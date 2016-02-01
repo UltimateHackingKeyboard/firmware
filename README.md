@@ -12,7 +12,7 @@ The current code runs on an FRDM-K22F dev board and implements a composite USB d
 2. Export the `KSDK_DIR` environment variable to point to the KSDK installation directory.
 3. If you wish to use KDS then:
  - Go to File -> Import -> General -> Existing Projects into Workspace, select the `build` directory, and click on the Finish button 
- - Right click on the `uhk-right` project -> Properties -> Resource -> Linked Resources -> Path Variables -> edit `KSDK_DIR` to point to your KSDK installation directory.
+ - In Project Explorer right-click on the `uhk-right` project -> Properties -> Resource -> Linked Resources -> Path Variables -> edit `KSDK_DIR` to point to your KSDK installation directory.
 4. At this point you can build the firmware by using KDS or at the command line by using the scripts of the build directory.
  
 ## Known bugs
