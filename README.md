@@ -24,8 +24,9 @@ Initially, the low-level functionality has to be implemented, such as:
 
 Next up, the features of the AVR firmware should to be ported by using an FRDM-K0[235]Z dev board acting as the left keyboard half:
  * Make the left half send keypress events to the right half via UART. 
- * Implement a 2x2 keyboard matrix on for the dev boards and make it work in the firmware - make the keypresses send keycodes to the host or move the mouse.
+ * Breadboard a 2x2 keyboard matrix wired per dev board and make them work in the firmware. Make the keypresses send keycodes to the host or move the mouse.
 
 Finally, implement all the advanced features, such as:
- * Receive USB control request to read and write the EEPROM.
+ * Send USB control request to write the EEPROM.
+ * Read the EEPROM via the raw HID interface.
  * Parse the content of the EEPROM to extract keymaps, macros, and other configuration information.
