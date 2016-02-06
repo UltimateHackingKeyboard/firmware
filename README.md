@@ -8,36 +8,24 @@ The current code runs on an FRDM-K22F dev board and implements a composite USB d
 
 ## Build
 
-1. Install Kinetis Design studio (KDS), KSDK 1.3, and set them up to be able to build the USB examples.
+1. Install Kinetis Design studio (KDS), KSDK 2.0 for the FRDM-K22F, and set them up to be able to build the USB examples.
 2. Export the `KSDK_DIR` environment variable to point to your KSDK installation directory.
 3. If you wish to use KDS then:
  - Go to File -> Import -> General -> Existing Projects into Workspace, select the `build` directory, and click on the Finish button 
  - In Project Explorer right-click on the `uhk-right` project -> Properties -> Resource -> Linked Resources -> Path Variables -> edit `KSDK_DIR` to point to your KSDK installation directory.
 4. At this point, you can build the firmware by using KDS or at the command line by using the scripts of the build directory.
  
-## Known bugs
-
-The USB device does not enumerate properly, yielding the following errors on Linux:
-
-```
-[25630.799145] usb 1-11: new full-speed USB device number 96 using xhci_hcd
-[25635.906816] usb 1-11: device descriptor read/64, error -71
-[25636.122623] usb 1-11: device descriptor read/64, error -71
-[25636.338444] usb 1-11: new full-speed USB device number 97 using xhci_hcd
-[25636.450357] usb 1-11: device descriptor read/64, error -71
-[25636.666170] usb 1-11: device descriptor read/64, error -71
-[25636.882022] usb 1-11: new full-speed USB device number 98 using xhci_hcd
-[25636.882170] usb 1-11: Device not responding to setup address.
-[25637.085938] usb 1-11: Device not responding to setup address.
-[25637.289680] usb 1-11: device not accepting address 98, error -71
-[25637.401584] usb 1-11: new full-speed USB device number 99 using xhci_hcd
-[25637.401745] usb 1-11: Device not responding to setup address.
-[25637.605469] usb 1-11: Device not responding to setup address.
-```
-
 ## Future work
 
 Initially, the low-level functionality has to be implemented, such as:
 * A USB device that exposes a keyboard, mouse and raw HID interface
 * Using kboot for the right keyboard half to directly interface with the host
 * Using kboot for the left keyboard half to indirectly interface with the host via the right keyboard half using UART
+
+Next up, the features of the AVR firmware should to be ported by using an FRDM-K0[235]Z dev board acting as the left keyboard half:
+ * Make the left half send keypress events to the right half via UART. 
+ * Implement a 2x2 keyboard matrix on for the dev boards and make it work in the firmware - make the keypresses send keycodes to the host or move the mouse.
+  
+ Finally, implement all the advanced features, such as:
+ * Receive USB control request to read and write the EEPROM.
+ * Parse the content of the EEPROM to extract keymaps, macros, and other configuration information.
