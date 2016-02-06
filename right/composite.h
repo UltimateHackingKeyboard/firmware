@@ -1,0 +1,21 @@
+#ifndef __USB_DEVICE_COMPOSITE_H__
+#define __USB_DEVICE_COMPOSITE_H__
+
+/* Macros: */
+
+    #define CONTROLLER_ID kUSB_ControllerKhci0
+    #define USB_DEVICE_INTERRUPT_PRIORITY (3U)
+
+/* Type defines: */
+
+    typedef struct _usb_device_composite_struct {
+        usb_device_handle deviceHandle;
+        class_handle_t hidMouseHandle;
+        class_handle_t hidKeyboardHandle;
+        uint8_t speed;
+        uint8_t attach;
+        uint8_t currentConfiguration;
+        uint8_t currentInterfaceAlternateSetting[USB_COMPOSITE_INTERFACE_COUNT];
+    } usb_device_composite_struct_t;
+
+#endif
