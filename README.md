@@ -8,7 +8,7 @@ The current code runs on an FRDM-K22F dev board and implements a composite USB d
 
 ## Build
 
-1. Install Kinetis Design studio (KDS), KSDK 2.0 built for the FRDM-K22F, and set them up to be able to build the USB examples.
+1. Install [Kinetis Design Studio (KDS) IDE](http://www.nxp.com/products/software-and-tools/run-time-software/kinetis-software-and-tools/ides-for-kinetis-mcus/kinetis-design-studio-integrated-development-environment-ide:KDS_IDE), KSDK 2.0 built for the FRDM-K22F, and set them up to be able to build the USB examples.
 2. Export the `KSDK_DIR` environment variable to point to your KSDK installation directory.
 3. If you wish to use KDS then:
  - Go to File -> Import -> General -> Existing Projects into Workspace, select the `build` directory, and click on the Finish button 
