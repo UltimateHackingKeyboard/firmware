@@ -1,0 +1,3 @@
+[submodule "libs/KSDK_2.0_FRDM-K22F"]
+	path = libs/KSDK_2.0_FRDM-K22F
+	url = git@github.com:UltimateHackingKeyboard/KSDK_2.0_FRDM-K22F.git
