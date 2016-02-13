@@ -93,87 +93,87 @@
 		<link>
 			<name>drivers/fsl_clock.c</name>
 			<type>1</type>
-			<locationURI>KSDK_DIR/devices/MK22F51212/drivers/fsl_clock.c</locationURI>
+			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/devices/MK22F51212/drivers/fsl_clock.c</locationURI>
 		</link>
 		<link>
 			<name>drivers/fsl_clock.h</name>
 			<type>1</type>
-			<locationURI>KSDK_DIR/devices/MK22F51212/drivers/fsl_clock.h</locationURI>
+			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/devices/MK22F51212/drivers/fsl_clock.h</locationURI>
 		</link>
 		<link>
 			<name>drivers/fsl_common.c</name>
 			<type>1</type>
-			<locationURI>KSDK_DIR/devices/MK22F51212/drivers/fsl_common.c</locationURI>
+			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/devices/MK22F51212/drivers/fsl_common.c</locationURI>
 		</link>
 		<link>
 			<name>drivers/fsl_common.h</name>
 			<type>1</type>
-			<locationURI>KSDK_DIR/devices/MK22F51212/drivers/fsl_common.h</locationURI>
+			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/devices/MK22F51212/drivers/fsl_common.h</locationURI>
 		</link>
 		<link>
 			<name>drivers/fsl_gpio.c</name>
 			<type>1</type>
-			<locationURI>KSDK_DIR/devices/MK22F51212/drivers/fsl_gpio.c</locationURI>
+			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/devices/MK22F51212/drivers/fsl_gpio.c</locationURI>
 		</link>
 		<link>
 			<name>drivers/fsl_gpio.h</name>
 			<type>1</type>
-			<locationURI>KSDK_DIR/devices/MK22F51212/drivers/fsl_gpio.h</locationURI>
+			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/devices/MK22F51212/drivers/fsl_gpio.h</locationURI>
 		</link>
 		<link>
 			<name>drivers/fsl_lpuart.c</name>
 			<type>1</type>
-			<locationURI>KSDK_DIR/devices/MK22F51212/drivers/fsl_lpuart.c</locationURI>
+			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/devices/MK22F51212/drivers/fsl_lpuart.c</locationURI>
 		</link>
 		<link>
 			<name>drivers/fsl_lpuart.h</name>
 			<type>1</type>
-			<locationURI>KSDK_DIR/devices/MK22F51212/drivers/fsl_lpuart.h</locationURI>
+			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/devices/MK22F51212/drivers/fsl_lpuart.h</locationURI>
 		</link>
 		<link>
 			<name>drivers/fsl_port.h</name>
 			<type>1</type>
-			<locationURI>KSDK_DIR/devices/MK22F51212/drivers/fsl_port.h</locationURI>
+			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/devices/MK22F51212/drivers/fsl_port.h</locationURI>
 		</link>
 		<link>
 			<name>drivers/fsl_sim.c</name>
 			<type>1</type>
-			<locationURI>KSDK_DIR/devices/MK22F51212/drivers/fsl_sim.c</locationURI>
+			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/devices/MK22F51212/drivers/fsl_sim.c</locationURI>
 		</link>
 		<link>
 			<name>drivers/fsl_smc.c</name>
 			<type>1</type>
-			<locationURI>KSDK_DIR/devices/MK22F51212/drivers/fsl_smc.c</locationURI>
+			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/devices/MK22F51212/drivers/fsl_smc.c</locationURI>
 		</link>
 		<link>
 			<name>drivers/fsl_smc.h</name>
 			<type>1</type>
-			<locationURI>KSDK_DIR/devices/MK22F51212/drivers/fsl_smc.h</locationURI>
+			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/devices/MK22F51212/drivers/fsl_smc.h</locationURI>
 		</link>
 		<link>
 			<name>drivers/fsl_uart.c</name>
 			<type>1</type>
-			<locationURI>KSDK_DIR/devices/MK22F51212/drivers/fsl_uart.c</locationURI>
+			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/devices/MK22F51212/drivers/fsl_uart.c</locationURI>
 		</link>
 		<link>
 			<name>drivers/fsl_uart.h</name>
 			<type>1</type>
-			<locationURI>KSDK_DIR/devices/MK22F51212/drivers/fsl_uart.h</locationURI>
+			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/devices/MK22F51212/drivers/fsl_uart.h</locationURI>
 		</link>
 		<link>
 			<name>osa/usb_osa.h</name>
 			<type>1</type>
-			<locationURI>KSDK_DIR/middleware/usb_1.0.0/osa/usb_osa.h</locationURI>
+			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/middleware/usb_1.0.0/osa/usb_osa.h</locationURI>
 		</link>
 		<link>
 			<name>osa/usb_osa_bm.c</name>
 			<type>1</type>
-			<locationURI>KSDK_DIR/middleware/usb_1.0.0/osa/usb_osa_bm.c</locationURI>
+			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/middleware/usb_1.0.0/osa/usb_osa_bm.c</locationURI>
 		</link>
 		<link>
 			<name>osa/usb_osa_bm.h</name>
 			<type>1</type>
-			<locationURI>KSDK_DIR/middleware/usb_1.0.0/osa/usb_osa_bm.h</locationURI>
+			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/middleware/usb_1.0.0/osa/usb_osa_bm.h</locationURI>
 		</link>
 		<link>
 			<name>sources/composite.c</name>
@@ -223,17 +223,17 @@
 		<link>
 			<name>startup/startup_MK22F51212.S</name>
 			<type>1</type>
-			<locationURI>KSDK_DIR/devices/MK22F51212/gcc/startup_MK22F51212.S</locationURI>
+			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/devices/MK22F51212/gcc/startup_MK22F51212.S</locationURI>
 		</link>
 		<link>
 			<name>startup/system_MK22F51212.c</name>
 			<type>1</type>
-			<locationURI>KSDK_DIR/devices/MK22F51212/system_MK22F51212.c</locationURI>
+			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/devices/MK22F51212/system_MK22F51212.c</locationURI>
 		</link>
 		<link>
 			<name>startup/system_MK22F51212.h</name>
 			<type>1</type>
-			<locationURI>KSDK_DIR/devices/MK22F51212/system_MK22F51212.h</locationURI>
+			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/devices/MK22F51212/system_MK22F51212.h</locationURI>
 		</link>
 		<link>
 			<name>usb/include</name>
@@ -243,12 +243,12 @@
 		<link>
 			<name>utilities/fsl_debug_console.c</name>
 			<type>1</type>
-			<locationURI>KSDK_DIR/devices/MK22F51212/utilities/fsl_debug_console.c</locationURI>
+			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/devices/MK22F51212/utilities/fsl_debug_console.c</locationURI>
 		</link>
 		<link>
 			<name>utilities/fsl_debug_console.h</name>
 			<type>1</type>
-			<locationURI>KSDK_DIR/devices/MK22F51212/utilities/fsl_debug_console.h</locationURI>
+			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/devices/MK22F51212/utilities/fsl_debug_console.h</locationURI>
 		</link>
 		<link>
 			<name>usb/device/class</name>
@@ -268,7 +268,7 @@
 		<link>
 			<name>usb/include/usb.h</name>
 			<type>1</type>
-			<locationURI>KSDK_DIR/middleware/usb_1.0.0/include/usb.h</locationURI>
+			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/middleware/usb_1.0.0/include/usb.h</locationURI>
 		</link>
 		<link>
 			<name>usb/device/class/hid</name>
@@ -288,7 +288,7 @@
 		<link>
 			<name>usb/device/include/usb_device.h</name>
 			<type>1</type>
-			<locationURI>KSDK_DIR/middleware/usb_1.0.0/device/usb_device.h</locationURI>
+			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/middleware/usb_1.0.0/device/usb_device.h</locationURI>
 		</link>
 		<link>
 			<name>usb/device/source/khci</name>
@@ -308,12 +308,12 @@
 		<link>
 			<name>usb/device/source/usb_device_dci.c</name>
 			<type>1</type>
-			<locationURI>KSDK_DIR/middleware/usb_1.0.0/device/usb_device_dci.c</locationURI>
+			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/middleware/usb_1.0.0/device/usb_device_dci.c</locationURI>
 		</link>
 		<link>
 			<name>usb/device/source/usb_device_dci.h</name>
 			<type>1</type>
-			<locationURI>KSDK_DIR/middleware/usb_1.0.0/device/usb_device_dci.h</locationURI>
+			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/middleware/usb_1.0.0/device/usb_device_dci.h</locationURI>
 		</link>
 		<link>
 			<name>usb/device/class/hid/usb_device_hid.c</name>
@@ -328,18 +328,12 @@
 		<link>
 			<name>usb/device/source/khci/usb_device_khci.c</name>
 			<type>1</type>
-			<locationURI>KSDK_DIR/middleware/usb_1.0.0/device/usb_device_khci.c</locationURI>
+			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/middleware/usb_1.0.0/device/usb_device_khci.c</locationURI>
 		</link>
 		<link>
 			<name>usb/device/source/khci/usb_device_khci.h</name>
 			<type>1</type>
-			<locationURI>KSDK_DIR/middleware/usb_1.0.0/device/usb_device_khci.h</locationURI>
+			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/middleware/usb_1.0.0/device/usb_device_khci.h</locationURI>
 		</link>
 	</linkedResources>
-	<variableList>
-		<variable>
-			<name>KSDK_DIR</name>
-			<value>file:/home/laci/projects/kds/KSDK_2.0</value>
-		</variable>
-	</variableList>
 </projectDescription>
