@@ -8,12 +8,13 @@ The current code runs on an FRDM-K22F dev board and implements a composite USB d
 
 ## Build
 
-1. Install [Kinetis Design Studio (KDS) IDE](http://www.nxp.com/products/software-and-tools/run-time-software/kinetis-software-and-tools/ides-for-kinetis-mcus/kinetis-design-studio-integrated-development-environment-ide:KDS_IDE), KSDK 2.0 built for the FRDM-K22F, and set them up to be able to build the USB examples.
-2. Export the `KSDK_DIR` environment variable to point to your KSDK installation directory.
-3. If you wish to use KDS then:
- - Go to File -> Import -> General -> Existing Projects into Workspace, select the `build` directory, and click on the Finish button
- - In Project Explorer right-click on the `uhk-right` project -> Properties -> Resource -> Linked Resources -> Path Variables -> edit `KSDK_DIR` to point to your KSDK installation directory.
-4. At this point, you should be able to build the firmware in KDS ~~or at the command line by using the scripts of the build directory~~ (the build scripts don't work yet).
+Please make sure to clone this repo with:
+
+`git clone --recursive git@github.com:UltimateHackingKeyboard/firmware-kinetis.git`
+
+You can install the [Kinetis Design Studio (KDS) IDE](http://www.nxp.com/products/software-and-tools/run-time-software/kinetis-software-and-tools/ides-for-kinetis-mcus/kinetis-design-studio-integrated-development-environment-ide:KDS_IDE) and import the project by invoking File -> Import -> General -> Existing Projects into Workspace, select the `right` directory, and click on the Finish button. At this point, you should be able to build the firmware in KDS.
+
+Alternatively, you can use the build scripts of the `right/build/armgcc` directory.
 
 ## Future work
 
