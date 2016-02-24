@@ -206,16 +206,6 @@
 			<locationURI>PARENT-2-PROJECT_LOC/hid_mouse.h</locationURI>
 		</link>
 		<link>
-			<name>sources/keyboard_descriptors.c</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/keyboard_descriptors.c</locationURI>
-		</link>
-		<link>
-			<name>sources/keyboard_descriptors.h</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/keyboard_descriptors.h</locationURI>
-		</link>
-		<link>
 			<name>sources/usb_device_config.h</name>
 			<type>1</type>
 			<locationURI>PARENT-2-PROJECT_LOC/usb_device_config.h</locationURI>
@@ -229,6 +219,16 @@
 			<name>sources/usb_device_descriptor.h</name>
 			<type>1</type>
 			<locationURI>PARENT-2-PROJECT_LOC/usb_device_descriptor.h</locationURI>
+		</link>
+		<link>
+			<name>sources/usb_keyboard_descriptors.c</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/usb_keyboard_descriptors.c</locationURI>
+		</link>
+		<link>
+			<name>sources/usb_keyboard_descriptors.h</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/usb_keyboard_descriptors.h</locationURI>
 		</link>
 		<link>
 			<name>startup/startup_MK22F51212.S</name>

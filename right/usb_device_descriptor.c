@@ -7,7 +7,7 @@
 #include "composite.h"
 #include "hid_mouse.h"
 #include "hid_keyboard.h"
-#include "keyboard_descriptors.h"
+#include "usb_keyboard_descriptors.h"
 
 // HID mouse endpoint
 usb_device_endpoint_struct_t g_UsbDeviceHidMouseEndpoints[USB_HID_MOUSE_ENDPOINT_COUNT] = {

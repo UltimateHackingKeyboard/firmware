@@ -3,7 +3,7 @@
 
 // Includes:
 
-    #include "keyboard_descriptors.h"
+    #include "usb_keyboard_descriptors.h"
 
 // Macros:
 
