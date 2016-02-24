@@ -294,37 +294,13 @@ uint8_t g_UsbDeviceString3[USB_DESCRIPTOR_LENGTH_STRING3] = {
     'E', 0x00U,
 };
 
-uint8_t g_UsbDeviceString4[USB_DESCRIPTOR_LENGTH_STRING4] = {
-    sizeof(g_UsbDeviceString4),
-    USB_DESCRIPTOR_TYPE_STRING,
-    'H', 0x00U,
-    'I', 0x00U,
-    'D', 0x00U,
-    ' ', 0x00U,
-    'K', 0x00U,
-    'E', 0x00U,
-    'Y', 0x00U,
-    'B', 0x00U,
-    'O', 0x00U,
-    'A', 0x00U,
-    'R', 0x00U,
-    'D', 0x00U,
-    ' ', 0x00U,
-    'D', 0x00U,
-    'E', 0x00U,
-    'V', 0x00U,
-    'I', 0x00U,
-    'C', 0x00U,
-    'E', 0x00U,
-};
-
 uint32_t g_UsbDeviceStringDescriptorLength[USB_DEVICE_STRING_COUNT] = {
     sizeof(g_UsbDeviceString0), sizeof(g_UsbDeviceString1), sizeof(g_UsbDeviceString2),
-    sizeof(g_UsbDeviceString3), sizeof(g_UsbDeviceString4),
+    sizeof(g_UsbDeviceString3), sizeof(g_UsbKeyboardString),
 };
 
 uint8_t *g_UsbDeviceStringDescriptorArray[USB_DEVICE_STRING_COUNT] = {
-    g_UsbDeviceString0, g_UsbDeviceString1, g_UsbDeviceString2, g_UsbDeviceString3, g_UsbDeviceString4,
+    g_UsbDeviceString0, g_UsbDeviceString1, g_UsbDeviceString2, g_UsbDeviceString3, g_UsbKeyboardString,
 };
 
 usb_language_t g_UsbDeviceLanguage[USB_DEVICE_LANGUAGE_COUNT] = {{

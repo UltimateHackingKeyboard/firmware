@@ -91,3 +91,27 @@ uint8_t UsbKeyboardReportDescriptor[USB_DESCRIPTOR_LENGTH_HID_KEYBOARD_REPORT] =
     0x81U, 0x00U, // Input(Data, Array), Key arrays(6U bytes)
     0xC0U,        // End collection
 };
+
+uint8_t g_UsbKeyboardString[USB_KEYBOARD_STRING_DESCRIPTOR_LENGTH] = {
+    sizeof(g_UsbKeyboardString),
+    USB_DESCRIPTOR_TYPE_STRING,
+    'H', 0x00U,
+    'I', 0x00U,
+    'D', 0x00U,
+    ' ', 0x00U,
+    'K', 0x00U,
+    'E', 0x00U,
+    'Y', 0x00U,
+    'B', 0x00U,
+    'O', 0x00U,
+    'A', 0x00U,
+    'R', 0x00U,
+    'D', 0x00U,
+    ' ', 0x00U,
+    'D', 0x00U,
+    'E', 0x00U,
+    'V', 0x00U,
+    'I', 0x00U,
+    'C', 0x00U,
+    'E', 0x00U,
+};
