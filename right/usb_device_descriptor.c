@@ -7,51 +7,7 @@
 #include "composite.h"
 #include "hid_mouse.h"
 #include "hid_keyboard.h"
-
-// HID keyboard endpoint
-usb_device_endpoint_struct_t g_UsbDeviceHidKeyboardEndpoints[USB_HID_KEYBOARD_ENDPOINT_COUNT] = {
-    /* HID keyboard interrupt IN pipe */
-    {
-        USB_HID_KEYBOARD_ENDPOINT_IN | (USB_IN << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT),
-        USB_ENDPOINT_INTERRUPT, FS_HID_KEYBOARD_INTERRUPT_IN_PACKET_SIZE,
-    },
-};
-
-// HID keyboard interface
-usb_device_interface_struct_t g_UsbDeviceHidKeyboardInterface[] = {
-    {
-        0U, // The alternate setting of the interface
-        {
-            USB_HID_KEYBOARD_ENDPOINT_COUNT,
-            g_UsbDeviceHidKeyboardEndpoints,
-        },
-        NULL,
-    }
-};
-
-usb_device_interfaces_struct_t g_UsbDeviceHidKeyboardInterfaces[USB_HID_KEYBOARD_INTERFACE_COUNT] = {
-    {
-        USB_HID_KEYBOARD_CLASS,
-        USB_HID_KEYBOARD_SUBCLASS,
-        USB_HID_KEYBOARD_PROTOCOL,
-        USB_HID_KEYBOARD_INTERFACE_INDEX,
-        g_UsbDeviceHidKeyboardInterface,
-        sizeof(g_UsbDeviceHidKeyboardInterface) / sizeof(usb_device_interfaces_struct_t),
-    },
-};
-
-usb_device_interface_list_t g_UsbDeviceHidKeyboardInterfaceList[USB_DEVICE_CONFIGURATION_COUNT] = {
-    {
-        USB_HID_KEYBOARD_INTERFACE_COUNT,
-        g_UsbDeviceHidKeyboardInterfaces,
-    },
-};
-
-usb_device_class_struct_t g_UsbDeviceHidKeyboardConfig = {
-    g_UsbDeviceHidKeyboardInterfaceList,
-    kUSB_DeviceClassTypeHid,
-    USB_DEVICE_CONFIGURATION_COUNT,
-};
+#include "keyboard_descriptors.h"
 
 // HID mouse endpoint
 usb_device_endpoint_struct_t g_UsbDeviceHidMouseEndpoints[USB_HID_MOUSE_ENDPOINT_COUNT] = {
@@ -259,47 +215,6 @@ uint8_t g_UsbDeviceHidMouseReportDescriptor[USB_DESCRIPTOR_LENGTH_HID_MOUSE_REPO
     0xC0U         /* end collection, Close Mouse collection */
 };
 
-/* HID keyboard report descriptor */
-uint8_t g_UsbDeviceHidKeyboardReportDescriptor[USB_DESCRIPTOR_LENGTH_HID_KEYBOARD_REPORT] = {
-    0x05U, 0x01U, /* Usage Page (Generic Desktop)*/
-    0x09U, 0x06U, /* Usage (Keyboard) */
-    0xA1U, 0x01U, /* Collection (Application) */
-    0x75U, 0x01U, /* Report Size (1U) */
-    0x95U, 0x08U, /* Report Count (8U) */
-    0x05U, 0x07U, /* Usage Page (Key Codes) */
-    0x19U, 0xE0U, /* Usage Minimum (224U) */
-    0x29U, 0xE7U, /* Usage Maximum (231U) */
-
-    0x15U, 0x00U, /* Logical Minimum (0U) */
-    0x25U, 0x01U, /* Logical Maximum (1U) */
-    0x81U, 0x02U, /* Input(Data, Variable, Absolute) Modifier byte */
-
-    0x95U, 0x01U, /* Report count (1U) */
-    0x75U, 0x08U, /* Report Size (8U) */
-    0x81U, 0x01U, /* Input (Constant), Reserved byte */
-    0x95U, 0x05U, /* Report count (5U) */
-    0x75U, 0x01U, /* Report Size (1U) */
-
-    0x05U, 0x01U, /* Usage Page (Page# for LEDs) */
-    0x19U, 0x01U, /* Usage Minimum (1U) */
-    0x29U, 0x05U, /* Usage Maximum (5U) */
-    0x91U, 0x02U, /* Output (Data, Variable, Absolute) LED report */
-    0x95U, 0x01U, /* Report count (1U) */
-    0x75U, 0x03U, /* Report Size (3U) */
-    0x91U, 0x01U, /* Output (Constant), LED report padding */
-
-    0x95U, 0x06U, /* Report count (6U) */
-    0x75U, 0x08U, /* Report Size (8U) */
-    0x15U, 0x00U, /* logical Minimum (0U) */
-    0x25U, 0xFFU, /* logical Maximum (255U) */
-    0x05U, 0x07U, /* Usage Page (Key Codes) */
-    0x19U, 0x00U, /* Usage Minimum (0U) */
-    0x29U, 0xFFU, /* Usage Maximum (255U) */
-
-    0x81U, 0x00U, /* Input(Data, Array), Key arrays(6U bytes)*/
-    0xC0U,        /* end collection */
-};
-
 uint8_t g_UsbDeviceString0[USB_DESCRIPTOR_LENGTH_STRING0] = {
     sizeof(g_UsbDeviceString0), USB_DESCRIPTOR_TYPE_STRING, 0x09U, 0x04U,
 };
@@ -479,7 +394,7 @@ usb_status_t USB_DeviceGetHidReportDescriptor(usb_device_handle handle,
         hidReportDescriptor->buffer = g_UsbDeviceHidMouseReportDescriptor;
         hidReportDescriptor->length = USB_DESCRIPTOR_LENGTH_HID_MOUSE_REPORT;
     } else if (USB_HID_KEYBOARD_INTERFACE_INDEX == hidReportDescriptor->interfaceNumber) {
-        hidReportDescriptor->buffer = g_UsbDeviceHidKeyboardReportDescriptor;
+        hidReportDescriptor->buffer = UsbKeyboardReportDescriptor;
         hidReportDescriptor->length = USB_DESCRIPTOR_LENGTH_HID_KEYBOARD_REPORT;
     } else {
         return kStatus_USB_InvalidRequest;

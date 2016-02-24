@@ -16,6 +16,7 @@
 #include <stdlib.h>
 #include "fsl_common.h"
 #include "include/board/pin_mux.h"
+#include "keyboard_descriptors.h"
 
 void BOARD_InitHardware(void);
 
@@ -23,7 +24,6 @@ static usb_status_t USB_DeviceCallback(usb_device_handle handle, uint32_t event,
 static void USB_DeviceApplicationInit(void);
 
 extern usb_device_class_struct_t g_UsbDeviceHidMouseConfig;
-extern usb_device_class_struct_t g_UsbDeviceHidKeyboardConfig;
 
 static usb_device_composite_struct_t g_UsbDeviceComposite;
 
@@ -31,7 +31,7 @@ usb_device_class_config_struct_t g_CompositeClassConfig[USB_COMPOSITE_INTERFACE_
     {
         USB_DeviceHidKeyboardCallback,
         (class_handle_t)NULL,
-        &g_UsbDeviceHidKeyboardConfig,
+        &UsbKeyboardClass,
     },
     {
         USB_DeviceHidMouseCallback,
