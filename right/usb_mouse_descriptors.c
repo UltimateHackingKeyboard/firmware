@@ -8,54 +8,39 @@
 #include "hid_mouse.h"
 #include "hid_keyboard.h"
 
-static usb_device_endpoint_struct_t g_UsbDeviceHidMouseEndpoints[USB_MOUSE_ENDPOINT_COUNT] =
-{
-    {
-        USB_MOUSE_ENDPOINT_IN | (USB_IN << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT),
-        USB_ENDPOINT_INTERRUPT,
-        USB_MOUSE_INTERRUPT_IN_PACKET_SIZE,
-    },
-};
+static usb_device_endpoint_struct_t UsbMouseEndpoints[USB_MOUSE_ENDPOINT_COUNT] = {{
+    USB_MOUSE_ENDPOINT_IN | (USB_IN << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT),
+    USB_ENDPOINT_INTERRUPT,
+    USB_MOUSE_INTERRUPT_IN_PACKET_SIZE,
+}};
 
-static usb_device_interface_struct_t g_UsbDeviceHidMouseInterface[] =
-{
-    {
-        USB_MOUSE_INTERFACE_ALTERNATE_SETTING,
-        {
-            USB_MOUSE_ENDPOINT_COUNT,
-            g_UsbDeviceHidMouseEndpoints,
-        },
-        NULL,
-    }
-};
+static usb_device_interface_struct_t UsbMouseInterface[] = {{
+    USB_MOUSE_INTERFACE_ALTERNATE_SETTING,
+    {USB_MOUSE_ENDPOINT_COUNT, UsbMouseEndpoints},
+    NULL,
+}};
 
-static usb_device_interfaces_struct_t g_UsbDeviceHidMouseInterfaces[USB_MOUSE_INTERFACE_COUNT] =
-{
-    {
-        USB_MOUSE_CLASS,
-        USB_MOUSE_SUBCLASS,
-        USB_MOUSE_PROTOCOL,
-        USB_MOUSE_INTERFACE_INDEX,
-        g_UsbDeviceHidMouseInterface,
-        sizeof(g_UsbDeviceHidMouseInterface) / sizeof(usb_device_interfaces_struct_t),
-    },
-};
+static usb_device_interfaces_struct_t UsbMouseInterfaces[USB_MOUSE_INTERFACE_COUNT] = {{
+    USB_MOUSE_CLASS,
+    USB_MOUSE_SUBCLASS,
+    USB_MOUSE_PROTOCOL,
+    USB_MOUSE_INTERFACE_INDEX,
+    UsbMouseInterface,
+    sizeof(UsbMouseInterface) / sizeof(usb_device_interfaces_struct_t),
+}};
 
-static usb_device_interface_list_t g_UsbDeviceHidMouseInterfaceList[USB_DEVICE_CONFIGURATION_COUNT] =
-{
-    {
-        USB_MOUSE_INTERFACE_COUNT,
-        g_UsbDeviceHidMouseInterfaces,
-    },
-};
+static usb_device_interface_list_t UsbMouseInterfaceList[USB_DEVICE_CONFIGURATION_COUNT] = {{
+    USB_MOUSE_INTERFACE_COUNT,
+    UsbMouseInterfaces,
+}};
 
-usb_device_class_struct_t UsbDeviceMouseConfig = {
-    g_UsbDeviceHidMouseInterfaceList,
+usb_device_class_struct_t UsbDeviceMouseClass = {
+    UsbMouseInterfaceList,
     kUSB_DeviceClassTypeHid,
     USB_DEVICE_CONFIGURATION_COUNT,
 };
 
-uint8_t UsbDeviceMouseReportDescriptor[USB_DESCRIPTOR_LENGTH_MOUSE_REPORT] = {
+uint8_t UsbMouseReportDescriptor[USB_MOUSE_REPORT_DESCRIPTOR_LENGTH] = {
     0x05U, 0x01U, // Usage Page (Generic Desktop)
     0x09U, 0x02U, // Usage (Mouse)
     0xA1U, 0x01U, // Collection (Application)

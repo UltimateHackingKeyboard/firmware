@@ -6,46 +6,31 @@
 #include "usb_device_descriptor.h"
 #include "usb_keyboard_descriptors.h"
 
-static usb_device_endpoint_struct_t UsbKeyboardEndpoints[USB_KEYBOARD_ENDPOINT_COUNT] =
-{
-    {
-        USB_KEYBOARD_ENDPOINT_IN | (USB_IN << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT),
-        USB_ENDPOINT_INTERRUPT,
-        USB_KEYBOARD_INTERRUPT_IN_PACKET_SIZE,
-    },
-};
+static usb_device_endpoint_struct_t UsbKeyboardEndpoints[USB_KEYBOARD_ENDPOINT_COUNT] = {{
+    USB_KEYBOARD_ENDPOINT_IN | (USB_IN << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT),
+    USB_ENDPOINT_INTERRUPT,
+    USB_KEYBOARD_INTERRUPT_IN_PACKET_SIZE,
+}};
 
-static usb_device_interface_struct_t UsbKeyboardInterface[] =
-{
-    {
-        USB_KEYBOARD_INTERFACE_ALTERNATE_SETTING,
-        {
-            USB_KEYBOARD_ENDPOINT_COUNT,
-            UsbKeyboardEndpoints,
-        },
-        NULL,
-    }
-};
+static usb_device_interface_struct_t UsbKeyboardInterface[] = {{
+    USB_KEYBOARD_INTERFACE_ALTERNATE_SETTING,
+    {USB_KEYBOARD_ENDPOINT_COUNT, UsbKeyboardEndpoints},
+    NULL,
+}};
 
-static usb_device_interfaces_struct_t UsbKeyboardInterfaces[USB_KEYBOARD_INTERFACE_COUNT] =
-{
-    {
-        USB_KEYBOARD_CLASS,
-        USB_KEYBOARD_SUBCLASS,
-        USB_KEYBOARD_PROTOCOL,
-        USB_KEYBOARD_INTERFACE_INDEX,
-        UsbKeyboardInterface,
-        sizeof(UsbKeyboardInterface) / sizeof(usb_device_interfaces_struct_t),
-    },
-};
+static usb_device_interfaces_struct_t UsbKeyboardInterfaces[USB_KEYBOARD_INTERFACE_COUNT] = {{
+    USB_KEYBOARD_CLASS,
+    USB_KEYBOARD_SUBCLASS,
+    USB_KEYBOARD_PROTOCOL,
+    USB_KEYBOARD_INTERFACE_INDEX,
+    UsbKeyboardInterface,
+    sizeof(UsbKeyboardInterface) / sizeof(usb_device_interfaces_struct_t),
+}};
 
-static usb_device_interface_list_t UsbKeyboardInterfaceList[USB_DEVICE_CONFIGURATION_COUNT] =
-{
-    {
-        USB_KEYBOARD_INTERFACE_COUNT,
-        UsbKeyboardInterfaces,
-    },
-};
+static usb_device_interface_list_t UsbKeyboardInterfaceList[USB_DEVICE_CONFIGURATION_COUNT] = {{
+    USB_KEYBOARD_INTERFACE_COUNT,
+    UsbKeyboardInterfaces,
+}};
 
 usb_device_class_struct_t UsbKeyboardClass = {
     UsbKeyboardInterfaceList,
@@ -53,7 +38,7 @@ usb_device_class_struct_t UsbKeyboardClass = {
     USB_DEVICE_CONFIGURATION_COUNT,
 };
 
-uint8_t UsbKeyboardReportDescriptor[USB_DESCRIPTOR_LENGTH_KEYBOARD_REPORT] = {
+uint8_t UsbKeyboardReportDescriptor[USB_KEYBOARD_REPORT_DESCRIPTOR_LENGTH] = {
     0x05U, 0x01U, // Usage Page (Generic Desktop)
     0x09U, 0x06U, // Usage (Keyboard)
     0xA1U, 0x01U, // Collection (Application)
