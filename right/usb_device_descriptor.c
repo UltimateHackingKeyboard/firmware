@@ -202,19 +202,6 @@ uint8_t *UsbStringDescriptors[USB_STRING_DESCRIPTOR_COUNT] = {
     UsbKeyboardString,
 };
 
-usb_language_t g_UsbDeviceLanguage[USB_DEVICE_LANGUAGE_COUNT] = {{
-    UsbStringDescriptors,
-    UsbStringDescriptorLengths,
-    (uint16_t)USB_LANGUAGE_ID_UNITED_STATES,
-}};
-
-usb_language_list_t UsbLanguageList = {
-    UsbLanguageListStringDescriptor,
-    sizeof(UsbLanguageListStringDescriptor),
-    g_UsbDeviceLanguage,
-    USB_DEVICE_LANGUAGE_COUNT,
-};
-
 usb_status_t USB_DeviceGetDeviceDescriptor(
     usb_device_handle handle, usb_device_get_device_descriptor_struct_t *deviceDescriptor)
 {
@@ -238,26 +225,15 @@ usb_status_t USB_DeviceGetStringDescriptor(
     usb_device_handle handle, usb_device_get_string_descriptor_struct_t *stringDescriptor)
 {
     if (stringDescriptor->stringIndex == 0U) {
-        stringDescriptor->buffer = (uint8_t *)UsbLanguageList.languageString;
-        stringDescriptor->length = UsbLanguageList.stringLength;
+        stringDescriptor->buffer = UsbLanguageListStringDescriptor;
+        stringDescriptor->length = sizeof(UsbLanguageListStringDescriptor);
+    } else if (stringDescriptor->languageId == USB_LANGUAGE_ID_UNITED_STATES &&
+               stringDescriptor->stringIndex < USB_STRING_DESCRIPTOR_COUNT)
+    {
+        stringDescriptor->buffer = UsbStringDescriptors[stringDescriptor->stringIndex];
+        stringDescriptor->length = UsbStringDescriptorLengths[stringDescriptor->stringIndex];
     } else {
-        uint8_t languageId = 0U;
-        uint8_t languageIndex = USB_STRING_DESCRIPTOR_COUNT;
-
-        for (; languageId < USB_STRING_DESCRIPTOR_COUNT; languageId++) {
-            if (stringDescriptor->languageId == UsbLanguageList.languageList[languageId].languageId) {
-                if (stringDescriptor->stringIndex < USB_STRING_DESCRIPTOR_COUNT) {
-                    languageIndex = stringDescriptor->stringIndex;
-                }
-                break;
-            }
-        }
-
-        if (USB_STRING_DESCRIPTOR_COUNT == languageIndex) {
-            return kStatus_USB_InvalidRequest;
-        }
-        stringDescriptor->buffer = (uint8_t *)UsbLanguageList.languageList[languageId].string[languageIndex];
-        stringDescriptor->length = UsbLanguageList.languageList[languageId].length[languageIndex];
+        return kStatus_USB_InvalidRequest;
     }
     return kStatus_USB_Success;
 }
