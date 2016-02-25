@@ -231,6 +231,16 @@
 			<locationURI>PARENT-2-PROJECT_LOC/usb_keyboard_descriptors.h</locationURI>
 		</link>
 		<link>
+			<name>sources/usb_mouse_descriptors.c</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/usb_mouse_descriptors.c</locationURI>
+		</link>
+		<link>
+			<name>sources/usb_mouse_descriptors.h</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/usb_mouse_descriptors.h</locationURI>
+		</link>
+		<link>
 			<name>startup/startup_MK22F51212.S</name>
 			<type>1</type>
 			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/devices/MK22F51212/gcc/startup_MK22F51212.S</locationURI>

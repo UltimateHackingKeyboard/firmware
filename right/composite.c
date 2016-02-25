@@ -17,13 +17,12 @@
 #include "fsl_common.h"
 #include "include/board/pin_mux.h"
 #include "usb_keyboard_descriptors.h"
+#include "usb_mouse_descriptors.h"
 
 void BOARD_InitHardware(void);
 
 static usb_status_t USB_DeviceCallback(usb_device_handle handle, uint32_t event, void *param);
 static void USB_DeviceApplicationInit(void);
-
-extern usb_device_class_struct_t g_UsbDeviceHidMouseConfig;
 
 static usb_device_composite_struct_t g_UsbDeviceComposite;
 
