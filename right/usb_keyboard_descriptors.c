@@ -50,11 +50,11 @@ uint8_t UsbKeyboardReportDescriptor[USB_KEYBOARD_REPORT_DESCRIPTOR_LENGTH] = {
 
     0x15U, 0x00U, // Logical Minimum (0U)
     0x25U, 0x01U, // Logical Maximum (1U)
-    0x81U, 0x02U, // Input(Data, Variable, Absolute) Modifier byte
+    0x81U, 0x02U, // Input (Data, Variable, Absolute) modifier byte
 
     0x95U, 0x01U, // Report count (1U)
     0x75U, 0x08U, // Report Size (8U)
-    0x81U, 0x01U, // Input (Constant), Reserved byte
+    0x81U, 0x01U, // Input (Constant), reserved byte
     0x95U, 0x05U, // Report count (5U)
     0x75U, 0x01U, // Report Size (1U)
 
@@ -74,7 +74,7 @@ uint8_t UsbKeyboardReportDescriptor[USB_KEYBOARD_REPORT_DESCRIPTOR_LENGTH] = {
     0x19U, 0x00U, // Usage Minimum (0U)
     0x29U, 0xFFU, // Usage Maximum (255U)
 
-    0x81U, 0x00U, // Input(Data, Array), Key arrays(6U bytes)
+    0x81U, 0x00U, // Input (Data, Array), Key arrays (6U bytes)
     0xC0U,        // End collection
 };
 

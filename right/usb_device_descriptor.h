@@ -11,6 +11,8 @@
     #define USB_VENDOR_ID 0x15A2U
     #define USB_PRODUCT_ID 0x007EU
 
+    #define USB_LANGUAGE_ID_UNITED_STATES (0x0409U)
+
     #define USB_DEVICE_SPECIFICATION_BCD_VERSION (0x0200U)
     #define USB_DEVICE_RELEASE_NUMBER (0x0101U)
 
@@ -23,11 +25,11 @@
     #define USB_DESCRIPTOR_LENGTH_CONFIGURATION_ALL (59U)
     #define USB_DESCRIPTOR_LENGTH_HID (9U)
     #define USB_DESCRIPTOR_LENGTH_STRING0 (4U)
-    #define USB_DESCRIPTOR_LENGTH_STRING1 (58U)
+    #define USB_MANUFACTURER_STRING_DESCRIPTOR_LENGTH (58U)
     #define USB_DESCRIPTOR_LENGTH_STRING2 (34U)
 
     #define USB_DEVICE_CONFIGURATION_COUNT (1U)
-    #define USB_DEVICE_STRING_COUNT (5U)
+    #define USB_STRING_DESCRIPTOR_COUNT (5U)
     #define USB_DEVICE_LANGUAGE_COUNT (1U)
 
     #define USB_STRING_DESCRIPTOR_ID_SERIAL_NUMBER 0x00U
@@ -40,7 +42,7 @@
 
     #define USB_COMPOSITE_INTERFACE_COUNT (USB_KEYBOARD_INTERFACE_COUNT + USB_MOUSE_INTERFACE_COUNT)
 
-// Function prototypes:
+// Functions:
 
     usb_status_t USB_DeviceGetDeviceDescriptor(
         usb_device_handle handle, usb_device_get_device_descriptor_struct_t *deviceDescriptor);

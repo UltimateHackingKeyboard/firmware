@@ -125,12 +125,15 @@ uint8_t UsbConfigurationDescriptor[USB_DESCRIPTOR_LENGTH_CONFIGURATION_ALL] = {
     USB_KEYBOARD_INTERRUPT_IN_INTERVAL,
 };
 
-uint8_t g_UsbDeviceString0[USB_DESCRIPTOR_LENGTH_STRING0] = {
-    sizeof(g_UsbDeviceString0), USB_DESCRIPTOR_TYPE_STRING, 0x09U, 0x04U,
+uint8_t UsbLanguageListStringDescriptor[USB_DESCRIPTOR_LENGTH_STRING0] = {
+    sizeof(UsbLanguageListStringDescriptor),
+    USB_DESCRIPTOR_TYPE_STRING,
+    GET_LSB_OF_WORD(USB_LANGUAGE_ID_UNITED_STATES),
+    GET_MSB_OF_WORD(USB_LANGUAGE_ID_UNITED_STATES)
 };
 
-uint8_t g_UsbDeviceString1[USB_DESCRIPTOR_LENGTH_STRING1] = {
-    sizeof(g_UsbDeviceString1),
+uint8_t UsbManufacturerString[USB_MANUFACTURER_STRING_DESCRIPTOR_LENGTH] = {
+    sizeof(UsbManufacturerString),
     USB_DESCRIPTOR_TYPE_STRING,
     'F', 0x00U,
     'R', 0x00U,
@@ -162,8 +165,8 @@ uint8_t g_UsbDeviceString1[USB_DESCRIPTOR_LENGTH_STRING1] = {
     '.', 0x00U,
 };
 
-uint8_t g_UsbDeviceString2[USB_DESCRIPTOR_LENGTH_STRING2] = {
-    sizeof(g_UsbDeviceString2),
+uint8_t UsbProductString[USB_DESCRIPTOR_LENGTH_STRING2] = {
+    sizeof(UsbProductString),
     USB_DESCRIPTOR_TYPE_STRING,
     'C', 0x00U,
     'O', 0x00U,
@@ -183,21 +186,33 @@ uint8_t g_UsbDeviceString2[USB_DESCRIPTOR_LENGTH_STRING2] = {
     'E', 0x00U,
 };
 
-uint32_t g_UsbDeviceStringDescriptorLength[USB_DEVICE_STRING_COUNT] = {
-    sizeof(g_UsbDeviceString0), sizeof(g_UsbDeviceString1), sizeof(g_UsbDeviceString2),
-    sizeof(UsbMouseString), sizeof(UsbKeyboardString),
+uint32_t UsbStringDescriptorLengths[USB_STRING_DESCRIPTOR_COUNT] = {
+    sizeof(UsbLanguageListStringDescriptor),
+    sizeof(UsbManufacturerString),
+    sizeof(UsbProductString),
+    sizeof(UsbMouseString),
+    sizeof(UsbKeyboardString),
 };
 
-uint8_t *g_UsbDeviceStringDescriptorArray[USB_DEVICE_STRING_COUNT] = {
-    g_UsbDeviceString0, g_UsbDeviceString1, g_UsbDeviceString2, UsbMouseString, UsbKeyboardString,
+uint8_t *UsbStringDescriptors[USB_STRING_DESCRIPTOR_COUNT] = {
+    UsbLanguageListStringDescriptor,
+    UsbManufacturerString,
+    UsbProductString,
+    UsbMouseString,
+    UsbKeyboardString,
 };
 
 usb_language_t g_UsbDeviceLanguage[USB_DEVICE_LANGUAGE_COUNT] = {{
-    g_UsbDeviceStringDescriptorArray, g_UsbDeviceStringDescriptorLength, (uint16_t)0x0409U,
+    UsbStringDescriptors,
+    UsbStringDescriptorLengths,
+    (uint16_t)USB_LANGUAGE_ID_UNITED_STATES,
 }};
 
-usb_language_list_t g_UsbDeviceLanguageList = {
-    g_UsbDeviceString0, sizeof(g_UsbDeviceString0), g_UsbDeviceLanguage, USB_DEVICE_LANGUAGE_COUNT,
+usb_language_list_t UsbLanguageList = {
+    UsbLanguageListStringDescriptor,
+    sizeof(UsbLanguageListStringDescriptor),
+    g_UsbDeviceLanguage,
+    USB_DEVICE_LANGUAGE_COUNT,
 };
 
 usb_status_t USB_DeviceGetDeviceDescriptor(
@@ -223,26 +238,26 @@ usb_status_t USB_DeviceGetStringDescriptor(
     usb_device_handle handle, usb_device_get_string_descriptor_struct_t *stringDescriptor)
 {
     if (stringDescriptor->stringIndex == 0U) {
-        stringDescriptor->buffer = (uint8_t *)g_UsbDeviceLanguageList.languageString;
-        stringDescriptor->length = g_UsbDeviceLanguageList.stringLength;
+        stringDescriptor->buffer = (uint8_t *)UsbLanguageList.languageString;
+        stringDescriptor->length = UsbLanguageList.stringLength;
     } else {
         uint8_t languageId = 0U;
-        uint8_t languageIndex = USB_DEVICE_STRING_COUNT;
+        uint8_t languageIndex = USB_STRING_DESCRIPTOR_COUNT;
 
-        for (; languageId < USB_DEVICE_STRING_COUNT; languageId++) {
-            if (stringDescriptor->languageId == g_UsbDeviceLanguageList.languageList[languageId].languageId) {
-                if (stringDescriptor->stringIndex < USB_DEVICE_STRING_COUNT) {
+        for (; languageId < USB_STRING_DESCRIPTOR_COUNT; languageId++) {
+            if (stringDescriptor->languageId == UsbLanguageList.languageList[languageId].languageId) {
+                if (stringDescriptor->stringIndex < USB_STRING_DESCRIPTOR_COUNT) {
                     languageIndex = stringDescriptor->stringIndex;
                 }
                 break;
             }
         }
 
-        if (USB_DEVICE_STRING_COUNT == languageIndex) {
+        if (USB_STRING_DESCRIPTOR_COUNT == languageIndex) {
             return kStatus_USB_InvalidRequest;
         }
-        stringDescriptor->buffer = (uint8_t *)g_UsbDeviceLanguageList.languageList[languageId].string[languageIndex];
-        stringDescriptor->length = g_UsbDeviceLanguageList.languageList[languageId].length[languageIndex];
+        stringDescriptor->buffer = (uint8_t *)UsbLanguageList.languageList[languageId].string[languageIndex];
+        stringDescriptor->length = UsbLanguageList.languageList[languageId].length[languageIndex];
     }
     return kStatus_USB_Success;
 }

@@ -71,7 +71,7 @@ uint8_t UsbMouseReportDescriptor[USB_MOUSE_REPORT_DESCRIPTOR_LENGTH] = {
     0x75U, 0x08U, // Report Size (8U)
     0x95U, 0x03U, // Report Count (3U)
 
-    0x81U, 0x06U, // Input(Data, Variable, Relative), 3 position bytes (X & Y & Z)
+    0x81U, 0x06U, // Input (Data, Variable, Relative), 3 position bytes (X & Y & Z)
     0xC0U,        // End collection, Close Pointer collection
     0xC0U         // End collection, Close Mouse collection
 };

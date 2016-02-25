@@ -1,7 +1,7 @@
 #ifndef __USB_DEVICE_HID_KEYBOARD_H__
 #define __USB_DEVICE_HID_KEYBOARD_H__
 
-/* Macros: */
+// Macros:
 
     #define KEY_ERRORROLLOVER 0x01U
     #define KEY_POSTFAIL 0x02U
@@ -231,14 +231,14 @@
     #define MODIFERKEYS_RIGHT_ALT 0x40U
     #define MODIFERKEYS_RIGHT_GUI 0x80U
 
-/* Type defines: */
+// Typedefs:
 
     typedef struct _usb_device_hid_keyboard_struct {
         uint8_t buffer[USB_KEYBOARD_REPORT_LENGTH];
         uint8_t idleRate;
     } usb_device_hid_keyboard_struct_t;
 
-/* Function prototypes: */
+// Functions:
 
     extern usb_status_t USB_DeviceHidKeyboardInit(usb_device_composite_struct_t *deviceComposite);
     extern usb_status_t USB_DeviceHidKeyboardCallback(class_handle_t handle, uint32_t event, void *param);
