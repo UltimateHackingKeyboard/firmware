@@ -180,8 +180,6 @@ add_executable(dev_composite_hid_mouse_hid_keyboard_bm.elf
 "${SrcDir}/usb_keyboard_descriptors.h"
 "${SrcDir}/usb_mouse_descriptors.c"
 "${SrcDir}/usb_mouse_descriptors.h"
-"${SrcDir}/util.c"
-"${SrcDir}/util.h"
 "${KsdkDir}/devices/MK22F51212/system_MK22F51212.c"
 "${KsdkDir}/devices/MK22F51212/system_MK22F51212.h"
 "${KsdkDir}/devices/MK22F51212/utilities/fsl_debug_console.c"
