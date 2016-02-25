@@ -10,9 +10,9 @@
 
 // Functions:
 
-    extern usb_status_t USB_DeviceHidMouseInit(usb_device_composite_struct_t *deviceComposite);
-    extern usb_status_t USB_DeviceHidMouseCallback(class_handle_t handle, uint32_t event, void *param);
-    extern usb_status_t USB_DeviceHidMouseSetConfigure(class_handle_t handle, uint8_t configure);
-    extern usb_status_t USB_DeviceHidMouseSetInterface(class_handle_t handle, uint8_t interface, uint8_t alternateSetting);
+    extern usb_status_t UsbMouseInit(usb_device_composite_struct_t *deviceComposite);
+    extern usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param);
+    extern usb_status_t UsbMouseSetConfigure(class_handle_t handle, uint8_t configure);
+    extern usb_status_t UsbMouseSetInterface(class_handle_t handle, uint8_t interface, uint8_t alternateSetting);
 
 #endif

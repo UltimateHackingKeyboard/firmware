@@ -23,7 +23,7 @@
 
 // Variables:
 
-    extern usb_device_class_struct_t UsbDeviceMouseClass;
+    extern usb_device_class_struct_t UsbMouseClass;
     extern uint8_t UsbMouseReportDescriptor[USB_MOUSE_REPORT_DESCRIPTOR_LENGTH];
     extern uint8_t UsbMouseString[USB_MOUSE_STRING_DESCRIPTOR_LENGTH];
 

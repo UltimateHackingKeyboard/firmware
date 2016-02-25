@@ -8,12 +8,10 @@
 #include "composite.h"
 #include "hid_keyboard.h"
 
-static usb_status_t USB_DeviceHidKeyboardAction(void);
+static usb_device_composite_struct_t *UsbCompositeDevice;
+static usb_device_hid_keyboard_struct_t UsbKeyboardDevice;
 
-static usb_device_composite_struct_t *s_UsbDeviceComposite;
-static usb_device_hid_keyboard_struct_t s_UsbDeviceHidKeyboard;
-
-static usb_status_t USB_DeviceHidKeyboardAction(void)
+static usb_status_t UsbKeyboardAction(void)
 {
     static int x = 0U;
     enum {
@@ -22,37 +20,37 @@ static usb_status_t USB_DeviceHidKeyboardAction(void)
     };
     static uint8_t dir = DOWN;
 
-    s_UsbDeviceHidKeyboard.buffer[2] = 0x00U;
+    UsbKeyboardDevice.buffer[2] = 0x00U;
     switch (dir) {
         case DOWN:
             x++;
             if (x > 200U) {
                 dir++;
-                s_UsbDeviceHidKeyboard.buffer[2] = KEY_PAGEUP;
+                UsbKeyboardDevice.buffer[2] = KEY_PAGEUP;
             }
             break;
         case UP:
             x--;
             if (x < 1U) {
                 dir = DOWN;
-                s_UsbDeviceHidKeyboard.buffer[2] = KEY_PAGEDOWN;
+                UsbKeyboardDevice.buffer[2] = KEY_PAGEDOWN;
             }
             break;
         default:
             break;
     }
-    return USB_DeviceHidSend(s_UsbDeviceComposite->hidKeyboardHandle, USB_KEYBOARD_ENDPOINT_IN,
-                             s_UsbDeviceHidKeyboard.buffer, USB_KEYBOARD_REPORT_LENGTH);
+    return USB_DeviceHidSend(UsbCompositeDevice->hidKeyboardHandle, USB_KEYBOARD_ENDPOINT_IN,
+                             UsbKeyboardDevice.buffer, USB_KEYBOARD_REPORT_LENGTH);
 }
 
-usb_status_t USB_DeviceHidKeyboardCallback(class_handle_t handle, uint32_t event, void *param)
+usb_status_t UsbKeyboardCallback(class_handle_t handle, uint32_t event, void *param)
 {
     usb_status_t error = kStatus_USB_Error;
 
     switch (event) {
         case kUSB_DeviceHidEventSendResponse:
-            if (s_UsbDeviceComposite->attach) {
-                return USB_DeviceHidKeyboardAction();
+            if (UsbCompositeDevice->attach) {
+                return UsbKeyboardAction();
             }
             break;
         case kUSB_DeviceHidEventGetReport:
@@ -72,24 +70,24 @@ usb_status_t USB_DeviceHidKeyboardCallback(class_handle_t handle, uint32_t event
     return error;
 }
 
-usb_status_t USB_DeviceHidKeyboardSetConfigure(class_handle_t handle, uint8_t configure)
+usb_status_t UsbKeyboardSetConfigure(class_handle_t handle, uint8_t configure)
 {
     if (USB_COMPOSITE_CONFIGURE_INDEX == configure) {
-        return USB_DeviceHidKeyboardAction();
+        return UsbKeyboardAction();
     }
     return kStatus_USB_Error;
 }
 
-usb_status_t USB_DeviceHidKeyboardSetInterface(class_handle_t handle, uint8_t interface, uint8_t alternateSetting)
+usb_status_t UsbKeyboardSetInterface(class_handle_t handle, uint8_t interface, uint8_t alternateSetting)
 {
     if (USB_KEYBOARD_INTERFACE_INDEX == interface) {
-        return USB_DeviceHidKeyboardAction();
+        return UsbKeyboardAction();
     }
     return kStatus_USB_Error;
 }
 
-usb_status_t USB_DeviceHidKeyboardInit(usb_device_composite_struct_t *deviceComposite)
+usb_status_t UsbKeyboardInit(usb_device_composite_struct_t *compositeDevice)
 {
-    s_UsbDeviceComposite = deviceComposite;
+    UsbCompositeDevice = compositeDevice;
     return kStatus_USB_Success;
 }

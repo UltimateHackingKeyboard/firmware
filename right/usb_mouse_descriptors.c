@@ -34,7 +34,7 @@ static usb_device_interface_list_t UsbMouseInterfaceList[USB_DEVICE_CONFIGURATIO
     UsbMouseInterfaces,
 }};
 
-usb_device_class_struct_t UsbDeviceMouseClass = {
+usb_device_class_struct_t UsbMouseClass = {
     UsbMouseInterfaceList,
     kUSB_DeviceClassTypeHid,
     USB_DEVICE_CONFIGURATION_COUNT,
