@@ -35,7 +35,7 @@ usb_device_class_config_struct_t g_CompositeClassConfig[USB_COMPOSITE_INTERFACE_
     {
         USB_DeviceHidMouseCallback,
         (class_handle_t)NULL,
-        &g_UsbDeviceHidMouseConfig,
+        &UsbDeviceMouseConfig,
     }
 };
 

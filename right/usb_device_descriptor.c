@@ -59,12 +59,12 @@ uint8_t UsbConfigurationDescriptor[USB_DESCRIPTOR_LENGTH_CONFIGURATION_ALL] = {
 
     USB_DESCRIPTOR_LENGTH_INTERFACE,
     USB_DESCRIPTOR_TYPE_INTERFACE,
-    USB_HID_MOUSE_INTERFACE_INDEX,
+    USB_MOUSE_INTERFACE_INDEX,
     0x00U, //  Value used to select this alternate setting for the interface identified in the prior field
-    USB_HID_MOUSE_ENDPOINT_COUNT,
-    USB_HID_MOUSE_CLASS,
-    USB_HID_MOUSE_SUBCLASS,
-    USB_HID_MOUSE_PROTOCOL,
+    USB_MOUSE_ENDPOINT_COUNT,
+    USB_MOUSE_CLASS,
+    USB_MOUSE_SUBCLASS,
+    USB_MOUSE_PROTOCOL,
     USB_STRING_DESCRIPTOR_ID_MOUSE,
 
 // Mouse HID descriptor
@@ -75,30 +75,30 @@ uint8_t UsbConfigurationDescriptor[USB_DESCRIPTOR_LENGTH_CONFIGURATION_ALL] = {
     0x00U,                          // Country code of the localized hardware
     0x01U,                          // Number of class descriptors (at least one report descriptor)
     USB_DESCRIPTOR_TYPE_HID_REPORT,
-    USB_SHORT_GET_LOW(USB_DESCRIPTOR_LENGTH_HID_MOUSE_REPORT),
-    USB_SHORT_GET_HIGH(USB_DESCRIPTOR_LENGTH_HID_MOUSE_REPORT),
+    USB_SHORT_GET_LOW(USB_DESCRIPTOR_LENGTH_MOUSE_REPORT),
+    USB_SHORT_GET_HIGH(USB_DESCRIPTOR_LENGTH_MOUSE_REPORT),
 
 // Mouse endpoint descriptor
 
     USB_DESCRIPTOR_LENGTH_ENDPOINT,
     USB_DESCRIPTOR_TYPE_ENDPOINT,
     // The address of the endpoint on the USB device described by this descriptor.
-    USB_HID_MOUSE_ENDPOINT_IN | (USB_IN << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT),
+    USB_MOUSE_ENDPOINT_IN | (USB_IN << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT),
     USB_ENDPOINT_INTERRUPT, // This field describes the endpoint's attributes
     // Maximum packet size this endpoint is capable of sending or receiving when this configuration is selected.
-    USB_SHORT_GET_LOW(FS_HID_MOUSE_INTERRUPT_IN_PACKET_SIZE), USB_SHORT_GET_HIGH(FS_HID_MOUSE_INTERRUPT_IN_PACKET_SIZE),
-    FS_HID_MOUSE_INTERRUPT_IN_INTERVAL, // Interval for polling endpoint for data transfers.
+    USB_SHORT_GET_LOW(USB_MOUSE_INTERRUPT_IN_PACKET_SIZE), USB_SHORT_GET_HIGH(USB_MOUSE_INTERRUPT_IN_PACKET_SIZE),
+    USB_MOUSE_INTERRUPT_IN_INTERVAL, // Interval for polling endpoint for data transfers.
 
 // Keyboard interface descriptor
 
     USB_DESCRIPTOR_LENGTH_INTERFACE,
     USB_DESCRIPTOR_TYPE_INTERFACE,
-    USB_HID_KEYBOARD_INTERFACE_INDEX,
+    USB_KEYBOARD_INTERFACE_INDEX,
     0x00U, // Value used to select this alternate setting for the interface identified in the prior field
-    USB_HID_KEYBOARD_ENDPOINT_COUNT,
-    USB_HID_KEYBOARD_CLASS,
-    USB_HID_KEYBOARD_SUBCLASS,
-    USB_HID_KEYBOARD_PROTOCOL,
+    USB_KEYBOARD_ENDPOINT_COUNT,
+    USB_KEYBOARD_CLASS,
+    USB_KEYBOARD_SUBCLASS,
+    USB_KEYBOARD_PROTOCOL,
     USB_STRING_DESCRIPTOR_ID_KEYBOARD,
 
 // Keyboard HID descriptor
@@ -109,20 +109,20 @@ uint8_t UsbConfigurationDescriptor[USB_DESCRIPTOR_LENGTH_CONFIGURATION_ALL] = {
     0x00U,        // Country code of the localized hardware
     0x01U,        // Number of class descriptors (at least one report descriptor)
     USB_DESCRIPTOR_TYPE_HID_REPORT,
-    USB_SHORT_GET_LOW(USB_DESCRIPTOR_LENGTH_HID_KEYBOARD_REPORT),
-    USB_SHORT_GET_HIGH(USB_DESCRIPTOR_LENGTH_HID_KEYBOARD_REPORT),
+    USB_SHORT_GET_LOW(USB_DESCRIPTOR_LENGTH_KEYBOARD_REPORT),
+    USB_SHORT_GET_HIGH(USB_DESCRIPTOR_LENGTH_KEYBOARD_REPORT),
 
 // Keyboard endpoint descriptor
 
     USB_DESCRIPTOR_LENGTH_ENDPOINT,
     USB_DESCRIPTOR_TYPE_ENDPOINT,
-    USB_HID_KEYBOARD_ENDPOINT_IN | (USB_IN << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT),
+    USB_KEYBOARD_ENDPOINT_IN | (USB_IN << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT),
     // The address of the endpoint on the USB device described by this descriptor.
     USB_ENDPOINT_INTERRUPT, // This field describes the endpoint's attributes
-    USB_SHORT_GET_LOW(FS_HID_KEYBOARD_INTERRUPT_IN_PACKET_SIZE),
-    USB_SHORT_GET_HIGH(FS_HID_KEYBOARD_INTERRUPT_IN_PACKET_SIZE),
+    USB_SHORT_GET_LOW(USB_KEYBOARD_INTERRUPT_IN_PACKET_SIZE),
+    USB_SHORT_GET_HIGH(USB_KEYBOARD_INTERRUPT_IN_PACKET_SIZE),
     // Maximum packet size this endpoint is capable of sending or receiving when this configuration is selected.
-    FS_HID_KEYBOARD_INTERRUPT_IN_INTERVAL, // Interval for polling endpoint for data transfers.
+    USB_KEYBOARD_INTERRUPT_IN_POLL_INTERVAL,
 };
 
 uint8_t g_UsbDeviceString0[USB_DESCRIPTOR_LENGTH_STRING0] = {
@@ -185,11 +185,11 @@ uint8_t g_UsbDeviceString2[USB_DESCRIPTOR_LENGTH_STRING2] = {
 
 uint32_t g_UsbDeviceStringDescriptorLength[USB_DEVICE_STRING_COUNT] = {
     sizeof(g_UsbDeviceString0), sizeof(g_UsbDeviceString1), sizeof(g_UsbDeviceString2),
-    sizeof(g_UsbDeviceString3), sizeof(g_UsbKeyboardString),
+    sizeof(UsbMouseString), sizeof(UsbKeyboardString),
 };
 
 uint8_t *g_UsbDeviceStringDescriptorArray[USB_DEVICE_STRING_COUNT] = {
-    g_UsbDeviceString0, g_UsbDeviceString1, g_UsbDeviceString2, g_UsbDeviceString3, g_UsbKeyboardString,
+    g_UsbDeviceString0, g_UsbDeviceString1, g_UsbDeviceString2, UsbMouseString, UsbKeyboardString,
 };
 
 usb_language_t g_UsbDeviceLanguage[USB_DEVICE_LANGUAGE_COUNT] = {{
@@ -256,12 +256,12 @@ usb_status_t USB_DeviceGetHidDescriptor(
 usb_status_t USB_DeviceGetHidReportDescriptor(
     usb_device_handle handle, usb_device_get_hid_report_descriptor_struct_t *hidReportDescriptor)
 {
-    if (USB_HID_MOUSE_INTERFACE_INDEX == hidReportDescriptor->interfaceNumber) {
-        hidReportDescriptor->buffer = g_UsbDeviceHidMouseReportDescriptor;
-        hidReportDescriptor->length = USB_DESCRIPTOR_LENGTH_HID_MOUSE_REPORT;
-    } else if (USB_HID_KEYBOARD_INTERFACE_INDEX == hidReportDescriptor->interfaceNumber) {
+    if (USB_MOUSE_INTERFACE_INDEX == hidReportDescriptor->interfaceNumber) {
+        hidReportDescriptor->buffer = UsbDeviceMouseReportDescriptor;
+        hidReportDescriptor->length = USB_DESCRIPTOR_LENGTH_MOUSE_REPORT;
+    } else if (USB_KEYBOARD_INTERFACE_INDEX == hidReportDescriptor->interfaceNumber) {
         hidReportDescriptor->buffer = UsbKeyboardReportDescriptor;
-        hidReportDescriptor->length = USB_DESCRIPTOR_LENGTH_HID_KEYBOARD_REPORT;
+        hidReportDescriptor->length = USB_DESCRIPTOR_LENGTH_KEYBOARD_REPORT;
     } else {
         return kStatus_USB_InvalidRequest;
     }

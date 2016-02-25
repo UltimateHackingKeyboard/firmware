@@ -67,8 +67,8 @@ static usb_status_t USB_DeviceHidMouseAction(void)
             break;
     }
 
-    return USB_DeviceHidSend(s_UsbDeviceComposite->hidMouseHandle, USB_HID_MOUSE_ENDPOINT_IN,
-                             s_UsbDeviceHidMouse.buffer, USB_HID_MOUSE_REPORT_LENGTH);
+    return USB_DeviceHidSend(s_UsbDeviceComposite->hidMouseHandle, USB_MOUSE_ENDPOINT_IN,
+                             s_UsbDeviceHidMouse.buffer, USB_MOUSE_REPORT_LENGTH);
 }
 
 usb_status_t USB_DeviceHidMouseCallback(class_handle_t handle, uint32_t event, void *param)
@@ -109,7 +109,7 @@ usb_status_t USB_DeviceHidMouseSetConfigure(class_handle_t handle, uint8_t confi
 
 usb_status_t USB_DeviceHidMouseSetInterface(class_handle_t handle, uint8_t interface, uint8_t alternateSetting)
 {
-    if (USB_HID_KEYBOARD_INTERFACE_INDEX == interface) {
+    if (USB_KEYBOARD_INTERFACE_INDEX == interface) {
         return USB_DeviceHidMouseAction();
     }
     return kStatus_USB_Error;

@@ -41,8 +41,8 @@ static usb_status_t USB_DeviceHidKeyboardAction(void)
         default:
             break;
     }
-    return USB_DeviceHidSend(s_UsbDeviceComposite->hidKeyboardHandle, USB_HID_KEYBOARD_ENDPOINT_IN,
-                             s_UsbDeviceHidKeyboard.buffer, USB_HID_KEYBOARD_REPORT_LENGTH);
+    return USB_DeviceHidSend(s_UsbDeviceComposite->hidKeyboardHandle, USB_KEYBOARD_ENDPOINT_IN,
+                             s_UsbDeviceHidKeyboard.buffer, USB_KEYBOARD_REPORT_LENGTH);
 }
 
 usb_status_t USB_DeviceHidKeyboardCallback(class_handle_t handle, uint32_t event, void *param)
@@ -82,7 +82,7 @@ usb_status_t USB_DeviceHidKeyboardSetConfigure(class_handle_t handle, uint8_t co
 
 usb_status_t USB_DeviceHidKeyboardSetInterface(class_handle_t handle, uint8_t interface, uint8_t alternateSetting)
 {
-    if (USB_HID_KEYBOARD_INTERFACE_INDEX == interface) {
+    if (USB_KEYBOARD_INTERFACE_INDEX == interface) {
         return USB_DeviceHidKeyboardAction();
     }
     return kStatus_USB_Error;
