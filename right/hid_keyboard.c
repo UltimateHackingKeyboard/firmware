@@ -39,7 +39,7 @@ static usb_status_t UsbKeyboardAction(void)
         default:
             break;
     }
-    return USB_DeviceHidSend(UsbCompositeDevice->hidKeyboardHandle, USB_KEYBOARD_ENDPOINT_IN,
+    return USB_DeviceHidSend(UsbCompositeDevice->hidKeyboardHandle, USB_KEYBOARD_ENDPOINT_ID,
                              UsbKeyboardDevice.buffer, USB_KEYBOARD_REPORT_LENGTH);
 }
 
@@ -72,7 +72,7 @@ usb_status_t UsbKeyboardCallback(class_handle_t handle, uint32_t event, void *pa
 
 usb_status_t UsbKeyboardSetConfigure(class_handle_t handle, uint8_t configure)
 {
-    if (USB_COMPOSITE_CONFIGURE_INDEX == configure) {
+    if (USB_COMPOSITE_CONFIGURATION_INDEX == configure) {
         return UsbKeyboardAction();
     }
     return kStatus_USB_Error;

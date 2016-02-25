@@ -30,29 +30,20 @@ uint8_t UsbDeviceDescriptor[USB_DESCRIPTOR_LENGTH_DEVICE] = {
     USB_DEVICE_CONFIGURATION_COUNT,
 };
 
-uint8_t UsbConfigurationDescriptor[USB_DESCRIPTOR_LENGTH_CONFIGURATION_ALL] = {
+uint8_t UsbConfigurationDescriptor[USB_CONFIGURATION_DESCRIPTOR_TOTAL_LENGTH] = {
 
 // Configuration descriptor
 
     USB_DESCRIPTOR_LENGTH_CONFIGURE,
     USB_DESCRIPTOR_TYPE_CONFIGURE,
-    USB_SHORT_GET_LOW(USB_DESCRIPTOR_LENGTH_CONFIGURATION_ALL),
-    USB_SHORT_GET_HIGH(USB_DESCRIPTOR_LENGTH_CONFIGURATION_ALL), // Total length of data returned for this configuration.
+    USB_SHORT_GET_LOW(USB_CONFIGURATION_DESCRIPTOR_TOTAL_LENGTH),
+    USB_SHORT_GET_HIGH(USB_CONFIGURATION_DESCRIPTOR_TOTAL_LENGTH),
     USB_COMPOSITE_INTERFACE_COUNT,
-    USB_COMPOSITE_CONFIGURE_INDEX, // Value to use as an argument to the SetConfiguration() request to select this configuration
-    0x00U, // Index of string descriptor describing this configuration
-
-    // Configuration characteristics
-    //     D7: Reserved (set to one)
-    //     D6: Self-powered
-    //     D5: Remote Wakeup
-    //     D4...0: Reserved (reset to zero)
+    USB_COMPOSITE_CONFIGURATION_INDEX,
+    USB_STRING_DESCRIPTOR_NONE,
     (USB_DESCRIPTOR_CONFIGURE_ATTRIBUTE_D7_MASK) |
         (USB_DEVICE_CONFIG_SELF_POWER << USB_DESCRIPTOR_CONFIGURE_ATTRIBUTE_SELF_POWERED_SHIFT) |
         (USB_DEVICE_CONFIG_REMOTE_WAKEUP << USB_DESCRIPTOR_CONFIGURE_ATTRIBUTE_REMOTE_WAKEUP_SHIFT),
-
-    // Maximum power consumption of the USB device from the bus in this specific configuration
-    // when the device is fully operational. Expressed in 2 mA units (i.e., 50 = 100 mA).
     USB_DEVICE_MAX_POWER,
 
 // Mouse interface descriptor
@@ -60,7 +51,7 @@ uint8_t UsbConfigurationDescriptor[USB_DESCRIPTOR_LENGTH_CONFIGURATION_ALL] = {
     USB_DESCRIPTOR_LENGTH_INTERFACE,
     USB_DESCRIPTOR_TYPE_INTERFACE,
     USB_MOUSE_INTERFACE_INDEX,
-    0x00U, //  Value used to select this alternate setting for the interface identified in the prior field
+    USB_INTERFACE_ALTERNATE_SETTING,
     USB_MOUSE_ENDPOINT_COUNT,
     USB_MOUSE_CLASS,
     USB_MOUSE_SUBCLASS,
@@ -71,9 +62,10 @@ uint8_t UsbConfigurationDescriptor[USB_DESCRIPTOR_LENGTH_CONFIGURATION_ALL] = {
 
     USB_DESCRIPTOR_LENGTH_HID,
     USB_DESCRIPTOR_TYPE_HID,
-    0x00U, 0x01U,                   // ID Class Specification release.
-    0x00U,                          // Country code of the localized hardware
-    0x01U,                          // Number of class descriptors (at least one report descriptor)
+    USB_SHORT_GET_LOW(USB_HID_VERSION),
+    USB_SHORT_GET_HIGH(USB_HID_VERSION),
+    USB_HID_COUNTRY_CODE_NOT_SUPPORTED,
+    USB_REPORT_DESCRIPTOR_COUNT_PER_HID_DEVICE,
     USB_DESCRIPTOR_TYPE_HID_REPORT,
     USB_SHORT_GET_LOW(USB_MOUSE_REPORT_DESCRIPTOR_LENGTH),
     USB_SHORT_GET_HIGH(USB_MOUSE_REPORT_DESCRIPTOR_LENGTH),
@@ -82,19 +74,18 @@ uint8_t UsbConfigurationDescriptor[USB_DESCRIPTOR_LENGTH_CONFIGURATION_ALL] = {
 
     USB_DESCRIPTOR_LENGTH_ENDPOINT,
     USB_DESCRIPTOR_TYPE_ENDPOINT,
-    // The address of the endpoint on the USB device described by this descriptor.
-    USB_MOUSE_ENDPOINT_IN | (USB_IN << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT),
-    USB_ENDPOINT_INTERRUPT, // This field describes the endpoint's attributes
-    // Maximum packet size this endpoint is capable of sending or receiving when this configuration is selected.
-    USB_SHORT_GET_LOW(USB_MOUSE_INTERRUPT_IN_PACKET_SIZE), USB_SHORT_GET_HIGH(USB_MOUSE_INTERRUPT_IN_PACKET_SIZE),
-    USB_MOUSE_INTERRUPT_IN_INTERVAL, // Interval for polling endpoint for data transfers.
+    USB_MOUSE_ENDPOINT_ID | (USB_IN << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT),
+    USB_ENDPOINT_INTERRUPT,
+    USB_SHORT_GET_LOW(USB_MOUSE_INTERRUPT_IN_PACKET_SIZE),
+    USB_SHORT_GET_HIGH(USB_MOUSE_INTERRUPT_IN_PACKET_SIZE),
+    USB_MOUSE_INTERRUPT_IN_INTERVAL,
 
 // Keyboard interface descriptor
 
     USB_DESCRIPTOR_LENGTH_INTERFACE,
     USB_DESCRIPTOR_TYPE_INTERFACE,
     USB_KEYBOARD_INTERFACE_INDEX,
-    0x00U, // Value used to select this alternate setting for the interface identified in the prior field
+    USB_INTERFACE_ALTERNATE_SETTING,
     USB_KEYBOARD_ENDPOINT_COUNT,
     USB_KEYBOARD_CLASS,
     USB_KEYBOARD_SUBCLASS,
@@ -105,9 +96,10 @@ uint8_t UsbConfigurationDescriptor[USB_DESCRIPTOR_LENGTH_CONFIGURATION_ALL] = {
 
     USB_DESCRIPTOR_LENGTH_HID,
     USB_DESCRIPTOR_TYPE_HID,
-    0x00U, 0x01U, // HID Class Specification release
-    0x00U,        // Country code of the localized hardware
-    0x01U,        // Number of class descriptors (at least one report descriptor)
+    USB_SHORT_GET_LOW(USB_HID_VERSION),
+    USB_SHORT_GET_HIGH(USB_HID_VERSION),
+    USB_HID_COUNTRY_CODE_NOT_SUPPORTED,
+    USB_REPORT_DESCRIPTOR_COUNT_PER_HID_DEVICE,
     USB_DESCRIPTOR_TYPE_HID_REPORT,
     USB_SHORT_GET_LOW(USB_KEYBOARD_REPORT_DESCRIPTOR_LENGTH),
     USB_SHORT_GET_HIGH(USB_KEYBOARD_REPORT_DESCRIPTOR_LENGTH),
@@ -116,16 +108,14 @@ uint8_t UsbConfigurationDescriptor[USB_DESCRIPTOR_LENGTH_CONFIGURATION_ALL] = {
 
     USB_DESCRIPTOR_LENGTH_ENDPOINT,
     USB_DESCRIPTOR_TYPE_ENDPOINT,
-    USB_KEYBOARD_ENDPOINT_IN | (USB_IN << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT),
-    // The address of the endpoint on the USB device described by this descriptor.
-    USB_ENDPOINT_INTERRUPT, // This field describes the endpoint's attributes
+    USB_KEYBOARD_ENDPOINT_ID | (USB_IN << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT),
+    USB_ENDPOINT_INTERRUPT,
     USB_SHORT_GET_LOW(USB_KEYBOARD_INTERRUPT_IN_PACKET_SIZE),
     USB_SHORT_GET_HIGH(USB_KEYBOARD_INTERRUPT_IN_PACKET_SIZE),
-    // Maximum packet size this endpoint is capable of sending or receiving when this configuration is selected.
     USB_KEYBOARD_INTERRUPT_IN_INTERVAL,
 };
 
-uint8_t UsbLanguageListStringDescriptor[USB_DESCRIPTOR_LENGTH_STRING0] = {
+uint8_t UsbLanguageListStringDescriptor[USB_LANGUAGE_LIST_STRING_DESCRIPTOR_LENGTH] = {
     sizeof(UsbLanguageListStringDescriptor),
     USB_DESCRIPTOR_TYPE_STRING,
     GET_LSB_OF_WORD(USB_LANGUAGE_ID_UNITED_STATES),
@@ -213,9 +203,9 @@ usb_status_t USB_DeviceGetDeviceDescriptor(
 usb_status_t USB_DeviceGetConfigurationDescriptor(
     usb_device_handle handle, usb_device_get_configuration_descriptor_struct_t *configurationDescriptor)
 {
-    if (USB_COMPOSITE_CONFIGURE_INDEX > configurationDescriptor->configuration) {
+    if (USB_COMPOSITE_CONFIGURATION_INDEX > configurationDescriptor->configuration) {
         configurationDescriptor->buffer = UsbConfigurationDescriptor;
-        configurationDescriptor->length = USB_DESCRIPTOR_LENGTH_CONFIGURATION_ALL;
+        configurationDescriptor->length = USB_CONFIGURATION_DESCRIPTOR_TOTAL_LENGTH;
         return kStatus_USB_Success;
     }
     return kStatus_USB_InvalidRequest;
