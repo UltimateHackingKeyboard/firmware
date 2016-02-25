@@ -19,9 +19,6 @@
 /*! @brief How many endpoints are supported in the stack. */
 #define USB_DEVICE_CONFIG_ENDPOINTS (4U)
 
-/*! @brief How many the notification message are supported when the device task enabled. */
-#define USB_DEVICE_CONFIG_MAX_MESSAGES (8U)
-
 /*! @brief The MAX buffer length for the KHCI DMA workaround.*/
 #define USB_DEVICE_CONFIG_KHCI_DMA_ALIGN_BUFFER_LENGTH (64U)
 
