@@ -3,34 +3,34 @@
 #include "usb_device.h"
 #include "include/usb/usb_device_class.h"
 #include "include/usb/usb_device_hid.h"
+#include "util.h"
 #include "usb_device_descriptor.h"
 #include "composite.h"
-#include "hid_mouse.h"
 #include "hid_keyboard.h"
-#include "usb_keyboard_descriptors.h"
-#include "usb_mouse_descriptors.h"
+#include "hid_mouse.h"
 
-uint8_t g_UsbDeviceDescriptor[USB_DESCRIPTOR_LENGTH_DEVICE] = {
+uint8_t UsbDeviceDescriptor[USB_DESCRIPTOR_LENGTH_DEVICE] = {
     USB_DESCRIPTOR_LENGTH_DEVICE,
     USB_DESCRIPTOR_TYPE_DEVICE,
-    USB_SHORT_GET_LOW(USB_DEVICE_SPECIFIC_BCD_VERSION),
-    USB_SHORT_GET_HIGH(USB_DEVICE_SPECIFIC_BCD_VERSION), // USB Specification Release Number in
-                                                         // Binary-Coded Decimal (i.e., 2.10 is 210H).
+    USB_SHORT_GET_LOW(USB_DEVICE_SPECIFICATION_BCD_VERSION),
+    USB_SHORT_GET_HIGH(USB_DEVICE_SPECIFICATION_BCD_VERSION),
     USB_DEVICE_CLASS,
     USB_DEVICE_SUBCLASS,
     USB_DEVICE_PROTOCOL,
-    USB_CONTROL_MAX_PACKET_SIZE,                         // Maximum packet size for endpoint zero (only 8, 16, 32, or 64 are valid)
-    0xA2U, 0x15U,                                        // Vendor ID (assigned by the USB-IF)
-    0x7EU, 0x00U,                                        // Product ID (assigned by the manufacturer)
-    USB_SHORT_GET_LOW(USB_DEVICE_DEMO_BCD_VERSION),
-    USB_SHORT_GET_HIGH(USB_DEVICE_DEMO_BCD_VERSION),     // Device release number in binary-coded decimal
-    0x01U,                                               // Index of string descriptor describing manufacturer
-    0x02U,                                               // Index of string descriptor describing product
-    0x00U,                                               // Index of string descriptor describing the device's serial number
+    USB_CONTROL_MAX_PACKET_SIZE,
+    GET_LSB_OF_WORD(USB_VENDOR_ID),
+    GET_MSB_OF_WORD(USB_VENDOR_ID),
+    GET_LSB_OF_WORD(USB_PRODUCT_ID),
+    GET_MSB_OF_WORD(USB_PRODUCT_ID),
+    USB_SHORT_GET_LOW(USB_DEVICE_RELEASE_NUMBER),
+    USB_SHORT_GET_HIGH(USB_DEVICE_RELEASE_NUMBER),
+    USB_STRING_DESCRIPTOR_ID_MANUFACTURER,
+    USB_STRING_DESCRIPTOR_ID_PRODUCT,
+    USB_STRING_DESCRIPTOR_ID_SERIAL_NUMBER,
     USB_DEVICE_CONFIGURATION_COUNT,
 };
 
-uint8_t g_UsbDeviceConfigurationDescriptor[USB_DESCRIPTOR_LENGTH_CONFIGURATION_ALL] = {
+uint8_t UsbConfigurationDescriptor[USB_DESCRIPTOR_LENGTH_CONFIGURATION_ALL] = {
 
 // Configuration descriptor
 
@@ -65,7 +65,7 @@ uint8_t g_UsbDeviceConfigurationDescriptor[USB_DESCRIPTOR_LENGTH_CONFIGURATION_A
     USB_HID_MOUSE_CLASS,
     USB_HID_MOUSE_SUBCLASS,
     USB_HID_MOUSE_PROTOCOL,
-    0x03U, // Index of string descriptor describing this interface
+    USB_STRING_DESCRIPTOR_ID_MOUSE,
 
 // Mouse HID descriptor
 
@@ -99,7 +99,7 @@ uint8_t g_UsbDeviceConfigurationDescriptor[USB_DESCRIPTOR_LENGTH_CONFIGURATION_A
     USB_HID_KEYBOARD_CLASS,
     USB_HID_KEYBOARD_SUBCLASS,
     USB_HID_KEYBOARD_PROTOCOL,
-    0x04U, // Index of string descriptor describing this interface
+    USB_STRING_DESCRIPTOR_ID_KEYBOARD,
 
 // Keyboard HID descriptor
 
@@ -203,7 +203,7 @@ usb_language_list_t g_UsbDeviceLanguageList = {
 usb_status_t USB_DeviceGetDeviceDescriptor(
     usb_device_handle handle, usb_device_get_device_descriptor_struct_t *deviceDescriptor)
 {
-    deviceDescriptor->buffer = g_UsbDeviceDescriptor;
+    deviceDescriptor->buffer = UsbDeviceDescriptor;
     deviceDescriptor->length = USB_DESCRIPTOR_LENGTH_DEVICE;
     return kStatus_USB_Success;
 }
@@ -212,7 +212,7 @@ usb_status_t USB_DeviceGetConfigurationDescriptor(
     usb_device_handle handle, usb_device_get_configuration_descriptor_struct_t *configurationDescriptor)
 {
     if (USB_COMPOSITE_CONFIGURE_INDEX > configurationDescriptor->configuration) {
-        configurationDescriptor->buffer = g_UsbDeviceConfigurationDescriptor;
+        configurationDescriptor->buffer = UsbConfigurationDescriptor;
         configurationDescriptor->length = USB_DESCRIPTOR_LENGTH_CONFIGURATION_ALL;
         return kStatus_USB_Success;
     }
