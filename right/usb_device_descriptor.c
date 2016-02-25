@@ -11,130 +11,118 @@
 #include "usb_mouse_descriptors.h"
 
 uint8_t g_UsbDeviceDescriptor[USB_DESCRIPTOR_LENGTH_DEVICE] = {
-    USB_DESCRIPTOR_LENGTH_DEVICE, /* Size of this descriptor in bytes */
-    USB_DESCRIPTOR_TYPE_DEVICE,   /* DEVICE Descriptor Type */
+    USB_DESCRIPTOR_LENGTH_DEVICE,
+    USB_DESCRIPTOR_TYPE_DEVICE,
     USB_SHORT_GET_LOW(USB_DEVICE_SPECIFIC_BCD_VERSION),
-    USB_SHORT_GET_HIGH(USB_DEVICE_SPECIFIC_BCD_VERSION), /* USB Specification Release Number in
-                                                            Binary-Coded Decimal (i.e., 2.10 is 210H). */
-    USB_DEVICE_CLASS,                                    /* Class code (assigned by the USB-IF). */
-    USB_DEVICE_SUBCLASS,                                 /* Subclass code (assigned by the USB-IF). */
-    USB_DEVICE_PROTOCOL,                                 /* Protocol code (assigned by the USB-IF). */
-    USB_CONTROL_MAX_PACKET_SIZE,                         /* Maximum packet size for endpoint zero
-                                                            (only 8, 16, 32, or 64 are valid) */
-    0xA2U, 0x15U,                                        /* Vendor ID (assigned by the USB-IF) */
-    0x7EU, 0x00U,                                        /* Product ID (assigned by the manufacturer) */
+    USB_SHORT_GET_HIGH(USB_DEVICE_SPECIFIC_BCD_VERSION), // USB Specification Release Number in
+                                                         // Binary-Coded Decimal (i.e., 2.10 is 210H).
+    USB_DEVICE_CLASS,
+    USB_DEVICE_SUBCLASS,
+    USB_DEVICE_PROTOCOL,
+    USB_CONTROL_MAX_PACKET_SIZE,                         // Maximum packet size for endpoint zero (only 8, 16, 32, or 64 are valid)
+    0xA2U, 0x15U,                                        // Vendor ID (assigned by the USB-IF)
+    0x7EU, 0x00U,                                        // Product ID (assigned by the manufacturer)
     USB_SHORT_GET_LOW(USB_DEVICE_DEMO_BCD_VERSION),
-    USB_SHORT_GET_HIGH(USB_DEVICE_DEMO_BCD_VERSION), /* Device release number in binary-coded decimal */
-    0x01U,                                           /* Index of string descriptor describing manufacturer */
-    0x02U,                                           /* Index of string descriptor describing product */
-    0x00U,                                           /* Index of string descriptor describing the
-                                                        device's serial number */
-    USB_DEVICE_CONFIGURATION_COUNT,                  /* Number of possible configurations */
+    USB_SHORT_GET_HIGH(USB_DEVICE_DEMO_BCD_VERSION),     // Device release number in binary-coded decimal
+    0x01U,                                               // Index of string descriptor describing manufacturer
+    0x02U,                                               // Index of string descriptor describing product
+    0x00U,                                               // Index of string descriptor describing the device's serial number
+    USB_DEVICE_CONFIGURATION_COUNT,
 };
 
 uint8_t g_UsbDeviceConfigurationDescriptor[USB_DESCRIPTOR_LENGTH_CONFIGURATION_ALL] = {
-    USB_DESCRIPTOR_LENGTH_CONFIGURE, /* Size of this descriptor in bytes */
-    USB_DESCRIPTOR_TYPE_CONFIGURE,   /* CONFIGURATION Descriptor Type */
+
+// Configuration descriptor
+
+    USB_DESCRIPTOR_LENGTH_CONFIGURE,
+    USB_DESCRIPTOR_TYPE_CONFIGURE,
     USB_SHORT_GET_LOW(USB_DESCRIPTOR_LENGTH_CONFIGURATION_ALL),
-    USB_SHORT_GET_HIGH(
-        USB_DESCRIPTOR_LENGTH_CONFIGURATION_ALL), /* Total length of data returned for this configuration. */
-    USB_COMPOSITE_INTERFACE_COUNT,                /* Number of interfaces supported by this configuration */
-    USB_COMPOSITE_CONFIGURE_INDEX,                /* Value to use as an argument to the
-                                                       SetConfiguration() request to select this configuration */
-    0x00U,                                        /* Index of string descriptor describing this configuration */
+    USB_SHORT_GET_HIGH(USB_DESCRIPTOR_LENGTH_CONFIGURATION_ALL), // Total length of data returned for this configuration.
+    USB_COMPOSITE_INTERFACE_COUNT,
+    USB_COMPOSITE_CONFIGURE_INDEX, // Value to use as an argument to the SetConfiguration() request to select this configuration
+    0x00U, // Index of string descriptor describing this configuration
+
+    // Configuration characteristics
+    //     D7: Reserved (set to one)
+    //     D6: Self-powered
+    //     D5: Remote Wakeup
+    //     D4...0: Reserved (reset to zero)
     (USB_DESCRIPTOR_CONFIGURE_ATTRIBUTE_D7_MASK) |
         (USB_DEVICE_CONFIG_SELF_POWER << USB_DESCRIPTOR_CONFIGURE_ATTRIBUTE_SELF_POWERED_SHIFT) |
         (USB_DEVICE_CONFIG_REMOTE_WAKEUP << USB_DESCRIPTOR_CONFIGURE_ATTRIBUTE_REMOTE_WAKEUP_SHIFT),
-    /* Configuration characteristics
-         D7: Reserved (set to one)
-         D6: Self-powered
-         D5: Remote Wakeup
-         D4...0: Reserved (reset to zero)
-    */
-    USB_DEVICE_MAX_POWER,            /* Maximum power consumption of the USB
-                                      * device from the bus in this specific
-                                      * configuration when the device is fully
-                                      * operational. Expressed in 2 mA units
-                                      *  (i.e., 50 = 100 mA).
-                                      */
-    USB_DESCRIPTOR_LENGTH_INTERFACE, /* Size of this descriptor in bytes */
-    USB_DESCRIPTOR_TYPE_INTERFACE,   /* INTERFACE Descriptor Type */
-    USB_HID_MOUSE_INTERFACE_INDEX,   /* Number of this interface. */
-    0x00U,                           /* Value used to select this alternate setting
-                                        for the interface identified in the prior field */
-    USB_HID_MOUSE_ENDPOINT_COUNT,    /* Number of endpoints used by this
-                                          interface (excluding endpoint zero). */
-    USB_HID_MOUSE_CLASS,             /* Class code (assigned by the USB-IF). */
-    USB_HID_MOUSE_SUBCLASS,          /* Subclass code (assigned by the USB-IF). */
-    USB_HID_MOUSE_PROTOCOL,          /* Protocol code (assigned by the USB). */
-    0x03U,                           /* Index of string descriptor describing this interface */
 
-    USB_DESCRIPTOR_LENGTH_HID,      /* Numeric expression that is the total size of the
-                                       HID descriptor. */
-    USB_DESCRIPTOR_TYPE_HID,        /* Constant name specifying type of HID
-                                       descriptor. */
-    0x00U, 0x01U,                   /* Numeric expression identifying the HID Class
-                                       Specification release. */
-    0x00U,                          /* Numeric expression identifying country code of
-                                       the localized hardware */
-    0x01U,                          /* Numeric expression specifying the number of
-                                       class descriptors(at least one report descriptor) */
-    USB_DESCRIPTOR_TYPE_HID_REPORT, /* Constant name identifying type of class descriptor. */
+    // Maximum power consumption of the USB device from the bus in this specific configuration
+    // when the device is fully operational. Expressed in 2 mA units (i.e., 50 = 100 mA).
+    USB_DEVICE_MAX_POWER,
+
+// Mouse interface descriptor
+
+    USB_DESCRIPTOR_LENGTH_INTERFACE,
+    USB_DESCRIPTOR_TYPE_INTERFACE,
+    USB_HID_MOUSE_INTERFACE_INDEX,
+    0x00U, //  Value used to select this alternate setting for the interface identified in the prior field
+    USB_HID_MOUSE_ENDPOINT_COUNT,
+    USB_HID_MOUSE_CLASS,
+    USB_HID_MOUSE_SUBCLASS,
+    USB_HID_MOUSE_PROTOCOL,
+    0x03U, // Index of string descriptor describing this interface
+
+// Mouse HID descriptor
+
+    USB_DESCRIPTOR_LENGTH_HID,
+    USB_DESCRIPTOR_TYPE_HID,
+    0x00U, 0x01U,                   // ID Class Specification release.
+    0x00U,                          // Country code of the localized hardware
+    0x01U,                          // Number of class descriptors (at least one report descriptor)
+    USB_DESCRIPTOR_TYPE_HID_REPORT,
     USB_SHORT_GET_LOW(USB_DESCRIPTOR_LENGTH_HID_MOUSE_REPORT),
     USB_SHORT_GET_HIGH(USB_DESCRIPTOR_LENGTH_HID_MOUSE_REPORT),
-    /* Numeric expression that is the total size of the
-       Report descriptor. */
-    USB_DESCRIPTOR_LENGTH_ENDPOINT, /* Size of this descriptor in bytes */
-    USB_DESCRIPTOR_TYPE_ENDPOINT,   /* ENDPOINT Descriptor Type */
+
+// Mouse endpoint descriptor
+
+    USB_DESCRIPTOR_LENGTH_ENDPOINT,
+    USB_DESCRIPTOR_TYPE_ENDPOINT,
+    // The address of the endpoint on the USB device described by this descriptor.
     USB_HID_MOUSE_ENDPOINT_IN | (USB_IN << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT),
-    /* The address of the endpoint on the USB device
-       described by this descriptor. */
-    USB_ENDPOINT_INTERRUPT, /* This field describes the endpoint's attributes */
+    USB_ENDPOINT_INTERRUPT, // This field describes the endpoint's attributes
+    // Maximum packet size this endpoint is capable of sending or receiving when this configuration is selected.
     USB_SHORT_GET_LOW(FS_HID_MOUSE_INTERRUPT_IN_PACKET_SIZE), USB_SHORT_GET_HIGH(FS_HID_MOUSE_INTERRUPT_IN_PACKET_SIZE),
-    /* Maximum packet size this endpoint is capable of
-       sending or receiving when this configuration is
-       selected. */
-    FS_HID_MOUSE_INTERRUPT_IN_INTERVAL, /* Interval for polling endpoint for data transfers. */
+    FS_HID_MOUSE_INTERRUPT_IN_INTERVAL, // Interval for polling endpoint for data transfers.
 
-    USB_DESCRIPTOR_LENGTH_INTERFACE,  /* Size of this descriptor in bytes */
-    USB_DESCRIPTOR_TYPE_INTERFACE,    /* INTERFACE Descriptor Type */
-    USB_HID_KEYBOARD_INTERFACE_INDEX, /* Number of this interface. */
-    0x00U,                            /* Value used to select this alternate setting
-                                         for the interface identified in the prior field */
-    USB_HID_KEYBOARD_ENDPOINT_COUNT,  /* Number of endpoints used by this
-                                        interface (excluding endpoint zero). */
-    USB_HID_KEYBOARD_CLASS,           /* Class code (assigned by the USB-IF). */
-    USB_HID_KEYBOARD_SUBCLASS,        /* Subclass code (assigned by the USB-IF). */
-    USB_HID_KEYBOARD_PROTOCOL,        /* Protocol code (assigned by the USB). */
-    0x04U,                            /* Index of string descriptor describing this interface */
+// Keyboard interface descriptor
 
-    USB_DESCRIPTOR_LENGTH_HID,      /* Numeric expression that is the total size of the
-                                       HID descriptor. */
-    USB_DESCRIPTOR_TYPE_HID,        /* Constant name specifying type of HID
-                                       descriptor. */
-    0x00U, 0x01U,                   /* Numeric expression identifying the HID Class
-                                       Specification release. */
-    0x00U,                          /* Numeric expression identifying country code of
-                                       the localized hardware */
-    0x01U,                          /* Numeric expression specifying the number of
-                                       class descriptors(at least one report descriptor) */
-    USB_DESCRIPTOR_TYPE_HID_REPORT, /* Constant name identifying type of class descriptor. */
+    USB_DESCRIPTOR_LENGTH_INTERFACE,
+    USB_DESCRIPTOR_TYPE_INTERFACE,
+    USB_HID_KEYBOARD_INTERFACE_INDEX,
+    0x00U, // Value used to select this alternate setting for the interface identified in the prior field
+    USB_HID_KEYBOARD_ENDPOINT_COUNT,
+    USB_HID_KEYBOARD_CLASS,
+    USB_HID_KEYBOARD_SUBCLASS,
+    USB_HID_KEYBOARD_PROTOCOL,
+    0x04U, // Index of string descriptor describing this interface
+
+// Keyboard HID descriptor
+
+    USB_DESCRIPTOR_LENGTH_HID,
+    USB_DESCRIPTOR_TYPE_HID,
+    0x00U, 0x01U, // HID Class Specification release
+    0x00U,        // Country code of the localized hardware
+    0x01U,        // Number of class descriptors (at least one report descriptor)
+    USB_DESCRIPTOR_TYPE_HID_REPORT,
     USB_SHORT_GET_LOW(USB_DESCRIPTOR_LENGTH_HID_KEYBOARD_REPORT),
     USB_SHORT_GET_HIGH(USB_DESCRIPTOR_LENGTH_HID_KEYBOARD_REPORT),
-    /* Numeric expression that is the total size of the
-       Report descriptor. */
-    USB_DESCRIPTOR_LENGTH_ENDPOINT, /* Size of this descriptor in bytes */
-    USB_DESCRIPTOR_TYPE_ENDPOINT,   /* ENDPOINT Descriptor Type */
+
+// Keyboard endpoint descriptor
+
+    USB_DESCRIPTOR_LENGTH_ENDPOINT,
+    USB_DESCRIPTOR_TYPE_ENDPOINT,
     USB_HID_KEYBOARD_ENDPOINT_IN | (USB_IN << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT),
-    /* The address of the endpoint on the USB device
-       described by this descriptor. */
-    USB_ENDPOINT_INTERRUPT, /* This field describes the endpoint's attributes */
+    // The address of the endpoint on the USB device described by this descriptor.
+    USB_ENDPOINT_INTERRUPT, // This field describes the endpoint's attributes
     USB_SHORT_GET_LOW(FS_HID_KEYBOARD_INTERRUPT_IN_PACKET_SIZE),
     USB_SHORT_GET_HIGH(FS_HID_KEYBOARD_INTERRUPT_IN_PACKET_SIZE),
-    /* Maximum packet size this endpoint is capable of
-       sending or receiving when this configuration is
-       selected. */
-    FS_HID_KEYBOARD_INTERRUPT_IN_INTERVAL, /* Interval for polling endpoint for data transfers. */
+    // Maximum packet size this endpoint is capable of sending or receiving when this configuration is selected.
+    FS_HID_KEYBOARD_INTERRUPT_IN_INTERVAL, // Interval for polling endpoint for data transfers.
 };
 
 uint8_t g_UsbDeviceString0[USB_DESCRIPTOR_LENGTH_STRING0] = {
@@ -212,8 +200,8 @@ usb_language_list_t g_UsbDeviceLanguageList = {
     g_UsbDeviceString0, sizeof(g_UsbDeviceString0), g_UsbDeviceLanguage, USB_DEVICE_LANGUAGE_COUNT,
 };
 
-usb_status_t USB_DeviceGetDeviceDescriptor(usb_device_handle handle,
-                                           usb_device_get_device_descriptor_struct_t *deviceDescriptor)
+usb_status_t USB_DeviceGetDeviceDescriptor(
+    usb_device_handle handle, usb_device_get_device_descriptor_struct_t *deviceDescriptor)
 {
     deviceDescriptor->buffer = g_UsbDeviceDescriptor;
     deviceDescriptor->length = USB_DESCRIPTOR_LENGTH_DEVICE;
@@ -231,8 +219,8 @@ usb_status_t USB_DeviceGetConfigurationDescriptor(
     return kStatus_USB_InvalidRequest;
 }
 
-usb_status_t USB_DeviceGetStringDescriptor(usb_device_handle handle,
-                                           usb_device_get_string_descriptor_struct_t *stringDescriptor)
+usb_status_t USB_DeviceGetStringDescriptor(
+    usb_device_handle handle, usb_device_get_string_descriptor_struct_t *stringDescriptor)
 {
     if (stringDescriptor->stringIndex == 0U) {
         stringDescriptor->buffer = (uint8_t *)g_UsbDeviceLanguageList.languageString;
@@ -259,13 +247,14 @@ usb_status_t USB_DeviceGetStringDescriptor(usb_device_handle handle,
     return kStatus_USB_Success;
 }
 
-usb_status_t USB_DeviceGetHidDescriptor(usb_device_handle handle, usb_device_get_hid_descriptor_struct_t *hidDescriptor)
+usb_status_t USB_DeviceGetHidDescriptor(
+    usb_device_handle handle, usb_device_get_hid_descriptor_struct_t *hidDescriptor)
 {
     return kStatus_USB_InvalidRequest;
 }
 
-usb_status_t USB_DeviceGetHidReportDescriptor(usb_device_handle handle,
-                                              usb_device_get_hid_report_descriptor_struct_t *hidReportDescriptor)
+usb_status_t USB_DeviceGetHidReportDescriptor(
+    usb_device_handle handle, usb_device_get_hid_report_descriptor_struct_t *hidReportDescriptor)
 {
     if (USB_HID_MOUSE_INTERFACE_INDEX == hidReportDescriptor->interfaceNumber) {
         hidReportDescriptor->buffer = g_UsbDeviceHidMouseReportDescriptor;
@@ -279,8 +268,8 @@ usb_status_t USB_DeviceGetHidReportDescriptor(usb_device_handle handle,
     return kStatus_USB_Success;
 }
 
-usb_status_t USB_DeviceGetHidPhysicalDescriptor(usb_device_handle handle,
-                                                usb_device_get_hid_physical_descriptor_struct_t *hidPhysicalDescriptor)
+usb_status_t USB_DeviceGetHidPhysicalDescriptor(
+    usb_device_handle handle, usb_device_get_hid_physical_descriptor_struct_t *hidPhysicalDescriptor)
 {
     return kStatus_USB_InvalidRequest;
 }
