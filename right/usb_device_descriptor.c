@@ -165,7 +165,7 @@ uint8_t UsbManufacturerString[USB_MANUFACTURER_STRING_DESCRIPTOR_LENGTH] = {
     '.', 0x00U,
 };
 
-uint8_t UsbProductString[USB_DESCRIPTOR_LENGTH_STRING2] = {
+uint8_t UsbProductString[USB_PRODUCT_STRING_DESCRIPTOR_LENGTH] = {
     sizeof(UsbProductString),
     USB_DESCRIPTOR_TYPE_STRING,
     'C', 0x00U,
