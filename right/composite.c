@@ -115,33 +115,17 @@ static void USB_DeviceApplicationInit(void)
     uint8_t irqNumber = usbDeviceKhciIrq[CONTROLLER_ID - kUSB_ControllerKhci0];
 
     SystemCoreClockUpdate();
-
     CLOCK_EnableUsbfs0Clock(kCLOCK_UsbSrcIrc48M, 48000000U);
 
-    // Set composite device to default state.
     UsbCompositeDevice.speed = USB_SPEED_FULL;
     UsbCompositeDevice.attach = 0U;
-    UsbCompositeDevice.mouseHandle = (class_handle_t)NULL;
-    UsbCompositeDevice.keyboardHandle = (class_handle_t)NULL;
-    UsbCompositeDevice.deviceHandle = NULL;
+    USB_DeviceClassInit(CONTROLLER_ID, &UsbDeviceCompositeConfigList, &UsbCompositeDevice.deviceHandle);
+    UsbCompositeDevice.keyboardHandle = UsbDeviceCompositeConfigList.config[0].classHandle;
+    UsbCompositeDevice.mouseHandle = UsbDeviceCompositeConfigList.config[1].classHandle;
 
-    usb_status_t deviceStatus = USB_DeviceClassInit(
-        CONTROLLER_ID, &UsbDeviceCompositeConfigList, &UsbCompositeDevice.deviceHandle);
-
-    if (kStatus_USB_Success != deviceStatus) {
-        usb_echo("USB device composite demo init failed\r\n");
-        return;
-    } else {
-        usb_echo("USB device composite demo\r\n");
-        UsbCompositeDevice.keyboardHandle = UsbDeviceCompositeConfigList.config[0].classHandle;
-        UsbCompositeDevice.mouseHandle = UsbDeviceCompositeConfigList.config[1].classHandle;
-    }
-
-    // Install ISR, set priority, and enable IRQ.
     NVIC_SetPriority((IRQn_Type)irqNumber, USB_DEVICE_INTERRUPT_PRIORITY);
     NVIC_EnableIRQ((IRQn_Type)irqNumber);
 
-    // Start the device function.
     USB_DeviceRun(UsbCompositeDevice.deviceHandle);
 }
 
