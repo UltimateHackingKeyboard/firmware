@@ -6,6 +6,7 @@
 #include "include/usb/usb_device_ch9.h"
 #include "usb_device_descriptor.h"
 #include "composite.h"
+#include "scancodes.h"
 #include "hid_keyboard.h"
 
 static usb_device_composite_struct_t *UsbCompositeDevice;

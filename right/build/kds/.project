@@ -206,6 +206,11 @@
 			<locationURI>PARENT-2-PROJECT_LOC/hid_mouse.h</locationURI>
 		</link>
 		<link>
+			<name>sources/scancodes.h</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/scancodes.h</locationURI>
+		</link>
+		<link>
 			<name>sources/usb_device_config.h</name>
 			<type>1</type>
 			<locationURI>PARENT-2-PROJECT_LOC/usb_device_config.h</locationURI>
