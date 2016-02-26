@@ -10,12 +10,16 @@
 
     typedef struct _usb_device_composite_struct {
         usb_device_handle deviceHandle;
-        class_handle_t hidMouseHandle;
-        class_handle_t hidKeyboardHandle;
+        class_handle_t mouseHandle;
+        class_handle_t keyboardHandle;
         uint8_t speed;
         uint8_t attach;
         uint8_t currentConfiguration;
         uint8_t currentInterfaceAlternateSetting[USB_COMPOSITE_INTERFACE_COUNT];
     } usb_device_composite_struct_t;
+
+// Variables:
+
+    extern usb_device_composite_struct_t UsbCompositeDevice;
 
 #endif

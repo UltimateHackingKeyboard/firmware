@@ -9,7 +9,6 @@
 #include "scancodes.h"
 #include "hid_keyboard.h"
 
-static usb_device_composite_struct_t *UsbCompositeDevice;
 static usb_device_hid_keyboard_struct_t UsbKeyboardDevice;
 
 static usb_status_t UsbKeyboardAction(void)
@@ -40,7 +39,7 @@ static usb_status_t UsbKeyboardAction(void)
         default:
             break;
     }
-    return USB_DeviceHidSend(UsbCompositeDevice->hidKeyboardHandle, USB_KEYBOARD_ENDPOINT_ID,
+    return USB_DeviceHidSend(UsbCompositeDevice.keyboardHandle, USB_KEYBOARD_ENDPOINT_ID,
                              UsbKeyboardDevice.buffer, USB_KEYBOARD_REPORT_LENGTH);
 }
 
@@ -50,7 +49,7 @@ usb_status_t UsbKeyboardCallback(class_handle_t handle, uint32_t event, void *pa
 
     switch (event) {
         case kUSB_DeviceHidEventSendResponse:
-            if (UsbCompositeDevice->attach) {
+            if (UsbCompositeDevice.attach) {
                 return UsbKeyboardAction();
             }
             break;
@@ -85,10 +84,4 @@ usb_status_t UsbKeyboardSetInterface(class_handle_t handle, uint8_t interface, u
         return UsbKeyboardAction();
     }
     return kStatus_USB_Error;
-}
-
-usb_status_t UsbKeyboardInit(usb_device_composite_struct_t *compositeDevice)
-{
-    UsbCompositeDevice = compositeDevice;
-    return kStatus_USB_Success;
 }

@@ -8,7 +8,6 @@
 #include "composite.h"
 #include "hid_mouse.h"
 
-static usb_device_composite_struct_t *UsbCompositeDevice;
 static usb_device_hid_mouse_struct_t UsbMouseDevice;
 
 /* Update mouse pointer location: draw a rectangular rotation. */
@@ -65,7 +64,7 @@ static usb_status_t UsbMouseAction(void)
             break;
     }
 
-    return USB_DeviceHidSend(UsbCompositeDevice->hidMouseHandle, USB_MOUSE_ENDPOINT_ID,
+    return USB_DeviceHidSend(UsbCompositeDevice.mouseHandle, USB_MOUSE_ENDPOINT_ID,
                              UsbMouseDevice.buffer, USB_MOUSE_REPORT_LENGTH);
 }
 
@@ -76,7 +75,7 @@ usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param
     switch (event)
     {
         case kUSB_DeviceHidEventSendResponse:
-            if (UsbCompositeDevice->attach) {
+            if (UsbCompositeDevice.attach) {
                 return UsbMouseAction();
             }
             break;
@@ -97,9 +96,9 @@ usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param
     return error;
 }
 
-usb_status_t UsbMouseSetConfigure(class_handle_t handle, uint8_t configure)
+usb_status_t UsbMouseSetConfigure(class_handle_t handle, uint8_t configuration)
 {
-    if (USB_COMPOSITE_CONFIGURATION_INDEX == configure) {
+    if (USB_COMPOSITE_CONFIGURATION_INDEX == configuration) {
         return UsbMouseAction();
     }
     return kStatus_USB_Error;
@@ -111,10 +110,4 @@ usb_status_t UsbMouseSetInterface(class_handle_t handle, uint8_t interface, uint
         return UsbMouseAction();
     }
     return kStatus_USB_Error;
-}
-
-usb_status_t UsbMouseInit(usb_device_composite_struct_t *compositeDevice)
-{
-    UsbCompositeDevice = compositeDevice;
-    return kStatus_USB_Success;
 }

@@ -20,7 +20,7 @@
 #include "usb_mouse_descriptors.h"
 
 static usb_status_t UsbDeviceCallback(usb_device_handle handle, uint32_t event, void *param);
-static usb_device_composite_struct_t UsbCompositeDevice;
+usb_device_composite_struct_t UsbCompositeDevice;
 
 usb_device_class_config_struct_t UsbDeviceCompositeClassConfig[USB_COMPOSITE_INTERFACE_COUNT] = {
     {UsbKeyboardCallback, (class_handle_t)NULL, &UsbKeyboardClass},
@@ -51,8 +51,8 @@ static usb_status_t UsbDeviceCallback(usb_device_handle handle, uint32_t event, 
         case kUSB_DeviceEventSetConfiguration:
             UsbCompositeDevice.attach = 1U;
             UsbCompositeDevice.currentConfiguration = *temp8;
-            UsbMouseSetConfigure(UsbCompositeDevice.hidMouseHandle, *temp8);
-            UsbKeyboardSetConfigure(UsbCompositeDevice.hidKeyboardHandle, *temp8);
+            UsbMouseSetConfigure(UsbCompositeDevice.mouseHandle, *temp8);
+            UsbKeyboardSetConfigure(UsbCompositeDevice.keyboardHandle, *temp8);
             error = kStatus_USB_Success;
             break;
         case kUSB_DeviceEventGetConfiguration:
@@ -65,8 +65,8 @@ static usb_status_t UsbDeviceCallback(usb_device_handle handle, uint32_t event, 
                 uint8_t alternateSetting = (uint8_t)(*temp16 & 0x00FFU);
                 if (interface < USB_COMPOSITE_INTERFACE_COUNT) {
                     UsbCompositeDevice.currentInterfaceAlternateSetting[interface] = alternateSetting;
-                    UsbMouseSetInterface(UsbCompositeDevice.hidMouseHandle, interface, alternateSetting);
-                    UsbKeyboardSetInterface(UsbCompositeDevice.hidKeyboardHandle, interface,
+                    UsbMouseSetInterface(UsbCompositeDevice.mouseHandle, interface, alternateSetting);
+                    UsbKeyboardSetInterface(UsbCompositeDevice.keyboardHandle, interface,
                                                       alternateSetting);
                     error = kStatus_USB_Success;
                 }
@@ -121,8 +121,8 @@ static void USB_DeviceApplicationInit(void)
     // Set composite device to default state.
     UsbCompositeDevice.speed = USB_SPEED_FULL;
     UsbCompositeDevice.attach = 0U;
-    UsbCompositeDevice.hidMouseHandle = (class_handle_t)NULL;
-    UsbCompositeDevice.hidKeyboardHandle = (class_handle_t)NULL;
+    UsbCompositeDevice.mouseHandle = (class_handle_t)NULL;
+    UsbCompositeDevice.keyboardHandle = (class_handle_t)NULL;
     UsbCompositeDevice.deviceHandle = NULL;
 
     usb_status_t deviceStatus = USB_DeviceClassInit(
@@ -133,10 +133,8 @@ static void USB_DeviceApplicationInit(void)
         return;
     } else {
         usb_echo("USB device composite demo\r\n");
-        UsbCompositeDevice.hidKeyboardHandle = UsbDeviceCompositeConfigList.config[0].classHandle;
-        UsbCompositeDevice.hidMouseHandle = UsbDeviceCompositeConfigList.config[1].classHandle;
-        UsbKeyboardInit(&UsbCompositeDevice);
-        UsbMouseInit(&UsbCompositeDevice);
+        UsbCompositeDevice.keyboardHandle = UsbDeviceCompositeConfigList.config[0].classHandle;
+        UsbCompositeDevice.mouseHandle = UsbDeviceCompositeConfigList.config[1].classHandle;
     }
 
     // Install ISR, set priority, and enable IRQ.
