@@ -1,3 +1,4 @@
+#include "include/board/board.h"
 #include "fsl_gpio.h"
 #include "usb_device_config.h"
 #include "usb.h"
@@ -15,7 +16,7 @@ static usb_status_t UsbMouseAction(void)
 {
     UsbMouseDevice.buffer[1] = 0U;
     UsbMouseDevice.buffer[2] = 0U;
-    if (!GPIO_ReadPinInput(GPIOC, 1U)) {
+    if (!GPIO_ReadPinInput(BOARD_SW2_GPIO, BOARD_SW2_GPIO_PIN)) {
         UsbMouseDevice.buffer[2] = 1U;
     }
     return USB_DeviceHidSend(UsbCompositeDevice.mouseHandle, USB_MOUSE_ENDPOINT_ID,

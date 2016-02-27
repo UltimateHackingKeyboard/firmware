@@ -30,6 +30,7 @@
 
 #include "fsl_common.h"
 #include "fsl_port.h"
+#include "board.h"
 
 void BOARD_InitPins(void)
 {
@@ -43,9 +44,9 @@ void BOARD_InitPins(void)
     switchConfig.pullSelect = kPORT_PullUp;
     switchConfig.mux = kPORT_MuxAsGpio;
     CLOCK_EnableClock(kCLOCK_PortC);
-    PORT_SetPinConfig(PORTC, 1U, &switchConfig);
+    PORT_SetPinConfig(BOARD_SW2_PORT, BOARD_SW2_GPIO_PIN, &switchConfig);
 
     // Set up SW3.
     CLOCK_EnableClock(kCLOCK_PortB);
-    PORT_SetPinConfig(PORTB, 17U, &switchConfig);
+    PORT_SetPinConfig(BOARD_SW3_PORT, BOARD_SW3_GPIO_PIN, &switchConfig);
 }

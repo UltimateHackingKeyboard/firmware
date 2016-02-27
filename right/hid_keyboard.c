@@ -1,3 +1,4 @@
+#include "include/board/board.h"
 #include "fsl_gpio.h"
 #include "usb_device_config.h"
 #include "usb.h"
@@ -15,7 +16,7 @@ static usb_device_hid_keyboard_struct_t UsbKeyboardDevice;
 static usb_status_t UsbKeyboardAction(void)
 {
     UsbKeyboardDevice.buffer[2] = 0x00U;
-    if (!GPIO_ReadPinInput(GPIOB, 17U)) {
+    if (!GPIO_ReadPinInput(BOARD_SW3_GPIO, BOARD_SW3_GPIO_PIN)) {
         UsbKeyboardDevice.buffer[2] = KEY_A;
     }
     return USB_DeviceHidSend(UsbCompositeDevice.keyboardHandle, USB_KEYBOARD_ENDPOINT_ID,
