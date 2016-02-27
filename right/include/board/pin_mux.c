@@ -31,19 +31,17 @@
 #include "fsl_common.h"
 #include "fsl_port.h"
 
-/*******************************************************************************
- * Code
- ******************************************************************************/
-
-/* Function Name : BOARD_InitPins */
 void BOARD_InitPins(void)
 {
-    /* Initialize UART1 pins below */
-    /* Ungate the port clock */
+    // Set up UART1 for OpenSDA.
     CLOCK_EnableClock(kCLOCK_PortE);
-
-    /* Affects PORTE_PCR0 register */
     PORT_SetPinMux(PORTE, 0u, kPORT_MuxAlt3);
-    /* Affects PORTE_PCR1 register */
     PORT_SetPinMux(PORTE, 1u, kPORT_MuxAlt3);
+
+    // Set up SW3.
+    CLOCK_EnableClock(kCLOCK_PortB);
+    port_pin_config_t switchConfig = {0};
+    switchConfig.pullSelect = kPORT_PullUp;
+    switchConfig.mux = kPORT_MuxAsGpio;
+    PORT_SetPinConfig(PORTB, 17U, &switchConfig);
 }

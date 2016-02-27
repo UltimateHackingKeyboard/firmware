@@ -1,3 +1,4 @@
+#include "fsl_gpio.h"
 #include "usb_device_config.h"
 #include "usb.h"
 #include "usb_device.h"
@@ -13,31 +14,9 @@ static usb_device_hid_keyboard_struct_t UsbKeyboardDevice;
 
 static usb_status_t UsbKeyboardAction(void)
 {
-    static int x = 0U;
-    enum {
-        DOWN,
-        UP
-    };
-    static uint8_t dir = DOWN;
-
     UsbKeyboardDevice.buffer[2] = 0x00U;
-    switch (dir) {
-        case DOWN:
-            x++;
-            if (x > 200U) {
-                dir++;
-                UsbKeyboardDevice.buffer[2] = KEY_PAGEUP;
-            }
-            break;
-        case UP:
-            x--;
-            if (x < 1U) {
-                dir = DOWN;
-                UsbKeyboardDevice.buffer[2] = KEY_PAGEDOWN;
-            }
-            break;
-        default:
-            break;
+    if (!GPIO_ReadPinInput(GPIOB, 17U)) {
+        UsbKeyboardDevice.buffer[2] = KEY_A;
     }
     return USB_DeviceHidSend(UsbCompositeDevice.keyboardHandle, USB_KEYBOARD_ENDPOINT_ID,
                              UsbKeyboardDevice.buffer, USB_KEYBOARD_REPORT_LENGTH);
