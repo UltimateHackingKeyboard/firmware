@@ -38,10 +38,14 @@ void BOARD_InitPins(void)
     PORT_SetPinMux(PORTE, 0u, kPORT_MuxAlt3);
     PORT_SetPinMux(PORTE, 1u, kPORT_MuxAlt3);
 
-    // Set up SW3.
-    CLOCK_EnableClock(kCLOCK_PortB);
+    // Set up SW2.
     port_pin_config_t switchConfig = {0};
     switchConfig.pullSelect = kPORT_PullUp;
     switchConfig.mux = kPORT_MuxAsGpio;
+    CLOCK_EnableClock(kCLOCK_PortC);
+    PORT_SetPinConfig(PORTC, 1U, &switchConfig);
+
+    // Set up SW3.
+    CLOCK_EnableClock(kCLOCK_PortB);
     PORT_SetPinConfig(PORTB, 17U, &switchConfig);
 }

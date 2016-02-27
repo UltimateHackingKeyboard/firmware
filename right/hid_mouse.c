@@ -1,3 +1,4 @@
+#include "fsl_gpio.h"
 #include "usb_device_config.h"
 #include "usb.h"
 #include "usb_device.h"
@@ -10,60 +11,13 @@
 
 static usb_device_hid_mouse_struct_t UsbMouseDevice;
 
-/* Update mouse pointer location: draw a rectangular rotation. */
 static usb_status_t UsbMouseAction(void)
 {
-    static int8_t x = 0U;
-    static int8_t y = 0U;
-    enum {
-        RIGHT,
-        DOWN,
-        LEFT,
-        UP
-    };
-    static uint8_t dir = RIGHT;
-
-    switch (dir) {
-        case RIGHT:
-            /* Move right. Increase X value. */
-            UsbMouseDevice.buffer[1] = 1U;
-            UsbMouseDevice.buffer[2] = 0U;
-            x++;
-            if (x > 99U) {
-                dir++;
-            }
-            break;
-        case DOWN:
-            /* Move down. Increase Y value. */
-            UsbMouseDevice.buffer[1] = 0U;
-            UsbMouseDevice.buffer[2] = 1U;
-            y++;
-            if (y > 99U) {
-                dir++;
-            }
-            break;
-        case LEFT:
-            /* Move left. Discrease X value. */
-            UsbMouseDevice.buffer[1] = (uint8_t)(0xFFU);
-            UsbMouseDevice.buffer[2] = 0U;
-            x--;
-            if (x < 1U) {
-                dir++;
-            }
-            break;
-        case UP:
-            /* Move up. Discrease Y value. */
-            UsbMouseDevice.buffer[1] = 0U;
-            UsbMouseDevice.buffer[2] = (uint8_t)(0xFFU);
-            y--;
-            if (y < 1U) {
-                dir = RIGHT;
-            }
-            break;
-        default:
-            break;
+    UsbMouseDevice.buffer[1] = 0U;
+    UsbMouseDevice.buffer[2] = 0U;
+    if (!GPIO_ReadPinInput(GPIOC, 1U)) {
+        UsbMouseDevice.buffer[2] = 1U;
     }
-
     return USB_DeviceHidSend(UsbCompositeDevice.mouseHandle, USB_MOUSE_ENDPOINT_ID,
                              UsbMouseDevice.buffer, USB_MOUSE_REPORT_LENGTH);
 }
