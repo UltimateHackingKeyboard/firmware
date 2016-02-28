@@ -8,7 +8,7 @@
 #define USB_DEVICE_CONFIG_NUM (1U)
 
 /*! @brief HID instance count */
-#define USB_DEVICE_CONFIG_HID (2U)
+#define USB_DEVICE_CONFIG_HID (3U)
 
 /*! @brief Whether device is self power. 1U supported, 0U not supported */
 #define USB_DEVICE_CONFIG_SELF_POWER (1U)
@@ -17,7 +17,7 @@
 #define USB_DEVICE_CONFIG_REMOTE_WAKEUP (0U)
 
 /*! @brief How many endpoints are supported in the stack. */
-#define USB_DEVICE_CONFIG_ENDPOINTS (4U)
+#define USB_DEVICE_CONFIG_ENDPOINTS (6U)
 
 /*! @brief The MAX buffer length for the KHCI DMA workaround.*/
 #define USB_DEVICE_CONFIG_KHCI_DMA_ALIGN_BUFFER_LENGTH (64U)

@@ -5,6 +5,7 @@
 
     #include "usb_keyboard_descriptors.h"
     #include "usb_mouse_descriptors.h"
+    #include "usb_generic_hid_descriptors.h"
 
 // Macros:
 
@@ -23,7 +24,7 @@
     #define USB_DEVICE_CONFIGURATION_COUNT (1U)
     #define USB_REPORT_DESCRIPTOR_COUNT_PER_HID_DEVICE (1U)
     #define USB_DEVICE_MAX_POWER (50U) // Expressed in 2mA units
-    #define USB_COMPOSITE_INTERFACE_COUNT (USB_KEYBOARD_INTERFACE_COUNT + USB_MOUSE_INTERFACE_COUNT)
+    #define USB_COMPOSITE_INTERFACE_COUNT (USB_KEYBOARD_INTERFACE_COUNT + USB_MOUSE_INTERFACE_COUNT + USB_GENERIC_HID_INTERFACE_COUNT)
 
     #define USB_LANGUAGE_ID_UNITED_STATES (0x0409U)
     #define USB_HID_COUNTRY_CODE_NOT_SUPPORTED (0x00U)
@@ -33,11 +34,11 @@
     // Descriptor lengths
 
     #define USB_HID_DESCRIPTOR_LENGTH (9U)
-    #define USB_CONFIGURATION_DESCRIPTOR_TOTAL_LENGTH (59U)
+    #define USB_CONFIGURATION_DESCRIPTOR_TOTAL_LENGTH (91U)
 
     // String descriptors
 
-    #define USB_STRING_DESCRIPTOR_COUNT (5U)
+    #define USB_STRING_DESCRIPTOR_COUNT (6U)
 
     #define USB_LANGUAGE_LIST_STRING_DESCRIPTOR_LENGTH (4U)
     #define USB_MANUFACTURER_STRING_DESCRIPTOR_LENGTH (58U)
@@ -48,6 +49,7 @@
     #define USB_STRING_DESCRIPTOR_ID_PRODUCT             2U
     #define USB_STRING_DESCRIPTOR_ID_MOUSE               3U
     #define USB_STRING_DESCRIPTOR_ID_KEYBOARD            4U
+    #define USB_STRING_DESCRIPTOR_ID_GENERIC_HID         5U
 
 // Functions:
 

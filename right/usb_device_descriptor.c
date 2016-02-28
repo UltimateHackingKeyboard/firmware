@@ -7,6 +7,7 @@
 #include "composite.h"
 #include "hid_keyboard.h"
 #include "hid_mouse.h"
+#include "hid_generic.h"
 
 uint8_t UsbDeviceDescriptor[USB_DESCRIPTOR_LENGTH_DEVICE] = {
     USB_DESCRIPTOR_LENGTH_DEVICE,
@@ -112,6 +113,50 @@ uint8_t UsbConfigurationDescriptor[USB_CONFIGURATION_DESCRIPTOR_TOTAL_LENGTH] = 
     USB_SHORT_GET_LOW(USB_KEYBOARD_INTERRUPT_IN_PACKET_SIZE),
     USB_SHORT_GET_HIGH(USB_KEYBOARD_INTERRUPT_IN_PACKET_SIZE),
     USB_KEYBOARD_INTERRUPT_IN_INTERVAL,
+
+// Generic HID interface descriptor
+
+    USB_DESCRIPTOR_LENGTH_INTERFACE,
+    USB_DESCRIPTOR_TYPE_INTERFACE,
+    USB_GENERIC_HID_INTERFACE_INDEX,
+    USB_INTERFACE_ALTERNATE_SETTING_NONE,
+    USB_GENERIC_HID_ENDPOINT_COUNT,
+    USB_GENERIC_HID_CLASS,
+    USB_GENERIC_HID_SUBCLASS,
+    USB_GENERIC_HID_PROTOCOL,
+    USB_STRING_DESCRIPTOR_ID_GENERIC_HID,
+
+// Generic HID descriptor
+
+    USB_HID_DESCRIPTOR_LENGTH,
+    USB_DESCRIPTOR_TYPE_HID,
+    USB_SHORT_GET_LOW(USB_HID_VERSION),
+    USB_SHORT_GET_HIGH(USB_HID_VERSION),
+    USB_HID_COUNTRY_CODE_NOT_SUPPORTED,
+    USB_REPORT_DESCRIPTOR_COUNT_PER_HID_DEVICE,
+    USB_DESCRIPTOR_TYPE_HID_REPORT,
+    USB_SHORT_GET_LOW(USB_GENERIC_HID_REPORT_DESCRIPTOR_LENGTH),
+    USB_SHORT_GET_HIGH(USB_GENERIC_HID_REPORT_DESCRIPTOR_LENGTH),
+
+// Generic HID IN endpoint descriptor
+
+    USB_DESCRIPTOR_LENGTH_ENDPOINT,
+    USB_DESCRIPTOR_TYPE_ENDPOINT,
+    USB_GENERIC_HID_ENDPOINT_IN_ID | (USB_IN << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT),
+    USB_ENDPOINT_INTERRUPT,
+    USB_SHORT_GET_LOW(USB_GENERIC_HID_INTERRUPT_IN_PACKET_SIZE),
+    USB_SHORT_GET_HIGH(USB_GENERIC_HID_INTERRUPT_IN_PACKET_SIZE),
+    USB_GENERIC_HID_INTERRUPT_IN_INTERVAL,
+
+// Generic HID OUT endpoint descriptor
+
+    USB_DESCRIPTOR_LENGTH_ENDPOINT,
+    USB_DESCRIPTOR_TYPE_ENDPOINT,
+    USB_GENERIC_HID_ENDPOINT_OUT_ID | (USB_OUT << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT),
+    USB_ENDPOINT_INTERRUPT,
+    USB_SHORT_GET_LOW(USB_GENERIC_HID_INTERRUPT_OUT_PACKET_SIZE),
+    USB_SHORT_GET_HIGH(USB_GENERIC_HID_INTERRUPT_OUT_PACKET_SIZE),
+    USB_GENERIC_HID_INTERRUPT_IN_INTERVAL,
 };
 
 uint8_t UsbLanguageListStringDescriptor[USB_LANGUAGE_LIST_STRING_DESCRIPTOR_LENGTH] = {
@@ -181,6 +226,7 @@ uint32_t UsbStringDescriptorLengths[USB_STRING_DESCRIPTOR_COUNT] = {
     sizeof(UsbProductString),
     sizeof(UsbMouseString),
     sizeof(UsbKeyboardString),
+    sizeof(UsbGenericHidString),
 };
 
 uint8_t *UsbStringDescriptors[USB_STRING_DESCRIPTOR_COUNT] = {
@@ -189,6 +235,7 @@ uint8_t *UsbStringDescriptors[USB_STRING_DESCRIPTOR_COUNT] = {
     UsbProductString,
     UsbMouseString,
     UsbKeyboardString,
+    UsbGenericHidString,
 };
 
 usb_status_t USB_DeviceGetDeviceDescriptor(
@@ -242,6 +289,9 @@ usb_status_t USB_DeviceGetHidReportDescriptor(
     } else if (USB_KEYBOARD_INTERFACE_INDEX == hidReportDescriptor->interfaceNumber) {
         hidReportDescriptor->buffer = UsbKeyboardReportDescriptor;
         hidReportDescriptor->length = USB_KEYBOARD_REPORT_DESCRIPTOR_LENGTH;
+    } else if (USB_GENERIC_HID_INTERFACE_INDEX == hidReportDescriptor->interfaceNumber) {
+        hidReportDescriptor->buffer = UsbGenericHidReportDescriptor;
+        hidReportDescriptor->length = USB_GENERIC_HID_REPORT_DESCRIPTOR_LENGTH;
     } else {
         return kStatus_USB_InvalidRequest;
     }

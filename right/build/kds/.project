@@ -186,6 +186,16 @@
 			<locationURI>PARENT-2-PROJECT_LOC/composite.h</locationURI>
 		</link>
 		<link>
+			<name>sources/hid_generic.c</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/hid_generic.c</locationURI>
+		</link>
+		<link>
+			<name>sources/hid_generic.h</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/hid_generic.h</locationURI>
+		</link>
+		<link>
 			<name>sources/hid_keyboard.c</name>
 			<type>1</type>
 			<locationURI>PARENT-2-PROJECT_LOC/hid_keyboard.c</locationURI>
@@ -224,6 +234,16 @@
 			<name>sources/usb_device_descriptor.h</name>
 			<type>1</type>
 			<locationURI>PARENT-2-PROJECT_LOC/usb_device_descriptor.h</locationURI>
+		</link>
+		<link>
+			<name>sources/usb_generic_hid_descriptors.c</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/usb_generic_hid_descriptors.c</locationURI>
+		</link>
+		<link>
+			<name>sources/usb_generic_hid_descriptors.h</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/usb_generic_hid_descriptors.h</locationURI>
 		</link>
 		<link>
 			<name>sources/usb_keyboard_descriptors.c</name>

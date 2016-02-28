@@ -8,6 +8,7 @@
 #include "composite.h"
 #include "hid_keyboard.h"
 #include "hid_mouse.h"
+#include "hid_generic.h"
 #include "fsl_device_registers.h"
 #include "include/board/clock_config.h"
 #include "include/board/board.h"
@@ -18,13 +19,15 @@
 #include "include/board/pin_mux.h"
 #include "usb_keyboard_descriptors.h"
 #include "usb_mouse_descriptors.h"
+#include "usb_generic_hid_descriptors.h"
 
 static usb_status_t UsbDeviceCallback(usb_device_handle handle, uint32_t event, void *param);
 usb_device_composite_struct_t UsbCompositeDevice;
 
 usb_device_class_config_struct_t UsbDeviceCompositeClassConfig[USB_COMPOSITE_INTERFACE_COUNT] = {
-    {UsbKeyboardCallback, (class_handle_t)NULL, &UsbKeyboardClass},
-    {UsbMouseCallback,    (class_handle_t)NULL, &UsbMouseClass}
+    {UsbKeyboardCallback,   (class_handle_t)NULL, &UsbKeyboardClass},
+    {UsbMouseCallback,      (class_handle_t)NULL, &UsbMouseClass},
+    {UsbGenericHidCallback, (class_handle_t)NULL, &UsbGenericHidClass}
 };
 
 usb_device_class_config_list_struct_t UsbDeviceCompositeConfigList = {
@@ -66,8 +69,7 @@ static usb_status_t UsbDeviceCallback(usb_device_handle handle, uint32_t event, 
                 if (interface < USB_COMPOSITE_INTERFACE_COUNT) {
                     UsbCompositeDevice.currentInterfaceAlternateSetting[interface] = alternateSetting;
                     UsbMouseSetInterface(UsbCompositeDevice.mouseHandle, interface, alternateSetting);
-                    UsbKeyboardSetInterface(UsbCompositeDevice.keyboardHandle, interface,
-                                                      alternateSetting);
+                    UsbKeyboardSetInterface(UsbCompositeDevice.keyboardHandle, interface, alternateSetting);
                     error = kStatus_USB_Success;
                 }
             }
@@ -122,6 +124,7 @@ static void USB_DeviceApplicationInit(void)
     USB_DeviceClassInit(CONTROLLER_ID, &UsbDeviceCompositeConfigList, &UsbCompositeDevice.deviceHandle);
     UsbCompositeDevice.keyboardHandle = UsbDeviceCompositeConfigList.config[0].classHandle;
     UsbCompositeDevice.mouseHandle = UsbDeviceCompositeConfigList.config[1].classHandle;
+    UsbCompositeDevice.genericHidHandle = UsbDeviceCompositeConfigList.config[2].classHandle;
 
     NVIC_SetPriority((IRQn_Type)irqNumber, USB_DEVICE_INTERRUPT_PRIORITY);
     NVIC_EnableIRQ((IRQn_Type)irqNumber);
@@ -134,6 +137,20 @@ void main(void)
     BOARD_InitPins();
     BOARD_BootClockHSRUN();
     BOARD_InitDebugConsole();
+
+    gpio_pin_config_t led_config = {
+        kGPIO_DigitalOutput, 0,
+    };
+
+    // Init output LED GPIO.
+    GPIO_PinInit(BOARD_LED_RED_GPIO, BOARD_LED_RED_GPIO_PIN, &led_config);
+    GPIO_PinInit(BOARD_LED_GREEN_GPIO, BOARD_LED_GREEN_GPIO_PIN, &led_config);
+    GPIO_PinInit(BOARD_LED_BLUE_GPIO, BOARD_LED_BLUE_GPIO_PIN, &led_config);
+
+    GPIO_SetPinsOutput(BOARD_LED_RED_GPIO, 1U << BOARD_LED_RED_GPIO_PIN);
+    GPIO_SetPinsOutput(BOARD_LED_GREEN_GPIO, 1U << BOARD_LED_GREEN_GPIO_PIN);
+    GPIO_SetPinsOutput(BOARD_LED_BLUE_GPIO, 1U << BOARD_LED_BLUE_GPIO_PIN);
+
     USB_DeviceApplicationInit();
 
     while (1U) {

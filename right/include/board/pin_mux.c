@@ -49,4 +49,13 @@ void BOARD_InitPins(void)
     // Set up SW3.
     CLOCK_EnableClock(kCLOCK_PortB);
     PORT_SetPinConfig(BOARD_SW3_PORT, BOARD_SW3_GPIO_PIN, &switchConfig);
+
+    // Enable LED port clock
+    CLOCK_EnableClock(kCLOCK_PortA);
+    CLOCK_EnableClock(kCLOCK_PortD);
+
+    // Led pin mux Configuration
+    PORT_SetPinMux(BOARD_LED_RED_GPIO_PORT, BOARD_LED_RED_GPIO_PIN, kPORT_MuxAsGpio);
+    PORT_SetPinMux(BOARD_LED_GREEN_GPIO_PORT, BOARD_LED_GREEN_GPIO_PIN, kPORT_MuxAsGpio);
+    PORT_SetPinMux(BOARD_LED_BLUE_GPIO_PORT, BOARD_LED_BLUE_GPIO_PIN, kPORT_MuxAsGpio);
 }
