@@ -56,6 +56,7 @@ static usb_status_t UsbDeviceCallback(usb_device_handle handle, uint32_t event, 
             UsbCompositeDevice.currentConfiguration = *temp8;
             UsbMouseSetConfigure(UsbCompositeDevice.mouseHandle, *temp8);
             UsbKeyboardSetConfigure(UsbCompositeDevice.keyboardHandle, *temp8);
+            UsbGenericHidSetConfigure(UsbCompositeDevice.keyboardHandle, *temp8);
             error = kStatus_USB_Success;
             break;
         case kUSB_DeviceEventGetConfiguration:
@@ -70,6 +71,7 @@ static usb_status_t UsbDeviceCallback(usb_device_handle handle, uint32_t event, 
                     UsbCompositeDevice.currentInterfaceAlternateSetting[interface] = alternateSetting;
                     UsbMouseSetInterface(UsbCompositeDevice.mouseHandle, interface, alternateSetting);
                     UsbKeyboardSetInterface(UsbCompositeDevice.keyboardHandle, interface, alternateSetting);
+                    UsbGenericHidSetInterface(UsbCompositeDevice.keyboardHandle, interface, alternateSetting);
                     error = kStatus_USB_Success;
                 }
             }
