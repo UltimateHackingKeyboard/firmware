@@ -79,7 +79,6 @@ usb_status_t UsbGenericHidSetConfiguration(class_handle_t handle, uint8_t config
 usb_status_t UsbGenericHidSetInterface(class_handle_t handle, uint8_t interface, uint8_t alternateSetting)
 {
     if (USB_GENERIC_HID_INTERFACE_INDEX == interface) {
-        UsbCompositeDevice.currentInterfaceAlternateSetting[interface] = alternateSetting;
         return UsbReceiveData();
     }
     return kStatus_USB_Error;
