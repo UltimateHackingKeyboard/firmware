@@ -1,5 +1,5 @@
-#ifndef __USB_GENERIC_HID_DESCRIPTORS_H__
-#define __USB_GENERIC_HID_DESCRIPTORS_H__
+#ifndef __USB_CLASS_GENERIC_HID_H__
+#define __USB_CLASS_GENERIC_HID_H__
 
 // Macros:
 
@@ -20,13 +20,8 @@
     #define USB_GENERIC_HID_INTERRUPT_OUT_PACKET_SIZE (64U)
     #define USB_GENERIC_HID_INTERRUPT_OUT_INTERVAL (0x04U)
 
-    #define USB_GENERIC_HID_REPORT_DESCRIPTOR_LENGTH (33U)
-    #define USB_GENERIC_HID_STRING_DESCRIPTOR_LENGTH (38U)
-
 // Variables:
 
     extern usb_device_class_struct_t UsbGenericHidClass;
-    extern uint8_t UsbGenericHidReportDescriptor[USB_GENERIC_HID_REPORT_DESCRIPTOR_LENGTH];
-    extern uint8_t UsbGenericHidString[USB_GENERIC_HID_STRING_DESCRIPTOR_LENGTH];
 
 #endif

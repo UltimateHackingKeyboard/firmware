@@ -6,10 +6,11 @@
 #include "include/usb/usb_device_class.h"
 #include "include/usb/usb_device_hid.h"
 #include "include/usb/usb_device_ch9.h"
-#include "usb_device_descriptor.h"
 #include "composite.h"
 #include "scancodes.h"
-#include "hid_keyboard.h"
+#include "usb_interface_keyboard.h"
+#include "usb_class_keyboard.h"
+#include "usb_descriptor_configuration.h"
 
 static usb_device_hid_keyboard_struct_t UsbKeyboardDevice;
 

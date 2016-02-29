@@ -4,11 +4,11 @@
 #include "include/usb/usb_device_class.h"
 #include "include/usb/usb_device_hid.h"
 #include "include/usb/usb_device_ch9.h"
-#include "usb_device_descriptor.h"
+#include "usb_descriptor_device.h"
 #include "composite.h"
-#include "hid_keyboard.h"
-#include "hid_mouse.h"
-#include "hid_generic.h"
+#include "usb_interface_keyboard.h"
+#include "usb_interface_mouse.h"
+#include "usb_interface_generic_hid.h"
 #include "fsl_device_registers.h"
 #include "include/board/clock_config.h"
 #include "include/board/board.h"
@@ -17,9 +17,10 @@
 #include <stdlib.h>
 #include "fsl_common.h"
 #include "include/board/pin_mux.h"
-#include "usb_keyboard_descriptors.h"
-#include "usb_mouse_descriptors.h"
-#include "usb_generic_hid_descriptors.h"
+#include "usb_class_keyboard.h"
+#include "usb_class_mouse.h"
+#include "usb_class_generic_hid.h"
+#include "usb_descriptor_strings.h"
 
 static usb_status_t UsbDeviceCallback(usb_device_handle handle, uint32_t event, void *param);
 usb_device_composite_struct_t UsbCompositeDevice;

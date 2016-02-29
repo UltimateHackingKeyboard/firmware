@@ -6,9 +6,10 @@
 #include "include/usb/usb_device_class.h"
 #include "include/usb/usb_device_hid.h"
 #include "include/usb/usb_device_ch9.h"
-#include "usb_device_descriptor.h"
 #include "composite.h"
-#include "hid_mouse.h"
+#include "usb_class_mouse.h"
+#include "usb_interface_mouse.h"
+#include "usb_descriptor_configuration.h"
 
 static usb_device_hid_mouse_struct_t UsbMouseDevice;
 
@@ -60,7 +61,7 @@ usb_status_t UsbMouseSetConfiguration(class_handle_t handle, uint8_t configurati
 
 usb_status_t UsbMouseSetInterface(class_handle_t handle, uint8_t interface, uint8_t alternateSetting)
 {
-    if (USB_KEYBOARD_INTERFACE_INDEX == interface) {
+    if (USB_MOUSE_INTERFACE_INDEX == interface) {
         return UsbMouseAction();
     }
     return kStatus_USB_Error;

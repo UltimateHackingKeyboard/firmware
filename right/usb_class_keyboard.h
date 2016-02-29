@@ -1,5 +1,5 @@
-#ifndef __USB_KEYBOARD_DESCRIPTORS_H__
-#define __USB_KEYBOARD_DESCRIPTORS_H__
+#ifndef __USB_CLASS_KEYBOARD_H__
+#define __USB_CLASS_KEYBOARD_H__
 
 // Macros:
 
@@ -17,13 +17,8 @@
     #define USB_KEYBOARD_INTERRUPT_IN_PACKET_SIZE (8U)
     #define USB_KEYBOARD_INTERRUPT_IN_INTERVAL (0x04U)
 
-    #define USB_KEYBOARD_REPORT_DESCRIPTOR_LENGTH (63U)
-    #define USB_KEYBOARD_STRING_DESCRIPTOR_LENGTH (40U)
-
 // Variables:
 
     extern usb_device_class_struct_t UsbKeyboardClass;
-    extern uint8_t UsbKeyboardReportDescriptor[USB_KEYBOARD_REPORT_DESCRIPTOR_LENGTH];
-    extern uint8_t UsbKeyboardString[USB_KEYBOARD_STRING_DESCRIPTOR_LENGTH];
 
 #endif

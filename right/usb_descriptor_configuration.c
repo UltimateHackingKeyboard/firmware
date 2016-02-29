@@ -3,32 +3,15 @@
 #include "usb_device.h"
 #include "include/usb/usb_device_class.h"
 #include "include/usb/usb_device_hid.h"
-#include "usb_device_descriptor.h"
+#include "usb_descriptor_device.h"
 #include "composite.h"
-#include "hid_keyboard.h"
-#include "hid_mouse.h"
-#include "hid_generic.h"
-
-uint8_t UsbDeviceDescriptor[USB_DESCRIPTOR_LENGTH_DEVICE] = {
-    USB_DESCRIPTOR_LENGTH_DEVICE,
-    USB_DESCRIPTOR_TYPE_DEVICE,
-    USB_SHORT_GET_LOW(USB_DEVICE_SPECIFICATION_VERSION),
-    USB_SHORT_GET_HIGH(USB_DEVICE_SPECIFICATION_VERSION),
-    USB_DEVICE_CLASS,
-    USB_DEVICE_SUBCLASS,
-    USB_DEVICE_PROTOCOL,
-    USB_CONTROL_MAX_PACKET_SIZE,
-    USB_SHORT_GET_LOW(USB_DEVICE_VENDOR_ID),
-    USB_SHORT_GET_HIGH(USB_DEVICE_VENDOR_ID),
-    USB_SHORT_GET_LOW(USB_DEVICE_PRODUCT_ID),
-    USB_SHORT_GET_HIGH(USB_DEVICE_PRODUCT_ID),
-    USB_SHORT_GET_LOW(USB_DEVICE_RELEASE_NUMBER),
-    USB_SHORT_GET_HIGH(USB_DEVICE_RELEASE_NUMBER),
-    USB_STRING_DESCRIPTOR_ID_MANUFACTURER,
-    USB_STRING_DESCRIPTOR_ID_PRODUCT,
-    USB_STRING_DESCRIPTOR_ID_SUPPORTED_LANGUAGES,
-    USB_DEVICE_CONFIGURATION_COUNT,
-};
+#include "usb_class_keyboard.h"
+#include "usb_class_mouse.h"
+#include "usb_class_generic_hid.h"
+#include "usb_descriptor_keyboard_report.h"
+#include "usb_descriptor_mouse_report.h"
+#include "usb_descriptor_generic_hid_report.h"
+#include "usb_descriptor_configuration.h"
 
 uint8_t UsbConfigurationDescriptor[USB_CONFIGURATION_DESCRIPTOR_TOTAL_LENGTH] = {
 
@@ -159,87 +142,6 @@ uint8_t UsbConfigurationDescriptor[USB_CONFIGURATION_DESCRIPTOR_TOTAL_LENGTH] = 
     USB_GENERIC_HID_INTERRUPT_IN_INTERVAL,
 };
 
-uint8_t UsbLanguageListStringDescriptor[USB_LANGUAGE_LIST_STRING_DESCRIPTOR_LENGTH] = {
-    sizeof(UsbLanguageListStringDescriptor),
-    USB_DESCRIPTOR_TYPE_STRING,
-    USB_SHORT_GET_LOW(USB_LANGUAGE_ID_UNITED_STATES),
-    USB_SHORT_GET_HIGH(USB_LANGUAGE_ID_UNITED_STATES)
-};
-
-uint8_t UsbManufacturerString[USB_MANUFACTURER_STRING_DESCRIPTOR_LENGTH] = {
-    sizeof(UsbManufacturerString),
-    USB_DESCRIPTOR_TYPE_STRING,
-    'F', 0x00U,
-    'R', 0x00U,
-    'E', 0x00U,
-    'E', 0x00U,
-    'S', 0x00U,
-    'C', 0x00U,
-    'A', 0x00U,
-    'L', 0x00U,
-    'E', 0x00U,
-    ' ', 0x00U,
-    'S', 0x00U,
-    'E', 0x00U,
-    'M', 0x00U,
-    'I', 0x00U,
-    'C', 0x00U,
-    'O', 0x00U,
-    'N', 0x00U,
-    'D', 0x00U,
-    'U', 0x00U,
-    'C', 0x00U,
-    'T', 0x00U,
-    'O', 0x00U,
-    'R', 0x00U,
-    ' ', 0x00U,
-    'I', 0x00U,
-    'N', 0x00U,
-    'C', 0x00U,
-    '.', 0x00U,
-};
-
-uint8_t UsbProductString[USB_PRODUCT_STRING_DESCRIPTOR_LENGTH] = {
-    sizeof(UsbProductString),
-    USB_DESCRIPTOR_TYPE_STRING,
-    'C', 0x00U,
-    'O', 0x00U,
-    'M', 0x00U,
-    'P', 0x00U,
-    'O', 0x00U,
-    'S', 0x00U,
-    'I', 0x00U,
-    'T', 0x00U,
-    'E', 0x00U,
-    ' ', 0x00U,
-    'D', 0x00U,
-    'E', 0x00U,
-    'V', 0x00U,
-    'I', 0x00U,
-    'C', 0x00U,
-    'E', 0x00U,
-};
-
-uint32_t UsbStringDescriptorLengths[USB_STRING_DESCRIPTOR_COUNT] = {
-    sizeof(UsbLanguageListStringDescriptor),
-    sizeof(UsbManufacturerString),
-    sizeof(UsbProductString),
-};
-
-uint8_t *UsbStringDescriptors[USB_STRING_DESCRIPTOR_COUNT] = {
-    UsbLanguageListStringDescriptor,
-    UsbManufacturerString,
-    UsbProductString,
-};
-
-usb_status_t USB_DeviceGetDeviceDescriptor(
-    usb_device_handle handle, usb_device_get_device_descriptor_struct_t *deviceDescriptor)
-{
-    deviceDescriptor->buffer = UsbDeviceDescriptor;
-    deviceDescriptor->length = USB_DESCRIPTOR_LENGTH_DEVICE;
-    return kStatus_USB_Success;
-}
-
 usb_status_t USB_DeviceGetConfigurationDescriptor(
     usb_device_handle handle, usb_device_get_configuration_descriptor_struct_t *configurationDescriptor)
 {
@@ -249,23 +151,6 @@ usb_status_t USB_DeviceGetConfigurationDescriptor(
         return kStatus_USB_Success;
     }
     return kStatus_USB_InvalidRequest;
-}
-
-usb_status_t USB_DeviceGetStringDescriptor(
-    usb_device_handle handle, usb_device_get_string_descriptor_struct_t *stringDescriptor)
-{
-    if (stringDescriptor->stringIndex == 0U) {
-        stringDescriptor->buffer = UsbLanguageListStringDescriptor;
-        stringDescriptor->length = sizeof(UsbLanguageListStringDescriptor);
-    } else if (stringDescriptor->languageId == USB_LANGUAGE_ID_UNITED_STATES &&
-               stringDescriptor->stringIndex < USB_STRING_DESCRIPTOR_COUNT)
-    {
-        stringDescriptor->buffer = UsbStringDescriptors[stringDescriptor->stringIndex];
-        stringDescriptor->length = UsbStringDescriptorLengths[stringDescriptor->stringIndex];
-    } else {
-        return kStatus_USB_InvalidRequest;
-    }
-    return kStatus_USB_Success;
 }
 
 usb_status_t USB_DeviceGetHidDescriptor(

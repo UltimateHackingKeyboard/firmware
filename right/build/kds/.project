@@ -186,39 +186,99 @@
 			<locationURI>PARENT-2-PROJECT_LOC/composite.h</locationURI>
 		</link>
 		<link>
-			<name>sources/hid_generic.c</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/hid_generic.c</locationURI>
-		</link>
-		<link>
-			<name>sources/hid_generic.h</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/hid_generic.h</locationURI>
-		</link>
-		<link>
-			<name>sources/hid_keyboard.c</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/hid_keyboard.c</locationURI>
-		</link>
-		<link>
-			<name>sources/hid_keyboard.h</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/hid_keyboard.h</locationURI>
-		</link>
-		<link>
-			<name>sources/hid_mouse.c</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/hid_mouse.c</locationURI>
-		</link>
-		<link>
-			<name>sources/hid_mouse.h</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/hid_mouse.h</locationURI>
-		</link>
-		<link>
 			<name>sources/scancodes.h</name>
 			<type>1</type>
 			<locationURI>PARENT-2-PROJECT_LOC/scancodes.h</locationURI>
+		</link>
+		<link>
+			<name>sources/usb_class_generic_hid.c</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/usb_class_generic_hid.c</locationURI>
+		</link>
+		<link>
+			<name>sources/usb_class_generic_hid.h</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/usb_class_generic_hid.h</locationURI>
+		</link>
+		<link>
+			<name>sources/usb_class_keyboard.c</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/usb_class_keyboard.c</locationURI>
+		</link>
+		<link>
+			<name>sources/usb_class_keyboard.h</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/usb_class_keyboard.h</locationURI>
+		</link>
+		<link>
+			<name>sources/usb_class_mouse.c</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/usb_class_mouse.c</locationURI>
+		</link>
+		<link>
+			<name>sources/usb_class_mouse.h</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/usb_class_mouse.h</locationURI>
+		</link>
+		<link>
+			<name>sources/usb_descriptor_configuration.c</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/usb_descriptor_configuration.c</locationURI>
+		</link>
+		<link>
+			<name>sources/usb_descriptor_configuration.h</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/usb_descriptor_configuration.h</locationURI>
+		</link>
+		<link>
+			<name>sources/usb_descriptor_device.c</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/usb_descriptor_device.c</locationURI>
+		</link>
+		<link>
+			<name>sources/usb_descriptor_device.h</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/usb_descriptor_device.h</locationURI>
+		</link>
+		<link>
+			<name>sources/usb_descriptor_generic_hid_report.c</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/usb_descriptor_generic_hid_report.c</locationURI>
+		</link>
+		<link>
+			<name>sources/usb_descriptor_generic_hid_report.h</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/usb_descriptor_generic_hid_report.h</locationURI>
+		</link>
+		<link>
+			<name>sources/usb_descriptor_keyboard_report.c</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/usb_descriptor_keyboard_report.c</locationURI>
+		</link>
+		<link>
+			<name>sources/usb_descriptor_keyboard_report.h</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/usb_descriptor_keyboard_report.h</locationURI>
+		</link>
+		<link>
+			<name>sources/usb_descriptor_mouse_report.c</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/usb_descriptor_mouse_report.c</locationURI>
+		</link>
+		<link>
+			<name>sources/usb_descriptor_mouse_report.h</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/usb_descriptor_mouse_report.h</locationURI>
+		</link>
+		<link>
+			<name>sources/usb_descriptor_strings.c</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/usb_descriptor_strings.c</locationURI>
+		</link>
+		<link>
+			<name>sources/usb_descriptor_strings.h</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/usb_descriptor_strings.h</locationURI>
 		</link>
 		<link>
 			<name>sources/usb_device_config.h</name>
@@ -226,44 +286,34 @@
 			<locationURI>PARENT-2-PROJECT_LOC/usb_device_config.h</locationURI>
 		</link>
 		<link>
-			<name>sources/usb_device_descriptor.c</name>
+			<name>sources/usb_interface_generic_hid.c</name>
 			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/usb_device_descriptor.c</locationURI>
+			<locationURI>PARENT-2-PROJECT_LOC/usb_interface_generic_hid.c</locationURI>
 		</link>
 		<link>
-			<name>sources/usb_device_descriptor.h</name>
+			<name>sources/usb_interface_generic_hid.h</name>
 			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/usb_device_descriptor.h</locationURI>
+			<locationURI>PARENT-2-PROJECT_LOC/usb_interface_generic_hid.h</locationURI>
 		</link>
 		<link>
-			<name>sources/usb_generic_hid_descriptors.c</name>
+			<name>sources/usb_interface_keyboard.c</name>
 			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/usb_generic_hid_descriptors.c</locationURI>
+			<locationURI>PARENT-2-PROJECT_LOC/usb_interface_keyboard.c</locationURI>
 		</link>
 		<link>
-			<name>sources/usb_generic_hid_descriptors.h</name>
+			<name>sources/usb_interface_keyboard.h</name>
 			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/usb_generic_hid_descriptors.h</locationURI>
+			<locationURI>PARENT-2-PROJECT_LOC/usb_interface_keyboard.h</locationURI>
 		</link>
 		<link>
-			<name>sources/usb_keyboard_descriptors.c</name>
+			<name>sources/usb_interface_mouse.c</name>
 			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/usb_keyboard_descriptors.c</locationURI>
+			<locationURI>PARENT-2-PROJECT_LOC/usb_interface_mouse.c</locationURI>
 		</link>
 		<link>
-			<name>sources/usb_keyboard_descriptors.h</name>
+			<name>sources/usb_interface_mouse.h</name>
 			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/usb_keyboard_descriptors.h</locationURI>
-		</link>
-		<link>
-			<name>sources/usb_mouse_descriptors.c</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/usb_mouse_descriptors.c</locationURI>
-		</link>
-		<link>
-			<name>sources/usb_mouse_descriptors.h</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/usb_mouse_descriptors.h</locationURI>
+			<locationURI>PARENT-2-PROJECT_LOC/usb_interface_mouse.h</locationURI>
 		</link>
 		<link>
 			<name>startup/startup_MK22F51212.S</name>

@@ -6,10 +6,11 @@
 #include "include/usb/usb_device_class.h"
 #include "include/usb/usb_device_hid.h"
 #include "include/usb/usb_device_ch9.h"
-#include "usb_device_descriptor.h"
+#include "usb_interface_generic_hid.h"
+#include "usb_class_generic_hid.h"
+#include "usb_descriptor_configuration.h"
 #include "composite.h"
 #include "scancodes.h"
-#include "hid_generic.h"
 
 static usb_device_generic_hid_struct_t UsbGenericHidDevice;
 

@@ -1,6 +1,10 @@
 #ifndef __USB_DEVICE_COMPOSITE_H__
 #define __USB_DEVICE_COMPOSITE_H__
 
+// Includes:
+
+    #include "usb_descriptor_configuration.h"
+
 // Macros:
 
     #define CONTROLLER_ID kUSB_ControllerKhci0
