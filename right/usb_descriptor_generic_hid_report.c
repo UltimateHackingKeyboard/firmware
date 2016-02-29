@@ -1,8 +1,4 @@
-#include "usb_device_config.h"
-#include "usb.h"
-#include "usb_device.h"
-#include "include/usb/usb_device_class.h"
-#include "include/usb/usb_device_hid.h"
+#include <stdint.h>
 #include "usb_descriptor_generic_hid_report.h"
 
 uint8_t UsbGenericHidReportDescriptor[USB_GENERIC_HID_REPORT_DESCRIPTOR_LENGTH] = {
