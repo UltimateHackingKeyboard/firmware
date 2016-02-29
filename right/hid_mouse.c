@@ -27,8 +27,7 @@ usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param
 {
     usb_status_t error = kStatus_USB_Error;
 
-    switch (event)
-    {
+    switch (event) {
         case kUSB_DeviceHidEventSendResponse:
             if (UsbCompositeDevice.attach) {
                 return UsbMouseAction();
