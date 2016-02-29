@@ -24,8 +24,7 @@ usb_status_t UsbGenericHidCallback(class_handle_t handle, uint32_t event, void *
 {
     usb_status_t error = kStatus_USB_Error;
 
-    switch (event)
-    {
+    switch (event) {
         case kUSB_DeviceHidEventSendResponse:
             break;
         case kUSB_DeviceHidEventRecvResponse:
@@ -33,16 +32,18 @@ usb_status_t UsbGenericHidCallback(class_handle_t handle, uint32_t event, void *
             GPIO_SetPinsOutput(BOARD_LED_GREEN_GPIO, 1U << BOARD_LED_GREEN_GPIO_PIN);
             GPIO_SetPinsOutput(BOARD_LED_BLUE_GPIO, 1U << BOARD_LED_BLUE_GPIO_PIN);
 
-            uint8_t* cp = (uint8_t*)&UsbGenericHidDevice.buffer[UsbGenericHidDevice.bufferIndex][0];
-            uint8_t c = *(cp+0);
-            if (c == 'r') {
-                GPIO_ClearPinsOutput(BOARD_LED_RED_GPIO, 1U << BOARD_LED_RED_GPIO_PIN);
-            }
-            if (c == 'g') {
-                GPIO_ClearPinsOutput(BOARD_LED_GREEN_GPIO, 1U << BOARD_LED_GREEN_GPIO_PIN);
-            }
-            if (c == 'b') {
-                GPIO_ClearPinsOutput(BOARD_LED_BLUE_GPIO, 1U << BOARD_LED_BLUE_GPIO_PIN);
+            uint8_t command = (uint8_t)UsbGenericHidDevice.buffer[UsbGenericHidDevice.bufferIndex][0];
+
+            switch (command) {
+                case 'r':
+                    GPIO_ClearPinsOutput(BOARD_LED_RED_GPIO, 1U << BOARD_LED_RED_GPIO_PIN);
+                    break;
+                case 'g':
+                    GPIO_ClearPinsOutput(BOARD_LED_GREEN_GPIO, 1U << BOARD_LED_GREEN_GPIO_PIN);
+                    break;
+                case 'b':
+                    GPIO_ClearPinsOutput(BOARD_LED_BLUE_GPIO, 1U << BOARD_LED_BLUE_GPIO_PIN);
+                    break;
             }
 
             USB_DeviceHidSend(UsbCompositeDevice.genericHidHandle, USB_GENERIC_HID_ENDPOINT_IN_ID,
