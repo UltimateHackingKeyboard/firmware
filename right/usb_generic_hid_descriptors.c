@@ -67,26 +67,3 @@ uint8_t UsbGenericHidReportDescriptor[USB_GENERIC_HID_REPORT_DESCRIPTOR_LENGTH] 
     0x91U, 0x02U, /* Input (Data, Variable, Absolute) */
     0xC0U,        /* End collection */
 };
-
-uint8_t UsbGenericHidString[USB_GENERIC_HID_STRING_DESCRIPTOR_LENGTH] = {
-    sizeof(UsbGenericHidString),
-    USB_DESCRIPTOR_TYPE_STRING,
-    'H', 0x00U,
-    'I', 0x00U,
-    'D', 0x00U,
-    ' ', 0x00U,
-    'G', 0x00U,
-    'E', 0x00U,
-    'N', 0x00U,
-    'E', 0x00U,
-    'R', 0x00U,
-    'I', 0x00U,
-    'C', 0x00U,
-    ' ', 0x00U,
-    'D', 0x00U,
-    'E', 0x00U,
-    'V', 0x00U,
-    'I', 0x00U,
-    'C', 0x00U,
-    'E', 0x00U,
-};

@@ -56,7 +56,7 @@ uint8_t UsbConfigurationDescriptor[USB_CONFIGURATION_DESCRIPTOR_TOTAL_LENGTH] = 
     USB_MOUSE_CLASS,
     USB_MOUSE_SUBCLASS,
     USB_MOUSE_PROTOCOL,
-    USB_STRING_DESCRIPTOR_ID_MOUSE,
+    USB_STRING_DESCRIPTOR_NONE,
 
 // Mouse HID descriptor
 
@@ -90,7 +90,7 @@ uint8_t UsbConfigurationDescriptor[USB_CONFIGURATION_DESCRIPTOR_TOTAL_LENGTH] = 
     USB_KEYBOARD_CLASS,
     USB_KEYBOARD_SUBCLASS,
     USB_KEYBOARD_PROTOCOL,
-    USB_STRING_DESCRIPTOR_ID_KEYBOARD,
+    USB_STRING_DESCRIPTOR_NONE,
 
 // Keyboard HID descriptor
 
@@ -124,7 +124,7 @@ uint8_t UsbConfigurationDescriptor[USB_CONFIGURATION_DESCRIPTOR_TOTAL_LENGTH] = 
     USB_GENERIC_HID_CLASS,
     USB_GENERIC_HID_SUBCLASS,
     USB_GENERIC_HID_PROTOCOL,
-    USB_STRING_DESCRIPTOR_ID_GENERIC_HID,
+    USB_STRING_DESCRIPTOR_NONE,
 
 // Generic HID descriptor
 
@@ -224,18 +224,12 @@ uint32_t UsbStringDescriptorLengths[USB_STRING_DESCRIPTOR_COUNT] = {
     sizeof(UsbLanguageListStringDescriptor),
     sizeof(UsbManufacturerString),
     sizeof(UsbProductString),
-    sizeof(UsbMouseString),
-    sizeof(UsbKeyboardString),
-    sizeof(UsbGenericHidString),
 };
 
 uint8_t *UsbStringDescriptors[USB_STRING_DESCRIPTOR_COUNT] = {
     UsbLanguageListStringDescriptor,
     UsbManufacturerString,
     UsbProductString,
-    UsbMouseString,
-    UsbKeyboardString,
-    UsbGenericHidString,
 };
 
 usb_status_t USB_DeviceGetDeviceDescriptor(

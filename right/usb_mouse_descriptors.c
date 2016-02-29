@@ -75,24 +75,3 @@ uint8_t UsbMouseReportDescriptor[USB_MOUSE_REPORT_DESCRIPTOR_LENGTH] = {
     0xC0U,        // End collection, Close Pointer collection
     0xC0U         // End collection, Close Mouse collection
 };
-
-uint8_t UsbMouseString[USB_MOUSE_STRING_DESCRIPTOR_LENGTH] = {
-    sizeof(UsbMouseString),
-    USB_DESCRIPTOR_TYPE_STRING,
-    'H', 0x00U,
-    'I', 0x00U,
-    'D', 0x00U,
-    ' ', 0x00U,
-    'M', 0x00U,
-    'O', 0x00U,
-    'U', 0x00U,
-    'S', 0x00U,
-    'E', 0x00U,
-    ' ', 0x00U,
-    'D', 0x00U,
-    'E', 0x00U,
-    'V', 0x00U,
-    'I', 0x00U,
-    'C', 0x00U,
-    'E', 0x00U,
-};
