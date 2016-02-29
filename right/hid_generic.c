@@ -13,7 +13,8 @@
 
 static usb_device_generic_hid_struct_t UsbGenericHidDevice;
 
-static usb_status_t UsbReceiveData() {
+static usb_status_t UsbReceiveData()
+{
     return USB_DeviceHidRecv(UsbCompositeDevice.genericHidHandle, USB_GENERIC_HID_ENDPOINT_OUT_ID,
                              (uint8_t *)&UsbGenericHidDevice.buffer[UsbGenericHidDevice.bufferIndex][0],
                              USB_GENERIC_HID_OUT_BUFFER_LENGTH);
@@ -77,7 +78,7 @@ usb_status_t UsbGenericHidSetConfiguration(class_handle_t handle, uint8_t config
 
 usb_status_t UsbGenericHidSetInterface(class_handle_t handle, uint8_t interface, uint8_t alternateSetting)
 {
-    if (USB_KEYBOARD_INTERFACE_INDEX == interface) {
+    if (USB_GENERIC_HID_INTERFACE_INDEX == interface) {
         UsbCompositeDevice.currentInterfaceAlternateSetting[interface] = alternateSetting;
         return UsbReceiveData();
     }
