@@ -14,7 +14,6 @@
 
 // Functions:
 
-    extern usb_status_t UsbKeyboardInit(usb_device_composite_struct_t *compositeDevice);
     extern usb_status_t UsbKeyboardCallback(class_handle_t handle, uint32_t event, void *param);
     extern usb_status_t UsbKeyboardSetConfigure(class_handle_t handle, uint8_t configuration);
     extern usb_status_t UsbKeyboardSetInterface(class_handle_t handle, uint8_t interface, uint8_t alternateSetting);
