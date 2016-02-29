@@ -121,7 +121,6 @@ static void USB_DeviceApplicationInit(void)
     SystemCoreClockUpdate();
     CLOCK_EnableUsbfs0Clock(kCLOCK_UsbSrcIrc48M, 48000000U);
 
-    UsbCompositeDevice.speed = USB_SPEED_FULL;
     UsbCompositeDevice.attach = 0U;
     USB_DeviceClassInit(CONTROLLER_ID, &UsbDeviceCompositeConfigList, &UsbCompositeDevice.deviceHandle);
     UsbCompositeDevice.keyboardHandle = UsbDeviceCompositeConfigList.config[0].classHandle;

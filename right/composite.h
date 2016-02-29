@@ -13,7 +13,6 @@
         class_handle_t mouseHandle;
         class_handle_t keyboardHandle;
         class_handle_t genericHidHandle;
-        uint8_t speed;
         uint8_t attach;
         uint8_t currentConfiguration;
         uint8_t currentInterfaceAlternateSetting[USB_COMPOSITE_INTERFACE_COUNT];
