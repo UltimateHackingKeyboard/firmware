@@ -50,7 +50,7 @@ usb_status_t UsbKeyboardCallback(class_handle_t handle, uint32_t event, void *pa
     return error;
 }
 
-usb_status_t UsbKeyboardSetConfigure(class_handle_t handle, uint8_t configuration)
+usb_status_t UsbKeyboardSetConfiguration(class_handle_t handle, uint8_t configuration)
 {
     if (USB_COMPOSITE_CONFIGURATION_INDEX == configuration) {
         return UsbKeyboardAction();

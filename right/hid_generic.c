@@ -62,7 +62,7 @@ usb_status_t UsbGenericHidCallback(class_handle_t handle, uint32_t event, void *
 
     return error;
 }
-usb_status_t UsbGenericHidSetConfigure(class_handle_t handle, uint8_t configuration)
+usb_status_t UsbGenericHidSetConfiguration(class_handle_t handle, uint8_t configuration)
 {
     if (USB_COMPOSITE_CONFIGURATION_INDEX == configuration) {
         return USB_DeviceHidRecv(

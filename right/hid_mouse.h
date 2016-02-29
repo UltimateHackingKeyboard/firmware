@@ -15,7 +15,7 @@
 // Functions:
 
     extern usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param);
-    extern usb_status_t UsbMouseSetConfigure(class_handle_t handle, uint8_t configuration);
+    extern usb_status_t UsbMouseSetConfiguration(class_handle_t handle, uint8_t configuration);
     extern usb_status_t UsbMouseSetInterface(class_handle_t handle, uint8_t interface, uint8_t alternateSetting);
 
 #endif

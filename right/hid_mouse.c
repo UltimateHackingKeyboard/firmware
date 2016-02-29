@@ -51,7 +51,7 @@ usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param
     return error;
 }
 
-usb_status_t UsbMouseSetConfigure(class_handle_t handle, uint8_t configuration)
+usb_status_t UsbMouseSetConfiguration(class_handle_t handle, uint8_t configuration)
 {
     if (USB_COMPOSITE_CONFIGURATION_INDEX == configuration) {
         return UsbMouseAction();
