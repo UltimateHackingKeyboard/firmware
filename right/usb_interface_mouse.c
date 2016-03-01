@@ -15,10 +15,18 @@ static usb_device_hid_mouse_struct_t UsbMouseDevice;
 
 static usb_status_t UsbMouseAction(void)
 {
-    UsbMouseDevice.buffer[1] = 0U;
-    UsbMouseDevice.buffer[2] = 0U;
+    //usb_device_wheeled_mouse_struct_t *wheeledMouse = (usb_device_wheeled_mouse_struct_t*)&(UsbMouseDevice.buffer);
+    UsbMouseDevice.buffer[0] = 0;
+    UsbMouseDevice.buffer[1] = 0;
+    UsbMouseDevice.buffer[2] = 0;
+    UsbMouseDevice.buffer[3] = 0;
+    UsbMouseDevice.buffer[4] = 0;
+    UsbMouseDevice.buffer[5] = 0;
+    UsbMouseDevice.buffer[6] = 0;
     if (!GPIO_ReadPinInput(BOARD_SW2_GPIO, BOARD_SW2_GPIO_PIN)) {
-        UsbMouseDevice.buffer[2] = 1U;
+        UsbMouseDevice.buffer[1] = 1;
+        //wheeledMouse->x = 32767;
+        //wheeledMouse->y = 32767;
     }
     return USB_DeviceHidSend(UsbCompositeDevice.mouseHandle, USB_MOUSE_ENDPOINT_ID,
                              UsbMouseDevice.buffer, USB_MOUSE_REPORT_LENGTH);
