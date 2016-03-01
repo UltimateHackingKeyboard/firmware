@@ -9,9 +9,12 @@
 // Macros:
 
     #define HID_RI_USAGE_PAGE_GENERIC_DESKTOP 0x01
+    #define HID_RI_USAGE_PAGE_LEDS            0x08
 
     #define HID_RI_USAGE_KEYBOARD 0x06
 
     #define HID_RI_COLLECTION_APPLICATION 0x01
+
+    #define HID_RI_USAGE_PAGE_KEY_CODES 0x07
 
 #endif
