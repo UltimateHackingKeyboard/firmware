@@ -1,6 +1,16 @@
 #ifndef __USB_CLASS_GENERIC_HID_H__
 #define __USB_CLASS_GENERIC_HID_H__
 
+// Includes:
+
+    #include "usb_device_config.h"
+    #include "usb.h"
+    #include "usb_device.h"
+    #include "include/usb/usb_device_class.h"
+    #include "include/usb/usb_device_hid.h"
+    #include "usb_descriptor_device.h"
+    #include "usb_class_keyboard.h"
+
 // Macros:
 
     #define USB_GENERIC_HID_CLASS (0x03U)
