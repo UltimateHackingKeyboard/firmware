@@ -7,17 +7,13 @@
 
 // Typedefs:
 
-    typedef struct usb_device_hid_mouse_struct {
-        uint8_t buffer[USB_MOUSE_REPORT_LENGTH];
-    } usb_device_hid_mouse_struct_t;
-
-    typedef struct usb_device_wheeled_mouse_struct {
-        uint8_t button;
+    typedef struct usb_mouse_report {
+        uint8_t buttons;
         int16_t x;
         int16_t y;
-        int8_t verticalWheelMovement;
-        int8_t horizontalWheelMovement;
-    } usb_device_wheeled_mouse_struct_t;
+        int8_t wheelX;
+        int8_t wheelY;
+    } __attribute__ ((packed)) usb_mouse_report_t;
 
 // Functions:
 

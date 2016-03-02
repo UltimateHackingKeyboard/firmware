@@ -11,35 +11,25 @@
 #include "usb_interface_mouse.h"
 #include "usb_descriptor_configuration.h"
 
-static usb_device_hid_mouse_struct_t UsbMouseDevice;
+static usb_mouse_report_t UsbMouseReport;
 
 static uint8_t scrollCounter = 0;
-static usb_status_t UsbMouseAction(void)
+static volatile usb_status_t UsbMouseAction(void)
 {
-    usb_device_wheeled_mouse_struct_t *wheeledMouse = (usb_device_wheeled_mouse_struct_t*)&(UsbMouseDevice.buffer);
-    UsbMouseDevice.buffer[0] = 0;
-    UsbMouseDevice.buffer[1] = 0;
-    UsbMouseDevice.buffer[2] = 0;
-    UsbMouseDevice.buffer[3] = 0;
-    UsbMouseDevice.buffer[4] = 0;
-    UsbMouseDevice.buffer[5] = 0;
-    UsbMouseDevice.buffer[6] = 0;
+    UsbMouseReport.buttons = 0;
+    UsbMouseReport.x = 0;
+    UsbMouseReport.y = 0;
+    UsbMouseReport.wheelX = 0;
+    UsbMouseReport.wheelY = 0;
+
     if (!GPIO_ReadPinInput(BOARD_SW2_GPIO, BOARD_SW2_GPIO_PIN)) {
-        // UsbMouseDevice.buffer[0] = 1;  // left click
-        // UsbMouseDevice.buffer[1] = 1;  // slow right
-        // UsbMouseDevice.buffer[2] = 1;  // fast right
-        // UsbMouseDevice.buffer[3] = 1;  // slow down
-        // UsbMouseDevice.buffer[4] = 1;  // fast down
         if (!(scrollCounter % 10)) {
-            UsbMouseDevice.buffer[5] = 1; // scroll up
-            //UsbMouseDevice.buffer[6] = 1; // scroll right
+            UsbMouseReport.wheelX = -1;
         }
-        //wheeledMouse->x = 32767;
-        //wheeledMouse->y = 32767;
     }
     scrollCounter++;
     return USB_DeviceHidSend(UsbCompositeDevice.mouseHandle, USB_MOUSE_ENDPOINT_ID,
-                             UsbMouseDevice.buffer, USB_MOUSE_REPORT_LENGTH);
+                             (uint8_t*)&UsbMouseReport, USB_MOUSE_REPORT_LENGTH);
 }
 
 usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param)
