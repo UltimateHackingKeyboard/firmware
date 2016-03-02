@@ -111,12 +111,12 @@ uint8_t UsbMouseReportDescriptor[USB_MOUSE_REPORT_DESCRIPTOR_LENGTH] = {
                 HID_RI_FEATURE(8, HID_IOF_CONSTANT | HID_IOF_VARIABLE | HID_IOF_ABSOLUTE),
 
                 // Horizontal wheel
-                0x05, 0x0c,        //         USAGE_PAGE (Consumer Devices)
-                0x0a, 0x38, 0x02,  //         USAGE (AC Pan)
-                0x15, 0x81,        //         LOGICAL_MINIMUM (-127)
-                0x25, 0x7f,        //         LOGICAL_MAXIMUM (127)
-                0x75, 0x08,        //         REPORT_SIZE (8)
-                0x81, 0x06,        //         INPUT (Data,Var,Rel)
+                HID_RI_USAGE_PAGE(8, HID_RI_USAGE_PAGE_CONSUMER),
+                HID_RI_USAGE(16, HID_RI_USAGE_AC_PAN),
+                HID_RI_LOGICAL_MINIMUM(8, -127),
+                HID_RI_LOGICAL_MAXIMUM(8, 127),
+                HID_RI_REPORT_SIZE(8, 0x08),
+                HID_RI_INPUT(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_RELATIVE),
 
                 HID_RI_END_COLLECTION(0),
         HID_RI_END_COLLECTION(0),
