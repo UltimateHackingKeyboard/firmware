@@ -14,6 +14,7 @@
     #define USB_MOUSE_REPORT_DESCRIPTOR_BUTTONS_PADDING ((USB_MOUSE_REPORT_DESCRIPTOR_BUTTONS % 8) \
                 ? (8 - (USB_MOUSE_REPORT_DESCRIPTOR_BUTTONS % 8)) \
                 : 0)
+
 // Variables:
 
     extern uint8_t UsbMouseReportDescriptor[USB_MOUSE_REPORT_DESCRIPTOR_LENGTH];
