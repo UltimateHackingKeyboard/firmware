@@ -21,7 +21,7 @@ uint8_t UsbMouseReportDescriptor[USB_MOUSE_REPORT_DESCRIPTOR_LENGTH] = {
 
             // Mouse buttons padding
             HID_RI_REPORT_COUNT(8, 0x01),
-            HID_RI_REPORT_SIZE(8, (USB_MOUSE_REPORT_DESCRIPTOR_BUTTONS % 8) ? (8 - (USB_MOUSE_REPORT_DESCRIPTOR_BUTTONS % 8)) : 0),
+            HID_RI_REPORT_SIZE(8, USB_MOUSE_REPORT_DESCRIPTOR_BUTTONS_PADDING),
             HID_RI_INPUT(8, HID_IOF_CONSTANT),
 
             // Mouse X and Y coordinates
