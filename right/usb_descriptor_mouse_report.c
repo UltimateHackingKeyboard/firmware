@@ -78,14 +78,14 @@ uint8_t UsbMouseReportDescriptor[USB_MOUSE_REPORT_DESCRIPTOR_LENGTH] = {
 
                 // Vertical wheel resolution multiplier
                 HID_RI_USAGE(8, HID_RI_USAGE_RESOLUTION_MULTIPLIER),
-                0x15, 0x00,        //         LOGICAL_MINIMUM (0)
-                0x25, 0x01,        //         LOGICAL_MAXIMUM (1)
-                0x35, 0x01,        //         PHYSICAL_MINIMUM (1)
-                0x45, 0x04,        //         PHYSICAL_MAXIMUM (4)
-                0x75, 0x02,        //         REPORT_SIZE (2)
-                0x95, 0x01,        //         REPORT_COUNT (1)
-                0xa4,              //         PUSH
-                0xb1, 0x02,        //         FEATURE (Data,Var,Abs)
+                HID_RI_LOGICAL_MINIMUM(8, 0x00),
+                HID_RI_LOGICAL_MAXIMUM(8, 0x01),
+                HID_RI_PHYSICAL_MINIMUM(8, 0x01),
+                HID_RI_PHYSICAL_MAXIMUM(8, 0x04),
+                HID_RI_REPORT_SIZE(8, 0x02),
+                HID_RI_REPORT_COUNT(8, 0x01),
+                HID_RI_PUSH(0),
+                HID_RI_FEATURE(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_ABSOLUTE),
 
                 // Vertical wheel
                 HID_RI_USAGE(8, HID_RI_USAGE_WHEEL),
@@ -95,8 +95,8 @@ uint8_t UsbMouseReportDescriptor[USB_MOUSE_REPORT_DESCRIPTOR_LENGTH] = {
                 0x45, 0x00,        //         PHYSICAL_MAXIMUM (0)
                 0x75, 0x08,        //         REPORT_SIZE (8)
                 0x81, 0x06,        //         INPUT (Data,Var,Rel)
-            HID_RI_END_COLLECTION(0),
 
+            HID_RI_END_COLLECTION(0),
             HID_RI_COLLECTION(8, HID_RI_COLLECTION_LOGICAL),
 
                 // Horizontal wheel resolution multiplier
