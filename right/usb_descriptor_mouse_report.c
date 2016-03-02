@@ -75,8 +75,9 @@ uint8_t UsbMouseReportDescriptor[USB_MOUSE_REPORT_DESCRIPTOR_LENGTH] = {
             HID_RI_INPUT(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_RELATIVE),
 
             HID_RI_COLLECTION(8, HID_RI_COLLECTION_LOGICAL),
-                                   // ------------------------------  Vertical wheel res multiplier
-                0x09, 0x48,        //         USAGE (Resolution Multiplier)
+
+                // Vertical wheel resolution multiplier
+                HID_RI_USAGE(8, HID_RI_USAGE_RESOLUTION_MULTIPLIER),
                 0x15, 0x00,        //         LOGICAL_MINIMUM (0)
                 0x25, 0x01,        //         LOGICAL_MAXIMUM (1)
                 0x35, 0x01,        //         PHYSICAL_MINIMUM (1)
@@ -86,27 +87,30 @@ uint8_t UsbMouseReportDescriptor[USB_MOUSE_REPORT_DESCRIPTOR_LENGTH] = {
                 0xa4,              //         PUSH
                 0xb1, 0x02,        //         FEATURE (Data,Var,Abs)
 
-                                   // ------------------------------  Vertical wheel
-                0x09, 0x38,        //         USAGE (Wheel)
+                // Vertical wheel
+                HID_RI_USAGE(8, HID_RI_USAGE_WHEEL),
                 0x15, 0x81,        //         LOGICAL_MINIMUM (-127)
                 0x25, 0x7f,        //         LOGICAL_MAXIMUM (127)
                 0x35, 0x00,        //         PHYSICAL_MINIMUM (0)        - reset physical
                 0x45, 0x00,        //         PHYSICAL_MAXIMUM (0)
                 0x75, 0x08,        //         REPORT_SIZE (8)
                 0x81, 0x06,        //         INPUT (Data,Var,Rel)
-            HID_RI_END_COLLECTION(0),              //       END_COLLECTION
+            HID_RI_END_COLLECTION(0),
 
             HID_RI_COLLECTION(8, HID_RI_COLLECTION_LOGICAL),
-                                   // ------------------------------  Horizontal wheel res multiplier
-                0x09, 0x48,        //         USAGE (Resolution Multiplier)
+
+                // Horizontal wheel resolution multiplier
+                HID_RI_USAGE(8, HID_RI_USAGE_RESOLUTION_MULTIPLIER),
                 0xb4,              //         POP
                 0xb1, 0x02,        //         FEATURE (Data,Var,Abs)
-                                   // ------------------------------  Padding for Feature report
+
+                // Padding
                 0x35, 0x00,        //         PHYSICAL_MINIMUM (0)        - reset physical
                 0x45, 0x00,        //         PHYSICAL_MAXIMUM (0)
                 0x75, 0x04,        //         REPORT_SIZE (4)
                 0xb1, 0x03,        //         FEATURE (Cnst,Var,Abs)
-                                   // ------------------------------  Horizontal wheel
+
+                // Horizontal wheel
                 0x05, 0x0c,        //         USAGE_PAGE (Consumer Devices)
                 0x0a, 0x38, 0x02,  //         USAGE (AC Pan)
                 0x15, 0x81,        //         LOGICAL_MINIMUM (-127)
