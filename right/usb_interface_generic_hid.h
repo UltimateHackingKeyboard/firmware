@@ -11,7 +11,6 @@
     typedef struct _usb_device_generic_hid_struct {
         uint32_t buffer[2][USB_GENERIC_HID_IN_BUFFER_LENGTH >> 2];
         uint8_t bufferIndex;
-        uint8_t idleRate;
     } usb_device_generic_hid_struct_t;
 
 // Functions:

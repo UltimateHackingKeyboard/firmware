@@ -9,7 +9,6 @@
 
     typedef struct _usb_device_hid_keyboard_struct {
         uint8_t buffer[USB_KEYBOARD_REPORT_LENGTH];
-        uint8_t idleRate;
     } usb_device_hid_keyboard_struct_t;
 
 // Functions:
