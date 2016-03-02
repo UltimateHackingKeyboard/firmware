@@ -101,8 +101,8 @@ uint8_t UsbMouseReportDescriptor[USB_MOUSE_REPORT_DESCRIPTOR_LENGTH] = {
 
                 // Horizontal wheel resolution multiplier
                 HID_RI_USAGE(8, HID_RI_USAGE_RESOLUTION_MULTIPLIER),
-                0xb4,              //         POP
-                0xb1, 0x02,        //         FEATURE (Data,Var,Abs)
+                HID_RI_POP(0),
+                HID_RI_FEATURE(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_ABSOLUTE),
 
                 // Padding
                 0x35, 0x00,        //         PHYSICAL_MINIMUM (0)        - reset physical
