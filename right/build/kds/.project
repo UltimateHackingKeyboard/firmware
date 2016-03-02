@@ -191,11 +191,6 @@
 			<locationURI>PARENT-2-PROJECT_LOC/composite.h</locationURI>
 		</link>
 		<link>
-			<name>sources/scancodes.h</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/scancodes.h</locationURI>
-		</link>
-		<link>
 			<name>sources/usb_class_generic_hid.c</name>
 			<type>1</type>
 			<locationURI>PARENT-2-PROJECT_LOC/usb_class_generic_hid.c</locationURI>

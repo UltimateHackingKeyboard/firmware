@@ -7,7 +7,7 @@
 #include "include/usb/usb_device_hid.h"
 #include "include/usb/usb_device_ch9.h"
 #include "composite.h"
-#include "scancodes.h"
+#include "include/lufa/HIDClassCommon.h"
 #include "usb_interface_keyboard.h"
 #include "usb_class_keyboard.h"
 #include "usb_descriptor_configuration.h"
@@ -23,8 +23,9 @@ static usb_status_t UsbKeyboardAction(void)
     }
 
     if (!GPIO_ReadPinInput(BOARD_SW3_GPIO, BOARD_SW3_GPIO_PIN)) {
-        UsbKeyboardReport.scancodes[0] = KEY_A;
+        UsbKeyboardReport.scancodes[0] = HID_KEYBOARD_SC_A;
     }
+
     return USB_DeviceHidSend(UsbCompositeDevice.keyboardHandle, USB_KEYBOARD_ENDPOINT_ID,
                              (uint8_t*)&UsbKeyboardReport, USB_KEYBOARD_REPORT_LENGTH);
 }
