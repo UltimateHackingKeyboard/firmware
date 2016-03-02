@@ -12,16 +12,21 @@
 #include "usb_class_keyboard.h"
 #include "usb_descriptor_configuration.h"
 
-static usb_device_hid_keyboard_struct_t UsbKeyboardDevice;
+static usb_keyboard_report_t UsbKeyboardReport;
 
 static usb_status_t UsbKeyboardAction(void)
 {
-    UsbKeyboardDevice.buffer[2] = 0x00U;
+    UsbKeyboardReport.modifiers = 0;
+    UsbKeyboardReport.reserved = 0;
+    for (uint8_t scancode_idx=0; scancode_idx<USB_KEYBOARD_MAX_KEYS; scancode_idx++) {
+        UsbKeyboardReport.scancodes[scancode_idx] = 0;
+    }
+
     if (!GPIO_ReadPinInput(BOARD_SW3_GPIO, BOARD_SW3_GPIO_PIN)) {
-        UsbKeyboardDevice.buffer[2] = KEY_A;
+        UsbKeyboardReport.scancodes[0] = KEY_A;
     }
     return USB_DeviceHidSend(UsbCompositeDevice.keyboardHandle, USB_KEYBOARD_ENDPOINT_ID,
-                             UsbKeyboardDevice.buffer, USB_KEYBOARD_REPORT_LENGTH);
+                             (uint8_t*)&UsbKeyboardReport, USB_KEYBOARD_REPORT_LENGTH);
 }
 
 usb_status_t UsbKeyboardCallback(class_handle_t handle, uint32_t event, void *param)

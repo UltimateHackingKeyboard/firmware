@@ -1,15 +1,21 @@
 #ifndef __USB_DEVICE_HID_KEYBOARD_H__
 #define __USB_DEVICE_HID_KEYBOARD_H__
 
+// Includes:
+
+    #include "usb_descriptor_keyboard_report.h"
+
 // Macros:
 
     #define USB_KEYBOARD_REPORT_LENGTH (0x08U)
 
 // Typedefs:
 
-    typedef struct _usb_device_hid_keyboard_struct {
-        uint8_t buffer[USB_KEYBOARD_REPORT_LENGTH];
-    } usb_device_hid_keyboard_struct_t;
+    typedef struct usb_keyboard_report {
+        uint8_t modifiers;
+        uint8_t reserved; // Always must be 0
+        uint8_t scancodes[USB_KEYBOARD_MAX_KEYS];
+    } __attribute__ ((packed)) usb_keyboard_report_t;
 
 // Functions:
 
