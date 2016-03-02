@@ -89,12 +89,12 @@ uint8_t UsbMouseReportDescriptor[USB_MOUSE_REPORT_DESCRIPTOR_LENGTH] = {
 
                 // Vertical wheel
                 HID_RI_USAGE(8, HID_RI_USAGE_WHEEL),
-                0x15, 0x81,        //         LOGICAL_MINIMUM (-127)
-                0x25, 0x7f,        //         LOGICAL_MAXIMUM (127)
-                0x35, 0x00,        //         PHYSICAL_MINIMUM (0)        - reset physical
-                0x45, 0x00,        //         PHYSICAL_MAXIMUM (0)
-                0x75, 0x08,        //         REPORT_SIZE (8)
-                0x81, 0x06,        //         INPUT (Data,Var,Rel)
+                HID_RI_LOGICAL_MINIMUM(8, -127),
+                HID_RI_LOGICAL_MAXIMUM(8, 127),
+                HID_RI_PHYSICAL_MINIMUM(8, 0x00),
+                HID_RI_PHYSICAL_MAXIMUM(8, 0x00),
+                HID_RI_REPORT_SIZE(8, 0x08),
+                HID_RI_INPUT(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_RELATIVE),
 
             HID_RI_END_COLLECTION(0),
             HID_RI_COLLECTION(8, HID_RI_COLLECTION_LOGICAL),
