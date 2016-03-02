@@ -41,12 +41,14 @@ uint8_t UsbMouseReportDescriptor[USB_MOUSE_REPORT_DESCRIPTOR_LENGTH] = {
 */
 
 uint8_t UsbMouseReportDescriptor[USB_MOUSE_REPORT_DESCRIPTOR_LENGTH] = {
-    HID_RI_USAGE_PAGE(8, 0x01),
-    HID_RI_USAGE(8, 0x02),
-    HID_RI_COLLECTION(8, 0x01),
-        HID_RI_USAGE(8, 0x01),
-        HID_RI_COLLECTION(8, 0x00),
-            HID_RI_USAGE_PAGE(8, 0x09),
+    HID_RI_USAGE_PAGE(8, HID_RI_USAGE_PAGE_GENERIC_DESKTOP),
+    HID_RI_USAGE(8, HID_RI_USAGE_MOUSE),
+    HID_RI_COLLECTION(8, HID_RI_COLLECTION_APPLICATION),
+        HID_RI_USAGE(8, HID_RI_USAGE_POINTER),
+        HID_RI_COLLECTION(8, HID_RI_COLLECTION_PHYSICAL),
+
+            // Mouse buttons
+            HID_RI_USAGE_PAGE(8, HID_RI_USAGE_PAGE_MOUSE_BUTTONS),
             HID_RI_USAGE_MINIMUM(8, 0x01),
             HID_RI_USAGE_MAXIMUM(8, USB_MOUSE_REPORT_DESCRIPTOR_BUTTONS),
             HID_RI_LOGICAL_MINIMUM(8, 0x00),
@@ -55,22 +57,24 @@ uint8_t UsbMouseReportDescriptor[USB_MOUSE_REPORT_DESCRIPTOR_LENGTH] = {
             HID_RI_REPORT_SIZE(8, 0x01),
             HID_RI_INPUT(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_ABSOLUTE),
 
+            // Mouse buttons padding
             HID_RI_REPORT_COUNT(8, 0x01),
             HID_RI_REPORT_SIZE(8, (USB_MOUSE_REPORT_DESCRIPTOR_BUTTONS % 8) ? (8 - (USB_MOUSE_REPORT_DESCRIPTOR_BUTTONS % 8)) : 0),
             HID_RI_INPUT(8, HID_IOF_CONSTANT),
 
-            HID_RI_USAGE_PAGE(8, 0x01),
-            HID_RI_USAGE(8, 0x30),
-            HID_RI_USAGE(8, 0x31),
+            // Mouse X and Y coordinates
+            HID_RI_USAGE_PAGE(8, HID_RI_USAGE_PAGE_GENERIC_DESKTOP),
+            HID_RI_USAGE(8, HID_RI_USAGE_X),
+            HID_RI_USAGE(8, HID_RI_USAGE_Y),
             HID_RI_LOGICAL_MINIMUM(16, USB_MOUSE_REPORT_DESCRIPTOR_MIN_AXIS_VALUE),
             HID_RI_LOGICAL_MAXIMUM(16, USB_MOUSE_REPORT_DESCRIPTOR_MAX_AXIS_VALUE),
             HID_RI_PHYSICAL_MINIMUM(16, USB_MOUSE_REPORT_DESCRIPTOR_MIN_AXIS_PHYSICAL_VALUE),
-            HID_RI_PHYSICAL_MAXIMUM(16, USB_MOUSE_REPORT_DESCRIPTOR_MAX_AXIS_PHYSICAL_VALUE), //50
+            HID_RI_PHYSICAL_MAXIMUM(16, USB_MOUSE_REPORT_DESCRIPTOR_MAX_AXIS_PHYSICAL_VALUE),
             HID_RI_REPORT_COUNT(8, 0x02),
             HID_RI_REPORT_SIZE(8, (((USB_MOUSE_REPORT_DESCRIPTOR_MIN_AXIS_VALUE >= -128) && (USB_MOUSE_REPORT_DESCRIPTOR_MAX_AXIS_VALUE <= 127)) ? 8 : 16)),
             HID_RI_INPUT(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_RELATIVE),
 
-            0xa1, 0x02,        //       COLLECTION (Logical)
+            HID_RI_COLLECTION(8, HID_RI_COLLECTION_LOGICAL),
                                    // ------------------------------  Vertical wheel res multiplier
                 0x09, 0x48,        //         USAGE (Resolution Multiplier)
                 0x15, 0x00,        //         LOGICAL_MINIMUM (0)
@@ -90,9 +94,9 @@ uint8_t UsbMouseReportDescriptor[USB_MOUSE_REPORT_DESCRIPTOR_LENGTH] = {
                 0x45, 0x00,        //         PHYSICAL_MAXIMUM (0)
                 0x75, 0x08,        //         REPORT_SIZE (8)
                 0x81, 0x06,        //         INPUT (Data,Var,Rel)
-            0xc0,              //       END_COLLECTION  // 90
+            HID_RI_END_COLLECTION(0),              //       END_COLLECTION
 
-            0xa1, 0x02,        //       COLLECTION (Logical)
+            HID_RI_COLLECTION(8, HID_RI_COLLECTION_LOGICAL),
                                    // ------------------------------  Horizontal wheel res multiplier
                 0x09, 0x48,        //         USAGE (Resolution Multiplier)
                 0xb4,              //         POP
@@ -109,7 +113,8 @@ uint8_t UsbMouseReportDescriptor[USB_MOUSE_REPORT_DESCRIPTOR_LENGTH] = {
                 0x25, 0x7f,        //         LOGICAL_MAXIMUM (127)
                 0x75, 0x08,        //         REPORT_SIZE (8)
                 0x81, 0x06,        //         INPUT (Data,Var,Rel)
-            0xc0,              //       END_COLLECTION
+
+                HID_RI_END_COLLECTION(0),
         HID_RI_END_COLLECTION(0),
     HID_RI_END_COLLECTION(0)
 };
