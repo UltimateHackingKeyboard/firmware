@@ -6,13 +6,6 @@
     #define USB_GENERIC_HID_IN_BUFFER_LENGTH (64U)
     #define USB_GENERIC_HID_OUT_BUFFER_LENGTH (64U)
 
-// Typedefs:
-
-    typedef struct _usb_device_generic_hid_struct {
-        uint32_t buffer[2][USB_GENERIC_HID_IN_BUFFER_LENGTH >> 2];
-        uint8_t bufferIndex;
-    } usb_device_generic_hid_struct_t;
-
 // Functions:
 
     extern usb_status_t UsbGenericHidCallback(class_handle_t handle, uint32_t event, void *param);

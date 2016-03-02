@@ -11,12 +11,13 @@
 #include "usb_descriptor_configuration.h"
 #include "composite.h"
 
-static usb_device_generic_hid_struct_t UsbGenericHidDevice;
+static uint8_t GenericHidBuffer[2][USB_GENERIC_HID_IN_BUFFER_LENGTH];
+static uint8_t GenericHidBufferIndex;
 
 static usb_status_t UsbReceiveData()
 {
     return USB_DeviceHidRecv(UsbCompositeDevice.genericHidHandle, USB_GENERIC_HID_ENDPOINT_OUT_ID,
-                             (uint8_t *)&UsbGenericHidDevice.buffer[UsbGenericHidDevice.bufferIndex][0],
+                             &GenericHidBuffer[GenericHidBufferIndex][0],
                              USB_GENERIC_HID_OUT_BUFFER_LENGTH);
 }
 
@@ -32,7 +33,7 @@ usb_status_t UsbGenericHidCallback(class_handle_t handle, uint32_t event, void *
             GPIO_SetPinsOutput(BOARD_LED_GREEN_GPIO, 1U << BOARD_LED_GREEN_GPIO_PIN);
             GPIO_SetPinsOutput(BOARD_LED_BLUE_GPIO, 1U << BOARD_LED_BLUE_GPIO_PIN);
 
-            uint8_t command = (uint8_t)UsbGenericHidDevice.buffer[UsbGenericHidDevice.bufferIndex][0];
+            uint8_t command = GenericHidBuffer[GenericHidBufferIndex][0];
 
             switch (command) {
                 case 'r':
@@ -47,9 +48,9 @@ usb_status_t UsbGenericHidCallback(class_handle_t handle, uint32_t event, void *
             }
 
             USB_DeviceHidSend(UsbCompositeDevice.genericHidHandle, USB_GENERIC_HID_ENDPOINT_IN_ID,
-                              (uint8_t *)&UsbGenericHidDevice.buffer[UsbGenericHidDevice.bufferIndex][0],
+                              &GenericHidBuffer[GenericHidBufferIndex][0],
                               USB_GENERIC_HID_OUT_BUFFER_LENGTH);
-            UsbGenericHidDevice.bufferIndex ^= 1U;
+            GenericHidBufferIndex ^= 1U;
             return UsbReceiveData();
             break;
         case kUSB_DeviceHidEventGetReport:
