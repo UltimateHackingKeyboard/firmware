@@ -26,4 +26,8 @@
 
     extern usb_device_composite_struct_t UsbCompositeDevice;
 
+//Functions:
+
+    extern void USB_DeviceApplicationInit(void);
+
 #endif

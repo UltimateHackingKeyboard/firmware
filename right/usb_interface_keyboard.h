@@ -3,6 +3,12 @@
 
 // Includes:
 
+    #include "usb_device_config.h"
+    #include "usb.h"
+    #include "usb_device.h"
+    #include "include/usb/usb_device_class.h"
+    #include "include/usb/usb_device_hid.h"
+    #include "include/usb/usb_device_ch9.h"
     #include "usb_descriptor_keyboard_report.h"
 
 // Macros:

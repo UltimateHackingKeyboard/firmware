@@ -10,13 +10,10 @@
 #include "usb_interface_mouse.h"
 #include "usb_interface_generic_hid.h"
 #include "fsl_device_registers.h"
-#include "include/board/clock_config.h"
-#include "include/board/board.h"
 #include "fsl_debug_console.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include "fsl_common.h"
-#include "include/board/pin_mux.h"
 #include "usb_descriptor_strings.h"
 
 static usb_status_t UsbDeviceCallback(usb_device_handle handle, uint32_t event, void *param);
@@ -111,7 +108,7 @@ void USB0_IRQHandler(void)
     USB_DeviceKhciIsrFunction(UsbCompositeDevice.deviceHandle);
 }
 
-static void USB_DeviceApplicationInit(void)
+void USB_DeviceApplicationInit(void)
 {
     uint8_t usbDeviceKhciIrq[] = USB_IRQS;
     uint8_t irqNumber = usbDeviceKhciIrq[CONTROLLER_ID - kUSB_ControllerKhci0];
@@ -131,13 +128,3 @@ static void USB_DeviceApplicationInit(void)
     USB_DeviceRun(UsbCompositeDevice.deviceHandle);
 }
 
-void main(void)
-{
-    BOARD_InitPins();
-    BOARD_BootClockHSRUN();
-    BOARD_InitDebugConsole();
-
-    USB_DeviceApplicationInit();
-    while (1U) {
-    }
-}
