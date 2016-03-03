@@ -81,7 +81,7 @@ uint8_t *UsbStringDescriptors[USB_STRING_DESCRIPTOR_COUNT] = {
 usb_status_t USB_DeviceGetStringDescriptor(
     usb_device_handle handle, usb_device_get_string_descriptor_struct_t *stringDescriptor)
 {
-    if (stringDescriptor->stringIndex == 0U) {
+    if (stringDescriptor->stringIndex == 0) {
         stringDescriptor->buffer = UsbLanguageListStringDescriptor;
         stringDescriptor->length = sizeof(UsbLanguageListStringDescriptor);
     } else if (stringDescriptor->languageId == USB_LANGUAGE_ID_UNITED_STATES &&

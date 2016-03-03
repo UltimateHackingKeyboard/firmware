@@ -68,21 +68,21 @@ usb_status_t UsbGenericHidCallback(class_handle_t handle, uint32_t event, void *
         case kUSB_DeviceHidEventSendResponse:
             break;
         case kUSB_DeviceHidEventRecvResponse:
-            GPIO_SetPinsOutput(BOARD_LED_RED_GPIO, 1U << BOARD_LED_RED_GPIO_PIN);
-            GPIO_SetPinsOutput(BOARD_LED_GREEN_GPIO, 1U << BOARD_LED_GREEN_GPIO_PIN);
-            GPIO_SetPinsOutput(BOARD_LED_BLUE_GPIO, 1U << BOARD_LED_BLUE_GPIO_PIN);
+            GPIO_SetPinsOutput(BOARD_LED_RED_GPIO, 1 << BOARD_LED_RED_GPIO_PIN);
+            GPIO_SetPinsOutput(BOARD_LED_GREEN_GPIO, 1 << BOARD_LED_GREEN_GPIO_PIN);
+            GPIO_SetPinsOutput(BOARD_LED_BLUE_GPIO, 1 << BOARD_LED_BLUE_GPIO_PIN);
 
             uint8_t command = GenericHidBuffer[GenericHidBufferIndex][0];
 
             switch (command) {
                 case 'r':
-                    GPIO_ClearPinsOutput(BOARD_LED_RED_GPIO, 1U << BOARD_LED_RED_GPIO_PIN);
+                    GPIO_ClearPinsOutput(BOARD_LED_RED_GPIO, 1 << BOARD_LED_RED_GPIO_PIN);
                     break;
                 case 'g':
-                    GPIO_ClearPinsOutput(BOARD_LED_GREEN_GPIO, 1U << BOARD_LED_GREEN_GPIO_PIN);
+                    GPIO_ClearPinsOutput(BOARD_LED_GREEN_GPIO, 1 << BOARD_LED_GREEN_GPIO_PIN);
                     break;
                 case 'b':
-                    GPIO_ClearPinsOutput(BOARD_LED_BLUE_GPIO, 1U << BOARD_LED_BLUE_GPIO_PIN);
+                    GPIO_ClearPinsOutput(BOARD_LED_BLUE_GPIO, 1 << BOARD_LED_BLUE_GPIO_PIN);
                     break;
             }
 

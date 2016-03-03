@@ -8,7 +8,7 @@
 // Macros:
 
     #define CONTROLLER_ID kUSB_ControllerKhci0
-    #define USB_DEVICE_INTERRUPT_PRIORITY (3U)
+    #define USB_DEVICE_INTERRUPT_PRIORITY 3
 
 // Typedefs:
 

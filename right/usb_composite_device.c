@@ -34,8 +34,8 @@ usb_device_class_config_list_struct_t UsbDeviceCompositeConfigList = {
 static usb_status_t UsbDeviceCallback(usb_device_handle handle, uint32_t event, void *param)
 {
     usb_status_t error = kStatus_USB_Error;
-    uint16_t *temp16 = (uint16_t *)param;
-    uint8_t *temp8 = (uint8_t *)param;
+    uint16_t *temp16 = (uint16_t*)param;
+    uint8_t *temp8 = (uint8_t*)param;
 
     if (!param && event != kUSB_DeviceEventBusReset && event != kUSB_DeviceEventSetInterface) {
         return error;
@@ -43,11 +43,11 @@ static usb_status_t UsbDeviceCallback(usb_device_handle handle, uint32_t event, 
 
     switch (event) {
         case kUSB_DeviceEventBusReset:
-            UsbCompositeDevice.attach = 0U;
+            UsbCompositeDevice.attach = 0;
             error = kStatus_USB_Success;
             break;
         case kUSB_DeviceEventSetConfiguration:
-            UsbCompositeDevice.attach = 1U;
+            UsbCompositeDevice.attach = 1;
             UsbCompositeDevice.currentConfiguration = *temp8;
             UsbGenericHidSetConfiguration(UsbCompositeDevice.genericHidHandle, *temp8);
             UsbKeyboardSetConfiguration(UsbCompositeDevice.keyboardHandle, *temp8);
@@ -60,8 +60,8 @@ static usb_status_t UsbDeviceCallback(usb_device_handle handle, uint32_t event, 
             break;
         case kUSB_DeviceEventSetInterface:
             if (UsbCompositeDevice.attach) {
-                uint8_t interface = (uint8_t)((*temp16 & 0xFF00U) >> 0x08U);
-                uint8_t alternateSetting = (uint8_t)(*temp16 & 0x00FFU);
+                uint8_t interface = (uint8_t)((*temp16 & 0xFF00U) >> 8);
+                uint8_t alternateSetting = (uint8_t)(*temp16 & 0x00FF);
                 if (interface < USB_COMPOSITE_INTERFACE_COUNT) {
                     UsbCompositeDevice.currentInterfaceAlternateSetting[interface] = alternateSetting;
                     UsbGenericHidSetInterface(UsbCompositeDevice.genericHidHandle, interface, alternateSetting);
@@ -72,9 +72,9 @@ static usb_status_t UsbDeviceCallback(usb_device_handle handle, uint32_t event, 
             }
             break;
         case kUSB_DeviceEventGetInterface: ;
-            uint8_t interface = (uint8_t)((*temp16 & 0xFF00U) >> 0x08U);
+            uint8_t interface = (uint8_t)((*temp16 & 0xFF00) >> 8);
             if (interface < USB_COMPOSITE_INTERFACE_COUNT) {
-                *temp16 = (*temp16 & 0xFF00U) | UsbCompositeDevice.currentInterfaceAlternateSetting[interface];
+                *temp16 = (*temp16 & 0xFF00) | UsbCompositeDevice.currentInterfaceAlternateSetting[interface];
                 error = kStatus_USB_Success;
             } else {
                 error = kStatus_USB_InvalidRequest;
@@ -114,9 +114,9 @@ void USB_DeviceApplicationInit(void)
     uint8_t irqNumber = usbDeviceKhciIrq[CONTROLLER_ID - kUSB_ControllerKhci0];
 
     SystemCoreClockUpdate();
-    CLOCK_EnableUsbfs0Clock(kCLOCK_UsbSrcIrc48M, 48000000U);
+    CLOCK_EnableUsbfs0Clock(kCLOCK_UsbSrcIrc48M, 48000000);
 
-    UsbCompositeDevice.attach = 0U;
+    UsbCompositeDevice.attach = 0;
     USB_DeviceClassInit(CONTROLLER_ID, &UsbDeviceCompositeConfigList, &UsbCompositeDevice.deviceHandle);
     UsbCompositeDevice.genericHidHandle = UsbDeviceCompositeConfigList.config[USB_GENERIC_HID_INTERFACE_INDEX].classHandle;
     UsbCompositeDevice.keyboardHandle = UsbDeviceCompositeConfigList.config[USB_KEYBOARD_INTERFACE_INDEX].classHandle;

@@ -11,6 +11,6 @@ void main(void)
 
     USB_DeviceApplicationInit();
 
-    while (1U) {
+    while (1) {
     }
 }
