@@ -181,14 +181,14 @@
 			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/middleware/usb_1.0.0/osa/usb_osa_bm.h</locationURI>
 		</link>
 		<link>
-			<name>sources/composite.c</name>
+			<name>sources/usb_composite_device.c</name>
 			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/composite.c</locationURI>
+			<locationURI>PARENT-2-PROJECT_LOC/usb_composite_device.c</locationURI>
 		</link>
 		<link>
-			<name>sources/composite.h</name>
+			<name>sources/usb_composite_device.h</name>
 			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/composite.h</locationURI>
+			<locationURI>PARENT-2-PROJECT_LOC/usb_composite_device.h</locationURI>
 		</link>
 		<link>
 			<name>sources/usb_descriptor_configuration.c</name>

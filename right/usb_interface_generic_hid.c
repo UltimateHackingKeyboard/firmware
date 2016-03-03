@@ -8,7 +8,7 @@
 #include "include/usb/usb_device_ch9.h"
 #include "usb_interface_generic_hid.h"
 #include "usb_descriptor_configuration.h"
-#include "composite.h"
+#include "usb_composite_device.h"
 
 static usb_device_endpoint_struct_t UsbGenericHidEndpoints[USB_GENERIC_HID_ENDPOINT_COUNT] =
 {

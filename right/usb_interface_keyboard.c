@@ -6,7 +6,7 @@
 #include "include/usb/usb_device_class.h"
 #include "include/usb/usb_device_hid.h"
 #include "include/usb/usb_device_ch9.h"
-#include "composite.h"
+#include "usb_composite_device.h"
 #include "include/lufa/HIDClassCommon.h"
 #include "usb_interface_keyboard.h"
 #include "usb_descriptor_configuration.h"

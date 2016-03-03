@@ -4,7 +4,7 @@
 #include "include/usb/usb_device_class.h"
 #include "include/usb/usb_device_hid.h"
 #include "usb_descriptor_device.h"
-#include "composite.h"
+#include "usb_composite_device.h"
 #include "usb_descriptor_strings.h"
 
 uint8_t UsbDeviceDescriptor[USB_DESCRIPTOR_LENGTH_DEVICE] = {
