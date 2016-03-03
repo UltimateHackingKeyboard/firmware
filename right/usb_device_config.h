@@ -17,7 +17,7 @@
 #define USB_DEVICE_CONFIG_REMOTE_WAKEUP 0
 
 // How many endpoints are supported in the stack
-#define USB_DEVICE_CONFIG_ENDPOINTS 6
+#define USB_DEVICE_CONFIG_ENDPOINTS 5
 
 // The maximum buffer length for the KHCI DMA workaround
 #define USB_DEVICE_CONFIG_KHCI_DMA_ALIGN_BUFFER_LENGTH 64
