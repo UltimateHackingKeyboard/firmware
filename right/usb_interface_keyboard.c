@@ -12,7 +12,7 @@
 #include "usb_descriptor_configuration.h"
 
 static usb_device_endpoint_struct_t UsbKeyboardEndpoints[USB_KEYBOARD_ENDPOINT_COUNT] = {{
-    USB_KEYBOARD_ENDPOINT_ID | (USB_IN << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT),
+    USB_KEYBOARD_ENDPOINT_INDEX | (USB_IN << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT),
     USB_ENDPOINT_INTERRUPT,
     USB_KEYBOARD_INTERRUPT_IN_PACKET_SIZE,
 }};
@@ -57,7 +57,7 @@ static usb_status_t UsbKeyboardAction(void)
         UsbKeyboardReport.scancodes[0] = HID_KEYBOARD_SC_A;
     }
 
-    return USB_DeviceHidSend(UsbCompositeDevice.keyboardHandle, USB_KEYBOARD_ENDPOINT_ID,
+    return USB_DeviceHidSend(UsbCompositeDevice.keyboardHandle, USB_KEYBOARD_ENDPOINT_INDEX,
                              (uint8_t*)&UsbKeyboardReport, USB_KEYBOARD_REPORT_LENGTH);
 }
 

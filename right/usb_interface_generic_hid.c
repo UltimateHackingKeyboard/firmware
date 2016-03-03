@@ -5,12 +5,12 @@
 static usb_device_endpoint_struct_t UsbGenericHidEndpoints[USB_GENERIC_HID_ENDPOINT_COUNT] =
 {
     {
-        USB_GENERIC_HID_ENDPOINT_IN_ID | (USB_IN << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT),
+        USB_GENERIC_HID_ENDPOINT_IN_INDEX | (USB_IN << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT),
         USB_ENDPOINT_INTERRUPT,
         USB_GENERIC_HID_INTERRUPT_IN_PACKET_SIZE,
     },
     {
-        USB_GENERIC_HID_ENDPOINT_OUT_ID | (USB_OUT << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT),
+        USB_GENERIC_HID_ENDPOINT_OUT_INDEX | (USB_OUT << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT),
         USB_ENDPOINT_INTERRUPT,
         USB_GENERIC_HID_INTERRUPT_OUT_PACKET_SIZE,
     }
@@ -47,7 +47,7 @@ static uint8_t GenericHidBufferIndex;
 
 static usb_status_t UsbReceiveData()
 {
-    return USB_DeviceHidRecv(UsbCompositeDevice.genericHidHandle, USB_GENERIC_HID_ENDPOINT_OUT_ID,
+    return USB_DeviceHidRecv(UsbCompositeDevice.genericHidHandle, USB_GENERIC_HID_ENDPOINT_OUT_INDEX,
                              &GenericHidBuffer[GenericHidBufferIndex][0],
                              USB_GENERIC_HID_OUT_BUFFER_LENGTH);
 }
@@ -78,7 +78,7 @@ usb_status_t UsbGenericHidCallback(class_handle_t handle, uint32_t event, void *
                     break;
             }
 
-            USB_DeviceHidSend(UsbCompositeDevice.genericHidHandle, USB_GENERIC_HID_ENDPOINT_IN_ID,
+            USB_DeviceHidSend(UsbCompositeDevice.genericHidHandle, USB_GENERIC_HID_ENDPOINT_IN_INDEX,
                               &GenericHidBuffer[GenericHidBufferIndex][0],
                               USB_GENERIC_HID_OUT_BUFFER_LENGTH);
             GenericHidBufferIndex ^= 1U;

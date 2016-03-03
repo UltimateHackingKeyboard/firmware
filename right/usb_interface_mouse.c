@@ -3,7 +3,7 @@
 #include "usb_composite_device.h"
 
 static usb_device_endpoint_struct_t UsbMouseEndpoints[USB_MOUSE_ENDPOINT_COUNT] = {{
-    USB_MOUSE_ENDPOINT_ID | (USB_IN << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT),
+    USB_MOUSE_ENDPOINT_INDEX | (USB_IN << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT),
     USB_ENDPOINT_INTERRUPT,
     USB_MOUSE_INTERRUPT_IN_PACKET_SIZE,
 }};
@@ -51,7 +51,7 @@ static volatile usb_status_t UsbMouseAction(void)
         }
     }
     scrollCounter++;
-    return USB_DeviceHidSend(UsbCompositeDevice.mouseHandle, USB_MOUSE_ENDPOINT_ID,
+    return USB_DeviceHidSend(UsbCompositeDevice.mouseHandle, USB_MOUSE_ENDPOINT_INDEX,
                              (uint8_t*)&UsbMouseReport, USB_MOUSE_REPORT_LENGTH);
 }
 
