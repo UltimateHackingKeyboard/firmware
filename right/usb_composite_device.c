@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include "fsl_common.h"
 #include "usb_descriptor_strings.h"
+#include "usb_descriptor_hid.h"
 
 static usb_status_t UsbDeviceCallback(usb_device_handle handle, uint32_t event, void *param);
 usb_composite_device_t UsbCompositeDevice;

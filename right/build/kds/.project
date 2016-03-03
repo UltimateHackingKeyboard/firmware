@@ -226,6 +226,16 @@
 			<locationURI>PARENT-2-PROJECT_LOC/usb_descriptor_generic_hid_report.h</locationURI>
 		</link>
 		<link>
+			<name>sources/usb_descriptor_hid.c</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/usb_descriptor_hid.c</locationURI>
+		</link>
+		<link>
+			<name>sources/usb_descriptor_hid.h</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/usb_descriptor_hid.h</locationURI>
+		</link>
+		<link>
 			<name>sources/usb_descriptor_keyboard_report.c</name>
 			<type>1</type>
 			<locationURI>PARENT-2-PROJECT_LOC/usb_descriptor_keyboard_report.c</locationURI>

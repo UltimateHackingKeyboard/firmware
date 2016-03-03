@@ -17,13 +17,4 @@
     extern usb_status_t USB_DeviceGetConfigurationDescriptor(
         usb_device_handle handle, usb_device_get_configuration_descriptor_struct_t *configurationDescriptor);
 
-    extern usb_status_t USB_DeviceGetHidDescriptor(
-        usb_device_handle handle, usb_device_get_hid_descriptor_struct_t *hidDescriptor);
-
-    extern usb_status_t USB_DeviceGetHidReportDescriptor(
-        usb_device_handle handle, usb_device_get_hid_report_descriptor_struct_t *hidReportDescriptor);
-
-    extern usb_status_t USB_DeviceGetHidPhysicalDescriptor(
-        usb_device_handle handle, usb_device_get_hid_physical_descriptor_struct_t *hidPhysicalDescriptor);
-
 #endif

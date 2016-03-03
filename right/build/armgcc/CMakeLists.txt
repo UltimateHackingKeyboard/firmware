@@ -176,6 +176,8 @@ add_executable(dev_composite_hid_mouse_hid_keyboard_bm.elf
 "${SrcDir}/usb_descriptor_device.h"
 "${SrcDir}/usb_descriptor_generic_hid_report.c"
 "${SrcDir}/usb_descriptor_generic_hid_report.h"
+"${SrcDir}/usb_descriptor_hid.c"
+"${SrcDir}/usb_descriptor_hid.h"
 "${SrcDir}/usb_descriptor_keyboard_report.c"
 "${SrcDir}/usb_descriptor_keyboard_report.h"
 "${SrcDir}/usb_descriptor_mouse_report.c"
