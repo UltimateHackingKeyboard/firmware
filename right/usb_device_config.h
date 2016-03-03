@@ -1,5 +1,5 @@
-#ifndef _USB_DEVICE_CONFIG_H_
-#define _USB_DEVICE_CONFIG_H_
+#ifndef __USB_DEVICE_CONFIG_H__
+#define __USB_DEVICE_CONFIG_H__
 
 /*! @brief KHCI instance count */
 #define USB_DEVICE_CONFIG_KHCI (1U)

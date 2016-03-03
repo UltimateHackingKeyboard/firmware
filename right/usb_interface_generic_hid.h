@@ -1,5 +1,5 @@
-#ifndef __HID_GENERIC_H__
-#define __HID_GENERIC_H__
+#ifndef __USB_INTERFACE_GENERIC_HID_H__
+#define __USB_INTERFACE_GENERIC_HID_H__
 
 // Includes:
 

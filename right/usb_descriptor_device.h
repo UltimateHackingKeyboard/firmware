@@ -1,5 +1,5 @@
-#ifndef __USB_DEVICE_DESCRIPTOR_H__
-#define __USB_DEVICE_DESCRIPTOR_H__
+#ifndef __USB_DESCRIPTOR_DEVICE_H__
+#define __USB_DESCRIPTOR_DEVICE_H__
 
 // Macros:
 

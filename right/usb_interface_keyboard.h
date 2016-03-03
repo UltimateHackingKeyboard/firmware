@@ -1,5 +1,5 @@
-#ifndef __USB_DEVICE_HID_KEYBOARD_H__
-#define __USB_DEVICE_HID_KEYBOARD_H__
+#ifndef __USB_INTERFACE_KEYBOARD_H__
+#define __USB_INTERFACE_KEYBOARD_H__
 
 // Includes:
 

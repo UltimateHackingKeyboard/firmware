@@ -1,5 +1,5 @@
-#ifndef __USB_REPORT_ITEM_DATA_CONST__
-#define __USB_REPORT_ITEM_DATA_CONST__
+#ifndef __USB_REPORT_ITEM_MACROS__
+#define __USB_REPORT_ITEM_MACROS__
 
 // Includes:
 

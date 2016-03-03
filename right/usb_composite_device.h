@@ -1,5 +1,5 @@
-#ifndef __USB_DEVICE_COMPOSITE_H__
-#define __USB_DEVICE_COMPOSITE_H__
+#ifndef __USB_COMPOSITE_DEVICE_H__
+#define __USB_COMPOSITE_DEVICE_H__
 
 // Includes:
 
