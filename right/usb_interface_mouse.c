@@ -15,7 +15,7 @@ static usb_device_interface_struct_t UsbMouseInterface[] = {{
 }};
 
 static usb_device_interfaces_struct_t UsbMouseInterfaces[USB_MOUSE_INTERFACE_COUNT] = {{
-    USB_MOUSE_CLASS,
+    USB_CLASS_HID,
     USB_MOUSE_SUBCLASS,
     USB_MOUSE_PROTOCOL,
     USB_MOUSE_INTERFACE_INDEX,

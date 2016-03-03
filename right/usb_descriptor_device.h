@@ -21,6 +21,7 @@
                                            USB_MOUSE_INTERFACE_COUNT + \
                                            USB_GENERIC_HID_INTERFACE_COUNT)
 
+    #define USB_CLASS_HID 0x03
     #define USB_HID_COUNTRY_CODE_NOT_SUPPORTED   0x00
     #define USB_INTERFACE_ALTERNATE_SETTING_NONE 0x00
     #define USB_STRING_DESCRIPTOR_NONE           0x00

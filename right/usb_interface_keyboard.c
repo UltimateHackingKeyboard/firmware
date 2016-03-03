@@ -24,7 +24,7 @@ static usb_device_interface_struct_t UsbKeyboardInterface[] = {{
 }};
 
 static usb_device_interfaces_struct_t UsbKeyboardInterfaces[USB_KEYBOARD_INTERFACE_COUNT] = {{
-    USB_KEYBOARD_CLASS,
+    USB_CLASS_HID,
     USB_KEYBOARD_SUBCLASS,
     USB_KEYBOARD_PROTOCOL,
     USB_KEYBOARD_INTERFACE_INDEX,

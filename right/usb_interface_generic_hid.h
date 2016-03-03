@@ -8,7 +8,6 @@
 
 // Macros:
 
-    #define USB_GENERIC_HID_CLASS 0x03
     #define USB_GENERIC_HID_SUBCLASS 0x00
     #define USB_GENERIC_HID_PROTOCOL 0x00
 

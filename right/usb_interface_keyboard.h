@@ -8,7 +8,6 @@
 
 // Macros:
 
-    #define USB_KEYBOARD_CLASS 0x03
     #define USB_KEYBOARD_SUBCLASS 0x01
     #define USB_KEYBOARD_PROTOCOL 0x01
 

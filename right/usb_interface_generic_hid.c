@@ -23,7 +23,7 @@ static usb_device_interface_struct_t UsbGenericHidInterface[] = {{
 }};
 
 static usb_device_interfaces_struct_t UsbGenericHidInterfaces[USB_GENERIC_HID_INTERFACE_COUNT] = {{
-    USB_GENERIC_HID_CLASS,
+    USB_CLASS_HID,
     USB_GENERIC_HID_SUBCLASS,
     USB_GENERIC_HID_PROTOCOL,
     USB_GENERIC_HID_INTERFACE_INDEX,
