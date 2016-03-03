@@ -17,7 +17,7 @@
 #include "usb_descriptor_strings.h"
 
 static usb_status_t UsbDeviceCallback(usb_device_handle handle, uint32_t event, void *param);
-usb_device_composite_struct_t UsbCompositeDevice;
+usb_composite_device_t UsbCompositeDevice;
 
 usb_device_class_config_struct_t UsbDeviceCompositeClassConfig[USB_COMPOSITE_INTERFACE_COUNT] = {
     {UsbKeyboardCallback,   (class_handle_t)NULL, &UsbKeyboardClass},
@@ -127,4 +127,3 @@ void USB_DeviceApplicationInit(void)
 
     USB_DeviceRun(UsbCompositeDevice.deviceHandle);
 }
-

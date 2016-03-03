@@ -20,11 +20,11 @@
         uint8_t attach;
         uint8_t currentConfiguration;
         uint8_t currentInterfaceAlternateSetting[USB_COMPOSITE_INTERFACE_COUNT];
-    } usb_device_composite_struct_t;
+    } usb_composite_device_t;
 
 // Variables:
 
-    extern usb_device_composite_struct_t UsbCompositeDevice;
+    extern usb_composite_device_t UsbCompositeDevice;
 
 //Functions:
 
