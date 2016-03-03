@@ -1,9 +1,4 @@
-#include "usb_device_config.h"
-#include "usb.h"
-#include "usb_device.h"
-#include "include/usb/usb_device_class.h"
-#include "include/usb/usb_device_hid.h"
-#include "usb_descriptor_device.h"
+#include "usb_api.h"
 #include "usb_composite_device.h"
 #include "usb_descriptor_strings.h"
 

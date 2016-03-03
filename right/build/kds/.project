@@ -186,6 +186,11 @@
 			<locationURI>PARENT-2-PROJECT_LOC/main.c</locationURI>
 		</link>
 		<link>
+			<name>sources/usb_api.h</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/usb_api.h</locationURI>
+		</link>
+		<link>
 			<name>sources/usb_composite_device.c</name>
 			<type>1</type>
 			<locationURI>PARENT-2-PROJECT_LOC/usb_composite_device.c</locationURI>
@@ -299,11 +304,6 @@
 			<name>sources/usb_interface_mouse.h</name>
 			<type>1</type>
 			<locationURI>PARENT-2-PROJECT_LOC/usb_interface_mouse.h</locationURI>
-		</link>
-		<link>
-			<name>sources/usb_report_item_macros.h</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/usb_report_item_macros.h</locationURI>
 		</link>
 		<link>
 			<name>startup/startup_MK22F51212.S</name>

@@ -1,5 +1,4 @@
-#include <stdint.h>
-#include "usb_report_item_macros.h"
+#include "usb_api.h"
 #include "usb_descriptor_mouse_report.h"
 
 uint8_t UsbMouseReportDescriptor[USB_MOUSE_REPORT_DESCRIPTOR_LENGTH] = {

@@ -1,21 +1,8 @@
-#include "usb_device_config.h"
-#include "usb.h"
-#include "usb_device.h"
-#include "include/usb/usb_device_class.h"
-#include "include/usb/usb_device_hid.h"
-#include "include/usb/usb_device_ch9.h"
-#include "usb_descriptor_device.h"
-#include "usb_composite_device.h"
-#include "usb_interface_keyboard.h"
-#include "usb_interface_mouse.h"
-#include "usb_interface_generic_hid.h"
-#include "fsl_device_registers.h"
-#include "fsl_debug_console.h"
-#include <stdio.h>
-#include <stdlib.h>
 #include "fsl_common.h"
-#include "usb_descriptor_strings.h"
+#include "usb_api.h"
+#include "usb_composite_device.h"
 #include "usb_descriptor_hid.h"
+#include "usb_descriptor_strings.h"
 
 static usb_status_t UsbDeviceCallback(usb_device_handle handle, uint32_t event, void *param);
 usb_composite_device_t UsbCompositeDevice;
@@ -104,12 +91,12 @@ static usb_status_t UsbDeviceCallback(usb_device_handle handle, uint32_t event, 
     return error;
 }
 
-void USB0_IRQHandler(void)
+void USB0_IRQHandler()
 {
     USB_DeviceKhciIsrFunction(UsbCompositeDevice.deviceHandle);
 }
 
-void USB_DeviceApplicationInit(void)
+void USB_DeviceApplicationInit()
 {
     uint8_t usbDeviceKhciIrq[] = USB_IRQS;
     uint8_t irqNumber = usbDeviceKhciIrq[CONTROLLER_ID - kUSB_ControllerKhci0];

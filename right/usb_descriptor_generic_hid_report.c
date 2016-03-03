@@ -1,5 +1,4 @@
-#include <stdint.h>
-#include "usb_report_item_macros.h"
+#include "usb_api.h"
 #include "usb_interface_generic_hid.h"
 #include "usb_descriptor_generic_hid_report.h"
 

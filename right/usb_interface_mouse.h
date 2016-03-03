@@ -1,15 +1,6 @@
 #ifndef __USB_INTERFACE_MOUSE_H__
 #define __USB_INTERFACE_MOUSE_H__
 
-// Includes:
-
-    #include "usb_device_config.h"
-    #include "usb.h"
-    #include "usb_device.h"
-    #include "include/usb/usb_device_class.h"
-    #include "include/usb/usb_device_hid.h"
-    #include "include/usb/usb_device_ch9.h"
-
 // Macros:
 
     #define USB_MOUSE_CLASS 0x03

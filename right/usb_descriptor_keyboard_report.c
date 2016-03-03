@@ -1,5 +1,5 @@
 #include <stdint.h>
-#include "usb_report_item_macros.h"
+#include "usb_api.h"
 #include "usb_descriptor_keyboard_report.h"
 
 uint8_t UsbKeyboardReportDescriptor[USB_KEYBOARD_REPORT_DESCRIPTOR_LENGTH] = {
