@@ -3,9 +3,9 @@
 
 // Includes:
 
-    #include "usb_class_keyboard.h"
-    #include "usb_class_mouse.h"
-    #include "usb_class_generic_hid.h"
+    #include "usb_interface_keyboard.h"
+    #include "usb_interface_mouse.h"
+    #include "usb_interface_generic_hid.h"
 
 // Macros:
 

@@ -1,12 +1,6 @@
 #ifndef __USB_DEVICE_DESCRIPTOR_H__
 #define __USB_DEVICE_DESCRIPTOR_H__
 
-// Includes:
-
-    #include "usb_class_keyboard.h"
-    #include "usb_class_mouse.h"
-    #include "usb_class_generic_hid.h"
-
 // Macros:
 
     #define USB_DEVICE_CLASS (0x00U)

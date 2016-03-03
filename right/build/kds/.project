@@ -191,36 +191,6 @@
 			<locationURI>PARENT-2-PROJECT_LOC/composite.h</locationURI>
 		</link>
 		<link>
-			<name>sources/usb_class_generic_hid.c</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/usb_class_generic_hid.c</locationURI>
-		</link>
-		<link>
-			<name>sources/usb_class_generic_hid.h</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/usb_class_generic_hid.h</locationURI>
-		</link>
-		<link>
-			<name>sources/usb_class_keyboard.c</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/usb_class_keyboard.c</locationURI>
-		</link>
-		<link>
-			<name>sources/usb_class_keyboard.h</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/usb_class_keyboard.h</locationURI>
-		</link>
-		<link>
-			<name>sources/usb_class_mouse.c</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/usb_class_mouse.c</locationURI>
-		</link>
-		<link>
-			<name>sources/usb_class_mouse.h</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/usb_class_mouse.h</locationURI>
-		</link>
-		<link>
 			<name>sources/usb_descriptor_configuration.c</name>
 			<type>1</type>
 			<locationURI>PARENT-2-PROJECT_LOC/usb_descriptor_configuration.c</locationURI>

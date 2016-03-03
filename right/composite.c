@@ -17,9 +17,6 @@
 #include <stdlib.h>
 #include "fsl_common.h"
 #include "include/board/pin_mux.h"
-#include "usb_class_keyboard.h"
-#include "usb_class_mouse.h"
-#include "usb_class_generic_hid.h"
 #include "usb_descriptor_strings.h"
 
 static usb_status_t UsbDeviceCallback(usb_device_handle handle, uint32_t event, void *param);
