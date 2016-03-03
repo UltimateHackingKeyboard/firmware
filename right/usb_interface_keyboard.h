@@ -31,13 +31,14 @@
 
 // Typedefs:
 
-    typedef struct usb_keyboard_report {
+    typedef struct {
         uint8_t modifiers;
         uint8_t reserved; // Always must be 0
         uint8_t scancodes[USB_KEYBOARD_MAX_KEYS];
     } __attribute__ ((packed)) usb_keyboard_report_t;
 
 // Variables:
+
     extern usb_device_class_struct_t UsbKeyboardClass;
 
 // Functions:

@@ -12,7 +12,7 @@
 
 // Typedefs:
 
-    typedef struct _usb_device_composite_struct {
+    typedef struct {
         usb_device_handle deviceHandle;
         class_handle_t mouseHandle;
         class_handle_t keyboardHandle;

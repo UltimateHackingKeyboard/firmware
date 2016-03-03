@@ -30,7 +30,7 @@
 
 // Typedefs:
 
-    typedef struct usb_mouse_report {
+    typedef struct {
         uint8_t buttons;
         int16_t x;
         int16_t y;
