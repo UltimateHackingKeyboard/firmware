@@ -9,7 +9,7 @@ static usb_device_endpoint_struct_t UsbMouseEndpoints[USB_MOUSE_ENDPOINT_COUNT] 
 }};
 
 static usb_device_interface_struct_t UsbMouseInterface[] = {{
-    USB_MOUSE_INTERFACE_ALTERNATE_SETTING,
+    USB_INTERFACE_ALTERNATE_SETTING_NONE,
     {USB_MOUSE_ENDPOINT_COUNT, UsbMouseEndpoints},
     NULL,
 }};

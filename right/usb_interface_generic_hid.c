@@ -17,7 +17,7 @@ static usb_device_endpoint_struct_t UsbGenericHidEndpoints[USB_GENERIC_HID_ENDPO
 };
 
 static usb_device_interface_struct_t UsbGenericHidInterface[] = {{
-    USB_GENERIC_HID_INTERFACE_ALTERNATE_SETTING,
+    USB_INTERFACE_ALTERNATE_SETTING_NONE,
     {USB_GENERIC_HID_ENDPOINT_COUNT, UsbGenericHidEndpoints},
     NULL,
 }};

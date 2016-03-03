@@ -18,7 +18,7 @@ static usb_device_endpoint_struct_t UsbKeyboardEndpoints[USB_KEYBOARD_ENDPOINT_C
 }};
 
 static usb_device_interface_struct_t UsbKeyboardInterface[] = {{
-    USB_KEYBOARD_INTERFACE_ALTERNATE_SETTING,
+    USB_INTERFACE_ALTERNATE_SETTING_NONE,
     {USB_KEYBOARD_ENDPOINT_COUNT, UsbKeyboardEndpoints},
     NULL,
 }};
