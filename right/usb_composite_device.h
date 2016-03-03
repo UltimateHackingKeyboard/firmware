@@ -19,7 +19,7 @@
         class_handle_t genericHidHandle;
         uint8_t attach;
         uint8_t currentConfiguration;
-        uint8_t currentInterfaceAlternateSetting[USB_COMPOSITE_INTERFACE_COUNT];
+        uint8_t currentInterfaceAlternateSetting[USB_DEVICE_CONFIG_HID];
     } usb_composite_device_t;
 
 // Variables:

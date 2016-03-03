@@ -7,7 +7,7 @@
 static usb_status_t UsbDeviceCallback(usb_device_handle handle, uint32_t event, void *param);
 usb_composite_device_t UsbCompositeDevice;
 
-usb_device_class_config_struct_t UsbDeviceCompositeClassConfig[USB_COMPOSITE_INTERFACE_COUNT] = {
+usb_device_class_config_struct_t UsbDeviceCompositeClassConfig[USB_DEVICE_CONFIG_HID] = {
     {UsbGenericHidCallback, (class_handle_t)NULL, &UsbGenericHidClass},
     {UsbKeyboardCallback,   (class_handle_t)NULL, &UsbKeyboardClass},
     {UsbMouseCallback,      (class_handle_t)NULL, &UsbMouseClass},
@@ -16,7 +16,7 @@ usb_device_class_config_struct_t UsbDeviceCompositeClassConfig[USB_COMPOSITE_INT
 usb_device_class_config_list_struct_t UsbDeviceCompositeConfigList = {
     UsbDeviceCompositeClassConfig,
     UsbDeviceCallback,
-    USB_COMPOSITE_INTERFACE_COUNT
+    USB_DEVICE_CONFIG_HID
 };
 
 static usb_status_t UsbDeviceCallback(usb_device_handle handle, uint32_t event, void *param)
@@ -50,7 +50,7 @@ static usb_status_t UsbDeviceCallback(usb_device_handle handle, uint32_t event, 
             if (UsbCompositeDevice.attach) {
                 uint8_t interface = (uint8_t)((*temp16 & 0xFF00U) >> 8);
                 uint8_t alternateSetting = (uint8_t)(*temp16 & 0x00FF);
-                if (interface < USB_COMPOSITE_INTERFACE_COUNT) {
+                if (interface < USB_DEVICE_CONFIG_HID) {
                     UsbCompositeDevice.currentInterfaceAlternateSetting[interface] = alternateSetting;
                     UsbGenericHidSetInterface(UsbCompositeDevice.genericHidHandle, interface, alternateSetting);
                     UsbKeyboardSetInterface(UsbCompositeDevice.keyboardHandle, interface, alternateSetting);
@@ -61,7 +61,7 @@ static usb_status_t UsbDeviceCallback(usb_device_handle handle, uint32_t event, 
             break;
         case kUSB_DeviceEventGetInterface: ;
             uint8_t interface = (uint8_t)((*temp16 & 0xFF00) >> 8);
-            if (interface < USB_COMPOSITE_INTERFACE_COUNT) {
+            if (interface < USB_DEVICE_CONFIG_HID) {
                 *temp16 = (*temp16 & 0xFF00) | UsbCompositeDevice.currentInterfaceAlternateSetting[interface];
                 error = kStatus_USB_Success;
             } else {

@@ -17,9 +17,6 @@
     #define USB_DEVICE_CONFIGURATION_COUNT 1
     #define USB_REPORT_DESCRIPTOR_COUNT_PER_HID_DEVICE 1
     #define USB_DEVICE_MAX_POWER 50 // Expressed in 2mA units
-    #define USB_COMPOSITE_INTERFACE_COUNT (USB_KEYBOARD_INTERFACE_COUNT + \
-                                           USB_MOUSE_INTERFACE_COUNT + \
-                                           USB_GENERIC_HID_INTERFACE_COUNT)
 
     #define USB_CLASS_HID 0x03
     #define USB_HID_COUNTRY_CODE_NOT_SUPPORTED   0x00

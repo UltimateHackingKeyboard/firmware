@@ -4,7 +4,6 @@
 // Macros:
 
     #define USB_MOUSE_INTERFACE_INDEX 2
-    #define USB_MOUSE_INTERFACE_COUNT 1
 
     #define USB_MOUSE_ENDPOINT_INDEX 1
     #define USB_MOUSE_ENDPOINT_COUNT 1
