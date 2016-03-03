@@ -24,8 +24,8 @@ static usb_device_interface_struct_t UsbGenericHidInterface[] = {{
 
 static usb_device_interfaces_struct_t UsbGenericHidInterfaces[USB_GENERIC_HID_INTERFACE_COUNT] = {{
     USB_CLASS_HID,
-    USB_GENERIC_HID_SUBCLASS,
-    USB_GENERIC_HID_PROTOCOL,
+    USB_HID_SUBCLASS_NONE,
+    USB_HID_PROTOCOL_NONE,
     USB_GENERIC_HID_INTERFACE_INDEX,
     UsbGenericHidInterface,
     sizeof(UsbGenericHidInterface) / sizeof(usb_device_interfaces_struct_t),

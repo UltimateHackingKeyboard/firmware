@@ -8,9 +8,6 @@
 
 // Macros:
 
-    #define USB_KEYBOARD_SUBCLASS 0x01
-    #define USB_KEYBOARD_PROTOCOL 0x01
-
     #define USB_KEYBOARD_INTERFACE_INDEX 1
     #define USB_KEYBOARD_INTERFACE_COUNT 1
 

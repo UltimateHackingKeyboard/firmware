@@ -26,6 +26,13 @@
     #define USB_INTERFACE_ALTERNATE_SETTING_NONE 0x00
     #define USB_STRING_DESCRIPTOR_NONE           0x00
 
+    #define USB_HID_SUBCLASS_NONE 0
+    #define USB_HID_SUBCLASS_BOOT 1
+
+    #define USB_HID_PROTOCOL_NONE     0
+    #define USB_HID_PROTOCOL_KEYBOARD 1
+    #define USB_HID_PROTOCOL_MOUSE    2
+
     // Descriptor lengths
 
     #define USB_HID_DESCRIPTOR_LENGTH 9

@@ -1,15 +1,6 @@
 #include "include/board/board.h"
-#include "fsl_gpio.h"
-#include "usb_device_config.h"
-#include "usb.h"
-#include "usb_device.h"
-#include "include/usb/usb_device_class.h"
-#include "include/usb/usb_device_hid.h"
-#include "include/usb/usb_device_ch9.h"
+#include "usb_api.h"
 #include "usb_composite_device.h"
-#include "include/lufa/HIDClassCommon.h"
-#include "usb_interface_keyboard.h"
-#include "usb_descriptor_configuration.h"
 
 static usb_device_endpoint_struct_t UsbKeyboardEndpoints[USB_KEYBOARD_ENDPOINT_COUNT] = {{
     USB_KEYBOARD_ENDPOINT_INDEX | (USB_IN << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT),
@@ -25,8 +16,8 @@ static usb_device_interface_struct_t UsbKeyboardInterface[] = {{
 
 static usb_device_interfaces_struct_t UsbKeyboardInterfaces[USB_KEYBOARD_INTERFACE_COUNT] = {{
     USB_CLASS_HID,
-    USB_KEYBOARD_SUBCLASS,
-    USB_KEYBOARD_PROTOCOL,
+    USB_HID_SUBCLASS_BOOT,
+    USB_HID_PROTOCOL_KEYBOARD,
     USB_KEYBOARD_INTERFACE_INDEX,
     UsbKeyboardInterface,
     sizeof(UsbKeyboardInterface) / sizeof(usb_device_interfaces_struct_t),

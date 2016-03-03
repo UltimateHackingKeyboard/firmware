@@ -3,9 +3,6 @@
 
 // Macros:
 
-    #define USB_MOUSE_SUBCLASS 0x01
-    #define USB_MOUSE_PROTOCOL 0x02
-
     #define USB_MOUSE_INTERFACE_INDEX 2
     #define USB_MOUSE_INTERFACE_COUNT 1
 
