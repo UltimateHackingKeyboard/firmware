@@ -24,7 +24,7 @@
     #define USB_STRING_DESCRIPTOR_NONE           0x00
     #define USB_LANGUAGE_ID_UNITED_STATES        0x0409
 
-// HID related constants
+    // HID related constants
 
     #define USB_DESCRIPTOR_LENGTH_HID 9
     #define USB_CLASS_HID 0x03
