@@ -1,6 +1,11 @@
 #ifndef __USB_INTERFACE_MOUSE_H__
 #define __USB_INTERFACE_MOUSE_H__
 
+// Includes:
+
+    #include "usb_api.h"
+    #include "usb_descriptor_device.h"
+
 // Macros:
 
     #define USB_MOUSE_INTERFACE_INDEX 2

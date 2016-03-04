@@ -1,4 +1,3 @@
-#include <stdint.h>
 #include "usb_api.h"
 #include "usb_descriptor_keyboard_report.h"
 

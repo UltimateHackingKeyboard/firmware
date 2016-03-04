@@ -1,6 +1,6 @@
 #include "include/board/board.h"
-#include "usb_api.h"
 #include "usb_composite_device.h"
+#include "usb_interface_mouse.h"
 
 static usb_device_endpoint_struct_t UsbMouseEndpoints[USB_MOUSE_ENDPOINT_COUNT] = {{
     USB_MOUSE_ENDPOINT_INDEX | (USB_IN << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT),

@@ -1,6 +1,6 @@
 #include "include/board/board.h"
-#include "usb_api.h"
 #include "usb_composite_device.h"
+#include "usb_interface_generic_hid.h"
 
 static usb_device_endpoint_struct_t UsbGenericHidEndpoints[USB_GENERIC_HID_ENDPOINT_COUNT] =
 {
