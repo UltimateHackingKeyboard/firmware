@@ -22,13 +22,13 @@
 
     #define USB_INTERFACE_ALTERNATE_SETTING_NONE 0x00
     #define USB_STRING_DESCRIPTOR_NONE           0x00
+    #define USB_LANGUAGE_ID_UNITED_STATES        0x0409
 
-    // HID related constants
-
-    #define USB_CLASS_HID 0x03
-    #define USB_HID_COUNTRY_CODE_NOT_SUPPORTED   0x00
+// HID related constants
 
     #define USB_DESCRIPTOR_LENGTH_HID 9
+    #define USB_CLASS_HID 0x03
+    #define USB_HID_COUNTRY_CODE_NOT_SUPPORTED   0x00
 
     #define USB_HID_SUBCLASS_NONE 0
     #define USB_HID_SUBCLASS_BOOT 1
@@ -61,9 +61,5 @@
     #define HID_RI_COLLECTION_LOGICAL     0x02
 
     #define HID_RI_USAGE_PAGE_KEY_CODES 0x07
-
-    // Miscellaneous constants
-
-    #define USB_LANGUAGE_ID_UNITED_STATES 0x0409
 
 #endif
