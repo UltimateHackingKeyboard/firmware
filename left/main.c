@@ -5,20 +5,20 @@ int main(void)
 {
     gpio_input_pin_user_config_t inputPin[] =
     {
-            {
-                .pinName                       = kGpioSW2,
-                .config.isPullEnable           = true,
-                .config.pullSelect             = kPortPullUp,
-                .config.isPassiveFilterEnabled = false,
-                .config.interrupt              = kPortIntDisabled,
-            },
-            {
-                .pinName                       = kGpioSW3,
-                .config.isPullEnable           = true,
-                .config.pullSelect             = kPortPullUp,
-                .config.isPassiveFilterEnabled = false,
-                .config.interrupt              = kPortIntDisabled,
-            },
+        {
+            .pinName                       = kGpioSW2,
+            .config.isPullEnable           = true,
+            .config.pullSelect             = kPortPullUp,
+            .config.isPassiveFilterEnabled = false,
+            .config.interrupt              = kPortIntDisabled,
+        },
+        {
+            .pinName                       = kGpioSW3,
+            .config.isPullEnable           = true,
+            .config.pullSelect             = kPortPullUp,
+            .config.isPassiveFilterEnabled = false,
+            .config.interrupt              = kPortIntDisabled,
+        },
         {
             .pinName = GPIO_PINS_OUT_OF_RANGE,
         }
