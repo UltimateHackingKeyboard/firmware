@@ -5,13 +5,20 @@ int main(void)
 {
     gpio_input_pin_user_config_t inputPin[] =
     {
-        {
-            .pinName                       = BOARD_SW_GPIO,
-            .config.isPullEnable           = true,
-            .config.pullSelect             = kPortPullUp,
-            .config.isPassiveFilterEnabled = false,
-            .config.interrupt              = kPortIntDisabled,
-        },
+            {
+                .pinName                       = kGpioSW2,
+                .config.isPullEnable           = true,
+                .config.pullSelect             = kPortPullUp,
+                .config.isPassiveFilterEnabled = false,
+                .config.interrupt              = kPortIntDisabled,
+            },
+            {
+                .pinName                       = kGpioSW3,
+                .config.isPullEnable           = true,
+                .config.pullSelect             = kPortPullUp,
+                .config.isPassiveFilterEnabled = false,
+                .config.interrupt              = kPortIntDisabled,
+            },
         {
             .pinName = GPIO_PINS_OUT_OF_RANGE,
         }
@@ -21,6 +28,12 @@ int main(void)
     {
         {
             .pinName              = kGpioLED1,
+            .config.outputLogic   = 0,
+            .config.slewRate      = kPortFastSlewRate,
+            .config.driveStrength = kPortHighDriveStrength,
+        },
+        {
+            .pinName              = kGpioLED3,
             .config.outputLogic   = 0,
             .config.slewRate      = kPortFastSlewRate,
             .config.driveStrength = kPortHighDriveStrength,
@@ -38,7 +51,9 @@ int main(void)
     GPIO_DRV_Init(inputPin, outputPin);
 
     while (1) {
-        uint8_t isSwitchPressed = GPIO_DRV_ReadPinInput(BOARD_SW_GPIO);
-        GPIO_DRV_WritePinOutput(kGpioLED1, isSwitchPressed);
+        uint8_t isSw2Pressed = GPIO_DRV_ReadPinInput(kGpioSW2);
+        uint8_t isSw3Pressed = GPIO_DRV_ReadPinInput(kGpioSW3);
+        GPIO_DRV_WritePinOutput(kGpioLED1, isSw2Pressed);
+        GPIO_DRV_WritePinOutput(kGpioLED3, isSw3Pressed);
     }
 }
