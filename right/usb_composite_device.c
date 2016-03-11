@@ -96,7 +96,7 @@ void USB0_IRQHandler()
     USB_DeviceKhciIsrFunction(UsbCompositeDevice.deviceHandle);
 }
 
-void USB_DeviceApplicationInit()
+void InitUsb()
 {
     uint8_t usbDeviceKhciIrq[] = USB_IRQS;
     uint8_t irqNumber = usbDeviceKhciIrq[CONTROLLER_ID - kUSB_ControllerKhci0];

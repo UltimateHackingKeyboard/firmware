@@ -19,7 +19,8 @@ SET(CMAKE_EXECUTABLE_LIBRARY_SUFFIX)
 
 # CURRENT DIRECTORY
 SET(SrcDir "${CMAKE_CURRENT_SOURCE_DIR}/../..")
-SET(KsdkDir "${SrcDir}/../lib/KSDK_1.3_FRDM-KL03Z/")
+SET(KsdkDir "${SrcDir}/../lib/KSDK_1.3_FRDM-KL03Z")
+SET(IncludeDir "${SrcDir}/../include")
 
 # DEBUG LINK FILE
 set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -T${KsdkDir}/platform/devices/MKL03Z4/linker/gcc/MKL03Z32xxx4_flash.ld  -static")
@@ -75,6 +76,7 @@ IF(CMAKE_BUILD_TYPE MATCHES Debug)
     INCLUDE_DIRECTORIES(${KsdkDir}/examples)
     INCLUDE_DIRECTORIES(${KsdkDir}/examples/frdmkl03z)
     INCLUDE_DIRECTORIES(${KsdkDir})
+    INCLUDE_DIRECTORIES(${IncludeDir})
 ELSEIF(CMAKE_BUILD_TYPE MATCHES Release)
     INCLUDE_DIRECTORIES(${KsdkDir}/platform/osa/inc)
     INCLUDE_DIRECTORIES(${KsdkDir}/platform/utilities/inc)
@@ -89,6 +91,7 @@ ELSEIF(CMAKE_BUILD_TYPE MATCHES Release)
     INCLUDE_DIRECTORIES(${KsdkDir}/examples)
     INCLUDE_DIRECTORIES(${KsdkDir}/examples/frdmkl03z)
     INCLUDE_DIRECTORIES(${KsdkDir})
+    INCLUDE_DIRECTORIES(${IncludeDir})
 ENDIF()
 
 # ADD_EXECUTABLE

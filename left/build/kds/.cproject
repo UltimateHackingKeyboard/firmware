@@ -83,6 +83,7 @@
 									<listOptionValue builtIn="false" value="../../../../lib/KSDK_1.3_FRDM-KL03Z/examples"/>
 									<listOptionValue builtIn="false" value="../../../../lib/KSDK_1.3_FRDM-KL03Z/examples/frdmkl03z"/>
 									<listOptionValue builtIn="false" value="../../../../lib/KSDK_1.3_FRDM-KL03Z"/>
+									<listOptionValue builtIn="false" value="../../../../include"/>
 								</option>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.std.933718024" name="Language standard" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.std" useByScannerDiscovery="true" value="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.std.gnu99" valueType="enumerated"/>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.defs.4702060583" name="Defined symbols (-D)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.defs" useByScannerDiscovery="false" valueType="definedSymbols">
@@ -227,6 +228,7 @@
 									<listOptionValue builtIn="false" value="../../../../lib/KSDK_1.3_FRDM-KL03Z/examples"/>
 									<listOptionValue builtIn="false" value="../../../../lib/KSDK_1.3_FRDM-KL03Z/examples/frdmkl03z"/>
 									<listOptionValue builtIn="false" value="../../../../lib/KSDK_1.3_FRDM-KL03Z"/>
+									<listOptionValue builtIn="false" value="../../../../include"/>
 								</option>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.std.997197032" name="Language standard" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.std" useByScannerDiscovery="true" value="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.std.gnu99" valueType="enumerated"/>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.defs.9999202301" name="Defined symbols (-D)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.defs" useByScannerDiscovery="false" valueType="definedSymbols">

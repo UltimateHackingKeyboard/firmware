@@ -20,6 +20,7 @@ SET(CMAKE_EXECUTABLE_LIBRARY_SUFFIX)
 # CURRENT DIRECTORY
 SET(SrcDir "${CMAKE_CURRENT_SOURCE_DIR}/../..")
 SET(KsdkDir "${SrcDir}/../lib/KSDK_2.0_FRDM-K22F/")
+SET(IncludeDir "${SrcDir}/../include")
 
 SET(CMAKE_ASM_FLAGS_DEBUG "${CMAKE_ASM_FLAGS_DEBUG} -DDEBUG")
 SET(CMAKE_ASM_FLAGS_DEBUG "${CMAKE_ASM_FLAGS_DEBUG} -D__STARTUP_CLEAR_BSS")
@@ -149,11 +150,14 @@ include_directories(${KsdkDir}/CMSIS/Include)
 include_directories(${KsdkDir}/boards/frdmk22f)
 include_directories(${KsdkDir}/devices/MK22F51212/drivers)
 include_directories(${KsdkDir}/devices/MK22F51212)
+include_directories(${IncludeDir})
 
 add_executable(dev_composite_hid_mouse_hid_keyboard_bm.elf 
 "${KsdkDir}/devices/MK22F51212/gcc/startup_MK22F51212.S"
 "${KsdkDir}/middleware/usb_1.0.0/device/usb_device_khci.c"
 "${KsdkDir}/middleware/usb_1.0.0/device/usb_device_khci.h"
+"${KsdkDir}/devices/MK22F51212/drivers/fsl_i2c.h"
+"${KsdkDir}/devices/MK22F51212/drivers/fsl_i2c.c"
 "${KsdkDir}/devices/MK22F51212/drivers/fsl_lpuart.h"
 "${KsdkDir}/devices/MK22F51212/drivers/fsl_lpuart.c"
 "${KsdkDir}/devices/MK22F51212/drivers/fsl_uart.h"

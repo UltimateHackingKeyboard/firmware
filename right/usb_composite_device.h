@@ -28,6 +28,6 @@
 
 //Functions:
 
-    extern void USB_DeviceApplicationInit();
+    extern void InitUsb();
 
 #endif

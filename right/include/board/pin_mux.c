@@ -34,8 +34,14 @@
 
 void BOARD_InitPins(void)
 {
+    // Ungate ports.
+    CLOCK_EnableClock(kCLOCK_PortA); // LEDs
+    CLOCK_EnableClock(kCLOCK_PortB); // SW3, I2C
+    CLOCK_EnableClock(kCLOCK_PortC); // SW2
+    CLOCK_EnableClock(kCLOCK_PortD); // LEDs
+    CLOCK_EnableClock(kCLOCK_PortE); // UART1 for OpenSDA
+
     // Set up UART1 for OpenSDA.
-    CLOCK_EnableClock(kCLOCK_PortE);
     PORT_SetPinMux(PORTE, 0u, kPORT_MuxAlt3);
     PORT_SetPinMux(PORTE, 1u, kPORT_MuxAlt3);
 
@@ -43,17 +49,12 @@ void BOARD_InitPins(void)
     port_pin_config_t switchConfig = {0};
     switchConfig.pullSelect = kPORT_PullUp;
     switchConfig.mux = kPORT_MuxAsGpio;
-    CLOCK_EnableClock(kCLOCK_PortC);
     PORT_SetPinConfig(BOARD_SW2_PORT, BOARD_SW2_GPIO_PIN, &switchConfig);
 
     // Set up SW3.
-    CLOCK_EnableClock(kCLOCK_PortB);
     PORT_SetPinConfig(BOARD_SW3_PORT, BOARD_SW3_GPIO_PIN, &switchConfig);
 
-    // Init LEDs.
-
-    CLOCK_EnableClock(kCLOCK_PortA);
-    CLOCK_EnableClock(kCLOCK_PortD);
+    // Initialize LEDs.
 
     PORT_SetPinMux(BOARD_LED_RED_GPIO_PORT, BOARD_LED_RED_GPIO_PIN, kPORT_MuxAsGpio);
     PORT_SetPinMux(BOARD_LED_GREEN_GPIO_PORT, BOARD_LED_GREEN_GPIO_PIN, kPORT_MuxAsGpio);
@@ -67,7 +68,19 @@ void BOARD_InitPins(void)
     GPIO_PinInit(BOARD_LED_GREEN_GPIO, BOARD_LED_GREEN_GPIO_PIN, &led_config);
     GPIO_PinInit(BOARD_LED_BLUE_GPIO, BOARD_LED_BLUE_GPIO_PIN, &led_config);
 
-    GPIO_SetPinsOutput(BOARD_LED_RED_GPIO, 1U << BOARD_LED_RED_GPIO_PIN);
-    GPIO_SetPinsOutput(BOARD_LED_GREEN_GPIO, 1U << BOARD_LED_GREEN_GPIO_PIN);
-    GPIO_SetPinsOutput(BOARD_LED_BLUE_GPIO, 1U << BOARD_LED_BLUE_GPIO_PIN);
+    GPIO_SetPinsOutput(BOARD_LED_RED_GPIO,   1 << BOARD_LED_RED_GPIO_PIN);
+    GPIO_SetPinsOutput(BOARD_LED_GREEN_GPIO, 1 << BOARD_LED_GREEN_GPIO_PIN);
+    GPIO_SetPinsOutput(BOARD_LED_BLUE_GPIO,  1 << BOARD_LED_BLUE_GPIO_PIN);
+
+    // Initialize I2C.
+
+    port_pin_config_t pinConfig = {0};
+    pinConfig.pullSelect = kPORT_PullUp;
+    pinConfig.openDrainEnable = kPORT_OpenDrainEnable;
+
+    PORT_SetPinConfig(PORTB, 2, &pinConfig);
+    PORT_SetPinConfig(PORTB, 3, &pinConfig);
+
+    PORT_SetPinMux(PORTB, 2, kPORT_MuxAlt2);
+    PORT_SetPinMux(PORTB, 3, kPORT_MuxAlt2);
 }
