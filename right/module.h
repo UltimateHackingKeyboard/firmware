@@ -18,7 +18,7 @@
     #define MODULE_REQUEST_GET_PROTOCOL_VERSION 0
     #define MODULE_REQUEST_GET_MODULE_ID        1
     #define MODULE_REQUEST_GET_FEATURES         2
-    #define MODULE_REQUEST_GET_FACTORY_KEYMAP   3
+    #define MODULE_REQUEST_GET_FACTORY_LAYER    3
     #define MODULE_REQUEST_GET_POINTER_INFO     4
     #define MODULE_REQUEST_GET_STATE            5
     #define MODULE_REQUEST_GET_GRAPHICS         6
@@ -40,7 +40,8 @@
     } pointer_t;
 
     typedef struct {
-        uint8_t status;
+        uint8_t enumerationState;
+        uint8_t enumerationSubstate;
         uint8_t moduleId;
         uint8_t pointerCount;
         uint8_t keyCount;
