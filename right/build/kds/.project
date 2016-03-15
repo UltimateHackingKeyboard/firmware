@@ -191,9 +191,19 @@
 			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/middleware/usb_1.0.0/osa/usb_osa_bm.h</locationURI>
 		</link>
 		<link>
+			<name>sources/action.h</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/action.h</locationURI>
+		</link>
+		<link>
 			<name>sources/i2c.h</name>
 			<type>1</type>
 			<locationURI>PARENT-3-PROJECT_LOC/include/i2c.h</locationURI>
+		</link>
+		<link>
+			<name>sources/layer.h</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/layer.h</locationURI>
 		</link>
 		<link>
 			<name>sources/main.c</name>
@@ -204,6 +214,16 @@
 			<name>sources/main.h</name>
 			<type>1</type>
 			<locationURI>PARENT-2-PROJECT_LOC/main.h</locationURI>
+		</link>
+		<link>
+			<name>sources/module.h</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/module.h</locationURI>
+		</link>
+		<link>
+			<name>sources/slot.h</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/slot.h</locationURI>
 		</link>
 		<link>
 			<name>sources/usb_api.h</name>
