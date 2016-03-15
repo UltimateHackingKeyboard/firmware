@@ -21,11 +21,15 @@
     #define MODULE_REQUEST_GET_STATE            3
     #define MODULE_REQUEST_GET_GRAPHICS         4
 
-    #define MODULE_STATUS_UNATTACHED 0
+    #define MODULE_STATUS_UNATTACHED  0
     #define MODULE_STATUS_ENUMERATING 1
-    #define MODULE_STATUS_ATTACHED 2
+    #define MODULE_STATUS_ATTACHED    2
 
-    #define MAX_KEY_COUNT_PER_MODULE 64
+    #define POINTER_ROLE_MOVE   0
+    #define POINTER_ROLE_SCROLL 1
+
+    #define MAX_KEY_COUNT_PER_MODULE     64
+    #define MAX_POINTER_COUNT_PER_MODULE 2
 
 // Typedefs:
 
@@ -35,6 +39,7 @@
         uint8_t pointerCount;
         uint8_t keyCount;
         uint8_t keyStates[MAX_KEY_COUNT_PER_MODULE];
+        uint8_t pointerRoles[LAYER_COUNT][MAX_POINTER_COUNT_PER_MODULE];
         key_action_t keyActions[LAYER_COUNT][MAX_KEY_COUNT_PER_MODULE];
     } module_t;
 
