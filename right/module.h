@@ -19,12 +19,18 @@
     #define MODULE_REQUEST_GET_MODULE_ID        1
     #define MODULE_REQUEST_GET_FEATURES         2
     #define MODULE_REQUEST_GET_STATE            3
+    #define MODULE_REQUEST_GET_GRAPHICS         4
+
+    #define MODULE_STATUS_UNATTACHED 0
+    #define MODULE_STATUS_ENUMERATING 1
+    #define MODULE_STATUS_ATTACHED 2
 
     #define MAX_KEY_COUNT_PER_MODULE 64
 
 // Typedefs:
 
     typedef struct {
+        uint8_t status;
         uint8_t moduleId;
         uint8_t pointerCount;
         uint8_t keyCount;
