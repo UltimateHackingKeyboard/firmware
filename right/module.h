@@ -34,12 +34,18 @@
 // Typedefs:
 
     typedef struct {
+        uint8_t acceleration;
+        uint8_t maxSpeed;
+        uint8_t roles[LAYER_COUNT];
+    } pointer_t;
+
+    typedef struct {
         uint8_t status;
         uint8_t moduleId;
         uint8_t pointerCount;
         uint8_t keyCount;
         uint8_t keyStates[MAX_KEY_COUNT_PER_MODULE];
-        uint8_t pointerRoles[LAYER_COUNT][MAX_POINTER_COUNT_PER_MODULE];
+        pointer_t pointers[MAX_POINTER_COUNT_PER_MODULE];
         key_action_t keyActions[LAYER_COUNT][MAX_KEY_COUNT_PER_MODULE];
     } module_t;
 
