@@ -45,13 +45,12 @@ void BOARD_InitPins(void)
     PORT_SetPinMux(PORTE, 0u, kPORT_MuxAlt3);
     PORT_SetPinMux(PORTE, 1u, kPORT_MuxAlt3);
 
-    // Set up SW2.
-    port_pin_config_t switchConfig = {0};
-    switchConfig.pullSelect = kPORT_PullUp;
-    switchConfig.mux = kPORT_MuxAsGpio;
+    // Set up switches
+    port_pin_config_t switchConfig = {
+        .pullSelect = kPORT_PullUp,
+        .mux = kPORT_MuxAsGpio,
+    };
     PORT_SetPinConfig(BOARD_SW2_PORT, BOARD_SW2_GPIO_PIN, &switchConfig);
-
-    // Set up SW3.
     PORT_SetPinConfig(BOARD_SW3_PORT, BOARD_SW3_GPIO_PIN, &switchConfig);
 
     // Initialize LEDs.
@@ -61,7 +60,8 @@ void BOARD_InitPins(void)
     PORT_SetPinMux(BOARD_LED_BLUE_GPIO_PORT, BOARD_LED_BLUE_GPIO_PIN, kPORT_MuxAsGpio);
 
     gpio_pin_config_t led_config = {
-        kGPIO_DigitalOutput, 0,
+        .pinDirection = kGPIO_DigitalOutput,
+        .outputLogic = 0,
     };
 
     GPIO_PinInit(BOARD_LED_RED_GPIO, BOARD_LED_RED_GPIO_PIN, &led_config);
