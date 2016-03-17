@@ -4,7 +4,11 @@ This repository hosts the firmware of the [Ultimate Hacking Keyboard](https://ul
 
 The [original firmware](https://github.com/UltimateHackingKeyboard/firmware) is already functional, but it's written for AVR microcontrollers. Kinetis microcontrollers are vastly more powerful and cost the same, allowing for future growth, so the decision has been made to port the firmware.
 
-The current code runs on an FRDM-K22F dev board and implements a composite USB device that exposes a keyboard and mouse HID interface. It is based on the `usb_device_composite_hid_mouse_hid_keyboard` KSDK 2.0 demo.
+The firmware of the right keyboard half currently runs on an FRDM-K22F dev board and implements a composite USB device.
+
+The firmware of the left keyboard half currently runs on an FRDM-KL03Z dev board and communicates with the right half via I2C.
+
+Here's a short [demonstration video](https://www.youtube.com/watch?v=MrMaoW_NA_U) for your viewing pleasure.
 
 ## Build
 
