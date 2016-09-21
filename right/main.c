@@ -8,7 +8,7 @@
 void main(void)
 {
     BOARD_InitPins();
-    BOARD_BootClockHSRUN();
+    BOARD_BootClockRUN();
     BOARD_InitDebugConsole();
 
     i2c_master_config_t masterConfig;
