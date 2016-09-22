@@ -54,7 +54,7 @@ static volatile usb_status_t UsbMouseAction(void)
     I2C_MasterTransferBlocking(EXAMPLE_I2C_MASTER_BASEADDR, &masterXfer);
 
     UsbMouseReport.buttons = 0;
-    UsbMouseReport.x = i2cBuffer[1] - i2cBuffer[0];
+    UsbMouseReport.x = 0;//i2cBuffer[1] - i2cBuffer[0];
     UsbMouseReport.y = 0;
     UsbMouseReport.wheelX = 0;
     UsbMouseReport.wheelY = 0;
