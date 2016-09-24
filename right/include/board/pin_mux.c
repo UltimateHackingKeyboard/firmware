@@ -36,9 +36,9 @@ void BOARD_InitPins(void)
 {
     // Ungate ports.
     CLOCK_EnableClock(kCLOCK_PortA); // LEDs
-    CLOCK_EnableClock(kCLOCK_PortB); // SW3, I2C
+    CLOCK_EnableClock(kCLOCK_PortB); // SW3
     CLOCK_EnableClock(kCLOCK_PortC); // SW2
-    CLOCK_EnableClock(kCLOCK_PortD); // LEDs
+    CLOCK_EnableClock(kCLOCK_PortD); // LEDs, I2C
     CLOCK_EnableClock(kCLOCK_PortE); // UART1 for OpenSDA
 
     // Set up UART1 for OpenSDA.
@@ -78,9 +78,9 @@ void BOARD_InitPins(void)
     pinConfig.pullSelect = kPORT_PullUp;
     pinConfig.openDrainEnable = kPORT_OpenDrainEnable;
 
-    PORT_SetPinConfig(PORTB, 2, &pinConfig);
-    PORT_SetPinConfig(PORTB, 3, &pinConfig);
+    PORT_SetPinConfig(PORTD, 2, &pinConfig);
+    PORT_SetPinConfig(PORTD, 3, &pinConfig);
 
-    PORT_SetPinMux(PORTB, 2, kPORT_MuxAlt2);
-    PORT_SetPinMux(PORTB, 3, kPORT_MuxAlt2);
+    PORT_SetPinMux(PORTD, 2, kPORT_MuxAlt7);
+    PORT_SetPinMux(PORTD, 3, kPORT_MuxAlt7);
 }

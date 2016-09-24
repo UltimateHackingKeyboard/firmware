@@ -42,7 +42,7 @@ static usb_mouse_report_t UsbMouseReport;
 static uint8_t scrollCounter = 0;
 static volatile usb_status_t UsbMouseAction(void)
 {
-    uint8_t i2cBuffer[I2C_DATA_LENGTH];
+/*    uint8_t i2cBuffer[I2C_DATA_LENGTH];
     i2c_master_transfer_t masterXfer;
     masterXfer.slaveAddress = LEFT_KEYBOARD_HALF_I2C_ADDRESS_7BIT;
     masterXfer.direction = kI2C_Read;
@@ -52,7 +52,7 @@ static volatile usb_status_t UsbMouseAction(void)
     masterXfer.dataSize = I2C_DATA_LENGTH;
     masterXfer.flags = kI2C_TransferDefaultFlag;
     I2C_MasterTransferBlocking(EXAMPLE_I2C_MASTER_BASEADDR, &masterXfer);
-
+*/
     UsbMouseReport.buttons = 0;
     UsbMouseReport.x = 0;//i2cBuffer[1] - i2cBuffer[0];
     UsbMouseReport.y = 0;
