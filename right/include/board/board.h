@@ -96,15 +96,9 @@
 /* Board led color mapping */
 #define LOGIC_LED_ON 0U
 #define LOGIC_LED_OFF 1U
-#define BOARD_LED_RED_GPIO GPIOA
-#define BOARD_LED_RED_GPIO_PORT PORTA
-#define BOARD_LED_RED_GPIO_PIN 1U
-#define BOARD_LED_GREEN_GPIO GPIOA
-#define BOARD_LED_GREEN_GPIO_PORT PORTA
-#define BOARD_LED_GREEN_GPIO_PIN 2U
-#define BOARD_LED_BLUE_GPIO GPIOD
-#define BOARD_LED_BLUE_GPIO_PORT PORTD
-#define BOARD_LED_BLUE_GPIO_PIN 5U
+#define BOARD_LED_RED_GPIO GPIOD
+#define BOARD_LED_RED_GPIO_PORT PORTD
+#define BOARD_LED_RED_GPIO_PIN 7U
 
 #define LED_RED_INIT(output)                                 \
     GPIO_PinInit(BOARD_LED_RED_GPIO, BOARD_LED_RED_GPIO_PIN, \
@@ -115,26 +109,6 @@
     GPIO_SetPinsOutput(BOARD_LED_RED_GPIO, 1U << BOARD_LED_RED_GPIO_PIN) /*!< Turn off target LED_RED */
 #define LED_RED_TOGGLE() \
     GPIO_TogglePinsOutput(BOARD_LED_RED_GPIO, 1U << BOARD_LED_RED_GPIO_PIN) /*!< Toggle on target LED_RED */
-
-#define LED_GREEN_INIT(output)                                   \
-    GPIO_PinInit(BOARD_LED_GREEN_GPIO, BOARD_LED_GREEN_GPIO_PIN, \
-                 &(gpio_pin_config_t){kGPIO_DigitalOutput, (output)}) /*!< Enable target LED_GREEN */
-#define LED_GREEN_ON() \
-    GPIO_ClearPinsOutput(BOARD_LED_GREEN_GPIO, 1U << BOARD_LED_GREEN_GPIO_PIN) /*!< Turn on target LED_GREEN */
-#define LED_GREEN_OFF() \
-    GPIO_SetPinsOutput(BOARD_LED_GREEN_GPIO, 1U << BOARD_LED_GREEN_GPIO_PIN) /*!< Turn off target LED_GREEN */
-#define LED_GREEN_TOGGLE() \
-    GPIO_TogglePinsOutput(BOARD_LED_GREEN_GPIO, 1U << BOARD_LED_GREEN_GPIO_PIN) /*!< Toggle on target LED_GREEN */
-
-#define LED_BLUE_INIT(output)                                  \
-    GPIO_PinInit(BOARD_LED_BLUE_GPIO, BOARD_LED_BLUE_GPIO_PIN, \
-                 &(gpio_pin_config_t){kGPIO_DigitalOutput, (output)}) /*!< Enable target LED_BLUE */
-#define LED_BLUE_ON() \
-    GPIO_ClearPinsOutput(BOARD_LED_BLUE_GPIO, 1U << BOARD_LED_BLUE_GPIO_PIN) /*!< Turn on target LED_BLUE */
-#define LED_BLUE_OFF() \
-    GPIO_SetPinsOutput(BOARD_LED_BLUE_GPIO, 1U << BOARD_LED_BLUE_GPIO_PIN) /*!< Turn off target LED_BLUE */
-#define LED_BLUE_TOGGLE() \
-    GPIO_TogglePinsOutput(BOARD_LED_BLUE_GPIO, 1U << BOARD_LED_BLUE_GPIO_PIN) /*!< Toggle on target LED_BLUE */
 
 /* @brief FreeRTOS tickless timer configuration. */
 #define vPortLptmrIsr LPTMR0_IRQHandler /*!< Timer IRQ handler. */

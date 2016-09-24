@@ -56,21 +56,15 @@ void BOARD_InitPins(void)
     // Initialize LEDs.
 
     PORT_SetPinMux(BOARD_LED_RED_GPIO_PORT, BOARD_LED_RED_GPIO_PIN, kPORT_MuxAsGpio);
-    PORT_SetPinMux(BOARD_LED_GREEN_GPIO_PORT, BOARD_LED_GREEN_GPIO_PIN, kPORT_MuxAsGpio);
-    PORT_SetPinMux(BOARD_LED_BLUE_GPIO_PORT, BOARD_LED_BLUE_GPIO_PIN, kPORT_MuxAsGpio);
 
     gpio_pin_config_t led_config = {
         .pinDirection = kGPIO_DigitalOutput,
         .outputLogic = 0,
     };
 
-    GPIO_PinInit(BOARD_LED_RED_GPIO, BOARD_LED_RED_GPIO_PIN, &led_config);
-    GPIO_PinInit(BOARD_LED_GREEN_GPIO, BOARD_LED_GREEN_GPIO_PIN, &led_config);
-    GPIO_PinInit(BOARD_LED_BLUE_GPIO, BOARD_LED_BLUE_GPIO_PIN, &led_config);
+    LED_RED_INIT(LOGIC_LED_ON);
 
     GPIO_SetPinsOutput(BOARD_LED_RED_GPIO,   1 << BOARD_LED_RED_GPIO_PIN);
-    GPIO_SetPinsOutput(BOARD_LED_GREEN_GPIO, 1 << BOARD_LED_GREEN_GPIO_PIN);
-    GPIO_SetPinsOutput(BOARD_LED_BLUE_GPIO,  1 << BOARD_LED_BLUE_GPIO_PIN);
 
     // Initialize I2C.
 

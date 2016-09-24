@@ -3,8 +3,8 @@
 
 // Macros:
 
-    #define USB_DEVICE_VENDOR_ID 0x16D0
-    #define USB_DEVICE_PRODUCT_ID 0x007E // TODO: Change this to 05EA for 6KRO and 05EB for NKRO
+    #define USB_DEVICE_VENDOR_ID 0x16D3 // TODO: Change this to 15D0 for the final prototype.
+    #define USB_DEVICE_PRODUCT_ID 0x05EA
     #define USB_DEVICE_RELEASE_NUMBER 0x0101
 
     #define USB_DEVICE_SPECIFICATION_VERSION 0x0200
