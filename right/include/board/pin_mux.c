@@ -51,16 +51,10 @@ void BOARD_InitPins(void)
         .mux = kPORT_MuxAsGpio,
     };
     PORT_SetPinConfig(BOARD_SW2_PORT, BOARD_SW2_GPIO_PIN, &switchConfig);
-    PORT_SetPinConfig(BOARD_SW3_PORT, BOARD_SW3_GPIO_PIN, &switchConfig);
 
     // Initialize LEDs.
 
     PORT_SetPinMux(BOARD_LED_RED_GPIO_PORT, BOARD_LED_RED_GPIO_PIN, kPORT_MuxAsGpio);
-
-    gpio_pin_config_t led_config = {
-        .pinDirection = kGPIO_DigitalOutput,
-        .outputLogic = 0,
-    };
 
     LED_RED_INIT(LOGIC_LED_ON);
 

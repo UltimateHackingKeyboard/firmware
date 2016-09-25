@@ -44,7 +44,7 @@ static usb_status_t UsbKeyboardAction(void)
         UsbKeyboardReport.scancodes[scancode_idx] = 0;
     }
 
-    if (!GPIO_ReadPinInput(BOARD_SW3_GPIO, BOARD_SW3_GPIO_PIN)) {
+    if (!GPIO_ReadPinInput(BOARD_SW2_GPIO, BOARD_SW2_GPIO_PIN)) {
         UsbKeyboardReport.scancodes[0] = HID_KEYBOARD_SC_A;
     }
 

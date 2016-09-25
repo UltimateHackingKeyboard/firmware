@@ -62,7 +62,6 @@ void InitLedDisplay()
 void main() {
     BOARD_InitPins();
     BOARD_BootClockRUN();
-    BOARD_InitDebugConsole();
 
     i2c_master_config_t masterConfig;
     uint32_t sourceClock;
