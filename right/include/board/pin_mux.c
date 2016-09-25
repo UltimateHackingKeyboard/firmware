@@ -31,6 +31,7 @@
 #include "fsl_common.h"
 #include "fsl_port.h"
 #include "board.h"
+#include "test_led.h"
 
 void BOARD_InitPins(void)
 {
@@ -54,11 +55,11 @@ void BOARD_InitPins(void)
 
     // Initialize LEDs.
 
-    PORT_SetPinMux(BOARD_LED_RED_GPIO_PORT, BOARD_LED_RED_GPIO_PIN, kPORT_MuxAsGpio);
+    PORT_SetPinMux(TEST_LED_GPIO_PORT, TEST_LED_GPIO_PIN, kPORT_MuxAsGpio);
 
-    LED_RED_INIT(LOGIC_LED_ON);
+    TEST_RED_INIT(LOGIC_LED_ON);
 
-    GPIO_SetPinsOutput(BOARD_LED_RED_GPIO,   1 << BOARD_LED_RED_GPIO_PIN);
+    GPIO_SetPinsOutput(TEST_LED_GPIO,   1 << TEST_LED_GPIO_PIN);
 
     // Initialize I2C.
 

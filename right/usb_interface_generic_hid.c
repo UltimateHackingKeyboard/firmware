@@ -1,6 +1,7 @@
 #include "include/board/board.h"
 #include "usb_composite_device.h"
 #include "usb_interface_generic_hid.h"
+#include "test_led.h"
 
 static usb_device_endpoint_struct_t UsbGenericHidEndpoints[USB_GENERIC_HID_ENDPOINT_COUNT] =
 {
@@ -66,10 +67,10 @@ usb_status_t UsbGenericHidCallback(class_handle_t handle, uint32_t event, void *
 
             switch (command) {
                 case '0':
-                    LED_RED_ON();
+                    TEST_RED_ON();
                     break;
                 case '1':
-                    LED_RED_OFF();
+                    TEST_RED_OFF();
                     break;
                 default:
                     break;

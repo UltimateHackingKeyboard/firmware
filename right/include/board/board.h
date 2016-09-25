@@ -31,36 +31,12 @@
 #ifndef _BOARD_H_
 #define _BOARD_H_
 
-#include "clock_config.h"
 #include "fsl_gpio.h"
-
-/*******************************************************************************
- * Definitions
- ******************************************************************************/
-
-/*! @brief Define the port interrupt number for the board switches */
 
 #define BOARD_SW2_GPIO GPIOC
 #define BOARD_SW2_PORT PORTC
 #define BOARD_SW2_GPIO_PIN 1
 #define BOARD_SW2_IRQ PORTC_IRQn
 #define BOARD_SW2_IRQ_HANDLER PORTC_IRQHandler
-
-/* Board led color mapping */
-#define LOGIC_LED_ON 0U
-#define LOGIC_LED_OFF 1U
-#define BOARD_LED_RED_GPIO GPIOD
-#define BOARD_LED_RED_GPIO_PORT PORTD
-#define BOARD_LED_RED_GPIO_PIN 7U
-
-#define LED_RED_INIT(output)                                 \
-    GPIO_PinInit(BOARD_LED_RED_GPIO, BOARD_LED_RED_GPIO_PIN, \
-                 &(gpio_pin_config_t){kGPIO_DigitalOutput, (output)}) /*!< Enable target LED_RED */
-#define LED_RED_ON() \
-    GPIO_ClearPinsOutput(BOARD_LED_RED_GPIO, 1U << BOARD_LED_RED_GPIO_PIN) /*!< Turn on target LED_RED */
-#define LED_RED_OFF() \
-    GPIO_SetPinsOutput(BOARD_LED_RED_GPIO, 1U << BOARD_LED_RED_GPIO_PIN) /*!< Turn off target LED_RED */
-#define LED_RED_TOGGLE() \
-    GPIO_TogglePinsOutput(BOARD_LED_RED_GPIO, 1U << BOARD_LED_RED_GPIO_PIN) /*!< Toggle on target LED_RED */
 
 #endif /* _BOARD_H_ */

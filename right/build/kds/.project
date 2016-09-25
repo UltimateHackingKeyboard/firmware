@@ -226,6 +226,11 @@
 			<locationURI>PARENT-2-PROJECT_LOC/slot.h</locationURI>
 		</link>
 		<link>
+			<name>sources/test_led.h</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/test_led.h</locationURI>
+		</link>
+		<link>
 			<name>sources/usb_api.h</name>
 			<type>1</type>
 			<locationURI>PARENT-2-PROJECT_LOC/usb_api.h</locationURI>
