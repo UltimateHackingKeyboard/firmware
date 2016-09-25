@@ -4,6 +4,3 @@
 [submodule "lib/KSDK_1.3_FRDM-KL03Z"]
 	path = lib/KSDK_1.3_FRDM-KL03Z
 	url = git@github.com:UltimateHackingKeyboard/KSDK_1.3_FRDM-KL03Z.git
-[submodule "lib/KBOOT_2.0.0"]
-	path = lib/KBOOT_2.0.0
-	url = git@github.com:UltimateHackingKeyboard/KBOOT_2.0.0.git
