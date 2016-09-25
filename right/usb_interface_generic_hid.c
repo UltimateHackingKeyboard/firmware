@@ -66,10 +66,10 @@ usb_status_t UsbGenericHidCallback(class_handle_t handle, uint32_t event, void *
             command = GenericHidBuffer[GenericHidBufferIndex][0];
 
             switch (command) {
-                case '0':
+                case 0:
                     TEST_RED_ON();
                     break;
-                case '1':
+                case 1:
                     TEST_RED_OFF();
                     break;
                 default:
