@@ -5,6 +5,7 @@
 
     #include "usb_api.h"
     #include "usb_descriptor_device.h"
+    #include "usb_protocol_handler.h"
 
 // Macros:
 
@@ -22,18 +23,17 @@
     #define USB_GENERIC_HID_IN_BUFFER_LENGTH 64
     #define USB_GENERIC_HID_OUT_BUFFER_LENGTH 64
 
-    #define USB_COMMAND_JUMP_TO_BOOTLOADER 0
-    #define USB_COMMAND_TEST_LED           1
-    #define USB_COMMAND_LED_DRIVER         2
-
 // Variables:
 
     extern usb_device_class_struct_t UsbGenericHidClass;
+    extern uint8_t GenericHidInBuffer[USB_GENERIC_HID_IN_BUFFER_LENGTH];
+    extern uint8_t GenericHidOutBuffer[USB_GENERIC_HID_OUT_BUFFER_LENGTH];
 
 // Functions:
 
     extern usb_status_t UsbGenericHidCallback(class_handle_t handle, uint32_t event, void *param);
     extern usb_status_t UsbGenericHidSetConfiguration(class_handle_t handle, uint8_t configuration);
     extern usb_status_t UsbGenericHidSetInterface(class_handle_t handle, uint8_t interface, uint8_t alternateSetting);
+
 
 #endif

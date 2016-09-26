@@ -1,7 +1,6 @@
 #include "include/board/board.h"
 #include "usb_composite_device.h"
 #include "usb_interface_generic_hid.h"
-#include "test_led.h"
 
 static usb_device_endpoint_struct_t UsbGenericHidEndpoints[USB_GENERIC_HID_ENDPOINT_COUNT] =
 {
@@ -43,8 +42,8 @@ usb_device_class_struct_t UsbGenericHidClass = {
     USB_DEVICE_CONFIGURATION_COUNT,
 };
 
-static uint8_t GenericHidInBuffer[USB_GENERIC_HID_IN_BUFFER_LENGTH];
-static uint8_t GenericHidOutBuffer[USB_GENERIC_HID_OUT_BUFFER_LENGTH];
+uint8_t GenericHidInBuffer[USB_GENERIC_HID_IN_BUFFER_LENGTH];
+uint8_t GenericHidOutBuffer[USB_GENERIC_HID_OUT_BUFFER_LENGTH];
 
 static usb_status_t UsbReceiveData()
 {
@@ -54,40 +53,15 @@ static usb_status_t UsbReceiveData()
                              USB_GENERIC_HID_OUT_BUFFER_LENGTH);
 }
 
-uint8_t x=0;
 usb_status_t UsbGenericHidCallback(class_handle_t handle, uint32_t event, void *param)
 {
     usb_status_t error = kStatus_USB_Error;
-    uint8_t command, arg;
 
     switch (event) {
         case kUSB_DeviceHidEventSendResponse:
             break;
         case kUSB_DeviceHidEventRecvResponse:
-
-            command = GenericHidInBuffer[0];
-            arg = GenericHidInBuffer[1];
-
-            switch (command) {
-                case USB_COMMAND_JUMP_TO_BOOTLOADER:
-                    break;
-                case USB_COMMAND_TEST_LED:
-                    switch (arg) {
-                        case 0:
-                            TEST_RED_ON();
-                            break;
-                        case 1:
-                            TEST_RED_OFF();
-                            break;
-                    }
-                    GenericHidOutBuffer[0]=arg;
-                    GenericHidOutBuffer[1]=arg;
-                    GenericHidOutBuffer[2]=0x66+x++;
-                case USB_COMMAND_LED_DRIVER:
-                    break;
-                default:
-                    break;
-            }
+            UsbProtocolHandler();
 
             USB_DeviceHidSend(UsbCompositeDevice.genericHidHandle,
                               USB_GENERIC_HID_ENDPOINT_IN_INDEX,
