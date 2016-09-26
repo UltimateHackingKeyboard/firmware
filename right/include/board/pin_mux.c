@@ -40,11 +40,6 @@ void BOARD_InitPins(void)
     CLOCK_EnableClock(kCLOCK_PortB); // SW3
     CLOCK_EnableClock(kCLOCK_PortC); // SW2
     CLOCK_EnableClock(kCLOCK_PortD); // LEDs, I2C
-    CLOCK_EnableClock(kCLOCK_PortE); // UART1 for OpenSDA
-
-    // Set up UART1 for OpenSDA.
-    PORT_SetPinMux(PORTE, 0u, kPORT_MuxAlt3);
-    PORT_SetPinMux(PORTE, 1u, kPORT_MuxAlt3);
 
     // Set up switches
     port_pin_config_t switchConfig = {
@@ -56,9 +51,7 @@ void BOARD_InitPins(void)
     // Initialize LEDs.
 
     PORT_SetPinMux(TEST_LED_GPIO_PORT, TEST_LED_GPIO_PIN, kPORT_MuxAsGpio);
-
     TEST_RED_INIT(LOGIC_LED_ON);
-
     GPIO_SetPinsOutput(TEST_LED_GPIO,   1 << TEST_LED_GPIO_PIN);
 
     // Initialize I2C.
