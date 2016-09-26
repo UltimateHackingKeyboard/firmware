@@ -7,9 +7,11 @@
 
 // Macros:
 
-    #define USB_COMMAND_JUMP_TO_BOOTLOADER 0
-    #define USB_COMMAND_TEST_LED           1
-    #define USB_COMMAND_LED_DRIVER         2
+    #define USB_COMMAND_GET_PROTOCOL_VERSION 0
+    #define USB_COMMAND_JUMP_TO_BOOTLOADER   1
+    #define USB_COMMAND_TEST_LED             2
+    #define USB_COMMAND_WRITE_LED_DRIVER     3
+    #define USB_COMMAND_READ_LED_DRIVER      4
 
 // Functions:
 
