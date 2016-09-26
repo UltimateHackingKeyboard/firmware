@@ -17,9 +17,7 @@ void LedDriver_WriteBuffer(uint8_t txBuffer[], uint8_t size)
 
 void LedDriver_WriteRegister(uint8_t reg, uint8_t val)
 {
-    uint8_t txBuffer[] = {0, 0};
-    txBuffer[0] = reg;
-    txBuffer[1] = val;
+    uint8_t txBuffer[] = {reg, val};
     LedDriver_WriteBuffer(txBuffer, sizeof(txBuffer));
 }
 
@@ -35,18 +33,18 @@ void LedDriver_EnableAllLeds()
     GPIO_PinInit(GPIOA, 2U, &led_config);
     GPIO_SetPinsOutput(GPIOA,   0 << 2U);
 
-    LedDriver_WriteRegister(0xfd, 0x0b); // point to page 9
-    LedDriver_WriteRegister(0x0a, 0x01); // set shutdown mode to normal
-    LedDriver_WriteRegister(0xfd, 0x00); // point to page 0
+    LedDriver_WriteRegister(LED_DRIVER_REGISTER_FRAME, LED_DRIVER_FRAME_FUNCTION);
+    LedDriver_WriteRegister(LED_DRIVER_REGISTER_SHUTDOWN, SHUTDOWN_MODE_NORMAL);
+    LedDriver_WriteRegister(LED_DRIVER_REGISTER_FRAME, LED_DRIVER_FRAME_1);
 
     uint8_t i;
-    for (i=0x00; i<=0x11; i++) {
+    for (i=FRAME_REGISTER_LED_CONTROL_FIRST; i<=FRAME_REGISTER_LED_CONTROL_LAST; i++) {
         LedDriver_WriteRegister(i, 0xff);
     }
-    for (i=0x12; i<=0x23; i++) {
+    for (i=FRAME_REGISTER_BLINK_CONTROL_FIRST; i<=FRAME_REGISTER_BLINK_CONTROL_LAST; i++) {
         LedDriver_WriteRegister(i, 0x00);
     }
-    for (i=0x24; i<=0xb3; i++) {
+    for (i=FRAME_REGISTER_PWM_FIRST; i<=FRAME_REGISTER_PWM_LAST; i++) {
         LedDriver_WriteRegister(i, 0xff);
     }
 }
