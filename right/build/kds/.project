@@ -31,19 +31,9 @@
 	</natures>
 	<linkedResources>
 		<link>
-			<name>board</name>
-			<type>2</type>
-			<locationURI>virtual:/virtual</locationURI>
-		</link>
-		<link>
 			<name>drivers</name>
 			<type>2</type>
 			<locationURI>virtual:/virtual</locationURI>
-		</link>
-		<link>
-			<name>lufa</name>
-			<type>2</type>
-			<locationURI>PARENT-2-PROJECT_LOC/include/lufa</locationURI>
 		</link>
 		<link>
 			<name>osa</name>
@@ -51,44 +41,14 @@
 			<locationURI>virtual:/virtual</locationURI>
 		</link>
 		<link>
-			<name>sources</name>
+			<name>src</name>
 			<type>2</type>
-			<locationURI>virtual:/virtual</locationURI>
+			<locationURI>PARENT-2-PROJECT_LOC/src</locationURI>
 		</link>
 		<link>
 			<name>startup</name>
 			<type>2</type>
 			<locationURI>virtual:/virtual</locationURI>
-		</link>
-		<link>
-			<name>board/board.c</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/include/board/board.c</locationURI>
-		</link>
-		<link>
-			<name>board/board.h</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/include/board/board.h</locationURI>
-		</link>
-		<link>
-			<name>board/clock_config.c</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/include/board/clock_config.c</locationURI>
-		</link>
-		<link>
-			<name>board/clock_config.h</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/include/board/clock_config.h</locationURI>
-		</link>
-		<link>
-			<name>board/pin_mux.c</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/include/board/pin_mux.c</locationURI>
-		</link>
-		<link>
-			<name>board/pin_mux.h</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/include/board/pin_mux.h</locationURI>
 		</link>
 		<link>
 			<name>drivers/fsl_clock.c</name>
@@ -146,166 +106,6 @@
 			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/middleware/usb_1.0.0/osa/usb_osa_bm.h</locationURI>
 		</link>
 		<link>
-			<name>sources/action.h</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/action.h</locationURI>
-		</link>
-		<link>
-			<name>sources/i2c.h</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/include/i2c.h</locationURI>
-		</link>
-		<link>
-			<name>sources/layer.h</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/layer.h</locationURI>
-		</link>
-		<link>
-			<name>sources/main.c</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/main.c</locationURI>
-		</link>
-		<link>
-			<name>sources/main.h</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/main.h</locationURI>
-		</link>
-		<link>
-			<name>sources/module.h</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/module.h</locationURI>
-		</link>
-		<link>
-			<name>sources/slot.h</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/slot.h</locationURI>
-		</link>
-		<link>
-			<name>sources/test_led.h</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/test_led.h</locationURI>
-		</link>
-		<link>
-			<name>sources/usb_api.h</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/usb_api.h</locationURI>
-		</link>
-		<link>
-			<name>sources/usb_composite_device.c</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/usb_composite_device.c</locationURI>
-		</link>
-		<link>
-			<name>sources/usb_composite_device.h</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/usb_composite_device.h</locationURI>
-		</link>
-		<link>
-			<name>sources/usb_descriptor_configuration.c</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/usb_descriptor_configuration.c</locationURI>
-		</link>
-		<link>
-			<name>sources/usb_descriptor_configuration.h</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/usb_descriptor_configuration.h</locationURI>
-		</link>
-		<link>
-			<name>sources/usb_descriptor_device.c</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/usb_descriptor_device.c</locationURI>
-		</link>
-		<link>
-			<name>sources/usb_descriptor_device.h</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/usb_descriptor_device.h</locationURI>
-		</link>
-		<link>
-			<name>sources/usb_descriptor_generic_hid_report.c</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/usb_descriptor_generic_hid_report.c</locationURI>
-		</link>
-		<link>
-			<name>sources/usb_descriptor_generic_hid_report.h</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/usb_descriptor_generic_hid_report.h</locationURI>
-		</link>
-		<link>
-			<name>sources/usb_descriptor_hid.c</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/usb_descriptor_hid.c</locationURI>
-		</link>
-		<link>
-			<name>sources/usb_descriptor_hid.h</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/usb_descriptor_hid.h</locationURI>
-		</link>
-		<link>
-			<name>sources/usb_descriptor_keyboard_report.c</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/usb_descriptor_keyboard_report.c</locationURI>
-		</link>
-		<link>
-			<name>sources/usb_descriptor_keyboard_report.h</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/usb_descriptor_keyboard_report.h</locationURI>
-		</link>
-		<link>
-			<name>sources/usb_descriptor_mouse_report.c</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/usb_descriptor_mouse_report.c</locationURI>
-		</link>
-		<link>
-			<name>sources/usb_descriptor_mouse_report.h</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/usb_descriptor_mouse_report.h</locationURI>
-		</link>
-		<link>
-			<name>sources/usb_descriptor_strings.c</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/usb_descriptor_strings.c</locationURI>
-		</link>
-		<link>
-			<name>sources/usb_descriptor_strings.h</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/usb_descriptor_strings.h</locationURI>
-		</link>
-		<link>
-			<name>sources/usb_device_config.h</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/usb_device_config.h</locationURI>
-		</link>
-		<link>
-			<name>sources/usb_interface_generic_hid.c</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/usb_interface_generic_hid.c</locationURI>
-		</link>
-		<link>
-			<name>sources/usb_interface_generic_hid.h</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/usb_interface_generic_hid.h</locationURI>
-		</link>
-		<link>
-			<name>sources/usb_interface_keyboard.c</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/usb_interface_keyboard.c</locationURI>
-		</link>
-		<link>
-			<name>sources/usb_interface_keyboard.h</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/usb_interface_keyboard.h</locationURI>
-		</link>
-		<link>
-			<name>sources/usb_interface_mouse.c</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/usb_interface_mouse.c</locationURI>
-		</link>
-		<link>
-			<name>sources/usb_interface_mouse.h</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/usb_interface_mouse.h</locationURI>
-		</link>
-		<link>
 			<name>startup/startup_MK22F51212.S</name>
 			<type>1</type>
 			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/devices/MK22F51212/gcc/startup_MK22F51212.S</locationURI>
@@ -353,12 +153,12 @@
 		<link>
 			<name>usb/device/class/usb_device_class.c</name>
 			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/include/usb/usb_device_class.c</locationURI>
+			<locationURI>PARENT-2-PROJECT_LOC/src/include/usb/usb_device_class.c</locationURI>
 		</link>
 		<link>
 			<name>usb/device/class/usb_device_class.h</name>
 			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/include/usb/usb_device_class.h</locationURI>
+			<locationURI>PARENT-2-PROJECT_LOC/src/include/usb/usb_device_class.h</locationURI>
 		</link>
 		<link>
 			<name>usb/device/include/usb_device.h</name>
@@ -373,12 +173,12 @@
 		<link>
 			<name>usb/device/source/usb_device_ch9.c</name>
 			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/include/usb/usb_device_ch9.c</locationURI>
+			<locationURI>PARENT-2-PROJECT_LOC/src/include/usb/usb_device_ch9.c</locationURI>
 		</link>
 		<link>
 			<name>usb/device/source/usb_device_ch9.h</name>
 			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/include/usb/usb_device_ch9.h</locationURI>
+			<locationURI>PARENT-2-PROJECT_LOC/src/include/usb/usb_device_ch9.h</locationURI>
 		</link>
 		<link>
 			<name>usb/device/source/usb_device_dci.c</name>
@@ -393,12 +193,12 @@
 		<link>
 			<name>usb/device/class/hid/usb_device_hid.c</name>
 			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/include/usb/usb_device_hid.c</locationURI>
+			<locationURI>PARENT-2-PROJECT_LOC/src/include/usb/usb_device_hid.c</locationURI>
 		</link>
 		<link>
 			<name>usb/device/class/hid/usb_device_hid.h</name>
 			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/include/usb/usb_device_hid.h</locationURI>
+			<locationURI>PARENT-2-PROJECT_LOC/src/include/usb/usb_device_hid.h</locationURI>
 		</link>
 		<link>
 			<name>usb/device/source/khci/usb_device_khci.c</name>
