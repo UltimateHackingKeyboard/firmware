@@ -276,9 +276,6 @@
 							</tool>
 						</toolChain>
 					</folderInfo>
-					<fileInfo id="ilg.gnuarmeclipse.managedbuild.cross.config.elf.release.1939339834.869377978" name="usb_device_ch9.c" rcbsApplicability="disable" resourcePath="usb/device/source/usb_device_ch9.c" toolsToInvoke="ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.955273220.137659836">
-						<tool id="ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.955273220.137659836" name="Cross ARM C Compiler" superClass="ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.955273220"/>
-					</fileInfo>
 				</configuration>
 			</storageModule>
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>

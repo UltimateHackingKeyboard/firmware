@@ -51,6 +51,11 @@
 			<locationURI>virtual:/virtual</locationURI>
 		</link>
 		<link>
+			<name>usb</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
 			<name>drivers/fsl_clock.c</name>
 			<type>1</type>
 			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/devices/MK22F51212/drivers/fsl_clock.c</locationURI>
@@ -121,32 +126,22 @@
 			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/devices/MK22F51212/system_MK22F51212.h</locationURI>
 		</link>
 		<link>
-			<name>usb/device/source</name>
-			<type>2</type>
-			<locationURI>virtual:/virtual</locationURI>
-		</link>
-		<link>
-			<name>usb/device/source/khci</name>
-			<type>2</type>
-			<locationURI>virtual:/virtual</locationURI>
-		</link>
-		<link>
-			<name>usb/device/source/usb_device_dci.c</name>
+			<name>usb/usb_device_dci.c</name>
 			<type>1</type>
 			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/middleware/usb_1.0.0/device/usb_device_dci.c</locationURI>
 		</link>
 		<link>
-			<name>usb/device/source/usb_device_dci.h</name>
+			<name>usb/usb_device_dci.h</name>
 			<type>1</type>
 			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/middleware/usb_1.0.0/device/usb_device_dci.h</locationURI>
 		</link>
 		<link>
-			<name>usb/device/source/khci/usb_device_khci.c</name>
+			<name>usb/usb_device_khci.c</name>
 			<type>1</type>
 			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/middleware/usb_1.0.0/device/usb_device_khci.c</locationURI>
 		</link>
 		<link>
-			<name>usb/device/source/khci/usb_device_khci.h</name>
+			<name>usb/usb_device_khci.h</name>
 			<type>1</type>
 			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/middleware/usb_1.0.0/device/usb_device_khci.h</locationURI>
 		</link>
