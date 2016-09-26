@@ -56,7 +56,7 @@ static usb_status_t UsbReceiveData()
 usb_status_t UsbGenericHidCallback(class_handle_t handle, uint32_t event, void *param)
 {
     usb_status_t error = kStatus_USB_Error;
-    uint8_t command;
+    uint8_t command, arg;
 
     switch (event) {
         case kUSB_DeviceHidEventSendResponse:
@@ -64,13 +64,23 @@ usb_status_t UsbGenericHidCallback(class_handle_t handle, uint32_t event, void *
         case kUSB_DeviceHidEventRecvResponse:
 
             command = GenericHidBuffer[GenericHidBufferIndex][0];
+            arg = GenericHidBuffer[GenericHidBufferIndex][1];
 
             switch (command) {
-                case 0:
-                    TEST_RED_ON();
-                    break;
-                case 1:
-                    TEST_RED_OFF();
+            case USB_COMMAND_JUMP_TO_BOOTLOADER:
+                break;
+            case USB_COMMAND_TEST_LED:
+                    switch (arg) {
+                        case 0:
+                            TEST_RED_ON();
+                            break;
+                        case 1:
+                            TEST_RED_OFF();
+                            break;
+                        default:
+                            break;
+                    }
+                case USB_COMMAND_LED_DRIVER:
                     break;
                 default:
                     break;

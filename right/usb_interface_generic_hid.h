@@ -22,6 +22,10 @@
     #define USB_GENERIC_HID_IN_BUFFER_LENGTH 64
     #define USB_GENERIC_HID_OUT_BUFFER_LENGTH 64
 
+    #define USB_COMMAND_JUMP_TO_BOOTLOADER 0
+    #define USB_COMMAND_TEST_LED           1
+    #define USB_COMMAND_LED_DRIVER         2
+
 // Variables:
 
     extern usb_device_class_struct_t UsbGenericHidClass;
