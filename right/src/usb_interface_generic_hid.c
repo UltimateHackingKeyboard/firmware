@@ -43,16 +43,18 @@ usb_device_class_struct_t UsbGenericHidClass = {
     USB_DEVICE_CONFIGURATION_COUNT,
 };
 
-static uint8_t GenericHidBuffer[2][USB_GENERIC_HID_IN_BUFFER_LENGTH];
-static uint8_t GenericHidBufferIndex;
+static uint8_t GenericHidInBuffer[USB_GENERIC_HID_IN_BUFFER_LENGTH];
+static uint8_t GenericHidOutBuffer[USB_GENERIC_HID_OUT_BUFFER_LENGTH];
 
 static usb_status_t UsbReceiveData()
 {
-    return USB_DeviceHidRecv(UsbCompositeDevice.genericHidHandle, USB_GENERIC_HID_ENDPOINT_OUT_INDEX,
-                             &GenericHidBuffer[GenericHidBufferIndex][0],
+    return USB_DeviceHidRecv(UsbCompositeDevice.genericHidHandle,
+                             USB_GENERIC_HID_ENDPOINT_OUT_INDEX,
+                             GenericHidInBuffer,
                              USB_GENERIC_HID_OUT_BUFFER_LENGTH);
 }
 
+uint8_t x=0;
 usb_status_t UsbGenericHidCallback(class_handle_t handle, uint32_t event, void *param)
 {
     usb_status_t error = kStatus_USB_Error;
@@ -63,13 +65,13 @@ usb_status_t UsbGenericHidCallback(class_handle_t handle, uint32_t event, void *
             break;
         case kUSB_DeviceHidEventRecvResponse:
 
-            command = GenericHidBuffer[GenericHidBufferIndex][0];
-            arg = GenericHidBuffer[GenericHidBufferIndex][1];
+            command = GenericHidInBuffer[0];
+            arg = GenericHidInBuffer[1];
 
             switch (command) {
-            case USB_COMMAND_JUMP_TO_BOOTLOADER:
-                break;
-            case USB_COMMAND_TEST_LED:
+                case USB_COMMAND_JUMP_TO_BOOTLOADER:
+                    break;
+                case USB_COMMAND_TEST_LED:
                     switch (arg) {
                         case 0:
                             TEST_RED_ON();
@@ -77,19 +79,20 @@ usb_status_t UsbGenericHidCallback(class_handle_t handle, uint32_t event, void *
                         case 1:
                             TEST_RED_OFF();
                             break;
-                        default:
-                            break;
                     }
+                    GenericHidOutBuffer[0]=arg;
+                    GenericHidOutBuffer[1]=arg;
+                    GenericHidOutBuffer[2]=0x66+x++;
                 case USB_COMMAND_LED_DRIVER:
                     break;
                 default:
                     break;
             }
 
-            USB_DeviceHidSend(UsbCompositeDevice.genericHidHandle, USB_GENERIC_HID_ENDPOINT_IN_INDEX,
-                              &GenericHidBuffer[GenericHidBufferIndex][0],
+            USB_DeviceHidSend(UsbCompositeDevice.genericHidHandle,
+                              USB_GENERIC_HID_ENDPOINT_IN_INDEX,
+                              GenericHidOutBuffer,
                               USB_GENERIC_HID_OUT_BUFFER_LENGTH);
-            GenericHidBufferIndex ^= 1U;
             return UsbReceiveData();
             break;
         case kUSB_DeviceHidEventGetReport:
