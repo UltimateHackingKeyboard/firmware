@@ -223,7 +223,7 @@
 									<listOptionValue builtIn="false" value="../../../../lib/KSDK_2.0_FRDM-K22F/CMSIS/Include"/>
 									<listOptionValue builtIn="false" value="../../../../lib/KSDK_2.0_FRDM-K22F/devices/MK22F51212/drivers"/>
 									<listOptionValue builtIn="false" value="../../../../lib/KSDK_2.0_FRDM-K22F/devices/MK22F51212"/>
-									<listOptionValue builtIn="false" value="../../../../include"/>
+									<listOptionValue builtIn="false" value="../../../../shared"/>
 								</option>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.std.997197032" name="Language standard" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.std" useByScannerDiscovery="true" value="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.std.gnu99" valueType="enumerated"/>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.defs.9752018572" name="Defined symbols (-D)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.defs" useByScannerDiscovery="false" valueType="definedSymbols">

@@ -41,6 +41,11 @@
 			<locationURI>virtual:/virtual</locationURI>
 		</link>
 		<link>
+			<name>shared</name>
+			<type>2</type>
+			<locationURI>PARENT-3-PROJECT_LOC/shared</locationURI>
+		</link>
+		<link>
 			<name>src</name>
 			<type>2</type>
 			<locationURI>PARENT-2-PROJECT_LOC/src</locationURI>
