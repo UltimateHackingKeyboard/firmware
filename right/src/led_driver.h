@@ -32,12 +32,12 @@
     #define FRAME_REGISTER_PWM_LAST            0xB3
 
     #define SHUTDOWN_MODE_SHUTDOWN 0
-    #define SHUTDOWN_MODE_NORMAL 1
+    #define SHUTDOWN_MODE_NORMAL   1
 
 // Functions:
 
-    extern void LedDriver_WriteBuffer(uint8_t txBuffer[], uint8_t size);
-    extern void LedDriver_WriteRegister(uint8_t reg, uint8_t val);
+    extern void LedDriver_WriteBuffer(uint8_t i2cAddress, uint8_t buffer[], uint8_t size);
+    extern void LedDriver_WriteRegister(uint8_t i2cAddress, uint8_t reg, uint8_t val);
     extern void LedDriver_EnableAllLeds();
 
 #endif
