@@ -61,11 +61,6 @@
 			<locationURI>virtual:/virtual</locationURI>
 		</link>
 		<link>
-			<name>utilities</name>
-			<type>2</type>
-			<locationURI>virtual:/virtual</locationURI>
-		</link>
-		<link>
 			<name>board/board.c</name>
 			<type>1</type>
 			<locationURI>PARENT-2-PROJECT_LOC/include/board/board.c</locationURI>
@@ -104,16 +99,6 @@
 			<name>drivers/fsl_clock.h</name>
 			<type>1</type>
 			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/devices/MK22F51212/drivers/fsl_clock.h</locationURI>
-		</link>
-		<link>
-			<name>drivers/fsl_common.c</name>
-			<type>1</type>
-			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/devices/MK22F51212/drivers/fsl_common.c</locationURI>
-		</link>
-		<link>
-			<name>drivers/fsl_common.h</name>
-			<type>1</type>
-			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/devices/MK22F51212/drivers/fsl_common.h</locationURI>
 		</link>
 		<link>
 			<name>drivers/fsl_gpio.c</name>
@@ -369,16 +354,6 @@
 			<name>usb/include</name>
 			<type>2</type>
 			<locationURI>virtual:/virtual</locationURI>
-		</link>
-		<link>
-			<name>utilities/fsl_debug_console.c</name>
-			<type>1</type>
-			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/devices/MK22F51212/utilities/fsl_debug_console.c</locationURI>
-		</link>
-		<link>
-			<name>utilities/fsl_debug_console.h</name>
-			<type>1</type>
-			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/devices/MK22F51212/utilities/fsl_debug_console.h</locationURI>
 		</link>
 		<link>
 			<name>usb/device/class</name>
