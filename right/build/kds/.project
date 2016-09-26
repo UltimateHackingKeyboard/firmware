@@ -126,11 +126,6 @@
 			<locationURI>virtual:/virtual</locationURI>
 		</link>
 		<link>
-			<name>usb/device/class</name>
-			<type>2</type>
-			<locationURI>virtual:/virtual</locationURI>
-		</link>
-		<link>
 			<name>usb/device/include</name>
 			<type>2</type>
 			<locationURI>virtual:/virtual</locationURI>
@@ -146,21 +141,6 @@
 			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/middleware/usb_1.0.0/include/usb.h</locationURI>
 		</link>
 		<link>
-			<name>usb/device/class/hid</name>
-			<type>2</type>
-			<locationURI>virtual:/virtual</locationURI>
-		</link>
-		<link>
-			<name>usb/device/class/usb_device_class.c</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/src/include/usb/usb_device_class.c</locationURI>
-		</link>
-		<link>
-			<name>usb/device/class/usb_device_class.h</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/src/include/usb/usb_device_class.h</locationURI>
-		</link>
-		<link>
 			<name>usb/device/include/usb_device.h</name>
 			<type>1</type>
 			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/middleware/usb_1.0.0/device/usb_device.h</locationURI>
@@ -171,16 +151,6 @@
 			<locationURI>virtual:/virtual</locationURI>
 		</link>
 		<link>
-			<name>usb/device/source/usb_device_ch9.c</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/src/include/usb/usb_device_ch9.c</locationURI>
-		</link>
-		<link>
-			<name>usb/device/source/usb_device_ch9.h</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/src/include/usb/usb_device_ch9.h</locationURI>
-		</link>
-		<link>
 			<name>usb/device/source/usb_device_dci.c</name>
 			<type>1</type>
 			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/middleware/usb_1.0.0/device/usb_device_dci.c</locationURI>
@@ -189,16 +159,6 @@
 			<name>usb/device/source/usb_device_dci.h</name>
 			<type>1</type>
 			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/middleware/usb_1.0.0/device/usb_device_dci.h</locationURI>
-		</link>
-		<link>
-			<name>usb/device/class/hid/usb_device_hid.c</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/src/include/usb/usb_device_hid.c</locationURI>
-		</link>
-		<link>
-			<name>usb/device/class/hid/usb_device_hid.h</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/src/include/usb/usb_device_hid.h</locationURI>
 		</link>
 		<link>
 			<name>usb/device/source/khci/usb_device_khci.c</name>
