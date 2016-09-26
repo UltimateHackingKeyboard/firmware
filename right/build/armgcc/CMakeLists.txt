@@ -141,7 +141,6 @@ SET(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} muldefs")
 include_directories(${SrcDir})
 include_directories(${SrcDir}/include/board)
 include_directories(${SrcDir}/include/usb)
-include_directories(${KsdkDir}/devices/MK22F51212/utilities)
 include_directories(${KsdkDir}/middleware/usb_1.0.0)
 include_directories(${KsdkDir}/middleware/usb_1.0.0/osa)
 include_directories(${KsdkDir}/middleware/usb_1.0.0/include)
@@ -152,16 +151,12 @@ include_directories(${KsdkDir}/devices/MK22F51212/drivers)
 include_directories(${KsdkDir}/devices/MK22F51212)
 include_directories(${IncludeDir})
 
-add_executable(dev_composite_hid_mouse_hid_keyboard_bm.elf 
+add_executable(dev_composite_hid_mouse_hid_keyboard_bm.elf
 "${KsdkDir}/devices/MK22F51212/gcc/startup_MK22F51212.S"
 "${KsdkDir}/middleware/usb_1.0.0/device/usb_device_khci.c"
 "${KsdkDir}/middleware/usb_1.0.0/device/usb_device_khci.h"
 "${KsdkDir}/devices/MK22F51212/drivers/fsl_i2c.h"
 "${KsdkDir}/devices/MK22F51212/drivers/fsl_i2c.c"
-"${KsdkDir}/devices/MK22F51212/drivers/fsl_lpuart.h"
-"${KsdkDir}/devices/MK22F51212/drivers/fsl_lpuart.c"
-"${KsdkDir}/devices/MK22F51212/drivers/fsl_uart.h"
-"${KsdkDir}/devices/MK22F51212/drivers/fsl_uart.c"
 "${KsdkDir}/middleware/usb_1.0.0/osa/usb_osa.h"
 "${KsdkDir}/middleware/usb_1.0.0/osa/usb_osa_bm.h"
 "${KsdkDir}/middleware/usb_1.0.0/osa/usb_osa_bm.c"
@@ -197,18 +192,13 @@ add_executable(dev_composite_hid_mouse_hid_keyboard_bm.elf
 "${SrcDir}/usb_interface_mouse.h"
 "${KsdkDir}/devices/MK22F51212/system_MK22F51212.c"
 "${KsdkDir}/devices/MK22F51212/system_MK22F51212.h"
-"${KsdkDir}/devices/MK22F51212/utilities/fsl_debug_console.c"
-"${KsdkDir}/devices/MK22F51212/utilities/fsl_debug_console.h"
 "${KsdkDir}/middleware/usb_1.0.0/include/usb.h"
 "${KsdkDir}/middleware/usb_1.0.0/device/usb_device.h"
 "${KsdkDir}/middleware/usb_1.0.0/device/usb_device_dci.c"
 "${KsdkDir}/middleware/usb_1.0.0/device/usb_device_dci.h"
-"${KsdkDir}/devices/MK22F51212/drivers/fsl_port.h"
 "${KsdkDir}/devices/MK22F51212/drivers/fsl_sim.c"
 "${KsdkDir}/devices/MK22F51212/drivers/fsl_clock.h"
 "${KsdkDir}/devices/MK22F51212/drivers/fsl_clock.c"
-"${KsdkDir}/devices/MK22F51212/drivers/fsl_common.h"
-"${KsdkDir}/devices/MK22F51212/drivers/fsl_common.c"
 "${SrcDir}/include/board/board.c"
 "${SrcDir}/include/board/board.h"
 "${SrcDir}/include/board/clock_config.c"
