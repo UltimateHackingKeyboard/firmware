@@ -10,9 +10,9 @@ void LedDriver_WriteBuffer(uint8_t txBuffer[], uint8_t size)
     masterXfer.data = txBuffer;
     masterXfer.dataSize = size;
     masterXfer.flags = kI2C_TransferDefaultFlag;
-    I2C_MasterTransferBlocking(EXAMPLE_I2C_MASTER_BASEADDR, &masterXfer);
+    I2C_MasterTransferBlocking(I2C_BASEADDR_MAIN_BUS, &masterXfer);
     masterXfer.slaveAddress = RIGHT_LED_DRIVER_ADDRESS_7BIT;
-    I2C_MasterTransferBlocking(EXAMPLE_I2C_MASTER_BASEADDR, &masterXfer);
+    I2C_MasterTransferBlocking(I2C_BASEADDR_MAIN_BUS, &masterXfer);
 }
 
 void LedDriver_WriteRegister(uint8_t reg, uint8_t val)

@@ -16,7 +16,7 @@ void main() {
     I2C_MasterGetDefaultConfig(&masterConfig);
     masterConfig.baudRate_Bps = I2C_BAUD_RATE;
     sourceClock = CLOCK_GetFreq(I2C_MASTER_CLK_SRC);
-    I2C_MasterInit(EXAMPLE_I2C_MASTER_BASEADDR, &masterConfig, sourceClock);
+    I2C_MasterInit(I2C_BASEADDR_MAIN_BUS, &masterConfig, sourceClock);
 
     LedDriver_EnableAllLeds();
     InitUsb();
