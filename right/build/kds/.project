@@ -121,16 +121,6 @@
 			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/devices/MK22F51212/drivers/fsl_i2c.h</locationURI>
 		</link>
 		<link>
-			<name>drivers/fsl_lpuart.c</name>
-			<type>1</type>
-			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/devices/MK22F51212/drivers/fsl_lpuart.c</locationURI>
-		</link>
-		<link>
-			<name>drivers/fsl_lpuart.h</name>
-			<type>1</type>
-			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/devices/MK22F51212/drivers/fsl_lpuart.h</locationURI>
-		</link>
-		<link>
 			<name>drivers/fsl_port.h</name>
 			<type>1</type>
 			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/devices/MK22F51212/drivers/fsl_port.h</locationURI>
@@ -149,16 +139,6 @@
 			<name>drivers/fsl_smc.h</name>
 			<type>1</type>
 			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/devices/MK22F51212/drivers/fsl_smc.h</locationURI>
-		</link>
-		<link>
-			<name>drivers/fsl_uart.c</name>
-			<type>1</type>
-			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/devices/MK22F51212/drivers/fsl_uart.c</locationURI>
-		</link>
-		<link>
-			<name>drivers/fsl_uart.h</name>
-			<type>1</type>
-			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_FRDM-K22F/devices/MK22F51212/drivers/fsl_uart.h</locationURI>
 		</link>
 		<link>
 			<name>osa/usb_osa.h</name>
