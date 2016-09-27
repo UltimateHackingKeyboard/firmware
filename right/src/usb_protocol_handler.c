@@ -1,6 +1,8 @@
 #include "usb_protocol_handler.h"
 #include "system_properties.h"
 #include "test_led.h"
+#include "i2c_addresses.h"
+#include "led_driver.h"
 
 void SetError(uint8_t error);
 void SetGenericError();
@@ -96,6 +98,20 @@ void GetSetTestLed()
 
 void WriteLedDriver()
 {
+    uint8_t i2cAddress = GenericHidInBuffer[1];
+    uint8_t i2cPayloadSize = GenericHidInBuffer[2];
+
+    if (!IS_I2C_LED_DRIVER_ADDRESS(i2cAddress)) {
+        SetError(WRITE_LED_DRIVER_RESPONSE_INVALID_ADDRESS);
+        return;
+    }
+
+    if (i2cPayloadSize > USB_GENERIC_HID_OUT_BUFFER_LENGTH-3) {
+        SetError(WRITE_LED_DRIVER_RESPONSE_INVALID_PAYLOAD_SIZE);
+        return;
+    }
+
+    LedDriver_WriteBuffer(i2cAddress, GenericHidInBuffer+3, i2cPayloadSize);
 }
 
 void ReadLedDriver()
