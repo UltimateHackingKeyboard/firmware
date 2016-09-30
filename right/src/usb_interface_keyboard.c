@@ -1,6 +1,8 @@
+#include "fsl_port.h"
 #include "include/board/board.h"
 #include "usb_api.h"
 #include "usb_composite_device.h"
+#include "test_led.h"
 
 static usb_device_endpoint_struct_t UsbKeyboardEndpoints[USB_KEYBOARD_ENDPOINT_COUNT] = {{
     USB_KEYBOARD_ENDPOINT_INDEX | (USB_IN << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT),
@@ -40,11 +42,22 @@ static usb_status_t UsbKeyboardAction(void)
 {
     UsbKeyboardReport.modifiers = 0;
     UsbKeyboardReport.reserved = 0;
+
     for (uint8_t scancode_idx=0; scancode_idx<USB_KEYBOARD_MAX_KEYS; scancode_idx++) {
         UsbKeyboardReport.scancodes[scancode_idx] = 0;
     }
 
-    if (!GPIO_ReadPinInput(BOARD_SW2_GPIO, BOARD_SW2_GPIO_PIN)) {
+    // row 1: PA12
+    // col 1: PA5
+
+    PORT_SetPinConfig(PORTA, 5, &(port_pin_config_t){.pullSelect=kPORT_PullDisable, .mux=kPORT_MuxAsGpio});
+    GPIO_PinInit(GPIOA, 5, &(gpio_pin_config_t){.pinDirection=kGPIO_DigitalOutput, .outputLogic=0});
+    GPIO_WritePinOutput(GPIOA, 5, 1);
+
+    PORT_SetPinConfig(PORTA, 12, &(port_pin_config_t){.pullSelect=kPORT_PullUp, .mux=kPORT_MuxAsGpio});
+    GPIO_PinInit(GPIOA, 12, &(gpio_pin_config_t){.pinDirection=kGPIO_DigitalInput});
+    if (!GPIO_ReadPinInput(GPIOA, 12)) {
+        GPIO_SetPinsOutput(TEST_LED_GPIO, 1 << TEST_LED_GPIO_PIN);
         UsbKeyboardReport.scancodes[0] = HID_KEYBOARD_SC_A;
     }
 

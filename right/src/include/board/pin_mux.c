@@ -52,7 +52,7 @@ void BOARD_InitPins(void)
 
     PORT_SetPinMux(TEST_LED_GPIO_PORT, TEST_LED_GPIO_PIN, kPORT_MuxAsGpio);
     TEST_RED_INIT(LOGIC_LED_ON);
-    GPIO_SetPinsOutput(TEST_LED_GPIO,   1 << TEST_LED_GPIO_PIN);
+//    GPIO_SetPinsOutput(TEST_LED_GPIO,   1 << TEST_LED_GPIO_PIN);
 
     // Initialize I2C.
 
