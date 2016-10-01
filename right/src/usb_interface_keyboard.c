@@ -51,12 +51,12 @@ static usb_status_t UsbKeyboardAction(void)
     // col 1: PA5
 
     PORT_SetPinConfig(PORTA, 5, &(port_pin_config_t){.pullSelect=kPORT_PullDisable, .mux=kPORT_MuxAsGpio});
-    GPIO_PinInit(GPIOA, 5, &(gpio_pin_config_t){.pinDirection=kGPIO_DigitalOutput, .outputLogic=0});
+    GPIO_PinInit(GPIOA, 5, &(gpio_pin_config_t){.pinDirection=kGPIO_DigitalOutput, .outputLogic=1});
     GPIO_WritePinOutput(GPIOA, 5, 1);
 
-    PORT_SetPinConfig(PORTA, 12, &(port_pin_config_t){.pullSelect=kPORT_PullUp, .mux=kPORT_MuxAsGpio});
+    PORT_SetPinConfig(PORTA, 12, &(port_pin_config_t){.pullSelect=kPORT_PullDown, .mux=kPORT_MuxAsGpio});
     GPIO_PinInit(GPIOA, 12, &(gpio_pin_config_t){.pinDirection=kGPIO_DigitalInput});
-    if (!GPIO_ReadPinInput(GPIOA, 12)) {
+    if (GPIO_ReadPinInput(GPIOA, 12)) {
         GPIO_SetPinsOutput(TEST_LED_GPIO, 1 << TEST_LED_GPIO_PIN);
         UsbKeyboardReport.scancodes[0] = HID_KEYBOARD_SC_A;
     }
