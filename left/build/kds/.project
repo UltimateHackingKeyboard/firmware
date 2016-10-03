@@ -36,6 +36,11 @@
 			<locationURI>virtual:/virtual</locationURI>
 		</link>
 		<link>
+			<name>shared</name>
+			<type>2</type>
+			<locationURI>PARENT-3-PROJECT_LOC/shared</locationURI>
+		</link>
+		<link>
 			<name>source</name>
 			<type>2</type>
 			<locationURI>virtual:/virtual</locationURI>
@@ -83,7 +88,7 @@
 		<link>
 			<name>source/i2c.h</name>
 			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/include/i2c.h</locationURI>
+			<locationURI>PARENT-3-PROJECT_LOC/shared/i2c.h</locationURI>
 		</link>
 		<link>
 			<name>source/main.c</name>

@@ -2,7 +2,7 @@
 #include "fsl_clock_manager.h"
 #include "fsl_i2c_slave_driver.h"
 #include "fsl_i2c_shared_function.h"
-#include "i2c.h"
+#include "i2c_addresses.h"
 #include "main.h"
 
 uint8_t isSw2Pressed;
@@ -94,7 +94,7 @@ int main(void)
     i2c_slave_state_t slave;
 
     i2c_slave_user_config_t userConfig = {
-        .address         = LEFT_KEYBOARD_HALF_I2C_ADDRESS_7BIT,
+        .address         = I2C_ADDRESS_LED_DRIVER_LEFT,
         .slaveCallback   = i2c_slave_callback,
         .callbackParam   = NULL,
         .slaveListening  = true,
