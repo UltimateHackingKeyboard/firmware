@@ -67,6 +67,7 @@ pin_t keyboardMatrixRows[] = {
 
 static usb_status_t UsbKeyboardAction(void)
 {
+    uint8_t scancode_i = 0;
     UsbKeyboardReport.modifiers = 0;
     UsbKeyboardReport.reserved = 0;
 
@@ -74,18 +75,21 @@ static usb_status_t UsbKeyboardAction(void)
         UsbKeyboardReport.scancodes[scancode_idx] = 0;
     }
 
-    // row 1: PA12
-    // col 1: PA5
+    for (uint8_t col=0; col<KEYBOARD_MATRIX_COLS_NUM; col++) {
+        PORT_SetPinConfig(keyboardMatrixCols[col].port, keyboardMatrixCols[col].pin, &(port_pin_config_t){.pullSelect=kPORT_PullDisable, .mux=kPORT_MuxAsGpio});
+        GPIO_PinInit(keyboardMatrixCols[col].gpio, keyboardMatrixCols[col].pin, &(gpio_pin_config_t){.pinDirection=kGPIO_DigitalOutput, .outputLogic=1});
+        GPIO_WritePinOutput(keyboardMatrixCols[col].gpio, keyboardMatrixCols[col].pin, 1);
 
-    PORT_SetPinConfig(keyboardMatrixCols[0].port, keyboardMatrixCols[0].pin, &(port_pin_config_t){.pullSelect=kPORT_PullDisable, .mux=kPORT_MuxAsGpio});
-    GPIO_PinInit(keyboardMatrixCols[0].gpio, keyboardMatrixCols[0].pin, &(gpio_pin_config_t){.pinDirection=kGPIO_DigitalOutput, .outputLogic=1});
-    GPIO_WritePinOutput(keyboardMatrixCols[0].gpio, keyboardMatrixCols[0].pin, 1);
+        for (uint8_t row=0; row<KEYBOARD_MATRIX_ROWS_NUM; row++) {
+            PORT_SetPinConfig(keyboardMatrixRows[row].port, keyboardMatrixRows[row].pin, &(port_pin_config_t){.pullSelect=kPORT_PullDown, .mux=kPORT_MuxAsGpio});
+            GPIO_PinInit(keyboardMatrixRows[row].gpio, keyboardMatrixRows[row].pin, &(gpio_pin_config_t){.pinDirection=kGPIO_DigitalInput});
 
-    PORT_SetPinConfig(keyboardMatrixRows[0].port, keyboardMatrixRows[0].pin, &(port_pin_config_t){.pullSelect=kPORT_PullDown, .mux=kPORT_MuxAsGpio});
-    GPIO_PinInit(keyboardMatrixRows[0].gpio, keyboardMatrixRows[0].pin, &(gpio_pin_config_t){.pinDirection=kGPIO_DigitalInput});
-    if (GPIO_ReadPinInput(keyboardMatrixRows[0].gpio, keyboardMatrixRows[0].pin)) {
-        GPIO_SetPinsOutput(TEST_LED_GPIO, 1 << TEST_LED_GPIO_PIN);
-        UsbKeyboardReport.scancodes[0] = HID_KEYBOARD_SC_A;
+            if (GPIO_ReadPinInput(keyboardMatrixRows[row].gpio, keyboardMatrixRows[row].pin)) {
+                GPIO_SetPinsOutput(TEST_LED_GPIO, 1 << TEST_LED_GPIO_PIN);
+                UsbKeyboardReport.scancodes[scancode_i] = HID_KEYBOARD_SC_A + row*KEYBOARD_MATRIX_COLS_NUM + col;
+            }
+        }
+        GPIO_WritePinOutput(keyboardMatrixCols[col].gpio, keyboardMatrixCols[col].pin, 0);
     }
 
     return USB_DeviceHidSend(UsbCompositeDevice.keyboardHandle, USB_KEYBOARD_ENDPOINT_INDEX,
