@@ -14,10 +14,10 @@
     #define TEST_LED_GPIO_PORT PORTD
     #define TEST_LED_GPIO_PIN  7U
 
-    #define TEST_RED_INIT(output) GPIO_PinInit(TEST_LED_GPIO, TEST_LED_GPIO_PIN, \
+    #define TEST_LED_INIT(output) GPIO_PinInit(TEST_LED_GPIO, TEST_LED_GPIO_PIN, \
                                               &(gpio_pin_config_t){kGPIO_DigitalOutput, (output)})
-    #define TEST_RED_ON() GPIO_ClearPinsOutput(TEST_LED_GPIO, 1U << TEST_LED_GPIO_PIN)
-    #define TEST_RED_OFF() GPIO_SetPinsOutput(TEST_LED_GPIO, 1U << TEST_LED_GPIO_PIN)
-    #define TEST_RED_TOGGLE() GPIO_TogglePinsOutput(TEST_LED_GPIO, 1U << TEST_LED_GPIO_PIN)
+    #define TEST_LED_ON() GPIO_ClearPinsOutput(TEST_LED_GPIO, 1U << TEST_LED_GPIO_PIN)
+    #define TEST_LED_OFF() GPIO_SetPinsOutput(TEST_LED_GPIO, 1U << TEST_LED_GPIO_PIN)
+    #define TEST_LED_TOGGLE() GPIO_TogglePinsOutput(TEST_LED_GPIO, 1U << TEST_LED_GPIO_PIN)
 
 #endif

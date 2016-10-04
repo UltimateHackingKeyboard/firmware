@@ -88,10 +88,10 @@ void GetSetTestLed()
     uint8_t arg = GenericHidInBuffer[1];
     switch (arg) {
         case 0:
-            TEST_RED_ON();
+            TEST_LED_ON();
             break;
         case 1:
-            TEST_RED_OFF();
+            TEST_LED_OFF();
             break;
     }
 }
