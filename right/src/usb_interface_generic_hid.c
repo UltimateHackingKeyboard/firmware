@@ -1,4 +1,3 @@
-#include "include/board/board.h"
 #include "usb_composite_device.h"
 #include "usb_interface_generic_hid.h"
 

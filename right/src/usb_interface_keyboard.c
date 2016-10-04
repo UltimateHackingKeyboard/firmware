@@ -1,5 +1,4 @@
 #include "fsl_port.h"
-#include "include/board/board.h"
 #include "usb_api.h"
 #include "usb_composite_device.h"
 #include "test_led.h"

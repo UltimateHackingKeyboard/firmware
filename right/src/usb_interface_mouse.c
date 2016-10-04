@@ -1,8 +1,8 @@
-#include "include/board/board.h"
 #include "usb_composite_device.h"
 #include "usb_interface_mouse.h"
 #include "fsl_i2c.h"
 #include "i2c.h"
+#include "reset_button.h"
 
 static usb_device_endpoint_struct_t UsbMouseEndpoints[USB_MOUSE_ENDPOINT_COUNT] = {{
     USB_MOUSE_ENDPOINT_INDEX | (USB_IN << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT),
@@ -58,7 +58,7 @@ static volatile usb_status_t UsbMouseAction(void)
     UsbMouseReport.wheelX = 0;
     UsbMouseReport.wheelY = 0;
 
-    if (!GPIO_ReadPinInput(BOARD_SW2_GPIO, BOARD_SW2_GPIO_PIN)) {
+    if (!GPIO_ReadPinInput(RESET_BUTTON_GPIO, RESET_BUTTON_PIN)) {
         if (!(scrollCounter % 10)) {
             UsbMouseReport.wheelX = -1;
         }

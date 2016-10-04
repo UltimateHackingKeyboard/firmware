@@ -30,8 +30,8 @@
 
 #include "fsl_common.h"
 #include "fsl_port.h"
-#include "board.h"
 #include "test_led.h"
+#include "reset_button.h"
 
 void BOARD_InitPins(void)
 {
@@ -46,13 +46,12 @@ void BOARD_InitPins(void)
         .pullSelect = kPORT_PullUp,
         .mux = kPORT_MuxAsGpio,
     };
-    PORT_SetPinConfig(BOARD_SW2_PORT, BOARD_SW2_GPIO_PIN, &switchConfig);
+    PORT_SetPinConfig(RESET_BUTTON_PORT, RESET_BUTTON_PIN, &switchConfig);
 
     // Initialize LEDs.
 
     PORT_SetPinMux(TEST_LED_GPIO_PORT, TEST_LED_GPIO_PIN, kPORT_MuxAsGpio);
-    TEST_LED_INIT(LOGIC_LED_ON);
-//    GPIO_SetPinsOutput(TEST_LED_GPIO,   1 << TEST_LED_GPIO_PIN);
+    TEST_LED_INIT(0);
 
     // Initialize I2C.
 

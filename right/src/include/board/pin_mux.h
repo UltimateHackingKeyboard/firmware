@@ -31,7 +31,6 @@
 #ifndef _PIN_MUX_H_
 #define _PIN_MUX_H_
 
-#include "include/board/board.h"
 #include "fsl_common.h"
 
 #if defined(__cplusplus)

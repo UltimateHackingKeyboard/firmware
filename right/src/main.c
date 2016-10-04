@@ -1,6 +1,5 @@
 #include "fsl_i2c.h"
 #include "include/board/clock_config.h"
-#include "include/board/board.h"
 #include "include/board/pin_mux.h"
 #include "usb_composite_device.h"
 #include "fsl_common.h"

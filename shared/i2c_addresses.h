@@ -1,5 +1,5 @@
-#ifndef __I2C_H__
-#define __I2C_H__
+#ifndef __I2C_ADDRESSES_H__
+#define __I2C_ADDRESSES_H__
 
 // 7-bit I2C addresses
 
