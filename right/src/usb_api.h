@@ -6,8 +6,8 @@
     #include "usb_device_config.h"
     #include "usb.h"
     #include "usb_device.h"
-    #include "include/usb/usb_device_class.h"
-    #include "include/usb/usb_device_hid.h"
+    #include "ksdk_usb/usb_device_class.h"
+    #include "ksdk_usb/usb_device_hid.h"
 
     #include "include/lufa/Common.h"
     #include "include/lufa/HIDClassCommon.h"
