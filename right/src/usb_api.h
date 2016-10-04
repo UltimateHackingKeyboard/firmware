@@ -9,8 +9,8 @@
     #include "ksdk_usb/usb_device_class.h"
     #include "ksdk_usb/usb_device_hid.h"
 
-    #include "include/lufa/Common.h"
-    #include "include/lufa/HIDClassCommon.h"
+    #include "lufa/Common.h"
+    #include "lufa/HIDClassCommon.h"
 
 // Macros:
 
