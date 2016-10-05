@@ -73,6 +73,7 @@
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.include.paths.336878990" name="Include paths (-I)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.include.paths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="../../.."/>
 									<listOptionValue builtIn="false" value="../../../src"/>
+									<listOptionValue builtIn="false" value="../../../src/ksdk_usb"/>
 									<listOptionValue builtIn="false" value="../../../src/usb_descriptors"/>
 									<listOptionValue builtIn="false" value="../../../../lib/KSDK_2.0_FRDM-K22F/middleware/usb_1.0.0"/>
 									<listOptionValue builtIn="false" value="../../../../lib/KSDK_2.0_FRDM-K22F/middleware/usb_1.0.0/osa"/>
@@ -81,8 +82,7 @@
 									<listOptionValue builtIn="false" value="../../../../lib/KSDK_2.0_FRDM-K22F/CMSIS/Include"/>
 									<listOptionValue builtIn="false" value="../../../../lib/KSDK_2.0_FRDM-K22F/devices/MK22F51212/drivers"/>
 									<listOptionValue builtIn="false" value="../../../../lib/KSDK_2.0_FRDM-K22F/devices/MK22F51212"/>
-									<listOptionValue builtIn="false" value="../../../../include"/>
-									<listOptionValue builtIn="false" value="../../../src/ksdk_usb"/>
+									<listOptionValue builtIn="false" value="../../../../shared"/>
 								</option>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.std.933718024" name="Language standard" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.std" useByScannerDiscovery="true" value="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.std.gnu99" valueType="enumerated"/>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.defs.62587551" name="Defined symbols (-D)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.defs" useByScannerDiscovery="false" valueType="definedSymbols">
