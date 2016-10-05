@@ -11,6 +11,11 @@
 
 // Macros:
 
+    #define LED_DRIVER_SDB_PORT  PORTA
+    #define LED_DRIVER_SDB_GPIO  GPIOA
+    #define LED_DRIVER_SDB_CLOCK kCLOCK_PortA
+    #define LED_DRIVER_SDB_PIN   2
+
     #define LED_DRIVER_REGISTER_SHUTDOWN 0x0A
     #define LED_DRIVER_REGISTER_FRAME    0xFD
 

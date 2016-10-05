@@ -21,15 +21,10 @@ void LedDriver_WriteRegister(uint8_t i2cAddress, uint8_t reg, uint8_t val)
 
 void LedDriver_EnableAllLeds()
 {
-    PORT_SetPinMux(PORTA, 2U, kPORT_MuxAsGpio);
-
-    gpio_pin_config_t led_config = {
-        .pinDirection = kGPIO_DigitalOutput,
-        .outputLogic = 0,
-    };
-
-    GPIO_PinInit(GPIOA, 2U, &led_config);
-    GPIO_SetPinsOutput(GPIOA,   0 << 2U);
+    CLOCK_EnableClock(LED_DRIVER_SDB_CLOCK);
+    PORT_SetPinMux(LED_DRIVER_SDB_PORT, LED_DRIVER_SDB_PIN, kPORT_MuxAsGpio);
+    GPIO_PinInit(GPIOA, LED_DRIVER_SDB_PIN, &(gpio_pin_config_t){kGPIO_DigitalOutput, 0});
+    GPIO_WritePinOutput(LED_DRIVER_SDB_GPIO, LED_DRIVER_SDB_PIN, 1);
 
     uint8_t ledDriverAddresses[] = {I2C_ADDRESS_LED_DRIVER_LEFT, I2C_ADDRESS_LED_DRIVER_RIGHT};
 

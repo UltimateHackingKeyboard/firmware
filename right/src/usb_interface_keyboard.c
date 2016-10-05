@@ -40,6 +40,7 @@ static usb_keyboard_report_t UsbKeyboardReport;
 typedef struct {
     PORT_Type *port;
     GPIO_Type *gpio;
+    clock_ip_name_t clock;
     uint32_t pin;
 } pin_t;
 
@@ -47,21 +48,21 @@ typedef struct {
 #define KEYBOARD_MATRIX_ROWS_NUM 5
 
 pin_t keyboardMatrixCols[] = {
-    {PORTA, GPIOA, 5},
-    {PORTB, GPIOB, 3},
-    {PORTB, GPIOB, 16},
-    {PORTB, GPIOB, 17},
-    {PORTB, GPIOB, 18},
-    {PORTA, GPIOA, 1},
-    {PORTB, GPIOB, 0},
+    {PORTA, GPIOA, kCLOCK_PortA, 5},
+    {PORTB, GPIOB, kCLOCK_PortB, 3},
+    {PORTB, GPIOB, kCLOCK_PortB, 16},
+    {PORTB, GPIOB, kCLOCK_PortB, 17},
+    {PORTB, GPIOB, kCLOCK_PortB, 18},
+    {PORTA, GPIOA, kCLOCK_PortA, 1},
+    {PORTB, GPIOB, kCLOCK_PortB, 0},
 };
 
 pin_t keyboardMatrixRows[] = {
-    {PORTA, GPIOA, 12},
-    {PORTA, GPIOA, 13},
-    {PORTC, GPIOC, 0},
-    {PORTB, GPIOB, 19},
-    {PORTD, GPIOD, 6},
+    {PORTA, GPIOA, kCLOCK_PortA, 12},
+    {PORTA, GPIOA, kCLOCK_PortA, 13},
+    {PORTC, GPIOC, kCLOCK_PortC, 0},
+    {PORTB, GPIOB, kCLOCK_PortB, 19},
+    {PORTD, GPIOD, kCLOCK_PortD, 6},
 };
 
 static usb_status_t UsbKeyboardAction(void)
@@ -69,6 +70,14 @@ static usb_status_t UsbKeyboardAction(void)
     uint8_t scancode_i = 0;
     UsbKeyboardReport.modifiers = 0;
     UsbKeyboardReport.reserved = 0;
+
+    for (uint8_t i=0; i<KEYBOARD_MATRIX_COLS_NUM; i++) {
+        CLOCK_EnableClock(keyboardMatrixCols[i].clock);
+    }
+
+    for (uint8_t i=0; i<KEYBOARD_MATRIX_ROWS_NUM; i++) {
+        CLOCK_EnableClock(keyboardMatrixRows[i].clock);
+    }
 
     for (uint8_t scancode_idx=0; scancode_idx<USB_KEYBOARD_MAX_KEYS; scancode_idx++) {
         UsbKeyboardReport.scancodes[scancode_idx] = 0;

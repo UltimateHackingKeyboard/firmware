@@ -44,11 +44,6 @@ void InitI2c() {
 
 void InitPeripherials(void)
 {
-    CLOCK_EnableClock(kCLOCK_PortA);
-    CLOCK_EnableClock(kCLOCK_PortB);
-    CLOCK_EnableClock(kCLOCK_PortC);
-    CLOCK_EnableClock(kCLOCK_PortD);
-
     InitResetButton();
     InitTestLed();
     InitI2c();
