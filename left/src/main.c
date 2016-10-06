@@ -1,3 +1,35 @@
+#include "fsl_gpio.h"
+#include "clock_config.h"
+
+#define TEST_LED_GPIO  GPIOA
+#define TEST_LED_PORT  PORTA
+#define TEST_LED_CLOCK kCLOCK_PortA
+#define TEST_LED_PIN   12
+
+#define TEST_LED_INIT(output) GPIO_PinInit(TEST_LED_GPIO, TEST_LED_PIN, \
+                                          &(gpio_pin_config_t){kGPIO_DigitalOutput, (output)})
+#define TEST_LED_ON() GPIO_ClearPinsOutput(TEST_LED_GPIO, 1U << TEST_LED_PIN)
+#define TEST_LED_OFF() GPIO_SetPinsOutput(TEST_LED_GPIO, 1U << TEST_LED_PIN)
+
+int main(void)
+{
+    CLOCK_EnableClock(TEST_LED_CLOCK);
+    TEST_LED_INIT(0);
+    BOARD_BootClockRUN();
+    while (1)
+    {
+        for (uint32_t i=0; i<500000; i++) {
+            TEST_LED_ON();
+        }
+        for (uint32_t i=0; i<500000; i++) {
+            TEST_LED_OFF();
+        }
+    }
+}
+
+/*
+#define I2C_DATA_LENGTH 2
+
 #include "board.h"
 #include "fsl_clock_manager.h"
 #include "fsl_i2c_slave_driver.h"
@@ -38,13 +70,6 @@ static void i2c_slave_callback(uint8_t instance, i2c_slave_event_t i2cEvent, voi
 
 int main(void)
 {
-    // Initialize clock.
-
-    CLOCK_SYS_EnablePortClock(PORTA_IDX);
-    CLOCK_SYS_EnablePortClock(PORTB_IDX);
-
-    BOARD_ClockInit();
-
     // Initialize GPIO.
 
     gpio_input_pin_user_config_t inputPin[] =
@@ -113,3 +138,4 @@ int main(void)
         GPIO_DRV_WritePinOutput(kGpioLED3, isSw3Pressed);
     }
 }
+*/

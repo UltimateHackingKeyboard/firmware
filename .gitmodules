@@ -4,3 +4,6 @@
 [submodule "lib/KSDK_1.3_FRDM-KL03Z"]
 	path = lib/KSDK_1.3_FRDM-KL03Z
 	url = git@github.com:UltimateHackingKeyboard/KSDK_1.3_FRDM-KL03Z.git
+[submodule "lib/KSDK_2.0_MKL03Z8xxx4"]
+	path = lib/KSDK_2.0_MKL03Z8xxx4
+	url = git@github.com:UltimateHackingKeyboard/KSDK_2.0_MKL03Z8xxx4.git

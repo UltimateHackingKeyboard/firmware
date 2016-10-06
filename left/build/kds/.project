@@ -26,12 +26,13 @@
 	<natures>
 		<nature>com.freescale.processorexpert.core.expertprojectnature</nature>
 		<nature>org.eclipse.cdt.core.cnature</nature>
+		<nature>org.eclipse.cdt.core.ccnature</nature>
 		<nature>org.eclipse.cdt.managedbuilder.core.managedBuildNature</nature>
 		<nature>org.eclipse.cdt.managedbuilder.core.ScannerConfigNature</nature>
 	</natures>
 	<linkedResources>
 		<link>
-			<name>board</name>
+			<name>drivers</name>
 			<type>2</type>
 			<locationURI>virtual:/virtual</locationURI>
 		</link>
@@ -41,9 +42,9 @@
 			<locationURI>PARENT-3-PROJECT_LOC/shared</locationURI>
 		</link>
 		<link>
-			<name>source</name>
+			<name>src</name>
 			<type>2</type>
-			<locationURI>virtual:/virtual</locationURI>
+			<locationURI>PARENT-2-PROJECT_LOC/src</locationURI>
 		</link>
 		<link>
 			<name>startup</name>
@@ -51,99 +52,54 @@
 			<locationURI>virtual:/virtual</locationURI>
 		</link>
 		<link>
-			<name>utilities</name>
-			<type>2</type>
-			<locationURI>virtual:/virtual</locationURI>
+			<name>drivers/fsl_clock.c</name>
+			<type>1</type>
+			<locationURI>PARENT-3-PROJECT_LOC/lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/drivers/fsl_clock.c</locationURI>
 		</link>
 		<link>
-			<name>board/board.c</name>
+			<name>drivers/fsl_clock.h</name>
 			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/lib/KSDK_1.3_FRDM-KL03Z/examples/frdmkl03z/board.c</locationURI>
+			<locationURI>PARENT-3-PROJECT_LOC/lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/drivers/fsl_clock.h</locationURI>
 		</link>
 		<link>
-			<name>board/board.h</name>
+			<name>drivers/fsl_gpio.c</name>
 			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/lib/KSDK_1.3_FRDM-KL03Z/examples/frdmkl03z/board.h</locationURI>
+			<locationURI>PARENT-3-PROJECT_LOC/lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/drivers/fsl_gpio.c</locationURI>
 		</link>
 		<link>
-			<name>board/gpio_pins.c</name>
+			<name>drivers/fsl_gpio.h</name>
 			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/lib/KSDK_1.3_FRDM-KL03Z/examples/frdmkl03z/gpio_pins.c</locationURI>
+			<locationURI>PARENT-3-PROJECT_LOC/lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/drivers/fsl_gpio.h</locationURI>
 		</link>
 		<link>
-			<name>board/gpio_pins.h</name>
+			<name>drivers/fsl_port.h</name>
 			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/lib/KSDK_1.3_FRDM-KL03Z/examples/frdmkl03z/gpio_pins.h</locationURI>
+			<locationURI>PARENT-3-PROJECT_LOC/lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/drivers/fsl_port.h</locationURI>
 		</link>
 		<link>
-			<name>board/pin_mux.c</name>
+			<name>drivers/fsl_smc.c</name>
 			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/lib/KSDK_1.3_FRDM-KL03Z/examples/frdmkl03z/pin_mux.c</locationURI>
+			<locationURI>PARENT-3-PROJECT_LOC/lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/drivers/fsl_smc.c</locationURI>
 		</link>
 		<link>
-			<name>board/pin_mux.h</name>
+			<name>drivers/fsl_smc.h</name>
 			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/lib/KSDK_1.3_FRDM-KL03Z/examples/frdmkl03z/pin_mux.h</locationURI>
-		</link>
-		<link>
-			<name>source/i2c.h</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/shared/i2c.h</locationURI>
-		</link>
-		<link>
-			<name>source/main.c</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/main.c</locationURI>
-		</link>
-		<link>
-			<name>source/main.h</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/main.h</locationURI>
-		</link>
-		<link>
-			<name>startup/startup.c</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/lib/KSDK_1.3_FRDM-KL03Z/platform/devices/startup.c</locationURI>
-		</link>
-		<link>
-			<name>startup/startup.h</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/lib/KSDK_1.3_FRDM-KL03Z/platform/devices/startup.h</locationURI>
+			<locationURI>PARENT-3-PROJECT_LOC/lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/drivers/fsl_smc.h</locationURI>
 		</link>
 		<link>
 			<name>startup/startup_MKL03Z4.S</name>
 			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/lib/KSDK_1.3_FRDM-KL03Z/platform/devices/MKL03Z4/startup/gcc/startup_MKL03Z4.S</locationURI>
+			<locationURI>PARENT-3-PROJECT_LOC/lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/gcc/startup_MKL03Z4.S</locationURI>
 		</link>
 		<link>
 			<name>startup/system_MKL03Z4.c</name>
 			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/lib/KSDK_1.3_FRDM-KL03Z/platform/devices/MKL03Z4/startup/system_MKL03Z4.c</locationURI>
+			<locationURI>PARENT-3-PROJECT_LOC/lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/system_MKL03Z4.c</locationURI>
 		</link>
 		<link>
-			<name>utilities/fsl_debug_console.c</name>
+			<name>startup/system_MKL03Z4.h</name>
 			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/lib/KSDK_1.3_FRDM-KL03Z/platform/utilities/src/fsl_debug_console.c</locationURI>
-		</link>
-		<link>
-			<name>utilities/fsl_debug_console.h</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/lib/KSDK_1.3_FRDM-KL03Z/platform/utilities/inc/fsl_debug_console.h</locationURI>
-		</link>
-		<link>
-			<name>utilities/fsl_misc_utilities.c</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/lib/KSDK_1.3_FRDM-KL03Z/platform/utilities/src/fsl_misc_utilities.c</locationURI>
-		</link>
-		<link>
-			<name>utilities/print_scan.c</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/lib/KSDK_1.3_FRDM-KL03Z/platform/utilities/src/print_scan.c</locationURI>
-		</link>
-		<link>
-			<name>utilities/print_scan.h</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/lib/KSDK_1.3_FRDM-KL03Z/platform/utilities/src/print_scan.h</locationURI>
+			<locationURI>PARENT-3-PROJECT_LOC/lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/system_MKL03Z4.h</locationURI>
 		</link>
 	</linkedResources>
 </projectDescription>
