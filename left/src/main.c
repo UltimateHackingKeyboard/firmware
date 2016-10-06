@@ -1,5 +1,6 @@
 #include "fsl_gpio.h"
 #include "clock_config.h"
+#include "fsl_port.h"
 
 #define TEST_LED_GPIO  GPIOA
 #define TEST_LED_PORT  PORTA
@@ -14,6 +15,7 @@
 int main(void)
 {
     CLOCK_EnableClock(TEST_LED_CLOCK);
+    PORT_SetPinMux(TEST_LED_PORT, TEST_LED_PIN, kPORT_MuxAsGpio);
     TEST_LED_INIT(0);
     BOARD_BootClockRUN();
     while (1)
