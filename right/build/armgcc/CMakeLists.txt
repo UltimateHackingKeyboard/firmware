@@ -18,9 +18,9 @@ SET(CMAKE_EXECUTABLE_LIBRARY_PREFIX)
 SET(CMAKE_EXECUTABLE_LIBRARY_SUFFIX)
 
 # CURRENT DIRECTORY
-SET(SrcDir "${CMAKE_CURRENT_SOURCE_DIR}/../..")
-SET(KsdkDir "${SrcDir}/../lib/KSDK_2.0_FRDM-K22F/")
-SET(IncludeDir "${SrcDir}/../include")
+SET(SrcDir "${CMAKE_CURRENT_SOURCE_DIR}/../../src")
+SET(KsdkDir "${SrcDir}/../../lib/KSDK_2.0_MK22FN512xxx12/")
+SET(IncludeDir "${SrcDir}/../shared")
 
 SET(CMAKE_ASM_FLAGS_DEBUG "${CMAKE_ASM_FLAGS_DEBUG} -DDEBUG")
 SET(CMAKE_ASM_FLAGS_DEBUG "${CMAKE_ASM_FLAGS_DEBUG} -D__STARTUP_CLEAR_BSS")
@@ -139,8 +139,9 @@ SET(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -Xlinker")
 SET(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} muldefs")
 
 include_directories(${SrcDir})
-include_directories(${SrcDir}/include/board)
-include_directories(${SrcDir}/include/usb)
+include_directories(${SrcDir}/ksdk_usb)
+include_directories(${SrcDir}/usb_descriptors)
+include_directories(${SrcDir}/../../shared)
 include_directories(${KsdkDir}/middleware/usb_1.0.0)
 include_directories(${KsdkDir}/middleware/usb_1.0.0/osa)
 include_directories(${KsdkDir}/middleware/usb_1.0.0/include)
@@ -176,30 +177,30 @@ add_executable(dev_composite_hid_mouse_hid_keyboard_bm.elf
 "${KsdkDir}/middleware/usb_1.0.0/osa/usb_osa_bm.c"
 "${KsdkDir}/middleware/usb_1.0.0/include/usb.h"
 
-"${SrcDir}/include/usb/usb_device_class.c"
-"${SrcDir}/include/usb/usb_device_class.h"
-"${SrcDir}/include/usb/usb_device_hid.c"
-"${SrcDir}/include/usb/usb_device_hid.h"
-"${SrcDir}/include/usb/usb_device_ch9.c"
-"${SrcDir}/include/usb/usb_device_ch9.h"
+"${SrcDir}/ksdk_usb/usb_device_class.c"
+"${SrcDir}/ksdk_usb/usb_device_class.h"
+"${SrcDir}/ksdk_usb/usb_device_hid.c"
+"${SrcDir}/ksdk_usb/usb_device_hid.h"
+"${SrcDir}/ksdk_usb/usb_device_ch9.c"
+"${SrcDir}/ksdk_usb/usb_device_ch9.h"
 
 "${SrcDir}/main.c"
 "${SrcDir}/usb_composite_device.c"
 "${SrcDir}/usb_composite_device.h"
-"${SrcDir}/usb_descriptor_configuration.c"
-"${SrcDir}/usb_descriptor_configuration.h"
-"${SrcDir}/usb_descriptor_device.c"
-"${SrcDir}/usb_descriptor_device.h"
-"${SrcDir}/usb_descriptor_generic_hid_report.c"
-"${SrcDir}/usb_descriptor_generic_hid_report.h"
-"${SrcDir}/usb_descriptor_hid.c"
-"${SrcDir}/usb_descriptor_hid.h"
-"${SrcDir}/usb_descriptor_keyboard_report.c"
-"${SrcDir}/usb_descriptor_keyboard_report.h"
-"${SrcDir}/usb_descriptor_mouse_report.c"
-"${SrcDir}/usb_descriptor_mouse_report.h"
-"${SrcDir}/usb_descriptor_strings.c"
-"${SrcDir}/usb_descriptor_strings.h"
+"${SrcDir}/usb_descriptors/usb_descriptor_configuration.c"
+"${SrcDir}/usb_descriptors/usb_descriptor_configuration.h"
+"${SrcDir}/usb_descriptors/usb_descriptor_device.c"
+"${SrcDir}/usb_descriptors/usb_descriptor_device.h"
+"${SrcDir}/usb_descriptors/usb_descriptor_generic_hid_report.c"
+"${SrcDir}/usb_descriptors/usb_descriptor_generic_hid_report.h"
+"${SrcDir}/usb_descriptors/usb_descriptor_hid.c"
+"${SrcDir}/usb_descriptors/usb_descriptor_hid.h"
+"${SrcDir}/usb_descriptors/usb_descriptor_keyboard_report.c"
+"${SrcDir}/usb_descriptors/usb_descriptor_keyboard_report.h"
+"${SrcDir}/usb_descriptors/usb_descriptor_mouse_report.c"
+"${SrcDir}/usb_descriptors/usb_descriptor_mouse_report.h"
+"${SrcDir}/usb_descriptors/usb_descriptor_strings.c"
+"${SrcDir}/usb_descriptors/usb_descriptor_strings.h"
 "${SrcDir}/usb_device_config.h"
 "${SrcDir}/usb_interface_generic_hid.c"
 "${SrcDir}/usb_interface_generic_hid.h"
@@ -207,16 +208,22 @@ add_executable(dev_composite_hid_mouse_hid_keyboard_bm.elf
 "${SrcDir}/usb_interface_keyboard.h"
 "${SrcDir}/usb_interface_mouse.c"
 "${SrcDir}/usb_interface_mouse.h"
-"${SrcDir}/include/board/board.c"
-"${SrcDir}/include/board/board.h"
-"${SrcDir}/include/board/clock_config.c"
-"${SrcDir}/include/board/clock_config.h"
-"${SrcDir}/include/board/pin_mux.c"
-"${SrcDir}/include/board/pin_mux.h"
+"${SrcDir}/init_peripherials.c"
+"${SrcDir}/init_peripherials.h"
+"${SrcDir}/init_clock.c"
+"${SrcDir}/init_clock.h"
+"${SrcDir}/led_driver.c"
+"${SrcDir}/led_driver.h"
+"${SrcDir}/reset_button.c"
+"${SrcDir}/reset_button.h"
+"${SrcDir}/test_led.c"
+"${SrcDir}/test_led.h"
+"${SrcDir}/usb_protocol_handler.c"
+"${SrcDir}/usb_protocol_handler.h"
 )
 
-set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -T${SrcDir}/build/kds/MK22FN512xxx12_flash.ld -static")
-set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} -T${SrcDir}/build/kds/MK22FN512xxx12_flash.ld -static")
+set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -T${KsdkDir}/devices/MK22F51212/gcc/MK22FN512xxx12_flash.ld -static")
+set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} -T${KsdkDir}/devices/MK22F51212/gcc/MK22FN512xxx12_flash.ld -static")
 
 TARGET_LINK_LIBRARIES(dev_composite_hid_mouse_hid_keyboard_bm.elf -Wl,--start-group)
 
