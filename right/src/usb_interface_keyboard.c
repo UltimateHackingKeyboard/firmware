@@ -62,29 +62,48 @@ key_matrix_t keyMatrix = {
     }
 };
 
+uint8_t keystates[100];
+
 static usb_status_t UsbKeyboardAction(void)
 {
-    uint8_t scancode_i = 0;
     UsbKeyboardReport.modifiers = 0;
     UsbKeyboardReport.reserved = 0;
 
-    KeyMatrix_Init(keyMatrix);
+    KeyMatrix_Init(&keyMatrix);
+    //KeyMatrix_Scan(&keyMatrix);
 
     for (uint8_t scancode_idx=0; scancode_idx<USB_KEYBOARD_MAX_KEYS; scancode_idx++) {
         UsbKeyboardReport.scancodes[scancode_idx] = 0;
     }
 
+    uint8_t scancode_idx = 0;
     for (uint8_t col=0; col<KEYBOARD_MATRIX_COLS_NUM; col++) {
         GPIO_WritePinOutput(keyMatrix.cols[col].gpio, keyMatrix.cols[col].pin, 1);
         for (uint8_t row=0; row<KEYBOARD_MATRIX_ROWS_NUM; row++) {
             if (GPIO_ReadPinInput(keyMatrix.rows[row].gpio, keyMatrix.rows[row].pin)) {
                 GPIO_SetPinsOutput(TEST_LED_GPIO, 1 << TEST_LED_GPIO_PIN);
-                UsbKeyboardReport.scancodes[scancode_i] = HID_KEYBOARD_SC_A + row*KEYBOARD_MATRIX_COLS_NUM + col;
+                UsbKeyboardReport.scancodes[scancode_idx++] = HID_KEYBOARD_SC_A + row*KEYBOARD_MATRIX_COLS_NUM + col;
             }
         }
         GPIO_WritePinOutput(keyMatrix.cols[col].gpio, keyMatrix.cols[col].pin, 0);
     }
 
+/*
+    uint8_t keyId = 0;
+    for (uint8_t col=0; col<keyMatrix.colNum; col++) {
+        GPIO_WritePinOutput(keyMatrix.cols[col].gpio, keyMatrix.cols[col].pin, 1);
+        for (uint8_t row=0; row<keyMatrix.rowNum; row++) {
+            keystates[row+col*keyMatrix.rowNum] = GPIO_ReadPinInput(keyMatrix.rows[row].gpio, keyMatrix.rows[row].pin);
+        }
+        GPIO_WritePinOutput(keyMatrix.cols[col].gpio, keyMatrix.cols[col].pin, 0);
+    }
+
+    for (uint8_t keyId=0; keyId<KEYBOARD_MATRIX_COLS_NUM*KEYBOARD_MATRIX_ROWS_NUM; keyId++) {
+        if (keystates[keyId] && scancode_idx<USB_KEYBOARD_MAX_KEYS) {
+            UsbKeyboardReport.scancodes[scancode_idx++] = keyId + HID_KEYBOARD_SC_A;
+        }
+    }
+*/
     return USB_DeviceHidSend(UsbCompositeDevice.keyboardHandle, USB_KEYBOARD_ENDPOINT_INDEX,
                              (uint8_t*)&UsbKeyboardReport, USB_KEYBOARD_REPORT_LENGTH);
 }
