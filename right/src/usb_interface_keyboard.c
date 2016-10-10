@@ -2,6 +2,7 @@
 #include "usb_api.h"
 #include "usb_composite_device.h"
 #include "test_led.h"
+#include "key_matrix.h"
 
 static usb_device_endpoint_struct_t UsbKeyboardEndpoints[USB_KEYBOARD_ENDPOINT_COUNT] = {{
     USB_KEYBOARD_ENDPOINT_INDEX | (USB_IN << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT),
@@ -37,32 +38,28 @@ usb_device_class_struct_t UsbKeyboardClass = {
 
 static usb_keyboard_report_t UsbKeyboardReport;
 
-typedef struct {
-    PORT_Type *port;
-    GPIO_Type *gpio;
-    clock_ip_name_t clock;
-    uint32_t pin;
-} pin_t;
-
 #define KEYBOARD_MATRIX_COLS_NUM 7
 #define KEYBOARD_MATRIX_ROWS_NUM 5
 
-pin_t keyboardMatrixCols[] = {
-    {PORTA, GPIOA, kCLOCK_PortA, 5},
-    {PORTB, GPIOB, kCLOCK_PortB, 3},
-    {PORTB, GPIOB, kCLOCK_PortB, 16},
-    {PORTB, GPIOB, kCLOCK_PortB, 17},
-    {PORTB, GPIOB, kCLOCK_PortB, 18},
-    {PORTA, GPIOA, kCLOCK_PortA, 1},
-    {PORTB, GPIOB, kCLOCK_PortB, 0},
-};
-
-pin_t keyboardMatrixRows[] = {
-    {PORTA, GPIOA, kCLOCK_PortA, 12},
-    {PORTA, GPIOA, kCLOCK_PortA, 13},
-    {PORTC, GPIOC, kCLOCK_PortC, 0},
-    {PORTB, GPIOB, kCLOCK_PortB, 19},
-    {PORTD, GPIOD, kCLOCK_PortD, 6},
+key_matrix_t keyMatrix = {
+    .colNum = KEYBOARD_MATRIX_COLS_NUM,
+    .rowNum = KEYBOARD_MATRIX_ROWS_NUM,
+    .cols = (key_matrix_pin_t[]){
+        {PORTA, GPIOA, kCLOCK_PortA, 5},
+        {PORTB, GPIOB, kCLOCK_PortB, 3},
+        {PORTB, GPIOB, kCLOCK_PortB, 16},
+        {PORTB, GPIOB, kCLOCK_PortB, 17},
+        {PORTB, GPIOB, kCLOCK_PortB, 18},
+        {PORTA, GPIOA, kCLOCK_PortA, 1},
+        {PORTB, GPIOB, kCLOCK_PortB, 0}
+        },
+    .rows = (key_matrix_pin_t[]){
+        {PORTA, GPIOA, kCLOCK_PortA, 12},
+        {PORTA, GPIOA, kCLOCK_PortA, 13},
+        {PORTC, GPIOC, kCLOCK_PortC, 0},
+        {PORTB, GPIOB, kCLOCK_PortB, 19},
+        {PORTD, GPIOD, kCLOCK_PortD, 6}
+    }
 };
 
 static usb_status_t UsbKeyboardAction(void)
@@ -71,33 +68,21 @@ static usb_status_t UsbKeyboardAction(void)
     UsbKeyboardReport.modifiers = 0;
     UsbKeyboardReport.reserved = 0;
 
-    for (uint8_t i=0; i<KEYBOARD_MATRIX_COLS_NUM; i++) {
-        CLOCK_EnableClock(keyboardMatrixCols[i].clock);
-    }
-
-    for (uint8_t i=0; i<KEYBOARD_MATRIX_ROWS_NUM; i++) {
-        CLOCK_EnableClock(keyboardMatrixRows[i].clock);
-    }
+    KeyMatrix_Init(keyMatrix);
 
     for (uint8_t scancode_idx=0; scancode_idx<USB_KEYBOARD_MAX_KEYS; scancode_idx++) {
         UsbKeyboardReport.scancodes[scancode_idx] = 0;
     }
 
     for (uint8_t col=0; col<KEYBOARD_MATRIX_COLS_NUM; col++) {
-        PORT_SetPinConfig(keyboardMatrixCols[col].port, keyboardMatrixCols[col].pin, &(port_pin_config_t){.pullSelect=kPORT_PullDisable, .mux=kPORT_MuxAsGpio});
-        GPIO_PinInit(keyboardMatrixCols[col].gpio, keyboardMatrixCols[col].pin, &(gpio_pin_config_t){.pinDirection=kGPIO_DigitalOutput, .outputLogic=1});
-        GPIO_WritePinOutput(keyboardMatrixCols[col].gpio, keyboardMatrixCols[col].pin, 1);
-
+        GPIO_WritePinOutput(keyMatrix.cols[col].gpio, keyMatrix.cols[col].pin, 1);
         for (uint8_t row=0; row<KEYBOARD_MATRIX_ROWS_NUM; row++) {
-            PORT_SetPinConfig(keyboardMatrixRows[row].port, keyboardMatrixRows[row].pin, &(port_pin_config_t){.pullSelect=kPORT_PullDown, .mux=kPORT_MuxAsGpio});
-            GPIO_PinInit(keyboardMatrixRows[row].gpio, keyboardMatrixRows[row].pin, &(gpio_pin_config_t){.pinDirection=kGPIO_DigitalInput});
-
-            if (GPIO_ReadPinInput(keyboardMatrixRows[row].gpio, keyboardMatrixRows[row].pin)) {
+            if (GPIO_ReadPinInput(keyMatrix.rows[row].gpio, keyMatrix.rows[row].pin)) {
                 GPIO_SetPinsOutput(TEST_LED_GPIO, 1 << TEST_LED_GPIO_PIN);
                 UsbKeyboardReport.scancodes[scancode_i] = HID_KEYBOARD_SC_A + row*KEYBOARD_MATRIX_COLS_NUM + col;
             }
         }
-        GPIO_WritePinOutput(keyboardMatrixCols[col].gpio, keyboardMatrixCols[col].pin, 0);
+        GPIO_WritePinOutput(keyMatrix.cols[col].gpio, keyMatrix.cols[col].pin, 0);
     }
 
     return USB_DeviceHidSend(UsbCompositeDevice.keyboardHandle, USB_KEYBOARD_ENDPOINT_INDEX,
