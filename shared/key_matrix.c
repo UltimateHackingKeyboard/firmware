@@ -8,7 +8,7 @@ void KeyMatrix_Init(key_matrix_t *keyMatrix)
         CLOCK_EnableClock(col.clock);
         PORT_SetPinConfig(col.port, col.pin,
                           &(port_pin_config_t){.pullSelect=kPORT_PullDisable, .mux=kPORT_MuxAsGpio});
-        GPIO_PinInit(col.gpio, col.pin, &(gpio_pin_config_t){kGPIO_DigitalOutput, 1});
+        GPIO_PinInit(col.gpio, col.pin, &(gpio_pin_config_t){kGPIO_DigitalOutput, 0});
     }
 
     for (uint8_t row_i=0; row_i<keyMatrix->rowNum; row_i++) {
