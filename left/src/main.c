@@ -1,6 +1,7 @@
 #include "fsl_gpio.h"
 #include "clock_config.h"
 #include "fsl_port.h"
+#include "key_matrix.h"
 
 #define TEST_LED_GPIO  GPIOA
 #define TEST_LED_PORT  PORTA
@@ -12,12 +13,40 @@
 #define TEST_LED_ON() GPIO_ClearPinsOutput(TEST_LED_GPIO, 1U << TEST_LED_PIN)
 #define TEST_LED_OFF() GPIO_SetPinsOutput(TEST_LED_GPIO, 1U << TEST_LED_PIN)
 
+#define KEYBOARD_MATRIX_COLS_NUM 7
+#define KEYBOARD_MATRIX_ROWS_NUM 5
+
+key_matrix_t keyMatrix = {
+    .colNum = KEYBOARD_MATRIX_COLS_NUM,
+    .rowNum = KEYBOARD_MATRIX_ROWS_NUM,
+    .cols = (key_matrix_pin_t[]){
+        {PORTB, GPIOB, kCLOCK_PortB, 11},
+        {PORTA, GPIOA, kCLOCK_PortA, 6},
+        {PORTA, GPIOA, kCLOCK_PortA, 8},
+        {PORTB, GPIOB, kCLOCK_PortB, 0},
+        {PORTB, GPIOB, kCLOCK_PortB, 6},
+        {PORTA, GPIOA, kCLOCK_PortA, 3},
+        {PORTB, GPIOB, kCLOCK_PortB, 5}
+    },
+    .rows = (key_matrix_pin_t[]){
+        {PORTB, GPIOB, kCLOCK_PortB, 7},
+        {PORTB, GPIOB, kCLOCK_PortB, 10},
+        {PORTA, GPIOA, kCLOCK_PortA, 5},
+        {PORTA, GPIOA, kCLOCK_PortA, 7},
+        {PORTA, GPIOA, kCLOCK_PortA, 4}
+    }
+};
+
 int main(void)
 {
     CLOCK_EnableClock(TEST_LED_CLOCK);
     PORT_SetPinMux(TEST_LED_PORT, TEST_LED_PIN, kPORT_MuxAsGpio);
-    TEST_LED_INIT(0);
+    TEST_LED_INIT(1);
     BOARD_BootClockRUN();
+
+    KeyMatrix_Init(&keyMatrix);
+    KeyMatrix_Scan(&keyMatrix);
+
     while (1)
     {
         for (uint32_t i=0; i<500000; i++) {
