@@ -62,8 +62,6 @@ key_matrix_t keyMatrix = {
     }
 };
 
-uint8_t keystates[100];
-
 static usb_status_t UsbKeyboardAction(void)
 {
     UsbKeyboardReport.modifiers = 0;
