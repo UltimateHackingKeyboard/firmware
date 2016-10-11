@@ -1,5 +1,5 @@
 #include "fsl_gpio.h"
-#include "clock_config.h"
+#include "init_clock.h"
 #include "fsl_port.h"
 #include "key_matrix.h"
 
@@ -42,7 +42,7 @@ int main(void)
     CLOCK_EnableClock(TEST_LED_CLOCK);
     PORT_SetPinMux(TEST_LED_PORT, TEST_LED_PIN, kPORT_MuxAsGpio);
     TEST_LED_INIT(1);
-    BOARD_BootClockRUN();
+    InitClock();
 
     KeyMatrix_Init(&keyMatrix);
     KeyMatrix_Scan(&keyMatrix);
