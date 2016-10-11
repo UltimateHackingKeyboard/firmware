@@ -82,6 +82,7 @@
 									<listOptionValue builtIn="false" value="../../../../lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/utilities"/>
 									<listOptionValue builtIn="false" value="../../../.."/>
 									<listOptionValue builtIn="false" value="../../../../lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4"/>
+									<listOptionValue builtIn="false" value="../../../../shared"/>
 								</option>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.std.933718024" name="Language standard" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.std" useByScannerDiscovery="true" value="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.std.gnu99" valueType="enumerated"/>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.defs.7934865376" name="Defined symbols (-D)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.defs" useByScannerDiscovery="false" valueType="definedSymbols">
@@ -234,6 +235,7 @@
 									<listOptionValue builtIn="false" value="../../../../lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/utilities"/>
 									<listOptionValue builtIn="false" value="../../../.."/>
 									<listOptionValue builtIn="false" value="../../../../lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4"/>
+									<listOptionValue builtIn="false" value="../../../../shared"/>
 								</option>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.std.997197032" name="Language standard" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.std" useByScannerDiscovery="true" value="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.std.gnu99" valueType="enumerated"/>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.defs.5122531351" name="Defined symbols (-D)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.defs" useByScannerDiscovery="false" valueType="definedSymbols">
@@ -307,15 +309,6 @@
 	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
 		<project id="k64f.ilg.gnuarmeclipse.managedbuild.cross.target.elf.1537007018" name="Executable" projectType="ilg.gnuarmeclipse.managedbuild.cross.target.elf"/>
 	</storageModule>
-	<storageModule moduleId="scannerConfiguration">
-		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		<scannerConfigBuildInfo instanceId="ilg.gnuarmeclipse.managedbuild.cross.config.elf.debug.1792027861;ilg.gnuarmeclipse.managedbuild.cross.config.elf.debug.1792027861.;ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.1397207158;ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.input.1895544709">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="ilg.gnuarmeclipse.managedbuild.cross.config.elf.release.1939339834;ilg.gnuarmeclipse.managedbuild.cross.config.elf.release.1939339834.;ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.955273220;ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.input.1711058916">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
 	<storageModule moduleId="refreshScope" versionNumber="2">
 		<configuration configurationName="Multiple configurations">
@@ -329,4 +322,19 @@
 		</configuration>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+	<storageModule moduleId="scannerConfiguration">
+		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		<scannerConfigBuildInfo instanceId="ilg.gnuarmeclipse.managedbuild.cross.config.elf.debug.1792027861;ilg.gnuarmeclipse.managedbuild.cross.config.elf.debug.1792027861.;ilg.gnuarmeclipse.managedbuild.cross.tool.cpp.compiler.435207489;ilg.gnuarmeclipse.managedbuild.cross.tool.cpp.compiler.input.1699166727">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="ilg.gnuarmeclipse.managedbuild.cross.config.elf.release.1939339834;ilg.gnuarmeclipse.managedbuild.cross.config.elf.release.1939339834.;ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.955273220;ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.input.1711058916">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="ilg.gnuarmeclipse.managedbuild.cross.config.elf.release.1939339834;ilg.gnuarmeclipse.managedbuild.cross.config.elf.release.1939339834.;ilg.gnuarmeclipse.managedbuild.cross.tool.cpp.compiler.270191615;ilg.gnuarmeclipse.managedbuild.cross.tool.cpp.compiler.input.1469754472">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="ilg.gnuarmeclipse.managedbuild.cross.config.elf.debug.1792027861;ilg.gnuarmeclipse.managedbuild.cross.config.elf.debug.1792027861.;ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.1397207158;ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.input.1895544709">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+	</storageModule>
 </cproject>
