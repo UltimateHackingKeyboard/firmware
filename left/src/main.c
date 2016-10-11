@@ -2,16 +2,7 @@
 #include "init_clock.h"
 #include "fsl_port.h"
 #include "key_matrix.h"
-
-#define TEST_LED_GPIO  GPIOA
-#define TEST_LED_PORT  PORTA
-#define TEST_LED_CLOCK kCLOCK_PortA
-#define TEST_LED_PIN   12
-
-#define TEST_LED_INIT(output) GPIO_PinInit(TEST_LED_GPIO, TEST_LED_PIN, \
-                                          &(gpio_pin_config_t){kGPIO_DigitalOutput, (output)})
-#define TEST_LED_ON() GPIO_ClearPinsOutput(TEST_LED_GPIO, 1U << TEST_LED_PIN)
-#define TEST_LED_OFF() GPIO_SetPinsOutput(TEST_LED_GPIO, 1U << TEST_LED_PIN)
+#include "test_led.h"
 
 #define KEYBOARD_MATRIX_COLS_NUM 7
 #define KEYBOARD_MATRIX_ROWS_NUM 5
@@ -39,9 +30,7 @@ key_matrix_t keyMatrix = {
 
 int main(void)
 {
-    CLOCK_EnableClock(TEST_LED_CLOCK);
-    PORT_SetPinMux(TEST_LED_PORT, TEST_LED_PIN, kPORT_MuxAsGpio);
-    TEST_LED_INIT(1);
+    InitTestLed();
     InitClock();
 
     KeyMatrix_Init(&keyMatrix);
