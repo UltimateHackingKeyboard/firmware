@@ -22,12 +22,12 @@ void KeyMatrix_Init(key_matrix_t *keyMatrix)
 
 void KeyMatrix_Scan(key_matrix_t *keyMatrix)
 {
-    uint8_t keyId = 0;
     for (uint8_t col=0; col<keyMatrix->colNum; col++) {
         GPIO_WritePinOutput(keyMatrix->cols[col].gpio, keyMatrix->cols[col].pin, 1);
         for (uint8_t row=0; row<keyMatrix->rowNum; row++) {
-            keyMatrix->keyStates[keyId++] = GPIO_ReadPinInput(keyMatrix->rows[row].gpio, keyMatrix->rows[row].pin);
+            keyMatrix->keyStates[row*keyMatrix->colNum + col] = GPIO_ReadPinInput(keyMatrix->rows[row].gpio, keyMatrix->rows[row].pin);
         }
         GPIO_WritePinOutput(keyMatrix->cols[col].gpio, keyMatrix->cols[col].pin, 0);
+        for (volatile uint32_t i=0; i<100; i++); // Wait for the new port state to settle. This avoid bogus key state detection.
     }
 }
