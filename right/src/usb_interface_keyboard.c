@@ -86,6 +86,7 @@ static usb_status_t UsbKeyboardAction(void)
             }
         }
         GPIO_WritePinOutput(keyMatrix.cols[col].gpio, keyMatrix.cols[col].pin, 0);
+        for (volatile uint32_t i=0; i<100; i++);
     }
 
 /*
