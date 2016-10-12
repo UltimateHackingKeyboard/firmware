@@ -72,6 +72,16 @@
 			<locationURI>PARENT-3-PROJECT_LOC/lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/drivers/fsl_gpio.h</locationURI>
 		</link>
 		<link>
+			<name>drivers/fsl_i2c.c</name>
+			<type>1</type>
+			<locationURI>PARENT-3-PROJECT_LOC/lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/drivers/fsl_i2c.c</locationURI>
+		</link>
+		<link>
+			<name>drivers/fsl_i2c.h</name>
+			<type>1</type>
+			<locationURI>PARENT-3-PROJECT_LOC/lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/drivers/fsl_i2c.h</locationURI>
+		</link>
+		<link>
 			<name>drivers/fsl_port.h</name>
 			<type>1</type>
 			<locationURI>PARENT-3-PROJECT_LOC/lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/drivers/fsl_port.h</locationURI>

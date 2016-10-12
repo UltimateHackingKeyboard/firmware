@@ -1,8 +1,12 @@
 #include "fsl_gpio.h"
 #include "init_clock.h"
 #include "fsl_port.h"
+#include "fsl_i2c.h"
 #include "key_matrix.h"
 #include "test_led.h"
+#include "i2c_addresses.h"
+#include "i2c.h"
+#include "init_peripherials.h"
 
 #define KEYBOARD_MATRIX_COLS_NUM 7
 #define KEYBOARD_MATRIX_ROWS_NUM 5
@@ -28,13 +32,51 @@ key_matrix_t keyMatrix = {
     }
 };
 
+i2c_slave_config_t slaveConfig;
+i2c_slave_handle_t slaveHandle;
+volatile bool g_SlaveCompletionFlag = false;
+
+static void i2c_slave_callback(I2C_Type *base, i2c_slave_transfer_t *xfer, void *userData)
+{
+    switch (xfer->event)
+    {
+        case kI2C_SlaveTransmitEvent:
+            xfer->data = keyMatrix.keyStates;
+            xfer->dataSize = KEYBOARD_MATRIX_COLS_NUM*KEYBOARD_MATRIX_ROWS_NUM;
+            break;
+        case kI2C_SlaveReceiveEvent:
+            break;
+        case kI2C_SlaveCompletionEvent:
+            g_SlaveCompletionFlag = true;
+            break;
+        case kI2C_SlaveTransmitAckEvent:
+            break;
+        default:
+            g_SlaveCompletionFlag = true;
+            break;
+    }
+}
+
 int main(void)
 {
-    InitTestLed();
     InitClock();
+    InitPeripherials();
 
+    I2C_SlaveGetDefaultConfig(&slaveConfig);
+    slaveConfig.slaveAddress = I2C_ADDRESS_LEFT_KEYBOARD_HALF;
+    slaveConfig.addressingMode = kI2C_Address7bit/kI2C_RangeMatch;
+    I2C_SlaveInit(I2C_BUS_BASEADDR, &slaveConfig);
+    I2C_SlaveTransferCreateHandle(I2C_BUS_BASEADDR, &slaveHandle, i2c_slave_callback, NULL);
+    I2C_SlaveTransferNonBlocking(I2C_BUS_BASEADDR, &slaveHandle, kI2C_SlaveCompletionEvent);
+
+//    while (!g_SlaveCompletionFlag) {}
+//    g_SlaveCompletionFlag = false;
+
+    TEST_LED_OFF();
     KeyMatrix_Init(&keyMatrix);
-    KeyMatrix_Scan(&keyMatrix);
+    while (1) {
+        KeyMatrix_Scan(&keyMatrix);
+    }
 
     while (1)
     {
@@ -48,48 +90,6 @@ int main(void)
 }
 
 /*
-#define I2C_DATA_LENGTH 2
-
-#include "board.h"
-#include "fsl_clock_manager.h"
-#include "fsl_i2c_slave_driver.h"
-#include "fsl_i2c_shared_function.h"
-#include "i2c_addresses.h"
-#include "main.h"
-
-uint8_t isSw2Pressed;
-uint8_t isSw3Pressed;
-uint8_t buffer[I2C_DATA_LENGTH];
-
-void I2C0_IRQHandler(void)
-{
-    I2C_DRV_IRQHandler(I2C0_IDX);
-}
-
-static void i2c_slave_callback(uint8_t instance, i2c_slave_event_t i2cEvent, void *param)
-{
-    i2c_slave_state_t *slaveState = I2C_DRV_SlaveGetHandler(instance);
-
-    switch (i2cEvent) {
-        case kI2CSlaveTxReq:
-            slaveState->txSize = I2C_DATA_LENGTH;
-            slaveState ->txBuff = buffer;
-            slaveState ->isTxBusy = true;
-            buffer[0] = isSw2Pressed;
-            buffer[1] = isSw3Pressed;
-            break;
-
-        case kI2CSlaveTxEmpty:
-            slaveState->isTxBusy = false;
-            break;
-
-        default:
-            break;
-    }
-}
-
-int main(void)
-{
     // Initialize GPIO.
 
     gpio_input_pin_user_config_t inputPin[] =
@@ -157,5 +157,4 @@ int main(void)
         GPIO_DRV_WritePinOutput(kGpioLED1, isSw2Pressed);
         GPIO_DRV_WritePinOutput(kGpioLED3, isSw3Pressed);
     }
-}
 */
