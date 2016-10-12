@@ -12,6 +12,8 @@ void JumpToBootloader();
 void GetSetTestLed();
 void WriteLedDriver();
 void ReadLedDriver();
+void WriteEeprom();
+void ReadEeprom();
 
 // Functions for setting error statuses
 
@@ -50,6 +52,12 @@ void UsbProtocolHandler()
             break;
         case USB_COMMAND_READ_LED_DRIVER:
             ReadLedDriver();
+            break;
+        case USB_COMMAND_WRITE_EEPROM:
+            WriteEeprom();
+            break;
+        case USB_COMMAND_READ_EEPROM:
+            ReadEeprom();
             break;
         default:
             break;
@@ -116,4 +124,52 @@ void WriteLedDriver()
 
 void ReadLedDriver()
 {
+
+}
+
+void WriteEeprom()
+{
+    uint8_t i2cPayloadSize = GenericHidInBuffer[1];
+
+    if (i2cPayloadSize > USB_GENERIC_HID_OUT_BUFFER_LENGTH-2) {
+        SetError(WRITE_EEPROM_RESPONSE_INVALID_PAYLOAD_SIZE);
+        return;
+    }
+
+    i2c_master_transfer_t masterXfer;
+    masterXfer.slaveAddress = I2C_ADDRESS_EEPROM;
+    masterXfer.direction = kI2C_Write;
+    masterXfer.subaddress = 0;
+    masterXfer.subaddressSize = 0;
+    masterXfer.data = GenericHidInBuffer+2;
+    masterXfer.dataSize = i2cPayloadSize;
+    masterXfer.flags = kI2C_TransferDefaultFlag;
+    I2C_MasterTransferBlocking(I2C_EEPROM_BUS_BASEADDR, &masterXfer);
+}
+
+void ReadEeprom()
+{
+    uint8_t i2cPayloadSize = GenericHidInBuffer[1];
+
+    if (i2cPayloadSize > USB_GENERIC_HID_OUT_BUFFER_LENGTH-1) {
+        SetError(WRITE_EEPROM_RESPONSE_INVALID_PAYLOAD_SIZE);
+        return;
+    }
+
+    i2c_master_transfer_t masterXfer;
+    masterXfer.slaveAddress = I2C_ADDRESS_EEPROM;
+    masterXfer.direction = kI2C_Write;
+    masterXfer.subaddress = 0;
+    masterXfer.subaddressSize = 0;
+    masterXfer.data = GenericHidInBuffer+2;
+    masterXfer.dataSize = 2;
+    masterXfer.flags = kI2C_TransferDefaultFlag;
+    I2C_MasterTransferBlocking(I2C_EEPROM_BUS_BASEADDR, &masterXfer);
+
+    masterXfer.direction = kI2C_Read;
+    masterXfer.data = GenericHidOutBuffer+1;
+    masterXfer.dataSize = i2cPayloadSize;
+    I2C_MasterTransferBlocking(I2C_EEPROM_BUS_BASEADDR, &masterXfer);
+
+    GenericHidOutBuffer[0] = PROTOCOL_RESPONSE_SUCCESS;
 }

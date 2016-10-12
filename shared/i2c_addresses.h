@@ -9,6 +9,7 @@
 // Reserved for future purposes        0b0000011
 // High-Speed master code              0b00001XX
 #define I2C_ADDRESS_LEFT_KEYBOARD_HALF 0b0001000
+#define I2C_ADDRESS_EEPROM             0b1010000
 #define I2C_ADDRESS_LED_DRIVER_LEFT    0b1110100
 // LED driver / touchpad               0b1110101
 // LED driver / touchpad               0b1110110
