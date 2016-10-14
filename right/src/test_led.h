@@ -15,8 +15,8 @@
     #define TEST_LED_CLOCK kCLOCK_PortD
     #define TEST_LED_GPIO_PIN  7U
 
-    #define TEST_LED_ON() GPIO_ClearPinsOutput(TEST_LED_GPIO, 1U << TEST_LED_GPIO_PIN)
-    #define TEST_LED_OFF() GPIO_SetPinsOutput(TEST_LED_GPIO, 1U << TEST_LED_GPIO_PIN)
+    #define TEST_LED_ON() GPIO_SetPinsOutput(TEST_LED_GPIO, 1U << TEST_LED_GPIO_PIN)
+    #define TEST_LED_OFF() GPIO_ClearPinsOutput(TEST_LED_GPIO, 1U << TEST_LED_GPIO_PIN)
     #define TEST_LED_TOGGLE() GPIO_TogglePinsOutput(TEST_LED_GPIO, 1U << TEST_LED_GPIO_PIN)
 
 // Functions:

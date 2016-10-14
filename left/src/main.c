@@ -72,7 +72,6 @@ int main(void)
 //    while (!g_SlaveCompletionFlag) {}
 //    g_SlaveCompletionFlag = false;
 
-    TEST_LED_OFF();
     KeyMatrix_Init(&keyMatrix);
     while (1) {
         KeyMatrix_Scan(&keyMatrix);
