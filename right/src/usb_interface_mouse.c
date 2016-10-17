@@ -47,7 +47,7 @@ static volatile usb_status_t UsbMouseAction(void)
     UsbMouseReport.wheelX = 0;
     UsbMouseReport.wheelY = 0;
 
-    if (!GPIO_ReadPinInput(RESET_BUTTON_GPIO, RESET_BUTTON_PIN)) {
+    if (RESET_BUTTON_IS_PRESSED) {
         if (!(scrollCounter % 10)) {
             UsbMouseReport.wheelX = -1;
         }

@@ -14,6 +14,8 @@
     #define RESET_BUTTON_IRQ PORTB_IRQn
     #define RESET_BUTTON_IRQ_HANDLER PORTB_IRQHandler
 
+    #define RESET_BUTTON_IS_PRESSED !GPIO_ReadPinInput(RESET_BUTTON_GPIO, RESET_BUTTON_PIN)
+
 // Functions:
 
     extern void InitResetButton();
