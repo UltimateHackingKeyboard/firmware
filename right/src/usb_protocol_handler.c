@@ -3,6 +3,7 @@
 #include "test_led.h"
 #include "i2c_addresses.h"
 #include "led_driver.h"
+#include "merge_sensor.h"
 
 void SetError(uint8_t error);
 void SetGenericError();
@@ -14,6 +15,7 @@ void WriteLedDriver();
 void ReadLedDriver();
 void WriteEeprom();
 void ReadEeprom();
+void ReadMergeSensor();
 
 // Functions for setting error statuses
 
@@ -58,6 +60,9 @@ void UsbProtocolHandler()
             break;
         case USB_COMMAND_READ_EEPROM:
             ReadEeprom();
+            break;
+        case USB_COMMAND_READ_MERGE_SENSOR:
+            ReadMergeSensor();
             break;
         default:
             break;
@@ -172,4 +177,9 @@ void ReadEeprom()
     I2C_MasterTransferBlocking(I2C_EEPROM_BUS_BASEADDR, &masterXfer);
 
     GenericHidOutBuffer[0] = PROTOCOL_RESPONSE_SUCCESS;
+}
+
+void ReadMergeSensor()
+{
+    SetResponseByte(MERGE_SENSOR_IS_MERGED);
 }

@@ -24,6 +24,7 @@
     #define USB_COMMAND_WRITE_EEPROM    5
         #define WRITE_EEPROM_RESPONSE_INVALID_PAYLOAD_SIZE 1
     #define USB_COMMAND_READ_EEPROM     6
+    #define USB_COMMAND_READ_MERGE_SENSOR     7
 
 // Functions:
 
