@@ -34,7 +34,6 @@ key_matrix_t keyMatrix = {
 
 i2c_slave_config_t slaveConfig;
 i2c_slave_handle_t slaveHandle;
-volatile bool g_SlaveCompletionFlag = false;
 
 static void i2c_slave_callback(I2C_Type *base, i2c_slave_transfer_t *xfer, void *userData)
 {
@@ -47,12 +46,10 @@ static void i2c_slave_callback(I2C_Type *base, i2c_slave_transfer_t *xfer, void 
         case kI2C_SlaveReceiveEvent:
             break;
         case kI2C_SlaveCompletionEvent:
-            g_SlaveCompletionFlag = true;
             break;
         case kI2C_SlaveTransmitAckEvent:
             break;
         default:
-            g_SlaveCompletionFlag = true;
             break;
     }
 }
@@ -69,91 +66,8 @@ int main(void)
     I2C_SlaveTransferCreateHandle(I2C_BUS_BASEADDR, &slaveHandle, i2c_slave_callback, NULL);
     I2C_SlaveTransferNonBlocking(I2C_BUS_BASEADDR, &slaveHandle, kI2C_SlaveCompletionEvent);
 
-//    while (!g_SlaveCompletionFlag) {}
-//    g_SlaveCompletionFlag = false;
-
     KeyMatrix_Init(&keyMatrix);
     while (1) {
         KeyMatrix_Scan(&keyMatrix);
     }
-
-    while (1)
-    {
-        for (uint32_t i=0; i<500000; i++) {
-            TEST_LED_ON();
-        }
-        for (uint32_t i=0; i<500000; i++) {
-            TEST_LED_OFF();
-        }
-    }
 }
-
-/*
-    // Initialize GPIO.
-
-    gpio_input_pin_user_config_t inputPin[] =
-    {
-        {
-            .pinName                       = kGpioSW2,
-            .config.isPullEnable           = true,
-            .config.pullSelect             = kPortPullUp,
-            .config.isPassiveFilterEnabled = false,
-            .config.interrupt              = kPortIntDisabled,
-        },
-        {
-            .pinName                       = kGpioSW3,
-            .config.isPullEnable           = true,
-            .config.pullSelect             = kPortPullUp,
-            .config.isPassiveFilterEnabled = false,
-            .config.interrupt              = kPortIntDisabled,
-        },
-        {
-            .pinName = GPIO_PINS_OUT_OF_RANGE,
-        }
-    };
-
-    gpio_output_pin_user_config_t outputPin[] =
-    {
-        {
-            .pinName              = kGpioLED1,
-            .config.outputLogic   = 0,
-            .config.slewRate      = kPortFastSlewRate,
-            .config.driveStrength = kPortHighDriveStrength,
-        },
-        {
-            .pinName              = kGpioLED3,
-            .config.outputLogic   = 0,
-            .config.slewRate      = kPortFastSlewRate,
-            .config.driveStrength = kPortHighDriveStrength,
-        },
-        {
-            .pinName = GPIO_PINS_OUT_OF_RANGE,
-        }
-    };
-
-    GPIO_DRV_Init(inputPin, outputPin);
-
-    // Initialize I2C.
-
-    i2c_slave_state_t slave;
-
-    i2c_slave_user_config_t userConfig = {
-        .address         = I2C_ADDRESS_LED_DRIVER_LEFT,
-        .slaveCallback   = i2c_slave_callback,
-        .callbackParam   = NULL,
-        .slaveListening  = true,
-        .startStopDetect = true,
-    };
-
-    configure_i2c_pins(0);
-    I2C_DRV_SlaveInit(BOARD_I2C_INSTANCE, &userConfig, &slave);
-
-    // Update switch states and toggle LEDs accordingly.
-
-    while (1) {
-        isSw2Pressed = GPIO_DRV_ReadPinInput(kGpioSW2);
-        isSw3Pressed = GPIO_DRV_ReadPinInput(kGpioSW3);
-        GPIO_DRV_WritePinOutput(kGpioLED1, isSw2Pressed);
-        GPIO_DRV_WritePinOutput(kGpioLED3, isSw3Pressed);
-    }
-*/
