@@ -4,6 +4,7 @@
 #include "i2c_addresses.h"
 #include "led_driver.h"
 #include "merge_sensor.h"
+#include "led_jumper.h"
 
 void SetError(uint8_t error);
 void SetGenericError();
@@ -16,6 +17,7 @@ void ReadLedDriver();
 void WriteEeprom();
 void ReadEeprom();
 void ReadMergeSensor();
+void ReadLedJumper();
 
 // Functions for setting error statuses
 
@@ -63,6 +65,9 @@ void UsbProtocolHandler()
             break;
         case USB_COMMAND_READ_MERGE_SENSOR:
             ReadMergeSensor();
+            break;
+        case USB_COMMAND_READ_LED_JUMPER:
+            ReadLedJumper();
             break;
         default:
             break;
@@ -182,4 +187,9 @@ void ReadEeprom()
 void ReadMergeSensor()
 {
     SetResponseByte(MERGE_SENSOR_IS_MERGED);
+}
+
+void ReadLedJumper()
+{
+    SetResponseByte(LED_JUMPER_IS_ENABLED);
 }
