@@ -9,6 +9,7 @@
 #include "i2c.h"
 #include "init_peripherials.h"
 #include "bridge_protocol_handler.h"
+#include "iso_jumper.h"
 
 key_matrix_t keyMatrix = {
     .colNum = KEYBOARD_MATRIX_COLS_NUM,
@@ -30,6 +31,7 @@ key_matrix_t keyMatrix = {
         {PORTA, GPIOA, kCLOCK_PortA, 4}
     }
 };
+uint8_t IsoJumperState;
 
 i2c_slave_config_t slaveConfig;
 i2c_slave_handle_t slaveHandle;
@@ -63,6 +65,7 @@ int main(void)
 {
     InitClock();
     InitPeripherials();
+    IsoJumperState = ISO_JUMPER_IS_ENABLED;
 
     I2C_SlaveGetDefaultConfig(&slaveConfig);
     slaveConfig.slaveAddress = I2C_ADDRESS_LEFT_KEYBOARD_HALF;

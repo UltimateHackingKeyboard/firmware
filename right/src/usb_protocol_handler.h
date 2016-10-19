@@ -26,6 +26,7 @@
     #define USB_COMMAND_READ_EEPROM     6
     #define USB_COMMAND_READ_MERGE_SENSOR     7
     #define USB_COMMAND_READ_LED_JUMPER 8
+    #define USB_COMMAND_READ_ISO_JUMPER 9
 
 // Functions:
 

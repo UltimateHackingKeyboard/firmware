@@ -13,5 +13,6 @@
 // Variables:
 
     extern key_matrix_t keyMatrix;
+    extern uint8_t IsoJumperState;
 
 #endif

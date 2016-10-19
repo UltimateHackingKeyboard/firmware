@@ -18,6 +18,7 @@ void WriteEeprom();
 void ReadEeprom();
 void ReadMergeSensor();
 void ReadLedJumper();
+void ReadIsoJumper();
 
 // Functions for setting error statuses
 
@@ -68,6 +69,9 @@ void UsbProtocolHandler()
             break;
         case USB_COMMAND_READ_LED_JUMPER:
             ReadLedJumper();
+            break;
+        case USB_COMMAND_READ_ISO_JUMPER:
+            ReadIsoJumper();
             break;
         default:
             break;
@@ -195,4 +199,15 @@ void ReadMergeSensor()
 void ReadLedJumper()
 {
     SetResponseByte(LED_JUMPER_IS_ENABLED);
+}
+
+void ReadIsoJumper()
+{
+    uint8_t txBuffer[] = {2};
+    I2cWrite(I2C_MAIN_BUS_BASEADDR, I2C_ADDRESS_LEFT_KEYBOARD_HALF, txBuffer, sizeof(txBuffer));
+
+    uint8_t rxBuffer[1];
+    I2cRead(I2C_MAIN_BUS_BASEADDR, I2C_ADDRESS_LEFT_KEYBOARD_HALF, rxBuffer, sizeof(rxBuffer));
+
+    SetResponseByte(rxBuffer[0]);
 }

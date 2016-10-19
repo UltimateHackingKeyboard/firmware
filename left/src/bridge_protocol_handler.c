@@ -3,6 +3,7 @@
 #include "main.h"
 #include "i2c_addresses.h"
 #include "i2c.h"
+#include "iso_jumper.h"
 
 void SetError(uint8_t error);
 void SetGenericError();
@@ -36,5 +37,8 @@ void BridgeProtocolHandler()
             BridgeTxSize = 0;
             TEST_LED_SET(BridgeRxBuffer[1]);
             break;
-        }
+        case BRIDGE_COMMAND_GET_ISO_JUMPER_STATE:
+            BridgeTxBuffer[0] = IsoJumperState;
+            break;
+    }
 }
