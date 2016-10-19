@@ -2,14 +2,13 @@
 #include "init_clock.h"
 #include "fsl_port.h"
 #include "fsl_i2c.h"
+#include "main.h"
 #include "key_matrix.h"
 #include "test_led.h"
 #include "i2c_addresses.h"
 #include "i2c.h"
 #include "init_peripherials.h"
-
-#define KEYBOARD_MATRIX_COLS_NUM 7
-#define KEYBOARD_MATRIX_ROWS_NUM 5
+#include "bridge_protocol_handler.h"
 
 key_matrix_t keyMatrix = {
     .colNum = KEYBOARD_MATRIX_COLS_NUM,
@@ -40,12 +39,18 @@ static void i2c_slave_callback(I2C_Type *base, i2c_slave_transfer_t *xfer, void 
     switch (xfer->event)
     {
         case kI2C_SlaveTransmitEvent:
-            xfer->data = keyMatrix.keyStates;
-            xfer->dataSize = KEYBOARD_MATRIX_COLS_NUM*KEYBOARD_MATRIX_ROWS_NUM;
+            BridgeProtocolHandler();
+            xfer->data = BridgeTxBuffer;
+            xfer->dataSize = BridgeTxSize;
             break;
         case kI2C_SlaveReceiveEvent:
+            BridgeProtocolHandler();
+            xfer->data = BridgeRxBuffer;
+            xfer->dataSize = BRIDGE_RX_BUFFER_SIZE;
             break;
         case kI2C_SlaveCompletionEvent:
+            xfer->data = NULL;
+            xfer->dataSize = 0;
             break;
         case kI2C_SlaveTransmitAckEvent:
             break;
@@ -64,6 +69,7 @@ int main(void)
     slaveConfig.addressingMode = kI2C_Address7bit/kI2C_RangeMatch;
     I2C_SlaveInit(I2C_BUS_BASEADDR, &slaveConfig);
     I2C_SlaveTransferCreateHandle(I2C_BUS_BASEADDR, &slaveHandle, i2c_slave_callback, NULL);
+    slaveHandle.eventMask |= kI2C_SlaveCompletionEvent;
     I2C_SlaveTransferNonBlocking(I2C_BUS_BASEADDR, &slaveHandle, kI2C_SlaveCompletionEvent);
 
     KeyMatrix_Init(&keyMatrix);

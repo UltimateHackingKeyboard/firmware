@@ -81,15 +81,10 @@ static usb_status_t UsbKeyboardAction(void)
         UsbKeyboardReport.scancodes[scancodeIdx] = 0;
     }
 
-    i2c_master_transfer_t masterXfer;
-    masterXfer.slaveAddress = I2C_ADDRESS_LEFT_KEYBOARD_HALF;
-    masterXfer.direction = kI2C_Read;
-    masterXfer.subaddress = 0;
-    masterXfer.subaddressSize = 0;
-    masterXfer.data = leftKeyStates;
-    masterXfer.dataSize = KEY_STATE_COUNT;
-    masterXfer.flags = kI2C_TransferDefaultFlag;
-    I2C_MasterTransferBlocking(I2C_MAIN_BUS_BASEADDR, &masterXfer);
+    uint8_t data[] = {0};
+    I2cWrite(I2C_MAIN_BUS_BASEADDR, I2C_ADDRESS_LEFT_KEYBOARD_HALF, data, sizeof(data));
+
+    I2cRead(I2C_MAIN_BUS_BASEADDR, I2C_ADDRESS_LEFT_KEYBOARD_HALF, leftKeyStates, KEY_STATE_COUNT);
 
     scancodeIdx = 0;
     for (uint8_t keyId=0; keyId<KEYBOARD_MATRIX_COLS_NUM*KEYBOARD_MATRIX_ROWS_NUM; keyId++) {

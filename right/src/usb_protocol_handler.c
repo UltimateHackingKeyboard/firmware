@@ -103,8 +103,11 @@ void JumpToBootloader() {
 
 void GetSetTestLed()
 {
-    uint8_t arg = GenericHidInBuffer[1];
-    switch (arg) {
+    uint8_t ledState = GenericHidInBuffer[1];
+    uint8_t data[] = {1, ledState};
+    I2cWrite(I2C_MAIN_BUS_BASEADDR, I2C_ADDRESS_LEFT_KEYBOARD_HALF, data, sizeof(data));
+
+    switch (ledState) {
         case 0:
             TEST_LED_ON();
             break;
