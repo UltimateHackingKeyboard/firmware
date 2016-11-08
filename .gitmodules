@@ -1,6 +1,6 @@
 [submodule "lib/KSDK_2.0_MKL03Z8xxx4"]
 	path = lib/KSDK_2.0_MKL03Z8xxx4
-	url = git@github.com:UltimateHackingKeyboard/KSDK_2.0_MKL03Z8xxx4.git
+	url = https://github.com/UltimateHackingKeyboard/KSDK_2.0_MKL03Z8xxx4.git
 [submodule "lib/KSDK_2.0_MK22FN512xxx12"]
 	path = lib/KSDK_2.0_MK22FN512xxx12
-	url = git@github.com:UltimateHackingKeyboard/KSDK_2.0_MK22FN512xxx12.git
+	url = https://github.com/UltimateHackingKeyboard/KSDK_2.0_MK22FN512xxx12.git
