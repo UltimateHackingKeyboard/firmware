@@ -2,12 +2,6 @@
 
 This repository hosts the firmware of the [Ultimate Hacking Keyboard](https://ultimatehackingkeyboard.com/).
 
-The firmware of the right keyboard half currently runs on an FRDM-K22F dev board and implements a composite USB device.
-
-The firmware of the left keyboard half currently runs on an FRDM-KL03Z dev board and communicates with the right half via I2C.
-
-Here's a short [demonstration video](https://www.youtube.com/watch?v=MrMaoW_NA_U) for your viewing pleasure.
-
 ## Build
 
 Please make sure to clone this repo with:
