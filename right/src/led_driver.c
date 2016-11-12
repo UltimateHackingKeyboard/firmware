@@ -42,7 +42,7 @@ void LedDriver_EnableAllLeds()
             LedDriver_WriteRegister(address, i, 0x00);
         }
         for (i=FRAME_REGISTER_PWM_FIRST; i<=FRAME_REGISTER_PWM_LAST; i++) {
-            LedDriver_WriteRegister(address, i, 0xff);
+            LedDriver_WriteRegister(address, i, 0x00);
         }
     }
 }
