@@ -157,7 +157,7 @@ static uint8_t getKeycode(uint8_t keyId)
 {
 	int activeIndex = (modifierState & MOD_PRESSED) ? 1 : 0;
 
-	if (keyId<sizeof(scancodes))
+	if (keyId<sizeof(defaultLayout))
 		return defaultLayout[keyId][activeIndex];
 	else
 		return 0;
