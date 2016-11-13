@@ -78,5 +78,6 @@ int main(void)
     KeyMatrix_Init(&keyMatrix);
     while (1) {
         KeyMatrix_Scan(&keyMatrix);
+        asm("wfi");
     }
 }
