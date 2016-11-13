@@ -29,7 +29,7 @@
 
 // Functions:
 
-    void I2cRead(I2C_Type *baseAddress, uint8_t i2cAddress, uint8_t *data, uint8_t size);
-    void I2cWrite(I2C_Type *baseAddress, uint8_t i2cAddress, uint8_t *data, uint8_t size);
+    status_t I2cRead(I2C_Type *baseAddress, uint8_t i2cAddress, uint8_t *data, uint8_t size);
+    status_t I2cWrite(I2C_Type *baseAddress, uint8_t i2cAddress, uint8_t *data, uint8_t size);
 
 #endif

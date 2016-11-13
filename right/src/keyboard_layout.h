@@ -38,18 +38,26 @@
 
 static inline __attribute__((always_inline)) uint8_t getKeycode(KEYBOARD_LAYOUT(layout), uint8_t keyId, uint8_t modifierState)
 {
-	if (keyId<LAYOUT_KEY_COUNT)
-		return layout[keyId][modifierState];
-	else
+	if (keyId<LAYOUT_KEY_COUNT) {
+		uint8_t k = layout[keyId][modifierState];
+		if (k==0) {
+			k = layout[keyId][0];
+		}
+
+		return k;
+	} else {
 		return 0;
+	}
 }
 
 static inline __attribute__((always_inline)) uint8_t getModifierState(const uint8_t *leftKeyStates, const uint8_t *rightKeyStates){
-	uint8_t mod=0;
-	if (leftKeyStates[KEYID_LEFT_MOD])
+	uint8_t mod = 0;
+	if (leftKeyStates[KEYID_LEFT_MOD]) {
 		mod |= MODIFIER_MOD_PRESSED;
-	if (leftKeyStates[KEYID_LEFT_FN] | rightKeyStates[KEYID_RIGHT_FN])
+	}
+	if (leftKeyStates[KEYID_LEFT_FN] | rightKeyStates[KEYID_RIGHT_FN]) {
 		mod |= MODIFIER_FN_PRESSED;
+	}
 
 	return mod;
 }

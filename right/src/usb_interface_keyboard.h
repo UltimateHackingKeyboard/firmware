@@ -36,4 +36,5 @@
     extern usb_status_t UsbKeyboardSetConfiguration(class_handle_t handle, uint8_t configuration);
     extern usb_status_t UsbKeyboardSetInterface(class_handle_t handle, uint8_t interface, uint8_t alternateSetting);
 
+    extern void usbKeyboadTask();
 #endif
