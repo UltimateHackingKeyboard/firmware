@@ -6,8 +6,12 @@
 void main() {
     InitPeripherials();
     InitClock();
-    LedDriver_EnableAllLeds();
+    LedDriver_InitAllLeds(0);
+    usbKeyboadTask();
     InitUsb();
 
-    while (1);
+    while (1){
+    	usbKeyboadTask();
+    	asm("wfi");
+    }
 }

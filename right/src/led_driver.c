@@ -19,7 +19,7 @@ void LedDriver_WriteRegister(uint8_t i2cAddress, uint8_t reg, uint8_t val)
     LedDriver_WriteBuffer(i2cAddress, buffer, sizeof(buffer));
 }
 
-void LedDriver_EnableAllLeds()
+void LedDriver_InitAllLeds(char isEnabled)
 {
     CLOCK_EnableClock(LED_DRIVER_SDB_CLOCK);
     PORT_SetPinMux(LED_DRIVER_SDB_PORT, LED_DRIVER_SDB_PIN, kPORT_MuxAsGpio);
@@ -35,14 +35,14 @@ void LedDriver_EnableAllLeds()
         LedDriver_WriteRegister(address, LED_DRIVER_REGISTER_FRAME, LED_DRIVER_FRAME_1);
 
         uint8_t i;
+        for (i=FRAME_REGISTER_PWM_FIRST; i<=FRAME_REGISTER_PWM_LAST; i++) {
+		   LedDriver_WriteRegister(address, i, isEnabled ? 0xFF : 0x00);
+	   }
         for (i=FRAME_REGISTER_LED_CONTROL_FIRST; i<=FRAME_REGISTER_LED_CONTROL_LAST; i++) {
             LedDriver_WriteRegister(address, i, 0xff);
         }
         for (i=FRAME_REGISTER_BLINK_CONTROL_FIRST; i<=FRAME_REGISTER_BLINK_CONTROL_LAST; i++) {
             LedDriver_WriteRegister(address, i, 0x00);
-        }
-        for (i=FRAME_REGISTER_PWM_FIRST; i<=FRAME_REGISTER_PWM_LAST; i++) {
-            LedDriver_WriteRegister(address, i, 0xff);
         }
     }
 }

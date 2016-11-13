@@ -6,6 +6,7 @@
 #include "fsl_i2c.h"
 #include "i2c.h"
 #include "i2c_addresses.h"
+#include "default_layout.h"
 
 static usb_device_endpoint_struct_t UsbKeyboardEndpoints[USB_KEYBOARD_ENDPOINT_COUNT] = {{
     USB_KEYBOARD_ENDPOINT_INDEX | (USB_IN << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT),
@@ -39,7 +40,8 @@ usb_device_class_struct_t UsbKeyboardClass = {
     USB_DEVICE_CONFIGURATION_COUNT,
 };
 
-static usb_keyboard_report_t UsbKeyboardReport;
+volatile static int activeLayout=0;
+volatile static usb_keyboard_report_t UsbKeyboardReport[2];
 
 #define KEYBOARD_MATRIX_COLS_NUM 7
 #define KEYBOARD_MATRIX_ROWS_NUM 5
@@ -65,42 +67,79 @@ key_matrix_t keyMatrix = {
     }
 };
 
-#define KEY_STATE_COUNT (5*7)
-uint8_t leftKeyStates[KEY_STATE_COUNT] = {0};
+void readLeftKeys(uint8_t *stateVector){
+	uint8_t data[] = {0};
+	uint8_t success=0;
+
+	if (I2cWrite(I2C_MAIN_BUS_BASEADDR, I2C_ADDRESS_LEFT_KEYBOARD_HALF, data, sizeof(data)) == kStatus_Success) {
+		if (I2cRead(I2C_MAIN_BUS_BASEADDR, I2C_ADDRESS_LEFT_KEYBOARD_HALF, stateVector, KEY_STATE_COUNT) == kStatus_Success) {
+			success = 1;
+		}
+	}
+
+	if (!success) {
+		bzero(stateVector, KEY_STATE_COUNT);
+	}
+}
+
+void usbKeyboadTask(){
+	//Producer task for USB packets. When the USB interrupt is called,
+	//the newest packet is sent out immediately, thus not doing long task
+	//in the interrupt handler.
+	int newLayout = 1-activeLayout;
+
+	static uint8_t leftKeyStates[KEY_STATE_COUNT];
+
+	UsbKeyboardReport[newLayout].modifiers = 0;
+	UsbKeyboardReport[newLayout].reserved = 0;
+
+	KeyMatrix_Init(&keyMatrix);
+	KeyMatrix_Scan(&keyMatrix);
+
+	bzero(&UsbKeyboardReport[newLayout].scancodes, USB_KEYBOARD_MAX_KEYS*sizeof(UsbKeyboardReport[newLayout].scancodes[0]));
+
+	readLeftKeys(leftKeyStates);
+
+	uint8_t modifierState = getModifierState(leftKeyStates, keyMatrix.keyStates);
+
+	int scancodeIdx = 0;
+	for (uint8_t keyId=0; keyId<KEYBOARD_MATRIX_COLS_NUM*KEYBOARD_MATRIX_ROWS_NUM; keyId++) {
+		if (scancodeIdx>=USB_KEYBOARD_MAX_KEYS) {
+			break;
+		}
+
+		if (keyMatrix.keyStates[keyId]) {
+			uint8_t code=getKeycode(defaultKeyboardLayout, keyId, modifierState);
+			if (code) {
+				UsbKeyboardReport[newLayout].scancodes[scancodeIdx++] = code;
+			}
+		}
+	}
+
+	for (uint8_t keyId=0; keyId<KEY_STATE_COUNT; keyId++) {
+		if (scancodeIdx>=USB_KEYBOARD_MAX_KEYS) {
+			break;
+		}
+
+		if (leftKeyStates[keyId]) {
+			uint8_t code=getKeycode(defaultKeyboardLayout, LAYOUT_LEFT_OFFSET+keyId, modifierState);
+			if (code) {
+				UsbKeyboardReport[newLayout].scancodes[scancodeIdx++] = code;
+			}
+		}
+	}
+
+	//Change to the new layout in atomic operation (int copy). Even if
+	//the copy is not atomic itself, only single bit changes. So it can
+	//never be a problem
+	activeLayout = newLayout;
+}
+
 
 static usb_status_t UsbKeyboardAction(void)
 {
-    UsbKeyboardReport.modifiers = 0;
-    UsbKeyboardReport.reserved = 0;
-
-    KeyMatrix_Init(&keyMatrix);
-    KeyMatrix_Scan(&keyMatrix);
-
-    uint8_t scancodeIdx;
-    for (uint8_t scancodeIdx=0; scancodeIdx<USB_KEYBOARD_MAX_KEYS; scancodeIdx++) {
-        UsbKeyboardReport.scancodes[scancodeIdx] = 0;
-    }
-
-    uint8_t data[] = {0};
-    I2cWrite(I2C_MAIN_BUS_BASEADDR, I2C_ADDRESS_LEFT_KEYBOARD_HALF, data, sizeof(data));
-
-    I2cRead(I2C_MAIN_BUS_BASEADDR, I2C_ADDRESS_LEFT_KEYBOARD_HALF, leftKeyStates, KEY_STATE_COUNT);
-
-    scancodeIdx = 0;
-    for (uint8_t keyId=0; keyId<KEYBOARD_MATRIX_COLS_NUM*KEYBOARD_MATRIX_ROWS_NUM; keyId++) {
-        if (keyMatrix.keyStates[keyId] && scancodeIdx<USB_KEYBOARD_MAX_KEYS) {
-            UsbKeyboardReport.scancodes[scancodeIdx++] = keyId + HID_KEYBOARD_SC_A;
-        }
-    }
-
-    for (uint8_t keyId=0; keyId<KEY_STATE_COUNT; keyId++) {
-        if (leftKeyStates[keyId] && scancodeIdx<USB_KEYBOARD_MAX_KEYS) {
-            UsbKeyboardReport.scancodes[scancodeIdx++] = keyId + HID_KEYBOARD_SC_A;
-        }
-    }
-
     return USB_DeviceHidSend(UsbCompositeDevice.keyboardHandle, USB_KEYBOARD_ENDPOINT_INDEX,
-                             (uint8_t*)&UsbKeyboardReport, USB_KEYBOARD_REPORT_LENGTH);
+                             (uint8_t*)&UsbKeyboardReport[activeLayout], USB_KEYBOARD_REPORT_LENGTH);
 }
 
 usb_status_t UsbKeyboardCallback(class_handle_t handle, uint32_t event, void *param)
