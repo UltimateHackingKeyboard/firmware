@@ -1,10 +1,3 @@
-/*
- * default_layout.h
- *
- *  Created on: 2016 nov. 13
- *      Author: xdever
- */
-
 #ifndef SRC_DEFAULT_LAYOUT_H_
 #define SRC_DEFAULT_LAYOUT_H_
 
@@ -13,5 +6,4 @@
 
 extern KEYBOARD_LAYOUT(defaultKeyboardLayout);
 
-
-#endif /* SRC_DEFAULT_LAYOUT_H_ */
+#endif
