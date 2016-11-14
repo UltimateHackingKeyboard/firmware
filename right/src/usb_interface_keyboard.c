@@ -41,7 +41,7 @@ usb_device_class_struct_t UsbKeyboardClass = {
 };
 
 volatile static int activeLayout=0;
-volatile static usb_keyboard_report_t UsbKeyboardReport[2];
+static usb_keyboard_report_t UsbKeyboardReport[2];
 
 #define KEYBOARD_MATRIX_COLS_NUM 7
 #define KEYBOARD_MATRIX_ROWS_NUM 5
@@ -100,34 +100,7 @@ void usbKeyboadTask(){
 
 	readLeftKeys(leftKeyStates);
 
-	uint8_t modifierState = getModifierState(leftKeyStates, keyMatrix.keyStates);
-
-	int scancodeIdx = 0;
-	for (uint8_t keyId=0; keyId<KEYBOARD_MATRIX_COLS_NUM*KEYBOARD_MATRIX_ROWS_NUM; keyId++) {
-		if (scancodeIdx>=USB_KEYBOARD_MAX_KEYS) {
-			break;
-		}
-
-		if (keyMatrix.keyStates[keyId]) {
-			uint8_t code=getKeycode(defaultKeyboardLayout, keyId, modifierState);
-			if (code) {
-				UsbKeyboardReport[newLayout].scancodes[scancodeIdx++] = code;
-			}
-		}
-	}
-
-	for (uint8_t keyId=0; keyId<KEY_STATE_COUNT; keyId++) {
-		if (scancodeIdx>=USB_KEYBOARD_MAX_KEYS) {
-			break;
-		}
-
-		if (leftKeyStates[keyId]) {
-			uint8_t code=getKeycode(defaultKeyboardLayout, LAYOUT_LEFT_OFFSET+keyId, modifierState);
-			if (code) {
-				UsbKeyboardReport[newLayout].scancodes[scancodeIdx++] = code;
-			}
-		}
-	}
+	fillKeyboardReport(&UsbKeyboardReport[newLayout], leftKeyStates, keyMatrix.keyStates, defaultKeyboardLayout);
 
 	//Change to the new layout in atomic operation (int copy). Even if
 	//the copy is not atomic itself, only single bit changes. So it can
