@@ -35,11 +35,20 @@
 #define MODIFIER_MOD_PRESSED 1
 #define MODIFIER_FN_PRESSED 2
 
+extern uint8_t keyMasks[LAYOUT_KEY_COUNT];
+
 
 static inline __attribute__((always_inline)) uint8_t getKeycode(KEYBOARD_LAYOUT(layout), uint8_t keyId, uint8_t modifierState)
 {
 	if (keyId<LAYOUT_KEY_COUNT) {
+		if (keyMasks[keyId]!=0 && keyMasks[keyId]!=modifierState){
+			//Mask out key presses after releasing modifier keys
+			return 0;
+		}
+
 		uint8_t k = layout[keyId][modifierState];
+		keyMasks[keyId] = modifierState;
+
 		if (k==0) {
 			k = layout[keyId][0];
 		}
@@ -60,6 +69,19 @@ static inline __attribute__((always_inline)) uint8_t getModifierState(const uint
 	}
 
 	return mod;
+}
+
+static inline __attribute__((always_inline)) void clearKeymasks(const uint8_t *leftKeyStates, const uint8_t *rightKeyStates){
+	int i;
+	for (i=0; i<KEY_STATE_COUNT; ++i){
+		if (rightKeyStates[i]==0){
+			keyMasks[i] = 0;
+		}
+
+		if (leftKeyStates[i]==0){
+			keyMasks[LAYOUT_LEFT_OFFSET+i] = 0;
+		}
+	}
 }
 
 #endif

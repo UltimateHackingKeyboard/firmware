@@ -101,6 +101,7 @@ void usbKeyboadTask(){
 	readLeftKeys(leftKeyStates);
 
 	uint8_t modifierState = getModifierState(leftKeyStates, keyMatrix.keyStates);
+	clearKeymasks(leftKeyStates, keyMatrix.keyStates);
 
 	int scancodeIdx = 0;
 	for (uint8_t keyId=0; keyId<KEYBOARD_MATRIX_COLS_NUM*KEYBOARD_MATRIX_ROWS_NUM; keyId++) {
