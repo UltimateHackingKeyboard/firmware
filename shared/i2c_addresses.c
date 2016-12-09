@@ -1,6 +1,8 @@
 #include "fsl_i2c.h"
 #include "i2c_addresses.h"
 
+#ifdef ROBI_I2C
+
 /**
  * This file has couple of hacks in it, because the blocking KSDK I2C API does not handle
  * I2C errors properly. There were some stalls when the keyboard halves were disconnected
@@ -235,3 +237,32 @@ status_t I2cWrite(I2C_Type *base, uint8_t i2cAddress, uint8_t *txBuff, uint8_t t
 	return result;
 }
 
+#else
+
+status_t I2cRead(I2C_Type *baseAddress, uint8_t i2cAddress, uint8_t *data, uint8_t size)
+{
+    i2c_master_transfer_t masterXfer;
+    masterXfer.slaveAddress = i2cAddress;
+    masterXfer.direction = kI2C_Read;
+    masterXfer.subaddress = 0;
+    masterXfer.subaddressSize = 0;
+    masterXfer.data = data;
+    masterXfer.dataSize = size;
+    masterXfer.flags = kI2C_TransferDefaultFlag;
+    return I2C_MasterTransferBlocking(baseAddress, &masterXfer);
+}
+
+status_t I2cWrite(I2C_Type *baseAddress, uint8_t i2cAddress, uint8_t *data, uint8_t size)
+{
+    i2c_master_transfer_t masterXfer;
+    masterXfer.slaveAddress = i2cAddress;
+    masterXfer.direction = kI2C_Write;
+    masterXfer.subaddress = 0;
+    masterXfer.subaddressSize = 0;
+    masterXfer.data = data;
+    masterXfer.dataSize = size;
+    masterXfer.flags = kI2C_TransferDefaultFlag;
+    return I2C_MasterTransferBlocking(baseAddress, &masterXfer);
+}
+
+#endif
