@@ -92,12 +92,13 @@ status_t i2c_preamble(I2C_Type *baseAddress, uint8_t i2cAddress, i2c_direction_t
 	return result;
 }
 
-status_t I2cRead(I2C_Type *baseAddress, uint8_t i2cAddress, uint8_t *data, uint8_t size)
+// status_t I2C_MasterReadBlocking(I2C_Type *base, uint8_t *rxBuff, size_t rxSize)
+status_t I2cRead(I2C_Type *base, uint8_t i2cAddress, uint8_t *rxBuff, uint8_t rxSize)
 {
-	status_t result = i2c_preamble(baseAddress, i2cAddress, kI2C_Read);
-	if (result){
-		return result;
-	}
+	status_t result = i2c_preamble(base, i2cAddress, kI2C_Read); // Added by Robi
+	if (result) {                                                // Added by Robi
+		return result;                                           // Added by Robi
+	}                                                            // Added by Robi
 
 	result = kStatus_Success;
 	volatile uint8_t dummy = 0;
@@ -105,94 +106,114 @@ status_t I2cRead(I2C_Type *baseAddress, uint8_t i2cAddress, uint8_t *data, uint8
 	/* Add this to avoid build warning. */
 	dummy++;
 
+//    /* Wait until the data register is ready for transmit. */
+//    while (!(base->S & kI2C_TransferCompleteFlag))
+//    {
+//    }
+
 	/* Clear the IICIF flag. */
-	baseAddress->S = kI2C_IntPendingFlag;
+	base->S = kI2C_IntPendingFlag;
 
 	/* Setup the I2C peripheral to receive data. */
-	baseAddress->C1 &= ~(I2C_C1_TX_MASK | I2C_C1_TXAK_MASK);
+	base->C1 &= ~(I2C_C1_TX_MASK | I2C_C1_TXAK_MASK);
 
 	/* If rxSize equals 1, configure to send NAK. */
-	if (size == 1)
+	if (rxSize == 1)
 	{
 		/* Issue NACK on read. */
-		baseAddress->C1 |= I2C_C1_TXAK_MASK;
+		base->C1 |= I2C_C1_TXAK_MASK;
 	}
 
 	/* Do dummy read. */
-	dummy = baseAddress->D;
+	dummy = base->D;
 
-	while ((size--))
+	while ((rxSize--))
 	{
 		/* Wait until data transfer complete. */
-		result=pollForFlag(baseAddress, kI2C_IntPendingFlag);
-		if (result){
-			return result;
-		}
+		result = pollForFlag(base, kI2C_IntPendingFlag); // Added by Robi
+		if (result) {                                    // Added by Robi
+			return result;                               // Added by Robi
+		}                                                // Added by Robi
+
+//        while (!(base->S & kI2C_IntPendingFlag))
+//        {
+//        }
 
 		/* Clear the IICIF flag. */
-		baseAddress->S = kI2C_IntPendingFlag;
+		base->S = kI2C_IntPendingFlag;
 
 		/* Single byte use case. */
-		if (size == 0)
+		if (rxSize == 0)
 		{
 			/* Read the final byte. */
-			result = I2C_MasterStop(baseAddress);
+			result = I2C_MasterStop(base);
 		}
 
-		if (size == 1)
+		if (rxSize == 1)
 		{
 			/* Issue NACK on read. */
-			baseAddress->C1 |= I2C_C1_TXAK_MASK;
+			base->C1 |= I2C_C1_TXAK_MASK;
 		}
 
 		/* Read from the data register. */
-		*data++ = baseAddress->D;
+		*rxBuff++ = base->D;
 	}
 
 	return result;
 }
 
-status_t I2cWrite(I2C_Type *baseAddress, uint8_t i2cAddress, uint8_t *data, uint8_t size)
+// status_t I2C_MasterWriteBlocking(I2C_Type *base, const uint8_t *txBuff, size_t txSize)
+status_t I2cWrite(I2C_Type *base, uint8_t i2cAddress, uint8_t *txBuff, uint8_t txSize)
 {
-	status_t result = i2c_preamble(baseAddress, i2cAddress, kI2C_Read);
-	if (result){
-		return result;
-	}
+	status_t result = i2c_preamble(base, i2cAddress, kI2C_Read); // Added by Robi
+	if (result) {                                                // Added by Robi
+		return result;                                           // Added by Robi
+	}                                                            // Added by Robi
 
+//    result = kStatus_Success;
 	uint8_t statusFlags = 0;
 
+//    /* Wait until the data register is ready for transmit. */
+//    while (!(base->S & kI2C_TransferCompleteFlag))
+//    {
+//    }
+
 	/* Clear the IICIF flag. */
-	baseAddress->S = kI2C_IntPendingFlag;
+	base->S = kI2C_IntPendingFlag;
 
 	/* Setup the I2C peripheral to transmit data. */
-	baseAddress->C1 |= I2C_C1_TX_MASK;
+	base->C1 |= I2C_C1_TX_MASK;
 
-	while (size--)
+	while (txSize--)
 	{
 		/* Send a byte of data. */
-		baseAddress->D = *data++;
+		base->D = *txBuff++;
 
 		/* Wait until data transfer complete. */
-		result=pollForFlag(baseAddress, kI2C_IntPendingFlag);
-		if (result){
-			return result;
-		}
+		result = pollForFlag(base, kI2C_IntPendingFlag); // Added by Robi
+		if (result) {                                    // Added by Robi
+			return result;                               // Added by Robi
+		}                                                // Added by Robi
 
-		statusFlags = baseAddress->S;
+//        while (!(base->S & kI2C_IntPendingFlag))
+//        {
+//        }
+
+		statusFlags = base->S;
 
 		/* Clear the IICIF flag. */
-		baseAddress->S = kI2C_IntPendingFlag;
+		base->S = kI2C_IntPendingFlag;
 
 		/* Check if arbitration lost or no acknowledgement (NAK), return failure status. */
 		if (statusFlags & kI2C_ArbitrationLostFlag)
 		{
-			baseAddress->S = kI2C_ArbitrationLostFlag;
+			base->S = kI2C_ArbitrationLostFlag;
 			result = kStatus_I2C_ArbitrationLost;
 		}
 
 		if (statusFlags & kI2C_ReceiveNakFlag)
 		{
-			baseAddress->S = kI2C_ReceiveNakFlag;
+			base->S = kI2C_ReceiveNakFlag;
 			result = kStatus_I2C_Nak;
 		}
 
@@ -203,16 +224,14 @@ status_t I2cWrite(I2C_Type *baseAddress, uint8_t i2cAddress, uint8_t *data, uint
 		}
 	}
 
-
-
-	if ((result == kStatus_Success) || (result == kStatus_I2C_Nak))
-	{
-		/* Clear the IICIF flag. */
-		baseAddress->S = kI2C_IntPendingFlag;
-
-		/* Send stop. */
-		result = I2C_MasterStop(baseAddress);
-	}
+	if ((result == kStatus_Success) || (result == kStatus_I2C_Nak)) // Added by Robi
+	{                                                               // Added by Robi
+		/* Clear the IICIF flag. */                                 // Added by Robi
+		base->S = kI2C_IntPendingFlag;                              // Added by Robi
+                                                                    // Added by Robi
+		/* Send stop. */                                            // Added by Robi
+		result = I2C_MasterStop(base);                              // Added by Robi
+	}                                                               // Added by Robi
 
 	return result;
 }
