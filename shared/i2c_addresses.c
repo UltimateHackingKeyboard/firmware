@@ -2,10 +2,9 @@
 #include "i2c_addresses.h"
 
 /**
- * This file has couple of hacks in it, because the blocking i2c api provided by kinetis does not handle
- * i2c errors properly. Because of this, there were some stalls when keyboards were disconnected in middle
- * of a transfer.
- *
+ * This file has couple of hacks in it, because the blocking KSDK I2C API does not handle
+ * I2C errors properly. There were some stalls when the keyboard halves were disconnected
+ * in the middle of a transfer.
  */
 
 #define TO_CLEAR_FLAGS (kI2C_ArbitrationLostFlag | kI2C_IntPendingFlag | kI2C_StartDetectFlag | kI2C_StopDetectFlag)
@@ -92,7 +91,7 @@ status_t i2c_preamble(I2C_Type *baseAddress, uint8_t i2cAddress, i2c_direction_t
 	return result;
 }
 
-// status_t I2C_MasterReadBlocking(I2C_Type *base, uint8_t *rxBuff, size_t rxSize)
+// Based on: status_t I2C_MasterReadBlocking(I2C_Type *base, uint8_t *rxBuff, size_t rxSize)
 status_t I2cRead(I2C_Type *base, uint8_t i2cAddress, uint8_t *rxBuff, uint8_t rxSize)
 {
 	status_t result = i2c_preamble(base, i2cAddress, kI2C_Read); // Added by Robi
@@ -162,7 +161,7 @@ status_t I2cRead(I2C_Type *base, uint8_t i2cAddress, uint8_t *rxBuff, uint8_t rx
 	return result;
 }
 
-// status_t I2C_MasterWriteBlocking(I2C_Type *base, const uint8_t *txBuff, size_t txSize)
+// Based on: status_t I2C_MasterWriteBlocking(I2C_Type *base, const uint8_t *txBuff, size_t txSize)
 status_t I2cWrite(I2C_Type *base, uint8_t i2cAddress, uint8_t *txBuff, uint8_t txSize)
 {
 	status_t result = i2c_preamble(base, i2cAddress, kI2C_Read); // Added by Robi
