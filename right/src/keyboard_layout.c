@@ -50,8 +50,6 @@ static void clearKeymasks(const uint8_t *leftKeyStates, const uint8_t *rightKeyS
 	}
 }
 
-static bool isEnabled = true;
-
 void handleKey(uhk_key_t key, int scancodeIdx, usb_keyboard_report_t *report) {
   switch (key.type) {
   case UHK_KEY_SIMPLE:
@@ -63,10 +61,6 @@ void handleKey(uhk_key_t key, int scancodeIdx, usb_keyboard_report_t *report) {
         report->scancodes[scancodeIdx++] = key.key;
       }
     }
-    break;
-  case UHK_KEY_TEST:
-    LedDriver_InitAllLeds(isEnabled);
-    isEnabled = !isEnabled;
     break;
   default:
     break;

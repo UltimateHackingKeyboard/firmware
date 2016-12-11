@@ -32,7 +32,7 @@ KEYBOARD_LAYOUT(defaultKeyboardLayout)={
 		{Key_NoKey}, //??
 		{{.type = UHK_KEY_SIMPLE, .key = HID_KEYBOARD_SC_SPACE }},
 		{Key_NoKey}, //??
-		{{.type = UHK_KEY_TEST, .value = HID_KEYBOARD_SC_H }}, //Fn
+		{Key_NoKey}, //Fn
 		{{.type = UHK_KEY_SIMPLE, .key = HID_KEYBOARD_SC_RIGHT_ALT }},
 		{{.type = UHK_KEY_SIMPLE, .key = HID_KEYBOARD_SC_RIGHT_GUI }},
 		{{.type = UHK_KEY_SIMPLE, .key = HID_KEYBOARD_SC_RIGHT_CONTROL }},

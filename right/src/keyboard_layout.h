@@ -33,8 +33,6 @@ typedef enum {
   UHK_KEY_MOUSE,
   UHK_KEY_SWITCH_KEYMAP,
   UHK_KEY_PLAY_MACRO,
-
-  UHK_KEY_TEST,
 } uhk_key_type_t;
 
 typedef union {
