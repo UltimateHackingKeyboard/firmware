@@ -24,7 +24,13 @@ void LedDriver_WriteRegister(uint8_t i2cAddress, uint8_t reg, uint8_t val);
 void LedDriver_SetAllLedsTo(uint8_t val);
 ```
 
-Variables and function parameters are written with lowerCamelCase.
+Non-function scoped variables are written with UpperCamelCase.
+
+```
+uint8_t OuterVariable;
+```
+
+Function scoped variables and function parameters are written with lowerCamelCase.
 
 ```
 uint8_t myVariable;
