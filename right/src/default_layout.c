@@ -31,7 +31,7 @@ KEYBOARD_LAYOUT(defaultKeyboardLayout)={
 		{{.type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_RIGHT_SHIFT } }},
 		{Key_NoKey}, //??
 		{{.type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_SPACE } }},
-		{Key_NoKey}, //??
+		{{.type = UHK_KEY_LAYER, .layer = { .target = LAYER_MOD }}}, // Mod
 		{{.type = UHK_KEY_LAYER, .layer = { .target = LAYER_FN }}}, //Fn
 		{{.type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_RIGHT_ALT } }},
 		{{.type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_RIGHT_GUI } }},
@@ -70,7 +70,7 @@ KEYBOARD_LAYOUT(defaultKeyboardLayout)={
 		{{.type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_LEFT_GUI } }},
 		{{.type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_LEFT_ALT } }},
 		{{.type = UHK_KEY_LAYER, .layer = { .target = LAYER_FN }}}, //Fn
-		{Key_NoKey}, //??
+		{{.type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_SPACE } }}, // Space-under-mod
 		{{.type = UHK_KEY_LAYER, .layer = { .target = LAYER_MOD }}}, //Mod
 		{Key_NoKey} //??
 };
