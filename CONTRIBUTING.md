@@ -72,3 +72,40 @@ void do_this()
 ```
 myFunction();
 ```
+
+## Header file structure
+
+Header files are composed of sections. The order of sections is fixed. Every header file is guarded by a file-wide `#ifndef`.
+
+```
+#ifndef __LED_DRIVER_H__
+#define __LED_DRIVER_H__
+
+// Includes:
+
+    #include "fsl_gpio.h"
+    ...
+
+// Macros:
+
+    #define LED_DRIVER_SDB_PORT  PORTA
+    ...
+
+// Typedefs:
+
+    typedef struct {
+        ...
+    } led_driver_state_t;
+
+// Variables:
+
+    extern led_driver_state_t ledDriverState;
+    ...
+
+// Functions:
+
+    extern void LedDriver_WriteBuffer(uint8_t i2cAddress, uint8_t buffer[], uint8_t size);
+    ...
+
+#endif
+```
