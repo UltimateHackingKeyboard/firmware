@@ -27,7 +27,29 @@
 
 #define LAYOUT_LEFT_OFFSET KEY_STATE_COUNT
 
-#define KEYBOARD_LAYOUT(name) const uint8_t name[LAYOUT_KEY_COUNT][LAYOUT_MOD_COUNT]
+typedef enum {
+  UHK_KEY_SIMPLE,
+  UHK_KEY_SWITCH_LAYER,
+  UHK_KEY_MOUSE,
+  UHK_KEY_SWITCH_KEYMAP,
+  UHK_KEY_PLAY_MACRO,
+
+  UHK_KEY_TEST,
+} uhk_key_type_t;
+
+typedef union {
+  struct {
+    uhk_key_type_t type;
+    union {
+      uint8_t value;
+      uint8_t key;
+    };
+  };
+  uint16_t raw;
+} uhk_key_t;
+
+#define Key_NoKey {.raw = 0}
+#define KEYBOARD_LAYOUT(name) const uhk_key_t name[LAYOUT_KEY_COUNT][LAYOUT_MOD_COUNT]
 
 #define KEYID_LEFT_MOD 33
 #define KEYID_LEFT_FN 31
