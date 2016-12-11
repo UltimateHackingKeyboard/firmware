@@ -40,3 +40,9 @@ void do_this()
     ...
 }
 ```
+
+## function calls
+
+```
+myFunction();
+```
