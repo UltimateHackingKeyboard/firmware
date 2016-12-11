@@ -119,3 +119,7 @@ Header files are composed of sections. The order of sections is fixed. Every hea
 
 #endif
 ```
+
+## Semantics
+
+The build process must not yield any warnings.
