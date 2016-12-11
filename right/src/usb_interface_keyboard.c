@@ -68,44 +68,44 @@ key_matrix_t keyMatrix = {
 };
 
 void readLeftKeys(uint8_t *stateVector){
-	uint8_t data[] = {0};
-	uint8_t success=0;
+    uint8_t data[] = {0};
+    uint8_t success=0;
 
-	if (I2cWrite(I2C_MAIN_BUS_BASEADDR, I2C_ADDRESS_LEFT_KEYBOARD_HALF, data, sizeof(data)) == kStatus_Success) {
-		if (I2cRead(I2C_MAIN_BUS_BASEADDR, I2C_ADDRESS_LEFT_KEYBOARD_HALF, stateVector, KEY_STATE_COUNT) == kStatus_Success) {
-			success = 1;
-		}
-	}
+    if (I2cWrite(I2C_MAIN_BUS_BASEADDR, I2C_ADDRESS_LEFT_KEYBOARD_HALF, data, sizeof(data)) == kStatus_Success) {
+        if (I2cRead(I2C_MAIN_BUS_BASEADDR, I2C_ADDRESS_LEFT_KEYBOARD_HALF, stateVector, KEY_STATE_COUNT) == kStatus_Success) {
+            success = 1;
+        }
+    }
 
-	if (!success) {
-		bzero(stateVector, KEY_STATE_COUNT);
-	}
+    if (!success) {
+        bzero(stateVector, KEY_STATE_COUNT);
+    }
 }
 
 void usbKeyboadTask(){
-	//Producer task for USB packets. When the USB interrupt is called,
-	//the newest packet is sent out immediately, thus not doing long task
-	//in the interrupt handler.
-	int newLayout = 1-activeLayout;
+    //Producer task for USB packets. When the USB interrupt is called,
+    //the newest packet is sent out immediately, thus not doing long task
+    //in the interrupt handler.
+    int newLayout = 1-activeLayout;
 
-	static uint8_t leftKeyStates[KEY_STATE_COUNT];
+    static uint8_t leftKeyStates[KEY_STATE_COUNT];
 
-	UsbKeyboardReport[newLayout].modifiers = 0;
-	UsbKeyboardReport[newLayout].reserved = 0;
+    UsbKeyboardReport[newLayout].modifiers = 0;
+    UsbKeyboardReport[newLayout].reserved = 0;
 
-	KeyMatrix_Init(&keyMatrix);
-	KeyMatrix_Scan(&keyMatrix);
+    KeyMatrix_Init(&keyMatrix);
+    KeyMatrix_Scan(&keyMatrix);
 
-	bzero(&UsbKeyboardReport[newLayout].scancodes, USB_KEYBOARD_MAX_KEYS*sizeof(UsbKeyboardReport[newLayout].scancodes[0]));
+    bzero(&UsbKeyboardReport[newLayout].scancodes, USB_KEYBOARD_MAX_KEYS*sizeof(UsbKeyboardReport[newLayout].scancodes[0]));
 
-	readLeftKeys(leftKeyStates);
+    readLeftKeys(leftKeyStates);
 
-	fillKeyboardReport(&UsbKeyboardReport[newLayout], leftKeyStates, keyMatrix.keyStates, defaultKeyboardLayout);
+    fillKeyboardReport(&UsbKeyboardReport[newLayout], leftKeyStates, keyMatrix.keyStates, defaultKeyboardLayout);
 
-	//Change to the new layout in atomic operation (int copy). Even if
-	//the copy is not atomic itself, only single bit changes. So it can
-	//never be a problem
-	activeLayout = newLayout;
+    //Change to the new layout in atomic operation (int copy). Even if
+    //the copy is not atomic itself, only single bit changes. So it can
+    //never be a problem
+    activeLayout = newLayout;
 }
 
 

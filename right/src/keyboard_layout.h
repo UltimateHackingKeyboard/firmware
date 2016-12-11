@@ -13,10 +13,10 @@
  * offset of 35 is added.
  *
  * For each Key ID, there are 4 different possible scan codes:
- * 		- default, when no modifiers are pressed
- * 		- mod layer
- * 		- fn layer
- * 		- mod+fn layer
+ *      - default, when no modifiers are pressed
+ *      - mod layer
+ *      - fn layer
+ *      - mod+fn layer
  *
  */
 

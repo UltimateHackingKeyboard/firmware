@@ -11,7 +11,7 @@ void main() {
     InitUsb();
 
     while (1){
-    	usbKeyboadTask();
-    	asm("wfi");
+        usbKeyboadTask();
+        asm("wfi");
     }
 }

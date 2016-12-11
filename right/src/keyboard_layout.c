@@ -7,36 +7,36 @@ static uint8_t modifierState = 0;
 
 static inline __attribute__((always_inline)) uhk_key_t getKeycode(KEYBOARD_LAYOUT(layout), uint8_t keyId)
 {
-	if (keyId<LAYOUT_KEY_COUNT) {
-		if (keyMasks[keyId]!=0 && keyMasks[keyId]!=modifierState){
-			//Mask out key presses after releasing modifier keys
+    if (keyId<LAYOUT_KEY_COUNT) {
+        if (keyMasks[keyId]!=0 && keyMasks[keyId]!=modifierState){
+            //Mask out key presses after releasing modifier keys
       return (uhk_key_t) { .raw = 0 };
-		}
+        }
 
-		uhk_key_t k = layout[keyId][modifierState];
-		keyMasks[keyId] = modifierState;
+        uhk_key_t k = layout[keyId][modifierState];
+        keyMasks[keyId] = modifierState;
 
-		if (k.raw==0) {
-			k = layout[keyId][0];
-		}
+        if (k.raw==0) {
+            k = layout[keyId][0];
+        }
 
-		return k;
-	} else {
-		return (uhk_key_t) { .raw = 0 };
-	}
+        return k;
+    } else {
+        return (uhk_key_t) { .raw = 0 };
+    }
 }
 
 static void clearKeymasks(const uint8_t *leftKeyStates, const uint8_t *rightKeyStates){
-	int i;
-	for (i=0; i<KEY_STATE_COUNT; ++i){
-		if (rightKeyStates[i]==0){
-			keyMasks[i] = 0;
-		}
+    int i;
+    for (i=0; i<KEY_STATE_COUNT; ++i){
+        if (rightKeyStates[i]==0){
+            keyMasks[i] = 0;
+        }
 
-		if (leftKeyStates[i]==0){
-			keyMasks[LAYOUT_LEFT_OFFSET+i] = 0;
-		}
-	}
+        if (leftKeyStates[i]==0){
+            keyMasks[LAYOUT_LEFT_OFFSET+i] = 0;
+        }
+    }
 }
 
 static uint8_t LEDVal = 0;
@@ -87,31 +87,31 @@ bool handleKey(uhk_key_t key, int scancodeIdx, usb_keyboard_report_t *report, ui
 }
 
 void fillKeyboardReport(usb_keyboard_report_t *report, const uint8_t *leftKeyStates, const uint8_t *rightKeyStates, KEYBOARD_LAYOUT(layout)) {
-	int scancodeIdx = 0;
+    int scancodeIdx = 0;
 
-	clearKeymasks(leftKeyStates, rightKeyStates);
+    clearKeymasks(leftKeyStates, rightKeyStates);
 
-	for (uint8_t keyId=0; keyId<KEY_STATE_COUNT; keyId++) {
-		if (scancodeIdx>=USB_KEYBOARD_MAX_KEYS) {
-			break;
-		}
+    for (uint8_t keyId=0; keyId<KEY_STATE_COUNT; keyId++) {
+        if (scancodeIdx>=USB_KEYBOARD_MAX_KEYS) {
+            break;
+        }
 
     uhk_key_t code=getKeycode(layout, keyId);
 
     if (handleKey(code, scancodeIdx, report, rightKeyStates[keyId])) {
       scancodeIdx++;
     }
-	}
+    }
 
-	for (uint8_t keyId=0; keyId<KEY_STATE_COUNT; keyId++) {
-		if (scancodeIdx>=USB_KEYBOARD_MAX_KEYS) {
-			break;
-		}
+    for (uint8_t keyId=0; keyId<KEY_STATE_COUNT; keyId++) {
+        if (scancodeIdx>=USB_KEYBOARD_MAX_KEYS) {
+            break;
+        }
 
     uhk_key_t code=getKeycode(layout, LAYOUT_LEFT_OFFSET+keyId);
 
     if (handleKey(code, scancodeIdx, report, leftKeyStates[keyId])) {
       scancodeIdx++;
     }
-	}
+    }
 }
