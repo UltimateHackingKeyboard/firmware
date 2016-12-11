@@ -56,7 +56,12 @@ void handleKey(uhk_key_t key, int scancodeIdx, usb_keyboard_report_t *report) {
   switch (key.type) {
   case UHK_KEY_SIMPLE:
     if (key.key) {
-      report->scancodes[scancodeIdx++] = key.key;
+      if (key.key >= HID_KEYBOARD_SC_LEFT_CONTROL && key.key <= HID_KEYBOARD_SC_RIGHT_GUI) {
+        uint8_t k = key.key - HID_KEYBOARD_SC_LEFT_CONTROL;
+        report->modifiers |= (1 << k);
+      } else {
+        report->scancodes[scancodeIdx++] = key.key;
+      }
     }
     break;
   case UHK_KEY_TEST:
