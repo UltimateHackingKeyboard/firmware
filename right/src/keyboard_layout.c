@@ -1,39 +1,29 @@
 #include "keyboard_layout.h"
+#include "led_driver.h"
 
 static uint8_t keyMasks[LAYOUT_KEY_COUNT];
 
-static inline __attribute__((always_inline)) uint8_t getKeycode(KEYBOARD_LAYOUT(layout), uint8_t keyId, uint8_t modifierState)
+static uint8_t modifierState = 0;
+
+static inline __attribute__((always_inline)) uhk_key_t getKeycode(KEYBOARD_LAYOUT(layout), uint8_t keyId)
 {
 	if (keyId<LAYOUT_KEY_COUNT) {
 		if (keyMasks[keyId]!=0 && keyMasks[keyId]!=modifierState){
 			//Mask out key presses after releasing modifier keys
-			return 0;
+      return (uhk_key_t) { .raw = 0 };
 		}
 
-		uint8_t k = layout[keyId][modifierState];
+		uhk_key_t k = layout[keyId][modifierState];
 		keyMasks[keyId] = modifierState;
 
-		if (k==0) {
+		if (k.raw==0) {
 			k = layout[keyId][0];
 		}
 
 		return k;
 	} else {
-		return 0;
+		return (uhk_key_t) { .raw = 0 };
 	}
-}
-
-
-static uint8_t getModifierState(const uint8_t *leftKeyStates, const uint8_t *rightKeyStates){
-	uint8_t mod = 0;
-	if (leftKeyStates[KEYID_LEFT_MOD]) {
-		mod |= MODIFIER_MOD_PRESSED;
-	}
-	if (leftKeyStates[KEYID_LEFT_FN] | rightKeyStates[KEYID_RIGHT_FN]) {
-		mod |= MODIFIER_FN_PRESSED;
-	}
-
-	return mod;
 }
 
 static void clearKeymasks(const uint8_t *leftKeyStates, const uint8_t *rightKeyStates){
@@ -49,23 +39,68 @@ static void clearKeymasks(const uint8_t *leftKeyStates, const uint8_t *rightKeyS
 	}
 }
 
-void fillKeyboardReport(usb_keyboard_report_t *report, const uint8_t *leftKeyStates, const uint8_t *rightKeyStates, KEYBOARD_LAYOUT(layout)){
+static uint8_t LEDVal = 0;
+static int8_t LEDstep = 10;
+
+bool pressKey(uhk_key_t key, int scancodeIdx, usb_keyboard_report_t *report) {
+  if (key.type != UHK_KEY_SIMPLE)
+    return false;
+
+  if (!key.simple.key)
+    return false;
+
+  for (uint8_t i = 0; i < 8; i++) {
+    if (key.simple.mods & (1 << i) ||
+        key.simple.key == HID_KEYBOARD_SC_LEFT_CONTROL + i) {
+      report->modifiers |= (1 << i);
+    }
+  }
+  report->scancodes[scancodeIdx] = key.simple.key;
+  return true;
+}
+
+bool layerOn(uhk_key_t key) {
+  modifierState |= (1 << (key.layer.target - 1));
+  return false;
+}
+
+bool layerOff(uhk_key_t key) {
+  modifierState &= ~(1 << (key.layer.target - 1));
+  return false;
+}
+
+bool handleKey(uhk_key_t key, int scancodeIdx, usb_keyboard_report_t *report, uint8_t keyState) {
+  switch (key.type) {
+  case UHK_KEY_SIMPLE:
+    if (keyState)
+      return pressKey (key, scancodeIdx, report);
+    break;
+  case UHK_KEY_LAYER:
+    if (keyState)
+      return layerOn (key);
+    return layerOff (key);
+    break;
+  default:
+    break;
+  }
+  return false;
+}
+
+void fillKeyboardReport(usb_keyboard_report_t *report, const uint8_t *leftKeyStates, const uint8_t *rightKeyStates, KEYBOARD_LAYOUT(layout)) {
 	int scancodeIdx = 0;
 
 	clearKeymasks(leftKeyStates, rightKeyStates);
-	uint8_t modifierState=getModifierState(leftKeyStates, rightKeyStates);
 
 	for (uint8_t keyId=0; keyId<KEY_STATE_COUNT; keyId++) {
 		if (scancodeIdx>=USB_KEYBOARD_MAX_KEYS) {
 			break;
 		}
 
-		if (rightKeyStates[keyId]) {
-			uint8_t code=getKeycode(layout, keyId, modifierState);
-			if (code) {
-				report->scancodes[scancodeIdx++] = code;
-			}
-		}
+    uhk_key_t code=getKeycode(layout, keyId);
+
+    if (handleKey(code, scancodeIdx, report, rightKeyStates[keyId])) {
+      scancodeIdx++;
+    }
 	}
 
 	for (uint8_t keyId=0; keyId<KEY_STATE_COUNT; keyId++) {
@@ -73,11 +108,10 @@ void fillKeyboardReport(usb_keyboard_report_t *report, const uint8_t *leftKeySta
 			break;
 		}
 
-		if (leftKeyStates[keyId]) {
-			uint8_t code=getKeycode(layout, LAYOUT_LEFT_OFFSET+keyId, modifierState);
-			if (code) {
-				report->scancodes[scancodeIdx++] = code;
-			}
-		}
+    uhk_key_t code=getKeycode(layout, LAYOUT_LEFT_OFFSET+keyId);
+
+    if (handleKey(code, scancodeIdx, report, leftKeyStates[keyId])) {
+      scancodeIdx++;
+    }
 	}
 }

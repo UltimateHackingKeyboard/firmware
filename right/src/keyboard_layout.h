@@ -27,14 +27,63 @@
 
 #define LAYOUT_LEFT_OFFSET KEY_STATE_COUNT
 
-#define KEYBOARD_LAYOUT(name) const uint8_t name[LAYOUT_KEY_COUNT][LAYOUT_MOD_COUNT]
+typedef enum {
+  UHK_KEY_SIMPLE,
+  UHK_KEY_MOUSE,
+  UHK_KEY_LAYER,
+  UHK_KEY_LAYER_TOGGLE,
+  UHK_KEY_KEYMAP,
+  UHK_KEY_MACRO,
+  UHK_KEY_LPRESSMOD,
+  UHK_KEY_LPRESSLAYER,
+} uhk_key_type_t;
 
-#define KEYID_LEFT_MOD 33
-#define KEYID_LEFT_FN 31
-#define KEYID_RIGHT_FN 31
+typedef union {
+  struct {
+    uint8_t type;
+    union {
+      struct {
+        uint8_t __unused_bits;
+        uint8_t mods;
+        uint8_t key;
+      } __attribute__ ((packed)) simple;
+      struct {
+        uint8_t __unused_bits;
+        uint8_t scrollActions; // bitfield
+        uint8_t moveActions; // bitfield
+      } __attribute__ ((packed)) mouse;
+      struct {
+        uint16_t __unused_bits;
+        uint8_t target;
+      } __attribute__ ((packed)) layer;
+      struct {
+        uint16_t __unused_bits;
+        uint8_t target;
+      } __attribute__ ((packed)) keymap;
+      struct {
+        uint8_t __unused_bits;
+        uint16_t index;
+      } __attribute__ ((packed)) macro;
+      struct {
+        uint8_t longPressMod; // single mod, or bitfield?
+        uint8_t mods; // for the alternate action
+        uint8_t key;
+      } __attribute__ ((packed)) longpressMod;
+      struct {
+        uint8_t longPressLayer;
+        uint8_t mods;
+        uint8_t key;
+      } __attribute__ ((packed)) longpressLayer;
+    };
+  } __attribute__ ((packed));
+  uint32_t raw;
+} __attribute__ ((packed)) uhk_key_t;
 
-#define MODIFIER_MOD_PRESSED 1
-#define MODIFIER_FN_PRESSED 2
+#define Key_NoKey {.raw = 0}
+#define KEYBOARD_LAYOUT(name) const uhk_key_t name[LAYOUT_KEY_COUNT][LAYOUT_MOD_COUNT]
+
+#define LAYER_MOD 1
+#define LAYER_FN 2
 
 void fillKeyboardReport(usb_keyboard_report_t *report, const uint8_t *leftKeyStates, const uint8_t *rightKeyStates, KEYBOARD_LAYOUT(layout));
 
