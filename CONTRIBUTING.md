@@ -16,7 +16,7 @@ Functions are written with UpperCamelCase and verb is followed by noun.
 DoThis();
 ```
 
-Whenever a file exposes a group of functions as a consistent API the functions should be prefixed with the group name, followed by `_`, followed by the individual function names.
+Whenever a file exposes a group of functions as a consistent API, their function names should be prefixed with the group name, followed by `_`, followed by the individual function names.
 
 ```
 void LedDriver_WriteBuffer(uint8_t i2cAddress, uint8_t buffer[], uint8_t size);
@@ -34,6 +34,7 @@ Function scoped variables and function parameters are written with lowerCamelCas
 
 ```
 uint8_t myVariable;
+void MyFunction(uint8_t myArg1, uint8_t myArg2);
 ```
 
 Type names are written with underscores, and end with `_t`. Type members are written with lowerCamelCase.
@@ -94,7 +95,7 @@ Header files are composed of sections. The order of sections is fixed. Every hea
 
 // Macros:
 
-    #define LED_DRIVER_SDB_PORT  PORTA
+    #define LED_DRIVER_SDB_PORT PORTA
     ...
 
 // Typedefs:
@@ -105,7 +106,7 @@ Header files are composed of sections. The order of sections is fixed. Every hea
 
 // Variables:
 
-    extern led_driver_state_t ledDriverState;
+    extern led_driver_state_t LedDriverState;
     ...
 
 // Functions:
