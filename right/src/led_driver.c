@@ -44,10 +44,10 @@ void LedDriver_SetAllLedsTo(uint8_t val)
             LedDriver_WriteRegister(address, i, val);
         }
         for (i=FRAME_REGISTER_LED_CONTROL_FIRST; i<=FRAME_REGISTER_LED_CONTROL_LAST; i++) {
-          LedDriver_WriteRegister(address, i, 0xff);
+            LedDriver_WriteRegister(address, i, 0xff);
         }
         for (i=FRAME_REGISTER_BLINK_CONTROL_FIRST; i<=FRAME_REGISTER_BLINK_CONTROL_LAST; i++) {
-          LedDriver_WriteRegister(address, i, 0x00);
+            LedDriver_WriteRegister(address, i, 0x00);
         }
     }
 }

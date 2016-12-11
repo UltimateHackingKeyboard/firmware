@@ -82,10 +82,10 @@ void readLeftKeys(uint8_t *stateVector){
     }
 }
 
-void usbKeyboadTask(){
-    //Producer task for USB packets. When the USB interrupt is called,
-    //the newest packet is sent out immediately, thus not doing long task
-    //in the interrupt handler.
+void UsbKeyboadTask(){
+    // Producer task for USB packets. When the USB interrupt is called,
+    // the newest packet is sent out immediately, thus not doing long task
+    // in the interrupt handler.
     int newLayout = 1-activeLayout;
 
     static uint8_t leftKeyStates[KEY_STATE_COUNT];
@@ -102,12 +102,11 @@ void usbKeyboadTask(){
 
     fillKeyboardReport(&UsbKeyboardReport[newLayout], leftKeyStates, keyMatrix.keyStates, defaultKeyboardLayout);
 
-    //Change to the new layout in atomic operation (int copy). Even if
-    //the copy is not atomic itself, only single bit changes. So it can
-    //never be a problem
+    // Change to the new layout in atomic operation (int copy). Even if
+    // the copy is not atomic itself, only single bit changes. So it can
+    // never be a problem
     activeLayout = newLayout;
 }
-
 
 static usb_status_t UsbKeyboardAction(void)
 {

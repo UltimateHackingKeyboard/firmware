@@ -8,4 +8,3 @@ extern void InitTestLed()
     GPIO_PinInit(TEST_LED_GPIO, TEST_LED_GPIO_PIN, &(gpio_pin_config_t){kGPIO_DigitalOutput, 1});
     TEST_LED_ON();
 }
-
