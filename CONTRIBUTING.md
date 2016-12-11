@@ -33,8 +33,11 @@ uint8_t OuterVariable;
 Function scoped variables and function parameters are written with lowerCamelCase.
 
 ```
-uint8_t myVariable;
-void MyFunction(uint8_t myArg1, uint8_t myArg2);
+void MyFunction(uint8_t myArg1, uint8_t myArg2)
+{
+    uint8_t myVariable;
+    ....
+}
 ```
 
 Type names are written with underscores, and end with `_t`. Type members are written with lowerCamelCase.
