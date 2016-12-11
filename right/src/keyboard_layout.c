@@ -38,9 +38,6 @@ static void clearKeymasks(const uint8_t *leftKeyStates, const uint8_t *rightKeyS
     }
 }
 
-static uint8_t LEDVal = 0;
-static int8_t LEDstep = 10;
-
 bool pressKey(uhk_key_t key, int scancodeIdx, usb_keyboard_report_t *report) {
     if (key.type != UHK_KEY_SIMPLE) {
         return false;
