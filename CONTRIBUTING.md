@@ -10,7 +10,7 @@
 
 ## Naming identifiers
 
-Functions are written with UpperCamelCase and noun follows verb.
+Functions are written with UpperCamelCase and verb is followed by noun.
 
 ```
 DoThis();
@@ -40,7 +40,7 @@ typedef struct {
 } pointer_t;
 ```
 
-## If
+## Control structures
 
 ```
 if (something) {
@@ -48,25 +48,17 @@ if (something) {
 } else {
     ...
 }
-```
 
-## for
-
-```
 for (uint8_t i; i<j; i++) {
     ...
 }
-```
 
-## while
-
-```
 while (condition) {
     ...
 }
 ```
 
-## function declaration
+## Function declaration
 
 ```
 void do_this()
@@ -75,7 +67,7 @@ void do_this()
 }
 ```
 
-## function calls
+## Function calls
 
 ```
 myFunction();
