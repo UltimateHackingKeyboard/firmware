@@ -26,6 +26,11 @@ void LedDriver_InitAllLeds(char isEnabled)
     GPIO_PinInit(GPIOA, LED_DRIVER_SDB_PIN, &(gpio_pin_config_t){kGPIO_DigitalOutput, 0});
     GPIO_WritePinOutput(LED_DRIVER_SDB_GPIO, LED_DRIVER_SDB_PIN, 1);
 
+    LedDriver_SetAllLedsTo(isEnabled ? 0xFF : 0x00);
+}
+
+void LedDriver_SetAllLedsTo(uint8_t val)
+{
     uint8_t ledDriverAddresses[] = {I2C_ADDRESS_LED_DRIVER_LEFT, I2C_ADDRESS_LED_DRIVER_RIGHT};
 
     for (uint8_t addressId=0; addressId<sizeof(ledDriverAddresses); addressId++) {
@@ -36,13 +41,13 @@ void LedDriver_InitAllLeds(char isEnabled)
 
         uint8_t i;
         for (i=FRAME_REGISTER_PWM_FIRST; i<=FRAME_REGISTER_PWM_LAST; i++) {
-		   LedDriver_WriteRegister(address, i, isEnabled ? 0xFF : 0x00);
-	   }
+            LedDriver_WriteRegister(address, i, val);
+        }
         for (i=FRAME_REGISTER_LED_CONTROL_FIRST; i<=FRAME_REGISTER_LED_CONTROL_LAST; i++) {
-            LedDriver_WriteRegister(address, i, 0xff);
+          LedDriver_WriteRegister(address, i, 0xff);
         }
         for (i=FRAME_REGISTER_BLINK_CONTROL_FIRST; i<=FRAME_REGISTER_BLINK_CONTROL_LAST; i++) {
-            LedDriver_WriteRegister(address, i, 0x00);
+          LedDriver_WriteRegister(address, i, 0x00);
         }
     }
 }

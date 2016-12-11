@@ -43,6 +43,7 @@
 
     extern void LedDriver_WriteBuffer(uint8_t i2cAddress, uint8_t buffer[], uint8_t size);
     extern void LedDriver_WriteRegister(uint8_t i2cAddress, uint8_t reg, uint8_t val);
+    extern void LedDriver_SetAllLedsTo(uint8_t val);
     extern void LedDriver_InitAllLeds(char isEnabled);
 
 #endif
