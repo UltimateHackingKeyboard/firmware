@@ -5,6 +5,8 @@
 #include "lufa/HIDClassCommon.h"
 #include "usb_composite_device.h"
 
+#include "module.h"
+
 // Keyboard layout is a 2D array of scan codes.
 //
 // First dimension is the Key ID of a given key. Key IDs are the indices of the
@@ -33,6 +35,8 @@ typedef enum {
     UHK_KEY_MACRO,
     UHK_KEY_LPRESSMOD,
     UHK_KEY_LPRESSLAYER,
+
+    UHK_KEY_TRANSPARENT = 0xff,
 } uhk_key_type_t;
 
 typedef union {
@@ -76,11 +80,7 @@ typedef union {
     uint32_t raw;
 } __attribute__ ((packed)) uhk_key_t;
 
-#define Key_NoKey {.raw = 0}
-#define KEYBOARD_LAYOUT(name) const uhk_key_t name[LAYOUT_KEY_COUNT][LAYOUT_MOD_COUNT]
-
-#define LAYER_MOD 1
-#define LAYER_FN 2
+#define KEYBOARD_LAYOUT(name) uhk_key_t name[LAYER_COUNT][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE]
 
 void fillKeyboardReport(usb_keyboard_report_t *report, const uint8_t *leftKeyStates, const uint8_t *rightKeyStates, KEYBOARD_LAYOUT(layout));
 

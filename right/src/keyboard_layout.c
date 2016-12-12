@@ -1,22 +1,22 @@
 #include "keyboard_layout.h"
 #include "led_driver.h"
 
-static uint8_t keyMasks[LAYOUT_KEY_COUNT];
+static uint8_t keyMasks[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
 static uint8_t modifierState = 0;
 
-static inline __attribute__((always_inline)) uhk_key_t getKeycode(KEYBOARD_LAYOUT(layout), uint8_t keyId)
+static inline __attribute__((always_inline)) uhk_key_t getKeycode(KEYBOARD_LAYOUT(layout), uint8_t slotId, uint8_t keyId)
 {
-    if (keyId < LAYOUT_KEY_COUNT) {
-        if (keyMasks[keyId]!=0 && keyMasks[keyId]!=modifierState) {
+    if (keyId < MAX_KEY_COUNT_PER_MODULE) {
+        if (keyMasks[slotId][keyId]!=0 && keyMasks[slotId][keyId]!=modifierState) {
             // Mask out key presses after releasing modifier keys
             return (uhk_key_t){.raw=0};
         }
 
-        uhk_key_t k = layout[keyId][modifierState];
-        keyMasks[keyId] = modifierState;
+        uhk_key_t k = layout[modifierState][slotId][keyId];
+        keyMasks[slotId][keyId] = modifierState;
 
         if (k.raw == 0) {
-            k = layout[keyId][0];
+            k = layout[0][slotId][keyId];
         }
 
         return k;
@@ -27,13 +27,13 @@ static inline __attribute__((always_inline)) uhk_key_t getKeycode(KEYBOARD_LAYOU
 
 static void clearKeymasks(const uint8_t *leftKeyStates, const uint8_t *rightKeyStates){
     int i;
-    for (i=0; i<KEY_STATE_COUNT; i++){
+    for (i=0; i < MAX_KEY_COUNT_PER_MODULE; i++){
         if (rightKeyStates[i]==0){
-            keyMasks[i] = 0;
+            keyMasks[SLOT_ID_RIGHT_KEYBOARD_HALF][i] = 0;
         }
 
         if (leftKeyStates[i]==0) {
-            keyMasks[LAYOUT_LEFT_OFFSET+i] = 0;
+            keyMasks[SLOT_ID_LEFT_KEYBOARD_HALF][i] = 0;
         }
     }
 }
@@ -96,7 +96,7 @@ void fillKeyboardReport(usb_keyboard_report_t *report, const uint8_t *leftKeySta
             break;
         }
 
-        uhk_key_t code = getKeycode(layout, keyId);
+        uhk_key_t code = getKeycode(layout, SLOT_ID_RIGHT_KEYBOARD_HALF, keyId);
 
         if (handleKey(code, scancodeIdx, report, rightKeyStates[keyId])) {
             scancodeIdx++;
@@ -108,7 +108,7 @@ void fillKeyboardReport(usb_keyboard_report_t *report, const uint8_t *leftKeySta
             break;
         }
 
-        uhk_key_t code = getKeycode(layout, LAYOUT_LEFT_OFFSET+keyId);
+        uhk_key_t code = getKeycode(layout, SLOT_ID_LEFT_KEYBOARD_HALF, keyId);
 
         if (handleKey(code, scancodeIdx, report, leftKeyStates[keyId])) {
             scancodeIdx++;
