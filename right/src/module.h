@@ -49,8 +49,7 @@
         uint8_t pointerCount;
         uint8_t keyCount;
         uint8_t keyStates[MAX_KEY_COUNT_PER_MODULE];
-        pointer_t pointers[MAX_POINTER_COUNT_PER_MODULE];
-        key_action_t keyActions[LAYER_COUNT][MAX_KEY_COUNT_PER_MODULE];
+        uint8_t pointerRole;
     } module_t;
 
 // Variables:
