@@ -21,11 +21,6 @@
 
 #define KEY_STATE_COUNT (5*7)
 
-#define LAYOUT_KEY_COUNT 70
-#define LAYOUT_MOD_COUNT 4
-
-#define LAYOUT_LEFT_OFFSET KEY_STATE_COUNT
-
 typedef enum {
     UHK_KEY_SIMPLE,
     UHK_KEY_MOUSE,
