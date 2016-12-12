@@ -1,21 +1,21 @@
 #include "keyboard_layout.h"
 #include "led_driver.h"
+#include "layer.h"
 
 static uint8_t keyMasks[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
-static uint8_t activeLayer = LAYER_ID_BASE;
 
 uint8_t prevKeyStates[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
 
 static inline __attribute__((always_inline)) uhk_key_t getKeycode(uint8_t slotId, uint8_t keyId)
 {
     if (keyId < MAX_KEY_COUNT_PER_MODULE) {
-        if (keyMasks[slotId][keyId]!=0 && keyMasks[slotId][keyId]!=activeLayer) {
+        if (keyMasks[slotId][keyId]!=0 && keyMasks[slotId][keyId]!=ActiveLayer) {
             // Mask out key presses after releasing modifier keys
             return (uhk_key_t){.type = UHK_KEY_NONE};
         }
 
-        uhk_key_t k = CurrentKeymap[activeLayer][slotId][keyId];
-        keyMasks[slotId][keyId] = activeLayer;
+        uhk_key_t k = CurrentKeymap[ActiveLayer][slotId][keyId];
+        keyMasks[slotId][keyId] = ActiveLayer;
 
         return k;
     } else {
@@ -55,16 +55,6 @@ bool pressKey(uhk_key_t key, int scancodeIdx, usb_keyboard_report_t *report) {
     return true;
 }
 
-bool layerOn(uhk_key_t key) {
-    activeLayer = key.layer.target;
-    return false;
-}
-
-bool layerOff(uhk_key_t key) {
-    activeLayer = LAYER_ID_BASE;
-    return false;
-}
-
 bool key_toggled_on(const uint8_t *prevKeyStates, const uint8_t *currKeyStates, uint8_t keyId) {
     return (!prevKeyStates[keyId]) && currKeyStates[keyId];
 }
@@ -86,11 +76,12 @@ bool handleKey(uhk_key_t key, int scancodeIdx, usb_keyboard_report_t *report, co
         break;
     case UHK_KEY_LAYER:
         if (key_toggled_on(prevKeyStates, currKeyStates, keyId)) {
-            return layerOn(key);
+            Layer_MoveTo(key.layer.target);
         }
         if (key_toggled_off(prevKeyStates, currKeyStates, keyId)) {
-            return layerOff(key);
+            Layer_MoveToBase();
         }
+        return false;
         break;
     default:
         break;
