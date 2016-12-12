@@ -2,20 +2,20 @@
 #include "led_driver.h"
 
 static uint8_t keyMasks[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
-static uint8_t modifierState = 0;
+static uint8_t activeLayer = LAYER_ID_BASE;
 
 uint8_t prevKeyStates[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
 
 static inline __attribute__((always_inline)) uhk_key_t getKeycode(uint8_t slotId, uint8_t keyId)
 {
     if (keyId < MAX_KEY_COUNT_PER_MODULE) {
-        if (keyMasks[slotId][keyId]!=0 && keyMasks[slotId][keyId]!=modifierState) {
+        if (keyMasks[slotId][keyId]!=0 && keyMasks[slotId][keyId]!=activeLayer) {
             // Mask out key presses after releasing modifier keys
             return (uhk_key_t){.type = UHK_KEY_NONE};
         }
 
-        uhk_key_t k = CurrentKeymap[modifierState][slotId][keyId];
-        keyMasks[slotId][keyId] = modifierState;
+        uhk_key_t k = CurrentKeymap[activeLayer][slotId][keyId];
+        keyMasks[slotId][keyId] = activeLayer;
 
         return k;
     } else {
@@ -56,12 +56,12 @@ bool pressKey(uhk_key_t key, int scancodeIdx, usb_keyboard_report_t *report) {
 }
 
 bool layerOn(uhk_key_t key) {
-    modifierState |= (1 << (key.layer.target - 1));
+    activeLayer = key.layer.target;
     return false;
 }
 
 bool layerOff(uhk_key_t key) {
-    modifierState &= ~(1 << (key.layer.target - 1));
+    activeLayer = LAYER_ID_BASE;
     return false;
 }
 
