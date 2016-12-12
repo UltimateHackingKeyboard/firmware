@@ -4,27 +4,22 @@
 static uint8_t keyMasks[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
 static uint8_t modifierState = 0;
 
-static uint8_t prevLeftKeyStates[KEY_STATE_COUNT];
-static uint8_t prevRightKeyStates[KEY_STATE_COUNT];
+uint8_t prevKeyStates[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
 
-static inline __attribute__((always_inline)) uhk_key_t getKeycode(KEYBOARD_LAYOUT(layout), uint8_t slotId, uint8_t keyId)
+static inline __attribute__((always_inline)) uhk_key_t getKeycode(uint8_t slotId, uint8_t keyId)
 {
     if (keyId < MAX_KEY_COUNT_PER_MODULE) {
         if (keyMasks[slotId][keyId]!=0 && keyMasks[slotId][keyId]!=modifierState) {
             // Mask out key presses after releasing modifier keys
-            return (uhk_key_t){.raw=0};
+            return (uhk_key_t){.type = UHK_KEY_NONE};
         }
 
-        uhk_key_t k = layout[modifierState][slotId][keyId];
+        uhk_key_t k = CurrentKeymap[modifierState][slotId][keyId];
         keyMasks[slotId][keyId] = modifierState;
-
-        if (k.type == UHK_KEY_TRANSPARENT) {
-            k = layout[0][slotId][keyId];
-        }
 
         return k;
     } else {
-        return (uhk_key_t){.raw=0};
+        return (uhk_key_t){.type = UHK_KEY_NONE};
     }
 }
 
@@ -103,7 +98,7 @@ bool handleKey(uhk_key_t key, int scancodeIdx, usb_keyboard_report_t *report, co
     return false;
 }
 
-void fillKeyboardReport(usb_keyboard_report_t *report, const uint8_t *leftKeyStates, const uint8_t *rightKeyStates, KEYBOARD_LAYOUT(layout)) {
+void fillKeyboardReport(usb_keyboard_report_t *report, const uint8_t *leftKeyStates, const uint8_t *rightKeyStates) {
     int scancodeIdx = 0;
 
     clearKeymasks(leftKeyStates, rightKeyStates);
@@ -113,9 +108,9 @@ void fillKeyboardReport(usb_keyboard_report_t *report, const uint8_t *leftKeySta
             break;
         }
 
-        uhk_key_t code = getKeycode(layout, SLOT_ID_RIGHT_KEYBOARD_HALF, keyId);
+        uhk_key_t code = getKeycode(SLOT_ID_RIGHT_KEYBOARD_HALF, keyId);
 
-        if (handleKey(code, scancodeIdx, report, prevRightKeyStates, rightKeyStates, keyId)) {
+        if (handleKey(code, scancodeIdx, report, prevKeyStates[SLOT_ID_RIGHT_KEYBOARD_HALF], rightKeyStates, keyId)) {
             scancodeIdx++;
         }
     }
@@ -125,13 +120,13 @@ void fillKeyboardReport(usb_keyboard_report_t *report, const uint8_t *leftKeySta
             break;
         }
 
-        uhk_key_t code = getKeycode(layout, SLOT_ID_LEFT_KEYBOARD_HALF, keyId);
+        uhk_key_t code = getKeycode(SLOT_ID_LEFT_KEYBOARD_HALF, keyId);
 
-        if (handleKey(code, scancodeIdx, report, prevLeftKeyStates, leftKeyStates, keyId)) {
+        if (handleKey(code, scancodeIdx, report, prevKeyStates[SLOT_ID_LEFT_KEYBOARD_HALF], leftKeyStates, keyId)) {
             scancodeIdx++;
         }
     }
 
-    memcpy (prevLeftKeyStates, leftKeyStates, KEY_STATE_COUNT);
-    memcpy (prevRightKeyStates, rightKeyStates, KEY_STATE_COUNT);
+    memcpy (prevKeyStates[SLOT_ID_RIGHT_KEYBOARD_HALF], rightKeyStates, KEY_STATE_COUNT);
+    memcpy (prevKeyStates[SLOT_ID_LEFT_KEYBOARD_HALF], leftKeyStates, KEY_STATE_COUNT);
 }
