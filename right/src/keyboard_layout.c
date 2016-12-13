@@ -1,5 +1,5 @@
 #include "keyboard_layout.h"
-#include "led_driver.h"
+#include "led_display.h"
 #include "layer.h"
 
 static uint8_t keyMasks[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
@@ -82,6 +82,7 @@ bool handleKey(uhk_key_t key, int scancodeIdx, usb_keyboard_report_t *report, co
         if (key_toggled_off(prevKeyStates, currKeyStates, keyId)) {
             ActiveLayer = LAYER_ID_BASE;
         }
+        LedDisplay_SetLayerLed(ActiveLayer, 0xff);
         return false;
         break;
     default:
