@@ -65,31 +65,31 @@ bool layerOff(uhk_key_t key) {
     return false;
 }
 
-bool key_toggled_on (const uint8_t *prevKeyStates, const uint8_t *currKeyStates, uint8_t keyId) {
+bool key_toggled_on(const uint8_t *prevKeyStates, const uint8_t *currKeyStates, uint8_t keyId) {
     return (!prevKeyStates[keyId]) && currKeyStates[keyId];
 }
 
-bool key_is_pressed (const uint8_t *prevKeyStates, const uint8_t *currKeyStates, uint8_t keyId) {
+bool key_is_pressed(const uint8_t *prevKeyStates, const uint8_t *currKeyStates, uint8_t keyId) {
     return currKeyStates[keyId];
 }
 
-bool key_toggled_off (const uint8_t *prevKeyStates, const uint8_t *currKeyStates, uint8_t keyId) {
+bool key_toggled_off(const uint8_t *prevKeyStates, const uint8_t *currKeyStates, uint8_t keyId) {
     return (!currKeyStates[keyId]) && prevKeyStates[keyId];
 }
 
 bool handleKey(uhk_key_t key, int scancodeIdx, usb_keyboard_report_t *report, const uint8_t *prevKeyStates, const uint8_t *currKeyStates, uint8_t keyId) {
     switch (key.type) {
     case UHK_KEY_SIMPLE:
-        if (key_is_pressed (prevKeyStates, currKeyStates, keyId)) {
-            return pressKey (key, scancodeIdx, report);
+        if (key_is_pressed(prevKeyStates, currKeyStates, keyId)) {
+            return pressKey(key, scancodeIdx, report);
         }
         break;
     case UHK_KEY_LAYER:
-        if (key_toggled_on (prevKeyStates, currKeyStates, keyId)) {
-            return layerOn (key);
+        if (key_toggled_on(prevKeyStates, currKeyStates, keyId)) {
+            return layerOn(key);
         }
-        if (key_toggled_off (prevKeyStates, currKeyStates, keyId)) {
-            return layerOff (key);
+        if (key_toggled_off(prevKeyStates, currKeyStates, keyId)) {
+            return layerOff(key);
         }
         break;
     default:
@@ -127,6 +127,6 @@ void fillKeyboardReport(usb_keyboard_report_t *report, const uint8_t *leftKeySta
         }
     }
 
-    memcpy (prevKeyStates[SLOT_ID_RIGHT_KEYBOARD_HALF], rightKeyStates, KEY_STATE_COUNT);
-    memcpy (prevKeyStates[SLOT_ID_LEFT_KEYBOARD_HALF], leftKeyStates, KEY_STATE_COUNT);
+    memcpy(prevKeyStates[SLOT_ID_RIGHT_KEYBOARD_HALF], rightKeyStates, KEY_STATE_COUNT);
+    memcpy(prevKeyStates[SLOT_ID_LEFT_KEYBOARD_HALF], leftKeyStates, KEY_STATE_COUNT);
 }
