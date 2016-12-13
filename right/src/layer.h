@@ -14,7 +14,4 @@
 
     extern uint8_t ActiveLayer;
 
-    void Layer_MoveTo(uint8_t layer);
-    void Layer_MoveToBase();
-
 #endif

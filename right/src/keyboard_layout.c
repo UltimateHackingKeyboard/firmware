@@ -4,6 +4,7 @@
 
 static uint8_t keyMasks[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
 
+uint8_t ActiveLayer = LAYER_ID_BASE;
 uint8_t prevKeyStates[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
 
 static inline __attribute__((always_inline)) uhk_key_t getKeycode(uint8_t slotId, uint8_t keyId)
@@ -76,10 +77,10 @@ bool handleKey(uhk_key_t key, int scancodeIdx, usb_keyboard_report_t *report, co
         break;
     case UHK_KEY_LAYER:
         if (key_toggled_on(prevKeyStates, currKeyStates, keyId)) {
-            Layer_MoveTo(key.layer.target);
+            ActiveLayer = layer;
         }
         if (key_toggled_off(prevKeyStates, currKeyStates, keyId)) {
-            Layer_MoveToBase();
+            ActiveLayer = LAYER_ID_BASE;
         }
         return false;
         break;
