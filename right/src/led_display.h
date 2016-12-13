@@ -3,6 +3,8 @@
 
     #include "led_driver.h"
 
-    void LedDisplay_SetLayerLed(uint8_t layerId, uint8_t brightness);
+    extern uint8_t LedDisplayBrightness;
+
+    void LedDisplay_SetLayerLed(uint8_t layerId);
 
 #endif

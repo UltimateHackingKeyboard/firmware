@@ -82,7 +82,7 @@ bool handleKey(uhk_key_t key, int scancodeIdx, usb_keyboard_report_t *report, co
         if (key_toggled_off(prevKeyStates, currKeyStates, keyId)) {
             ActiveLayer = LAYER_ID_BASE;
         }
-        LedDisplay_SetLayerLed(ActiveLayer, 0xff);
+        LedDisplay_SetLayerLed(ActiveLayer);
         return false;
         break;
     default:
