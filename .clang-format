@@ -1,0 +1,25 @@
+---
+Language:        Cpp
+BasedOnStyle:  WebKit
+AllowShortFunctionsOnASingleLine: false
+BinPackArguments: false
+BinPackParameters: false
+BraceWrapping:   
+  AfterClass:      false
+  AfterControlStatement: false
+  AfterEnum:       false
+  AfterFunction:   true
+  AfterNamespace:  false
+  AfterObjCDeclaration: false
+  AfterStruct:     false
+  AfterUnion:      false
+  BeforeCatch:     false
+  BeforeElse:      false
+  IndentBraces:    false
+BreakBeforeBraces: Custom
+Cpp11BracedListStyle: true
+PointerAlignment: Right
+ReflowComments:  false
+SortIncludes:    false
+TabWidth:        4
+...
