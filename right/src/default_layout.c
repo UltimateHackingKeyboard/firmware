@@ -312,23 +312,23 @@ uhk_key_t CurrentKeymap[LAYER_COUNT][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
             { .type = UHK_KEY_NONE },
 
             // Row 2
-            { .type = UHK_KEY_NONE }, // TODO: Mouse button 4
-            { .type = UHK_KEY_NONE }, // TODO: Mouse up
-            { .type = UHK_KEY_NONE }, // TODO: Mouse button 5
-            { .type = UHK_KEY_NONE }, // TODO: Mouse button 6
+            { .type = UHK_KEY_MOUSE, .mouse = { .buttonActions = UHK_MOUSE_BUTTON_4 }},
+            { .type = UHK_KEY_MOUSE, .mouse = { .moveActions = UHK_MOUSE_MOVE_UP }},
+            { .type = UHK_KEY_MOUSE, .mouse = { .buttonActions = UHK_MOUSE_BUTTON_5 }},
+            { .type = UHK_KEY_MOUSE, .mouse = { .buttonActions = UHK_MOUSE_BUTTON_6 }},
             { .type = UHK_KEY_NONE },
             { .type = UHK_KEY_NONE },
             { .type = UHK_KEY_NONE },
-            { .type = UHK_KEY_NONE }, // TODO: Mouse Wheel Up
+            { .type = UHK_KEY_MOUSE, .mouse = { .scrollActions = UHK_MOUSE_SCROLL_UP }},
 
             // Row 3
-            { .type = UHK_KEY_NONE }, // TODO: Mouse left
-            { .type = UHK_KEY_NONE }, // TODO: Mouse down
-            { .type = UHK_KEY_NONE }, // TODO: Mouse right
+            { .type = UHK_KEY_MOUSE, .mouse = { .moveActions = UHK_MOUSE_MOVE_LEFT }},
+            { .type = UHK_KEY_MOUSE, .mouse = { .moveActions = UHK_MOUSE_MOVE_DOWN }},
+            { .type = UHK_KEY_MOUSE, .mouse = { .moveActions = UHK_MOUSE_MOVE_RIGHT }},
             { .type = UHK_KEY_NONE },
             { .type = UHK_KEY_NONE },
             { .type = UHK_KEY_NONE },
-            { .type = UHK_KEY_NONE }, // TODO: Mouse Wheel down
+            { .type = UHK_KEY_MOUSE, .mouse = { .scrollActions = UHK_MOUSE_SCROLL_DOWN }},
 
             // Row 4
             { .type = UHK_KEY_NONE },
@@ -371,9 +371,9 @@ uhk_key_t CurrentKeymap[LAYER_COUNT][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
             // Row 3
             { .type = UHK_KEY_LAYER, .layer = { .target = LAYER_ID_MOUSE }},
             { .type = UHK_KEY_NONE },
-            { .type = UHK_KEY_NONE }, // TODO: Mouse left click
-            { .type = UHK_KEY_NONE }, // TODO: Mouse middle click
-            { .type = UHK_KEY_NONE }, // TODO: Mouse right click
+            { .type = UHK_KEY_MOUSE, .mouse = { .buttonActions = UHK_MOUSE_BUTTON_LEFT }},
+            { .type = UHK_KEY_MOUSE, .mouse = { .buttonActions = UHK_MOUSE_BUTTON_MIDDLE }},
+            { .type = UHK_KEY_MOUSE, .mouse = { .buttonActions = UHK_MOUSE_BUTTON_RIGHT }},
             { .type = UHK_KEY_NONE },
             { .type = UHK_KEY_NONE },
 
@@ -391,8 +391,8 @@ uhk_key_t CurrentKeymap[LAYER_COUNT][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
             { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_LEFT_GUI }},
             { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_LEFT_ALT }},
             { .type = UHK_KEY_NONE },
-            { .type = UHK_KEY_NONE }, // TODO: mouse decelerate
-            { .type = UHK_KEY_NONE }, // TODO: mouse accelerate
+            { .type = UHK_KEY_MOUSE, .mouse = { .moveActions = UHK_MOUSE_DECELERATE }},
+            { .type = UHK_KEY_MOUSE, .mouse = { .moveActions = UHK_MOUSE_ACCELERATE }},
             { .type = UHK_KEY_NONE },
         }
     },

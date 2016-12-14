@@ -33,6 +33,32 @@ typedef enum {
     UHK_KEY_LPRESSLAYER,
 } uhk_key_type_t;
 
+enum {
+    UHK_MOUSE_BUTTON_LEFT   = (1 << 0),
+    UHK_MOUSE_BUTTON_RIGHT  = (1 << 1),
+    UHK_MOUSE_BUTTON_MIDDLE = (1 << 2),
+    UHK_MOUSE_BUTTON_4      = (1 << 3),
+    UHK_MOUSE_BUTTON_5      = (1 << 4),
+    UHK_MOUSE_BUTTON_6      = (1 << 5),
+};
+
+enum {
+    UHK_MOUSE_MOVE_UP    = (1 << 0),
+    UHK_MOUSE_MOVE_DOWN  = (1 << 1),
+    UHK_MOUSE_MOVE_LEFT  = (1 << 2),
+    UHK_MOUSE_MOVE_RIGHT = (1 << 3),
+
+    UHK_MOUSE_ACCELERATE = (1 << 4),
+    UHK_MOUSE_DECELERATE = (1 << 5),
+};
+
+enum {
+    UHK_MOUSE_SCROLL_UP    = (1 << 0),
+    UHK_MOUSE_SCROLL_DOWN  = (1 << 1),
+    UHK_MOUSE_SCROLL_LEFT  = (1 << 2),
+    UHK_MOUSE_SCROLL_RIGHT = (1 << 3),
+};
+
 typedef struct {
     uint8_t type;
     union {
@@ -42,7 +68,7 @@ typedef struct {
             uint8_t key;
         } __attribute__ ((packed)) simple;
         struct {
-            uint8_t __unused_bits;
+            uint8_t buttonActions; // bitfield
             uint8_t scrollActions; // bitfield
             uint8_t moveActions; // bitfield
         } __attribute__ ((packed)) mouse;
