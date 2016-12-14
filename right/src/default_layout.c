@@ -72,7 +72,7 @@ uhk_key_t CurrentKeymap[LAYER_COUNT][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
             { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_T }},
 
             // Row 3
-            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_CAPS_LOCK }},
+            { .type = UHK_KEY_LAYER, .layer = { .target = LAYER_ID_MOUSE }},
             { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_A }},
             { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_S }},
             { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_D }},
@@ -114,39 +114,40 @@ uhk_key_t CurrentKeymap[LAYER_COUNT][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
             { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_DELETE }},
 
             // Row 2
-            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_HOME }},
             { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_UP_ARROW }},
-            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_END }},
+            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_DELETE }},
             { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_PRINT_SCREEN }},
             { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_SCROLL_LOCK }},
             { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_PAUSE }},
-            { .type = UHK_KEY_NONE },
             { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_PAGE_UP }},
 
             // Row 3
             { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_LEFT_ARROW }},
             { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_DOWN_ARROW }},
             { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_RIGHT_ARROW }},
-            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_INSERT }},
             { .type = UHK_KEY_NONE },
             { .type = UHK_KEY_NONE },
             { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_PAGE_DOWN }},
 
             // Row 4
-            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_MEDIA_MUTE }},
             { .type = UHK_KEY_NONE },
             { .type = UHK_KEY_NONE },
             { .type = UHK_KEY_NONE },
             { .type = UHK_KEY_NONE },
             { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_RIGHT_SHIFT }},
             { .type = UHK_KEY_NONE },
 
             // Row 5
             { .type = UHK_KEY_NONE },
             { .type = UHK_KEY_LAYER, .layer = { .target = LAYER_ID_MOD }},
             { .type = UHK_KEY_NONE },
-            { .type = UHK_KEY_NONE },
-            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_RIGHT_ALT }},
+            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_RIGHT_GUI }},
+            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_RIGHT_CONTROL }},
         },
 
         // Left
@@ -163,34 +164,34 @@ uhk_key_t CurrentKeymap[LAYER_COUNT][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
             // Row 2
             { .type = UHK_KEY_NONE },
             { .type = UHK_KEY_NONE },
-            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_UP_ARROW }},
+            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_PAGE_UP, .mods = HID_KEYBOARD_MODIFIER_LEFTCTRL }}, // [<] tab prev
+            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_T, .mods = HID_KEYBOARD_MODIFIER_LEFTCTRL }}, // [+] tab new
+            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_PAGE_DOWN, .mods = HID_KEYBOARD_MODIFIER_LEFTCTRL }}, // [>] tab next
             { .type = UHK_KEY_NONE },
             { .type = UHK_KEY_NONE },
-            { .type = UHK_KEY_NONE },
-            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_HOME }},
 
             // Row 3
             { .type = UHK_KEY_NONE },
-            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_LEFT_ARROW }},
-            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_DOWN_ARROW }},
-            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_RIGHT_ARROW }},
-            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_DELETE }},
             { .type = UHK_KEY_NONE },
-            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_END }},
+            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_LEFT_ARROW, .mods = HID_KEYBOARD_MODIFIER_LEFTCTRL | HID_KEYBOARD_MODIFIER_LEFTALT }}, // workspace prev
+            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_TAB, .mods = HID_KEYBOARD_MODIFIER_LEFTSHIFT }}, // Window switch?
+            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_RIGHT_ARROW, .mods = HID_KEYBOARD_MODIFIER_LEFTCTRL | HID_KEYBOARD_MODIFIER_LEFTALT }}, // workspace next
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
 
             // Row 4
+            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_LEFT_SHIFT }},
             { .type = UHK_KEY_NONE },
             { .type = UHK_KEY_NONE },
-            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_MEDIA_BACKWARD }},
-            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_MEDIA_PLAY }},
-            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_MEDIA_FORWARD }},
-            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_MEDIA_VOLUME_DOWN }},
-            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_MEDIA_VOLUME_UP }},
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_W, .mods = HID_KEYBOARD_MODIFIER_LEFTCTRL }}, // [x] tab close
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
 
             // Row 5
-            { .type = UHK_KEY_NONE },
-            { .type = UHK_KEY_NONE },
-            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_LEFT_CONTROL }},
+            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_LEFT_GUI }},
+            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_LEFT_ALT }},
             { .type = UHK_KEY_NONE },
             { .type = UHK_KEY_NONE },
             { .type = UHK_KEY_LAYER, .layer = { .target = LAYER_ID_MOD }},
@@ -199,7 +200,201 @@ uhk_key_t CurrentKeymap[LAYER_COUNT][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
     },
 
     // Layer 2: FN
+    {
+        // Right
+        {
+            // Row 1
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+
+            // Row 2
+            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_MEDIA_PLAY }},
+            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_MEDIA_VOLUME_UP }},
+            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_MEDIA_STOP }},
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_MEDIA_SLEEP }},
+            { .type = UHK_KEY_NONE },
+
+            // Row 3
+            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_MEDIA_PREVIOUS_TRACK }},
+            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_MEDIA_VOLUME_DOWN }},
+            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_MEDIA_NEXT_TRACK }},
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+
+            // Row 4
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_MEDIA_MUTE }},
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_RIGHT_SHIFT }},
+            { .type = UHK_KEY_NONE },
+
+            // Row 5
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_LAYER, .layer = { .target = LAYER_ID_FN }},
+            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_RIGHT_ALT }},
+            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_RIGHT_GUI }},
+            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_RIGHT_CONTROL }},
+        },
+
+        // Left
+        {
+            // Row 1
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+
+            // Row 2
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_MEDIA_STOP }},
+            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_MEDIA_RELOAD }},
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+
+            // Row 3
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE }, // TODO: hist-
+            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_MEDIA_WWW }},
+            { .type = UHK_KEY_NONE }, // TODO: hist+
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+
+            // Row 4
+            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_LEFT_SHIFT }},
+            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_MEDIA_LOCK }},
+            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_MEDIA_SEARCH }},
+            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_MEDIA_CALCULATOR }},
+            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_MEDIA_EJECT }},
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+
+            // Row 5
+            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_LEFT_CONTROL }},
+            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_LEFT_GUI }},
+            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_LEFT_ALT }},
+            { .type = UHK_KEY_LAYER, .layer = { .target = LAYER_ID_FN }},
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+        }
+    },
+
     // Layer 3: Mouse
+    {
+        // Right
+        {
+            // Row 1
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+
+            // Row 2
+            { .type = UHK_KEY_MOUSE, .mouse = { .buttonActions = UHK_MOUSE_BUTTON_4 }},
+            { .type = UHK_KEY_MOUSE, .mouse = { .moveActions = UHK_MOUSE_MOVE_UP }},
+            { .type = UHK_KEY_MOUSE, .mouse = { .buttonActions = UHK_MOUSE_BUTTON_5 }},
+            { .type = UHK_KEY_MOUSE, .mouse = { .buttonActions = UHK_MOUSE_BUTTON_6 }},
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_MOUSE, .mouse = { .scrollActions = UHK_MOUSE_SCROLL_UP }},
+
+            // Row 3
+            { .type = UHK_KEY_MOUSE, .mouse = { .moveActions = UHK_MOUSE_MOVE_LEFT }},
+            { .type = UHK_KEY_MOUSE, .mouse = { .moveActions = UHK_MOUSE_MOVE_DOWN }},
+            { .type = UHK_KEY_MOUSE, .mouse = { .moveActions = UHK_MOUSE_MOVE_RIGHT }},
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_MOUSE, .mouse = { .scrollActions = UHK_MOUSE_SCROLL_DOWN }},
+
+            // Row 4
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_RIGHT_SHIFT }},
+            { .type = UHK_KEY_NONE },
+
+            // Row 5
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_RIGHT_ALT }},
+            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_RIGHT_GUI }},
+            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_RIGHT_CONTROL }},
+        },
+
+        // Left
+        {
+            // Row 1
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+
+            // Row 2
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+
+            // Row 3
+            { .type = UHK_KEY_LAYER, .layer = { .target = LAYER_ID_MOUSE }},
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_MOUSE, .mouse = { .buttonActions = UHK_MOUSE_BUTTON_LEFT }},
+            { .type = UHK_KEY_MOUSE, .mouse = { .buttonActions = UHK_MOUSE_BUTTON_MIDDLE }},
+            { .type = UHK_KEY_MOUSE, .mouse = { .buttonActions = UHK_MOUSE_BUTTON_RIGHT }},
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+
+            // Row 4
+            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_LEFT_SHIFT }},
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_NONE },
+
+            // Row 5
+            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_LEFT_CONTROL }},
+            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_LEFT_GUI }},
+            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_LEFT_ALT }},
+            { .type = UHK_KEY_NONE },
+            { .type = UHK_KEY_MOUSE, .mouse = { .moveActions = UHK_MOUSE_DECELERATE }},
+            { .type = UHK_KEY_MOUSE, .mouse = { .moveActions = UHK_MOUSE_ACCELERATE }},
+            { .type = UHK_KEY_NONE },
+        }
+    },
 
 };
-
