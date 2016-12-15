@@ -1,6 +1,7 @@
 #include "keyboard_layout.h"
 #include "led_display.h"
 #include "layer.h"
+#include "usb_interface_mouse.h"
 
 static uint8_t keyMasks[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
 
@@ -85,10 +86,87 @@ bool handleKey(uhk_key_t key, int scancodeIdx, usb_keyboard_report_t *report, co
         LedDisplay_SetLayerLed(ActiveLayer);
         return false;
         break;
+    case UHK_KEY_MOUSE:
+        fillMouseReport(key, prevKeyStates, currKeyStates, keyId);
+        return false;
     default:
         break;
     }
     return false;
+}
+
+
+#define MOUSE_WHEEL_SPEED   1
+#define MOUSE_WHEEL_DIVISOR 4
+
+#define MOUSE_MAX_SPEED           10
+#define MOUSE_SPEED_ACCEL_DIVISOR 50
+
+static uint8_t mouseWheelDivisorCounter = 0;
+static uint8_t mouseSpeedAccelDivisorCounter = 0;
+static uint8_t mouseSpeed = 3;
+static bool wasPreviousMouseActionWheelAction = false;
+
+void HandleMouseKey(usb_mouse_report_t *report, uhk_key_t key, const uint8_t *prevKeyStates, const uint8_t *currKeyStates, uint8_t keyId)
+{
+    bool isWheelAction;
+
+    if (!key_is_pressed(prevKeyStates, currKeyStates, keyId))
+        return;
+
+    isWheelAction = !!(key.mouse.scrollActions) && !(key.mouse.moveActions) && !(key.mouse.buttonActions);
+
+    if (isWheelAction && wasPreviousMouseActionWheelAction) {
+        mouseWheelDivisorCounter++;
+    }
+
+    if (key.mouse.scrollActions) {
+        if (mouseWheelDivisorCounter == MOUSE_WHEEL_DIVISOR) {
+            mouseWheelDivisorCounter = 0;
+            if (key.mouse.scrollActions & UHK_MOUSE_SCROLL_UP) {
+                    report->wheelX = 1;
+            }
+            if (key.mouse.scrollActions & UHK_MOUSE_SCROLL_DOWN) {
+                report->wheelX = -1;
+            }
+        }
+    }
+
+    if (key.mouse.moveActions & UHK_MOUSE_ACCELERATE || key.mouse.moveActions & UHK_MOUSE_DECELERATE) {
+        mouseSpeedAccelDivisorCounter++;
+
+        if (mouseSpeedAccelDivisorCounter == MOUSE_SPEED_ACCEL_DIVISOR) {
+            mouseSpeedAccelDivisorCounter = 0;
+
+            if (key.mouse.moveActions & UHK_MOUSE_ACCELERATE) {
+                if (mouseSpeed < MOUSE_MAX_SPEED) {
+                    mouseSpeed++;
+                }
+            }
+            if (key.mouse.moveActions & UHK_MOUSE_DECELERATE) {
+                if (mouseSpeed > 1) {
+                    mouseSpeed--;
+                }
+            }
+        }
+    } else if (key.mouse.moveActions) {
+        if (key.mouse.moveActions & UHK_MOUSE_MOVE_LEFT) {
+            report->x = -mouseSpeed;
+        }
+        if (key.mouse.moveActions & UHK_MOUSE_MOVE_RIGHT) {
+            report->x = mouseSpeed;
+        }
+        if (key.mouse.moveActions & UHK_MOUSE_MOVE_UP) {
+            report->y = -mouseSpeed;
+        }
+        if (key.mouse.moveActions & UHK_MOUSE_MOVE_DOWN) {
+            report->y = mouseSpeed;
+        }
+    }
+
+    report->buttons |= key.mouse.buttonActions;
+
+    wasPreviousMouseActionWheelAction = isWheelAction;
 }
 
 void fillKeyboardReport(usb_keyboard_report_t *report, const uint8_t *leftKeyStates, const uint8_t *rightKeyStates) {

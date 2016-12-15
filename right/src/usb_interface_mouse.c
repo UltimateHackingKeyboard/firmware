@@ -3,6 +3,7 @@
 #include "fsl_i2c.h"
 #include "i2c.h"
 #include "reset_button.h"
+#include "keyboard_layout.h"
 
 static usb_device_endpoint_struct_t UsbMouseEndpoints[USB_MOUSE_ENDPOINT_COUNT] = {{
     USB_MOUSE_ENDPOINT_INDEX | (USB_IN << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT),
@@ -38,23 +39,23 @@ usb_device_class_struct_t UsbMouseClass = {
 
 static usb_mouse_report_t UsbMouseReport;
 
-static uint8_t scrollCounter = 0;
 static volatile usb_status_t UsbMouseAction(void)
 {
+    usb_status_t ret;
+    ret = USB_DeviceHidSend(UsbCompositeDevice.mouseHandle, USB_MOUSE_ENDPOINT_INDEX,
+                            (uint8_t*)&UsbMouseReport, USB_MOUSE_REPORT_LENGTH);
     UsbMouseReport.buttons = 0;
     UsbMouseReport.x = 0;
     UsbMouseReport.y = 0;
     UsbMouseReport.wheelX = 0;
     UsbMouseReport.wheelY = 0;
 
-    if (RESET_BUTTON_IS_PRESSED) {
-        if (!(scrollCounter % 10)) {
-            UsbMouseReport.wheelX = -1;
-        }
-    }
-    scrollCounter++;
-    return USB_DeviceHidSend(UsbCompositeDevice.mouseHandle, USB_MOUSE_ENDPOINT_INDEX,
-                             (uint8_t*)&UsbMouseReport, USB_MOUSE_REPORT_LENGTH);
+    return ret;
+}
+
+void fillMouseReport(uhk_key_t key, const uint8_t *prevKeyStates, const uint8_t *currKeyStates, uint8_t keyId)
+{
+    HandleMouseKey(&UsbMouseReport, key, prevKeyStates, currKeyStates, keyId);
 }
 
 usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param)
