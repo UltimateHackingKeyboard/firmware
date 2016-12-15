@@ -1,4 +1,4 @@
-#include "keyboard_layout.h"
+#include "action.h"
 #include "led_display.h"
 #include "layer.h"
 #include "usb_interface_mouse.h"
@@ -38,7 +38,7 @@ static void clearKeymasks(const uint8_t *leftKeyStates, const uint8_t *rightKeyS
     }
 }
 
-bool pressKey(uhk_key_t key, int scancodeIdx, usb_keyboard_report_t *report) {
+static bool pressKey(uhk_key_t key, int scancodeIdx, usb_keyboard_report_t *report) {
     if (key.type != UHK_KEY_SIMPLE) {
         return false;
     }
@@ -57,19 +57,19 @@ bool pressKey(uhk_key_t key, int scancodeIdx, usb_keyboard_report_t *report) {
     return true;
 }
 
-bool key_toggled_on(const uint8_t *prevKeyStates, const uint8_t *currKeyStates, uint8_t keyId) {
+static bool key_toggled_on(const uint8_t *prevKeyStates, const uint8_t *currKeyStates, uint8_t keyId) {
     return (!prevKeyStates[keyId]) && currKeyStates[keyId];
 }
 
-bool key_is_pressed(const uint8_t *prevKeyStates, const uint8_t *currKeyStates, uint8_t keyId) {
+static bool key_is_pressed(const uint8_t *prevKeyStates, const uint8_t *currKeyStates, uint8_t keyId) {
     return currKeyStates[keyId];
 }
 
-bool key_toggled_off(const uint8_t *prevKeyStates, const uint8_t *currKeyStates, uint8_t keyId) {
+static bool key_toggled_off(const uint8_t *prevKeyStates, const uint8_t *currKeyStates, uint8_t keyId) {
     return (!currKeyStates[keyId]) && prevKeyStates[keyId];
 }
 
-bool handleKey(uhk_key_t key, int scancodeIdx, usb_keyboard_report_t *report, const uint8_t *prevKeyStates, const uint8_t *currKeyStates, uint8_t keyId) {
+static bool handleKey(uhk_key_t key, int scancodeIdx, usb_keyboard_report_t *report, const uint8_t *prevKeyStates, const uint8_t *currKeyStates, uint8_t keyId) {
     switch (key.type) {
     case UHK_KEY_SIMPLE:
         if (key_is_pressed(prevKeyStates, currKeyStates, keyId)) {
@@ -86,9 +86,6 @@ bool handleKey(uhk_key_t key, int scancodeIdx, usb_keyboard_report_t *report, co
         LedDisplay_SetLayerLed(ActiveLayer);
         return false;
         break;
-    case UHK_KEY_MOUSE:
-        fillMouseReport(key, prevKeyStates, currKeyStates, keyId);
-        return false;
     default:
         break;
     }
@@ -107,7 +104,7 @@ static uint8_t mouseSpeedAccelDivisorCounter = 0;
 static uint8_t mouseSpeed = 3;
 static bool wasPreviousMouseActionWheelAction = false;
 
-void HandleMouseKey(usb_mouse_report_t *report, uhk_key_t key, const uint8_t *prevKeyStates, const uint8_t *currKeyStates, uint8_t keyId)
+static void handleMouseKey(usb_mouse_report_t *report, uhk_key_t key, const uint8_t *prevKeyStates, const uint8_t *currKeyStates, uint8_t keyId)
 {
     bool isWheelAction;
 
@@ -169,7 +166,7 @@ void HandleMouseKey(usb_mouse_report_t *report, uhk_key_t key, const uint8_t *pr
     wasPreviousMouseActionWheelAction = isWheelAction;
 }
 
-void fillKeyboardReport(usb_keyboard_report_t *report, const uint8_t *leftKeyStates, const uint8_t *rightKeyStates) {
+void HandleKeyboardEvents(usb_keyboard_report_t *keyboardReport, usb_mouse_report_t *mouseReport, const uint8_t *leftKeyStates, const uint8_t *rightKeyStates) {
     int scancodeIdx = 0;
 
     clearKeymasks(leftKeyStates, rightKeyStates);
@@ -181,8 +178,12 @@ void fillKeyboardReport(usb_keyboard_report_t *report, const uint8_t *leftKeySta
 
         uhk_key_t code = getKeycode(SLOT_ID_RIGHT_KEYBOARD_HALF, keyId);
 
-        if (handleKey(code, scancodeIdx, report, prevKeyStates[SLOT_ID_RIGHT_KEYBOARD_HALF], rightKeyStates, keyId)) {
-            scancodeIdx++;
+        if (code.type == UHK_KEY_MOUSE) {
+            handleMouseKey(mouseReport, code, prevKeyStates[SLOT_ID_RIGHT_KEYBOARD_HALF], rightKeyStates, keyId);
+        } else {
+            if (handleKey(code, scancodeIdx, keyboardReport, prevKeyStates[SLOT_ID_RIGHT_KEYBOARD_HALF], rightKeyStates, keyId)) {
+                scancodeIdx++;
+            }
         }
     }
 
@@ -193,8 +194,12 @@ void fillKeyboardReport(usb_keyboard_report_t *report, const uint8_t *leftKeySta
 
         uhk_key_t code = getKeycode(SLOT_ID_LEFT_KEYBOARD_HALF, keyId);
 
-        if (handleKey(code, scancodeIdx, report, prevKeyStates[SLOT_ID_LEFT_KEYBOARD_HALF], leftKeyStates, keyId)) {
-            scancodeIdx++;
+        if (code.type == UHK_KEY_MOUSE) {
+            handleMouseKey(mouseReport, code, prevKeyStates[SLOT_ID_LEFT_KEYBOARD_HALF], leftKeyStates, keyId);
+        } else {
+            if (handleKey(code, scancodeIdx, keyboardReport, prevKeyStates[SLOT_ID_LEFT_KEYBOARD_HALF], leftKeyStates, keyId)) {
+                scancodeIdx++;
+            }
         }
     }
 
