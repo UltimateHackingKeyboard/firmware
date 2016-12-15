@@ -59,6 +59,12 @@ enum {
     UHK_MOUSE_SCROLL_RIGHT = (1 << 3),
 };
 
+#define MOUSE_WHEEL_SPEED   1
+#define MOUSE_WHEEL_DIVISOR 4
+
+#define MOUSE_MAX_SPEED           10
+#define MOUSE_SPEED_ACCEL_DIVISOR 50
+
 typedef struct {
     uint8_t type;
     union {

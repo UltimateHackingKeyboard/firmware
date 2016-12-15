@@ -92,13 +92,6 @@ static bool handleKey(uhk_key_t key, int scancodeIdx, usb_keyboard_report_t *rep
     return false;
 }
 
-
-#define MOUSE_WHEEL_SPEED   1
-#define MOUSE_WHEEL_DIVISOR 4
-
-#define MOUSE_MAX_SPEED           10
-#define MOUSE_SPEED_ACCEL_DIVISOR 50
-
 static uint8_t mouseWheelDivisorCounter = 0;
 static uint8_t mouseSpeedAccelDivisorCounter = 0;
 static uint8_t mouseSpeed = 3;
