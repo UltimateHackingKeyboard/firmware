@@ -174,7 +174,7 @@ uhk_key_t CurrentKeymap[LAYER_COUNT][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
             { .type = UHK_KEY_NONE },
             { .type = UHK_KEY_NONE },
             { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_LEFT_ARROW, .mods = HID_KEYBOARD_MODIFIER_LEFTCTRL | HID_KEYBOARD_MODIFIER_LEFTALT }}, // workspace prev
-            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_TAB, .mods = HID_KEYBOARD_MODIFIER_LEFTSHIFT }}, // Window switch?
+            { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_TAB, .mods = HID_KEYBOARD_MODIFIER_LEFTALT }}, // Window switch?
             { .type = UHK_KEY_SIMPLE, .simple = { .key = HID_KEYBOARD_SC_RIGHT_ARROW, .mods = HID_KEYBOARD_MODIFIER_LEFTCTRL | HID_KEYBOARD_MODIFIER_LEFTALT }}, // workspace next
             { .type = UHK_KEY_NONE },
             { .type = UHK_KEY_NONE },
