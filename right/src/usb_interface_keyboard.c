@@ -1,3 +1,4 @@
+#include "action.h"
 #include "fsl_port.h"
 #include "usb_api.h"
 #include "usb_composite_device.h"
@@ -6,7 +7,6 @@
 #include "fsl_i2c.h"
 #include "i2c.h"
 #include "i2c_addresses.h"
-#include "keyboard_layout.h"
 
 static usb_device_endpoint_struct_t UsbKeyboardEndpoints[USB_KEYBOARD_ENDPOINT_COUNT] = {{
     USB_KEYBOARD_ENDPOINT_INDEX | (USB_IN << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT),
@@ -100,7 +100,7 @@ void UsbKeyboadTask(){
 
     readLeftKeys(leftKeyStates);
 
-    fillKeyboardReport(&UsbKeyboardReport[newLayout], leftKeyStates, keyMatrix.keyStates);
+    HandleKeyboardEvents(&UsbKeyboardReport[newLayout], &UsbMouseReport, leftKeyStates, keyMatrix.keyStates);
 
     // Change to the new layout in atomic operation (int copy). Even if
     // the copy is not atomic itself, only single bit changes. So it can
