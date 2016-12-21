@@ -6,7 +6,7 @@
 void main() {
     InitPeripherials();
     InitClock();
-    LedDriver_InitAllLeds(0);
+    LedDriver_InitAllLeds(1);
     UsbKeyboadTask();
     InitUsb();
 
