@@ -49,6 +49,24 @@ static usb_keyboard_report_t UsbKeyboardReport[2];
 key_matrix_t keyMatrix = {
     .colNum = KEYBOARD_MATRIX_COLS_NUM,
     .rowNum = KEYBOARD_MATRIX_ROWS_NUM,
+#ifdef PROTOTYPE_VERSION_7
+    .cols = (key_matrix_pin_t[]){
+        {PORTA, GPIOA, kCLOCK_PortA, 5},
+        {PORTB, GPIOB, kCLOCK_PortB, 16},
+        {PORTB, GPIOB, kCLOCK_PortB, 17},
+        {PORTB, GPIOB, kCLOCK_PortB, 18},
+        {PORTB, GPIOB, kCLOCK_PortB, 19},
+        {PORTA, GPIOA, kCLOCK_PortA, 1},
+        {PORTB, GPIOB, kCLOCK_PortB, 1}
+        },
+    .rows = (key_matrix_pin_t[]){
+        {PORTA, GPIOA, kCLOCK_PortA, 12},
+        {PORTA, GPIOA, kCLOCK_PortA, 13},
+        {PORTC, GPIOC, kCLOCK_PortC, 1},
+        {PORTC, GPIOC, kCLOCK_PortC, 0},
+        {PORTD, GPIOD, kCLOCK_PortD, 5}
+    }
+#else
     .cols = (key_matrix_pin_t[]){
         {PORTA, GPIOA, kCLOCK_PortA, 5},
         {PORTB, GPIOB, kCLOCK_PortB, 3},
@@ -65,6 +83,7 @@ key_matrix_t keyMatrix = {
         {PORTB, GPIOB, kCLOCK_PortB, 19},
         {PORTD, GPIOD, kCLOCK_PortD, 6}
     }
+#endif
 };
 
 void readLeftKeys(uint8_t *stateVector){
