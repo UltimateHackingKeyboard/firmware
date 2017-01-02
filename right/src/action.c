@@ -16,10 +16,10 @@ static inline __attribute__((always_inline)) uhk_key_t getKeycode(uint8_t slotId
             return (uhk_key_t){.type = UHK_KEY_NONE};
         }
 
-        uhk_key_t k = CurrentKeymap[ActiveLayer][slotId][keyId];
+        uhk_key_t key = CurrentKeymap[ActiveLayer][slotId][keyId];
         keyMasks[slotId][keyId] = ActiveLayer;
 
-        return k;
+        return key;
     } else {
         return (uhk_key_t){.type = UHK_KEY_NONE};
     }
