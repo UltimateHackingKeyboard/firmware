@@ -41,6 +41,7 @@ void SetResponseByte(uint8_t response)
 
 void UsbProtocolHandler()
 {
+    bzero(GenericHidOutBuffer, USB_GENERIC_HID_OUT_BUFFER_LENGTH);
     uint8_t command = GenericHidInBuffer[0];
     switch (command) {
         case USB_COMMAND_GET_SYSTEM_PROPERTY:
