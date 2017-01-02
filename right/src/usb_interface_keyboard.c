@@ -1,9 +1,9 @@
+#include "main.h"
 #include "action.h"
 #include "fsl_port.h"
 #include "usb_api.h"
 #include "usb_composite_device.h"
 #include "test_led.h"
-#include "key_matrix.h"
 #include "fsl_i2c.h"
 #include "i2c.h"
 #include "i2c_addresses.h"
@@ -40,61 +40,16 @@ usb_device_class_struct_t UsbKeyboardClass = {
     USB_DEVICE_CONFIGURATION_COUNT,
 };
 
-volatile static int activeLayout=0;
+volatile static int activeReportIndex=0;
 static usb_keyboard_report_t UsbKeyboardReport[2];
-
-#define KEYBOARD_MATRIX_COLS_NUM 7
-#define KEYBOARD_MATRIX_ROWS_NUM 5
-
-key_matrix_t keyMatrix = {
-    .colNum = KEYBOARD_MATRIX_COLS_NUM,
-    .rowNum = KEYBOARD_MATRIX_ROWS_NUM,
-#if UHK_PCB_MAJOR_VERSION == 7
-    .cols = (key_matrix_pin_t[]){
-        {PORTA, GPIOA, kCLOCK_PortA, 5},
-        {PORTB, GPIOB, kCLOCK_PortB, 16},
-        {PORTB, GPIOB, kCLOCK_PortB, 17},
-        {PORTB, GPIOB, kCLOCK_PortB, 18},
-        {PORTB, GPIOB, kCLOCK_PortB, 19},
-        {PORTA, GPIOA, kCLOCK_PortA, 1},
-        {PORTB, GPIOB, kCLOCK_PortB, 1}
-        },
-    .rows = (key_matrix_pin_t[]){
-        {PORTA, GPIOA, kCLOCK_PortA, 12},
-        {PORTA, GPIOA, kCLOCK_PortA, 13},
-        {PORTC, GPIOC, kCLOCK_PortC, 1},
-        {PORTC, GPIOC, kCLOCK_PortC, 0},
-        {PORTD, GPIOD, kCLOCK_PortD, 5}
-    }
-#else
-    .cols = (key_matrix_pin_t[]){
-        {PORTA, GPIOA, kCLOCK_PortA, 5},
-        {PORTB, GPIOB, kCLOCK_PortB, 3},
-        {PORTB, GPIOB, kCLOCK_PortB, 16},
-        {PORTB, GPIOB, kCLOCK_PortB, 17},
-        {PORTB, GPIOB, kCLOCK_PortB, 18},
-        {PORTA, GPIOA, kCLOCK_PortA, 1},
-        {PORTB, GPIOB, kCLOCK_PortB, 0}
-        },
-    .rows = (key_matrix_pin_t[]){
-        {PORTA, GPIOA, kCLOCK_PortA, 12},
-        {PORTA, GPIOA, kCLOCK_PortA, 13},
-        {PORTC, GPIOC, kCLOCK_PortC, 0},
-        {PORTB, GPIOB, kCLOCK_PortB, 19},
-        {PORTD, GPIOD, kCLOCK_PortD, 6}
-    }
-#endif
-};
 
 void UsbKeyboadTask()
 {
-    int newLayout = 1-activeLayout;
+    int newReportIndex = 1-activeReportIndex;
 
+    UsbKeyboardReport[newReportIndex].modifiers = 0;
+    UsbKeyboardReport[newReportIndex].reserved = 0;
 
-    UsbKeyboardReport[newLayout].modifiers = 0;
-    UsbKeyboardReport[newLayout].reserved = 0;
-
-    KeyMatrix_Init(&keyMatrix);
     KeyMatrix_Scan(&keyMatrix);
 
     uint8_t txData[] = {0};
@@ -104,16 +59,16 @@ void UsbKeyboadTask()
         I2cRead(I2C_MAIN_BUS_BASEADDR, I2C_ADDRESS_LEFT_KEYBOARD_HALF, leftKeyStates, KEY_STATE_COUNT);
     }
 
-    bzero(&UsbKeyboardReport[newLayout].scancodes, USB_KEYBOARD_MAX_KEYS);
-    HandleKeyboardEvents(&UsbKeyboardReport[newLayout], &UsbMouseReport, leftKeyStates, keyMatrix.keyStates);
+    bzero(&UsbKeyboardReport[newReportIndex].scancodes, USB_KEYBOARD_MAX_KEYS);
+    HandleKeyboardEvents(&UsbKeyboardReport[newReportIndex], &UsbMouseReport, leftKeyStates, keyMatrix.keyStates);
 
-    activeLayout = newLayout;
+    activeReportIndex = newReportIndex;
 }
 
 static usb_status_t UsbKeyboardAction(void)
 {
     return USB_DeviceHidSend(UsbCompositeDevice.keyboardHandle, USB_KEYBOARD_ENDPOINT_INDEX,
-                             (uint8_t*)&UsbKeyboardReport[activeLayout], USB_KEYBOARD_REPORT_LENGTH);
+                             (uint8_t*)&UsbKeyboardReport[activeReportIndex], USB_KEYBOARD_REPORT_LENGTH);
 }
 
 usb_status_t UsbKeyboardCallback(class_handle_t handle, uint32_t event, void *param)
