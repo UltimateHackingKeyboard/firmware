@@ -22,41 +22,38 @@
 #define KEY_STATE_COUNT (5*7)
 
 typedef enum {
-    UHK_KEY_NONE,
-    UHK_KEY_SIMPLE,
-    UHK_KEY_MOUSE,
-    UHK_KEY_LAYER,
-    UHK_KEY_LAYER_TOGGLE,
-    UHK_KEY_KEYMAP,
-    UHK_KEY_MACRO,
-    UHK_KEY_LPRESSMOD,
-    UHK_KEY_LPRESSLAYER,
-} uhk_key_type_t;
+    KEY_ACTION_NONE,
+    KEY_ACTION_KEYSTROKE,
+    KEY_ACTION_MOUSE,
+    KEY_ACTION_SWITCH_LAYER,
+    KEY_ACTION_SWITCH_KEYMAP,
+    KEY_ACTION_PLAY_MACRO,
+} key_action_type_t;
 
 enum {
-    UHK_MOUSE_BUTTON_LEFT   = (1 << 0),
-    UHK_MOUSE_BUTTON_RIGHT  = (1 << 1),
-    UHK_MOUSE_BUTTON_MIDDLE = (1 << 2),
-    UHK_MOUSE_BUTTON_4      = (1 << 3),
-    UHK_MOUSE_BUTTON_5      = (1 << 4),
-    UHK_MOUSE_BUTTON_6      = (1 << 5),
+    MOUSE_BUTTON_LEFT   = (1 << 0),
+    MOUSE_BUTTON_RIGHT  = (1 << 1),
+    MOUSE_BUTTON_MIDDLE = (1 << 2),
+    MOUSE_BUTTON_4      = (1 << 3),
+    MOUSE_BUTTON_5      = (1 << 4),
+    MOUSE_BUTTON_6      = (1 << 5),
 };
 
 enum {
-    UHK_MOUSE_MOVE_UP    = (1 << 0),
-    UHK_MOUSE_MOVE_DOWN  = (1 << 1),
-    UHK_MOUSE_MOVE_LEFT  = (1 << 2),
-    UHK_MOUSE_MOVE_RIGHT = (1 << 3),
+    MOUSE_MOVE_UP    = (1 << 0),
+    MOUSE_MOVE_DOWN  = (1 << 1),
+    MOUSE_MOVE_LEFT  = (1 << 2),
+    MOUSE_MOVE_RIGHT = (1 << 3),
 
-    UHK_MOUSE_ACCELERATE = (1 << 4),
-    UHK_MOUSE_DECELERATE = (1 << 5),
+    MOUSE_ACCELERATE = (1 << 4),
+    MOUSE_DECELERATE = (1 << 5),
 };
 
 enum {
-    UHK_MOUSE_SCROLL_UP    = (1 << 0),
-    UHK_MOUSE_SCROLL_DOWN  = (1 << 1),
-    UHK_MOUSE_SCROLL_LEFT  = (1 << 2),
-    UHK_MOUSE_SCROLL_RIGHT = (1 << 3),
+    MOUSE_SCROLL_UP    = (1 << 0),
+    MOUSE_SCROLL_DOWN  = (1 << 1),
+    MOUSE_SCROLL_LEFT  = (1 << 2),
+    MOUSE_SCROLL_RIGHT = (1 << 3),
 };
 
 #define MOUSE_WHEEL_SPEED   1
@@ -101,10 +98,10 @@ typedef struct {
             uint8_t key;
         } __attribute__ ((packed)) longpressLayer;
     };
-} __attribute__ ((packed)) uhk_key_t;
+} __attribute__ ((packed)) key_action_t;
 
 extern uint8_t prevKeyStates[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
-extern uhk_key_t CurrentKeymap[LAYER_COUNT][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
+extern key_action_t CurrentKeymap[LAYER_COUNT][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
 
 void HandleKeyboardEvents(usb_keyboard_report_t *keyboardReport, usb_mouse_report_t *mouseReport, const uint8_t *leftKeyStates, const uint8_t *rightKeyStates);
 

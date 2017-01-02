@@ -53,7 +53,7 @@ static volatile usb_status_t UsbMouseAction(void)
     return ret;
 }
 
-void fillMouseReport(uhk_key_t key, const uint8_t *prevKeyStates, const uint8_t *currKeyStates, uint8_t keyId)
+void fillMouseReport(key_action_t key, const uint8_t *prevKeyStates, const uint8_t *currKeyStates, uint8_t keyId)
 {
     HandleMouseKey(&UsbMouseReport, key, prevKeyStates, currKeyStates, keyId);
 }
