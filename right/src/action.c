@@ -99,12 +99,11 @@ static bool wasPreviousMouseActionWheelAction = false;
 
 static void handleMouseKey(usb_mouse_report_t *report, uhk_key_t key, const uint8_t *prevKeyStates, const uint8_t *currKeyStates, uint8_t keyId)
 {
-    bool isWheelAction;
-
-    if (!key_is_pressed(prevKeyStates, currKeyStates, keyId))
+    if (!key_is_pressed(prevKeyStates, currKeyStates, keyId)) {
         return;
+    }
 
-    isWheelAction = !!(key.mouse.scrollActions) && !(key.mouse.moveActions) && !(key.mouse.buttonActions);
+    bool isWheelAction = key.mouse.scrollActions && !key.mouse.moveActions && !key.mouse.buttonActions;
 
     if (isWheelAction && wasPreviousMouseActionWheelAction) {
         mouseWheelDivisorCounter++;
