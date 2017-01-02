@@ -8,7 +8,7 @@ static uint8_t keyMasks[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
 static uint8_t ActiveLayer = LAYER_ID_BASE;
 uint8_t prevKeyStates[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
 
-static inline __attribute__((always_inline)) key_action_t getKeycode(uint8_t slotId, uint8_t keyId)
+static key_action_t getKeycode(uint8_t slotId, uint8_t keyId)
 {
     if (keyId < MAX_KEY_COUNT_PER_MODULE) {
         if (keyMasks[slotId][keyId]!=0 && keyMasks[slotId][keyId]!=ActiveLayer) {
@@ -25,9 +25,9 @@ static inline __attribute__((always_inline)) key_action_t getKeycode(uint8_t slo
     }
 }
 
-static void clearKeymasks(const uint8_t *leftKeyStates, const uint8_t *rightKeyStates){
-    int i;
-    for (i=0; i < MAX_KEY_COUNT_PER_MODULE; i++){
+static void clearKeymasks(const uint8_t *leftKeyStates, const uint8_t *rightKeyStates)
+{
+    for (int i=0; i < MAX_KEY_COUNT_PER_MODULE; i++){
         if (rightKeyStates[i]==0){
             keyMasks[SLOT_ID_RIGHT_KEYBOARD_HALF][i] = 0;
         }
@@ -38,7 +38,8 @@ static void clearKeymasks(const uint8_t *leftKeyStates, const uint8_t *rightKeyS
     }
 }
 
-static bool pressKey(key_action_t key, int scancodeIdx, usb_keyboard_report_t *report) {
+static bool pressKey(key_action_t key, int scancodeIdx, usb_keyboard_report_t *report)
+{
     if (key.type != KEY_ACTION_KEYSTROKE) {
         return false;
     }
@@ -57,15 +58,18 @@ static bool pressKey(key_action_t key, int scancodeIdx, usb_keyboard_report_t *r
     return true;
 }
 
-static bool hasKeyPressed(const uint8_t *prevKeyStates, const uint8_t *currKeyStates, uint8_t keyId) {
+static bool hasKeyPressed(const uint8_t *prevKeyStates, const uint8_t *currKeyStates, uint8_t keyId)
+{
     return (!prevKeyStates[keyId]) && currKeyStates[keyId];
 }
 
-static bool isKeyPressed(const uint8_t *prevKeyStates, const uint8_t *currKeyStates, uint8_t keyId) {
+static bool isKeyPressed(const uint8_t *prevKeyStates, const uint8_t *currKeyStates, uint8_t keyId)
+{
     return currKeyStates[keyId];
 }
 
-static bool hasKeyReleased(const uint8_t *prevKeyStates, const uint8_t *currKeyStates, uint8_t keyId) {
+static bool hasKeyReleased(const uint8_t *prevKeyStates, const uint8_t *currKeyStates, uint8_t keyId)
+{
     return (!currKeyStates[keyId]) && prevKeyStates[keyId];
 }
 
