@@ -57,30 +57,30 @@ static bool pressKey(uhk_key_t key, int scancodeIdx, usb_keyboard_report_t *repo
     return true;
 }
 
-static bool key_toggled_on(const uint8_t *prevKeyStates, const uint8_t *currKeyStates, uint8_t keyId) {
+static bool hasKeyPressed(const uint8_t *prevKeyStates, const uint8_t *currKeyStates, uint8_t keyId) {
     return (!prevKeyStates[keyId]) && currKeyStates[keyId];
 }
 
-static bool key_is_pressed(const uint8_t *prevKeyStates, const uint8_t *currKeyStates, uint8_t keyId) {
+static bool isKeyPressed(const uint8_t *prevKeyStates, const uint8_t *currKeyStates, uint8_t keyId) {
     return currKeyStates[keyId];
 }
 
-static bool key_toggled_off(const uint8_t *prevKeyStates, const uint8_t *currKeyStates, uint8_t keyId) {
+static bool hasKeyReleased(const uint8_t *prevKeyStates, const uint8_t *currKeyStates, uint8_t keyId) {
     return (!currKeyStates[keyId]) && prevKeyStates[keyId];
 }
 
 static bool handleKey(uhk_key_t key, int scancodeIdx, usb_keyboard_report_t *report, const uint8_t *prevKeyStates, const uint8_t *currKeyStates, uint8_t keyId) {
     switch (key.type) {
     case UHK_KEY_SIMPLE:
-        if (key_is_pressed(prevKeyStates, currKeyStates, keyId)) {
+        if (isKeyPressed(prevKeyStates, currKeyStates, keyId)) {
             return pressKey(key, scancodeIdx, report);
         }
         break;
     case UHK_KEY_LAYER:
-        if (key_toggled_on(prevKeyStates, currKeyStates, keyId)) {
+        if (hasKeyPressed(prevKeyStates, currKeyStates, keyId)) {
             ActiveLayer = key.layer.target;
         }
-        if (key_toggled_off(prevKeyStates, currKeyStates, keyId)) {
+        if (hasKeyReleased(prevKeyStates, currKeyStates, keyId)) {
             ActiveLayer = LAYER_ID_BASE;
         }
         LedDisplay_SetLayerLed(ActiveLayer);
@@ -99,7 +99,7 @@ static bool wasPreviousMouseActionWheelAction = false;
 
 static void handleMouseKey(usb_mouse_report_t *report, uhk_key_t key, const uint8_t *prevKeyStates, const uint8_t *currKeyStates, uint8_t keyId)
 {
-    if (!key_is_pressed(prevKeyStates, currKeyStates, keyId)) {
+    if (!isKeyPressed(prevKeyStates, currKeyStates, keyId)) {
         return;
     }
 
