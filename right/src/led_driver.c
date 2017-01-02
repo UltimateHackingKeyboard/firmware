@@ -1,22 +1,10 @@
 #include "led_driver.h"
-
-void LedDriver_WriteBuffer(uint8_t i2cAddress, uint8_t buffer[], uint8_t size)
-{
-    i2c_master_transfer_t masterXfer;
-    masterXfer.slaveAddress = i2cAddress;
-    masterXfer.direction = kI2C_Write;
-    masterXfer.subaddress = 0;
-    masterXfer.subaddressSize = 0;
-    masterXfer.data = buffer;
-    masterXfer.dataSize = size;
-    masterXfer.flags = kI2C_TransferDefaultFlag;
-    I2C_MasterTransferBlocking(I2C_MAIN_BUS_BASEADDR, &masterXfer);
-}
+#include "i2c_addresses.h"
 
 void LedDriver_WriteRegister(uint8_t i2cAddress, uint8_t reg, uint8_t val)
 {
     uint8_t buffer[] = {reg, val};
-    LedDriver_WriteBuffer(i2cAddress, buffer, sizeof(buffer));
+    I2cWrite(I2C_MAIN_BUS_BASEADDR, i2cAddress, buffer, sizeof(buffer));
 }
 
 void LedDriver_InitAllLeds(char isEnabled)

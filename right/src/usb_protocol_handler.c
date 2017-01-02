@@ -140,7 +140,7 @@ void WriteLedDriver()
         return;
     }
 
-    LedDriver_WriteBuffer(i2cAddress, GenericHidInBuffer+3, i2cPayloadSize);
+    I2cWrite(I2C_MAIN_BUS_BASEADDR, i2cAddress, GenericHidInBuffer+3, i2cPayloadSize);
 }
 
 void ReadLedDriver()
@@ -157,15 +157,7 @@ void WriteEeprom()
         return;
     }
 
-    i2c_master_transfer_t masterXfer;
-    masterXfer.slaveAddress = I2C_ADDRESS_EEPROM;
-    masterXfer.direction = kI2C_Write;
-    masterXfer.subaddress = 0;
-    masterXfer.subaddressSize = 0;
-    masterXfer.data = GenericHidInBuffer+2;
-    masterXfer.dataSize = i2cPayloadSize;
-    masterXfer.flags = kI2C_TransferDefaultFlag;
-    I2C_MasterTransferBlocking(I2C_EEPROM_BUS_BASEADDR, &masterXfer);
+    I2cWrite(I2C_EEPROM_BUS_BASEADDR, I2C_ADDRESS_EEPROM, GenericHidInBuffer+2, i2cPayloadSize);
 }
 
 void ReadEeprom()
@@ -177,20 +169,8 @@ void ReadEeprom()
         return;
     }
 
-    i2c_master_transfer_t masterXfer;
-    masterXfer.slaveAddress = I2C_ADDRESS_EEPROM;
-    masterXfer.direction = kI2C_Write;
-    masterXfer.subaddress = 0;
-    masterXfer.subaddressSize = 0;
-    masterXfer.data = GenericHidInBuffer+2;
-    masterXfer.dataSize = 2;
-    masterXfer.flags = kI2C_TransferDefaultFlag;
-    I2C_MasterTransferBlocking(I2C_EEPROM_BUS_BASEADDR, &masterXfer);
-
-    masterXfer.direction = kI2C_Read;
-    masterXfer.data = GenericHidOutBuffer+1;
-    masterXfer.dataSize = i2cPayloadSize;
-    I2C_MasterTransferBlocking(I2C_EEPROM_BUS_BASEADDR, &masterXfer);
+    I2cWrite(I2C_EEPROM_BUS_BASEADDR, I2C_ADDRESS_EEPROM, GenericHidInBuffer+2, 2);
+    I2cRead(I2C_EEPROM_BUS_BASEADDR, I2C_ADDRESS_EEPROM, GenericHidOutBuffer+1, i2cPayloadSize);
 
     GenericHidOutBuffer[0] = PROTOCOL_RESPONSE_SUCCESS;
 }
