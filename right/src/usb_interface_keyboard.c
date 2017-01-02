@@ -50,7 +50,7 @@ void UsbKeyboadTask()
     UsbKeyboardReport[newReportIndex].modifiers = 0;
     UsbKeyboardReport[newReportIndex].reserved = 0;
 
-    KeyMatrix_Scan(&keyMatrix);
+    KeyMatrix_Scan(&KeyMatrix);
 
     uint8_t txData[] = {0};
     static uint8_t leftKeyStates[KEY_STATE_COUNT];
@@ -60,7 +60,7 @@ void UsbKeyboadTask()
     }
 
     bzero(&UsbKeyboardReport[newReportIndex].scancodes, USB_KEYBOARD_MAX_KEYS);
-    HandleKeyboardEvents(&UsbKeyboardReport[newReportIndex], &UsbMouseReport, leftKeyStates, keyMatrix.keyStates);
+    HandleKeyboardEvents(&UsbKeyboardReport[newReportIndex], &UsbMouseReport, leftKeyStates, KeyMatrix.keyStates);
 
     activeReportIndex = newReportIndex;
 }

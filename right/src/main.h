@@ -12,6 +12,6 @@
 
 // Variables:
 
-    extern key_matrix_t keyMatrix;
+    extern key_matrix_t KeyMatrix;
 
 #endif

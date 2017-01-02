@@ -4,7 +4,7 @@
 #include "usb_composite_device.h"
 #include "led_driver.h"
 
-key_matrix_t keyMatrix = {
+key_matrix_t KeyMatrix = {
     .colNum = KEYBOARD_MATRIX_COLS_NUM,
     .rowNum = KEYBOARD_MATRIX_ROWS_NUM,
 #if UHK_PCB_MAJOR_VERSION == 7
@@ -48,7 +48,7 @@ void main() {
     InitPeripherials();
     InitClock();
     LedDriver_InitAllLeds(1);
-    KeyMatrix_Init(&keyMatrix);
+    KeyMatrix_Init(&KeyMatrix);
     UsbKeyboadTask();
     InitUsb();
 
