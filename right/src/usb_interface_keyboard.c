@@ -115,7 +115,7 @@ void UsbKeyboadTask(){
     KeyMatrix_Init(&keyMatrix);
     KeyMatrix_Scan(&keyMatrix);
 
-    bzero(&UsbKeyboardReport[newLayout].scancodes, USB_KEYBOARD_MAX_KEYS*sizeof(UsbKeyboardReport[newLayout].scancodes[0]));
+    bzero(&UsbKeyboardReport[newLayout].scancodes, USB_KEYBOARD_MAX_KEYS);
 
     readLeftKeys(leftKeyStates);
 
