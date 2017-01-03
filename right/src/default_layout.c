@@ -1,9 +1,9 @@
 #include "action.h"
 
 key_action_t CurrentKeymap[LAYER_COUNT][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
-    // Layer 0
+    // Base layer
     {
-        // Right
+        // Right keyboard half
         {
             // Row 1
             { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .key = HID_KEYBOARD_SC_7_AND_AMPERSAND }},
@@ -51,7 +51,7 @@ key_action_t CurrentKeymap[LAYER_COUNT][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = 
             { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .key = HID_KEYBOARD_SC_RIGHT_CONTROL }},
         },
 
-        // Left
+        // Left keyboard half
         {
             // Row 1
             { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .key = HID_KEYBOARD_SC_GRAVE_ACCENT_AND_TILDE }},
@@ -100,9 +100,9 @@ key_action_t CurrentKeymap[LAYER_COUNT][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = 
         }
     },
 
-    // Layer 1: MOD
+    // Mod layer
     {
-        // Right
+        // Right keyboard half
         {
             // Row 1
             { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .key = HID_KEYBOARD_SC_F7 }},
@@ -150,7 +150,7 @@ key_action_t CurrentKeymap[LAYER_COUNT][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = 
             { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .key = HID_KEYBOARD_SC_RIGHT_CONTROL }},
         },
 
-        // Left
+        // Left keyboard half
         {
             // Row 1
             { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .key = HID_KEYBOARD_SC_ESCAPE }},
@@ -199,9 +199,9 @@ key_action_t CurrentKeymap[LAYER_COUNT][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = 
         }
     },
 
-    // Layer 2: FN
+    // Fn layer
     {
-        // Right
+        // Right keyboard half
         {
             // Row 1
             { .type = KEY_ACTION_NONE },
@@ -249,7 +249,7 @@ key_action_t CurrentKeymap[LAYER_COUNT][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = 
             { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .key = HID_KEYBOARD_SC_RIGHT_CONTROL }},
         },
 
-        // Left
+        // Left keyboard half
         {
             // Row 1
             { .type = KEY_ACTION_NONE },
@@ -298,9 +298,9 @@ key_action_t CurrentKeymap[LAYER_COUNT][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = 
         }
     },
 
-    // Layer 3: Mouse
+    // Mouse layer
     {
-        // Right
+        // Right keyboard half
         {
             // Row 1
             { .type = KEY_ACTION_NONE },
@@ -348,7 +348,7 @@ key_action_t CurrentKeymap[LAYER_COUNT][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = 
             { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .key = HID_KEYBOARD_SC_RIGHT_CONTROL }},
         },
 
-        // Left
+        // Left keyboard half
         {
             // Row 1
             { .type = KEY_ACTION_NONE },
@@ -396,5 +396,4 @@ key_action_t CurrentKeymap[LAYER_COUNT][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = 
             { .type = KEY_ACTION_NONE },
         }
     },
-
 };
