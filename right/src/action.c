@@ -25,14 +25,10 @@ static key_action_t getKeycode(uint8_t slotId, uint8_t keyId)
     }
 }
 
-static void clearKeymasks(const uint8_t *leftKeyStates, const uint8_t *rightKeyStates)
+static void clearKeymask(const uint8_t *keyStates)
 {
     for (uint8_t i=0; i < MAX_KEY_COUNT_PER_MODULE; i++) {
-        if (rightKeyStates[i]==0){
-            keyMasks[SLOT_ID_RIGHT_KEYBOARD_HALF][i] = 0;
-        }
-
-        if (leftKeyStates[i]==0) {
+        if (keyStates[i]==0) {
             keyMasks[SLOT_ID_LEFT_KEYBOARD_HALF][i] = 0;
         }
     }
@@ -165,10 +161,8 @@ static void handleMouseKey(usb_mouse_report_t *report, key_action_t key, const u
 void HandleKeyboardEvents(usb_keyboard_report_t *keyboardReport, usb_mouse_report_t *mouseReport) {
     int scancodeIdx = 0;
 
-    clearKeymasks(CurrentKeyStates[SLOT_ID_LEFT_KEYBOARD_HALF], CurrentKeyStates[SLOT_ID_RIGHT_KEYBOARD_HALF]);
-
-
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
+        clearKeymask(CurrentKeyStates[slotId]);
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
             if (scancodeIdx >= USB_KEYBOARD_MAX_KEYS) {
                 break;
