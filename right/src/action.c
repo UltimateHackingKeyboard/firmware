@@ -167,34 +167,21 @@ void HandleKeyboardEvents(usb_keyboard_report_t *keyboardReport, usb_mouse_repor
 
     clearKeymasks(CurrentKeyStates[SLOT_ID_LEFT_KEYBOARD_HALF], CurrentKeyStates[SLOT_ID_RIGHT_KEYBOARD_HALF]);
 
-    for (uint8_t keyId=0; keyId<LEFT_KEYBOARD_HALF_KEY_COUNT; keyId++) {
-        if (scancodeIdx >= USB_KEYBOARD_MAX_KEYS) {
-            break;
-        }
 
-        key_action_t code = getKeycode(SLOT_ID_RIGHT_KEYBOARD_HALF, keyId);
-
-        if (code.type == KEY_ACTION_MOUSE) {
-            handleMouseKey(mouseReport, code, PreviousKeyStates[SLOT_ID_RIGHT_KEYBOARD_HALF], CurrentKeyStates[SLOT_ID_RIGHT_KEYBOARD_HALF], keyId);
-        } else {
-            if (handleKey(code, scancodeIdx, keyboardReport, PreviousKeyStates[SLOT_ID_RIGHT_KEYBOARD_HALF], CurrentKeyStates[SLOT_ID_RIGHT_KEYBOARD_HALF], keyId)) {
-                scancodeIdx++;
+    for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
+        for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
+            if (scancodeIdx >= USB_KEYBOARD_MAX_KEYS) {
+                break;
             }
-        }
-    }
 
-    for (uint8_t keyId=0; keyId<LEFT_KEYBOARD_HALF_KEY_COUNT; keyId++) {
-        if (scancodeIdx >= USB_KEYBOARD_MAX_KEYS) {
-            break;
-        }
+            key_action_t code = getKeycode(slotId, keyId);
 
-        key_action_t code = getKeycode(SLOT_ID_LEFT_KEYBOARD_HALF, keyId);
-
-        if (code.type == KEY_ACTION_MOUSE) {
-            handleMouseKey(mouseReport, code, PreviousKeyStates[SLOT_ID_LEFT_KEYBOARD_HALF], CurrentKeyStates[SLOT_ID_LEFT_KEYBOARD_HALF], keyId);
-        } else {
-            if (handleKey(code, scancodeIdx, keyboardReport, PreviousKeyStates[SLOT_ID_LEFT_KEYBOARD_HALF], CurrentKeyStates[SLOT_ID_LEFT_KEYBOARD_HALF], keyId)) {
-                scancodeIdx++;
+            if (code.type == KEY_ACTION_MOUSE) {
+                handleMouseKey(mouseReport, code, PreviousKeyStates[slotId], CurrentKeyStates[slotId], keyId);
+            } else {
+                if (handleKey(code, scancodeIdx, keyboardReport, PreviousKeyStates[slotId], CurrentKeyStates[slotId], keyId)) {
+                    scancodeIdx++;
+                }
             }
         }
     }
