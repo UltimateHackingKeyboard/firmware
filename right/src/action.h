@@ -68,7 +68,7 @@ typedef struct {
             uint8_t __unused_bits;
             uint8_t mods;
             uint8_t key;
-        } __attribute__ ((packed)) simple;
+        } __attribute__ ((packed)) keystroke;
         struct {
             uint8_t buttonActions; // bitfield
             uint8_t scrollActions; // bitfield
@@ -76,26 +76,16 @@ typedef struct {
         } __attribute__ ((packed)) mouse;
         struct {
             uint16_t __unused_bits;
-            uint8_t target;
-        } __attribute__ ((packed)) layer;
+            uint8_t layer;
+        } __attribute__ ((packed)) switchLayer;
         struct {
             uint16_t __unused_bits;
-            uint8_t target;
-        } __attribute__ ((packed)) keymap;
+            uint8_t layer;
+        } __attribute__ ((packed)) switchKeymap;
         struct {
             uint8_t __unused_bits;
             uint16_t index;
-        } __attribute__ ((packed)) macro;
-        struct {
-            uint8_t longPressMod; // single mod, or bitfield?
-            uint8_t mods; // for the alternate action
-            uint8_t key;
-        } __attribute__ ((packed)) longpressMod;
-        struct {
-            uint8_t longPressLayer;
-            uint8_t mods;
-            uint8_t key;
-        } __attribute__ ((packed)) longpressLayer;
+        } __attribute__ ((packed)) playMacro;
     };
 } __attribute__ ((packed)) key_action_t;
 

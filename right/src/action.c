@@ -40,17 +40,17 @@ static bool pressKey(key_action_t key, int scancodeIdx, usb_keyboard_report_t *r
         return false;
     }
 
-    if (!key.simple.key) {
+    if (!key.keystroke.key) {
         return false;
     }
 
     for (uint8_t i = 0; i < 8; i++) {
-        if (key.simple.mods & (1 << i) || key.simple.key == HID_KEYBOARD_SC_LEFT_CONTROL + i) {
+        if (key.keystroke.mods & (1 << i) || key.keystroke.key == HID_KEYBOARD_SC_LEFT_CONTROL + i) {
             report->modifiers |= (1 << i);
         }
     }
 
-    report->scancodes[scancodeIdx] = key.simple.key;
+    report->scancodes[scancodeIdx] = key.keystroke.key;
     return true;
 }
 
@@ -78,7 +78,7 @@ static bool handleKey(key_action_t key, int scancodeIdx, usb_keyboard_report_t *
         break;
     case KEY_ACTION_SWITCH_LAYER:
         if (hasKeyPressed(prevKeyStates, currKeyStates, keyId)) {
-            ActiveLayer = key.layer.target;
+            ActiveLayer = key.switchLayer.layer;
         }
         if (hasKeyReleased(prevKeyStates, currKeyStates, keyId)) {
             ActiveLayer = LAYER_ID_BASE;
