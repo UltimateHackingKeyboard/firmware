@@ -1,3 +1,4 @@
+#include "main.h"
 #include "action.h"
 #include "led_display.h"
 #include "layer.h"
@@ -6,7 +7,6 @@
 static uint8_t keyMasks[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
 
 static uint8_t ActiveLayer = LAYER_ID_BASE;
-uint8_t prevKeyStates[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
 
 static key_action_t getKeycode(uint8_t slotId, uint8_t keyId)
 {
@@ -27,7 +27,7 @@ static key_action_t getKeycode(uint8_t slotId, uint8_t keyId)
 
 static void clearKeymasks(const uint8_t *leftKeyStates, const uint8_t *rightKeyStates)
 {
-    for (int i=0; i < MAX_KEY_COUNT_PER_MODULE; i++){
+    for (uint8_t i=0; i < MAX_KEY_COUNT_PER_MODULE; i++) {
         if (rightKeyStates[i]==0){
             keyMasks[SLOT_ID_RIGHT_KEYBOARD_HALF][i] = 0;
         }
@@ -162,12 +162,12 @@ static void handleMouseKey(usb_mouse_report_t *report, key_action_t key, const u
     wasPreviousMouseActionWheelAction = isWheelAction;
 }
 
-void HandleKeyboardEvents(usb_keyboard_report_t *keyboardReport, usb_mouse_report_t *mouseReport, const uint8_t *leftKeyStates, const uint8_t *rightKeyStates) {
+void HandleKeyboardEvents(usb_keyboard_report_t *keyboardReport, usb_mouse_report_t *mouseReport) {
     int scancodeIdx = 0;
 
-    clearKeymasks(leftKeyStates, rightKeyStates);
+    clearKeymasks(CurrentKeyStates[SLOT_ID_LEFT_KEYBOARD_HALF], CurrentKeyStates[SLOT_ID_RIGHT_KEYBOARD_HALF]);
 
-    for (uint8_t keyId=0; keyId<KEY_STATE_COUNT; keyId++) {
+    for (uint8_t keyId=0; keyId<LEFT_KEYBOARD_HALF_KEY_COUNT; keyId++) {
         if (scancodeIdx >= USB_KEYBOARD_MAX_KEYS) {
             break;
         }
@@ -175,15 +175,15 @@ void HandleKeyboardEvents(usb_keyboard_report_t *keyboardReport, usb_mouse_repor
         key_action_t code = getKeycode(SLOT_ID_RIGHT_KEYBOARD_HALF, keyId);
 
         if (code.type == KEY_ACTION_MOUSE) {
-            handleMouseKey(mouseReport, code, prevKeyStates[SLOT_ID_RIGHT_KEYBOARD_HALF], rightKeyStates, keyId);
+            handleMouseKey(mouseReport, code, PreviousKeyStates[SLOT_ID_RIGHT_KEYBOARD_HALF], CurrentKeyStates[SLOT_ID_RIGHT_KEYBOARD_HALF], keyId);
         } else {
-            if (handleKey(code, scancodeIdx, keyboardReport, prevKeyStates[SLOT_ID_RIGHT_KEYBOARD_HALF], rightKeyStates, keyId)) {
+            if (handleKey(code, scancodeIdx, keyboardReport, PreviousKeyStates[SLOT_ID_RIGHT_KEYBOARD_HALF], CurrentKeyStates[SLOT_ID_RIGHT_KEYBOARD_HALF], keyId)) {
                 scancodeIdx++;
             }
         }
     }
 
-    for (uint8_t keyId=0; keyId<KEY_STATE_COUNT; keyId++) {
+    for (uint8_t keyId=0; keyId<LEFT_KEYBOARD_HALF_KEY_COUNT; keyId++) {
         if (scancodeIdx >= USB_KEYBOARD_MAX_KEYS) {
             break;
         }
@@ -191,14 +191,14 @@ void HandleKeyboardEvents(usb_keyboard_report_t *keyboardReport, usb_mouse_repor
         key_action_t code = getKeycode(SLOT_ID_LEFT_KEYBOARD_HALF, keyId);
 
         if (code.type == KEY_ACTION_MOUSE) {
-            handleMouseKey(mouseReport, code, prevKeyStates[SLOT_ID_LEFT_KEYBOARD_HALF], leftKeyStates, keyId);
+            handleMouseKey(mouseReport, code, PreviousKeyStates[SLOT_ID_LEFT_KEYBOARD_HALF], CurrentKeyStates[SLOT_ID_LEFT_KEYBOARD_HALF], keyId);
         } else {
-            if (handleKey(code, scancodeIdx, keyboardReport, prevKeyStates[SLOT_ID_LEFT_KEYBOARD_HALF], leftKeyStates, keyId)) {
+            if (handleKey(code, scancodeIdx, keyboardReport, PreviousKeyStates[SLOT_ID_LEFT_KEYBOARD_HALF], CurrentKeyStates[SLOT_ID_LEFT_KEYBOARD_HALF], keyId)) {
                 scancodeIdx++;
             }
         }
     }
 
-    memcpy(prevKeyStates[SLOT_ID_RIGHT_KEYBOARD_HALF], rightKeyStates, KEY_STATE_COUNT);
-    memcpy(prevKeyStates[SLOT_ID_LEFT_KEYBOARD_HALF], leftKeyStates, KEY_STATE_COUNT);
+    memcpy(PreviousKeyStates[SLOT_ID_RIGHT_KEYBOARD_HALF], CurrentKeyStates[SLOT_ID_RIGHT_KEYBOARD_HALF], MAX_KEY_COUNT_PER_MODULE);
+    memcpy(PreviousKeyStates[SLOT_ID_LEFT_KEYBOARD_HALF], CurrentKeyStates[SLOT_ID_LEFT_KEYBOARD_HALF], MAX_KEY_COUNT_PER_MODULE);
 }

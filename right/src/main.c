@@ -44,6 +44,9 @@ key_matrix_t KeyMatrix = {
 #endif
 };
 
+uint8_t PreviousKeyStates[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
+uint8_t CurrentKeyStates[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
+
 void main() {
     InitPeripherials();
     InitClock();

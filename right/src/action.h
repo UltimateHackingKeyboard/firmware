@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include "lufa/HIDClassCommon.h"
 #include "usb_composite_device.h"
+#include "main.h"
 
 #include "module.h"
 
@@ -18,8 +19,6 @@
 //      - mod layer
 //      - fn layer
 //      - mod+fn layer
-
-#define KEY_STATE_COUNT (5*7)
 
 typedef enum {
     KEY_ACTION_NONE,
@@ -100,9 +99,8 @@ typedef struct {
     };
 } __attribute__ ((packed)) key_action_t;
 
-extern uint8_t prevKeyStates[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
 extern key_action_t CurrentKeymap[LAYER_COUNT][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
 
-void HandleKeyboardEvents(usb_keyboard_report_t *keyboardReport, usb_mouse_report_t *mouseReport, const uint8_t *leftKeyStates, const uint8_t *rightKeyStates);
+void HandleKeyboardEvents(usb_keyboard_report_t *keyboardReport, usb_mouse_report_t *mouseReport);
 
 #endif
