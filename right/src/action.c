@@ -184,8 +184,7 @@ void HandleKeyboardEvents(usb_keyboard_report_t *keyboardReport, usb_mouse_repor
                 }
             }
         }
-    }
 
-    memcpy(PreviousKeyStates[SLOT_ID_RIGHT_KEYBOARD_HALF], CurrentKeyStates[SLOT_ID_RIGHT_KEYBOARD_HALF], MAX_KEY_COUNT_PER_MODULE);
-    memcpy(PreviousKeyStates[SLOT_ID_LEFT_KEYBOARD_HALF], CurrentKeyStates[SLOT_ID_LEFT_KEYBOARD_HALF], MAX_KEY_COUNT_PER_MODULE);
+        memcpy(PreviousKeyStates[slotId], CurrentKeyStates[slotId], MAX_KEY_COUNT_PER_MODULE);
+    }
 }
