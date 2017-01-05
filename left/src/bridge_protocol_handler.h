@@ -15,7 +15,6 @@
 
     #define BRIDGE_COMMAND_GET_KEY_STATES 0
     #define BRIDGE_COMMAND_SET_LED        1
-    #define BRIDGE_COMMAND_GET_ISO_JUMPER_STATE 2
 
 // Variables:
 

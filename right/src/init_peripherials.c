@@ -5,7 +5,6 @@
 #include "i2c.h"
 #include "led_driver.h"
 #include "merge_sensor.h"
-#include "led_jumper.h"
 
 void InitI2c() {
     port_pin_config_t pinConfig = {
@@ -47,7 +46,6 @@ void InitI2c() {
 void InitPeripherials(void)
 {
     InitResetButton();
-    InitLedJumper();
     InitMergeSensor();
     InitTestLed();
     InitI2c();

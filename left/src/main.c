@@ -9,7 +9,6 @@
 #include "i2c.h"
 #include "init_peripherials.h"
 #include "bridge_protocol_handler.h"
-#include "iso_jumper.h"
 
 key_matrix_t keyMatrix = {
     .colNum = KEYBOARD_MATRIX_COLS_NUM,
@@ -84,7 +83,6 @@ int main(void)
 {
     InitClock();
     InitPeripherials();
-    IsoJumperState = ISO_JUMPER_IS_ENABLED;
 
     I2C_SlaveGetDefaultConfig(&slaveConfig);
     slaveConfig.slaveAddress = I2C_ADDRESS_LEFT_KEYBOARD_HALF;
