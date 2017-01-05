@@ -16,7 +16,7 @@ key_matrix_t KeyMatrix = {
         {PORTB, GPIOB, kCLOCK_PortB, 19},
         {PORTA, GPIOA, kCLOCK_PortA, 1},
         {PORTB, GPIOB, kCLOCK_PortB, 1}
-        },
+    },
     .rows = (key_matrix_pin_t[]){
         {PORTA, GPIOA, kCLOCK_PortA, 12},
         {PORTA, GPIOA, kCLOCK_PortA, 13},
@@ -33,7 +33,7 @@ key_matrix_t KeyMatrix = {
         {PORTB, GPIOB, kCLOCK_PortB, 18},
         {PORTA, GPIOA, kCLOCK_PortA, 1},
         {PORTB, GPIOB, kCLOCK_PortB, 0}
-        },
+    },
     .rows = (key_matrix_pin_t[]){
         {PORTA, GPIOA, kCLOCK_PortA, 12},
         {PORTA, GPIOA, kCLOCK_PortA, 13},
