@@ -61,7 +61,7 @@ static const uint8_t testData[] =
 void main() {
     InitPeripherials();
     InitClock();
-    LedDriver_InitAllLeds(1);
+    LedDriver_InitAllLeds(0);
     KeyMatrix_Init(&KeyMatrix);
     UsbKeyboadTask();
     InitUsb();
