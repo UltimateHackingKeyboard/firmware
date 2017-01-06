@@ -81,7 +81,7 @@ typedef struct {
         } __attribute__ ((packed)) switchLayer;
         struct {
             uint16_t __unused_bits;
-            uint8_t layer;
+            uint8_t keymap;
         } __attribute__ ((packed)) switchKeymap;
         struct {
             uint8_t __unused_bits;
