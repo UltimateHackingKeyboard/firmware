@@ -65,7 +65,7 @@ typedef struct {
     uint8_t type;
     union {
         struct {
-            uint8_t __unused_bits;
+            uint8_t longPress;
             uint8_t mods;
             uint8_t key;
         } __attribute__ ((packed)) keystroke;
@@ -75,12 +75,13 @@ typedef struct {
             uint8_t moveActions; // bitfield
         } __attribute__ ((packed)) mouse;
         struct {
-            uint16_t __unused_bits;
+            uint16_t __unused_bits:15;
+            bool isToggle:1;
             uint8_t layer;
         } __attribute__ ((packed)) switchLayer;
         struct {
             uint16_t __unused_bits;
-            uint8_t layer;
+            uint8_t keymap;
         } __attribute__ ((packed)) switchKeymap;
         struct {
             uint8_t __unused_bits;
