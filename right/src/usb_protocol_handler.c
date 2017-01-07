@@ -4,6 +4,8 @@
 #include "i2c_addresses.h"
 #include "led_driver.h"
 #include "merge_sensor.h"
+#include "deserialize.h"
+#include "config_buffer.h"
 
 void SetError(uint8_t error);
 void SetGenericError();
@@ -16,6 +18,8 @@ void ReadLedDriver();
 void WriteEeprom();
 void ReadEeprom();
 void ReadMergeSensor();
+void uploadConfig();
+void applyConfig();
 
 // Functions for setting error statuses
 
@@ -64,6 +68,12 @@ void UsbProtocolHandler()
             break;
         case USB_COMMAND_READ_MERGE_SENSOR:
             ReadMergeSensor();
+            break;
+        case USB_COMMAND_UPLOAD_CONFIG:
+            uploadConfig();
+            break;
+        case USB_COMMAND_APPLY_CONFIG:
+            applyConfig();
             break;
         default:
             break;
@@ -170,4 +180,22 @@ void ReadEeprom()
 void ReadMergeSensor()
 {
     SetResponseByte(MERGE_SENSOR_IS_MERGED);
+}
+
+void uploadConfig()
+{
+    uint8_t byteCount = GenericHidInBuffer[1];
+    uint16_t memoryOffset = *((uint16_t*)(GenericHidInBuffer+2));
+
+    if (byteCount > USB_GENERIC_HID_OUT_BUFFER_LENGTH-4) {
+        SetError(UPLOAD_CONFIG_INVALID_PAYLOAD_SIZE);
+        return;
+    }
+
+    memcpy(ConfigBuffer+memoryOffset, GenericHidInBuffer+4, byteCount);
+}
+
+void applyConfig()
+{
+    deserialize_Layer(ConfigBuffer, 0);
 }
