@@ -31,6 +31,56 @@ void LedDriver_SetAllLedsTo(uint8_t val)
         for (i=FRAME_REGISTER_PWM_FIRST; i<=FRAME_REGISTER_PWM_LAST; i++) {
             LedDriver_WriteRegister(address, i, val);
         }
+
+        uint8_t ledControlBufferRight[] = {
+            FRAME_REGISTER_LED_CONTROL_FIRST,
+            0b01111111, // key row 1
+            0b00000000, // no display
+            0b01111111, // keys row 2
+            0b00000000, // no display
+            0b01111111, // keys row 3
+            0b00000000, // no display
+            0b01111111, // keys row 4
+            0b00000000, // no display
+            0b00101111, // keys row 5
+            0b00000000, // no display
+            0b00000000, // keys row 6
+            0b00000000, // no display
+            0b00000000, // keys row 7
+            0b00000000, // no display
+            0b00000000, // keys row 8
+            0b00000000, // no display
+            0b00000000, // keys row 9
+            0b00000000, // no display
+        };
+        I2cWrite(I2C_MAIN_BUS_BASEADDR, I2C_ADDRESS_LED_DRIVER_RIGHT,
+                 ledControlBufferRight, sizeof(ledControlBufferRight));
+
+        uint8_t ledControlBufferLeft[] = {
+            FRAME_REGISTER_LED_CONTROL_FIRST,
+            0b01111111, // key row 1
+            0b00111111, // display row 1
+            0b01011111, // keys row 2
+            0b00111111, // display row 2
+            0b01011111, // keys row 3
+            0b00111111, // display row 3
+            0b01111101, // keys row 4
+            0b00011111, // display row 4
+            0b00101111, // keys row 5
+            0b00011111, // display row 5
+            0b00000000, // keys row 6
+            0b00011111, // display row 6
+            0b00000000, // keys row 7
+            0b00011111, // display row 7
+            0b00000000, // keys row 8
+            0b00011111, // display row 8
+            0b00000000, // keys row 9
+            0b00011111, // display row 9
+        };
+        I2cWrite(I2C_MAIN_BUS_BASEADDR, I2C_ADDRESS_LED_DRIVER_LEFT,
+                 ledControlBufferLeft, sizeof(ledControlBufferLeft));
+
+
         for (i=FRAME_REGISTER_LED_CONTROL_FIRST; i<=FRAME_REGISTER_LED_CONTROL_LAST; i++) {
             LedDriver_WriteRegister(address, i, 0xff);
         }
@@ -38,32 +88,4 @@ void LedDriver_SetAllLedsTo(uint8_t val)
             LedDriver_WriteRegister(address, i, 0x00);
         }
     }
-
-    for (uint8_t i=FRAME_REGISTER_PWM_FIRST; i<=FRAME_REGISTER_PWM_LAST; i++) {
-        LedDriver_WriteRegister(I2C_ADDRESS_LED_DRIVER_RIGHT, i, 0xff);
-    }
-
-    uint8_t buffer[] = {
-        FRAME_REGISTER_PWM_FIRST,
-        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // keys 1
-        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // display
-        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // keys 2
-        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // display
-        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // keys 3
-        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // display
-        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // keys 4
-        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // display
-        0xff, 0xff, 0xff, 0xff, 0x00, 0xff, 0x00, 0x00, // keys 5 blocks slowly
-        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // display
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // keys 6 blocks slowly
-        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // display
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // keys 7 blocks slowly
-        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // display
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // keys 8 blocks slowly
-        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // display
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // keys 9 blocks quickly
-        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // display
-    };
-    I2cWrite(I2C_MAIN_BUS_BASEADDR, I2C_ADDRESS_LED_DRIVER_LEFT, buffer, sizeof(buffer));
-
 }
