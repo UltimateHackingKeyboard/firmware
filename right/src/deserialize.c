@@ -41,6 +41,7 @@ static uint16_t readCompactLength(serialized_buffer_t *buffer) {
     return length;
 }
 
+/*
 static const char *readString(serialized_buffer_t *buffer, uint16_t *len) {
     const char *str = (const char *)&(buffer->buffer[buffer->offset]);
 
@@ -49,6 +50,7 @@ static const char *readString(serialized_buffer_t *buffer, uint16_t *len) {
 
     return str;
 }
+*/
 
 // ----------------
 
@@ -127,8 +129,8 @@ static void processSwitchLayerAction(key_action_t *action, serialized_buffer_t *
 }
 
 static void processSwitchKeymapAction(key_action_t *action, serialized_buffer_t *buffer) {
-    uint16_t len;
-    const char *keymap = readString(buffer, &len);
+//    uint16_t len;
+//    const char *keymap = readString(buffer, &len);
 
     action->type = KEY_ACTION_SWITCH_KEYMAP;
 

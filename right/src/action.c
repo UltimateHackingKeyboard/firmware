@@ -98,7 +98,7 @@ static uint8_t mouseSpeedAccelDivisorCounter = 0;
 static uint8_t mouseSpeed = 3;
 static bool wasPreviousMouseActionWheelAction = false;
 
-static void handleMouseKey(usb_mouse_report_t *report, key_action_t key, const uint8_t *prevKeyStates, const uint8_t *currKeyStates, uint8_t keyId)
+void HandleMouseKey(usb_mouse_report_t *report, key_action_t key, const uint8_t *prevKeyStates, const uint8_t *currKeyStates, uint8_t keyId)
 {
     if (!isKeyPressed(prevKeyStates, currKeyStates, keyId)) {
         return;
@@ -172,7 +172,7 @@ void HandleKeyboardEvents(usb_keyboard_report_t *keyboardReport, usb_mouse_repor
             key_action_t code = getKeycode(slotId, keyId);
 
             if (code.type == KEY_ACTION_MOUSE) {
-                handleMouseKey(mouseReport, code, PreviousKeyStates[slotId], CurrentKeyStates[slotId], keyId);
+                HandleMouseKey(mouseReport, code, PreviousKeyStates[slotId], CurrentKeyStates[slotId], keyId);
             } else {
                 if (handleKey(code, scancodeIdx, keyboardReport, PreviousKeyStates[slotId], CurrentKeyStates[slotId], keyId)) {
                     scancodeIdx++;
