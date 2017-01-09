@@ -11,8 +11,15 @@ void LedDriver_InitAllLeds(char isEnabled)
 {
     CLOCK_EnableClock(LED_DRIVER_SDB_CLOCK);
     PORT_SetPinMux(LED_DRIVER_SDB_PORT, LED_DRIVER_SDB_PIN, kPORT_MuxAsGpio);
-    GPIO_PinInit(GPIOA, LED_DRIVER_SDB_PIN, &(gpio_pin_config_t){kGPIO_DigitalOutput, 0});
+    GPIO_PinInit(LED_DRIVER_SDB_GPIO, LED_DRIVER_SDB_PIN, &(gpio_pin_config_t){kGPIO_DigitalOutput, 0});
     GPIO_WritePinOutput(LED_DRIVER_SDB_GPIO, LED_DRIVER_SDB_PIN, 1);
+
+#if UHK_PCB_MAJOR_VERSION == 7
+    CLOCK_EnableClock(LED_DRIVER_PWM_CLOCK);
+    PORT_SetPinMux(LED_DRIVER_PWM_PORT, LED_DRIVER_PWM_PIN, kPORT_MuxAsGpio);
+    GPIO_PinInit(LED_DRIVER_PWM_GPIO, LED_DRIVER_PWM_PIN, &(gpio_pin_config_t){kGPIO_DigitalOutput, 0});
+    GPIO_WritePinOutput(LED_DRIVER_PWM_GPIO, LED_DRIVER_PWM_PIN, 1);
+#endif
 
     LedDriver_SetAllLedsTo(isEnabled ? 0xFF : 0x00);
 }
