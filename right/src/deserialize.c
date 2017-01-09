@@ -1,5 +1,7 @@
 #include "deserialize.h"
 #include "action.h"
+#include "current_keymap.h"
+
 #define longCompactLengthPrefix 0xff
 
 #define HAS_SCANCODE (1 << 0)

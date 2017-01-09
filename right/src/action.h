@@ -90,8 +90,6 @@ typedef struct {
     };
 } __attribute__ ((packed)) key_action_t;
 
-extern key_action_t CurrentKeymap[LAYER_COUNT][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
-
 void HandleKeyboardEvents(usb_keyboard_report_t *keyboardReport, usb_mouse_report_t *mouseReport);
 
 #endif
