@@ -31,6 +31,6 @@
 
 // Functions:
 
-    extern void UsbProtocolHandler();
+    extern void usbProtocolHandler();
 
 #endif
