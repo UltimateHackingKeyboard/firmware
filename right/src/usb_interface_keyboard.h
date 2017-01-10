@@ -40,6 +40,4 @@
     extern void ResetActiveUsbKeyboardReport();
     extern void SwitchActiveUsbKeyboardReport();
 
-    extern void UsbKeyboadTask();
-
 #endif

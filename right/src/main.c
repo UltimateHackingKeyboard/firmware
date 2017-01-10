@@ -4,6 +4,7 @@
 #include "usb_composite_device.h"
 #include "led_driver.h"
 #include "deserialize.h"
+#include "action.h"
 
 key_matrix_t KeyMatrix = {
     .colNum = KEYBOARD_MATRIX_COLS_NUM,
@@ -58,18 +59,36 @@ static const uint8_t testData[] =
    0x0a, 0x02, 0x2d, 0x02, 0x1d, 0x02, 0x1b, 0x02, 0x06, 0x02, 0x19, 0x02, 0x05, 0x02, 0x04, 0x02, 0x05, 0x02, 0x06,
    0x02, 0x07, 0x02, 0x08, 0x02, 0x09, 0x02, 0x02, 0x00 };
 
+void updateUsbReports()
+{
+    ResetActiveUsbKeyboardReport();
+
+    KeyMatrix_Scan(&KeyMatrix);
+    memcpy(CurrentKeyStates[SLOT_ID_RIGHT_KEYBOARD_HALF], KeyMatrix.keyStates, MAX_KEY_COUNT_PER_MODULE);
+
+    uint8_t txData[] = {0};
+    bzero(CurrentKeyStates[SLOT_ID_LEFT_KEYBOARD_HALF], MAX_KEY_COUNT_PER_MODULE);
+    if (I2cWrite(I2C_MAIN_BUS_BASEADDR, I2C_ADDRESS_LEFT_KEYBOARD_HALF, txData, sizeof(txData)) == kStatus_Success) {
+        I2cRead(I2C_MAIN_BUS_BASEADDR, I2C_ADDRESS_LEFT_KEYBOARD_HALF, CurrentKeyStates[SLOT_ID_LEFT_KEYBOARD_HALF], LEFT_KEYBOARD_HALF_KEY_COUNT);
+    }
+
+    HandleKeyboardEvents(ActiveUsbKeyboardReport, &UsbMouseReport);
+
+    SwitchActiveUsbKeyboardReport();
+}
+
 void main() {
     InitPeripherials();
     InitClock();
     LedDriver_InitAllLeds(1);
     KeyMatrix_Init(&KeyMatrix);
-    UsbKeyboadTask();
+    updateUsbReports();
     InitUsb();
 
     // deserialize_Layer(testData, 0);
 
     while (1) {
-        UsbKeyboadTask();
+        updateUsbReports();
         asm("wfi");
     }
 }
