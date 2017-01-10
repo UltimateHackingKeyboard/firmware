@@ -29,12 +29,16 @@
 // Variables:
 
     extern usb_device_class_struct_t UsbKeyboardClass;
+    extern usb_keyboard_report_t* ActiveUsbKeyboardReport;
 
 // Functions:
 
     extern usb_status_t UsbKeyboardCallback(class_handle_t handle, uint32_t event, void *param);
     extern usb_status_t UsbKeyboardSetConfiguration(class_handle_t handle, uint8_t configuration);
     extern usb_status_t UsbKeyboardSetInterface(class_handle_t handle, uint8_t interface, uint8_t alternateSetting);
+
+    extern void ResetActiveUsbKeyboardReport();
+    extern void SwitchActiveUsbKeyboardReport();
 
     extern void UsbKeyboadTask();
 

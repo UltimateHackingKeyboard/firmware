@@ -40,15 +40,29 @@ usb_device_class_struct_t UsbKeyboardClass = {
     USB_DEVICE_CONFIGURATION_COUNT,
 };
 
-volatile static int activeReportIndex=0;
-static usb_keyboard_report_t UsbKeyboardReport[2];
+static usb_keyboard_report_t usbKeyboardReports[2];
+usb_keyboard_report_t* ActiveUsbKeyboardReport = usbKeyboardReports;
+
+usb_keyboard_report_t* getInactiveUsbKeyboardReport()
+{
+    return ActiveUsbKeyboardReport == usbKeyboardReports ? usbKeyboardReports+1 : usbKeyboardReports;
+}
+
+void SwitchActiveUsbKeyboardReport()
+{
+    ActiveUsbKeyboardReport = getInactiveUsbKeyboardReport();
+}
+
+void ResetActiveUsbKeyboardReport()
+{
+    ActiveUsbKeyboardReport->modifiers = 0;
+    ActiveUsbKeyboardReport->reserved = 0;
+    bzero(ActiveUsbKeyboardReport->scancodes, USB_KEYBOARD_MAX_KEYS);
+}
 
 void UsbKeyboadTask()
 {
-    int newReportIndex = 1-activeReportIndex;
-
-    UsbKeyboardReport[newReportIndex].modifiers = 0;
-    UsbKeyboardReport[newReportIndex].reserved = 0;
+    ResetActiveUsbKeyboardReport();
 
     KeyMatrix_Scan(&KeyMatrix);
     memcpy(CurrentKeyStates[SLOT_ID_RIGHT_KEYBOARD_HALF], KeyMatrix.keyStates, MAX_KEY_COUNT_PER_MODULE);
@@ -59,16 +73,15 @@ void UsbKeyboadTask()
         I2cRead(I2C_MAIN_BUS_BASEADDR, I2C_ADDRESS_LEFT_KEYBOARD_HALF, CurrentKeyStates[SLOT_ID_LEFT_KEYBOARD_HALF], LEFT_KEYBOARD_HALF_KEY_COUNT);
     }
 
-    bzero(&UsbKeyboardReport[newReportIndex].scancodes, USB_KEYBOARD_MAX_KEYS);
-    HandleKeyboardEvents(&UsbKeyboardReport[newReportIndex], &UsbMouseReport);
+    HandleKeyboardEvents(ActiveUsbKeyboardReport, &UsbMouseReport);
 
-    activeReportIndex = newReportIndex;
+    SwitchActiveUsbKeyboardReport();
 }
 
 static usb_status_t UsbKeyboardAction(void)
 {
     return USB_DeviceHidSend(UsbCompositeDevice.keyboardHandle, USB_KEYBOARD_ENDPOINT_INDEX,
-                             (uint8_t*)&UsbKeyboardReport[activeReportIndex], USB_KEYBOARD_REPORT_LENGTH);
+                             (uint8_t*)getInactiveUsbKeyboardReport(), USB_KEYBOARD_REPORT_LENGTH);
 }
 
 usb_status_t UsbKeyboardCallback(class_handle_t handle, uint32_t event, void *param)
