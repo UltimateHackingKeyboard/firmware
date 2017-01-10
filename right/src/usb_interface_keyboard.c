@@ -55,9 +55,7 @@ void SwitchActiveUsbKeyboardReport()
 
 void ResetActiveUsbKeyboardReport()
 {
-    ActiveUsbKeyboardReport->modifiers = 0;
-    ActiveUsbKeyboardReport->reserved = 0;
-    bzero(ActiveUsbKeyboardReport->scancodes, USB_KEYBOARD_MAX_KEYS);
+    bzero(ActiveUsbKeyboardReport, USB_KEYBOARD_REPORT_LENGTH);
 }
 
 void UsbKeyboadTask()
