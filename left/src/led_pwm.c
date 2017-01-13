@@ -6,6 +6,9 @@ void LedPwm_Init() {
     CLOCK_EnableClock(LED_PWM_CLOCK);
     PORT_SetPinMux(LED_PWM_PORT, LED_PWM_PIN, kPORT_MuxAlt2);
 
+    // Select the clock source for the TPM counter as MCGPLLCLK.
+    CLOCK_SetTpmClock(1U);
+
     tpm_config_t tpmInfo;
     TPM_GetDefaultConfig(&tpmInfo);
     TPM_Init(LED_PWM_TPM_BASEADDR, &tpmInfo);
