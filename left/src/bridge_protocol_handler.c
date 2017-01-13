@@ -33,9 +33,9 @@ void BridgeProtocolHandler()
             memcpy(BridgeTxBuffer, keyMatrix.keyStates, BridgeTxSize);
             break;
         case BRIDGE_COMMAND_SET_TEST_LED:
-            TEST_LED_OFF();
             BridgeTxSize = 0;
-            TEST_LED_SET(BridgeRxBuffer[1]);
+            bool isLedOn = BridgeRxBuffer[1];
+            TEST_LED_SET(isLedOn);
             break;
         case BRIDGE_COMMAND_SET_LED_PWM:
             BridgeTxSize = 0;
