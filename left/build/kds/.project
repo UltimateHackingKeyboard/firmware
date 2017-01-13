@@ -97,6 +97,16 @@
 			<locationURI>PARENT-3-PROJECT_LOC/lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/drivers/fsl_smc.h</locationURI>
 		</link>
 		<link>
+			<name>drivers/fsl_tpm.c</name>
+			<type>1</type>
+			<locationURI>PARENT-3-PROJECT_LOC/lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/drivers/fsl_tpm.c</locationURI>
+		</link>
+		<link>
+			<name>drivers/fsl_tpm.h</name>
+			<type>1</type>
+			<locationURI>PARENT-3-PROJECT_LOC/lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/drivers/fsl_tpm.h</locationURI>
+		</link>
+		<link>
 			<name>startup/startup_MKL03Z4.S</name>
 			<type>1</type>
 			<locationURI>PARENT-3-PROJECT_LOC/lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/gcc/startup_MKL03Z4.S</locationURI>

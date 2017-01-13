@@ -6,6 +6,7 @@
 #include "fsl_i2c.h"
 #include "fsl_clock.h"
 #include "i2c.h"
+#include "led_pwm.h"
 
 void InitI2c() {
     port_pin_config_t pinConfig = {
@@ -41,5 +42,6 @@ void InitPeripherials(void)
 {
     InitLedDriver();
     InitTestLed();
+    LedPwm_Init();
     InitI2c();
 }

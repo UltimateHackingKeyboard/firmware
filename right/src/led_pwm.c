@@ -15,7 +15,7 @@ void LedPwm_Init() {
 
     ftmParam[0].chnlNumber = (ftm_chnl_t)LED_PWM_FTM_CHANNEL;
     ftmParam[0].level = kFTM_LowTrue;
-    ftmParam[0].dutyCyclePercent = INITIAL_DUTY_CYCLE_PERCENT - 100;
+    ftmParam[0].dutyCyclePercent = 100 - INITIAL_DUTY_CYCLE_PERCENT;
     ftmParam[0].firstEdgeDelayPercent = 0;
     FTM_GetDefaultConfig(&ftmInfo);
 
@@ -28,6 +28,6 @@ void LedPwm_Init() {
 
 void LedPwm_SetBrightness(uint8_t brightnessPercent)
 {
-    FTM_UpdatePwmDutycycle(LED_PWM_FTM_BASEADDR, LED_PWM_FTM_CHANNEL, kFTM_EdgeAlignedPwm, brightnessPercent-100);
+    FTM_UpdatePwmDutycycle(LED_PWM_FTM_BASEADDR, LED_PWM_FTM_CHANNEL, kFTM_EdgeAlignedPwm, 100 - brightnessPercent);
     FTM_SetSoftwareTrigger(LED_PWM_FTM_BASEADDR, true);  // Triggers register update.
 }

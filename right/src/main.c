@@ -59,7 +59,7 @@ static const uint8_t testData[] =
    0x0a, 0x02, 0x2d, 0x02, 0x1d, 0x02, 0x1b, 0x02, 0x06, 0x02, 0x19, 0x02, 0x05, 0x02, 0x04, 0x02, 0x05, 0x02, 0x06,
    0x02, 0x07, 0x02, 0x08, 0x02, 0x09, 0x02, 0x02, 0x00 };
 
-void updateUsbReports()
+void UpdateUsbReports()
 {
     ResetActiveUsbKeyboardReport();
 
@@ -82,13 +82,13 @@ void main() {
     InitClock();
     LedDriver_InitAllLeds(1);
     KeyMatrix_Init(&KeyMatrix);
-    updateUsbReports();
+    UpdateUsbReports();
     InitUsb();
 
     // deserialize_Layer(testData, 0);
 
     while (1) {
-        updateUsbReports();
+        UpdateUsbReports();
         asm("wfi");
     }
 }
