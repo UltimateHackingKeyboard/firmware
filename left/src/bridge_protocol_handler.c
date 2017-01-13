@@ -41,7 +41,6 @@ void BridgeProtocolHandler()
             BridgeTxSize = 0;
             uint8_t brightnessPercent = BridgeRxBuffer[1];
             LedPwm_SetBrightness(brightnessPercent);
-            TEST_LED_SET(brightnessPercent == 0);
             break;
     }
 }
