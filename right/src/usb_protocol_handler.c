@@ -6,6 +6,7 @@
 #include "merge_sensor.h"
 #include "deserialize.h"
 #include "config_buffer.h"
+#include "led_pwm.h"
 
 void setError(uint8_t error);
 void setGenericError();
@@ -20,6 +21,7 @@ void readEeprom();
 void readMergeSensor();
 void uploadConfig();
 void applyConfig();
+void setLedPwm();
 
 // Functions for setting error statuses
 
@@ -74,6 +76,9 @@ void usbProtocolHandler()
             break;
         case USB_COMMAND_APPLY_CONFIG:
             applyConfig();
+            break;
+        case USB_COMMAND_SET_LED_PWM:
+            setLedPwm();
             break;
         default:
             break;
@@ -198,4 +203,12 @@ void uploadConfig()
 void applyConfig()
 {
     deserialize_Layer(ConfigBuffer, 0);
+}
+
+void setLedPwm()
+{
+    uint8_t brightnessPercent = GenericHidInBuffer[1];
+#if UHK_PCB_MAJOR_VERSION == 7
+    LedPwm_SetBrightness(brightnessPercent);
+#endif
 }

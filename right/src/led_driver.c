@@ -14,13 +14,6 @@ void LedDriver_InitAllLeds(char isEnabled)
     GPIO_PinInit(LED_DRIVER_SDB_GPIO, LED_DRIVER_SDB_PIN, &(gpio_pin_config_t){kGPIO_DigitalOutput, 0});
     GPIO_WritePinOutput(LED_DRIVER_SDB_GPIO, LED_DRIVER_SDB_PIN, 1);
 
-#if UHK_PCB_MAJOR_VERSION == 7
-    CLOCK_EnableClock(LED_DRIVER_PWM_CLOCK);
-    PORT_SetPinMux(LED_DRIVER_PWM_PORT, LED_DRIVER_PWM_PIN, kPORT_MuxAsGpio);
-    GPIO_PinInit(LED_DRIVER_PWM_GPIO, LED_DRIVER_PWM_PIN, &(gpio_pin_config_t){kGPIO_DigitalOutput, 0});
-    GPIO_WritePinOutput(LED_DRIVER_PWM_GPIO, LED_DRIVER_PWM_PIN, 1);
-#endif
-
     LedDriver_SetAllLedsTo(isEnabled ? 0xFF : 0x00);
 }
 
@@ -86,7 +79,6 @@ void LedDriver_SetAllLedsTo(uint8_t val)
         };
         I2cWrite(I2C_MAIN_BUS_BASEADDR, I2C_ADDRESS_LED_DRIVER_LEFT,
                  ledControlBufferLeft, sizeof(ledControlBufferLeft));
-
 
         for (i=FRAME_REGISTER_LED_CONTROL_FIRST; i<=FRAME_REGISTER_LED_CONTROL_LAST; i++) {
             LedDriver_WriteRegister(address, i, 0xff);

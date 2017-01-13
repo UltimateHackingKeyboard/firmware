@@ -5,6 +5,7 @@
 #include "i2c.h"
 #include "led_driver.h"
 #include "merge_sensor.h"
+#include "led_pwm.h"
 
 void InitI2c() {
     port_pin_config_t pinConfig = {
@@ -49,4 +50,7 @@ void InitPeripherials(void)
     InitMergeSensor();
     InitTestLed();
     InitI2c();
+#if UHK_PCB_MAJOR_VERSION == 7
+    LedPwm_Init();
+#endif
 }

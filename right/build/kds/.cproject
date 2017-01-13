@@ -595,13 +595,17 @@
 		<configuration configurationName="Multiple configurations">
 			<resource resourceType="PROJECT" workspacePath="/FRDM-K64F_Demo"/>
 		</configuration>
-		<configuration configurationName="release-v7"/>
+		<configuration configurationName="v6-debug"/>
+		<configuration configurationName="v7-release"/>
 		<configuration configurationName="debug">
 			<resource resourceType="PROJECT" workspacePath="/uhk-right"/>
 		</configuration>
+		<configuration configurationName="release-v7"/>
 		<configuration configurationName="release">
 			<resource resourceType="PROJECT" workspacePath="/uhk-right"/>
 		</configuration>
+		<configuration configurationName="v6-release"/>
+		<configuration configurationName="v7-debug"/>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
 	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>

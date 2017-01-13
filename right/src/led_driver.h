@@ -16,11 +16,6 @@
     #define LED_DRIVER_SDB_CLOCK kCLOCK_PortA
     #define LED_DRIVER_SDB_PIN   2
 
-    #define LED_DRIVER_PWM_PORT  PORTD
-    #define LED_DRIVER_PWM_GPIO  GPIOD
-    #define LED_DRIVER_PWM_CLOCK kCLOCK_PortD
-    #define LED_DRIVER_PWM_PIN   6
-
     #define LED_DRIVER_REGISTER_SHUTDOWN 0x0A
     #define LED_DRIVER_REGISTER_FRAME    0xFD
 
