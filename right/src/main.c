@@ -82,13 +82,13 @@ void main() {
     InitClock();
     LedDriver_InitAllLeds(1);
     KeyMatrix_Init(&KeyMatrix);
-    UpdateUsbReports();
+    //UpdateUsbReports();
     InitUsb();
 
     // deserialize_Layer(testData, 0);
 
     while (1) {
-        UpdateUsbReports();
+        //UpdateUsbReports();
         asm("wfi");
     }
 }

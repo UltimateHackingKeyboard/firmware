@@ -60,6 +60,7 @@ void ResetActiveUsbKeyboardReport()
 
 static usb_status_t UsbKeyboardAction(void)
 {
+    UpdateUsbReports();
     return USB_DeviceHidSend(UsbCompositeDevice.keyboardHandle, USB_KEYBOARD_ENDPOINT_INDEX,
                              (uint8_t*)getInactiveUsbKeyboardReport(), USB_KEYBOARD_REPORT_LENGTH);
 }
