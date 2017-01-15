@@ -208,9 +208,13 @@ void applyConfig()
 void setLedPwm()
 {
 #if UHK_PCB_MAJOR_VERSION == 7
-    uint8_t brightnessPercent = GenericHidInBuffer[1];
-    LedPwm_SetBrightness(brightnessPercent);
-    uint8_t data[] = {2, brightnessPercent};
-    I2cWrite(I2C_MAIN_BUS_BASEADDR, I2C_ADDRESS_LEFT_KEYBOARD_HALF, data, sizeof(data));
+    uint8_t isRightKeyboardHalf = GenericHidInBuffer[1];
+    uint8_t brightnessPercent = GenericHidInBuffer[2];
+    if (isRightKeyboardHalf) {
+        LedPwm_SetBrightness(brightnessPercent);
+    } else {
+        uint8_t data[] = {2, brightnessPercent};
+        I2cWrite(I2C_MAIN_BUS_BASEADDR, I2C_ADDRESS_LEFT_KEYBOARD_HALF, data, sizeof(data));
+    }
 #endif
 }
