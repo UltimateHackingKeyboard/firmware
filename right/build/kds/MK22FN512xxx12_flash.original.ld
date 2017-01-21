@@ -58,8 +58,9 @@ M_VECTOR_RAM_SIZE = DEFINED(__ram_vector_table__) ? 0x0400 : 0x0;
 /* Specify the memory areas */
 MEMORY
 {
-  m_interrupts          (RX)  : ORIGIN = 0x0000c000, LENGTH = 0x00000400
-  m_text                (RX)  : ORIGIN = 0x0000c400, LENGTH = 0x00073BF0   /* SGF Linker adjusted for app */
+  m_interrupts          (RX)  : ORIGIN = 0x00000000, LENGTH = 0x00000400
+  m_flash_config        (RX)  : ORIGIN = 0x00000400, LENGTH = 0x00000010
+  m_text                (RX)  : ORIGIN = 0x00000410, LENGTH = 0x0007FBF0
   m_data                (RW)  : ORIGIN = 0x1FFF0000, LENGTH = 0x00010000
   m_data_2              (RW)  : ORIGIN = 0x20000000, LENGTH = 0x00010000
 }
@@ -75,6 +76,13 @@ SECTIONS
     KEEP(*(.isr_vector))     /* Startup code */
     . = ALIGN(4);
   } > m_interrupts
+
+  .flash_config :
+  {
+    . = ALIGN(4);
+    KEEP(*(.FlashConfig))    /* Flash Configuration Field (FCF) */
+    . = ALIGN(4);
+  } > m_flash_config
 
   /* The program code and other data goes into internal flash */
   .text :
