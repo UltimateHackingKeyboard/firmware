@@ -49,7 +49,7 @@ void InitPeripherials(void)
     InitResetButton();
     InitMergeSensor();
     InitI2c();
-#if UHK_PCB_MAJOR_VERSION == 7
+#if UHK_PCB_MAJOR_VERSION >= 7
     LedPwm_Init();
 #endif
     InitTestLed(); // This function must not be called before LedPwm_Init() or else the UHK won't

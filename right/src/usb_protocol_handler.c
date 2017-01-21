@@ -207,7 +207,7 @@ void applyConfig()
 
 void setLedPwm()
 {
-#if UHK_PCB_MAJOR_VERSION == 7
+#if UHK_PCB_MAJOR_VERSION >= 7
     uint8_t isRightKeyboardHalf = GenericHidInBuffer[1];
     uint8_t brightnessPercent = GenericHidInBuffer[2];
     if (isRightKeyboardHalf) {

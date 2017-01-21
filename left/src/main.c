@@ -13,7 +13,7 @@
 key_matrix_t keyMatrix = {
     .colNum = KEYBOARD_MATRIX_COLS_NUM,
     .rowNum = KEYBOARD_MATRIX_ROWS_NUM,
-#if UHK_PCB_MAJOR_VERSION == 7
+#if UHK_PCB_MAJOR_VERSION >= 7
     .cols = (key_matrix_pin_t[]){
         {PORTB, GPIOB, kCLOCK_PortB, 11},
         {PORTA, GPIOA, kCLOCK_PortA, 6},

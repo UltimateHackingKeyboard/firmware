@@ -7,7 +7,7 @@
 
 // Macros:
 
-#if UHK_PCB_MAJOR_VERSION == 7
+#if UHK_PCB_MAJOR_VERSION >= 7
     #define MERGE_SENSOR_GPIO        GPIOB
     #define MERGE_SENSOR_PORT        PORTB
     #define MERGE_SENSOR_CLOCK       kCLOCK_PortB
