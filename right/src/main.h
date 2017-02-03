@@ -13,7 +13,6 @@
     #define KEYBOARD_MATRIX_ROWS_NUM 5
     #define LEFT_KEYBOARD_HALF_KEY_COUNT (5*7)
 
-
 // Variables:
 
     extern key_matrix_t KeyMatrix;

@@ -84,7 +84,7 @@ static bool handleKey(key_action_t key, int scancodeIdx, usb_keyboard_report_t *
         if (hasKeyReleased(prevKeyStates, currKeyStates, keyId)) {
             ActiveLayer = LAYER_ID_BASE;
         }
-        LedDisplay_SetLayerLed(ActiveLayer);
+        //LedDisplay_SetLayerLed(ActiveLayer);
         return false;
         break;
     default:

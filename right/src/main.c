@@ -5,6 +5,8 @@
 #include "led_driver.h"
 #include "deserialize.h"
 #include "action.h"
+#include "bridge_protocol_scheduler.h"
+#include "test_led.h"
 
 key_matrix_t KeyMatrix = {
     .colNum = KEYBOARD_MATRIX_COLS_NUM,
@@ -66,11 +68,11 @@ void UpdateUsbReports()
     KeyMatrix_Scan(&KeyMatrix);
     memcpy(CurrentKeyStates[SLOT_ID_RIGHT_KEYBOARD_HALF], KeyMatrix.keyStates, MAX_KEY_COUNT_PER_MODULE);
 
-    uint8_t txData[] = {0};
-    bzero(CurrentKeyStates[SLOT_ID_LEFT_KEYBOARD_HALF], MAX_KEY_COUNT_PER_MODULE);
-    if (I2cWrite(I2C_MAIN_BUS_BASEADDR, I2C_ADDRESS_LEFT_KEYBOARD_HALF, txData, sizeof(txData)) == kStatus_Success) {
-        I2cRead(I2C_MAIN_BUS_BASEADDR, I2C_ADDRESS_LEFT_KEYBOARD_HALF, CurrentKeyStates[SLOT_ID_LEFT_KEYBOARD_HALF], LEFT_KEYBOARD_HALF_KEY_COUNT);
-    }
+//    uint8_t txData[] = {0};
+//    bzero(CurrentKeyStates[SLOT_ID_LEFT_KEYBOARD_HALF], MAX_KEY_COUNT_PER_MODULE);
+//    if (I2cWrite(I2C_MAIN_BUS_BASEADDR, I2C_ADDRESS_LEFT_KEYBOARD_HALF, txData, sizeof(txData)) == kStatus_Success) {
+//        I2cRead(I2C_MAIN_BUS_BASEADDR, I2C_ADDRESS_LEFT_KEYBOARD_HALF, CurrentKeyStates[SLOT_ID_LEFT_KEYBOARD_HALF], LEFT_KEYBOARD_HALF_KEY_COUNT);
+//    }
 
     HandleKeyboardEvents(ActiveUsbKeyboardReport, &UsbMouseReport);
 
@@ -81,6 +83,7 @@ void main() {
     InitPeripherials();
     InitClock();
     LedDriver_InitAllLeds(1);
+    InitBridgeProtocolScheduler();
     KeyMatrix_Init(&KeyMatrix);
     //UpdateUsbReports();
     InitUsb();

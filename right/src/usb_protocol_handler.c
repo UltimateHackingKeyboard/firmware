@@ -7,6 +7,7 @@
 #include "deserialize.h"
 #include "config_buffer.h"
 #include "led_pwm.h"
+#include "bridge_protocol_scheduler.h"
 
 void setError(uint8_t error);
 void setGenericError();
@@ -57,10 +58,10 @@ void usbProtocolHandler()
             getSetTestLed();
             break;
         case USB_COMMAND_WRITE_LED_DRIVER:
-            writeLedDriver();
+            //writeLedDriver();
             break;
         case USB_COMMAND_READ_LED_DRIVER:
-            readLedDriver();
+            //readLedDriver();
             break;
         case USB_COMMAND_WRITE_EEPROM:
             writeEeprom();
@@ -119,8 +120,8 @@ void jumpToBootloader() {
 void getSetTestLed()
 {
     uint8_t ledState = GenericHidInBuffer[1];
-    uint8_t data[] = {1, ledState};
-    I2cWrite(I2C_MAIN_BUS_BASEADDR, I2C_ADDRESS_LEFT_KEYBOARD_HALF, data, sizeof(data));
+//    uint8_t data[] = {1, ledState};
+//    I2cWrite(I2C_MAIN_BUS_BASEADDR, I2C_ADDRESS_LEFT_KEYBOARD_HALF, data, sizeof(data));
 
     switch (ledState) {
         case 0:
@@ -130,6 +131,7 @@ void getSetTestLed()
             TEST_LED_OFF();
             break;
     }
+    SetLeds(ledState ? 0xff : 0);
 }
 
 void writeLedDriver()

@@ -53,6 +53,6 @@ void InitPeripherials(void)
     LedPwm_Init();
 #endif
     InitTestLed(); // This function must not be called before LedPwm_Init() or else the UHK won't
-                   // enumerate over USB unless disconnecting it, waiting for at least 4 seconds
+                   // reenumerate over USB unless disconnecting it, waiting for at least 4 seconds
                    // and reconnecting it. This is the strangest thing ever!
 }
