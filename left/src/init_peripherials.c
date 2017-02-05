@@ -21,6 +21,12 @@ void InitI2c() {
     pinConfig.mux = I2C_BUS_MUX;
     PORT_SetPinConfig(I2C_BUS_SDA_PORT, I2C_BUS_SDA_PIN, &pinConfig);
     PORT_SetPinConfig(I2C_BUS_SCL_PORT, I2C_BUS_SCL_PIN, &pinConfig);
+
+    i2c_slave_config_t slaveConfig;
+    I2C_SlaveGetDefaultConfig(&slaveConfig);
+    slaveConfig.slaveAddress = I2C_ADDRESS_LEFT_KEYBOARD_HALF;
+    slaveConfig.addressingMode = kI2C_Address7bit / kI2C_RangeMatch;
+    I2C_SlaveInit(I2C_BUS_BASEADDR, &slaveConfig);
 }
 
 void InitLedDriver() {
