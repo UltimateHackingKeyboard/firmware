@@ -6,5 +6,6 @@
 // Functions:
 
     void InitPeripherials();
-
+    void restartI2C();
+    uint32_t I2C_Watchdog = 0;
 #endif

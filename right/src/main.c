@@ -8,6 +8,7 @@
 #include "bridge_protocol_scheduler.h"
 #include "test_led.h"
 
+
 key_matrix_t KeyMatrix = {
     .colNum = KEYBOARD_MATRIX_COLS_NUM,
     .rowNum = KEYBOARD_MATRIX_ROWS_NUM,
@@ -80,6 +81,8 @@ void UpdateUsbReports()
 }
 
 void main() {
+
+
     InitPeripherials();
     InitClock();
     LedDriver_InitAllLeds(1);
@@ -92,6 +95,7 @@ void main() {
 
     while (1) {
         //UpdateUsbReports();
+    	restartI2C();
         asm("wfi");
     }
 }
