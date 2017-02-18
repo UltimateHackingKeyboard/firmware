@@ -3,9 +3,13 @@
 
 #include "fsl_common.h"
 
+// Variables:
+
+    uint32_t I2C_Watchdog = 0;
+
 // Functions:
 
     void InitPeripherials();
     void restartI2C();
-    uint32_t I2C_Watchdog = 0;
+
 #endif

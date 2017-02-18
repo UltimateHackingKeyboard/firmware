@@ -46,25 +46,23 @@ void InitI2c() {
 }
 
 /* This function is designed to restart and reinstall the I2C handler
- * when a disconnection of the left side makes the Master I2C bus
- * unresponsive  */
+ * when a disconnection of the left side makes the master I2C bus unresponsive  */
 void restartI2C(void) {
-	extern uint32_t I2C_Watchdog;
-	volatile uint32_t temp, counter;
-	uint32_t sourceClock;
+    extern uint32_t I2C_Watchdog;
+    volatile uint32_t temp, counter;
+    uint32_t sourceClock;
     i2c_master_config_t masterConfig;
 
-    temp = I2C_Watchdog;								// We take the current value of I2C counter
-    for (counter = 0; counter < 10000000; counter++);   // This can also be changed for 1 sec delay using PIT
+    temp = I2C_Watchdog; // We take the current value of I2C counter
+    for (counter=0; counter<10000000; counter++);   // This can also be changed for 1 sec delay using PIT
 
-	if (I2C_Watchdog == temp) { 						// Restart I2C if there hasn't be any interrupt during 1 sec
-		I2C_MasterGetDefaultConfig(&masterConfig);
-
-		I2C_MasterDeinit(I2C_MAIN_BUS_BASEADDR);
-		sourceClock = CLOCK_GetFreq(I2C_MASTER_BUS_CLK_SRC);
-		I2C_MasterInit(I2C_MAIN_BUS_BASEADDR, &masterConfig, sourceClock);
-		InitBridgeProtocolScheduler();
-	}
+    if (I2C_Watchdog == temp) { // Restart I2C if there hasn't be any interrupt during 1 sec
+        I2C_MasterGetDefaultConfig(&masterConfig);
+        I2C_MasterDeinit(I2C_MAIN_BUS_BASEADDR);
+        sourceClock = CLOCK_GetFreq(I2C_MASTER_BUS_CLK_SRC);
+        I2C_MasterInit(I2C_MAIN_BUS_BASEADDR, &masterConfig, sourceClock);
+        InitBridgeProtocolScheduler();
+    }
 }
 
 void InitPeripherials(void)
