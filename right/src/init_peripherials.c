@@ -48,7 +48,6 @@ void InitI2c() {
 /* This function is designed to restart and reinstall the I2C handler
  * when a disconnection of the left side makes the master I2C bus unresponsive  */
 void restartI2C(void) {
-    extern uint32_t I2C_Watchdog;
     volatile uint32_t temp, counter;
     uint32_t sourceClock;
     i2c_master_config_t masterConfig;
