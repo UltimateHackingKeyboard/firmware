@@ -8,6 +8,8 @@
 #include "led_pwm.h"
 #include "bridge_protocol_scheduler.h"
 
+volatile uint32_t temp, counter;
+
 void InitI2c() {
     port_pin_config_t pinConfig = {
         .pullSelect = kPORT_PullUp,
@@ -47,8 +49,8 @@ void InitI2c() {
 
 /* This function is designed to restart and reinstall the I2C handler
  * when a disconnection of the left side makes the master I2C bus unresponsive  */
+volatile uint32_t temp, counter;
 void restartI2C(void) {
-    volatile uint32_t temp, counter;
     uint32_t sourceClock;
     i2c_master_config_t masterConfig;
 
