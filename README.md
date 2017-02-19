@@ -26,7 +26,7 @@ In KDS, click on *Run -> Debug Configurations*, then you have two choices:
 
 1. Select *GDB SEGGER J-Link Debugging -> uhk-right vX release jlink* to flash the firmware via a SEGGER J-Link USB debug probe. In this case, the target device (left or right keyboard half, or add-on module) must be powered, and it must be connected to the debug probe.
 
-2. Alternatively, select *C/C++ Application -> uhk-right vX release kboot* to flash the firmware via the bootloader. This method will be the default, but right now it's experimental, and not very robust.
+2. Alternatively, select *C/C++ Application -> uhk-right vX release kboot* to flash the firmware via the bootloader. This method will be the default one, but right now it's experimental, and not very robust.
 
 Lastly, click on the *Debug* button to flash the firmware.
 
