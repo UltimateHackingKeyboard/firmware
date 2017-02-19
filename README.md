@@ -8,7 +8,7 @@ Please make sure to clone this repo with:
 
 `git clone --recursive git@github.com:UltimateHackingKeyboard/firmware.git`
 
-This will download the dependent submodules which are required to build the firmware.
+This will download the dependent submodules, which are required to build the firmware.
 
 ## Importing the firmware
 
@@ -16,7 +16,7 @@ Install [Kinetis Design Studio](http://www.nxp.com/products/software-and-tools/r
 
 ## Bootloader dependency
 
-Before flashing the firmware of the right keyboard half, [the bootloader](https://github.com/UltimateHackingKeyboard/bootloader) must be flashed, otherwise the firmware will not be started. The reason is that the bootloader gets executed first, then it jumps to the firmware, which is offsetted.
+Before flashing the firmware of the *right keyboard half*, [the bootloader](https://github.com/UltimateHackingKeyboard/bootloader) must be flashed, otherwise the firmware will not be started. The reason is that the bootloader gets executed first, then it jumps to the firmware, which is offsetted.
 
 ## Building and flashing the firmware
 
