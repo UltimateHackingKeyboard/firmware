@@ -20,11 +20,13 @@ Before flashing the firmware of the right keyboard half, [the bootloader](https:
 
 ## Building and flashing the firmware
 
-In KDS, click on Run > Debug Configurations, then you have two choices:
+In KDS, click on *Run > Debug Configurations*, then you have two choices:
 
 1. You can select *C/C++ Application > uhk-right v7 release kboot* to flash the firmware via the bootloader.
 
 2. You can select *GDB SEGGER J-Link Debugging > uhk-right v7 release jlink* to flash the firmware via a SEGGER J-Link USB debug probe. In this case, the target device (left or right keyboard half, or add-on module) must be powered, and it must be connected to the debug probe.
+
+Lastly, click on the *Debug* button to flash the firmware.
 
 ## Contributing
 
