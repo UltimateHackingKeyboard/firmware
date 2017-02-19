@@ -28,7 +28,7 @@ In KDS, click on *Run -> Debug Configurations*, then you have two choices:
 
 2. Alternatively, select *C/C++ Application -> uhk-right vX release kboot* to flash the firmware via the bootloader. This method will be the default one, but right now it's experimental, and not very robust.
 
-Lastly, click on the *Debug* button to flash the firmware.
+Lastly, click on the *Debug* button to build and flash the firmware.
 
 ## Contributing
 
