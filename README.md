@@ -12,11 +12,11 @@ This will download the dependent submodules which are required to build the firm
 
 ## Importing the firmware
 
-Install [Kinetis Design Studio](http://www.nxp.com/products/software-and-tools/run-time-software/kinetis-software-and-tools/ides-for-kinetis-mcus/kinetis-design-studio-integrated-development-environment-ide:KDS_IDE) (KDS) and import the project by invoking *File -> Import -> General -> Existing Projects into Workspace*, select the `right` or `left` directory depending on the desired firmware, then click on the *Finish* button.
+Install [Kinetis Design Studio](http://www.nxp.com/products/software-and-tools/run-time-software/kinetis-software-and-tools/ides-for-kinetis-mcus/kinetis-design-studio-integrated-development-environment-ide:KDS_IDE) (KDS) and import the project by invoking *File -> Import -> General -> Existing Projects into Workspace*, select the `left` or `right` directory depending on the desired firmware, then click on the *Finish* button.
 
 ## Bootloader dependency
 
-Before flashing the firmware of the right keyboard half, [the bootloader](https://github.com/UltimateHackingKeyboard/bootloader) must be flashed to the microcontroller, otherwise the firmware will not be started. The reason is that the bootloader gets executed first, then it jumps to the firmware, which is offsetted.
+Before flashing the firmware of the right keyboard half, [the bootloader](https://github.com/UltimateHackingKeyboard/bootloader) must be flashed, otherwise the firmware will not be started. The reason is that the bootloader gets executed first, then it jumps to the firmware, which is offsetted.
 
 ## Building and flashing the firmware
 
