@@ -12,7 +12,7 @@ This will download the dependent submodules which are required to build the firm
 
 ## Importing the firmware
 
-Install [Kinetis Design Studio](http://www.nxp.com/products/software-and-tools/run-time-software/kinetis-software-and-tools/ides-for-kinetis-mcus/kinetis-design-studio-integrated-development-environment-ide:KDS_IDE) (KDS) and import the project by invoking *File -> Import -> General -> Existing Projects* into Workspace, select the `right` or `left` directory depending on the desired firmware, then click on the Finish button. At this point, you should be able to build the firmware in KDS.
+Install [Kinetis Design Studio](http://www.nxp.com/products/software-and-tools/run-time-software/kinetis-software-and-tools/ides-for-kinetis-mcus/kinetis-design-studio-integrated-development-environment-ide:KDS_IDE) (KDS) and import the project by invoking *File -> Import -> General -> Existing Projects* into Workspace, select the `right` or `left` directory depending on the desired firmware, then click on the *Finish* button.
 
 ## Bootloader dependency
 
