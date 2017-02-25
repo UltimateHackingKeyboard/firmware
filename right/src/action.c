@@ -5,30 +5,13 @@
 #include "usb_interface_mouse.h"
 #include "current_keymap.h"
 
-static uint8_t keyMasks[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
-
 static uint8_t ActiveLayer = LAYER_ID_BASE;
 
 static key_action_t keyToAction(uint8_t slotId, uint8_t keyId)
 {
-    if (keyMasks[slotId][keyId]!=0 && keyMasks[slotId][keyId]!=ActiveLayer) {
-        // Mask out key presses after releasing modifier keys
-        return (key_action_t){.type = KEY_ACTION_NONE};
-    }
-
     key_action_t key = CurrentKeymap[ActiveLayer][slotId][keyId];
-    keyMasks[slotId][keyId] = ActiveLayer;
 
     return key;
-}
-
-static void clearKeymask(const uint8_t *keyStates)
-{
-    for (uint8_t i=0; i < MAX_KEY_COUNT_PER_MODULE; i++) {
-        if (keyStates[i]==0) {
-            keyMasks[SLOT_ID_LEFT_KEYBOARD_HALF][i] = 0;
-        }
-    }
 }
 
 static bool pressKey(key_action_t key, int scancodeIdx, usb_keyboard_report_t *report)
@@ -51,19 +34,9 @@ static bool pressKey(key_action_t key, int scancodeIdx, usb_keyboard_report_t *r
     return true;
 }
 
-static bool hasKeyPressed(const uint8_t *prevKeyStates, const uint8_t *currKeyStates, uint8_t keyId)
-{
-    return (!prevKeyStates[keyId]) && currKeyStates[keyId];
-}
-
 static bool isKeyPressed(const uint8_t *currKeyStates, uint8_t keyId)
 {
     return currKeyStates[keyId];
-}
-
-static bool hasKeyReleased(const uint8_t *prevKeyStates, const uint8_t *currKeyStates, uint8_t keyId)
-{
-    return (!currKeyStates[keyId]) && prevKeyStates[keyId];
 }
 
 static bool handleKey(key_action_t key, int scancodeIdx, usb_keyboard_report_t *report, const uint8_t *prevKeyStates, const uint8_t *currKeyStates, uint8_t keyId) {
@@ -159,7 +132,6 @@ void HandleKeyboardEvents(usb_keyboard_report_t *keyboardReport, usb_mouse_repor
     }
 
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
-        clearKeymask(CurrentKeyStates[slotId]);
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
             if (scancodeIdx >= USB_KEYBOARD_MAX_KEYS) {
                 break;
