@@ -7,13 +7,6 @@
 
 static uint8_t ActiveLayer = LAYER_ID_BASE;
 
-static key_action_t keyToAction(uint8_t slotId, uint8_t keyId)
-{
-    key_action_t key = CurrentKeymap[ActiveLayer][slotId][keyId];
-
-    return key;
-}
-
 static bool pressKey(key_action_t key, int scancodeIdx, usb_keyboard_report_t *report)
 {
     if (key.type != KEY_ACTION_KEYSTROKE) {
@@ -137,7 +130,7 @@ void HandleKeyboardEvents() {
                 break;
             }
 
-            key_action_t action = keyToAction(slotId, keyId);
+            key_action_t action = CurrentKeymap[ActiveLayer][slotId][keyId];
 
             if (action.type == KEY_ACTION_MOUSE) {
                 HandleMouseKey(&UsbMouseReport, action, PreviousKeyStates[slotId], CurrentKeyStates[slotId], keyId);
