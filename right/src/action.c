@@ -73,18 +73,6 @@ static bool handleKey(key_action_t key, int scancodeIdx, usb_keyboard_report_t *
             return pressKey(key, scancodeIdx, report);
         }
         break;
-    case KEY_ACTION_SWITCH_LAYER:
-        if (hasKeyPressed(prevKeyStates, currKeyStates, keyId)) {
-            ActiveLayer = key.switchLayer.layer;
-        }
-        if (hasKeyReleased(prevKeyStates, currKeyStates, keyId)) {
-            ActiveLayer = LAYER_ID_BASE;
-        }
-        //LedDisplay_SetLayerLed(ActiveLayer);
-        return false;
-        break;
-    default:
-        break;
     }
     return false;
 }
@@ -157,6 +145,18 @@ void HandleMouseKey(usb_mouse_report_t *report, key_action_t key, const uint8_t 
 
 void HandleKeyboardEvents(usb_keyboard_report_t *keyboardReport, usb_mouse_report_t *mouseReport) {
     int scancodeIdx = 0;
+
+    ActiveLayer = LAYER_ID_BASE;
+    for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
+        for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
+            if (CurrentKeyStates[slotId][keyId]) {
+                key_action_t action =  CurrentKeymap[LAYER_ID_BASE][slotId][keyId];
+                if (action.type == KEY_ACTION_SWITCH_LAYER) {
+                    ActiveLayer = action.switchLayer.layer;
+                }
+            }
+        }
+    }
 
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         clearKeymask(CurrentKeyStates[slotId]);
