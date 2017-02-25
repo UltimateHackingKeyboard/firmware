@@ -56,7 +56,7 @@ static bool hasKeyPressed(const uint8_t *prevKeyStates, const uint8_t *currKeySt
     return (!prevKeyStates[keyId]) && currKeyStates[keyId];
 }
 
-static bool isKeyPressed(const uint8_t *prevKeyStates, const uint8_t *currKeyStates, uint8_t keyId)
+static bool isKeyPressed(const uint8_t *currKeyStates, uint8_t keyId)
 {
     return currKeyStates[keyId];
 }
@@ -69,7 +69,7 @@ static bool hasKeyReleased(const uint8_t *prevKeyStates, const uint8_t *currKeyS
 static bool handleKey(key_action_t key, int scancodeIdx, usb_keyboard_report_t *report, const uint8_t *prevKeyStates, const uint8_t *currKeyStates, uint8_t keyId) {
     switch (key.type) {
     case KEY_ACTION_KEYSTROKE:
-        if (isKeyPressed(prevKeyStates, currKeyStates, keyId)) {
+        if (isKeyPressed(currKeyStates, keyId)) {
             return pressKey(key, scancodeIdx, report);
         }
         break;
@@ -96,7 +96,7 @@ static bool wasPreviousMouseActionWheelAction = false;
 
 void HandleMouseKey(usb_mouse_report_t *report, key_action_t key, const uint8_t *prevKeyStates, const uint8_t *currKeyStates, uint8_t keyId)
 {
-    if (!isKeyPressed(prevKeyStates, currKeyStates, keyId)) {
+    if (!isKeyPressed(currKeyStates, keyId)) {
         return;
     }
 
