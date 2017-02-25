@@ -9,7 +9,7 @@ static uint8_t keyMasks[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
 
 static uint8_t ActiveLayer = LAYER_ID_BASE;
 
-static key_action_t getKeycode(uint8_t slotId, uint8_t keyId)
+static key_action_t keyToAction(uint8_t slotId, uint8_t keyId)
 {
     if (keyMasks[slotId][keyId]!=0 && keyMasks[slotId][keyId]!=ActiveLayer) {
         // Mask out key presses after releasing modifier keys
@@ -165,12 +165,12 @@ void HandleKeyboardEvents(usb_keyboard_report_t *keyboardReport, usb_mouse_repor
                 break;
             }
 
-            key_action_t code = getKeycode(slotId, keyId);
+            key_action_t action = keyToAction(slotId, keyId);
 
-            if (code.type == KEY_ACTION_MOUSE) {
-                HandleMouseKey(mouseReport, code, PreviousKeyStates[slotId], CurrentKeyStates[slotId], keyId);
+            if (action.type == KEY_ACTION_MOUSE) {
+                HandleMouseKey(mouseReport, action, PreviousKeyStates[slotId], CurrentKeyStates[slotId], keyId);
             } else {
-                if (handleKey(code, scancodeIdx, keyboardReport, PreviousKeyStates[slotId], CurrentKeyStates[slotId], keyId)) {
+                if (handleKey(action, scancodeIdx, keyboardReport, PreviousKeyStates[slotId], CurrentKeyStates[slotId], keyId)) {
                     scancodeIdx++;
                 }
             }
