@@ -3,6 +3,7 @@
 #include "test_led.h"
 #include "reset_button.h"
 #include "i2c.h"
+#include "i2c_watchdog.h"
 #include "led_driver.h"
 #include "merge_sensor.h"
 #include "led_pwm.h"
@@ -47,25 +48,6 @@ void InitI2c() {
     I2C_MasterInit(I2C_EEPROM_BUS_BASEADDR, &masterConfig, sourceClock);
 }
 
-/* This function is designed to restart and reinstall the I2C handler
- * when a disconnection of the left side makes the master I2C bus unresponsive  */
-volatile uint32_t temp, counter;
-void restartI2C(void) {
-    uint32_t sourceClock;
-    i2c_master_config_t masterConfig;
-
-    temp = I2C_Watchdog; // We take the current value of I2C counter
-    for (counter=0; counter<10000000; counter++);   // This can also be changed for 1 sec delay using PIT
-
-    if (I2C_Watchdog == temp) { // Restart I2C if there hasn't be any interrupt during 1 sec
-        I2C_MasterGetDefaultConfig(&masterConfig);
-        I2C_MasterDeinit(I2C_MAIN_BUS_BASEADDR);
-        sourceClock = CLOCK_GetFreq(I2C_MASTER_BUS_CLK_SRC);
-        I2C_MasterInit(I2C_MAIN_BUS_BASEADDR, &masterConfig, sourceClock);
-        InitBridgeProtocolScheduler();
-    }
-}
-
 void InitPeripherials(void)
 {
     InitResetButton();
@@ -77,4 +59,5 @@ void InitPeripherials(void)
     InitTestLed(); // This function must not be called before LedPwm_Init() or else the UHK won't
                    // reenumerate over USB unless disconnecting it, waiting for at least 4 seconds
                    // and reconnecting it. This is the strangest thing ever!
+    InitI2cWatchdog();
 }

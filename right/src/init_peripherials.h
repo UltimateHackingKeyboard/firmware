@@ -10,6 +10,5 @@
 // Functions:
 
     void InitPeripherials();
-    void restartI2C();
 
 #endif

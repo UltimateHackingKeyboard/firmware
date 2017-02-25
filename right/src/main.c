@@ -92,7 +92,6 @@ void main() {
 
     while (1) {
         //UpdateUsbReports();
-        restartI2C();
         asm("wfi");
     }
 }
