@@ -91,6 +91,6 @@ typedef struct {
 } __attribute__ ((packed)) key_action_t;
 
 void HandleMouseKey(usb_mouse_report_t *report, key_action_t key, const uint8_t *prevKeyStates, const uint8_t *currKeyStates, uint8_t keyId);
-void HandleKeyboardEvents(usb_keyboard_report_t *keyboardReport, usb_mouse_report_t *mouseReport);
+void HandleKeyboardEvents();
 
 #endif

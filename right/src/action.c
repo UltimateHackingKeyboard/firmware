@@ -116,7 +116,7 @@ void HandleMouseKey(usb_mouse_report_t *report, key_action_t key, const uint8_t 
     wasPreviousMouseActionWheelAction = isWheelAction;
 }
 
-void HandleKeyboardEvents(usb_keyboard_report_t *keyboardReport, usb_mouse_report_t *mouseReport) {
+void HandleKeyboardEvents() {
     int scancodeIdx = 0;
 
     ActiveLayer = LAYER_ID_BASE;
@@ -140,9 +140,9 @@ void HandleKeyboardEvents(usb_keyboard_report_t *keyboardReport, usb_mouse_repor
             key_action_t action = keyToAction(slotId, keyId);
 
             if (action.type == KEY_ACTION_MOUSE) {
-                HandleMouseKey(mouseReport, action, PreviousKeyStates[slotId], CurrentKeyStates[slotId], keyId);
+                HandleMouseKey(&UsbMouseReport, action, PreviousKeyStates[slotId], CurrentKeyStates[slotId], keyId);
             } else {
-                if (handleKey(action, scancodeIdx, keyboardReport, PreviousKeyStates[slotId], CurrentKeyStates[slotId], keyId)) {
+                if (handleKey(action, scancodeIdx, ActiveUsbKeyboardReport, PreviousKeyStates[slotId], CurrentKeyStates[slotId], keyId)) {
                     scancodeIdx++;
                 }
             }
