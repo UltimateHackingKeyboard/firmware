@@ -11,19 +11,15 @@ static uint8_t ActiveLayer = LAYER_ID_BASE;
 
 static key_action_t getKeycode(uint8_t slotId, uint8_t keyId)
 {
-    if (keyId < MAX_KEY_COUNT_PER_MODULE) {
-        if (keyMasks[slotId][keyId]!=0 && keyMasks[slotId][keyId]!=ActiveLayer) {
-            // Mask out key presses after releasing modifier keys
-            return (key_action_t){.type = KEY_ACTION_NONE};
-        }
-
-        key_action_t key = CurrentKeymap[ActiveLayer][slotId][keyId];
-        keyMasks[slotId][keyId] = ActiveLayer;
-
-        return key;
-    } else {
+    if (keyMasks[slotId][keyId]!=0 && keyMasks[slotId][keyId]!=ActiveLayer) {
+        // Mask out key presses after releasing modifier keys
         return (key_action_t){.type = KEY_ACTION_NONE};
     }
+
+    key_action_t key = CurrentKeymap[ActiveLayer][slotId][keyId];
+    keyMasks[slotId][keyId] = ActiveLayer;
+
+    return key;
 }
 
 static void clearKeymask(const uint8_t *keyStates)
