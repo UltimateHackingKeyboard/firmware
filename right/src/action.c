@@ -69,7 +69,14 @@ void HandleMouseKey(key_action_t action)
 }
 
 void HandleKeyboardEvents() {
-    int scancodeIdx = 0;
+
+    UsbMouseReport.buttons = 0;
+    UsbMouseReport.x = 0;
+    UsbMouseReport.y = 0;
+    UsbMouseReport.wheelX = 0;
+    UsbMouseReport.wheelY = 0;
+
+    uint8_t scancodeIdx = 0;
 
     activeLayer = LAYER_ID_BASE;
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {

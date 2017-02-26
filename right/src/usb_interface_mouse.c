@@ -39,18 +39,10 @@ usb_device_class_struct_t UsbMouseClass = {
 
 usb_mouse_report_t UsbMouseReport;
 
-static volatile usb_status_t UsbMouseAction(void)
+static volatile usb_status_t usbMouseAction()
 {
-    usb_status_t ret;
-    ret = USB_DeviceHidSend(UsbCompositeDevice.mouseHandle, USB_MOUSE_ENDPOINT_INDEX,
-                            (uint8_t*)&UsbMouseReport, USB_MOUSE_REPORT_LENGTH);
-    UsbMouseReport.buttons = 0;
-    UsbMouseReport.x = 0;
-    UsbMouseReport.y = 0;
-    UsbMouseReport.wheelX = 0;
-    UsbMouseReport.wheelY = 0;
-
-    return ret;
+    return USB_DeviceHidSend(UsbCompositeDevice.mouseHandle, USB_MOUSE_ENDPOINT_INDEX,
+                             (uint8_t*)&UsbMouseReport, USB_MOUSE_REPORT_LENGTH);
 }
 
 usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param)
@@ -60,7 +52,7 @@ usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param
     switch (event) {
         case kUSB_DeviceHidEventSendResponse:
             if (UsbCompositeDevice.attach) {
-                return UsbMouseAction();
+                return usbMouseAction();
             }
             break;
         case kUSB_DeviceHidEventGetReport:
@@ -83,7 +75,7 @@ usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param
 usb_status_t UsbMouseSetConfiguration(class_handle_t handle, uint8_t configuration)
 {
     if (USB_COMPOSITE_CONFIGURATION_INDEX == configuration) {
-        return UsbMouseAction();
+        return usbMouseAction();
     }
     return kStatus_USB_Error;
 }
@@ -91,7 +83,7 @@ usb_status_t UsbMouseSetConfiguration(class_handle_t handle, uint8_t configurati
 usb_status_t UsbMouseSetInterface(class_handle_t handle, uint8_t interface, uint8_t alternateSetting)
 {
     if (USB_MOUSE_INTERFACE_INDEX == interface) {
-        return UsbMouseAction();
+        return usbMouseAction();
     }
     return kStatus_USB_Error;
 }
