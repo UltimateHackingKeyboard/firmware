@@ -108,7 +108,5 @@ void UpdateActiveUsbReports() {
                     break;
             }
         }
-
-        memcpy(PreviousKeyStates[slotId], CurrentKeyStates[slotId], MAX_KEY_COUNT_PER_MODULE);
     }
 }
