@@ -6,7 +6,7 @@
 #include "deserialize.h"
 #include "action.h"
 #include "bridge_protocol_scheduler.h"
-#include "test_led.h"
+#include "peripherials/test_led.h"
 
 key_matrix_t KeyMatrix = {
     .colNum = KEYBOARD_MATRIX_COLS_NUM,
