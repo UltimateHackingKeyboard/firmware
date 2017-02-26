@@ -70,11 +70,7 @@ void ProcessMouseAction(key_action_t action)
 
 void UpdateActiveUsbReports() {
 
-    UsbMouseReport.buttons = 0;
-    UsbMouseReport.x = 0;
-    UsbMouseReport.y = 0;
-    UsbMouseReport.wheelX = 0;
-    UsbMouseReport.wheelY = 0;
+    bzero(&UsbMouseReport, sizeof(usb_mouse_report_t));
 
     uint8_t scancodeIdx = 0;
 
