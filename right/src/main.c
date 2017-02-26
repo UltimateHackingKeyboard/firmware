@@ -74,7 +74,7 @@ void UpdateUsbReports()
 //        I2cRead(I2C_MAIN_BUS_BASEADDR, I2C_ADDRESS_LEFT_KEYBOARD_HALF, CurrentKeyStates[SLOT_ID_LEFT_KEYBOARD_HALF], LEFT_KEYBOARD_HALF_KEY_COUNT);
 //    }
 
-    HandleKeyboardEvents(ActiveUsbKeyboardReport, &UsbMouseReport);
+    HandleKeyboardEvents();
 
     SwitchActiveUsbKeyboardReport();
 }
