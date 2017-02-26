@@ -371,9 +371,9 @@ key_action_t CurrentKeymap[LAYER_COUNT][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = 
             // Row 3
             { .type = KEY_ACTION_SWITCH_LAYER, .switchLayer = { .layer = LAYER_ID_MOUSE }},
             { .type = KEY_ACTION_NONE },
-            { .type = KEY_ACTION_MOUSE, .mouse = { .buttonActions = MOUSE_BUTTON_LEFT }},
-            { .type = KEY_ACTION_MOUSE, .mouse = { .buttonActions = MOUSE_BUTTON_MIDDLE }},
             { .type = KEY_ACTION_MOUSE, .mouse = { .buttonActions = MOUSE_BUTTON_RIGHT }},
+            { .type = KEY_ACTION_MOUSE, .mouse = { .buttonActions = MOUSE_BUTTON_MIDDLE }},
+            { .type = KEY_ACTION_MOUSE, .mouse = { .buttonActions = MOUSE_BUTTON_LEFT }},
             { .type = KEY_ACTION_NONE },
             { .type = KEY_ACTION_NONE },
 
