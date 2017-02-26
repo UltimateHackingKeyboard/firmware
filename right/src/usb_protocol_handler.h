@@ -3,7 +3,7 @@
 
 // Includes:
 
-#include "usb_interface_generic_hid.h"
+#include "usb_interfaces/usb_interface_generic_hid.h"
 
 // Macros:
 

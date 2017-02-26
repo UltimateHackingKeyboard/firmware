@@ -2,7 +2,7 @@
 #include "action.h"
 #include "led_display.h"
 #include "layer.h"
-#include "usb_interface_mouse.h"
+#include "usb_interfaces/usb_interface_mouse.h"
 #include "current_keymap.h"
 
 static uint8_t activeLayer = LAYER_ID_BASE;
