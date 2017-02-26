@@ -3,7 +3,7 @@
 
 // Includes:
 
-    #include "usb_descriptor_configuration.h"
+    #include "usb_descriptors/usb_descriptor_configuration.h"
 
 // Macros:
 

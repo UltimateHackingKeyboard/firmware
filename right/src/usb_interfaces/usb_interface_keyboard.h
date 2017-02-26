@@ -4,7 +4,7 @@
 // Includes:
 
     #include "usb_api.h"
-    #include "usb_descriptor_keyboard_report.h"
+    #include "usb_descriptors/usb_descriptor_keyboard_report.h"
 
 // Macros:
 
