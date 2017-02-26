@@ -3,6 +3,7 @@
 
 // Includes:
 
+    #include "fsl_common.h"
     #include "usb_api.h"
     #include "usb_descriptors/usb_descriptor_keyboard_report.h"
 
@@ -28,6 +29,7 @@
 
 // Variables:
 
+    extern bool IsUsbKeyboardReportSent;
     extern usb_device_class_struct_t UsbKeyboardClass;
     extern usb_keyboard_report_t* ActiveUsbKeyboardReport;
 

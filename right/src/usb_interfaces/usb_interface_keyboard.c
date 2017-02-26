@@ -42,6 +42,7 @@ usb_device_class_struct_t UsbKeyboardClass = {
 
 static usb_keyboard_report_t usbKeyboardReports[2];
 usb_keyboard_report_t* ActiveUsbKeyboardReport = usbKeyboardReports;
+bool IsUsbKeyboardReportSent = false;
 
 usb_keyboard_report_t* getInactiveUsbKeyboardReport()
 {
@@ -60,9 +61,11 @@ void ResetActiveUsbKeyboardReport()
 
 static usb_status_t UsbKeyboardAction(void)
 {
-    UpdateUsbReports();
-    return USB_DeviceHidSend(UsbCompositeDevice.keyboardHandle, USB_KEYBOARD_ENDPOINT_INDEX,
-                             (uint8_t*)getInactiveUsbKeyboardReport(), USB_KEYBOARD_REPORT_LENGTH);
+    usb_status_t status = USB_DeviceHidSend(
+        UsbCompositeDevice.keyboardHandle, USB_KEYBOARD_ENDPOINT_INDEX,
+        (uint8_t*)getInactiveUsbKeyboardReport(), USB_KEYBOARD_REPORT_LENGTH);
+    IsUsbKeyboardReportSent = true;
+    return status;
 }
 
 usb_status_t UsbKeyboardCallback(class_handle_t handle, uint32_t event, void *param)
