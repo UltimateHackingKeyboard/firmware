@@ -11,7 +11,7 @@ static uint8_t mouseSpeedAccelDivisorCounter = 0;
 static uint8_t mouseSpeed = 3;
 static bool wasPreviousMouseActionWheelAction = false;
 
-void HandleMouseKey(key_action_t action)
+void ProcessMouseAction(key_action_t action)
 {
     bool isWheelAction = action.mouse.scrollActions && !action.mouse.moveActions && !action.mouse.buttonActions;
 
@@ -104,7 +104,7 @@ void UpdateActiveUsbReports() {
                     ActiveUsbKeyboardReport->modifiers |= action.keystroke.mods;
                     break;
                 case KEY_ACTION_MOUSE:
-                    HandleMouseKey(action);
+                    ProcessMouseAction(action);
                     break;
             }
         }

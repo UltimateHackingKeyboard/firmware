@@ -90,7 +90,7 @@ typedef struct {
     };
 } __attribute__ ((packed)) key_action_t;
 
-void HandleMouseKey(key_action_t action);
+void ProcessMouseAction(key_action_t action);
 void UpdateActiveUsbReports();
 
 #endif
