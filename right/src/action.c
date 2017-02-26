@@ -68,7 +68,7 @@ void HandleMouseKey(key_action_t action)
     wasPreviousMouseActionWheelAction = isWheelAction;
 }
 
-void HandleKeyboardEvents() {
+void UpdateActiveUsbReports() {
 
     UsbMouseReport.buttons = 0;
     UsbMouseReport.x = 0;

@@ -91,6 +91,6 @@ typedef struct {
 } __attribute__ ((packed)) key_action_t;
 
 void HandleMouseKey(key_action_t action);
-void HandleKeyboardEvents();
+void UpdateActiveUsbReports();
 
 #endif
