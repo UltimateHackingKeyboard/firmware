@@ -7,40 +7,9 @@
 
 static uint8_t ActiveLayer = LAYER_ID_BASE;
 
-static bool pressKey(key_action_t key, int scancodeIdx, usb_keyboard_report_t *report)
-{
-    if (key.type != KEY_ACTION_KEYSTROKE) {
-        return false;
-    }
-
-    if (!key.keystroke.key) {
-        return false;
-    }
-
-    for (uint8_t i = 0; i < 8; i++) {
-        if (key.keystroke.mods & (1 << i) || key.keystroke.key == HID_KEYBOARD_SC_LEFT_CONTROL + i) {
-            report->modifiers |= (1 << i);
-        }
-    }
-
-    report->scancodes[scancodeIdx] = key.keystroke.key;
-    return true;
-}
-
 static bool isKeyPressed(const uint8_t *currKeyStates, uint8_t keyId)
 {
     return currKeyStates[keyId];
-}
-
-static bool handleKey(key_action_t key, int scancodeIdx, usb_keyboard_report_t *report, const uint8_t *prevKeyStates, const uint8_t *currKeyStates, uint8_t keyId) {
-    switch (key.type) {
-    case KEY_ACTION_KEYSTROKE:
-        if (isKeyPressed(currKeyStates, keyId)) {
-            return pressKey(key, scancodeIdx, report);
-        }
-        break;
-    }
-    return false;
 }
 
 static uint8_t mouseWheelDivisorCounter = 0;
@@ -116,7 +85,7 @@ void HandleKeyboardEvents() {
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
             if (CurrentKeyStates[slotId][keyId]) {
-                key_action_t action =  CurrentKeymap[LAYER_ID_BASE][slotId][keyId];
+                key_action_t action = CurrentKeymap[LAYER_ID_BASE][slotId][keyId];
                 if (action.type == KEY_ACTION_SWITCH_LAYER) {
                     ActiveLayer = action.switchLayer.layer;
                 }
@@ -126,18 +95,20 @@ void HandleKeyboardEvents() {
 
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
-            if (scancodeIdx >= USB_KEYBOARD_MAX_KEYS) {
-                break;
+
+            if (!CurrentKeyStates[slotId][keyId]) {
+                continue;
             }
 
             key_action_t action = CurrentKeymap[ActiveLayer][slotId][keyId];
-
-            if (action.type == KEY_ACTION_MOUSE) {
-                HandleMouseKey(&UsbMouseReport, action, PreviousKeyStates[slotId], CurrentKeyStates[slotId], keyId);
-            } else {
-                if (handleKey(action, scancodeIdx, ActiveUsbKeyboardReport, PreviousKeyStates[slotId], CurrentKeyStates[slotId], keyId)) {
-                    scancodeIdx++;
-                }
+            switch (action.type) {
+                case KEY_ACTION_KEYSTROKE:
+                    ActiveUsbKeyboardReport->scancodes[scancodeIdx++] = action.keystroke.key;
+                    ActiveUsbKeyboardReport->modifiers |= action.keystroke.mods;
+                    break;
+                case KEY_ACTION_MOUSE:
+                    HandleMouseKey(&UsbMouseReport, action, PreviousKeyStates[slotId], CurrentKeyStates[slotId], keyId);
+                    break;
             }
         }
 
