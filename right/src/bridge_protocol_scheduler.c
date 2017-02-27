@@ -47,6 +47,7 @@ void i2cAsyncRead(uint8_t i2cAddress, uint8_t *volatile data, volatile size_t da
 static void bridgeProtocolCallback(I2C_Type *base, i2c_master_handle_t *handle, status_t status, void *userData)
 {
     bridge_slave_t *bridgeSlave = bridgeSlaves + currentBridgeSlaveId;
+    SetLeds(0xff);
 
     if (bridgeSlave->type == BridgeSlaveType_UhkModule) {
         i2cAsyncRead(I2C_ADDRESS_LEFT_KEYBOARD_HALF, CurrentKeyStates[SLOT_ID_LEFT_KEYBOARD_HALF], LEFT_KEYBOARD_HALF_KEY_COUNT);
@@ -63,6 +64,7 @@ static void bridgeProtocolCallback(I2C_Type *base, i2c_master_handle_t *handle, 
 
 void InitBridgeProtocolScheduler()
 {
+    SetLeds(0xff);
     I2C_MasterTransferCreateHandle(I2C_MAIN_BUS_BASEADDR, &masterHandle, bridgeProtocolCallback, NULL);
     i2cAsyncWrite(I2C_ADDRESS_LED_DRIVER_LEFT, ledsBuffer, BUFFER_SIZE);
 }
