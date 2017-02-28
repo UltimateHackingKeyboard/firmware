@@ -53,11 +53,9 @@ void InitPeripherials(void)
     InitResetButton();
     InitMergeSensor();
     InitI2c();
+    InitTestLed();
 #if UHK_PCB_MAJOR_VERSION >= 7
     LedPwm_Init();
 #endif
-    InitTestLed(); // This function must not be called before LedPwm_Init() or else the UHK won't
-                   // reenumerate over USB unless disconnecting it, waiting for at least 4 seconds
-                   // and reconnecting it. This is the strangest thing ever!
     InitI2cWatchdog();
 }

@@ -2,7 +2,6 @@
 #include "fsl_port.h"
 
 void LedPwm_Init() {
-
     CLOCK_EnableClock(LED_PWM_CLOCK);
     PORT_SetPinMux(LED_PWM_PORT, LED_PWM_PIN, kPORT_MuxAlt4);
 
@@ -15,7 +14,7 @@ void LedPwm_Init() {
     ftmParam[0].level = kFTM_LowTrue;
     ftmParam[0].dutyCyclePercent = 100 - INITIAL_DUTY_CYCLE_PERCENT;
     ftmParam[0].firstEdgeDelayPercent = 0;
-    FTM_SetupPwm(LED_PWM_FTM_BASEADDR, ftmParam, sizeof(ftmParam),
+    FTM_SetupPwm(LED_PWM_FTM_BASEADDR, ftmParam, 1,
                  kFTM_EdgeAlignedPwm, FTM_PWM_FREQUENCY, FTM_SOURCE_CLOCK);
 
     FTM_StartTimer(LED_PWM_FTM_BASEADDR, kFTM_SystemClock);
