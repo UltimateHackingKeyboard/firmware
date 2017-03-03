@@ -8,18 +8,6 @@
 
 #include "module.h"
 
-// Keyboard layout is a 2D array of scan codes.
-//
-// First dimension is the Key ID of a given key. Key IDs are the indices of the
-// of the active keys of the key_matrix_t structure. In case of left half, an
-// offset of 35 is added.
-//
-// For each Key ID, there are 4 different possible scan codes:
-//      - default, when no modifiers are pressed
-//      - mod layer
-//      - fn layer
-//      - mod+fn layer
-
 typedef enum {
     KEY_ACTION_NONE,
     KEY_ACTION_BASIC_KEYSTROKE,
@@ -71,21 +59,18 @@ typedef struct {
             uint8_t key;
         } __attribute__ ((packed)) keystroke;
         struct {
-            uint8_t buttonActions; // bitfield
-            uint8_t scrollActions; // bitfield
-            uint8_t moveActions; // bitfield
+            uint8_t buttonActions;
+            uint8_t scrollActions;
+            uint8_t moveActions;
         } __attribute__ ((packed)) mouse;
         struct {
-            uint16_t __unused_bits:15;
-            bool isToggle:1;
+            bool isToggle;
             uint8_t layer;
         } __attribute__ ((packed)) switchLayer;
         struct {
-            uint16_t __unused_bits;
             uint8_t keymap;
         } __attribute__ ((packed)) switchKeymap;
         struct {
-            uint8_t __unused_bits;
             uint16_t index;
         } __attribute__ ((packed)) playMacro;
     };
