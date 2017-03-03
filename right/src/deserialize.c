@@ -109,13 +109,13 @@ static void processKeyStrokeAction(key_action_t *action, uint8_t actionType, ser
     action->type = KEY_ACTION_BASIC_KEYSTROKE;
 
     if (flags & HAS_SCANCODE) {
-        action->basicKeystroke.scancode = readUInt8(buffer);
+        action->keystroke.scancode = readUInt8(buffer);
     }
     if (flags & HAS_MODS) {
-        action->basicKeystroke.modifiers = readUInt8(buffer);
+        action->keystroke.modifiers = readUInt8(buffer);
     }
     if (flags & HAS_LONGPRESS) {
-        action->basicKeystroke.longPressAction = readUInt8(buffer);
+        action->keystroke.longPressAction = readUInt8(buffer);
     }
 }
 

@@ -57,7 +57,7 @@ typedef struct {
             uint8_t longPressAction;
             uint8_t modifiers;
             uint8_t scancode;
-        } __attribute__ ((packed)) basicKeystroke;
+        } __attribute__ ((packed)) keystroke;
         struct {
             uint8_t buttonActions;
             uint8_t scrollActions;
