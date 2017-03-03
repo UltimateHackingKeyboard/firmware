@@ -1,7 +1,7 @@
 #include "usb_api.h"
-#include "usb_descriptor_keyboard_report.h"
+#include "usb_descriptor_basic_keyboard_report.h"
 
-uint8_t UsbKeyboardReportDescriptor[USB_KEYBOARD_REPORT_DESCRIPTOR_LENGTH] = {
+uint8_t UsbBasicKeyboardReportDescriptor[USB_BASIC_KEYBOARD_REPORT_DESCRIPTOR_LENGTH] = {
     HID_RI_USAGE_PAGE(8, HID_RI_USAGE_PAGE_GENERIC_DESKTOP),
     HID_RI_USAGE(8, HID_RI_USAGE_GENERIC_DESKTOP_KEYBOARD),
     HID_RI_COLLECTION(8, HID_RI_COLLECTION_APPLICATION),
@@ -40,7 +40,7 @@ uint8_t UsbKeyboardReportDescriptor[USB_KEYBOARD_REPORT_DESCRIPTOR_LENGTH] = {
         HID_RI_USAGE_PAGE(8, HID_RI_USAGE_PAGE_KEY_CODES),
         HID_RI_USAGE_MINIMUM(8, 0x00),
         HID_RI_USAGE_MAXIMUM(8, 0xFF),
-        HID_RI_REPORT_COUNT(8, USB_KEYBOARD_MAX_KEYS),
+        HID_RI_REPORT_COUNT(8, USB_BASIC_KEYBOARD_MAX_KEYS),
         HID_RI_REPORT_SIZE(8, 0x08),
         HID_RI_INPUT(8, HID_IOF_DATA | HID_IOF_ARRAY | HID_IOF_ABSOLUTE),
 

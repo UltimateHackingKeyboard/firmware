@@ -15,9 +15,12 @@ usb_status_t USB_DeviceGetHidReportDescriptor(
     if (USB_MOUSE_INTERFACE_INDEX == hidReportDescriptor->interfaceNumber) {
         hidReportDescriptor->buffer = UsbMouseReportDescriptor;
         hidReportDescriptor->length = USB_MOUSE_REPORT_DESCRIPTOR_LENGTH;
-    } else if (USB_KEYBOARD_INTERFACE_INDEX == hidReportDescriptor->interfaceNumber) {
-        hidReportDescriptor->buffer = UsbKeyboardReportDescriptor;
-        hidReportDescriptor->length = USB_KEYBOARD_REPORT_DESCRIPTOR_LENGTH;
+    } else if (USB_BASIC_KEYBOARD_INTERFACE_INDEX == hidReportDescriptor->interfaceNumber) {
+        hidReportDescriptor->buffer = UsbBasicKeyboardReportDescriptor;
+        hidReportDescriptor->length = USB_BASIC_KEYBOARD_REPORT_DESCRIPTOR_LENGTH;
+    } else if (USB_MEDIA_KEYBOARD_INTERFACE_INDEX == hidReportDescriptor->interfaceNumber) {
+        hidReportDescriptor->buffer = UsbMediaKeyboardReportDescriptor;
+        hidReportDescriptor->length = USB_MEDIA_KEYBOARD_REPORT_DESCRIPTOR_LENGTH;
     } else if (USB_GENERIC_HID_INTERFACE_INDEX == hidReportDescriptor->interfaceNumber) {
         hidReportDescriptor->buffer = UsbGenericHidReportDescriptor;
         hidReportDescriptor->length = USB_GENERIC_HID_REPORT_DESCRIPTOR_LENGTH;

@@ -7,7 +7,8 @@
 #include "action.h"
 #include "bridge_protocol_scheduler.h"
 #include "peripherials/test_led.h"
-#include "usb_interfaces/usb_interface_keyboard.h"
+#include "usb_interfaces/usb_interface_basic_keyboard.h"
+#include "usb_interfaces/usb_interface_media_keyboard.h"
 
 key_matrix_t KeyMatrix = {
     .colNum = KEYBOARD_MATRIX_COLS_NUM,
@@ -63,17 +64,19 @@ static const uint8_t testData[] =
 
 void UpdateUsbReports()
 {
-    if (!IsUsbKeyboardReportSent) {
+    if (!IsUsbBasicKeyboardReportSent) {
         return;
     }
 
-    ResetActiveUsbKeyboardReport();
+    ResetActiveUsbBasicKeyboardReport();
+    ResetActiveUsbMediaKeyboardReport();
     KeyMatrix_Scan(&KeyMatrix);
     memcpy(CurrentKeyStates[SLOT_ID_RIGHT_KEYBOARD_HALF], KeyMatrix.keyStates, MAX_KEY_COUNT_PER_MODULE);
     UpdateActiveUsbReports();
-    SwitchActiveUsbKeyboardReport();
+    SwitchActiveUsbBasicKeyboardReport();
+    SwitchActiveUsbMediaKeyboardReport();
 
-    IsUsbKeyboardReportSent = false;
+    IsUsbBasicKeyboardReportSent = false;
 }
 
 void main() {

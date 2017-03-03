@@ -106,7 +106,7 @@ static void processNoneAction(key_action_t *action, serialized_buffer_t *buffer)
 static void processKeyStrokeAction(key_action_t *action, uint8_t actionType, serialized_buffer_t *buffer) {
     uint8_t flags = actionType - 1;
 
-    action->type = KEY_ACTION_KEYSTROKE;
+    action->type = KEY_ACTION_BASIC_KEYSTROKE;
 
     if (flags & HAS_SCANCODE) {
         action->keystroke.key = readUInt8(buffer);

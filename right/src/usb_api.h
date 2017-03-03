@@ -49,6 +49,7 @@
     #define HID_RI_USAGE_GENERIC_DESKTOP_JOYSTICK              0x04
     #define HID_RI_USAGE_GENERIC_DESKTOP_GAMEPAD               0x05
     #define HID_RI_USAGE_GENERIC_DESKTOP_KEYBOARD              0x06
+    #define HID_RI_USAGE_GENERIC_DESKTOP_CONSUMER              0x0C
     #define HID_RI_USAGE_GENERIC_DESKTOP_X                     0x30
     #define HID_RI_USAGE_GENERIC_DESKTOP_Y                     0x31
     #define HID_RI_USAGE_GENERIC_DESKTOP_WHEEL                 0x38
