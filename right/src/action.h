@@ -54,10 +54,10 @@ typedef struct {
     uint8_t type;
     union {
         struct {
-            uint8_t longPress;
-            uint8_t mods;
-            uint8_t key;
-        } __attribute__ ((packed)) keystroke;
+            uint8_t longPressAction;
+            uint8_t modifiers;
+            uint8_t scancode;
+        } __attribute__ ((packed)) basicKeystroke;
         struct {
             uint8_t buttonActions;
             uint8_t scrollActions;
@@ -68,10 +68,10 @@ typedef struct {
             uint8_t layer;
         } __attribute__ ((packed)) switchLayer;
         struct {
-            uint8_t keymap;
+            uint8_t keymapId;
         } __attribute__ ((packed)) switchKeymap;
         struct {
-            uint16_t index;
+            uint16_t macroId;
         } __attribute__ ((packed)) playMacro;
     };
 } __attribute__ ((packed)) key_action_t;
