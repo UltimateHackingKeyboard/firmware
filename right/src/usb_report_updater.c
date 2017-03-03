@@ -95,12 +95,16 @@ void UpdateActiveUsbReports() {
 
             key_action_t action = CurrentKeymap[activeLayer][slotId][keyId];
             switch (action.type) {
-            case KEY_ACTION_BASIC_KEYSTROKE:
-                ActiveUsbBasicKeyboardReport->scancodes[scancodeIdx++] = action.keystroke.scancode;
+            case KEY_ACTION_KEYSTROKE:
                 ActiveUsbBasicKeyboardReport->modifiers |= action.keystroke.modifiers;
-                break;
-            case KEY_ACTION_MEDIA_KEYSTROKE:
-                ActiveUsbMediaKeyboardReport->scancodes[scancodeIdx++] = action.keystroke.scancode;
+                switch (action.keystroke.keystrokeType) {
+                case KEYSTROKE_BASIC:
+                    ActiveUsbBasicKeyboardReport->scancodes[scancodeIdx++] = action.keystroke.scancode;
+                    break;
+                case KEYSTROKE_MEDIA:
+                    ActiveUsbMediaKeyboardReport->scancodes[scancodeIdx++] = action.keystroke.scancode;
+                    break;
+                }
                 break;
             case KEY_ACTION_MOUSE:
                 processMouseAction(action);

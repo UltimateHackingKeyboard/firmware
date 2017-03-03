@@ -10,13 +10,18 @@
 
 typedef enum {
     KEY_ACTION_NONE,
-    KEY_ACTION_BASIC_KEYSTROKE,
-    KEY_ACTION_MEDIA_KEYSTROKE,
+    KEY_ACTION_KEYSTROKE,
     KEY_ACTION_MOUSE,
     KEY_ACTION_SWITCH_LAYER,
     KEY_ACTION_SWITCH_KEYMAP,
     KEY_ACTION_PLAY_MACRO,
 } key_action_type_t;
+
+typedef enum {
+    KEYSTROKE_BASIC,
+    KEYSTROKE_MEDIA,
+    KEYSTROKE_SYSTEM,
+} keystroke_type_t;
 
 enum {
     MOUSE_BUTTON_LEFT   = (1 << 0),
@@ -54,6 +59,7 @@ typedef struct {
     uint8_t type;
     union {
         struct {
+            keystroke_type_t keystrokeType;
             uint8_t longPressAction;
             uint8_t modifiers;
             uint8_t scancode;
