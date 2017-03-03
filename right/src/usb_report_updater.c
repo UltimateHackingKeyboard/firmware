@@ -72,7 +72,8 @@ void UpdateActiveUsbReports() {
 
     bzero(&UsbMouseReport, sizeof(usb_mouse_report_t));
 
-    uint8_t scancodeIdx = 0;
+    uint8_t basicScancodeIndex = 0;
+    uint8_t mediaScancodeIndex = 0;
 
     activeLayer = LAYER_ID_BASE;
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
@@ -97,12 +98,19 @@ void UpdateActiveUsbReports() {
             switch (action.type) {
                 case KEY_ACTION_KEYSTROKE:
                     ActiveUsbBasicKeyboardReport->modifiers |= action.keystroke.modifiers;
+
                     switch (action.keystroke.keystrokeType) {
                         case KEYSTROKE_BASIC:
-                            ActiveUsbBasicKeyboardReport->scancodes[scancodeIdx++] = action.keystroke.scancode;
+                            if (basicScancodeIndex >= USB_BASIC_KEYBOARD_MAX_KEYS) {
+                                break;
+                            }
+                            ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = action.keystroke.scancode;
                             break;
                         case KEYSTROKE_MEDIA:
-                            ActiveUsbMediaKeyboardReport->scancodes[scancodeIdx++] = action.keystroke.scancode;
+                            if (mediaScancodeIndex >= USB_MEDIA_KEYBOARD_MAX_KEYS) {
+                                break;
+                            }
+                            ActiveUsbMediaKeyboardReport->scancodes[mediaScancodeIndex++] = action.keystroke.scancode;
                             break;
                     }
                     break;
