@@ -62,7 +62,7 @@ typedef struct {
             keystroke_type_t keystrokeType;
             uint8_t longPressAction;
             uint8_t modifiers;
-            uint8_t scancode;
+            uint16_t scancode;
         } __attribute__ ((packed)) keystroke;
         struct {
             uint8_t buttonActions;

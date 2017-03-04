@@ -214,19 +214,19 @@ key_action_t CurrentKeymap[LAYER_COUNT][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = 
             { .type = KEY_ACTION_NONE },
 
             // Row 2
-            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_MEDIA_PLAY }},
-            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_MEDIA_VOLUME_UP }},
-            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_MEDIA_STOP }},
+            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .keystrokeType = KEYSTROKE_MEDIA, .scancode = MEDIA_PLAY_PAUSE }},
+            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .keystrokeType = KEYSTROKE_MEDIA, .scancode = MEDIA_VOLUME_UP }},
+            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .keystrokeType = KEYSTROKE_MEDIA, .scancode = MEDIA_STOP }},
             { .type = KEY_ACTION_NONE },
             { .type = KEY_ACTION_NONE },
             { .type = KEY_ACTION_NONE },
-            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_MEDIA_SLEEP }},
+            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .keystrokeType = KEYSTROKE_MEDIA, .scancode = HID_CONSUMER_SLEEP_MODE }},
             { .type = KEY_ACTION_NONE },
 
             // Row 3
-            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_MEDIA_PREVIOUS_TRACK }},
-            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_MEDIA_VOLUME_DOWN }},
-            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_MEDIA_NEXT_TRACK }},
+            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .keystrokeType = KEYSTROKE_MEDIA, .scancode = MEDIA_PREVIOUS }},
+            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .keystrokeType = KEYSTROKE_MEDIA, .scancode = MEDIA_VOLUME_DOWN }},
+            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .keystrokeType = KEYSTROKE_MEDIA, .scancode = MEDIA_NEXT }},
             { .type = KEY_ACTION_NONE },
             { .type = KEY_ACTION_NONE },
             { .type = KEY_ACTION_NONE },
@@ -235,7 +235,7 @@ key_action_t CurrentKeymap[LAYER_COUNT][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = 
             // Row 4
             { .type = KEY_ACTION_NONE },
             { .type = KEY_ACTION_NONE },
-            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_MEDIA_MUTE }},
+            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .keystrokeType = KEYSTROKE_MEDIA, .scancode = MEDIA_VOLUME_MUTE }},
             { .type = KEY_ACTION_NONE },
             { .type = KEY_ACTION_NONE },
             { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_RIGHT_SHIFT }},
@@ -264,8 +264,8 @@ key_action_t CurrentKeymap[LAYER_COUNT][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = 
             // Row 2
             { .type = KEY_ACTION_NONE },
             { .type = KEY_ACTION_NONE },
-            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_MEDIA_CANCEL }},
-            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_MEDIA_RELOAD }},
+            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .keystrokeType = KEYSTROKE_MEDIA, .scancode = HID_CONSUMER_AC_CANCEL }}, // HID_CONSUMER_AC_STOP
+            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .keystrokeType = KEYSTROKE_MEDIA, .scancode = CONSUMER_BROWSER_REFRESH }},
             { .type = KEY_ACTION_NONE },
             { .type = KEY_ACTION_NONE },
             { .type = KEY_ACTION_NONE },
@@ -273,19 +273,19 @@ key_action_t CurrentKeymap[LAYER_COUNT][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = 
             // Row 3
             { .type = KEY_ACTION_NONE },
             { .type = KEY_ACTION_NONE },
-            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_MEDIA_BACKWARD }},
-            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_MEDIA_WWW }},
-            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_MEDIA_FORWARD }},
+            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .keystrokeType = KEYSTROKE_MEDIA, .scancode = CONSUMER_BROWSER_BACK }},
+            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .keystrokeType = KEYSTROKE_MEDIA, .scancode = CONSUMER_EXPLORER }},
+            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .keystrokeType = KEYSTROKE_MEDIA, .scancode = CONSUMER_BROWSER_FORWARD }},
             { .type = KEY_ACTION_NONE },
             { .type = KEY_ACTION_NONE },
 
             // Row 4
             { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_LEFT_SHIFT }},
             { .type = KEY_ACTION_NONE },
-            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_MEDIA_LOCK }},
-            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_MEDIA_SEARCH }},
-            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_MEDIA_CALCULATOR }},
-            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_MEDIA_EJECT }},
+            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .keystrokeType = KEYSTROKE_MEDIA, .scancode = CONSUMER_SCREENSAVER }},
+            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .keystrokeType = KEYSTROKE_MEDIA, .scancode = HID_CONSUMER_AC_SEARCH }},
+            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .keystrokeType = KEYSTROKE_MEDIA, .scancode = CONSUMER_CALCULATOR }},
+            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .keystrokeType = KEYSTROKE_MEDIA, .scancode = HID_CONSUMER_EJECT }},
             { .type = KEY_ACTION_NONE },
 
             // Row 5

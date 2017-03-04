@@ -324,23 +324,6 @@
         #define HID_KEYBOARD_SC_RIGHT_SHIFT                       0xE5
         #define HID_KEYBOARD_SC_RIGHT_ALT                         0xE6
         #define HID_KEYBOARD_SC_RIGHT_GUI                         0xE7
-        #define HID_KEYBOARD_SC_MEDIA_PLAY                        0xE8
-        #define HID_KEYBOARD_SC_MEDIA_STOP                        0xE9
-        #define HID_KEYBOARD_SC_MEDIA_PREVIOUS_TRACK              0xEA
-        #define HID_KEYBOARD_SC_MEDIA_NEXT_TRACK                  0xEB
-        #define HID_KEYBOARD_SC_MEDIA_EJECT                       0xEC
-        #define HID_KEYBOARD_SC_MEDIA_VOLUME_UP                   0xED
-        #define HID_KEYBOARD_SC_MEDIA_VOLUME_DOWN                 0xEE
-        #define HID_KEYBOARD_SC_MEDIA_MUTE                        0xEF
-        #define HID_KEYBOARD_SC_MEDIA_WWW                         0xF0
-        #define HID_KEYBOARD_SC_MEDIA_BACKWARD                    0xF1
-        #define HID_KEYBOARD_SC_MEDIA_FORWARD                     0xF2
-        #define HID_KEYBOARD_SC_MEDIA_CANCEL                      0xF3
-        #define HID_KEYBOARD_SC_MEDIA_SEARCH                      0xF4
-        #define HID_KEYBOARD_SC_MEDIA_SLEEP                       0xF8
-        #define HID_KEYBOARD_SC_MEDIA_LOCK                        0xF9
-        #define HID_KEYBOARD_SC_MEDIA_RELOAD                      0xFA
-        #define HID_KEYBOARD_SC_MEDIA_CALCULATOR                  0xFB
         //@}
 
         /** \name Common HID Device Report Descriptors */
