@@ -34,17 +34,13 @@ typedef enum {
     MEDIA_REWIND    = 0xB4,
     MEDIA_NEXT  = 0xB5,
     MEDIA_PREVIOUS  = 0xB6,
-    MEDIA_PREV  = 0xB6, // Alias
     MEDIA_STOP  = 0xB7,
     MEDIA_PLAY_PAUSE    = 0xCD,
     MEDIA_PAUSE = 0xB0,
 
     MEDIA_VOLUME_MUTE   = 0xE2,
-    MEDIA_VOL_MUTE = 0xE2, // Alias
     MEDIA_VOLUME_UP = 0xE9,
-    MEDIA_VOL_UP    = 0xE9, // Alias
     MEDIA_VOLUME_DOWN   = 0xEA,
-    MEDIA_VOL_DOWN  = 0xEA, // Alias
 
     CONSUMER_SCREENSAVER = 0x19e,
 
