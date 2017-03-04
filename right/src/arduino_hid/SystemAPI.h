@@ -24,7 +24,7 @@ THE SOFTWARE.
 #ifndef __SYSTEM_API_H__
 #define __SYSTEM_API_H__
 
-enum SystemKeycode : uint8_t {
+typedef enum {
     SYSTEM_POWER_DOWN   = 0x81,
     SYSTEM_SLEEP    = 0x82,
     SYSTEM_WAKE_UP  = 0x83,
@@ -69,6 +69,6 @@ enum SystemKeycode : uint8_t {
     HID_SYSTEM_DISPLAY_TOGGLE_INT_SLASH_EXT = 0xB5, // HID type OSC
     HID_SYSTEM_DISPLAY_SWAP_PRIMARY_SLASH_SECONDARY = 0xB6, // HID type OSC
     HID_SYSTEM_DISPLAY_LCD_AUTOSCALE    = 0xB7, // HID type OSC
-};
+} system_keycode_t;
 
 #endif

@@ -24,7 +24,7 @@ THE SOFTWARE.
 #ifndef __CONSUMER_API_H__
 #define __CONSUMER_API_H__
 
-enum ConsumerKeycode : uint16_t {
+typedef enum {
     // Some keys might only work with linux
     CONSUMER_POWER  = 0x30,
     CONSUMER_SLEEP = 0x32,
@@ -442,6 +442,6 @@ enum ConsumerKeycode : uint16_t {
     HID_CONSUMER_AC_SPLIT   = 0x29A,    // HID type SEL
     HID_CONSUMER_AC_DISRIBUTE_HORIZONTALLY  = 0x29B,    // HID type SEL
     HID_CONSUMER_AC_DISTRIBUTE_VERTICALLY   = 0x29C,    // HID type SEL
-};
+} consumer_keycode_t;
 
 #endif

@@ -25,7 +25,7 @@ THE SOFTWARE.
 #define __IMPROVED_KEY_LAYOUTS_H__
 
 // Hut1_12v2.pdf
-enum KeyboardKeycode : uint8_t {
+typedef enum {
     KEY_RESERVED        =  0,
     KEY_ERROR_ROLLOVER  =  1,
     KEY_POST_FAIL       =  2,
@@ -485,10 +485,10 @@ enum KeyboardKeycode : uint8_t {
     HID_KEYBOARD_RIGHT_SHIFT    = 0xE5,
     HID_KEYBOARD_RIGHT_ALT  = 0xE6,
     HID_KEYBOARD_RIGHT_GUI  = 0xE7,
-};
+} keyboard_keycode_t;
 
 // Keyboard Leds
-enum KeyboardLeds : uint8_t {
+typedef enum {
     LED_NUM_LOCK        = (1 << 0),
     LED_CAPS_LOCK       = (1 << 1),
     LED_SCROLL_LOCK     = (1 << 2),
@@ -497,10 +497,10 @@ enum KeyboardLeds : uint8_t {
     LED_POWER           = (1 << 5),
     LED_SHIFT           = (1 << 6),
     LED_DO_NOT_DISTURB  = (1 << 7),
-};
+} keyboard_leds_t;
 
 #define SHIFT 0x80
-static const uint8_t _asciimap[] PROGMEM =
+uint8_t_asciimap[] =
 {
     KEY_RESERVED,           // NUL
     KEY_RESERVED,           // SOH
