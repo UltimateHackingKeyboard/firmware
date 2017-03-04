@@ -1,4 +1,5 @@
 #include "action.h"
+#include "arduino_hid/ConsumerAPI.h"
 
 key_action_t CurrentKeymap[LAYER_COUNT][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
     // Base layer
@@ -234,7 +235,7 @@ key_action_t CurrentKeymap[LAYER_COUNT][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = 
             // Row 4
             { .type = KEY_ACTION_NONE },
             { .type = KEY_ACTION_NONE },
-            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .keystrokeType = KEYSTROKE_MEDIA ,.scancode = /*HID_KEYBOARD_SC_MEDIA_MUTE*/0xe2 }},
+            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_MEDIA_MUTE }},
             { .type = KEY_ACTION_NONE },
             { .type = KEY_ACTION_NONE },
             { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_RIGHT_SHIFT }},
@@ -263,7 +264,7 @@ key_action_t CurrentKeymap[LAYER_COUNT][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = 
             // Row 2
             { .type = KEY_ACTION_NONE },
             { .type = KEY_ACTION_NONE },
-            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_MEDIA_STOP }},
+            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_MEDIA_CANCEL }},
             { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_MEDIA_RELOAD }},
             { .type = KEY_ACTION_NONE },
             { .type = KEY_ACTION_NONE },
@@ -272,19 +273,19 @@ key_action_t CurrentKeymap[LAYER_COUNT][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = 
             // Row 3
             { .type = KEY_ACTION_NONE },
             { .type = KEY_ACTION_NONE },
-            { .type = KEY_ACTION_NONE }, // TODO: hist-
+            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_MEDIA_BACKWARD }},
             { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_MEDIA_WWW }},
-            { .type = KEY_ACTION_NONE }, // TODO: hist+
+            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_MEDIA_FORWARD }},
             { .type = KEY_ACTION_NONE },
             { .type = KEY_ACTION_NONE },
 
             // Row 4
             { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_LEFT_SHIFT }},
+            { .type = KEY_ACTION_NONE },
             { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_MEDIA_LOCK }},
             { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_MEDIA_SEARCH }},
             { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_MEDIA_CALCULATOR }},
             { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_MEDIA_EJECT }},
-            { .type = KEY_ACTION_NONE },
             { .type = KEY_ACTION_NONE },
 
             // Row 5
