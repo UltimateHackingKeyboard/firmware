@@ -1,5 +1,4 @@
-#include "fsl_common.h"
-#include "usb_api.h"
+#include "usb_device_config.h"
 #include "usb_composite_device.h"
 #include "usb_descriptors/usb_descriptor_hid.h"
 #include "usb_descriptors/usb_descriptor_strings.h"

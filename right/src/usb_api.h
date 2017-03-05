@@ -3,7 +3,6 @@
 
 // Includes:
 
-    #include "usb_device_config.h"
     #include "usb.h"
     #include "usb_device.h"
     #include "ksdk_usb/usb_device_class.h"

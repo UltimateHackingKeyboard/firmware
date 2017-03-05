@@ -4,16 +4,21 @@
 // KHCI instance count
 #define USB_DEVICE_CONFIG_KHCI 1
 
+#include "usb_interfaces/usb_interface_basic_keyboard.h"
+#include "usb_interfaces/usb_interface_media_keyboard.h"
+#include "usb_interfaces/usb_interface_mouse.h"
+#include "usb_interfaces/usb_interface_generic_hid.h"
+
 // Device instance count, the sum of KHCI and EHCI instance counts
 #define USB_DEVICE_CONFIG_NUM 1
 
 // HID instance count
-#define USB_BASIC_KEYBOARD_INTERFACE_COUNT 1
-#define USB_MEDIA_KEYBOARD_INTERFACE_COUNT 1
-#define USB_MOUSE_INTERFACE_COUNT 1
-#define USB_GENERIC_HID_INTERFACE_COUNT 1
-#define USB_DEVICE_CONFIG_HID \
-    (USB_BASIC_KEYBOARD_INTERFACE_COUNT + USB_MEDIA_KEYBOARD_INTERFACE_COUNT + USB_MOUSE_INTERFACE_COUNT + USB_GENERIC_HID_INTERFACE_COUNT)
+#define USB_DEVICE_CONFIG_HID ( \
+    USB_BASIC_KEYBOARD_INTERFACE_COUNT + \
+    USB_MEDIA_KEYBOARD_INTERFACE_COUNT + \
+    USB_MOUSE_INTERFACE_COUNT + \
+    USB_GENERIC_HID_INTERFACE_COUNT \
+)
 
 // Whether the device is self-powered: 1 supported, 0 not supported
 #define USB_DEVICE_CONFIG_SELF_POWER 1
@@ -21,8 +26,17 @@
 // Whether device remote wakeup supported: 1 supported, 0 not supported
 #define USB_DEVICE_CONFIG_REMOTE_WAKEUP 0
 
+// The number of control endpoints, which is always 1
+#define USB_CONTROL_ENDPOINT_COUNT 1
+
 // How many endpoints are supported in the stack
-#define USB_DEVICE_CONFIG_ENDPOINTS 6
+#define USB_DEVICE_CONFIG_ENDPOINTS ( \
+    USB_CONTROL_ENDPOINT_COUNT + \
+    USB_BASIC_KEYBOARD_ENDPOINT_COUNT + \
+    USB_MEDIA_KEYBOARD_ENDPOINT_COUNT + \
+    USB_MOUSE_ENDPOINT_COUNT + \
+    USB_GENERIC_HID_ENDPOINT_COUNT \
+)
 
 // The maximum buffer length for the KHCI DMA workaround
 #define USB_DEVICE_CONFIG_KHCI_DMA_ALIGN_BUFFER_LENGTH 64
