@@ -18,7 +18,7 @@ Install [Kinetis Design Studio](http://www.nxp.com/products/software-and-tools/r
 
 *Please make sure to substitute vX with the actual version of your prototype (v6, v7, etc.) below.*
 
-For the left keyboard half, make sure to power it via the bridge cable and USB, and connect it to your SEGGER J-Link USB debug probe, which must also be connected via USB. Then in KDS, click on *Run -> Run Configurations*, select *GDB SEGGER J-Link Debugging -> uhk-left vX release jlink*, and click on the *Debug* button.
+For the left keyboard half, make sure to power it via the right keyboard half (which must be powered via USB). Also connect the left keyboard half to your SEGGER J-Link USB debug probe (which must also be connected via USB). Then in KDS, click on *Run -> Run Configurations*, select *GDB SEGGER J-Link Debugging -> uhk-left vX release jlink*, and click on the *Debug* button.
 
 For the right keyboard half, flash [the bootloader](https://github.com/UltimateHackingKeyboard/bootloader) first. Then in KDS, click on *Run -> Run Configurations*, select *C/C++ Application -> uhk-right vX release kboot*, and click on the *Debug* button.
 
