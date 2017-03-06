@@ -14,17 +14,13 @@ This will download the dependent submodules, which are required to build the fir
 
 Install [Kinetis Design Studio](http://www.nxp.com/products/software-and-tools/run-time-software/kinetis-software-and-tools/ides-for-kinetis-mcus/kinetis-design-studio-integrated-development-environment-ide:KDS_IDE) (KDS), import the project by invoking *File -> Import -> General -> Existing Projects into Workspace*, select the *left* or *right* directory depending on the desired firmware, then click on the *Finish* button.
 
-## Bootloader dependency
-
-Before flashing the firmware of the *right keyboard half*, [the bootloader](https://github.com/UltimateHackingKeyboard/bootloader) must be flashed, otherwise the firmware will not be started. The reason is that the bootloader gets executed first, then it jumps to the firmware, which is offsetted.
-
 ## Building and flashing the firmware
 
-*Please make sure to substitute vX with the actual version of your prototype (v6, v7, etc.)* below.
+*Please make sure to substitute vX with the actual version of your prototype (v6, v7, etc.) below.*
 
-In KDS, click on *Run -> Run Configurations*, then select *C/C++ Application -> uhk-right vX release kboot* to flash the firmware via the bootloader.
+For the left keyboard half, make sure to power it via the bridge cable and USB, and connect it to your SEGGER J-Link USB debug probe, which must also be connected via USB. Then in KDS, click on *Run -> Run Configurations*, select *GDB SEGGER J-Link Debugging -> uhk-left vX release jlink*, and click on the *Debug* button.
 
-Lastly, click on the *Debug* button to build and flash the firmware.
+For the right keyboard half, flash [the bootloader](https://github.com/UltimateHackingKeyboard/bootloader) first. Then in KDS, click on *Run -> Run Configurations*, select *C/C++ Application -> uhk-right vX release kboot*, and click on the *Debug* button.
 
 ## Contributing
 
