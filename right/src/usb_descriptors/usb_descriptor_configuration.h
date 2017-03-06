@@ -5,13 +5,14 @@
 
     #include "usb_interfaces/usb_interface_basic_keyboard.h"
     #include "usb_interfaces/usb_interface_media_keyboard.h"
+    #include "usb_interfaces/usb_interface_system_keyboard.h"
     #include "usb_interfaces/usb_interface_mouse.h"
     #include "usb_interfaces/usb_interface_generic_hid.h"
 
 // Macros:
 
     #define USB_COMPOSITE_CONFIGURATION_INDEX 1
-    #define USB_CONFIGURATION_DESCRIPTOR_TOTAL_LENGTH 116
+    #define USB_CONFIGURATION_DESCRIPTOR_TOTAL_LENGTH 141
 
 // Functions:
 

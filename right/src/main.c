@@ -70,11 +70,15 @@ void UpdateUsbReports()
 
     ResetActiveUsbBasicKeyboardReport();
     ResetActiveUsbMediaKeyboardReport();
+    ResetActiveUsbSystemKeyboardReport();
+
     KeyMatrix_Scan(&KeyMatrix);
     memcpy(CurrentKeyStates[SLOT_ID_RIGHT_KEYBOARD_HALF], KeyMatrix.keyStates, MAX_KEY_COUNT_PER_MODULE);
     UpdateActiveUsbReports();
+
     SwitchActiveUsbBasicKeyboardReport();
     SwitchActiveUsbMediaKeyboardReport();
+    SwitchActiveUsbSystemKeyboardReport();
 
     IsUsbBasicKeyboardReportSent = false;
 }

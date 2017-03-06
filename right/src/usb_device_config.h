@@ -6,6 +6,7 @@
 
 #include "usb_interfaces/usb_interface_basic_keyboard.h"
 #include "usb_interfaces/usb_interface_media_keyboard.h"
+#include "usb_interfaces/usb_interface_system_keyboard.h"
 #include "usb_interfaces/usb_interface_mouse.h"
 #include "usb_interfaces/usb_interface_generic_hid.h"
 
@@ -16,6 +17,7 @@
 #define USB_DEVICE_CONFIG_HID ( \
     USB_BASIC_KEYBOARD_INTERFACE_COUNT + \
     USB_MEDIA_KEYBOARD_INTERFACE_COUNT + \
+    USB_SYSTEM_KEYBOARD_INTERFACE_COUNT + \
     USB_MOUSE_INTERFACE_COUNT + \
     USB_GENERIC_HID_INTERFACE_COUNT \
 )
@@ -34,6 +36,7 @@
     USB_CONTROL_ENDPOINT_COUNT + \
     USB_BASIC_KEYBOARD_ENDPOINT_COUNT + \
     USB_MEDIA_KEYBOARD_ENDPOINT_COUNT + \
+    USB_SYSTEM_KEYBOARD_ENDPOINT_COUNT + \
     USB_MOUSE_ENDPOINT_COUNT + \
     USB_GENERIC_HID_ENDPOINT_COUNT \
 )

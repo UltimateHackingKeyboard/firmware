@@ -1,5 +1,6 @@
 #include "action.h"
 #include "arduino_hid/ConsumerAPI.h"
+#include "arduino_hid/SystemAPI.h"
 
 key_action_t CurrentKeymap[LAYER_COUNT][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
     // Base layer
@@ -210,7 +211,7 @@ key_action_t CurrentKeymap[LAYER_COUNT][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = 
             { .type = KEY_ACTION_NONE },
             { .type = KEY_ACTION_NONE },
             { .type = KEY_ACTION_NONE },
-            { .type = KEY_ACTION_NONE },
+            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .keystrokeType = KEYSTROKE_SYSTEM, .scancode = SYSTEM_WAKE_UP }},
             { .type = KEY_ACTION_NONE },
 
             // Row 2
@@ -219,8 +220,8 @@ key_action_t CurrentKeymap[LAYER_COUNT][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = 
             { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .keystrokeType = KEYSTROKE_MEDIA, .scancode = MEDIA_STOP }},
             { .type = KEY_ACTION_NONE },
             { .type = KEY_ACTION_NONE },
-            { .type = KEY_ACTION_NONE },
-            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .keystrokeType = KEYSTROKE_MEDIA, .scancode = HID_CONSUMER_SLEEP_MODE }},
+            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .keystrokeType = KEYSTROKE_SYSTEM, .scancode = SYSTEM_SLEEP }},
+            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .keystrokeType = KEYSTROKE_SYSTEM, .scancode = SYSTEM_POWER_DOWN }},
             { .type = KEY_ACTION_NONE },
 
             // Row 3

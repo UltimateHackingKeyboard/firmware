@@ -1,0 +1,13 @@
+#ifndef __USB_DESCRIPTOR_SYSTEM_KEYBOARD_REPORT_H__
+#define __USB_DESCRIPTOR_SYSTEM_KEYBOARD_REPORT_H__
+
+// Macros:
+
+    #define USB_SYSTEM_KEYBOARD_REPORT_DESCRIPTOR_LENGTH 22
+    #define USB_SYSTEM_KEYBOARD_MAX_KEYS 1
+
+// Variables:
+
+    extern uint8_t UsbSystemKeyboardReportDescriptor[USB_SYSTEM_KEYBOARD_REPORT_DESCRIPTOR_LENGTH];
+
+#endif

@@ -74,6 +74,7 @@ void UpdateActiveUsbReports() {
 
     uint8_t basicScancodeIndex = 0;
     uint8_t mediaScancodeIndex = 0;
+    uint8_t systemScancodeIndex = 0;
 
     activeLayer = LAYER_ID_BASE;
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
@@ -111,6 +112,12 @@ void UpdateActiveUsbReports() {
                                 break;
                             }
                             ActiveUsbMediaKeyboardReport->scancodes[mediaScancodeIndex++] = action.keystroke.scancode;
+                            break;
+                        case KEYSTROKE_SYSTEM:
+                            if (systemScancodeIndex >= USB_SYSTEM_KEYBOARD_MAX_KEYS) {
+                                break;
+                            }
+                            ActiveUsbSystemKeyboardReport->scancodes[systemScancodeIndex++] = action.keystroke.scancode;
                             break;
                     }
                     break;

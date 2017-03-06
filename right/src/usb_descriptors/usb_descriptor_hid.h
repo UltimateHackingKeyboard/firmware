@@ -5,6 +5,7 @@
 
     #include "usb_interfaces/usb_interface_basic_keyboard.h"
     #include "usb_interfaces/usb_interface_media_keyboard.h"
+    #include "usb_interfaces/usb_interface_system_keyboard.h"
     #include "usb_interfaces/usb_interface_mouse.h"
     #include "usb_interfaces/usb_interface_generic_hid.h"
 
