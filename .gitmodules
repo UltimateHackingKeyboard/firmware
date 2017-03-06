@@ -4,3 +4,9 @@
 [submodule "lib/KSDK_2.0_MK22FN512xxx12"]
 	path = lib/KSDK_2.0_MK22FN512xxx12
 	url = https://github.com/UltimateHackingKeyboard/KSDK_2.0_MK22FN512xxx12.git
+[submodule "lib/bootloader"]
+	path = lib/bootloader
+	url = https://github.com/UltimateHackingKeyboard/bootloader.git
+[submodule "lib/agent"]
+	path = lib/agent
+	url = https://github.com/UltimateHackingKeyboard/agent.git
