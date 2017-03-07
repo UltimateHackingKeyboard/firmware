@@ -43,6 +43,8 @@
     #define HID_RI_USAGE_PAGE_BUTTONS         0x09
     #define HID_RI_USAGE_PAGE_CONSUMER        0x0C
 
+    #define HID_RI_USAGE_ID_CONSUMER_PAGE_CONSUMER_CONTROL 0x01
+
     #define HID_RI_USAGE_GENERIC_DESKTOP_POINTER               0x01
     #define HID_RI_USAGE_GENERIC_DESKTOP_MOUSE                 0x02
     #define HID_RI_USAGE_GENERIC_DESKTOP_JOYSTICK              0x04
