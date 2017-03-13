@@ -22,11 +22,19 @@ void InitI2c() {
     PORT_SetPinConfig(I2C_BUS_SDA_PORT, I2C_BUS_SDA_PIN, &pinConfig);
     PORT_SetPinConfig(I2C_BUS_SCL_PORT, I2C_BUS_SCL_PIN, &pinConfig);
 
-    i2c_slave_config_t slaveConfig;
-    I2C_SlaveGetDefaultConfig(&slaveConfig);
-    slaveConfig.slaveAddress = I2C_ADDRESS_LEFT_KEYBOARD_HALF;
-    slaveConfig.addressingMode = kI2C_Address7bit / kI2C_RangeMatch;
-    I2C_SlaveInit(I2C_BUS_BASEADDR, &slaveConfig);
+#if UHK_PCB_MAJOR_VERSION < 7
+    // The left keyboard half is an I2C slave, so calling I2C_MasterInit() doesn't make any sense.
+    // Yet, this is exactly what's required to make the left keyboard half of the 6th generation
+    // prototype send scancodes to the right half. Luckily, The 7th generation prototype works
+    // without this so, it will be removed as soon as the 6th generation prototypes get obsoleted.
+
+    i2c_master_config_t masterConfig;
+    I2C_MasterGetDefaultConfig(&masterConfig);
+    uint32_t sourceClock;
+    masterConfig.baudRate_Bps = I2C_BUS_BAUD_RATE;
+    sourceClock = CLOCK_GetFreq(I2C_BUS_CLK_SRC);
+    I2C_MasterInit(I2C_BUS_BASEADDR, &masterConfig, sourceClock);
+#endif
 }
 
 void InitLedDriver() {
