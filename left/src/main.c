@@ -86,7 +86,6 @@ int main(void)
 
     I2C_SlaveGetDefaultConfig(&slaveConfig);
     slaveConfig.slaveAddress = I2C_ADDRESS_LEFT_KEYBOARD_HALF;
-    slaveConfig.addressingMode = kI2C_Address7bit/kI2C_RangeMatch;
     I2C_SlaveInit(I2C_BUS_BASEADDR, &slaveConfig);
     I2C_SlaveTransferCreateHandle(I2C_BUS_BASEADDR, &slaveHandle, i2c_slave_callback, NULL);
     slaveHandle.eventMask |= kI2C_SlaveCompletionEvent;
