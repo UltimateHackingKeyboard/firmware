@@ -17,7 +17,7 @@ void LedPwm_Init() {
     tpmParam[0].chnlNumber = LED_PWM_TPM_CHANNEL;
     tpmParam[0].level = kTPM_LowTrue;
     tpmParam[0].dutyCyclePercent = 100 - INITIAL_DUTY_CYCLE_PERCENT;
-    TPM_SetupPwm(LED_PWM_TPM_BASEADDR, tpmParam, sizeof(tpmParam),
+    TPM_SetupPwm(LED_PWM_TPM_BASEADDR, tpmParam, 1,
                  kTPM_EdgeAlignedPwm, TPM_PWM_FREQUENCY, TPM_SOURCE_CLOCK);
 
     TPM_StartTimer(LED_PWM_TPM_BASEADDR, kTPM_SystemClock);
