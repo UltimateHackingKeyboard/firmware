@@ -17,7 +17,7 @@ bridge_slave_t bridgeSlaves[] = {
         { .i2cAddress = I2C_ADDRESS_LED_DRIVER_LEFT,    .type = BridgeSlaveType_LedDriver },
 };
 
-void i2cAsyncWrite(uint8_t i2cAddress, uint8_t *volatile data, volatile size_t dataSize)
+void i2cAsyncWrite(uint8_t i2cAddress, uint8_t *data, size_t dataSize)
 {
     masterXfer.slaveAddress = i2cAddress;
     masterXfer.direction = kI2C_Write;
@@ -26,7 +26,7 @@ void i2cAsyncWrite(uint8_t i2cAddress, uint8_t *volatile data, volatile size_t d
     I2C_MasterTransferNonBlocking(I2C_MAIN_BUS_BASEADDR, &masterHandle, &masterXfer);
 }
 
-void i2cAsyncRead(uint8_t i2cAddress, uint8_t *volatile data, volatile size_t dataSize)
+void i2cAsyncRead(uint8_t i2cAddress, uint8_t *data, size_t dataSize)
 {
     masterXfer.slaveAddress = i2cAddress;
     masterXfer.direction = kI2C_Read;
