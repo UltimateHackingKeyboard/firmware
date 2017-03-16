@@ -21,17 +21,6 @@ void InitI2c() {
     pinConfig.mux = I2C_BUS_MUX;
     PORT_SetPinConfig(I2C_BUS_SDA_PORT, I2C_BUS_SDA_PIN, &pinConfig);
     PORT_SetPinConfig(I2C_BUS_SCL_PORT, I2C_BUS_SCL_PIN, &pinConfig);
-
-    // The left keyboard half is an I2C slave, so calling I2C_MasterInit() doesn't make any sense.
-    // Yet, this is exactly what's required to make the left keyboard half prototype send scancodes
-    // to the right half.
-
-    i2c_master_config_t masterConfig;
-    I2C_MasterGetDefaultConfig(&masterConfig);
-    uint32_t sourceClock;
-    masterConfig.baudRate_Bps = I2C_BUS_BAUD_RATE;
-    sourceClock = CLOCK_GetFreq(I2C_BUS_CLK_SRC);
-    I2C_MasterInit(I2C_BUS_BASEADDR, &masterConfig, sourceClock);
 }
 
 void InitLedDriver() {
