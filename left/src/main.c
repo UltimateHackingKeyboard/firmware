@@ -1,14 +1,6 @@
-#include "fsl_gpio.h"
-#include "init_clock.h"
-#include "fsl_port.h"
-#include "fsl_i2c.h"
 #include "main.h"
-#include "key_matrix.h"
-#include "test_led.h"
-#include "i2c_addresses.h"
-#include "i2c.h"
+#include "init_clock.h"
 #include "init_peripherials.h"
-#include "bridge_protocol_handler.h"
 
 key_matrix_t keyMatrix = {
     .colNum = KEYBOARD_MATRIX_COLS_NUM,
@@ -49,49 +41,13 @@ key_matrix_t keyMatrix = {
     }
 #endif
 };
-uint8_t IsoJumperState;
-
-i2c_slave_config_t slaveConfig;
-i2c_slave_handle_t slaveHandle;
-
-static void i2c_slave_callback(I2C_Type *base, i2c_slave_transfer_t *xfer, void *userData)
-{
-    switch (xfer->event)
-    {
-        case kI2C_SlaveTransmitEvent:
-            BridgeProtocolHandler();
-            xfer->data = BridgeTxBuffer;
-            xfer->dataSize = BridgeTxSize;
-            break;
-        case kI2C_SlaveReceiveEvent:
-            BridgeProtocolHandler();
-            xfer->data = BridgeRxBuffer;
-            xfer->dataSize = BRIDGE_RX_BUFFER_SIZE;
-            break;
-        case kI2C_SlaveCompletionEvent:
-            xfer->data = NULL;
-            xfer->dataSize = 0;
-            break;
-        case kI2C_SlaveTransmitAckEvent:
-            break;
-        default:
-            break;
-    }
-}
 
 int main(void)
 {
     InitClock();
     InitPeripherials();
-
-    I2C_SlaveGetDefaultConfig(&slaveConfig);
-    slaveConfig.slaveAddress = I2C_ADDRESS_LEFT_KEYBOARD_HALF;
-    I2C_SlaveInit(I2C_BUS_BASEADDR, &slaveConfig);
-    I2C_SlaveTransferCreateHandle(I2C_BUS_BASEADDR, &slaveHandle, i2c_slave_callback, NULL);
-    slaveHandle.eventMask |= kI2C_SlaveCompletionEvent;
-    I2C_SlaveTransferNonBlocking(I2C_BUS_BASEADDR, &slaveHandle, kI2C_SlaveCompletionEvent);
-
     KeyMatrix_Init(&keyMatrix);
+
     while (1) {
         KeyMatrix_Scan(&keyMatrix);
         asm("wfi");
