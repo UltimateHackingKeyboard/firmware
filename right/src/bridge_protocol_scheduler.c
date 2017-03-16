@@ -50,11 +50,9 @@ static void bridgeProtocolCallback(I2C_Type *base, i2c_master_handle_t *handle, 
     SetLeds(0xff);
 
     if (bridgeSlave->type == BridgeSlaveType_UhkModule) {
-        i2cAsyncRead(I2C_ADDRESS_LEFT_KEYBOARD_HALF, CurrentKeyStates[SLOT_ID_LEFT_KEYBOARD_HALF], LEFT_KEYBOARD_HALF_KEY_COUNT);
-//        i2cAsyncRead(bridgeSlave->i2cAddress, ledsBuffer, BUFFER_SIZE);
-//        i2cAsyncWrite(I2C_ADDRESS_LED_DRIVER_LEFT, txBuff, BUFFER_SIZE);
+        i2cAsyncRead(bridgeSlave->i2cAddress, CurrentKeyStates[SLOT_ID_LEFT_KEYBOARD_HALF], LEFT_KEYBOARD_HALF_KEY_COUNT);
     } else if (bridgeSlave->type == BridgeSlaveType_LedDriver) {
-        i2cAsyncWrite(I2C_ADDRESS_LED_DRIVER_LEFT, ledsBuffer, BUFFER_SIZE);
+        i2cAsyncWrite(bridgeSlave->i2cAddress, ledsBuffer, BUFFER_SIZE);
     }
 
     if (++currentBridgeSlaveId >= (sizeof(bridgeSlaves) / sizeof(bridge_slave_t))) {
