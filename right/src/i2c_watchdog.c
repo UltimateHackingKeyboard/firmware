@@ -11,8 +11,8 @@
 
 static uint32_t prevWatchdogCounter = 0;
 
-/* This function is designed to restart and reinstall the I2C handler
- * when a disconnection of the left side makes the master I2C bus unresponsive  */
+// This function is designed to restart and reinstall the I2C handler
+// when a disconnection of the left side makes the master I2C bus unresponsive.
 void PIT_I2C_WATCHDOG_HANDLER(void)
 {
     if (I2C_Watchdog == prevWatchdogCounter) { // Restart I2C if there hasn't be any interrupt during 1 sec
