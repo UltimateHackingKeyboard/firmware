@@ -15,7 +15,6 @@ uint8_t currentBridgeSlaveId = 0;
 bridge_slave_t bridgeSlaves[] = {
         { .i2cAddress = I2C_ADDRESS_LEFT_KEYBOARD_HALF, .type = BridgeSlaveType_UhkModule },
         { .i2cAddress = I2C_ADDRESS_LED_DRIVER_LEFT,    .type = BridgeSlaveType_LedDriver },
-//        { .i2cAddress = I2C_ADDRESS_LED_DRIVER_RIGHT,   .type = BridgeSlaveType_LedDriver }
 };
 
 void i2cAsyncWrite(uint8_t i2cAddress, uint8_t *volatile data, volatile size_t dataSize)
@@ -36,15 +35,25 @@ void i2cAsyncRead(uint8_t i2cAddress, uint8_t *volatile data, volatile size_t da
     I2C_MasterTransferNonBlocking(I2C_MAIN_BUS_BASEADDR, &masterHandle, &masterXfer);
 }
 
+bool BridgeSlaveLedDriverHandler(uint8_t ledDriverId) {
+    i2cAsyncWrite(I2C_ADDRESS_LED_DRIVER_LEFT, ledsBuffer, BUFFER_SIZE);
+    return true;
+}
+
+bool BridgeSlaveUhkModuleHandler(uint8_t uhkModuleId) {
+    i2cAsyncRead(I2C_ADDRESS_LEFT_KEYBOARD_HALF, CurrentKeyStates[SLOT_ID_LEFT_KEYBOARD_HALF], LEFT_KEYBOARD_HALF_KEY_COUNT);
+    return true;
+}
+
 static void bridgeProtocolCallback(I2C_Type *base, i2c_master_handle_t *handle, status_t status, void *userData)
 {
     bridge_slave_t *bridgeSlave = bridgeSlaves + currentBridgeSlaveId;
     SetLeds(0xff);
 
     if (bridgeSlave->type == BridgeSlaveType_UhkModule) {
-        i2cAsyncRead(bridgeSlave->i2cAddress, CurrentKeyStates[SLOT_ID_LEFT_KEYBOARD_HALF], LEFT_KEYBOARD_HALF_KEY_COUNT);
+        BridgeSlaveUhkModuleHandler(0);
     } else if (bridgeSlave->type == BridgeSlaveType_LedDriver) {
-        i2cAsyncWrite(bridgeSlave->i2cAddress, ledsBuffer, BUFFER_SIZE);
+        BridgeSlaveLedDriverHandler(0);
     }
 
     if (++currentBridgeSlaveId >= (sizeof(bridgeSlaves) / sizeof(bridge_slave_t))) {
