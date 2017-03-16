@@ -18,14 +18,6 @@ bridge_slave_t bridgeSlaves[] = {
 //        { .i2cAddress = I2C_ADDRESS_LED_DRIVER_RIGHT,   .type = BridgeSlaveType_LedDriver }
 };
 
-// Possible I2C statuses to log:
-//    kStatus_Success
-//    kStatus_I2C_Timeout
-//    kStatus_I2C_ArbitrationLost
-//    kStatus_I2C_Nak
-//    kStatus_I2C_Busy
-//    kStatus_I2C_Idle
-
 void i2cAsyncWrite(uint8_t i2cAddress, uint8_t *volatile data, volatile size_t dataSize)
 {
     masterXfer.slaveAddress = i2cAddress;
