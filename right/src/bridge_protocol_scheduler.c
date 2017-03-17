@@ -10,8 +10,8 @@ uint8_t ledsBuffer[BUFFER_SIZE] = {FRAME_REGISTER_PWM_FIRST};
 uint8_t currentBridgeSlaveId = 0;
 
 bridge_slave_t bridgeSlaves[] = {
-        { .i2cAddress = I2C_ADDRESS_LEFT_KEYBOARD_HALF, .type = BridgeSlaveType_UhkModule },
-        { .i2cAddress = I2C_ADDRESS_LED_DRIVER_LEFT,    .type = BridgeSlaveType_LedDriver },
+    { .moduleId = 0, .type = BridgeSlaveType_UhkModule },
+    { .moduleId = 0, .type = BridgeSlaveType_LedDriver },
 };
 
 bool BridgeSlaveLedDriverHandler(uint8_t ledDriverId) {
@@ -30,9 +30,9 @@ static void bridgeProtocolCallback(I2C_Type *base, i2c_master_handle_t *handle, 
     SetLeds(0xff);
 
     if (bridgeSlave->type == BridgeSlaveType_UhkModule) {
-        BridgeSlaveUhkModuleHandler(0);
+        BridgeSlaveUhkModuleHandler(bridgeSlave->moduleId);
     } else if (bridgeSlave->type == BridgeSlaveType_LedDriver) {
-        BridgeSlaveLedDriverHandler(0);
+        BridgeSlaveLedDriverHandler(bridgeSlave->moduleId);
     }
 
     if (++currentBridgeSlaveId >= (sizeof(bridgeSlaves) / sizeof(bridge_slave_t))) {

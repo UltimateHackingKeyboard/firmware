@@ -14,7 +14,7 @@
     } bridge_slave_type_t;
 
     typedef struct {
-        uint8_t i2cAddress;
+        uint8_t moduleId;  // This is a unique, per-module ID.
         bridge_slave_type_t type;
         bool isConnected;
     } bridge_slave_t;
