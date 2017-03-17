@@ -42,7 +42,7 @@ void LedDriver_SetAllLedsTo(uint8_t val)
             0b00000000, // no display
             0b01111111, // keys row 4
             0b00000000, // no display
-            0b00101111, // keys row 5
+            0b01111010, // keys row 5
             0b00000000, // no display
             0b00000000, // keys row 6
             0b00000000, // no display
@@ -80,9 +80,6 @@ void LedDriver_SetAllLedsTo(uint8_t val)
         I2cWrite(I2C_MAIN_BUS_BASEADDR, I2C_ADDRESS_LED_DRIVER_LEFT,
                  ledControlBufferLeft, sizeof(ledControlBufferLeft));
 
-        for (i=FRAME_REGISTER_LED_CONTROL_FIRST; i<=FRAME_REGISTER_LED_CONTROL_LAST; i++) {
-            LedDriver_WriteRegister(address, i, 0xff);
-        }
         for (i=FRAME_REGISTER_BLINK_CONTROL_FIRST; i<=FRAME_REGISTER_BLINK_CONTROL_LAST; i++) {
             LedDriver_WriteRegister(address, i, 0x00);
         }
