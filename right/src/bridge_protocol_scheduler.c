@@ -29,10 +29,13 @@ static void bridgeProtocolCallback(I2C_Type *base, i2c_master_handle_t *handle, 
     bridge_slave_t *bridgeSlave = bridgeSlaves + currentBridgeSlaveId;
     SetLeds(0xff);
 
-    bridgeSlave->slaveHandler(bridgeSlave->moduleId);
+    bool isFinished = bridgeSlave->slaveHandler(bridgeSlave->moduleId);
+    if (isFinished) {
+        currentBridgeSlaveId++;
 
-    if (++currentBridgeSlaveId >= (sizeof(bridgeSlaves) / sizeof(bridge_slave_t))) {
-        currentBridgeSlaveId = 0;
+        if (currentBridgeSlaveId >= (sizeof(bridgeSlaves) / sizeof(bridge_slave_t))) {
+            currentBridgeSlaveId = 0;
+        }
     }
 }
 
