@@ -1,18 +1,12 @@
 #include "fsl_i2c.h"
-#include "led_driver.h"
 #include "bridge_protocol_scheduler.h"
 #include "slot.h"
 #include "main.h"
+#include "bridge_slave_led_driver_handler.h"
+#include "i2c.h"
+#include "i2c_addresses.h"
 
-#define BUFFER_SIZE (LED_DRIVER_LED_COUNT + 1)
-
-uint8_t ledsBuffer[BUFFER_SIZE] = {FRAME_REGISTER_PWM_FIRST};
 uint8_t currentBridgeSlaveId = 0;
-
-bool BridgeSlaveLedDriverHandler(uint8_t ledDriverId) {
-    I2cAsyncWrite(I2C_ADDRESS_LED_DRIVER_LEFT, ledsBuffer, BUFFER_SIZE);
-    return true;
-}
 
 bool BridgeSlaveUhkModuleHandler(uint8_t uhkModuleId) {
     I2cAsyncRead(I2C_ADDRESS_LEFT_KEYBOARD_HALF, CurrentKeyStates[SLOT_ID_LEFT_KEYBOARD_HALF], LEFT_KEYBOARD_HALF_KEY_COUNT);
@@ -43,10 +37,5 @@ void InitBridgeProtocolScheduler()
 {
     SetLeds(0xff);
     I2C_MasterTransferCreateHandle(I2C_MAIN_BUS_BASEADDR, &I2cMasterHandle, bridgeProtocolCallback, NULL);
-    I2cAsyncWrite(I2C_ADDRESS_LED_DRIVER_LEFT, ledsBuffer, BUFFER_SIZE);
-}
-
-void SetLeds(uint8_t ledBrightness)
-{
-    memset(ledsBuffer+1, ledBrightness, LED_DRIVER_LED_COUNT);
+    bridgeSlaves[0].slaveHandler(bridgeSlaves[0].moduleId);
 }
