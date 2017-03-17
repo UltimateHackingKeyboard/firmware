@@ -6,10 +6,7 @@
 
 #define BUFFER_SIZE (LED_DRIVER_LED_COUNT + 1)
 
-i2c_master_handle_t masterHandle;
-i2c_master_config_t masterConfig;
 uint8_t ledsBuffer[BUFFER_SIZE] = {FRAME_REGISTER_PWM_FIRST};
-i2c_master_transfer_t masterXfer;
 uint8_t currentBridgeSlaveId = 0;
 
 bridge_slave_t bridgeSlaves[] = {
@@ -17,31 +14,13 @@ bridge_slave_t bridgeSlaves[] = {
         { .i2cAddress = I2C_ADDRESS_LED_DRIVER_LEFT,    .type = BridgeSlaveType_LedDriver },
 };
 
-void i2cAsyncWrite(uint8_t i2cAddress, uint8_t *data, size_t dataSize)
-{
-    masterXfer.slaveAddress = i2cAddress;
-    masterXfer.direction = kI2C_Write;
-    masterXfer.data = data;
-    masterXfer.dataSize = dataSize;
-    I2C_MasterTransferNonBlocking(I2C_MAIN_BUS_BASEADDR, &masterHandle, &masterXfer);
-}
-
-void i2cAsyncRead(uint8_t i2cAddress, uint8_t *data, size_t dataSize)
-{
-    masterXfer.slaveAddress = i2cAddress;
-    masterXfer.direction = kI2C_Read;
-    masterXfer.data = data;
-    masterXfer.dataSize = dataSize;
-    I2C_MasterTransferNonBlocking(I2C_MAIN_BUS_BASEADDR, &masterHandle, &masterXfer);
-}
-
 bool BridgeSlaveLedDriverHandler(uint8_t ledDriverId) {
-    i2cAsyncWrite(I2C_ADDRESS_LED_DRIVER_LEFT, ledsBuffer, BUFFER_SIZE);
+    I2cAsyncWrite(I2C_ADDRESS_LED_DRIVER_LEFT, ledsBuffer, BUFFER_SIZE);
     return true;
 }
 
 bool BridgeSlaveUhkModuleHandler(uint8_t uhkModuleId) {
-    i2cAsyncRead(I2C_ADDRESS_LEFT_KEYBOARD_HALF, CurrentKeyStates[SLOT_ID_LEFT_KEYBOARD_HALF], LEFT_KEYBOARD_HALF_KEY_COUNT);
+    I2cAsyncRead(I2C_ADDRESS_LEFT_KEYBOARD_HALF, CurrentKeyStates[SLOT_ID_LEFT_KEYBOARD_HALF], LEFT_KEYBOARD_HALF_KEY_COUNT);
     return true;
 }
 
@@ -64,8 +43,8 @@ static void bridgeProtocolCallback(I2C_Type *base, i2c_master_handle_t *handle, 
 void InitBridgeProtocolScheduler()
 {
     SetLeds(0xff);
-    I2C_MasterTransferCreateHandle(I2C_MAIN_BUS_BASEADDR, &masterHandle, bridgeProtocolCallback, NULL);
-    i2cAsyncWrite(I2C_ADDRESS_LED_DRIVER_LEFT, ledsBuffer, BUFFER_SIZE);
+    I2C_MasterTransferCreateHandle(I2C_MAIN_BUS_BASEADDR, &I2cMasterHandle, bridgeProtocolCallback, NULL);
+    I2cAsyncWrite(I2C_ADDRESS_LED_DRIVER_LEFT, ledsBuffer, BUFFER_SIZE);
 }
 
 void SetLeds(uint8_t ledBrightness)

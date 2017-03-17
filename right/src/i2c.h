@@ -1,6 +1,10 @@
 #ifndef __I2C_H__
 #define __I2C_H__
 
+// Includes:
+
+    #include "fsl_i2c.h"
+
 // Macros:
 
     // Main bus
@@ -32,5 +36,14 @@
     #define I2C_EEPROM_BUS_SCL_PORT  PORTC
     #define I2C_EEPROM_BUS_SCL_CLOCK kCLOCK_PortC
     #define I2C_EEPROM_BUS_SCL_PIN   10
+
+// Variables:
+
+    extern i2c_master_handle_t I2cMasterHandle;
+
+// Functions:
+
+    void I2cAsyncWrite(uint8_t i2cAddress, uint8_t *data, size_t dataSize);
+    void I2cAsyncRead(uint8_t i2cAddress, uint8_t *data, size_t dataSize);
 
 #endif
