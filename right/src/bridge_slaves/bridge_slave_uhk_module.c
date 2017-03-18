@@ -10,7 +10,17 @@ uhk_module_field_t currentUhkModuleField = UhkModuleField_SendKeystatesRequestCo
 uhk_module_state_t uhkModuleExternalStates[UHK_MODULE_MAX_COUNT];
 uint8_t txBuffer[2];
 
-bool BridgeSlaveUhkModuleHandler(uint8_t uhkModuleId) {
+void InitUhkModules()
+{
+    for (uint8_t moduleId=0; moduleId<UHK_MODULE_MAX_COUNT; moduleId++) {
+        uhk_module_state_t* uhkModuleState = UhkModuleStates + moduleId;
+        uhkModuleState->isTestLedOn = true;
+        uhkModuleState->ledPwmBrightness = 0x64;
+    }
+}
+
+bool BridgeSlaveUhkModuleHandler(uint8_t uhkModuleId)
+{
     uhk_module_state_t *uhkModuleInternalState = UhkModuleStates + uhkModuleId;
     uhk_module_state_t *uhkModuleExternalState = uhkModuleExternalStates + uhkModuleId;
 

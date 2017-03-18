@@ -31,6 +31,7 @@ static void bridgeProtocolCallback(I2C_Type *base, i2c_master_handle_t *handle, 
 
 void InitBridgeProtocolScheduler()
 {
+    InitUhkModules();
     SetLeds(0xff);
     I2C_MasterTransferCreateHandle(I2C_MAIN_BUS_BASEADDR, &I2cMasterHandle, bridgeProtocolCallback, NULL);
 

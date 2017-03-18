@@ -29,6 +29,7 @@
 
 // Functions:
 
+    extern void InitUhkModules();
     extern bool BridgeSlaveUhkModuleHandler(uint8_t uhkModuleId);
 
 #endif
