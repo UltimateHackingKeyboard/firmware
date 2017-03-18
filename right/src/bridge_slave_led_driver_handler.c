@@ -53,16 +53,32 @@ uint8_t ledControlBufferRight[] = {
     0b00000000, // no display
 };
 
+uint8_t setFunctionFrameBuffer[] = {LED_DRIVER_REGISTER_FRAME, LED_DRIVER_FRAME_FUNCTION};
+uint8_t setShutdownModeNormalBuffer[] = {LED_DRIVER_REGISTER_SHUTDOWN, SHUTDOWN_MODE_NORMAL};
+uint8_t setFrame1Buffer[] = {LED_DRIVER_REGISTER_FRAME, LED_DRIVER_FRAME_1};
+
 bool BridgeSlaveLedDriverHandler(uint8_t ledDriverId) {
     uint8_t *ledDriverState = ledDriverStates + ledDriverId;
     uint8_t ledDriverAddress = ledDriverId ? I2C_ADDRESS_LED_DRIVER_LEFT : I2C_ADDRESS_LED_DRIVER_RIGHT;
     uint8_t *ledControlBuffer = ledDriverId ? ledControlBufferLeft : ledControlBufferRight;
 
     switch (*ledDriverState) {
+        case LedDriverState_SetFunctionFrame:
+            I2cAsyncWrite(ledDriverAddress, setFunctionFrameBuffer, sizeof(setFunctionFrameBuffer));
+            *ledDriverState = LedDriverState_SetShutdownModeNormal;
+            break;
+        case LedDriverState_SetShutdownModeNormal:
+            I2cAsyncWrite(ledDriverAddress, setShutdownModeNormalBuffer, sizeof(setShutdownModeNormalBuffer));
+            *ledDriverState = LedDriverState_SetFrame1;
+            break;
+        case LedDriverState_SetFrame1:
+            I2cAsyncWrite(ledDriverAddress, setFrame1Buffer, sizeof(setFrame1Buffer));
+            *ledDriverState = LedDriverState_InitLedControlRegisters;
+            break;
         case LedDriverState_InitLedControlRegisters:
             I2cAsyncWrite(ledDriverAddress, ledControlBuffer, sizeof(ledControlBufferLeft));
             *ledDriverState = LedDriverState_Initialized;
-            break;
+        break;
           case LedDriverState_Initialized:
             I2cAsyncWrite(I2C_ADDRESS_LED_DRIVER_LEFT, ledsBuffer, BUFFER_SIZE);
             break;

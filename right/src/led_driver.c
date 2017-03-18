@@ -13,18 +13,4 @@ void LedDriver_InitAllLeds(char isEnabled)
     PORT_SetPinMux(LED_DRIVER_SDB_PORT, LED_DRIVER_SDB_PIN, kPORT_MuxAsGpio);
     GPIO_PinInit(LED_DRIVER_SDB_GPIO, LED_DRIVER_SDB_PIN, &(gpio_pin_config_t){kGPIO_DigitalOutput, 0});
     GPIO_WritePinOutput(LED_DRIVER_SDB_GPIO, LED_DRIVER_SDB_PIN, 1);
-
-    LedDriver_SetAllLedsTo(isEnabled ? 0xFF : 0x00);
-}
-
-void LedDriver_SetAllLedsTo(uint8_t val)
-{
-    uint8_t ledDriverAddresses[] = {I2C_ADDRESS_LED_DRIVER_LEFT, I2C_ADDRESS_LED_DRIVER_RIGHT};
-
-    for (uint8_t addressId=0; addressId<sizeof(ledDriverAddresses); addressId++) {
-        uint8_t address = ledDriverAddresses[addressId];
-        LedDriver_WriteRegister(address, LED_DRIVER_REGISTER_FRAME, LED_DRIVER_FRAME_FUNCTION);
-        LedDriver_WriteRegister(address, LED_DRIVER_REGISTER_SHUTDOWN, SHUTDOWN_MODE_NORMAL);
-        LedDriver_WriteRegister(address, LED_DRIVER_REGISTER_FRAME, LED_DRIVER_FRAME_1);
-    }
 }
