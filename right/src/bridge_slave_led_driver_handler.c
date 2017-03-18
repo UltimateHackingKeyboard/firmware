@@ -4,9 +4,69 @@
 #define BUFFER_SIZE (LED_DRIVER_LED_COUNT + 1)
 
 uint8_t ledsBuffer[BUFFER_SIZE] = {FRAME_REGISTER_PWM_FIRST};
+uint8_t ledDriverStates[2] = {0};
+uint8_t buffer[LED_DRIVER_BUFFER_LENGTH];
+
+uint8_t initLedControlRegistersMessage = {FRAME_REGISTER_LED_CONTROL_FIRST, };
+
+uint8_t ledControlBufferLeft[] = {
+    FRAME_REGISTER_LED_CONTROL_FIRST,
+    0b01111111, // key row 1
+    0b00111111, // display row 1
+    0b01011111, // keys row 2
+    0b00111111, // display row 2
+    0b01011111, // keys row 3
+    0b00111111, // display row 3
+    0b01111101, // keys row 4
+    0b00011111, // display row 4
+    0b00101111, // keys row 5
+    0b00011111, // display row 5
+    0b00000000, // keys row 6
+    0b00011111, // display row 6
+    0b00000000, // keys row 7
+    0b00011111, // display row 7
+    0b00000000, // keys row 8
+    0b00011111, // display row 8
+    0b00000000, // keys row 9
+    0b00011111, // display row 9
+};
+
+uint8_t ledControlBufferRight[] = {
+    FRAME_REGISTER_LED_CONTROL_FIRST,
+    0b01111111, // key row 1
+    0b00000000, // no display
+    0b01111111, // keys row 2
+    0b00000000, // no display
+    0b01111111, // keys row 3
+    0b00000000, // no display
+    0b01111111, // keys row 4
+    0b00000000, // no display
+    0b01111010, // keys row 5
+    0b00000000, // no display
+    0b00000000, // keys row 6
+    0b00000000, // no display
+    0b00000000, // keys row 7
+    0b00000000, // no display
+    0b00000000, // keys row 8
+    0b00000000, // no display
+    0b00000000, // keys row 9
+    0b00000000, // no display
+};
 
 bool BridgeSlaveLedDriverHandler(uint8_t ledDriverId) {
-    I2cAsyncWrite(I2C_ADDRESS_LED_DRIVER_LEFT, ledsBuffer, BUFFER_SIZE);
+    uint8_t *ledDriverState = ledDriverStates + ledDriverId;
+    uint8_t ledDriverAddress = ledDriverId ? I2C_ADDRESS_LED_DRIVER_LEFT : I2C_ADDRESS_LED_DRIVER_RIGHT;
+    uint8_t *ledControlBuffer = ledDriverId ? ledControlBufferLeft : ledControlBufferRight;
+
+    switch (*ledDriverState) {
+        case LedDriverState_InitLedControlRegisters:
+            I2cAsyncWrite(ledDriverAddress, ledControlBuffer, sizeof(ledControlBufferLeft));
+            *ledDriverState = LedDriverState_Initialized;
+            break;
+          case LedDriverState_Initialized:
+            I2cAsyncWrite(I2C_ADDRESS_LED_DRIVER_LEFT, ledsBuffer, BUFFER_SIZE);
+            break;
+        }
     return true;
 }
 

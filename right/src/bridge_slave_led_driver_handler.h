@@ -5,6 +5,13 @@
 
     #include "fsl_common.h"
 
+// Typedefs:
+
+typedef enum {
+    LedDriverState_InitLedControlRegisters,
+    LedDriverState_Initialized,
+} LedDriverState;
+
 // Functions:
 
     extern bool BridgeSlaveLedDriverHandler(uint8_t ledDriverId);
