@@ -18,7 +18,6 @@ bridge_slave_t bridgeSlaves[] = {
 static void bridgeProtocolCallback(I2C_Type *base, i2c_master_handle_t *handle, status_t status, void *userData)
 {
     bridge_slave_t *bridgeSlave = bridgeSlaves + currentBridgeSlaveId;
-    SetLeds(0xff);
 
     bool isFinished = bridgeSlave->slaveHandler(bridgeSlave->moduleId);
     if (isFinished) {
