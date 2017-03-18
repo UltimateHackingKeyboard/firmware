@@ -13,10 +13,6 @@
     #define PROTOCOL_RESPONSE_SUCCESS       0
     #define PROTOCOL_RESPONSE_GENERIC_ERROR 1
 
-    #define BRIDGE_COMMAND_GET_KEY_STATES 0
-    #define BRIDGE_COMMAND_SET_TEST_LED   1
-    #define BRIDGE_COMMAND_SET_LED_PWM    2
-
 // Variables:
 
     uint8_t BridgeRxBuffer[BRIDGE_RX_BUFFER_SIZE];

@@ -4,6 +4,7 @@
 #include "i2c_addresses.h"
 #include "i2c.h"
 #include "led_pwm.h"
+#include "bridge_protocol.h"
 
 void SetError(uint8_t error);
 void SetGenericError();
@@ -28,16 +29,16 @@ void BridgeProtocolHandler()
 {
     uint8_t commandId = BridgeRxBuffer[0];
     switch (commandId) {
-        case BRIDGE_COMMAND_GET_KEY_STATES:
+        case BridgeCommand_GetKeyStates:
             BridgeTxSize = KEYBOARD_MATRIX_COLS_NUM*KEYBOARD_MATRIX_ROWS_NUM;
             memcpy(BridgeTxBuffer, keyMatrix.keyStates, BridgeTxSize);
             break;
-        case BRIDGE_COMMAND_SET_TEST_LED:
+        case BridgeCommand_SetTestLed:
             BridgeTxSize = 0;
             bool isLedOn = BridgeRxBuffer[1];
             TEST_LED_SET(isLedOn);
             break;
-        case BRIDGE_COMMAND_SET_LED_PWM:
+        case BridgeCommand_SetLedPwmBrightness:
             BridgeTxSize = 0;
             uint8_t brightnessPercent = BridgeRxBuffer[1];
             LedPwm_SetBrightness(brightnessPercent);
