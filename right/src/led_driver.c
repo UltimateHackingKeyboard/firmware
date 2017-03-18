@@ -26,10 +26,5 @@ void LedDriver_SetAllLedsTo(uint8_t val)
         LedDriver_WriteRegister(address, LED_DRIVER_REGISTER_FRAME, LED_DRIVER_FRAME_FUNCTION);
         LedDriver_WriteRegister(address, LED_DRIVER_REGISTER_SHUTDOWN, SHUTDOWN_MODE_NORMAL);
         LedDriver_WriteRegister(address, LED_DRIVER_REGISTER_FRAME, LED_DRIVER_FRAME_1);
-
-        uint8_t i;
-        for (i=FRAME_REGISTER_PWM_FIRST; i<=FRAME_REGISTER_PWM_LAST; i++) {
-            LedDriver_WriteRegister(address, i, val);
-        }
     }
 }
