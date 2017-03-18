@@ -8,6 +8,7 @@
 #include "config_buffer.h"
 #include "led_pwm.h"
 #include "bridge_protocol_scheduler.h"
+#include "bridge_slaves/bridge_slave_uhk_module.h"
 
 void setError(uint8_t error);
 void setGenericError();
@@ -120,18 +121,8 @@ void jumpToBootloader() {
 void getSetTestLed()
 {
     uint8_t ledState = GenericHidInBuffer[1];
-//    uint8_t data[] = {1, ledState};
-//    I2cWrite(I2C_MAIN_BUS_BASEADDR, I2C_ADDRESS_LEFT_KEYBOARD_HALF, data, sizeof(data));
-
-    switch (ledState) {
-        case 0:
-            TEST_LED_ON();
-            break;
-        case 1:
-            TEST_LED_OFF();
-            break;
-    }
-    SetLeds(ledState ? 0xff : 0);
+    TEST_LED_SET(ledState);
+    UhkModuleStates[0].isTestLedOn = ledState;
 }
 
 void writeLedDriver()
@@ -215,8 +206,7 @@ void setLedPwm()
     if (isRightKeyboardHalf) {
         LedPwm_SetBrightness(brightnessPercent);
     } else {
-        uint8_t data[] = {2, brightnessPercent};
-        I2cWrite(I2C_MAIN_BUS_BASEADDR, I2C_ADDRESS_LEFT_KEYBOARD_HALF, data, sizeof(data));
+        UhkModuleStates[0].ledPwmBrightness = brightnessPercent;
     }
 #endif
 }

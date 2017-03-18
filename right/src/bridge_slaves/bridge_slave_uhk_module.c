@@ -3,7 +3,9 @@
 #include "bridge_slave_uhk_module.h"
 #include "bridge_protocol.h"
 #include "main.h"
+#include "peripherials/test_led.h"
 
+uhk_module_state_t UhkModuleStates[UHK_MODULE_MAX_COUNT];
 uhk_module_field_t currentUhkModuleField = UhkModuleField_SendKeystatesRequestCommand;
 uhk_module_state_t uhkModuleExternalStates[UHK_MODULE_MAX_COUNT];
 uint8_t txBuffer[2];
@@ -11,6 +13,7 @@ uint8_t txBuffer[2];
 bool BridgeSlaveUhkModuleHandler(uint8_t uhkModuleId) {
     uhk_module_state_t *uhkModuleInternalState = UhkModuleStates + uhkModuleId;
     uhk_module_state_t *uhkModuleExternalState = uhkModuleExternalStates + uhkModuleId;
+    uhkModuleInternalState->ledPwmBrightness = 0xff;
 
     switch (currentUhkModuleField) {
         case UhkModuleField_SendKeystatesRequestCommand:
@@ -24,13 +27,13 @@ bool BridgeSlaveUhkModuleHandler(uint8_t uhkModuleId) {
             break;
         case UhkModuleField_SendPwmBrightnessCommand:
             txBuffer[0] = BridgeCommand_SetLedPwmBrightness;
-            txBuffer[1] = uhkModuleExternalState->ledPwmBrightness;
+            txBuffer[1] = uhkModuleInternalState->ledPwmBrightness;
             I2cAsyncWrite(I2C_ADDRESS_LEFT_KEYBOARD_HALF, txBuffer, 2);
             currentUhkModuleField = UhkModuleField_SendTestLedCommand;
             break;
         case UhkModuleField_SendTestLedCommand:
             txBuffer[0] = BridgeCommand_SetTestLed;
-            txBuffer[1] = uhkModuleExternalState->isTestLedOn;
+            txBuffer[1] = uhkModuleInternalState->isTestLedOn;
             I2cAsyncWrite(I2C_ADDRESS_LEFT_KEYBOARD_HALF, txBuffer, 2);
             currentUhkModuleField = UhkModuleField_SendKeystatesRequestCommand;
             break;
