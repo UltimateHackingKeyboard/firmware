@@ -2,7 +2,7 @@
 #include "bridge_protocol_scheduler.h"
 #include "slot.h"
 #include "main.h"
-#include "bridge_slave_led_driver_handler.h"
+#include "bridge_slave_led_driver.h"
 #include "i2c.h"
 #include "i2c_addresses.h"
 

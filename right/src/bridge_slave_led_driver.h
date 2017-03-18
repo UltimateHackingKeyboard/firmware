@@ -1,5 +1,5 @@
-#ifndef __BRIDGE_SLAVE_LED_DRIVER_HANDLER_H__
-#define __BRIDGE_SLAVE_LED_DRIVER_HANDLER_H__
+#ifndef __BRIDGE_SLAVE_LED_DRIVER_H__
+#define __BRIDGE_SLAVE_LED_DRIVER_H__
 
 // Includes:
 

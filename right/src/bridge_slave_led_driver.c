@@ -1,4 +1,4 @@
-#include "bridge_slave_led_driver_handler.h"
+#include "bridge_slave_led_driver.h"
 #include "led_driver.h"
 
 #define BUFFER_SIZE (LED_DRIVER_LED_COUNT + 1)
