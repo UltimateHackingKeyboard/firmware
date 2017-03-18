@@ -8,6 +8,6 @@ uint8_t LedDisplayBrightness = 0xff;
 
 void LedDisplay_SetLayerLed(uint8_t layerId) {
     for (uint8_t i = 0; i < LAYER_COUNT; i++) {
-        LedDriver_WriteRegister(I2C_ADDRESS_LED_DRIVER_LEFT, LAYER_LED_FIRST + (i * LAYER_LED_DISTANCE), LedDisplayBrightness * (layerId == i + 1));
+//        LedDriver_WriteRegister(I2C_ADDRESS_LED_DRIVER_LEFT, LAYER_LED_FIRST + (i * LAYER_LED_DISTANCE), LedDisplayBrightness * (layerId == i + 1));
     }
 }
