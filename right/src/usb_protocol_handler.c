@@ -61,9 +61,6 @@ void usbProtocolHandler()
         case USB_COMMAND_WRITE_LED_DRIVER:
             //writeLedDriver();
             break;
-        case USB_COMMAND_READ_LED_DRIVER:
-            //readLedDriver();
-            break;
         case USB_COMMAND_WRITE_EEPROM:
             writeEeprom();
             break;
@@ -139,11 +136,6 @@ void writeLedDriver()
     }
 
     I2cWrite(I2C_MAIN_BUS_BASEADDR, i2cAddress, GenericHidInBuffer+3, i2cPayloadSize);
-}
-
-void readLedDriver()
-{
-
 }
 
 void writeEeprom()
