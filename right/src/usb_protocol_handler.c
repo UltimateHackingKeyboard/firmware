@@ -112,10 +112,9 @@ void getSystemProperty() {
 }
 
 void jumpToBootloader() {
-    // We should reset the device here
-    SCB->AIRCR = (0x5FA<<SCB_AIRCR_VECTKEY_Pos)|SCB_AIRCR_SYSRESETREQ_Msk;
-    //SCB->AIRCR = 0x05fA0002; // If the masked version doesn't work, this should also reset the core.
-    for(;;);
+    SCB->AIRCR = 0x5FA<<SCB_AIRCR_VECTKEY_Pos | SCB_AIRCR_SYSRESETREQ_Msk; // Reset the MCU.
+//    SCB->AIRCR = 0x05fA0002; // If the masked version doesn't work, this should also reset the core.
+    for (;;);
 }
 
 void getSetTestLed()
