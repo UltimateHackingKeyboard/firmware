@@ -15,7 +15,7 @@ void setGenericError();
 void usbProtocolHandler();
 void getSystemProperty();
 void jumpToBootloader();
-void getSetTestLed();
+void setTestLed();
 void writeLedDriver();
 void readLedDriver();
 void writeEeprom();
@@ -55,8 +55,8 @@ void usbProtocolHandler()
         case USB_COMMAND_JUMP_TO_BOOTLOADER:
             jumpToBootloader();
             break;
-        case USB_COMMAND_TEST_LED:
-            getSetTestLed();
+        case USB_COMMAND_SET_TEST_LED:
+            setTestLed();
             break;
         case USB_COMMAND_WRITE_LED_DRIVER:
             //writeLedDriver();
@@ -116,7 +116,7 @@ void jumpToBootloader() {
     for (;;);
 }
 
-void getSetTestLed()
+void setTestLed()
 {
     uint8_t ledState = GenericHidInBuffer[1];
     TEST_LED_SET(ledState);
