@@ -5,9 +5,6 @@
 
 uint8_t ledsBuffer[BUFFER_SIZE] = {FRAME_REGISTER_PWM_FIRST};
 uint8_t ledDriverStates[2] = {0};
-uint8_t buffer[LED_DRIVER_BUFFER_LENGTH];
-
-uint8_t initLedControlRegistersMessage = {FRAME_REGISTER_LED_CONTROL_FIRST, };
 
 uint8_t ledControlBufferLeft[] = {
     FRAME_REGISTER_LED_CONTROL_FIRST,
