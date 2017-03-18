@@ -38,5 +38,7 @@ void InitBridgeProtocolScheduler()
 {
     SetLeds(0xff);
     I2C_MasterTransferCreateHandle(I2C_MAIN_BUS_BASEADDR, &I2cMasterHandle, bridgeProtocolCallback, NULL);
+
+    // Kickstart the scheduler by triggering the first callback.
     bridgeSlaves[0].slaveHandler(bridgeSlaves[0].moduleId);
 }
