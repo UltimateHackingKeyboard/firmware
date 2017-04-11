@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include "command.h"
 #include "packet/serial_packet.h"
-#include "crc/crc16.h"
+#include "crc16.h"
 //#include "utilities/fsl_rtos_abstraction.h"
 
 #include "fsl_flash.h"

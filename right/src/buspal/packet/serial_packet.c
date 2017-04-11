@@ -6,7 +6,7 @@
 #include "packet/serial_packet.h"
 #include "fsl_common.h"
 #include "bl_peripheral.h"
-#include "crc/crc16.h"
+#include "crc16.h"
 //#include "utilities/fsl_assert.h"
 
 #ifndef BOOTLOADER_HOST
