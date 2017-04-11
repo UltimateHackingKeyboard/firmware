@@ -10,7 +10,7 @@
 
 #include "fsl_device_registers.h"
 #include "bootloader_hid_report_ids.h"
-#include "utilities/fsl_rtos_abstraction.h"
+#include "fsl_rtos_abstraction.h"
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -1,7 +1,7 @@
 #ifndef __USB_HID_MOUSE_H__
 #define __USB_HID_MOUSE_H__ 1
 
-#include "utilities/fsl_rtos_abstraction.h"
+#include "fsl_rtos_abstraction.h"
 #include "bootloader_hid_report_ids.h"
 
 #define USB_DEVICE_INTERRUPT_PRIORITY (4)

@@ -3,7 +3,7 @@
 #include "fsl_i2c.h"
 #include "fsl_uart.h"
 #include "microseconds/microseconds.h"
-#include "utilities/fsl_rtos_abstraction.h"
+#include "fsl_rtos_abstraction.h"
 
 #include "usb_descriptor.h"
 
