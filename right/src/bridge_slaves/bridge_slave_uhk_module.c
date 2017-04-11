@@ -22,7 +22,7 @@ void InitUhkModules()
 bool BridgeSlaveUhkModuleHandler(uint8_t uhkModuleId)
 {
     uhk_module_state_t *uhkModuleInternalState = UhkModuleStates + uhkModuleId;
-    uhk_module_state_t *uhkModuleExternalState = uhkModuleExternalStates + uhkModuleId;
+    //uhk_module_state_t *uhkModuleExternalState = uhkModuleExternalStates + uhkModuleId;
 
     switch (currentUhkModuleField) {
         case UhkModuleField_SendKeystatesRequestCommand:

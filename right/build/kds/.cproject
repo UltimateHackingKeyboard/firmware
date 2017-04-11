@@ -63,8 +63,10 @@
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.include.paths.2122094274" name="Include paths (-I)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.include.paths"/>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.defs.7801442172" name="Defined symbols (-D)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.defs" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="DEBUG"/>
+									<listOptionValue builtIn="false" value="BL_CONFIG_USB_HID=1"/>
 									<listOptionValue builtIn="false" value="__STARTUP_CLEAR_BSS"/>
 									<listOptionValue builtIn="false" value="UHK_PCB_MAJOR_VERSION=7"/>
+									<listOptionValue builtIn="false" value="BOOTLOADER_HOST"/>
 								</option>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.nostdinc.4189903161" name="Do not search system directories (-nostdinc)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.nostdinc" value="false" valueType="boolean"/>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.other.1539698818" name="Other assembler flags" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.other" value=" -fno-common  -ffunction-sections  -fdata-sections  -ffreestanding  -fno-builtin  -mapcs " valueType="string"/>
@@ -75,6 +77,9 @@
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.include.paths.336878990" name="Include paths (-I)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.include.paths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="../../../src"/>
 									<listOptionValue builtIn="false" value="../../../src/ksdk_usb"/>
+									<listOptionValue builtIn="false" value="../../../src/buspal"/>
+									<listOptionValue builtIn="false" value="../../../src/buspal/bootloader"/>
+									<listOptionValue builtIn="false" value="../../../src/buspal/bm_usb"/>
 									<listOptionValue builtIn="false" value="../../../../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0"/>
 									<listOptionValue builtIn="false" value="../../../../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0/osa"/>
 									<listOptionValue builtIn="false" value="../../../../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0/include"/>
@@ -87,6 +92,8 @@
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.std.933718024" name="Language standard" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.std" useByScannerDiscovery="true" value="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.std.gnu99" valueType="enumerated"/>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.defs.62587551" name="Defined symbols (-D)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.defs" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="_DEBUG=1"/>
+									<listOptionValue builtIn="false" value="BL_CONFIG_USB_HID=1"/>
+									<listOptionValue builtIn="false" value="BOOTLOADER_HOST"/>
 									<listOptionValue builtIn="false" value="UHK_PCB_MAJOR_VERSION=7"/>
 									<listOptionValue builtIn="false" value="CPU_MK22FN512VLH12"/>
 									<listOptionValue builtIn="false" value="USB_STACK_BM"/>
@@ -641,6 +648,9 @@
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.include.paths.58271126" name="Include paths (-I)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.include.paths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="../../../src"/>
 									<listOptionValue builtIn="false" value="../../../src/ksdk_usb"/>
+									<listOptionValue builtIn="false" value="../../../src/buspal"/>
+									<listOptionValue builtIn="false" value="../../../src/buspal/bootloader"/>
+									<listOptionValue builtIn="false" value="../../../src/buspal/bm_usb"/>
 									<listOptionValue builtIn="false" value="../../../../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0"/>
 									<listOptionValue builtIn="false" value="../../../../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0/osa"/>
 									<listOptionValue builtIn="false" value="../../../../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0/include"/>
@@ -773,8 +783,10 @@
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.include.paths.1619685061" name="Include paths (-I)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.include.paths"/>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.defs.671721773" name="Defined symbols (-D)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.defs" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="DEBUG"/>
+									<listOptionValue builtIn="false" value="BL_CONFIG_USB_HID=1"/>
 									<listOptionValue builtIn="false" value="__STARTUP_CLEAR_BSS"/>
 									<listOptionValue builtIn="false" value="UHK_PCB_MAJOR_VERSION=7"/>
+									<listOptionValue builtIn="false" value="BOOTLOADER_HOST"/>
 								</option>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.nostdinc.2110956724" name="Do not search system directories (-nostdinc)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.nostdinc" value="false" valueType="boolean"/>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.other.1101826118" name="Other assembler flags" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.other" value=" -fno-common  -ffunction-sections  -fdata-sections  -ffreestanding  -fno-builtin  -mapcs " valueType="string"/>
@@ -784,6 +796,9 @@
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.include.paths.450812741" name="Include paths (-I)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.include.paths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="../../../src"/>
 									<listOptionValue builtIn="false" value="../../../src/ksdk_usb"/>
+									<listOptionValue builtIn="false" value="../../../src/buspal"/>
+									<listOptionValue builtIn="false" value="../../../src/buspal/bootloader"/>
+									<listOptionValue builtIn="false" value="../../../src/buspal/bm_usb"/>
 									<listOptionValue builtIn="false" value="../../../../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0"/>
 									<listOptionValue builtIn="false" value="../../../../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0/osa"/>
 									<listOptionValue builtIn="false" value="../../../../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0/include"/>
@@ -796,6 +811,8 @@
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.std.104109443" name="Language standard" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.std" useByScannerDiscovery="true" value="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.std.gnu99" valueType="enumerated"/>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.defs.1312429299" name="Defined symbols (-D)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.defs" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="_DEBUG=1"/>
+									<listOptionValue builtIn="false" value="BOOTLOADER_HOST"/>
+									<listOptionValue builtIn="false" value="BL_CONFIG_USB_HID=1"/>
 									<listOptionValue builtIn="false" value="CPU_MK22FN512VLH12"/>
 									<listOptionValue builtIn="false" value="UHK_PCB_MAJOR_VERSION=7"/>
 									<listOptionValue builtIn="false" value="USB_STACK_BM"/>
@@ -926,6 +943,9 @@
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.include.paths.936678785" name="Include paths (-I)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.include.paths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="../../../src"/>
 									<listOptionValue builtIn="false" value="../../../src/ksdk_usb"/>
+									<listOptionValue builtIn="false" value="../../../src/buspal"/>
+									<listOptionValue builtIn="false" value="../../../src/buspal/bootloader"/>
+									<listOptionValue builtIn="false" value="../../../src/buspal/bm_usb"/>
 									<listOptionValue builtIn="false" value="../../../../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0"/>
 									<listOptionValue builtIn="false" value="../../../../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0/osa"/>
 									<listOptionValue builtIn="false" value="../../../../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0/include"/>
@@ -1170,6 +1190,7 @@
 		<configuration configurationName="debug">
 			<resource resourceType="PROJECT" workspacePath="/uhk-right"/>
 		</configuration>
+		<configuration configurationName="v6-debug-srec"/>
 		<configuration configurationName="release">
 			<resource resourceType="PROJECT" workspacePath="/uhk-right"/>
 		</configuration>
