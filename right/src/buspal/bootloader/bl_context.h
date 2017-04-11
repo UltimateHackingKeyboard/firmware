@@ -3,7 +3,7 @@
 
 #include "bootloader_common.h"
 #include "bootloader/bl_peripheral.h"
-#include "memory/memory.h"
+#include "memory.h"
 #include "packet/command_packet.h"
 //#include "bootloader/bl_command.h"
 #include "property.h"
