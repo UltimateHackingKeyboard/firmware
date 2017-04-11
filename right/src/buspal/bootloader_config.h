@@ -40,8 +40,6 @@
 #define BL_FEATURE_FLASH_SECURITY (1)
 #endif
 
-#define BL_FEATURE_QSPI_MODULE (0)
-
 #define BL_FEATURE_ENCRYPTION (0)
 
 // Bootloader peripheral detection default timeout in milliseconds
