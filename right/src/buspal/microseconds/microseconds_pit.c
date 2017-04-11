@@ -6,7 +6,6 @@
  */
 #include "microseconds/microseconds.h"
 #include <stdarg.h>
-//#include "bootloader_common.h"
 #include "bus_pal_hardware.h"
 
 ////////////////////////////////////////////////////////////////////////////////

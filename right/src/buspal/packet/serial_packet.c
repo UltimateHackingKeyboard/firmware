@@ -1,5 +1,4 @@
 #include <string.h>
-//#include "bootloader_common.h"
 #include "bootloader/bl_context.h"
 #include "bootloader/bootloader.h"
 #include "packet/command_packet.h"
@@ -7,11 +6,6 @@
 #include "fsl_common.h"
 #include "bl_peripheral.h"
 #include "crc16.h"
-//#include "utilities/fsl_assert.h"
-
-#ifndef BOOTLOADER_HOST
-#include "microseconds/microseconds.h"
-#endif
 
 //! @addtogroup packet
 //! @{

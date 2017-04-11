@@ -3,7 +3,6 @@
 #include "usb_device.h"
 
 #include "usb_device_class.h"
-//#include "usb_device_msc.h"
 #include "usb_device_hid.h"
 #include "usb_device_ch9.h"
 #include "usb_descriptor.h"

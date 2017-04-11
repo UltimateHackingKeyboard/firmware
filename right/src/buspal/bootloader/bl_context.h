@@ -5,7 +5,6 @@
 #include "bootloader/bl_peripheral.h"
 #include "memory.h"
 #include "packet/command_packet.h"
-//#include "bootloader/bl_command.h"
 #include "property.h"
 #include "command.h"
 

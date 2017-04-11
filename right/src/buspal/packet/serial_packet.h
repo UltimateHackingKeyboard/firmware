@@ -4,7 +4,6 @@
 #include "bootloader_common.h"
 #include "bootloader/bl_peripheral.h"
 #include "command_packet.h"
-//#include "property/property.h"
 #include "stdbool.h"
 
 //! @addtogroup packet

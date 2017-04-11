@@ -1,7 +1,5 @@
 #include "bootloader_common.h"
 #include "crc16.h"
-//#include "utilities/fsl_assert.h"
-//#include "utilities/fsl_rtos_abstraction.h"
 
 #if !defined(BOOTLOADER_HOST)
 #include "fsl_device_registers.h"

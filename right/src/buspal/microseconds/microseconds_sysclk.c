@@ -4,7 +4,6 @@
  *
  * Notes: The driver configure sysclk as lifetime timer
  */
-//#include "bootloader_common.h"
 #include "microseconds/microseconds.h"
 #include "fsl_device_registers.h"
 #include <stdarg.h>

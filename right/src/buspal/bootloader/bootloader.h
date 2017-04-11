@@ -3,12 +3,7 @@
 
 #include "bootloader_common.h"
 #include "bootloader/bl_peripheral.h"
-//#include "bootloader/bl_command.h"
 #include "bootloader/bl_context.h"
-//#include "bootloader/bl_version.h"
-//#include "bootloader/bl_user_entry.h"
-//#include "bootloader/bl_peripheral_interface.h"
-//#include "bootloader/bl_shutdown_cleanup.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 // Definitions

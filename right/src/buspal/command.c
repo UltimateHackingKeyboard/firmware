@@ -1,12 +1,8 @@
-//#include "memory/memory.h"
-//#include "property/property.h"
-//#include "utilities/fsl_assert.h"
 #include <string.h>
 #include <stdint.h>
 #include "command.h"
 #include "packet/serial_packet.h"
 #include "crc16.h"
-//#include "utilities/fsl_rtos_abstraction.h"
 
 #include "fsl_flash.h"
 #include "fsl_device_registers.h"

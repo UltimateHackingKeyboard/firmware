@@ -4,7 +4,6 @@
 
 #include "usb_device_class.h"
 #include "usb_device_hid.h"
-//#include "usb_device_msc.h"
 #include "bootloader_hid_report_ids.h"
 
 #include "usb_descriptor.h"

@@ -1,7 +1,6 @@
 #if !defined(__COMMAND_PACKET_H__)
 #define __COMMAND_PACKET_H__
 
-//#include "bootloader_common.h"
 #include "stdint.h"
 
 //! @addtogroup packet

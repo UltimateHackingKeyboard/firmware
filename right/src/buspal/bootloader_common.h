@@ -11,7 +11,6 @@
 #include "fsl_common.h"
 
 #if defined(BOOTLOADER_HOST)
-//#include "blfwk/bootloader_config.h"
 #elif defined(BUSPAL)
 #include "../src/buspal_config.h"
 #else

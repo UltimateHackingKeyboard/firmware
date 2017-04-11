@@ -1,7 +1,6 @@
 #ifndef __USB_DEVICE_COMPOSITE_H__
 #define __USB_DEVICE_COMPOSITE_H__ 1
 
-//#include "msc_disk.h"
 #include "hid_bootloader.h"
 #include "usb_device_config.h"
 
