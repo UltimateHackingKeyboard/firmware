@@ -1,59 +1,35 @@
-#if !defined(__FSL_RTOS_ABSTRACTION_H__)
+#ifndef __FSL_RTOS_ABSTRACTION_H__
 #define __FSL_RTOS_ABSTRACTION_H__
 
 #include <stdint.h>
 #include <stdbool.h>
 
-//! @addtogroup rtos_irq_sync
-//! @{
-
-////////////////////////////////////////////////////////////////////////////////
-// Declarations
-////////////////////////////////////////////////////////////////////////////////
-typedef enum _osa_status_t
-{
-    kStatus_OSA_Success = 0U, /*!< Success */
-    kStatus_OSA_Error = 1U,   /*!< Failed */
-    kStatus_OSA_Timeout = 2U, /*!< Timeout occurs while waiting */
-    kStatus_OSA_Idle = 3U     /*!< Used for bare metal only, the wait object is not ready
-                                and timeout still not occur */
+typedef enum _osa_status_t {
+    kStatus_OSA_Success = 0U, // Success
+    kStatus_OSA_Error = 1U,   // Failed
+    kStatus_OSA_Timeout = 2U, // Timeout occurs while waiting
+    kStatus_OSA_Idle = 3U     // Used for bare metal only, the wait object is not ready and timeout still not occur
 } osa_status_t;
 
-typedef struct Semaphore
-{
-    volatile bool isWaiting;   /*!< Is any task waiting for a timeout on this object */
-    volatile uint8_t semCount; /*!< The count value of the object                    */
-    uint64_t tickStart;        /*!< The ticks to start timeout                       */
-    uint32_t timeout;          /*!< Timeout to wait in milliseconds                  */
+typedef struct Semaphore {
+    volatile bool isWaiting;   // Is any task waiting for a timeout on this object
+    volatile uint8_t semCount; // The count value of the object
+    uint64_t tickStart;        // The ticks to start timeout
+    uint32_t timeout;          // Timeout to wait in milliseconds
 } semaphore_t;
 
-//! @brief Type for an interrupt synchronization object.
+// Interrupt synchronization object.
 typedef volatile int32_t sync_object_t;
 
-//! @brief Type for an interrupt lock object.
+// Interrupt lock object.
 typedef volatile uint32_t lock_object_t;
 
 enum sync_timeouts
 {
-    //! @brief Constant to pass for the sync_wait() timeout in order to wait indefinitely.
-    kSyncWaitForever = 0xffffffffU
+    kSyncWaitForever = 0xffffffffU // Constant to pass for the sync_wait() timeout in order to wait indefinitely.
 };
 
-////////////////////////////////////////////////////////////////////////////////
-// API
-////////////////////////////////////////////////////////////////////////////////
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
-
-//! @name Interrupt handler synchronization
-//@{
-
-/*!
- * @name Counting Semaphore
- * @{
- */
 
 /*!
  * @brief Creates a semaphore with a given value.
@@ -162,12 +138,7 @@ osa_status_t OSA_SemaDestroy(semaphore_t *pSem);
  */
 void OSA_TimeDelay(uint32_t delay);
 
-//@}
 
-//! @}
-
-//! @name Interrupt handler synchronization
-//@{
 
 /*!
  * @brief Initialize a synchronization object to a given state.
@@ -206,13 +177,7 @@ void sync_signal(sync_object_t *obj);
  */
 void sync_reset(sync_object_t *obj);
 
-//@}
 
-//! @addtogroup irq_lock
-//! @{
-
-//! @name Interrupt handler lock
-//@{
 
 //! @brief Initialize the lock object
 void lock_init(void);
@@ -223,12 +188,4 @@ void lock_acquire(void);
 //! @brief Restore previous state.
 void lock_release(void);
 
-//@}
-
-//! @}
-
-#if defined(__cplusplus)
-}
 #endif
-
-#endif // __FSL_RTOS_ABSTRACTION_H__
