@@ -6,7 +6,7 @@
 #include "memory/memory.h"
 #include "packet/command_packet.h"
 //#include "bootloader/bl_command.h"
-#include "property/property.h"
+#include "property.h"
 #include "command.h"
 
 #if !defined(BOOTLOADER_HOST)
