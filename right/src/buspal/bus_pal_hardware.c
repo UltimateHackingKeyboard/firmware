@@ -22,12 +22,6 @@
 // Definitions
 ////////////////////////////////////////////////////////////////////////////////
 
-#if (BL_CONFIG_USB_HID || BL_CONFIG_HS_USB_HID || BL_CONFIG_USB_MSC || BL_CONFIG_HS_USB_MSC)
-
-////////////////////////////////////////////////////////////////////////////////
-// Definitions
-////////////////////////////////////////////////////////////////////////////////
-
 #define REQ_DATA_SIZE (1)
 
 #define USB_HID_INDEX (0)
@@ -84,7 +78,6 @@ const peripheral_packet_interface_t g_usbHidPacketInterface = {.init = usb_hid_p
                                                                .byteReceivedCallback = 0 };
 
 const peripheral_descriptor_t g_peripherals[] = {
-#if (BL_CONFIG_USB_HID || BL_CONFIG_USB_MSC)
     // USB HID - Full speed
     {.typeMask = kPeripheralType_USB_HID,
      .instance = 0,
@@ -92,7 +85,6 @@ const peripheral_descriptor_t g_peripherals[] = {
      .controlInterface = &g_usbHidControlInterface,
      .byteInterface = NULL,
      .packetInterface = &g_usbHidPacketInterface },
-#endif    // BL_CONFIG_USB_HID
     { 0 } // Terminator
 };
 
@@ -128,8 +120,6 @@ uint32_t g_calculatedBaudRate;
  *END**************************************************************************/
 bool usb_clock_init(void)
 {
-#if ((BL_CONFIG_USB_HID) || (BL_CONFIG_USB_MSC))
-
     SIM->CLKDIV2 = (uint32_t)0x0UL; /* Update USB clock prescalers */
                                     // Select IRC48M clock
     SIM->SOPT2 |= (SIM_SOPT2_USBSRC_MASK | SIM_SOPT2_PLLFLLSEL_MASK);
@@ -147,7 +137,6 @@ bool usb_clock_init(void)
     USB0->CLK_RECOVER_CTRL |= USB_CLK_RECOVER_CTRL_CLOCK_RECOVER_EN_MASK;
 
     USB0->CLK_RECOVER_CTRL |= 0x20;
-#endif
     return true;
 }
 
@@ -162,12 +151,7 @@ bool usb_hid_poll_for_activity(const peripheral_descriptor_t *self)
     //    uint32_t hidInfoIndex = self->instance / 2;
     bool hid_active = false;
     bool msc_active = false;
-#if USB_DEVICE_CONFIG_HID
     hid_active = g_device_composite.hid_generic.hid_packet.didReceiveFirstReport;
-#endif //  USB_DEVICE_CONFIG_HID
-#if USB_DEVICE_CONFIG_MSC
-    msc_active = g_device_composite.msc_disk.msc_state.isActive;
-#endif //  USB_DEVICE_CONFIG_HID
 
     s_dHidMscActivity[0] = hid_active;
     s_dHidMscActivity[1] = msc_active;
@@ -204,12 +188,7 @@ usb_status_t usb_device_callback(usb_device_handle handle, uint32_t event, void 
             {
                 g_device_composite.attach = 1;
                 g_device_composite.current_configuration = *temp8;
-#if USB_DEVICE_CONFIG_HID
                 error = usb_device_hid_generic_set_configure(g_device_composite.hid_generic.hid_handle, *temp8);
-#endif // USB_DEVICE_CONFIG_HID
-#if USB_DEVICE_CONFIG_MSC
-                usb_device_msc_disk_set_configure(g_device_composite.msc_disk.msc_handle, *temp8);
-#endif // USB_DEVICE_CONFIG_MSC
                 error = kStatus_USB_Success;
             }
             break;
@@ -221,10 +200,8 @@ usb_status_t usb_device_callback(usb_device_handle handle, uint32_t event, void 
                 if (interface < USB_COMPOSITE_INTERFACE_COUNT)
                 {
                     g_device_composite.current_interface_alternate_setting[interface] = alternate_setting;
-#if USB_DEVICE_CONFIG_HID
                     usb_device_hid_generic_set_interface(g_device_composite.hid_generic.hid_handle, interface,
                                                          alternate_setting);
-#endif
                     error = kStatus_USB_Success;
                 }
             }
@@ -326,12 +303,7 @@ status_t usb_device_full_init(const peripheral_descriptor_t *self, serial_byte_r
 
     g_device_composite.speed = USB_SPEED_FULL;
     g_device_composite.attach = 0;
-#if USB_DEVICE_CONFIG_HID
     g_device_composite.hid_generic.hid_handle = (class_handle_t)NULL;
-#endif // USB_DEVICE_CONFIG_HID
-#if USB_DEVICE_CONFIG_MSC
-    g_device_composite.msc_disk.msc_handle = (class_handle_t)NULL;
-#endif // USB_DEVICE_CONFIG_MSC
     g_device_composite.device_handle = NULL;
 
     if (kStatus_USB_Success !=
@@ -341,20 +313,8 @@ status_t usb_device_full_init(const peripheral_descriptor_t *self, serial_byte_r
     }
     else
     {
-#if ((USB_DEVICE_CONFIG_HID == 1) && (USB_DEVICE_CONFIG_MSC == 1))
-        g_device_composite.msc_disk.msc_handle = g_composite_device_config_list.config[1].classHandle;
-        usb_device_msc_disk_init(&g_device_composite);
         g_device_composite.hid_generic.hid_handle = g_composite_device_config_list.config[0].classHandle;
         usb_device_hid_generic_init(&g_device_composite);
-#endif
-#if ((USB_DEVICE_CONFIG_MSC == 1) && (USB_DEVICE_CONFIG_HID == 0))
-        g_device_composite.msc_disk.msc_handle = g_composite_device_config_list.config[0].classHandle;
-        usb_device_msc_disk_init(&g_device_composite);
-#endif // USB_DEVICE_CONFIG_MSC
-#if ((USB_DEVICE_CONFIG_HID == 1) && (USB_DEVICE_CONFIG_MSC == 0))
-        g_device_composite.hid_generic.hid_handle = g_composite_device_config_list.config[0].classHandle;
-        usb_device_hid_generic_init(&g_device_composite);
-#endif // USB_DEVICE_CONFIG_HID
     }
 
     /* Install isr, set priority, and enable IRQ. */
@@ -382,13 +342,8 @@ void usb_device_full_shutdown(const peripheral_descriptor_t *self)
     }
     else
     {
-// Shutdown class driver
-#if USB_DEVICE_CONFIG_MSC
-        usb_device_msc_disk_deinit(&g_device_composite);
-#endif // USB_DEVICE_CONFIG_MSC
-#if USB_DEVICE_CONFIG_HID
+        // Shutdown class driver
         usb_device_hid_generic_deinit(&g_device_composite);
-#endif // USB_DEVICE_CONFIG_MSC
     }
 
 // Make sure we are clocking to the peripheral to ensure there
@@ -442,13 +397,6 @@ void usb_device_full_shutdown(const peripheral_descriptor_t *self)
  *END**************************************************************************/
 void usb_msc_pump(const peripheral_descriptor_t *self)
 {
-    s_dHidMscActivity[USB_HID_INDEX] = false;
-    s_dHidMscActivity[USB_MSC_INDEX] = true;
-
-//#if (USB_DEVICE_CONFIG_MSC)
-#if (BL_CONFIG_USB_MSC || BL_CONFIG_HS_USB_MSC)
-    usb_device_msc_disk_pump();
-#endif // BL_CONFIG_USB_MSC
     s_dHidMscActivity[USB_HID_INDEX] = true;
     s_dHidMscActivity[USB_MSC_INDEX] = false;
 }
@@ -555,7 +503,6 @@ status_t usb_hid_packet_read(const peripheral_descriptor_t *self,
         *packet = g_device_composite.hid_generic.hid_packet.report.packet;
         *packetLength = lengthOfPacket;
     }
-#endif // USB_DEVICE_CONFIG_HID
     return kStatus_Success;
 }
 
