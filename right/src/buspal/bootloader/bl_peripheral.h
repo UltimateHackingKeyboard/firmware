@@ -1,15 +1,5 @@
-#ifndef _peripheral_h
-#define _peripheral_h
-
-#include <stdint.h>
-#include "bootloader_common.h"
-
-//! @addtogroup peripheral
-//! @{
-
-////////////////////////////////////////////////////////////////////////////////
-// Declarations
-////////////////////////////////////////////////////////////////////////////////
+#ifndef __BL_PERIPHERAL_H__
+#define __BL_PERIPHERAL_H__
 
 //! @brief Peripheral type bit mask definitions.
 //!
@@ -53,10 +43,7 @@ typedef struct _peripheral_control_interface
 //! @brief Peripheral abstract byte interface.
 typedef struct _peripheral_byte_inteface
 {
-    status_t (*init)(const peripheral_descriptor_t *self);
-#ifdef BOOTLOADER_HOST
     status_t (*read)(const peripheral_descriptor_t *self, uint8_t *buffer, uint32_t requestedBytes);
-#endif // #ifdef BOOTLOADER_HOST
     status_t (*write)(const peripheral_descriptor_t *self, const uint8_t *buffer, uint32_t byteCount);
 } peripheral_byte_inteface_t;
 
@@ -114,13 +101,6 @@ struct PeripheralDescriptor
     const peripheral_packet_interface_t *packetInterface;
 };
 
-////////////////////////////////////////////////////////////////////////////////
-// Externs
-////////////////////////////////////////////////////////////////////////////////
-
-//! @brief Array of all peripherals available in this device.
 extern const peripheral_descriptor_t g_peripherals[];
 
-//! @}
-
-#endif // _peripheral_h
+#endif
