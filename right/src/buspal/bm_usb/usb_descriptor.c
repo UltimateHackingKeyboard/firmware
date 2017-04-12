@@ -78,43 +78,6 @@ usb_device_class_struct_t g_hid_generic_class = {
     USB_CONFIGURE_COUNT,          /* The configuration count */
 };
 
-/* msc disk information */
-/* Define endpoint for MSC class */
-usb_device_endpoint_struct_t g_msc_disk_endpoints[USB_MSC_ENDPOINT_COUNT] = {
-    {
-        USB_MSC_BULK_IN_ENDPOINT | (USB_IN << 7), USB_ENDPOINT_BULK, FS_BULK_IN_PACKET_SIZE,
-    },
-    {
-        USB_MSC_BULK_OUT_ENDPOINT | (USB_OUT << 7), USB_ENDPOINT_BULK, FS_BULK_OUT_PACKET_SIZE,
-    }
-};
-
-/* Define interface for MSC class */
-usb_device_interface_struct_t g_msc_disk_interface[] = { {
-    0,
-    {
-        USB_MSC_ENDPOINT_COUNT, g_msc_disk_endpoints,
-    },
-} };
-
-/* Define interfaces for MSC disk */
-usb_device_interfaces_struct_t g_msc_disk_interfaces[USB_MSC_INTERFACE_COUNT] = { {
-    USB_MSC_CLASS, USB_MSC_SUBCLASS, USB_MSC_PROTOCOL, USB_MSC_INTERFACE_INDEX, g_msc_disk_interface,
-    sizeof(g_msc_disk_interface) / sizeof(usb_device_interfaces_struct_t),
-} };
-
-/* Define configurations for MSC disk */
-usb_device_interface_list_t g_msc_disk_interface_list[USB_CONFIGURE_COUNT] = {
-    {
-        USB_MSC_INTERFACE_COUNT, g_msc_disk_interfaces,
-    },
-};
-
-/* Define class information for MSC disk */
-usb_device_class_struct_t g_msc_class = {
-    g_msc_disk_interface_list, kUSB_DeviceClassTypeMsc, USB_CONFIGURE_COUNT,
-};
-
 uint8_t g_hid_generic_report_descriptor[USB_HID_REPORT_DESC_SIZE] = {
     0x06,
     0x00,
@@ -157,11 +120,7 @@ uint8_t g_device_descriptor[USB_DEVICE_DESCRIPTOR_LENGTH] = {
     /* Product string index */
     0x02,
 /*  Serial number string index */
-#if (USB_DEVICE_CONFIG_MSC > 0)
-    0x03,
-#else
     0x00,
-#endif
     /*  Number of configurations */
     USB_CONFIGURE_COUNT,
 };
@@ -187,7 +146,6 @@ uint8_t g_config_descriptor[USB_CONFIGURE_DESCRIPTOR_LENGTH] = {
     /*  Current draw from bus */
     USB_CONFIGURE_DRAWN,
 
-#if USB_DEVICE_CONFIG_HID
     /* Interface Descriptor */
     USB_INTERFACE_DESCRIPTOR_LENGTH, USB_DESCRIPTOR_TYPE_INTERFACE, USB_HID_GENERIC_INTERFACE_INDEX, 0x00,
     USB_HID_GENERIC_ENDPOINT_COUNT, USB_HID_GENERIC_CLASS, USB_HID_GENERIC_SUBCLASS, USB_HID_GENERIC_PROTOCOL, 0x03,
@@ -203,27 +161,6 @@ uint8_t g_config_descriptor[USB_CONFIGURE_DESCRIPTOR_LENGTH] = {
     /*Endpoint descriptor */
     USB_ENDPOINT_DESCRIPTOR_LENGTH, USB_DESCRIPTOR_TYPE_ENDPOINT, USB_HID_GENERIC_ENDPOINT_OUT | (USB_OUT << 7),
     USB_ENDPOINT_INTERRUPT, FS_HID_GENERIC_INTERRUPT_OUT_PACKET_SIZE, 0x00, FS_HID_GENERIC_INTERRUPT_OUT_INTERVAL,
-
-#endif // USB_DEVICE_CONFIG_HID
-
-#if USB_DEVICE_CONFIG_MSC
-    /* MSC Interface Descriptor */
-    USB_INTERFACE_DESCRIPTOR_LENGTH, USB_DESCRIPTOR_TYPE_INTERFACE, USB_MSC_INTERFACE_INDEX, 0x00,
-    USB_MSC_ENDPOINT_COUNT, USB_MSC_CLASS, USB_MSC_SUBCLASS, USB_MSC_PROTOCOL,
-    0x03, /* Interface Description String Index*/
-
-    /*Bulk IN Endpoint descriptor */
-    USB_ENDPOINT_DESCRIPTOR_LENGTH, USB_DESCRIPTOR_TYPE_ENDPOINT, USB_MSC_BULK_IN_ENDPOINT | (USB_IN << 7),
-    USB_ENDPOINT_BULK,
-
-    USB_SHORT_GET_LOW(FS_BULK_IN_PACKET_SIZE), USB_SHORT_GET_HIGH(FS_BULK_IN_PACKET_SIZE),
-    0x00, /* This value is ignored for Bulk ENDPOINT */
-
-    /*Bulk OUT Endpoint descriptor */
-    USB_ENDPOINT_DESCRIPTOR_LENGTH, USB_DESCRIPTOR_TYPE_ENDPOINT, USB_MSC_BULK_OUT_ENDPOINT | (USB_OUT << 7),
-    USB_ENDPOINT_BULK, USB_SHORT_GET_LOW(FS_BULK_OUT_PACKET_SIZE), USB_SHORT_GET_HIGH(FS_BULK_OUT_PACKET_SIZE),
-    0x00 /* This value is ignored for Bulk ENDPOINT */
-#endif   // USB_DEVICE_CONFIG_HID
 };
 
 /* Define string descriptor */
@@ -337,72 +274,7 @@ uint8_t g_usb_str_2[USB_STRING_DESCRIPTOR_2_LENGTH + USB_STRING_DESCRIPTOR_HEADE
     0
 };
 
-#if ((USB_DEVICE_CONFIG_MSC > 0U) && (USB_DEVICE_CONFIG_HID > 0U)) // MSC + HID
-uint8_t g_usb_str_3[USB_STRING_DESCRIPTOR_3_LENGTH + USB_STRING_DESCRIPTOR_HEADER_LENGTH] = {
-    sizeof(g_usb_str_3),
-    USB_DESCRIPTOR_TYPE_STRING,
-    'M',
-    0,
-    'C',
-    0,
-    'U',
-    0,
-    ' ',
-    0,
-    'M',
-    0,
-    'S',
-    0,
-    'C',
-    0,
-    ' ',
-    0,
-    'A',
-    0,
-    'N',
-    0,
-    'D',
-    0,
-    ' ',
-    0,
-    'H',
-    0,
-    'I',
-    0,
-    'D',
-    0,
-    ' ',
-    0,
-    'G',
-    0,
-    'E',
-    0,
-    'N',
-    0,
-    'E',
-    0,
-    'R',
-    0,
-    'I',
-    0,
-    'C',
-    0,
-    ' ',
-    0,
-    'D',
-    0,
-    'E',
-    0,
-    'V',
-    0,
-    'I',
-    0,
-    'C',
-    0,
-    'E',
-    0
-};
-#elif((USB_DEVICE_CONFIG_MSC == 0U) && (USB_DEVICE_CONFIG_HID > 0U)) // Only HID
+
 uint8_t g_usb_str_3[USB_STRING_DESCRIPTOR_3_LENGTH + USB_STRING_DESCRIPTOR_HEADER_LENGTH] = {
     sizeof(g_usb_str_3),
     USB_DESCRIPTOR_TYPE_STRING,
@@ -451,44 +323,6 @@ uint8_t g_usb_str_3[USB_STRING_DESCRIPTOR_3_LENGTH + USB_STRING_DESCRIPTOR_HEADE
     'E',
     0
 };
-#elif((USB_DEVICE_CONFIG_MSC > 0U) && (USB_DEVICE_CONFIG_HID == 0U)) // Only MSC
-uint8_t g_usb_str_3[USB_STRING_DESCRIPTOR_3_LENGTH + USB_STRING_DESCRIPTOR_HEADER_LENGTH] = {
-    sizeof(g_usb_str_3),
-    USB_DESCRIPTOR_TYPE_STRING,
-    'M',
-    0,
-    'C',
-    0,
-    'U',
-    0,
-    ' ',
-    0,
-    'M',
-    0,
-    'S',
-    0,
-    'C',
-    0,
-    ' ',
-    0,
-    'D',
-    0,
-    'E',
-    0,
-    'V',
-    0,
-    'I',
-    0,
-    'C',
-    0,
-    'E',
-    0
-};
-#else                                                                // None
-uint8_t g_usb_str_3[USB_STRING_DESCRIPTOR_3_LENGTH + USB_STRING_DESCRIPTOR_HEADER_LENGTH] = {
-    sizeof(g_usb_str_3), USB_DESCRIPTOR_TYPE_STRING, ' ', 0,
-};
-#endif
 
 uint8_t g_usb_str_n[USB_STRING_DESCRIPTOR_ERROR_LENGTH + USB_STRING_DESCRIPTOR_HEADER_LENGTH] = {
     sizeof(g_usb_str_n),
@@ -662,60 +496,30 @@ usb_status_t usb_device_get_string_descriptor(usb_device_handle handle,
 usb_status_t usb_device_set_speed(usb_device_handle handle, uint8_t speed)
 {
     usb_hid_config_descriptor_t *ptr_hid = NULL;
-    usb_msc_config_descriptor_t *ptr_msc = NULL;
 
-#if (USB_DEVICE_CONFIG_HID == 1) && (USB_DEVICE_CONFIG_MSC == 1)
     ptr_hid = (usb_hid_config_descriptor_t *)&g_config_descriptor[USB_HID_CONFIG_INDEX];
-    ptr_msc = (usb_msc_config_descriptor_t *)&g_config_descriptor[USB_MSC_CONFIG_INDEX];
-#elif(USB_DEVICE_CONFIG_HID == 1) && (USB_DEVICE_CONFIG_MSC == 0)
-    // HID only
-    //    ptr_msc = NULL;
-    ptr_hid = (usb_hid_config_descriptor_t *)&g_config_descriptor[USB_HID_CONFIG_INDEX];
-#elif(USB_DEVICE_CONFIG_HID == 0) && (USB_DEVICE_CONFIG_MSC == 1)
-    // MSC only
-    //    ptr_hid = NULL;
-    ptr_msc = (usb_msc_config_descriptor_t *)&g_config_descriptor[USB_MSC_CONFIG_INDEX];
-#endif
 
     if (USB_SPEED_HIGH == speed)
     {
-        if (ptr_hid != NULL)
-        {
-            // HID interface
-            USB_SHORT_TO_LITTLE_ENDIAN_ADDRESS(HS_HID_GENERIC_INTERRUPT_IN_PACKET_SIZE,
-                                               ptr_hid->endpoint_in.wMaxPacketSize);
-            ptr_hid->endpoint_in.bInterval = HS_HID_GENERIC_INTERRUPT_IN_INTERVAL;
+        // HID interface
+        USB_SHORT_TO_LITTLE_ENDIAN_ADDRESS(HS_HID_GENERIC_INTERRUPT_IN_PACKET_SIZE,
+                                           ptr_hid->endpoint_in.wMaxPacketSize);
+        ptr_hid->endpoint_in.bInterval = HS_HID_GENERIC_INTERRUPT_IN_INTERVAL;
 
-            USB_SHORT_TO_LITTLE_ENDIAN_ADDRESS(HS_HID_GENERIC_INTERRUPT_OUT_PACKET_SIZE,
-                                               ptr_hid->endpoint_out.wMaxPacketSize);
-            ptr_hid->endpoint_out.bInterval = HS_HID_GENERIC_INTERRUPT_OUT_INTERVAL;
-        }
-        if (ptr_msc != NULL)
-        {
-            // MSC interface
-            USB_SHORT_TO_LITTLE_ENDIAN_ADDRESS(HS_BULK_IN_PACKET_SIZE, ptr_msc->endpoint_in.wMaxPacketSize);
-            USB_SHORT_TO_LITTLE_ENDIAN_ADDRESS(HS_BULK_OUT_PACKET_SIZE, ptr_msc->endpoint_out.wMaxPacketSize);
-        }
+        USB_SHORT_TO_LITTLE_ENDIAN_ADDRESS(HS_HID_GENERIC_INTERRUPT_OUT_PACKET_SIZE,
+                                           ptr_hid->endpoint_out.wMaxPacketSize);
+        ptr_hid->endpoint_out.bInterval = HS_HID_GENERIC_INTERRUPT_OUT_INTERVAL;
     }
     else
     {
-        if (ptr_hid != NULL)
-        {
-            // HID interface
-            USB_SHORT_TO_LITTLE_ENDIAN_ADDRESS(FS_HID_GENERIC_INTERRUPT_IN_PACKET_SIZE,
-                                               ptr_hid->endpoint_in.wMaxPacketSize);
-            ptr_hid->endpoint_in.bInterval = FS_HID_GENERIC_INTERRUPT_IN_INTERVAL;
+        // HID interface
+        USB_SHORT_TO_LITTLE_ENDIAN_ADDRESS(FS_HID_GENERIC_INTERRUPT_IN_PACKET_SIZE,
+                                           ptr_hid->endpoint_in.wMaxPacketSize);
+        ptr_hid->endpoint_in.bInterval = FS_HID_GENERIC_INTERRUPT_IN_INTERVAL;
 
-            USB_SHORT_TO_LITTLE_ENDIAN_ADDRESS(FS_HID_GENERIC_INTERRUPT_OUT_PACKET_SIZE,
-                                               ptr_hid->endpoint_out.wMaxPacketSize);
-            ptr_hid->endpoint_out.bInterval = FS_HID_GENERIC_INTERRUPT_OUT_INTERVAL;
-        }
-        if (ptr_msc != NULL)
-        {
-            // MSC interface
-            USB_SHORT_TO_LITTLE_ENDIAN_ADDRESS(FS_BULK_IN_PACKET_SIZE, ptr_msc->endpoint_in.wMaxPacketSize);
-            USB_SHORT_TO_LITTLE_ENDIAN_ADDRESS(FS_BULK_OUT_PACKET_SIZE, ptr_msc->endpoint_out.wMaxPacketSize);
-        }
+        USB_SHORT_TO_LITTLE_ENDIAN_ADDRESS(FS_HID_GENERIC_INTERRUPT_OUT_PACKET_SIZE,
+                                           ptr_hid->endpoint_out.wMaxPacketSize);
+        ptr_hid->endpoint_out.bInterval = FS_HID_GENERIC_INTERRUPT_OUT_INTERVAL;
     }
 
     for (uint32_t i = 0; i < USB_HID_GENERIC_ENDPOINT_COUNT; i++)
@@ -744,32 +548,5 @@ usb_status_t usb_device_set_speed(usb_device_handle handle, uint8_t speed)
         }
     }
 
-    for (uint32_t i = 0; i < USB_MSC_ENDPOINT_COUNT; i++)
-    {
-        if (USB_SPEED_HIGH == speed)
-        {
-            if ((USB_IN << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT) ==
-                (g_msc_disk_endpoints[i].endpointAddress & USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_MASK))
-            {
-                g_msc_disk_endpoints[i].maxPacketSize = HS_BULK_IN_PACKET_SIZE;
-            }
-            else
-            {
-                g_msc_disk_endpoints[i].maxPacketSize = HS_BULK_OUT_PACKET_SIZE;
-            }
-        }
-        else
-        {
-            if ((USB_IN << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT) ==
-                (g_msc_disk_endpoints[i].endpointAddress & USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_MASK))
-            {
-                g_msc_disk_endpoints[i].maxPacketSize = FS_BULK_IN_PACKET_SIZE;
-            }
-            else
-            {
-                g_msc_disk_endpoints[i].maxPacketSize = FS_BULK_OUT_PACKET_SIZE;
-            }
-        }
-    }
     return kStatus_USB_Success;
 }

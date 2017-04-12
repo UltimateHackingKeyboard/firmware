@@ -42,21 +42,7 @@
 #define FS_BULK_IN_PACKET_SIZE (64)
 #define FS_BULK_OUT_PACKET_SIZE (64)
 
-// MSC
-#define USB_MSC_CLASS (0x08)
-/* scsi command set */
-#define USB_MSC_SUBCLASS (0x06)
-/* bulk only transport protocol */
-#define USB_MSC_PROTOCOL (0x50)
-
-#define USB_MSC_CONFIGURE_INDEX (1)
-#define USB_MSC_ENDPOINT_COUNT (2)
-#define USB_MSC_BULK_IN_ENDPOINT (3)
-#define USB_MSC_BULK_OUT_ENDPOINT (4)
-#define USB_MSC_INTERFACE_COUNT (1)
-
 #define USB_HID_GENERIC_INTERFACE_INDEX (0)
-#define USB_MSC_INTERFACE_INDEX (0)
 
 // HID
 #define USB_HID_GENERIC_CONFIGURE_INDEX (1)
@@ -113,13 +99,6 @@ typedef struct _usb_hid_config_descriptor
     usb_descriptor_endpoint_t endpoint_in;  /* Endpoint descriptor */
     usb_descriptor_endpoint_t endpoint_out; /* Endpoint descriptor */
 } usb_hid_config_descriptor_t;
-
-typedef struct _usb_msc_config_descriptor
-{
-    usb_descriptor_interface_t interface;   /* Interface descriptor */
-    usb_descriptor_endpoint_t endpoint_in;  /* Endpoint descriptor */
-    usb_descriptor_endpoint_t endpoint_out; /* Endpoint descriptor */
-} usb_msc_config_descriptor_t;
 
 extern usb_device_class_struct_t g_hid_generic_class;
 extern usb_device_class_struct_t g_msc_class;
