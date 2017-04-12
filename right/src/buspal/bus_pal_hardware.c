@@ -4,25 +4,17 @@
 #include "composite.h"
 #include "bootloader_config.h"
 
-#define REQ_DATA_SIZE (1)
-#define USB_HID_INDEX (0)
-#define USB_MSC_INDEX (1)
-
 bool usb_hid_poll_for_activity(const peripheral_descriptor_t *self);
 static status_t usb_device_full_init(const peripheral_descriptor_t *self, serial_byte_receive_func_t function);
 static void usb_device_full_shutdown(const peripheral_descriptor_t *self);
 static void usb_msc_pump(const peripheral_descriptor_t *self);
-
 status_t usb_hid_packet_init(const peripheral_descriptor_t *self);
-
 static void usb_hid_packet_abort_data_phase(const peripheral_descriptor_t *self);
 static status_t usb_hid_packet_finalize(const peripheral_descriptor_t *self);
 static uint32_t usb_hid_packet_get_max_packet_size(const peripheral_descriptor_t *self);
-
-// static bool s_dHidMscActivity[USB_COMPOSITE_INTERFACE_COUNT] = {false};
-static bool s_dHidMscActivity[2] = { false };
-
 static void init_i2c(uint32_t instance);
+
+static bool s_dHidActivity = false;
 
 const peripheral_control_interface_t g_usbHidControlInterface = {.pollForActivity = usb_hid_poll_for_activity,
                                                                  .init = usb_device_full_init,
@@ -86,13 +78,8 @@ bool usb_clock_init(void)
 
 bool usb_hid_poll_for_activity(const peripheral_descriptor_t *self)
 {
-    bool hid_active = false;
-    bool msc_active = false;
-    hid_active = g_device_composite.hid_generic.hid_packet.didReceiveFirstReport;
-
-    s_dHidMscActivity[0] = hid_active;
-    s_dHidMscActivity[1] = msc_active;
-    return (g_device_composite.attach && (hid_active || msc_active));
+    s_dHidActivity = g_device_composite.hid_generic.hid_packet.didReceiveFirstReport;
+    return g_device_composite.attach && s_dHidActivity;
 }
 
 usb_status_t usb_device_callback(usb_device_handle handle, uint32_t event, void *param)
@@ -268,8 +255,7 @@ void usb_device_full_shutdown(const peripheral_descriptor_t *self)
  *END**************************************************************************/
 void usb_msc_pump(const peripheral_descriptor_t *self)
 {
-    s_dHidMscActivity[USB_HID_INDEX] = true;
-    s_dHidMscActivity[USB_MSC_INDEX] = false;
+    s_dHidActivity = true;
 }
 
 status_t usb_hid_packet_init(const peripheral_descriptor_t *self)
@@ -308,7 +294,7 @@ status_t usb_hid_packet_read(const peripheral_descriptor_t *self,
             //            debug_printf("usbhid: unsupported packet type %d\r\n", (int)packetType);
             return kStatus_Fail;
     };
-    if (s_dHidMscActivity[USB_HID_INDEX])
+    if (s_dHidActivity)
     {
         // The first receive data request was initiated after enumeration.
         // After that we wait until we are ready to read data before
@@ -370,7 +356,7 @@ status_t usb_hid_packet_write(const peripheral_descriptor_t *self,
                               uint32_t byteCount,
                               packet_type_t packetType)
 {
-    if (s_dHidMscActivity[USB_HID_INDEX])
+    if (s_dHidActivity)
     {
         if (byteCount > kMinPacketBufferSize)
         {
