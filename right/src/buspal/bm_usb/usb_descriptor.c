@@ -377,14 +377,11 @@ usb_status_t usb_device_get_hid_descriptor(usb_device_handle handle,
 usb_status_t usb_device_get_hid_report_descriptor(usb_device_handle handle,
                                                   usb_device_get_hid_report_descriptor_struct_t *hid_report_descriptor)
 {
-    if (USB_HID_GENERIC_INTERFACE_INDEX == hid_report_descriptor->interfaceNumber)
-    {
+    if (USB_HID_GENERIC_INTERFACE_INDEX == hid_report_descriptor->interfaceNumber) {
         hid_report_descriptor->buffer = g_hid_generic_report_descriptor;
         //        hid_report_descriptor->length = USB_HID_REPORT_DESC_SIZE;
         hid_report_descriptor->length = sizeof(g_hid_generic_report_descriptor);
-    }
-    else
-    {
+    } else {
         return kStatus_USB_InvalidRequest;
     }
     return kStatus_USB_Success;
@@ -451,30 +448,23 @@ usb_status_t usb_device_get_configuration_descriptor(
 usb_status_t usb_device_get_string_descriptor(usb_device_handle handle,
                                               usb_device_get_string_descriptor_struct_t *string_descriptor)
 {
-    if (string_descriptor->stringIndex == 0)
-    {
+    if (string_descriptor->stringIndex == 0) {
         string_descriptor->buffer = (uint8_t *)g_language_list.languageString;
         string_descriptor->length = g_language_list.stringLength;
-    }
-    else
-    {
+    } else {
         uint8_t lang_id = 0;
         uint8_t lang_index = USB_STRING_COUNT;
 
-        for (; lang_id < USB_LANGUAGE_COUNT; lang_id++)
-        {
-            if (string_descriptor->languageId == g_language_list.languageList[lang_id].languageId)
-            {
-                if (string_descriptor->stringIndex < USB_STRING_COUNT)
-                {
+        for (; lang_id < USB_LANGUAGE_COUNT; lang_id++) {
+            if (string_descriptor->languageId == g_language_list.languageList[lang_id].languageId) {
+                if (string_descriptor->stringIndex < USB_STRING_COUNT) {
                     lang_index = string_descriptor->stringIndex;
                 }
                 break;
             }
         }
 
-        if (USB_STRING_COUNT == lang_index)
-        {
+        if (USB_STRING_COUNT == lang_index) {
             return kStatus_USB_InvalidRequest;
         }
         string_descriptor->buffer = (uint8_t *)g_language_list.languageList[lang_id].string[lang_index];
@@ -496,11 +486,9 @@ usb_status_t usb_device_get_string_descriptor(usb_device_handle handle,
 usb_status_t usb_device_set_speed(usb_device_handle handle, uint8_t speed)
 {
     usb_hid_config_descriptor_t *ptr_hid = NULL;
-
     ptr_hid = (usb_hid_config_descriptor_t *)&g_config_descriptor[USB_HID_CONFIG_INDEX];
 
-    if (USB_SPEED_HIGH == speed)
-    {
+    if (USB_SPEED_HIGH == speed) {
         // HID interface
         USB_SHORT_TO_LITTLE_ENDIAN_ADDRESS(HS_HID_GENERIC_INTERRUPT_IN_PACKET_SIZE,
                                            ptr_hid->endpoint_in.wMaxPacketSize);
@@ -509,9 +497,7 @@ usb_status_t usb_device_set_speed(usb_device_handle handle, uint8_t speed)
         USB_SHORT_TO_LITTLE_ENDIAN_ADDRESS(HS_HID_GENERIC_INTERRUPT_OUT_PACKET_SIZE,
                                            ptr_hid->endpoint_out.wMaxPacketSize);
         ptr_hid->endpoint_out.bInterval = HS_HID_GENERIC_INTERRUPT_OUT_INTERVAL;
-    }
-    else
-    {
+    } else {
         // HID interface
         USB_SHORT_TO_LITTLE_ENDIAN_ADDRESS(FS_HID_GENERIC_INTERRUPT_IN_PACKET_SIZE,
                                            ptr_hid->endpoint_in.wMaxPacketSize);
@@ -522,27 +508,17 @@ usb_status_t usb_device_set_speed(usb_device_handle handle, uint8_t speed)
         ptr_hid->endpoint_out.bInterval = FS_HID_GENERIC_INTERRUPT_OUT_INTERVAL;
     }
 
-    for (uint32_t i = 0; i < USB_HID_GENERIC_ENDPOINT_COUNT; i++)
-    {
-        if (USB_SPEED_HIGH == speed)
-        {
-            if (g_hid_generic_endpoints[i].endpointAddress & USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_IN)
-            {
+    for (uint32_t i = 0; i < USB_HID_GENERIC_ENDPOINT_COUNT; i++) {
+        if (USB_SPEED_HIGH == speed) {
+            if (g_hid_generic_endpoints[i].endpointAddress & USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_IN) {
                 g_hid_generic_endpoints[i].maxPacketSize = HS_HID_GENERIC_INTERRUPT_IN_PACKET_SIZE;
-            }
-            else
-            {
+            } else {
                 g_hid_generic_endpoints[i].maxPacketSize = HS_HID_GENERIC_INTERRUPT_OUT_PACKET_SIZE;
             }
-        }
-        else
-        {
-            if (g_hid_generic_endpoints[i].endpointAddress & USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_IN)
-            {
+        } else {
+            if (g_hid_generic_endpoints[i].endpointAddress & USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_IN) {
                 g_hid_generic_endpoints[i].maxPacketSize = FS_HID_GENERIC_INTERRUPT_IN_PACKET_SIZE;
-            }
-            else
-            {
+            } else {
                 g_hid_generic_endpoints[i].maxPacketSize = FS_HID_GENERIC_INTERRUPT_OUT_PACKET_SIZE;
             }
         }
