@@ -5,9 +5,9 @@
 
 enum _hid_report_ids {
     kBootloaderReportID_CommandOut = 1,
-    kBootloaderReportID_DataOut = 2,
-    kBootloaderReportID_CommandIn = 3,
-    kBootloaderReportID_DataIn = 4
+    kBootloaderReportID_DataOut    = 2,
+    kBootloaderReportID_CommandIn  = 3,
+    kBootloaderReportID_DataIn     = 4,
 };
 
 typedef struct _bl_hid_header {
