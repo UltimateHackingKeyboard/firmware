@@ -1,4 +1,3 @@
-#include "bootloader/bl_context.h"
 #include "bootloader/bootloader.h"
 #include "crc16.h"
 
