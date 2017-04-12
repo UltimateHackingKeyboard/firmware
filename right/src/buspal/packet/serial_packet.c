@@ -1,20 +1,6 @@
-#include <string.h>
 #include "bootloader/bl_context.h"
 #include "bootloader/bootloader.h"
-#include "packet/command_packet.h"
-#include "packet/serial_packet.h"
-#include "fsl_common.h"
-#include "bl_peripheral.h"
 #include "crc16.h"
-
-//! @addtogroup packet
-//! @{
-
-////////////////////////////////////////////////////////////////////////////////
-// Definitions
-////////////////////////////////////////////////////////////////////////////////
-
-//#define TEST_NAK
 
 ////////////////////////////////////////////////////////////////////////////////
 // Prototypes
@@ -42,19 +28,6 @@ const peripheral_packet_interface_t g_framingPacketInterface = {
     serial_packet_queue_byte
 };
 
-//! @brief Ping response.
-#if defined(__cplusplus)
-const ping_response_t k_PingResponse = {
-    MAKE_VERSION(kSerialProtocol_Version_Bugfix,
-                 kSerialProtocol_Version_Minor,
-                 kSerialProtocol_Version_Major,
-                 kSerialProtocol_Version_Name),
-    0,     // options, recalculate crc16 if this value changes
-    0xeaaa // crc16 of start byte, packet type, version and options.
-           // i.e. [5a a7 00 00 01 50 00 00]
-           // Calculated using CRC-16/XMODEM.
-};
-#else
 const ping_response_t k_PingResponse = {
     { { kSerialProtocol_Version_Bugfix, kSerialProtocol_Version_Minor, kSerialProtocol_Version_Major,
         kSerialProtocol_Version_Name } },
@@ -63,7 +36,6 @@ const ping_response_t k_PingResponse = {
            // i.e. [5a a7 00 00 01 50 00 00]
            // Calculated using CRC-16/XMODEM.
 };
-#endif
 
 //! @brief Global context data.
 static serial_data_t g_serialContext;
@@ -181,9 +153,7 @@ status_t serial_packet_write(const peripheral_descriptor_t *self,
     {
         g_serialContext.isBackToBackWrite = false;
 
-#if defined(BOOTLOADER_HOST)
         host_delay(100);
-#endif
     }
 
     // Initialize the framing data packet.
@@ -205,9 +175,6 @@ status_t serial_packet_write(const peripheral_descriptor_t *self,
     // Calculate and set the framing packet crc.
     framingPacket->dataPacket.crc16 =
         calculate_framing_crc16(&framingPacket->dataPacket, (uint8_t *)framingPacket->data);
-#if defined(TEST_NAK)
-    ++framingPacket->dataPacket.crc16;
-#endif // TEST_NAK
 
     // Send the framing data packet.
     status = write_data((uint8_t *)framingPacket, sizeof(framing_data_packet_t) + byteCount);
@@ -281,10 +248,7 @@ static status_t wait_for_ack_packet()
 
         if (sync.header.packetType == kFramingPacketType_Nak)
         {
-// Re-transmit the last packet.
-#if defined(TEST_NAK)
-            --g_serialContext.framingPacket.dataPacket.crc16;
-#endif // TEST_NAK
+            // Re-transmit the last packet.
             status = write_data((uint8_t *)&g_serialContext.framingPacket,
                                 sizeof(framing_data_packet_t) + g_serialContext.framingPacket.dataPacket.length);
             if (status != kStatus_Success)
@@ -348,44 +312,8 @@ static status_t write_data(const uint8_t *buffer, uint32_t byteCount)
 //! @brief Read from peripheral until specified number of bytes received.
 static status_t read_data(uint8_t *buffer, uint32_t byteCount, uint32_t timeoutMs)
 {
-#ifdef BOOTLOADER_HOST
     // Host will not be relying on interrupts for reads so manually read the data out
-    return g_bootloaderContext.activePeripheral->byteInterface->read(g_bootloaderContext.activePeripheral, buffer,
-                                                                     byteCount);
-#else
-    // On the target we read from our interrupt buffer
-    uint32_t currentBytesRead = 0;
-    uint64_t startTicks = microseconds_get_ticks();
-    uint64_t timeOutTicks = microseconds_convert_to_ticks(timeoutMs * 1000);
-    uint64_t endTicks = startTicks;
-    uint64_t deltaTicks = 0;
-
-    while (currentBytesRead != byteCount)
-    {
-        endTicks = microseconds_get_ticks();
-        deltaTicks = endTicks - startTicks;
-
-        // Check timer roll over
-        if (endTicks < startTicks)
-        {
-            deltaTicks = endTicks + (~startTicks) + 1;
-        }
-
-        if (timeOutTicks && (deltaTicks >= timeOutTicks))
-        {
-            return kStatus_Timeout;
-        }
-
-        if (g_serialContext.readOffset != g_serialContext.writeOffset)
-        {
-            buffer[currentBytesRead++] = g_serialContext.callbackBuffer[g_serialContext.readOffset++];
-
-            g_serialContext.readOffset &= kCallbackBufferSize - 1;
-        }
-    }
-
-    return kStatus_Success;
-#endif
+    return g_bootloaderContext.activePeripheral->byteInterface->read(g_bootloaderContext.activePeripheral, buffer, byteCount);
 }
 
 //! @brief Read from peripheral until entire data framing packet read.
@@ -447,9 +375,7 @@ static status_t read_data_packet(framing_data_packet_t *packet, uint8_t *data, p
 //! @brief Read from peripheral until start byte found.
 static status_t read_start_byte(framing_header_t *header)
 {
-#if defined(BOOTLOADER_HOST)
     uint32_t startByteReadCount = 0;
-#endif
 
     // Read until start byte found.
     do
@@ -460,7 +386,6 @@ static status_t read_start_byte(framing_header_t *header)
             return status;
         }
 
-#if defined(BOOTLOADER_HOST)
         if (startByteReadCount++ > kHostMaxStartByteReadCount)
         {
             return kStatus_Timeout;
@@ -474,7 +399,6 @@ static status_t read_start_byte(framing_header_t *header)
             // that may take several seconds to complete.
             host_delay(kDefaultByteReadTimeoutMs);
         }
-#endif
     } while (header->startByte != kFramingPacketStartByte);
 
     return kStatus_Success;
