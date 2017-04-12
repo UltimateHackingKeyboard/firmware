@@ -1,39 +1,10 @@
-#include <string.h>
-#include <stdint.h>
 #include "command.h"
-#include "packet/serial_packet.h"
 #include "crc16.h"
-
-#include "fsl_flash.h"
-#include "fsl_device_registers.h"
-
-#if defined(ENABLE_USB)
-#include "usb_class_hid.h"
-#include "usb_device_stack_interface.h"
-#include "usb_hid.h"
-#include "bootloader_hid_report_ids.h"
-#include "usb_error.h"
-#include "usb_descriptor.h"
-#include "usb_class_hid.h"
-#endif
-
 #include "bus_pal_hardware.h"
 
-//! @addtogroup command
-//! @{
-
-////////////////////////////////////////////////////////////////////////////////
-// Variables
-////////////////////////////////////////////////////////////////////////////////
-
-//! @brief Command processor state data.
 command_processor_data_t g_commandData;
 buspal_state_t g_buspalState = kBuspal_Idle;
 uint8_t g_targetRxBuffer[64];
-
-////////////////////////////////////////////////////////////////////////////////
-// Definitions
-////////////////////////////////////////////////////////////////////////////////
 
 void handle_reset(uint8_t *packet, uint32_t packetLength);
 void send_generic_response(uint32_t commandStatus, uint32_t commandTag);
@@ -47,10 +18,6 @@ static void finalize_data_phase(status_t status);
 static void reset_data_phase();
 static status_t peripheral_read(uint8_t *dest, uint32_t readLength);
 static status_t peripheral_write(uint8_t *src, uint32_t writeLength);
-
-////////////////////////////////////////////////////////////////////////////////
-// Code
-////////////////////////////////////////////////////////////////////////////////
 
 void handleUsbBusPalCommand()
 {
