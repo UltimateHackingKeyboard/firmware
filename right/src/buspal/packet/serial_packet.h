@@ -1,13 +1,9 @@
-#ifndef _packet_h
-#define _packet_h
+#ifndef __SERIAL_PACKET_H__
+#define __SERIAL_PACKET_H__
 
 #include "bootloader_common.h"
 #include "bootloader/bl_peripheral.h"
 #include "command_packet.h"
-#include "stdbool.h"
-
-//! @addtogroup packet
-//! @{
 
 ////////////////////////////////////////////////////////////////////////////////
 // Declarations
@@ -122,10 +118,6 @@ extern const peripheral_packet_interface_t g_framingPacketInterface;
 // Prototypes
 ////////////////////////////////////////////////////////////////////////////////
 
-#if defined(__cplusplus)
-extern "C" {
-#endif // __cplusplus
-
 //! @brief Initialize component.
 status_t serial_packet_init(const peripheral_descriptor_t *self);
 
@@ -164,14 +156,6 @@ status_t serial_send_ping_response(const peripheral_descriptor_t *peripheral);
 //! @brief Queues a byte received by the active peripheral
 void serial_packet_queue_byte(uint8_t byte);
 
-#if defined(BOOTLOADER_HOST)
 void host_delay(uint32_t milliseconds);
-#endif // BOOTLOADER_HOST
 
-#if defined(__cplusplus)
-}
-#endif // __cplusplus
-
-//! @}
-
-#endif // _packet_h
+#endif
