@@ -4,8 +4,6 @@
 #include "fsl_rtos_abstraction.h"
 #include "bootloader_hid_report_ids.h"
 
-#define USB_DEVICE_INTERRUPT_PRIORITY (4)
-
 //! @brief Request parameters.
 enum
 {

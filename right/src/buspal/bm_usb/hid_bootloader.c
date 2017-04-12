@@ -1,28 +1,6 @@
-#include "usb_device_config.h"
-#include "usb.h"
-#include "usb_device.h"
-
-#include "usb_device_class.h"
-#include "usb_device_hid.h"
-#include "usb_device_ch9.h"
 #include "usb_descriptor.h"
-#include "hid_bootloader.h"
-
-#include "fsl_device_registers.h"
-#include "bootloader_hid_report_ids.h"
-#include "fsl_rtos_abstraction.h"
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include "composite.h"
 
-#if (BL_CONFIG_USB_HID || BL_CONFIG_HS_USB_HID)
-
-/*******************************************************************************
- * Variables
- ******************************************************************************/
 extern usb_device_endpoint_struct_t g_hid_generic_endpoints[];
 static usb_device_composite_struct_t *g_device_composite;
 
@@ -30,11 +8,8 @@ static usb_device_composite_struct_t *g_device_composite;
 usb_status_t usb_device_hid_generic_callback(class_handle_t handle, uint32_t event, void *param)
 {
     usb_status_t error = kStatus_USB_Error;
-
     usb_device_hid_report_struct_t *hid_report_param;
-
     hid_report_param = (usb_device_hid_report_struct_t *)param;
-
     const bl_hid_header_t *header;
 
     switch (event)
@@ -168,5 +143,3 @@ usb_status_t usb_device_hid_generic_deinit(usb_device_composite_struct_t *device
     g_device_composite->hid_generic.hid_handle = (class_handle_t)NULL;
     return kStatus_USB_Success;
 }
-
-#endif //  BL_CONFIG_USB_HID
