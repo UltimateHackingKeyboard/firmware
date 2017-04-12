@@ -1,42 +1,19 @@
 #include "bus_pal_hardware.h"
-#include "fsl_device_registers.h"
-#include "fsl_i2c.h"
-#include "fsl_uart.h"
-#include "microseconds/microseconds.h"
-#include "fsl_rtos_abstraction.h"
-
 #include "usb_descriptor.h"
-
 #include "usb_device_config.h"
-#include "usb.h"
-#include "usb_device.h"
-
-#include "usb_device_class.h"
-#include "usb_device_hid.h"
-#include "usb_device_ch9.h"
-#include "usb_descriptor.h"
-
 #include "composite.h"
-
-////////////////////////////////////////////////////////////////////////////////
-// Definitions
-////////////////////////////////////////////////////////////////////////////////
+#include "bootloader_config.h"
 
 #define REQ_DATA_SIZE (1)
-
 #define USB_HID_INDEX (0)
 #define USB_MSC_INDEX (1)
 
-////////////////////////////////////////////////////////////////////////////////
-// Prototypes
-////////////////////////////////////////////////////////////////////////////////
-
-// bool usb_hid_poll_for_activity(const peripheral_descriptor_t *self);
+bool usb_hid_poll_for_activity(const peripheral_descriptor_t *self);
 static status_t usb_device_full_init(const peripheral_descriptor_t *self, serial_byte_receive_func_t function);
 static void usb_device_full_shutdown(const peripheral_descriptor_t *self);
 static void usb_msc_pump(const peripheral_descriptor_t *self);
 
-// status_t usb_hid_packet_init(const peripheral_descriptor_t *self);
+status_t usb_hid_packet_init(const peripheral_descriptor_t *self);
 
 static void usb_hid_packet_abort_data_phase(const peripheral_descriptor_t *self);
 static status_t usb_hid_packet_finalize(const peripheral_descriptor_t *self);
@@ -45,24 +22,7 @@ static uint32_t usb_hid_packet_get_max_packet_size(const peripheral_descriptor_t
 // static bool s_dHidMscActivity[USB_COMPOSITE_INTERFACE_COUNT] = {false};
 static bool s_dHidMscActivity[2] = { false };
 
-/*!
- * @brief i2c initialization.
- */
 static void init_i2c(uint32_t instance);
-
-/*!
- * @brief get PORT base address function.
- */
-static PORT_Type *getPortBaseAddrFromAscii(uint8_t port);
-
-/*!
- * @brief get GPIO base address function.
- */
-static GPIO_Type *getGpioBaseAddrFromAscii(uint8_t port);
-
-////////////////////////////////////////////////////////////////////////////////
-// Variables
-////////////////////////////////////////////////////////////////////////////////
 
 const peripheral_control_interface_t g_usbHidControlInterface = {.pollForActivity = usb_hid_poll_for_activity,
                                                                  .init = usb_device_full_init,
@@ -99,25 +59,10 @@ static i2c_user_config_t s_i2cUserConfig = {.slaveAddress = 0x10, //!< The slave
 
 static i2c_master_handle_t s_i2cHandle;
 
-//! @brief Variable for host data receiving
-static uint8_t *s_rxData;
-static uint32_t s_bytesRx;
-
 const static uint32_t g_i2cBaseAddr[] = I2C_BASE_ADDRS;
-const static uint32_t g_uartBaseAddr[] = UART_BASE_ADDRS;
 
 uint32_t g_calculatedBaudRate;
 
-////////////////////////////////////////////////////////////////////////////////
-// Code
-////////////////////////////////////////////////////////////////////////////////
-
-/*FUNCTION**********************************************************************
- *
- * Function Name : usb_clock_init
- * Description   : usb clock init
- *
- *END**************************************************************************/
 bool usb_clock_init(void)
 {
     SIM->CLKDIV2 = (uint32_t)0x0UL; /* Update USB clock prescalers */
@@ -140,15 +85,8 @@ bool usb_clock_init(void)
     return true;
 }
 
-/*FUNCTION**********************************************************************
- *
- * Function Name : usb_device_callback
- * Description   : usb hid poll for activity
- *
- *END**************************************************************************/
 bool usb_hid_poll_for_activity(const peripheral_descriptor_t *self)
 {
-    //    uint32_t hidInfoIndex = self->instance / 2;
     bool hid_active = false;
     bool msc_active = false;
     hid_active = g_device_composite.hid_generic.hid_packet.didReceiveFirstReport;
@@ -158,12 +96,6 @@ bool usb_hid_poll_for_activity(const peripheral_descriptor_t *self)
     return (g_device_composite.attach && (hid_active || msc_active));
 }
 
-/*FUNCTION**********************************************************************
- *
- * Function Name : usb_device_callback
- * Description   : device callback processing
- *
- *END**************************************************************************/
 usb_status_t usb_device_callback(usb_device_handle handle, uint32_t event, void *param)
 {
     usb_status_t error = kStatus_USB_Success;
@@ -175,12 +107,6 @@ usb_status_t usb_device_callback(usb_device_handle handle, uint32_t event, void 
         case kUSB_DeviceEventBusReset:
         {
             g_device_composite.attach = 0;
-#if defined(USB_DEVICE_CONFIG_EHCI) && (USB_DEVICE_CONFIG_EHCI > 0)
-            if (kStatus_USB_Success == USB_DeviceClassGetSpeed(CONTROLLER_ID, &g_device_composite.speed))
-            {
-                usb_device_set_speed(handle, g_device_composite.speed);
-            }
-#endif
         }
         break;
         case kUSB_DeviceEventSetConfiguration:
@@ -256,15 +182,13 @@ usb_status_t usb_device_callback(usb_device_handle handle, uint32_t event, void 
         case kUSB_DeviceEventGetHidReportDescriptor:
             if (param)
             {
-                error = usb_device_get_hid_report_descriptor(handle,
-                                                             (usb_device_get_hid_report_descriptor_struct_t *)param);
+                error = usb_device_get_hid_report_descriptor(handle, (usb_device_get_hid_report_descriptor_struct_t *)param);
             }
             break;
         case kUSB_DeviceEventGetHidPhysicalDescriptor:
             if (param)
             {
-                error = usb_device_get_hid_physical_descriptor(
-                    handle, (usb_device_get_hid_physical_descriptor_struct_t *)param);
+                error = usb_device_get_hid_physical_descriptor( handle, (usb_device_get_hid_physical_descriptor_struct_t *)param);
             }
             break;
     }
@@ -272,27 +196,14 @@ usb_status_t usb_device_callback(usb_device_handle handle, uint32_t event, void 
     return error;
 }
 
-/*FUNCTION**********************************************************************
- *
- * Function Name : usb_device_full_init
- * Description   : device full init processing
- *
- *END**************************************************************************/
 status_t usb_device_full_init(const peripheral_descriptor_t *self, serial_byte_receive_func_t function)
 {
     // Not used for USB
     (void)function;
 
-    //    uint8_t controllerId = kUSB_ControllerKhci0;
     uint8_t irqNumber;
-#if defined(USB_DEVICE_CONFIG_EHCI) && (USB_DEVICE_CONFIG_EHCI > 0U)
-    uint8_t usbDeviceEhciIrq[] = USBHS_IRQS;
-    irqNumber = usbDeviceEhciIrq[CONTROLLER_ID - kUSB_ControllerEhci0];
-#endif
-#if defined(USB_DEVICE_CONFIG_KHCI) && (USB_DEVICE_CONFIG_KHCI > 0U)
     uint8_t usbDeviceKhciIrq[] = USB_IRQS;
     irqNumber = usbDeviceKhciIrq[CONTROLLER_ID - kUSB_ControllerKhci0];
-#endif
 
     // Init the state info.
     memset(&g_device_composite, 0, sizeof(g_device_composite));
@@ -306,13 +217,9 @@ status_t usb_device_full_init(const peripheral_descriptor_t *self, serial_byte_r
     g_device_composite.hid_generic.hid_handle = (class_handle_t)NULL;
     g_device_composite.device_handle = NULL;
 
-    if (kStatus_USB_Success !=
-        USB_DeviceClassInit(CONTROLLER_ID, &g_composite_device_config_list, &g_device_composite.device_handle))
-    {
+    if (kStatus_USB_Success != USB_DeviceClassInit(CONTROLLER_ID, &g_composite_device_config_list, &g_device_composite.device_handle)) {
         return kStatus_Fail;
-    }
-    else
-    {
+    } else {
         g_device_composite.hid_generic.hid_handle = g_composite_device_config_list.config[0].classHandle;
         usb_device_hid_generic_init(&g_device_composite);
     }
@@ -326,40 +233,18 @@ status_t usb_device_full_init(const peripheral_descriptor_t *self, serial_byte_r
     return kStatus_Success;
 }
 
-/*FUNCTION**********************************************************************
- *
- * Function Name : usb_device_full_shutdown
- * Description   : device shutdown processing
- *
- *END**************************************************************************/
 void usb_device_full_shutdown(const peripheral_descriptor_t *self)
 {
-    //    uint32_t hidInfoIndex = self->instance / 2;
-
-    if (kStatus_USB_Success != USB_DeviceClassDeinit(CONTROLLER_ID))
-    {
+    if (kStatus_USB_Success != USB_DeviceClassDeinit(CONTROLLER_ID)) {
         return;
     }
-    else
-    {
-        // Shutdown class driver
-        usb_device_hid_generic_deinit(&g_device_composite);
-    }
+
+    // Shutdown class driver
+    usb_device_hid_generic_deinit(&g_device_composite);
 
 // Make sure we are clocking to the peripheral to ensure there
 // are no bus errors
 #if defined(PCC_BASE_ADDRS)
-    if ((self->instance == kUSB_ControllerEhci0) && ((*(volatile uint32_t *)kCLOCK_Usbfs0) & PCC_CLKCFG_CGC_MASK))
-    {
-        // Disable the USB interrupt
-        NVIC_DisableIRQ(USB0_IRQn);
-
-        // Clear any pending interrupts on USB
-        NVIC_ClearPendingIRQ(USB0_IRQn);
-
-        // Turn off clocking to USB
-        CLOCK_DisableClock(kCLOCK_Usbfs0);
-    }
 #else
     if ((CONTROLLER_ID == kUSB_ControllerKhci0) && (SIM->SCGC4 & SIM_SCGC4_USBOTG_MASK))
     {
@@ -371,19 +256,6 @@ void usb_device_full_shutdown(const peripheral_descriptor_t *self)
 
         // Turn off clocking to USB
         SIM->SCGC4 &= ~SIM_SCGC4_USBOTG_MASK;
-    }
-#endif // defined(PCC_BASE_ADDRS)
-#if USB_DEVICE_CONFIG_EHCI
-    else if ((CONTROLLER_ID == kUSB_ControllerEhci0) && (SIM->SCGC3 & SIM_SCGC3_USBHS_MASK))
-    {
-        // Disable the USB interrupt
-        NVIC_DisableIRQ(USBHS_IRQn);
-
-        // Clear any pending interrupts on USB
-        NVIC_ClearPendingIRQ(USBHS_IRQn);
-
-        // Turn off HS USB PHY clock gate
-        SIM->SCGC3 &= ~(SIM_SCGC3_USBHS_MASK | SIM_SCGC3_USBHSPHY_MASK);
     }
 #endif
 }
@@ -403,30 +275,19 @@ void usb_msc_pump(const peripheral_descriptor_t *self)
 
 status_t usb_hid_packet_init(const peripheral_descriptor_t *self)
 {
-//    uint32_t hidInfoIndex = self->instance / 2;
-#if USB_DEVICE_CONFIG_HID
     sync_init(&g_device_composite.hid_generic.hid_packet.receiveSync, false);
     sync_init(&g_device_composite.hid_generic.hid_packet.sendSync, false);
 
     // Check for any received data that may be pending
     sync_signal(&g_device_composite.hid_generic.hid_packet.receiveSync);
-#endif
     return kStatus_Success;
 }
 
-/*FUNCTION**********************************************************************
- *
- * Function Name : usb_hid_packet_read
- * Description   : packet read
- *
- *END**************************************************************************/
 status_t usb_hid_packet_read(const peripheral_descriptor_t *self,
                              uint8_t **packet,
                              uint32_t *packetLength,
                              packet_type_t packetType)
 {
-    //    uint32_t hidInfoIndex = self->instance / 2;
-
     if (!packet || !packetLength)
     {
         //        debug_printf("Error: invalid packet\r\n");
@@ -448,7 +309,6 @@ status_t usb_hid_packet_read(const peripheral_descriptor_t *self,
             //            debug_printf("usbhid: unsupported packet type %d\r\n", (int)packetType);
             return kStatus_Fail;
     };
-#if USB_DEVICE_CONFIG_HID
     if (s_dHidMscActivity[USB_HID_INDEX])
     {
         // The first receive data request was initiated after enumeration.
@@ -506,19 +366,11 @@ status_t usb_hid_packet_read(const peripheral_descriptor_t *self,
     return kStatus_Success;
 }
 
-/*FUNCTION**********************************************************************
- *
- * Function Name : usb_hid_packet_write
- * Description   : packet write
- *
- *END**************************************************************************/
 status_t usb_hid_packet_write(const peripheral_descriptor_t *self,
                               const uint8_t *packet,
                               uint32_t byteCount,
                               packet_type_t packetType)
 {
-#if USB_DEVICE_CONFIG_HID
-    //    uint32_t hidInfoIndex = self->instance / 2;
     if (s_dHidMscActivity[USB_HID_INDEX])
     {
         if (byteCount > kMinPacketBufferSize)
@@ -571,16 +423,9 @@ status_t usb_hid_packet_write(const peripheral_descriptor_t *self,
             sync_wait(&g_device_composite.hid_generic.hid_packet.sendSync, kSyncWaitForever);
         }
     }
-#endif // USB_DEVICE_CONFIG_HID
     return kStatus_Success;
 }
 
-/*FUNCTION**********************************************************************
- *
- * Function Name : usb_hid_packet_abort_data_phase
- * Description   : packet abort data phase processing
- *
- *END**************************************************************************/
 static void usb_hid_packet_abort_data_phase(const peripheral_descriptor_t *self)
 {
     status_t status = self->packetInterface->writePacket(self, NULL, 0, kPacketType_Command);
@@ -591,94 +436,34 @@ static void usb_hid_packet_abort_data_phase(const peripheral_descriptor_t *self)
     }
 }
 
-/*FUNCTION**********************************************************************
- *
- * Function Name : usb_hid_packet_finalize
- * Description   : place holder
- *
- *END**************************************************************************/
 static status_t usb_hid_packet_finalize(const peripheral_descriptor_t *self)
 {
     return kStatus_Success;
 }
 
-/*FUNCTION**********************************************************************
- *
- * Function Name : usb_hid_packet_get_max_packet_size
- * Description   : get buffer size
- *
- *END**************************************************************************/
 static uint32_t usb_hid_packet_get_max_packet_size(const peripheral_descriptor_t *self)
 {
     return kMinPacketBufferSize;
 }
 
-/*FUNCTION**********************************************************************
- *
- * Function Name : USBHS_IRQHandler
- * Description   : USB EHCI interrup hander
- *
- *END**************************************************************************/
-#if defined(USB_DEVICE_CONFIG_EHCI) && (USB_DEVICE_CONFIG_EHCI > 0)
-void USBHS_IRQHandler(void)
-{
-    USB_DeviceEhciIsrFunction(g_device_composite.device_handle);
-}
-#endif
-
-/*FUNCTION**********************************************************************
- *
- * Function Name : USB0_IRQHandler
- * Description   : USB KHCI interrup hander
- *
- *END**************************************************************************/
-/*
-
-#if defined(USB_DEVICE_CONFIG_KHCI) && (USB_DEVICE_CONFIG_KHCI > 0)
+#ifdef ENABLE_BUSPAL
 void USB0_IRQHandler(void)
 {
     USB_DeviceKhciIsrFunction(g_device_composite.device_handle);
 }
 #endif
-*/
 
-#endif
-
-/*FUNCTION**********************************************************************
- *
- * Function Name : get_bus_clock
- * Description   : Gets bus clock
- *
- *END**************************************************************************/
 uint32_t get_bus_clock(void)
 {
     uint32_t busClockDivider = ((SIM->CLKDIV1 & SIM_CLKDIV1_OUTDIV2_MASK) >> SIM_CLKDIV1_OUTDIV2_SHIFT) + 1;
     return (SystemCoreClock / busClockDivider);
 }
 
-/*FUNCTION**********************************************************************
- *
- * Function Name : get_fast_peripheral_clock
- * Description   : fast peripheral clock
- *
- *END**************************************************************************/
-uint32_t get_fast_peripheral_clock(void)
-{
-    uint32_t busClockDivider = ((SIM->CLKDIV1 & SIM_CLKDIV1_OUTDIV2_MASK) >> SIM_CLKDIV1_OUTDIV2_SHIFT) + 1;
-    return (SystemCoreClock / busClockDivider);
-}
-
-/*FUNCTION**********************************************************************
- *
- * Function Name : init_hardware
- * Description   : hardware initialization
- *
- *END**************************************************************************/
 void init_hardware(void)
 {
     // Disable the MPU otherwise USB cannot access the bus
 //    MPU->CESR = 0;
-
+/*
     SIM->SCGC5 |= (SIM_SCGC5_PORTA_MASK | SIM_SCGC5_PORTB_MASK | SIM_SCGC5_PORTC_MASK | SIM_SCGC5_PORTD_MASK |
                    SIM_SCGC5_PORTE_MASK);
 
@@ -687,17 +472,11 @@ void init_hardware(void)
     PORTE->PCR[19] = PORT_PCR_MUX(4) | PORT_PCR_ODE_MASK; // I2C0_SDA is ALT2 for pin PTD9, I2C0_SDA set for open drain
 
     microseconds_init();
-
+*/
     init_i2c(0);
     usb_device_full_init(&g_peripherals[0], 0);
 }
 
-/*FUNCTION**********************************************************************
- *
- * Function Name : init_i2c
- * Description   : I2C init function
- *
- *END**************************************************************************/
 void init_i2c(uint32_t instance)
 {
     uint32_t baseAddr = g_i2cBaseAddr[instance];
@@ -709,82 +488,16 @@ void init_i2c(uint32_t instance)
     I2C_MasterTransferCreateHandle((I2C_Type *)baseAddr, &s_i2cHandle, NULL, NULL);
 }
 
-/*FUNCTION**********************************************************************
- *
- * Function Name : host_start_command_rx
- * Description   : receiving host start command process
- *
- *END**************************************************************************/
-void host_start_command_rx(uint8_t *dest, uint32_t length)
-{
-    s_rxData = dest;
-    s_bytesRx = 0;
-}
-
-/*FUNCTION**********************************************************************
- *
- * Function Name : host_stop_command_rx
- * Description   : receiving host stop command process
- *
- *END**************************************************************************/
-void host_stop_command_rx(void)
-{
-    s_rxData = 0;
-    s_bytesRx = 0;
-}
-
-/*FUNCTION**********************************************************************
- *
- * Function Name : get_bytes_received_from_host
- * Description   : receiving host get bytes command process
- *
- *END**************************************************************************/
-uint32_t get_bytes_received_from_host(void)
-{
-    return s_bytesRx;
-}
-
-/*FUNCTION**********************************************************************
- *
- * Function Name : write_bytes_to_host
- * Description   : sending host bytes command process
- *
- *END**************************************************************************/
-void write_bytes_to_host(uint8_t *src, uint32_t length)
-{
-    uint32_t baseAddr = g_uartBaseAddr[4];
-
-    UART_WriteBlocking((UART_Type *)baseAddr, src, length);
-}
-
-/*FUNCTION**********************************************************************
- *
- * Function Name : configure_i2c_address
- * Description   : i2c config address process
- *
- *END**************************************************************************/
 void configure_i2c_address(uint8_t address)
 {
     s_i2cUserConfig.slaveAddress = address;
 }
 
-/*FUNCTION**********************************************************************
- *
- * Function Name : configure_i2c_speed
- * Description   : i2c config speed process
- *
- *END**************************************************************************/
 void configure_i2c_speed(uint32_t speedkhz)
 {
     s_i2cUserConfig.baudRate_kbps = speedkhz;
 }
 
-/*FUNCTION**********************************************************************
- *
- * Function Name : send_i2c_data
- * Description   : i2c sending data process
- *
- *END**************************************************************************/
 status_t send_i2c_data(uint8_t *src, uint32_t writeLength)
 {
     i2c_master_transfer_t send_data;
@@ -802,12 +515,6 @@ status_t send_i2c_data(uint8_t *src, uint32_t writeLength)
     return kStatus_Success;
 }
 
-/*FUNCTION**********************************************************************
- *
- * Function Name : receive_i2c_data
- * Description   : i2c receiving data process
- *
- *END**************************************************************************/
 status_t receive_i2c_data(uint8_t *dest, uint32_t readLength)
 {
     i2c_master_transfer_t receive_data;
@@ -823,104 +530,4 @@ status_t receive_i2c_data(uint8_t *dest, uint32_t readLength)
     I2C_MasterTransferBlocking((I2C_Type *)baseAddr, &receive_data);
 
     return kStatus_Success;
-}
-
-/*FUNCTION**********************************************************************
- *
- * Function Name : getPortBaseAddrFromAscii
- * Description   : PORT get base address function
- *
- *END**************************************************************************/
-PORT_Type *getPortBaseAddrFromAscii(uint8_t port)
-{
-    if ((port >= 'a') && (port <= 'e'))
-    {
-        port = port - 'a';
-    }
-    else if ((port >= 'A') && (port <= 'E'))
-    {
-        port = port - 'A';
-    }
-
-    switch (port)
-    {
-        default:
-        case 0:
-            return PORTA;
-        case 1:
-            return PORTB;
-        case 2:
-            return PORTC;
-        case 3:
-            return PORTD;
-        case 4:
-            return PORTE;
-    }
-}
-
-/*FUNCTION**********************************************************************
- *
- * Function Name : getGpioBaseAddrFromAscii
- * Description   : GPIO get base address function
- *
- *END**************************************************************************/
-GPIO_Type *getGpioBaseAddrFromAscii(uint8_t port)
-{
-    if ((port >= 'a') && (port <= 'e'))
-    {
-        port = port - 'a';
-    }
-    else if ((port >= 'A') && (port <= 'E'))
-    {
-        port = port - 'A';
-    }
-
-    switch (port)
-    {
-        default:
-        case 0:
-            return GPIOA;
-        case 1:
-            return GPIOB;
-        case 2:
-            return GPIOC;
-        case 3:
-            return GPIOD;
-        case 4:
-            return GPIOE;
-    }
-}
-
-/*FUNCTION**********************************************************************
- *
- * Function Name : configure_gpio
- * Description   : GPIO config processing
- *
- *END**************************************************************************/
-void configure_gpio(uint8_t port, uint8_t pinNum, uint8_t muxVal)
-{
-    PORT_Type *realPort = getPortBaseAddrFromAscii(port);
-    realPort->PCR[pinNum] = ((~PORT_PCR_MUX_MASK) & realPort->PCR[pinNum]) | PORT_PCR_MUX(muxVal);
-}
-
-/*FUNCTION**********************************************************************
- *
- * Function Name : set_gpio
- * Description   : GPIO set up function
- *
- *END**************************************************************************/
-void set_gpio(uint8_t port, uint8_t pinNum, uint8_t level)
-{
-    GPIO_Type *realPort = getGpioBaseAddrFromAscii(port);
-
-    realPort->PDDR |= 1 << pinNum;
-
-    if (level)
-    {
-        realPort->PSOR |= 1 << pinNum;
-    }
-    else
-    {
-        realPort->PCOR |= 1 << pinNum;
-    }
 }

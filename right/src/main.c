@@ -9,6 +9,8 @@
 #include "peripherials/test_led.h"
 #include "usb_interfaces/usb_interface_basic_keyboard.h"
 #include "usb_interfaces/usb_interface_media_keyboard.h"
+#include "bus_pal_hardware.h"
+#include "bootloader_config.h"
 
 key_matrix_t KeyMatrix = {
     .colNum = KEYBOARD_MATRIX_COLS_NUM,
@@ -90,7 +92,11 @@ void main() {
     InitBridgeProtocolScheduler();
     KeyMatrix_Init(&KeyMatrix);
     UpdateUsbReports();
+#ifdef ENABLE_BUSPAL
+    init_hardware();
+#else
     InitUsb();
+#endif
 
     // deserialize_Layer(testData, 0);
 

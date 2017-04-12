@@ -2,6 +2,7 @@
 #include "usb_composite_device.h"
 #include "usb_descriptors/usb_descriptor_hid.h"
 #include "usb_descriptors/usb_descriptor_strings.h"
+#include "bootloader_config.h"
 
 static usb_status_t UsbDeviceCallback(usb_device_handle handle, uint32_t event, void *param);
 usb_composite_device_t UsbCompositeDevice;
@@ -96,10 +97,12 @@ static usb_status_t UsbDeviceCallback(usb_device_handle handle, uint32_t event, 
     return error;
 }
 
+#ifndef ENABLE_BUSPAL
 void USB0_IRQHandler()
 {
     USB_DeviceKhciIsrFunction(UsbCompositeDevice.deviceHandle);
 }
+#endif
 
 void InitUsb()
 {
