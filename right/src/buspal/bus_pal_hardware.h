@@ -21,13 +21,7 @@ status_t send_i2c_data(uint8_t *src, uint32_t writeLength);
 status_t receive_i2c_data(uint8_t *dest, uint32_t readLength);
 bool usb_hid_poll_for_activity(const peripheral_descriptor_t *self);
 status_t usb_hid_packet_init(const peripheral_descriptor_t *self);
-status_t usb_hid_packet_read(const peripheral_descriptor_t *self,
-                             uint8_t **packet,
-                             uint32_t *packetLength,
-                             packet_type_t packetType);
-status_t usb_hid_packet_write(const peripheral_descriptor_t *self,
-                              const uint8_t *packet,
-                              uint32_t byteCount,
-                              packet_type_t packetType);
+status_t usb_hid_packet_read(const peripheral_descriptor_t *self, uint8_t **packet, uint32_t *packetLength, packet_type_t packetType);
+status_t usb_hid_packet_write(const peripheral_descriptor_t *self, const uint8_t *packet, uint32_t byteCount,packet_type_t packetType);
 
 #endif
