@@ -2,7 +2,7 @@
 #define __SERIAL_PACKET_H__
 
 #include "bootloader_common.h"
-#include "bootloader/bl_peripheral.h"
+#include "bl_peripheral.h"
 #include "command_packet.h"
 
 ////////////////////////////////////////////////////////////////////////////////
