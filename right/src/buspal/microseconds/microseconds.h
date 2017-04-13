@@ -1,25 +1,8 @@
-/*
- * @file microseconds.h
- * @brief Microseconds timer driver based on PIT(Periodic Interrupt Timer)
- *
- * Notes:
- */
-
 #ifndef ___MICROSECONDS_H__
 #define ___MICROSECONDS_H__
 
-#include <stdio.h>
 #include "fsl_device_registers.h"
 
-////////////////////////////////////////////////////////////////////////////////
-// Prototypes
-////////////////////////////////////////////////////////////////////////////////
-
-#if defined(__cplusplus)
-extern "C" {
-#endif // __cplusplus
-
-/********************************************************************/
 //! @brief Initialize timer facilities.
 void microseconds_init(void);
 
@@ -43,8 +26,4 @@ void microseconds_delay(uint32_t us);
 //! @brief Gets the clock value used for microseconds driver
 uint32_t microseconds_get_clock(void);
 
-#if defined(__cplusplus)
-}
-#endif // __cplusplus
-
-#endif /* ___MICROSECONDS_H__ */
+#endif
