@@ -281,68 +281,43 @@ usb_language_list_t g_language_list = {
 
 usb_language_list_t *g_language_ptr;
 
-/* Get hid descriptor request */
-usb_status_t usb_device_get_hid_descriptor(usb_device_handle handle,
-                                           usb_device_get_hid_descriptor_struct_t *hid_descriptor)
+usb_status_t usb_device_get_hid_descriptor(
+        usb_device_handle handle, usb_device_get_hid_descriptor_struct_t *hid_descriptor)
 {
     return kStatus_USB_InvalidRequest;
 }
 
 /* Get hid report descriptor request */
-usb_status_t usb_device_get_hid_report_descriptor(usb_device_handle handle,
-                                                  usb_device_get_hid_report_descriptor_struct_t *hid_report_descriptor)
+usb_status_t usb_device_get_hid_report_descriptor(
+    usb_device_handle handle, usb_device_get_hid_report_descriptor_struct_t *hid_report_descriptor)
 {
     if (USB_HID_GENERIC_INTERFACE_INDEX == hid_report_descriptor->interfaceNumber) {
         hid_report_descriptor->buffer = g_hid_generic_report_descriptor;
-        //        hid_report_descriptor->length = USB_HID_REPORT_DESC_SIZE;
-        hid_report_descriptor->length = sizeof(g_hid_generic_report_descriptor);
+        hid_report_descriptor->length = USB_HID_REPORT_DESC_SIZE;
     } else {
         return kStatus_USB_InvalidRequest;
     }
     return kStatus_USB_Success;
 }
 
-/* Get hid physical descriptor request */
 usb_status_t usb_device_get_hid_physical_descriptor(
     usb_device_handle handle, usb_device_get_hid_physical_descriptor_struct_t *hid_physical_descriptor)
 {
     return kStatus_USB_InvalidRequest;
 }
 
-/*!
- * @brief USB device get device descriptor function.
- *
- * This function gets the device descriptor of the USB devcie.
- *
- * @param handle The USB device handle.
- * @param device_descriptor The pointer to the device descriptor structure.
- *
- * @return A USB error code or kStatus_USB_Success.
- */
-usb_status_t usb_device_get_device_descriptor(usb_device_handle handle,
-                                              usb_device_get_device_descriptor_struct_t *device_descriptor)
+usb_status_t usb_device_get_device_descriptor(
+    usb_device_handle handle, usb_device_get_device_descriptor_struct_t *device_descriptor)
 {
     device_descriptor->buffer = g_device_descriptor;
     device_descriptor->length = USB_DEVICE_DESCRIPTOR_LENGTH;
     return kStatus_USB_Success;
 }
 
-/*!
- * @brief USB device get configuration descriptor function.
- *
- * This function gets the configuration descriptor of the USB devcie.
- *
- * @param handle The USB device handle.
- * @param configuration_descriptor The pointer to the configuration descriptor structure.
- *
- * @return A USB error code or kStatus_USB_Success.
- */
 usb_status_t usb_device_get_configuration_descriptor(
     usb_device_handle handle, usb_device_get_configuration_descriptor_struct_t *configuration_descriptor)
 {
-    //    if (USB_COMPOSITE_CONFIGURE_INDEX > configuration_descriptor->configuration)
-    if (USB_HID_GENERIC_CONFIGURE_INDEX > configuration_descriptor->configuration)
-    {
+    if (USB_HID_GENERIC_CONFIGURE_INDEX > configuration_descriptor->configuration) {
         configuration_descriptor->buffer = g_config_descriptor;
         configuration_descriptor->length = USB_CONFIGURE_DESCRIPTOR_LENGTH;
         return kStatus_USB_Success;
@@ -350,18 +325,8 @@ usb_status_t usb_device_get_configuration_descriptor(
     return kStatus_USB_InvalidRequest;
 }
 
-/*!
- * @brief USB device get string descriptor function.
- *
- * This function gets the string descriptor of the USB devcie.
- *
- * @param handle The USB device handle.
- * @param string_descriptor Pointer to the string descriptor structure.
- *
- * @return A USB error code or kStatus_USB_Success.
- */
-usb_status_t usb_device_get_string_descriptor(usb_device_handle handle,
-                                              usb_device_get_string_descriptor_struct_t *string_descriptor)
+usb_status_t usb_device_get_string_descriptor(
+    usb_device_handle handle, usb_device_get_string_descriptor_struct_t *string_descriptor)
 {
     if (string_descriptor->stringIndex == 0) {
         string_descriptor->buffer = (uint8_t *)g_language_list.languageString;
@@ -388,54 +353,23 @@ usb_status_t usb_device_get_string_descriptor(usb_device_handle handle,
     return kStatus_USB_Success;
 }
 
-/*!
- * @brief USB device set speed function.
- *
- * This function sets the speed of the USB devcie.
- *
- * @param handle The USB device handle.
- * @param speed Speed type. USB_SPEED_HIGH/USB_SPEED_FULL/USB_SPEED_LOW.
- *
- * @return A USB error code or kStatus_USB_Success.
- */
 usb_status_t usb_device_set_speed(usb_device_handle handle, uint8_t speed)
 {
     usb_hid_config_descriptor_t *ptr_hid = NULL;
     ptr_hid = (usb_hid_config_descriptor_t *)&g_config_descriptor[USB_HID_CONFIG_INDEX];
 
-    if (USB_SPEED_HIGH == speed) {
-        // HID interface
-        USB_SHORT_TO_LITTLE_ENDIAN_ADDRESS(HS_HID_GENERIC_INTERRUPT_IN_PACKET_SIZE,
-                                           ptr_hid->endpoint_in.wMaxPacketSize);
-        ptr_hid->endpoint_in.bInterval = HS_HID_GENERIC_INTERRUPT_IN_INTERVAL;
+    // HID interface
+    USB_SHORT_TO_LITTLE_ENDIAN_ADDRESS(FS_HID_GENERIC_INTERRUPT_IN_PACKET_SIZE, ptr_hid->endpoint_in.wMaxPacketSize);
+    ptr_hid->endpoint_in.bInterval = FS_HID_GENERIC_INTERRUPT_IN_INTERVAL;
 
-        USB_SHORT_TO_LITTLE_ENDIAN_ADDRESS(HS_HID_GENERIC_INTERRUPT_OUT_PACKET_SIZE,
-                                           ptr_hid->endpoint_out.wMaxPacketSize);
-        ptr_hid->endpoint_out.bInterval = HS_HID_GENERIC_INTERRUPT_OUT_INTERVAL;
-    } else {
-        // HID interface
-        USB_SHORT_TO_LITTLE_ENDIAN_ADDRESS(FS_HID_GENERIC_INTERRUPT_IN_PACKET_SIZE,
-                                           ptr_hid->endpoint_in.wMaxPacketSize);
-        ptr_hid->endpoint_in.bInterval = FS_HID_GENERIC_INTERRUPT_IN_INTERVAL;
-
-        USB_SHORT_TO_LITTLE_ENDIAN_ADDRESS(FS_HID_GENERIC_INTERRUPT_OUT_PACKET_SIZE,
-                                           ptr_hid->endpoint_out.wMaxPacketSize);
-        ptr_hid->endpoint_out.bInterval = FS_HID_GENERIC_INTERRUPT_OUT_INTERVAL;
-    }
+    USB_SHORT_TO_LITTLE_ENDIAN_ADDRESS(FS_HID_GENERIC_INTERRUPT_OUT_PACKET_SIZE, ptr_hid->endpoint_out.wMaxPacketSize);
+    ptr_hid->endpoint_out.bInterval = FS_HID_GENERIC_INTERRUPT_OUT_INTERVAL;
 
     for (uint32_t i = 0; i < USB_HID_GENERIC_ENDPOINT_COUNT; i++) {
-        if (USB_SPEED_HIGH == speed) {
-            if (g_hid_generic_endpoints[i].endpointAddress & USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_IN) {
-                g_hid_generic_endpoints[i].maxPacketSize = HS_HID_GENERIC_INTERRUPT_IN_PACKET_SIZE;
-            } else {
-                g_hid_generic_endpoints[i].maxPacketSize = HS_HID_GENERIC_INTERRUPT_OUT_PACKET_SIZE;
-            }
+        if (g_hid_generic_endpoints[i].endpointAddress & USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_IN) {
+            g_hid_generic_endpoints[i].maxPacketSize = FS_HID_GENERIC_INTERRUPT_IN_PACKET_SIZE;
         } else {
-            if (g_hid_generic_endpoints[i].endpointAddress & USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_IN) {
-                g_hid_generic_endpoints[i].maxPacketSize = FS_HID_GENERIC_INTERRUPT_IN_PACKET_SIZE;
-            } else {
-                g_hid_generic_endpoints[i].maxPacketSize = FS_HID_GENERIC_INTERRUPT_OUT_PACKET_SIZE;
-            }
+            g_hid_generic_endpoints[i].maxPacketSize = FS_HID_GENERIC_INTERRUPT_OUT_PACKET_SIZE;
         }
     }
 
