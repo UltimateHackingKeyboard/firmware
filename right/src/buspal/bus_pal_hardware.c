@@ -228,10 +228,7 @@ void usb_device_full_shutdown(const peripheral_descriptor_t *self)
     // Shutdown class driver
     usb_device_hid_generic_deinit(&g_device_composite);
 
-// Make sure we are clocking to the peripheral to ensure there
-// are no bus errors
-#if defined(PCC_BASE_ADDRS)
-#else
+    // Make sure we are clocking to the peripheral to ensure there are no bus errors
     if ((CONTROLLER_ID == kUSB_ControllerKhci0) && (SIM->SCGC4 & SIM_SCGC4_USBOTG_MASK))
     {
         // Disable the USB interrupt
@@ -243,7 +240,6 @@ void usb_device_full_shutdown(const peripheral_descriptor_t *self)
         // Turn off clocking to USB
         SIM->SCGC4 &= ~SIM_SCGC4_USBOTG_MASK;
     }
-#endif
 }
 
 /*FUNCTION**********************************************************************
