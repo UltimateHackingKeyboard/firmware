@@ -88,13 +88,13 @@ void UpdateUsbReports()
 void main() {
     InitPeripherials();
     InitClock();
+#ifdef ENABLE_BUSPAL
+    init_hardware();
+#else
     LedDriver_InitAllLeds(1);
     InitBridgeProtocolScheduler();
     KeyMatrix_Init(&KeyMatrix);
     UpdateUsbReports();
-#ifdef ENABLE_BUSPAL
-    init_hardware();
-#else
     InitUsb();
 #endif
 

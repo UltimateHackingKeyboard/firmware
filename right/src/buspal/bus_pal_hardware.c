@@ -3,6 +3,8 @@
 #include "usb_device_config.h"
 #include "composite.h"
 #include "bootloader_config.h"
+#include "microseconds/microseconds.h"
+#include "i2c.h"
 
 bool usb_hid_poll_for_activity(const peripheral_descriptor_t *self);
 static status_t usb_device_full_init(const peripheral_descriptor_t *self, serial_byte_receive_func_t function);
@@ -49,8 +51,6 @@ static i2c_user_config_t s_i2cUserConfig = {.slaveAddress = 0x10, //!< The slave
                                             .baudRate_kbps = 100 };
 
 static i2c_master_handle_t s_i2cHandle;
-
-const static uint32_t g_i2cBaseAddr[] = I2C_BASE_ADDRS;
 
 uint32_t g_calculatedBaudRate;
 
@@ -435,31 +435,21 @@ uint32_t get_bus_clock(void)
 
 void init_hardware(void)
 {
-    // Disable the MPU otherwise USB cannot access the bus
-//    MPU->CESR = 0;
-/*
-    SIM->SCGC5 |= (SIM_SCGC5_PORTA_MASK | SIM_SCGC5_PORTB_MASK | SIM_SCGC5_PORTC_MASK | SIM_SCGC5_PORTD_MASK |
+/*    SIM->SCGC5 |= (SIM_SCGC5_PORTA_MASK | SIM_SCGC5_PORTB_MASK | SIM_SCGC5_PORTC_MASK | SIM_SCGC5_PORTD_MASK |
                    SIM_SCGC5_PORTE_MASK);
 
     // Enable pins for I2C0 on PTD8 - PTD9.
     PORTE->PCR[18] = PORT_PCR_MUX(4) | PORT_PCR_ODE_MASK; // I2C0_SCL is ALT2 for pin PTD9, I2C0_SCL set for open drain
     PORTE->PCR[19] = PORT_PCR_MUX(4) | PORT_PCR_ODE_MASK; // I2C0_SDA is ALT2 for pin PTD9, I2C0_SDA set for open drain
-
-    microseconds_init();
 */
+    microseconds_init();
     init_i2c(0);
     usb_device_full_init(&g_peripherals[0], 0);
 }
 
 void init_i2c(uint32_t instance)
 {
-    uint32_t baseAddr = g_i2cBaseAddr[instance];
-    i2c_master_config_t config;
-
-    I2C_MasterGetDefaultConfig(&config);
-
-    I2C_MasterInit((I2C_Type *)baseAddr, &config, get_bus_clock());
-    I2C_MasterTransferCreateHandle((I2C_Type *)baseAddr, &s_i2cHandle, NULL, NULL);
+    I2C_MasterTransferCreateHandle(I2C_MAIN_BUS_BASEADDR, &s_i2cHandle, NULL, NULL);
 }
 
 void configure_i2c_address(uint8_t address)
@@ -475,7 +465,6 @@ void configure_i2c_speed(uint32_t speedkhz)
 status_t send_i2c_data(uint8_t *src, uint32_t writeLength)
 {
     i2c_master_transfer_t send_data;
-    uint32_t baseAddr = g_i2cBaseAddr[0];
     send_data.slaveAddress = s_i2cUserConfig.slaveAddress;
     send_data.direction = kI2C_Write;
     send_data.data = src;
@@ -484,7 +473,7 @@ status_t send_i2c_data(uint8_t *src, uint32_t writeLength)
     send_data.subaddressSize = 0;
     send_data.flags = kI2C_TransferDefaultFlag;
 
-    I2C_MasterTransferBlocking((I2C_Type *)baseAddr, &send_data);
+    I2C_MasterTransferBlocking(I2C_MAIN_BUS_BASEADDR, &send_data);
 
     return kStatus_Success;
 }
@@ -492,7 +481,6 @@ status_t send_i2c_data(uint8_t *src, uint32_t writeLength)
 status_t receive_i2c_data(uint8_t *dest, uint32_t readLength)
 {
     i2c_master_transfer_t receive_data;
-    uint32_t baseAddr = g_i2cBaseAddr[0];
     receive_data.slaveAddress = s_i2cUserConfig.slaveAddress;
     receive_data.direction = kI2C_Read;
     receive_data.data = dest;
@@ -501,7 +489,7 @@ status_t receive_i2c_data(uint8_t *dest, uint32_t readLength)
     receive_data.subaddressSize = 0;
     receive_data.flags = kI2C_TransferDefaultFlag;
 
-    I2C_MasterTransferBlocking((I2C_Type *)baseAddr, &receive_data);
+    I2C_MasterTransferBlocking(I2C_MAIN_BUS_BASEADDR, &receive_data);
 
     return kStatus_Success;
 }
