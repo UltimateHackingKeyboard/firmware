@@ -1,12 +1,19 @@
 #include "usb_device_config.h"
-#include "usb.h"
-#include "usb_device.h"
-
-#include "usb_device_class.h"
-#include "usb_device_hid.h"
 #include "bootloader_hid_report_ids.h"
-
 #include "usb_descriptor.h"
+
+usb_status_t usb_device_get_device_descriptor(
+    usb_device_handle handle, usb_device_get_device_descriptor_struct_t *device_descriptor);
+usb_status_t usb_device_get_configuration_descriptor(
+    usb_device_handle handle, usb_device_get_configuration_descriptor_struct_t *configuration_descriptor);
+usb_status_t usb_device_get_string_descriptor(
+    usb_device_handle handle, usb_device_get_string_descriptor_struct_t *string_descriptor);
+usb_status_t usb_device_get_hid_descriptor(
+    usb_device_handle handle, usb_device_get_hid_descriptor_struct_t *hid_descriptor);
+usb_status_t usb_device_get_hid_report_descriptor(
+    usb_device_handle handle, usb_device_get_hid_report_descriptor_struct_t *hid_report_descriptor);
+usb_status_t usb_device_get_hid_physical_descriptor(
+    usb_device_handle handle, usb_device_get_hid_physical_descriptor_struct_t *hid_physical_descriptor);
 
 #define BL_MIN_PACKET_SIZE (32)
 #define BL_PACKET_SIZE_HEADER_SIZE (3) // alignment byte + length lsb + length msb (does not include report id)
@@ -350,28 +357,5 @@ usb_status_t usb_device_get_string_descriptor(
         string_descriptor->buffer = (uint8_t *)g_language_list.languageList[lang_id].string[lang_index];
         string_descriptor->length = g_language_list.languageList[lang_id].length[lang_index];
     }
-    return kStatus_USB_Success;
-}
-
-usb_status_t usb_device_set_speed(usb_device_handle handle, uint8_t speed)
-{
-    usb_hid_config_descriptor_t *ptr_hid = NULL;
-    ptr_hid = (usb_hid_config_descriptor_t *)&g_config_descriptor[USB_HID_CONFIG_INDEX];
-
-    // HID interface
-    USB_SHORT_TO_LITTLE_ENDIAN_ADDRESS(FS_HID_GENERIC_INTERRUPT_IN_PACKET_SIZE, ptr_hid->endpoint_in.wMaxPacketSize);
-    ptr_hid->endpoint_in.bInterval = FS_HID_GENERIC_INTERRUPT_IN_INTERVAL;
-
-    USB_SHORT_TO_LITTLE_ENDIAN_ADDRESS(FS_HID_GENERIC_INTERRUPT_OUT_PACKET_SIZE, ptr_hid->endpoint_out.wMaxPacketSize);
-    ptr_hid->endpoint_out.bInterval = FS_HID_GENERIC_INTERRUPT_OUT_INTERVAL;
-
-    for (uint32_t i = 0; i < USB_HID_GENERIC_ENDPOINT_COUNT; i++) {
-        if (g_hid_generic_endpoints[i].endpointAddress & USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_IN) {
-            g_hid_generic_endpoints[i].maxPacketSize = FS_HID_GENERIC_INTERRUPT_IN_PACKET_SIZE;
-        } else {
-            g_hid_generic_endpoints[i].maxPacketSize = FS_HID_GENERIC_INTERRUPT_OUT_PACKET_SIZE;
-        }
-    }
-
     return kStatus_USB_Success;
 }
