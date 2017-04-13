@@ -75,6 +75,20 @@ typedef struct _usb_hid_config_descriptor {
 
 extern usb_device_class_struct_t g_hid_generic_class;
 
+usb_status_t usb_device_get_device_descriptor(
+    usb_device_handle handle, usb_device_get_device_descriptor_struct_t *device_descriptor);
+usb_status_t usb_device_get_configuration_descriptor(
+    usb_device_handle handle, usb_device_get_configuration_descriptor_struct_t *configuration_descriptor);
+usb_status_t usb_device_get_string_descriptor(
+    usb_device_handle handle, usb_device_get_string_descriptor_struct_t *string_descriptor);
+usb_status_t usb_device_get_hid_descriptor(
+    usb_device_handle handle, usb_device_get_hid_descriptor_struct_t *hid_descriptor);
+usb_status_t usb_device_get_hid_report_descriptor(
+    usb_device_handle handle, usb_device_get_hid_report_descriptor_struct_t *hid_report_descriptor);
+usb_status_t usb_device_get_hid_physical_descriptor(
+    usb_device_handle handle, usb_device_get_hid_physical_descriptor_struct_t *hid_physical_descriptor);
+
+
 extern uint8_t g_device_descriptor[];
 extern usb_language_list_t g_language_list;
 extern usb_language_list_t *g_language_ptr;

@@ -2,19 +2,6 @@
 #include "bootloader_hid_report_ids.h"
 #include "usb_descriptor.h"
 
-usb_status_t usb_device_get_device_descriptor(
-    usb_device_handle handle, usb_device_get_device_descriptor_struct_t *device_descriptor);
-usb_status_t usb_device_get_configuration_descriptor(
-    usb_device_handle handle, usb_device_get_configuration_descriptor_struct_t *configuration_descriptor);
-usb_status_t usb_device_get_string_descriptor(
-    usb_device_handle handle, usb_device_get_string_descriptor_struct_t *string_descriptor);
-usb_status_t usb_device_get_hid_descriptor(
-    usb_device_handle handle, usb_device_get_hid_descriptor_struct_t *hid_descriptor);
-usb_status_t usb_device_get_hid_report_descriptor(
-    usb_device_handle handle, usb_device_get_hid_report_descriptor_struct_t *hid_report_descriptor);
-usb_status_t usb_device_get_hid_physical_descriptor(
-    usb_device_handle handle, usb_device_get_hid_physical_descriptor_struct_t *hid_physical_descriptor);
-
 #define BL_MIN_PACKET_SIZE (32)
 #define BL_PACKET_SIZE_HEADER_SIZE (3) // alignment byte + length lsb + length msb (does not include report id)
 #define BL_REPORT_SIZE (BL_MIN_PACKET_SIZE + BL_PACKET_SIZE_HEADER_SIZE)
