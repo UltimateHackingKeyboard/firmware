@@ -225,20 +225,13 @@ void usb_device_full_shutdown(const peripheral_descriptor_t *self)
         return;
     }
 
-    // Shutdown class driver
-    usb_device_hid_generic_deinit(&g_device_composite);
+    usb_device_hid_generic_deinit(&g_device_composite); // Shutdown class driver
 
     // Make sure we are clocking to the peripheral to ensure there are no bus errors
-    if ((CONTROLLER_ID == kUSB_ControllerKhci0) && (SIM->SCGC4 & SIM_SCGC4_USBOTG_MASK))
-    {
-        // Disable the USB interrupt
-        NVIC_DisableIRQ(USB0_IRQn);
-
-        // Clear any pending interrupts on USB
-        NVIC_ClearPendingIRQ(USB0_IRQn);
-
-        // Turn off clocking to USB
-        SIM->SCGC4 &= ~SIM_SCGC4_USBOTG_MASK;
+    if (SIM->SCGC4 & SIM_SCGC4_USBOTG_MASK) {
+        NVIC_DisableIRQ(USB0_IRQn);           // Disable the USB interrupt
+        NVIC_ClearPendingIRQ(USB0_IRQn);      // Clear any pending interrupts on USB
+        SIM->SCGC4 &= ~SIM_SCGC4_USBOTG_MASK; // Turn off clocking to USB
     }
 }
 
