@@ -45,8 +45,6 @@ const peripheral_descriptor_t g_peripherals[] = {
 static usb_device_composite_struct_t g_device_composite;
 usb_status_t usb_device_callback(usb_device_handle handle, uint32_t event, void *param);
 
-extern usb_status_t usb_device_msc_callback(class_handle_t handle, uint32_t event, void *param);
-
 static i2c_user_config_t s_i2cUserConfig = {.slaveAddress = 0x10, //!< The slave's 7-bit address
                                             .baudRate_kbps = 100 };
 
