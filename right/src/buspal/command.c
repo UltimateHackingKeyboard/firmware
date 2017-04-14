@@ -34,7 +34,6 @@ void handleUsbBusPalCommand()
 
 static void handle_config_i2c(uint8_t *packet, uint32_t packetLength)
 {
-//    TEST_LED_OFF();
     configure_i2c_packet_t *command = (configure_i2c_packet_t *)packet;
     configure_i2c_address(command->address);
     configure_i2c_speed(command->speed);
@@ -394,7 +393,6 @@ status_t bootloader_command_pump()
                 debug_printf("Error: readPacket returned status 0x%x\r\n", status);
                 break;
             }
-//            TEST_LED_OFF();
 
             if (g_commandData.packetLength == 0)
             {

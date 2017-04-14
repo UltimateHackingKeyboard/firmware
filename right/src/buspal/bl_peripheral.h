@@ -34,7 +34,6 @@ typedef void (*serial_byte_receive_func_t)(uint8_t);
 //! @brief Peripheral control interface.
 typedef struct _peripheral_control_interface
 {
-    bool (*pollForActivity)(const peripheral_descriptor_t *self);
     status_t (*init)(const peripheral_descriptor_t *self, serial_byte_receive_func_t function);
     void (*shutdown)(const peripheral_descriptor_t *self);
     void (*pump)(const peripheral_descriptor_t *self);

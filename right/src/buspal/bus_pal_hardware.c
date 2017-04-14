@@ -19,8 +19,7 @@ static void init_i2c(uint32_t instance);
 
 static bool s_dHidActivity = false;
 
-const peripheral_control_interface_t g_usbHidControlInterface = {.pollForActivity = usb_hid_poll_for_activity,
-                                                                 .init = usb_device_full_init,
+const peripheral_control_interface_t g_usbHidControlInterface = {.init = usb_device_full_init,
                                                                  .shutdown = usb_device_full_shutdown,
                                                                  .pump = usb_msc_pump };
 
@@ -75,8 +74,7 @@ bool usb_clock_init(void)
 
 bool usb_hid_poll_for_activity(const peripheral_descriptor_t *self)
 {
-    s_dHidActivity = g_device_composite.hid_generic.hid_packet.didReceiveFirstReport;
-    return g_device_composite.attach && s_dHidActivity;
+    return g_device_composite.attach && g_device_composite.hid_generic.hid_packet.didReceiveFirstReport;
 }
 
 usb_status_t usb_device_callback(usb_device_handle handle, uint32_t event, void *param)
@@ -242,7 +240,6 @@ void usb_device_full_shutdown(const peripheral_descriptor_t *self)
 void usb_msc_pump(const peripheral_descriptor_t *self)
 {
     s_dHidActivity = true;
-    TEST_LED_OFF();
 }
 
 status_t usb_hid_packet_init(const peripheral_descriptor_t *self)
