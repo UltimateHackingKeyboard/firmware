@@ -6,7 +6,7 @@
 #include "deserialize.h"
 #include "action.h"
 #include "bridge_protocol_scheduler.h"
-#include "peripherials/test_led.h"
+#include "peripherals/test_led.h"
 #include "usb_interfaces/usb_interface_basic_keyboard.h"
 #include "usb_interfaces/usb_interface_media_keyboard.h"
 #include "bus_pal_hardware.h"

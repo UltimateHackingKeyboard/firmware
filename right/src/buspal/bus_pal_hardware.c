@@ -5,7 +5,7 @@
 #include "bootloader_config.h"
 #include "microseconds/microseconds.h"
 #include "i2c.h"
-#include "peripherials/test_led.h"
+#include "peripherals/test_led.h"
 
 bool usb_hid_poll_for_activity(const peripheral_descriptor_t *self);
 static status_t usb_device_full_init(const peripheral_descriptor_t *self, serial_byte_receive_func_t function);

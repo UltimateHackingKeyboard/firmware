@@ -1,7 +1,7 @@
 #include "command.h"
 #include "crc16.h"
 #include "bus_pal_hardware.h"
-#include "peripherials/test_led.h"
+#include "peripherals/test_led.h"
 
 command_processor_data_t g_commandData;
 buspal_state_t g_buspalState = kBuspal_Idle;

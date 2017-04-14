@@ -3,7 +3,7 @@
 #include "bridge_slave_uhk_module.h"
 #include "bridge_protocol.h"
 #include "main.h"
-#include "peripherials/test_led.h"
+#include "peripherals/test_led.h"
 
 uhk_module_state_t UhkModuleStates[UHK_MODULE_MAX_COUNT];
 uhk_module_field_t currentUhkModuleField = UhkModuleField_SendKeystatesRequestCommand;
