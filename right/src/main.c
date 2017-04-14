@@ -11,6 +11,7 @@
 #include "usb_interfaces/usb_interface_media_keyboard.h"
 #include "bus_pal_hardware.h"
 #include "bootloader_config.h"
+#include "command.h"
 
 key_matrix_t KeyMatrix = {
     .colNum = KEYBOARD_MATRIX_COLS_NUM,
@@ -90,13 +91,13 @@ void main() {
     InitClock();
 #ifdef ENABLE_BUSPAL
     init_hardware();
+    handleUsbBusPalCommand();
 #else
     LedDriver_InitAllLeds(1);
     InitBridgeProtocolScheduler();
     KeyMatrix_Init(&KeyMatrix);
     UpdateUsbReports();
     InitUsb();
-#endif
 
     // deserialize_Layer(testData, 0);
 
@@ -104,4 +105,5 @@ void main() {
         UpdateUsbReports();
         asm("wfi");
     }
+#endif
 }

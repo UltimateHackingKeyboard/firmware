@@ -49,6 +49,8 @@ typedef struct CommandInterface {
 // Default command interface.
 extern command_interface_t g_commandInterface;
 
+void handleUsbBusPalCommand();
+
 // Initialize the command processor component.
 status_t bootloader_command_init(void);
 

@@ -1,6 +1,7 @@
 #include "command.h"
 #include "crc16.h"
 #include "bus_pal_hardware.h"
+#include "peripherials/test_led.h"
 
 command_processor_data_t g_commandData;
 buspal_state_t g_buspalState = kBuspal_Idle;
@@ -25,12 +26,15 @@ void handleUsbBusPalCommand()
 
     while (1)
     {
+        usb_msc_pump(g_peripherals);
         bootloader_command_pump();
+        usb_msc_pump(g_peripherals);
     }
 }
 
 static void handle_config_i2c(uint8_t *packet, uint32_t packetLength)
 {
+//    TEST_LED_OFF();
     configure_i2c_packet_t *command = (configure_i2c_packet_t *)packet;
     configure_i2c_address(command->address);
     configure_i2c_speed(command->speed);
@@ -384,19 +388,19 @@ status_t bootloader_command_pump()
 
             status = usb_hid_packet_read(&g_peripherals[0], &g_commandData.packet, &g_commandData.packetLength,
                                          kPacketType_Command);
-
+//if (g_commandData.packet[12] == 0x64) TEST_LED_OFF();
             if (status != kStatus_Success)
             {
                 debug_printf("Error: readPacket returned status 0x%x\r\n", status);
                 break;
             }
+//            TEST_LED_OFF();
 
             if (g_commandData.packetLength == 0)
             {
                 // No command packet is available. Return success.
                 break;
             }
-
             cmdPacket = (command_packet_t *)g_commandData.packet;
             cmdTag = cmdPacket->commandTag;
 

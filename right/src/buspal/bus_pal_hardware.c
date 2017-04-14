@@ -5,11 +5,12 @@
 #include "bootloader_config.h"
 #include "microseconds/microseconds.h"
 #include "i2c.h"
+#include "peripherials/test_led.h"
 
 bool usb_hid_poll_for_activity(const peripheral_descriptor_t *self);
 static status_t usb_device_full_init(const peripheral_descriptor_t *self, serial_byte_receive_func_t function);
 static void usb_device_full_shutdown(const peripheral_descriptor_t *self);
-static void usb_msc_pump(const peripheral_descriptor_t *self);
+
 status_t usb_hid_packet_init(const peripheral_descriptor_t *self);
 static void usb_hid_packet_abort_data_phase(const peripheral_descriptor_t *self);
 static status_t usb_hid_packet_finalize(const peripheral_descriptor_t *self);
@@ -49,8 +50,6 @@ static i2c_user_config_t s_i2cUserConfig = {.slaveAddress = 0x10, //!< The slave
                                             .baudRate_kbps = 100 };
 
 static i2c_master_handle_t s_i2cHandle;
-
-uint32_t g_calculatedBaudRate;
 
 bool usb_clock_init(void)
 {
@@ -243,6 +242,7 @@ void usb_device_full_shutdown(const peripheral_descriptor_t *self)
 void usb_msc_pump(const peripheral_descriptor_t *self)
 {
     s_dHidActivity = true;
+    TEST_LED_OFF();
 }
 
 status_t usb_hid_packet_init(const peripheral_descriptor_t *self)
