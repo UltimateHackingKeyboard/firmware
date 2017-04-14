@@ -3,16 +3,14 @@
 
 #include "packet/serial_packet.h"
 
-enum _command_state
-{
+enum _command_state {
     kCommandState_CommandPhase,
     kCommandState_DataPhase,
     kCommandState_DataPhaseRead,
     kCommandState_DataPhaseWrite
 };
 
-typedef enum _buspal_state
-{
+typedef enum _buspal_state {
     kBuspal_Idle,
     kBuspal_I2c,
 } buspal_state_t;
