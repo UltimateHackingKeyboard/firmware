@@ -38,18 +38,7 @@ typedef struct CommandProcessorData {
     const command_handler_entry_t *handlerEntry; // Pointer to handler table entry for packet in process
 } command_processor_data_t;
 
-// Interface to command processor operations.
-typedef struct CommandInterface {
-    command_processor_data_t *stateData;
-} command_interface_t;
-
-// Default command interface.
-extern command_interface_t g_commandInterface;
-
 void handleUsbBusPalCommand();
-
-// Initialize the command processor component.
-status_t bootloader_command_init(void);
 
 // Pump the command state machine. Executes one command or data phase transaction.
 status_t bootloader_command_pump(void);

@@ -364,15 +364,6 @@ static status_t handle_data_write(bool *hasMoreData)
 }
 
 // See command.h for documentation on this function.
-status_t bootloader_command_init()
-{
-    command_processor_data_t *data = g_commandInterface.stateData;
-
-    data->state = kCommandState_CommandPhase;
-    return kStatus_Success;
-}
-
-// See command.h for documentation on this function.
 status_t bootloader_command_pump()
 {
     status_t status = kStatus_Success;
