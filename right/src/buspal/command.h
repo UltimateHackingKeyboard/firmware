@@ -19,7 +19,6 @@ typedef enum _buspal_state
 
 typedef struct CommandHandlerEntry
 {
-    void (*handleCommand)(uint8_t *packet, uint32_t packetLength);
     status_t (*handleData)(bool *hasMoreData);
 } command_handler_entry_t;
 
