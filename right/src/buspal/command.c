@@ -23,11 +23,8 @@ void handleUsbBusPalCommand()
 {
     g_commandData.state = kCommandState_CommandPhase;
 
-    while (1)
-    {
-        usb_msc_pump(g_peripherals);
+    while (1) {
         bootloader_command_pump();
-        usb_msc_pump(g_peripherals);
     }
 }
 
@@ -377,7 +374,7 @@ status_t bootloader_command_pump()
 
             status = usb_hid_packet_read(&g_peripherals[0], &g_commandData.packet, &g_commandData.packetLength,
                                          kPacketType_Command);
-//if (g_commandData.packet[12] == 0x64) TEST_LED_OFF();
+
             if (status != kStatus_Success)
             {
                 debug_printf("Error: readPacket returned status 0x%x\r\n", status);

@@ -7,7 +7,7 @@
 #include "i2c.h"
 #include "peripherals/test_led.h"
 
-bool usb_hid_poll_for_activity(const peripheral_descriptor_t *self);
+bool is_usb_active();
 static status_t usb_device_full_init(const peripheral_descriptor_t *self, serial_byte_receive_func_t function);
 static void usb_device_full_shutdown(const peripheral_descriptor_t *self);
 
@@ -16,8 +16,6 @@ static void usb_hid_packet_abort_data_phase(const peripheral_descriptor_t *self)
 static status_t usb_hid_packet_finalize(const peripheral_descriptor_t *self);
 static uint32_t usb_hid_packet_get_max_packet_size(const peripheral_descriptor_t *self);
 static void init_i2c(uint32_t instance);
-
-static bool s_dHidActivity = false;
 
 const peripheral_control_interface_t g_usbHidControlInterface = {.init = usb_device_full_init,
                                                                  .shutdown = usb_device_full_shutdown};
@@ -71,7 +69,7 @@ bool usb_clock_init(void)
     return true;
 }
 
-bool usb_hid_poll_for_activity(const peripheral_descriptor_t *self)
+bool is_usb_active()
 {
     return g_device_composite.attach && g_device_composite.hid_generic.hid_packet.didReceiveFirstReport;
 }
@@ -229,18 +227,6 @@ void usb_device_full_shutdown(const peripheral_descriptor_t *self)
     }
 }
 
-/*FUNCTION**********************************************************************
- *
- * Function Name : usb_msc_pump
- * Description   : This function is called repeatedly by the main application
- * loop. We use it to run the state machine from non-interrupt context
- *
- *END**************************************************************************/
-void usb_msc_pump(const peripheral_descriptor_t *self)
-{
-    s_dHidActivity = true;
-}
-
 status_t usb_hid_packet_init(const peripheral_descriptor_t *self)
 {
     sync_init(&g_device_composite.hid_generic.hid_packet.receiveSync, false);
@@ -277,7 +263,7 @@ status_t usb_hid_packet_read(const peripheral_descriptor_t *self,
             //            debug_printf("usbhid: unsupported packet type %d\r\n", (int)packetType);
             return kStatus_Fail;
     };
-    if (s_dHidActivity)
+    if (is_usb_active())
     {
         // The first receive data request was initiated after enumeration.
         // After that we wait until we are ready to read data before
@@ -339,7 +325,7 @@ status_t usb_hid_packet_write(const peripheral_descriptor_t *self,
                               uint32_t byteCount,
                               packet_type_t packetType)
 {
-    if (s_dHidActivity)
+    if (is_usb_active())
     {
         if (byteCount > kMinPacketBufferSize)
         {
