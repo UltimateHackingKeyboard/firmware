@@ -1,14 +1,5 @@
-#if !defined(__COMMAND_PACKET_H__)
+#ifndef __COMMAND_PACKET_H__
 #define __COMMAND_PACKET_H__
-
-#include "stdint.h"
-
-//! @addtogroup packet
-//! @{
-
-////////////////////////////////////////////////////////////////////////////////
-// Declarations
-////////////////////////////////////////////////////////////////////////////////
 
 //! @brief Command/Data Packet constants.
 enum _command_packet_constants
@@ -90,7 +81,6 @@ typedef struct CommandPacket
 } command_packet_t;
 
 //! @name Command Packet formats
-//@{
 
 //! @brief FlashEraseAll packet format.
 typedef struct FlashEraseAllPacket
@@ -244,10 +234,7 @@ typedef struct ConfigureCanPacket
     uint32_t rxid;                  //!< Parameter 2: rxid
 } configure_can_packet_t;
 
-//@}
-
 //! @name Response Packet formats
-//@{
 
 //! @brief Generic response packet format.
 typedef struct GenericResponsePacket
@@ -290,8 +277,4 @@ typedef struct FlashReadResourceResponsePacket
     uint32_t dataByteCount;         //!< parameter 1
 } flash_read_resource_response_packet_t;
 
-//@}
-
-//! @}
-
-#endif // __COMMAND_PACKET_H__
+#endif
