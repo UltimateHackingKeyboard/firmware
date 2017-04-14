@@ -20,8 +20,7 @@ static void init_i2c(uint32_t instance);
 static bool s_dHidActivity = false;
 
 const peripheral_control_interface_t g_usbHidControlInterface = {.init = usb_device_full_init,
-                                                                 .shutdown = usb_device_full_shutdown,
-                                                                 .pump = usb_msc_pump };
+                                                                 .shutdown = usb_device_full_shutdown};
 
 const peripheral_packet_interface_t g_usbHidPacketInterface = {.init = usb_hid_packet_init,
                                                                .readPacket = usb_hid_packet_read,

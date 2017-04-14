@@ -36,7 +36,6 @@ typedef struct _peripheral_control_interface
 {
     status_t (*init)(const peripheral_descriptor_t *self, serial_byte_receive_func_t function);
     void (*shutdown)(const peripheral_descriptor_t *self);
-    void (*pump)(const peripheral_descriptor_t *self);
 } peripheral_control_interface_t;
 
 //! @brief Peripheral abstract byte interface.
