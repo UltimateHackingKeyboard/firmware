@@ -429,13 +429,6 @@ uint32_t get_bus_clock(void)
 
 void init_hardware(void)
 {
-/*    SIM->SCGC5 |= (SIM_SCGC5_PORTA_MASK | SIM_SCGC5_PORTB_MASK | SIM_SCGC5_PORTC_MASK | SIM_SCGC5_PORTD_MASK |
-                   SIM_SCGC5_PORTE_MASK);
-
-    // Enable pins for I2C0 on PTD8 - PTD9.
-    PORTE->PCR[18] = PORT_PCR_MUX(4) | PORT_PCR_ODE_MASK; // I2C0_SCL is ALT2 for pin PTD9, I2C0_SCL set for open drain
-    PORTE->PCR[19] = PORT_PCR_MUX(4) | PORT_PCR_ODE_MASK; // I2C0_SDA is ALT2 for pin PTD9, I2C0_SDA set for open drain
-*/
     microseconds_init();
     init_i2c(0);
     usb_device_full_init(&g_peripherals[0], 0);
