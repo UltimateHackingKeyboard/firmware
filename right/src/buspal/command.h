@@ -40,9 +40,6 @@ typedef struct CommandProcessorData {
 
 // Interface to command processor operations.
 typedef struct CommandInterface {
-    status_t (*init)(void);
-    status_t (*pump)(void);
-    const command_handler_entry_t *handlerTable;
     command_processor_data_t *stateData;
 } command_interface_t;
 
