@@ -41,7 +41,7 @@ usb_status_t usb_device_hid_generic_callback(class_handle_t handle, uint32_t eve
             g_device_composite->hid_generic.hid_packet.reportSize = hid_report_param->reportLength;
 
             g_device_composite->hid_generic.hid_packet.didReceiveFirstReport = true;
-TEST_LED_OFF();
+
             // Wake up the read packet handler.
             sync_signal(&g_device_composite->hid_generic.hid_packet.receiveSync);
             error = kStatus_USB_Success;

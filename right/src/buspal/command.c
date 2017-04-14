@@ -11,7 +11,6 @@ void handle_reset(uint8_t *packet, uint32_t packetLength);
 void send_generic_response(uint32_t commandStatus, uint32_t commandTag);
 
 static status_t handle_command_internal(uint8_t *packet, uint32_t packetLength);
-static status_t handle_data(bool *hasMoreData);
 static uint16_t calculate_framing_crc16(framing_data_packet_t *packet, const uint8_t *data);
 static status_t handle_data_read(bool *hasMoreData);
 static void handle_read_memory_command(uint8_t *packet, uint32_t packetLength);
@@ -446,12 +445,7 @@ status_t bootloader_command_pump()
             break;
 
         case kCommandState_DataPhase:
-            status = handle_data(&hasMoreData);
-            if (status != kStatus_Success)
-            {
-                g_commandData.state = kCommandState_CommandPhase;
-                break;
-            }
+            status = kStatus_Success;
             g_commandData.state = hasMoreData ? kCommandState_DataPhase : kCommandState_CommandPhase;
             break;
     }
@@ -550,19 +544,6 @@ static status_t handle_command_internal(uint8_t *packet, uint32_t packetLength)
     }
 
     return status;
-}
-
-//! @brief Handle a data transaction.
-static status_t handle_data(bool *hasMoreData)
-{
-    if (g_commandData.handlerEntry)
-    {
-        // Run data phase if present, otherwise just return success.
-        *hasMoreData = 0;
-        return g_commandData.handlerEntry->handleData ? g_commandData.handlerEntry->handleData(hasMoreData) :
-                                                        kStatus_Success;
-    }
-    return kStatus_Success;
 }
 
 //! @brief Reset command handler.

@@ -17,11 +17,6 @@ typedef enum _buspal_state
     kBuspal_I2c,
 } buspal_state_t;
 
-typedef struct CommandHandlerEntry
-{
-    status_t (*handleData)(bool *hasMoreData);
-} command_handler_entry_t;
-
 typedef struct CommandProcessorData {
     int32_t state;                   // Current state machine state
     uint8_t *packet;                 // Pointer to packet in process
@@ -34,7 +29,6 @@ typedef struct CommandProcessorData {
         uint8_t commandTag;          // Tag of command running data phase
         uint8_t option;              // Option for special command
     } dataPhase;
-    const command_handler_entry_t *handlerEntry; // Pointer to handler table entry for packet in process
 } command_processor_data_t;
 
 void handleUsbBusPalCommand();
