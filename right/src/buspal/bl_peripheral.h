@@ -8,23 +8,15 @@
 //! flash region to list available peripherals and control which peripherals are enabled.
 enum _peripheral_types
 {
-    kPeripheralType_UART = (1 << 0),
+    kPeripheralType_UART     = (1 << 0),
     kPeripheralType_I2CSlave = (1 << 1),
     kPeripheralType_SPISlave = (1 << 2),
-    kPeripheralType_CAN = (1 << 3),
-    kPeripheralType_USB_HID = (1 << 4),
-    kPeripheralType_USB_CDC = (1 << 5),
-    kPeripheralType_USB_DFU = (1 << 6),
-    kPeripheralType_USB_MSC = (1 << 7)
+    kPeripheralType_CAN      = (1 << 3),
+    kPeripheralType_USB_HID  = (1 << 4),
+    kPeripheralType_USB_CDC  = (1 << 5),
+    kPeripheralType_USB_DFU  = (1 << 6),
+    kPeripheralType_USB_MSC  = (1 << 7),
 };
-
-//! @brief Pinmux types.
-typedef enum _pinmux_types
-{
-    kPinmuxType_Default = 0,
-    kPinmuxType_GPIO = 1,
-    kPinmuxType_Peripheral = 2
-} pinmux_type_t;
 
 // Forward declaration.
 typedef struct PeripheralDescriptor peripheral_descriptor_t;
@@ -83,9 +75,6 @@ struct PeripheralDescriptor
 
     //! @brief The instance number of the peripheral.
     uint32_t instance;
-
-    //! @brief Configure pinmux setting for the peripheral.
-    void (*pinmuxConfig)(uint32_t instance, pinmux_type_t pinmux);
 
     //! @brief Control interface for the peripheral.
     const peripheral_control_interface_t *controlInterface;

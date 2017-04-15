@@ -32,7 +32,6 @@ const peripheral_descriptor_t g_peripherals[] = {
     // USB HID - Full speed
     {.typeMask = kPeripheralType_USB_HID,
      .instance = 0,
-     .pinmuxConfig = NULL,
      .controlInterface = &g_usbHidControlInterface,
      .byteInterface = NULL,
      .packetInterface = &g_usbHidPacketInterface },
