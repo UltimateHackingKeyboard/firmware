@@ -86,6 +86,26 @@ void UpdateUsbReports()
     IsUsbBasicKeyboardReportSent = false;
 }
 
+typedef struct {
+  uint32_t magicNumber;
+  uint8_t enumerationMode;
+} wormhole_t;
+
+wormhole_t *message_ptr __attribute__ ((__section__ (".noinit")));
+
+void* getSP(void)
+{
+    void *sp;
+    __asm__ __volatile__ ("mov %0, sp" : "=r"(sp));
+    return sp;
+}
+
+void __attribute__ ((__section__ (".init3"), __naked__)) move_sp(void) {
+    void* SP = getSP();
+    SP -= sizeof(wormhole_t);
+    message_ptr = (wormhole_t*)(SP + 1);
+}
+
 void main() {
     InitPeripherials();
     InitClock();
