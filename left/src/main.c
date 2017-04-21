@@ -42,6 +42,16 @@ key_matrix_t keyMatrix = {
 #endif
 };
 
+void JumpToBootloader() {
+    uint32_t runBootloaderAddress;
+    void (*runBootloader)(void * arg);
+    // Read the function address from the ROM API tree.
+    runBootloaderAddress = **(uint32_t **)(0x1c00001c);
+    runBootloader = (void (*)(void * arg))runBootloaderAddress;
+    // Start the bootloader.
+    runBootloader(NULL);
+}
+
 int main(void)
 {
     InitClock();
