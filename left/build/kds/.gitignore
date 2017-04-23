@@ -3,5 +3,7 @@
 /v7-release/
 /v6-release/
 /v7-debug/
+/v6-debug/
 core
 /v7-debug-srec/
+/v7-release-srec/
