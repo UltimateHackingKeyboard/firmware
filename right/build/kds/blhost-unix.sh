@@ -14,6 +14,7 @@ if [ ! -f $usb_binding ]; then
 fi
 
 $usb_dir/jump-to-bootloader.js
+$blhost --usb 0x15a2,0x0073 flash-security-disable 0403020108070605
 $blhost --usb 0x15a2,0x0073 flash-erase-all 0
 $blhost --usb 0x15a2,0x0073 flash-image $firmware_image
 $blhost --usb 0x15a2,0x0073 reset
