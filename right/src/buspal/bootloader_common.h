@@ -4,27 +4,13 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdint.h>
-#if !defined(WIN32)
 #include <stdbool.h>
-#endif
 #include "bootloader_common.h"
 #include "fsl_common.h"
-
-#if defined(BOOTLOADER_HOST)
-#elif defined(BUSPAL)
-#include "../src/buspal_config.h"
-#else
-#include "bootloader_config.h"
-#include "target_config.h"
-#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 // Definitions
 ////////////////////////////////////////////////////////////////////////////////
-
-#ifndef NULL
-#define NULL 0
-#endif
 
 // The following macros are to be used when trying to save code size for specific peripheral configurations
 // that will only be using one peripheral instance. most of the peripheral driver code can use multiple instances but by
@@ -33,17 +19,6 @@
 #define USE_ONLY_UART(instance) (defined(BL_FEATURE_UART_OPTIMIZE) && (BL_UART_USED_INSTANCE == instance))
 #define USE_ONLY_SPI(instance) (defined(BL_FEATURE_SPI_OPTIMIZE) && (BL_SPI_USED_INSTANCE == instance))
 #define USE_ONLY_I2C(instance) (defined(BL_FEATURE_I2C_OPTIMIZE) && (BL_I2C_USED_INSTANCE == instance))
-
-//! @name Min/max macros
-//@{
-#if !defined(MIN)
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
-#endif
-
-#if !defined(MAX)
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
-#endif
-//@}
 
 //! @brief Computes the number of elements in an array.
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
@@ -72,7 +47,7 @@
 //! is treated as a 32-bit little endian value.
 #define FOUR_CHAR_CODE(a, b, c, d) (((d) << 24) | ((c) << 16) | ((b) << 8) | ((a)))
 
-#if (defined(DEBUG) || defined(_DEBUG)) && !defined(DEBUG_PRINT_DISABLE)
+#if (defined(DEBUG))
 static inline void debug_printf(const char *format, ...);
 
 //! @brief Debug print utility.
@@ -83,14 +58,7 @@ static inline void debug_printf(const char *format, ...)
     va_list args;
     va_start(args, format);
     vprintf(format, args);
-// Temporarily disable MISRA rule 14.2
-#if defined(__ICCARM__)
-#pragma diag_suppress = Pm049
-#endif
     va_end(args);
-#if defined(__ICCARM__)
-#pragma diag_default = Pm049
-#endif
 }
 #else // (DEBUG || _DEBUG) && !DEBUG_PRINT_DISABLE
 // Empty macro to cause debug_printf() calls to disappear.
@@ -128,10 +96,6 @@ enum _bl_driver_status_groups
     kStatusGroup_OTFADDriver = 5,   //!< OTFAD driver status group number.
 };
 
-#if defined(__CC_ARM)
-#pragma anon_unions
-#endif
-
 //! @brief Structure of version property.
 //!
 //! @ingroup bl_core
@@ -145,17 +109,6 @@ typedef union StandardVersion
         char name;      //!< name [31:24]
     };
     uint32_t version; //!< combined version numbers
-
-#if defined(__cplusplus)
-    StandardVersion()
-        : version(0)
-    {
-    }
-    StandardVersion(uint32_t version)
-        : version(version)
-    {
-    }
-#endif
 } standard_version_t;
 
 // #define MAKE_VERSION(bugfix, minor, major, name) (((name) << 24) | ((major) << 16) | ((minor) << 8 ) | (bugfix))
