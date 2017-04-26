@@ -506,6 +506,8 @@ static status_t handle_command_internal(uint8_t *packet, uint32_t packetLength)
                     }
                     else
                     {
+                        uint8_t dst[1];
+                        peripheral_read(dst, 1); // TODO: Make this more general, so that the extra 0 byte is not expected.
                         // receiving framing paket header
                         if (peripheral_read(rxBuf, sizeof(framing_data_packet_t)) != kStatus_Success)
                         {
@@ -513,8 +515,6 @@ static status_t handle_command_internal(uint8_t *packet, uint32_t packetLength)
                         }
                         else
                         {
-                            uint8_t dst[1];
-                            peripheral_read(dst, 1); // TODO: Make this more general, so that the extra 0 byte is not expected.
 
                             rxSize = ((framing_data_packet_t *)rxBuf)->length;
                             if (peripheral_read(rxBuf + sizeof(framing_data_packet_t), rxSize) != kStatus_Success)
