@@ -4,12 +4,15 @@
 #include "layer.h"
 #include "usb_interfaces/usb_interface_mouse.h"
 #include "current_keymap.h"
+#include "test_states.h"
+#include "peripherals/test_led.h"
 
 static uint8_t activeLayer = LAYER_ID_BASE;
 static uint8_t mouseWheelDivisorCounter = 0;
 static uint8_t mouseSpeedAccelDivisorCounter = 0;
 static uint8_t mouseSpeed = 3;
 static bool wasPreviousMouseActionWheelAction = false;
+test_states_t TestStates;
 
 void processMouseAction(key_action_t action)
 {
@@ -68,6 +71,13 @@ void processMouseAction(key_action_t action)
     wasPreviousMouseActionWheelAction = isWheelAction;
 }
 
+void processTestAction(key_action_t testAction) {
+    if (testAction.test.testAction == TestAction_DisableI2c) {
+        TestStates.disableI2c = true;
+        TEST_LED_OFF();
+    }
+}
+
 void UpdateActiveUsbReports() {
 
     bzero(&UsbMouseReport, sizeof(usb_mouse_report_t));
@@ -123,6 +133,9 @@ void UpdateActiveUsbReports() {
                     break;
                 case KEY_ACTION_MOUSE:
                     processMouseAction(action);
+                    break;
+                case KEY_ACTION_TEST:
+                    processTestAction(action);
                     break;
             }
         }

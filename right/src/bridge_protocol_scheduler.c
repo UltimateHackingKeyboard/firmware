@@ -6,6 +6,7 @@
 #include "bridge_slaves/bridge_slave_uhk_module.h"
 #include "i2c.h"
 #include "i2c_addresses.h"
+#include "test_states.h"
 
 uint8_t currentBridgeSlaveId = 0;
 
@@ -17,6 +18,9 @@ bridge_slave_t bridgeSlaves[] = {
 
 static void bridgeProtocolCallback(I2C_Type *base, i2c_master_handle_t *handle, status_t status, void *userData)
 {
+    if (TestStates.disableI2c) {
+        return;
+    }
     bridge_slave_t *bridgeSlave = bridgeSlaves + currentBridgeSlaveId;
 
     bool isFinished = bridgeSlave->slaveHandler(bridgeSlave->moduleId);
