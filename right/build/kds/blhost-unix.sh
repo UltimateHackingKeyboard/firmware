@@ -15,6 +15,6 @@ fi
 
 $usb_dir/jump-to-bootloader.js
 $blhost flash-security-disable 0403020108070605
-$blhost flash-erase-all 0
+$blhost flash-erase-region 0xc000 475136
 $blhost flash-image $firmware_image
 $blhost reset
