@@ -49,6 +49,15 @@ enum {
     MOUSE_SCROLL_RIGHT = (1 << 3),
 };
 
+typedef enum {
+    TestAction_DisableUsb,
+    TestAction_DisableI2c,
+    TestAction_DisableKeyMatrixScan,
+    TestAction_DisableLedSdb,
+    TestAction_DisableLedFetPwm,
+    TestAction_DisableLedDriverPwm,
+} test_action_t;
+
 #define MOUSE_WHEEL_SPEED   1
 #define MOUSE_WHEEL_DIVISOR 4
 
@@ -79,6 +88,9 @@ typedef struct {
         struct {
             uint16_t macroId;
         } __attribute__ ((packed)) playMacro;
+        struct {
+            test_action_t testAction;
+        } __attribute__ ((packed)) test;
     };
 } __attribute__ ((packed)) key_action_t;
 
