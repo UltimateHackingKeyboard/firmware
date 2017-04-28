@@ -15,6 +15,7 @@ typedef enum {
     KEY_ACTION_SWITCH_LAYER,
     KEY_ACTION_SWITCH_KEYMAP,
     KEY_ACTION_PLAY_MACRO,
+    KEY_ACTION_TEST,
 } key_action_type_t;
 
 typedef enum {

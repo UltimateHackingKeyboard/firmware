@@ -8,23 +8,30 @@ key_action_t CurrentKeymap[LAYER_COUNT][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = 
         // Right keyboard half
         {
             // Row 1
-            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_7_AND_AMPERSAND }},
-            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_8_AND_ASTERISK }},
-            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_9_AND_OPENING_PARENTHESIS }},
+//            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_7_AND_AMPERSAND }},
+//            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_8_AND_ASTERISK }},
+//            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_9_AND_OPENING_PARENTHESIS }},
+            { .type = KEY_ACTION_TEST, .test = { .testAction = TestAction_DisableUsb }},
+            { .type = KEY_ACTION_TEST, .test = { .testAction = TestAction_DisableI2c }},
+            { .type = KEY_ACTION_TEST, .test = { .testAction = TestAction_DisableKeyMatrixScan }},
+
             { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_0_AND_CLOSING_PARENTHESIS }},
             { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_MINUS_AND_UNDERSCORE }},
             { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_EQUAL_AND_PLUS }},
             { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_BACKSPACE }},
 
             // Row 2
-            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_U }},
-            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_I }},
+//            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_U }},
+//            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_I }},
+            { .type = KEY_ACTION_TEST, .test = { .testAction = TestAction_DisableLedSdb }},
+            { .type = KEY_ACTION_TEST, .test = { .testAction = TestAction_DisableLedFetPwm }},
             { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_O }},
             { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_P }},
             { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_OPENING_BRACKET_AND_OPENING_BRACE }},
             { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_CLOSING_BRACKET_AND_CLOSING_BRACE }},
             { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_BACKSLASH_AND_PIPE }},
-            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_Y }},
+//            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_Y }},
+            { .type = KEY_ACTION_TEST, .test = { .testAction = TestAction_DisableLedDriverPwm }},
 
             // Row 3
             { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_J }},
