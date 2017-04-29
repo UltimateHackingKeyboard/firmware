@@ -72,9 +72,13 @@ void processMouseAction(key_action_t action)
 }
 
 void processTestAction(key_action_t testAction) {
-    if (testAction.test.testAction == TestAction_DisableI2c) {
+    switch (testAction.test.testAction) {
+    case TestAction_DisableI2c:
         TestStates.disableI2c = true;
-        TEST_LED_OFF();
+        break;
+    case TestAction_DisableKeyMatrixScan:
+        TestStates.disableKeyMatrixScan = true;
+        break;
     }
 }
 
