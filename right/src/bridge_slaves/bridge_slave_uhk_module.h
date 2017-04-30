@@ -17,6 +17,8 @@
         UhkModuleField_SendPwmBrightnessCommand,
         UhkModuleField_SendTestLedCommand,
         UhkModuleField_SendDisableKeyMatrixScanState,
+        UhkModuleField_SendLedPwmBrightness,
+        UhkModuleField_DisableLedSdb,
     } uhk_module_field_t;
 
     typedef struct {

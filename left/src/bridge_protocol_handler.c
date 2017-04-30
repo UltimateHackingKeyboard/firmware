@@ -6,6 +6,7 @@
 #include "led_pwm.h"
 #include "bridge_protocol.h"
 #include "main.h"
+#include "init_peripherials.h"
 
 void SetError(uint8_t error);
 void SetGenericError();
@@ -42,11 +43,17 @@ void BridgeProtocolHandler()
         case BridgeCommand_SetLedPwmBrightness:
             BridgeTxSize = 0;
             uint8_t brightnessPercent = BridgeRxBuffer[1];
+#if UHK_PCB_MAJOR_VERSION >= 7
             LedPwm_SetBrightness(brightnessPercent);
+#endif
             break;
         case BridgeCommand_SetDisableKeyMatrixScanState:
             BridgeTxSize = 0;
             DisableKeyMatrixScanState = BridgeRxBuffer[1];
+            break;
+        case BridgeCommand_SetDisableLedSdb:
+            BridgeTxSize = 0;
+            GPIO_WritePinOutput(LED_DRIVER_SDB_GPIO, LED_DRIVER_SDB_PIN, BridgeRxBuffer[1] ? 0 : 1);
             break;
     }
 }

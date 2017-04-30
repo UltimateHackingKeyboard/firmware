@@ -7,6 +7,8 @@
 #include "test_states.h"
 #include "peripherals/test_led.h"
 #include "bridge_slaves/bridge_slave_led_driver.h"
+#include "bridge_slaves/bridge_slave_uhk_module.h"
+#include "led_pwm.h"
 
 static uint8_t activeLayer = LAYER_ID_BASE;
 static uint8_t mouseWheelDivisorCounter = 0;
@@ -93,6 +95,14 @@ void processTestAction(key_action_t testAction) {
         break;
     case TestAction_DisableLedDriverPwm:
         SetLeds(0);
+        break;
+    case TestAction_DisableLedFetPwm:
+        LedPwm_SetBrightness(0);
+        UhkModuleStates[0].ledPwmBrightness = 0;
+        break;
+    case TestAction_DisableLedSdb:
+        GPIO_WritePinOutput(LED_DRIVER_SDB_GPIO, LED_DRIVER_SDB_PIN, 0);
+        TestStates.disableLedSdb = true;
         break;
     }
 }
