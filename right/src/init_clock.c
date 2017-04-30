@@ -1,6 +1,7 @@
 #include "fsl_smc.h"
 #include "init_clock.h"
 #include "fsl_rtc.h"
+#include "peripherals/reset_button.h"
 
 // How to setup clock using clock driver functions:
 //
@@ -115,9 +116,11 @@ void InitClock(void)
 {
     // Set HSRUN power mode.
     SMC_SetPowerModeProtection(SMC, kSMC_AllowPowerModeAll);
-    SMC_SetPowerModeHsrun(SMC);
-    while (SMC_GetPowerModeState(SMC) != kSMC_PowerStateHsrun)
-    {
+    if (!RESET_BUTTON_IS_PRESSED) {
+        SMC_SetPowerModeHsrun(SMC);
+        while (SMC_GetPowerModeState(SMC) != kSMC_PowerStateHsrun)
+        {
+        }
     }
     // Set the system clock dividers in SIM to safe value.
     CLOCK_SetSimSafeDivs();
