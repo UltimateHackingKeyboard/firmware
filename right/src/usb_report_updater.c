@@ -6,6 +6,7 @@
 #include "current_keymap.h"
 #include "test_states.h"
 #include "peripherals/test_led.h"
+#include "bridge_slaves/bridge_slave_led_driver.h"
 
 static uint8_t activeLayer = LAYER_ID_BASE;
 static uint8_t mouseWheelDivisorCounter = 0;
@@ -89,6 +90,9 @@ void processTestAction(key_action_t testAction) {
         break;
     case TestAction_DisableKeyMatrixScan:
         TestStates.disableKeyMatrixScan = true;
+        break;
+    case TestAction_DisableLedDriverPwm:
+        SetLeds(0);
         break;
     }
 }

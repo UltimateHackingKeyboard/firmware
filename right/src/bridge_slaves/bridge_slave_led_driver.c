@@ -77,7 +77,7 @@ bool BridgeSlaveLedDriverHandler(uint8_t ledDriverId) {
             *ledDriverState = LedDriverState_Initialized;
         break;
           case LedDriverState_Initialized:
-            I2cAsyncWrite(I2C_ADDRESS_LED_DRIVER_LEFT, ledsBuffer, BUFFER_SIZE);
+            I2cAsyncWrite(ledDriverAddress, ledsBuffer, BUFFER_SIZE);
             break;
         }
     return true;
