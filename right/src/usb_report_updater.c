@@ -73,6 +73,17 @@ void processMouseAction(key_action_t action)
 
 void processTestAction(key_action_t testAction) {
     switch (testAction.test.testAction) {
+    case TestAction_DisableUsb:
+        if (kStatus_USB_Success != USB_DeviceClassDeinit(CONTROLLER_ID)) {
+            return;
+        }
+        // Make sure we are clocking to the peripheral to ensure there are no bus errors
+        if (SIM->SCGC4 & SIM_SCGC4_USBOTG_MASK) {
+            NVIC_DisableIRQ(USB0_IRQn);           // Disable the USB interrupt
+            NVIC_ClearPendingIRQ(USB0_IRQn);      // Clear any pending interrupts on USB
+            SIM->SCGC4 &= ~SIM_SCGC4_USBOTG_MASK; // Turn off clocking to USB
+        }
+        break;
     case TestAction_DisableI2c:
         TestStates.disableI2c = true;
         break;
