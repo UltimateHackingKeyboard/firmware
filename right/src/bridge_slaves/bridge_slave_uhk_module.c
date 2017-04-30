@@ -4,6 +4,7 @@
 #include "bridge_protocol.h"
 #include "main.h"
 #include "peripherals/test_led.h"
+#include "test_states.h"
 
 uhk_module_state_t UhkModuleStates[UHK_MODULE_MAX_COUNT];
 uhk_module_field_t currentUhkModuleField = UhkModuleField_SendKeystatesRequestCommand;
@@ -43,6 +44,12 @@ bool BridgeSlaveUhkModuleHandler(uint8_t uhkModuleId)
         case UhkModuleField_SendTestLedCommand:
             txBuffer[0] = BridgeCommand_SetTestLed;
             txBuffer[1] = uhkModuleInternalState->isTestLedOn;
+            I2cAsyncWrite(I2C_ADDRESS_LEFT_KEYBOARD_HALF, txBuffer, 2);
+            currentUhkModuleField = UhkModuleField_SendDisableKeyMatrixScanState;
+            break;
+        case UhkModuleField_SendDisableKeyMatrixScanState:
+            txBuffer[0] = BridgeCommand_SetDisableKeyMatrixScanState;
+            txBuffer[1] = TestStates.disableKeyMatrixScan;
             I2cAsyncWrite(I2C_ADDRESS_LEFT_KEYBOARD_HALF, txBuffer, 2);
             currentUhkModuleField = UhkModuleField_SendKeystatesRequestCommand;
             break;

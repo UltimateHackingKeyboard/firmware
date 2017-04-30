@@ -5,6 +5,7 @@
 #include "i2c.h"
 #include "led_pwm.h"
 #include "bridge_protocol.h"
+#include "main.h"
 
 void SetError(uint8_t error);
 void SetGenericError();
@@ -42,6 +43,10 @@ void BridgeProtocolHandler()
             BridgeTxSize = 0;
             uint8_t brightnessPercent = BridgeRxBuffer[1];
             LedPwm_SetBrightness(brightnessPercent);
+            break;
+        case BridgeCommand_SetDisableKeyMatrixScanState:
+            BridgeTxSize = 0;
+            DisableKeyMatrixScanState = BridgeRxBuffer[1];
             break;
     }
 }

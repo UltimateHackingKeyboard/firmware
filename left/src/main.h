@@ -13,5 +13,6 @@
 // Variables:
 
     extern key_matrix_t keyMatrix;
+    extern volatile bool DisableKeyMatrixScanState;
 
 #endif

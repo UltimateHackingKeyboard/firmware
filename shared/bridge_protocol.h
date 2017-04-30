@@ -7,6 +7,7 @@
         BridgeCommand_GetKeyStates,
         BridgeCommand_SetTestLed,
         BridgeCommand_SetLedPwmBrightness,
+        BridgeCommand_SetDisableKeyMatrixScanState,
     } bridge_command_t;
 
 #endif

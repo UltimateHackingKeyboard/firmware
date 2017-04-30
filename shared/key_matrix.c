@@ -1,6 +1,5 @@
 #include "fsl_gpio.h"
 #include "key_matrix.h"
-#include "test_states.h"
 
 void KeyMatrix_Init(key_matrix_t *keyMatrix)
 {
@@ -21,10 +20,6 @@ void KeyMatrix_Init(key_matrix_t *keyMatrix)
 
 void KeyMatrix_Scan(key_matrix_t *keyMatrix)
 {
-    if (TestStates.disableKeyMatrixScan) {
-        return;
-    }
-
     uint8_t *keyState = keyMatrix->keyStates;
 
     key_matrix_pin_t *rowEnd = keyMatrix->rows + keyMatrix->rowNum;

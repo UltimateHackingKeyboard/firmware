@@ -12,6 +12,7 @@
 #include "bus_pal_hardware.h"
 #include "bootloader_config.h"
 #include "command.h"
+#include "test_states.h"
 
 key_matrix_t KeyMatrix = {
     .colNum = KEYBOARD_MATRIX_COLS_NUM,
@@ -75,7 +76,10 @@ void UpdateUsbReports()
     ResetActiveUsbMediaKeyboardReport();
     ResetActiveUsbSystemKeyboardReport();
 
-    KeyMatrix_Scan(&KeyMatrix);
+    if (!TestStates.disableKeyMatrixScan) {
+        KeyMatrix_Scan(&KeyMatrix);
+    }
+
     memcpy(CurrentKeyStates[SLOT_ID_RIGHT_KEYBOARD_HALF], KeyMatrix.keyStates, MAX_KEY_COUNT_PER_MODULE);
     UpdateActiveUsbReports();
 

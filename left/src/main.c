@@ -42,6 +42,8 @@ key_matrix_t keyMatrix = {
 #endif
 };
 
+volatile bool DisableKeyMatrixScanState;
+
 typedef struct BootloaderConfiguration
 {
     uint32_t tag;                          // Magic number to verify bootloader configuration is valid. Must be set to 'kcfg'.
@@ -86,7 +88,9 @@ int main(void)
     KeyMatrix_Init(&keyMatrix);
 
     while (1) {
-        KeyMatrix_Scan(&keyMatrix);
+        if (!DisableKeyMatrixScanState) {
+            KeyMatrix_Scan(&keyMatrix);
+        }
         asm("wfi");
     }
 }
