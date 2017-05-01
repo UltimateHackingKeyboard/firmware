@@ -73,7 +73,6 @@
 									<listOptionValue builtIn="false" value="../../../src"/>
 									<listOptionValue builtIn="false" value="../../../src/ksdk_usb"/>
 									<listOptionValue builtIn="false" value="../../../src/buspal"/>
-									<listOptionValue builtIn="false" value="../../../src/buspal/bootloader"/>
 									<listOptionValue builtIn="false" value="../../../src/buspal/bm_usb"/>
 									<listOptionValue builtIn="false" value="../../../../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0"/>
 									<listOptionValue builtIn="false" value="../../../../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0/osa"/>
@@ -356,7 +355,6 @@
 									<listOptionValue builtIn="false" value="../../../src"/>
 									<listOptionValue builtIn="false" value="../../../src/ksdk_usb"/>
 									<listOptionValue builtIn="false" value="../../../src/buspal"/>
-									<listOptionValue builtIn="false" value="../../../src/buspal/bootloader"/>
 									<listOptionValue builtIn="false" value="../../../src/buspal/bm_usb"/>
 									<listOptionValue builtIn="false" value="../../../../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0"/>
 									<listOptionValue builtIn="false" value="../../../../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0/osa"/>
@@ -498,7 +496,6 @@
 									<listOptionValue builtIn="false" value="../../../src"/>
 									<listOptionValue builtIn="false" value="../../../src/ksdk_usb"/>
 									<listOptionValue builtIn="false" value="../../../src/buspal"/>
-									<listOptionValue builtIn="false" value="../../../src/buspal/bootloader"/>
 									<listOptionValue builtIn="false" value="../../../src/buspal/bm_usb"/>
 									<listOptionValue builtIn="false" value="../../../../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0"/>
 									<listOptionValue builtIn="false" value="../../../../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0/osa"/>
