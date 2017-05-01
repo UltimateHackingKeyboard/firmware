@@ -9,6 +9,7 @@
 #include "led_pwm.h"
 #include "bridge_protocol_scheduler.h"
 #include "bridge_slaves/bridge_slave_uhk_module.h"
+#include "wormhole.h"
 
 void setError(uint8_t error);
 void setGenericError();
@@ -109,6 +110,7 @@ void getSystemProperty() {
 }
 
 void jumpToBootloader() {
+//    Wormhole->magicNumber = WORMHOLE_MAGIC_NUMBER;
     SCB->AIRCR = 0x5FA<<SCB_AIRCR_VECTKEY_Pos | SCB_AIRCR_SYSRESETREQ_Msk; // Reset the MCU.
     for (;;);
 }

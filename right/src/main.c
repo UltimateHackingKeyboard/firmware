@@ -13,6 +13,7 @@
 #include "bootloader_config.h"
 #include "command.h"
 #include "test_states.h"
+#include "wormhole.h"
 
 key_matrix_t KeyMatrix = {
     .colNum = KEYBOARD_MATRIX_COLS_NUM,
@@ -90,44 +91,25 @@ void UpdateUsbReports()
     IsUsbBasicKeyboardReportSent = false;
 }
 
-typedef struct {
-  uint32_t magicNumber;
-  uint8_t enumerationMode;
-} wormhole_t;
-
-wormhole_t *message_ptr __attribute__ ((__section__ (".noinit")));
-
-void* getSP(void)
-{
-    void *sp;
-    __asm__ __volatile__ ("mov %0, sp" : "=r"(sp));
-    return sp;
-}
-
-void __attribute__ ((__section__ (".init3"), __naked__)) move_sp(void) {
-    void* SP = getSP();
-    SP -= sizeof(wormhole_t);
-    message_ptr = (wormhole_t*)(SP + 1);
-}
-
 void main() {
     InitPeripherials();
     InitClock();
-#ifdef ENABLE_BUSPAL
-    init_hardware();
-    handleUsbBusPalCommand();
-#else
-    LedDriver_InitAllLeds(1);
-    InitBridgeProtocolScheduler();
-    KeyMatrix_Init(&KeyMatrix);
-    UpdateUsbReports();
-    InitUsb();
-
-    // deserialize_Layer(testData, 0);
-
-    while (1) {
+    if (false/* || Wormhole->magicNumber == WORMHOLE_MAGIC_NUMBER*/) {
+        Wormhole->magicNumber = 0;
+        init_hardware();
+        handleUsbBusPalCommand();
+    } else {
+        LedDriver_InitAllLeds(1);
+        InitBridgeProtocolScheduler();
+        KeyMatrix_Init(&KeyMatrix);
         UpdateUsbReports();
-        asm("wfi");
+        InitUsb();
+
+        // deserialize_Layer(testData, 0);
+
+        while (1) {
+            UpdateUsbReports();
+            asm("wfi");
+        }
     }
-#endif
 }
