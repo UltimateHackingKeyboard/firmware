@@ -6,6 +6,7 @@
 #include "microseconds/microseconds.h"
 #include "i2c.h"
 #include "peripherals/test_led.h"
+#include "usb_composite_device.h"
 
 bool is_usb_active();
 static status_t usb_device_full_init(const peripheral_descriptor_t *self, serial_byte_receive_func_t function);
@@ -38,7 +39,7 @@ const peripheral_descriptor_t g_peripherals[] = {
     { 0 } // Terminator
 };
 
-static usb_device_composite_struct_t g_device_composite;
+usb_device_composite_struct_t BuspalCompositeUsbDevice;
 usb_status_t usb_device_callback(usb_device_handle handle, uint32_t event, void *param);
 
 static i2c_user_config_t s_i2cUserConfig = {.slaveAddress = 0x10, //!< The slave's 7-bit address
@@ -70,7 +71,7 @@ bool usb_clock_init(void)
 
 bool is_usb_active()
 {
-    return g_device_composite.attach && g_device_composite.hid_generic.hid_packet.didReceiveFirstReport;
+    return BuspalCompositeUsbDevice.attach && BuspalCompositeUsbDevice.hid_generic.hid_packet.didReceiveFirstReport;
 }
 
 usb_status_t usb_device_callback(usb_device_handle handle, uint32_t event, void *param)
@@ -83,27 +84,27 @@ usb_status_t usb_device_callback(usb_device_handle handle, uint32_t event, void 
     {
         case kUSB_DeviceEventBusReset:
         {
-            g_device_composite.attach = 0;
+            BuspalCompositeUsbDevice.attach = 0;
         }
         break;
         case kUSB_DeviceEventSetConfiguration:
             if (param)
             {
-                g_device_composite.attach = 1;
-                g_device_composite.current_configuration = *temp8;
-                error = usb_device_hid_generic_set_configure(g_device_composite.hid_generic.hid_handle, *temp8);
+                BuspalCompositeUsbDevice.attach = 1;
+                BuspalCompositeUsbDevice.current_configuration = *temp8;
+                error = usb_device_hid_generic_set_configure(BuspalCompositeUsbDevice.hid_generic.hid_handle, *temp8);
                 error = kStatus_USB_Success;
             }
             break;
         case kUSB_DeviceEventSetInterface:
-            if (g_device_composite.attach)
+            if (BuspalCompositeUsbDevice.attach)
             {
                 uint8_t interface = (uint8_t)((*temp16 & 0xFF00U) >> 0x08U);
                 uint8_t alternate_setting = (uint8_t)(*temp16 & 0x00FFU);
                 if (interface < USB_COMPOSITE_INTERFACE_COUNT)
                 {
-                    g_device_composite.current_interface_alternate_setting[interface] = alternate_setting;
-                    usb_device_hid_generic_set_interface(g_device_composite.hid_generic.hid_handle, interface,
+                    BuspalCompositeUsbDevice.current_interface_alternate_setting[interface] = alternate_setting;
+                    usb_device_hid_generic_set_interface(BuspalCompositeUsbDevice.hid_generic.hid_handle, interface,
                                                          alternate_setting);
                     error = kStatus_USB_Success;
                 }
@@ -112,7 +113,7 @@ usb_status_t usb_device_callback(usb_device_handle handle, uint32_t event, void 
         case kUSB_DeviceEventGetConfiguration:
             if (param)
             {
-                *temp8 = g_device_composite.current_configuration;
+                *temp8 = BuspalCompositeUsbDevice.current_configuration;
                 error = kStatus_USB_Success;
             }
             break;
@@ -122,7 +123,7 @@ usb_status_t usb_device_callback(usb_device_handle handle, uint32_t event, void 
                 uint8_t interface = (uint8_t)((*temp16 & 0xFF00) >> 0x08);
                 if (interface < USB_COMPOSITE_INTERFACE_COUNT)
                 {
-                    *temp16 = (*temp16 & 0xFF00) | g_device_composite.current_interface_alternate_setting[interface];
+                    *temp16 = (*temp16 & 0xFF00) | BuspalCompositeUsbDevice.current_interface_alternate_setting[interface];
                     error = kStatus_USB_Success;
                 }
                 else
@@ -183,29 +184,29 @@ status_t usb_device_full_init(const peripheral_descriptor_t *self, serial_byte_r
     irqNumber = usbDeviceKhciIrq[CONTROLLER_ID - kUSB_ControllerKhci0];
 
     // Init the state info.
-    memset(&g_device_composite, 0, sizeof(g_device_composite));
+    memset(&BuspalCompositeUsbDevice, 0, sizeof(BuspalCompositeUsbDevice));
 
     usb_clock_init();
 
     g_language_ptr = &g_language_list;
 
-    g_device_composite.speed = USB_SPEED_FULL;
-    g_device_composite.attach = 0;
-    g_device_composite.hid_generic.hid_handle = (class_handle_t)NULL;
-    g_device_composite.device_handle = NULL;
+    BuspalCompositeUsbDevice.speed = USB_SPEED_FULL;
+    BuspalCompositeUsbDevice.attach = 0;
+    BuspalCompositeUsbDevice.hid_generic.hid_handle = (class_handle_t)NULL;
+    BuspalCompositeUsbDevice.device_handle = NULL;
 
-    if (kStatus_USB_Success != USB_DeviceClassInit(CONTROLLER_ID, &g_composite_device_config_list, &g_device_composite.device_handle)) {
+    if (kStatus_USB_Success != USB_DeviceClassInit(CONTROLLER_ID, &g_composite_device_config_list, &BuspalCompositeUsbDevice.device_handle)) {
         return kStatus_Fail;
     } else {
-        g_device_composite.hid_generic.hid_handle = g_composite_device_config_list.config[0].classHandle;
-        usb_device_hid_generic_init(&g_device_composite);
+        BuspalCompositeUsbDevice.hid_generic.hid_handle = g_composite_device_config_list.config[0].classHandle;
+        usb_device_hid_generic_init(&BuspalCompositeUsbDevice);
     }
 
     /* Install isr, set priority, and enable IRQ. */
     NVIC_SetPriority((IRQn_Type)irqNumber, USB_DEVICE_INTERRUPT_PRIORITY);
     NVIC_EnableIRQ((IRQn_Type)irqNumber);
 
-    USB_DeviceRun(g_device_composite.device_handle);
+    USB_DeviceRun(BuspalCompositeUsbDevice.device_handle);
 
     return kStatus_Success;
 }
@@ -216,7 +217,7 @@ void usb_device_full_shutdown(const peripheral_descriptor_t *self)
         return;
     }
 
-    usb_device_hid_generic_deinit(&g_device_composite); // Shutdown class driver
+    usb_device_hid_generic_deinit(&BuspalCompositeUsbDevice); // Shutdown class driver
 
     // Make sure we are clocking to the peripheral to ensure there are no bus errors
     if (SIM->SCGC4 & SIM_SCGC4_USBOTG_MASK) {
@@ -228,11 +229,11 @@ void usb_device_full_shutdown(const peripheral_descriptor_t *self)
 
 status_t usb_hid_packet_init(const peripheral_descriptor_t *self)
 {
-    sync_init(&g_device_composite.hid_generic.hid_packet.receiveSync, false);
-    sync_init(&g_device_composite.hid_generic.hid_packet.sendSync, false);
+    sync_init(&BuspalCompositeUsbDevice.hid_generic.hid_packet.receiveSync, false);
+    sync_init(&BuspalCompositeUsbDevice.hid_generic.hid_packet.sendSync, false);
 
     // Check for any received data that may be pending
-    sync_signal(&g_device_composite.hid_generic.hid_packet.receiveSync);
+    sync_signal(&BuspalCompositeUsbDevice.hid_generic.hid_packet.receiveSync);
     return kStatus_Success;
 }
 
@@ -269,26 +270,26 @@ status_t usb_hid_packet_read(const peripheral_descriptor_t *self,
         // we request more. This mechanism prevents data loss
         // by allowing the USB controller to hold off the host with NAKs
         // on the interrupt out pipe until we are ready.
-        if (g_device_composite.hid_generic.hid_packet.isReceiveDataRequestRequired)
+        if (BuspalCompositeUsbDevice.hid_generic.hid_packet.isReceiveDataRequestRequired)
         {
             // Initiate receive on interrupt out pipe.
-            USB_DeviceHidRecv(g_device_composite.hid_generic.hid_handle, USB_HID_GENERIC_ENDPOINT_OUT,
-                              (uint8_t *)&g_device_composite.hid_generic.hid_packet.report.header,
-                              sizeof(g_device_composite.hid_generic.hid_packet.report));
+            USB_DeviceHidRecv(BuspalCompositeUsbDevice.hid_generic.hid_handle, USB_HID_GENERIC_ENDPOINT_OUT,
+                              (uint8_t *)&BuspalCompositeUsbDevice.hid_generic.hid_packet.report.header,
+                              sizeof(BuspalCompositeUsbDevice.hid_generic.hid_packet.report));
         }
 
-        g_device_composite.hid_generic.hid_packet.isReceiveDataRequestRequired = true;
+        BuspalCompositeUsbDevice.hid_generic.hid_packet.isReceiveDataRequestRequired = true;
 
         // Wait until we have received a report.
 
-        sync_wait(&g_device_composite.hid_generic.hid_packet.receiveSync, kSyncWaitForever);
+        sync_wait(&BuspalCompositeUsbDevice.hid_generic.hid_packet.receiveSync, kSyncWaitForever);
 
         // Check the report ID, the first byte of the report buffer.
-        if (g_device_composite.hid_generic.hid_packet.report.header.reportID != reportID)
+        if (BuspalCompositeUsbDevice.hid_generic.hid_packet.report.header.reportID != reportID)
         {
             // If waiting for a command but get data, this is a flush after a data abort.
             if ((reportID == kBootloaderReportID_CommandOut) &&
-                (g_device_composite.hid_generic.hid_packet.report.header.reportID == kBootloaderReportID_DataOut))
+                (BuspalCompositeUsbDevice.hid_generic.hid_packet.report.header.reportID == kBootloaderReportID_DataOut))
             {
                 return -1; // kStatus_AbortDataPhase;
             }
@@ -299,13 +300,13 @@ status_t usb_hid_packet_read(const peripheral_descriptor_t *self,
 
         // Extract the packet length encoded as bytes 1 and 2 of the report. The packet length
         // is transferred in little endian byte order.
-        uint16_t lengthOfPacket = g_device_composite.hid_generic.hid_packet.report.header.packetLengthLsb |
-                                  (g_device_composite.hid_generic.hid_packet.report.header.packetLengthMsb << 8);
+        uint16_t lengthOfPacket = BuspalCompositeUsbDevice.hid_generic.hid_packet.report.header.packetLengthLsb |
+                                  (BuspalCompositeUsbDevice.hid_generic.hid_packet.report.header.packetLengthMsb << 8);
 
         // Make sure we got all of the packet. Some hosts (Windows) may send up to the maximum
         // report size, so there may be extra trailing bytes.
-        if ((g_device_composite.hid_generic.hid_packet.reportSize -
-             sizeof(g_device_composite.hid_generic.hid_packet.report.header)) < lengthOfPacket)
+        if ((BuspalCompositeUsbDevice.hid_generic.hid_packet.reportSize -
+             sizeof(BuspalCompositeUsbDevice.hid_generic.hid_packet.report.header)) < lengthOfPacket)
         {
             //        debug_printf("usbhid: received only %d bytes of packet with length %d\r\n",
             //        s_hidInfo[hidInfoIndex].reportSize - 3, lengthOfPacket);
@@ -313,7 +314,7 @@ status_t usb_hid_packet_read(const peripheral_descriptor_t *self,
         }
 
         // Return packet to caller.
-        *packet = g_device_composite.hid_generic.hid_packet.report.packet;
+        *packet = BuspalCompositeUsbDevice.hid_generic.hid_packet.report.packet;
         *packetLength = lengthOfPacket;
     }
     return kStatus_Success;
@@ -349,31 +350,31 @@ status_t usb_hid_packet_write(const peripheral_descriptor_t *self,
 
         // Check for data phase aborted by receiver.
         lock_acquire();
-        if (g_device_composite.hid_generic.hid_packet.didReceiveDataPhaseAbort)
+        if (BuspalCompositeUsbDevice.hid_generic.hid_packet.didReceiveDataPhaseAbort)
         {
-            g_device_composite.hid_generic.hid_packet.didReceiveDataPhaseAbort = false;
+            BuspalCompositeUsbDevice.hid_generic.hid_packet.didReceiveDataPhaseAbort = false;
             lock_release();
             return -1; // kStatus_AbortDataPhase;
         }
         lock_release();
 
         // Construct report contents.
-        g_device_composite.hid_generic.hid_packet.report.header.reportID = reportID;
-        g_device_composite.hid_generic.hid_packet.report.header._padding = 0;
-        g_device_composite.hid_generic.hid_packet.report.header.packetLengthLsb = byteCount & 0xff;
-        g_device_composite.hid_generic.hid_packet.report.header.packetLengthMsb = (byteCount >> 8) & 0xff;
+        BuspalCompositeUsbDevice.hid_generic.hid_packet.report.header.reportID = reportID;
+        BuspalCompositeUsbDevice.hid_generic.hid_packet.report.header._padding = 0;
+        BuspalCompositeUsbDevice.hid_generic.hid_packet.report.header.packetLengthLsb = byteCount & 0xff;
+        BuspalCompositeUsbDevice.hid_generic.hid_packet.report.header.packetLengthMsb = (byteCount >> 8) & 0xff;
         if (packet && byteCount > 0)
         {
-            memcpy(&g_device_composite.hid_generic.hid_packet.report.packet, packet, byteCount);
+            memcpy(&BuspalCompositeUsbDevice.hid_generic.hid_packet.report.packet, packet, byteCount);
         }
-        if (g_device_composite.hid_generic.attach == 1)
+        if (BuspalCompositeUsbDevice.hid_generic.attach == 1)
         {
             // Send the maximum report size since that's what the host expects.
             // There may be extra trailing bytes.
-            USB_DeviceHidSend(g_device_composite.hid_generic.hid_handle, USB_HID_GENERIC_ENDPOINT_IN,
-                              (uint8_t *)&g_device_composite.hid_generic.hid_packet.report.header,
-                              sizeof(g_device_composite.hid_generic.hid_packet.report));
-            sync_wait(&g_device_composite.hid_generic.hid_packet.sendSync, kSyncWaitForever);
+            USB_DeviceHidSend(BuspalCompositeUsbDevice.hid_generic.hid_handle, USB_HID_GENERIC_ENDPOINT_IN,
+                              (uint8_t *)&BuspalCompositeUsbDevice.hid_generic.hid_packet.report.header,
+                              sizeof(BuspalCompositeUsbDevice.hid_generic.hid_packet.report));
+            sync_wait(&BuspalCompositeUsbDevice.hid_generic.hid_packet.sendSync, kSyncWaitForever);
         }
     }
     return kStatus_Success;
@@ -398,13 +399,6 @@ static uint32_t usb_hid_packet_get_max_packet_size(const peripheral_descriptor_t
 {
     return kMinPacketBufferSize;
 }
-
-#ifdef ENABLE_BUSPAL
-void USB0_IRQHandler(void)
-{
-    USB_DeviceKhciIsrFunction(g_device_composite.device_handle);
-}
-#endif
 
 uint32_t get_bus_clock(void)
 {

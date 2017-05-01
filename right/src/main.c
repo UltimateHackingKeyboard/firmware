@@ -91,11 +91,16 @@ void UpdateUsbReports()
     IsUsbBasicKeyboardReportSent = false;
 }
 
+wormhole_t wormhole;
+
 void main() {
     InitPeripherials();
     InitClock();
-    if (false/* || Wormhole->magicNumber == WORMHOLE_MAGIC_NUMBER*/) {
-        Wormhole->magicNumber = 0;
+    Wormhole = &wormhole; // TODO: Remove this as soon as the wormhole stabilizes.
+    Wormhole->enumerationMode = EnumerationMode_NormalKeyboard;
+//    Wormhole->enumerationMode = EnumerationMode_BusPal;
+    if (/*Wormhole->magicNumber == WORMHOLE_MAGIC_NUMBER && */ Wormhole->enumerationMode == EnumerationMode_BusPal) {
+        //Wormhole->magicNumber = 0;
         init_hardware();
         handleUsbBusPalCommand();
     } else {

@@ -3,9 +3,9 @@
 
 #include "hid_bootloader.h"
 #include "usb_device_config.h"
+#include "bm_usb/usb_descriptor.h"
 
 #define CONTROLLER_ID kUSB_ControllerKhci0
-#define USB_DEVICE_INTERRUPT_PRIORITY 4
 
 typedef struct _usb_device_composite_struct {
     usb_device_handle device_handle;      // USB device handle.

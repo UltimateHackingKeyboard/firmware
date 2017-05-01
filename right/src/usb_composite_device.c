@@ -3,6 +3,8 @@
 #include "usb_descriptors/usb_descriptor_hid.h"
 #include "usb_descriptors/usb_descriptor_strings.h"
 #include "bootloader_config.h"
+#include "bus_pal_hardware.h"
+#include "wormhole.h"
 
 static usb_status_t UsbDeviceCallback(usb_device_handle handle, uint32_t event, void *param);
 usb_composite_device_t UsbCompositeDevice;
@@ -97,12 +99,12 @@ static usb_status_t UsbDeviceCallback(usb_device_handle handle, uint32_t event, 
     return error;
 }
 
-#ifndef ENABLE_BUSPAL
-void USB0_IRQHandler()
+void USB0_IRQHandler(void)
 {
-    USB_DeviceKhciIsrFunction(UsbCompositeDevice.deviceHandle);
+    USB_DeviceKhciIsrFunction(Wormhole->enumerationMode == EnumerationMode_BusPal
+        ? BuspalCompositeUsbDevice.device_handle
+        : UsbCompositeDevice.deviceHandle);
 }
-#endif
 
 void InitUsb()
 {

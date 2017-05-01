@@ -12,6 +12,13 @@
 
 // Typedefs:
 
+    typedef enum {
+        EnumerationMode_Bootloader,
+        EnumerationMode_NormalKeyboard,
+        EnumerationMode_CompatibleKeyboard,
+        EnumerationMode_BusPal,
+    } enumeration_mode_t;
+
     typedef struct {
       uint64_t magicNumber;
       uint8_t enumerationMode;

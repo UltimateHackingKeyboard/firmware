@@ -3,6 +3,7 @@
 
 #include "fsl_rtos_abstraction.h"
 #include "bootloader_hid_report_ids.h"
+#include "bm_usb/usb_descriptor.h"
 
 enum { // Request parameters
     kAppRequestParam_IdleRate = 0,
