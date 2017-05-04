@@ -11,9 +11,9 @@
 uint8_t currentBridgeSlaveId = 0;
 
 uhk_slave_t bridgeSlaves[] = {
-    { .slaveHandler = BridgeSlaveUhkModuleHandler, .moduleId = 0 },
-    { .slaveHandler = BridgeSlaveLedDriverHandler, .moduleId = 0 },
-    { .slaveHandler = BridgeSlaveLedDriverHandler, .moduleId = 1 },
+    { .slaveHandler = UhkSlaveUhkModuleHandler, .moduleId = 0 },
+    { .slaveHandler = UhkSlaveLedDriverHandler, .moduleId = 0 },
+    { .slaveHandler = UhkSlaveLedDriverHandler, .moduleId = 1 },
 };
 
 static void bridgeProtocolCallback(I2C_Type *base, i2c_master_handle_t *handle, status_t status, void *userData)

@@ -20,7 +20,7 @@ void InitUhkModules()
     }
 }
 
-void BridgeSlaveUhkModuleHandler(uint8_t uhkModuleId)
+void UhkSlaveUhkModuleHandler(uint8_t uhkModuleId)
 {
     uhk_module_state_t *uhkModuleInternalState = UhkModuleStates + uhkModuleId;
     //uhk_module_state_t *uhkModuleExternalState = uhkModuleExternalStates + uhkModuleId;

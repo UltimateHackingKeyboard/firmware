@@ -54,7 +54,7 @@ uint8_t setFunctionFrameBuffer[] = {LED_DRIVER_REGISTER_FRAME, LED_DRIVER_FRAME_
 uint8_t setShutdownModeNormalBuffer[] = {LED_DRIVER_REGISTER_SHUTDOWN, SHUTDOWN_MODE_NORMAL};
 uint8_t setFrame1Buffer[] = {LED_DRIVER_REGISTER_FRAME, LED_DRIVER_FRAME_1};
 
-void BridgeSlaveLedDriverHandler(uint8_t ledDriverId) {
+void UhkSlaveLedDriverHandler(uint8_t ledDriverId) {
     uint8_t *ledDriverState = ledDriverStates + ledDriverId;
     uint8_t ledDriverAddress = ledDriverId ? I2C_ADDRESS_LED_DRIVER_LEFT : I2C_ADDRESS_LED_DRIVER_RIGHT;
     uint8_t *ledControlBuffer = ledDriverId ? ledControlBufferLeft : ledControlBufferRight;

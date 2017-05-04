@@ -33,6 +33,6 @@
 // Functions:
 
     extern void InitUhkModules();
-    extern void BridgeSlaveUhkModuleHandler(uint8_t uhkModuleId);
+    extern void UhkSlaveUhkModuleHandler(uint8_t uhkModuleId);
 
 #endif
