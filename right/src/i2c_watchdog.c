@@ -21,7 +21,7 @@ void PIT_I2C_WATCHDOG_HANDLER(void)
         I2C_MasterDeinit(I2C_MAIN_BUS_BASEADDR);
         uint32_t sourceClock = CLOCK_GetFreq(I2C_MASTER_BUS_CLK_SRC);
         I2C_MasterInit(I2C_MAIN_BUS_BASEADDR, &masterConfig, sourceClock);
-        InitBridgeProtocolScheduler();
+        InitSlaveScheduler();
     }
 
     prevWatchdogCounter = I2C_Watchdog;

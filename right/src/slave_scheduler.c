@@ -31,7 +31,7 @@ static void bridgeProtocolCallback(I2C_Type *base, i2c_master_handle_t *handle, 
     }
 }
 
-void InitBridgeProtocolScheduler()
+void InitSlaveScheduler()
 {
     InitUhkModules();
     SetLeds(0xff);

@@ -105,7 +105,7 @@ void main() {
         handleUsbBusPalCommand();
     } else {
         LedDriver_InitAllLeds(1);
-        InitBridgeProtocolScheduler();
+        InitSlaveScheduler();
         KeyMatrix_Init(&KeyMatrix);
         UpdateUsbReports();
         InitUsb();

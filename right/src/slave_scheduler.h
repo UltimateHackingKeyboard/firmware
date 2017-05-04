@@ -23,7 +23,7 @@
 
 // Functions:
 
-    void InitBridgeProtocolScheduler();
+    void InitSlaveScheduler();
     void SetLeds(uint8_t ledBrightness);
 
 #endif
