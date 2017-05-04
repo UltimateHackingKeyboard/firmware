@@ -6,7 +6,6 @@ void* getSP(void)
 {
     void *sp;
     __asm__ __volatile__ ("mov %0, sp" : "=r"(sp));
-//    __asm__ __volatile__ ("mrs %0, msp" : "=r"(sp));
     return sp;
 }
 
