@@ -8,9 +8,9 @@
 // Typedefs:
 
     typedef enum {
-        BridgeSlaveType_LedDriver,
-        BridgeSlaveType_UhkModule,
-        BridgeSlaveType_Touchpad
+        UhkSlaveType_LedDriver,
+        UhkSlaveType_UhkModule,
+        UhkSlaveType_Touchpad
     } uhk_slave_type_t;
 
     typedef bool (slave_handler_t)(uint8_t);
