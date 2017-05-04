@@ -6,8 +6,8 @@
 #include "current_keymap.h"
 #include "test_states.h"
 #include "peripherals/test_led.h"
-#include "slave_drivers/bridge_slave_led_driver.h"
-#include "slave_drivers/bridge_slave_uhk_module.h"
+#include "slave_drivers/slave_driver_led_driver.h"
+#include "slave_drivers/slave_driver_uhk_module.h"
 #include "led_pwm.h"
 
 static uint8_t activeLayer = LAYER_ID_BASE;
