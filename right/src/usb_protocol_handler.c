@@ -7,7 +7,7 @@
 #include "deserialize.h"
 #include "config_buffer.h"
 #include "led_pwm.h"
-#include "bridge_protocol_scheduler.h"
+#include "slave_scheduler.h"
 #include "slave_drivers/slave_driver_uhk_module.h"
 #include "wormhole.h"
 

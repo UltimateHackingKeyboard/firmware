@@ -1,5 +1,5 @@
 #include "fsl_i2c.h"
-#include "bridge_protocol_scheduler.h"
+#include "slave_scheduler.h"
 #include "slot.h"
 #include "main.h"
 #include "slave_drivers/slave_driver_led_driver.h"

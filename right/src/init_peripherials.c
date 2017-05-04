@@ -7,7 +7,7 @@
 #include "led_driver.h"
 #include "peripherals/merge_sensor.h"
 #include "led_pwm.h"
-#include "bridge_protocol_scheduler.h"
+#include "slave_scheduler.h"
 
 volatile uint32_t temp, counter;
 

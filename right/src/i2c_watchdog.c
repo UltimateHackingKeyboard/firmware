@@ -3,7 +3,7 @@
 #include "fsl_clock.h"
 #include "i2c.h"
 #include "i2c_watchdog.h"
-#include "bridge_protocol_scheduler.h"
+#include "slave_scheduler.h"
 
 #define PIT_I2C_WATCHDOG_HANDLER PIT0_IRQHandler
 #define PIT_I2C_WATCHDOG_IRQ_ID PIT0_IRQn
