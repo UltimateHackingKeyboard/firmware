@@ -10,7 +10,7 @@
 
 uint8_t currentBridgeSlaveId = 0;
 
-bridge_slave_t bridgeSlaves[] = {
+uhk_slave_t bridgeSlaves[] = {
     { .slaveHandler = BridgeSlaveUhkModuleHandler, .moduleId = 0 },
     { .slaveHandler = BridgeSlaveLedDriverHandler, .moduleId = 0 },
     { .slaveHandler = BridgeSlaveLedDriverHandler, .moduleId = 1 },
@@ -21,13 +21,13 @@ static void bridgeProtocolCallback(I2C_Type *base, i2c_master_handle_t *handle, 
     if (TestStates.disableI2c) {
         return;
     }
-    bridge_slave_t *bridgeSlave = bridgeSlaves + currentBridgeSlaveId;
+    uhk_slave_t *bridgeSlave = bridgeSlaves + currentBridgeSlaveId;
 
     bool isFinished = bridgeSlave->slaveHandler(bridgeSlave->moduleId);
     if (isFinished) {
         currentBridgeSlaveId++;
 
-        if (currentBridgeSlaveId >= (sizeof(bridgeSlaves) / sizeof(bridge_slave_t))) {
+        if (currentBridgeSlaveId >= (sizeof(bridgeSlaves) / sizeof(uhk_slave_t))) {
             currentBridgeSlaveId = 0;
         }
     }

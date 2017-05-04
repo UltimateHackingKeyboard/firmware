@@ -11,7 +11,7 @@
         BridgeSlaveType_LedDriver,
         BridgeSlaveType_UhkModule,
         BridgeSlaveType_Touchpad
-    } bridge_slave_type_t;
+    } uhk_slave_type_t;
 
     typedef bool (slave_handler_t)(uint8_t);
 
@@ -19,7 +19,7 @@
         uint8_t moduleId;  // This is a unique, per-module ID.
         slave_handler_t *slaveHandler;
         bool isConnected;
-    } bridge_slave_t;
+    } uhk_slave_t;
 
 // Functions:
 
