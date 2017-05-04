@@ -8,7 +8,7 @@
 #include "config_buffer.h"
 #include "led_pwm.h"
 #include "bridge_protocol_scheduler.h"
-#include "bridge_slaves/bridge_slave_uhk_module.h"
+#include "slave_drivers/bridge_slave_uhk_module.h"
 #include "wormhole.h"
 
 void setError(uint8_t error);
