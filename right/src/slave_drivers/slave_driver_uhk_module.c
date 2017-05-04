@@ -20,7 +20,7 @@ void InitUhkModules()
     }
 }
 
-bool BridgeSlaveUhkModuleHandler(uint8_t uhkModuleId)
+void BridgeSlaveUhkModuleHandler(uint8_t uhkModuleId)
 {
     uhk_module_state_t *uhkModuleInternalState = UhkModuleStates + uhkModuleId;
     //uhk_module_state_t *uhkModuleExternalState = uhkModuleExternalStates + uhkModuleId;
@@ -66,6 +66,4 @@ bool BridgeSlaveUhkModuleHandler(uint8_t uhkModuleId)
             currentUhkModuleField = UhkModuleField_SendKeystatesRequestCommand;
             break;
     }
-
-    return true;
 }

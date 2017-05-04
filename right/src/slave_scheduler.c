@@ -23,13 +23,11 @@ static void bridgeProtocolCallback(I2C_Type *base, i2c_master_handle_t *handle, 
     }
     uhk_slave_t *bridgeSlave = bridgeSlaves + currentBridgeSlaveId;
 
-    bool isFinished = bridgeSlave->slaveHandler(bridgeSlave->moduleId);
-    if (isFinished) {
-        currentBridgeSlaveId++;
+    bridgeSlave->slaveHandler(bridgeSlave->moduleId);
+    currentBridgeSlaveId++;
 
-        if (currentBridgeSlaveId >= (sizeof(bridgeSlaves) / sizeof(uhk_slave_t))) {
-            currentBridgeSlaveId = 0;
-        }
+    if (currentBridgeSlaveId >= (sizeof(bridgeSlaves) / sizeof(uhk_slave_t))) {
+        currentBridgeSlaveId = 0;
     }
 }
 

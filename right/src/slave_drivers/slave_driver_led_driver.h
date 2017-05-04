@@ -17,7 +17,7 @@
 
 // Functions:
 
-    extern bool BridgeSlaveLedDriverHandler(uint8_t ledDriverId);
+    extern void BridgeSlaveLedDriverHandler(uint8_t ledDriverId);
     extern void SetLeds(uint8_t ledBrightness);
 
 #endif
