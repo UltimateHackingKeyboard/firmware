@@ -1,5 +1,5 @@
-#ifndef __BRIDGE_SLAVE_UHK_MODULE_H__
-#define __BRIDGE_SLAVE_UHK_MODULE_H__
+#ifndef __SLAVE_DRIVER_UHK_MODULE_H__
+#define __SLAVE_DRIVER_UHK_MODULE_H__
 
 // Includes:
 

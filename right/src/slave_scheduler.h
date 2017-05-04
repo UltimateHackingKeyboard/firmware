@@ -1,5 +1,5 @@
-#ifndef __BRIDGE_PROTOCOL_SCHEDULER_H__
-#define __BRIDGE_PROTOCOL_SCHEDULER_H__
+#ifndef __SLAVE_SCHEDULER_H__
+#define __SLAVE_SCHEDULER_H__
 
 // Includes:
 
