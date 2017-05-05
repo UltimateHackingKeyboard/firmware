@@ -16,9 +16,9 @@ slave_driver_initializer_t slaveDriverInitializers[] = {
 };
 
 uhk_slave_t slaves[] = {
-    { .slaveHandler = UhkModuleSlaveDriver_Update, .moduleId = 0 },
-    { .slaveHandler = LedSlaveDriver_Update,       .moduleId = 0 },
-    { .slaveHandler = LedSlaveDriver_Update,       .moduleId = 1 },
+    { .updater = UhkModuleSlaveDriver_Update, .moduleId = 0 },
+    { .updater = LedSlaveDriver_Update,       .moduleId = 0 },
+    { .updater = LedSlaveDriver_Update,       .moduleId = 1 },
 };
 
 static void bridgeProtocolCallback(I2C_Type *base, i2c_master_handle_t *handle, status_t status, void *userData)
@@ -28,7 +28,7 @@ static void bridgeProtocolCallback(I2C_Type *base, i2c_master_handle_t *handle, 
     }
     uhk_slave_t *bridgeSlave = slaves + currentBridgeSlaveId;
 
-    bridgeSlave->slaveHandler(bridgeSlave->moduleId);
+    bridgeSlave->updater(bridgeSlave->moduleId);
     currentBridgeSlaveId++;
 
     if (currentBridgeSlaveId >= (sizeof(slaves) / sizeof(uhk_slave_t))) {
@@ -49,5 +49,5 @@ void InitSlaveScheduler()
     I2C_MasterTransferCreateHandle(I2C_MAIN_BUS_BASEADDR, &I2cMasterHandle, bridgeProtocolCallback, NULL);
 
     // Kickstart the scheduler by triggering the first callback.
-    slaves[0].slaveHandler(slaves[0].moduleId);
+    slaves[0].updater(slaves[0].moduleId);
 }

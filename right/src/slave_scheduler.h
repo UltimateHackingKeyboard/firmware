@@ -13,12 +13,12 @@
         UhkSlaveType_Touchpad
     } uhk_slave_type_t;
 
-    typedef void (slave_handler_t)(uint8_t);
+    typedef void (slave_updater_t)(uint8_t);
     typedef void (*slave_driver_initializer_t)();
 
     typedef struct {
         uint8_t moduleId;  // This is a unique, per-module ID.
-        slave_handler_t *slaveHandler;
+        slave_updater_t *updater;
         bool isConnected;
     } uhk_slave_t;
 
