@@ -10,6 +10,11 @@
 
 uint8_t currentBridgeSlaveId = 0;
 
+slave_driver_initializer_t slaveDriverInitializers[] = {
+    InitUhkModules,
+    InitLedSlaveDriver,
+};
+
 uhk_slave_t slaves[] = {
     { .slaveHandler = UhkSlaveUhkModuleHandler, .moduleId = 0 },
     { .slaveHandler = UhkSlaveLedDriverHandler, .moduleId = 0 },
@@ -31,10 +36,16 @@ static void bridgeProtocolCallback(I2C_Type *base, i2c_master_handle_t *handle, 
     }
 }
 
+static void initSlaveDrivers()
+{
+    for (uint8_t i=0; i<sizeof(slaveDriverInitializers) / sizeof(slave_driver_initializer_t); i++) {
+        slaveDriverInitializers[i]();
+    }
+}
+
 void InitSlaveScheduler()
 {
-    InitUhkModules();
-    SetLeds(0xff);
+    initSlaveDrivers();
     I2C_MasterTransferCreateHandle(I2C_MAIN_BUS_BASEADDR, &I2cMasterHandle, bridgeProtocolCallback, NULL);
 
     // Kickstart the scheduler by triggering the first callback.

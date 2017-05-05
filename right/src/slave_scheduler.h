@@ -14,6 +14,7 @@
     } uhk_slave_type_t;
 
     typedef void (slave_handler_t)(uint8_t);
+    typedef void (*slave_driver_initializer_t)();
 
     typedef struct {
         uint8_t moduleId;  // This is a unique, per-module ID.
