@@ -26,9 +26,9 @@ static void bridgeProtocolCallback(I2C_Type *base, i2c_master_handle_t *handle, 
     if (TestStates.disableI2c) {
         return;
     }
-    uhk_slave_t *bridgeSlave = slaves + currentSlaveId;
+    uhk_slave_t *slave = slaves + currentSlaveId;
 
-    bridgeSlave->updater(bridgeSlave->perDriverId);
+    slave->updater(slave->perDriverId);
     currentSlaveId++;
 
     if (currentSlaveId >= (sizeof(slaves) / sizeof(uhk_slave_t))) {
