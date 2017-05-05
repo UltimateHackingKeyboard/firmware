@@ -79,8 +79,8 @@ void UhkSlaveLedDriverHandler(uint8_t ledDriverId) {
         case LedDriverState_InitLedControlRegisters:
             I2cAsyncWrite(ledDriverAddress, ledControlBuffer, sizeof(ledControlBufferLeft));
             *ledDriverState = LedDriverState_Initialized;
-        break;
-          case LedDriverState_Initialized:
+            break;
+        case LedDriverState_Initialized:
             I2cAsyncWrite(ledDriverAddress, ledsBuffer, BUFFER_SIZE);
             break;
     }
