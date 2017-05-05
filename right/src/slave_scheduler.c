@@ -8,7 +8,7 @@
 #include "i2c_addresses.h"
 #include "test_states.h"
 
-uint8_t currentBridgeSlaveId = 0;
+uint8_t currentSlaveId = 0;
 
 slave_driver_initializer_t slaveDriverInitializers[] = {
     UhkModuleSlaveDriver_Init,
@@ -26,13 +26,13 @@ static void bridgeProtocolCallback(I2C_Type *base, i2c_master_handle_t *handle, 
     if (TestStates.disableI2c) {
         return;
     }
-    uhk_slave_t *bridgeSlave = slaves + currentBridgeSlaveId;
+    uhk_slave_t *bridgeSlave = slaves + currentSlaveId;
 
     bridgeSlave->updater(bridgeSlave->moduleId);
-    currentBridgeSlaveId++;
+    currentSlaveId++;
 
-    if (currentBridgeSlaveId >= (sizeof(slaves) / sizeof(uhk_slave_t))) {
-        currentBridgeSlaveId = 0;
+    if (currentSlaveId >= (sizeof(slaves) / sizeof(uhk_slave_t))) {
+        currentSlaveId = 0;
     }
 }
 
