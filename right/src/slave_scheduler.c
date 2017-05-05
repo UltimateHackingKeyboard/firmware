@@ -12,13 +12,13 @@ uint8_t currentBridgeSlaveId = 0;
 
 slave_driver_initializer_t slaveDriverInitializers[] = {
     InitUhkModules,
-    InitLedSlaveDriver,
+    LedSlaveDriver_Init,
 };
 
 uhk_slave_t slaves[] = {
     { .slaveHandler = UhkSlaveUhkModuleHandler, .moduleId = 0 },
-    { .slaveHandler = UhkSlaveLedDriverHandler, .moduleId = 0 },
-    { .slaveHandler = UhkSlaveLedDriverHandler, .moduleId = 1 },
+    { .slaveHandler = LedSlaveDriver_Update, .moduleId = 0 },
+    { .slaveHandler = LedSlaveDriver_Update, .moduleId = 1 },
 };
 
 static void bridgeProtocolCallback(I2C_Type *base, i2c_master_handle_t *handle, status_t status, void *userData)
