@@ -83,7 +83,7 @@ void UhkSlaveLedDriverHandler(uint8_t ledDriverId) {
           case LedDriverState_Initialized:
             I2cAsyncWrite(ledDriverAddress, ledsBuffer, BUFFER_SIZE);
             break;
-        }
+    }
 }
 
 void SetLeds(uint8_t ledBrightness)
