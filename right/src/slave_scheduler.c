@@ -17,8 +17,8 @@ slave_driver_initializer_t slaveDriverInitializers[] = {
 
 uhk_slave_t slaves[] = {
     { .slaveHandler = UhkModuleSlaveDriver_Update, .moduleId = 0 },
-    { .slaveHandler = LedSlaveDriver_Update, .moduleId = 0 },
-    { .slaveHandler = LedSlaveDriver_Update, .moduleId = 1 },
+    { .slaveHandler = LedSlaveDriver_Update,       .moduleId = 0 },
+    { .slaveHandler = LedSlaveDriver_Update,       .moduleId = 1 },
 };
 
 static void bridgeProtocolCallback(I2C_Type *base, i2c_master_handle_t *handle, status_t status, void *userData)
