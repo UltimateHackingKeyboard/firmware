@@ -11,12 +11,12 @@
 uint8_t currentBridgeSlaveId = 0;
 
 slave_driver_initializer_t slaveDriverInitializers[] = {
-    InitUhkModules,
+    UhkModuleSlaveDriver_Init,
     LedSlaveDriver_Init,
 };
 
 uhk_slave_t slaves[] = {
-    { .slaveHandler = UhkSlaveUhkModuleHandler, .moduleId = 0 },
+    { .slaveHandler = UhkModuleSlaveDriver_Update, .moduleId = 0 },
     { .slaveHandler = LedSlaveDriver_Update, .moduleId = 0 },
     { .slaveHandler = LedSlaveDriver_Update, .moduleId = 1 },
 };

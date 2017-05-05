@@ -32,7 +32,7 @@
 
 // Functions:
 
-    extern void InitUhkModules();
-    extern void UhkSlaveUhkModuleHandler(uint8_t uhkModuleId);
+    extern void UhkModuleSlaveDriver_Init();
+    extern void UhkModuleSlaveDriver_Update(uint8_t uhkModuleId);
 
 #endif
