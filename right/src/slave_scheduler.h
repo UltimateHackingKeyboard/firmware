@@ -17,7 +17,7 @@
     typedef void (*slave_driver_initializer_t)();
 
     typedef struct {
-        uint8_t moduleId;  // This is a unique, per-module ID.
+        uint8_t perDriverId;  // Identifies the slave instance on a per-driver basis
         slave_updater_t *updater;
         bool isConnected;
     } uhk_slave_t;
