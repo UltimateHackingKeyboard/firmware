@@ -61,6 +61,16 @@
 			<locationURI>virtual:/virtual</locationURI>
 		</link>
 		<link>
+			<name>drivers/fsl_adc16.c</name>
+			<type>1</type>
+			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212/drivers/fsl_adc16.c</locationURI>
+		</link>
+		<link>
+			<name>drivers/fsl_adc16.h</name>
+			<type>1</type>
+			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212/drivers/fsl_adc16.h</locationURI>
+		</link>
+		<link>
 			<name>drivers/fsl_clock.c</name>
 			<type>1</type>
 			<locationURI>$%7BPARENT-3-PROJECT_LOC%7D/lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212/drivers/fsl_clock.c</locationURI>

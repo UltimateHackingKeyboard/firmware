@@ -8,6 +8,7 @@
 #include "peripherals/merge_sensor.h"
 #include "led_pwm.h"
 #include "slave_scheduler.h"
+#include "peripherals/adc.h"
 
 volatile uint32_t temp, counter;
 
@@ -52,6 +53,7 @@ void InitPeripherials(void)
 {
     InitResetButton();
     InitMergeSensor();
+    ADC_Init();
     InitI2c();
     InitTestLed();
 #if UHK_PCB_MAJOR_VERSION >= 7
