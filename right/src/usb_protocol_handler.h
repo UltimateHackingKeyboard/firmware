@@ -28,6 +28,7 @@
         #define UPLOAD_CONFIG_INVALID_PAYLOAD_SIZE 1
     #define USB_COMMAND_APPLY_CONFIG        9
     #define USB_COMMAND_SET_LED_PWM        10
+    #define USB_COMMAND_GET_ADC_VALUE      11
 
 // Functions:
 

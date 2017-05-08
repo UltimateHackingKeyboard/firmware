@@ -10,6 +10,7 @@
 #include "slave_scheduler.h"
 #include "slave_drivers/slave_driver_uhk_module.h"
 #include "wormhole.h"
+#include "peripherals/adc.h"
 
 void setError(uint8_t error);
 void setGenericError();
@@ -25,6 +26,7 @@ void readMergeSensor();
 void uploadConfig();
 void applyConfig();
 void setLedPwm();
+void getAdcValue(void);
 
 // Functions for setting error statuses
 
@@ -78,6 +80,9 @@ void usbProtocolHandler()
             applyConfig();
             break;
         case USB_COMMAND_SET_LED_PWM:
+            setLedPwm();
+            break;
+        case USB_COMMAND_GET_ADC_VALUE:
             setLedPwm();
             break;
         default:
@@ -197,4 +202,9 @@ void setLedPwm()
     LedPwm_SetBrightness(brightnessPercent);
     UhkModuleStates[0].ledPwmBrightness = brightnessPercent;
 #endif
+}
+
+void getAdcValue(void)
+{
+    *((uint32_t*)GenericHidOutBuffer) = ADC_Measure();
 }
