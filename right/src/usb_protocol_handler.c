@@ -83,7 +83,7 @@ void usbProtocolHandler()
             setLedPwm();
             break;
         case USB_COMMAND_GET_ADC_VALUE:
-            setLedPwm();
+            getAdcValue();
             break;
         default:
             break;
