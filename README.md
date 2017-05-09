@@ -1,5 +1,7 @@
 # Ultimate Hacking Keyboard firmware
 
+[![Build Status](https://travis-ci.org/UltimateHackingKeyboard/firmware.svg?branch=master)](https://travis-ci.org/UltimateHackingKeyboard/firmware)
+
 This repository hosts the firmware of the [Ultimate Hacking Keyboard](https://ultimatehackingkeyboard.com/).
 
 ## Cloning the repository
