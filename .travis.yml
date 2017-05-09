@@ -16,3 +16,4 @@ script:
     -import $TRAVIS_BUILD_DIR/left/build/kds
     -import $TRAVIS_BUILD_DIR/right/build/kds
     -build all
+
