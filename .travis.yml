@@ -10,6 +10,7 @@ addons:
   apt:
     packages:
       - ia32-libs
+      - ia32-libs-multiarch
 cache:
   directories:
     - $HOME/Library/Caches/Homebrew/Cask
