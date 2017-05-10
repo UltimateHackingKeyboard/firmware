@@ -11,6 +11,8 @@ addons:
     packages:
       - ia32-libs
       - ia32-libs-multiarch
+      - libsane:i386
+      - libgphoto2-2:i386
 cache:
   directories:
     - $HOME/Library/Caches/Homebrew/Cask
