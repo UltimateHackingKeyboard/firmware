@@ -4,17 +4,17 @@ matrix:
   include:
     - os: osx
       env: ECLIPSE_BIN_DIR=/Applications/Eclipse.app/Contents/MacOS
-      install: brew cask install eclipse-cpp gcc-arm-embedded
+      before_install: brew cask install eclipse-cpp gcc-arm-embedded
 cache:
   directories:
     - $HOME/Library/Caches/Homebrew/Cask
 env: ECLIPSE_BIN_DIR=$TRAVIS_BUILD_DIR/eclipse PATH=$PATH:$TRAVIS_BUILD_DIR/gcc-arm-none-eabi-6-2017-q1-update/bin
-install:
+before_install:
   - wget "http://www.eclipse.org/downloads/download.php?file=/technology/epp/downloads/release/neon/3/eclipse-cpp-neon-3-linux-gtk-x86_64.tar.gz&mirror_id=1"
   - tar xf "download.php?file=%2Ftechnology%2Fepp%2Fdownloads%2Frelease%2Fneon%2F3%2Feclipse-cpp-neon-3-linux-gtk-x86_64.tar.gz&mirror_id=1"
   - wget "https://developer.arm.com/-/media/Files/downloads/gnu-rm/6_1-2017q1/gcc-arm-none-eabi-6-2017-q1-update-linux.tar.bz2"
   - tar xf gcc-arm-none-eabi-6-2017-q1-update-linux.tar.bz2
-after_install:
+install:
   - $ECLIPSE_BIN_DIR/eclipse -noSplash 
     -application org.eclipse.equinox.p2.director 
     -repository http://gnuarmeclipse.sourceforge.net/updates 
