@@ -3,6 +3,7 @@ jdk: oraclejdk8
 matrix:
   include:
     - os: osx
+      jdk: 
       env: ECLIPSE_BIN_DIR=/Applications/Eclipse.app/Contents/MacOS
       before_install: brew cask install eclipse-cpp gcc-arm-embedded
 cache:
