@@ -1,4 +1,5 @@
-language: generic
+language: java
+jdk: oraclejdk8
 matrix:
   include:
     - os: osx
