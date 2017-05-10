@@ -44,8 +44,7 @@ key_matrix_t keyMatrix = {
 
 volatile bool DisableKeyMatrixScanState;
 
-typedef struct BootloaderConfiguration
-{
+typedef struct {
     uint32_t tag;                          // Magic number to verify bootloader configuration is valid. Must be set to 'kcfg'.
     uint32_t reserved[3];
     uint8_t enabledPeripherals;            // Bitfield of peripherals to enable.
@@ -61,8 +60,7 @@ typedef struct BootloaderConfiguration
     uint8_t clockDivider; // Inverted value of the divider to use for core and bus clocks when in high speed mode.
 } bootloader_config_t;
 
-__attribute__((section(".BootloaderConfig"))) const bootloader_config_t BootloaderConfig =
-{
+__attribute__((section(".BootloaderConfig"))) const bootloader_config_t BootloaderConfig = {
     .tag = 0x6766636B,                    // Magic Number
     .enabledPeripherals = 0xE2,           // Enabled Peripheral: I2C
     .i2cSlaveAddress = 0x10,              // Use user-defined I2C address
