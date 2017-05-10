@@ -13,6 +13,7 @@ addons:
       - ia32-libs-multiarch
       - libsane:i386
       - libgphoto2-2:i386
+      - libgd2-xpm:i386
 cache:
   directories:
     - $HOME/Library/Caches/Homebrew/Cask
