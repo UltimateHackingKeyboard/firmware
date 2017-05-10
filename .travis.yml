@@ -22,6 +22,7 @@ install:
     -installIUs ilg.gnuarmeclipse.managedbuild.cross.feature.group 
     -profileProperties org.eclipse.update.install.features=true
 script:
+  - arm-none-eabi-gcc --version
   - $ECLIPSE_BIN_DIR/eclipse -noSplash 
     -application org.eclipse.cdt.managedbuilder.core.headlessbuild 
     -import $TRAVIS_BUILD_DIR/left/build/kds
