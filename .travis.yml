@@ -6,15 +6,19 @@ matrix:
       jdk: 
       env: ECLIPSE_BIN_DIR=/Applications/Eclipse.app/Contents/MacOS
       before_install: brew cask install eclipse-cpp gcc-arm-embedded
+addons:
+  apt:
+    packages:
+      - ia32-libs
 cache:
   directories:
     - $HOME/Library/Caches/Homebrew/Cask
-env: ECLIPSE_BIN_DIR=$TRAVIS_BUILD_DIR/eclipse PATH=$PATH:$TRAVIS_BUILD_DIR/gcc-arm-none-eabi-6_2-2016q4/bin
+env: ECLIPSE_BIN_DIR=$TRAVIS_BUILD_DIR/eclipse PATH=$PATH:$TRAVIS_BUILD_DIR/gcc-arm-none-eabi-5_4-2016q3/bin
 before_install:
   - wget "http://www.eclipse.org/downloads/download.php?file=/technology/epp/downloads/release/neon/3/eclipse-cpp-neon-3-linux-gtk-x86_64.tar.gz&mirror_id=1"
   - tar xf "download.php?file=%2Ftechnology%2Fepp%2Fdownloads%2Frelease%2Fneon%2F3%2Feclipse-cpp-neon-3-linux-gtk-x86_64.tar.gz&mirror_id=1"
-  - wget "https://developer.arm.com/-/media/Files/downloads/gnu-rm/6-2016q4/gcc-arm-none-eabi-6_2-2016q4-20161216-linux.tar.bz2"
-  - tar xf gcc-arm-none-eabi-6_2-2016q4-20161216-linux.tar.bz2
+  - wget "https://developer.arm.com/-/media/Files/downloads/gnu-rm/5_4-2016q3/gcc-arm-none-eabi-5_4-2016q3-20160926-linux.tar.bz2"
+  - tar xf gcc-arm-none-eabi-5_4-2016q3-20160926-linux.tar.bz2
 install:
   - $ECLIPSE_BIN_DIR/eclipse -noSplash 
     -application org.eclipse.equinox.p2.director 
