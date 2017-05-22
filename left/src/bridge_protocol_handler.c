@@ -43,9 +43,7 @@ void BridgeProtocolHandler()
         case BridgeCommand_SetLedPwmBrightness:
             BridgeTxSize = 0;
             uint8_t brightnessPercent = BridgeRxBuffer[1];
-#if UHK_PCB_MAJOR_VERSION >= 7
             LedPwm_SetBrightness(brightnessPercent);
-#endif
             break;
         case BridgeCommand_SetDisableKeyMatrixScanState:
             BridgeTxSize = 0;

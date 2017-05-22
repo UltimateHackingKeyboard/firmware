@@ -10,21 +10,10 @@
     #define LOGIC_LED_ON  0U
     #define LOGIC_LED_OFF 1U
 
-#if UHK_PCB_MAJOR_VERSION >= 7
-
     #define TEST_LED_GPIO  GPIOB
     #define TEST_LED_PORT  PORTB
     #define TEST_LED_CLOCK kCLOCK_PortB
     #define TEST_LED_PIN   13
-
-#else
-
-    #define TEST_LED_GPIO  GPIOA
-    #define TEST_LED_PORT  PORTA
-    #define TEST_LED_CLOCK kCLOCK_PortA
-    #define TEST_LED_PIN   12
-
-#endif
 
     #define TEST_LED_ON() GPIO_SetPinsOutput(TEST_LED_GPIO, 1U << TEST_LED_PIN)
     #define TEST_LED_OFF() GPIO_ClearPinsOutput(TEST_LED_GPIO, 1U << TEST_LED_PIN)

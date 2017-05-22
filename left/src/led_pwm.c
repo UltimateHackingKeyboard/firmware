@@ -2,7 +2,6 @@
 #include "fsl_port.h"
 
 void LedPwm_Init() {
-#if UHK_PCB_MAJOR_VERSION >= 7
     CLOCK_EnableClock(LED_PWM_CLOCK);
     PORT_SetPinMux(LED_PWM_PORT, LED_PWM_PIN, kPORT_MuxAlt2);
 
@@ -21,13 +20,10 @@ void LedPwm_Init() {
                  kTPM_EdgeAlignedPwm, TPM_PWM_FREQUENCY, TPM_SOURCE_CLOCK);
 
     TPM_StartTimer(LED_PWM_TPM_BASEADDR, kTPM_SystemClock);
-#endif
 }
 
 void LedPwm_SetBrightness(uint8_t brightnessPercent)
 {
-#if UHK_PCB_MAJOR_VERSION >= 7
     TPM_UpdatePwmDutycycle(LED_PWM_TPM_BASEADDR, LED_PWM_TPM_CHANNEL,
                            kTPM_EdgeAlignedPwm, 100 - brightnessPercent);
-#endif
 }
