@@ -60,7 +60,7 @@ typedef struct {
     uint8_t clockDivider; // Inverted value of the divider to use for core and bus clocks when in high speed mode.
 } bootloader_config_t;
 
-__attribute__((section(".BootloaderConfig"))) const bootloader_config_t BootloaderConfig = {
+__attribute__((used, section(".BootloaderConfig"))) const bootloader_config_t BootloaderConfig = {
     .tag = 0x6766636B,                    // Magic Number
     .enabledPeripherals = 0xE2,           // Enabled Peripheral: I2C
     .i2cSlaveAddress = 0x10,              // Use user-defined I2C address
