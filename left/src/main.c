@@ -5,7 +5,7 @@
 key_matrix_t keyMatrix = {
     .colNum = KEYBOARD_MATRIX_COLS_NUM,
     .rowNum = KEYBOARD_MATRIX_ROWS_NUM,
-    .cols = (key_matrix_pin_t[]){
+    .cols = (key_matrix_pin_t[]) {
         {PORTB, GPIOB, kCLOCK_PortB, 11},
         {PORTA, GPIOA, kCLOCK_PortA, 6},
         {PORTA, GPIOA, kCLOCK_PortA, 8},
@@ -14,7 +14,7 @@ key_matrix_t keyMatrix = {
         {PORTA, GPIOA, kCLOCK_PortA, 3},
         {PORTA, GPIOA, kCLOCK_PortA, 12}
     },
-    .rows = (key_matrix_pin_t[]){
+    .rows = (key_matrix_pin_t[]) {
         {PORTB, GPIOB, kCLOCK_PortB, 7},
         {PORTB, GPIOB, kCLOCK_PortB, 10},
         {PORTA, GPIOA, kCLOCK_PortA, 5},
