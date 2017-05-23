@@ -9,6 +9,7 @@
 #include "led_pwm.h"
 #include "slave_scheduler.h"
 #include "peripherals/adc.h"
+#include "init_peripherals.h"
 
 volatile uint32_t temp, counter;
 

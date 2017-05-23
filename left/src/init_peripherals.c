@@ -1,7 +1,7 @@
 #include "fsl_common.h"
 #include "fsl_port.h"
 #include "test_led.h"
-#include "init_peripherials.h"
+#include "init_peripherals.h"
 #include "i2c_addresses.h"
 #include "fsl_i2c.h"
 #include "fsl_clock.h"

@@ -1,6 +1,6 @@
 #include "main.h"
 #include "init_clock.h"
-#include "init_peripherials.h"
+#include "init_peripherals.h"
 #include "usb_composite_device.h"
 #include "led_driver.h"
 #include "deserialize.h"
