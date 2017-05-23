@@ -56,8 +56,6 @@ void InitPeripherials(void)
     ADC_Init();
     InitI2c();
     InitTestLed();
-#if UHK_PCB_MAJOR_VERSION >= 7
     LedPwm_Init();
-#endif
     InitI2cWatchdog();
 }

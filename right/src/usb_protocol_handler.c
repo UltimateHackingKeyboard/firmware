@@ -197,11 +197,9 @@ void applyConfig()
 
 void setLedPwm()
 {
-#if UHK_PCB_MAJOR_VERSION >= 7
     uint8_t brightnessPercent = GenericHidInBuffer[1];
     LedPwm_SetBrightness(brightnessPercent);
     UhkModuleStates[0].ledPwmBrightness = brightnessPercent;
-#endif
 }
 
 void getAdcValue(void)
