@@ -34,7 +34,7 @@ static void i2cSlaveCallback(I2C_Type *base, i2c_slave_transfer_t *xfer, void *u
     }
 }
 
-void InitI2c() {
+void InitI2c(void) {
     port_pin_config_t pinConfig = {
         .pullSelect = kPORT_PullUp,
     };
@@ -57,7 +57,7 @@ void InitI2c() {
     I2C_SlaveTransferNonBlocking(I2C_BUS_BASEADDR, &slaveHandle, kI2C_SlaveCompletionEvent);
 }
 
-void InitLedDriver() {
+void InitLedDriver(void) {
     CLOCK_EnableClock(LED_DRIVER_SDB_CLOCK);
     PORT_SetPinMux(LED_DRIVER_SDB_PORT, LED_DRIVER_SDB_PIN, kPORT_MuxAsGpio);
     GPIO_PinInit(LED_DRIVER_SDB_GPIO, LED_DRIVER_SDB_PIN, &(gpio_pin_config_t){kGPIO_DigitalOutput, 0});

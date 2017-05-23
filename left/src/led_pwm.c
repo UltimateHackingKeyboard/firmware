@@ -1,7 +1,7 @@
 #include "led_pwm.h"
 #include "fsl_port.h"
 
-void LedPwm_Init() {
+void LedPwm_Init(void) {
     CLOCK_EnableClock(LED_PWM_CLOCK);
     PORT_SetPinMux(LED_PWM_PORT, LED_PWM_PIN, kPORT_MuxAlt2);
 

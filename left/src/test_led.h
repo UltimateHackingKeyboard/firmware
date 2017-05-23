@@ -22,6 +22,6 @@
 
 // Functions:
 
-    extern void InitTestLed();
+    extern void InitTestLed(void);
 
 #endif

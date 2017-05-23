@@ -21,6 +21,6 @@
 
 // Functions:
 
-    extern void BridgeProtocolHandler();
+    extern void BridgeProtocolHandler(void);
 
 #endif

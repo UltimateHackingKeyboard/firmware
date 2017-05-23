@@ -9,14 +9,14 @@
 #include "init_peripherials.h"
 
 void SetError(uint8_t error);
-void SetGenericError();
+void SetGenericError(void);
 void SetResponseByte(uint8_t response);
 
 void SetError(uint8_t error) {
     BridgeTxBuffer[0] = error;
 }
 
-void SetGenericError()
+void SetGenericError(void)
 {
     SetError(PROTOCOL_RESPONSE_GENERIC_ERROR);
 }
@@ -27,7 +27,7 @@ void SetResponseByte(uint8_t response)
     BridgeTxBuffer[1] = response;
 }
 
-void BridgeProtocolHandler()
+void BridgeProtocolHandler(void)
 {
     uint8_t commandId = BridgeRxBuffer[0];
     switch (commandId) {
