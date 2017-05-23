@@ -3,8 +3,8 @@
 
 // Macros:
 
-    #define USB_DEVICE_VENDOR_ID 0x16D3 // TODO: Change this for the final prototype.
-    #define USB_DEVICE_PRODUCT_ID 0x05EA
+    #define USB_DEVICE_VENDOR_ID 0x1D50
+    #define USB_DEVICE_PRODUCT_ID 0x6122
     #define USB_DEVICE_RELEASE_NUMBER 0x0101
 
     #define USB_DEVICE_SPECIFICATION_VERSION 0x0200
