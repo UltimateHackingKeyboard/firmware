@@ -10,7 +10,7 @@
 
     #define MAX_KEYS_IN_MATRIX 100
 
-// Type definitions:
+// Typedefs:
 
     typedef struct {
         PORT_Type *port;

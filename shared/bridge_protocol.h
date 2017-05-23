@@ -1,7 +1,7 @@
 #ifndef __BRIDGE_PROTOCOL_H__
 #define __BRIDGE_PROTOCOL_H__
 
-// Macros:
+// Typedefs:
 
     typedef enum {
         BridgeCommand_GetKeyStates,
