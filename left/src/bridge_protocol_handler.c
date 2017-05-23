@@ -6,7 +6,7 @@
 #include "led_pwm.h"
 #include "bridge_protocol.h"
 #include "main.h"
-#include "init_peripherials.h"
+#include "init_peripherals.h"
 
 void SetError(uint8_t error);
 void SetGenericError(void);
