@@ -1,5 +1,5 @@
-#ifndef __BRIDGE_PROTOCOL__
-#define __BRIDGE_PROTOCOL__
+#ifndef __BRIDGE_PROTOCOL_H__
+#define __BRIDGE_PROTOCOL_H__
 
 // Macros:
 

@@ -1,5 +1,5 @@
-#ifndef __CURRENT_KEYMAP_H_
-#define __CURRENT_KEYMAP_H_
+#ifndef __CURRENT_KEYMAP_H__
+#define __CURRENT_KEYMAP_H__
 
 // Includes:
 

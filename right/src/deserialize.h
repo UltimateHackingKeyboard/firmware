@@ -1,5 +1,5 @@
 #ifndef __DESERIALIZE_H__
-#define __DESERIALIZE_H__ 1
+#define __DESERIALIZE_H__
 
 #include <stdint.h>
 

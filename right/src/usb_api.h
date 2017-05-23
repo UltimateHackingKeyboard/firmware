@@ -1,5 +1,5 @@
-#ifndef __USB_REPORT_ITEM_MACROS__
-#define __USB_REPORT_ITEM_MACROS__
+#ifndef __USB_API_H__
+#define __USB_API_H__
 
 // Includes:
 

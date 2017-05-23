@@ -1,5 +1,5 @@
-#ifndef __UHK_ACTION_H_
-#define __UHK_ACTION_H_
+#ifndef __ACTION_H__
+#define __ACTION_H__
 
 #include <stdint.h>
 #include "lufa/HIDClassCommon.h"

@@ -1,5 +1,5 @@
-#ifndef __TEST_STATES__
-#define __TEST_STATES__
+#ifndef __TEST_STATES_H__
+#define __TEST_STATES_H__
 
 // Typedefs:
 
