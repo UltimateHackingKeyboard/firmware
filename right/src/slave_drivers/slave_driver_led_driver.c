@@ -55,6 +55,7 @@ uint8_t setShutdownModeNormalBuffer[] = {LED_DRIVER_REGISTER_SHUTDOWN, SHUTDOWN_
 uint8_t setFrame1Buffer[] = {LED_DRIVER_REGISTER_FRAME, LED_DRIVER_FRAME_1};
 
 void LedSlaveDriver_Init() {
+	ledControlBufferLeft[7] |= 0b00000010; // Enable the LED of the ISO key.
     SetLeds(0xff);
 }
 
