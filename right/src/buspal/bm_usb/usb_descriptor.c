@@ -104,9 +104,9 @@ uint8_t g_device_descriptor[USB_DEVICE_DESCRIPTOR_LENGTH] = {
     /* Max Packet size */
     USB_CONTROL_MAX_PACKET_SIZE,
     /* Vendor ID */
-    0xa2, 0x15, /*  Vendor ID for Freescale       */
+    0x50, 0x1d, /* UHK bootloader proxy VID */
     /* Product ID */
-    0x73, 0x00, /* 0x73,0x00,ProductID for KL25Z48M */
+    0x21, 0x61, /* UHK bootloader proxy PID */
     /* BCD Device version */
     0x02, 0x00,
     /* Manufacturer string index */
