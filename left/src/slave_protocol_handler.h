@@ -1,5 +1,5 @@
-#ifndef __SLAVE_PROTOCOL_HANDLER__
-#define __SLAVE_PROTOCOL_HANDLER__
+#ifndef __SLAVE_PROTOCOL_HANDLER_H__
+#define __SLAVE_PROTOCOL_HANDLER_H__
 
 // Includes:
 
