@@ -1,5 +1,5 @@
-#ifndef __BRIDGE_PROTOCOL_HANDLER__
-#define __BRIDGE_PROTOCOL_HANDLER__
+#ifndef __SLAVE_PROTOCOL_HANDLER__
+#define __SLAVE_PROTOCOL_HANDLER__
 
 // Includes:
 

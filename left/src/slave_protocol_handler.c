@@ -1,4 +1,4 @@
-#include "bridge_protocol_handler.h"
+#include "slave_protocol_handler.h"
 #include "test_led.h"
 #include "main.h"
 #include "i2c_addresses.h"

@@ -7,7 +7,7 @@
 #include "fsl_clock.h"
 #include "i2c.h"
 #include "led_pwm.h"
-#include "bridge_protocol_handler.h"
+#include "slave_protocol_handler.h"
 
 static void i2cSlaveCallback(I2C_Type *base, i2c_slave_transfer_t *xfer, void *userData)
 {
