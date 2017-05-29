@@ -13,7 +13,7 @@ void SetGenericError(void);
 void SetResponseByte(uint8_t response);
 
 void SetError(uint8_t error) {
-    BridgeTxBuffer[0] = error;
+    SlaveTxBuffer[0] = error;
 }
 
 void SetGenericError(void)
@@ -24,34 +24,34 @@ void SetGenericError(void)
 // Set a single byte as the response.
 void SetResponseByte(uint8_t response)
 {
-    BridgeTxBuffer[1] = response;
+    SlaveTxBuffer[1] = response;
 }
 
-void BridgeProtocolHandler(void)
+void SlaveProtocolHandler(void)
 {
-    uint8_t commandId = BridgeRxBuffer[0];
+    uint8_t commandId = SlaveRxBuffer[0];
     switch (commandId) {
-        case BridgeCommand_GetKeyStates:
-            BridgeTxSize = KEYBOARD_MATRIX_COLS_NUM*KEYBOARD_MATRIX_ROWS_NUM;
-            memcpy(BridgeTxBuffer, keyMatrix.keyStates, BridgeTxSize);
+        case SlaveCommand_GetKeyStates:
+            SlaveTxSize = KEYBOARD_MATRIX_COLS_NUM*KEYBOARD_MATRIX_ROWS_NUM;
+            memcpy(SlaveTxBuffer, keyMatrix.keyStates, SlaveTxSize);
             break;
-        case BridgeCommand_SetTestLed:
-            BridgeTxSize = 0;
-            bool isLedOn = BridgeRxBuffer[1];
+        case SlaveCommand_SetTestLed:
+            SlaveTxSize = 0;
+            bool isLedOn = SlaveRxBuffer[1];
             TEST_LED_SET(isLedOn);
             break;
-        case BridgeCommand_SetLedPwmBrightness:
-            BridgeTxSize = 0;
-            uint8_t brightnessPercent = BridgeRxBuffer[1];
+        case SlaveCommand_SetLedPwmBrightness:
+            SlaveTxSize = 0;
+            uint8_t brightnessPercent = SlaveRxBuffer[1];
             LedPwm_SetBrightness(brightnessPercent);
             break;
-        case BridgeCommand_SetDisableKeyMatrixScanState:
-            BridgeTxSize = 0;
-            DisableKeyMatrixScanState = BridgeRxBuffer[1];
+        case SlaveCommand_SetDisableKeyMatrixScanState:
+            SlaveTxSize = 0;
+            DisableKeyMatrixScanState = SlaveRxBuffer[1];
             break;
-        case BridgeCommand_SetDisableLedSdb:
-            BridgeTxSize = 0;
-            GPIO_WritePinOutput(LED_DRIVER_SDB_GPIO, LED_DRIVER_SDB_PIN, BridgeRxBuffer[1] ? 0 : 1);
+        case SlaveCommand_SetDisableLedSdb:
+            SlaveTxSize = 0;
+            GPIO_WritePinOutput(LED_DRIVER_SDB_GPIO, LED_DRIVER_SDB_PIN, SlaveRxBuffer[1] ? 0 : 1);
             break;
     }
 }

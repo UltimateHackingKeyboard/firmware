@@ -4,11 +4,11 @@
 // Typedefs:
 
     typedef enum {
-        BridgeCommand_GetKeyStates,
-        BridgeCommand_SetTestLed,
-        BridgeCommand_SetLedPwmBrightness,
-        BridgeCommand_SetDisableKeyMatrixScanState,
-        BridgeCommand_SetDisableLedSdb,
-    } bridge_command_t;
+        SlaveCommand_GetKeyStates,
+        SlaveCommand_SetTestLed,
+        SlaveCommand_SetLedPwmBrightness,
+        SlaveCommand_SetDisableKeyMatrixScanState,
+        SlaveCommand_SetDisableLedSdb,
+    } slave_command_t;
 
 #endif

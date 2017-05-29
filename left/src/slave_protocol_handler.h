@@ -7,20 +7,20 @@
 
 // Macros:
 
-    #define BRIDGE_RX_BUFFER_SIZE 100
-    #define BRIDGE_TX_BUFFER_SIZE 100
+    #define SLAVE_RX_BUFFER_SIZE 100
+    #define SLAVE_TX_BUFFER_SIZE 100
 
     #define PROTOCOL_RESPONSE_SUCCESS       0
     #define PROTOCOL_RESPONSE_GENERIC_ERROR 1
 
 // Variables:
 
-    uint8_t BridgeRxBuffer[BRIDGE_RX_BUFFER_SIZE];
-    uint8_t BridgeTxBuffer[BRIDGE_TX_BUFFER_SIZE];
-    uint8_t BridgeTxSize;
+    uint8_t SlaveRxBuffer[SLAVE_RX_BUFFER_SIZE];
+    uint8_t SlaveTxBuffer[SLAVE_TX_BUFFER_SIZE];
+    uint8_t SlaveTxSize;
 
 // Functions:
 
-    extern void BridgeProtocolHandler(void);
+    extern void SlaveProtocolHandler(void);
 
 #endif

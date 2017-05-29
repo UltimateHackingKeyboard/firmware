@@ -27,7 +27,7 @@ void UhkModuleSlaveDriver_Update(uint8_t uhkModuleId)
 
     switch (currentUhkModuleField) {
         case UhkModuleField_SendKeystatesRequestCommand:
-            txBuffer[0] = BridgeCommand_GetKeyStates;
+            txBuffer[0] = SlaveCommand_GetKeyStates;
             I2cAsyncWrite(I2C_ADDRESS_LEFT_KEYBOARD_HALF, txBuffer, 1);
             currentUhkModuleField = UhkModuleField_ReceiveKeystates;
             break;
@@ -36,31 +36,31 @@ void UhkModuleSlaveDriver_Update(uint8_t uhkModuleId)
             currentUhkModuleField = UhkModuleField_SendPwmBrightnessCommand;
             break;
         case UhkModuleField_SendPwmBrightnessCommand:
-            txBuffer[0] = BridgeCommand_SetLedPwmBrightness;
+            txBuffer[0] = SlaveCommand_SetLedPwmBrightness;
             txBuffer[1] = uhkModuleInternalState->ledPwmBrightness;
             I2cAsyncWrite(I2C_ADDRESS_LEFT_KEYBOARD_HALF, txBuffer, 2);
             currentUhkModuleField = UhkModuleField_SendTestLedCommand;
             break;
         case UhkModuleField_SendTestLedCommand:
-            txBuffer[0] = BridgeCommand_SetTestLed;
+            txBuffer[0] = SlaveCommand_SetTestLed;
             txBuffer[1] = uhkModuleInternalState->isTestLedOn;
             I2cAsyncWrite(I2C_ADDRESS_LEFT_KEYBOARD_HALF, txBuffer, 2);
             currentUhkModuleField = UhkModuleField_SendDisableKeyMatrixScanState;
             break;
         case UhkModuleField_SendDisableKeyMatrixScanState:
-            txBuffer[0] = BridgeCommand_SetDisableKeyMatrixScanState;
+            txBuffer[0] = SlaveCommand_SetDisableKeyMatrixScanState;
             txBuffer[1] = TestStates.disableKeyMatrixScan;
             I2cAsyncWrite(I2C_ADDRESS_LEFT_KEYBOARD_HALF, txBuffer, 2);
             currentUhkModuleField = UhkModuleField_SendLedPwmBrightness;
             break;
         case UhkModuleField_SendLedPwmBrightness:
-            txBuffer[0] = BridgeCommand_SetDisableKeyMatrixScanState;
+            txBuffer[0] = SlaveCommand_SetDisableKeyMatrixScanState;
             txBuffer[1] = TestStates.disableKeyMatrixScan;
             I2cAsyncWrite(I2C_ADDRESS_LEFT_KEYBOARD_HALF, txBuffer, 2);
             currentUhkModuleField = UhkModuleField_DisableLedSdb;
             break;
         case UhkModuleField_DisableLedSdb:
-            txBuffer[0] = BridgeCommand_SetDisableLedSdb;
+            txBuffer[0] = SlaveCommand_SetDisableLedSdb;
             txBuffer[1] = TestStates.disableLedSdb;
             I2cAsyncWrite(I2C_ADDRESS_LEFT_KEYBOARD_HALF, txBuffer, 2);
             currentUhkModuleField = UhkModuleField_SendKeystatesRequestCommand;
