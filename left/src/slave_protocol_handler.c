@@ -4,7 +4,7 @@
 #include "i2c_addresses.h"
 #include "i2c.h"
 #include "led_pwm.h"
-#include "bridge_protocol.h"
+#include "slave_protocol.h"
 #include "main.h"
 #include "init_peripherals.h"
 

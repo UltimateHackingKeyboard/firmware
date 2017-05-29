@@ -1,5 +1,5 @@
-#ifndef __BRIDGE_PROTOCOL_H__
-#define __BRIDGE_PROTOCOL_H__
+#ifndef __SLAVE_PROTOCOL_H__
+#define __SLAVE_PROTOCOL_H__
 
 // Typedefs:
 
