@@ -1,6 +1,8 @@
 #ifndef __CRC16_H__
 #define __CRC16_H__
 
+#include <stdint.h>
+
 typedef struct Crc16Data {
     uint16_t currentCrc;
 } crc16_data_t;

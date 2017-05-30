@@ -1,19 +1,12 @@
-#include "bootloader_common.h"
 #include "crc16.h"
 
 void crc16_init(crc16_data_t *crc16Config)
 {
-    assert(crc16Config);
-
-    // initialize running crc and byte count
     crc16Config->currentCrc = 0;
 }
 
 void crc16_update(crc16_data_t *crc16Config, const uint8_t *src, uint32_t lengthInBytes)
 {
-    assert(crc16Config);
-    assert(src);
-
     uint32_t crc = crc16Config->currentCrc;
 
     uint32_t j;
@@ -38,8 +31,5 @@ void crc16_update(crc16_data_t *crc16Config, const uint8_t *src, uint32_t length
 
 void crc16_finalize(crc16_data_t *crc16Config, uint16_t *hash)
 {
-    assert(crc16Config);
-    assert(hash);
-
     *hash = crc16Config->currentCrc;
 }
