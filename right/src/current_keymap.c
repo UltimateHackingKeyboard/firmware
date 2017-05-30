@@ -11,7 +11,6 @@ key_action_t CurrentKeymap[LAYER_COUNT][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = 
             { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_7_AND_AMPERSAND }},
             { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_8_AND_ASTERISK }},
             { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_9_AND_OPENING_PARENTHESIS }},
-
             { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_0_AND_CLOSING_PARENTHESIS }},
             { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_MINUS_AND_UNDERSCORE }},
             { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .scancode = HID_KEYBOARD_SC_EQUAL_AND_PLUS }},
