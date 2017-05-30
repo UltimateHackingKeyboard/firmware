@@ -7,6 +7,7 @@
 #include "slave_protocol.h"
 #include "main.h"
 #include "init_peripherals.h"
+#include "bool_array_converter.h"
 
 void SetError(uint8_t error);
 void SetGenericError(void);
@@ -33,7 +34,8 @@ void SlaveProtocolHandler(void)
     switch (commandId) {
         case SlaveCommand_GetKeyStates:
             SlaveTxSize = KEYBOARD_MATRIX_COLS_NUM*KEYBOARD_MATRIX_ROWS_NUM;
-            memcpy(SlaveTxBuffer, keyMatrix.keyStates, SlaveTxSize);
+            BoolBytesToBits(keyMatrix.keyStates, SlaveTxBuffer, SlaveTxSize);
+//            memcpy(SlaveTxBuffer, keyMatrix.keyStates, SlaveTxSize);
             break;
         case SlaveCommand_SetTestLed:
             SlaveTxSize = 0;
