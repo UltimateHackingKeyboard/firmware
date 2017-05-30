@@ -204,5 +204,9 @@ void setLedPwm()
 
 void getAdcValue(void)
 {
-    *((uint32_t*)GenericHidOutBuffer) = ADC_Measure();
+	uint32_t adcValue = ADC_Measure();
+	GenericHidOutBuffer[0] = adcValue >> 0;
+	GenericHidOutBuffer[1] = adcValue >> 8;
+	GenericHidOutBuffer[2] = adcValue >> 16;
+	GenericHidOutBuffer[3] = adcValue >> 24;
 }
