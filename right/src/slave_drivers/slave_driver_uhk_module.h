@@ -8,6 +8,7 @@
 // Macros:
 
     #define UHK_MODULE_MAX_COUNT 1
+    #define KEY_STATE_BUFFER_SIZE (LEFT_KEYBOARD_HALF_KEY_COUNT/8 + 1)
 
 // Typedefs:
 

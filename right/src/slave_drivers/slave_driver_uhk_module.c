@@ -11,7 +11,7 @@ uhk_module_state_t UhkModuleStates[UHK_MODULE_MAX_COUNT];
 uhk_module_field_t currentUhkModuleField = UhkModuleField_SendKeystatesRequestCommand;
 uhk_module_state_t uhkModuleExternalStates[UHK_MODULE_MAX_COUNT];
 uint8_t txBuffer[2];
-uint8_t rxBuffer[LEFT_KEYBOARD_HALF_KEY_COUNT/8 + 1];
+uint8_t rxBuffer[KEY_STATE_BUFFER_SIZE];
 
 void UhkModuleSlaveDriver_Init()
 {
@@ -34,14 +34,11 @@ void UhkModuleSlaveDriver_Update(uint8_t uhkModuleId)
             currentUhkModuleField = UhkModuleField_ReceiveKeystates;
             break;
         case UhkModuleField_ReceiveKeystates:
-//            I2cAsyncRead(I2C_ADDRESS_LEFT_KEYBOARD_HALF, CurrentKeyStates[SLOT_ID_LEFT_KEYBOARD_HALF], LEFT_KEYBOARD_HALF_KEY_COUNT);
-            I2cAsyncRead(I2C_ADDRESS_LEFT_KEYBOARD_HALF, rxBuffer, LEFT_KEYBOARD_HALF_KEY_COUNT/8+1);
+            I2cAsyncRead(I2C_ADDRESS_LEFT_KEYBOARD_HALF, rxBuffer, KEY_STATE_BUFFER_SIZE);
             currentUhkModuleField = UhkModuleField_SendPwmBrightnessCommand;
             break;
         case UhkModuleField_SendPwmBrightnessCommand:
-//        memset(rxBuffer, 0, LEFT_KEYBOARD_HALF_KEY_COUNT/8 + 1);
             BoolBitsToBytes(rxBuffer, CurrentKeyStates[SLOT_ID_LEFT_KEYBOARD_HALF], LEFT_KEYBOARD_HALF_KEY_COUNT);
-
             txBuffer[0] = SlaveCommand_SetLedPwmBrightness;
             txBuffer[1] = uhkModuleInternalState->ledPwmBrightness;
             I2cAsyncWrite(I2C_ADDRESS_LEFT_KEYBOARD_HALF, txBuffer, 2);
