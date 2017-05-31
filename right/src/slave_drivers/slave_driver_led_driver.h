@@ -17,8 +17,8 @@
 // Typedefs:
 
     typedef enum {
-        ledDriverId_Right,
-        ledDriverId_Left,
+        LedDriverId_Right,
+        LedDriverId_Left,
     } led_driver_id_t;
 
     typedef enum {
