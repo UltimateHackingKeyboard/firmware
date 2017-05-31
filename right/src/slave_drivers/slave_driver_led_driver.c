@@ -62,9 +62,9 @@ void LedSlaveDriver_Init() {
 }
 
 void LedSlaveDriver_Update(uint8_t ledDriverId) {
-    uint8_t *ledDriverPhase = &ledDriverStates[ledDriverId].phase;
-    uint8_t ledDriverAddress = ledDriverStates[ledDriverId].i2cAddress;
-    uint8_t *ledControlBuffer = ledDriverStates[ledDriverId].setupLedControlRegistersCommand;
+    led_driver_state_t *currentLedDriverState = ledDriverStates + ledDriverId;
+    uint8_t *ledDriverPhase = &currentLedDriverState->phase;
+    uint8_t ledDriverAddress = currentLedDriverState->i2cAddress;
 
     switch (*ledDriverPhase) {
         case LedDriverPhase_SetFunctionFrame:
@@ -80,7 +80,7 @@ void LedSlaveDriver_Update(uint8_t ledDriverId) {
             *ledDriverPhase = LedDriverPhase_InitLedControlRegisters;
             break;
         case LedDriverPhase_InitLedControlRegisters:
-            I2cAsyncWrite(ledDriverAddress, ledControlBuffer, LED_CONTROL_REGISTERS_COMMAND_LENGTH);
+            I2cAsyncWrite(ledDriverAddress, currentLedDriverState->setupLedControlRegistersCommand, LED_CONTROL_REGISTERS_COMMAND_LENGTH);
             *ledDriverPhase = LedDriverPhase_Initialized;
             break;
         case LedDriverPhase_Initialized:
