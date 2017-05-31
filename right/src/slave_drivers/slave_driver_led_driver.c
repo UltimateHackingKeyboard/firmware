@@ -55,6 +55,7 @@ led_driver_state_t ledDriverStates[LED_DRIVER_MAX_COUNT] = {
 uint8_t setFunctionFrameBuffer[] = {LED_DRIVER_REGISTER_FRAME, LED_DRIVER_FRAME_FUNCTION};
 uint8_t setShutdownModeNormalBuffer[] = {LED_DRIVER_REGISTER_SHUTDOWN, SHUTDOWN_MODE_NORMAL};
 uint8_t setFrame1Buffer[] = {LED_DRIVER_REGISTER_FRAME, LED_DRIVER_FRAME_1};
+uint8_t updatePwmRegistersBuffer[PWM_REGISTER_BUFFER_LENGTH];
 
 void LedSlaveDriver_Init() {
     ledDriverStates[ledDriverId_Left].setupLedControlRegistersCommand[7] |= 0b00000010; // Enable the LED of the ISO key.
@@ -65,6 +66,7 @@ void LedSlaveDriver_Update(uint8_t ledDriverId) {
     led_driver_state_t *currentLedDriverState = ledDriverStates + ledDriverId;
     uint8_t *ledDriverPhase = &currentLedDriverState->phase;
     uint8_t ledDriverAddress = currentLedDriverState->i2cAddress;
+    uint8_t *ledIndex = &currentLedDriverState->ledIndex;
 
     switch (*ledDriverPhase) {
         case LedDriverPhase_SetFunctionFrame:
@@ -84,7 +86,13 @@ void LedSlaveDriver_Update(uint8_t ledDriverId) {
             *ledDriverPhase = LedDriverPhase_Initialized;
             break;
         case LedDriverPhase_Initialized:
-            I2cAsyncWrite(ledDriverAddress, ledsBuffer, BUFFER_SIZE);
+            updatePwmRegistersBuffer[0] = FRAME_REGISTER_PWM_FIRST + *ledIndex;
+            memcpy(updatePwmRegistersBuffer+1, ledsBuffer + *ledIndex, PMW_REGISTER_UPDATE_CHUNK_SIZE);
+            I2cAsyncWrite(ledDriverAddress, updatePwmRegistersBuffer, PWM_REGISTER_BUFFER_LENGTH);
+            *ledIndex += PMW_REGISTER_UPDATE_CHUNK_SIZE;
+            if (*ledIndex >= LED_DRIVER_LED_COUNT) {
+                ledIndex = 0;
+            }
             break;
     }
 }
