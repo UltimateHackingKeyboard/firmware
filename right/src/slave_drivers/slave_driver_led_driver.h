@@ -25,6 +25,7 @@
         led_driver_phase_t phase;
         uint8_t frames[LED_DRIVER_LED_COUNT];
         uint8_t ledIndex;
+        uint8_t i2cAddress;
     } led_driver_state_t;
 
 // Functions:
