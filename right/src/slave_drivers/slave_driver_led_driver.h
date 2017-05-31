@@ -31,7 +31,7 @@
 
     typedef struct {
         led_driver_phase_t phase;
-        uint8_t frames[LED_DRIVER_LED_COUNT];
+        uint8_t ledValues[LED_DRIVER_LED_COUNT];
         uint8_t ledIndex;
         uint8_t i2cAddress;
         uint8_t setupLedControlRegistersCommand[LED_CONTROL_REGISTERS_COMMAND_LENGTH];
