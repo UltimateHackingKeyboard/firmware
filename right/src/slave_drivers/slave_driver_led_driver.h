@@ -8,12 +8,12 @@
 // Typedefs:
 
     typedef enum {
-        LedDriverState_SetFunctionFrame,
-        LedDriverState_SetShutdownModeNormal,
-        LedDriverState_SetFrame1,
-        LedDriverState_InitLedControlRegisters,
-        LedDriverState_Initialized,
-    } LedDriverState;
+        LedDriverPhase_SetFunctionFrame,
+        LedDriverPhase_SetShutdownModeNormal,
+        LedDriverPhase_SetFrame1,
+        LedDriverPhase_InitLedControlRegisters,
+        LedDriverPhase_Initialized,
+    } led_driver_phase_t;
 
 // Functions:
 

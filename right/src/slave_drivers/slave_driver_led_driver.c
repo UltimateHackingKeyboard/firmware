@@ -55,33 +55,33 @@ uint8_t setShutdownModeNormalBuffer[] = {LED_DRIVER_REGISTER_SHUTDOWN, SHUTDOWN_
 uint8_t setFrame1Buffer[] = {LED_DRIVER_REGISTER_FRAME, LED_DRIVER_FRAME_1};
 
 void LedSlaveDriver_Init() {
-	ledControlBufferLeft[7] |= 0b00000010; // Enable the LED of the ISO key.
+    ledControlBufferLeft[7] |= 0b00000010; // Enable the LED of the ISO key.
     SetLeds(0xff);
 }
 
 void LedSlaveDriver_Update(uint8_t ledDriverId) {
-    uint8_t *ledDriverState = ledDriverStates + ledDriverId;
+    uint8_t *ledDriverPhase = ledDriverStates + ledDriverId;
     uint8_t ledDriverAddress = ledDriverId ? I2C_ADDRESS_LED_DRIVER_LEFT : I2C_ADDRESS_LED_DRIVER_RIGHT;
     uint8_t *ledControlBuffer = ledDriverId ? ledControlBufferLeft : ledControlBufferRight;
 
-    switch (*ledDriverState) {
-        case LedDriverState_SetFunctionFrame:
+    switch (*ledDriverPhase) {
+        case LedDriverPhase_SetFunctionFrame:
             I2cAsyncWrite(ledDriverAddress, setFunctionFrameBuffer, sizeof(setFunctionFrameBuffer));
-            *ledDriverState = LedDriverState_SetShutdownModeNormal;
+            *ledDriverPhase = LedDriverPhase_SetShutdownModeNormal;
             break;
-        case LedDriverState_SetShutdownModeNormal:
+        case LedDriverPhase_SetShutdownModeNormal:
             I2cAsyncWrite(ledDriverAddress, setShutdownModeNormalBuffer, sizeof(setShutdownModeNormalBuffer));
-            *ledDriverState = LedDriverState_SetFrame1;
+            *ledDriverPhase = LedDriverPhase_SetFrame1;
             break;
-        case LedDriverState_SetFrame1:
+        case LedDriverPhase_SetFrame1:
             I2cAsyncWrite(ledDriverAddress, setFrame1Buffer, sizeof(setFrame1Buffer));
-            *ledDriverState = LedDriverState_InitLedControlRegisters;
+            *ledDriverPhase = LedDriverPhase_InitLedControlRegisters;
             break;
-        case LedDriverState_InitLedControlRegisters:
+        case LedDriverPhase_InitLedControlRegisters:
             I2cAsyncWrite(ledDriverAddress, ledControlBuffer, sizeof(ledControlBufferLeft));
-            *ledDriverState = LedDriverState_Initialized;
+            *ledDriverPhase = LedDriverPhase_Initialized;
             break;
-        case LedDriverState_Initialized:
+        case LedDriverPhase_Initialized:
             I2cAsyncWrite(ledDriverAddress, ledsBuffer, BUFFER_SIZE);
             break;
     }
