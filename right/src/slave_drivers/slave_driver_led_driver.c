@@ -57,6 +57,9 @@ uint8_t setFrame1Buffer[] = {LED_DRIVER_REGISTER_FRAME, LED_DRIVER_FRAME_1};
 uint8_t updatePwmRegistersBuffer[PWM_REGISTER_BUFFER_LENGTH];
 
 void LedSlaveDriver_Init(uint8_t ledDriverId) {
+    led_driver_state_t *currentLedDriverState = ledDriverStates + ledDriverId;
+    currentLedDriverState->phase = LedDriverPhase_SetFunctionFrame;
+    currentLedDriverState->ledIndex = 0;
     ledDriverStates[LedDriverId_Left].setupLedControlRegistersCommand[7] |= 0b00000010; // Enable the LED of the ISO key.
     SetLeds(0xff);
 }

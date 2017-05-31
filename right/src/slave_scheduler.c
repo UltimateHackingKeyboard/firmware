@@ -23,6 +23,10 @@ static void bridgeProtocolCallback(I2C_Type *base, i2c_master_handle_t *handle, 
     }
     uhk_slave_t *slave = slaves + currentSlaveId;
 
+    if (status != kStatus_Success) {
+        slave->initializer(slave->perDriverId);
+    }
+
     slave->updater(slave->perDriverId);
     currentSlaveId++;
 
