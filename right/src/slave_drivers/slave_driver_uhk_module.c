@@ -10,7 +10,6 @@
 
 uhk_module_state_t UhkModuleStates[UHK_MODULE_MAX_COUNT];
 uhk_module_phase_t uhkModulePhase = UhkModulePhase_SendKeystatesRequestCommand;
-uhk_module_state_t uhkModuleExternalStates[UHK_MODULE_MAX_COUNT];
 uint8_t txBuffer[2];
 uint8_t rxBuffer[KEY_STATE_BUFFER_SIZE];
 
@@ -26,7 +25,6 @@ void UhkModuleSlaveDriver_Init()
 void UhkModuleSlaveDriver_Update(uint8_t uhkModuleId)
 {
     uhk_module_state_t *uhkModuleInternalState = UhkModuleStates + uhkModuleId;
-    //uhk_module_state_t *uhkModuleExternalState = uhkModuleExternalStates + uhkModuleId;
 
     switch (uhkModulePhase) {
         case UhkModulePhase_SendKeystatesRequestCommand:
