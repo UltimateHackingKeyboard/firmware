@@ -33,9 +33,8 @@ void SlaveProtocolHandler(void)
     uint8_t commandId = SlaveRxBuffer[0];
     switch (commandId) {
         case SlaveCommand_GetKeyStates:
-            SlaveTxSize = KEYBOARD_MATRIX_COLS_NUM*KEYBOARD_MATRIX_ROWS_NUM;
-            BoolBytesToBits(keyMatrix.keyStates, SlaveTxBuffer, SlaveTxSize);
-//            memcpy(SlaveTxBuffer, keyMatrix.keyStates, SlaveTxSize);
+            SlaveTxSize = KEY_STATE_BUFFER_SIZE;
+            BoolBytesToBits(keyMatrix.keyStates, SlaveTxBuffer, LEFT_KEYBOARD_HALF_KEY_COUNT);
             break;
         case SlaveCommand_SetTestLed:
             SlaveTxSize = 0;
