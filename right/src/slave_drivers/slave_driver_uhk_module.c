@@ -13,13 +13,11 @@ uhk_module_phase_t uhkModulePhase = UhkModulePhase_SendKeystatesRequestCommand;
 uint8_t txBuffer[2];
 uint8_t rxBuffer[KEY_STATE_BUFFER_SIZE];
 
-void UhkModuleSlaveDriver_Init()
+void UhkModuleSlaveDriver_Init(uint8_t uhkModuleId)
 {
-    for (uint8_t moduleId=0; moduleId<UHK_MODULE_MAX_COUNT; moduleId++) {
-        uhk_module_state_t* uhkModuleState = UhkModuleStates + moduleId;
-        uhkModuleState->isTestLedOn = true;
-        uhkModuleState->ledPwmBrightness = 0x64;
-    }
+    uhk_module_state_t* uhkModuleState = UhkModuleStates + uhkModuleId;
+    uhkModuleState->isTestLedOn = true;
+    uhkModuleState->ledPwmBrightness = 0x64;
 }
 
 void UhkModuleSlaveDriver_Update(uint8_t uhkModuleId)

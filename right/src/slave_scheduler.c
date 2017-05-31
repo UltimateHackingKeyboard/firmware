@@ -10,15 +10,10 @@
 
 uint8_t currentSlaveId = 0;
 
-slave_driver_initializer_t slaveDriverInitializers[] = {
-    UhkModuleSlaveDriver_Init,
-    LedSlaveDriver_Init,
-};
-
 uhk_slave_t slaves[] = {
-    { .updater = UhkModuleSlaveDriver_Update, .perDriverId = 0 },
-    { .updater = LedSlaveDriver_Update,       .perDriverId = 0 },
-    { .updater = LedSlaveDriver_Update,       .perDriverId = 1 },
+    { .initializer = UhkModuleSlaveDriver_Init, .updater = UhkModuleSlaveDriver_Update, .perDriverId = 0 },
+    { .initializer = LedSlaveDriver_Init,       .updater = LedSlaveDriver_Update,       .perDriverId = 0 },
+    { .initializer = LedSlaveDriver_Init,       .updater = LedSlaveDriver_Update,       .perDriverId = 1 },
 };
 
 static void bridgeProtocolCallback(I2C_Type *base, i2c_master_handle_t *handle, status_t status, void *userData)
@@ -38,8 +33,8 @@ static void bridgeProtocolCallback(I2C_Type *base, i2c_master_handle_t *handle, 
 
 static void initSlaveDrivers()
 {
-    for (uint8_t i=0; i<sizeof(slaveDriverInitializers) / sizeof(slave_driver_initializer_t); i++) {
-        slaveDriverInitializers[i]();
+    for (uint8_t i=0; i<sizeof(slaves) / sizeof(uhk_slave_t); i++) {
+        slaves[i].initializer(slaves[i].perDriverId);
     }
 }
 
