@@ -1,6 +1,5 @@
 #include "slave_drivers/slave_driver_led_driver.h"
 
-uint8_t ledsBuffer[BUFFER_SIZE] = {FRAME_REGISTER_PWM_FIRST};
 led_driver_state_t ledDriverStates[LED_DRIVER_MAX_COUNT] = {
     {
         .i2cAddress = I2C_ADDRESS_LED_DRIVER_RIGHT,
@@ -87,7 +86,7 @@ void LedSlaveDriver_Update(uint8_t ledDriverId) {
             break;
         case LedDriverPhase_Initialized:
             updatePwmRegistersBuffer[0] = FRAME_REGISTER_PWM_FIRST + *ledIndex;
-            memcpy(updatePwmRegistersBuffer+1, ledsBuffer + *ledIndex, PMW_REGISTER_UPDATE_CHUNK_SIZE);
+            memcpy(updatePwmRegistersBuffer+1, currentLedDriverState->frames + *ledIndex, PMW_REGISTER_UPDATE_CHUNK_SIZE);
             I2cAsyncWrite(ledDriverAddress, updatePwmRegistersBuffer, PWM_REGISTER_BUFFER_LENGTH);
             *ledIndex += PMW_REGISTER_UPDATE_CHUNK_SIZE;
             if (*ledIndex >= LED_DRIVER_LED_COUNT) {
@@ -99,5 +98,7 @@ void LedSlaveDriver_Update(uint8_t ledDriverId) {
 
 void SetLeds(uint8_t ledBrightness)
 {
-    memset(ledsBuffer+1, ledBrightness, LED_DRIVER_LED_COUNT);
+    for (uint8_t i=0; i<LED_DRIVER_MAX_COUNT; i++) {
+        memset(&ledDriverStates[i].frames, ledBrightness, LED_DRIVER_LED_COUNT);
+    }
 }
