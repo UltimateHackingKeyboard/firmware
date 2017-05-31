@@ -8,6 +8,7 @@
 
 // Macros:
 
+    #define LED_DRIVER_MAX_COUNT 2
     #define BUFFER_SIZE (LED_DRIVER_LED_COUNT + 1)
 
 // Typedefs:
@@ -23,6 +24,7 @@
     typedef struct {
         led_driver_phase_t phase;
         uint8_t frames[LED_DRIVER_LED_COUNT];
+        uint8_t ledIndex;
     } led_driver_state_t;
 
 // Functions:
