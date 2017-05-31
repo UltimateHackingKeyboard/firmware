@@ -10,8 +10,14 @@
 
     #define LED_DRIVER_MAX_COUNT 2
     #define BUFFER_SIZE (LED_DRIVER_LED_COUNT + 1)
+    #define LED_CONTROL_REGISTERS_COMMAND_LENGTH 19
 
 // Typedefs:
+
+    typedef enum {
+        ledDriverId_Right,
+        ledDriverId_Left,
+    } led_driver_id_t;
 
     typedef enum {
         LedDriverPhase_SetFunctionFrame,
@@ -26,6 +32,7 @@
         uint8_t frames[LED_DRIVER_LED_COUNT];
         uint8_t ledIndex;
         uint8_t i2cAddress;
+        uint8_t setupLedControlRegistersCommand[LED_CONTROL_REGISTERS_COMMAND_LENGTH];
     } led_driver_state_t;
 
 // Functions:
