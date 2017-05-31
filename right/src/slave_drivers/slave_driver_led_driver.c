@@ -1,10 +1,7 @@
 #include "slave_drivers/slave_driver_led_driver.h"
-#include "led_driver.h"
-
-#define BUFFER_SIZE (LED_DRIVER_LED_COUNT + 1)
 
 uint8_t ledsBuffer[BUFFER_SIZE] = {FRAME_REGISTER_PWM_FIRST};
-uint8_t ledDriverStates[2] = {0};
+uint8_t ledDriverPhases[2] = {0};
 
 uint8_t ledControlBufferLeft[] = {
     FRAME_REGISTER_LED_CONTROL_FIRST,
@@ -60,7 +57,7 @@ void LedSlaveDriver_Init() {
 }
 
 void LedSlaveDriver_Update(uint8_t ledDriverId) {
-    uint8_t *ledDriverPhase = ledDriverStates + ledDriverId;
+    uint8_t *ledDriverPhase = ledDriverPhases + ledDriverId;
     uint8_t ledDriverAddress = ledDriverId ? I2C_ADDRESS_LED_DRIVER_LEFT : I2C_ADDRESS_LED_DRIVER_RIGHT;
     uint8_t *ledControlBuffer = ledDriverId ? ledControlBufferLeft : ledControlBufferRight;
 

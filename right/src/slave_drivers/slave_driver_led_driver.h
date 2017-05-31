@@ -4,6 +4,11 @@
 // Includes:
 
     #include "fsl_common.h"
+    #include "led_driver.h"
+
+// Macros:
+
+    #define BUFFER_SIZE (LED_DRIVER_LED_COUNT + 1)
 
 // Typedefs:
 
@@ -14,6 +19,11 @@
         LedDriverPhase_InitLedControlRegisters,
         LedDriverPhase_Initialized,
     } led_driver_phase_t;
+
+    typedef struct {
+        led_driver_phase_t phase;
+        uint8_t frames[LED_DRIVER_LED_COUNT];
+    } led_driver_state_t;
 
 // Functions:
 
