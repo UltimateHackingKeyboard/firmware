@@ -4,6 +4,7 @@
 // Includes:
 
     #include "fsl_port.h"
+    #include "crc16.h"
 
 // Macros:
 
@@ -14,7 +15,8 @@
     #define PROTOCOL_RESPONSE_GENERIC_ERROR 1
 
     #define LEFT_KEYBOARD_HALF_KEY_COUNT (KEYBOARD_MATRIX_COLS_NUM*KEYBOARD_MATRIX_ROWS_NUM)
-    #define KEY_STATE_BUFFER_SIZE (LEFT_KEYBOARD_HALF_KEY_COUNT/8 + 1)
+    #define KEY_STATE_SIZE (LEFT_KEYBOARD_HALF_KEY_COUNT/8 + 1)
+    #define KEY_STATE_BUFFER_SIZE (KEY_STATE_SIZE + CRC16_HASH_LENGTH)
 
 // Variables:
 

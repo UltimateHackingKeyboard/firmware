@@ -6,6 +6,7 @@
 #include "peripherals/test_led.h"
 #include "test_states.h"
 #include "bool_array_converter.h"
+#include "crc16.h"
 
 uhk_module_state_t UhkModuleStates[UHK_MODULE_MAX_COUNT];
 uhk_module_field_t currentUhkModuleField = UhkModuleField_SendKeystatesRequestCommand;
@@ -38,7 +39,9 @@ void UhkModuleSlaveDriver_Update(uint8_t uhkModuleId)
             currentUhkModuleField = UhkModuleField_SendPwmBrightnessCommand;
             break;
         case UhkModuleField_SendPwmBrightnessCommand:
-            BoolBitsToBytes(rxBuffer, CurrentKeyStates[SLOT_ID_LEFT_KEYBOARD_HALF], LEFT_KEYBOARD_HALF_KEY_COUNT);
+            if (CRC16_IsMessageValid(rxBuffer, KEY_STATE_SIZE)) {
+                BoolBitsToBytes(rxBuffer, CurrentKeyStates[SLOT_ID_LEFT_KEYBOARD_HALF], LEFT_KEYBOARD_HALF_KEY_COUNT);
+            }
             txBuffer[0] = SlaveCommand_SetLedPwmBrightness;
             txBuffer[1] = uhkModuleInternalState->ledPwmBrightness;
             I2cAsyncWrite(I2C_ADDRESS_LEFT_KEYBOARD_HALF, txBuffer, 2);

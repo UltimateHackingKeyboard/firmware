@@ -35,6 +35,7 @@ void SlaveProtocolHandler(void)
         case SlaveCommand_GetKeyStates:
             SlaveTxSize = KEY_STATE_BUFFER_SIZE;
             BoolBytesToBits(keyMatrix.keyStates, SlaveTxBuffer, LEFT_KEYBOARD_HALF_KEY_COUNT);
+            CRC16_AppendToMessage(SlaveTxBuffer, KEY_STATE_SIZE);
             break;
         case SlaveCommand_SetTestLed:
             SlaveTxSize = 0;

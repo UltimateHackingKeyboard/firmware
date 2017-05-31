@@ -4,11 +4,13 @@
 // Includes:
 
     #include "fsl_common.h"
+    #include "crc16.h"
 
 // Macros:
 
     #define UHK_MODULE_MAX_COUNT 1
-    #define KEY_STATE_BUFFER_SIZE (LEFT_KEYBOARD_HALF_KEY_COUNT/8 + 1)
+    #define KEY_STATE_SIZE (LEFT_KEYBOARD_HALF_KEY_COUNT/8 + 1)
+    #define KEY_STATE_BUFFER_SIZE (KEY_STATE_SIZE + CRC16_HASH_LENGTH)
 
 // Typedefs:
 

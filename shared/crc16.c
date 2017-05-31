@@ -33,3 +33,24 @@ void crc16_finalize(crc16_data_t *crc16Config, uint16_t *hash)
 {
     *hash = crc16Config->currentCrc;
 }
+
+crc16_data_t crc16data;
+
+void CRC16_AppendToMessage(uint8_t *message, uint32_t lengthInBytes)
+{
+    uint16_t hash;
+    crc16_init(&crc16data);
+    crc16_update(&crc16data, message, lengthInBytes);
+    crc16_finalize(&crc16data, &hash);
+    message[lengthInBytes] = hash & 0xff;
+    message[lengthInBytes+1] = hash >> 8;
+}
+
+bool CRC16_IsMessageValid(uint8_t *message, uint32_t lengthInBytes)
+{
+    uint16_t hash;
+    crc16_init(&crc16data);
+    crc16_update(&crc16data, message, lengthInBytes);
+    crc16_finalize(&crc16data, &hash);
+    return (message[lengthInBytes] == (hash & 0xff)) && (message[lengthInBytes+1] == (hash >> 8));
+}
