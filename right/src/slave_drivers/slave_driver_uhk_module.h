@@ -15,14 +15,14 @@
 // Typedefs:
 
     typedef enum {
-        UhkModuleField_SendKeystatesRequestCommand,
-        UhkModuleField_ReceiveKeystates,
-        UhkModuleField_SendPwmBrightnessCommand,
-        UhkModuleField_SendTestLedCommand,
-        UhkModuleField_SendDisableKeyMatrixScanState,
-        UhkModuleField_SendLedPwmBrightness,
-        UhkModuleField_DisableLedSdb,
-    } uhk_module_field_t;
+        UhkModulePhase_SendKeystatesRequestCommand,
+        UhkModulePhase_ReceiveKeystates,
+        UhkModulePhase_SendPwmBrightnessCommand,
+        UhkModulePhase_SendTestLedCommand,
+        UhkModulePhase_SendDisableKeyMatrixScanState,
+        UhkModulePhase_SendLedPwmBrightness,
+        UhkModulePhase_DisableLedSdb,
+    } uhk_module_phase_t;
 
     typedef struct {
         uint8_t ledPwmBrightness;

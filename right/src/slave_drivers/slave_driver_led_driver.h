@@ -15,6 +15,10 @@
         LedDriverPhase_Initialized,
     } led_driver_phase_t;
 
+    typedef enum {
+
+    } led_driver_state_t;
+
 // Functions:
 
     extern void LedSlaveDriver_Init();
