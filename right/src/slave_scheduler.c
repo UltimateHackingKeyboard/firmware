@@ -18,22 +18,26 @@ uhk_slave_t slaves[] = {
 
 static void bridgeProtocolCallback(I2C_Type *base, i2c_master_handle_t *handle, status_t status, void *userData)
 {
-    if (TestStates.disableI2c) {
-        return;
-    }
-    uhk_slave_t *slave = slaves + currentSlaveId;
+    IsI2cTransferScheduled = false;
 
-    slave->isConnected = status == kStatus_Success;
-    if (!slave->isConnected) {
-        slave->initializer(slave->perDriverId);
-    }
+    do {
+        if (TestStates.disableI2c) {
+            return;
+        }
+        uhk_slave_t *slave = slaves + currentSlaveId;
 
-    slave->updater(slave->perDriverId);
-    currentSlaveId++;
+        slave->isConnected = status == kStatus_Success;
+        if (!slave->isConnected) {
+            slave->initializer(slave->perDriverId);
+        }
 
-    if (currentSlaveId >= (sizeof(slaves) / sizeof(uhk_slave_t))) {
-        currentSlaveId = 0;
-    }
+        slave->updater(slave->perDriverId);
+        currentSlaveId++;
+
+        if (currentSlaveId >= (sizeof(slaves) / sizeof(uhk_slave_t))) {
+            currentSlaveId = 0;
+        }
+    } while (!IsI2cTransferScheduled);
 }
 
 static void initSlaveDrivers()
