@@ -73,7 +73,7 @@ void LedSlaveDriver_Update(uint8_t ledDriverId) {
 
     switch (*ledDriverPhase) {
         case LedDriverPhase_SetFunctionFrame:
-            if (!slaves[SlaveId_LeftKeyboardHalf].isConnected) {
+            if (!Slaves[SlaveId_LeftKeyboardHalf].isConnected) {
                 break;
             }
             I2cAsyncWrite(ledDriverAddress, setFunctionFrameBuffer, sizeof(setFunctionFrameBuffer));

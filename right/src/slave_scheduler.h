@@ -31,7 +31,7 @@
 
 // Variables:
 
-    extern uhk_slave_t slaves[];
+    extern uhk_slave_t Slaves[];
 
 // Functions:
 
