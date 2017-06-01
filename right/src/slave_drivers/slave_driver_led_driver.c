@@ -1,4 +1,5 @@
 #include "slave_drivers/slave_driver_led_driver.h"
+#include "slave_scheduler.h"
 
 led_driver_state_t ledDriverStates[LED_DRIVER_MAX_COUNT] = {
     {
@@ -72,6 +73,9 @@ void LedSlaveDriver_Update(uint8_t ledDriverId) {
 
     switch (*ledDriverPhase) {
         case LedDriverPhase_SetFunctionFrame:
+            if (!slaves[SlaveId_LeftKeyboardHalf].isConnected) {
+                break;
+            }
             I2cAsyncWrite(ledDriverAddress, setFunctionFrameBuffer, sizeof(setFunctionFrameBuffer));
             *ledDriverPhase = LedDriverPhase_SetShutdownModeNormal;
             break;
