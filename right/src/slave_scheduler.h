@@ -8,10 +8,10 @@
 // Typedefs:
 
     typedef enum {
-        UhkSlaveType_LedDriver,
-        UhkSlaveType_UhkModule,
-        UhkSlaveType_Touchpad
-    } uhk_slave_type_t;
+        SlaveType_LedDriver,
+        SlaveType_UhkModule,
+        SlaveType_Touchpad
+    } slave_type_t;
 
     typedef enum {
         SlaveId_LeftKeyboardHalf,
