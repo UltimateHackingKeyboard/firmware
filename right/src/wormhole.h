@@ -26,6 +26,6 @@
 
 // Variables:
 
-    extern wormhole_t *Wormhole NO_INIT_GCC;
+    extern wormhole_t Wormhole NO_INIT_GCC;
 
 #endif

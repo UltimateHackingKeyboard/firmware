@@ -16,7 +16,7 @@ void setError(uint8_t error);
 void setGenericError();
 void usbProtocolHandler();
 void getSystemProperty();
-void jumpToBootloader();
+void reenumerate();
 void setTestLed();
 void writeLedDriver();
 void readLedDriver();
@@ -55,8 +55,8 @@ void usbProtocolHandler()
         case USB_COMMAND_GET_SYSTEM_PROPERTY:
             getSystemProperty();
             break;
-        case USB_COMMAND_JUMP_TO_BOOTLOADER:
-            jumpToBootloader();
+        case USB_COMMAND_REENUMERATE:
+            reenumerate();
             break;
         case USB_COMMAND_SET_TEST_LED:
             setTestLed();
@@ -114,8 +114,9 @@ void getSystemProperty() {
     }
 }
 
-void jumpToBootloader() {
-//    Wormhole->magicNumber = WORMHOLE_MAGIC_NUMBER;
+void reenumerate() {
+    Wormhole.magicNumber = WORMHOLE_MAGIC_NUMBER;
+    Wormhole.enumerationMode = GenericHidInBuffer[1];
     SCB->AIRCR = 0x5FA<<SCB_AIRCR_VECTKEY_Pos | SCB_AIRCR_SYSRESETREQ_Msk; // Reset the MCU.
     for (;;);
 }
