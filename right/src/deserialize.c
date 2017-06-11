@@ -4,9 +4,18 @@
 
 #define longCompactLengthPrefix 0xff
 
-#define HAS_SCANCODE (1 << 0)
-#define HAS_MODS (1 << 1)
-#define HAS_LONGPRESS (1 << 2)
+#define HAS_SCANCODE   0b00001
+#define HAS_MODS       0b00010
+#define HAS_LONGPRESS  0b00100
+#define KEYSTROKE_TYPE 0b11000
+#define KEYSTROKE_TYPE_SHIFT 3
+
+typedef enum {
+    KeystrokeType_Basic,
+    KeystrokeType_ShortMedia,
+    KeystrokeType_LongMedia,
+    KeystrokeType_System,
+} serialized_keystroke_type_t;
 
 typedef struct {
     const uint8_t *buffer;
@@ -16,7 +25,7 @@ typedef struct {
 enum {
     NoneAction = 0,
     KeyStrokeAction = 1,
-    LastKeyStrokeAction = 7,
+    LastKeyStrokeAction = 31,
     SwitchLayerAction,
     SwitchKeymapAction,
     MouseAction,
@@ -27,6 +36,11 @@ enum {
 
 static uint8_t readUInt8(serialized_buffer_t *buffer) {
     return buffer->buffer[buffer->offset++];
+}
+
+static uint16_t readUInt16(serialized_buffer_t *buffer) {
+    uint8_t firstByte = buffer->buffer[buffer->offset++];
+    return firstByte + (buffer->buffer[buffer->offset++] << 8);
 }
 
 static bool readBool(serialized_buffer_t *buffer) {
@@ -108,8 +122,21 @@ static void processKeyStrokeAction(key_action_t *action, uint8_t actionType, ser
 
     action->type = KEY_ACTION_KEYSTROKE;
 
+    uint8_t keystrokeType = (KEYSTROKE_TYPE & flags) >> KEYSTROKE_TYPE_SHIFT;
+    switch (keystrokeType) {
+        case KeystrokeType_Basic:
+            action->keystroke.keystrokeType = KEYSTROKE_BASIC;
+            break;
+        case KeystrokeType_ShortMedia:
+        case KeystrokeType_LongMedia:
+            action->keystroke.keystrokeType = KEYSTROKE_MEDIA;
+            break;
+        case KeystrokeType_System:
+            action->keystroke.keystrokeType = KEYSTROKE_SYSTEM;
+            break;
+    }
     if (flags & HAS_SCANCODE) {
-        action->keystroke.scancode = readUInt8(buffer);
+        action->keystroke.scancode = keystrokeType == KeystrokeType_LongMedia ? readUInt16(buffer) : readUInt8(buffer);
     }
     if (flags & HAS_MODS) {
         action->keystroke.modifiers = readUInt8(buffer);
