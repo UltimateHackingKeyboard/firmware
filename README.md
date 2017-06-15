@@ -18,11 +18,9 @@ Install [Kinetis Design Studio](http://www.nxp.com/products/software-and-tools/r
 
 ## Building and flashing the firmware
 
-*Please substitute vX with v6 or v7 below according to the actual version of your prototype.*
+For the left keyboard half, make sure to power it via the right keyboard half (which must be powered via USB). Also connect the left keyboard half to your SEGGER J-Link USB debug probe (which must also be connected via USB). Then in KDS, click on *Run -> Run Configurations*, select *GDB SEGGER J-Link Debugging -> uhk-left release jlink*, and click on the *Debug* button.
 
-For the left keyboard half, make sure to power it via the right keyboard half (which must be powered via USB). Also connect the left keyboard half to your SEGGER J-Link USB debug probe (which must also be connected via USB). Then in KDS, click on *Run -> Run Configurations*, select *GDB SEGGER J-Link Debugging -> uhk-left vX release jlink*, and click on the *Debug* button.
-
-For the right keyboard half, flash [the bootloader](https://github.com/UltimateHackingKeyboard/bootloader) first. Then in KDS, click on *Run -> Run Configurations*, select *C/C++ Application -> uhk-right vX release kboot*, and click on the *Debug* button. Please note that this update method only works on Linux out of the box. On other operating systems, you have to execute the relevant commands of the [blhost-unix.sh](right/build/kds/blhost-unix.sh) script.
+For the right keyboard half, flash [the bootloader](https://github.com/UltimateHackingKeyboard/bootloader) first. Then in KDS, click on *Run -> Run Configurations*, select *C/C++ Application -> uhk-right release blhost*, and click on the *Debug* button. Please note that this update method only works on Linux out of the box. On other operating systems, you have to execute the relevant commands of the [blhost-unix.sh](right/build/kds/blhost-unix.sh) script.
 
 ## Contributing
 
