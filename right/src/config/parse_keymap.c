@@ -1,5 +1,5 @@
 #include "config/parse_keymap.h"
-#include "action.h"
+#include "key_action.h"
 #include "current_keymap.h"
 
 #define longCompactLengthPrefix 0xff

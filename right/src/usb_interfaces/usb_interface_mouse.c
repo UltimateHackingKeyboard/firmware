@@ -3,7 +3,7 @@
 #include "fsl_i2c.h"
 #include "i2c.h"
 #include "peripherals/reset_button.h"
-#include "action.h"
+#include "key_action.h"
 
 static usb_device_endpoint_struct_t UsbMouseEndpoints[USB_MOUSE_ENDPOINT_COUNT] = {{
     USB_MOUSE_ENDPOINT_INDEX | (USB_IN << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT),

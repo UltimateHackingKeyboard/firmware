@@ -3,7 +3,7 @@
 #include "init_peripherals.h"
 #include "usb_composite_device.h"
 #include "led_driver.h"
-#include "action.h"
+#include "key_action.h"
 #include "slave_scheduler.h"
 #include "peripherals/test_led.h"
 #include "usb_interfaces/usb_interface_basic_keyboard.h"
