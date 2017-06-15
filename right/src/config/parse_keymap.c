@@ -36,8 +36,6 @@ static const char *readString(serialized_buffer_t *buffer, uint16_t *len) {
 }
 */
 
-// ----------------
-
 static void parseNoneAction(key_action_t *action, serialized_buffer_t *buffer) {
     action->type = KeyActionType_None;
 }
@@ -177,8 +175,6 @@ static void parseModule(serialized_buffer_t *buffer, uint8_t targetLayer) {
 static void clearModule(uint8_t targetLayer, uint8_t moduleID) {
     memset(&CurrentKeymap[targetLayer][moduleID], 0, MAX_KEY_COUNT_PER_MODULE * sizeof(key_action_t));
 }
-
-// ----------
 
 void ParseLayer(const uint8_t *data, uint8_t targetLayer) {
     serialized_buffer_t buffer;
