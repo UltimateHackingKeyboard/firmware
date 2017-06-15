@@ -39,25 +39,25 @@ static const char *readString(serialized_buffer_t *buffer, uint16_t *len) {
 // ----------------
 
 static void parseNoneAction(key_action_t *action, serialized_buffer_t *buffer) {
-    action->type = KEY_ACTION_NONE;
+    action->type = KeyActionType_None;
 }
 
 static void parseKeyStrokeAction(key_action_t *action, uint8_t actionType, serialized_buffer_t *buffer) {
     uint8_t flags = actionType - 1;
 
-    action->type = KEY_ACTION_KEYSTROKE;
+    action->type = KeyActionType_Keystroke;
 
     uint8_t keystrokeType = (SERIALIZED_KEYSTROKE_TYPE_MASK_KEYSTROKE_TYPE & flags) >> SERIALIZED_KEYSTROKE_TYPE_OFFSET_KEYSTROKE_TYPE;
     switch (keystrokeType) {
         case SerializedKeystrokeType_Basic:
-            action->keystroke.keystrokeType = KEYSTROKE_BASIC;
+            action->keystroke.keystrokeType = KeystrokeType_Basic;
             break;
         case SerializedKeystrokeType_ShortMedia:
         case SerializedKeystrokeType_LongMedia:
-            action->keystroke.keystrokeType = KEYSTROKE_MEDIA;
+            action->keystroke.keystrokeType = KeystrokeType_Media;
             break;
         case SerializedKeystrokeType_System:
-            action->keystroke.keystrokeType = KEYSTROKE_SYSTEM;
+            action->keystroke.keystrokeType = KeystrokeType_System;
             break;
     }
     if (flags & SERIALIZED_KEYSTROKE_TYPE_MASK_HAS_SCANCODE) {
@@ -75,7 +75,7 @@ static void parseSwitchLayerAction(key_action_t *action, serialized_buffer_t *bu
     uint8_t layer = readUInt8(buffer) + 1;
     bool isToggle = readBool(buffer);
 
-    action->type = KEY_ACTION_SWITCH_LAYER;
+    action->type = KeyActionType_SwitchLayer;
     action->switchLayer.layer = layer;
     action->switchLayer.isToggle = isToggle;
 }
@@ -84,7 +84,7 @@ static void parseSwitchKeymapAction(key_action_t *action, serialized_buffer_t *b
 //    uint16_t len;
 //    const char *keymap = readString(buffer, &len);
 
-    action->type = KEY_ACTION_SWITCH_KEYMAP;
+    action->type = KeyActionType_SwitchKeymap;
 
     // TODO: Implement this
 }
@@ -92,46 +92,46 @@ static void parseSwitchKeymapAction(key_action_t *action, serialized_buffer_t *b
 static void parseMouseAction(key_action_t *action, serialized_buffer_t *buffer) {
     uint8_t mouseAction = readUInt8(buffer);
 
-    action->type = KEY_ACTION_MOUSE;
+    action->type = KeyActionType_Mouse;
     switch (mouseAction) {
     case 0: // leftClick
-        action->mouse.buttonActions |= MOUSE_BUTTON_LEFT;
+        action->mouse.buttonActions |= MouseButton_Left;
         break;
     case 1: // middleClick
-        action->mouse.buttonActions |= MOUSE_BUTTON_MIDDLE;
+        action->mouse.buttonActions |= MouseButton_Middle;
         break;
     case 2: // rightClick
-        action->mouse.buttonActions |= MOUSE_BUTTON_RIGHT;
+        action->mouse.buttonActions |= MouseButton_Right;
         break;
     case 3: // moveUp
-        action->mouse.moveActions |= MOUSE_MOVE_UP;
+        action->mouse.moveActions |= MouseMove_Up;
         break;
     case 4: // moveDown
-        action->mouse.moveActions |= MOUSE_MOVE_DOWN;
+        action->mouse.moveActions |= MouseMove_Down;
         break;
     case 5: // moveLeft
-        action->mouse.moveActions |= MOUSE_MOVE_LEFT;
+        action->mouse.moveActions |= MouseMove_Left;
         break;
     case 6: // moveRight
-        action->mouse.moveActions |= MOUSE_MOVE_RIGHT;
+        action->mouse.moveActions |= MouseMove_Right;
         break;
     case 7: // scrollUp
-        action->mouse.scrollActions |= MOUSE_SCROLL_UP;
+        action->mouse.scrollActions |= MouseScroll_Up;
         break;
     case 8: // scrollDown
-        action->mouse.scrollActions |= MOUSE_SCROLL_DOWN;
+        action->mouse.scrollActions |= MouseScroll_Down;
         break;
     case 9: // scrollLeft
-        action->mouse.scrollActions |= MOUSE_SCROLL_LEFT;
+        action->mouse.scrollActions |= MouseScroll_Left;
         break;
     case 10: // scrollRight
-        action->mouse.scrollActions |= MOUSE_SCROLL_RIGHT;
+        action->mouse.scrollActions |= MouseScroll_Right;
         break;
     case 11: // accelerate
-        action->mouse.moveActions |= MOUSE_ACCELERATE;
+        action->mouse.moveActions |= MouseMove_Accelerate;
         break;
     case 12: // decelerate
-        action->mouse.moveActions |= MOUSE_DECELERATE;
+        action->mouse.moveActions |= MouseMove_Decelerate;
         break;
     }
 }

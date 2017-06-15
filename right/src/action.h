@@ -9,46 +9,46 @@
 #include "module.h"
 
 typedef enum {
-    KEY_ACTION_NONE,
-    KEY_ACTION_KEYSTROKE,
-    KEY_ACTION_MOUSE,
-    KEY_ACTION_SWITCH_LAYER,
-    KEY_ACTION_SWITCH_KEYMAP,
-    KEY_ACTION_PLAY_MACRO,
-    KEY_ACTION_TEST,
+    KeyActionType_None,
+    KeyActionType_Keystroke,
+    KeyActionType_Mouse,
+    KeyActionType_SwitchLayer,
+    KeyActionType_SwitchKeymap,
+    KeyActionType_PlayMacro,
+    KeyActionType_Test,
 } key_action_type_t;
 
 typedef enum {
-    KEYSTROKE_BASIC,
-    KEYSTROKE_MEDIA,
-    KEYSTROKE_SYSTEM,
+    KeystrokeType_Basic,
+    KeystrokeType_Media,
+    KeystrokeType_System,
 } keystroke_type_t;
 
-enum {
-    MOUSE_BUTTON_LEFT   = (1 << 0),
-    MOUSE_BUTTON_RIGHT  = (1 << 1),
-    MOUSE_BUTTON_MIDDLE = (1 << 2),
-    MOUSE_BUTTON_4      = (1 << 3),
-    MOUSE_BUTTON_5      = (1 << 4),
-    MOUSE_BUTTON_6      = (1 << 5),
-};
+typedef enum {
+    MouseButton_Left   = 1 << 0,
+    MouseButton_Right  = 1 << 1,
+    MouseButton_Middle = 1 << 2,
+    MouseButton_4      = 1 << 3,
+    MouseButton_5      = 1 << 4,
+    MouseButton_t      = 1 << 5,
+} mouse_button_t;
 
-enum {
-    MOUSE_MOVE_UP    = (1 << 0),
-    MOUSE_MOVE_DOWN  = (1 << 1),
-    MOUSE_MOVE_LEFT  = (1 << 2),
-    MOUSE_MOVE_RIGHT = (1 << 3),
+typedef enum {
+    MouseMove_Up    = 1 << 0,
+    MouseMove_Down  = 1 << 1,
+    MouseMove_Left  = 1 << 2,
+    MouseMove_Right = 1 << 3,
 
-    MOUSE_ACCELERATE = (1 << 4),
-    MOUSE_DECELERATE = (1 << 5),
-};
+    MouseMove_Accelerate = 1 << 4,
+    MouseMove_Decelerate = 1 << 5,
+} mouse_move_action_t;
 
-enum {
-    MOUSE_SCROLL_UP    = (1 << 0),
-    MOUSE_SCROLL_DOWN  = (1 << 1),
-    MOUSE_SCROLL_LEFT  = (1 << 2),
-    MOUSE_SCROLL_RIGHT = (1 << 3),
-};
+typedef enum {
+    MouseScroll_Up    = 1 << 0,
+    MouseScroll_Down  = 1 << 1,
+    MouseScroll_Left  = 1 << 2,
+    MouseScroll_Right = 1 << 3,
+} mouse_scroll_t;
 
 typedef enum {
     TestAction_DisableUsb,
@@ -75,9 +75,9 @@ typedef struct {
             uint16_t scancode;
         } __attribute__ ((packed)) keystroke;
         struct {
-            uint8_t buttonActions;
-            uint8_t scrollActions;
-            uint8_t moveActions;
+            mouse_button_t buttonActions;
+            mouse_scroll_t scrollActions;
+            mouse_move_action_t moveActions;
         } __attribute__ ((packed)) mouse;
         struct {
             bool isToggle;
