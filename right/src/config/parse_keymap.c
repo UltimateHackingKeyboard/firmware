@@ -4,14 +4,6 @@
 
 #define longCompactLengthPrefix 0xff
 
-#define HAS_SCANCODE   0b00001
-#define HAS_MODS       0b00010
-#define HAS_LONGPRESS  0b00100
-#define KEYSTROKE_TYPE 0b11000
-#define KEYSTROKE_TYPE_SHIFT 3
-
-// ----------------
-
 static uint8_t readUInt8(serialized_buffer_t *buffer) {
     return buffer->buffer[buffer->offset++];
 }
@@ -55,7 +47,7 @@ static void parseKeyStrokeAction(key_action_t *action, uint8_t actionType, seria
 
     action->type = KEY_ACTION_KEYSTROKE;
 
-    uint8_t keystrokeType = (KEYSTROKE_TYPE & flags) >> KEYSTROKE_TYPE_SHIFT;
+    uint8_t keystrokeType = (SERIALIZED_KEYSTROKE_TYPE_MASK_KEYSTROKE_TYPE & flags) >> SERIALIZED_KEYSTROKE_TYPE_OFFSET_KEYSTROKE_TYPE;
     switch (keystrokeType) {
         case SerializedKeystrokeType_Basic:
             action->keystroke.keystrokeType = KEYSTROKE_BASIC;
@@ -68,13 +60,13 @@ static void parseKeyStrokeAction(key_action_t *action, uint8_t actionType, seria
             action->keystroke.keystrokeType = KEYSTROKE_SYSTEM;
             break;
     }
-    if (flags & HAS_SCANCODE) {
+    if (flags & SERIALIZED_KEYSTROKE_TYPE_MASK_HAS_SCANCODE) {
         action->keystroke.scancode = keystrokeType == SerializedKeystrokeType_LongMedia ? readUInt16(buffer) : readUInt8(buffer);
     }
-    if (flags & HAS_MODS) {
+    if (flags & SERIALIZED_KEYSTROKE_TYPE_MASK_HAS_MODIFIERS) {
         action->keystroke.modifiers = readUInt8(buffer);
     }
-    if (flags & HAS_LONGPRESS) {
+    if (flags & SERIALIZED_KEYSTROKE_TYPE_MASK_HAS_LONGPRESS) {
         action->keystroke.longPressAction = readUInt8(buffer);
     }
 }
