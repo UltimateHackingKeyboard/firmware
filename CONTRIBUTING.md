@@ -14,9 +14,11 @@ Extern functions and variables are written with UpperCamelCase, non-extern funct
 
 Function names are composed of a verb followed by a noun.
 
+Non-extern functions must be declared as static.
+
 ```
 DoThisExtern();
-doThisNonExtern();
+static doThisNonExtern();
 uint8 ExternVariable;
 uint8 nonExternVariable;
 ```
