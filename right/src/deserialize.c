@@ -68,51 +68,6 @@ static const char *readString(serialized_buffer_t *buffer, uint16_t *len) {
 
 // ----------------
 
-static uint8_t findIndex(uint8_t moduleID, uint8_t idx) {
-    switch (moduleID) {
-    case 0:
-        switch (idx) {
-        case 0 ... 6:
-            return idx;
-        case 7:
-            return 14;
-        case 8 ... 14:
-            return idx - 1;
-        case 15:
-            return 21;
-        case 16 ... 21:
-            return idx - 1;
-        case 22 ... 27:
-            return idx;
-        case 28:
-            return idx + 1;
-        case 29 ... 32:
-            return idx + 2;
-        case 33:
-            return 30;
-        }
-        break;
-
-    case 1:
-        switch (idx) {
-        case 0 ... 11:
-            return idx;
-        case 12 ... 17:
-            return idx + 1;
-        case 18 ... 19:
-            return idx + 2;
-        case 20 ... 28:
-            return idx + 3;
-        case 29:
-            return 33;
-        case 30:
-            return 32;
-        }
-        break;
-    }
-    return idx;
-}
-
 static void processNoneAction(key_action_t *action, serialized_buffer_t *buffer) {
     action->type = KEY_ACTION_NONE;
 }
@@ -235,9 +190,7 @@ static void processKeyActions(uint8_t targetLayer, serialized_buffer_t *buffer, 
     uint8_t actionCount = readCompactLength(buffer);
 
     for (uint8_t actionIdx = 0; actionIdx < actionCount; actionIdx++) {
-        uint8_t pos = findIndex(moduleID, actionIdx);
-        key_action_t *action = &(CurrentKeymap[targetLayer][moduleID][pos]);
-
+        key_action_t *action = &(CurrentKeymap[targetLayer][moduleID][actionIdx]);
         processKeyAction(action, buffer);
     }
 }
