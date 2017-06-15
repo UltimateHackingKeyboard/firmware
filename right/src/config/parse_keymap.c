@@ -10,28 +10,6 @@
 #define KEYSTROKE_TYPE 0b11000
 #define KEYSTROKE_TYPE_SHIFT 3
 
-typedef enum {
-    KeystrokeType_Basic,
-    KeystrokeType_ShortMedia,
-    KeystrokeType_LongMedia,
-    KeystrokeType_System,
-} serialized_keystroke_type_t;
-
-typedef struct {
-    const uint8_t *buffer;
-    uint16_t offset;
-} serialized_buffer_t;
-
-enum {
-    NoneAction = 0,
-    KeyStrokeAction = 1,
-    LastKeyStrokeAction = 31,
-    SwitchLayerAction,
-    SwitchKeymapAction,
-    MouseAction,
-    PlayMacroAction
-};
-
 // ----------------
 
 static uint8_t readUInt8(serialized_buffer_t *buffer) {
@@ -79,19 +57,19 @@ static void parseKeyStrokeAction(key_action_t *action, uint8_t actionType, seria
 
     uint8_t keystrokeType = (KEYSTROKE_TYPE & flags) >> KEYSTROKE_TYPE_SHIFT;
     switch (keystrokeType) {
-        case KeystrokeType_Basic:
+        case SerializedKeystrokeType_Basic:
             action->keystroke.keystrokeType = KEYSTROKE_BASIC;
             break;
-        case KeystrokeType_ShortMedia:
-        case KeystrokeType_LongMedia:
+        case SerializedKeystrokeType_ShortMedia:
+        case SerializedKeystrokeType_LongMedia:
             action->keystroke.keystrokeType = KEYSTROKE_MEDIA;
             break;
-        case KeystrokeType_System:
+        case SerializedKeystrokeType_System:
             action->keystroke.keystrokeType = KEYSTROKE_SYSTEM;
             break;
     }
     if (flags & HAS_SCANCODE) {
-        action->keystroke.scancode = keystrokeType == KeystrokeType_LongMedia ? readUInt16(buffer) : readUInt8(buffer);
+        action->keystroke.scancode = keystrokeType == SerializedKeystrokeType_LongMedia ? readUInt16(buffer) : readUInt8(buffer);
     }
     if (flags & HAS_MODS) {
         action->keystroke.modifiers = readUInt8(buffer);
@@ -170,15 +148,15 @@ static void parseKeyAction(key_action_t *action, serialized_buffer_t *buffer) {
     uint8_t actionType = readUInt8(buffer);
 
     switch (actionType) {
-    case NoneAction:
+    case SerializedKeyActionType_None:
         return parseNoneAction(action, buffer);
-    case KeyStrokeAction ... LastKeyStrokeAction:
+    case SerializedKeyActionType_KeyStroke ... SerializedKeyActionType_LastKeyStroke:
         return parseKeyStrokeAction(action, actionType, buffer);
-    case SwitchLayerAction:
+    case SerializedKeyActionType_SwitchLayer:
         return parseSwitchLayerAction(action, buffer);
-    case SwitchKeymapAction:
+    case SerializedKeyActionType_SwitchKeymap:
         return parseSwitchKeymapAction(action, buffer);
-    case MouseAction:
+    case SerializedKeyActionType_Mouse:
         return parseMouseAction(action, buffer);
     default:
         // TODO: Handle the case where the actionType is unknown
