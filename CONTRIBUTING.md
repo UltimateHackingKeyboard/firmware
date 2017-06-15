@@ -103,9 +103,11 @@ Header files are composed of sections. The order of sections is fixed. Every hea
 
 // Typedefs:
 
-    typedef struct {
-        ...
-    } led_driver_state_t;
+    typedef enum {
+        KeystrokeType_Basic,
+        KeystrokeType_Media,
+        KeystrokeType_System,
+    } keystroke_type_t;
 
 // Variables:
 
