@@ -1,5 +1,5 @@
-#ifndef __CONFIG_BUFFER_H__
-#define __CONFIG_BUFFER_H__
+#ifndef __CONFIG_STATE_H__
+#define __CONFIG_STATE_H__
 
 // Includes:
 

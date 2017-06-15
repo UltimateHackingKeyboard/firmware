@@ -1,5 +1,5 @@
-#ifndef __DESERIALIZE_H__
-#define __DESERIALIZE_H__
+#ifndef __PARSE_KEYMAP_H__
+#define __PARSE_KEYMAP_H__
 
 #include <stdint.h>
 
