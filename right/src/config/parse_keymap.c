@@ -40,8 +40,8 @@ static void parseNoneAction(key_action_t *keyAction, serialized_buffer_t *buffer
     keyAction->type = KeyActionType_None;
 }
 
-static void parseKeyStrokeAction(key_action_t *keyAction, uint8_t actionType, serialized_buffer_t *buffer) {
-    uint8_t flags = actionType - 1;
+static void parseKeyStrokeAction(key_action_t *keyAction, uint8_t keyActionType, serialized_buffer_t *buffer) {
+    uint8_t flags = keyActionType - 1;
 
     keyAction->type = KeyActionType_Keystroke;
 
@@ -135,13 +135,13 @@ static void parseMouseAction(key_action_t *keyAction, serialized_buffer_t *buffe
 }
 
 static void parseKeyAction(key_action_t *keyAction, serialized_buffer_t *buffer) {
-    uint8_t actionType = readUInt8(buffer);
+    uint8_t keyActionType = readUInt8(buffer);
 
-    switch (actionType) {
+    switch (keyActionType) {
     case SerializedKeyActionType_None:
         return parseNoneAction(keyAction, buffer);
     case SerializedKeyActionType_KeyStroke ... SerializedKeyActionType_LastKeyStroke:
-        return parseKeyStrokeAction(keyAction, actionType, buffer);
+        return parseKeyStrokeAction(keyAction, keyActionType, buffer);
     case SerializedKeyActionType_SwitchLayer:
         return parseSwitchLayerAction(keyAction, buffer);
     case SerializedKeyActionType_SwitchKeymap:
