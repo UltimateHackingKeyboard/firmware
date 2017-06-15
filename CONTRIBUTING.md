@@ -59,7 +59,7 @@ if (something) {
     ...
 }
 
-for (uint8_t i; i<j; i++) {
+for (uint8_t i = 0; i < j; i++) {
     ...
 }
 
