@@ -50,7 +50,7 @@ static bool readBool(serialized_buffer_t *buffer) {
 static uint16_t readCompactLength(serialized_buffer_t *buffer) {
     uint16_t length = readUInt8(buffer);
     if (length == longCompactLengthPrefix) {
-        length += readUInt8(buffer) << 8;
+        length = readUInt16(buffer);
     }
     return length;
 }
