@@ -193,7 +193,7 @@ void uploadConfig()
 
 void applyConfig()
 {
-    deserialize_Layer(ConfigBuffer, 0);
+    ParseLayer(ConfigBuffer, 0);
 }
 
 void setLedPwm()

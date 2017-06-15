@@ -68,11 +68,11 @@ static const char *readString(serialized_buffer_t *buffer, uint16_t *len) {
 
 // ----------------
 
-static void processNoneAction(key_action_t *action, serialized_buffer_t *buffer) {
+static void parseNoneAction(key_action_t *action, serialized_buffer_t *buffer) {
     action->type = KEY_ACTION_NONE;
 }
 
-static void processKeyStrokeAction(key_action_t *action, uint8_t actionType, serialized_buffer_t *buffer) {
+static void parseKeyStrokeAction(key_action_t *action, uint8_t actionType, serialized_buffer_t *buffer) {
     uint8_t flags = actionType - 1;
 
     action->type = KEY_ACTION_KEYSTROKE;
@@ -101,7 +101,7 @@ static void processKeyStrokeAction(key_action_t *action, uint8_t actionType, ser
     }
 }
 
-static void processSwitchLayerAction(key_action_t *action, serialized_buffer_t *buffer) {
+static void parseSwitchLayerAction(key_action_t *action, serialized_buffer_t *buffer) {
     uint8_t layer = readUInt8(buffer) + 1;
     bool isToggle = readBool(buffer);
 
@@ -110,7 +110,7 @@ static void processSwitchLayerAction(key_action_t *action, serialized_buffer_t *
     action->switchLayer.isToggle = isToggle;
 }
 
-static void processSwitchKeymapAction(key_action_t *action, serialized_buffer_t *buffer) {
+static void parseSwitchKeymapAction(key_action_t *action, serialized_buffer_t *buffer) {
 //    uint16_t len;
 //    const char *keymap = readString(buffer, &len);
 
@@ -119,7 +119,7 @@ static void processSwitchKeymapAction(key_action_t *action, serialized_buffer_t 
     // TODO: Implement this
 }
 
-static void processMouseAction(key_action_t *action, serialized_buffer_t *buffer) {
+static void parseMouseAction(key_action_t *action, serialized_buffer_t *buffer) {
     uint8_t mouseAction = readUInt8(buffer);
 
     action->type = KEY_ACTION_MOUSE;
@@ -166,42 +166,42 @@ static void processMouseAction(key_action_t *action, serialized_buffer_t *buffer
     }
 }
 
-static void processKeyAction(key_action_t *action, serialized_buffer_t *buffer) {
+static void parseKeyAction(key_action_t *action, serialized_buffer_t *buffer) {
     uint8_t actionType = readUInt8(buffer);
 
     switch (actionType) {
     case NoneAction:
-        return processNoneAction(action, buffer);
+        return parseNoneAction(action, buffer);
     case KeyStrokeAction ... LastKeyStrokeAction:
-        return processKeyStrokeAction(action, actionType, buffer);
+        return parseKeyStrokeAction(action, actionType, buffer);
     case SwitchLayerAction:
-        return processSwitchLayerAction(action, buffer);
+        return parseSwitchLayerAction(action, buffer);
     case SwitchKeymapAction:
-        return processSwitchKeymapAction(action, buffer);
+        return parseSwitchKeymapAction(action, buffer);
     case MouseAction:
-        return processMouseAction(action, buffer);
+        return parseMouseAction(action, buffer);
     default:
         // TODO: Handle the case where the actionType is unknown
         break;
     }
 }
 
-static void processKeyActions(uint8_t targetLayer, serialized_buffer_t *buffer, uint8_t moduleID, uint8_t pointerRole) {
+static void parseKeyActions(uint8_t targetLayer, serialized_buffer_t *buffer, uint8_t moduleID, uint8_t pointerRole) {
     uint8_t actionCount = readCompactLength(buffer);
 
     for (uint8_t actionIdx = 0; actionIdx < actionCount; actionIdx++) {
         key_action_t *action = &(CurrentKeymap[targetLayer][moduleID][actionIdx]);
-        processKeyAction(action, buffer);
+        parseKeyAction(action, buffer);
     }
 }
 
-static void processModule(serialized_buffer_t *buffer, uint8_t targetLayer) {
+static void parseModule(serialized_buffer_t *buffer, uint8_t targetLayer) {
     uint8_t moduleID, pointerRole;
 
     moduleID = readUInt8(buffer);
     pointerRole = readUInt8(buffer);
 
-    processKeyActions(targetLayer, buffer, moduleID, pointerRole);
+    parseKeyActions(targetLayer, buffer, moduleID, pointerRole);
 }
 
 static void clearModule(uint8_t targetLayer, uint8_t moduleID) {
@@ -210,7 +210,7 @@ static void clearModule(uint8_t targetLayer, uint8_t moduleID) {
 
 // ----------
 
-void deserialize_Layer (const uint8_t *data, uint8_t targetLayer) {
+void ParseLayer(const uint8_t *data, uint8_t targetLayer) {
     serialized_buffer_t buffer;
 
     buffer.buffer = data;
@@ -220,6 +220,6 @@ void deserialize_Layer (const uint8_t *data, uint8_t targetLayer) {
 
     for (uint8_t modIdx = 0; modIdx < moduleCount; modIdx++) {
         clearModule(targetLayer, modIdx);
-        processModule(&buffer, targetLayer);
+        parseModule(&buffer, targetLayer);
     }
 }
