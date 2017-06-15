@@ -164,11 +164,8 @@ static void parseKeyActions(uint8_t targetLayer, serialized_buffer_t *buffer, ui
 }
 
 static void parseModule(serialized_buffer_t *buffer, uint8_t targetLayer) {
-    uint8_t moduleID, pointerRole;
-
-    moduleID = readUInt8(buffer);
-    pointerRole = readUInt8(buffer);
-
+    uint8_t moduleID = readUInt8(buffer);
+    uint8_t pointerRole = readUInt8(buffer);
     parseKeyActions(targetLayer, buffer, moduleID, pointerRole);
 }
 
