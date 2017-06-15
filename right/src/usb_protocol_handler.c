@@ -5,7 +5,7 @@
 #include "led_driver.h"
 #include "peripherals/merge_sensor.h"
 #include "config/parse_keymap.h"
-#include "config/config_buffer.h"
+#include "config/config_state.h"
 #include "led_pwm.h"
 #include "slave_scheduler.h"
 #include "slave_drivers/slave_driver_uhk_module.h"
