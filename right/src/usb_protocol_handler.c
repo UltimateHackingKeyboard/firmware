@@ -4,7 +4,7 @@
 #include "i2c_addresses.h"
 #include "led_driver.h"
 #include "peripherals/merge_sensor.h"
-#include "deserialize.h"
+#include "config_parser/deserialize.h"
 #include "config_buffer.h"
 #include "led_pwm.h"
 #include "slave_scheduler.h"

@@ -3,7 +3,7 @@
 #include "init_peripherals.h"
 #include "usb_composite_device.h"
 #include "led_driver.h"
-#include "deserialize.h"
+#include "config_parser/deserialize.h"
 #include "action.h"
 #include "slave_scheduler.h"
 #include "peripherals/test_led.h"
