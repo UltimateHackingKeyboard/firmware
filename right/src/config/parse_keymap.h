@@ -16,13 +16,6 @@
 // Typedefs:
 
     typedef enum {
-        SerializedKeystrokeType_Basic,
-        SerializedKeystrokeType_ShortMedia,
-        SerializedKeystrokeType_LongMedia,
-        SerializedKeystrokeType_System,
-    } serialized_keystroke_type_t;
-
-    typedef enum {
         SerializedKeyActionType_None = 0,
         SerializedKeyActionType_KeyStroke = 1,
         SerializedKeyActionType_LastKeyStroke = 31,
@@ -31,6 +24,29 @@
         SerializedKeyActionType_Mouse,
         SerializedKeyActionType_PlayMacro
     } serialized_key_action_type_t;
+
+    typedef enum {
+        SerializedKeystrokeType_Basic,
+        SerializedKeystrokeType_ShortMedia,
+        SerializedKeystrokeType_LongMedia,
+        SerializedKeystrokeType_System,
+    } serialized_keystroke_type_t;
+
+    typedef enum {
+        SerializedMouseAction_LeftClick,
+        SerializedMouseAction_MiddleClick,
+        SerializedMouseAction_RightClick,
+        SerializedMouseAction_MoveUp,
+        SerializedMouseAction_MoveDown,
+        SerializedMouseAction_MoveLeft,
+        SerializedMouseAction_MoveRight,
+        SerializedMouseAction_ScrollUp,
+        SerializedMouseAction_ScrollDown,
+        SerializedMouseAction_ScrollLeft,
+        SerializedMouseAction_ScrollRight,
+        SerializedMouseAction_Accelerate,
+        SerializedMouseAction_Decelerate,
+    } serialized_mouse_action_t;
 
     typedef struct {
         uint8_t *buffer;

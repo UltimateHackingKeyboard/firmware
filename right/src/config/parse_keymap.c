@@ -90,43 +90,43 @@ static void parseMouseAction(key_action_t *keyAction, serialized_buffer_t *buffe
 
     keyAction->type = KeyActionType_Mouse;
     switch (mouseAction) {
-    case 0: // leftClick
+    case SerializedMouseAction_LeftClick:
         keyAction->mouse.buttonActions |= MouseButton_Left;
         break;
-    case 1: // middleClick
+    case SerializedMouseAction_MiddleClick:
         keyAction->mouse.buttonActions |= MouseButton_Middle;
         break;
-    case 2: // rightClick
+    case SerializedMouseAction_RightClick:
         keyAction->mouse.buttonActions |= MouseButton_Right;
         break;
-    case 3: // moveUp
+    case SerializedMouseAction_MoveUp:
         keyAction->mouse.moveActions |= MouseMove_Up;
         break;
-    case 4: // moveDown
+    case SerializedMouseAction_MoveDown:
         keyAction->mouse.moveActions |= MouseMove_Down;
         break;
-    case 5: // moveLeft
+    case SerializedMouseAction_MoveLeft:
         keyAction->mouse.moveActions |= MouseMove_Left;
         break;
-    case 6: // moveRight
+    case SerializedMouseAction_MoveRight:
         keyAction->mouse.moveActions |= MouseMove_Right;
         break;
-    case 7: // scrollUp
+    case SerializedMouseAction_ScrollUp:
         keyAction->mouse.scrollActions |= MouseScroll_Up;
         break;
-    case 8: // scrollDown
+    case SerializedMouseAction_ScrollDown:
         keyAction->mouse.scrollActions |= MouseScroll_Down;
         break;
-    case 9: // scrollLeft
+    case SerializedMouseAction_ScrollLeft:
         keyAction->mouse.scrollActions |= MouseScroll_Left;
         break;
-    case 10: // scrollRight
+    case SerializedMouseAction_ScrollRight:
         keyAction->mouse.scrollActions |= MouseScroll_Right;
         break;
-    case 11: // accelerate
+    case SerializedMouseAction_Accelerate:
         keyAction->mouse.moveActions |= MouseMove_Accelerate;
         break;
-    case 12: // decelerate
+    case SerializedMouseAction_Decelerate:
         keyAction->mouse.moveActions |= MouseMove_Decelerate;
         break;
     }
