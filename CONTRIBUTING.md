@@ -14,9 +14,11 @@ Extern functions and variables are written with UpperCamelCase, non-extern funct
 
 Function names are composed of a verb followed by a noun.
 
+Non-extern functions must be declared as static.
+
 ```
 DoThisExtern();
-doThisNonExtern();
+static doThisNonExtern();
 uint8 ExternVariable;
 uint8 nonExternVariable;
 ```
@@ -70,7 +72,7 @@ while (condition) {
 ## Function declaration
 
 ```
-void do_this()
+void doThis()
 {
     ...
 }
@@ -123,4 +125,4 @@ Header files are composed of sections. The order of sections is fixed. Every hea
 
 ## Semantics
 
-The build process must not yield any warnings.
+The build process must not yield any warnings, and the build must pass [on Travis](https://travis-ci.org/UltimateHackingKeyboard/firmware).
