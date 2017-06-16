@@ -5,7 +5,22 @@ PATH=$PATH:/usr/local/bin # This should make node and npm accessible on OSX.
 firmware_image=`pwd`/$1
 usb_dir=../../../lib/agent/usb
 usb_binding=$usb_dir/node_modules/usb/build/Release/usb_bindings.node
-blhost="../../../lib/bootloader/bin/Tools/blhost/linux/amd64/blhost --usb 0x1d50,0x6120"
+
+case "$(uname -s)" in
+
+   Linux)
+     blhost_path=linux/amd64
+     ;;
+   Darwin)
+     blhost_path=mac
+     ;;
+   *)
+     echo 'Your operating system is not supported.'
+     exit 1
+     ;;
+esac
+
+blhost="../../../lib/bootloader/bin/Tools/blhost/$blhost_path/blhost --usb 0x1d50,0x6120"
 
 set -x # echo on
 
