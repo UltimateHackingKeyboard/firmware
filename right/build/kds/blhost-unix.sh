@@ -7,7 +7,6 @@ usb_dir=../../../lib/agent/usb
 usb_binding=$usb_dir/node_modules/usb/build/Release/usb_bindings.node
 
 case "$(uname -s)" in
-
    Linux)
      blhost_path=linux/amd64
      ;;
