@@ -1,6 +1,7 @@
 #!/bin/sh
 set -e # fail the script if a command fails
 
+PATH=$PATH:/usr/local/bin # This should make node and npm accessible on OSX.
 firmware_image=`pwd`/$1
 usb_dir=../../../lib/agent/usb
 usb_binding=$usb_dir/node_modules/usb/build/Release/usb_bindings.node
