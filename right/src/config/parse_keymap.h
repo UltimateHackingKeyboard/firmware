@@ -33,12 +33,12 @@
     } serialized_key_action_type_t;
 
     typedef struct {
-        const uint8_t *buffer;
+        uint8_t *buffer;
         uint16_t offset;
     } serialized_buffer_t;
 
 // Functions:
 
-    void ParseLayer(const uint8_t *data, uint8_t targetLayer);
+    void ParseLayer(uint8_t *data, uint8_t layer);
 
 #endif

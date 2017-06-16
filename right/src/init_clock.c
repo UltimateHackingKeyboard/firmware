@@ -87,7 +87,7 @@ static void CLOCK_CONFIG_SetFllExtRefDiv(uint8_t frdiv)
     MCG->C1 = ((MCG->C1 & ~MCG_C1_FRDIV_MASK) | MCG_C1_FRDIV(frdiv));
 }
 
-const mcg_config_t mcgConfig_BOARD_BootClockRUN =
+mcg_config_t mcgConfig_BOARD_BootClockRUN =
     {
         .mcgMode = kMCG_ModePEE,                  // PEE - PLL Engaged External
         .irclkEnableMode = kMCG_IrclkEnable,      // MCGIRCLK enabled, MCGIRCLK disabled in STOP mode
@@ -105,7 +105,7 @@ const mcg_config_t mcgConfig_BOARD_BootClockRUN =
             },
     };
 
-const sim_clock_config_t simConfig_BOARD_BootClockRUN =
+sim_clock_config_t simConfig_BOARD_BootClockRUN =
     {
         .pllFllSel = SIM_PLLFLLSEL_MCGPLLCLK_CLK, // PLLFLL select: MCGPLLCLK clock
         .er32kSrc = SIM_OSC32KSEL_RTC32KCLK_CLK,  // OSC32KSEL select: RTC32KCLK clock (32.768kHz)
