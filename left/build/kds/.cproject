@@ -633,25 +633,31 @@
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
 	<storageModule moduleId="refreshScope" versionNumber="2">
-		<configuration configurationName="v7-release-srec"/>
+		<configuration configurationName="uhk-left-release-srec"/>
 		<configuration configurationName="Multiple configurations">
 			<resource resourceType="PROJECT" workspacePath="/uhk-left"/>
 		</configuration>
-		<configuration configurationName="v6-debug"/>
 		<configuration configurationName="v7-release">
 			<resource resourceType="PROJECT" workspacePath="/uhk-left"/>
 		</configuration>
-		<configuration configurationName="v7-debug-srec">
+		<configuration configurationName="uhk-left-debug">
 			<resource resourceType="PROJECT" workspacePath="/uhk-left"/>
 		</configuration>
 		<configuration configurationName="debug">
 			<resource resourceType="PROJECT" workspacePath="/uhk-left"/>
 		</configuration>
+		<configuration configurationName="v7-release-srec"/>
+		<configuration configurationName="v6-debug"/>
+		<configuration configurationName="uhk-left-debug-srec"/>
+		<configuration configurationName="v7-debug-srec">
+			<resource resourceType="PROJECT" workspacePath="/uhk-left"/>
+		</configuration>
+		<configuration configurationName="v7-debug"/>
 		<configuration configurationName="release">
 			<resource resourceType="PROJECT" workspacePath="/uhk-left"/>
 		</configuration>
 		<configuration configurationName="v6-release"/>
-		<configuration configurationName="v7-debug"/>
+		<configuration configurationName="uhk-left-release"/>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
 	<storageModule moduleId="scannerConfiguration">
