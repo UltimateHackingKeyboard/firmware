@@ -55,6 +55,6 @@
 
 // Functions:
 
-    void ParseLayer(uint8_t *data, uint8_t layer);
+    void ParseKeymap(uint8_t *data);
 
 #endif

@@ -25,7 +25,6 @@ static uint16_t readCompactLength(serialized_buffer_t *buffer) {
     return length;
 }
 
-/*
 static const char *readString(serialized_buffer_t *buffer, uint16_t *len) {
     const char *str = (const char *)&(buffer->buffer[buffer->offset]);
 
@@ -34,7 +33,6 @@ static const char *readString(serialized_buffer_t *buffer, uint16_t *len) {
 
     return str;
 }
-*/
 
 static void parseNoneAction(key_action_t *keyAction, serialized_buffer_t *buffer) {
     keyAction->type = KeyActionType_None;
@@ -171,15 +169,32 @@ static void clearModule(uint8_t layer, uint8_t moduleId) {
     memset(&CurrentKeymap[layer][moduleId], 0, MAX_KEY_COUNT_PER_MODULE * sizeof(key_action_t));
 }
 
-void ParseLayer(uint8_t *data, uint8_t layer) {
-    serialized_buffer_t buffer;
-    buffer.buffer = data;
-    buffer.offset = 0;
-
-    uint8_t moduleCount = readCompactLength(&buffer);
+void parseLayer(serialized_buffer_t *buffer, uint8_t layer) {
+    uint8_t moduleCount = readCompactLength(buffer);
 
     for (uint8_t moduleIdx = 0; moduleIdx < moduleCount; moduleIdx++) {
         clearModule(layer, moduleIdx);
-        parseModule(&buffer, layer);
+        parseModule(buffer, layer);
     }
 }
+
+void ParseKeymap(uint8_t *data) {
+    serialized_buffer_t *buffer = &(serialized_buffer_t){ data, 0 };
+    uint16_t abbreviationLen;
+    uint16_t nameLen;
+    uint16_t descriptionLen;
+    const char *abbreviation = readString(buffer, &abbreviationLen);
+    bool isDefault = readBool(buffer);
+    const char *name = readString(buffer, &nameLen);
+    const char *description = readString(buffer, &descriptionLen);
+    uint8_t layerCount = readCompactLength(buffer);
+
+    (void)abbreviation;
+    (void)isDefault;
+    (void)name;
+    (void)description;
+    for (uint8_t layerIdx = 0; layerIdx < layerCount; layerIdx++) {
+        parseLayer(buffer, layerIdx);
+    }
+}
+

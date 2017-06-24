@@ -193,7 +193,7 @@ void uploadConfig()
 
 void applyConfig()
 {
-    ParseLayer(ConfigBuffer, 0);
+    ParseKeymap(ConfigBuffer);
 }
 
 void setLedPwm()
