@@ -169,7 +169,7 @@ static void clearModule(uint8_t layer, uint8_t moduleId) {
     memset(&CurrentKeymap[layer][moduleId], 0, MAX_KEY_COUNT_PER_MODULE * sizeof(key_action_t));
 }
 
-void parseLayer(serialized_buffer_t *buffer, uint8_t layer) {
+static void parseLayer(serialized_buffer_t *buffer, uint8_t layer) {
     uint8_t moduleCount = readCompactLength(buffer);
 
     for (uint8_t moduleIdx = 0; moduleIdx < moduleCount; moduleIdx++) {
