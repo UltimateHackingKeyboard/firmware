@@ -4,6 +4,7 @@
 // Includes:
 
     #include <stdint.h>
+    #include <stdbool.h>
 
 // Macros:
 
@@ -55,6 +56,6 @@
 
 // Functions:
 
-    void ParseKeymap(uint8_t *data);
+    bool ParseKeymap(uint8_t *data);
 
 #endif
