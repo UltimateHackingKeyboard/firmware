@@ -193,8 +193,7 @@ static bool parseLayer(serialized_buffer_t *buffer, uint8_t layer) {
     return false;
 }
 
-bool ParseKeymap(uint8_t *data) {
-    serialized_buffer_t *buffer = &(serialized_buffer_t){ data, 0 };
+bool ParseKeymap(serialized_buffer_t *buffer) {;
     uint16_t abbreviationLen;
     uint16_t nameLen;
     uint16_t descriptionLen;

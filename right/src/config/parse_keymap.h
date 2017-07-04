@@ -56,6 +56,6 @@
 
 // Functions:
 
-    bool ParseKeymap(uint8_t *data);
+    bool ParseKeymap(serialized_buffer_t *buffer);
 
 #endif
