@@ -4,6 +4,13 @@
 
 #define longCompactLengthPrefix 0xff
 
+enum {
+    ParserError_Success,
+    ParserError_InvalidSerializedKeystrokeType,
+    ParserError_InvalidSerializedMouseAction,
+    ParserError_InvalidSerializedKeyActionType,
+};
+
 static uint8_t readUInt8(serialized_buffer_t *buffer) {
     return buffer->buffer[buffer->offset++];
 }
@@ -34,12 +41,12 @@ static const char *readString(serialized_buffer_t *buffer, uint16_t *len) {
     return str;
 }
 
-static bool parseNoneAction(key_action_t *keyAction, serialized_buffer_t *buffer) {
+static uint8_t parseNoneAction(key_action_t *keyAction, serialized_buffer_t *buffer) {
     keyAction->type = KeyActionType_None;
-    return false;
+    return ParserError_Success;
 }
 
-static bool parseKeyStrokeAction(key_action_t *keyAction, uint8_t keyStrokeAction, serialized_buffer_t *buffer) {
+static uint8_t parseKeyStrokeAction(key_action_t *keyAction, uint8_t keyStrokeAction, serialized_buffer_t *buffer) {
     keyAction->type = KeyActionType_Keystroke;
 
     uint8_t keystrokeType = (SERIALIZED_KEYSTROKE_TYPE_MASK_KEYSTROKE_TYPE & keyStrokeAction) >> SERIALIZED_KEYSTROKE_TYPE_OFFSET_KEYSTROKE_TYPE;
@@ -55,7 +62,7 @@ static bool parseKeyStrokeAction(key_action_t *keyAction, uint8_t keyStrokeActio
             keyAction->keystroke.keystrokeType = KeystrokeType_System;
             break;
         default:
-            return true;
+            return ParserError_InvalidSerializedKeystrokeType;
     }
     if (keyStrokeAction & SERIALIZED_KEYSTROKE_TYPE_MASK_HAS_SCANCODE) {
         keyAction->keystroke.scancode = keystrokeType == SerializedKeystrokeType_LongMedia ? readUInt16(buffer) : readUInt8(buffer);
@@ -66,30 +73,30 @@ static bool parseKeyStrokeAction(key_action_t *keyAction, uint8_t keyStrokeActio
     if (keyStrokeAction & SERIALIZED_KEYSTROKE_TYPE_MASK_HAS_LONGPRESS) {
         keyAction->keystroke.longPressAction = readUInt8(buffer);
     }
-    return false;
+    return ParserError_Success;
 }
 
-static bool parseSwitchLayerAction(key_action_t *KeyAction, serialized_buffer_t *buffer) {
+static uint8_t parseSwitchLayerAction(key_action_t *KeyAction, serialized_buffer_t *buffer) {
     uint8_t layer = readUInt8(buffer) + 1;
     bool isToggle = readBool(buffer);
 
     KeyAction->type = KeyActionType_SwitchLayer;
     KeyAction->switchLayer.layer = layer;
     KeyAction->switchLayer.isToggle = isToggle;
-    return false;
+    return ParserError_Success;
 }
 
-static bool parseSwitchKeymapAction(key_action_t *keyAction, serialized_buffer_t *buffer) {
+static uint8_t parseSwitchKeymapAction(key_action_t *keyAction, serialized_buffer_t *buffer) {
 //    uint16_t len;
 //    const char *keymap = readString(buffer, &len);
 
     keyAction->type = KeyActionType_SwitchKeymap;
 
     // TODO: Implement this
-    return false;
+    return ParserError_Success;
 }
 
-static bool parseMouseAction(key_action_t *keyAction, serialized_buffer_t *buffer) {
+static uint8_t parseMouseAction(key_action_t *keyAction, serialized_buffer_t *buffer) {
     uint8_t mouseAction = readUInt8(buffer);
 
     keyAction->type = KeyActionType_Mouse;
@@ -134,12 +141,12 @@ static bool parseMouseAction(key_action_t *keyAction, serialized_buffer_t *buffe
         keyAction->mouse.moveActions |= MouseMove_Decelerate;
         break;
     default:
-        return true;
+        return ParserError_InvalidSerializedMouseAction;
     }
-    return false;
+    return ParserError_Success;
 }
 
-static bool parseKeyAction(key_action_t *keyAction, serialized_buffer_t *buffer) {
+static uint8_t parseKeyAction(key_action_t *keyAction, serialized_buffer_t *buffer) {
     uint8_t keyActionType = readUInt8(buffer);
 
     switch (keyActionType) {
@@ -154,24 +161,26 @@ static bool parseKeyAction(key_action_t *keyAction, serialized_buffer_t *buffer)
     case SerializedKeyActionType_Mouse:
         return parseMouseAction(keyAction, buffer);
     default:
-        return true;
+        return ParserError_InvalidSerializedKeyActionType;
     }
-    return false;
+    return ParserError_Success;
 }
 
-static bool parseKeyActions(uint8_t targetLayer, serialized_buffer_t *buffer, uint8_t moduleId, uint8_t pointerRole) {
+static uint8_t parseKeyActions(uint8_t targetLayer, serialized_buffer_t *buffer, uint8_t moduleId, uint8_t pointerRole) {
+    uint8_t errorCode;
     uint8_t actionCount = readCompactLength(buffer);
 
     for (uint8_t actionIdx = 0; actionIdx < actionCount; actionIdx++) {
         key_action_t *keyAction = &(CurrentKeymap[targetLayer][moduleId][actionIdx]);
-        if (parseKeyAction(keyAction, buffer)) {
-            return true;
+        errorCode = parseKeyAction(keyAction, buffer);
+        if (errorCode != ParserError_Success) {
+            return errorCode;
         }
     }
-    return false;
+    return ParserError_Success;
 }
 
-static bool parseModule(serialized_buffer_t *buffer, uint8_t layer) {
+static uint8_t parseModule(serialized_buffer_t *buffer, uint8_t layer) {
     uint8_t moduleId = readUInt8(buffer);
     uint8_t pointerRole = readUInt8(buffer);
     return parseKeyActions(layer, buffer, moduleId, pointerRole);
@@ -181,19 +190,22 @@ static void clearModule(uint8_t layer, uint8_t moduleId) {
     memset(&CurrentKeymap[layer][moduleId], 0, MAX_KEY_COUNT_PER_MODULE * sizeof(key_action_t));
 }
 
-static bool parseLayer(serialized_buffer_t *buffer, uint8_t layer) {
+static uint8_t parseLayer(serialized_buffer_t *buffer, uint8_t layer) {
+    uint8_t errorCode;
     uint8_t moduleCount = readCompactLength(buffer);
 
     for (uint8_t moduleIdx = 0; moduleIdx < moduleCount; moduleIdx++) {
         clearModule(layer, moduleIdx);
-        if (parseModule(buffer, layer)) {
-            return true;
+        errorCode = parseModule(buffer, layer);
+        if (errorCode != ParserError_Success) {
+            return errorCode;
         }
     }
-    return false;
+    return ParserError_Success;
 }
 
-bool ParseKeymap(serialized_buffer_t *buffer) {;
+uint8_t ParseKeymap(serialized_buffer_t *buffer) {;
+    uint8_t errorCode;
     uint16_t abbreviationLen;
     uint16_t nameLen;
     uint16_t descriptionLen;
@@ -208,10 +220,11 @@ bool ParseKeymap(serialized_buffer_t *buffer) {;
     (void)name;
     (void)description;
     for (uint8_t layerIdx = 0; layerIdx < layerCount; layerIdx++) {
-        if (parseLayer(buffer, layerIdx)) {
-            return true;
+        errorCode = parseLayer(buffer, layerIdx);
+        if (errorCode != ParserError_Success) {
+            return errorCode;
         }
     }
-    return false;
+    return ParserError_Success;
 }
 
