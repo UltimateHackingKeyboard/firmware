@@ -193,7 +193,11 @@ void uploadConfig()
 
 void applyConfig()
 {
-    ParseLayer(ConfigBuffer, 0);
+    serialized_buffer_t buffer = { ConfigBuffer, 0 };
+
+    GenericHidOutBuffer[0] = ParseKeymap(&buffer);
+    GenericHidOutBuffer[1] = buffer.offset;
+    GenericHidOutBuffer[2] = buffer.offset >> 8;
 }
 
 void setLedPwm()
