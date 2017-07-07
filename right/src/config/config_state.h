@@ -12,6 +12,5 @@
 // Variables:
 
     extern uint8_t ConfigBuffer[EEPROM_SIZE];
-    extern uint8_t *ConfigPtr;
 
 #endif
