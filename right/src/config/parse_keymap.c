@@ -9,6 +9,9 @@ enum {
     ParserError_InvalidSerializedKeystrokeType,
     ParserError_InvalidSerializedMouseAction,
     ParserError_InvalidSerializedKeyActionType,
+    ParserError_InvalidLayerCount,
+    ParserError_InvalidModuleCount,
+    ParserError_InvalidActionCount,
 };
 
 static uint8_t readUInt8(serialized_buffer_t *buffer) {
@@ -170,6 +173,9 @@ static uint8_t parseKeyActions(uint8_t targetLayer, serialized_buffer_t *buffer,
     uint8_t errorCode;
     uint8_t actionCount = readCompactLength(buffer);
 
+    if (actionCount > MAX_KEY_COUNT_PER_MODULE) {
+        return ParserError_InvalidActionCount;
+    }
     for (uint8_t actionIdx = 0; actionIdx < actionCount; actionIdx++) {
         key_action_t *keyAction = &(CurrentKeymap[targetLayer][moduleId][actionIdx]);
         errorCode = parseKeyAction(keyAction, buffer);
@@ -194,6 +200,9 @@ static uint8_t parseLayer(serialized_buffer_t *buffer, uint8_t layer) {
     uint8_t errorCode;
     uint8_t moduleCount = readCompactLength(buffer);
 
+    if (moduleCount > SLOT_COUNT) {
+        return ParserError_InvalidModuleCount;
+    }
     for (uint8_t moduleIdx = 0; moduleIdx < moduleCount; moduleIdx++) {
         clearModule(layer, moduleIdx);
         errorCode = parseModule(buffer, layer);
@@ -219,6 +228,9 @@ uint8_t ParseKeymap(serialized_buffer_t *buffer) {;
     (void)isDefault;
     (void)name;
     (void)description;
+    if (layerCount != LAYER_COUNT) {
+        return ParserError_InvalidLayerCount;
+    }
     for (uint8_t layerIdx = 0; layerIdx < layerCount; layerIdx++) {
         errorCode = parseLayer(buffer, layerIdx);
         if (errorCode != ParserError_Success) {
