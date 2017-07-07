@@ -90,11 +90,11 @@ static uint8_t parseSwitchLayerAction(key_action_t *KeyAction, serialized_buffer
 }
 
 static uint8_t parseSwitchKeymapAction(key_action_t *keyAction, serialized_buffer_t *buffer) {
-//    uint16_t len;
-//    const char *keymap = readString(buffer, &len);
+    uint16_t keymapAbbreviationLen;
+    const char *keymapAbbreviation = readString(buffer, &keymapAbbreviationLen);
 
+    (void)keymapAbbreviation;
     keyAction->type = KeyActionType_SwitchKeymap;
-
     // TODO: Implement this
     return ParserError_Success;
 }
