@@ -54,8 +54,18 @@
         uint16_t offset;
     } serialized_buffer_t;
 
+    typedef enum {
+        ParserError_Success,
+        ParserError_InvalidSerializedKeystrokeType,
+        ParserError_InvalidSerializedMouseAction,
+        ParserError_InvalidSerializedKeyActionType,
+        ParserError_InvalidLayerCount,
+        ParserError_InvalidModuleCount,
+        ParserError_InvalidActionCount,
+    } parser_error_t;
+
 // Functions:
 
-    uint8_t ParseKeymap(serialized_buffer_t *buffer);
+    parser_error_t ParseKeymap(serialized_buffer_t *buffer);
 
 #endif
