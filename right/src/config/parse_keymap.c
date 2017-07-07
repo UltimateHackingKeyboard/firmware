@@ -2,39 +2,7 @@
 #include "key_action.h"
 #include "current_keymap.h"
 
-#define longCompactLengthPrefix 0xff
-
 static bool isDryRun;
-
-static uint8_t readUInt8(serialized_buffer_t *buffer) {
-    return buffer->buffer[buffer->offset++];
-}
-
-static uint16_t readUInt16(serialized_buffer_t *buffer) {
-    uint8_t firstByte = buffer->buffer[buffer->offset++];
-    return firstByte + (buffer->buffer[buffer->offset++] << 8);
-}
-
-static bool readBool(serialized_buffer_t *buffer) {
-    return buffer->buffer[buffer->offset++] == 1;
-}
-
-static uint16_t readCompactLength(serialized_buffer_t *buffer) {
-    uint16_t length = readUInt8(buffer);
-    if (length == longCompactLengthPrefix) {
-        length = readUInt16(buffer);
-    }
-    return length;
-}
-
-static const char *readString(serialized_buffer_t *buffer, uint16_t *len) {
-    const char *str = (const char *)&(buffer->buffer[buffer->offset]);
-
-    *len = readCompactLength(buffer);
-    buffer->offset += *len;
-
-    return str;
-}
 
 static parser_error_t parseNoneAction(key_action_t *keyAction, serialized_buffer_t *buffer) {
     keyAction->type = KeyActionType_None;
