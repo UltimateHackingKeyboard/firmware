@@ -74,7 +74,8 @@ void processMouseAction(key_action_t action)
     wasPreviousMouseActionWheelAction = isWheelAction;
 }
 
-void processTestAction(key_action_t testAction) {
+void processTestAction(key_action_t testAction)
+{
     switch (testAction.test.testAction) {
     case TestAction_DisableUsb:
         if (kStatus_USB_Success != USB_DeviceClassDeinit(CONTROLLER_ID)) {
@@ -107,8 +108,8 @@ void processTestAction(key_action_t testAction) {
     }
 }
 
-void UpdateActiveUsbReports() {
-
+void UpdateActiveUsbReports()
+{
     bzero(&UsbMouseReport, sizeof(usb_mouse_report_t));
 
     uint8_t basicScancodeIndex = 0;
