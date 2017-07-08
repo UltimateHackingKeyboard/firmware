@@ -10,7 +10,6 @@
 #include "slave_drivers/slave_driver_uhk_module.h"
 #include "led_pwm.h"
 
-static uint8_t activeLayer = LAYER_ID_BASE;
 static uint8_t mouseWheelDivisorCounter = 0;
 static uint8_t mouseSpeedAccelDivisorCounter = 0;
 static uint8_t mouseSpeed = 3;
@@ -108,15 +107,9 @@ void processTestAction(key_action_t testAction)
     }
 }
 
-void UpdateActiveUsbReports()
+uint8_t getActiveLayer()
 {
-    bzero(&UsbMouseReport, sizeof(usb_mouse_report_t));
-
-    uint8_t basicScancodeIndex = 0;
-    uint8_t mediaScancodeIndex = 0;
-    uint8_t systemScancodeIndex = 0;
-
-    activeLayer = LAYER_ID_BASE;
+    uint8_t activeLayer = LAYER_ID_BASE;
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
             if (CurrentKeyStates[slotId][keyId]) {
@@ -127,6 +120,17 @@ void UpdateActiveUsbReports()
             }
         }
     }
+    return activeLayer;
+}
+
+void UpdateActiveUsbReports()
+{
+    bzero(&UsbMouseReport, sizeof(usb_mouse_report_t));
+
+    uint8_t basicScancodeIndex = 0;
+    uint8_t mediaScancodeIndex = 0;
+    uint8_t systemScancodeIndex = 0;
+    uint8_t activeLayer = getActiveLayer();
 
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
