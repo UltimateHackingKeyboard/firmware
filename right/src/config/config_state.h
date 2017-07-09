@@ -12,7 +12,7 @@
 // Typedefs:
 
     typedef struct {
-        uint8_t *buffer;
+        uint8_t *const buffer;
         uint16_t offset;
     } serialized_buffer_t;
 
@@ -28,7 +28,7 @@
 
 // Variables:
 
-    extern uint8_t ConfigBuffer[EEPROM_SIZE];
+    extern serialized_buffer_t ConfigBuffer;
 
 // Functions:
 

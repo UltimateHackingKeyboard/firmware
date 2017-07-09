@@ -188,16 +188,15 @@ void uploadConfig()
         return;
     }
 
-    memcpy(ConfigBuffer+memoryOffset, GenericHidInBuffer+4, byteCount);
+    memcpy(ConfigBuffer.buffer+memoryOffset, GenericHidInBuffer+4, byteCount);
 }
 
 void applyConfig()
 {
-    serialized_buffer_t buffer = { ConfigBuffer, 0 };
-
-    GenericHidOutBuffer[0] = ParseKeymap(&buffer);
-    GenericHidOutBuffer[1] = buffer.offset;
-    GenericHidOutBuffer[2] = buffer.offset >> 8;
+    ConfigBuffer.offset = 0;
+    GenericHidOutBuffer[0] = ParseKeymap(&ConfigBuffer);
+    GenericHidOutBuffer[1] = ConfigBuffer.offset;
+    GenericHidOutBuffer[2] = ConfigBuffer.offset >> 8;
 }
 
 void setLedPwm()
