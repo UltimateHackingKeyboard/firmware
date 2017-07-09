@@ -132,13 +132,13 @@ static parser_error_t parseKeyAction(key_action_t *keyAction, serialized_buffer_
 
 static parser_error_t parseKeyActions(uint8_t targetLayer, serialized_buffer_t *buffer, uint8_t moduleId, uint8_t pointerRole) {
     parser_error_t errorCode;
-    uint8_t actionCount = readCompactLength(buffer);
+    uint16_t actionCount = readCompactLength(buffer);
     key_action_t dummyKeyAction;
 
     if (actionCount > MAX_KEY_COUNT_PER_MODULE) {
         return ParserError_InvalidActionCount;
     }
-    for (uint8_t actionIdx = 0; actionIdx < actionCount; actionIdx++) {
+    for (uint16_t actionIdx = 0; actionIdx < actionCount; actionIdx++) {
         errorCode = parseKeyAction(isDryRun ? &dummyKeyAction : &CurrentKeymap[targetLayer][moduleId][actionIdx], buffer);
         if (errorCode != ParserError_Success) {
             return errorCode;
@@ -155,12 +155,12 @@ static parser_error_t parseModule(serialized_buffer_t *buffer, uint8_t layer) {
 
 static parser_error_t parseLayer(serialized_buffer_t *buffer, uint8_t layer) {
     parser_error_t errorCode;
-    uint8_t moduleCount = readCompactLength(buffer);
+    uint16_t moduleCount = readCompactLength(buffer);
 
     if (moduleCount > SLOT_COUNT) {
         return ParserError_InvalidModuleCount;
     }
-    for (uint8_t moduleIdx = 0; moduleIdx < moduleCount; moduleIdx++) {
+    for (uint16_t moduleIdx = 0; moduleIdx < moduleCount; moduleIdx++) {
         errorCode = parseModule(buffer, layer);
         if (errorCode != ParserError_Success) {
             return errorCode;
@@ -178,7 +178,7 @@ parser_error_t ParseKeymap(serialized_buffer_t *buffer) {;
     bool isDefault = readBool(buffer);
     const char *name = readString(buffer, &nameLen);
     const char *description = readString(buffer, &descriptionLen);
-    uint8_t layerCount = readCompactLength(buffer);
+    uint16_t layerCount = readCompactLength(buffer);
 
     (void)abbreviation;
     (void)name;
@@ -187,7 +187,7 @@ parser_error_t ParseKeymap(serialized_buffer_t *buffer) {;
         return ParserError_InvalidLayerCount;
     }
     isDryRun = !isDefault;
-    for (uint8_t layerIdx = 0; layerIdx < layerCount; layerIdx++) {
+    for (uint16_t layerIdx = 0; layerIdx < layerCount; layerIdx++) {
         errorCode = parseLayer(buffer, layerIdx);
         if (errorCode != ParserError_Success) {
             return errorCode;
