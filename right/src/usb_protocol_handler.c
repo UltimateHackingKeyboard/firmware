@@ -4,7 +4,7 @@
 #include "i2c_addresses.h"
 #include "led_driver.h"
 #include "peripherals/merge_sensor.h"
-#include "config/parse_keymap.h"
+#include "config/parse_config.h"
 #include "config/config_state.h"
 #include "led_pwm.h"
 #include "slave_scheduler.h"
@@ -194,7 +194,7 @@ void uploadConfig()
 void applyConfig()
 {
     ConfigBuffer.offset = 0;
-    GenericHidOutBuffer[0] = ParseKeymap(&ConfigBuffer);
+    GenericHidOutBuffer[0] = ParseConfig(&ConfigBuffer);
     GenericHidOutBuffer[1] = ConfigBuffer.offset;
     GenericHidOutBuffer[2] = ConfigBuffer.offset >> 8;
 }

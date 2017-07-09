@@ -5,7 +5,7 @@
 
     #include <stdint.h>
     #include <stdbool.h>
-    #include "config_state.h"
+    #include "parse_config.h"
 
 // Macros:
 
