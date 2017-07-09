@@ -2,37 +2,7 @@
 #include "key_action.h"
 #include "current_keymap.h"
 
-#define longCompactLengthPrefix 0xff
-
-static uint8_t readUInt8(serialized_buffer_t *buffer) {
-    return buffer->buffer[buffer->offset++];
-}
-
-static uint16_t readUInt16(serialized_buffer_t *buffer) {
-    uint8_t firstByte = buffer->buffer[buffer->offset++];
-    return firstByte + (buffer->buffer[buffer->offset++] << 8);
-}
-
-static bool readBool(serialized_buffer_t *buffer) {
-    return buffer->buffer[buffer->offset++] == 1;
-}
-
-static uint16_t readCompactLength(serialized_buffer_t *buffer) {
-    uint16_t length = readUInt8(buffer);
-    if (length == longCompactLengthPrefix) {
-        length = readUInt16(buffer);
-    }
-    return length;
-}
-
-static const char *readString(serialized_buffer_t *buffer, uint16_t *len) {
-    const char *str = (const char *)&(buffer->buffer[buffer->offset]);
-
-    *len = readCompactLength(buffer);
-    buffer->offset += *len;
-
-    return str;
-}
+static bool isDryRun;
 
 static parser_error_t parseNoneAction(key_action_t *keyAction, serialized_buffer_t *buffer) {
     keyAction->type = KeyActionType_None;
@@ -93,45 +63,46 @@ static parser_error_t parseMouseAction(key_action_t *keyAction, serialized_buffe
     uint8_t mouseAction = readUInt8(buffer);
 
     keyAction->type = KeyActionType_Mouse;
+    memset(&keyAction->mouse, 0, sizeof keyAction->mouse);
     switch (mouseAction) {
     case SerializedMouseAction_LeftClick:
-        keyAction->mouse.buttonActions |= MouseButton_Left;
+        keyAction->mouse.buttonActions = MouseButton_Left;
         break;
     case SerializedMouseAction_MiddleClick:
-        keyAction->mouse.buttonActions |= MouseButton_Middle;
+        keyAction->mouse.buttonActions = MouseButton_Middle;
         break;
     case SerializedMouseAction_RightClick:
-        keyAction->mouse.buttonActions |= MouseButton_Right;
+        keyAction->mouse.buttonActions = MouseButton_Right;
         break;
     case SerializedMouseAction_MoveUp:
-        keyAction->mouse.moveActions |= MouseMove_Up;
+        keyAction->mouse.moveActions = MouseMove_Up;
         break;
     case SerializedMouseAction_MoveDown:
-        keyAction->mouse.moveActions |= MouseMove_Down;
+        keyAction->mouse.moveActions = MouseMove_Down;
         break;
     case SerializedMouseAction_MoveLeft:
-        keyAction->mouse.moveActions |= MouseMove_Left;
+        keyAction->mouse.moveActions = MouseMove_Left;
         break;
     case SerializedMouseAction_MoveRight:
-        keyAction->mouse.moveActions |= MouseMove_Right;
+        keyAction->mouse.moveActions = MouseMove_Right;
         break;
     case SerializedMouseAction_ScrollUp:
-        keyAction->mouse.scrollActions |= MouseScroll_Up;
+        keyAction->mouse.scrollActions = MouseScroll_Up;
         break;
     case SerializedMouseAction_ScrollDown:
-        keyAction->mouse.scrollActions |= MouseScroll_Down;
+        keyAction->mouse.scrollActions = MouseScroll_Down;
         break;
     case SerializedMouseAction_ScrollLeft:
-        keyAction->mouse.scrollActions |= MouseScroll_Left;
+        keyAction->mouse.scrollActions = MouseScroll_Left;
         break;
     case SerializedMouseAction_ScrollRight:
-        keyAction->mouse.scrollActions |= MouseScroll_Right;
+        keyAction->mouse.scrollActions = MouseScroll_Right;
         break;
     case SerializedMouseAction_Accelerate:
-        keyAction->mouse.moveActions |= MouseMove_Accelerate;
+        keyAction->mouse.moveActions = MouseMove_Accelerate;
         break;
     case SerializedMouseAction_Decelerate:
-        keyAction->mouse.moveActions |= MouseMove_Decelerate;
+        keyAction->mouse.moveActions = MouseMove_Decelerate;
         break;
     default:
         return ParserError_InvalidSerializedMouseAction;
@@ -161,14 +132,14 @@ static parser_error_t parseKeyAction(key_action_t *keyAction, serialized_buffer_
 
 static parser_error_t parseKeyActions(uint8_t targetLayer, serialized_buffer_t *buffer, uint8_t moduleId, uint8_t pointerRole) {
     parser_error_t errorCode;
-    uint8_t actionCount = readCompactLength(buffer);
+    uint16_t actionCount = readCompactLength(buffer);
+    key_action_t dummyKeyAction;
 
     if (actionCount > MAX_KEY_COUNT_PER_MODULE) {
         return ParserError_InvalidActionCount;
     }
-    for (uint8_t actionIdx = 0; actionIdx < actionCount; actionIdx++) {
-        key_action_t *keyAction = &(CurrentKeymap[targetLayer][moduleId][actionIdx]);
-        errorCode = parseKeyAction(keyAction, buffer);
+    for (uint16_t actionIdx = 0; actionIdx < actionCount; actionIdx++) {
+        errorCode = parseKeyAction(isDryRun ? &dummyKeyAction : &CurrentKeymap[targetLayer][moduleId][actionIdx], buffer);
         if (errorCode != ParserError_Success) {
             return errorCode;
         }
@@ -182,19 +153,14 @@ static parser_error_t parseModule(serialized_buffer_t *buffer, uint8_t layer) {
     return parseKeyActions(layer, buffer, moduleId, pointerRole);
 }
 
-static void clearModule(uint8_t layer, uint8_t moduleId) {
-    memset(&CurrentKeymap[layer][moduleId], 0, MAX_KEY_COUNT_PER_MODULE * sizeof(key_action_t));
-}
-
 static parser_error_t parseLayer(serialized_buffer_t *buffer, uint8_t layer) {
     parser_error_t errorCode;
-    uint8_t moduleCount = readCompactLength(buffer);
+    uint16_t moduleCount = readCompactLength(buffer);
 
     if (moduleCount > SLOT_COUNT) {
         return ParserError_InvalidModuleCount;
     }
-    for (uint8_t moduleIdx = 0; moduleIdx < moduleCount; moduleIdx++) {
-        clearModule(layer, moduleIdx);
+    for (uint16_t moduleIdx = 0; moduleIdx < moduleCount; moduleIdx++) {
         errorCode = parseModule(buffer, layer);
         if (errorCode != ParserError_Success) {
             return errorCode;
@@ -212,16 +178,16 @@ parser_error_t ParseKeymap(serialized_buffer_t *buffer) {;
     bool isDefault = readBool(buffer);
     const char *name = readString(buffer, &nameLen);
     const char *description = readString(buffer, &descriptionLen);
-    uint8_t layerCount = readCompactLength(buffer);
+    uint16_t layerCount = readCompactLength(buffer);
 
     (void)abbreviation;
-    (void)isDefault;
     (void)name;
     (void)description;
     if (layerCount != LAYER_COUNT) {
         return ParserError_InvalidLayerCount;
     }
-    for (uint8_t layerIdx = 0; layerIdx < layerCount; layerIdx++) {
+    isDryRun = !isDefault;
+    for (uint16_t layerIdx = 0; layerIdx < layerCount; layerIdx++) {
         errorCode = parseLayer(buffer, layerIdx);
         if (errorCode != ParserError_Success) {
             return errorCode;

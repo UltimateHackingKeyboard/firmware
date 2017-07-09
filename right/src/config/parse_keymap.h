@@ -5,6 +5,7 @@
 
     #include <stdint.h>
     #include <stdbool.h>
+    #include "parse_config.h"
 
 // Macros:
 
@@ -48,21 +49,6 @@
         SerializedMouseAction_Accelerate,
         SerializedMouseAction_Decelerate,
     } serialized_mouse_action_t;
-
-    typedef struct {
-        uint8_t *buffer;
-        uint16_t offset;
-    } serialized_buffer_t;
-
-    typedef enum {
-        ParserError_Success,
-        ParserError_InvalidSerializedKeystrokeType,
-        ParserError_InvalidSerializedMouseAction,
-        ParserError_InvalidSerializedKeyActionType,
-        ParserError_InvalidLayerCount,
-        ParserError_InvalidModuleCount,
-        ParserError_InvalidActionCount,
-    } parser_error_t;
 
 // Functions:
 
