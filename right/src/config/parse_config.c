@@ -22,21 +22,21 @@ parser_error_t ParseConfig(serialized_buffer_t *buffer) {
     uint16_t keymapCount;
 
     (void)dataModelVersion;
-    for (uint8_t moduleConfigurationIdx = 0; moduleConfigurationIdx < moduleConfigurationCount; moduleConfigurationIdx++) {
+    for (uint16_t moduleConfigurationIdx = 0; moduleConfigurationIdx < moduleConfigurationCount; moduleConfigurationIdx++) {
         errorCode = parseModuleConfiguration(buffer);
         if (errorCode != ParserError_Success) {
             return errorCode;
         }
     }
     macroCount = readCompactLength(buffer);
-    for (uint8_t macroIdx = 0; macroIdx < macroCount; macroIdx++) {
+    for (uint16_t macroIdx = 0; macroIdx < macroCount; macroIdx++) {
         // errorCode = ParseMacro(buffer);
         // if (errorCode != ParserError_Success) {
         //     return errorCode;
         // }
     }
     keymapCount = readCompactLength(buffer);
-    for (uint8_t keymapIdx = 0; keymapIdx < keymapCount; keymapIdx++) {
+    for (uint16_t keymapIdx = 0; keymapIdx < keymapCount; keymapIdx++) {
         errorCode = ParseKeymap(buffer);
         if (errorCode != ParserError_Success) {
             return errorCode;
