@@ -37,6 +37,10 @@
         uint8_t setupLedControlRegistersCommand[LED_CONTROL_REGISTERS_COMMAND_LENGTH];
     } led_driver_state_t;
 
+// Variables:
+
+    extern led_driver_state_t LedDriverStates[LED_DRIVER_MAX_COUNT];
+
 // Functions:
 
     extern void LedSlaveDriver_Init(uint8_t ledDriverId);
