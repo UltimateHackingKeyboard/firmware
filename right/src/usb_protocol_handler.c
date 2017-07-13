@@ -2,7 +2,7 @@
 #include "system_properties.h"
 #include "peripherals/test_led.h"
 #include "i2c_addresses.h"
-#include "led_driver.h"
+#include "peripherals/led_driver.h"
 #include "peripherals/merge_sensor.h"
 #include "config/parse_config.h"
 #include "config/config_state.h"

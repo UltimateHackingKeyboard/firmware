@@ -4,7 +4,7 @@
 #include "peripherals/reset_button.h"
 #include "i2c.h"
 #include "i2c_watchdog.h"
-#include "led_driver.h"
+#include "peripherals/led_driver.h"
 #include "peripherals/merge_sensor.h"
 #include "led_pwm.h"
 #include "slave_scheduler.h"
@@ -52,6 +52,7 @@ void InitI2c() {
 
 void InitPeripherials(void)
 {
+    InitLedDriver();
     InitResetButton();
     InitMergeSensor();
     ADC_Init();

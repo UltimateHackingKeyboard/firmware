@@ -1,7 +1,7 @@
 #ifndef __LED_DISPLAY_H__
 #define __LED_DISPLAY_H__
 
-    #include "led_driver.h"
+    #include "peripherals/led_driver.h"
 
     extern uint8_t LedDisplayBrightness;
 
