@@ -62,7 +62,7 @@ void UpdateUsbReports()
 }
 
 void main() {
-    InitPeripherials();
+    InitPeripherals();
     InitClock();
 
     if (Wormhole.magicNumber == WORMHOLE_MAGIC_NUMBER && Wormhole.enumerationMode == EnumerationMode_BusPal) {

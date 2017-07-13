@@ -64,7 +64,7 @@ void InitLedDriver(void) {
     GPIO_WritePinOutput(LED_DRIVER_SDB_GPIO, LED_DRIVER_SDB_PIN, 1);
 }
 
-void InitPeripherials(void)
+void InitPeripherals(void)
 {
     InitLedDriver();
     InitTestLed();

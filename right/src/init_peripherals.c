@@ -50,7 +50,7 @@ void InitI2c() {
     I2C_MasterInit(I2C_EEPROM_BUS_BASEADDR, &masterConfig, sourceClock);
 }
 
-void InitPeripherials(void)
+void InitPeripherals(void)
 {
     InitLedDriver();
     InitResetButton();
