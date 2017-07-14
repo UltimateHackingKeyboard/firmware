@@ -1,5 +1,6 @@
 #include "slave_drivers/slave_driver_led_driver.h"
 #include "slave_scheduler.h"
+#include "led_display.h"
 
 led_driver_state_t LedDriverStates[LED_DRIVER_MAX_COUNT] = {
     {
@@ -63,6 +64,7 @@ void LedSlaveDriver_Init(uint8_t ledDriverId) {
     currentLedDriverState->ledIndex = 0;
     LedDriverStates[LedDriverId_Left].setupLedControlRegistersCommand[7] |= 0b00000010; // Enable the LED of the ISO key.
     SetLeds(0xff);
+    LedDisplay_SetText(3, "ABC");
 }
 
 void LedSlaveDriver_Update(uint8_t ledDriverId) {
