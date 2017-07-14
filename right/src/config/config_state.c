@@ -8,27 +8,27 @@ uint8_t readUInt8(serialized_buffer_t *buffer) {
 }
 
 uint16_t readUInt16(serialized_buffer_t *buffer) {
-    uint8_t firstByte = buffer->buffer[buffer->offset++];
-    return firstByte + (buffer->buffer[buffer->offset++] << 8);
+    uint16_t uInt16 = *(uint16_t *)(buffer->buffer + buffer->offset);
+
+    buffer->offset += 2;
+    return uInt16;
 }
 
 bool readBool(serialized_buffer_t *buffer) {
-    return buffer->buffer[buffer->offset++] == 1;
+    return readUInt8(buffer);
 }
 
 uint16_t readCompactLength(serialized_buffer_t *buffer) {
-    uint16_t length = readUInt8(buffer);
-    if (length == 0xFF) {
-        length = readUInt16(buffer);
-    }
-    return length;
+    uint16_t compactLength = readUInt8(buffer);
+
+    return compactLength == 0xFF ? readUInt16(buffer) : compactLength;
 }
 
 const char *readString(serialized_buffer_t *buffer, uint16_t *len) {
-    const char *str = (const char *)&(buffer->buffer[buffer->offset]);
+    const char *string;
 
     *len = readCompactLength(buffer);
+    string = buffer->buffer + buffer->offset;
     buffer->offset += *len;
-
-    return str;
+    return string;
 }
