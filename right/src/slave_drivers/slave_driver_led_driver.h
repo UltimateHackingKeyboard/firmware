@@ -4,7 +4,7 @@
 // Includes:
 
     #include "fsl_common.h"
-    #include "led_driver.h"
+    #include "peripherals/led_driver.h"
 
 // Macros:
 
@@ -36,6 +36,10 @@
         uint8_t i2cAddress;
         uint8_t setupLedControlRegistersCommand[LED_CONTROL_REGISTERS_COMMAND_LENGTH];
     } led_driver_state_t;
+
+// Variables:
+
+    extern led_driver_state_t LedDriverStates[LED_DRIVER_MAX_COUNT];
 
 // Functions:
 

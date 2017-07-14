@@ -2,7 +2,7 @@
 #include "init_clock.h"
 #include "init_peripherals.h"
 #include "usb_composite_device.h"
-#include "led_driver.h"
+#include "peripherals/led_driver.h"
 #include "key_action.h"
 #include "slave_scheduler.h"
 #include "peripherals/test_led.h"
@@ -62,15 +62,14 @@ void UpdateUsbReports()
 }
 
 void main() {
-    InitPeripherials();
     InitClock();
+    InitPeripherals();
 
     if (Wormhole.magicNumber == WORMHOLE_MAGIC_NUMBER && Wormhole.enumerationMode == EnumerationMode_BusPal) {
         Wormhole.magicNumber = 0;
         init_hardware();
         handleUsbBusPalCommand();
     } else {
-        LedDriver_InitAllLeds(1);
         InitSlaveScheduler();
         KeyMatrix_Init(&KeyMatrix);
         UpdateUsbReports();

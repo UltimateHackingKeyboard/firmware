@@ -44,6 +44,6 @@
 
 // Functions:
 
-    extern void LedDriver_InitAllLeds(char isEnabled);
+    extern void InitLedDriver();
 
 #endif

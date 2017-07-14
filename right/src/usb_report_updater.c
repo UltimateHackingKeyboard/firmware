@@ -134,6 +134,7 @@ void UpdateActiveUsbReports()
     static uint8_t previousModifiers = 0;
     uint8_t activeLayer = getActiveLayer();
 
+    LedDisplay_SetLayer(activeLayer);
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
 

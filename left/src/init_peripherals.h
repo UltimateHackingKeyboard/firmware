@@ -10,6 +10,6 @@
 
 // Functions:
 
-    void InitPeripherials(void);
+    void InitPeripherals(void);
 
 #endif

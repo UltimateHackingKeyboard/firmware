@@ -28,7 +28,7 @@ volatile bool DisableKeyMatrixScanState;
 int main(void)
 {
     InitClock();
-    InitPeripherials();
+    InitPeripherals();
     KeyMatrix_Init(&keyMatrix);
 
     while (1) {
