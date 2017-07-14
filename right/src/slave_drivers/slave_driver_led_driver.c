@@ -97,7 +97,7 @@ void LedSlaveDriver_Update(uint8_t ledDriverId) {
             I2cAsyncWrite(ledDriverAddress, updatePwmRegistersBuffer, PWM_REGISTER_BUFFER_LENGTH);
             *ledIndex += PMW_REGISTER_UPDATE_CHUNK_SIZE;
             if (*ledIndex >= LED_DRIVER_LED_COUNT) {
-                ledIndex = 0;
+                *ledIndex = 0;
             }
             break;
     }
