@@ -1,6 +1,7 @@
 #include "config/parse_keymap.h"
 #include "key_action.h"
 #include "current_keymap.h"
+#include "led_display.h"
 
 static bool isDryRun;
 
@@ -180,13 +181,15 @@ parser_error_t ParseKeymap(serialized_buffer_t *buffer) {;
     const char *description = readString(buffer, &descriptionLen);
     uint16_t layerCount = readCompactLength(buffer);
 
-    (void)abbreviation;
     (void)name;
     (void)description;
     if (layerCount != LAYER_COUNT) {
         return ParserError_InvalidLayerCount;
     }
     isDryRun = !isDefault;
+    if (!isDryRun) {
+        LedDisplay_SetText(abbreviationLen, abbreviation);
+    }
     for (uint16_t layerIdx = 0; layerIdx < layerCount; layerIdx++) {
         errorCode = parseLayer(buffer, layerIdx);
         if (errorCode != ParserError_Success) {
