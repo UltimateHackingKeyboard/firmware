@@ -1,7 +1,6 @@
 #include "config_state.h"
 
-static uint8_t config[EEPROM_SIZE];
-serialized_buffer_t ConfigBuffer = { config };
+serialized_buffer_t ConfigBuffer;
 
 uint8_t readUInt8(serialized_buffer_t *buffer) {
     return buffer->buffer[buffer->offset++];

@@ -13,7 +13,7 @@
 // Typedefs:
 
     typedef struct {
-        uint8_t *const buffer;
+        uint8_t const buffer[EEPROM_SIZE];
         uint16_t offset;
     } serialized_buffer_t;
 
