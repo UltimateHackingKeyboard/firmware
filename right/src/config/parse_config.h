@@ -19,6 +19,6 @@
 
 // Functions:
 
-    parser_error_t ParseConfig(serialized_buffer_t *buffer);
+    parser_error_t ParseConfig(config_buffer_t *buffer);
 
 #endif

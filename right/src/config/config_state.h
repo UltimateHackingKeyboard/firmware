@@ -15,18 +15,18 @@
     typedef struct {
         uint8_t const buffer[EEPROM_SIZE];
         uint16_t offset;
-    } serialized_buffer_t;
+    } config_buffer_t;
 
 // Variables:
 
-    extern serialized_buffer_t ConfigBuffer;
+    extern config_buffer_t ConfigBuffer;
 
 // Functions:
 
-    uint8_t readUInt8(serialized_buffer_t *buffer);
-    uint16_t readUInt16(serialized_buffer_t *buffer);
-    bool readBool(serialized_buffer_t *buffer);
-    uint16_t readCompactLength(serialized_buffer_t *buffer);
-    const char *readString(serialized_buffer_t *buffer, uint16_t *len);
+    uint8_t readUInt8(config_buffer_t *buffer);
+    uint16_t readUInt16(config_buffer_t *buffer);
+    bool readBool(config_buffer_t *buffer);
+    uint16_t readCompactLength(config_buffer_t *buffer);
+    const char *readString(config_buffer_t *buffer, uint16_t *len);
 
 #endif

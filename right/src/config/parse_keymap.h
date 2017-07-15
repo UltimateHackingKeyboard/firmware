@@ -52,6 +52,6 @@
 
 // Functions:
 
-    parser_error_t ParseKeymap(serialized_buffer_t *buffer);
+    parser_error_t ParseKeymap(config_buffer_t *buffer);
 
 #endif

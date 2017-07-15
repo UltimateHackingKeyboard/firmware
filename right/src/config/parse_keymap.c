@@ -5,12 +5,12 @@
 
 static bool isDryRun;
 
-static parser_error_t parseNoneAction(key_action_t *keyAction, serialized_buffer_t *buffer) {
+static parser_error_t parseNoneAction(key_action_t *keyAction, config_buffer_t *buffer) {
     keyAction->type = KeyActionType_None;
     return ParserError_Success;
 }
 
-static parser_error_t parseKeyStrokeAction(key_action_t *keyAction, uint8_t keyStrokeAction, serialized_buffer_t *buffer) {
+static parser_error_t parseKeyStrokeAction(key_action_t *keyAction, uint8_t keyStrokeAction, config_buffer_t *buffer) {
     keyAction->type = KeyActionType_Keystroke;
 
     uint8_t keystrokeType = (SERIALIZED_KEYSTROKE_TYPE_MASK_KEYSTROKE_TYPE & keyStrokeAction) >> SERIALIZED_KEYSTROKE_TYPE_OFFSET_KEYSTROKE_TYPE;
@@ -40,7 +40,7 @@ static parser_error_t parseKeyStrokeAction(key_action_t *keyAction, uint8_t keyS
     return ParserError_Success;
 }
 
-static parser_error_t parseSwitchLayerAction(key_action_t *KeyAction, serialized_buffer_t *buffer) {
+static parser_error_t parseSwitchLayerAction(key_action_t *KeyAction, config_buffer_t *buffer) {
     uint8_t layer = readUInt8(buffer) + 1;
     bool isToggle = readBool(buffer);
 
@@ -50,7 +50,7 @@ static parser_error_t parseSwitchLayerAction(key_action_t *KeyAction, serialized
     return ParserError_Success;
 }
 
-static parser_error_t parseSwitchKeymapAction(key_action_t *keyAction, serialized_buffer_t *buffer) {
+static parser_error_t parseSwitchKeymapAction(key_action_t *keyAction, config_buffer_t *buffer) {
     uint16_t keymapAbbreviationLen;
     const char *keymapAbbreviation = readString(buffer, &keymapAbbreviationLen);
 
@@ -60,7 +60,7 @@ static parser_error_t parseSwitchKeymapAction(key_action_t *keyAction, serialize
     return ParserError_Success;
 }
 
-static parser_error_t parseMouseAction(key_action_t *keyAction, serialized_buffer_t *buffer) {
+static parser_error_t parseMouseAction(key_action_t *keyAction, config_buffer_t *buffer) {
     uint8_t mouseAction = readUInt8(buffer);
 
     keyAction->type = KeyActionType_Mouse;
@@ -111,7 +111,7 @@ static parser_error_t parseMouseAction(key_action_t *keyAction, serialized_buffe
     return ParserError_Success;
 }
 
-static parser_error_t parseKeyAction(key_action_t *keyAction, serialized_buffer_t *buffer) {
+static parser_error_t parseKeyAction(key_action_t *keyAction, config_buffer_t *buffer) {
     uint8_t keyActionType = readUInt8(buffer);
 
     switch (keyActionType) {
@@ -131,7 +131,7 @@ static parser_error_t parseKeyAction(key_action_t *keyAction, serialized_buffer_
     return ParserError_Success;
 }
 
-static parser_error_t parseKeyActions(uint8_t targetLayer, serialized_buffer_t *buffer, uint8_t moduleId, uint8_t pointerRole) {
+static parser_error_t parseKeyActions(uint8_t targetLayer, config_buffer_t *buffer, uint8_t moduleId, uint8_t pointerRole) {
     parser_error_t errorCode;
     uint16_t actionCount = readCompactLength(buffer);
     key_action_t dummyKeyAction;
@@ -148,13 +148,13 @@ static parser_error_t parseKeyActions(uint8_t targetLayer, serialized_buffer_t *
     return ParserError_Success;
 }
 
-static parser_error_t parseModule(serialized_buffer_t *buffer, uint8_t layer) {
+static parser_error_t parseModule(config_buffer_t *buffer, uint8_t layer) {
     uint8_t moduleId = readUInt8(buffer);
     uint8_t pointerRole = readUInt8(buffer);
     return parseKeyActions(layer, buffer, moduleId, pointerRole);
 }
 
-static parser_error_t parseLayer(serialized_buffer_t *buffer, uint8_t layer) {
+static parser_error_t parseLayer(config_buffer_t *buffer, uint8_t layer) {
     parser_error_t errorCode;
     uint16_t moduleCount = readCompactLength(buffer);
 
@@ -170,7 +170,7 @@ static parser_error_t parseLayer(serialized_buffer_t *buffer, uint8_t layer) {
     return ParserError_Success;
 }
 
-parser_error_t ParseKeymap(serialized_buffer_t *buffer) {;
+parser_error_t ParseKeymap(config_buffer_t *buffer) {;
     parser_error_t errorCode;
     uint16_t abbreviationLen;
     uint16_t nameLen;
