@@ -81,7 +81,7 @@ void LedDisplay_SetLayer(uint8_t layerId) {
     uint8_t layerLedValues[3] = { 0 };
 
     if (layerId >= LAYER_ID_MOD && layerId <= LAYER_ID_MOUSE) {
-        layerLedValues[layerId - 1] = 0xFF;
+        layerLedValues[layerId - 1] = 255;
     }
     LedDriverStates[LedDriverId_Left].ledValues[13] = layerLedValues[0];
     LedDriverStates[LedDriverId_Left].ledValues[29] = layerLedValues[1];
