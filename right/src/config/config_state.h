@@ -13,7 +13,7 @@
 // Typedefs:
 
     typedef struct {
-        uint8_t const buffer[EEPROM_SIZE];
+        uint8_t buffer[EEPROM_SIZE];
         uint16_t offset;
     } config_buffer_t;
 

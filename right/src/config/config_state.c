@@ -7,9 +7,9 @@ uint8_t readUInt8(config_buffer_t *buffer) {
 }
 
 uint16_t readUInt16(config_buffer_t *buffer) {
-    uint16_t uInt16 = *(uint16_t *)(buffer->buffer + buffer->offset);
+    uint16_t uInt16 = readUInt8(buffer);
 
-    buffer->offset += 2;
+    uInt16 |= readUInt8(buffer) << 8;
     return uInt16;
 }
 
@@ -27,7 +27,7 @@ const char *readString(config_buffer_t *buffer, uint16_t *len) {
     const char *string;
 
     *len = readCompactLength(buffer);
-    string = buffer->buffer + buffer->offset;
+    string = (const char *)(buffer->buffer + buffer->offset);
     buffer->offset += *len;
     return string;
 }
