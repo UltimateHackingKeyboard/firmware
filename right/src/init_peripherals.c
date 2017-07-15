@@ -59,6 +59,5 @@ void InitPeripherals(void)
     InitI2c();
     InitTestLed();
     LedPwm_Init();
-//    LedPwm_SetBrightness(100);
     InitI2cWatchdog();
 }
