@@ -78,14 +78,12 @@ void LedDisplay_SetText(uint8_t length, const char* text) {
 
 
 void LedDisplay_SetLayer(uint8_t layerId) {
-    uint8_t layerLedValues[3] = { 0 };
-
-    if (layerId >= LAYER_ID_MOD && layerId <= LAYER_ID_MOUSE) {
-        layerLedValues[layerId - 1] = 255;
+    for (uint8_t i = 13; i <= 45; i += 16) {
+        LedDriverStates[LedDriverId_Left].ledValues[i] = 0;
     }
-    LedDriverStates[LedDriverId_Left].ledValues[13] = layerLedValues[0];
-    LedDriverStates[LedDriverId_Left].ledValues[29] = layerLedValues[1];
-    LedDriverStates[LedDriverId_Left].ledValues[45] = layerLedValues[2];
+    if (layerId >= LAYER_ID_MOD && layerId <= LAYER_ID_MOUSE) {
+        LedDriverStates[LedDriverId_Left].ledValues[16 * layerId - 3] = 255;
+    }
 }
 
 void LedDisplay_SetIcon(led_display_icon_t icon, bool isEnabled) {
