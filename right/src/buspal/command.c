@@ -1,7 +1,13 @@
+#define FIXED_BUSPAL_BOOTLOADER  (1)
+  /*!< Used to mark the fixed BUSPL bootloader. Macro usage can be removed in the future */
+
 #include "command.h"
 #include "crc16.h"
 #include "bus_pal_hardware.h"
 #include "peripherals/test_led.h"
+#if FIXED_BUSPAL_BOOTLOADER
+  #include "microseconds/microseconds.h"
+#endif
 
 command_processor_data_t g_commandData;
 buspal_state_t g_buspalState = kBuspal_Idle;
@@ -15,11 +21,41 @@ static uint16_t calculate_framing_crc16(framing_data_packet_t *packet, const uin
 static status_t handle_data_read(bool *hasMoreData);
 static void handle_read_memory_command(uint8_t *packet, uint32_t packetLength);
 static void finalize_data_phase(status_t status);
-static void reset_data_phase();
+static void reset_data_phase(void);
 static status_t peripheral_read(uint8_t *dest, uint32_t readLength);
 static status_t peripheral_write(uint8_t *src, uint32_t writeLength);
 
-void handleUsbBusPalCommand()
+#if FIXED_BUSPAL_BOOTLOADER
+/*!
+ * \brief Function which checks if the KL03Z ROM bootloader is ready. It polls for the frame start byte (0x5a)
+ * \param buf Pointer to byte where to store the byte read
+ * \param nofRead Returns the number of bytes stored in buffer
+ * \return 1 for success, 0 for failure
+ */
+static int WaitForStartByte(uint8_t *buf, size_t *nofRead)
+{
+    uint8_t tmp;
+    int cntr = 128; /* max retries */
+
+	microseconds_delay(1000); /* initial delay of 1 ms, see errata of KL03Z ROM Bootloader */
+    while(cntr>0)
+    {
+      peripheral_read(&tmp, 1); /* read one byte */
+      if (tmp==kFramingPacketStartByte)
+      { /* start of frame? */
+    	  *buf = tmp; /* store byte read */
+    	  *nofRead = 1; /* return number of bytes read */
+          return 1; /* ok */
+      }
+      microseconds_delay(500); /* just wait for some time until the next retry */
+      cntr--; /* keep track of retries */
+    }
+    *nofRead = 0; /* nothing read */
+    return 0; /* failed */
+}
+#endif
+
+void handleUsbBusPalCommand(void)
 {
     g_commandData.state = kCommandState_CommandPhase;
 
@@ -127,8 +163,25 @@ static void finalize_data_phase(status_t status)
 
     if (status == kStatus_Success)
     {
-        // receiving framing paket header
+#if FIXED_BUSPAL_BOOTLOADER
+	int res;
+	size_t offset;
+
+	status = kStatus_Success; /* default */
+	res = WaitForStartByte(rxBuf, &offset);
+	if (res==1 && offset==1)
+	{
+	  /* read remaining bytes */
+      if (peripheral_read(rxBuf+offset, sizeof(framing_data_packet_t)-offset) != kStatus_Success)
+      {
+    	  status = kStatus_Fail;
+      }
+	}
+	if (kStatus_Success!=kStatus_Success)
+#else
+        // receiving framing packet header
         if (peripheral_read(rxBuf, sizeof(framing_data_packet_t)) != kStatus_Success)
+#endif
         {
             status = kStatus_Fail;
         }
@@ -152,6 +205,9 @@ static void finalize_data_phase(status_t status)
             sync.header.packetType = kFramingPacketType_Ack;
         }
 
+	#if FIXED_BUSPAL_BOOTLOADER
+		microseconds_delay(1000);
+	#endif
         // send Ack/Nak back to peripheral
         peripheral_write((uint8_t *)&sync, sizeof(framing_sync_packet_t));
     }
@@ -307,20 +363,39 @@ static status_t handle_data_write(bool *hasMoreData)
     }
 
     framingPacket.dataPacket.crc16 = calculate_framing_crc16(&framingPacket.dataPacket, (uint8_t *)framingPacket.data);
-
     // send framing packet to target peripheral
     if (peripheral_write((uint8_t *)&framingPacket, sizeof(framing_data_packet_t) + framingPacket.dataPacket.length) !=
         kStatus_Success)
     {
         status = kStatus_Fail;
     }
-    // recering ACK from target peripheral
+    // receiving ACK from target peripheral
     else
     {
         uint8_t count = 32;
         do
         {
+#if FIXED_BUSPAL_BOOTLOADER
+			int res;
+			size_t offset;
+
+			status = kStatus_Success; /* default */
+			res = WaitForStartByte((uint8_t *)&sync.header, &offset);
+			if (res==1 && offset==1)
+			{ /* success! read remaining byte */
+				if (peripheral_read((uint8_t *)&sync.header+offset, 2-offset) != kStatus_Success)
+				{
+					status = kStatus_Fail;
+				}
+			}
+			else
+			{
+				status = kStatus_Fail;
+			}
+			if (status != kStatus_Success)
+#else
             if (peripheral_read((uint8_t *)&sync.header, 2) != kStatus_Success)
+#endif
             {
                 status = kStatus_Fail;
             }
@@ -482,12 +557,20 @@ static status_t handle_command_internal(uint8_t *packet, uint32_t packetLength)
     {
         status = kStatus_Fail;
     }
-    else // recering ACK from target peripheral
+    else // receiving ACK from target peripheral
     {
         uint8_t count = 32;
         do
         {
-            if (peripheral_read((uint8_t *)&sync.header.startByte, 1) != kStatus_Success)
+#if FIXED_BUSPAL_BOOTLOADER
+		size_t offset;
+		int res;
+
+		res = WaitForStartByte(&sync.header.startByte, &offset);
+    	if (res!=1 || offset!=1)
+#else
+        if (peripheral_read((uint8_t *)&sync.header.startByte, 1) != kStatus_Success)
+#endif
             {
                 status = kStatus_Fail;
                 break;
@@ -506,16 +589,34 @@ static status_t handle_command_internal(uint8_t *packet, uint32_t packetLength)
                     }
                     else
                     {
-                        uint8_t dst[1];
-                        peripheral_read(dst, 1); // TODO: Make this more general, so that the extra 0 byte is not expected.
-                        // receiving framing paket header
+#if FIXED_BUSPAL_BOOTLOADER
+                		size_t offset;
+                		int res;
+
+                		status = kStatus_Success; /* set default */
+                    	res = WaitForStartByte(rxBuf, &offset);
+						if (res==1 && offset==1)
+						{
+							/* read remaining bytes */
+	                        if (peripheral_read(rxBuf+offset, sizeof(framing_data_packet_t)-offset) != kStatus_Success)
+	                        {
+	                            status = kStatus_Fail;
+	                        }
+						}
+						else
+						{
+                            status = kStatus_Fail;
+						}
+						if (status!=kStatus_Success)
+#else
+                        // receiving framing packet header
                         if (peripheral_read(rxBuf, sizeof(framing_data_packet_t)) != kStatus_Success)
+#endif
                         {
                             status = kStatus_Fail;
                         }
                         else
                         {
-
                             rxSize = ((framing_data_packet_t *)rxBuf)->length;
                             if (peripheral_read(rxBuf + sizeof(framing_data_packet_t), rxSize) != kStatus_Success)
                             {
@@ -528,6 +629,9 @@ static status_t handle_command_internal(uint8_t *packet, uint32_t packetLength)
                             }
 
                             // send Ack/Nak back to peripheral
+						#if FIXED_BUSPAL_BOOTLOADER
+							microseconds_delay(1000);
+						#endif
                             peripheral_write((uint8_t *)&sync, sizeof(framing_sync_packet_t));
                         }
                     }
@@ -556,7 +660,7 @@ void handle_reset(uint8_t *packet, uint32_t packetLength)
 }
 
 //! @brief Reset data phase variables.
-static void reset_data_phase()
+static void reset_data_phase(void)
 {
     memset(&g_commandData.dataPhase, 0, sizeof(g_commandData.dataPhase));
 }
