@@ -37,14 +37,14 @@ static int WaitForStartByte(uint8_t *buf, size_t *nofRead)
     uint8_t tmp;
     int cntr = 128; /* max retries */
 
-	microseconds_delay(1000); /* initial delay of 1 ms, see errata of KL03Z ROM Bootloader */
+    microseconds_delay(1000); /* initial delay of 1 ms, see errata of KL03Z ROM Bootloader */
     while(cntr>0)
     {
       peripheral_read(&tmp, 1); /* read one byte */
       if (tmp==kFramingPacketStartByte)
       { /* start of frame? */
-    	  *buf = tmp; /* store byte read */
-    	  *nofRead = 1; /* return number of bytes read */
+          *buf = tmp; /* store byte read */
+          *nofRead = 1; /* return number of bytes read */
           return 1; /* ok */
       }
       microseconds_delay(500); /* just wait for some time until the next retry */
@@ -164,20 +164,20 @@ static void finalize_data_phase(status_t status)
     if (status == kStatus_Success)
     {
 #if FIXED_BUSPAL_BOOTLOADER
-	int res;
-	size_t offset;
+    int res;
+    size_t offset;
 
-	status = kStatus_Success; /* default */
-	res = WaitForStartByte(rxBuf, &offset);
-	if (res==1 && offset==1)
-	{
-	  /* read remaining bytes */
+    status = kStatus_Success; /* default */
+    res = WaitForStartByte(rxBuf, &offset);
+    if (res==1 && offset==1)
+    {
+      /* read remaining bytes */
       if (peripheral_read(rxBuf+offset, sizeof(framing_data_packet_t)-offset) != kStatus_Success)
       {
-    	  status = kStatus_Fail;
+          status = kStatus_Fail;
       }
-	}
-	if (kStatus_Success!=kStatus_Success)
+    }
+    if (kStatus_Success!=kStatus_Success)
 #else
         // receiving framing packet header
         if (peripheral_read(rxBuf, sizeof(framing_data_packet_t)) != kStatus_Success)
@@ -205,9 +205,9 @@ static void finalize_data_phase(status_t status)
             sync.header.packetType = kFramingPacketType_Ack;
         }
 
-	#if FIXED_BUSPAL_BOOTLOADER
-		microseconds_delay(1000);
-	#endif
+    #if FIXED_BUSPAL_BOOTLOADER
+        microseconds_delay(1000);
+    #endif
         // send Ack/Nak back to peripheral
         peripheral_write((uint8_t *)&sync, sizeof(framing_sync_packet_t));
     }
@@ -376,23 +376,23 @@ static status_t handle_data_write(bool *hasMoreData)
         do
         {
 #if FIXED_BUSPAL_BOOTLOADER
-			int res;
-			size_t offset;
+            int res;
+            size_t offset;
 
-			status = kStatus_Success; /* default */
-			res = WaitForStartByte((uint8_t *)&sync.header, &offset);
-			if (res==1 && offset==1)
-			{ /* success! read remaining byte */
-				if (peripheral_read((uint8_t *)&sync.header+offset, 2-offset) != kStatus_Success)
-				{
-					status = kStatus_Fail;
-				}
-			}
-			else
-			{
-				status = kStatus_Fail;
-			}
-			if (status != kStatus_Success)
+            status = kStatus_Success; /* default */
+            res = WaitForStartByte((uint8_t *)&sync.header, &offset);
+            if (res==1 && offset==1)
+            { /* success! read remaining byte */
+                if (peripheral_read((uint8_t *)&sync.header+offset, 2-offset) != kStatus_Success)
+                {
+                    status = kStatus_Fail;
+                }
+            }
+            else
+            {
+                status = kStatus_Fail;
+            }
+            if (status != kStatus_Success)
 #else
             if (peripheral_read((uint8_t *)&sync.header, 2) != kStatus_Success)
 #endif
@@ -563,11 +563,11 @@ static status_t handle_command_internal(uint8_t *packet, uint32_t packetLength)
         do
         {
 #if FIXED_BUSPAL_BOOTLOADER
-		size_t offset;
-		int res;
+        size_t offset;
+        int res;
 
-		res = WaitForStartByte(&sync.header.startByte, &offset);
-    	if (res!=1 || offset!=1)
+        res = WaitForStartByte(&sync.header.startByte, &offset);
+        if (res!=1 || offset!=1)
 #else
         if (peripheral_read((uint8_t *)&sync.header.startByte, 1) != kStatus_Success)
 #endif
@@ -590,24 +590,24 @@ static status_t handle_command_internal(uint8_t *packet, uint32_t packetLength)
                     else
                     {
 #if FIXED_BUSPAL_BOOTLOADER
-                		size_t offset;
-                		int res;
+                        size_t offset;
+                        int res;
 
-                		status = kStatus_Success; /* set default */
-                    	res = WaitForStartByte(rxBuf, &offset);
-						if (res==1 && offset==1)
-						{
-							/* read remaining bytes */
-	                        if (peripheral_read(rxBuf+offset, sizeof(framing_data_packet_t)-offset) != kStatus_Success)
-	                        {
-	                            status = kStatus_Fail;
-	                        }
-						}
-						else
-						{
+                        status = kStatus_Success; /* set default */
+                        res = WaitForStartByte(rxBuf, &offset);
+                        if (res==1 && offset==1)
+                        {
+                            /* read remaining bytes */
+                            if (peripheral_read(rxBuf+offset, sizeof(framing_data_packet_t)-offset) != kStatus_Success)
+                            {
+                                status = kStatus_Fail;
+                            }
+                        }
+                        else
+                        {
                             status = kStatus_Fail;
-						}
-						if (status!=kStatus_Success)
+                        }
+                        if (status!=kStatus_Success)
 #else
                         // receiving framing packet header
                         if (peripheral_read(rxBuf, sizeof(framing_data_packet_t)) != kStatus_Success)
@@ -629,9 +629,9 @@ static status_t handle_command_internal(uint8_t *packet, uint32_t packetLength)
                             }
 
                             // send Ack/Nak back to peripheral
-						#if FIXED_BUSPAL_BOOTLOADER
-							microseconds_delay(1000);
-						#endif
+                        #if FIXED_BUSPAL_BOOTLOADER
+                            microseconds_delay(1000);
+                        #endif
                             peripheral_write((uint8_t *)&sync, sizeof(framing_sync_packet_t));
                         }
                     }

@@ -3,7 +3,7 @@
 /* bits for enabledPeripherals */
 #define ENABLE_PERIPHERAL_UART     (1<<0)
 #define ENABLE_PERIPHERAL_I2C      (1<<1)
-#define ENABLE_PERIPHERAL_SPI  	   (1<<2)
+#define ENABLE_PERIPHERAL_SPI      (1<<2)
 #define ENABLE_PERIPHERAL_CAN      (1<<3)
 #define ENABLE_PERIPHERAL_USB_HID  (1<<4)
 #define ENABLE_PERIPHERAL_USB_MSC  (1<<7)
@@ -18,13 +18,13 @@ __attribute__((used, section(".BootloaderConfig"))) const bootloader_config_t Bo
 };
 
 void JumpToBootloader(void) {
-	uint32_t runBootloaderAddress;
-	void (*runBootloader)(void *arg);
+    uint32_t runBootloaderAddress;
+    void (*runBootloader)(void *arg);
 
-	/* Read the function address from the ROM API tree. */
-	runBootloaderAddress = **(uint32_t **)(0x1c00001c);
-	runBootloader = (void (*)(void * arg))runBootloaderAddress;
+    /* Read the function address from the ROM API tree. */
+    runBootloaderAddress = **(uint32_t **)(0x1c00001c);
+    runBootloader = (void (*)(void * arg))runBootloaderAddress;
 
-	/* Start the bootloader. */
-	runBootloader(NULL);
+    /* Start the bootloader. */
+    runBootloader(NULL);
 }
