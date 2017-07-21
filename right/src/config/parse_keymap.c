@@ -134,10 +134,8 @@ static parser_error_t parseKeyAction(key_action_t *keyAction, config_buffer_t *b
         return parseMouseAction(keyAction, buffer);
     case SerializedKeyActionType_PlayMacro:
         return parsePlayMacroAction(keyAction, buffer);
-    default:
-        return ParserError_InvalidSerializedKeyActionType;
     }
-    return ParserError_Success;
+    return ParserError_InvalidSerializedKeyActionType;
 }
 
 static parser_error_t parseKeyActions(uint8_t targetLayer, config_buffer_t *buffer, uint8_t moduleId, uint8_t pointerRole) {
