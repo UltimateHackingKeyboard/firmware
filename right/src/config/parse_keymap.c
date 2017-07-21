@@ -60,6 +60,13 @@ static parser_error_t parseSwitchKeymapAction(key_action_t *keyAction, config_bu
     return ParserError_Success;
 }
 
+static parser_error_t parsePlayMacroAction(key_action_t *keyAction, config_buffer_t *buffer) {
+    uint8_t macroIndex = readUInt8(buffer);
+
+    (void)macroIndex;
+    return ParserError_Success;
+}
+
 static parser_error_t parseMouseAction(key_action_t *keyAction, config_buffer_t *buffer) {
     uint8_t mouseAction = readUInt8(buffer);
 
@@ -125,6 +132,8 @@ static parser_error_t parseKeyAction(key_action_t *keyAction, config_buffer_t *b
         return parseSwitchKeymapAction(keyAction, buffer);
     case SerializedKeyActionType_Mouse:
         return parseMouseAction(keyAction, buffer);
+    case SerializedKeyActionType_PlayMacro:
+        return parsePlayMacroAction(keyAction, buffer);
     default:
         return ParserError_InvalidSerializedKeyActionType;
     }
