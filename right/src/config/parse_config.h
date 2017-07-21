@@ -15,6 +15,7 @@
         ParserError_InvalidLayerCount,
         ParserError_InvalidModuleCount,
         ParserError_InvalidActionCount,
+        ParserError_InvalidSerializedMacroActionType,
     } parser_error_t;
 
 // Functions:
