@@ -13,6 +13,10 @@ uint16_t readUInt16(config_buffer_t *buffer) {
     return uInt16;
 }
 
+int16_t readInt16(config_buffer_t *buffer) {
+    return readUInt16(buffer);
+}
+
 bool readBool(config_buffer_t *buffer) {
     return readUInt8(buffer);
 }

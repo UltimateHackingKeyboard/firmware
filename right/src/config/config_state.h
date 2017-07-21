@@ -25,6 +25,7 @@
 
     uint8_t readUInt8(config_buffer_t *buffer);
     uint16_t readUInt16(config_buffer_t *buffer);
+    int16_t readInt16(config_buffer_t *buffer);
     bool readBool(config_buffer_t *buffer);
     uint16_t readCompactLength(config_buffer_t *buffer);
     const char *readString(config_buffer_t *buffer, uint16_t *len);
