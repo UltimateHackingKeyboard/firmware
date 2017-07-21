@@ -11,9 +11,9 @@ static parser_error_t parseNoneAction(key_action_t *keyAction, config_buffer_t *
 }
 
 static parser_error_t parseKeyStrokeAction(key_action_t *keyAction, uint8_t keyStrokeAction, config_buffer_t *buffer) {
-    keyAction->type = KeyActionType_Keystroke;
-
     uint8_t keystrokeType = (SERIALIZED_KEYSTROKE_TYPE_MASK_KEYSTROKE_TYPE & keyStrokeAction) >> SERIALIZED_KEYSTROKE_TYPE_OFFSET_KEYSTROKE_TYPE;
+
+    keyAction->type = KeyActionType_Keystroke;
     switch (keystrokeType) {
         case SerializedKeystrokeType_Basic:
             keyAction->keystroke.keystrokeType = KeystrokeType_Basic;
@@ -73,47 +73,47 @@ static parser_error_t parseMouseAction(key_action_t *keyAction, config_buffer_t 
     keyAction->type = KeyActionType_Mouse;
     memset(&keyAction->mouse, 0, sizeof keyAction->mouse);
     switch (mouseAction) {
-    case SerializedMouseAction_LeftClick:
-        keyAction->mouse.buttonActions = MouseButton_Left;
-        break;
-    case SerializedMouseAction_MiddleClick:
-        keyAction->mouse.buttonActions = MouseButton_Middle;
-        break;
-    case SerializedMouseAction_RightClick:
-        keyAction->mouse.buttonActions = MouseButton_Right;
-        break;
-    case SerializedMouseAction_MoveUp:
-        keyAction->mouse.moveActions = MouseMove_Up;
-        break;
-    case SerializedMouseAction_MoveDown:
-        keyAction->mouse.moveActions = MouseMove_Down;
-        break;
-    case SerializedMouseAction_MoveLeft:
-        keyAction->mouse.moveActions = MouseMove_Left;
-        break;
-    case SerializedMouseAction_MoveRight:
-        keyAction->mouse.moveActions = MouseMove_Right;
-        break;
-    case SerializedMouseAction_ScrollUp:
-        keyAction->mouse.scrollActions = MouseScroll_Up;
-        break;
-    case SerializedMouseAction_ScrollDown:
-        keyAction->mouse.scrollActions = MouseScroll_Down;
-        break;
-    case SerializedMouseAction_ScrollLeft:
-        keyAction->mouse.scrollActions = MouseScroll_Left;
-        break;
-    case SerializedMouseAction_ScrollRight:
-        keyAction->mouse.scrollActions = MouseScroll_Right;
-        break;
-    case SerializedMouseAction_Accelerate:
-        keyAction->mouse.moveActions = MouseMove_Accelerate;
-        break;
-    case SerializedMouseAction_Decelerate:
-        keyAction->mouse.moveActions = MouseMove_Decelerate;
-        break;
-    default:
-        return ParserError_InvalidSerializedMouseAction;
+        case SerializedMouseAction_LeftClick:
+            keyAction->mouse.buttonActions = MouseButton_Left;
+            break;
+        case SerializedMouseAction_MiddleClick:
+            keyAction->mouse.buttonActions = MouseButton_Middle;
+            break;
+        case SerializedMouseAction_RightClick:
+            keyAction->mouse.buttonActions = MouseButton_Right;
+            break;
+        case SerializedMouseAction_MoveUp:
+            keyAction->mouse.moveActions = MouseMove_Up;
+            break;
+        case SerializedMouseAction_MoveDown:
+            keyAction->mouse.moveActions = MouseMove_Down;
+            break;
+        case SerializedMouseAction_MoveLeft:
+            keyAction->mouse.moveActions = MouseMove_Left;
+            break;
+        case SerializedMouseAction_MoveRight:
+            keyAction->mouse.moveActions = MouseMove_Right;
+            break;
+        case SerializedMouseAction_ScrollUp:
+            keyAction->mouse.scrollActions = MouseScroll_Up;
+            break;
+        case SerializedMouseAction_ScrollDown:
+            keyAction->mouse.scrollActions = MouseScroll_Down;
+            break;
+        case SerializedMouseAction_ScrollLeft:
+            keyAction->mouse.scrollActions = MouseScroll_Left;
+            break;
+        case SerializedMouseAction_ScrollRight:
+            keyAction->mouse.scrollActions = MouseScroll_Right;
+            break;
+        case SerializedMouseAction_Accelerate:
+            keyAction->mouse.moveActions = MouseMove_Accelerate;
+            break;
+        case SerializedMouseAction_Decelerate:
+            keyAction->mouse.moveActions = MouseMove_Decelerate;
+            break;
+        default:
+            return ParserError_InvalidSerializedMouseAction;
     }
     return ParserError_Success;
 }
@@ -122,18 +122,18 @@ static parser_error_t parseKeyAction(key_action_t *keyAction, config_buffer_t *b
     uint8_t keyActionType = readUInt8(buffer);
 
     switch (keyActionType) {
-    case SerializedKeyActionType_None:
-        return parseNoneAction(keyAction, buffer);
-    case SerializedKeyActionType_KeyStroke ... SerializedKeyActionType_LastKeyStroke:
-        return parseKeyStrokeAction(keyAction, keyActionType, buffer);
-    case SerializedKeyActionType_SwitchLayer:
-        return parseSwitchLayerAction(keyAction, buffer);
-    case SerializedKeyActionType_SwitchKeymap:
-        return parseSwitchKeymapAction(keyAction, buffer);
-    case SerializedKeyActionType_Mouse:
-        return parseMouseAction(keyAction, buffer);
-    case SerializedKeyActionType_PlayMacro:
-        return parsePlayMacroAction(keyAction, buffer);
+        case SerializedKeyActionType_None:
+            return parseNoneAction(keyAction, buffer);
+        case SerializedKeyActionType_KeyStroke ... SerializedKeyActionType_LastKeyStroke:
+            return parseKeyStrokeAction(keyAction, keyActionType, buffer);
+        case SerializedKeyActionType_SwitchLayer:
+            return parseSwitchLayerAction(keyAction, buffer);
+        case SerializedKeyActionType_SwitchKeymap:
+            return parseSwitchKeymapAction(keyAction, buffer);
+        case SerializedKeyActionType_Mouse:
+            return parseMouseAction(keyAction, buffer);
+        case SerializedKeyActionType_PlayMacro:
+            return parsePlayMacroAction(keyAction, buffer);
     }
     return ParserError_InvalidSerializedKeyActionType;
 }
@@ -158,6 +158,7 @@ static parser_error_t parseKeyActions(uint8_t targetLayer, config_buffer_t *buff
 static parser_error_t parseModule(config_buffer_t *buffer, uint8_t layer) {
     uint8_t moduleId = readUInt8(buffer);
     uint8_t pointerRole = readUInt8(buffer);
+
     return parseKeyActions(layer, buffer, moduleId, pointerRole);
 }
 
