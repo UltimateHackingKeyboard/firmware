@@ -19,7 +19,7 @@ void setError(uint8_t error) {
     GenericHidOutBuffer[0] = error;
 }
 
-void setGenericError()
+void setGenericError(void)
 {
     setError(PROTOCOL_RESPONSE_GENERIC_ERROR);
 }
@@ -32,7 +32,7 @@ void SetResponseByte(uint8_t response)
 
 // Per command protocol command handlers
 
-void getSystemProperty() {
+void getSystemProperty(void) {
     uint8_t propertyId = GenericHidInBuffer[1];
 
     switch (propertyId) {
@@ -54,21 +54,21 @@ void getSystemProperty() {
     }
 }
 
-void reenumerate() {
+void reenumerate(void) {
     Wormhole.magicNumber = WORMHOLE_MAGIC_NUMBER;
     Wormhole.enumerationMode = GenericHidInBuffer[1];
     SCB->AIRCR = 0x5FA<<SCB_AIRCR_VECTKEY_Pos | SCB_AIRCR_SYSRESETREQ_Msk; // Reset the MCU.
     for (;;);
 }
 
-void setTestLed()
+void setTestLed(void)
 {
     uint8_t ledState = GenericHidInBuffer[1];
     TEST_LED_SET(ledState);
     UhkModuleStates[0].isTestLedOn = ledState;
 }
 
-void writeEeprom()
+void writeEeprom(void)
 {
     uint8_t i2cPayloadSize = GenericHidInBuffer[1];
 
@@ -80,7 +80,7 @@ void writeEeprom()
 //    I2cWrite(I2C_EEPROM_BUS_BASEADDR, I2C_ADDRESS_EEPROM, GenericHidInBuffer+2, i2cPayloadSize);
 }
 
-void readEeprom()
+void readEeprom(void)
 {
     uint8_t i2cPayloadSize = GenericHidInBuffer[1];
 
@@ -95,12 +95,12 @@ void readEeprom()
     GenericHidOutBuffer[0] = PROTOCOL_RESPONSE_SUCCESS;
 }
 
-void readMergeSensor()
+void readMergeSensor(void)
 {
     SetResponseByte(MERGE_SENSOR_IS_MERGED);
 }
 
-void uploadConfig()
+void uploadConfig(void)
 {
     uint8_t byteCount = GenericHidInBuffer[1];
     uint16_t memoryOffset = *((uint16_t*)(GenericHidInBuffer+2));
@@ -113,7 +113,7 @@ void uploadConfig()
     memcpy(UserConfigBuffer.buffer+memoryOffset, GenericHidInBuffer+4, byteCount);
 }
 
-void applyConfig()
+void applyConfig(void)
 {
     UserConfigBuffer.offset = 0;
     GenericHidOutBuffer[0] = ParseConfig(&UserConfigBuffer);
@@ -121,7 +121,7 @@ void applyConfig()
     GenericHidOutBuffer[2] = UserConfigBuffer.offset >> 8;
 }
 
-void setLedPwm()
+void setLedPwm(void)
 {
     uint8_t brightnessPercent = GenericHidInBuffer[1];
     LedPwm_SetBrightness(brightnessPercent);
@@ -145,7 +145,7 @@ void launchEepromTransfer(void)
 
 // The main protocol handler function
 
-void usbProtocolHandler()
+void usbProtocolHandler(void)
 {
     bzero(GenericHidOutBuffer, USB_GENERIC_HID_OUT_BUFFER_LENGTH);
     uint8_t command = GenericHidInBuffer[0];
