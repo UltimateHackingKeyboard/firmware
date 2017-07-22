@@ -18,7 +18,6 @@ void usbProtocolHandler();
 void getSystemProperty();
 void reenumerate();
 void setTestLed();
-void writeLedDriver();
 void readLedDriver();
 void writeEeprom();
 void readEeprom();
@@ -62,7 +61,6 @@ void usbProtocolHandler()
             setTestLed();
             break;
         case USB_COMMAND_WRITE_LED_DRIVER:
-            //writeLedDriver();
             break;
         case USB_COMMAND_WRITE_EEPROM:
             writeEeprom();
@@ -128,24 +126,6 @@ void setTestLed()
     UhkModuleStates[0].isTestLedOn = ledState;
 }
 
-void writeLedDriver()
-{
-    uint8_t i2cAddress = GenericHidInBuffer[1];
-    uint8_t i2cPayloadSize = GenericHidInBuffer[2];
-
-    if (!IS_I2C_LED_DRIVER_ADDRESS(i2cAddress)) {
-        setError(WRITE_LED_DRIVER_RESPONSE_INVALID_ADDRESS);
-        return;
-    }
-
-    if (i2cPayloadSize > USB_GENERIC_HID_OUT_BUFFER_LENGTH-3) {
-        setError(WRITE_LED_DRIVER_RESPONSE_INVALID_PAYLOAD_SIZE);
-        return;
-    }
-
-    I2cWrite(I2C_MAIN_BUS_BASEADDR, i2cAddress, GenericHidInBuffer+3, i2cPayloadSize);
-}
-
 void writeEeprom()
 {
     uint8_t i2cPayloadSize = GenericHidInBuffer[1];
@@ -155,7 +135,7 @@ void writeEeprom()
         return;
     }
 
-    I2cWrite(I2C_EEPROM_BUS_BASEADDR, I2C_ADDRESS_EEPROM, GenericHidInBuffer+2, i2cPayloadSize);
+//    I2cWrite(I2C_EEPROM_BUS_BASEADDR, I2C_ADDRESS_EEPROM, GenericHidInBuffer+2, i2cPayloadSize);
 }
 
 void readEeprom()
@@ -167,8 +147,8 @@ void readEeprom()
         return;
     }
 
-    I2cWrite(I2C_EEPROM_BUS_BASEADDR, I2C_ADDRESS_EEPROM, GenericHidInBuffer+2, 2);
-    I2cRead(I2C_EEPROM_BUS_BASEADDR, I2C_ADDRESS_EEPROM, GenericHidOutBuffer+1, i2cPayloadSize);
+//    I2cWrite(I2C_EEPROM_BUS_BASEADDR, I2C_ADDRESS_EEPROM, GenericHidInBuffer+2, 2);
+//    I2cRead(I2C_EEPROM_BUS_BASEADDR, I2C_ADDRESS_EEPROM, GenericHidOutBuffer+1, i2cPayloadSize);
 
     GenericHidOutBuffer[0] = PROTOCOL_RESPONSE_SUCCESS;
 }
@@ -188,15 +168,15 @@ void uploadConfig()
         return;
     }
 
-    memcpy(ConfigBuffer.buffer+memoryOffset, GenericHidInBuffer+4, byteCount);
+    memcpy(UserConfigBuffer.buffer+memoryOffset, GenericHidInBuffer+4, byteCount);
 }
 
 void applyConfig()
 {
-    ConfigBuffer.offset = 0;
-    GenericHidOutBuffer[0] = ParseConfig(&ConfigBuffer);
-    GenericHidOutBuffer[1] = ConfigBuffer.offset;
-    GenericHidOutBuffer[2] = ConfigBuffer.offset >> 8;
+    UserConfigBuffer.offset = 0;
+    GenericHidOutBuffer[0] = ParseConfig(&UserConfigBuffer);
+    GenericHidOutBuffer[1] = UserConfigBuffer.offset;
+    GenericHidOutBuffer[2] = UserConfigBuffer.offset >> 8;
 }
 
 void setLedPwm()

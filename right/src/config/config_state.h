@@ -9,17 +9,20 @@
 // Macros:
 
     #define EEPROM_SIZE (32*1024)
+    #define HARDWARE_CONFIG_SIZE 64
+    #define USER_CONFIG_SIZE (EEPROM_SIZE - HARDWARE_CONFIG_SIZE)
 
 // Typedefs:
 
     typedef struct {
-        uint8_t buffer[EEPROM_SIZE];
+        uint8_t *buffer;
         uint16_t offset;
     } config_buffer_t;
 
 // Variables:
 
-    extern config_buffer_t ConfigBuffer;
+    extern config_buffer_t HardwareConfigBuffer;
+    extern config_buffer_t UserConfigBuffer;
 
 // Functions:
 

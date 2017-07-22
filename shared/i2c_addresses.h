@@ -27,9 +27,4 @@
     #define IS_I2C_LED_DRIVER_ADDRESS(address) \
         (I2C_ADDRESS_LED_DRIVER_LEFT <= (address) && (address) <= I2C_ADDRESS_LED_DRIVER_RIGHT)
 
-// Functions:
-
-    status_t I2cRead(I2C_Type *baseAddress, uint8_t i2cAddress, uint8_t *data, uint8_t size);
-    status_t I2cWrite(I2C_Type *baseAddress, uint8_t i2cAddress, uint8_t *data, uint8_t size);
-
 #endif

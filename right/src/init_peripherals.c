@@ -10,6 +10,7 @@
 #include "slave_scheduler.h"
 #include "peripherals/adc.h"
 #include "init_peripherals.h"
+#include "eeprom.h"
 
 volatile uint32_t temp, counter;
 
@@ -60,4 +61,5 @@ void InitPeripherals(void)
     InitTestLed();
     LedPwm_Init();
     InitI2cWatchdog();
+    EEPROM_Init();
 }
