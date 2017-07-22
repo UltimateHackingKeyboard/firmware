@@ -11,6 +11,7 @@
 #include "slave_drivers/slave_driver_uhk_module.h"
 #include "wormhole.h"
 #include "peripherals/adc.h"
+#include "eeprom.h"
 
 void setError(uint8_t error);
 void setGenericError();
@@ -26,6 +27,7 @@ void uploadConfig();
 void applyConfig();
 void setLedPwm();
 void getAdcValue(void);
+void launchEepromTransfer(void);
 
 // Functions for setting error statuses
 
@@ -83,6 +85,8 @@ void usbProtocolHandler()
         case USB_COMMAND_GET_ADC_VALUE:
             getAdcValue();
             break;
+        case USB_COMMAND_LAUNCH_EEPROM_TRANSFER:
+            launchEepromTransfer();
         default:
             break;
     }
@@ -193,4 +197,10 @@ void getAdcValue(void)
     GenericHidOutBuffer[1] = adcValue >> 8;
     GenericHidOutBuffer[2] = adcValue >> 16;
     GenericHidOutBuffer[3] = adcValue >> 24;
+}
+
+void launchEepromTransfer(void)
+{
+    eeprom_transfer_t transferType = GenericHidInBuffer[1];
+    EEPROM_LaunchTransfer(transferType);
 }

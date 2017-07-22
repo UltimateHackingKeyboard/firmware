@@ -29,6 +29,7 @@
     #define USB_COMMAND_APPLY_CONFIG        9
     #define USB_COMMAND_SET_LED_PWM        10
     #define USB_COMMAND_GET_ADC_VALUE      11
+    #define USB_COMMAND_LAUNCH_EEPROM_TRANSFER     12
 
 // Functions:
 
