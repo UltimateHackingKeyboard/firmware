@@ -53,39 +53,39 @@ void usbProtocolHandler()
     bzero(GenericHidOutBuffer, USB_GENERIC_HID_OUT_BUFFER_LENGTH);
     uint8_t command = GenericHidInBuffer[0];
     switch (command) {
-        case USB_COMMAND_GET_SYSTEM_PROPERTY:
+        case UsbCommand_GetSystemProperty:
             getSystemProperty();
             break;
-        case USB_COMMAND_REENUMERATE:
+        case UsbCommand_Reenumerate:
             reenumerate();
             break;
-        case USB_COMMAND_SET_TEST_LED:
+        case UsbCommand_SetTestLed:
             setTestLed();
             break;
-        case USB_COMMAND_WRITE_LED_DRIVER:
+        case UsbCommand_WriteLedDriver:
             break;
-        case USB_COMMAND_WRITE_EEPROM:
+        case UsbCommand_WriteEeprom:
             writeEeprom();
             break;
-        case USB_COMMAND_READ_EEPROM:
+        case UsbCommand_ReadEeprom:
             readEeprom();
             break;
-        case USB_COMMAND_READ_MERGE_SENSOR:
+        case UsbCommand_ReadMergeSensor:
             readMergeSensor();
             break;
-        case USB_COMMAND_UPLOAD_CONFIG:
+        case UsbCommand_UploadConfig:
             uploadConfig();
             break;
-        case USB_COMMAND_APPLY_CONFIG:
+        case UsbCommand_ApplyConfig:
             applyConfig();
             break;
-        case USB_COMMAND_SET_LED_PWM:
+        case UsbCommand_SetLedPwm:
             setLedPwm();
             break;
-        case USB_COMMAND_GET_ADC_VALUE:
+        case UsbCommand_GetAdcValue:
             getAdcValue();
             break;
-        case USB_COMMAND_LAUNCH_EEPROM_TRANSFER:
+        case UsbCommand_LaunchEepromTransfer:
             launchEepromTransfer();
         default:
             break;
