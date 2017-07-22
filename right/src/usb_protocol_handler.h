@@ -7,8 +7,6 @@
 
 // Macros:
 
-    #define PROTOCOL_RESPONSE_SUCCESS       0
-    #define PROTOCOL_RESPONSE_GENERIC_ERROR 1
 
     #define WRITE_LED_DRIVER_RESPONSE_INVALID_ADDRESS      1
     #define WRITE_LED_DRIVER_RESPONSE_INVALID_PAYLOAD_SIZE 2
@@ -38,6 +36,11 @@
         SystemProperty_DataModelVersionId      = 2,
         SystemProperty_FirmwareVersionId       = 3,
     } system_property_t;
+
+    typedef enum {
+        UsbResponse_Success      = 0,
+        UsbResponse_GenericError = 1,
+    } usb_response_t;
 
 // Functions:
 

@@ -21,7 +21,7 @@ void setError(uint8_t error) {
 
 void setGenericError(void)
 {
-    setError(PROTOCOL_RESPONSE_GENERIC_ERROR);
+    setError(UsbResponse_GenericError);
 }
 
 // Set a single byte as the response.
@@ -92,7 +92,7 @@ void readEeprom(void)
 //    I2cWrite(I2C_EEPROM_BUS_BASEADDR, I2C_ADDRESS_EEPROM, GenericHidInBuffer+2, 2);
 //    I2cRead(I2C_EEPROM_BUS_BASEADDR, I2C_ADDRESS_EEPROM, GenericHidOutBuffer+1, i2cPayloadSize);
 
-    GenericHidOutBuffer[0] = PROTOCOL_RESPONSE_SUCCESS;
+    GenericHidOutBuffer[0] = UsbResponse_Success;
 }
 
 void readMergeSensor(void)
