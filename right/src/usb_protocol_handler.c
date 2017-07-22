@@ -13,22 +13,6 @@
 #include "peripherals/adc.h"
 #include "eeprom.h"
 
-void setError(uint8_t error);
-void setGenericError();
-void usbProtocolHandler();
-void getSystemProperty();
-void reenumerate();
-void setTestLed();
-void readLedDriver();
-void writeEeprom();
-void readEeprom();
-void readMergeSensor();
-void uploadConfig();
-void applyConfig();
-void setLedPwm();
-void getAdcValue(void);
-void launchEepromTransfer(void);
-
 // Functions for setting error statuses
 
 void setError(uint8_t error) {
@@ -44,53 +28,6 @@ void setGenericError()
 void SetResponseByte(uint8_t response)
 {
     GenericHidOutBuffer[1] = response;
-}
-
-// The main protocol handler function
-
-void usbProtocolHandler()
-{
-    bzero(GenericHidOutBuffer, USB_GENERIC_HID_OUT_BUFFER_LENGTH);
-    uint8_t command = GenericHidInBuffer[0];
-    switch (command) {
-        case UsbCommand_GetSystemProperty:
-            getSystemProperty();
-            break;
-        case UsbCommand_Reenumerate:
-            reenumerate();
-            break;
-        case UsbCommand_SetTestLed:
-            setTestLed();
-            break;
-        case UsbCommand_WriteLedDriver:
-            break;
-        case UsbCommand_WriteEeprom:
-            writeEeprom();
-            break;
-        case UsbCommand_ReadEeprom:
-            readEeprom();
-            break;
-        case UsbCommand_ReadMergeSensor:
-            readMergeSensor();
-            break;
-        case UsbCommand_UploadConfig:
-            uploadConfig();
-            break;
-        case UsbCommand_ApplyConfig:
-            applyConfig();
-            break;
-        case UsbCommand_SetLedPwm:
-            setLedPwm();
-            break;
-        case UsbCommand_GetAdcValue:
-            getAdcValue();
-            break;
-        case UsbCommand_LaunchEepromTransfer:
-            launchEepromTransfer();
-            break;
-        default:
-            break;
-    }
 }
 
 // Per command protocol command handlers
@@ -204,4 +141,51 @@ void launchEepromTransfer(void)
 {
     eeprom_transfer_t transferType = GenericHidInBuffer[1];
     EEPROM_LaunchTransfer(transferType);
+}
+
+// The main protocol handler function
+
+void usbProtocolHandler()
+{
+    bzero(GenericHidOutBuffer, USB_GENERIC_HID_OUT_BUFFER_LENGTH);
+    uint8_t command = GenericHidInBuffer[0];
+    switch (command) {
+        case UsbCommand_GetSystemProperty:
+            getSystemProperty();
+            break;
+        case UsbCommand_Reenumerate:
+            reenumerate();
+            break;
+        case UsbCommand_SetTestLed:
+            setTestLed();
+            break;
+        case UsbCommand_WriteLedDriver:
+            break;
+        case UsbCommand_WriteEeprom:
+            writeEeprom();
+            break;
+        case UsbCommand_ReadEeprom:
+            readEeprom();
+            break;
+        case UsbCommand_ReadMergeSensor:
+            readMergeSensor();
+            break;
+        case UsbCommand_UploadConfig:
+            uploadConfig();
+            break;
+        case UsbCommand_ApplyConfig:
+            applyConfig();
+            break;
+        case UsbCommand_SetLedPwm:
+            setLedPwm();
+            break;
+        case UsbCommand_GetAdcValue:
+            getAdcValue();
+            break;
+        case UsbCommand_LaunchEepromTransfer:
+            launchEepromTransfer();
+            break;
+        default:
+            break;
+    }
 }
