@@ -87,6 +87,7 @@ void usbProtocolHandler()
             break;
         case UsbCommand_LaunchEepromTransfer:
             launchEepromTransfer();
+            break;
         default:
             break;
     }
