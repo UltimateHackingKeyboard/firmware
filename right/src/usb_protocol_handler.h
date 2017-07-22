@@ -10,10 +10,6 @@
     #define PROTOCOL_RESPONSE_SUCCESS       0
     #define PROTOCOL_RESPONSE_GENERIC_ERROR 1
 
-    #define SYSTEM_PROPERTY_USB_PROTOCOL_VERSION_ID      0
-    #define SYSTEM_PROPERTY_BRIDGE_PROTOCOL_VERSION_ID   1
-    #define SYSTEM_PROPERTY_DATA_MODEL_VERSION_ID        2
-    #define SYSTEM_PROPERTY_FIRMWARE_VERSION_ID          3
     #define WRITE_LED_DRIVER_RESPONSE_INVALID_ADDRESS      1
     #define WRITE_LED_DRIVER_RESPONSE_INVALID_PAYLOAD_SIZE 2
     #define WRITE_EEPROM_RESPONSE_INVALID_PAYLOAD_SIZE 1
@@ -35,6 +31,13 @@
         UsbCommand_GetAdcValue          = 11,
         UsbCommand_LaunchEepromTransfer = 12,
     } usb_command_t;
+
+    typedef enum {
+        SystemProperty_UsbProtocolVersionId    = 0,
+        SystemProperty_BridgeProtocolVersionId = 1,
+        SystemProperty_DataModelVersionId      = 2,
+        SystemProperty_FirmwareVersionId       = 3,
+    } system_property_t;
 
 // Functions:
 
