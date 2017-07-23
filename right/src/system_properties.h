@@ -15,6 +15,8 @@
         SystemPropertyId_BridgeProtocolVersion = 1,
         SystemPropertyId_DataModelVersion      = 2,
         SystemPropertyId_FirmwareVersion       = 3,
+        SystemPropertyId_HardwareConfigSize    = 4,
+        SystemPropertyId_UserConfigSize        = 5,
     } system_property_t;
 
 #endif

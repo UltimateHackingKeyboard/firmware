@@ -24,10 +24,14 @@ void setGenericError(void)
     setError(UsbResponse_GenericError);
 }
 
-// Set a single byte as the response.
 void SetResponseByte(uint8_t response)
 {
     GenericHidOutBuffer[1] = response;
+}
+
+void SetResponseWord(uint16_t response)
+{
+    *((uint16_t*)(GenericHidOutBuffer+1)) = response;
 }
 
 // Per command protocol command handlers
@@ -47,6 +51,12 @@ void getSystemProperty(void) {
             break;
         case SystemPropertyId_FirmwareVersion:
             SetResponseByte(SYSTEM_PROPERTY_FIRMWARE_VERSION);
+            break;
+        case SystemPropertyId_HardwareConfigSize:
+            SetResponseWord(HARDWARE_CONFIG_SIZE);
+            break;
+        case SystemPropertyId_UserConfigSize:
+            SetResponseWord(USER_CONFIG_SIZE);
             break;
         default:
             setGenericError();
