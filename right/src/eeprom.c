@@ -97,7 +97,7 @@ status_t EEPROM_LaunchTransfer(eeprom_transfer_t transferType)
         case EepromTransfer_ReadHardwareConfiguration:
         case EepromTransfer_ReadUserConfiguration:
             setStartAddressCommand = isHardwareConfig ?  0 : HARDWARE_CONFIG_SIZE;
-            LastEepromTransferStatus = i2cAsyncWrite((uint8_t*)&setStartAddressCommand, 2);
+            LastEepromTransferStatus = i2cAsyncWrite((uint8_t*)&setStartAddressCommand, EEPROM_ADDRESS_LENGTH);
             break;
         case EepromTransfer_WriteHardwareConfiguration:
         case EepromTransfer_WriteUserConfiguration:
