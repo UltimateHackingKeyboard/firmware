@@ -36,16 +36,16 @@ void getSystemProperty(void) {
     uint8_t propertyId = GenericHidInBuffer[1];
 
     switch (propertyId) {
-        case SystemProperty_UsbProtocolVersionId:
+        case SystemPropertyId_UsbProtocolVersion:
             SetResponseByte(SYSTEM_PROPERTY_USB_PROTOCOL_VERSION);
             break;
-        case SystemProperty_BridgeProtocolVersionId:
+        case SystemPropertyId_BridgeProtocolVersion:
             SetResponseByte(SYSTEM_PROPERTY_BRIDGE_PROTOCOL_VERSION);
             break;
-        case SystemProperty_DataModelVersionId:
+        case SystemPropertyId_DataModelVersion:
             SetResponseByte(SYSTEM_PROPERTY_DATA_MODEL_VERSION);
             break;
-        case SystemProperty_FirmwareVersionId:
+        case SystemPropertyId_FirmwareVersion:
             SetResponseByte(SYSTEM_PROPERTY_FIRMWARE_VERSION);
             break;
         default:

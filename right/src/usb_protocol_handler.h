@@ -24,13 +24,6 @@
     } usb_command_t;
 
     typedef enum {
-        SystemProperty_UsbProtocolVersionId    = 0,
-        SystemProperty_BridgeProtocolVersionId = 1,
-        SystemProperty_DataModelVersionId      = 2,
-        SystemProperty_FirmwareVersionId       = 3,
-    } system_property_t;
-
-    typedef enum {
         UsbResponse_Success      = 0,
         UsbResponse_GenericError = 1,
     } usb_response_t;
