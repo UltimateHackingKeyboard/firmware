@@ -106,7 +106,7 @@ void launchEepromTransfer(void)
 void readConfiguration(bool isHardware)
 {
     uint8_t length = GenericHidInBuffer[1];
-    uint16_t offset = *((uint16_t*)GenericHidInBuffer+2);
+    uint16_t offset = *((uint16_t*)(GenericHidInBuffer+2));
 
     if (length > USB_GENERIC_HID_OUT_BUFFER_LENGTH-1) {
         setError(ConfigTransferResponse_LengthTooLarge);
