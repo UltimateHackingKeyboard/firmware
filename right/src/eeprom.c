@@ -47,8 +47,8 @@ static status_t writePage()
 
 static void i2cCallback(I2C_Type *base, i2c_master_handle_t *handle, status_t status, void *userData)
 {
+    LastEepromTransferStatus = status;
     if (status != kStatus_Success) {
-        LastEepromTransferStatus = status;
         return;
     }
 
