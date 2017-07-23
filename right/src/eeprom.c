@@ -87,7 +87,7 @@ status_t EEPROM_LaunchTransfer(eeprom_transfer_t transferType)
         return kStatus_I2C_Busy;
     }
 
-    uint16_t setStartAddressCommand;
+    uint16_t eepromStartAddress;
     bool isHardwareConfig = CurrentEepromTransfer == EepromTransfer_ReadHardwareConfiguration ||
                             CurrentEepromTransfer == EepromTransfer_WriteHardwareConfiguration;
     CurrentEepromTransfer = transferType;
@@ -95,8 +95,8 @@ status_t EEPROM_LaunchTransfer(eeprom_transfer_t transferType)
     switch (transferType) {
         case EepromTransfer_ReadHardwareConfiguration:
         case EepromTransfer_ReadUserConfiguration:
-            setStartAddressCommand = isHardwareConfig ?  0 : HARDWARE_CONFIG_SIZE;
-            LastEepromTransferStatus = i2cAsyncWrite((uint8_t*)&setStartAddressCommand, EEPROM_ADDRESS_LENGTH);
+            eepromStartAddress = isHardwareConfig ?  0 : HARDWARE_CONFIG_SIZE;
+            LastEepromTransferStatus = i2cAsyncWrite((uint8_t*)&eepromStartAddress, EEPROM_ADDRESS_LENGTH);
             break;
         case EepromTransfer_WriteHardwareConfiguration:
         case EepromTransfer_WriteUserConfiguration:
