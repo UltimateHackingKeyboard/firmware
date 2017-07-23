@@ -36,12 +36,12 @@ static status_t i2cAsyncRead(uint8_t *data, size_t dataSize)
 static status_t writePage()
 {
     static uint8_t buffer[EEPROM_BUFFER_SIZE];
-    uint8_t pageLength = MIN(sourceLength - sourceOffset, EEPROM_PAGE_SIZE);
     buffer[0] = sourceOffset & 0xff;
     buffer[1] = sourceOffset >> 8;
-    memcpy(buffer+EEPROM_ADDRESS_LENGTH, sourceBuffer+sourceOffset, pageLength);
-    status_t status = i2cAsyncWrite(buffer, pageLength);
-    sourceOffset += pageLength;
+    uint8_t writeLength = MIN(sourceLength - sourceOffset, EEPROM_PAGE_SIZE);
+    memcpy(buffer+EEPROM_ADDRESS_LENGTH, sourceBuffer+sourceOffset, writeLength);
+    status_t status = i2cAsyncWrite(buffer, writeLength);
+    sourceOffset += writeLength;
     return status;
 }
 
