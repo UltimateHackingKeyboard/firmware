@@ -88,9 +88,9 @@ status_t EEPROM_LaunchTransfer(eeprom_transfer_t transferType)
     }
 
     uint16_t eepromStartAddress;
+    CurrentEepromTransfer = transferType;
     bool isHardwareConfig = CurrentEepromTransfer == EepromTransfer_ReadHardwareConfiguration ||
                             CurrentEepromTransfer == EepromTransfer_WriteHardwareConfiguration;
-    CurrentEepromTransfer = transferType;
 
     switch (transferType) {
         case EepromTransfer_ReadHardwareConfiguration:
@@ -106,6 +106,7 @@ status_t EEPROM_LaunchTransfer(eeprom_transfer_t transferType)
             LastEepromTransferStatus = writePage();
             break;
     }
+
     IsEepromBusy = LastEepromTransferStatus == kStatus_Success;
     return LastEepromTransferStatus;
 }
