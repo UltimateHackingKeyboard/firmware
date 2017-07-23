@@ -68,49 +68,9 @@ void setTestLed(void)
     UhkModuleStates[0].isTestLedOn = ledState;
 }
 
-void writeEeprom(void)
-{
-    uint8_t i2cPayloadSize = GenericHidInBuffer[1];
-
-    if (i2cPayloadSize > USB_GENERIC_HID_OUT_BUFFER_LENGTH-2) {
-        setError(WRITE_EEPROM_RESPONSE_INVALID_PAYLOAD_SIZE);
-        return;
-    }
-
-//    I2cWrite(I2C_EEPROM_BUS_BASEADDR, I2C_ADDRESS_EEPROM, GenericHidInBuffer+2, i2cPayloadSize);
-}
-
-void readEeprom(void)
-{
-    uint8_t i2cPayloadSize = GenericHidInBuffer[1];
-
-    if (i2cPayloadSize > USB_GENERIC_HID_OUT_BUFFER_LENGTH-1) {
-        setError(WRITE_EEPROM_RESPONSE_INVALID_PAYLOAD_SIZE);
-        return;
-    }
-
-//    I2cWrite(I2C_EEPROM_BUS_BASEADDR, I2C_ADDRESS_EEPROM, GenericHidInBuffer+2, 2);
-//    I2cRead(I2C_EEPROM_BUS_BASEADDR, I2C_ADDRESS_EEPROM, GenericHidOutBuffer+1, i2cPayloadSize);
-
-    GenericHidOutBuffer[0] = UsbResponse_Success;
-}
-
 void readMergeSensor(void)
 {
     SetResponseByte(MERGE_SENSOR_IS_MERGED);
-}
-
-void uploadConfig(void)
-{
-    uint8_t byteCount = GenericHidInBuffer[1];
-    uint16_t memoryOffset = *((uint16_t*)(GenericHidInBuffer+2));
-
-    if (byteCount > USB_GENERIC_HID_OUT_BUFFER_LENGTH-4) {
-        setError(UPLOAD_CONFIG_INVALID_PAYLOAD_SIZE);
-        return;
-    }
-
-    memcpy(UserConfigBuffer.buffer+memoryOffset, GenericHidInBuffer+4, byteCount);
 }
 
 void applyConfig(void)
@@ -143,6 +103,48 @@ void launchEepromTransfer(void)
     EEPROM_LaunchTransfer(transferType);
 }
 
+void readConfiguration(bool isHardware)
+{
+    uint8_t length = GenericHidInBuffer[1];
+    uint16_t offset = *((uint16_t*)GenericHidInBuffer+2);
+
+    if (length > USB_GENERIC_HID_OUT_BUFFER_LENGTH-1) {
+        setError(ConfigTransferResponse_LengthTooLarge);
+        return;
+    }
+
+    uint8_t *buffer = isHardware ? HardwareConfigBuffer.buffer : UserConfigBuffer.buffer;
+    uint16_t bufferLength = isHardware ? HARDWARE_CONFIG_SIZE : USER_CONFIG_SIZE;
+
+    if (offset + length > bufferLength) {
+        setError(ConfigTransferResponse_BufferOutOfBounds);
+        return;
+    }
+
+    memcpy(GenericHidOutBuffer+1, buffer+offset, length);
+}
+
+void writeConfiguration(bool isHardware)
+{
+    uint8_t length = GenericHidInBuffer[1];
+    uint16_t offset = *((uint16_t*)(GenericHidInBuffer+1+1));
+
+    if (length > USB_GENERIC_HID_OUT_BUFFER_LENGTH-1-1-2) {
+        setError(ConfigTransferResponse_LengthTooLarge);
+        return;
+    }
+
+    uint8_t *buffer = isHardware ? HardwareConfigBuffer.buffer : UserConfigBuffer.buffer;
+    uint16_t bufferLength = isHardware ? HARDWARE_CONFIG_SIZE : USER_CONFIG_SIZE;
+
+    if (offset + length > bufferLength) {
+        setError(ConfigTransferResponse_BufferOutOfBounds);
+        return;
+    }
+
+    memcpy(buffer+offset, GenericHidInBuffer+1+1+2, length);
+}
+
 // The main protocol handler function
 
 void usbProtocolHandler(void)
@@ -161,17 +163,12 @@ void usbProtocolHandler(void)
             break;
         case UsbCommand_WriteLedDriver:
             break;
-        case UsbCommand_WriteEeprom:
-            writeEeprom();
-            break;
-        case UsbCommand_ReadEeprom:
-            readEeprom();
-            break;
         case UsbCommand_ReadMergeSensor:
             readMergeSensor();
             break;
-        case UsbCommand_UploadConfig:
-            uploadConfig();
+        case UsbCommand_WriteUserConfiguration:
+            writeConfiguration(false);
+            //uploadConfig();
             break;
         case UsbCommand_ApplyConfig:
             applyConfig();
@@ -184,6 +181,15 @@ void usbProtocolHandler(void)
             break;
         case UsbCommand_LaunchEepromTransfer:
             launchEepromTransfer();
+            break;
+        case UsbCommand_ReadHardwareConfiguration:
+            readConfiguration(true);
+            break;
+        case UsbCommand_WriteHardwareConfiguration:
+            writeConfiguration(true);
+            break;
+        case UsbCommand_ReadUserConfiguration:
+            readConfiguration(false);
             break;
         default:
             break;
