@@ -64,12 +64,11 @@ static void i2cCallback(I2C_Type *base, i2c_master_handle_t *handle, status_t st
             break;
         case EepromTransfer_WriteHardwareConfiguration:
         case EepromTransfer_WriteUserConfiguration:
-            if (sourceLength - sourceOffset == 0) {
+            IsEepromBusy = sourceOffset < sourceLength;
+            if (!IsEepromBusy) {
                 return;
             }
-
             LastEepromTransferStatus = writePage();
-            IsEepromBusy = sourceOffset < sourceLength;
             break;
         default:
             IsEepromBusy = false;
