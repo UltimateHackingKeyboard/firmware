@@ -168,7 +168,6 @@ void usbProtocolHandler(void)
             break;
         case UsbCommand_WriteUserConfiguration:
             writeConfiguration(false);
-            //uploadConfig();
             break;
         case UsbCommand_ApplyConfig:
             applyConfig();
