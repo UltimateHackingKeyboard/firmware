@@ -40,7 +40,7 @@ static status_t writePage()
     buffer[1] = sourceOffset >> 8;
     uint8_t writeLength = MIN(sourceLength - sourceOffset, EEPROM_PAGE_SIZE);
     memcpy(buffer+EEPROM_ADDRESS_LENGTH, sourceBuffer+sourceOffset, writeLength);
-    status_t status = i2cAsyncWrite(buffer, writeLength);
+    status_t status = i2cAsyncWrite(buffer, writeLength+EEPROM_ADDRESS_LENGTH);
     sourceOffset += writeLength;
     return status;
 }
