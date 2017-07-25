@@ -155,6 +155,11 @@ void writeConfiguration(bool isHardware)
     memcpy(buffer+offset, GenericHidInBuffer+1+1+2, length);
 }
 
+void getKeyboardState(void)
+{
+    GenericHidOutBuffer[1] = IsEepromBusy;
+}
+
 // The main protocol handler function
 
 void usbProtocolHandler(void)
@@ -199,6 +204,9 @@ void usbProtocolHandler(void)
             break;
         case UsbCommand_ReadUserConfiguration:
             readConfiguration(false);
+            break;
+        case UsbCommand_GetKeyboardState:
+            getKeyboardState();
             break;
         default:
             break;
