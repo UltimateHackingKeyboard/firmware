@@ -30,12 +30,18 @@ static parser_error_t parseKeyStrokeAction(key_action_t *keyAction, uint8_t keyS
     }
     if (keyStrokeAction & SERIALIZED_KEYSTROKE_TYPE_MASK_HAS_SCANCODE) {
         keyAction->keystroke.scancode = keystrokeType == SerializedKeystrokeType_LongMedia ? readUInt16(buffer) : readUInt8(buffer);
+    } else {
+        keyAction->keystroke.scancode = 0;
     }
     if (keyStrokeAction & SERIALIZED_KEYSTROKE_TYPE_MASK_HAS_MODIFIERS) {
         keyAction->keystroke.modifiers = readUInt8(buffer);
+    } else {
+        keyAction->keystroke.modifiers = 0;
     }
     if (keyStrokeAction & SERIALIZED_KEYSTROKE_TYPE_MASK_HAS_LONGPRESS) {
         keyAction->keystroke.longPressAction = readUInt8(buffer);
+    } else {
+        keyAction->keystroke.longPressAction = 0;
     }
     return ParserError_Success;
 }
