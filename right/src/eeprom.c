@@ -53,6 +53,9 @@ static void i2cCallback(I2C_Type *base, i2c_master_handle_t *handle, status_t st
     switch (CurrentEepromTransfer) {
         case EepromTransfer_ReadHardwareConfiguration:
         case EepromTransfer_ReadUserConfiguration:
+            if (!IsEepromBusy) {
+                return;
+            }
             LastEepromTransferStatus = i2cAsyncRead(
                 isHardwareConfig ? HardwareConfigBuffer.buffer : UserConfigBuffer.buffer,
                 isHardwareConfig ? HARDWARE_CONFIG_SIZE : USER_CONFIG_SIZE
