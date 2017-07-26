@@ -13,8 +13,10 @@ static i2c_master_transfer_t i2cTransfer;
 
 static uint8_t *sourceBuffer;
 static uint16_t sourceOffset;
+static uint16_t eepromStartAddress;
 static uint16_t sourceLength;
 static uint8_t writeLength;
+static bool isReadSent;
 
 static status_t i2cAsyncWrite(uint8_t *data, size_t dataSize)
 {
@@ -37,8 +39,9 @@ static status_t i2cAsyncRead(uint8_t *data, size_t dataSize)
 static status_t writePage()
 {
     static uint8_t buffer[EEPROM_BUFFER_SIZE];
-    buffer[0] = sourceOffset & 0xff;
-    buffer[1] = sourceOffset >> 8;
+    uint16_t targetEepromOffset = sourceOffset + eepromStartAddress;
+    buffer[0] = targetEepromOffset & 0xff;
+    buffer[1] = targetEepromOffset >> 8;
     writeLength = MIN(sourceLength - sourceOffset, EEPROM_PAGE_SIZE);
     memcpy(buffer+EEPROM_ADDRESS_LENGTH, sourceBuffer+sourceOffset, writeLength);
     status_t status = i2cAsyncWrite(buffer, writeLength+EEPROM_ADDRESS_LENGTH);
@@ -53,14 +56,16 @@ static void i2cCallback(I2C_Type *base, i2c_master_handle_t *handle, status_t st
     switch (CurrentEepromTransfer) {
         case EepromTransfer_ReadHardwareConfiguration:
         case EepromTransfer_ReadUserConfiguration:
-            if (!IsEepromBusy) {
+            if (isReadSent) {
+                IsEepromBusy = false;
                 return;
             }
             LastEepromTransferStatus = i2cAsyncRead(
                 isHardwareConfig ? HardwareConfigBuffer.buffer : UserConfigBuffer.buffer,
                 isHardwareConfig ? HARDWARE_CONFIG_SIZE : USER_CONFIG_SIZE
             );
-            IsEepromBusy = false;
+            IsEepromBusy = true;
+            isReadSent = true;
             break;
         case EepromTransfer_WriteHardwareConfiguration:
         case EepromTransfer_WriteUserConfiguration:
@@ -90,15 +95,15 @@ status_t EEPROM_LaunchTransfer(eeprom_transfer_t transferType)
         return kStatus_I2C_Busy;
     }
 
-    uint16_t eepromStartAddress;
     CurrentEepromTransfer = transferType;
     bool isHardwareConfig = CurrentEepromTransfer == EepromTransfer_ReadHardwareConfiguration ||
                             CurrentEepromTransfer == EepromTransfer_WriteHardwareConfiguration;
+    eepromStartAddress = isHardwareConfig ? 0 : HARDWARE_CONFIG_SIZE;
 
     switch (transferType) {
         case EepromTransfer_ReadHardwareConfiguration:
         case EepromTransfer_ReadUserConfiguration:
-            eepromStartAddress = isHardwareConfig ?  0 : HARDWARE_CONFIG_SIZE;
+            isReadSent = false;
             LastEepromTransferStatus = i2cAsyncWrite((uint8_t*)&eepromStartAddress, EEPROM_ADDRESS_LENGTH);
             break;
         case EepromTransfer_WriteHardwareConfiguration:
