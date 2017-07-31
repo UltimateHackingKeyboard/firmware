@@ -63,6 +63,7 @@ void LedSlaveDriver_Init(uint8_t ledDriverId) {
     currentLedDriverState->phase = LedDriverPhase_SetFunctionFrame;
     currentLedDriverState->ledIndex = 0;
     LedDriverStates[LedDriverId_Left].setupLedControlRegistersCommand[7] |= 0b00000010; // Enable the LED of the ISO key.
+    memset(currentLedDriverState->targetLedValues, 0xff, LED_DRIVER_LED_COUNT);
     SetLeds(0xff);
     LedDisplay_SetText(3, "ABC");
 }
@@ -94,20 +95,66 @@ void LedSlaveDriver_Update(uint8_t ledDriverId) {
             *ledDriverPhase = LedDriverPhase_Initialized;
             break;
         case LedDriverPhase_Initialized:
+        {
+#ifdef LED_DRIVER_STRESS_TEST
             updatePwmRegistersBuffer[0] = FRAME_REGISTER_PWM_FIRST + *ledIndex;
-            memcpy(updatePwmRegistersBuffer+1, currentLedDriverState->ledValues + *ledIndex, PMW_REGISTER_UPDATE_CHUNK_SIZE);
+            memcpy(updatePwmRegistersBuffer+1, currentLedDriverState->sourceLedValues + *ledIndex, PMW_REGISTER_UPDATE_CHUNK_SIZE);
             I2cAsyncWrite(ledDriverAddress, updatePwmRegistersBuffer, PWM_REGISTER_BUFFER_LENGTH);
             *ledIndex += PMW_REGISTER_UPDATE_CHUNK_SIZE;
             if (*ledIndex >= LED_DRIVER_LED_COUNT) {
                 *ledIndex = 0;
             }
+#else
+            uint8_t *sourceLedValues = currentLedDriverState->sourceLedValues;
+            uint8_t *targetLedValues = currentLedDriverState->targetLedValues;
+
+            uint8_t lastLedChunkStartIndex = LED_DRIVER_LED_COUNT - PMW_REGISTER_UPDATE_CHUNK_SIZE;
+            uint8_t startLedIndex = *ledIndex > lastLedChunkStartIndex ? lastLedChunkStartIndex : *ledIndex;
+
+            uint8_t count;
+            for (count=0; count<LED_DRIVER_LED_COUNT; count++) {
+                if (sourceLedValues[startLedIndex] != targetLedValues[startLedIndex]) {
+                    break;
+                }
+
+                if (++startLedIndex >= LED_DRIVER_LED_COUNT) {
+                    startLedIndex = 0;
+                }
+            }
+
+            bool foundStartIndex = count < LED_DRIVER_LED_COUNT;
+            if (!foundStartIndex) {
+                *ledIndex = 0;
+                return;
+            }
+
+            uint8_t maxChunkSize = MIN(LED_DRIVER_LED_COUNT - startLedIndex, PMW_REGISTER_UPDATE_CHUNK_SIZE);
+            uint8_t maxEndLedIndex = startLedIndex + maxChunkSize - 1;
+            uint8_t endLedIndex = startLedIndex;
+            for (uint8_t index=startLedIndex; index<=maxEndLedIndex; index++) {
+                if (sourceLedValues[index] != targetLedValues[index]) {
+                    endLedIndex = index;
+                }
+            }
+
+            updatePwmRegistersBuffer[0] = FRAME_REGISTER_PWM_FIRST + startLedIndex;
+            uint8_t length = endLedIndex - startLedIndex + 1;
+            memcpy(updatePwmRegistersBuffer+1, currentLedDriverState->sourceLedValues + startLedIndex, length);
+            memcpy(currentLedDriverState->targetLedValues + startLedIndex, currentLedDriverState->sourceLedValues + startLedIndex, length);
+            I2cAsyncWrite(ledDriverAddress, updatePwmRegistersBuffer, length+1);
+            *ledIndex += length;
+            if (*ledIndex >= LED_DRIVER_LED_COUNT) {
+                *ledIndex = 0;
+            }
+#endif
             break;
+        }
     }
 }
 
 void SetLeds(uint8_t ledBrightness)
 {
     for (uint8_t i=0; i<LED_DRIVER_MAX_COUNT; i++) {
-        memset(&LedDriverStates[i].ledValues, ledBrightness, LED_DRIVER_LED_COUNT);
+        memset(&LedDriverStates[i].sourceLedValues, ledBrightness, LED_DRIVER_LED_COUNT);
     }
 }
