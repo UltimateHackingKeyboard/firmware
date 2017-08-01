@@ -160,6 +160,14 @@ void getKeyboardState(void)
     GenericHidOutBuffer[1] = IsEepromBusy;
 }
 
+void getDebugInfo(void)
+{
+    GenericHidOutBuffer[1] = (I2C_Watchdog >> 0) & 0xff;;
+    GenericHidOutBuffer[2] = (I2C_Watchdog >> 8) & 0xff;
+    GenericHidOutBuffer[3] = (I2C_Watchdog >> 16) & 0xff;
+    GenericHidOutBuffer[4] = (I2C_Watchdog >> 24) & 0xff;
+}
+
 // The main protocol handler function
 
 void usbProtocolHandler(void)
@@ -207,6 +215,9 @@ void usbProtocolHandler(void)
             break;
         case UsbCommand_GetKeyboardState:
             getKeyboardState();
+            break;
+        case UsbCommand_GetDebugInfo:
+            getDebugInfo();
             break;
         default:
             break;

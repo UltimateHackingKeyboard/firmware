@@ -22,6 +22,7 @@
         UsbCommand_WriteHardwareConfiguration = 14,
         UsbCommand_ReadUserConfiguration      = 15,
         UsbCommand_GetKeyboardState           = 16,
+        UsbCommand_GetDebugInfo               = 17,
     } usb_command_t;
 
     typedef enum {
