@@ -12,8 +12,6 @@
 #include "init_peripherals.h"
 #include "eeprom.h"
 
-volatile uint32_t temp, counter;
-
 void InitI2c() {
     port_pin_config_t pinConfig = {
         .pullSelect = kPORT_PullUp,
