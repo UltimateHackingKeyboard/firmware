@@ -8,6 +8,7 @@
 #include "i2c_addresses.h"
 #include "test_states.h"
 
+uint8_t previousSlaveId = 0;
 uint8_t currentSlaveId = 0;
 
 uhk_slave_t Slaves[] = {
@@ -24,14 +25,19 @@ static void bridgeProtocolCallback(I2C_Type *base, i2c_master_handle_t *handle, 
         if (TestStates.disableI2c) {
             return;
         }
-        uhk_slave_t *slave = Slaves + currentSlaveId;
 
-        slave->isConnected = status == kStatus_Success;
-        if (!slave->isConnected) {
-            slave->initializer(slave->perDriverId);
+        uhk_slave_t *previousSlave = Slaves + previousSlaveId;
+        uhk_slave_t *currentSlave = Slaves + currentSlaveId;
+
+        previousSlave->isConnected = status == kStatus_Success;
+
+        if (!currentSlave->isConnected) {
+            currentSlave->initializer(currentSlave->perDriverId);
         }
 
-        slave->updater(slave->perDriverId);
+        currentSlave->updater(currentSlave->perDriverId);
+
+        previousSlaveId = currentSlaveId;
         currentSlaveId++;
 
         if (currentSlaveId >= (sizeof(Slaves) / sizeof(uhk_slave_t))) {
