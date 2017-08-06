@@ -1,3 +1,4 @@
+#include "config.h"
 #include "main.h"
 #include "init_clock.h"
 #include "init_peripherals.h"
@@ -64,6 +65,11 @@ void UpdateUsbReports()
 void main() {
     InitClock();
     InitPeripherals();
+
+#ifdef FORCE_BUSPAL
+    Wormhole.magicNumber = WORMHOLE_MAGIC_NUMBER;
+    Wormhole.enumerationMode = EnumerationMode_BusPal;
+#endif
 
     if (Wormhole.magicNumber == WORMHOLE_MAGIC_NUMBER && Wormhole.enumerationMode == EnumerationMode_BusPal) {
         Wormhole.magicNumber = 0;
