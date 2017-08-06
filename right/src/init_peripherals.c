@@ -1,5 +1,6 @@
 #include "fsl_common.h"
 #include "fsl_port.h"
+#include "config.h"
 #include "peripherals/test_led.h"
 #include "peripherals/reset_button.h"
 #include "i2c.h"

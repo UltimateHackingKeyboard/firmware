@@ -1,6 +1,4 @@
-#define FIXED_BUSPAL_BOOTLOADER  (1)
-  /*!< Used to mark the fixed BUSPL bootloader. Macro usage can be removed in the future */
-
+#include "config.h"
 #include "command.h"
 #include "crc16.h"
 #include "bus_pal_hardware.h"
