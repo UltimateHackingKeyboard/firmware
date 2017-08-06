@@ -3,6 +3,7 @@
 
 // Macros:
 
+    #define EEPROM_SIZE (32*1024)
     #define EEPROM_ADDRESS_LENGTH 2
     #define EEPROM_PAGE_SIZE 64
     #define EEPROM_BUFFER_SIZE (EEPROM_ADDRESS_LENGTH + EEPROM_PAGE_SIZE)

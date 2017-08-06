@@ -5,10 +5,10 @@
 
     #include <stdint.h>
     #include "fsl_common.h"
+    #include "eeprom.h"
 
 // Macros:
 
-    #define EEPROM_SIZE (32*1024)
     #define HARDWARE_CONFIG_SIZE 64
     #define USER_CONFIG_SIZE (EEPROM_SIZE - HARDWARE_CONFIG_SIZE)
 
