@@ -6,7 +6,7 @@
 #include "current_keymap.h"
 #include "test_states.h"
 #include "peripherals/test_led.h"
-#include "slave_drivers/slave_driver_led_driver.h"
+#include "slave_drivers/is31fl3731_driver.h"
 #include "slave_drivers/uhk_module_driver.h"
 #include "led_pwm.h"
 

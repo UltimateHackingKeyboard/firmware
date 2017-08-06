@@ -1,5 +1,5 @@
 #include "led_display.h"
-#include "slave_drivers/slave_driver_led_driver.h"
+#include "slave_drivers/is31fl3731_driver.h"
 #include "layer.h"
 
 static const uint16_t capitalLetterToSegmentSet[] = {

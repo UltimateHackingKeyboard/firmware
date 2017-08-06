@@ -2,7 +2,7 @@
 #include "slave_scheduler.h"
 #include "slot.h"
 #include "main.h"
-#include "slave_drivers/slave_driver_led_driver.h"
+#include "slave_drivers/is31fl3731_driver.h"
 #include "slave_drivers/uhk_module_driver.h"
 #include "i2c.h"
 #include "i2c_addresses.h"
