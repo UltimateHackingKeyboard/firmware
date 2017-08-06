@@ -1,6 +1,6 @@
 #include "i2c_addresses.h"
 #include "i2c.h"
-#include "slave_drivers/slave_driver_uhk_module.h"
+#include "slave_drivers/uhk_module_driver.h"
 #include "slave_protocol.h"
 #include "main.h"
 #include "peripherals/test_led.h"

@@ -8,7 +8,7 @@
 #include "config/config_state.h"
 #include "led_pwm.h"
 #include "slave_scheduler.h"
-#include "slave_drivers/slave_driver_uhk_module.h"
+#include "slave_drivers/uhk_module_driver.h"
 #include "wormhole.h"
 #include "peripherals/adc.h"
 #include "eeprom.h"

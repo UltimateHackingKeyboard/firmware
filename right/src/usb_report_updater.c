@@ -7,7 +7,7 @@
 #include "test_states.h"
 #include "peripherals/test_led.h"
 #include "slave_drivers/slave_driver_led_driver.h"
-#include "slave_drivers/slave_driver_uhk_module.h"
+#include "slave_drivers/uhk_module_driver.h"
 #include "led_pwm.h"
 
 static uint8_t mouseWheelDivisorCounter = 0;

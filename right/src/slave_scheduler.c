@@ -3,7 +3,7 @@
 #include "slot.h"
 #include "main.h"
 #include "slave_drivers/slave_driver_led_driver.h"
-#include "slave_drivers/slave_driver_uhk_module.h"
+#include "slave_drivers/uhk_module_driver.h"
 #include "i2c.h"
 #include "i2c_addresses.h"
 #include "test_states.h"
