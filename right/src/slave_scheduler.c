@@ -59,5 +59,5 @@ void InitSlaveScheduler()
     I2C_MasterTransferCreateHandle(I2C_MAIN_BUS_BASEADDR, &I2cMasterHandle, bridgeProtocolCallback, NULL);
 
     // Kickstart the scheduler by triggering the first callback.
-    Slaves[0].updater(Slaves[0].perDriverId);
+    Slaves[currentSlaveId].updater(Slaves[currentSlaveId].perDriverId);
 }
