@@ -1,4 +1,4 @@
-#include "config/parse_keymap.h"
+#include "config_parser/parse_keymap.h"
 #include "key_action.h"
 #include "current_keymap.h"
 #include "led_display.h"
