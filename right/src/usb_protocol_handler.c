@@ -85,10 +85,19 @@ void readMergeSensor(void)
 
 void applyConfig(void)
 {
-    UserConfigBuffer.offset = 0;
-    GenericHidOutBuffer[0] = ParseConfig(&UserConfigBuffer);
-    GenericHidOutBuffer[1] = UserConfigBuffer.offset;
-    GenericHidOutBuffer[2] = UserConfigBuffer.offset >> 8;
+    uint8_t *temp;
+
+    NewUserConfigBuffer.offset = 0;
+    GenericHidOutBuffer[0] = ParseConfig(&NewUserConfigBuffer);
+    GenericHidOutBuffer[1] = NewUserConfigBuffer.offset;
+    GenericHidOutBuffer[2] = NewUserConfigBuffer.offset >> 8;
+    if (GenericHidOutBuffer[0] == ParserError_Success) {
+        temp = UserConfigBuffer.buffer;
+        UserConfigBuffer.buffer = NewUserConfigBuffer.buffer;
+        NewUserConfigBuffer.buffer = temp;
+        UserConfigBuffer.offset = 0;
+        ParseConfig(&UserConfigBuffer);
+    }
 }
 
 void setLedPwm(void)
@@ -144,7 +153,7 @@ void writeConfiguration(bool isHardware)
         return;
     }
 
-    uint8_t *buffer = isHardware ? HardwareConfigBuffer.buffer : UserConfigBuffer.buffer;
+    uint8_t *buffer = isHardware ? HardwareConfigBuffer.buffer : NewUserConfigBuffer.buffer;
     uint16_t bufferLength = isHardware ? HARDWARE_CONFIG_SIZE : USER_CONFIG_SIZE;
 
     if (offset + length > bufferLength) {

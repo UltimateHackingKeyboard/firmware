@@ -193,7 +193,7 @@ parser_error_t ParseKeymap(config_buffer_t *buffer) {;
     if (layerCount != LAYER_COUNT) {
         return ParserError_InvalidLayerCount;
     }
-    isDryRun = !isDefault;
+    isDryRun = buffer == &NewUserConfigBuffer || !isDefault;
     if (!isDryRun) {
         LedDisplay_SetText(abbreviationLen, abbreviation);
     }
