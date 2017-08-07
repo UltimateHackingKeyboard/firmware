@@ -1,6 +1,6 @@
 #include "config_parser/parse_keymap.h"
 #include "key_action.h"
-#include "current_keymap.h"
+#include "keymaps.h"
 #include "led_display.h"
 
 static parser_error_t parseNoneAction(key_action_t *keyAction, config_buffer_t *buffer) {
