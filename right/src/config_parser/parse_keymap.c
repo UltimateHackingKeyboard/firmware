@@ -51,9 +51,8 @@ static parser_error_t parseSwitchLayerAction(key_action_t *KeyAction, config_buf
 static parser_error_t parseSwitchKeymapAction(key_action_t *keyAction, config_buffer_t *buffer) {
     uint8_t keymapIndex = readUInt8(buffer);
 
-    (void)keymapIndex;
     keyAction->type = KeyActionType_SwitchKeymap;
-    // TODO: Implement this
+    keyAction->switchKeymap.keymapId = keymapIndex;
     return ParserError_Success;
 }
 
