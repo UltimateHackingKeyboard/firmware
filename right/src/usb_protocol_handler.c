@@ -92,6 +92,10 @@ void applyConfig(void)
     GenericHidOutBuffer[0] = ParseConfig(&StagingUserConfigBuffer);
     GenericHidOutBuffer[1] = StagingUserConfigBuffer.offset;
     GenericHidOutBuffer[2] = StagingUserConfigBuffer.offset >> 8;
+    GenericHidOutBuffer[3] = 0;
+    if (GenericHidOutBuffer[0]) {
+        return;
+    }
     ParserRunDry = false;
     temp = UserConfigBuffer.buffer;
     UserConfigBuffer.buffer = StagingUserConfigBuffer.buffer;
@@ -100,6 +104,7 @@ void applyConfig(void)
     GenericHidOutBuffer[0] = ParseConfig(&UserConfigBuffer);
     GenericHidOutBuffer[1] = UserConfigBuffer.offset;
     GenericHidOutBuffer[2] = UserConfigBuffer.offset >> 8;
+    GenericHidOutBuffer[3] = 1;
 }
 
 void setLedPwm(void)
