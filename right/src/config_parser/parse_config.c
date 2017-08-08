@@ -1,6 +1,7 @@
 #include "parse_config.h"
 #include "parse_keymap.h"
 #include "parse_macro.h"
+#include "keymaps.h"
 
 static parser_error_t parseModuleConfiguration(config_buffer_t *buffer) {
     uint8_t id = readUInt8(buffer);
