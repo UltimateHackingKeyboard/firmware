@@ -197,7 +197,6 @@ parser_error_t ParseKeymap(config_buffer_t *buffer, uint8_t keymapIdx, uint8_t k
         return ParserError_InvalidLayerCount;
     }
     if (!ParserRunDry) {
-        AllKeymapsCount = keymapCount;
         AllKeymaps[keymapIdx].abbreviation = abbreviation;
         AllKeymaps[keymapIdx].abbreviationLen = abbreviationLen;
         AllKeymaps[keymapIdx].offset = offset;

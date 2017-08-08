@@ -43,5 +43,8 @@ parser_error_t ParseConfig(config_buffer_t *buffer) {
             return errorCode;
         }
     }
+    if (!ParserRunDry) {
+        AllKeymapsCount = keymapCount;
+    }
     return ParserError_Success;
 }
