@@ -12,7 +12,8 @@ uint8_t AllKeymapsCount;
 uint8_t DefaultKeymapIndex;
 uint8_t CurrentKeymapIndex = 0;
 
-void Keymaps_Switch(uint8_t index) {
+void Keymaps_Switch(uint8_t index)
+{
     CurrentKeymapIndex = index;
     UserConfigBuffer.offset = AllKeymaps[index].offset;
     ParseKeymap(&UserConfigBuffer, index, AllKeymapsCount);

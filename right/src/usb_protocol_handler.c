@@ -16,7 +16,8 @@
 
 // Functions for setting error statuses
 
-void setError(uint8_t error) {
+void setError(uint8_t error)
+{
     GenericHidOutBuffer[0] = error;
 }
 
@@ -37,7 +38,8 @@ void SetResponseWord(uint16_t response)
 
 // Per command protocol command handlers
 
-void getSystemProperty(void) {
+void getSystemProperty(void)
+{
     uint8_t propertyId = GenericHidInBuffer[1];
 
     switch (propertyId) {
@@ -65,7 +67,8 @@ void getSystemProperty(void) {
     }
 }
 
-void reenumerate(void) {
+void reenumerate(void)
+{
     Wormhole.magicNumber = WORMHOLE_MAGIC_NUMBER;
     Wormhole.enumerationMode = GenericHidInBuffer[1];
     SCB->AIRCR = 0x5FA<<SCB_AIRCR_VECTKEY_Pos | SCB_AIRCR_SYSRESETREQ_Msk; // Reset the MCU.
