@@ -83,21 +83,15 @@ void readMergeSensor(void)
     SetResponseByte(MERGE_SENSOR_IS_MERGED);
 }
 
-// TODO: Expose this as a separate USB command and make Agent call it and check its output before calling applyConfig.
-void TestConfig(void)
+void applyConfig(void)
 {
+    uint8_t *temp;
+
     ParserRunDry = true;
     StagingUserConfigBuffer.offset = 0;
     GenericHidOutBuffer[0] = ParseConfig(&StagingUserConfigBuffer);
     GenericHidOutBuffer[1] = StagingUserConfigBuffer.offset;
     GenericHidOutBuffer[2] = StagingUserConfigBuffer.offset >> 8;
-}
-
-void applyConfig(void)
-{
-    uint8_t *temp;
-
-    TestConfig(); // This line will be removed. TestConfig will be called by Agent separately.
     ParserRunDry = false;
     temp = UserConfigBuffer.buffer;
     UserConfigBuffer.buffer = StagingUserConfigBuffer.buffer;
