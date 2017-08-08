@@ -88,7 +88,7 @@ void applyConfig(void)
 {
     uint8_t *temp;
     char oldKeymapAbbreviation[3];
-    char oldKeymapAbbreviationLen;
+    uint8_t oldKeymapAbbreviationLen;
 
     ParserRunDry = true;
     StagingUserConfigBuffer.offset = 0;
