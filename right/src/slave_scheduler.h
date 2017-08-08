@@ -29,7 +29,7 @@
 
 // Functions:
 
-    void InitSlaveScheduler();
-    void SetLeds(uint8_t ledBrightness);
+    extern void InitSlaveScheduler();
+    extern void SetLeds(uint8_t ledBrightness);
 
 #endif
