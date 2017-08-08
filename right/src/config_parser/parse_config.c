@@ -38,7 +38,7 @@ parser_error_t ParseConfig(config_buffer_t *buffer) {
     }
     keymapCount = readCompactLength(buffer);
     for (uint16_t keymapIdx = 0; keymapIdx < keymapCount; keymapIdx++) {
-        errorCode = ParseKeymap(buffer);
+        errorCode = ParseKeymap(buffer, keymapIdx, keymapCount);
         if (errorCode != ParserError_Success) {
             return errorCode;
         }

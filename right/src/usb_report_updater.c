@@ -174,6 +174,9 @@ void UpdateActiveUsbReports()
                 case KeyActionType_Test:
                     processTestAction(action);
                     break;
+                case KeyActionType_SwitchKeymap:
+                    Keymaps_Switch(action.switchKeymap.keymapId);
+                    break;
             }
         }
     }

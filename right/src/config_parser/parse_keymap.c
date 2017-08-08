@@ -174,7 +174,8 @@ static parser_error_t parseLayer(config_buffer_t *buffer, uint8_t layer) {
     return ParserError_Success;
 }
 
-parser_error_t ParseKeymap(config_buffer_t *buffer) {;
+parser_error_t ParseKeymap(config_buffer_t *buffer, uint8_t keymapIdx, uint8_t keymapCount) {;
+    uint16_t offset = buffer->offset;
     parser_error_t errorCode;
     uint16_t abbreviationLen;
     uint16_t nameLen;
@@ -191,7 +192,13 @@ parser_error_t ParseKeymap(config_buffer_t *buffer) {;
         return ParserError_InvalidLayerCount;
     }
     if (!ParserRunDry) {
-        LedDisplay_SetText(abbreviationLen, abbreviation);
+        AllKeymapsCount = keymapCount;
+        AllKeymaps[keymapIdx].abbreviation = abbreviation;
+        AllKeymaps[keymapIdx].abbreviationLen = abbreviationLen;
+        AllKeymaps[keymapIdx].offset = offset;
+        if (isDefault) {
+            DefaultKeymapIndex = keymapIdx;
+        }
     }
     for (uint16_t layerIdx = 0; layerIdx < layerCount; layerIdx++) {
         errorCode = parseLayer(buffer, layerIdx);

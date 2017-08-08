@@ -12,6 +12,7 @@
 #include "wormhole.h"
 #include "peripherals/adc.h"
 #include "eeprom.h"
+#include "keymaps.h"
 
 // Functions for setting error statuses
 
@@ -86,6 +87,8 @@ void readMergeSensor(void)
 void applyConfig(void)
 {
     uint8_t *temp;
+    char oldKeymapAbbreviation[3];
+    char oldKeymapAbbreviationLen;
 
     ParserRunDry = true;
     StagingUserConfigBuffer.offset = 0;
@@ -96,6 +99,8 @@ void applyConfig(void)
     if (GenericHidOutBuffer[0]) {
         return;
     }
+    memcpy(oldKeymapAbbreviation, AllKeymaps[CurrentKeymapIndex].abbreviation, 3);
+    oldKeymapAbbreviationLen = AllKeymaps[CurrentKeymapIndex].abbreviationLen;
     ParserRunDry = false;
     temp = UserConfigBuffer.buffer;
     UserConfigBuffer.buffer = StagingUserConfigBuffer.buffer;
@@ -105,6 +110,20 @@ void applyConfig(void)
     GenericHidOutBuffer[1] = UserConfigBuffer.offset;
     GenericHidOutBuffer[2] = UserConfigBuffer.offset >> 8;
     GenericHidOutBuffer[3] = 1;
+    if (GenericHidOutBuffer[0]) {
+        return;
+    }
+    for (uint8_t i = 0; i < AllKeymapsCount; i++) {
+        if (AllKeymaps[i].abbreviationLen != oldKeymapAbbreviationLen) {
+            continue;
+        }
+        if (memcmp(oldKeymapAbbreviation, AllKeymaps[i].abbreviation, oldKeymapAbbreviationLen)) {
+            continue;
+        }
+        Keymaps_Switch(i);
+        return;
+    }
+    Keymaps_Switch(DefaultKeymapIndex);
 }
 
 void setLedPwm(void)
