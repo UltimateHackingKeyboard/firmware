@@ -3,7 +3,7 @@
 #include "led_display.h"
 #include "layer.h"
 #include "usb_interfaces/usb_interface_mouse.h"
-#include "current_keymap.h"
+#include "keymaps.h"
 #include "test_states.h"
 #include "peripherals/test_led.h"
 #include "slave_drivers/is31fl3731_driver.h"
@@ -173,6 +173,9 @@ void UpdateActiveUsbReports()
                     break;
                 case KeyActionType_Test:
                     processTestAction(action);
+                    break;
+                case KeyActionType_SwitchKeymap:
+                    Keymaps_Switch(action.switchKeymap.keymapId);
                     break;
             }
         }

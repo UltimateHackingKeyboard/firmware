@@ -1,6 +1,7 @@
 #include "parse_config.h"
 #include "parse_keymap.h"
 #include "parse_macro.h"
+#include "keymaps.h"
 
 static parser_error_t parseModuleConfiguration(config_buffer_t *buffer) {
     uint8_t id = readUInt8(buffer);
@@ -38,10 +39,13 @@ parser_error_t ParseConfig(config_buffer_t *buffer) {
     }
     keymapCount = readCompactLength(buffer);
     for (uint16_t keymapIdx = 0; keymapIdx < keymapCount; keymapIdx++) {
-        errorCode = ParseKeymap(buffer);
+        errorCode = ParseKeymap(buffer, keymapIdx, keymapCount);
         if (errorCode != ParserError_Success) {
             return errorCode;
         }
+    }
+    if (!ParserRunDry) {
+        AllKeymapsCount = keymapCount;
     }
     return ParserError_Success;
 }

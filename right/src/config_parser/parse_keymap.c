@@ -1,7 +1,9 @@
 #include "config_parser/parse_keymap.h"
 #include "key_action.h"
-#include "current_keymap.h"
+#include "keymaps.h"
 #include "led_display.h"
+
+uint8_t tempKeymapCount;
 
 static parser_error_t parseNoneAction(key_action_t *keyAction, config_buffer_t *buffer) {
     keyAction->type = KeyActionType_None;
@@ -51,9 +53,11 @@ static parser_error_t parseSwitchLayerAction(key_action_t *KeyAction, config_buf
 static parser_error_t parseSwitchKeymapAction(key_action_t *keyAction, config_buffer_t *buffer) {
     uint8_t keymapIndex = readUInt8(buffer);
 
-    (void)keymapIndex;
+    if (keymapIndex >= tempKeymapCount) {
+        return ParserError_InvalidSerializedSwitchKeymapAction;
+    }
     keyAction->type = KeyActionType_SwitchKeymap;
-    // TODO: Implement this
+    keyAction->switchKeymap.keymapId = keymapIndex;
     return ParserError_Success;
 }
 
@@ -175,7 +179,8 @@ static parser_error_t parseLayer(config_buffer_t *buffer, uint8_t layer) {
     return ParserError_Success;
 }
 
-parser_error_t ParseKeymap(config_buffer_t *buffer) {;
+parser_error_t ParseKeymap(config_buffer_t *buffer, uint8_t keymapIdx, uint8_t keymapCount) {;
+    uint16_t offset = buffer->offset;
     parser_error_t errorCode;
     uint16_t abbreviationLen;
     uint16_t nameLen;
@@ -185,28 +190,27 @@ parser_error_t ParseKeymap(config_buffer_t *buffer) {;
     const char *name = readString(buffer, &nameLen);
     const char *description = readString(buffer, &descriptionLen);
     uint16_t layerCount = readCompactLength(buffer);
-    bool temp;
 
     (void)name;
     (void)description;
     if (layerCount != LAYER_COUNT) {
         return ParserError_InvalidLayerCount;
     }
-    temp = ParserRunDry;
-    if (!isDefault) {
-        ParserRunDry = true;
-    }
     if (!ParserRunDry) {
-        LedDisplay_SetText(abbreviationLen, abbreviation);
+        AllKeymaps[keymapIdx].abbreviation = abbreviation;
+        AllKeymaps[keymapIdx].abbreviationLen = abbreviationLen;
+        AllKeymaps[keymapIdx].offset = offset;
+        if (isDefault) {
+            DefaultKeymapIndex = keymapIdx;
+        }
     }
+    tempKeymapCount = keymapCount;
     for (uint16_t layerIdx = 0; layerIdx < layerCount; layerIdx++) {
         errorCode = parseLayer(buffer, layerIdx);
         if (errorCode != ParserError_Success) {
-            ParserRunDry = temp;
             return errorCode;
         }
     }
-    ParserRunDry = temp;
     return ParserError_Success;
 }
 
