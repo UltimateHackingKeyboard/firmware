@@ -3,8 +3,6 @@
 #include "current_keymap.h"
 #include "led_display.h"
 
-static bool isDryRun;
-
 static parser_error_t parseNoneAction(key_action_t *keyAction, config_buffer_t *buffer) {
     keyAction->type = KeyActionType_None;
     return ParserError_Success;
@@ -146,7 +144,7 @@ static parser_error_t parseKeyActions(uint8_t targetLayer, config_buffer_t *buff
         return ParserError_InvalidActionCount;
     }
     for (uint16_t actionIdx = 0; actionIdx < actionCount; actionIdx++) {
-        errorCode = parseKeyAction(isDryRun ? &dummyKeyAction : &CurrentKeymap[targetLayer][moduleId][actionIdx], buffer);
+        errorCode = parseKeyAction(ParserRunDry ? &dummyKeyAction : &CurrentKeymap[targetLayer][moduleId][actionIdx], buffer);
         if (errorCode != ParserError_Success) {
             return errorCode;
         }
@@ -193,8 +191,7 @@ parser_error_t ParseKeymap(config_buffer_t *buffer) {;
     if (layerCount != LAYER_COUNT) {
         return ParserError_InvalidLayerCount;
     }
-    isDryRun = buffer == &NewUserConfigBuffer || !isDefault;
-    if (!isDryRun) {
+    if (!ParserRunDry) {
         LedDisplay_SetText(abbreviationLen, abbreviation);
     }
     for (uint16_t layerIdx = 0; layerIdx < layerCount; layerIdx++) {

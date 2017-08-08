@@ -3,11 +3,13 @@
 static uint8_t hardwareConfig[HARDWARE_CONFIG_SIZE];
 config_buffer_t HardwareConfigBuffer = {hardwareConfig};
 
-static uint8_t userConfig1[USER_CONFIG_SIZE];
-static uint8_t __attribute__((section (".m_data_2"))) userConfig2[USER_CONFIG_SIZE];
+static uint8_t userConfig[USER_CONFIG_SIZE];
+static uint8_t __attribute__((section (".m_data_2"))) stagingUserConfig[USER_CONFIG_SIZE];
 
-config_buffer_t UserConfigBuffer = { userConfig1 };
-config_buffer_t NewUserConfigBuffer = { userConfig2 };
+config_buffer_t UserConfigBuffer = { userConfig };
+config_buffer_t StagingUserConfigBuffer = { stagingUserConfig };
+
+bool ParserRunDry;
 
 uint8_t readUInt8(config_buffer_t *buffer) {
     return buffer->buffer[buffer->offset++];

@@ -83,21 +83,25 @@ void readMergeSensor(void)
     SetResponseByte(MERGE_SENSOR_IS_MERGED);
 }
 
+// TODO: Expose this as a separate USB command and make Agent call it and check its output before calling applyConfig.
+void TestConfig(void)
+{
+    ParserRunDry = true;
+    StagingUserConfigBuffer.offset = 0;
+    GenericHidOutBuffer[0] = ParseConfig(&StagingUserConfigBuffer);
+    GenericHidOutBuffer[1] = StagingUserConfigBuffer.offset;
+    GenericHidOutBuffer[2] = StagingUserConfigBuffer.offset >> 8;
+}
+
 void applyConfig(void)
 {
-    uint8_t *temp;
-
-    NewUserConfigBuffer.offset = 0;
-    GenericHidOutBuffer[0] = ParseConfig(&NewUserConfigBuffer);
-    GenericHidOutBuffer[1] = NewUserConfigBuffer.offset;
-    GenericHidOutBuffer[2] = NewUserConfigBuffer.offset >> 8;
-    if (GenericHidOutBuffer[0] == ParserError_Success) {
-        temp = UserConfigBuffer.buffer;
-        UserConfigBuffer.buffer = NewUserConfigBuffer.buffer;
-        NewUserConfigBuffer.buffer = temp;
-        UserConfigBuffer.offset = 0;
-        ParseConfig(&UserConfigBuffer);
-    }
+    TestConfig(); // This line will be removed. TestConfig will be called by Agent separately.
+    memcpy(&UserConfigBuffer, &StagingUserConfigBuffer, USER_CONFIG_SIZE);
+    ParserRunDry = false;
+    UserConfigBuffer.offset = 0;
+    GenericHidOutBuffer[0] = ParseConfig(&UserConfigBuffer);
+    GenericHidOutBuffer[1] = UserConfigBuffer.offset;
+    GenericHidOutBuffer[2] = UserConfigBuffer.offset >> 8;
 }
 
 void setLedPwm(void)
@@ -153,7 +157,7 @@ void writeConfiguration(bool isHardware)
         return;
     }
 
-    uint8_t *buffer = isHardware ? HardwareConfigBuffer.buffer : NewUserConfigBuffer.buffer;
+    uint8_t *buffer = isHardware ? HardwareConfigBuffer.buffer : StagingUserConfigBuffer.buffer;
     uint16_t bufferLength = isHardware ? HARDWARE_CONFIG_SIZE : USER_CONFIG_SIZE;
 
     if (offset + length > bufferLength) {
