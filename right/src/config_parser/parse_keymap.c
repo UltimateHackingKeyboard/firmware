@@ -3,8 +3,6 @@
 #include "current_keymap.h"
 #include "led_display.h"
 
-static bool isDryRun;
-
 static parser_error_t parseNoneAction(key_action_t *keyAction, config_buffer_t *buffer) {
     keyAction->type = KeyActionType_None;
     return ParserError_Success;
@@ -146,7 +144,7 @@ static parser_error_t parseKeyActions(uint8_t targetLayer, config_buffer_t *buff
         return ParserError_InvalidActionCount;
     }
     for (uint16_t actionIdx = 0; actionIdx < actionCount; actionIdx++) {
-        errorCode = parseKeyAction(isDryRun ? &dummyKeyAction : &CurrentKeymap[targetLayer][moduleId][actionIdx], buffer);
+        errorCode = parseKeyAction(ParserRunDry ? &dummyKeyAction : &CurrentKeymap[targetLayer][moduleId][actionIdx], buffer);
         if (errorCode != ParserError_Success) {
             return errorCode;
         }
@@ -187,22 +185,28 @@ parser_error_t ParseKeymap(config_buffer_t *buffer) {;
     const char *name = readString(buffer, &nameLen);
     const char *description = readString(buffer, &descriptionLen);
     uint16_t layerCount = readCompactLength(buffer);
+    bool temp;
 
     (void)name;
     (void)description;
     if (layerCount != LAYER_COUNT) {
         return ParserError_InvalidLayerCount;
     }
-    isDryRun = !isDefault;
-    if (!isDryRun) {
+    temp = ParserRunDry;
+    if (!isDefault) {
+        ParserRunDry = true;
+    }
+    if (!ParserRunDry) {
         LedDisplay_SetText(abbreviationLen, abbreviation);
     }
     for (uint16_t layerIdx = 0; layerIdx < layerCount; layerIdx++) {
         errorCode = parseLayer(buffer, layerIdx);
         if (errorCode != ParserError_Success) {
+            ParserRunDry = temp;
             return errorCode;
         }
     }
+    ParserRunDry = temp;
     return ParserError_Success;
 }
 

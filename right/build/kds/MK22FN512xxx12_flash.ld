@@ -214,7 +214,14 @@ SECTIONS
     __bss_end__ = .;
     __END_BSS = .;
   } > m_data
-
+  
+  .m_data_2 : 
+  {
+     . = ALIGN(4);
+     *(.m_data_2) /* This is an User defined section */
+     . = ALIGN(4);
+  } > m_data_2
+  
   .heap :
   {
     . = ALIGN(8);
