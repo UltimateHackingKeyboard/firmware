@@ -95,9 +95,13 @@ void TestConfig(void)
 
 void applyConfig(void)
 {
+    uint8_t *temp;
+
     TestConfig(); // This line will be removed. TestConfig will be called by Agent separately.
-    memcpy(&UserConfigBuffer, &StagingUserConfigBuffer, USER_CONFIG_SIZE);
     ParserRunDry = false;
+    temp = UserConfigBuffer.buffer;
+    UserConfigBuffer.buffer = StagingUserConfigBuffer.buffer;
+    StagingUserConfigBuffer.buffer = temp;
     UserConfigBuffer.offset = 0;
     GenericHidOutBuffer[0] = ParseConfig(&UserConfigBuffer);
     GenericHidOutBuffer[1] = UserConfigBuffer.offset;
