@@ -185,11 +185,16 @@ parser_error_t ParseKeymap(config_buffer_t *buffer) {;
     const char *name = readString(buffer, &nameLen);
     const char *description = readString(buffer, &descriptionLen);
     uint16_t layerCount = readCompactLength(buffer);
+    bool temp;
 
     (void)name;
     (void)description;
     if (layerCount != LAYER_COUNT) {
         return ParserError_InvalidLayerCount;
+    }
+    temp = ParserRunDry;
+    if (!isDefault) {
+        ParserRunDry = true;
     }
     if (!ParserRunDry) {
         LedDisplay_SetText(abbreviationLen, abbreviation);
@@ -197,9 +202,11 @@ parser_error_t ParseKeymap(config_buffer_t *buffer) {;
     for (uint16_t layerIdx = 0; layerIdx < layerCount; layerIdx++) {
         errorCode = parseLayer(buffer, layerIdx);
         if (errorCode != ParserError_Success) {
+            ParserRunDry = temp;
             return errorCode;
         }
     }
+    ParserRunDry = temp;
     return ParserError_Success;
 }
 
