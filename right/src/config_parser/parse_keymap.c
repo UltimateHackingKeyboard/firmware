@@ -3,6 +3,8 @@
 #include "keymaps.h"
 #include "led_display.h"
 
+uint8_t tempKeymapCount;
+
 static parser_error_t parseNoneAction(key_action_t *keyAction, config_buffer_t *buffer) {
     keyAction->type = KeyActionType_None;
     return ParserError_Success;
@@ -51,6 +53,9 @@ static parser_error_t parseSwitchLayerAction(key_action_t *KeyAction, config_buf
 static parser_error_t parseSwitchKeymapAction(key_action_t *keyAction, config_buffer_t *buffer) {
     uint8_t keymapIndex = readUInt8(buffer);
 
+    if (keymapIndex >= tempKeymapCount) {
+        return ParserError_InvalidSerializedSwitchKeymapAction;
+    }
     keyAction->type = KeyActionType_SwitchKeymap;
     keyAction->switchKeymap.keymapId = keymapIndex;
     return ParserError_Success;
@@ -200,6 +205,7 @@ parser_error_t ParseKeymap(config_buffer_t *buffer, uint8_t keymapIdx, uint8_t k
             DefaultKeymapIndex = keymapIdx;
         }
     }
+    tempKeymapCount = keymapCount;
     for (uint16_t layerIdx = 0; layerIdx < layerCount; layerIdx++) {
         errorCode = parseLayer(buffer, layerIdx);
         if (errorCode != ParserError_Success) {

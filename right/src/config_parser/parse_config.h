@@ -16,6 +16,7 @@
         ParserError_InvalidModuleCount,
         ParserError_InvalidActionCount,
         ParserError_InvalidSerializedMacroActionType,
+        ParserError_InvalidSerializedSwitchKeymapAction,
     } parser_error_t;
 
 // Functions:
