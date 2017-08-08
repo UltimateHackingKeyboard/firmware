@@ -3,6 +3,7 @@
 #include "keymaps.h"
 #include "led_display.h"
 #include "config_parser/parse_keymap.h"
+#include "config_parser/config_globals.h"
 
 // TODO: Restore Ctrl and Super keys and Mod+N.
 

@@ -1,3 +1,5 @@
+#include "config_parser/config_globals.h"
+#include "config_parser/parse_config.h"
 #include "config_parser/parse_keymap.h"
 #include "key_action.h"
 #include "keymaps.h"

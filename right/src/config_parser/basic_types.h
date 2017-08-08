@@ -1,16 +1,9 @@
-#ifndef __CONFIG_STATE_H__
-#define __CONFIG_STATE_H__
+#ifndef __BASIC_TYPES_H__
+#define __BASIC_TYPES_H__
 
 // Includes:
 
-    #include <stdint.h>
     #include "fsl_common.h"
-    #include "eeprom.h"
-
-// Macros:
-
-    #define HARDWARE_CONFIG_SIZE 64
-    #define USER_CONFIG_SIZE (EEPROM_SIZE - HARDWARE_CONFIG_SIZE)
 
 // Typedefs:
 
@@ -18,13 +11,6 @@
         uint8_t *buffer;
         uint16_t offset;
     } config_buffer_t;
-
-// Variables:
-
-    extern bool ParserRunDry;
-    extern config_buffer_t HardwareConfigBuffer;
-    extern config_buffer_t UserConfigBuffer;
-    extern config_buffer_t StagingUserConfigBuffer;
 
 // Functions:
 

@@ -1,5 +1,5 @@
 #include "fsl_common.h"
-#include "config_parser/config_state.h"
+#include "config_parser/config_globals.h"
 #include "i2c_addresses.h"
 #include "i2c.h"
 #include "eeprom.h"
