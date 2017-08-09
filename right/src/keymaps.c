@@ -7,7 +7,7 @@
 
 // TODO: Restore Ctrl and Super keys and Mod+N.
 
-keymap_reference_t AllKeymaps[MAX_KEYMAP_NUM] = { { "QTY", 3 } };
+keymap_reference_t AllKeymaps[MAX_KEYMAP_NUM] = { { "QTY", 0, 3 } };
 uint8_t AllKeymapsCount;
 uint8_t DefaultKeymapIndex;
 uint8_t CurrentKeymapIndex = 0;

@@ -14,8 +14,8 @@
 
     typedef struct {
         const char *abbreviation;
-        uint16_t abbreviationLen;
         uint16_t offset;
+        uint8_t abbreviationLen;
     } keymap_reference_t;
 
 // Variables:
