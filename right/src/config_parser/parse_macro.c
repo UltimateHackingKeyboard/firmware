@@ -70,7 +70,7 @@ parser_error_t parseTextMacroAction(config_buffer_t *buffer, macro_action_t *mac
     return ParserError_Success;
 }
 
-parser_error_t parseMacroAction(config_buffer_t *buffer, macro_action_t *macroAction) {
+parser_error_t ParseMacroAction(config_buffer_t *buffer, macro_action_t *macroAction) {
     uint8_t macroActionType = readUInt8(buffer);
 
     switch (macroActionType) {
@@ -91,24 +91,24 @@ parser_error_t parseMacroAction(config_buffer_t *buffer, macro_action_t *macroAc
 }
 
 parser_error_t ParseMacro(config_buffer_t *buffer, uint8_t macroIdx) {
-    uint16_t offset = buffer->offset;
     parser_error_t errorCode;
     uint16_t nameLen;
     bool isLooped = readBool(buffer);
     bool isPrivate = readBool(buffer);
     const char *name = readString(buffer, &nameLen);
     uint16_t macroActionsCount = readCompactLength(buffer);
+    uint16_t firstMacroActionOffset = buffer->offset;
     macro_action_t dummyMacroAction;
 
     (void)isLooped;
     (void)isPrivate;
     (void)name;
     if (!ParserRunDry) {
-        AllMacros[macroIdx].offset = offset;
+        AllMacros[macroIdx].firstMacroActionOffset = firstMacroActionOffset;
         AllMacros[macroIdx].macroActionsCount = macroActionsCount;
     }
     for (uint16_t i = 0; i < macroActionsCount; i++) {
-        errorCode = parseMacroAction(buffer, &dummyMacroAction);
+        errorCode = ParseMacroAction(buffer, &dummyMacroAction);
         if (errorCode != ParserError_Success) {
             return errorCode;
         }

@@ -13,7 +13,7 @@
 // Typedefs:
 
     typedef struct {
-        uint16_t offset;
+        uint16_t firstMacroActionOffset;
         uint16_t macroActionsCount;
     } macro_reference_t;
 
