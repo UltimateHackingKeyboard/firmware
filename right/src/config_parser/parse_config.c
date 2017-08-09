@@ -44,7 +44,7 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
         }
     }
     keymapCount = readCompactLength(buffer);
-    if (keymapCount > 255) {
+    if (keymapCount > MAX_KEYMAP_NUM) {
         return ParserError_InvalidKeymapCount;
     }
     for (uint8_t keymapIdx = 0; keymapIdx < keymapCount; keymapIdx++) {
