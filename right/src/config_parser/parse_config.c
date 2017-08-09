@@ -38,7 +38,7 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
     }
     macroCount = readCompactLength(buffer);
     for (uint16_t macroIdx = 0; macroIdx < macroCount; macroIdx++) {
-        errorCode = ParseMacro(buffer);
+        errorCode = ParseMacro(buffer, macroIdx);
         if (errorCode != ParserError_Success) {
             return errorCode;
         }

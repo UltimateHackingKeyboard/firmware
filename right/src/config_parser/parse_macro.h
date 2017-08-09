@@ -20,6 +20,6 @@
 
 // Functions:
 
-    parser_error_t ParseMacro(config_buffer_t *buffer);
+    parser_error_t ParseMacro(config_buffer_t *buffer, uint16_t macroIdx);
 
 #endif
