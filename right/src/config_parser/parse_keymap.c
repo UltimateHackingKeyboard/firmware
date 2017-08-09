@@ -5,7 +5,8 @@
 #include "keymaps.h"
 #include "led_display.h"
 
-uint8_t tempKeymapCount;
+static uint8_t tempKeymapCount;
+static uint8_t tempMacroCount;
 
 static parser_error_t parseNoneAction(key_action_t *keyAction, config_buffer_t *buffer)
 {
@@ -71,6 +72,9 @@ static parser_error_t parsePlayMacroAction(key_action_t *keyAction, config_buffe
 {
     uint8_t macroIndex = readUInt8(buffer);
 
+    if (macroIndex >= tempMacroCount) {
+        return ParserError_InvalidSerializedPlayMacroAction;
+    }
     keyAction->type = KeyActionType_SwitchKeymap;
     keyAction->playMacro.macroId = macroIndex;
     return ParserError_Success;
@@ -192,7 +196,7 @@ static parser_error_t parseLayer(config_buffer_t *buffer, uint8_t layer)
     return ParserError_Success;
 }
 
-parser_error_t ParseKeymap(config_buffer_t *buffer, uint8_t keymapIdx, uint8_t keymapCount)
+parser_error_t ParseKeymap(config_buffer_t *buffer, uint8_t keymapIdx, uint8_t keymapCount, uint8_t macroCount)
 {
     uint16_t offset = buffer->offset;
     parser_error_t errorCode;
@@ -222,6 +226,7 @@ parser_error_t ParseKeymap(config_buffer_t *buffer, uint8_t keymapIdx, uint8_t k
         }
     }
     tempKeymapCount = keymapCount;
+    tempMacroCount = macroCount;
     for (uint8_t layerIdx = 0; layerIdx < layerCount; layerIdx++) {
         errorCode = parseLayer(buffer, layerIdx);
         if (errorCode != ParserError_Success) {

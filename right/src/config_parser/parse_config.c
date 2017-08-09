@@ -52,13 +52,14 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
         return ParserError_InvalidKeymapCount;
     }
     for (uint8_t keymapIdx = 0; keymapIdx < keymapCount; keymapIdx++) {
-        errorCode = ParseKeymap(buffer, keymapIdx, keymapCount);
+        errorCode = ParseKeymap(buffer, keymapIdx, keymapCount, macroCount);
         if (errorCode != ParserError_Success) {
             return errorCode;
         }
     }
     if (!ParserRunDry) {
         AllKeymapsCount = keymapCount;
+        AllMacrosCount = macroCount;
     }
     return ParserError_Success;
 }

@@ -4,6 +4,7 @@
 #include "led_display.h"
 #include "config_parser/parse_keymap.h"
 #include "config_parser/config_globals.h"
+#include "macros.h"
 
 // TODO: Restore Ctrl and Super keys and Mod+N.
 
@@ -16,7 +17,7 @@ void Keymaps_Switch(uint8_t index)
 {
     CurrentKeymapIndex = index;
     UserConfigBuffer.offset = AllKeymaps[index].offset;
-    ParseKeymap(&UserConfigBuffer, index, AllKeymapsCount);
+    ParseKeymap(&UserConfigBuffer, index, AllKeymapsCount, AllMacrosCount);
     LedDisplay_SetText(AllKeymaps[index].abbreviationLen, AllKeymaps[index].abbreviation);
 }
 

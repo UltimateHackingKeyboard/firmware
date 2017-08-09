@@ -21,6 +21,7 @@
         ParserError_InvalidKeymapCount,
         ParserError_InvalidAbbreviationLen,
         ParserError_InvalidMacroCount,
+        ParserError_InvalidSerializedPlayMacroAction,
     } parser_error_t;
 
 // Functions:

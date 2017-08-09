@@ -19,5 +19,6 @@
 // Variables:
 
     extern macro_reference_t AllMacros[MAX_MACRO_NUM];
+    extern uint8_t AllMacrosCount;
 
 #endif
