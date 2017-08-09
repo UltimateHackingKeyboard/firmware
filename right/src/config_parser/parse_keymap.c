@@ -71,7 +71,8 @@ static parser_error_t parsePlayMacroAction(key_action_t *keyAction, config_buffe
 {
     uint8_t macroIndex = readUInt8(buffer);
 
-    (void)macroIndex;
+    keyAction->type = KeyActionType_SwitchKeymap;
+    keyAction->playMacro.macroId = macroIndex;
     return ParserError_Success;
 }
 
