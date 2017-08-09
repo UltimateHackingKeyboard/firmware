@@ -2,7 +2,8 @@
 #include "config_globals.h"
 #include "macros.h"
 
-parser_error_t parseKeyMacroAction(config_buffer_t *buffer, macro_action_t *macroAction, serialized_macro_action_type_t macroActionType) {
+parser_error_t parseKeyMacroAction(config_buffer_t *buffer, macro_action_t *macroAction, serialized_macro_action_type_t macroActionType)
+{
     uint8_t keyMacroType = macroActionType - SerializedMacroActionType_KeyMacroAction;
     uint8_t action = keyMacroType & 0b11;
     uint8_t type;
@@ -22,7 +23,8 @@ parser_error_t parseKeyMacroAction(config_buffer_t *buffer, macro_action_t *macr
     return ParserError_Success;
 }
 
-parser_error_t parseMouseButtonMacroAction(config_buffer_t *buffer, macro_action_t *macroAction, serialized_macro_action_type_t macroActionType) {
+parser_error_t parseMouseButtonMacroAction(config_buffer_t *buffer, macro_action_t *macroAction, serialized_macro_action_type_t macroActionType)
+{
     uint8_t action = macroActionType - SerializedMacroActionType_MouseButtonMacroAction;
     uint8_t mouseButtonsMask = readUInt8(buffer);
 
@@ -32,7 +34,8 @@ parser_error_t parseMouseButtonMacroAction(config_buffer_t *buffer, macro_action
     return ParserError_Success;
 }
 
-parser_error_t parseMoveMouseMacroAction(config_buffer_t *buffer, macro_action_t *macroAction) {
+parser_error_t parseMoveMouseMacroAction(config_buffer_t *buffer, macro_action_t *macroAction)
+{
     int16_t x = readInt16(buffer);
     int16_t y = readInt16(buffer);
 
@@ -42,7 +45,8 @@ parser_error_t parseMoveMouseMacroAction(config_buffer_t *buffer, macro_action_t
     return ParserError_Success;
 }
 
-parser_error_t parseScrollMouseMacroAction(config_buffer_t *buffer, macro_action_t *macroAction) {
+parser_error_t parseScrollMouseMacroAction(config_buffer_t *buffer, macro_action_t *macroAction)
+{
     int16_t x = readInt16(buffer);
     int16_t y = readInt16(buffer);
 
@@ -52,7 +56,8 @@ parser_error_t parseScrollMouseMacroAction(config_buffer_t *buffer, macro_action
     return ParserError_Success;
 }
 
-parser_error_t parseDelayMacroAction(config_buffer_t *buffer, macro_action_t *macroAction) {
+parser_error_t parseDelayMacroAction(config_buffer_t *buffer, macro_action_t *macroAction)
+{
     int16_t delay = readInt16(buffer);
 
     macroAction->type = MacroActionType_Delay;
@@ -60,7 +65,8 @@ parser_error_t parseDelayMacroAction(config_buffer_t *buffer, macro_action_t *ma
     return ParserError_Success;
 }
 
-parser_error_t parseTextMacroAction(config_buffer_t *buffer, macro_action_t *macroAction) {
+parser_error_t parseTextMacroAction(config_buffer_t *buffer, macro_action_t *macroAction)
+{
     uint16_t textLen;
     const char *text = readString(buffer, &textLen);
 
@@ -70,7 +76,8 @@ parser_error_t parseTextMacroAction(config_buffer_t *buffer, macro_action_t *mac
     return ParserError_Success;
 }
 
-parser_error_t ParseMacroAction(config_buffer_t *buffer, macro_action_t *macroAction) {
+parser_error_t ParseMacroAction(config_buffer_t *buffer, macro_action_t *macroAction)
+{
     uint8_t macroActionType = readUInt8(buffer);
 
     switch (macroActionType) {
@@ -90,7 +97,8 @@ parser_error_t ParseMacroAction(config_buffer_t *buffer, macro_action_t *macroAc
     return ParserError_InvalidSerializedMacroActionType;
 }
 
-parser_error_t ParseMacro(config_buffer_t *buffer, uint8_t macroIdx) {
+parser_error_t ParseMacro(config_buffer_t *buffer, uint8_t macroIdx)
+{
     parser_error_t errorCode;
     uint16_t nameLen;
     bool isLooped = readBool(buffer);
