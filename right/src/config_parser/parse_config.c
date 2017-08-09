@@ -41,7 +41,7 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
     if (macroCount > MAX_MACRO_NUM) {
         return ParserError_InvalidMacroCount;
     }
-    for (uint16_t macroIdx = 0; macroIdx < macroCount; macroIdx++) {
+    for (uint8_t macroIdx = 0; macroIdx < macroCount; macroIdx++) {
         errorCode = ParseMacro(buffer, macroIdx);
         if (errorCode != ParserError_Success) {
             return errorCode;

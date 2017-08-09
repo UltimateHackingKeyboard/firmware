@@ -7,7 +7,7 @@
 
 // Macros:
 
-    #define MAX_MACRO_NUM 1024
+    #define MAX_MACRO_NUM 255
 
 // Typedefs:
 

@@ -87,7 +87,7 @@ parser_error_t parseMacroAction(config_buffer_t *buffer) {
     return ParserError_InvalidSerializedMacroActionType;
 }
 
-parser_error_t ParseMacro(config_buffer_t *buffer, uint16_t macroIdx) {
+parser_error_t ParseMacro(config_buffer_t *buffer, uint8_t macroIdx) {
     uint16_t offset = buffer->offset;
     parser_error_t errorCode;
     uint16_t nameLen;

@@ -92,7 +92,7 @@
                 uint8_t keymapId;
             } __attribute__ ((packed)) switchKeymap;
             struct {
-                uint16_t macroId;
+                uint8_t macroId;
             } __attribute__ ((packed)) playMacro;
             struct {
                 test_action_t testAction;
