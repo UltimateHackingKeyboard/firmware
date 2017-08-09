@@ -19,6 +19,7 @@
         ParserError_InvalidSerializedSwitchKeymapAction,
         ParserError_InvalidModuleConfigurationCount,
         ParserError_InvalidKeymapCount,
+        ParserError_InvalidAbbreviationLen,
     } parser_error_t;
 
 // Functions:

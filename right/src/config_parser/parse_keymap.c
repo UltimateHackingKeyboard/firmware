@@ -205,6 +205,9 @@ parser_error_t ParseKeymap(config_buffer_t *buffer, uint8_t keymapIdx, uint8_t k
 
     (void)name;
     (void)description;
+    if (!abbreviationLen || abbreviationLen > 3) {
+        return ParserError_InvalidAbbreviationLen;
+    }
     if (layerCount != LAYER_COUNT) {
         return ParserError_InvalidLayerCount;
     }
