@@ -3,6 +3,7 @@
 #include "parse_macro.h"
 #include "keymaps.h"
 #include "config_globals.h"
+#include "macros.h"
 
 static parser_error_t parseModuleConfiguration(config_buffer_t *buffer)
 {
@@ -37,6 +38,9 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
         }
     }
     macroCount = readCompactLength(buffer);
+    if (macroCount > MAX_MACRO_NUM) {
+        return ParserError_InvalidMacroCount;
+    }
     for (uint16_t macroIdx = 0; macroIdx < macroCount; macroIdx++) {
         errorCode = ParseMacro(buffer, macroIdx);
         if (errorCode != ParserError_Success) {

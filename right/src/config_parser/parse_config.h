@@ -20,6 +20,7 @@
         ParserError_InvalidModuleConfigurationCount,
         ParserError_InvalidKeymapCount,
         ParserError_InvalidAbbreviationLen,
+        ParserError_InvalidMacroCount,
     } parser_error_t;
 
 // Functions:
