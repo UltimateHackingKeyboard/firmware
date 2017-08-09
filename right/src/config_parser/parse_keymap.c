@@ -191,7 +191,8 @@ static parser_error_t parseLayer(config_buffer_t *buffer, uint8_t layer)
     return ParserError_Success;
 }
 
-parser_error_t ParseKeymap(config_buffer_t *buffer, uint8_t keymapIdx, uint8_t keymapCount) {;
+parser_error_t ParseKeymap(config_buffer_t *buffer, uint8_t keymapIdx, uint8_t keymapCount)
+{
     uint16_t offset = buffer->offset;
     parser_error_t errorCode;
     uint16_t abbreviationLen;
