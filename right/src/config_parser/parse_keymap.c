@@ -157,7 +157,7 @@ static parser_error_t parseKeyActions(uint8_t targetLayer, config_buffer_t *buff
     if (actionCount > MAX_KEY_COUNT_PER_MODULE) {
         return ParserError_InvalidActionCount;
     }
-    for (uint16_t actionIdx = 0; actionIdx < actionCount; actionIdx++) {
+    for (uint8_t actionIdx = 0; actionIdx < actionCount; actionIdx++) {
         errorCode = parseKeyAction(ParserRunDry ? &dummyKeyAction : &CurrentKeymap[targetLayer][moduleId][actionIdx], buffer);
         if (errorCode != ParserError_Success) {
             return errorCode;
@@ -182,7 +182,7 @@ static parser_error_t parseLayer(config_buffer_t *buffer, uint8_t layer)
     if (moduleCount > SLOT_COUNT) {
         return ParserError_InvalidModuleCount;
     }
-    for (uint16_t moduleIdx = 0; moduleIdx < moduleCount; moduleIdx++) {
+    for (uint8_t moduleIdx = 0; moduleIdx < moduleCount; moduleIdx++) {
         errorCode = parseModule(buffer, layer);
         if (errorCode != ParserError_Success) {
             return errorCode;
@@ -217,7 +217,7 @@ parser_error_t ParseKeymap(config_buffer_t *buffer, uint8_t keymapIdx, uint8_t k
         }
     }
     tempKeymapCount = keymapCount;
-    for (uint16_t layerIdx = 0; layerIdx < layerCount; layerIdx++) {
+    for (uint8_t layerIdx = 0; layerIdx < layerCount; layerIdx++) {
         errorCode = parseLayer(buffer, layerIdx);
         if (errorCode != ParserError_Success) {
             return errorCode;
