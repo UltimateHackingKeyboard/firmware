@@ -64,7 +64,6 @@ void LedSlaveDriver_Init(uint8_t ledDriverId) {
     currentLedDriverState->phase = LedDriverPhase_SetFunctionFrame;
     currentLedDriverState->ledIndex = 0;
     LedDriverStates[LedDriverId_Left].setupLedControlRegistersCommand[7] |= 0b00000010; // Enable the LED of the ISO key.
-    memset(currentLedDriverState->targetLedValues, 0x00, LED_DRIVER_LED_COUNT);
     SetLeds(0xff);
     LedDisplay_SetText(3, "ABC");
 }
@@ -102,6 +101,7 @@ void LedSlaveDriver_Update(uint8_t ledDriverId) {
             *ledIndex += PMW_REGISTER_UPDATE_CHUNK_SIZE;
             if (*ledIndex >= LED_DRIVER_LED_COUNT) {
                 *ledIndex = 0;
+                memcpy(currentLedDriverState->targetLedValues, currentLedDriverState->sourceLedValues, LED_DRIVER_LED_COUNT);
                 *ledDriverPhase = LedDriverPhase_Initialized;
             }
             break;
