@@ -105,8 +105,7 @@ void LedSlaveDriver_Update(uint8_t ledDriverId) {
                 *ledDriverPhase = LedDriverPhase_Initialized;
             }
             break;
-        case LedDriverPhase_Initialized:
-        {
+        case LedDriverPhase_Initialized: {
             uint8_t *sourceLedValues = currentLedDriverState->sourceLedValues;
             uint8_t *targetLedValues = currentLedDriverState->targetLedValues;
 
