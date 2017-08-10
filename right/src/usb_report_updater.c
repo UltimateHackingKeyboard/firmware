@@ -9,6 +9,7 @@
 #include "slave_drivers/is31fl3731_driver.h"
 #include "slave_drivers/uhk_module_driver.h"
 #include "led_pwm.h"
+#include "macros.h"
 
 static uint8_t mouseWheelDivisorCounter = 0;
 static uint8_t mouseSpeedAccelDivisorCounter = 0;
@@ -132,8 +133,17 @@ void UpdateActiveUsbReports()
     uint8_t systemScancodeIndex = 0;
     static uint8_t previousLayer = LAYER_ID_BASE;
     static uint8_t previousModifiers = 0;
-    uint8_t activeLayer = getActiveLayer();
+    uint8_t activeLayer;
 
+    if (MacroPlaying) {
+        Macros_ContinueMacro();
+        memcpy(&UsbMouseReport, &MacroMouseReport, sizeof MacroMouseReport);
+        memcpy(&ActiveUsbBasicKeyboardReport, &MacroBasicKeyboardReport, sizeof MacroBasicKeyboardReport);
+        memcpy(&ActiveUsbMediaKeyboardReport, &MacroMediaKeyboardReport, sizeof MacroMediaKeyboardReport);
+        memcpy(&ActiveUsbSystemKeyboardReport, &MacroSystemKeyboardReport, sizeof MacroSystemKeyboardReport);
+        return;
+    }
+    activeLayer = getActiveLayer();
     LedDisplay_SetLayer(activeLayer);
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {

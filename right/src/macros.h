@@ -4,7 +4,9 @@
 // Includes:
 
     #include <stdint.h>
+    #include <stdbool.h>
     #include "key_action.h"
+    #include "usb_device_config.h"
 
 // Macros:
 
@@ -67,5 +69,15 @@
 
     extern macro_reference_t AllMacros[MAX_MACRO_NUM];
     extern uint8_t AllMacrosCount;
+    extern bool MacroPlaying;
+    extern usb_mouse_report_t MacroMouseReport;
+    extern usb_basic_keyboard_report_t MacroBasicKeyboardReport;
+    extern usb_media_keyboard_report_t MacroMediaKeyboardReport;
+    extern usb_system_keyboard_report_t MacroSystemKeyboardReport;
+
+// Functions:
+
+    void Macros_StartMacro(uint8_t index);
+    void Macros_ContinueMacro(void);
 
 #endif
