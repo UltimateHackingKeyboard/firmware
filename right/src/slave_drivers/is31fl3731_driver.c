@@ -93,19 +93,20 @@ void LedSlaveDriver_Update(uint8_t ledDriverId) {
             break;
         case LedDriverPhase_InitLedControlRegisters:
             I2cAsyncWrite(ledDriverAddress, currentLedDriverState->setupLedControlRegistersCommand, LED_CONTROL_REGISTERS_COMMAND_LENGTH);
-            *ledDriverPhase = LedDriverPhase_Initialized;
+            *ledDriverPhase = LedDriverPhase_InitLedValues;
             break;
-        case LedDriverPhase_Initialized:
-        {
-#ifdef LED_DRIVER_STRESS_TEST
+        case LedDriverPhase_InitLedValues:
             updatePwmRegistersBuffer[0] = FRAME_REGISTER_PWM_FIRST + *ledIndex;
             memcpy(updatePwmRegistersBuffer+1, currentLedDriverState->sourceLedValues + *ledIndex, PMW_REGISTER_UPDATE_CHUNK_SIZE);
             I2cAsyncWrite(ledDriverAddress, updatePwmRegistersBuffer, PWM_REGISTER_BUFFER_LENGTH);
             *ledIndex += PMW_REGISTER_UPDATE_CHUNK_SIZE;
             if (*ledIndex >= LED_DRIVER_LED_COUNT) {
                 *ledIndex = 0;
+                *ledDriverPhase = LedDriverPhase_Initialized;
             }
-#else
+            break;
+        case LedDriverPhase_Initialized:
+        {
             uint8_t *sourceLedValues = currentLedDriverState->sourceLedValues;
             uint8_t *targetLedValues = currentLedDriverState->targetLedValues;
 
@@ -147,7 +148,6 @@ void LedSlaveDriver_Update(uint8_t ledDriverId) {
             if (*ledIndex >= LED_DRIVER_LED_COUNT) {
                 *ledIndex = 0;
             }
-#endif
             break;
         }
     }
