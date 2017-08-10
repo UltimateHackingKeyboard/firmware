@@ -12,6 +12,7 @@
 #include "peripherals/adc.h"
 #include "init_peripherals.h"
 #include "eeprom.h"
+#include "microseconds/microseconds_pit.c"
 
 void InitI2c() {
     port_pin_config_t pinConfig = {
@@ -63,4 +64,5 @@ void InitPeripherals(void)
     InitI2cWatchdog();
 #endif
     EEPROM_Init();
+    microseconds_init();
 }

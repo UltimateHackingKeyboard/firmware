@@ -13,6 +13,7 @@
 #include "peripherals/adc.h"
 #include "eeprom.h"
 #include "keymaps.h"
+#include "microseconds/microseconds_pit.c"
 
 // Functions for setting error statuses
 
@@ -200,10 +201,23 @@ void getKeyboardState(void)
 
 void getDebugInfo(void)
 {
-    GenericHidOutBuffer[1] = (I2C_Watchdog >> 0) & 0xff;;
-    GenericHidOutBuffer[2] = (I2C_Watchdog >> 8) & 0xff;
-    GenericHidOutBuffer[3] = (I2C_Watchdog >> 16) & 0xff;
-    GenericHidOutBuffer[4] = (I2C_Watchdog >> 24) & 0xff;
+    GenericHidOutBuffer[1] = I2C_Watchdog >> 0;
+    GenericHidOutBuffer[2] = I2C_Watchdog >> 8;
+    GenericHidOutBuffer[3] = I2C_Watchdog >> 16;
+    GenericHidOutBuffer[4] = I2C_Watchdog >> 24;
+
+    uint64_t ticks = microseconds_get_ticks();
+    uint32_t microseconds = microseconds_convert_to_microseconds(ticks);
+    uint32_t milliseconds = microseconds/1000;
+
+    GenericHidOutBuffer[1] = (ticks >> 0) & 0xff;;
+    GenericHidOutBuffer[2] = (ticks >> 8) & 0xff;
+    GenericHidOutBuffer[3] = (ticks >> 16) & 0xff;
+    GenericHidOutBuffer[4] = (ticks >> 24) & 0xff;
+    GenericHidOutBuffer[5] = (ticks >> 32) & 0xff;;
+    GenericHidOutBuffer[6] = (ticks >> 40) & 0xff;
+    GenericHidOutBuffer[7] = (ticks >> 48) & 0xff;
+    GenericHidOutBuffer[8] = (ticks >> 56) & 0xff;
 }
 
 // The main protocol handler function
