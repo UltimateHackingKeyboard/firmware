@@ -5,10 +5,10 @@
 macro_reference_t AllMacros[MAX_MACRO_NUM];
 uint8_t AllMacrosCount;
 bool MacroPlaying = false;
-usb_mouse_report_t MacroMouseReport = { 0 };
-usb_basic_keyboard_report_t MacroBasicKeyboardReport = { 0 };
-usb_media_keyboard_report_t MacroMediaKeyboardReport = { { 0 } };
-usb_system_keyboard_report_t MacroSystemKeyboardReport = { { 0 } };
+usb_mouse_report_t MacroMouseReport;
+usb_basic_keyboard_report_t MacroBasicKeyboardReport;
+usb_media_keyboard_report_t MacroMediaKeyboardReport;
+usb_system_keyboard_report_t MacroSystemKeyboardReport;
 
 static uint8_t currentMacroIndex;
 static uint16_t currentMacroActionIndex;
@@ -278,6 +278,10 @@ void Macros_StartMacro(uint8_t index)
     currentMacroActionIndex = 0;
     UserConfigBuffer.offset = AllMacros[index].firstMacroActionOffset;
     ParseMacroAction(&UserConfigBuffer, &currentMacroAction);
+    memset(&MacroMouseReport, 0, sizeof MacroMouseReport);
+    memset(&MacroBasicKeyboardReport, 0, sizeof MacroBasicKeyboardReport);
+    memset(&MacroMediaKeyboardReport, 0, sizeof MacroMediaKeyboardReport);
+    memset(&MacroSystemKeyboardReport, 0, sizeof MacroSystemKeyboardReport);
 }
 
 void Macros_ContinueMacro(void)
