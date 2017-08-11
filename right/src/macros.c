@@ -83,7 +83,7 @@ uint8_t characterToScancode(char character)
 
 void addBasicScancode(uint8_t scancode)
 {
-    if (scancode) {
+    if (!scancode) {
         return;
     }
     for (uint8_t i = 0; i < USB_BASIC_KEYBOARD_MAX_KEYS; i++) {
@@ -101,7 +101,7 @@ void addBasicScancode(uint8_t scancode)
 
 void deleteBasicScancode(uint8_t scancode)
 {
-    if (scancode) {
+    if (!scancode) {
         return;
     }
     for (uint8_t i = 0; i < USB_BASIC_KEYBOARD_MAX_KEYS; i++) {
@@ -124,7 +124,7 @@ void deleteModifiers(uint8_t modifiers)
 
 void addMediaScancode(uint16_t scancode)
 {
-    if (scancode) {
+    if (!scancode) {
         return;
     }
     for (uint8_t i = 0; i < USB_MEDIA_KEYBOARD_MAX_KEYS; i++) {
@@ -142,7 +142,7 @@ void addMediaScancode(uint16_t scancode)
 
 void deleteMediaScancode(uint16_t scancode)
 {
-    if (scancode) {
+    if (!scancode) {
         return;
     }
     for (uint8_t i = 0; i < USB_MEDIA_KEYBOARD_MAX_KEYS; i++) {
@@ -155,7 +155,7 @@ void deleteMediaScancode(uint16_t scancode)
 
 void addSystemScancode(uint8_t scancode)
 {
-    if (scancode) {
+    if (!scancode) {
         return;
     }
     for (uint8_t i = 0; i < USB_SYSTEM_KEYBOARD_MAX_KEYS; i++) {
@@ -173,7 +173,7 @@ void addSystemScancode(uint8_t scancode)
 
 void deleteSystemScancode(uint8_t scancode)
 {
-    if (scancode) {
+    if (!scancode) {
         return;
     }
     for (uint8_t i = 0; i < USB_SYSTEM_KEYBOARD_MAX_KEYS; i++) {
