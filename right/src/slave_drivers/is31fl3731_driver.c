@@ -64,7 +64,6 @@ void LedSlaveDriver_Init(uint8_t ledDriverId) {
     currentLedDriverState->phase = LedDriverPhase_SetFunctionFrame;
     currentLedDriverState->ledIndex = 0;
     LedDriverStates[LedDriverId_Left].setupLedControlRegistersCommand[7] |= 0b00000010; // Enable the LED of the ISO key.
-    memset(currentLedDriverState->targetLedValues, 0xff, LED_DRIVER_LED_COUNT);
     SetLeds(0xff);
     LedDisplay_SetText(3, "ABC");
 }
@@ -93,19 +92,23 @@ void LedSlaveDriver_Update(uint8_t ledDriverId) {
             break;
         case LedDriverPhase_InitLedControlRegisters:
             I2cAsyncWrite(ledDriverAddress, currentLedDriverState->setupLedControlRegistersCommand, LED_CONTROL_REGISTERS_COMMAND_LENGTH);
-            *ledDriverPhase = LedDriverPhase_Initialized;
+            *ledDriverPhase = LedDriverPhase_InitLedValues;
             break;
-        case LedDriverPhase_Initialized:
-        {
-#ifdef LED_DRIVER_STRESS_TEST
+        case LedDriverPhase_InitLedValues:
             updatePwmRegistersBuffer[0] = FRAME_REGISTER_PWM_FIRST + *ledIndex;
-            memcpy(updatePwmRegistersBuffer+1, currentLedDriverState->sourceLedValues + *ledIndex, PMW_REGISTER_UPDATE_CHUNK_SIZE);
-            I2cAsyncWrite(ledDriverAddress, updatePwmRegistersBuffer, PWM_REGISTER_BUFFER_LENGTH);
-            *ledIndex += PMW_REGISTER_UPDATE_CHUNK_SIZE;
+            uint8_t chunkSize = MIN(LED_DRIVER_LED_COUNT - *ledIndex, PMW_REGISTER_UPDATE_CHUNK_SIZE);
+            memcpy(updatePwmRegistersBuffer+1, currentLedDriverState->sourceLedValues + *ledIndex, chunkSize);
+            I2cAsyncWrite(ledDriverAddress, updatePwmRegistersBuffer, chunkSize + 1);
+            *ledIndex += chunkSize;
             if (*ledIndex >= LED_DRIVER_LED_COUNT) {
                 *ledIndex = 0;
+                memcpy(currentLedDriverState->targetLedValues, currentLedDriverState->sourceLedValues, LED_DRIVER_LED_COUNT);
+#ifndef LED_DRIVER_STRESS_TEST
+                *ledDriverPhase = LedDriverPhase_Initialized;
+#endif
             }
-#else
+            break;
+        case LedDriverPhase_Initialized: {
             uint8_t *sourceLedValues = currentLedDriverState->sourceLedValues;
             uint8_t *targetLedValues = currentLedDriverState->targetLedValues;
 
@@ -147,7 +150,6 @@ void LedSlaveDriver_Update(uint8_t ledDriverId) {
             if (*ledIndex >= LED_DRIVER_LED_COUNT) {
                 *ledIndex = 0;
             }
-#endif
             break;
         }
     }

@@ -26,6 +26,7 @@
         LedDriverPhase_SetShutdownModeNormal,
         LedDriverPhase_SetFrame1,
         LedDriverPhase_InitLedControlRegisters,
+        LedDriverPhase_InitLedValues,
         LedDriverPhase_Initialized,
     } led_driver_phase_t;
 
