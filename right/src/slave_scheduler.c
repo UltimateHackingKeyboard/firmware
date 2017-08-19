@@ -7,8 +7,8 @@
 #include "i2c.h"
 #include "i2c_addresses.h"
 
-uint8_t previousSlaveId = 0;
-uint8_t currentSlaveId = 0;
+uint8_t previousSlaveId;
+uint8_t currentSlaveId;
 uint32_t BridgeCounter;
 
 uhk_slave_t Slaves[] = {
@@ -48,16 +48,15 @@ static void bridgeProtocolCallback(I2C_Type *base, i2c_master_handle_t *handle, 
     } while (!isTransferScheduled);
 }
 
-static void initSlaveDrivers()
-{
-    for (uint8_t i=0; i<sizeof(Slaves) / sizeof(uhk_slave_t); i++) {
-        Slaves[i].init(Slaves[i].perDriverId);
-    }
-}
-
 void InitSlaveScheduler()
 {
-    initSlaveDrivers();
+    previousSlaveId = 0;
+    currentSlaveId = 0;
+
+    for (uint8_t i=0; i<sizeof(Slaves) / sizeof(uhk_slave_t); i++) {
+        Slaves[i].isConnected = false;
+    }
+
     I2C_MasterTransferCreateHandle(I2C_MAIN_BUS_BASEADDR, &I2cMasterHandle, bridgeProtocolCallback, NULL);
 
     // Kickstart the scheduler by triggering the first callback.
