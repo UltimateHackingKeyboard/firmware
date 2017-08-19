@@ -7,8 +7,6 @@
         SlaveCommand_GetKeyStates,
         SlaveCommand_SetTestLed,
         SlaveCommand_SetLedPwmBrightness,
-        SlaveCommand_SetDisableKeyMatrixScanState,
-        SlaveCommand_SetDisableLedSdb,
     } slave_command_t;
 
 #endif

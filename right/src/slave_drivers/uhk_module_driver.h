@@ -25,9 +25,6 @@
         UhkModulePhase_ReceiveKeystates,
         UhkModulePhase_SendPwmBrightnessCommand,
         UhkModulePhase_SendTestLedCommand,
-        UhkModulePhase_SendDisableKeyMatrixScanState,
-        UhkModulePhase_SendLedPwmBrightness,
-        UhkModulePhase_DisableLedSdb,
     } uhk_module_phase_t;
 
     typedef struct {

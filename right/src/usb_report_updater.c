@@ -4,7 +4,6 @@
 #include "layer.h"
 #include "usb_interfaces/usb_interface_mouse.h"
 #include "keymaps.h"
-#include "test_states.h"
 #include "peripherals/test_led.h"
 #include "slave_drivers/is31fl3731_driver.h"
 #include "slave_drivers/uhk_module_driver.h"
@@ -15,7 +14,6 @@ static uint8_t mouseWheelDivisorCounter = 0;
 static uint8_t mouseSpeedAccelDivisorCounter = 0;
 static uint8_t mouseSpeed = 3;
 static bool wasPreviousMouseActionWheelAction = false;
-test_states_t TestStates;
 
 void processMouseAction(key_action_t action)
 {
@@ -72,40 +70,6 @@ void processMouseAction(key_action_t action)
     UsbMouseReport.buttons |= action.mouse.buttonActions;
 
     wasPreviousMouseActionWheelAction = isWheelAction;
-}
-
-void processTestAction(key_action_t testAction)
-{
-    switch (testAction.test.testAction) {
-    case TestAction_DisableUsb:
-        if (kStatus_USB_Success != USB_DeviceClassDeinit(CONTROLLER_ID)) {
-            return;
-        }
-        // Make sure we are clocking to the peripheral to ensure there are no bus errors
-        if (SIM->SCGC4 & SIM_SCGC4_USBOTG_MASK) {
-            NVIC_DisableIRQ(USB0_IRQn);           // Disable the USB interrupt
-            NVIC_ClearPendingIRQ(USB0_IRQn);      // Clear any pending interrupts on USB
-            SIM->SCGC4 &= ~SIM_SCGC4_USBOTG_MASK; // Turn off clocking to USB
-        }
-        break;
-    case TestAction_DisableI2c:
-        TestStates.disableI2c = true;
-        break;
-    case TestAction_DisableKeyMatrixScan:
-        TestStates.disableKeyMatrixScan = true;
-        break;
-    case TestAction_DisableLedDriverPwm:
-        SetLeds(0);
-        break;
-    case TestAction_DisableLedFetPwm:
-        LedPwm_SetBrightness(0);
-        UhkModuleStates[0].ledPwmBrightness = 0;
-        break;
-    case TestAction_DisableLedSdb:
-        GPIO_WritePinOutput(LED_DRIVER_SDB_GPIO, LED_DRIVER_SDB_PIN, 0);
-        TestStates.disableLedSdb = true;
-        break;
-    }
 }
 
 uint8_t getActiveLayer()
@@ -180,9 +144,6 @@ void UpdateActiveUsbReports()
                     break;
                 case KeyActionType_Mouse:
                     processMouseAction(action);
-                    break;
-                case KeyActionType_Test:
-                    processTestAction(action);
                     break;
                 case KeyActionType_SwitchKeymap:
                     Keymaps_Switch(action.switchKeymap.keymapId);

@@ -225,29 +225,23 @@ key_action_t CurrentKeymap[LAYER_COUNT][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = 
         // Right keyboard half
         {
             // Row 1
-//            { .type = KEY_ACTION_NONE },
-//            { .type = KEY_ACTION_NONE },
-//            { .type = KEY_ACTION_NONE },
-            { .type = KeyActionType_Test, .test = { .testAction = TestAction_DisableUsb }},
-            { .type = KeyActionType_Test, .test = { .testAction = TestAction_DisableI2c }},
-            { .type = KeyActionType_Test, .test = { .testAction = TestAction_DisableKeyMatrixScan }},
+            { .type = KeyActionType_None },
+            { .type = KeyActionType_None },
+            { .type = KeyActionType_None },
             { .type = KeyActionType_None },
             { .type = KeyActionType_None },
             { .type = KeyActionType_Keystroke, .keystroke = { .keystrokeType = KeystrokeType_System, .scancode = SYSTEM_WAKE_UP }},
             { .type = KeyActionType_None },
 
             // Row 2
-//            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .keystrokeType = KEYSTROKE_MEDIA, .scancode = MEDIA_PLAY_PAUSE }},
-//            { .type = KEY_ACTION_KEYSTROKE, .keystroke = { .keystrokeType = KEYSTROKE_MEDIA, .scancode = MEDIA_VOLUME_UP }},
-            { .type = KeyActionType_Test, .test = { .testAction = TestAction_DisableLedSdb }},
-            { .type = KeyActionType_Test, .test = { .testAction = TestAction_DisableLedFetPwm }},
+            { .type = KeyActionType_Keystroke, .keystroke = { .keystrokeType = KeystrokeType_Media, .scancode = MEDIA_PLAY_PAUSE }},
+            { .type = KeyActionType_Keystroke, .keystroke = { .keystrokeType = KeystrokeType_Media, .scancode = MEDIA_VOLUME_UP }},
             { .type = KeyActionType_Keystroke, .keystroke = { .keystrokeType = KeystrokeType_Media, .scancode = MEDIA_STOP }},
             { .type = KeyActionType_None },
             { .type = KeyActionType_None },
             { .type = KeyActionType_Keystroke, .keystroke = { .keystrokeType = KeystrokeType_System, .scancode = SYSTEM_SLEEP }},
             { .type = KeyActionType_Keystroke, .keystroke = { .keystrokeType = KeystrokeType_System, .scancode = SYSTEM_POWER_DOWN }},
-//            { .type = KEY_ACTION_NONE },
-            { .type = KeyActionType_Test, .test = { .testAction = TestAction_DisableLedDriverPwm }},
+            { .type = KeyActionType_None },
 
             // Row 3
             { .type = KeyActionType_Keystroke, .keystroke = { .keystrokeType = KeystrokeType_Media, .scancode = MEDIA_PREVIOUS }},

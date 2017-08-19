@@ -6,7 +6,6 @@
 #include "slave_drivers/uhk_module_driver.h"
 #include "i2c.h"
 #include "i2c_addresses.h"
-#include "test_states.h"
 
 uint8_t previousSlaveId = 0;
 uint8_t currentSlaveId = 0;
@@ -24,9 +23,6 @@ static void bridgeProtocolCallback(I2C_Type *base, i2c_master_handle_t *handle, 
 
     do {
         BridgeCounter++;
-        if (TestStates.disableI2c) {
-            return;
-        }
 
         uhk_slave_t *previousSlave = Slaves + previousSlaveId;
         uhk_slave_t *currentSlave = Slaves + currentSlaveId;

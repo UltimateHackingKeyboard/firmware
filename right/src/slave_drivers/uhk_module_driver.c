@@ -4,7 +4,6 @@
 #include "slave_protocol.h"
 #include "main.h"
 #include "peripherals/test_led.h"
-#include "test_states.h"
 #include "bool_array_converter.h"
 #include "crc16.h"
 
@@ -46,24 +45,6 @@ void UhkModuleSlaveDriver_Update(uint8_t uhkModuleId)
         case UhkModulePhase_SendTestLedCommand:
             txBuffer[0] = SlaveCommand_SetTestLed;
             txBuffer[1] = uhkModuleInternalState->isTestLedOn;
-            I2cAsyncWrite(I2C_ADDRESS_LEFT_KEYBOARD_HALF, txBuffer, 2);
-            uhkModulePhase = UhkModulePhase_SendDisableKeyMatrixScanState;
-            break;
-        case UhkModulePhase_SendDisableKeyMatrixScanState:
-            txBuffer[0] = SlaveCommand_SetDisableKeyMatrixScanState;
-            txBuffer[1] = TestStates.disableKeyMatrixScan;
-            I2cAsyncWrite(I2C_ADDRESS_LEFT_KEYBOARD_HALF, txBuffer, 2);
-            uhkModulePhase = UhkModulePhase_SendLedPwmBrightness;
-            break;
-        case UhkModulePhase_SendLedPwmBrightness:
-            txBuffer[0] = SlaveCommand_SetDisableKeyMatrixScanState;
-            txBuffer[1] = TestStates.disableKeyMatrixScan;
-            I2cAsyncWrite(I2C_ADDRESS_LEFT_KEYBOARD_HALF, txBuffer, 2);
-            uhkModulePhase = UhkModulePhase_DisableLedSdb;
-            break;
-        case UhkModulePhase_DisableLedSdb:
-            txBuffer[0] = SlaveCommand_SetDisableLedSdb;
-            txBuffer[1] = TestStates.disableLedSdb;
             I2cAsyncWrite(I2C_ADDRESS_LEFT_KEYBOARD_HALF, txBuffer, 2);
             uhkModulePhase = UhkModulePhase_SendKeystatesRequestCommand;
             break;
