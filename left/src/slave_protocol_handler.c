@@ -47,13 +47,5 @@ void SlaveProtocolHandler(void)
             uint8_t brightnessPercent = SlaveRxBuffer[1];
             LedPwm_SetBrightness(brightnessPercent);
             break;
-        case SlaveCommand_SetDisableKeyMatrixScanState:
-            SlaveTxSize = 0;
-            DisableKeyMatrixScanState = SlaveRxBuffer[1];
-            break;
-        case SlaveCommand_SetDisableLedSdb:
-            SlaveTxSize = 0;
-            GPIO_WritePinOutput(LED_DRIVER_SDB_GPIO, LED_DRIVER_SDB_PIN, SlaveRxBuffer[1] ? 0 : 1);
-            break;
     }
 }
