@@ -27,7 +27,7 @@
         LedDriverPhase_SetFrame1,
         LedDriverPhase_InitLedControlRegisters,
         LedDriverPhase_InitLedValues,
-        LedDriverPhase_Initialized,
+        LedDriverPhase_UpdateChangedLedValues,
     } led_driver_phase_t;
 
     typedef struct {
