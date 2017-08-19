@@ -64,5 +64,5 @@ void InitPeripherals(void)
     InitI2cWatchdog();
 #endif
     EEPROM_Init();
-    microseconds_init();
+    //microseconds_init();
 }
