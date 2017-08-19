@@ -44,7 +44,7 @@
 
 // Functions:
 
-    void I2cAsyncWrite(uint8_t i2cAddress, uint8_t *data, size_t dataSize);
-    void I2cAsyncRead(uint8_t i2cAddress, uint8_t *data, size_t dataSize);
+    status_t I2cAsyncWrite(uint8_t i2cAddress, uint8_t *data, size_t dataSize);
+    status_t I2cAsyncRead(uint8_t i2cAddress, uint8_t *data, size_t dataSize);
 
 #endif
