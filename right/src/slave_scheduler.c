@@ -10,6 +10,7 @@
 
 uint8_t previousSlaveId = 0;
 uint8_t currentSlaveId = 0;
+uint32_t BridgeCounter;
 
 uhk_slave_t Slaves[] = {
     { .initializer = UhkModuleSlaveDriver_Init, .updater = UhkModuleSlaveDriver_Update, .perDriverId = UhkModuleId_LeftKeyboardHalf },
@@ -22,6 +23,7 @@ static void bridgeProtocolCallback(I2C_Type *base, i2c_master_handle_t *handle, 
     IsI2cTransferScheduled = false;
 
     do {
+        BridgeCounter++;
         if (TestStates.disableI2c) {
             return;
         }
@@ -36,6 +38,9 @@ static void bridgeProtocolCallback(I2C_Type *base, i2c_master_handle_t *handle, 
         }
 
         currentSlave->updater(currentSlave->perDriverId);
+        if (IsI2cTransferScheduled) {
+            currentSlave->isConnected = true;
+        }
 
         previousSlaveId = currentSlaveId;
         currentSlaveId++;

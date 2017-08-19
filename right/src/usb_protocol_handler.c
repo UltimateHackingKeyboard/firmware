@@ -14,7 +14,7 @@
 #include "eeprom.h"
 #include "keymaps.h"
 #include "microseconds/microseconds_pit.c"
-
+#include "i2c_watchdog.h"
 // Functions for setting error statuses
 
 void setError(uint8_t error)
@@ -206,6 +206,21 @@ void getDebugInfo(void)
     GenericHidOutBuffer[3] = I2C_Watchdog >> 16;
     GenericHidOutBuffer[4] = I2C_Watchdog >> 24;
 
+    GenericHidOutBuffer[5] = BridgeCounter >> 0;
+    GenericHidOutBuffer[6] = BridgeCounter >> 8;
+    GenericHidOutBuffer[7] = BridgeCounter >> 16;
+    GenericHidOutBuffer[8] = BridgeCounter >> 24;
+
+    GenericHidOutBuffer[9] = I2C_WatchdogOuterCounter >> 0;
+    GenericHidOutBuffer[10] = I2C_WatchdogOuterCounter >> 8;
+    GenericHidOutBuffer[11] = I2C_WatchdogOuterCounter >> 16;
+    GenericHidOutBuffer[12] = I2C_WatchdogOuterCounter >> 24;
+
+    GenericHidOutBuffer[13] = I2C_WatchdogInnerCounter >> 0;
+    GenericHidOutBuffer[14] = I2C_WatchdogInnerCounter >> 8;
+    GenericHidOutBuffer[15] = I2C_WatchdogInnerCounter >> 16;
+    GenericHidOutBuffer[16] = I2C_WatchdogInnerCounter >> 24;
+/*
     uint64_t ticks = microseconds_get_ticks();
     uint32_t microseconds = microseconds_convert_to_microseconds(ticks);
     uint32_t milliseconds = microseconds/1000;
@@ -218,7 +233,7 @@ void getDebugInfo(void)
     GenericHidOutBuffer[6] = (ticks >> 40) & 0xff;
     GenericHidOutBuffer[7] = (ticks >> 48) & 0xff;
     GenericHidOutBuffer[8] = (ticks >> 56) & 0xff;
-}
+*/}
 
 // The main protocol handler function
 

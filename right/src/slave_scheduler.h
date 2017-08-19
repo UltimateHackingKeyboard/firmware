@@ -26,6 +26,7 @@
 // Variables:
 
     extern uhk_slave_t Slaves[];
+    extern uint32_t BridgeCounter;
 
 // Functions:
 

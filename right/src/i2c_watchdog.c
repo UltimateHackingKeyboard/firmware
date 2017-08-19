@@ -10,12 +10,16 @@
 #define PIT_SOURCE_CLOCK CLOCK_GetFreq(kCLOCK_BusClk)
 
 static uint32_t prevWatchdogCounter = 0;
+uint32_t I2C_WatchdogInnerCounter;
+uint32_t I2C_WatchdogOuterCounter;
 
 // This function is designed to restart and reinstall the I2C handler
 // when a disconnection of the left side makes the master I2C bus unresponsive.
 void PIT_I2C_WATCHDOG_HANDLER(void)
 {
+    I2C_WatchdogOuterCounter++;
     if (I2C_Watchdog == prevWatchdogCounter) { // Restart I2C if there hasn't be any interrupt during 1 sec
+        I2C_WatchdogInnerCounter++;
         i2c_master_config_t masterConfig;
         I2C_MasterGetDefaultConfig(&masterConfig);
         I2C_MasterDeinit(I2C_MAIN_BUS_BASEADDR);
