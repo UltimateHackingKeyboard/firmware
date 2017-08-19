@@ -46,7 +46,7 @@
 // Functions:
 
     extern void LedSlaveDriver_Init(uint8_t ledDriverId);
-    extern void LedSlaveDriver_Update(uint8_t ledDriverId);
+    extern status_t LedSlaveDriver_Update(uint8_t ledDriverId);
     extern void SetLeds(uint8_t ledBrightness);
 
 #endif

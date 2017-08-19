@@ -40,7 +40,6 @@
 // Variables:
 
     extern i2c_master_handle_t I2cMasterHandle;
-    extern bool IsI2cTransferScheduled;
 
 // Functions:
 

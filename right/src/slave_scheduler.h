@@ -14,7 +14,7 @@
     } slave_id_t;
 
     typedef void (slave_init_t)(uint8_t);
-    typedef void (slave_update_t)(uint8_t);
+    typedef status_t (slave_update_t)(uint8_t);
 
     typedef struct {
         uint8_t perDriverId;  // Identifies the slave instance on a per-driver basis
@@ -22,6 +22,14 @@
         slave_update_t *update;
         bool isConnected;
     } uhk_slave_t;
+
+    typedef enum {
+        kStatusGroup_Uhk = -1,
+    } uhk_status_group_t;
+
+    typedef enum {
+        kStatus_Uhk_IdleSlave = MAKE_STATUS(kStatusGroup_Uhk, 0),
+    } uhk_status_t;
 
 // Variables:
 

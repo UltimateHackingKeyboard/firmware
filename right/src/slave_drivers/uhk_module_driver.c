@@ -1,5 +1,6 @@
 #include "i2c_addresses.h"
 #include "i2c.h"
+#include "slave_scheduler.h"
 #include "slave_drivers/uhk_module_driver.h"
 #include "slave_protocol.h"
 #include "main.h"
@@ -19,18 +20,19 @@ void UhkModuleSlaveDriver_Init(uint8_t uhkModuleId)
     uhkModuleState->ledPwmBrightness = 0x64;
 }
 
-void UhkModuleSlaveDriver_Update(uint8_t uhkModuleId)
+status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleId)
 {
+    status_t status = kStatus_Uhk_IdleSlave;
     uhk_module_state_t *uhkModuleInternalState = UhkModuleStates + uhkModuleId;
 
     switch (uhkModulePhase) {
         case UhkModulePhase_SendKeystatesRequestCommand:
             txBuffer[0] = SlaveCommand_GetKeyStates;
-            I2cAsyncWrite(I2C_ADDRESS_LEFT_KEYBOARD_HALF, txBuffer, 1);
+            status = I2cAsyncWrite(I2C_ADDRESS_LEFT_KEYBOARD_HALF, txBuffer, 1);
             uhkModulePhase = UhkModulePhase_ReceiveKeystates;
             break;
         case UhkModulePhase_ReceiveKeystates:
-            I2cAsyncRead(I2C_ADDRESS_LEFT_KEYBOARD_HALF, rxBuffer, KEY_STATE_BUFFER_SIZE);
+            status = I2cAsyncRead(I2C_ADDRESS_LEFT_KEYBOARD_HALF, rxBuffer, KEY_STATE_BUFFER_SIZE);
             uhkModulePhase = UhkModulePhase_SendPwmBrightnessCommand;
             break;
         case UhkModulePhase_SendPwmBrightnessCommand:
@@ -39,14 +41,16 @@ void UhkModuleSlaveDriver_Update(uint8_t uhkModuleId)
             }
             txBuffer[0] = SlaveCommand_SetLedPwmBrightness;
             txBuffer[1] = uhkModuleInternalState->ledPwmBrightness;
-            I2cAsyncWrite(I2C_ADDRESS_LEFT_KEYBOARD_HALF, txBuffer, 2);
+            status = I2cAsyncWrite(I2C_ADDRESS_LEFT_KEYBOARD_HALF, txBuffer, 2);
             uhkModulePhase = UhkModulePhase_SendTestLedCommand;
             break;
         case UhkModulePhase_SendTestLedCommand:
             txBuffer[0] = SlaveCommand_SetTestLed;
             txBuffer[1] = uhkModuleInternalState->isTestLedOn;
-            I2cAsyncWrite(I2C_ADDRESS_LEFT_KEYBOARD_HALF, txBuffer, 2);
+            status = I2cAsyncWrite(I2C_ADDRESS_LEFT_KEYBOARD_HALF, txBuffer, 2);
             uhkModulePhase = UhkModulePhase_SendKeystatesRequestCommand;
             break;
     }
+
+    return status;
 }

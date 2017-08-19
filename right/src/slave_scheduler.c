@@ -17,9 +17,9 @@ uhk_slave_t Slaves[] = {
     { .init = LedSlaveDriver_Init,       .update = LedSlaveDriver_Update,       .perDriverId = LedDriverId_Left             },
 };
 
-static void bridgeProtocolCallback(I2C_Type *base, i2c_master_handle_t *handle, status_t status, void *userData)
+static void bridgeProtocolCallback(I2C_Type *base, i2c_master_handle_t *handle, status_t previousStatus, void *userData)
 {
-    IsI2cTransferScheduled = false;
+    bool isTransferScheduled = false;
 
     do {
         BridgeCounter++;
@@ -27,14 +27,15 @@ static void bridgeProtocolCallback(I2C_Type *base, i2c_master_handle_t *handle, 
         uhk_slave_t *previousSlave = Slaves + previousSlaveId;
         uhk_slave_t *currentSlave = Slaves + currentSlaveId;
 
-        previousSlave->isConnected = status == kStatus_Success;
+        previousSlave->isConnected = previousStatus == kStatus_Success;
 
         if (!currentSlave->isConnected) {
             currentSlave->init(currentSlave->perDriverId);
         }
 
-        currentSlave->update(currentSlave->perDriverId);
-        if (IsI2cTransferScheduled) {
+        status_t currentStatus = currentSlave->update(currentSlave->perDriverId);
+        isTransferScheduled = currentStatus == kStatus_Success;
+        if (isTransferScheduled) {
             currentSlave->isConnected = true;
         }
 
@@ -44,7 +45,7 @@ static void bridgeProtocolCallback(I2C_Type *base, i2c_master_handle_t *handle, 
         if (currentSlaveId >= (sizeof(Slaves) / sizeof(uhk_slave_t))) {
             currentSlaveId = 0;
         }
-    } while (!IsI2cTransferScheduled);
+    } while (!isTransferScheduled);
 }
 
 static void initSlaveDrivers()
