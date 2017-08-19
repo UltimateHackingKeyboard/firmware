@@ -13,9 +13,9 @@ uint8_t currentSlaveId = 0;
 uint32_t BridgeCounter;
 
 uhk_slave_t Slaves[] = {
-    { .initializer = UhkModuleSlaveDriver_Init, .updater = UhkModuleSlaveDriver_Update, .perDriverId = UhkModuleId_LeftKeyboardHalf },
-    { .initializer = LedSlaveDriver_Init,       .updater = LedSlaveDriver_Update,       .perDriverId = LedDriverId_Right            },
-    { .initializer = LedSlaveDriver_Init,       .updater = LedSlaveDriver_Update,       .perDriverId = LedDriverId_Left             },
+    { .init = UhkModuleSlaveDriver_Init, .update = UhkModuleSlaveDriver_Update, .perDriverId = UhkModuleId_LeftKeyboardHalf },
+    { .init = LedSlaveDriver_Init,       .update = LedSlaveDriver_Update,       .perDriverId = LedDriverId_Right            },
+    { .init = LedSlaveDriver_Init,       .update = LedSlaveDriver_Update,       .perDriverId = LedDriverId_Left             },
 };
 
 static void bridgeProtocolCallback(I2C_Type *base, i2c_master_handle_t *handle, status_t status, void *userData)
@@ -34,10 +34,10 @@ static void bridgeProtocolCallback(I2C_Type *base, i2c_master_handle_t *handle, 
         previousSlave->isConnected = status == kStatus_Success;
 
         if (!currentSlave->isConnected) {
-            currentSlave->initializer(currentSlave->perDriverId);
+            currentSlave->init(currentSlave->perDriverId);
         }
 
-        currentSlave->updater(currentSlave->perDriverId);
+        currentSlave->update(currentSlave->perDriverId);
         if (IsI2cTransferScheduled) {
             currentSlave->isConnected = true;
         }
@@ -54,7 +54,7 @@ static void bridgeProtocolCallback(I2C_Type *base, i2c_master_handle_t *handle, 
 static void initSlaveDrivers()
 {
     for (uint8_t i=0; i<sizeof(Slaves) / sizeof(uhk_slave_t); i++) {
-        Slaves[i].initializer(Slaves[i].perDriverId);
+        Slaves[i].init(Slaves[i].perDriverId);
     }
 }
 
@@ -64,5 +64,5 @@ void InitSlaveScheduler()
     I2C_MasterTransferCreateHandle(I2C_MAIN_BUS_BASEADDR, &I2cMasterHandle, bridgeProtocolCallback, NULL);
 
     // Kickstart the scheduler by triggering the first callback.
-    Slaves[currentSlaveId].updater(Slaves[currentSlaveId].perDriverId);
+    Slaves[currentSlaveId].update(Slaves[currentSlaveId].perDriverId);
 }
