@@ -17,7 +17,7 @@ uhk_slave_t Slaves[] = {
     { .init = LedSlaveDriver_Init,       .update = LedSlaveDriver_Update,       .perDriverId = LedDriverId_Left             },
 };
 
-static void bridgeProtocolCallback(I2C_Type *base, i2c_master_handle_t *handle, status_t previousStatus, void *userData)
+static void slaveCallback(I2C_Type *base, i2c_master_handle_t *handle, status_t previousStatus, void *userData)
 {
     bool isTransferScheduled = false;
 
@@ -57,7 +57,7 @@ void InitSlaveScheduler()
         Slaves[i].isConnected = false;
     }
 
-    I2C_MasterTransferCreateHandle(I2C_MAIN_BUS_BASEADDR, &I2cMasterHandle, bridgeProtocolCallback, NULL);
+    I2C_MasterTransferCreateHandle(I2C_MAIN_BUS_BASEADDR, &I2cMasterHandle, slaveCallback, NULL);
 
     // Kickstart the scheduler by triggering the first callback.
     Slaves[currentSlaveId].update(Slaves[currentSlaveId].perDriverId);
