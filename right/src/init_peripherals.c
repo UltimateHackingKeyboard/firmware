@@ -60,7 +60,7 @@ void InitPeripherals(void)
     InitI2c();
     InitTestLed();
     LedPwm_Init();
-#ifndef LED_DRIVER_STRESS_TEST
+#ifdef I2C_WATCHDOG
     InitI2cWatchdog();
 #endif
     EEPROM_Init();
