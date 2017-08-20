@@ -38,7 +38,7 @@ void InitI2cWatchdog()
     pit_config_t pitConfig;
     PIT_GetDefaultConfig(&pitConfig);
     PIT_Init(PIT, &pitConfig);
-    PIT_SetTimerPeriod(PIT, kPIT_Chnl_0, USEC_TO_COUNT(1000000U, PIT_SOURCE_CLOCK));
+    PIT_SetTimerPeriod(PIT, kPIT_Chnl_0, USEC_TO_COUNT(100000U, PIT_SOURCE_CLOCK));
     PIT_EnableInterrupts(PIT, kPIT_Chnl_0, kPIT_TimerInterruptEnable);
     EnableIRQ(PIT_I2C_WATCHDOG_IRQ_ID);
     PIT_StartTimer(PIT, kPIT_Chnl_0);
