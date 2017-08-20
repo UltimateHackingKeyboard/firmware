@@ -13,12 +13,13 @@ static uint32_t prevWatchdogCounter = 0;
 uint32_t I2C_WatchdogInnerCounter;
 uint32_t I2C_WatchdogOuterCounter;
 
-// This function is designed to restart and reinstall the I2C handler
-// when a disconnection of the left side makes the master I2C bus unresponsive.
+// This function restarts and reinstalls the I2C handler when the I2C bus gets unresponsive
+// by a misbehaving I2C slave, or by disconnecting the left keyboard half or an add-on module.
+// This method relies on a patched KSDK which increments I2C_Watchdog upon I2C transfers.
 void PIT_I2C_WATCHDOG_HANDLER(void)
 {
     I2C_WatchdogOuterCounter++;
-    if (I2C_Watchdog == prevWatchdogCounter) { // Restart I2C if there hasn't be any interrupt during 1 sec
+    if (I2C_Watchdog == prevWatchdogCounter) { // Restart I2C if there hasn't be any interrupt during 100 ms
         I2C_WatchdogInnerCounter++;
         i2c_master_config_t masterConfig;
         I2C_MasterGetDefaultConfig(&masterConfig);
