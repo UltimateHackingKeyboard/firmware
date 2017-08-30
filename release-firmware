@@ -1,0 +1,15 @@
+#!/usr/bin/env sh
+
+version=$1
+releaseName=uhk-firmware-$version
+releaseDir=/tmp/$releaseName
+rightFirmwareFile=right/build/kds/uhk-right-release-srec/uhk-right.srec
+leftFirmwareFile=left/build/kds/uhk-left-release-srec/uhk-left.srec
+
+chmod 644 $rightFirmwareFile $leftFirmwareFile
+rm -r $releaseDir
+mkdir $releaseDir
+cp $rightFirmwareFile $releaseDir
+cp $leftFirmwareFile $releaseDir
+echo $version > $releaseDir/version
+tar -cvjSf $releaseName.tar.bz2 -C $releaseDir .
