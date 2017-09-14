@@ -62,7 +62,8 @@ MEMORY
   m_flash_config        (RX)  : ORIGIN = 0x00000400, LENGTH = 0x00000010
   m_text                (RX)  : ORIGIN = 0x00000410, LENGTH = 0x0007FBF0
   m_data                (RW)  : ORIGIN = 0x1FFF0000, LENGTH = 0x00010000
-  m_data_2              (RW)  : ORIGIN = 0x20000000, LENGTH = 0x00010000
+  m_data_2              (RW)  : ORIGIN = 0x20000000, LENGTH = 0x0000FF00
+  m_noinit              (RW)  : ORIGIN = 0x2000FF00, LENGTH = 0x000000FF
 }
 
 /* Define output sections */
@@ -221,7 +222,14 @@ SECTIONS
     __bss_end__ = .;
     __END_BSS = .;
   } > m_data
-
+  
+  .m_data_2 : 
+  {
+     . = ALIGN(4);
+     *(.m_data_2) /* This is an User defined section */
+     . = ALIGN(4);
+  } > m_data_2
+  
   .heap :
   {
     . = ALIGN(8);
@@ -258,5 +266,21 @@ SECTIONS
   .ARM.attributes 0 : { *(.ARM.attributes) }
 
   ASSERT(__StackLimit >= __HeapLimit, "region m_data_2 overflowed with stack and heap")
-}
 
+  .noinit (NOLOAD):
+  {
+    . = ALIGN(4);
+    _noinit = .;
+
+    *(.noinit .noinit.*)
+
+    . = ALIGN(4) ;
+    _end_noinit = .;
+  } > m_noinit
+
+  /* Mandatory to be word aligned, _sbrk assumes this */
+  PROVIDE ( end = _end_noinit ); /* was _ebss */
+  PROVIDE ( _end = _end_noinit );
+  PROVIDE ( __end = _end_noinit );
+  PROVIDE ( __end__ = _end_noinit );
+}
