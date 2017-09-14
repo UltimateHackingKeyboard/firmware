@@ -88,7 +88,7 @@ void readMergeSensor(void)
     SetResponseByte(MERGE_SENSOR_IS_MERGED);
 }
 
-void applyConfig(void)
+void ApplyConfig(void)
 {
     uint8_t *temp;
     char oldKeymapAbbreviation[3];
@@ -149,7 +149,7 @@ void getAdcValue(void)
 void launchEepromTransfer(void)
 {
     eeprom_transfer_t transferType = GenericHidInBuffer[1];
-    EEPROM_LaunchTransfer(transferType);
+    EEPROM_LaunchTransfer(transferType, NULL);
 }
 
 void readConfiguration(bool isHardware)
@@ -162,7 +162,7 @@ void readConfiguration(bool isHardware)
         return;
     }
 
-    uint8_t *buffer = isHardware ? HardwareConfigBuffer.buffer : UserConfigBuffer.buffer;
+    uint8_t *buffer = isHardware ? HardwareConfigBuffer.buffer : StagingUserConfigBuffer.buffer;
     uint16_t bufferLength = isHardware ? HARDWARE_CONFIG_SIZE : USER_CONFIG_SIZE;
 
     if (offset + length > bufferLength) {
@@ -237,7 +237,7 @@ void getDebugInfo(void)
 
 // The main protocol handler function
 
-void usbProtocolHandler(void)
+void UsbProtocolHandler(void)
 {
     bzero(GenericHidOutBuffer, USB_GENERIC_HID_OUT_BUFFER_LENGTH);
     uint8_t command = GenericHidInBuffer[0];
@@ -260,7 +260,7 @@ void usbProtocolHandler(void)
             writeConfiguration(false);
             break;
         case UsbCommand_ApplyConfig:
-            applyConfig();
+            ApplyConfig();
             break;
         case UsbCommand_SetLedPwm:
             setLedPwm();

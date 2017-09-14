@@ -60,7 +60,7 @@ usb_status_t UsbGenericHidCallback(class_handle_t handle, uint32_t event, void *
         case kUSB_DeviceHidEventSendResponse:
             break;
         case kUSB_DeviceHidEventRecvResponse:
-            usbProtocolHandler();
+            UsbProtocolHandler();
 
             USB_DeviceHidSend(UsbCompositeDevice.genericHidHandle,
                               USB_GENERIC_HID_ENDPOINT_IN_INDEX,

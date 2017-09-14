@@ -26,6 +26,6 @@
 // Functions:
 
     extern void EEPROM_Init(void);
-    extern status_t EEPROM_LaunchTransfer(eeprom_transfer_t transferType);
+    extern status_t EEPROM_LaunchTransfer(eeprom_transfer_t transferType, void (*successCallback));
 
 #endif

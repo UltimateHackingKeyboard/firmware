@@ -13,6 +13,7 @@
 #include "bootloader_config.h"
 #include "command.h"
 #include "wormhole.h"
+#include "eeprom.h"
 
 key_matrix_t KeyMatrix = {
     .colNum = KEYBOARD_MATRIX_COLS_NUM,
@@ -59,9 +60,23 @@ void UpdateUsbReports()
     IsUsbBasicKeyboardReportSent = false;
 }
 
+bool IsEepromInitialized = false;
+bool IsConfigInitialized = false;
+
+void userConfigurationReadFinished()
+{
+    IsEepromInitialized = true;
+}
+
+void hardwareConfigurationReadFinished()
+{
+    EEPROM_LaunchTransfer(EepromTransfer_ReadUserConfiguration, userConfigurationReadFinished);
+}
+
 void main() {
     InitClock();
     InitPeripherals();
+    EEPROM_LaunchTransfer(EepromTransfer_ReadHardwareConfiguration, hardwareConfigurationReadFinished);
 
 #ifdef FORCE_BUSPAL
     Wormhole.magicNumber = WORMHOLE_MAGIC_NUMBER;
@@ -79,6 +94,10 @@ void main() {
         InitUsb();
 
         while (1) {
+            if (!IsConfigInitialized && IsEepromInitialized) {
+                ApplyConfig();
+                IsConfigInitialized = true;
+            }
             UpdateUsbReports();
             asm("wfi");
         }
