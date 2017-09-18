@@ -14,7 +14,15 @@
 #include "eeprom.h"
 #include "microseconds/microseconds_pit.c"
 
-void InitI2c() {
+void InitInterruptPriorities()
+{
+    NVIC_SetPriority(I2C0_IRQn, 1);
+    NVIC_SetPriority(I2C1_IRQn, 1);
+    NVIC_SetPriority(USB0_IRQn, 1);
+}
+
+void InitI2c()
+{
     port_pin_config_t pinConfig = {
         .pullSelect = kPORT_PullUp,
         .openDrainEnable = kPORT_OpenDrainEnable
@@ -53,6 +61,7 @@ void InitI2c() {
 
 void InitPeripherals(void)
 {
+    InitInterruptPriorities();
     InitLedDriver();
     InitResetButton();
     InitMergeSensor();
