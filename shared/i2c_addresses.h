@@ -13,8 +13,10 @@
     // In order to minimize the chance of I2C address collisions in the future, an explicit
     // address allocation strategy is utilized. The idea is to spread UHK I2C slaves 8 addresses
     // away from each other. Given that most I2C devices expose at most 3 address pins which
-    // equal to a continuous block of 8 addresses, this strategy allows a lot of room when
-    // adding further I2C slaves.
+    // generally equal to a continuous block of 8 addresses, this strategy allows a lot of room
+    // when adding further I2C slaves. Fully implementing this strategy is not possible because
+    // many slaves only offer a small number of possible addresses, but we should adhere to
+    // this strategy as closely as possible by spreading the addresses as much as possible.
 
     // Reserved for general call address              0x00
     // Reserved for CBUS compatibility                0x01
