@@ -48,7 +48,7 @@
     // Reserved for future purposes                   0x7F
 
     // The EEPROM is featured separately as it's not connected to the main I2C bus.
-    #define I2C_ADDRESS_EEPROM             0b1010000
+    #define I2C_ADDRESS_EEPROM                        0x50
 
     #define IS_IS31FL3731_I2C_ADDRESS(address) \
         (I2C_ADDRESS_IS31FL3731_LEFT <= (address) && (address) <= I2C_ADDRESS_IS31FL3731_RIGHT)
