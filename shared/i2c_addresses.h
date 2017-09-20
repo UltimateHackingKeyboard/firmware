@@ -26,18 +26,18 @@
     // Reserved for high-speed mode master            0x07
     #define I2C_ADDRESS_LEFT_KEYBOARD_HALF_FIRMWARE   0x08
     #define I2C_ADDRESS_LEFT_KEYBOARD_HALF_BOOTLOADER 0x10
-    #define I2C_ADDRESS_RIGHT_TOUCHPAD_FIRMWARE       0x15
+    #define I2C_ADDRESS_RIGHT_IQS5XX_FIRMWARE         0x15 // Touchpad
     #define I2C_ADDRESS_LEFT_ADDON_FIRMWARE           0x18
     #define I2C_ADDRESS_LEFT_ADDON_BOOTLOADER         0x20
-    #define I2C_ADDRESS_LEFT_TOUCHPAD_FIRMWARE        0x25
+    #define I2C_ADDRESS_LEFT_IQS5XX_FIRMWARE          0x25 // Touchpad
     #define I2C_ADDRESS_RIGHT_ADDON_FIRMWARE          0x28
     #define I2C_ADDRESS_RIGHT_ADDON_BOOTLOADER        0x30
-    #define I2C_ADDRESS_RIGHT_TOUCHPAD_BOOTLOADER     0x55
-    #define I2C_ADDRESS_LEFT_TOUCHPAD_BOOTLOADER      0x65
-    #define I2C_ADDRESS_LED_DRIVER_LEFT               0x74
-    // Let's reserve this for another LED driver      0x75
-    // Let's reserve this for another LED driver      0x76
-    #define I2C_ADDRESS_LED_DRIVER_RIGHT              0x77
+    #define I2C_ADDRESS_RIGHT_IQS5XX_BOOTLOADER       0x55 // Touchpad
+    #define I2C_ADDRESS_LEFT_IQS5XX_BOOTLOADER        0x65 // Touchpad
+    #define I2C_ADDRESS_IS31FL3731_LEFT               0x74 // LED driver
+    // Let's reserve this for another IS31FL3731      0x75 // LED driver
+    // Let's reserve this for another IS31FL3731      0x76 // LED driver
+    #define I2C_ADDRESS_IS31FL3731_RIGHT              0x77 // LED driver
     // Reserved for 10-bit addressing                 0x78
     // Reserved for 10-bit addressing                 0x79
     // Reserved for 10-bit addressing                 0x7A
@@ -50,7 +50,7 @@
     // The EEPROM is featured separately as it's not connected to the main I2C bus.
     #define I2C_ADDRESS_EEPROM             0b1010000
 
-    #define IS_I2C_LED_DRIVER_ADDRESS(address) \
-        (I2C_ADDRESS_LED_DRIVER_LEFT <= (address) && (address) <= I2C_ADDRESS_LED_DRIVER_RIGHT)
+    #define IS_IS31FL3731_I2C_ADDRESS(address) \
+        (I2C_ADDRESS_IS31FL3731_LEFT <= (address) && (address) <= I2C_ADDRESS_IS31FL3731_RIGHT)
 
 #endif

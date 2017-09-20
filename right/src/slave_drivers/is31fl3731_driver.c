@@ -5,7 +5,7 @@
 
 led_driver_state_t LedDriverStates[LED_DRIVER_MAX_COUNT] = {
     {
-        .i2cAddress = I2C_ADDRESS_LED_DRIVER_RIGHT,
+        .i2cAddress = I2C_ADDRESS_IS31FL3731_RIGHT,
         .setupLedControlRegistersCommand = {
             FRAME_REGISTER_LED_CONTROL_FIRST,
             0b01111111, // key row 1
@@ -29,7 +29,7 @@ led_driver_state_t LedDriverStates[LED_DRIVER_MAX_COUNT] = {
         }
     },
     {
-        .i2cAddress = I2C_ADDRESS_LED_DRIVER_LEFT,
+        .i2cAddress = I2C_ADDRESS_IS31FL3731_LEFT,
         .setupLedControlRegistersCommand = {
             FRAME_REGISTER_LED_CONTROL_FIRST,
             0b01111111, // key row 1
