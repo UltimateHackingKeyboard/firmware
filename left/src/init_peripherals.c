@@ -50,7 +50,7 @@ void InitI2c(void) {
     i2c_slave_handle_t slaveHandle;
 
     I2C_SlaveGetDefaultConfig(&slaveConfig);
-    slaveConfig.slaveAddress = I2C_ADDRESS_LEFT_KEYBOARD_HALF;
+    slaveConfig.slaveAddress = I2C_ADDRESS_LEFT_KEYBOARD_HALF_FIRMWARE;
     I2C_SlaveInit(I2C_BUS_BASEADDR, &slaveConfig);
     I2C_SlaveTransferCreateHandle(I2C_BUS_BASEADDR, &slaveHandle, i2cSlaveCallback, NULL);
     slaveHandle.eventMask |= kI2C_SlaveCompletionEvent;
