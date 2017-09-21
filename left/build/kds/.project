@@ -82,6 +82,16 @@
 			<locationURI>PARENT-3-PROJECT_LOC/lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/drivers/fsl_i2c.h</locationURI>
 		</link>
 		<link>
+			<name>drivers/fsl_lptmr.c</name>
+			<type>1</type>
+			<locationURI>PARENT-3-PROJECT_LOC/lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/drivers/fsl_lptmr.c</locationURI>
+		</link>
+		<link>
+			<name>drivers/fsl_lptmr.h</name>
+			<type>1</type>
+			<locationURI>PARENT-3-PROJECT_LOC/lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/drivers/fsl_lptmr.h</locationURI>
+		</link>
+		<link>
 			<name>drivers/fsl_port.h</name>
 			<type>1</type>
 			<locationURI>PARENT-3-PROJECT_LOC/lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/drivers/fsl_port.h</locationURI>

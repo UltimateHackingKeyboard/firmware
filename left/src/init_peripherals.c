@@ -8,6 +8,7 @@
 #include "i2c.h"
 #include "led_pwm.h"
 #include "slave_protocol_handler.h"
+#include "i2c_watchdog.h"
 
 static void i2cSlaveCallback(I2C_Type *base, i2c_slave_transfer_t *xfer, void *userData)
 {
@@ -32,6 +33,12 @@ static void i2cSlaveCallback(I2C_Type *base, i2c_slave_transfer_t *xfer, void *u
         default:
             break;
     }
+}
+
+void InitInterruptPriorities()
+{
+    NVIC_SetPriority(I2C0_IRQn, 1);
+    NVIC_SetPriority(TPM1_IRQn, 1);
 }
 
 void InitI2c(void) {
@@ -66,8 +73,10 @@ void InitLedDriver(void) {
 
 void InitPeripherals(void)
 {
+    InitInterruptPriorities();
     InitLedDriver();
     InitTestLed();
     LedPwm_Init();
     InitI2c();
+    //InitI2cWatchdog();
 }

@@ -40,7 +40,7 @@ void SlaveProtocolHandler(void)
         case SlaveCommand_SetTestLed:
             SlaveTxSize = 0;
             bool isLedOn = SlaveRxBuffer[1];
-            TEST_LED_SET(isLedOn);
+//            TEST_LED_SET(isLedOn);
             break;
         case SlaveCommand_SetLedPwmBrightness:
             SlaveTxSize = 0;

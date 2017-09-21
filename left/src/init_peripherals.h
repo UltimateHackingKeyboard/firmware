@@ -10,6 +10,7 @@
 
 // Functions:
 
-    void InitPeripherals(void);
+    extern void InitPeripherals(void);
+    extern void InitI2c(void);
 
 #endif
