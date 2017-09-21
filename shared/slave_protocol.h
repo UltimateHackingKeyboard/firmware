@@ -7,6 +7,7 @@
         SlaveCommand_GetKeyStates,
         SlaveCommand_SetTestLed,
         SlaveCommand_SetLedPwmBrightness,
+        SlaveCommand_JumpToBootloader,
     } slave_command_t;
 
 #endif

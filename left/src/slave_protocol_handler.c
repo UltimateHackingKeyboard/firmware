@@ -8,6 +8,7 @@
 #include "main.h"
 #include "init_peripherals.h"
 #include "bool_array_converter.h"
+#include "kboot.h"
 
 void SetError(uint8_t error);
 void SetGenericError(void);
@@ -39,13 +40,16 @@ void SlaveProtocolHandler(void)
             break;
         case SlaveCommand_SetTestLed:
             SlaveTxSize = 0;
-            bool isLedOn = SlaveRxBuffer[1];
+//            bool isLedOn = SlaveRxBuffer[1];
 //            TEST_LED_SET(isLedOn);
             break;
         case SlaveCommand_SetLedPwmBrightness:
             SlaveTxSize = 0;
             uint8_t brightnessPercent = SlaveRxBuffer[1];
             LedPwm_SetBrightness(brightnessPercent);
+            break;
+        case SlaveCommand_JumpToBootloader:
+            JumpToKboot();
             break;
     }
 }
