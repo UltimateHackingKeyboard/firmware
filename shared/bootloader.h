@@ -9,6 +9,7 @@
 // Macros:
 
     #define BOOTLOADER_TAG 0x6766636B
+    #define BOOTLOADER_TIMEOUT_MS 100
 
     // bits for bootloader_config_t.enabledPeripherals
     #define ENABLE_PERIPHERAL_UART     (1<<0)
