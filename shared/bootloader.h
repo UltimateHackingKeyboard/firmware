@@ -39,6 +39,6 @@
 
 // Functions:
 
-    extern void JumpToKboot(void);
+    extern void JumpToBootloaderoader(void);
 
 #endif

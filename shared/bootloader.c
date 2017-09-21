@@ -1,6 +1,6 @@
 #include "bootloader.h"
 
-void JumpToKboot(void) {
+void JumpToBootloader(void) {
     uint32_t runBootloaderAddress;
     void (*runBootloader)(void *arg);
 

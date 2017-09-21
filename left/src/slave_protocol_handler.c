@@ -49,7 +49,7 @@ void SlaveProtocolHandler(void)
             LedPwm_SetBrightness(brightnessPercent);
             break;
         case SlaveCommand_JumpToBootloader:
-            JumpToKboot();
+            JumpToBootloader();
             break;
     }
 }
