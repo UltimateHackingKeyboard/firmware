@@ -8,6 +8,8 @@
 
 // Macros:
 
+    #define BOOTLOADER_TAG 0x6766636B
+
     // bits for bootloader_config_t.enabledPeripherals
     #define ENABLE_PERIPHERAL_UART     (1<<0)
     #define ENABLE_PERIPHERAL_I2C      (1<<1)
