@@ -11,15 +11,16 @@
     #define BOOTLOADER_TAG 0x6766636B
     #define BOOTLOADER_TIMEOUT_MS 100
 
-    // bits for bootloader_config_t.enabledPeripherals
-    #define ENABLE_PERIPHERAL_UART     (1<<0)
-    #define ENABLE_PERIPHERAL_I2C      (1<<1)
-    #define ENABLE_PERIPHERAL_SPI      (1<<2)
-    #define ENABLE_PERIPHERAL_CAN      (1<<3)
-    #define ENABLE_PERIPHERAL_USB_HID  (1<<4)
-    #define ENABLE_PERIPHERAL_USB_MSC  (1<<7)
-
 // Typedefs:
+
+    typedef enum {
+        EnabledBootloaderPeripherial_Uart   = (1<<0),
+        EnabledBootloaderPeripherial_I2c    = (1<<1),
+        EnabledBootloaderPeripherial_Spi    = (1<<2),
+        EnabledBootloaderPeripherial_Can    = (1<<3),
+        EnabledBootloaderPeripherial_UsbHid = (1<<4),
+        EnabledBootloaderPeripherial_UsbMsc = (1<<7),
+    } enabled_bootloader_peripheral_t;
 
     typedef struct {
         uint32_t tag;                          // Magic number to verify bootloader configuration is valid. Must be set to 'kcfg'.
@@ -39,6 +40,6 @@
 
 // Functions:
 
-    extern void JumpToBootloaderoader(void);
+    extern void JumpToBootloader(void);
 
 #endif
