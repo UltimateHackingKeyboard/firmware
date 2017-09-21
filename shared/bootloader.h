@@ -10,6 +10,7 @@
 
     #define BOOTLOADER_TAG 0x6766636B
     #define BOOTLOADER_TIMEOUT_MS 100
+    #define CLOCK_FLAG_HIGH_SPEED_MODE 0x01
 
 // Typedefs:
 
