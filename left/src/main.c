@@ -1,7 +1,6 @@
 #include "main.h"
 #include "init_clock.h"
 #include "init_peripherals.h"
-#include "bootloader.h"
 
 key_matrix_t keyMatrix = {
     .colNum = KEYBOARD_MATRIX_COLS_NUM,
