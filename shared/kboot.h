@@ -1,10 +1,20 @@
-#ifndef __BOOTLOADER_H__
-#define __BOOTLOADER_H__
+#ifndef __KBOOT_H__
+#define __KBOOT_H__
 
 // Includes:
 
     #include <stdint.h>
     #include <stddef.h>
+
+// Macros:
+
+    // bits for bootloader_config_t.enabledPeripherals
+    #define ENABLE_PERIPHERAL_UART     (1<<0)
+    #define ENABLE_PERIPHERAL_I2C      (1<<1)
+    #define ENABLE_PERIPHERAL_SPI      (1<<2)
+    #define ENABLE_PERIPHERAL_CAN      (1<<3)
+    #define ENABLE_PERIPHERAL_USB_HID  (1<<4)
+    #define ENABLE_PERIPHERAL_USB_MSC  (1<<7)
 
 // Typedefs:
 
@@ -24,9 +34,8 @@
         uint8_t clockDivider; // Inverted value of the divider to use for core and bus clocks when in high speed mode.
     } bootloader_config_t;
 
-
 // Functions:
 
-    extern void JumpToBootloader(void);
+    extern void JumpToKboot(void);
 
 #endif
