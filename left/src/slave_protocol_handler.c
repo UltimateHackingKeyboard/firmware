@@ -8,7 +8,7 @@
 #include "main.h"
 #include "init_peripherals.h"
 #include "bool_array_converter.h"
-#include "kboot.h"
+#include "bootloader.h"
 
 void SetError(uint8_t error);
 void SetGenericError(void);

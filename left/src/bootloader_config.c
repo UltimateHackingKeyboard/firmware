@@ -1,4 +1,4 @@
-#include "kboot.h"
+#include "bootloader.h"
 #include "i2c_addresses.h"
 
 __attribute__((used, section(".BootloaderConfig"))) const bootloader_config_t BootloaderConfig = {
