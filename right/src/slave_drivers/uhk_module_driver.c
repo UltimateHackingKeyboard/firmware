@@ -27,7 +27,7 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleId)
 
     switch (uhkModulePhase) {
         case UhkModulePhase_SendKeystatesRequestCommand:
-            txBuffer[0] = SlaveCommand_GetKeyStates;
+            txBuffer[0] = SlaveCommand_RequestKeyStates;
             status = I2cAsyncWrite(I2C_ADDRESS_LEFT_KEYBOARD_HALF_FIRMWARE, txBuffer, 1);
             uhkModulePhase = UhkModulePhase_ReceiveKeystates;
             break;

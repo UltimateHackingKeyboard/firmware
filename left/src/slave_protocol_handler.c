@@ -33,7 +33,7 @@ void SlaveProtocolHandler(void)
 {
     uint8_t commandId = SlaveRxBuffer[0];
     switch (commandId) {
-        case SlaveCommand_GetKeyStates:
+        case SlaveCommand_RequestKeyStates:
             SlaveTxSize = KEY_STATE_BUFFER_SIZE;
             BoolBytesToBits(keyMatrix.keyStates, SlaveTxBuffer, LEFT_KEYBOARD_HALF_KEY_COUNT);
             CRC16_AppendToMessage(SlaveTxBuffer, KEY_STATE_SIZE);

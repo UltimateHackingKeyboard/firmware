@@ -4,7 +4,7 @@
 // Typedefs:
 
     typedef enum {
-        SlaveCommand_GetKeyStates,
+        SlaveCommand_RequestKeyStates,
         SlaveCommand_SetTestLed,
         SlaveCommand_SetLedPwmBrightness,
         SlaveCommand_JumpToBootloader,
