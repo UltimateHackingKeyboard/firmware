@@ -42,9 +42,9 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleId)
             txBuffer[0] = SlaveCommand_SetLedPwmBrightness;
             txBuffer[1] = uhkModuleInternalState->ledPwmBrightness;
             status = I2cAsyncWrite(I2C_ADDRESS_LEFT_KEYBOARD_HALF_FIRMWARE, txBuffer, 2);
-            uhkModulePhase = UhkModulePhase_SendTestLedCommand;
+            uhkModulePhase = UhkModulePhase_SetTestLed;
             break;
-        case UhkModulePhase_SendTestLedCommand:
+        case UhkModulePhase_SetTestLed:
             txBuffer[0] = SlaveCommand_SetTestLed;
             txBuffer[1] = uhkModuleInternalState->isTestLedOn;
             status = I2cAsyncWrite(I2C_ADDRESS_LEFT_KEYBOARD_HALF_FIRMWARE, txBuffer, 2);

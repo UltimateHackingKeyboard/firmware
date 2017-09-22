@@ -24,7 +24,7 @@
         UhkModulePhase_RequestKeyStates,
         UhkModulePhase_ReceiveKeystates,
         UhkModulePhase_SetLedPwmBrightness,
-        UhkModulePhase_SendTestLedCommand,
+        UhkModulePhase_SetTestLed,
     } uhk_module_phase_t;
 
     typedef struct {
