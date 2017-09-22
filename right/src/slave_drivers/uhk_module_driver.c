@@ -39,6 +39,7 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleId)
             if (CRC16_IsMessageValid(rxBuffer, KEY_STATE_SIZE)) {
                 BoolBitsToBytes(rxBuffer, CurrentKeyStates[SLOT_ID_LEFT_KEYBOARD_HALF], LEFT_KEYBOARD_HALF_KEY_COUNT);
             }
+            status = kStatus_Uhk_NoOp;
             uhkModulePhase = UhkModulePhase_SetLedPwmBrightness;
             break;
         case UhkModulePhase_SetLedPwmBrightness:
