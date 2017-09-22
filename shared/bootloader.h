@@ -12,6 +12,16 @@
     #define BOOTLOADER_TIMEOUT_MS 100
     #define CLOCK_FLAG_HIGH_SPEED_MODE 0x01
 
+    #define DEFINE_BOOTLOADER_CONFIG_AREA(address) \
+        __attribute__((used, section(".BootloaderConfig"))) const bootloader_config_t BootloaderConfig = { \
+            .tag = BOOTLOADER_TAG, \
+            .enabledPeripherals = EnabledBootloaderPeripherial_I2c, \
+            .i2cSlaveAddress = address, \
+            .peripheralDetectionTimeoutMs = BOOTLOADER_TIMEOUT_MS, \
+            .clockFlags = CLOCK_FLAG_HIGH_SPEED_MODE, \
+            .clockDivider = ~0 \
+    };
+
 // Typedefs:
 
     typedef enum {
