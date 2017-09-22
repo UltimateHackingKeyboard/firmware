@@ -1,5 +1,5 @@
-#ifndef __KBOOT_H__
-#define __KBOOT_H__
+#ifndef __BOOTLOADER_H__
+#define __BOOTLOADER_H__
 
 // Includes:
 
