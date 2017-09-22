@@ -23,6 +23,7 @@
     typedef enum {
         UhkModulePhase_RequestKeyStates,
         UhkModulePhase_ReceiveKeystates,
+        UhkModulePhase_ProcessKeystates,
         UhkModulePhase_SetLedPwmBrightness,
         UhkModulePhase_SetTestLed,
     } uhk_module_phase_t;

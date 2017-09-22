@@ -33,12 +33,15 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleId)
             break;
         case UhkModulePhase_ReceiveKeystates:
             status = I2cAsyncRead(I2C_ADDRESS_LEFT_KEYBOARD_HALF_FIRMWARE, rxBuffer, KEY_STATE_BUFFER_SIZE);
-            uhkModulePhase = UhkModulePhase_SetLedPwmBrightness;
+            uhkModulePhase = UhkModulePhase_ProcessKeystates;
             break;
-        case UhkModulePhase_SetLedPwmBrightness:
+        case UhkModulePhase_ProcessKeystates:
             if (CRC16_IsMessageValid(rxBuffer, KEY_STATE_SIZE)) {
                 BoolBitsToBytes(rxBuffer, CurrentKeyStates[SLOT_ID_LEFT_KEYBOARD_HALF], LEFT_KEYBOARD_HALF_KEY_COUNT);
             }
+            uhkModulePhase = UhkModulePhase_SetLedPwmBrightness;
+            break;
+        case UhkModulePhase_SetLedPwmBrightness:
             txBuffer[0] = SlaveCommand_SetLedPwmBrightness;
             txBuffer[1] = uhkModuleInternalState->ledPwmBrightness;
             status = I2cAsyncWrite(I2C_ADDRESS_LEFT_KEYBOARD_HALF_FIRMWARE, txBuffer, 2);
