@@ -1,6 +1,9 @@
 #include "main.h"
 #include "init_clock.h"
 #include "init_peripherals.h"
+#include "bootloader.h"
+
+DEFINE_BOOTLOADER_CONFIG_AREA(I2C_ADDRESS_LEFT_KEYBOARD_HALF_BOOTLOADER)
 
 key_matrix_t keyMatrix = {
     .colNum = KEYBOARD_MATRIX_COLS_NUM,

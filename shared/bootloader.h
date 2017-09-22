@@ -5,6 +5,7 @@
 
     #include <stdint.h>
     #include <stddef.h>
+    #include "i2c_addresses.h"
 
 // Macros:
 

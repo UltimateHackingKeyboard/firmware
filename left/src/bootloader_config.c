@@ -1,4 +1,0 @@
-#include "bootloader.h"
-#include "i2c_addresses.h"
-
-DEFINE_BOOTLOADER_CONFIG_AREA(I2C_ADDRESS_LEFT_KEYBOARD_HALF_BOOTLOADER)
