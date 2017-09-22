@@ -9,7 +9,7 @@
 #include "crc16.h"
 
 uhk_module_state_t UhkModuleStates[UHK_MODULE_MAX_COUNT];
-uhk_module_phase_t uhkModulePhase = UhkModulePhase_SendKeystatesRequestCommand;
+uhk_module_phase_t uhkModulePhase = UhkModulePhase_RequestKeyStates;
 uint8_t txBuffer[2];
 uint8_t rxBuffer[KEY_STATE_BUFFER_SIZE];
 
@@ -26,7 +26,7 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleId)
     uhk_module_state_t *uhkModuleInternalState = UhkModuleStates + uhkModuleId;
 
     switch (uhkModulePhase) {
-        case UhkModulePhase_SendKeystatesRequestCommand:
+        case UhkModulePhase_RequestKeyStates:
             txBuffer[0] = SlaveCommand_RequestKeyStates;
             status = I2cAsyncWrite(I2C_ADDRESS_LEFT_KEYBOARD_HALF_FIRMWARE, txBuffer, 1);
             uhkModulePhase = UhkModulePhase_ReceiveKeystates;
@@ -48,7 +48,7 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleId)
             txBuffer[0] = SlaveCommand_SetTestLed;
             txBuffer[1] = uhkModuleInternalState->isTestLedOn;
             status = I2cAsyncWrite(I2C_ADDRESS_LEFT_KEYBOARD_HALF_FIRMWARE, txBuffer, 2);
-            uhkModulePhase = UhkModulePhase_SendKeystatesRequestCommand;
+            uhkModulePhase = UhkModulePhase_RequestKeyStates;
             break;
     }
 

@@ -21,7 +21,7 @@
     } uhk_module_id_t;
 
     typedef enum {
-        UhkModulePhase_SendKeystatesRequestCommand,
+        UhkModulePhase_RequestKeyStates,
         UhkModulePhase_ReceiveKeystates,
         UhkModulePhase_SendPwmBrightnessCommand,
         UhkModulePhase_SendTestLedCommand,
