@@ -26,8 +26,6 @@ key_matrix_t keyMatrix = {
     }
 };
 
-volatile bool DisableKeyMatrixScanState;
-
 #define ALWAYS_ENTER_BOOTLOADER   (0)
   /*! set to 1 for easier bootloader debugging. With this, the KL03 always enters bootloader mode after reset */
 
@@ -41,9 +39,7 @@ int main(void)
     JumpToBootloader(); /* << EST: \todo Temporary only */
 #endif
     while (1) {
-        if (!DisableKeyMatrixScanState) {
-            KeyMatrix_Scan(&keyMatrix);
-        }
+        KeyMatrix_Scan(&keyMatrix);
         asm("wfi");
     }
 }
