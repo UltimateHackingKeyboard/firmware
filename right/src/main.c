@@ -99,7 +99,7 @@ void main() {
                 IsConfigInitialized = true;
             }
             UpdateUsbReports();
-            asm("wfi");
+            __WFI();
         }
     }
 }

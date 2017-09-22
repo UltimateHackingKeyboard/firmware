@@ -40,6 +40,6 @@ int main(void)
 #endif
     while (1) {
         KeyMatrix_Scan(&keyMatrix);
-        asm("wfi");
+        __WFI();
     }
 }
