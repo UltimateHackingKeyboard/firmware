@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "slave_protocol.h"
 
 #define CRC16_HASH_LENGTH 2 // bytes
 
@@ -25,7 +26,7 @@ void crc16_update(crc16_data_t *crc16Config, const uint8_t *src, uint32_t length
 //! @param hash Pointer to the value returned for the final calculated crc value.
 void crc16_finalize(crc16_data_t *crc16Config, uint16_t *hash);
 
-void CRC16_AppendToMessage(uint8_t *message, uint32_t lengthInBytes);
-bool CRC16_IsMessageValid(uint8_t *message, uint32_t lengthInBytes);
+void CRC16_UpdateMessageChecksum(i2c_message_t *message);
+bool CRC16_IsMessageValid(i2c_message_t *message);
 
 #endif

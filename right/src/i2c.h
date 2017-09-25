@@ -4,6 +4,7 @@
 // Includes:
 
     #include "fsl_i2c.h"
+    #include "slave_protocol.h"
 
 // Macros:
 
@@ -45,5 +46,7 @@
 
     status_t I2cAsyncWrite(uint8_t i2cAddress, uint8_t *data, size_t dataSize);
     status_t I2cAsyncRead(uint8_t i2cAddress, uint8_t *data, size_t dataSize);
+    status_t I2cAsyncWriteMessage(uint8_t i2cAddress, i2c_message_t *message);
+    status_t I2cAsyncReadMessage(uint8_t i2cAddress, i2c_message_t *message);
 
 #endif

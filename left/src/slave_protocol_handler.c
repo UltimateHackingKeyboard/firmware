@@ -10,12 +10,15 @@
 #include "bool_array_converter.h"
 #include "bootloader.h"
 
+i2c_message_t rxMessage;
+i2c_message_t txMessage;
+
 void SetError(uint8_t error);
 void SetGenericError(void);
 void SetResponseByte(uint8_t response);
 
 void SetError(uint8_t error) {
-    SlaveTxBuffer[0] = error;
+    txMessage.data[0] = error;
 }
 
 void SetGenericError(void)
@@ -26,26 +29,26 @@ void SetGenericError(void)
 // Set a single byte as the response.
 void SetResponseByte(uint8_t response)
 {
-    SlaveTxBuffer[1] = response;
+    txMessage.data[1] = response;
 }
 
 void SlaveProtocolHandler(void)
 {
-    uint8_t commandId = SlaveRxBuffer[0];
+    uint8_t commandId = rxMessage.data[0];
     switch (commandId) {
         case SlaveCommand_RequestKeyStates:
-            SlaveTxSize = KEY_STATE_BUFFER_SIZE;
-            BoolBytesToBits(keyMatrix.keyStates, SlaveTxBuffer, LEFT_KEYBOARD_HALF_KEY_COUNT);
-            CRC16_AppendToMessage(SlaveTxBuffer, KEY_STATE_SIZE);
+            BoolBytesToBits(keyMatrix.keyStates, txMessage.data, LEFT_KEYBOARD_HALF_KEY_COUNT);
+            txMessage.length = KEY_STATE_SIZE;
+            CRC16_UpdateMessageChecksum(&txMessage);
             break;
         case SlaveCommand_SetTestLed:
-            SlaveTxSize = 0;
-//            bool isLedOn = SlaveRxBuffer[1];
-//            TEST_LED_SET(isLedOn);
+            txMessage.length = 0;
+            bool isLedOn = rxMessage.data[1];
+            TEST_LED_SET(isLedOn);
             break;
         case SlaveCommand_SetLedPwmBrightness:
-            SlaveTxSize = 0;
-            uint8_t brightnessPercent = SlaveRxBuffer[1];
+            txMessage.length = 0;
+            uint8_t brightnessPercent = rxMessage.data[1];
             LedPwm_SetBrightness(brightnessPercent);
             break;
         case SlaveCommand_JumpToBootloader:

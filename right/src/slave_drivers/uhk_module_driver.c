@@ -10,8 +10,9 @@
 
 uhk_module_state_t UhkModuleStates[UHK_MODULE_MAX_COUNT];
 uhk_module_phase_t uhkModulePhase = UhkModulePhase_RequestKeyStates;
-uint8_t txBuffer[2];
-uint8_t rxBuffer[KEY_STATE_BUFFER_SIZE];
+
+i2c_message_t rxMessage;
+i2c_message_t txMessage;
 
 void UhkModuleSlaveDriver_Init(uint8_t uhkModuleId)
 {
@@ -27,31 +28,34 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleId)
 
     switch (uhkModulePhase) {
         case UhkModulePhase_RequestKeyStates:
-            txBuffer[0] = SlaveCommand_RequestKeyStates;
-            status = I2cAsyncWrite(I2C_ADDRESS_LEFT_KEYBOARD_HALF_FIRMWARE, txBuffer, 1);
+            txMessage.data[0] = SlaveCommand_RequestKeyStates;
+            txMessage.length = 1;
+            status = I2cAsyncWriteMessage(I2C_ADDRESS_LEFT_KEYBOARD_HALF_FIRMWARE, &txMessage);
             uhkModulePhase = UhkModulePhase_ReceiveKeystates;
             break;
         case UhkModulePhase_ReceiveKeystates:
-            status = I2cAsyncRead(I2C_ADDRESS_LEFT_KEYBOARD_HALF_FIRMWARE, rxBuffer, KEY_STATE_BUFFER_SIZE);
+            status = I2cAsyncReadMessage(I2C_ADDRESS_LEFT_KEYBOARD_HALF_FIRMWARE, &rxMessage);
             uhkModulePhase = UhkModulePhase_ProcessKeystates;
             break;
         case UhkModulePhase_ProcessKeystates:
-            if (CRC16_IsMessageValid(rxBuffer, KEY_STATE_SIZE)) {
-                BoolBitsToBytes(rxBuffer, CurrentKeyStates[SLOT_ID_LEFT_KEYBOARD_HALF], LEFT_KEYBOARD_HALF_KEY_COUNT);
+            if (CRC16_IsMessageValid(&rxMessage)) {
+                BoolBitsToBytes(rxMessage.data, CurrentKeyStates[SLOT_ID_LEFT_KEYBOARD_HALF], LEFT_KEYBOARD_HALF_KEY_COUNT);
             }
             status = kStatus_Uhk_NoOp;
-            uhkModulePhase = UhkModulePhase_SetLedPwmBrightness;
-            break;
-        case UhkModulePhase_SetLedPwmBrightness:
-            txBuffer[0] = SlaveCommand_SetLedPwmBrightness;
-            txBuffer[1] = uhkModuleInternalState->ledPwmBrightness;
-            status = I2cAsyncWrite(I2C_ADDRESS_LEFT_KEYBOARD_HALF_FIRMWARE, txBuffer, 2);
             uhkModulePhase = UhkModulePhase_SetTestLed;
             break;
         case UhkModulePhase_SetTestLed:
-            txBuffer[0] = SlaveCommand_SetTestLed;
-            txBuffer[1] = uhkModuleInternalState->isTestLedOn;
-            status = I2cAsyncWrite(I2C_ADDRESS_LEFT_KEYBOARD_HALF_FIRMWARE, txBuffer, 2);
+            txMessage.data[0] = SlaveCommand_SetTestLed;
+            txMessage.data[1] = uhkModuleInternalState->isTestLedOn;
+            txMessage.length = 2;
+            status = I2cAsyncWriteMessage(I2C_ADDRESS_LEFT_KEYBOARD_HALF_FIRMWARE, &txMessage);
+            uhkModulePhase = UhkModulePhase_SetLedPwmBrightness;
+            break;
+        case UhkModulePhase_SetLedPwmBrightness:
+            txMessage.data[0] = SlaveCommand_SetLedPwmBrightness;
+            txMessage.data[1] = uhkModuleInternalState->ledPwmBrightness;
+            txMessage.length = 2;
+            status = I2cAsyncWriteMessage(I2C_ADDRESS_LEFT_KEYBOARD_HALF_FIRMWARE, &txMessage);
             uhkModulePhase = UhkModulePhase_RequestKeyStates;
             break;
     }

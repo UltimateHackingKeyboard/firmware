@@ -12,24 +12,19 @@
 
 static void i2cSlaveCallback(I2C_Type *base, i2c_slave_transfer_t *xfer, void *userData)
 {
-    switch (xfer->event)
-    {
+    switch (xfer->event) {
         case kI2C_SlaveTransmitEvent:
             SlaveProtocolHandler();
-            xfer->data = SlaveTxBuffer;
-            xfer->dataSize = SlaveTxSize;
+            xfer->data = (uint8_t*)&txMessage;
+            xfer->dataSize = txMessage.length+3;
             break;
         case kI2C_SlaveReceiveEvent:
+            xfer->data = (uint8_t*)&rxMessage;
+//            xfer->dataSize = I2C_BUFFER_MAX_LENGTH;
             SlaveProtocolHandler();
-            xfer->data = SlaveRxBuffer;
-            xfer->dataSize = SLAVE_RX_BUFFER_SIZE;
             break;
         case kI2C_SlaveCompletionEvent:
-            xfer->data = NULL;
-            xfer->dataSize = 0;
-            break;
-        case kI2C_SlaveTransmitAckEvent:
-            break;
+            //SlaveProtocolHandler();
         default:
             break;
     }
