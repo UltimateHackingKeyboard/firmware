@@ -17,14 +17,6 @@
     #define SLOT_ID_LEFT_MODULE         2
     #define SLOT_ID_RIGHT_MODULE        3
 
-    // The 7-bit I2C addresses below 0x08 are reserved.
-    #define SLOT_I2C_ADDRESS_LEFT_KEYBOARD_HALF  0x08
-    #define SLOT_I2C_ADDRESS_LEFT_MODULE         0x09
-    #define SLOT_I2C_ADDRESS_RIGHT_MODULE        0x0A
-
-    #define SLOT_I2C_ADDRESS_MIN 0x08
-    #define SLOT_I2C_ADDRESS_MAX 0x0A
-
     #define SLOT_COUNT 4
 
 #endif
