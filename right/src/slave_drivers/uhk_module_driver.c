@@ -14,6 +14,14 @@ uhk_module_phase_t uhkModulePhase = UhkModulePhase_RequestKeyStates;
 i2c_message_t rxMessage;
 i2c_message_t txMessage;
 
+status_t tx() {
+    return I2cAsyncWriteMessage(I2C_ADDRESS_LEFT_KEYBOARD_HALF_FIRMWARE, &txMessage);
+}
+
+status_t rx() {
+    return I2cAsyncReadMessage(I2C_ADDRESS_LEFT_KEYBOARD_HALF_FIRMWARE, &rxMessage);
+}
+
 void UhkModuleSlaveDriver_Init(uint8_t uhkModuleId)
 {
     uhk_module_state_t* uhkModuleState = UhkModuleStates + uhkModuleId;
@@ -30,11 +38,11 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleId)
         case UhkModulePhase_RequestKeyStates:
             txMessage.data[0] = SlaveCommand_RequestKeyStates;
             txMessage.length = 1;
-            status = I2cAsyncWriteMessage(I2C_ADDRESS_LEFT_KEYBOARD_HALF_FIRMWARE, &txMessage);
+            status = tx();
             uhkModulePhase = UhkModulePhase_ReceiveKeystates;
             break;
         case UhkModulePhase_ReceiveKeystates:
-            status = I2cAsyncReadMessage(I2C_ADDRESS_LEFT_KEYBOARD_HALF_FIRMWARE, &rxMessage);
+            status = rx();
             uhkModulePhase = UhkModulePhase_ProcessKeystates;
             break;
         case UhkModulePhase_ProcessKeystates:
@@ -48,14 +56,14 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleId)
             txMessage.data[0] = SlaveCommand_SetTestLed;
             txMessage.data[1] = uhkModuleInternalState->isTestLedOn;
             txMessage.length = 2;
-            status = I2cAsyncWriteMessage(I2C_ADDRESS_LEFT_KEYBOARD_HALF_FIRMWARE, &txMessage);
+            status = tx();
             uhkModulePhase = UhkModulePhase_SetLedPwmBrightness;
             break;
         case UhkModulePhase_SetLedPwmBrightness:
             txMessage.data[0] = SlaveCommand_SetLedPwmBrightness;
             txMessage.data[1] = uhkModuleInternalState->ledPwmBrightness;
             txMessage.length = 2;
-            status = I2cAsyncWriteMessage(I2C_ADDRESS_LEFT_KEYBOARD_HALF_FIRMWARE, &txMessage);
+            status = tx();
             uhkModulePhase = UhkModulePhase_RequestKeyStates;
             break;
     }
