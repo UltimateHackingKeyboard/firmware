@@ -50,7 +50,7 @@ void UpdateUsbReports()
 
     KeyMatrix_Scan(&KeyMatrix);
 
-    memcpy(CurrentKeyStates[SLOT_ID_RIGHT_KEYBOARD_HALF], KeyMatrix.keyStates, MAX_KEY_COUNT_PER_MODULE);
+    memcpy(CurrentKeyStates[SlotId_RightKeyboardHalf], KeyMatrix.keyStates, MAX_KEY_COUNT_PER_MODULE);
     UpdateActiveUsbReports();
 
     SwitchActiveUsbBasicKeyboardReport();

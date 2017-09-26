@@ -12,11 +12,15 @@
 
 // Macros:
 
-    #define SLOT_ID_RIGHT_KEYBOARD_HALF 0
-    #define SLOT_ID_LEFT_KEYBOARD_HALF  1
-    #define SLOT_ID_LEFT_MODULE         2
-    #define SLOT_ID_RIGHT_MODULE        3
-
     #define SLOT_COUNT 4
+
+// Typedefs:
+
+    typedef enum {
+        SlotId_RightKeyboardHalf = 0,
+        SlotId_LeftKeyboardHalf  = 1,
+        SlotId_LeftModule        = 2,
+        SlotId_RightModule       = 3,
+    } slot_t;
 
 #endif
