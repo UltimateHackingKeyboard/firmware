@@ -58,6 +58,7 @@ void InitSlaveScheduler()
 
     for (uint8_t i=0; i<sizeof(Slaves) / sizeof(uhk_slave_t); i++) {
         Slaves[i].isConnected = false;
+        Slaves[i].init(Slaves[i].perDriverId);
     }
 
     I2C_MasterTransferCreateHandle(I2C_MAIN_BUS_BASEADDR, &I2cMasterHandle, masterCallback, NULL);
