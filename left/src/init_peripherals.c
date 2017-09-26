@@ -10,24 +10,40 @@
 #include "slave_protocol_handler.h"
 #include "i2c_watchdog.h"
 
+uint8_t byteIn;
+uint8_t rxMessagePos;
+i2c_slave_transfer_event_t prevEvent;
+
 static void i2cSlaveCallback(I2C_Type *base, i2c_slave_transfer_t *xfer, void *userData)
 {
+    if (prevEvent != kI2C_SlaveReceiveEvent && xfer->event == kI2C_SlaveReceiveEvent) {
+        rxMessagePos = 0;
+        memset(&rxMessage, 0, I2C_BUFFER_MAX_LENGTH);
+    } else if (prevEvent == kI2C_SlaveReceiveEvent && xfer->event == kI2C_SlaveCompletionEvent) {
+        ((uint8_t*)&rxMessage)[rxMessagePos] = byteIn;
+        rxMessage.length = rxMessagePos-3;
+        SlaveRxHandler();
+    } else if (prevEvent == kI2C_SlaveReceiveEvent && xfer->event == kI2C_SlaveReceiveEvent) {
+        ((uint8_t*)&rxMessage)[rxMessagePos++] = byteIn;
+    }
+
     switch (xfer->event) {
         case kI2C_SlaveTransmitEvent:
-            SlaveProtocolHandler();
+            SlaveTxHandler();
             xfer->data = (uint8_t*)&txMessage;
             xfer->dataSize = txMessage.length+3;
             break;
         case kI2C_SlaveReceiveEvent:
-            xfer->data = (uint8_t*)&rxMessage;
-//            xfer->dataSize = I2C_BUFFER_MAX_LENGTH;
-            SlaveProtocolHandler();
+            xfer->data = (uint8_t*)&byteIn;
+            xfer->dataSize = 1;
             break;
         case kI2C_SlaveCompletionEvent:
-            //SlaveProtocolHandler();
+            break;
         default:
             break;
     }
+
+    prevEvent = xfer->event;
 }
 
 void InitInterruptPriorities()

@@ -22,6 +22,7 @@
 
 // Functions:
 
-    extern void SlaveProtocolHandler(void);
+    void SlaveRxHandler(void);
+    void SlaveTxHandler(void);
 
 #endif

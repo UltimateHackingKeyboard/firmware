@@ -32,15 +32,10 @@ void SetResponseByte(uint8_t response)
     txMessage.data[1] = response;
 }
 
-void SlaveProtocolHandler(void)
+void SlaveRxHandler(void)
 {
     uint8_t commandId = rxMessage.data[0];
     switch (commandId) {
-        case SlaveCommand_RequestKeyStates:
-            BoolBytesToBits(keyMatrix.keyStates, txMessage.data, LEFT_KEYBOARD_HALF_KEY_COUNT);
-            txMessage.length = KEY_STATE_SIZE;
-            CRC16_UpdateMessageChecksum(&txMessage);
-            break;
         case SlaveCommand_SetTestLed:
             txMessage.length = 0;
             bool isLedOn = rxMessage.data[1];
@@ -53,6 +48,18 @@ void SlaveProtocolHandler(void)
             break;
         case SlaveCommand_JumpToBootloader:
             JumpToBootloader();
+            break;
+    }
+}
+
+void SlaveTxHandler(void)
+{
+    uint8_t commandId = rxMessage.data[0];
+    switch (commandId) {
+        case SlaveCommand_RequestKeyStates:
+            BoolBytesToBits(keyMatrix.keyStates, txMessage.data, LEFT_KEYBOARD_HALF_KEY_COUNT);
+            txMessage.length = KEY_STATE_SIZE;
+            CRC16_UpdateMessageChecksum(&txMessage);
             break;
     }
 }
