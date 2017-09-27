@@ -31,7 +31,7 @@ void UhkModuleSlaveDriver_Init(uint8_t uhkModuleId)
     uhkModuleSourceState->isTestLedOn = true;
     uhkModuleTargetState->isTestLedOn = false;
 
-    uhkModuleSourceState->ledPwmBrightness = 0x64;
+    uhkModuleSourceState->ledPwmBrightness = MAX_PWM_BRIGHTNESS;
     uhkModuleTargetState->ledPwmBrightness = 0;
 }
 
