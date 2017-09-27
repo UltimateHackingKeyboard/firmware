@@ -9,6 +9,7 @@
 #include "crc16.h"
 
 uhk_module_state_t UhkModuleStates[UHK_MODULE_MAX_COUNT];
+static uhk_module_state_t UhkModuleTargetStates[UHK_MODULE_MAX_COUNT];
 uhk_module_phase_t uhkModulePhase = UhkModulePhase_RequestKeyStates;
 
 i2c_message_t rxMessage;
@@ -24,15 +25,21 @@ status_t rx() {
 
 void UhkModuleSlaveDriver_Init(uint8_t uhkModuleId)
 {
-    uhk_module_state_t* uhkModuleState = UhkModuleStates + uhkModuleId;
-    uhkModuleState->isTestLedOn = true;
-    uhkModuleState->ledPwmBrightness = 0x64;
+    uhk_module_state_t* uhkModuleSourceState = UhkModuleStates + uhkModuleId;
+    uhk_module_state_t* uhkModuleTargetState = UhkModuleTargetStates + uhkModuleId;
+
+    uhkModuleSourceState->isTestLedOn = true;
+    uhkModuleTargetState->isTestLedOn = false;
+
+    uhkModuleSourceState->ledPwmBrightness = 0x64;
+    uhkModuleTargetState->ledPwmBrightness = 0;
 }
 
 status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleId)
 {
     status_t status = kStatus_Uhk_IdleSlave;
-    uhk_module_state_t *uhkModuleInternalState = UhkModuleStates + uhkModuleId;
+    uhk_module_state_t *uhkModuleSourceState = UhkModuleStates + uhkModuleId;
+    uhk_module_state_t *uhkModuleTargetState = UhkModuleTargetStates + uhkModuleId;
 
     switch (uhkModulePhase) {
         case UhkModulePhase_RequestKeyStates:
@@ -53,17 +60,27 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleId)
             uhkModulePhase = UhkModulePhase_SetTestLed;
             break;
         case UhkModulePhase_SetTestLed:
-            txMessage.data[0] = SlaveCommand_SetTestLed;
-            txMessage.data[1] = uhkModuleInternalState->isTestLedOn;
-            txMessage.length = 2;
-            status = tx();
+            if (uhkModuleSourceState->isTestLedOn == uhkModuleTargetState->isTestLedOn) {
+                status = kStatus_Uhk_NoOp;
+            } else {
+                txMessage.data[0] = SlaveCommand_SetTestLed;
+                txMessage.data[1] = uhkModuleSourceState->isTestLedOn;
+                txMessage.length = 2;
+                status = tx();
+                uhkModuleTargetState->isTestLedOn = uhkModuleSourceState->isTestLedOn;
+            }
             uhkModulePhase = UhkModulePhase_SetLedPwmBrightness;
             break;
         case UhkModulePhase_SetLedPwmBrightness:
-            txMessage.data[0] = SlaveCommand_SetLedPwmBrightness;
-            txMessage.data[1] = uhkModuleInternalState->ledPwmBrightness;
-            txMessage.length = 2;
-            status = tx();
+            if (uhkModuleSourceState->ledPwmBrightness == uhkModuleTargetState->ledPwmBrightness) {
+                status = kStatus_Uhk_NoOp;
+            } else {
+                txMessage.data[0] = SlaveCommand_SetLedPwmBrightness;
+                txMessage.data[1] = uhkModuleSourceState->ledPwmBrightness;
+                txMessage.length = 2;
+                status = tx();
+                uhkModuleTargetState->ledPwmBrightness = uhkModuleSourceState->ledPwmBrightness;
+            }
             uhkModulePhase = UhkModulePhase_RequestKeyStates;
             break;
     }
