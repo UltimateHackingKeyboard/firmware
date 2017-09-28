@@ -15,9 +15,9 @@
 // Typedefs:
 
     typedef enum {
-        UhkModuleId_LeftKeyboardHalf,
-        UhkModuleId_LeftAddon,
-        UhkModuleId_RightAddon,
+        UhkModuleDriverId_LeftKeyboardHalf,
+        UhkModuleDriverId_LeftAddon,
+        UhkModuleDriverId_RightAddon,
     } uhk_module_id_t;
 
     typedef enum {
