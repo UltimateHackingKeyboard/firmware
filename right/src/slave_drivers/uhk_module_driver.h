@@ -33,6 +33,11 @@
         bool isTestLedOn;
     } uhk_module_vars_t;
 
+    typedef struct {
+        uhk_module_phase_t phase;
+        uhk_module_vars_t targetVars;
+    } uhk_module_state_t;
+
 // Variables:
 
     extern uhk_module_vars_t UhkModuleVars[UHK_MODULE_MAX_COUNT];

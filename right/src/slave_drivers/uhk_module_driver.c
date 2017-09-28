@@ -9,8 +9,7 @@
 #include "crc16.h"
 
 uhk_module_vars_t UhkModuleVars[UHK_MODULE_MAX_COUNT];
-static uhk_module_vars_t uhkModuleTargetStates[UHK_MODULE_MAX_COUNT];
-static uhk_module_phase_t uhkModulePhases[UHK_MODULE_MAX_COUNT];
+static uhk_module_state_t uhkModuleStates[UHK_MODULE_MAX_COUNT];
 
 static i2c_message_t rxMessage;
 static i2c_message_t txMessage;
@@ -25,25 +24,27 @@ static status_t rx(void) {
 
 void UhkModuleSlaveDriver_Init(uint8_t uhkModuleId)
 {
-    uhk_module_vars_t* uhkModuleSourceState = UhkModuleVars + uhkModuleId;
-    uhk_module_vars_t* uhkModuleTargetState = uhkModuleTargetStates + uhkModuleId;
+    uhk_module_vars_t* uhkModuleSourceVars = UhkModuleVars + uhkModuleId;
+    uhk_module_state_t* uhkModuleState = uhkModuleStates + uhkModuleId;
+    uhk_module_vars_t* uhkModuleTargetVars = &uhkModuleState->targetVars;
 
-    uhkModuleSourceState->isTestLedOn = true;
-    uhkModuleTargetState->isTestLedOn = false;
+    uhkModuleSourceVars->isTestLedOn = true;
+    uhkModuleTargetVars->isTestLedOn = false;
 
-    uhkModuleSourceState->ledPwmBrightness = MAX_PWM_BRIGHTNESS;
-    uhkModuleTargetState->ledPwmBrightness = 0;
+    uhkModuleSourceVars->ledPwmBrightness = MAX_PWM_BRIGHTNESS;
+    uhkModuleTargetVars->ledPwmBrightness = 0;
 
-    uhk_module_phase_t *uhkModulePhase = uhkModulePhases + uhkModuleId;
+    uhk_module_phase_t *uhkModulePhase = &uhkModuleState->phase;
     *uhkModulePhase = UhkModulePhase_RequestKeyStates;
 }
 
 status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleId)
 {
     status_t status = kStatus_Uhk_IdleSlave;
-    uhk_module_vars_t *uhkModuleSourceState = UhkModuleVars + uhkModuleId;
-    uhk_module_vars_t *uhkModuleTargetState = uhkModuleTargetStates + uhkModuleId;
-    uhk_module_phase_t *uhkModulePhase = uhkModulePhases + uhkModuleId;
+    uhk_module_vars_t *uhkModuleSourceVars = UhkModuleVars + uhkModuleId;
+    uhk_module_state_t* uhkModuleState = uhkModuleStates + uhkModuleId;
+    uhk_module_vars_t* uhkModuleTargetVars = &uhkModuleState->targetVars;
+    uhk_module_phase_t *uhkModulePhase = &uhkModuleState->phase;
 
     switch (*uhkModulePhase) {
         case UhkModulePhase_RequestKeyStates:
@@ -64,26 +65,26 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleId)
             *uhkModulePhase = UhkModulePhase_SetTestLed;
             break;
         case UhkModulePhase_SetTestLed:
-            if (uhkModuleSourceState->isTestLedOn == uhkModuleTargetState->isTestLedOn) {
+            if (uhkModuleSourceVars->isTestLedOn == uhkModuleTargetVars->isTestLedOn) {
                 status = kStatus_Uhk_NoTransfer;
             } else {
                 txMessage.data[0] = SlaveCommand_SetTestLed;
-                txMessage.data[1] = uhkModuleSourceState->isTestLedOn;
+                txMessage.data[1] = uhkModuleSourceVars->isTestLedOn;
                 txMessage.length = 2;
                 status = tx();
-                uhkModuleTargetState->isTestLedOn = uhkModuleSourceState->isTestLedOn;
+                uhkModuleTargetVars->isTestLedOn = uhkModuleSourceVars->isTestLedOn;
             }
             *uhkModulePhase = UhkModulePhase_SetLedPwmBrightness;
             break;
         case UhkModulePhase_SetLedPwmBrightness:
-            if (uhkModuleSourceState->ledPwmBrightness == uhkModuleTargetState->ledPwmBrightness) {
+            if (uhkModuleSourceVars->ledPwmBrightness == uhkModuleTargetVars->ledPwmBrightness) {
                 status = kStatus_Uhk_NoTransfer;
             } else {
                 txMessage.data[0] = SlaveCommand_SetLedPwmBrightness;
-                txMessage.data[1] = uhkModuleSourceState->ledPwmBrightness;
+                txMessage.data[1] = uhkModuleSourceVars->ledPwmBrightness;
                 txMessage.length = 2;
                 status = tx();
-                uhkModuleTargetState->ledPwmBrightness = uhkModuleSourceState->ledPwmBrightness;
+                uhkModuleTargetVars->ledPwmBrightness = uhkModuleSourceVars->ledPwmBrightness;
             }
             *uhkModulePhase = UhkModulePhase_RequestKeyStates;
             break;
