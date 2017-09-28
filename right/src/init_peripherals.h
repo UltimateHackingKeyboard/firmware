@@ -5,6 +5,6 @@
 
 // Functions:
 
-    extern void InitPeripherals();
+    void InitPeripherals();
 
 #endif

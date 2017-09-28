@@ -13,7 +13,7 @@
 
 // Functions:
 
-    extern void ADC_Init(void);
-    extern uint32_t ADC_Measure(void);
+    void ADC_Init(void);
+    uint32_t ADC_Measure(void);
 
 #endif

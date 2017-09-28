@@ -16,7 +16,7 @@
 
 // Functions:
 
-    extern usb_status_t USB_DeviceGetConfigurationDescriptor(
+    usb_status_t USB_DeviceGetConfigurationDescriptor(
         usb_device_handle handle, usb_device_get_configuration_descriptor_struct_t *configurationDescriptor);
 
 #endif

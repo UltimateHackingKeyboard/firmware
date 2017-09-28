@@ -1,9 +1,13 @@
 #ifndef __I2C_WATCHDOG_H__
 #define __I2C_WATCHDOG_H__
 
-// Functions:
+// Variables:
 
-    extern void InitI2cWatchdog();
     extern uint32_t I2C_WatchdogInnerCounter;
     extern uint32_t I2C_WatchdogOuterCounter;
+
+// Functions:
+
+    void InitI2cWatchdog();
+
 #endif

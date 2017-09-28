@@ -18,6 +18,6 @@
 
 // Functions:
 
-    extern void InitResetButton();
+    void InitResetButton();
 
 #endif

@@ -32,6 +32,6 @@
 
 //Functions:
 
-    extern void InitUsb();
+    void InitUsb();
 
 #endif
