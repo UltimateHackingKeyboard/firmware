@@ -17,14 +17,11 @@
     #define MODULE_REQUEST_GET_STATE            6
     #define MODULE_REQUEST_GET_GRAPHICS         7
 
-    #define MODULE_STATUS_ATTACHED MODULE_REQUEST_GET_STATE
-
     #define POINTER_ROLE_MOVE   0
     #define POINTER_ROLE_SCROLL 1
 
     #define MAX_MODULE_NAME_LENGTH       64
     #define MAX_KEY_COUNT_PER_MODULE     64
-    #define MAX_POINTER_COUNT_PER_MODULE 2
 
 // Typedefs:
 
@@ -43,18 +40,11 @@
     } pointer_t;
 
     typedef struct {
-        uint8_t enumerationState;
-        uint8_t enumerationSubstate;
         uint8_t moduleId;
         char moduleName[MAX_MODULE_NAME_LENGTH];
         uint8_t pointerCount;
         uint8_t keyCount;
-        uint8_t keyStates[MAX_KEY_COUNT_PER_MODULE];
         uint8_t pointerRole;
     } module_t;
-
-// Variables:
-
-    extern module_t AttachedModules[SLOT_COUNT];
 
 #endif
