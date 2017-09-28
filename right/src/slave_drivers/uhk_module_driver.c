@@ -10,16 +10,14 @@
 
 uhk_module_vars_t UhkModuleVars[UHK_MODULE_MAX_COUNT];
 static uhk_module_state_t uhkModuleStates[UHK_MODULE_MAX_COUNT];
-
-static i2c_message_t rxMessage;
 static i2c_message_t txMessage;
 
 static status_t tx(void) {
     return I2cAsyncWriteMessage(I2C_ADDRESS_LEFT_KEYBOARD_HALF_FIRMWARE, &txMessage);
 }
 
-static status_t rx(void) {
-    return I2cAsyncReadMessage(I2C_ADDRESS_LEFT_KEYBOARD_HALF_FIRMWARE, &rxMessage);
+static status_t rx(i2c_message_t *rxMessage) {
+    return I2cAsyncReadMessage(I2C_ADDRESS_LEFT_KEYBOARD_HALF_FIRMWARE, rxMessage);
 }
 
 void UhkModuleSlaveDriver_Init(uint8_t uhkModuleId)
@@ -45,6 +43,7 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleId)
     uhk_module_state_t *uhkModuleState = uhkModuleStates + uhkModuleId;
     uhk_module_vars_t *uhkModuleTargetVars = &uhkModuleState->targetVars;
     uhk_module_phase_t *uhkModulePhase = &uhkModuleState->phase;
+    i2c_message_t *rxMessage = &uhkModuleState->rxMessage;
 
     switch (*uhkModulePhase) {
         case UhkModulePhase_RequestKeyStates:
@@ -54,12 +53,12 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleId)
             *uhkModulePhase = UhkModulePhase_ReceiveKeystates;
             break;
         case UhkModulePhase_ReceiveKeystates:
-            status = rx();
+            status = rx(rxMessage);
             *uhkModulePhase = UhkModulePhase_ProcessKeystates;
             break;
         case UhkModulePhase_ProcessKeystates:
-            if (CRC16_IsMessageValid(&rxMessage)) {
-                BoolBitsToBytes(rxMessage.data, CurrentKeyStates[SlotId_LeftKeyboardHalf], LEFT_KEYBOARD_HALF_KEY_COUNT);
+            if (CRC16_IsMessageValid(rxMessage)) {
+                BoolBitsToBytes(rxMessage->data, CurrentKeyStates[SlotId_LeftKeyboardHalf], LEFT_KEYBOARD_HALF_KEY_COUNT);
             }
             status = kStatus_Uhk_NoTransfer;
             *uhkModulePhase = UhkModulePhase_SetTestLed;

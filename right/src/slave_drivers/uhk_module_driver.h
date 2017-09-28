@@ -36,6 +36,7 @@
     typedef struct {
         uhk_module_phase_t phase;
         uhk_module_vars_t targetVars;
+        i2c_message_t rxMessage;
     } uhk_module_state_t;
 
 // Variables:
