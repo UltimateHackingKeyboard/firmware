@@ -17,8 +17,8 @@
 
 // Variables:
 
-    extern i2c_message_t rxMessage;
-    extern i2c_message_t txMessage;
+    extern i2c_message_t RxMessage;
+    extern i2c_message_t TxMessage;
 
 // Functions:
 
