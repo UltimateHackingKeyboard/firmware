@@ -31,11 +31,11 @@
     typedef struct {
         uint8_t ledPwmBrightness;
         bool isTestLedOn;
-    } uhk_module_state_t;
+    } uhk_module_vars_t;
 
 // Variables:
 
-    extern uhk_module_state_t UhkModuleStates[UHK_MODULE_MAX_COUNT];
+    extern uhk_module_vars_t UhkModuleVars[UHK_MODULE_MAX_COUNT];
 
 // Functions:
 

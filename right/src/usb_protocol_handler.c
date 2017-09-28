@@ -80,7 +80,7 @@ void setTestLed(void)
 {
     uint8_t ledState = GenericHidInBuffer[1];
     TEST_LED_SET(ledState);
-    UhkModuleStates[0].isTestLedOn = ledState;
+    UhkModuleVars[0].isTestLedOn = ledState;
 }
 
 void readMergeSensor(void)
@@ -134,7 +134,7 @@ void setLedPwm(void)
 {
     uint8_t brightnessPercent = GenericHidInBuffer[1];
     LedPwm_SetBrightness(brightnessPercent);
-    UhkModuleStates[0].ledPwmBrightness = brightnessPercent;
+    UhkModuleVars[0].ledPwmBrightness = brightnessPercent;
 }
 
 void getAdcValue(void)
