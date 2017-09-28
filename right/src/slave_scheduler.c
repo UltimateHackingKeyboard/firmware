@@ -34,14 +34,14 @@ static void masterCallback(I2C_Type *base, i2c_master_handle_t *handle, status_t
         }
 
         status_t currentStatus = currentSlave->update(currentSlave->perDriverId);
-        isTransferScheduled = currentStatus != kStatus_Uhk_IdleSlave && currentStatus != kStatus_Uhk_NoOp;
+        isTransferScheduled = currentStatus != kStatus_Uhk_IdleSlave && currentStatus != kStatus_Uhk_NoTransfer;
         //isTransferScheduled = currentStatus == kStatus_Success // Why it is not working?
         if (isTransferScheduled) {
             currentSlave->isConnected = true;
         }
 
         previousSlaveId = currentSlaveId;
-        if (currentStatus != kStatus_Uhk_NoOp) {
+        if (currentStatus != kStatus_Uhk_NoTransfer) {
             currentSlaveId++;
         }
 
