@@ -28,12 +28,12 @@ static uhk_module_i2c_addresses_t moduleIdsToI2cAddresses[] = {
     },
 };
 
-static status_t tx(void) {
-    return I2cAsyncWriteMessage(I2C_ADDRESS_LEFT_KEYBOARD_HALF_FIRMWARE, &txMessage);
+static status_t tx(uint8_t i2cAddress) {
+    return I2cAsyncWriteMessage(i2cAddress, &txMessage);
 }
 
-static status_t rx(i2c_message_t *rxMessage) {
-    return I2cAsyncReadMessage(I2C_ADDRESS_LEFT_KEYBOARD_HALF_FIRMWARE, rxMessage);
+static status_t rx(i2c_message_t *rxMessage, uint8_t i2cAddress) {
+    return I2cAsyncReadMessage(i2cAddress, rxMessage);
 }
 
 void UhkModuleSlaveDriver_Init(uint8_t uhkModuleId)
@@ -63,17 +63,18 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleId)
     uhk_module_state_t *uhkModuleState = uhkModuleStates + uhkModuleId;
     uhk_module_vars_t *uhkModuleTargetVars = &uhkModuleState->targetVars;
     uhk_module_phase_t *uhkModulePhase = &uhkModuleState->phase;
+    uint8_t i2cAddress = uhkModuleState->firmwareI2cAddress;
     i2c_message_t *rxMessage = &uhkModuleState->rxMessage;
 
     switch (*uhkModulePhase) {
         case UhkModulePhase_RequestKeyStates:
             txMessage.data[0] = SlaveCommand_RequestKeyStates;
             txMessage.length = 1;
-            status = tx();
+            status = tx(i2cAddress);
             *uhkModulePhase = UhkModulePhase_ReceiveKeystates;
             break;
         case UhkModulePhase_ReceiveKeystates:
-            status = rx(rxMessage);
+            status = rx(rxMessage, i2cAddress);
             *uhkModulePhase = UhkModulePhase_ProcessKeystates;
             break;
         case UhkModulePhase_ProcessKeystates:
@@ -90,7 +91,7 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleId)
                 txMessage.data[0] = SlaveCommand_SetTestLed;
                 txMessage.data[1] = uhkModuleSourceVars->isTestLedOn;
                 txMessage.length = 2;
-                status = tx();
+                status = tx(i2cAddress);
                 uhkModuleTargetVars->isTestLedOn = uhkModuleSourceVars->isTestLedOn;
             }
             *uhkModulePhase = UhkModulePhase_SetLedPwmBrightness;
@@ -102,7 +103,7 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleId)
                 txMessage.data[0] = SlaveCommand_SetLedPwmBrightness;
                 txMessage.data[1] = uhkModuleSourceVars->ledPwmBrightness;
                 txMessage.length = 2;
-                status = tx();
+                status = tx(i2cAddress);
                 uhkModuleTargetVars->ledPwmBrightness = uhkModuleSourceVars->ledPwmBrightness;
             }
             *uhkModulePhase = UhkModulePhase_RequestKeyStates;
