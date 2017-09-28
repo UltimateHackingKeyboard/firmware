@@ -46,10 +46,10 @@ static const uint16_t digitToSegmentSet[] = {
 
 static uint16_t characterToSegmentSet(char character) {
     switch (character) {
-    case 'A' ... 'Z':
-        return capitalLetterToSegmentSet[character - 'A'];
-    case '0' ... '9':
-        return digitToSegmentSet[character - '0'];
+        case 'A' ... 'Z':
+            return capitalLetterToSegmentSet[character - 'A'];
+        case '0' ... '9':
+            return digitToSegmentSet[character - '0'];
     }
     return 0;
 }
@@ -58,12 +58,12 @@ void LedDisplay_SetText(uint8_t length, const char* text) {
     uint64_t allSegmentSets = 0;
 
     switch (length) {
-    case 3:
-        allSegmentSets = (uint64_t)characterToSegmentSet(text[2]) << 28;
-    case 2:
-        allSegmentSets |= characterToSegmentSet(text[1]) << 14;
-    case 1:
-        allSegmentSets |= characterToSegmentSet(text[0]);
+        case 3:
+            allSegmentSets = (uint64_t)characterToSegmentSet(text[2]) << 28;
+        case 2:
+            allSegmentSets |= characterToSegmentSet(text[1]) << 14;
+        case 1:
+            allSegmentSets |= characterToSegmentSet(text[0]);
     }
     LedDriverStates[LedDriverId_Left].sourceLedValues[11] = allSegmentSets & 0b00000001 ? LED_BRIGHTNESS_LEVEL : 0;
     LedDriverStates[LedDriverId_Left].sourceLedValues[12] = allSegmentSets & 0b00000010 ? LED_BRIGHTNESS_LEVEL : 0;
