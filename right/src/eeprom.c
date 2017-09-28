@@ -38,7 +38,7 @@ static status_t i2cAsyncRead(uint8_t *data, size_t dataSize)
     return I2C_MasterTransferNonBlocking(I2C_EEPROM_BUS_BASEADDR, &i2cHandle, &i2cTransfer);
 }
 
-static status_t writePage()
+static status_t writePage(void)
 {
     static uint8_t buffer[EEPROM_BUFFER_SIZE];
     uint16_t targetEepromOffset = sourceOffset + eepromStartAddress;

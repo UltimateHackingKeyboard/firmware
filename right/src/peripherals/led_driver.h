@@ -44,6 +44,6 @@
 
 // Functions:
 
-    void InitLedDriver();
+    void InitLedDriver(void);
 
 #endif

@@ -49,12 +49,12 @@ usb_system_keyboard_report_t* getInactiveUsbSystemKeyboardReport()
     return ActiveUsbSystemKeyboardReport == usbSystemKeyboardReports ? usbSystemKeyboardReports+1 : usbSystemKeyboardReports;
 }
 
-void SwitchActiveUsbSystemKeyboardReport()
+void SwitchActiveUsbSystemKeyboardReport(void)
 {
     ActiveUsbSystemKeyboardReport = getInactiveUsbSystemKeyboardReport();
 }
 
-void ResetActiveUsbSystemKeyboardReport()
+void ResetActiveUsbSystemKeyboardReport(void)
 {
     bzero(ActiveUsbSystemKeyboardReport, USB_SYSTEM_KEYBOARD_REPORT_LENGTH);
 }

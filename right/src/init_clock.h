@@ -3,6 +3,6 @@
 
 // Functions:
 
-    void InitClock();
+    void InitClock(void);
 
 #endif

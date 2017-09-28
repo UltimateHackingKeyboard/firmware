@@ -295,4 +295,3 @@ void Macros_ContinueMacro(void)
     }
     ParseMacroAction(&UserConfigBuffer, &currentMacroAction);
 }
-

@@ -14,14 +14,14 @@
 #include "eeprom.h"
 #include "microseconds/microseconds_pit.c"
 
-void InitInterruptPriorities()
+void InitInterruptPriorities(void)
 {
     NVIC_SetPriority(I2C0_IRQn, 1);
     NVIC_SetPriority(I2C1_IRQn, 1);
     NVIC_SetPriority(USB0_IRQn, 1);
 }
 
-void InitI2c()
+void InitI2c(void)
 {
     port_pin_config_t pinConfig = {
         .pullSelect = kPORT_PullUp,

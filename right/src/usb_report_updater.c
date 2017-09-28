@@ -72,7 +72,7 @@ void processMouseAction(key_action_t action)
     wasPreviousMouseActionWheelAction = isWheelAction;
 }
 
-uint8_t getActiveLayer()
+uint8_t getActiveLayer(void)
 {
     uint8_t activeLayer = LAYER_ID_BASE;
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
@@ -88,7 +88,7 @@ uint8_t getActiveLayer()
     return activeLayer;
 }
 
-void UpdateActiveUsbReports()
+void UpdateActiveUsbReports(void)
 {
     bzero(&UsbMouseReport, sizeof(usb_mouse_report_t));
 

@@ -51,7 +51,7 @@ static void masterCallback(I2C_Type *base, i2c_master_handle_t *handle, status_t
     } while (!isTransferScheduled);
 }
 
-void InitSlaveScheduler()
+void InitSlaveScheduler(void)
 {
     previousSlaveId = 0;
     currentSlaveId = 0;

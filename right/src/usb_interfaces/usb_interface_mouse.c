@@ -39,7 +39,7 @@ usb_device_class_struct_t UsbMouseClass = {
 
 usb_mouse_report_t UsbMouseReport;
 
-static volatile usb_status_t usbMouseAction()
+static volatile usb_status_t usbMouseAction(void)
 {
     return USB_DeviceHidSend(UsbCompositeDevice.mouseHandle, USB_MOUSE_ENDPOINT_INDEX,
                              (uint8_t*)&UsbMouseReport, USB_MOUSE_REPORT_LENGTH);

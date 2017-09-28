@@ -34,7 +34,7 @@ void PIT_I2C_WATCHDOG_HANDLER(void)
     PIT_ClearStatusFlags(PIT, kPIT_Chnl_0, PIT_TFLG_TIF_MASK);
 }
 
-void InitI2cWatchdog()
+void InitI2cWatchdog(void)
 {
     pit_config_t pitConfig;
     PIT_GetDefaultConfig(&pitConfig);

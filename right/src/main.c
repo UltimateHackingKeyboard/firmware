@@ -38,7 +38,7 @@ key_matrix_t KeyMatrix = {
 
 uint8_t CurrentKeyStates[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
 
-void UpdateUsbReports()
+void UpdateUsbReports(void)
 {
     if (!IsUsbBasicKeyboardReportSent) {
         return;
@@ -63,17 +63,17 @@ void UpdateUsbReports()
 bool IsEepromInitialized = false;
 bool IsConfigInitialized = false;
 
-void userConfigurationReadFinished()
+void userConfigurationReadFinished(void)
 {
     IsEepromInitialized = true;
 }
 
-void hardwareConfigurationReadFinished()
+void hardwareConfigurationReadFinished(void)
 {
     EEPROM_LaunchTransfer(EepromTransfer_ReadUserConfiguration, userConfigurationReadFinished);
 }
 
-void main() {
+void main(void) {
     InitClock();
     InitPeripherals();
     EEPROM_LaunchTransfer(EepromTransfer_ReadHardwareConfiguration, hardwareConfigurationReadFinished);

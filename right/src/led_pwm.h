@@ -21,7 +21,7 @@
 
 // Functions:
 
-    void LedPwm_Init();
+    void LedPwm_Init(void);
     void LedPwm_SetBrightness(uint8_t brightnessPercent);
 
 #endif

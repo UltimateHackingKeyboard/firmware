@@ -18,6 +18,6 @@
 
 // Functions:
 
-    void InitMergeSensor();
+    void InitMergeSensor(void);
 
 #endif

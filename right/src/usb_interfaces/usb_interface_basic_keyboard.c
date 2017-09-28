@@ -44,17 +44,17 @@ static usb_basic_keyboard_report_t usbBasicKeyboardReports[2];
 usb_basic_keyboard_report_t* ActiveUsbBasicKeyboardReport = usbBasicKeyboardReports;
 bool IsUsbBasicKeyboardReportSent = false;
 
-usb_basic_keyboard_report_t* getInactiveUsbBasicKeyboardReport()
+usb_basic_keyboard_report_t* getInactiveUsbBasicKeyboardReport(void)
 {
     return ActiveUsbBasicKeyboardReport == usbBasicKeyboardReports ? usbBasicKeyboardReports+1 : usbBasicKeyboardReports;
 }
 
-void SwitchActiveUsbBasicKeyboardReport()
+void SwitchActiveUsbBasicKeyboardReport(void)
 {
     ActiveUsbBasicKeyboardReport = getInactiveUsbBasicKeyboardReport();
 }
 
-void ResetActiveUsbBasicKeyboardReport()
+void ResetActiveUsbBasicKeyboardReport(void)
 {
     bzero(ActiveUsbBasicKeyboardReport, USB_BASIC_KEYBOARD_REPORT_LENGTH);
 }

@@ -46,7 +46,7 @@ static void i2cSlaveCallback(I2C_Type *base, i2c_slave_transfer_t *xfer, void *u
     prevEvent = xfer->event;
 }
 
-void InitInterruptPriorities()
+void InitInterruptPriorities(void)
 {
     NVIC_SetPriority(I2C0_IRQn, 1);
     NVIC_SetPriority(TPM1_IRQn, 1);

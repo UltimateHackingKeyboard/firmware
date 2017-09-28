@@ -22,6 +22,6 @@
 
 // Functions:
 
-    void InitTestLed();
+    void InitTestLed(void);
 
 #endif

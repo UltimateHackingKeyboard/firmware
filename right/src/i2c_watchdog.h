@@ -8,6 +8,6 @@
 
 // Functions:
 
-    void InitI2cWatchdog();
+    void InitI2cWatchdog(void);
 
 #endif

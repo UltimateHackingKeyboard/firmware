@@ -38,7 +38,7 @@
     usb_status_t UsbSystemKeyboardSetConfiguration(class_handle_t handle, uint8_t configuration);
     usb_status_t UsbSystemKeyboardSetInterface(class_handle_t handle, uint8_t interface, uint8_t alternateSetting);
 
-    void ResetActiveUsbSystemKeyboardReport();
-    void SwitchActiveUsbSystemKeyboardReport();
+    void ResetActiveUsbSystemKeyboardReport(void);
+    void SwitchActiveUsbSystemKeyboardReport(void);
 
 #endif

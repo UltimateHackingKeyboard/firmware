@@ -90,6 +90,6 @@
 
 // Variables:
 
-    void UpdateActiveUsbReports();
+    void UpdateActiveUsbReports(void);
 
 #endif

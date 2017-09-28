@@ -106,7 +106,7 @@ void USB0_IRQHandler(void)
         : UsbCompositeDevice.deviceHandle);
 }
 
-void InitUsb()
+void InitUsb(void)
 {
     uint8_t usbDeviceKhciIrq[] = USB_IRQS;
     uint8_t irqNumber = usbDeviceKhciIrq[CONTROLLER_ID - kUSB_ControllerKhci0];

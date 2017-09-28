@@ -39,7 +39,7 @@
 
 // Functions:
 
-    void InitSlaveScheduler();
+    void InitSlaveScheduler(void);
     void SetLeds(uint8_t ledBrightness);
 
 #endif
