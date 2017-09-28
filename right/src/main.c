@@ -73,7 +73,8 @@ void hardwareConfigurationReadFinished(void)
     EEPROM_LaunchTransfer(EepromTransfer_ReadUserConfiguration, userConfigurationReadFinished);
 }
 
-void main(void) {
+void main(void)
+{
     InitClock();
     InitPeripherals();
     EEPROM_LaunchTransfer(EepromTransfer_ReadHardwareConfiguration, hardwareConfigurationReadFinished);
