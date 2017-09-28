@@ -5,10 +5,6 @@
 #include "i2c_watchdog.h"
 #include "slave_scheduler.h"
 
-#define PIT_I2C_WATCHDOG_HANDLER PIT0_IRQHandler
-#define PIT_I2C_WATCHDOG_IRQ_ID PIT0_IRQn
-#define PIT_SOURCE_CLOCK CLOCK_GetFreq(kCLOCK_BusClk)
-
 uint32_t I2cWatchdog_OuterCounter;
 uint32_t I2cWatchdog_InnerCounter;
 
