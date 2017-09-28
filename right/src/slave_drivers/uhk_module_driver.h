@@ -9,7 +9,7 @@
 // Macros:
 
     #define UHK_MODULE_MAX_COUNT 3
-    #define KEY_STATE_SIZE (LEFT_KEYBOARD_HALF_KEY_COUNT/8 + 1)
+    #define KEY_STATE_SIZE (LEFT_KEYBOARD_HALF_KEY_COUNT/8 + (LEFT_KEYBOARD_HALF_KEY_COUNT % 8 ? 1 : 0))
     #define MAX_PWM_BRIGHTNESS 0x64
 
 // Typedefs:
