@@ -42,9 +42,8 @@ static void masterCallback(I2C_Type *base, i2c_master_handle_t *handle, status_t
             currentSlave->isConnected = true;
         }
 
-        previousSlaveId = currentSlaveId;
         if (currentStatus != kStatus_Uhk_NoTransfer) {
-            currentSlaveId++;
+            previousSlaveId = currentSlaveId++;
         }
 
         if (currentSlaveId >= (sizeof(Slaves) / sizeof(uhk_slave_t))) {
