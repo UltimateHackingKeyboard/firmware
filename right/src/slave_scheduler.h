@@ -28,7 +28,7 @@
     } uhk_status_group_t;
 
     typedef enum {
-        kStatus_Uhk_IdleSlave  = MAKE_STATUS(kStatusGroup_Uhk, 0), // An other slave should be scheduled
+        kStatus_Uhk_IdleSlave  = MAKE_STATUS(kStatusGroup_Uhk, 0), // Another slave should be scheduled
         kStatus_Uhk_NoTransfer = MAKE_STATUS(kStatusGroup_Uhk, 1), // The same slave should be rescheduled
     } uhk_status_t;
 
