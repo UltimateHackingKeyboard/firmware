@@ -211,15 +211,15 @@ void getDebugInfo(void)
     GenericHidOutBuffer[7] = BridgeCounter >> 16;
     GenericHidOutBuffer[8] = BridgeCounter >> 24;
 
-    GenericHidOutBuffer[9] = I2C_WatchdogOuterCounter >> 0;
-    GenericHidOutBuffer[10] = I2C_WatchdogOuterCounter >> 8;
-    GenericHidOutBuffer[11] = I2C_WatchdogOuterCounter >> 16;
-    GenericHidOutBuffer[12] = I2C_WatchdogOuterCounter >> 24;
+    GenericHidOutBuffer[9] = I2cWatchdog_OuterCounter >> 0;
+    GenericHidOutBuffer[10] = I2cWatchdog_OuterCounter >> 8;
+    GenericHidOutBuffer[11] = I2cWatchdog_OuterCounter >> 16;
+    GenericHidOutBuffer[12] = I2cWatchdog_OuterCounter >> 24;
 
-    GenericHidOutBuffer[13] = I2C_WatchdogInnerCounter >> 0;
-    GenericHidOutBuffer[14] = I2C_WatchdogInnerCounter >> 8;
-    GenericHidOutBuffer[15] = I2C_WatchdogInnerCounter >> 16;
-    GenericHidOutBuffer[16] = I2C_WatchdogInnerCounter >> 24;
+    GenericHidOutBuffer[13] = I2cWatchdog_InnerCounter >> 0;
+    GenericHidOutBuffer[14] = I2cWatchdog_InnerCounter >> 8;
+    GenericHidOutBuffer[15] = I2cWatchdog_InnerCounter >> 16;
+    GenericHidOutBuffer[16] = I2cWatchdog_InnerCounter >> 24;
 /*
     uint64_t ticks = microseconds_get_ticks();
     uint32_t microseconds = microseconds_convert_to_microseconds(ticks);

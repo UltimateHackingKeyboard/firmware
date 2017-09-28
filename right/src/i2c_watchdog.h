@@ -3,8 +3,8 @@
 
 // Variables:
 
-    extern uint32_t I2C_WatchdogInnerCounter;
-    extern uint32_t I2C_WatchdogOuterCounter;
+    extern uint32_t I2cWatchdog_InnerCounter;
+    extern uint32_t I2cWatchdog_OuterCounter;
 
 // Functions:
 
