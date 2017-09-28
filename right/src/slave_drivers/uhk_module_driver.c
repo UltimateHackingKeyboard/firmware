@@ -24,9 +24,9 @@ static status_t rx(void) {
 
 void UhkModuleSlaveDriver_Init(uint8_t uhkModuleId)
 {
-    uhk_module_vars_t* uhkModuleSourceVars = UhkModuleVars + uhkModuleId;
-    uhk_module_state_t* uhkModuleState = uhkModuleStates + uhkModuleId;
-    uhk_module_vars_t* uhkModuleTargetVars = &uhkModuleState->targetVars;
+    uhk_module_vars_t *uhkModuleSourceVars = UhkModuleVars + uhkModuleId;
+    uhk_module_state_t *uhkModuleState = uhkModuleStates + uhkModuleId;
+    uhk_module_vars_t *uhkModuleTargetVars = &uhkModuleState->targetVars;
 
     uhkModuleSourceVars->isTestLedOn = true;
     uhkModuleTargetVars->isTestLedOn = false;
@@ -42,8 +42,8 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleId)
 {
     status_t status = kStatus_Uhk_IdleSlave;
     uhk_module_vars_t *uhkModuleSourceVars = UhkModuleVars + uhkModuleId;
-    uhk_module_state_t* uhkModuleState = uhkModuleStates + uhkModuleId;
-    uhk_module_vars_t* uhkModuleTargetVars = &uhkModuleState->targetVars;
+    uhk_module_state_t *uhkModuleState = uhkModuleStates + uhkModuleId;
+    uhk_module_vars_t *uhkModuleTargetVars = &uhkModuleState->targetVars;
     uhk_module_phase_t *uhkModulePhase = &uhkModuleState->phase;
 
     switch (*uhkModulePhase) {
