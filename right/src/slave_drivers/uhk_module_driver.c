@@ -9,7 +9,7 @@
 #include "crc16.h"
 
 uhk_module_state_t UhkModuleStates[UHK_MODULE_MAX_COUNT];
-static uhk_module_state_t UhkModuleTargetStates[UHK_MODULE_MAX_COUNT];
+static uhk_module_state_t uhkModuleTargetStates[UHK_MODULE_MAX_COUNT];
 uhk_module_phase_t uhkModulePhase = UhkModulePhase_RequestKeyStates;
 
 i2c_message_t rxMessage;
@@ -26,7 +26,7 @@ status_t rx() {
 void UhkModuleSlaveDriver_Init(uint8_t uhkModuleId)
 {
     uhk_module_state_t* uhkModuleSourceState = UhkModuleStates + uhkModuleId;
-    uhk_module_state_t* uhkModuleTargetState = UhkModuleTargetStates + uhkModuleId;
+    uhk_module_state_t* uhkModuleTargetState = uhkModuleTargetStates + uhkModuleId;
 
     uhkModuleSourceState->isTestLedOn = true;
     uhkModuleTargetState->isTestLedOn = false;
@@ -39,7 +39,7 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleId)
 {
     status_t status = kStatus_Uhk_IdleSlave;
     uhk_module_state_t *uhkModuleSourceState = UhkModuleStates + uhkModuleId;
-    uhk_module_state_t *uhkModuleTargetState = UhkModuleTargetStates + uhkModuleId;
+    uhk_module_state_t *uhkModuleTargetState = uhkModuleTargetStates + uhkModuleId;
 
     switch (uhkModulePhase) {
         case UhkModulePhase_RequestKeyStates:
