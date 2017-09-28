@@ -9,7 +9,7 @@
 #define PIT_I2C_WATCHDOG_IRQ_ID PIT0_IRQn
 #define PIT_SOURCE_CLOCK CLOCK_GetFreq(kCLOCK_BusClk)
 
-static uint32_t prevWatchdogCounter = 0;
+static uint32_t prevWatchdogCounter;
 uint32_t I2C_WatchdogInnerCounter;
 uint32_t I2C_WatchdogOuterCounter;
 
