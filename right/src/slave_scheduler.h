@@ -37,7 +37,7 @@
 // Variables:
 
     extern uhk_slave_t Slaves[];
-    extern uint32_t BridgeCounter;
+    extern uint32_t I2cSchedulerCounter;
 
 // Functions:
 

@@ -206,10 +206,10 @@ void getDebugInfo(void)
     GenericHidOutBuffer[3] = I2C_Watchdog >> 16;
     GenericHidOutBuffer[4] = I2C_Watchdog >> 24;
 
-    GenericHidOutBuffer[5] = BridgeCounter >> 0;
-    GenericHidOutBuffer[6] = BridgeCounter >> 8;
-    GenericHidOutBuffer[7] = BridgeCounter >> 16;
-    GenericHidOutBuffer[8] = BridgeCounter >> 24;
+    GenericHidOutBuffer[5] = I2cSchedulerCounter >> 0;
+    GenericHidOutBuffer[6] = I2cSchedulerCounter >> 8;
+    GenericHidOutBuffer[7] = I2cSchedulerCounter >> 16;
+    GenericHidOutBuffer[8] = I2cSchedulerCounter >> 24;
 
     GenericHidOutBuffer[9] = I2cWatchdog_OuterCounter >> 0;
     GenericHidOutBuffer[10] = I2cWatchdog_OuterCounter >> 8;

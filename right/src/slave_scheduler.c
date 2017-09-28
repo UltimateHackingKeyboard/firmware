@@ -9,7 +9,7 @@
 
 uint8_t previousSlaveId;
 uint8_t currentSlaveId;
-uint32_t BridgeCounter;
+uint32_t I2cSchedulerCounter;
 
 uhk_slave_t Slaves[] = {
     { .init = UhkModuleSlaveDriver_Init, .update = UhkModuleSlaveDriver_Update, .perDriverId = UhkModuleDriverId_LeftKeyboardHalf },
@@ -22,10 +22,9 @@ uhk_slave_t Slaves[] = {
 static void masterCallback(I2C_Type *base, i2c_master_handle_t *handle, status_t previousStatus, void *userData)
 {
     bool isTransferScheduled = false;
+    I2cSchedulerCounter++;
 
     do {
-        BridgeCounter++;
-
         uhk_slave_t *previousSlave = Slaves + previousSlaveId;
         uhk_slave_t *currentSlave = Slaves + currentSlaveId;
 
