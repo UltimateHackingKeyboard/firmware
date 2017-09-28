@@ -28,11 +28,13 @@ static uhk_module_i2c_addresses_t moduleIdsToI2cAddresses[] = {
     },
 };
 
-static status_t tx(uint8_t i2cAddress) {
+static status_t tx(uint8_t i2cAddress)
+{
     return I2cAsyncWriteMessage(i2cAddress, &txMessage);
 }
 
-static status_t rx(i2c_message_t *rxMessage, uint8_t i2cAddress) {
+static status_t rx(i2c_message_t *rxMessage, uint8_t i2cAddress)
+{
     return I2cAsyncReadMessage(i2cAddress, rxMessage);
 }
 
