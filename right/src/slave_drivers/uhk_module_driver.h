@@ -37,7 +37,14 @@
         uhk_module_phase_t phase;
         uhk_module_vars_t targetVars;
         i2c_message_t rxMessage;
+        uint8_t firmwareI2cAddress;
+        uint8_t bootloaderI2cAddress;
     } uhk_module_state_t;
+
+    typedef struct {
+        uint8_t firmwareI2cAddress;
+        uint8_t bootloaderI2cAddress;
+    } uhk_module_i2c_addresses_t;
 
 // Variables:
 

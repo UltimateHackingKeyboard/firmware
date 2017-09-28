@@ -9,8 +9,24 @@
 #include "crc16.h"
 
 uhk_module_vars_t UhkModuleVars[UHK_MODULE_MAX_COUNT];
+
 static uhk_module_state_t uhkModuleStates[UHK_MODULE_MAX_COUNT];
 static i2c_message_t txMessage;
+
+static uhk_module_i2c_addresses_t moduleIdsToI2cAddresses[] = {
+    { // UhkModuleId_LeftKeyboardHalf
+        .firmwareI2cAddress   = I2C_ADDRESS_LEFT_KEYBOARD_HALF_FIRMWARE,
+        .bootloaderI2cAddress = I2C_ADDRESS_LEFT_KEYBOARD_HALF_BOOTLOADER
+    },
+    { // UhkModuleId_LeftAddon
+        .firmwareI2cAddress   = I2C_ADDRESS_LEFT_ADDON_FIRMWARE,
+        .bootloaderI2cAddress = I2C_ADDRESS_LEFT_ADDON_BOOTLOADER
+    },
+    { // UhkModuleId_RightAddon
+        .firmwareI2cAddress   = I2C_ADDRESS_RIGHT_ADDON_FIRMWARE,
+        .bootloaderI2cAddress = I2C_ADDRESS_RIGHT_ADDON_BOOTLOADER
+    },
+};
 
 static status_t tx(void) {
     return I2cAsyncWriteMessage(I2C_ADDRESS_LEFT_KEYBOARD_HALF_FIRMWARE, &txMessage);
@@ -34,6 +50,10 @@ void UhkModuleSlaveDriver_Init(uint8_t uhkModuleId)
 
     uhk_module_phase_t *uhkModulePhase = &uhkModuleState->phase;
     *uhkModulePhase = UhkModulePhase_RequestKeyStates;
+
+    uhk_module_i2c_addresses_t *uhkModuleI2cAddresses = moduleIdsToI2cAddresses + uhkModuleId;
+    uhkModuleState->firmwareI2cAddress = uhkModuleI2cAddresses->firmwareI2cAddress;
+    uhkModuleState->bootloaderI2cAddress = uhkModuleI2cAddresses->bootloaderI2cAddress;
 }
 
 status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleId)
