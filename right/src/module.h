@@ -8,12 +8,6 @@
 
 // Macros:
 
-    #define MODULE_ID_LEFT_KEYBOARD_HALF 0
-    #define MODULE_ID_KEY_CLUSTER_LEFT   1
-    #define MODULE_ID_TRACKBALL_RIGHT    2
-    #define MODULE_ID_TRACKPOINT_RIGHT   3
-    #define MODULE_ID_TOUCHPAD           4
-
     #define MODULE_REQUEST_GET_PROTOCOL_VERSION 0
     #define MODULE_REQUEST_GET_MODULE_ID        1
     #define MODULE_REQUEST_GET_MODULE_NAME      2
@@ -33,6 +27,14 @@
     #define MAX_POINTER_COUNT_PER_MODULE 2
 
 // Typedefs:
+
+    typedef enum {
+        ModuleId_LeftKeyboardHalf = 1,
+        ModuleId_KeyClusterLeft   = 2,
+        ModuleId_TrackballRight   = 3,
+        ModuleId_TrackpointRight  = 4,
+        ModuleId_TouchpadRight    = 5,
+    } module_id_t;
 
     typedef struct {
         uint8_t acceleration;
