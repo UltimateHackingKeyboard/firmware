@@ -65,9 +65,11 @@ void LedDisplay_SetText(uint8_t length, const char* text) {
         case 1:
             allSegmentSets |= characterToSegmentSet(text[0]);
     }
+
     LedDriverStates[LedDriverId_Left].sourceLedValues[11] = allSegmentSets & 0b00000001 ? LED_BRIGHTNESS_LEVEL : 0;
     LedDriverStates[LedDriverId_Left].sourceLedValues[12] = allSegmentSets & 0b00000010 ? LED_BRIGHTNESS_LEVEL : 0;
     allSegmentSets >>= 2;
+
     for (uint8_t i = 24; i <= 136; i += 16) {
         for (uint8_t j = 0; j < 5; j++) {
             LedDriverStates[LedDriverId_Left].sourceLedValues[i + j] = allSegmentSets & 1 << j ? LED_BRIGHTNESS_LEVEL : 0;
@@ -80,6 +82,7 @@ void LedDisplay_SetLayer(uint8_t layerId) {
     for (uint8_t i = 13; i <= 45; i += 16) {
         LedDriverStates[LedDriverId_Left].sourceLedValues[i] = 0;
     }
+
     if (layerId >= LAYER_ID_MOD && layerId <= LAYER_ID_MOUSE) {
         LedDriverStates[LedDriverId_Left].sourceLedValues[16 * layerId - 3] = LED_BRIGHTNESS_LEVEL;
     }
