@@ -7,8 +7,10 @@
 
 // Typedefs:
 
-    typedef enum {
+    typedef enum { // Slaves[] is meant to be indexed with these values
         SlaveId_LeftKeyboardHalf,
+        SlaveId_LeftAddon,
+        SlaveId_RightAddon,
         SlaveId_RightLedDriver,
         SlaveId_LeftLedDriver,
     } slave_id_t;
