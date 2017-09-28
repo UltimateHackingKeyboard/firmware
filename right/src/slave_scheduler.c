@@ -7,9 +7,10 @@
 #include "i2c.h"
 #include "i2c_addresses.h"
 
-uint8_t previousSlaveId;
-uint8_t currentSlaveId;
 uint32_t I2cSchedulerCounter;
+
+static uint8_t previousSlaveId;
+static uint8_t currentSlaveId;
 
 uhk_slave_t Slaves[] = {
     { .init = UhkModuleSlaveDriver_Init, .update = UhkModuleSlaveDriver_Update, .perDriverId = UhkModuleDriverId_LeftKeyboardHalf },
