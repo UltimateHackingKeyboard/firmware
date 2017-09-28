@@ -16,7 +16,7 @@ static uint32_t prevWatchdogCounter;
 void PIT_I2C_WATCHDOG_HANDLER(void)
 {
     I2cWatchdog_OuterCounter++;
-    if (I2C_Watchdog == prevWatchdogCounter) { // Restart I2C if there hasn't be any interrupt during 100 ms
+    if (I2C_Watchdog == prevWatchdogCounter) { // Restart I2C if there haven't been any interrupts recently
         I2cWatchdog_InnerCounter++;
         i2c_master_config_t masterConfig;
         I2C_MasterGetDefaultConfig(&masterConfig);
