@@ -60,12 +60,12 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleId)
             if (CRC16_IsMessageValid(&rxMessage)) {
                 BoolBitsToBytes(rxMessage.data, CurrentKeyStates[SlotId_LeftKeyboardHalf], LEFT_KEYBOARD_HALF_KEY_COUNT);
             }
-            status = kStatus_Uhk_NoOp;
+            status = kStatus_Uhk_NoTransfer;
             *uhkModulePhase = UhkModulePhase_SetTestLed;
             break;
         case UhkModulePhase_SetTestLed:
             if (uhkModuleSourceState->isTestLedOn == uhkModuleTargetState->isTestLedOn) {
-                status = kStatus_Uhk_NoOp;
+                status = kStatus_Uhk_NoTransfer;
             } else {
                 txMessage.data[0] = SlaveCommand_SetTestLed;
                 txMessage.data[1] = uhkModuleSourceState->isTestLedOn;
@@ -77,7 +77,7 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleId)
             break;
         case UhkModulePhase_SetLedPwmBrightness:
             if (uhkModuleSourceState->ledPwmBrightness == uhkModuleTargetState->ledPwmBrightness) {
-                status = kStatus_Uhk_NoOp;
+                status = kStatus_Uhk_NoTransfer;
             } else {
                 txMessage.data[0] = SlaveCommand_SetLedPwmBrightness;
                 txMessage.data[1] = uhkModuleSourceState->ledPwmBrightness;
