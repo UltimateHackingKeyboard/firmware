@@ -17,8 +17,8 @@ Function names are composed of a verb followed by a noun.
 Non-extern functions must be declared as static.
 
 ```
-DoThisExtern();
-static doThisNonExtern();
+DoThisExtern(void);
+static doThisNonExtern(void);
 uint8 ExternVariable;
 uint8 nonExternVariable;
 ```
@@ -72,7 +72,7 @@ while (condition) {
 ## Function declaration
 
 ```
-void doThis()
+void doThis(void)
 {
     ...
 }
@@ -117,7 +117,7 @@ Header files are composed of sections. The order of sections is fixed. Every hea
 
 // Functions:
 
-    extern void LedDriver_WriteBuffer(uint8_t i2cAddress, uint8_t buffer[], uint8_t size);
+    void LedDriver_WriteBuffer(uint8_t i2cAddress, uint8_t buffer[], uint8_t size);
     ...
 
 #endif
