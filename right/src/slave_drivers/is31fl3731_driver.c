@@ -60,10 +60,13 @@ uint8_t setFrame1Buffer[] = {LED_DRIVER_REGISTER_FRAME, LED_DRIVER_FRAME_1};
 uint8_t updatePwmRegistersBuffer[PWM_REGISTER_BUFFER_LENGTH];
 
 void LedSlaveDriver_Init(uint8_t ledDriverId) {
+    if (ledDriverId == LedDriverId_Left) {
+        LedDriverStates[LedDriverId_Left].setupLedControlRegistersCommand[7] |= 0b00000010; // Enable the LED of the ISO key
+    }
+
     led_driver_state_t *currentLedDriverState = LedDriverStates + ledDriverId;
     currentLedDriverState->phase = LedDriverPhase_SetFunctionFrame;
     currentLedDriverState->ledIndex = 0;
-    LedDriverStates[LedDriverId_Left].setupLedControlRegistersCommand[7] |= 0b00000010; // Enable the LED of the ISO key.
     memset(LedDriverStates[ledDriverId].sourceLedValues, LED_BRIGHTNESS_LEVEL, LED_DRIVER_LED_COUNT);
     LedDisplay_SetText(3, "ABC");
 }
