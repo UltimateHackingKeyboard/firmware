@@ -12,14 +12,14 @@ uhk_module_state_t UhkModuleStates[UHK_MODULE_MAX_COUNT];
 static uhk_module_state_t uhkModuleTargetStates[UHK_MODULE_MAX_COUNT];
 static uhk_module_phase_t uhkModulePhases[UHK_MODULE_MAX_COUNT];
 
-i2c_message_t rxMessage;
-i2c_message_t txMessage;
+static i2c_message_t rxMessage;
+static i2c_message_t txMessage;
 
-status_t tx() {
+static status_t tx() {
     return I2cAsyncWriteMessage(I2C_ADDRESS_LEFT_KEYBOARD_HALF_FIRMWARE, &txMessage);
 }
 
-status_t rx() {
+static status_t rx() {
     return I2cAsyncReadMessage(I2C_ADDRESS_LEFT_KEYBOARD_HALF_FIRMWARE, &rxMessage);
 }
 
