@@ -9,11 +9,21 @@
 // Typedefs:
 
     typedef enum {
+        SlaveCommand_RequestProperty,
         SlaveCommand_RequestKeyStates,
         SlaveCommand_SetTestLed,
         SlaveCommand_SetLedPwmBrightness,
         SlaveCommand_JumpToBootloader,
     } slave_command_t;
+
+    typedef enum {
+        SlaveProperty_Features,
+    } slave_property_t;
+
+    typedef struct {
+        uint8_t keyCount;
+        bool hasPointer;
+    } uhk_module_features_t;
 
     typedef struct {
         uint8_t length;

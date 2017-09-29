@@ -51,7 +51,7 @@ void UhkModuleSlaveDriver_Init(uint8_t uhkModuleId)
     uhkModuleTargetVars->ledPwmBrightness = 0;
 
     uhk_module_phase_t *uhkModulePhase = &uhkModuleState->phase;
-    *uhkModulePhase = UhkModulePhase_RequestKeyStates;
+    *uhkModulePhase = UhkModulePhase_RequestModuleFeatures;
 
     uhk_module_i2c_addresses_t *uhkModuleI2cAddresses = moduleIdsToI2cAddresses + uhkModuleId;
     uhkModuleState->firmwareI2cAddress = uhkModuleI2cAddresses->firmwareI2cAddress;
@@ -69,6 +69,24 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleId)
     i2c_message_t *rxMessage = &uhkModuleState->rxMessage;
 
     switch (*uhkModulePhase) {
+        case UhkModulePhase_RequestModuleFeatures:
+            txMessage.data[0] = SlaveCommand_RequestProperty;
+            txMessage.data[1] = SlaveProperty_Features;
+            txMessage.length = 2;
+            status = tx(i2cAddress);
+            *uhkModulePhase = UhkModulePhase_ReceiveModuleFeatures;
+            break;
+        case UhkModulePhase_ReceiveModuleFeatures:
+            status = rx(rxMessage, i2cAddress);
+            *uhkModulePhase = UhkModulePhase_ProcessModuleFeatures;
+            break;
+        case UhkModulePhase_ProcessModuleFeatures:
+            if (CRC16_IsMessageValid(rxMessage)) {
+                memcpy(&uhkModuleState->features, rxMessage->data, sizeof(uhk_module_features_t));
+            }
+            status = kStatus_Uhk_NoTransfer;
+            *uhkModulePhase = UhkModulePhase_RequestKeyStates;
+            break;
         case UhkModulePhase_RequestKeyStates:
             txMessage.data[0] = SlaveCommand_RequestKeyStates;
             txMessage.length = 1;
@@ -81,7 +99,7 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleId)
             break;
         case UhkModulePhase_ProcessKeystates:
             if (CRC16_IsMessageValid(rxMessage)) {
-                BoolBitsToBytes(rxMessage->data, CurrentKeyStates[SlotId_LeftKeyboardHalf], LEFT_KEYBOARD_HALF_KEY_COUNT);
+                BoolBitsToBytes(rxMessage->data, CurrentKeyStates[SlotId_LeftKeyboardHalf], uhkModuleState->features.keyCount);
             }
             status = kStatus_Uhk_NoTransfer;
             *uhkModulePhase = UhkModulePhase_SetTestLed;

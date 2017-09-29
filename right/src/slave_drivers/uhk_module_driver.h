@@ -21,6 +21,9 @@
     } uhk_module_id_t;
 
     typedef enum {
+        UhkModulePhase_RequestModuleFeatures,
+        UhkModulePhase_ReceiveModuleFeatures,
+        UhkModulePhase_ProcessModuleFeatures,
         UhkModulePhase_RequestKeyStates,
         UhkModulePhase_ReceiveKeystates,
         UhkModulePhase_ProcessKeystates,
@@ -39,6 +42,7 @@
         i2c_message_t rxMessage;
         uint8_t firmwareI2cAddress;
         uint8_t bootloaderI2cAddress;
+        uhk_module_features_t features;
     } uhk_module_state_t;
 
     typedef struct {

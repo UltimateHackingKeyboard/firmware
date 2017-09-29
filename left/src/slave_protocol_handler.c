@@ -9,6 +9,7 @@
 #include "init_peripherals.h"
 #include "bool_array_converter.h"
 #include "bootloader.h"
+#include "module.h"
 
 i2c_message_t RxMessage;
 i2c_message_t TxMessage;
@@ -56,10 +57,24 @@ void SlaveTxHandler(void)
 {
     uint8_t commandId = RxMessage.data[0];
     switch (commandId) {
+        case SlaveCommand_RequestProperty: {
+            uint8_t propertyId = RxMessage.data[1];
+            switch (propertyId) {
+                case SlaveProperty_Features: {
+                    uhk_module_features_t *moduleFeatures = (uhk_module_features_t*)&TxMessage.data;
+                    moduleFeatures->keyCount = LEFT_KEYBOARD_HALF_KEY_COUNT;
+                    moduleFeatures->hasPointer = MODULE_HAS_POINTER;
+                    TxMessage.length = sizeof(uhk_module_features_t);
+                    break;
+                }
+            }
+            break;
+        }
         case SlaveCommand_RequestKeyStates:
             BoolBytesToBits(keyMatrix.keyStates, TxMessage.data, LEFT_KEYBOARD_HALF_KEY_COUNT);
             TxMessage.length = KEY_STATE_SIZE;
-            CRC16_UpdateMessageChecksum(&TxMessage);
             break;
     }
+
+    CRC16_UpdateMessageChecksum(&TxMessage);
 }
