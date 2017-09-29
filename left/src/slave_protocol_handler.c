@@ -62,7 +62,7 @@ void SlaveTxHandler(void)
             switch (propertyId) {
                 case SlaveProperty_Features: {
                     uhk_module_features_t *moduleFeatures = (uhk_module_features_t*)&TxMessage.data;
-                    moduleFeatures->keyCount = LEFT_KEYBOARD_HALF_KEY_COUNT;
+                    moduleFeatures->keyCount = MODULE_KEY_COUNT;
                     moduleFeatures->hasPointer = MODULE_HAS_POINTER;
                     TxMessage.length = sizeof(uhk_module_features_t);
                     break;
@@ -71,7 +71,7 @@ void SlaveTxHandler(void)
             break;
         }
         case SlaveCommand_RequestKeyStates:
-            BoolBytesToBits(keyMatrix.keyStates, TxMessage.data, LEFT_KEYBOARD_HALF_KEY_COUNT);
+            BoolBytesToBits(keyMatrix.keyStates, TxMessage.data, MODULE_KEY_COUNT);
             TxMessage.length = KEY_STATE_SIZE;
             break;
     }
