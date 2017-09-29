@@ -14,15 +14,15 @@ static uhk_module_state_t uhkModuleStates[UHK_MODULE_MAX_COUNT];
 static i2c_message_t txMessage;
 
 static uhk_module_i2c_addresses_t moduleIdsToI2cAddresses[] = {
-    { // UhkModuleId_LeftKeyboardHalf
+    { // UhkModuleDriverId_LeftKeyboardHalf
         .firmwareI2cAddress   = I2C_ADDRESS_LEFT_KEYBOARD_HALF_FIRMWARE,
         .bootloaderI2cAddress = I2C_ADDRESS_LEFT_KEYBOARD_HALF_BOOTLOADER
     },
-    { // UhkModuleId_LeftAddon
+    { // UhkModuleDriverId_LeftAddon
         .firmwareI2cAddress   = I2C_ADDRESS_LEFT_ADDON_FIRMWARE,
         .bootloaderI2cAddress = I2C_ADDRESS_LEFT_ADDON_BOOTLOADER
     },
-    { // UhkModuleId_RightAddon
+    { // UhkModuleDriverId_RightAddon
         .firmwareI2cAddress   = I2C_ADDRESS_RIGHT_ADDON_FIRMWARE,
         .bootloaderI2cAddress = I2C_ADDRESS_RIGHT_ADDON_BOOTLOADER
     },
