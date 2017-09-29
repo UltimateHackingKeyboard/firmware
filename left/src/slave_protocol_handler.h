@@ -12,8 +12,6 @@
     #define PROTOCOL_RESPONSE_SUCCESS       0
     #define PROTOCOL_RESPONSE_GENERIC_ERROR 1
 
-    #define KEY_STATE_SIZE (MODULE_KEY_COUNT/8 + (MODULE_KEY_COUNT % 8 ? 1 : 0))
-
 // Variables:
 
     extern i2c_message_t RxMessage;

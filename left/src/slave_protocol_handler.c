@@ -72,7 +72,7 @@ void SlaveTxHandler(void)
         }
         case SlaveCommand_RequestKeyStates:
             BoolBytesToBits(keyMatrix.keyStates, TxMessage.data, MODULE_KEY_COUNT);
-            TxMessage.length = KEY_STATE_SIZE;
+            TxMessage.length = BOOL_BYTES_TO_BITS_COUNT(MODULE_KEY_COUNT);
             break;
     }
 
