@@ -15,6 +15,11 @@
     #define PWM_REGISTER_BUFFER_LENGTH (1 + PMW_REGISTER_UPDATE_CHUNK_SIZE)
     #define LED_BRIGHTNESS_LEVEL 0xff
 
+    #define IS_ISO true
+    #define ISO_KEY_LED_DRIVER_ID LedDriverId_Left
+    #define ISO_KEY_CONTROL_REGISTER_POS 7
+    #define ISO_KEY_CONTROL_REGISTER_BIT 1
+
 // Typedefs:
 
     typedef enum {
