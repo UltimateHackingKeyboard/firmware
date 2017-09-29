@@ -3,7 +3,7 @@
 
 // Macros:
 
-    #define MODULE_KEY_COUNT (5*7)
+    #define MODULE_KEY_COUNT (KEYBOARD_MATRIX_ROWS_NUM * KEYBOARD_MATRIX_COLS_NUM)
     #define MODULE_HAS_POINTER false
 
 #endif
