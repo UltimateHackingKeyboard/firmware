@@ -69,6 +69,8 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleId)
     i2c_message_t *rxMessage = &uhkModuleState->rxMessage;
 
     switch (*uhkModulePhase) {
+
+        // Get module features
         case UhkModulePhase_RequestModuleFeatures:
             txMessage.data[0] = SlaveCommand_RequestProperty;
             txMessage.data[1] = SlaveProperty_Features;
@@ -87,6 +89,8 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleId)
             status = kStatus_Uhk_NoTransfer;
             *uhkModulePhase = UhkModulePhase_RequestKeyStates;
             break;
+
+        // Get key states
         case UhkModulePhase_RequestKeyStates:
             txMessage.data[0] = SlaveCommand_RequestKeyStates;
             txMessage.length = 1;
@@ -104,6 +108,8 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleId)
             status = kStatus_Uhk_NoTransfer;
             *uhkModulePhase = UhkModulePhase_SetTestLed;
             break;
+
+        // Set test LED
         case UhkModulePhase_SetTestLed:
             if (uhkModuleSourceVars->isTestLedOn == uhkModuleTargetVars->isTestLedOn) {
                 status = kStatus_Uhk_NoTransfer;
@@ -116,6 +122,8 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleId)
             }
             *uhkModulePhase = UhkModulePhase_SetLedPwmBrightness;
             break;
+
+        // Set PWM brightness
         case UhkModulePhase_SetLedPwmBrightness:
             if (uhkModuleSourceVars->ledPwmBrightness == uhkModuleTargetVars->ledPwmBrightness) {
                 status = kStatus_Uhk_NoTransfer;
