@@ -56,7 +56,7 @@
 
 // Functions:
 
-    void UhkModuleSlaveDriver_Init(uint8_t uhkModuleId);
-    status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleId);
+    void UhkModuleSlaveDriver_Init(uint8_t uhkModuleDriverId);
+    status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId);
 
 #endif

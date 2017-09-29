@@ -38,10 +38,10 @@ static status_t rx(i2c_message_t *rxMessage, uint8_t i2cAddress)
     return I2cAsyncReadMessage(i2cAddress, rxMessage);
 }
 
-void UhkModuleSlaveDriver_Init(uint8_t uhkModuleId)
+void UhkModuleSlaveDriver_Init(uint8_t uhkModuleDriverId)
 {
-    uhk_module_vars_t *uhkModuleSourceVars = UhkModuleVars + uhkModuleId;
-    uhk_module_state_t *uhkModuleState = uhkModuleStates + uhkModuleId;
+    uhk_module_vars_t *uhkModuleSourceVars = UhkModuleVars + uhkModuleDriverId;
+    uhk_module_state_t *uhkModuleState = uhkModuleStates + uhkModuleDriverId;
     uhk_module_vars_t *uhkModuleTargetVars = &uhkModuleState->targetVars;
 
     uhkModuleSourceVars->isTestLedOn = true;
@@ -53,16 +53,16 @@ void UhkModuleSlaveDriver_Init(uint8_t uhkModuleId)
     uhk_module_phase_t *uhkModulePhase = &uhkModuleState->phase;
     *uhkModulePhase = UhkModulePhase_RequestModuleFeatures;
 
-    uhk_module_i2c_addresses_t *uhkModuleI2cAddresses = moduleIdsToI2cAddresses + uhkModuleId;
+    uhk_module_i2c_addresses_t *uhkModuleI2cAddresses = moduleIdsToI2cAddresses + uhkModuleDriverId;
     uhkModuleState->firmwareI2cAddress = uhkModuleI2cAddresses->firmwareI2cAddress;
     uhkModuleState->bootloaderI2cAddress = uhkModuleI2cAddresses->bootloaderI2cAddress;
 }
 
-status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleId)
+status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
 {
     status_t status = kStatus_Uhk_IdleSlave;
-    uhk_module_vars_t *uhkModuleSourceVars = UhkModuleVars + uhkModuleId;
-    uhk_module_state_t *uhkModuleState = uhkModuleStates + uhkModuleId;
+    uhk_module_vars_t *uhkModuleSourceVars = UhkModuleVars + uhkModuleDriverId;
+    uhk_module_state_t *uhkModuleState = uhkModuleStates + uhkModuleDriverId;
     uhk_module_vars_t *uhkModuleTargetVars = &uhkModuleState->targetVars;
     uhk_module_phase_t *uhkModulePhase = &uhkModuleState->phase;
     uint8_t i2cAddress = uhkModuleState->firmwareI2cAddress;
@@ -103,7 +103,7 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleId)
             break;
         case UhkModulePhase_ProcessKeystates:
             if (CRC16_IsMessageValid(rxMessage)) {
-                uint8_t slotId = uhkModuleId + 1;
+                uint8_t slotId = uhkModuleDriverId + 1;
                 BoolBitsToBytes(rxMessage->data, CurrentKeyStates[slotId], uhkModuleState->features.keyCount);
             }
             status = kStatus_Uhk_NoTransfer;
