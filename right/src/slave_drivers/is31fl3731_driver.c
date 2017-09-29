@@ -56,10 +56,10 @@ static led_driver_state_t ledDriverStates[LED_DRIVER_MAX_COUNT] = {
     },
 };
 
-uint8_t setFunctionFrameBuffer[] = {LED_DRIVER_REGISTER_FRAME, LED_DRIVER_FRAME_FUNCTION};
-uint8_t setShutdownModeNormalBuffer[] = {LED_DRIVER_REGISTER_SHUTDOWN, SHUTDOWN_MODE_NORMAL};
-uint8_t setFrame1Buffer[] = {LED_DRIVER_REGISTER_FRAME, LED_DRIVER_FRAME_1};
-uint8_t updatePwmRegistersBuffer[PWM_REGISTER_BUFFER_LENGTH];
+static uint8_t setFunctionFrameBuffer[] = {LED_DRIVER_REGISTER_FRAME, LED_DRIVER_FRAME_FUNCTION};
+static uint8_t setShutdownModeNormalBuffer[] = {LED_DRIVER_REGISTER_SHUTDOWN, SHUTDOWN_MODE_NORMAL};
+static uint8_t setFrame1Buffer[] = {LED_DRIVER_REGISTER_FRAME, LED_DRIVER_FRAME_1};
+static uint8_t updatePwmRegistersBuffer[PWM_REGISTER_BUFFER_LENGTH];
 
 void LedSlaveDriver_Init(uint8_t ledDriverId) {
     if (ledDriverId == ISO_KEY_LED_DRIVER_ID && IS_ISO) {
