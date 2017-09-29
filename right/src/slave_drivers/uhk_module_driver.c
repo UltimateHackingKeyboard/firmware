@@ -103,7 +103,8 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleId)
             break;
         case UhkModulePhase_ProcessKeystates:
             if (CRC16_IsMessageValid(rxMessage)) {
-                BoolBitsToBytes(rxMessage->data, CurrentKeyStates[SlotId_LeftKeyboardHalf], uhkModuleState->features.keyCount);
+                uint8_t slotId = uhkModuleId + 1;
+                BoolBitsToBytes(rxMessage->data, CurrentKeyStates[slotId], uhkModuleState->features.keyCount);
             }
             status = kStatus_Uhk_NoTransfer;
             *uhkModulePhase = UhkModulePhase_SetTestLed;
