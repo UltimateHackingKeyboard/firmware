@@ -37,7 +37,6 @@
 
     typedef struct {
         led_driver_phase_t phase;
-        uint8_t sourceLedValues[LED_DRIVER_LED_COUNT];
         uint8_t targetLedValues[LED_DRIVER_LED_COUNT];
         uint8_t ledIndex;
         uint8_t i2cAddress;
@@ -46,7 +45,7 @@
 
 // Variables:
 
-    extern led_driver_state_t LedDriverStates[LED_DRIVER_MAX_COUNT];
+    extern uint8_t LedDriverValues[LED_DRIVER_MAX_COUNT][LED_DRIVER_LED_COUNT];
 
 // Functions:
 

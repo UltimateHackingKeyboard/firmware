@@ -3,7 +3,9 @@
 #include "slave_scheduler.h"
 #include "led_display.h"
 
-led_driver_state_t LedDriverStates[LED_DRIVER_MAX_COUNT] = {
+uint8_t LedDriverValues[LED_DRIVER_MAX_COUNT][LED_DRIVER_LED_COUNT];
+
+static led_driver_state_t ledDriverStates[LED_DRIVER_MAX_COUNT] = {
     {
         .i2cAddress = I2C_ADDRESS_IS31FL3731_RIGHT,
         .setupLedControlRegistersCommand = {
@@ -61,19 +63,20 @@ uint8_t updatePwmRegistersBuffer[PWM_REGISTER_BUFFER_LENGTH];
 
 void LedSlaveDriver_Init(uint8_t ledDriverId) {
     if (ledDriverId == ISO_KEY_LED_DRIVER_ID && IS_ISO) {
-        LedDriverStates[LedDriverId_Left].setupLedControlRegistersCommand[ISO_KEY_CONTROL_REGISTER_POS] |= 1 << ISO_KEY_CONTROL_REGISTER_BIT;
+        ledDriverStates[LedDriverId_Left].setupLedControlRegistersCommand[ISO_KEY_CONTROL_REGISTER_POS] |= 1 << ISO_KEY_CONTROL_REGISTER_BIT;
     }
 
-    led_driver_state_t *currentLedDriverState = LedDriverStates + ledDriverId;
+    led_driver_state_t *currentLedDriverState = ledDriverStates + ledDriverId;
     currentLedDriverState->phase = LedDriverPhase_SetFunctionFrame;
     currentLedDriverState->ledIndex = 0;
-    memset(LedDriverStates[ledDriverId].sourceLedValues, LED_BRIGHTNESS_LEVEL, LED_DRIVER_LED_COUNT);
+    memset(LedDriverValues[ledDriverId], LED_BRIGHTNESS_LEVEL, LED_DRIVER_LED_COUNT);
     LedDisplay_SetText(3, "ABC");
 }
 
 status_t LedSlaveDriver_Update(uint8_t ledDriverId) {
     status_t status = kStatus_Uhk_IdleSlave;
-    led_driver_state_t *currentLedDriverState = LedDriverStates + ledDriverId;
+    uint8_t *ledValues = LedDriverValues[ledDriverId];
+    led_driver_state_t *currentLedDriverState = ledDriverStates + ledDriverId;
     uint8_t *ledDriverPhase = &currentLedDriverState->phase;
     uint8_t ledDriverAddress = currentLedDriverState->i2cAddress;
     uint8_t *ledIndex = &currentLedDriverState->ledIndex;
@@ -101,19 +104,18 @@ status_t LedSlaveDriver_Update(uint8_t ledDriverId) {
         case LedDriverPhase_InitLedValues:
             updatePwmRegistersBuffer[0] = FRAME_REGISTER_PWM_FIRST + *ledIndex;
             uint8_t chunkSize = MIN(LED_DRIVER_LED_COUNT - *ledIndex, PMW_REGISTER_UPDATE_CHUNK_SIZE);
-            memcpy(updatePwmRegistersBuffer+1, currentLedDriverState->sourceLedValues + *ledIndex, chunkSize);
+            memcpy(updatePwmRegistersBuffer+1, ledValues + *ledIndex, chunkSize);
             status = I2cAsyncWrite(ledDriverAddress, updatePwmRegistersBuffer, chunkSize + 1);
             *ledIndex += chunkSize;
             if (*ledIndex >= LED_DRIVER_LED_COUNT) {
                 *ledIndex = 0;
 #ifndef LED_DRIVER_FORCE_UPDATE
-                memcpy(currentLedDriverState->targetLedValues, currentLedDriverState->sourceLedValues, LED_DRIVER_LED_COUNT);
+                memcpy(currentLedDriverState->targetLedValues, ledValues, LED_DRIVER_LED_COUNT);
                 *ledDriverPhase = LedDriverPhase_UpdateChangedLedValues;
 #endif
             }
             break;
         case LedDriverPhase_UpdateChangedLedValues: {
-            uint8_t *sourceLedValues = currentLedDriverState->sourceLedValues;
             uint8_t *targetLedValues = currentLedDriverState->targetLedValues;
 
             uint8_t lastLedChunkStartIndex = LED_DRIVER_LED_COUNT - PMW_REGISTER_UPDATE_CHUNK_SIZE;
@@ -121,7 +123,7 @@ status_t LedSlaveDriver_Update(uint8_t ledDriverId) {
 
             uint8_t count;
             for (count=0; count<LED_DRIVER_LED_COUNT; count++) {
-                if (sourceLedValues[startLedIndex] != targetLedValues[startLedIndex]) {
+                if (ledValues[startLedIndex] != targetLedValues[startLedIndex]) {
                     break;
                 }
 
@@ -140,15 +142,15 @@ status_t LedSlaveDriver_Update(uint8_t ledDriverId) {
             uint8_t maxEndLedIndex = startLedIndex + maxChunkSize - 1;
             uint8_t endLedIndex = startLedIndex;
             for (uint8_t index=startLedIndex; index<=maxEndLedIndex; index++) {
-                if (sourceLedValues[index] != targetLedValues[index]) {
+                if (ledValues[index] != targetLedValues[index]) {
                     endLedIndex = index;
                 }
             }
 
             updatePwmRegistersBuffer[0] = FRAME_REGISTER_PWM_FIRST + startLedIndex;
             uint8_t length = endLedIndex - startLedIndex + 1;
-            memcpy(updatePwmRegistersBuffer+1, currentLedDriverState->sourceLedValues + startLedIndex, length);
-            memcpy(currentLedDriverState->targetLedValues + startLedIndex, currentLedDriverState->sourceLedValues + startLedIndex, length);
+            memcpy(updatePwmRegistersBuffer+1, ledValues + startLedIndex, length);
+            memcpy(currentLedDriverState->targetLedValues + startLedIndex, ledValues + startLedIndex, length);
             status = I2cAsyncWrite(ledDriverAddress, updatePwmRegistersBuffer, length+1);
             *ledIndex += length;
             if (*ledIndex >= LED_DRIVER_LED_COUNT) {
