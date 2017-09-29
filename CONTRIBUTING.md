@@ -60,6 +60,18 @@ if (something) {
     ...
 }
 
+switch (currentMacroAction.key.type) {
+    case KeystrokeType_Basic:
+        addBasicScancode(currentMacroAction.key.scancode);
+        break;
+    case KeystrokeType_Media:
+        addMediaScancode(currentMacroAction.key.scancode);
+        break;
+    case KeystrokeType_System:
+        addSystemScancode(currentMacroAction.key.scancode);
+        break;
+}
+
 for (uint8_t i = 0; i < j; i++) {
     ...
 }
