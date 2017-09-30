@@ -15,10 +15,12 @@
     #define I2C_MAIN_BUS_BAUD_RATE 100000 // 100 kHz works even with a 20 meter long bridge cable.
     #define I2C_MAIN_BUS_MUX       kPORT_MuxAlt7
 
+    #define I2C_MAIN_BUS_SDA_GPIO  GPIOD
     #define I2C_MAIN_BUS_SDA_PORT  PORTD
     #define I2C_MAIN_BUS_SDA_CLOCK kCLOCK_PortD
     #define I2C_MAIN_BUS_SDA_PIN   3
 
+    #define I2C_MAIN_BUS_SCL_GPIO  GPIOD
     #define I2C_MAIN_BUS_SCL_PORT  PORTD
     #define I2C_MAIN_BUS_SCL_CLOCK kCLOCK_PortD
     #define I2C_MAIN_BUS_SCL_PIN   2
