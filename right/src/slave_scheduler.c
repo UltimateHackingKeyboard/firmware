@@ -22,6 +22,7 @@ uhk_slave_t Slaves[] = {
 
 static void masterCallback(I2C_Type *base, i2c_master_handle_t *handle, status_t previousStatus, void *userData)
 {
+    bool isFirstIteration = true;
     bool isTransferScheduled = false;
     I2cSchedulerCounter++;
 
@@ -29,7 +30,10 @@ static void masterCallback(I2C_Type *base, i2c_master_handle_t *handle, status_t
         uhk_slave_t *previousSlave = Slaves + previousSlaveId;
         uhk_slave_t *currentSlave = Slaves + currentSlaveId;
 
-        previousSlave->isConnected = previousStatus == kStatus_Success;
+        if (isFirstIteration) {
+            previousSlave->isConnected = previousStatus == kStatus_Success;
+            isFirstIteration = false;
+        }
 
         if (!currentSlave->isConnected) {
             currentSlave->init(currentSlave->perDriverId);
