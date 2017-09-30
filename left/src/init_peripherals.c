@@ -112,5 +112,5 @@ void InitPeripherals(void)
     InitTestLed();
     LedPwm_Init();
     InitI2c();
-    InitI2cWatchdog();
+//    InitI2cWatchdog();
 }
