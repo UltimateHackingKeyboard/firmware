@@ -21,13 +21,14 @@ void InitI2cWatchdog(void)
 
 void I2C_WATCHDOG_LPTMR_HANDLER(void)
 {
-    I2cWatchdog_OuterCounter++;
     TEST_LED_TOGGLE();
+    I2cWatchdog_OuterCounter++;
 
-    if (I2C_Watchdog == prevWatchdogCounter && I2cWatchdog_OuterCounter>10) { // Restart I2C if there hasn't been any interrupt during 100 ms
+    if (I2C_Watchdog == prevWatchdogCounter) { // Restart I2C if there hasn't been any interrupt during 100 ms
+//        NVIC_SystemReset();
         I2cWatchdog_InnerCounter++;
         I2C_SlaveDeinit(I2C_BUS_BASEADDR);
-        //InitI2c();
+        InitI2cV2();
     }
 
     prevWatchdogCounter = I2C_Watchdog;

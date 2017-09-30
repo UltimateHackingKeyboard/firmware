@@ -75,6 +75,29 @@ void InitI2c(void) {
     I2C_SlaveTransferNonBlocking(I2C_BUS_BASEADDR, &slaveHandle, kI2C_SlaveCompletionEvent);
 }
 
+void InitI2cV2(void) {
+    port_pin_config_t pinConfig = {
+        .pullSelect = kPORT_PullUp,
+    };
+
+    CLOCK_EnableClock(I2C_BUS_SDA_CLOCK);
+    CLOCK_EnableClock(I2C_BUS_SCL_CLOCK);
+
+    pinConfig.mux = I2C_BUS_MUX;
+    PORT_SetPinConfig(I2C_BUS_SDA_PORT, I2C_BUS_SDA_PIN, &pinConfig);
+    PORT_SetPinConfig(I2C_BUS_SCL_PORT, I2C_BUS_SCL_PIN, &pinConfig);
+
+    i2c_slave_config_t slaveConfig;
+    i2c_slave_handle_t slaveHandle;
+
+    I2C_SlaveGetDefaultConfig(&slaveConfig);
+    slaveConfig.slaveAddress = I2C_ADDRESS_LEFT_KEYBOARD_HALF_FIRMWARE;
+    I2C_SlaveInit(I2C_BUS_BASEADDR, &slaveConfig);
+    I2C_SlaveTransferCreateHandle(I2C_BUS_BASEADDR, &slaveHandle, i2cSlaveCallback, NULL);
+    slaveHandle.eventMask |= kI2C_SlaveCompletionEvent;
+    I2C_SlaveTransferNonBlocking(I2C_BUS_BASEADDR, &slaveHandle, kI2C_SlaveCompletionEvent);
+}
+
 void InitLedDriver(void) {
     CLOCK_EnableClock(LED_DRIVER_SDB_CLOCK);
     PORT_SetPinMux(LED_DRIVER_SDB_PORT, LED_DRIVER_SDB_PIN, kPORT_MuxAsGpio);
@@ -89,5 +112,5 @@ void InitPeripherals(void)
     InitTestLed();
     LedPwm_Init();
     InitI2c();
-    //InitI2cWatchdog();
+    InitI2cWatchdog();
 }

@@ -12,5 +12,6 @@
 
     void InitPeripherals(void);
     void InitI2c(void);
+    void InitI2cV2(void);
 
 #endif
