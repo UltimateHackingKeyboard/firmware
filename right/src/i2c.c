@@ -19,7 +19,7 @@ status_t I2cAsyncWriteMessage(uint8_t i2cAddress, i2c_message_t *message)
     masterTransfer.slaveAddress = i2cAddress;
     masterTransfer.direction = kI2C_Write;
     masterTransfer.data = (uint8_t*)message;
-    masterTransfer.dataSize = message->length+3;
+    masterTransfer.dataSize = I2C_MESSAGE_HEADER_LENGTH + message->length;
     I2cMasterHandle.userData = NULL;
     CRC16_UpdateMessageChecksum(message);
     return I2C_MasterTransferNonBlocking(I2C_MAIN_BUS_BASEADDR, &I2cMasterHandle, &masterTransfer);
