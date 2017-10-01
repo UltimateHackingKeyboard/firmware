@@ -3,9 +3,9 @@
 
 // Macros:
 
-    #define I2C_MESSAGE_MAX_LENGTH 255
     #define I2C_MESSAGE_HEADER_LENGTH 3
-    #define I2C_BUFFER_MAX_LENGTH (I2C_MESSAGE_HEADER_LENGTH + I2C_MESSAGE_MAX_LENGTH)
+    #define I2C_MESSAGE_MAX_PAYLOAD_LENGTH 255
+    #define I2C_BUFFER_MAX_LENGTH (I2C_MESSAGE_HEADER_LENGTH + I2C_MESSAGE_MAX_PAYLOAD_LENGTH)
 
 // Typedefs:
 
@@ -29,7 +29,7 @@
     typedef struct {
         uint8_t length;
         uint16_t crc;
-        uint8_t data[I2C_MESSAGE_MAX_LENGTH];
+        uint8_t data[I2C_MESSAGE_MAX_PAYLOAD_LENGTH];
     } __attribute__ ((packed)) i2c_message_t;
 
 #endif
