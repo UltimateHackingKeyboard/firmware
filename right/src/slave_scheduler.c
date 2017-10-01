@@ -93,6 +93,6 @@ void InitSlaveScheduler(void)
 
     I2C_MasterTransferCreateHandle(I2C_MAIN_BUS_BASEADDR, &I2cMasterHandle, slaveSchedulerCallback, NULL);
 
-    // Kickstart the scheduler by triggering the first callback.
-    Slaves[currentSlaveId].update(Slaves[currentSlaveId].perDriverId);
+    // Kickstart the scheduler by triggering the first transfer.
+    slaveSchedulerCallback(I2C_MAIN_BUS_BASEADDR, &I2cMasterHandle, kStatus_Fail, NULL);
 }
