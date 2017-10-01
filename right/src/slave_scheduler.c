@@ -88,7 +88,6 @@ void InitSlaveScheduler(void)
     for (uint8_t i=0; i<sizeof(Slaves) / sizeof(uhk_slave_t); i++) {
         uhk_slave_t *currentSlave = Slaves + i;
         currentSlave->isConnected = false;
-        currentSlave->init(currentSlave->perDriverId);
     }
 
     I2C_MasterTransferCreateHandle(I2C_MAIN_BUS_BASEADDR, &I2cMasterHandle, slaveSchedulerCallback, NULL);
