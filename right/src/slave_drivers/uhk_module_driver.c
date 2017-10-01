@@ -141,3 +141,10 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
 
     return status;
 }
+
+void UhkModuleSlaveDriver_Disconnect(uint8_t uhkModuleDriverId)
+{
+    if (uhkModuleDriverId == SlaveId_LeftKeyboardHalf) {
+        Slaves[SlaveId_LeftLedDriver].isConnected = false;
+    }
+}

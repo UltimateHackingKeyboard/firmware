@@ -57,5 +57,6 @@
 
     void UhkModuleSlaveDriver_Init(uint8_t uhkModuleDriverId);
     status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId);
+    void UhkModuleSlaveDriver_Disconnect(uint8_t uhkModuleDriverId);
 
 #endif

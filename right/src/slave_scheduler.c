@@ -13,7 +13,7 @@ static uint8_t previousSlaveId;
 static uint8_t currentSlaveId;
 
 uhk_slave_t Slaves[] = {
-    { .init = UhkModuleSlaveDriver_Init, .update = UhkModuleSlaveDriver_Update, .perDriverId = UhkModuleDriverId_LeftKeyboardHalf },
+    { .init = UhkModuleSlaveDriver_Init, .update = UhkModuleSlaveDriver_Update, .perDriverId = UhkModuleDriverId_LeftKeyboardHalf, .disconnect = UhkModuleSlaveDriver_Disconnect },
     { .init = UhkModuleSlaveDriver_Init, .update = UhkModuleSlaveDriver_Update, .perDriverId = UhkModuleDriverId_LeftAddon        },
     { .init = UhkModuleSlaveDriver_Init, .update = UhkModuleSlaveDriver_Update, .perDriverId = UhkModuleDriverId_RightAddon       },
     { .init = LedSlaveDriver_Init,       .update = LedSlaveDriver_Update,       .perDriverId = LedDriverId_Right                  },
@@ -31,7 +31,11 @@ static void masterCallback(I2C_Type *base, i2c_master_handle_t *handle, status_t
         uhk_slave_t *currentSlave = Slaves + currentSlaveId;
 
         if (isFirstIteration) {
+            bool wasPreviousSlaveConnected = previousSlave->isConnected;
             previousSlave->isConnected = previousStatus == kStatus_Success;
+            if (wasPreviousSlaveConnected && !previousSlave->isConnected && previousSlave->disconnect) {
+                previousSlave->disconnect(previousSlaveId);
+            }
             isFirstIteration = false;
         }
 
