@@ -35,6 +35,11 @@ void SetResponseByte(uint8_t response)
 
 void SlaveRxHandler(void)
 {
+    if (!CRC16_IsMessageValid(&RxMessage)) {
+        TxMessage.length = 0;
+        return;
+    }
+
     uint8_t commandId = RxMessage.data[0];
     switch (commandId) {
         case SlaveCommand_SetTestLed:
