@@ -27,7 +27,7 @@ static void i2cSlaveCallback(I2C_Type *base, i2c_slave_transfer_t *xfer, void *u
                 ((uint8_t*)&RxMessage)[rxMessagePos++] = byteIn;
             } else {
                 rxMessagePos = 0;
-                memset(&RxMessage, 0, I2C_BUFFER_MAX_LENGTH);
+                memset(&RxMessage, 0, I2C_MESSAGE_MAX_TOTAL_LENGTH);
             }
 
             xfer->data = (uint8_t*)&byteIn;
