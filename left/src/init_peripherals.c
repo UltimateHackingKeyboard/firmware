@@ -20,7 +20,7 @@ static void i2cSlaveCallback(I2C_Type *base, i2c_slave_transfer_t *xfer, void *u
         case kI2C_SlaveTransmitEvent:
             SlaveTxHandler();
             xfer->data = (uint8_t*)&TxMessage;
-            xfer->dataSize = TxMessage.length+3;
+            xfer->dataSize = TxMessage.length + I2C_MESSAGE_HEADER_LENGTH;
             break;
         case kI2C_SlaveReceiveEvent:
             if (prevEvent == kI2C_SlaveReceiveEvent) {
@@ -36,7 +36,7 @@ static void i2cSlaveCallback(I2C_Type *base, i2c_slave_transfer_t *xfer, void *u
         case kI2C_SlaveCompletionEvent:
             if (prevEvent == kI2C_SlaveReceiveEvent) {
                 ((uint8_t*)&RxMessage)[rxMessagePos] = byteIn;
-                RxMessage.length = rxMessagePos-3;
+                RxMessage.length = rxMessagePos - I2C_MESSAGE_HEADER_LENGTH;
                 SlaveRxHandler();
             }
             break;
