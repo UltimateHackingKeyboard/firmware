@@ -41,7 +41,7 @@ uhk_slave_t Slaves[] = {
     },
 };
 
-static void masterCallback(I2C_Type *base, i2c_master_handle_t *handle, status_t previousStatus, void *userData)
+static void slaveSchedulerCallback(I2C_Type *base, i2c_master_handle_t *handle, status_t previousStatus, void *userData)
 {
     bool isFirstIteration = true;
     bool isTransferScheduled = false;
@@ -91,7 +91,7 @@ void InitSlaveScheduler(void)
         currentSlave->init(currentSlave->perDriverId);
     }
 
-    I2C_MasterTransferCreateHandle(I2C_MAIN_BUS_BASEADDR, &I2cMasterHandle, masterCallback, NULL);
+    I2C_MasterTransferCreateHandle(I2C_MAIN_BUS_BASEADDR, &I2cMasterHandle, slaveSchedulerCallback, NULL);
 
     // Kickstart the scheduler by triggering the first callback.
     Slaves[currentSlaveId].update(Slaves[currentSlaveId].perDriverId);
