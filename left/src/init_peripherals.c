@@ -16,17 +16,6 @@ i2c_slave_transfer_event_t prevEvent;
 
 static void i2cSlaveCallback(I2C_Type *base, i2c_slave_transfer_t *xfer, void *userData)
 {
-    if (prevEvent != kI2C_SlaveReceiveEvent && xfer->event == kI2C_SlaveReceiveEvent) {
-        rxMessagePos = 0;
-        memset(&RxMessage, 0, I2C_BUFFER_MAX_LENGTH);
-    } else if (prevEvent == kI2C_SlaveReceiveEvent && xfer->event == kI2C_SlaveCompletionEvent) {
-        ((uint8_t*)&RxMessage)[rxMessagePos] = byteIn;
-        RxMessage.length = rxMessagePos-3;
-        SlaveRxHandler();
-    } else if (prevEvent == kI2C_SlaveReceiveEvent && xfer->event == kI2C_SlaveReceiveEvent) {
-        ((uint8_t*)&RxMessage)[rxMessagePos++] = byteIn;
-    }
-
     switch (xfer->event) {
         case kI2C_SlaveTransmitEvent:
             SlaveTxHandler();
@@ -34,10 +23,22 @@ static void i2cSlaveCallback(I2C_Type *base, i2c_slave_transfer_t *xfer, void *u
             xfer->dataSize = TxMessage.length+3;
             break;
         case kI2C_SlaveReceiveEvent:
+            if (prevEvent == kI2C_SlaveReceiveEvent) {
+                ((uint8_t*)&RxMessage)[rxMessagePos++] = byteIn;
+            } else {
+                rxMessagePos = 0;
+                memset(&RxMessage, 0, I2C_BUFFER_MAX_LENGTH);
+            }
+
             xfer->data = (uint8_t*)&byteIn;
             xfer->dataSize = 1;
             break;
         case kI2C_SlaveCompletionEvent:
+            if (prevEvent == kI2C_SlaveReceiveEvent) {
+                ((uint8_t*)&RxMessage)[rxMessagePos] = byteIn;
+                RxMessage.length = rxMessagePos-3;
+                SlaveRxHandler();
+            }
             break;
         default:
             break;
