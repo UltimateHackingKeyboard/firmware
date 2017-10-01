@@ -12,9 +12,9 @@
     typedef enum {
         SlaveCommand_RequestProperty,
         SlaveCommand_RequestKeyStates,
+        SlaveCommand_JumpToBootloader,
         SlaveCommand_SetTestLed,
         SlaveCommand_SetLedPwmBrightness,
-        SlaveCommand_JumpToBootloader,
     } slave_command_t;
 
     typedef enum {

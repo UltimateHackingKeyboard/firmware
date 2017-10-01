@@ -42,6 +42,9 @@ void SlaveRxHandler(void)
 
     uint8_t commandId = RxMessage.data[0];
     switch (commandId) {
+        case SlaveCommand_JumpToBootloader:
+            JumpToBootloader();
+            break;
         case SlaveCommand_SetTestLed:
             TxMessage.length = 0;
             bool isLedOn = RxMessage.data[1];
@@ -51,9 +54,6 @@ void SlaveRxHandler(void)
             TxMessage.length = 0;
             uint8_t brightnessPercent = RxMessage.data[1];
             LedPwm_SetBrightness(brightnessPercent);
-            break;
-        case SlaveCommand_JumpToBootloader:
-            JumpToBootloader();
             break;
     }
 }
