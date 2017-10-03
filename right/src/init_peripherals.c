@@ -21,19 +21,8 @@ void InitInterruptPriorities(void)
     NVIC_SetPriority(USB0_IRQn, 1);
 }
 
-void InitI2c(void)
+void InitI2cMainBus(void)
 {
-     port_pin_config_t pinConfig = {
-        .pullSelect = kPORT_PullUp,
-        .openDrainEnable = kPORT_OpenDrainEnable
-    };
-
-    i2c_master_config_t masterConfig;
-    I2C_MasterGetDefaultConfig(&masterConfig);
-    uint32_t sourceClock;
-
-    // Initialize main bus
-
     CLOCK_EnableClock(I2C_MAIN_BUS_SDA_CLOCK);
     CLOCK_EnableClock(I2C_MAIN_BUS_SCL_CLOCK);
 
@@ -92,26 +81,47 @@ void InitI2c(void)
     GPIO_WritePinOutput(I2C_MAIN_BUS_SDA_GPIO, I2C_MAIN_BUS_SDA_PIN, 1);
     for (volatile uint32_t i=0; i<10000; i++);
 
-    pinConfig.mux = I2C_MAIN_BUS_MUX;
+    port_pin_config_t pinConfig = {
+        .pullSelect = kPORT_PullUp,
+        .openDrainEnable = kPORT_OpenDrainEnable,
+        .mux = I2C_MAIN_BUS_MUX,
+    };
+
     PORT_SetPinConfig(I2C_MAIN_BUS_SDA_PORT, I2C_MAIN_BUS_SDA_PIN, &pinConfig);
     PORT_SetPinConfig(I2C_MAIN_BUS_SCL_PORT, I2C_MAIN_BUS_SCL_PIN, &pinConfig);
 
+    i2c_master_config_t masterConfig;
+    I2C_MasterGetDefaultConfig(&masterConfig);
     masterConfig.baudRate_Bps = I2C_MAIN_BUS_BAUD_RATE;
-    sourceClock = CLOCK_GetFreq(I2C_MASTER_BUS_CLK_SRC);
-    I2C_MasterInit(I2C_MAIN_BUS_BASEADDR, &masterConfig, sourceClock);
+    uint32_t sourceClock = CLOCK_GetFreq(I2C_MASTER_BUS_CLK_SRC);
+    I2C_MasterInit(I2C_MAIN_BUS_BASEADDR, &masterConfig, sourceClock);}
 
-    // Initialize EEPROM bus
+void initI2cEepromBus(void)
+{
+    port_pin_config_t pinConfig = {
+       .pullSelect = kPORT_PullUp,
+       .openDrainEnable = kPORT_OpenDrainEnable,
+       .mux = I2C_EEPROM_BUS_MUX,
+   };
 
-    CLOCK_EnableClock(I2C_EEPROM_BUS_SDA_CLOCK);
-    CLOCK_EnableClock(I2C_EEPROM_BUS_SCL_CLOCK);
 
-    pinConfig.mux = I2C_EEPROM_BUS_MUX;
-    PORT_SetPinConfig(I2C_EEPROM_BUS_SDA_PORT, I2C_EEPROM_BUS_SDA_PIN, &pinConfig);
-    PORT_SetPinConfig(I2C_EEPROM_BUS_SCL_PORT, I2C_EEPROM_BUS_SCL_PIN, &pinConfig);
+   CLOCK_EnableClock(I2C_EEPROM_BUS_SDA_CLOCK);
+   CLOCK_EnableClock(I2C_EEPROM_BUS_SCL_CLOCK);
 
-    masterConfig.baudRate_Bps = I2C_EEPROM_BUS_BAUD_RATE;
-    sourceClock = CLOCK_GetFreq(I2C_EEPROM_BUS_CLK_SRC);
-    I2C_MasterInit(I2C_EEPROM_BUS_BASEADDR, &masterConfig, sourceClock);
+   PORT_SetPinConfig(I2C_EEPROM_BUS_SDA_PORT, I2C_EEPROM_BUS_SDA_PIN, &pinConfig);
+   PORT_SetPinConfig(I2C_EEPROM_BUS_SCL_PORT, I2C_EEPROM_BUS_SCL_PIN, &pinConfig);
+
+   i2c_master_config_t masterConfig;
+   I2C_MasterGetDefaultConfig(&masterConfig);
+   masterConfig.baudRate_Bps = I2C_EEPROM_BUS_BAUD_RATE;
+   uint32_t sourceClock = CLOCK_GetFreq(I2C_EEPROM_BUS_CLK_SRC);
+   I2C_MasterInit(I2C_EEPROM_BUS_BASEADDR, &masterConfig, sourceClock);
+}
+
+void InitI2c(void)
+{
+    InitI2cMainBus();
+    initI2cEepromBus();
 }
 
 void InitPeripherals(void)

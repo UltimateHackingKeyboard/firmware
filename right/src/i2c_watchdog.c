@@ -6,6 +6,7 @@
 #include "i2c.h"
 #include "i2c_watchdog.h"
 #include "slave_scheduler.h"
+#include "init_peripherals.h"
 
 uint32_t I2cWatchdog_OuterCounter;
 uint32_t I2cWatchdog_InnerCounter;
@@ -23,72 +24,7 @@ void PIT_I2C_WATCHDOG_HANDLER(void)
         i2c_master_config_t masterConfig;
         I2C_MasterGetDefaultConfig(&masterConfig);
         I2C_MasterDeinit(I2C_MAIN_BUS_BASEADDR);
-
-        PORT_SetPinMux(I2C_MAIN_BUS_SCL_PORT, I2C_MAIN_BUS_SCL_PIN, kPORT_MuxAsGpio);
-        GPIO_PinInit(I2C_MAIN_BUS_SCL_GPIO, I2C_MAIN_BUS_SCL_PIN, &(gpio_pin_config_t){kGPIO_DigitalOutput, 1});
-        PORT_SetPinMux(I2C_MAIN_BUS_SCL_PORT, I2C_MAIN_BUS_SDA_PIN, kPORT_MuxAsGpio);
-        GPIO_PinInit(I2C_MAIN_BUS_SCL_GPIO, I2C_MAIN_BUS_SDA_PIN, &(gpio_pin_config_t){kGPIO_DigitalOutput, 1});
-
-        GPIO_WritePinOutput(I2C_MAIN_BUS_SCL_GPIO, I2C_MAIN_BUS_SCL_PIN, 0);
-        for (volatile uint32_t i=0; i<10000; i++);
-
-        GPIO_WritePinOutput(I2C_MAIN_BUS_SDA_GPIO, I2C_MAIN_BUS_SDA_PIN, 0);
-        for (volatile uint32_t i=0; i<10000; i++);
-
-        GPIO_WritePinOutput(I2C_MAIN_BUS_SCL_GPIO, I2C_MAIN_BUS_SCL_PIN, 1);
-        for (volatile uint32_t i=0; i<10000; i++);
-        GPIO_WritePinOutput(I2C_MAIN_BUS_SCL_GPIO, I2C_MAIN_BUS_SCL_PIN, 0);
-        for (volatile uint32_t i=0; i<10000; i++);
-        GPIO_WritePinOutput(I2C_MAIN_BUS_SCL_GPIO, I2C_MAIN_BUS_SCL_PIN, 1);
-        for (volatile uint32_t i=0; i<10000; i++);
-        GPIO_WritePinOutput(I2C_MAIN_BUS_SCL_GPIO, I2C_MAIN_BUS_SCL_PIN, 0);
-        for (volatile uint32_t i=0; i<10000; i++);
-        GPIO_WritePinOutput(I2C_MAIN_BUS_SCL_GPIO, I2C_MAIN_BUS_SCL_PIN, 1);
-        for (volatile uint32_t i=0; i<10000; i++);
-        GPIO_WritePinOutput(I2C_MAIN_BUS_SCL_GPIO, I2C_MAIN_BUS_SCL_PIN, 0);
-        for (volatile uint32_t i=0; i<10000; i++);
-        GPIO_WritePinOutput(I2C_MAIN_BUS_SCL_GPIO, I2C_MAIN_BUS_SCL_PIN, 1);
-        for (volatile uint32_t i=0; i<10000; i++);
-        GPIO_WritePinOutput(I2C_MAIN_BUS_SCL_GPIO, I2C_MAIN_BUS_SCL_PIN, 0);
-        for (volatile uint32_t i=0; i<10000; i++);
-        GPIO_WritePinOutput(I2C_MAIN_BUS_SCL_GPIO, I2C_MAIN_BUS_SCL_PIN, 1);
-        for (volatile uint32_t i=0; i<10000; i++);
-        GPIO_WritePinOutput(I2C_MAIN_BUS_SCL_GPIO, I2C_MAIN_BUS_SCL_PIN, 0);
-        for (volatile uint32_t i=0; i<10000; i++);
-        GPIO_WritePinOutput(I2C_MAIN_BUS_SCL_GPIO, I2C_MAIN_BUS_SCL_PIN, 1);
-        for (volatile uint32_t i=0; i<10000; i++);
-        GPIO_WritePinOutput(I2C_MAIN_BUS_SCL_GPIO, I2C_MAIN_BUS_SCL_PIN, 0);
-        for (volatile uint32_t i=0; i<10000; i++);
-        GPIO_WritePinOutput(I2C_MAIN_BUS_SCL_GPIO, I2C_MAIN_BUS_SCL_PIN, 1);
-        for (volatile uint32_t i=0; i<10000; i++);
-        GPIO_WritePinOutput(I2C_MAIN_BUS_SCL_GPIO, I2C_MAIN_BUS_SCL_PIN, 0);
-        for (volatile uint32_t i=0; i<10000; i++);
-        GPIO_WritePinOutput(I2C_MAIN_BUS_SCL_GPIO, I2C_MAIN_BUS_SCL_PIN, 1);
-        for (volatile uint32_t i=0; i<10000; i++);
-        GPIO_WritePinOutput(I2C_MAIN_BUS_SCL_GPIO, I2C_MAIN_BUS_SCL_PIN, 0);
-        for (volatile uint32_t i=0; i<10000; i++);
-
-        GPIO_WritePinOutput(I2C_MAIN_BUS_SDA_GPIO, I2C_MAIN_BUS_SDA_PIN, 1);
-        for (volatile uint32_t i=0; i<10000; i++);
-        GPIO_WritePinOutput(I2C_MAIN_BUS_SDA_GPIO, I2C_MAIN_BUS_SDA_PIN, 0);
-        for (volatile uint32_t i=0; i<10000; i++);
-        GPIO_WritePinOutput(I2C_MAIN_BUS_SDA_GPIO, I2C_MAIN_BUS_SDA_PIN, 1);
-        for (volatile uint32_t i=0; i<10000; i++);
-        GPIO_WritePinOutput(I2C_MAIN_BUS_SDA_GPIO, I2C_MAIN_BUS_SDA_PIN, 0);
-        for (volatile uint32_t i=0; i<10000; i++);
-        GPIO_WritePinOutput(I2C_MAIN_BUS_SDA_GPIO, I2C_MAIN_BUS_SDA_PIN, 1);
-        for (volatile uint32_t i=0; i<10000; i++);
-
-        port_pin_config_t pinConfig = {
-            .pullSelect = kPORT_PullUp,
-            .openDrainEnable = kPORT_OpenDrainEnable
-        };
-        pinConfig.mux = I2C_MAIN_BUS_MUX;
-        PORT_SetPinConfig(I2C_MAIN_BUS_SDA_PORT, I2C_MAIN_BUS_SDA_PIN, &pinConfig);
-        PORT_SetPinConfig(I2C_MAIN_BUS_SCL_PORT, I2C_MAIN_BUS_SCL_PIN, &pinConfig);
-
-        uint32_t sourceClock = CLOCK_GetFreq(I2C_MASTER_BUS_CLK_SRC);
-        I2C_MasterInit(I2C_MAIN_BUS_BASEADDR, &masterConfig, sourceClock);
+        InitI2cMainBus();
         InitSlaveScheduler();
     }
 

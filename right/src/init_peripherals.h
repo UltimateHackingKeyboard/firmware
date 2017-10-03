@@ -6,5 +6,6 @@
 // Functions:
 
     void InitPeripherals(void);
+    void InitI2cMainBus(void);
 
 #endif
