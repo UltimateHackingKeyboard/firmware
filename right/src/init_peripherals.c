@@ -23,7 +23,7 @@ void InitInterruptPriorities(void)
 
 void delay(void)
 {
-    for (volatile uint32_t i=0; i<10000; i++);
+    for (volatile uint32_t i=0; i<62; i++);
 }
 
 void InitI2cMainBus(void)
