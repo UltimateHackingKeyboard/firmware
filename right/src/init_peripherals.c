@@ -37,7 +37,7 @@ void InitI2cMainBus(void)
     GPIO_PinInit(I2C_MAIN_BUS_SCL_GPIO, I2C_MAIN_BUS_SDA_PIN, &(gpio_pin_config_t){kGPIO_DigitalOutput, 1});
 
     bool isOn = true;
-    for (int i=0; i<16; i++) {
+    for (int i=0; i<20; i++) {
         GPIO_WritePinOutput(I2C_MAIN_BUS_SCL_GPIO, I2C_MAIN_BUS_SCL_PIN, isOn);
         delay();
         isOn = !isOn;
