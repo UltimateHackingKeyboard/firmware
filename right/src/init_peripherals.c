@@ -36,12 +36,6 @@ void InitI2cMainBus(void)
     PORT_SetPinMux(I2C_MAIN_BUS_SCL_PORT, I2C_MAIN_BUS_SDA_PIN, kPORT_MuxAsGpio);
     GPIO_PinInit(I2C_MAIN_BUS_SCL_GPIO, I2C_MAIN_BUS_SDA_PIN, &(gpio_pin_config_t){kGPIO_DigitalOutput, 1});
 
-    GPIO_WritePinOutput(I2C_MAIN_BUS_SCL_GPIO, I2C_MAIN_BUS_SCL_PIN, 0);
-    delay();
-
-    GPIO_WritePinOutput(I2C_MAIN_BUS_SDA_GPIO, I2C_MAIN_BUS_SDA_PIN, 0);
-    delay();
-
     bool isOn = true;
     for (int i=0; i<16; i++) {
         GPIO_WritePinOutput(I2C_MAIN_BUS_SCL_GPIO, I2C_MAIN_BUS_SCL_PIN, isOn);
