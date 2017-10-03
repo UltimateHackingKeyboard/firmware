@@ -31,8 +31,8 @@ void InitI2cMainBus(void)
     CLOCK_EnableClock(I2C_MAIN_BUS_SDA_CLOCK);
     CLOCK_EnableClock(I2C_MAIN_BUS_SCL_CLOCK);
 
-    PORT_SetPinMux(I2C_MAIN_BUS_SCL_PORT, I2C_MAIN_BUS_SCL_PIN, kPORT_MuxAsGpio);
-    GPIO_PinInit(I2C_MAIN_BUS_SCL_GPIO, I2C_MAIN_BUS_SCL_PIN, &(gpio_pin_config_t){kGPIO_DigitalOutput, 1});
+    PORT_SetPinMux(I2C_MAIN_BUS_SDA_PORT, I2C_MAIN_BUS_SCL_PIN, kPORT_MuxAsGpio);
+    GPIO_PinInit(I2C_MAIN_BUS_SDA_GPIO, I2C_MAIN_BUS_SCL_PIN, &(gpio_pin_config_t){kGPIO_DigitalOutput, 1});
     PORT_SetPinMux(I2C_MAIN_BUS_SCL_PORT, I2C_MAIN_BUS_SDA_PIN, kPORT_MuxAsGpio);
     GPIO_PinInit(I2C_MAIN_BUS_SCL_GPIO, I2C_MAIN_BUS_SDA_PIN, &(gpio_pin_config_t){kGPIO_DigitalOutput, 1});
 
