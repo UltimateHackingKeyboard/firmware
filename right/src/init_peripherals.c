@@ -28,10 +28,10 @@ void delay(void)
 
 void recoverI2c(void)
 {
-    PORT_SetPinMux(I2C_MAIN_BUS_SDA_PORT, I2C_MAIN_BUS_SCL_PIN, kPORT_MuxAsGpio);
-    GPIO_PinInit(I2C_MAIN_BUS_SDA_GPIO, I2C_MAIN_BUS_SCL_PIN, &(gpio_pin_config_t){kGPIO_DigitalOutput, 1});
-    PORT_SetPinMux(I2C_MAIN_BUS_SCL_PORT, I2C_MAIN_BUS_SDA_PIN, kPORT_MuxAsGpio);
-    GPIO_PinInit(I2C_MAIN_BUS_SCL_GPIO, I2C_MAIN_BUS_SDA_PIN, &(gpio_pin_config_t){kGPIO_DigitalOutput, 1});
+    PORT_SetPinMux(I2C_MAIN_BUS_SDA_PORT, I2C_MAIN_BUS_SDA_PIN, kPORT_MuxAsGpio);
+    GPIO_PinInit(I2C_MAIN_BUS_SDA_GPIO, I2C_MAIN_BUS_SDA_PIN, &(gpio_pin_config_t){kGPIO_DigitalOutput, 1});
+    PORT_SetPinMux(I2C_MAIN_BUS_SCL_PORT, I2C_MAIN_BUS_SCL_PIN, kPORT_MuxAsGpio);
+    GPIO_PinInit(I2C_MAIN_BUS_SCL_GPIO, I2C_MAIN_BUS_SCL_PIN, &(gpio_pin_config_t){kGPIO_DigitalOutput, 1});
 
     bool isOn = true;
     for (int i=0; i<20; i++) {
@@ -42,7 +42,7 @@ void recoverI2c(void)
 
     GPIO_WritePinOutput(I2C_MAIN_BUS_SDA_GPIO, I2C_MAIN_BUS_SDA_PIN, 0);
     delay();
-    GPIO_WritePinOutput(I2C_MAIN_BUS_SDA_GPIO, I2C_MAIN_BUS_SCL_PIN, 1);
+    GPIO_WritePinOutput(I2C_MAIN_BUS_SCL_GPIO, I2C_MAIN_BUS_SCL_PIN, 1);
     delay();
     GPIO_WritePinOutput(I2C_MAIN_BUS_SDA_GPIO, I2C_MAIN_BUS_SDA_PIN, 1);
     delay();
