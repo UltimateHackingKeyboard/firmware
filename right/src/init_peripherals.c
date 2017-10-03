@@ -21,6 +21,11 @@ void InitInterruptPriorities(void)
     NVIC_SetPriority(USB0_IRQn, 1);
 }
 
+void delay(void)
+{
+    for (volatile uint32_t i=0; i<10000; i++);
+}
+
 void InitI2cMainBus(void)
 {
     CLOCK_EnableClock(I2C_MAIN_BUS_SDA_CLOCK);
@@ -32,28 +37,28 @@ void InitI2cMainBus(void)
     GPIO_PinInit(I2C_MAIN_BUS_SCL_GPIO, I2C_MAIN_BUS_SDA_PIN, &(gpio_pin_config_t){kGPIO_DigitalOutput, 1});
 
     GPIO_WritePinOutput(I2C_MAIN_BUS_SCL_GPIO, I2C_MAIN_BUS_SCL_PIN, 0);
-    for (volatile uint32_t i=0; i<10000; i++);
+    delay();
 
     GPIO_WritePinOutput(I2C_MAIN_BUS_SDA_GPIO, I2C_MAIN_BUS_SDA_PIN, 0);
-    for (volatile uint32_t i=0; i<10000; i++);
+    delay();
 
     bool isOn = true;
     for (int i=0; i<16; i++) {
         GPIO_WritePinOutput(I2C_MAIN_BUS_SCL_GPIO, I2C_MAIN_BUS_SCL_PIN, isOn);
-        for (volatile uint32_t i=0; i<10000; i++);
+        delay();
         isOn = !isOn;
     }
 
     GPIO_WritePinOutput(I2C_MAIN_BUS_SDA_GPIO, I2C_MAIN_BUS_SDA_PIN, 1);
-    for (volatile uint32_t i=0; i<10000; i++);
+    delay();
     GPIO_WritePinOutput(I2C_MAIN_BUS_SDA_GPIO, I2C_MAIN_BUS_SDA_PIN, 0);
-    for (volatile uint32_t i=0; i<10000; i++);
+    delay();
     GPIO_WritePinOutput(I2C_MAIN_BUS_SDA_GPIO, I2C_MAIN_BUS_SDA_PIN, 1);
-    for (volatile uint32_t i=0; i<10000; i++);
+    delay();
     GPIO_WritePinOutput(I2C_MAIN_BUS_SDA_GPIO, I2C_MAIN_BUS_SDA_PIN, 0);
-    for (volatile uint32_t i=0; i<10000; i++);
+    delay();
     GPIO_WritePinOutput(I2C_MAIN_BUS_SDA_GPIO, I2C_MAIN_BUS_SDA_PIN, 1);
-    for (volatile uint32_t i=0; i<10000; i++);
+    delay();
 
     port_pin_config_t pinConfig = {
         .pullSelect = kPORT_PullUp,
