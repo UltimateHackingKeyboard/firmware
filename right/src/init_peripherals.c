@@ -37,38 +37,12 @@ void InitI2cMainBus(void)
     GPIO_WritePinOutput(I2C_MAIN_BUS_SDA_GPIO, I2C_MAIN_BUS_SDA_PIN, 0);
     for (volatile uint32_t i=0; i<10000; i++);
 
-    GPIO_WritePinOutput(I2C_MAIN_BUS_SCL_GPIO, I2C_MAIN_BUS_SCL_PIN, 1);
-    for (volatile uint32_t i=0; i<10000; i++);
-    GPIO_WritePinOutput(I2C_MAIN_BUS_SCL_GPIO, I2C_MAIN_BUS_SCL_PIN, 0);
-    for (volatile uint32_t i=0; i<10000; i++);
-    GPIO_WritePinOutput(I2C_MAIN_BUS_SCL_GPIO, I2C_MAIN_BUS_SCL_PIN, 1);
-    for (volatile uint32_t i=0; i<10000; i++);
-    GPIO_WritePinOutput(I2C_MAIN_BUS_SCL_GPIO, I2C_MAIN_BUS_SCL_PIN, 0);
-    for (volatile uint32_t i=0; i<10000; i++);
-    GPIO_WritePinOutput(I2C_MAIN_BUS_SCL_GPIO, I2C_MAIN_BUS_SCL_PIN, 1);
-    for (volatile uint32_t i=0; i<10000; i++);
-    GPIO_WritePinOutput(I2C_MAIN_BUS_SCL_GPIO, I2C_MAIN_BUS_SCL_PIN, 0);
-    for (volatile uint32_t i=0; i<10000; i++);
-    GPIO_WritePinOutput(I2C_MAIN_BUS_SCL_GPIO, I2C_MAIN_BUS_SCL_PIN, 1);
-    for (volatile uint32_t i=0; i<10000; i++);
-    GPIO_WritePinOutput(I2C_MAIN_BUS_SCL_GPIO, I2C_MAIN_BUS_SCL_PIN, 0);
-    for (volatile uint32_t i=0; i<10000; i++);
-    GPIO_WritePinOutput(I2C_MAIN_BUS_SCL_GPIO, I2C_MAIN_BUS_SCL_PIN, 1);
-    for (volatile uint32_t i=0; i<10000; i++);
-    GPIO_WritePinOutput(I2C_MAIN_BUS_SCL_GPIO, I2C_MAIN_BUS_SCL_PIN, 0);
-    for (volatile uint32_t i=0; i<10000; i++);
-    GPIO_WritePinOutput(I2C_MAIN_BUS_SCL_GPIO, I2C_MAIN_BUS_SCL_PIN, 1);
-    for (volatile uint32_t i=0; i<10000; i++);
-    GPIO_WritePinOutput(I2C_MAIN_BUS_SCL_GPIO, I2C_MAIN_BUS_SCL_PIN, 0);
-    for (volatile uint32_t i=0; i<10000; i++);
-    GPIO_WritePinOutput(I2C_MAIN_BUS_SCL_GPIO, I2C_MAIN_BUS_SCL_PIN, 1);
-    for (volatile uint32_t i=0; i<10000; i++);
-    GPIO_WritePinOutput(I2C_MAIN_BUS_SCL_GPIO, I2C_MAIN_BUS_SCL_PIN, 0);
-    for (volatile uint32_t i=0; i<10000; i++);
-    GPIO_WritePinOutput(I2C_MAIN_BUS_SCL_GPIO, I2C_MAIN_BUS_SCL_PIN, 1);
-    for (volatile uint32_t i=0; i<10000; i++);
-    GPIO_WritePinOutput(I2C_MAIN_BUS_SCL_GPIO, I2C_MAIN_BUS_SCL_PIN, 0);
-    for (volatile uint32_t i=0; i<10000; i++);
+    bool isOn = true;
+    for (int i=0; i<16; i++) {
+        GPIO_WritePinOutput(I2C_MAIN_BUS_SCL_GPIO, I2C_MAIN_BUS_SCL_PIN, isOn);
+        for (volatile uint32_t i=0; i<10000; i++);
+        isOn = !isOn;
+    }
 
     GPIO_WritePinOutput(I2C_MAIN_BUS_SDA_GPIO, I2C_MAIN_BUS_SDA_PIN, 1);
     for (volatile uint32_t i=0; i<10000; i++);
