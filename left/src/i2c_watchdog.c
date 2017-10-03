@@ -28,7 +28,7 @@ void I2C_WATCHDOG_LPTMR_HANDLER(void)
 //        NVIC_SystemReset();
         I2cWatchdog_InnerCounter++;
         I2C_SlaveDeinit(I2C_BUS_BASEADDR);
-        InitI2cV2();
+        InitI2c();
     }
 
     prevWatchdogCounter = I2C_Watchdog;
