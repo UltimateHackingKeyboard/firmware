@@ -276,8 +276,8 @@ void Macros_StartMacro(uint8_t index)
     MacroPlaying = true;
     currentMacroIndex = index;
     currentMacroActionIndex = 0;
-    UserConfigBuffer.offset = AllMacros[index].firstMacroActionOffset;
-    ParseMacroAction(&UserConfigBuffer, &currentMacroAction);
+    ValidatedUserConfigBuffer.offset = AllMacros[index].firstMacroActionOffset;
+    ParseMacroAction(&ValidatedUserConfigBuffer, &currentMacroAction);
     memset(&MacroMouseReport, 0, sizeof MacroMouseReport);
     memset(&MacroBasicKeyboardReport, 0, sizeof MacroBasicKeyboardReport);
     memset(&MacroMediaKeyboardReport, 0, sizeof MacroMediaKeyboardReport);
@@ -293,5 +293,5 @@ void Macros_ContinueMacro(void)
         MacroPlaying = false;
         return;
     }
-    ParseMacroAction(&UserConfigBuffer, &currentMacroAction);
+    ParseMacroAction(&ValidatedUserConfigBuffer, &currentMacroAction);
 }

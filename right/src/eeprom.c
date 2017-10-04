@@ -66,7 +66,7 @@ static void i2cCallback(I2C_Type *base, i2c_master_handle_t *handle, status_t st
                 return;
             }
             LastEepromTransferStatus = i2cAsyncRead(
-                isHardwareConfig ? HardwareConfigBuffer.buffer : UserConfigBuffer.buffer,
+                isHardwareConfig ? HardwareConfigBuffer.buffer : ValidatedUserConfigBuffer.buffer,
                 isHardwareConfig ? HARDWARE_CONFIG_SIZE : USER_CONFIG_SIZE
             );
             IsEepromBusy = true;
@@ -119,7 +119,7 @@ status_t EEPROM_LaunchTransfer(eeprom_transfer_t transferType, void (*successCal
             break;
         case EepromTransfer_WriteHardwareConfiguration:
         case EepromTransfer_WriteUserConfiguration:
-            sourceBuffer = isHardwareConfig ? HardwareConfigBuffer.buffer : UserConfigBuffer.buffer;
+            sourceBuffer = isHardwareConfig ? HardwareConfigBuffer.buffer : ValidatedUserConfigBuffer.buffer;
             sourceOffset = 0;
             sourceLength = isHardwareConfig ? HARDWARE_CONFIG_SIZE : USER_CONFIG_SIZE;
             LastEepromTransferStatus = writePage();

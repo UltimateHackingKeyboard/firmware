@@ -111,15 +111,15 @@ void ApplyConfig(void)
     oldKeymapAbbreviationLen = AllKeymaps[CurrentKeymapIndex].abbreviationLen;
 
     uint8_t *temp;
-    temp = UserConfigBuffer.buffer;
-    UserConfigBuffer.buffer = StagingUserConfigBuffer.buffer;
+    temp = ValidatedUserConfigBuffer.buffer;
+    ValidatedUserConfigBuffer.buffer = StagingUserConfigBuffer.buffer;
     StagingUserConfigBuffer.buffer = temp;
 
     ParserRunDry = false;
-    UserConfigBuffer.offset = 0;
-    GenericHidOutBuffer[0] = ParseConfig(&UserConfigBuffer);
-    GenericHidOutBuffer[1] = UserConfigBuffer.offset;
-    GenericHidOutBuffer[2] = UserConfigBuffer.offset >> 8;
+    ValidatedUserConfigBuffer.offset = 0;
+    GenericHidOutBuffer[0] = ParseConfig(&ValidatedUserConfigBuffer);
+    GenericHidOutBuffer[1] = ValidatedUserConfigBuffer.offset;
+    GenericHidOutBuffer[2] = ValidatedUserConfigBuffer.offset >> 8;
     GenericHidOutBuffer[3] = 1;
 
     if (GenericHidOutBuffer[0] != UsbResponse_Success) {

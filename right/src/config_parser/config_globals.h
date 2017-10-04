@@ -16,7 +16,7 @@
 
     extern bool ParserRunDry;
     extern config_buffer_t HardwareConfigBuffer;
-    extern config_buffer_t UserConfigBuffer;
+    extern config_buffer_t ValidatedUserConfigBuffer;
     extern config_buffer_t StagingUserConfigBuffer;
 
 #endif
