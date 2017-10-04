@@ -51,7 +51,7 @@ void UhkModuleSlaveDriver_Init(uint8_t uhkModuleDriverId)
     uhkModuleTargetVars->ledPwmBrightness = 0;
 
     uhk_module_phase_t *uhkModulePhase = &uhkModuleState->phase;
-    *uhkModulePhase = UhkModulePhase_RequestModuleFeatures;
+    *uhkModulePhase = UhkModulePhase_RequestSync;
 
     uhk_module_i2c_addresses_t *uhkModuleI2cAddresses = moduleIdsToI2cAddresses + uhkModuleDriverId;
     uhkModuleState->firmwareI2cAddress = uhkModuleI2cAddresses->firmwareI2cAddress;
@@ -69,6 +69,28 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
     i2c_message_t *rxMessage = &uhkModuleState->rxMessage;
 
     switch (*uhkModulePhase) {
+
+        // Sync communication
+        case UhkModulePhase_RequestSync:
+            txMessage.data[0] = SlaveCommand_RequestProperty;
+            txMessage.data[1] = SlaveProperty_Sync;
+            txMessage.length = 2;
+            status = tx(i2cAddress);
+            *uhkModulePhase = UhkModulePhase_ReceiveSync;
+            break;
+        case UhkModulePhase_ReceiveSync:
+            status = rx(rxMessage, i2cAddress);
+            *uhkModulePhase = UhkModulePhase_ProcessSync;
+            break;
+        case UhkModulePhase_ProcessSync: {
+            bool isMessageValid = CRC16_IsMessageValid(rxMessage);
+            bool isSyncValid = memcmp(rxMessage->data, SlaveSyncString, SLAVE_SYNC_STRING_LENGTH) == 0;
+            status = kStatus_Uhk_NoTransfer;
+            *uhkModulePhase = isSyncValid && isMessageValid
+                ? UhkModulePhase_RequestModuleFeatures
+                : UhkModulePhase_RequestSync;
+            break;
+        }
 
         // Get module features
         case UhkModulePhase_RequestModuleFeatures:

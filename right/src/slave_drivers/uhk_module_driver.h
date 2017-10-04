@@ -20,6 +20,9 @@
     } uhk_module_id_t;
 
     typedef enum {
+        UhkModulePhase_RequestSync,
+        UhkModulePhase_ReceiveSync,
+        UhkModulePhase_ProcessSync,
         UhkModulePhase_RequestModuleFeatures,
         UhkModulePhase_ReceiveModuleFeatures,
         UhkModulePhase_ProcessModuleFeatures,

@@ -1,11 +1,18 @@
 #ifndef __SLAVE_PROTOCOL_H__
 #define __SLAVE_PROTOCOL_H__
 
+// Includes:
+
+    #include "fsl_common.h"
+
 // Macros:
 
     #define I2C_MESSAGE_HEADER_LENGTH 3
     #define I2C_MESSAGE_MAX_PAYLOAD_LENGTH 255
     #define I2C_MESSAGE_MAX_TOTAL_LENGTH (I2C_MESSAGE_HEADER_LENGTH + I2C_MESSAGE_MAX_PAYLOAD_LENGTH)
+
+    #define SLAVE_SYNC_STRING "SYNC"
+    #define SLAVE_SYNC_STRING_LENGTH (sizeof(SLAVE_SYNC_STRING) - 1)
 
 // Typedefs:
 
@@ -18,6 +25,7 @@
     } slave_command_t;
 
     typedef enum {
+        SlaveProperty_Sync,
         SlaveProperty_Features,
     } slave_property_t;
 
@@ -31,5 +39,9 @@
         uint16_t crc;
         uint8_t data[I2C_MESSAGE_MAX_PAYLOAD_LENGTH];
     } __attribute__ ((packed)) i2c_message_t;
+
+// Variables:
+
+    extern char SlaveSyncString[];
 
 #endif

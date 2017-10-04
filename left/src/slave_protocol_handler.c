@@ -65,6 +65,11 @@ void SlaveTxHandler(void)
         case SlaveCommand_RequestProperty: {
             uint8_t propertyId = RxMessage.data[1];
             switch (propertyId) {
+                case SlaveProperty_Sync: {
+                    memcpy(TxMessage.data, SlaveSyncString, SLAVE_SYNC_STRING_LENGTH);
+                    TxMessage.length = SLAVE_SYNC_STRING_LENGTH;
+                    break;
+                }
                 case SlaveProperty_Features: {
                     uhk_module_features_t *moduleFeatures = (uhk_module_features_t*)&TxMessage.data;
                     moduleFeatures->keyCount = MODULE_KEY_COUNT;
