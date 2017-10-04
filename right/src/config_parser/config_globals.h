@@ -1,4 +1,4 @@
-#ifndef __CONFIG_STATE_H__
+#ifndef __CONFIG_GLOBALS_H__
 #define __CONFIG_GLOBALS_H__
 
 // Includes:
