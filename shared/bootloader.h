@@ -53,6 +53,6 @@
 
 // Functions:
 
-    extern void JumpToBootloader(void);
+    void JumpToBootloader(void);
 
 #endif
