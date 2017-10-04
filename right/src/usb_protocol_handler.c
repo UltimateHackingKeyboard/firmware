@@ -90,9 +90,7 @@ void readMergeSensor(void)
 
 void ApplyConfig(void)
 {
-    uint8_t *temp;
-    char oldKeymapAbbreviation[3];
-    uint8_t oldKeymapAbbreviationLen;
+    // Validate the staging configuration.
 
     ParserRunDry = true;
     StagingUserConfigBuffer.offset = 0;
@@ -100,23 +98,36 @@ void ApplyConfig(void)
     GenericHidOutBuffer[1] = StagingUserConfigBuffer.offset;
     GenericHidOutBuffer[2] = StagingUserConfigBuffer.offset >> 8;
     GenericHidOutBuffer[3] = 0;
-    if (GenericHidOutBuffer[0]) {
+
+    if (GenericHidOutBuffer[0] != UsbResponse_Success) {
         return;
     }
-    memcpy(oldKeymapAbbreviation, AllKeymaps[CurrentKeymapIndex].abbreviation, 3);
+
+    // Make the staging configuration the current one.
+
+    char oldKeymapAbbreviation[KEYMAP_ABBREVIATION_LENGTH];
+    uint8_t oldKeymapAbbreviationLen;
+    memcpy(oldKeymapAbbreviation, AllKeymaps[CurrentKeymapIndex].abbreviation, KEYMAP_ABBREVIATION_LENGTH);
     oldKeymapAbbreviationLen = AllKeymaps[CurrentKeymapIndex].abbreviationLen;
-    ParserRunDry = false;
+
+    uint8_t *temp;
     temp = UserConfigBuffer.buffer;
     UserConfigBuffer.buffer = StagingUserConfigBuffer.buffer;
     StagingUserConfigBuffer.buffer = temp;
+
+    ParserRunDry = false;
     UserConfigBuffer.offset = 0;
     GenericHidOutBuffer[0] = ParseConfig(&UserConfigBuffer);
     GenericHidOutBuffer[1] = UserConfigBuffer.offset;
     GenericHidOutBuffer[2] = UserConfigBuffer.offset >> 8;
     GenericHidOutBuffer[3] = 1;
-    if (GenericHidOutBuffer[0]) {
+
+    if (GenericHidOutBuffer[0] != UsbResponse_Success) {
         return;
     }
+
+    // Switch to the keymap of the updated configuration of the same name or the default keymap.
+
     for (uint8_t i = 0; i < AllKeymapsCount; i++) {
         if (AllKeymaps[i].abbreviationLen != oldKeymapAbbreviationLen) {
             continue;
@@ -127,6 +138,7 @@ void ApplyConfig(void)
         Keymaps_Switch(i);
         return;
     }
+
     Keymaps_Switch(DefaultKeymapIndex);
 }
 

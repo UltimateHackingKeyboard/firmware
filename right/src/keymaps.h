@@ -9,6 +9,7 @@
 // Macros:
 
     #define MAX_KEYMAP_NUM 255
+    #define KEYMAP_ABBREVIATION_LENGTH 3
 
 // Typedefs:
 
