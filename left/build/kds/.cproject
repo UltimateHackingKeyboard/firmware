@@ -288,7 +288,7 @@
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.cpp.linker.cref.2232183349" name="Cross reference (-Xlinker --cref)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.cpp.linker.cref" value="false" valueType="boolean"/>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.cpp.linker.printgcsections.3012895541" name="Print removed sections (-Xlinker --print-gc-sections)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.cpp.linker.printgcsections" value="false" valueType="boolean"/>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.cpp.linker.strip.8142494542" name="Omit all symbol information (-s)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.cpp.linker.strip" value="false" valueType="boolean"/>
-								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.cpp.linker.other.1261986804" name="Other linker flags" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.cpp.linker.other" value="-mapcs  -Xlinker -static  -Xlinker -z  -Xlinker muldefs" valueType="string"/>
+								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.cpp.linker.other.1261986804" name="Other linker flags" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.cpp.linker.other" value="-mapcs  -Xlinker -static  -Xlinker -z  -Xlinker muldefs -specs=rdimon.specs" valueType="string"/>
 								<inputType id="ilg.gnuarmeclipse.managedbuild.cross.tool.cpp.linker.input.1924084905" superClass="ilg.gnuarmeclipse.managedbuild.cross.tool.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -656,11 +656,11 @@
 		<configuration configurationName="v7-debug-srec">
 			<resource resourceType="PROJECT" workspacePath="/uhk-left"/>
 		</configuration>
+		<configuration configurationName="v7-debug"/>
 		<configuration configurationName="release">
 			<resource resourceType="PROJECT" workspacePath="/uhk-left"/>
 		</configuration>
 		<configuration configurationName="v6-release"/>
-		<configuration configurationName="v7-debug"/>
 		<configuration configurationName="uhk-left-release">
 			<resource resourceType="PROJECT" workspacePath="/uhk-left"/>
 		</configuration>
