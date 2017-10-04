@@ -4,6 +4,7 @@
 // Includes:
 
     #include "fsl_common.h"
+    #include "attributes.h"
     #include "usb_api.h"
     #include "usb_descriptors/usb_descriptor_system_keyboard_report.h"
 
@@ -24,7 +25,7 @@
 
     typedef struct {
         uint8_t scancodes[USB_SYSTEM_KEYBOARD_MAX_KEYS];
-    } __attribute__ ((packed)) usb_system_keyboard_report_t;
+    } ATTR_PACKED usb_system_keyboard_report_t;
 
 // Variables:
 

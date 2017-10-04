@@ -27,7 +27,7 @@
         int16_t y;
         int8_t wheelX;
         int8_t wheelY;
-    } __attribute__ ((packed)) usb_mouse_report_t;
+    } ATTR_PACKED usb_mouse_report_t;
 
 // Variables:
 

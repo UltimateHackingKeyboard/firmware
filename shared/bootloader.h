@@ -5,6 +5,7 @@
 
     #include <stdint.h>
     #include <stddef.h>
+    #include "attributes.h"
     #include "i2c_addresses.h"
 
 // Macros:
@@ -14,7 +15,7 @@
     #define CLOCK_FLAG_HIGH_SPEED_MODE 0x01
 
     #define DEFINE_BOOTLOADER_CONFIG_AREA(address) \
-        __attribute__((used, section(".BootloaderConfig"))) const bootloader_config_t BootloaderConfig = { \
+        const ATTR_BOOTLOADER_CONFIG bootloader_config_t BootloaderConfig = { \
             .tag = BOOTLOADER_TAG, \
             .enabledPeripherals = EnabledBootloaderPeripherial_I2c, \
             .i2cSlaveAddress = address, \

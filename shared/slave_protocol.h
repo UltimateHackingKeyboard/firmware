@@ -4,6 +4,7 @@
 // Includes:
 
     #include "fsl_common.h"
+    #include "attributes.h"
 
 // Macros:
 
@@ -38,7 +39,7 @@
         uint8_t length;
         uint16_t crc;
         uint8_t data[I2C_MESSAGE_MAX_PAYLOAD_LENGTH];
-    } __attribute__ ((packed)) i2c_message_t;
+    } ATTR_PACKED i2c_message_t;
 
 // Variables:
 

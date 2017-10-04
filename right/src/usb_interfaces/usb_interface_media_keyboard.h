@@ -24,7 +24,7 @@
 
     typedef struct {
         uint16_t scancodes[USB_MEDIA_KEYBOARD_MAX_KEYS];
-    } __attribute__ ((packed)) usb_media_keyboard_report_t;
+    } ATTR_PACKED usb_media_keyboard_report_t;
 
 // Variables:
 

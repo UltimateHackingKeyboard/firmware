@@ -1,3 +1,3 @@
 #include "wormhole.h"
 
-wormhole_t Wormhole NO_INIT_GCC;
+wormhole_t ATTR_NO_INIT Wormhole;

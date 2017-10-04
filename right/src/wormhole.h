@@ -4,11 +4,11 @@
 // Includes:
 
     #include <stdint.h>
+    #include "attributes.h"
 
 // Macros:
 
     #define WORMHOLE_MAGIC_NUMBER 0x3b04cd9e94521f9a
-    #define NO_INIT_GCC __attribute__ ((section (".noinit")))
 
 // Typedefs:
 
@@ -26,6 +26,6 @@
 
 // Variables:
 
-    extern wormhole_t Wormhole NO_INIT_GCC;
+    extern wormhole_t ATTR_NO_INIT Wormhole;
 
 #endif
