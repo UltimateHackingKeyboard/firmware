@@ -20,17 +20,26 @@
     } uhk_module_id_t;
 
     typedef enum {
+
+        // Sync communication
         UhkModulePhase_RequestSync,
         UhkModulePhase_ReceiveSync,
         UhkModulePhase_ProcessSync,
+
+        // Get module features
         UhkModulePhase_RequestModuleFeatures,
         UhkModulePhase_ReceiveModuleFeatures,
         UhkModulePhase_ProcessModuleFeatures,
+
+        // Get key states
         UhkModulePhase_RequestKeyStates,
         UhkModulePhase_ReceiveKeystates,
         UhkModulePhase_ProcessKeystates,
+
+        // Misc phases
         UhkModulePhase_SetLedPwmBrightness,
         UhkModulePhase_SetTestLed,
+
     } uhk_module_phase_t;
 
     typedef struct {
