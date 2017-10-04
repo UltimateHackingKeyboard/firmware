@@ -2,6 +2,7 @@
 #include "init_clock.h"
 #include "init_peripherals.h"
 #include "bootloader.h"
+#include <stdio.h>
 
 DEFINE_BOOTLOADER_CONFIG_AREA(I2C_ADDRESS_LEFT_KEYBOARD_HALF_BOOTLOADER)
 
