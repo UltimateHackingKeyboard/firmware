@@ -172,7 +172,7 @@ void legacyLaunchEepromTransfer(void)
         EEPROM_LaunchTransfer(EepromOperation_Read, ConfigBufferId_ValidatedUserConfig, NULL);
         break;
     case 3:
-        EEPROM_LaunchTransfer(EepromOperation_Write, ConfigBufferId_StagingUserConfig, NULL);
+        EEPROM_LaunchTransfer(EepromOperation_Write, ConfigBufferId_ValidatedUserConfig, NULL);
         break;
     }
 }
