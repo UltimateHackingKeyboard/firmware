@@ -83,6 +83,7 @@ void setTestLed(void)
     UhkModuleVars[0].isTestLedOn = ledState;
 }
 
+// To be removed. Now it's already part of getKeyboardState()
 void readMergeSensor(void)
 {
     SetResponseByte(MERGE_SENSOR_IS_MERGED);
@@ -222,6 +223,7 @@ void writeConfiguration(bool isHardware)
 void getKeyboardState(void)
 {
     GenericHidOutBuffer[1] = IsEepromBusy;
+    GenericHidOutBuffer[2] = MERGE_SENSOR_IS_MERGED;
 }
 
 void getDebugInfo(void)
