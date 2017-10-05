@@ -66,6 +66,7 @@
         uint8_t firmwareI2cAddress;
         uint8_t bootloaderI2cAddress;
         uhk_module_features_t features;
+        bool isEnumerated;
     } uhk_module_state_t;
 
     typedef struct {
