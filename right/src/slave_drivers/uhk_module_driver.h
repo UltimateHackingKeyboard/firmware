@@ -61,6 +61,7 @@
         uint8_t moduleId;
         uint8_t protocolVersion;
         uhk_module_phase_t phase;
+        uhk_module_vars_t sourceVars;
         uhk_module_vars_t targetVars;
         i2c_message_t rxMessage;
         uint8_t firmwareI2cAddress;
@@ -76,7 +77,7 @@
 
 // Variables:
 
-    extern uhk_module_vars_t UhkModuleVars[UHK_MODULE_MAX_COUNT];
+    extern uhk_module_state_t uhkModuleStates[UHK_MODULE_MAX_COUNT];
 
 // Functions:
 

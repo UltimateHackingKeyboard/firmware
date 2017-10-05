@@ -8,9 +8,8 @@
 #include "bool_array_converter.h"
 #include "crc16.h"
 
-uhk_module_vars_t UhkModuleVars[UHK_MODULE_MAX_COUNT];
+uhk_module_state_t uhkModuleStates[UHK_MODULE_MAX_COUNT];
 
-static uhk_module_state_t uhkModuleStates[UHK_MODULE_MAX_COUNT];
 static i2c_message_t txMessage;
 
 static uhk_module_i2c_addresses_t moduleIdsToI2cAddresses[] = {
@@ -40,8 +39,8 @@ static status_t rx(i2c_message_t *rxMessage, uint8_t i2cAddress)
 
 void UhkModuleSlaveDriver_Init(uint8_t uhkModuleDriverId)
 {
-    uhk_module_vars_t *uhkModuleSourceVars = UhkModuleVars + uhkModuleDriverId;
     uhk_module_state_t *uhkModuleState = uhkModuleStates + uhkModuleDriverId;
+    uhk_module_vars_t *uhkModuleSourceVars = &uhkModuleState->sourceVars;
     uhk_module_vars_t *uhkModuleTargetVars = &uhkModuleState->targetVars;
 
     uhkModuleSourceVars->isTestLedOn = true;
@@ -61,8 +60,8 @@ void UhkModuleSlaveDriver_Init(uint8_t uhkModuleDriverId)
 status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
 {
     status_t status = kStatus_Uhk_IdleSlave;
-    uhk_module_vars_t *uhkModuleSourceVars = UhkModuleVars + uhkModuleDriverId;
     uhk_module_state_t *uhkModuleState = uhkModuleStates + uhkModuleDriverId;
+    uhk_module_vars_t *uhkModuleSourceVars = &uhkModuleState->sourceVars;
     uhk_module_vars_t *uhkModuleTargetVars = &uhkModuleState->targetVars;
     uhk_module_phase_t *uhkModulePhase = &uhkModuleState->phase;
     uint8_t i2cAddress = uhkModuleState->firmwareI2cAddress;
