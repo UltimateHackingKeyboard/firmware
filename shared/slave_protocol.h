@@ -27,6 +27,7 @@
 
     typedef enum {
         SlaveProperty_Sync,
+        SlaveProperty_ProtocolVersion,
         SlaveProperty_ModuleId,
         SlaveProperty_Features,
     } slave_property_t;

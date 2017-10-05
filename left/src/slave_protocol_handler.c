@@ -75,6 +75,11 @@ void SlaveTxHandler(void)
                     TxMessage.length = 1;
                     break;
                 }
+                case SlaveProperty_ProtocolVersion: {
+                    TxMessage.data[0] = MODULE_PROTOCOL_VERSION;
+                    TxMessage.length = 1;
+                    break;
+                }
                 case SlaveProperty_Features: {
                     uhk_module_features_t *moduleFeatures = (uhk_module_features_t*)&TxMessage.data;
                     moduleFeatures->keyCount = MODULE_KEY_COUNT;
