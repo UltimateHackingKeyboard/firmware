@@ -25,14 +25,6 @@
 
 // Typedefs:
 
-    typedef enum {
-        ModuleId_LeftKeyboardHalf = 1,
-        ModuleId_KeyClusterLeft   = 2,
-        ModuleId_TrackballRight   = 3,
-        ModuleId_TrackpointRight  = 4,
-        ModuleId_TouchpadRight    = 5,
-    } module_id_t;
-
     typedef struct {
         uint8_t acceleration;
         uint8_t maxSpeed;

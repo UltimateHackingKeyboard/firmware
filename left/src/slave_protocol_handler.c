@@ -70,6 +70,11 @@ void SlaveTxHandler(void)
                     TxMessage.length = SLAVE_SYNC_STRING_LENGTH;
                     break;
                 }
+                case SlaveProperty_ModuleId: {
+                    TxMessage.data[0] = ModuleId_LeftKeyboardHalf;
+                    TxMessage.length = 1;
+                    break;
+                }
                 case SlaveProperty_Features: {
                     uhk_module_features_t *moduleFeatures = (uhk_module_features_t*)&TxMessage.data;
                     moduleFeatures->keyCount = MODULE_KEY_COUNT;

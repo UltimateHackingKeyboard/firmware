@@ -26,6 +26,11 @@
         UhkModulePhase_ReceiveSync,
         UhkModulePhase_ProcessSync,
 
+        // Get module id
+        UhkModulePhase_RequestModuleId,
+        UhkModulePhase_ReceiveModuleId,
+        UhkModulePhase_ProcessModuleId,
+
         // Get module features
         UhkModulePhase_RequestModuleFeatures,
         UhkModulePhase_ReceiveModuleFeatures,
@@ -48,6 +53,7 @@
     } uhk_module_vars_t;
 
     typedef struct {
+        uint8_t moduleId;
         uhk_module_phase_t phase;
         uhk_module_vars_t targetVars;
         i2c_message_t rxMessage;
