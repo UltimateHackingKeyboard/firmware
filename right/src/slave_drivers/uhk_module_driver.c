@@ -151,7 +151,6 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
             bool isMessageValid = CRC16_IsMessageValid(rxMessage);
             if (isMessageValid) {
                 memcpy(&uhkModuleState->features, rxMessage->data, sizeof(uhk_module_features_t));
-                uhkModuleState->isEnumerated = true;
             }
             status = kStatus_Uhk_NoTransfer;
             *uhkModulePhase = isMessageValid ? UhkModulePhase_RequestKeyStates : UhkModulePhase_RequestModuleFeatures;
@@ -215,5 +214,5 @@ void UhkModuleSlaveDriver_Disconnect(uint8_t uhkModuleDriverId)
     if (uhkModuleDriverId == SlaveId_LeftKeyboardHalf) {
         Slaves[SlaveId_LeftLedDriver].isConnected = false;
     }
-    UhkModuleStates[uhkModuleDriverId].isEnumerated = false;
+    UhkModuleStates[uhkModuleDriverId].moduleId = 0;
 }

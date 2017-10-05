@@ -224,6 +224,9 @@ void getKeyboardState(void)
 {
     GenericHidOutBuffer[1] = IsEepromBusy;
     GenericHidOutBuffer[2] = MERGE_SENSOR_IS_MERGED;
+    GenericHidOutBuffer[3] = UhkModuleStates[UhkModuleDriverId_LeftKeyboardHalf].moduleId;
+    GenericHidOutBuffer[4] = UhkModuleStates[UhkModuleDriverId_LeftAddon].moduleId;
+    GenericHidOutBuffer[5] = UhkModuleStates[UhkModuleDriverId_RightAddon].moduleId;
 }
 
 void getDebugInfo(void)
