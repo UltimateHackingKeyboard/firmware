@@ -104,13 +104,15 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
             status = rx(rxMessage, i2cAddress);
             *uhkModulePhase = UhkModulePhase_ProcessProtocolVersion;
             break;
-        case UhkModulePhase_ProcessProtocolVersion:
-            if (CRC16_IsMessageValid(rxMessage)) {
+        case UhkModulePhase_ProcessProtocolVersion: {
+            bool isMessageValid = CRC16_IsMessageValid(rxMessage);
+            if (isMessageValid) {
                 uhkModuleState->protocolVersion = rxMessage->data[0];
             }
             status = kStatus_Uhk_NoTransfer;
-            *uhkModulePhase = UhkModulePhase_RequestModuleId;
+            *uhkModulePhase = isMessageValid ? UhkModulePhase_RequestModuleId : UhkModulePhase_RequestProtocolVersion;
             break;
+        }
 
         // Get module id
         case UhkModulePhase_RequestModuleId:
@@ -124,13 +126,15 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
             status = rx(rxMessage, i2cAddress);
             *uhkModulePhase = UhkModulePhase_ProcessModuleId;
             break;
-        case UhkModulePhase_ProcessModuleId:
-            if (CRC16_IsMessageValid(rxMessage)) {
+        case UhkModulePhase_ProcessModuleId: {
+            bool isMessageValid = CRC16_IsMessageValid(rxMessage);
+            if (isMessageValid) {
                 uhkModuleState->moduleId = rxMessage->data[0];
             }
             status = kStatus_Uhk_NoTransfer;
-            *uhkModulePhase = UhkModulePhase_RequestModuleFeatures;
+            *uhkModulePhase = isMessageValid ? UhkModulePhase_RequestModuleFeatures : UhkModulePhase_RequestModuleId;
             break;
+        }
 
         // Get module features
         case UhkModulePhase_RequestModuleFeatures:
@@ -144,14 +148,16 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
             status = rx(rxMessage, i2cAddress);
             *uhkModulePhase = UhkModulePhase_ProcessModuleFeatures;
             break;
-        case UhkModulePhase_ProcessModuleFeatures:
-            if (CRC16_IsMessageValid(rxMessage)) {
+        case UhkModulePhase_ProcessModuleFeatures: {
+            bool isMessageValid = CRC16_IsMessageValid(rxMessage);
+            if (isMessageValid) {
                 memcpy(&uhkModuleState->features, rxMessage->data, sizeof(uhk_module_features_t));
                 uhkModuleState->isEnumerated = true;
             }
             status = kStatus_Uhk_NoTransfer;
-            *uhkModulePhase = UhkModulePhase_RequestKeyStates;
+            *uhkModulePhase = isMessageValid ? UhkModulePhase_RequestKeyStates : UhkModulePhase_RequestModuleFeatures;
             break;
+        }
 
         // Get key states
         case UhkModulePhase_RequestKeyStates:
