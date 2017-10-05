@@ -3,9 +3,11 @@
 #include "i2c_addresses.h"
 #include "i2c.h"
 #include "eeprom.h"
+#include "config_parser/config_globals.h"
 
 bool IsEepromBusy;
-eeprom_transfer_t CurrentEepromTransfer;
+static eeprom_operation_t CurrentEepromOperation;
+static config_buffer_id_t CurrentConfigBufferId;
 status_t LastEepromTransferStatus;
 void (*SuccessCallback)();
 
@@ -54,10 +56,8 @@ static void i2cCallback(I2C_Type *base, i2c_master_handle_t *handle, status_t st
 {
     LastEepromTransferStatus = status;
 
-    bool isHardwareConfig = CurrentEepromTransfer == EepromTransfer_ReadHardwareConfiguration;
-    switch (CurrentEepromTransfer) {
-        case EepromTransfer_ReadHardwareConfiguration:
-        case EepromTransfer_ReadUserConfiguration:
+    switch (CurrentEepromOperation) {
+        case EepromOperation_Read:
             if (isReadSent) {
                 IsEepromBusy = false;
                 if (SuccessCallback) {
@@ -66,14 +66,13 @@ static void i2cCallback(I2C_Type *base, i2c_master_handle_t *handle, status_t st
                 return;
             }
             LastEepromTransferStatus = i2cAsyncRead(
-                isHardwareConfig ? HardwareConfigBuffer.buffer : ValidatedUserConfigBuffer.buffer,
-                isHardwareConfig ? HARDWARE_CONFIG_SIZE : USER_CONFIG_SIZE
+                ConfigBufferIdToConfigBuffer(CurrentConfigBufferId)->buffer,
+                CurrentConfigBufferId == ConfigBufferId_HardwareConfig ? HARDWARE_CONFIG_SIZE : USER_CONFIG_SIZE
             );
             IsEepromBusy = true;
             isReadSent = true;
             break;
-        case EepromTransfer_WriteHardwareConfiguration:
-        case EepromTransfer_WriteUserConfiguration:
+        case EepromOperation_Write:
             if (status == kStatus_Success) {
                 sourceOffset += writeLength;
             }
@@ -97,29 +96,28 @@ void EEPROM_Init(void)
     I2C_MasterTransferCreateHandle(I2C_EEPROM_BUS_BASEADDR, &i2cHandle, i2cCallback, NULL);
 }
 
-status_t EEPROM_LaunchTransfer(eeprom_transfer_t transferType, void (*successCallback))
+status_t EEPROM_LaunchTransfer(eeprom_operation_t operation, config_buffer_id_t config_buffer_id, void (*successCallback))
 {
     if (IsEepromBusy) {
         return kStatus_I2C_Busy;
     }
 
-    CurrentEepromTransfer = transferType;
+    CurrentEepromOperation = operation;
+    CurrentConfigBufferId = config_buffer_id;
+
     SuccessCallback = successCallback;
-    bool isHardwareConfig = CurrentEepromTransfer == EepromTransfer_ReadHardwareConfiguration ||
-                            CurrentEepromTransfer == EepromTransfer_WriteHardwareConfiguration;
+    bool isHardwareConfig = CurrentConfigBufferId == ConfigBufferId_HardwareConfig;
     eepromStartAddress = isHardwareConfig ? 0 : HARDWARE_CONFIG_SIZE;
     addressBuffer[0] = eepromStartAddress >> 8;
     addressBuffer[1] = eepromStartAddress & 0xff;
 
-    switch (transferType) {
-        case EepromTransfer_ReadHardwareConfiguration:
-        case EepromTransfer_ReadUserConfiguration:
+    switch (CurrentEepromOperation) {
+        case EepromOperation_Read:
             isReadSent = false;
             LastEepromTransferStatus = i2cAsyncWrite(addressBuffer, EEPROM_ADDRESS_LENGTH);
             break;
-        case EepromTransfer_WriteHardwareConfiguration:
-        case EepromTransfer_WriteUserConfiguration:
-            sourceBuffer = isHardwareConfig ? HardwareConfigBuffer.buffer : ValidatedUserConfigBuffer.buffer;
+        case EepromOperation_Write:
+            sourceBuffer = ConfigBufferIdToConfigBuffer(CurrentConfigBufferId)->buffer;
             sourceOffset = 0;
             sourceLength = isHardwareConfig ? HARDWARE_CONFIG_SIZE : USER_CONFIG_SIZE;
             LastEepromTransferStatus = writePage();

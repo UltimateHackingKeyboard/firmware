@@ -4,13 +4,7 @@
 // Includes:
 
     #include "fsl_common.h"
-    #include "eeprom.h"
     #include "basic_types.h"
-
-// Macros:
-
-    #define HARDWARE_CONFIG_SIZE 64
-    #define USER_CONFIG_SIZE (EEPROM_SIZE - HARDWARE_CONFIG_SIZE)
 
 // Typedefs:
 
@@ -26,5 +20,9 @@
     extern config_buffer_t HardwareConfigBuffer;
     extern config_buffer_t StagingUserConfigBuffer;
     extern config_buffer_t ValidatedUserConfigBuffer;
+
+    // Functions:
+
+    config_buffer_t* ConfigBufferIdToConfigBuffer(config_buffer_id_t configBufferId);
 
 #endif

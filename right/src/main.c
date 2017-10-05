@@ -70,14 +70,14 @@ void userConfigurationReadFinished(void)
 
 void hardwareConfigurationReadFinished(void)
 {
-    EEPROM_LaunchTransfer(EepromTransfer_ReadUserConfiguration, userConfigurationReadFinished);
+    EEPROM_LaunchTransfer(EepromOperation_Read, ConfigBufferId_StagingUserConfig, userConfigurationReadFinished);
 }
 
 void main(void)
 {
     InitClock();
     InitPeripherals();
-    EEPROM_LaunchTransfer(EepromTransfer_ReadHardwareConfiguration, hardwareConfigurationReadFinished);
+    EEPROM_LaunchTransfer(EepromOperation_Read, ConfigBufferId_HardwareConfig, hardwareConfigurationReadFinished);
 
 #ifdef FORCE_BUSPAL
     Wormhole.magicNumber = WORMHOLE_MAGIC_NUMBER;

@@ -158,10 +158,23 @@ void getAdcValue(void)
     GenericHidOutBuffer[3] = adcValue >> 24;
 }
 
-void launchEepromTransfer(void)
+void legacyLaunchEepromTransfer(void)
 {
-    eeprom_transfer_t transferType = GenericHidInBuffer[1];
-    EEPROM_LaunchTransfer(transferType, NULL);
+    uint8_t legacyEepromTransferId = GenericHidInBuffer[1];
+    switch (legacyEepromTransferId) {
+    case 0:
+        EEPROM_LaunchTransfer(EepromOperation_Read, ConfigBufferId_HardwareConfig, NULL);
+        break;
+    case 1:
+        EEPROM_LaunchTransfer(EepromOperation_Write, ConfigBufferId_HardwareConfig, NULL);
+        break;
+    case 2:
+        EEPROM_LaunchTransfer(EepromOperation_Read, ConfigBufferId_ValidatedUserConfig, NULL);
+        break;
+    case 3:
+        EEPROM_LaunchTransfer(EepromOperation_Write, ConfigBufferId_StagingUserConfig, NULL);
+        break;
+    }
 }
 
 void readConfiguration(bool isHardware)
@@ -174,7 +187,7 @@ void readConfiguration(bool isHardware)
         return;
     }
 
-    uint8_t *buffer = isHardware ? HardwareConfigBuffer.buffer : StagingUserConfigBuffer.buffer;
+    uint8_t *buffer = isHardware ? HardwareConfigBuffer.buffer : ValidatedUserConfigBuffer.buffer;
     uint16_t bufferLength = isHardware ? HARDWARE_CONFIG_SIZE : USER_CONFIG_SIZE;
 
     if (offset + length > bufferLength) {
@@ -281,7 +294,7 @@ void UsbProtocolHandler(void)
             getAdcValue();
             break;
         case UsbCommand_LaunchEepromTransfer:
-            launchEepromTransfer();
+            legacyLaunchEepromTransfer();
             break;
         case UsbCommand_ReadHardwareConfiguration:
             readConfiguration(true);
