@@ -71,7 +71,7 @@ void SlaveTxHandler(void)
                     break;
                 }
                 case SlaveProperty_ModuleId: {
-                    TxMessage.data[0] = ModuleId_LeftKeyboardHalf;
+                    TxMessage.data[0] = MODULE_ID;
                     TxMessage.length = 1;
                     break;
                 }
