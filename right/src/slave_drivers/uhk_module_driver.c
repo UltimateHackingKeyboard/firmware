@@ -8,7 +8,7 @@
 #include "bool_array_converter.h"
 #include "crc16.h"
 
-uhk_module_state_t uhkModuleStates[UHK_MODULE_MAX_COUNT];
+uhk_module_state_t UhkModuleStates[UHK_MODULE_MAX_COUNT];
 
 static i2c_message_t txMessage;
 
@@ -39,7 +39,7 @@ static status_t rx(i2c_message_t *rxMessage, uint8_t i2cAddress)
 
 void UhkModuleSlaveDriver_Init(uint8_t uhkModuleDriverId)
 {
-    uhk_module_state_t *uhkModuleState = uhkModuleStates + uhkModuleDriverId;
+    uhk_module_state_t *uhkModuleState = UhkModuleStates + uhkModuleDriverId;
     uhk_module_vars_t *uhkModuleSourceVars = &uhkModuleState->sourceVars;
     uhk_module_vars_t *uhkModuleTargetVars = &uhkModuleState->targetVars;
 
@@ -60,7 +60,7 @@ void UhkModuleSlaveDriver_Init(uint8_t uhkModuleDriverId)
 status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
 {
     status_t status = kStatus_Uhk_IdleSlave;
-    uhk_module_state_t *uhkModuleState = uhkModuleStates + uhkModuleDriverId;
+    uhk_module_state_t *uhkModuleState = UhkModuleStates + uhkModuleDriverId;
     uhk_module_vars_t *uhkModuleSourceVars = &uhkModuleState->sourceVars;
     uhk_module_vars_t *uhkModuleTargetVars = &uhkModuleState->targetVars;
     uhk_module_phase_t *uhkModulePhase = &uhkModuleState->phase;
@@ -215,5 +215,5 @@ void UhkModuleSlaveDriver_Disconnect(uint8_t uhkModuleDriverId)
     if (uhkModuleDriverId == SlaveId_LeftKeyboardHalf) {
         Slaves[SlaveId_LeftLedDriver].isConnected = false;
     }
-    uhkModuleStates[uhkModuleDriverId].isEnumerated = false;
+    UhkModuleStates[uhkModuleDriverId].isEnumerated = false;
 }

@@ -80,7 +80,7 @@ void setTestLed(void)
 {
     uint8_t ledState = GenericHidInBuffer[1];
     TEST_LED_SET(ledState);
-    uhkModuleStates[0].sourceVars.isTestLedOn = ledState;
+    UhkModuleStates[0].sourceVars.isTestLedOn = ledState;
 }
 
 // To be removed. Now it's already part of getKeyboardState()
@@ -147,7 +147,7 @@ void setLedPwm(void)
 {
     uint8_t brightnessPercent = GenericHidInBuffer[1];
     LedPwm_SetBrightness(brightnessPercent);
-    uhkModuleStates[0].sourceVars.ledPwmBrightness = brightnessPercent;
+    UhkModuleStates[0].sourceVars.ledPwmBrightness = brightnessPercent;
 }
 
 void getAdcValue(void)

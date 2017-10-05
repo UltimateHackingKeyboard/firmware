@@ -77,7 +77,7 @@
 
 // Variables:
 
-    extern uhk_module_state_t uhkModuleStates[UHK_MODULE_MAX_COUNT];
+    extern uhk_module_state_t UhkModuleStates[UHK_MODULE_MAX_COUNT];
 
 // Functions:
 
