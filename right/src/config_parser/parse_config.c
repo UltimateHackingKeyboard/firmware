@@ -28,38 +28,46 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
     uint16_t keymapCount;
 
     (void)dataModelVersion;
+
     if (moduleConfigurationCount > 255) {
         return ParserError_InvalidModuleConfigurationCount;
     }
+
     for (uint8_t moduleConfigurationIdx = 0; moduleConfigurationIdx < moduleConfigurationCount; moduleConfigurationIdx++) {
         errorCode = parseModuleConfiguration(buffer);
         if (errorCode != ParserError_Success) {
             return errorCode;
         }
     }
+
     macroCount = readCompactLength(buffer);
     if (macroCount > MAX_MACRO_NUM) {
         return ParserError_InvalidMacroCount;
     }
+
     for (uint8_t macroIdx = 0; macroIdx < macroCount; macroIdx++) {
         errorCode = ParseMacro(buffer, macroIdx);
         if (errorCode != ParserError_Success) {
             return errorCode;
         }
     }
+
     keymapCount = readCompactLength(buffer);
-    if (keymapCount > MAX_KEYMAP_NUM) {
+    if (keymapCount == 0 || keymapCount > MAX_KEYMAP_NUM) {
         return ParserError_InvalidKeymapCount;
     }
+
     for (uint8_t keymapIdx = 0; keymapIdx < keymapCount; keymapIdx++) {
         errorCode = ParseKeymap(buffer, keymapIdx, keymapCount, macroCount);
         if (errorCode != ParserError_Success) {
             return errorCode;
         }
     }
+
     if (!ParserRunDry) {
         AllKeymapsCount = keymapCount;
         AllMacrosCount = macroCount;
     }
+
     return ParserError_Success;
 }
