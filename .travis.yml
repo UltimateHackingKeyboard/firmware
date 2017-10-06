@@ -4,7 +4,7 @@ cache:
   directories:
     - $HOME/Library/Caches/Homebrew/Cask
 install:
-  - brew cask install eclipse-cpp gcc-arm-embedded
+  - brew tap Homebrew/bundle && brew bundle
   - /Applications/Eclipse.app/Contents/MacOS/eclipse -noSplash 
     -application org.eclipse.equinox.p2.director 
     -repository http://gnuarmeclipse.sourceforge.net/updates 
@@ -16,4 +16,3 @@ script:
     -import $TRAVIS_BUILD_DIR/left/build/kds
     -import $TRAVIS_BUILD_DIR/right/build/kds
     -build all
-
