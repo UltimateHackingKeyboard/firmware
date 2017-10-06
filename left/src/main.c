@@ -35,7 +35,6 @@ int main(void)
     InitClock();
     InitPeripherals();
     KeyMatrix_Init(&keyMatrix);
-    printf("Hello from semihosting!");
 #if ALWAYS_ENTER_BOOTLOADER
     JumpToBootloader(); /* << EST: \todo Temporary only */
 #endif
