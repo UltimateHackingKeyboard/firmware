@@ -20,7 +20,9 @@ static volatile bool masterFinished = false;
 
 static void masterCallback(SPI_Type *base, spi_master_handle_t *masterHandle, status_t status, void *userData)
 {
+#ifdef DEBUG_OVER_SPI
     masterFinished = true;
+#endif
 }
 
 void DebugOverSpi_Init(void)
@@ -42,7 +44,6 @@ void DebugOverSpi_Init(void)
     SPI_MasterGetDefaultConfig(&userConfig);
     uint32_t srcFreq = CLOCK_GetFreq(EXAMPLE_SPI_MASTER_SOURCE_CLOCK);
     SPI_MasterInit(EXAMPLE_SPI_MASTER, &userConfig, srcFreq);
-
     SPI_MasterTransferCreateHandle(EXAMPLE_SPI_MASTER, &handle, masterCallback, NULL);
 #endif
 }

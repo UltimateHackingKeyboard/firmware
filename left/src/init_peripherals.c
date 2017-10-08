@@ -18,12 +18,14 @@ uint8_t byteIn;
 uint8_t rxMessagePos;
 i2c_slave_transfer_event_t prevEvent;
 
-uint8_t dosBuffer[60];
+uint8_t dosBuffer[2];
 
 static void i2cSlaveCallback(I2C_Type *base, i2c_slave_transfer_t *xfer, void *userData)
 {
     dosBuffer[0] = xfer->event;
-    DebugOverSpi_Send(dosBuffer, 1);
+    dosBuffer[1] = byteIn;
+    DebugOverSpi_Send(dosBuffer, 2);
+
     switch (xfer->event) {
         case kI2C_SlaveTransmitEvent:
             SlaveTxHandler();
