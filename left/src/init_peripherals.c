@@ -9,6 +9,7 @@
 #include "led_pwm.h"
 #include "slave_protocol_handler.h"
 #include "i2c_watchdog.h"
+#include "debug_over_spi.h"
 
 i2c_slave_config_t slaveConfig;
 i2c_slave_handle_t slaveHandle;
@@ -17,8 +18,12 @@ uint8_t byteIn;
 uint8_t rxMessagePos;
 i2c_slave_transfer_event_t prevEvent;
 
+uint8_t dosBuffer[60];
+
 static void i2cSlaveCallback(I2C_Type *base, i2c_slave_transfer_t *xfer, void *userData)
 {
+    dosBuffer[0] = xfer->event;
+    DebugOverSpi_Send(dosBuffer, 1);
     switch (xfer->event) {
         case kI2C_SlaveTransmitEvent:
             SlaveTxHandler();
@@ -54,9 +59,11 @@ void InitInterruptPriorities(void)
 {
     NVIC_SetPriority(I2C0_IRQn, 1);
     NVIC_SetPriority(TPM1_IRQn, 1);
+    NVIC_SetPriority(SPI0_IRQn, 1);
 }
 
-void InitI2c(void) {
+void InitI2c(void)
+{
     port_pin_config_t pinConfig = {
         .pullSelect = kPORT_PullUp,
     };
@@ -76,7 +83,8 @@ void InitI2c(void) {
     I2C_SlaveTransferNonBlocking(I2C_BUS_BASEADDR, &slaveHandle, kI2C_SlaveCompletionEvent);
 }
 
-void InitLedDriver(void) {
+void InitLedDriver(void)
+{
     CLOCK_EnableClock(LED_DRIVER_SDB_CLOCK);
     PORT_SetPinMux(LED_DRIVER_SDB_PORT, LED_DRIVER_SDB_PIN, kPORT_MuxAsGpio);
     GPIO_PinInit(LED_DRIVER_SDB_GPIO, LED_DRIVER_SDB_PIN, &(gpio_pin_config_t){kGPIO_DigitalOutput, 0});
@@ -89,6 +97,7 @@ void InitPeripherals(void)
     InitLedDriver();
     InitTestLed();
     LedPwm_Init();
-    InitI2c();
 //    InitI2cWatchdog();
+    DebugOverSpi_Init();
+    InitI2c();
 }
