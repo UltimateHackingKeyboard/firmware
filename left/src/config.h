@@ -3,6 +3,6 @@
 
 // Macros:
 
-    #define DEBUG_OVER_SPI
+//    #define DEBUG_OVER_SPI
 
 #endif

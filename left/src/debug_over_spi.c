@@ -14,7 +14,7 @@ static spi_transfer_t xfer = {0};
 static spi_master_config_t userConfig;
 spi_master_handle_t handle;
 
-static volatile bool masterFinished = false;
+static volatile bool masterFinished = true;
 
 #endif
 
@@ -51,12 +51,12 @@ void DebugOverSpi_Init(void)
 void DebugOverSpi_Send(uint8_t *tx, uint8_t len)
 {
 #ifdef DEBUG_OVER_SPI
-//    if (masterFinished) {
+    if (masterFinished) {
         masterFinished = false;
         memcpy(srcBuff, tx, MIN(BUFFER_SIZE, len));
         xfer.txData = srcBuff;
         xfer.dataSize = len;
         SPI_MasterTransferNonBlocking(EXAMPLE_SPI_MASTER, &handle, &xfer);
-//    }
+    }
 #endif
 }

@@ -14,16 +14,14 @@
 i2c_slave_config_t slaveConfig;
 i2c_slave_handle_t slaveHandle;
 
-uint8_t byteIn;
+uint8_t userData;
 uint8_t rxMessagePos;
-i2c_slave_transfer_event_t prevEvent;
-
 uint8_t dosBuffer[2];
 
-static void i2cSlaveCallback(I2C_Type *base, i2c_slave_transfer_t *xfer, void *userData)
+static void i2cSlaveCallback(I2C_Type *base, i2c_slave_transfer_t *xfer, void *userDataArg)
 {
     dosBuffer[0] = xfer->event;
-    dosBuffer[1] = byteIn;
+    dosBuffer[1] = userData;
     DebugOverSpi_Send(dosBuffer, 2);
 
     switch (xfer->event) {
@@ -32,29 +30,18 @@ static void i2cSlaveCallback(I2C_Type *base, i2c_slave_transfer_t *xfer, void *u
             xfer->data = (uint8_t*)&TxMessage;
             xfer->dataSize = TxMessage.length + I2C_MESSAGE_HEADER_LENGTH;
             break;
-        case kI2C_SlaveReceiveEvent:
-            if (prevEvent == kI2C_SlaveReceiveEvent) {
-                ((uint8_t*)&RxMessage)[rxMessagePos++] = byteIn;
-            } else {
-                rxMessagePos = 0;
-                memset(&RxMessage, 0, I2C_MESSAGE_MAX_TOTAL_LENGTH);
-            }
-
-            xfer->data = (uint8_t*)&byteIn;
-            xfer->dataSize = 1;
+        case kI2C_SlaveAddressMatchEvent:
+            rxMessagePos = 0;
             break;
-        case kI2C_SlaveCompletionEvent:
-            if (prevEvent == kI2C_SlaveReceiveEvent) {
-                ((uint8_t*)&RxMessage)[rxMessagePos] = byteIn;
-                RxMessage.length = rxMessagePos - I2C_MESSAGE_HEADER_LENGTH;
+        case kI2C_SlaveReceiveEvent:
+            ((uint8_t*)&RxMessage)[rxMessagePos++] = userData;
+            if (RxMessage.length == rxMessagePos-I2C_MESSAGE_HEADER_LENGTH) {
                 SlaveRxHandler();
             }
             break;
         default:
             break;
     }
-
-    prevEvent = xfer->event;
 }
 
 void InitInterruptPriorities(void)
@@ -80,9 +67,8 @@ void InitI2c(void)
     I2C_SlaveGetDefaultConfig(&slaveConfig);
     slaveConfig.slaveAddress = I2C_ADDRESS_LEFT_KEYBOARD_HALF_FIRMWARE;
     I2C_SlaveInit(I2C_BUS_BASEADDR, &slaveConfig);
-    I2C_SlaveTransferCreateHandle(I2C_BUS_BASEADDR, &slaveHandle, i2cSlaveCallback, NULL);
-    slaveHandle.eventMask |= kI2C_SlaveCompletionEvent;
-    I2C_SlaveTransferNonBlocking(I2C_BUS_BASEADDR, &slaveHandle, kI2C_SlaveCompletionEvent);
+    I2C_SlaveTransferCreateHandle(I2C_BUS_BASEADDR, &slaveHandle, i2cSlaveCallback, &userData);
+    I2C_SlaveTransferNonBlocking(I2C_BUS_BASEADDR, &slaveHandle, kI2C_SlaveAddressMatchEvent);
 }
 
 void InitLedDriver(void)
