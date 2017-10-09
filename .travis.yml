@@ -4,7 +4,7 @@ cache:
   directories:
     - $HOME/Library/Caches/Homebrew/Cask
 install:
-  - brew tap Homebrew/bundle && brew bundle
+  - brew update && brew bundle
   - /Applications/Eclipse.app/Contents/MacOS/eclipse -noSplash 
     -application org.eclipse.equinox.p2.director 
     -repository http://gnuarmeclipse.sourceforge.net/updates 
