@@ -1,2 +1,2 @@
 cask "eclipse-cpp"
-cask "gcc-arm-embedded"
+cask "./gcc-arm-embedded"
