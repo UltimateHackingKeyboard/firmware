@@ -1,5 +1,6 @@
 language: generic
 sudo: required
+os: linux
 cache:
   directories:
     - $HOME/Library/Caches/Homebrew/Cask
