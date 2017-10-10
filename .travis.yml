@@ -4,14 +4,14 @@ cache:
   directories:
     - $HOME/Library/Caches/Homebrew/Cask
 install:
-  - brew tap Homebrew/bundle && brew bundle
-  - /Applications/Eclipse.app/Contents/MacOS/eclipse -noSplash 
+  - brew update && brew bundle -v
+  - /Applications/Eclipse\ CPP.app/Contents/MacOS/eclipse -noSplash 
     -application org.eclipse.equinox.p2.director 
     -repository http://gnuarmeclipse.sourceforge.net/updates 
     -installIUs ilg.gnuarmeclipse.managedbuild.cross.feature.group 
     -profileProperties org.eclipse.update.install.features=true
 script:
-  - /Applications/Eclipse.app/Contents/MacOS/eclipse -noSplash 
+  - /Applications/Eclipse\ CPP.app/Contents/MacOS/eclipse -noSplash 
     -application org.eclipse.cdt.managedbuilder.core.headlessbuild 
     -import $TRAVIS_BUILD_DIR/left/build/kds
     -import $TRAVIS_BUILD_DIR/right/build/kds
