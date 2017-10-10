@@ -2,6 +2,7 @@ cask 'gcc-arm-embedded' do
   version '4_8-2014q3'
   sha256 '6b30901738b09a8d22fdfff99e991217444b80ac492a6163af5c06a3baaa3487'
 
+  # launchpad.net/gcc-arm-embedded/ was verified as official when first introduced to the cask
   url "https://launchpad.net/gcc-arm-embedded/4.8/4.8-2014-q3-update/+download/gcc-arm-none-eabi-#{version}-20140805-mac.tar.bz2"
   name 'GCC ARM Embedded'
   homepage 'https://developer.arm.com/open-source/gnu-toolchain/gnu-rm'
