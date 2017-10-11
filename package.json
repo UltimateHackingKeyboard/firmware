@@ -1,0 +1,18 @@
+{
+  "name": "uhk-firmware",
+  "homepage": "https://UltimateHackingKeyboard.com",
+  "description": "The firmware of the Ultimate Hacking Keyboard",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/UltimateHackingKeyboard/firmware.git"
+  },
+  "author": "Ultimate Gadget Laboratories",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/UltimateHackingKeyboard/firmware/issues"
+  },
+  "version": "2.0.0",
+  "dataModelVersion": "1.0.0",
+  "usbProtocolVersion": "1.1.0",
+  "slaveProtocolVersion": "2.0.0"
+}
