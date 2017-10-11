@@ -6,7 +6,7 @@ and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
 ## [2.0.0] - 2017-10-10
 
-Data model: 1.0.0 (unchanged) | USB Protocol: 1.1.0 (minor bump) | Slave Protocol: 2.0.0 (major bump)
+Data Model: 1.0.0 (unchanged) | USB Protocol: 1.1.0 (minor bump) | Slave Protocol: 2.0.0 (major bump)
 
 - Read the hardware and user configuration area of the EEPROM upon startup and set the default keymap.
 - Greatly improve the I2C watchdog and drivers. Communication between the halves or the add-ons should never fail again.
@@ -20,6 +20,6 @@ Data model: 1.0.0 (unchanged) | USB Protocol: 1.1.0 (minor bump) | Slave Protoco
 
 ## [1.0.0] - 2017-08-30
 
-Data model: 1.0.0 | USB Protocol: 1.0.0 | Slave Protocol: 1.0.0
+Data Model: 1.0.0 | USB Protocol: 1.0.0 | Slave Protocol: 1.0.0
 
 - First Release
