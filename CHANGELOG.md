@@ -13,7 +13,7 @@ Data model: 1.0.0 (unchanged) | USB Protocol: 1.1.0 (minor bump) | Slave Protoco
 - Implement generic enumeration sequence and per-slave state for UHK modules, allowing add-ons to be added. `SLAVEPROTOCOL:MAJOR`
 - Make the master cache the output fields of slave modules, allowing for more frequent input updates.
 - Optimize I2C protocol scheduler resulting in increased roustness and more efficient use of I2C bandwidth.
-- Add I2C message headers containing a length header, allowing for variable-length mesages and a CRC16-CCITT checksum, allowing for robust communication. `SLAVEPROTOCOL:MAJOR`
+- Add I2C message headers containing a length header, allowing for variable-length messages and a CRC16-CCITT checksum, allowing for robust communication. `SLAVEPROTOCOL:MAJOR`
 - Add mechanism to dump the internal state of the KL03 via SPI for debugging purposes.
 - Add merge sensor state and attached module IDs to GetDebugInfo(). `USBPROTOCOL:PATCH`
 - Throw ParserError_InvalidKeymapCount if keymapCount == 0. `DATAMODEL:PATCH`
