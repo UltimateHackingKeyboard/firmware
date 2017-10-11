@@ -21,5 +21,5 @@ matrix:
         - nix-env -i gcc-arm-embedded-4.8-2014q1-20140314
         - nix-env -i eclipse-cpp
     - os: osx
-      env: PATH=$PATH:/Applications/Eclipse\ CPP.app/Contents/MacOS
+      env: PATH=$PATH:"/Applications/Eclipse CPP.app/Contents/MacOS"
       before_install: brew update && brew bundle -v
