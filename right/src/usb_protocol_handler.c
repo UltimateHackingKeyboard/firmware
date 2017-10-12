@@ -265,6 +265,18 @@ void getDebugInfo(void)
     GenericHidOutBuffer[8] = (ticks >> 56) & 0xff;
 */}
 
+void jumpToSlaveBootloader(void)
+{
+    uint8_t uhkModuleDriverId = GenericHidInBuffer[1];
+
+    if (uhkModuleDriverId >= UHK_MODULE_MAX_COUNT) {
+        setError(JumpToBootloaderError_InvalidModuleDriverId);
+        return;
+    }
+
+    UhkModuleStates[uhkModuleDriverId].jumpToBootloader = true;
+}
+
 // The main protocol handler function
 
 void UsbProtocolHandler(void)
@@ -315,6 +327,9 @@ void UsbProtocolHandler(void)
             break;
         case UsbCommand_GetDebugInfo:
             getDebugInfo();
+            break;
+        case UsbCommand_JumpToSlaveBootloader:
+            jumpToSlaveBootloader();
             break;
         default:
             break;

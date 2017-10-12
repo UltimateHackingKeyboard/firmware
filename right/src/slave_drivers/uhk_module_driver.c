@@ -174,6 +174,19 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
                 BoolBitsToBytes(rxMessage->data, CurrentKeyStates[slotId], uhkModuleState->features.keyCount);
             }
             status = kStatus_Uhk_NoTransfer;
+            *uhkModulePhase = UhkModulePhase_JumpToBootloader;
+            break;
+
+        // Jump to bootloader
+        case UhkModulePhase_JumpToBootloader:
+            if (uhkModuleState->jumpToBootloader) {
+                txMessage.data[0] = SlaveCommand_JumpToBootloader;
+                txMessage.length = 1;
+                status = tx(i2cAddress);
+                uhkModuleState->jumpToBootloader = false;
+            } else {
+                status = kStatus_Uhk_NoTransfer;
+            }
             *uhkModulePhase = UhkModulePhase_SetTestLed;
             break;
 
