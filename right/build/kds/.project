@@ -31,6 +31,11 @@
 	</natures>
 	<linkedResources>
 		<link>
+			<name>bootloader-shared</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
 			<name>drivers</name>
 			<type>2</type>
 			<locationURI>virtual:/virtual</locationURI>
@@ -59,6 +64,16 @@
 			<name>usb</name>
 			<type>2</type>
 			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>bootloader-shared/wormhole.c</name>
+			<type>1</type>
+			<locationURI>PARENT-3-PROJECT_LOC/lib/bootloader/src/bootloader/src/wormhole.c</locationURI>
+		</link>
+		<link>
+			<name>bootloader-shared/wormhole.h</name>
+			<type>1</type>
+			<locationURI>PARENT-3-PROJECT_LOC/lib/bootloader/src/bootloader/wormhole.h</locationURI>
 		</link>
 		<link>
 			<name>drivers/fsl_adc16.c</name>

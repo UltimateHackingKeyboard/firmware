@@ -12,7 +12,7 @@
 #include "bus_pal_hardware.h"
 #include "bootloader_config.h"
 #include "command.h"
-#include "wormhole.h"
+#include "bootloader/wormhole.h"
 #include "eeprom.h"
 
 key_matrix_t KeyMatrix = {

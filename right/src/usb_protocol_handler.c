@@ -9,7 +9,7 @@
 #include "led_pwm.h"
 #include "slave_scheduler.h"
 #include "slave_drivers/uhk_module_driver.h"
-#include "wormhole.h"
+#include "bootloader/wormhole.h"
 #include "peripherals/adc.h"
 #include "eeprom.h"
 #include "keymaps.h"
