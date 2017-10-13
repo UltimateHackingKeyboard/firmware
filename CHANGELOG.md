@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [2.1.0] - 2017-10-13
+
+Data Model: 1.0.0 (unchanged) | USB Protocol: 1.2.0 (minor bump) | Slave Protocol: 2.1.0 (minor bump)
+
+- Add jumpToSlaveBootloader USB and slave protocol command. `USBPROTOCOL:MINOR` `SLAVEPROTOCOL:MINOR`
+- Fix generic HID descriptor enumeration error.
+
 ## [2.0.0] - 2017-10-10
 
 Data Model: 1.0.0 (unchanged) | USB Protocol: 1.1.0 (minor bump) | Slave Protocol: 2.0.0 (major bump)
