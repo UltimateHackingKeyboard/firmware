@@ -1,15 +1,22 @@
 #!/usr/bin/env sh
 
-version=$1
+version="$1"
+
+if [ -z "$version" ]; then
+    echo "No version number is specified."
+    exit 1
+fi
+
 releaseName=uhk-firmware-$version
 releaseDir=/tmp/$releaseName
 rightFirmwareFile=right/build/kds/uhk-right-release-srec/uhk-right.srec
 leftFirmwareFile=left/build/kds/uhk-left-release-srec/uhk-left.srec
 
 chmod 644 $rightFirmwareFile $leftFirmwareFile
+ls -l $rightFirmwareFile $leftFirmwareFile
 rm -r $releaseDir
 mkdir $releaseDir
 cp $rightFirmwareFile $releaseDir
 cp $leftFirmwareFile $releaseDir
-echo $version > $releaseDir/version
+cp package.json $releaseDir
 tar -cvjSf $releaseName.tar.bz2 -C $releaseDir .
