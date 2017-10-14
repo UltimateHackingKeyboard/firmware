@@ -21,11 +21,14 @@ static parser_error_t parseModuleConfiguration(config_buffer_t *buffer)
 
 parser_error_t ParseConfig(config_buffer_t *buffer)
 {
-    uint16_t dataModelVersion = readUInt16(buffer);
-    parser_error_t errorCode;
-    uint16_t moduleConfigurationCount = readCompactLength(buffer);
+    uint16_t len;
     uint16_t macroCount;
     uint16_t keymapCount;
+    parser_error_t errorCode;
+
+    uint16_t dataModelVersion = readUInt16(buffer);
+    readString(buffer, &len); // Ignore device name
+    uint16_t moduleConfigurationCount = readCompactLength(buffer);
 
     (void)dataModelVersion;
 
