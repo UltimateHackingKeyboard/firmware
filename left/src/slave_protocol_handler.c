@@ -43,7 +43,7 @@ void SlaveRxHandler(void)
     uint8_t commandId = RxMessage.data[0];
     switch (commandId) {
         case SlaveCommand_JumpToBootloader:
-            JumpToBootloader();
+            NVIC_SystemReset();
             break;
         case SlaveCommand_SetTestLed:
             TxMessage.length = 0;
