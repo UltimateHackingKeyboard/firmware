@@ -2,7 +2,6 @@
 #include "usb_composite_device.h"
 #include "usb_descriptors/usb_descriptor_hid.h"
 #include "usb_descriptors/usb_descriptor_strings.h"
-#include "bootloader_config.h"
 #include "bus_pal_hardware.h"
 #include "bootloader/wormhole.h"
 

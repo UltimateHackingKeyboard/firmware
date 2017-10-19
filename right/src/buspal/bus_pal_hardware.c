@@ -2,7 +2,6 @@
 #include "usb_descriptor.h"
 #include "usb_device_config.h"
 #include "composite.h"
-#include "bootloader_config.h"
 #include "microseconds/microseconds.h"
 #include "i2c.h"
 #include "peripherals/test_led.h"

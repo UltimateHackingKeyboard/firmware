@@ -10,7 +10,6 @@
 #include "usb_interfaces/usb_interface_basic_keyboard.h"
 #include "usb_interfaces/usb_interface_media_keyboard.h"
 #include "bus_pal_hardware.h"
-#include "bootloader_config.h"
 #include "command.h"
 #include "bootloader/wormhole.h"
 #include "eeprom.h"
