@@ -3,8 +3,8 @@ set -e # fail the script if a command fails
 
 PATH=$PATH:/usr/local/bin # This should make node and npm accessible on OSX.
 firmware_image=`pwd`/$1
-usb_dir=../../../lib/agent/usb
-usb_binding=$usb_dir/node_modules/usb/build/Release/usb_bindings.node
+usb_dir=../../../lib/agent/packages/usb
+usb_binding=$usb_dir/node_modules/node-hid/build/Release/HID.node
 
 case "$(uname -s)" in
    Linux)
@@ -24,8 +24,8 @@ blhost="../../../lib/bootloader/bin/Tools/blhost/$blhost_path/blhost --usb 0x1d5
 set -x # echo on
 
 if [ ! -f $usb_binding ]; then
-   cd $usb_dir
-   npm install
+   echo 'You have to make jump-to-bootloader.js work by executing `npm i` in ${UhkFirmwareDirectory}/lib/agent'
+   exit 1
 fi
 
 $usb_dir/jump-to-bootloader.js
