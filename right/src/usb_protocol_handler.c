@@ -73,8 +73,7 @@ void reenumerate(void)
     Wormhole.magicNumber = WORMHOLE_MAGIC_NUMBER;
     Wormhole.enumerationMode = GenericHidInBuffer[1];
     Wormhole.timeoutMs = *((uint32_t*)(GenericHidInBuffer+2));
-    SCB->AIRCR = 0x5FA<<SCB_AIRCR_VECTKEY_Pos | SCB_AIRCR_SYSRESETREQ_Msk; // Reset the MCU.
-    for (;;);
+    NVIC_SystemReset();
 }
 
 void setTestLed(void)
