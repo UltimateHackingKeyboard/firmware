@@ -78,11 +78,6 @@ void main(void)
     InitPeripherals();
     EEPROM_LaunchTransfer(EepromOperation_Read, ConfigBufferId_HardwareConfig, hardwareConfigurationReadFinished);
 
-#ifdef FORCE_BUSPAL
-    Wormhole.magicNumber = WORMHOLE_MAGIC_NUMBER;
-    Wormhole.enumerationMode = EnumerationMode_BusPal;
-#endif
-
     if (Wormhole.magicNumber == WORMHOLE_MAGIC_NUMBER && Wormhole.enumerationMode == EnumerationMode_BusPal) {
         Wormhole.magicNumber = 0;
         init_hardware();
