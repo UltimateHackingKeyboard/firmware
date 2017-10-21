@@ -30,9 +30,9 @@ set -x # echo on
 
 $usb_dir/jump-to-slave-bootloader.js
 $usb_dir/jump-to-bootloader.js buspal
-sleep 1
+sleep 2
 $blhost get-property 1
 $blhost flash-erase-all-unsecure
-$blhost write-memory 0x0 uhk-left-release-srec/uhk-left.bin
+$blhost write-memory 0x0 "$firmware_image"
 $blhost reset
 ../../../lib/bootloader/bin/Tools/blhost/$blhost_path/blhost --usb 0x1d50,0x6121 reset
