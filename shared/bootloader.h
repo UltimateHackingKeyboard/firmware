@@ -11,7 +11,7 @@
 // Macros:
 
     #define BOOTLOADER_TAG 0x6766636B
-    #define BOOTLOADER_TIMEOUT_MS 100
+    #define BOOTLOADER_TIMEOUT_MS 3000
     #define CLOCK_FLAG_HIGH_SPEED_MODE 0x01
 
     #define DEFINE_BOOTLOADER_CONFIG_AREA(address) \
