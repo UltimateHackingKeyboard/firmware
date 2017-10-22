@@ -15,8 +15,14 @@
         KbootDriverId_Singleton,
     } kboot_driver_id_t;
 
+    typedef enum {
+        KbootCommand_Idle,
+        KbootCommand_Ping,
+        KbootCommand_Reset,
+    } kboot_command_t;
+
     typedef struct {
-        bool isTransferScheduled;
+        kboot_command_t commandType;
         uint8_t i2cAddress;
         uint8_t phase;
     } kboot_driver_state_t;

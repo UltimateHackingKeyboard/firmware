@@ -7,6 +7,7 @@ kboot_driver_state_t KbootDriverState;
 static uint8_t rxBuffer[MAX_KBOOT_COMMAND_LENGTH];
 static uint8_t resetCommand[] = {0x5a, 0xa4, 0x04, 0x00, 0x6f, 0x46, 0x0b, 0x00, 0x00, 0x00};
 static uint8_t ackMessage[] = {0x5a, 0xa1};
+
 static status_t tx(uint8_t *buffer, uint8_t length)
 {
     return I2cAsyncWrite(KbootDriverState.i2cAddress, buffer, length);
@@ -25,23 +26,31 @@ status_t KbootSlaveDriver_Update(uint8_t kbootInstanceId)
 {
     status_t status = kStatus_Uhk_IdleSlave;
 
-    if (!KbootDriverState.isTransferScheduled) {
-        return status;
-    }
-
-    switch (KbootDriverState.phase++) {
-        case 0:
-            status = tx(resetCommand, sizeof(resetCommand));
+    switch (KbootDriverState.commandType) {
+        case KbootCommand_Idle:
             break;
-        case 1:
-            status = rx(2);
+        case KbootCommand_Ping:
             break;
-        case 2:
-            status = rx(18);
+        case KbootCommand_Reset:
+            switch (KbootDriverState.phase) {
+                case 0:
+                    status = tx(resetCommand, sizeof(resetCommand));
+                    KbootDriverState.phase++;
+                    break;
+                case 1:
+                    status = rx(2);
+                    KbootDriverState.phase++;
+                    break;
+                case 2:
+                    status = rx(18);
+                    KbootDriverState.phase++;
+                    break;
+                case 3:
+                    status = tx(ackMessage, sizeof(ackMessage));
+                    KbootDriverState.commandType = KbootCommand_Idle;
+                    break;
+            }
             break;
-        case 3:
-            status = tx(ackMessage, sizeof(ackMessage));
-            KbootDriverState.isTransferScheduled = false;
     }
 
     return status;

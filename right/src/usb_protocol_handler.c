@@ -281,9 +281,9 @@ void jumpToSlaveBootloader(void)
 
 void sendKbootCommand(void)
 {
-    uint8_t i2cAddress = GenericHidInBuffer[1];
-    KbootDriverState.i2cAddress = i2cAddress;
-    KbootDriverState.isTransferScheduled = true;
+    KbootDriverState.phase = 0;
+    KbootDriverState.i2cAddress = GenericHidInBuffer[2];
+    KbootDriverState.commandType = GenericHidInBuffer[1];
 }
 
 // The main protocol handler function
