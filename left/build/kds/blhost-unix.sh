@@ -35,4 +35,6 @@ $blhost get-property 1
 $blhost flash-erase-all-unsecure
 $blhost write-memory 0x0 "$firmware_image"
 $blhost reset
+sleep 4
+$usb_dir/send-kboot-reset.js
 ../../../lib/bootloader/bin/Tools/blhost/$blhost_path/blhost --usb 0x1d50,0x6121 reset

@@ -4,6 +4,7 @@
 #include "main.h"
 #include "slave_drivers/is31fl3731_driver.h"
 #include "slave_drivers/uhk_module_driver.h"
+#include "slave_drivers/kboot_driver.h"
 #include "i2c.h"
 #include "i2c_addresses.h"
 
@@ -38,6 +39,11 @@ uhk_slave_t Slaves[] = {
         .init = LedSlaveDriver_Init,
         .update = LedSlaveDriver_Update,
         .perDriverId = LedDriverId_Left,
+    },
+    {
+        .init = KbootSlaveDriver_Init,
+        .update = KbootSlaveDriver_Update,
+        .perDriverId = KbootDriverId_Singleton,
     },
 };
 

@@ -9,12 +9,14 @@
 #include "led_pwm.h"
 #include "slave_scheduler.h"
 #include "slave_drivers/uhk_module_driver.h"
+#include "slave_drivers/kboot_driver.h"
 #include "bootloader/wormhole.h"
 #include "peripherals/adc.h"
 #include "eeprom.h"
 #include "keymaps.h"
 #include "microseconds/microseconds_pit.c"
 #include "i2c_watchdog.h"
+
 // Functions for setting error statuses
 
 void setError(uint8_t error)
@@ -277,6 +279,13 @@ void jumpToSlaveBootloader(void)
     UhkModuleStates[uhkModuleDriverId].jumpToBootloader = true;
 }
 
+void sendKbootCommand(void)
+{
+    uint8_t i2cAddress = GenericHidInBuffer[1];
+    KbootDriverState.i2cAddress = i2cAddress;
+    KbootDriverState.isTransferScheduled = true;
+}
+
 // The main protocol handler function
 
 void UsbProtocolHandler(void)
@@ -330,6 +339,9 @@ void UsbProtocolHandler(void)
             break;
         case UsbCommand_JumpToSlaveBootloader:
             jumpToSlaveBootloader();
+            break;
+        case UsbCommand_SendKbootCommand:
+            sendKbootCommand();
             break;
         default:
             break;
