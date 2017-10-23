@@ -25,6 +25,7 @@
         kboot_command_t commandType;
         uint8_t i2cAddress;
         uint8_t phase;
+        uint32_t status;
     } kboot_driver_state_t;
 
 // Variables:

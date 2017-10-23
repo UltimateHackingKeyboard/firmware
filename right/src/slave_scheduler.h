@@ -13,6 +13,7 @@
         SlaveId_RightAddon,
         SlaveId_RightLedDriver,
         SlaveId_LeftLedDriver,
+        SlaveId_KbootDriver,
     } slave_id_t;
 
     typedef void (slave_init_t)(uint8_t);
@@ -25,6 +26,7 @@
         slave_update_t *update;
         slave_disconnect_t *disconnect;
         bool isConnected;
+        status_t previousStatus;
     } uhk_slave_t;
 
     typedef enum {

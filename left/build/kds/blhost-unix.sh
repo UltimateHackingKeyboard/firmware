@@ -35,7 +35,8 @@ case "$(uname -s)" in
      ;;
 esac
 
-blhost="../../../lib/bootloader/bin/Tools/blhost/$blhost_path/blhost --usb 0x1d50,0x6121 --buspal i2c,0x10,100k"
+blhost_usb="../../../lib/bootloader/bin/Tools/blhost/$blhost_path/blhost --usb 0x1d50,0x6121"
+blhost_buspal="$blhost_usb --buspal i2c,0x10,100k"
 
 set -x # echo on
 
@@ -44,12 +45,12 @@ set -x # echo on
 #   npm install
 #fi
 
+$usb_dir/send-kboot-command.js ping 0x10
 $usb_dir/jump-to-slave-bootloader.js
 $usb_dir/reenumerate.js buspal
-$blhost get-property 1
-$blhost flash-erase-all-unsecure
-$blhost write-memory 0x0 "$firmware_image"
-$blhost reset
-sleep 4
-#$usb_dir/send-kboot-command.js reset 0x10
-#../../../lib/bootloader/bin/Tools/blhost/$blhost_path/blhost --usb 0x1d50,0x6121 reset
+$blhost_buspal get-property 1
+$blhost_buspal flash-erase-all-unsecure
+$blhost_buspal write-memory 0x0 "$firmware_image"
+$blhost_usb reset
+$usb_dir/reenumerate.js normalKeyboard
+$usb_dir/send-kboot-command.js reset 0x10
