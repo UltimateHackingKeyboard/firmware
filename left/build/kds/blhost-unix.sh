@@ -45,7 +45,7 @@ set -x # echo on
 #   npm install
 #fi
 
-$usb_dir/send-kboot-command.js ping 0x10
+$usb_dir/send-kboot-command-to-slave.js ping 0x10
 $usb_dir/jump-to-slave-bootloader.js
 $usb_dir/reenumerate.js buspal
 $blhost_buspal get-property 1
@@ -53,4 +53,4 @@ $blhost_buspal flash-erase-all-unsecure
 $blhost_buspal write-memory 0x0 "$firmware_image"
 $blhost_usb reset
 $usb_dir/reenumerate.js normalKeyboard
-$usb_dir/send-kboot-command.js reset 0x10
+$usb_dir/send-kboot-command-to-slave.js reset 0x10
