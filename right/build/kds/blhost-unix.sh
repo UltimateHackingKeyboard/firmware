@@ -28,7 +28,7 @@ if [ ! -f $usb_binding ]; then
    exit 1
 fi
 
-$usb_dir/jump-to-bootloader.js
+$usb_dir/reenumerate.js bootloader
 $blhost flash-security-disable 0403020108070605
 $blhost flash-erase-region 0xc000 475136
 $blhost flash-image $firmware_image
