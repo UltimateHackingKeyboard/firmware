@@ -43,13 +43,14 @@ void UpdateUsbReports(void)
         return;
     }
 
+    KeyMatrix_Scan(&KeyMatrix);
+
+    memcpy(CurrentKeyStates[SlotId_RightKeyboardHalf], KeyMatrix.keyStates, MAX_KEY_COUNT_PER_MODULE);
+
     ResetActiveUsbBasicKeyboardReport();
     ResetActiveUsbMediaKeyboardReport();
     ResetActiveUsbSystemKeyboardReport();
 
-    KeyMatrix_Scan(&KeyMatrix);
-
-    memcpy(CurrentKeyStates[SlotId_RightKeyboardHalf], KeyMatrix.keyStates, MAX_KEY_COUNT_PER_MODULE);
     UpdateActiveUsbReports();
 
     SwitchActiveUsbBasicKeyboardReport();
