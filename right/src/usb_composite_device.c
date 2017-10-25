@@ -11,9 +11,9 @@ usb_composite_device_t UsbCompositeDevice;
 usb_device_class_config_struct_t UsbDeviceCompositeClassConfig[USB_DEVICE_CONFIG_HID] = {
     {UsbGenericHidCallback,     (class_handle_t)NULL, &UsbGenericHidClass},
     {UsbBasicKeyboardCallback,  (class_handle_t)NULL, &UsbBasicKeyboardClass},
-    {UsbMouseCallback,          (class_handle_t)NULL, &UsbMouseClass},
     {UsbMediaKeyboardCallback,  (class_handle_t)NULL, &UsbMediaKeyboardClass},
     {UsbSystemKeyboardCallback, (class_handle_t)NULL, &UsbSystemKeyboardClass},
+    {UsbMouseCallback,          (class_handle_t)NULL, &UsbMouseClass},
 };
 
 usb_device_class_config_list_struct_t UsbDeviceCompositeConfigList = {
@@ -42,9 +42,9 @@ static usb_status_t UsbDeviceCallback(usb_device_handle handle, uint32_t event, 
             UsbCompositeDevice.currentConfiguration = *temp8;
             UsbGenericHidSetConfiguration(UsbCompositeDevice.genericHidHandle, *temp8);
             UsbBasicKeyboardSetConfiguration(UsbCompositeDevice.basicKeyboardHandle, *temp8);
-            UsbMouseSetConfiguration(UsbCompositeDevice.mouseHandle, *temp8);
             UsbMediaKeyboardSetConfiguration(UsbCompositeDevice.mediaKeyboardHandle, *temp8);
             UsbSystemKeyboardSetConfiguration(UsbCompositeDevice.systemKeyboardHandle, *temp8);
+            UsbMouseSetConfiguration(UsbCompositeDevice.mouseHandle, *temp8);
             error = kStatus_USB_Success;
             break;
         case kUSB_DeviceEventGetConfiguration:
@@ -59,9 +59,9 @@ static usb_status_t UsbDeviceCallback(usb_device_handle handle, uint32_t event, 
                     UsbCompositeDevice.currentInterfaceAlternateSetting[interface] = alternateSetting;
                     UsbGenericHidSetInterface(UsbCompositeDevice.genericHidHandle, interface, alternateSetting);
                     UsbBasicKeyboardSetInterface(UsbCompositeDevice.basicKeyboardHandle, interface, alternateSetting);
-                    UsbMouseSetInterface(UsbCompositeDevice.mouseHandle, interface, alternateSetting);
                     UsbMediaKeyboardSetInterface(UsbCompositeDevice.mediaKeyboardHandle, interface, alternateSetting);
                     UsbSystemKeyboardSetInterface(UsbCompositeDevice.systemKeyboardHandle, interface, alternateSetting);
+                    UsbMouseSetInterface(UsbCompositeDevice.mouseHandle, interface, alternateSetting);
                     error = kStatus_USB_Success;
                 }
             }
@@ -117,9 +117,9 @@ void InitUsb(void)
     USB_DeviceClassInit(CONTROLLER_ID, &UsbDeviceCompositeConfigList, &UsbCompositeDevice.deviceHandle);
     UsbCompositeDevice.genericHidHandle = UsbDeviceCompositeConfigList.config[USB_GENERIC_HID_INTERFACE_INDEX].classHandle;
     UsbCompositeDevice.basicKeyboardHandle = UsbDeviceCompositeConfigList.config[USB_BASIC_KEYBOARD_INTERFACE_INDEX].classHandle;
-    UsbCompositeDevice.mouseHandle = UsbDeviceCompositeConfigList.config[USB_MOUSE_INTERFACE_INDEX].classHandle;
     UsbCompositeDevice.mediaKeyboardHandle = UsbDeviceCompositeConfigList.config[USB_MEDIA_KEYBOARD_INTERFACE_INDEX].classHandle;
     UsbCompositeDevice.systemKeyboardHandle = UsbDeviceCompositeConfigList.config[USB_SYSTEM_KEYBOARD_INTERFACE_INDEX].classHandle;
+    UsbCompositeDevice.mouseHandle = UsbDeviceCompositeConfigList.config[USB_MOUSE_INTERFACE_INDEX].classHandle;
 
     NVIC_SetPriority((IRQn_Type)irqNumber, USB_DEVICE_INTERRUPT_PRIORITY);
     NVIC_EnableIRQ((IRQn_Type)irqNumber);
