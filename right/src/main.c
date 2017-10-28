@@ -9,6 +9,7 @@
 #include "peripherals/test_led.h"
 #include "usb_interfaces/usb_interface_basic_keyboard.h"
 #include "usb_interfaces/usb_interface_media_keyboard.h"
+#include "usb_protocol_handler.h"
 #include "bus_pal_hardware.h"
 #include "command.h"
 #include "bootloader/wormhole.h"

@@ -17,6 +17,8 @@
 #include "microseconds/microseconds_pit.c"
 #include "i2c_watchdog.h"
 
+uint8_t UsbDebugInfo[USB_GENERIC_HID_OUT_BUFFER_LENGTH];
+
 // Functions for setting error statuses
 
 void setError(uint8_t error)
@@ -233,26 +235,29 @@ void getKeyboardState(void)
 
 void getDebugInfo(void)
 {
-    GenericHidOutBuffer[1] = I2C_Watchdog >> 0;
-    GenericHidOutBuffer[2] = I2C_Watchdog >> 8;
-    GenericHidOutBuffer[3] = I2C_Watchdog >> 16;
-    GenericHidOutBuffer[4] = I2C_Watchdog >> 24;
+    UsbDebugInfo[0] = I2C_Watchdog >> 0;
+    UsbDebugInfo[1] = I2C_Watchdog >> 8;
+    UsbDebugInfo[2] = I2C_Watchdog >> 16;
+    UsbDebugInfo[3] = I2C_Watchdog >> 24;
 
-    GenericHidOutBuffer[5] = I2cSchedulerCounter >> 0;
-    GenericHidOutBuffer[6] = I2cSchedulerCounter >> 8;
-    GenericHidOutBuffer[7] = I2cSchedulerCounter >> 16;
-    GenericHidOutBuffer[8] = I2cSchedulerCounter >> 24;
+    UsbDebugInfo[4] = I2cSchedulerCounter >> 0;
+    UsbDebugInfo[5] = I2cSchedulerCounter >> 8;
+    UsbDebugInfo[6] = I2cSchedulerCounter >> 16;
+    UsbDebugInfo[7] = I2cSchedulerCounter >> 24;
 
-    GenericHidOutBuffer[9] = I2cWatchdog_OuterCounter >> 0;
-    GenericHidOutBuffer[10] = I2cWatchdog_OuterCounter >> 8;
-    GenericHidOutBuffer[11] = I2cWatchdog_OuterCounter >> 16;
-    GenericHidOutBuffer[12] = I2cWatchdog_OuterCounter >> 24;
+    UsbDebugInfo[8] = I2cWatchdog_OuterCounter >> 0;
+    UsbDebugInfo[9] = I2cWatchdog_OuterCounter >> 8;
+    UsbDebugInfo[10] = I2cWatchdog_OuterCounter >> 16;
+    UsbDebugInfo[11] = I2cWatchdog_OuterCounter >> 24;
 
-    GenericHidOutBuffer[13] = I2cWatchdog_InnerCounter >> 0;
-    GenericHidOutBuffer[14] = I2cWatchdog_InnerCounter >> 8;
-    GenericHidOutBuffer[15] = I2cWatchdog_InnerCounter >> 16;
-    GenericHidOutBuffer[16] = I2cWatchdog_InnerCounter >> 24;
-/*
+    UsbDebugInfo[12] = I2cWatchdog_InnerCounter >> 0;
+    UsbDebugInfo[13] = I2cWatchdog_InnerCounter >> 8;
+    UsbDebugInfo[14] = I2cWatchdog_InnerCounter >> 16;
+    UsbDebugInfo[15] = I2cWatchdog_InnerCounter >> 24;
+
+    memcpy(GenericHidOutBuffer, UsbDebugInfo, USB_GENERIC_HID_OUT_BUFFER_LENGTH);
+
+    /*
     uint64_t ticks = microseconds_get_ticks();
     uint32_t microseconds = microseconds_convert_to_microseconds(ticks);
     uint32_t milliseconds = microseconds/1000;
