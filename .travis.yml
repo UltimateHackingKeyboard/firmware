@@ -1,18 +1,25 @@
 language: generic
-os: osx
 cache:
   directories:
     - $HOME/Library/Caches/Homebrew/Cask
-install:
-  - brew update && brew bundle -v
-  - /Applications/Eclipse\ CPP.app/Contents/MacOS/eclipse -noSplash 
-    -application org.eclipse.equinox.p2.director 
-    -repository http://gnuarmeclipse.sourceforge.net/updates 
-    -installIUs ilg.gnuarmeclipse.managedbuild.cross.feature.group 
-    -profileProperties org.eclipse.update.install.features=true
-script:
-  - /Applications/Eclipse\ CPP.app/Contents/MacOS/eclipse -noSplash 
-    -application org.eclipse.cdt.managedbuilder.core.headlessbuild 
-    -import $TRAVIS_BUILD_DIR/left/build/kds
-    -import $TRAVIS_BUILD_DIR/right/build/kds
-    -build all
+install: eclipse -noSplash 
+         -application org.eclipse.equinox.p2.director 
+         -repository http://gnuarmeclipse.sourceforge.net/updates 
+         -installIUs ilg.gnuarmeclipse.managedbuild.cross.feature.group 
+         -profileProperties org.eclipse.update.install.features=true
+script: eclipse -noSplash 
+        -application org.eclipse.cdt.managedbuilder.core.headlessbuild 
+        -import $TRAVIS_BUILD_DIR/left/build/kds
+        -import $TRAVIS_BUILD_DIR/right/build/kds
+        -build all
+matrix:
+  include:
+    - os: linux
+      sudo: required
+      before_install: 
+        - curl https://nixos.org/nix/install | sh && . ~/.nix-profile/etc/profile.d/nix.sh
+        - nix-env -i gcc-arm-embedded-4.8-2014q1-20140314
+        - nix-env -i eclipse-cpp
+    - os: osx
+      env: PATH="$PATH:/Applications/Eclipse CPP.app/Contents/MacOS"
+      before_install: brew update && brew bundle -v

@@ -9,8 +9,8 @@
 #include "peripherals/test_led.h"
 #include "usb_interfaces/usb_interface_basic_keyboard.h"
 #include "usb_interfaces/usb_interface_media_keyboard.h"
+#include "usb_protocol_handler.h"
 #include "bus_pal_hardware.h"
-#include "bootloader_config.h"
 #include "command.h"
 #include "bootloader/wormhole.h"
 #include "eeprom.h"
@@ -44,13 +44,14 @@ void UpdateUsbReports(void)
         return;
     }
 
+    KeyMatrix_Scan(&KeyMatrix);
+
+    memcpy(CurrentKeyStates[SlotId_RightKeyboardHalf], KeyMatrix.keyStates, MAX_KEY_COUNT_PER_MODULE);
+
     ResetActiveUsbBasicKeyboardReport();
     ResetActiveUsbMediaKeyboardReport();
     ResetActiveUsbSystemKeyboardReport();
 
-    KeyMatrix_Scan(&KeyMatrix);
-
-    memcpy(CurrentKeyStates[SlotId_RightKeyboardHalf], KeyMatrix.keyStates, MAX_KEY_COUNT_PER_MODULE);
     UpdateActiveUsbReports();
 
     SwitchActiveUsbBasicKeyboardReport();
@@ -78,11 +79,6 @@ void main(void)
     InitClock();
     InitPeripherals();
     EEPROM_LaunchTransfer(EepromOperation_Read, ConfigBufferId_HardwareConfig, hardwareConfigurationReadFinished);
-
-#ifdef FORCE_BUSPAL
-    Wormhole.magicNumber = WORMHOLE_MAGIC_NUMBER;
-    Wormhole.enumerationMode = EnumerationMode_BusPal;
-#endif
 
     if (Wormhole.magicNumber == WORMHOLE_MAGIC_NUMBER && Wormhole.enumerationMode == EnumerationMode_BusPal) {
         Wormhole.magicNumber = 0;

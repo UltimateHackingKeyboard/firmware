@@ -23,7 +23,8 @@
         UsbCommand_ReadUserConfiguration      = 15,
         UsbCommand_GetKeyboardState           = 16,
         UsbCommand_GetDebugInfo               = 17,
-        UsbCommand_JumpToSlaveBootloader           = 18,
+        UsbCommand_JumpToSlaveBootloader      = 18,
+        UsbCommand_SendKbootCommand           = 19,
     } usb_command_t;
 
     typedef enum {
@@ -39,6 +40,10 @@
     typedef enum {
         JumpToBootloaderError_InvalidModuleDriverId = 1,
     } jump_to_bootloader_error_t;
+
+// Variables:
+
+    extern uint8_t UsbDebugInfo[USB_GENERIC_HID_OUT_BUFFER_LENGTH];
 
 // Functions:
 

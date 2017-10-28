@@ -1,5 +1,6 @@
 #include "usb_composite_device.h"
 #include "usb_interface_generic_hid.h"
+#include "usb_protocol_handler.h"
 
 static usb_device_endpoint_struct_t UsbGenericHidEndpoints[USB_GENERIC_HID_ENDPOINT_COUNT] =
 {

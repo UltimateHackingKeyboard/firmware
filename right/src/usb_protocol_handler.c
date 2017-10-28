@@ -9,12 +9,16 @@
 #include "led_pwm.h"
 #include "slave_scheduler.h"
 #include "slave_drivers/uhk_module_driver.h"
+#include "slave_drivers/kboot_driver.h"
 #include "bootloader/wormhole.h"
 #include "peripherals/adc.h"
 #include "eeprom.h"
 #include "keymaps.h"
 #include "microseconds/microseconds_pit.c"
 #include "i2c_watchdog.h"
+
+uint8_t UsbDebugInfo[USB_GENERIC_HID_OUT_BUFFER_LENGTH];
+
 // Functions for setting error statuses
 
 void setError(uint8_t error)
@@ -72,8 +76,8 @@ void reenumerate(void)
 {
     Wormhole.magicNumber = WORMHOLE_MAGIC_NUMBER;
     Wormhole.enumerationMode = GenericHidInBuffer[1];
-    SCB->AIRCR = 0x5FA<<SCB_AIRCR_VECTKEY_Pos | SCB_AIRCR_SYSRESETREQ_Msk; // Reset the MCU.
-    for (;;);
+    Wormhole.timeoutMs = *((uint32_t*)(GenericHidInBuffer+2));
+    NVIC_SystemReset();
 }
 
 void setTestLed(void)
@@ -231,26 +235,29 @@ void getKeyboardState(void)
 
 void getDebugInfo(void)
 {
-    GenericHidOutBuffer[1] = I2C_Watchdog >> 0;
-    GenericHidOutBuffer[2] = I2C_Watchdog >> 8;
-    GenericHidOutBuffer[3] = I2C_Watchdog >> 16;
-    GenericHidOutBuffer[4] = I2C_Watchdog >> 24;
+    UsbDebugInfo[0] = I2C_Watchdog >> 0;
+    UsbDebugInfo[1] = I2C_Watchdog >> 8;
+    UsbDebugInfo[2] = I2C_Watchdog >> 16;
+    UsbDebugInfo[3] = I2C_Watchdog >> 24;
 
-    GenericHidOutBuffer[5] = I2cSchedulerCounter >> 0;
-    GenericHidOutBuffer[6] = I2cSchedulerCounter >> 8;
-    GenericHidOutBuffer[7] = I2cSchedulerCounter >> 16;
-    GenericHidOutBuffer[8] = I2cSchedulerCounter >> 24;
+    UsbDebugInfo[4] = I2cSchedulerCounter >> 0;
+    UsbDebugInfo[5] = I2cSchedulerCounter >> 8;
+    UsbDebugInfo[6] = I2cSchedulerCounter >> 16;
+    UsbDebugInfo[7] = I2cSchedulerCounter >> 24;
 
-    GenericHidOutBuffer[9] = I2cWatchdog_OuterCounter >> 0;
-    GenericHidOutBuffer[10] = I2cWatchdog_OuterCounter >> 8;
-    GenericHidOutBuffer[11] = I2cWatchdog_OuterCounter >> 16;
-    GenericHidOutBuffer[12] = I2cWatchdog_OuterCounter >> 24;
+    UsbDebugInfo[8] = I2cWatchdog_OuterCounter >> 0;
+    UsbDebugInfo[9] = I2cWatchdog_OuterCounter >> 8;
+    UsbDebugInfo[10] = I2cWatchdog_OuterCounter >> 16;
+    UsbDebugInfo[11] = I2cWatchdog_OuterCounter >> 24;
 
-    GenericHidOutBuffer[13] = I2cWatchdog_InnerCounter >> 0;
-    GenericHidOutBuffer[14] = I2cWatchdog_InnerCounter >> 8;
-    GenericHidOutBuffer[15] = I2cWatchdog_InnerCounter >> 16;
-    GenericHidOutBuffer[16] = I2cWatchdog_InnerCounter >> 24;
-/*
+    UsbDebugInfo[12] = I2cWatchdog_InnerCounter >> 0;
+    UsbDebugInfo[13] = I2cWatchdog_InnerCounter >> 8;
+    UsbDebugInfo[14] = I2cWatchdog_InnerCounter >> 16;
+    UsbDebugInfo[15] = I2cWatchdog_InnerCounter >> 24;
+
+    memcpy(GenericHidOutBuffer, UsbDebugInfo, USB_GENERIC_HID_OUT_BUFFER_LENGTH);
+
+    /*
     uint64_t ticks = microseconds_get_ticks();
     uint32_t microseconds = microseconds_convert_to_microseconds(ticks);
     uint32_t milliseconds = microseconds/1000;
@@ -275,6 +282,13 @@ void jumpToSlaveBootloader(void)
     }
 
     UhkModuleStates[uhkModuleDriverId].jumpToBootloader = true;
+}
+
+void sendKbootCommand(void)
+{
+    KbootDriverState.phase = 0;
+    KbootDriverState.i2cAddress = GenericHidInBuffer[2];
+    KbootDriverState.commandType = GenericHidInBuffer[1];
 }
 
 // The main protocol handler function
@@ -330,6 +344,9 @@ void UsbProtocolHandler(void)
             break;
         case UsbCommand_JumpToSlaveBootloader:
             jumpToSlaveBootloader();
+            break;
+        case UsbCommand_SendKbootCommand:
+            sendKbootCommand();
             break;
         default:
             break;

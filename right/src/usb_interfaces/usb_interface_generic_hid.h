@@ -5,7 +5,6 @@
 
     #include "usb_api.h"
     #include "usb_descriptors/usb_descriptor_device.h"
-    #include "usb_protocol_handler.h"
 
 // Macros:
 

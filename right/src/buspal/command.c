@@ -3,9 +3,10 @@
 #include "crc16.h"
 #include "bus_pal_hardware.h"
 #include "peripherals/test_led.h"
-#if FIXED_BUSPAL_BOOTLOADER
-  #include "microseconds/microseconds.h"
-#endif
+#include "microseconds/microseconds.h"
+#include "bootloader/wormhole.h"
+
+#define FIXED_BUSPAL_BOOTLOADER  1 // Used to mark the fixed BusPal bootloader. Macro usage can be removed in the future.
 
 command_processor_data_t g_commandData;
 buspal_state_t g_buspalState = kBuspal_Idle;
@@ -483,6 +484,10 @@ status_t bootloader_command_pump()
                 handle_write_memory_command(g_commandData.packet, g_commandData.packetLength);
 
                 g_commandData.state = kCommandState_DataPhaseWrite;
+            } else if (cmdTag == kCommandTag_Reset) {
+                Wormhole.magicNumber = WORMHOLE_MAGIC_NUMBER;
+                Wormhole.enumerationMode = EnumerationMode_NormalKeyboard;
+                NVIC_SystemReset();
             }
 
             status = handle_command_internal(g_commandData.packet, g_commandData.packetLength);

@@ -4,6 +4,7 @@
 #include "main.h"
 #include "slave_drivers/is31fl3731_driver.h"
 #include "slave_drivers/uhk_module_driver.h"
+#include "slave_drivers/kboot_driver.h"
 #include "i2c.h"
 #include "i2c_addresses.h"
 
@@ -39,6 +40,11 @@ uhk_slave_t Slaves[] = {
         .update = LedSlaveDriver_Update,
         .perDriverId = LedDriverId_Left,
     },
+    {
+        .init = KbootSlaveDriver_Init,
+        .update = KbootSlaveDriver_Update,
+        .perDriverId = KbootDriverId_Singleton,
+    },
 };
 
 static void slaveSchedulerCallback(I2C_Type *base, i2c_master_handle_t *handle, status_t previousStatus, void *userData)
@@ -50,6 +56,8 @@ static void slaveSchedulerCallback(I2C_Type *base, i2c_master_handle_t *handle, 
     do {
         uhk_slave_t *previousSlave = Slaves + previousSlaveId;
         uhk_slave_t *currentSlave = Slaves + currentSlaveId;
+
+        previousSlave->previousStatus = previousStatus;
 
         if (isFirstIteration) {
             bool wasPreviousSlaveConnected = previousSlave->isConnected;
