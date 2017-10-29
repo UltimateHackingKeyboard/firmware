@@ -320,38 +320,6 @@
 		<project id="k64f.ilg.gnuarmeclipse.managedbuild.cross.target.elf.1537007018" name="Executable" projectType="ilg.gnuarmeclipse.managedbuild.cross.target.elf"/>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
-	<storageModule moduleId="refreshScope" versionNumber="2">
-		<configuration configurationName="uhk-left-release-srec">
-			<resource resourceType="PROJECT" workspacePath="/uhk-left"/>
-		</configuration>
-		<configuration configurationName="Multiple configurations">
-			<resource resourceType="PROJECT" workspacePath="/uhk-left"/>
-		</configuration>
-		<configuration configurationName="v7-release">
-			<resource resourceType="PROJECT" workspacePath="/uhk-left"/>
-		</configuration>
-		<configuration configurationName="uhk-left-debug">
-			<resource resourceType="PROJECT" workspacePath="/uhk-left"/>
-		</configuration>
-		<configuration configurationName="debug">
-			<resource resourceType="PROJECT" workspacePath="/uhk-left"/>
-		</configuration>
-		<configuration configurationName="v7-release-srec"/>
-		<configuration configurationName="v6-debug"/>
-		<configuration configurationName="uhk-left-debug-srec">
-			<resource resourceType="PROJECT" workspacePath="/uhk-left"/>
-		</configuration>
-		<configuration configurationName="v7-debug-srec">
-			<resource resourceType="PROJECT" workspacePath="/uhk-left"/>
-		</configuration>
-		<configuration configurationName="v6-release"/>
-		<configuration configurationName="v7-debug"/>
-		<configuration configurationName="release">
-			<resource resourceType="PROJECT" workspacePath="/uhk-left"/>
-		</configuration>
-		<configuration configurationName="uhk-left-release">
-			<resource resourceType="PROJECT" workspacePath="/uhk-left"/>
-		</configuration>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
 	<storageModule moduleId="scannerConfiguration">
