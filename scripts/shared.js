@@ -35,7 +35,7 @@ function getBlhostCmd(pid) {
             break;
     }
 
-    return `../../../lib/bootloader/bin/Tools/blhost/${blhostPath} --usb 0x1d50,${pid}`;
+    return `${__dirname}/../lib/bootloader/bin/Tools/blhost/${blhostPath} --usb 0x1d50,${pid}`;
 }
 
 function execRetry(command) {

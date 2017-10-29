@@ -11,7 +11,7 @@ program
     .parse(process.argv)
 
 const firmwareImage = program.args[0];
-const usbDir = '../../../lib/agent/packages/usb';
+const usbDir = `${__dirname}/../lib/agent/packages/usb`;
 const blhost = getBlhostCmd(0x6120);
 
 checkFirmwareImage(firmwareImage, extension);

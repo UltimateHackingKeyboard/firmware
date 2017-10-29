@@ -11,9 +11,9 @@ program
     .parse(process.argv)
 
 const firmwareImage = program.args[0];
-const usbDir = '../../../lib/agent/packages/usb';
+const usbDir = `${__dirname}/../lib/agent/packages/usb`;
 const blhostUsb = getBlhostCmd(0x6121);
-const blhostBuspal = blhostUsb + ' --buspal i2c,0x10,100k';
+const blhostBuspal = `${blhostUsb} --buspal i2c,0x10,100k`;
 
 checkFirmwareImage(firmwareImage, extension);
 
