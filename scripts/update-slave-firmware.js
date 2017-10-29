@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 const program = require('commander');
 require('shelljs/global');
+require('./shared')
 
 config.fatal = true;
 
@@ -53,9 +54,12 @@ config.verbose = true;
 exec(`${usbDir}/send-kboot-command-to-slave.js ping 0x10`);
 exec(`${usbDir}/jump-to-slave-bootloader.js`);
 exec(`${usbDir}/reenumerate.js buspal`);
-exec(`${blhostBuspal} get-property 1`);
+execRetry(`${blhostBuspal} get-property 1`);
 exec(`${blhostBuspal} flash-erase-all-unsecure`);
 exec(`${blhostBuspal} write-memory 0x0 ${firmwareImage}`);
 exec(`${blhostUsb} reset`);
 exec(`${usbDir}/reenumerate.js normalKeyboard`);
-exec(`${usbDir}/send-kboot-command-to-slave.js reset 0x10`);
+execRetry(`${usbDir}/send-kboot-command-to-slave.js reset 0x10`);
+
+config.verbose = false;
+echo('Firmware updated successfully');
