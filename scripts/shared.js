@@ -1,5 +1,22 @@
 require('shelljs/global');
 
+function checkFirmwareImage(imagePath, extension) {
+    if (!imagePath) {
+        echo('No firmware image specified');
+        exit(1);
+    }
+
+    if (!imagePath.endsWith(extension)) {
+        echo(`Firmware image extension is not ${extension}`);
+        exit(1);
+    }
+
+    if (!test('-f', imagePath)) {
+        echo('Firmware image does not exist');
+        exit(1);
+    }
+}
+
 function getBlhostCmd() {
     let blhostPath;
     switch (process.platform) {
@@ -37,6 +54,7 @@ function execRetry(command) {
 }
 
 const exp = {
+    checkFirmwareImage,
     getBlhostCmd,
     execRetry,
 }
