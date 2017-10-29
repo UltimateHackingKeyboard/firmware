@@ -14,3 +14,7 @@ perf.data
 /uhk-right-release-srec/
 /.settings/
 /uhk-right-debug/
+/uhk-right-release/
+/uhk60-right_release/
+/uhk60-right_debug/
+/uhk60-right_debug_standalone/
