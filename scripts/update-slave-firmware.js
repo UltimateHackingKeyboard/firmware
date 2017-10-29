@@ -12,7 +12,7 @@ program
 
 const firmwareImage = program.args[0];
 const usbDir = '../../../lib/agent/packages/usb';
-const blhostUsb = getBlhostCmd();
+const blhostUsb = getBlhostCmd(0x6121);
 const blhostBuspal = blhostUsb + ' --buspal i2c,0x10,100k';
 
 checkFirmwareImage(firmwareImage, extension);

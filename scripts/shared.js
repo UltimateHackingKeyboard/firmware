@@ -17,7 +17,7 @@ function checkFirmwareImage(imagePath, extension) {
     }
 }
 
-function getBlhostCmd() {
+function getBlhostCmd(pid) {
     let blhostPath;
     switch (process.platform) {
         case 'linux':
@@ -35,7 +35,7 @@ function getBlhostCmd() {
             break;
     }
 
-    return `../../../lib/bootloader/bin/Tools/blhost/${blhostPath} --usb 0x1d50,0x6121`;
+    return `../../../lib/bootloader/bin/Tools/blhost/${blhostPath} --usb 0x1d50,${pid}`;
 }
 
 function execRetry(command) {
