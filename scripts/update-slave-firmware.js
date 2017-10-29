@@ -9,7 +9,7 @@ program
     .usage('update-slave-firmware <firmware-image>')
     .parse(process.argv)
 
-let firmwareImage = program.args[0];
+const firmwareImage = program.args[0];
 
 if (!firmwareImage) {
     echo('No firmware image specified');
@@ -26,31 +26,11 @@ if (!test('-f', firmwareImage)) {
     exit(1);
 }
 
-let usbDir = '../../../lib/agent/packages/usb';
-let usbBinding = usbDir + '/node_modules/usb/build/Release/usb_bindings.node';
-
-let blhostPath;
-switch (process.platform) {
-    case 'linux':
-        blhostPath = 'linux/amd64/blhost';
-        break;
-    case 'darwin':
-        blhostPath = 'mac/blhost';
-        break;
-    case 'win32':
-        blhostPath = 'win/blhost.exe';
-        break;
-    default:
-        echo('Your operating system is not supported');
-        exit(1);
-        break;
-}
-
-let blhostUsb = `../../../lib/bootloader/bin/Tools/blhost/${blhostPath} --usb 0x1d50,0x6121`;
-let blhostBuspal = blhostUsb + ' --buspal i2c,0x10,100k';
+const usbDir = '../../../lib/agent/packages/usb';
+const blhostUsb = getBlhostCmd();
+const blhostBuspal = blhostUsb + ' --buspal i2c,0x10,100k';
 
 config.verbose = true;
-
 exec(`${usbDir}/send-kboot-command-to-slave.js ping 0x10`);
 exec(`${usbDir}/jump-to-slave-bootloader.js`);
 exec(`${usbDir}/reenumerate.js buspal`);
@@ -60,6 +40,6 @@ exec(`${blhostBuspal} write-memory 0x0 ${firmwareImage}`);
 exec(`${blhostUsb} reset`);
 exec(`${usbDir}/reenumerate.js normalKeyboard`);
 execRetry(`${usbDir}/send-kboot-command-to-slave.js reset 0x10`);
-
 config.verbose = false;
+
 echo('Firmware updated successfully');
