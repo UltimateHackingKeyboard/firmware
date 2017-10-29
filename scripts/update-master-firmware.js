@@ -3,7 +3,7 @@ const program = require('commander');
 require('shelljs/global');
 require('./shared')
 
-const extension = '.srec';
+const extension = '.hex';
 config.fatal = true;
 
 program
