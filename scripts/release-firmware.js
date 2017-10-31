@@ -1,13 +1,8 @@
 #!/usr/bin/env node
+const fs = require('fs');
 require('shelljs/global');
 
-const version = process.argv[2];
-
-if (!(version)) {
-  echo('No version number is specified.');
-  exit(1);
-}
-
+const version = JSON.parse(fs.readFileSync('package.json')).version;
 const releaseName = 'uhk-firmware-' + version;
 const releaseDir = '/tmp/' + releaseName;
 const rightFirmwareFile = '../right/build/uhk60-right_release/uhk-right.hex';
