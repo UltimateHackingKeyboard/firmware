@@ -2,6 +2,8 @@
 const fs = require('fs');
 require('shelljs/global');
 
+config.fatal = true;
+
 const version = JSON.parse(fs.readFileSync('package.json')).version;
 const releaseName = `uhk-firmware-${version}`;
 const releaseDir = `/tmp/${releaseName}`;
