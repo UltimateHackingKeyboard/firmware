@@ -70,19 +70,19 @@
 							</tool>
 							<tool id="ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.813655335" name="Cross ARM C Compiler" superClass="ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler">
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.include.paths.58271126" name="Include paths (-I)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.include.paths" useByScannerDiscovery="false" valueType="includePath">
-									<listOptionValue builtIn="false" value="../../../src"/>
-									<listOptionValue builtIn="false" value="../../../src/ksdk_usb"/>
-									<listOptionValue builtIn="false" value="../../../src/buspal"/>
-									<listOptionValue builtIn="false" value="../../../src/buspal/bm_usb"/>
-									<listOptionValue builtIn="false" value="../../../../lib/bootloader/src"/>
-									<listOptionValue builtIn="false" value="../../../../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0"/>
-									<listOptionValue builtIn="false" value="../../../../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0/osa"/>
-									<listOptionValue builtIn="false" value="../../../../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0/include"/>
-									<listOptionValue builtIn="false" value="../../../../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0/device"/>
-									<listOptionValue builtIn="false" value="../../../../lib/KSDK_2.0_MK22FN512xxx12/CMSIS/Include"/>
-									<listOptionValue builtIn="false" value="../../../../lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212/drivers"/>
-									<listOptionValue builtIn="false" value="../../../../lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212"/>
-									<listOptionValue builtIn="false" value="../../../../shared"/>
+									<listOptionValue builtIn="false" value="../../src"/>
+									<listOptionValue builtIn="false" value="../../src/ksdk_usb"/>
+									<listOptionValue builtIn="false" value="../../src/buspal"/>
+									<listOptionValue builtIn="false" value="../../src/buspal/bm_usb"/>
+									<listOptionValue builtIn="false" value="../../../lib/bootloader/src"/>
+									<listOptionValue builtIn="false" value="../../../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0"/>
+									<listOptionValue builtIn="false" value="../../../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0/osa"/>
+									<listOptionValue builtIn="false" value="../../../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0/include"/>
+									<listOptionValue builtIn="false" value="../../../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0/device"/>
+									<listOptionValue builtIn="false" value="../../../lib/KSDK_2.0_MK22FN512xxx12/CMSIS/Include"/>
+									<listOptionValue builtIn="false" value="../../../lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212/drivers"/>
+									<listOptionValue builtIn="false" value="../../../lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212"/>
+									<listOptionValue builtIn="false" value="../../../shared"/>
 								</option>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.std.133793610" name="Language standard" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.std" useByScannerDiscovery="true" value="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.std.gnu99" valueType="enumerated"/>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.defs.336821673" name="Defined symbols (-D)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.defs" useByScannerDiscovery="false" valueType="definedSymbols">
@@ -136,6 +136,9 @@
 							</tool>
 						</toolChain>
 					</folderInfo>
+					<fileInfo id="ilg.gnuarmeclipse.managedbuild.cross.config.elf.release.1939339834.1692217331.621318926" name="wormhole.c" rcbsApplicability="disable" resourcePath="bootloader-shared/wormhole.c" toolsToInvoke="ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.813655335.948885614">
+						<tool id="ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.813655335.948885614" name="Cross ARM C Compiler" superClass="ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.813655335"/>
+					</fileInfo>
 				</configuration>
 			</storageModule>
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
@@ -211,19 +214,19 @@
 							</tool>
 							<tool id="ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.1137693493" name="Cross ARM C Compiler" superClass="ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler">
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.include.paths.450812741" name="Include paths (-I)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.include.paths" useByScannerDiscovery="false" valueType="includePath">
-									<listOptionValue builtIn="false" value="../../../src"/>
-									<listOptionValue builtIn="false" value="../../../src/ksdk_usb"/>
-									<listOptionValue builtIn="false" value="../../../src/buspal"/>
-									<listOptionValue builtIn="false" value="../../../src/buspal/bm_usb"/>
-									<listOptionValue builtIn="false" value="../../../../lib/bootloader/src"/>
-									<listOptionValue builtIn="false" value="../../../../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0"/>
-									<listOptionValue builtIn="false" value="../../../../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0/osa"/>
-									<listOptionValue builtIn="false" value="../../../../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0/include"/>
-									<listOptionValue builtIn="false" value="../../../../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0/device"/>
-									<listOptionValue builtIn="false" value="../../../../lib/KSDK_2.0_MK22FN512xxx12/CMSIS/Include"/>
-									<listOptionValue builtIn="false" value="../../../../lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212/drivers"/>
-									<listOptionValue builtIn="false" value="../../../../lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212"/>
-									<listOptionValue builtIn="false" value="../../../../shared"/>
+									<listOptionValue builtIn="false" value="../../src"/>
+									<listOptionValue builtIn="false" value="../../src/ksdk_usb"/>
+									<listOptionValue builtIn="false" value="../../src/buspal"/>
+									<listOptionValue builtIn="false" value="../../src/buspal/bm_usb"/>
+									<listOptionValue builtIn="false" value="../../../lib/bootloader/src"/>
+									<listOptionValue builtIn="false" value="../../../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0"/>
+									<listOptionValue builtIn="false" value="../../../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0/osa"/>
+									<listOptionValue builtIn="false" value="../../../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0/include"/>
+									<listOptionValue builtIn="false" value="../../../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0/device"/>
+									<listOptionValue builtIn="false" value="../../../lib/KSDK_2.0_MK22FN512xxx12/CMSIS/Include"/>
+									<listOptionValue builtIn="false" value="../../../lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212/drivers"/>
+									<listOptionValue builtIn="false" value="../../../lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212"/>
+									<listOptionValue builtIn="false" value="../../../shared"/>
 								</option>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.std.104109443" name="Language standard" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.std" useByScannerDiscovery="true" value="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.std.gnu99" valueType="enumerated"/>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.defs.1312429299" name="Defined symbols (-D)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.defs" useByScannerDiscovery="false" valueType="definedSymbols">
@@ -320,7 +323,7 @@
 							<option id="ilg.gnuarmeclipse.managedbuild.cross.option.command.size.450860801" name="Size command" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.command.size" value="size" valueType="string"/>
 							<option id="ilg.gnuarmeclipse.managedbuild.cross.option.command.make.2090968095" name="Build command" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.command.make" value="make" valueType="string"/>
 							<option id="ilg.gnuarmeclipse.managedbuild.cross.option.command.rm.8859913" name="Remove command" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.command.rm" value="rm" valueType="string"/>
-							<option id="ilg.gnuarmeclipse.managedbuild.cross.option.addtools.createflash.137743124" name="Create flash image" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.addtools.createflash" value="false" valueType="boolean"/>
+							<option id="ilg.gnuarmeclipse.managedbuild.cross.option.addtools.createflash.137743124" name="Create flash image" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.addtools.createflash" value="true" valueType="boolean"/>
 							<option id="ilg.gnuarmeclipse.managedbuild.cross.option.addtools.printsize.658937193" name="Print size" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.addtools.printsize" value="true" valueType="boolean"/>
 							<option id="ilg.gnuarmeclipse.managedbuild.cross.option.toolchain.useglobalpath.2084940020" name="Use global path" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.toolchain.useglobalpath" value="true" valueType="boolean"/>
 							<option id="ilg.gnuarmeclipse.managedbuild.cross.option.command.ar.2031734167" name="Archiver" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.command.ar" value="ar" valueType="string"/>
@@ -354,19 +357,19 @@
 							</tool>
 							<tool id="ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.1999160366" name="Cross ARM C Compiler" superClass="ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler">
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.include.paths.2002225588" name="Include paths (-I)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.include.paths" useByScannerDiscovery="false" valueType="includePath">
-									<listOptionValue builtIn="false" value="../../../src"/>
-									<listOptionValue builtIn="false" value="../../../src/ksdk_usb"/>
-									<listOptionValue builtIn="false" value="../../../src/buspal"/>
-									<listOptionValue builtIn="false" value="../../../src/buspal/bm_usb"/>
-									<listOptionValue builtIn="false" value="../../../../lib/bootloader/src"/>
-									<listOptionValue builtIn="false" value="../../../../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0"/>
-									<listOptionValue builtIn="false" value="../../../../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0/osa"/>
-									<listOptionValue builtIn="false" value="../../../../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0/include"/>
-									<listOptionValue builtIn="false" value="../../../../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0/device"/>
-									<listOptionValue builtIn="false" value="../../../../lib/KSDK_2.0_MK22FN512xxx12/CMSIS/Include"/>
-									<listOptionValue builtIn="false" value="../../../../lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212/drivers"/>
-									<listOptionValue builtIn="false" value="../../../../lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212"/>
-									<listOptionValue builtIn="false" value="../../../../shared"/>
+									<listOptionValue builtIn="false" value="../../src"/>
+									<listOptionValue builtIn="false" value="../../src/ksdk_usb"/>
+									<listOptionValue builtIn="false" value="../../src/buspal"/>
+									<listOptionValue builtIn="false" value="../../src/buspal/bm_usb"/>
+									<listOptionValue builtIn="false" value="../../../lib/bootloader/src"/>
+									<listOptionValue builtIn="false" value="../../../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0"/>
+									<listOptionValue builtIn="false" value="../../../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0/osa"/>
+									<listOptionValue builtIn="false" value="../../../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0/include"/>
+									<listOptionValue builtIn="false" value="../../../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0/device"/>
+									<listOptionValue builtIn="false" value="../../../lib/KSDK_2.0_MK22FN512xxx12/CMSIS/Include"/>
+									<listOptionValue builtIn="false" value="../../../lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212/drivers"/>
+									<listOptionValue builtIn="false" value="../../../lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212"/>
+									<listOptionValue builtIn="false" value="../../../shared"/>
 								</option>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.std.2080930720" name="Language standard" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.std" useByScannerDiscovery="true" value="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.std.gnu99" valueType="enumerated"/>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.defs.1448177506" name="Defined symbols (-D)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.defs" useByScannerDiscovery="false" valueType="definedSymbols">
