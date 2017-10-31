@@ -6,9 +6,12 @@ config.fatal = true;
 
 const version = JSON.parse(fs.readFileSync(`${__dirname}/package.json`)).version;
 const releaseName = `uhk-firmware-${version}`;
-const releaseDir = `/tmp/${releaseName}`;
+const releaseDir = `${__dirname}/${releaseName}`;
+const releaseFile = `${__dirname}/${releaseName}.tar.bz2`;
 const rightFirmwareFile = `${__dirname}/../right/build/uhk60-right_release/uhk-right.hex`;
 const leftFirmwareFile = `${__dirname}/../left/build/uhk60-left_release/uhk-left.bin`;
+
+rm('-rf', releaseDir, releaseFile, leftFirmwareFile, rightFirmwareFile);
 
 exec(`/opt/Freescale/KDS_v3/eclipse/kinetis-design-studio \
 --launcher.suppressErrors \
@@ -20,10 +23,8 @@ exec(`/opt/Freescale/KDS_v3/eclipse/kinetis-design-studio \
 -cleanBuild uhk-right`);
 
 chmod(644, rightFirmwareFile, leftFirmwareFile);
-ls('-l', rightFirmwareFile, leftFirmwareFile);
-rm('-r', releaseDir);
 mkdir(releaseDir);
 cp(rightFirmwareFile, releaseDir);
 cp(leftFirmwareFile, releaseDir);
 cp(`${__dirname}/package.json`, releaseDir);
-exec(`tar -cvjSf ${__dirname}/${releaseName}.tar.bz2 -C ${releaseDir} .`);
+exec(`tar -cvjSf ${releaseFile} -C ${releaseDir} .`);
