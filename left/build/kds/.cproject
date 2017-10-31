@@ -250,7 +250,7 @@
 									<listOptionValue builtIn="false" value="PRINTF_ADVANCED_ENABLE=0"/>
 									<listOptionValue builtIn="false" value="SCANF_ADVANCED_ENABLE=0"/>
 									<listOptionValue builtIn="false" value="FRDM_KL03Z"/>
-									<listOptionValue builtIn="false" value="FREEDOM"/>
+									<listOptionValue builtIn="false" value="FREEDOMx"/>
 								</option>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.nostdinc.1784976960" name="Do not search system directories (-nostdinc)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.nostdinc" useByScannerDiscovery="true" value="false" valueType="boolean"/>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.other.182809566" name="Other compiler flags" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.other" useByScannerDiscovery="true" value=" -mapcs " valueType="string"/>
@@ -319,7 +319,7 @@
 	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
 		<project id="k64f.ilg.gnuarmeclipse.managedbuild.cross.target.elf.1537007018" name="Executable" projectType="ilg.gnuarmeclipse.managedbuild.cross.target.elf"/>
 	</storageModule>
-	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
+	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders">
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
 	<storageModule moduleId="scannerConfiguration">
