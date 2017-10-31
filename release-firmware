@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/bin/bash
 
 version="$1"
 
@@ -11,6 +11,15 @@ releaseName=uhk-firmware-$version
 releaseDir=/tmp/$releaseName
 rightFirmwareFile=right/build/kds/uhk60-right_release/uhk-right.hex
 leftFirmwareFile=left/build/kds/uhk60-left_release/uhk-left.bin
+
+/opt/Freescale/KDS_v3/eclipse/kinetis-design-studio \
+--launcher.suppressErrors \
+-noSplash \
+-application org.eclipse.cdt.managedbuilder.core.headlessbuild \
+-import left/build/kds \
+-import right/build/kds \
+-cleanBuild uhk-left \
+-cleanBuild uhk-right
 
 chmod 644 $rightFirmwareFile $leftFirmwareFile
 ls -l $rightFirmwareFile $leftFirmwareFile
