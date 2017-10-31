@@ -9,8 +9,8 @@ install: eclipse -noSplash
          -profileProperties org.eclipse.update.install.features=true
 script: eclipse -noSplash 
         -application org.eclipse.cdt.managedbuilder.core.headlessbuild 
-        -import $TRAVIS_BUILD_DIR/left/build/kds
-        -import $TRAVIS_BUILD_DIR/right/build/kds
+        -import $TRAVIS_BUILD_DIR/left/build
+        -import $TRAVIS_BUILD_DIR/right/build
         -build all
 matrix:
   include:
