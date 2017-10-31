@@ -3,8 +3,8 @@ const fs = require('fs');
 require('shelljs/global');
 
 const version = JSON.parse(fs.readFileSync('package.json')).version;
-const releaseName = 'uhk-firmware-' + version;
-const releaseDir = '/tmp/' + releaseName;
+const releaseName = `uhk-firmware-${version}`;
+const releaseDir = `/tmp/${releaseName}`;
 const rightFirmwareFile = '../right/build/uhk60-right_release/uhk-right.hex';
 const leftFirmwareFile = '../left/build/uhk60-left_release/uhk-left.bin';
 
