@@ -9,8 +9,8 @@ fi
 
 releaseName=uhk-firmware-$version
 releaseDir=/tmp/$releaseName
-rightFirmwareFile=right/build/kds/uhk-right-release-srec/uhk-right.srec
-leftFirmwareFile=left/build/kds/uhk-left-release-srec/uhk-left.srec
+rightFirmwareFile=right/build/kds/uhk60-right_release/uhk-right.hex
+leftFirmwareFile=left/build/kds/uhk60-left_release/uhk-left.bin
 
 chmod 644 $rightFirmwareFile $leftFirmwareFile
 ls -l $rightFirmwareFile $leftFirmwareFile
