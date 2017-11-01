@@ -18,5 +18,19 @@
   "version": "2.1.0",
   "dataModelVersion": "1.0.0",
   "usbProtocolVersion": "1.2.0",
-  "slaveProtocolVersion": "2.1.0"
+  "slaveProtocolVersion": "2.1.0",
+  "masters": [
+    {
+      "moduleId": 0,
+      "name": "uhk60-right",
+      "source": "right/build/uhk60-right_release/uhk-right.hex"
+    }
+  ],
+  "slaves": [
+    {
+      "moduleId": 1,
+      "name": "uhk60-left",
+      "source": "left/build/uhk60-left_release/uhk-left.bin"
+    }
+  ]
 }

@@ -4,14 +4,17 @@ require('shelljs/global');
 
 config.fatal = true;
 
-const version = JSON.parse(fs.readFileSync(`${__dirname}/package.json`)).version;
+const package = JSON.parse(fs.readFileSync(`${__dirname}/package.json`));
+const version = package.version;
 const releaseName = `uhk-firmware-${version}`;
 const releaseDir = `${__dirname}/${releaseName}`;
+const slavesDir = `${releaseDir}/slaves`;
 const releaseFile = `${__dirname}/${releaseName}.tar.bz2`;
-const rightFirmwareFile = `${__dirname}/../right/build/uhk60-right_release/uhk-right.hex`;
 const leftFirmwareFile = `${__dirname}/../left/build/uhk60-left_release/uhk-left.bin`;
 
-rm('-rf', releaseDir, releaseFile, leftFirmwareFile, rightFirmwareFile);
+const masterSourceFirmwares = package.masters.map(master => `${__dirname}/../${master.source}`);
+const slaveSourceFirmwares = package.slaves.map(slave => `${__dirname}/../${slave.source}`);
+rm('-rf', releaseDir, releaseFile, masterSourceFirmwares, slaveSourceFirmwares);
 
 exec(`/opt/Freescale/KDS_v3/eclipse/kinetis-design-studio \
 --launcher.suppressErrors \
@@ -20,11 +23,24 @@ exec(`/opt/Freescale/KDS_v3/eclipse/kinetis-design-studio \
 -import ${__dirname}/../left/build \
 -import ${__dirname}/../right/build \
 -cleanBuild uhk-left \
--cleanBuild uhk-right`);
+-cleanBuild uhk-right`
+);
 
-chmod(644, rightFirmwareFile, leftFirmwareFile);
-mkdir(releaseDir);
-cp(rightFirmwareFile, releaseDir);
-cp(leftFirmwareFile, releaseDir);
+for (let master of package.masters) {
+    const masterDir = `${releaseDir}/masters/${master.name}`;
+    const masterSource = `${__dirname}/../${master.source}`;
+    mkdir('-p', masterDir);
+    chmod(644, masterSource);
+    cp(masterSource, `${masterDir}/firmware.hex`);
+}
+
+for (let slave of package.slaves) {
+    const slaveDir = `${releaseDir}/slaves`;
+    const slaveSource = `${__dirname}/../${slave.source}`;
+    mkdir('-p', slaveDir);
+    chmod(644, slaveSource);
+    cp(slaveSource, `${slaveDir}/${slave.name}.bin`);
+}
+
 cp(`${__dirname}/package.json`, releaseDir);
 exec(`tar -cvjSf ${releaseFile} -C ${releaseDir} .`);
