@@ -11,6 +11,7 @@ const releaseDir = `${__dirname}/${releaseName}`;
 const slavesDir = `${releaseDir}/slaves`;
 const releaseFile = `${__dirname}/${releaseName}.tar.bz2`;
 const leftFirmwareFile = `${__dirname}/../left/build/uhk60-left_release/uhk-left.bin`;
+const usbDir = `${__dirname}/../lib/agent/packages/usb`;
 
 const masterSourceFirmwares = package.masters.map(master => `${__dirname}/../${master.source}`);
 const slaveSourceFirmwares = package.slaves.map(slave => `${__dirname}/../${slave.source}`);
@@ -32,6 +33,7 @@ for (let master of package.masters) {
     mkdir('-p', masterDir);
     chmod(644, masterSource);
     cp(masterSource, `${masterDir}/firmware.hex`);
+//    exec(`${usbDir}/user-config-json-to-bin.ts ${masterDir}/config.bin`);
 }
 
 for (let slave of package.slaves) {
