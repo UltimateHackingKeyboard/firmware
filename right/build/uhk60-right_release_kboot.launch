@@ -19,7 +19,7 @@
 <booleanAttribute key="org.eclipse.cdt.launch.DEBUGGER_STOP_AT_MAIN" value="true"/>
 <stringAttribute key="org.eclipse.cdt.launch.DEBUGGER_STOP_AT_MAIN_SYMBOL" value="main"/>
 <stringAttribute key="org.eclipse.cdt.launch.PROGRAM_ARGUMENTS" value="uhk60-right_release/uhk-right.hex"/>
-<stringAttribute key="org.eclipse.cdt.launch.PROGRAM_NAME" value="../../../scripts/update-master-firmware.js"/>
+<stringAttribute key="org.eclipse.cdt.launch.PROGRAM_NAME" value="../../scripts/update-master-firmware.js"/>
 <stringAttribute key="org.eclipse.cdt.launch.PROJECT_ATTR" value="uhk-right"/>
 <booleanAttribute key="org.eclipse.cdt.launch.PROJECT_BUILD_CONFIG_AUTO_ATTR" value="false"/>
 <stringAttribute key="org.eclipse.cdt.launch.PROJECT_BUILD_CONFIG_ID_ATTR" value="ilg.gnuarmeclipse.managedbuild.cross.config.elf.release.1939339834.1692217331"/>

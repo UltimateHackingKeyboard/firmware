@@ -31,13 +31,17 @@
 
 // Variables:
 
+    extern bool IsUsbMouseReportSent;
     extern usb_device_class_struct_t UsbMouseClass;
-    extern usb_mouse_report_t UsbMouseReport;
+    extern usb_mouse_report_t* ActiveUsbMouseReport;
 
 // Functions:
 
     usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param);
     usb_status_t UsbMouseSetConfiguration(class_handle_t handle, uint8_t configuration);
     usb_status_t UsbMouseSetInterface(class_handle_t handle, uint8_t interface, uint8_t alternateSetting);
+
+    void ResetActiveUsbMouseReport(void);
+    void SwitchActiveUsbMouseReport(void);
 
 #endif

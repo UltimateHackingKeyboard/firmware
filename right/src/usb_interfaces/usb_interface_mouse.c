@@ -4,6 +4,7 @@
 #include "i2c.h"
 #include "peripherals/reset_button.h"
 #include "key_action.h"
+#include "usb_protocol_handler.h"
 
 static usb_device_endpoint_struct_t UsbMouseEndpoints[USB_MOUSE_ENDPOINT_COUNT] = {{
     USB_MOUSE_ENDPOINT_INDEX | (USB_IN << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT),
@@ -37,12 +38,33 @@ usb_device_class_struct_t UsbMouseClass = {
     USB_DEVICE_CONFIGURATION_COUNT,
 };
 
-usb_mouse_report_t UsbMouseReport;
+usb_mouse_report_t usbMouseReports[2];
+usb_mouse_report_t* ActiveUsbMouseReport = usbMouseReports;
+bool IsUsbMouseReportSent = false;
+
+usb_mouse_report_t* getInactiveUsbMouseReport(void)
+{
+    return ActiveUsbMouseReport == usbMouseReports ? usbMouseReports+1 : usbMouseReports;
+}
+
+void SwitchActiveUsbMouseReport(void)
+{
+    ActiveUsbMouseReport = getInactiveUsbMouseReport();
+}
+
+void ResetActiveUsbMouseReport(void)
+{
+    bzero(ActiveUsbMouseReport, USB_MOUSE_REPORT_LENGTH);
+}
 
 static volatile usb_status_t usbMouseAction(void)
 {
+    usb_mouse_report_t *mouseReport = getInactiveUsbMouseReport();
+    *((uint16_t*)(UsbDebugInfo+16)) = mouseReport->x;
+    *((uint16_t*)(UsbDebugInfo+18)) = mouseReport->y;
+    IsUsbMouseReportSent = true;
     return USB_DeviceHidSend(UsbCompositeDevice.mouseHandle, USB_MOUSE_ENDPOINT_INDEX,
-                             (uint8_t*)&UsbMouseReport, USB_MOUSE_REPORT_LENGTH);
+               (uint8_t*)mouseReport, USB_MOUSE_REPORT_LENGTH);
 }
 
 usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param)

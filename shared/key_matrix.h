@@ -22,6 +22,7 @@
     typedef struct {
         uint8_t colNum;
         uint8_t rowNum;
+        uint8_t currentRowNum;
         key_matrix_pin_t *cols;
         key_matrix_pin_t *rows;
         uint8_t keyStates[MAX_KEYS_IN_MATRIX];
@@ -31,5 +32,6 @@
 
     void KeyMatrix_Init(key_matrix_t *keyMatrix);
     void KeyMatrix_Scan(key_matrix_t *keyMatrix);
+    void KeyMatrix_ScanRow(key_matrix_t *keyMatrix);
 
 #endif

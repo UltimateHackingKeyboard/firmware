@@ -19,6 +19,7 @@ void InitInterruptPriorities(void)
     NVIC_SetPriority(I2C0_IRQn, 1);
     NVIC_SetPriority(I2C1_IRQn, 1);
     NVIC_SetPriority(USB0_IRQn, 1);
+    NVIC_SetPriority(PIT1_IRQn, 6);
 }
 
 void delay(void)

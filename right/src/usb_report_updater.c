@@ -27,10 +27,10 @@ void processMouseAction(key_action_t action)
         if (mouseWheelDivisorCounter == MOUSE_WHEEL_DIVISOR) {
             mouseWheelDivisorCounter = 0;
             if (action.mouse.scrollActions & MouseScroll_Up) {
-                UsbMouseReport.wheelX = 1;
+                ActiveUsbMouseReport->wheelX = 1;
             }
             if (action.mouse.scrollActions & MouseScroll_Down) {
-                UsbMouseReport.wheelX = -1;
+                ActiveUsbMouseReport->wheelX = -1;
             }
         }
     }
@@ -54,20 +54,20 @@ void processMouseAction(key_action_t action)
         }
     } else if (action.mouse.moveActions) {
         if (action.mouse.moveActions & MouseMove_Left) {
-            UsbMouseReport.x = -mouseSpeed;
+            ActiveUsbMouseReport->x = -mouseSpeed;
         }
         if (action.mouse.moveActions & MouseMove_Right) {
-            UsbMouseReport.x = mouseSpeed;
+            ActiveUsbMouseReport->x = mouseSpeed;
         }
         if (action.mouse.moveActions & MouseMove_Up) {
-            UsbMouseReport.y = -mouseSpeed;
+            ActiveUsbMouseReport->y = -mouseSpeed;
         }
         if (action.mouse.moveActions & MouseMove_Down) {
-            UsbMouseReport.y = mouseSpeed;
+            ActiveUsbMouseReport->y = mouseSpeed;
         }
     }
 
-    UsbMouseReport.buttons |= action.mouse.buttonActions;
+    ActiveUsbMouseReport->buttons |= action.mouse.buttonActions;
 
     wasPreviousMouseActionWheelAction = isWheelAction;
 }
@@ -90,8 +90,6 @@ uint8_t getActiveLayer(void)
 
 void UpdateActiveUsbReports(void)
 {
-    bzero(&UsbMouseReport, sizeof(usb_mouse_report_t));
-
     uint8_t basicScancodeIndex = 0;
     uint8_t mediaScancodeIndex = 0;
     uint8_t systemScancodeIndex = 0;
@@ -101,7 +99,7 @@ void UpdateActiveUsbReports(void)
 
     if (MacroPlaying) {
         Macros_ContinueMacro();
-        memcpy(&UsbMouseReport, &MacroMouseReport, sizeof MacroMouseReport);
+        memcpy(&ActiveUsbMouseReport, &MacroMouseReport, sizeof MacroMouseReport);
         memcpy(&ActiveUsbBasicKeyboardReport, &MacroBasicKeyboardReport, sizeof MacroBasicKeyboardReport);
         memcpy(&ActiveUsbMediaKeyboardReport, &MacroMediaKeyboardReport, sizeof MacroMediaKeyboardReport);
         memcpy(&ActiveUsbSystemKeyboardReport, &MacroSystemKeyboardReport, sizeof MacroSystemKeyboardReport);
