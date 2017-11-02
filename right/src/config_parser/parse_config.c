@@ -27,8 +27,8 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
     parser_error_t errorCode;
 
     uint16_t dataModelVersion = readUInt16(buffer);
-//    uint16_t userConfigLength = readUInt16(buffer);
-//    (void)userConfigLength;
+    uint16_t userConfigLength = readUInt16(buffer);
+    (void)userConfigLength;
     readString(buffer, &len); // Ignore device name
     uint16_t moduleConfigurationCount = readCompactLength(buffer);
 
