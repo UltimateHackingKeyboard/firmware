@@ -74,11 +74,11 @@ void processMouseAction(key_action_t action)
 
 uint8_t getActiveLayer(void)
 {
-    uint8_t activeLayer = LAYER_ID_BASE;
+    uint8_t activeLayer = LayerId_Base;
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
             if (CurrentKeyStates[slotId][keyId]) {
-                key_action_t action = CurrentKeymap[LAYER_ID_BASE][slotId][keyId];
+                key_action_t action = CurrentKeymap[LayerId_Base][slotId][keyId];
                 if (action.type == KeyActionType_SwitchLayer) {
                     activeLayer = action.switchLayer.layer;
                 }
@@ -93,7 +93,7 @@ void UpdateActiveUsbReports(void)
     uint8_t basicScancodeIndex = 0;
     uint8_t mediaScancodeIndex = 0;
     uint8_t systemScancodeIndex = 0;
-    static uint8_t previousLayer = LAYER_ID_BASE;
+    static uint8_t previousLayer = LayerId_Base;
     static uint8_t previousModifiers = 0;
     uint8_t activeLayer;
 
@@ -153,7 +153,7 @@ void UpdateActiveUsbReports(void)
     // When a layer switcher key gets pressed along with another key that produces some modifiers
     // and the accomanying key gets released then keep the related modifiers active a long as the
     // layer switcher key stays pressed.  Useful for Alt+Tab keymappings and the like.
-    if (activeLayer != LAYER_ID_BASE && activeLayer == previousLayer && basicScancodeIndex == 0) {
+    if (activeLayer != LayerId_Base && activeLayer == previousLayer && basicScancodeIndex == 0) {
         ActiveUsbBasicKeyboardReport->modifiers |= previousModifiers;
     }
 

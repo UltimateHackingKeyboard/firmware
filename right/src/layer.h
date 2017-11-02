@@ -3,11 +3,15 @@
 
 // Macros:
 
-    #define LAYER_ID_BASE  0
-    #define LAYER_ID_MOD   1
-    #define LAYER_ID_FN    2
-    #define LAYER_ID_MOUSE 3
-
     #define LAYER_COUNT 4
+
+// Typedefs:
+
+    typedef enum {
+        LayerId_Base,
+        LayerId_Mod,
+        LayerId_Fn,
+        LayerId_Mouse,
+    } layer_id_t;
 
 #endif

@@ -83,7 +83,7 @@ void LedDisplay_SetLayer(uint8_t layerId) {
         LedDriverValues[LedDriverId_Left][i] = 0;
     }
 
-    if (layerId >= LAYER_ID_MOD && layerId <= LAYER_ID_MOUSE) {
+    if (layerId >= LayerId_Mod && layerId <= LayerId_Mouse) {
         LedDriverValues[LedDriverId_Left][16 * layerId - 3] = LED_BRIGHTNESS_LEVEL;
     }
 }
