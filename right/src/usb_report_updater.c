@@ -74,43 +74,75 @@ void processMouseAction(key_action_t action)
     wasPreviousMouseActionWheelAction = isWheelAction;
 }
 
-static bool pressedLayers[LAYER_COUNT];
+static bool HeldLayers[LAYER_COUNT];
+static bool PressedLayers[LAYER_COUNT];
 
-void updatePressedLayers(void)
+void updateLayerStates(void)
 {
-    memset(pressedLayers, false, LAYER_COUNT);
+    memset(HeldLayers, false, LAYER_COUNT);
+    memset(PressedLayers, false, LAYER_COUNT);
 
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
-            if (KeyStates[slotId][keyId].current) {
+            key_state_t *keyState = &KeyStates[slotId][keyId];
+            if (keyState->current) {
                 key_action_t action = CurrentKeymap[LayerId_Base][slotId][keyId];
                 if (action.type == KeyActionType_SwitchLayer) {
-                    pressedLayers[action.switchLayer.layer] = true;
+                    if (!action.switchLayer.isToggle) {
+                        HeldLayers[action.switchLayer.layer] = true;
+                    } else if (!keyState->previous && keyState->current) {
+                        PressedLayers[action.switchLayer.layer] = true;
+                    }
                 }
             }
         }
     }
 }
 
-static uint8_t PreviousLayer = LayerId_Base;
+static layer_id_t PreviousHeldLayer = LayerId_Base;
+static layer_id_t PreviousToggledLayer = LayerId_Base;
 
 layer_id_t getActiveLayer()
 {
-    updatePressedLayers();
+    updateLayerStates();
 
-    layer_id_t activeLayer = LayerId_Base;
+    // Handle toggled layers
+
+    layer_id_t toggledLayer = PreviousToggledLayer;
 
     for (layer_id_t layerId=LayerId_Mod; layerId<=LayerId_Mouse; layerId++) {
-        if (pressedLayers[layerId]) {
-            activeLayer = layerId;
+        if (PressedLayers[layerId]) {
+            if (PreviousToggledLayer == layerId) {
+                toggledLayer = LayerId_Base;
+                break;
+            } else if (PreviousToggledLayer == LayerId_Base) {
+                toggledLayer = layerId;
+                break;
+            }
+        }
+    }
+
+    PreviousToggledLayer = toggledLayer;
+
+    if (toggledLayer != LayerId_Base) {
+        return toggledLayer;
+    }
+
+    // Handle held layers
+
+    layer_id_t heldLayer = LayerId_Base;
+
+    for (layer_id_t layerId=LayerId_Mod; layerId<=LayerId_Mouse; layerId++) {
+        if (HeldLayers[layerId]) {
+            heldLayer = layerId;
             break;
         }
     }
 
-    activeLayer = activeLayer != LayerId_Base && pressedLayers[PreviousLayer] ? PreviousLayer : activeLayer;
-    PreviousLayer = activeLayer;
+    heldLayer = heldLayer != LayerId_Base && HeldLayers[PreviousHeldLayer] ? PreviousHeldLayer : heldLayer;
+    PreviousHeldLayer = heldLayer;
 
-    return activeLayer;
+    return heldLayer;
 }
 
 void UpdateActiveUsbReports(void)
@@ -119,13 +151,13 @@ void UpdateActiveUsbReports(void)
     uint8_t mediaScancodeIndex = 0;
     uint8_t systemScancodeIndex = 0;
 
-    layer_id_t activeLayer = getActiveLayer();
-    LedDisplay_SetLayer(activeLayer);
-    static uint8_t previousModifiers = 0;
-
     for (uint8_t keyId=0; keyId < RIGHT_KEY_MATRIX_KEY_COUNT; keyId++) {
         KeyStates[SlotId_RightKeyboardHalf][keyId].current = RightKeyMatrix.keyStates[keyId];
     }
+
+    layer_id_t activeLayer = getActiveLayer();
+    LedDisplay_SetLayer(activeLayer);
+    static uint8_t previousModifiers = 0;
 
     if (MacroPlaying) {
         Macros_ContinueMacro();
@@ -136,11 +168,10 @@ void UpdateActiveUsbReports(void)
         return;
     }
 
-
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
-            key_state_t keyState = KeyStates[slotId][keyId];
-            if (keyState.current) {
+            key_state_t *keyState = &KeyStates[slotId][keyId];
+            if (keyState->current) {
                 key_action_t action = CurrentKeymap[activeLayer][slotId][keyId];
                 switch (action.type) {
                     case KeyActionType_Keystroke:
@@ -175,14 +206,14 @@ void UpdateActiveUsbReports(void)
                         break;
                 }
             }
-            keyState.previous = keyState.current;
+            keyState->previous = keyState->current;
         }
     }
 
     // When a layer switcher key gets pressed along with another key that produces some modifiers
     // and the accomanying key gets released then keep the related modifiers active a long as the
     // layer switcher key stays pressed.  Useful for Alt+Tab keymappings and the like.
-    if (activeLayer != LayerId_Base && activeLayer == PreviousLayer && basicScancodeIndex == 0) {
+    if (activeLayer != LayerId_Base && activeLayer == PreviousHeldLayer && basicScancodeIndex == 0) {
         ActiveUsbBasicKeyboardReport->modifiers |= previousModifiers;
     }
 
