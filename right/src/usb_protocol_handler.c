@@ -100,8 +100,7 @@ void ApplyConfig(void)
     ParserRunDry = true;
     StagingUserConfigBuffer.offset = 0;
     GenericHidOutBuffer[0] = ParseConfig(&StagingUserConfigBuffer);
-    GenericHidOutBuffer[1] = StagingUserConfigBuffer.offset;
-    GenericHidOutBuffer[2] = StagingUserConfigBuffer.offset >> 8;
+    *(uint16_t*)(GenericHidOutBuffer+1) = StagingUserConfigBuffer.offset;
     GenericHidOutBuffer[3] = 0;
 
     if (GenericHidOutBuffer[0] != UsbResponse_Success) {
@@ -115,16 +114,14 @@ void ApplyConfig(void)
     memcpy(oldKeymapAbbreviation, AllKeymaps[CurrentKeymapIndex].abbreviation, KEYMAP_ABBREVIATION_LENGTH);
     oldKeymapAbbreviationLen = AllKeymaps[CurrentKeymapIndex].abbreviationLen;
 
-    uint8_t *temp;
-    temp = ValidatedUserConfigBuffer.buffer;
+    uint8_t *temp = ValidatedUserConfigBuffer.buffer;
     ValidatedUserConfigBuffer.buffer = StagingUserConfigBuffer.buffer;
     StagingUserConfigBuffer.buffer = temp;
 
     ParserRunDry = false;
     ValidatedUserConfigBuffer.offset = 0;
     GenericHidOutBuffer[0] = ParseConfig(&ValidatedUserConfigBuffer);
-    GenericHidOutBuffer[1] = ValidatedUserConfigBuffer.offset;
-    GenericHidOutBuffer[2] = ValidatedUserConfigBuffer.offset >> 8;
+    *(uint16_t*)(GenericHidOutBuffer+1) = ValidatedUserConfigBuffer.offset;
     GenericHidOutBuffer[3] = 1;
 
     if (GenericHidOutBuffer[0] != UsbResponse_Success) {
@@ -133,14 +130,14 @@ void ApplyConfig(void)
 
     // Switch to the keymap of the updated configuration of the same name or the default keymap.
 
-    for (uint8_t i = 0; i < AllKeymapsCount; i++) {
-        if (AllKeymaps[i].abbreviationLen != oldKeymapAbbreviationLen) {
+    for (uint8_t keymapId = 0; keymapId < AllKeymapsCount; keymapId++) {
+        if (AllKeymaps[keymapId].abbreviationLen != oldKeymapAbbreviationLen) {
             continue;
         }
-        if (memcmp(oldKeymapAbbreviation, AllKeymaps[i].abbreviation, oldKeymapAbbreviationLen)) {
+        if (memcmp(oldKeymapAbbreviation, AllKeymaps[keymapId].abbreviation, oldKeymapAbbreviationLen)) {
             continue;
         }
-        SwitchKeymap(i);
+        SwitchKeymap(keymapId);
         return;
     }
 
@@ -156,11 +153,7 @@ void setLedPwm(void)
 
 void getAdcValue(void)
 {
-    uint32_t adcValue = ADC_Measure();
-    GenericHidOutBuffer[0] = adcValue >> 0;
-    GenericHidOutBuffer[1] = adcValue >> 8;
-    GenericHidOutBuffer[2] = adcValue >> 16;
-    GenericHidOutBuffer[3] = adcValue >> 24;
+    *(uint32_t*)(GenericHidOutBuffer+0) = ADC_Measure();
 }
 
 void legacyLaunchEepromTransfer(void)
@@ -185,7 +178,7 @@ void legacyLaunchEepromTransfer(void)
 void readConfiguration(bool isHardware)
 {
     uint8_t length = GenericHidInBuffer[1];
-    uint16_t offset = *((uint16_t*)(GenericHidInBuffer+2));
+    uint16_t offset = *(uint16_t*)(GenericHidInBuffer+2);
 
     if (length > USB_GENERIC_HID_OUT_BUFFER_LENGTH-1) {
         setError(ConfigTransferResponse_LengthTooLarge);
@@ -235,42 +228,19 @@ void getKeyboardState(void)
 
 void getDebugInfo(void)
 {
-    UsbDebugInfo[0] = I2C_Watchdog >> 0;
-    UsbDebugInfo[1] = I2C_Watchdog >> 8;
-    UsbDebugInfo[2] = I2C_Watchdog >> 16;
-    UsbDebugInfo[3] = I2C_Watchdog >> 24;
-
-    UsbDebugInfo[4] = I2cSchedulerCounter >> 0;
-    UsbDebugInfo[5] = I2cSchedulerCounter >> 8;
-    UsbDebugInfo[6] = I2cSchedulerCounter >> 16;
-    UsbDebugInfo[7] = I2cSchedulerCounter >> 24;
-
-    UsbDebugInfo[8] = I2cWatchdog_OuterCounter >> 0;
-    UsbDebugInfo[9] = I2cWatchdog_OuterCounter >> 8;
-    UsbDebugInfo[10] = I2cWatchdog_OuterCounter >> 16;
-    UsbDebugInfo[11] = I2cWatchdog_OuterCounter >> 24;
-
-    UsbDebugInfo[12] = I2cWatchdog_InnerCounter >> 0;
-    UsbDebugInfo[13] = I2cWatchdog_InnerCounter >> 8;
-    UsbDebugInfo[14] = I2cWatchdog_InnerCounter >> 16;
-    UsbDebugInfo[15] = I2cWatchdog_InnerCounter >> 24;
+    *(uint32_t*)(UsbDebugInfo+0) = I2C_Watchdog;
+    *(uint32_t*)(UsbDebugInfo+4) = I2cSchedulerCounter;
+    *(uint32_t*)(UsbDebugInfo+8) = I2cWatchdog_OuterCounter;
+    *(uint32_t*)(UsbDebugInfo+12) = I2cWatchdog_InnerCounter;
 
     memcpy(GenericHidOutBuffer, UsbDebugInfo, USB_GENERIC_HID_OUT_BUFFER_LENGTH);
 
-    /*
-    uint64_t ticks = microseconds_get_ticks();
+/*    uint64_t ticks = microseconds_get_ticks();
     uint32_t microseconds = microseconds_convert_to_microseconds(ticks);
     uint32_t milliseconds = microseconds/1000;
-
-    GenericHidOutBuffer[1] = (ticks >> 0) & 0xff;;
-    GenericHidOutBuffer[2] = (ticks >> 8) & 0xff;
-    GenericHidOutBuffer[3] = (ticks >> 16) & 0xff;
-    GenericHidOutBuffer[4] = (ticks >> 24) & 0xff;
-    GenericHidOutBuffer[5] = (ticks >> 32) & 0xff;;
-    GenericHidOutBuffer[6] = (ticks >> 40) & 0xff;
-    GenericHidOutBuffer[7] = (ticks >> 48) & 0xff;
-    GenericHidOutBuffer[8] = (ticks >> 56) & 0xff;
-*/}
+    *(uint32_t*)(GenericHidOutBuffer+1) = ticks;
+*/
+}
 
 void jumpToSlaveBootloader(void)
 {
