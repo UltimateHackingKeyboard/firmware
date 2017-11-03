@@ -132,7 +132,9 @@ void UpdateActiveUsbReports(void)
                         processMouseAction(action);
                         break;
                     case KeyActionType_SwitchKeymap:
-                        SwitchKeymap(action.switchKeymap.keymapId);
+                        if (!keyState->previous && keyState->current) {
+                            SwitchKeymap(action.switchKeymap.keymapId);
+                        }
                         break;
                 }
             }
