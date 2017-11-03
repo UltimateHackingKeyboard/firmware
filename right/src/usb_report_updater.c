@@ -77,6 +77,7 @@ void processMouseAction(key_action_t action)
 
 void UpdateActiveUsbReports(void)
 {
+    static uint8_t previousModifiers = 0;
     uint8_t basicScancodeIndex = 0;
     uint8_t mediaScancodeIndex = 0;
     uint8_t systemScancodeIndex = 0;
@@ -87,7 +88,6 @@ void UpdateActiveUsbReports(void)
 
     layer_id_t activeLayer = GetActiveLayer();
     LedDisplay_SetLayer(activeLayer);
-    static uint8_t previousModifiers = 0;
 
     if (MacroPlaying) {
         Macros_ContinueMacro();
@@ -109,7 +109,7 @@ void UpdateActiveUsbReports(void)
 
                         switch (action.keystroke.keystrokeType) {
                             case KeystrokeType_Basic:
-                                if (basicScancodeIndex >= USB_BASIC_KEYBOARD_MAX_KEYS) {
+                                if (basicScancodeIndex >= USB_BASIC_KEYBOARD_MAX_KEYS || action.keystroke.scancode == 0) {
                                     break;
                                 }
                                 ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = action.keystroke.scancode;
