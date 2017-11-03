@@ -100,7 +100,6 @@ void updateLayerStates(void)
 }
 
 static layer_id_t PreviousHeldLayer = LayerId_Base;
-static layer_id_t PreviousToggledLayer = LayerId_Base;
 
 layer_id_t getActiveLayer()
 {
@@ -108,21 +107,19 @@ layer_id_t getActiveLayer()
 
     // Handle toggled layers
 
-    layer_id_t toggledLayer = PreviousToggledLayer;
+    static layer_id_t toggledLayer = LayerId_Base;
 
     for (layer_id_t layerId=LayerId_Mod; layerId<=LayerId_Mouse; layerId++) {
         if (PressedLayers[layerId]) {
-            if (PreviousToggledLayer == layerId) {
+            if (toggledLayer == layerId) {
                 toggledLayer = LayerId_Base;
                 break;
-            } else if (PreviousToggledLayer == LayerId_Base) {
+            } else if (toggledLayer == LayerId_Base) {
                 toggledLayer = layerId;
                 break;
             }
         }
     }
-
-    PreviousToggledLayer = toggledLayer;
 
     if (toggledLayer != LayerId_Base) {
         return toggledLayer;
