@@ -18,7 +18,7 @@
 #include "key_scanner.h"
 #include "key_states.h"
 
-void UpdateUsbReports(void)
+void updateUsbReports(void)
 {
     if (!IsUsbBasicKeyboardReportSent) {
         return;
@@ -76,7 +76,7 @@ void main(void)
 #ifdef INTERRUPT_KEY_SCANNER
         InitKeyScanner();
 #endif
-        UpdateUsbReports();
+        updateUsbReports();
         InitUsb();
 
         while (1) {
@@ -84,7 +84,7 @@ void main(void)
                 ApplyConfig();
                 IsConfigInitialized = true;
             }
-            UpdateUsbReports();
+            updateUsbReports();
             __WFI();
         }
     }

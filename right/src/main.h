@@ -7,8 +7,4 @@
     #include "slot.h"
     #include "module.h"
 
-// Variables:
-
-    extern void UpdateUsbReports(void);
-
 #endif
