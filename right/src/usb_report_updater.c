@@ -139,44 +139,43 @@ void UpdateActiveUsbReports(void)
 
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
+            key_state_t keyState = KeyStates[slotId][keyId];
+            if (keyState.current) {
+                key_action_t action = CurrentKeymap[activeLayer][slotId][keyId];
+                switch (action.type) {
+                    case KeyActionType_Keystroke:
+                        ActiveUsbBasicKeyboardReport->modifiers |= action.keystroke.modifiers;
 
-            if (!KeyStates[slotId][keyId].current) {
-                continue;
+                        switch (action.keystroke.keystrokeType) {
+                            case KeystrokeType_Basic:
+                                if (basicScancodeIndex >= USB_BASIC_KEYBOARD_MAX_KEYS) {
+                                    break;
+                                }
+                                ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = action.keystroke.scancode;
+                                break;
+                            case KeystrokeType_Media:
+                                if (mediaScancodeIndex >= USB_MEDIA_KEYBOARD_MAX_KEYS) {
+                                    break;
+                                }
+                                ActiveUsbMediaKeyboardReport->scancodes[mediaScancodeIndex++] = action.keystroke.scancode;
+                                break;
+                            case KeystrokeType_System:
+                                if (systemScancodeIndex >= USB_SYSTEM_KEYBOARD_MAX_KEYS) {
+                                    break;
+                                }
+                                ActiveUsbSystemKeyboardReport->scancodes[systemScancodeIndex++] = action.keystroke.scancode;
+                                break;
+                        }
+                        break;
+                    case KeyActionType_Mouse:
+                        processMouseAction(action);
+                        break;
+                    case KeyActionType_SwitchKeymap:
+                        Keymaps_Switch(action.switchKeymap.keymapId);
+                        break;
+                }
             }
-
-            key_action_t action = CurrentKeymap[activeLayer][slotId][keyId];
-            switch (action.type) {
-                case KeyActionType_Keystroke:
-                    ActiveUsbBasicKeyboardReport->modifiers |= action.keystroke.modifiers;
-
-                    switch (action.keystroke.keystrokeType) {
-                        case KeystrokeType_Basic:
-                            if (basicScancodeIndex >= USB_BASIC_KEYBOARD_MAX_KEYS) {
-                                break;
-                            }
-                            ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = action.keystroke.scancode;
-                            break;
-                        case KeystrokeType_Media:
-                            if (mediaScancodeIndex >= USB_MEDIA_KEYBOARD_MAX_KEYS) {
-                                break;
-                            }
-                            ActiveUsbMediaKeyboardReport->scancodes[mediaScancodeIndex++] = action.keystroke.scancode;
-                            break;
-                        case KeystrokeType_System:
-                            if (systemScancodeIndex >= USB_SYSTEM_KEYBOARD_MAX_KEYS) {
-                                break;
-                            }
-                            ActiveUsbSystemKeyboardReport->scancodes[systemScancodeIndex++] = action.keystroke.scancode;
-                            break;
-                    }
-                    break;
-                case KeyActionType_Mouse:
-                    processMouseAction(action);
-                    break;
-                case KeyActionType_SwitchKeymap:
-                    Keymaps_Switch(action.switchKeymap.keymapId);
-                    break;
-            }
+            keyState.previous = keyState.current;
         }
     }
 
