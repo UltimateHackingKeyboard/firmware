@@ -74,13 +74,13 @@ void processMouseAction(key_action_t action)
     wasPreviousMouseActionWheelAction = isWheelAction;
 }
 
-static bool HeldLayers[LAYER_COUNT];
-static bool PressedLayers[LAYER_COUNT];
+static bool heldLayers[LAYER_COUNT];
+static bool pressedLayers[LAYER_COUNT];
 
 void updateLayerStates(void)
 {
-    memset(HeldLayers, false, LAYER_COUNT);
-    memset(PressedLayers, false, LAYER_COUNT);
+    memset(heldLayers, false, LAYER_COUNT);
+    memset(pressedLayers, false, LAYER_COUNT);
 
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
@@ -89,9 +89,9 @@ void updateLayerStates(void)
                 key_action_t action = CurrentKeymap[LayerId_Base][slotId][keyId];
                 if (action.type == KeyActionType_SwitchLayer) {
                     if (!action.switchLayer.isToggle) {
-                        HeldLayers[action.switchLayer.layer] = true;
+                        heldLayers[action.switchLayer.layer] = true;
                     } else if (!keyState->previous && keyState->current) {
-                        PressedLayers[action.switchLayer.layer] = true;
+                        pressedLayers[action.switchLayer.layer] = true;
                     }
                 }
             }
@@ -110,7 +110,7 @@ layer_id_t getActiveLayer()
     static layer_id_t toggledLayer = LayerId_Base;
 
     for (layer_id_t layerId=LayerId_Mod; layerId<=LayerId_Mouse; layerId++) {
-        if (PressedLayers[layerId]) {
+        if (pressedLayers[layerId]) {
             if (toggledLayer == layerId) {
                 toggledLayer = LayerId_Base;
                 break;
@@ -130,13 +130,13 @@ layer_id_t getActiveLayer()
     layer_id_t heldLayer = LayerId_Base;
 
     for (layer_id_t layerId=LayerId_Mod; layerId<=LayerId_Mouse; layerId++) {
-        if (HeldLayers[layerId]) {
+        if (heldLayers[layerId]) {
             heldLayer = layerId;
             break;
         }
     }
 
-    heldLayer = heldLayer != LayerId_Base && HeldLayers[PreviousHeldLayer] ? PreviousHeldLayer : heldLayer;
+    heldLayer = heldLayer != LayerId_Base && heldLayers[PreviousHeldLayer] ? PreviousHeldLayer : heldLayer;
     PreviousHeldLayer = heldLayer;
 
     return heldLayer;
