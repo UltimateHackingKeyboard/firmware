@@ -7,7 +7,7 @@ uint32_t counter = 0;
 void PIT_KEY_SCANNER_HANDLER(void)
 {
     *((uint32_t*)(UsbDebugInfo+20)) = counter++;
-    KeyMatrix_ScanRow(&KeyMatrix);
+    KeyMatrix_ScanRow(&RightKeyMatrix);
     PIT_ClearStatusFlags(PIT, PIT_KEY_SCANNER_CHANNEL, PIT_TFLG_TIF_MASK);
 }
 

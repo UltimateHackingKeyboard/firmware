@@ -1,8 +1,8 @@
-#include "key_matrix_instance.h"
+#include "right_key_matrix.h"
 
-key_matrix_t KeyMatrix = {
-    .colNum = KEYBOARD_MATRIX_COLS_NUM,
-    .rowNum = KEYBOARD_MATRIX_ROWS_NUM,
+key_matrix_t RightKeyMatrix = {
+    .colNum = RIGHT_KEY_MATRIX_COLS_NUM,
+    .rowNum = RIGHT_KEY_MATRIX_ROWS_NUM,
     .cols = (key_matrix_pin_t[]){
         {PORTA, GPIOA, kCLOCK_PortA, 5},
         {PORTB, GPIOB, kCLOCK_PortB, 16},

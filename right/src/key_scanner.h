@@ -3,11 +3,11 @@
 
 // Includes:
 
-    #include "key_matrix_instance.h"
+    #include "right_key_matrix.h"
 
 // Macros:
 
-    #define KEY_SCANNER_INTERVAL_USEC (1000 / KEYBOARD_MATRIX_ROWS_NUM)
+    #define KEY_SCANNER_INTERVAL_USEC (1000 / RIGHT_KEY_MATRIX_ROWS_NUM)
 
     #define PIT_KEY_SCANNER_HANDLER PIT1_IRQHandler
     #define PIT_KEY_SCANNER_IRQ_ID PIT1_IRQn

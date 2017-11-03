@@ -14,7 +14,7 @@
 #include "command.h"
 #include "bootloader/wormhole.h"
 #include "eeprom.h"
-#include "key_matrix_instance.h"
+#include "right_key_matrix.h"
 #include "key_scanner.h"
 #include "key_states.h"
 
@@ -25,7 +25,7 @@ void updateUsbReports(void)
     }
 
 #ifndef INTERRUPT_KEY_SCANNER
-    KeyMatrix_Scan(&KeyMatrix);
+    KeyMatrix_Scan(&RightKeyMatrix);
 #endif
 
     ResetActiveUsbBasicKeyboardReport();
@@ -68,7 +68,7 @@ void main(void)
         handleUsbBusPalCommand();
     } else {
         InitSlaveScheduler();
-        KeyMatrix_Init(&KeyMatrix);
+        KeyMatrix_Init(&RightKeyMatrix);
 #ifdef INTERRUPT_KEY_SCANNER
         InitKeyScanner();
 #endif
