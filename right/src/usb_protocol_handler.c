@@ -13,7 +13,7 @@
 #include "bootloader/wormhole.h"
 #include "peripherals/adc.h"
 #include "eeprom.h"
-#include "keymaps.h"
+#include "keymap.h"
 #include "microseconds/microseconds_pit.c"
 #include "i2c_watchdog.h"
 

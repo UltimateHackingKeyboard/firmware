@@ -1,6 +1,6 @@
 #include "arduino_hid/ConsumerAPI.h"
 #include "arduino_hid/SystemAPI.h"
-#include "keymaps.h"
+#include "keymap.h"
 #include "led_display.h"
 #include "config_parser/parse_keymap.h"
 #include "config_parser/config_globals.h"

@@ -1,7 +1,7 @@
 #include "parse_config.h"
 #include "parse_keymap.h"
 #include "parse_macro.h"
-#include "keymaps.h"
+#include "keymap.h"
 #include "config_globals.h"
 #include "macros.h"
 

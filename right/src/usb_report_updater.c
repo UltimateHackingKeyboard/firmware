@@ -3,7 +3,7 @@
 #include "led_display.h"
 #include "layer.h"
 #include "usb_interfaces/usb_interface_mouse.h"
-#include "keymaps.h"
+#include "keymap.h"
 #include "peripherals/test_led.h"
 #include "slave_drivers/is31fl3731_driver.h"
 #include "slave_drivers/uhk_module_driver.h"

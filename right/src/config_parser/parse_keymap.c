@@ -2,7 +2,7 @@
 #include "config_parser/parse_config.h"
 #include "config_parser/parse_keymap.h"
 #include "key_action.h"
-#include "keymaps.h"
+#include "keymap.h"
 #include "led_display.h"
 
 static uint8_t tempKeymapCount;

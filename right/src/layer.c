@@ -2,7 +2,7 @@
 #include "slot.h"
 #include "module.h"
 #include "key_states.h"
-#include "keymaps.h"
+#include "keymap.h"
 
 static bool heldLayers[LAYER_COUNT];
 static bool pressedLayers[LAYER_COUNT];
