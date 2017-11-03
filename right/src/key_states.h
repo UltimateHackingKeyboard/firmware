@@ -7,8 +7,16 @@
     #include "slot.h"
     #include "module.h"
 
+// Typedefs:
+
+    typedef struct {
+        bool previous;
+        bool current;
+        bool suppressed;
+    } key_state_t;
+
 // Variables:
 
-    extern uint8_t KeyStates[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
+    extern key_state_t KeyStates[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
 
 #endif

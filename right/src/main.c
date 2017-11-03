@@ -28,7 +28,9 @@ void UpdateUsbReports(void)
     KeyMatrix_Scan(&KeyMatrix);
 #endif
 
-    memcpy(KeyStates[SlotId_RightKeyboardHalf], KeyMatrix.keyStates, MAX_KEY_COUNT_PER_MODULE);
+    for (uint8_t keyId=0; keyId < KEYBOARD_MATRIX_KEY_COUNT; keyId++) {
+        KeyStates[SlotId_RightKeyboardHalf][keyId].current = KeyMatrix.keyStates[keyId];
+    }
 
     ResetActiveUsbBasicKeyboardReport();
     ResetActiveUsbMediaKeyboardReport();

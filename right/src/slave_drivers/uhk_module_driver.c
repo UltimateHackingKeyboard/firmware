@@ -10,7 +10,7 @@
 #include "key_states.h"
 
 uhk_module_state_t UhkModuleStates[UHK_MODULE_MAX_COUNT];
-
+static uint8_t keyStatesBuffer[MAX_KEY_COUNT_PER_MODULE];
 static i2c_message_t txMessage;
 
 static uhk_module_i2c_addresses_t moduleIdsToI2cAddresses[] = {
@@ -172,7 +172,10 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
         case UhkModulePhase_ProcessKeystates:
             if (CRC16_IsMessageValid(rxMessage)) {
                 uint8_t slotId = uhkModuleDriverId + 1;
-                BoolBitsToBytes(rxMessage->data, KeyStates[slotId], uhkModuleState->features.keyCount);
+                BoolBitsToBytes(rxMessage->data, keyStatesBuffer, uhkModuleState->features.keyCount);
+                for (uint8_t keyId=0; keyId<uhkModuleState->features.keyCount; keyId++) {
+                    KeyStates[slotId][keyId].current = keyStatesBuffer[keyId];
+                }
             }
             status = kStatus_Uhk_NoTransfer;
             *uhkModulePhase = UhkModulePhase_JumpToBootloader;
