@@ -132,7 +132,7 @@ void UpdateActiveUsbReports(void)
                         processMouseAction(action);
                         break;
                     case KeyActionType_SwitchKeymap:
-                        Keymaps_Switch(action.switchKeymap.keymapId);
+                        SwitchKeymap(action.switchKeymap.keymapId);
                         break;
                 }
             }

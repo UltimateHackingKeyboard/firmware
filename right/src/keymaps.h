@@ -29,6 +29,6 @@
 
 // Functions:
 
-    void Keymaps_Switch(uint8_t index);
+    void SwitchKeymap(uint8_t index);
 
 #endif

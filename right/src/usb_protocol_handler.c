@@ -140,11 +140,11 @@ void ApplyConfig(void)
         if (memcmp(oldKeymapAbbreviation, AllKeymaps[i].abbreviation, oldKeymapAbbreviationLen)) {
             continue;
         }
-        Keymaps_Switch(i);
+        SwitchKeymap(i);
         return;
     }
 
-    Keymaps_Switch(DefaultKeymapIndex);
+    SwitchKeymap(DefaultKeymapIndex);
 }
 
 void setLedPwm(void)

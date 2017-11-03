@@ -13,7 +13,7 @@ uint8_t AllKeymapsCount;
 uint8_t DefaultKeymapIndex;
 uint8_t CurrentKeymapIndex = 0;
 
-void Keymaps_Switch(uint8_t index)
+void SwitchKeymap(uint8_t index)
 {
     CurrentKeymapIndex = index;
     ValidatedUserConfigBuffer.offset = AllKeymaps[index].offset;
