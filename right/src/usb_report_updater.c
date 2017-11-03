@@ -10,6 +10,7 @@
 #include "led_pwm.h"
 #include "macros.h"
 #include "key_states.h"
+#include "key_matrix_instance.h"
 
 static uint8_t mouseWheelDivisorCounter = 0;
 static uint8_t mouseSpeedAccelDivisorCounter = 0;
@@ -97,6 +98,10 @@ void UpdateActiveUsbReports(void)
     static uint8_t previousLayer = LayerId_Base;
     static uint8_t previousModifiers = 0;
     uint8_t activeLayer;
+
+    for (uint8_t keyId=0; keyId < KEYBOARD_MATRIX_KEY_COUNT; keyId++) {
+        KeyStates[SlotId_RightKeyboardHalf][keyId].current = KeyMatrix.keyStates[keyId];
+    }
 
     if (MacroPlaying) {
         Macros_ContinueMacro();

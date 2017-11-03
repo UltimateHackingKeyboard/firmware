@@ -28,10 +28,6 @@ void updateUsbReports(void)
     KeyMatrix_Scan(&KeyMatrix);
 #endif
 
-    for (uint8_t keyId=0; keyId < KEYBOARD_MATRIX_KEY_COUNT; keyId++) {
-        KeyStates[SlotId_RightKeyboardHalf][keyId].current = KeyMatrix.keyStates[keyId];
-    }
-
     ResetActiveUsbBasicKeyboardReport();
     ResetActiveUsbMediaKeyboardReport();
     ResetActiveUsbSystemKeyboardReport();
