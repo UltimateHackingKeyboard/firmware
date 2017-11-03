@@ -7,6 +7,7 @@
 #include "peripherals/test_led.h"
 #include "bool_array_converter.h"
 #include "crc16.h"
+#include "key_states.h"
 
 uhk_module_state_t UhkModuleStates[UHK_MODULE_MAX_COUNT];
 
@@ -171,7 +172,7 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
         case UhkModulePhase_ProcessKeystates:
             if (CRC16_IsMessageValid(rxMessage)) {
                 uint8_t slotId = uhkModuleDriverId + 1;
-                BoolBitsToBytes(rxMessage->data, CurrentKeyStates[slotId], uhkModuleState->features.keyCount);
+                BoolBitsToBytes(rxMessage->data, KeyStates[slotId], uhkModuleState->features.keyCount);
             }
             status = kStatus_Uhk_NoTransfer;
             *uhkModulePhase = UhkModulePhase_JumpToBootloader;

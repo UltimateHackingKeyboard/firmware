@@ -9,8 +9,6 @@
 
 // Variables:
 
-    extern uint8_t PreviousKeyStates[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
-    extern uint8_t CurrentKeyStates[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
     extern void UpdateUsbReports(void);
 
 #endif

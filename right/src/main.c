@@ -16,8 +16,7 @@
 #include "eeprom.h"
 #include "key_matrix_instance.h"
 #include "key_scanner.h"
-
-uint8_t CurrentKeyStates[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
+#include "key_states.h"
 
 void UpdateUsbReports(void)
 {
@@ -29,7 +28,7 @@ void UpdateUsbReports(void)
     KeyMatrix_Scan(&KeyMatrix);
 #endif
 
-    memcpy(CurrentKeyStates[SlotId_RightKeyboardHalf], KeyMatrix.keyStates, MAX_KEY_COUNT_PER_MODULE);
+    memcpy(KeyStates[SlotId_RightKeyboardHalf], KeyMatrix.keyStates, MAX_KEY_COUNT_PER_MODULE);
 
     ResetActiveUsbBasicKeyboardReport();
     ResetActiveUsbMediaKeyboardReport();
