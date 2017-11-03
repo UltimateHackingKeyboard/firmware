@@ -74,19 +74,42 @@ void processMouseAction(key_action_t action)
     wasPreviousMouseActionWheelAction = isWheelAction;
 }
 
-uint8_t getActiveLayer(void)
+static bool pressedLayers[LAYER_COUNT];
+
+void updatePressedLayers(void)
 {
-    uint8_t activeLayer = LayerId_Base;
+    memset(pressedLayers, false, LAYER_COUNT);
+
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
             if (KeyStates[slotId][keyId].current) {
                 key_action_t action = CurrentKeymap[LayerId_Base][slotId][keyId];
                 if (action.type == KeyActionType_SwitchLayer) {
-                    activeLayer = action.switchLayer.layer;
+                    pressedLayers[action.switchLayer.layer] = true;
                 }
             }
         }
     }
+}
+
+static uint8_t PreviousLayer = LayerId_Base;
+
+layer_id_t getActiveLayer()
+{
+    updatePressedLayers();
+
+    layer_id_t activeLayer = LayerId_Base;
+
+    for (layer_id_t layerId=LayerId_Mod; layerId<=LayerId_Mouse; layerId++) {
+        if (pressedLayers[layerId]) {
+            activeLayer = layerId;
+            break;
+        }
+    }
+
+    activeLayer = activeLayer != LayerId_Base && pressedLayers[PreviousLayer] ? PreviousLayer : activeLayer;
+    PreviousLayer = activeLayer;
+
     return activeLayer;
 }
 
@@ -95,9 +118,10 @@ void UpdateActiveUsbReports(void)
     uint8_t basicScancodeIndex = 0;
     uint8_t mediaScancodeIndex = 0;
     uint8_t systemScancodeIndex = 0;
-    static uint8_t previousLayer = LayerId_Base;
+
+    layer_id_t activeLayer = getActiveLayer();
+    LedDisplay_SetLayer(activeLayer);
     static uint8_t previousModifiers = 0;
-    uint8_t activeLayer;
 
     for (uint8_t keyId=0; keyId < RIGHT_KEY_MATRIX_KEY_COUNT; keyId++) {
         KeyStates[SlotId_RightKeyboardHalf][keyId].current = RightKeyMatrix.keyStates[keyId];
@@ -111,8 +135,8 @@ void UpdateActiveUsbReports(void)
         memcpy(&ActiveUsbSystemKeyboardReport, &MacroSystemKeyboardReport, sizeof MacroSystemKeyboardReport);
         return;
     }
-    activeLayer = getActiveLayer();
-    LedDisplay_SetLayer(activeLayer);
+
+
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
 
@@ -159,10 +183,9 @@ void UpdateActiveUsbReports(void)
     // When a layer switcher key gets pressed along with another key that produces some modifiers
     // and the accomanying key gets released then keep the related modifiers active a long as the
     // layer switcher key stays pressed.  Useful for Alt+Tab keymappings and the like.
-    if (activeLayer != LayerId_Base && activeLayer == previousLayer && basicScancodeIndex == 0) {
+    if (activeLayer != LayerId_Base && activeLayer == PreviousLayer && basicScancodeIndex == 0) {
         ActiveUsbBasicKeyboardReport->modifiers |= previousModifiers;
     }
 
-    previousLayer = activeLayer;
     previousModifiers = ActiveUsbBasicKeyboardReport->modifiers;
 }
