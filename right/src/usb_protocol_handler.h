@@ -48,6 +48,5 @@
 // Functions:
 
     void UsbProtocolHandler(void);
-    void ApplyConfig(void);
 
 #endif
