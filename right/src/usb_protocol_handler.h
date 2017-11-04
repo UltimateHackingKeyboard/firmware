@@ -8,24 +8,24 @@
 // Typedefs:
 
     typedef enum {
-        UsbCommand_GetSystemProperty          =  0,
-        UsbCommand_Reenumerate                =  1,
-        UsbCommand_SetTestLed                 =  2,
-        UsbCommand_WriteLedDriver             =  3,
-        UsbCommand_ReadMergeSensor            =  7,
-        UsbCommand_WriteUserConfiguration     =  8,
+        UsbCommandId_GetSystemProperty          =  0,
+        UsbCommandId_Reenumerate                =  1,
+        UsbCommandId_SetTestLed                 =  2,
+        UsbCommandId_WriteLedDriver             =  3,
+        UsbCommandId_ReadMergeSensor            =  7,
+        UsbCommandId_WriteUserConfiguration     =  8,
         UsbCommandId_ApplyConfig                =  9,
-        UsbCommand_SetLedPwm                  = 10,
-        UsbCommand_GetAdcValue                = 11,
-        UsbCommand_LaunchEepromTransfer       = 12,
-        UsbCommand_ReadHardwareConfiguration  = 13,
-        UsbCommand_WriteHardwareConfiguration = 14,
-        UsbCommand_ReadUserConfiguration      = 15,
-        UsbCommand_GetKeyboardState           = 16,
-        UsbCommand_GetDebugInfo               = 17,
-        UsbCommand_JumpToSlaveBootloader      = 18,
-        UsbCommand_SendKbootCommand           = 19,
-    } usb_command_t;
+        UsbCommandId_SetLedPwm                  = 10,
+        UsbCommandId_GetAdcValue                = 11,
+        UsbCommandId_LaunchEepromTransfer       = 12,
+        UsbCommandId_ReadHardwareConfiguration  = 13,
+        UsbCommandId_WriteHardwareConfiguration = 14,
+        UsbCommandId_ReadUserConfiguration      = 15,
+        UsbCommandId_GetKeyboardState           = 16,
+        UsbCommandId_GetDebugInfo               = 17,
+        UsbCommandId_JumpToSlaveBootloader      = 18,
+        UsbCommandId_SendKbootCommand           = 19,
+    } usb_command_id_t;
 
     typedef enum {
         UsbResponse_Success      = 0,

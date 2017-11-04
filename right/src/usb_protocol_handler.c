@@ -218,54 +218,54 @@ void UsbProtocolHandler(void)
     bzero(GenericHidOutBuffer, USB_GENERIC_HID_OUT_BUFFER_LENGTH);
     uint8_t command = GenericHidInBuffer[0];
     switch (command) {
-        case UsbCommand_GetSystemProperty:
+        case UsbCommandId_GetSystemProperty:
             getSystemProperty();
             break;
-        case UsbCommand_Reenumerate:
+        case UsbCommandId_Reenumerate:
             reenumerate();
             break;
-        case UsbCommand_SetTestLed:
+        case UsbCommandId_SetTestLed:
             setTestLed();
             break;
-        case UsbCommand_WriteLedDriver:
+        case UsbCommandId_WriteLedDriver:
             break;
-        case UsbCommand_ReadMergeSensor:
+        case UsbCommandId_ReadMergeSensor:
             readMergeSensor();
             break;
-        case UsbCommand_WriteUserConfiguration:
+        case UsbCommandId_WriteUserConfiguration:
             writeConfiguration(false);
             break;
         case UsbCommandId_ApplyConfig:
             UsbCommand_ApplyConfig();
             break;
-        case UsbCommand_SetLedPwm:
+        case UsbCommandId_SetLedPwm:
             setLedPwm();
             break;
-        case UsbCommand_GetAdcValue:
+        case UsbCommandId_GetAdcValue:
             getAdcValue();
             break;
-        case UsbCommand_LaunchEepromTransfer:
+        case UsbCommandId_LaunchEepromTransfer:
             legacyLaunchEepromTransfer();
             break;
-        case UsbCommand_ReadHardwareConfiguration:
+        case UsbCommandId_ReadHardwareConfiguration:
             readConfiguration(true);
             break;
-        case UsbCommand_WriteHardwareConfiguration:
+        case UsbCommandId_WriteHardwareConfiguration:
             writeConfiguration(true);
             break;
-        case UsbCommand_ReadUserConfiguration:
+        case UsbCommandId_ReadUserConfiguration:
             readConfiguration(false);
             break;
-        case UsbCommand_GetKeyboardState:
+        case UsbCommandId_GetKeyboardState:
             getKeyboardState();
             break;
-        case UsbCommand_GetDebugInfo:
+        case UsbCommandId_GetDebugInfo:
             getDebugInfo();
             break;
-        case UsbCommand_JumpToSlaveBootloader:
+        case UsbCommandId_JumpToSlaveBootloader:
             jumpToSlaveBootloader();
             break;
-        case UsbCommand_SendKbootCommand:
+        case UsbCommandId_SendKbootCommand:
             sendKbootCommand();
             break;
         default:
