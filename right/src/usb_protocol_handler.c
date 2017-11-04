@@ -19,6 +19,7 @@
 #include "usb_commands/usb_command_read_config.h"
 #include "usb_commands/usb_command_get_property.h"
 #include "usb_commands/usb_command_jump_to_slave_bootloader.h"
+#include "usb_commands/usb_command_send_kboot_command.h"
 
 uint8_t UsbDebugInfo[USB_GENERIC_HID_OUT_BUFFER_LENGTH];
 
@@ -139,13 +140,6 @@ void getDebugInfo(void)
 */
 }
 
-void sendKbootCommand(void)
-{
-    KbootDriverState.phase = 0;
-    KbootDriverState.i2cAddress = GenericHidInBuffer[2];
-    KbootDriverState.commandType = GenericHidInBuffer[1];
-}
-
 // The main protocol handler function
 
 void UsbProtocolHandler(void)
@@ -201,7 +195,7 @@ void UsbProtocolHandler(void)
             UsbCommand_JumpToSlaveBootloader();
             break;
         case UsbCommandId_SendKbootCommand:
-            sendKbootCommand();
+            UsbCommand_SendKbootCommand();
             break;
         default:
             break;
