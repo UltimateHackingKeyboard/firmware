@@ -23,6 +23,7 @@
 #include "usb_commands/usb_command_send_kboot_command.h"
 #include "usb_commands/usb_command_launch_eeprom_transfer_legacy.h"
 #include "usb_commands/usb_command_get_keyboard_state.h"
+#include "usb_commands/usb_command_get_debug_info.h"
 
 uint8_t UsbDebugInfo[USB_GENERIC_HID_OUT_BUFFER_LENGTH];
 
@@ -78,22 +79,6 @@ void getAdcValue(void)
     *(uint32_t*)(GenericHidOutBuffer+1) = ADC_Measure();
 }
 
-void getDebugInfo(void)
-{
-    *(uint32_t*)(UsbDebugInfo+1) = I2C_Watchdog;
-    *(uint32_t*)(UsbDebugInfo+5) = I2cSchedulerCounter;
-    *(uint32_t*)(UsbDebugInfo+9) = I2cWatchdog_OuterCounter;
-    *(uint32_t*)(UsbDebugInfo+13) = I2cWatchdog_InnerCounter;
-
-    memcpy(GenericHidOutBuffer, UsbDebugInfo, USB_GENERIC_HID_OUT_BUFFER_LENGTH);
-
-/*    uint64_t ticks = microseconds_get_ticks();
-    uint32_t microseconds = microseconds_convert_to_microseconds(ticks);
-    uint32_t milliseconds = microseconds/1000;
-    *(uint32_t*)(GenericHidOutBuffer+1) = ticks;
-*/
-}
-
 // The main protocol handler function
 
 void UsbProtocolHandler(void)
@@ -143,7 +128,7 @@ void UsbProtocolHandler(void)
             UsbCommand_GetKeyboardState();
             break;
         case UsbCommandId_GetDebugInfo:
-            getDebugInfo();
+            UsbCommand_GetDebugInfo();
             break;
         case UsbCommandId_JumpToSlaveBootloader:
             UsbCommand_JumpToSlaveBootloader();
