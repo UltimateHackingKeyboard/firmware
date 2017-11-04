@@ -3,6 +3,7 @@ const fs = require('fs');
 require('shelljs/global');
 
 config.fatal = true;
+config.verbose = true;
 
 const package = JSON.parse(fs.readFileSync(`${__dirname}/package.json`));
 const version = package.version;
@@ -33,7 +34,7 @@ for (let master of package.masters) {
     mkdir('-p', masterDir);
     chmod(644, masterSource);
     cp(masterSource, `${masterDir}/firmware.hex`);
-//    exec(`${usbDir}/user-config-json-to-bin.ts ${masterDir}/config.bin`);
+    exec(`${usbDir}/user-config-json-to-bin.ts ${masterDir}/config.bin`);
 }
 
 for (let slave of package.slaves) {
