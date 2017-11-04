@@ -18,6 +18,7 @@
 #include "usb_commands/usb_command_apply_config.h"
 #include "usb_commands/usb_command_read_config.h"
 #include "usb_commands/usb_command_get_property.h"
+#include "usb_commands/usb_command_jump_to_slave_bootloader.h"
 
 uint8_t UsbDebugInfo[USB_GENERIC_HID_OUT_BUFFER_LENGTH];
 
@@ -138,18 +139,6 @@ void getDebugInfo(void)
 */
 }
 
-void jumpToSlaveBootloader(void)
-{
-    uint8_t uhkModuleDriverId = GenericHidInBuffer[1];
-
-    if (uhkModuleDriverId >= UHK_MODULE_MAX_COUNT) {
-        SetUsbError(JumpToBootloaderError_InvalidModuleDriverId);
-        return;
-    }
-
-    UhkModuleStates[uhkModuleDriverId].jumpToBootloader = true;
-}
-
 void sendKbootCommand(void)
 {
     KbootDriverState.phase = 0;
@@ -209,7 +198,7 @@ void UsbProtocolHandler(void)
             getDebugInfo();
             break;
         case UsbCommandId_JumpToSlaveBootloader:
-            jumpToSlaveBootloader();
+            UsbCommand_JumpToSlaveBootloader();
             break;
         case UsbCommandId_SendKbootCommand:
             sendKbootCommand();
