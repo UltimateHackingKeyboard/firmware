@@ -17,6 +17,7 @@
 #include "i2c_watchdog.h"
 #include "usb_commands/usb_command_apply_config.h"
 #include "usb_commands/usb_command_read_config.h"
+#include "usb_commands/usb_command_write_config.h"
 #include "usb_commands/usb_command_get_property.h"
 #include "usb_commands/usb_command_jump_to_slave_bootloader.h"
 #include "usb_commands/usb_command_send_kboot_command.h"
@@ -94,27 +95,6 @@ void legacyLaunchEepromTransfer(void)
     }
 }
 
-void writeConfiguration(bool isHardware)
-{
-    uint8_t length = GenericHidInBuffer[1];
-    uint16_t offset = *((uint16_t*)(GenericHidInBuffer+1+1));
-
-    if (length > USB_GENERIC_HID_OUT_BUFFER_LENGTH-1-1-2) {
-        SetUsbError(ConfigTransferResponse_LengthTooLarge);
-        return;
-    }
-
-    uint8_t *buffer = isHardware ? HardwareConfigBuffer.buffer : StagingUserConfigBuffer.buffer;
-    uint16_t bufferLength = isHardware ? HARDWARE_CONFIG_SIZE : USER_CONFIG_SIZE;
-
-    if (offset + length > bufferLength) {
-        SetUsbError(ConfigTransferResponse_BufferOutOfBounds);
-        return;
-    }
-
-    memcpy(buffer+offset, GenericHidInBuffer+1+1+2, length);
-}
-
 void getKeyboardState(void)
 {
     GenericHidOutBuffer[1] = IsEepromBusy;
@@ -162,7 +142,7 @@ void UsbProtocolHandler(void)
             readMergeSensor();
             break;
         case UsbCommandId_WriteUserConfiguration:
-            writeConfiguration(false);
+            UsbCommand_WriteConfig(false);
             break;
         case UsbCommandId_ApplyConfig:
             UsbCommand_ApplyConfig();
@@ -180,7 +160,7 @@ void UsbProtocolHandler(void)
             UsbCommand_ReadConfig(true);
             break;
         case UsbCommandId_WriteHardwareConfiguration:
-            writeConfiguration(true);
+            UsbCommand_WriteConfig(true);
             break;
         case UsbCommandId_ReadUserConfiguration:
             UsbCommand_ReadConfig(false);
