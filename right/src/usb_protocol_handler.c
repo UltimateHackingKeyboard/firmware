@@ -22,6 +22,7 @@
 #include "usb_commands/usb_command_jump_to_slave_bootloader.h"
 #include "usb_commands/usb_command_send_kboot_command.h"
 #include "usb_commands/usb_command_launch_eeprom_transfer_legacy.h"
+#include "usb_commands/usb_command_get_keyboard_state.h"
 
 uint8_t UsbDebugInfo[USB_GENERIC_HID_OUT_BUFFER_LENGTH];
 
@@ -75,15 +76,6 @@ void setLedPwm(void)
 void getAdcValue(void)
 {
     *(uint32_t*)(GenericHidOutBuffer+1) = ADC_Measure();
-}
-
-void getKeyboardState(void)
-{
-    GenericHidOutBuffer[1] = IsEepromBusy;
-    GenericHidOutBuffer[2] = MERGE_SENSOR_IS_MERGED;
-    GenericHidOutBuffer[3] = UhkModuleStates[UhkModuleDriverId_LeftKeyboardHalf].moduleId;
-    GenericHidOutBuffer[4] = UhkModuleStates[UhkModuleDriverId_LeftAddon].moduleId;
-    GenericHidOutBuffer[5] = UhkModuleStates[UhkModuleDriverId_RightAddon].moduleId;
 }
 
 void getDebugInfo(void)
@@ -148,7 +140,7 @@ void UsbProtocolHandler(void)
             UsbCommand_ReadConfig(false);
             break;
         case UsbCommandId_GetKeyboardState:
-            getKeyboardState();
+            UsbCommand_GetKeyboardState();
             break;
         case UsbCommandId_GetDebugInfo:
             getDebugInfo();
