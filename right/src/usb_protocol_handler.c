@@ -21,6 +21,7 @@
 #include "usb_commands/usb_command_get_property.h"
 #include "usb_commands/usb_command_jump_to_slave_bootloader.h"
 #include "usb_commands/usb_command_send_kboot_command.h"
+#include "usb_commands/usb_command_launch_eeprom_transfer_legacy.h"
 
 uint8_t UsbDebugInfo[USB_GENERIC_HID_OUT_BUFFER_LENGTH];
 
@@ -74,25 +75,6 @@ void setLedPwm(void)
 void getAdcValue(void)
 {
     *(uint32_t*)(GenericHidOutBuffer+1) = ADC_Measure();
-}
-
-void legacyLaunchEepromTransfer(void)
-{
-    uint8_t legacyEepromTransferId = GenericHidInBuffer[1];
-    switch (legacyEepromTransferId) {
-    case 0:
-        EEPROM_LaunchTransfer(EepromOperation_Read, ConfigBufferId_HardwareConfig, NULL);
-        break;
-    case 1:
-        EEPROM_LaunchTransfer(EepromOperation_Write, ConfigBufferId_HardwareConfig, NULL);
-        break;
-    case 2:
-        EEPROM_LaunchTransfer(EepromOperation_Read, ConfigBufferId_ValidatedUserConfig, NULL);
-        break;
-    case 3:
-        EEPROM_LaunchTransfer(EepromOperation_Write, ConfigBufferId_ValidatedUserConfig, NULL);
-        break;
-    }
 }
 
 void getKeyboardState(void)
@@ -153,8 +135,8 @@ void UsbProtocolHandler(void)
         case UsbCommandId_GetAdcValue:
             getAdcValue();
             break;
-        case UsbCommandId_LaunchEepromTransfer:
-            legacyLaunchEepromTransfer();
+        case UsbCommandId_LaunchEepromTransferLegacy:
+            UsbCommand_LaunchEepromTransferLegacy();
             break;
         case UsbCommandId_ReadHardwareConfiguration:
             UsbCommand_ReadConfig(true);

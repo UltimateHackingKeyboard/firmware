@@ -17,7 +17,7 @@
         UsbCommandId_ApplyConfig                =  9,
         UsbCommandId_SetLedPwm                  = 10,
         UsbCommandId_GetAdcValue                = 11,
-        UsbCommandId_LaunchEepromTransfer       = 12,
+        UsbCommandId_LaunchEepromTransferLegacy       = 12,
         UsbCommandId_ReadHardwareConfiguration  = 13,
         UsbCommandId_WriteHardwareConfiguration = 14,
         UsbCommandId_ReadUserConfiguration      = 15,
