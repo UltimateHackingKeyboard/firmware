@@ -14,7 +14,7 @@
         UsbCommand_WriteLedDriver             =  3,
         UsbCommand_ReadMergeSensor            =  7,
         UsbCommand_WriteUserConfiguration     =  8,
-        UsbCommand_ApplyConfig                =  9,
+        UsbCommandId_ApplyConfig                =  9,
         UsbCommand_SetLedPwm                  = 10,
         UsbCommand_GetAdcValue                = 11,
         UsbCommand_LaunchEepromTransfer       = 12,

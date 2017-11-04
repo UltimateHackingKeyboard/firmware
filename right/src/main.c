@@ -17,6 +17,7 @@
 #include "right_key_matrix.h"
 #include "key_scanner.h"
 #include "key_states.h"
+#include "usb_commands/usb_command_apply_config.h"
 
 void updateUsbReports(void)
 {
@@ -77,7 +78,7 @@ void main(void)
 
         while (1) {
             if (!IsConfigInitialized && IsEepromInitialized) {
-                ApplyConfig();
+                UsbCommand_ApplyConfig();
                 IsConfigInitialized = true;
             }
             updateUsbReports();
