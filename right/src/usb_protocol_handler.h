@@ -48,5 +48,8 @@
 // Functions:
 
     void UsbProtocolHandler(void);
+    void SetUsbError(uint8_t error);
+    void SetUsbResponseByte(uint8_t response);
+    void SetUsbResponseWord(uint16_t response);
 
 #endif

@@ -17,27 +17,23 @@
 #include "microseconds/microseconds_pit.c"
 #include "i2c_watchdog.h"
 #include "usb_commands/usb_command_apply_config.h"
+#include "usb_commands/usb_command_read_config.h"
 
 uint8_t UsbDebugInfo[USB_GENERIC_HID_OUT_BUFFER_LENGTH];
 
 // Functions for setting error statuses
 
-void setError(uint8_t error)
+void SetUsbError(uint8_t error)
 {
     GenericHidOutBuffer[0] = error;
 }
 
-void setGenericError(void)
-{
-    setError(UsbResponse_GenericError);
-}
-
-void SetResponseByte(uint8_t response)
+void SetUsbResponseByte(uint8_t response)
 {
     GenericHidOutBuffer[1] = response;
 }
 
-void SetResponseWord(uint16_t response)
+void SetUsbResponseWord(uint16_t response)
 {
     *((uint16_t*)(GenericHidOutBuffer+1)) = response;
 }
@@ -50,25 +46,25 @@ void getSystemProperty(void)
 
     switch (propertyId) {
         case SystemPropertyId_UsbProtocolVersion:
-            SetResponseByte(SYSTEM_PROPERTY_USB_PROTOCOL_VERSION);
+            SetUsbResponseByte(SYSTEM_PROPERTY_USB_PROTOCOL_VERSION);
             break;
         case SystemPropertyId_BridgeProtocolVersion:
-            SetResponseByte(SYSTEM_PROPERTY_BRIDGE_PROTOCOL_VERSION);
+            SetUsbResponseByte(SYSTEM_PROPERTY_BRIDGE_PROTOCOL_VERSION);
             break;
         case SystemPropertyId_DataModelVersion:
-            SetResponseByte(SYSTEM_PROPERTY_DATA_MODEL_VERSION);
+            SetUsbResponseByte(SYSTEM_PROPERTY_DATA_MODEL_VERSION);
             break;
         case SystemPropertyId_FirmwareVersion:
-            SetResponseByte(SYSTEM_PROPERTY_FIRMWARE_VERSION);
+            SetUsbResponseByte(SYSTEM_PROPERTY_FIRMWARE_VERSION);
             break;
         case SystemPropertyId_HardwareConfigSize:
-            SetResponseWord(HARDWARE_CONFIG_SIZE);
+            SetUsbResponseWord(HARDWARE_CONFIG_SIZE);
             break;
         case SystemPropertyId_UserConfigSize:
-            SetResponseWord(USER_CONFIG_SIZE);
+            SetUsbResponseWord(USER_CONFIG_SIZE);
             break;
         default:
-            setGenericError();
+            SetUsbError(1);
             break;
     }
 }
@@ -91,7 +87,7 @@ void setTestLed(void)
 // To be removed. Now it's already part of getKeyboardState()
 void readMergeSensor(void)
 {
-    SetResponseByte(MERGE_SENSOR_IS_MERGED);
+    SetUsbResponseByte(MERGE_SENSOR_IS_MERGED);
 }
 
 void setLedPwm(void)
@@ -125,34 +121,13 @@ void legacyLaunchEepromTransfer(void)
     }
 }
 
-void readConfiguration(bool isHardware)
-{
-    uint8_t length = GenericHidInBuffer[1];
-    uint16_t offset = *(uint16_t*)(GenericHidInBuffer+2);
-
-    if (length > USB_GENERIC_HID_OUT_BUFFER_LENGTH-1) {
-        setError(ConfigTransferResponse_LengthTooLarge);
-        return;
-    }
-
-    uint8_t *buffer = isHardware ? HardwareConfigBuffer.buffer : ValidatedUserConfigBuffer.buffer;
-    uint16_t bufferLength = isHardware ? HARDWARE_CONFIG_SIZE : USER_CONFIG_SIZE;
-
-    if (offset + length > bufferLength) {
-        setError(ConfigTransferResponse_BufferOutOfBounds);
-        return;
-    }
-
-    memcpy(GenericHidOutBuffer+1, buffer+offset, length);
-}
-
 void writeConfiguration(bool isHardware)
 {
     uint8_t length = GenericHidInBuffer[1];
     uint16_t offset = *((uint16_t*)(GenericHidInBuffer+1+1));
 
     if (length > USB_GENERIC_HID_OUT_BUFFER_LENGTH-1-1-2) {
-        setError(ConfigTransferResponse_LengthTooLarge);
+        SetUsbError(ConfigTransferResponse_LengthTooLarge);
         return;
     }
 
@@ -160,7 +135,7 @@ void writeConfiguration(bool isHardware)
     uint16_t bufferLength = isHardware ? HARDWARE_CONFIG_SIZE : USER_CONFIG_SIZE;
 
     if (offset + length > bufferLength) {
-        setError(ConfigTransferResponse_BufferOutOfBounds);
+        SetUsbError(ConfigTransferResponse_BufferOutOfBounds);
         return;
     }
 
@@ -197,7 +172,7 @@ void jumpToSlaveBootloader(void)
     uint8_t uhkModuleDriverId = GenericHidInBuffer[1];
 
     if (uhkModuleDriverId >= UHK_MODULE_MAX_COUNT) {
-        setError(JumpToBootloaderError_InvalidModuleDriverId);
+        SetUsbError(JumpToBootloaderError_InvalidModuleDriverId);
         return;
     }
 
@@ -248,13 +223,13 @@ void UsbProtocolHandler(void)
             legacyLaunchEepromTransfer();
             break;
         case UsbCommandId_ReadHardwareConfiguration:
-            readConfiguration(true);
+            UsbCommand_ReadConfig(true);
             break;
         case UsbCommandId_WriteHardwareConfiguration:
             writeConfiguration(true);
             break;
         case UsbCommandId_ReadUserConfiguration:
-            readConfiguration(false);
+            UsbCommand_ReadConfig(false);
             break;
         case UsbCommandId_GetKeyboardState:
             getKeyboardState();
