@@ -8,7 +8,7 @@
 // Typedefs:
 
     typedef enum {
-        UsbCommandId_GetSystemProperty          =  0,
+        UsbCommandId_GetProperty                =  0,
         UsbCommandId_Reenumerate                =  1,
         UsbCommandId_SetTestLed                 =  2,
         UsbCommandId_WriteLedDriver             =  3,

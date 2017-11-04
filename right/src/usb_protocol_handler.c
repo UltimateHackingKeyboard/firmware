@@ -1,5 +1,4 @@
 #include "usb_protocol_handler.h"
-#include "system_properties.h"
 #include "peripherals/test_led.h"
 #include "i2c_addresses.h"
 #include "peripherals/led_driver.h"
@@ -18,6 +17,7 @@
 #include "i2c_watchdog.h"
 #include "usb_commands/usb_command_apply_config.h"
 #include "usb_commands/usb_command_read_config.h"
+#include "usb_commands/usb_command_get_property.h"
 
 uint8_t UsbDebugInfo[USB_GENERIC_HID_OUT_BUFFER_LENGTH];
 
@@ -39,35 +39,6 @@ void SetUsbResponseWord(uint16_t response)
 }
 
 // Per command protocol command handlers
-
-void getSystemProperty(void)
-{
-    uint8_t propertyId = GenericHidInBuffer[1];
-
-    switch (propertyId) {
-        case SystemPropertyId_UsbProtocolVersion:
-            SetUsbResponseByte(SYSTEM_PROPERTY_USB_PROTOCOL_VERSION);
-            break;
-        case SystemPropertyId_BridgeProtocolVersion:
-            SetUsbResponseByte(SYSTEM_PROPERTY_BRIDGE_PROTOCOL_VERSION);
-            break;
-        case SystemPropertyId_DataModelVersion:
-            SetUsbResponseByte(SYSTEM_PROPERTY_DATA_MODEL_VERSION);
-            break;
-        case SystemPropertyId_FirmwareVersion:
-            SetUsbResponseByte(SYSTEM_PROPERTY_FIRMWARE_VERSION);
-            break;
-        case SystemPropertyId_HardwareConfigSize:
-            SetUsbResponseWord(HARDWARE_CONFIG_SIZE);
-            break;
-        case SystemPropertyId_UserConfigSize:
-            SetUsbResponseWord(USER_CONFIG_SIZE);
-            break;
-        default:
-            SetUsbError(1);
-            break;
-    }
-}
 
 void reenumerate(void)
 {
@@ -193,8 +164,8 @@ void UsbProtocolHandler(void)
     bzero(GenericHidOutBuffer, USB_GENERIC_HID_OUT_BUFFER_LENGTH);
     uint8_t command = GenericHidInBuffer[0];
     switch (command) {
-        case UsbCommandId_GetSystemProperty:
-            getSystemProperty();
+        case UsbCommandId_GetProperty:
+            UsbCommand_GetProperty();
             break;
         case UsbCommandId_Reenumerate:
             reenumerate();

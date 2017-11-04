@@ -1,5 +1,5 @@
-#ifndef __SYSTEM_PROPERTIES_H__
-#define __SYSTEM_PROPERTIES_H__
+#ifndef __USB_COMMAND_GET_PROPERTY_H__
+#define __USB_COMMAND_GET_PROPERTY_H__
 
 // Macros:
 
@@ -18,5 +18,9 @@
         SystemPropertyId_HardwareConfigSize    = 4,
         SystemPropertyId_UserConfigSize        = 5,
     } system_property_t;
+
+// Functions:
+
+    void UsbCommand_GetProperty(void);
 
 #endif
