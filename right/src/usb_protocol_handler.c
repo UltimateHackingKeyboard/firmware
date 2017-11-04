@@ -153,7 +153,7 @@ void setLedPwm(void)
 
 void getAdcValue(void)
 {
-    *(uint32_t*)(GenericHidOutBuffer+0) = ADC_Measure();
+    *(uint32_t*)(GenericHidOutBuffer+1) = ADC_Measure();
 }
 
 void legacyLaunchEepromTransfer(void)
@@ -228,10 +228,10 @@ void getKeyboardState(void)
 
 void getDebugInfo(void)
 {
-    *(uint32_t*)(UsbDebugInfo+0) = I2C_Watchdog;
-    *(uint32_t*)(UsbDebugInfo+4) = I2cSchedulerCounter;
-    *(uint32_t*)(UsbDebugInfo+8) = I2cWatchdog_OuterCounter;
-    *(uint32_t*)(UsbDebugInfo+12) = I2cWatchdog_InnerCounter;
+    *(uint32_t*)(UsbDebugInfo+1) = I2C_Watchdog;
+    *(uint32_t*)(UsbDebugInfo+5) = I2cSchedulerCounter;
+    *(uint32_t*)(UsbDebugInfo+9) = I2cWatchdog_OuterCounter;
+    *(uint32_t*)(UsbDebugInfo+13) = I2cWatchdog_InnerCounter;
 
     memcpy(GenericHidOutBuffer, UsbDebugInfo, USB_GENERIC_HID_OUT_BUFFER_LENGTH);
 
