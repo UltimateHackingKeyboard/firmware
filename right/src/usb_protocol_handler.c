@@ -44,8 +44,6 @@ void UsbProtocolHandler(void)
         case UsbCommandId_SetTestLed:
             UsbCommand_SetTestLed();
             break;
-        case UsbCommandId_WriteLedDriver:
-            break;
         case UsbCommandId_WriteUserConfiguration:
             UsbCommand_WriteConfig(false);
             break;
