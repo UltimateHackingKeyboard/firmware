@@ -14,7 +14,7 @@
         UsbCommandId_WriteLedDriver             =  3,
         UsbCommandId_WriteUserConfiguration     =  8,
         UsbCommandId_ApplyConfig                =  9,
-        UsbCommandId_SetLedPwm                  = 10,
+        UsbCommandId_SetLedPwmBrightness                  = 10,
         UsbCommandId_GetAdcValue                = 11,
         UsbCommandId_LaunchEepromTransferLegacy = 12,
         UsbCommandId_ReadHardwareConfiguration  = 13,
