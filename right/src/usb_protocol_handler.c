@@ -54,12 +54,6 @@ void setTestLed(void)
     UhkModuleStates[UhkModuleDriverId_LeftKeyboardHalf].sourceVars.isTestLedOn = ledState;
 }
 
-// To be removed. Now it's already part of getKeyboardState()
-void readMergeSensor(void)
-{
-    SetUsbResponseByte(MERGE_SENSOR_IS_MERGED);
-}
-
 void setLedPwm(void)
 {
     uint8_t brightnessPercent = GenericHidInBuffer[1];
@@ -89,9 +83,6 @@ void UsbProtocolHandler(void)
             setTestLed();
             break;
         case UsbCommandId_WriteLedDriver:
-            break;
-        case UsbCommandId_ReadMergeSensor:
-            readMergeSensor();
             break;
         case UsbCommandId_WriteUserConfiguration:
             UsbCommand_WriteConfig(false);
