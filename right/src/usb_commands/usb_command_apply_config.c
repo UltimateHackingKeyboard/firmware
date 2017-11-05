@@ -1,8 +1,6 @@
-#include "fsl_common.h"
 #include "usb_commands/usb_command_apply_config.h"
 #include "config_parser/config_globals.h"
 #include "config_parser/parse_config.h"
-#include "usb_interfaces/usb_interface_generic_hid.h"
 #include "usb_protocol_handler.h"
 #include "keymap.h"
 

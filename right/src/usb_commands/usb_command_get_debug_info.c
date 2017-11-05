@@ -1,6 +1,4 @@
-#include "fsl_common.h"
 #include "fsl_i2c.h"
-#include "usb_commands/usb_command_get_debug_info.h"
 #include "usb_protocol_handler.h"
 #include "slave_scheduler.h"
 #include "i2c_watchdog.h"
