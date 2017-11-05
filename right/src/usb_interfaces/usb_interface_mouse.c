@@ -4,7 +4,6 @@
 #include "i2c.h"
 #include "peripherals/reset_button.h"
 #include "key_action.h"
-#include "usb_protocol_handler.h"
 
 static usb_device_endpoint_struct_t UsbMouseEndpoints[USB_MOUSE_ENDPOINT_COUNT] = {{
     USB_MOUSE_ENDPOINT_INDEX | (USB_IN << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT),
@@ -60,8 +59,6 @@ void ResetActiveUsbMouseReport(void)
 static volatile usb_status_t usbMouseAction(void)
 {
     usb_mouse_report_t *mouseReport = getInactiveUsbMouseReport();
-    *((uint16_t*)(UsbDebugInfo+16)) = mouseReport->x;
-    *((uint16_t*)(UsbDebugInfo+18)) = mouseReport->y;
     IsUsbMouseReportSent = true;
     return USB_DeviceHidSend(UsbCompositeDevice.mouseHandle, USB_MOUSE_ENDPOINT_INDEX,
                (uint8_t*)mouseReport, USB_MOUSE_REPORT_LENGTH);

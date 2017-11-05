@@ -13,8 +13,6 @@
 #include "usb_commands/usb_command_jump_to_slave_bootloader.h"
 #include "usb_commands/usb_command_send_kboot_command.h"
 
-uint8_t UsbDebugInfo[USB_GENERIC_HID_OUT_BUFFER_LENGTH];
-
 void SetUsbError(uint8_t error)
 {
     GenericHidOutBuffer[0] = error;

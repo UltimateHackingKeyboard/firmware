@@ -40,10 +40,6 @@
         JumpToBootloaderError_InvalidModuleDriverId = 1,
     } jump_to_bootloader_error_t;
 
-// Variables:
-
-    extern uint8_t UsbDebugInfo[USB_GENERIC_HID_OUT_BUFFER_LENGTH];
-
 // Functions:
 
     void UsbProtocolHandler(void);

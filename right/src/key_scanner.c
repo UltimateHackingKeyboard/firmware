@@ -1,12 +1,10 @@
 #include "fsl_pit.h"
 #include "key_scanner.h"
-#include "usb_protocol_handler.h"
 
 uint32_t counter = 0;
 
 void PIT_KEY_SCANNER_HANDLER(void)
 {
-    *((uint32_t*)(UsbDebugInfo+20)) = counter++;
     KeyMatrix_ScanRow(&RightKeyMatrix);
     PIT_ClearStatusFlags(PIT, PIT_KEY_SCANNER_CHANNEL, PIT_TFLG_TIF_MASK);
 }

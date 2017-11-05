@@ -5,6 +5,8 @@
 #include "slave_scheduler.h"
 #include "i2c_watchdog.h"
 
+uint8_t UsbDebugInfo[USB_GENERIC_HID_OUT_BUFFER_LENGTH];
+
 void UsbCommand_GetDebugInfo(void)
 {
     *(uint32_t*)(UsbDebugInfo+1) = I2C_Watchdog;
