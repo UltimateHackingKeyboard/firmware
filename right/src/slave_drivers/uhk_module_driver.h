@@ -10,6 +10,8 @@
 
     #define UHK_MODULE_MAX_COUNT 3
     #define MAX_PWM_BRIGHTNESS 0x64
+    #define SLOT_ID_TO_UHK_MODULE_DRIVER_ID(slotId) ((slotId)-1)
+    #define UHK_MODULE_DRIVER_ID_TO_SLOT_ID(uhkModuleDriverId) ((uhkModuleDriverId)+1)
 
 // Typedefs:
 

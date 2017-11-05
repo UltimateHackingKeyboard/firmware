@@ -8,7 +8,7 @@
 // Typedefs:
 
     typedef enum {
-        UsbStatusCode_JumpToSlaveBootloader_InvalidModuleDriverId = 2,
+        UsbStatusCode_JumpToSlaveBootloader_InvalidSlaveSlotId = 2,
     } usb_status_code_jump_to_slave_bootloader_t;
 
 #endif
