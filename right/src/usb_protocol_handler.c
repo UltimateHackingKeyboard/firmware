@@ -25,6 +25,7 @@
 #include "usb_commands/usb_command_get_keyboard_state.h"
 #include "usb_commands/usb_command_get_debug_info.h"
 #include "usb_commands/usb_command_reenumerate.h"
+#include "usb_commands/usb_command_set_test_led.h"
 
 uint8_t UsbDebugInfo[USB_GENERIC_HID_OUT_BUFFER_LENGTH];
 
@@ -46,13 +47,6 @@ void SetUsbResponseWord(uint16_t response)
 }
 
 // Per command protocol command handlers
-
-void setTestLed(void)
-{
-    uint8_t ledState = GenericHidInBuffer[1];
-    TEST_LED_SET(ledState);
-    UhkModuleStates[UhkModuleDriverId_LeftKeyboardHalf].sourceVars.isTestLedOn = ledState;
-}
 
 void setLedPwm(void)
 {
@@ -80,7 +74,7 @@ void UsbProtocolHandler(void)
             UsbCommand_Reenumerate();
             break;
         case UsbCommandId_SetTestLed:
-            setTestLed();
+            UsbCommand_SetTestLed();
             break;
         case UsbCommandId_WriteLedDriver:
             break;
