@@ -13,7 +13,7 @@
 #include "usb_commands/usb_command_jump_to_slave_bootloader.h"
 #include "usb_commands/usb_command_send_kboot_command.h"
 
-void SetUsbError(uint8_t error)
+void SetUsbStatusCode(uint8_t error)
 {
     GenericHidOutBuffer[0] = error;
 }
@@ -79,7 +79,7 @@ void UsbProtocolHandler(void)
             UsbCommand_SendKbootCommand();
             break;
         default:
-            SetUsbError(UsbResponse_InvalidCommand);
+            SetUsbStatusCode(UsbStatusCode_InvalidCommand);
             break;
     }
 }

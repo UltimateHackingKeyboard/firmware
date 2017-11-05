@@ -9,7 +9,7 @@ void UsbCommand_ReadConfig(bool isHardware)
     uint16_t offset = *(uint16_t*)(GenericHidInBuffer+2);
 
     if (length > USB_GENERIC_HID_OUT_BUFFER_LENGTH-1) {
-        SetUsbError(ConfigTransferResponse_LengthTooLarge);
+        SetUsbStatusCode(UsbStatusCode_TransferConfig_LengthTooLarge);
         return;
     }
 
@@ -17,7 +17,7 @@ void UsbCommand_ReadConfig(bool isHardware)
     uint16_t bufferLength = isHardware ? HARDWARE_CONFIG_SIZE : USER_CONFIG_SIZE;
 
     if (offset + length > bufferLength) {
-        SetUsbError(ConfigTransferResponse_BufferOutOfBounds);
+        SetUsbStatusCode(UsbStatusCode_TransferConfig_BufferOutOfBounds);
         return;
     }
 

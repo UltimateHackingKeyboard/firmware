@@ -27,23 +27,23 @@
     } usb_command_id_t;
 
     typedef enum {
-        UsbResponse_Success        = 0,
-        UsbResponse_InvalidCommand = 1,
+        UsbStatusCode_Success        = 0,
+        UsbStatusCode_InvalidCommand = 1,
     } usb_response_t;
 
     typedef enum {
-        ConfigTransferResponse_LengthTooLarge    = 1,
-        ConfigTransferResponse_BufferOutOfBounds = 2,
+        UsbStatusCode_TransferConfig_LengthTooLarge    = 1,
+        UsbStatusCode_TransferConfig_BufferOutOfBounds = 2,
     } config_transfer_response_t;
 
     typedef enum {
-        JumpToBootloaderError_InvalidModuleDriverId = 1,
+        UsbStatusCode_JumpToSlaveBootloader_InvalidModuleDriverId = 1,
     } jump_to_bootloader_error_t;
 
 // Functions:
 
     void UsbProtocolHandler(void);
-    void SetUsbError(uint8_t error);
+    void SetUsbStatusCode(uint8_t status);
     void SetUsbResponseByte(uint8_t response);
     void SetUsbResponseWord(uint16_t response);
 

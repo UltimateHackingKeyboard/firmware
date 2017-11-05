@@ -6,7 +6,7 @@ void UsbCommand_JumpToSlaveBootloader(void)
     uint8_t uhkModuleDriverId = GenericHidInBuffer[1];
 
     if (uhkModuleDriverId >= UHK_MODULE_MAX_COUNT) {
-        SetUsbError(JumpToBootloaderError_InvalidModuleDriverId);
+        SetUsbStatusCode(UsbStatusCode_JumpToSlaveBootloader_InvalidModuleDriverId);
         return;
     }
 

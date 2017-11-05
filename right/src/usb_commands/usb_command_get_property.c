@@ -27,7 +27,7 @@ void UsbCommand_GetProperty(void)
             SetUsbResponseWord(USER_CONFIG_SIZE);
             break;
         default:
-            SetUsbError(1);
+            SetUsbStatusCode(1);
             break;
     }
 }

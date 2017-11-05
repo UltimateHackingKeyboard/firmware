@@ -16,7 +16,7 @@ void UsbCommand_ApplyConfig(void)
     *(uint16_t*)(GenericHidOutBuffer+1) = StagingUserConfigBuffer.offset;
     GenericHidOutBuffer[3] = 0;
 
-    if (GenericHidOutBuffer[0] != UsbResponse_Success) {
+    if (GenericHidOutBuffer[0] != UsbStatusCode_Success) {
         return;
     }
 
@@ -37,7 +37,7 @@ void UsbCommand_ApplyConfig(void)
     *(uint16_t*)(GenericHidOutBuffer+1) = ValidatedUserConfigBuffer.offset;
     GenericHidOutBuffer[3] = 1;
 
-    if (GenericHidOutBuffer[0] != UsbResponse_Success) {
+    if (GenericHidOutBuffer[0] != UsbStatusCode_Success) {
         return;
     }
 
