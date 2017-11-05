@@ -79,6 +79,7 @@ void UsbProtocolHandler(void)
             UsbCommand_SendKbootCommand();
             break;
         default:
+            SetUsbError(UsbResponse_InvalidCommand);
             break;
     }
 }

@@ -27,8 +27,8 @@
     } usb_command_id_t;
 
     typedef enum {
-        UsbResponse_Success      = 0,
-        UsbResponse_GenericError = 1,
+        UsbResponse_Success        = 0,
+        UsbResponse_InvalidCommand = 1,
     } usb_response_t;
 
     typedef enum {
