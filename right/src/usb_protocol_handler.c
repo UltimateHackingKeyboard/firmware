@@ -26,6 +26,7 @@
 #include "usb_commands/usb_command_get_debug_info.h"
 #include "usb_commands/usb_command_reenumerate.h"
 #include "usb_commands/usb_command_set_test_led.h"
+#include "usb_commands/usb_command_get_adc_value.h"
 
 uint8_t UsbDebugInfo[USB_GENERIC_HID_OUT_BUFFER_LENGTH];
 
@@ -53,11 +54,6 @@ void setLedPwm(void)
     uint8_t brightnessPercent = GenericHidInBuffer[1];
     LedPwm_SetBrightness(brightnessPercent);
     UhkModuleStates[UhkModuleDriverId_LeftKeyboardHalf].sourceVars.ledPwmBrightness = brightnessPercent;
-}
-
-void getAdcValue(void)
-{
-    *(uint32_t*)(GenericHidOutBuffer+1) = ADC_Measure();
 }
 
 // The main protocol handler function
@@ -88,7 +84,7 @@ void UsbProtocolHandler(void)
             setLedPwm();
             break;
         case UsbCommandId_GetAdcValue:
-            getAdcValue();
+            UsbCommand_GetAdcValue();
             break;
         case UsbCommandId_LaunchEepromTransferLegacy:
             UsbCommand_LaunchEepromTransferLegacy();
