@@ -41,11 +41,6 @@
         UsbStatusCode_InvalidCommand = 1,
     } usb_status_code_general_t;
 
-    typedef enum {
-        UsbStatusCode_TransferConfig_LengthTooLarge    = 2,
-        UsbStatusCode_TransferConfig_BufferOutOfBounds = 3,
-    } usb_status_code_transfer_config_t;
-
 // Functions:
 
     void UsbProtocolHandler(void);
