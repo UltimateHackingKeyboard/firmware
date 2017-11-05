@@ -3,6 +3,7 @@
 
 // Includes:
 
+    #include "fsl_common.h"
     #include "usb_interfaces/usb_interface_generic_hid.h"
 
 // Typedefs:

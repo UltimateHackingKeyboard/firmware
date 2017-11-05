@@ -1,20 +1,4 @@
 #include "usb_protocol_handler.h"
-#include "peripherals/test_led.h"
-#include "i2c_addresses.h"
-#include "peripherals/led_driver.h"
-#include "peripherals/merge_sensor.h"
-#include "config_parser/parse_config.h"
-#include "config_parser/config_globals.h"
-#include "led_pwm.h"
-#include "slave_scheduler.h"
-#include "slave_drivers/uhk_module_driver.h"
-#include "slave_drivers/kboot_driver.h"
-#include "bootloader/wormhole.h"
-#include "peripherals/adc.h"
-#include "eeprom.h"
-#include "keymap.h"
-#include "microseconds/microseconds_pit.c"
-#include "i2c_watchdog.h"
 #include "usb_commands/usb_command_apply_config.h"
 #include "usb_commands/usb_command_read_config.h"
 #include "usb_commands/usb_command_write_config.h"
@@ -31,8 +15,6 @@
 
 uint8_t UsbDebugInfo[USB_GENERIC_HID_OUT_BUFFER_LENGTH];
 
-// Functions for setting error statuses
-
 void SetUsbError(uint8_t error)
 {
     GenericHidOutBuffer[0] = error;
@@ -47,8 +29,6 @@ void SetUsbResponseWord(uint16_t response)
 {
     *((uint16_t*)(GenericHidOutBuffer+1)) = response;
 }
-
-// The main protocol handler function
 
 void UsbProtocolHandler(void)
 {
