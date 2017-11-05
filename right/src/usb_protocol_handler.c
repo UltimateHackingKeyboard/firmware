@@ -9,7 +9,7 @@
 #include "usb_commands/usb_command_launch_eeprom_transfer_legacy.h"
 #include "usb_commands/usb_command_read_config.h"
 #include "usb_commands/usb_command_get_keyboard_state.h"
-#include "usb_commands/usb_command_get_debug_info.h"
+#include "usb_commands/usb_command_get_debug_buffer.h"
 #include "usb_commands/usb_command_jump_to_slave_bootloader.h"
 #include "usb_commands/usb_command_send_kboot_command.h"
 
@@ -55,7 +55,7 @@ void UsbProtocolHandler(void)
             UsbCommand_GetKeyboardState();
             break;
         case UsbCommandId_GetDebugInfo:
-            UsbCommand_GetDebugInfo();
+            UsbCommand_GetDebugBuffer();
             break;
         case UsbCommandId_JumpToSlaveBootloader:
             UsbCommand_JumpToSlaveBootloader();
