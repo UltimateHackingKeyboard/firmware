@@ -5,7 +5,7 @@
 
 void UsbCommand_SetTestLed(void)
 {
-    uint8_t ledState = GenericHidInBuffer[1];
+    uint8_t ledState = GET_USB_BUFFER_UINT8(1);
     TEST_LED_SET(ledState);
     UhkModuleStates[UhkModuleDriverId_LeftKeyboardHalf].sourceVars.isTestLedOn = ledState;
 }

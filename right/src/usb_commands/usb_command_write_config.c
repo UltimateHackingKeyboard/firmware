@@ -5,11 +5,11 @@
 
 void UsbCommand_WriteConfig(bool isHardware)
 {
-    uint8_t length = GenericHidInBuffer[1];
-    uint16_t offset = *((uint16_t*)(GenericHidInBuffer+1+1));
+    uint8_t length = GET_USB_BUFFER_UINT8(1);
+    uint16_t offset = GET_USB_BUFFER_UINT16(2);
 
-    if (length > USB_GENERIC_HID_OUT_BUFFER_LENGTH-1-1-2) {
-        SetUsbStatusCode(UsbStatusCode_TransferConfig_LengthTooLarge);
+    if (length > USB_GENERIC_HID_OUT_BUFFER_LENGTH-4) {
+        SET_USB_BUFFER_UINT8(0, UsbStatusCode_TransferConfig_LengthTooLarge);
         return;
     }
 
@@ -17,9 +17,9 @@ void UsbCommand_WriteConfig(bool isHardware)
     uint16_t bufferLength = isHardware ? HARDWARE_CONFIG_SIZE : USER_CONFIG_SIZE;
 
     if (offset + length > bufferLength) {
-        SetUsbStatusCode(UsbStatusCode_TransferConfig_BufferOutOfBounds);
+        SET_USB_BUFFER_UINT8(0, UsbStatusCode_TransferConfig_BufferOutOfBounds);
         return;
     }
 
-    memcpy(buffer+offset, GenericHidInBuffer+1+1+2, length);
+    memcpy(buffer+offset, GenericHidInBuffer+4, length);
 }

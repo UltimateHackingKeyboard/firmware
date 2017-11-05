@@ -6,7 +6,7 @@
 void UsbCommand_Reenumerate(void)
 {
     Wormhole.magicNumber = WORMHOLE_MAGIC_NUMBER;
-    Wormhole.enumerationMode = GenericHidInBuffer[1];
-    Wormhole.timeoutMs = *((uint32_t*)(GenericHidInBuffer+2));
+    Wormhole.enumerationMode = GET_USB_BUFFER_UINT8(1);
+    Wormhole.timeoutMs       = GET_USB_BUFFER_UINT32(2);
     NVIC_SystemReset();
 }

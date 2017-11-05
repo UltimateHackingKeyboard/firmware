@@ -12,11 +12,13 @@ void UsbCommand_ApplyConfig(void)
 
     ParserRunDry = true;
     StagingUserConfigBuffer.offset = 0;
-    GenericHidOutBuffer[0] = ParseConfig(&StagingUserConfigBuffer);
-    *(uint16_t*)(GenericHidOutBuffer+1) = StagingUserConfigBuffer.offset;
-    GenericHidOutBuffer[3] = 0;
+    uint8_t parseConfigStatus = ParseConfig(&StagingUserConfigBuffer);
 
-    if (GenericHidOutBuffer[0] != UsbStatusCode_Success) {
+    SET_USB_BUFFER_UINT8(0, parseConfigStatus);
+    SET_USB_BUFFER_UINT16(1, StagingUserConfigBuffer.offset);
+    SET_USB_BUFFER_UINT8(3, 0);
+
+    if (parseConfigStatus != UsbStatusCode_Success) {
         return;
     }
 
@@ -33,11 +35,13 @@ void UsbCommand_ApplyConfig(void)
 
     ParserRunDry = false;
     ValidatedUserConfigBuffer.offset = 0;
-    GenericHidOutBuffer[0] = ParseConfig(&ValidatedUserConfigBuffer);
-    *(uint16_t*)(GenericHidOutBuffer+1) = ValidatedUserConfigBuffer.offset;
-    GenericHidOutBuffer[3] = 1;
+    parseConfigStatus = ParseConfig(&ValidatedUserConfigBuffer);
 
-    if (GenericHidOutBuffer[0] != UsbStatusCode_Success) {
+    SET_USB_BUFFER_UINT8(0, parseConfigStatus);
+    SET_USB_BUFFER_UINT16(1, ValidatedUserConfigBuffer.offset);
+    SET_USB_BUFFER_UINT8(3, 1);
+
+    if (parseConfigStatus != UsbStatusCode_Success) {
         return;
     }
 

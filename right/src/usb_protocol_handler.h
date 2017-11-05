@@ -6,6 +6,16 @@
     #include "fsl_common.h"
     #include "usb_interfaces/usb_interface_generic_hid.h"
 
+// Macros:
+
+    #define GET_USB_BUFFER_UINT8(offset)  (*(uint8_t*)(GenericHidInBuffer+offset))
+    #define GET_USB_BUFFER_UINT16(offset) (*(uint16_t*)(GenericHidInBuffer+offset))
+    #define GET_USB_BUFFER_UINT32(offset) (*(uint32_t*)(GenericHidInBuffer+offset))
+
+    #define SET_USB_BUFFER_UINT8(offset, value) (*(uint8_t*)(GenericHidOutBuffer+(offset)) = (value))
+    #define SET_USB_BUFFER_UINT16(offset, value) (*(uint16_t*)(GenericHidOutBuffer+(offset)) = (value))
+    #define SET_USB_BUFFER_UINT32(offset, value) (*(uint32_t*)(GenericHidOutBuffer+(offset)) = (value))
+
 // Typedefs:
 
     typedef enum {
@@ -29,18 +39,15 @@
     typedef enum {
         UsbStatusCode_Success        = 0,
         UsbStatusCode_InvalidCommand = 1,
-    } usb_response_t;
+    } usb_status_code_general_t;
 
     typedef enum {
         UsbStatusCode_TransferConfig_LengthTooLarge    = 2,
         UsbStatusCode_TransferConfig_BufferOutOfBounds = 3,
-    } config_transfer_response_t;
+    } usb_status_code_transfer_config_t;
 
 // Functions:
 
     void UsbProtocolHandler(void);
-    void SetUsbStatusCode(uint8_t status);
-    void SetUsbResponseByte(uint8_t response);
-    void SetUsbResponseWord(uint16_t response);
 
 #endif

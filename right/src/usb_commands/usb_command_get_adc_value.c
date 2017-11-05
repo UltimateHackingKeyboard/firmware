@@ -4,5 +4,5 @@
 
 void UsbCommand_GetAdcValue(void)
 {
-    *(uint32_t*)(GenericHidOutBuffer+1) = ADC_Measure();
+    SET_USB_BUFFER_UINT32(1, ADC_Measure());
 }

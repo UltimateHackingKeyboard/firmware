@@ -5,29 +5,29 @@
 
 void UsbCommand_GetProperty(void)
 {
-    uint8_t propertyId = GenericHidInBuffer[1];
+    uint8_t propertyId = GET_USB_BUFFER_UINT8(1);
 
     switch (propertyId) {
         case SystemPropertyId_UsbProtocolVersion:
-            SetUsbResponseByte(SYSTEM_PROPERTY_USB_PROTOCOL_VERSION);
+            SET_USB_BUFFER_UINT8(1, SYSTEM_PROPERTY_USB_PROTOCOL_VERSION);
             break;
         case SystemPropertyId_BridgeProtocolVersion:
-            SetUsbResponseByte(SYSTEM_PROPERTY_BRIDGE_PROTOCOL_VERSION);
+            SET_USB_BUFFER_UINT8(1, SYSTEM_PROPERTY_BRIDGE_PROTOCOL_VERSION);
             break;
         case SystemPropertyId_DataModelVersion:
-            SetUsbResponseByte(SYSTEM_PROPERTY_DATA_MODEL_VERSION);
+            SET_USB_BUFFER_UINT8(1, SYSTEM_PROPERTY_DATA_MODEL_VERSION);
             break;
         case SystemPropertyId_FirmwareVersion:
-            SetUsbResponseByte(SYSTEM_PROPERTY_FIRMWARE_VERSION);
+            SET_USB_BUFFER_UINT8(1, SYSTEM_PROPERTY_FIRMWARE_VERSION);
             break;
         case SystemPropertyId_HardwareConfigSize:
-            SetUsbResponseWord(HARDWARE_CONFIG_SIZE);
+            SET_USB_BUFFER_UINT16(1, HARDWARE_CONFIG_SIZE);
             break;
         case SystemPropertyId_UserConfigSize:
-            SetUsbResponseWord(USER_CONFIG_SIZE);
+            SET_USB_BUFFER_UINT16(1, USER_CONFIG_SIZE);
             break;
         default:
-            SetUsbStatusCode(1);
+            SET_USB_BUFFER_UINT8(0, UsbStatusCode_GetProperty_InvalidProperty);
             break;
     }
 }
