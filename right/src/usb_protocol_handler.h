@@ -8,9 +8,9 @@
 
 // Macros:
 
-    #define GET_USB_BUFFER_UINT8(offset)  (*(uint8_t*)(GenericHidInBuffer+offset))
-    #define GET_USB_BUFFER_UINT16(offset) (*(uint16_t*)(GenericHidInBuffer+offset))
-    #define GET_USB_BUFFER_UINT32(offset) (*(uint32_t*)(GenericHidInBuffer+offset))
+    #define GET_USB_BUFFER_UINT8(offset)  (*(uint8_t*)(GenericHidInBuffer+(offset)))
+    #define GET_USB_BUFFER_UINT16(offset) (*(uint16_t*)(GenericHidInBuffer+(offset)))
+    #define GET_USB_BUFFER_UINT32(offset) (*(uint32_t*)(GenericHidInBuffer+(offset)))
 
     #define SET_USB_BUFFER_UINT8(offset, value) (*(uint8_t*)(GenericHidOutBuffer+(offset)) = (value))
     #define SET_USB_BUFFER_UINT16(offset, value) (*(uint16_t*)(GenericHidOutBuffer+(offset)) = (value))
