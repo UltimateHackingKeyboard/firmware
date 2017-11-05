@@ -16,7 +16,7 @@ void UsbCommand_ApplyConfig(void)
 
     SET_USB_BUFFER_UINT8(0, parseConfigStatus);
     SET_USB_BUFFER_UINT16(1, StagingUserConfigBuffer.offset);
-    SET_USB_BUFFER_UINT8(3, 0);
+    SET_USB_BUFFER_UINT8(3, ParsingStage_Validate);
 
     if (parseConfigStatus != UsbStatusCode_Success) {
         return;
@@ -39,7 +39,7 @@ void UsbCommand_ApplyConfig(void)
 
     SET_USB_BUFFER_UINT8(0, parseConfigStatus);
     SET_USB_BUFFER_UINT16(1, ValidatedUserConfigBuffer.offset);
-    SET_USB_BUFFER_UINT8(3, 1);
+    SET_USB_BUFFER_UINT8(3, ParsingStage_Apply);
 
     if (parseConfigStatus != UsbStatusCode_Success) {
         return;
