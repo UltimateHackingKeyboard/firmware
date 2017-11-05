@@ -32,12 +32,12 @@
     } usb_response_t;
 
     typedef enum {
-        UsbStatusCode_TransferConfig_LengthTooLarge    = 1,
-        UsbStatusCode_TransferConfig_BufferOutOfBounds = 2,
+        UsbStatusCode_TransferConfig_LengthTooLarge    = 2,
+        UsbStatusCode_TransferConfig_BufferOutOfBounds = 3,
     } config_transfer_response_t;
 
     typedef enum {
-        UsbStatusCode_JumpToSlaveBootloader_InvalidModuleDriverId = 1,
+        UsbStatusCode_JumpToSlaveBootloader_InvalidModuleDriverId = 2,
     } jump_to_bootloader_error_t;
 
 // Functions:
