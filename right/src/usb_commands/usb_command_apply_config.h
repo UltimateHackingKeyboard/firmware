@@ -3,10 +3,10 @@
 
 // Typedefs:
 
-typedef enum {
-    ParsingStage_Validate,
-    ParsingStage_Apply,
-} parser_stage_t;
+    typedef enum {
+        ParsingStage_Validate,
+        ParsingStage_Apply,
+    } parser_stage_t;
 
 // Functions:
 
