@@ -1,4 +1,5 @@
 #include "usb_protocol_handler.h"
+#include "usb_commands/usb_command_jump_to_slave_bootloader.h"
 #include "slave_drivers/uhk_module_driver.h"
 
 void UsbCommand_JumpToSlaveBootloader(void)

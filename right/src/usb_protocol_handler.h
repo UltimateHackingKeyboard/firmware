@@ -36,10 +36,6 @@
         UsbStatusCode_TransferConfig_BufferOutOfBounds = 3,
     } config_transfer_response_t;
 
-    typedef enum {
-        UsbStatusCode_JumpToSlaveBootloader_InvalidModuleDriverId = 2,
-    } jump_to_bootloader_error_t;
-
 // Functions:
 
     void UsbProtocolHandler(void);
