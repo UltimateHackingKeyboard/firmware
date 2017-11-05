@@ -6,7 +6,7 @@
 typedef enum {
     ParsingStage_Validate,
     ParsingStage_Apply,
-} parsing_stage_t;
+} parser_stage_t;
 
 // Functions:
 

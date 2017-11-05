@@ -6,6 +6,13 @@
 #include "usb_protocol_handler.h"
 #include "keymap.h"
 
+void updateUsbBuffer(uint8_t usbStatusCode, uint16_t parserOffset, parser_stage_t parserStage)
+{
+    SET_USB_BUFFER_UINT8(0, usbStatusCode);
+    SET_USB_BUFFER_UINT16(1, parserOffset);
+    SET_USB_BUFFER_UINT8(3, parserStage);
+}
+
 void UsbCommand_ApplyConfig(void)
 {
     // Validate the staging configuration.
@@ -13,10 +20,7 @@ void UsbCommand_ApplyConfig(void)
     ParserRunDry = true;
     StagingUserConfigBuffer.offset = 0;
     uint8_t parseConfigStatus = ParseConfig(&StagingUserConfigBuffer);
-
-    SET_USB_BUFFER_UINT8(0, parseConfigStatus);
-    SET_USB_BUFFER_UINT16(1, StagingUserConfigBuffer.offset);
-    SET_USB_BUFFER_UINT8(3, ParsingStage_Validate);
+    updateUsbBuffer(parseConfigStatus, StagingUserConfigBuffer.offset, ParsingStage_Validate);
 
     if (parseConfigStatus != UsbStatusCode_Success) {
         return;
@@ -36,10 +40,7 @@ void UsbCommand_ApplyConfig(void)
     ParserRunDry = false;
     ValidatedUserConfigBuffer.offset = 0;
     parseConfigStatus = ParseConfig(&ValidatedUserConfigBuffer);
-
-    SET_USB_BUFFER_UINT8(0, parseConfigStatus);
-    SET_USB_BUFFER_UINT16(1, ValidatedUserConfigBuffer.offset);
-    SET_USB_BUFFER_UINT8(3, ParsingStage_Apply);
+    updateUsbBuffer(parseConfigStatus, ValidatedUserConfigBuffer.offset, ParsingStage_Apply);
 
     if (parseConfigStatus != UsbStatusCode_Success) {
         return;
