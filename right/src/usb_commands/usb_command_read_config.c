@@ -8,7 +8,7 @@ void UsbCommand_ReadConfig(bool isHardware)
     uint8_t length = GET_USB_BUFFER_UINT8(1);
     uint16_t offset = GET_USB_BUFFER_UINT16(2);
 
-    if (length > USB_GENERIC_HID_OUT_BUFFER_LENGTH-1) {
+    if (length > USB_GENERIC_HID_OUT_BUFFER_LENGTH - USB_STATUS_CODE_SIZE) {
         SET_USB_BUFFER_UINT8(0, UsbStatusCode_ReadConfig_LengthTooLarge);
         return;
     }
@@ -21,5 +21,5 @@ void UsbCommand_ReadConfig(bool isHardware)
         return;
     }
 
-    memcpy(GenericHidOutBuffer+1, buffer+offset, length);
+    memcpy(GenericHidOutBuffer + USB_STATUS_CODE_SIZE, buffer + offset, length);
 }

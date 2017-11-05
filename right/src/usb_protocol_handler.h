@@ -8,6 +8,8 @@
 
 // Macros:
 
+    #define USB_STATUS_CODE_SIZE 1
+
     #define GET_USB_BUFFER_UINT8(offset)  (*(uint8_t*)(GenericHidInBuffer+(offset)))
     #define GET_USB_BUFFER_UINT16(offset) (*(uint16_t*)(GenericHidInBuffer+(offset)))
     #define GET_USB_BUFFER_UINT32(offset) (*(uint32_t*)(GenericHidInBuffer+(offset)))
