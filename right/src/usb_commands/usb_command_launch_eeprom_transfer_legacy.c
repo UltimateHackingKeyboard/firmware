@@ -1,5 +1,5 @@
 #include "fsl_common.h"
-#include "usb_commands/usb_command_write_config.h"
+#include "usb_commands/usb_command_launch_eeprom_transfer_legacy.h"
 #include "usb_protocol_handler.h"
 #include "eeprom.h"
 

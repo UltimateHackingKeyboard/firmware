@@ -1,4 +1,5 @@
 #include "usb_protocol_handler.h"
+#include "usb_commands/usb_command_set_led_pwm_brightness.h"
 #include "slave_drivers/uhk_module_driver.h"
 #include "led_pwm.h"
 
