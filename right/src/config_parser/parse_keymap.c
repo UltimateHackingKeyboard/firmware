@@ -39,7 +39,7 @@ static parser_error_t parseKeyStrokeAction(key_action_t *keyAction, uint8_t keyS
     keyAction->keystroke.modifiers = keyStrokeAction & SERIALIZED_KEYSTROKE_TYPE_MASK_HAS_MODIFIERS
         ? readUInt8(buffer)
         : 0;
-    keyAction->keystroke.longPressAction = keyStrokeAction & SERIALIZED_KEYSTROKE_TYPE_MASK_HAS_LONGPRESS
+    keyAction->keystroke.secondaryRole = keyStrokeAction & SERIALIZED_KEYSTROKE_TYPE_MASK_HAS_LONGPRESS
         ? readUInt8(buffer)
         : 0;
     return ParserError_Success;

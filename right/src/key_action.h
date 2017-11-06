@@ -67,7 +67,7 @@
         union {
             struct {
                 keystroke_type_t keystrokeType;
-                uint8_t longPressAction;
+                uint8_t secondaryRole;
                 uint8_t modifiers;
                 uint16_t scancode;
             } ATTR_PACKED keystroke;
