@@ -4,6 +4,7 @@
 #include "i2c.h"
 #include "peripherals/reset_button.h"
 #include "key_action.h"
+#include "usb_commands/usb_command_get_debug_buffer.h"
 
 static usb_device_endpoint_struct_t UsbMouseEndpoints[USB_MOUSE_ENDPOINT_COUNT] = {{
     USB_MOUSE_ENDPOINT_INDEX | (USB_IN << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT),
@@ -56,9 +57,16 @@ void ResetActiveUsbMouseReport(void)
     bzero(ActiveUsbMouseReport, USB_MOUSE_REPORT_LENGTH);
 }
 
+static uint32_t count1 = 0;
+static uint32_t count2 = 0;
+static uint32_t count3 = 0;
+
 static volatile usb_status_t usbMouseAction(void)
 {
+    count3++;
     usb_mouse_report_t *mouseReport = getInactiveUsbMouseReport();
+    SET_DEBUG_BUFFER_UINT32(29, mouseReport->x);
+    SET_DEBUG_BUFFER_UINT32(31, mouseReport->y);
     IsUsbMouseReportSent = true;
     return USB_DeviceHidSend(UsbCompositeDevice.mouseHandle, USB_MOUSE_ENDPOINT_INDEX,
                (uint8_t*)mouseReport, USB_MOUSE_REPORT_LENGTH);
@@ -66,10 +74,17 @@ static volatile usb_status_t usbMouseAction(void)
 
 usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param)
 {
+    SET_DEBUG_BUFFER_UINT32(17, count1);
+    SET_DEBUG_BUFFER_UINT32(21, count2);
+    SET_DEBUG_BUFFER_UINT32(25, count3);
+
+    count1++;
+
     usb_status_t error = kStatus_USB_Error;
 
     switch (event) {
         case kUSB_DeviceHidEventSendResponse:
+            count2++;
             if (UsbCompositeDevice.attach) {
                 return usbMouseAction();
             }
