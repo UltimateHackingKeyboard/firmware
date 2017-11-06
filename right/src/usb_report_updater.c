@@ -132,7 +132,13 @@ void UpdateActiveUsbReports(void)
         KeyStates[SlotId_RightKeyboardHalf][keyId].current = RightKeyMatrix.keyStates[keyId];
     }
 
-    layer_id_t activeLayer = GetActiveLayer();
+    layer_id_t activeLayer = LayerId_Base;
+    if (secondaryRoleState == SecondaryRoleState_Triggered && IS_SECONDARY_ROLE_LAYER_SWITCHER(secondaryRole)) {
+        activeLayer = SECONDARY_ROLE_LAYER_TO_LAYER_ID(secondaryRole);
+    }
+    if (activeLayer == LayerId_Base) {
+        activeLayer = GetActiveLayer();
+    }
     LedDisplay_SetLayer(activeLayer);
 
     if (MacroPlaying) {
