@@ -149,24 +149,31 @@ void UpdateActiveUsbReports(void)
             key_state_t *keyState = &KeyStates[slotId][keyId];
             key_action_t *action = &CurrentKeymap[activeLayer][slotId][keyId];
 
-            if (action->type == KeyActionType_Keystroke && action->keystroke.secondaryRole) {
-                if (!keyState->previous && keyState->current && secondaryRoleState == SecondaryRoleState_Released) {
-                    secondaryRoleState = SecondaryRoleState_Pressed;
-                    secondaryRoleSlotId = slotId;
-                    secondaryRoleKeyId = keyId;
-                    secondaryRole = action->keystroke.secondaryRole;
-                } else if (keyState->previous && !keyState->current && secondaryRoleSlotId == slotId && secondaryRoleKeyId == keyId) {
-                    if (secondaryRoleState == SecondaryRoleState_Pressed) {
-                        applyKeyAction(keyState, action);
+            if (keyState->current) {
+                if (action->type == KeyActionType_Keystroke && action->keystroke.secondaryRole) {
+                    // Press released secondary role key.
+                    if (!keyState->previous && action->type == KeyActionType_Keystroke && action->keystroke.secondaryRole && secondaryRoleState == SecondaryRoleState_Released) {
+                        secondaryRoleState = SecondaryRoleState_Pressed;
+                        secondaryRoleSlotId = slotId;
+                        secondaryRoleKeyId = keyId;
+                        secondaryRole = action->keystroke.secondaryRole;
                     }
-                    secondaryRoleState = SecondaryRoleState_Released;
+                } else {
+                    // Trigger secondary role.
+                    if (!keyState->previous && secondaryRoleState == SecondaryRoleState_Pressed) {
+                        secondaryRoleState = SecondaryRoleState_Triggered;
+                    }
+                    applyKeyAction(keyState, action);
                 }
-            } else if (keyState->current) {
-                if (!keyState->previous && secondaryRoleState == SecondaryRoleState_Pressed) {
-                    secondaryRoleState = SecondaryRoleState_Triggered;
+            // Release secondary role key.
+            } else if (keyState->previous && secondaryRoleSlotId == slotId && secondaryRoleKeyId == keyId) {
+                // Trigger primary role.
+                if (secondaryRoleState == SecondaryRoleState_Pressed) {
+                    applyKeyAction(keyState, action);
                 }
-                applyKeyAction(keyState, action);
+                secondaryRoleState = SecondaryRoleState_Released;
             }
+
             keyState->previous = keyState->current;
         }
     }
