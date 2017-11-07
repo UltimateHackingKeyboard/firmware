@@ -80,6 +80,10 @@ static uint8_t systemScancodeIndex = 0;
 
 void applyKeyAction(key_state_t *keyState, key_action_t *action)
 {
+    if (keyState->suppressed) {
+        return;
+    }
+
     switch (action->type) {
         case KeyActionType_Keystroke:
             ActiveUsbBasicKeyboardReport->modifiers |= action->keystroke.modifiers;
@@ -116,6 +120,7 @@ void applyKeyAction(key_state_t *keyState, key_action_t *action)
     }
 }
 
+static layer_id_t previousLayer = LayerId_Base;
 static uint8_t secondaryRoleState = SecondaryRoleState_Released;
 static uint8_t secondaryRoleSlotId;
 static uint8_t secondaryRoleKeyId;
@@ -139,6 +144,7 @@ void UpdateActiveUsbReports(void)
     if (activeLayer == LayerId_Base) {
         activeLayer = GetActiveLayer();
     }
+    bool suppressKeys = previousLayer != LayerId_Base && activeLayer == LayerId_Base;
     LedDisplay_SetLayer(activeLayer);
 
     if (MacroPlaying) {
@@ -156,6 +162,10 @@ void UpdateActiveUsbReports(void)
             key_action_t *action = &CurrentKeymap[activeLayer][slotId][keyId];
 
             if (keyState->current) {
+                if (suppressKeys) {
+                    keyState->suppressed = true;
+                }
+
                 if (action->type == KeyActionType_Keystroke && action->keystroke.secondaryRole) {
                     // Press released secondary role key.
                     if (!keyState->previous && action->type == KeyActionType_Keystroke && action->keystroke.secondaryRole && secondaryRoleState == SecondaryRoleState_Released) {
@@ -171,13 +181,19 @@ void UpdateActiveUsbReports(void)
                     }
                     applyKeyAction(keyState, action);
                 }
-            // Release secondary role key.
-            } else if (keyState->previous && secondaryRoleSlotId == slotId && secondaryRoleKeyId == keyId) {
-                // Trigger primary role.
-                if (secondaryRoleState == SecondaryRoleState_Pressed) {
-                    applyKeyAction(keyState, action);
+            } else {
+                if (keyState->suppressed) {
+                    keyState->suppressed = false;
                 }
-                secondaryRoleState = SecondaryRoleState_Released;
+
+                // Release secondary role key.
+                if (keyState->previous && secondaryRoleSlotId == slotId && secondaryRoleKeyId == keyId) {
+                    // Trigger primary role.
+                    if (secondaryRoleState == SecondaryRoleState_Pressed) {
+                        applyKeyAction(keyState, action);
+                    }
+                    secondaryRoleState = SecondaryRoleState_Released;
+                }
             }
 
             keyState->previous = keyState->current;
@@ -196,4 +212,5 @@ void UpdateActiveUsbReports(void)
     }
 
     previousModifiers = ActiveUsbBasicKeyboardReport->modifiers;
+    previousLayer = activeLayer;
 }
