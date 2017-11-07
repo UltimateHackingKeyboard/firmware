@@ -74,9 +74,9 @@ void processMouseAction(key_action_t *action)
     wasPreviousMouseActionWheelAction = isWheelAction;
 }
 
-uint8_t basicScancodeIndex = 0;
-uint8_t mediaScancodeIndex = 0;
-uint8_t systemScancodeIndex = 0;
+static uint8_t basicScancodeIndex = 0;
+static uint8_t mediaScancodeIndex = 0;
+static uint8_t systemScancodeIndex = 0;
 
 void applyKeyAction(key_state_t *keyState, key_action_t *action)
 {
@@ -116,10 +116,10 @@ void applyKeyAction(key_state_t *keyState, key_action_t *action)
     }
 }
 
-uint8_t secondaryRoleState = SecondaryRoleState_Released;
-uint8_t secondaryRoleSlotId;
-uint8_t secondaryRoleKeyId;
-secondary_role_t secondaryRole;
+static uint8_t secondaryRoleState = SecondaryRoleState_Released;
+static uint8_t secondaryRoleSlotId;
+static uint8_t secondaryRoleKeyId;
+static secondary_role_t secondaryRole;
 
 void UpdateActiveUsbReports(void)
 {
