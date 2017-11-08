@@ -27,7 +27,7 @@ void UsbProtocolHandler(void)
         case UsbCommandId_SetTestLed:
             UsbCommand_SetTestLed();
             break;
-        case UsbCommandId_WriteUserConfiguration:
+        case UsbCommandId_WriteUserConfig:
             UsbCommand_WriteConfig(false);
             break;
         case UsbCommandId_ApplyConfig:
@@ -42,13 +42,13 @@ void UsbProtocolHandler(void)
         case UsbCommandId_LaunchEepromTransferLegacy:
             UsbCommand_LaunchEepromTransferLegacy();
             break;
-        case UsbCommandId_ReadHardwareConfiguration:
+        case UsbCommandId_ReadHardwareConfig:
             UsbCommand_ReadConfig(true);
             break;
-        case UsbCommandId_WriteHardwareConfiguration:
+        case UsbCommandId_WriteHardwareConfig:
             UsbCommand_WriteConfig(true);
             break;
-        case UsbCommandId_ReadUserConfiguration:
+        case UsbCommandId_ReadUserConfig:
             UsbCommand_ReadConfig(false);
             break;
         case UsbCommandId_GetKeyboardState:
@@ -57,10 +57,10 @@ void UsbProtocolHandler(void)
         case UsbCommandId_GetDebugInfo:
             UsbCommand_GetDebugBuffer();
             break;
-        case UsbCommandId_JumpToSlaveBootloader:
+        case UsbCommandId_JumpToModuleBootloader:
             UsbCommand_JumpToSlaveBootloader();
             break;
-        case UsbCommandId_SendKbootCommand:
+        case UsbCommandId_SendKbootCommandToModule:
             UsbCommand_SendKbootCommand();
             break;
         default:
