@@ -19,14 +19,14 @@
   "dataModelVersion": "1.0.0",
   "usbProtocolVersion": "1.2.0",
   "slaveProtocolVersion": "2.1.0",
-  "masters": [
+  "devices": [
     {
       "deviceId": 0,
       "name": "uhk60-right",
       "source": "right/build/uhk60-right_release/uhk-right.hex"
     }
   ],
-  "slaves": [
+  "modules": [
     {
       "moduleId": 1,
       "name": "uhk60-left",

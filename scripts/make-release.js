@@ -9,14 +9,14 @@ const package = JSON.parse(fs.readFileSync(`${__dirname}/package.json`));
 const version = package.version;
 const releaseName = `uhk-firmware-${version}`;
 const releaseDir = `${__dirname}/${releaseName}`;
-const slavesDir = `${releaseDir}/slaves`;
+const modulesDir = `${releaseDir}/modules`;
 const releaseFile = `${__dirname}/${releaseName}.tar.bz2`;
 const leftFirmwareFile = `${__dirname}/../left/build/uhk60-left_release/uhk-left.bin`;
 const usbDir = `${__dirname}/../lib/agent/packages/usb`;
 
-const masterSourceFirmwares = package.masters.map(master => `${__dirname}/../${master.source}`);
-const slaveSourceFirmwares = package.slaves.map(slave => `${__dirname}/../${slave.source}`);
-rm('-rf', releaseDir, releaseFile, masterSourceFirmwares, slaveSourceFirmwares);
+const deviceSourceFirmwares = package.devices.map(device => `${__dirname}/../${device.source}`);
+const moduleSourceFirmwares = package.modules.map(module => `${__dirname}/../${module.source}`);
+rm('-rf', releaseDir, releaseFile, deviceSourceFirmwares, moduleSourceFirmwares);
 
 exec(`/opt/Freescale/KDS_v3/eclipse/kinetis-design-studio \
 --launcher.suppressErrors \
@@ -28,21 +28,21 @@ exec(`/opt/Freescale/KDS_v3/eclipse/kinetis-design-studio \
 -cleanBuild uhk-right`
 );
 
-for (let master of package.masters) {
-    const masterDir = `${releaseDir}/masters/${master.name}`;
-    const masterSource = `${__dirname}/../${master.source}`;
-    mkdir('-p', masterDir);
-    chmod(644, masterSource);
-    cp(masterSource, `${masterDir}/firmware.hex`);
-    exec(`${usbDir}/user-config-json-to-bin.ts ${masterDir}/config.bin`);
+for (let device of package.devices) {
+    const deviceDir = `${releaseDir}/devices/${device.name}`;
+    const deviceSource = `${__dirname}/../${device.source}`;
+    mkdir('-p', deviceDir);
+    chmod(644, deviceSource);
+    cp(deviceSource, `${deviceDir}/firmware.hex`);
+    exec(`${usbDir}/user-config-json-to-bin.ts ${deviceDir}/config.bin`);
 }
 
-for (let slave of package.slaves) {
-    const slaveDir = `${releaseDir}/slaves`;
-    const slaveSource = `${__dirname}/../${slave.source}`;
-    mkdir('-p', slaveDir);
-    chmod(644, slaveSource);
-    cp(slaveSource, `${slaveDir}/${slave.name}.bin`);
+for (let module of package.modules) {
+    const moduleDir = `${releaseDir}/modules`;
+    const moduleSource = `${__dirname}/../${module.source}`;
+    mkdir('-p', moduleDir);
+    chmod(644, moduleSource);
+    cp(moduleSource, `${moduleDir}/${module.name}.bin`);
 }
 
 cp(`${__dirname}/package.json`, releaseDir);
