@@ -7,11 +7,6 @@
     #include "crc16.h"
     #include "slave_protocol.h"
 
-// Macros:
-
-    #define PROTOCOL_RESPONSE_SUCCESS       0
-    #define PROTOCOL_RESPONSE_GENERIC_ERROR 1
-
 // Variables:
 
     extern i2c_message_t RxMessage;
