@@ -1,3 +1,5 @@
+#ifdef DEBUG_OVER_SPI
+
 #ifndef __DEBUG_OVER_SPI_H__
 #define __DEBUG_OVER_SPI_H__
 
@@ -24,4 +26,9 @@
     void DebugOverSpi_Init(void);
     void DebugOverSpi_Send(uint8_t *tx, uint8_t len);
 
+#endif
+
+#else
+    #define DebugOverSpi_Init()
+    #define DebugOverSpi_Send(tx, len)
 #endif
