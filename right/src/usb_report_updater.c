@@ -173,6 +173,7 @@ void UpdateActiveUsbReports(void)
                         secondaryRoleSlotId = slotId;
                         secondaryRoleKeyId = keyId;
                         secondaryRole = action->keystroke.secondaryRole;
+                        keyState->suppressed = true;
                     }
                 } else {
                     // Trigger secondary role.
