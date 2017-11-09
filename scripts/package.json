@@ -21,7 +21,7 @@
   "slaveProtocolVersion": "2.1.0",
   "devices": [
     {
-      "deviceId": 0,
+      "deviceId": 1,
       "name": "uhk60-right",
       "source": "right/build/uhk60-right_release/uhk-right.hex"
     }
