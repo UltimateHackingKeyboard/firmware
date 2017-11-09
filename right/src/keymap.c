@@ -18,7 +18,7 @@ void SwitchKeymap(uint8_t index)
     CurrentKeymapIndex = index;
     ValidatedUserConfigBuffer.offset = AllKeymaps[index].offset;
     ParseKeymap(&ValidatedUserConfigBuffer, index, AllKeymapsCount, AllMacrosCount);
-    LedDisplay_SetText(AllKeymaps[index].abbreviationLen, AllKeymaps[index].abbreviation);
+    LedDisplay_SetCurrentKeymapText();
 }
 
 // The factory keymap is initialized before it gets overwritten by the default keymap of the EEPROM.

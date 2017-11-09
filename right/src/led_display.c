@@ -1,6 +1,7 @@
 #include "led_display.h"
 #include "slave_drivers/is31fl3731_driver.h"
 #include "layer.h"
+#include "keymap.h"
 
 static const uint16_t capitalLetterToSegmentSet[] = {
     0b0000000011110111,
@@ -76,6 +77,12 @@ void LedDisplay_SetText(uint8_t length, const char* text) {
         }
         allSegmentSets >>= 5;
     }
+}
+
+void LedDisplay_SetCurrentKeymapText(void)
+{
+    keymap_reference_t *currentKeymap = AllKeymaps + CurrentKeymapIndex;
+    LedDisplay_SetText(currentKeymap->abbreviationLen, currentKeymap->abbreviation);
 }
 
 void LedDisplay_SetLayer(uint8_t layerId) {

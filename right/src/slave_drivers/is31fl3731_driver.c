@@ -70,9 +70,8 @@ void LedSlaveDriver_Init(uint8_t ledDriverId) {
     currentLedDriverState->phase = LedDriverPhase_SetFunctionFrame;
     currentLedDriverState->ledIndex = 0;
     memset(LedDriverValues[ledDriverId], LED_BRIGHTNESS_LEVEL, LED_DRIVER_LED_COUNT);
-    LedDisplay_SetText(3, "FTY");
+    LedDisplay_SetCurrentKeymapText();
 }
-
 
 status_t LedSlaveDriver_Update(uint8_t ledDriverId) {
     status_t status = kStatus_Uhk_IdleSlave;
