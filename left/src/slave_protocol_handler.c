@@ -14,25 +14,6 @@
 i2c_message_t RxMessage;
 i2c_message_t TxMessage;
 
-void SetError(uint8_t error);
-void SetGenericError(void);
-void SetResponseByte(uint8_t response);
-
-void SetError(uint8_t error) {
-    TxMessage.data[0] = error;
-}
-
-void SetGenericError(void)
-{
-    SetError(PROTOCOL_RESPONSE_GENERIC_ERROR);
-}
-
-// Set a single byte as the response.
-void SetResponseByte(uint8_t response)
-{
-    TxMessage.data[1] = response;
-}
-
 void SlaveRxHandler(void)
 {
     if (!CRC16_IsMessageValid(&RxMessage)) {
