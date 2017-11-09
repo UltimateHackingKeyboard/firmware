@@ -5,8 +5,8 @@
 #include "init_peripherals.h"
 
 static uint32_t prevWatchdogCounter = 0;
-uint32_t I2cWatchdog_InnerCounter;
-volatile uint32_t I2cWatchdog_OuterCounter;
+uint32_t I2cWatchdog_RecoveryCounter;
+volatile uint32_t I2cWatchdog_WatchCounter;
 
 void InitI2cWatchdog(void)
 {
@@ -22,11 +22,11 @@ void InitI2cWatchdog(void)
 void I2C_WATCHDOG_LPTMR_HANDLER(void)
 {
     TEST_LED_TOGGLE();
-    I2cWatchdog_OuterCounter++;
+    I2cWatchdog_WatchCounter++;
 
     if (I2C_Watchdog == prevWatchdogCounter) { // Restart I2C if there hasn't been any interrupt during 100 ms
 //        NVIC_SystemReset();
-        I2cWatchdog_InnerCounter++;
+        I2cWatchdog_RecoveryCounter++;
         I2C_SlaveDeinit(I2C_BUS_BASEADDR);
         InitI2c();
     }

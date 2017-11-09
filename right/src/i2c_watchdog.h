@@ -11,8 +11,8 @@
 
 // Variables:
 
-    extern uint32_t I2cWatchdog_InnerCounter;
-    extern uint32_t I2cWatchdog_OuterCounter;
+    extern uint32_t I2cWatchdog_RecoveryCounter;
+    extern uint32_t I2cWatchdog_WatchCounter;
 
 // Functions:
 

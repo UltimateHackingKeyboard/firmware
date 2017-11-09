@@ -8,7 +8,7 @@
 #include "i2c.h"
 #include "i2c_addresses.h"
 
-uint32_t I2cSchedulerCounter;
+uint32_t I2cSlaveScheduler_Counter;
 
 static uint8_t previousSlaveId;
 static uint8_t currentSlaveId;
@@ -51,7 +51,7 @@ static void slaveSchedulerCallback(I2C_Type *base, i2c_master_handle_t *handle, 
 {
     bool isFirstIteration = true;
     bool isTransferScheduled = false;
-    I2cSchedulerCounter++;
+    I2cSlaveScheduler_Counter++;
 
     do {
         uhk_slave_t *previousSlave = Slaves + previousSlaveId;

@@ -8,8 +8,8 @@
 #include "slave_scheduler.h"
 #include "init_peripherals.h"
 
-uint32_t I2cWatchdog_OuterCounter;
-uint32_t I2cWatchdog_InnerCounter;
+uint32_t I2cWatchdog_WatchCounter;
+uint32_t I2cWatchdog_RecoveryCounter;
 
 static uint32_t prevWatchdogCounter;
 
@@ -18,9 +18,9 @@ static uint32_t prevWatchdogCounter;
 // This method relies on a patched KSDK which increments I2C_Watchdog upon I2C transfers.
 void PIT_I2C_WATCHDOG_HANDLER(void)
 {
-    I2cWatchdog_OuterCounter++;
+    I2cWatchdog_WatchCounter++;
     if (I2C_Watchdog == prevWatchdogCounter) { // Restart I2C if there haven't been any interrupts recently
-        I2cWatchdog_InnerCounter++;
+        I2cWatchdog_RecoveryCounter++;
         i2c_master_config_t masterConfig;
         I2C_MasterGetDefaultConfig(&masterConfig);
         I2C_MasterDeinit(I2C_MAIN_BUS_BASEADDR);

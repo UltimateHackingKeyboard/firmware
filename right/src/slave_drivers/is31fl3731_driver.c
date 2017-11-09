@@ -73,6 +73,7 @@ void LedSlaveDriver_Init(uint8_t ledDriverId) {
     LedDisplay_SetText(3, "FTY");
 }
 
+
 status_t LedSlaveDriver_Update(uint8_t ledDriverId) {
     status_t status = kStatus_Uhk_IdleSlave;
     uint8_t *ledValues = LedDriverValues[ledDriverId];
