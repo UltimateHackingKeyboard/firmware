@@ -18,6 +18,7 @@
 #include "key_scanner.h"
 #include "key_states.h"
 #include "usb_commands/usb_command_apply_config.h"
+#include "peripherals/reset_button.h"
 
 void updateUsbReports(void)
 {
@@ -61,7 +62,10 @@ void main(void)
 {
     InitClock();
     InitPeripherals();
-    EEPROM_LaunchTransfer(EepromOperation_Read, ConfigBufferId_HardwareConfig, hardwareConfigurationReadFinished);
+
+    if (!RESET_BUTTON_IS_PRESSED) {
+        EEPROM_LaunchTransfer(EepromOperation_Read, ConfigBufferId_HardwareConfig, hardwareConfigurationReadFinished);
+    }
 
     if (Wormhole.magicNumber == WORMHOLE_MAGIC_NUMBER && Wormhole.enumerationMode == EnumerationMode_BusPal) {
         Wormhole.magicNumber = 0;
