@@ -61,7 +61,8 @@ static uint8_t setShutdownModeNormalBuffer[] = {LED_DRIVER_REGISTER_SHUTDOWN, SH
 static uint8_t setFrame1Buffer[] = {LED_DRIVER_REGISTER_FRAME, LED_DRIVER_FRAME_1};
 static uint8_t updatePwmRegistersBuffer[PWM_REGISTER_BUFFER_LENGTH];
 
-void LedSlaveDriver_Init(uint8_t ledDriverId) {
+void LedSlaveDriver_Init(uint8_t ledDriverId)
+{
     if (ledDriverId == ISO_KEY_LED_DRIVER_ID && IS_ISO) {
         ledDriverStates[LedDriverId_Left].setupLedControlRegistersCommand[ISO_KEY_CONTROL_REGISTER_POS] |= 1 << ISO_KEY_CONTROL_REGISTER_BIT;
     }
@@ -73,7 +74,8 @@ void LedSlaveDriver_Init(uint8_t ledDriverId) {
     LedDisplay_SetCurrentKeymapText();
 }
 
-status_t LedSlaveDriver_Update(uint8_t ledDriverId) {
+status_t LedSlaveDriver_Update(uint8_t ledDriverId)
+{
     status_t status = kStatus_Uhk_IdleSlave;
     uint8_t *ledValues = LedDriverValues[ledDriverId];
     led_driver_state_t *currentLedDriverState = ledDriverStates + ledDriverId;

@@ -45,7 +45,8 @@ static const uint16_t digitToSegmentSet[] = {
     0b0000000011101111,
 };
 
-static uint16_t characterToSegmentSet(char character) {
+static uint16_t characterToSegmentSet(char character)
+{
     switch (character) {
         case 'A' ... 'Z':
             return capitalLetterToSegmentSet[character - 'A'];
@@ -55,7 +56,8 @@ static uint16_t characterToSegmentSet(char character) {
     return 0;
 }
 
-void LedDisplay_SetText(uint8_t length, const char* text) {
+void LedDisplay_SetText(uint8_t length, const char* text)
+{
     uint64_t allSegmentSets = 0;
 
     switch (length) {
@@ -85,7 +87,8 @@ void LedDisplay_SetCurrentKeymapText(void)
     LedDisplay_SetText(currentKeymap->abbreviationLen, currentKeymap->abbreviation);
 }
 
-void LedDisplay_SetLayer(uint8_t layerId) {
+void LedDisplay_SetLayer(uint8_t layerId)
+{
     for (uint8_t i = 13; i <= 45; i += 16) {
         LedDriverValues[LedDriverId_Left][i] = 0;
     }
@@ -95,6 +98,7 @@ void LedDisplay_SetLayer(uint8_t layerId) {
     }
 }
 
-void LedDisplay_SetIcon(led_display_icon_t icon, bool isEnabled) {
+void LedDisplay_SetIcon(led_display_icon_t icon, bool isEnabled)
+{
     LedDriverValues[LedDriverId_Left][8 + icon] = isEnabled ? LED_BRIGHTNESS_LEVEL : 0;
 }
