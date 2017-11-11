@@ -45,8 +45,7 @@ static status_t writePage(void)
 {
     static uint8_t buffer[EEPROM_BUFFER_SIZE];
     uint16_t targetEepromOffset = sourceOffset + eepromStartAddress;
-    buffer[0] = targetEepromOffset >> 8;
-    buffer[1] = targetEepromOffset & 0xff;
+    SetBufferUint16Be(buffer, 0, targetEepromOffset);
     writeLength = MIN(sourceLength - sourceOffset, EEPROM_PAGE_SIZE);
     memcpy(buffer+EEPROM_ADDRESS_LENGTH, sourceBuffer+sourceOffset, writeLength);
     status_t status = i2cAsyncWrite(buffer, writeLength+EEPROM_ADDRESS_LENGTH);
@@ -109,10 +108,7 @@ status_t EEPROM_LaunchTransfer(eeprom_operation_t operation, config_buffer_id_t 
     SuccessCallback = successCallback;
     bool isHardwareConfig = CurrentConfigBufferId == ConfigBufferId_HardwareConfig;
     eepromStartAddress = isHardwareConfig ? 0 : HARDWARE_CONFIG_SIZE;
-
-    // This has to be big-endian.
-    addressBuffer[0] = eepromStartAddress >> 8;
-    addressBuffer[1] = eepromStartAddress & 0xff;
+    SetBufferUint16Be(addressBuffer, 0, eepromStartAddress);
 
     switch (CurrentEepromOperation) {
         case EepromOperation_Read:
