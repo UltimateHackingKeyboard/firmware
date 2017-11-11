@@ -4,6 +4,7 @@
 #include "i2c.h"
 #include "eeprom.h"
 #include "config_parser/config_globals.h"
+#include "buffer.h"
 
 bool IsEepromBusy;
 static eeprom_operation_t CurrentEepromOperation;
@@ -108,6 +109,8 @@ status_t EEPROM_LaunchTransfer(eeprom_operation_t operation, config_buffer_id_t 
     SuccessCallback = successCallback;
     bool isHardwareConfig = CurrentConfigBufferId == ConfigBufferId_HardwareConfig;
     eepromStartAddress = isHardwareConfig ? 0 : HARDWARE_CONFIG_SIZE;
+
+    // This has to be big-endian.
     addressBuffer[0] = eepromStartAddress >> 8;
     addressBuffer[1] = eepromStartAddress & 0xff;
 
