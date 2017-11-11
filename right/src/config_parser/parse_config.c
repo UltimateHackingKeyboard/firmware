@@ -7,10 +7,10 @@
 
 static parser_error_t parseModuleConfiguration(config_buffer_t *buffer)
 {
-    uint8_t id = readUInt8(buffer);
-    uint8_t initialPointerSpeed = readUInt8(buffer);
-    uint8_t pointerAcceleration = readUInt8(buffer);
-    uint8_t maxPointerSpeed = readUInt8(buffer);
+    uint8_t id = ReadUInt8(buffer);
+    uint8_t initialPointerSpeed = ReadUInt8(buffer);
+    uint8_t pointerAcceleration = ReadUInt8(buffer);
+    uint8_t maxPointerSpeed = ReadUInt8(buffer);
 
     (void)id;
     (void)initialPointerSpeed;
@@ -26,11 +26,11 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
     uint16_t keymapCount;
     parser_error_t errorCode;
 
-    uint16_t dataModelVersion = readUInt16(buffer);
-    uint16_t userConfigLength = readUInt16(buffer);
+    uint16_t dataModelVersion = ReadUInt16(buffer);
+    uint16_t userConfigLength = ReadUInt16(buffer);
     (void)userConfigLength;
-    readString(buffer, &len); // Ignore device name
-    uint16_t moduleConfigurationCount = readCompactLength(buffer);
+    ReadString(buffer, &len); // Ignore device name
+    uint16_t moduleConfigurationCount = ReadCompactLength(buffer);
 
     (void)dataModelVersion;
 
@@ -45,7 +45,7 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
         }
     }
 
-    macroCount = readCompactLength(buffer);
+    macroCount = ReadCompactLength(buffer);
     if (macroCount > MAX_MACRO_NUM) {
         return ParserError_InvalidMacroCount;
     }
@@ -57,7 +57,7 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
         }
     }
 
-    keymapCount = readCompactLength(buffer);
+    keymapCount = ReadCompactLength(buffer);
     if (keymapCount == 0 || keymapCount > MAX_KEYMAP_NUM) {
         return ParserError_InvalidKeymapCount;
     }

@@ -1,40 +1,40 @@
 #include "basic_types.h"
 
-uint8_t readUInt8(config_buffer_t *buffer)
+uint8_t ReadUInt8(config_buffer_t *buffer)
 {
     return buffer->buffer[buffer->offset++];
 }
 
-uint16_t readUInt16(config_buffer_t *buffer)
+uint16_t ReadUInt16(config_buffer_t *buffer)
 {
-    uint16_t uInt16 = readUInt8(buffer);
+    uint16_t uInt16 = ReadUInt8(buffer);
 
-    uInt16 |= readUInt8(buffer) << 8;
+    uInt16 |= ReadUInt8(buffer) << 8;
     return uInt16;
 }
 
-int16_t readInt16(config_buffer_t *buffer)
+int16_t ReadInt16(config_buffer_t *buffer)
 {
-    return readUInt16(buffer);
+    return ReadUInt16(buffer);
 }
 
-bool readBool(config_buffer_t *buffer)
+bool ReadBool(config_buffer_t *buffer)
 {
-    return readUInt8(buffer);
+    return ReadUInt8(buffer);
 }
 
-uint16_t readCompactLength(config_buffer_t *buffer)
+uint16_t ReadCompactLength(config_buffer_t *buffer)
 {
-    uint16_t compactLength = readUInt8(buffer);
+    uint16_t compactLength = ReadUInt8(buffer);
 
-    return compactLength == 0xFF ? readUInt16(buffer) : compactLength;
+    return compactLength == 0xFF ? ReadUInt16(buffer) : compactLength;
 }
 
-const char *readString(config_buffer_t *buffer, uint16_t *len)
+const char *ReadString(config_buffer_t *buffer, uint16_t *len)
 {
     const char *string;
 
-    *len = readCompactLength(buffer);
+    *len = ReadCompactLength(buffer);
     string = (const char *)(buffer->buffer + buffer->offset);
     buffer->offset += *len;
     return string;

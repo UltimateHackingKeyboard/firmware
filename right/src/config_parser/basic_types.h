@@ -14,11 +14,11 @@
 
 // Functions:
 
-    uint8_t readUInt8(config_buffer_t *buffer);
-    uint16_t readUInt16(config_buffer_t *buffer);
-    int16_t readInt16(config_buffer_t *buffer);
-    bool readBool(config_buffer_t *buffer);
-    uint16_t readCompactLength(config_buffer_t *buffer);
-    const char *readString(config_buffer_t *buffer, uint16_t *len);
+    uint8_t ReadUInt8(config_buffer_t *buffer);
+    uint16_t ReadUInt16(config_buffer_t *buffer);
+    int16_t ReadInt16(config_buffer_t *buffer);
+    bool ReadBool(config_buffer_t *buffer);
+    uint16_t ReadCompactLength(config_buffer_t *buffer);
+    const char *ReadString(config_buffer_t *buffer, uint16_t *len);
 
 #endif

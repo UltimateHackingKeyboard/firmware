@@ -34,21 +34,21 @@ static parser_error_t parseKeyStrokeAction(key_action_t *keyAction, uint8_t keyS
             return ParserError_InvalidSerializedKeystrokeType;
     }
     keyAction->keystroke.scancode = keyStrokeAction & SERIALIZED_KEYSTROKE_TYPE_MASK_HAS_SCANCODE
-        ? keystrokeType == SerializedKeystrokeType_LongMedia ? readUInt16(buffer) : readUInt8(buffer)
+        ? keystrokeType == SerializedKeystrokeType_LongMedia ? ReadUInt16(buffer) : ReadUInt8(buffer)
         : 0;
     keyAction->keystroke.modifiers = keyStrokeAction & SERIALIZED_KEYSTROKE_TYPE_MASK_HAS_MODIFIERS
-        ? readUInt8(buffer)
+        ? ReadUInt8(buffer)
         : 0;
     keyAction->keystroke.secondaryRole = keyStrokeAction & SERIALIZED_KEYSTROKE_TYPE_MASK_HAS_LONGPRESS
-        ? readUInt8(buffer) + 1
+        ? ReadUInt8(buffer) + 1
         : 0;
     return ParserError_Success;
 }
 
 static parser_error_t parseSwitchLayerAction(key_action_t *KeyAction, config_buffer_t *buffer)
 {
-    uint8_t layer = readUInt8(buffer) + 1;
-    bool isToggle = readBool(buffer);
+    uint8_t layer = ReadUInt8(buffer) + 1;
+    bool isToggle = ReadBool(buffer);
 
     KeyAction->type = KeyActionType_SwitchLayer;
     KeyAction->switchLayer.layer = layer;
@@ -58,7 +58,7 @@ static parser_error_t parseSwitchLayerAction(key_action_t *KeyAction, config_buf
 
 static parser_error_t parseSwitchKeymapAction(key_action_t *keyAction, config_buffer_t *buffer)
 {
-    uint8_t keymapIndex = readUInt8(buffer);
+    uint8_t keymapIndex = ReadUInt8(buffer);
 
     if (keymapIndex >= tempKeymapCount) {
         return ParserError_InvalidSerializedSwitchKeymapAction;
@@ -70,7 +70,7 @@ static parser_error_t parseSwitchKeymapAction(key_action_t *keyAction, config_bu
 
 static parser_error_t parsePlayMacroAction(key_action_t *keyAction, config_buffer_t *buffer)
 {
-    uint8_t macroIndex = readUInt8(buffer);
+    uint8_t macroIndex = ReadUInt8(buffer);
 
     if (macroIndex >= tempMacroCount) {
         return ParserError_InvalidSerializedPlayMacroAction;
@@ -82,7 +82,7 @@ static parser_error_t parsePlayMacroAction(key_action_t *keyAction, config_buffe
 
 static parser_error_t parseMouseAction(key_action_t *keyAction, config_buffer_t *buffer)
 {
-    uint8_t mouseAction = readUInt8(buffer);
+    uint8_t mouseAction = ReadUInt8(buffer);
 
     keyAction->type = KeyActionType_Mouse;
     memset(&keyAction->mouse, 0, sizeof keyAction->mouse);
@@ -134,7 +134,7 @@ static parser_error_t parseMouseAction(key_action_t *keyAction, config_buffer_t 
 
 static parser_error_t parseKeyAction(key_action_t *keyAction, config_buffer_t *buffer)
 {
-    uint8_t keyActionType = readUInt8(buffer);
+    uint8_t keyActionType = ReadUInt8(buffer);
 
     switch (keyActionType) {
         case SerializedKeyActionType_None:
@@ -156,7 +156,7 @@ static parser_error_t parseKeyAction(key_action_t *keyAction, config_buffer_t *b
 static parser_error_t parseKeyActions(uint8_t targetLayer, config_buffer_t *buffer, uint8_t moduleId, uint8_t pointerRole)
 {
     parser_error_t errorCode;
-    uint16_t actionCount = readCompactLength(buffer);
+    uint16_t actionCount = ReadCompactLength(buffer);
     key_action_t dummyKeyAction;
 
     if (actionCount > MAX_KEY_COUNT_PER_MODULE) {
@@ -173,8 +173,8 @@ static parser_error_t parseKeyActions(uint8_t targetLayer, config_buffer_t *buff
 
 static parser_error_t parseModule(config_buffer_t *buffer, uint8_t layer)
 {
-    uint8_t moduleId = readUInt8(buffer);
-    uint8_t pointerRole = readUInt8(buffer);
+    uint8_t moduleId = ReadUInt8(buffer);
+    uint8_t pointerRole = ReadUInt8(buffer);
 
     return parseKeyActions(layer, buffer, moduleId, pointerRole);
 }
@@ -182,7 +182,7 @@ static parser_error_t parseModule(config_buffer_t *buffer, uint8_t layer)
 static parser_error_t parseLayer(config_buffer_t *buffer, uint8_t layer)
 {
     parser_error_t errorCode;
-    uint16_t moduleCount = readCompactLength(buffer);
+    uint16_t moduleCount = ReadCompactLength(buffer);
 
     if (moduleCount > SLOT_COUNT) {
         return ParserError_InvalidModuleCount;
@@ -203,11 +203,11 @@ parser_error_t ParseKeymap(config_buffer_t *buffer, uint8_t keymapIdx, uint8_t k
     uint16_t abbreviationLen;
     uint16_t nameLen;
     uint16_t descriptionLen;
-    const char *abbreviation = readString(buffer, &abbreviationLen);
-    bool isDefault = readBool(buffer);
-    const char *name = readString(buffer, &nameLen);
-    const char *description = readString(buffer, &descriptionLen);
-    uint16_t layerCount = readCompactLength(buffer);
+    const char *abbreviation = ReadString(buffer, &abbreviationLen);
+    bool isDefault = ReadBool(buffer);
+    const char *name = ReadString(buffer, &nameLen);
+    const char *description = ReadString(buffer, &descriptionLen);
+    uint16_t layerCount = ReadCompactLength(buffer);
 
     (void)name;
     (void)description;
