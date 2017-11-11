@@ -5,7 +5,7 @@
 
 void UsbCommand_SetLedPwmBrightness(void)
 {
-    uint8_t brightnessPercent = GET_USB_BUFFER_UINT8(1);
+    uint8_t brightnessPercent = GetUsbRxBufferUint8(1);
     LedPwm_SetBrightness(brightnessPercent);
     UhkModuleStates[UhkModuleDriverId_LeftKeyboardHalf].sourceVars.ledPwmBrightness = brightnessPercent;
 }

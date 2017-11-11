@@ -5,10 +5,10 @@
 
 void UsbCommand_JumpToSlaveBootloader(void)
 {
-    uint8_t slotId = GET_USB_BUFFER_UINT8(1);
+    uint8_t slotId = GetUsbRxBufferUint8(1);
 
     if (!IS_VALID_SLAVE_SLOT(slotId)) {
-        SET_USB_BUFFER_UINT8(0, UsbStatusCode_JumpToSlaveBootloader_InvalidSlaveSlotId);
+        SetUsbTxBufferUint8(0, UsbStatusCode_JumpToSlaveBootloader_InvalidSlaveSlotId);
         return;
     }
 

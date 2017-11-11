@@ -5,11 +5,11 @@
 
 void UsbCommand_ReadConfig(bool isHardware)
 {
-    uint8_t length = GET_USB_BUFFER_UINT8(1);
-    uint16_t offset = GET_USB_BUFFER_UINT16(2);
+    uint8_t length = GetUsbRxBufferUint8(1);
+    uint16_t offset = GetUsbRxBufferUint16(2);
 
     if (length > USB_GENERIC_HID_OUT_BUFFER_LENGTH - USB_STATUS_CODE_SIZE) {
-        SET_USB_BUFFER_UINT8(0, UsbStatusCode_ReadConfig_LengthTooLarge);
+        SetUsbTxBufferUint8(0, UsbStatusCode_ReadConfig_LengthTooLarge);
         return;
     }
 
@@ -17,7 +17,7 @@ void UsbCommand_ReadConfig(bool isHardware)
     uint16_t bufferLength = isHardware ? HARDWARE_CONFIG_SIZE : USER_CONFIG_SIZE;
 
     if (offset + length > bufferLength) {
-        SET_USB_BUFFER_UINT8(0, UsbStatusCode_ReadConfig_BufferOutOfBounds);
+        SetUsbTxBufferUint8(0, UsbStatusCode_ReadConfig_BufferOutOfBounds);
         return;
     }
 

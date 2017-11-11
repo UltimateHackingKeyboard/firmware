@@ -6,9 +6,9 @@
 
 void updateUsbBuffer(uint8_t usbStatusCode, uint16_t parserOffset, parser_stage_t parserStage)
 {
-    SET_USB_BUFFER_UINT8(0, usbStatusCode);
-    SET_USB_BUFFER_UINT16(1, parserOffset);
-    SET_USB_BUFFER_UINT8(3, parserStage);
+    SetUsbTxBufferUint8(0, usbStatusCode);
+    SetUsbTxBufferUint16(1, parserOffset);
+    SetUsbTxBufferUint8(3, parserStage);
 }
 
 void UsbCommand_ApplyConfig(void)

@@ -5,7 +5,7 @@
 
 void UsbCommand_SetTestLed(void)
 {
-    bool isTestLedOn = GET_USB_BUFFER_UINT8(1);
+    bool isTestLedOn = GetUsbRxBufferUint8(1);
     TEST_LED_SET(isTestLedOn);
     UhkModuleStates[UhkModuleDriverId_LeftKeyboardHalf].sourceVars.isTestLedOn = isTestLedOn;
 }

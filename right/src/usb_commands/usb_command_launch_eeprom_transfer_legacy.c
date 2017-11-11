@@ -5,7 +5,7 @@
 
 void UsbCommand_LaunchEepromTransferLegacy(void)
 {
-    uint8_t legacyEepromTransferId = GET_USB_BUFFER_UINT8(1);
+    uint8_t legacyEepromTransferId = GetUsbRxBufferUint8(1);
     switch (legacyEepromTransferId) {
     case 0:
         EEPROM_LaunchTransfer(EepromOperation_Read, ConfigBufferId_HardwareConfig, NULL);

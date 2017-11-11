@@ -10,14 +10,6 @@
 
     #define USB_STATUS_CODE_SIZE 1
 
-    #define GET_USB_BUFFER_UINT8(offset)  (*(uint8_t*)(GenericHidInBuffer+(offset)))
-    #define GET_USB_BUFFER_UINT16(offset) (*(uint16_t*)(GenericHidInBuffer+(offset)))
-    #define GET_USB_BUFFER_UINT32(offset) (*(uint32_t*)(GenericHidInBuffer+(offset)))
-
-    #define SET_USB_BUFFER_UINT8(offset, value) (*(uint8_t*)(GenericHidOutBuffer+(offset)) = (value))
-    #define SET_USB_BUFFER_UINT16(offset, value) (*(uint16_t*)(GenericHidOutBuffer+(offset)) = (value))
-    #define SET_USB_BUFFER_UINT32(offset, value) (*(uint32_t*)(GenericHidOutBuffer+(offset)) = (value))
-
 // Typedefs:
 
     typedef enum {
@@ -46,5 +38,13 @@
 // Functions:
 
     void UsbProtocolHandler(void);
+
+    uint8_t GetUsbRxBufferUint8(uint32_t offset);
+    uint16_t GetUsbRxBufferUint16(uint32_t offset);
+    uint32_t GetUsbRxBufferUint32(uint32_t offset);
+
+    void SetUsbTxBufferUint8(uint32_t offset, uint8_t value);
+    void SetUsbTxBufferUint16(uint32_t offset, uint16_t value);
+    void SetUsbTxBufferUint32(uint32_t offset, uint32_t value);
 
 #endif
