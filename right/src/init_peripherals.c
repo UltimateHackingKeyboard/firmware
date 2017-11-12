@@ -77,7 +77,8 @@ void InitI2cMainBus(void)
     I2C_MasterGetDefaultConfig(&masterConfig);
     masterConfig.baudRate_Bps = I2C_MAIN_BUS_BAUD_RATE;
     uint32_t sourceClock = CLOCK_GetFreq(I2C_MASTER_BUS_CLK_SRC);
-    I2C_MasterInit(I2C_MAIN_BUS_BASEADDR, &masterConfig, sourceClock);}
+    I2C_MasterInit(I2C_MAIN_BUS_BASEADDR, &masterConfig, sourceClock);
+}
 
 void initI2cEepromBus(void)
 {

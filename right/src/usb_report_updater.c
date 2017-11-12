@@ -11,15 +11,20 @@
 #include "right_key_matrix.h"
 #include "layer.h"
 #include "usb_report_updater.h"
+#include "timer.h"
+
+uint32_t UsbReportUpdateTime = 0;
 
 static uint8_t mouseWheelDivisorCounter = 0;
 static uint8_t mouseSpeedAccelDivisorCounter = 0;
-static uint8_t mouseSpeed = 3;
+static uint8_t mouseSpeed = 10;
 static bool wasPreviousMouseActionWheelAction = false;
+static uint32_t elapsedTime;
 
 void processMouseAction(key_action_t *action)
 {
     bool isWheelAction = action->mouse.scrollActions && !action->mouse.moveActions && !action->mouse.buttonActions;
+    uint16_t distance = mouseSpeed * elapsedTime / 25;
 
     if (isWheelAction && wasPreviousMouseActionWheelAction) {
         mouseWheelDivisorCounter++;
@@ -56,16 +61,16 @@ void processMouseAction(key_action_t *action)
         }
     } else if (action->mouse.moveActions) {
         if (action->mouse.moveActions & MouseMove_Left) {
-            ActiveUsbMouseReport->x = -mouseSpeed;
+            ActiveUsbMouseReport->x = -distance;
         }
         if (action->mouse.moveActions & MouseMove_Right) {
-            ActiveUsbMouseReport->x = mouseSpeed;
+            ActiveUsbMouseReport->x = distance;
         }
         if (action->mouse.moveActions & MouseMove_Up) {
-            ActiveUsbMouseReport->y = -mouseSpeed;
+            ActiveUsbMouseReport->y = -distance;
         }
         if (action->mouse.moveActions & MouseMove_Down) {
-            ActiveUsbMouseReport->y = mouseSpeed;
+            ActiveUsbMouseReport->y = distance;
         }
     }
 
@@ -129,6 +134,8 @@ static secondary_role_t secondaryRole;
 void UpdateActiveUsbReports(void)
 {
     static uint8_t previousModifiers = 0;
+    elapsedTime = Timer_GetElapsedTime(&UsbReportUpdateTime);
+
     basicScancodeIndex = 0;
     mediaScancodeIndex = 0;
     systemScancodeIndex = 0;

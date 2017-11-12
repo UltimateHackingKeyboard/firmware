@@ -7,11 +7,15 @@
 
 // Macros:
 
-    #define TIMER_INTERVAL_USEC 1000
+    #define TIMER_INTERVAL_MSEC 1
+
+// Variables:
+
+    extern uint32_t CurrentTime;
 
 // Functions:
 
     void Timer_Init(void);
-    uint32_t Timer_GetTime(void);
+    uint32_t Timer_GetElapsedTime(uint32_t *time);
 
 #endif

@@ -14,7 +14,7 @@ void UsbCommand_GetDebugBuffer(void)
     SetDebugBufferUint32(5, I2cSlaveScheduler_Counter);
     SetDebugBufferUint32(9, I2cWatchdog_WatchCounter);
     SetDebugBufferUint32(13, I2cWatchdog_RecoveryCounter);
-    SetDebugBufferUint32(40, Timer_GetTime());
+    SetDebugBufferUint32(40, CurrentTime);
 
     memcpy(GenericHidOutBuffer, DebugBuffer, USB_GENERIC_HID_OUT_BUFFER_LENGTH);
 
