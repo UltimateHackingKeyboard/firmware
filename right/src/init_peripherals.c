@@ -13,6 +13,7 @@
 #include "init_peripherals.h"
 #include "eeprom.h"
 #include "microseconds/microseconds_pit.c"
+#include "timer.h"
 
 void InitInterruptPriorities(void)
 {
@@ -109,6 +110,7 @@ void InitI2c(void)
 void InitPeripherals(void)
 {
     InitInterruptPriorities();
+    Timer_Init();
     InitLedDriver();
     InitResetButton();
     InitMergeSensor();
