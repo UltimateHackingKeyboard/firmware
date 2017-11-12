@@ -6,8 +6,6 @@
 #include "config_parser/config_globals.h"
 #include "macros.h"
 
-// TODO: Restore Ctrl and Super keys and Mod+N.
-
 keymap_reference_t AllKeymaps[MAX_KEYMAP_NUM] = { { "FTY", 0, 3 } };
 uint8_t AllKeymapsCount;
 uint8_t DefaultKeymapIndex;
@@ -159,7 +157,7 @@ key_action_t CurrentKeymap[LAYER_COUNT][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = 
             { .type = KeyActionType_None },
             { .type = KeyActionType_None },
             { .type = KeyActionType_None },
-            { .type = KeyActionType_None },
+            { .type = HID_KEYBOARD_SC_MENU },
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_RIGHT_SHIFT }},
             { .type = KeyActionType_None },
 
