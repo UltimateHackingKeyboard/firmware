@@ -1,8 +1,6 @@
 #include "fsl_pit.h"
 #include "key_scanner.h"
 
-uint32_t counter = 0;
-
 void PIT_KEY_SCANNER_HANDLER(void)
 {
     KeyMatrix_ScanRow(&RightKeyMatrix);
