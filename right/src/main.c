@@ -22,13 +22,9 @@
 
 void updateUsbReports(void)
 {
-    if (!IsUsbBasicKeyboardReportSent) {
+    if (!IsUsbBasicKeyboardReportSent || !IsUsbMediaKeyboardReportSent || /*!IsUsbSystemKeyboardReportSent ||*/ !IsUsbMouseReportSent) {
         return;
     }
-
-#ifndef INTERRUPT_KEY_SCANNER
-    KeyMatrix_Scan(&RightKeyMatrix);
-#endif
 
     ResetActiveUsbBasicKeyboardReport();
     ResetActiveUsbMediaKeyboardReport();
@@ -43,6 +39,9 @@ void updateUsbReports(void)
     SwitchActiveUsbMouseReport();
 
     IsUsbBasicKeyboardReportSent = false;
+    IsUsbMediaKeyboardReportSent = false;
+    IsUsbSystemKeyboardReportSent = false;
+    IsUsbMouseReportSent = false;
 }
 
 bool IsEepromInitialized = false;
@@ -74,9 +73,7 @@ void main(void)
     } else {
         InitSlaveScheduler();
         KeyMatrix_Init(&RightKeyMatrix);
-#ifdef INTERRUPT_KEY_SCANNER
         InitKeyScanner();
-#endif
         updateUsbReports();
         InitUsb();
 

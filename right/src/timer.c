@@ -1,7 +1,7 @@
 #include "fsl_pit.h"
 #include "timer.h"
 
-uint32_t CurrentTime = 1;
+uint32_t CurrentTime;
 
 void PIT_TIMER_HANDLER(void)
 {
