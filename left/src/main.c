@@ -4,6 +4,7 @@
 #include "bootloader.h"
 #include <stdio.h>
 #include "config.h"
+#include "key_scanner.h"
 
 DEFINE_BOOTLOADER_CONFIG_AREA(I2C_ADDRESS_LEFT_KEYBOARD_HALF_BOOTLOADER)
 
@@ -41,9 +42,9 @@ int main(void)
     InitClock();
     InitPeripherals();
     KeyMatrix_Init(&keyMatrix);
+    InitKeyScanner();
 
     while (1) {
-//        KeyMatrix_Scan(&keyMatrix);
         __WFI();
     }
 }
