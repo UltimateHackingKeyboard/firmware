@@ -14,6 +14,7 @@
 #include "eeprom.h"
 #include "microseconds/microseconds_pit.c"
 #include "timer.h"
+#include "key_debouncer.h"
 
 void InitInterruptPriorities(void)
 {
@@ -122,6 +123,7 @@ void InitPeripherals(void)
 #ifdef I2C_WATCHDOG
     InitI2cWatchdog();
 #endif
+    InitKeyDebouncer();
     EEPROM_Init();
     //microseconds_init();
 }

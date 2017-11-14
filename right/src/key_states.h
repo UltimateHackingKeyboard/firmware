@@ -13,6 +13,7 @@
         bool previous;
         bool current;
         bool suppressed;
+        uint8_t debounceCounter;
     } key_state_t;
 
 // Variables:

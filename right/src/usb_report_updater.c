@@ -12,6 +12,7 @@
 #include "layer.h"
 #include "usb_report_updater.h"
 #include "timer.h"
+#include "key_debouncer.h"
 
 uint32_t UsbReportUpdateTime = 0;
 
@@ -167,6 +168,13 @@ void UpdateActiveUsbReports(void)
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
             key_state_t *keyState = &KeyStates[slotId][keyId];
             key_action_t *action = &CurrentKeymap[activeLayer][slotId][keyId];
+
+
+            if (keyState->debounceCounter < KEY_DEBOUNCER_TIMEOUT_MSEC) {
+                keyState->current = keyState->previous;
+            } else if (!keyState->previous && keyState->current) {
+                keyState->debounceCounter = 0;
+            }
 
             if (keyState->current) {
                 if (suppressKeys) {

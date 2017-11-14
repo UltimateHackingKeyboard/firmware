@@ -1,5 +1,5 @@
 #ifndef __KEY_SCANNER_H__
-#define __TIMER_H__
+#define __KEY_SCANNER_H__
 
 // Includes:
 
