@@ -31,7 +31,6 @@
 // Functions:
 
     void KeyMatrix_Init(key_matrix_t *keyMatrix);
-    void KeyMatrix_Scan(key_matrix_t *keyMatrix);
     void KeyMatrix_ScanRow(key_matrix_t *keyMatrix);
 
 #endif

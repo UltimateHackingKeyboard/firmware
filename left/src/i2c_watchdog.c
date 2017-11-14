@@ -4,7 +4,7 @@
 #include "test_led.h"
 #include "init_peripherals.h"
 
-static uint32_t prevWatchdogCounter = 0;
+//static uint32_t prevWatchdogCounter = 0;
 uint32_t I2cWatchdog_RecoveryCounter;
 volatile uint32_t I2cWatchdog_WatchCounter;
 
@@ -18,7 +18,7 @@ void InitI2cWatchdog(void)
     EnableIRQ(LPTMR0_IRQn);
     LPTMR_StartTimer(LPTMR0);
 }
-
+/*
 void I2C_WATCHDOG_LPTMR_HANDLER(void)
 {
     TEST_LED_TOGGLE();
@@ -35,3 +35,4 @@ void I2C_WATCHDOG_LPTMR_HANDLER(void)
 
     LPTMR_ClearStatusFlags(LPTMR0, kLPTMR_TimerCompareFlag);
 }
+*/

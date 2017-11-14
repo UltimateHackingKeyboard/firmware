@@ -43,7 +43,7 @@ int main(void)
     KeyMatrix_Init(&keyMatrix);
 
     while (1) {
-        KeyMatrix_Scan(&keyMatrix);
+//        KeyMatrix_Scan(&keyMatrix);
         __WFI();
     }
 }
