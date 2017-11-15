@@ -20,9 +20,40 @@
 #include "usb_commands/usb_command_apply_config.h"
 #include "peripherals/reset_button.h"
 
+bool UsbBasicKeyboardReportEverSent = false;
+bool UsbMediaKeyboardReportEverSent = false;
+bool UsbSystemKeyboardReportEverSent = false;
+bool UsbMouseReportEverSentEverSent = false;
+
 void updateUsbReports(void)
 {
-    if (!IsUsbBasicKeyboardReportSent || !IsUsbMediaKeyboardReportSent || /*!IsUsbSystemKeyboardReportSent ||*/ !IsUsbMouseReportSent) {
+    if (IsUsbBasicKeyboardReportSent) {
+        UsbBasicKeyboardReportEverSent = true;
+    }
+    if (IsUsbMediaKeyboardReportSent) {
+        UsbMediaKeyboardReportEverSent = true;
+    }
+    if (IsUsbSystemKeyboardReportSent) {
+        UsbSystemKeyboardReportEverSent = true;
+    }
+    if (IsUsbMouseReportSent) {
+        UsbMouseReportEverSentEverSent = true;
+    }
+
+    bool areUsbReportsSent = true;
+    if (UsbBasicKeyboardReportEverSent) {
+        areUsbReportsSent &= IsUsbBasicKeyboardReportSent;
+    }
+    if (UsbMediaKeyboardReportEverSent) {
+        areUsbReportsSent &= IsUsbMediaKeyboardReportSent;
+    }
+    if (UsbSystemKeyboardReportEverSent) {
+        areUsbReportsSent &= IsUsbSystemKeyboardReportSent;
+    }
+    if (UsbMouseReportEverSentEverSent) {
+        areUsbReportsSent &= IsUsbMouseReportSent;
+    }
+    if (!areUsbReportsSent) {
         return;
     }
 
