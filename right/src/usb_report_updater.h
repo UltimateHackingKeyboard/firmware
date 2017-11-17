@@ -30,4 +30,8 @@
         SecondaryRole_Mouse
     } secondary_role_t;
 
+// Functions:
+
+    void UpdateUsbReports(void);
+
 #endif

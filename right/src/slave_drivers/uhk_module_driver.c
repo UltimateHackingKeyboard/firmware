@@ -3,7 +3,6 @@
 #include "slave_scheduler.h"
 #include "slave_drivers/uhk_module_driver.h"
 #include "slave_protocol.h"
-#include "main.h"
 #include "peripherals/test_led.h"
 #include "bool_array_converter.h"
 #include "crc16.h"

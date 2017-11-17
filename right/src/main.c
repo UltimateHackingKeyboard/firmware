@@ -1,79 +1,16 @@
 #include "config.h"
-#include "main.h"
 #include "init_clock.h"
 #include "init_peripherals.h"
 #include "usb_composite_device.h"
-#include "peripherals/led_driver.h"
-#include "key_action.h"
 #include "slave_scheduler.h"
-#include "peripherals/test_led.h"
-#include "usb_interfaces/usb_interface_basic_keyboard.h"
-#include "usb_interfaces/usb_interface_media_keyboard.h"
-#include "usb_protocol_handler.h"
 #include "bus_pal_hardware.h"
 #include "command.h"
 #include "bootloader/wormhole.h"
 #include "eeprom.h"
-#include "right_key_matrix.h"
 #include "key_scanner.h"
-#include "key_states.h"
 #include "usb_commands/usb_command_apply_config.h"
 #include "peripherals/reset_button.h"
-
-bool UsbBasicKeyboardReportEverSent = false;
-bool UsbMediaKeyboardReportEverSent = false;
-bool UsbSystemKeyboardReportEverSent = false;
-bool UsbMouseReportEverSentEverSent = false;
-
-void updateUsbReports(void)
-{
-    if (IsUsbBasicKeyboardReportSent) {
-        UsbBasicKeyboardReportEverSent = true;
-    }
-    if (IsUsbMediaKeyboardReportSent) {
-        UsbMediaKeyboardReportEverSent = true;
-    }
-    if (IsUsbSystemKeyboardReportSent) {
-        UsbSystemKeyboardReportEverSent = true;
-    }
-    if (IsUsbMouseReportSent) {
-        UsbMouseReportEverSentEverSent = true;
-    }
-
-    bool areUsbReportsSent = true;
-    if (UsbBasicKeyboardReportEverSent) {
-        areUsbReportsSent &= IsUsbBasicKeyboardReportSent;
-    }
-    if (UsbMediaKeyboardReportEverSent) {
-        areUsbReportsSent &= IsUsbMediaKeyboardReportSent;
-    }
-    if (UsbSystemKeyboardReportEverSent) {
-        areUsbReportsSent &= IsUsbSystemKeyboardReportSent;
-    }
-    if (UsbMouseReportEverSentEverSent) {
-        areUsbReportsSent &= IsUsbMouseReportSent;
-    }
-    if (!areUsbReportsSent) {
-        return;
-    }
-
-    ResetActiveUsbBasicKeyboardReport();
-    ResetActiveUsbMediaKeyboardReport();
-    ResetActiveUsbSystemKeyboardReport();
-    ResetActiveUsbMouseReport();
-
-    UpdateActiveUsbReports();
-
-    SwitchActiveUsbBasicKeyboardReport();
-    SwitchActiveUsbMediaKeyboardReport();
-    SwitchActiveUsbSystemKeyboardReport();
-    SwitchActiveUsbMouseReport();
-
-    IsUsbBasicKeyboardReportSent = false;
-    IsUsbMediaKeyboardReportSent = false;
-    IsUsbSystemKeyboardReportSent = false;
-    IsUsbMouseReportSent = false;
-}
+#include "usb_report_updater.h"
 
 bool IsEepromInitialized = false;
 bool IsConfigInitialized = false;
@@ -105,7 +42,7 @@ void main(void)
         InitSlaveScheduler();
         KeyMatrix_Init(&RightKeyMatrix);
         InitKeyScanner();
-        updateUsbReports();
+        UpdateUsbReports();
         InitUsb();
 
         while (1) {
@@ -113,7 +50,7 @@ void main(void)
                 UsbCommand_ApplyConfig();
                 IsConfigInitialized = true;
             }
-            updateUsbReports();
+            UpdateUsbReports();
             __WFI();
         }
     }

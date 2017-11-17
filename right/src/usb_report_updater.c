@@ -132,7 +132,7 @@ static uint8_t secondaryRoleSlotId;
 static uint8_t secondaryRoleKeyId;
 static secondary_role_t secondaryRole;
 
-void UpdateActiveUsbReports(void)
+void updateActiveUsbReports(void)
 {
     static uint8_t previousModifiers = 0;
     elapsedTime = Timer_GetElapsedTime(&UsbReportUpdateTime);
@@ -230,4 +230,59 @@ void UpdateActiveUsbReports(void)
 
     previousModifiers = ActiveUsbBasicKeyboardReport->modifiers;
     previousLayer = activeLayer;
+}
+
+bool UsbBasicKeyboardReportEverSent = false;
+bool UsbMediaKeyboardReportEverSent = false;
+bool UsbSystemKeyboardReportEverSent = false;
+bool UsbMouseReportEverSentEverSent = false;
+
+void UpdateUsbReports(void)
+{
+    if (IsUsbBasicKeyboardReportSent) {
+        UsbBasicKeyboardReportEverSent = true;
+    }
+    if (IsUsbMediaKeyboardReportSent) {
+        UsbMediaKeyboardReportEverSent = true;
+    }
+    if (IsUsbSystemKeyboardReportSent) {
+        UsbSystemKeyboardReportEverSent = true;
+    }
+    if (IsUsbMouseReportSent) {
+        UsbMouseReportEverSentEverSent = true;
+    }
+
+    bool areUsbReportsSent = true;
+    if (UsbBasicKeyboardReportEverSent) {
+        areUsbReportsSent &= IsUsbBasicKeyboardReportSent;
+    }
+    if (UsbMediaKeyboardReportEverSent) {
+        areUsbReportsSent &= IsUsbMediaKeyboardReportSent;
+    }
+    if (UsbSystemKeyboardReportEverSent) {
+        areUsbReportsSent &= IsUsbSystemKeyboardReportSent;
+    }
+    if (UsbMouseReportEverSentEverSent) {
+        areUsbReportsSent &= IsUsbMouseReportSent;
+    }
+    if (!areUsbReportsSent) {
+        return;
+    }
+
+    ResetActiveUsbBasicKeyboardReport();
+    ResetActiveUsbMediaKeyboardReport();
+    ResetActiveUsbSystemKeyboardReport();
+    ResetActiveUsbMouseReport();
+
+    updateActiveUsbReports();
+
+    SwitchActiveUsbBasicKeyboardReport();
+    SwitchActiveUsbMediaKeyboardReport();
+    SwitchActiveUsbSystemKeyboardReport();
+    SwitchActiveUsbMouseReport();
+
+    IsUsbBasicKeyboardReportSent = false;
+    IsUsbMediaKeyboardReportSent = false;
+    IsUsbSystemKeyboardReportSent = false;
+    IsUsbMouseReportSent = false;
 }

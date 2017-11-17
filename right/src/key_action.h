@@ -7,7 +7,6 @@
     #include "attributes.h"
     #include "lufa/HIDClassCommon.h"
     #include "usb_composite_device.h"
-    #include "main.h"
     #include "module.h"
 
 // Macros:

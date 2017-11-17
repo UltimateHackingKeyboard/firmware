@@ -1,4 +1,3 @@
-#include "main.h"
 #include "key_action.h"
 #include "fsl_port.h"
 #include "usb_api.h"
