@@ -45,8 +45,8 @@ static status_t writePage(void)
     static uint8_t buffer[EEPROM_BUFFER_SIZE];
     SetBufferUint16Be(buffer, 0, eepromStartAddress + sourceOffset);
     writeLength = MIN(sourceLength - sourceOffset, EEPROM_PAGE_SIZE);
-    memcpy(buffer+EEPROM_ADDRESS_LENGTH, sourceBuffer+sourceOffset, writeLength);
-    status_t status = i2cAsyncWrite(buffer, writeLength+EEPROM_ADDRESS_LENGTH);
+    memcpy(buffer+EEPROM_ADDRESS_SIZE, sourceBuffer+sourceOffset, writeLength);
+    status_t status = i2cAsyncWrite(buffer, writeLength+EEPROM_ADDRESS_SIZE);
     return status;
 }
 
@@ -110,9 +110,9 @@ status_t EEPROM_LaunchTransfer(eeprom_operation_t operation, config_buffer_id_t 
     switch (CurrentEepromOperation) {
         case EepromOperation_Read:
             isReadSent = false;
-            uint8_t addressBuffer[EEPROM_ADDRESS_LENGTH];
+            static uint8_t addressBuffer[EEPROM_ADDRESS_SIZE];
             SetBufferUint16Be(addressBuffer, 0, eepromStartAddress);
-            LastEepromTransferStatus = i2cAsyncWrite(addressBuffer, EEPROM_ADDRESS_LENGTH);
+            LastEepromTransferStatus = i2cAsyncWrite(addressBuffer, EEPROM_ADDRESS_SIZE);
             break;
         case EepromOperation_Write:
             sourceBuffer = ConfigBufferIdToConfigBuffer(CurrentConfigBufferId)->buffer;
