@@ -10,7 +10,7 @@ bool IsEepromBusy;
 static eeprom_operation_t CurrentEepromOperation;
 static config_buffer_id_t CurrentConfigBufferId;
 status_t LastEepromTransferStatus;
-void (*SuccessCallback)();
+void (*SuccessCallback)(void);
 
 static i2c_master_handle_t i2cHandle;
 static i2c_master_transfer_t i2cTransfer;
@@ -21,7 +21,6 @@ static uint16_t eepromStartAddress;
 static uint16_t sourceLength;
 static uint8_t writeLength;
 static bool isReadSent;
-static uint8_t addressBuffer[EEPROM_ADDRESS_LENGTH];
 
 static status_t i2cAsyncWrite(uint8_t *data, size_t dataSize)
 {
@@ -44,8 +43,7 @@ static status_t i2cAsyncRead(uint8_t *data, size_t dataSize)
 static status_t writePage(void)
 {
     static uint8_t buffer[EEPROM_BUFFER_SIZE];
-    uint16_t targetEepromOffset = sourceOffset + eepromStartAddress;
-    SetBufferUint16Be(buffer, 0, targetEepromOffset);
+    SetBufferUint16Be(buffer, 0, eepromStartAddress + sourceOffset);
     writeLength = MIN(sourceLength - sourceOffset, EEPROM_PAGE_SIZE);
     memcpy(buffer+EEPROM_ADDRESS_LENGTH, sourceBuffer+sourceOffset, writeLength);
     status_t status = i2cAsyncWrite(buffer, writeLength+EEPROM_ADDRESS_LENGTH);
@@ -104,15 +102,16 @@ status_t EEPROM_LaunchTransfer(eeprom_operation_t operation, config_buffer_id_t 
 
     CurrentEepromOperation = operation;
     CurrentConfigBufferId = config_buffer_id;
-
     SuccessCallback = successCallback;
+
     bool isHardwareConfig = CurrentConfigBufferId == ConfigBufferId_HardwareConfig;
     eepromStartAddress = isHardwareConfig ? 0 : HARDWARE_CONFIG_SIZE;
-    SetBufferUint16Be(addressBuffer, 0, eepromStartAddress);
 
     switch (CurrentEepromOperation) {
         case EepromOperation_Read:
             isReadSent = false;
+            uint8_t addressBuffer[EEPROM_ADDRESS_LENGTH];
+            SetBufferUint16Be(addressBuffer, 0, eepromStartAddress);
             LastEepromTransferStatus = i2cAsyncWrite(addressBuffer, EEPROM_ADDRESS_LENGTH);
             break;
         case EepromOperation_Write:
