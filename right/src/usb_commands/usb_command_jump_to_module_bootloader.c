@@ -1,14 +1,14 @@
 #include "usb_protocol_handler.h"
-#include "usb_commands/usb_command_jump_to_slave_bootloader.h"
+#include "usb_commands/usb_command_jump_to_module_bootloader.h"
 #include "slot.h"
 #include "slave_drivers/uhk_module_driver.h"
 
-void UsbCommand_JumpToSlaveBootloader(void)
+void UsbCommand_JumpToModuleBootloader(void)
 {
     uint8_t slotId = GetUsbRxBufferUint8(1);
 
     if (!IS_VALID_SLAVE_SLOT(slotId)) {
-        SetUsbTxBufferUint8(0, UsbStatusCode_JumpToSlaveBootloader_InvalidSlaveSlotId);
+        SetUsbTxBufferUint8(0, UsbStatusCode_JumpToModuleBootloader_InvalidSlaveSlotId);
         return;
     }
 

@@ -11,8 +11,8 @@
 #include "usb_commands/usb_command_read_config.h"
 #include "usb_commands/usb_command_get_keyboard_state.h"
 #include "usb_commands/usb_command_get_debug_buffer.h"
-#include "usb_commands/usb_command_jump_to_slave_bootloader.h"
-#include "usb_commands/usb_command_send_kboot_command.h"
+#include "usb_commands/usb_command_jump_to_module_bootloader.h"
+#include "usb_commands/usb_command_send_kboot_command_to_module.h"
 
 void UsbProtocolHandler(void)
 {
@@ -55,14 +55,14 @@ void UsbProtocolHandler(void)
         case UsbCommandId_GetKeyboardState:
             UsbCommand_GetKeyboardState();
             break;
-        case UsbCommandId_GetDebugInfo:
+        case UsbCommandId_GetDebugBuffer:
             UsbCommand_GetDebugBuffer();
             break;
         case UsbCommandId_JumpToModuleBootloader:
-            UsbCommand_JumpToSlaveBootloader();
+            UsbCommand_JumpToModuleBootloader();
             break;
         case UsbCommandId_SendKbootCommandToModule:
-            UsbCommand_SendKbootCommand();
+            UsbCommand_SendKbootCommandToModule();
             break;
         default:
             SetUsbTxBufferUint8(0, UsbStatusCode_InvalidCommand);

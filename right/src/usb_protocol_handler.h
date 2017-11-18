@@ -25,7 +25,7 @@
         UsbCommandId_WriteHardwareConfig        = 14,
         UsbCommandId_ReadUserConfig             = 15,
         UsbCommandId_GetKeyboardState           = 16,
-        UsbCommandId_GetDebugInfo               = 17,
+        UsbCommandId_GetDebugBuffer             = 17,
         UsbCommandId_JumpToModuleBootloader     = 18,
         UsbCommandId_SendKbootCommandToModule   = 19,
     } usb_command_id_t;
