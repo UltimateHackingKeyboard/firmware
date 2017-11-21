@@ -41,7 +41,7 @@
         MouseButton_Middle = 1 << 2,
         MouseButton_4      = 1 << 3,
         MouseButton_5      = 1 << 4,
-        MouseButton_t      = 1 << 5,
+        MouseButton_6      = 1 << 5,
     } mouse_button_t;
 
     typedef enum {

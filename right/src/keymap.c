@@ -335,7 +335,7 @@ key_action_t CurrentKeymap[LAYER_COUNT][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = 
             { .type = KeyActionType_Mouse, .mouse = { .buttonActions = MouseButton_4 }},
             { .type = KeyActionType_Mouse, .mouse = { .moveActions = MouseMove_Up }},
             { .type = KeyActionType_Mouse, .mouse = { .buttonActions = MouseButton_5 }},
-            { .type = KeyActionType_Mouse, .mouse = { .buttonActions = MouseButton_t }},
+            { .type = KeyActionType_Mouse, .mouse = { .buttonActions = MouseButton_6 }},
             { .type = KeyActionType_None },
             { .type = KeyActionType_None },
             { .type = KeyActionType_None },
