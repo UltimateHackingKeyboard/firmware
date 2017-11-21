@@ -19,7 +19,9 @@ uint32_t UsbReportUpdateTime = 0;
 static uint32_t elapsedTime;
 
 static float mouseMoveSpeed = 0.4;
-static float mouseMoveMaxSpeed = 10;
+static float mouseMoveInitialSpeed = 1;
+static float mouseMoveAcceleration = 5;
+static float mouseMoveMaxSpeed = 5;
 
 static float mouseScrollSpeed = 0.1;
 static float mouseScrollMaxSpeed = 0.1;
@@ -27,9 +29,16 @@ static float mouseScrollMaxSpeed = 0.1;
 static float mouseAccelerateFactor = 2;
 static float mouseDecelerateFactor = 0.5;
 
+static bool isMouseActionProcessed;
+static bool wasMouseActionProcessed;
 void processMouseAction(key_action_t *action)
 {
-    uint16_t distance = mouseMoveSpeed * elapsedTime;
+    static float mouseMoveCurrentSpeed;
+
+    isMouseActionProcessed = true;
+    if (!wasMouseActionProcessed) {
+        mouseMoveCurrentSpeed = mouseMoveInitialSpeed;
+    }
 
     if (action->mouse.speedActions) {
         if (action->mouse.speedActions & MouseSpeed_Accelerate) {
@@ -44,6 +53,13 @@ void processMouseAction(key_action_t *action)
     }
 
     if (action->mouse.moveActions) {
+        mouseMoveCurrentSpeed += mouseMoveAcceleration * elapsedTime / 1000;
+        if (mouseMoveCurrentSpeed > mouseMoveMaxSpeed) {
+            mouseMoveCurrentSpeed = mouseMoveMaxSpeed;
+        }
+
+        uint16_t distance = mouseMoveCurrentSpeed * elapsedTime / 10;
+
         if (action->mouse.moveActions & MouseMove_Left) {
             ActiveUsbMouseReport->x = -distance;
         } else if (action->mouse.moveActions & MouseMove_Right) {
@@ -132,6 +148,9 @@ static secondary_role_t secondaryRole;
 
 void updateActiveUsbReports(void)
 {
+    wasMouseActionProcessed = isMouseActionProcessed;
+    isMouseActionProcessed = false;
+
     static uint8_t previousModifiers = 0;
     elapsedTime = Timer_GetElapsedTime(&UsbReportUpdateTime);
 

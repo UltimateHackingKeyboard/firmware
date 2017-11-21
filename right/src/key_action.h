@@ -1,5 +1,5 @@
-#ifndef __ACTION_H__
-#define __ACTION_H__
+#ifndef __KEY_ACTION_H__
+#define __KEY_ACTION_H__
 
 // Includes:
 
