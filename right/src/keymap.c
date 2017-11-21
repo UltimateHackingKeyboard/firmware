@@ -411,8 +411,8 @@ key_action_t CurrentKeymap[LAYER_COUNT][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = 
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_LEFT_GUI }},
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_LEFT_ALT }},
             { .type = KeyActionType_None },
-            { .type = KeyActionType_Mouse, .mouse = { .moveActions = MouseMove_Decelerate }},
-            { .type = KeyActionType_Mouse, .mouse = { .moveActions = MouseMove_Accelerate }},
+            { .type = KeyActionType_Mouse, .mouse = { .speedActions = MouseSpeed_Decelerate }},
+            { .type = KeyActionType_Mouse, .mouse = { .speedActions = MouseSpeed_Accelerate }},
             { .type = KeyActionType_None },
         }
     },

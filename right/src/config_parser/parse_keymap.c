@@ -121,10 +121,10 @@ static parser_error_t parseMouseAction(key_action_t *keyAction, config_buffer_t 
             keyAction->mouse.scrollActions = MouseScroll_Right;
             break;
         case SerializedMouseAction_Accelerate:
-            keyAction->mouse.moveActions = MouseMove_Accelerate;
+            keyAction->mouse.speedActions = MouseSpeed_Accelerate;
             break;
         case SerializedMouseAction_Decelerate:
-            keyAction->mouse.moveActions = MouseMove_Decelerate;
+            keyAction->mouse.speedActions = MouseSpeed_Decelerate;
             break;
         default:
             return ParserError_InvalidSerializedMouseAction;

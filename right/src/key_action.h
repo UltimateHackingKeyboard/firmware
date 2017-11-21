@@ -9,14 +9,6 @@
     #include "usb_composite_device.h"
     #include "module.h"
 
-// Macros:
-
-    #define MOUSE_WHEEL_SPEED   1
-    #define MOUSE_WHEEL_DIVISOR 4
-
-    #define MOUSE_MAX_SPEED           10
-    #define MOUSE_SPEED_ACCEL_DIVISOR 50
-
 // Typedefs:
 
     typedef enum {
@@ -49,10 +41,12 @@
         MouseMove_Down  = 1 << 1,
         MouseMove_Left  = 1 << 2,
         MouseMove_Right = 1 << 3,
-
-        MouseMove_Accelerate = 1 << 4,
-        MouseMove_Decelerate = 1 << 5,
     } mouse_move_action_t;
+
+    typedef enum {
+        MouseSpeed_Accelerate = 1 << 0,
+        MouseSpeed_Decelerate = 1 << 1,
+    } mouse_speed_action_t;
 
     typedef enum {
         MouseScroll_Up    = 1 << 0,
@@ -74,6 +68,7 @@
                 mouse_button_t buttonActions;
                 mouse_scroll_t scrollActions;
                 mouse_move_action_t moveActions;
+                mouse_speed_action_t speedActions;
             } ATTR_PACKED mouse;
             struct {
                 bool isToggle;

@@ -1,3 +1,4 @@
+#include <math.h>
 #include "key_action.h"
 #include "led_display.h"
 #include "layer.h"
@@ -15,69 +16,66 @@
 #include "key_debouncer.h"
 
 uint32_t UsbReportUpdateTime = 0;
-
-static uint8_t mouseWheelDivisorCounter = 0;
-static uint8_t mouseSpeedAccelDivisorCounter = 0;
-static uint8_t mouseSpeed = 10;
-static bool wasPreviousMouseActionWheelAction = false;
 static uint32_t elapsedTime;
+
+static float mouseMoveSpeed = 0.4;
+static float mouseMoveMaxSpeed = 10;
+
+static float mouseScrollSpeed = 0.1;
+static float mouseScrollMaxSpeed = 0.1;
+
+static float mouseAccelerateFactor = 2;
+static float mouseDecelerateFactor = 0.5;
 
 void processMouseAction(key_action_t *action)
 {
-    bool isWheelAction = action->mouse.scrollActions && !action->mouse.moveActions && !action->mouse.buttonActions;
-    uint16_t distance = mouseSpeed * elapsedTime / 25;
+    uint16_t distance = mouseMoveSpeed * elapsedTime;
 
-    if (isWheelAction && wasPreviousMouseActionWheelAction) {
-        mouseWheelDivisorCounter++;
-    }
-
-    if (action->mouse.scrollActions) {
-        if (mouseWheelDivisorCounter == MOUSE_WHEEL_DIVISOR) {
-            mouseWheelDivisorCounter = 0;
-            if (action->mouse.scrollActions & MouseScroll_Up) {
-                ActiveUsbMouseReport->wheelX = 1;
+    if (action->mouse.speedActions) {
+        if (action->mouse.speedActions & MouseSpeed_Accelerate) {
+            if (mouseMoveSpeed < mouseMoveMaxSpeed) {
+                mouseMoveSpeed++;
             }
-            if (action->mouse.scrollActions & MouseScroll_Down) {
-                ActiveUsbMouseReport->wheelX = -1;
+        } else if (action->mouse.speedActions & MouseSpeed_Decelerate) {
+            if (mouseMoveSpeed > 1) {
+                mouseMoveSpeed--;
             }
         }
     }
 
-    if (action->mouse.moveActions & MouseMove_Accelerate || action->mouse.moveActions & MouseMove_Decelerate) {
-        mouseSpeedAccelDivisorCounter++;
-
-        if (mouseSpeedAccelDivisorCounter == MOUSE_SPEED_ACCEL_DIVISOR) {
-            mouseSpeedAccelDivisorCounter = 0;
-
-            if (action->mouse.moveActions & MouseMove_Accelerate) {
-                if (mouseSpeed < MOUSE_MAX_SPEED) {
-                    mouseSpeed++;
-                }
-            }
-            if (action->mouse.moveActions & MouseMove_Decelerate) {
-                if (mouseSpeed > 1) {
-                    mouseSpeed--;
-                }
-            }
-        }
-    } else if (action->mouse.moveActions) {
+    if (action->mouse.moveActions) {
         if (action->mouse.moveActions & MouseMove_Left) {
             ActiveUsbMouseReport->x = -distance;
-        }
-        if (action->mouse.moveActions & MouseMove_Right) {
+        } else if (action->mouse.moveActions & MouseMove_Right) {
             ActiveUsbMouseReport->x = distance;
         }
+
         if (action->mouse.moveActions & MouseMove_Up) {
             ActiveUsbMouseReport->y = -distance;
-        }
-        if (action->mouse.moveActions & MouseMove_Down) {
+        } else if (action->mouse.moveActions & MouseMove_Down) {
             ActiveUsbMouseReport->y = distance;
         }
     }
 
-    ActiveUsbMouseReport->buttons |= action->mouse.buttonActions;
+    static float mouseScrollDistanceSum = 0;
+    if (action->mouse.scrollActions) {
+        mouseScrollDistanceSum += mouseScrollSpeed;
+        float mouseScrollDistanceIntegerSum;
+        float mouseScrollDistanceFractionSum = modff(mouseScrollDistanceSum, &mouseScrollDistanceIntegerSum);
 
-    wasPreviousMouseActionWheelAction = isWheelAction;
+        if (mouseScrollDistanceIntegerSum) {
+            if (action->mouse.scrollActions & MouseScroll_Up) {
+                ActiveUsbMouseReport->wheelX = mouseScrollDistanceIntegerSum;
+            } else if (action->mouse.scrollActions & MouseScroll_Down) {
+                ActiveUsbMouseReport->wheelX = -mouseScrollDistanceIntegerSum;
+            }
+            mouseScrollDistanceSum = mouseScrollDistanceFractionSum;
+        }
+    } else {
+        mouseScrollDistanceSum = 0;
+    }
+
+    ActiveUsbMouseReport->buttons |= action->mouse.buttonActions;
 }
 
 static uint8_t basicScancodeIndex = 0;
