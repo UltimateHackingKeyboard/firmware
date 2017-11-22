@@ -20,7 +20,7 @@ static uint32_t elapsedTime;
 
 static float mouseMoveSpeed = 0.4;
 static float mouseMoveInitialSpeed = 1;
-static float mouseMoveAcceleration = 5;
+static float mouseMoveAcceleration = 4;
 static float mouseMoveMaxSpeed = 5;
 
 static float mouseScrollSpeed = 0.1;
@@ -29,14 +29,13 @@ static float mouseScrollMaxSpeed = 0.1;
 static float mouseAccelerateFactor = 2;
 static float mouseDecelerateFactor = 0.5;
 
-static bool isMouseActionProcessed;
-static bool wasMouseActionProcessed;
+static bool isMouseMoving;
+static bool wasMouseMoving;
 void processMouseAction(key_action_t *action)
 {
     static float mouseMoveCurrentSpeed;
 
-    isMouseActionProcessed = true;
-    if (!wasMouseActionProcessed) {
+    if (!wasMouseMoving) {
         mouseMoveCurrentSpeed = mouseMoveInitialSpeed;
     }
 
@@ -53,6 +52,7 @@ void processMouseAction(key_action_t *action)
     }
 
     if (action->mouse.moveActions) {
+        isMouseMoving = true;
         mouseMoveCurrentSpeed += mouseMoveAcceleration * elapsedTime / 1000;
         if (mouseMoveCurrentSpeed > mouseMoveMaxSpeed) {
             mouseMoveCurrentSpeed = mouseMoveMaxSpeed;
@@ -148,8 +148,8 @@ static secondary_role_t secondaryRole;
 
 void updateActiveUsbReports(void)
 {
-    wasMouseActionProcessed = isMouseActionProcessed;
-    isMouseActionProcessed = false;
+    wasMouseMoving = isMouseMoving;
+    isMouseMoving = false;
 
     static uint8_t previousModifiers = 0;
     elapsedTime = Timer_GetElapsedTime(&UsbReportUpdateTime);
