@@ -18,19 +18,17 @@
 uint32_t UsbReportUpdateTime = 0;
 static uint32_t elapsedTime;
 
-static float mouseMoveSpeed = 0.4;
 static float mouseMoveInitialSpeed = 1;
-static float mouseMoveAcceleration = 4;
-static float mouseMoveMaxSpeed = 5;
+static float mouseMoveBaseAcceleration = 3;
+static float mouseMoveBaseSpeed = 5;
+static float mouseMoveAcceleratedSpeed = 10;
+static float mouseMoveDeceleratedSpeed = 2.5;
 
 static float mouseScrollSpeed = 0.1;
-static float mouseScrollMaxSpeed = 0.1;
-
-static float mouseAccelerateFactor = 2;
-static float mouseDecelerateFactor = 0.5;
 
 static bool isMouseMoving;
 static bool wasMouseMoving;
+
 void processMouseAction(key_action_t *action)
 {
     static float mouseMoveCurrentSpeed;
@@ -39,23 +37,28 @@ void processMouseAction(key_action_t *action)
         mouseMoveCurrentSpeed = mouseMoveInitialSpeed;
     }
 
-    if (action->mouse.speedActions) {
-        if (action->mouse.speedActions & MouseSpeed_Accelerate) {
-            if (mouseMoveSpeed < mouseMoveMaxSpeed) {
-                mouseMoveSpeed++;
-            }
-        } else if (action->mouse.speedActions & MouseSpeed_Decelerate) {
-            if (mouseMoveSpeed > 1) {
-                mouseMoveSpeed--;
-            }
-        }
-    }
-
     if (action->mouse.moveActions) {
         isMouseMoving = true;
-        mouseMoveCurrentSpeed += mouseMoveAcceleration * elapsedTime / 1000;
-        if (mouseMoveCurrentSpeed > mouseMoveMaxSpeed) {
-            mouseMoveCurrentSpeed = mouseMoveMaxSpeed;
+
+        float targetSpeed;
+        if (action->mouse.speedActions & MouseSpeed_Accelerate) {
+            targetSpeed = mouseMoveAcceleratedSpeed;
+        } else if (action->mouse.speedActions & MouseSpeed_Decelerate) {
+            targetSpeed = mouseMoveDeceleratedSpeed;
+        } else {
+            targetSpeed = mouseMoveBaseSpeed;
+        }
+
+        if (mouseMoveCurrentSpeed < targetSpeed) {
+            mouseMoveCurrentSpeed += mouseMoveBaseAcceleration * elapsedTime / 1000;
+            if (mouseMoveCurrentSpeed > targetSpeed) {
+                mouseMoveCurrentSpeed = targetSpeed;
+            }
+        } else {
+            mouseMoveCurrentSpeed -= mouseMoveBaseAcceleration * elapsedTime / 1000;
+            if (mouseMoveCurrentSpeed < targetSpeed) {
+                mouseMoveCurrentSpeed = targetSpeed;
+            }
         }
 
         uint16_t distance = mouseMoveCurrentSpeed * elapsedTime / 10;
