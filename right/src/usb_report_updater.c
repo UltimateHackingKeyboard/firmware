@@ -88,6 +88,12 @@ void processMouseAction(key_action_t *action)
             } else if (action->mouse.scrollActions & MouseScroll_Down) {
                 ActiveUsbMouseReport->wheelX = -mouseScrollDistanceIntegerSum;
             }
+
+            if (action->mouse.scrollActions & MouseScroll_Right) {
+                ActiveUsbMouseReport->wheelY = mouseScrollDistanceIntegerSum;
+            } else if (action->mouse.scrollActions & MouseScroll_Left) {
+                ActiveUsbMouseReport->wheelY = -mouseScrollDistanceIntegerSum;
+            }
             mouseScrollDistanceSum = mouseScrollDistanceFractionSum;
         }
     } else {
