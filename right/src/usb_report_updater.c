@@ -27,8 +27,8 @@ static float mouseMoveDeceleratedSpeed = 2.5;
 
 static float mouseScrollSpeed = 0.1;
 
-static bool isMouseMoving;
-static bool wasMouseMoving;
+static bool wasMoveAction;
+static mouse_speed_t prevMouseSpeed = MouseSpeed_Normal;
 
 static bool activeMouseStates[ACTIVE_MOUSE_STATES_COUNT];
 
@@ -36,7 +36,7 @@ void processMouseActions()
 {
     static float mouseMoveCurrentSpeed;
 
-    if (!wasMouseMoving) {
+    if (!wasMoveAction) {
         mouseMoveCurrentSpeed = mouseMoveInitialSpeed;
     }
 
@@ -46,17 +46,22 @@ void processMouseActions()
                         activeMouseStates[SerializedMouseAction_MoveRight];
 
     float targetSpeed;
+    mouse_speed_t mouseSpeed = MouseSpeed_Normal;
     if (activeMouseStates[SerializedMouseAction_Accelerate]) {
         targetSpeed = mouseMoveAcceleratedSpeed;
+        mouseSpeed = MouseSpeed_Accelerated;
     } else if (activeMouseStates[SerializedMouseAction_Decelerate]) {
         targetSpeed = mouseMoveDeceleratedSpeed;
+        mouseSpeed = MouseSpeed_Decelerated;
     } else if (isMoveAction) {
         targetSpeed = mouseMoveBaseSpeed;
     }
 
-    if (isMoveAction) {
-        isMouseMoving = true;
+    if (mouseSpeed == MouseSpeed_Accelerated || (wasMoveAction && isMoveAction && (prevMouseSpeed != mouseSpeed))) {
+        mouseMoveCurrentSpeed = targetSpeed;
+    }
 
+    if (isMoveAction) {
         if (mouseMoveCurrentSpeed < targetSpeed) {
             mouseMoveCurrentSpeed += mouseMoveBaseAcceleration * elapsedTime / 1000;
             if (mouseMoveCurrentSpeed > targetSpeed) {
@@ -122,6 +127,9 @@ void processMouseActions()
     if (activeMouseStates[SerializedMouseAction_RightClick]) {
         ActiveUsbMouseReport->buttons |= MouseButton_Right;
     }
+
+    prevMouseSpeed = mouseSpeed;
+    wasMoveAction = isMoveAction;
 }
 
 static uint8_t basicScancodeIndex = 0;
@@ -179,8 +187,6 @@ static secondary_role_t secondaryRole;
 void updateActiveUsbReports(void)
 {
     memset(activeMouseStates, 0, ACTIVE_MOUSE_STATES_COUNT);
-    wasMouseMoving = isMouseMoving;
-    isMouseMoving = false;
 
     static uint8_t previousModifiers = 0;
     elapsedTime = Timer_GetElapsedTime(&UsbReportUpdateTime);

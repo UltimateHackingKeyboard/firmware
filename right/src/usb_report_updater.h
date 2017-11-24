@@ -32,6 +32,12 @@
         SecondaryRole_Mouse
     } secondary_role_t;
 
+    typedef enum {
+        MouseSpeed_Normal,
+        MouseSpeed_Accelerated,
+        MouseSpeed_Decelerated,
+    } mouse_speed_t;
+
 // Functions:
 
     void UpdateUsbReports(void);
