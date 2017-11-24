@@ -30,7 +30,7 @@ static float mouseScrollSpeed = 0.1;
 static bool isMouseMoving;
 static bool wasMouseMoving;
 
-static bool activeMouseStates[SerializedMouseAction_Last];
+static bool activeMouseStates[ACTIVE_MOUSE_STATES_COUNT];
 
 void processMouseActions()
 {
@@ -178,7 +178,7 @@ static secondary_role_t secondaryRole;
 
 void updateActiveUsbReports(void)
 {
-    memset(activeMouseStates, 0, SerializedMouseAction_Last);
+    memset(activeMouseStates, 0, ACTIVE_MOUSE_STATES_COUNT);
     wasMouseMoving = isMouseMoving;
     isMouseMoving = false;
 
