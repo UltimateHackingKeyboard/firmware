@@ -82,53 +82,16 @@ static parser_error_t parsePlayMacroAction(key_action_t *keyAction, config_buffe
 
 static parser_error_t parseMouseAction(key_action_t *keyAction, config_buffer_t *buffer)
 {
-    uint8_t mouseAction = ReadUInt8(buffer);
-
     keyAction->type = KeyActionType_Mouse;
-    memset(&keyAction->mouse, 0, sizeof keyAction->mouse);
-    switch (mouseAction) {
-        case SerializedMouseAction_LeftClick:
-            keyAction->mouse.buttonActions = MouseButton_Left;
-            break;
-        case SerializedMouseAction_MiddleClick:
-            keyAction->mouse.buttonActions = MouseButton_Middle;
-            break;
-        case SerializedMouseAction_RightClick:
-            keyAction->mouse.buttonActions = MouseButton_Right;
-            break;
-        case SerializedMouseAction_MoveUp:
-            keyAction->mouse.moveActions = MouseMove_Up;
-            break;
-        case SerializedMouseAction_MoveDown:
-            keyAction->mouse.moveActions = MouseMove_Down;
-            break;
-        case SerializedMouseAction_MoveLeft:
-            keyAction->mouse.moveActions = MouseMove_Left;
-            break;
-        case SerializedMouseAction_MoveRight:
-            keyAction->mouse.moveActions = MouseMove_Right;
-            break;
-        case SerializedMouseAction_ScrollUp:
-            keyAction->mouse.scrollActions = MouseScroll_Up;
-            break;
-        case SerializedMouseAction_ScrollDown:
-            keyAction->mouse.scrollActions = MouseScroll_Down;
-            break;
-        case SerializedMouseAction_ScrollLeft:
-            keyAction->mouse.scrollActions = MouseScroll_Left;
-            break;
-        case SerializedMouseAction_ScrollRight:
-            keyAction->mouse.scrollActions = MouseScroll_Right;
-            break;
-        case SerializedMouseAction_Accelerate:
-            keyAction->mouse.speedActions = MouseSpeed_Accelerate;
-            break;
-        case SerializedMouseAction_Decelerate:
-            keyAction->mouse.speedActions = MouseSpeed_Decelerate;
-            break;
-        default:
-            return ParserError_InvalidSerializedMouseAction;
+
+    uint8_t mouseAction = ReadUInt8(buffer);
+    if (mouseAction > SerializedMouseAction_Last) {
+        return ParserError_InvalidSerializedMouseAction;
     }
+
+    memset(&keyAction->mouseAction, 0, sizeof keyAction->mouseAction);
+    keyAction->mouseAction = mouseAction;
+
     return ParserError_Success;
 }
 

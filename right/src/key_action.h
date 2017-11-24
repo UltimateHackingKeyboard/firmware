@@ -8,6 +8,7 @@
     #include "lufa/HIDClassCommon.h"
     #include "usb_composite_device.h"
     #include "module.h"
+    #include "config_parser/parse_keymap.h"
 
 // Typedefs:
 
@@ -36,25 +37,6 @@
         MouseButton_6      = 1 << 5,
     } mouse_button_t;
 
-    typedef enum {
-        MouseMove_Up    = 1 << 0,
-        MouseMove_Down  = 1 << 1,
-        MouseMove_Left  = 1 << 2,
-        MouseMove_Right = 1 << 3,
-    } mouse_move_action_t;
-
-    typedef enum {
-        MouseSpeed_Accelerate = 1 << 0,
-        MouseSpeed_Decelerate = 1 << 1,
-    } mouse_speed_action_t;
-
-    typedef enum {
-        MouseScroll_Up    = 1 << 0,
-        MouseScroll_Down  = 1 << 1,
-        MouseScroll_Left  = 1 << 2,
-        MouseScroll_Right = 1 << 3,
-    } mouse_scroll_t;
-
     typedef struct {
         uint8_t type;
         union {
@@ -64,12 +46,7 @@
                 uint8_t modifiers;
                 uint16_t scancode;
             } ATTR_PACKED keystroke;
-            struct {
-                mouse_button_t buttonActions;
-                mouse_scroll_t scrollActions;
-                mouse_move_action_t moveActions;
-                mouse_speed_action_t speedActions;
-            } ATTR_PACKED mouse;
+            serialized_mouse_action_t mouseAction;
             struct {
                 bool isToggle;
                 uint8_t layer;

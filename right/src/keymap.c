@@ -332,23 +332,23 @@ key_action_t CurrentKeymap[LAYER_COUNT][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = 
             { .type = KeyActionType_None },
 
             // Row 2
-            { .type = KeyActionType_Mouse, .mouse = { .buttonActions = MouseButton_4 }},
-            { .type = KeyActionType_Mouse, .mouse = { .moveActions = MouseMove_Up }},
-            { .type = KeyActionType_Mouse, .mouse = { .buttonActions = MouseButton_5 }},
-            { .type = KeyActionType_Mouse, .mouse = { .buttonActions = MouseButton_6 }},
+            { .type = KeyActionType_Mouse, .mouseAction = SerializedMouseAction_Button_4 },
+            { .type = KeyActionType_Mouse, .mouseAction = SerializedMouseAction_MoveUp },
+            { .type = KeyActionType_Mouse, .mouseAction = SerializedMouseAction_Button_5 },
+            { .type = KeyActionType_Mouse, .mouseAction = SerializedMouseAction_Button_6 },
             { .type = KeyActionType_None },
             { .type = KeyActionType_None },
             { .type = KeyActionType_None },
-            { .type = KeyActionType_Mouse, .mouse = { .scrollActions = MouseScroll_Up }},
+            { .type = KeyActionType_Mouse, .mouseAction = SerializedMouseAction_ScrollUp },
 
             // Row 3
-            { .type = KeyActionType_Mouse, .mouse = { .moveActions = MouseMove_Left }},
-            { .type = KeyActionType_Mouse, .mouse = { .moveActions = MouseMove_Down }},
-            { .type = KeyActionType_Mouse, .mouse = { .moveActions = MouseMove_Right }},
+            { .type = KeyActionType_Mouse, .mouseAction= SerializedMouseAction_MoveLeft },
+            { .type = KeyActionType_Mouse, .mouseAction = SerializedMouseAction_MoveDown },
+            { .type = KeyActionType_Mouse, .mouseAction = SerializedMouseAction_MoveRight },
             { .type = KeyActionType_None },
             { .type = KeyActionType_None },
             { .type = KeyActionType_None },
-            { .type = KeyActionType_Mouse, .mouse = { .scrollActions = MouseScroll_Down }},
+            { .type = KeyActionType_Mouse, .mouseAction = SerializedMouseAction_ScrollDown },
 
             // Row 4
             { .type = KeyActionType_None },
@@ -391,9 +391,9 @@ key_action_t CurrentKeymap[LAYER_COUNT][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = 
             // Row 3
             { .type = KeyActionType_SwitchLayer, .switchLayer = { .layer = LayerId_Mouse }},
             { .type = KeyActionType_None },
-            { .type = KeyActionType_Mouse, .mouse = { .buttonActions = MouseButton_Right }},
-            { .type = KeyActionType_Mouse, .mouse = { .buttonActions = MouseButton_Middle }},
-            { .type = KeyActionType_Mouse, .mouse = { .buttonActions = MouseButton_Left }},
+            { .type = KeyActionType_Mouse, .mouseAction = SerializedMouseAction_RightClick },
+            { .type = KeyActionType_Mouse, .mouseAction = SerializedMouseAction_MiddleClick },
+            { .type = KeyActionType_Mouse, .mouseAction = SerializedMouseAction_LeftClick },
             { .type = KeyActionType_None },
             { .type = KeyActionType_None },
 
@@ -411,8 +411,8 @@ key_action_t CurrentKeymap[LAYER_COUNT][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = 
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_LEFT_GUI }},
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_LEFT_ALT }},
             { .type = KeyActionType_None },
-            { .type = KeyActionType_Mouse, .mouse = { .speedActions = MouseSpeed_Decelerate }},
-            { .type = KeyActionType_Mouse, .mouse = { .speedActions = MouseSpeed_Accelerate }},
+            { .type = KeyActionType_Mouse, .mouseAction = SerializedMouseAction_Decelerate },
+            { .type = KeyActionType_Mouse, .mouseAction = SerializedMouseAction_Accelerate },
             { .type = KeyActionType_None },
         }
     },

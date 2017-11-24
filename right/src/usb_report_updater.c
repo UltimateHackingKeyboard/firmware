@@ -14,6 +14,7 @@
 #include "usb_report_updater.h"
 #include "timer.h"
 #include "key_debouncer.h"
+#include "config_parser/parse_keymap.h"
 
 uint32_t UsbReportUpdateTime = 0;
 static uint32_t elapsedTime;
@@ -29,7 +30,9 @@ static float mouseScrollSpeed = 0.1;
 static bool isMouseMoving;
 static bool wasMouseMoving;
 
-void processMouseAction(key_action_t *action)
+static bool activeMouseStates[SerializedMouseAction_Last];
+
+void processMouseActions()
 {
     static float mouseMoveCurrentSpeed;
 
@@ -37,17 +40,22 @@ void processMouseAction(key_action_t *action)
         mouseMoveCurrentSpeed = mouseMoveInitialSpeed;
     }
 
-    if (action->mouse.moveActions) {
-        isMouseMoving = true;
+    bool isMoveAction = activeMouseStates[SerializedMouseAction_MoveUp] ||
+                        activeMouseStates[SerializedMouseAction_MoveDown] ||
+                        activeMouseStates[SerializedMouseAction_MoveLeft] ||
+                        activeMouseStates[SerializedMouseAction_MoveRight];
 
-        float targetSpeed;
-        if (action->mouse.speedActions & MouseSpeed_Accelerate) {
-            targetSpeed = mouseMoveAcceleratedSpeed;
-        } else if (action->mouse.speedActions & MouseSpeed_Decelerate) {
-            targetSpeed = mouseMoveDeceleratedSpeed;
-        } else {
-            targetSpeed = mouseMoveBaseSpeed;
-        }
+    float targetSpeed;
+    if (activeMouseStates[SerializedMouseAction_Accelerate]) {
+        targetSpeed = mouseMoveAcceleratedSpeed;
+    } else if (activeMouseStates[SerializedMouseAction_Decelerate]) {
+        targetSpeed = mouseMoveDeceleratedSpeed;
+    } else if (isMoveAction) {
+        targetSpeed = mouseMoveBaseSpeed;
+    }
+
+    if (isMoveAction) {
+        isMouseMoving = true;
 
         if (mouseMoveCurrentSpeed < targetSpeed) {
             mouseMoveCurrentSpeed += mouseMoveBaseAcceleration * elapsedTime / 1000;
@@ -63,35 +71,40 @@ void processMouseAction(key_action_t *action)
 
         uint16_t distance = mouseMoveCurrentSpeed * elapsedTime / 10;
 
-        if (action->mouse.moveActions & MouseMove_Left) {
+        if (activeMouseStates[SerializedMouseAction_MoveLeft]) {
             ActiveUsbMouseReport->x = -distance;
-        } else if (action->mouse.moveActions & MouseMove_Right) {
+        } else if (activeMouseStates[SerializedMouseAction_MoveRight]) {
             ActiveUsbMouseReport->x = distance;
         }
 
-        if (action->mouse.moveActions & MouseMove_Up) {
+        if (activeMouseStates[SerializedMouseAction_MoveUp]) {
             ActiveUsbMouseReport->y = -distance;
-        } else if (action->mouse.moveActions & MouseMove_Down) {
+        } else if (activeMouseStates[SerializedMouseAction_MoveDown]) {
             ActiveUsbMouseReport->y = distance;
         }
     }
 
+    bool isScrollAction = activeMouseStates[SerializedMouseAction_ScrollUp] ||
+                          activeMouseStates[SerializedMouseAction_ScrollDown] ||
+                          activeMouseStates[SerializedMouseAction_ScrollLeft] ||
+                          activeMouseStates[SerializedMouseAction_ScrollRight];
+
     static float mouseScrollDistanceSum = 0;
-    if (action->mouse.scrollActions) {
+    if (isScrollAction) {
         mouseScrollDistanceSum += mouseScrollSpeed;
         float mouseScrollDistanceIntegerSum;
         float mouseScrollDistanceFractionSum = modff(mouseScrollDistanceSum, &mouseScrollDistanceIntegerSum);
 
         if (mouseScrollDistanceIntegerSum) {
-            if (action->mouse.scrollActions & MouseScroll_Up) {
+            if (activeMouseStates[SerializedMouseAction_ScrollUp]) {
                 ActiveUsbMouseReport->wheelX = mouseScrollDistanceIntegerSum;
-            } else if (action->mouse.scrollActions & MouseScroll_Down) {
+            } else if (activeMouseStates[SerializedMouseAction_ScrollDown]) {
                 ActiveUsbMouseReport->wheelX = -mouseScrollDistanceIntegerSum;
             }
 
-            if (action->mouse.scrollActions & MouseScroll_Right) {
+            if (activeMouseStates[SerializedMouseAction_ScrollRight]) {
                 ActiveUsbMouseReport->wheelY = mouseScrollDistanceIntegerSum;
-            } else if (action->mouse.scrollActions & MouseScroll_Left) {
+            } else if (activeMouseStates[SerializedMouseAction_ScrollLeft]) {
                 ActiveUsbMouseReport->wheelY = -mouseScrollDistanceIntegerSum;
             }
             mouseScrollDistanceSum = mouseScrollDistanceFractionSum;
@@ -100,7 +113,15 @@ void processMouseAction(key_action_t *action)
         mouseScrollDistanceSum = 0;
     }
 
-    ActiveUsbMouseReport->buttons |= action->mouse.buttonActions;
+    if (activeMouseStates[SerializedMouseAction_LeftClick]) {
+        ActiveUsbMouseReport->buttons |= MouseButton_Left;
+    }
+    if (activeMouseStates[SerializedMouseAction_MiddleClick]) {
+        ActiveUsbMouseReport->buttons |= MouseButton_Middle;
+    }
+    if (activeMouseStates[SerializedMouseAction_RightClick]) {
+        ActiveUsbMouseReport->buttons |= MouseButton_Right;
+    }
 }
 
 static uint8_t basicScancodeIndex = 0;
@@ -139,7 +160,7 @@ void applyKeyAction(key_state_t *keyState, key_action_t *action)
             }
             break;
         case KeyActionType_Mouse:
-            processMouseAction(action);
+            activeMouseStates[action->mouseAction] = true;
             break;
         case KeyActionType_SwitchKeymap:
             if (!keyState->previous && keyState->current) {
@@ -157,6 +178,7 @@ static secondary_role_t secondaryRole;
 
 void updateActiveUsbReports(void)
 {
+    memset(activeMouseStates, 0, SerializedMouseAction_Last);
     wasMouseMoving = isMouseMoving;
     isMouseMoving = false;
 
@@ -242,6 +264,8 @@ void updateActiveUsbReports(void)
             keyState->previous = keyState->current;
         }
     }
+
+    processMouseActions();
 
     // When a layer switcher key gets pressed along with another key that produces some modifiers
     // and the accomanying key gets released then keep the related modifiers active a long as the
