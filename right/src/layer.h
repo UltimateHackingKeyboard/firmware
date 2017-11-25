@@ -21,10 +21,10 @@
 // Variables:
 
     extern layer_id_t PreviousHeldLayer;
+    extern layer_id_t ToggledLayer;
 
 // Functions:
 
     layer_id_t GetActiveLayer();
-
 
 #endif

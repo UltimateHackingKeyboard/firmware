@@ -29,6 +29,12 @@
     } keystroke_type_t;
 
     typedef enum {
+        SwitchLayerMode_Hold,
+        SwitchLayerMode_HoldAndDoubleTapToggle,
+        SwitchLayerMode_Toggle,
+    } switch_layer_mode_t;
+
+    typedef enum {
         MouseButton_Left   = 1 << 0,
         MouseButton_Right  = 1 << 1,
         MouseButton_Middle = 1 << 2,
@@ -48,7 +54,7 @@
             } ATTR_PACKED keystroke;
             serialized_mouse_action_t mouseAction;
             struct {
-                bool isToggle;
+                switch_layer_mode_t mode;
                 uint8_t layer;
             } ATTR_PACKED switchLayer;
             struct {

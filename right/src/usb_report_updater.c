@@ -132,14 +132,20 @@ void processMouseActions()
     wasMoveAction = isMoveAction;
 }
 
+static layer_id_t previousLayer = LayerId_Base;
 static uint8_t basicScancodeIndex = 0;
 static uint8_t mediaScancodeIndex = 0;
 static uint8_t systemScancodeIndex = 0;
+key_state_t *doubleTapSwitchLayerKey;
 
 void applyKeyAction(key_state_t *keyState, key_action_t *action)
 {
     if (keyState->suppressed) {
         return;
+    }
+
+    if (doubleTapSwitchLayerKey && doubleTapSwitchLayerKey != keyState && !keyState->previous) {
+        doubleTapSwitchLayerKey = NULL;
     }
 
     switch (action->type) {
@@ -170,15 +176,24 @@ void applyKeyAction(key_state_t *keyState, key_action_t *action)
         case KeyActionType_Mouse:
             activeMouseStates[action->mouseAction] = true;
             break;
+        case KeyActionType_SwitchLayer:
+            if (!keyState->previous && previousLayer == LayerId_Base && action->switchLayer.mode == SwitchLayerMode_HoldAndDoubleTapToggle) {
+                if (doubleTapSwitchLayerKey) {
+                    ToggledLayer = action->switchLayer.layer;
+                    doubleTapSwitchLayerKey = NULL;
+                } else {
+                    doubleTapSwitchLayerKey = keyState;
+                }
+            }
+            break;
         case KeyActionType_SwitchKeymap:
-            if (!keyState->previous && keyState->current) {
+            if (!keyState->previous) {
                 SwitchKeymap(action->switchKeymap.keymapId);
             }
             break;
     }
 }
 
-static layer_id_t previousLayer = LayerId_Base;
 static uint8_t secondaryRoleState = SecondaryRoleState_Released;
 static uint8_t secondaryRoleSlotId;
 static uint8_t secondaryRoleKeyId;

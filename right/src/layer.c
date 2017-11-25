@@ -5,7 +5,7 @@
 #include "keymap.h"
 
 static bool heldLayers[LAYER_COUNT];
-static bool pressedLayers[LAYER_COUNT];
+static switch_layer_mode_t pressedLayers[LAYER_COUNT];
 
 void updateLayerStates(void)
 {
@@ -18,10 +18,11 @@ void updateLayerStates(void)
             if (keyState->current) {
                 key_action_t action = CurrentKeymap[LayerId_Base][slotId][keyId];
                 if (action.type == KeyActionType_SwitchLayer) {
-                    if (!action.switchLayer.isToggle) {
+                    if (action.switchLayer.mode != SwitchLayerMode_Toggle) {
                         heldLayers[action.switchLayer.layer] = true;
-                    } else if (!keyState->previous && keyState->current) {
-                        pressedLayers[action.switchLayer.layer] = true;
+                    }
+                    if (action.switchLayer.mode != SwitchLayerMode_Hold && !keyState->previous && keyState->current) {
+                        pressedLayers[action.switchLayer.layer] = action.switchLayer.mode;
                     }
                 }
             }
@@ -30,6 +31,7 @@ void updateLayerStates(void)
 }
 
 layer_id_t PreviousHeldLayer = LayerId_Base;
+layer_id_t ToggledLayer = LayerId_Base;
 
 layer_id_t GetActiveLayer()
 {
@@ -37,22 +39,20 @@ layer_id_t GetActiveLayer()
 
     // Handle toggled layers
 
-    static layer_id_t toggledLayer = LayerId_Base;
-
     for (layer_id_t layerId=LayerId_Mod; layerId<=LayerId_Mouse; layerId++) {
         if (pressedLayers[layerId]) {
-            if (toggledLayer == layerId) {
-                toggledLayer = LayerId_Base;
+            if (ToggledLayer == layerId) {
+                ToggledLayer = LayerId_Base;
                 break;
-            } else if (toggledLayer == LayerId_Base) {
-                toggledLayer = layerId;
+            } else if (ToggledLayer == LayerId_Base && pressedLayers[layerId] == SwitchLayerMode_Toggle) {
+                ToggledLayer = layerId;
                 break;
             }
         }
     }
 
-    if (toggledLayer != LayerId_Base) {
-        return toggledLayer;
+    if (ToggledLayer != LayerId_Base) {
+        return ToggledLayer;
     }
 
     // Handle held layers

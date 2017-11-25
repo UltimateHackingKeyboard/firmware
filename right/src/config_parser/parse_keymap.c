@@ -48,11 +48,11 @@ static parser_error_t parseKeyStrokeAction(key_action_t *keyAction, uint8_t keyS
 static parser_error_t parseSwitchLayerAction(key_action_t *KeyAction, config_buffer_t *buffer)
 {
     uint8_t layer = ReadUInt8(buffer) + 1;
-    bool isToggle = ReadBool(buffer);
+    uint8_t mode = ReadBool(buffer) ? SwitchLayerMode_Toggle : SwitchLayerMode_HoldAndDoubleTapToggle;
 
     KeyAction->type = KeyActionType_SwitchLayer;
     KeyAction->switchLayer.layer = layer;
-    KeyAction->switchLayer.isToggle = isToggle;
+    KeyAction->switchLayer.mode = mode;
     return ParserError_Success;
 }
 
