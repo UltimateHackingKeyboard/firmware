@@ -19,6 +19,8 @@
 uint32_t UsbReportUpdateTime = 0;
 static uint32_t elapsedTime;
 
+static uint16_t doubleTapSwitchLayerTimeout = 300;
+
 static float mouseMoveInitialSpeed = 1;
 static float mouseMoveBaseAcceleration = 3;
 static float mouseMoveBaseSpeed = 5;
@@ -137,6 +139,7 @@ static uint8_t basicScancodeIndex = 0;
 static uint8_t mediaScancodeIndex = 0;
 static uint8_t systemScancodeIndex = 0;
 key_state_t *doubleTapSwitchLayerKey;
+uint32_t doubleTapSwitchLayerStartTime;
 
 void applyKeyAction(key_state_t *keyState, key_action_t *action)
 {
@@ -179,10 +182,13 @@ void applyKeyAction(key_state_t *keyState, key_action_t *action)
         case KeyActionType_SwitchLayer:
             if (!keyState->previous && previousLayer == LayerId_Base && action->switchLayer.mode == SwitchLayerMode_HoldAndDoubleTapToggle) {
                 if (doubleTapSwitchLayerKey) {
-                    ToggledLayer = action->switchLayer.layer;
+                    if (Timer_GetElapsedTime(&doubleTapSwitchLayerStartTime) < doubleTapSwitchLayerTimeout) {
+                        ToggledLayer = action->switchLayer.layer;
+                    }
                     doubleTapSwitchLayerKey = NULL;
                 } else {
                     doubleTapSwitchLayerKey = keyState;
+                    doubleTapSwitchLayerStartTime = CurrentTime;
                 }
             }
             break;
