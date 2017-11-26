@@ -21,75 +21,88 @@ static uint32_t elapsedTime;
 
 static uint16_t doubleTapSwitchLayerTimeout = 300;
 
-static float mouseMoveInitialSpeed = 1;
-static float mouseMoveAcceleration = 3;
-static float mouseMoveDeceleratedSpeed = 2.5;
-static float mouseMoveBaseSpeed = 5;
-static float mouseMoveAcceleratedSpeed = 10;
-
 static float mouseScrollSpeed = 0.1;
-
-static bool wasMoveAction;
-static mouse_speed_t prevMouseSpeed = MouseSpeed_Normal;
 
 static bool activeMouseStates[ACTIVE_MOUSE_STATES_COUNT];
 
-void processMouseActions()
-{
-    static float mouseMoveCurrentSpeed;
+static mouse_kinetic_state_t mouseMoveState = {
+    .upState = SerializedMouseAction_MoveUp,
+    .downState = SerializedMouseAction_MoveDown,
+    .leftState = SerializedMouseAction_MoveLeft,
+    .rightState = SerializedMouseAction_MoveRight,
+    .initialSpeed = 1,
+    .acceleration = 3,
+    .deceleratedSpeed = 2.5,
+    .baseSpeed = 5,
+    .acceleratedSpeed = 10,
+};
+//static mouse_kinetic_state_t mouseScrollState;
 
-    if (!wasMoveAction) {
-        mouseMoveCurrentSpeed = mouseMoveInitialSpeed;
+void processMouseKineticState(mouse_kinetic_state_t *kineticState)
+{
+    if (!kineticState->wasMoveAction) {
+        kineticState->currentSpeed = kineticState->initialSpeed;
     }
 
-    bool isMoveAction = activeMouseStates[SerializedMouseAction_MoveUp] ||
-                        activeMouseStates[SerializedMouseAction_MoveDown] ||
-                        activeMouseStates[SerializedMouseAction_MoveLeft] ||
-                        activeMouseStates[SerializedMouseAction_MoveRight];
+    bool isMoveAction = activeMouseStates[kineticState->upState] ||
+                        activeMouseStates[kineticState->downState] ||
+                        activeMouseStates[kineticState->leftState] ||
+                        activeMouseStates[kineticState->rightState];
 
-    float targetSpeed;
     mouse_speed_t mouseSpeed = MouseSpeed_Normal;
     if (activeMouseStates[SerializedMouseAction_Accelerate]) {
-        targetSpeed = mouseMoveAcceleratedSpeed;
+        kineticState->targetSpeed = kineticState->acceleratedSpeed;
         mouseSpeed = MouseSpeed_Accelerated;
     } else if (activeMouseStates[SerializedMouseAction_Decelerate]) {
-        targetSpeed = mouseMoveDeceleratedSpeed;
+        kineticState->targetSpeed = kineticState->deceleratedSpeed;
         mouseSpeed = MouseSpeed_Decelerated;
     } else if (isMoveAction) {
-        targetSpeed = mouseMoveBaseSpeed;
+        kineticState->targetSpeed = kineticState->baseSpeed;
     }
 
-    if (mouseSpeed == MouseSpeed_Accelerated || (wasMoveAction && isMoveAction && (prevMouseSpeed != mouseSpeed))) {
-        mouseMoveCurrentSpeed = targetSpeed;
+    if (mouseSpeed == MouseSpeed_Accelerated || (kineticState->wasMoveAction && isMoveAction && (kineticState->prevMouseSpeed != mouseSpeed))) {
+        kineticState->currentSpeed = kineticState->targetSpeed;
     }
 
     if (isMoveAction) {
-        if (mouseMoveCurrentSpeed < targetSpeed) {
-            mouseMoveCurrentSpeed += mouseMoveAcceleration * elapsedTime / 1000;
-            if (mouseMoveCurrentSpeed > targetSpeed) {
-                mouseMoveCurrentSpeed = targetSpeed;
+        if (kineticState->currentSpeed < kineticState->targetSpeed) {
+            kineticState->currentSpeed += kineticState->acceleration * elapsedTime / 1000;
+            if (kineticState->currentSpeed > kineticState->targetSpeed) {
+                kineticState->currentSpeed = kineticState->targetSpeed;
             }
         } else {
-            mouseMoveCurrentSpeed -= mouseMoveAcceleration * elapsedTime / 1000;
-            if (mouseMoveCurrentSpeed < targetSpeed) {
-                mouseMoveCurrentSpeed = targetSpeed;
+            kineticState->currentSpeed -= kineticState->acceleration * elapsedTime / 1000;
+            if (kineticState->currentSpeed < kineticState->targetSpeed) {
+                kineticState->currentSpeed = kineticState->targetSpeed;
             }
         }
 
-        uint16_t distance = mouseMoveCurrentSpeed * elapsedTime / 10;
+        uint16_t distance = kineticState->currentSpeed * elapsedTime / 10;
 
-        if (activeMouseStates[SerializedMouseAction_MoveLeft]) {
-            ActiveUsbMouseReport->x = -distance;
-        } else if (activeMouseStates[SerializedMouseAction_MoveRight]) {
-            ActiveUsbMouseReport->x = distance;
+        if (activeMouseStates[kineticState->leftState]) {
+            kineticState->x = -distance;
+        } else if (activeMouseStates[kineticState->rightState]) {
+            kineticState->x = distance;
         }
 
-        if (activeMouseStates[SerializedMouseAction_MoveUp]) {
-            ActiveUsbMouseReport->y = -distance;
-        } else if (activeMouseStates[SerializedMouseAction_MoveDown]) {
-            ActiveUsbMouseReport->y = distance;
+        if (activeMouseStates[kineticState->upState]) {
+            kineticState->y = -distance;
+        } else if (activeMouseStates[kineticState->downState]) {
+            kineticState->y = distance;
         }
     }
+
+    kineticState->prevMouseSpeed = mouseSpeed;
+    kineticState->wasMoveAction = isMoveAction;
+}
+
+void processMouseActions()
+{
+    processMouseKineticState(&mouseMoveState);
+    ActiveUsbMouseReport->x = mouseMoveState.x;
+    ActiveUsbMouseReport->y = mouseMoveState.y;
+    mouseMoveState.x = 0;
+    mouseMoveState.y = 0;
 
     bool isScrollAction = activeMouseStates[SerializedMouseAction_ScrollUp] ||
                           activeMouseStates[SerializedMouseAction_ScrollDown] ||
@@ -130,8 +143,6 @@ void processMouseActions()
         ActiveUsbMouseReport->buttons |= MouseButton_Right;
     }
 
-    prevMouseSpeed = mouseSpeed;
-    wasMoveAction = isMoveAction;
 }
 
 static layer_id_t previousLayer = LayerId_Base;

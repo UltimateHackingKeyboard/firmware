@@ -1,6 +1,10 @@
 #ifndef __USB_REPORT_UPDATER_H__
 #define __USB_REPORT_UPDATER_H__
 
+// Includes:
+
+    #include "config_parser/parse_keymap.h"
+
 // Macros:
 
     #define ACTIVE_MOUSE_STATES_COUNT (SerializedMouseAction_Last + 1)
@@ -37,6 +41,24 @@
         MouseSpeed_Accelerated,
         MouseSpeed_Decelerated,
     } mouse_speed_t;
+
+    typedef struct {
+        bool wasMoveAction;
+        serialized_mouse_action_t upState;
+        serialized_mouse_action_t downState;
+        serialized_mouse_action_t leftState;
+        serialized_mouse_action_t rightState;
+        mouse_speed_t prevMouseSpeed;
+        float currentSpeed;
+        float targetSpeed;
+        float initialSpeed;
+        float acceleration;
+        float deceleratedSpeed;
+        float baseSpeed;
+        float acceleratedSpeed;
+        int16_t x;
+        int16_t y;
+    } mouse_kinetic_state_t;
 
 // Functions:
 
