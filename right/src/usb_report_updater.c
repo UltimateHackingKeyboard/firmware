@@ -22,10 +22,10 @@ static uint32_t elapsedTime;
 static uint16_t doubleTapSwitchLayerTimeout = 300;
 
 static float mouseMoveInitialSpeed = 1;
-static float mouseMoveBaseAcceleration = 3;
+static float mouseMoveAcceleration = 3;
+static float mouseMoveDeceleratedSpeed = 2.5;
 static float mouseMoveBaseSpeed = 5;
 static float mouseMoveAcceleratedSpeed = 10;
-static float mouseMoveDeceleratedSpeed = 2.5;
 
 static float mouseScrollSpeed = 0.1;
 
@@ -65,12 +65,12 @@ void processMouseActions()
 
     if (isMoveAction) {
         if (mouseMoveCurrentSpeed < targetSpeed) {
-            mouseMoveCurrentSpeed += mouseMoveBaseAcceleration * elapsedTime / 1000;
+            mouseMoveCurrentSpeed += mouseMoveAcceleration * elapsedTime / 1000;
             if (mouseMoveCurrentSpeed > targetSpeed) {
                 mouseMoveCurrentSpeed = targetSpeed;
             }
         } else {
-            mouseMoveCurrentSpeed -= mouseMoveBaseAcceleration * elapsedTime / 1000;
+            mouseMoveCurrentSpeed -= mouseMoveAcceleration * elapsedTime / 1000;
             if (mouseMoveCurrentSpeed < targetSpeed) {
                 mouseMoveCurrentSpeed = targetSpeed;
             }
