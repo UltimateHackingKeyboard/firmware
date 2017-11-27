@@ -80,17 +80,27 @@ void processMouseKineticState(mouse_kinetic_state_t *kineticState)
         uint16_t distance = kineticState->currentSpeed * elapsedTime / 10;
 
         if (activeMouseStates[kineticState->leftState]) {
-            kineticState->x = -distance;
+            kineticState->xSum -= distance;
         } else if (activeMouseStates[kineticState->rightState]) {
-            kineticState->x = distance;
+            kineticState->xSum += distance;
         }
 
+        float xSumInt;
+        float xSumFrac = modff(kineticState->xSum, &xSumInt);
+        kineticState->xSum = xSumFrac;
+        kineticState->xOut = xSumInt;
+
         if (activeMouseStates[kineticState->upState]) {
-            kineticState->y = -distance;
+            kineticState->ySum -= distance;
         } else if (activeMouseStates[kineticState->downState]) {
-            kineticState->y = distance;
+            kineticState->ySum += distance;
         }
-    }
+
+        float ySumInt;
+        float ySumFrac = modff(kineticState->ySum, &ySumInt);
+        kineticState->ySum = ySumFrac;
+        kineticState->yOut = ySumInt;
+}
 
     kineticState->prevMouseSpeed = mouseSpeed;
     kineticState->wasMoveAction = isMoveAction;
@@ -99,10 +109,10 @@ void processMouseKineticState(mouse_kinetic_state_t *kineticState)
 void processMouseActions()
 {
     processMouseKineticState(&mouseMoveState);
-    ActiveUsbMouseReport->x = mouseMoveState.x;
-    ActiveUsbMouseReport->y = mouseMoveState.y;
-    mouseMoveState.x = 0;
-    mouseMoveState.y = 0;
+    ActiveUsbMouseReport->x = mouseMoveState.xOut;
+    ActiveUsbMouseReport->y = mouseMoveState.yOut;
+    mouseMoveState.xOut = 0;
+    mouseMoveState.yOut = 0;
 
     bool isScrollAction = activeMouseStates[SerializedMouseAction_ScrollUp] ||
                           activeMouseStates[SerializedMouseAction_ScrollDown] ||

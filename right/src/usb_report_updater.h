@@ -56,8 +56,10 @@
         float deceleratedSpeed;
         float baseSpeed;
         float acceleratedSpeed;
-        int16_t x;
-        int16_t y;
+        float xSum;
+        float ySum;
+        int16_t xOut;
+        int16_t yOut;
     } mouse_kinetic_state_t;
 
 // Functions:
