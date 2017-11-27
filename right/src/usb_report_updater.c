@@ -30,11 +30,11 @@ static mouse_kinetic_state_t mouseMoveState = {
     .downState = SerializedMouseAction_MoveDown,
     .leftState = SerializedMouseAction_MoveLeft,
     .rightState = SerializedMouseAction_MoveRight,
-    .initialSpeed = 1,
-    .acceleration = 3,
-    .deceleratedSpeed = 2.5,
-    .baseSpeed = 5,
-    .acceleratedSpeed = 10,
+    .initialSpeed = 100,
+    .acceleration = 300,
+    .deceleratedSpeed = 250,
+    .baseSpeed = 500,
+    .acceleratedSpeed = 1000,
 };
 //static mouse_kinetic_state_t mouseScrollState;
 
@@ -77,7 +77,7 @@ void processMouseKineticState(mouse_kinetic_state_t *kineticState)
             }
         }
 
-        uint16_t distance = kineticState->currentSpeed * elapsedTime / 10;
+        uint16_t distance = kineticState->currentSpeed * elapsedTime / 1000;
 
         if (activeMouseStates[kineticState->leftState]) {
             kineticState->xSum -= distance;
@@ -100,7 +100,7 @@ void processMouseKineticState(mouse_kinetic_state_t *kineticState)
         float ySumFrac = modff(kineticState->ySum, &ySumInt);
         kineticState->ySum = ySumFrac;
         kineticState->yOut = ySumInt;
-}
+    }
 
     kineticState->prevMouseSpeed = mouseSpeed;
     kineticState->wasMoveAction = isMoveAction;
