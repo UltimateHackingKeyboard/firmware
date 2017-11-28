@@ -17,12 +17,6 @@ void UsbCommand_GetDebugBuffer(void)
     SetDebugBufferUint32(40, CurrentTime);
 
     memcpy(GenericHidOutBuffer, DebugBuffer, USB_GENERIC_HID_OUT_BUFFER_LENGTH);
-
-/*    uint64_t ticks = microseconds_get_ticks();
-    uint32_t microseconds = microseconds_convert_to_microseconds(ticks);
-    uint32_t milliseconds = microseconds/1000;
-    *(uint32_t*)(GenericHidOutBuffer+1) = ticks;
-*/
 }
 
 void SetDebugBufferUint8(uint32_t offset, uint8_t value)

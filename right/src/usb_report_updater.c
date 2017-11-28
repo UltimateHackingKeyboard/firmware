@@ -29,12 +29,12 @@ static mouse_kinetic_state_t mouseMoveState = {
     .downState = SerializedMouseAction_MoveDown,
     .leftState = SerializedMouseAction_MoveLeft,
     .rightState = SerializedMouseAction_MoveRight,
-    .intMultiplier = 31.25,
-    .initialSpeed = 3,
-    .acceleration = 10,
-    .deceleratedSpeed = 8,
-    .baseSpeed = 16,
-    .acceleratedSpeed = 32,
+    .intMultiplier = 10,
+    .initialSpeed = 10,
+    .acceleration = 30,
+    .deceleratedSpeed = 1, // 25
+    .baseSpeed = 50,
+    .acceleratedSpeed = 255, // 100
 };
 
 static mouse_kinetic_state_t mouseScrollState = {
@@ -42,12 +42,12 @@ static mouse_kinetic_state_t mouseScrollState = {
     .downState = SerializedMouseAction_ScrollUp,
     .leftState = SerializedMouseAction_ScrollLeft,
     .rightState = SerializedMouseAction_ScrollRight,
-    .intMultiplier = 0.75,
+    .intMultiplier = 1,
     .initialSpeed = 8,
     .acceleration = 8,
-    .deceleratedSpeed = 8,
-    .baseSpeed = 16,
-    .acceleratedSpeed = 32,
+    .deceleratedSpeed = 1, // 25
+    .baseSpeed = 12,
+    .acceleratedSpeed = 255, // 100
 };
 
 void processMouseKineticState(mouse_kinetic_state_t *kineticState)

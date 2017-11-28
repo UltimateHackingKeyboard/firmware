@@ -125,5 +125,4 @@ void InitPeripherals(void)
 #endif
     InitKeyDebouncer();
     EEPROM_Init();
-    //microseconds_init();
 }
