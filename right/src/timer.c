@@ -14,7 +14,11 @@ void Timer_Init(void)
     pit_config_t pitConfig;
     PIT_GetDefaultConfig(&pitConfig);
     PIT_Init(PIT, &pitConfig);
-    PIT_SetTimerPeriod(PIT, PIT_TIMER_CHANNEL, MSEC_TO_COUNT(TIMER_INTERVAL_MSEC, PIT_SOURCE_CLOCK));
+
+    // TODO: Why the interval needs to be multiplied by two to arrive to the correct timing?
+    // Figure it out and clean this up.
+    PIT_SetTimerPeriod(PIT, PIT_TIMER_CHANNEL, MSEC_TO_COUNT(TIMER_INTERVAL_MSEC*2, PIT_SOURCE_CLOCK));
+
     PIT_EnableInterrupts(PIT, PIT_TIMER_CHANNEL, kPIT_TimerInterruptEnable);
     EnableIRQ(PIT_TIMER_IRQ_ID);
     PIT_StartTimer(PIT, PIT_TIMER_CHANNEL);

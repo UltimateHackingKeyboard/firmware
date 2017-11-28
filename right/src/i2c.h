@@ -11,8 +11,9 @@
     // Main bus
 
     #define I2C_MAIN_BUS_BASEADDR  I2C0
-    #define I2C_MASTER_BUS_CLK_SRC I2C0_CLK_SRC
-    #define I2C_MAIN_BUS_BAUD_RATE 100000 // 100 kHz works even with a 20 meter long bridge cable.
+    #define I2C_MAIN_BUS_IRQ_ID    I2C0_IRQn
+    #define I2C_MAIN_BUS_CLK_SRC   I2C0_CLK_SRC
+    #define I2C_MAIN_BUS_BAUD_RATE 100000  // 100 kHz works even with a 20 meter long bridge cable.
     #define I2C_MAIN_BUS_MUX       kPORT_MuxAlt7
 
     #define I2C_MAIN_BUS_SDA_GPIO  GPIOD
@@ -28,8 +29,9 @@
     // EEPROM bus
 
     #define I2C_EEPROM_BUS_BASEADDR  I2C1
+    #define I2C_EEPROM_BUS_IRQ_ID    I2C1_IRQn
     #define I2C_EEPROM_BUS_CLK_SRC   I2C1_CLK_SRC
-    #define I2C_EEPROM_BUS_BAUD_RATE 1000000 // 1 Mhz is the maximum speed of the EEPROM.
+    #define I2C_EEPROM_BUS_BAUD_RATE 1000000  // 1 Mhz is the maximum speed of the EEPROM.
     #define I2C_EEPROM_BUS_MUX       kPORT_MuxAlt2
 
     #define I2C_EEPROM_BUS_SDA_PORT  PORTC

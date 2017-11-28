@@ -8,20 +8,22 @@
 #include "peripherals/led_driver.h"
 #include "peripherals/merge_sensor.h"
 #include "led_pwm.h"
-#include "slave_scheduler.h"
 #include "peripherals/adc.h"
 #include "init_peripherals.h"
 #include "eeprom.h"
-#include "microseconds/microseconds_pit.c"
 #include "timer.h"
 #include "key_debouncer.h"
+#include "usb_api.h"
 
 void InitInterruptPriorities(void)
 {
-    NVIC_SetPriority(I2C0_IRQn, 1);
-    NVIC_SetPriority(I2C1_IRQn, 1);
-    NVIC_SetPriority(USB0_IRQn, 1);
-    NVIC_SetPriority(PIT1_IRQn, 6);
+    NVIC_SetPriority(PIT_I2C_WATCHDOG_IRQ_ID,  1);
+    NVIC_SetPriority(PIT_TIMER_IRQ_ID,         2);
+    NVIC_SetPriority(PIT_KEY_SCANNER_IRQ_ID,   3);
+    NVIC_SetPriority(PIT_KEY_DEBOUNCER_IRQ_ID, 3);
+    NVIC_SetPriority(I2C_MAIN_BUS_IRQ_ID,      3);
+    NVIC_SetPriority(I2C_EEPROM_BUS_IRQ_ID,    3);
+    NVIC_SetPriority(USB_IRQ_ID,               3);
 }
 
 void delay(void)
@@ -77,7 +79,7 @@ void InitI2cMainBus(void)
     i2c_master_config_t masterConfig;
     I2C_MasterGetDefaultConfig(&masterConfig);
     masterConfig.baudRate_Bps = I2C_MAIN_BUS_BAUD_RATE;
-    uint32_t sourceClock = CLOCK_GetFreq(I2C_MASTER_BUS_CLK_SRC);
+    uint32_t sourceClock = CLOCK_GetFreq(I2C_MAIN_BUS_CLK_SRC);
     I2C_MasterInit(I2C_MAIN_BUS_BASEADDR, &masterConfig, sourceClock);
 }
 

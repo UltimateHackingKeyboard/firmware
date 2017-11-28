@@ -121,7 +121,6 @@ void InitUsb(void)
     UsbCompositeDevice.systemKeyboardHandle = UsbDeviceCompositeConfigList.config[USB_SYSTEM_KEYBOARD_INTERFACE_INDEX].classHandle;
     UsbCompositeDevice.mouseHandle = UsbDeviceCompositeConfigList.config[USB_MOUSE_INTERFACE_INDEX].classHandle;
 
-    NVIC_SetPriority((IRQn_Type)irqNumber, USB_DEVICE_INTERRUPT_PRIORITY);
     NVIC_EnableIRQ((IRQn_Type)irqNumber);
 
     USB_DeviceRun(UsbCompositeDevice.deviceHandle);
