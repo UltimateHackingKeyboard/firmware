@@ -43,11 +43,11 @@ static mouse_kinetic_state_t mouseScrollState = {
     .leftState = SerializedMouseAction_ScrollLeft,
     .rightState = SerializedMouseAction_ScrollRight,
     .intMultiplier = 1,
-    .initialSpeed = 16,
-    .acceleration = 16,
-    .deceleratedSpeed = 5, // 25
-    .baseSpeed = 24,
-    .acceleratedSpeed = 255, // 100
+    .initialSpeed = 20,
+    .acceleration = 20,
+    .deceleratedSpeed = 10,
+    .baseSpeed = 20,
+    .acceleratedSpeed = 40,
 };
 
 void processMouseKineticState(mouse_kinetic_state_t *kineticState)
