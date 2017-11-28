@@ -51,7 +51,6 @@
         mouse_speed_t prevMouseSpeed;
         float intMultiplier;
         float currentSpeed;
-        float distance;
         float targetSpeed;
         uint8_t initialSpeed;
         uint8_t acceleration;

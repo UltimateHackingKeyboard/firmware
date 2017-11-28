@@ -96,7 +96,6 @@ void processMouseKineticState(mouse_kinetic_state_t *kineticState)
         }
 
         float distance = kineticState->currentSpeed * elapsedTime / 1000;
-        kineticState->distance = distance;
 
         if (activeMouseStates[kineticState->leftState]) {
             kineticState->xSum -= distance;
@@ -137,15 +136,17 @@ void processMouseActions()
 
     processMouseKineticState(&mouseScrollState);
     ActiveUsbMouseReport->wheelX = mouseScrollState.xOut;
-    *(float*)(DebugBuffer + 50) = mouseScrollState.currentSpeed;
-    *(uint16_t*)(DebugBuffer + 54) = mouseScrollState.xOut;
-    *(float*)(DebugBuffer + 56) = mouseScrollState.xSum;
-    *(float*)(DebugBuffer + 60) = mouseScrollState.distance;
-//    SetDebugBufferFloat(60, mouseScrollState.currentSpeed);
     ActiveUsbMouseReport->wheelY = mouseScrollState.yOut;
-//    SetDebugBufferFloat(62, mouseScrollState.ySum);
     mouseScrollState.xOut = 0;
     mouseScrollState.yOut = 0;
+
+//  The following line makes the firmware crash for some reason:
+//  SetDebugBufferFloat(60, mouseScrollState.currentSpeed);
+//  TODO: Figure out why.
+//  Oddly, the following line (which is the inlined version of the above) works:
+//  *(float*)(DebugBuffer + 60) = mouseScrollState.currentSpeed;
+//  The value parameter of SetDebugBufferFloat() seems to be the culprit because
+//  if it's not used within the function it doesn't crash anymore.
 
     if (activeMouseStates[SerializedMouseAction_LeftClick]) {
         ActiveUsbMouseReport->buttons |= MouseButton_Left;
