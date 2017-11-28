@@ -29,11 +29,12 @@ static mouse_kinetic_state_t mouseMoveState = {
     .downState = SerializedMouseAction_MoveDown,
     .leftState = SerializedMouseAction_MoveLeft,
     .rightState = SerializedMouseAction_MoveRight,
-    .initialSpeed = 100,
-    .acceleration = 300,
-    .deceleratedSpeed = 250,
-    .baseSpeed = 500,
-    .acceleratedSpeed = 1000,
+    .intMultiplier = 31.25,
+    .initialSpeed = 3,
+    .acceleration = 10,
+    .deceleratedSpeed = 8,
+    .baseSpeed = 16,
+    .acceleratedSpeed = 32,
 };
 
 static mouse_kinetic_state_t mouseScrollState = {
@@ -41,17 +42,24 @@ static mouse_kinetic_state_t mouseScrollState = {
     .downState = SerializedMouseAction_ScrollUp,
     .leftState = SerializedMouseAction_ScrollLeft,
     .rightState = SerializedMouseAction_ScrollRight,
-    .initialSpeed = 6,
-    .acceleration = 6,
-    .deceleratedSpeed = 6,
-    .baseSpeed = 12,
-    .acceleratedSpeed = 24,
+    .intMultiplier = 0.75,
+    .initialSpeed = 8,
+    .acceleration = 8,
+    .deceleratedSpeed = 8,
+    .baseSpeed = 16,
+    .acceleratedSpeed = 32,
 };
 
 void processMouseKineticState(mouse_kinetic_state_t *kineticState)
 {
+    float initialSpeed = kineticState->intMultiplier * kineticState->initialSpeed;
+    float acceleration = kineticState->intMultiplier * kineticState->acceleration;
+    float deceleratedSpeed = kineticState->intMultiplier * kineticState->deceleratedSpeed;
+    float baseSpeed = kineticState->intMultiplier * kineticState->baseSpeed;
+    float acceleratedSpeed = kineticState->intMultiplier * kineticState->acceleratedSpeed;
+
     if (!kineticState->wasMoveAction) {
-        kineticState->currentSpeed = kineticState->initialSpeed;
+        kineticState->currentSpeed = initialSpeed;
     }
 
     bool isMoveAction = activeMouseStates[kineticState->upState] ||
@@ -61,13 +69,13 @@ void processMouseKineticState(mouse_kinetic_state_t *kineticState)
 
     mouse_speed_t mouseSpeed = MouseSpeed_Normal;
     if (activeMouseStates[SerializedMouseAction_Accelerate]) {
-        kineticState->targetSpeed = kineticState->acceleratedSpeed;
+        kineticState->targetSpeed = acceleratedSpeed;
         mouseSpeed = MouseSpeed_Accelerated;
     } else if (activeMouseStates[SerializedMouseAction_Decelerate]) {
-        kineticState->targetSpeed = kineticState->deceleratedSpeed;
+        kineticState->targetSpeed = deceleratedSpeed;
         mouseSpeed = MouseSpeed_Decelerated;
     } else if (isMoveAction) {
-        kineticState->targetSpeed = kineticState->baseSpeed;
+        kineticState->targetSpeed = baseSpeed;
     }
 
     if (mouseSpeed == MouseSpeed_Accelerated || (kineticState->wasMoveAction && isMoveAction && (kineticState->prevMouseSpeed != mouseSpeed))) {
@@ -76,12 +84,12 @@ void processMouseKineticState(mouse_kinetic_state_t *kineticState)
 
     if (isMoveAction) {
         if (kineticState->currentSpeed < kineticState->targetSpeed) {
-            kineticState->currentSpeed += kineticState->acceleration * elapsedTime / 1000;
+            kineticState->currentSpeed += acceleration * elapsedTime / 1000;
             if (kineticState->currentSpeed > kineticState->targetSpeed) {
                 kineticState->currentSpeed = kineticState->targetSpeed;
             }
         } else {
-            kineticState->currentSpeed -= kineticState->acceleration * elapsedTime / 1000;
+            kineticState->currentSpeed -= acceleration * elapsedTime / 1000;
             if (kineticState->currentSpeed < kineticState->targetSpeed) {
                 kineticState->currentSpeed = kineticState->targetSpeed;
             }
