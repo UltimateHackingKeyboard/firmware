@@ -19,8 +19,14 @@
     void SetBufferUint16(uint8_t *buffer, uint32_t offset, uint16_t value);
     void SetBufferUint32(uint8_t *buffer, uint32_t offset, uint32_t value);
 
+    void SetBufferInt8(uint8_t *buffer, uint32_t offset, int8_t value);
+    void SetBufferInt16(uint8_t *buffer, uint32_t offset, int16_t value);
+    void SetBufferInt32(uint8_t *buffer, uint32_t offset, int32_t value);
+
     void  SetBufferUint8Be(uint8_t *buffer, uint32_t offset, uint8_t value);
     void SetBufferUint16Be(uint8_t *buffer, uint32_t offset, uint16_t value);
     void SetBufferUint32Be(uint8_t *buffer, uint32_t offset, uint32_t value);
+
+    void SetBufferFloat(uint8_t *buffer, uint32_t offset, float value);
 
 #endif

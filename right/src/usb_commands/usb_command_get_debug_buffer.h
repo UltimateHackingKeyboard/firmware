@@ -17,4 +17,10 @@
     void SetDebugBufferUint16(uint32_t offset, uint16_t value);
     void SetDebugBufferUint32(uint32_t offset, uint32_t value);
 
+    void SetDebugBufferInt8(uint32_t offset, int8_t value);
+    void SetDebugBufferInt16(uint32_t offset, int16_t value);
+    void SetDebugBufferInt32(uint32_t offset, int32_t value);
+
+    void SetDebugBufferFloat(uint32_t offset, float value);
+
 #endif

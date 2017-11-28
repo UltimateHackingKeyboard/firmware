@@ -39,3 +39,23 @@ void SetDebugBufferUint32(uint32_t offset, uint32_t value)
 {
     SetBufferUint32(DebugBuffer, offset, value);
 }
+
+void SetDebugBufferInt8(uint32_t offset, int8_t value)
+{
+    SetBufferInt8(DebugBuffer, offset, value);
+}
+
+void SetDebugBufferInt16(uint32_t offset, int16_t value)
+{
+    SetBufferInt16(DebugBuffer, offset, value);
+}
+
+void SetDebugBufferInt32(uint32_t offset, int32_t value)
+{
+    SetBufferInt32(DebugBuffer, offset, value);
+}
+
+void SetDebugBufferFloat(uint32_t offset, float value)
+{
+    *(float*)(DebugBuffer + offset) = value;
+}

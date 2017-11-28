@@ -50,6 +50,7 @@
         serialized_mouse_action_t rightState;
         mouse_speed_t prevMouseSpeed;
         float currentSpeed;
+        float distance;
         float targetSpeed;
         float initialSpeed;
         float acceleration;

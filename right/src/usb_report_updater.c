@@ -15,13 +15,12 @@
 #include "timer.h"
 #include "key_debouncer.h"
 #include "config_parser/parse_keymap.h"
+#include "usb_commands/usb_command_get_debug_buffer.h"
 
 uint32_t UsbReportUpdateTime = 0;
 static uint32_t elapsedTime;
 
 static uint16_t doubleTapSwitchLayerTimeout = 300;
-
-static float mouseScrollSpeed = 0.1;
 
 static bool activeMouseStates[ACTIVE_MOUSE_STATES_COUNT];
 
@@ -36,7 +35,18 @@ static mouse_kinetic_state_t mouseMoveState = {
     .baseSpeed = 500,
     .acceleratedSpeed = 1000,
 };
-//static mouse_kinetic_state_t mouseScrollState;
+
+static mouse_kinetic_state_t mouseScrollState = {
+    .upState = SerializedMouseAction_ScrollDown,
+    .downState = SerializedMouseAction_ScrollUp,
+    .leftState = SerializedMouseAction_ScrollLeft,
+    .rightState = SerializedMouseAction_ScrollRight,
+    .initialSpeed = 6,
+    .acceleration = 6,
+    .deceleratedSpeed = 6,
+    .baseSpeed = 12,
+    .acceleratedSpeed = 24,
+};
 
 void processMouseKineticState(mouse_kinetic_state_t *kineticState)
 {
@@ -77,7 +87,8 @@ void processMouseKineticState(mouse_kinetic_state_t *kineticState)
             }
         }
 
-        uint16_t distance = kineticState->currentSpeed * elapsedTime / 1000;
+        float distance = kineticState->currentSpeed * elapsedTime / 1000;
+        kineticState->distance = distance;
 
         if (activeMouseStates[kineticState->leftState]) {
             kineticState->xSum -= distance;
@@ -100,6 +111,8 @@ void processMouseKineticState(mouse_kinetic_state_t *kineticState)
         float ySumFrac = modff(kineticState->ySum, &ySumInt);
         kineticState->ySum = ySumFrac;
         kineticState->yOut = ySumInt;
+    } else {
+        kineticState->currentSpeed = 0;  // to be removed
     }
 
     kineticState->prevMouseSpeed = mouseSpeed;
@@ -114,34 +127,17 @@ void processMouseActions()
     mouseMoveState.xOut = 0;
     mouseMoveState.yOut = 0;
 
-    bool isScrollAction = activeMouseStates[SerializedMouseAction_ScrollUp] ||
-                          activeMouseStates[SerializedMouseAction_ScrollDown] ||
-                          activeMouseStates[SerializedMouseAction_ScrollLeft] ||
-                          activeMouseStates[SerializedMouseAction_ScrollRight];
-
-    static float mouseScrollDistanceSum = 0;
-    if (isScrollAction) {
-        mouseScrollDistanceSum += mouseScrollSpeed;
-        float mouseScrollDistanceIntegerSum;
-        float mouseScrollDistanceFractionSum = modff(mouseScrollDistanceSum, &mouseScrollDistanceIntegerSum);
-
-        if (mouseScrollDistanceIntegerSum) {
-            if (activeMouseStates[SerializedMouseAction_ScrollUp]) {
-                ActiveUsbMouseReport->wheelX = mouseScrollDistanceIntegerSum;
-            } else if (activeMouseStates[SerializedMouseAction_ScrollDown]) {
-                ActiveUsbMouseReport->wheelX = -mouseScrollDistanceIntegerSum;
-            }
-
-            if (activeMouseStates[SerializedMouseAction_ScrollRight]) {
-                ActiveUsbMouseReport->wheelY = mouseScrollDistanceIntegerSum;
-            } else if (activeMouseStates[SerializedMouseAction_ScrollLeft]) {
-                ActiveUsbMouseReport->wheelY = -mouseScrollDistanceIntegerSum;
-            }
-            mouseScrollDistanceSum = mouseScrollDistanceFractionSum;
-        }
-    } else {
-        mouseScrollDistanceSum = 0;
-    }
+    processMouseKineticState(&mouseScrollState);
+    ActiveUsbMouseReport->wheelX = mouseScrollState.xOut;
+    *(float*)(DebugBuffer + 50) = mouseScrollState.currentSpeed;
+    *(uint16_t*)(DebugBuffer + 54) = mouseScrollState.xOut;
+    *(float*)(DebugBuffer + 56) = mouseScrollState.xSum;
+    *(float*)(DebugBuffer + 60) = mouseScrollState.distance;
+//    SetDebugBufferFloat(60, mouseScrollState.currentSpeed);
+    ActiveUsbMouseReport->wheelY = mouseScrollState.yOut;
+//    SetDebugBufferFloat(62, mouseScrollState.ySum);
+    mouseScrollState.xOut = 0;
+    mouseScrollState.yOut = 0;
 
     if (activeMouseStates[SerializedMouseAction_LeftClick]) {
         ActiveUsbMouseReport->buttons |= MouseButton_Left;
@@ -152,7 +148,6 @@ void processMouseActions()
     if (activeMouseStates[SerializedMouseAction_RightClick]) {
         ActiveUsbMouseReport->buttons |= MouseButton_Right;
     }
-
 }
 
 static layer_id_t previousLayer = LayerId_Base;

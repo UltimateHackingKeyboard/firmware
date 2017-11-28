@@ -25,8 +25,8 @@
         uint8_t buttons;
         int16_t x;
         int16_t y;
-        int8_t wheelX;
         int8_t wheelY;
+        int8_t wheelX;
     } ATTR_PACKED usb_mouse_report_t;
 
 // Variables:
