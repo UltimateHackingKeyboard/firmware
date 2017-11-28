@@ -58,7 +58,7 @@ void processMouseKineticState(mouse_kinetic_state_t *kineticState)
     float baseSpeed = kineticState->intMultiplier * kineticState->baseSpeed;
     float acceleratedSpeed = kineticState->intMultiplier * kineticState->acceleratedSpeed;
 
-    if (!kineticState->wasMoveAction) {
+    if (!kineticState->wasMoveAction && !activeMouseStates[SerializedMouseAction_Decelerate]) {
         kineticState->currentSpeed = initialSpeed;
     }
 
@@ -120,7 +120,7 @@ void processMouseKineticState(mouse_kinetic_state_t *kineticState)
         kineticState->ySum = ySumFrac;
         kineticState->yOut = ySumInt;
     } else {
-        kineticState->currentSpeed = 0;  // to be removed
+        kineticState->currentSpeed = 0;
     }
 
     kineticState->prevMouseSpeed = mouseSpeed;
