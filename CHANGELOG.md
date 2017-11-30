@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [4.0.0] - 2017-11-30
+
+Data Model: 3.0.0 (major bump) | USB Protocol: 2.0.0 (unchanged) | Slave Protocol: 3.0.0 (unchanged)
+
+- Implement mouse movement and scrolling deceleration and acceleration.
+- Toggle layers upon double tapping their keys. Make the double tap timeout configurable.
+- Make the parser read additional user configuration properties: dataModelMajorVersion, dataModelMinorVersion, dataModelPatchVersion, doubleTapSwitchLayerTimeout, iconsAndLayerTextsBrightness, alphanumericSegmentsBrightness, keyBacklightBrightness, mouseMoveInitialSpeed, mouseMoveAcceleration, mouseMoveDeceleratedSpeed, mouseMoveBaseSpeed, mouseMoveAcceleratedSpeed, mouseScrollInitialSpeed, mouseScrollAcceleration, mouseScrollDeceleratedSpeed, mouseScrollBaseSpeed, mouseScrollAcceleratedSpeed. `DATAMODEL:MAJOR`
+
 ## [3.0.0] - 2017-11-15
 
 Data Model: 2.0.0 (major bump) | USB Protocol: 2.0.0 (major bump) | Slave Protocol: 3.0.0 (major bump)
