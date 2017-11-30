@@ -20,11 +20,11 @@
 uint32_t UsbReportUpdateTime = 0;
 static uint32_t elapsedTime;
 
-static uint16_t doubleTapSwitchLayerTimeout = 300;
+uint16_t DoubleTapSwitchLayerTimeout = 250;
 
 static bool activeMouseStates[ACTIVE_MOUSE_STATES_COUNT];
 
-static mouse_kinetic_state_t mouseMoveState = {
+mouse_kinetic_state_t MouseMoveState = {
     .upState = SerializedMouseAction_MoveUp,
     .downState = SerializedMouseAction_MoveDown,
     .leftState = SerializedMouseAction_MoveLeft,
@@ -37,7 +37,7 @@ static mouse_kinetic_state_t mouseMoveState = {
     .acceleratedSpeed = 80,
 };
 
-static mouse_kinetic_state_t mouseScrollState = {
+mouse_kinetic_state_t MouseScrollState = {
     .upState = SerializedMouseAction_ScrollDown,
     .downState = SerializedMouseAction_ScrollUp,
     .leftState = SerializedMouseAction_ScrollLeft,
@@ -47,7 +47,7 @@ static mouse_kinetic_state_t mouseScrollState = {
     .acceleration = 20,
     .deceleratedSpeed = 10,
     .baseSpeed = 20,
-    .acceleratedSpeed = 40,
+    .acceleratedSpeed = 50,
 };
 
 void processMouseKineticState(mouse_kinetic_state_t *kineticState)
@@ -128,17 +128,17 @@ void processMouseKineticState(mouse_kinetic_state_t *kineticState)
 
 void processMouseActions()
 {
-    processMouseKineticState(&mouseMoveState);
-    ActiveUsbMouseReport->x = mouseMoveState.xOut;
-    ActiveUsbMouseReport->y = mouseMoveState.yOut;
-    mouseMoveState.xOut = 0;
-    mouseMoveState.yOut = 0;
+    processMouseKineticState(&MouseMoveState);
+    ActiveUsbMouseReport->x = MouseMoveState.xOut;
+    ActiveUsbMouseReport->y = MouseMoveState.yOut;
+    MouseMoveState.xOut = 0;
+    MouseMoveState.yOut = 0;
 
-    processMouseKineticState(&mouseScrollState);
-    ActiveUsbMouseReport->wheelX = mouseScrollState.xOut;
-    ActiveUsbMouseReport->wheelY = mouseScrollState.yOut;
-    mouseScrollState.xOut = 0;
-    mouseScrollState.yOut = 0;
+    processMouseKineticState(&MouseScrollState);
+    ActiveUsbMouseReport->wheelX = MouseScrollState.xOut;
+    ActiveUsbMouseReport->wheelY = MouseScrollState.yOut;
+    MouseScrollState.xOut = 0;
+    MouseScrollState.yOut = 0;
 
 //  The following line makes the firmware crash for some reason:
 //  SetDebugBufferFloat(60, mouseScrollState.currentSpeed);
@@ -207,7 +207,7 @@ void applyKeyAction(key_state_t *keyState, key_action_t *action)
         case KeyActionType_SwitchLayer:
             if (!keyState->previous && previousLayer == LayerId_Base && action->switchLayer.mode == SwitchLayerMode_HoldAndDoubleTapToggle) {
                 if (doubleTapSwitchLayerKey) {
-                    if (Timer_GetElapsedTime(&doubleTapSwitchLayerStartTime) < doubleTapSwitchLayerTimeout) {
+                    if (Timer_GetElapsedTime(&doubleTapSwitchLayerStartTime) < DoubleTapSwitchLayerTimeout) {
                         ToggledLayer = action->switchLayer.layer;
                     }
                     doubleTapSwitchLayerKey = NULL;

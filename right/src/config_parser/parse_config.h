@@ -8,20 +8,21 @@
 // Typedefs:
 
     typedef enum {
-        ParserError_Success,
-        ParserError_InvalidSerializedKeystrokeType,
-        ParserError_InvalidSerializedMouseAction,
-        ParserError_InvalidSerializedKeyActionType,
-        ParserError_InvalidLayerCount,
-        ParserError_InvalidModuleCount,
-        ParserError_InvalidActionCount,
-        ParserError_InvalidSerializedMacroActionType,
-        ParserError_InvalidSerializedSwitchKeymapAction,
-        ParserError_InvalidModuleConfigurationCount,
-        ParserError_InvalidKeymapCount,
-        ParserError_InvalidAbbreviationLen,
-        ParserError_InvalidMacroCount,
-        ParserError_InvalidSerializedPlayMacroAction,
+        ParserError_Success                             =  0,
+        ParserError_InvalidSerializedKeystrokeType      =  1,
+        ParserError_InvalidSerializedMouseAction        =  2,
+        ParserError_InvalidSerializedKeyActionType      =  3,
+        ParserError_InvalidLayerCount                   =  4,
+        ParserError_InvalidModuleCount                  =  5,
+        ParserError_InvalidActionCount                  =  6,
+        ParserError_InvalidSerializedMacroActionType    =  7,
+        ParserError_InvalidSerializedSwitchKeymapAction =  8,
+        ParserError_InvalidModuleConfigurationCount     =  9,
+        ParserError_InvalidKeymapCount                  = 10,
+        ParserError_InvalidAbbreviationLen              = 11,
+        ParserError_InvalidMacroCount                   = 12,
+        ParserError_InvalidSerializedPlayMacroAction    = 13,
+        ParserError_InvalidMouseKineticProperty         = 14,
     } parser_error_t;
 
 // Functions:

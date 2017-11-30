@@ -4,35 +4,84 @@
 #include "keymap.h"
 #include "config_globals.h"
 #include "macros.h"
+#include "usb_report_updater.h"
 
 static parser_error_t parseModuleConfiguration(config_buffer_t *buffer)
 {
     uint8_t id = ReadUInt8(buffer);
-    uint8_t initialPointerSpeed = ReadUInt8(buffer);
-    uint8_t pointerAcceleration = ReadUInt8(buffer);
-    uint8_t maxPointerSpeed = ReadUInt8(buffer);
+    uint8_t deceleratedPointerSpeedMultiplier = ReadUInt8(buffer);
+    uint8_t basePointerSpeedMultiplier = ReadUInt8(buffer);
+    uint8_t acceleratedPointerSpeed = ReadUInt8(buffer);
 
     (void)id;
-    (void)initialPointerSpeed;
-    (void)pointerAcceleration;
-    (void)maxPointerSpeed;
+    (void)deceleratedPointerSpeedMultiplier;
+    (void)basePointerSpeedMultiplier;
+    (void)acceleratedPointerSpeed;
     return ParserError_Success;
 }
 
 parser_error_t ParseConfig(config_buffer_t *buffer)
 {
+    // Miscellaneous properties
+
     uint16_t len;
     uint16_t macroCount;
     uint16_t keymapCount;
     parser_error_t errorCode;
 
-    uint16_t dataModelVersion = ReadUInt16(buffer);
+    uint16_t dataModelMajorVersion = ReadUInt16(buffer);
+    uint16_t dataModelMinorVersion = ReadUInt16(buffer);
+    uint16_t dataModelPatchVersion = ReadUInt16(buffer);
     uint16_t userConfigLength = ReadUInt16(buffer);
-    (void)userConfigLength;
-    ReadString(buffer, &len); // Ignore device name
-    uint16_t moduleConfigurationCount = ReadCompactLength(buffer);
+    const char *deviceName = ReadString(buffer, &len);
+    uint16_t doubleTapSwitchLayerTimeout = ReadUInt16(buffer);
 
-    (void)dataModelVersion;
+    (void)userConfigLength;
+    (void)dataModelMajorVersion;
+    (void)dataModelMinorVersion;
+    (void)dataModelPatchVersion;
+    (void)deviceName;
+
+    // LED brightness
+
+    uint8_t iconsAndLayerTextsBrightness = ReadUInt8(buffer);
+    uint8_t alphanumericSegmentsBrightness = ReadUInt8(buffer);
+    uint8_t keyBacklightBrightness = ReadUInt8(buffer);
+
+    (void)iconsAndLayerTextsBrightness;
+    (void)alphanumericSegmentsBrightness;
+    (void)keyBacklightBrightness;
+
+    // Mouse kinetic properties
+
+    uint8_t mouseMoveInitialSpeed = ReadUInt8(buffer);
+    uint8_t mouseMoveAcceleration = ReadUInt8(buffer);
+    uint8_t mouseMoveDeceleratedSpeed = ReadUInt8(buffer);
+    uint8_t mouseMoveBaseSpeed = ReadUInt8(buffer);
+    uint8_t mouseMoveAcceleratedSpeed = ReadUInt8(buffer);
+    uint8_t mouseScrollInitialSpeed = ReadUInt8(buffer);
+    uint8_t mouseScrollAcceleration = ReadUInt8(buffer);
+    uint8_t mouseScrollDeceleratedSpeed = ReadUInt8(buffer);
+    uint8_t mouseScrollBaseSpeed = ReadUInt8(buffer);
+    uint8_t mouseScrollAcceleratedSpeed = ReadUInt8(buffer);
+
+    if (mouseMoveInitialSpeed == 0 ||
+        mouseMoveAcceleration == 0 ||
+        mouseMoveDeceleratedSpeed == 0 ||
+        mouseMoveBaseSpeed == 0 ||
+        mouseMoveAcceleratedSpeed == 0 ||
+        mouseScrollInitialSpeed == 0 ||
+        mouseScrollAcceleration == 0 ||
+        mouseScrollDeceleratedSpeed == 0 ||
+        mouseScrollBaseSpeed == 0 ||
+        mouseScrollAcceleratedSpeed == 0)
+    {
+        return ParserError_InvalidMouseKineticProperty;
+    }
+
+    // Module configurations
+
+    uint16_t moduleConfigurationCount = ReadCompactLength(buffer);
 
     if (moduleConfigurationCount > 255) {
         return ParserError_InvalidModuleConfigurationCount;
@@ -44,6 +93,8 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
             return errorCode;
         }
     }
+
+    // Macros
 
     macroCount = ReadCompactLength(buffer);
     if (macroCount > MAX_MACRO_NUM) {
@@ -57,6 +108,8 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
         }
     }
 
+    // Keymaps
+
     keymapCount = ReadCompactLength(buffer);
     if (keymapCount == 0 || keymapCount > MAX_KEYMAP_NUM) {
         return ParserError_InvalidKeymapCount;
@@ -69,7 +122,23 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
         }
     }
 
+    // If parsing succeeded then apply the parsed values.
+
     if (!ParserRunDry) {
+        DoubleTapSwitchLayerTimeout = doubleTapSwitchLayerTimeout;
+
+        MouseMoveState.initialSpeed = mouseMoveInitialSpeed;
+        MouseMoveState.acceleration = mouseMoveAcceleration;
+        MouseMoveState.deceleratedSpeed = mouseMoveDeceleratedSpeed;
+        MouseMoveState.baseSpeed = mouseMoveBaseSpeed;
+        MouseMoveState.acceleratedSpeed = mouseMoveAcceleratedSpeed;
+
+        MouseScrollState.initialSpeed = mouseScrollInitialSpeed;
+        MouseScrollState.acceleration = mouseScrollAcceleration;
+        MouseScrollState.deceleratedSpeed = mouseScrollDeceleratedSpeed;
+        MouseScrollState.baseSpeed = mouseScrollBaseSpeed;
+        MouseScrollState.acceleratedSpeed = mouseScrollAcceleratedSpeed;
+
         AllKeymapsCount = keymapCount;
         AllMacrosCount = macroCount;
     }

@@ -63,6 +63,12 @@
         int16_t yOut;
     } mouse_kinetic_state_t;
 
+// Variables:
+
+    extern uint16_t DoubleTapSwitchLayerTimeout;
+    extern mouse_kinetic_state_t MouseMoveState;
+    extern mouse_kinetic_state_t MouseScrollState;
+
 // Functions:
 
     void UpdateUsbReports(void);
