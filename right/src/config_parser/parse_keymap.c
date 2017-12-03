@@ -116,7 +116,7 @@ static parser_error_t parseKeyAction(key_action_t *keyAction, config_buffer_t *b
     return ParserError_InvalidSerializedKeyActionType;
 }
 
-static parser_error_t parseKeyActions(uint8_t targetLayer, config_buffer_t *buffer, uint8_t moduleId, uint8_t pointerRole)
+static parser_error_t parseKeyActions(uint8_t targetLayer, config_buffer_t *buffer, uint8_t moduleId)
 {
     parser_error_t errorCode;
     uint16_t actionCount = ReadCompactLength(buffer);
@@ -137,9 +137,7 @@ static parser_error_t parseKeyActions(uint8_t targetLayer, config_buffer_t *buff
 static parser_error_t parseModule(config_buffer_t *buffer, uint8_t layer)
 {
     uint8_t moduleId = ReadUInt8(buffer);
-    uint8_t pointerRole = ReadUInt8(buffer);
-
-    return parseKeyActions(layer, buffer, moduleId, pointerRole);
+    return parseKeyActions(layer, buffer, moduleId);
 }
 
 static parser_error_t parseLayer(config_buffer_t *buffer, uint8_t layer)
