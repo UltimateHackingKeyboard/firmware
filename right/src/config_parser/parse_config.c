@@ -14,14 +14,20 @@ static parser_error_t parseModuleConfiguration(config_buffer_t *buffer)
     uint8_t basePointerSpeedMultiplier = ReadUInt8(buffer);
     uint8_t acceleratedPointerSpeed = ReadUInt8(buffer);
     uint16_t angularShift = ReadUInt16(buffer);
-    uint8_t baseLayerPointerFunction = ReadUInt8(buffer);  // none vs invertMode vs decelerate vs accelerate
     uint8_t modLayerPointerFunction = ReadUInt8(buffer);  // none vs invertMode vs decelerate vs accelerate
+    uint8_t fnLayerPointerFunction = ReadUInt8(buffer);  // none vs invertMode vs decelerate vs accelerate
     uint8_t mouseLayerPointerFunction = ReadUInt8(buffer);  // none vs invertMode vs decelerate vs accelerate
 
     (void)id;
+    (void)pointerMode;
     (void)deceleratedPointerSpeedMultiplier;
     (void)basePointerSpeedMultiplier;
     (void)acceleratedPointerSpeed;
+    (void)angularShift;
+    (void)modLayerPointerFunction;
+    (void)fnLayerPointerFunction;
+    (void)mouseLayerPointerFunction;
+
     return ParserError_Success;
 }
 
