@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [5.0.0] - 2017-12-04
+
+Data Model: 4.0.0 (major bump) | USB Protocol: 2.0.0 (unchanged) | Slave Protocol: 3.0.0 (unchanged)
+
+- Move pointerRole from keymaps to module configurations as pointerMode. Add angularShift, modLayerPointerFunction, fnLayerPointerFunction, and mouseLayerPointerFunction to module configurations. `DATAMODEL:MAJOR`
+
 ## [4.0.0] - 2017-11-30
 
 Data Model: 3.0.0 (major bump) | USB Protocol: 2.0.0 (unchanged) | Slave Protocol: 3.0.0 (unchanged)
