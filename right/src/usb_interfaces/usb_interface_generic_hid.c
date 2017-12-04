@@ -4,7 +4,7 @@
 usb_device_class_struct_t UsbGenericHidClass = {
     .type = kUSB_DeviceClassTypeHid,
     .configurations = USB_DEVICE_CONFIGURATION_COUNT,
-    .interfaceList = (usb_device_interface_list_t [USB_DEVICE_CONFIGURATION_COUNT]) {{
+    .interfaceList = (usb_device_interface_list_t[USB_DEVICE_CONFIGURATION_COUNT]) {{
         .count = USB_GENERIC_HID_INTERFACE_COUNT,
         .interfaces = (usb_device_interfaces_struct_t[USB_GENERIC_HID_INTERFACE_COUNT]) {{
             .classCode = USB_CLASS_HID,
