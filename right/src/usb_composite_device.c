@@ -6,10 +6,10 @@
 #include "bootloader/wormhole.h"
 
 usb_composite_device_t UsbCompositeDevice;
-static usb_status_t UsbDeviceCallback(usb_device_handle handle, uint32_t event, void *param);
+static usb_status_t usbDeviceCallback(usb_device_handle handle, uint32_t event, void *param);
 
 static usb_device_class_config_list_struct_t UsbDeviceCompositeConfigList = {
-    .deviceCallback = UsbDeviceCallback,
+    .deviceCallback = usbDeviceCallback,
     .count = USB_DEVICE_CONFIG_HID,
     .config = (usb_device_class_config_struct_t[USB_DEVICE_CONFIG_HID]) {{
         .classCallback = UsbGenericHidCallback,
@@ -160,7 +160,7 @@ static usb_device_class_config_list_struct_t UsbDeviceCompositeConfigList = {
     }
 }};
 
-static usb_status_t UsbDeviceCallback(usb_device_handle handle, uint32_t event, void *param)
+static usb_status_t usbDeviceCallback(usb_device_handle handle, uint32_t event, void *param)
 {
     usb_status_t error = kStatus_USB_Error;
     uint16_t *temp16 = (uint16_t*)param;
