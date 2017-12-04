@@ -9,17 +9,37 @@ static usb_status_t UsbDeviceCallback(usb_device_handle handle, uint32_t event, 
 usb_composite_device_t UsbCompositeDevice;
 
 usb_device_class_config_struct_t UsbDeviceCompositeClassConfig[USB_DEVICE_CONFIG_HID] = {
-    {UsbGenericHidCallback,     (class_handle_t)NULL, &UsbGenericHidClass},
-    {UsbBasicKeyboardCallback,  (class_handle_t)NULL, &UsbBasicKeyboardClass},
-    {UsbMediaKeyboardCallback,  (class_handle_t)NULL, &UsbMediaKeyboardClass},
-    {UsbSystemKeyboardCallback, (class_handle_t)NULL, &UsbSystemKeyboardClass},
-    {UsbMouseCallback,          (class_handle_t)NULL, &UsbMouseClass},
+    {
+        .classCallback = UsbGenericHidCallback,
+        .classHandle = (class_handle_t)NULL,
+        .classInfomation = &UsbGenericHidClass
+    },
+    {
+        .classCallback = UsbBasicKeyboardCallback,
+        .classHandle = (class_handle_t)NULL,
+        .classInfomation = &UsbBasicKeyboardClass
+    },
+    {
+        .classCallback = UsbMediaKeyboardCallback,
+        .classHandle = (class_handle_t)NULL,
+        .classInfomation = &UsbMediaKeyboardClass
+    },
+    {
+        .classCallback = UsbSystemKeyboardCallback,
+        .classHandle = (class_handle_t)NULL,
+        .classInfomation = &UsbSystemKeyboardClass
+    },
+    {
+        .classCallback = UsbMouseCallback,
+        .classHandle = (class_handle_t)NULL,
+        .classInfomation = &UsbMouseClass
+    },
 };
 
 usb_device_class_config_list_struct_t UsbDeviceCompositeConfigList = {
-    UsbDeviceCompositeClassConfig,
-    UsbDeviceCallback,
-    USB_DEVICE_CONFIG_HID
+    .deviceCallback = UsbDeviceCallback,
+    .count = USB_DEVICE_CONFIG_HID,
+    .config = UsbDeviceCompositeClassConfig,
 };
 
 static usb_status_t UsbDeviceCallback(usb_device_handle handle, uint32_t event, void *param)
