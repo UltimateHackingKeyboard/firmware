@@ -13,7 +13,6 @@ static usb_device_class_config_list_struct_t UsbDeviceCompositeConfigList = {
     .count = USB_DEVICE_CONFIG_HID,
     .config = (usb_device_class_config_struct_t[USB_DEVICE_CONFIG_HID]) {{
         .classCallback = UsbGenericHidCallback,
-        .classHandle = (class_handle_t)NULL,
         .classInfomation = (usb_device_class_struct_t[]) {{
             .type = kUSB_DeviceClassTypeHid,
             .configurations = USB_DEVICE_CONFIGURATION_COUNT,
@@ -27,7 +26,6 @@ static usb_device_class_config_list_struct_t UsbDeviceCompositeConfigList = {
                     .count = 1,
                     .interface = (usb_device_interface_struct_t[]) {{
                         .alternateSetting = USB_INTERFACE_ALTERNATE_SETTING_NONE,
-                        .classSpecific = NULL,
                         .endpointList = {
                             .count = USB_GENERIC_HID_ENDPOINT_COUNT,
                             .endpoint = (usb_device_endpoint_struct_t[USB_GENERIC_HID_ENDPOINT_COUNT]) {
@@ -50,7 +48,6 @@ static usb_device_class_config_list_struct_t UsbDeviceCompositeConfigList = {
     },
     {
         .classCallback = UsbBasicKeyboardCallback,
-        .classHandle = (class_handle_t)NULL,
         .classInfomation = (usb_device_class_struct_t[]) {{
             .type = kUSB_DeviceClassTypeHid,
             .configurations = USB_DEVICE_CONFIGURATION_COUNT,
@@ -64,7 +61,6 @@ static usb_device_class_config_list_struct_t UsbDeviceCompositeConfigList = {
                     .count = 1,
                     .interface = (usb_device_interface_struct_t[]) {{
                         .alternateSetting = USB_INTERFACE_ALTERNATE_SETTING_NONE,
-                        .classSpecific = NULL,
                         .endpointList = {
                             USB_BASIC_KEYBOARD_ENDPOINT_COUNT,
                             (usb_device_endpoint_struct_t[USB_BASIC_KEYBOARD_ENDPOINT_COUNT]) {{
@@ -80,7 +76,6 @@ static usb_device_class_config_list_struct_t UsbDeviceCompositeConfigList = {
     },
     {
         .classCallback = UsbMediaKeyboardCallback,
-        .classHandle = (class_handle_t)NULL,
         .classInfomation = (usb_device_class_struct_t[]) {{
             .type = kUSB_DeviceClassTypeHid,
             .configurations = USB_DEVICE_CONFIGURATION_COUNT,
@@ -94,7 +89,6 @@ static usb_device_class_config_list_struct_t UsbDeviceCompositeConfigList = {
                     .count = 1,
                     .interface = (usb_device_interface_struct_t[]) {{
                         .alternateSetting = USB_INTERFACE_ALTERNATE_SETTING_NONE,
-                        .classSpecific = NULL,
                         .endpointList = {
                             USB_MEDIA_KEYBOARD_ENDPOINT_COUNT,
                             (usb_device_endpoint_struct_t[USB_MEDIA_KEYBOARD_ENDPOINT_COUNT]) {{
@@ -110,7 +104,6 @@ static usb_device_class_config_list_struct_t UsbDeviceCompositeConfigList = {
     },
     {
         .classCallback = UsbSystemKeyboardCallback,
-        .classHandle = (class_handle_t)NULL,
         .classInfomation = (usb_device_class_struct_t[]) {{
             .type = kUSB_DeviceClassTypeHid,
             .configurations = USB_DEVICE_CONFIGURATION_COUNT,
@@ -124,7 +117,6 @@ static usb_device_class_config_list_struct_t UsbDeviceCompositeConfigList = {
                     .count = 1,
                     .interface = (usb_device_interface_struct_t[]) {{
                         .alternateSetting = USB_INTERFACE_ALTERNATE_SETTING_NONE,
-                        .classSpecific = NULL,
                         .endpointList = {
                             USB_SYSTEM_KEYBOARD_ENDPOINT_COUNT,
                             (usb_device_endpoint_struct_t[USB_SYSTEM_KEYBOARD_ENDPOINT_COUNT]) {{
@@ -140,7 +132,6 @@ static usb_device_class_config_list_struct_t UsbDeviceCompositeConfigList = {
     },
     {
         .classCallback = UsbMouseCallback,
-        .classHandle = (class_handle_t)NULL,
         .classInfomation = (usb_device_class_struct_t[]) {{
             .type = kUSB_DeviceClassTypeHid,
             .configurations = USB_DEVICE_CONFIGURATION_COUNT,
@@ -154,7 +145,6 @@ static usb_device_class_config_list_struct_t UsbDeviceCompositeConfigList = {
                     .count = 1,
                     .interface = (usb_device_interface_struct_t[]) {{
                         .alternateSetting = USB_INTERFACE_ALTERNATE_SETTING_NONE,
-                        .classSpecific = NULL,
                         .endpointList = {
                             USB_MOUSE_ENDPOINT_COUNT,
                             (usb_device_endpoint_struct_t[USB_MOUSE_ENDPOINT_COUNT]) {{
