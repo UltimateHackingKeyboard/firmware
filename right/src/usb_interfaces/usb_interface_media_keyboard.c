@@ -1,42 +1,30 @@
-#include "key_action.h"
-#include "fsl_port.h"
-#include "usb_api.h"
 #include "usb_composite_device.h"
-#include "peripherals/test_led.h"
-#include "fsl_i2c.h"
-#include "i2c.h"
-#include "i2c_addresses.h"
-
-static usb_device_endpoint_struct_t UsbMediaKeyboardEndpoints[USB_MEDIA_KEYBOARD_ENDPOINT_COUNT] = {{
-    USB_MEDIA_KEYBOARD_ENDPOINT_INDEX | (USB_IN << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT),
-    USB_ENDPOINT_INTERRUPT,
-    USB_MEDIA_KEYBOARD_INTERRUPT_IN_PACKET_SIZE,
-}};
-
-static usb_device_interface_struct_t UsbMediaKeyboardInterface[] = {{
-    USB_INTERFACE_ALTERNATE_SETTING_NONE,
-    {USB_MEDIA_KEYBOARD_ENDPOINT_COUNT, UsbMediaKeyboardEndpoints},
-    NULL,
-}};
-
-static usb_device_interfaces_struct_t UsbMediaKeyboardInterfaces[USB_MEDIA_KEYBOARD_INTERFACE_COUNT] = {{
-    USB_CLASS_HID,
-    USB_HID_SUBCLASS_BOOT,
-    USB_HID_PROTOCOL_KEYBOARD,
-    USB_MEDIA_KEYBOARD_INTERFACE_INDEX,
-    UsbMediaKeyboardInterface,
-    sizeof(UsbMediaKeyboardInterface) / sizeof(usb_device_interfaces_struct_t),
-}};
-
-static usb_device_interface_list_t UsbMediaKeyboardInterfaceList[USB_DEVICE_CONFIGURATION_COUNT] = {{
-    USB_MEDIA_KEYBOARD_INTERFACE_COUNT,
-    UsbMediaKeyboardInterfaces,
-}};
 
 usb_device_class_struct_t UsbMediaKeyboardClass = {
-    UsbMediaKeyboardInterfaceList,
-    kUSB_DeviceClassTypeHid,
-    USB_DEVICE_CONFIGURATION_COUNT,
+    .type = kUSB_DeviceClassTypeHid,
+    .configurations = USB_DEVICE_CONFIGURATION_COUNT,
+    .interfaceList = (usb_device_interface_list_t[USB_DEVICE_CONFIGURATION_COUNT]) {{
+        .count = USB_MEDIA_KEYBOARD_INTERFACE_COUNT,
+        .interfaces = (usb_device_interfaces_struct_t[USB_MEDIA_KEYBOARD_INTERFACE_COUNT]) {{
+            .classCode = USB_CLASS_HID,
+            .subclassCode = USB_HID_SUBCLASS_BOOT,
+            .protocolCode = USB_HID_PROTOCOL_KEYBOARD,
+            .interfaceNumber = USB_MEDIA_KEYBOARD_INTERFACE_INDEX,
+            .count = 1,
+            .interface = (usb_device_interface_struct_t[]) {{
+                .alternateSetting = USB_INTERFACE_ALTERNATE_SETTING_NONE,
+                .classSpecific = NULL,
+                .endpointList = {
+                    USB_MEDIA_KEYBOARD_ENDPOINT_COUNT,
+                    (usb_device_endpoint_struct_t[USB_MEDIA_KEYBOARD_ENDPOINT_COUNT]) {{
+                        .endpointAddress = USB_MEDIA_KEYBOARD_ENDPOINT_INDEX | (USB_IN << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT),
+                        .transferType = USB_ENDPOINT_INTERRUPT,
+                        .maxPacketSize = USB_MEDIA_KEYBOARD_INTERRUPT_IN_PACKET_SIZE,
+                    }}
+                }
+            }}
+        }}
+    }}
 };
 
 uint32_t UsbMediaKeyboardActionCounter;

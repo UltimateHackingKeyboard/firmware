@@ -15,7 +15,8 @@ usb_device_class_struct_t UsbBasicKeyboardClass = {
                 .alternateSetting = USB_INTERFACE_ALTERNATE_SETTING_NONE,
                 .classSpecific = NULL,
                 .endpointList = {
-                    USB_BASIC_KEYBOARD_ENDPOINT_COUNT, (usb_device_endpoint_struct_t[USB_BASIC_KEYBOARD_ENDPOINT_COUNT]) {{
+                    USB_BASIC_KEYBOARD_ENDPOINT_COUNT,
+                    (usb_device_endpoint_struct_t[USB_BASIC_KEYBOARD_ENDPOINT_COUNT]) {{
                         .endpointAddress = USB_BASIC_KEYBOARD_ENDPOINT_INDEX | (USB_IN << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT),
                         .transferType = USB_ENDPOINT_INTERRUPT,
                         .maxPacketSize = USB_BASIC_KEYBOARD_INTERRUPT_IN_PACKET_SIZE,
