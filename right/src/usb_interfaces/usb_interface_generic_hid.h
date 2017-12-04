@@ -25,7 +25,6 @@
 
 // Variables:
 
-    extern usb_device_class_struct_t UsbGenericHidClass;
     extern uint32_t UsbGenericHidActionCounter;
     extern uint8_t GenericHidInBuffer[USB_GENERIC_HID_IN_BUFFER_LENGTH];
     extern uint8_t GenericHidOutBuffer[USB_GENERIC_HID_OUT_BUFFER_LENGTH];

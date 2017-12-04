@@ -33,7 +33,6 @@
 
     extern bool IsUsbBasicKeyboardReportSent;
     extern uint32_t UsbBasicKeyboardActionCounter;
-    extern usb_device_class_struct_t UsbBasicKeyboardClass;
     extern usb_basic_keyboard_report_t* ActiveUsbBasicKeyboardReport;
 
 // Functions:

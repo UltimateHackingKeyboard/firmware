@@ -30,7 +30,6 @@
 
     extern bool IsUsbMediaKeyboardReportSent;
     extern uint32_t UsbMediaKeyboardActionCounter;
-    extern usb_device_class_struct_t UsbMediaKeyboardClass;
     extern usb_media_keyboard_report_t* ActiveUsbMediaKeyboardReport;
 
 // Functions:

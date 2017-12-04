@@ -1,32 +1,5 @@
 #include "usb_composite_device.h"
 
-usb_device_class_struct_t UsbMediaKeyboardClass = {
-    .type = kUSB_DeviceClassTypeHid,
-    .configurations = USB_DEVICE_CONFIGURATION_COUNT,
-    .interfaceList = (usb_device_interface_list_t[USB_DEVICE_CONFIGURATION_COUNT]) {{
-        .count = USB_MEDIA_KEYBOARD_INTERFACE_COUNT,
-        .interfaces = (usb_device_interfaces_struct_t[USB_MEDIA_KEYBOARD_INTERFACE_COUNT]) {{
-            .classCode = USB_CLASS_HID,
-            .subclassCode = USB_HID_SUBCLASS_BOOT,
-            .protocolCode = USB_HID_PROTOCOL_KEYBOARD,
-            .interfaceNumber = USB_MEDIA_KEYBOARD_INTERFACE_INDEX,
-            .count = 1,
-            .interface = (usb_device_interface_struct_t[]) {{
-                .alternateSetting = USB_INTERFACE_ALTERNATE_SETTING_NONE,
-                .classSpecific = NULL,
-                .endpointList = {
-                    USB_MEDIA_KEYBOARD_ENDPOINT_COUNT,
-                    (usb_device_endpoint_struct_t[USB_MEDIA_KEYBOARD_ENDPOINT_COUNT]) {{
-                        .endpointAddress = USB_MEDIA_KEYBOARD_ENDPOINT_INDEX | (USB_IN << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT),
-                        .transferType = USB_ENDPOINT_INTERRUPT,
-                        .maxPacketSize = USB_MEDIA_KEYBOARD_INTERRUPT_IN_PACKET_SIZE,
-                    }}
-                }
-            }}
-        }}
-    }}
-};
-
 uint32_t UsbMediaKeyboardActionCounter;
 static usb_media_keyboard_report_t usbMediaKeyboardReports[2];
 usb_media_keyboard_report_t* ActiveUsbMediaKeyboardReport = usbMediaKeyboardReports;
