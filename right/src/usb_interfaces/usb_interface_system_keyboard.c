@@ -39,6 +39,7 @@ usb_device_class_struct_t UsbSystemKeyboardClass = {
     USB_DEVICE_CONFIGURATION_COUNT,
 };
 
+uint32_t UsbSystemKeyboardActionCounter;
 static usb_system_keyboard_report_t usbSystemKeyboardReports[2];
 usb_system_keyboard_report_t* ActiveUsbSystemKeyboardReport = usbSystemKeyboardReports;
 bool IsUsbSystemKeyboardReportSent = false;
@@ -64,6 +65,7 @@ static usb_status_t UsbSystemKeyboardAction(void)
         UsbCompositeDevice.systemKeyboardHandle, USB_SYSTEM_KEYBOARD_ENDPOINT_INDEX,
         (uint8_t*)getInactiveUsbSystemKeyboardReport(), USB_SYSTEM_KEYBOARD_REPORT_LENGTH);
     IsUsbSystemKeyboardReportSent = true;
+    UsbSystemKeyboardActionCounter++;
     return status;
 }
 

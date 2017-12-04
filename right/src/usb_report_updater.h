@@ -68,6 +68,7 @@
     extern uint16_t DoubleTapSwitchLayerTimeout;
     extern mouse_kinetic_state_t MouseMoveState;
     extern mouse_kinetic_state_t MouseScrollState;
+    extern uint32_t UsbReportUpdateCounter;
 
 // Functions:
 

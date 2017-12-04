@@ -10,6 +10,10 @@
 
     #define KEY_SCANNER_INTERVAL_USEC (1000 / RIGHT_KEY_MATRIX_ROWS_NUM)
 
+// Variables:
+
+    extern uint32_t KeyScannerCounter;
+
 // Functions:
 
     void InitKeyScanner(void);

@@ -1,9 +1,12 @@
 #include "fsl_pit.h"
 #include "key_scanner.h"
 
+uint32_t KeyScannerCounter;
+
 void PIT_KEY_SCANNER_HANDLER(void)
 {
     KeyMatrix_ScanRow(&RightKeyMatrix);
+    KeyScannerCounter++;
     PIT_ClearStatusFlags(PIT, PIT_KEY_SCANNER_CHANNEL, PIT_TFLG_TIF_MASK);
 }
 

@@ -39,6 +39,7 @@ usb_device_class_struct_t UsbMouseClass = {
     USB_DEVICE_CONFIGURATION_COUNT,
 };
 
+uint32_t UsbMouseActionCounter;
 usb_mouse_report_t usbMouseReports[2];
 usb_mouse_report_t* ActiveUsbMouseReport = usbMouseReports;
 bool IsUsbMouseReportSent = false;
@@ -58,16 +59,11 @@ void ResetActiveUsbMouseReport(void)
     bzero(ActiveUsbMouseReport, USB_MOUSE_REPORT_LENGTH);
 }
 
-static uint32_t count1 = 0;
-static uint32_t count2 = 0;
-static uint32_t count3 = 0;
-
 static volatile usb_status_t usbMouseAction(void)
 {
-    count3++;
     usb_mouse_report_t *mouseReport = getInactiveUsbMouseReport();
-    SetDebugBufferUint16(29, mouseReport->x);
-    SetDebugBufferUint16(31, mouseReport->y);
+    SetDebugBufferUint16(61, mouseReport->x);
+    SetDebugBufferUint16(63, mouseReport->y);
     IsUsbMouseReportSent = true;
     return USB_DeviceHidSend(UsbCompositeDevice.mouseHandle, USB_MOUSE_ENDPOINT_INDEX,
                (uint8_t*)mouseReport, USB_MOUSE_REPORT_LENGTH);
@@ -75,17 +71,11 @@ static volatile usb_status_t usbMouseAction(void)
 
 usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param)
 {
-    SetDebugBufferUint32(17, count1);
-    SetDebugBufferUint32(21, count2);
-    SetDebugBufferUint32(25, count3);
-
-    count1++;
-
+    UsbMouseActionCounter++;
     usb_status_t error = kStatus_USB_Error;
 
     switch (event) {
         case kUSB_DeviceHidEventSendResponse:
-            count2++;
             if (UsbCompositeDevice.attach) {
                 return usbMouseAction();
             }

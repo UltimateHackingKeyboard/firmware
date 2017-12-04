@@ -5,6 +5,12 @@
 #include "i2c_watchdog.h"
 #include "buffer.h"
 #include "timer.h"
+#include "key_scanner.h"
+#include "usb_report_updater.h"
+#include "usb_interfaces/usb_interface_basic_keyboard.h"
+#include "usb_interfaces/usb_interface_media_keyboard.h"
+#include "usb_interfaces/usb_interface_system_keyboard.h"
+#include "usb_interfaces/usb_interface_mouse.h"
 
 uint8_t DebugBuffer[USB_GENERIC_HID_OUT_BUFFER_LENGTH];
 
@@ -14,7 +20,14 @@ void UsbCommand_GetDebugBuffer(void)
     SetDebugBufferUint32(5, I2cSlaveScheduler_Counter);
     SetDebugBufferUint32(9, I2cWatchdog_WatchCounter);
     SetDebugBufferUint32(13, I2cWatchdog_RecoveryCounter);
-    SetDebugBufferUint32(40, CurrentTime);
+    SetDebugBufferUint32(17, KeyScannerCounter);
+    SetDebugBufferUint32(21, UsbReportUpdateCounter);
+    SetDebugBufferUint32(25, CurrentTime);
+    SetDebugBufferUint32(29, UsbGenericHidActionCounter);
+    SetDebugBufferUint32(33, UsbBasicKeyboardActionCounter);
+    SetDebugBufferUint32(37, UsbMediaKeyboardActionCounter);
+    SetDebugBufferUint32(41, UsbSystemKeyboardActionCounter);
+    SetDebugBufferUint32(45, UsbMouseActionCounter);
 
     memcpy(GenericHidOutBuffer, DebugBuffer, USB_GENERIC_HID_OUT_BUFFER_LENGTH);
 }

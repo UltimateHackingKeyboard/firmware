@@ -39,6 +39,7 @@ usb_device_class_struct_t UsbMediaKeyboardClass = {
     USB_DEVICE_CONFIGURATION_COUNT,
 };
 
+uint32_t UsbMediaKeyboardActionCounter;
 static usb_media_keyboard_report_t usbMediaKeyboardReports[2];
 usb_media_keyboard_report_t* ActiveUsbMediaKeyboardReport = usbMediaKeyboardReports;
 bool IsUsbMediaKeyboardReportSent = false;
@@ -64,6 +65,7 @@ static usb_status_t UsbMediaKeyboardAction(void)
         UsbCompositeDevice.mediaKeyboardHandle, USB_MEDIA_KEYBOARD_ENDPOINT_INDEX,
         (uint8_t*)getInactiveUsbMediaKeyboardReport(), USB_MEDIA_KEYBOARD_REPORT_LENGTH);
     IsUsbMediaKeyboardReportSent = true;
+    UsbMediaKeyboardActionCounter++;
     return status;
 }
 

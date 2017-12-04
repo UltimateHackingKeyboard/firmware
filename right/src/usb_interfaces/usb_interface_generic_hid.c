@@ -42,6 +42,7 @@ usb_device_class_struct_t UsbGenericHidClass = {
     USB_DEVICE_CONFIGURATION_COUNT,
 };
 
+uint32_t UsbGenericHidActionCounter;
 uint8_t GenericHidInBuffer[USB_GENERIC_HID_IN_BUFFER_LENGTH];
 uint8_t GenericHidOutBuffer[USB_GENERIC_HID_OUT_BUFFER_LENGTH];
 
@@ -67,6 +68,7 @@ usb_status_t UsbGenericHidCallback(class_handle_t handle, uint32_t event, void *
                               USB_GENERIC_HID_ENDPOINT_IN_INDEX,
                               GenericHidOutBuffer,
                               USB_GENERIC_HID_OUT_BUFFER_LENGTH);
+            UsbGenericHidActionCounter++;
             return UsbReceiveData();
             break;
         case kUSB_DeviceHidEventGetReport:
