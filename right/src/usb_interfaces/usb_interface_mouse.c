@@ -1,46 +1,34 @@
 #include "usb_composite_device.h"
-#include "usb_interface_mouse.h"
-#include "fsl_i2c.h"
-#include "i2c.h"
-#include "peripherals/reset_button.h"
-#include "key_action.h"
-#include "buffer.h"
-#include "usb_commands/usb_command_get_debug_buffer.h"
-
-static usb_device_endpoint_struct_t UsbMouseEndpoints[USB_MOUSE_ENDPOINT_COUNT] = {{
-    USB_MOUSE_ENDPOINT_INDEX | (USB_IN << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT),
-    USB_ENDPOINT_INTERRUPT,
-    USB_MOUSE_INTERRUPT_IN_PACKET_SIZE,
-}};
-
-static usb_device_interface_struct_t UsbMouseInterface[] = {{
-    USB_INTERFACE_ALTERNATE_SETTING_NONE,
-    {USB_MOUSE_ENDPOINT_COUNT, UsbMouseEndpoints},
-    NULL,
-}};
-
-static usb_device_interfaces_struct_t UsbMouseInterfaces[USB_MOUSE_INTERFACE_COUNT] = {{
-    USB_CLASS_HID,
-    USB_HID_SUBCLASS_BOOT,
-    USB_HID_PROTOCOL_MOUSE,
-    USB_MOUSE_INTERFACE_INDEX,
-    UsbMouseInterface,
-    sizeof(UsbMouseInterface) / sizeof(usb_device_interfaces_struct_t),
-}};
-
-static usb_device_interface_list_t UsbMouseInterfaceList[USB_DEVICE_CONFIGURATION_COUNT] = {{
-    USB_MOUSE_INTERFACE_COUNT,
-    UsbMouseInterfaces,
-}};
 
 usb_device_class_struct_t UsbMouseClass = {
-    UsbMouseInterfaceList,
-    kUSB_DeviceClassTypeHid,
-    USB_DEVICE_CONFIGURATION_COUNT,
+    .type = kUSB_DeviceClassTypeHid,
+    .configurations = USB_DEVICE_CONFIGURATION_COUNT,
+    .interfaceList = (usb_device_interface_list_t[USB_DEVICE_CONFIGURATION_COUNT]) {{
+        .count = USB_MOUSE_INTERFACE_COUNT,
+        .interfaces = (usb_device_interfaces_struct_t[USB_MOUSE_INTERFACE_COUNT]) {{
+            .classCode = USB_CLASS_HID,
+            .subclassCode = USB_HID_SUBCLASS_BOOT,
+            .protocolCode = USB_HID_PROTOCOL_MOUSE,
+            .interfaceNumber = USB_MOUSE_INTERFACE_INDEX,
+            .count = 1,
+            .interface = (usb_device_interface_struct_t[]) {{
+                .alternateSetting = USB_INTERFACE_ALTERNATE_SETTING_NONE,
+                .classSpecific = NULL,
+                .endpointList = {
+                    USB_MOUSE_ENDPOINT_COUNT,
+                    (usb_device_endpoint_struct_t[USB_MOUSE_ENDPOINT_COUNT]) {{
+                        .endpointAddress = USB_MOUSE_ENDPOINT_INDEX | (USB_IN << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT),
+                        .transferType = USB_ENDPOINT_INTERRUPT,
+                        .maxPacketSize = USB_MOUSE_INTERRUPT_IN_PACKET_SIZE,
+                    }}
+                }
+            }}
+        }}
+    }}
 };
 
 uint32_t UsbMouseActionCounter;
-usb_mouse_report_t usbMouseReports[2];
+static usb_mouse_report_t usbMouseReports[2];
 usb_mouse_report_t* ActiveUsbMouseReport = usbMouseReports;
 bool IsUsbMouseReportSent = false;
 
