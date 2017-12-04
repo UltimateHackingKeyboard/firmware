@@ -1,45 +1,38 @@
 #include "usb_composite_device.h"
-#include "usb_interface_generic_hid.h"
 #include "usb_protocol_handler.h"
 
-static usb_device_endpoint_struct_t UsbGenericHidEndpoints[USB_GENERIC_HID_ENDPOINT_COUNT] =
-{
-    {
-        USB_GENERIC_HID_ENDPOINT_IN_INDEX | (USB_IN << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT),
-        USB_ENDPOINT_INTERRUPT,
-        USB_GENERIC_HID_INTERRUPT_IN_PACKET_SIZE,
-    },
-    {
-        USB_GENERIC_HID_ENDPOINT_OUT_INDEX | (USB_OUT << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT),
-        USB_ENDPOINT_INTERRUPT,
-        USB_GENERIC_HID_INTERRUPT_OUT_PACKET_SIZE,
-    }
-};
-
-static usb_device_interface_struct_t UsbGenericHidInterface[] = {{
-    USB_INTERFACE_ALTERNATE_SETTING_NONE,
-    {USB_GENERIC_HID_ENDPOINT_COUNT, UsbGenericHidEndpoints},
-    NULL,
-}};
-
-static usb_device_interfaces_struct_t UsbGenericHidInterfaces[USB_GENERIC_HID_INTERFACE_COUNT] = {{
-    USB_CLASS_HID,
-    USB_HID_SUBCLASS_NONE,
-    USB_HID_PROTOCOL_NONE,
-    USB_GENERIC_HID_INTERFACE_INDEX,
-    UsbGenericHidInterface,
-    sizeof(UsbGenericHidInterface) / sizeof(usb_device_interfaces_struct_t),
-}};
-
-static usb_device_interface_list_t UsbGenericHidInterfaceList[USB_DEVICE_CONFIGURATION_COUNT] = {{
-    USB_GENERIC_HID_INTERFACE_COUNT,
-    UsbGenericHidInterfaces,
-}};
-
 usb_device_class_struct_t UsbGenericHidClass = {
-    UsbGenericHidInterfaceList,
-    kUSB_DeviceClassTypeHid,
-    USB_DEVICE_CONFIGURATION_COUNT,
+    .type = kUSB_DeviceClassTypeHid,
+    .configurations = USB_DEVICE_CONFIGURATION_COUNT,
+    .interfaceList = (usb_device_interface_list_t [USB_DEVICE_CONFIGURATION_COUNT]) {{
+        .count = USB_GENERIC_HID_INTERFACE_COUNT,
+        .interfaces = (usb_device_interfaces_struct_t[USB_GENERIC_HID_INTERFACE_COUNT]) {{
+            .classCode = USB_CLASS_HID,
+            .subclassCode = USB_HID_SUBCLASS_NONE,
+            .protocolCode = USB_HID_PROTOCOL_NONE,
+            .interfaceNumber = USB_GENERIC_HID_INTERFACE_INDEX,
+            .count = 1,
+            .interface = (usb_device_interface_struct_t[]) {{
+                .alternateSetting = USB_INTERFACE_ALTERNATE_SETTING_NONE,
+                .classSpecific = NULL,
+                .endpointList = {
+                    .count = USB_GENERIC_HID_ENDPOINT_COUNT,
+                    .endpoint = (usb_device_endpoint_struct_t[USB_GENERIC_HID_ENDPOINT_COUNT]) {
+                        {
+                            .endpointAddress = USB_GENERIC_HID_ENDPOINT_IN_INDEX | (USB_IN << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT),
+                            .transferType = USB_ENDPOINT_INTERRUPT,
+                            .maxPacketSize = USB_GENERIC_HID_INTERRUPT_IN_PACKET_SIZE,
+                        },
+                        {
+                            .endpointAddress = USB_GENERIC_HID_ENDPOINT_OUT_INDEX | (USB_OUT << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT),
+                            .transferType = USB_ENDPOINT_INTERRUPT,
+                            .maxPacketSize = USB_GENERIC_HID_INTERRUPT_OUT_PACKET_SIZE,
+                        }
+                    }
+                }
+            }}
+        }}
+    }}
 };
 
 uint32_t UsbGenericHidActionCounter;
