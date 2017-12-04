@@ -162,18 +162,18 @@ static usb_device_class_config_list_struct_t UsbDeviceCompositeConfigList = {
 
 static usb_status_t usbDeviceCallback(usb_device_handle handle, uint32_t event, void *param)
 {
-    usb_status_t error = kStatus_USB_Error;
+    usb_status_t status = kStatus_USB_Error;
     uint16_t *temp16 = (uint16_t*)param;
     uint8_t *temp8 = (uint8_t*)param;
 
     if (!param && event != kUSB_DeviceEventBusReset && event != kUSB_DeviceEventSetInterface) {
-        return error;
+        return status;
     }
 
     switch (event) {
         case kUSB_DeviceEventBusReset:
             UsbCompositeDevice.attach = 0;
-            error = kStatus_USB_Success;
+            status = kStatus_USB_Success;
             break;
         case kUSB_DeviceEventSetConfiguration:
             UsbCompositeDevice.attach = 1;
@@ -183,11 +183,11 @@ static usb_status_t usbDeviceCallback(usb_device_handle handle, uint32_t event, 
             UsbMediaKeyboardSetConfiguration(UsbCompositeDevice.mediaKeyboardHandle, *temp8);
             UsbSystemKeyboardSetConfiguration(UsbCompositeDevice.systemKeyboardHandle, *temp8);
             UsbMouseSetConfiguration(UsbCompositeDevice.mouseHandle, *temp8);
-            error = kStatus_USB_Success;
+            status = kStatus_USB_Success;
             break;
         case kUSB_DeviceEventGetConfiguration:
             *temp8 = UsbCompositeDevice.currentConfiguration;
-            error = kStatus_USB_Success;
+            status = kStatus_USB_Success;
             break;
         case kUSB_DeviceEventSetInterface:
             if (UsbCompositeDevice.attach) {
@@ -200,7 +200,7 @@ static usb_status_t usbDeviceCallback(usb_device_handle handle, uint32_t event, 
                     UsbMediaKeyboardSetInterface(UsbCompositeDevice.mediaKeyboardHandle, interface, alternateSetting);
                     UsbSystemKeyboardSetInterface(UsbCompositeDevice.systemKeyboardHandle, interface, alternateSetting);
                     UsbMouseSetInterface(UsbCompositeDevice.mouseHandle, interface, alternateSetting);
-                    error = kStatus_USB_Success;
+                    status = kStatus_USB_Success;
                 }
             }
             break;
@@ -208,32 +208,32 @@ static usb_status_t usbDeviceCallback(usb_device_handle handle, uint32_t event, 
             uint8_t interface = (uint8_t)((*temp16 & 0xFF00) >> 8);
             if (interface < USB_DEVICE_CONFIG_HID) {
                 *temp16 = (*temp16 & 0xFF00) | UsbCompositeDevice.currentInterfaceAlternateSetting[interface];
-                error = kStatus_USB_Success;
+                status = kStatus_USB_Success;
             } else {
-                error = kStatus_USB_InvalidRequest;
+                status = kStatus_USB_InvalidRequest;
             }
             break;
         case kUSB_DeviceEventGetDeviceDescriptor:
-            error = USB_DeviceGetDeviceDescriptor(handle, (usb_device_get_device_descriptor_struct_t *)param);
+            status = USB_DeviceGetDeviceDescriptor(handle, (usb_device_get_device_descriptor_struct_t *)param);
             break;
         case kUSB_DeviceEventGetConfigurationDescriptor:
-            error = USB_DeviceGetConfigurationDescriptor(handle, (usb_device_get_configuration_descriptor_struct_t *)param);
+            status = USB_DeviceGetConfigurationDescriptor(handle, (usb_device_get_configuration_descriptor_struct_t *)param);
             break;
         case kUSB_DeviceEventGetStringDescriptor:
-            error = USB_DeviceGetStringDescriptor(handle, (usb_device_get_string_descriptor_struct_t *)param);
+            status = USB_DeviceGetStringDescriptor(handle, (usb_device_get_string_descriptor_struct_t *)param);
             break;
         case kUSB_DeviceEventGetHidDescriptor:
-            error = USB_DeviceGetHidDescriptor(handle, (usb_device_get_hid_descriptor_struct_t *)param);
+            status = USB_DeviceGetHidDescriptor(handle, (usb_device_get_hid_descriptor_struct_t *)param);
             break;
         case kUSB_DeviceEventGetHidReportDescriptor:
-            error = USB_DeviceGetHidReportDescriptor(handle, (usb_device_get_hid_report_descriptor_struct_t *)param);
+            status = USB_DeviceGetHidReportDescriptor(handle, (usb_device_get_hid_report_descriptor_struct_t *)param);
             break;
         case kUSB_DeviceEventGetHidPhysicalDescriptor:
-            error = USB_DeviceGetHidPhysicalDescriptor(handle, (usb_device_get_hid_physical_descriptor_struct_t *)param);
+            status = USB_DeviceGetHidPhysicalDescriptor(handle, (usb_device_get_hid_physical_descriptor_struct_t *)param);
             break;
     }
 
-    return error;
+    return status;
 }
 
 void USB0_IRQHandler(void)
@@ -245,9 +245,6 @@ void USB0_IRQHandler(void)
 
 void InitUsb(void)
 {
-    uint8_t usbDeviceKhciIrq[] = USB_IRQS;
-    uint8_t irqNumber = usbDeviceKhciIrq[CONTROLLER_ID - kUSB_ControllerKhci0];
-
     SystemCoreClockUpdate();
     CLOCK_EnableUsbfs0Clock(kCLOCK_UsbSrcIrc48M, 48000000);
 
@@ -259,6 +256,8 @@ void InitUsb(void)
     UsbCompositeDevice.systemKeyboardHandle = UsbDeviceCompositeConfigList.config[USB_SYSTEM_KEYBOARD_INTERFACE_INDEX].classHandle;
     UsbCompositeDevice.mouseHandle = UsbDeviceCompositeConfigList.config[USB_MOUSE_INTERFACE_INDEX].classHandle;
 
+    uint8_t usbDeviceKhciIrq[] = USB_IRQS;
+    uint8_t irqNumber = usbDeviceKhciIrq[CONTROLLER_ID - kUSB_ControllerKhci0];
     NVIC_EnableIRQ((IRQn_Type)irqNumber);
 
     USB_DeviceRun(UsbCompositeDevice.deviceHandle);
