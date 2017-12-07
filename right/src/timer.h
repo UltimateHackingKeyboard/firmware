@@ -16,6 +16,8 @@
 // Functions:
 
     void Timer_Init(void);
+    void Timer_SetCurrentTime(uint32_t *time);
     uint32_t Timer_GetElapsedTime(uint32_t *time);
+    uint32_t Timer_GetElapsedTimeAndSetCurrent(uint32_t *time);
 
 #endif

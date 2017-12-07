@@ -24,9 +24,20 @@ void Timer_Init(void)
     PIT_StartTimer(PIT, PIT_TIMER_CHANNEL);
 }
 
+void Timer_SetCurrentTime(uint32_t *time)
+{
+    *time = CurrentTime;
+}
+
 uint32_t Timer_GetElapsedTime(uint32_t *time)
 {
     uint32_t elapsedTime = CurrentTime - *time;
+    return elapsedTime;
+}
+
+uint32_t Timer_GetElapsedTimeAndSetCurrent(uint32_t *time)
+{
+    uint32_t elapsedTime = Timer_GetElapsedTime(time);
     *time = CurrentTime;
     return elapsedTime;
 }

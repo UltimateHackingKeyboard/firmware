@@ -207,7 +207,7 @@ void applyKeyAction(key_state_t *keyState, key_action_t *action)
         case KeyActionType_SwitchLayer:
             if (!keyState->previous && previousLayer == LayerId_Base && action->switchLayer.mode == SwitchLayerMode_HoldAndDoubleTapToggle) {
                 if (doubleTapSwitchLayerKey) {
-                    if (Timer_GetElapsedTime(&doubleTapSwitchLayerStartTime) < DoubleTapSwitchLayerTimeout) {
+                    if (Timer_GetElapsedTimeAndSetCurrent(&doubleTapSwitchLayerStartTime) < DoubleTapSwitchLayerTimeout) {
                         ToggledLayer = action->switchLayer.layer;
                     }
                     doubleTapSwitchLayerKey = NULL;
@@ -237,7 +237,7 @@ void updateActiveUsbReports(void)
     memset(activeMouseStates, 0, ACTIVE_MOUSE_STATES_COUNT);
 
     static uint8_t previousModifiers = 0;
-    elapsedTime = Timer_GetElapsedTime(&UsbReportUpdateTime);
+    elapsedTime = Timer_GetElapsedTimeAndSetCurrent(&UsbReportUpdateTime);
 
     basicScancodeIndex = 0;
     mediaScancodeIndex = 0;
@@ -346,10 +346,18 @@ bool UsbSystemKeyboardReportEverSent = false;
 bool UsbMouseReportEverSentEverSent = false;
 
 uint32_t UsbReportUpdateCounter;
+static uint32_t lastUsbUpdateTime;
 
 void UpdateUsbReports(void)
 {
     UsbReportUpdateCounter++;
+
+    if (Timer_GetElapsedTime(&lastUsbUpdateTime) > 100) {
+        UsbBasicKeyboardReportEverSent = false;
+        UsbMediaKeyboardReportEverSent = false;
+        UsbSystemKeyboardReportEverSent = false;
+        UsbMouseReportEverSentEverSent = false;
+    }
 
     if (IsUsbBasicKeyboardReportSent) {
         UsbBasicKeyboardReportEverSent = true;
@@ -397,4 +405,6 @@ void UpdateUsbReports(void)
     IsUsbMediaKeyboardReportSent = false;
     IsUsbSystemKeyboardReportSent = false;
     IsUsbMouseReportSent = false;
+
+    Timer_SetCurrentTime(&lastUsbUpdateTime);
 }
