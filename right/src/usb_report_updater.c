@@ -25,6 +25,7 @@ uint16_t DoubleTapSwitchLayerTimeout = 250;
 static bool activeMouseStates[ACTIVE_MOUSE_STATES_COUNT];
 
 mouse_kinetic_state_t MouseMoveState = {
+    .isScroll = false,
     .upState = SerializedMouseAction_MoveUp,
     .downState = SerializedMouseAction_MoveDown,
     .leftState = SerializedMouseAction_MoveLeft,
@@ -38,6 +39,7 @@ mouse_kinetic_state_t MouseMoveState = {
 };
 
 mouse_kinetic_state_t MouseScrollState = {
+    .isScroll = true,
     .upState = SerializedMouseAction_ScrollDown,
     .downState = SerializedMouseAction_ScrollUp,
     .leftState = SerializedMouseAction_ScrollLeft,
@@ -97,6 +99,11 @@ void processMouseKineticState(mouse_kinetic_state_t *kineticState)
 
         float distance = kineticState->currentSpeed * elapsedTime / 1000;
 
+        if (kineticState->isScroll && !kineticState->wasMoveAction) {
+            kineticState->xSum = 0;
+            kineticState->ySum = 0;
+        }
+
         if (activeMouseStates[kineticState->leftState]) {
             kineticState->xSum -= distance;
         } else if (activeMouseStates[kineticState->rightState]) {
@@ -108,6 +115,11 @@ void processMouseKineticState(mouse_kinetic_state_t *kineticState)
         kineticState->xSum = xSumFrac;
         kineticState->xOut = xSumInt;
 
+        if (kineticState->isScroll && !kineticState->wasMoveAction && kineticState->xOut == 0) {
+            kineticState->xOut = kineticState->xSum > 0 ? 1 : -1;
+            kineticState->xSum = 0;
+        }
+
         if (activeMouseStates[kineticState->upState]) {
             kineticState->ySum -= distance;
         } else if (activeMouseStates[kineticState->downState]) {
@@ -118,6 +130,11 @@ void processMouseKineticState(mouse_kinetic_state_t *kineticState)
         float ySumFrac = modff(kineticState->ySum, &ySumInt);
         kineticState->ySum = ySumFrac;
         kineticState->yOut = ySumInt;
+
+        if (kineticState->isScroll && !kineticState->wasMoveAction && kineticState->yOut == 0) {
+            kineticState->yOut = kineticState->ySum > 0 ? 1 : -1;
+            kineticState->ySum = 0;
+        }
     } else {
         kineticState->currentSpeed = 0;
     }

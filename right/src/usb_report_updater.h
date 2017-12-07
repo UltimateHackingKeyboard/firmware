@@ -43,6 +43,7 @@
     } mouse_speed_t;
 
     typedef struct {
+        bool isScroll;
         bool wasMoveAction;
         serialized_mouse_action_t upState;
         serialized_mouse_action_t downState;
