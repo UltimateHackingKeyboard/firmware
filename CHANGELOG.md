@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [5.0.1] - 2017-12-09
+
+Data Model: 4.0.0 (unchanged) | USB Protocol: 2.0.0 (unchanged) | Slave Protocol: 3.0.0 (unchanged)
+
+ - Make key presses continue to emit scancodes even if a USB interface (typically the mouse interface) is not polled by the host anymore.
+ - Make scrolling always immediately react to keypresses regardless of the previous internal scroll state.
+
 ## [5.0.0] - 2017-12-04
 
 Data Model: 4.0.0 (major bump) | USB Protocol: 2.0.0 (unchanged) | Slave Protocol: 3.0.0 (unchanged)
