@@ -71,7 +71,13 @@ void LedSlaveDriver_Init(uint8_t ledDriverId)
     currentLedDriverState->phase = LedDriverPhase_SetFunctionFrame;
     currentLedDriverState->ledIndex = 0;
     memset(LedDriverValues[ledDriverId], LED_BRIGHTNESS_LEVEL, LED_DRIVER_LED_COUNT);
-    LedDisplay_SetCurrentKeymapText();
+
+    if (ledDriverId == LedDriverId_Left) {
+        LedDisplay_SetIcon(LedDisplayIcon_CapsLock, false);
+        LedDisplay_SetIcon(LedDisplayIcon_Agent, false);
+        LedDisplay_SetIcon(LedDisplayIcon_Adaptive, false);
+        LedDisplay_SetCurrentKeymapText();
+    }
 }
 
 status_t LedSlaveDriver_Update(uint8_t ledDriverId)
