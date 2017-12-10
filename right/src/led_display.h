@@ -14,6 +14,11 @@
         LedDisplayIcon_Adaptive,
     } led_display_icon_t;
 
+// Variables:
+
+    extern uint8_t IconsAndLayerTextsBrightness;
+    extern uint8_t AlphanumericSegmentsBrightness;
+
 // Functions:
 
     void LedDisplay_SetText(uint8_t length, const char* text);

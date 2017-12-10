@@ -5,6 +5,9 @@
 #include "config_globals.h"
 #include "macros.h"
 #include "usb_report_updater.h"
+#include "led_display.h"
+#include "slave_scheduler.h"
+#include "slave_drivers/is31fl3731_driver.h"
 
 static parser_error_t parseModuleConfiguration(config_buffer_t *buffer)
 {
@@ -58,10 +61,6 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
     uint8_t iconsAndLayerTextsBrightness = ReadUInt8(buffer);
     uint8_t alphanumericSegmentsBrightness = ReadUInt8(buffer);
     uint8_t keyBacklightBrightness = ReadUInt8(buffer);
-
-    (void)iconsAndLayerTextsBrightness;
-    (void)alphanumericSegmentsBrightness;
-    (void)keyBacklightBrightness;
 
     // Mouse kinetic properties
 
@@ -138,6 +137,16 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
     if (!ParserRunDry) {
         DoubleTapSwitchLayerTimeout = doubleTapSwitchLayerTimeout;
 
+        // Update LED brightnesses and reinitialize LED drivers
+
+        IconsAndLayerTextsBrightness = iconsAndLayerTextsBrightness;
+        AlphanumericSegmentsBrightness = alphanumericSegmentsBrightness;
+        KeyBacklightBrightness = keyBacklightBrightness;
+        Slaves[SlaveId_LeftLedDriver].isConnected = false;
+        Slaves[SlaveId_RightLedDriver].isConnected = false;
+
+        // Update mouse key speeds
+
         MouseMoveState.initialSpeed = mouseMoveInitialSpeed;
         MouseMoveState.acceleration = mouseMoveAcceleration;
         MouseMoveState.deceleratedSpeed = mouseMoveDeceleratedSpeed;
@@ -149,6 +158,8 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
         MouseScrollState.deceleratedSpeed = mouseScrollDeceleratedSpeed;
         MouseScrollState.baseSpeed = mouseScrollBaseSpeed;
         MouseScrollState.acceleratedSpeed = mouseScrollAcceleratedSpeed;
+
+        // Update counts
 
         AllKeymapsCount = keymapCount;
         AllMacrosCount = macroCount;

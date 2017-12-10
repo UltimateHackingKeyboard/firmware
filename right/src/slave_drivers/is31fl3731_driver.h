@@ -12,7 +12,6 @@
     #define LED_CONTROL_REGISTERS_COMMAND_LENGTH 19
     #define PMW_REGISTER_UPDATE_CHUNK_SIZE 8
     #define PWM_REGISTER_BUFFER_LENGTH (1 + PMW_REGISTER_UPDATE_CHUNK_SIZE)
-    #define LED_BRIGHTNESS_LEVEL 0xff
 
     #define IS_ISO true
     #define ISO_KEY_LED_DRIVER_ID LedDriverId_Left
@@ -45,6 +44,7 @@
 
 // Variables:
 
+    extern uint8_t KeyBacklightBrightness;
     extern uint8_t LedDriverValues[LED_DRIVER_MAX_COUNT][LED_DRIVER_LED_COUNT];
 
 // Functions:

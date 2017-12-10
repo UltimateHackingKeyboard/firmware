@@ -3,6 +3,7 @@
 #include "slave_scheduler.h"
 #include "led_display.h"
 
+uint8_t KeyBacklightBrightness = 0xff;
 uint8_t LedDriverValues[LED_DRIVER_MAX_COUNT][LED_DRIVER_LED_COUNT];
 
 static led_driver_state_t ledDriverStates[LED_DRIVER_MAX_COUNT] = {
@@ -70,7 +71,7 @@ void LedSlaveDriver_Init(uint8_t ledDriverId)
     led_driver_state_t *currentLedDriverState = ledDriverStates + ledDriverId;
     currentLedDriverState->phase = LedDriverPhase_SetFunctionFrame;
     currentLedDriverState->ledIndex = 0;
-    memset(LedDriverValues[ledDriverId], LED_BRIGHTNESS_LEVEL, LED_DRIVER_LED_COUNT);
+    memset(LedDriverValues[ledDriverId], KeyBacklightBrightness, LED_DRIVER_LED_COUNT);
 
     if (ledDriverId == LedDriverId_Left) {
         LedDisplay_SetIcon(LedDisplayIcon_CapsLock, false);

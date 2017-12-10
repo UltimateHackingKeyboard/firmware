@@ -3,6 +3,9 @@
 #include "layer.h"
 #include "keymap.h"
 
+uint8_t IconsAndLayerTextsBrightness = 0xff;
+uint8_t AlphanumericSegmentsBrightness = 0xff;
+
 static const uint16_t capitalLetterToSegmentSet[] = {
     0b0000000011110111,
     0b0001001010001111,
@@ -69,13 +72,13 @@ void LedDisplay_SetText(uint8_t length, const char* text)
             allSegmentSets |= characterToSegmentSet(text[0]);
     }
 
-    LedDriverValues[LedDriverId_Left][11] = allSegmentSets & 0b00000001 ? LED_BRIGHTNESS_LEVEL : 0;
-    LedDriverValues[LedDriverId_Left][12] = allSegmentSets & 0b00000010 ? LED_BRIGHTNESS_LEVEL : 0;
+    LedDriverValues[LedDriverId_Left][11] = allSegmentSets & 0b00000001 ? AlphanumericSegmentsBrightness : 0;
+    LedDriverValues[LedDriverId_Left][12] = allSegmentSets & 0b00000010 ? AlphanumericSegmentsBrightness : 0;
     allSegmentSets >>= 2;
 
     for (uint8_t i = 24; i <= 136; i += 16) {
         for (uint8_t j = 0; j < 5; j++) {
-            LedDriverValues[LedDriverId_Left][i + j] = allSegmentSets & 1 << j ? LED_BRIGHTNESS_LEVEL : 0;
+            LedDriverValues[LedDriverId_Left][i + j] = allSegmentSets & 1 << j ? AlphanumericSegmentsBrightness : 0;
         }
         allSegmentSets >>= 5;
     }
@@ -94,11 +97,11 @@ void LedDisplay_SetLayer(uint8_t layerId)
     }
 
     if (layerId >= LayerId_Mod && layerId <= LayerId_Mouse) {
-        LedDriverValues[LedDriverId_Left][16 * layerId - 3] = LED_BRIGHTNESS_LEVEL;
+        LedDriverValues[LedDriverId_Left][16 * layerId - 3] = IconsAndLayerTextsBrightness;
     }
 }
 
 void LedDisplay_SetIcon(led_display_icon_t icon, bool isEnabled)
 {
-    LedDriverValues[LedDriverId_Left][8 + icon] = isEnabled ? LED_BRIGHTNESS_LEVEL : 0;
+    LedDriverValues[LedDriverId_Left][8 + icon] = isEnabled ? IconsAndLayerTextsBrightness : 0;
 }
