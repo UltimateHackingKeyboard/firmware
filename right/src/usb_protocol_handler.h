@@ -16,7 +16,7 @@
         UsbCommandId_GetProperty                = 0x00,
 
         UsbCommandId_Reenumerate                = 0x01,
-        UsbCommandId_JumpToModuleBootloader     = 0x12,
+        UsbCommandId_JumpToModuleBootloader     = 0x02, // was 0x12
         UsbCommandId_SendKbootCommandToModule   = 0x13,
 
         UsbCommandId_ReadHardwareConfig         = 0x0D,
