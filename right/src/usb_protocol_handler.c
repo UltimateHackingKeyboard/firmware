@@ -47,7 +47,7 @@ void UsbProtocolHandler(void)
             UsbCommand_ReadConfig();
             break;
         case UsbCommandId_WriteHardwareConfig:
-            UsbCommand_ReadConfig(false);
+            UsbCommand_WriteConfig(true);
             break;
         case UsbCommandId_GetKeyboardState:
             UsbCommand_GetKeyboardState();
