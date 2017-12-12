@@ -16,20 +16,20 @@
         UsbCommandId_GetProperty              = 0x00,
 
         UsbCommandId_Reenumerate              = 0x01,
-        UsbCommandId_JumpToModuleBootloader   = 0x02, // was 0x12
-        UsbCommandId_SendKbootCommandToModule = 0x03, // was 0x13
+        UsbCommandId_JumpToModuleBootloader   = 0x02,
+        UsbCommandId_SendKbootCommandToModule = 0x03,
 
-        UsbCommandId_ReadConfig               = 0x04, // was 0x0d and 0x0f
-        UsbCommandId_WriteHardwareConfig      = 0x05, // was 0x0e
-        UsbCommandId_WriteStagingUserConfig   = 0x06, // was 0x08
-        UsbCommandId_ApplyConfig              = 0x07, // was 0x09
-        UsbCommandId_LaunchEepromTransfer     = 0x08, // was 0x0C
+        UsbCommandId_ReadConfig               = 0x04,
+        UsbCommandId_WriteHardwareConfig      = 0x05,
+        UsbCommandId_WriteStagingUserConfig   = 0x06,
+        UsbCommandId_ApplyConfig              = 0x07,
+        UsbCommandId_LaunchEepromTransfer     = 0x08,
 
-        UsbCommandId_GetKeyboardState         = 0x10,
-        UsbCommandId_SetTestLed               = 0x14, // was 0x02
-        UsbCommandId_GetDebugBuffer           = 0x11,
-        UsbCommandId_GetAdcValue              = 0x0B,
-        UsbCommandId_SetLedPwmBrightness      = 0x0A,
+        UsbCommandId_GetDeviceState           = 0x09,
+        UsbCommandId_SetTestLed               = 0x0a,
+        UsbCommandId_GetDebugBuffer           = 0x0b,
+        UsbCommandId_GetAdcValue              = 0x0c,
+        UsbCommandId_SetLedPwmBrightness      = 0x0d,
     } usb_command_id_t;
 
     typedef enum {

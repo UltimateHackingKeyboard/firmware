@@ -25,23 +25,11 @@ void UsbProtocolHandler(void)
         case UsbCommandId_Reenumerate:
             UsbCommand_Reenumerate();
             break;
-        case UsbCommandId_SetTestLed:
-            UsbCommand_SetTestLed();
+        case UsbCommandId_JumpToModuleBootloader:
+            UsbCommand_JumpToModuleBootloader();
             break;
-        case UsbCommandId_WriteStagingUserConfig:
-            UsbCommand_WriteConfig(ConfigBufferId_StagingUserConfig);
-            break;
-        case UsbCommandId_ApplyConfig:
-            UsbCommand_ApplyConfig();
-            break;
-        case UsbCommandId_SetLedPwmBrightness:
-            UsbCommand_SetLedPwmBrightness();
-            break;
-        case UsbCommandId_GetAdcValue:
-            UsbCommand_GetAdcValue();
-            break;
-        case UsbCommandId_LaunchEepromTransfer:
-            UsbCommand_LaunchEepromTransfer();
+        case UsbCommandId_SendKbootCommandToModule:
+            UsbCommand_SendKbootCommandToModule();
             break;
         case UsbCommandId_ReadConfig:
             UsbCommand_ReadConfig();
@@ -49,17 +37,29 @@ void UsbProtocolHandler(void)
         case UsbCommandId_WriteHardwareConfig:
             UsbCommand_WriteConfig(ConfigBufferId_HardwareConfig);
             break;
-        case UsbCommandId_GetKeyboardState:
+        case UsbCommandId_WriteStagingUserConfig:
+            UsbCommand_WriteConfig(ConfigBufferId_StagingUserConfig);
+            break;
+        case UsbCommandId_ApplyConfig:
+            UsbCommand_ApplyConfig();
+            break;
+        case UsbCommandId_LaunchEepromTransfer:
+            UsbCommand_LaunchEepromTransfer();
+            break;
+        case UsbCommandId_GetDeviceState:
             UsbCommand_GetKeyboardState();
+            break;
+        case UsbCommandId_SetTestLed:
+            UsbCommand_SetTestLed();
             break;
         case UsbCommandId_GetDebugBuffer:
             UsbCommand_GetDebugBuffer();
             break;
-        case UsbCommandId_JumpToModuleBootloader:
-            UsbCommand_JumpToModuleBootloader();
+        case UsbCommandId_GetAdcValue:
+            UsbCommand_GetAdcValue();
             break;
-        case UsbCommandId_SendKbootCommandToModule:
-            UsbCommand_SendKbootCommandToModule();
+        case UsbCommandId_SetLedPwmBrightness:
+            UsbCommand_SetLedPwmBrightness();
             break;
         default:
             SetUsbTxBufferUint8(0, UsbStatusCode_InvalidCommand);
