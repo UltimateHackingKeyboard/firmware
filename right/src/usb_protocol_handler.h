@@ -22,7 +22,7 @@
         UsbCommandId_ReadConfig                 = 0x04, // was 0x0d and 0x0f
         UsbCommandId_WriteHardwareConfig        = 0x05, // was 0x0e
         UsbCommandId_WriteStagingUserConfig     = 0x06, // was 0x08
-        UsbCommandId_ApplyConfig                = 0x09,
+        UsbCommandId_ApplyConfig                = 0x07, // was 0x09,
         UsbCommandId_LaunchEepromTransferLegacy = 0x0C,
 
         UsbCommandId_GetKeyboardState           = 0x10,
