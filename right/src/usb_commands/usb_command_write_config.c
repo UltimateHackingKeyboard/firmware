@@ -3,7 +3,7 @@
 #include "usb_protocol_handler.h"
 #include "eeprom.h"
 
-void UsbCommand_WriteConfig(bool isHardware)
+void UsbCommand_WriteConfig(config_buffer_id_t configBufferId)
 {
     uint8_t length = GetUsbRxBufferUint8(1);
     uint16_t offset = GetUsbRxBufferUint16(2);
@@ -14,8 +14,8 @@ void UsbCommand_WriteConfig(bool isHardware)
         return;
     }
 
-    uint8_t *buffer = isHardware ? HardwareConfigBuffer.buffer : StagingUserConfigBuffer.buffer;
-    uint16_t bufferLength = isHardware ? HARDWARE_CONFIG_SIZE : USER_CONFIG_SIZE;
+    uint8_t *buffer = ConfigBufferIdToConfigBuffer(configBufferId)->buffer;
+    uint16_t bufferLength = ConfigBufferIdToBufferSize(configBufferId);
 
     if (offset + length > bufferLength) {
         SetUsbTxBufferUint8(0, UsbStatusCode_WriteConfig_BufferOutOfBounds);

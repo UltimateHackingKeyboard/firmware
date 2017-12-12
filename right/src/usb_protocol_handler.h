@@ -20,8 +20,8 @@
         UsbCommandId_SendKbootCommandToModule   = 0x03, // was 0x13
 
         UsbCommandId_ReadConfig                 = 0x04, // was 0x0d and 0x0f
-        UsbCommandId_WriteHardwareConfig        = 0x0E,
-        UsbCommandId_WriteUserConfig            = 0x08,
+        UsbCommandId_WriteHardwareConfig        = 0x05, // was 0x0e
+        UsbCommandId_WriteStagingUserConfig     = 0x06, // was 0x08
         UsbCommandId_ApplyConfig                = 0x09,
         UsbCommandId_LaunchEepromTransferLegacy = 0x0C,
 

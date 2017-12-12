@@ -1,9 +1,9 @@
 #ifndef __USB_COMMAND_WRITE_CONFIG_H__
 #define __USB_COMMAND_WRITE_CONFIG_H__
 
-// Functions:
+// Includes:
 
-    void UsbCommand_WriteConfig(bool isHardware);
+    #include "config_parser/config_globals.h"
 
 // Typedefs:
 
@@ -11,5 +11,9 @@
         UsbStatusCode_WriteConfig_LengthTooLarge    = 2,
         UsbStatusCode_WriteConfig_BufferOutOfBounds = 3,
     } usb_status_code_write_config_t;
+
+// Functions:
+
+    void UsbCommand_WriteConfig(config_buffer_id_t configBufferId);
 
 #endif

@@ -28,8 +28,8 @@ void UsbProtocolHandler(void)
         case UsbCommandId_SetTestLed:
             UsbCommand_SetTestLed();
             break;
-        case UsbCommandId_WriteUserConfig:
-            UsbCommand_WriteConfig(false);
+        case UsbCommandId_WriteStagingUserConfig:
+            UsbCommand_WriteConfig(ConfigBufferId_StagingUserConfig);
             break;
         case UsbCommandId_ApplyConfig:
             UsbCommand_ApplyConfig();
@@ -47,7 +47,7 @@ void UsbProtocolHandler(void)
             UsbCommand_ReadConfig();
             break;
         case UsbCommandId_WriteHardwareConfig:
-            UsbCommand_WriteConfig(true);
+            UsbCommand_WriteConfig(ConfigBufferId_HardwareConfig);
             break;
         case UsbCommandId_GetKeyboardState:
             UsbCommand_GetKeyboardState();
