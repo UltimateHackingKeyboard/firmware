@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [6.0.0] - 2017-12-12
+
+Data Model: 4.0.0 (unchanged) | USB Protocol: 3.0.0 (major bump) | Slave Protocol: 3.0.0 (unchanged)
+
+- Change the value of almost every USB protocol commands because there were unused intervals between them. `USBPROTOCOL:MAJOR`
+- Disable LED display icons by default.
+- Update LED brightness levels upon applying the configuration.
+
 ## [5.0.1] - 2017-12-09
 
 Data Model: 4.0.0 (unchanged) | USB Protocol: 2.0.0 (unchanged) | Slave Protocol: 3.0.0 (unchanged)

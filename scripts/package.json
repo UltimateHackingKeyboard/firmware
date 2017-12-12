@@ -15,9 +15,9 @@
     "commander": "^2.11.0",
     "shelljs": "^0.7.8"
   },
-  "version": "5.0.1",
+  "version": "6.0.0",
   "dataModelVersion": "4.0.0",
-  "usbProtocolVersion": "2.0.0",
+  "usbProtocolVersion": "3.0.0",
   "slaveProtocolVersion": "3.0.0",
   "devices": [
     {
