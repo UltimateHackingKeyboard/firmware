@@ -43,13 +43,10 @@ void UsbProtocolHandler(void)
         case UsbCommandId_LaunchEepromTransferLegacy:
             UsbCommand_LaunchEepromTransferLegacy();
             break;
-        case UsbCommandId_ReadHardwareConfig:
-            UsbCommand_ReadConfig(true);
+        case UsbCommandId_ReadConfig:
+            UsbCommand_ReadConfig();
             break;
         case UsbCommandId_WriteHardwareConfig:
-            UsbCommand_WriteConfig(true);
-            break;
-        case UsbCommandId_ReadUserConfig:
             UsbCommand_ReadConfig(false);
             break;
         case UsbCommandId_GetKeyboardState:

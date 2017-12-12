@@ -19,9 +19,7 @@
         UsbCommandId_JumpToModuleBootloader     = 0x02, // was 0x12
         UsbCommandId_SendKbootCommandToModule   = 0x03, // was 0x13
 
-        UsbCommandId_ReadHardwareConfig         = 0x0D,
-        UsbCommandId_ReadUserConfig             = 0x0F,
-        // use ReadConfig instead of the above 2
+        UsbCommandId_ReadConfig                 = 0x04, // was 0x0d and 0x0f
         UsbCommandId_WriteHardwareConfig        = 0x0E,
         UsbCommandId_WriteUserConfig            = 0x08,
         UsbCommandId_ApplyConfig                = 0x09,

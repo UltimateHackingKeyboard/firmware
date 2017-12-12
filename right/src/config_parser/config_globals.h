@@ -23,6 +23,8 @@
 
     // Functions:
 
+    bool IsConfigBufferIdValid(config_buffer_id_t configBufferId);
     config_buffer_t* ConfigBufferIdToConfigBuffer(config_buffer_id_t configBufferId);
+    uint16_t ConfigBufferIdToBufferSize(config_buffer_id_t configBufferId);
 
 #endif
