@@ -7,7 +7,7 @@
 #include "usb_commands/usb_command_apply_config.h"
 #include "usb_commands/usb_command_set_led_pwm_brightness.h"
 #include "usb_commands/usb_command_get_adc_value.h"
-#include "usb_commands/usb_command_launch_eeprom_transfer_legacy.h"
+#include "usb_commands/usb_command_launch_eeprom_transfer.h"
 #include "usb_commands/usb_command_read_config.h"
 #include "usb_commands/usb_command_get_keyboard_state.h"
 #include "usb_commands/usb_command_get_debug_buffer.h"
@@ -40,8 +40,8 @@ void UsbProtocolHandler(void)
         case UsbCommandId_GetAdcValue:
             UsbCommand_GetAdcValue();
             break;
-        case UsbCommandId_LaunchEepromTransferLegacy:
-            UsbCommand_LaunchEepromTransferLegacy();
+        case UsbCommandId_LaunchEepromTransfer:
+            UsbCommand_LaunchEepromTransfer();
             break;
         case UsbCommandId_ReadConfig:
             UsbCommand_ReadConfig();

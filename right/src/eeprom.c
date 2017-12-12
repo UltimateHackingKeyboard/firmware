@@ -125,3 +125,8 @@ status_t EEPROM_LaunchTransfer(eeprom_operation_t operation, config_buffer_id_t 
     IsEepromBusy = LastEepromTransferStatus == kStatus_Success;
     return LastEepromTransferStatus;
 }
+
+bool IsEepromOperationValid(eeprom_operation_t operation)
+{
+    return operation == EepromOperation_Read || operation == EepromOperation_Write;
+}
