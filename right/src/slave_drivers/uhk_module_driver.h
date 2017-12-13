@@ -49,9 +49,9 @@
         UhkModulePhase_ProcessKeystates,
 
         // Misc phases
-        UhkModulePhase_JumpToBootloader,
         UhkModulePhase_SetTestLed,
         UhkModulePhase_SetLedPwmBrightness,
+        UhkModulePhase_JumpToBootloader,
 
     } uhk_module_phase_t;
 
@@ -70,7 +70,6 @@
         uint8_t firmwareI2cAddress;
         uint8_t bootloaderI2cAddress;
         uhk_module_features_t features;
-        bool jumpToBootloader;
     } uhk_module_state_t;
 
     typedef struct {

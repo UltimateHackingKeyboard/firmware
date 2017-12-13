@@ -69,6 +69,13 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
 
     switch (*uhkModulePhase) {
 
+        // Jump to bootloader
+        case UhkModulePhase_JumpToBootloader:
+            txMessage.data[0] = SlaveCommand_JumpToBootloader;
+            txMessage.length = 1;
+            status = tx(i2cAddress);
+            break;
+
         // Sync communication
         case UhkModulePhase_RequestSync:
             txMessage.data[0] = SlaveCommand_RequestProperty;
@@ -177,19 +184,6 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
                 }
             }
             status = kStatus_Uhk_NoTransfer;
-            *uhkModulePhase = UhkModulePhase_JumpToBootloader;
-            break;
-
-        // Jump to bootloader
-        case UhkModulePhase_JumpToBootloader:
-            if (uhkModuleState->jumpToBootloader) {
-                txMessage.data[0] = SlaveCommand_JumpToBootloader;
-                txMessage.length = 1;
-                status = tx(i2cAddress);
-                uhkModuleState->jumpToBootloader = false;
-            } else {
-                status = kStatus_Uhk_NoTransfer;
-            }
             *uhkModulePhase = UhkModulePhase_SetTestLed;
             break;
 
