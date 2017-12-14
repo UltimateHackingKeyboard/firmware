@@ -6,7 +6,7 @@ config.fatal = true;
 config.verbose = true;
 
 const package = JSON.parse(fs.readFileSync(`${__dirname}/package.json`));
-const version = package.version;
+const version = package.firmwareVersion;
 const releaseName = `uhk-firmware-${version}`;
 const releaseDir = `${__dirname}/${releaseName}`;
 const modulesDir = `${releaseDir}/modules`;

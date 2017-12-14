@@ -15,7 +15,7 @@
     "commander": "^2.11.0",
     "shelljs": "^0.7.8"
   },
-  "version": "6.0.0",
+  "firmwareVersion": "6.0.0",
   "deviceProtocolVersion": "3.0.0",
   "moduleProtocolVersion": "3.0.0",
   "userConfigVersion": "4.0.0",
