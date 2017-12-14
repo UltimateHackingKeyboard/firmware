@@ -7,7 +7,7 @@ and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
 ## [6.0.0] - 2017-12-12
 
-Device Protocol: **3.0.0** | Slave Protocol: 3.0.0 | User Config: 4.0.0
+Device Protocol: **3.0.0** | Module Protocol: 3.0.0 | User Config: 4.0.0
 
 - Change the value of almost every Device Protocol commands because there were unused intervals between them. `DEVICEPROTOCOL:MAJOR`
 - Disable LED display icons by default.
@@ -15,20 +15,20 @@ Device Protocol: **3.0.0** | Slave Protocol: 3.0.0 | User Config: 4.0.0
 
 ## [5.0.1] - 2017-12-09
 
-Device Protocol: 2.0.0 | Slave Protocol: 3.0.0 | User Config: 4.0.0
+Device Protocol: 2.0.0 | Module Protocol: 3.0.0 | User Config: 4.0.0
 
  - Make key presses continue to emit scancodes even if a USB interface (typically the mouse interface) is not polled by the host anymore.
  - Make scrolling always immediately react to keypresses regardless of the previous internal scroll state.
 
 ## [5.0.0] - 2017-12-04
 
-Device Protocol: 2.0.0 | Slave Protocol: 3.0.0 | User Config: **4.0.0**
+Device Protocol: 2.0.0 | Module Protocol: 3.0.0 | User Config: **4.0.0**
 
 - Move pointerRole from keymaps to module configurations as pointerMode. Add angularShift, modLayerPointerFunction, fnLayerPointerFunction, and mouseLayerPointerFunction to module configurations. `USERCONFIG:MAJOR`
 
 ## [4.0.0] - 2017-11-30
 
-Device Protocol: 2.0.0 | Slave Protocol: 3.0.0 | User Config: **3.0.0**
+Device Protocol: 2.0.0 | Module Protocol: 3.0.0 | User Config: **3.0.0**
 
 - Implement mouse movement and scrolling deceleration and acceleration.
 - Toggle layers upon double tapping their keys. Make the double tap timeout configurable.
@@ -36,7 +36,7 @@ Device Protocol: 2.0.0 | Slave Protocol: 3.0.0 | User Config: **3.0.0**
 
 ## [3.0.0] - 2017-11-15
 
-Device Protocol: **2.0.0** | Slave Protocol: **3.0.0** | User Config: **2.0.0**
+Device Protocol: **2.0.0** | Module Protocol: **3.0.0** | User Config: **2.0.0**
 
 - Detect the use of USB interfaces and only wait for the ones that are actually used by the host.
 - Implement key debouncer.
@@ -44,7 +44,7 @@ Device Protocol: **2.0.0** | Slave Protocol: **3.0.0** | User Config: **2.0.0**
 - Make pressing the reset button revert to the factory preset.
 - Revert to the factory default state when the reset button is pressed upon firmware startup. Display FTY on the display in this case.
 - Make the LED display show the abbreviation of the current keymap even when it gets reinitialized by the I2C watchdog.
-- Swap SlaveCommand_RequestKeyStates and SlaveCommand_JumpToBootloader, thereby making SlaveCommand_JumpToBootloader the lower number because it's more essential and shouldn't change in the future. `SLAVEPROTOCOL:MAJOR`
+- Swap SlaveCommand_RequestKeyStates and SlaveCommand_JumpToBootloader, thereby making SlaveCommand_JumpToBootloader the lower number because it's more essential and shouldn't change in the future. `MODULEPROTOCOL:MAJOR`
 - Suppress pressed keys upon layer switcher key release.
 - Handle secondary role modifiers and layer switchers.
 - Make UsbCommand_JumpToSlaveBootloader expect a slave slot id instead of a uhkModuleDriverId. `DEVICEPROTOCOL:MAJOR`
@@ -66,27 +66,27 @@ Device Protocol: **2.0.0** | Slave Protocol: **3.0.0** | User Config: **2.0.0**
 
 ## [2.1.0] - 2017-10-13
 
-Device Protocol: 1.**2.0** | Slave Protocol: 2.**1.0** | User Config: 1.0.0
+Device Protocol: 1.**2.0** | Module Protocol: 2.**1.0** | User Config: 1.0.0
 
-- Add jumpToSlaveBootloader USB and slave protocol command. `DEVICEPROTOCOL:MINOR` `SLAVEPROTOCOL:MINOR`
+- Add jumpToSlaveBootloader USB and Module Protocol command. `DEVICEPROTOCOL:MINOR` `MODULEPROTOCOL:MINOR`
 - Fix generic HID descriptor enumeration error.
 
 ## [2.0.0] - 2017-10-10
 
-Device Protocol: 1.**1.0** | Slave Protocol: **2.0.0** | User Config: 1.0.0
+Device Protocol: 1.**1.0** | Module Protocol: **2.0.0** | User Config: 1.0.0
 
 - Read the hardware and user configuration area of the EEPROM upon startup and set the default keymap.
 - Greatly improve the I2C watchdog and drivers. Communication between the halves or the add-ons should never fail again.
-- Implement generic enumeration sequence and per-slave state for UHK modules, allowing add-ons to be added. `SLAVEPROTOCOL:MAJOR`
+- Implement generic enumeration sequence and per-slave state for UHK modules, allowing add-ons to be added. `MODULEPROTOCOL:MAJOR`
 - Make the master cache the output fields of slave modules, allowing for more frequent input updates.
 - Optimize I2C protocol scheduler resulting in increased roustness and more efficient use of I2C bandwidth.
-- Add I2C message headers containing a length header, allowing for variable-length messages and a CRC16-CCITT checksum, allowing for robust communication. `SLAVEPROTOCOL:MAJOR`
+- Add I2C message headers containing a length header, allowing for variable-length messages and a CRC16-CCITT checksum, allowing for robust communication. `MODULEPROTOCOL:MAJOR`
 - Add mechanism to dump the internal state of the KL03 via SPI for debugging purposes.
 - Add merge sensor state and attached module IDs to GetDebugInfo(). `DEVICEPROTOCOL:PATCH`
 - Throw ParserError_InvalidKeymapCount if keymapCount == 0. `USERCONFIG:PATCH`
 
 ## [1.0.0] - 2017-08-30
 
-Device Protocol: 1.0.0 | Slave Protocol: 1.0.0 | User Config: 1.0.0
+Device Protocol: 1.0.0 | Module Protocol: 1.0.0 | User Config: 1.0.0
 
 - First Release
