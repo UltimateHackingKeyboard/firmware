@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [7.0.0] - 2017-12-14
+
+Device Protocol: **4.0.0** | Module Protocol: 3.0.0 | User Config: 4.0.0 | Hardware Config: 1.0.0
+
+- Make UsbCommand_JumpToModuleBootloader() more robust by not making it dependent on the state of the module driver.
+- Don't make horizontal scrolling and vertical scrolling affect each other.
+- Expose version numbers via the get property interface. `DEVICEPROTOCOL:MINOR`
+- Add DevicePropertyId_ConfigSizes. `DEVICEPROTOCOL:MINOR`
+- Remove DevicePropertyId_HardwareConfigSize and DevicePropertyId_UserConfigSize. `DEVICEPROTOCOL:MAJOR`
+
 ## [6.0.0] - 2017-12-12
 
 Device Protocol: **3.0.0** | Module Protocol: 3.0.0 | User Config: 4.0.0 | Hardware Config: 1.0.0
