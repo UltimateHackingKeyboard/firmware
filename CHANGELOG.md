@@ -7,7 +7,7 @@ and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
 ## [6.0.0] - 2017-12-12
 
-USB Protocol: **3.0.0** | Slave Protocol: 3.0.0 | Data Model: 4.0.0
+USB Protocol: **3.0.0** | Slave Protocol: 3.0.0 | User Config: 4.0.0
 
 - Change the value of almost every USB protocol commands because there were unused intervals between them. `USBPROTOCOL:MAJOR`
 - Disable LED display icons by default.
@@ -15,28 +15,28 @@ USB Protocol: **3.0.0** | Slave Protocol: 3.0.0 | Data Model: 4.0.0
 
 ## [5.0.1] - 2017-12-09
 
-USB Protocol: 2.0.0 | Slave Protocol: 3.0.0 | Data Model: 4.0.0
+USB Protocol: 2.0.0 | Slave Protocol: 3.0.0 | User Config: 4.0.0
 
  - Make key presses continue to emit scancodes even if a USB interface (typically the mouse interface) is not polled by the host anymore.
  - Make scrolling always immediately react to keypresses regardless of the previous internal scroll state.
 
 ## [5.0.0] - 2017-12-04
 
-USB Protocol: 2.0.0 | Slave Protocol: 3.0.0 | Data Model: **4.0.0**
+USB Protocol: 2.0.0 | Slave Protocol: 3.0.0 | User Config: **4.0.0**
 
-- Move pointerRole from keymaps to module configurations as pointerMode. Add angularShift, modLayerPointerFunction, fnLayerPointerFunction, and mouseLayerPointerFunction to module configurations. `DATAMODEL:MAJOR`
+- Move pointerRole from keymaps to module configurations as pointerMode. Add angularShift, modLayerPointerFunction, fnLayerPointerFunction, and mouseLayerPointerFunction to module configurations. `USERCONFIG:MAJOR`
 
 ## [4.0.0] - 2017-11-30
 
-USB Protocol: 2.0.0 | Slave Protocol: 3.0.0 | Data Model: **3.0.0**
+USB Protocol: 2.0.0 | Slave Protocol: 3.0.0 | User Config: **3.0.0**
 
 - Implement mouse movement and scrolling deceleration and acceleration.
 - Toggle layers upon double tapping their keys. Make the double tap timeout configurable.
-- Make the parser read additional user configuration properties: dataModelMajorVersion, dataModelMinorVersion, dataModelPatchVersion, doubleTapSwitchLayerTimeout, iconsAndLayerTextsBrightness, alphanumericSegmentsBrightness, keyBacklightBrightness, mouseMoveInitialSpeed, mouseMoveAcceleration, mouseMoveDeceleratedSpeed, mouseMoveBaseSpeed, mouseMoveAcceleratedSpeed, mouseScrollInitialSpeed, mouseScrollAcceleration, mouseScrollDeceleratedSpeed, mouseScrollBaseSpeed, mouseScrollAcceleratedSpeed. `DATAMODEL:MAJOR`
+- Make the parser read additional user configuration properties: USERCONFIGMajorVersion, USERCONFIGMinorVersion, USERCONFIGPatchVersion, doubleTapSwitchLayerTimeout, iconsAndLayerTextsBrightness, alphanumericSegmentsBrightness, keyBacklightBrightness, mouseMoveInitialSpeed, mouseMoveAcceleration, mouseMoveDeceleratedSpeed, mouseMoveBaseSpeed, mouseMoveAcceleratedSpeed, mouseScrollInitialSpeed, mouseScrollAcceleration, mouseScrollDeceleratedSpeed, mouseScrollBaseSpeed, mouseScrollAcceleratedSpeed. `USERCONFIG:MAJOR`
 
 ## [3.0.0] - 2017-11-15
 
-USB Protocol: **2.0.0** | Slave Protocol: **3.0.0** | Data Model: **2.0.0**
+USB Protocol: **2.0.0** | Slave Protocol: **3.0.0** | User Config: **2.0.0**
 
 - Detect the use of USB interfaces and only wait for the ones that are actually used by the host.
 - Implement key debouncer.
@@ -54,26 +54,26 @@ USB Protocol: **2.0.0** | Slave Protocol: **3.0.0** | Data Model: **2.0.0**
 - Switch keymap only upon keypress.
 - Handle layer toggle actions.
 - Keep the active layer active even if another layer switcher key gets pressed while holding it.
-- Read the new UserConfig.userConfigLength user config field. `DATAMODEL:MAJOR`
+- Read the new UserConfig.userConfigLength user config field. `USERCONFIG:MAJOR`
 - Change Ctrl and Alt back according to the official UHK factory keymap.
 - Update system keyboard HID descriptor which doesn't make the pointer go to the top left corner on OSX anymore.
 - Scan keyboard matrices in a more efficient manner from timer interrupts instead of the main loop.
 - Add UsbCommand_SendKbootCommand. `USBPROTOCOL:MINOR`
 - Make the reenumerate USB command accept a timeout value. `USBPROTOCOL:MINOR`
-- Make the config parser read the device name. `DATAMODEL:MAJOR`
+- Make the config parser read the device name. `USERCONFIG:MAJOR`
 - Update release file format containing device and module directories and hex files instead of srec.
 - Remove obsolete ARM GCC build files.
 
 ## [2.1.0] - 2017-10-13
 
-USB Protocol: 1.**2.0** | Slave Protocol: 2.**1.0** | Data Model: 1.0.0
+USB Protocol: 1.**2.0** | Slave Protocol: 2.**1.0** | User Config: 1.0.0
 
 - Add jumpToSlaveBootloader USB and slave protocol command. `USBPROTOCOL:MINOR` `SLAVEPROTOCOL:MINOR`
 - Fix generic HID descriptor enumeration error.
 
 ## [2.0.0] - 2017-10-10
 
-USB Protocol: 1.**1.0** | Slave Protocol: **2.0.0** | Data Model: 1.0.0
+USB Protocol: 1.**1.0** | Slave Protocol: **2.0.0** | User Config: 1.0.0
 
 - Read the hardware and user configuration area of the EEPROM upon startup and set the default keymap.
 - Greatly improve the I2C watchdog and drivers. Communication between the halves or the add-ons should never fail again.
@@ -83,10 +83,10 @@ USB Protocol: 1.**1.0** | Slave Protocol: **2.0.0** | Data Model: 1.0.0
 - Add I2C message headers containing a length header, allowing for variable-length messages and a CRC16-CCITT checksum, allowing for robust communication. `SLAVEPROTOCOL:MAJOR`
 - Add mechanism to dump the internal state of the KL03 via SPI for debugging purposes.
 - Add merge sensor state and attached module IDs to GetDebugInfo(). `USBPROTOCOL:PATCH`
-- Throw ParserError_InvalidKeymapCount if keymapCount == 0. `DATAMODEL:PATCH`
+- Throw ParserError_InvalidKeymapCount if keymapCount == 0. `USERCONFIG:PATCH`
 
 ## [1.0.0] - 2017-08-30
 
-USB Protocol: 1.0.0 | Slave Protocol: 1.0.0 | Data Model: 1.0.0
+USB Protocol: 1.0.0 | Slave Protocol: 1.0.0 | User Config: 1.0.0
 
 - First Release
