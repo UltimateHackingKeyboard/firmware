@@ -28,7 +28,7 @@ exec(`/opt/Freescale/KDS_v3/eclipse/kinetis-design-studio \
 -cleanBuild uhk-right`
 );
 
-for (let device of package.devices) {
+for (const device of package.devices) {
     const deviceDir = `${releaseDir}/devices/${device.name}`;
     const deviceSource = `${__dirname}/../${device.source}`;
     mkdir('-p', deviceDir);
@@ -37,7 +37,7 @@ for (let device of package.devices) {
     exec(`${usbDir}/user-config-json-to-bin.ts ${deviceDir}/config.bin`);
 }
 
-for (let module of package.modules) {
+for (const module of package.modules) {
     const moduleDir = `${releaseDir}/modules`;
     const moduleSource = `${__dirname}/../${module.source}`;
     mkdir('-p', moduleDir);
