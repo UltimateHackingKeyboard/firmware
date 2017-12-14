@@ -7,7 +7,7 @@ and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
 ## [6.0.0] - 2017-12-12
 
-Data Model: 4.0.0 | USB Protocol: **3.0.0** | Slave Protocol: 3.0.0
+USB Protocol: **3.0.0** | Slave Protocol: 3.0.0 | Data Model: 4.0.0
 
 - Change the value of almost every USB protocol commands because there were unused intervals between them. `USBPROTOCOL:MAJOR`
 - Disable LED display icons by default.
@@ -15,20 +15,20 @@ Data Model: 4.0.0 | USB Protocol: **3.0.0** | Slave Protocol: 3.0.0
 
 ## [5.0.1] - 2017-12-09
 
-Data Model: 4.0.0 | USB Protocol: 2.0.0 | Slave Protocol: 3.0.0
+USB Protocol: 2.0.0 | Slave Protocol: 3.0.0 | Data Model: 4.0.0
 
  - Make key presses continue to emit scancodes even if a USB interface (typically the mouse interface) is not polled by the host anymore.
  - Make scrolling always immediately react to keypresses regardless of the previous internal scroll state.
 
 ## [5.0.0] - 2017-12-04
 
-Data Model: **4.0.0** | USB Protocol: 2.0.0 | Slave Protocol: 3.0.0
+USB Protocol: 2.0.0 | Slave Protocol: 3.0.0 | Data Model: **4.0.0**
 
 - Move pointerRole from keymaps to module configurations as pointerMode. Add angularShift, modLayerPointerFunction, fnLayerPointerFunction, and mouseLayerPointerFunction to module configurations. `DATAMODEL:MAJOR`
 
 ## [4.0.0] - 2017-11-30
 
-Data Model: **3.0.0** | USB Protocol: 2.0.0 | Slave Protocol: 3.0.0
+USB Protocol: 2.0.0 | Slave Protocol: 3.0.0 | Data Model: **3.0.0**
 
 - Implement mouse movement and scrolling deceleration and acceleration.
 - Toggle layers upon double tapping their keys. Make the double tap timeout configurable.
@@ -36,7 +36,7 @@ Data Model: **3.0.0** | USB Protocol: 2.0.0 | Slave Protocol: 3.0.0
 
 ## [3.0.0] - 2017-11-15
 
-Data Model: **2.0.0** | USB Protocol: **2.0.0** | Slave Protocol: **3.0.0**
+USB Protocol: **2.0.0** | Slave Protocol: **3.0.0** | Data Model: **2.0.0**
 
 - Detect the use of USB interfaces and only wait for the ones that are actually used by the host.
 - Implement key debouncer.
@@ -66,14 +66,14 @@ Data Model: **2.0.0** | USB Protocol: **2.0.0** | Slave Protocol: **3.0.0**
 
 ## [2.1.0] - 2017-10-13
 
-Data Model: 1.0.0 | USB Protocol: 1.**2.0** | Slave Protocol: 2.**1.0**
+USB Protocol: 1.**2.0** | Slave Protocol: 2.**1.0** | Data Model: 1.0.0
 
 - Add jumpToSlaveBootloader USB and slave protocol command. `USBPROTOCOL:MINOR` `SLAVEPROTOCOL:MINOR`
 - Fix generic HID descriptor enumeration error.
 
 ## [2.0.0] - 2017-10-10
 
-Data Model: 1.0.0 | USB Protocol: 1.**1.0** | Slave Protocol: **2.0.0**
+USB Protocol: 1.**1.0** | Slave Protocol: **2.0.0** | Data Model: 1.0.0
 
 - Read the hardware and user configuration area of the EEPROM upon startup and set the default keymap.
 - Greatly improve the I2C watchdog and drivers. Communication between the halves or the add-ons should never fail again.
@@ -87,6 +87,6 @@ Data Model: 1.0.0 | USB Protocol: 1.**1.0** | Slave Protocol: **2.0.0**
 
 ## [1.0.0] - 2017-08-30
 
-Data Model: 1.0.0 | USB Protocol: 1.0.0 | Slave Protocol: 1.0.0
+USB Protocol: 1.0.0 | Slave Protocol: 1.0.0 | Data Model: 1.0.0
 
 - First Release
