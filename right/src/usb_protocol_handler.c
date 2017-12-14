@@ -9,7 +9,7 @@
 #include "usb_commands/usb_command_get_adc_value.h"
 #include "usb_commands/usb_command_launch_eeprom_transfer.h"
 #include "usb_commands/usb_command_read_config.h"
-#include "usb_commands/usb_command_get_keyboard_state.h"
+#include "usb_commands/usb_command_get_device_state.h"
 #include "usb_commands/usb_command_get_debug_buffer.h"
 #include "usb_commands/usb_command_jump_to_module_bootloader.h"
 #include "usb_commands/usb_command_send_kboot_command_to_module.h"

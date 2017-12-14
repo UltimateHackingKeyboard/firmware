@@ -1,5 +1,5 @@
 #include "fsl_common.h"
-#include "usb_commands/usb_command_get_keyboard_state.h"
+#include "usb_commands/usb_command_get_device_state.h"
 #include "usb_protocol_handler.h"
 #include "eeprom.h"
 #include "peripherals/merge_sensor.h"
