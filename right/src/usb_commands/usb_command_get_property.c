@@ -55,12 +55,6 @@ void UsbCommand_GetProperty(void)
         case DevicePropertyId_ConfigSizes:
             memcpy(GenericHidOutBuffer+1, (uint8_t*)&configSizes, sizeof(configSizes));
             break;
-        case DevicePropertyId_HardwareConfigSize:
-            SetUsbTxBufferUint16(1, HARDWARE_CONFIG_SIZE);
-            break;
-        case DevicePropertyId_UserConfigSize:
-            SetUsbTxBufferUint16(1, USER_CONFIG_SIZE);
-            break;
         default:
             SetUsbTxBufferUint8(0, UsbStatusCode_GetProperty_InvalidProperty);
             break;

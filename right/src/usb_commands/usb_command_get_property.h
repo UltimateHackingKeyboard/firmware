@@ -7,8 +7,6 @@
         DevicePropertyId_DeviceProtocolVersion = 0,
         DevicePropertyId_ProtocolVersions      = 1,
         DevicePropertyId_ConfigSizes           = 2,
-        DevicePropertyId_HardwareConfigSize    = 4,
-        DevicePropertyId_UserConfigSize        = 5,
     } system_property_t;
 
     typedef enum {
