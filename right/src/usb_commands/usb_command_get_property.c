@@ -10,7 +10,7 @@ version_t deviceProtocolVersion = {
     DEVICE_PROTOCOL_PATCH_VERSION,
 };
 
-version_t everyProtocolVersion[] =
+version_t protocolVersions[] =
 {
     {
         FIRMWARE_MAJOR_VERSION,
@@ -39,6 +39,8 @@ version_t everyProtocolVersion[] =
     }
 };
 
+uint16_t configSizes[] = {HARDWARE_CONFIG_SIZE, USER_CONFIG_SIZE};
+
 void UsbCommand_GetProperty(void)
 {
     uint8_t propertyId = GetUsbRxBufferUint8(1);
@@ -47,8 +49,11 @@ void UsbCommand_GetProperty(void)
         case DevicePropertyId_DeviceProtocolVersion:
             memcpy(GenericHidOutBuffer+1, (uint8_t*)&deviceProtocolVersion, sizeof(deviceProtocolVersion));
             break;
-        case DevicePropertyId_EveryProtocolVersion:
-            memcpy(GenericHidOutBuffer+1, (uint8_t*)&everyProtocolVersion, sizeof(everyProtocolVersion));
+        case DevicePropertyId_ProtocolVersions:
+            memcpy(GenericHidOutBuffer+1, (uint8_t*)&protocolVersions, sizeof(protocolVersions));
+            break;
+        case DevicePropertyId_ConfigSizes:
+            memcpy(GenericHidOutBuffer+1, (uint8_t*)&configSizes, sizeof(configSizes));
             break;
         case DevicePropertyId_HardwareConfigSize:
             SetUsbTxBufferUint16(1, HARDWARE_CONFIG_SIZE);
