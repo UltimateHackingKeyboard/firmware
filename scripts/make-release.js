@@ -5,6 +5,8 @@ require('shelljs/global');
 config.fatal = true;
 config.verbose = true;
 
+exec(`${__dirname}/generate-versions-h.js`);
+
 const package = JSON.parse(fs.readFileSync(`${__dirname}/package.json`));
 const version = package.firmwareVersion;
 const releaseName = `uhk-firmware-${version}`;
