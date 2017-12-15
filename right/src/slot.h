@@ -13,7 +13,7 @@
 // Macros:
 
     #define SLOT_COUNT 4
-    #define IS_VALID_SLAVE_SLOT(slotId) (SlotId_LeftKeyboardHalf <= (slotId) && (slotId) <= SlotId_RightModule)
+    #define IS_VALID_MODULE_SLOT(slotId) (SlotId_LeftKeyboardHalf <= (slotId) && (slotId) <= SlotId_RightModule)
 
 // Typedefs:
 

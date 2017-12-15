@@ -61,6 +61,9 @@ void UsbProtocolHandler(void)
         case UsbCommandId_SetLedPwmBrightness:
             UsbCommand_SetLedPwmBrightness();
             break;
+        case UsbCommandId_GetModuleProperties:
+            UsbCommand_GetModuleProperties();
+            break;
         default:
             SetUsbTxBufferUint8(0, UsbStatusCode_InvalidCommand);
             break;

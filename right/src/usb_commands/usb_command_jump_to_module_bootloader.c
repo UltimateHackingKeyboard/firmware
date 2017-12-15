@@ -7,7 +7,7 @@ void UsbCommand_JumpToModuleBootloader(void)
 {
     uint8_t slotId = GetUsbRxBufferUint8(1);
 
-    if (!IS_VALID_SLAVE_SLOT(slotId)) {
+    if (!IS_VALID_MODULE_SLOT(slotId)) {
         SetUsbTxBufferUint8(0, UsbStatusCode_JumpToModuleBootloader_InvalidSlaveSlotId);
         return;
     }
