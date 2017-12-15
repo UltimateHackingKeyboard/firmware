@@ -29,9 +29,9 @@
         UhkModulePhase_ProcessSync,
 
         // Get protocol version
-        UhkModulePhase_RequestProtocolVersion,
-        UhkModulePhase_ReceiveProtocolVersion,
-        UhkModulePhase_ProcessProtocolVersion,
+        UhkModulePhase_RequestModuleProtocolVersion,
+        UhkModulePhase_ReceiveModuleProtocolVersion,
+        UhkModulePhase_ProcessModuleProtocolVersion,
 
         // Get module id
         UhkModulePhase_RequestModuleId,

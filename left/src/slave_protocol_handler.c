@@ -56,7 +56,7 @@ void SlaveTxHandler(void)
                     TxMessage.length = 1;
                     break;
                 }
-                case SlaveProperty_ProtocolVersion: {
+                case SlaveProperty_ModuleProtocolVersion: {
                     TxMessage.data[0] = MODULE_PROTOCOL_VERSION;
                     TxMessage.length = 1;
                     break;

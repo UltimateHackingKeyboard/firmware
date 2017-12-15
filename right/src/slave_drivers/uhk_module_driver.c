@@ -93,30 +93,30 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
             bool isSyncValid = memcmp(rxMessage->data, SlaveSyncString, SLAVE_SYNC_STRING_LENGTH) == 0;
             status = kStatus_Uhk_NoTransfer;
             *uhkModulePhase = isSyncValid && isMessageValid
-                ? UhkModulePhase_RequestProtocolVersion
+                ? UhkModulePhase_RequestModuleProtocolVersion
                 : UhkModulePhase_RequestSync;
             break;
         }
 
         // Get protocol version
-        case UhkModulePhase_RequestProtocolVersion:
+        case UhkModulePhase_RequestModuleProtocolVersion:
             txMessage.data[0] = SlaveCommand_RequestProperty;
-            txMessage.data[1] = SlaveProperty_ProtocolVersion;
+            txMessage.data[1] = SlaveProperty_ModuleProtocolVersion;
             txMessage.length = 2;
             status = tx(i2cAddress);
-            *uhkModulePhase = UhkModulePhase_ReceiveProtocolVersion;
+            *uhkModulePhase = UhkModulePhase_ReceiveModuleProtocolVersion;
             break;
-        case UhkModulePhase_ReceiveProtocolVersion:
+        case UhkModulePhase_ReceiveModuleProtocolVersion:
             status = rx(rxMessage, i2cAddress);
-            *uhkModulePhase = UhkModulePhase_ProcessProtocolVersion;
+            *uhkModulePhase = UhkModulePhase_ProcessModuleProtocolVersion;
             break;
-        case UhkModulePhase_ProcessProtocolVersion: {
+        case UhkModulePhase_ProcessModuleProtocolVersion: {
             bool isMessageValid = CRC16_IsMessageValid(rxMessage);
             if (isMessageValid) {
                 uhkModuleState->protocolVersion = rxMessage->data[0];
             }
             status = kStatus_Uhk_NoTransfer;
-            *uhkModulePhase = isMessageValid ? UhkModulePhase_RequestModuleId : UhkModulePhase_RequestProtocolVersion;
+            *uhkModulePhase = isMessageValid ? UhkModulePhase_RequestModuleId : UhkModulePhase_RequestModuleProtocolVersion;
             break;
         }
 
