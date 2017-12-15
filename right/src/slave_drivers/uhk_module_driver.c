@@ -113,7 +113,7 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
         case UhkModulePhase_ProcessModuleProtocolVersion: {
             bool isMessageValid = CRC16_IsMessageValid(rxMessage);
             if (isMessageValid) {
-                uhkModuleState->protocolVersion = rxMessage->data[0];
+                memcpy(&uhkModuleState->moduleProtocolVersion, rxMessage->data, sizeof(version_t));
             }
             status = kStatus_Uhk_NoTransfer;
             *uhkModulePhase = isMessageValid ? UhkModulePhase_RequestModuleId : UhkModulePhase_RequestModuleProtocolVersion;

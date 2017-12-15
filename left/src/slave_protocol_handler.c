@@ -10,9 +10,16 @@
 #include "bool_array_converter.h"
 #include "bootloader.h"
 #include "module.h"
+#include "versions.h"
 
 i2c_message_t RxMessage;
 i2c_message_t TxMessage;
+
+static version_t moduleProtocolVersion = {
+    MODULE_PROTOCOL_MAJOR_VERSION,
+    MODULE_PROTOCOL_MINOR_VERSION,
+    MODULE_PROTOCOL_PATCH_VERSION,
+};
 
 void SlaveRxHandler(void)
 {
@@ -57,7 +64,7 @@ void SlaveTxHandler(void)
                     break;
                 }
                 case SlaveProperty_ModuleProtocolVersion: {
-                    TxMessage.data[0] = MODULE_PROTOCOL_VERSION;
+                    memcpy(TxMessage.data, &moduleProtocolVersion, sizeof(version_t));
                     TxMessage.length = 1;
                     break;
                 }

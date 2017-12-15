@@ -5,6 +5,7 @@
 
     #include "fsl_common.h"
     #include "crc16.h"
+    #include "versions.h"
 
 // Macros:
 
@@ -62,7 +63,7 @@
 
     typedef struct {
         uint8_t moduleId;
-        uint8_t protocolVersion;
+        version_t moduleProtocolVersion;
         uhk_module_phase_t phase;
         uhk_module_vars_t sourceVars;
         uhk_module_vars_t targetVars;
