@@ -21,6 +21,12 @@ static version_t moduleProtocolVersion = {
     MODULE_PROTOCOL_PATCH_VERSION,
 };
 
+static version_t firmwareVersion = {
+    FIRMWARE_MAJOR_VERSION,
+    FIRMWARE_MINOR_VERSION,
+    FIRMWARE_PATCH_VERSION,
+};
+
 void SlaveRxHandler(void)
 {
     if (!CRC16_IsMessageValid(&RxMessage)) {
@@ -65,7 +71,12 @@ void SlaveTxHandler(void)
                 }
                 case SlaveProperty_ModuleProtocolVersion: {
                     memcpy(TxMessage.data, &moduleProtocolVersion, sizeof(version_t));
-                    TxMessage.length = 1;
+                    TxMessage.length = sizeof(version_t);
+                    break;
+                }
+                case SlaveProperty_FirmwareVersion:
+                    memcpy(TxMessage.data, &firmwareVersion, sizeof(version_t));
+                    TxMessage.length = sizeof(version_t);
                     break;
                 }
                 case SlaveProperty_Features: {

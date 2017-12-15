@@ -34,6 +34,11 @@
         UhkModulePhase_ReceiveModuleProtocolVersion,
         UhkModulePhase_ProcessModuleProtocolVersion,
 
+        // Get firmware version
+        UhkModulePhase_RequestFirmwareVersion,
+        UhkModulePhase_ReceiveFirmwareVersion,
+        UhkModulePhase_ProcessFirmwareVersion,
+
         // Get module id
         UhkModulePhase_RequestModuleId,
         UhkModulePhase_ReceiveModuleId,
@@ -64,6 +69,7 @@
     typedef struct {
         uint8_t moduleId;
         version_t moduleProtocolVersion;
+        version_t firmwareVersion;
         uhk_module_phase_t phase;
         uhk_module_vars_t sourceVars;
         uhk_module_vars_t targetVars;
