@@ -44,10 +44,15 @@
         UhkModulePhase_ReceiveModuleId,
         UhkModulePhase_ProcessModuleId,
 
-        // Get module features
-        UhkModulePhase_RequestModuleFeatures,
-        UhkModulePhase_ReceiveModuleFeatures,
-        UhkModulePhase_ProcessModuleFeatures,
+        // Get module key count
+        UhkModulePhase_RequestModuleKeyCount,
+        UhkModulePhase_ReceiveModuleKeyCount,
+        UhkModulePhase_ProcessModuleKeyCount,
+
+        // Get module key count
+        UhkModulePhase_RequestModulePointerCount,
+        UhkModulePhase_ReceiveModulePointerCount,
+        UhkModulePhase_ProcessModulePointerCount,
 
         // Get key states
         UhkModulePhase_RequestKeyStates,
@@ -76,7 +81,8 @@
         i2c_message_t rxMessage;
         uint8_t firmwareI2cAddress;
         uint8_t bootloaderI2cAddress;
-        uhk_module_features_t features;
+        uint8_t keyCount;
+        uint8_t pointerCount;
     } uhk_module_state_t;
 
     typedef struct {

@@ -30,7 +30,8 @@
         SlaveProperty_ModuleProtocolVersion,
         SlaveProperty_FirmwareVersion,
         SlaveProperty_ModuleId,
-        SlaveProperty_Features,
+        SlaveProperty_KeyCount,
+        SlaveProperty_PointerCount,
     } slave_property_t;
 
     typedef enum {
@@ -40,11 +41,6 @@
         ModuleId_TrackpointRight  = 4,
         ModuleId_TouchpadRight    = 5,
     } module_id_t;
-
-    typedef struct {
-        uint8_t keyCount;
-        bool hasPointer;
-    } uhk_module_features_t;
 
     typedef struct {
         uint8_t length;

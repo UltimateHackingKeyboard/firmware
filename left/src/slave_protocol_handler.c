@@ -64,26 +64,29 @@ void SlaveTxHandler(void)
                     TxMessage.length = SLAVE_SYNC_STRING_LENGTH;
                     break;
                 }
-                case SlaveProperty_ModuleId: {
-                    TxMessage.data[0] = MODULE_ID;
-                    TxMessage.length = 1;
-                    break;
-                }
                 case SlaveProperty_ModuleProtocolVersion: {
                     memcpy(TxMessage.data, &moduleProtocolVersion, sizeof(version_t));
                     TxMessage.length = sizeof(version_t);
                     break;
                 }
-                case SlaveProperty_FirmwareVersion:
+                case SlaveProperty_FirmwareVersion: {
                     memcpy(TxMessage.data, &firmwareVersion, sizeof(version_t));
                     TxMessage.length = sizeof(version_t);
                     break;
                 }
-                case SlaveProperty_Features: {
-                    uhk_module_features_t *moduleFeatures = (uhk_module_features_t*)&TxMessage.data;
-                    moduleFeatures->keyCount = MODULE_KEY_COUNT;
-                    moduleFeatures->hasPointer = MODULE_HAS_POINTER;
-                    TxMessage.length = sizeof(uhk_module_features_t);
+                case SlaveProperty_ModuleId: {
+                    TxMessage.data[0] = MODULE_ID;
+                    TxMessage.length = 1;
+                    break;
+                }
+                case SlaveProperty_KeyCount: {
+                    TxMessage.data[0] = MODULE_KEY_COUNT;
+                    TxMessage.length = 1;
+                    break;
+                }
+                case SlaveProperty_PointerCount: {
+                    TxMessage.data[0] = MODULE_POINTER_COUNT;
+                    TxMessage.length = 1;
                     break;
                 }
             }

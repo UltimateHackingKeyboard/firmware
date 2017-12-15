@@ -160,29 +160,51 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
                 uhkModuleState->moduleId = rxMessage->data[0];
             }
             status = kStatus_Uhk_NoTransfer;
-            *uhkModulePhase = isMessageValid ? UhkModulePhase_RequestModuleFeatures : UhkModulePhase_RequestModuleId;
+            *uhkModulePhase = isMessageValid ? UhkModulePhase_RequestModuleKeyCount : UhkModulePhase_RequestModuleId;
             break;
         }
 
-        // Get module features
-        case UhkModulePhase_RequestModuleFeatures:
+        // Get module key count
+        case UhkModulePhase_RequestModuleKeyCount:
             txMessage.data[0] = SlaveCommand_RequestProperty;
-            txMessage.data[1] = SlaveProperty_Features;
+            txMessage.data[1] = SlaveProperty_KeyCount;
             txMessage.length = 2;
             status = tx(i2cAddress);
-            *uhkModulePhase = UhkModulePhase_ReceiveModuleFeatures;
+            *uhkModulePhase = UhkModulePhase_ReceiveModuleKeyCount;
             break;
-        case UhkModulePhase_ReceiveModuleFeatures:
+        case UhkModulePhase_ReceiveModuleKeyCount:
             status = rx(rxMessage, i2cAddress);
-            *uhkModulePhase = UhkModulePhase_ProcessModuleFeatures;
+            *uhkModulePhase = UhkModulePhase_ProcessModuleKeyCount;
             break;
-        case UhkModulePhase_ProcessModuleFeatures: {
+        case UhkModulePhase_ProcessModuleKeyCount: {
             bool isMessageValid = CRC16_IsMessageValid(rxMessage);
             if (isMessageValid) {
-                memcpy(&uhkModuleState->features, rxMessage->data, sizeof(uhk_module_features_t));
+                uhkModuleState->keyCount = rxMessage->data[0];
             }
             status = kStatus_Uhk_NoTransfer;
-            *uhkModulePhase = isMessageValid ? UhkModulePhase_RequestKeyStates : UhkModulePhase_RequestModuleFeatures;
+            *uhkModulePhase = isMessageValid ? UhkModulePhase_RequestModulePointerCount : UhkModulePhase_RequestModuleKeyCount;
+            break;
+        }
+
+        // Get module pointer count
+        case UhkModulePhase_RequestModulePointerCount:
+            txMessage.data[0] = SlaveCommand_RequestProperty;
+            txMessage.data[1] = SlaveProperty_PointerCount;
+            txMessage.length = 2;
+            status = tx(i2cAddress);
+            *uhkModulePhase = UhkModulePhase_ReceiveModulePointerCount;
+            break;
+        case UhkModulePhase_ReceiveModulePointerCount:
+            status = rx(rxMessage, i2cAddress);
+            *uhkModulePhase = UhkModulePhase_ProcessModulePointerCount;
+            break;
+        case UhkModulePhase_ProcessModulePointerCount: {
+            bool isMessageValid = CRC16_IsMessageValid(rxMessage);
+            if (isMessageValid) {
+                uhkModuleState->pointerCount = rxMessage->data[0];
+            }
+            status = kStatus_Uhk_NoTransfer;
+            *uhkModulePhase = isMessageValid ? UhkModulePhase_RequestKeyStates : UhkModulePhase_RequestModulePointerCount;
             break;
         }
 
@@ -200,8 +222,8 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
         case UhkModulePhase_ProcessKeystates:
             if (CRC16_IsMessageValid(rxMessage)) {
                 uint8_t slotId = uhkModuleDriverId + 1;
-                BoolBitsToBytes(rxMessage->data, keyStatesBuffer, uhkModuleState->features.keyCount);
-                for (uint8_t keyId=0; keyId<uhkModuleState->features.keyCount; keyId++) {
+                BoolBitsToBytes(rxMessage->data, keyStatesBuffer, uhkModuleState->keyCount);
+                for (uint8_t keyId=0; keyId<uhkModuleState->keyCount; keyId++) {
                     KeyStates[slotId][keyId].current = keyStatesBuffer[keyId];
                 }
             }
