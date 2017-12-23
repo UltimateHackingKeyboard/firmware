@@ -1,6 +1,7 @@
 #include "usb_protocol_handler.h"
 #include "buffer.h"
 #include "usb_commands/usb_command_get_property.h"
+#include "usb_commands/usb_command_get_module_property.h"
 #include "usb_commands/usb_command_reenumerate.h"
 #include "usb_commands/usb_command_set_test_led.h"
 #include "usb_commands/usb_command_write_config.h"
@@ -61,8 +62,8 @@ void UsbProtocolHandler(void)
         case UsbCommandId_SetLedPwmBrightness:
             UsbCommand_SetLedPwmBrightness();
             break;
-        case UsbCommandId_GetModuleProperties:
-            UsbCommand_GetModuleProperties();
+        case UsbCommandId_GetModuleProperty:
+            UsbCommand_GetModuleProperty();
             break;
         default:
             SetUsbTxBufferUint8(0, UsbStatusCode_InvalidCommand);

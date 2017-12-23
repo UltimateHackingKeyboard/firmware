@@ -1,15 +1,15 @@
 #include "fsl_common.h"
-#include "usb_commands/usb_command_get_module_properties.h"
+#include "usb_commands/usb_command_get_module_property.h"
 #include "usb_protocol_handler.h"
 #include "slot.h"
 #include "slave_drivers/uhk_module_driver.h"
 
-void UsbCommand_GetModuleProperties()
+void UsbCommand_GetModuleProperty()
 {
     slot_t slotId = GetUsbRxBufferUint8(1);
 
     if (!IS_VALID_MODULE_SLOT(slotId)) {
-        SetUsbTxBufferUint8(0, UsbStatusCode_ReadConfig_InvalidModuleSlotId);
+        SetUsbTxBufferUint8(0, UsbStatusCode_GetModuleProperty_InvalidModuleSlotId);
     }
 
     uint8_t moduleDriverId = SLOT_ID_TO_UHK_MODULE_DRIVER_ID(slotId);

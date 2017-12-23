@@ -3,12 +3,12 @@
 
 // Functions:
 
-    void UsbCommand_GetModuleProperties();
+    void UsbCommand_GetModuleProperty();
 
 // Typedefs:
 
     typedef enum {
-        UsbStatusCode_ReadConfig_InvalidModuleSlotId = 2,
+        UsbStatusCode_GetModuleProperty_InvalidModuleSlotId = 2,
     } usb_status_code_get_module_properties_t;
 
 #endif
