@@ -1,6 +1,6 @@
 #include "usb_protocol_handler.h"
 #include "buffer.h"
-#include "usb_commands/usb_command_get_property.h"
+#include "usb_commands/usb_command_get_device_property.h"
 #include "usb_commands/usb_command_get_module_property.h"
 #include "usb_commands/usb_command_reenumerate.h"
 #include "usb_commands/usb_command_set_test_led.h"
@@ -20,8 +20,8 @@ void UsbProtocolHandler(void)
     bzero(GenericHidOutBuffer, USB_GENERIC_HID_OUT_BUFFER_LENGTH);
     uint8_t command = GetUsbRxBufferUint8(0);
     switch (command) {
-        case UsbCommandId_GetProperty:
-            UsbCommand_GetProperty();
+        case UsbCommandId_GetDeviceProperty:
+            UsbCommand_GetDeviceProperty();
             break;
         case UsbCommandId_Reenumerate:
             UsbCommand_Reenumerate();

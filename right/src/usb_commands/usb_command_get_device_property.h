@@ -1,5 +1,5 @@
-#ifndef __USB_COMMAND_GET_PROPERTY_H__
-#define __USB_COMMAND_GET_PROPERTY_H__
+#ifndef __USB_COMMAND_GET_DEVICE_PROPERTY_H__
+#define __USB_COMMAND_GET_DEVICE_PROPERTY_H__
 
 // Typedefs:
 
@@ -10,11 +10,11 @@
     } system_property_t;
 
     typedef enum {
-        UsbStatusCode_GetProperty_InvalidProperty = 2,
-    } usb_status_code_get_property_t;
+        UsbStatusCode_GetDeviceProperty_InvalidProperty = 2,
+    } usb_status_code_get_device_property_t;
 
 // Functions:
 
-    void UsbCommand_GetProperty(void);
+    void UsbCommand_GetDeviceProperty(void);
 
 #endif

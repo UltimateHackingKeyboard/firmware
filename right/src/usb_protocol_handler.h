@@ -13,7 +13,7 @@
 // Typedefs:
 
     typedef enum {
-        UsbCommandId_GetProperty              = 0x00,
+        UsbCommandId_GetDeviceProperty        = 0x00,
 
         UsbCommandId_Reenumerate              = 0x01,
         UsbCommandId_JumpToModuleBootloader   = 0x02,

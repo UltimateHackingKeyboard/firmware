@@ -1,5 +1,5 @@
 #include "fsl_common.h"
-#include "usb_commands/usb_command_get_property.h"
+#include "usb_commands/usb_command_get_device_property.h"
 #include "usb_protocol_handler.h"
 #include "eeprom.h"
 #include "versions.h"
@@ -41,7 +41,7 @@ version_t protocolVersions[] =
 
 uint16_t configSizes[] = {HARDWARE_CONFIG_SIZE, USER_CONFIG_SIZE};
 
-void UsbCommand_GetProperty(void)
+void UsbCommand_GetDeviceProperty(void)
 {
     uint8_t propertyId = GetUsbRxBufferUint8(1);
 
@@ -56,7 +56,7 @@ void UsbCommand_GetProperty(void)
             memcpy(GenericHidOutBuffer+1, (uint8_t*)&configSizes, sizeof(configSizes));
             break;
         default:
-            SetUsbTxBufferUint8(0, UsbStatusCode_GetProperty_InvalidProperty);
+            SetUsbTxBufferUint8(0, UsbStatusCode_GetDeviceProperty_InvalidProperty);
             break;
     }
 }
