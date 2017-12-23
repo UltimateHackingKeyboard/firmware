@@ -1,5 +1,5 @@
-#ifndef __USB_COMMAND_GET_MODULE_PROPERTIES_H__
-#define __USB_COMMAND_GET_MODULE_PROPERTIES_H__
+#ifndef __USB_COMMAND_GET_MODULE_PROPERTY_H__
+#define __USB_COMMAND_GET_MODULE_PROPERTY_H__
 
 // Functions:
 
@@ -9,6 +9,6 @@
 
     typedef enum {
         UsbStatusCode_GetModuleProperty_InvalidModuleSlotId = 2,
-    } usb_status_code_get_module_properties_t;
+    } usb_status_code_get_module_property_t;
 
 #endif
