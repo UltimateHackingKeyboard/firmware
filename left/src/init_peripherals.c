@@ -85,7 +85,7 @@ void InitPeripherals(void)
     InitLedDriver();
     InitTestLed();
     LedPwm_Init();
-//    InitI2cWatchdog();
     DebugOverSpi_Init();
     InitI2c();
+    InitI2cWatchdog();
 }
