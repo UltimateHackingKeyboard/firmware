@@ -10,6 +10,7 @@
 #include "slave_protocol_handler.h"
 #include "i2c_watchdog.h"
 #include "debug_over_spi.h"
+#include "main.h"
 
 i2c_slave_config_t slaveConfig;
 i2c_slave_handle_t slaveHandle;
@@ -87,5 +88,7 @@ void InitPeripherals(void)
     LedPwm_Init();
     DebugOverSpi_Init();
     InitI2c();
+#if KEY_USE_I2C_WATCHDOG_TIMER
     InitI2cWatchdog();
+#endif
 }
