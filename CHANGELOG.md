@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [8.0.1] - 2017-12-25
+
+Device Protocol: 4.1.0 | Module Protocol: 4.0.0 | User Config: 4.0.0 | Hardware Config: 1.0.0
+
+- Implement I2C watchdog for the left keyboard half which should resolve the occasional hangs of the left keyboard half.
+
 ## [8.0.0] - 2017-12-15
 
 Device Protocol: 4.**1.0** | Module Protocol: **4.0.0** | User Config: 4.0.0 | Hardware Config: 1.0.0
