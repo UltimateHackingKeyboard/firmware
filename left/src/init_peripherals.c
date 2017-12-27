@@ -88,7 +88,4 @@ void InitPeripherals(void)
     LedPwm_Init();
     DebugOverSpi_Init();
     InitI2c();
-#if KEY_USE_I2C_WATCHDOG_TIMER
-    InitI2cWatchdog();
-#endif
 }

@@ -13,7 +13,6 @@
 
 // Functions:
 
-    void InitI2cWatchdog(void);
     void RunWatchdog(void);
 
 #endif

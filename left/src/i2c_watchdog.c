@@ -3,22 +3,16 @@
 #include "i2c_watchdog.h"
 #include "test_led.h"
 #include "init_peripherals.h"
-#include "main.h"
+#include "config.h"
 
 /* NOTE: Because of a bug in the ROM bootloader of the KL03Z, the watchdog timer is disabled and cannot be re-enabled.
  * See https://community.nxp.com/thread/457893
  * Therefore the hardware watchdog timer cannot be used without an extra way to enter bootloader or application mode.
  */
-#if KEY_USE_I2C_WATCHDOG_TIMER
+#ifdef I2C_WATCHDOG
   static uint32_t prevWatchdogCounter = 0;
   static uint32_t I2cWatchdog_RecoveryCounter; /* counter for how many times we had to recover and restart */
-#endif
 
-void InitI2cWatchdog(void)
-{
-}
-
-#if KEY_USE_I2C_WATCHDOG_TIMER
 void RunWatchdog(void)
 {
 	static volatile uint32_t I2cWatchdog_WatchCounter = 0; /* counter for timer */
@@ -32,10 +26,14 @@ void RunWatchdog(void)
 
 		if (I2cWatchdog_WatchCounter>10) { /* do not check within the first 1000 ms, as I2C might not be running yet */
 			if (I2C_Watchdog == prevWatchdogCounter) { // Restart I2C if there hasn't been any interrupt during 100 ms. I2C_Watchdog gets incremented for every I2C transaction
-		//        NVIC_SystemReset();
 				I2cWatchdog_RecoveryCounter++;
+#if I2C_WATCHDOG == I2C_WATCHDOG_VALUE_REBOOT
+		        NVIC_SystemReset();
+#endif
+#if I2C_WATCHDOG == I2C_WATCHDOG_VALUE_REINIT
 				I2C_SlaveDeinit(I2C_BUS_BASEADDR);
 				InitI2c();
+#endif
 			}
 		}
 		prevWatchdogCounter = I2C_Watchdog; /* remember previous counter */

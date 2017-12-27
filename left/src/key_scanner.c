@@ -1,14 +1,12 @@
 #include "fsl_lptmr.h"
 #include "key_scanner.h"
-#include "main.h"
-#if KEY_USE_I2C_WATCHDOG_TIMER
-  #include "i2c_watchdog.h"
-#endif
+#include "config.h"
+#include "i2c_watchdog.h"
 
 void KEY_SCANNER_HANDLER(void)
 {
     KeyMatrix_ScanRow(&keyMatrix);
-#if KEY_USE_I2C_WATCHDOG_TIMER
+#ifdef I2C_WATCHDOG
     RunWatchdog();
 #endif
     LPTMR_ClearStatusFlags(KEY_SCANNER_LPTMR_BASEADDR, kLPTMR_TimerCompareFlag);
