@@ -4,6 +4,7 @@
 // Includes:
 
     #include "fsl_common.h"
+    #include "config.h"
 
 // Typedefs:
 
@@ -11,8 +12,10 @@
         SlaveId_LeftKeyboardHalf,
         SlaveId_LeftAddon,
         SlaveId_RightAddon,
+#ifdef LED_DRIVERS_ENABLED
         SlaveId_RightLedDriver,
         SlaveId_LeftLedDriver,
+#endif
         SlaveId_KbootDriver,
     } slave_id_t;
 

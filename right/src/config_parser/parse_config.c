@@ -8,6 +8,7 @@
 #include "led_display.h"
 #include "slave_scheduler.h"
 #include "slave_drivers/is31fl3731_driver.h"
+#include "config.h"
 
 static parser_error_t parseModuleConfiguration(config_buffer_t *buffer)
 {
@@ -142,9 +143,10 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
         IconsAndLayerTextsBrightness = iconsAndLayerTextsBrightness;
         AlphanumericSegmentsBrightness = alphanumericSegmentsBrightness;
         KeyBacklightBrightness = keyBacklightBrightness;
+#ifdef LED_DRIVERS_ENABLED
         Slaves[SlaveId_LeftLedDriver].isConnected = false;
         Slaves[SlaveId_RightLedDriver].isConnected = false;
-
+#endif
         // Update mouse key speeds
 
         MouseMoveState.initialSpeed = mouseMoveInitialSpeed;

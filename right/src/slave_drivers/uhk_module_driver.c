@@ -265,8 +265,10 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
 
 void UhkModuleSlaveDriver_Disconnect(uint8_t uhkModuleDriverId)
 {
+#ifdef LED_DRIVERS_ENABLED
     if (uhkModuleDriverId == SlaveId_LeftKeyboardHalf) {
         Slaves[SlaveId_LeftLedDriver].isConnected = false;
     }
     UhkModuleStates[uhkModuleDriverId].moduleId = 0;
+#endif
 }

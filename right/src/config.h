@@ -4,6 +4,7 @@
 // Macros:
 
     #define I2C_WATCHDOG
+    #define LED_DRIVERS_ENABLED
 //    #define LED_DRIVER_STRESS_TEST
 
 #endif
