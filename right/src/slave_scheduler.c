@@ -84,7 +84,7 @@ static void slaveSchedulerCallback(I2C_Type *base, i2c_master_handle_t *handle, 
             previousSlaveId = currentSlaveId++;
         }
 
-        if (currentSlaveId >= (sizeof(Slaves) / sizeof(uhk_slave_t))) {
+        if (currentSlaveId >= SLAVE_COUNT) {
             currentSlaveId = 0;
         }
     } while (!isTransferScheduled);
@@ -95,7 +95,7 @@ void InitSlaveScheduler(void)
     previousSlaveId = 0;
     currentSlaveId = 0;
 
-    for (uint8_t i=0; i<sizeof(Slaves) / sizeof(uhk_slave_t); i++) {
+    for (uint8_t i=0; i<SLAVE_COUNT; i++) {
         uhk_slave_t *currentSlave = Slaves + i;
         currentSlave->isConnected = false;
     }

@@ -6,6 +6,10 @@
     #include "fsl_common.h"
     #include "config.h"
 
+// Macros:
+
+    #define SLAVE_COUNT (sizeof(Slaves) / sizeof(uhk_slave_t))
+
 // Typedefs:
 
     typedef enum { // Slaves[] is meant to be indexed with these values
