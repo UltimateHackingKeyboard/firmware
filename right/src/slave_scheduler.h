@@ -9,6 +9,8 @@
 // Macros:
 
     #define SLAVE_COUNT (sizeof(Slaves) / sizeof(uhk_slave_t))
+    #define MAX_SLAVE_COUNT 6
+    #define IS_VALID_SLAVE_ID(slaveId) (0 <= slaveId && slaveId <= MAX_SLAVE_COUNT)
 
 // Typedefs:
 
@@ -37,7 +39,7 @@
     } uhk_slave_t;
 
     typedef enum {
-        kStatusGroup_Uhk = -1,
+        kStatusGroup_Uhk = 200,
     } uhk_status_group_t;
 
     typedef enum {

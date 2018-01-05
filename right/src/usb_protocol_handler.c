@@ -14,6 +14,7 @@
 #include "usb_commands/usb_command_get_debug_buffer.h"
 #include "usb_commands/usb_command_jump_to_module_bootloader.h"
 #include "usb_commands/usb_command_send_kboot_command_to_module.h"
+#include "usb_commands/usb_command_get_slave_i2c_errors.h"
 
 void UsbProtocolHandler(void)
 {
@@ -64,6 +65,9 @@ void UsbProtocolHandler(void)
             break;
         case UsbCommandId_GetModuleProperty:
             UsbCommand_GetModuleProperty();
+            break;
+        case UsbCommandId_GetSlaveI2cErrors:
+            UsbCommand_GetSlaveI2cErrors();
             break;
         default:
             SetUsbTxBufferUint8(0, UsbStatusCode_InvalidCommand);

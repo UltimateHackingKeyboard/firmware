@@ -31,6 +31,7 @@
         UsbCommandId_GetAdcValue              = 0x0c,
         UsbCommandId_SetLedPwmBrightness      = 0x0d,
         UsbCommandId_GetModuleProperty        = 0x0e,
+        UsbCommandId_GetSlaveI2cErrors        = 0x0f,
     } usb_command_id_t;
 
     typedef enum {
