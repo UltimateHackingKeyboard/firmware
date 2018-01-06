@@ -1,9 +1,14 @@
+#include "fsl_i2c.h"
 #include "i2c_error_logger.h"
 
 i2c_slave_error_counter_t I2cSlaveErrorCounters[MAX_SLAVE_COUNT];
 
 void LogI2cError(uint8_t slaveId, status_t status)
 {
+    if (!(kStatus_I2C_Busy <= status && status <= kStatus_I2C_Timeout)) {
+        return;
+    }
+
     i2c_slave_error_counter_t *i2cSlaveErrorCounter = I2cSlaveErrorCounters + slaveId;
     uint8_t errorIdx;
 
