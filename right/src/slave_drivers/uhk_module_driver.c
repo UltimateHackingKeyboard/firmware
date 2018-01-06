@@ -91,7 +91,7 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
         case UhkModulePhase_ProcessSync: {
             bool isMessageValid = CRC16_IsMessageValid(rxMessage);
             bool isSyncValid = memcmp(rxMessage->data, SlaveSyncString, SLAVE_SYNC_STRING_LENGTH) == 0;
-            status = kStatus_Uhk_NoTransfer;
+            status = kStatus_Uhk_IdleCycle;
             *uhkModulePhase = isSyncValid && isMessageValid
                 ? UhkModulePhase_RequestModuleProtocolVersion
                 : UhkModulePhase_RequestSync;
@@ -115,7 +115,7 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
             if (isMessageValid) {
                 memcpy(&uhkModuleState->moduleProtocolVersion, rxMessage->data, sizeof(version_t));
             }
-            status = kStatus_Uhk_NoTransfer;
+            status = kStatus_Uhk_IdleCycle;
             *uhkModulePhase = isMessageValid ? UhkModulePhase_RequestFirmwareVersion : UhkModulePhase_RequestModuleProtocolVersion;
             break;
         }
@@ -137,7 +137,7 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
             if (isMessageValid) {
                 memcpy(&uhkModuleState->firmwareVersion, rxMessage->data, sizeof(version_t));
             }
-            status = kStatus_Uhk_NoTransfer;
+            status = kStatus_Uhk_IdleCycle;
             *uhkModulePhase = isMessageValid ? UhkModulePhase_RequestModuleId : UhkModulePhase_RequestFirmwareVersion;
             break;
         }
@@ -159,7 +159,7 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
             if (isMessageValid) {
                 uhkModuleState->moduleId = rxMessage->data[0];
             }
-            status = kStatus_Uhk_NoTransfer;
+            status = kStatus_Uhk_IdleCycle;
             *uhkModulePhase = isMessageValid ? UhkModulePhase_RequestModuleKeyCount : UhkModulePhase_RequestModuleId;
             break;
         }
@@ -181,7 +181,7 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
             if (isMessageValid) {
                 uhkModuleState->keyCount = rxMessage->data[0];
             }
-            status = kStatus_Uhk_NoTransfer;
+            status = kStatus_Uhk_IdleCycle;
             *uhkModulePhase = isMessageValid ? UhkModulePhase_RequestModulePointerCount : UhkModulePhase_RequestModuleKeyCount;
             break;
         }
@@ -203,7 +203,7 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
             if (isMessageValid) {
                 uhkModuleState->pointerCount = rxMessage->data[0];
             }
-            status = kStatus_Uhk_NoTransfer;
+            status = kStatus_Uhk_IdleCycle;
             *uhkModulePhase = isMessageValid ? UhkModulePhase_RequestKeyStates : UhkModulePhase_RequestModulePointerCount;
             break;
         }
@@ -227,14 +227,14 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
                     KeyStates[slotId][keyId].current = keyStatesBuffer[keyId];
                 }
             }
-            status = kStatus_Uhk_NoTransfer;
+            status = kStatus_Uhk_IdleCycle;
             *uhkModulePhase = UhkModulePhase_SetTestLed;
             break;
 
         // Set test LED
         case UhkModulePhase_SetTestLed:
             if (uhkModuleSourceVars->isTestLedOn == uhkModuleTargetVars->isTestLedOn) {
-                status = kStatus_Uhk_NoTransfer;
+                status = kStatus_Uhk_IdleCycle;
             } else {
                 txMessage.data[0] = SlaveCommand_SetTestLed;
                 txMessage.data[1] = uhkModuleSourceVars->isTestLedOn;
@@ -248,7 +248,7 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
         // Set PWM brightness
         case UhkModulePhase_SetLedPwmBrightness:
             if (uhkModuleSourceVars->ledPwmBrightness == uhkModuleTargetVars->ledPwmBrightness) {
-                status = kStatus_Uhk_NoTransfer;
+                status = kStatus_Uhk_IdleCycle;
             } else {
                 txMessage.data[0] = SlaveCommand_SetLedPwmBrightness;
                 txMessage.data[1] = uhkModuleSourceVars->ledPwmBrightness;

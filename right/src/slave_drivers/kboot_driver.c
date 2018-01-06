@@ -39,7 +39,7 @@ status_t KbootSlaveDriver_Update(uint8_t kbootInstanceId)
                 case 1:
                     KbootDriverState.status = Slaves[SlaveId_KbootDriver].previousStatus;
                     KbootDriverState.phase = KbootDriverState.status == kStatus_Success ? 2 : 0;
-                    return kStatus_Uhk_NoTransfer;
+                    return kStatus_Uhk_IdleCycle;
                 case 2:
                     status = rx(10);
                     KbootDriverState.phase++;
@@ -50,7 +50,7 @@ status_t KbootSlaveDriver_Update(uint8_t kbootInstanceId)
                         KbootDriverState.commandType = KbootCommand_Idle;
                     } else {
                         KbootDriverState.phase = 0;
-                        return kStatus_Uhk_NoTransfer;
+                        return kStatus_Uhk_IdleCycle;
                     }
                 }
             break;

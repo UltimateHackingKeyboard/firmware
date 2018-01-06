@@ -52,7 +52,7 @@ uhk_slave_t Slaves[] = {
 
 static void slaveSchedulerCallback(I2C_Type *base, i2c_master_handle_t *handle, status_t previousStatus, void *userData)
 {
-    bool isFirstIteration = true;
+    bool isFirstCycle = true;
     bool isTransferScheduled = false;
     I2cSlaveScheduler_Counter++;
 
@@ -60,7 +60,7 @@ static void slaveSchedulerCallback(I2C_Type *base, i2c_master_handle_t *handle, 
         uhk_slave_t *previousSlave = Slaves + previousSlaveId;
         uhk_slave_t *currentSlave = Slaves + currentSlaveId;
 
-        if (isFirstIteration) {
+        if (isFirstCycle) {
             previousSlave->previousStatus = previousStatus;
             if (IS_STATUS_I2C_ERROR(previousStatus)) {
                 LogI2cError(previousSlaveId, previousStatus);
@@ -72,7 +72,7 @@ static void slaveSchedulerCallback(I2C_Type *base, i2c_master_handle_t *handle, 
                 previousSlave->disconnect(previousSlaveId);
             }
 
-            isFirstIteration = false;
+            isFirstCycle = false;
         }
 
         if (!currentSlave->isConnected) {
@@ -83,12 +83,12 @@ static void slaveSchedulerCallback(I2C_Type *base, i2c_master_handle_t *handle, 
         if (IS_STATUS_I2C_ERROR(currentStatus)) {
             LogI2cError(currentSlaveId, currentStatus);
         }
-        isTransferScheduled = currentStatus != kStatus_Uhk_IdleSlave && currentStatus != kStatus_Uhk_NoTransfer;
+        isTransferScheduled = currentStatus != kStatus_Uhk_IdleSlave && currentStatus != kStatus_Uhk_IdleCycle;
         if (isTransferScheduled) {
             currentSlave->isConnected = true;
         }
 
-        if (currentStatus != kStatus_Uhk_NoTransfer) {
+        if (currentStatus != kStatus_Uhk_IdleCycle) {
             previousSlaveId = currentSlaveId++;
             if (currentSlaveId >= SLAVE_COUNT) {
                 currentSlaveId = 0;
