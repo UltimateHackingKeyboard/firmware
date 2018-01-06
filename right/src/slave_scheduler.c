@@ -61,7 +61,9 @@ static void slaveSchedulerCallback(I2C_Type *base, i2c_master_handle_t *handle, 
         uhk_slave_t *currentSlave = Slaves + currentSlaveId;
 
         previousSlave->previousStatus = previousStatus;
-        LogI2cError(previousSlaveId, previousStatus);
+        if (IS_STATUS_I2C_ERROR(previousStatus)) {
+            LogI2cError(previousSlaveId, previousStatus);
+        }
 
         if (isFirstIteration) {
             bool wasPreviousSlaveConnected = previousSlave->isConnected;
@@ -77,7 +79,9 @@ static void slaveSchedulerCallback(I2C_Type *base, i2c_master_handle_t *handle, 
         }
 
         status_t currentStatus = currentSlave->update(currentSlave->perDriverId);
-        LogI2cError(currentSlaveId, currentStatus);
+        if (IS_STATUS_I2C_ERROR(currentStatus)) {
+            LogI2cError(currentSlaveId, currentStatus);
+        }
         isTransferScheduled = currentStatus != kStatus_Uhk_IdleSlave && currentStatus != kStatus_Uhk_NoTransfer;
         if (isTransferScheduled) {
             currentSlave->isConnected = true;
