@@ -89,11 +89,11 @@ static void slaveSchedulerCallback(I2C_Type *base, i2c_master_handle_t *handle, 
 
         if (currentStatus != kStatus_Uhk_NoTransfer) {
             previousSlaveId = currentSlaveId++;
+            if (currentSlaveId >= SLAVE_COUNT) {
+                currentSlaveId = 0;
+            }
         }
 
-        if (currentSlaveId >= SLAVE_COUNT) {
-            currentSlaveId = 0;
-        }
     } while (!isTransferScheduled);
 }
 
