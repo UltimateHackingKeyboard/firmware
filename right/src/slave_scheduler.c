@@ -60,17 +60,18 @@ static void slaveSchedulerCallback(I2C_Type *base, i2c_master_handle_t *handle, 
         uhk_slave_t *previousSlave = Slaves + previousSlaveId;
         uhk_slave_t *currentSlave = Slaves + currentSlaveId;
 
-        previousSlave->previousStatus = previousStatus;
-        if (IS_STATUS_I2C_ERROR(previousStatus)) {
-            LogI2cError(previousSlaveId, previousStatus);
-        }
-
         if (isFirstIteration) {
+            previousSlave->previousStatus = previousStatus;
+            if (IS_STATUS_I2C_ERROR(previousStatus)) {
+                LogI2cError(previousSlaveId, previousStatus);
+            }
+
             bool wasPreviousSlaveConnected = previousSlave->isConnected;
             previousSlave->isConnected = previousStatus == kStatus_Success;
             if (wasPreviousSlaveConnected && !previousSlave->isConnected && previousSlave->disconnect) {
                 previousSlave->disconnect(previousSlaveId);
             }
+
             isFirstIteration = false;
         }
 
