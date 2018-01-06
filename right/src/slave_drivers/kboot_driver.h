@@ -7,7 +7,10 @@
 
 // Macros:
 
-    #define MAX_KBOOT_COMMAND_LENGTH 32
+    #define KBOOT_PACKAGE_MAX_LENGTH 32
+    #define KBOOT_PACKAGE_LENGTH_PING_RESPONSE 10
+    #define KBOOT_PACKAGE_LENGTH_ACK 2
+    #define KBOOT_PACKAGE_LENGTH_GENERIC_RESPONSE 18
 
 // Typedefs:
 
@@ -20,6 +23,20 @@
         KbootCommand_Ping,
         KbootCommand_Reset,
     } kboot_command_t;
+
+    typedef enum {
+        KbootPhase_SendPing,
+        KbootPhase_CheckPingStatus,
+        KbootPhase_ReceivePingResponse,
+        KbootPhase_CheckPingResponseStatus,
+    } kboot_ping_phase_t;
+
+    typedef enum {
+        KbootPhase_SendReset,
+        KbootPhase_ReceiveResetAck,
+        KbootPhase_ReceiveResetGenericResponse,
+        KbootPhase_CheckResetSendAck,
+    } kboot_reset_phase_t;
 
     typedef struct {
         kboot_command_t commandType;
