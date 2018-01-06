@@ -57,10 +57,10 @@ static void slaveSchedulerCallback(I2C_Type *base, i2c_master_handle_t *handle, 
     I2cSlaveScheduler_Counter++;
 
     do {
-        uhk_slave_t *previousSlave = Slaves + previousSlaveId;
         uhk_slave_t *currentSlave = Slaves + currentSlaveId;
 
         if (isFirstCycle) {
+            uhk_slave_t *previousSlave = Slaves + previousSlaveId;
             previousSlave->previousStatus = previousStatus;
             if (IS_STATUS_I2C_ERROR(previousStatus)) {
                 LogI2cError(previousSlaveId, previousStatus);
