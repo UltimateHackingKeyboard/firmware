@@ -3,6 +3,7 @@
 #include "usb_protocol_handler.h"
 #include "eeprom.h"
 #include "versions.h"
+#include "slave_drivers/kboot_driver.h"
 
 version_t deviceProtocolVersion = {
     DEVICE_PROTOCOL_MAJOR_VERSION,
@@ -54,6 +55,9 @@ void UsbCommand_GetDeviceProperty(void)
             break;
         case DevicePropertyId_ConfigSizes:
             memcpy(GenericHidOutBuffer+1, (uint8_t*)&configSizes, sizeof(configSizes));
+            break;
+        case DevicePropertyId_CurrentKbootCommand:
+            GenericHidOutBuffer[1] = KbootDriverState.command;
             break;
         default:
             SetUsbTxBufferUint8(0, UsbStatusCode_GetDeviceProperty_InvalidProperty);

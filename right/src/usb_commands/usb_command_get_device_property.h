@@ -7,6 +7,7 @@
         DevicePropertyId_DeviceProtocolVersion = 0,
         DevicePropertyId_ProtocolVersions      = 1,
         DevicePropertyId_ConfigSizes           = 2,
+        DevicePropertyId_CurrentKbootCommand   = 3,
     } system_property_t;
 
     typedef enum {

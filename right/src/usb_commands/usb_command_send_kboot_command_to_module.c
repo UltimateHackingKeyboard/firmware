@@ -6,5 +6,5 @@ void UsbCommand_SendKbootCommandToModule(void)
 {
     KbootDriverState.phase = 0;
     KbootDriverState.i2cAddress  = GetUsbRxBufferUint8(2);
-    KbootDriverState.commandType = GetUsbRxBufferUint8(1); // Command should be set last.
+    KbootDriverState.command = GetUsbRxBufferUint8(1); // Command should be set last.
 }

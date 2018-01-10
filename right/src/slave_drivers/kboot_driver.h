@@ -39,7 +39,7 @@
     } kboot_reset_phase_t;
 
     typedef struct {
-        kboot_command_t commandType;
+        kboot_command_t command;
         uint8_t i2cAddress;
         uint8_t phase;
         uint32_t status;

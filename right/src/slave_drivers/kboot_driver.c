@@ -27,7 +27,7 @@ status_t KbootSlaveDriver_Update(uint8_t kbootInstanceId)
 {
     status_t status = kStatus_Uhk_IdleSlave;
 
-    switch (KbootDriverState.commandType) {
+    switch (KbootDriverState.command) {
         case KbootCommand_Idle:
             break;
         case KbootCommand_Ping:
@@ -49,7 +49,7 @@ status_t KbootSlaveDriver_Update(uint8_t kbootInstanceId)
                 case KbootPhase_CheckPingResponseStatus:
                     KbootDriverState.status = Slaves[SlaveId_KbootDriver].previousStatus;
                     if (KbootDriverState.status == kStatus_Success) {
-                        KbootDriverState.commandType = KbootCommand_Idle;
+                        KbootDriverState.command = KbootCommand_Idle;
                     } else {
                         KbootDriverState.phase = KbootPhase_SendPing;
                         return kStatus_Uhk_IdleCycle;
@@ -72,7 +72,7 @@ status_t KbootSlaveDriver_Update(uint8_t kbootInstanceId)
                     break;
                 case KbootPhase_CheckResetSendAck:
                     status = tx(ackMessage, sizeof(ackMessage));
-                    KbootDriverState.commandType = KbootCommand_Idle;
+                    KbootDriverState.command = KbootCommand_Idle;
                     break;
             }
             break;
