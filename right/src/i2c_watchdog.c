@@ -22,9 +22,7 @@ void PIT_I2C_WATCHDOG_HANDLER(void)
 
     if (I2C_Watchdog == prevWatchdogCounter) { // Restart I2C if there haven't been any interrupts recently
         I2cWatchdog_RecoveryCounter++;
-        I2C_MasterDeinit(I2C_MAIN_BUS_BASEADDR);
-        InitI2cMainBus();
-        InitSlaveScheduler();
+        ReinitI2cMainBus();
     }
 
     prevWatchdogCounter = I2C_Watchdog;

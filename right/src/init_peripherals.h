@@ -9,5 +9,6 @@
 
     void InitPeripherals(void);
     void InitI2cMainBus(void);
+    void ReinitI2cMainBus(void);
 
 #endif

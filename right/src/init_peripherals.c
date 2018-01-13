@@ -83,6 +83,13 @@ void InitI2cMainBus(void)
     I2C_MasterInit(I2C_MAIN_BUS_BASEADDR, &masterConfig, sourceClock);
 }
 
+void ReinitI2cMainBus(void)
+{
+    I2C_MasterDeinit(I2C_MAIN_BUS_BASEADDR);
+    InitI2cMainBus();
+    InitSlaveScheduler();
+}
+
 void initI2cEepromBus(void)
 {
     port_pin_config_t pinConfig = {
