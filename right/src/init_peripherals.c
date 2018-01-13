@@ -91,7 +91,6 @@ void initI2cEepromBus(void)
        .mux = I2C_EEPROM_BUS_MUX,
    };
 
-
    CLOCK_EnableClock(I2C_EEPROM_BUS_SDA_CLOCK);
    CLOCK_EnableClock(I2C_EEPROM_BUS_SCL_CLOCK);
 
