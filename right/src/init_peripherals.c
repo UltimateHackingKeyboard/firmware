@@ -61,7 +61,7 @@ void recoverI2c(void)
     delay();
 }
 
-void InitI2cMainBus(void)
+void initI2cMainBus(void)
 {
     CLOCK_EnableClock(I2C_MAIN_BUS_SDA_CLOCK);
     CLOCK_EnableClock(I2C_MAIN_BUS_SCL_CLOCK);
@@ -87,7 +87,7 @@ void InitI2cMainBus(void)
 void ReinitI2cMainBus(void)
 {
     I2C_MasterDeinit(I2C_MAIN_BUS_BASEADDR);
-    InitI2cMainBus();
+    initI2cMainBus();
     InitSlaveScheduler();
 }
 
@@ -114,7 +114,7 @@ void initI2cEepromBus(void)
 
 void InitI2c(void)
 {
-    InitI2cMainBus();
+    initI2cMainBus();
     initI2cEepromBus();
 }
 
