@@ -5,7 +5,6 @@
 #include "fsl_gpio.h"
 #include "i2c.h"
 #include "i2c_watchdog.h"
-#include "slave_scheduler.h"
 #include "init_peripherals.h"
 
 uint32_t I2cWatchdog_WatchCounter;

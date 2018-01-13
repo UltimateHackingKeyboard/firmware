@@ -14,6 +14,7 @@
 #include "timer.h"
 #include "key_debouncer.h"
 #include "usb_api.h"
+#include "slave_scheduler.h"
 
 void InitInterruptPriorities(void)
 {
