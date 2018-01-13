@@ -5,6 +5,10 @@
 
     #include "fsl_common.h"
 
+// Variables:
+
+    extern uint32_t I2cMainBusBaudRateBps;
+
 // Functions:
 
     void InitPeripherals(void);

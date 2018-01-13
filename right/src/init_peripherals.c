@@ -16,6 +16,8 @@
 #include "usb_api.h"
 #include "slave_scheduler.h"
 
+uint32_t I2cMainBusBaudRateBps = I2C_MAIN_BUS_BAUD_RATE;
+
 void InitInterruptPriorities(void)
 {
     NVIC_SetPriority(PIT_I2C_WATCHDOG_IRQ_ID,  1);
@@ -79,7 +81,7 @@ void initI2cMainBus(void)
 
     i2c_master_config_t masterConfig;
     I2C_MasterGetDefaultConfig(&masterConfig);
-    masterConfig.baudRate_Bps = I2C_MAIN_BUS_BAUD_RATE;
+    masterConfig.baudRate_Bps = I2cMainBusBaudRateBps;
     uint32_t sourceClock = CLOCK_GetFreq(I2C_MAIN_BUS_CLK_SRC);
     I2C_MasterInit(I2C_MAIN_BUS_BASEADDR, &masterConfig, sourceClock);
 }
