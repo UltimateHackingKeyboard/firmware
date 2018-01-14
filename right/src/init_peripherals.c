@@ -29,7 +29,7 @@ void initBusPalState(void) {
     }
 }
 
-void InitInterruptPriorities(void)
+void initInterruptPriorities(void)
 {
     NVIC_SetPriority(PIT_I2C_WATCHDOG_IRQ_ID,  1);
     NVIC_SetPriority(PIT_TIMER_IRQ_ID,         2);
@@ -126,7 +126,7 @@ void initI2cEepromBus(void)
    I2C_MasterInit(I2C_EEPROM_BUS_BASEADDR, &masterConfig, sourceClock);
 }
 
-void InitI2c(void)
+void initI2c(void)
 {
     initI2cMainBus();
     initI2cEepromBus();
@@ -135,13 +135,13 @@ void InitI2c(void)
 void InitPeripherals(void)
 {
     initBusPalState();
-    InitInterruptPriorities();
+    initInterruptPriorities();
     Timer_Init();
     InitLedDriver();
     InitResetButton();
     InitMergeSensor();
     ADC_Init();
-    InitI2c();
+    initI2c();
     InitTestLed();
     LedPwm_Init();
 #ifdef I2C_WATCHDOG

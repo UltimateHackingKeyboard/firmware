@@ -45,14 +45,14 @@ static void i2cSlaveCallback(I2C_Type *base, i2c_slave_transfer_t *xfer, void *u
     }
 }
 
-void InitInterruptPriorities(void)
+void initInterruptPriorities(void)
 {
     NVIC_SetPriority(I2C0_IRQn, 1);
     NVIC_SetPriority(TPM1_IRQn, 1);
     NVIC_SetPriority(SPI0_IRQn, 1);
 }
 
-void InitI2c(void)
+void initI2c(void)
 {
     port_pin_config_t pinConfig = {
         .pullSelect = kPORT_PullUp,
@@ -82,10 +82,10 @@ void InitLedDriver(void)
 
 void InitPeripherals(void)
 {
-    InitInterruptPriorities();
+    initInterruptPriorities();
     InitLedDriver();
     InitTestLed();
     LedPwm_Init();
     DebugOverSpi_Init();
-    InitI2c();
+    initI2c();
 }

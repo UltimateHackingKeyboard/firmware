@@ -11,6 +11,6 @@
 // Functions:
 
     void InitPeripherals(void);
-    void InitI2c(void);
+    void initI2c(void);
 
 #endif

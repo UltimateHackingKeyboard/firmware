@@ -32,7 +32,7 @@ void RunWatchdog(void)
 #endif
 #if I2C_WATCHDOG == I2C_WATCHDOG_VALUE_REINIT
                 I2C_SlaveDeinit(I2C_BUS_BASEADDR);
-                InitI2c();
+                initI2c();
 #endif
             }
         }
