@@ -8,6 +8,10 @@
 // Typedefs:
 
     typedef enum {
+        ModulePropertyId_VersionNumbers = 0,
+    } module_property_id_t;
+
+    typedef enum {
         UsbStatusCode_GetModuleProperty_InvalidModuleSlotId = 2,
     } usb_status_code_get_module_property_t;
 

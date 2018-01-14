@@ -12,10 +12,15 @@ void UsbCommand_GetModuleProperty()
         SetUsbTxBufferUint8(0, UsbStatusCode_GetModuleProperty_InvalidModuleSlotId);
     }
 
-    uint8_t moduleDriverId = SLOT_ID_TO_UHK_MODULE_DRIVER_ID(slotId);
-    uhk_module_state_t *moduleState = UhkModuleStates + moduleDriverId;
-
-    GenericHidOutBuffer[1] = moduleState->moduleId;
-    memcpy(GenericHidOutBuffer + 2, &moduleState->moduleProtocolVersion, sizeof(version_t));
-    memcpy(GenericHidOutBuffer + 2 + sizeof(version_t), &moduleState->firmwareVersion, sizeof(version_t));
+    module_property_id_t modulePropertyId = GetUsbRxBufferUint8(2);
+    switch (modulePropertyId) {
+        case ModulePropertyId_VersionNumbers: {
+            uint8_t moduleDriverId = SLOT_ID_TO_UHK_MODULE_DRIVER_ID(slotId);
+            uhk_module_state_t *moduleState = UhkModuleStates + moduleDriverId;
+            GenericHidOutBuffer[1] = moduleState->moduleId;
+            memcpy(GenericHidOutBuffer + 2, &moduleState->moduleProtocolVersion, sizeof(version_t));
+            memcpy(GenericHidOutBuffer + 8, &moduleState->firmwareVersion, sizeof(version_t));
+            break;
+        }
+    }
 }
