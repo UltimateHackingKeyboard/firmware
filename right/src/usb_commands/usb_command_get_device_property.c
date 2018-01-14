@@ -4,6 +4,9 @@
 #include "eeprom.h"
 #include "versions.h"
 #include "slave_drivers/kboot_driver.h"
+#include "i2c.h"
+#include "init_peripherals.h"
+#include "fsl_i2c.h"
 
 version_t deviceProtocolVersion = {
     DEVICE_PROTOCOL_MAJOR_VERSION,
@@ -58,6 +61,11 @@ void UsbCommand_GetDeviceProperty(void)
             break;
         case DevicePropertyId_CurrentKbootCommand:
             GenericHidOutBuffer[1] = KbootDriverState.command;
+            break;
+        case DevicePropertyId_I2cMainBusBaudRate:
+            GenericHidOutBuffer[1] = I2C_MAIN_BUS_BASEADDR->F;
+            SetUsbTxBufferUint32(2, I2cMainBusRequestedBaudRateBps);
+            SetUsbTxBufferUint32(6, I2cMainBusActualBaudRateBps);
             break;
         default:
             SetUsbTxBufferUint8(0, UsbStatusCode_GetDeviceProperty_InvalidProperty);

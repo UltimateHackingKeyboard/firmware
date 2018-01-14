@@ -7,7 +7,8 @@
 
 // Variables:
 
-    extern uint32_t I2cMainBusBaudRateBps;
+    extern uint32_t I2cMainBusRequestedBaudRateBps;
+    extern uint32_t I2cMainBusActualBaudRateBps;
 
 // Functions:
 

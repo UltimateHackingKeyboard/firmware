@@ -8,7 +8,8 @@
         DevicePropertyId_ProtocolVersions      = 1,
         DevicePropertyId_ConfigSizes           = 2,
         DevicePropertyId_CurrentKbootCommand   = 3,
-    } system_property_t;
+        DevicePropertyId_I2cMainBusBaudRate    = 4,
+    } device_property_t;
 
     typedef enum {
         UsbStatusCode_GetDeviceProperty_InvalidProperty = 2,
