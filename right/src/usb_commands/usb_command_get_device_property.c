@@ -7,6 +7,7 @@
 #include "i2c.h"
 #include "init_peripherals.h"
 #include "fsl_i2c.h"
+#include "timer.h"
 
 version_t deviceProtocolVersion = {
     DEVICE_PROTOCOL_MAJOR_VERSION,
@@ -66,6 +67,9 @@ void UsbCommand_GetDeviceProperty(void)
             GenericHidOutBuffer[1] = I2C_MAIN_BUS_BASEADDR->F;
             SetUsbTxBufferUint32(2, I2cMainBusRequestedBaudRateBps);
             SetUsbTxBufferUint32(6, I2cMainBusActualBaudRateBps);
+            break;
+        case DevicePropertyId_Uptime:
+            SetUsbTxBufferUint32(1, CurrentTime);
             break;
         default:
             SetUsbTxBufferUint8(0, UsbStatusCode_GetDeviceProperty_InvalidProperty);

@@ -9,6 +9,7 @@
         DevicePropertyId_ConfigSizes           = 2,
         DevicePropertyId_CurrentKbootCommand   = 3,
         DevicePropertyId_I2cMainBusBaudRate    = 4,
+        DevicePropertyId_Uptime                = 5,
     } device_property_t;
 
     typedef enum {
