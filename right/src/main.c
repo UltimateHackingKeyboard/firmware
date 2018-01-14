@@ -5,7 +5,6 @@
 #include "slave_scheduler.h"
 #include "bus_pal_hardware.h"
 #include "command.h"
-#include "bootloader/wormhole.h"
 #include "eeprom.h"
 #include "key_scanner.h"
 #include "usb_commands/usb_command_apply_config.h"
@@ -34,8 +33,7 @@ void main(void)
         EEPROM_LaunchTransfer(EepromOperation_Read, ConfigBufferId_HardwareConfig, hardwareConfigurationReadFinished);
     }
 
-    if (Wormhole.magicNumber == WORMHOLE_MAGIC_NUMBER && Wormhole.enumerationMode == EnumerationMode_BusPal) {
-        Wormhole.magicNumber = 0;
+    if (IsBusPalOn) {
         init_hardware();
         handleUsbBusPalCommand();
     } else {

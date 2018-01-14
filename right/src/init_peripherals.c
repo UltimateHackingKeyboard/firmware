@@ -15,9 +15,19 @@
 #include "key_debouncer.h"
 #include "usb_api.h"
 #include "slave_scheduler.h"
+#include "bootloader/wormhole.h"
 
-uint32_t I2cMainBusRequestedBaudRateBps = I2C_MAIN_BUS_BAUD_RATE;
+bool IsBusPalOn;
+uint32_t I2cMainBusRequestedBaudRateBps = I2C_MAIN_BUS_NORMAL_BAUD_RATE;
 uint32_t I2cMainBusActualBaudRateBps;
+
+void initBusPalState(void) {
+    IsBusPalOn = Wormhole.magicNumber == WORMHOLE_MAGIC_NUMBER && Wormhole.enumerationMode == EnumerationMode_BusPal;
+    if (IsBusPalOn) {
+        Wormhole.magicNumber = 0;
+        I2cMainBusRequestedBaudRateBps = I2C_MAIN_BUS_BUSPAL_BAUD_RATE;
+    }
+}
 
 void InitInterruptPriorities(void)
 {
@@ -124,6 +134,7 @@ void InitI2c(void)
 
 void InitPeripherals(void)
 {
+    initBusPalState();
     InitInterruptPriorities();
     Timer_Init();
     InitLedDriver();

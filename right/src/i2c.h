@@ -10,11 +10,12 @@
 
     // Main bus
 
-    #define I2C_MAIN_BUS_BASEADDR  I2C0
-    #define I2C_MAIN_BUS_IRQ_ID    I2C0_IRQn
-    #define I2C_MAIN_BUS_CLK_SRC   I2C0_CLK_SRC
-    #define I2C_MAIN_BUS_BAUD_RATE 100000
-    #define I2C_MAIN_BUS_MUX       kPORT_MuxAlt7
+    #define I2C_MAIN_BUS_BASEADDR         I2C0
+    #define I2C_MAIN_BUS_IRQ_ID           I2C0_IRQn
+    #define I2C_MAIN_BUS_CLK_SRC          I2C0_CLK_SRC
+    #define I2C_MAIN_BUS_NORMAL_BAUD_RATE 100000
+    #define I2C_MAIN_BUS_BUSPAL_BAUD_RATE 30000
+    #define I2C_MAIN_BUS_MUX              kPORT_MuxAlt7
 
     #define I2C_MAIN_BUS_SDA_GPIO  GPIOD
     #define I2C_MAIN_BUS_SDA_PORT  PORTD

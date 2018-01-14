@@ -7,6 +7,7 @@
 
 // Variables:
 
+    extern bool IsBusPalOn;
     extern uint32_t I2cMainBusRequestedBaudRateBps;
     extern uint32_t I2cMainBusActualBaudRateBps;
 
