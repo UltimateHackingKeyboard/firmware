@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [8.1.0] - 2018-01-15
+
+Device Protocol: 4.**2**.0 | Module Protocol: 4.0.0 | User Config: 4.0.0 | Hardware Config: 1.0.0
+
+- Enable left-half watchdog in reinit mode which seems to prevent freezes.
+- Slow down main bus I2C baud rate to 30kHz when BusPal is on to make firmware transfer more robust.
+- Implement UsbCommandId_GetSlaveI2cErrors. `DEVICEPROTOCOL:MINOR`
+- Implement UsbCommandId_SetI2cBaudRate. `DEVICEPROTOCOL:MINOR`
+- Implement DevicePropertyId_CurrentKbootCommand. `DEVICEPROTOCOL:MINOR`
+- Implement DevicePropertyId_I2cMainBusBaudRate. `DEVICEPROTOCOL:MINOR`
+- Implement DevicePropertyId_Uptime. `DEVICEPROTOCOL:MINOR`
+
 ## [8.0.1] - 2017-12-25
 
 Device Protocol: 4.1.0 | Module Protocol: 4.0.0 | User Config: 4.0.0 | Hardware Config: 1.0.0
