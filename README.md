@@ -4,6 +4,10 @@
 
 This repository hosts the firmware of the [Ultimate Hacking Keyboard](https://ultimatehackingkeyboard.com/).
 
+## Updating to the latest firmware
+
+Want to update your UHK to the latest firmware version? Simply download the [latest release of Agent](https://github.com/UltimateHackingKeyboard/agent/releases/latest) which includes the latest firmware version. You'll be easily able to update the firmware within Agent.
+
 ## Cloning the repository
 
 Please make sure to clone this repo with:
