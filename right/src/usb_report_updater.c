@@ -234,15 +234,12 @@ void applyKeyAction(key_state_t *keyState, key_action_t *action)
             break;
         case KeyActionType_SwitchLayer:
             if (!keyState->previous && previousLayer == LayerId_Base && action->switchLayer.mode == SwitchLayerMode_HoldAndDoubleTapToggle) {
-                if (doubleTapSwitchLayerKey) {
-                    if (Timer_GetElapsedTimeAndSetCurrent(&doubleTapSwitchLayerStartTime) < DoubleTapSwitchLayerTimeout) {
-                        ToggledLayer = action->switchLayer.layer;
-                    }
-                    doubleTapSwitchLayerKey = NULL;
+                if (doubleTapSwitchLayerKey && Timer_GetElapsedTimeAndSetCurrent(&doubleTapSwitchLayerStartTime) < DoubleTapSwitchLayerTimeout) {
+                    ToggledLayer = action->switchLayer.layer;
                 } else {
                     doubleTapSwitchLayerKey = keyState;
-                    doubleTapSwitchLayerStartTime = CurrentTime;
                 }
+                doubleTapSwitchLayerStartTime = CurrentTime;
             }
             break;
         case KeyActionType_SwitchKeymap:
