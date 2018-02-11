@@ -45,30 +45,26 @@ usb_status_t UsbBasicKeyboardCallback(class_handle_t handle, uint32_t event, voi
         case kUSB_DeviceHidEventGetReport:
             error = kStatus_USB_InvalidRequest;
             break;
-        case kUSB_DeviceHidEventSetReport:
-            {
-                usb_device_hid_report_struct_t *report = (usb_device_hid_report_struct_t*)param;
-                if (report->reportType == USB_DEVICE_HID_REQUEST_GET_REPORT_TYPE_OUPUT && report->reportId == 0 && report->reportLength == 1) {
-                    LedDisplay_SetIcon(LedDisplayIcon_CapsLock, report->reportBuffer[0] & HID_KEYBOARD_LED_CAPSLOCK);
-                    error = kStatus_USB_Success;
-                } else {
-                    error = kStatus_USB_InvalidRequest;
-                }
-
+        case kUSB_DeviceHidEventSetReport: {
+            usb_device_hid_report_struct_t *report = (usb_device_hid_report_struct_t*)param;
+            if (report->reportType == USB_DEVICE_HID_REQUEST_GET_REPORT_TYPE_OUPUT && report->reportId == 0 && report->reportLength == 1) {
+                LedDisplay_SetIcon(LedDisplayIcon_CapsLock, report->reportBuffer[0] & HID_KEYBOARD_LED_CAPSLOCK);
+                error = kStatus_USB_Success;
+            } else {
+                error = kStatus_USB_InvalidRequest;
             }
             break;
-        case kUSB_DeviceHidEventRequestReportBuffer:
-            {
-                usb_device_hid_report_struct_t *report = (usb_device_hid_report_struct_t*)param;
-                if (report->reportLength <= USB_BASIC_KEYBOARD_REPORT_LENGTH) {
-                    report->reportBuffer = usbBasicKeyboardInBuffer;
-                    error = kStatus_USB_Success;
-                }
-                else {
-                    error = kStatus_USB_InvalidRequest;
-                }
+        }
+        case kUSB_DeviceHidEventRequestReportBuffer: {
+            usb_device_hid_report_struct_t *report = (usb_device_hid_report_struct_t*)param;
+            if (report->reportLength <= USB_BASIC_KEYBOARD_REPORT_LENGTH) {
+                report->reportBuffer = usbBasicKeyboardInBuffer;
+                error = kStatus_USB_Success;
+            } else {
+                error = kStatus_USB_InvalidRequest;
             }
             break;
+        }
         case kUSB_DeviceHidEventGetIdle:
         case kUSB_DeviceHidEventGetProtocol:
         case kUSB_DeviceHidEventSetIdle:
