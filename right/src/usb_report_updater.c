@@ -265,10 +265,8 @@ static uint8_t secondaryRoleSlotId;
 static uint8_t secondaryRoleKeyId;
 static secondary_role_t secondaryRole;
 
-#define pos 35
 void updateActiveUsbReports(void)
 {
-    SetDebugBufferUint32(pos, 1);
     memset(activeMouseStates, 0, ACTIVE_MOUSE_STATES_COUNT);
 
     static uint8_t previousModifiers = 0;
@@ -300,7 +298,6 @@ void updateActiveUsbReports(void)
         memcpy(&ActiveUsbSystemKeyboardReport, &MacroSystemKeyboardReport, sizeof MacroSystemKeyboardReport);
         return;
     }
-    SetDebugBufferUint32(pos, 2);
 
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
@@ -354,10 +351,8 @@ void updateActiveUsbReports(void)
             keyState->previous = keyState->current;
         }
     }
-    SetDebugBufferUint32(pos, 4);
 
     processMouseActions();
-    SetDebugBufferUint32(pos, 5);
 
     // When a layer switcher key gets pressed along with another key that produces some modifiers
     // and the accomanying key gets released then keep the related modifiers active a long as the
@@ -372,7 +367,6 @@ void updateActiveUsbReports(void)
 
     previousModifiers = ActiveUsbBasicKeyboardReport->modifiers;
     previousLayer = activeLayer;
-    SetDebugBufferUint32(pos, 7);
 }
 
 bool UsbBasicKeyboardReportEverSent = false;
