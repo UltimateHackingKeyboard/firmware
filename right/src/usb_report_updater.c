@@ -191,11 +191,12 @@ static layer_id_t previousLayer = LayerId_Base;
 static uint8_t basicScancodeIndex = 0;
 static uint8_t mediaScancodeIndex = 0;
 static uint8_t systemScancodeIndex = 0;
-key_state_t *doubleTapSwitchLayerKey;
-uint32_t doubleTapSwitchLayerStartTime;
 
 void applyKeyAction(key_state_t *keyState, key_action_t *action)
 {
+    static key_state_t *doubleTapSwitchLayerKey;
+    static uint32_t doubleTapSwitchLayerStartTime;
+
     if (keyState->suppressed) {
         return;
     }
