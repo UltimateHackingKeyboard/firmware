@@ -21,6 +21,7 @@ uint32_t UsbReportUpdateTime = 0;
 static uint32_t elapsedTime;
 
 uint16_t DoubleTapSwitchLayerTimeout = 250;
+uint16_t DoubleTapSwitchLayerReleaseTimeout = 100;
 
 static bool activeMouseStates[ACTIVE_MOUSE_STATES_COUNT];
 
@@ -196,6 +197,7 @@ void applyKeyAction(key_state_t *keyState, key_action_t *action)
 {
     static key_state_t *doubleTapSwitchLayerKey;
     static uint32_t doubleTapSwitchLayerStartTime;
+    static uint32_t doubleTapSwitchLayerTriggerTime;
 
     if (keyState->suppressed) {
         return;
@@ -234,9 +236,16 @@ void applyKeyAction(key_state_t *keyState, key_action_t *action)
             activeMouseStates[action->mouseAction] = true;
             break;
         case KeyActionType_SwitchLayer:
+            if (keyState->previous && doubleTapSwitchLayerKey == keyState &&
+                Timer_GetElapsedTime(&doubleTapSwitchLayerTriggerTime) > DoubleTapSwitchLayerReleaseTimeout)
+            {
+                ToggledLayer = LayerId_Base;
+            }
+
             if (!keyState->previous && previousLayer == LayerId_Base && action->switchLayer.mode == SwitchLayerMode_HoldAndDoubleTapToggle) {
                 if (doubleTapSwitchLayerKey && Timer_GetElapsedTimeAndSetCurrent(&doubleTapSwitchLayerStartTime) < DoubleTapSwitchLayerTimeout) {
                     ToggledLayer = action->switchLayer.layer;
+                    doubleTapSwitchLayerTriggerTime = CurrentTime;
                 } else {
                     doubleTapSwitchLayerKey = keyState;
                 }
