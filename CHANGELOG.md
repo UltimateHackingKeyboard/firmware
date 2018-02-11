@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [8.1.1] - 2018-02-11
+
+Device Protocol: 4.2.0 | Module Protocol: 4.0.0 | User Config: 4.0.0 | Hardware Config: 1.0.0
+
+- Lock layers every time when double-tapping their layer switcher keys, regardless of how many times the layer switcher key was tapped before.
+- Only lock layers via double-tapping if the second tap gets released within 100ms.
+
 ## [8.1.0] - 2018-01-15
 
 Device Protocol: 4.**2**.0 | Module Protocol: 4.0.0 | User Config: 4.0.0 | Hardware Config: 1.0.0
