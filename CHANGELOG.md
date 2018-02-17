@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [8.1.3] - 2018-02-18
+
+Device Protocol: 4.2.0 | Module Protocol: 4.0.0 | User Config: 4.0.0 | Hardware Config: 1.0.0
+
+- Fix system keyboard descriptor, so it is byte-aligned.
+- Set key debounce timeout from 15ms to 20ms. This should at least reduce and hopefully eliminate key chattering.
+
 ## [8.1.2] - 2018-02-13
 
 Device Protocol: 4.2.0 | Module Protocol: 4.0.0 | User Config: 4.0.0 | Hardware Config: 1.0.0
