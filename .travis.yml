@@ -12,6 +12,7 @@ script: eclipse -noSplash
         -import $TRAVIS_BUILD_DIR/left/build
         -import $TRAVIS_BUILD_DIR/right/build
         -build all
+after_failure: cat /home/travis/.eclipse/org.eclipse.platform_4.7.0/configuration/*.log
 matrix:
   include:
     - os: linux
