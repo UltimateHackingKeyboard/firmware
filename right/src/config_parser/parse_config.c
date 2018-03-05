@@ -136,7 +136,7 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
     // If parsing succeeded then apply the parsed values.
 
     if (!ParserRunDry) {
-        DoubleTapSwitchLayerTimeout = doubleTapSwitchLayerTimeout;
+//        DoubleTapSwitchLayerTimeout = doubleTapSwitchLayerTimeout;
 
         // Update LED brightnesses and reinitialize LED drivers
 

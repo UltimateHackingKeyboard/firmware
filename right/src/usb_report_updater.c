@@ -20,7 +20,7 @@
 uint32_t UsbReportUpdateTime = 0;
 static uint32_t elapsedTime;
 
-uint16_t DoubleTapSwitchLayerTimeout = 250;
+uint16_t DoubleTapSwitchLayerTimeout = 150;
 uint16_t DoubleTapSwitchLayerReleaseTimeout = 100;
 
 static bool activeMouseStates[ACTIVE_MOUSE_STATES_COUNT];
