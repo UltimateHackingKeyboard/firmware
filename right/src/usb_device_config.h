@@ -23,10 +23,10 @@
 )
 
 // Whether the device is self-powered: 1 supported, 0 not supported
-#define USB_DEVICE_CONFIG_SELF_POWER 1
+#define USB_DEVICE_CONFIG_SELF_POWER 0
 
 // Whether device remote wakeup supported: 1 supported, 0 not supported
-#define USB_DEVICE_CONFIG_REMOTE_WAKEUP 0
+#define USB_DEVICE_CONFIG_REMOTE_WAKEUP 1
 
 // The number of control endpoints, which is always 1
 #define USB_CONTROL_ENDPOINT_COUNT 1

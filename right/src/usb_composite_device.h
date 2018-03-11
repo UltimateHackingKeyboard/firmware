@@ -33,5 +33,7 @@
 //Functions:
 
     void InitUsb(void);
+    bool IsComputerSleeping(void);
+    void WakeupComputer(bool sendResume);
 
 #endif

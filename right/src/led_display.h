@@ -5,6 +5,7 @@
 
     #include <stdint.h>
     #include <stdbool.h>
+    #include "layer.h"
 
 // Typedefs:
 
@@ -23,7 +24,9 @@
 
     void LedDisplay_SetText(uint8_t length, const char* text);
     void LedDisplay_SetCurrentKeymapText(void);
-    void LedDisplay_SetLayer(uint8_t layerId);
+    void LedDisplay_SetLayer(layer_id_t layerId);
     void LedDisplay_SetIcon(led_display_icon_t icon, bool isEnabled);
+
+    bool LedDisplay_GetIcon(led_display_icon_t icon);
 
 #endif
