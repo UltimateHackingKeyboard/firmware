@@ -453,5 +453,8 @@ void UpdateUsbReports(void)
         IsUsbMouseReportSent = false;
     }
 
+    if ((!IsUsbBasicKeyboardReportSent || !IsUsbMediaKeyboardReportSent || !IsUsbSystemKeyboardReportSent || !IsUsbMouseReportSent) && IsComputerSleeping())
+        WakeupComputer(true); // Wake up the computer if any key is pressed and the computer is sleeping
+
     Timer_SetCurrentTime(&lastUsbUpdateTime);
 }
