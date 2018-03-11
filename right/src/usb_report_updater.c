@@ -425,15 +425,33 @@ void UpdateUsbReports(void)
 
     updateActiveUsbReports();
 
-    SwitchActiveUsbBasicKeyboardReport();
-    SwitchActiveUsbMediaKeyboardReport();
-    SwitchActiveUsbSystemKeyboardReport();
-    SwitchActiveUsbMouseReport();
+    static usb_basic_keyboard_report_t last_basic_report = { .scancodes[0] = 0xFF };
+    if (memcmp(ActiveUsbBasicKeyboardReport, &last_basic_report, sizeof(usb_basic_keyboard_report_t)) != 0) {
+        last_basic_report = *ActiveUsbBasicKeyboardReport;
+        SwitchActiveUsbBasicKeyboardReport();
+        IsUsbBasicKeyboardReportSent = false;
+    }
 
-    IsUsbBasicKeyboardReportSent = false;
-    IsUsbMediaKeyboardReportSent = false;
-    IsUsbSystemKeyboardReportSent = false;
-    IsUsbMouseReportSent = false;
+    static usb_media_keyboard_report_t last_media_report = { .scancodes[0] = 0xFF };
+    if (memcmp(ActiveUsbMediaKeyboardReport, &last_media_report, sizeof(usb_media_keyboard_report_t)) != 0) {
+        last_media_report = *ActiveUsbMediaKeyboardReport;
+        SwitchActiveUsbMediaKeyboardReport();
+        IsUsbMediaKeyboardReportSent = false;
+    }
+
+    static usb_system_keyboard_report_t last_system_report = { .scancodes[0] = 0xFF };
+    if (memcmp(ActiveUsbSystemKeyboardReport, &last_system_report, sizeof(usb_system_keyboard_report_t)) != 0) {
+        last_system_report = *ActiveUsbSystemKeyboardReport;
+        SwitchActiveUsbSystemKeyboardReport();
+        IsUsbSystemKeyboardReportSent = false;
+    }
+
+    static usb_mouse_report_t last_mouse_report = { .buttons = 0xFF };
+    if (memcmp(ActiveUsbMouseReport, &last_mouse_report, sizeof(usb_mouse_report_t)) != 0) {
+        last_mouse_report = *ActiveUsbMouseReport;
+        SwitchActiveUsbMouseReport();
+        IsUsbMouseReportSent = false;
+    }
 
     Timer_SetCurrentTime(&lastUsbUpdateTime);
 }
