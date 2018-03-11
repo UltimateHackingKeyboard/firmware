@@ -227,6 +227,9 @@ static usb_status_t usbDeviceCallback(usb_device_handle handle, uint32_t event, 
         return status;
     }
 
+    if (computerSleeping)
+        WakeupComputer(false); // Wake up the keyboard if there is any activity on the bus
+
     switch (event) {
         case kUSB_DeviceEventBusReset:
             UsbCompositeDevice.attach = 0;
@@ -239,10 +242,9 @@ static usb_status_t usbDeviceCallback(usb_device_handle handle, uint32_t event, 
             }
             break;
         case kUSB_DeviceEventResume:
-            if (computerSleeping) {
-                WakeupComputer(false); // The computer just woke up, so restore the LEDs
-                status = kStatus_USB_Success;
-            }
+            // We will just wake up the computer if there is any activity on the bus
+            // The problem is that the computer won't send a resume event when it boots, so the lights will never come back on
+            status = kStatus_USB_Success;
             break;
         case kUSB_DeviceEventSetConfiguration:
             UsbCompositeDevice.attach = 1;
