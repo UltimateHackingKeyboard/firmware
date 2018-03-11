@@ -26,4 +26,6 @@
     void LedDisplay_SetLayer(uint8_t layerId);
     void LedDisplay_SetIcon(led_display_icon_t icon, bool isEnabled);
 
+    bool LedDisplay_GetIcon(led_display_icon_t icon);
+
 #endif

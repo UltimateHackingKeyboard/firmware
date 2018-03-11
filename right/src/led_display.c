@@ -101,6 +101,11 @@ void LedDisplay_SetLayer(uint8_t layerId)
     }
 }
 
+bool LedDisplay_GetIcon(led_display_icon_t icon)
+{
+    return LedDriverValues[LedDriverId_Left][8 + icon];
+}
+
 void LedDisplay_SetIcon(led_display_icon_t icon, bool isEnabled)
 {
     LedDriverValues[LedDriverId_Left][8 + icon] = isEnabled ? IconsAndLayerTextsBrightness : 0;

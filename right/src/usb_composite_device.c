@@ -1,3 +1,6 @@
+#include "config.h"
+#include "led_display.h"
+#include "slave_drivers/is31fl3731_driver.h"
 #include "usb_device_config.h"
 #include "usb_composite_device.h"
 #include "usb_descriptors/usb_descriptor_hid.h"
@@ -162,11 +165,15 @@ static usb_device_class_config_list_struct_t UsbDeviceCompositeConfigList = {
 
 static usb_status_t usbDeviceCallback(usb_device_handle handle, uint32_t event, void *param)
 {
+#ifdef LED_DRIVERS_ENABLED
+    static uint8_t oldKeyBacklightBrightness = 0xFF;
+    static bool capsLockOn = false, agentOn = false, adaptiveOn = false;
+#endif
     usb_status_t status = kStatus_USB_Error;
     uint16_t *temp16 = (uint16_t*)param;
     uint8_t *temp8 = (uint8_t*)param;
 
-    if (!param && event != kUSB_DeviceEventBusReset && event != kUSB_DeviceEventSetInterface) {
+    if (!param && event != kUSB_DeviceEventBusReset && event != kUSB_DeviceEventSetInterface && event != kUSB_DeviceEventSuspend && event != kUSB_DeviceEventResume) {
         return status;
     }
 
@@ -174,6 +181,42 @@ static usb_status_t usbDeviceCallback(usb_device_handle handle, uint32_t event, 
         case kUSB_DeviceEventBusReset:
             UsbCompositeDevice.attach = 0;
             status = kStatus_USB_Success;
+            break;
+        case kUSB_DeviceEventSuspend:
+            if (UsbCompositeDevice.attach) {
+#ifdef LED_DRIVERS_ENABLED
+                // Save the state of the icons
+                capsLockOn = LedDisplay_GetIcon(LedDisplayIcon_CapsLock);
+                agentOn = LedDisplay_GetIcon(LedDisplayIcon_Agent);
+                adaptiveOn = LedDisplay_GetIcon(LedDisplayIcon_Adaptive);
+
+                // Disable keyboard backlight
+                oldKeyBacklightBrightness = KeyBacklightBrightness;
+                KeyBacklightBrightness = 0;
+                LedSlaveDriver_Init(LedDriverId_Right);
+                LedSlaveDriver_Init(LedDriverId_Left);
+
+                // Clear the text
+                LedDisplay_SetText(0, NULL);
+#endif
+                status = kStatus_USB_Success;
+            }
+            break;
+        case kUSB_DeviceEventResume:
+            if (UsbCompositeDevice.attach) {
+#ifdef LED_DRIVERS_ENABLED
+                // Restore keyboard backlight and text
+                KeyBacklightBrightness = oldKeyBacklightBrightness;
+                LedSlaveDriver_Init(LedDriverId_Right);
+                LedSlaveDriver_Init(LedDriverId_Left);
+
+                // Restore icon states
+                LedDisplay_SetIcon(LedDisplayIcon_CapsLock, capsLockOn);
+                LedDisplay_SetIcon(LedDisplayIcon_Agent, agentOn);
+                LedDisplay_SetIcon(LedDisplayIcon_Adaptive, adaptiveOn);
+#endif
+                status = kStatus_USB_Success;
+            }
             break;
         case kUSB_DeviceEventSetConfiguration:
             UsbCompositeDevice.attach = 1;
