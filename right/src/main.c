@@ -11,15 +11,15 @@
 #include "peripherals/reset_button.h"
 #include "usb_report_updater.h"
 
-bool IsEepromInitialized = false;
-bool IsConfigInitialized = false;
+static bool IsEepromInitialized = false;
+static bool IsConfigInitialized = false;
 
-void userConfigurationReadFinished(void)
+static void userConfigurationReadFinished(void)
 {
     IsEepromInitialized = true;
 }
 
-void hardwareConfigurationReadFinished(void)
+static void hardwareConfigurationReadFinished(void)
 {
     EEPROM_LaunchTransfer(EepromOperation_Read, ConfigBufferId_StagingUserConfig, userConfigurationReadFinished);
 }

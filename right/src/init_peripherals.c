@@ -18,10 +18,10 @@
 #include "bootloader/wormhole.h"
 
 bool IsBusPalOn;
-uint32_t I2cMainBusRequestedBaudRateBps = I2C_MAIN_BUS_NORMAL_BAUD_RATE;
-uint32_t I2cMainBusActualBaudRateBps;
+volatile uint32_t I2cMainBusRequestedBaudRateBps = I2C_MAIN_BUS_NORMAL_BAUD_RATE;
+volatile uint32_t I2cMainBusActualBaudRateBps;
 
-void initBusPalState(void) {
+static void initBusPalState(void) {
     IsBusPalOn = Wormhole.magicNumber == WORMHOLE_MAGIC_NUMBER && Wormhole.enumerationMode == EnumerationMode_BusPal;
     if (IsBusPalOn) {
         Wormhole.magicNumber = 0;
@@ -29,7 +29,7 @@ void initBusPalState(void) {
     }
 }
 
-void initInterruptPriorities(void)
+static void initInterruptPriorities(void)
 {
     NVIC_SetPriority(PIT_I2C_WATCHDOG_IRQ_ID,  1);
     NVIC_SetPriority(PIT_TIMER_IRQ_ID,         2);
@@ -40,12 +40,12 @@ void initInterruptPriorities(void)
     NVIC_SetPriority(USB_IRQ_ID,               3);
 }
 
-void delay(void)
+static void delay(void)
 {
     for (volatile uint32_t i=0; i<62; i++);
 }
 
-void recoverI2c(void)
+static void recoverI2c(void)
 {
     PORT_SetPinMux(I2C_MAIN_BUS_SDA_PORT, I2C_MAIN_BUS_SDA_PIN, kPORT_MuxAsGpio);
     PORT_SetPinMux(I2C_MAIN_BUS_SCL_PORT, I2C_MAIN_BUS_SCL_PIN, kPORT_MuxAsGpio);
@@ -74,7 +74,7 @@ void recoverI2c(void)
     delay();
 }
 
-void initI2cMainBus(void)
+static void initI2cMainBus(void)
 {
     CLOCK_EnableClock(I2C_MAIN_BUS_SDA_CLOCK);
     CLOCK_EnableClock(I2C_MAIN_BUS_SCL_CLOCK);
@@ -105,7 +105,7 @@ void ReinitI2cMainBus(void)
     InitSlaveScheduler();
 }
 
-void initI2cEepromBus(void)
+static void initI2cEepromBus(void)
 {
     port_pin_config_t pinConfig = {
        .pullSelect = kPORT_PullUp,
@@ -126,7 +126,7 @@ void initI2cEepromBus(void)
    I2C_MasterInit(I2C_EEPROM_BUS_BASEADDR, &masterConfig, sourceClock);
 }
 
-void initI2c(void)
+static void initI2c(void)
 {
     initI2cMainBus();
     initI2cEepromBus();

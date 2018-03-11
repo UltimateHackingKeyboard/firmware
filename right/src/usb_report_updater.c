@@ -17,11 +17,11 @@
 #include "config_parser/parse_keymap.h"
 #include "usb_commands/usb_command_get_debug_buffer.h"
 
-uint32_t UsbReportUpdateTime = 0;
+static uint32_t UsbReportUpdateTime = 0;
 static uint32_t elapsedTime;
 
 uint16_t DoubleTapSwitchLayerTimeout = 150;
-uint16_t DoubleTapSwitchLayerReleaseTimeout = 100;
+static uint16_t DoubleTapSwitchLayerReleaseTimeout = 100;
 
 static bool activeMouseStates[ACTIVE_MOUSE_STATES_COUNT];
 
@@ -53,7 +53,7 @@ mouse_kinetic_state_t MouseScrollState = {
     .acceleratedSpeed = 50,
 };
 
-void processMouseKineticState(mouse_kinetic_state_t *kineticState)
+static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
 {
     float initialSpeed = kineticState->intMultiplier * kineticState->initialSpeed;
     float acceleration = kineticState->intMultiplier * kineticState->acceleration;
@@ -155,7 +155,7 @@ void processMouseKineticState(mouse_kinetic_state_t *kineticState)
     kineticState->wasMoveAction = isMoveAction;
 }
 
-void processMouseActions()
+static void processMouseActions()
 {
     processMouseKineticState(&MouseMoveState);
     ActiveUsbMouseReport->x = MouseMoveState.xOut;
@@ -193,7 +193,7 @@ static uint8_t basicScancodeIndex = 0;
 static uint8_t mediaScancodeIndex = 0;
 static uint8_t systemScancodeIndex = 0;
 
-void applyKeyAction(key_state_t *keyState, key_action_t *action)
+static void applyKeyAction(key_state_t *keyState, key_action_t *action)
 {
     static key_state_t *doubleTapSwitchLayerKey;
     static uint32_t doubleTapSwitchLayerStartTime;
@@ -265,7 +265,7 @@ static uint8_t secondaryRoleSlotId;
 static uint8_t secondaryRoleKeyId;
 static secondary_role_t secondaryRole;
 
-void updateActiveUsbReports(void)
+static void updateActiveUsbReports(void)
 {
     memset(activeMouseStates, 0, ACTIVE_MOUSE_STATES_COUNT);
 
@@ -369,10 +369,10 @@ void updateActiveUsbReports(void)
     previousLayer = activeLayer;
 }
 
-bool UsbBasicKeyboardReportEverSent = false;
-bool UsbMediaKeyboardReportEverSent = false;
-bool UsbSystemKeyboardReportEverSent = false;
-bool UsbMouseReportEverSentEverSent = false;
+static bool UsbBasicKeyboardReportEverSent = false;
+static bool UsbMediaKeyboardReportEverSent = false;
+static bool UsbSystemKeyboardReportEverSent = false;
+static bool UsbMouseReportEverSentEverSent = false;
 
 uint32_t UsbReportUpdateCounter;
 static uint32_t lastUsbUpdateTime;
@@ -425,15 +425,33 @@ void UpdateUsbReports(void)
 
     updateActiveUsbReports();
 
-    SwitchActiveUsbBasicKeyboardReport();
-    SwitchActiveUsbMediaKeyboardReport();
-    SwitchActiveUsbSystemKeyboardReport();
-    SwitchActiveUsbMouseReport();
+    static usb_basic_keyboard_report_t last_basic_report = { .scancodes[0] = 0xFF };
+    if (memcmp(ActiveUsbBasicKeyboardReport, &last_basic_report, sizeof(usb_basic_keyboard_report_t)) != 0) {
+        last_basic_report = *ActiveUsbBasicKeyboardReport;
+        SwitchActiveUsbBasicKeyboardReport();
+        IsUsbBasicKeyboardReportSent = false;
+    }
 
-    IsUsbBasicKeyboardReportSent = false;
-    IsUsbMediaKeyboardReportSent = false;
-    IsUsbSystemKeyboardReportSent = false;
-    IsUsbMouseReportSent = false;
+    static usb_media_keyboard_report_t last_media_report = { .scancodes[0] = 0xFF };
+    if (memcmp(ActiveUsbMediaKeyboardReport, &last_media_report, sizeof(usb_media_keyboard_report_t)) != 0) {
+        last_media_report = *ActiveUsbMediaKeyboardReport;
+        SwitchActiveUsbMediaKeyboardReport();
+        IsUsbMediaKeyboardReportSent = false;
+    }
+
+    static usb_system_keyboard_report_t last_system_report = { .scancodes[0] = 0xFF };
+    if (memcmp(ActiveUsbSystemKeyboardReport, &last_system_report, sizeof(usb_system_keyboard_report_t)) != 0) {
+        last_system_report = *ActiveUsbSystemKeyboardReport;
+        SwitchActiveUsbSystemKeyboardReport();
+        IsUsbSystemKeyboardReportSent = false;
+    }
+
+    static usb_mouse_report_t last_mouse_report = { .buttons = 0xFF };
+    if (memcmp(ActiveUsbMouseReport, &last_mouse_report, sizeof(usb_mouse_report_t)) != 0) {
+        last_mouse_report = *ActiveUsbMouseReport;
+        SwitchActiveUsbMouseReport();
+        IsUsbMouseReportSent = false;
+    }
 
     Timer_SetCurrentTime(&lastUsbUpdateTime);
 }
