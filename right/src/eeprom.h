@@ -24,7 +24,7 @@
 
 // Variables:
 
-    extern bool IsEepromBusy;
+    extern volatile bool IsEepromBusy;
     extern status_t EepromTransferStatus;
 
 // Functions:

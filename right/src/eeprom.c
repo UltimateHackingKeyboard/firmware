@@ -6,7 +6,7 @@
 #include "config_parser/config_globals.h"
 #include "buffer.h"
 
-bool IsEepromBusy;
+volatile bool IsEepromBusy;
 static eeprom_operation_t CurrentEepromOperation;
 static config_buffer_id_t CurrentConfigBufferId;
 status_t LastEepromTransferStatus;

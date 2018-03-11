@@ -18,8 +18,8 @@
 #include "bootloader/wormhole.h"
 
 bool IsBusPalOn;
-uint32_t I2cMainBusRequestedBaudRateBps = I2C_MAIN_BUS_NORMAL_BAUD_RATE;
-uint32_t I2cMainBusActualBaudRateBps;
+volatile uint32_t I2cMainBusRequestedBaudRateBps = I2C_MAIN_BUS_NORMAL_BAUD_RATE;
+volatile uint32_t I2cMainBusActualBaudRateBps;
 
 void initBusPalState(void) {
     IsBusPalOn = Wormhole.magicNumber == WORMHOLE_MAGIC_NUMBER && Wormhole.enumerationMode == EnumerationMode_BusPal;

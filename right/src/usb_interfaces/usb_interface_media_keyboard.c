@@ -3,7 +3,7 @@
 uint32_t UsbMediaKeyboardActionCounter;
 static usb_media_keyboard_report_t usbMediaKeyboardReports[2];
 usb_media_keyboard_report_t* ActiveUsbMediaKeyboardReport = usbMediaKeyboardReports;
-bool IsUsbMediaKeyboardReportSent = false;
+volatile bool IsUsbMediaKeyboardReportSent = false;
 
 usb_media_keyboard_report_t* getInactiveUsbMediaKeyboardReport(void)
 {

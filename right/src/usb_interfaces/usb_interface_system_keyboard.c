@@ -3,7 +3,7 @@
 uint32_t UsbSystemKeyboardActionCounter;
 static usb_system_keyboard_report_t usbSystemKeyboardReports[2];
 usb_system_keyboard_report_t* ActiveUsbSystemKeyboardReport = usbSystemKeyboardReports;
-bool IsUsbSystemKeyboardReportSent = false;
+volatile bool IsUsbSystemKeyboardReportSent = false;
 
 usb_system_keyboard_report_t* getInactiveUsbSystemKeyboardReport()
 {
