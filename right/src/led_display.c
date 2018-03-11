@@ -90,7 +90,7 @@ void LedDisplay_SetCurrentKeymapText(void)
     LedDisplay_SetText(currentKeymap->abbreviationLen, currentKeymap->abbreviation);
 }
 
-void LedDisplay_SetLayer(uint8_t layerId)
+void LedDisplay_SetLayer(layer_id_t layerId)
 {
     for (uint8_t i = 13; i <= 45; i += 16) {
         LedDriverValues[LedDriverId_Left][i] = 0;

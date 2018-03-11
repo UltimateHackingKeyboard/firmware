@@ -187,6 +187,9 @@ static void ComputerIsSleeping(void) {
     LedSlaveDriver_Init(LedDriverId_Right);
     LedSlaveDriver_Init(LedDriverId_Left);
 
+    // Turn layer LEDs off
+    LedDisplay_SetLayer(LayerId_Base);
+
     // Clear the text
     LedDisplay_SetText(0, NULL);
 #endif
@@ -203,6 +206,9 @@ void WakeupComputer(bool sendResume) {
     KeyBacklightBrightness = oldKeyBacklightBrightness;
     LedSlaveDriver_Init(LedDriverId_Right);
     LedSlaveDriver_Init(LedDriverId_Left);
+
+    // Update the active layer
+    LedDisplay_SetLayer(GetActiveLayer());
 
     // Restore icon states
     LedDisplay_SetIcon(LedDisplayIcon_CapsLock, capsLockOn);
