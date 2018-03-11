@@ -5,7 +5,7 @@ static usb_mouse_report_t usbMouseReports[2];
 usb_mouse_report_t* ActiveUsbMouseReport = usbMouseReports;
 volatile bool IsUsbMouseReportSent = false;
 
-usb_mouse_report_t* getInactiveUsbMouseReport(void)
+static usb_mouse_report_t* getInactiveUsbMouseReport(void)
 {
     return ActiveUsbMouseReport == usbMouseReports ? usbMouseReports+1 : usbMouseReports;
 }

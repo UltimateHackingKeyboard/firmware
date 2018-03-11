@@ -5,7 +5,7 @@ static usb_system_keyboard_report_t usbSystemKeyboardReports[2];
 usb_system_keyboard_report_t* ActiveUsbSystemKeyboardReport = usbSystemKeyboardReports;
 volatile bool IsUsbSystemKeyboardReportSent = false;
 
-usb_system_keyboard_report_t* getInactiveUsbSystemKeyboardReport()
+static usb_system_keyboard_report_t* getInactiveUsbSystemKeyboardReport()
 {
     return ActiveUsbSystemKeyboardReport == usbSystemKeyboardReports ? usbSystemKeyboardReports+1 : usbSystemKeyboardReports;
 }
