@@ -22,7 +22,7 @@ void UsbCommand_GetDebugBuffer(void)
     SetDebugBufferUint32(13, I2cWatchdog_RecoveryCounter);
     SetDebugBufferUint32(17, KeyScannerCounter);
     SetDebugBufferUint32(21, UsbReportUpdateCounter);
-    SetDebugBufferUint32(25, CurrentTime);
+    SetDebugBufferUint32(25, Timer_GetCurrentTime());
     SetDebugBufferUint32(29, UsbGenericHidActionCounter);
     SetDebugBufferUint32(33, UsbBasicKeyboardActionCounter);
     SetDebugBufferUint32(37, UsbMediaKeyboardActionCounter);
