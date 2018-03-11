@@ -11,7 +11,7 @@
 
 // Variables:
 
-    extern uint32_t CurrentTime;
+    extern volatile uint32_t CurrentTime;
 
 // Functions:
 
