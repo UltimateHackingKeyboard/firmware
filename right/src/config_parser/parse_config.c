@@ -56,6 +56,7 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
     (void)dataModelMinorVersion;
     (void)dataModelPatchVersion;
     (void)deviceName;
+    (void)doubleTapSwitchLayerTimeout;
 
     // LED brightness
 
