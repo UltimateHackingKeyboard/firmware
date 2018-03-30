@@ -31,6 +31,7 @@ bool SwitchKeymapByAbbreviation(uint8_t length, char *abbrev)
     for (uint8_t i=0; i<MAX_KEYMAP_NUM; i++) {
         keymap_reference_t *keymap = AllKeymaps + i;
         if (keymap->abbreviationLen == length && strcmp(keymap->abbreviation, abbrev) == 0) {
+            SwitchKeymap(i);
             return true;
         }
     }
