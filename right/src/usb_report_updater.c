@@ -254,7 +254,7 @@ void applyKeyAction(key_state_t *keyState, key_action_t *action)
             break;
         case KeyActionType_SwitchKeymap:
             if (!keyState->previous) {
-                SwitchKeymap(action->switchKeymap.keymapId);
+                SwitchKeymapById(action->switchKeymap.keymapId);
             }
             break;
     }

@@ -50,10 +50,10 @@ void UsbCommand_ApplyConfig(void)
         if (AllKeymaps[keymapId].abbreviationLen == oldKeymapAbbreviationLen &&
             !memcmp(oldKeymapAbbreviation, AllKeymaps[keymapId].abbreviation, oldKeymapAbbreviationLen))
         {
-            SwitchKeymap(keymapId);
+            SwitchKeymapById(keymapId);
             return;
         }
     }
 
-    SwitchKeymap(DefaultKeymapIndex);
+    SwitchKeymapById(DefaultKeymapIndex);
 }

@@ -29,7 +29,7 @@
 
 // Functions:
 
-    void SwitchKeymap(uint8_t index);
+    void SwitchKeymapById(uint8_t index);
     bool SwitchKeymapByAbbreviation(uint8_t length, char *abbrev);
 
 #endif

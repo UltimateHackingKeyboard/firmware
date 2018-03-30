@@ -18,7 +18,7 @@ uint8_t AllKeymapsCount;
 uint8_t DefaultKeymapIndex;
 uint8_t CurrentKeymapIndex = 0;
 
-void SwitchKeymap(uint8_t index)
+void SwitchKeymapById(uint8_t index)
 {
     CurrentKeymapIndex = index;
     ValidatedUserConfigBuffer.offset = AllKeymaps[index].offset;
@@ -31,7 +31,7 @@ bool SwitchKeymapByAbbreviation(uint8_t length, char *abbrev)
     for (uint8_t i=0; i<MAX_KEYMAP_NUM; i++) {
         keymap_reference_t *keymap = AllKeymaps + i;
         if (keymap->abbreviationLen == length && strcmp(keymap->abbreviation, abbrev) == 0) {
-            SwitchKeymap(i);
+            SwitchKeymapById(i);
             return true;
         }
     }
