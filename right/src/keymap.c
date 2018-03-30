@@ -6,7 +6,14 @@
 #include "config_parser/config_globals.h"
 #include "macros.h"
 
-keymap_reference_t AllKeymaps[MAX_KEYMAP_NUM] = { { "FTY", 0, 3 } };
+keymap_reference_t AllKeymaps[MAX_KEYMAP_NUM] = {
+    {
+        .abbreviation = "FTY",
+        .offset = 0,
+        .abbreviationLen = 3
+    }
+};
+
 uint8_t AllKeymapsCount;
 uint8_t DefaultKeymapIndex;
 uint8_t CurrentKeymapIndex = 0;
@@ -17,6 +24,17 @@ void SwitchKeymap(uint8_t index)
     ValidatedUserConfigBuffer.offset = AllKeymaps[index].offset;
     ParseKeymap(&ValidatedUserConfigBuffer, index, AllKeymapsCount, AllMacrosCount);
     LedDisplay_SetCurrentKeymapText();
+}
+
+bool SwitchKeymapByAbbreviation(uint8_t length, char *abbrev)
+{
+    for (uint8_t i=0; i<MAX_KEYMAP_NUM; i++) {
+        keymap_reference_t *keymap = AllKeymaps + i;
+        if (keymap->abbreviationLen == length && strcmp(keymap->abbreviation, abbrev) == 0) {
+            return true;
+        }
+    }
+    return false;
 }
 
 // The factory keymap is initialized before it gets overwritten by the default keymap of the EEPROM.

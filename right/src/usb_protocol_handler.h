@@ -33,6 +33,7 @@
         UsbCommandId_GetModuleProperty        = 0x0e,
         UsbCommandId_GetSlaveI2cErrors        = 0x0f,
         UsbCommandId_SetI2cBaudRate           = 0x10,
+        UsbCommandId_SwitchKeymap             = 0x11,
     } usb_command_id_t;
 
     typedef enum {
