@@ -36,6 +36,7 @@ for (const device of package.devices) {
     mkdir('-p', deviceDir);
     chmod(644, deviceSource);
     cp(deviceSource, `${deviceDir}/firmware.hex`);
+    exec(`cd ${usbDir}; git pull origin master; git checkout master`);
     exec(`${usbDir}/user-config-json-to-bin.ts ${deviceDir}/config.bin`);
 }
 
