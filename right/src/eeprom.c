@@ -6,10 +6,10 @@
 #include "config_parser/config_globals.h"
 #include "buffer.h"
 
-bool IsEepromBusy;
+volatile bool IsEepromBusy;
 static eeprom_operation_t CurrentEepromOperation;
 static config_buffer_id_t CurrentConfigBufferId;
-status_t LastEepromTransferStatus;
+static status_t LastEepromTransferStatus;
 void (*SuccessCallback)(void);
 
 static i2c_master_handle_t i2cHandle;

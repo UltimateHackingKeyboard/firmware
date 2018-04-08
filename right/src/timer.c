@@ -1,7 +1,7 @@
 #include "fsl_pit.h"
 #include "timer.h"
 
-uint32_t CurrentTime;
+static volatile uint32_t CurrentTime;
 
 void PIT_TIMER_HANDLER(void)
 {
@@ -22,6 +22,10 @@ void Timer_Init(void)
     PIT_EnableInterrupts(PIT, PIT_TIMER_CHANNEL, kPIT_TimerInterruptEnable);
     EnableIRQ(PIT_TIMER_IRQ_ID);
     PIT_StartTimer(PIT, PIT_TIMER_CHANNEL);
+}
+
+uint32_t Timer_GetCurrentTime() {
+    return CurrentTime;
 }
 
 void Timer_SetCurrentTime(uint32_t *time)

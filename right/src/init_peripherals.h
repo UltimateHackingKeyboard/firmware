@@ -8,8 +8,8 @@
 // Variables:
 
     extern bool IsBusPalOn;
-    extern uint32_t I2cMainBusRequestedBaudRateBps;
-    extern uint32_t I2cMainBusActualBaudRateBps;
+    extern volatile uint32_t I2cMainBusRequestedBaudRateBps;
+    extern volatile uint32_t I2cMainBusActualBaudRateBps;
 
 // Functions:
 

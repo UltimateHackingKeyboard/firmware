@@ -31,7 +31,7 @@
 
 // Variables:
 
-    extern bool IsUsbMouseReportSent;
+    extern volatile bool IsUsbMouseReportSent;
     extern uint32_t UsbMouseActionCounter;
     extern usb_mouse_report_t* ActiveUsbMouseReport;
 

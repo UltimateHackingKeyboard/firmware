@@ -2,7 +2,7 @@
 #include "fsl_port.h"
 #include "peripherals/adc.h"
 
-adc16_channel_config_t adc16ChannelConfigStruct;
+static adc16_channel_config_t adc16ChannelConfigStruct;
 
 void ADC_Init(void)
 {
