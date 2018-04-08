@@ -17,8 +17,8 @@
 #include "config_parser/parse_keymap.h"
 #include "usb_commands/usb_command_get_debug_buffer.h"
 
-static uint32_t UsbReportUpdateTime = 0;
-static uint32_t elapsedTime;
+static uint32_t mouseUsbReportUpdateTime = 0;
+static uint32_t mouseElapsedTime;
 
 uint16_t DoubleTapSwitchLayerTimeout = 150;
 static uint16_t DoubleTapSwitchLayerReleaseTimeout = 100;
@@ -87,18 +87,18 @@ static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
 
     if (isMoveAction) {
         if (kineticState->currentSpeed < kineticState->targetSpeed) {
-            kineticState->currentSpeed += acceleration * elapsedTime / 1000;
+            kineticState->currentSpeed += acceleration * mouseElapsedTime / 1000;
             if (kineticState->currentSpeed > kineticState->targetSpeed) {
                 kineticState->currentSpeed = kineticState->targetSpeed;
             }
         } else {
-            kineticState->currentSpeed -= acceleration * elapsedTime / 1000;
+            kineticState->currentSpeed -= acceleration * mouseElapsedTime / 1000;
             if (kineticState->currentSpeed < kineticState->targetSpeed) {
                 kineticState->currentSpeed = kineticState->targetSpeed;
             }
         }
 
-        float distance = kineticState->currentSpeed * elapsedTime / 1000;
+        float distance = kineticState->currentSpeed * mouseElapsedTime / 1000;
 
 
         if (kineticState->isScroll && !kineticState->wasMoveAction) {
@@ -157,6 +157,8 @@ static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
 
 static void processMouseActions()
 {
+    mouseElapsedTime = Timer_GetElapsedTimeAndSetCurrent(&mouseUsbReportUpdateTime);
+
     processMouseKineticState(&MouseMoveState);
     ActiveUsbMouseReport->x = MouseMoveState.xOut;
     ActiveUsbMouseReport->y = MouseMoveState.yOut;
@@ -270,7 +272,6 @@ static void updateActiveUsbReports(void)
     memset(activeMouseStates, 0, ACTIVE_MOUSE_STATES_COUNT);
 
     static uint8_t previousModifiers = 0;
-    elapsedTime = Timer_GetElapsedTimeAndSetCurrent(&UsbReportUpdateTime);
 
     basicScancodeIndex = 0;
     mediaScancodeIndex = 0;
