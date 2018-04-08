@@ -369,13 +369,8 @@ static void updateActiveUsbReports(void)
     previousLayer = activeLayer;
 }
 
-static bool UsbBasicKeyboardReportEverSent = false;
-static bool UsbMediaKeyboardReportEverSent = false;
-static bool UsbSystemKeyboardReportEverSent = false;
-static bool UsbMouseReportEverSentEverSent = false;
-
 uint32_t UsbReportUpdateCounter;
-static uint32_t lastUsbUpdateTime;
+static uint32_t lastMouseUpdateTime;
 
 void UpdateUsbReports(void)
 {
@@ -386,45 +381,11 @@ void UpdateUsbReports(void)
         activeMouseStates[SerializedMouseAction_MoveDown] ||
         activeMouseStates[SerializedMouseAction_MoveLeft] ||
         activeMouseStates[SerializedMouseAction_MoveRight]) {
-        if (Timer_GetElapsedTime(&lastUsbUpdateTime) < 10)
+        if (Timer_GetElapsedTime(&lastMouseUpdateTime) < USB_MOUSE_INTERRUPT_IN_INTERVAL)
             return;
-    } else {
-        if (Timer_GetElapsedTime(&lastUsbUpdateTime) > 100) {
-            UsbBasicKeyboardReportEverSent = false;
-            UsbMediaKeyboardReportEverSent = false;
-            UsbSystemKeyboardReportEverSent = false;
-            UsbMouseReportEverSentEverSent = false;
-        }
-
-        if (IsUsbBasicKeyboardReportSent) {
-            UsbBasicKeyboardReportEverSent = true;
-        }
-        if (IsUsbMediaKeyboardReportSent) {
-            UsbMediaKeyboardReportEverSent = true;
-        }
-        if (IsUsbSystemKeyboardReportSent) {
-            UsbSystemKeyboardReportEverSent = true;
-        }
-        if (IsUsbMouseReportSent) {
-            UsbMouseReportEverSentEverSent = true;
-        }
-
-        bool areUsbReportsSent = true;
-        if (UsbBasicKeyboardReportEverSent) {
-            areUsbReportsSent &= IsUsbBasicKeyboardReportSent;
-        }
-        if (UsbMediaKeyboardReportEverSent) {
-            areUsbReportsSent &= IsUsbMediaKeyboardReportSent;
-        }
-        if (UsbSystemKeyboardReportEverSent) {
-            areUsbReportsSent &= IsUsbSystemKeyboardReportSent;
-        }
-        if (UsbMouseReportEverSentEverSent) {
-            areUsbReportsSent &= IsUsbMouseReportSent;
-        }
-        if (!areUsbReportsSent) {
-            return;
-        }
+        Timer_SetCurrentTime(&lastMouseUpdateTime);
+    } else if (!IsUsbBasicKeyboardReportSent || !IsUsbMediaKeyboardReportSent || !IsUsbSystemKeyboardReportSent || !IsUsbMouseReportSent) {
+        return;
     }
 
     ResetActiveUsbBasicKeyboardReport();
@@ -464,6 +425,4 @@ void UpdateUsbReports(void)
 
     if ((previousLayer != LayerId_Base || !IsUsbBasicKeyboardReportSent || !IsUsbMediaKeyboardReportSent || !IsUsbSystemKeyboardReportSent || !IsUsbMouseReportSent) && IsComputerSleeping())
         WakeupComputer(true); // Wake up the computer if any key is pressed and the computer is sleeping
-
-    Timer_SetCurrentTime(&lastUsbUpdateTime);
 }
