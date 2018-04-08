@@ -381,7 +381,7 @@ void UpdateUsbReports(void)
         activeMouseStates[SerializedMouseAction_MoveDown] ||
         activeMouseStates[SerializedMouseAction_MoveLeft] ||
         activeMouseStates[SerializedMouseAction_MoveRight]) {
-        if (Timer_GetElapsedTime(&lastMouseUpdateTime) < 10)
+        if (Timer_GetElapsedTime(&lastMouseUpdateTime) < USB_MOUSE_INTERRUPT_IN_INTERVAL)
             return;
         Timer_SetCurrentTime(&lastMouseUpdateTime);
     } else if (!IsUsbBasicKeyboardReportSent || !IsUsbMediaKeyboardReportSent || !IsUsbSystemKeyboardReportSent || !IsUsbMouseReportSent) {
