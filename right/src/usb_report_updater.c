@@ -87,18 +87,18 @@ static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
 
     if (isMoveAction) {
         if (kineticState->currentSpeed < kineticState->targetSpeed) {
-            kineticState->currentSpeed += acceleration * mouseElapsedTime / 1000;
+            kineticState->currentSpeed += acceleration * (float)mouseElapsedTime / 1000.0f;
             if (kineticState->currentSpeed > kineticState->targetSpeed) {
                 kineticState->currentSpeed = kineticState->targetSpeed;
             }
         } else {
-            kineticState->currentSpeed -= acceleration * mouseElapsedTime / 1000;
+            kineticState->currentSpeed -= acceleration * (float)mouseElapsedTime / 1000.0f;
             if (kineticState->currentSpeed < kineticState->targetSpeed) {
                 kineticState->currentSpeed = kineticState->targetSpeed;
             }
         }
 
-        float distance = kineticState->currentSpeed * mouseElapsedTime / 1000;
+        float distance = kineticState->currentSpeed * (float)mouseElapsedTime / 1000.0f;
 
 
         if (kineticState->isScroll && !kineticState->wasMoveAction) {
