@@ -381,41 +381,50 @@ void UpdateUsbReports(void)
 {
     UsbReportUpdateCounter++;
 
-    if (Timer_GetElapsedTime(&lastUsbUpdateTime) > 100) {
-        UsbBasicKeyboardReportEverSent = false;
-        UsbMediaKeyboardReportEverSent = false;
-        UsbSystemKeyboardReportEverSent = false;
-        UsbMouseReportEverSentEverSent = false;
-    }
+    // Process the key inputs at a constant rate when moving the mouse, so the mouse speed is consistent
+    if (activeMouseStates[SerializedMouseAction_MoveUp] ||
+        activeMouseStates[SerializedMouseAction_MoveDown] ||
+        activeMouseStates[SerializedMouseAction_MoveLeft] ||
+        activeMouseStates[SerializedMouseAction_MoveRight]) {
+        if (Timer_GetElapsedTime(&lastUsbUpdateTime) < 10)
+            return;
+    } else {
+        if (Timer_GetElapsedTime(&lastUsbUpdateTime) > 100) {
+            UsbBasicKeyboardReportEverSent = false;
+            UsbMediaKeyboardReportEverSent = false;
+            UsbSystemKeyboardReportEverSent = false;
+            UsbMouseReportEverSentEverSent = false;
+        }
 
-    if (IsUsbBasicKeyboardReportSent) {
-        UsbBasicKeyboardReportEverSent = true;
-    }
-    if (IsUsbMediaKeyboardReportSent) {
-        UsbMediaKeyboardReportEverSent = true;
-    }
-    if (IsUsbSystemKeyboardReportSent) {
-        UsbSystemKeyboardReportEverSent = true;
-    }
-    if (IsUsbMouseReportSent) {
-        UsbMouseReportEverSentEverSent = true;
-    }
+        if (IsUsbBasicKeyboardReportSent) {
+            UsbBasicKeyboardReportEverSent = true;
+        }
+        if (IsUsbMediaKeyboardReportSent) {
+            UsbMediaKeyboardReportEverSent = true;
+        }
+        if (IsUsbSystemKeyboardReportSent) {
+            UsbSystemKeyboardReportEverSent = true;
+        }
+        if (IsUsbMouseReportSent) {
+            UsbMouseReportEverSentEverSent = true;
+        }
 
-    bool areUsbReportsSent = true;
-    if (UsbBasicKeyboardReportEverSent) {
-        areUsbReportsSent &= IsUsbBasicKeyboardReportSent;
-    }
-    if (UsbMediaKeyboardReportEverSent) {
-        areUsbReportsSent &= IsUsbMediaKeyboardReportSent;
-    }
-    if (UsbSystemKeyboardReportEverSent) {
-        areUsbReportsSent &= IsUsbSystemKeyboardReportSent;
-    }
-    if (UsbMouseReportEverSentEverSent) {
-        areUsbReportsSent &= IsUsbMouseReportSent;
-    }
-    if (!areUsbReportsSent) {
-        return;
+        bool areUsbReportsSent = true;
+        if (UsbBasicKeyboardReportEverSent) {
+            areUsbReportsSent &= IsUsbBasicKeyboardReportSent;
+        }
+        if (UsbMediaKeyboardReportEverSent) {
+            areUsbReportsSent &= IsUsbMediaKeyboardReportSent;
+        }
+        if (UsbSystemKeyboardReportEverSent) {
+            areUsbReportsSent &= IsUsbSystemKeyboardReportSent;
+        }
+        if (UsbMouseReportEverSentEverSent) {
+            areUsbReportsSent &= IsUsbMouseReportSent;
+        }
+        if (!areUsbReportsSent) {
+            return;
+        }
     }
 
     ResetActiveUsbBasicKeyboardReport();
