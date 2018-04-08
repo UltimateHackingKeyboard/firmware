@@ -196,21 +196,27 @@ SECTIONS
   text_end = ORIGIN(m_text) + LENGTH(m_text);
   ASSERT(__DATA_END <= text_end, "region m_text overflowed with text and data")
 
-  USB_RAM_GAP = DEFINED(__usb_ram_size__) ? __usb_ram_size__ : 0x800;
   /* Uninitialized data section */
-  .bss :
+  .bss : ALIGN(4)
   {
     /* This is used by the startup in order to initialize the .bss section */
-    . = ALIGN(4);
     __START_BSS = .;
     __bss_start__ = .;
     *(.bss)
     *(.bss*)
-    . = ALIGN(512);
-    USB_RAM_START = .;
-    . += USB_RAM_GAP;
     *(COMMON)
     . = ALIGN(4);
+  } > m_data
+  
+  .m_usb_bdt (NOLOAD) :
+  {
+    . = ALIGN(512); 
+    *(m_usb_bdt)
+  } > m_data
+
+  .m_usb_global (NOLOAD) :
+  {
+    *(m_usb_global)
     __bss_end__ = .;
     __END_BSS = .;
   } > m_data
@@ -238,17 +244,6 @@ SECTIONS
     . = ALIGN(8);
     . += STACK_SIZE;
   } > m_data_2
-
-  m_usb_bdt USB_RAM_START (NOLOAD) :
-  {
-    *(m_usb_bdt)
-    USB_RAM_BDT_END = .;
-  }
-
-  m_usb_global USB_RAM_BDT_END (NOLOAD) :
-  {
-    *(m_usb_global)
-  }
 
   /* Initializes stack on the end of block */
   __StackTop   = ORIGIN(m_data_2) + LENGTH(m_data_2);
