@@ -378,12 +378,16 @@ void UpdateUsbReports(void)
     UsbReportUpdateCounter++;
 
     // Process the key inputs at a constant rate when moving the mouse, so the mouse speed is consistent
-    if (activeMouseStates[SerializedMouseAction_MoveUp] ||
-        activeMouseStates[SerializedMouseAction_MoveDown] ||
-        activeMouseStates[SerializedMouseAction_MoveLeft] ||
-        activeMouseStates[SerializedMouseAction_MoveRight]) {
-        if (Timer_GetElapsedTime(&lastMouseUpdateTime) < USB_MOUSE_INTERRUPT_IN_INTERVAL)
+    bool hasActiveMouseState = false;
+    for (uint8_t i=0; i<ACTIVE_MOUSE_STATES_COUNT; i++) {
+        hasActiveMouseState = true;
+        break;
+    }
+
+    if (hasActiveMouseState) {
+        if (Timer_GetElapsedTime(&lastMouseUpdateTime) < USB_MOUSE_INTERRUPT_IN_INTERVAL) {
             return;
+        }
         Timer_SetCurrentTime(&lastMouseUpdateTime);
     } else if (!IsUsbBasicKeyboardReportSent || !IsUsbMediaKeyboardReportSent || !IsUsbSystemKeyboardReportSent || !IsUsbMouseReportSent) {
         return;
@@ -424,6 +428,7 @@ void UpdateUsbReports(void)
         IsUsbMouseReportSent = false;
     }
 
-    if ((previousLayer != LayerId_Base || !IsUsbBasicKeyboardReportSent || !IsUsbMediaKeyboardReportSent || !IsUsbSystemKeyboardReportSent || !IsUsbMouseReportSent) && IsComputerSleeping())
+    if ((previousLayer != LayerId_Base || !IsUsbBasicKeyboardReportSent || !IsUsbMediaKeyboardReportSent || !IsUsbSystemKeyboardReportSent || !IsUsbMouseReportSent) && IsComputerSleeping()) {
         WakeupComputer(true); // Wake up the computer if any key is pressed and the computer is sleeping
+    }
 }
