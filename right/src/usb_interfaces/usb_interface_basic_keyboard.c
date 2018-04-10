@@ -4,10 +4,10 @@
 static usb_basic_keyboard_report_t usbBasicKeyboardReports[2];
 uint32_t UsbBasicKeyboardActionCounter;
 usb_basic_keyboard_report_t* ActiveUsbBasicKeyboardReport = usbBasicKeyboardReports;
-bool IsUsbBasicKeyboardReportSent = false;
+volatile bool IsUsbBasicKeyboardReportSent = false;
 static uint8_t usbBasicKeyboardInBuffer[USB_BASIC_KEYBOARD_REPORT_LENGTH];
 
-usb_basic_keyboard_report_t* getInactiveUsbBasicKeyboardReport(void)
+static usb_basic_keyboard_report_t* getInactiveUsbBasicKeyboardReport(void)
 {
     return ActiveUsbBasicKeyboardReport == usbBasicKeyboardReports ? usbBasicKeyboardReports+1 : usbBasicKeyboardReports;
 }

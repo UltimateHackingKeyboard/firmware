@@ -90,7 +90,7 @@ void LedDisplay_SetCurrentKeymapText(void)
     LedDisplay_SetText(currentKeymap->abbreviationLen, currentKeymap->abbreviation);
 }
 
-void LedDisplay_SetLayer(uint8_t layerId)
+void LedDisplay_SetLayer(layer_id_t layerId)
 {
     for (uint8_t i = 13; i <= 45; i += 16) {
         LedDriverValues[LedDriverId_Left][i] = 0;
@@ -99,6 +99,11 @@ void LedDisplay_SetLayer(uint8_t layerId)
     if (layerId >= LayerId_Mod && layerId <= LayerId_Mouse) {
         LedDriverValues[LedDriverId_Left][16 * layerId - 3] = IconsAndLayerTextsBrightness;
     }
+}
+
+bool LedDisplay_GetIcon(led_display_icon_t icon)
+{
+    return LedDriverValues[LedDriverId_Left][8 + icon];
 }
 
 void LedDisplay_SetIcon(led_display_icon_t icon, bool isEnabled)

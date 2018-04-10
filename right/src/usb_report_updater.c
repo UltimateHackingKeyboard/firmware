@@ -17,11 +17,11 @@
 #include "config_parser/parse_keymap.h"
 #include "usb_commands/usb_command_get_debug_buffer.h"
 
-uint32_t UsbReportUpdateTime = 0;
-static uint32_t elapsedTime;
+static uint32_t mouseUsbReportUpdateTime = 0;
+static uint32_t mouseElapsedTime;
 
 uint16_t DoubleTapSwitchLayerTimeout = 150;
-uint16_t DoubleTapSwitchLayerReleaseTimeout = 100;
+static uint16_t DoubleTapSwitchLayerReleaseTimeout = 100;
 
 static bool activeMouseStates[ACTIVE_MOUSE_STATES_COUNT];
 
@@ -53,7 +53,7 @@ mouse_kinetic_state_t MouseScrollState = {
     .acceleratedSpeed = 50,
 };
 
-void processMouseKineticState(mouse_kinetic_state_t *kineticState)
+static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
 {
     float initialSpeed = kineticState->intMultiplier * kineticState->initialSpeed;
     float acceleration = kineticState->intMultiplier * kineticState->acceleration;
@@ -87,18 +87,18 @@ void processMouseKineticState(mouse_kinetic_state_t *kineticState)
 
     if (isMoveAction) {
         if (kineticState->currentSpeed < kineticState->targetSpeed) {
-            kineticState->currentSpeed += acceleration * elapsedTime / 1000;
+            kineticState->currentSpeed += acceleration * (float)mouseElapsedTime / 1000.0f;
             if (kineticState->currentSpeed > kineticState->targetSpeed) {
                 kineticState->currentSpeed = kineticState->targetSpeed;
             }
         } else {
-            kineticState->currentSpeed -= acceleration * elapsedTime / 1000;
+            kineticState->currentSpeed -= acceleration * (float)mouseElapsedTime / 1000.0f;
             if (kineticState->currentSpeed < kineticState->targetSpeed) {
                 kineticState->currentSpeed = kineticState->targetSpeed;
             }
         }
 
-        float distance = kineticState->currentSpeed * elapsedTime / 1000;
+        float distance = kineticState->currentSpeed * (float)mouseElapsedTime / 1000.0f;
 
 
         if (kineticState->isScroll && !kineticState->wasMoveAction) {
@@ -155,8 +155,10 @@ void processMouseKineticState(mouse_kinetic_state_t *kineticState)
     kineticState->wasMoveAction = isMoveAction;
 }
 
-void processMouseActions()
+static void processMouseActions()
 {
+    mouseElapsedTime = Timer_GetElapsedTimeAndSetCurrent(&mouseUsbReportUpdateTime);
+
     processMouseKineticState(&MouseMoveState);
     ActiveUsbMouseReport->x = MouseMoveState.xOut;
     ActiveUsbMouseReport->y = MouseMoveState.yOut;
@@ -193,7 +195,7 @@ static uint8_t basicScancodeIndex = 0;
 static uint8_t mediaScancodeIndex = 0;
 static uint8_t systemScancodeIndex = 0;
 
-void applyKeyAction(key_state_t *keyState, key_action_t *action)
+static void applyKeyAction(key_state_t *keyState, key_action_t *action)
 {
     static key_state_t *doubleTapSwitchLayerKey;
     static uint32_t doubleTapSwitchLayerStartTime;
@@ -245,16 +247,16 @@ void applyKeyAction(key_state_t *keyState, key_action_t *action)
             if (!keyState->previous && previousLayer == LayerId_Base && action->switchLayer.mode == SwitchLayerMode_HoldAndDoubleTapToggle) {
                 if (doubleTapSwitchLayerKey && Timer_GetElapsedTimeAndSetCurrent(&doubleTapSwitchLayerStartTime) < DoubleTapSwitchLayerTimeout) {
                     ToggledLayer = action->switchLayer.layer;
-                    doubleTapSwitchLayerTriggerTime = CurrentTime;
+                    doubleTapSwitchLayerTriggerTime = Timer_GetCurrentTime();
                 } else {
                     doubleTapSwitchLayerKey = keyState;
                 }
-                doubleTapSwitchLayerStartTime = CurrentTime;
+                doubleTapSwitchLayerStartTime = Timer_GetCurrentTime();
             }
             break;
         case KeyActionType_SwitchKeymap:
             if (!keyState->previous) {
-                SwitchKeymap(action->switchKeymap.keymapId);
+                SwitchKeymapById(action->switchKeymap.keymapId);
             }
             break;
     }
@@ -265,12 +267,11 @@ static uint8_t secondaryRoleSlotId;
 static uint8_t secondaryRoleKeyId;
 static secondary_role_t secondaryRole;
 
-void updateActiveUsbReports(void)
+static void updateActiveUsbReports(void)
 {
     memset(activeMouseStates, 0, ACTIVE_MOUSE_STATES_COUNT);
 
     static uint8_t previousModifiers = 0;
-    elapsedTime = Timer_GetElapsedTimeAndSetCurrent(&UsbReportUpdateTime);
 
     basicScancodeIndex = 0;
     mediaScancodeIndex = 0;
@@ -369,52 +370,26 @@ void updateActiveUsbReports(void)
     previousLayer = activeLayer;
 }
 
-bool UsbBasicKeyboardReportEverSent = false;
-bool UsbMediaKeyboardReportEverSent = false;
-bool UsbSystemKeyboardReportEverSent = false;
-bool UsbMouseReportEverSentEverSent = false;
-
 uint32_t UsbReportUpdateCounter;
-static uint32_t lastUsbUpdateTime;
+static uint32_t lastMouseUpdateTime;
 
 void UpdateUsbReports(void)
 {
     UsbReportUpdateCounter++;
 
-    if (Timer_GetElapsedTime(&lastUsbUpdateTime) > 100) {
-        UsbBasicKeyboardReportEverSent = false;
-        UsbMediaKeyboardReportEverSent = false;
-        UsbSystemKeyboardReportEverSent = false;
-        UsbMouseReportEverSentEverSent = false;
+    // Process the key inputs at a constant rate when moving the mouse, so the mouse speed is consistent
+    bool hasActiveMouseState = false;
+    for (uint8_t i=0; i<ACTIVE_MOUSE_STATES_COUNT; i++) {
+        hasActiveMouseState = true;
+        break;
     }
 
-    if (IsUsbBasicKeyboardReportSent) {
-        UsbBasicKeyboardReportEverSent = true;
-    }
-    if (IsUsbMediaKeyboardReportSent) {
-        UsbMediaKeyboardReportEverSent = true;
-    }
-    if (IsUsbSystemKeyboardReportSent) {
-        UsbSystemKeyboardReportEverSent = true;
-    }
-    if (IsUsbMouseReportSent) {
-        UsbMouseReportEverSentEverSent = true;
-    }
-
-    bool areUsbReportsSent = true;
-    if (UsbBasicKeyboardReportEverSent) {
-        areUsbReportsSent &= IsUsbBasicKeyboardReportSent;
-    }
-    if (UsbMediaKeyboardReportEverSent) {
-        areUsbReportsSent &= IsUsbMediaKeyboardReportSent;
-    }
-    if (UsbSystemKeyboardReportEverSent) {
-        areUsbReportsSent &= IsUsbSystemKeyboardReportSent;
-    }
-    if (UsbMouseReportEverSentEverSent) {
-        areUsbReportsSent &= IsUsbMouseReportSent;
-    }
-    if (!areUsbReportsSent) {
+    if (hasActiveMouseState) {
+        if (Timer_GetElapsedTime(&lastMouseUpdateTime) < USB_MOUSE_INTERRUPT_IN_INTERVAL) {
+            return;
+        }
+        Timer_SetCurrentTime(&lastMouseUpdateTime);
+    } else if (!IsUsbBasicKeyboardReportSent || !IsUsbMediaKeyboardReportSent || !IsUsbSystemKeyboardReportSent || !IsUsbMouseReportSent) {
         return;
     }
 
@@ -425,15 +400,35 @@ void UpdateUsbReports(void)
 
     updateActiveUsbReports();
 
-    SwitchActiveUsbBasicKeyboardReport();
-    SwitchActiveUsbMediaKeyboardReport();
-    SwitchActiveUsbSystemKeyboardReport();
-    SwitchActiveUsbMouseReport();
+    static usb_basic_keyboard_report_t last_basic_report = { .scancodes[0] = 0xFF };
+    if (memcmp(ActiveUsbBasicKeyboardReport, &last_basic_report, sizeof(usb_basic_keyboard_report_t)) != 0) {
+        last_basic_report = *ActiveUsbBasicKeyboardReport;
+        SwitchActiveUsbBasicKeyboardReport();
+        IsUsbBasicKeyboardReportSent = false;
+    }
 
-    IsUsbBasicKeyboardReportSent = false;
-    IsUsbMediaKeyboardReportSent = false;
-    IsUsbSystemKeyboardReportSent = false;
-    IsUsbMouseReportSent = false;
+    static usb_media_keyboard_report_t last_media_report = { .scancodes[0] = 0xFF };
+    if (memcmp(ActiveUsbMediaKeyboardReport, &last_media_report, sizeof(usb_media_keyboard_report_t)) != 0) {
+        last_media_report = *ActiveUsbMediaKeyboardReport;
+        SwitchActiveUsbMediaKeyboardReport();
+        IsUsbMediaKeyboardReportSent = false;
+    }
 
-    Timer_SetCurrentTime(&lastUsbUpdateTime);
+    static usb_system_keyboard_report_t last_system_report = { .scancodes[0] = 0xFF };
+    if (memcmp(ActiveUsbSystemKeyboardReport, &last_system_report, sizeof(usb_system_keyboard_report_t)) != 0) {
+        last_system_report = *ActiveUsbSystemKeyboardReport;
+        SwitchActiveUsbSystemKeyboardReport();
+        IsUsbSystemKeyboardReportSent = false;
+    }
+
+    static usb_mouse_report_t last_mouse_report = { .buttons = 0xFF };
+    if (memcmp(ActiveUsbMouseReport, &last_mouse_report, sizeof(usb_mouse_report_t)) != 0) {
+        last_mouse_report = *ActiveUsbMouseReport;
+        SwitchActiveUsbMouseReport();
+        IsUsbMouseReportSent = false;
+    }
+
+    if ((previousLayer != LayerId_Base || !IsUsbBasicKeyboardReportSent || !IsUsbMediaKeyboardReportSent || !IsUsbSystemKeyboardReportSent || !IsUsbMouseReportSent) && IsComputerSleeping()) {
+        WakeupComputer(true); // Wake up the computer if any key is pressed and the computer is sleeping
+    }
 }

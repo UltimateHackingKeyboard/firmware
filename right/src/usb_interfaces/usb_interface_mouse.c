@@ -3,9 +3,9 @@
 uint32_t UsbMouseActionCounter;
 static usb_mouse_report_t usbMouseReports[2];
 usb_mouse_report_t* ActiveUsbMouseReport = usbMouseReports;
-bool IsUsbMouseReportSent = false;
+volatile bool IsUsbMouseReportSent = false;
 
-usb_mouse_report_t* getInactiveUsbMouseReport(void)
+static usb_mouse_report_t* getInactiveUsbMouseReport(void)
 {
     return ActiveUsbMouseReport == usbMouseReports ? usbMouseReports+1 : usbMouseReports;
 }
