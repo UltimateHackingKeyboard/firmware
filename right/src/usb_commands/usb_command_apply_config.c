@@ -45,14 +45,8 @@ void UsbCommand_ApplyConfig(void)
     }
 
     // Switch to the keymap of the updated configuration of the same name or the default keymap.
-
-    for (uint8_t keymapId = 0; keymapId < AllKeymapsCount; keymapId++) {
-        if (AllKeymaps[keymapId].abbreviationLen == oldKeymapAbbreviationLen &&
-            !memcmp(oldKeymapAbbreviation, AllKeymaps[keymapId].abbreviation, oldKeymapAbbreviationLen))
-        {
-            SwitchKeymapById(keymapId);
-            return;
-        }
+    if (SwitchKeymapByAbbreviation(oldKeymapAbbreviationLen, oldKeymapAbbreviation)) {
+        return;
     }
 
     SwitchKeymapById(DefaultKeymapIndex);

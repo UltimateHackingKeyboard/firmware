@@ -28,9 +28,9 @@ void SwitchKeymapById(uint8_t index)
 
 bool SwitchKeymapByAbbreviation(uint8_t length, char *abbrev)
 {
-    for (uint8_t i=0; i<MAX_KEYMAP_NUM; i++) {
+    for (uint8_t i=0; i<AllKeymapsCount; i++) {
         keymap_reference_t *keymap = AllKeymaps + i;
-        if (keymap->abbreviationLen == length && strcmp(keymap->abbreviation, abbrev) == 0) {
+        if (keymap->abbreviationLen == length && memcmp(keymap->abbreviation, abbrev, length) == 0) {
             SwitchKeymapById(i);
             return true;
         }
