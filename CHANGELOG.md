@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [8.1.6] - 2018-04-10
+
+Device Protocol: 4.**3.0** | Module Protocol: 4.0.0 | User Config: 4.0.0 | Hardware Config: 1.0.0
+
+- Change the scheduling of USB reports which changes mouse pointer speeds.
+- Disable LEDs while the host sleeps.
+- Make any key wake up the host while it sleeps.
+- Add UsbCommand_SwitchKeymap(). `DEVICEPROTOCOL:MINOR`
+- Make GCC optimize the release builds for execution speed (-O3).
+
 ## [8.1.5] - 2018-04-04
 
 Device Protocol: 4.2.0 | Module Protocol: 4.0.0 | User Config: 4.0.0 | Hardware Config: 1.0.0
