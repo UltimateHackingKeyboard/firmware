@@ -23,6 +23,7 @@
     typedef enum {
         LedDriverId_Right,
         LedDriverId_Left,
+        LedDriverId_Last = LedDriverId_Left,
     } led_driver_id_t;
 
     typedef enum {
@@ -49,6 +50,7 @@
 
 // Functions:
 
+    void LedSlaveDriver_UpdateLedValues(void);
     void LedSlaveDriver_Init(uint8_t ledDriverId);
     status_t LedSlaveDriver_Update(uint8_t ledDriverId);
 

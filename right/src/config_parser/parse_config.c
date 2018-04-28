@@ -145,8 +145,7 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
         AlphanumericSegmentsBrightness = alphanumericSegmentsBrightness;
         KeyBacklightBrightness = keyBacklightBrightness;
 
-        Slaves[SlaveId_LeftLedDriver].isConnected = false;
-        Slaves[SlaveId_RightLedDriver].isConnected = false;
+        LedSlaveDriver_UpdateLedValues();
 
         // Update mouse key speeds
 

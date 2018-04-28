@@ -23,7 +23,7 @@ void SwitchKeymapById(uint8_t index)
     CurrentKeymapIndex = index;
     ValidatedUserConfigBuffer.offset = AllKeymaps[index].offset;
     ParseKeymap(&ValidatedUserConfigBuffer, index, AllKeymapsCount, AllMacrosCount);
-    LedDisplay_SetCurrentKeymapText();
+    LedDisplay_UpdateText();
 }
 
 bool SwitchKeymapByAbbreviation(uint8_t length, char *abbrev)

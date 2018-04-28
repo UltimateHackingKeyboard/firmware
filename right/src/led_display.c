@@ -85,12 +85,6 @@ void LedDisplay_SetText(uint8_t length, const char* text)
     }
 }
 
-void LedDisplay_SetCurrentKeymapText(void)
-{
-    keymap_reference_t *currentKeymap = AllKeymaps + CurrentKeymapIndex;
-    LedDisplay_SetText(currentKeymap->abbreviationLen, currentKeymap->abbreviation);
-}
-
 void LedDisplay_SetLayer(layer_id_t layerId)
 {
     for (uint8_t i = 13; i <= 45; i += 16) {
@@ -118,4 +112,16 @@ void LedDisplay_UpdateIcons(void)
     for (uint8_t i=0; i<=LedDisplayIcon_Last; i++) {
         LedDisplay_SetIcon(i, ledIconStates[i]);
     }
+}
+
+void LedDisplay_UpdateText(void)
+{
+    keymap_reference_t *currentKeymap = AllKeymaps + CurrentKeymapIndex;
+    LedDisplay_SetText(currentKeymap->abbreviationLen, currentKeymap->abbreviation);
+}
+
+void LedDisplay_UpdateAll(void)
+{
+    LedDisplay_UpdateIcons();
+    LedDisplay_UpdateText();
 }

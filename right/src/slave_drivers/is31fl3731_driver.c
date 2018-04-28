@@ -62,6 +62,15 @@ static uint8_t setShutdownModeNormalBuffer[] = {LED_DRIVER_REGISTER_SHUTDOWN, SH
 static uint8_t setFrame1Buffer[] = {LED_DRIVER_REGISTER_FRAME, LED_DRIVER_FRAME_1};
 static uint8_t updatePwmRegistersBuffer[PWM_REGISTER_BUFFER_LENGTH];
 
+void LedSlaveDriver_UpdateLedValues(void)
+{
+    for (uint8_t ledDriverId=0; ledDriverId<=LedDriverId_Last; ledDriverId++) {
+        memset(LedDriverValues[ledDriverId], KeyBacklightBrightness, LED_DRIVER_LED_COUNT);
+    }
+
+    LedDisplay_UpdateAll();
+}
+
 void LedSlaveDriver_Init(uint8_t ledDriverId)
 {
     if (ledDriverId == ISO_KEY_LED_DRIVER_ID && IS_ISO) {
@@ -74,8 +83,7 @@ void LedSlaveDriver_Init(uint8_t ledDriverId)
     memset(LedDriverValues[ledDriverId], KeyBacklightBrightness, LED_DRIVER_LED_COUNT);
 
     if (ledDriverId == LedDriverId_Left) {
-        LedDisplay_UpdateIcons();
-        LedDisplay_SetCurrentKeymapText();
+        LedDisplay_UpdateAll();
     }
 }
 

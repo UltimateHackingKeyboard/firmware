@@ -24,10 +24,11 @@
 // Functions:
 
     void LedDisplay_SetText(uint8_t length, const char* text);
-    void LedDisplay_SetCurrentKeymapText(void);
     void LedDisplay_SetLayer(layer_id_t layerId);
     bool LedDisplay_GetIcon(led_display_icon_t icon);
     void LedDisplay_SetIcon(led_display_icon_t icon, bool isEnabled);
     void LedDisplay_UpdateIcons(void);
+    void LedDisplay_UpdateText(void);
+    void LedDisplay_UpdateAll(void);
 
 #endif
