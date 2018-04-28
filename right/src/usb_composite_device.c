@@ -164,22 +164,10 @@ static usb_device_class_config_list_struct_t UsbDeviceCompositeConfigList = {
 }};
 
 bool IsHostSleeping = false;
-static uint8_t oldKeyBacklightBrightness = 0xFF;
 
 static void suspendHost(void) {
     IsHostSleeping = true;
-
-    // Disable keyboard backlight
-    oldKeyBacklightBrightness = KeyBacklightBrightness;
-    KeyBacklightBrightness = 0;
-    LedSlaveDriver_Init(LedDriverId_Right);
-    LedSlaveDriver_Init(LedDriverId_Left);
-
-    // Turn layer LEDs off
-    LedDisplay_SetLayer(LayerId_Base);
-
-    // Clear the text
-    LedDisplay_SetText(0, NULL);
+    LedSlaveDriver_DisableLeds();
 }
 
 void WakeUpHost(bool sendResume) {
@@ -188,18 +176,8 @@ void WakeUpHost(bool sendResume) {
         USB_DeviceSetStatus(UsbCompositeDevice.deviceHandle, kUSB_DeviceStatusBus, NULL);
     }
 
-    IsHostSleeping = false; // The host is now awake.
-
-    // Restore keyboard backlight and text
-    KeyBacklightBrightness = oldKeyBacklightBrightness;
-    LedSlaveDriver_Init(LedDriverId_Right);
-    LedSlaveDriver_Init(LedDriverId_Left);
-
-    // Update the active layer
-    LedDisplay_SetLayer(GetActiveLayer());
-
-    // Restore icon states
-    LedDisplay_UpdateIcons();
+    IsHostSleeping = false;
+    LedSlaveDriver_UpdateLeds();
 }
 
 static usb_status_t usbDeviceCallback(usb_device_handle handle, uint32_t event, void *param)
