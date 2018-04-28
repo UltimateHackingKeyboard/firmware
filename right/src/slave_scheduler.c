@@ -31,7 +31,6 @@ uhk_slave_t Slaves[] = {
         .update = UhkModuleSlaveDriver_Update,
         .perDriverId = UhkModuleDriverId_RightAddon,
     },
-#ifdef LED_DRIVERS_ENABLED
     {
         .init = LedSlaveDriver_Init,
         .update = LedSlaveDriver_Update,
@@ -42,7 +41,6 @@ uhk_slave_t Slaves[] = {
         .update = LedSlaveDriver_Update,
         .perDriverId = LedDriverId_Left,
     },
-#endif
     {
         .init = KbootSlaveDriver_Init,
         .update = KbootSlaveDriver_Update,

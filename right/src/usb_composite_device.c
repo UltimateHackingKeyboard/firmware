@@ -164,10 +164,8 @@ static usb_device_class_config_list_struct_t UsbDeviceCompositeConfigList = {
 }};
 
 static bool isHostSleeping = false;
-#ifdef LED_DRIVERS_ENABLED
 static uint8_t oldKeyBacklightBrightness = 0xFF;
 static bool capsLockOn = false, agentOn = false, adaptiveOn = false;
-#endif
 
 bool IsHostSleeping(void) {
     return isHostSleeping;
@@ -175,7 +173,6 @@ bool IsHostSleeping(void) {
 
 static void suspendHost(void) {
     isHostSleeping = true;
-#ifdef LED_DRIVERS_ENABLED
     // Save the state of the icons
     capsLockOn = LedDisplay_GetIcon(LedDisplayIcon_CapsLock);
     agentOn = LedDisplay_GetIcon(LedDisplayIcon_Agent);
@@ -192,7 +189,6 @@ static void suspendHost(void) {
 
     // Clear the text
     LedDisplay_SetText(0, NULL);
-#endif
 }
 
 void WakeUpHost(bool sendResume) {
@@ -203,7 +199,6 @@ void WakeUpHost(bool sendResume) {
 
     isHostSleeping = false; // The computer is now awake
 
-#ifdef LED_DRIVERS_ENABLED
     // Restore keyboard backlight and text
     KeyBacklightBrightness = oldKeyBacklightBrightness;
     LedSlaveDriver_Init(LedDriverId_Right);
@@ -216,7 +211,6 @@ void WakeUpHost(bool sendResume) {
     LedDisplay_SetIcon(LedDisplayIcon_CapsLock, capsLockOn);
     LedDisplay_SetIcon(LedDisplayIcon_Agent, agentOn);
     LedDisplay_SetIcon(LedDisplayIcon_Adaptive, adaptiveOn);
-#endif
 }
 
 static usb_status_t usbDeviceCallback(usb_device_handle handle, uint32_t event, void *param)

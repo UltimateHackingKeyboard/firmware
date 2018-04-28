@@ -144,10 +144,10 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
         IconsAndLayerTextsBrightness = iconsAndLayerTextsBrightness;
         AlphanumericSegmentsBrightness = alphanumericSegmentsBrightness;
         KeyBacklightBrightness = keyBacklightBrightness;
-#ifdef LED_DRIVERS_ENABLED
+
         Slaves[SlaveId_LeftLedDriver].isConnected = false;
         Slaves[SlaveId_RightLedDriver].isConnected = false;
-#endif
+
         // Update mouse key speeds
 
         MouseMoveState.initialSpeed = mouseMoveInitialSpeed;
