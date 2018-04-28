@@ -118,10 +118,8 @@ status_t LedSlaveDriver_Update(uint8_t ledDriverId)
             *ledIndex += chunkSize;
             if (*ledIndex >= LED_DRIVER_LED_COUNT) {
                 *ledIndex = 0;
-#ifndef LED_DRIVER_STRESS_TEST
                 memcpy(currentLedDriverState->targetLedValues, ledValues, LED_DRIVER_LED_COUNT);
                 *ledDriverPhase = LedDriverPhase_UpdateChangedLedValues;
-#endif
             }
             break;
         case LedDriverPhase_UpdateChangedLedValues: {
