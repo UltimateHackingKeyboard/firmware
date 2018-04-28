@@ -6,7 +6,7 @@
 uint8_t IconsAndLayerTextsBrightness = 0xff;
 uint8_t AlphanumericSegmentsBrightness = 0xff;
 
-static const uint16_t capitalLetterToSegmentSet[] = {
+static const uint16_t capitalLetterToSegmentMap[] = {
     0b0000000011110111,
     0b0001001010001111,
     0b0000000000111001,
@@ -35,7 +35,7 @@ static const uint16_t capitalLetterToSegmentSet[] = {
     0b0000110000001001,
 };
 
-static const uint16_t digitToSegmentSet[] = {
+static const uint16_t digitToSegmentMap[] = {
     0b0000110000111111,
     0b0000010000000110,
     0b0000100010001011,
@@ -48,13 +48,13 @@ static const uint16_t digitToSegmentSet[] = {
     0b0000000011101111,
 };
 
-static uint16_t characterToSegmentSet(char character)
+static uint16_t characterToSegmentMap(char character)
 {
     switch (character) {
         case 'A' ... 'Z':
-            return capitalLetterToSegmentSet[character - 'A'];
+            return capitalLetterToSegmentMap[character - 'A'];
         case '0' ... '9':
-            return digitToSegmentSet[character - '0'];
+            return digitToSegmentMap[character - '0'];
     }
     return 0;
 }
@@ -65,11 +65,11 @@ void LedDisplay_SetText(uint8_t length, const char* text)
 
     switch (length) {
         case 3:
-            allSegmentSets = (uint64_t)characterToSegmentSet(text[2]) << 28;
+            allSegmentSets = (uint64_t)characterToSegmentMap(text[2]) << 28;
         case 2:
-            allSegmentSets |= characterToSegmentSet(text[1]) << 14;
+            allSegmentSets |= characterToSegmentMap(text[1]) << 14;
         case 1:
-            allSegmentSets |= characterToSegmentSet(text[0]);
+            allSegmentSets |= characterToSegmentMap(text[0]);
     }
 
     LedDriverValues[LedDriverId_Left][11] = allSegmentSets & 0b00000001 ? AlphanumericSegmentsBrightness : 0;

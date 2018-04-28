@@ -196,8 +196,10 @@ static void ComputerIsSleeping(void) {
 }
 
 void WakeupComputer(bool sendResume) {
-    if (sendResume) // The device should wake up the computer
-        USB_DeviceSetStatus(UsbCompositeDevice.deviceHandle, kUSB_DeviceStatusBus, NULL); // Send resume signal - this will call USB_DeviceKhciControl(khciHandle, kUSB_DeviceControlResume, NULL);
+    if (sendResume) { // The device should wake up the computer
+        // Send resume signal - this will call USB_DeviceKhciControl(khciHandle, kUSB_DeviceControlResume, NULL);
+        USB_DeviceSetStatus(UsbCompositeDevice.deviceHandle, kUSB_DeviceStatusBus, NULL);
+    }
 
     computerSleeping = false; // The computer is now awake
 
