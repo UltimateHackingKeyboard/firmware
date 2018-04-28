@@ -163,16 +163,12 @@ static usb_device_class_config_list_struct_t UsbDeviceCompositeConfigList = {
     }
 }};
 
-static bool isHostSleeping = false;
+bool IsHostSleeping = false;
 static uint8_t oldKeyBacklightBrightness = 0xFF;
 static bool capsLockOn = false, agentOn = false, adaptiveOn = false;
 
-bool IsHostSleeping(void) {
-    return isHostSleeping;
-}
-
 static void suspendHost(void) {
-    isHostSleeping = true;
+    IsHostSleeping = true;
     // Save the state of the icons
     capsLockOn = LedDisplay_GetIcon(LedDisplayIcon_CapsLock);
     agentOn = LedDisplay_GetIcon(LedDisplayIcon_Agent);
@@ -197,7 +193,7 @@ void WakeUpHost(bool sendResume) {
         USB_DeviceSetStatus(UsbCompositeDevice.deviceHandle, kUSB_DeviceStatusBus, NULL);
     }
 
-    isHostSleeping = false; // The computer is now awake
+    IsHostSleeping = false; // The computer is now awake
 
     // Restore keyboard backlight and text
     KeyBacklightBrightness = oldKeyBacklightBrightness;
@@ -223,7 +219,7 @@ static usb_status_t usbDeviceCallback(usb_device_handle handle, uint32_t event, 
         return status;
     }
 
-    if (isHostSleeping) {
+    if (IsHostSleeping) {
         WakeUpHost(false); // Wake up the keyboard if there is any activity on the bus.
     }
 

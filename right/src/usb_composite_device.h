@@ -28,12 +28,12 @@
 
 // Variables:
 
+    extern bool IsHostSleeping;
     extern usb_composite_device_t UsbCompositeDevice;
 
 //Functions:
 
     void InitUsb(void);
-    bool IsHostSleeping(void);
     void WakeUpHost(bool sendResume);
 
 #endif
