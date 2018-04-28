@@ -3,6 +3,4 @@
 
 // Macros:
 
-    #define I2C_WATCHDOG
-
 #endif

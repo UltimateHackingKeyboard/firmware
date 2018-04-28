@@ -144,9 +144,7 @@ void InitPeripherals(void)
     initI2c();
     InitTestLed();
     LedPwm_Init();
-#ifdef I2C_WATCHDOG
     InitI2cWatchdog();
-#endif
     InitKeyDebouncer();
     EEPROM_Init();
 }
