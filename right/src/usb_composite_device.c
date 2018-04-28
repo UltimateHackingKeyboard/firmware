@@ -183,12 +183,12 @@ static void suspendHost(void) {
 }
 
 void WakeUpHost(bool sendResume) {
-    if (sendResume) { // The device should wake up the computer
+    if (sendResume) { // The device should wake up the host.
         // Send resume signal - this will call USB_DeviceKhciControl(khciHandle, kUSB_DeviceControlResume, NULL);
         USB_DeviceSetStatus(UsbCompositeDevice.deviceHandle, kUSB_DeviceStatusBus, NULL);
     }
 
-    IsHostSleeping = false; // The computer is now awake
+    IsHostSleeping = false; // The host is now awake.
 
     // Restore keyboard backlight and text
     KeyBacklightBrightness = oldKeyBacklightBrightness;
@@ -223,13 +223,13 @@ static usb_status_t usbDeviceCallback(usb_device_handle handle, uint32_t event, 
             break;
         case kUSB_DeviceEventSuspend:
             if (UsbCompositeDevice.attach) {
-                suspendHost(); // The computer sends this event when it goes to sleep, so turn off all the LEDs.
+                suspendHost(); // The host sends this event when it goes to sleep, so turn off all the LEDs.
                 status = kStatus_USB_Success;
             }
             break;
         case kUSB_DeviceEventResume:
-            // We will just wake up the computer if there is any activity on the bus.
-            // The problem is that the computer won't send a resume event when it boots, so the lights will never come back on.
+            // We will just wake up the host if there is any activity on the bus.
+            // The problem is that the host won't send a resume event when it boots, so the lights will never come back on.
             status = kStatus_USB_Success;
             break;
         case kUSB_DeviceEventSetConfiguration:

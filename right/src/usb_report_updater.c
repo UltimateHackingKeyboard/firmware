@@ -429,6 +429,6 @@ void UpdateUsbReports(void)
     }
 
     if ((previousLayer != LayerId_Base || !IsUsbBasicKeyboardReportSent || !IsUsbMediaKeyboardReportSent || !IsUsbSystemKeyboardReportSent || !IsUsbMouseReportSent) && IsHostSleeping) {
-        WakeUpHost(true); // Wake up the computer if any key is pressed and the computer is sleeping.
+        WakeUpHost(true); // Wake up the host if any key is pressed and the computer is sleeping.
     }
 }
