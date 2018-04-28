@@ -377,7 +377,7 @@ void UpdateUsbReports(void)
 {
     UsbReportUpdateCounter++;
 
-    // Process the key inputs at a constant rate when moving the mouse, so the mouse speed is consistent
+    // Process the key inputs at a constant rate when moving the mouse, so the mouse speed is consistent.
     bool hasActiveMouseState = false;
     for (uint8_t i=0; i<ACTIVE_MOUSE_STATES_COUNT; i++) {
         hasActiveMouseState = true;
@@ -428,7 +428,7 @@ void UpdateUsbReports(void)
         IsUsbMouseReportSent = false;
     }
 
-    if ((previousLayer != LayerId_Base || !IsUsbBasicKeyboardReportSent || !IsUsbMediaKeyboardReportSent || !IsUsbSystemKeyboardReportSent || !IsUsbMouseReportSent) && IsComputerSleeping()) {
-        WakeupComputer(true); // Wake up the computer if any key is pressed and the computer is sleeping
+    if ((previousLayer != LayerId_Base || !IsUsbBasicKeyboardReportSent || !IsUsbMediaKeyboardReportSent || !IsUsbSystemKeyboardReportSent || !IsUsbMouseReportSent) && IsHostSleeping()) {
+        WakeUpHost(true); // Wake up the computer if any key is pressed and the computer is sleeping.
     }
 }

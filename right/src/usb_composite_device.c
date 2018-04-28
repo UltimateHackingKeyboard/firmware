@@ -163,18 +163,18 @@ static usb_device_class_config_list_struct_t UsbDeviceCompositeConfigList = {
     }
 }};
 
-static bool computerSleeping = false;
+static bool isHostSleeping = false;
 #ifdef LED_DRIVERS_ENABLED
 static uint8_t oldKeyBacklightBrightness = 0xFF;
 static bool capsLockOn = false, agentOn = false, adaptiveOn = false;
 #endif
 
-bool IsComputerSleeping(void) {
-    return computerSleeping;
+bool IsHostSleeping(void) {
+    return isHostSleeping;
 }
 
-static void ComputerIsSleeping(void) {
-    computerSleeping = true;
+static void suspendHost(void) {
+    isHostSleeping = true;
 #ifdef LED_DRIVERS_ENABLED
     // Save the state of the icons
     capsLockOn = LedDisplay_GetIcon(LedDisplayIcon_CapsLock);
@@ -195,13 +195,13 @@ static void ComputerIsSleeping(void) {
 #endif
 }
 
-void WakeupComputer(bool sendResume) {
+void WakeUpHost(bool sendResume) {
     if (sendResume) { // The device should wake up the computer
         // Send resume signal - this will call USB_DeviceKhciControl(khciHandle, kUSB_DeviceControlResume, NULL);
         USB_DeviceSetStatus(UsbCompositeDevice.deviceHandle, kUSB_DeviceStatusBus, NULL);
     }
 
-    computerSleeping = false; // The computer is now awake
+    isHostSleeping = false; // The computer is now awake
 
 #ifdef LED_DRIVERS_ENABLED
     // Restore keyboard backlight and text
@@ -229,8 +229,9 @@ static usb_status_t usbDeviceCallback(usb_device_handle handle, uint32_t event, 
         return status;
     }
 
-    if (computerSleeping)
-        WakeupComputer(false); // Wake up the keyboard if there is any activity on the bus
+    if (isHostSleeping) {
+        WakeUpHost(false); // Wake up the keyboard if there is any activity on the bus.
+    }
 
     switch (event) {
         case kUSB_DeviceEventBusReset:
@@ -239,13 +240,13 @@ static usb_status_t usbDeviceCallback(usb_device_handle handle, uint32_t event, 
             break;
         case kUSB_DeviceEventSuspend:
             if (UsbCompositeDevice.attach) {
-                ComputerIsSleeping(); // The computer sends this event when it goes to sleep, so turn off all the LEDs
+                suspendHost(); // The computer sends this event when it goes to sleep, so turn off all the LEDs.
                 status = kStatus_USB_Success;
             }
             break;
         case kUSB_DeviceEventResume:
-            // We will just wake up the computer if there is any activity on the bus
-            // The problem is that the computer won't send a resume event when it boots, so the lights will never come back on
+            // We will just wake up the computer if there is any activity on the bus.
+            // The problem is that the computer won't send a resume event when it boots, so the lights will never come back on.
             status = kStatus_USB_Success;
             break;
         case kUSB_DeviceEventSetConfiguration:
