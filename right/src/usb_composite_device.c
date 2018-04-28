@@ -165,14 +165,9 @@ static usb_device_class_config_list_struct_t UsbDeviceCompositeConfigList = {
 
 bool IsHostSleeping = false;
 static uint8_t oldKeyBacklightBrightness = 0xFF;
-static bool capsLockOn = false, agentOn = false, adaptiveOn = false;
 
 static void suspendHost(void) {
     IsHostSleeping = true;
-    // Save the state of the icons
-    capsLockOn = LedDisplay_GetIcon(LedDisplayIcon_CapsLock);
-    agentOn = LedDisplay_GetIcon(LedDisplayIcon_Agent);
-    adaptiveOn = LedDisplay_GetIcon(LedDisplayIcon_Adaptive);
 
     // Disable keyboard backlight
     oldKeyBacklightBrightness = KeyBacklightBrightness;
@@ -204,9 +199,7 @@ void WakeUpHost(bool sendResume) {
     LedDisplay_SetLayer(GetActiveLayer());
 
     // Restore icon states
-    LedDisplay_SetIcon(LedDisplayIcon_CapsLock, capsLockOn);
-    LedDisplay_SetIcon(LedDisplayIcon_Agent, agentOn);
-    LedDisplay_SetIcon(LedDisplayIcon_Adaptive, adaptiveOn);
+    LedDisplay_UpdateIcons();
 }
 
 static usb_status_t usbDeviceCallback(usb_device_handle handle, uint32_t event, void *param)

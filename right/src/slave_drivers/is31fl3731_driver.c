@@ -74,9 +74,7 @@ void LedSlaveDriver_Init(uint8_t ledDriverId)
     memset(LedDriverValues[ledDriverId], KeyBacklightBrightness, LED_DRIVER_LED_COUNT);
 
     if (ledDriverId == LedDriverId_Left) {
-        LedDisplay_SetIcon(LedDisplayIcon_CapsLock, false);
-        LedDisplay_SetIcon(LedDisplayIcon_Agent, false);
-        LedDisplay_SetIcon(LedDisplayIcon_Adaptive, false);
+        LedDisplay_UpdateIcons();
         LedDisplay_SetCurrentKeymapText();
     }
 }

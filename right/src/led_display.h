@@ -13,6 +13,7 @@
         LedDisplayIcon_CapsLock,
         LedDisplayIcon_Agent,
         LedDisplayIcon_Adaptive,
+        LedDisplayIcon_Last = LedDisplayIcon_Adaptive,
     } led_display_icon_t;
 
 // Variables:
@@ -25,8 +26,8 @@
     void LedDisplay_SetText(uint8_t length, const char* text);
     void LedDisplay_SetCurrentKeymapText(void);
     void LedDisplay_SetLayer(layer_id_t layerId);
-    void LedDisplay_SetIcon(led_display_icon_t icon, bool isEnabled);
-
     bool LedDisplay_GetIcon(led_display_icon_t icon);
+    void LedDisplay_SetIcon(led_display_icon_t icon, bool isEnabled);
+    void LedDisplay_UpdateIcons(void);
 
 #endif

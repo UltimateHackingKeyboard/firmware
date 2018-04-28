@@ -5,6 +5,7 @@
 
 uint8_t IconsAndLayerTextsBrightness = 0xff;
 uint8_t AlphanumericSegmentsBrightness = 0xff;
+bool ledIconStates[LedDisplayIcon_Last];
 
 static const uint16_t capitalLetterToSegmentMap[] = {
     0b0000000011110111,
@@ -108,5 +109,13 @@ bool LedDisplay_GetIcon(led_display_icon_t icon)
 
 void LedDisplay_SetIcon(led_display_icon_t icon, bool isEnabled)
 {
-    LedDriverValues[LedDriverId_Left][8 + icon] = isEnabled ? IconsAndLayerTextsBrightness : 0;
+    ledIconStates[icon] = isEnabled;
+    LedDriverValues[LedDriverId_Left][icon + 8] = isEnabled ? IconsAndLayerTextsBrightness : 0;
+}
+
+void LedDisplay_UpdateIcons(void)
+{
+    for (uint8_t i=0; i<=LedDisplayIcon_Last; i++) {
+        LedDisplay_SetIcon(i, ledIconStates[i]);
+    }
 }
