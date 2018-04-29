@@ -18,8 +18,8 @@ matrix:
       sudo: required
       before_install: 
         - curl https://nixos.org/nix/install | sh && . ~/.nix-profile/etc/profile.d/nix.sh
-        - nix-env -i gcc-arm-embedded-4.8-2014q1-20140314
-        - nix-env -i eclipse-cpp
+        - nix install gcc-arm-embedded-4.8-2014q1-20140314
+        - nix install eclipse-cpp
     - os: osx
       env: PATH="$PATH:/Applications/Eclipse CPP.app/Contents/MacOS"
       before_install: brew update && brew bundle -v
