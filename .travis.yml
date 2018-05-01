@@ -1,34 +1,15 @@
-language: generic
+language: c
 
-cache:
-  directories:
-    - $HOME/Library/Caches/Homebrew/Cask
+os:
+  - linux
+  - osx
 
-install: eclipse -noSplash
-         -application org.eclipse.equinox.p2.director
-         -repository http://gnuarmeclipse.sourceforge.net/updates
-         -installIUs ilg.gnuarmeclipse.managedbuild.cross.feature.group
-         -profileProperties org.eclipse.update.install.features=true
-
-before_script:
-        - tar -xf gcc-arm-none-eabi-7-2017-q4-major-*.tar.bz2
-        - export PATH=$PATH:$PWD/gcc-arm-none-eabi-7-2017-q4-major/bin
+install:
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then os_name=mac; else os_name=linux; fi
+  - wget "https://developer.arm.com/-/media/Files/downloads/gnu-rm/7-2017q4/gcc-arm-none-eabi-7-2017-q4-major-$os_name.tar.bz2"
+  - tar -xf gcc-arm-none-eabi-7-2017-q4-major-*.tar.bz2
+  - export PATH=$PATH:$PWD/gcc-arm-none-eabi-7-2017-q4-major/bin
 
 script:
-        - eclipse -noSplash -application org.eclipse.cdt.managedbuilder.core.headlessbuild -import $TRAVIS_BUILD_DIR/left/build -import $TRAVIS_BUILD_DIR/right/build -build all
-        - make -j2 -C $TRAVIS_BUILD_DIR/left
-        - make -j2 -C $TRAVIS_BUILD_DIR/right
-
-matrix:
-  include:
-    - os: linux
-      sudo: required
-      before_install:
-        - curl https://nixos.org/nix/install | sh && . ~/.nix-profile/etc/profile.d/nix.sh
-        - nix-env -i eclipse-cpp
-        - wget "https://developer.arm.com/-/media/Files/downloads/gnu-rm/7-2017q4/gcc-arm-none-eabi-7-2017-q4-major-linux.tar.bz2"
-    - os: osx
-      env: PATH="$PATH:/Applications/Eclipse CPP.app/Contents/MacOS"
-      before_install:
-        - brew cask install eclipse-cpp
-        - wget "https://developer.arm.com/-/media/Files/downloads/gnu-rm/7-2017q4/gcc-arm-none-eabi-7-2017-q4-major-mac.tar.bz2"
+  - make -j2 -C left
+  - make -j2 -C right
