@@ -24,7 +24,7 @@ static void hardwareConfigurationReadFinished(void)
     EEPROM_LaunchTransfer(EepromOperation_Read, ConfigBufferId_StagingUserConfig, userConfigurationReadFinished);
 }
 
-void main(void)
+int main(void)
 {
     InitClock();
     InitPeripherals();

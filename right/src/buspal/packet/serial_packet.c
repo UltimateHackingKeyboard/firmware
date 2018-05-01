@@ -110,7 +110,7 @@ status_t serial_packet_read(const peripheral_descriptor_t *self,
 
         // Receive the framing data packet.
         isPacketOk = true;
-        status_t status = read_data_packet(&framingPacket, g_serialContext.data, packetType);
+        status = read_data_packet(&framingPacket, g_serialContext.data, packetType);
         if (status != kStatus_Success)
         {
             // No packet available.

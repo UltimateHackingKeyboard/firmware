@@ -593,9 +593,6 @@ static status_t handle_command_internal(uint8_t *packet, uint32_t packetLength)
                     else
                     {
 #if FIXED_BUSPAL_BOOTLOADER
-                        size_t offset;
-                        int res;
-
                         status = kStatus_Success; /* set default */
                         res = WaitForStartByte(rxBuf, &offset);
                         if (res==1 && offset==1)
