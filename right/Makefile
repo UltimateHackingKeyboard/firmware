@@ -1,0 +1,73 @@
+# Copyright (C) 2018 Kristian Lauszus. All rights reserved.
+#
+# This software may be distributed and modified under the terms of the GNU
+# General Public License version 2 (GPL2) as published by the Free Software
+# Foundation and appearing in the file GPL2.TXT included in the packaging of
+# this file. Please note that GPL2 Section 2[b] requires that all works based
+# on this software must also be made publicly available under the terms of
+# the GPL2 ("Copyleft").
+#
+# Contact information
+# -------------------
+# Kristian Lauszus
+# Web      :  http://www.lauszus.com
+# e-mail   :  lauszus@gmail.com
+
+# Set project name.
+PROJECT_NAME = uhk_right
+
+# Defines the part type that this project uses.
+PART = MK22FN512VLH12
+
+# Defines the linker script to use for the application.
+LDSCRIPT = link/MK22FN512xxx12_flash.ld
+
+# Address of the app vector table. The bootloader will take up the flash before this address.
+BL_APP_VECTOR_TABLE_ADDRESS = 0xc000
+
+# Size of the heap and stack.
+HEAP_SIZE = 0x2000
+STACK_SIZE = 0x0400
+
+ # Preprocessor directives.
+BUILD_FLAGS = -DCPU_$(PART)_cm4 -DBL_APP_VECTOR_TABLE_ADDRESS=$(BL_APP_VECTOR_TABLE_ADDRESS) -DUSB_STACK_BM -DBL_HAS_BOOTLOADER_CONFIG=1
+
+# Set the compiler CPU and FPU options.
+CPU = -mcpu=cortex-m4
+FPU = -mfpu=fpv4-sp-d16 -mfloat-abi=hard
+
+# Source files.
+SOURCE = $(wildcard src/*.c) \
+         $(wildcard src/*/*.c) \
+         $(wildcard src/*/*/*.c) \
+         ../lib/bootloader/src/bootloader/src/wormhole.c \
+         $(wildcard ../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0/device/*.c) \
+         $(wildcard ../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0/osa/*.c) \
+         ../lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212/system_MK22F51212.c \
+         ../lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212/gcc/startup_MK22F51212.S \
+         ../lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212/drivers/fsl_adc16.c \
+         ../lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212/drivers/fsl_clock.c \
+         ../lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212/drivers/fsl_ftm.c \
+         ../lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212/drivers/fsl_gpio.c \
+         ../lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212/drivers/fsl_i2c.c \
+         ../lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212/drivers/fsl_pit.c \
+         ../lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212/drivers/fsl_sim.c \
+         ../lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212/drivers/fsl_smc.c \
+         $(wildcard ../shared/*.c)
+
+# Header files.
+IPATH = src \
+        src/ksdk_usb \
+        src/buspal \
+        src/buspal/bm_usb \
+        ../lib/bootloader/src \
+        ../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0/device \
+        ../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0/include \
+        ../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0/osa \
+        ../lib/KSDK_2.0_MK22FN512xxx12/CMSIS/Include \
+        ../lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212 \
+        ../lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212/drivers \
+        ../shared
+
+# Include main Makefile.
+include ../scripts/Makedefs.mk
