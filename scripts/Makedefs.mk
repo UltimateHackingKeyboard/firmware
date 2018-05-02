@@ -150,7 +150,7 @@ ifeq ($(INTERACTIVE),1)
     color_purple = \033[38;5;097m
 endif
 
-.PHONY: all clean
+.PHONY: all clean flash
 
 # The default rule, which causes the project to be built.
 all: $(PROJECT_OBJ)
@@ -159,6 +159,9 @@ all: $(PROJECT_OBJ)
 clean:
 	@rm -rf $(BUILD_DIR) $(wildcard *~)
 	@echo "$(color_red)Done cleaning!$(color_default)"
+
+flash: all
+	@$(FLASH_CMD) || exit 1
 
 # Rebuild all objects when the Makefile changes.
 $(OBJS): Makefile

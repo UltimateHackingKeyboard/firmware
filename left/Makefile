@@ -30,6 +30,9 @@ STACK_SIZE = 0x0050
 CPU = -mcpu=cortex-m0plus
 FPU = -mfloat-abi=soft
 
+# Command for flashing the left half of the keyboard.
+FLASH_CMD = node ../lib/agent/packages/usb/update-module-firmware.js leftHalf $(PROJECT_OBJ:.axf=.bin)
+
 # Source files.
 SOURCE = $(wildcard src/*.c) \
          ../lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/system_MKL03Z4.c \

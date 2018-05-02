@@ -36,6 +36,9 @@ BUILD_FLAGS = -DCPU_$(PART)_cm4 -DBL_APP_VECTOR_TABLE_ADDRESS=$(BL_APP_VECTOR_TA
 CPU = -mcpu=cortex-m4
 FPU = -mfpu=fpv4-sp-d16 -mfloat-abi=hard
 
+# Command for flashing the right half of the keyboard.
+FLASH_CMD = node ../lib/agent/packages/usb/update-device-firmware.js $(PROJECT_OBJ:.axf=.hex)
+
 # Source files.
 SOURCE = $(wildcard src/*.c) \
          $(wildcard src/*/*.c) \
