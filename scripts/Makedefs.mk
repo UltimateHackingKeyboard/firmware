@@ -19,8 +19,11 @@ SEMIHOSTING ?= 0
 # Build directory.
 BUILD_DIR ?= build_make
 
- # Preprocessor directives.
-BUILD_FLAGS += -D__NEWLIB__ -D__USE_CMSIS -D__MCUXPRESSO -DCPU_$(PART) -D__STARTUP_CLEAR_BSS
+# Set default value (no bootloader) for the bootloader vector table address.
+BL_APP_VECTOR_TABLE_ADDRESS ?= 0
+
+# Preprocessor directives.
+BUILD_FLAGS += -D__NEWLIB__ -D__USE_CMSIS -D__MCUXPRESSO -DCPU_$(PART) -D__STARTUP_CLEAR_BSS -DBL_APP_VECTOR_TABLE_ADDRESS=$(BL_APP_VECTOR_TABLE_ADDRESS)
 
 # Path to project object file.
 PROJECT_OBJ = $(BUILD_DIR)/$(PROJECT_NAME).axf
@@ -85,9 +88,6 @@ CXXSTD = -std=gnu++14
 ifdef TRAVIS
     CFLAGS += -Werror
 endif
-
-# Set default value for the bootloader vector table address.
-BL_APP_VECTOR_TABLE_ADDRESS ?= 0
 
 # The flags passed to the linker.
 LDFLAGS = --specs=nano.specs -mthumb $(CPU) $(FPU) -T $(LDSCRIPT) -Wl,-Map=$(PROJECT_OBJ:.axf=.map),--gc-sections,-print-memory-usage,-no-wchar-size-warning,--defsym=__heap_size__=$(HEAP_SIZE),--defsym=__stack_size__=$(STACK_SIZE),--defsym=__bl_app_vector_table_address__=$(BL_APP_VECTOR_TABLE_ADDRESS)

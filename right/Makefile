@@ -22,15 +22,9 @@ PART = MK22FN512VLH12
 # Defines the linker script to use for the application.
 LDSCRIPT = link/MK22FN512xxx12_flash.ld
 
-# Address of the app vector table. The bootloader will take up the flash before this address.
-BL_APP_VECTOR_TABLE_ADDRESS = 0xc000
-
 # Size of the heap and stack.
 HEAP_SIZE = 0x2000
 STACK_SIZE = 0x0400
-
- # Preprocessor directives.
-BUILD_FLAGS = -DCPU_$(PART)_cm4 -DBL_APP_VECTOR_TABLE_ADDRESS=$(BL_APP_VECTOR_TABLE_ADDRESS) -DUSB_STACK_BM -DBL_HAS_BOOTLOADER_CONFIG=1
 
 # Set the compiler CPU and FPU options.
 CPU = -mcpu=cortex-m4
@@ -38,6 +32,12 @@ FPU = -mfpu=fpv4-sp-d16 -mfloat-abi=hard
 
 # Command for flashing the right half of the keyboard.
 FLASH_CMD = node ../lib/agent/packages/usb/update-device-firmware.js $(PROJECT_OBJ:.axf=.hex)
+
+# Preprocessor directives.
+BUILD_FLAGS = -DCPU_$(PART)_cm4 -DUSB_STACK_BM -DBL_HAS_BOOTLOADER_CONFIG=1
+
+# Address of the app vector table. The bootloader will take up the flash before this address.
+BL_APP_VECTOR_TABLE_ADDRESS = 0xc000
 
 # Source files.
 SOURCE = $(wildcard src/*.c) \
