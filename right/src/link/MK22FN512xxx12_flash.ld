@@ -55,12 +55,14 @@ HEAP_SIZE  = DEFINED(__heap_size__)  ? __heap_size__  : 0x2000;
 STACK_SIZE = DEFINED(__stack_size__) ? __stack_size__ : 0x0400;
 M_VECTOR_RAM_SIZE = DEFINED(__ram_vector_table__) ? 0x0400 : 0x0;
 
+/* This should match the value in bootloader_config.h if KBOOT is used */
+BL_APP_VECTOR_TABLE_ADDRESS = DEFINED(__bl_app_vector_table_address__) ? __bl_app_vector_table_address__ : 0;
+
 /* Specify the memory areas */
 MEMORY
 {
-  m_interrupts          (RX)  : ORIGIN = 0x00000000, LENGTH = 0x00000400
-  m_flash_config        (RX)  : ORIGIN = 0x00000400, LENGTH = 0x00000010
-  m_text                (RX)  : ORIGIN = 0x00000410, LENGTH = 0x0007FBF0
+  m_interrupts          (RX)  : ORIGIN = 0x0 + BL_APP_VECTOR_TABLE_ADDRESS, LENGTH = 0x00000400
+  m_text                (RX)  : ORIGIN = 0x00000400 + BL_APP_VECTOR_TABLE_ADDRESS, LENGTH = 512K - 0x400 - BL_APP_VECTOR_TABLE_ADDRESS
   m_data                (RW)  : ORIGIN = 0x1FFF0000, LENGTH = 0x00010000
   m_data_2              (RW)  : ORIGIN = 0x20000000, LENGTH = 0x0000FF00
   m_noinit              (RW)  : ORIGIN = 0x2000FF00, LENGTH = 0x000000FF
@@ -77,13 +79,6 @@ SECTIONS
     KEEP(*(.isr_vector))     /* Startup code */
     . = ALIGN(4);
   } > m_interrupts
-
-  .flash_config :
-  {
-    . = ALIGN(4);
-    KEEP(*(.FlashConfig))    /* Flash Configuration Field (FCF) */
-    . = ALIGN(4);
-  } > m_flash_config
 
   /* The program code and other data goes into internal flash */
   .text :
@@ -215,10 +210,10 @@ SECTIONS
     *(COMMON)
     . = ALIGN(4);
   } > m_data
-  
+
   .m_usb_bdt (NOLOAD) :
   {
-    . = ALIGN(512); 
+    . = ALIGN(512);
     *(m_usb_bdt)
   } > m_data
 
@@ -228,14 +223,14 @@ SECTIONS
     __bss_end__ = .;
     __END_BSS = .;
   } > m_data
-  
-  .m_data_2 : 
+
+  .m_data_2 :
   {
      . = ALIGN(4);
      *(.m_data_2) /* This is an User defined section */
      . = ALIGN(4);
   } > m_data_2
-  
+
   .heap :
   {
     . = ALIGN(8);

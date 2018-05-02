@@ -1,25 +1,36 @@
-language: generic
+language: c
+
 cache:
   directories:
     - $HOME/Library/Caches/Homebrew/Cask
-install: eclipse -noSplash 
-         -application org.eclipse.equinox.p2.director 
-         -repository http://gnuarmeclipse.sourceforge.net/updates 
-         -installIUs ilg.gnuarmeclipse.managedbuild.cross.feature.group 
+
+install: eclipse -noSplash
+         -application org.eclipse.equinox.p2.director
+         -repository http://gnuarmeclipse.sourceforge.net/updates
+         -installIUs ilg.gnuarmeclipse.managedbuild.cross.feature.group
          -profileProperties org.eclipse.update.install.features=true
-script: eclipse -noSplash 
-        -application org.eclipse.cdt.managedbuilder.core.headlessbuild 
-        -import $TRAVIS_BUILD_DIR/left/build
-        -import $TRAVIS_BUILD_DIR/right/build
-        -build all
+
+before_script:
+  - tar -xf gcc-arm-none-eabi-7-2017-q4-major-*.tar.bz2
+  - export PATH=$PATH:$PWD/gcc-arm-none-eabi-7-2017-q4-major/bin
+
+script:
+  - eclipse -noSplash -application org.eclipse.cdt.managedbuilder.core.headlessbuild -import $TRAVIS_BUILD_DIR/left/build -import $TRAVIS_BUILD_DIR/right/build -build all
+  - make -C left clean && make -j2 -C left DEBUG=1
+  - make -C left clean && make -j2 -C left DEBUG=0
+  - make -C right clean && make -j2 -C right DEBUG=1
+  - make -C right clean && make -j2 -C right DEBUG=0
+
 matrix:
   include:
     - os: linux
       sudo: required
-      before_install: 
+      before_install:
         - curl https://nixos.org/nix/install | sh && . ~/.nix-profile/etc/profile.d/nix.sh
-        - nix-env -i gcc-arm-embedded-4.8-2014q1-20140314
         - nix-env -i eclipse-cpp
+        - wget "https://developer.arm.com/-/media/Files/downloads/gnu-rm/7-2017q4/gcc-arm-none-eabi-7-2017-q4-major-linux.tar.bz2"
     - os: osx
       env: PATH="$PATH:/Applications/Eclipse CPP.app/Contents/MacOS"
-      before_install: brew update && brew bundle -v
+      before_install:
+        - brew cask install eclipse-cpp
+        - wget "https://developer.arm.com/-/media/Files/downloads/gnu-rm/7-2017q4/gcc-arm-none-eabi-7-2017-q4-major-mac.tar.bz2"

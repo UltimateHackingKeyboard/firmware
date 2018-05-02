@@ -109,7 +109,7 @@ void LedDisplay_SetIcon(led_display_icon_t icon, bool isEnabled)
 
 void LedDisplay_UpdateIcons(void)
 {
-    for (uint8_t i=0; i<=LedDisplayIcon_Last; i++) {
+    for (led_display_icon_t i=0; i<=LedDisplayIcon_Last; i++) {
         LedDisplay_SetIcon(i, ledIconStates[i]);
     }
 }
