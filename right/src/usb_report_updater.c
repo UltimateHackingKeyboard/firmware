@@ -288,7 +288,7 @@ static void updateActiveUsbReports(void)
     if (activeLayer == LayerId_Base) {
         activeLayer = GetActiveLayer();
     }
-    bool suppressKeys = previousLayer != LayerId_Base && activeLayer == LayerId_Base;
+    bool layerGotReleased = previousLayer != LayerId_Base && activeLayer == LayerId_Base;
     LedDisplay_SetLayer(activeLayer);
 
     if (MacroPlaying) {
@@ -305,7 +305,6 @@ static void updateActiveUsbReports(void)
             key_state_t *keyState = &KeyStates[slotId][keyId];
             key_action_t *action = &CurrentKeymap[activeLayer][slotId][keyId];
 
-
             if (keyState->debounceCounter < KEY_DEBOUNCER_TIMEOUT_MSEC) {
                 keyState->current = keyState->previous;
             } else if (!keyState->previous && keyState->current) {
@@ -313,7 +312,8 @@ static void updateActiveUsbReports(void)
             }
 
             if (keyState->current) {
-                if (suppressKeys) {
+                key_action_t *baseAction = &CurrentKeymap[LayerId_Base][slotId][keyId];
+                if (layerGotReleased && !(baseAction->type == KeyActionType_Keystroke && baseAction->keystroke.scancode == 0 && baseAction->keystroke.modifiers)) {
                     keyState->suppressed = true;
                 }
 
