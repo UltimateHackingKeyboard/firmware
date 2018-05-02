@@ -161,21 +161,21 @@ clean:
 flash: all
 	@$(FLASH_CMD) || exit 1
 
-# Rebuild all objects when the Makefile changes.
-$(OBJS): Makefile
+# Rebuild all objects when the Makefiles change.
+$(OBJS): $(MAKEFILE_LIST)
 
 # The rule for linking the application.
 $(PROJECT_OBJ): $(OBJS) $(LDSCRIPT)
-	@if [ '$(VERBOSE)' = 1 ]; then                                        \
-	     echo $(LD_CMD);                                                  \
-	 else                                                                 \
-	     echo "    $(color_purple)LD$(color_default)    $(notdir $(@))";  \
+	@if [ '$(VERBOSE)' = 1 ]; then                               \
+	     echo $(LD_CMD);                                         \
+	 else                                                        \
+	     echo "    $(color_purple)LD$(color_default)    $(@F)";  \
 	 fi
 	@echo
 	@$(LD_CMD)
 	@echo
-	@if [ '$(VERBOSE)' = 1 ]; then                                        \
-	     $(SIZE) -Ax $(@);                                                \
+	@if [ '$(VERBOSE)' = 1 ]; then                               \
+	     $(SIZE) -Ax $(@);                                       \
 	 fi
 	@$(OBJCOPY) -O binary $(@) $(@:.axf=.bin)
 	@$(OBJCOPY) -O ihex $(@) $(@:.axf=.hex)
@@ -183,28 +183,28 @@ $(PROJECT_OBJ): $(OBJS) $(LDSCRIPT)
 # The rule for building the object files from each source file.
 $(C_OBJS): $(BUILD_DIR)/%.o : %.c
 	@mkdir -p $(@D)
-	@if [ '$(VERBOSE)' = 1 ]; then                                        \
-	     echo $(CC_CMD);                                                  \
-	 else                                                                 \
-	     echo "    $(color_green)CC$(color_default)    $(notdir $(<))";   \
+	@if [ '$(VERBOSE)' = 1 ]; then                               \
+	     echo $(CC_CMD);                                         \
+	 else                                                        \
+	     echo "    $(color_green)CC$(color_default)    $(<F)";   \
 	 fi
 	@$(CC_CMD)
 
 $(CPP_OBJS): $(BUILD_DIR)/%.o : %.cpp
 	@mkdir -p $(@D)
-	@if [ '$(VERBOSE)' = 1 ]; then                                        \
-	     echo $(CXX_CMD);                                                 \
-	 else                                                                 \
-	     echo "    $(color_cyan)CXX$(color_default)   $(notdir $(<))";    \
+	@if [ '$(VERBOSE)' = 1 ]; then                               \
+	     echo $(CXX_CMD);                                        \
+	 else                                                        \
+	     echo "    $(color_cyan)CXX$(color_default)   $(<F)";    \
 	 fi
 	@$(CXX_CMD)
 
 $(S_OBJS): $(BUILD_DIR)/%.o: %.S
 	@mkdir -p $(@D)
-	@if [ '$(VERBOSE)' = 1 ]; then                                        \
-	     echo $(AS_CMD);                                                  \
-	 else                                                                 \
-	     echo "    $(color_magenta)AS$(color_default)    $(notdir $(<))"; \
+	@if [ '$(VERBOSE)' = 1 ]; then                               \
+	     echo $(AS_CMD);                                         \
+	 else                                                        \
+	     echo "    $(color_magenta)AS$(color_default)    $(<F)"; \
 	 fi
 	@$(AS_CMD)
 
