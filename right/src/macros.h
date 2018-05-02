@@ -39,7 +39,7 @@
             struct {
                 macro_sub_action_t action;
                 keystroke_type_t type;
-                uint8_t scancode;
+                uint16_t scancode;
                 uint8_t modifierMask;
             } ATTR_PACKED key;
             struct {

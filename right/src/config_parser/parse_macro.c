@@ -7,13 +7,15 @@ parser_error_t parseKeyMacroAction(config_buffer_t *buffer, macro_action_t *macr
     uint8_t keyMacroType = macroActionType - SerializedMacroActionType_KeyMacroAction;
     uint8_t action = keyMacroType & 0b11;
     uint8_t type;
-    uint8_t scancode;
+    uint16_t scancode = 0;
     uint8_t modifierMask;
 
     keyMacroType >>= 2;
     type = keyMacroType & 0b11;
     keyMacroType >>= 2;
-    scancode = keyMacroType & 0b10 ? ReadUInt8(buffer) : 0;
+    if (keyMacroType & 0b10) {
+        scancode = type == SerializedKeystrokeType_LongMedia ? ReadUInt16(buffer) : ReadUInt8(buffer);
+    }
     modifierMask = keyMacroType & 0b01 ? ReadUInt8(buffer) : 0;
     macroAction->type = MacroActionType_Key;
     macroAction->key.action = action;
