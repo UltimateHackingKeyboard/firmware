@@ -20,7 +20,7 @@ PROJECT_NAME = uhk_right
 PART = MK22FN512VLH12
 
 # Defines the linker script to use for the application.
-LDSCRIPT = link/MK22FN512xxx12_flash.ld
+LDSCRIPT = src/link/MK22FN512xxx12_flash.ld
 
 # Size of the heap and stack.
 HEAP_SIZE = 0x2000
