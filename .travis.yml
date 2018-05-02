@@ -16,8 +16,10 @@ before_script:
 
 script:
   - eclipse -noSplash -application org.eclipse.cdt.managedbuilder.core.headlessbuild -import $TRAVIS_BUILD_DIR/left/build -import $TRAVIS_BUILD_DIR/right/build -build all
-  - make -j2 -C left
-  - make -j2 -C right
+  - make -C left clean && make -j2 -C left DEBUG=1
+  - make -C left clean && make -j2 -C left DEBUG=0
+  - make -C right clean && make -j2 -C right DEBUG=1
+  - make -C right clean && make -j2 -C right DEBUG=0
 
 matrix:
   include:
