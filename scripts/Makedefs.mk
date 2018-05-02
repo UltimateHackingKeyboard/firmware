@@ -29,10 +29,24 @@ PROJECT_OBJ = $(BUILD_DIR)/$(PROJECT_NAME).axf
 # Set the prefix for the tools to use.
 PREFIX ?= arm-none-eabi
 
+# Set WIN=1 manually for Windows Subsystem for Linux.
+WIN ?= 0
+
 # Determine if we are on a Windows machine and set the .exe suffix.
-# We can not use the suffix command, as the PREFIX might contain spaces.
 UNAME_S := $(shell uname -s)
 ifeq ($(OS),Windows_NT) # Native Windows.
+    WIN = 1
+endif
+
+# Set J-Link executable.
+ifeq ($(WIN),1)
+    JLINK := JLink.exe
+else
+    JLINK := JLinkExe
+endif
+
+# We can not use the suffix command, as the PREFIX might contain spaces.
+ifeq ($(WIN),1)
     SUFFIX := .exe
 endif
 
@@ -148,7 +162,7 @@ ifeq ($(INTERACTIVE),1)
     color_purple = \033[38;5;097m
 endif
 
-.PHONY: all clean flash
+.PHONY: all clean flash flash-jlink
 
 # The default rule, which causes the project to be built.
 all: $(PROJECT_OBJ)
@@ -160,6 +174,9 @@ clean:
 
 flash: all
 	@$(FLASH_CMD) || exit 1
+
+flash-jlink: all
+	$(JLINK) -if SWD -CommandFile $(JLINK_SCRIPT) || exit 1
 
 # Rebuild all objects when the Makefiles change.
 $(OBJS): $(MAKEFILE_LIST)

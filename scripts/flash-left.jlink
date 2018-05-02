@@ -1,0 +1,7 @@
+speed 4000
+device MKL03Z32xxx4
+connect
+loadfile build_make/uhk_left.hex
+RSetType 2
+r
+qc

@@ -31,6 +31,9 @@ FPU = -mfpu=fpv4-sp-d16 -mfloat-abi=hard
 # Command for flashing the right half of the keyboard.
 FLASH_CMD = node ../lib/agent/packages/usb/update-device-firmware.js $(PROJECT_OBJ:.axf=.hex)
 
+# Path to the JLink script used for the right half.
+JLINK_SCRIPT = ../scripts/flash-right.jlink
+
 # Preprocessor directives.
 BUILD_FLAGS = -DCPU_$(PART)_cm4 -DUSB_STACK_BM -DBL_HAS_BOOTLOADER_CONFIG=1
 
