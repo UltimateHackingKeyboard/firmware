@@ -32,6 +32,16 @@
 	</natures>
 	<linkedResources>
 		<link>
+			<name>Makedefs.mk</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/scripts/Makedefs.mk</locationURI>
+		</link>
+		<link>
+			<name>Makefile</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Makefile</locationURI>
+		</link>
+		<link>
 			<name>drivers</name>
 			<type>2</type>
 			<locationURI>virtual:/virtual</locationURI>
