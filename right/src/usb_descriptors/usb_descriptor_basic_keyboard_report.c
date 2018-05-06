@@ -21,7 +21,7 @@ uint8_t UsbBasicKeyboardReportDescriptor[USB_BASIC_KEYBOARD_REPORT_DESCRIPTOR_LE
         HID_RI_REPORT_SIZE(8, 0x08),
         HID_RI_INPUT(8, HID_IOF_CONSTANT),
 
-        // LED status
+        // LED status - Num lock, Caps lock, Scroll lock, Compose, Kana
         HID_RI_USAGE_PAGE(8, HID_RI_USAGE_PAGE_LEDS),
         HID_RI_USAGE_MINIMUM(8, 0x01),
         HID_RI_USAGE_MAXIMUM(8, 0x05),
