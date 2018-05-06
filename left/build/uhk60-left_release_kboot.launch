@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <launchConfiguration type="org.eclipse.ui.externaltools.ProgramLaunchConfigurationType">
-<mapAttribute key="org.eclipse.debug.core.environmentVariables">
-<mapEntry key="PATH" value="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"/>
-</mapAttribute>
 <stringAttribute key="org.eclipse.ui.externaltools.ATTR_LAUNCH_CONFIGURATION_BUILD_SCOPE" value="${none}"/>
 <stringAttribute key="org.eclipse.ui.externaltools.ATTR_LOCATION" value="/usr/bin/make"/>
 <stringAttribute key="org.eclipse.ui.externaltools.ATTR_TOOL_ARGUMENTS" value="DEBUG=0 flash"/>
