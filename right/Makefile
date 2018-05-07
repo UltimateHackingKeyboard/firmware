@@ -55,7 +55,6 @@ SOURCE = $(wildcard src/*.c) \
          ../lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212/drivers/fsl_gpio.c \
          ../lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212/drivers/fsl_i2c.c \
          ../lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212/drivers/fsl_pit.c \
-         ../lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212/drivers/fsl_sim.c \
          ../lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212/drivers/fsl_smc.c \
          $(wildcard ../shared/*.c)
 

@@ -42,7 +42,6 @@ SOURCE = $(wildcard src/*.c) \
          ../lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/drivers/fsl_gpio.c \
          ../lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/drivers/fsl_i2c.c \
          ../lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/drivers/fsl_lptmr.c \
-         ../lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/drivers/fsl_smc.c \
          ../lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/drivers/fsl_spi.c \
          ../lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/drivers/fsl_tpm.c \
          $(wildcard ../shared/*.c)
