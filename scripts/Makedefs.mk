@@ -120,7 +120,7 @@ else
 endif
 
 # Check if the DEBUG environment variable is set.
-DEBUG ?= 1
+DEBUG ?= 0
 ifeq ($(DEBUG),1)
     CFLAGS += -O3 -g3 -DDEBUG
 else
