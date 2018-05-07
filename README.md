@@ -4,21 +4,17 @@
 
 This repository hosts the firmware of the [Ultimate Hacking Keyboard](https://ultimatehackingkeyboard.com/).
 
-## Updating to the latest firmware
+If you want to use the latest firmware version for your UHK, then instead of going through the pain of building the firmware, simply download the [latest release of Agent](https://github.com/UltimateHackingKeyboard/agent/releases/latest) and flash the bundled firmware with a click of a button.
 
-Want to update your UHK to the latest firmware version? Simply download the [latest release of Agent](https://github.com/UltimateHackingKeyboard/agent/releases/latest) which includes the latest firmware version. You'll be easily able to update the firmware within Agent.
+If you're one of the brave few who wants to hack the firmware, read on.
 
-## Cloning the repository
-
-Please make sure to clone this repo with:
+1. Make sure to clone this repo with:
 
 `git clone --recursive git@github.com:UltimateHackingKeyboard/firmware.git`
 
-This will download the dependent submodules, which are required to build the firmware.
+2. Download and install MCUXpresso IDE for [Linux](https://storage.googleapis.com/ugl-static/mcuxpresso-ide/mcuxpressoide-10.1.1_606.x86_64.deb.bin), [Mac](https://storage.googleapis.com/ugl-static/mcuxpresso-ide/MCUXpressoIDE_10.1.1_606.pkg), or [Windows](https://storage.googleapis.com/ugl-static/mcuxpresso-ide/MCUXpressoIDE_10.1.1_606.exe).
 
-## Importing the firmware
-
-Install [Kinetis Design Studio](http://www.nxp.com/products/software-and-tools/run-time-software/kinetis-software-and-tools/ides-for-kinetis-mcus/kinetis-design-studio-integrated-development-environment-ide:KDS_IDE) (KDS), import the project by invoking *File -> Import -> General -> Existing Projects into Workspace*, select the *left* or *right* directory depending on the desired firmware, then click on the *Finish* button.
+3. In the IDE, import the project by invoking *File -> Import -> General -> Existing Projects into Workspace*, select the *left* or *right* directory depending on the desired firmware, then click on the *Finish* button.
 
 ## Building and flashing the firmware
 
