@@ -34,6 +34,9 @@ FLASH_CMD = node ../lib/agent/packages/usb/update-module-firmware.js leftHalf $(
 # Path to the JLink script used for the left half.
 JLINK_SCRIPT = ../scripts/flash-left.jlink
 
+# Enable the link-time optimizer.
+BUILD_FLAGS = -flto
+
 # Source files.
 SOURCE = $(wildcard src/*.c) \
          ../lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/system_MKL03Z4.c \
