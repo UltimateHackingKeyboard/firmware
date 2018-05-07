@@ -24,14 +24,14 @@
     {
       "deviceId": 1,
       "name": "uhk60-right",
-      "source": "right/build/uhk60-right_release/uhk-right.hex"
+      "source": "right/build_make/uhk_right.hex"
     }
   ],
   "modules": [
     {
       "moduleId": 1,
       "name": "uhk60-left",
-      "source": "left/build/uhk60-left_release/uhk-left.bin"
+      "source": "left/build_make/uhk_left.bin"
     }
   ]
 }
