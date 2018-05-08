@@ -20,8 +20,8 @@ const deviceSourceFirmwares = package.devices.map(device => `${__dirname}/../${d
 const moduleSourceFirmwares = package.modules.map(module => `${__dirname}/../${module.source}`);
 rm('-rf', releaseDir, releaseFile, deviceSourceFirmwares, moduleSourceFirmwares);
 
-exec(`cd ${__dirname}/../left; make -j8 -B`);
-exec(`cd ${__dirname}/../right; make -j8 -B`);
+exec(`cd ${__dirname}/../left; make clean; make -j8 -B`);
+exec(`cd ${__dirname}/../right; make clean; make -j8 -B`);
 
 for (const device of package.devices) {
     const deviceDir = `${releaseDir}/devices/${device.name}`;
