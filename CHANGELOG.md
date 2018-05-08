@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [8.2.2] - 2018-05-09
+
+Device Protocol: 4.3.0 | Module Protocol: 4.0.0 | User Config: 4.0.**1** | Hardware Config: 1.0.0
+
+- Parse long media macro actions. `USERCONFIG:PATCH`
+- Fix vendor-specific USB usage page entry. This makes the HIDAPI Linux/hidraw driver able to access interface 0.
+
 ## [8.2.1] - 2018-05-02
 
 Device Protocol: 4.3.0 | Module Protocol: 4.0.0 | User Config: 4.0.0 | Hardware Config: 1.0.0
