@@ -75,7 +75,7 @@ static parser_error_t parsePlayMacroAction(key_action_t *keyAction, config_buffe
     if (macroIndex >= tempMacroCount) {
         return ParserError_InvalidSerializedPlayMacroAction;
     }
-    keyAction->type = KeyActionType_SwitchKeymap;
+    keyAction->type = KeyActionType_PlayMacro;
     keyAction->playMacro.macroId = macroIndex;
     return ParserError_Success;
 }
@@ -196,4 +196,3 @@ parser_error_t ParseKeymap(config_buffer_t *buffer, uint8_t keymapIdx, uint8_t k
     }
     return ParserError_Success;
 }
-

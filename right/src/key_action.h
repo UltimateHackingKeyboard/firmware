@@ -19,7 +19,6 @@
         KeyActionType_SwitchLayer,
         KeyActionType_SwitchKeymap,
         KeyActionType_PlayMacro,
-        KeyActionType_Test,
     } key_action_type_t;
 
     typedef enum {
