@@ -51,7 +51,6 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
     const char *deviceName = ReadString(buffer, &len);
     uint16_t doubleTapSwitchLayerTimeout = ReadUInt16(buffer);
 
-    (void)userConfigLength;
     (void)dataModelMajorVersion;
     (void)dataModelMinorVersion;
     (void)dataModelPatchVersion;
@@ -140,6 +139,8 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
 //        DoubleTapSwitchLayerTimeout = doubleTapSwitchLayerTimeout;
 
         // Update LED brightnesses and reinitialize LED drivers
+
+        ValidatedUserConfigLength = userConfigLength;
 
         IconsAndLayerTextsBrightness = iconsAndLayerTextsBrightness;
         AlphanumericSegmentsBrightness = alphanumericSegmentsBrightness;

@@ -17,6 +17,7 @@
 // Variables:
 
     extern bool ParserRunDry;
+    extern uint16_t ValidatedUserConfigLength;
     extern config_buffer_t HardwareConfigBuffer;
     extern config_buffer_t StagingUserConfigBuffer;
     extern config_buffer_t ValidatedUserConfigBuffer;

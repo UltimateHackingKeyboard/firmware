@@ -94,14 +94,14 @@ void EEPROM_Init(void)
     I2C_MasterTransferCreateHandle(I2C_EEPROM_BUS_BASEADDR, &i2cHandle, i2cCallback, NULL);
 }
 
-status_t EEPROM_LaunchTransfer(eeprom_operation_t operation, config_buffer_id_t config_buffer_id, void (*successCallback))
+status_t EEPROM_LaunchTransfer(eeprom_operation_t operation, config_buffer_id_t configBufferId, void (*successCallback))
 {
     if (IsEepromBusy) {
         return kStatus_I2C_Busy;
     }
 
     CurrentEepromOperation = operation;
-    CurrentConfigBufferId = config_buffer_id;
+    CurrentConfigBufferId = configBufferId;
     SuccessCallback = successCallback;
 
     bool isHardwareConfig = CurrentConfigBufferId == ConfigBufferId_HardwareConfig;
@@ -117,7 +117,8 @@ status_t EEPROM_LaunchTransfer(eeprom_operation_t operation, config_buffer_id_t 
         case EepromOperation_Write:
             sourceBuffer = ConfigBufferIdToConfigBuffer(CurrentConfigBufferId)->buffer;
             sourceOffset = 0;
-            sourceLength = isHardwareConfig ? HARDWARE_CONFIG_SIZE : USER_CONFIG_SIZE;
+            uint16_t userConfigSize = ValidatedUserConfigLength && configBufferId == ConfigBufferId_ValidatedUserConfig ? ValidatedUserConfigLength : USER_CONFIG_SIZE;
+            sourceLength = isHardwareConfig ? HARDWARE_CONFIG_SIZE : userConfigSize;
             LastEepromTransferStatus = writePage();
             break;
     }

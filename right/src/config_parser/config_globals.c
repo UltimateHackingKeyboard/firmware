@@ -6,6 +6,7 @@ static uint8_t hardwareConfig[HARDWARE_CONFIG_SIZE];
 static uint8_t ATTR_DATA2 stagingUserConfig[USER_CONFIG_SIZE];
 static uint8_t validatedUserConfig[USER_CONFIG_SIZE];
 
+uint16_t ValidatedUserConfigLength;
 config_buffer_t HardwareConfigBuffer = { hardwareConfig };
 config_buffer_t StagingUserConfigBuffer = { stagingUserConfig };
 config_buffer_t ValidatedUserConfigBuffer = { validatedUserConfig };
