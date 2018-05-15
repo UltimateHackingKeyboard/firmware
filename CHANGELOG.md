@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [8.2.3] - 2018-05-15
+
+Device Protocol: 4.3.0 | Module Protocol: 4.0.0 | User Config: 4.0.1 | Hardware Config: 1.0.0
+
+- Don't switch keymaps instead of playing macros.
+- Make saving the user configuration faster by only writing the part of the EEPROM which actually contains the user configuration.
+
 ## [8.2.2] - 2018-05-09
 
 Device Protocol: 4.3.0 | Module Protocol: 4.0.0 | User Config: 4.0.**1** | Hardware Config: 1.0.0
