@@ -6,6 +6,10 @@
     #include "fsl_common.h"
     #include "basic_types.h"
 
+// Macros:
+
+    #define HARDWARE_CONFIG_SIGNATURE_LENGTH 3
+
 // Typedefs:
 
     typedef enum {
@@ -14,6 +18,19 @@
         ConfigBufferId_ValidatedUserConfig,
     } config_buffer_id_t;
 
+    typedef struct {
+        uint8_t signatureLength;
+        char signature[HARDWARE_CONFIG_SIGNATURE_LENGTH];
+        uint8_t majorVersion;
+        uint8_t minorVersion;
+        uint8_t patchVersion;
+        uint8_t brandId;
+        uint8_t deviceId;
+        uint32_t uniqueId;
+        bool isVendorModeOn;
+        bool isIso;
+    } hardware_config_t;
+
 // Variables:
 
     extern bool ParserRunDry;
@@ -21,8 +38,9 @@
     extern config_buffer_t HardwareConfigBuffer;
     extern config_buffer_t StagingUserConfigBuffer;
     extern config_buffer_t ValidatedUserConfigBuffer;
+    extern hardware_config_t *HardwareConfig;
 
-    // Functions:
+// Functions:
 
     bool IsConfigBufferIdValid(config_buffer_id_t configBufferId);
     config_buffer_t* ConfigBufferIdToConfigBuffer(config_buffer_id_t configBufferId);

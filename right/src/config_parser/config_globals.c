@@ -11,6 +11,8 @@ config_buffer_t HardwareConfigBuffer = { hardwareConfig };
 config_buffer_t StagingUserConfigBuffer = { stagingUserConfig };
 config_buffer_t ValidatedUserConfigBuffer = { validatedUserConfig };
 
+hardware_config_t *HardwareConfig = (hardware_config_t*)hardwareConfig;
+
 bool ParserRunDry;
 
 bool IsConfigBufferIdValid(config_buffer_id_t configBufferId)

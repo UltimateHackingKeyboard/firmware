@@ -9,6 +9,7 @@
 #include "key_scanner.h"
 #include "usb_commands/usb_command_apply_config.h"
 #include "peripherals/reset_button.h"
+#include "config_parser/config_globals.h"
 #include "usb_report_updater.h"
 
 static bool IsEepromInitialized = false;
@@ -29,7 +30,10 @@ int main(void)
     InitClock();
     InitPeripherals();
 
-    if (!RESET_BUTTON_IS_PRESSED) {
+    if (RESET_BUTTON_IS_PRESSED) {
+        HardwareConfig->signatureLength = HARDWARE_CONFIG_SIGNATURE_LENGTH;
+        strncpy(HardwareConfig->signature, "FTY", HARDWARE_CONFIG_SIGNATURE_LENGTH);
+    } else {
         EEPROM_LaunchTransfer(EepromOperation_Read, ConfigBufferId_HardwareConfig, hardwareConfigurationReadFinished);
     }
 
