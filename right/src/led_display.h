@@ -7,6 +7,10 @@
     #include <stdbool.h>
     #include "layer.h"
 
+// Macros:
+
+    #define LED_DISPLAY_DEBUG_MODE 0
+
 // Typedefs:
 
     typedef enum {
@@ -20,6 +24,7 @@
 
     extern uint8_t IconsAndLayerTextsBrightness;
     extern uint8_t AlphanumericSegmentsBrightness;
+    extern char LedDisplay_DebugString[];
 
 // Functions:
 
