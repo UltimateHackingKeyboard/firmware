@@ -1,6 +1,7 @@
 #include "usb_commands/usb_command_apply_config.h"
 #include "config_parser/config_globals.h"
 #include "config_parser/parse_config.h"
+#include "peripherals/reset_button.h"
 #include "usb_protocol_handler.h"
 #include "keymap.h"
 
@@ -34,6 +35,10 @@ void UsbCommand_ApplyConfig(void)
     uint8_t *temp = ValidatedUserConfigBuffer.buffer;
     ValidatedUserConfigBuffer.buffer = StagingUserConfigBuffer.buffer;
     StagingUserConfigBuffer.buffer = temp;
+
+    if (IsFactoryResetModeEnabled) {
+        return;
+    }
 
     ParserRunDry = false;
     ValidatedUserConfigBuffer.offset = 0;
