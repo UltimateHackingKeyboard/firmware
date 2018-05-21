@@ -15,10 +15,10 @@
     "commander": "^2.11.0",
     "shelljs": "^0.7.8"
   },
-  "firmwareVersion": "8.2.3",
-  "deviceProtocolVersion": "4.3.0",
+  "firmwareVersion": "8.2.4",
+  "deviceProtocolVersion": "4.3.1",
   "moduleProtocolVersion": "4.0.0",
-  "userConfigVersion": "4.0.0",
+  "userConfigVersion": "4.0.1",
   "hardwareConfigVersion": "1.0.0",
   "devices": [
     {

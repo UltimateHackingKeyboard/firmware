@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [8.2.4] - 2018-05-21
+
+Device Protocol: 4.3.**1** | Module Protocol: 4.0.0 | User Config: 4.0.1 | Hardware Config: 1.0.0
+
+- Fix the bug that made the hardware and user configuration not load from the EEPROM on some hosts right after firmware update.
+- Set the signature of the hardware config to "FTY" in the RAM when the keyboard is in factory reset mode, allowing Agent to be aware of the factory reset state. `DEVICEPROTOCOL:PATCH`
+- Load the hardware and user configuration from the EEPROM even in factory reset mode.
+- Set key debounce timeout from 60ms to 80ms. This should further reduce key chattering.
+
 ## [8.2.3] - 2018-05-15
 
 Device Protocol: 4.3.0 | Module Protocol: 4.0.0 | User Config: 4.0.1 | Hardware Config: 1.0.0
