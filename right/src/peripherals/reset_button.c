@@ -2,6 +2,8 @@
 #include "fsl_port.h"
 #include "bootloader/wormhole.h"
 
+bool IsFactoryResetModeEnabled = false;
+
 void RESET_BUTTON_IRQ_HANDLER(void)
 {
     Wormhole.magicNumber = WORMHOLE_MAGIC_NUMBER;

@@ -16,6 +16,10 @@
 
     #define RESET_BUTTON_IS_PRESSED !GPIO_ReadPinInput(RESET_BUTTON_GPIO, RESET_BUTTON_PIN)
 
+// Variables:
+
+    extern bool IsFactoryResetModeEnabled;
+
 // Functions:
 
     void InitResetButton(void);

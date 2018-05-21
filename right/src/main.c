@@ -30,7 +30,8 @@ int main(void)
     InitClock();
     InitPeripherals();
 
-    if (RESET_BUTTON_IS_PRESSED) {
+    IsFactoryResetModeEnabled = RESET_BUTTON_IS_PRESSED;
+    if (IsFactoryResetModeEnabled) {
         HardwareConfig->signatureLength = HARDWARE_CONFIG_SIGNATURE_LENGTH;
         strncpy(HardwareConfig->signature, "FTY", HARDWARE_CONFIG_SIGNATURE_LENGTH);
     } else {
