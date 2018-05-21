@@ -22,6 +22,10 @@ static void userConfigurationReadFinished(void)
 
 static void hardwareConfigurationReadFinished(void)
 {
+    if (IsFactoryResetModeEnabled) {
+        HardwareConfig->signatureLength = HARDWARE_CONFIG_SIGNATURE_LENGTH;
+        strncpy(HardwareConfig->signature, "FTY", HARDWARE_CONFIG_SIGNATURE_LENGTH);
+    }
     EEPROM_LaunchTransfer(EepromOperation_Read, ConfigBufferId_StagingUserConfig, userConfigurationReadFinished);
 }
 
@@ -31,10 +35,6 @@ int main(void)
     InitPeripherals();
 
     IsFactoryResetModeEnabled = RESET_BUTTON_IS_PRESSED;
-    if (IsFactoryResetModeEnabled) {
-        HardwareConfig->signatureLength = HARDWARE_CONFIG_SIGNATURE_LENGTH;
-        strncpy(HardwareConfig->signature, "FTY", HARDWARE_CONFIG_SIGNATURE_LENGTH);
-    }
 
     EEPROM_LaunchTransfer(EepromOperation_Read, ConfigBufferId_HardwareConfig, hardwareConfigurationReadFinished);
 
