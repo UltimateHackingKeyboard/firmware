@@ -33,10 +33,10 @@ static void initInterruptPriorities(void)
 {
     NVIC_SetPriority(PIT_I2C_WATCHDOG_IRQ_ID,  1);
     NVIC_SetPriority(PIT_TIMER_IRQ_ID,         2);
+    NVIC_SetPriority(I2C_EEPROM_BUS_IRQ_ID,    2);
     NVIC_SetPriority(PIT_KEY_SCANNER_IRQ_ID,   3);
     NVIC_SetPriority(PIT_KEY_DEBOUNCER_IRQ_ID, 3);
     NVIC_SetPriority(I2C_MAIN_BUS_IRQ_ID,      3);
-    NVIC_SetPriority(I2C_EEPROM_BUS_IRQ_ID,    3);
     NVIC_SetPriority(USB_IRQ_ID,               3);
 }
 
