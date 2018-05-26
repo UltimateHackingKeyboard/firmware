@@ -35,10 +35,12 @@
     #define I2C_EEPROM_BUS_BAUD_RATE 1000000  // 1 Mhz is the maximum speed of the EEPROM.
     #define I2C_EEPROM_BUS_MUX       kPORT_MuxAlt2
 
+    #define I2C_EEPROM_BUS_SDA_GPIO  GPIOC
     #define I2C_EEPROM_BUS_SDA_PORT  PORTC
     #define I2C_EEPROM_BUS_SDA_CLOCK kCLOCK_PortC
     #define I2C_EEPROM_BUS_SDA_PIN   11
 
+    #define I2C_EEPROM_BUS_SCL_GPIO  GPIOC
     #define I2C_EEPROM_BUS_SCL_PORT  PORTC
     #define I2C_EEPROM_BUS_SCL_CLOCK kCLOCK_PortC
     #define I2C_EEPROM_BUS_SCL_PIN   10

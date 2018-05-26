@@ -32,12 +32,12 @@ static void initBusPalState(void) {
 static void initInterruptPriorities(void)
 {
     NVIC_SetPriority(PIT_I2C_WATCHDOG_IRQ_ID,  1);
-    NVIC_SetPriority(PIT_TIMER_IRQ_ID,         2);
-    NVIC_SetPriority(I2C_EEPROM_BUS_IRQ_ID,    2);
-    NVIC_SetPriority(PIT_KEY_SCANNER_IRQ_ID,   3);
-    NVIC_SetPriority(PIT_KEY_DEBOUNCER_IRQ_ID, 3);
-    NVIC_SetPriority(I2C_MAIN_BUS_IRQ_ID,      3);
-    NVIC_SetPriority(USB_IRQ_ID,               3);
+    NVIC_SetPriority(I2C_EEPROM_BUS_IRQ_ID,    0);
+    NVIC_SetPriority(PIT_TIMER_IRQ_ID,         3);
+    NVIC_SetPriority(PIT_KEY_SCANNER_IRQ_ID,   4);
+    NVIC_SetPriority(PIT_KEY_DEBOUNCER_IRQ_ID, 4);
+    NVIC_SetPriority(I2C_MAIN_BUS_IRQ_ID,      4);
+    NVIC_SetPriority(USB_IRQ_ID,               4);
 }
 
 static void delay(void)
@@ -71,6 +71,35 @@ static void recoverI2c(void)
     GPIO_WritePinOutput(I2C_MAIN_BUS_SCL_GPIO, I2C_MAIN_BUS_SCL_PIN, 1);
     delay();
     GPIO_WritePinOutput(I2C_MAIN_BUS_SDA_GPIO, I2C_MAIN_BUS_SDA_PIN, 1);
+    delay();
+}
+
+static void recoverI2cEeprom(void)
+{
+    PORT_SetPinMux(I2C_EEPROM_BUS_SDA_PORT, I2C_EEPROM_BUS_SDA_PIN, kPORT_MuxAsGpio);
+    PORT_SetPinMux(I2C_EEPROM_BUS_SCL_PORT, I2C_EEPROM_BUS_SCL_PIN, kPORT_MuxAsGpio);
+    GPIO_PinInit(I2C_EEPROM_BUS_SCL_GPIO, I2C_EEPROM_BUS_SCL_PIN, &(gpio_pin_config_t){kGPIO_DigitalOutput, 1});
+
+    bool isOn = true;
+    for (int i=0; i<20; i++) {
+        GPIO_PinInit(I2C_EEPROM_BUS_SDA_GPIO, I2C_EEPROM_BUS_SDA_PIN, &(gpio_pin_config_t){kGPIO_DigitalInput});
+        bool isSdaHigh = GPIO_ReadPinInput(I2C_EEPROM_BUS_SDA_GPIO, I2C_EEPROM_BUS_SDA_PIN);
+        GPIO_PinInit(I2C_EEPROM_BUS_SDA_GPIO, I2C_EEPROM_BUS_SDA_PIN, &(gpio_pin_config_t){kGPIO_DigitalOutput, 1});
+
+        if (isSdaHigh) {
+            return;
+        }
+
+        GPIO_WritePinOutput(I2C_EEPROM_BUS_SCL_GPIO, I2C_EEPROM_BUS_SCL_PIN, isOn);
+        delay();
+        isOn = !isOn;
+    }
+
+    GPIO_WritePinOutput(I2C_EEPROM_BUS_SDA_GPIO, I2C_EEPROM_BUS_SDA_PIN, 0);
+    delay();
+    GPIO_WritePinOutput(I2C_EEPROM_BUS_SCL_GPIO, I2C_EEPROM_BUS_SCL_PIN, 1);
+    delay();
+    GPIO_WritePinOutput(I2C_EEPROM_BUS_SDA_GPIO, I2C_EEPROM_BUS_SDA_PIN, 1);
     delay();
 }
 
@@ -115,6 +144,8 @@ static void initI2cEepromBus(void)
 
    CLOCK_EnableClock(I2C_EEPROM_BUS_SDA_CLOCK);
    CLOCK_EnableClock(I2C_EEPROM_BUS_SCL_CLOCK);
+
+   recoverI2cEeprom();
 
    PORT_SetPinConfig(I2C_EEPROM_BUS_SDA_PORT, I2C_EEPROM_BUS_SDA_PIN, &pinConfig);
    PORT_SetPinConfig(I2C_EEPROM_BUS_SCL_PORT, I2C_EEPROM_BUS_SCL_PIN, &pinConfig);
