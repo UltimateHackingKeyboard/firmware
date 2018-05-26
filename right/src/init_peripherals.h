@@ -5,6 +5,18 @@
 
     #include "fsl_common.h"
 
+// Typedefs
+
+typedef struct {
+    GPIO_Type *sdaGpio;
+    PORT_Type *sdaPort;
+    uint32_t sdaPin;
+
+    GPIO_Type *sclGpio;
+    PORT_Type *sclPort;
+    uint32_t sclPin;
+} i2c_bus_t;
+
 // Variables:
 
     extern bool IsBusPalOn;
