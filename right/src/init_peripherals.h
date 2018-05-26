@@ -1,21 +1,27 @@
 #ifndef __INIT_PERIPHERALS_H__
 #define __INIT_PERIPHERALS_H__
 
-// Includes
+// Includes:
 
     #include "fsl_common.h"
 
-// Typedefs
+// Typedefs:
 
-typedef struct {
-    GPIO_Type *sdaGpio;
-    PORT_Type *sdaPort;
-    uint32_t sdaPin;
+    typedef struct {
+        clock_name_t clockSrc;
+        I2C_Type *baseAddr;
+        uint16_t mux;
 
-    GPIO_Type *sclGpio;
-    PORT_Type *sclPort;
-    uint32_t sclPin;
-} i2c_bus_t;
+        clock_ip_name_t sdaClock;
+        GPIO_Type *sdaGpio;
+        PORT_Type *sdaPort;
+        uint32_t sdaPin;
+
+        clock_ip_name_t sclClock;
+        GPIO_Type *sclGpio;
+        PORT_Type *sclPort;
+        uint32_t sclPin;
+    } i2c_bus_t;
 
 // Variables:
 

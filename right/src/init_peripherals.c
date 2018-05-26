@@ -22,20 +22,32 @@ volatile uint32_t I2cMainBusRequestedBaudRateBps = I2C_MAIN_BUS_NORMAL_BAUD_RATE
 volatile uint32_t I2cMainBusActualBaudRateBps;
 
 static i2c_bus_t i2cMainBus = {
+    .baseAddr = I2C_MAIN_BUS_BASEADDR,
+    .clockSrc = I2C_MAIN_BUS_CLK_SRC,
+    .mux = I2C_MAIN_BUS_MUX,
+
+    .sdaClock = I2C_MAIN_BUS_SDA_CLOCK,
     .sdaGpio = I2C_MAIN_BUS_SDA_GPIO,
     .sdaPort = I2C_MAIN_BUS_SDA_PORT,
     .sdaPin = I2C_MAIN_BUS_SDA_PIN,
 
+    .sclClock = I2C_MAIN_BUS_SCL_CLOCK,
     .sclGpio = I2C_MAIN_BUS_SCL_GPIO,
     .sclPort = I2C_MAIN_BUS_SCL_PORT,
     .sclPin = I2C_MAIN_BUS_SCL_PIN,
 };
 
 static i2c_bus_t i2cEepromBus = {
+    .baseAddr = I2C_EEPROM_BUS_BASEADDR,
+    .clockSrc = I2C_EEPROM_BUS_CLK_SRC,
+    .mux = I2C_EEPROM_BUS_MUX,
+
+    .sdaClock = I2C_EEPROM_BUS_SDA_CLOCK,
     .sdaGpio = I2C_EEPROM_BUS_SDA_GPIO,
     .sdaPort = I2C_EEPROM_BUS_SDA_PORT,
     .sdaPin = I2C_EEPROM_BUS_SDA_PIN,
 
+    .sclClock = I2C_EEPROM_BUS_SCL_CLOCK,
     .sclGpio = I2C_EEPROM_BUS_SCL_GPIO,
     .sclPort = I2C_EEPROM_BUS_SCL_PORT,
     .sclPin = I2C_EEPROM_BUS_SCL_PIN,
@@ -94,64 +106,44 @@ static void recoverI2cBus(i2c_bus_t *i2cBus)
     delay();
 }
 
-static void initI2cMainBus(void)
+static void initI2cBus(i2c_bus_t *i2cBus)
 {
-    CLOCK_EnableClock(I2C_MAIN_BUS_SDA_CLOCK);
-    CLOCK_EnableClock(I2C_MAIN_BUS_SCL_CLOCK);
+    CLOCK_EnableClock(i2cBus->sdaClock);
+    CLOCK_EnableClock(i2cBus->sclClock);
 
-    recoverI2cBus(&i2cMainBus);
+    recoverI2cBus(i2cBus);
 
     port_pin_config_t pinConfig = {
         .pullSelect = kPORT_PullUp,
         .openDrainEnable = kPORT_OpenDrainEnable,
-        .mux = I2C_MAIN_BUS_MUX,
+        .mux = i2cBus->mux,
     };
 
-    PORT_SetPinConfig(I2C_MAIN_BUS_SDA_PORT, I2C_MAIN_BUS_SDA_PIN, &pinConfig);
-    PORT_SetPinConfig(I2C_MAIN_BUS_SCL_PORT, I2C_MAIN_BUS_SCL_PIN, &pinConfig);
+    PORT_SetPinConfig(i2cBus->sdaPort, i2cBus->sdaPin, &pinConfig);
+    PORT_SetPinConfig(i2cBus->sclPort, i2cBus->sclPin, &pinConfig);
 
     i2c_master_config_t masterConfig;
     I2C_MasterGetDefaultConfig(&masterConfig);
-    masterConfig.baudRate_Bps = I2cMainBusRequestedBaudRateBps;
-    uint32_t sourceClock = CLOCK_GetFreq(I2C_MAIN_BUS_CLK_SRC);
-    I2C_MasterInit(I2C_MAIN_BUS_BASEADDR, &masterConfig, sourceClock);
-    I2cMainBusActualBaudRateBps = I2C_ActualBaudRate;
+    masterConfig.baudRate_Bps = i2cBus == &i2cMainBus ? I2cMainBusRequestedBaudRateBps : I2C_EEPROM_BUS_BAUD_RATE;
+    uint32_t sourceClock = CLOCK_GetFreq(i2cBus->clockSrc);
+    I2C_MasterInit(i2cBus->baseAddr, &masterConfig, sourceClock);
+
+    if (i2cBus == &i2cMainBus) {
+        I2cMainBusActualBaudRateBps = I2C_ActualBaudRate;
+    }
 }
 
 void ReinitI2cMainBus(void)
 {
     I2C_MasterDeinit(I2C_MAIN_BUS_BASEADDR);
-    initI2cMainBus();
+    initI2cBus(&i2cMainBus);
     InitSlaveScheduler();
-}
-
-static void initI2cEepromBus(void)
-{
-    port_pin_config_t pinConfig = {
-       .pullSelect = kPORT_PullUp,
-       .openDrainEnable = kPORT_OpenDrainEnable,
-       .mux = I2C_EEPROM_BUS_MUX,
-   };
-
-   CLOCK_EnableClock(I2C_EEPROM_BUS_SDA_CLOCK);
-   CLOCK_EnableClock(I2C_EEPROM_BUS_SCL_CLOCK);
-
-   recoverI2cBus(&i2cEepromBus);
-
-   PORT_SetPinConfig(I2C_EEPROM_BUS_SDA_PORT, I2C_EEPROM_BUS_SDA_PIN, &pinConfig);
-   PORT_SetPinConfig(I2C_EEPROM_BUS_SCL_PORT, I2C_EEPROM_BUS_SCL_PIN, &pinConfig);
-
-   i2c_master_config_t masterConfig;
-   I2C_MasterGetDefaultConfig(&masterConfig);
-   masterConfig.baudRate_Bps = I2C_EEPROM_BUS_BAUD_RATE;
-   uint32_t sourceClock = CLOCK_GetFreq(I2C_EEPROM_BUS_CLK_SRC);
-   I2C_MasterInit(I2C_EEPROM_BUS_BASEADDR, &masterConfig, sourceClock);
 }
 
 static void initI2c(void)
 {
-    initI2cMainBus();
-    initI2cEepromBus();
+    initI2cBus(&i2cMainBus);
+    initI2cBus(&i2cEepromBus);
 }
 
 void InitPeripherals(void)
