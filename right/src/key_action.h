@@ -28,9 +28,9 @@
     } keystroke_type_t;
 
     typedef enum {
-        SwitchLayerMode_Hold,
         SwitchLayerMode_HoldAndDoubleTapToggle,
         SwitchLayerMode_Toggle,
+        SwitchLayerMode_Hold,
     } switch_layer_mode_t;
 
     typedef enum {
