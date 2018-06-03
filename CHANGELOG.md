@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [8.3.0] - 2018-06-03
+
+Device Protocol: 4.3.1 | Module Protocol: 4.0.0 | User Config: 4.**1.0** | Hardware Config: 1.0.0
+
+- Make the config parser handle switch layer actions with hold on double tap disabled. `USERCONFIG:MINOR`
+- Set key debounce timeout from 80ms to 100ms. This should further reduce key chattering.
+
 ## [8.2.5] - 2018-05-27
 
 Device Protocol: 4.3.1 | Module Protocol: 4.0.0 | User Config: 4.0.1 | Hardware Config: 1.0.0
