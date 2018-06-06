@@ -29,7 +29,6 @@
 
 // Variables:
 
-    extern volatile bool IsUsbSystemKeyboardReportSent;
     extern uint32_t UsbSystemKeyboardActionCounter;
     extern usb_system_keyboard_report_t* ActiveUsbSystemKeyboardReport;
 

@@ -3,7 +3,6 @@
 uint32_t UsbSystemKeyboardActionCounter;
 static usb_system_keyboard_report_t usbSystemKeyboardReports[2];
 usb_system_keyboard_report_t* ActiveUsbSystemKeyboardReport = usbSystemKeyboardReports;
-volatile bool IsUsbSystemKeyboardReportSent = false;
 
 static usb_system_keyboard_report_t* getInactiveUsbSystemKeyboardReport()
 {
@@ -22,15 +21,10 @@ void ResetActiveUsbSystemKeyboardReport(void)
 
 usb_status_t UsbSystemKeyboardAction(void)
 {
-    usb_status_t status = kStatus_USB_Error;
-    if (!IsUsbSystemKeyboardReportSent) {
-        status = USB_DeviceHidSend(
-                UsbCompositeDevice.systemKeyboardHandle, USB_SYSTEM_KEYBOARD_ENDPOINT_INDEX,
-                (uint8_t*)getInactiveUsbSystemKeyboardReport(), USB_SYSTEM_KEYBOARD_REPORT_LENGTH);
-        IsUsbSystemKeyboardReportSent = true;
-        UsbSystemKeyboardActionCounter++;
-    }
-    return status;
+    UsbSystemKeyboardActionCounter++;
+    return USB_DeviceHidSend(
+            UsbCompositeDevice.systemKeyboardHandle, USB_SYSTEM_KEYBOARD_ENDPOINT_INDEX,
+            (uint8_t*)getInactiveUsbSystemKeyboardReport(), USB_SYSTEM_KEYBOARD_REPORT_LENGTH);
 }
 
 usb_status_t UsbSystemKeyboardCallback(class_handle_t handle, uint32_t event, void *param)

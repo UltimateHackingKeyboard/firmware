@@ -4,7 +4,6 @@
 static usb_basic_keyboard_report_t usbBasicKeyboardReports[2];
 uint32_t UsbBasicKeyboardActionCounter;
 usb_basic_keyboard_report_t* ActiveUsbBasicKeyboardReport = usbBasicKeyboardReports;
-volatile bool IsUsbBasicKeyboardReportSent = false;
 static uint8_t usbBasicKeyboardInBuffer[USB_BASIC_KEYBOARD_REPORT_LENGTH];
 
 static usb_basic_keyboard_report_t* getInactiveUsbBasicKeyboardReport(void)
@@ -24,15 +23,10 @@ void ResetActiveUsbBasicKeyboardReport(void)
 
 usb_status_t UsbBasicKeyboardAction(void)
 {
-    usb_status_t status = kStatus_USB_Error;
-    if (!IsUsbBasicKeyboardReportSent) {
-        status = USB_DeviceHidSend(
-                UsbCompositeDevice.basicKeyboardHandle, USB_BASIC_KEYBOARD_ENDPOINT_INDEX,
-                (uint8_t*)getInactiveUsbBasicKeyboardReport(), USB_BASIC_KEYBOARD_REPORT_LENGTH);
-        IsUsbBasicKeyboardReportSent = true;
-        UsbBasicKeyboardActionCounter++;
-    }
-    return status;
+    UsbBasicKeyboardActionCounter++;
+    return USB_DeviceHidSend(
+            UsbCompositeDevice.basicKeyboardHandle, USB_BASIC_KEYBOARD_ENDPOINT_INDEX,
+            (uint8_t*)getInactiveUsbBasicKeyboardReport(), USB_BASIC_KEYBOARD_REPORT_LENGTH);
 }
 
 usb_status_t UsbBasicKeyboardCallback(class_handle_t handle, uint32_t event, void *param)

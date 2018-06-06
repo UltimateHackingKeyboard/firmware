@@ -3,7 +3,6 @@
 uint32_t UsbMouseActionCounter;
 static usb_mouse_report_t usbMouseReports[2];
 usb_mouse_report_t* ActiveUsbMouseReport = usbMouseReports;
-volatile bool IsUsbMouseReportSent = false;
 
 static usb_mouse_report_t* getInactiveUsbMouseReport(void)
 {
@@ -22,15 +21,10 @@ void ResetActiveUsbMouseReport(void)
 
 usb_status_t usbMouseAction(void)
 {
-    usb_status_t status = kStatus_USB_Error;
-    if (!IsUsbMouseReportSent) {
-        status = USB_DeviceHidSend(
-                UsbCompositeDevice.mouseHandle, USB_MOUSE_ENDPOINT_INDEX,
-                (uint8_t*)getInactiveUsbMouseReport(), USB_MOUSE_REPORT_LENGTH);
-        IsUsbMouseReportSent = true;
-        UsbMouseActionCounter++;
-    }
-    return status;
+    UsbMouseActionCounter++;
+    return USB_DeviceHidSend(
+            UsbCompositeDevice.mouseHandle, USB_MOUSE_ENDPOINT_INDEX,
+            (uint8_t*)getInactiveUsbMouseReport(), USB_MOUSE_REPORT_LENGTH);
 }
 
 usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param)
