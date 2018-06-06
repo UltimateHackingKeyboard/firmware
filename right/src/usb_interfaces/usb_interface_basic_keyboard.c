@@ -22,13 +22,16 @@ void ResetActiveUsbBasicKeyboardReport(void)
     bzero(ActiveUsbBasicKeyboardReport, USB_BASIC_KEYBOARD_REPORT_LENGTH);
 }
 
-static usb_status_t UsbBasicKeyboardAction(void)
+usb_status_t UsbBasicKeyboardAction(void)
 {
-    usb_status_t status = USB_DeviceHidSend(
-        UsbCompositeDevice.basicKeyboardHandle, USB_BASIC_KEYBOARD_ENDPOINT_INDEX,
-        (uint8_t*)getInactiveUsbBasicKeyboardReport(), USB_BASIC_KEYBOARD_REPORT_LENGTH);
-    IsUsbBasicKeyboardReportSent = true;
-    UsbBasicKeyboardActionCounter++;
+    usb_status_t status = kStatus_USB_Error;
+    if (!IsUsbBasicKeyboardReportSent) {
+        status = USB_DeviceHidSend(
+                UsbCompositeDevice.basicKeyboardHandle, USB_BASIC_KEYBOARD_ENDPOINT_INDEX,
+                (uint8_t*)getInactiveUsbBasicKeyboardReport(), USB_BASIC_KEYBOARD_REPORT_LENGTH);
+        IsUsbBasicKeyboardReportSent = true;
+        UsbBasicKeyboardActionCounter++;
+    }
     return status;
 }
 
@@ -38,10 +41,6 @@ usb_status_t UsbBasicKeyboardCallback(class_handle_t handle, uint32_t event, voi
 
     switch (event) {
         case kUSB_DeviceHidEventSendResponse:
-            if (UsbCompositeDevice.attach) {
-                return UsbBasicKeyboardAction();
-            }
-            break;
         case kUSB_DeviceHidEventGetReport:
             error = kStatus_USB_InvalidRequest;
             break;
@@ -80,7 +79,7 @@ usb_status_t UsbBasicKeyboardCallback(class_handle_t handle, uint32_t event, voi
 usb_status_t UsbBasicKeyboardSetConfiguration(class_handle_t handle, uint8_t configuration)
 {
     if (USB_COMPOSITE_CONFIGURATION_INDEX == configuration) {
-        return UsbBasicKeyboardAction();
+        //return UsbBasicKeyboardAction();
     }
     return kStatus_USB_Error;
 }
@@ -88,7 +87,7 @@ usb_status_t UsbBasicKeyboardSetConfiguration(class_handle_t handle, uint8_t con
 usb_status_t UsbBasicKeyboardSetInterface(class_handle_t handle, uint8_t interface, uint8_t alternateSetting)
 {
     if (USB_BASIC_KEYBOARD_INTERFACE_INDEX == interface) {
-        return UsbBasicKeyboardAction();
+        //return UsbBasicKeyboardAction();
     }
     return kStatus_USB_Error;
 }

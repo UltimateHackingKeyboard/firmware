@@ -43,5 +43,6 @@
 
     void ResetActiveUsbMouseReport(void);
     void SwitchActiveUsbMouseReport(void);
+    usb_status_t usbMouseAction(void);
 
 #endif

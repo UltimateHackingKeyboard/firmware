@@ -41,5 +41,6 @@
 
     void ResetActiveUsbSystemKeyboardReport(void);
     void SwitchActiveUsbSystemKeyboardReport(void);
+    usb_status_t UsbSystemKeyboardAction(void);
 
 #endif

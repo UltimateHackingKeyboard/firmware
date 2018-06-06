@@ -40,5 +40,6 @@
 
     void ResetActiveUsbMediaKeyboardReport(void);
     void SwitchActiveUsbMediaKeyboardReport(void);
+    usb_status_t UsbMediaKeyboardAction();
 
 #endif

@@ -405,6 +405,7 @@ void UpdateUsbReports(void)
         last_basic_report = *ActiveUsbBasicKeyboardReport;
         SwitchActiveUsbBasicKeyboardReport();
         IsUsbBasicKeyboardReportSent = false;
+        UsbBasicKeyboardAction();
     }
 
     static usb_media_keyboard_report_t last_media_report = { .scancodes[0] = 0xFF };
@@ -412,6 +413,7 @@ void UpdateUsbReports(void)
         last_media_report = *ActiveUsbMediaKeyboardReport;
         SwitchActiveUsbMediaKeyboardReport();
         IsUsbMediaKeyboardReportSent = false;
+        UsbMediaKeyboardAction();
     }
 
     static usb_system_keyboard_report_t last_system_report = { .scancodes[0] = 0xFF };
@@ -419,6 +421,7 @@ void UpdateUsbReports(void)
         last_system_report = *ActiveUsbSystemKeyboardReport;
         SwitchActiveUsbSystemKeyboardReport();
         IsUsbSystemKeyboardReportSent = false;
+        UsbSystemKeyboardAction();
     }
 
     static usb_mouse_report_t last_mouse_report = { .buttons = 0xFF };
@@ -426,6 +429,7 @@ void UpdateUsbReports(void)
         last_mouse_report = *ActiveUsbMouseReport;
         SwitchActiveUsbMouseReport();
         IsUsbMouseReportSent = false;
+        usbMouseAction();
     }
 
     if ((previousLayer != LayerId_Base || !IsUsbBasicKeyboardReportSent || !IsUsbMediaKeyboardReportSent || !IsUsbSystemKeyboardReportSent || !IsUsbMouseReportSent) && IsHostSleeping) {
