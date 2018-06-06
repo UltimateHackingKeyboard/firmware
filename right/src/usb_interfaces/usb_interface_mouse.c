@@ -33,6 +33,13 @@ usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param
 
     switch (event) {
         case kUSB_DeviceHidEventSendResponse:
+            if (UsbCompositeDevice.attach) {
+                // Send out the mouse report continuously if the report is not zeros
+                usb_mouse_report_t *mouseReport = getInactiveUsbMouseReport();
+                uint8_t zeroBuf[sizeof(usb_mouse_report_t)] = { 0 };
+                if (memcmp(mouseReport, zeroBuf, sizeof(usb_mouse_report_t)) != 0)
+                    return usbMouseAction();
+            }
         case kUSB_DeviceHidEventGetReport:
         case kUSB_DeviceHidEventSetReport:
         case kUSB_DeviceHidEventRequestReportBuffer:
