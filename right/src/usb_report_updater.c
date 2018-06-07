@@ -389,8 +389,6 @@ void UpdateUsbReports(void)
             return;
         }
         Timer_SetCurrentTime(&lastMouseUpdateTime);
-    } else if (!IsUsbBasicKeyboardReportSent || !IsUsbMediaKeyboardReportSent || !IsUsbSystemKeyboardReportSent || !IsUsbMouseReportSent) {
-        return;
     }
 
     ResetActiveUsbBasicKeyboardReport();
@@ -401,34 +399,42 @@ void UpdateUsbReports(void)
     updateActiveUsbReports();
 
     static usb_basic_keyboard_report_t last_basic_report = { .scancodes[0] = 0xFF };
+    bool HasUsbBasicKeyboardReportChanged = false;
     if (memcmp(ActiveUsbBasicKeyboardReport, &last_basic_report, sizeof(usb_basic_keyboard_report_t)) != 0) {
         last_basic_report = *ActiveUsbBasicKeyboardReport;
         SwitchActiveUsbBasicKeyboardReport();
-        IsUsbBasicKeyboardReportSent = false;
+        HasUsbBasicKeyboardReportChanged = true;
+        UsbBasicKeyboardAction();
     }
 
     static usb_media_keyboard_report_t last_media_report = { .scancodes[0] = 0xFF };
+    bool HasUsbMediaKeyboardReportChanged = false;
     if (memcmp(ActiveUsbMediaKeyboardReport, &last_media_report, sizeof(usb_media_keyboard_report_t)) != 0) {
         last_media_report = *ActiveUsbMediaKeyboardReport;
+        HasUsbMediaKeyboardReportChanged = true;
         SwitchActiveUsbMediaKeyboardReport();
-        IsUsbMediaKeyboardReportSent = false;
+        UsbMediaKeyboardAction();
     }
 
     static usb_system_keyboard_report_t last_system_report = { .scancodes[0] = 0xFF };
+    bool HasUsbSystemKeyboardReportChanged = false;
     if (memcmp(ActiveUsbSystemKeyboardReport, &last_system_report, sizeof(usb_system_keyboard_report_t)) != 0) {
         last_system_report = *ActiveUsbSystemKeyboardReport;
+        HasUsbSystemKeyboardReportChanged = true;
         SwitchActiveUsbSystemKeyboardReport();
-        IsUsbSystemKeyboardReportSent = false;
+        UsbSystemKeyboardAction();
     }
 
     static usb_mouse_report_t last_mouse_report = { .buttons = 0xFF };
+    bool HasUsbMouseReportChanged = false;
     if (memcmp(ActiveUsbMouseReport, &last_mouse_report, sizeof(usb_mouse_report_t)) != 0) {
         last_mouse_report = *ActiveUsbMouseReport;
+        HasUsbMouseReportChanged = true;
         SwitchActiveUsbMouseReport();
-        IsUsbMouseReportSent = false;
+        usbMouseAction();
     }
 
-    if ((previousLayer != LayerId_Base || !IsUsbBasicKeyboardReportSent || !IsUsbMediaKeyboardReportSent || !IsUsbSystemKeyboardReportSent || !IsUsbMouseReportSent) && IsHostSleeping) {
+    if ((previousLayer != LayerId_Base || HasUsbBasicKeyboardReportChanged || HasUsbMediaKeyboardReportChanged || HasUsbSystemKeyboardReportChanged || HasUsbMouseReportChanged) && IsHostSleeping) {
         WakeUpHost(true); // Wake up the host if any key is pressed and the computer is sleeping.
     }
 }
