@@ -197,15 +197,15 @@ static void handleSwitchLayerAction(key_state_t *keyState, key_action_t *action)
     static key_state_t *doubleTapSwitchLayerKey;
     static uint32_t doubleTapSwitchLayerStartTime;
     static uint32_t doubleTapSwitchLayerTriggerTime;
-    static bool IsLayerDoubleTapToggled;
+    static bool isLayerDoubleTapToggled;
 
     if (doubleTapSwitchLayerKey && doubleTapSwitchLayerKey != keyState && !keyState->previous) {
         doubleTapSwitchLayerKey = NULL;
     }
 
-    if (!keyState->previous && IsLayerDoubleTapToggled && ToggledLayer == action->switchLayer.layer) {
+    if (!keyState->previous && isLayerDoubleTapToggled && ToggledLayer == action->switchLayer.layer) {
         ToggledLayer = LayerId_Base;
-        IsLayerDoubleTapToggled = false;
+        isLayerDoubleTapToggled = false;
     }
 
     if (action->type != KeyActionType_SwitchLayer) {
@@ -221,7 +221,7 @@ static void handleSwitchLayerAction(key_state_t *keyState, key_action_t *action)
     if (!keyState->previous && previousLayer == LayerId_Base && action->switchLayer.mode == SwitchLayerMode_HoldAndDoubleTapToggle) {
         if (doubleTapSwitchLayerKey && Timer_GetElapsedTimeAndSetCurrent(&doubleTapSwitchLayerStartTime) < DoubleTapSwitchLayerTimeout) {
             ToggledLayer = action->switchLayer.layer;
-            IsLayerDoubleTapToggled = true;
+            isLayerDoubleTapToggled = true;
             doubleTapSwitchLayerTriggerTime = Timer_GetCurrentTime();
         } else {
             doubleTapSwitchLayerKey = keyState;
