@@ -48,7 +48,7 @@ static parser_error_t parseKeyStrokeAction(key_action_t *keyAction, uint8_t keyS
 static parser_error_t parseSwitchLayerAction(key_action_t *KeyAction, config_buffer_t *buffer)
 {
     uint8_t layer = ReadUInt8(buffer) + 1;
-    uint8_t mode = ReadUInt8(buffer);
+    switch_layer_mode_t mode = ReadUInt8(buffer);
 
     KeyAction->type = KeyActionType_SwitchLayer;
     KeyAction->switchLayer.layer = layer;

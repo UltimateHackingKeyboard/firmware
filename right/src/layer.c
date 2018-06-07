@@ -5,12 +5,12 @@
 #include "keymap.h"
 
 static bool heldLayers[LAYER_COUNT];
-static switch_layer_mode_t pressedLayers[LAYER_COUNT];
+static bool toggledLayers[LAYER_COUNT];
 
 void updateLayerStates(void)
 {
     memset(heldLayers, false, LAYER_COUNT);
-    memset(pressedLayers, false, LAYER_COUNT);
+    memset(toggledLayers, false, LAYER_COUNT);
 
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
@@ -20,9 +20,8 @@ void updateLayerStates(void)
                 if (action.type == KeyActionType_SwitchLayer) {
                     if (action.switchLayer.mode != SwitchLayerMode_Toggle) {
                         heldLayers[action.switchLayer.layer] = true;
-                    }
-                    if (action.switchLayer.mode != SwitchLayerMode_Hold && !keyState->previous && keyState->current) {
-                        pressedLayers[action.switchLayer.layer] = action.switchLayer.mode;
+                    } else if (!keyState->previous && keyState->current) {
+                        toggledLayers[action.switchLayer.layer] = action.switchLayer.mode;
                     }
                 }
             }
@@ -40,11 +39,11 @@ layer_id_t GetActiveLayer()
     // Handle toggled layers
 
     for (layer_id_t layerId=LayerId_Mod; layerId<=LayerId_Mouse; layerId++) {
-        if (pressedLayers[layerId]) {
+        if (toggledLayers[layerId]) {
             if (ToggledLayer == layerId) {
                 ToggledLayer = LayerId_Base;
                 break;
-            } else if (ToggledLayer == LayerId_Base && pressedLayers[layerId] == SwitchLayerMode_Toggle) {
+            } else if (ToggledLayer == LayerId_Base && toggledLayers[layerId] == SwitchLayerMode_Toggle) {
                 ToggledLayer = layerId;
                 break;
             }
