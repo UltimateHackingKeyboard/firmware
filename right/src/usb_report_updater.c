@@ -191,20 +191,13 @@ static void processMouseActions()
 }
 
 static layer_id_t previousLayer = LayerId_Base;
-static uint8_t basicScancodeIndex = 0;
-static uint8_t mediaScancodeIndex = 0;
-static uint8_t systemScancodeIndex = 0;
 
-static void applyKeyAction(key_state_t *keyState, key_action_t *action)
+static void handleSwitchLayerAction(key_state_t *keyState, key_action_t *action)
 {
     static key_state_t *doubleTapSwitchLayerKey;
     static uint32_t doubleTapSwitchLayerStartTime;
     static uint32_t doubleTapSwitchLayerTriggerTime;
     static bool IsLayerDoubleTapToggled;
-
-    if (keyState->suppressed) {
-        return;
-    }
 
     if (doubleTapSwitchLayerKey && doubleTapSwitchLayerKey != keyState && !keyState->previous) {
         doubleTapSwitchLayerKey = NULL;
@@ -214,6 +207,40 @@ static void applyKeyAction(key_state_t *keyState, key_action_t *action)
         ToggledLayer = LayerId_Base;
         IsLayerDoubleTapToggled = false;
     }
+
+    if (action->type != KeyActionType_SwitchLayer) {
+        return;
+    }
+
+    if (keyState->previous && doubleTapSwitchLayerKey == keyState &&
+        Timer_GetElapsedTime(&doubleTapSwitchLayerTriggerTime) > DoubleTapSwitchLayerReleaseTimeout)
+    {
+        ToggledLayer = LayerId_Base;
+    }
+
+    if (!keyState->previous && previousLayer == LayerId_Base && action->switchLayer.mode == SwitchLayerMode_HoldAndDoubleTapToggle) {
+        if (doubleTapSwitchLayerKey && Timer_GetElapsedTimeAndSetCurrent(&doubleTapSwitchLayerStartTime) < DoubleTapSwitchLayerTimeout) {
+            ToggledLayer = action->switchLayer.layer;
+            IsLayerDoubleTapToggled = true;
+            doubleTapSwitchLayerTriggerTime = Timer_GetCurrentTime();
+        } else {
+            doubleTapSwitchLayerKey = keyState;
+        }
+        doubleTapSwitchLayerStartTime = Timer_GetCurrentTime();
+    }
+}
+
+static uint8_t basicScancodeIndex = 0;
+static uint8_t mediaScancodeIndex = 0;
+static uint8_t systemScancodeIndex = 0;
+
+static void applyKeyAction(key_state_t *keyState, key_action_t *action)
+{
+    if (keyState->suppressed) {
+        return;
+    }
+
+    handleSwitchLayerAction(keyState, action);
 
     switch (action->type) {
         case KeyActionType_Keystroke:
@@ -244,22 +271,7 @@ static void applyKeyAction(key_state_t *keyState, key_action_t *action)
             activeMouseStates[action->mouseAction] = true;
             break;
         case KeyActionType_SwitchLayer:
-            if (keyState->previous && doubleTapSwitchLayerKey == keyState &&
-                Timer_GetElapsedTime(&doubleTapSwitchLayerTriggerTime) > DoubleTapSwitchLayerReleaseTimeout)
-            {
-                ToggledLayer = LayerId_Base;
-            }
-
-            if (!keyState->previous && previousLayer == LayerId_Base && action->switchLayer.mode == SwitchLayerMode_HoldAndDoubleTapToggle) {
-                if (doubleTapSwitchLayerKey && Timer_GetElapsedTimeAndSetCurrent(&doubleTapSwitchLayerStartTime) < DoubleTapSwitchLayerTimeout) {
-                    ToggledLayer = action->switchLayer.layer;
-                    IsLayerDoubleTapToggled = true;
-                    doubleTapSwitchLayerTriggerTime = Timer_GetCurrentTime();
-                } else {
-                    doubleTapSwitchLayerKey = keyState;
-                }
-                doubleTapSwitchLayerStartTime = Timer_GetCurrentTime();
-            }
+            // Handled by handleSwitchLayerAction()
             break;
         case KeyActionType_SwitchKeymap:
             if (!keyState->previous) {
