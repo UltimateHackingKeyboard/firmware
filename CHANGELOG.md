@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [8.3.1] - 2018-06-07
+
+Device Protocol: 4.3.1 | Module Protocol: 4.0.0 | User Config: 4.1.0 | Hardware Config: 1.0.0
+
+- Fix media key repetition bug on Windows.
+- Fix bug that made Windows unable to sleep when the UHK was plugged in.
+- Fix bug that made Chrome Remote Desktop blocked from interacting on Windows.
+- Fix bug that made locked layers not release. This bug was introduced in the previous release.
+
 ## [8.3.0] - 2018-06-03
 
 Device Protocol: 4.3.1 | Module Protocol: 4.0.0 | User Config: 4.**1.0** | Hardware Config: 1.0.0
