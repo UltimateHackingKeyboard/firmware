@@ -29,16 +29,20 @@ usb_status_t usbMouseAction(void)
 
 usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param)
 {
+    static bool usbMouseActionActive = false;
     usb_status_t error = kStatus_USB_Error;
 
     switch (event) {
         case kUSB_DeviceHidEventSendResponse:
             if (UsbCompositeDevice.attach) {
-                // Send out the mouse report continuously if the report is not zeros
-                usb_mouse_report_t *mouseReport = getInactiveUsbMouseReport();
+                // Send out the report continuously if the report is not zeros
+                usb_mouse_report_t *report = getInactiveUsbMouseReport();
                 uint8_t zeroBuf[sizeof(usb_mouse_report_t)] = { 0 };
-                if (memcmp(mouseReport, zeroBuf, sizeof(usb_mouse_report_t)) != 0)
+                bool reportChanged = memcmp(report, zeroBuf, sizeof(usb_mouse_report_t)) != 0;
+                if (usbMouseActionActive || reportChanged) {
+                    usbMouseActionActive = reportChanged; // Used to send out all zeros once after a report has been sent
                     return usbMouseAction();
+                }
             }
         case kUSB_DeviceHidEventGetReport:
         case kUSB_DeviceHidEventSetReport:
