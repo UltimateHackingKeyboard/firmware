@@ -21,7 +21,7 @@ void updateLayerStates(void)
                     if (action.switchLayer.mode != SwitchLayerMode_Toggle) {
                         heldLayers[action.switchLayer.layer] = true;
                     } else if (!keyState->previous && keyState->current) {
-                        toggledLayers[action.switchLayer.layer] = action.switchLayer.mode;
+                        toggledLayers[action.switchLayer.layer] = true;
                     }
                 }
             }
