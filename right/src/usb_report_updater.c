@@ -423,7 +423,8 @@ void UpdateUsbReports(void)
         last_basic_report = *ActiveUsbBasicKeyboardReport;
         SwitchActiveUsbBasicKeyboardReport();
         HasUsbBasicKeyboardReportChanged = true;
-        UsbBasicKeyboardAction();
+        if (UsbBasicKeyboardAction() != kStatus_USB_Success)
+            last_basic_report.scancodes[0] = 0xFF; // Invalidate the stored report if the command fails
     }
 
     static usb_media_keyboard_report_t last_media_report = { .scancodes[0] = 0xFF };
@@ -432,7 +433,8 @@ void UpdateUsbReports(void)
         last_media_report = *ActiveUsbMediaKeyboardReport;
         HasUsbMediaKeyboardReportChanged = true;
         SwitchActiveUsbMediaKeyboardReport();
-        UsbMediaKeyboardAction();
+        if (UsbMediaKeyboardAction() != kStatus_USB_Success)
+            last_media_report.scancodes[0] = 0xFF; // Invalidate the stored report if the command fails
     }
 
     static usb_system_keyboard_report_t last_system_report = { .scancodes[0] = 0xFF };
@@ -441,7 +443,8 @@ void UpdateUsbReports(void)
         last_system_report = *ActiveUsbSystemKeyboardReport;
         HasUsbSystemKeyboardReportChanged = true;
         SwitchActiveUsbSystemKeyboardReport();
-        UsbSystemKeyboardAction();
+        if (UsbSystemKeyboardAction() != kStatus_USB_Success)
+            last_system_report.scancodes[0] = 0xFF; // Invalidate the stored report if the command fails
     }
 
     static usb_mouse_report_t last_mouse_report = { .buttons = 0xFF };
@@ -450,7 +453,8 @@ void UpdateUsbReports(void)
         last_mouse_report = *ActiveUsbMouseReport;
         HasUsbMouseReportChanged = true;
         SwitchActiveUsbMouseReport();
-        usbMouseAction();
+        if (usbMouseAction() != kStatus_USB_Success)
+            last_mouse_report.buttons = 0xFF; // Invalidate the stored report if the command fails
     }
 
     if ((previousLayer != LayerId_Base || HasUsbBasicKeyboardReportChanged || HasUsbMediaKeyboardReportChanged || HasUsbSystemKeyboardReportChanged || HasUsbMouseReportChanged) && IsHostSleeping) {
