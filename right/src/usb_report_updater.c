@@ -396,19 +396,10 @@ void UpdateUsbReports(void)
 {
     UsbReportUpdateCounter++;
 
-    // Process the key inputs at a constant rate when moving the mouse, so the mouse speed is consistent.
-    bool hasActiveMouseState = false;
-    for (uint8_t i=0; i<ACTIVE_MOUSE_STATES_COUNT; i++) {
-        hasActiveMouseState = true;
-        break;
+    if (Timer_GetElapsedTime(&lastMouseUpdateTime) < USB_BASIC_KEYBOARD_INTERRUPT_IN_INTERVAL) {
+        return;
     }
-
-    if (hasActiveMouseState) {
-        if (Timer_GetElapsedTime(&lastMouseUpdateTime) < USB_MOUSE_INTERRUPT_IN_INTERVAL) {
-            return;
-        }
-        Timer_SetCurrentTime(&lastMouseUpdateTime);
-    }
+    Timer_SetCurrentTime(&lastMouseUpdateTime);
 
     ResetActiveUsbBasicKeyboardReport();
     ResetActiveUsbMediaKeyboardReport();
@@ -421,8 +412,8 @@ void UpdateUsbReports(void)
     bool HasUsbBasicKeyboardReportChanged = false;
     if (memcmp(ActiveUsbBasicKeyboardReport, &last_basic_report, sizeof(usb_basic_keyboard_report_t)) != 0) {
         last_basic_report = *ActiveUsbBasicKeyboardReport;
-        SwitchActiveUsbBasicKeyboardReport();
         HasUsbBasicKeyboardReportChanged = true;
+        SwitchActiveUsbBasicKeyboardReport();
         if (UsbBasicKeyboardAction() != kStatus_USB_Success)
             last_basic_report.scancodes[0] = 0xFF; // Invalidate the stored report if the command fails
     }
