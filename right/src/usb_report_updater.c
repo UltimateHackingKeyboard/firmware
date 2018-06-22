@@ -390,16 +390,16 @@ static void updateActiveUsbReports(void)
 }
 
 uint32_t UsbReportUpdateCounter;
-static uint32_t lastMouseUpdateTime;
+static uint32_t lastMouseUpdateTimeMicros;
 
 void UpdateUsbReports(void)
 {
     UsbReportUpdateCounter++;
 
-    if (Timer_GetElapsedTime(&lastMouseUpdateTime) < USB_BASIC_KEYBOARD_INTERRUPT_IN_INTERVAL) {
+    if (Timer_GetElapsedTimeMicros(&lastMouseUpdateTimeMicros) < 1000U * USB_BASIC_KEYBOARD_INTERRUPT_IN_INTERVAL) {
         return;
     }
-    Timer_SetCurrentTime(&lastMouseUpdateTime);
+    Timer_SetCurrentTimeMicros(&lastMouseUpdateTimeMicros);
 
     ResetActiveUsbBasicKeyboardReport();
     ResetActiveUsbMediaKeyboardReport();
