@@ -37,7 +37,8 @@ uint32_t Timer_GetCurrentTimeMicros() {
     ms = CurrentTime; // Read the overflow counter
     EnableGlobalIRQ(primask); // Enable interrupts again if they where enabled before - this should make it interrupt safe
 
-    uint32_t us = COUNT_TO_USEC(count, timerClockFrequency);
+    // Calculate the counter value in microseconds - note that the PIT timer is counting downward, so we need to subtract the count from the period value
+    uint32_t us = 1000U * TIMER_INTERVAL_MSEC - COUNT_TO_USEC(count, timerClockFrequency);
     return ms * 1000U * TIMER_INTERVAL_MSEC + us;
 }
 
