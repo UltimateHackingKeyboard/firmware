@@ -4,14 +4,14 @@ uint32_t UsbMouseActionCounter;
 static usb_mouse_report_t usbMouseReports[2];
 usb_mouse_report_t* ActiveUsbMouseReport = usbMouseReports;
 
-static usb_mouse_report_t* getInactiveUsbMouseReport(void)
+usb_mouse_report_t* GetInactiveUsbMouseReport(void)
 {
     return ActiveUsbMouseReport == usbMouseReports ? usbMouseReports+1 : usbMouseReports;
 }
 
-void SwitchActiveUsbMouseReport(void)
+static void SwitchActiveUsbMouseReport(void)
 {
-    ActiveUsbMouseReport = getInactiveUsbMouseReport();
+    ActiveUsbMouseReport = GetInactiveUsbMouseReport();
 }
 
 void ResetActiveUsbMouseReport(void)
@@ -22,9 +22,12 @@ void ResetActiveUsbMouseReport(void)
 usb_status_t usbMouseAction(void)
 {
     UsbMouseActionCounter++;
-    return USB_DeviceHidSend(
+    usb_status_t usb_status = USB_DeviceHidSend(
             UsbCompositeDevice.mouseHandle, USB_MOUSE_ENDPOINT_INDEX,
-            (uint8_t*)getInactiveUsbMouseReport(), USB_MOUSE_REPORT_LENGTH);
+            (uint8_t*)ActiveUsbMouseReport, USB_MOUSE_REPORT_LENGTH);
+    if (usb_status == kStatus_USB_Success)
+        SwitchActiveUsbMouseReport(); // Switch the active report if the data was sent successfully
+    return usb_status;
 }
 
 usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param)
@@ -35,8 +38,8 @@ usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param
     switch (event) {
         case kUSB_DeviceHidEventSendResponse:
             if (UsbCompositeDevice.attach) {
-                // Send out the report continuously if the report is not zeros
-                usb_mouse_report_t *report = getInactiveUsbMouseReport();
+                // Send out the last report continuously if the report was not zeros
+                usb_mouse_report_t *report = GetInactiveUsbMouseReport();
                 uint8_t zeroBuf[sizeof(usb_mouse_report_t)] = { 0 };
                 bool reportChanged = memcmp(report, zeroBuf, sizeof(usb_mouse_report_t)) != 0;
                 if (usbMouseActionActive || reportChanged) {

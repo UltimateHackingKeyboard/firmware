@@ -408,44 +408,28 @@ void UpdateUsbReports(void)
 
     updateActiveUsbReports();
 
-    static usb_basic_keyboard_report_t last_basic_report = { .scancodes[0] = 0xFF };
     bool HasUsbBasicKeyboardReportChanged = false;
-    if (memcmp(ActiveUsbBasicKeyboardReport, &last_basic_report, sizeof(usb_basic_keyboard_report_t)) != 0) {
-        last_basic_report = *ActiveUsbBasicKeyboardReport;
+    if (memcmp(ActiveUsbBasicKeyboardReport, GetInactiveUsbBasicKeyboardReport(), sizeof(usb_basic_keyboard_report_t)) != 0) {
         HasUsbBasicKeyboardReportChanged = true;
-        SwitchActiveUsbBasicKeyboardReport();
-        if (UsbBasicKeyboardAction() != kStatus_USB_Success)
-            last_basic_report.scancodes[0] = 0xFF; // Invalidate the stored report if the command fails
+        UsbBasicKeyboardAction();
     }
 
-    static usb_media_keyboard_report_t last_media_report = { .scancodes[0] = 0xFF };
     bool HasUsbMediaKeyboardReportChanged = false;
-    if (memcmp(ActiveUsbMediaKeyboardReport, &last_media_report, sizeof(usb_media_keyboard_report_t)) != 0) {
-        last_media_report = *ActiveUsbMediaKeyboardReport;
+    if (memcmp(ActiveUsbMediaKeyboardReport, GetInactiveUsbMediaKeyboardReport(), sizeof(usb_media_keyboard_report_t)) != 0) {
         HasUsbMediaKeyboardReportChanged = true;
-        SwitchActiveUsbMediaKeyboardReport();
-        if (UsbMediaKeyboardAction() != kStatus_USB_Success)
-            last_media_report.scancodes[0] = 0xFF; // Invalidate the stored report if the command fails
+        UsbMediaKeyboardAction();
     }
 
-    static usb_system_keyboard_report_t last_system_report = { .scancodes[0] = 0xFF };
     bool HasUsbSystemKeyboardReportChanged = false;
-    if (memcmp(ActiveUsbSystemKeyboardReport, &last_system_report, sizeof(usb_system_keyboard_report_t)) != 0) {
-        last_system_report = *ActiveUsbSystemKeyboardReport;
+    if (memcmp(ActiveUsbSystemKeyboardReport, GetInactiveUsbSystemKeyboardReport(), sizeof(usb_system_keyboard_report_t)) != 0) {
         HasUsbSystemKeyboardReportChanged = true;
-        SwitchActiveUsbSystemKeyboardReport();
-        if (UsbSystemKeyboardAction() != kStatus_USB_Success)
-            last_system_report.scancodes[0] = 0xFF; // Invalidate the stored report if the command fails
+        UsbSystemKeyboardAction();
     }
 
-    static usb_mouse_report_t last_mouse_report = { .buttons = 0xFF };
     bool HasUsbMouseReportChanged = false;
-    if (memcmp(ActiveUsbMouseReport, &last_mouse_report, sizeof(usb_mouse_report_t)) != 0) {
-        last_mouse_report = *ActiveUsbMouseReport;
+    if (memcmp(ActiveUsbMouseReport, GetInactiveUsbMouseReport(), sizeof(usb_mouse_report_t)) != 0) {
         HasUsbMouseReportChanged = true;
-        SwitchActiveUsbMouseReport();
-        if (usbMouseAction() != kStatus_USB_Success)
-            last_mouse_report.buttons = 0xFF; // Invalidate the stored report if the command fails
+        usbMouseAction();
     }
 
     if ((previousLayer != LayerId_Base || HasUsbBasicKeyboardReportChanged || HasUsbMediaKeyboardReportChanged || HasUsbSystemKeyboardReportChanged || HasUsbMouseReportChanged) && IsHostSleeping) {

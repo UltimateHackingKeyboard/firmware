@@ -4,14 +4,14 @@ uint32_t UsbMediaKeyboardActionCounter;
 static usb_media_keyboard_report_t usbMediaKeyboardReports[2];
 usb_media_keyboard_report_t* ActiveUsbMediaKeyboardReport = usbMediaKeyboardReports;
 
-static usb_media_keyboard_report_t* getInactiveUsbMediaKeyboardReport(void)
+usb_media_keyboard_report_t* GetInactiveUsbMediaKeyboardReport(void)
 {
     return ActiveUsbMediaKeyboardReport == usbMediaKeyboardReports ? usbMediaKeyboardReports+1 : usbMediaKeyboardReports;
 }
 
-void SwitchActiveUsbMediaKeyboardReport(void)
+static void SwitchActiveUsbMediaKeyboardReport(void)
 {
-    ActiveUsbMediaKeyboardReport = getInactiveUsbMediaKeyboardReport();
+    ActiveUsbMediaKeyboardReport = GetInactiveUsbMediaKeyboardReport();
 }
 
 void ResetActiveUsbMediaKeyboardReport(void)
@@ -22,9 +22,12 @@ void ResetActiveUsbMediaKeyboardReport(void)
 usb_status_t UsbMediaKeyboardAction()
 {
     UsbMediaKeyboardActionCounter++;
-    return USB_DeviceHidSend(
+    usb_status_t usb_status = USB_DeviceHidSend(
             UsbCompositeDevice.mediaKeyboardHandle, USB_MEDIA_KEYBOARD_ENDPOINT_INDEX,
-            (uint8_t*)getInactiveUsbMediaKeyboardReport(), USB_MEDIA_KEYBOARD_REPORT_LENGTH);
+            (uint8_t*)ActiveUsbMediaKeyboardReport, USB_MEDIA_KEYBOARD_REPORT_LENGTH);
+    if (usb_status == kStatus_USB_Success)
+        SwitchActiveUsbMediaKeyboardReport(); // Switch the active report if the data was sent successfully
+    return usb_status;
 }
 
 usb_status_t UsbMediaKeyboardCallback(class_handle_t handle, uint32_t event, void *param)
