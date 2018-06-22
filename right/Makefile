@@ -38,7 +38,7 @@ JLINK_SCRIPT = ../scripts/flash-right.jlink
 BUILD_FLAGS = -DCPU_$(PART)_cm4 -DUSB_STACK_BM -DBL_HAS_BOOTLOADER_CONFIG=1
 
 # Address of the app vector table. The bootloader will take up the flash before this address.
-BL_APP_VECTOR_TABLE_ADDRESS = 0xc000
+BL_APP_VECTOR_TABLE_ADDRESS ?= 0xc000
 
 # Source files.
 SOURCE = $(wildcard src/*.c) \
