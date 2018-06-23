@@ -426,8 +426,10 @@ void UpdateUsbReports(void)
         UsbSystemKeyboardAction();
     }
 
+    // Send out the report continuously if the report was not zeros
     bool HasUsbMouseReportChanged = false;
-    if (memcmp(ActiveUsbMouseReport, GetInactiveUsbMouseReport(), sizeof(usb_mouse_report_t)) != 0) {
+    uint8_t zeroBuf[sizeof(usb_mouse_report_t)] = { 0 };
+    if (memcmp(ActiveUsbMouseReport, zeroBuf, sizeof(usb_mouse_report_t)) != 0) {
         HasUsbMouseReportChanged = true;
         usbMouseAction();
     }
