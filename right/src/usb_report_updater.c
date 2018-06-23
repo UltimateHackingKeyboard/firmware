@@ -408,33 +408,29 @@ void UpdateUsbReports(void)
 
     updateActiveUsbReports();
 
-    bool HasUsbBasicKeyboardReportChanged = false;
-    if (memcmp(ActiveUsbBasicKeyboardReport, GetInactiveUsbBasicKeyboardReport(), sizeof(usb_basic_keyboard_report_t)) != 0) {
-        HasUsbBasicKeyboardReportChanged = true;
+    bool HasUsbBasicKeyboardReportChanged = memcmp(ActiveUsbBasicKeyboardReport, GetInactiveUsbBasicKeyboardReport(), sizeof(usb_basic_keyboard_report_t)) != 0;
+    if (HasUsbBasicKeyboardReportChanged) {
         UsbBasicKeyboardAction();
     }
 
-    bool HasUsbMediaKeyboardReportChanged = false;
-    if (memcmp(ActiveUsbMediaKeyboardReport, GetInactiveUsbMediaKeyboardReport(), sizeof(usb_media_keyboard_report_t)) != 0) {
-        HasUsbMediaKeyboardReportChanged = true;
+    bool HasUsbMediaKeyboardReportChanged = memcmp(ActiveUsbMediaKeyboardReport, GetInactiveUsbMediaKeyboardReport(), sizeof(usb_media_keyboard_report_t)) != 0;
+    if (HasUsbMediaKeyboardReportChanged) {
         UsbMediaKeyboardAction();
     }
 
-    bool HasUsbSystemKeyboardReportChanged = false;
-    if (memcmp(ActiveUsbSystemKeyboardReport, GetInactiveUsbSystemKeyboardReport(), sizeof(usb_system_keyboard_report_t)) != 0) {
-        HasUsbSystemKeyboardReportChanged = true;
+    bool HasUsbSystemKeyboardReportChanged = memcmp(ActiveUsbSystemKeyboardReport, GetInactiveUsbSystemKeyboardReport(), sizeof(usb_system_keyboard_report_t)) != 0;
+    if (HasUsbSystemKeyboardReportChanged) {
         UsbSystemKeyboardAction();
     }
 
-    // Send out the report continuously if the report was not zeros
-    bool HasUsbMouseReportChanged = false;
-    uint8_t zeroBuf[sizeof(usb_mouse_report_t)] = { 0 };
-    if (memcmp(ActiveUsbMouseReport, zeroBuf, sizeof(usb_mouse_report_t)) != 0) {
-        HasUsbMouseReportChanged = true;
+    // Send out the mouse position and wheel values continuously if the report is not zeros, but only send the mouse button states when they change.
+    bool HasUsbMouseReportChanged = memcmp(ActiveUsbMouseReport, GetInactiveUsbMouseReport(), sizeof(usb_mouse_report_t)) != 0;
+    if (HasUsbMouseReportChanged || ActiveUsbMouseReport->x || ActiveUsbMouseReport->y ||
+            ActiveUsbMouseReport->wheelX || ActiveUsbMouseReport->wheelY) {
         usbMouseAction();
     }
 
-    if ((previousLayer != LayerId_Base || HasUsbBasicKeyboardReportChanged || HasUsbMediaKeyboardReportChanged || HasUsbSystemKeyboardReportChanged || HasUsbMouseReportChanged) && IsHostSleeping) {
+    if (IsHostSleeping && (previousLayer != LayerId_Base || HasUsbBasicKeyboardReportChanged || HasUsbMediaKeyboardReportChanged || HasUsbSystemKeyboardReportChanged || HasUsbMouseReportChanged)) {
         WakeUpHost(true); // Wake up the host if any key is pressed and the computer is sleeping.
     }
 }
