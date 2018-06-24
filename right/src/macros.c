@@ -189,7 +189,7 @@ bool processKeyMacroAction(void)
     static bool pressStarted;
 
     switch (currentMacroAction.key.action) {
-        case MacroSubAction_Press:
+        case MacroSubAction_Tap:
             if (!pressStarted) {
                 pressStarted = true;
                 addModifiers(currentMacroAction.key.modifierMask);
@@ -234,7 +234,7 @@ bool processKeyMacroAction(void)
                     break;
             }
             break;
-        case MacroSubAction_Hold:
+        case MacroSubAction_Press:
             addModifiers(currentMacroAction.key.modifierMask);
             switch (currentMacroAction.key.type) {
                 case KeystrokeType_Basic:

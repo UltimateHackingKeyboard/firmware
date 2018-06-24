@@ -20,8 +20,8 @@
     } macro_reference_t;
 
     typedef enum {
+        MacroSubAction_Tap,
         MacroSubAction_Press,
-        MacroSubAction_Hold,
         MacroSubAction_Release,
     } macro_sub_action_t;
 
