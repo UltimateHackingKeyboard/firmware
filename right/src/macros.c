@@ -184,6 +184,36 @@ void deleteSystemScancode(uint8_t scancode)
     }
 }
 
+void addScancode(uint16_t scancode, macro_sub_action_t type)
+{
+    switch (type) {
+        case KeystrokeType_Basic:
+            addBasicScancode(scancode);
+            break;
+        case KeystrokeType_Media:
+            addMediaScancode(scancode);
+            break;
+        case KeystrokeType_System:
+            addSystemScancode(scancode);
+            break;
+    }
+}
+
+void deleteScancode(uint16_t scancode, macro_sub_action_t type)
+{
+    switch (type) {
+        case KeystrokeType_Basic:
+            deleteBasicScancode(scancode);
+            break;
+        case KeystrokeType_Media:
+            deleteMediaScancode(scancode);
+            break;
+        case KeystrokeType_System:
+            deleteSystemScancode(scancode);
+            break;
+    }
+}
+
 bool processKeyMacroAction(void)
 {
     static bool pressStarted;
@@ -193,60 +223,20 @@ bool processKeyMacroAction(void)
             if (!pressStarted) {
                 pressStarted = true;
                 addModifiers(currentMacroAction.key.modifierMask);
-                switch (currentMacroAction.key.type) {
-                    case KeystrokeType_Basic:
-                        addBasicScancode(currentMacroAction.key.scancode);
-                        break;
-                    case KeystrokeType_Media:
-                        // addMediaScancode(currentMacroAction.key.scancode);
-                        break;
-                    case KeystrokeType_System:
-                        addSystemScancode(currentMacroAction.key.scancode);
-                        break;
-                }
+                addScancode(currentMacroAction.key.scancode, currentMacroAction.key.type);
                 return true;
             }
             pressStarted = false;
             deleteModifiers(currentMacroAction.key.modifierMask);
-            switch (currentMacroAction.key.type) {
-                case KeystrokeType_Basic:
-                    deleteBasicScancode(currentMacroAction.key.scancode);
-                    break;
-                case KeystrokeType_Media:
-                    // deleteMediaScancode(currentMacroAction.key.scancode);
-                    break;
-                case KeystrokeType_System:
-                    deleteSystemScancode(currentMacroAction.key.scancode);
-                    break;
-            }
+            deleteScancode(currentMacroAction.key.scancode, currentMacroAction.key.type);
             break;
         case MacroSubAction_Release:
             deleteModifiers(currentMacroAction.key.modifierMask);
-            switch (currentMacroAction.key.type) {
-                case KeystrokeType_Basic:
-                    deleteBasicScancode(currentMacroAction.key.scancode);
-                    break;
-                case KeystrokeType_Media:
-                    // deleteMediaScancode(currentMacroAction.key.scancode);
-                    break;
-                case KeystrokeType_System:
-                    deleteSystemScancode(currentMacroAction.key.scancode);
-                    break;
-            }
+            deleteScancode(currentMacroAction.key.scancode, currentMacroAction.key.type);
             break;
         case MacroSubAction_Press:
             addModifiers(currentMacroAction.key.modifierMask);
-            switch (currentMacroAction.key.type) {
-                case KeystrokeType_Basic:
-                    addBasicScancode(currentMacroAction.key.scancode);
-                    break;
-                case KeystrokeType_Media:
-                    // addMediaScancode(currentMacroAction.key.scancode);
-                    break;
-                case KeystrokeType_System:
-                    addSystemScancode(currentMacroAction.key.scancode);
-                    break;
-            }
+            addScancode(currentMacroAction.key.scancode, currentMacroAction.key.type);
             break;
     }
     return false;
