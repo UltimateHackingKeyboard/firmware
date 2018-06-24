@@ -55,7 +55,7 @@
                 int16_t y;
             } ATTR_PACKED scrollMouse;
             struct {
-                int16_t delay;
+                uint16_t delay;
             } ATTR_PACKED delay;
             struct {
                 const char *text;
