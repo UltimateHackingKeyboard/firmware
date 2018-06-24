@@ -3,7 +3,6 @@
 uint32_t UsbMouseActionCounter;
 static usb_mouse_report_t usbMouseReports[2];
 usb_mouse_report_t* ActiveUsbMouseReport = usbMouseReports;
-volatile bool sendUsbMouseReportCompleted = true;
 
 usb_mouse_report_t* GetInactiveUsbMouseReport(void)
 {
@@ -22,7 +21,7 @@ void ResetActiveUsbMouseReport(void)
 
 usb_status_t usbMouseAction(void)
 {
-    if (!sendUsbMouseReportCompleted)
+    if (((usb_device_hid_struct_t *)UsbCompositeDevice.mouseHandle)->interruptInPipeBusy)
         return kStatus_USB_Busy; // The previous report has not been sent yet
 
     UsbMouseActionCounter++;
@@ -30,8 +29,8 @@ usb_status_t usbMouseAction(void)
     usb_status_t usb_status = USB_DeviceHidSend(
             UsbCompositeDevice.mouseHandle, USB_MOUSE_ENDPOINT_INDEX,
             (uint8_t*)GetInactiveUsbMouseReport(), USB_MOUSE_REPORT_LENGTH);
-    if (usb_status == kStatus_USB_Success) {
-        sendUsbMouseReportCompleted = false;
+    if (usb_status != kStatus_USB_Success) {
+        SwitchActiveUsbMouseReport(); // Switch back, as the command failed
     }
     return usb_status;
 }
@@ -43,7 +42,6 @@ usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param
     switch (event) {
         // This report is received when the report has been sent
         case kUSB_DeviceHidEventSendResponse:
-            sendUsbMouseReportCompleted = true;
             error = kStatus_USB_Success;
             break;
         case kUSB_DeviceHidEventRecvResponse:
