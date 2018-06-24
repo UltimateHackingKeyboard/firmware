@@ -278,6 +278,9 @@ static void applyKeyAction(key_state_t *keyState, key_action_t *action)
                 SwitchKeymapById(action->switchKeymap.keymapId);
             }
             break;
+        case KeyActionType_PlayMacro:
+            Macros_StartMacro(action->playMacro.macroId);
+            break;
     }
 }
 
@@ -288,9 +291,18 @@ static secondary_role_t secondaryRole;
 
 static void updateActiveUsbReports(void)
 {
-    memset(activeMouseStates, 0, ACTIVE_MOUSE_STATES_COUNT);
-
     static uint8_t previousModifiers = 0;
+
+    if (MacroPlaying) {
+        Macros_ContinueMacro();
+        memcpy(&ActiveUsbMouseReport, &MacroMouseReport, sizeof MacroMouseReport);
+        memcpy(&ActiveUsbBasicKeyboardReport, &MacroBasicKeyboardReport, sizeof MacroBasicKeyboardReport);
+        memcpy(&ActiveUsbMediaKeyboardReport, &MacroMediaKeyboardReport, sizeof MacroMediaKeyboardReport);
+        memcpy(&ActiveUsbSystemKeyboardReport, &MacroSystemKeyboardReport, sizeof MacroSystemKeyboardReport);
+        return;
+    }
+
+    memset(activeMouseStates, 0, ACTIVE_MOUSE_STATES_COUNT);
 
     basicScancodeIndex = 0;
     mediaScancodeIndex = 0;
@@ -309,15 +321,6 @@ static void updateActiveUsbReports(void)
     }
     bool layerGotReleased = previousLayer != LayerId_Base && activeLayer == LayerId_Base;
     LedDisplay_SetLayer(activeLayer);
-
-    if (MacroPlaying) {
-        Macros_ContinueMacro();
-        memcpy(&ActiveUsbMouseReport, &MacroMouseReport, sizeof MacroMouseReport);
-        memcpy(&ActiveUsbBasicKeyboardReport, &MacroBasicKeyboardReport, sizeof MacroBasicKeyboardReport);
-        memcpy(&ActiveUsbMediaKeyboardReport, &MacroMediaKeyboardReport, sizeof MacroMediaKeyboardReport);
-        memcpy(&ActiveUsbSystemKeyboardReport, &MacroSystemKeyboardReport, sizeof MacroSystemKeyboardReport);
-        return;
-    }
 
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
