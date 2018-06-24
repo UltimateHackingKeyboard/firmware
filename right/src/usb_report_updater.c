@@ -395,8 +395,12 @@ static uint32_t lastMouseUpdateTimeMicros;
 void UpdateUsbReports(void)
 {
     UsbReportUpdateCounter++;
-
-    if (Timer_GetElapsedTimeMicros(&lastMouseUpdateTimeMicros) < 1000U * USB_BASIC_KEYBOARD_INTERRUPT_IN_INTERVAL) {
+    if (((usb_device_hid_struct_t *)UsbCompositeDevice.basicKeyboardHandle)->interruptInPipeBusy ||
+            ((usb_device_hid_struct_t *)UsbCompositeDevice.mediaKeyboardHandle)->interruptInPipeBusy ||
+            ((usb_device_hid_struct_t *)UsbCompositeDevice.systemKeyboardHandle)->interruptInPipeBusy ||
+            ((usb_device_hid_struct_t *)UsbCompositeDevice.mouseHandle)->interruptInPipeBusy) {
+        return;
+    } else if (Timer_GetElapsedTimeMicros(&lastMouseUpdateTimeMicros) < 1000U * USB_BASIC_KEYBOARD_INTERRUPT_IN_INTERVAL) {
         return;
     }
     Timer_SetCurrentTimeMicros(&lastMouseUpdateTimeMicros);
