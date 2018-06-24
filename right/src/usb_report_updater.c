@@ -285,6 +285,8 @@ static uint8_t secondaryRoleState = SecondaryRoleState_Released;
 static uint8_t secondaryRoleSlotId;
 static uint8_t secondaryRoleKeyId;
 static secondary_role_t secondaryRole;
+static bool simulateKeypresses = false;
+static bool sendChar = false;
 
 static void updateActiveUsbReports(void)
 {
@@ -317,6 +319,16 @@ static void updateActiveUsbReports(void)
         memcpy(&ActiveUsbMediaKeyboardReport, &MacroMediaKeyboardReport, sizeof MacroMediaKeyboardReport);
         memcpy(&ActiveUsbSystemKeyboardReport, &MacroSystemKeyboardReport, sizeof MacroSystemKeyboardReport);
         return;
+    }
+
+    key_state_t *testKeyState = &KeyStates[SlotId_LeftKeyboardHalf][0];
+    if (!testKeyState->previous && testKeyState->current && activeLayer == LayerId_Fn) {
+        simulateKeypresses = !simulateKeypresses;
+    }
+
+    if (simulateKeypresses) {
+        sendChar = !sendChar;
+        ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = sendChar ? HID_KEYBOARD_SC_A : HID_KEYBOARD_SC_B;
     }
 
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
