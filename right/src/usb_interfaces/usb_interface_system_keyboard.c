@@ -64,16 +64,10 @@ usb_status_t UsbSystemKeyboardCallback(class_handle_t handle, uint32_t event, vo
 
 usb_status_t UsbSystemKeyboardSetConfiguration(class_handle_t handle, uint8_t configuration)
 {
-    if (USB_COMPOSITE_CONFIGURATION_INDEX == configuration) {
-        //return UsbSystemKeyboardAction();
-    }
     return kStatus_USB_Error;
 }
 
 usb_status_t UsbSystemKeyboardSetInterface(class_handle_t handle, uint8_t interface, uint8_t alternateSetting)
 {
-    if (USB_SYSTEM_KEYBOARD_INTERFACE_INDEX == interface) {
-        //return UsbSystemKeyboardAction();
-    }
     return kStatus_USB_Error;
 }

@@ -84,16 +84,10 @@ usb_status_t UsbBasicKeyboardCallback(class_handle_t handle, uint32_t event, voi
 
 usb_status_t UsbBasicKeyboardSetConfiguration(class_handle_t handle, uint8_t configuration)
 {
-    if (USB_COMPOSITE_CONFIGURATION_INDEX == configuration) {
-        //return UsbBasicKeyboardAction();
-    }
     return kStatus_USB_Error;
 }
 
 usb_status_t UsbBasicKeyboardSetInterface(class_handle_t handle, uint8_t interface, uint8_t alternateSetting)
 {
-    if (USB_BASIC_KEYBOARD_INTERFACE_INDEX == interface) {
-        //return UsbBasicKeyboardAction();
-    }
     return kStatus_USB_Error;
 }

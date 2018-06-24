@@ -64,16 +64,10 @@ usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param
 
 usb_status_t UsbMouseSetConfiguration(class_handle_t handle, uint8_t configuration)
 {
-    if (USB_COMPOSITE_CONFIGURATION_INDEX == configuration) {
-        //return usbMouseAction();
-    }
     return kStatus_USB_Error;
 }
 
 usb_status_t UsbMouseSetInterface(class_handle_t handle, uint8_t interface, uint8_t alternateSetting)
 {
-    if (USB_MOUSE_INTERFACE_INDEX == interface) {
-        //return usbMouseAction();
-    }
     return kStatus_USB_Error;
 }

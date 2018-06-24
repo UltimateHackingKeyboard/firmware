@@ -64,16 +64,10 @@ usb_status_t UsbMediaKeyboardCallback(class_handle_t handle, uint32_t event, voi
 
 usb_status_t UsbMediaKeyboardSetConfiguration(class_handle_t handle, uint8_t configuration)
 {
-    if (USB_COMPOSITE_CONFIGURATION_INDEX == configuration) {
-        //return UsbMediaKeyboardAction();
-    }
     return kStatus_USB_Error;
 }
 
 usb_status_t UsbMediaKeyboardSetInterface(class_handle_t handle, uint8_t interface, uint8_t alternateSetting)
 {
-    if (USB_MEDIA_KEYBOARD_INTERFACE_INDEX == interface) {
-        //return UsbMediaKeyboardAction();
-    }
     return kStatus_USB_Error;
 }
