@@ -1,7 +1,7 @@
 #include "test_led.h"
 #include "fsl_port.h"
 
-extern void InitTestLed(void)
+extern void TestLed_Init(void)
 {
     CLOCK_EnableClock(TEST_LED_CLOCK);
     PORT_SetPinMux(TEST_LED_PORT, TEST_LED_PIN, kPORT_MuxAsGpio);
