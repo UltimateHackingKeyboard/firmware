@@ -38,5 +38,6 @@
 // Functions:
 
     void TestLed_Init(void);
+    void TestLed_Blink(uint8_t times);
 
 #endif
