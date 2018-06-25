@@ -15,10 +15,25 @@
     #define TEST_LED_CLOCK kCLOCK_PortD
     #define TEST_LED_GPIO_PIN  7U
 
-    #define TEST_LED_ON() GPIO_SetPinsOutput(TEST_LED_GPIO, 1U << TEST_LED_GPIO_PIN)
-    #define TEST_LED_OFF() GPIO_ClearPinsOutput(TEST_LED_GPIO, 1U << TEST_LED_GPIO_PIN)
-    #define TEST_LED_SET(state) GPIO_WritePinOutput(TEST_LED_GPIO, TEST_LED_GPIO_PIN, (state))
-    #define TEST_LED_TOGGLE() GPIO_TogglePinsOutput(TEST_LED_GPIO, 1U << TEST_LED_GPIO_PIN)
+    static inline void TestLed_On(void)
+    {
+        GPIO_SetPinsOutput(TEST_LED_GPIO, 1U << TEST_LED_GPIO_PIN);
+    }
+
+    static inline void TestLed_Off(void)
+    {
+        GPIO_ClearPinsOutput(TEST_LED_GPIO, 1U << TEST_LED_GPIO_PIN);
+    }
+
+    static inline void TestLed_Set(bool state)
+    {
+        GPIO_WritePinOutput(TEST_LED_GPIO, TEST_LED_GPIO_PIN, state);
+    }
+
+    static inline void TestLed_Toggle(void)
+    {
+        GPIO_TogglePinsOutput(TEST_LED_GPIO, 1U << TEST_LED_GPIO_PIN);
+    }
 
 // Functions:
 
