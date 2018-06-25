@@ -3,9 +3,15 @@
 
 static volatile uint32_t CurrentTime;
 
+static volatile uint32_t delayLength;
+
 void PIT_TIMER_HANDLER(void)
 {
     CurrentTime++;
+
+    if (delayLength) {
+        --delayLength;
+    }
     PIT_ClearStatusFlags(PIT, PIT_TIMER_CHANNEL, PIT_TFLG_TIF_MASK);
 }
 
@@ -44,4 +50,12 @@ uint32_t Timer_GetElapsedTimeAndSetCurrent(uint32_t *time)
     uint32_t elapsedTime = Timer_GetElapsedTime(time);
     *time = CurrentTime;
     return elapsedTime;
+}
+
+void Timer_Delay(uint32_t length)
+{
+    delayLength = length;
+    while (delayLength) {
+        ;
+    }
 }
