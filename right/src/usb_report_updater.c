@@ -295,10 +295,10 @@ static void updateActiveUsbReports(void)
 
     if (MacroPlaying) {
         Macros_ContinueMacro();
-        memcpy(&ActiveUsbMouseReport, &MacroMouseReport, sizeof MacroMouseReport);
-        memcpy(&ActiveUsbBasicKeyboardReport, &MacroBasicKeyboardReport, sizeof MacroBasicKeyboardReport);
-        memcpy(&ActiveUsbMediaKeyboardReport, &MacroMediaKeyboardReport, sizeof MacroMediaKeyboardReport);
-        memcpy(&ActiveUsbSystemKeyboardReport, &MacroSystemKeyboardReport, sizeof MacroSystemKeyboardReport);
+        memcpy(ActiveUsbMouseReport, &MacroMouseReport, sizeof MacroMouseReport);
+        memcpy(ActiveUsbBasicKeyboardReport, &MacroBasicKeyboardReport, sizeof MacroBasicKeyboardReport);
+        memcpy(ActiveUsbMediaKeyboardReport, &MacroMediaKeyboardReport, sizeof MacroMediaKeyboardReport);
+        memcpy(ActiveUsbSystemKeyboardReport, &MacroSystemKeyboardReport, sizeof MacroSystemKeyboardReport);
         return;
     }
 
