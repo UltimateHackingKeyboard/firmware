@@ -279,7 +279,9 @@ static void applyKeyAction(key_state_t *keyState, key_action_t *action)
             }
             break;
         case KeyActionType_PlayMacro:
-            Macros_StartMacro(action->playMacro.macroId);
+            if (!keyState->previous) {
+                Macros_StartMacro(action->playMacro.macroId);
+            }
             break;
     }
 }
