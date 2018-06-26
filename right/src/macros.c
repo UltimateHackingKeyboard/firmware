@@ -19,67 +19,100 @@ uint8_t characterToScancode(char character)
 {
     switch (character) {
         case 'A' ... 'Z':
-            return 0;
         case 'a' ... 'z':
-            return 0;
+            return HID_KEYBOARD_SC_A - 1 + (character & 0x1F);
         case '1' ... '9':
-            return 0;
+            return HID_KEYBOARD_SC_1_AND_EXCLAMATION - 1 + (character & 0x0F);
         case ')':
         case '0':
-            return 0;
+            return HID_KEYBOARD_SC_0_AND_CLOSING_PARENTHESIS;
         case '!':
-            return 0;
+            return HID_KEYBOARD_SC_1_AND_EXCLAMATION;
         case '@':
-            return 0;
+            return HID_KEYBOARD_SC_2_AND_AT;
         case '#':
-            return 0;
+            return HID_KEYBOARD_SC_3_AND_HASHMARK;
         case '$':
-            return 0;
+            return HID_KEYBOARD_SC_4_AND_DOLLAR;
         case '%':
-            return 0;
+            return HID_KEYBOARD_SC_5_AND_PERCENTAGE;
         case '^':
-            return 0;
+            return HID_KEYBOARD_SC_6_AND_CARET;
         case '&':
-            return 0;
+            return HID_KEYBOARD_SC_7_AND_AMPERSAND;
         case '*':
-            return 0;
+            return HID_KEYBOARD_SC_8_AND_ASTERISK;
         case '(':
-            return 0;
+            return HID_KEYBOARD_SC_9_AND_OPENING_PARENTHESIS;
         case '`':
         case '~':
-            return 0;
+            return HID_KEYBOARD_SC_GRAVE_ACCENT_AND_TILDE;
         case '[':
         case '{':
-            return 0;
+            return HID_KEYBOARD_SC_OPENING_BRACKET_AND_OPENING_BRACE;
         case ']':
         case '}':
-            return 0;
+            return HID_KEYBOARD_SC_CLOSING_BRACKET_AND_CLOSING_BRACE;
         case ';':
         case ':':
-            return 0;
+            return HID_KEYBOARD_SC_SEMICOLON_AND_COLON;
         case '\'':
         case '\"':
-            return 0;
+            return HID_KEYBOARD_SC_APOSTROPHE_AND_QUOTE;
         case '+':
         case '=':
-            return 0;
+            return HID_KEYBOARD_SC_EQUAL_AND_PLUS;
         case '\\':
         case '|':
-            return 0;
+            return HID_KEYBOARD_SC_BACKSLASH_AND_PIPE;
         case '.':
         case '>':
-            return 0;
+            return HID_KEYBOARD_SC_DOT_AND_GREATER_THAN_SIGN;
         case ',':
         case '<':
-            return 0;
+            return HID_KEYBOARD_SC_KEYPAD_LESS_THAN_SIGN;
         case '/':
         case '\?':
-            return 0;
+            return HID_KEYBOARD_SC_SLASH_AND_QUESTION_MARK;
         case '-':
         case '_':
-            return 0;
+            return HID_KEYBOARD_SC_MINUS_AND_UNDERSCORE;
+        case '\n':
+            return HID_KEYBOARD_SC_ENTER;
+        case ' ':
+            return HID_KEYBOARD_SC_SPACE;
     }
     return 0;
+}
+
+bool characterToShift(char character)
+{
+    switch (character) {
+        case 'A' ... 'Z':
+        case ')':
+        case '!':
+        case '@':
+        case '#':
+        case '$':
+        case '%':
+        case '^':
+        case '&':
+        case '*':
+        case '(':
+        case '~':
+        case '{':
+        case '}':
+        case ':':
+        case '\"':
+        case '+':
+        case '|':
+        case '>':
+        case '<':
+        case '\?':
+        case '_':
+            return true;
+    }
+    return false;
 }
 
 void addBasicScancode(uint8_t scancode)
@@ -297,6 +330,37 @@ bool processScrollMouseAction(void)
     return false;
 }
 
+bool processTextAction(void)
+{
+    static uint16_t textIndex;
+    static uint8_t reportIndex = USB_BASIC_KEYBOARD_MAX_KEYS;
+    char character;
+    uint8_t scancode;
+
+    if (textIndex == currentMacroAction.text.textLen) {
+        textIndex = 0;
+        reportIndex = USB_BASIC_KEYBOARD_MAX_KEYS;
+        return false;
+    }
+    if (reportIndex == USB_BASIC_KEYBOARD_MAX_KEYS) {
+        reportIndex = 0;
+        memset(&MacroBasicKeyboardReport, 0, sizeof MacroBasicKeyboardReport);
+        return true;
+    }
+    character = currentMacroAction.text.text[textIndex];
+    scancode = characterToScancode(character);
+    for (uint8_t i = 0; i < reportIndex; i++) {
+        if (MacroBasicKeyboardReport.scancodes[i] == scancode) {
+            reportIndex = USB_BASIC_KEYBOARD_MAX_KEYS;
+            return true;
+        }
+    }
+    MacroBasicKeyboardReport.scancodes[reportIndex++] = scancode;
+    MacroBasicKeyboardReport.modifiers = characterToShift(character) ? HID_KEYBOARD_MODIFIER_LEFTSHIFT : 0;
+    ++textIndex;
+    return true;
+}
+
 bool processCurrentMacroAction(void)
 {
     switch (currentMacroAction.type) {
@@ -311,7 +375,7 @@ bool processCurrentMacroAction(void)
         case MacroActionType_ScrollMouse:
             return processScrollMouseAction();
         case MacroActionType_Text:
-            return false;
+            return processTextAction();
     }
     return false;
 }
