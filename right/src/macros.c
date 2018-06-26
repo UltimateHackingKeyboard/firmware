@@ -340,6 +340,7 @@ bool processTextAction(void)
     if (textIndex == currentMacroAction.text.textLen) {
         textIndex = 0;
         reportIndex = USB_BASIC_KEYBOARD_MAX_KEYS;
+        memset(&MacroBasicKeyboardReport, 0, sizeof MacroBasicKeyboardReport);
         return false;
     }
     if (reportIndex == USB_BASIC_KEYBOARD_MAX_KEYS) {
