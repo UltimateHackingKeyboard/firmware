@@ -259,6 +259,44 @@ bool processDelayMacroAction(void)
     return inDelay;
 }
 
+bool processMouseButtonAction(void)
+{
+    static bool pressStarted;
+
+    switch (currentMacroAction.key.action) {
+        case MacroSubAction_Tap:
+            if (!pressStarted) {
+                pressStarted = true;
+                MacroMouseReport.buttons |= currentMacroAction.mouseButton.mouseButtonsMask;
+                return true;
+            }
+            pressStarted = false;
+            MacroMouseReport.buttons &= ~currentMacroAction.mouseButton.mouseButtonsMask;
+            break;
+        case MacroSubAction_Release:
+            MacroMouseReport.buttons &= ~currentMacroAction.mouseButton.mouseButtonsMask;
+            break;
+        case MacroSubAction_Press:
+            MacroMouseReport.buttons |= currentMacroAction.mouseButton.mouseButtonsMask;
+            break;
+    }
+    return false;
+}
+
+bool processMoveMouseAction(void)
+{
+    MacroMouseReport.x = currentMacroAction.moveMouse.x;
+    MacroMouseReport.y = currentMacroAction.moveMouse.y;
+    return false;
+}
+
+bool processScrollMouseAction(void)
+{
+    MacroMouseReport.wheelX = currentMacroAction.scrollMouse.x;
+    MacroMouseReport.wheelY = currentMacroAction.scrollMouse.y;
+    return false;
+}
+
 bool processCurrentMacroAction(void)
 {
     switch (currentMacroAction.type) {
@@ -267,11 +305,11 @@ bool processCurrentMacroAction(void)
         case MacroActionType_Key:
             return processKeyMacroAction();
         case MacroActionType_MouseButton:
-            return false;
+            return processMouseButtonAction();
         case MacroActionType_MoveMouse:
-            return false;
+            return processMoveMouseAction();
         case MacroActionType_ScrollMouse:
-            return false;
+            return processScrollMouseAction();
         case MacroActionType_Text:
             return false;
     }
