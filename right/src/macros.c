@@ -215,7 +215,7 @@ void deleteScancode(uint16_t scancode, macro_sub_action_t type)
     }
 }
 
-bool processKeyMacroAction(void)
+bool processKeyAction(void)
 {
     static bool pressStarted;
 
@@ -243,7 +243,7 @@ bool processKeyMacroAction(void)
     return false;
 }
 
-bool processDelayMacroAction(void)
+bool processDelayAction(void)
 {
     static bool inDelay;
     static uint32_t delayStart;
@@ -301,9 +301,9 @@ bool processCurrentMacroAction(void)
 {
     switch (currentMacroAction.type) {
         case MacroActionType_Delay:
-            return processDelayMacroAction();
+            return processDelayAction();
         case MacroActionType_Key:
-            return processKeyMacroAction();
+            return processKeyAction();
         case MacroActionType_MouseButton:
             return processMouseButtonAction();
         case MacroActionType_MoveMouse:
