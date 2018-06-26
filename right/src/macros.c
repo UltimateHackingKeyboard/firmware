@@ -318,16 +318,32 @@ bool processMouseButtonAction(void)
 
 bool processMoveMouseAction(void)
 {
-    MacroMouseReport.x = currentMacroAction.moveMouse.x;
-    MacroMouseReport.y = currentMacroAction.moveMouse.y;
-    return false;
+    static bool inMotion;
+
+    if (inMotion) {
+        memset(&MacroMouseReport, 0, sizeof MacroMouseReport);
+        inMotion = false;
+    } else {
+        MacroMouseReport.x = currentMacroAction.moveMouse.x;
+        MacroMouseReport.y = currentMacroAction.moveMouse.y;
+        inMotion = true;
+    }
+    return inMotion;
 }
 
 bool processScrollMouseAction(void)
 {
-    MacroMouseReport.wheelX = currentMacroAction.scrollMouse.x;
-    MacroMouseReport.wheelY = currentMacroAction.scrollMouse.y;
-    return false;
+    static bool inMotion;
+
+    if (inMotion) {
+        memset(&MacroMouseReport, 0, sizeof MacroMouseReport);
+        inMotion = false;
+    } else {
+        MacroMouseReport.wheelX = currentMacroAction.scrollMouse.x;
+        MacroMouseReport.wheelY = currentMacroAction.scrollMouse.y;
+        inMotion = true;
+    }
+    return inMotion;
 }
 
 bool processTextAction(void)
