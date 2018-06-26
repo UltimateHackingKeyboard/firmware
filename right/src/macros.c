@@ -321,7 +321,8 @@ bool processMoveMouseAction(void)
     static bool inMotion;
 
     if (inMotion) {
-        memset(&MacroMouseReport, 0, sizeof MacroMouseReport);
+        MacroMouseReport.x = 0;
+        MacroMouseReport.y = 0;
         inMotion = false;
     } else {
         MacroMouseReport.x = currentMacroAction.moveMouse.x;
@@ -336,7 +337,8 @@ bool processScrollMouseAction(void)
     static bool inMotion;
 
     if (inMotion) {
-        memset(&MacroMouseReport, 0, sizeof MacroMouseReport);
+        MacroMouseReport.wheelX = 0;
+        MacroMouseReport.wheelY = 0;
         inMotion = false;
     } else {
         MacroMouseReport.wheelX = currentMacroAction.scrollMouse.x;
