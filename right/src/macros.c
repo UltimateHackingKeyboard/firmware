@@ -1,6 +1,7 @@
 #include "macros.h"
 #include "config_parser/parse_macro.h"
 #include "config_parser/config_globals.h"
+#include "timer.h"
 
 macro_reference_t AllMacros[MAX_MACRO_NUM];
 uint8_t AllMacrosCount;
@@ -242,11 +243,27 @@ bool processKeyMacroAction(void)
     return false;
 }
 
+bool processDelayMacroAction(void)
+{
+    static bool inDelay;
+    static uint32_t delayStart;
+
+    if (inDelay) {
+        if (Timer_GetElapsedTime(&delayStart) >= currentMacroAction.delay.delay) {
+            inDelay = false;
+        }
+    } else {
+        Timer_SetCurrentTime(&delayStart);
+        inDelay = true;
+    }
+    return inDelay;
+}
+
 bool processCurrentMacroAction(void)
 {
     switch (currentMacroAction.type) {
         case MacroActionType_Delay:
-            return false;
+            return processDelayMacroAction();
         case MacroActionType_Key:
             return processKeyMacroAction();
         case MacroActionType_MouseButton:
