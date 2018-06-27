@@ -42,7 +42,7 @@ void SlaveRxHandler(void)
         case SlaveCommand_SetTestLed:
             TxMessage.length = 0;
             bool isLedOn = RxMessage.data[1];
-            TEST_LED_SET(isLedOn);
+            TestLed_Set(isLedOn);
             break;
         case SlaveCommand_SetLedPwmBrightness:
             TxMessage.length = 0;

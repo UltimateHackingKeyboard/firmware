@@ -60,7 +60,7 @@ parser_error_t parseScrollMouseMacroAction(config_buffer_t *buffer, macro_action
 
 parser_error_t parseDelayMacroAction(config_buffer_t *buffer, macro_action_t *macroAction)
 {
-    int16_t delay = ReadInt16(buffer);
+    uint16_t delay = ReadUInt16(buffer);
 
     macroAction->type = MacroActionType_Delay;
     macroAction->delay.delay = delay;

@@ -1,11 +1,14 @@
 #include "fsl_pit.h"
 #include "timer.h"
 
-static volatile uint32_t CurrentTime;
+static volatile uint32_t currentTime, delayLength;
 
 void PIT_TIMER_HANDLER(void)
 {
-    CurrentTime++;
+    currentTime++;
+    if (delayLength) {
+        --delayLength;
+    }
     PIT_ClearStatusFlags(PIT, PIT_TIMER_CHANNEL, PIT_TFLG_TIF_MASK);
 }
 
@@ -25,23 +28,31 @@ void Timer_Init(void)
 }
 
 uint32_t Timer_GetCurrentTime() {
-    return CurrentTime;
+    return currentTime;
 }
 
 void Timer_SetCurrentTime(uint32_t *time)
 {
-    *time = CurrentTime;
+    *time = currentTime;
 }
 
 uint32_t Timer_GetElapsedTime(uint32_t *time)
 {
-    uint32_t elapsedTime = CurrentTime - *time;
+    uint32_t elapsedTime = currentTime - *time;
     return elapsedTime;
 }
 
 uint32_t Timer_GetElapsedTimeAndSetCurrent(uint32_t *time)
 {
     uint32_t elapsedTime = Timer_GetElapsedTime(time);
-    *time = CurrentTime;
+    *time = currentTime;
     return elapsedTime;
+}
+
+void Timer_Delay(uint32_t length)
+{
+    delayLength = length;
+    while (delayLength) {
+        ;
+    }
 }

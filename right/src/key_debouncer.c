@@ -7,7 +7,7 @@
 
 void PIT_KEY_DEBOUNCER_HANDLER(void)
 {
-    TEST_LED_TOGGLE();
+    TestLed_Toggle();
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
             uint8_t *debounceCounter = &KeyStates[slotId][keyId].debounceCounter;
