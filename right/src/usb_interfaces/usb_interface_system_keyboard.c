@@ -3,6 +3,7 @@
 uint32_t UsbSystemKeyboardActionCounter;
 static usb_system_keyboard_report_t usbSystemKeyboardReports[2];
 usb_system_keyboard_report_t* ActiveUsbSystemKeyboardReport = usbSystemKeyboardReports;
+volatile bool IsUsbSystemKeyboardReportSent = false;
 
 static usb_system_keyboard_report_t* getInactiveUsbSystemKeyboardReport()
 {
@@ -19,12 +20,14 @@ void ResetActiveUsbSystemKeyboardReport(void)
     bzero(ActiveUsbSystemKeyboardReport, USB_SYSTEM_KEYBOARD_REPORT_LENGTH);
 }
 
-usb_status_t UsbSystemKeyboardAction(void)
+static usb_status_t UsbSystemKeyboardAction(void)
 {
+    usb_status_t status = USB_DeviceHidSend(
+        UsbCompositeDevice.systemKeyboardHandle, USB_SYSTEM_KEYBOARD_ENDPOINT_INDEX,
+        (uint8_t*)getInactiveUsbSystemKeyboardReport(), USB_SYSTEM_KEYBOARD_REPORT_LENGTH);
+    IsUsbSystemKeyboardReportSent = true;
     UsbSystemKeyboardActionCounter++;
-    return USB_DeviceHidSend(
-            UsbCompositeDevice.systemKeyboardHandle, USB_SYSTEM_KEYBOARD_ENDPOINT_INDEX,
-            (uint8_t*)getInactiveUsbSystemKeyboardReport(), USB_SYSTEM_KEYBOARD_REPORT_LENGTH);
+    return status;
 }
 
 usb_status_t UsbSystemKeyboardCallback(class_handle_t handle, uint32_t event, void *param)
@@ -33,6 +36,10 @@ usb_status_t UsbSystemKeyboardCallback(class_handle_t handle, uint32_t event, vo
 
     switch (event) {
         case kUSB_DeviceHidEventSendResponse:
+            if (UsbCompositeDevice.attach) {
+                return UsbSystemKeyboardAction();
+            }
+            break;
         case kUSB_DeviceHidEventGetReport:
         case kUSB_DeviceHidEventSetReport:
         case kUSB_DeviceHidEventRequestReportBuffer:
@@ -53,7 +60,7 @@ usb_status_t UsbSystemKeyboardCallback(class_handle_t handle, uint32_t event, vo
 usb_status_t UsbSystemKeyboardSetConfiguration(class_handle_t handle, uint8_t configuration)
 {
     if (USB_COMPOSITE_CONFIGURATION_INDEX == configuration) {
-        //return UsbSystemKeyboardAction();
+        return UsbSystemKeyboardAction();
     }
     return kStatus_USB_Error;
 }
@@ -61,7 +68,7 @@ usb_status_t UsbSystemKeyboardSetConfiguration(class_handle_t handle, uint8_t co
 usb_status_t UsbSystemKeyboardSetInterface(class_handle_t handle, uint8_t interface, uint8_t alternateSetting)
 {
     if (USB_SYSTEM_KEYBOARD_INTERFACE_INDEX == interface) {
-        //return UsbSystemKeyboardAction();
+        return UsbSystemKeyboardAction();
     }
     return kStatus_USB_Error;
 }
