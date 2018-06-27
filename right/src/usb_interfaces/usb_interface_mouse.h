@@ -31,6 +31,7 @@
 
 // Variables:
 
+    extern volatile bool IsUsbMouseReportSent;
     extern uint32_t UsbMouseActionCounter;
     extern usb_mouse_report_t* ActiveUsbMouseReport;
 
@@ -42,6 +43,5 @@
 
     void ResetActiveUsbMouseReport(void);
     void SwitchActiveUsbMouseReport(void);
-    usb_status_t usbMouseAction(void);
 
 #endif
