@@ -19,7 +19,7 @@ void ResetActiveUsbMediaKeyboardReport(void)
     bzero(ActiveUsbMediaKeyboardReport, USB_MEDIA_KEYBOARD_REPORT_LENGTH);
 }
 
-usb_status_t UsbMediaKeyboardAction()
+usb_status_t UsbMediaKeyboardAction(void)
 {
     if (((usb_device_hid_struct_t *)UsbCompositeDevice.mediaKeyboardHandle)->interruptInPipeBusy)
         return kStatus_USB_Busy; // The previous report has not been sent yet
