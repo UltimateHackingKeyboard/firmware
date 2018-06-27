@@ -9,7 +9,7 @@
 // Macros:
 
     #define KEY_DEBOUNCER_INTERVAL_MSEC 1
-    #define KEY_DEBOUNCER_TIMEOUT_MSEC 100
+    #define KEY_DEBOUNCER_TIMEOUT_MSEC 5
 
 // Functions:
 

@@ -324,10 +324,10 @@ static void updateActiveUsbReports(void)
             key_state_t *keyState = &KeyStates[slotId][keyId];
             key_action_t *action = &CurrentKeymap[activeLayer][slotId][keyId];
 
-            if (keyState->debounceCounter < KEY_DEBOUNCER_TIMEOUT_MSEC) {
+            if (keyState->debounceCounter) {
                 keyState->current = keyState->previous;
-            } else if (!keyState->previous && keyState->current) {
-                keyState->debounceCounter = 0;
+            } else if (keyState->previous != keyState->current) {
+                keyState->debounceCounter = KEY_DEBOUNCER_TIMEOUT_MSEC + 1;
             }
 
             if (keyState->current) {
