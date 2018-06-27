@@ -326,7 +326,7 @@ static void updateActiveUsbReports(void)
 
             if (keyState->debounceCounter) {
                 keyState->current = keyState->previous;
-            } else if (keyState->previous != keyState->current) {
+            } else if (!keyState->previous && keyState->current) {
                 keyState->debounceCounter = KEY_DEBOUNCER_TIMEOUT_MSEC + 1;
             }
 
