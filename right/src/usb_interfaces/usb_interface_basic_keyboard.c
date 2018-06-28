@@ -1,5 +1,6 @@
 #include "led_display.h"
 #include "usb_composite_device.h"
+#include "usb_report_updater.h"
 
 static usb_basic_keyboard_report_t usbBasicKeyboardReports[2];
 uint32_t UsbBasicKeyboardActionCounter;
@@ -40,6 +41,8 @@ usb_status_t UsbBasicKeyboardCallback(class_handle_t handle, uint32_t event, voi
     switch (event) {
         // This report is received when the report has been sent
         case kUSB_DeviceHidEventSendResponse:
+            UsbReportUpdateSemaphore &= ~(1 << USB_BASIC_KEYBOARD_INTERFACE_INDEX);
+            break;
         case kUSB_DeviceHidEventRecvResponse:
         case kUSB_DeviceHidEventGetReport:
             break;

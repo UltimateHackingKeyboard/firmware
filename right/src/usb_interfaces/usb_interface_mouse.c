@@ -1,4 +1,5 @@
 #include "usb_composite_device.h"
+#include "usb_report_updater.h"
 
 uint32_t UsbMouseActionCounter;
 static usb_mouse_report_t usbMouseReports[2];
@@ -38,6 +39,8 @@ usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param
     switch (event) {
         // This report is received when the report has been sent
         case kUSB_DeviceHidEventSendResponse:
+            UsbReportUpdateSemaphore &= ~(1 << USB_MOUSE_INTERFACE_INDEX);
+            break;
         case kUSB_DeviceHidEventRecvResponse:
         case kUSB_DeviceHidEventGetReport:
         case kUSB_DeviceHidEventSetReport:

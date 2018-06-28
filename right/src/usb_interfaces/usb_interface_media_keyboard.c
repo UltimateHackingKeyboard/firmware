@@ -1,4 +1,5 @@
 #include "usb_composite_device.h"
+#include "usb_report_updater.h"
 
 uint32_t UsbMediaKeyboardActionCounter;
 static usb_media_keyboard_report_t usbMediaKeyboardReports[2];
@@ -38,6 +39,8 @@ usb_status_t UsbMediaKeyboardCallback(class_handle_t handle, uint32_t event, voi
     switch (event) {
         // This report is received when the report has been sent
         case kUSB_DeviceHidEventSendResponse:
+            UsbReportUpdateSemaphore &= ~(1 << USB_MEDIA_KEYBOARD_INTERFACE_INDEX);
+            break;
         case kUSB_DeviceHidEventRecvResponse:
         case kUSB_DeviceHidEventGetReport:
         case kUSB_DeviceHidEventSetReport:
