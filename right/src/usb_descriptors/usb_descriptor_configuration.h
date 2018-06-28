@@ -14,6 +14,10 @@
     #define USB_COMPOSITE_CONFIGURATION_INDEX 1
     #define USB_CONFIGURATION_DESCRIPTOR_TOTAL_LENGTH 141
 
+// Variables:
+
+    extern uint8_t UsbConfigurationDescriptor[USB_CONFIGURATION_DESCRIPTOR_TOTAL_LENGTH];
+
 // Functions:
 
     usb_status_t USB_DeviceGetConfigurationDescriptor(
