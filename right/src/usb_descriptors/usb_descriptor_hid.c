@@ -12,23 +12,29 @@ usb_status_t USB_DeviceGetHidDescriptor(
 usb_status_t USB_DeviceGetHidReportDescriptor(
     usb_device_handle handle, usb_device_get_hid_report_descriptor_struct_t *hidReportDescriptor)
 {
-    if (USB_GENERIC_HID_INTERFACE_INDEX == hidReportDescriptor->interfaceNumber) {
-        hidReportDescriptor->buffer = UsbGenericHidReportDescriptor;
-        hidReportDescriptor->length = USB_GENERIC_HID_REPORT_DESCRIPTOR_LENGTH;
-    } else if (USB_BASIC_KEYBOARD_INTERFACE_INDEX == hidReportDescriptor->interfaceNumber) {
-        hidReportDescriptor->buffer = UsbBasicKeyboardReportDescriptor;
-        hidReportDescriptor->length = USB_BASIC_KEYBOARD_REPORT_DESCRIPTOR_LENGTH;
-    } else if (USB_MEDIA_KEYBOARD_INTERFACE_INDEX == hidReportDescriptor->interfaceNumber) {
-        hidReportDescriptor->buffer = UsbMediaKeyboardReportDescriptor;
-        hidReportDescriptor->length = USB_MEDIA_KEYBOARD_REPORT_DESCRIPTOR_LENGTH;
-    } else if (USB_SYSTEM_KEYBOARD_INTERFACE_INDEX == hidReportDescriptor->interfaceNumber) {
-        hidReportDescriptor->buffer = UsbSystemKeyboardReportDescriptor;
-        hidReportDescriptor->length = USB_MEDIA_KEYBOARD_REPORT_DESCRIPTOR_LENGTH;
-    } else if (USB_MOUSE_INTERFACE_INDEX == hidReportDescriptor->interfaceNumber) {
-        hidReportDescriptor->buffer = UsbMouseReportDescriptor;
-        hidReportDescriptor->length = USB_MOUSE_REPORT_DESCRIPTOR_LENGTH;
-    } else {
-        return kStatus_USB_InvalidRequest;
+    switch (hidReportDescriptor->interfaceNumber) {
+        case USB_GENERIC_HID_INTERFACE_INDEX:
+            hidReportDescriptor->buffer = UsbGenericHidReportDescriptor;
+            hidReportDescriptor->length = USB_GENERIC_HID_REPORT_DESCRIPTOR_LENGTH;
+            break;
+        case USB_BASIC_KEYBOARD_INTERFACE_INDEX:
+            hidReportDescriptor->buffer = UsbBasicKeyboardReportDescriptor;
+            hidReportDescriptor->length = USB_BASIC_KEYBOARD_REPORT_DESCRIPTOR_LENGTH;
+            break;
+        case USB_MEDIA_KEYBOARD_INTERFACE_INDEX:
+            hidReportDescriptor->buffer = UsbMediaKeyboardReportDescriptor;
+            hidReportDescriptor->length = USB_MEDIA_KEYBOARD_REPORT_DESCRIPTOR_LENGTH;
+            break;
+        case USB_SYSTEM_KEYBOARD_INTERFACE_INDEX:
+            hidReportDescriptor->buffer = UsbSystemKeyboardReportDescriptor;
+            hidReportDescriptor->length = USB_MEDIA_KEYBOARD_REPORT_DESCRIPTOR_LENGTH;
+            break;
+        case USB_MOUSE_INTERFACE_INDEX:
+            hidReportDescriptor->buffer = UsbMouseReportDescriptor;
+            hidReportDescriptor->length = USB_MOUSE_REPORT_DESCRIPTOR_LENGTH;
+            break;
+        default:
+            return kStatus_USB_InvalidRequest;
     }
     return kStatus_USB_Success;
 }
