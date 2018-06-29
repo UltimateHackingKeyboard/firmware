@@ -21,15 +21,13 @@ void ResetActiveUsbMouseReport(void)
 
 usb_status_t usbMouseAction(void)
 {
-    if (((usb_device_hid_struct_t *)UsbCompositeDevice.mouseHandle)->interruptInPipeBusy)
-        return kStatus_USB_Busy; // The previous report has not been sent yet
-
-    UsbMouseActionCounter++;
     SwitchActiveUsbMouseReport(); // Switch the active report
     usb_status_t usb_status = USB_DeviceHidSend(
             UsbCompositeDevice.mouseHandle, USB_MOUSE_ENDPOINT_INDEX,
             (uint8_t*)GetInactiveUsbMouseReport(), USB_MOUSE_REPORT_LENGTH);
-    if (usb_status != kStatus_USB_Success) {
+    if (usb_status == kStatus_USB_Success) {
+        UsbMouseActionCounter++;
+    } else {
         SwitchActiveUsbMouseReport(); // Switch back, as the command failed
     }
     return usb_status;
