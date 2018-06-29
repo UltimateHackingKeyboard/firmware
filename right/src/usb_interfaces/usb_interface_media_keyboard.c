@@ -33,37 +33,31 @@ usb_status_t UsbMediaKeyboardAction(void)
 
 usb_status_t UsbMediaKeyboardCallback(class_handle_t handle, uint32_t event, void *param)
 {
-    usb_status_t error = kStatus_USB_Error;
+    usb_status_t error = kStatus_USB_Success;
 
     switch (event) {
         // This report is received when the report has been sent
         case kUSB_DeviceHidEventSendResponse:
-            error = kStatus_USB_Success;
-            break;
         case kUSB_DeviceHidEventRecvResponse:
         case kUSB_DeviceHidEventGetReport:
         case kUSB_DeviceHidEventSetReport:
         case kUSB_DeviceHidEventRequestReportBuffer:
-            error = kStatus_USB_InvalidRequest;
-            break;
         case kUSB_DeviceHidEventGetIdle:
         case kUSB_DeviceHidEventGetProtocol:
         case kUSB_DeviceHidEventSetIdle:
         case kUSB_DeviceHidEventSetProtocol:
-            break;
         default:
             break;
     }
-
     return error;
 }
 
 usb_status_t UsbMediaKeyboardSetConfiguration(class_handle_t handle, uint8_t configuration)
 {
-    return kStatus_USB_Error;
+    return kStatus_USB_Success;
 }
 
 usb_status_t UsbMediaKeyboardSetInterface(class_handle_t handle, uint8_t interface, uint8_t alternateSetting)
 {
-    return kStatus_USB_Error;
+    return kStatus_USB_Success;
 }
