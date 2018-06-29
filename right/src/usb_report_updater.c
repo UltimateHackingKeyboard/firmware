@@ -330,7 +330,7 @@ static void updateActiveUsbReports(void)
 
     if (simulateKeypresses) {
         sendChar = !sendChar;
-        ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = sendChar ? HID_KEYBOARD_SC_A : HID_KEYBOARD_SC_B;
+        ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = sendChar ? HID_KEYBOARD_SC_A : HID_KEYBOARD_SC_BACKSPACE;
     }
 
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
