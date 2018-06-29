@@ -423,6 +423,14 @@ void UpdateUsbReports(void)
     updateActiveUsbReports();
 
     bool HasUsbBasicKeyboardReportChanged = memcmp(ActiveUsbBasicKeyboardReport, GetInactiveUsbBasicKeyboardReport(), sizeof(usb_basic_keyboard_report_t)) != 0;
+    bool HasUsbMediaKeyboardReportChanged = memcmp(ActiveUsbMediaKeyboardReport, GetInactiveUsbMediaKeyboardReport(), sizeof(usb_media_keyboard_report_t)) != 0;
+    bool HasUsbSystemKeyboardReportChanged = memcmp(ActiveUsbSystemKeyboardReport, GetInactiveUsbSystemKeyboardReport(), sizeof(usb_system_keyboard_report_t)) != 0;
+    bool HasUsbMouseReportChanged = memcmp(ActiveUsbMouseReport, GetInactiveUsbMouseReport(), sizeof(usb_mouse_report_t)) != 0;
+
+    if (IsHostSleeping && (previousLayer != LayerId_Base || HasUsbBasicKeyboardReportChanged || HasUsbMediaKeyboardReportChanged || HasUsbSystemKeyboardReportChanged || HasUsbMouseReportChanged)) {
+        WakeUpHost(true); // Wake up the host if any key is pressed and the computer is sleeping.
+    }
+
     if (HasUsbBasicKeyboardReportChanged) {
         UsbReportUpdateSemaphore |= 1 << USB_BASIC_KEYBOARD_INTERFACE_INDEX;
         do {
@@ -430,7 +438,6 @@ void UpdateUsbReports(void)
         } while (status != kStatus_USB_Success);
     }
 
-    bool HasUsbMediaKeyboardReportChanged = memcmp(ActiveUsbMediaKeyboardReport, GetInactiveUsbMediaKeyboardReport(), sizeof(usb_media_keyboard_report_t)) != 0;
     if (HasUsbMediaKeyboardReportChanged) {
         UsbReportUpdateSemaphore |= 1 << USB_MEDIA_KEYBOARD_INTERFACE_INDEX;
         do {
@@ -438,7 +445,6 @@ void UpdateUsbReports(void)
         } while (status != kStatus_USB_Success);
     }
 
-    bool HasUsbSystemKeyboardReportChanged = memcmp(ActiveUsbSystemKeyboardReport, GetInactiveUsbSystemKeyboardReport(), sizeof(usb_system_keyboard_report_t)) != 0;
     if (HasUsbSystemKeyboardReportChanged) {
         UsbReportUpdateSemaphore |= 1 << USB_SYSTEM_KEYBOARD_INTERFACE_INDEX;
         do {
@@ -447,16 +453,11 @@ void UpdateUsbReports(void)
     }
 
     // Send out the mouse position and wheel values continuously if the report is not zeros, but only send the mouse button states when they change.
-    bool HasUsbMouseReportChanged = memcmp(ActiveUsbMouseReport, GetInactiveUsbMouseReport(), sizeof(usb_mouse_report_t)) != 0;
     if (HasUsbMouseReportChanged || ActiveUsbMouseReport->x || ActiveUsbMouseReport->y ||
             ActiveUsbMouseReport->wheelX || ActiveUsbMouseReport->wheelY) {
         UsbReportUpdateSemaphore |= 1 << USB_MOUSE_INTERFACE_INDEX;
         do {
             status = usbMouseAction();
         } while (status != kStatus_USB_Success);
-    }
-
-    if (IsHostSleeping && (previousLayer != LayerId_Base || HasUsbBasicKeyboardReportChanged || HasUsbMediaKeyboardReportChanged || HasUsbSystemKeyboardReportChanged || HasUsbMouseReportChanged)) {
-        WakeUpHost(true); // Wake up the host if any key is pressed and the computer is sleeping.
     }
 }
