@@ -21,14 +21,12 @@ void ResetActiveUsbMediaKeyboardReport(void)
 
 usb_status_t UsbMediaKeyboardAction(void)
 {
-    SwitchActiveUsbMediaKeyboardReport(); // Switch the active report
     usb_status_t usb_status = USB_DeviceHidSend(
-            UsbCompositeDevice.mediaKeyboardHandle, USB_MEDIA_KEYBOARD_ENDPOINT_INDEX,
-            (uint8_t*)GetInactiveUsbMediaKeyboardReport(), USB_MEDIA_KEYBOARD_REPORT_LENGTH);
+        UsbCompositeDevice.mediaKeyboardHandle, USB_MEDIA_KEYBOARD_ENDPOINT_INDEX,
+        (uint8_t *)ActiveUsbMediaKeyboardReport, USB_MEDIA_KEYBOARD_REPORT_LENGTH);
     if (usb_status == kStatus_USB_Success) {
         UsbMediaKeyboardActionCounter++;
-    } else {
-        SwitchActiveUsbMediaKeyboardReport(); // Switch back, as the command failed
+        SwitchActiveUsbMediaKeyboardReport();
     }
     return usb_status;
 }
