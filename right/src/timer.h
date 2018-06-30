@@ -20,5 +20,6 @@
     uint32_t Timer_GetElapsedTimeMicros(uint32_t *time);
     uint32_t Timer_GetElapsedTimeAndSetCurrent(uint32_t *time);
     uint32_t Timer_GetElapsedTimeAndSetCurrentMicros(uint32_t *time);
+    void Timer_Delay(uint32_t length);
 
 #endif
