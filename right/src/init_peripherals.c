@@ -157,7 +157,7 @@ void InitPeripherals(void)
     InitMergeSensor();
     ADC_Init();
     initI2c();
-    InitTestLed();
+    TestLed_Init();
     LedPwm_Init();
     InitI2cWatchdog();
     InitKeyDebouncer();

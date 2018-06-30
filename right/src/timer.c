@@ -4,11 +4,14 @@
 
 static volatile uint32_t CurrentTime;
 static uint32_t timerClockFrequency;
+static volatile uint32_t currentTime, delayLength;
 
 void PIT_TIMER_HANDLER(void)
 {
-    CurrentTime++;
-    //TEST_LED_TOGGLE();
+    currentTime++;
+    if (delayLength) {
+        --delayLength;
+    }
     PIT_ClearStatusFlags(PIT, PIT_TIMER_CHANNEL, kPIT_TimerFlag);
 }
 
@@ -27,14 +30,14 @@ void Timer_Init(void)
 }
 
 uint32_t Timer_GetCurrentTime() {
-    return CurrentTime;
+    return currentTime;
 }
 
 uint32_t Timer_GetCurrentTimeMicros() {
     uint32_t primask, count, ms;
     primask = DisableGlobalIRQ(); // Make sure the read is atomic
     count = PIT_GetCurrentTimerCount(PIT, PIT_TIMER_CHANNEL); // Read the current timer count
-    ms = CurrentTime; // Read the overflow counter
+    ms = currentTime; // Read the overflow counter
     EnableGlobalIRQ(primask); // Enable interrupts again if they where enabled before - this should make it interrupt safe
 
     // Calculate the counter value in microseconds - note that the PIT timer is counting downward, so we need to subtract the count from the period value
@@ -76,4 +79,12 @@ uint32_t Timer_GetElapsedTimeAndSetCurrentMicros(uint32_t *time)
     uint32_t elapsedTime = Timer_GetElapsedTimeMicros(time);
     *time = Timer_GetCurrentTimeMicros();
     return elapsedTime;
+}
+
+void Timer_Delay(uint32_t length)
+{
+    delayLength = length;
+    while (delayLength) {
+        ;
+    }
 }

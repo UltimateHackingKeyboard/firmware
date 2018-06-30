@@ -1,6 +1,7 @@
 #include "macros.h"
 #include "config_parser/parse_macro.h"
 #include "config_parser/config_globals.h"
+#include "timer.h"
 
 macro_reference_t AllMacros[MAX_MACRO_NUM];
 uint8_t AllMacrosCount;
@@ -18,67 +19,100 @@ uint8_t characterToScancode(char character)
 {
     switch (character) {
         case 'A' ... 'Z':
-            return 0;
         case 'a' ... 'z':
-            return 0;
+            return HID_KEYBOARD_SC_A - 1 + (character & 0x1F);
         case '1' ... '9':
-            return 0;
+            return HID_KEYBOARD_SC_1_AND_EXCLAMATION - 1 + (character & 0x0F);
         case ')':
         case '0':
-            return 0;
+            return HID_KEYBOARD_SC_0_AND_CLOSING_PARENTHESIS;
         case '!':
-            return 0;
+            return HID_KEYBOARD_SC_1_AND_EXCLAMATION;
         case '@':
-            return 0;
+            return HID_KEYBOARD_SC_2_AND_AT;
         case '#':
-            return 0;
+            return HID_KEYBOARD_SC_3_AND_HASHMARK;
         case '$':
-            return 0;
+            return HID_KEYBOARD_SC_4_AND_DOLLAR;
         case '%':
-            return 0;
+            return HID_KEYBOARD_SC_5_AND_PERCENTAGE;
         case '^':
-            return 0;
+            return HID_KEYBOARD_SC_6_AND_CARET;
         case '&':
-            return 0;
+            return HID_KEYBOARD_SC_7_AND_AMPERSAND;
         case '*':
-            return 0;
+            return HID_KEYBOARD_SC_8_AND_ASTERISK;
         case '(':
-            return 0;
+            return HID_KEYBOARD_SC_9_AND_OPENING_PARENTHESIS;
         case '`':
         case '~':
-            return 0;
+            return HID_KEYBOARD_SC_GRAVE_ACCENT_AND_TILDE;
         case '[':
         case '{':
-            return 0;
+            return HID_KEYBOARD_SC_OPENING_BRACKET_AND_OPENING_BRACE;
         case ']':
         case '}':
-            return 0;
+            return HID_KEYBOARD_SC_CLOSING_BRACKET_AND_CLOSING_BRACE;
         case ';':
         case ':':
-            return 0;
+            return HID_KEYBOARD_SC_SEMICOLON_AND_COLON;
         case '\'':
         case '\"':
-            return 0;
+            return HID_KEYBOARD_SC_APOSTROPHE_AND_QUOTE;
         case '+':
         case '=':
-            return 0;
+            return HID_KEYBOARD_SC_EQUAL_AND_PLUS;
         case '\\':
         case '|':
-            return 0;
+            return HID_KEYBOARD_SC_BACKSLASH_AND_PIPE;
         case '.':
         case '>':
-            return 0;
+            return HID_KEYBOARD_SC_DOT_AND_GREATER_THAN_SIGN;
         case ',':
         case '<':
-            return 0;
+            return HID_KEYBOARD_SC_KEYPAD_LESS_THAN_SIGN;
         case '/':
         case '\?':
-            return 0;
+            return HID_KEYBOARD_SC_SLASH_AND_QUESTION_MARK;
         case '-':
         case '_':
-            return 0;
+            return HID_KEYBOARD_SC_MINUS_AND_UNDERSCORE;
+        case '\n':
+            return HID_KEYBOARD_SC_ENTER;
+        case ' ':
+            return HID_KEYBOARD_SC_SPACE;
     }
     return 0;
+}
+
+bool characterToShift(char character)
+{
+    switch (character) {
+        case 'A' ... 'Z':
+        case ')':
+        case '!':
+        case '@':
+        case '#':
+        case '$':
+        case '%':
+        case '^':
+        case '&':
+        case '*':
+        case '(':
+        case '~':
+        case '{':
+        case '}':
+        case ':':
+        case '\"':
+        case '+':
+        case '|':
+        case '>':
+        case '<':
+        case '\?':
+        case '_':
+            return true;
+    }
+    return false;
 }
 
 void addBasicScancode(uint8_t scancode)
@@ -184,89 +218,183 @@ void deleteSystemScancode(uint8_t scancode)
     }
 }
 
-bool processKeyMacroAction(void)
+void addScancode(uint16_t scancode, macro_sub_action_t type)
+{
+    switch (type) {
+        case KeystrokeType_Basic:
+            addBasicScancode(scancode);
+            break;
+        case KeystrokeType_Media:
+            addMediaScancode(scancode);
+            break;
+        case KeystrokeType_System:
+            addSystemScancode(scancode);
+            break;
+    }
+}
+
+void deleteScancode(uint16_t scancode, macro_sub_action_t type)
+{
+    switch (type) {
+        case KeystrokeType_Basic:
+            deleteBasicScancode(scancode);
+            break;
+        case KeystrokeType_Media:
+            deleteMediaScancode(scancode);
+            break;
+        case KeystrokeType_System:
+            deleteSystemScancode(scancode);
+            break;
+    }
+}
+
+bool processKeyAction(void)
 {
     static bool pressStarted;
 
     switch (currentMacroAction.key.action) {
-        case MacroSubAction_Press:
+        case MacroSubAction_Tap:
             if (!pressStarted) {
                 pressStarted = true;
                 addModifiers(currentMacroAction.key.modifierMask);
-                switch (currentMacroAction.key.type) {
-                    case KeystrokeType_Basic:
-                        addBasicScancode(currentMacroAction.key.scancode);
-                        break;
-                    case KeystrokeType_Media:
-                        // addMediaScancode(currentMacroAction.key.scancode);
-                        break;
-                    case KeystrokeType_System:
-                        addSystemScancode(currentMacroAction.key.scancode);
-                        break;
-                }
+                addScancode(currentMacroAction.key.scancode, currentMacroAction.key.type);
                 return true;
             }
             pressStarted = false;
             deleteModifiers(currentMacroAction.key.modifierMask);
-            switch (currentMacroAction.key.type) {
-                case KeystrokeType_Basic:
-                    deleteBasicScancode(currentMacroAction.key.scancode);
-                    break;
-                case KeystrokeType_Media:
-                    // deleteMediaScancode(currentMacroAction.key.scancode);
-                    break;
-                case KeystrokeType_System:
-                    deleteSystemScancode(currentMacroAction.key.scancode);
-                    break;
-            }
+            deleteScancode(currentMacroAction.key.scancode, currentMacroAction.key.type);
             break;
         case MacroSubAction_Release:
             deleteModifiers(currentMacroAction.key.modifierMask);
-            switch (currentMacroAction.key.type) {
-                case KeystrokeType_Basic:
-                    deleteBasicScancode(currentMacroAction.key.scancode);
-                    break;
-                case KeystrokeType_Media:
-                    // deleteMediaScancode(currentMacroAction.key.scancode);
-                    break;
-                case KeystrokeType_System:
-                    deleteSystemScancode(currentMacroAction.key.scancode);
-                    break;
-            }
+            deleteScancode(currentMacroAction.key.scancode, currentMacroAction.key.type);
             break;
-        case MacroSubAction_Hold:
+        case MacroSubAction_Press:
             addModifiers(currentMacroAction.key.modifierMask);
-            switch (currentMacroAction.key.type) {
-                case KeystrokeType_Basic:
-                    addBasicScancode(currentMacroAction.key.scancode);
-                    break;
-                case KeystrokeType_Media:
-                    // addMediaScancode(currentMacroAction.key.scancode);
-                    break;
-                case KeystrokeType_System:
-                    addSystemScancode(currentMacroAction.key.scancode);
-                    break;
-            }
+            addScancode(currentMacroAction.key.scancode, currentMacroAction.key.type);
             break;
     }
     return false;
+}
+
+bool processDelayAction(void)
+{
+    static bool inDelay;
+    static uint32_t delayStart;
+
+    if (inDelay) {
+        if (Timer_GetElapsedTime(&delayStart) >= currentMacroAction.delay.delay) {
+            inDelay = false;
+        }
+    } else {
+        Timer_SetCurrentTime(&delayStart);
+        inDelay = true;
+    }
+    return inDelay;
+}
+
+bool processMouseButtonAction(void)
+{
+    static bool pressStarted;
+
+    switch (currentMacroAction.key.action) {
+        case MacroSubAction_Tap:
+            if (!pressStarted) {
+                pressStarted = true;
+                MacroMouseReport.buttons |= currentMacroAction.mouseButton.mouseButtonsMask;
+                return true;
+            }
+            pressStarted = false;
+            MacroMouseReport.buttons &= ~currentMacroAction.mouseButton.mouseButtonsMask;
+            break;
+        case MacroSubAction_Release:
+            MacroMouseReport.buttons &= ~currentMacroAction.mouseButton.mouseButtonsMask;
+            break;
+        case MacroSubAction_Press:
+            MacroMouseReport.buttons |= currentMacroAction.mouseButton.mouseButtonsMask;
+            break;
+    }
+    return false;
+}
+
+bool processMoveMouseAction(void)
+{
+    static bool inMotion;
+
+    if (inMotion) {
+        MacroMouseReport.x = 0;
+        MacroMouseReport.y = 0;
+        inMotion = false;
+    } else {
+        MacroMouseReport.x = currentMacroAction.moveMouse.x;
+        MacroMouseReport.y = currentMacroAction.moveMouse.y;
+        inMotion = true;
+    }
+    return inMotion;
+}
+
+bool processScrollMouseAction(void)
+{
+    static bool inMotion;
+
+    if (inMotion) {
+        MacroMouseReport.wheelX = 0;
+        MacroMouseReport.wheelY = 0;
+        inMotion = false;
+    } else {
+        MacroMouseReport.wheelX = currentMacroAction.scrollMouse.x;
+        MacroMouseReport.wheelY = currentMacroAction.scrollMouse.y;
+        inMotion = true;
+    }
+    return inMotion;
+}
+
+bool processTextAction(void)
+{
+    static uint16_t textIndex;
+    static uint8_t reportIndex = USB_BASIC_KEYBOARD_MAX_KEYS;
+    char character;
+    uint8_t scancode;
+
+    if (textIndex == currentMacroAction.text.textLen) {
+        textIndex = 0;
+        reportIndex = USB_BASIC_KEYBOARD_MAX_KEYS;
+        memset(&MacroBasicKeyboardReport, 0, sizeof MacroBasicKeyboardReport);
+        return false;
+    }
+    if (reportIndex == USB_BASIC_KEYBOARD_MAX_KEYS) {
+        reportIndex = 0;
+        memset(&MacroBasicKeyboardReport, 0, sizeof MacroBasicKeyboardReport);
+        return true;
+    }
+    character = currentMacroAction.text.text[textIndex];
+    scancode = characterToScancode(character);
+    for (uint8_t i = 0; i < reportIndex; i++) {
+        if (MacroBasicKeyboardReport.scancodes[i] == scancode) {
+            reportIndex = USB_BASIC_KEYBOARD_MAX_KEYS;
+            return true;
+        }
+    }
+    MacroBasicKeyboardReport.scancodes[reportIndex++] = scancode;
+    MacroBasicKeyboardReport.modifiers = characterToShift(character) ? HID_KEYBOARD_MODIFIER_LEFTSHIFT : 0;
+    ++textIndex;
+    return true;
 }
 
 bool processCurrentMacroAction(void)
 {
     switch (currentMacroAction.type) {
         case MacroActionType_Delay:
-            return false;
+            return processDelayAction();
         case MacroActionType_Key:
-            return processKeyMacroAction();
+            return processKeyAction();
         case MacroActionType_MouseButton:
-            return false;
+            return processMouseButtonAction();
         case MacroActionType_MoveMouse:
-            return false;
+            return processMoveMouseAction();
         case MacroActionType_ScrollMouse:
-            return false;
+            return processScrollMouseAction();
         case MacroActionType_Text:
-            return false;
+            return processTextAction();
     }
     return false;
 }

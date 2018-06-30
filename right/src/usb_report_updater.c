@@ -280,6 +280,11 @@ static void applyKeyAction(key_state_t *keyState, key_action_t *action)
                 SwitchKeymapById(action->switchKeymap.keymapId);
             }
             break;
+        case KeyActionType_PlayMacro:
+            if (!keyState->previous) {
+                Macros_StartMacro(action->playMacro.macroId);
+            }
+            break;
     }
 }
 
@@ -292,9 +297,18 @@ static bool sendChar = false;
 
 static void updateActiveUsbReports(void)
 {
-    memset(activeMouseStates, 0, ACTIVE_MOUSE_STATES_COUNT);
-
     static uint8_t previousModifiers = 0;
+
+    if (MacroPlaying) {
+        Macros_ContinueMacro();
+        memcpy(ActiveUsbMouseReport, &MacroMouseReport, sizeof MacroMouseReport);
+        memcpy(ActiveUsbBasicKeyboardReport, &MacroBasicKeyboardReport, sizeof MacroBasicKeyboardReport);
+        memcpy(ActiveUsbMediaKeyboardReport, &MacroMediaKeyboardReport, sizeof MacroMediaKeyboardReport);
+        memcpy(ActiveUsbSystemKeyboardReport, &MacroSystemKeyboardReport, sizeof MacroSystemKeyboardReport);
+        return;
+    }
+
+    memset(activeMouseStates, 0, ACTIVE_MOUSE_STATES_COUNT);
 
     basicScancodeIndex = 0;
     mediaScancodeIndex = 0;
@@ -313,15 +327,6 @@ static void updateActiveUsbReports(void)
     }
     bool layerGotReleased = previousLayer != LayerId_Base && activeLayer == LayerId_Base;
     LedDisplay_SetLayer(activeLayer);
-
-    if (MacroPlaying) {
-        Macros_ContinueMacro();
-        memcpy(&ActiveUsbMouseReport, &MacroMouseReport, sizeof MacroMouseReport);
-        memcpy(&ActiveUsbBasicKeyboardReport, &MacroBasicKeyboardReport, sizeof MacroBasicKeyboardReport);
-        memcpy(&ActiveUsbMediaKeyboardReport, &MacroMediaKeyboardReport, sizeof MacroMediaKeyboardReport);
-        memcpy(&ActiveUsbSystemKeyboardReport, &MacroSystemKeyboardReport, sizeof MacroSystemKeyboardReport);
-        return;
-    }
 
     key_state_t *testKeyState = &KeyStates[SlotId_LeftKeyboardHalf][0];
     if (!testKeyState->previous && testKeyState->current && activeLayer == LayerId_Fn) {
