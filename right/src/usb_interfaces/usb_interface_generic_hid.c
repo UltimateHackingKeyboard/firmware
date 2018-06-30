@@ -18,7 +18,11 @@ usb_status_t UsbGenericHidCallback(class_handle_t handle, uint32_t event, void *
     usb_status_t error = kStatus_USB_Error;
 
     switch (event) {
+        // This report is received when the report has been sent
         case kUSB_DeviceHidEventSendResponse:
+            if (UsbCompositeDevice.attach) {
+                error = kStatus_USB_Success;
+            }
             break;
         case kUSB_DeviceHidEventRecvResponse:
             UsbProtocolHandler();
