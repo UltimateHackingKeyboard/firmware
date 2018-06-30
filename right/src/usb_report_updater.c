@@ -409,7 +409,7 @@ void UpdateUsbReports(void)
 {
     usb_status_t status;
 
-    if (UsbReportUpdateSemaphore) {
+    if (UsbReportUpdateSemaphore && !IsHostSleeping) {
         return;
     }
 
