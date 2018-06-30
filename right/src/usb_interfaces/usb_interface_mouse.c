@@ -22,12 +22,14 @@ void ResetActiveUsbMouseReport(void)
 
 usb_status_t UsbMouseAction(void)
 {
+    SwitchActiveUsbMouseReport(); // Switch the active report
     usb_status_t usb_status = USB_DeviceHidSend(
-        UsbCompositeDevice.mouseHandle, USB_MOUSE_ENDPOINT_INDEX,
-        (uint8_t *)ActiveUsbMouseReport, USB_MOUSE_REPORT_LENGTH);
+            UsbCompositeDevice.mouseHandle, USB_MOUSE_ENDPOINT_INDEX,
+            (uint8_t*)GetInactiveUsbMouseReport(), USB_MOUSE_REPORT_LENGTH);
     if (usb_status == kStatus_USB_Success) {
         UsbMouseActionCounter++;
-        SwitchActiveUsbMouseReport();
+    } else {
+        SwitchActiveUsbMouseReport(); // Switch back, as the command failed
     }
     return usb_status;
 }
