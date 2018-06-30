@@ -41,7 +41,7 @@ usb_status_t UsbSystemKeyboardCallback(class_handle_t handle, uint32_t event, vo
     usb_status_t error = kStatus_USB_Error;
 
     switch (event) {
-        // This report is received when the report has been sent
+        // This event is received when the report has been sent
         case kUSB_DeviceHidEventSendResponse:
             UsbReportUpdateSemaphore &= ~(1 << USB_SYSTEM_KEYBOARD_INTERFACE_INDEX);
             if (UsbCompositeDevice.attach) {
