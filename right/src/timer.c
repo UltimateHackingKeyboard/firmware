@@ -2,7 +2,6 @@
 #include "timer.h"
 #include "peripherals/test_led.h"
 
-static volatile uint32_t CurrentTime;
 static uint32_t timerClockFrequency;
 static volatile uint32_t currentTime, delayLength;
 
