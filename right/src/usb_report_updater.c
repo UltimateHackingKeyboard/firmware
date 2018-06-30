@@ -407,8 +407,6 @@ uint32_t UsbReportUpdateCounter;
 
 void UpdateUsbReports(void)
 {
-    usb_status_t status;
-
     if (UsbReportUpdateSemaphore) {
         return;
     }
@@ -433,31 +431,23 @@ void UpdateUsbReports(void)
 
     if (HasUsbBasicKeyboardReportChanged) {
         UsbReportUpdateSemaphore |= 1 << USB_BASIC_KEYBOARD_INTERFACE_INDEX;
-        do {
-            status = UsbBasicKeyboardAction();
-        } while (status != kStatus_USB_Success);
+        UsbBasicKeyboardAction();
     }
 
     if (HasUsbMediaKeyboardReportChanged) {
         UsbReportUpdateSemaphore |= 1 << USB_MEDIA_KEYBOARD_INTERFACE_INDEX;
-        do {
-            status = UsbMediaKeyboardAction();
-        } while (status != kStatus_USB_Success);
+        UsbMediaKeyboardAction();
     }
 
     if (HasUsbSystemKeyboardReportChanged) {
         UsbReportUpdateSemaphore |= 1 << USB_SYSTEM_KEYBOARD_INTERFACE_INDEX;
-        do {
-            status = UsbSystemKeyboardAction();
-        } while (status != kStatus_USB_Success);
+        UsbSystemKeyboardAction();
     }
 
     // Send out the mouse position and wheel values continuously if the report is not zeros, but only send the mouse button states when they change.
     if (HasUsbMouseReportChanged || ActiveUsbMouseReport->x || ActiveUsbMouseReport->y ||
             ActiveUsbMouseReport->wheelX || ActiveUsbMouseReport->wheelY) {
         UsbReportUpdateSemaphore |= 1 << USB_MOUSE_INTERFACE_INDEX;
-        do {
-            status = UsbMouseAction();
-        } while (status != kStatus_USB_Success);
+        UsbMouseAction();
     }
 }
