@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [8.3.2] - 2018-06-27
+
+Device Protocol: 4.3.1 | Module Protocol: 4.0.0 | User Config: 4.1.0 | Hardware Config: 1.0.0
+
+- Make the debouncer debounce not only on key presses but also on key releases, and change the debounce interval from 100ms to the suggested 5ms of MX switches.
+- Revert the Windows related commits of firmware 8.3.1 because they introduced a nondeterministic bug that made USB hang.
+- Add base layer key mappings for the left and right add-ons for testing purposes.
+
 ## [8.3.1] - 2018-06-07
 
 Device Protocol: 4.3.1 | Module Protocol: 4.0.0 | User Config: 4.1.0 | Hardware Config: 1.0.0

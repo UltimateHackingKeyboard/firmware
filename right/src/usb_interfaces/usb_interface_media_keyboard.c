@@ -1,4 +1,5 @@
 #include "usb_composite_device.h"
+#include "usb_report_updater.h"
 
 uint32_t UsbMediaKeyboardActionCounter;
 static usb_media_keyboard_report_t usbMediaKeyboardReports[2];
@@ -21,18 +22,17 @@ void ResetActiveUsbMediaKeyboardReport(void)
 
 usb_status_t UsbMediaKeyboardAction(void)
 {
-    if (!UsbCompositeDevice.attach)
+    if (!UsbCompositeDevice.attach) {
         return kStatus_USB_Error; // The device is not attached
+    }
 
-    if (((usb_device_hid_struct_t *)UsbCompositeDevice.mediaKeyboardHandle)->interruptInPipeBusy)
-        return kStatus_USB_Busy; // The previous report has not been sent yet
-
-    UsbMediaKeyboardActionCounter++;
     SwitchActiveUsbMediaKeyboardReport(); // Switch the active report
     usb_status_t usb_status = USB_DeviceHidSend(
             UsbCompositeDevice.mediaKeyboardHandle, USB_MEDIA_KEYBOARD_ENDPOINT_INDEX,
             (uint8_t*)GetInactiveUsbMediaKeyboardReport(), USB_MEDIA_KEYBOARD_REPORT_LENGTH);
-    if (usb_status != kStatus_USB_Success) {
+    if (usb_status == kStatus_USB_Success) {
+        UsbMediaKeyboardActionCounter++;
+    } else {
         SwitchActiveUsbMediaKeyboardReport(); // Switch back, as the command failed
     }
     return usb_status;
@@ -45,6 +45,7 @@ usb_status_t UsbMediaKeyboardCallback(class_handle_t handle, uint32_t event, voi
     switch (event) {
         // This report is received when the report has been sent
         case kUSB_DeviceHidEventSendResponse:
+            UsbReportUpdateSemaphore &= ~(1 << USB_MEDIA_KEYBOARD_INTERFACE_INDEX);
             if (UsbCompositeDevice.attach) {
                 error = kStatus_USB_Success;
             }

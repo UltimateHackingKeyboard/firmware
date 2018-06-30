@@ -1,4 +1,5 @@
 #include "usb_composite_device.h"
+#include "usb_report_updater.h"
 
 uint32_t UsbSystemKeyboardActionCounter;
 static usb_system_keyboard_report_t usbSystemKeyboardReports[2];
@@ -21,18 +22,17 @@ void ResetActiveUsbSystemKeyboardReport(void)
 
 usb_status_t UsbSystemKeyboardAction(void)
 {
-    if (!UsbCompositeDevice.attach)
+    if (!UsbCompositeDevice.attach) {
         return kStatus_USB_Error; // The device is not attached
+    }
 
-    if (((usb_device_hid_struct_t *)UsbCompositeDevice.systemKeyboardHandle)->interruptInPipeBusy)
-        return kStatus_USB_Busy; // The previous report has not been sent yet
-
-    UsbSystemKeyboardActionCounter++;
     SwitchActiveUsbSystemKeyboardReport(); // Switch the active report
     usb_status_t usb_status = USB_DeviceHidSend(
             UsbCompositeDevice.systemKeyboardHandle, USB_SYSTEM_KEYBOARD_ENDPOINT_INDEX,
             (uint8_t*)GetInactiveUsbSystemKeyboardReport(), USB_SYSTEM_KEYBOARD_REPORT_LENGTH);
-    if (usb_status != kStatus_USB_Success) {
+    if (usb_status == kStatus_USB_Success) {
+        UsbSystemKeyboardActionCounter++;
+    } else {
         SwitchActiveUsbSystemKeyboardReport(); // Switch back, as the command failed
     }
     return usb_status;
@@ -45,6 +45,7 @@ usb_status_t UsbSystemKeyboardCallback(class_handle_t handle, uint32_t event, vo
     switch (event) {
         // This report is received when the report has been sent
         case kUSB_DeviceHidEventSendResponse:
+            UsbReportUpdateSemaphore &= ~(1 << USB_SYSTEM_KEYBOARD_INTERFACE_INDEX);
             if (UsbCompositeDevice.attach) {
                 error = kStatus_USB_Success;
             }
