@@ -457,7 +457,7 @@ void UpdateUsbReports(void)
             ActiveUsbMouseReport->wheelX || ActiveUsbMouseReport->wheelY) {
         UsbReportUpdateSemaphore |= 1 << USB_MOUSE_INTERFACE_INDEX;
         do {
-            status = usbMouseAction();
+            status = UsbMouseAction();
         } while (status != kStatus_USB_Success);
     }
 }

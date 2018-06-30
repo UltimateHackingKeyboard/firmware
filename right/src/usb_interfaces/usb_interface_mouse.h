@@ -42,6 +42,6 @@
 
     void ResetActiveUsbMouseReport(void);
     usb_mouse_report_t* GetInactiveUsbMouseReport(void);
-    usb_status_t usbMouseAction(void);
+    usb_status_t UsbMouseAction(void);
 
 #endif

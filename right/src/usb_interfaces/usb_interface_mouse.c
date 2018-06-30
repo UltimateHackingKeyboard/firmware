@@ -20,7 +20,7 @@ void ResetActiveUsbMouseReport(void)
     bzero(ActiveUsbMouseReport, USB_MOUSE_REPORT_LENGTH);
 }
 
-usb_status_t usbMouseAction(void)
+usb_status_t UsbMouseAction(void)
 {
     usb_status_t usb_status = USB_DeviceHidSend(
         UsbCompositeDevice.mouseHandle, USB_MOUSE_ENDPOINT_INDEX,
