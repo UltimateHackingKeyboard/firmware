@@ -125,7 +125,7 @@ static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
         kineticState->xOut = xSumInt;
 
         if (kineticState->isScroll && !kineticState->wasMoveAction && kineticState->xOut == 0 && horizontalMovement) {
-            kineticState->xOut = kineticState->xSum > 0 ? 1 : -1;
+            kineticState->xOut = kineticState->xSum ? copysignf(1.0, kineticState->xSum) : 0;
             kineticState->xSum = 0;
         }
 
@@ -146,7 +146,7 @@ static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
         kineticState->yOut = ySumInt;
 
         if (kineticState->isScroll && !kineticState->wasMoveAction && kineticState->yOut == 0 && verticalMovement) {
-            kineticState->yOut = kineticState->ySum > 0 ? 1 : -1;
+            kineticState->yOut = kineticState->ySum ? copysignf(1.0, kineticState->ySum) : 0;
             kineticState->ySum = 0;
         }
     } else {
