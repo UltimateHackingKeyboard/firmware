@@ -402,20 +402,20 @@ static void updateActiveUsbReports(void)
 }
 
 uint32_t UsbReportUpdateCounter;
-static uint32_t lastMouseUpdateTimeMicros;
+static uint32_t lastMouseUpdateTime;
 
 void UpdateUsbReports(void)
 {
     UsbReportUpdateCounter++;
-    if (((usb_device_hid_struct_t *)UsbCompositeDevice.basicKeyboardHandle)->interruptInPipeBusy ||
+    /*if (((usb_device_hid_struct_t *)UsbCompositeDevice.basicKeyboardHandle)->interruptInPipeBusy ||
             ((usb_device_hid_struct_t *)UsbCompositeDevice.mediaKeyboardHandle)->interruptInPipeBusy ||
             ((usb_device_hid_struct_t *)UsbCompositeDevice.systemKeyboardHandle)->interruptInPipeBusy ||
             ((usb_device_hid_struct_t *)UsbCompositeDevice.mouseHandle)->interruptInPipeBusy) {
         return;
-    } else if (Timer_GetElapsedTimeMicros(&lastMouseUpdateTimeMicros) < 1000U * USB_BASIC_KEYBOARD_INTERRUPT_IN_INTERVAL) {
+    } else */if (Timer_GetElapsedTime(&lastMouseUpdateTime) < USB_BASIC_KEYBOARD_INTERRUPT_IN_INTERVAL) {
         return;
     }
-    Timer_SetCurrentTimeMicros(&lastMouseUpdateTimeMicros);
+    Timer_SetCurrentTime(&lastMouseUpdateTime);
 
     ResetActiveUsbBasicKeyboardReport();
     ResetActiveUsbMediaKeyboardReport();

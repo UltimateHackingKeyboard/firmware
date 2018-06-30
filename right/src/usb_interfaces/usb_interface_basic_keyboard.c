@@ -23,8 +23,12 @@ void ResetActiveUsbBasicKeyboardReport(void)
 
 usb_status_t UsbBasicKeyboardAction(void)
 {
-    if (((usb_device_hid_struct_t *)UsbCompositeDevice.basicKeyboardHandle)->interruptInPipeBusy)
-        return kStatus_USB_Busy; // The previous report has not been sent yet
+    if (((usb_device_hid_struct_t *)UsbCompositeDevice.basicKeyboardHandle)->interruptInPipeBusy) {
+        ((usb_device_hid_struct_t *)UsbCompositeDevice.basicKeyboardHandle)->interruptInPipeBusy = 0;
+        return USB_DeviceCancel(((usb_device_hid_struct_t *)UsbCompositeDevice.basicKeyboardHandle)->handle,
+                (USB_BASIC_KEYBOARD_ENDPOINT_INDEX & USB_ENDPOINT_NUMBER_MASK) |
+                USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_IN);
+    }
 
     UsbBasicKeyboardActionCounter++;
     SwitchActiveUsbBasicKeyboardReport(); // Switch the active report
