@@ -38,15 +38,17 @@ usb_status_t UsbBasicKeyboardAction(void)
 
 usb_status_t UsbBasicKeyboardCallback(class_handle_t handle, uint32_t event, void *param)
 {
-    usb_status_t error = kStatus_USB_Success;
+    usb_status_t error = kStatus_USB_Error;
 
     switch (event) {
         // This report is received when the report has been sent
         case kUSB_DeviceHidEventSendResponse:
             UsbReportUpdateSemaphore &= ~(1 << USB_BASIC_KEYBOARD_INTERFACE_INDEX);
+            error = kStatus_USB_Success;
             break;
         case kUSB_DeviceHidEventRecvResponse:
         case kUSB_DeviceHidEventGetReport:
+            error = kStatus_USB_InvalidRequest;
             break;
         case kUSB_DeviceHidEventSetReport: {
             usb_device_hid_report_struct_t *report = (usb_device_hid_report_struct_t*)param;
@@ -72,18 +74,20 @@ usb_status_t UsbBasicKeyboardCallback(class_handle_t handle, uint32_t event, voi
         case kUSB_DeviceHidEventGetProtocol:
         case kUSB_DeviceHidEventSetIdle:
         case kUSB_DeviceHidEventSetProtocol:
+            break;
         default:
             break;
     }
+
     return error;
 }
 
 usb_status_t UsbBasicKeyboardSetConfiguration(class_handle_t handle, uint8_t configuration)
 {
-    return kStatus_USB_Success;
+    return kStatus_USB_Error;
 }
 
 usb_status_t UsbBasicKeyboardSetInterface(class_handle_t handle, uint8_t interface, uint8_t alternateSetting)
 {
-    return kStatus_USB_Success;
+    return kStatus_USB_Error;
 }
