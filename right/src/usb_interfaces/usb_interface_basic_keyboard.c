@@ -23,6 +23,9 @@ void ResetActiveUsbBasicKeyboardReport(void)
 
 usb_status_t UsbBasicKeyboardAction(void)
 {
+    if (!UsbCompositeDevice.attach)
+        return kStatus_USB_Error; // The device is not attached
+
     if (((usb_device_hid_struct_t *)UsbCompositeDevice.basicKeyboardHandle)->interruptInPipeBusy) {
         ((usb_device_hid_struct_t *)UsbCompositeDevice.basicKeyboardHandle)->interruptInPipeBusy = 0;
         return USB_DeviceCancel(((usb_device_hid_struct_t *)UsbCompositeDevice.basicKeyboardHandle)->handle,

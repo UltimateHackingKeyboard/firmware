@@ -7,6 +7,9 @@ uint8_t GenericHidOutBuffer[USB_GENERIC_HID_OUT_BUFFER_LENGTH];
 
 static usb_status_t UsbReceiveData(void)
 {
+    if (!UsbCompositeDevice.attach)
+        return kStatus_USB_Error; // The device is not attached
+
     return USB_DeviceHidRecv(UsbCompositeDevice.genericHidHandle,
                              USB_GENERIC_HID_ENDPOINT_OUT_INDEX,
                              GenericHidInBuffer,

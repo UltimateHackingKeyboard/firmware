@@ -21,6 +21,9 @@ void ResetActiveUsbSystemKeyboardReport(void)
 
 usb_status_t UsbSystemKeyboardAction(void)
 {
+    if (!UsbCompositeDevice.attach)
+        return kStatus_USB_Error; // The device is not attached
+
     if (((usb_device_hid_struct_t *)UsbCompositeDevice.systemKeyboardHandle)->interruptInPipeBusy)
         return kStatus_USB_Busy; // The previous report has not been sent yet
 

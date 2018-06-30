@@ -21,6 +21,9 @@ void ResetActiveUsbMediaKeyboardReport(void)
 
 usb_status_t UsbMediaKeyboardAction(void)
 {
+    if (!UsbCompositeDevice.attach)
+        return kStatus_USB_Error; // The device is not attached
+
     if (((usb_device_hid_struct_t *)UsbCompositeDevice.mediaKeyboardHandle)->interruptInPipeBusy)
         return kStatus_USB_Busy; // The previous report has not been sent yet
 
