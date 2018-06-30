@@ -26,14 +26,12 @@ usb_status_t UsbMouseAction(void)
         return kStatus_USB_Error; // The device is not attached
     }
 
-    SwitchActiveUsbMouseReport(); // Switch the active report
     usb_status_t usb_status = USB_DeviceHidSend(
-            UsbCompositeDevice.mouseHandle, USB_MOUSE_ENDPOINT_INDEX,
-            (uint8_t*)GetInactiveUsbMouseReport(), USB_MOUSE_REPORT_LENGTH);
+        UsbCompositeDevice.mouseHandle, USB_MOUSE_ENDPOINT_INDEX,
+        (uint8_t *)ActiveUsbMouseReport, USB_MOUSE_REPORT_LENGTH);
     if (usb_status == kStatus_USB_Success) {
         UsbMouseActionCounter++;
-    } else {
-        SwitchActiveUsbMouseReport(); // Switch back, as the command failed
+        SwitchActiveUsbMouseReport();
     }
     return usb_status;
 }

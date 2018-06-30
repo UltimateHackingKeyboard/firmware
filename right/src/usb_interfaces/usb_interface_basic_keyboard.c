@@ -28,14 +28,12 @@ usb_status_t UsbBasicKeyboardAction(void)
         return kStatus_USB_Error; // The device is not attached
     }
 
-    SwitchActiveUsbBasicKeyboardReport(); // Switch the active report
     usb_status_t usb_status = USB_DeviceHidSend(
-            UsbCompositeDevice.basicKeyboardHandle, USB_BASIC_KEYBOARD_ENDPOINT_INDEX,
-            (uint8_t*)GetInactiveUsbBasicKeyboardReport(), USB_BASIC_KEYBOARD_REPORT_LENGTH);
+        UsbCompositeDevice.basicKeyboardHandle, USB_BASIC_KEYBOARD_ENDPOINT_INDEX,
+        (uint8_t *)ActiveUsbBasicKeyboardReport, USB_BASIC_KEYBOARD_REPORT_LENGTH);
     if (usb_status == kStatus_USB_Success) {
         UsbBasicKeyboardActionCounter++;
-    } else {
-        SwitchActiveUsbBasicKeyboardReport(); // Switch back, as the command failed
+        SwitchActiveUsbBasicKeyboardReport();
     }
     return usb_status;
 }
