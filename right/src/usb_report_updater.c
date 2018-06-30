@@ -409,6 +409,9 @@ static void updateActiveUsbReports(void)
 }
 
 uint32_t UsbReportUpdateCounter;
+
+void UpdateUsbReports(void)
+{
     usb_status_t status;
 
     if (UsbReportUpdateSemaphore && !IsHostSleeping) {
