@@ -292,8 +292,6 @@ static uint8_t secondaryRoleState = SecondaryRoleState_Released;
 static uint8_t secondaryRoleSlotId;
 static uint8_t secondaryRoleKeyId;
 static secondary_role_t secondaryRole;
-static bool simulateKeypresses = false;
-static bool sendChar = false;
 
 static void updateActiveUsbReports(void)
 {
@@ -328,6 +326,10 @@ static void updateActiveUsbReports(void)
     bool layerGotReleased = previousLayer != LayerId_Base && activeLayer == LayerId_Base;
     LedDisplay_SetLayer(activeLayer);
 
+#if 0 // Used to toggle key presses at the maximum rate - this was used to reproduce: https://github.com/UltimateHackingKeyboard/firmware/issues/122
+    static bool simulateKeypresses = false;
+    static bool sendChar = false;
+
     key_state_t *testKeyState = &KeyStates[SlotId_LeftKeyboardHalf][0];
     if (!testKeyState->previous && testKeyState->current && activeLayer == LayerId_Fn) {
         simulateKeypresses = !simulateKeypresses;
@@ -337,6 +339,7 @@ static void updateActiveUsbReports(void)
         sendChar = !sendChar;
         ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = sendChar ? HID_KEYBOARD_SC_A : HID_KEYBOARD_SC_BACKSPACE;
     }
+#endif
 
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
