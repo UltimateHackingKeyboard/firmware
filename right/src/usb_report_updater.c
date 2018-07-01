@@ -312,10 +312,6 @@ static void updateActiveUsbReports(void)
     mediaScancodeIndex = 0;
     systemScancodeIndex = 0;
 
-    for (uint8_t keyId=0; keyId < RIGHT_KEY_MATRIX_KEY_COUNT; keyId++) {
-        KeyStates[SlotId_RightKeyboardHalf][keyId].current = RightKeyMatrix.keyStates[keyId];
-    }
-
     layer_id_t activeLayer = LayerId_Base;
     if (secondaryRoleState == SecondaryRoleState_Triggered && IS_SECONDARY_ROLE_LAYER_SWITCHER(secondaryRole)) {
         activeLayer = SECONDARY_ROLE_LAYER_TO_LAYER_ID(secondaryRole);
@@ -415,7 +411,23 @@ uint32_t UsbReportUpdateCounter;
 
 void UpdateUsbReports(void)
 {
-    if (UsbReportUpdateSemaphore && !IsHostSleeping) {
+    for (uint8_t keyId = 0; keyId < RIGHT_KEY_MATRIX_KEY_COUNT; keyId++) {
+        KeyStates[SlotId_RightKeyboardHalf][keyId].current = RightKeyMatrix.keyStates[keyId];
+    }
+
+    if (IsHostSleeping) {
+        for (uint8_t slotId = 0; slotId < SLOT_COUNT; slotId++) {
+            for (uint8_t keyId = 0; keyId < MAX_KEY_COUNT_PER_MODULE; keyId++) {
+                if (KeyStates[slotId][keyId].current) {
+                    WakeUpHost(true);
+                    break;
+                }
+            }
+        }
+        return;
+    }
+
+    if (UsbReportUpdateSemaphore) {
         return;
     }
 
