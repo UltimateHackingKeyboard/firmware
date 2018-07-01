@@ -25,6 +25,8 @@ static uint16_t DoubleTapSwitchLayerReleaseTimeout = 100;
 
 static bool activeMouseStates[ACTIVE_MOUSE_STATES_COUNT];
 
+volatile uint8_t UsbReportUpdateSemaphore = 0;
+
 mouse_kinetic_state_t MouseMoveState = {
     .isScroll = false,
     .upState = SerializedMouseAction_MoveUp,
@@ -324,6 +326,21 @@ static void updateActiveUsbReports(void)
     bool layerGotReleased = previousLayer != LayerId_Base && activeLayer == LayerId_Base;
     LedDisplay_SetLayer(activeLayer);
 
+#if 0 // Used to toggle key presses at the maximum rate - this was used to reproduce: https://github.com/UltimateHackingKeyboard/firmware/issues/122
+    static bool simulateKeypresses = false;
+    static bool sendChar = false;
+
+    key_state_t *testKeyState = &KeyStates[SlotId_LeftKeyboardHalf][0];
+    if (!testKeyState->previous && testKeyState->current && activeLayer == LayerId_Fn) {
+        simulateKeypresses = !simulateKeypresses;
+    }
+
+    if (simulateKeypresses) {
+        sendChar = !sendChar;
+        ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = sendChar ? HID_KEYBOARD_SC_A : HID_KEYBOARD_SC_BACKSPACE;
+    }
+#endif
+
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
             key_state_t *keyState = &KeyStates[slotId][keyId];
@@ -395,27 +412,14 @@ static void updateActiveUsbReports(void)
 }
 
 uint32_t UsbReportUpdateCounter;
-static uint32_t lastMouseUpdateTime;
 
 void UpdateUsbReports(void)
 {
-    UsbReportUpdateCounter++;
-
-    // Process the key inputs at a constant rate when moving the mouse, so the mouse speed is consistent.
-    bool hasActiveMouseState = false;
-    for (uint8_t i=0; i<ACTIVE_MOUSE_STATES_COUNT; i++) {
-        hasActiveMouseState = true;
-        break;
-    }
-
-    if (hasActiveMouseState) {
-        if (Timer_GetElapsedTime(&lastMouseUpdateTime) < USB_MOUSE_INTERRUPT_IN_INTERVAL) {
-            return;
-        }
-        Timer_SetCurrentTime(&lastMouseUpdateTime);
-    } else if (!IsUsbBasicKeyboardReportSent || !IsUsbMediaKeyboardReportSent || !IsUsbSystemKeyboardReportSent || !IsUsbMouseReportSent) {
+    if (UsbReportUpdateSemaphore && !IsHostSleeping) {
         return;
     }
+
+    UsbReportUpdateCounter++;
 
     ResetActiveUsbBasicKeyboardReport();
     ResetActiveUsbMediaKeyboardReport();
@@ -424,35 +428,42 @@ void UpdateUsbReports(void)
 
     updateActiveUsbReports();
 
-    static usb_basic_keyboard_report_t last_basic_report = { .scancodes[0] = 0xFF };
-    if (memcmp(ActiveUsbBasicKeyboardReport, &last_basic_report, sizeof(usb_basic_keyboard_report_t)) != 0) {
-        last_basic_report = *ActiveUsbBasicKeyboardReport;
-        SwitchActiveUsbBasicKeyboardReport();
-        IsUsbBasicKeyboardReportSent = false;
-    }
+    bool HasUsbBasicKeyboardReportChanged = memcmp(ActiveUsbBasicKeyboardReport, GetInactiveUsbBasicKeyboardReport(), sizeof(usb_basic_keyboard_report_t)) != 0;
+    bool HasUsbMediaKeyboardReportChanged = memcmp(ActiveUsbMediaKeyboardReport, GetInactiveUsbMediaKeyboardReport(), sizeof(usb_media_keyboard_report_t)) != 0;
+    bool HasUsbSystemKeyboardReportChanged = memcmp(ActiveUsbSystemKeyboardReport, GetInactiveUsbSystemKeyboardReport(), sizeof(usb_system_keyboard_report_t)) != 0;
+    bool HasUsbMouseReportChanged = memcmp(ActiveUsbMouseReport, GetInactiveUsbMouseReport(), sizeof(usb_mouse_report_t)) != 0;
 
-    static usb_media_keyboard_report_t last_media_report = { .scancodes[0] = 0xFF };
-    if (memcmp(ActiveUsbMediaKeyboardReport, &last_media_report, sizeof(usb_media_keyboard_report_t)) != 0) {
-        last_media_report = *ActiveUsbMediaKeyboardReport;
-        SwitchActiveUsbMediaKeyboardReport();
-        IsUsbMediaKeyboardReportSent = false;
-    }
-
-    static usb_system_keyboard_report_t last_system_report = { .scancodes[0] = 0xFF };
-    if (memcmp(ActiveUsbSystemKeyboardReport, &last_system_report, sizeof(usb_system_keyboard_report_t)) != 0) {
-        last_system_report = *ActiveUsbSystemKeyboardReport;
-        SwitchActiveUsbSystemKeyboardReport();
-        IsUsbSystemKeyboardReportSent = false;
-    }
-
-    static usb_mouse_report_t last_mouse_report = { .buttons = 0xFF };
-    if (memcmp(ActiveUsbMouseReport, &last_mouse_report, sizeof(usb_mouse_report_t)) != 0) {
-        last_mouse_report = *ActiveUsbMouseReport;
-        SwitchActiveUsbMouseReport();
-        IsUsbMouseReportSent = false;
-    }
-
-    if ((previousLayer != LayerId_Base || !IsUsbBasicKeyboardReportSent || !IsUsbMediaKeyboardReportSent || !IsUsbSystemKeyboardReportSent || !IsUsbMouseReportSent) && IsHostSleeping) {
+    if (IsHostSleeping && (previousLayer != LayerId_Base || HasUsbBasicKeyboardReportChanged || HasUsbMediaKeyboardReportChanged || HasUsbSystemKeyboardReportChanged || HasUsbMouseReportChanged)) {
         WakeUpHost(true); // Wake up the host if any key is pressed and the computer is sleeping.
+    }
+
+    if (HasUsbBasicKeyboardReportChanged) {
+        usb_status_t status = UsbBasicKeyboardAction();
+        if (status == kStatus_USB_Success) {
+            UsbReportUpdateSemaphore |= 1 << USB_BASIC_KEYBOARD_INTERFACE_INDEX;
+        }
+    }
+
+    if (HasUsbMediaKeyboardReportChanged) {
+        usb_status_t status = UsbMediaKeyboardAction();
+        if (status == kStatus_USB_Success) {
+            UsbReportUpdateSemaphore |= 1 << USB_MEDIA_KEYBOARD_INTERFACE_INDEX;
+        }
+    }
+
+    if (HasUsbSystemKeyboardReportChanged) {
+        usb_status_t status = UsbSystemKeyboardAction();
+        if (status == kStatus_USB_Success) {
+            UsbReportUpdateSemaphore |= 1 << USB_SYSTEM_KEYBOARD_INTERFACE_INDEX;
+        }
+    }
+
+    // Send out the mouse position and wheel values continuously if the report is not zeros, but only send the mouse button states when they change.
+    if (HasUsbMouseReportChanged || ActiveUsbMouseReport->x || ActiveUsbMouseReport->y ||
+            ActiveUsbMouseReport->wheelX || ActiveUsbMouseReport->wheelY) {
+        usb_status_t status = UsbMouseAction();
+        if (status == kStatus_USB_Success) {
+            UsbReportUpdateSemaphore |= 1 << USB_MOUSE_INTERFACE_INDEX;
+        }
     }
 }

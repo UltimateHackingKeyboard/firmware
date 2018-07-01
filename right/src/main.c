@@ -45,7 +45,6 @@ int main(void)
         InitSlaveScheduler();
         KeyMatrix_Init(&RightKeyMatrix);
         InitKeyScanner();
-        UpdateUsbReports();
         InitUsb();
 
         while (1) {

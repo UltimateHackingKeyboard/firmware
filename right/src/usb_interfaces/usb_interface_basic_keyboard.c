@@ -1,20 +1,20 @@
 #include "led_display.h"
 #include "usb_composite_device.h"
+#include "usb_report_updater.h"
 
 static usb_basic_keyboard_report_t usbBasicKeyboardReports[2];
 uint32_t UsbBasicKeyboardActionCounter;
 usb_basic_keyboard_report_t* ActiveUsbBasicKeyboardReport = usbBasicKeyboardReports;
-volatile bool IsUsbBasicKeyboardReportSent = false;
 static uint8_t usbBasicKeyboardInBuffer[USB_BASIC_KEYBOARD_REPORT_LENGTH];
 
-static usb_basic_keyboard_report_t* getInactiveUsbBasicKeyboardReport(void)
+usb_basic_keyboard_report_t* GetInactiveUsbBasicKeyboardReport(void)
 {
     return ActiveUsbBasicKeyboardReport == usbBasicKeyboardReports ? usbBasicKeyboardReports+1 : usbBasicKeyboardReports;
 }
 
-void SwitchActiveUsbBasicKeyboardReport(void)
+static void SwitchActiveUsbBasicKeyboardReport(void)
 {
-    ActiveUsbBasicKeyboardReport = getInactiveUsbBasicKeyboardReport();
+    ActiveUsbBasicKeyboardReport = GetInactiveUsbBasicKeyboardReport();
 }
 
 void ResetActiveUsbBasicKeyboardReport(void)
@@ -22,14 +22,20 @@ void ResetActiveUsbBasicKeyboardReport(void)
     bzero(ActiveUsbBasicKeyboardReport, USB_BASIC_KEYBOARD_REPORT_LENGTH);
 }
 
-static usb_status_t UsbBasicKeyboardAction(void)
+usb_status_t UsbBasicKeyboardAction(void)
 {
-    usb_status_t status = USB_DeviceHidSend(
+    if (!UsbCompositeDevice.attach) {
+        return kStatus_USB_Error; // The device is not attached
+    }
+
+    usb_status_t usb_status = USB_DeviceHidSend(
         UsbCompositeDevice.basicKeyboardHandle, USB_BASIC_KEYBOARD_ENDPOINT_INDEX,
-        (uint8_t*)getInactiveUsbBasicKeyboardReport(), USB_BASIC_KEYBOARD_REPORT_LENGTH);
-    IsUsbBasicKeyboardReportSent = true;
-    UsbBasicKeyboardActionCounter++;
-    return status;
+        (uint8_t *)ActiveUsbBasicKeyboardReport, USB_BASIC_KEYBOARD_REPORT_LENGTH);
+    if (usb_status == kStatus_USB_Success) {
+        UsbBasicKeyboardActionCounter++;
+        SwitchActiveUsbBasicKeyboardReport();
+    }
+    return usb_status;
 }
 
 usb_status_t UsbBasicKeyboardCallback(class_handle_t handle, uint32_t event, void *param)
@@ -37,11 +43,14 @@ usb_status_t UsbBasicKeyboardCallback(class_handle_t handle, uint32_t event, voi
     usb_status_t error = kStatus_USB_Error;
 
     switch (event) {
+        // This event is received when the report has been sent
         case kUSB_DeviceHidEventSendResponse:
+            UsbReportUpdateSemaphore &= ~(1 << USB_BASIC_KEYBOARD_INTERFACE_INDEX);
             if (UsbCompositeDevice.attach) {
-                return UsbBasicKeyboardAction();
+                error = kStatus_USB_Success;
             }
             break;
+        case kUSB_DeviceHidEventRecvResponse:
         case kUSB_DeviceHidEventGetReport:
             error = kStatus_USB_InvalidRequest;
             break;
@@ -61,7 +70,7 @@ usb_status_t UsbBasicKeyboardCallback(class_handle_t handle, uint32_t event, voi
                 report->reportBuffer = usbBasicKeyboardInBuffer;
                 error = kStatus_USB_Success;
             } else {
-                error = kStatus_USB_InvalidRequest;
+                error = kStatus_USB_AllocFail;
             }
             break;
         }
@@ -79,16 +88,10 @@ usb_status_t UsbBasicKeyboardCallback(class_handle_t handle, uint32_t event, voi
 
 usb_status_t UsbBasicKeyboardSetConfiguration(class_handle_t handle, uint8_t configuration)
 {
-    if (USB_COMPOSITE_CONFIGURATION_INDEX == configuration) {
-        return UsbBasicKeyboardAction();
-    }
     return kStatus_USB_Error;
 }
 
 usb_status_t UsbBasicKeyboardSetInterface(class_handle_t handle, uint8_t interface, uint8_t alternateSetting)
 {
-    if (USB_BASIC_KEYBOARD_INTERFACE_INDEX == interface) {
-        return UsbBasicKeyboardAction();
-    }
     return kStatus_USB_Error;
 }

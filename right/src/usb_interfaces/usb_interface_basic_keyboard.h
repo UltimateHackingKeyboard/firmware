@@ -31,7 +31,6 @@
 
 // Variables:
 
-    extern volatile bool IsUsbBasicKeyboardReportSent;
     extern uint32_t UsbBasicKeyboardActionCounter;
     extern usb_basic_keyboard_report_t* ActiveUsbBasicKeyboardReport;
 
@@ -42,6 +41,7 @@
     usb_status_t UsbBasicKeyboardSetInterface(class_handle_t handle, uint8_t interface, uint8_t alternateSetting);
 
     void ResetActiveUsbBasicKeyboardReport(void);
-    void SwitchActiveUsbBasicKeyboardReport(void);
+    usb_basic_keyboard_report_t* GetInactiveUsbBasicKeyboardReport(void);
+    usb_status_t UsbBasicKeyboardAction(void);
 
 #endif
