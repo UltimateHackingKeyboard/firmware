@@ -16,6 +16,7 @@
 #include "key_debouncer.h"
 #include "config_parser/parse_keymap.h"
 #include "usb_commands/usb_command_get_debug_buffer.h"
+#include "arduino_hid/ConsumerAPI.h"
 
 static uint32_t mouseUsbReportUpdateTime = 0;
 static uint32_t mouseElapsedTime;
@@ -324,7 +325,9 @@ static void updateActiveUsbReports(void)
 
 #if 0 // Used to toggle key presses at the maximum rate - this was used to reproduce: https://github.com/UltimateHackingKeyboard/firmware/issues/122
     static bool simulateKeypresses = false;
-    static bool sendChar = false;
+    static bool isEven = false;
+    static bool isEvenMedia = false;
+    static uint32_t mediaCounter = 0;
 
     key_state_t *testKeyState = &KeyStates[SlotId_LeftKeyboardHalf][0];
     if (!testKeyState->previous && testKeyState->current && activeLayer == LayerId_Fn) {
@@ -332,8 +335,13 @@ static void updateActiveUsbReports(void)
     }
 
     if (simulateKeypresses) {
-        sendChar = !sendChar;
-        ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = sendChar ? HID_KEYBOARD_SC_A : HID_KEYBOARD_SC_BACKSPACE;
+        isEven = !isEven;
+        ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = isEven ? HID_KEYBOARD_SC_A : HID_KEYBOARD_SC_BACKSPACE;
+        if (++mediaCounter % 200 == 0) {
+            isEvenMedia = !isEvenMedia;
+            ActiveUsbMediaKeyboardReport->scancodes[mediaScancodeIndex++] = isEvenMedia ? MEDIA_VOLUME_DOWN : MEDIA_VOLUME_UP;
+        }
+        MouseMoveState.xOut = isEven ? -1 : 1;
     }
 #endif
 
