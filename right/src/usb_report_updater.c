@@ -420,7 +420,7 @@ void UpdateUsbReports(void)
             for (uint8_t keyId = 0; keyId < MAX_KEY_COUNT_PER_MODULE; keyId++) {
                 if (KeyStates[slotId][keyId].current) {
                     WakeUpHost(true);
-                    break;
+                    return;
                 }
             }
         }
