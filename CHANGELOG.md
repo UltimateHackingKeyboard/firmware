@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [8.3.3] - 2018-07-03
+
+Device Protocol: 4.3.1 | Module Protocol: 4.0.0 | User Config: 4.1.0 | Hardware Config: 1.0.0
+
+- Implement the macro engine.
+- Fix the nondeterministic bug that made USB hang.
+- Restore the Windows related commits of firmware 8.3.1 because the USB hang bug has been fixed.
+- Restore debouncing to 100ms until it gets really fixed.
+
 ## [8.3.2] - 2018-06-27
 
 Device Protocol: 4.3.1 | Module Protocol: 4.0.0 | User Config: 4.1.0 | Hardware Config: 1.0.0
