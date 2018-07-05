@@ -10,10 +10,11 @@
 // Typedefs:
 
     typedef struct {
-        bool previous;
-        bool current;
-        bool suppressed;
-        uint8_t debounceCounter;
+        uint8_t timestamp;
+        bool previous : 1;
+        bool current : 1;
+        bool suppressed : 1;
+        bool debouncing : 1;
     } key_state_t;
 
 // Variables:

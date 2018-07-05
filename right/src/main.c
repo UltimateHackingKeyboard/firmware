@@ -6,7 +6,7 @@
 #include "bus_pal_hardware.h"
 #include "command.h"
 #include "eeprom.h"
-#include "key_scanner.h"
+#include "right_key_matrix.h"
 #include "usb_commands/usb_command_apply_config.h"
 #include "peripherals/reset_button.h"
 #include "config_parser/config_globals.h"
@@ -44,7 +44,6 @@ int main(void)
     } else {
         InitSlaveScheduler();
         KeyMatrix_Init(&RightKeyMatrix);
-        InitKeyScanner();
         InitUsb();
 
         while (1) {
@@ -52,6 +51,8 @@ int main(void)
                 UsbCommand_ApplyConfig();
                 IsConfigInitialized = true;
             }
+            KeyMatrix_ScanRow(&RightKeyMatrix);
+            ++MatrixScanCounter;
             UpdateUsbReports();
             __WFI();
         }

@@ -9,6 +9,7 @@
 // Macros:
 
     #define MAX_KEYS_IN_MATRIX 100
+    #define KEY_BOUNCE_TIME_MSEC 100
 
 // Typedefs:
 

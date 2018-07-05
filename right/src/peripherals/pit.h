@@ -17,12 +17,4 @@
     #define PIT_TIMER_IRQ_ID          PIT1_IRQn
     #define PIT_TIMER_CHANNEL         kPIT_Chnl_1
 
-    #define PIT_KEY_SCANNER_HANDLER   PIT2_IRQHandler
-    #define PIT_KEY_SCANNER_IRQ_ID    PIT2_IRQn
-    #define PIT_KEY_SCANNER_CHANNEL   kPIT_Chnl_2
-
-    #define PIT_KEY_DEBOUNCER_HANDLER PIT3_IRQHandler
-    #define PIT_KEY_DEBOUNCER_IRQ_ID  PIT3_IRQn
-    #define PIT_KEY_DEBOUNCER_CHANNEL kPIT_Chnl_3
-
 #endif
