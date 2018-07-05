@@ -5,7 +5,7 @@
 #include "i2c_watchdog.h"
 #include "buffer.h"
 #include "timer.h"
-#include "key_scanner.h"
+#include "right_key_matrix.h"
 #include "usb_report_updater.h"
 #include "usb_interfaces/usb_interface_basic_keyboard.h"
 #include "usb_interfaces/usb_interface_media_keyboard.h"
@@ -20,7 +20,7 @@ void UsbCommand_GetDebugBuffer(void)
     SetDebugBufferUint32(5, I2cSlaveScheduler_Counter);
     SetDebugBufferUint32(9, I2cWatchdog_WatchCounter);
     SetDebugBufferUint32(13, I2cWatchdog_RecoveryCounter);
-    SetDebugBufferUint32(17, KeyScannerCounter);
+    SetDebugBufferUint32(17, MatrixScanCounter);
     SetDebugBufferUint32(21, UsbReportUpdateCounter);
     SetDebugBufferUint32(25, Timer_GetCurrentTime());
     SetDebugBufferUint32(29, UsbGenericHidActionCounter);

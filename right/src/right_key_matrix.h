@@ -14,5 +14,6 @@
 // Variables:
 
     extern key_matrix_t RightKeyMatrix;
+    extern uint32_t MatrixScanCounter;
 
 #endif

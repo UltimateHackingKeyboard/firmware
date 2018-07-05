@@ -1,5 +1,7 @@
 #include "right_key_matrix.h"
 
+uint32_t MatrixScanCounter;
+
 key_matrix_t RightKeyMatrix = {
     .colNum = RIGHT_KEY_MATRIX_COLS_NUM,
     .rowNum = RIGHT_KEY_MATRIX_ROWS_NUM,
