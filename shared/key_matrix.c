@@ -1,6 +1,8 @@
 #include "fsl_gpio.h"
 #include "key_matrix.h"
 
+uint8_t DebounceTimePress = 100, DebounceTimeRelease = 0;
+
 void KeyMatrix_Init(key_matrix_t *keyMatrix)
 {
     for (key_matrix_pin_t *row = keyMatrix->rows; row < keyMatrix->rows + keyMatrix->rowNum; row++) {

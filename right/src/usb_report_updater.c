@@ -350,12 +350,12 @@ static void updateActiveUsbReports(void)
             key_action_t *action = &CurrentKeymap[activeLayer][slotId][keyId];
 
             if (keyState->debouncing) {
-                if ((uint8_t)(Timer_GetCurrentTime() - keyState->timestamp) > KEY_BOUNCE_TIME_MSEC) {
+                if ((uint8_t)(Timer_GetCurrentTime() - keyState->timestamp) > (keyState->previous ? DebounceTimePress : DebounceTimeRelease)) {
                     keyState->debouncing = false;
                 } else {
                     keyState->current = keyState->previous;
                 }
-            } else if (!keyState->previous && keyState->current) {
+            } else if (keyState->previous != keyState->current) {
                 keyState->timestamp = Timer_GetCurrentTime();
                 keyState->debouncing = true;
             }

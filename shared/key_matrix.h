@@ -9,7 +9,6 @@
 // Macros:
 
     #define MAX_KEYS_IN_MATRIX 100
-    #define KEY_BOUNCE_TIME_MSEC 100
 
 // Typedefs:
 
@@ -28,6 +27,10 @@
         key_matrix_pin_t *rows;
         uint8_t keyStates[MAX_KEYS_IN_MATRIX];
     } key_matrix_t;
+
+// Variables:
+
+    extern uint8_t DebounceTimePress, DebounceTimeRelease;
 
 // Functions:
 
