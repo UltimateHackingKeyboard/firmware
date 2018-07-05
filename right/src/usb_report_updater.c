@@ -13,7 +13,6 @@
 #include "layer.h"
 #include "usb_report_updater.h"
 #include "timer.h"
-#include "key_debouncer.h"
 #include "config_parser/parse_keymap.h"
 #include "usb_commands/usb_command_get_debug_buffer.h"
 #include "arduino_hid/ConsumerAPI.h"
@@ -350,10 +349,15 @@ static void updateActiveUsbReports(void)
             key_state_t *keyState = &KeyStates[slotId][keyId];
             key_action_t *action = &CurrentKeymap[activeLayer][slotId][keyId];
 
-            if (keyState->debounceCounter) {
-                keyState->current = keyState->previous;
+            if (keyState->debouncing) {
+                if ((uint8_t)(Timer_GetCurrentTime() - keyState->timestamp) > KEY_BOUNCE_TIME_MSEC) {
+                    keyState->debouncing = false;
+                } else {
+                    keyState->current = keyState->previous;
+                }
             } else if (!keyState->previous && keyState->current) {
-                keyState->debounceCounter = KEY_DEBOUNCER_TIMEOUT_MSEC + 1;
+                keyState->timestamp = Timer_GetCurrentTime();
+                keyState->debouncing = true;
             }
 
             if (keyState->current) {
