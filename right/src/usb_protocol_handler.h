@@ -34,7 +34,16 @@
         UsbCommandId_GetSlaveI2cErrors        = 0x0f,
         UsbCommandId_SetI2cBaudRate           = 0x10,
         UsbCommandId_SwitchKeymap             = 0x11,
+        UsbCommandId_GetVariable              = 0x12,
+        UsbCommandId_SetVariable              = 0x13,
     } usb_command_id_t;
+
+    typedef enum {
+        UsbVariable_TestMode,
+        UsbVariable_TestUsbStack,
+        UsbVariable_DebounceTimePress,
+        UsbVariable_DebounceTimeRelease
+    } usb_variable_id_t;
 
     typedef enum {
         UsbStatusCode_Success        = 0,

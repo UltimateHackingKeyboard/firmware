@@ -17,6 +17,8 @@
 #include "usb_commands/usb_command_get_slave_i2c_errors.h"
 #include "usb_commands/usb_command_set_i2c_baud_rate.h"
 #include "usb_commands/usb_command_switch_keymap.h"
+#include "usb_commands/usb_command_get_variable.h"
+#include "usb_commands/usb_command_set_variable.h"
 
 void UsbProtocolHandler(void)
 {
@@ -76,6 +78,12 @@ void UsbProtocolHandler(void)
             break;
         case UsbCommandId_SwitchKeymap:
             UsbCommand_SwitchKeymap();
+            break;
+        case UsbCommandId_GetVariable:
+            UsbCommand_GetVariable();
+            break;
+        case UsbCommandId_SetVariable:
+            UsbCommand_SetVariable();
             break;
         default:
             SetUsbTxBufferUint8(0, UsbStatusCode_InvalidCommand);
