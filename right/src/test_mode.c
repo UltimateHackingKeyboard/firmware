@@ -3,6 +3,8 @@
 #include "key_action.h"
 #include "keymap.h"
 
+bool TestModeActive = false;
+
 static const key_action_t TestKeymap[1][2][MAX_KEY_COUNT_PER_MODULE] = {
     // Base layer
     {

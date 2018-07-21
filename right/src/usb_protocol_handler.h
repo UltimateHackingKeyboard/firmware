@@ -39,7 +39,7 @@
     } usb_command_id_t;
 
     typedef enum {
-        UsbVariable_TestMode,
+        UsbVariable_TestModeActive,
         UsbVariable_TestUsbStack,
         UsbVariable_DebounceTimePress,
         UsbVariable_DebounceTimeRelease

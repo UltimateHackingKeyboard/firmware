@@ -1,7 +1,6 @@
 #include "usb_protocol_handler.h"
 #include "usb_commands/usb_command_switch_keymap.h"
 #include "keymap.h"
-#include "test_mode.h"
 
 void UsbCommand_SwitchKeymap(void)
 {
@@ -10,8 +9,6 @@ void UsbCommand_SwitchKeymap(void)
 
     if (keymapLength > KEYMAP_ABBREVIATION_LENGTH) {
         SetUsbTxBufferUint8(0, UsbStatusCode_SwitchKeymap_InvalidAbbreviationLength);
-    } else if (keymapLength == 1 && keymapAbbrev[0] == 1) {
-        TestMode_Activate();
     }
 
     if (!SwitchKeymapByAbbreviation(keymapLength, keymapAbbrev)) {
