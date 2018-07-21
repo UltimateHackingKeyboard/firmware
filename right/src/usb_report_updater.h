@@ -71,6 +71,7 @@
     extern mouse_kinetic_state_t MouseScrollState;
     extern uint32_t UsbReportUpdateCounter;
     extern volatile uint8_t UsbReportUpdateSemaphore;
+    extern bool TestUsbStack;
 
 // Functions:
 

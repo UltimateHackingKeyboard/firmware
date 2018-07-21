@@ -2,6 +2,7 @@
 #include "usb_commands/usb_command_set_variable.h"
 #include "key_matrix.h"
 #include "test_mode.h"
+#include "usb_report_updater.h"
 
 void UsbCommand_SetVariable(void)
 {
@@ -15,6 +16,7 @@ void UsbCommand_SetVariable(void)
             }
             break;
         case UsbVariable_TestUsbStack:
+            TestUsbStack = GetUsbRxBufferUint8(2);
             break;
         case UsbVariable_DebounceTimePress:
             DebounceTimePress = GetUsbRxBufferUint8(2);
