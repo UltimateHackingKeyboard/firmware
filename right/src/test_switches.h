@@ -7,10 +7,10 @@
 
 // Functions:
 
-    void TestMode_Activate(void);
+    void TestSwitches_Activate(void);
 
 // Variables:
 
-    extern bool TestModeActive;
+    extern bool TestSwitches;
 
 #endif
