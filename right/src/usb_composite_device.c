@@ -163,21 +163,28 @@ static usb_device_class_config_list_struct_t UsbDeviceCompositeConfigList = {
     }
 }};
 
-bool IsHostSleeping = false;
+volatile bool SleepModeActive = true;
+static volatile bool wakeUpHostAllowed;
 
-static void suspendHost(void) {
-    IsHostSleeping = true;
+static void suspendUhk(void) {
+    SleepModeActive = true;
     LedSlaveDriver_DisableLeds();
 }
 
-void WakeUpHost(bool sendResume) {
-    if (sendResume) { // The device should wake up the host.
-        // Send resume signal - this will call USB_DeviceKhciControl(khciHandle, kUSB_DeviceControlResume, NULL);
-        USB_DeviceSetStatus(UsbCompositeDevice.deviceHandle, kUSB_DeviceStatusBus, NULL);
-    }
-
-    IsHostSleeping = false;
+static void wakeUpUhk(void) {
+    SleepModeActive = false;
     LedSlaveDriver_UpdateLeds();
+}
+
+void WakeUpHost(void) {
+    if (!wakeUpHostAllowed) {
+        return;
+    }
+    // Send resume signal - this will call USB_DeviceKhciControl(khciHandle, kUSB_DeviceControlResume, NULL);
+    USB_DeviceSetStatus(UsbCompositeDevice.deviceHandle, kUSB_DeviceStatusBus, NULL);
+    while (SleepModeActive) {
+        ;
+    }
 }
 
 static usb_status_t usbDeviceCallback(usb_device_handle handle, uint32_t event, void *param)
@@ -190,10 +197,6 @@ static usb_status_t usbDeviceCallback(usb_device_handle handle, uint32_t event, 
         return status;
     }
 
-    if (IsHostSleeping) {
-        WakeUpHost(false); // Wake up the keyboard if there is any activity on the bus.
-    }
-
     switch (event) {
         case kUSB_DeviceEventBusReset:
             UsbCompositeDevice.attach = 0;
@@ -201,17 +204,17 @@ static usb_status_t usbDeviceCallback(usb_device_handle handle, uint32_t event, 
             break;
         case kUSB_DeviceEventSuspend:
             if (UsbCompositeDevice.attach) {
-                suspendHost(); // The host sends this event when it goes to sleep, so turn off all the LEDs.
+                suspendUhk(); // The host sends this event when it goes to sleep, so turn off all the LEDs.
                 status = kStatus_USB_Success;
             }
             break;
         case kUSB_DeviceEventResume:
-            // We will just wake up the host if there is any activity on the bus.
-            // The problem is that the host won't send a resume event when it boots, so the lights will never come back on.
+            wakeUpUhk();
             status = kStatus_USB_Success;
             break;
         case kUSB_DeviceEventSetConfiguration:
             UsbCompositeDevice.attach = 1;
+            wakeUpUhk();
             UsbCompositeDevice.currentConfiguration = *temp8;
             UsbGenericHidSetConfiguration(UsbCompositeDevice.genericHidHandle, *temp8);
             UsbBasicKeyboardSetConfiguration(UsbCompositeDevice.basicKeyboardHandle, *temp8);
@@ -265,6 +268,10 @@ static usb_status_t usbDeviceCallback(usb_device_handle handle, uint32_t event, 
             break;
         case kUSB_DeviceEventGetHidPhysicalDescriptor:
             status = USB_DeviceGetHidPhysicalDescriptor(handle, (usb_device_get_hid_physical_descriptor_struct_t *)param);
+            break;
+        case kUSB_DeviceEventSetRemoteWakeup:
+            wakeUpHostAllowed = *temp8;
+            status = kStatus_USB_Success;
             break;
     }
 

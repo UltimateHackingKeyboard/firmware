@@ -426,11 +426,11 @@ void UpdateUsbReports(void)
         KeyStates[SlotId_RightKeyboardHalf][keyId].current = RightKeyMatrix.keyStates[keyId];
     }
 
-    if (IsHostSleeping) {
+    if (SleepModeActive) {
         for (uint8_t slotId = 0; slotId < SLOT_COUNT; slotId++) {
             for (uint8_t keyId = 0; keyId < MAX_KEY_COUNT_PER_MODULE; keyId++) {
                 if (KeyStates[slotId][keyId].current) {
-                    WakeUpHost(true);
+                    WakeUpHost();
                     return;
                 }
             }
@@ -455,10 +455,6 @@ void UpdateUsbReports(void)
     bool HasUsbMediaKeyboardReportChanged = memcmp(ActiveUsbMediaKeyboardReport, GetInactiveUsbMediaKeyboardReport(), sizeof(usb_media_keyboard_report_t)) != 0;
     bool HasUsbSystemKeyboardReportChanged = memcmp(ActiveUsbSystemKeyboardReport, GetInactiveUsbSystemKeyboardReport(), sizeof(usb_system_keyboard_report_t)) != 0;
     bool HasUsbMouseReportChanged = memcmp(ActiveUsbMouseReport, GetInactiveUsbMouseReport(), sizeof(usb_mouse_report_t)) != 0;
-
-    if (IsHostSleeping && (previousLayer != LayerId_Base || HasUsbBasicKeyboardReportChanged || HasUsbMediaKeyboardReportChanged || HasUsbSystemKeyboardReportChanged || HasUsbMouseReportChanged)) {
-        WakeUpHost(true); // Wake up the host if any key is pressed and the computer is sleeping.
-    }
 
     if (HasUsbBasicKeyboardReportChanged) {
         usb_status_t status = UsbBasicKeyboardAction();
