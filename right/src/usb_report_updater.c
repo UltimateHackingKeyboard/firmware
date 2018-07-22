@@ -24,6 +24,7 @@ uint16_t DoubleTapSwitchLayerTimeout = 150;
 static uint16_t DoubleTapSwitchLayerReleaseTimeout = 100;
 
 static bool activeMouseStates[ACTIVE_MOUSE_STATES_COUNT];
+bool TestUsbStack = false;
 
 volatile uint8_t UsbReportUpdateSemaphore = 0;
 
@@ -322,18 +323,17 @@ static void updateActiveUsbReports(void)
     bool layerGotReleased = previousLayer != LayerId_Base && activeLayer == LayerId_Base;
     LedDisplay_SetLayer(activeLayer);
 
-#if 0 // Used to toggle key presses at the maximum rate - this was used to reproduce: https://github.com/UltimateHackingKeyboard/firmware/issues/122
-    static bool simulateKeypresses = false;
+
     static bool isEven = false;
     static bool isEvenMedia = false;
     static uint32_t mediaCounter = 0;
 
     key_state_t *testKeyState = &KeyStates[SlotId_LeftKeyboardHalf][0];
     if (!testKeyState->previous && testKeyState->current && activeLayer == LayerId_Fn) {
-        simulateKeypresses = !simulateKeypresses;
+        TestUsbStack = !TestUsbStack;
     }
 
-    if (simulateKeypresses) {
+    if (TestUsbStack) {
         isEven = !isEven;
         ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = isEven ? HID_KEYBOARD_SC_A : HID_KEYBOARD_SC_BACKSPACE;
         if (++mediaCounter % 200 == 0) {
@@ -342,7 +342,6 @@ static void updateActiveUsbReports(void)
         }
         MouseMoveState.xOut = isEven ? -1 : 1;
     }
-#endif
 
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
