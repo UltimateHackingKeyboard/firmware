@@ -323,17 +323,17 @@ static void updateActiveUsbReports(void)
     bool layerGotReleased = previousLayer != LayerId_Base && activeLayer == LayerId_Base;
     LedDisplay_SetLayer(activeLayer);
 
-
+    static bool simulateKeypresses = false;
     static bool isEven = false;
     static bool isEvenMedia = false;
     static uint32_t mediaCounter = 0;
 
     key_state_t *testKeyState = &KeyStates[SlotId_LeftKeyboardHalf][0];
-    if (!testKeyState->previous && testKeyState->current && activeLayer == LayerId_Fn) {
-        TestUsbStack = !TestUsbStack;
+    if (TestUsbStack && !testKeyState->previous && testKeyState->current && activeLayer == LayerId_Fn) {
+        simulateKeypresses = !simulateKeypresses;
     }
 
-    if (TestUsbStack) {
+    if (simulateKeypresses) {
         isEven = !isEven;
         ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = isEven ? HID_KEYBOARD_SC_A : HID_KEYBOARD_SC_BACKSPACE;
         if (++mediaCounter % 200 == 0) {
