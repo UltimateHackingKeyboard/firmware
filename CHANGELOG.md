@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [8.4.0] - 2018-07-24
+
+Device Protocol: 4.**4.0** | Module Protocol: 4.0.0 | User Config: 4.1.0 | Hardware Config: 1.0.0
+
+- Rewrite the key debouncer and set the press and release timeouts to 50ms.
+- Add hardcoded test keymap.
+- Make debounce timeouts configurable via USB. `DEVICEPROTOCOL:MINOR`
+- Make the hardcoded test keymap able to trigger via USB. `DEVICEPROTOCOL:MINOR`
+- Allow the USB stack test mode to be activated via USB. `DEVICEPROTOCOL:MINOR`
+
 ## [8.3.3] - 2018-07-03
 
 Device Protocol: 4.3.1 | Module Protocol: 4.0.0 | User Config: 4.1.0 | Hardware Config: 1.0.0
