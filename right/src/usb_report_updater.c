@@ -455,10 +455,6 @@ void UpdateUsbReports(void)
     bool HasUsbSystemKeyboardReportChanged = memcmp(ActiveUsbSystemKeyboardReport, GetInactiveUsbSystemKeyboardReport(), sizeof(usb_system_keyboard_report_t)) != 0;
     bool HasUsbMouseReportChanged = memcmp(ActiveUsbMouseReport, GetInactiveUsbMouseReport(), sizeof(usb_mouse_report_t)) != 0;
 
-    if (IsHostSleeping && (previousLayer != LayerId_Base || HasUsbBasicKeyboardReportChanged || HasUsbMediaKeyboardReportChanged || HasUsbSystemKeyboardReportChanged || HasUsbMouseReportChanged)) {
-        WakeUpHost(true); // Wake up the host if any key is pressed and the computer is sleeping.
-    }
-
     if (HasUsbBasicKeyboardReportChanged) {
         usb_status_t status = UsbBasicKeyboardAction();
         if (status == kStatus_USB_Success) {
