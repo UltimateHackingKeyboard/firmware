@@ -377,6 +377,7 @@ static void updateActiveUsbReports(void)
                     // Trigger secondary role.
                     if (!keyState->previous && secondaryRoleState == SecondaryRoleState_Pressed) {
                         secondaryRoleState = SecondaryRoleState_Triggered;
+                        keyState->current = false;
                     } else {
                         applyKeyAction(keyState, action);
                     }
