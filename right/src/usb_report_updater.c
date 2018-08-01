@@ -236,6 +236,7 @@ static void handleSwitchLayerAction(key_state_t *keyState, key_action_t *action)
 static uint8_t basicScancodeIndex = 0;
 static uint8_t mediaScancodeIndex = 0;
 static uint8_t systemScancodeIndex = 0;
+static uint8_t stickyModifiers;
 
 static void applyKeyAction(key_state_t *keyState, key_action_t *action)
 {
@@ -245,10 +246,19 @@ static void applyKeyAction(key_state_t *keyState, key_action_t *action)
 
     handleSwitchLayerAction(keyState, action);
 
+    if (!keyState->previous) {
+        stickyModifiers = 0;
+    }
+
     switch (action->type) {
         case KeyActionType_Keystroke:
-            ActiveUsbBasicKeyboardReport->modifiers |= action->keystroke.modifiers;
-
+            if (action->keystroke.scancode) {
+                if (!keyState->previous) {
+                    stickyModifiers = action->keystroke.modifiers;
+                }
+            } else {
+                ActiveUsbBasicKeyboardReport->modifiers |= action->keystroke.modifiers;
+            }
             switch (action->keystroke.keystrokeType) {
                 case KeystrokeType_Basic:
                     if (basicScancodeIndex >= USB_BASIC_KEYBOARD_MAX_KEYS || action->keystroke.scancode == 0) {
@@ -296,8 +306,6 @@ static secondary_role_t secondaryRole;
 
 static void updateActiveUsbReports(void)
 {
-    static uint8_t previousModifiers = 0;
-
     if (MacroPlaying) {
         Macros_ContinueMacro();
         memcpy(ActiveUsbMouseReport, &MacroMouseReport, sizeof MacroMouseReport);
@@ -320,7 +328,11 @@ static void updateActiveUsbReports(void)
     if (activeLayer == LayerId_Base) {
         activeLayer = GetActiveLayer();
     }
-    bool layerGotReleased = previousLayer != LayerId_Base && activeLayer == LayerId_Base;
+    bool layerChanged = previousLayer != activeLayer;
+    if (layerChanged) {
+        stickyModifiers = 0;
+    }
+    bool layerGotReleased = layerChanged && activeLayer == LayerId_Base;
     LedDisplay_SetLayer(activeLayer);
 
     if (TestUsbStack) {
@@ -406,15 +418,12 @@ static void updateActiveUsbReports(void)
     // When a layer switcher key gets pressed along with another key that produces some modifiers
     // and the accomanying key gets released then keep the related modifiers active a long as the
     // layer switcher key stays pressed.  Useful for Alt+Tab keymappings and the like.
-    if (activeLayer != LayerId_Base && activeLayer == PreviousHeldLayer && basicScancodeIndex == 0) {
-        ActiveUsbBasicKeyboardReport->modifiers |= previousModifiers;
-    }
+    ActiveUsbBasicKeyboardReport->modifiers |= stickyModifiers;
 
     if (secondaryRoleState == SecondaryRoleState_Triggered && IS_SECONDARY_ROLE_MODIFIER(secondaryRole)) {
         ActiveUsbBasicKeyboardReport->modifiers |= SECONDARY_ROLE_MODIFIER_TO_HID_MODIFIER(secondaryRole);
     }
 
-    previousModifiers = ActiveUsbBasicKeyboardReport->modifiers;
     previousLayer = activeLayer;
 }
 
