@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [8.4.2] - 2018-08-02
+
+Device Protocol: 4.4.0 | Module Protocol: 4.0.0 | User Config: 4.1.0 | Hardware Config: 1.0.0
+
+- Fix various bugs related to secondary role handling and sticky modifier states.
+
 ## [8.4.1] - 2018-07-31
 
 Device Protocol: 4.4.0 | Module Protocol: 4.0.0 | User Config: 4.1.0 | Hardware Config: 1.0.0
