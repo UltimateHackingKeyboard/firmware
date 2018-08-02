@@ -246,10 +246,6 @@ static void applyKeyAction(key_state_t *keyState, key_action_t *action)
 
     handleSwitchLayerAction(keyState, action);
 
-    if (!keyState->previous) {
-        stickyModifiers = 0;
-    }
-
     switch (action->type) {
         case KeyActionType_Keystroke:
             if (action->keystroke.scancode) {
@@ -281,6 +277,9 @@ static void applyKeyAction(key_state_t *keyState, key_action_t *action)
             }
             break;
         case KeyActionType_Mouse:
+            if (!keyState->previous) {
+                stickyModifiers = 0;
+            }
             activeMouseStates[action->mouseAction] = true;
             break;
         case KeyActionType_SwitchLayer:
@@ -288,11 +287,13 @@ static void applyKeyAction(key_state_t *keyState, key_action_t *action)
             break;
         case KeyActionType_SwitchKeymap:
             if (!keyState->previous) {
+                stickyModifiers = 0;
                 SwitchKeymapById(action->switchKeymap.keymapId);
             }
             break;
         case KeyActionType_PlayMacro:
             if (!keyState->previous) {
+                stickyModifiers = 0;
                 Macros_StartMacro(action->playMacro.macroId);
             }
             break;
