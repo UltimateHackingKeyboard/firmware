@@ -3,7 +3,6 @@
 #include "i2c_watchdog.h"
 #include "test_led.h"
 #include "init_peripherals.h"
-#include "config.h"
 
 // NOTE: Because of a bug in the ROM bootloader of the KL03Z, the watchdog timer is disabled and cannot be re-enabled.
 // See https://community.nxp.com/thread/457893

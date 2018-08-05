@@ -1,6 +1,5 @@
 #include "fsl_lptmr.h"
 #include "key_scanner.h"
-#include "config.h"
 #include "i2c_watchdog.h"
 
 void KEY_SCANNER_HANDLER(void)

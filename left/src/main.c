@@ -3,7 +3,6 @@
 #include "init_peripherals.h"
 #include "bootloader.h"
 #include <stdio.h>
-#include "config.h"
 #include "key_scanner.h"
 
 DEFINE_BOOTLOADER_CONFIG_AREA(I2C_ADDRESS_LEFT_KEYBOARD_HALF_BOOTLOADER)
