@@ -1,9 +1,5 @@
-#ifdef DEBUG_OVER_SPI
-
 #include "debug_over_spi.h"
-#include "config.h"
 #include "fsl_gpio.h"
-
 
 #define EXAMPLE_SPI_MASTER (SPI0)
 #define EXAMPLE_SPI_MASTER_SOURCE_CLOCK (kCLOCK_BusClk)
@@ -52,5 +48,3 @@ void DebugOverSpi_Send(uint8_t *tx, uint8_t len)
         SPI_MasterTransferNonBlocking(EXAMPLE_SPI_MASTER, &handle, &xfer);
     }
 }
-
-#endif

@@ -9,7 +9,6 @@
 #include "led_pwm.h"
 #include "slave_protocol_handler.h"
 #include "i2c_watchdog.h"
-#include "debug_over_spi.h"
 #include "main.h"
 
 i2c_slave_config_t slaveConfig;
@@ -23,7 +22,6 @@ static void i2cSlaveCallback(I2C_Type *base, i2c_slave_transfer_t *xfer, void *u
 {
     dosBuffer[0] = xfer->event;
     dosBuffer[1] = userData;
-    DebugOverSpi_Send(dosBuffer, 2);
 
     switch (xfer->event) {
         case kI2C_SlaveTransmitEvent:
@@ -86,6 +84,5 @@ void InitPeripherals(void)
     InitLedDriver();
     TestLed_Init();
     LedPwm_Init();
-    DebugOverSpi_Init();
     initI2c();
 }
