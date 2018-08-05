@@ -1,5 +1,5 @@
 #include "main.h"
-#include "init_clock.h"
+#include "slave/init_clock.h"
 #include "init_peripherals.h"
 #include "bootloader.h"
 #include <stdio.h>

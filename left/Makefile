@@ -44,7 +44,8 @@ SOURCE = $(wildcard src/*.c) \
          ../lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/drivers/fsl_lptmr.c \
          ../lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/drivers/fsl_spi.c \
          ../lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/drivers/fsl_tpm.c \
-         $(wildcard ../shared/*.c)
+         $(wildcard ../shared/*.c) \
+         $(wildcard ../shared/slave/*.c)
 
 # Header files.
 IPATH = src \
