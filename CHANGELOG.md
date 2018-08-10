@@ -32,6 +32,7 @@ Device Protocol: 4.**4.0** | Module Protocol: 4.0.0 | User Config: 4.1.0 | Hardw
 Device Protocol: 4.3.1 | Module Protocol: 4.0.0 | User Config: 4.1.0 | Hardware Config: 1.0.0
 
 - Implement the macro engine.
+- Fix the timer which makes it tick twice as fast as before.
 - Fix the nondeterministic bug that made USB hang.
 - Restore the Windows related commits of firmware 8.3.1 because the USB hang bug has been fixed.
 - Restore debouncing to 100ms until it gets really fixed.
