@@ -20,8 +20,8 @@
 static uint32_t mouseUsbReportUpdateTime = 0;
 static uint32_t mouseElapsedTime;
 
-uint16_t DoubleTapSwitchLayerTimeout = 150;
-static uint16_t DoubleTapSwitchLayerReleaseTimeout = 100;
+uint16_t DoubleTapSwitchLayerTimeout = 300;
+static uint16_t DoubleTapSwitchLayerReleaseTimeout = 200;
 
 static bool activeMouseStates[ACTIVE_MOUSE_STATES_COUNT];
 bool TestUsbStack = false;
