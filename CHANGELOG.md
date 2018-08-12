@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [8.4.3] - 2018-08-12
+
+Device Protocol: 4.4.0 | Module Protocol: 4.0.0 | User Config: 4.1.0 | Hardware Config: 1.0.0
+
+- Compensate "double tap to lock layer" timeouts for the timer fix to make them as long as before 8.3.3
+
 ## [8.4.2] - 2018-08-02
 
 Device Protocol: 4.4.0 | Module Protocol: 4.0.0 | User Config: 4.1.0 | Hardware Config: 1.0.0
