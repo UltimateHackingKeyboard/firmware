@@ -377,7 +377,11 @@ static void updateActiveUsbReports(void)
                     keyState->suppressed = true;
                 }
 
-                if (action->type == KeyActionType_Keystroke && action->keystroke.secondaryRole) {
+                // Trigger secondary role.
+                if (!keyState->previous && secondaryRoleState == SecondaryRoleState_Pressed) {
+                    secondaryRoleState = SecondaryRoleState_Triggered;
+                    keyState->current = false;
+                } else if (action->type == KeyActionType_Keystroke && action->keystroke.secondaryRole) {
                     // Press released secondary role key.
                     if (!keyState->previous && secondaryRoleState == SecondaryRoleState_Released) {
                         secondaryRoleState = SecondaryRoleState_Pressed;
@@ -387,13 +391,7 @@ static void updateActiveUsbReports(void)
                         keyState->suppressed = true;
                     }
                 } else {
-                    // Trigger secondary role.
-                    if (!keyState->previous && secondaryRoleState == SecondaryRoleState_Pressed) {
-                        secondaryRoleState = SecondaryRoleState_Triggered;
-                        keyState->current = false;
-                    } else {
-                        applyKeyAction(keyState, action);
-                    }
+                    applyKeyAction(keyState, action);
                 }
             } else {
                 if (keyState->suppressed) {
