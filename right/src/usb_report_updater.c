@@ -372,6 +372,9 @@ static void updateActiveUsbReports(void)
             }
 
             if (keyState->current) {
+                if (SleepModeActive && !keyState->previous) {
+                    WakeUpHost();
+                }
                 key_action_t *baseAction = &CurrentKeymap[LayerId_Base][slotId][keyId];
                 if (layerGotReleased && !(baseAction->type == KeyActionType_Keystroke && baseAction->keystroke.scancode == 0 && baseAction->keystroke.modifiers)) {
                     keyState->suppressed = true;
@@ -436,19 +439,7 @@ void UpdateUsbReports(void)
         KeyStates[SlotId_RightKeyboardHalf][keyId].current = RightKeyMatrix.keyStates[keyId];
     }
 
-    if (SleepModeActive) {
-        for (uint8_t slotId = 0; slotId < SLOT_COUNT; slotId++) {
-            for (uint8_t keyId = 0; keyId < MAX_KEY_COUNT_PER_MODULE; keyId++) {
-                if (KeyStates[slotId][keyId].current) {
-                    WakeUpHost();
-                    return;
-                }
-            }
-        }
-        return;
-    }
-
-    if (UsbReportUpdateSemaphore) {
+    if (UsbReportUpdateSemaphore && !SleepModeActive) {
         return;
     }
 
