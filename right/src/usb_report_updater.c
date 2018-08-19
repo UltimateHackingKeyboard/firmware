@@ -25,6 +25,7 @@ static uint16_t DoubleTapSwitchLayerReleaseTimeout = 200;
 
 static bool activeMouseStates[ACTIVE_MOUSE_STATES_COUNT];
 bool TestUsbStack = false;
+bool KeymapChanged = false;
 
 volatile uint8_t UsbReportUpdateSemaphore = 0;
 
@@ -333,7 +334,6 @@ static void updateActiveUsbReports(void)
     if (layerChanged) {
         stickyModifiers = 0;
     }
-    bool layerGotReleased = layerChanged && activeLayer == LayerId_Base;
     LedDisplay_SetLayer(activeLayer);
 
     if (TestUsbStack) {
@@ -376,7 +376,7 @@ static void updateActiveUsbReports(void)
                     WakeUpHost();
                 }
                 key_action_t *baseAction = &CurrentKeymap[LayerId_Base][slotId][keyId];
-                if (layerGotReleased && !(baseAction->type == KeyActionType_Keystroke && baseAction->keystroke.scancode == 0 && baseAction->keystroke.modifiers)) {
+                if ((layerChanged || KeymapChanged) && !(baseAction->type == KeyActionType_Keystroke && baseAction->keystroke.scancode == 0 && baseAction->keystroke.modifiers)) {
                     keyState->suppressed = true;
                 }
 
@@ -427,6 +427,7 @@ static void updateActiveUsbReports(void)
     }
 
     previousLayer = activeLayer;
+    KeymapChanged = false;
 }
 
 uint32_t UsbReportUpdateCounter;
