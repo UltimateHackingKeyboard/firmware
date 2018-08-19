@@ -5,6 +5,7 @@
 #include "config_parser/parse_keymap.h"
 #include "config_parser/config_globals.h"
 #include "macros.h"
+#include "usb_report_updater.h"
 
 keymap_reference_t AllKeymaps[MAX_KEYMAP_NUM] = {
     {
@@ -24,6 +25,7 @@ void SwitchKeymapById(uint8_t index)
     ValidatedUserConfigBuffer.offset = AllKeymaps[index].offset;
     ParseKeymap(&ValidatedUserConfigBuffer, index, AllKeymapsCount, AllMacrosCount);
     LedDisplay_UpdateText();
+    KeymapChanged = true;
 }
 
 bool SwitchKeymapByAbbreviation(uint8_t length, char *abbrev)

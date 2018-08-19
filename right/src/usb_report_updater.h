@@ -72,6 +72,7 @@
     extern uint32_t UsbReportUpdateCounter;
     extern volatile uint8_t UsbReportUpdateSemaphore;
     extern bool TestUsbStack;
+    extern bool KeymapChanged;
 
 // Functions:
 
