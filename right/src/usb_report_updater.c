@@ -26,6 +26,7 @@ static uint16_t DoubleTapSwitchLayerReleaseTimeout = 200;
 static bool activeMouseStates[ACTIVE_MOUSE_STATES_COUNT];
 bool TestUsbStack = false;
 bool KeymapChanged = false;
+static uint8_t layerCache[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
 
 volatile uint8_t UsbReportUpdateSemaphore = 0;
 
@@ -334,6 +335,8 @@ static void updateActiveUsbReports(void)
     if (layerChanged) {
         stickyModifiers = 0;
     }
+    bool keymapChangedLastCycle = KeymapChanged;
+    KeymapChanged = false;
     LedDisplay_SetLayer(activeLayer);
 
     if (TestUsbStack) {
@@ -358,7 +361,7 @@ static void updateActiveUsbReports(void)
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
             key_state_t *keyState = &KeyStates[slotId][keyId];
-            key_action_t *action = &CurrentKeymap[activeLayer][slotId][keyId];
+            key_action_t *action;
 
             if (keyState->debouncing) {
                 if ((uint8_t)(Timer_GetCurrentTime() - keyState->timestamp) > (keyState->previous ? DebounceTimePress : DebounceTimeRelease)) {
@@ -371,19 +374,24 @@ static void updateActiveUsbReports(void)
                 keyState->debouncing = true;
             }
 
-            if (keyState->current) {
-                if (SleepModeActive && !keyState->previous) {
+            if (keyState->current && !keyState->previous) {
+                if (SleepModeActive) {
                     WakeUpHost();
                 }
-                key_action_t *baseAction = &CurrentKeymap[LayerId_Base][slotId][keyId];
-                if ((layerChanged || KeymapChanged) && !(baseAction->type == KeyActionType_Keystroke && baseAction->keystroke.scancode == 0 && baseAction->keystroke.modifiers)) {
-                    keyState->suppressed = true;
-                }
-
-                // Trigger secondary role.
-                if (!keyState->previous && secondaryRoleState == SecondaryRoleState_Pressed) {
+                if (secondaryRoleState == SecondaryRoleState_Pressed) {
+                    // Trigger secondary role.
                     secondaryRoleState = SecondaryRoleState_Triggered;
                     keyState->current = false;
+                } else {
+                    layerCache[slotId][keyId] = activeLayer;
+                }
+            }
+
+            action = &CurrentKeymap[layerCache[slotId][keyId]][slotId][keyId];
+
+            if (keyState->current) {
+                if ((KeymapChanged || keymapChangedLastCycle) && keyState->previous) {
+                    keyState->suppressed = true;
                 } else if (action->type == KeyActionType_Keystroke && action->keystroke.secondaryRole) {
                     // Press released secondary role key.
                     if (!keyState->previous && secondaryRoleState == SecondaryRoleState_Released) {
@@ -397,9 +405,7 @@ static void updateActiveUsbReports(void)
                     applyKeyAction(keyState, action);
                 }
             } else {
-                if (keyState->suppressed) {
-                    keyState->suppressed = false;
-                }
+                keyState->suppressed = false;
 
                 // Release secondary role key.
                 if (keyState->previous && secondaryRoleSlotId == slotId && secondaryRoleKeyId == keyId) {
@@ -427,7 +433,6 @@ static void updateActiveUsbReports(void)
     }
 
     previousLayer = activeLayer;
-    KeymapChanged = false;
 }
 
 uint32_t UsbReportUpdateCounter;
