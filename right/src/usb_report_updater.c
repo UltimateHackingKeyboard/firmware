@@ -239,6 +239,10 @@ static uint8_t basicScancodeIndex = 0;
 static uint8_t mediaScancodeIndex = 0;
 static uint8_t systemScancodeIndex = 0;
 static uint8_t stickyModifiers;
+static uint8_t secondaryRoleState = SecondaryRoleState_Released;
+static uint8_t secondaryRoleSlotId;
+static uint8_t secondaryRoleKeyId;
+static secondary_role_t secondaryRole;
 
 static void applyKeyAction(key_state_t *keyState, key_action_t *action)
 {
@@ -290,6 +294,7 @@ static void applyKeyAction(key_state_t *keyState, key_action_t *action)
         case KeyActionType_SwitchKeymap:
             if (!keyState->previous) {
                 stickyModifiers = 0;
+                secondaryRoleState = SecondaryRoleState_Released;
                 SwitchKeymapById(action->switchKeymap.keymapId);
             }
             break;
@@ -301,11 +306,6 @@ static void applyKeyAction(key_state_t *keyState, key_action_t *action)
             break;
     }
 }
-
-static uint8_t secondaryRoleState = SecondaryRoleState_Released;
-static uint8_t secondaryRoleSlotId;
-static uint8_t secondaryRoleKeyId;
-static secondary_role_t secondaryRole;
 
 static void updateActiveUsbReports(void)
 {
