@@ -208,13 +208,13 @@ static void handleSwitchLayerAction(key_state_t *keyState, key_action_t *action)
         doubleTapSwitchLayerKey = NULL;
     }
 
+    if (action->type != KeyActionType_SwitchLayer) {
+        return;
+    }
+
     if (!keyState->previous && isLayerDoubleTapToggled && ToggledLayer == action->switchLayer.layer) {
         ToggledLayer = LayerId_Base;
         isLayerDoubleTapToggled = false;
-    }
-
-    if (action->type != KeyActionType_SwitchLayer) {
-        return;
     }
 
     if (keyState->previous && doubleTapSwitchLayerKey == keyState &&
