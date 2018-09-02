@@ -411,6 +411,7 @@ static void updateActiveUsbReports(void)
                 if (keyState->previous && secondaryRoleSlotId == slotId && secondaryRoleKeyId == keyId) {
                     // Trigger primary role.
                     if (secondaryRoleState == SecondaryRoleState_Pressed) {
+                        keyState->previous = false;
                         applyKeyAction(keyState, action);
                     }
                     secondaryRoleState = SecondaryRoleState_Released;
