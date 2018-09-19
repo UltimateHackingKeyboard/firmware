@@ -70,7 +70,7 @@ uint8_t characterToScancode(char character)
             return HID_KEYBOARD_SC_DOT_AND_GREATER_THAN_SIGN;
         case ',':
         case '<':
-            return HID_KEYBOARD_SC_KEYPAD_LESS_THAN_SIGN;
+            return HID_KEYBOARD_SC_COMMA_AND_LESS_THAN_SIGN;
         case '/':
         case '\?':
             return HID_KEYBOARD_SC_SLASH_AND_QUESTION_MARK;
