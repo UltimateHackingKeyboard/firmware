@@ -354,7 +354,7 @@ static void updateActiveUsbReports(void)
                 isEvenMedia = !isEvenMedia;
                 ActiveUsbMediaKeyboardReport->scancodes[mediaScancodeIndex++] = isEvenMedia ? MEDIA_VOLUME_DOWN : MEDIA_VOLUME_UP;
             }
-            MouseMoveState.xOut = isEven ? -1 : 1;
+            MouseMoveState.xOut = isEven ? -5 : 5;
         }
     }
 
