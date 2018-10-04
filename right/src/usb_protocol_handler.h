@@ -42,7 +42,8 @@
         UsbVariable_TestSwitches,
         UsbVariable_TestUsbStack,
         UsbVariable_DebounceTimePress,
-        UsbVariable_DebounceTimeRelease
+        UsbVariable_DebounceTimeRelease,
+        UsbVariable_UsbReportSemaphore,
     } usb_variable_id_t;
 
     typedef enum {
