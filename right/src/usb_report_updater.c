@@ -440,14 +440,21 @@ uint32_t UsbReportUpdateCounter;
 
 void UpdateUsbReports(void)
 {
+    static uint32_t lastUpdateTime;
+
     for (uint8_t keyId = 0; keyId < RIGHT_KEY_MATRIX_KEY_COUNT; keyId++) {
         KeyStates[SlotId_RightKeyboardHalf][keyId].current = RightKeyMatrix.keyStates[keyId];
     }
 
     if (UsbReportUpdateSemaphore && !SleepModeActive) {
-        return;
+        if (Timer_GetElapsedTime(&lastUpdateTime) < USB_SEMAPHORE_TIMEOUT) {
+            return;
+        } else {
+            UsbReportUpdateSemaphore = 0;
+        }
     }
 
+    lastUpdateTime = CurrentTime;
     UsbReportUpdateCounter++;
 
     ResetActiveUsbBasicKeyboardReport();
