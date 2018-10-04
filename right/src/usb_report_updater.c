@@ -227,11 +227,11 @@ static void handleSwitchLayerAction(key_state_t *keyState, key_action_t *action)
         if (doubleTapSwitchLayerKey && Timer_GetElapsedTimeAndSetCurrent(&doubleTapSwitchLayerStartTime) < DoubleTapSwitchLayerTimeout) {
             ToggledLayer = action->switchLayer.layer;
             isLayerDoubleTapToggled = true;
-            doubleTapSwitchLayerTriggerTime = Timer_GetCurrentTime();
+            doubleTapSwitchLayerTriggerTime = CurrentTime;
         } else {
             doubleTapSwitchLayerKey = keyState;
         }
-        doubleTapSwitchLayerStartTime = Timer_GetCurrentTime();
+        doubleTapSwitchLayerStartTime = CurrentTime;
     }
 }
 
@@ -364,13 +364,13 @@ static void updateActiveUsbReports(void)
             key_action_t *action;
 
             if (keyState->debouncing) {
-                if ((uint8_t)(Timer_GetCurrentTime() - keyState->timestamp) > (keyState->previous ? DebounceTimePress : DebounceTimeRelease)) {
+                if ((uint8_t)(CurrentTime - keyState->timestamp) > (keyState->previous ? DebounceTimePress : DebounceTimeRelease)) {
                     keyState->debouncing = false;
                 } else {
                     keyState->current = keyState->previous;
                 }
             } else if (keyState->previous != keyState->current) {
-                keyState->timestamp = Timer_GetCurrentTime();
+                keyState->timestamp = CurrentTime;
                 keyState->debouncing = true;
             }
 

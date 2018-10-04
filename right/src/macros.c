@@ -286,7 +286,7 @@ bool processDelayAction(void)
             inDelay = false;
         }
     } else {
-        Timer_SetCurrentTime(&delayStart);
+        delayStart = CurrentTime;
         inDelay = true;
     }
     return inDelay;

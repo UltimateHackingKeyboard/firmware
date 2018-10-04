@@ -9,12 +9,14 @@
 
     #define TIMER_INTERVAL_MSEC 1
 
+// Variables:
+
+   extern volatile uint32_t CurrentTime;
+
 // Functions:
 
     void Timer_Init(void);
-    uint32_t Timer_GetCurrentTime();
     uint32_t Timer_GetCurrentTimeMicros();
-    void Timer_SetCurrentTime(uint32_t *time);
     void Timer_SetCurrentTimeMicros(uint32_t *time);
     uint32_t Timer_GetElapsedTime(uint32_t *time);
     uint32_t Timer_GetElapsedTimeMicros(uint32_t *time);
