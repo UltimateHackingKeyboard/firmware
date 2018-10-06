@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [8.5.2] - 2018-10-06
+
+Device Protocol: 4.5.0 | Module Protocol: 4.0.0 | User Config: 4.1.0 | Hardware Config: 1.0.0
+
+- Don't suppress keys upon keymap change.
+
 ## [8.5.1] - 2018-10-04
 
 Device Protocol: 4.5.0 | Module Protocol: 4.0.0 | User Config: 4.1.0 | Hardware Config: 1.0.0
