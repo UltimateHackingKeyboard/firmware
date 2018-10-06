@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [8.5.1] - 2018-10-04
+
+Device Protocol: 4.5.0 | Module Protocol: 4.0.0 | User Config: 4.1.0 | Hardware Config: 1.0.0
+
+- Reset UsbReportUpdateSemaphore if it gets stuck for 100ms. This should fix occasional freezes.
+
+## [8.5.0] - 2018-10-04
+
+Device Protocol: 4.**5.0** | Module Protocol: 4.0.0 | User Config: 4.1.0 | Hardware Config: 1.0.0
+
+- Send primary role modifiers consistently.
+- Only allow layer switcher keys to deactivate toggled layers.
+- Deactivate secondary roles when switching keymaps.
+- Use the correct scancode so that commas are outputted for macros.
+- Move the pointer not by 1 but by 5 pixels when testing the USB stack to make the pointer easier to see.
+- Expose UsbReportUpdateSemaphore via UsbCommand_{Get,Set}Variable() `DEVICEPROTOCOL:MINOR`
+- Extract CurrentTime and remove Timer_{Get,Set}CurrentTime()
+
 ## [8.4.5] - 2018-08-21
 
 Device Protocol: 4.4.0 | Module Protocol: 4.0.0 | User Config: 4.1.0 | Hardware Config: 1.0.0

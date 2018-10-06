@@ -2,12 +2,13 @@
 #include "timer.h"
 #include "peripherals/test_led.h"
 
+volatile uint32_t CurrentTime;
 static uint32_t timerClockFrequency;
-static volatile uint32_t currentTime, delayLength;
+static volatile uint32_t delayLength;
 
 void PIT_TIMER_HANDLER(void)
 {
-    currentTime++;
+    CurrentTime++;
     if (delayLength) {
         --delayLength;
     }
@@ -28,25 +29,16 @@ void Timer_Init(void)
     PIT_StartTimer(PIT, PIT_TIMER_CHANNEL);
 }
 
-uint32_t Timer_GetCurrentTime() {
-    return currentTime;
-}
-
 uint32_t Timer_GetCurrentTimeMicros() {
     uint32_t primask, count, ms;
     primask = DisableGlobalIRQ(); // Make sure the read is atomic
     count = PIT_GetCurrentTimerCount(PIT, PIT_TIMER_CHANNEL); // Read the current timer count
-    ms = currentTime; // Read the overflow counter
+    ms = CurrentTime; // Read the overflow counter
     EnableGlobalIRQ(primask); // Enable interrupts again if they where enabled before - this should make it interrupt safe
 
     // Calculate the counter value in microseconds - note that the PIT timer is counting downward, so we need to subtract the count from the period value
     uint32_t us = 1000U * TIMER_INTERVAL_MSEC - COUNT_TO_USEC(count, timerClockFrequency);
     return ms * 1000U * TIMER_INTERVAL_MSEC + us;
-}
-
-void Timer_SetCurrentTime(uint32_t *time)
-{
-    *time = Timer_GetCurrentTime();
 }
 
 void Timer_SetCurrentTimeMicros(uint32_t *time)
@@ -56,20 +48,18 @@ void Timer_SetCurrentTimeMicros(uint32_t *time)
 
 uint32_t Timer_GetElapsedTime(uint32_t *time)
 {
-    uint32_t elapsedTime = Timer_GetCurrentTime() - *time;
-    return elapsedTime;
+    return CurrentTime - *time;
 }
 
 uint32_t Timer_GetElapsedTimeMicros(uint32_t *time)
 {
-    uint32_t elapsedTime = Timer_GetCurrentTimeMicros() - *time;
-    return elapsedTime;
+    return Timer_GetCurrentTimeMicros() - *time;
 }
 
 uint32_t Timer_GetElapsedTimeAndSetCurrent(uint32_t *time)
 {
     uint32_t elapsedTime = Timer_GetElapsedTime(time);
-    *time = Timer_GetCurrentTime();
+    *time = CurrentTime;
     return elapsedTime;
 }
 

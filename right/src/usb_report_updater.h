@@ -14,6 +14,8 @@
     #define SECONDARY_ROLE_MODIFIER_TO_HID_MODIFIER(secondaryRoleModifier) (1 << ((secondaryRoleModifier) - 1))
     #define SECONDARY_ROLE_LAYER_TO_LAYER_ID(secondaryRoleLayer) ((secondaryRoleLayer) - SecondaryRole_RightSuper)
 
+    #define USB_SEMAPHORE_TIMEOUT 100 // ms
+
 // Typedefs:
 
     typedef enum {

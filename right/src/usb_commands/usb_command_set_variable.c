@@ -24,5 +24,8 @@ void UsbCommand_SetVariable(void)
         case UsbVariable_DebounceTimeRelease:
             DebounceTimeRelease = GetUsbRxBufferUint8(2);
             break;
+        case UsbVariable_UsbReportSemaphore:
+            UsbReportUpdateSemaphore = GetUsbRxBufferUint8(2);
+            break;
     }
 }

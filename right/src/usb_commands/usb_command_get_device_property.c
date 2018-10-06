@@ -69,7 +69,7 @@ void UsbCommand_GetDeviceProperty(void)
             SetUsbTxBufferUint32(6, I2cMainBusActualBaudRateBps);
             break;
         case DevicePropertyId_Uptime:
-            SetUsbTxBufferUint32(1, Timer_GetCurrentTime());
+            SetUsbTxBufferUint32(1, CurrentTime);
             break;
         default:
             SetUsbTxBufferUint8(0, UsbStatusCode_GetDeviceProperty_InvalidProperty);

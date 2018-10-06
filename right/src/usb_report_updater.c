@@ -226,11 +226,11 @@ static void handleSwitchLayerAction(key_state_t *keyState, key_action_t *action)
         if (doubleTapSwitchLayerKey && Timer_GetElapsedTimeAndSetCurrent(&doubleTapSwitchLayerStartTime) < DoubleTapSwitchLayerTimeout) {
             ToggledLayer = action->switchLayer.layer;
             isLayerDoubleTapToggled = true;
-            doubleTapSwitchLayerTriggerTime = Timer_GetCurrentTime();
+            doubleTapSwitchLayerTriggerTime = CurrentTime;
         } else {
             doubleTapSwitchLayerKey = keyState;
         }
-        doubleTapSwitchLayerStartTime = Timer_GetCurrentTime();
+        doubleTapSwitchLayerStartTime = CurrentTime;
     }
 }
 
@@ -351,7 +351,7 @@ static void updateActiveUsbReports(void)
                 isEvenMedia = !isEvenMedia;
                 ActiveUsbMediaKeyboardReport->scancodes[mediaScancodeIndex++] = isEvenMedia ? MEDIA_VOLUME_DOWN : MEDIA_VOLUME_UP;
             }
-            MouseMoveState.xOut = isEven ? -1 : 1;
+            MouseMoveState.xOut = isEven ? -5 : 5;
         }
     }
 
@@ -361,13 +361,13 @@ static void updateActiveUsbReports(void)
             key_action_t *action;
 
             if (keyState->debouncing) {
-                if ((uint8_t)(Timer_GetCurrentTime() - keyState->timestamp) > (keyState->previous ? DebounceTimePress : DebounceTimeRelease)) {
+                if ((uint8_t)(CurrentTime - keyState->timestamp) > (keyState->previous ? DebounceTimePress : DebounceTimeRelease)) {
                     keyState->debouncing = false;
                 } else {
                     keyState->current = keyState->previous;
                 }
             } else if (keyState->previous != keyState->current) {
-                keyState->timestamp = Timer_GetCurrentTime();
+                keyState->timestamp = CurrentTime;
                 keyState->debouncing = true;
             }
 
@@ -406,6 +406,7 @@ static void updateActiveUsbReports(void)
                 if (keyState->previous && secondaryRoleSlotId == slotId && secondaryRoleKeyId == keyId) {
                     // Trigger primary role.
                     if (secondaryRoleState == SecondaryRoleState_Pressed) {
+                        keyState->previous = false;
                         applyKeyAction(keyState, action);
                     }
                     secondaryRoleState = SecondaryRoleState_Released;
@@ -434,14 +435,21 @@ uint32_t UsbReportUpdateCounter;
 
 void UpdateUsbReports(void)
 {
+    static uint32_t lastUpdateTime;
+
     for (uint8_t keyId = 0; keyId < RIGHT_KEY_MATRIX_KEY_COUNT; keyId++) {
         KeyStates[SlotId_RightKeyboardHalf][keyId].current = RightKeyMatrix.keyStates[keyId];
     }
 
     if (UsbReportUpdateSemaphore && !SleepModeActive) {
-        return;
+        if (Timer_GetElapsedTime(&lastUpdateTime) < USB_SEMAPHORE_TIMEOUT) {
+            return;
+        } else {
+            UsbReportUpdateSemaphore = 0;
+        }
     }
 
+    lastUpdateTime = CurrentTime;
     UsbReportUpdateCounter++;
 
     ResetActiveUsbBasicKeyboardReport();
