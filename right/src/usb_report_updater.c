@@ -25,7 +25,6 @@ static uint16_t DoubleTapSwitchLayerReleaseTimeout = 200;
 
 static bool activeMouseStates[ACTIVE_MOUSE_STATES_COUNT];
 bool TestUsbStack = false;
-bool KeymapChanged = false;
 static uint8_t layerCache[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
 
 volatile uint8_t UsbReportUpdateSemaphore = 0;
@@ -335,8 +334,6 @@ static void updateActiveUsbReports(void)
     if (layerChanged) {
         stickyModifiers = 0;
     }
-    bool keymapChangedLastCycle = KeymapChanged;
-    KeymapChanged = false;
     LedDisplay_SetLayer(activeLayer);
 
     if (TestUsbStack) {
@@ -390,9 +387,7 @@ static void updateActiveUsbReports(void)
             action = &CurrentKeymap[layerCache[slotId][keyId]][slotId][keyId];
 
             if (keyState->current) {
-                if ((KeymapChanged || keymapChangedLastCycle) && keyState->previous) {
-                    keyState->suppressed = true;
-                } else if (action->type == KeyActionType_Keystroke && action->keystroke.secondaryRole) {
+                if (action->type == KeyActionType_Keystroke && action->keystroke.secondaryRole) {
                     // Press released secondary role key.
                     if (!keyState->previous && secondaryRoleState == SecondaryRoleState_Released) {
                         secondaryRoleState = SecondaryRoleState_Pressed;
