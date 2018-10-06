@@ -25,7 +25,7 @@ static uint16_t DoubleTapSwitchLayerReleaseTimeout = 200;
 
 static bool activeMouseStates[ACTIVE_MOUSE_STATES_COUNT];
 bool TestUsbStack = false;
-static uint8_t layerCache[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
+static key_action_t actionCache[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
 
 volatile uint8_t UsbReportUpdateSemaphore = 0;
 
@@ -380,11 +380,11 @@ static void updateActiveUsbReports(void)
                     secondaryRoleState = SecondaryRoleState_Triggered;
                     keyState->current = false;
                 } else {
-                    layerCache[slotId][keyId] = activeLayer;
+                    actionCache[slotId][keyId] = CurrentKeymap[activeLayer][slotId][keyId];
                 }
             }
 
-            action = &CurrentKeymap[layerCache[slotId][keyId]][slotId][keyId];
+            action = &actionCache[slotId][keyId];
 
             if (keyState->current) {
                 if (action->type == KeyActionType_Keystroke && action->keystroke.secondaryRole) {
