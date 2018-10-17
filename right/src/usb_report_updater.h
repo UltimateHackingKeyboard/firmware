@@ -4,6 +4,8 @@
 // Includes:
 
     #include "config_parser/parse_keymap.h"
+    #include "key_states.h"
+    #include "key_action.h"
 
 // Macros:
 
@@ -37,6 +39,16 @@
         SecondaryRole_Fn,
         SecondaryRole_Mouse
     } secondary_role_t;
+
+    typedef struct {
+        int32_t secondaryRoleEnqueueTime;
+        uint8_t secondaryRoleState;
+
+        key_state_t *state;
+        key_action_t *action;
+        uint8_t keyId;
+        uint8_t slotId;
+    } active_key_t;
 
     typedef enum {
         MouseSpeed_Normal,
