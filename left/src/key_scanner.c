@@ -5,9 +5,7 @@
 void KEY_SCANNER_HANDLER(void)
 {
     KeyMatrix_ScanRow(&keyMatrix);
-#ifdef I2C_WATCHDOG
     RunWatchdog();
-#endif
     LPTMR_ClearStatusFlags(KEY_SCANNER_LPTMR_BASEADDR, kLPTMR_TimerCompareFlag);
 }
 
