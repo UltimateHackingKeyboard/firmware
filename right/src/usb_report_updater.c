@@ -428,7 +428,9 @@ static void updateActiveUsbReports(void)
                         pendingSecondaryRoleKeys[pendingSecondaryRoleKeyCount++] = activeKey;
                     }
                 } else {
-                    activeKeyStates[activeKeysCount++] = activeKey;
+                    if (pendingIndex < 0) {
+                        activeKeyStates[activeKeysCount++] = activeKey;
+                    }
                 }
 
                 if (!hasSecondaryRole && activeKey.action->keystroke.scancode) {
@@ -453,7 +455,7 @@ static void updateActiveUsbReports(void)
 
         int timeout = 120;
         bool secondaryRoleTimeoutElapsed = (int)(CurrentTime - activeKey->secondaryRoleEnqueueTime) > timeout;
-        bool secondaryRoleDiscardTimeoutElapsed = (int)(CurrentTime - activeKey->secondaryRoleEnqueueTime) > 3 * timeout;
+        bool secondaryRoleDiscardTimeoutElapsed = (int)(CurrentTime - activeKey->secondaryRoleEnqueueTime) > 2 * timeout;
 
         bool isEvicted = false;
 
