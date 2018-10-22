@@ -453,7 +453,7 @@ static void updateActiveUsbReports(void)
             continue;
         }
 
-        int timeout = 120;
+        int timeout = 100;
         bool secondaryRoleTimeoutElapsed = (int)(CurrentTime - activeKey->secondaryRoleEnqueueTime) > timeout;
         bool secondaryRoleDiscardTimeoutElapsed = (int)(CurrentTime - activeKey->secondaryRoleEnqueueTime) > 300;
 
