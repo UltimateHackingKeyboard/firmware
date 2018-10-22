@@ -451,9 +451,9 @@ static void updateActiveUsbReports(void)
             continue;
         }
 
-        int timeout = 150;
+        int timeout = 120;
         bool secondaryRoleTimeoutElapsed = (int)(CurrentTime - activeKey->secondaryRoleEnqueueTime) > timeout;
-        bool secondaryRoleDiscardTimeoutElapsed = (int)(CurrentTime - activeKey->secondaryRoleEnqueueTime) > 2 * timeout;
+        bool secondaryRoleDiscardTimeoutElapsed = (int)(CurrentTime - activeKey->secondaryRoleEnqueueTime) > 3 * timeout;
 
         bool isEvicted = false;
 
