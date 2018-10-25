@@ -350,8 +350,8 @@ static uint8_t applySecondaryRoleOf(key_ref_t *keyRef, uint8_t layer) {
         return SECONDARY_ROLE_LAYER_TO_LAYER_ID(secRole);
     } else if (IS_SECONDARY_ROLE_MODIFIER(secRole)) {
         ActiveUsbBasicKeyboardReport->modifiers |= SECONDARY_ROLE_MODIFIER_TO_HID_MODIFIER(secRole);
-        return layer;
     }
+    return layer;
 }
 
 static void updateActiveUsbReports(void)
@@ -404,7 +404,7 @@ static void updateActiveUsbReports(void)
                 key->ref.keyState->previous = false;
                 key->ref.keyState->current = true;
             } else {
-                Remove(key, pendingActionCount, pendingActionCount--);
+                Remove(pendingActions, &key->ref, pendingActionCount--);
             }
         }
     }
@@ -438,7 +438,6 @@ static void updateActiveUsbReports(void)
         activeLayer = GetActiveLayer();
     }
 
-    bool layerChanged = previousLayer != activeLayer;
     LedDisplay_SetLayer(activeLayer);
 
     for (uint8_t i = 0; i < pressedKeyAmount; ++i) {
