@@ -41,14 +41,17 @@
     } secondary_role_t;
 
     typedef struct {
-        int32_t secondaryRoleEnqueueTime;
-        uint8_t secondaryRoleState;
-
-        key_state_t *state;
-        key_action_t *action;
         uint8_t keyId;
         uint8_t slotId;
-    } active_key_t;
+        key_state_t *keyState;
+    } key_ref_t;
+
+    typedef struct {
+        int32_t enqueueTime;
+        key_ref_t ref;
+        bool activated;
+        key_action_t *action;
+    } pending_key_t;
 
     typedef enum {
         MouseSpeed_Normal,
