@@ -413,7 +413,7 @@ static void updateActiveUsbReports(void)
     bool activeModifierDetected = false;
     for (uint8_t i = 0; i < pendingModifierCount;) {
         pending_key_t *pendingModifier = &pendingModifiers[i];
-        bool timeoutElapsed = (CurrentTime - pendingModifier->enqueueTime) > 3000;
+        bool timeoutElapsed = (CurrentTime - pendingModifier->enqueueTime) > 500;
 
         if (pendingModifier->ref.keyState->current) {
             pendingModifier->activated |= timeoutElapsed || pendingActionKeyReleaseDetected;
