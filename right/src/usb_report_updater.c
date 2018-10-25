@@ -404,7 +404,8 @@ static void updateActiveUsbReports(void)
                 key->ref.keyState->previous = false;
                 key->ref.keyState->current = true;
             } else {
-                Remove(pendingActions, &key->ref, pendingActionCount--);
+                Remove(pendingActions, &key->ref, pendingActionCount);
+                --pendingActionCount;
             }
         }
     }
@@ -429,7 +430,6 @@ static void updateActiveUsbReports(void)
                 InsertAt(pendingActions, pendingModifier, 0, pendingActionCount);
                 pendingModifier->ref.keyState->current = true;
                 ++pendingActionCount;
-                pendingActionKeyReleaseDetected = true;
             }
         }
     }
@@ -453,28 +453,29 @@ static void updateActiveUsbReports(void)
 
         bool hasSecondaryRole = secondaryRole(action);
         bool notRegisteredAsModifier = IndexOf(pendingModifiers, ref, pendingModifierCount) < 0;
-        if (hasSecondaryRole && notRegisteredAsModifier) {
-            InsertAt(pendingModifiers, &key, pendingModifierCount, pendingModifierCount);
-            ++pendingModifierCount;
-        } else if (notRegisteredAsModifier && IndexOf(pendingActions, ref, pendingActionCount) < 0) {
-            InsertAt(pendingActions, &key, pendingActionCount, pendingActionCount);
-            ++pendingActionCount;
+        bool notRegisteredAsAction = IndexOf(pendingActions, ref, pendingActionCount) < 0;
+
+        if (notRegisteredAsAction && notRegisteredAsModifier) {
+            if (hasSecondaryRole) {
+                InsertAt(pendingModifiers, &key, pendingModifierCount, pendingModifierCount);
+                ++pendingModifierCount;
+            } else {
+                InsertAt(pendingActions, &key, pendingActionCount, pendingActionCount);
+                ++pendingActionCount;
+            }
         }
     }
 
-    for (uint8_t i = 0; i < pendingActionCount; ) {
+    for (uint8_t i = 0; i < pendingActionCount; ++i) {
         pending_key_t *key = &pendingActions[i];
         key_action_t *action = &CurrentKeymap[activeLayer][key->ref.slotId][key->ref.keyId];
         key_state_t *keyState = key->ref.keyState;
 
         bool blockedByModifiers = (pendingModifierCount > 0 && !activeModifierDetected);
         bool shouldApply = blockedByModifiers != keyState->current;
-        if (shouldApply) {
+        if (shouldApply && !key->activated) {
             applyKeyAction(keyState, action);
-            Remove(pendingActions, &key->ref, pendingActionCount);
-            --pendingActionCount;
-        } else {
-            ++i;
+            key->activated = true;
         }
     }
 
