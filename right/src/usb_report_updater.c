@@ -399,7 +399,7 @@ static void updateActiveUsbReports(void)
     for (uint8_t i = 0; i < pendingActionCount; ++i) {
         pending_key_t *key = &pendingActions[i];
         if (!key->ref.keyState->current) {
-            if (pendingModifierCount > 0) {
+            if (pendingModifierCount > 0 && pendingModifiers[0].enqueueTime < key->enqueueTime) {
                 pendingActionKeyReleaseDetected = true;
                 key->ref.keyState->previous = false;
                 key->ref.keyState->current = true;
