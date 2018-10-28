@@ -22,6 +22,7 @@ static uint32_t mouseElapsedTime;
 
 uint16_t DoubleTapSwitchLayerTimeout = 300;
 static uint16_t DoubleTapSwitchLayerReleaseTimeout = 200;
+static const int SEC_ROLE_KICKIN_THRESHOLD = 300;
 
 static bool activeMouseStates[ACTIVE_MOUSE_STATES_COUNT];
 bool TestUsbStack = false;
@@ -193,7 +194,7 @@ static void processMouseActions()
     }
 }
 
-static layer_id_t previousLayer = LayerId_Base;
+static layer_id_t previousLayer = LayerId_Fn;
 
 static void handleSwitchLayerAction(key_state_t *keyState, key_action_t *action)
 {
@@ -237,9 +238,6 @@ static uint8_t basicScancodeIndex = 0;
 static uint8_t mediaScancodeIndex = 0;
 static uint8_t systemScancodeIndex = 0;
 
-static uint8_t stickyModifiers;
-
-
 static void applyKeyAction(key_state_t *keyState, key_action_t *action)
 {
     handleSwitchLayerAction(keyState, action);
@@ -269,20 +267,15 @@ static void applyKeyAction(key_state_t *keyState, key_action_t *action)
             }
             break;
         case KeyActionType_Mouse:
-            if (!keyState->previous) {
-                stickyModifiers = 0;
-            }
             activeMouseStates[action->mouseAction] = true;
             break;
         case KeyActionType_SwitchLayer:
             // Handled by handleSwitchLayerAction()
             break;
         case KeyActionType_SwitchKeymap:
-                stickyModifiers = 0;
                 SwitchKeymapById(action->switchKeymap.keymapId);
             break;
         case KeyActionType_PlayMacro:
-                stickyModifiers = 0;
                 Macros_StartMacro(action->playMacro.macroId);
             break;
     }
@@ -370,23 +363,7 @@ static void dbg(uint8_t keyCode) {
     }
 }
 
-static int comp(const void *key1, const void *key2) {
-    uint32_t t1 = ((pending_key_t*) key1)->enqueueTime;
-    uint32_t t2 = ((pending_key_t*) key2)->enqueueTime;
-
-    if (t1 > t2) {
-        return 1;
-    }
-
-    if (t2 > t1) {
-        return -1;
-    }
-
-    return 0;
-}
-
 static void execAllActions() {
-    qsort(actions, actionCount, sizeof(pending_key_t), comp);
     for (uint8_t i = 0; i < actionCount; ) {
         pending_key_t actionKey = actions[i];
 
@@ -397,16 +374,14 @@ static void execAllActions() {
 
         if (!state->current || state->suppressed) {
             dbg(HID_KEYBOARD_SC_R);
-            while (Remove(actions, &actionKey.ref, actionCount)){
-                --actionCount;
-            }
+            Remove(actions, &actionKey.ref, actionCount--);
+            actionKey.ref.keyState->suppressed = false;
         } else {
             ++i;
         }
     }
 }
 
-static const int SEC_ROLE_KICKIN_THRESHOLD = 300;
 
 void sendKeyboardEvents() {
     bool HasUsbBasicKeyboardReportChanged = memcmp(ActiveUsbBasicKeyboardReport, GetInactiveUsbBasicKeyboardReport(), sizeof(usb_basic_keyboard_report_t)) != 0;
@@ -443,8 +418,6 @@ void resetKeyboardReports() {
 
 static void updateActiveUsbReports(void)
 {
-    LedDisplay_SetLayer(activeLayer);
-
     if (MacroPlaying) {
         Macros_ContinueMacro();
         memcpy(ActiveUsbMouseReport, &MacroMouseReport, sizeof MacroMouseReport);
@@ -453,6 +426,8 @@ static void updateActiveUsbReports(void)
         memcpy(ActiveUsbSystemKeyboardReport, &MacroSystemKeyboardReport, sizeof MacroSystemKeyboardReport);
         return;
     }
+
+    activeLayer = GetActiveLayer();
 
     memset(activeMouseStates, 0, ACTIVE_MOUSE_STATES_COUNT);
 
@@ -504,8 +479,6 @@ static void updateActiveUsbReports(void)
                         dbg(codes[actionCount]);
                     }
                 }
-            } else {
-                keyState->suppressed = false;
             }
 
             keyState->previous = keyState->current;
@@ -612,8 +585,6 @@ static void updateActiveUsbReports(void)
                 key->ref.keyState->current = true;
                 key->ref.keyState->suppressed = true;
                 releasedActionKeyEnqueueTime = key->enqueueTime;
-                dbg(codes[actionCount]);
-                break;
             }
         }
 
@@ -623,12 +594,10 @@ static void updateActiveUsbReports(void)
             pending_key_t *pendingModifier = &modifiers[i];
             bool timeoutElapsed = (CurrentTime - pendingModifier->enqueueTime) > SEC_ROLE_KICKIN_THRESHOLD;
             if (!pendingModifier->ref.keyState->current) {
-                Remove(modifiers, &pendingModifier->ref, modifierCount);
-                --modifierCount;
+                Remove(modifiers, &pendingModifier->ref, modifierCount--);
                 if (!timeoutElapsed && !pendingModifier->activated) {
-                    InsertAt(actions, pendingModifier, 0, actionCount);
+                    InsertAt(actions, pendingModifier, 0, actionCount++);
                     pendingModifier->ref.keyState->current = true;
-                    ++actionCount;
                 }
             } else {
                 ++i;
@@ -642,12 +611,6 @@ static void updateActiveUsbReports(void)
             }
         }
 
-        if (!activeModifierDetected) {
-            activeLayer = GetActiveLayer();
-        }
-
-        LedDisplay_SetLayer(activeLayer);
-
         // apply all the pending actions, at this moment none of the actions should be in released state, so remove those
         // before executing the actions - sort them based on enqueue time(?)
         if (!activeModifierDetected) {
@@ -657,6 +620,8 @@ static void updateActiveUsbReports(void)
         execAllActions();
     }
 
+
+    LedDisplay_SetLayer(activeLayer);
 
     processMouseActions();
 
