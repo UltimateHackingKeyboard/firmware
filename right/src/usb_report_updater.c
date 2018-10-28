@@ -414,6 +414,39 @@ static void execAllActions() {
 static const int SEC_ROLE_KICKIN_THRESHOLD = 30000;
 
 
+void sendKeyboardEvents() {
+    bool HasUsbBasicKeyboardReportChanged = memcmp(ActiveUsbBasicKeyboardReport, GetInactiveUsbBasicKeyboardReport(), sizeof(usb_basic_keyboard_report_t)) != 0;
+    bool HasUsbMediaKeyboardReportChanged = memcmp(ActiveUsbMediaKeyboardReport, GetInactiveUsbMediaKeyboardReport(), sizeof(usb_media_keyboard_report_t)) != 0;
+    bool HasUsbSystemKeyboardReportChanged = memcmp(ActiveUsbSystemKeyboardReport, GetInactiveUsbSystemKeyboardReport(), sizeof(usb_system_keyboard_report_t)) != 0;
+
+    if (HasUsbBasicKeyboardReportChanged) {
+        usb_status_t status = UsbBasicKeyboardAction();
+        if (status == kStatus_USB_Success) {
+            UsbReportUpdateSemaphore |= 1 << USB_BASIC_KEYBOARD_INTERFACE_INDEX;
+        }
+    }
+
+    if (HasUsbMediaKeyboardReportChanged) {
+        usb_status_t status = UsbMediaKeyboardAction();
+        if (status == kStatus_USB_Success) {
+            UsbReportUpdateSemaphore |= 1 << USB_MEDIA_KEYBOARD_INTERFACE_INDEX;
+        }
+    }
+
+    if (HasUsbSystemKeyboardReportChanged) {
+        usb_status_t status = UsbSystemKeyboardAction();
+        if (status == kStatus_USB_Success) {
+            UsbReportUpdateSemaphore |= 1 << USB_SYSTEM_KEYBOARD_INTERFACE_INDEX;
+        }
+    }
+}
+
+void resetKeyboardReports() {
+    ResetActiveUsbBasicKeyboardReport();
+    ResetActiveUsbMediaKeyboardReport();
+    ResetActiveUsbSystemKeyboardReport();
+}
+
 static void updateActiveUsbReports(void)
 {
     LedDisplay_SetLayer(activeLayer);
@@ -536,10 +569,11 @@ static void updateActiveUsbReports(void)
             if (!state->current) {
                 RemoveAt(modifiers, i, modifierCount--);
                 if (!timeoutElapsed) {
-                    InsertAt(actions, pendingModifier, actionCount, actionCount);
-//                    InsertAt(actions, pendingModifier, 0, actionCount);
-                    pendingModifier->ref.keyState->current = true;
-                    ++actionCount;
+
+                    applyKeyAction(state, &CurrentKeymap[activeLayer][pendingModifier->ref.slotId][pendingModifier->ref.keyId]);
+                    sendKeyboardEvents();
+                    resetKeyboardReports();
+
                     dbg(codes[actionCount]);
                 }
             } else {
@@ -665,38 +699,14 @@ void UpdateUsbReports(void)
     lastUpdateTime = CurrentTime;
     UsbReportUpdateCounter++;
 
-    ResetActiveUsbBasicKeyboardReport();
-    ResetActiveUsbMediaKeyboardReport();
-    ResetActiveUsbSystemKeyboardReport();
+    resetKeyboardReports();
     ResetActiveUsbMouseReport();
 
     updateActiveUsbReports();
 
-    bool HasUsbBasicKeyboardReportChanged = memcmp(ActiveUsbBasicKeyboardReport, GetInactiveUsbBasicKeyboardReport(), sizeof(usb_basic_keyboard_report_t)) != 0;
-    bool HasUsbMediaKeyboardReportChanged = memcmp(ActiveUsbMediaKeyboardReport, GetInactiveUsbMediaKeyboardReport(), sizeof(usb_media_keyboard_report_t)) != 0;
-    bool HasUsbSystemKeyboardReportChanged = memcmp(ActiveUsbSystemKeyboardReport, GetInactiveUsbSystemKeyboardReport(), sizeof(usb_system_keyboard_report_t)) != 0;
     bool HasUsbMouseReportChanged = memcmp(ActiveUsbMouseReport, GetInactiveUsbMouseReport(), sizeof(usb_mouse_report_t)) != 0;
 
-    if (HasUsbBasicKeyboardReportChanged) {
-        usb_status_t status = UsbBasicKeyboardAction();
-        if (status == kStatus_USB_Success) {
-            UsbReportUpdateSemaphore |= 1 << USB_BASIC_KEYBOARD_INTERFACE_INDEX;
-        }
-    }
-
-    if (HasUsbMediaKeyboardReportChanged) {
-        usb_status_t status = UsbMediaKeyboardAction();
-        if (status == kStatus_USB_Success) {
-            UsbReportUpdateSemaphore |= 1 << USB_MEDIA_KEYBOARD_INTERFACE_INDEX;
-        }
-    }
-
-    if (HasUsbSystemKeyboardReportChanged) {
-        usb_status_t status = UsbSystemKeyboardAction();
-        if (status == kStatus_USB_Success) {
-            UsbReportUpdateSemaphore |= 1 << USB_SYSTEM_KEYBOARD_INTERFACE_INDEX;
-        }
-    }
+    sendKeyboardEvents();
 
     // Send out the mouse position and wheel values continuously if the report is not zeros, but only send the mouse button states when they change.
     if (HasUsbMouseReportChanged || ActiveUsbMouseReport->x || ActiveUsbMouseReport->y ||
