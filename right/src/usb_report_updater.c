@@ -513,7 +513,6 @@ static void updateActiveUsbReports(void)
         }
     }
 
-    // TODO - figure out with the suppression
     // await mode - a modifier key is held and we buffer the action keys to see if any of them will be released
     // before the modifier key is released.
     if (stateType == 1) {
@@ -528,7 +527,6 @@ static void updateActiveUsbReports(void)
                 if (!timeoutElapsed) {
                     InsertAt(actions, pendingModifier, actionCount, actionCount);
                     pendingModifier->ref.keyState->current = true;
-                    pendingModifier->ref.keyState->suppressed = actionCount > 0;
                     ++actionCount;
                     dbg(codes[actionCount]);
                 }
@@ -542,7 +540,7 @@ static void updateActiveUsbReports(void)
             // see if any action is released (even the modifier would do)
             for (uint8_t i = 0; i < actionCount; ++i) {
                 pending_key_t *key = &actions[i];
-                if (!key->ref.keyState->current && !key->ref.keyState->suppressed) {
+                if (!key->ref.keyState->current) {
                     shouldTriggerSecRoleMode = true;
 
                     dbg(HID_KEYBOARD_SC_Q);
