@@ -1,4 +1,5 @@
 #include <math.h>
+#include <stdlib.h>
 #include "key_action.h"
 #include "led_display.h"
 #include "layer.h"
@@ -287,9 +288,9 @@ static void applyKeyAction(key_state_t *keyState, key_action_t *action)
     }
 }
 
-static int IndexOf(pending_key_t *keys, key_ref_t *key, uint8_t size) {
+static int IndexOf(pending_key_t *keys, key_ref_t *ref, uint8_t size) {
     for (uint8_t i = 0; i < size; ++i) {
-        if (keys[i].ref.slotId == key->slotId && keys[i].ref.keyId == key->keyId) {
+        if (keys[i].ref.slotId == ref->slotId && keys[i].ref.keyId == ref->keyId) {
             return (int) i;
         }
     }
@@ -332,11 +333,11 @@ static void mitigateBouncing(key_state_t *keyState) {
     }
 }
 
-static pending_key_t pendingModifiers[100];
-static uint8_t pendingModifierCount = 0;
+static pending_key_t modifiers[100];
+static uint8_t modifierCount = 0;
 
-static pending_key_t pendingActions[100];
-static uint8_t pendingActionCount = 0;
+static pending_key_t actions[100];
+static uint8_t actionCount = 0;
 
 static inline uint8_t secondaryRole(key_action_t *action) {
     return action->type == KeyActionType_Keystroke ? action->keystroke.secondaryRole : 0;
@@ -354,8 +355,62 @@ static uint8_t applySecondaryRoleOf(key_ref_t *keyRef, uint8_t layer) {
     return layer;
 }
 
+static uint8_t stateType = 0;
+static layer_id_t activeLayer = LayerId_Base;
+
+
+bool debug = false;
+static key_state_t test = {.previous = false, .current = false, .suppressed = false, .debouncing = false};
+static key_action_t testAction = {.type = KeyActionType_Keystroke, .keystroke = {.scancode = HID_KEYBOARD_SC_J, .keystrokeType = KeystrokeType_Basic}};
+static uint8_t codes[] = { HID_KEYBOARD_SC_0_AND_CLOSING_PARENTHESIS, HID_KEYBOARD_SC_1_AND_EXCLAMATION, HID_KEYBOARD_SC_2_AND_AT, HID_KEYBOARD_SC_3_AND_HASHMARK, HID_KEYBOARD_SC_4_AND_DOLLAR, HID_KEYBOARD_SC_5_AND_PERCENTAGE, HID_KEYBOARD_SC_6_AND_CARET, HID_KEYBOARD_SC_7_AND_AMPERSAND, HID_KEYBOARD_SC_8_AND_ASTERISK, HID_KEYBOARD_SC_9_AND_OPENING_PARENTHESIS};
+static void dbg(uint8_t keyCode) {
+    if (debug) {
+        testAction.keystroke.scancode = keyCode;
+        applyKeyAction(&test, &testAction);
+    }
+}
+
+static int comp(const void *key1, const void *key2) {
+    uint32_t t1 = ((pending_key_t*) key1)->enqueueTime;
+    uint32_t t2 = ((pending_key_t*) key2)->enqueueTime;
+
+    if (t1 > t2) {
+        return 1;
+    }
+
+    if (t2 > t1) {
+        return -1;
+    }
+
+    return 0;
+}
+
+static void flushAllActions() {
+    qsort(actions, actionCount, sizeof(pending_key_t), comp);
+    for (uint8_t i = 0; i < actionCount; ) {
+        pending_key_t actionKey = actions[i];
+
+        key_state_t *state = actionKey.ref.keyState;
+        if (state->current) {
+            applyKeyAction(state, &CurrentKeymap[activeLayer][actionKey.ref.slotId][actionKey.ref.keyId]);
+        }
+
+        if (!state->current || state->suppressed) {
+            dbg(HID_KEYBOARD_SC_R);
+            RemoveAt(actions, i, actionCount--);
+        } else {
+            ++i;
+        }
+    }
+}
+
+static const int SEC_ROLE_KICKIN_THRESHOLD = 30000;
+
+
 static void updateActiveUsbReports(void)
 {
+    LedDisplay_SetLayer(activeLayer);
+
     if (MacroPlaying) {
         Macros_ContinueMacro();
         memcpy(ActiveUsbMouseReport, &MacroMouseReport, sizeof MacroMouseReport);
@@ -371,10 +426,6 @@ static void updateActiveUsbReports(void)
     mediaScancodeIndex = 0;
     systemScancodeIndex = 0;
 
-    bool pendingActionKeyReleaseDetected = false;
-    uint8_t pressedKeyAmount = 0;
-
-    key_ref_t pressedKeys[100];
     for (uint8_t slotId = 0; slotId < SLOT_COUNT; slotId++) {
         for (uint8_t keyId = 0; keyId < MAX_KEY_COUNT_PER_MODULE; keyId++) {
             key_state_t *keyState = &KeyStates[slotId][keyId];
@@ -387,97 +438,200 @@ static void updateActiveUsbReports(void)
                 }
             }
 
-            key_ref_t ref = {.keyId = keyId, .slotId = slotId, .keyState = keyState};
             if (keyState->current) {
-                pressedKeys[pressedKeyAmount++] = ref;
+                key_ref_t ref = {
+                        .keyId = keyId,
+                        .slotId = slotId,
+                        .keyState = keyState
+                };
+
+                key_action_t *action = &CurrentKeymap[activeLayer][ref.slotId][ref.keyId];
+
+                pending_key_t key = {
+                        .activated = false,
+                        .enqueueTime = CurrentTime,
+                        .ref = ref,
+                        .action = action
+                };
+
+                bool hasSecondaryRole = secondaryRole(action);
+                bool notRegisteredAsModifier = IndexOf(modifiers, &ref, modifierCount) < 0;
+                bool notRegisteredAsAction = IndexOf(actions, &ref, actionCount) < 0;
+
+                if (notRegisteredAsAction && notRegisteredAsModifier) {
+                    // if secondary role detected and this is a genuinely new tap
+                    //
+                    //
+                    // tricky related situation: first role held (e.g. 't' -> types 't),
+                    // then without releasing the first role, we press the secondary key (e.g. 's') and hold it
+                    // 's' is immediately pressed (or not ?!),
+                    if (hasSecondaryRole && !keyState->previous) {
+                        dbg(HID_KEYBOARD_SC_Z);
+                        InsertAt(modifiers, &key, modifierCount, modifierCount);
+                        ++modifierCount;
+                    } else {
+                        dbg(HID_KEYBOARD_SC_I);
+                        // otherwise - treat the tap as a mere action
+                        InsertAt(actions, &key, actionCount, actionCount);
+                        ++actionCount;
+                        dbg(codes[actionCount]);
+                    }
+                }
             }
 
             keyState->previous = keyState->current;
         }
     }
 
-    for (uint8_t i = 0; i < pendingActionCount; ++i) {
-        pending_key_t *key = &pendingActions[i];
-        if (!key->ref.keyState->current) {
-            if (pendingModifierCount > 0 && pendingModifiers[0].enqueueTime < key->enqueueTime) {
-                pendingActionKeyReleaseDetected = true;
-                key->ref.keyState->previous = false;
-                key->ref.keyState->current = true;
-            } else {
-                Remove(pendingActions, &key->ref, pendingActionCount);
-                --pendingActionCount;
-            }
+    pending_key_t *longestPressedKey = NULL;
+    for (uint8_t i = 0; i < modifierCount; ++i) {
+        if (!longestPressedKey || longestPressedKey->enqueueTime > modifiers[i].enqueueTime) {
+            longestPressedKey = &modifiers[i];
         }
     }
 
-    layer_id_t activeLayer = LayerId_Base;
-    bool activeModifierDetected = false;
-    for (uint8_t i = 0; i < pendingModifierCount;) {
-        pending_key_t *pendingModifier = &pendingModifiers[i];
-        bool timeoutElapsed = (CurrentTime - pendingModifier->enqueueTime) > 500;
+    for (uint8_t i = 0; i < actionCount; ++i) {
+        if (!longestPressedKey || longestPressedKey->enqueueTime > actions[i].enqueueTime) {
+            longestPressedKey = &actions[i];
+        }
+    }
 
-        if (pendingModifier->ref.keyState->current) {
-            pendingModifier->activated |= timeoutElapsed || pendingActionKeyReleaseDetected;
-            if (pendingModifier->activated) {
-                activeLayer = applySecondaryRoleOf(&pendingModifier->ref, activeLayer);
-                activeModifierDetected = true;
-            }
-            ++i;
+    // free mode - none of the modifiers is pressed yet, merely wait for them and push through all the
+    // actions in the meantime
+    if (stateType == 0) {
+        if (modifierCount > 0 && secondaryRole(longestPressedKey->action)) {
+            stateType = 1;
         } else {
-            Remove(pendingModifiers, &pendingModifier->ref, pendingModifierCount);
-            --pendingModifierCount;
-            if (!timeoutElapsed && !pendingModifier->activated) {
-                InsertAt(pendingActions, pendingModifier, 0, pendingActionCount);
-                pendingModifier->ref.keyState->current = true;
-                ++pendingActionCount;
+            for (uint8_t i = 0; i < modifierCount; ++i) {
+                pending_key_t *modifier = &modifiers[i];
+                InsertAt(actions, modifier, actionCount, actionCount);
+                modifier->ref.keyState->current = true;
+                ++actionCount;
             }
+            modifierCount = 0;
+            flushAllActions();
         }
     }
 
-    if (activeLayer == LayerId_Base) {
-        activeLayer = GetActiveLayer();
-    }
-
-    LedDisplay_SetLayer(activeLayer);
-
-    for (uint8_t i = 0; i < pressedKeyAmount; ++i) {
-        key_ref_t *ref = &pressedKeys[i];
-        key_action_t *action = &CurrentKeymap[activeLayer][ref->slotId][ref->keyId];
-
-        pending_key_t key = {
-                .activated = false,
-                .enqueueTime = CurrentTime,
-                .ref = *ref,
-                .action = action
-        };
-
-        bool hasSecondaryRole = secondaryRole(action);
-        bool notRegisteredAsModifier = IndexOf(pendingModifiers, ref, pendingModifierCount) < 0;
-        bool notRegisteredAsAction = IndexOf(pendingActions, ref, pendingActionCount) < 0;
-
-        if (notRegisteredAsAction && notRegisteredAsModifier) {
-            if (hasSecondaryRole) {
-                InsertAt(pendingModifiers, &key, pendingModifierCount, pendingModifierCount);
-                ++pendingModifierCount;
+    // TODO - figure out with the suppression
+    // await mode - a modifier key is held and we buffer the action keys to see if any of them will be released
+    // before the modifier key is released.
+    if (stateType == 1) {
+        dbg(HID_KEYBOARD_SC_X);
+        // push all released modifiers as actions
+        for (uint8_t i = 0; i < modifierCount;) {
+            pending_key_t *pendingModifier = &modifiers[i];
+            key_state_t *state = pendingModifier->ref.keyState;
+            bool timeoutElapsed = (CurrentTime - pendingModifier->enqueueTime) > SEC_ROLE_KICKIN_THRESHOLD;
+            if (!state->current) {
+                RemoveAt(modifiers, i, modifierCount--);
+                if (!timeoutElapsed) {
+                    InsertAt(actions, pendingModifier, actionCount, actionCount);
+                    pendingModifier->ref.keyState->current = true;
+                    pendingModifier->ref.keyState->suppressed = actionCount > 0;
+                    ++actionCount;
+                    dbg(codes[actionCount]);
+                }
             } else {
-                InsertAt(pendingActions, &key, pendingActionCount, pendingActionCount);
-                ++pendingActionCount;
+                ++i;
             }
         }
-    }
 
-    for (uint8_t i = 0; i < pendingActionCount; ++i) {
-        pending_key_t *key = &pendingActions[i];
-        key_action_t *action = &CurrentKeymap[activeLayer][key->ref.slotId][key->ref.keyId];
-        key_state_t *keyState = key->ref.keyState;
+        bool shouldTriggerSecRoleMode = false;
+        if (modifierCount > 0) {
+            // see if any action is released (even the modifier would do)
+            for (uint8_t i = 0; i < actionCount; ++i) {
+                pending_key_t *key = &actions[i];
+                if (!key->ref.keyState->current && !key->ref.keyState->suppressed) {
+                    shouldTriggerSecRoleMode = true;
 
-        bool blockedByModifiers = (pendingModifierCount > 0 && !activeModifierDetected);
-        bool shouldApply = blockedByModifiers != keyState->current;
-        if (shouldApply && !key->activated) {
-            applyKeyAction(keyState, action);
-            key->activated = true;
+                    dbg(HID_KEYBOARD_SC_Q);
+                }
+            }
+        }
+
+        // detect if any modifier becomes active
+        bool activeModifierDetected = false;
+        for (uint8_t i = 0; i < modifierCount; ++i) {
+            pending_key_t *pendingModifier = &modifiers[i];
+            bool timeoutElapsed = (CurrentTime - pendingModifier->enqueueTime) > SEC_ROLE_KICKIN_THRESHOLD;
+
+            if (pendingModifier->ref.keyState->current) {
+                if (timeoutElapsed || shouldTriggerSecRoleMode) {
+                    activeModifierDetected = true;
+                    dbg(HID_KEYBOARD_SC_B);
+                    break;
+                }
+            }
+        }
+
+        if (activeModifierDetected) {
+            // turn all released pending actions on
+            stateType = 2;
+        } else if (modifierCount == 0) {
+            dbg(HID_KEYBOARD_SC_E);
+            flushAllActions();
+            stateType = 0;
         }
     }
+
+    if (stateType == 2) {
+        uint32_t releasedActionKeyEnqueueTime  = 0;
+        for (uint8_t i = 0; i < actionCount; ++i) {
+            pending_key_t *key = &actions[i];
+            if (!key->ref.keyState->current) {
+                key->ref.keyState->current = true;
+                key->ref.keyState->suppressed = true;
+                releasedActionKeyEnqueueTime = key->enqueueTime;
+                dbg(codes[actionCount]);
+                break;
+            }
+        }
+
+
+        bool activeModifierDetected = false;
+        for (uint8_t i = 0; i < modifierCount;) {
+            pending_key_t *pendingModifier = &modifiers[i];
+            bool timeoutElapsed = (CurrentTime - pendingModifier->enqueueTime) > SEC_ROLE_KICKIN_THRESHOLD;
+            if (!pendingModifier->ref.keyState->current) {
+                Remove(modifiers, &pendingModifier->ref, modifierCount);
+                --modifierCount;
+                if (!timeoutElapsed && !pendingModifier->activated) {
+                    InsertAt(actions, pendingModifier, 0, actionCount);
+                    pendingModifier->ref.keyState->current = true;
+                    ++actionCount;
+                }
+            } else {
+                ++i;
+
+                if (pendingModifier->activated || (timeoutElapsed || pendingModifier->enqueueTime < releasedActionKeyEnqueueTime)){
+                    activeLayer = applySecondaryRoleOf(&pendingModifier->ref, activeLayer);
+                    dbg(HID_KEYBOARD_SC_C);
+                    pendingModifier->activated = true;
+                    activeModifierDetected = true;
+                }
+            }
+        }
+
+        if (!activeModifierDetected) {
+            activeLayer = LayerId_Base;
+        }
+
+        if (activeLayer == LayerId_Base) {
+            activeLayer = GetActiveLayer();
+        }
+
+        LedDisplay_SetLayer(activeLayer);
+
+        // apply all the pending actions, at this moment none of the actions should be in released state, so remove those
+        // before executing the actions - sort them based on enqueue time(?)
+        if (!activeModifierDetected) {
+            stateType = actionCount > 0 ? 1 : 0;
+        }
+
+        flushAllActions();
+    }
+
 
     processMouseActions();
 

@@ -47,7 +47,7 @@
     } key_ref_t;
 
     typedef struct {
-        int32_t enqueueTime;
+        uint32_t enqueueTime;
         key_ref_t ref;
         bool activated;
         key_action_t *action;
@@ -83,7 +83,7 @@
 
 // Variables:
 
-    extern uint16_t DoubleTapSwitchLayerTimeout;
+extern uint16_t DoubleTapSwitchLayerTimeout;
     extern mouse_kinetic_state_t MouseMoveState;
     extern mouse_kinetic_state_t MouseScrollState;
     extern uint32_t UsbReportUpdateCounter;
