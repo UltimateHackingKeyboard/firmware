@@ -22,7 +22,7 @@ static uint32_t mouseElapsedTime;
 
 uint16_t DoubleTapSwitchLayerTimeout = 300;
 static uint16_t DoubleTapSwitchLayerReleaseTimeout = 200;
-static const int SEC_ROLE_KICKIN_THRESHOLD = 300;
+static const int SEC_ROLE_KICKIN_THRESHOLD = 200;
 
 static bool activeMouseStates[ACTIVE_MOUSE_STATES_COUNT];
 bool TestUsbStack = false;
