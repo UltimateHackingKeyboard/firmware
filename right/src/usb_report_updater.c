@@ -388,16 +388,11 @@ static int comp(const void *key1, const void *key2) {
 static void execAllActions() {
     qsort(actions, actionCount, sizeof(pending_key_t), comp);
     for (uint8_t i = 0; i < actionCount; ) {
-//    uint8_t min = actionCount == 0 ? actionCount : 1;
-//    for (uint8_t i = 0; i < min; ) {
-//    for (int i = actionCount - 1; i > 0; --i) {
-//    for (uint8_t i = 0; i < 1; ) {
         pending_key_t actionKey = actions[i];
 
         key_state_t *state = actionKey.ref.keyState;
         if (state->current) {
             applyKeyAction(state, &CurrentKeymap[activeLayer][actionKey.ref.slotId][actionKey.ref.keyId]);
-            break;
         }
 
         if (!state->current || state->suppressed) {
@@ -411,8 +406,7 @@ static void execAllActions() {
     }
 }
 
-static const int SEC_ROLE_KICKIN_THRESHOLD = 30000;
-
+static const int SEC_ROLE_KICKIN_THRESHOLD = 300;
 
 void sendKeyboardEvents() {
     bool HasUsbBasicKeyboardReportChanged = memcmp(ActiveUsbBasicKeyboardReport, GetInactiveUsbBasicKeyboardReport(), sizeof(usb_basic_keyboard_report_t)) != 0;
@@ -499,21 +493,12 @@ static void updateActiveUsbReports(void)
                 bool notRegisteredAsAction = IndexOf(actions, &ref, actionCount) < 0;
 
                 if (notRegisteredAsAction && notRegisteredAsModifier) {
-                    // if secondary role detected and this is a genuinely new tap
-                    //
-                    //
-                    // tricky related situation: first role held (e.g. 't' -> types 't),
-                    // then without releasing the first role, we press the secondary key (e.g. 's') and hold it
-                    // 's' is immediately pressed (or not ?!),
                     if (hasSecondaryRole && !keyState->previous) {
                         dbg(HID_KEYBOARD_SC_Z);
-//                        dbg(action->keystroke.scancode);
                         InsertAt(modifiers, &key, modifierCount, modifierCount);
                         ++modifierCount;
                     } else {
                         dbg(HID_KEYBOARD_SC_Y);
-//                        dbg(action->keystroke.scancode);
-                        // otherwise - treat the tap as a mere action
                         InsertAt(actions, &key, actionCount, actionCount);
                         ++actionCount;
                         dbg(codes[actionCount]);
