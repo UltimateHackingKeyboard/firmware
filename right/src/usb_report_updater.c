@@ -385,19 +385,26 @@ static int comp(const void *key1, const void *key2) {
     return 0;
 }
 
-static void flushAllActions() {
+static void execAllActions() {
     qsort(actions, actionCount, sizeof(pending_key_t), comp);
     for (uint8_t i = 0; i < actionCount; ) {
+//    uint8_t min = actionCount == 0 ? actionCount : 1;
+//    for (uint8_t i = 0; i < min; ) {
+//    for (int i = actionCount - 1; i > 0; --i) {
+//    for (uint8_t i = 0; i < 1; ) {
         pending_key_t actionKey = actions[i];
 
         key_state_t *state = actionKey.ref.keyState;
         if (state->current) {
             applyKeyAction(state, &CurrentKeymap[activeLayer][actionKey.ref.slotId][actionKey.ref.keyId]);
+            break;
         }
 
         if (!state->current || state->suppressed) {
             dbg(HID_KEYBOARD_SC_R);
-            RemoveAt(actions, i, actionCount--);
+            while (Remove(actions, &actionKey.ref, actionCount)){
+                --actionCount;
+            }
         } else {
             ++i;
         }
@@ -467,16 +474,20 @@ static void updateActiveUsbReports(void)
                     // 's' is immediately pressed (or not ?!),
                     if (hasSecondaryRole && !keyState->previous) {
                         dbg(HID_KEYBOARD_SC_Z);
+//                        dbg(action->keystroke.scancode);
                         InsertAt(modifiers, &key, modifierCount, modifierCount);
                         ++modifierCount;
                     } else {
-                        dbg(HID_KEYBOARD_SC_I);
+                        dbg(HID_KEYBOARD_SC_Y);
+//                        dbg(action->keystroke.scancode);
                         // otherwise - treat the tap as a mere action
                         InsertAt(actions, &key, actionCount, actionCount);
                         ++actionCount;
                         dbg(codes[actionCount]);
                     }
                 }
+            } else {
+                keyState->suppressed = false;
             }
 
             keyState->previous = keyState->current;
@@ -509,7 +520,7 @@ static void updateActiveUsbReports(void)
                 ++actionCount;
             }
             modifierCount = 0;
-            flushAllActions();
+            execAllActions();
         }
     }
 
@@ -526,6 +537,7 @@ static void updateActiveUsbReports(void)
                 RemoveAt(modifiers, i, modifierCount--);
                 if (!timeoutElapsed) {
                     InsertAt(actions, pendingModifier, actionCount, actionCount);
+//                    InsertAt(actions, pendingModifier, 0, actionCount);
                     pendingModifier->ref.keyState->current = true;
                     ++actionCount;
                     dbg(codes[actionCount]);
@@ -568,7 +580,7 @@ static void updateActiveUsbReports(void)
             stateType = 2;
         } else if (modifierCount == 0) {
             dbg(HID_KEYBOARD_SC_E);
-            flushAllActions();
+            execAllActions();
             stateType = 0;
         }
     }
@@ -623,7 +635,7 @@ static void updateActiveUsbReports(void)
             stateType = actionCount > 0 ? 1 : 0;
         }
 
-        flushAllActions();
+        execAllActions();
     }
 
 
