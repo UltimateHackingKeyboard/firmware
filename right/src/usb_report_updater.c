@@ -612,10 +612,6 @@ static void updateActiveUsbReports(void)
         }
 
         if (!activeModifierDetected) {
-            activeLayer = LayerId_Base;
-        }
-
-        if (activeLayer == LayerId_Base) {
             activeLayer = GetActiveLayer();
         }
 
