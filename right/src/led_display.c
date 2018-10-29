@@ -94,6 +94,8 @@ void LedDisplay_SetLayer(layer_id_t layerId)
         return;
     }
 
+    current = &layerId;
+
     for (uint8_t i = 13; i <= 45; i += 16) {
         LedDriverValues[LedDriverId_Left][i] = 0;
     }
