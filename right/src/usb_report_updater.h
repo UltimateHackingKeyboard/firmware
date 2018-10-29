@@ -50,7 +50,6 @@
         uint32_t enqueueTime;
         key_ref_t ref;
         bool activated;
-        key_action_t *action;
     } pending_key_t;
 
     typedef enum {

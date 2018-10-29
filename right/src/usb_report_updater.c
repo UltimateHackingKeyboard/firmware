@@ -454,16 +454,13 @@ static void updateActiveUsbReports(void)
                         .keyState = keyState
                 };
 
-                key_action_t *action = &CurrentKeymap[activeLayer][ref.slotId][ref.keyId];
-
                 pending_key_t key = {
                         .activated = false,
                         .enqueueTime = CurrentTime,
-                        .ref = ref,
-                        .action = action
+                        .ref = ref
                 };
 
-                bool hasSecondaryRole = secondaryRole(action);
+                bool hasSecondaryRole = secondaryRole(&CurrentKeymap[activeLayer][ref.slotId][ref.keyId]);
                 bool notRegisteredAsModifier = IndexOf(modifiers, &ref, modifierCount) < 0;
                 bool notRegisteredAsAction = IndexOf(actions, &ref, actionCount) < 0;
 
@@ -501,7 +498,8 @@ static void updateActiveUsbReports(void)
     // free mode - none of the modifiers is pressed yet, merely wait for them and push through all the
     // actions in the meantime
     if (stateType == 0) {
-        if (modifierCount > 0 && secondaryRole(longestPressedKey->action)) {
+        key_ref_t ref = longestPressedKey->ref;
+        if (modifierCount > 0 && secondaryRole(&CurrentKeymap[activeLayer][ref.slotId][ref.keyId])) {
             stateType = 1;
         } else {
             for (uint8_t i = 0; i < modifierCount; ++i) {
