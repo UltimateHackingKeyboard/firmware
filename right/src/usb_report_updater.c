@@ -194,7 +194,7 @@ static void processMouseActions()
     }
 }
 
-static layer_id_t previousLayer = LayerId_Fn;
+static layer_id_t previousLayer = LayerId_Base;
 
 static void handleSwitchLayerAction(key_state_t *keyState, key_action_t *action)
 {
@@ -368,7 +368,7 @@ static void execAllActions() {
         pending_key_t actionKey = actions[i];
 
         key_state_t *state = actionKey.ref.keyState;
-        if (state->current) {
+        if (state->current || state->suppressed) {
             applyKeyAction(state, &CurrentKeymap[activeLayer][actionKey.ref.slotId][actionKey.ref.keyId]);
         }
 
@@ -416,6 +416,22 @@ void resetKeyboardReports() {
     ResetActiveUsbSystemKeyboardReport();
 }
 
+
+bool execImmediate() {
+    int count = 0;
+
+    for (uint8_t i = 0; i < actionCount; ++i) {
+        pending_key_t actionKey = actions[i];
+        key_action_t action = CurrentKeymap[activeLayer][actionKey.ref.slotId][actionKey.ref.keyId];
+        if (action.type == KeyActionType_Keystroke && !action.keystroke.scancode) {
+            ActiveUsbBasicKeyboardReport->modifiers |= action.keystroke.modifiers;
+            count++;
+        }
+    }
+
+    return count > 0;
+}
+
 static void updateActiveUsbReports(void)
 {
     if (MacroPlaying) {
@@ -460,12 +476,14 @@ static void updateActiveUsbReports(void)
                         .ref = ref
                 };
 
-                bool hasSecondaryRole = secondaryRole(&CurrentKeymap[activeLayer][ref.slotId][ref.keyId]);
+                key_action_t action = CurrentKeymap[activeLayer][ref.slotId][ref.keyId];
+                bool hasSecondaryRole = secondaryRole(&action);
                 bool notRegisteredAsModifier = IndexOf(modifiers, &ref, modifierCount) < 0;
                 bool notRegisteredAsAction = IndexOf(actions, &ref, actionCount) < 0;
 
+                // distribute previously untracked keys between action and modifier queue
                 if (notRegisteredAsAction && notRegisteredAsModifier) {
-                    if (hasSecondaryRole && !keyState->previous) {
+                    if (hasSecondaryRole) {
                         dbg(HID_KEYBOARD_SC_Z);
                         InsertAt(modifiers, &key, modifierCount, modifierCount);
                         ++modifierCount;
@@ -482,6 +500,7 @@ static void updateActiveUsbReports(void)
         }
     }
 
+    // detect the longest held key, might affect the further algorithm
     pending_key_t *longestPressedKey = NULL;
     for (uint8_t i = 0; i < modifierCount; ++i) {
         if (!longestPressedKey || longestPressedKey->enqueueTime > modifiers[i].enqueueTime) {
@@ -491,22 +510,29 @@ static void updateActiveUsbReports(void)
 
     for (uint8_t i = 0; i < actionCount; ++i) {
         if (!longestPressedKey || longestPressedKey->enqueueTime > actions[i].enqueueTime) {
-            longestPressedKey = &actions[i];
+            key_action_t action = CurrentKeymap[activeLayer][actions[i].ref.slotId][actions[i].ref.keyId];
+            if (action.type == KeyActionType_Keystroke && action.keystroke.scancode) {
+                longestPressedKey = &actions[i];
+            }
         }
     }
 
     // free mode - none of the modifiers is pressed yet, merely wait for them and push through all the
     // actions in the meantime
     if (stateType == 0) {
-        key_ref_t ref = longestPressedKey->ref;
-        if (modifierCount > 0 && secondaryRole(&CurrentKeymap[activeLayer][ref.slotId][ref.keyId])) {
+        bool mayStartListeningToSecondaryRoleActivation = false;
+        if (longestPressedKey) {
+            key_ref_t ref = longestPressedKey->ref;
+            key_action_t *action = &CurrentKeymap[activeLayer][ref.slotId][ref.keyId];
+            mayStartListeningToSecondaryRoleActivation = secondaryRole(action);//;
+        }
+        if (modifierCount > 0 && mayStartListeningToSecondaryRoleActivation) {
             stateType = 1;
         } else {
             for (uint8_t i = 0; i < modifierCount; ++i) {
                 pending_key_t *modifier = &modifiers[i];
                 InsertAt(actions, modifier, actionCount, actionCount);
-                modifier->ref.keyState->current = true;
-                ++actionCount;
+               ++actionCount;
             }
             modifierCount = 0;
             execAllActions();
@@ -518,6 +544,7 @@ static void updateActiveUsbReports(void)
     if (stateType == 1) {
         dbg(HID_KEYBOARD_SC_X);
         // push all released modifiers as actions
+        bool someModifiersToSend = false;
         for (uint8_t i = 0; i < modifierCount;) {
             pending_key_t *pendingModifier = &modifiers[i];
             key_state_t *state = pendingModifier->ref.keyState;
@@ -525,16 +552,24 @@ static void updateActiveUsbReports(void)
             if (!state->current) {
                 RemoveAt(modifiers, i, modifierCount--);
                 if (!timeoutElapsed) {
-
+                    someModifiersToSend = true;
                     applyKeyAction(state, &CurrentKeymap[activeLayer][pendingModifier->ref.slotId][pendingModifier->ref.keyId]);
-                    sendKeyboardEvents();
-                    resetKeyboardReports();
 
                     dbg(codes[actionCount]);
                 }
             } else {
                 ++i;
             }
+        }
+
+        // TODO - pay additional attention to this and maybe try to streamline the functionality
+        if (someModifiersToSend) {
+            execImmediate();
+        }
+
+        if (someModifiersToSend) {
+            sendKeyboardEvents();
+            resetKeyboardReports();
         }
 
         bool shouldTriggerSecRoleMode = false;
@@ -544,7 +579,6 @@ static void updateActiveUsbReports(void)
                 pending_key_t *key = &actions[i];
                 if (!key->ref.keyState->current) {
                     shouldTriggerSecRoleMode = true;
-
                     dbg(HID_KEYBOARD_SC_Q);
                 }
             }
@@ -575,19 +609,20 @@ static void updateActiveUsbReports(void)
         }
     }
 
+    // secondary role mode - execute all the actions write-through, track held sec role keys, bail out as soon as
+    // there is none
     if (stateType == 2) {
         uint32_t releasedActionKeyEnqueueTime  = 0;
         for (uint8_t i = 0; i < actionCount; ++i) {
             pending_key_t *key = &actions[i];
             if (!key->ref.keyState->current) {
-                key->ref.keyState->current = true;
                 key->ref.keyState->suppressed = true;
                 releasedActionKeyEnqueueTime = key->enqueueTime;
             }
         }
 
-
         bool activeModifierDetected = false;
+
         for (uint8_t i = 0; i < modifierCount;) {
             pending_key_t *pendingModifier = &modifiers[i];
             bool timeoutElapsed = (CurrentTime - pendingModifier->enqueueTime) > SEC_ROLE_KICKIN_THRESHOLD;
@@ -665,4 +700,3 @@ void UpdateUsbReports(void)
         }
     }
 }
-
