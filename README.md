@@ -25,3 +25,10 @@ Going forward, it's easier to flash the firmware of your choice by using the dow
 ## Contributing
 
 Want to contribute? Let us show you [how](/CONTRIBUTING.md).
+
+## Custom Firmwares
+
+The following list contains unofficial forks of the firmware. These forks provide functionality unavailable in the official firmware, but come without guarantees of any kind:
+
+- [https://github.com/kareltucek/firmware](https://github.com/kareltucek/firmware) - firmware featuring macro engine extended by a set of custom commands, allowing more advanced configurations including custom layer switching logic, doubletap bindings, alternative secondary roles etc.
+
