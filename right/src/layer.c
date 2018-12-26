@@ -15,7 +15,7 @@ void updateLayerStates(void)
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
             key_state_t *keyState = &KeyStates[slotId][keyId];
-            if (keyState->current && !keyState->suppressed) {
+            if (keyState->current) {
                 key_action_t action = CurrentKeymap[LayerId_Base][slotId][keyId];
                 if (action.type == KeyActionType_SwitchLayer) {
                     if (action.switchLayer.mode != SwitchLayerMode_Toggle) {
@@ -69,4 +69,15 @@ layer_id_t GetActiveLayer()
     PreviousHeldLayer = heldLayer;
 
     return heldLayer;
+}
+
+bool IsLayerHeld(void)
+{
+    for (layer_id_t layerId = LayerId_Mod; layerId <= LayerId_Mouse; layerId++) {
+        if (heldLayers[layerId]) {
+            return true;
+        }
+    }
+
+    return false;
 }

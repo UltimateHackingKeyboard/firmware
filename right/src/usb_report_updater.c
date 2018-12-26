@@ -237,72 +237,84 @@ static void handleSwitchLayerAction(key_state_t *keyState, key_action_t *action)
 static uint8_t basicScancodeIndex = 0;
 static uint8_t mediaScancodeIndex = 0;
 static uint8_t systemScancodeIndex = 0;
-static uint8_t stickyModifiers;
+static uint8_t stickyModifiers, stickySlotId, stickyKeyId;
 static uint8_t secondaryRoleState = SecondaryRoleState_Released;
 static uint8_t secondaryRoleSlotId;
 static uint8_t secondaryRoleKeyId;
 static secondary_role_t secondaryRole;
 
-static void applyKeyAction(key_state_t *keyState, key_action_t *action)
+static void applyKeyAction(key_state_t *keyState, key_action_t *action, uint8_t slotId, uint8_t keyId)
 {
-    if (keyState->suppressed) {
-        return;
-    }
+    if (keyState->current) {
+        handleSwitchLayerAction(keyState, action);
 
-    handleSwitchLayerAction(keyState, action);
-
-    switch (action->type) {
-        case KeyActionType_Keystroke:
-            if (action->keystroke.scancode) {
-                if (!keyState->previous) {
-                    stickyModifiers = action->keystroke.modifiers;
+        switch (action->type) {
+            case KeyActionType_Keystroke:
+                if (action->keystroke.scancode) {
+                    if (!keyState->previous) {
+                        stickyModifiers = action->keystroke.modifiers;
+                        stickySlotId = slotId;
+                        stickyKeyId = keyId;
+                    }
+                } else {
+                    ActiveUsbBasicKeyboardReport->modifiers |= action->keystroke.modifiers;
                 }
-            } else {
-                ActiveUsbBasicKeyboardReport->modifiers |= action->keystroke.modifiers;
-            }
-            switch (action->keystroke.keystrokeType) {
-                case KeystrokeType_Basic:
-                    if (basicScancodeIndex >= USB_BASIC_KEYBOARD_MAX_KEYS || action->keystroke.scancode == 0) {
+                switch (action->keystroke.keystrokeType) {
+                    case KeystrokeType_Basic:
+                        if (basicScancodeIndex >= USB_BASIC_KEYBOARD_MAX_KEYS || action->keystroke.scancode == 0) {
+                            break;
+                        }
+                        ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = action->keystroke.scancode;
                         break;
-                    }
-                    ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = action->keystroke.scancode;
-                    break;
-                case KeystrokeType_Media:
-                    if (mediaScancodeIndex >= USB_MEDIA_KEYBOARD_MAX_KEYS) {
+                    case KeystrokeType_Media:
+                        if (mediaScancodeIndex >= USB_MEDIA_KEYBOARD_MAX_KEYS) {
+                            break;
+                        }
+                        ActiveUsbMediaKeyboardReport->scancodes[mediaScancodeIndex++] = action->keystroke.scancode;
                         break;
-                    }
-                    ActiveUsbMediaKeyboardReport->scancodes[mediaScancodeIndex++] = action->keystroke.scancode;
-                    break;
-                case KeystrokeType_System:
-                    if (systemScancodeIndex >= USB_SYSTEM_KEYBOARD_MAX_KEYS) {
+                    case KeystrokeType_System:
+                        if (systemScancodeIndex >= USB_SYSTEM_KEYBOARD_MAX_KEYS) {
+                            break;
+                        }
+                        ActiveUsbSystemKeyboardReport->scancodes[systemScancodeIndex++] = action->keystroke.scancode;
                         break;
+                }
+                break;
+            case KeyActionType_Mouse:
+                if (!keyState->previous) {
+                    stickyModifiers = 0;
+                }
+                activeMouseStates[action->mouseAction] = true;
+                break;
+            case KeyActionType_SwitchLayer:
+                // Handled by handleSwitchLayerAction()
+                break;
+            case KeyActionType_SwitchKeymap:
+                if (!keyState->previous) {
+                    stickyModifiers = 0;
+                    secondaryRoleState = SecondaryRoleState_Released;
+                    SwitchKeymapById(action->switchKeymap.keymapId);
+                }
+                break;
+            case KeyActionType_PlayMacro:
+                if (!keyState->previous) {
+                    stickyModifiers = 0;
+                    Macros_StartMacro(action->playMacro.macroId);
+                }
+                break;
+        }
+    } else {
+        switch (action->type) {
+            case KeyActionType_Keystroke:
+                if (keyState->previous) {
+                    if (slotId == stickySlotId && keyId == stickyKeyId) {
+                        if (!IsLayerHeld() && !(secondaryRoleState == SecondaryRoleState_Triggered && IS_SECONDARY_ROLE_LAYER_SWITCHER(secondaryRole))) {
+                            stickyModifiers = 0;
+                        }
                     }
-                    ActiveUsbSystemKeyboardReport->scancodes[systemScancodeIndex++] = action->keystroke.scancode;
-                    break;
-            }
-            break;
-        case KeyActionType_Mouse:
-            if (!keyState->previous) {
-                stickyModifiers = 0;
-            }
-            activeMouseStates[action->mouseAction] = true;
-            break;
-        case KeyActionType_SwitchLayer:
-            // Handled by handleSwitchLayerAction()
-            break;
-        case KeyActionType_SwitchKeymap:
-            if (!keyState->previous) {
-                stickyModifiers = 0;
-                secondaryRoleState = SecondaryRoleState_Released;
-                SwitchKeymapById(action->switchKeymap.keymapId);
-            }
-            break;
-        case KeyActionType_PlayMacro:
-            if (!keyState->previous) {
-                stickyModifiers = 0;
-                Macros_StartMacro(action->playMacro.macroId);
-            }
-            break;
+                }
+                break;
+        }
     }
 }
 
@@ -394,22 +406,22 @@ static void updateActiveUsbReports(void)
                         secondaryRoleSlotId = slotId;
                         secondaryRoleKeyId = keyId;
                         secondaryRole = action->keystroke.secondaryRole;
-                        keyState->suppressed = true;
                     }
                 } else {
-                    applyKeyAction(keyState, action);
+                    applyKeyAction(keyState, action, slotId, keyId);
                 }
             } else {
-                keyState->suppressed = false;
-
                 // Release secondary role key.
-                if (keyState->previous && secondaryRoleSlotId == slotId && secondaryRoleKeyId == keyId) {
+                if (keyState->previous && secondaryRoleSlotId == slotId && secondaryRoleKeyId == keyId && secondaryRoleState != SecondaryRoleState_Released) {
                     // Trigger primary role.
                     if (secondaryRoleState == SecondaryRoleState_Pressed) {
                         keyState->previous = false;
-                        applyKeyAction(keyState, action);
+                        keyState->current = true;
+                        applyKeyAction(keyState, action, slotId, keyId);
                     }
                     secondaryRoleState = SecondaryRoleState_Released;
+                } else {
+                    applyKeyAction(keyState, action, slotId, keyId);
                 }
             }
 
