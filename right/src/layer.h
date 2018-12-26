@@ -25,6 +25,7 @@
 
 // Functions:
 
-    layer_id_t GetActiveLayer();
+    layer_id_t GetActiveLayer(void);
+    bool IsLayerHeld(void);
 
 #endif
