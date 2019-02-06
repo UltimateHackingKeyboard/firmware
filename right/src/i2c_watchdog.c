@@ -6,6 +6,7 @@
 #include "i2c.h"
 #include "i2c_watchdog.h"
 #include "init_peripherals.h"
+#include "peripherals/test_led.h"
 
 uint32_t I2cWatchdog_WatchCounter;
 uint32_t I2cWatchdog_RecoveryCounter;
@@ -26,6 +27,7 @@ void PIT_I2C_WATCHDOG_HANDLER(void)
 
     prevWatchdogCounter = I2C_Watchdog;
     PIT_ClearStatusFlags(PIT, PIT_I2C_WATCHDOG_CHANNEL, PIT_TFLG_TIF_MASK);
+	TestLed_Toggle();
 }
 
 void InitI2cWatchdog(void)
