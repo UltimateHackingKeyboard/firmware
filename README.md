@@ -14,11 +14,13 @@ If you're one of the brave few who wants to hack the firmware then read on.
 
 2. Download and install MCUXpresso IDE for [Linux](https://storage.googleapis.com/ugl-static/mcuxpresso-ide/mcuxpressoide-10.2.1_795.x86_64.deb.bin), [Mac](https://storage.googleapis.com/ugl-static/mcuxpresso-ide/MCUXpressoIDE_10.2.1_795.pkg), or [Windows](https://storage.googleapis.com/ugl-static/mcuxpresso-ide/MCUXpressoIDE_10.2.1_795.exe).
 
-3. In the IDE, import the project by invoking *File -> Import -> General -> Existing Projects into Workspace*, select the *left* or *right* directory depending on the desired firmware, then click on the *Finish* button.
+3. [Install GNU ARM Eclipse Plugins](https://mcuoneclipse.com/2017/04/02/mcuxpresso-ide-importing-kinetis-design-studio-projects/) to make indexing work and to avoid the "Orphaned configuration. No base extension cfg exists for ilg.gnuarmeclipse.managedbuild.cross.config.elf.debug.1376620489" error message.
 
-4. In order to be able to flash the firmware via USB from the IDE, you must build [Agent](https://github.com/UltimateHackingKeyboard/agent) which is Git submodule of the this repo and located in the `lib/agent` directory.
+4. In the IDE, import the project by invoking *File -> Import -> General -> Existing Projects into Workspace*, select the *left* or *right* directory depending on the desired firmware, then click on the *Finish* button.
 
-5. Finally, in the IDE, click on *Run -> External Tools -> External Tools Configurations*, then select a release firmware to be flashed such as *uhk60-right_release_kboot*, and click on the *Run* button.
+5. In order to be able to flash the firmware via USB from the IDE, you must build [Agent](https://github.com/UltimateHackingKeyboard/agent) which is Git submodule of the this repo and located in the `lib/agent` directory.
+
+6. Finally, in the IDE, click on *Run -> External Tools -> External Tools Configurations*, then select a release firmware to be flashed such as *uhk60-right_release_kboot*, and click on the *Run* button.
 
 Going forward, it's easier to flash the firmware of your choice by using the downwards toolbar icon which is located rightwards of the *green play + toolbox icon*.
 
