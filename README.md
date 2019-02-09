@@ -12,7 +12,7 @@ If you're one of the brave few who wants to hack the firmware then read on.
 
 `git clone --recursive git@github.com:UltimateHackingKeyboard/firmware.git`
 
-2. Download and install MCUXpresso IDE for [Linux](https://storage.googleapis.com/ugl-static/mcuxpresso-ide/mcuxpressoide-10.2.1_795.x86_64.deb.bin), [Mac](https://storage.googleapis.com/ugl-static/mcuxpresso-ide/MCUXpressoIDE_10.2.1_795.pkg), or [Windows](https://storage.googleapis.com/ugl-static/mcuxpresso-ide/MCUXpressoIDE_10.2.1_795.exe).
+2. Download and install MCUXpresso IDE for [Linux](https://storage.googleapis.com/ugl-static/mcuxpresso-ide/mcuxpressoide-10.3.0_2200.x86_64.deb.bin), [Mac](https://storage.googleapis.com/ugl-static/mcuxpresso-ide/MCUXpressoIDE_10.3.0_2200.pkg), or [Windows](https://storage.googleapis.com/ugl-static/mcuxpresso-ide/MCUXpressoIDE_10.3.0_2200.exe).
 
 3. [Install GNU ARM Eclipse Plugins](https://mcuoneclipse.com/2017/04/02/mcuxpresso-ide-importing-kinetis-design-studio-projects/) to make indexing work and to avoid the "Orphaned configuration. No base extension cfg exists for ilg.gnuarmeclipse.managedbuild.cross.config.elf.debug.1376620489" error message.
 
