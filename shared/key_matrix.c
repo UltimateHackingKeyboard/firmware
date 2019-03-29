@@ -24,19 +24,19 @@ void KeyMatrix_ScanRow(key_matrix_t *keyMatrix)
 {
     uint8_t *keyState = keyMatrix->keyStates + keyMatrix->currentRowNum * keyMatrix->colNum;
     key_matrix_pin_t *row = keyMatrix->rows + keyMatrix->currentRowNum;
-    GPIO_Type *rowGpio = row->gpio;
-    uint32_t rowPin = row->pin;
-
-    GPIO_WritePinOutput(rowGpio, rowPin, 1);
 
     key_matrix_pin_t *colEnd = keyMatrix->cols + keyMatrix->colNum;
     for (key_matrix_pin_t *col = keyMatrix->cols; col<colEnd; col++) {
         *(keyState++) = GPIO_ReadPinInput(col->gpio, col->pin);
     }
 
-    GPIO_WritePinOutput(rowGpio, rowPin, 0);
+    GPIO_WritePinOutput(row->gpio, row->pin, 0);
 
     if (++keyMatrix->currentRowNum >= keyMatrix->rowNum) {
         keyMatrix->currentRowNum = 0;
     }
+
+    // This should come last to maintain the strobe for as long as possible to minimize the chance of chatter.
+    row = keyMatrix->rows + keyMatrix->currentRowNum;
+    GPIO_WritePinOutput(row->gpio, row->pin, 1);
 }
