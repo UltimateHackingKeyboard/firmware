@@ -296,7 +296,7 @@ bool processMouseButtonAction(void)
 {
     static bool pressStarted;
 
-    switch (currentMacroAction.key.action) {
+    switch (currentMacroAction.mouseButton.action) {
         case MacroSubAction_Tap:
             if (!pressStarted) {
                 pressStarted = true;
