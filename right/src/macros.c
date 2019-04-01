@@ -401,6 +401,9 @@ bool processCurrentMacroAction(void)
 
 void Macros_StartMacro(uint8_t index)
 {
+    if(AllMacros[index].macroActionsCount == 0) {
+        return;
+    }
     MacroPlaying = true;
     currentMacroIndex = index;
     currentMacroActionIndex = 0;
