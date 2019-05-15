@@ -10,6 +10,7 @@
 #include "slave_protocol_handler.h"
 #include "i2c_watchdog.h"
 #include "main.h"
+#include "module.h"
 
 i2c_slave_config_t slaveConfig;
 i2c_slave_handle_t slaveHandle;
@@ -64,7 +65,7 @@ void initI2c(void)
     PORT_SetPinConfig(I2C_BUS_SCL_PORT, I2C_BUS_SCL_PIN, &pinConfig);
 
     I2C_SlaveGetDefaultConfig(&slaveConfig);
-    slaveConfig.slaveAddress = I2C_ADDRESS_LEFT_KEYBOARD_HALF_FIRMWARE;
+    slaveConfig.slaveAddress = I2C_ADDRESS_MODULE_FIRMWARE;
     I2C_SlaveInit(I2C_BUS_BASEADDR, &slaveConfig);
     I2C_SlaveTransferCreateHandle(I2C_BUS_BASEADDR, &slaveHandle, i2cSlaveCallback, &userData);
     I2C_SlaveTransferNonBlocking(I2C_BUS_BASEADDR, &slaveHandle, kI2C_SlaveAddressMatchEvent);
