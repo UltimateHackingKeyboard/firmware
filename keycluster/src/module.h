@@ -4,8 +4,8 @@
 // Macros:
 
     #define MODULE_PROTOCOL_VERSION 1
-    #define MODULE_ID ModuleId_LeftKeyboardHalf
+    #define MODULE_ID ModuleId_KeyClusterLeft
     #define MODULE_KEY_COUNT (KEYBOARD_MATRIX_ROWS_NUM * KEYBOARD_MATRIX_COLS_NUM)
-    #define MODULE_POINTER_COUNT 0
+    #define MODULE_POINTER_COUNT 1
 
 #endif

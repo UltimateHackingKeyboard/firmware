@@ -7,8 +7,8 @@
 
 // Macros:
 
-    #define KEYBOARD_MATRIX_COLS_NUM 7
-    #define KEYBOARD_MATRIX_ROWS_NUM 5
+    #define KEYBOARD_MATRIX_COLS_NUM 2
+    #define KEYBOARD_MATRIX_ROWS_NUM 2
 
 // Variables:
 
