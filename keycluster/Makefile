@@ -29,7 +29,7 @@ CPU = -mcpu=cortex-m0plus
 FPU = -mfloat-abi=soft
 
 # Command for flashing the key cluster module.
-FLASH_CMD = node ../lib/agent/packages/usb/update-module-firmware.js keyCluster $(PROJECT_OBJ:.axf=.bin)
+FLASH_CMD = node ../lib/agent/packages/usb/update-module-firmware.js leftModule $(PROJECT_OBJ:.axf=.bin)
 
 # Path to the JLink script used for the key cluster module.
 JLINK_SCRIPT = ../scripts/flash-keycluster.jlink
