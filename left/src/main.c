@@ -4,8 +4,9 @@
 #include "bootloader.h"
 #include <stdio.h>
 #include "key_scanner.h"
+#include "modules.h"
 
-DEFINE_BOOTLOADER_CONFIG_AREA(I2C_ADDRESS_LEFT_KEYBOARD_HALF_BOOTLOADER)
+DEFINE_BOOTLOADER_CONFIG_AREA(I2C_ADDRESS_MODULE_BOOTLOADER)
 
 key_matrix_t keyMatrix = {
     .colNum = KEYBOARD_MATRIX_COLS_NUM,
