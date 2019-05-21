@@ -18,12 +18,12 @@ static uhk_module_i2c_addresses_t moduleIdsToI2cAddresses[] = {
         .bootloaderI2cAddress = I2C_ADDRESS_LEFT_KEYBOARD_HALF_BOOTLOADER
     },
     { // UhkModuleDriverId_LeftAddon
-        .firmwareI2cAddress   = I2C_ADDRESS_LEFT_ADDON_FIRMWARE,
-        .bootloaderI2cAddress = I2C_ADDRESS_LEFT_ADDON_BOOTLOADER
+        .firmwareI2cAddress   = I2C_ADDRESS_LEFT_MODULE_FIRMWARE,
+        .bootloaderI2cAddress = I2C_ADDRESS_LEFT_MODULE_BOOTLOADER
     },
     { // UhkModuleDriverId_RightAddon
-        .firmwareI2cAddress   = I2C_ADDRESS_RIGHT_ADDON_FIRMWARE,
-        .bootloaderI2cAddress = I2C_ADDRESS_RIGHT_ADDON_BOOTLOADER
+        .firmwareI2cAddress   = I2C_ADDRESS_RIGHT_MODULE_FIRMWARE,
+        .bootloaderI2cAddress = I2C_ADDRESS_RIGHT_MODULE_BOOTLOADER
     },
 };
 
