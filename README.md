@@ -14,8 +14,14 @@ If you're one of the brave few who wants to hack the firmware then read on.
 
 2. Download and install MCUXpresso IDE for [Linux](https://storage.googleapis.com/ugl-static/mcuxpresso-ide/mcuxpressoide-10.3.0_2200.x86_64.deb.bin), [Mac](https://storage.googleapis.com/ugl-static/mcuxpresso-ide/MCUXpressoIDE_10.3.0_2200.pkg), or [Windows](https://storage.googleapis.com/ugl-static/mcuxpresso-ide/MCUXpressoIDE_10.3.0_2200.exe).
 
-3. Install the GNU ARM Eclipse Plugins for [Linux](https://github.com/gnu-mcu-eclipse/org.eclipse.epp.packages/releases/download/v4.5.1-20190101-2018-12/20190101-2023-gnumcueclipse-4.5.1-2018-12-R-linux.gtk.x86_64.tar.gz), [Mac](https://github.com/gnu-mcu-eclipse/org.eclipse.epp.packages/releases/download/v4.5.1-20190101-2018-12/20190101-2023-gnumcueclipse-4.5.1-2018-12-R-macosx.cocoa.x86_64.tar.gz), or [Windows](https://github.com/gnu-mcu-eclipse/org.eclipse.epp.packages/releases/download/v4.5.1-20190101-2018-12/20190101-2023-gnumcueclipse-4.5.1-2018-12-R-win32.win32.x86_64.zip) in McuXpresso IDE. This is needed to make indexing work, and to avoid the "Orphaned configuration. No base extension cfg exists for ilg.gnuarmeclipse.managedbuild.cross.config.elf.debug.1376620489" error message. You can check out the [GitHub releases page](https://github.com/gnu-mcu-eclipse/org.eclipse.epp.packages/releases) of the project, and a related [MCU on Eclipse article](https://mcuoneclipse.com/2017/04/02/mcuxpresso-ide-importing-kinetis-design-studio-projects/).
-
+3. Install the GNU ARM Eclipse Plugins for in McuXpresso IDE. This is needed to make indexing work, and to avoid the "Orphaned configuration" error message in project properties.
+    1. Visit the [latest release](https://github.com/gnu-mcu-eclipse/eclipse-plugins/releases/latest).
+    2. Download the zip file.
+    3. In MCUXpresso IDE, go to Help > "Install New Software...", then a new dialog will appear.
+    4. Click the "Add..." button, then a new dialog will appear.
+    5. Click the "Archive..." button and choose the downloaded zip file.
+    6. Go with the flow and install the plugin.
+    
 4. In the IDE, import this project by invoking *File -> Import -> General -> Existing Projects into Workspace*, select the *left* or *right* directory depending on the desired firmware, then click on the *Finish* button.
 
 5. In order to be able to flash the firmware via USB from the IDE, you must build [Agent](https://github.com/UltimateHackingKeyboard/agent) which is Git submodule of the this repo and located in the `lib/agent` directory.
