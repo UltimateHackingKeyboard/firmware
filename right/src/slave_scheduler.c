@@ -24,12 +24,12 @@ uhk_slave_t Slaves[] = {
     {
         .init = UhkModuleSlaveDriver_Init,
         .update = UhkModuleSlaveDriver_Update,
-        .perDriverId = UhkModuleDriverId_LeftAddon,
+        .perDriverId = UhkModuleDriverId_LeftModule,
     },
     {
         .init = UhkModuleSlaveDriver_Init,
         .update = UhkModuleSlaveDriver_Update,
-        .perDriverId = UhkModuleDriverId_RightAddon,
+        .perDriverId = UhkModuleDriverId_RightModule,
     },
     {
         .init = LedSlaveDriver_Init,

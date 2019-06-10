@@ -10,6 +10,6 @@ void UsbCommand_GetKeyboardState(void)
     SetUsbTxBufferUint8(1, IsEepromBusy);
     SetUsbTxBufferUint8(2, MERGE_SENSOR_IS_MERGED);
     SetUsbTxBufferUint8(3, UhkModuleStates[UhkModuleDriverId_LeftKeyboardHalf].moduleId);
-    SetUsbTxBufferUint8(4, UhkModuleStates[UhkModuleDriverId_LeftAddon].moduleId);
-    SetUsbTxBufferUint8(5, UhkModuleStates[UhkModuleDriverId_RightAddon].moduleId);
+    SetUsbTxBufferUint8(4, UhkModuleStates[UhkModuleDriverId_LeftModule].moduleId);
+    SetUsbTxBufferUint8(5, UhkModuleStates[UhkModuleDriverId_RightModule].moduleId);
 }
