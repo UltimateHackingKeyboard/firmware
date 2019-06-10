@@ -11,8 +11,6 @@
 
     #define UHK_MODULE_MAX_COUNT 3
     #define MAX_PWM_BRIGHTNESS 0x64
-    #define SLOT_ID_TO_UHK_MODULE_DRIVER_ID(slotId) ((slotId)-1)
-    #define UHK_MODULE_DRIVER_ID_TO_SLOT_ID(uhkModuleDriverId) ((uhkModuleDriverId)+1)
 
 // Typedefs:
 
@@ -95,6 +93,9 @@
     extern uhk_module_state_t UhkModuleStates[UHK_MODULE_MAX_COUNT];
 
 // Functions:
+
+    uint8_t UhkModuleSlaveDriver_SlotIdToDriverId(uint8_t slotId);
+    uint8_t UhkModuleSlaveDriver_DriverIdToSlotId(uint8_t uhkModuleDriverId);
 
     void UhkModuleSlaveDriver_Init(uint8_t uhkModuleDriverId);
     status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId);

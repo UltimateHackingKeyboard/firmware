@@ -15,7 +15,7 @@ void UsbCommand_GetModuleProperty()
     module_property_id_t modulePropertyId = GetUsbRxBufferUint8(2);
     switch (modulePropertyId) {
         case ModulePropertyId_VersionNumbers: {
-            uint8_t moduleDriverId = SLOT_ID_TO_UHK_MODULE_DRIVER_ID(slotId);
+            uint8_t moduleDriverId = UhkModuleSlaveDriver_SlotIdToDriverId(slotId);
             uhk_module_state_t *moduleState = UhkModuleStates + moduleDriverId;
             GenericHidOutBuffer[1] = moduleState->moduleId;
             memcpy(GenericHidOutBuffer + 2, &moduleState->moduleProtocolVersion, sizeof(version_t));

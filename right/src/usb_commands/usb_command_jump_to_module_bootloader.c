@@ -12,6 +12,6 @@ void UsbCommand_JumpToModuleBootloader(void)
         return;
     }
 
-    uint8_t uhkModuleDriverId = SLOT_ID_TO_UHK_MODULE_DRIVER_ID(slotId);
+    uint8_t uhkModuleDriverId = UhkModuleSlaveDriver_SlotIdToDriverId(slotId);
     UhkModuleStates[uhkModuleDriverId].phase = UhkModulePhase_JumpToBootloader;
 }

@@ -9,6 +9,17 @@
 #include "key_states.h"
 
 uhk_module_state_t UhkModuleStates[UHK_MODULE_MAX_COUNT];
+
+uint8_t UhkModuleSlaveDriver_SlotIdToDriverId(uint8_t slotId)
+{
+    return slotId-1;
+}
+
+uint8_t UhkModuleSlaveDriver_DriverIdToSlotId(uint8_t uhkModuleDriverId)
+{
+    return uhkModuleDriverId+1;
+}
+
 static uint8_t keyStatesBuffer[MAX_KEY_COUNT_PER_MODULE];
 static i2c_message_t txMessage;
 
