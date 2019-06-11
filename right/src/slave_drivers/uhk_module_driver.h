@@ -6,6 +6,7 @@
     #include "fsl_common.h"
     #include "crc16.h"
     #include "versions.h"
+    #include "usb_interfaces/usb_interface_mouse.h"
 
 // Macros:
 
@@ -81,6 +82,7 @@
         uint8_t bootloaderI2cAddress;
         uint8_t keyCount;
         uint8_t pointerCount;
+        pointer_delta_t pointerDelta;
     } uhk_module_state_t;
 
     typedef struct {

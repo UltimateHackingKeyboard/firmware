@@ -94,7 +94,17 @@ void SlaveTxHandler(void)
         }
         case SlaveCommand_RequestKeyStates:
             BoolBytesToBits(keyMatrix.keyStates, TxMessage.data, MODULE_KEY_COUNT);
-            TxMessage.length = BOOL_BYTES_TO_BITS_COUNT(MODULE_KEY_COUNT);
+            uint8_t messageLength = BOOL_BYTES_TO_BITS_COUNT(MODULE_KEY_COUNT);
+            if (MODULE_POINTER_COUNT) {
+                pointer_delta_t *pointerDelta = (pointer_delta_t*)(TxMessage.data + messageLength);
+                pointerDelta->x = 0;
+                pointerDelta->y = 0;
+                if (keyMatrix.keyStates[0]) {
+                    pointerDelta->x = 1;
+                }
+                messageLength += sizeof(pointer_delta_t);
+            }
+            TxMessage.length = messageLength;
             break;
     }
 

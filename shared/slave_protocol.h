@@ -48,6 +48,11 @@
         uint8_t data[I2C_MESSAGE_MAX_PAYLOAD_LENGTH];
     } ATTR_PACKED i2c_message_t;
 
+    typedef struct {
+        int16_t x;
+        int16_t y;
+    } ATTR_PACKED pointer_delta_t;
+
 // Variables:
 
     extern char SlaveSyncString[];
