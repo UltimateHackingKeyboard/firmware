@@ -11,6 +11,7 @@
 #include "i2c_watchdog.h"
 #include "main.h"
 #include "module.h"
+#include "blackberry_trackball.h"
 
 i2c_slave_config_t slaveConfig;
 i2c_slave_handle_t slaveHandle;
@@ -86,4 +87,5 @@ void InitPeripherals(void)
     TestLed_Init();
     LedPwm_Init();
     initI2c();
+    BlackberryTrackball_Init();
 }

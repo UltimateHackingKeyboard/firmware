@@ -11,6 +11,7 @@
 #include "bootloader.h"
 #include "module.h"
 #include "versions.h"
+#include "blackberry_trackball.h"
 
 i2c_message_t RxMessage;
 i2c_message_t TxMessage;
@@ -97,8 +98,10 @@ void SlaveTxHandler(void)
             uint8_t messageLength = BOOL_BYTES_TO_BITS_COUNT(MODULE_KEY_COUNT);
             if (MODULE_POINTER_COUNT) {
                 pointer_delta_t *pointerDelta = (pointer_delta_t*)(TxMessage.data + messageLength);
-                pointerDelta->x = 0;
-                pointerDelta->y = 0;
+                pointerDelta->x = BlackBerryTrackball_PointerDelta.x;
+                pointerDelta->y = BlackBerryTrackball_PointerDelta.y;
+                BlackBerryTrackball_PointerDelta.x = 0;
+                BlackBerryTrackball_PointerDelta.y = 0;
                 if (keyMatrix.keyStates[0]) {
                     pointerDelta->x = 1;
                 }
