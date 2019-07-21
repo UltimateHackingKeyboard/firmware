@@ -99,8 +99,8 @@ I have read this Agreement, and fully agree to it by signing it with my GitHub u
 
 - @eltang
 - @kareltucek
+- @Lauszus
 - @mondalaci
 - @santiagogf89
 - @tastyger
 - @xdever
-- @Lauszus
