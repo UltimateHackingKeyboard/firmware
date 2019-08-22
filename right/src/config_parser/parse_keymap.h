@@ -48,10 +48,12 @@
         SerializedMouseAction_ScrollRight,
         SerializedMouseAction_Accelerate,
         SerializedMouseAction_Decelerate,
-        SerializedMouseAction_Last = SerializedMouseAction_Decelerate,
         SerializedMouseAction_Button_4,
         SerializedMouseAction_Button_5,
         SerializedMouseAction_Button_6,
+        SerializedMouseAction_Button_7,
+        SerializedMouseAction_Button_8,
+        SerializedMouseAction_Last = SerializedMouseAction_Button_8,
     } serialized_mouse_action_t;
 
 // Functions:
