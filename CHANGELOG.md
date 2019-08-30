@@ -9,7 +9,7 @@ and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
 Device Protocol: 4.5.0 | Module Protocol: 4.**1.0** | User Config: 4.1.**1** | Hardware Config: 1.0.0
 
-- Make the config parser accept mouse buttons 4 to 8. `USERCONFIG:PATCH`
+- Make the config parser accept mouse button 4 to 8. `USERCONFIG:PATCH`
 - Implement API for modules to send pointer movements to the master. `MODULEPROTOCOL:MINOR`
 - Fix empty macro playback.
 
