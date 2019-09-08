@@ -12,7 +12,7 @@ If you're one of the brave few who wants to hack the firmware then read on.
 
 `git clone --recursive git@github.com:UltimateHackingKeyboard/firmware.git`
 
-2. Download and install MCUXpresso IDE for [Linux](https://storage.googleapis.com/ugl-static/mcuxpresso-ide/mcuxpressoide-10.3.0_2200.x86_64.deb.bin), [Mac](https://storage.googleapis.com/ugl-static/mcuxpresso-ide/MCUXpressoIDE_10.3.0_2200.pkg), or [Windows](https://storage.googleapis.com/ugl-static/mcuxpresso-ide/MCUXpressoIDE_10.3.0_2200.exe).
+2. Download and install MCUXpresso IDE for [Linux](https://storage.googleapis.com/ugl-static/mcuxpresso-ide/mcuxpressoide-11.0.1_2563.x86_64.deb.bin), [Mac](https://storage.googleapis.com/ugl-static/mcuxpresso-ide/MCUXpressoIDE_11.0.1_2563.pkg), or [Windows](https://storage.googleapis.com/ugl-static/mcuxpresso-ide/MCUXpressoIDE_11.0.1_2563.exe).
 
 3. Install the GNU ARM Eclipse Plugins for in McuXpresso IDE. This is needed to make indexing work, and to avoid the "Orphaned configuration" error message in project properties.
     1. Visit the [latest release](https://github.com/gnu-mcu-eclipse/eclipse-plugins/releases/latest).
