@@ -24,11 +24,13 @@ uhk_slave_t Slaves[] = {
     {
         .init = UhkModuleSlaveDriver_Init,
         .update = UhkModuleSlaveDriver_Update,
+        .disconnect = UhkModuleSlaveDriver_Disconnect,
         .perDriverId = UhkModuleDriverId_LeftModule,
     },
     {
         .init = UhkModuleSlaveDriver_Init,
         .update = UhkModuleSlaveDriver_Update,
+        .disconnect = UhkModuleSlaveDriver_Disconnect,
         .perDriverId = UhkModuleDriverId_RightModule,
     },
     {
