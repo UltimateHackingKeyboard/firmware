@@ -288,5 +288,12 @@ void UhkModuleSlaveDriver_Disconnect(uint8_t uhkModuleDriverId)
     if (uhkModuleDriverId == SlaveId_LeftKeyboardHalf) {
         Slaves[SlaveId_LeftLedDriver].isConnected = false;
     }
-    UhkModuleStates[uhkModuleDriverId].moduleId = 0;
+
+    uhk_module_state_t *uhkModuleState = UhkModuleStates + uhkModuleDriverId;
+    uhkModuleState->moduleId = 0;
+    uint8_t slotId = UhkModuleSlaveDriver_DriverIdToSlotId(uhkModuleDriverId);
+
+    if (IS_VALID_MODULE_SLOT(slotId)) {
+        memset(KeyStates[slotId], 0, MAX_KEY_COUNT_PER_MODULE * sizeof(key_state_t));
+    }
 }
