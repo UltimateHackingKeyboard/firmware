@@ -94,7 +94,7 @@ void SlaveTxHandler(void)
             break;
         }
         case SlaveCommand_RequestKeyStates:
-            BoolBytesToBits(keyMatrix.keyStates, TxMessage.data, MODULE_KEY_COUNT);
+            BoolBytesToBits(keyVector.keyStates, TxMessage.data, MODULE_KEY_COUNT);
             uint8_t messageLength = BOOL_BYTES_TO_BITS_COUNT(MODULE_KEY_COUNT);
             if (MODULE_POINTER_COUNT) {
                 pointer_delta_t *pointerDelta = (pointer_delta_t*)(TxMessage.data + messageLength);
@@ -102,9 +102,6 @@ void SlaveTxHandler(void)
                 pointerDelta->y = BlackBerryTrackball_PointerDelta.y;
                 BlackBerryTrackball_PointerDelta.x = 0;
                 BlackBerryTrackball_PointerDelta.y = 0;
-                if (keyMatrix.keyStates[0]) {
-                    pointerDelta->x = 1;
-                }
                 messageLength += sizeof(pointer_delta_t);
             }
             TxMessage.length = messageLength;

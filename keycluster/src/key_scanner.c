@@ -4,7 +4,7 @@
 
 void KEY_SCANNER_HANDLER(void)
 {
-    KeyMatrix_ScanRow(&keyMatrix);
+    KeyVector_Scan(&keyVector);
     RunWatchdog();
     LPTMR_ClearStatusFlags(KEY_SCANNER_LPTMR_BASEADDR, kLPTMR_TimerCompareFlag);
 }

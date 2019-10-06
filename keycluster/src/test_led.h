@@ -13,7 +13,7 @@
     #define TEST_LED_GPIO  GPIOB
     #define TEST_LED_PORT  PORTB
     #define TEST_LED_CLOCK kCLOCK_PortB
-    #define TEST_LED_PIN   13
+    #define TEST_LED_PIN   1
 
     static inline void TestLed_On(void)
     {

@@ -3,15 +3,14 @@
 
 // Includes:
 
-    #include "key_matrix.h"
+    #include "key_vector.h"
 
 // Macros:
 
-    #define KEYBOARD_MATRIX_COLS_NUM 2
-    #define KEYBOARD_MATRIX_ROWS_NUM 2
+    #define KEYBOARD_VECTOR_ITEMS_NUM 6
 
 // Variables:
 
-    extern key_matrix_t keyMatrix;
+    extern key_vector_t keyVector;
 
 #endif
