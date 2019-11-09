@@ -7,7 +7,7 @@
 
 // Macros:
 
-    #define KEYBOARD_VECTOR_ITEMS_NUM 6
+    #define KEYBOARD_VECTOR_ITEMS_NUM 2
 
 // Variables:
 
