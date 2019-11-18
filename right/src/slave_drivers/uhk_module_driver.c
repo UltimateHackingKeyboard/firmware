@@ -238,7 +238,7 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
                 uint8_t slotId = UhkModuleSlaveDriver_DriverIdToSlotId(uhkModuleDriverId);
                 BoolBitsToBytes(rxMessage->data, keyStatesBuffer, uhkModuleState->keyCount);
                 for (uint8_t keyId=0; keyId < uhkModuleState->keyCount; keyId++) {
-                    KeyStates[slotId][keyId].current = keyStatesBuffer[keyId];
+                    KeyStates[slotId][keyId].next = keyStatesBuffer[keyId];
                 }
                 if (uhkModuleState->pointerCount) {
                     uint8_t keyStatesLength = BOOL_BYTES_TO_BITS_COUNT(uhkModuleState->keyCount);
