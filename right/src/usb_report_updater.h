@@ -21,6 +21,7 @@
     typedef enum {
         SecondaryRoleState_Released,
         SecondaryRoleState_Pressed,
+        SecondaryRoleState_Trigger_Pending,
         SecondaryRoleState_Triggered,
     } secondary_role_state_t;
 

@@ -346,8 +346,9 @@ static void updateActiveUsbReports(void)
     systemScancodeIndex = 0;
 
     layer_id_t activeLayer = LayerId_Base;
-    if (secondaryRoleState == SecondaryRoleState_Triggered && IS_SECONDARY_ROLE_LAYER_SWITCHER(secondaryRole)) {
+    if (secondaryRoleState == SecondaryRoleState_Trigger_Pending && IS_SECONDARY_ROLE_LAYER_SWITCHER(secondaryRole)) {
         activeLayer = SECONDARY_ROLE_LAYER_TO_LAYER_ID(secondaryRole);
+        secondaryRoleState = SecondaryRoleState_Triggered;
     }
     if (activeLayer == LayerId_Base) {
         activeLayer = GetActiveLayer();
@@ -397,10 +398,27 @@ static void updateActiveUsbReports(void)
                 if (SleepModeActive) {
                     WakeUpHost();
                 }
-                if (secondaryRoleState == SecondaryRoleState_Pressed) {
-                    // Trigger secondary role.
-                    secondaryRoleState = SecondaryRoleState_Triggered;
+                if (secondaryRoleState == SecondaryRoleState_Trigger_Pending) {
+                    /*
+                     * This means that another action key has has been pressed
+                     * within same update cyle. This is the second handled key.
+                     * Secondary role layer is not yet active.
+                     * */
                     keyState->current = false;
+                    keyState->debouncing = false;
+                }
+                else if (secondaryRoleState == SecondaryRoleState_Pressed) {
+                    /*
+                     * This is entrance of the first action key pressed while a
+                     * secondary role key is being held. Lets trigger the
+                     * secondary role and disable this key for this update
+                     * cycle. Secondary role layer switch will take place in
+                     * next update cycle and this key will be activated for
+                     * second time.
+                     */
+                    secondaryRoleState = SecondaryRoleState_Trigger_Pending;
+                    keyState->current = false;
+                    keyState->debouncing = false;
                 } else {
                     actionCache[slotId][keyId] = CurrentKeymap[activeLayer][slotId][keyId];
                 }
