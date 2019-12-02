@@ -329,17 +329,17 @@ static void applyKeyAction(key_state_t *keyState, key_action_t *action, uint8_t 
 }
 
 static inline void preprocessKeyState(key_state_t *keyState) {
-  keyState->previous = keyState->current;
+    keyState->previous = keyState->current;
 
-  if( keyState->debouncing && (uint8_t)(CurrentTime - keyState->timestamp) > (keyState->previous ? DebounceTimePress : DebounceTimeRelease) ) {
-    keyState->debouncing = false;
-  } 
-  
-  if ( !keyState->debouncing && keyState->current != keyState->next ) {
-    keyState->timestamp = CurrentTime;
-    keyState->debouncing = true;
-    keyState->current = keyState->next;
-  } 
+    if (keyState->debouncing && (uint8_t)(CurrentTime - keyState->timestamp) > (keyState->previous ? DebounceTimePress : DebounceTimeRelease)) {
+        keyState->debouncing = false;
+    }
+
+    if (!keyState->debouncing && keyState->current != keyState->next) {
+        keyState->timestamp = CurrentTime;
+        keyState->debouncing = true;
+        keyState->current = keyState->next;
+    }
 }
 
 static void updateActiveUsbReports(void)
