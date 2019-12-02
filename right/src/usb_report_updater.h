@@ -3,6 +3,7 @@
 
 // Includes:
 
+    #include "layer.h"
     #include "config_parser/parse_keymap.h"
 
 // Macros:
@@ -68,6 +69,7 @@
 
 // Variables:
 
+    extern layer_id_t PreviousLayer;
     extern uint16_t DoubleTapSwitchLayerTimeout;
     extern mouse_kinetic_state_t MouseMoveState;
     extern mouse_kinetic_state_t MouseScrollState;

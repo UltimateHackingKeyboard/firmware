@@ -204,7 +204,7 @@ static void processMouseActions()
     }
 }
 
-static layer_id_t previousLayer = LayerId_Base;
+layer_id_t PreviousLayer = LayerId_Base;
 
 static void handleSwitchLayerAction(key_state_t *keyState, key_action_t *action)
 {
@@ -232,7 +232,7 @@ static void handleSwitchLayerAction(key_state_t *keyState, key_action_t *action)
         ToggledLayer = LayerId_Base;
     }
 
-    if (!keyState->previous && previousLayer == LayerId_Base && action->switchLayer.mode == SwitchLayerMode_HoldAndDoubleTapToggle) {
+    if (!keyState->previous && PreviousLayer == LayerId_Base && action->switchLayer.mode == SwitchLayerMode_HoldAndDoubleTapToggle) {
         if (doubleTapSwitchLayerKey && Timer_GetElapsedTimeAndSetCurrent(&doubleTapSwitchLayerStartTime) < DoubleTapSwitchLayerTimeout) {
             ToggledLayer = action->switchLayer.layer;
             isLayerDoubleTapToggled = true;
@@ -367,7 +367,7 @@ static void updateActiveUsbReports(void)
     if (activeLayer == LayerId_Base) {
         activeLayer = GetActiveLayer();
     }
-    bool layerChanged = previousLayer != activeLayer;
+    bool layerChanged = PreviousLayer != activeLayer;
     if (layerChanged) {
         stickyModifiers = 0;
     }
@@ -455,7 +455,7 @@ static void updateActiveUsbReports(void)
         ActiveUsbBasicKeyboardReport->modifiers |= SECONDARY_ROLE_MODIFIER_TO_HID_MODIFIER(secondaryRole);
     }
 
-    previousLayer = activeLayer;
+    PreviousLayer = activeLayer;
 }
 
 uint32_t UsbReportUpdateCounter;
