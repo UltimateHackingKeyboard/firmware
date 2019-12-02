@@ -401,6 +401,7 @@ static void updateActiveUsbReports(void)
                     // Trigger secondary role.
                     secondaryRoleState = SecondaryRoleState_Triggered;
                     keyState->current = false;
+                    keyState->debouncing = false;
                 } else {
                     actionCache[slotId][keyId] = CurrentKeymap[activeLayer][slotId][keyId];
                 }
