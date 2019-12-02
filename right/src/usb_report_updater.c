@@ -328,6 +328,20 @@ static void applyKeyAction(key_state_t *keyState, key_action_t *action, uint8_t 
     }
 }
 
+static inline void preprocessKeyState(key_state_t *keyState) {
+  keyState->previous = keyState->current;
+
+  if( keyState->debouncing && (uint8_t)(CurrentTime - keyState->timestamp) > (keyState->previous ? DebounceTimePress : DebounceTimeRelease) ) {
+    keyState->debouncing = false;
+  } 
+  
+  if ( !keyState->debouncing && keyState->current != keyState->next ) {
+    keyState->timestamp = CurrentTime;
+    keyState->debouncing = true;
+    keyState->current = keyState->next;
+  } 
+}
+
 static void updateActiveUsbReports(void)
 {
     if (MacroPlaying) {
@@ -382,16 +396,7 @@ static void updateActiveUsbReports(void)
             key_state_t *keyState = &KeyStates[slotId][keyId];
             key_action_t *action;
 
-            if (keyState->debouncing) {
-                if ((uint8_t)(CurrentTime - keyState->timestamp) > (keyState->previous ? DebounceTimePress : DebounceTimeRelease)) {
-                    keyState->debouncing = false;
-                } else {
-                    keyState->current = keyState->previous;
-                }
-            } else if (keyState->previous != keyState->current) {
-                keyState->timestamp = CurrentTime;
-                keyState->debouncing = true;
-            }
+            preprocessKeyState(keyState);
 
             if (keyState->current && !keyState->previous) {
                 if (SleepModeActive) {
@@ -435,8 +440,6 @@ static void updateActiveUsbReports(void)
                     applyKeyAction(keyState, action, slotId, keyId);
                 }
             }
-
-            keyState->previous = keyState->current;
         }
     }
 
@@ -461,7 +464,7 @@ void UpdateUsbReports(void)
     static uint32_t lastUpdateTime;
 
     for (uint8_t keyId = 0; keyId < RIGHT_KEY_MATRIX_KEY_COUNT; keyId++) {
-        KeyStates[SlotId_RightKeyboardHalf][keyId].current = RightKeyMatrix.keyStates[keyId];
+        KeyStates[SlotId_RightKeyboardHalf][keyId].next = RightKeyMatrix.keyStates[keyId];
     }
 
     if (UsbReportUpdateSemaphore && !SleepModeActive) {
