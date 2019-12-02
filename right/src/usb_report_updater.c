@@ -331,7 +331,8 @@ static void applyKeyAction(key_state_t *keyState, key_action_t *action, uint8_t 
 static inline void preprocessKeyState(key_state_t *keyState) {
     keyState->previous = keyState->current;
 
-    if (keyState->debouncing && (uint8_t)(CurrentTime - keyState->timestamp) > (keyState->previous ? DebounceTimePress : DebounceTimeRelease)) {
+    uint8_t debounceTime = keyState->previous ? DebounceTimePress : DebounceTimeRelease;
+    if (keyState->debouncing && (uint8_t)(CurrentTime - keyState->timestamp) > debounceTime) {
         keyState->debouncing = false;
     }
 
