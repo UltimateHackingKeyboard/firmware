@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
-## [8.6.0] - 2018-08-23
+## [8.6.0] - 2019-08-23
 
 Device Protocol: 4.5.0 | Module Protocol: 4.**1.0** | User Config: 4.1.**1** | Hardware Config: 1.0.0
 
@@ -13,7 +13,7 @@ Device Protocol: 4.5.0 | Module Protocol: 4.**1.0** | User Config: 4.1.**1** | H
 - Implement API for modules to send pointer movements to the master. `MODULEPROTOCOL:MINOR`
 - Fix empty macro playback.
 
-## [8.5.4] - 2018-01-05
+## [8.5.4] - 2019-01-05
 
 Device Protocol: 4.5.0 | Module Protocol: 4.0.0 | User Config: 4.1.0 | Hardware Config: 1.0.0
 
