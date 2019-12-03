@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [8.7.0] - 2019-12-03
+
+Device Protocol: 4.**6.0** | Module Protocol: 4.1.0 | User Config: 4.1.1 | Hardware Config: 1.0.0
+
+- Make the Agent icon of the LED display light up when Agent is running.
+- Fix debouncer related data races which slightly affect the left keyboard half.
+- When a dual-role key is held and the secondary role gets triggered by another key, don't debounce the latter key.
+- Set the key states of disconnected modules to unpressed.
+- Update module states upon disconnecting the left and right modules.
+- Expose the active layer via the GetDeviceState USB command. `DEVICEPROTOCOL:MINOR`
+
 ## [8.6.0] - 2019-08-23
 
 Device Protocol: 4.5.0 | Module Protocol: 4.**1.0** | User Config: 4.1.**1** | Hardware Config: 1.0.0
