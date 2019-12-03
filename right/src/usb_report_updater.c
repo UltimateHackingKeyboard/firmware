@@ -343,6 +343,8 @@ static inline void preprocessKeyState(key_state_t *keyState) {
     }
 }
 
+uint32_t LastUsbGetKeyboardStateRequestTimestamp;
+
 static void updateActiveUsbReports(void)
 {
     if (MacroPlaying) {
@@ -372,6 +374,8 @@ static void updateActiveUsbReports(void)
         stickyModifiers = 0;
     }
     LedDisplay_SetLayer(activeLayer);
+
+    LedDisplay_SetIcon(LedDisplayIcon_Agent, CurrentTime - LastUsbGetKeyboardStateRequestTimestamp < 1000);
 
     if (TestUsbStack) {
         static bool simulateKeypresses, isEven, isEvenMedia;

@@ -51,6 +51,10 @@
         UsbStatusCode_InvalidCommand = 1,
     } usb_status_code_general_t;
 
+// Variables:
+
+    extern uint32_t LastUsbGetKeyboardStateRequestTimestamp;
+
 // Functions:
 
     void UsbProtocolHandler(void);
