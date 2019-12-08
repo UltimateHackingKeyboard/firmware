@@ -17,8 +17,8 @@
 
     typedef enum { // Slaves[] is meant to be indexed with these values
         SlaveId_LeftKeyboardHalf,
-        SlaveId_LeftAddon,
-        SlaveId_RightAddon,
+        SlaveId_LeftModule,
+        SlaveId_RightModule,
         SlaveId_RightLedDriver,
         SlaveId_LeftLedDriver,
         SlaveId_KbootDriver,
