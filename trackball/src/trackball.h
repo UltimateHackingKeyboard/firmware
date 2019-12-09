@@ -1,5 +1,5 @@
-#ifndef __BLACKBERRY_TRACKBALL_H__
-#define __BLACKBERRY_TRACKBALL_H__
+#ifndef __TRACKBALL_H__
+#define __TRACKBALL_H__
 
 // Includes:
 
@@ -8,37 +8,37 @@
 
 // Macros:
 
-    #define BLACKBERRY_TRACKBALL_LEFT_PORT PORTB
-    #define BLACKBERRY_TRACKBALL_LEFT_GPIO GPIOB
-    #define BLACKBERRY_TRACKBALL_LEFT_IRQ PORTB_IRQn
-    #define BLACKBERRY_TRACKBALL_LEFT_CLOCK kCLOCK_PortB
-    #define BLACKBERRY_TRACKBALL_LEFT_PIN 13
+    #define TRACKBALL_LEFT_PORT PORTB
+    #define TRACKBALL_LEFT_GPIO GPIOB
+    #define TRACKBALL_LEFT_IRQ PORTB_IRQn
+    #define TRACKBALL_LEFT_CLOCK kCLOCK_PortB
+    #define TRACKBALL_LEFT_PIN 13
 
-    #define BLACKBERRY_TRACKBALL_RIGHT_PORT PORTB
-    #define BLACKBERRY_TRACKBALL_RIGHT_GPIO GPIOB
-    #define BLACKBERRY_TRACKBALL_RIGHT_IRQ PORTB_IRQn
-    #define BLACKBERRY_TRACKBALL_RIGHT_CLOCK kCLOCK_PortB
-    #define BLACKBERRY_TRACKBALL_RIGHT_PIN 6
+    #define TRACKBALL_RIGHT_PORT PORTB
+    #define TRACKBALL_RIGHT_GPIO GPIOB
+    #define TRACKBALL_RIGHT_IRQ PORTB_IRQn
+    #define TRACKBALL_RIGHT_CLOCK kCLOCK_PortB
+    #define TRACKBALL_RIGHT_PIN 6
 
-    #define BLACKBERRY_TRACKBALL_UP_PORT PORTA
-    #define BLACKBERRY_TRACKBALL_UP_GPIO GPIOA
-    #define BLACKBERRY_TRACKBALL_UP_IRQ PORTA_IRQn
-    #define BLACKBERRY_TRACKBALL_UP_CLOCK kCLOCK_PortA
-    #define BLACKBERRY_TRACKBALL_UP_PIN 3
+    #define TRACKBALL_UP_PORT PORTA
+    #define TRACKBALL_UP_GPIO GPIOA
+    #define TRACKBALL_UP_IRQ PORTA_IRQn
+    #define TRACKBALL_UP_CLOCK kCLOCK_PortA
+    #define TRACKBALL_UP_PIN 3
 
-    #define BLACKBERRY_TRACKBALL_DOWN_PORT PORTA
-    #define BLACKBERRY_TRACKBALL_DOWN_GPIO GPIOA
-    #define BLACKBERRY_TRACKBALL_DOWN_IRQ PORTA_IRQn
-    #define BLACKBERRY_TRACKBALL_DOWN_CLOCK kCLOCK_PortA
-    #define BLACKBERRY_TRACKBALL_DOWN_PIN 4
+    #define TRACKBALL_DOWN_PORT PORTA
+    #define TRACKBALL_DOWN_GPIO GPIOA
+    #define TRACKBALL_DOWN_IRQ PORTA_IRQn
+    #define TRACKBALL_DOWN_CLOCK kCLOCK_PortA
+    #define TRACKBALL_DOWN_PIN 4
 
 // Variables:
 
-    extern pointer_delta_t BlackBerryTrackball_PointerDelta;
+    extern pointer_delta_t Trackball_PointerDelta;
 
 // Functions:
 
-    void BlackberryTrackball_Init(void);
-    void BlackberryTrackball_Update(void);
+    void Trackball_Init(void);
+    void Trackball_Update(void);
 
 #endif

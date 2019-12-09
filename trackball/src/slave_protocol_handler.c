@@ -98,10 +98,10 @@ void SlaveTxHandler(void)
             uint8_t messageLength = BOOL_BYTES_TO_BITS_COUNT(MODULE_KEY_COUNT);
             if (MODULE_POINTER_COUNT) {
                 pointer_delta_t *pointerDelta = (pointer_delta_t*)(TxMessage.data + messageLength);
-                pointerDelta->x = BlackBerryTrackball_PointerDelta.x;
-                pointerDelta->y = BlackBerryTrackball_PointerDelta.y;
-                BlackBerryTrackball_PointerDelta.x = 0;
-                BlackBerryTrackball_PointerDelta.y = 0;
+                pointerDelta->x = Trackball_PointerDelta.x;
+                pointerDelta->y = Trackball_PointerDelta.y;
+                Trackball_PointerDelta.x = 0;
+                Trackball_PointerDelta.y = 0;
                 messageLength += sizeof(pointer_delta_t);
             }
             TxMessage.length = messageLength;
