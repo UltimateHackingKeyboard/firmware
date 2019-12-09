@@ -14,6 +14,12 @@
     #define TRACKBALL_SHTDWN_CLOCK kCLOCK_PortA
     #define TRACKBALL_SHTDWN_PIN 4
 
+    #define TRACKBALL_NCS_PORT PORTB
+    #define TRACKBALL_NCS_GPIO GPIOB
+    #define TRACKBALL_NCS_IRQ PORTB_IRQn
+    #define TRACKBALL_NCS_CLOCK kCLOCK_PortB
+    #define TRACKBALL_NCS_PIN 1
+
 // Variables:
 
     extern pointer_delta_t Trackball_PointerDelta;
