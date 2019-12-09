@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include "key_scanner.h"
 #include "module.h"
-#include "blackberry_trackball.h"
+#include "trackball.h"
 
 DEFINE_BOOTLOADER_CONFIG_AREA(I2C_ADDRESS_MODULE_BOOTLOADER)
 

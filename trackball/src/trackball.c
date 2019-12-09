@@ -1,6 +1,6 @@
 #include "fsl_gpio.h"
 #include "fsl_port.h"
-#include "blackberry_trackball.h"
+#include "trackball.h"
 #include "test_led.h"
 
 pointer_delta_t BlackBerryTrackball_PointerDelta;
