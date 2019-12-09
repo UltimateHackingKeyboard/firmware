@@ -25,7 +25,6 @@ int main(void)
     InitKeyScanner();
 
     while (1) {
-//        BlackberryTrackball_Update();
         __WFI();
     }
 }
