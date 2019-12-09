@@ -87,5 +87,5 @@ void InitPeripherals(void)
     TestLed_Init();
     LedPwm_Init();
     initI2c();
-//    BlackberryTrackball_Init();
+    Trackball_Init();
 }

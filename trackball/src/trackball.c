@@ -5,11 +5,12 @@
 
 pointer_delta_t Trackball_PointerDelta;
 
-void BlackberryTrackball_Init(void)
+void Trackball_Init(void)
 {
-    CLOCK_EnableClock(TRACKBALL_LEFT_CLOCK);
-    PORT_SetPinMux(TRACKBALL_LEFT_PORT, TRACKBALL_LEFT_PIN, kPORT_MuxAsGpio);
-
+    CLOCK_EnableClock(TRACKBALL_SHTDWN_CLOCK);
+    PORT_SetPinMux(TRACKBALL_SHTDWN_PORT, TRACKBALL_SHTDWN_PIN, kPORT_MuxAsGpio);
+    GPIO_WritePinOutput(TRACKBALL_SHTDWN_GPIO, TRACKBALL_SHTDWN_PIN, 0);
+/*
     CLOCK_EnableClock(TRACKBALL_RIGHT_CLOCK);
     PORT_SetPinMux(TRACKBALL_RIGHT_PORT, TRACKBALL_RIGHT_PIN, kPORT_MuxAsGpio);
 
@@ -18,18 +19,12 @@ void BlackberryTrackball_Init(void)
 
     CLOCK_EnableClock(TRACKBALL_DOWN_CLOCK);
     PORT_SetPinMux(TRACKBALL_DOWN_PORT, TRACKBALL_DOWN_PIN, kPORT_MuxAsGpio);
-}
+*/}
 
 bool oldLeft, oldRight, oldUp, oldDown;
 
 void BlackberryTrackball_Update(void)
 {
-    uint8_t newLeft = GPIO_ReadPinInput(TRACKBALL_LEFT_GPIO, TRACKBALL_LEFT_PIN);
-    if (oldLeft != newLeft) {
-        Trackball_PointerDelta.x--;
-        oldLeft = newLeft;
-    }
-
     uint8_t newRight = GPIO_ReadPinInput(TRACKBALL_RIGHT_GPIO, TRACKBALL_RIGHT_PIN);
     if (oldRight != newRight) {
         Trackball_PointerDelta.x++;
