@@ -6,26 +6,50 @@
 
 pointer_delta_t Trackball_PointerDelta;
 
-#define TX_SIZE 2
-#define RX_SIZE 1
+#define BUFFER_SIZE 2
 
-uint8_t txBuffer[TX_SIZE] = {0x5a, 0x3a};
-uint8_t rxBuffer[RX_SIZE];
+typedef enum {
+    ModulePhase_PoweredUp,
+    ModulePhase_ProcessDeltaY,
+    ModulePhase_ProcessDeltaX,
+} module_phase_t;
+
+module_phase_t modulePhase = ModulePhase_PoweredUp;
+
+uint8_t txBufferPowerUpReset[] = {0x5a, 0x3a};
+uint8_t txBufferGetDeltaY[] = {0x03, 0x00};
+uint8_t txBufferGetDeltaX[] = {0x04, 0x00};
+
+uint8_t rxBuffer[BUFFER_SIZE];
 spi_master_handle_t handle;
 spi_transfer_t xfer = {0};
 
 void tx(uint8_t *txBuff)
 {
     xfer.txData = txBuff;
-    xfer.dataSize = TX_SIZE;
     SPI_MasterTransferNonBlocking(TRACKBALL_SPI_MASTER, &handle, &xfer);
 }
 
 void trackballUpdate(SPI_Type *base, spi_master_handle_t *masterHandle, status_t status, void *userData)
 {
-//    Trackball_PointerDelta.x++;
-//    Trackball_PointerDelta.y++;
-    tx(txBuffer);
+    switch (modulePhase) {
+        case ModulePhase_PoweredUp:
+            tx(txBufferGetDeltaY);
+            modulePhase = ModulePhase_ProcessDeltaY;
+            break;
+        case ModulePhase_ProcessDeltaY: ;
+            int8_t deltaY = (int8_t)rxBuffer[1];
+            Trackball_PointerDelta.y += deltaY;
+            tx(txBufferGetDeltaX);
+            modulePhase = ModulePhase_ProcessDeltaX;
+            break;
+        case ModulePhase_ProcessDeltaX: ;
+            int8_t deltaX = (int8_t)rxBuffer[1];
+            Trackball_PointerDelta.x += deltaX;
+            tx(txBufferGetDeltaY);
+            modulePhase = ModulePhase_ProcessDeltaY;
+            break;
+    }
 }
 
 void Trackball_Init(void)
@@ -56,7 +80,6 @@ void Trackball_Init(void)
     CLOCK_EnableClock(TRACKBALL_SCK_CLOCK);
     PORT_SetPinMux(TRACKBALL_SCK_PORT, TRACKBALL_SCK_PIN, kPORT_MuxAlt3);
 
-
     uint32_t srcFreq = 0;
     spi_master_config_t userConfig;
     SPI_MasterGetDefaultConfig(&userConfig);
@@ -73,5 +96,7 @@ void Trackball_Init(void)
     srcFreq = CLOCK_GetFreq(TRACKBALL_SPI_MASTER_SOURCE_CLOCK);
     SPI_MasterInit(TRACKBALL_SPI_MASTER, &userConfig, srcFreq);
     SPI_MasterTransferCreateHandle(TRACKBALL_SPI_MASTER, &handle, trackballUpdate, NULL);
-    tx(txBuffer);
+    xfer.rxData = rxBuffer;
+    xfer.dataSize = BUFFER_SIZE;
+    tx(txBufferPowerUpReset);
 }

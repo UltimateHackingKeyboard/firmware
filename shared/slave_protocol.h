@@ -49,8 +49,8 @@
     } ATTR_PACKED i2c_message_t;
 
     typedef struct {
-        int16_t x;
-        int16_t y;
+        uint16_t x;
+        uint16_t y;
     } ATTR_PACKED pointer_delta_t;
 
 // Variables:
