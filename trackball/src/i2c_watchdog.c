@@ -18,7 +18,7 @@ void RunWatchdog(void)
     counter++;
     if (counter == 100) { // We get called from KEY_SCANNER_HANDLER() which runs at 1ms, thus scaling down by 100 here to get 100 ms period
         counter=0;
-        TestLed_Toggle();
+//        TestLed_Toggle();
         I2cWatchdog_WatchCounter++;
 
         if (I2cWatchdog_WatchCounter > 10) { // Do not check within the first 1000 ms, as I2C might not be running yet

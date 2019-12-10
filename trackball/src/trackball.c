@@ -37,6 +37,14 @@ void Trackball_Init(void)
 
     CLOCK_EnableClock(TRACKBALL_NCS_CLOCK);
     PORT_SetPinMux(TRACKBALL_NCS_PORT, TRACKBALL_NCS_PIN, kPORT_MuxAsGpio);
+    GPIO_WritePinOutput(TRACKBALL_NCS_GPIO, TRACKBALL_NCS_PIN, 1);
+
+    TestLed_On();
+    for (volatile uint32_t i=0; i<1000000; i++);
+    TestLed_Off();
+
+    CLOCK_EnableClock(TRACKBALL_NCS_CLOCK);
+    PORT_SetPinMux(TRACKBALL_NCS_PORT, TRACKBALL_NCS_PIN, kPORT_MuxAsGpio);
     GPIO_WritePinOutput(TRACKBALL_NCS_GPIO, TRACKBALL_NCS_PIN, 0);
 
     CLOCK_EnableClock(TRACKBALL_MOSI_CLOCK);
@@ -46,10 +54,12 @@ void Trackball_Init(void)
     PORT_SetPinMux(TRACKBALL_MISO_PORT, TRACKBALL_MOSI_PIN, kPORT_MuxAlt3);
 
     CLOCK_EnableClock(TRACKBALL_SCK_CLOCK);
-    PORT_SetPinMux(TRACKBALL_SCK_PORT, TRACKBALL_MOSI_PIN, kPORT_MuxAlt3);
+    PORT_SetPinMux(TRACKBALL_SCK_PORT, TRACKBALL_SCK_PIN, kPORT_MuxAlt3);
+
 
     uint32_t srcFreq = 0;
     spi_master_config_t userConfig;
+    SPI_MasterGetDefaultConfig(&userConfig);
     // userConfig.enableStopInWaitMode = false;
     // userConfig.polarity = kSPI_ClockPolarityActiveHigh;
     // userConfig.phase = kSPI_ClockPhaseFirstEdge;
@@ -59,8 +69,7 @@ void Trackball_Init(void)
     // userConfig.rxWatermark = kSPI_RxFifoOneHalfFull;
     // userConfig.pinMode = kSPI_PinModeNormal;
     // userConfig.outputMode = kSPI_SlaveSelectAutomaticOutput;
-    // userConfig.baudRate_Bps = 500000U;
-    SPI_MasterGetDefaultConfig(&userConfig);
+    userConfig.baudRate_Bps = 1000U;
     srcFreq = CLOCK_GetFreq(TRACKBALL_SPI_MASTER_SOURCE_CLOCK);
     SPI_MasterInit(TRACKBALL_SPI_MASTER, &userConfig, srcFreq);
     SPI_MasterTransferCreateHandle(TRACKBALL_SPI_MASTER, &handle, trackballUpdate, NULL);
