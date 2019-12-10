@@ -10,6 +10,7 @@ pointer_delta_t Trackball_PointerDelta;
 
 typedef enum {
     ModulePhase_PoweredUp,
+    ModulePhase_ProcessMotion,
     ModulePhase_ProcessDeltaY,
     ModulePhase_ProcessDeltaX,
 } module_phase_t;
@@ -17,6 +18,7 @@ typedef enum {
 module_phase_t modulePhase = ModulePhase_PoweredUp;
 
 uint8_t txBufferPowerUpReset[] = {0x5a, 0x3a};
+uint8_t txBufferGetMotion[] = {0x02, 0x00};
 uint8_t txBufferGetDeltaY[] = {0x03, 0x00};
 uint8_t txBufferGetDeltaX[] = {0x04, 0x00};
 
@@ -34,8 +36,18 @@ void trackballUpdate(SPI_Type *base, spi_master_handle_t *masterHandle, status_t
 {
     switch (modulePhase) {
         case ModulePhase_PoweredUp:
-            tx(txBufferGetDeltaY);
-            modulePhase = ModulePhase_ProcessDeltaY;
+            tx(txBufferGetMotion);
+            modulePhase = ModulePhase_ProcessMotion;
+            break;
+        case ModulePhase_ProcessMotion: ;
+            uint8_t motion = (int8_t)rxBuffer[1];
+            bool isMoved = motion || (1<<7);
+            if (isMoved) {
+                tx(txBufferGetDeltaY);
+                modulePhase = ModulePhase_ProcessDeltaY;
+            } else {
+                tx(txBufferGetMotion);
+            }
             break;
         case ModulePhase_ProcessDeltaY: ;
             int8_t deltaY = (int8_t)rxBuffer[1];
@@ -46,8 +58,8 @@ void trackballUpdate(SPI_Type *base, spi_master_handle_t *masterHandle, status_t
         case ModulePhase_ProcessDeltaX: ;
             int8_t deltaX = (int8_t)rxBuffer[1];
             Trackball_PointerDelta.x += deltaX;
-            tx(txBufferGetDeltaY);
-            modulePhase = ModulePhase_ProcessDeltaY;
+            tx(txBufferGetMotion);
+            modulePhase = ModulePhase_ProcessMotion;
             break;
     }
 }
@@ -75,7 +87,7 @@ void Trackball_Init(void)
     PORT_SetPinMux(TRACKBALL_MOSI_PORT, TRACKBALL_MOSI_PIN, kPORT_MuxAlt3);
 
     CLOCK_EnableClock(TRACKBALL_MISO_CLOCK);
-    PORT_SetPinMux(TRACKBALL_MISO_PORT, TRACKBALL_MOSI_PIN, kPORT_MuxAlt3);
+    PORT_SetPinMux(TRACKBALL_MISO_PORT, TRACKBALL_MISO_PIN, kPORT_MuxAlt3);
 
     CLOCK_EnableClock(TRACKBALL_SCK_CLOCK);
     PORT_SetPinMux(TRACKBALL_SCK_PORT, TRACKBALL_SCK_PIN, kPORT_MuxAlt3);
@@ -92,7 +104,7 @@ void Trackball_Init(void)
     // userConfig.rxWatermark = kSPI_RxFifoOneHalfFull;
     // userConfig.pinMode = kSPI_PinModeNormal;
     // userConfig.outputMode = kSPI_SlaveSelectAutomaticOutput;
-    userConfig.baudRate_Bps = 1000U;
+    userConfig.baudRate_Bps = 100000U;
     srcFreq = CLOCK_GetFreq(TRACKBALL_SPI_MASTER_SOURCE_CLOCK);
     SPI_MasterInit(TRACKBALL_SPI_MASTER, &userConfig, srcFreq);
     SPI_MasterTransferCreateHandle(TRACKBALL_SPI_MASTER, &handle, trackballUpdate, NULL);
