@@ -38,6 +38,10 @@
     #define TRACKBALL_SCK_CLOCK kCLOCK_PortB
     #define TRACKBALL_SCK_PIN 0
 
+    #define TRACKBALL_SPI_MASTER SPI0
+    #define TRACKBALL_SPI_MASTER_SOURCE_CLOCK kCLOCK_BusClk
+
+
 // Variables:
 
     extern pointer_delta_t Trackball_PointerDelta;
@@ -45,6 +49,5 @@
 // Functions:
 
     void Trackball_Init(void);
-    void Trackball_Update(void);
 
 #endif
