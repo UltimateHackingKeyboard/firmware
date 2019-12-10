@@ -9,14 +9,23 @@ pointer_delta_t Trackball_PointerDelta;
 #define TX_SIZE 2
 #define RX_SIZE 1
 
-uint8_t txBuffer[TX_SIZE];
+uint8_t txBuffer[TX_SIZE] = {0x5a, 0x3a};
 uint8_t rxBuffer[RX_SIZE];
 spi_master_handle_t handle;
+spi_transfer_t xfer = {0};
+
+void tx(uint8_t *txBuff)
+{
+    xfer.txData = txBuff;
+    xfer.dataSize = TX_SIZE;
+    SPI_MasterTransferNonBlocking(TRACKBALL_SPI_MASTER, &handle, &xfer);
+}
 
 void trackballUpdate(SPI_Type *base, spi_master_handle_t *masterHandle, status_t status, void *userData)
 {
 //    Trackball_PointerDelta.x++;
 //    Trackball_PointerDelta.y++;
+    tx(txBuffer);
 }
 
 void Trackball_Init(void)
@@ -54,10 +63,6 @@ void Trackball_Init(void)
     SPI_MasterGetDefaultConfig(&userConfig);
     srcFreq = CLOCK_GetFreq(TRACKBALL_SPI_MASTER_SOURCE_CLOCK);
     SPI_MasterInit(TRACKBALL_SPI_MASTER, &userConfig, srcFreq);
-
-    spi_transfer_t xfer = {0};
-    xfer.txData = txBuffer;
-    xfer.dataSize = TX_SIZE;
     SPI_MasterTransferCreateHandle(TRACKBALL_SPI_MASTER, &handle, trackballUpdate, NULL);
-    SPI_MasterTransferNonBlocking(TRACKBALL_SPI_MASTER, &handle, &xfer);
+    tx(txBuffer);
 }

@@ -41,7 +41,6 @@
     #define TRACKBALL_SPI_MASTER SPI0
     #define TRACKBALL_SPI_MASTER_SOURCE_CLOCK kCLOCK_BusClk
 
-
 // Variables:
 
     extern pointer_delta_t Trackball_PointerDelta;
