@@ -18,6 +18,7 @@ typedef enum {
 module_phase_t modulePhase = ModulePhase_PoweredUp;
 
 uint8_t txBufferPowerUpReset[] = {0x5a, 0x3a};
+uint8_t txBufferGetProductId[] = {0x00, 0x00};
 uint8_t txBufferGetMotion[] = {0x02, 0x00};
 uint8_t txBufferGetDeltaY[] = {0x03, 0x00};
 uint8_t txBufferGetDeltaX[] = {0x04, 0x00};
@@ -40,6 +41,8 @@ void trackballUpdate(SPI_Type *base, spi_master_handle_t *masterHandle, status_t
             modulePhase = ModulePhase_ProcessMotion;
             break;
         case ModulePhase_ProcessMotion: ;
+//            tx(txBufferGetProductId);
+//            break;
             uint8_t motion = (int8_t)rxBuffer[1];
             bool isMoved = motion || (1<<7);
             if (isMoved) {
