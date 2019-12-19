@@ -17,7 +17,7 @@ typedef enum {
 
 module_phase_t modulePhase = ModulePhase_PoweredUp;
 
-uint8_t txBufferPowerUpReset[] = {0x5a, 0x3a};
+uint8_t txBufferPowerUpReset[] = {0xba, 0x5a};
 uint8_t txBufferGetProductId[] = {0x00, 0x00};
 uint8_t txBufferGetMotion[] = {0x02, 0x00};
 uint8_t txBufferGetDeltaY[] = {0x03, 0x00};
@@ -43,8 +43,8 @@ void trackballUpdate(SPI_Type *base, spi_master_handle_t *masterHandle, status_t
         case ModulePhase_ProcessMotion: ;
 //            tx(txBufferGetProductId);
 //            break;
-            uint8_t motion = (int8_t)rxBuffer[1];
-            bool isMoved = motion || (1<<7);
+            uint8_t motion = rxBuffer[1];
+            bool isMoved = motion & (1<<7);
             if (isMoved) {
                 tx(txBufferGetDeltaY);
                 modulePhase = ModulePhase_ProcessDeltaY;
@@ -99,8 +99,8 @@ void Trackball_Init(void)
     spi_master_config_t userConfig;
     SPI_MasterGetDefaultConfig(&userConfig);
     // userConfig.enableStopInWaitMode = false;
-    // userConfig.polarity = kSPI_ClockPolarityActiveHigh;
-    // userConfig.phase = kSPI_ClockPhaseFirstEdge;
+    userConfig.polarity = kSPI_ClockPolarityActiveLow;
+    userConfig.phase = kSPI_ClockPhaseSecondEdge;
     // userConfig.direction = kSPI_MsbFirst;
     // userConfig.dataMode = kSPI_8BitMode;
     // userConfig.txWatermark = kSPI_TxFifoOneHalfEmpty;
