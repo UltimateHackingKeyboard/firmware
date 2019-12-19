@@ -35,6 +35,9 @@ void tx(uint8_t *txBuff)
 
 void trackballUpdate(SPI_Type *base, spi_master_handle_t *masterHandle, status_t status, void *userData)
 {
+    GPIO_WritePinOutput(TRACKBALL_NCS_GPIO, TRACKBALL_NCS_PIN, 1);
+    GPIO_WritePinOutput(TRACKBALL_NCS_GPIO, TRACKBALL_NCS_PIN, 0);
+
     switch (modulePhase) {
         case ModulePhase_PoweredUp:
             tx(txBufferGetMotion);
