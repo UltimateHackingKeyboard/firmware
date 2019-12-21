@@ -69,7 +69,6 @@ void Trackball_Init(void)
 {
     CLOCK_EnableClock(TRACKBALL_SHTDWN_CLOCK);
     PORT_SetPinConfig(TRACKBALL_SHTDWN_PORT, TRACKBALL_SHTDWN_PIN, &(port_pin_config_t){.pullSelect=kPORT_PullDown, .mux=kPORT_MuxAsGpio});
-    GPIO_PinInit(TRACKBALL_SHTDWN_GPIO, TRACKBALL_SHTDWN_PIN, &(gpio_pin_config_t){kGPIO_DigitalOutput, 0});
     GPIO_WritePinOutput(TRACKBALL_SHTDWN_GPIO, TRACKBALL_SHTDWN_PIN, 0);
 
     CLOCK_EnableClock(TRACKBALL_NCS_CLOCK);
