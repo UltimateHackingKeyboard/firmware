@@ -6,6 +6,7 @@
 pointer_delta_t Trackball_PointerDelta;
 
 #define BUFFER_SIZE 2
+#define MOTION_BIT (1<<7)
 
 typedef enum {
     ModulePhase_PoweredUp,
@@ -42,7 +43,7 @@ void trackballUpdate(SPI_Type *base, spi_master_handle_t *masterHandle, status_t
             break;
         case ModulePhase_ProcessMotion: ;
             uint8_t motion = rxBuffer[1];
-            bool isMoved = motion & (1<<7);
+            bool isMoved = motion & MOTION_BIT;
             if (isMoved) {
                 tx(txBufferGetDeltaY);
                 modulePhase = ModulePhase_ProcessDeltaY;
