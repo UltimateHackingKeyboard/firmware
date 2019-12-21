@@ -68,7 +68,7 @@ void trackballUpdate(SPI_Type *base, spi_master_handle_t *masterHandle, status_t
 void Trackball_Init(void)
 {
     CLOCK_EnableClock(TRACKBALL_SHTDWN_CLOCK);
-    PORT_SetPinConfig(TRACKBALL_SHTDWN_PORT, TRACKBALL_SHTDWN_PIN, &(port_pin_config_t){.pullSelect=kPORT_PullDown, .mux=kPORT_MuxAsGpio});
+    PORT_SetPinMux(TRACKBALL_SHTDWN_PORT, TRACKBALL_SHTDWN_PIN, kPORT_MuxAsGpio);
     GPIO_WritePinOutput(TRACKBALL_SHTDWN_GPIO, TRACKBALL_SHTDWN_PIN, 0);
 
     CLOCK_EnableClock(TRACKBALL_NCS_CLOCK);
