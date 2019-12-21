@@ -2,7 +2,6 @@
 #include "fsl_port.h"
 #include "fsl_spi.h"
 #include "trackball.h"
-#include "test_led.h"
 
 pointer_delta_t Trackball_PointerDelta;
 
@@ -77,10 +76,6 @@ void Trackball_Init(void)
     CLOCK_EnableClock(TRACKBALL_NCS_CLOCK);
     PORT_SetPinMux(TRACKBALL_NCS_PORT, TRACKBALL_NCS_PIN, kPORT_MuxAsGpio);
     GPIO_WritePinOutput(TRACKBALL_NCS_GPIO, TRACKBALL_NCS_PIN, 1);
-
-    TestLed_On();
-//    for (volatile uint32_t i=0; i<1000000; i++);
-    TestLed_Off();
 
     CLOCK_EnableClock(TRACKBALL_NCS_CLOCK);
     PORT_SetPinMux(TRACKBALL_NCS_PORT, TRACKBALL_NCS_PIN, kPORT_MuxAsGpio);
