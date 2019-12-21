@@ -27,15 +27,14 @@ spi_transfer_t xfer = {0};
 
 void tx(uint8_t *txBuff)
 {
+    GPIO_WritePinOutput(TRACKBALL_NCS_GPIO, TRACKBALL_NCS_PIN, 1);
+    GPIO_WritePinOutput(TRACKBALL_NCS_GPIO, TRACKBALL_NCS_PIN, 0);
     xfer.txData = txBuff;
     SPI_MasterTransferNonBlocking(TRACKBALL_SPI_MASTER, &handle, &xfer);
 }
 
 void trackballUpdate(SPI_Type *base, spi_master_handle_t *masterHandle, status_t status, void *userData)
 {
-    GPIO_WritePinOutput(TRACKBALL_NCS_GPIO, TRACKBALL_NCS_PIN, 1);
-    GPIO_WritePinOutput(TRACKBALL_NCS_GPIO, TRACKBALL_NCS_PIN, 0);
-
     switch (modulePhase) {
         case ModulePhase_PoweredUp:
             tx(txBufferGetMotion);
@@ -75,8 +74,6 @@ void Trackball_Init(void)
 
     CLOCK_EnableClock(TRACKBALL_NCS_CLOCK);
     PORT_SetPinMux(TRACKBALL_NCS_PORT, TRACKBALL_NCS_PIN, kPORT_MuxAsGpio);
-    GPIO_WritePinOutput(TRACKBALL_NCS_GPIO, TRACKBALL_NCS_PIN, 1);
-    GPIO_WritePinOutput(TRACKBALL_NCS_GPIO, TRACKBALL_NCS_PIN, 0);
 
     CLOCK_EnableClock(TRACKBALL_MOSI_CLOCK);
     PORT_SetPinMux(TRACKBALL_MOSI_PORT, TRACKBALL_MOSI_PIN, kPORT_MuxAlt3);
