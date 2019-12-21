@@ -79,7 +79,7 @@ void Trackball_Init(void)
     GPIO_WritePinOutput(TRACKBALL_NCS_GPIO, TRACKBALL_NCS_PIN, 1);
 
     TestLed_On();
-    for (volatile uint32_t i=0; i<1000000; i++);
+//    for (volatile uint32_t i=0; i<1000000; i++);
     TestLed_Off();
 
     CLOCK_EnableClock(TRACKBALL_NCS_CLOCK);
