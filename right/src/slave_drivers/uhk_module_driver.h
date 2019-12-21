@@ -6,11 +6,12 @@
     #include "fsl_common.h"
     #include "crc16.h"
     #include "versions.h"
+    #include "slot.h"
     #include "usb_interfaces/usb_interface_mouse.h"
 
 // Macros:
 
-    #define UHK_MODULE_MAX_COUNT 3
+    #define UHK_MODULE_MAX_COUNT (SLOT_COUNT-1)
     #define MAX_PWM_BRIGHTNESS 0x64
 
 // Typedefs:

@@ -178,8 +178,13 @@ static void processMouseActions()
     for (uint8_t moduleId=0; moduleId<UHK_MODULE_MAX_COUNT; moduleId++) {
         uhk_module_state_t *moduleState = UhkModuleStates + moduleId;
         if (moduleState->pointerCount) {
-            ActiveUsbMouseReport->x += moduleState->pointerDelta.x;
-            ActiveUsbMouseReport->y -= moduleState->pointerDelta.y;
+            if (moduleState->moduleId == ModuleId_KeyClusterLeft) {
+                ActiveUsbMouseReport->wheelX += moduleState->pointerDelta.x;
+                ActiveUsbMouseReport->wheelY -= moduleState->pointerDelta.y;
+            } else {
+                ActiveUsbMouseReport->x += moduleState->pointerDelta.x;
+                ActiveUsbMouseReport->y -= moduleState->pointerDelta.y;
+            }
             moduleState->pointerDelta.x = 0;
             moduleState->pointerDelta.y = 0;
         }
