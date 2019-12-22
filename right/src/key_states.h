@@ -7,6 +7,15 @@
     #include "slot.h"
     #include "module.h"
 
+// Macros:
+
+    #define ACTIVE(KEY) (((KEY)->current))
+    #define INACTIVE(KEY) (!((KEY)->current))
+    #define ACTIVATED_NOW(KEY) (!(KEY)->previous && (KEY)->current)
+    #define DEACTIVATED_NOW(KEY) ((KEY)->previous && !(KEY)->current)
+    #define ACTIVATED_EARLIER(KEY) ((KEY)->previous && (KEY)->current)
+    #define DEACTIVATED_EARLIER(KEY) (!(KEY)->previous && !(KEY)->current)
+
 // Typedefs:
 
     // Next is used as an accumulator of the state - asynchronous state updates
