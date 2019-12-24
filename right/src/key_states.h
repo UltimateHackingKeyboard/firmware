@@ -9,12 +9,13 @@
 
 // Macros:
 
-    #define ACTIVE(KEY) (((KEY)->current))
-    #define INACTIVE(KEY) (!((KEY)->current))
-    #define ACTIVATED_NOW(KEY) (!(KEY)->previous && (KEY)->current)
-    #define DEACTIVATED_NOW(KEY) ((KEY)->previous && !(KEY)->current)
-    #define ACTIVATED_EARLIER(KEY) ((KEY)->previous && (KEY)->current)
-    #define DEACTIVATED_EARLIER(KEY) (!(KEY)->previous && !(KEY)->current)
+
+    #define KEYSTATE_ACTIVE(KEY) (((KEY)->current))
+    #define KEYSTATE_INACTIVE(KEY) (!((KEY)->current))
+    #define KEYSTATE_ACTIVATED_NOW(KEY) (!(KEY)->previous && (KEY)->current)
+    #define KEYSTATE_DEACTIVATED_NOW(KEY) ((KEY)->previous && !(KEY)->current)
+    #define KEYSTATE_ACTIVATED_EARLIER(KEY) ((KEY)->previous && (KEY)->current)
+    #define KEYSTATE_DEACTIVATED_EARLIER(KEY) (!(KEY)->previous && !(KEY)->current)
 
 // Typedefs:
 
@@ -40,5 +41,8 @@
 // Variables:
 
     extern key_state_t KeyStates[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
+
+
+    static inline bool Keystate_Active(key_state_t* s) { return s->current; };
 
 #endif
