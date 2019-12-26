@@ -14,8 +14,6 @@
     #define KEYSTATE_INACTIVE(KEY) (!((KEY)->current))
     #define KEYSTATE_ACTIVATED_NOW(KEY) (!(KEY)->previous && (KEY)->current)
     #define KEYSTATE_DEACTIVATED_NOW(KEY) ((KEY)->previous && !(KEY)->current)
-    #define KEYSTATE_ACTIVATED_EARLIER(KEY) ((KEY)->previous && (KEY)->current)
-    #define KEYSTATE_DEACTIVATED_EARLIER(KEY) (!(KEY)->previous && !(KEY)->current)
 
 // Typedefs:
 
