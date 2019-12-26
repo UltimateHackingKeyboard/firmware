@@ -275,7 +275,7 @@ static secondary_role_t secondaryRole;
 
 
 static bool shouldStick_actionIsSelected(key_action_t * action) {
-    if(action->type != KeyActionType_Keystroke || action->keystroke.keystrokeType != KeystrokeType_Basic) {
+    if(action->keystroke.modifiers == 0 || action->type != KeyActionType_Keystroke || action->keystroke.keystrokeType != KeystrokeType_Basic) {
         return false;
     }
 
