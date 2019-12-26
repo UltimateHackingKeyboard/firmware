@@ -260,13 +260,13 @@ static secondary_role_t secondaryRole;
 
 static void applyKeyAction(key_state_t *keyState, key_action_t *action, uint8_t slotId, uint8_t keyId)
 {
-    if (keyState->current) {
+    if (KeyState_Active(keyState)) {
         handleSwitchLayerAction(keyState, action);
 
         switch (action->type) {
             case KeyActionType_Keystroke:
                 if (action->keystroke.scancode) {
-                    if (!keyState->previous) {
+                    if (KeyState_ActivatedNow(keyState)) {
                         stickyModifiers = action->keystroke.modifiers;
                         stickySlotId = slotId;
                         stickyKeyId = keyId;
@@ -296,7 +296,7 @@ static void applyKeyAction(key_state_t *keyState, key_action_t *action, uint8_t 
                 }
                 break;
             case KeyActionType_Mouse:
-                if (!keyState->previous) {
+                if (KeyState_ActivatedNow(keyState)) {
                     stickyModifiers = 0;
                 }
                 activeMouseStates[action->mouseAction] = true;
@@ -305,14 +305,14 @@ static void applyKeyAction(key_state_t *keyState, key_action_t *action, uint8_t 
                 // Handled by handleSwitchLayerAction()
                 break;
             case KeyActionType_SwitchKeymap:
-                if (!keyState->previous) {
+                if (KeyState_ActivatedNow(keyState)) {
                     stickyModifiers = 0;
                     secondaryRoleState = SecondaryRoleState_Released;
                     SwitchKeymapById(action->switchKeymap.keymapId);
                 }
                 break;
             case KeyActionType_PlayMacro:
-                if (!keyState->previous) {
+                if (KeyState_ActivatedNow(keyState)) {
                     stickyModifiers = 0;
                     Macros_StartMacro(action->playMacro.macroId);
                 }
@@ -321,7 +321,7 @@ static void applyKeyAction(key_state_t *keyState, key_action_t *action, uint8_t 
     } else {
         switch (action->type) {
             case KeyActionType_Keystroke:
-                if (keyState->previous) {
+                if (KeyState_DeactivatedNow(keyState)) {
                     if (slotId == stickySlotId && keyId == stickyKeyId) {
                         if (!IsLayerHeld() && !(secondaryRoleState == SecondaryRoleState_Triggered && IS_SECONDARY_ROLE_LAYER_SWITCHER(secondaryRole))) {
                             stickyModifiers = 0;
@@ -408,7 +408,7 @@ static void updateActiveUsbReports(void)
 
             preprocessKeyState(keyState);
 
-            if (keyState->current && !keyState->previous) {
+            if (KeyState_ActivatedNow(keyState)) {
                 if (SleepModeActive) {
                     WakeUpHost();
                 }
@@ -424,10 +424,10 @@ static void updateActiveUsbReports(void)
 
             action = &actionCache[slotId][keyId];
 
-            if (keyState->current) {
+            if (KeyState_Active(keyState)) {
                 if (action->type == KeyActionType_Keystroke && action->keystroke.secondaryRole) {
                     // Press released secondary role key.
-                    if (!keyState->previous && secondaryRoleState == SecondaryRoleState_Released) {
+                    if (KeyState_ActivatedNow(keyState) && secondaryRoleState == SecondaryRoleState_Released) {
                         secondaryRoleState = SecondaryRoleState_Pressed;
                         secondaryRoleSlotId = slotId;
                         secondaryRoleKeyId = keyId;
@@ -438,7 +438,7 @@ static void updateActiveUsbReports(void)
                 }
             } else {
                 // Release secondary role key.
-                if (keyState->previous && secondaryRoleSlotId == slotId && secondaryRoleKeyId == keyId && secondaryRoleState != SecondaryRoleState_Released) {
+                if (KeyState_DeactivatedNow(keyState) && secondaryRoleSlotId == slotId && secondaryRoleKeyId == keyId && secondaryRoleState != SecondaryRoleState_Released) {
                     // Trigger primary role.
                     if (secondaryRoleState == SecondaryRoleState_Pressed) {
                         keyState->previous = false;
