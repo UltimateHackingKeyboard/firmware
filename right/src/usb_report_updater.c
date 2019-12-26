@@ -260,7 +260,7 @@ static secondary_role_t secondaryRole;
 
 static void applyKeyAction(key_state_t *keyState, key_action_t *action, uint8_t slotId, uint8_t keyId)
 {
-    if (Keystate_Active(keyState)) {
+    if (KeyState_Active(keyState)) {
         handleSwitchLayerAction(keyState, action);
 
         switch (action->type) {
