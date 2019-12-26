@@ -326,6 +326,8 @@ static void applyKeyAction(key_state_t *keyState, key_action_t *action, uint8_t 
                 if (KeyState_DeactivatedNow(keyState)) {
                     if (slotId == stickySlotId && keyId == stickyKeyId) {
                         if (!IsLayerHeld() && !(secondaryRoleState == SecondaryRoleState_Triggered && IS_SECONDARY_ROLE_LAYER_SWITCHER(secondaryRole))) {
+                            //disable the modifiers, but send one last report of modifiers without scancode)
+                            ActiveUsbBasicKeyboardReport->modifiers |= stickyModifiers;
                             stickyModifiers = 0;
                         }
                     }
