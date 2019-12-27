@@ -51,6 +51,7 @@ static const uint16_t digitToSegmentMap[] = {
 };
 
 static const uint8_t layerLedIds[LAYER_COUNT-1] = {13, 29, 45};
+static const uint8_t iconLedIds[LedDisplayIcon_Count] = {8, 9, 10};
 
 static uint16_t characterToSegmentMap(char character)
 {
@@ -97,13 +98,13 @@ void LedDisplay_SetLayer(layer_id_t layerId)
 
 bool LedDisplay_GetIcon(led_display_icon_t icon)
 {
-    return LedDriverValues[LedDriverId_Left][8 + icon];
+    return LedDriverValues[LedDriverId_Left][iconLedIds[icon]];
 }
 
 void LedDisplay_SetIcon(led_display_icon_t icon, bool isEnabled)
 {
     ledIconStates[icon] = isEnabled;
-    LedDriverValues[LedDriverId_Left][icon + 8] = isEnabled ? IconsAndLayerTextsBrightness : 0;
+    LedDriverValues[LedDriverId_Left][iconLedIds[icon]] = isEnabled ? IconsAndLayerTextsBrightness : 0;
 }
 
 void LedDisplay_UpdateIcons(void)
