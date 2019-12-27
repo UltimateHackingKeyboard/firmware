@@ -50,6 +50,8 @@ static const uint16_t digitToSegmentMap[] = {
     0b0000000011101111,
 };
 
+static const uint8_t layerLedIds[LAYER_COUNT-1] = {13, 29, 45};
+
 static uint16_t characterToSegmentMap(char character)
 {
     switch (character) {
@@ -88,12 +90,8 @@ void LedDisplay_SetText(uint8_t length, const char* text)
 
 void LedDisplay_SetLayer(layer_id_t layerId)
 {
-    for (uint8_t i = 13; i <= 45; i += 16) {
-        LedDriverValues[LedDriverId_Left][i] = 0;
-    }
-
-    if (layerId >= LayerId_Mod && layerId <= LayerId_Mouse) {
-        LedDriverValues[LedDriverId_Left][16 * layerId - 3] = IconsAndLayerTextsBrightness;
+    for (uint8_t i=1; i<LAYER_COUNT; i++) {
+        LedDriverValues[LedDriverId_Left][layerLedIds[i-1]] = layerId == i ? IconsAndLayerTextsBrightness : 0;
     }
 }
 
