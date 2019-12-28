@@ -265,8 +265,11 @@ static void applyKeyAction(key_state_t *keyState, key_action_t *action, uint8_t 
 
         switch (action->type) {
             case KeyActionType_Keystroke:
+            {
+                bool stickyModifiersUnChanged = true;
                 if (action->keystroke.scancode) {
                     if (KeyState_ActivatedNow(keyState)) {
+                        stickyModifiersUnChanged = action->keystroke.modifiers == stickyModifiers;
                         stickyModifiers = action->keystroke.modifiers;
                         stickySlotId = slotId;
                         stickyKeyId = keyId;
@@ -274,7 +277,7 @@ static void applyKeyAction(key_state_t *keyState, key_action_t *action, uint8_t 
                 } else {
                     ActiveUsbBasicKeyboardReport->modifiers |= action->keystroke.modifiers;
                 }
-                if(action->keystroke.modifiers == 0 || KeyState_ActivatedEarlier(keyState)) {
+                if(stickyModifiersUnChanged || KeyState_ActivatedEarlier(keyState)) {
                     switch (action->keystroke.keystrokeType) {
                         case KeystrokeType_Basic:
                             if (basicScancodeIndex >= USB_BASIC_KEYBOARD_MAX_KEYS || action->keystroke.scancode == 0) {
@@ -296,6 +299,7 @@ static void applyKeyAction(key_state_t *keyState, key_action_t *action, uint8_t 
                             break;
                     }
                 }
+            }
                 break;
             case KeyActionType_Mouse:
                 if (KeyState_ActivatedNow(keyState)) {
