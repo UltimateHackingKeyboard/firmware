@@ -5,7 +5,7 @@
 
     #include "module/module_api.h"
     #include "key_matrix.h"
-    #include "slave_protocol_handler.h"
+    #include "module/slave_protocol_handler.h"
 
 // Macros:
 
