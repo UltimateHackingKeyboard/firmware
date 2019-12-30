@@ -30,4 +30,8 @@
     extern key_matrix_t keyMatrix;
     extern pointer_delta_t PointerDelta;
 
+// Functions:
+
+    void Module_Init(void);
+
 #endif
