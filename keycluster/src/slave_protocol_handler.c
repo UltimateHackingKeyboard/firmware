@@ -1,5 +1,5 @@
 #include "slave_protocol_handler.h"
-#include "test_led.h"
+#include "module/test_led.h"
 #include "i2c_addresses.h"
 #include "module/i2c.h"
 #include "module/led_pwm.h"
