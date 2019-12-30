@@ -2,7 +2,7 @@
 #include "test_led.h"
 #include "i2c_addresses.h"
 #include "i2c.h"
-#include "led_pwm.h"
+#include "module/led_pwm.h"
 #include "slave_protocol.h"
 #include "init_peripherals.h"
 #include "bool_array_converter.h"
