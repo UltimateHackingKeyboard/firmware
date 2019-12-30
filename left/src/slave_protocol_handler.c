@@ -4,7 +4,7 @@
 #include "module/i2c.h"
 #include "module/led_pwm.h"
 #include "slave_protocol.h"
-#include "init_peripherals.h"
+#include "module/init_peripherals.h"
 #include "bool_array_converter.h"
 #include "bootloader.h"
 #include "module.h"
