@@ -90,10 +90,24 @@ void SlaveTxHandler(void)
             }
             break;
         }
-        case SlaveCommand_RequestKeyStates:
-            BoolBytesToBits(keyMatrix.keyStates, TxMessage.data, MODULE_KEY_COUNT);
-            TxMessage.length = BOOL_BYTES_TO_BITS_COUNT(MODULE_KEY_COUNT);
+        case SlaveCommand_RequestKeyStates: {
+            #if KEY_ARRAY_TYPE == 1
+                BoolBytesToBits(keyVector.keyStates, TxMessage.data, MODULE_KEY_COUNT);
+            #elif KEY_ARRAY_TYPE == 2
+                BoolBytesToBits(keyMatrix.keyStates, TxMessage.data, MODULE_KEY_COUNT);
+            #endif
+            uint8_t messageLength = BOOL_BYTES_TO_BITS_COUNT(MODULE_KEY_COUNT);
+            if (MODULE_POINTER_COUNT) {
+                pointer_delta_t *pointerDelta = (pointer_delta_t*)(TxMessage.data + messageLength);
+                pointerDelta->x = PointerDelta.x;
+                pointerDelta->y = PointerDelta.y;
+                PointerDelta.x = 0;
+                PointerDelta.y = 0;
+                messageLength += sizeof(pointer_delta_t);
+            }
+            TxMessage.length = messageLength;
             break;
+        }
     }
 
     CRC16_UpdateMessageChecksum(&TxMessage);

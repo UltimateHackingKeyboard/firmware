@@ -21,6 +21,7 @@
     #define TEST_LED_CLOCK kCLOCK_PortB
     #define TEST_LED_PIN   13
 
+    #define KEY_ARRAY_TYPE 2
     #define KEYBOARD_MATRIX_COLS_NUM 7
     #define KEYBOARD_MATRIX_ROWS_NUM 5
 

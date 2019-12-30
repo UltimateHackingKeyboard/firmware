@@ -9,7 +9,6 @@
 #include "bootloader.h"
 #include "module.h"
 #include "versions.h"
-#include "trackball.h"
 
 i2c_message_t RxMessage;
 i2c_message_t TxMessage;
@@ -91,8 +90,12 @@ void SlaveTxHandler(void)
             }
             break;
         }
-        case SlaveCommand_RequestKeyStates:
-            BoolBytesToBits(keyVector.keyStates, TxMessage.data, MODULE_KEY_COUNT);
+        case SlaveCommand_RequestKeyStates: {
+            #if KEY_ARRAY_TYPE == 1
+                BoolBytesToBits(keyVector.keyStates, TxMessage.data, MODULE_KEY_COUNT);
+            #elif KEY_ARRAY_TYPE == 2
+                BoolBytesToBits(keyMatrix.keyStates, TxMessage.data, MODULE_KEY_COUNT);
+            #endif
             uint8_t messageLength = BOOL_BYTES_TO_BITS_COUNT(MODULE_KEY_COUNT);
             if (MODULE_POINTER_COUNT) {
                 pointer_delta_t *pointerDelta = (pointer_delta_t*)(TxMessage.data + messageLength);
@@ -104,6 +107,7 @@ void SlaveTxHandler(void)
             }
             TxMessage.length = messageLength;
             break;
+        }
     }
 
     CRC16_UpdateMessageChecksum(&TxMessage);

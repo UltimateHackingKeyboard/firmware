@@ -21,6 +21,7 @@
     #define TEST_LED_CLOCK kCLOCK_PortB
     #define TEST_LED_PIN   1
 
+    #define KEY_ARRAY_TYPE 1
     #define KEYBOARD_VECTOR_ITEMS_NUM 6
 
 // Variables:
