@@ -15,6 +15,7 @@ int main(void)
     InitKeyScanner();
 
     while (1) {
+        Module_Loop();
         __WFI();
     }
 }

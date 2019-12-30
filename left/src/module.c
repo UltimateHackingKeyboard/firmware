@@ -27,3 +27,7 @@ void Module_Init(void)
 {
     KeyMatrix_Init(&keyMatrix);
 }
+
+void Module_Loop(void)
+{
+}

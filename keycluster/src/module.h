@@ -33,5 +33,6 @@
 // Functions:
 
     void Module_Init(void);
+    void Module_Loop(void);
 
 #endif

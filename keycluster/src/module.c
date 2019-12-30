@@ -20,3 +20,8 @@ void Module_Init(void)
     KeyVector_Init(&keyVector);
     BlackberryTrackball_Init();
 }
+
+void Module_Loop(void)
+{
+    BlackberryTrackball_Update();
+}

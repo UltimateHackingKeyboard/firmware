@@ -16,3 +16,7 @@ void Module_Init(void)
     KeyVector_Init(&keyVector);
     Trackball_Init();
 }
+
+void Module_Loop(void)
+{
+}
