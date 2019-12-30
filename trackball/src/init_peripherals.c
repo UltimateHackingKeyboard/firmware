@@ -5,7 +5,7 @@
 #include "i2c_addresses.h"
 #include "fsl_i2c.h"
 #include "fsl_clock.h"
-#include "i2c.h"
+#include "module/i2c.h"
 #include "module/led_pwm.h"
 #include "slave_protocol_handler.h"
 #include "module/i2c_watchdog.h"
