@@ -3,6 +3,7 @@
 
 // Includes:
 
+    #include "module/module.h"
     #include "key_matrix.h"
     #include "slave_protocol_handler.h"
 
@@ -21,7 +22,7 @@
     #define TEST_LED_CLOCK kCLOCK_PortB
     #define TEST_LED_PIN   13
 
-    #define KEY_ARRAY_TYPE 2
+    #define KEY_ARRAY_TYPE KEY_ARRAY_TYPE_MATRIX
     #define KEYBOARD_MATRIX_COLS_NUM 7
     #define KEYBOARD_MATRIX_ROWS_NUM 5
 
