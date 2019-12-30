@@ -8,7 +8,7 @@
 #include "i2c.h"
 #include "led_pwm.h"
 #include "slave_protocol_handler.h"
-#include "i2c_watchdog.h"
+#include "module/i2c_watchdog.h"
 #include "module.h"
 
 i2c_slave_config_t slaveConfig;
