@@ -4,16 +4,12 @@
 // Includes:
 
     #include "fsl_gpio.h"
+    #include "module.h"
 
 // Macros:
 
     #define LOGIC_LED_ON  0U
     #define LOGIC_LED_OFF 1U
-
-    #define TEST_LED_GPIO  GPIOB
-    #define TEST_LED_PORT  PORTB
-    #define TEST_LED_CLOCK kCLOCK_PortB
-    #define TEST_LED_PIN   1
 
     static inline void TestLed_On(void)
     {
