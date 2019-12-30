@@ -1,9 +1,7 @@
 #include "fsl_gpio.h"
 #include "fsl_port.h"
 #include "blackberry_trackball.h"
-#include "test_led.h"
-
-pointer_delta_t BlackBerryTrackball_PointerDelta;
+#include "module.h"
 
 void BlackberryTrackball_Init(void)
 {
@@ -26,25 +24,25 @@ void BlackberryTrackball_Update(void)
 {
     uint8_t newLeft = GPIO_ReadPinInput(BLACKBERRY_TRACKBALL_LEFT_GPIO, BLACKBERRY_TRACKBALL_LEFT_PIN);
     if (oldLeft != newLeft) {
-        BlackBerryTrackball_PointerDelta.x--;
+        PointerDelta.x--;
         oldLeft = newLeft;
     }
 
     uint8_t newRight = GPIO_ReadPinInput(BLACKBERRY_TRACKBALL_RIGHT_GPIO, BLACKBERRY_TRACKBALL_RIGHT_PIN);
     if (oldRight != newRight) {
-        BlackBerryTrackball_PointerDelta.x++;
+        PointerDelta.x++;
         oldRight = newRight;
     }
 
     uint8_t newUp = GPIO_ReadPinInput(BLACKBERRY_TRACKBALL_UP_GPIO, BLACKBERRY_TRACKBALL_UP_PIN);
     if (oldUp != newUp) {
-        BlackBerryTrackball_PointerDelta.y--;
+        PointerDelta.y--;
         oldUp = newUp;
     }
 
     uint8_t newDown = GPIO_ReadPinInput(BLACKBERRY_TRACKBALL_DOWN_GPIO, BLACKBERRY_TRACKBALL_DOWN_PIN);
     if (oldDown != newDown) {
-        BlackBerryTrackball_PointerDelta.y++;
+        PointerDelta.y++;
         oldDown = newDown;
     }
 }

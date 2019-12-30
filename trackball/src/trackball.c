@@ -2,8 +2,7 @@
 #include "fsl_port.h"
 #include "fsl_spi.h"
 #include "trackball.h"
-
-pointer_delta_t Trackball_PointerDelta;
+#include "module.h"
 
 #define BUFFER_SIZE 2
 #define MOTION_BIT (1<<7)
@@ -53,13 +52,13 @@ void trackballUpdate(SPI_Type *base, spi_master_handle_t *masterHandle, status_t
             break;
         case ModulePhase_ProcessDeltaY: ;
             int8_t deltaY = (int8_t)rxBuffer[1];
-            Trackball_PointerDelta.x += deltaY; // This is correct given the sensor orientation.
+            PointerDelta.x += deltaY; // This is correct given the sensor orientation.
             tx(txBufferGetDeltaX);
             modulePhase = ModulePhase_ProcessDeltaX;
             break;
         case ModulePhase_ProcessDeltaX: ;
             int8_t deltaX = (int8_t)rxBuffer[1];
-            Trackball_PointerDelta.y += deltaX; // This is correct given the sensor orientation.
+            PointerDelta.y += deltaX; // This is correct given the sensor orientation.
             tx(txBufferGetMotion);
             modulePhase = ModulePhase_ProcessMotion;
             break;

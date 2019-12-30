@@ -4,6 +4,7 @@
 // Includes:
 
     #include "key_matrix.h"
+    #include "slave_protocol_handler.h"
 
 // Macros:
 
@@ -26,5 +27,6 @@
 // Variables:
 
     extern key_matrix_t keyMatrix;
+    extern pointer_delta_t PointerDelta;
 
 #endif

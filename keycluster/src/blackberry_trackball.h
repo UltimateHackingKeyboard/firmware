@@ -32,10 +32,6 @@
     #define BLACKBERRY_TRACKBALL_DOWN_CLOCK kCLOCK_PortA
     #define BLACKBERRY_TRACKBALL_DOWN_PIN 4
 
-// Variables:
-
-    extern pointer_delta_t BlackBerryTrackball_PointerDelta;
-
 // Functions:
 
     void BlackberryTrackball_Init(void);
