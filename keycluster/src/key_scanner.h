@@ -13,8 +13,6 @@
     #define KEY_SCANNER_LPTMR_IRQ_ID   LPTMR0_IRQn
     #define KEY_SCANNER_HANDLER        LPTMR0_IRQHandler
 
-    #define KEY_SCANNER_INTERVAL_USEC (1000 / KEYBOARD_VECTOR_ITEMS_NUM)
-
 // Functions:
 
     void InitKeyScanner(void);
