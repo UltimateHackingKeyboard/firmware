@@ -9,7 +9,6 @@
 #include "led_pwm.h"
 #include "slave_protocol_handler.h"
 #include "i2c_watchdog.h"
-#include "main.h"
 #include "module.h"
 #include "trackball.h"
 

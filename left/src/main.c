@@ -1,4 +1,3 @@
-#include "main.h"
 #include "slave/init_clock.h"
 #include "init_peripherals.h"
 #include "bootloader.h"

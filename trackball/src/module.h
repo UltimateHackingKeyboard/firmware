@@ -1,6 +1,10 @@
 #ifndef __MODULE_H__
 #define __MODULE_H__
 
+// Includes:
+
+    #include "key_vector.h"
+
 // Macros:
 
     #define I2C_ADDRESS_MODULE_FIRMWARE I2C_ADDRESS_RIGHT_MODULE_FIRMWARE
@@ -15,5 +19,11 @@
     #define TEST_LED_PORT  PORTB
     #define TEST_LED_CLOCK kCLOCK_PortB
     #define TEST_LED_PIN   2
+
+    #define KEYBOARD_VECTOR_ITEMS_NUM 2
+
+// Variables:
+
+    extern key_vector_t keyVector;
 
 #endif
