@@ -110,6 +110,13 @@ static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
             kineticState->ySum = 0;
         }
 
+        // If moving on diagonal, normalize the speed
+
+        if ( (activeMouseStates[kineticState->leftState] || activeMouseStates[kineticState->rightState]) &&
+             (activeMouseStates[kineticState->upState]   || activeMouseStates[kineticState->downState])) {
+            distance /= 1.41f;
+        }
+
         // Update horizontal state
 
         bool horizontalMovement = true;
