@@ -272,7 +272,7 @@ bool processKeyAction(void)
                     return false;
             }
         case MacroSubAction_Release:
-            switch(pressPhase) {
+            switch (pressPhase) {
                 case 1:
                     deleteScancode(currentMacroAction.key.scancode, currentMacroAction.key.type);
                     return true;
@@ -282,7 +282,7 @@ bool processKeyAction(void)
                     return false;
             }
         case MacroSubAction_Press:
-            switch(pressPhase) {
+            switch (pressPhase) {
                 case 1:
                     addModifiers(currentMacroAction.key.modifierMask);
                     return true;
@@ -367,7 +367,8 @@ bool processScrollMouseAction(void)
     return inMotion;
 }
 
-static void clearScancodes() {
+static void clearScancodes()
+{
     uint8_t oldMods = MacroBasicKeyboardReport.modifiers;
     memset(&MacroBasicKeyboardReport, 0, sizeof MacroBasicKeyboardReport);
     MacroBasicKeyboardReport.modifiers = oldMods;
@@ -384,7 +385,7 @@ bool processTextAction(void)
     /* When all characters have been sent, finish. Yet, one last report should still be sent
      * in case it contains modifiers, and then the report should be properly cleaned before next use.*/
     if (textIndex == currentMacroAction.text.textLen) {
-        if( MacroBasicKeyboardReport.modifiers != 0 && reportIndex != 0) {
+        if (MacroBasicKeyboardReport.modifiers != 0 && reportIndex != 0) {
             clearScancodes();
             reportIndex = 0;
             return true;
@@ -421,8 +422,8 @@ bool processTextAction(void)
      * Then send report containing only new modifiers.
      * Just when the modifiers finally match, go on and add the scancode.
      */
-    if(mods != MacroBasicKeyboardReport.modifiers) {
-        if(reportIndex != 0) {
+    if (mods != MacroBasicKeyboardReport.modifiers) {
+        if (reportIndex != 0) {
             reportIndex = 0;
             clearScancodes();
             return true;
@@ -458,7 +459,7 @@ bool processCurrentMacroAction(void)
 
 void Macros_StartMacro(uint8_t index)
 {
-    if(AllMacros[index].macroActionsCount == 0) {
+    if (AllMacros[index].macroActionsCount == 0) {
         return;
     }
     MacroPlaying = true;

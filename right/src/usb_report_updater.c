@@ -277,7 +277,7 @@ static void applyKeyAction(key_state_t *keyState, key_action_t *action, uint8_t 
                 } else {
                     ActiveUsbBasicKeyboardReport->modifiers |= action->keystroke.modifiers;
                 }
-                if(stickyModifiersUnChanged || KeyState_ActivatedEarlier(keyState) || action->keystroke.secondaryRole) {
+                if (stickyModifiersUnChanged || KeyState_ActivatedEarlier(keyState) || action->keystroke.secondaryRole) {
                     switch (action->keystroke.keystrokeType) {
                         case KeystrokeType_Basic:
                             if (basicScancodeIndex >= USB_BASIC_KEYBOARD_MAX_KEYS || action->keystroke.scancode == 0) {
