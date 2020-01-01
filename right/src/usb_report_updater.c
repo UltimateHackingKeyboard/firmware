@@ -253,16 +253,14 @@ static uint8_t basicScancodeIndex = 0;
 static uint8_t mediaScancodeIndex = 0;
 static uint8_t systemScancodeIndex = 0;
 
-/*
- * Sticky modifiers are all "action modifiers" - i.e., modifiers of composed
- * keystrokes whose purpose is to activate concrete shortcut. They are
- * activated once on keydown, and reset when another key gets activated (even
- * if the activation key is still active).
- *
- * Depending on configuration, they may "stick" - i.e., live longer than their
- * activation key, either until next action, or until release of held layer.
- * (This serves for Alt+Tab style shortcuts.)
- */
+// Sticky modifiers are all "action modifiers" - i.e., modifiers of composed
+// keystrokes whose purpose is to activate concrete shortcut. They are
+// activated once on keydown, and reset when another key gets activated (even
+// if the activation key is still active).
+//
+// Depending on configuration, they may "stick" - i.e., live longer than their
+// activation key, either until next action, or until release of held layer.
+// (This serves for Alt+Tab style shortcuts.)
 static uint8_t stickyModifiers;
 static uint8_t stickySlotId;
 static uint8_t stickyKeyId;
@@ -280,9 +278,10 @@ static bool isStickyShortcut(key_action_t * action)
         return false;
     }
 
-    #define TRY_MATCH(MOD, SC) if (action->keystroke.modifiers == MOD && action->keystroke.scancode == SC) { return true; }
-
-    TRY_MATCH ( HID_KEYBOARD_MODIFIER_LEFTALT, HID_KEYBOARD_SC_TAB );
+    //TODO: replace this ifelse train by an array of modifier-scancode pairs and a loop at some point
+    if (action->keystroke.modifiers == HID_KEYBOARD_MODIFIER_LEFTALT && action->keystroke.scancode == HID_KEYBOARD_SC_TAB) {
+        return true;
+    }
 
     return false;
 }
@@ -311,7 +310,7 @@ static void applyKeyAction(key_state_t *keyState, key_action_t *action, uint8_t 
         switch (action->type) {
             case KeyActionType_Keystroke:
                 if (action->keystroke.scancode) {
-                    /* On keydown, reset old sticky modifiers and set new ones */
+                    // On keydown, reset old sticky modifiers and set new ones
                     if (KeyState_ActivatedNow(keyState)) {
                         activateStickyMods(action, slotId, keyId);
                     }
@@ -365,12 +364,8 @@ static void applyKeyAction(key_state_t *keyState, key_action_t *action, uint8_t 
     } else {
         switch (action->type) {
             case KeyActionType_Keystroke:
-                if (KeyState_DeactivatedNow(keyState)) {
-                    if (slotId == stickySlotId && keyId == stickyKeyId) {
-                        if (!stickyModifierShouldStick) {
-                            stickyModifiers = 0;
-                        }
-                    }
+                if (KeyState_DeactivatedNow(keyState) && slotId == stickySlotId && keyId == stickyKeyId && !stickyModifierShouldStick) {
+                    stickyModifiers = 0;
                 }
                 break;
         }
