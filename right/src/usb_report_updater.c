@@ -274,30 +274,33 @@ static uint8_t secondaryRoleKeyId;
 static secondary_role_t secondaryRole;
 
 
-static bool shouldStick_actionIsSelected(key_action_t * action) {
-    if(action->keystroke.modifiers == 0 || action->type != KeyActionType_Keystroke || action->keystroke.keystrokeType != KeystrokeType_Basic) {
+static bool isStickyShortcut(key_action_t * action)
+{
+    if (action->keystroke.modifiers == 0 || action->type != KeyActionType_Keystroke || action->keystroke.keystrokeType != KeystrokeType_Basic) {
         return false;
     }
 
-    #define TRY_MATCH(MOD, SC) if(action->keystroke.modifiers == MOD && action->keystroke.scancode == SC) { return true; }
+    #define TRY_MATCH(MOD, SC) if (action->keystroke.modifiers == MOD && action->keystroke.scancode == SC) { return true; }
 
     TRY_MATCH ( HID_KEYBOARD_MODIFIER_LEFTALT, HID_KEYBOARD_SC_TAB );
 
     return false;
 }
 
-static bool shouldStick(key_action_t * action) {
+static bool shouldStickAction(key_action_t * action)
+{
     bool currentLayerIsHeld = IsLayerHeld() || (secondaryRoleState == SecondaryRoleState_Triggered && IS_SECONDARY_ROLE_LAYER_SWITCHER(secondaryRole));
     bool allowAll = true;
 
-    return currentLayerIsHeld && (allowAll || shouldStick_actionIsSelected(action));
+    return currentLayerIsHeld && (allowAll || isStickyShortcut(action));
 }
 
-static void activateStickyMods(key_action_t *action, uint8_t slotId, uint8_t keyId) {
+static void activateStickyMods(key_action_t *action, uint8_t slotId, uint8_t keyId)
+{
     stickyModifiers = action->keystroke.modifiers;
     stickySlotId = slotId;
     stickyKeyId = keyId;
-    stickyModifierShouldStick = shouldStick(action);
+    stickyModifierShouldStick = shouldStickAction(action);
 }
 
 static void applyKeyAction(key_state_t *keyState, key_action_t *action, uint8_t slotId, uint8_t keyId)
@@ -364,7 +367,7 @@ static void applyKeyAction(key_state_t *keyState, key_action_t *action, uint8_t 
             case KeyActionType_Keystroke:
                 if (keyState->previous) {
                     if (slotId == stickySlotId && keyId == stickyKeyId) {
-                        if(!stickyModifierShouldStick) {
+                        if (!stickyModifierShouldStick) {
                             stickyModifiers = 0;
                         }
                     }
