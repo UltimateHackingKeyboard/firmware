@@ -271,7 +271,6 @@ static uint8_t secondaryRoleSlotId;
 static uint8_t secondaryRoleKeyId;
 static secondary_role_t secondaryRole;
 
-
 static bool isStickyShortcut(key_action_t * action)
 {
     if (action->keystroke.modifiers == 0 || action->type != KeyActionType_Keystroke || action->keystroke.keystrokeType != KeystrokeType_Basic) {
@@ -281,18 +280,12 @@ static bool isStickyShortcut(key_action_t * action)
     const uint8_t alt = HID_KEYBOARD_MODIFIER_LEFTALT | HID_KEYBOARD_MODIFIER_RIGHTALT;
     const uint8_t super = HID_KEYBOARD_MODIFIER_LEFTGUI | HID_KEYBOARD_MODIFIER_RIGHTGUI;
 
-    //TODO: replace this ifelse train by an array of modifier-scancode pairs and a loop at some point
-    if ((action->keystroke.modifiers & (alt | super)) && action->keystroke.scancode == HID_KEYBOARD_SC_TAB) {
-        return true;
-    }
-
-    return false;
+    return (action->keystroke.modifiers & (alt | super)) && action->keystroke.scancode == HID_KEYBOARD_SC_TAB;
 }
 
 static bool shouldStickAction(key_action_t * action)
 {
     bool currentLayerIsHeld = IsLayerHeld() || (secondaryRoleState == SecondaryRoleState_Triggered && IS_SECONDARY_ROLE_LAYER_SWITCHER(secondaryRole));
-
     return currentLayerIsHeld && isStickyShortcut(action);
 }
 
