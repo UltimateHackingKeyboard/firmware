@@ -65,6 +65,8 @@
         float ySum;
         int16_t xOut;
         int16_t yOut;
+        int8_t verticalStateSign;
+        int8_t horizontalStateSign;
     } mouse_kinetic_state_t;
 
 // Variables:

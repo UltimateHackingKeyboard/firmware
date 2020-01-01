@@ -5,7 +5,7 @@
 #include "usb_interfaces/usb_interface_mouse.h"
 #include "keymap.h"
 #include "peripherals/test_led.h"
-#include "slave_drivers/is31fl3731_driver.h"
+#include "slave_drivers/is31fl37_driver.h"
 #include "slave_drivers/uhk_module_driver.h"
 #include "macros.h"
 #include "key_states.h"
@@ -35,6 +35,8 @@ mouse_kinetic_state_t MouseMoveState = {
     .downState = SerializedMouseAction_MoveDown,
     .leftState = SerializedMouseAction_MoveLeft,
     .rightState = SerializedMouseAction_MoveRight,
+    .verticalStateSign = 0,
+    .horizontalStateSign = 0,
     .intMultiplier = 25,
     .initialSpeed = 5,
     .acceleration = 35,
@@ -49,6 +51,8 @@ mouse_kinetic_state_t MouseScrollState = {
     .downState = SerializedMouseAction_ScrollUp,
     .leftState = SerializedMouseAction_ScrollLeft,
     .rightState = SerializedMouseAction_ScrollRight,
+    .verticalStateSign = 0,
+    .horizontalStateSign = 0,
     .intMultiplier = 1,
     .initialSpeed = 20,
     .acceleration = 20,
@@ -56,6 +60,52 @@ mouse_kinetic_state_t MouseScrollState = {
     .baseSpeed = 20,
     .acceleratedSpeed = 50,
 };
+
+static void updateOneDirectionSign(int8_t* sign, int8_t expectedSign, uint8_t expectedState, uint8_t otherState) {
+    if (*sign == expectedSign && !activeMouseStates[expectedState]) {
+        *sign = activeMouseStates[otherState] ? -expectedSign : 0;
+    }
+}
+
+// Assume that mouse movement key has been just released. In that case check if there is another key which keeps the state active.
+// If not, check whether the other direction state is active and either flip movement direction or zero the state.
+static void updateDirectionSigns(mouse_kinetic_state_t *kineticState) {
+    updateOneDirectionSign(&kineticState->horizontalStateSign, -1, kineticState->leftState, kineticState->rightState);
+    updateOneDirectionSign(&kineticState->horizontalStateSign,  1, kineticState->rightState, kineticState->leftState);
+    updateOneDirectionSign(&kineticState->verticalStateSign, -1, kineticState->upState, kineticState->downState);
+    updateOneDirectionSign(&kineticState->verticalStateSign,  1, kineticState->downState, kineticState->upState);
+}
+
+// Called on keydown of mouse action. Direction signs ensure that the last pressed action always takes precedence, and therefore
+// have to be updated statefully.
+static void activateDirectionSigns(uint8_t state) {
+    switch (state) {
+    case SerializedMouseAction_MoveUp:
+        MouseMoveState.verticalStateSign = -1;
+        break;
+    case SerializedMouseAction_MoveDown:
+        MouseMoveState.verticalStateSign = 1;
+        break;
+    case SerializedMouseAction_MoveLeft:
+        MouseMoveState.horizontalStateSign = -1;
+        break;
+    case SerializedMouseAction_MoveRight:
+        MouseMoveState.horizontalStateSign = 1;
+        break;
+    case SerializedMouseAction_ScrollUp:
+        MouseScrollState.verticalStateSign = 1;
+        break;
+    case SerializedMouseAction_ScrollDown:
+        MouseScrollState.verticalStateSign = -1;
+        break;
+    case SerializedMouseAction_ScrollLeft:
+        MouseScrollState.horizontalStateSign = -1;
+        break;
+    case SerializedMouseAction_ScrollRight:
+        MouseScrollState.horizontalStateSign = 1;
+        break;
+    }
+}
 
 static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
 {
@@ -117,22 +167,23 @@ static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
             distance /= 1.41f;
         }
 
+        // Update travelled distances
+
+        updateDirectionSigns(kineticState);
+
+        kineticState->xSum += distance * kineticState->horizontalStateSign;
+        kineticState->ySum += distance * kineticState->verticalStateSign;
+
         // Update horizontal state
 
-        bool horizontalMovement = true;
-        if (activeMouseStates[kineticState->leftState]) {
-            kineticState->xSum -= distance;
-        } else if (activeMouseStates[kineticState->rightState]) {
-            kineticState->xSum += distance;
-        } else {
-            horizontalMovement = false;
-        }
+        bool horizontalMovement = kineticState->horizontalStateSign != 0;
 
         float xSumInt;
         float xSumFrac = modff(kineticState->xSum, &xSumInt);
         kineticState->xSum = xSumFrac;
         kineticState->xOut = xSumInt;
 
+        // Handle the first scroll tick.
         if (kineticState->isScroll && !kineticState->wasMoveAction && kineticState->xOut == 0 && horizontalMovement) {
             kineticState->xOut = activeMouseStates[kineticState->leftState] ? -1 : 1;
             kineticState->xSum = 0;
@@ -140,20 +191,14 @@ static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
 
         // Update vertical state
 
-        bool verticalMovement = true;
-        if (activeMouseStates[kineticState->upState]) {
-            kineticState->ySum -= distance;
-        } else if (activeMouseStates[kineticState->downState]) {
-            kineticState->ySum += distance;
-        } else {
-            verticalMovement = false;
-        }
+        bool verticalMovement = kineticState->verticalStateSign != 0;
 
         float ySumInt;
         float ySumFrac = modff(kineticState->ySum, &ySumInt);
         kineticState->ySum = ySumFrac;
         kineticState->yOut = ySumInt;
 
+        // Handle the first scroll tick.
         if (kineticState->isScroll && !kineticState->wasMoveAction && kineticState->yOut == 0 && verticalMovement) {
             kineticState->yOut = activeMouseStates[kineticState->upState] ? -1 : 1;
             kineticState->ySum = 0;
@@ -259,11 +304,50 @@ static void handleSwitchLayerAction(key_state_t *keyState, key_action_t *action)
 static uint8_t basicScancodeIndex = 0;
 static uint8_t mediaScancodeIndex = 0;
 static uint8_t systemScancodeIndex = 0;
-static uint8_t stickyModifiers, stickySlotId, stickyKeyId;
+
+// Sticky modifiers are all "action modifiers" - i.e., modifiers of composed
+// keystrokes whose purpose is to activate concrete shortcut. They are
+// activated once on keydown, and reset when another key gets activated (even
+// if the activation key is still active).
+//
+// Depending on configuration, they may "stick" - i.e., live longer than their
+// activation key, either until next action, or until release of held layer.
+// (This serves for Alt+Tab style shortcuts.)
+static uint8_t stickyModifiers;
+static uint8_t stickySlotId;
+static uint8_t stickyKeyId;
+static bool    stickyModifierShouldStick;
+
 static uint8_t secondaryRoleState = SecondaryRoleState_Released;
 static uint8_t secondaryRoleSlotId;
 static uint8_t secondaryRoleKeyId;
 static secondary_role_t secondaryRole;
+
+static bool isStickyShortcut(key_action_t * action)
+{
+    if (action->keystroke.modifiers == 0 || action->type != KeyActionType_Keystroke || action->keystroke.keystrokeType != KeystrokeType_Basic) {
+        return false;
+    }
+
+    const uint8_t alt = HID_KEYBOARD_MODIFIER_LEFTALT | HID_KEYBOARD_MODIFIER_RIGHTALT;
+    const uint8_t super = HID_KEYBOARD_MODIFIER_LEFTGUI | HID_KEYBOARD_MODIFIER_RIGHTGUI;
+
+    return (action->keystroke.modifiers & (alt | super)) && action->keystroke.scancode == HID_KEYBOARD_SC_TAB;
+}
+
+static bool shouldStickAction(key_action_t * action)
+{
+    bool currentLayerIsHeld = IsLayerHeld() || (secondaryRoleState == SecondaryRoleState_Triggered && IS_SECONDARY_ROLE_LAYER_SWITCHER(secondaryRole));
+    return currentLayerIsHeld && isStickyShortcut(action);
+}
+
+static void activateStickyMods(key_action_t *action, uint8_t slotId, uint8_t keyId)
+{
+    stickyModifiers = action->keystroke.modifiers;
+    stickySlotId = slotId;
+    stickyKeyId = keyId;
+    stickyModifierShouldStick = shouldStickAction(action);
+}
 
 static void applyKeyAction(key_state_t *keyState, key_action_t *action, uint8_t slotId, uint8_t keyId)
 {
@@ -273,10 +357,9 @@ static void applyKeyAction(key_state_t *keyState, key_action_t *action, uint8_t 
         switch (action->type) {
             case KeyActionType_Keystroke:
                 if (action->keystroke.scancode) {
+                    // On keydown, reset old sticky modifiers and set new ones
                     if (KeyState_ActivatedNow(keyState)) {
-                        stickyModifiers = action->keystroke.modifiers;
-                        stickySlotId = slotId;
-                        stickyKeyId = keyId;
+                        activateStickyMods(action, slotId, keyId);
                     }
                 } else {
                     ActiveUsbBasicKeyboardReport->modifiers |= action->keystroke.modifiers;
@@ -305,6 +388,7 @@ static void applyKeyAction(key_state_t *keyState, key_action_t *action, uint8_t 
             case KeyActionType_Mouse:
                 if (KeyState_ActivatedNow(keyState)) {
                     stickyModifiers = 0;
+                    activateDirectionSigns(action->mouseAction);
                 }
                 activeMouseStates[action->mouseAction] = true;
                 break;
@@ -328,12 +412,8 @@ static void applyKeyAction(key_state_t *keyState, key_action_t *action, uint8_t 
     } else {
         switch (action->type) {
             case KeyActionType_Keystroke:
-                if (KeyState_DeactivatedNow(keyState)) {
-                    if (slotId == stickySlotId && keyId == stickyKeyId) {
-                        if (!IsLayerHeld() && !(secondaryRoleState == SecondaryRoleState_Triggered && IS_SECONDARY_ROLE_LAYER_SWITCHER(secondaryRole))) {
-                            stickyModifiers = 0;
-                        }
-                    }
+                if (KeyState_DeactivatedNow(keyState) && slotId == stickySlotId && keyId == stickyKeyId && !stickyModifierShouldStick) {
+                    stickyModifiers = 0;
                 }
                 break;
         }

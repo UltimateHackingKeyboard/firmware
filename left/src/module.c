@@ -1,12 +1,6 @@
-#include "main.h"
-#include "slave/init_clock.h"
-#include "init_peripherals.h"
-#include "bootloader.h"
-#include <stdio.h>
-#include "key_scanner.h"
 #include "module.h"
 
-DEFINE_BOOTLOADER_CONFIG_AREA(I2C_ADDRESS_MODULE_BOOTLOADER)
+pointer_delta_t PointerDelta;
 
 key_matrix_t keyMatrix = {
     .colNum = KEYBOARD_MATRIX_COLS_NUM,
@@ -29,14 +23,11 @@ key_matrix_t keyMatrix = {
     }
 };
 
-int main(void)
+void Module_Init(void)
 {
-    InitClock();
-    InitPeripherals();
     KeyMatrix_Init(&keyMatrix);
-    InitKeyScanner();
+}
 
-    while (1) {
-        __WFI();
-    }
+void Module_Loop(void)
+{
 }
