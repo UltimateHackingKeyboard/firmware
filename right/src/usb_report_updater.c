@@ -67,10 +67,8 @@ static void updateOneDirectionSign(int8_t* sign, int8_t expectedSign, uint8_t ex
     }
 }
 
-/*
- * Assume that mouse movement key has been just released. In that case check if there is another key which keeps the state active.
- * If not, check whether the other direction state is active and either flip movement direction or zero the state.
- */
+// Assume that mouse movement key has been just released. In that case check if there is another key which keeps the state active.
+// If not, check whether the other direction state is active and either flip movement direction or zero the state.
 static void updateDirectionSigns(mouse_kinetic_state_t *kineticState) {
     updateOneDirectionSign(&kineticState->horizontalStateSign, -1, kineticState->leftState, kineticState->rightState);
     updateOneDirectionSign(&kineticState->horizontalStateSign,  1, kineticState->rightState, kineticState->leftState);
@@ -78,10 +76,8 @@ static void updateDirectionSigns(mouse_kinetic_state_t *kineticState) {
     updateOneDirectionSign(&kineticState->verticalStateSign,  1, kineticState->downState, kineticState->upState);
 }
 
-/*
- * Called on keydown of mouse action. Direction signs ensure that the last pressed action always takes precedence, and therefore
- * have to be updated statefully.
- */
+// Called on keydown of mouse action. Direction signs ensure that the last pressed action always takes precedence, and therefore
+// have to be updated statefully.
 static void activateDirectionSigns(uint8_t state) {
     switch (state) {
     case SerializedMouseAction_MoveUp:
@@ -165,6 +161,7 @@ static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
         }
 
         // Update travelled distances
+
         updateDirectionSigns(kineticState);
 
         kineticState->xSum += distance * kineticState->horizontalStateSign;
@@ -179,7 +176,7 @@ static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
         kineticState->xSum = xSumFrac;
         kineticState->xOut = xSumInt;
 
-        /* Handle the first scroll tick. */
+        // Handle the first scroll tick.
         if (kineticState->isScroll && !kineticState->wasMoveAction && kineticState->xOut == 0 && horizontalMovement) {
             kineticState->xOut = activeMouseStates[kineticState->leftState] ? -1 : 1;
             kineticState->xSum = 0;
@@ -194,7 +191,7 @@ static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
         kineticState->ySum = ySumFrac;
         kineticState->yOut = ySumInt;
 
-        /* Handle the first scroll tick. */
+        // Handle the first scroll tick.
         if (kineticState->isScroll && !kineticState->wasMoveAction && kineticState->yOut == 0 && verticalMovement) {
             kineticState->yOut = activeMouseStates[kineticState->upState] ? -1 : 1;
             kineticState->ySum = 0;
