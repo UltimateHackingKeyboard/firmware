@@ -1,17 +1,14 @@
 #include "slave_protocol_handler.h"
-#include "test_led.h"
-#include "main.h"
+#include "module/test_led.h"
 #include "i2c_addresses.h"
-#include "i2c.h"
-#include "led_pwm.h"
+#include "module/i2c.h"
+#include "module/led_pwm.h"
 #include "slave_protocol.h"
-#include "main.h"
-#include "init_peripherals.h"
+#include "module/init_peripherals.h"
 #include "bool_array_converter.h"
 #include "bootloader.h"
 #include "module.h"
 #include "versions.h"
-#include "trackball.h"
 
 i2c_message_t RxMessage;
 i2c_message_t TxMessage;
@@ -93,19 +90,24 @@ void SlaveTxHandler(void)
             }
             break;
         }
-        case SlaveCommand_RequestKeyStates:
-            BoolBytesToBits(keyVector.keyStates, TxMessage.data, MODULE_KEY_COUNT);
+        case SlaveCommand_RequestKeyStates: {
+            #if KEY_ARRAY_TYPE == KEY_ARRAY_TYPE_VECTOR
+                BoolBytesToBits(keyVector.keyStates, TxMessage.data, MODULE_KEY_COUNT);
+            #elif KEY_ARRAY_TYPE == KEY_ARRAY_TYPE_MATRIX
+                BoolBytesToBits(keyMatrix.keyStates, TxMessage.data, MODULE_KEY_COUNT);
+            #endif
             uint8_t messageLength = BOOL_BYTES_TO_BITS_COUNT(MODULE_KEY_COUNT);
             if (MODULE_POINTER_COUNT) {
                 pointer_delta_t *pointerDelta = (pointer_delta_t*)(TxMessage.data + messageLength);
-                pointerDelta->x = Trackball_PointerDelta.x;
-                pointerDelta->y = Trackball_PointerDelta.y;
-                Trackball_PointerDelta.x = 0;
-                Trackball_PointerDelta.y = 0;
+                pointerDelta->x = PointerDelta.x;
+                pointerDelta->y = PointerDelta.y;
+                PointerDelta.x = 0;
+                PointerDelta.y = 0;
                 messageLength += sizeof(pointer_delta_t);
             }
             TxMessage.length = messageLength;
             break;
+        }
     }
 
     CRC16_UpdateMessageChecksum(&TxMessage);

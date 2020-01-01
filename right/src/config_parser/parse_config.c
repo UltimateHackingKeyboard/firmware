@@ -7,7 +7,7 @@
 #include "usb_report_updater.h"
 #include "led_display.h"
 #include "slave_scheduler.h"
-#include "slave_drivers/is31fl3731_driver.h"
+#include "slave_drivers/is31fl37_driver.h"
 #include "config.h"
 
 static parser_error_t parseModuleConfiguration(config_buffer_t *buffer)

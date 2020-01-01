@@ -5,7 +5,7 @@
 #include "usb_interfaces/usb_interface_mouse.h"
 #include "keymap.h"
 #include "peripherals/test_led.h"
-#include "slave_drivers/is31fl3731_driver.h"
+#include "slave_drivers/is31fl37_driver.h"
 #include "slave_drivers/uhk_module_driver.h"
 #include "macros.h"
 #include "key_states.h"
@@ -127,7 +127,7 @@ static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
         kineticState->xOut = xSumInt;
 
         if (kineticState->isScroll && !kineticState->wasMoveAction && kineticState->xOut == 0 && horizontalMovement) {
-            kineticState->xOut = kineticState->xSum ? copysignf(1.0, kineticState->xSum) : 0;
+            kineticState->xOut = activeMouseStates[kineticState->leftState] ? -1 : 1;
             kineticState->xSum = 0;
         }
 
@@ -148,7 +148,7 @@ static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
         kineticState->yOut = ySumInt;
 
         if (kineticState->isScroll && !kineticState->wasMoveAction && kineticState->yOut == 0 && verticalMovement) {
-            kineticState->yOut = kineticState->ySum ? copysignf(1.0, kineticState->ySum) : 0;
+            kineticState->yOut = activeMouseStates[kineticState->upState] ? -1 : 1;
             kineticState->ySum = 0;
         }
     } else {
@@ -305,14 +305,14 @@ static void activateStickyMods(key_action_t *action, uint8_t slotId, uint8_t key
 
 static void applyKeyAction(key_state_t *keyState, key_action_t *action, uint8_t slotId, uint8_t keyId)
 {
-    if (keyState->current) {
+    if (KeyState_Active(keyState)) {
         handleSwitchLayerAction(keyState, action);
 
         switch (action->type) {
             case KeyActionType_Keystroke:
                 if (action->keystroke.scancode) {
                     /* On keydown, reset old sticky modifiers and set new ones */
-                    if (!keyState->previous) {
+                    if (KeyState_ActivatedNow(keyState)) {
                         activateStickyMods(action, slotId, keyId);
                     }
                 } else {
@@ -340,7 +340,7 @@ static void applyKeyAction(key_state_t *keyState, key_action_t *action, uint8_t 
                 }
                 break;
             case KeyActionType_Mouse:
-                if (!keyState->previous) {
+                if (KeyState_ActivatedNow(keyState)) {
                     stickyModifiers = 0;
                 }
                 activeMouseStates[action->mouseAction] = true;
@@ -349,14 +349,14 @@ static void applyKeyAction(key_state_t *keyState, key_action_t *action, uint8_t 
                 // Handled by handleSwitchLayerAction()
                 break;
             case KeyActionType_SwitchKeymap:
-                if (!keyState->previous) {
+                if (KeyState_ActivatedNow(keyState)) {
                     stickyModifiers = 0;
                     secondaryRoleState = SecondaryRoleState_Released;
                     SwitchKeymapById(action->switchKeymap.keymapId);
                 }
                 break;
             case KeyActionType_PlayMacro:
-                if (!keyState->previous) {
+                if (KeyState_ActivatedNow(keyState)) {
                     stickyModifiers = 0;
                     Macros_StartMacro(action->playMacro.macroId);
                 }
@@ -365,7 +365,7 @@ static void applyKeyAction(key_state_t *keyState, key_action_t *action, uint8_t 
     } else {
         switch (action->type) {
             case KeyActionType_Keystroke:
-                if (keyState->previous) {
+                if (KeyState_DeactivatedNow(keyState)) {
                     if (slotId == stickySlotId && keyId == stickyKeyId) {
                         if (!stickyModifierShouldStick) {
                             stickyModifiers = 0;
@@ -452,7 +452,7 @@ static void updateActiveUsbReports(void)
 
             preprocessKeyState(keyState);
 
-            if (keyState->current && !keyState->previous) {
+            if (KeyState_ActivatedNow(keyState)) {
                 if (SleepModeActive) {
                     WakeUpHost();
                 }
@@ -468,10 +468,10 @@ static void updateActiveUsbReports(void)
 
             action = &actionCache[slotId][keyId];
 
-            if (keyState->current) {
+            if (KeyState_Active(keyState)) {
                 if (action->type == KeyActionType_Keystroke && action->keystroke.secondaryRole) {
                     // Press released secondary role key.
-                    if (!keyState->previous && secondaryRoleState == SecondaryRoleState_Released) {
+                    if (KeyState_ActivatedNow(keyState) && secondaryRoleState == SecondaryRoleState_Released) {
                         secondaryRoleState = SecondaryRoleState_Pressed;
                         secondaryRoleSlotId = slotId;
                         secondaryRoleKeyId = keyId;
@@ -482,7 +482,7 @@ static void updateActiveUsbReports(void)
                 }
             } else {
                 // Release secondary role key.
-                if (keyState->previous && secondaryRoleSlotId == slotId && secondaryRoleKeyId == keyId && secondaryRoleState != SecondaryRoleState_Released) {
+                if (KeyState_DeactivatedNow(keyState) && secondaryRoleSlotId == slotId && secondaryRoleKeyId == keyId && secondaryRoleState != SecondaryRoleState_Released) {
                     // Trigger primary role.
                     if (secondaryRoleState == SecondaryRoleState_Pressed) {
                         keyState->previous = false;

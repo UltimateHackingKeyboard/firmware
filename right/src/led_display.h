@@ -18,6 +18,7 @@
         LedDisplayIcon_Agent,
         LedDisplayIcon_Adaptive,
         LedDisplayIcon_Last = LedDisplayIcon_Adaptive,
+        LedDisplayIcon_Count = LedDisplayIcon_Last + 1,
     } led_display_icon_t;
 
 // Variables:
