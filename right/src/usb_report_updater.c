@@ -252,11 +252,57 @@ static void handleSwitchLayerAction(key_state_t *keyState, key_action_t *action)
 static uint8_t basicScancodeIndex = 0;
 static uint8_t mediaScancodeIndex = 0;
 static uint8_t systemScancodeIndex = 0;
-static uint8_t stickyModifiers, stickySlotId, stickyKeyId;
+
+// Sticky modifiers are all "action modifiers" - i.e., modifiers of composed
+// keystrokes whose purpose is to activate concrete shortcut. They are
+// activated once on keydown, and reset when another key gets activated (even
+// if the activation key is still active).
+//
+// Depending on configuration, they may "stick" - i.e., live longer than their
+// activation key, either until next action, or until release of held layer.
+// (This serves for Alt+Tab style shortcuts.)
+static uint8_t stickyModifiers;
+static uint8_t stickySlotId;
+static uint8_t stickyKeyId;
+static bool    stickyModifierShouldStick;
+
 static uint8_t secondaryRoleState = SecondaryRoleState_Released;
 static uint8_t secondaryRoleSlotId;
 static uint8_t secondaryRoleKeyId;
 static secondary_role_t secondaryRole;
+
+
+static bool isStickyShortcut(key_action_t * action)
+{
+    if (action->keystroke.modifiers == 0 || action->type != KeyActionType_Keystroke || action->keystroke.keystrokeType != KeystrokeType_Basic) {
+        return false;
+    }
+
+    const uint8_t alt = HID_KEYBOARD_MODIFIER_LEFTALT | HID_KEYBOARD_MODIFIER_RIGHTALT;
+    const uint8_t super = HID_KEYBOARD_MODIFIER_LEFTGUI | HID_KEYBOARD_MODIFIER_RIGHTGUI;
+
+    //TODO: replace this ifelse train by an array of modifier-scancode pairs and a loop at some point
+    if ((action->keystroke.modifiers & (alt | super)) && action->keystroke.scancode == HID_KEYBOARD_SC_TAB) {
+        return true;
+    }
+
+    return false;
+}
+
+static bool shouldStickAction(key_action_t * action)
+{
+    bool currentLayerIsHeld = IsLayerHeld() || (secondaryRoleState == SecondaryRoleState_Triggered && IS_SECONDARY_ROLE_LAYER_SWITCHER(secondaryRole));
+
+    return currentLayerIsHeld && isStickyShortcut(action);
+}
+
+static void activateStickyMods(key_action_t *action, uint8_t slotId, uint8_t keyId)
+{
+    stickyModifiers = action->keystroke.modifiers;
+    stickySlotId = slotId;
+    stickyKeyId = keyId;
+    stickyModifierShouldStick = shouldStickAction(action);
+}
 
 static void applyKeyAction(key_state_t *keyState, key_action_t *action, uint8_t slotId, uint8_t keyId)
 {
@@ -266,10 +312,9 @@ static void applyKeyAction(key_state_t *keyState, key_action_t *action, uint8_t 
         switch (action->type) {
             case KeyActionType_Keystroke:
                 if (action->keystroke.scancode) {
+                    // On keydown, reset old sticky modifiers and set new ones
                     if (KeyState_ActivatedNow(keyState)) {
-                        stickyModifiers = action->keystroke.modifiers;
-                        stickySlotId = slotId;
-                        stickyKeyId = keyId;
+                        activateStickyMods(action, slotId, keyId);
                     }
                 } else {
                     ActiveUsbBasicKeyboardReport->modifiers |= action->keystroke.modifiers;
@@ -321,12 +366,8 @@ static void applyKeyAction(key_state_t *keyState, key_action_t *action, uint8_t 
     } else {
         switch (action->type) {
             case KeyActionType_Keystroke:
-                if (KeyState_DeactivatedNow(keyState)) {
-                    if (slotId == stickySlotId && keyId == stickyKeyId) {
-                        if (!IsLayerHeld() && !(secondaryRoleState == SecondaryRoleState_Triggered && IS_SECONDARY_ROLE_LAYER_SWITCHER(secondaryRole))) {
-                            stickyModifiers = 0;
-                        }
-                    }
+                if (KeyState_DeactivatedNow(keyState) && slotId == stickySlotId && keyId == stickyKeyId && !stickyModifierShouldStick) {
+                    stickyModifiers = 0;
                 }
                 break;
         }
