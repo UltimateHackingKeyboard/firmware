@@ -3,7 +3,7 @@
 
 // Includes:
 
-    #include "main.h"
+    #include "module.h"
 
 // Macros:
 
@@ -12,8 +12,6 @@
     #define KEY_SCANNER_LPTMR_BASEADDR LPTMR0
     #define KEY_SCANNER_LPTMR_IRQ_ID   LPTMR0_IRQn
     #define KEY_SCANNER_HANDLER        LPTMR0_IRQHandler
-
-    #define KEY_SCANNER_INTERVAL_USEC (1000 / KEYBOARD_MATRIX_ROWS_NUM)
 
 // Functions:
 

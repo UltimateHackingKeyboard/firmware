@@ -1,9 +1,50 @@
 #include "fsl_gpio.h"
 #include "fsl_port.h"
 #include "fsl_spi.h"
-#include "trackball.h"
+#include "module.h"
 
-pointer_delta_t Trackball_PointerDelta;
+#define TRACKBALL_SHTDWN_PORT PORTA
+#define TRACKBALL_SHTDWN_GPIO GPIOA
+#define TRACKBALL_SHTDWN_IRQ PORTA_IRQn
+#define TRACKBALL_SHTDWN_CLOCK kCLOCK_PortA
+#define TRACKBALL_SHTDWN_PIN 4
+
+#define TRACKBALL_NCS_PORT PORTB
+#define TRACKBALL_NCS_GPIO GPIOB
+#define TRACKBALL_NCS_IRQ PORTB_IRQn
+#define TRACKBALL_NCS_CLOCK kCLOCK_PortB
+#define TRACKBALL_NCS_PIN 1
+
+#define TRACKBALL_MOSI_PORT PORTA
+#define TRACKBALL_MOSI_GPIO GPIOA
+#define TRACKBALL_MOSI_IRQ PORTA_IRQn
+#define TRACKBALL_MOSI_CLOCK kCLOCK_PortA
+#define TRACKBALL_MOSI_PIN 7
+
+#define TRACKBALL_MISO_PORT PORTA
+#define TRACKBALL_MISO_GPIO GPIOA
+#define TRACKBALL_MISO_IRQ PORTA_IRQn
+#define TRACKBALL_MISO_CLOCK kCLOCK_PortA
+#define TRACKBALL_MISO_PIN 6
+
+#define TRACKBALL_SCK_PORT PORTB
+#define TRACKBALL_SCK_GPIO GPIOB
+#define TRACKBALL_SCK_IRQ PORTB_IRQn
+#define TRACKBALL_SCK_CLOCK kCLOCK_PortB
+#define TRACKBALL_SCK_PIN 0
+
+#define TRACKBALL_SPI_MASTER SPI0
+#define TRACKBALL_SPI_MASTER_SOURCE_CLOCK kCLOCK_BusClk
+
+pointer_delta_t PointerDelta;
+
+key_vector_t keyVector = {
+    .itemNum = KEYBOARD_VECTOR_ITEMS_NUM,
+    .items = (key_vector_pin_t[]) {
+        {PORTA, GPIOA, kCLOCK_PortA, 3}, // left button
+        {PORTA, GPIOA, kCLOCK_PortA, 5}, // right button
+    },
+};
 
 #define BUFFER_SIZE 2
 #define MOTION_BIT (1<<7)
@@ -53,13 +94,13 @@ void trackballUpdate(SPI_Type *base, spi_master_handle_t *masterHandle, status_t
             break;
         case ModulePhase_ProcessDeltaY: ;
             int8_t deltaY = (int8_t)rxBuffer[1];
-            Trackball_PointerDelta.x += deltaY; // This is correct given the sensor orientation.
+            PointerDelta.x += deltaY; // This is correct given the sensor orientation.
             tx(txBufferGetDeltaX);
             modulePhase = ModulePhase_ProcessDeltaX;
             break;
         case ModulePhase_ProcessDeltaX: ;
             int8_t deltaX = (int8_t)rxBuffer[1];
-            Trackball_PointerDelta.y += deltaX; // This is correct given the sensor orientation.
+            PointerDelta.y += deltaX; // This is correct given the sensor orientation.
             tx(txBufferGetMotion);
             modulePhase = ModulePhase_ProcessMotion;
             break;
@@ -96,4 +137,14 @@ void Trackball_Init(void)
     xfer.rxData = rxBuffer;
     xfer.dataSize = BUFFER_SIZE;
     tx(txBufferPowerUpReset);
+}
+
+void Module_Init(void)
+{
+    KeyVector_Init(&keyVector);
+    Trackball_Init();
+}
+
+void Module_Loop(void)
+{
 }

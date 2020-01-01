@@ -1,17 +1,15 @@
 #include "fsl_common.h"
 #include "fsl_port.h"
-#include "test_led.h"
+#include "module/test_led.h"
 #include "init_peripherals.h"
 #include "i2c_addresses.h"
 #include "fsl_i2c.h"
 #include "fsl_clock.h"
-#include "i2c.h"
-#include "led_pwm.h"
+#include "module/i2c.h"
+#include "module/led_pwm.h"
 #include "slave_protocol_handler.h"
-#include "i2c_watchdog.h"
-#include "main.h"
+#include "module/i2c_watchdog.h"
 #include "module.h"
-#include "blackberry_trackball.h"
 
 i2c_slave_config_t slaveConfig;
 i2c_slave_handle_t slaveHandle;
@@ -87,5 +85,4 @@ void InitPeripherals(void)
     TestLed_Init();
     LedPwm_Init();
     initI2c();
-    BlackberryTrackball_Init();
 }
