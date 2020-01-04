@@ -250,28 +250,47 @@ void deleteScancode(uint16_t scancode, keystroke_type_t type)
 
 bool processKeyAction(void)
 {
-    static bool pressStarted;
+    static uint8_t pressPhase = 0;
+
+    pressPhase++;
 
     switch (currentMacroAction.key.action) {
         case MacroSubAction_Tap:
-            if (!pressStarted) {
-                pressStarted = true;
-                addModifiers(currentMacroAction.key.modifierMask);
-                addScancode(currentMacroAction.key.scancode, currentMacroAction.key.type);
-                return true;
+            switch(pressPhase) {
+                case 1:
+                    addModifiers(currentMacroAction.key.modifierMask);
+                    return true;
+                case 2:
+                    addScancode(currentMacroAction.key.scancode, currentMacroAction.key.type);
+                    return true;
+                case 3:
+                    deleteScancode(currentMacroAction.key.scancode, currentMacroAction.key.type);
+                    return true;
+                case 4:
+                    deleteModifiers(currentMacroAction.key.modifierMask);
+                    pressPhase = 0;
+                    return false;
             }
-            pressStarted = false;
-            deleteModifiers(currentMacroAction.key.modifierMask);
-            deleteScancode(currentMacroAction.key.scancode, currentMacroAction.key.type);
-            break;
         case MacroSubAction_Release:
-            deleteModifiers(currentMacroAction.key.modifierMask);
-            deleteScancode(currentMacroAction.key.scancode, currentMacroAction.key.type);
-            break;
+            switch (pressPhase) {
+                case 1:
+                    deleteScancode(currentMacroAction.key.scancode, currentMacroAction.key.type);
+                    return true;
+                case 2:
+                    deleteModifiers(currentMacroAction.key.modifierMask);
+                    pressPhase = 0;
+                    return false;
+            }
         case MacroSubAction_Press:
-            addModifiers(currentMacroAction.key.modifierMask);
-            addScancode(currentMacroAction.key.scancode, currentMacroAction.key.type);
-            break;
+            switch (pressPhase) {
+                case 1:
+                    addModifiers(currentMacroAction.key.modifierMask);
+                    return true;
+                case 2:
+                    addScancode(currentMacroAction.key.scancode, currentMacroAction.key.type);
+                    pressPhase = 0;
+                    return false;
+            }
     }
     return false;
 }
@@ -348,35 +367,72 @@ bool processScrollMouseAction(void)
     return inMotion;
 }
 
+static void clearScancodes()
+{
+    uint8_t oldMods = MacroBasicKeyboardReport.modifiers;
+    memset(&MacroBasicKeyboardReport, 0, sizeof MacroBasicKeyboardReport);
+    MacroBasicKeyboardReport.modifiers = oldMods;
+}
+
 bool processTextAction(void)
 {
     static uint16_t textIndex;
     static uint8_t reportIndex = USB_BASIC_KEYBOARD_MAX_KEYS;
     char character;
     uint8_t scancode;
+    uint8_t mods;
 
+    // When all characters have been sent, finish. Yet, one last report should still be sent
+    // in case it contains modifiers, and then the report should be properly cleaned before next use.
     if (textIndex == currentMacroAction.text.textLen) {
+        if (MacroBasicKeyboardReport.modifiers != 0 && reportIndex != 0) {
+            clearScancodes();
+            reportIndex = 0;
+            return true;
+        }
         textIndex = 0;
         reportIndex = USB_BASIC_KEYBOARD_MAX_KEYS;
         memset(&MacroBasicKeyboardReport, 0, sizeof MacroBasicKeyboardReport);
         return false;
     }
+
+    // Whenever the report is full, we clear the report and send it empty before continuing.
     if (reportIndex == USB_BASIC_KEYBOARD_MAX_KEYS) {
         reportIndex = 0;
         memset(&MacroBasicKeyboardReport, 0, sizeof MacroBasicKeyboardReport);
         return true;
     }
+
     character = currentMacroAction.text.text[textIndex];
     scancode = characterToScancode(character);
+    mods = characterToShift(character) ? HID_KEYBOARD_MODIFIER_LEFTSHIFT : 0;
+
+    // If current character is already contained in the report, we need to
+    // release it first. We do so by artificially marking the report
+    // full, and let the next processTextAction call do rest of the work
     for (uint8_t i = 0; i < reportIndex; i++) {
         if (MacroBasicKeyboardReport.scancodes[i] == scancode) {
             reportIndex = USB_BASIC_KEYBOARD_MAX_KEYS;
             return true;
         }
     }
-    MacroBasicKeyboardReport.scancodes[reportIndex++] = scancode;
-    MacroBasicKeyboardReport.modifiers = characterToShift(character) ? HID_KEYBOARD_MODIFIER_LEFTSHIFT : 0;
-    ++textIndex;
+
+    // If mods differ, first send report with old modifiers, but without any scancodes.
+    // Then send report containing only new modifiers.
+    // Just when the modifiers finally match, go on and add the scancode.
+    if (mods != MacroBasicKeyboardReport.modifiers) {
+        if (reportIndex != 0) {
+            reportIndex = 0;
+            clearScancodes();
+            return true;
+        } else {
+            MacroBasicKeyboardReport.modifiers = mods;
+            return true;
+        }
+    } else {
+        MacroBasicKeyboardReport.scancodes[reportIndex++] = scancode;
+        ++textIndex;
+    }
     return true;
 }
 
@@ -401,7 +457,7 @@ bool processCurrentMacroAction(void)
 
 void Macros_StartMacro(uint8_t index)
 {
-    if(AllMacros[index].macroActionsCount == 0) {
+    if (AllMacros[index].macroActionsCount == 0) {
         return;
     }
     MacroPlaying = true;

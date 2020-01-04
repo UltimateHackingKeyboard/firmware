@@ -349,34 +349,40 @@ static void applyKeyAction(key_state_t *keyState, key_action_t *action, uint8_t 
 
         switch (action->type) {
             case KeyActionType_Keystroke:
+            {
+                bool stickyModifiersChanged = false;
                 if (action->keystroke.scancode) {
                     // On keydown, reset old sticky modifiers and set new ones
                     if (KeyState_ActivatedNow(keyState)) {
+                        stickyModifiersChanged = action->keystroke.modifiers != stickyModifiers;
                         activateStickyMods(action, slotId, keyId);
                     }
                 } else {
                     ActiveUsbBasicKeyboardReport->modifiers |= action->keystroke.modifiers;
                 }
-                switch (action->keystroke.keystrokeType) {
-                    case KeystrokeType_Basic:
-                        if (basicScancodeIndex >= USB_BASIC_KEYBOARD_MAX_KEYS || action->keystroke.scancode == 0) {
+                if (!stickyModifiersChanged || KeyState_ActivatedEarlier(keyState) || action->keystroke.secondaryRole) {
+                    switch (action->keystroke.keystrokeType) {
+                        case KeystrokeType_Basic:
+                            if (basicScancodeIndex >= USB_BASIC_KEYBOARD_MAX_KEYS || action->keystroke.scancode == 0) {
+                                break;
+                            }
+                            ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = action->keystroke.scancode;
                             break;
-                        }
-                        ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = action->keystroke.scancode;
-                        break;
-                    case KeystrokeType_Media:
-                        if (mediaScancodeIndex >= USB_MEDIA_KEYBOARD_MAX_KEYS) {
+                        case KeystrokeType_Media:
+                            if (mediaScancodeIndex >= USB_MEDIA_KEYBOARD_MAX_KEYS) {
+                                break;
+                            }
+                            ActiveUsbMediaKeyboardReport->scancodes[mediaScancodeIndex++] = action->keystroke.scancode;
                             break;
-                        }
-                        ActiveUsbMediaKeyboardReport->scancodes[mediaScancodeIndex++] = action->keystroke.scancode;
-                        break;
-                    case KeystrokeType_System:
-                        if (systemScancodeIndex >= USB_SYSTEM_KEYBOARD_MAX_KEYS) {
+                        case KeystrokeType_System:
+                            if (systemScancodeIndex >= USB_SYSTEM_KEYBOARD_MAX_KEYS) {
+                                break;
+                            }
+                            ActiveUsbSystemKeyboardReport->scancodes[systemScancodeIndex++] = action->keystroke.scancode;
                             break;
-                        }
-                        ActiveUsbSystemKeyboardReport->scancodes[systemScancodeIndex++] = action->keystroke.scancode;
-                        break;
+                    }
                 }
+            }
                 break;
             case KeyActionType_Mouse:
                 if (KeyState_ActivatedNow(keyState)) {
@@ -406,6 +412,8 @@ static void applyKeyAction(key_state_t *keyState, key_action_t *action, uint8_t 
         switch (action->type) {
             case KeyActionType_Keystroke:
                 if (KeyState_DeactivatedNow(keyState) && slotId == stickySlotId && keyId == stickyKeyId && !stickyModifierShouldStick) {
+                    //disable the modifiers, but send one last report of modifiers without scancode)
+                    ActiveUsbBasicKeyboardReport->modifiers |= stickyModifiers;
                     stickyModifiers = 0;
                 }
                 break;
