@@ -1,0 +1,1 @@
+Run `npm install` before executing the scripts of this directory.
