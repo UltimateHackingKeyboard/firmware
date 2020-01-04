@@ -312,17 +312,17 @@ static void applyKeyAction(key_state_t *keyState, key_action_t *action, uint8_t 
         switch (action->type) {
             case KeyActionType_Keystroke:
             {
-                bool stickyModifiersUnChanged = true;
+                bool stickyModifiersChanged = false;
                 if (action->keystroke.scancode) {
                     // On keydown, reset old sticky modifiers and set new ones
                     if (KeyState_ActivatedNow(keyState)) {
-                        stickyModifiersUnChanged = action->keystroke.modifiers == stickyModifiers;
+                        stickyModifiersChanged = action->keystroke.modifiers != stickyModifiers;
                         activateStickyMods(action, slotId, keyId);
                     }
                 } else {
                     ActiveUsbBasicKeyboardReport->modifiers |= action->keystroke.modifiers;
                 }
-                if (stickyModifiersUnChanged || KeyState_ActivatedEarlier(keyState) || action->keystroke.secondaryRole) {
+                if (!stickyModifiersChanged || KeyState_ActivatedEarlier(keyState) || action->keystroke.secondaryRole) {
                     switch (action->keystroke.keystrokeType) {
                         case KeystrokeType_Basic:
                             if (basicScancodeIndex >= USB_BASIC_KEYBOARD_MAX_KEYS || action->keystroke.scancode == 0) {

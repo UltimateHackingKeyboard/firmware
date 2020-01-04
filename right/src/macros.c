@@ -382,8 +382,8 @@ bool processTextAction(void)
     uint8_t scancode;
     uint8_t mods;
 
-    /* When all characters have been sent, finish. Yet, one last report should still be sent
-     * in case it contains modifiers, and then the report should be properly cleaned before next use.*/
+    // When all characters have been sent, finish. Yet, one last report should still be sent
+    // in case it contains modifiers, and then the report should be properly cleaned before next use.
     if (textIndex == currentMacroAction.text.textLen) {
         if (MacroBasicKeyboardReport.modifiers != 0 && reportIndex != 0) {
             clearScancodes();
@@ -396,7 +396,7 @@ bool processTextAction(void)
         return false;
     }
 
-    /* Whenever the report is full, we clear the report and send it empty before continuing. */
+    // Whenever the report is full, we clear the report and send it empty before continuing.
     if (reportIndex == USB_BASIC_KEYBOARD_MAX_KEYS) {
         reportIndex = 0;
         memset(&MacroBasicKeyboardReport, 0, sizeof MacroBasicKeyboardReport);
@@ -407,9 +407,9 @@ bool processTextAction(void)
     scancode = characterToScancode(character);
     mods = characterToShift(character) ? HID_KEYBOARD_MODIFIER_LEFTSHIFT : 0;
 
-    /* If current character is already contained in the report, we need to
-     * release it first. We do so by artificially marking the report
-     * full, and let the next processTextAction call do rest of the work */
+    // If current character is already contained in the report, we need to
+    // release it first. We do so by artificially marking the report
+    // full, and let the next processTextAction call do rest of the work
     for (uint8_t i = 0; i < reportIndex; i++) {
         if (MacroBasicKeyboardReport.scancodes[i] == scancode) {
             reportIndex = USB_BASIC_KEYBOARD_MAX_KEYS;
@@ -417,11 +417,9 @@ bool processTextAction(void)
         }
     }
 
-    /*
-     * If mods differ, first send report with old modifiers, but without any scancodes.
-     * Then send report containing only new modifiers.
-     * Just when the modifiers finally match, go on and add the scancode.
-     */
+    // If mods differ, first send report with old modifiers, but without any scancodes.
+    // Then send report containing only new modifiers.
+    // Just when the modifiers finally match, go on and add the scancode.
     if (mods != MacroBasicKeyboardReport.modifiers) {
         if (reportIndex != 0) {
             reportIndex = 0;
