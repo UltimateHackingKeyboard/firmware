@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 const fs = require('fs');
+const path = require('path');
 require('shelljs/global');
 
 config.fatal = true;
@@ -18,8 +19,14 @@ const deviceSourceFirmwares = package.devices.map(device => `${__dirname}/../${d
 const moduleSourceFirmwares = package.modules.map(module => `${__dirname}/../${module.source}`);
 rm('-rf', releaseDir, releaseFile, deviceSourceFirmwares, moduleSourceFirmwares);
 
-exec(`cd ${__dirname}/../left; make clean; make -j8`);
-exec(`cd ${__dirname}/../right; make clean; make -j8`);
+const sourcePaths = [
+    ...package.devices.map(device => device.source),
+    ...package.modules.map(module => module.source),
+];
+for (sourcePath of sourcePaths) {
+    const buildDir = path.dirname(`${__dirname}/../${sourcePath}`);
+    exec(`cd ${buildDir}/..; make clean; make -j8`);
+}
 
 exec(`git pull origin master; git checkout master`, { cwd: agentDir });
 exec(`npm ci`, { cwd: agentDir });
