@@ -11,7 +11,7 @@ const package = JSON.parse(fs.readFileSync(`${__dirname}/package.json`));
 const version = package.firmwareVersion;
 const releaseName = `uhk-firmware-${version}`;
 const releaseDir = `${__dirname}/${releaseName}`;
-const releaseFile = `${__dirname}/${releaseName}.tar.bz2`;
+const releaseFile = `${__dirname}/${releaseName}.tar.gz`;
 const agentDir = `${__dirname}/../lib/agent`;
 
 const deviceSourceFirmwares = package.devices.map(device => `${__dirname}/../${device.source}`);
@@ -42,4 +42,4 @@ for (const module of package.modules) {
 }
 
 cp(`${__dirname}/package.json`, releaseDir);
-exec(`tar -cvjSf ${releaseFile} -C ${releaseDir} .`);
+exec(`tar -czvf ${releaseFile} -C ${releaseDir} .`);
