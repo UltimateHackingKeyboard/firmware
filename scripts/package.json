@@ -32,6 +32,16 @@
       "moduleId": 1,
       "name": "uhk60-left",
       "source": "left/build_make/uhk_left.bin"
+    },
+    {
+      "moduleId": 2,
+      "name": "keycluster-left",
+      "source": "keycluster/build_make/uhk_keycluster.bin"
+    },
+    {
+      "moduleId": 3,
+      "name": "trackball-right",
+      "source": "trackball/build_make/uhk_trackball.bin"
     }
   ]
 }
