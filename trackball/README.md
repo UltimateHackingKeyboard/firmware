@@ -1,3 +1,3 @@
-# Key cluster module firmware
+# Trackball module firmware
 
-This directory contains the firmware of the key cluster module.
+This directory contains the firmware of the trackball module.
