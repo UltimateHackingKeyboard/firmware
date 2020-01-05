@@ -42,6 +42,11 @@
       "moduleId": 3,
       "name": "trackball-right",
       "source": "trackball/build_make/uhk_trackball.bin"
+    },
+    {
+      "moduleId": 4,
+      "name": "trackpoint-right",
+      "source": "trackpoint/build_make/uhk_trackpoint.bin"
     }
   ]
 }
