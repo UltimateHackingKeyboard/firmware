@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [8.7.1] - 2020-01-07
+
+Device Protocol: 4.6.0 | Module Protocol: 4.1.0 | User Config: 4.1.1 | Hardware Config: 1.0.0
+
+- Don't make shortcuts sticky with the exception of Alt+Tab and Cmd+Tab.
+- Add extra USB reports for pressing and releasing the modifiers of shortcuts. This makes the firmware play nicer with Karabiner, RDP, and possibly some other applications.
+- Make scroll key actions always emit a USB scroll event, even when tapped momentarily.
+- When conflicting mouse keys are pressed at the same time, make the most recent key the dominant one.
+- Add key cluster, trackball, and trackpoint firmware images to the firmware tarball.
+- Set sensible default key actions for modules.
+- Make the key cluster scroll and the other modules move the pointer by default.
+- Move from .tar.bz2 to .tar.gz as the firmware release file format because the latter can be attached in GitHub issues.
+
 ## [8.7.0] - 2019-12-03
 
 Device Protocol: 4.**6.0** | Module Protocol: 4.1.0 | User Config: 4.1.1 | Hardware Config: 1.0.0
