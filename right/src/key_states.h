@@ -10,7 +10,7 @@
 // Typedefs:
 
     // Next is used as an accumulator of the state - asynchronous state updates
-    // are stored there. The next always contains the most up-to-date
+    // are stored there. The hardwareSwitchState always contains the most up-to-date
     // information about hardware state of the switch.
     //
     // `Previous` and `current` are computed from `next` by "debouncing"
@@ -22,9 +22,10 @@
 
     typedef struct {
         uint8_t timestamp;
-        bool previous : 1;
+        volatile bool hardwareSwitchState : 1;
+        bool debouncedSwitchState : 1;
         bool current : 1;
-        volatile bool next : 1;
+        bool previous : 1;
         bool debouncing : 1;
     } key_state_t;
 

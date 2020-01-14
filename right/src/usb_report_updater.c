@@ -16,6 +16,7 @@
 #include "config_parser/parse_keymap.h"
 #include "usb_commands/usb_command_get_debug_buffer.h"
 #include "arduino_hid/ConsumerAPI.h"
+#include "postponer.h"
 
 static uint32_t mouseUsbReportUpdateTime = 0;
 static uint32_t mouseElapsedTime;
@@ -422,17 +423,21 @@ static void applyKeyAction(key_state_t *keyState, key_action_t *action, uint8_t 
 }
 
 static inline void preprocessKeyState(key_state_t *keyState) {
-    keyState->previous = keyState->current;
-
     uint8_t debounceTime = keyState->previous ? DebounceTimePress : DebounceTimeRelease;
     if (keyState->debouncing && (uint8_t)(CurrentTime - keyState->timestamp) > debounceTime) {
         keyState->debouncing = false;
     }
 
-    if (!keyState->debouncing && keyState->current != keyState->next) {
+    if (!keyState->debouncing && keyState->debouncedSwitchState != keyState->hardwareSwitchState) {
         keyState->timestamp = CurrentTime;
         keyState->debouncing = true;
-        keyState->current = keyState->next;
+        keyState->debouncedSwitchState = keyState->hardwareSwitchState;
+
+        if (PostponerCore_IsActive()) {
+            PostponerCore_TrackKeyEvent(keyState, keyState->hardwareSwitchState);
+        } else {
+            keyState->current = keyState->hardwareSwitchState;
+        }
     }
 }
 
@@ -447,6 +452,10 @@ static void updateActiveUsbReports(void)
         memcpy(ActiveUsbMediaKeyboardReport, &MacroMediaKeyboardReport, sizeof MacroMediaKeyboardReport);
         memcpy(ActiveUsbSystemKeyboardReport, &MacroSystemKeyboardReport, sizeof MacroSystemKeyboardReport);
         return;
+    }
+
+    if ( PostponerCore_IsActive() ) {
+        PostponerCore_RunPostponedEvents();
     }
 
     memset(activeMouseStates, 0, ACTIVE_MOUSE_STATES_COUNT);
@@ -538,10 +547,14 @@ static void updateActiveUsbReports(void)
                     applyKeyAction(keyState, action, slotId, keyId);
                 }
             }
+
+            keyState->previous = keyState->current;
         }
     }
 
     processMouseActions();
+
+    PostponerCore_FinishCycle();
 
     // When a layer switcher key gets pressed along with another key that produces some modifiers
     // and the accomanying key gets released then keep the related modifiers active a long as the
@@ -562,7 +575,7 @@ void UpdateUsbReports(void)
     static uint32_t lastUpdateTime;
 
     for (uint8_t keyId = 0; keyId < RIGHT_KEY_MATRIX_KEY_COUNT; keyId++) {
-        KeyStates[SlotId_RightKeyboardHalf][keyId].next = RightKeyMatrix.keyStates[keyId];
+        KeyStates[SlotId_RightKeyboardHalf][keyId].hardwareSwitchState = RightKeyMatrix.keyStates[keyId];
     }
 
     if (UsbReportUpdateSemaphore && !SleepModeActive) {
