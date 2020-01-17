@@ -13,7 +13,7 @@
     // are stored there. The hardwareSwitchState always contains the most up-to-date
     // information about hardware state of the switch.
     //
-    // `Previous` and `current` are computed from `next` by "debouncing"
+    // `Previous` and `current` are computed from `hardwareSwitchState` by "debouncing"
     // algorithm.  Especially values (0, 1) signify that key has been pressed
     // right now and an action (e.g., start of a macro) should take place.
     //
@@ -41,5 +41,6 @@
     static inline bool KeyState_DeactivatedNow(key_state_t* s) { return s->previous && !s->current; };
     static inline bool KeyState_ActivatedEarlier(key_state_t* s) { return s->previous && s->current; };
     static inline bool KeyState_DeactivatedEarlier(key_state_t* s) { return !s->previous && !s->current; };
+    static inline bool KeyState_NonZero(key_state_t* s) { return s->previous || s->current; };
 
 #endif

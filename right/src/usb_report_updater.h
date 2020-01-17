@@ -20,12 +20,6 @@
 // Typedefs:
 
     typedef enum {
-        SecondaryRoleState_Released,
-        SecondaryRoleState_Pressed,
-        SecondaryRoleState_Triggered,
-    } secondary_role_state_t;
-
-    typedef enum {
         SecondaryRole_LeftCtrl = 1,
         SecondaryRole_LeftShift,
         SecondaryRole_LeftAlt,

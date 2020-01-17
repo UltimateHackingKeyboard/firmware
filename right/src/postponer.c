@@ -24,11 +24,13 @@ static void consumeEvent(uint8_t count)
 //### Core Functions ###
 //######################
 
-void PostponerCore_PostponeNCycles(uint8_t n) {
+void PostponerCore_PostponeNCycles(uint8_t n)
+{
     cycles_until_activation = MAX(n + 1, cycles_until_activation);
 }
 
-bool PostponerCore_IsActive(void) {
+bool PostponerCore_IsActive(void)
+{
     return buffer_size > 0 || cycles_until_activation > 0;
 }
 
