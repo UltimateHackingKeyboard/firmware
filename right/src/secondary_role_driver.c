@@ -37,7 +37,7 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnow()
 
 static secondary_role_state_t resolveCurrentKey()
 {
-    switch(resolutionState) {
+    switch (resolutionState) {
     case SecondaryRoleState_Primary:
     case SecondaryRoleState_Secondary:
         return resolutionState;
