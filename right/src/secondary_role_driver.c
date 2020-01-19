@@ -27,7 +27,7 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnow()
     if ( PostponerQuery_PendingKeypressCount() > 0 && !PostponerQuery_IsKeyReleased(resolutionKey) ) {
         activateSecondary();
         return SecondaryRoleState_Secondary;
-    } else if (PostponerQuery_PendingKeypressCount() == 0 && PostponerQuery_IsKeyReleased(resolutionKey)) {
+    } else if ( PostponerQuery_IsKeyReleased(resolutionKey) /*assume PostponerQuery_PendingKeypressCount() == 0, but gather race conditions too*/ ) {
         activatePrimary();
         return SecondaryRoleState_Primary;
     } else {
