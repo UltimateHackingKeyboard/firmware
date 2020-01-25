@@ -40,6 +40,8 @@
         MouseButton_4      = 1 << 3,
         MouseButton_5      = 1 << 4,
         MouseButton_6      = 1 << 5,
+        MouseButton_7      = 1 << 6,
+        MouseButton_8      = 1 << 7,
     } mouse_button_t;
 
     typedef struct {

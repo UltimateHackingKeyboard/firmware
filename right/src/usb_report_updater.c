@@ -252,6 +252,21 @@ static void processMouseActions()
     if (activeMouseStates[SerializedMouseAction_RightClick]) {
         ActiveUsbMouseReport->buttons |= MouseButton_Right;
     }
+    if (activeMouseStates[SerializedMouseAction_Button_4]) {
+        ActiveUsbMouseReport->buttons |= MouseButton_4;
+    }
+    if (activeMouseStates[SerializedMouseAction_Button_5]) {
+        ActiveUsbMouseReport->buttons |= MouseButton_5;
+    }
+    if (activeMouseStates[SerializedMouseAction_Button_6]) {
+        ActiveUsbMouseReport->buttons |= MouseButton_6;
+    }
+    if (activeMouseStates[SerializedMouseAction_Button_7]) {
+        ActiveUsbMouseReport->buttons |= MouseButton_7;
+    }
+    if (activeMouseStates[SerializedMouseAction_Button_8]) {
+        ActiveUsbMouseReport->buttons |= MouseButton_8;
+    }
 }
 
 layer_id_t PreviousLayer = LayerId_Base;
