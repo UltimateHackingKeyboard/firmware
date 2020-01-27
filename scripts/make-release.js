@@ -25,6 +25,7 @@ const sourcePaths = [
 ];
 for (sourcePath of sourcePaths) {
     const buildDir = path.dirname(`${__dirname}/../${sourcePath}`);
+    exec(`mkdir -p ${buildDir}`);
     exec(`cd ${buildDir}/..; make clean; make -j8`);
 }
 
