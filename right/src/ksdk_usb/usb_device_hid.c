@@ -656,10 +656,12 @@ usb_status_t USB_DeviceHidRecv(class_handle_t handle, uint8_t ep, uint8_t *buffe
     {
         return kStatus_USB_Busy;
     }
+    hidHandle->interruptOutPipeBusy = 1U;
     error = USB_DeviceRecvRequest(hidHandle->handle, ep, buffer, length);
-    if (kStatus_USB_Success == error)
+    //The flag has to be set before the call. Assume what happens if a bus reset happens asynchronously here. (Deadlock.)
+    if (kStatus_USB_Success != error)
     {
-        hidHandle->interruptOutPipeBusy = 1U;
+        hidHandle->interruptOutPipeBusy = 0U;
     }
     return error;
 }

@@ -589,32 +589,39 @@ void UpdateUsbReports(void)
     bool HasUsbMouseReportChanged = memcmp(ActiveUsbMouseReport, GetInactiveUsbMouseReport(), sizeof(usb_mouse_report_t)) != 0;
 
     if (HasUsbBasicKeyboardReportChanged) {
+        UsbReportUpdateSemaphore |= 1 << USB_BASIC_KEYBOARD_INTERFACE_INDEX;
         usb_status_t status = UsbBasicKeyboardAction();
-        if (status == kStatus_USB_Success) {
-            UsbReportUpdateSemaphore |= 1 << USB_BASIC_KEYBOARD_INTERFACE_INDEX;
+        //The semaphore has to be set before the call. Assume what happens if a bus reset happens asynchronously here. (Deadlock.)
+        if (status != kStatus_USB_Success) {
+            //This is *not* asynchronously safe as long as multiple reports of different type can be sent at the same time.
+            //TODO: consider either making it atomic, or lowering semaphore reset delay, or changing subsequent ifs to elseifs
+            UsbReportUpdateSemaphore &= ~(1 << USB_BASIC_KEYBOARD_INTERFACE_INDEX);
         }
     }
 
     if (HasUsbMediaKeyboardReportChanged) {
+        UsbReportUpdateSemaphore |= 1 << USB_MEDIA_KEYBOARD_INTERFACE_INDEX;
         usb_status_t status = UsbMediaKeyboardAction();
-        if (status == kStatus_USB_Success) {
-            UsbReportUpdateSemaphore |= 1 << USB_MEDIA_KEYBOARD_INTERFACE_INDEX;
+        if (status != kStatus_USB_Success) {
+            UsbReportUpdateSemaphore &= ~(1 << USB_MEDIA_KEYBOARD_INTERFACE_INDEX);
         }
     }
 
     if (HasUsbSystemKeyboardReportChanged) {
+        UsbReportUpdateSemaphore |= 1 << USB_SYSTEM_KEYBOARD_INTERFACE_INDEX;
         usb_status_t status = UsbSystemKeyboardAction();
-        if (status == kStatus_USB_Success) {
-            UsbReportUpdateSemaphore |= 1 << USB_SYSTEM_KEYBOARD_INTERFACE_INDEX;
+        if (status != kStatus_USB_Success) {
+            UsbReportUpdateSemaphore &= ~(1 << USB_SYSTEM_KEYBOARD_INTERFACE_INDEX);
         }
     }
 
     // Send out the mouse position and wheel values continuously if the report is not zeros, but only send the mouse button states when they change.
     if (HasUsbMouseReportChanged || ActiveUsbMouseReport->x || ActiveUsbMouseReport->y ||
             ActiveUsbMouseReport->wheelX || ActiveUsbMouseReport->wheelY) {
+        UsbReportUpdateSemaphore |= 1 << USB_MOUSE_INTERFACE_INDEX;
         usb_status_t status = UsbMouseAction();
-        if (status == kStatus_USB_Success) {
-            UsbReportUpdateSemaphore |= 1 << USB_MOUSE_INTERFACE_INDEX;
+        if (status != kStatus_USB_Success) {
+            UsbReportUpdateSemaphore &= ~(1 << USB_MOUSE_INTERFACE_INDEX);
         }
     }
 }
