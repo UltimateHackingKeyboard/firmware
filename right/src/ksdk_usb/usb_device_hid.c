@@ -31,6 +31,7 @@
 #include "usb_device_config.h"
 #include "usb.h"
 #include "usb_device.h"
+#include "usb_report_updater.h"
 
 #include "usb_device_class.h"
 
@@ -331,6 +332,7 @@ usb_status_t USB_DeviceHidEvent(void *handle, uint32_t event, void *param)
             hidHandle->configuration = 0U;
             hidHandle->interruptInPipeBusy = 0U;
             hidHandle->interruptOutPipeBusy = 0U;
+            UsbReportUpdateSemaphore = 0;
             break;
         case kUSB_DeviceClassEventSetConfiguration:
             /* Get the new configuration. */
