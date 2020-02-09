@@ -21,26 +21,65 @@ void Module_Init(void)
                       &(port_pin_config_t){/*.pullSelect=kPORT_PullDown,*/ .mux=kPORT_MuxAsGpio});
     GPIO_PinInit(PS2_CLOCK_GPIO, PS2_CLOCK_PIN, &(gpio_pin_config_t){kGPIO_DigitalInput});
 
+    PORT_SetPinInterruptConfig(PS2_CLOCK_PORT, PS2_CLOCK_PIN, kPORT_InterruptEitherEdge);
+    EnableIRQ(PS2_CLOCK_IRQ);
+    GPIO_PinInit(PS2_CLOCK_GPIO, PS2_CLOCK_PIN, &(gpio_pin_config_t){.pinDirection=kGPIO_DigitalInput, .outputLogic=0});
+
     CLOCK_EnableClock(PS2_DATA_CLOCK);
     PORT_SetPinConfig(PS2_DATA_PORT, PS2_DATA_PIN,
                       &(port_pin_config_t){/*.pullSelect=kPORT_PullDown,*/ .mux=kPORT_MuxAsGpio});
     GPIO_PinInit(PS2_DATA_GPIO, PS2_DATA_PIN, &(gpio_pin_config_t){kGPIO_DigitalInput});
+
 }
 
 uint32_t clockTransitionCounter = 0;
 uint32_t upTransitions = 0;
 uint8_t prevClock = 1;
 uint8_t phase = 0;
+
+void PS2_CLOCK_IRQ_HANDLER(void) {
+    GPIO_ClearPinsInterruptFlags(PS2_CLOCK_GPIO, 1U << PS2_CLOCK_PIN);
+
+    bool isLedOn = (clockTransitionCounter++ / 44) % 2;
+    TestLed_Set(isLedOn);
+
+    switch (phase) {
+        case 0: {
+            if (clockTransitionCounter == 44) {
+                for (volatile uint32_t i=0; i<150; i++);
+                GPIO_PinInit(PS2_CLOCK_GPIO, PS2_CLOCK_PIN, &(gpio_pin_config_t){kGPIO_DigitalOutput});
+                GPIO_WritePinOutput(PS2_CLOCK_GPIO, PS2_CLOCK_PIN, 0);
+                for (volatile uint32_t i=0; i<150; i++);
+                GPIO_PinInit(PS2_DATA_GPIO, PS2_DATA_PIN, &(gpio_pin_config_t){kGPIO_DigitalOutput});
+                GPIO_WritePinOutput(PS2_DATA_GPIO, PS2_DATA_PIN, 0);
+                for (volatile uint32_t i=0; i<150; i++);
+                GPIO_WritePinOutput(PS2_CLOCK_GPIO, PS2_CLOCK_PIN, 1);
+                GPIO_PinInit(PS2_CLOCK_GPIO, PS2_CLOCK_PIN, &(gpio_pin_config_t){kGPIO_DigitalInput});
+                phase = 1;
+            }
+            break;
+        }
+        case 1: {
+            GPIO_WritePinOutput(PS2_DATA_GPIO, PS2_DATA_PIN, 1);
+            GPIO_PinInit(PS2_DATA_GPIO, PS2_DATA_PIN, &(gpio_pin_config_t){kGPIO_DigitalInput});
+
+            phase = 2;
+            break;
+        }
+    }
+}
+
 void Module_Loop(void)
 {
+    return;
     uint8_t clock = GPIO_ReadPinInput(PS2_CLOCK_GPIO, PS2_CLOCK_PIN);
     bool clockTransitioned = prevClock != clock;
     if (clockTransitioned) {
         clockTransitionCounter++;
     }
 
-    bool isLedOn = (clockTransitionCounter / 44) % 2;
-    TestLed_Set(isLedOn);
+//    bool isLedOn = (clockTransitionCounter / 44) % 2;
+//    TestLed_Set(isLedOn);
 
     switch (phase) {
         case 0: {

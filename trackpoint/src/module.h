@@ -24,13 +24,16 @@
 
     #define PS2_DATA_GPIO  GPIOA
     #define PS2_DATA_PORT  PORTA
+    #define PS2_DATA_IRQ   PORTA_IRQn
     #define PS2_DATA_CLOCK kCLOCK_PortA
     #define PS2_DATA_PIN   7
 
     #define PS2_CLOCK_GPIO  GPIOB
     #define PS2_CLOCK_PORT  PORTB
+    #define PS2_CLOCK_IRQ   PORTB_IRQn
     #define PS2_CLOCK_CLOCK kCLOCK_PortB
     #define PS2_CLOCK_PIN   0
+    #define PS2_CLOCK_IRQ_HANDLER PORTB_IRQHandler
 
     #define KEY_ARRAY_TYPE KEY_ARRAY_TYPE_VECTOR
     #define KEYBOARD_VECTOR_ITEMS_NUM 2
