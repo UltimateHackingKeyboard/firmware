@@ -33,6 +33,7 @@ void Module_Init(void)
 }
 
 uint8_t phase = 0;
+bool clockState;
 uint32_t transitionCount = 1;
 uint32_t upTransitionCount = 0;
 uint32_t downTransitionCount = 0;
@@ -50,11 +51,58 @@ void requestToSend()
     GPIO_PinInit(PS2_CLOCK_GPIO, PS2_CLOCK_PIN, &(gpio_pin_config_t){kGPIO_DigitalInput});
 }
 
+uint8_t buffer;
+uint8_t bitId = 0;
+
+bool shiftNextBit()
+{
+    static bool parityBit;
+    bool isFinished = false;
+
+    if (bitId == 10 && clockState == 0) {
+        GPIO_PinInit(PS2_DATA_GPIO, PS2_DATA_PIN, &(gpio_pin_config_t){kGPIO_DigitalInput});
+        isFinished = true;
+        return isFinished;
+    }
+
+    if (clockState == 1) {
+        return isFinished;
+    }
+
+    switch (bitId) {
+        case 0 ... 7: {
+            if (bitId == 0) {
+                parityBit = 1;
+                GPIO_PinInit(PS2_DATA_GPIO, PS2_DATA_PIN, &(gpio_pin_config_t){kGPIO_DigitalOutput});
+            }
+            bool dataBit = buffer & (1 << bitId);
+            if (dataBit) {
+                parityBit = !parityBit;
+            }
+            GPIO_WritePinOutput(PS2_DATA_GPIO, PS2_DATA_PIN, dataBit);
+            break;
+        }
+        case 8: {
+            GPIO_WritePinOutput(PS2_DATA_GPIO, PS2_DATA_PIN, parityBit);
+            break;
+        }
+        case 9: {
+            uint8_t stopBit = 1;
+            GPIO_WritePinOutput(PS2_DATA_GPIO, PS2_DATA_PIN, stopBit);
+            break;
+        }
+    }
+
+    bitId++;
+    return isFinished;
+}
+
 void PS2_CLOCK_IRQ_HANDLER(void) {
     GPIO_ClearPinsInterruptFlags(PS2_CLOCK_GPIO, 1U << PS2_CLOCK_PIN);
 
     transitionCount++;
-    if (GPIO_ReadPinInput(PS2_CLOCK_GPIO, PS2_CLOCK_PIN)) {
+    clockState = GPIO_ReadPinInput(PS2_CLOCK_GPIO, PS2_CLOCK_PIN);
+    if (clockState) {
         upTransitionCount++;
     } else {
         downTransitionCount++;
@@ -72,22 +120,36 @@ void PS2_CLOCK_IRQ_HANDLER(void) {
         }
         case 1: {
             requestToSend();
+            bitId = 0;
+            buffer = 0xff;
             phase = 2;
             break;
         }
         case 2: {
-            GPIO_WritePinOutput(PS2_DATA_GPIO, PS2_DATA_PIN, 1);
-            GPIO_PinInit(PS2_DATA_GPIO, PS2_DATA_PIN, &(gpio_pin_config_t){kGPIO_DigitalInput});
-            upTransitionCount = 0;
-            phase = 3;
+            if (shiftNextBit()) {
+                transitionCount = 0;
+                phase = 3;
+            }
             break;
         }
         case 3: {
-            if (upTransitionCount == 9) {
-                GPIO_WritePinOutput(PS2_DATA_GPIO, PS2_DATA_PIN, 0);
-                GPIO_PinInit(PS2_DATA_GPIO, PS2_DATA_PIN, &(gpio_pin_config_t){kGPIO_DigitalInput});
+            if (transitionCount == 66) {
                 phase = 4;
             }
+            break;
+        }
+        case 4: {
+            requestToSend();
+            bitId = 0;
+            buffer = 0xf3;
+            phase = 5;
+        }
+        case 5: {
+            if (shiftNextBit()) {
+                transitionCount = 0;
+                phase = 5;
+            }
+            break;
         }
     }
 }
