@@ -37,6 +37,19 @@ uint32_t transitionCount = 1;
 uint32_t upTransitionCount = 0;
 uint32_t downTransitionCount = 0;
 
+void requestToSend()
+{
+    for (volatile uint32_t i=0; i<150; i++);
+    GPIO_PinInit(PS2_CLOCK_GPIO, PS2_CLOCK_PIN, &(gpio_pin_config_t){kGPIO_DigitalOutput});
+    GPIO_WritePinOutput(PS2_CLOCK_GPIO, PS2_CLOCK_PIN, 0);
+    for (volatile uint32_t i=0; i<150; i++);
+    GPIO_PinInit(PS2_DATA_GPIO, PS2_DATA_PIN, &(gpio_pin_config_t){kGPIO_DigitalOutput});
+    GPIO_WritePinOutput(PS2_DATA_GPIO, PS2_DATA_PIN, 0);
+    for (volatile uint32_t i=0; i<150; i++);
+    GPIO_WritePinOutput(PS2_CLOCK_GPIO, PS2_CLOCK_PIN, 1);
+    GPIO_PinInit(PS2_CLOCK_GPIO, PS2_CLOCK_PIN, &(gpio_pin_config_t){kGPIO_DigitalInput});
+}
+
 void PS2_CLOCK_IRQ_HANDLER(void) {
     GPIO_ClearPinsInterruptFlags(PS2_CLOCK_GPIO, 1U << PS2_CLOCK_PIN);
 
@@ -58,15 +71,7 @@ void PS2_CLOCK_IRQ_HANDLER(void) {
             break;
         }
         case 1: {
-            for (volatile uint32_t i=0; i<150; i++);
-            GPIO_PinInit(PS2_CLOCK_GPIO, PS2_CLOCK_PIN, &(gpio_pin_config_t){kGPIO_DigitalOutput});
-            GPIO_WritePinOutput(PS2_CLOCK_GPIO, PS2_CLOCK_PIN, 0);
-            for (volatile uint32_t i=0; i<150; i++);
-            GPIO_PinInit(PS2_DATA_GPIO, PS2_DATA_PIN, &(gpio_pin_config_t){kGPIO_DigitalOutput});
-            GPIO_WritePinOutput(PS2_DATA_GPIO, PS2_DATA_PIN, 0);
-            for (volatile uint32_t i=0; i<150; i++);
-            GPIO_WritePinOutput(PS2_CLOCK_GPIO, PS2_CLOCK_PIN, 1);
-            GPIO_PinInit(PS2_CLOCK_GPIO, PS2_CLOCK_PIN, &(gpio_pin_config_t){kGPIO_DigitalInput});
+            requestToSend();
             phase = 2;
             break;
         }
