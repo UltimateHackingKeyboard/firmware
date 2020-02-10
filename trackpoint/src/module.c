@@ -32,20 +32,27 @@ void Module_Init(void)
 
 }
 
-uint32_t clockTransitionCounter = 0;
-uint32_t upTransitions = 0;
-uint8_t prevClock = 1;
 uint8_t phase = 0;
+uint32_t transitionCount = 1;
+uint32_t upTransitionCount = 0;
+uint32_t downTransitionCount = 0;
 
 void PS2_CLOCK_IRQ_HANDLER(void) {
     GPIO_ClearPinsInterruptFlags(PS2_CLOCK_GPIO, 1U << PS2_CLOCK_PIN);
 
-    bool isLedOn = (clockTransitionCounter++ / 44) % 2;
+    transitionCount++;
+    if (GPIO_ReadPinInput(PS2_CLOCK_GPIO, PS2_CLOCK_PIN)) {
+        upTransitionCount++;
+    } else {
+        downTransitionCount++;
+    }
+
+    bool isLedOn = (transitionCount / 44) % 2;
     TestLed_Set(isLedOn);
 
     switch (phase) {
         case 0: {
-            if (clockTransitionCounter == 44) {
+            if (transitionCount == 44) {
                 phase = 1;
             }
             break;
@@ -66,59 +73,20 @@ void PS2_CLOCK_IRQ_HANDLER(void) {
         case 2: {
             GPIO_WritePinOutput(PS2_DATA_GPIO, PS2_DATA_PIN, 1);
             GPIO_PinInit(PS2_DATA_GPIO, PS2_DATA_PIN, &(gpio_pin_config_t){kGPIO_DigitalInput});
+            upTransitionCount = 0;
             phase = 3;
             break;
+        }
+        case 3: {
+            if (upTransitionCount == 9) {
+                GPIO_WritePinOutput(PS2_DATA_GPIO, PS2_DATA_PIN, 0);
+                GPIO_PinInit(PS2_DATA_GPIO, PS2_DATA_PIN, &(gpio_pin_config_t){kGPIO_DigitalInput});
+                phase = 4;
+            }
         }
     }
 }
 
 void Module_Loop(void)
 {
-    return;
-    uint8_t clock = GPIO_ReadPinInput(PS2_CLOCK_GPIO, PS2_CLOCK_PIN);
-    bool clockTransitioned = prevClock != clock;
-    if (clockTransitioned) {
-        clockTransitionCounter++;
-    }
-
-//    bool isLedOn = (clockTransitionCounter / 44) % 2;
-//    TestLed_Set(isLedOn);
-
-    switch (phase) {
-        case 0: {
-            if (clockTransitionCounter == 46) {
-                for (volatile uint32_t i=0; i<150; i++);
-                GPIO_PinInit(PS2_CLOCK_GPIO, PS2_CLOCK_PIN, &(gpio_pin_config_t){kGPIO_DigitalOutput});
-                GPIO_WritePinOutput(PS2_CLOCK_GPIO, PS2_CLOCK_PIN, 0);
-                for (volatile uint32_t i=0; i<150; i++);
-                GPIO_PinInit(PS2_DATA_GPIO, PS2_DATA_PIN, &(gpio_pin_config_t){kGPIO_DigitalOutput});
-                GPIO_WritePinOutput(PS2_DATA_GPIO, PS2_DATA_PIN, 0);
-                for (volatile uint32_t i=0; i<150; i++);
-                GPIO_WritePinOutput(PS2_CLOCK_GPIO, PS2_CLOCK_PIN, 1);
-                GPIO_PinInit(PS2_CLOCK_GPIO, PS2_CLOCK_PIN, &(gpio_pin_config_t){kGPIO_DigitalInput});
-                phase = 1;
-            }
-            break;
-        }
-        case 1: {
-            if (clockTransitioned && clock == 0) {
-                GPIO_WritePinOutput(PS2_DATA_GPIO, PS2_DATA_PIN, 1);
-                phase = 2;
-            }
-            break;
-        }
-        case 2: {
-            if (clockTransitioned && clock == 0) {
-                upTransitions++;
-            }
-            if (upTransitions == 9) {
-                GPIO_WritePinOutput(PS2_DATA_GPIO, PS2_DATA_PIN, 0);
-                GPIO_PinInit(PS2_DATA_GPIO, PS2_DATA_PIN, &(gpio_pin_config_t){kGPIO_DigitalInput});
-                phase = 3;
-            }
-            break;
-        }
-    }
-
-    prevClock = clock;
 }
