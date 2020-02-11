@@ -141,7 +141,7 @@ void PS2_CLOCK_IRQ_HANDLER(void) {
         case 4: {
             requestToSend();
             bitId = 0;
-            buffer = 0xf3;
+            buffer = 0xf4;
             phase = 5;
         }
         case 5: {
