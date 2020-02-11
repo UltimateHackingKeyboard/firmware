@@ -51,8 +51,8 @@ void requestToSend()
     GPIO_PinInit(PS2_CLOCK_GPIO, PS2_CLOCK_PIN, &(gpio_pin_config_t){kGPIO_DigitalInput});
 }
 
-uint8_t buffer;
 uint8_t bitId = 0;
+uint8_t buffer;
 
 bool shiftNextBit()
 {
@@ -97,7 +97,40 @@ bool shiftNextBit()
     return isFinished;
 }
 
+bool readNextBit()
+{
+    bool isFinished = false;
+
+    if (bitId == 11 && clockState == 0) {
+        isFinished = true;
+        return isFinished;
+    }
+
+    if (clockState == 1) {
+        return isFinished;
+    }
+
+    switch (bitId) {
+        case 0: {
+            buffer = 0;
+            break;
+        }
+        case 1 ... 8: {
+            bool bit = GPIO_ReadPinInput(PS2_DATA_GPIO, PS2_DATA_PIN);
+            buffer <<= bit;
+            break;
+        }
+    }
+
+    bitId++;
+    return isFinished;
+}
+
 void PS2_CLOCK_IRQ_HANDLER(void) {
+    static int8_t byte1 = 0;
+    static int16_t deltaX = 0;
+    static int16_t deltaY = 0;
+
     GPIO_ClearPinsInterruptFlags(PS2_CLOCK_GPIO, 1U << PS2_CLOCK_PIN);
 
     transitionCount++;
@@ -107,9 +140,6 @@ void PS2_CLOCK_IRQ_HANDLER(void) {
     } else {
         downTransitionCount++;
     }
-
-    bool isLedOn = (transitionCount / 44) % 2;
-    TestLed_Set(isLedOn);
 
     switch (phase) {
         case 0: {
@@ -146,8 +176,48 @@ void PS2_CLOCK_IRQ_HANDLER(void) {
         }
         case 5: {
             if (shiftNextBit()) {
-                transitionCount = 0;
-                phase = 5;
+                bitId = 0;
+                phase = 6;
+            }
+            break;
+        }
+        case 6: {
+            if (readNextBit()) { // read ACK
+                bitId = 0;
+                phase = 7;
+            }
+            break;
+        }
+        case 7: {
+            if (readNextBit()) {
+                byte1 = buffer;
+                bitId = 0;
+                phase = 8;
+            }
+            break;
+        }
+        case 8: {
+            if (readNextBit()) {
+                deltaX = buffer;
+                bitId = 0;
+                phase = 9;
+            }
+            break;
+        }
+        case 9: {
+            if (readNextBit()) {
+                deltaY = buffer;
+                if (byte1 & (1 << 3)) {
+                    deltaX *= -1;
+                }
+                if (byte1 & (1 << 2)) {
+                    deltaY *= -1;
+                }
+                PointerDelta.x = deltaX;
+                PointerDelta.y = deltaY;
+                bitId = 0;
+                phase = 7;
+                TestLed_Toggle();
             }
             break;
         }
