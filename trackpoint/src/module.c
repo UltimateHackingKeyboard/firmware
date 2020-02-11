@@ -116,7 +116,8 @@ bool readNextBit()
             break;
         }
         case 1 ... 8: {
-            buffer <<= GPIO_ReadPinInput(PS2_DATA_GPIO, PS2_DATA_PIN);
+            bool bit = GPIO_ReadPinInput(PS2_DATA_GPIO, PS2_DATA_PIN) ? 1 : 0;
+            buffer = (buffer << 1) | bit;
             break;
         }
     }
@@ -126,7 +127,7 @@ bool readNextBit()
 }
 
 void PS2_CLOCK_IRQ_HANDLER(void) {
-    static int8_t byte1 = 0;
+    static uint8_t byte1 = 0;
     static int16_t deltaX = 0;
     static int16_t deltaY = 0;
 
@@ -216,7 +217,6 @@ void PS2_CLOCK_IRQ_HANDLER(void) {
                 PointerDelta.y = deltaY;
                 bitId = 0;
                 phase = 7;
-                TestLed_Toggle();
             }
             break;
         }
