@@ -228,8 +228,8 @@ void PS2_CLOCK_IRQ_HANDLER(void) {
                 if (byte1 & (1 << 2)) {
                     deltaY *= -1;
                 }
-                PointerDelta.x = deltaX;
-                PointerDelta.y = deltaY;
+                PointerDelta.x += deltaX;
+                PointerDelta.y += deltaY;
                 bitId = 0;
                 phase = 7;
             }
