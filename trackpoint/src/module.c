@@ -116,8 +116,7 @@ bool readNextBit()
             break;
         }
         case 1 ... 8: {
-            bool bit = GPIO_ReadPinInput(PS2_DATA_GPIO, PS2_DATA_PIN);
-            buffer <<= bit;
+            buffer <<= GPIO_ReadPinInput(PS2_DATA_GPIO, PS2_DATA_PIN);
             break;
         }
     }
