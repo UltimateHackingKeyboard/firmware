@@ -54,7 +54,7 @@ void requestToSend()
 uint8_t bitId = 0;
 uint8_t buffer;
 
-bool writeNextBit()
+bool writeByte()
 {
     static bool parityBit;
     bool isFinished = false;
@@ -97,7 +97,7 @@ bool writeNextBit()
     return isFinished;
 }
 
-bool readNextBit()
+bool readByte()
 {
     bool isFinished = false;
 
@@ -156,7 +156,7 @@ void PS2_CLOCK_IRQ_HANDLER(void) {
             break;
         }
         case 2: {
-            if (writeNextBit()) {
+            if (writeByte()) {
                 transitionCount = 0;
                 phase = 3;
             }
@@ -175,21 +175,21 @@ void PS2_CLOCK_IRQ_HANDLER(void) {
             phase = 5;
         }
         case 5: {
-            if (writeNextBit()) {
+            if (writeByte()) {
                 bitId = 0;
                 phase = 6;
             }
             break;
         }
         case 6: {
-            if (readNextBit()) { // read ACK
+            if (readByte()) { // read ACK
                 bitId = 0;
                 phase = 7;
             }
             break;
         }
         case 7: {
-            if (readNextBit()) {
+            if (readByte()) {
                 byte1 = buffer;
                 bitId = 0;
                 phase = 8;
@@ -197,7 +197,7 @@ void PS2_CLOCK_IRQ_HANDLER(void) {
             break;
         }
         case 8: {
-            if (readNextBit()) {
+            if (readByte()) {
                 deltaX = buffer;
                 bitId = 0;
                 phase = 9;
@@ -205,7 +205,7 @@ void PS2_CLOCK_IRQ_HANDLER(void) {
             break;
         }
         case 9: {
-            if (readNextBit()) {
+            if (readByte()) {
                 deltaY = buffer;
                 if (byte1 & (1 << 3)) {
                     deltaX *= -1;
