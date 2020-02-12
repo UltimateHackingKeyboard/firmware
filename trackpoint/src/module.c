@@ -53,19 +53,18 @@ void requestToSend()
 uint8_t bitId = 0;
 uint8_t buffer;
 
+// Write a PS/2 byte to buffer bit by bit, and return true when finished.
 bool writeByte()
 {
     static bool parityBit;
-    bool isFinished = false;
 
     if (bitId == 10 && clockState == 0) {
         GPIO_PinInit(PS2_DATA_GPIO, PS2_DATA_PIN, &(gpio_pin_config_t){kGPIO_DigitalInput});
-        isFinished = true;
-        return isFinished;
+        return true;
     }
 
     if (clockState == 1) {
-        return isFinished;
+        return false;
     }
 
     switch (bitId) {
@@ -93,20 +92,18 @@ bool writeByte()
     }
 
     bitId++;
-    return isFinished;
+    return false;
 }
 
+// Read a PS/2 byte from buffer bit by bit, and return true when finished.
 bool readByte()
 {
-    bool isFinished = false;
-
     if (bitId == 10 && clockState == 0) {
-        isFinished = true;
-        return isFinished;
+        return true;
     }
 
     if (clockState == 1) {
-        return isFinished;
+        return false;
     }
 
     switch (bitId) {
@@ -122,7 +119,7 @@ bool readByte()
     }
 
     bitId++;
-    return isFinished;
+    return false;
 }
 
 void PS2_CLOCK_IRQ_HANDLER(void) {
