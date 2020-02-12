@@ -1,6 +1,5 @@
 #include "fsl_gpio.h"
 #include "module.h"
-#include "module/test_led.h"
 
 pointer_delta_t PointerDelta;
 
@@ -47,21 +46,6 @@ void requestToSend()
     GPIO_PinInit(PS2_DATA_GPIO, PS2_DATA_PIN, &(gpio_pin_config_t){kGPIO_DigitalOutput});
     GPIO_WritePinOutput(PS2_DATA_GPIO, PS2_DATA_PIN, 0);
     for (volatile uint32_t i=0; i<150; i++);
-    GPIO_WritePinOutput(PS2_CLOCK_GPIO, PS2_CLOCK_PIN, 1);
-    GPIO_PinInit(PS2_CLOCK_GPIO, PS2_CLOCK_PIN, &(gpio_pin_config_t){kGPIO_DigitalInput});
-}
-
-void mark()
-{
-    GPIO_PinInit(PS2_CLOCK_GPIO, PS2_CLOCK_PIN, &(gpio_pin_config_t){kGPIO_DigitalOutput});
-    GPIO_PinInit(PS2_DATA_GPIO, PS2_DATA_PIN, &(gpio_pin_config_t){kGPIO_DigitalOutput});
-    bool out = 0;
-    for (uint8_t i=0; i<20; i++) {
-        GPIO_WritePinOutput(PS2_CLOCK_GPIO, PS2_CLOCK_PIN, out);
-        GPIO_WritePinOutput(PS2_DATA_GPIO, PS2_DATA_PIN, out);
-        for (volatile uint32_t j=0; j<10; j++);
-        out = !out;
-    }
     GPIO_WritePinOutput(PS2_CLOCK_GPIO, PS2_CLOCK_PIN, 1);
     GPIO_PinInit(PS2_CLOCK_GPIO, PS2_CLOCK_PIN, &(gpio_pin_config_t){kGPIO_DigitalInput});
 }
@@ -234,11 +218,6 @@ void PS2_CLOCK_IRQ_HANDLER(void) {
                 phase = 7;
             }
             break;
-        }
-        case 10: {
-            mark();
-            bitId = 0;
-            phase = 7;
         }
     }
 }
