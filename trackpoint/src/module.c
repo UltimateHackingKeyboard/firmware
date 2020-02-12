@@ -223,10 +223,10 @@ void PS2_CLOCK_IRQ_HANDLER(void) {
             if (readByte()) {
                 deltaY = buffer;
                 if (byte1 & (1 << 4)) {
-                    deltaX |= 1 << 15;
+                    deltaX |= 0xff00;
                 }
                 if (byte1 & (1 << 5)) {
-                    deltaY |= 1 << 15;
+                    deltaY |= 0xff00;
                 }
                 PointerDelta.x -= deltaX;
                 PointerDelta.y -= deltaY;
