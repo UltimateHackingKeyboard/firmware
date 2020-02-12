@@ -143,8 +143,8 @@ bool readByte()
 
 void PS2_CLOCK_IRQ_HANDLER(void) {
     static uint8_t byte1 = 0;
-    static int16_t deltaX = 0;
-    static int16_t deltaY = 0;
+    static uint16_t deltaX = 0;
+    static uint16_t deltaY = 0;
 
     GPIO_ClearPinsInterruptFlags(PS2_CLOCK_GPIO, 1U << PS2_CLOCK_PIN);
 
@@ -223,13 +223,13 @@ void PS2_CLOCK_IRQ_HANDLER(void) {
             if (readByte()) {
                 deltaY = buffer;
                 if (byte1 & (1 << 4)) {
-                    deltaX *= -1;
+                    deltaX |= 1 << 15;
                 }
                 if (byte1 & (1 << 5)) {
-                    deltaY *= -1;
+                    deltaY |= 1 << 15;
                 }
-                PointerDelta.x += deltaX;
-                PointerDelta.y += deltaY;
+                PointerDelta.x -= deltaX;
+                PointerDelta.y -= deltaY;
                 bitId = 0;
                 phase = 7;
             }
