@@ -16,6 +16,7 @@
 #include "config_parser/parse_keymap.h"
 #include "usb_commands/usb_command_get_debug_buffer.h"
 #include "arduino_hid/ConsumerAPI.h"
+#include "slave_drivers/touchpad_driver.h"
 
 static uint32_t mouseUsbReportUpdateTime = 0;
 static uint32_t mouseElapsedTime;
@@ -219,6 +220,11 @@ static void processMouseActions()
     ActiveUsbMouseReport->wheelY = MouseScrollState.yOut;
     MouseScrollState.xOut = 0;
     MouseScrollState.yOut = 0;
+
+    ActiveUsbMouseReport->x += TouchpadUsbMouseReport.x;
+    ActiveUsbMouseReport->y += TouchpadUsbMouseReport.y;
+    TouchpadUsbMouseReport.x = 0;
+    TouchpadUsbMouseReport.y = 0;
 
     for (uint8_t moduleId=0; moduleId<UHK_MODULE_MAX_COUNT; moduleId++) {
         uhk_module_state_t *moduleState = UhkModuleStates + moduleId;
