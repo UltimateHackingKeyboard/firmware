@@ -53,8 +53,8 @@ status_t TouchpadDriver_Update(uint8_t uhkModuleDriverId)
         case 4: {
             status = I2cAsyncRead(address, buffer, 2);
             deltaY = (int16_t)(buffer[1] | buffer[0]<<8);
-            TouchpadUsbMouseReport.x = -deltaX;
-            TouchpadUsbMouseReport.y = deltaY;
+            TouchpadUsbMouseReport.x -= deltaX;
+            TouchpadUsbMouseReport.y += deltaY;
             phase = 5;
             break;
         }
