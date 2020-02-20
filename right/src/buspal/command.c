@@ -176,7 +176,7 @@ static void finalize_data_phase(status_t status)
           status = kStatus_Fail;
       }
     }
-    if (kStatus_Success!=kStatus_Success)
+    if (status!=kStatus_Success)
 #else
         // receiving framing packet header
         if (peripheral_read(rxBuf, sizeof(framing_data_packet_t)) != kStatus_Success)

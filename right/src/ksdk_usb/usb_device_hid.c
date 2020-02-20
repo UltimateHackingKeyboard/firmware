@@ -31,6 +31,7 @@
 #include "usb_device_config.h"
 #include "usb.h"
 #include "usb_device.h"
+#include "usb_report_updater.h"
 
 #include "usb_device_class.h"
 
@@ -331,6 +332,7 @@ usb_status_t USB_DeviceHidEvent(void *handle, uint32_t event, void *param)
             hidHandle->configuration = 0U;
             hidHandle->interruptInPipeBusy = 0U;
             hidHandle->interruptOutPipeBusy = 0U;
+            UsbReportUpdateSemaphore = 0;
             break;
         case kUSB_DeviceClassEventSetConfiguration:
             /* Get the new configuration. */
@@ -612,10 +614,12 @@ usb_status_t USB_DeviceHidSend(class_handle_t handle, uint8_t ep, uint8_t *buffe
     {
         return kStatus_USB_Busy;
     }
+    hidHandle->interruptInPipeBusy = 1U;
     error = USB_DeviceSendRequest(hidHandle->handle, ep, buffer, length);
-    if (kStatus_USB_Success == error)
+    //The flag has to be set before the call. Assume what happens if a bus reset happens asynchronously here. (Deadlock.)
+    if (kStatus_USB_Success != error)
     {
-        hidHandle->interruptInPipeBusy = 1U;
+        hidHandle->interruptInPipeBusy = 0U;
     }
     return error;
 }
@@ -656,10 +660,12 @@ usb_status_t USB_DeviceHidRecv(class_handle_t handle, uint8_t ep, uint8_t *buffe
     {
         return kStatus_USB_Busy;
     }
+    hidHandle->interruptOutPipeBusy = 1U;
     error = USB_DeviceRecvRequest(hidHandle->handle, ep, buffer, length);
-    if (kStatus_USB_Success == error)
+    //The flag has to be set before the call. Assume what happens if a bus reset happens asynchronously here. (Deadlock.)
+    if (kStatus_USB_Success != error)
     {
-        hidHandle->interruptOutPipeBusy = 1U;
+        hidHandle->interruptOutPipeBusy = 0U;
     }
     return error;
 }

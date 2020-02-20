@@ -378,18 +378,33 @@ bool processTextAction(void)
 {
     static uint16_t textIndex;
     static uint8_t reportIndex = USB_BASIC_KEYBOARD_MAX_KEYS;
-    char character;
-    uint8_t scancode;
-    uint8_t mods;
+    char character = 0;
+    uint8_t scancode = 0;
+    uint8_t mods = 0;
 
-    // When all characters have been sent, finish. Yet, one last report should still be sent
-    // in case it contains modifiers, and then the report should be properly cleaned before next use.
-    if (textIndex == currentMacroAction.text.textLen) {
-        if (MacroBasicKeyboardReport.modifiers != 0 && reportIndex != 0) {
-            clearScancodes();
+    // Precompute modifiers and scancode.
+    if(textIndex != currentMacroAction.text.textLen) {
+        character = currentMacroAction.text.text[textIndex];
+        scancode = characterToScancode(character);
+        mods = characterToShift(character) ? HID_KEYBOARD_MODIFIER_LEFTSHIFT : 0;
+    }
+
+    // If required modifiers differ, first clear scancodes and send empty report
+    // containing only old modifiers. Then set new modifiers and send that new report.
+    // Just then continue.
+    if (mods != MacroBasicKeyboardReport.modifiers) {
+        if (reportIndex != 0) {
             reportIndex = 0;
+            clearScancodes();
+            return true;
+        } else {
+            MacroBasicKeyboardReport.modifiers = mods;
             return true;
         }
+    }
+
+    // If all characters have been sent, finish.
+    if (textIndex == currentMacroAction.text.textLen) {
         textIndex = 0;
         reportIndex = USB_BASIC_KEYBOARD_MAX_KEYS;
         memset(&MacroBasicKeyboardReport, 0, sizeof MacroBasicKeyboardReport);
@@ -403,13 +418,9 @@ bool processTextAction(void)
         return true;
     }
 
-    character = currentMacroAction.text.text[textIndex];
-    scancode = characterToScancode(character);
-    mods = characterToShift(character) ? HID_KEYBOARD_MODIFIER_LEFTSHIFT : 0;
-
     // If current character is already contained in the report, we need to
     // release it first. We do so by artificially marking the report
-    // full, and let the next processTextAction call do rest of the work
+    // full. Next call will do rest of the work for us.
     for (uint8_t i = 0; i < reportIndex; i++) {
         if (MacroBasicKeyboardReport.scancodes[i] == scancode) {
             reportIndex = USB_BASIC_KEYBOARD_MAX_KEYS;
@@ -417,22 +428,9 @@ bool processTextAction(void)
         }
     }
 
-    // If mods differ, first send report with old modifiers, but without any scancodes.
-    // Then send report containing only new modifiers.
-    // Just when the modifiers finally match, go on and add the scancode.
-    if (mods != MacroBasicKeyboardReport.modifiers) {
-        if (reportIndex != 0) {
-            reportIndex = 0;
-            clearScancodes();
-            return true;
-        } else {
-            MacroBasicKeyboardReport.modifiers = mods;
-            return true;
-        }
-    } else {
-        MacroBasicKeyboardReport.scancodes[reportIndex++] = scancode;
-        ++textIndex;
-    }
+    // Send the scancode.
+    MacroBasicKeyboardReport.scancodes[reportIndex++] = scancode;
+    ++textIndex;
     return true;
 }
 
