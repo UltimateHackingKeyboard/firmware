@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [8.8.1] - 2020-02-20
+
+Device Protocol: 4.7.0 | Module Protocol: 4.1.0 | User Config: 4.1.1 | Hardware Config: 1.0.0
+
+- Make the empty characters of keymap abbreviations show up empty on the LED display.
+- Add touchpad module slave driver.
+- Enable the pull-up resistors for the GPIO pins of the hall sensors of the BlackBerry trackball. This makes the new sensors work correctly.
+
 ## [8.8.0] - 2020-02-16
 
 Device Protocol: 4.**7.0** | Module Protocol: 4.1.0 | User Config: 4.1.1 | Hardware Config: 1.0.0
