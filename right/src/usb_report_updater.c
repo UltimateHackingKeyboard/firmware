@@ -345,6 +345,7 @@ static bool isStickyShortcut(key_action_t * action)
 
     const uint8_t alt = HID_KEYBOARD_MODIFIER_LEFTALT | HID_KEYBOARD_MODIFIER_RIGHTALT;
     const uint8_t super = HID_KEYBOARD_MODIFIER_LEFTGUI | HID_KEYBOARD_MODIFIER_RIGHTGUI;
+    const uint8_t ctrl = HID_KEYBOARD_MODIFIER_LEFTCTRL | HID_KEYBOARD_MODIFIER_RIGHTCTRL;
 
     switch(action->keystroke.scancode) {
         case HID_KEYBOARD_SC_TAB:
@@ -352,7 +353,7 @@ static bool isStickyShortcut(key_action_t * action)
         case HID_KEYBOARD_SC_RIGHT_ARROW:
         case HID_KEYBOARD_SC_UP_ARROW:
         case HID_KEYBOARD_SC_DOWN_ARROW:
-            return action->keystroke.modifiers & (alt | super);
+            return action->keystroke.modifiers & (alt | super | ctrl);
         default:
             return false;
     }
