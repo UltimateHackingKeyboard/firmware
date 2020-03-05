@@ -4,10 +4,6 @@
 key_state_t* resolutionKey;
 secondary_role_state_t resolutionState;
 
-uint8_t secondaryRoleLayer;
-key_state_t* secondaryRoleLayerKey;
-
-
 static void activatePrimary()
 {
     //ensure that the key is active in Primary state for at least next two cycles.
@@ -62,10 +58,12 @@ secondary_role_state_t SecondaryRoles_ResolveState(key_state_t* keyState)
     // it suffices to deal with the `resolutionKey` only. Any other queried key is an active secondary role.
 
     if ( KeyState_ActivatedNow(keyState) ) {
+        //start new resolution
         resolutionState = startResolution(keyState);
         resolutionState = resolveCurrentKey();
         return resolutionState;
     } else {
+        //handle old resolution
         if (keyState == resolutionKey) {
             resolutionState = resolveCurrentKey();
             return resolutionState;

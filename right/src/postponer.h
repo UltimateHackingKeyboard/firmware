@@ -24,8 +24,10 @@
 
 // Macros:
 
+    //Both 5 and 32 are quite arbitrary. 5 suffices for two keystrokes and one more event just to be sure.
+    #define POSTPONER_BUFFER_SAFETY_GAP 5
     #define POSTPONER_BUFFER_SIZE 32
-    #define POSTPONER_BUFFER_MAX_FILL (POSTPONER_BUFFER_SIZE-5)
+    #define POSTPONER_BUFFER_MAX_FILL (POSTPONER_BUFFER_SIZE-POSTPONER_BUFFER_SAFETY_GAP)
 
     //It takes two cycles to send a shortcut with an extra modifier report.
     #define POSTPONER_MIN_CYCLES_PER_ACTIVATION 2

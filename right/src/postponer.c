@@ -69,7 +69,7 @@ void PostponerCore_FinishCycle(void)
 uint8_t PostponerQuery_PendingKeypressCount()
 {
     uint8_t cnt = 0;
-    for ( int i = 0; i < buffer_size; i++ ) {
+    for ( uint8_t i = 0; i < buffer_size; i++ ) {
         if (buffer[POS(i)].active) {
             cnt++;
         }
@@ -82,7 +82,7 @@ bool PostponerQuery_IsKeyReleased(key_state_t* key)
     if (key == NULL) {
         return false;
     }
-    for ( int i = 0; i < buffer_size; i++ ) {
+    for ( uint8_t i = 0; i < buffer_size; i++ ) {
         if (buffer[POS(i)].key == key && !buffer[POS(i)].active) {
             return true;
         }
