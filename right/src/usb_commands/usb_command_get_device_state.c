@@ -14,6 +14,6 @@ void UsbCommand_GetKeyboardState(void)
     SetUsbTxBufferUint8(3, UhkModuleStates[UhkModuleDriverId_LeftKeyboardHalf].moduleId);
     SetUsbTxBufferUint8(4, UhkModuleStates[UhkModuleDriverId_LeftModule].moduleId);
     SetUsbTxBufferUint8(5, UhkModuleStates[UhkModuleDriverId_RightModule].moduleId);
-    SetUsbTxBufferUint8(6, PreviousLayer); // It's actually the active layer in practice, but with stable state.
+    SetUsbTxBufferUint8(6, PreviousLayer | (ToggledLayer == LayerId_Base ? 0 : (1 << 7)) ); // It's actually the active layer in practice, but with stable state.
     LastUsbGetKeyboardStateRequestTimestamp = CurrentTime;
 }

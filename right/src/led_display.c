@@ -89,8 +89,9 @@ static const uint8_t segmentLedIds[maxSegmentChars][ledCountPerChar] = {
 
 void LedDisplay_SetText(uint8_t length, const char* text)
 {
-    for (uint8_t charId=0; charId<length; charId++) {
-        uint16_t charBits = letterToSegmentMap[text[charId]-' '];
+    for (uint8_t charId=0; charId<LED_DISPLAY_KEYMAP_NAME_LENGTH; charId++) {
+        char keymapChar = charId < length ? text[charId] : ' ';
+        uint16_t charBits = letterToSegmentMap[keymapChar - ' '];
         for (uint8_t ledId=0; ledId<ledCountPerChar; ledId++) {
             uint8_t ledIdx = segmentLedIds[charId][ledId];
             bool isLedOn = charBits & (1 << ledId);

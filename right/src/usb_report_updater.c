@@ -18,6 +18,7 @@
 #include "arduino_hid/ConsumerAPI.h"
 #include "postponer.h"
 #include "secondary_role_driver.h"
+#include "slave_drivers/touchpad_driver.h"
 
 static uint32_t mouseUsbReportUpdateTime = 0;
 static uint32_t mouseElapsedTime;
@@ -222,6 +223,11 @@ static void processMouseActions()
     MouseScrollState.xOut = 0;
     MouseScrollState.yOut = 0;
 
+    ActiveUsbMouseReport->x += TouchpadUsbMouseReport.x;
+    ActiveUsbMouseReport->y += TouchpadUsbMouseReport.y;
+    TouchpadUsbMouseReport.x = 0;
+    TouchpadUsbMouseReport.y = 0;
+
     for (uint8_t moduleId=0; moduleId<UHK_MODULE_MAX_COUNT; moduleId++) {
         uhk_module_state_t *moduleState = UhkModuleStates + moduleId;
         if (moduleState->pointerCount) {
@@ -253,6 +259,21 @@ static void processMouseActions()
     }
     if (activeMouseStates[SerializedMouseAction_RightClick]) {
         ActiveUsbMouseReport->buttons |= MouseButton_Right;
+    }
+    if (activeMouseStates[SerializedMouseAction_Button_4]) {
+        ActiveUsbMouseReport->buttons |= MouseButton_4;
+    }
+    if (activeMouseStates[SerializedMouseAction_Button_5]) {
+        ActiveUsbMouseReport->buttons |= MouseButton_5;
+    }
+    if (activeMouseStates[SerializedMouseAction_Button_6]) {
+        ActiveUsbMouseReport->buttons |= MouseButton_6;
+    }
+    if (activeMouseStates[SerializedMouseAction_Button_7]) {
+        ActiveUsbMouseReport->buttons |= MouseButton_7;
+    }
+    if (activeMouseStates[SerializedMouseAction_Button_8]) {
+        ActiveUsbMouseReport->buttons |= MouseButton_8;
     }
 }
 
@@ -325,7 +346,16 @@ static bool isStickyShortcut(key_action_t * action)
     const uint8_t alt = HID_KEYBOARD_MODIFIER_LEFTALT | HID_KEYBOARD_MODIFIER_RIGHTALT;
     const uint8_t super = HID_KEYBOARD_MODIFIER_LEFTGUI | HID_KEYBOARD_MODIFIER_RIGHTGUI;
 
-    return (action->keystroke.modifiers & (alt | super)) && action->keystroke.scancode == HID_KEYBOARD_SC_TAB;
+    switch(action->keystroke.scancode) {
+        case HID_KEYBOARD_SC_TAB:
+        case HID_KEYBOARD_SC_LEFT_ARROW:
+        case HID_KEYBOARD_SC_RIGHT_ARROW:
+        case HID_KEYBOARD_SC_UP_ARROW:
+        case HID_KEYBOARD_SC_DOWN_ARROW:
+            return action->keystroke.modifiers & (alt | super);
+        default:
+            return false;
+    }
 }
 
 static bool shouldStickAction(key_action_t * action)
@@ -613,32 +643,39 @@ void UpdateUsbReports(void)
     bool HasUsbMouseReportChanged = memcmp(ActiveUsbMouseReport, GetInactiveUsbMouseReport(), sizeof(usb_mouse_report_t)) != 0;
 
     if (HasUsbBasicKeyboardReportChanged) {
+        UsbReportUpdateSemaphore |= 1 << USB_BASIC_KEYBOARD_INTERFACE_INDEX;
         usb_status_t status = UsbBasicKeyboardAction();
-        if (status == kStatus_USB_Success) {
-            UsbReportUpdateSemaphore |= 1 << USB_BASIC_KEYBOARD_INTERFACE_INDEX;
+        //The semaphore has to be set before the call. Assume what happens if a bus reset happens asynchronously here. (Deadlock.)
+        if (status != kStatus_USB_Success) {
+            //This is *not* asynchronously safe as long as multiple reports of different type can be sent at the same time.
+            //TODO: consider either making it atomic, or lowering semaphore reset delay, or changing subsequent ifs to elseifs
+            UsbReportUpdateSemaphore &= ~(1 << USB_BASIC_KEYBOARD_INTERFACE_INDEX);
         }
     }
 
     if (HasUsbMediaKeyboardReportChanged) {
+        UsbReportUpdateSemaphore |= 1 << USB_MEDIA_KEYBOARD_INTERFACE_INDEX;
         usb_status_t status = UsbMediaKeyboardAction();
-        if (status == kStatus_USB_Success) {
-            UsbReportUpdateSemaphore |= 1 << USB_MEDIA_KEYBOARD_INTERFACE_INDEX;
+        if (status != kStatus_USB_Success) {
+            UsbReportUpdateSemaphore &= ~(1 << USB_MEDIA_KEYBOARD_INTERFACE_INDEX);
         }
     }
 
     if (HasUsbSystemKeyboardReportChanged) {
+        UsbReportUpdateSemaphore |= 1 << USB_SYSTEM_KEYBOARD_INTERFACE_INDEX;
         usb_status_t status = UsbSystemKeyboardAction();
-        if (status == kStatus_USB_Success) {
-            UsbReportUpdateSemaphore |= 1 << USB_SYSTEM_KEYBOARD_INTERFACE_INDEX;
+        if (status != kStatus_USB_Success) {
+            UsbReportUpdateSemaphore &= ~(1 << USB_SYSTEM_KEYBOARD_INTERFACE_INDEX);
         }
     }
 
     // Send out the mouse position and wheel values continuously if the report is not zeros, but only send the mouse button states when they change.
     if (HasUsbMouseReportChanged || ActiveUsbMouseReport->x || ActiveUsbMouseReport->y ||
             ActiveUsbMouseReport->wheelX || ActiveUsbMouseReport->wheelY) {
+        UsbReportUpdateSemaphore |= 1 << USB_MOUSE_INTERFACE_INDEX;
         usb_status_t status = UsbMouseAction();
-        if (status == kStatus_USB_Success) {
-            UsbReportUpdateSemaphore |= 1 << USB_MOUSE_INTERFACE_INDEX;
+        if (status != kStatus_USB_Success) {
+            UsbReportUpdateSemaphore &= ~(1 << USB_MOUSE_INTERFACE_INDEX);
         }
     }
 }

@@ -19,6 +19,7 @@
         SlaveId_LeftKeyboardHalf,
         SlaveId_LeftModule,
         SlaveId_RightModule,
+        SlaveId_RightTouchpad,
         SlaveId_RightLedDriver,
         SlaveId_LeftLedDriver,
         SlaveId_KbootDriver,
