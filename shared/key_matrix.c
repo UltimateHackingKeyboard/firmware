@@ -1,7 +1,7 @@
 #include "fsl_gpio.h"
 #include "key_matrix.h"
 
-uint8_t DebounceTimePress = 50, DebounceTimeRelease = 50;
+uint8_t DebounceTimePress = 5, DebounceTimeRelease = 5; // microseconds
 
 void KeyMatrix_Init(key_matrix_t *keyMatrix)
 {
