@@ -6,16 +6,20 @@ secondary_role_state_t resolutionState;
 
 static void activatePrimary()
 {
-    //ensure that the key is active in Primary state for at least next two cycles.
-    PostponerCore_PostponeNCycles(POSTPONER_MIN_CYCLES_PER_ACTIVATION);
+    // Activate the key "again", but now in "SecondaryRoleState_Primary".
     resolutionKey->current = true;
     resolutionKey->previous = false;
+    // Give the key two cycles (this and next) of activity before allowing postponer to replay any events (esp., the key's own release).
+    PostponerCore_PostponeNCycles(1);
 }
 
 static void activateSecondary()
 {
+    // Activate the key "again", but now in "SecondaryRoleState_Secondary".
     resolutionKey->current = true;
     resolutionKey->previous = false;
+    // Let the secondary role take place before allowing the affected key to execute. Postponing rest of this cycle should suffice.
+    PostponerCore_PostponeNCycles(0); //just for aesthetics - we are already postponed for this cycle so this is no-op
 }
 
 static secondary_role_state_t resolveCurrentKeyRoleIfDontKnow()

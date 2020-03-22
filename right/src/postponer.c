@@ -24,6 +24,20 @@ static void consumeEvent(uint8_t count)
 //### Core Functions ###
 //######################
 
+// Postpone keys for the next n cycles. If called by multiple callers, maximum of all the
+// requests is taken.
+//
+// 0 means "(rest of) this cycle"
+// 1 means "(rest of) this cycle and the next one"
+// ...
+//
+// E.g., if you want to stop key processing for longer time, you want to call
+// this with n=1 every update cycle for as long as you want. Once you stop postponing
+// the events, Postponer will start replaying them at a pace one every two cycles.
+//
+// If you just want to perform some action of known length without being disturbed
+// (e.g., activation of a key with extra usb reports takes 2 cycles), then you just
+// call this once with the required number.
 void PostponerCore_PostponeNCycles(uint8_t n)
 {
     cycles_until_activation = MAX(n + 1, cycles_until_activation);
@@ -44,15 +58,16 @@ void PostponerCore_TrackKeyEvent(key_state_t *keyState, bool active)
     };
     buffer_size = buffer_size < POSTPONER_BUFFER_SIZE ? buffer_size + 1 : buffer_size;
     last_press_time = active ? CurrentTime : last_press_time;
-    PostponerCore_PostponeNCycles(POSTPONER_MIN_CYCLES_PER_ACTIVATION);
 }
 
 void PostponerCore_RunPostponedEvents(void)
 {
+    // Process one event every two cycles. (Unless someone keeps Postponer active by touching cycles_until_activation.)
     if (buffer_size != 0 && (cycles_until_activation == 0 || buffer_size > POSTPONER_BUFFER_MAX_FILL)) {
         buffer[buffer_position].key->current = buffer[buffer_position].active;
         consumeEvent(1);
-        PostponerCore_PostponeNCycles(POSTPONER_MIN_CYCLES_PER_ACTIVATION);
+        // This gives the key two ticks (this and next) to get properly processed before execution of next queued event.
+        PostponerCore_PostponeNCycles(1);
     }
 }
 

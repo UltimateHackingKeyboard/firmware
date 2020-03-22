@@ -11,8 +11,8 @@
  *
  * The `n` from `PostponeNCycles(n)` is stored into `cycles_until_activation`,
  * and is decremented every update cycle. Once `cycles_until_activation` reaches
- * zero, Postponer starts replaying enqueued events. After replaying an event, the
- * value is reset to POSTPONER_MIN_CYCLES_PER_ACTIVATION.
+ * zero, Postponer starts replaying enqueued events at pace one event every two
+ * cycles. This allows every key to go through its entire lifecycle properly.
  *
  * Postponer becomes inactive once cycles_until_activation is zero and event queue
  * is empty.
@@ -28,9 +28,6 @@
     #define POSTPONER_BUFFER_SAFETY_GAP 5
     #define POSTPONER_BUFFER_SIZE 32
     #define POSTPONER_BUFFER_MAX_FILL (POSTPONER_BUFFER_SIZE-POSTPONER_BUFFER_SAFETY_GAP)
-
-    //It takes two cycles to send a shortcut with an extra modifier report.
-    #define POSTPONER_MIN_CYCLES_PER_ACTIVATION 2
 
 // Typedefs:
 

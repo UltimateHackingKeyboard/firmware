@@ -385,6 +385,7 @@ static void applyKeystrokePrimary(key_state_t *keyState, key_action_t *action)
         } else {
             ActiveUsbBasicKeyboardReport->modifiers |= action->keystroke.modifiers;
         }
+        // If there are mods: first cycle send just mods, in next cycle start sending mods+scancode
         if (!stickyModifiersChanged || KeyState_ActivatedEarlier(keyState)) {
             switch (action->keystroke.keystrokeType) {
                 case KeystrokeType_Basic:
@@ -442,6 +443,7 @@ static void applyKeystroke(key_state_t *keyState, key_action_t *action)
                 applyKeystrokeSecondary(keyState, action->keystroke.secondaryRole);
                 return;
             case SecondaryRoleState_DontKnowYet:
+                // Repeatedly trigger to keep Postponer in postponing mode until the driver decides.
                 PostponerCore_PostponeNCycles(1);
                 return;
         }
