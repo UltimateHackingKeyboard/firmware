@@ -5,7 +5,7 @@
 
 uint8_t IconsAndLayerTextsBrightness = 0xff;
 uint8_t AlphanumericSegmentsBrightness = 0xff;
-bool ledIconStates[LedDisplayIcon_Last];
+bool ledIconStates[LedDisplayIcon_Count];
 char LedDisplay_DebugString[] = "   ";
 
 static const uint16_t letterToSegmentMap[] = {
