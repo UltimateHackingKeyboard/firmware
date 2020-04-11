@@ -16,6 +16,8 @@
 #include "config_parser/parse_keymap.h"
 #include "usb_commands/usb_command_get_debug_buffer.h"
 #include "arduino_hid/ConsumerAPI.h"
+#include "postponer.h"
+#include "secondary_role_driver.h"
 #include "slave_drivers/touchpad_driver.h"
 
 static uint32_t mouseUsbReportUpdateTime = 0;
@@ -328,14 +330,12 @@ static uint8_t systemScancodeIndex = 0;
 // activation key, either until next action, or until release of held layer.
 // (This serves for Alt+Tab style shortcuts.)
 static uint8_t stickyModifiers;
-static uint8_t stickySlotId;
-static uint8_t stickyKeyId;
+static key_state_t* stickyModifierKey;
 static bool    stickyModifierShouldStick;
 
-static uint8_t secondaryRoleState = SecondaryRoleState_Released;
-static uint8_t secondaryRoleSlotId;
-static uint8_t secondaryRoleKeyId;
-static secondary_role_t secondaryRole;
+//todo: refactor - make this part of layer handling mechanism
+static uint8_t secondaryRoleLayer = LayerId_Base;
+static key_state_t* secondaryRoleLayerKey;
 
 static bool isStickyShortcut(key_action_t * action)
 {
@@ -361,109 +361,153 @@ static bool isStickyShortcut(key_action_t * action)
 
 static bool shouldStickAction(key_action_t * action)
 {
-    bool currentLayerIsHeld = IsLayerHeld() || (secondaryRoleState == SecondaryRoleState_Triggered && IS_SECONDARY_ROLE_LAYER_SWITCHER(secondaryRole));
+    //todo: refactor - ideally make secondaryRoleLayer be handled by isLayerHeld
+    bool currentLayerIsHeld = IsLayerHeld() || (secondaryRoleLayer != LayerId_Base );
     return currentLayerIsHeld && isStickyShortcut(action);
 }
 
-static void activateStickyMods(key_action_t *action, uint8_t slotId, uint8_t keyId)
+static void activateStickyMods(key_state_t *keyState, key_action_t *action)
 {
     stickyModifiers = action->keystroke.modifiers;
-    stickySlotId = slotId;
-    stickyKeyId = keyId;
+    stickyModifierKey = keyState;
     stickyModifierShouldStick = shouldStickAction(action);
 }
 
-static void applyKeyAction(key_state_t *keyState, key_action_t *action, uint8_t slotId, uint8_t keyId)
+static void applyKeystrokePrimary(key_state_t *keyState, key_action_t *action)
 {
     if (KeyState_Active(keyState)) {
-        handleSwitchLayerAction(keyState, action);
-
-        switch (action->type) {
-            case KeyActionType_Keystroke:
-            {
-                bool stickyModifiersChanged = false;
-                if (action->keystroke.scancode) {
-                    // On keydown, reset old sticky modifiers and set new ones
-                    if (KeyState_ActivatedNow(keyState)) {
-                        stickyModifiersChanged = action->keystroke.modifiers != stickyModifiers;
-                        activateStickyMods(action, slotId, keyId);
-                    }
-                } else {
-                    ActiveUsbBasicKeyboardReport->modifiers |= action->keystroke.modifiers;
-                }
-                if (!stickyModifiersChanged || KeyState_ActivatedEarlier(keyState) || action->keystroke.secondaryRole) {
-                    switch (action->keystroke.keystrokeType) {
-                        case KeystrokeType_Basic:
-                            if (basicScancodeIndex >= USB_BASIC_KEYBOARD_MAX_KEYS || action->keystroke.scancode == 0) {
-                                break;
-                            }
-                            ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = action->keystroke.scancode;
-                            break;
-                        case KeystrokeType_Media:
-                            if (mediaScancodeIndex >= USB_MEDIA_KEYBOARD_MAX_KEYS) {
-                                break;
-                            }
-                            ActiveUsbMediaKeyboardReport->scancodes[mediaScancodeIndex++] = action->keystroke.scancode;
-                            break;
-                        case KeystrokeType_System:
-                            if (systemScancodeIndex >= USB_SYSTEM_KEYBOARD_MAX_KEYS) {
-                                break;
-                            }
-                            ActiveUsbSystemKeyboardReport->scancodes[systemScancodeIndex++] = action->keystroke.scancode;
-                            break;
-                    }
-                }
+        bool stickyModifiersChanged = false;
+        if (action->keystroke.scancode) {
+            // On keydown, reset old sticky modifiers and set new ones
+            if (KeyState_ActivatedNow(keyState)) {
+                stickyModifiersChanged = action->keystroke.modifiers != stickyModifiers;
+                activateStickyMods(keyState, action);
             }
-                break;
-            case KeyActionType_Mouse:
-                if (KeyState_ActivatedNow(keyState)) {
-                    stickyModifiers = 0;
-                    activateDirectionSigns(action->mouseAction);
-                }
-                activeMouseStates[action->mouseAction] = true;
-                break;
-            case KeyActionType_SwitchLayer:
-                // Handled by handleSwitchLayerAction()
-                break;
-            case KeyActionType_SwitchKeymap:
-                if (KeyState_ActivatedNow(keyState)) {
-                    stickyModifiers = 0;
-                    secondaryRoleState = SecondaryRoleState_Released;
-                    SwitchKeymapById(action->switchKeymap.keymapId);
-                }
-                break;
-            case KeyActionType_PlayMacro:
-                if (KeyState_ActivatedNow(keyState)) {
-                    stickyModifiers = 0;
-                    Macros_StartMacro(action->playMacro.macroId);
-                }
-                break;
+        } else {
+            ActiveUsbBasicKeyboardReport->modifiers |= action->keystroke.modifiers;
         }
-    } else {
-        switch (action->type) {
-            case KeyActionType_Keystroke:
-                if (KeyState_DeactivatedNow(keyState) && slotId == stickySlotId && keyId == stickyKeyId && !stickyModifierShouldStick) {
-                    //disable the modifiers, but send one last report of modifiers without scancode)
-                    ActiveUsbBasicKeyboardReport->modifiers |= stickyModifiers;
-                    stickyModifiers = 0;
-                }
-                break;
+        // If there are mods: first cycle send just mods, in next cycle start sending mods+scancode
+        if (!stickyModifiersChanged || KeyState_ActivatedEarlier(keyState)) {
+            switch (action->keystroke.keystrokeType) {
+                case KeystrokeType_Basic:
+                    if (basicScancodeIndex >= USB_BASIC_KEYBOARD_MAX_KEYS || action->keystroke.scancode == 0) {
+                        break;
+                    }
+                    ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = action->keystroke.scancode;
+                    break;
+                case KeystrokeType_Media:
+                    if (mediaScancodeIndex >= USB_MEDIA_KEYBOARD_MAX_KEYS) {
+                        break;
+                    }
+                    ActiveUsbMediaKeyboardReport->scancodes[mediaScancodeIndex++] = action->keystroke.scancode;
+                    break;
+                case KeystrokeType_System:
+                    if (systemScancodeIndex >= USB_SYSTEM_KEYBOARD_MAX_KEYS) {
+                        break;
+                    }
+                    ActiveUsbSystemKeyboardReport->scancodes[systemScancodeIndex++] = action->keystroke.scancode;
+                    break;
+            }
+        }
+    } else if (KeyState_DeactivatedNow(keyState)) {
+        if (stickyModifierKey == keyState && !stickyModifierShouldStick) {
+            //disable the modifiers, but send one last report of modifiers without scancode
+            ActiveUsbBasicKeyboardReport->modifiers |= stickyModifiers;
+            stickyModifiers = 0;
         }
     }
 }
 
-static inline void preprocessKeyState(key_state_t *keyState) {
-    keyState->previous = keyState->current;
+static void applyKeystrokeSecondary(key_state_t *keyState, secondary_role_t secondaryRole)
+{
+    if ( IS_SECONDARY_ROLE_LAYER_SWITCHER(secondaryRole) ) {
+        if (KeyState_ActivatedNow(keyState)) {
+            secondaryRoleLayer = SECONDARY_ROLE_LAYER_TO_LAYER_ID(secondaryRole);
+            secondaryRoleLayerKey = keyState;
+        } else if (KeyState_DeactivatedNow(keyState) && secondaryRoleLayerKey == keyState) {
+            secondaryRoleLayer = LayerId_Base;
+            secondaryRoleLayerKey = NULL;
+        }
+    } else if (IS_SECONDARY_ROLE_MODIFIER(secondaryRole)) {
+        ActiveUsbBasicKeyboardReport->modifiers |= SECONDARY_ROLE_MODIFIER_TO_HID_MODIFIER(secondaryRole);
+    }
+}
 
+static void applyKeystroke(key_state_t *keyState, key_action_t *action)
+{
+    if (action->keystroke.secondaryRole) {
+        switch (SecondaryRoles_ResolveState(keyState)) {
+            case SecondaryRoleState_Primary:
+                applyKeystrokePrimary(keyState, action);
+                return;
+            case SecondaryRoleState_Secondary:
+                applyKeystrokeSecondary(keyState, action->keystroke.secondaryRole);
+                return;
+            case SecondaryRoleState_DontKnowYet:
+                // Repeatedly trigger to keep Postponer in postponing mode until the driver decides.
+                PostponerCore_PostponeNCycles(1);
+                return;
+        }
+    } else {
+        applyKeystrokePrimary(keyState, action);
+    }
+}
+
+static void applyKeyAction(key_state_t *keyState, key_action_t *action, uint8_t slotId, uint8_t keyId)
+{
+    switch (action->type) {
+        case KeyActionType_Keystroke:
+            if (KeyState_NonZero(keyState)) {
+                applyKeystroke(keyState, action);
+            }
+            break;
+        case KeyActionType_Mouse:
+            if (KeyState_ActivatedNow(keyState)) {
+                stickyModifiers = 0;
+                activateDirectionSigns(action->mouseAction);
+            }
+            activeMouseStates[action->mouseAction] = true;
+            break;
+        case KeyActionType_SwitchLayer:
+            // Handled by handleSwitchLayerAction()
+            break;
+        case KeyActionType_SwitchKeymap:
+            if (KeyState_ActivatedNow(keyState)) {
+                stickyModifiers = 0;
+                SwitchKeymapById(action->switchKeymap.keymapId);
+            }
+            break;
+        case KeyActionType_PlayMacro:
+            if (KeyState_ActivatedNow(keyState)) {
+                stickyModifiers = 0;
+                Macros_StartMacro(action->playMacro.macroId);
+            }
+            break;
+    }
+}
+
+static void commitKeyState(key_state_t *keyState, bool active)
+{
+    if (PostponerCore_IsActive()) {
+        PostponerCore_TrackKeyEvent(keyState, active);
+    } else {
+        keyState->current = active;
+    }
+}
+
+static inline void preprocessKeyState(key_state_t *keyState)
+{
     uint8_t debounceTime = keyState->previous ? DebounceTimePress : DebounceTimeRelease;
     if (keyState->debouncing && (uint8_t)(CurrentTime - keyState->timestamp) > debounceTime) {
         keyState->debouncing = false;
     }
 
-    if (!keyState->debouncing && keyState->current != keyState->next) {
+    if (!keyState->debouncing && keyState->debouncedSwitchState != keyState->hardwareSwitchState) {
         keyState->timestamp = CurrentTime;
         keyState->debouncing = true;
-        keyState->current = keyState->next;
+        keyState->debouncedSwitchState = keyState->hardwareSwitchState;
+
+        commitKeyState(keyState, keyState->debouncedSwitchState);
     }
 }
 
@@ -471,6 +515,7 @@ uint32_t LastUsbGetKeyboardStateRequestTimestamp;
 
 static void updateActiveUsbReports(void)
 {
+    //todo: refactor this to use postponer.
     if (MacroPlaying) {
         Macros_ContinueMacro();
         memcpy(ActiveUsbMouseReport, &MacroMouseReport, sizeof MacroMouseReport);
@@ -480,6 +525,10 @@ static void updateActiveUsbReports(void)
         return;
     }
 
+    if ( PostponerCore_IsActive() ) {
+        PostponerCore_RunPostponedEvents();
+    }
+
     memset(activeMouseStates, 0, ACTIVE_MOUSE_STATES_COUNT);
 
     basicScancodeIndex = 0;
@@ -487,12 +536,13 @@ static void updateActiveUsbReports(void)
     systemScancodeIndex = 0;
 
     layer_id_t activeLayer = LayerId_Base;
-    if (secondaryRoleState == SecondaryRoleState_Triggered && IS_SECONDARY_ROLE_LAYER_SWITCHER(secondaryRole)) {
-        activeLayer = SECONDARY_ROLE_LAYER_TO_LAYER_ID(secondaryRole);
+    if (activeLayer == LayerId_Base) {
+        activeLayer = secondaryRoleLayer;
     }
     if (activeLayer == LayerId_Base) {
         activeLayer = GetActiveLayer();
     }
+    //todo: throw this out
     bool layerChanged = PreviousLayer != activeLayer;
     if (layerChanged) {
         stickyModifiers = 0;
@@ -501,6 +551,7 @@ static void updateActiveUsbReports(void)
 
     LedDisplay_SetIcon(LedDisplayIcon_Agent, CurrentTime - LastUsbGetKeyboardStateRequestTimestamp < 1000);
 
+    //todo: refactor this
     if (TestUsbStack) {
         static bool simulateKeypresses, isEven, isEvenMedia;
         static uint32_t mediaCounter = 0;
@@ -531,57 +582,32 @@ static void updateActiveUsbReports(void)
                 if (SleepModeActive) {
                     WakeUpHost();
                 }
-                if (secondaryRoleState == SecondaryRoleState_Pressed) {
-                    // Trigger secondary role.
-                    secondaryRoleState = SecondaryRoleState_Triggered;
-                    keyState->current = false;
-                    keyState->debouncing = false;
-                } else {
-                    actionCache[slotId][keyId] = CurrentKeymap[activeLayer][slotId][keyId];
-                }
+                actionCache[slotId][keyId] = CurrentKeymap[activeLayer][slotId][keyId];
             }
 
             action = &actionCache[slotId][keyId];
 
+            //todo: refactor this thing
             if (KeyState_Active(keyState)) {
-                if (action->type == KeyActionType_Keystroke && action->keystroke.secondaryRole) {
-                    // Press released secondary role key.
-                    if (KeyState_ActivatedNow(keyState) && secondaryRoleState == SecondaryRoleState_Released) {
-                        secondaryRoleState = SecondaryRoleState_Pressed;
-                        secondaryRoleSlotId = slotId;
-                        secondaryRoleKeyId = keyId;
-                        secondaryRole = action->keystroke.secondaryRole;
-                    }
-                } else {
-                    applyKeyAction(keyState, action, slotId, keyId);
-                }
-            } else {
-                // Release secondary role key.
-                if (KeyState_DeactivatedNow(keyState) && secondaryRoleSlotId == slotId && secondaryRoleKeyId == keyId && secondaryRoleState != SecondaryRoleState_Released) {
-                    // Trigger primary role.
-                    if (secondaryRoleState == SecondaryRoleState_Pressed) {
-                        keyState->previous = false;
-                        keyState->current = true;
-                        applyKeyAction(keyState, action, slotId, keyId);
-                    }
-                    secondaryRoleState = SecondaryRoleState_Released;
-                } else {
-                    applyKeyAction(keyState, action, slotId, keyId);
-                }
+                handleSwitchLayerAction(keyState, action);
             }
+
+            if (KeyState_NonZero(keyState)) {
+                applyKeyAction(keyState, action, slotId, keyId);
+            }
+
+            keyState->previous = keyState->current;
         }
     }
 
     processMouseActions();
 
+    PostponerCore_FinishCycle();
+
     // When a layer switcher key gets pressed along with another key that produces some modifiers
     // and the accomanying key gets released then keep the related modifiers active a long as the
     // layer switcher key stays pressed.  Useful for Alt+Tab keymappings and the like.
     ActiveUsbBasicKeyboardReport->modifiers |= stickyModifiers;
-
-    if (secondaryRoleState == SecondaryRoleState_Triggered && IS_SECONDARY_ROLE_MODIFIER(secondaryRole)) {
-        ActiveUsbBasicKeyboardReport->modifiers |= SECONDARY_ROLE_MODIFIER_TO_HID_MODIFIER(secondaryRole);
-    }
 
     PreviousLayer = activeLayer;
 }
@@ -593,7 +619,7 @@ void UpdateUsbReports(void)
     static uint32_t lastUpdateTime;
 
     for (uint8_t keyId = 0; keyId < RIGHT_KEY_MATRIX_KEY_COUNT; keyId++) {
-        KeyStates[SlotId_RightKeyboardHalf][keyId].next = RightKeyMatrix.keyStates[keyId];
+        KeyStates[SlotId_RightKeyboardHalf][keyId].hardwareSwitchState = RightKeyMatrix.keyStates[keyId];
     }
 
     if (UsbReportUpdateSemaphore && !SleepModeActive) {
