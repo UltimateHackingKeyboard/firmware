@@ -1,6 +1,6 @@
 #include "config.h"
 #include "led_display.h"
-#include "slave_drivers/is31fl37_driver.h"
+#include "slave_drivers/is31fl37xx_driver.h"
 #include "usb_device_config.h"
 #include "usb_composite_device.h"
 #include "usb_descriptors/usb_descriptor_hid.h"

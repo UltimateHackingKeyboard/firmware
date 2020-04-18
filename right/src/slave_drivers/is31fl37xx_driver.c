@@ -1,5 +1,5 @@
 #include "config.h"
-#include "slave_drivers/is31fl37_driver.h"
+#include "slave_drivers/is31fl37xx_driver.h"
 #include "slave_scheduler.h"
 #include "led_display.h"
 
