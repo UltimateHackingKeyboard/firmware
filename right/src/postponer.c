@@ -4,20 +4,20 @@
 #include "timer.h"
 
 struct postponer_buffer_record_type_t buffer[POSTPONER_BUFFER_SIZE];
-uint8_t buffer_size = 0;
-uint8_t buffer_position = 0;
+uint8_t bufferSize = 0;
+uint8_t bufferPosition = 0;
 
-uint8_t cycles_until_activation = 0;
+uint8_t cyclesUntilActivation = 0;
 key_state_t* Postponer_NextEventKey;
-uint32_t last_press_time;
+uint32_t lastPressTime;
 
-#define POS(idx) ((buffer_position + (idx)) % POSTPONER_BUFFER_SIZE)
+#define POS(idx) ((bufferPosition + (idx)) % POSTPONER_BUFFER_SIZE)
 
 static void consumeEvent(uint8_t count)
 {
-    buffer_position = POS(count);
-    buffer_size = count > buffer_size ? 0 : buffer_size - count;
-    Postponer_NextEventKey = buffer_size == 0 ? NULL : buffer[buffer_position].key;
+    bufferPosition = POS(count);
+    bufferSize = count > bufferSize ? 0 : bufferSize - count;
+    Postponer_NextEventKey = bufferSize == 0 ? NULL : buffer[bufferPosition].key;
 }
 
 //######################
@@ -40,31 +40,31 @@ static void consumeEvent(uint8_t count)
 // call this once with the required number.
 void PostponerCore_PostponeNCycles(uint8_t n)
 {
-    cycles_until_activation = MAX(n + 1, cycles_until_activation);
+    cyclesUntilActivation = MAX(n + 1, cyclesUntilActivation);
 }
 
 bool PostponerCore_IsActive(void)
 {
-    return buffer_size > 0 || cycles_until_activation > 0;
+    return bufferSize > 0 || cyclesUntilActivation > 0;
 }
 
 
 void PostponerCore_TrackKeyEvent(key_state_t *keyState, bool active)
 {
-    uint8_t pos = POS(buffer_size);
+    uint8_t pos = POS(bufferSize);
     buffer[pos] = (struct postponer_buffer_record_type_t) {
             .key = keyState,
             .active = active,
     };
-    buffer_size = buffer_size < POSTPONER_BUFFER_SIZE ? buffer_size + 1 : buffer_size;
-    last_press_time = active ? CurrentTime : last_press_time;
+    bufferSize = bufferSize < POSTPONER_BUFFER_SIZE ? bufferSize + 1 : bufferSize;
+    lastPressTime = active ? CurrentTime : lastPressTime;
 }
 
 void PostponerCore_RunPostponedEvents(void)
 {
     // Process one event every two cycles. (Unless someone keeps Postponer active by touching cycles_until_activation.)
-    if (buffer_size != 0 && (cycles_until_activation == 0 || buffer_size > POSTPONER_BUFFER_MAX_FILL)) {
-        buffer[buffer_position].key->current = buffer[buffer_position].active;
+    if (bufferSize != 0 && (cyclesUntilActivation == 0 || bufferSize > POSTPONER_BUFFER_MAX_FILL)) {
+        buffer[bufferPosition].key->current = buffer[bufferPosition].active;
         consumeEvent(1);
         // This gives the key two ticks (this and next) to get properly processed before execution of next queued event.
         PostponerCore_PostponeNCycles(1);
@@ -73,7 +73,7 @@ void PostponerCore_RunPostponedEvents(void)
 
 void PostponerCore_FinishCycle(void)
 {
-    cycles_until_activation -= cycles_until_activation > 0 ? 1 : 0;
+    cyclesUntilActivation -= cyclesUntilActivation > 0 ? 1 : 0;
 }
 
 //#######################
@@ -84,7 +84,7 @@ void PostponerCore_FinishCycle(void)
 uint8_t PostponerQuery_PendingKeypressCount()
 {
     uint8_t cnt = 0;
-    for ( uint8_t i = 0; i < buffer_size; i++ ) {
+    for ( uint8_t i = 0; i < bufferSize; i++ ) {
         if (buffer[POS(i)].active) {
             cnt++;
         }
@@ -97,7 +97,7 @@ bool PostponerQuery_IsKeyReleased(key_state_t* key)
     if (key == NULL) {
         return false;
     }
-    for ( uint8_t i = 0; i < buffer_size; i++ ) {
+    for ( uint8_t i = 0; i < bufferSize; i++ ) {
         if (buffer[POS(i)].key == key && !buffer[POS(i)].active) {
             return true;
         }
