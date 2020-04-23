@@ -525,10 +525,6 @@ static void updateActiveUsbReports(void)
         return;
     }
 
-    if ( PostponerCore_IsActive() ) {
-        PostponerCore_RunPostponedEvents();
-    }
-
     memset(activeMouseStates, 0, ACTIVE_MOUSE_STATES_COUNT);
 
     basicScancodeIndex = 0;
@@ -571,6 +567,20 @@ static void updateActiveUsbReports(void)
         }
     }
 
+    // This has to happen:
+    // - after GetActiveLayer()
+    // - before new key activations via Postponer
+    for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
+        for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
+            key_state_t *keyState = &KeyStates[slotId][keyId];
+            keyState->previous = keyState->current;
+        }
+    }
+
+    if ( PostponerCore_IsActive() ) {
+        PostponerCore_RunPostponedEvents();
+    }
+
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
             key_state_t *keyState = &KeyStates[slotId][keyId];
@@ -595,8 +605,6 @@ static void updateActiveUsbReports(void)
             if (KeyState_NonZero(keyState)) {
                 applyKeyAction(keyState, action, slotId, keyId);
             }
-
-            keyState->previous = keyState->current;
         }
     }
 
