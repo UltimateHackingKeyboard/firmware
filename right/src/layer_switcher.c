@@ -11,8 +11,6 @@ static layer_id_t toggledLayer;
 static layer_id_t secondaryLayer;
 static layer_id_t heldLayer;
 
-static bool toggledLayerHardLocked = false;
-
 /**
  * General logic.
  *
@@ -109,10 +107,8 @@ void LayerSwitcher_DoubleTapInterrupt(key_state_t* keyState) {
 void LayerSwitcher_ToggleLayer(layer_id_t layer) {
     if(toggledLayer == LayerId_Base) {
         toggledLayer = layer;
-        toggledLayerHardLocked = true;
     } else {
         toggledLayer = LayerId_Base;
-        toggledLayerHardLocked = false;
     }
     updateActiveLayer();
 }
