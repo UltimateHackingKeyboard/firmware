@@ -7,9 +7,9 @@ static uint16_t DoubleTapSwitchLayerReleaseTimeout = 200;
 layer_id_t ActiveLayer = LayerId_Base;
 bool ActiveLayerHeld = false;
 
-static layer_id_t toggledLayer;
-static layer_id_t secondaryLayer;
-static layer_id_t heldLayer;
+static layer_id_t toggledLayer = LayerId_Base;
+static layer_id_t secondaryLayer = LayerId_Base;
+static layer_id_t heldLayer = LayerId_Base;
 
 /**
  * General logic.
@@ -71,8 +71,8 @@ void updateActiveLayer() {
 key_state_t *doubleTapSwitchLayerKey;
 
 void LayerSwitcher_DoubleTapToggle(layer_id_t layer, key_state_t* keyState) {
-    static uint32_t doubleTapSwitchLayerStartTime;
-    static uint32_t doubleTapSwitchLayerTriggerTime;
+    static uint32_t doubleTapSwitchLayerStartTime = 0;
+    static uint32_t doubleTapSwitchLayerTriggerTime = 0;
 
     if(KeyState_ActivatedNow(keyState)) {
         toggledLayer = LayerId_Base;
