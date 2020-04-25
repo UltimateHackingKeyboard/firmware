@@ -75,7 +75,7 @@ void LayerSwitcher_DoubleTapToggle(layer_id_t layer, key_state_t* keyState) {
     static uint32_t doubleTapSwitchLayerTriggerTime;
 
     if(KeyState_ActivatedNow(keyState)) {
-        ActiveLayer = LayerId_Base;
+        toggledLayer = LayerId_Base;
         if (doubleTapSwitchLayerKey == keyState && Timer_GetElapsedTimeAndSetCurrent(&doubleTapSwitchLayerStartTime) < DoubleTapSwitchLayerTimeout) {
             toggledLayer = layer;
             doubleTapSwitchLayerTriggerTime = CurrentTime;
