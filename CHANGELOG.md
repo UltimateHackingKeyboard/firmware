@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [8.9.2] - 2020-04-30
+
+Device Protocol: 4.7.0 | Module Protocol: 4.1.0 | User Config: 4.1.1 | Hardware Config: 1.0.0
+
+- Make every layer switcher action always deactivate held layers of their own layer without any side effects.
+- Allow to cycle keymaps without releasing the relevant layer switcher key.
+
 ## [8.9.1] - 2020-04-23
 
 Device Protocol: 4.7.0 | Module Protocol: 4.1.0 | User Config: 4.1.1 | Hardware Config: 1.0.0
