@@ -3,6 +3,7 @@
 #include "module.h"
 #include "key_states.h"
 #include "keymap.h"
+#include "macros.h"
 
 static bool heldLayers[LAYER_COUNT];
 static bool toggledLayers[LAYER_COUNT];
@@ -75,8 +76,18 @@ layer_id_t GetActiveLayer()
     return heldLayer;
 }
 
+void ToggleLayer(layer_id_t layer)
+{
+	toggledLayers[layer] = true;
+	ToggledLayer = layer;
+}
+
 bool IsLayerHeld(void)
 {
+    if(Macros_IsLayerHeld()) {
+        return true;
+    }
+
     for (layer_id_t layerId = LayerId_Mod; layerId <= LayerId_Mouse; layerId++) {
         if (heldLayers[layerId]) {
             return true;

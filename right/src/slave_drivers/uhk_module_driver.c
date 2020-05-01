@@ -7,6 +7,7 @@
 #include "bool_array_converter.h"
 #include "crc16.h"
 #include "key_states.h"
+#include "usb_report_updater.h"
 
 uhk_module_state_t UhkModuleStates[UHK_MODULE_MAX_COUNT];
 

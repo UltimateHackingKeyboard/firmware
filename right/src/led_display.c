@@ -76,8 +76,28 @@ static const uint16_t letterToSegmentMap[] = {
     0b00000000000000, // `
 };
 
+static const uint16_t aboveUpperToSegmentMap[] = {
+    0b0000100101001001, // {
+    0b0001001000000000, // |
+    0b0010010010001001, // }
+    0b0000010100100000, // ~
+};
+
 static const uint8_t layerLedIds[LAYER_COUNT-1] = {13, 29, 45};
 static const uint8_t iconLedIds[LedDisplayIcon_Count] = {8, 9, 10};
+
+static uint16_t characterToSegmentMap(char character)
+{
+    switch (character) {
+        case ' ' ... '`':
+            return letterToSegmentMap[character - ' '];
+        case 'a' ... 'z':
+            return letterToSegmentMap[character - ' ' - ('a' - 'A')];
+        case '{' ... '~':
+            return aboveUpperToSegmentMap[character - '{'];
+    }
+    return 0;
+}
 
 #define maxSegmentChars 3
 #define ledCountPerChar 14
@@ -91,7 +111,7 @@ void LedDisplay_SetText(uint8_t length, const char* text)
 {
     for (uint8_t charId=0; charId<LED_DISPLAY_KEYMAP_NAME_LENGTH; charId++) {
         char keymapChar = charId < length ? text[charId] : ' ';
-        uint16_t charBits = letterToSegmentMap[keymapChar - ' '];
+        uint16_t charBits = characterToSegmentMap(keymapChar);
         for (uint8_t ledId=0; ledId<ledCountPerChar; ledId++) {
             uint8_t ledIdx = segmentLedIds[charId][ledId];
             bool isLedOn = charBits & (1 << ledId);
@@ -120,7 +140,7 @@ void LedDisplay_SetIcon(led_display_icon_t icon, bool isEnabled)
 
 void LedDisplay_UpdateIcons(void)
 {
-    for (led_display_icon_t i=0; i<=LedDisplayIcon_Last; i++) {
+    for (led_display_icon_t i=0; i<LedDisplayIcon_Count; i++) {
         LedDisplay_SetIcon(i, ledIconStates[i]);
     }
 }

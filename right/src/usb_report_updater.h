@@ -5,6 +5,7 @@
 
     #include "layer.h"
     #include "config_parser/parse_keymap.h"
+    #include "key_states.h"
 
 // Macros:
 
@@ -72,9 +73,21 @@
     extern uint32_t UsbReportUpdateCounter;
     extern volatile uint8_t UsbReportUpdateSemaphore;
     extern bool TestUsbStack;
+    extern uint8_t HardwareModifierState;
+    extern uint8_t HardwareModifierStatePrevious;
+    extern bool SuppressMods;
+    extern bool PostponeKeys;
+    extern bool StickyModifiersEnabled;
+    extern bool CompensateDiagonalSpeed;
+    extern uint16_t KeystrokeDelay;
+    extern bool PendingPostponedAndReleased;
+    extern bool ActivateOnRelease;
+    extern key_state_t* EmergencyKey;
 
 // Functions:
 
     void UpdateUsbReports(void);
+    void ToggleMouseState(serialized_mouse_action_t action, bool activate);
+    void ActivateKey(key_state_t *keyState, bool debounce);
 
 #endif

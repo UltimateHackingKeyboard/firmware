@@ -28,4 +28,6 @@
     layer_id_t GetActiveLayer(void);
     bool IsLayerHeld(void);
 
+    void ToggleLayer(layer_id_t layer);
+
 #endif
