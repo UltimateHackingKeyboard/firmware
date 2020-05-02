@@ -12,6 +12,7 @@
 #include "str_utils.h"
 #include "utils.h"
 #include "layer_switcher.h"
+#include "mouse_controller.h"
 
 
 macro_reference_t AllMacros[MAX_MACRO_NUM];
