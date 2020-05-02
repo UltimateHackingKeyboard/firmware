@@ -4,11 +4,11 @@
 #include "keymap.h"
 #include "config_globals.h"
 #include "macros.h"
-#include "usb_report_updater.h"
 #include "led_display.h"
 #include "slave_scheduler.h"
 #include "slave_drivers/is31fl37xx_driver.h"
 #include "config.h"
+#include "mouse_controller.h"
 
 static parser_error_t parseModuleConfiguration(config_buffer_t *buffer)
 {
