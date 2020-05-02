@@ -9,8 +9,6 @@
 
 // Macros:
 
-    #define SECONDARY_AS_REGULAR_HOLD
-
 // Variables:
     extern layer_id_t ActiveLayer;
     extern bool ActiveLayerHeld;
@@ -22,7 +20,6 @@
     void LayerSwitcher_DoubleTapInterrupt(key_state_t* keyState);
     void LayerSwitcher_ToggleLayer(layer_id_t layer);
     void LayerSwitcher_UnToggleLayerOnly(layer_id_t layer);
-    void LayerSwitcher_ToggleSecondaryLayer(layer_id_t layer);
 
 // Functions - hooks:
 

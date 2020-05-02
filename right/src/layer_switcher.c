@@ -9,7 +9,6 @@ layer_id_t ActiveLayer = LayerId_Base;
 bool ActiveLayerHeld = false;
 
 static layer_id_t toggledLayer = LayerId_Base;
-static layer_id_t secondaryLayer = LayerId_Base;
 static layer_id_t heldLayer = LayerId_Base;
 
 /**
@@ -46,9 +45,6 @@ void updateActiveLayer() {
     layer_id_t activeLayerHeld = LayerId_Base;
     if(activeLayer == LayerId_Base) {
         activeLayer = toggledLayer;
-    }
-    if(activeLayer == LayerId_Base) {
-        activeLayer = secondaryLayer;
     }
     if(activeLayer == LayerId_Base) {
         activeLayer = heldLayer;
@@ -128,14 +124,6 @@ void LayerSwitcher_UnToggleLayerOnly(layer_id_t layer) {
         updateActiveLayer();
     }
 }
-
-#ifdef SECONDARY_AS_REGULAR_HOLD
-#else
-void LayerSwitcher_ToggleSecondaryLayer(layer_id_t layer) {
-    secondaryLayer = layer;
-    updateActiveLayer();
-}
-#endif
 
 /*
  * Hold handlers
