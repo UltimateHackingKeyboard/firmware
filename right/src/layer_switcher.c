@@ -53,7 +53,7 @@ void updateActiveLayer() {
     if(activeLayer == LayerId_Base) {
         activeLayer = heldLayer;
     }
-    activeLayerHeld = (heldLayer == ActiveLayer && ActiveLayer != LayerId_Base);
+    activeLayerHeld = heldLayer == ActiveLayer && ActiveLayer != LayerId_Base;
 
     if(activeLayer == LayerId_Base) {
         activeLayer = Macros_ActiveLayer;
