@@ -289,7 +289,7 @@ static void applyLayerHolds(key_state_t *keyState, key_action_t *action) {
                 break;
         }
     }
-#ifdef SECONDARY_AS_REGULAR_HOLD
+
     if (
             ActiveLayer != LayerId_Base &&
             action->type == KeyActionType_Keystroke &&
@@ -303,7 +303,6 @@ static void applyLayerHolds(key_state_t *keyState, key_action_t *action) {
         // layer - then this layer switcher becomes active due to hold semantics.
         LayerSwitcher_HoldLayer(SECONDARY_ROLE_LAYER_TO_LAYER_ID(action->keystroke.secondaryRole));
     }
-#endif
 }
 
 // Toggle actions are applied on active/cached layer.
@@ -433,22 +432,11 @@ static void applyKeystrokeSecondary(key_state_t *keyState, key_action_t *action,
 {
     secondary_role_t secondaryRole = action->keystroke.secondaryRole;
     if ( IS_SECONDARY_ROLE_LAYER_SWITCHER(secondaryRole) ) {
-#ifdef SECONDARY_AS_REGULAR_HOLD
         // If the cached action is the current base role, then hold, otherwise keymap was changed. In that case do nothing just
         // as a well behaved hold action should.
         if(action->type == actionBase->type && action->keystroke.secondaryRole == actionBase->keystroke.secondaryRole) {
             LayerSwitcher_HoldLayer(SECONDARY_ROLE_LAYER_TO_LAYER_ID(secondaryRole));
         }
-#else
-        static key_state_t* secondaryRoleLayerKey;
-        if (KeyState_ActivatedNow(keyState)) {
-            LayerSwitcher_ToggleSecondaryLayer(SECONDARY_ROLE_LAYER_TO_LAYER_ID(secondaryRole));
-            secondaryRoleLayerKey = keyState;
-        } else if (KeyState_DeactivatedNow(keyState) && secondaryRoleLayerKey == keyState) {
-            LayerSwitcher_ToggleSecondaryLayer(LayerId_Base);
-            secondaryRoleLayerKey = NULL;
-        }
-#endif
     } else if (IS_SECONDARY_ROLE_MODIFIER(secondaryRole)) {
         ActiveUsbBasicKeyboardReport->modifiers |= SECONDARY_ROLE_MODIFIER_TO_HID_MODIFIER(secondaryRole);
     }
