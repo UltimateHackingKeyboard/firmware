@@ -21,12 +21,11 @@
 #include "postponer.h"
 #include "secondary_role_driver.h"
 #include "slave_drivers/touchpad_driver.h"
+#include "layer_switcher.h"
 
 static uint32_t mouseUsbReportUpdateTime = 0;
 static uint32_t mouseElapsedTime;
 
-uint16_t DoubleTapSwitchLayerTimeout = 300;
-static uint16_t DoubleTapSwitchLayerReleaseTimeout = 200;
 
 static bool toggledMouseStates[ACTIVE_MOUSE_STATES_COUNT];
 static bool activeMouseStates[ACTIVE_MOUSE_STATES_COUNT];
@@ -298,43 +297,60 @@ static void processMouseActions()
     }
 }
 
-layer_id_t PreviousLayer = LayerId_Base;
-
-static void handleSwitchLayerAction(key_state_t *keyState, key_action_t *action)
-{
-    static key_state_t *doubleTapSwitchLayerKey;
-    static uint32_t doubleTapSwitchLayerStartTime;
-    static uint32_t doubleTapSwitchLayerTriggerTime;
-    static bool isLayerDoubleTapToggled;
-
-    if (doubleTapSwitchLayerKey && doubleTapSwitchLayerKey != keyState && !keyState->previous) {
-        doubleTapSwitchLayerKey = NULL;
-    }
-
-    if (action->type != KeyActionType_SwitchLayer) {
-        return;
-    }
-
-    if (!keyState->previous && isLayerDoubleTapToggled && ToggledLayer == action->switchLayer.layer) {
-        ToggledLayer = LayerId_Base;
-        isLayerDoubleTapToggled = false;
-    }
-
-    if (keyState->previous && doubleTapSwitchLayerKey == keyState &&
-        Timer_GetElapsedTime(&doubleTapSwitchLayerTriggerTime) > DoubleTapSwitchLayerReleaseTimeout)
-    {
-        ToggledLayer = LayerId_Base;
-    }
-
-    if (!keyState->previous && PreviousLayer == LayerId_Base && action->switchLayer.mode == SwitchLayerMode_HoldAndDoubleTapToggle) {
-        if (doubleTapSwitchLayerKey && Timer_GetElapsedTimeAndSetCurrent(&doubleTapSwitchLayerStartTime) < DoubleTapSwitchLayerTimeout) {
-            ToggledLayer = action->switchLayer.layer;
-            isLayerDoubleTapToggled = true;
-            doubleTapSwitchLayerTriggerTime = CurrentTime;
-        } else {
-            doubleTapSwitchLayerKey = keyState;
+// Holds are applied on current base layer.
+static void applyLayerHolds(key_state_t *keyState, key_action_t *action) {
+    if (action->type == KeyActionType_SwitchLayer && KeyState_Active(keyState)) {
+        switch(action->switchLayer.mode) {
+            case SwitchLayerMode_HoldAndDoubleTapToggle:
+            case SwitchLayerMode_Hold:
+                LayerSwitcher_HoldLayer(action->switchLayer.layer);
+                break;
+            case SwitchLayerMode_Toggle:
+                //this switch handles only "hold" effects, therefore toggle not present here.
+                break;
         }
-        doubleTapSwitchLayerStartTime = CurrentTime;
+    }
+#ifdef SECONDARY_AS_REGULAR_HOLD
+    if (
+            ActiveLayer != LayerId_Base &&
+            action->type == KeyActionType_Keystroke &&
+            action->keystroke.secondaryRole &&
+            IS_SECONDARY_ROLE_LAYER_SWITCHER(action->keystroke.secondaryRole) &&
+            KeyState_Active(keyState)
+    ) {
+        // If some layer is active, always assume base secondary layer switcher roles to take their secondary role and be active
+        // This makes secondary layer holds act just as standard layer holds.
+        // Also, this is a no-op until some other event causes deactivation of the currently active
+        // layer - then this layer switcher becomes active due to hold semantics.
+        LayerSwitcher_HoldLayer(SECONDARY_ROLE_LAYER_TO_LAYER_ID(action->keystroke.secondaryRole));
+    }
+#endif
+}
+
+// Toggle actions are applied on active/cached layer.
+static void applyToggleLayerAction(key_state_t *keyState, key_action_t *action) {
+    switch(action->switchLayer.mode) {
+        case SwitchLayerMode_HoldAndDoubleTapToggle:
+            if( keyState->current != keyState->previous ) {
+                LayerSwitcher_DoubleTapToggle(action->switchLayer.layer, keyState);
+            }
+            break;
+        case SwitchLayerMode_Toggle:
+            if (KeyState_ActivatedNow(keyState)) {
+                LayerSwitcher_ToggleLayer(action->switchLayer.layer);
+            }
+            break;
+        case SwitchLayerMode_Hold:
+            if (KeyState_ActivatedNow(keyState)) {
+                LayerSwitcher_UnToggleLayerOnly(action->switchLayer.layer);
+            }
+            break;
+    }
+}
+
+static void handleEventInterrupts(key_state_t *keyState) {
+    if(KeyState_ActivatedNow(keyState)) {
+        LayerSwitcher_DoubleTapInterrupt(keyState);
     }
 }
 
@@ -354,9 +370,6 @@ static uint8_t stickyModifiers;
 static key_state_t* stickyModifierKey;
 static bool    stickyModifierShouldStick;
 
-//todo: refactor - make this part of layer handling mechanism
-static uint8_t secondaryRoleLayer = LayerId_Base;
-static key_state_t* secondaryRoleLayerKey;
 
 static bool isStickyShortcut(key_action_t * action)
 {
@@ -382,9 +395,7 @@ static bool isStickyShortcut(key_action_t * action)
 
 static bool shouldStickAction(key_action_t * action)
 {
-    //todo: refactor - ideally make secondaryRoleLayer be handled by isLayerHeld
-    bool currentLayerIsHeld = IsLayerHeld() || (secondaryRoleLayer != LayerId_Base );
-    return currentLayerIsHeld && isStickyShortcut(action) && StickyModifiersEnabled;
+    return ActiveLayerHeld && isStickyShortcut(action) && StickyModifiersEnabled;
 }
 
 static void activateStickyMods(key_state_t *keyState, key_action_t *action)
@@ -442,22 +453,32 @@ static void applyKeystrokePrimary(key_state_t *keyState, key_action_t *action)
     }
 }
 
-static void applyKeystrokeSecondary(key_state_t *keyState, secondary_role_t secondaryRole)
+static void applyKeystrokeSecondary(key_state_t *keyState, key_action_t *action, key_action_t *actionBase)
 {
+    secondary_role_t secondaryRole = action->keystroke.secondaryRole;
     if ( IS_SECONDARY_ROLE_LAYER_SWITCHER(secondaryRole) ) {
+#ifdef SECONDARY_AS_REGULAR_HOLD
+        // If the cached action is the current base role, then hold, otherwise keymap was changed. In that case do nothing just
+        // as a well behaved hold action should.
+        if(action->type == actionBase->type && action->keystroke.secondaryRole == actionBase->keystroke.secondaryRole) {
+            LayerSwitcher_HoldLayer(SECONDARY_ROLE_LAYER_TO_LAYER_ID(secondaryRole));
+        }
+#else
+        static key_state_t* secondaryRoleLayerKey;
         if (KeyState_ActivatedNow(keyState)) {
-            secondaryRoleLayer = SECONDARY_ROLE_LAYER_TO_LAYER_ID(secondaryRole);
+            LayerSwitcher_ToggleSecondaryLayer(SECONDARY_ROLE_LAYER_TO_LAYER_ID(secondaryRole));
             secondaryRoleLayerKey = keyState;
         } else if (KeyState_DeactivatedNow(keyState) && secondaryRoleLayerKey == keyState) {
-            secondaryRoleLayer = LayerId_Base;
+            LayerSwitcher_ToggleSecondaryLayer(LayerId_Base);
             secondaryRoleLayerKey = NULL;
         }
+#endif
     } else if (IS_SECONDARY_ROLE_MODIFIER(secondaryRole)) {
         ActiveUsbBasicKeyboardReport->modifiers |= SECONDARY_ROLE_MODIFIER_TO_HID_MODIFIER(secondaryRole);
     }
 }
 
-static void applyKeystroke(key_state_t *keyState, key_action_t *action)
+static void applyKeystroke(key_state_t *keyState, key_action_t *action, key_action_t *actionBase)
 {
     if (action->keystroke.secondaryRole) {
         switch (SecondaryRoles_ResolveState(keyState)) {
@@ -465,7 +486,7 @@ static void applyKeystroke(key_state_t *keyState, key_action_t *action)
                 applyKeystrokePrimary(keyState, action);
                 return;
             case SecondaryRoleState_Secondary:
-                applyKeystrokeSecondary(keyState, action->keystroke.secondaryRole);
+                applyKeystrokeSecondary(keyState, action, actionBase);
                 return;
             case SecondaryRoleState_DontKnowYet:
                 // Repeatedly trigger to keep Postponer in postponing mode until the driver decides.
@@ -477,7 +498,7 @@ static void applyKeystroke(key_state_t *keyState, key_action_t *action)
     }
 }
 
-static void applyKeyAction(key_state_t *keyState, key_action_t *action, uint8_t slotId, uint8_t keyId)
+static void applyKeyAction(key_state_t *keyState, key_action_t *action, key_action_t *actionBase, uint8_t slotId, uint8_t keyId)
 {
     if (KeyState_ActivatedNow(keyState)) {
         Macros_SignalInterrupt();
@@ -486,7 +507,7 @@ static void applyKeyAction(key_state_t *keyState, key_action_t *action, uint8_t 
     switch (action->type) {
         case KeyActionType_Keystroke:
             if (KeyState_NonZero(keyState)) {
-                applyKeystroke(keyState, action);
+                applyKeystroke(keyState, action, actionBase);
             }
             break;
         case KeyActionType_Mouse:
@@ -497,7 +518,9 @@ static void applyKeyAction(key_state_t *keyState, key_action_t *action, uint8_t 
             activeMouseStates[action->mouseAction] = true;
             break;
         case KeyActionType_SwitchLayer:
-            // Handled by handleSwitchLayerAction()
+            if (keyState->current != keyState->previous) {
+                applyToggleLayerAction(keyState, action);
+            }
             break;
         case KeyActionType_SwitchKeymap:
             if (KeyState_ActivatedNow(keyState)) {
@@ -586,47 +609,13 @@ static inline void preprocessKeyState(key_state_t *keyState)
 
 uint32_t LastUsbGetKeyboardStateRequestTimestamp;
 
-static void updateActiveUsbReports(void)
-{
-    clearActiveReports();
-    HardwareModifierStatePrevious = HardwareModifierState;
-    HardwareModifierState = 0;
-    SuppressMods = false;
-
-
-    if (MacroPlaying) {
-        Macros_ContinueMacro();
-    }
-
-    memset(activeMouseStates, 0, ACTIVE_MOUSE_STATES_COUNT);
-
-    basicScancodeIndex = 0;
-    mediaScancodeIndex = 0;
-    systemScancodeIndex = 0;
-
-    layer_id_t activeLayer = LayerId_Base;
-    if (activeLayer == LayerId_Base) {
-        activeLayer = secondaryRoleLayer;
-    }
-    if (activeLayer == LayerId_Base) {
-        activeLayer = GetActiveLayer();
-    }
-    //todo: throw this out
-    bool layerChanged = PreviousLayer != activeLayer;
-    if (layerChanged) {
-        stickyModifiers = 0;
-    }
-    LedDisplay_SetLayer(activeLayer);
-
-    LedDisplay_SetIcon(LedDisplayIcon_Agent, CurrentTime - LastUsbGetKeyboardStateRequestTimestamp < 1000);
-
-    //todo: refactor this
+static void handleUsbStackTestMode() {
     if (TestUsbStack) {
         static bool simulateKeypresses, isEven, isEvenMedia;
         static uint32_t mediaCounter = 0;
         key_state_t *testKeyState = &KeyStates[SlotId_LeftKeyboardHalf][0];
 
-        if (activeLayer == LayerId_Fn && KeyState_ActivatedNow(testKeyState)) {
+        if (ActiveLayer == LayerId_Fn && testKeyState->current && !testKeyState->previous) {
             simulateKeypresses = !simulateKeypresses;
         }
         if (simulateKeypresses) {
@@ -639,16 +628,44 @@ static void updateActiveUsbReports(void)
             MouseMoveState.xOut = isEven ? -5 : 5;
         }
     }
+}
 
-    // This has to happen:
-    // - after GetActiveLayer()
-    // - before new key activations via Postponer
-    for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
-        for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
-            key_state_t *keyState = &KeyStates[slotId][keyId];
-            keyState->previous = keyState->current;
-        }
+//This might be moved directly into the layer_switcher
+static void handleLayerChanges() {
+    static layer_id_t previousLayer = LayerId_Base;
+
+    LayerSwitcher_UpdateActiveLayer();
+
+    if(ActiveLayer != previousLayer) {
+        previousLayer = ActiveLayer;
+        stickyModifiers = 0;
     }
+}
+
+static void updateActiveUsbReports(void)
+{
+    clearActiveReports();
+    HardwareModifierStatePrevious = HardwareModifierState;
+    HardwareModifierState = 0;
+    SuppressMods = false;
+
+    if (MacroPlaying) {
+        Macros_ContinueMacro();
+    }
+
+    memset(activeMouseStates, 0, ACTIVE_MOUSE_STATES_COUNT);
+
+    basicScancodeIndex = 0;
+    mediaScancodeIndex = 0;
+    systemScancodeIndex = 0;
+
+    handleLayerChanges();
+
+    LedDisplay_SetLayer(ActiveLayer);
+
+    LedDisplay_SetIcon(LedDisplayIcon_Agent, CurrentTime - LastUsbGetKeyboardStateRequestTimestamp < 1000);
+
+    handleUsbStackTestMode();
 
     if ( PostponerCore_IsActive() ) {
         PostponerCore_RunPostponedEvents();
@@ -658,42 +675,43 @@ static void updateActiveUsbReports(void)
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
             key_state_t *keyState = &KeyStates[slotId][keyId];
             key_action_t *action;
+            key_action_t *actionBase;
 
             preprocessKeyState(keyState);
 
-            if (KeyState_ActivatedNow(keyState)) {
-                if (SleepModeActive) {
-                    WakeUpHost();
-                }
-                actionCache[slotId][keyId] = CurrentKeymap[activeLayer][slotId][keyId];
-            }
-
-            action = &actionCache[slotId][keyId];
-
-            //todo: refactor this thing
-            if (KeyState_Active(keyState)) {
-                handleSwitchLayerAction(keyState, action);
-
-            }
-
             if (KeyState_NonZero(keyState)) {
-                applyKeyAction(keyState, action, slotId, keyId);
+                if (KeyState_ActivatedNow(keyState)) {
+                    if (SleepModeActive) {
+                        WakeUpHost();
+                    }
+                    actionCache[slotId][keyId] = CurrentKeymap[ActiveLayer][slotId][keyId];
+                    handleEventInterrupts(keyState);
+                }
+
+                action = &actionCache[slotId][keyId];
+                actionBase = &CurrentKeymap[LayerId_Base][slotId][keyId];
+
+                //apply base-layer holds
+                applyLayerHolds(keyState, actionBase);
+
+                //apply active-layer action
+                applyKeyAction(keyState, action, actionBase, slotId, keyId);
+
+                keyState->previous = keyState->current;
             }
         }
     }
+
+    processMouseActions();
 
     PostponerCore_FinishCycle();
 
     mergeReports();
 
-    processMouseActions();
-
     // When a layer switcher key gets pressed along with another key that produces some modifiers
     // and the accomanying key gets released then keep the related modifiers active a long as the
     // layer switcher key stays pressed.  Useful for Alt+Tab keymappings and the like.
     ActiveUsbBasicKeyboardReport->modifiers |= stickyModifiers;
-
-    PreviousLayer = activeLayer;
 }
 
 uint32_t UsbReportUpdateCounter;
@@ -741,7 +759,7 @@ void UpdateUsbReports(void)
             //The semaphore has to be set before the call. Assume what happens if a bus reset happens asynchronously here. (Deadlock.)
             if (status != kStatus_USB_Success) {
                 //This is *not* asynchronously safe as long as multiple reports of different type can be sent at the same time.
-                //TODO: consider either making it atomic, or lowering semaphore reset delay, or changing subsequent ifs to elseifs
+                //TODO: consider either making it atomic, or lowering semaphore reset delay
                 UsbReportUpdateSemaphore &= ~(1 << USB_BASIC_KEYBOARD_INTERFACE_INDEX);
             }
         }

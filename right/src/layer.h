@@ -1,9 +1,9 @@
-#ifndef __LAYER_H__
-#define __LAYER_H__
+#ifndef SRC_LAYER_H_
+#define SRC_LAYER_H_
 
-// Includes:
-
-    #include "fsl_common.h"
+/**
+ * layer.c code was refactored into layer_switcher.h
+ */
 
 // Macros:
 
@@ -18,16 +18,4 @@
         LayerId_Mouse,
     } layer_id_t;
 
-// Variables:
-
-    extern layer_id_t PreviousHeldLayer;
-    extern layer_id_t ToggledLayer;
-
-// Functions:
-
-    layer_id_t GetActiveLayer(void);
-    bool IsLayerHeld(void);
-
-    void ToggleLayer(layer_id_t layer);
-
-#endif
+#endif /* SRC_LAYER_H_ */
