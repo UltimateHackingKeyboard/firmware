@@ -11,6 +11,7 @@
 #include "macro_shortcut_parser.h"
 #include "str_utils.h"
 #include "utils.h"
+#include "layer_switcher.h"
 
 
 macro_reference_t AllMacros[MAX_MACRO_NUM];
@@ -24,6 +25,9 @@ usb_system_keyboard_report_t MacroSystemKeyboardReport;
 uint8_t MacroBasicScancodeIndex = 0;
 uint8_t MacroMediaScancodeIndex = 0;
 uint8_t MacroSystemScancodeIndex = 0;
+
+layer_id_t Macros_ActiveLayer = LayerId_Base;
+bool Macros_ActiveLayerHeld = false;
 
 static char statusBuffer[STATUS_BUFFER_MAX_LENGTH];
 static uint16_t statusBufferLen;
@@ -56,6 +60,18 @@ bool callMacro(uint8_t macroIndex);
 bool Macros_ClaimReports() {
     s->reportsUsed = true;
     return true;
+}
+
+/**
+ * This ensures integration/interface between macro layer mechanism
+ * and official layer mechanism - we expose our layer via
+ * Macros_ActiveLayer/Macros_ActiveLayerHeld and let the layer switcher
+ * make its mind.
+ */
+void activateLayer(layer_id_t layer) {
+    Macros_ActiveLayer = layer;
+    Macros_ActiveLayerHeld = Macros_IsLayerHeld();
+    LayerSwitcher_RecalculateLayerComposition();
 }
 
 void Macros_SignalInterrupt()
@@ -824,7 +840,7 @@ void popLayerStack(bool forceRemoveTop, bool toggledInsteadOfTop) {
     if(layerIdxStack[layerIdxStackTop].keymap != CurrentKeymapIndex) {
         SwitchKeymapById(layerIdxStack[layerIdxStackTop].keymap);
     }
-    ToggleLayer(layerIdxStack[layerIdxStackTop].layer);
+    activateLayer(layerIdxStack[layerIdxStackTop].layer);
 }
 
 void Macros_UpdateLayerStack() {
@@ -849,7 +865,7 @@ void pushStack(uint8_t layer, uint8_t keymap, bool hold) {
     if(keymap != CurrentKeymapIndex) {
         SwitchKeymapById(keymap);
     }
-    ToggleLayer(layerIdxStack[layerIdxStackTop].layer);
+    activateLayer(layerIdxStack[layerIdxStackTop].layer);
     layerIdxStackSize = layerIdxStackSize < LAYER_STACK_SIZE - 1 ? layerIdxStackSize+1 : layerIdxStackSize;
 }
 
@@ -928,7 +944,7 @@ bool processSwitchKeymapCommand(const char* arg1, const char* cmdEnd)
 /**DEPRECATED**/
 bool processSwitchKeymapLayerCommand(const char* arg1, const char* cmdEnd)
 {
-    uint8_t tmpLayerIdx = ToggledLayer;
+    uint8_t tmpLayerIdx = Macros_ActiveLayer;
     uint8_t tmpLayerKeymapIdx = CurrentKeymapIndex;
     pushStack(parseLayerId(NextTok(arg1, cmdEnd), cmdEnd), parseKeymapId(arg1, cmdEnd), false);
     lastLayerIdx = tmpLayerIdx;
@@ -939,7 +955,7 @@ bool processSwitchKeymapLayerCommand(const char* arg1, const char* cmdEnd)
 /**DEPRECATED**/
 bool processSwitchLayerCommand(const char* arg1, const char* cmdEnd)
 {
-    uint8_t tmpLayerIdx = ToggledLayer;
+    uint8_t tmpLayerIdx = Macros_ActiveLayer;
     uint8_t tmpLayerKeymapIdx = CurrentKeymapIndex;
     if(TokenMatches(arg1, cmdEnd, "previous")) {
         popLayerStack(true, false);
@@ -955,7 +971,7 @@ bool processSwitchLayerCommand(const char* arg1, const char* cmdEnd)
 
 bool processToggleKeymapLayerCommand(const char* arg1, const char* cmdEnd)
 {
-    uint8_t tmpLayerIdx = ToggledLayer;
+    uint8_t tmpLayerIdx = Macros_ActiveLayer;
     uint8_t tmpLayerKeymapIdx = CurrentKeymapIndex;
     pushStack(parseLayerId(NextTok(arg1, cmdEnd), cmdEnd), parseKeymapId(arg1, cmdEnd), false);
     lastLayerIdx = tmpLayerIdx;
@@ -965,7 +981,7 @@ bool processToggleKeymapLayerCommand(const char* arg1, const char* cmdEnd)
 
 bool processToggleLayerCommand(const char* arg1, const char* cmdEnd)
 {
-    uint8_t tmpLayerIdx = ToggledLayer;
+    uint8_t tmpLayerIdx = Macros_ActiveLayer;
     uint8_t tmpLayerKeymapIdx = CurrentKeymapIndex;
     pushStack(parseLayerId(arg1, cmdEnd), parseLayerKeymapId(arg1, cmdEnd), false);
     lastLayerIdx = tmpLayerIdx;
@@ -975,7 +991,7 @@ bool processToggleLayerCommand(const char* arg1, const char* cmdEnd)
 
 bool processUnToggleLayerCommand()
 {
-    uint8_t tmpLayerIdx = ToggledLayer;
+    uint8_t tmpLayerIdx = Macros_ActiveLayer;
     uint8_t tmpLayerKeymapIdx = CurrentKeymapIndex;
     popLayerStack(true, true);
     lastLayerIdx = tmpLayerIdx;
@@ -1666,7 +1682,7 @@ bool processifKeyDefinedCommand(bool negate, const char* arg1, const char* argEn
     uint8_t slot;
     uint8_t slotIdx;
     Utils_DecodeId(keyid, &slot, &slotIdx);
-    key_action_t* action = &CurrentKeymap[ToggledLayer][slot][slotIdx];
+    key_action_t* action = &CurrentKeymap[ActiveLayer][slot][slotIdx];
     return (action->type != KeyActionType_None) != negate;
 }
 

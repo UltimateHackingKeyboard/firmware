@@ -1,5 +1,6 @@
 #include "layer_switcher.h"
 #include "timer.h"
+#include "macros.h"
 
 static uint16_t DoubleTapSwitchLayerTimeout = 300;
 static uint16_t DoubleTapSwitchLayerReleaseTimeout = 200;
@@ -42,6 +43,7 @@ static layer_id_t heldLayer = LayerId_Base;
 // Recompute active layer whenever state of the layer locks changes.
 void updateActiveLayer() {
     layer_id_t activeLayer = LayerId_Base;
+    layer_id_t activeLayerHeld = LayerId_Base;
     if(activeLayer == LayerId_Base) {
         activeLayer = toggledLayer;
     }
@@ -51,9 +53,15 @@ void updateActiveLayer() {
     if(activeLayer == LayerId_Base) {
         activeLayer = heldLayer;
     }
+    activeLayerHeld = (heldLayer == ActiveLayer && ActiveLayer != LayerId_Base);
+
+    if(activeLayer == LayerId_Base) {
+        activeLayer = Macros_ActiveLayer;
+        activeLayerHeld = Macros_ActiveLayer;
+    }
     //(write actual ActiveLayer atomically, so that random observer is not confused)
     ActiveLayer = activeLayer;
-    ActiveLayerHeld = heldLayer == ActiveLayer;
+    ActiveLayerHeld = activeLayerHeld;
 
 }
 
@@ -172,4 +180,11 @@ void LayerSwitcher_UpdateActiveLayer() {
     if(previousHeldLayer != heldLayer) {
         updateActiveLayer();
     }
+}
+
+/**
+ * Fork extensions:
+ */
+void LayerSwitcher_RecalculateLayerComposition() {
+    updateActiveLayer();
 }

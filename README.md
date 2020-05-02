@@ -428,8 +428,9 @@ This version of firmware includes basic error handling. If an error is encounter
 ## Known issues/limitations
 
 Bugs and features of this firmware:
-- Layers can be untoggled only via macro or "toggle" feature. The combined hold/doubletap will *not* release layer toggle (this is bug of the official firmware, waiting for reply from devs).  
-- Generally, interaction of legacy layer switching mechanisms with the newly implemented ones is not very well tested. Therefore, we advise you to use only one of the mechanisms in each of your layer systems. Of course, you are welcome to test and report problems.
+- Integration of legacy layer switching and our layer switching is mechanism is complicated. Generally, if legacy layer hold is active, it takes precedence over macro layer holds. However, "hold keymap layer" implicit keymap switching still takes place. 
+
+  This should give mostly correct and sane results, however it is still recommendable to use only one of the mechanisms at a time. Still, please let me know about any unexpected behaviour.
 - Only one-liners are allowed, due to our need to respect firmware's indexation of actions.
 - Global settings and recorded macros are remembered until power cycling only. (We recommend you to create an "init" layer, which will contain only one macro which will set all global settings and then switch to your keymap.) 
 

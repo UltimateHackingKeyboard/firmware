@@ -138,6 +138,8 @@
     extern uint8_t AllMacrosCount;
     extern macro_state_t MacroState[MACRO_STATE_POOL_SIZE];
     extern bool MacroPlaying;
+    extern layer_id_t Macros_ActiveLayer;
+    extern bool Macros_ActiveLayerHeld;
 
 // Functions:
 
