@@ -53,7 +53,7 @@ void updateActiveLayer() {
     }
     //(write actual ActiveLayer atomically, so that random observer is not confused)
     ActiveLayer = activeLayer;
-    ActiveLayerHeld = heldLayer == ActiveLayer;
+    ActiveLayerHeld = heldLayer == ActiveLayer && ActiveLayer != LayerId_Base;
 
 }
 
