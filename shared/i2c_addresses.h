@@ -34,7 +34,9 @@
     #define I2C_ADDRESS_LEFT_IQS5XX_FIRMWARE          0x25 // Touchpad
     #define I2C_ADDRESS_RIGHT_MODULE_FIRMWARE         0x28
     #define I2C_ADDRESS_RIGHT_MODULE_BOOTLOADER       0x30
+    #define I2C_ADDRESS_IS31FL3737_LEFT               0x50 // LED driver
     #define I2C_ADDRESS_RIGHT_IQS5XX_BOOTLOADER       0x55 // Touchpad
+    #define I2C_ADDRESS_IS31FL3737_RIGHT              0x5F // LED driver
     #define I2C_ADDRESS_LEFT_IQS5XX_BOOTLOADER        0x65 // Touchpad
     #define I2C_ADDRESS_IS31FL3731_LEFT               0x74 // LED driver
     // Let's reserve this for another IS31FL3731      0x75 // LED driver
