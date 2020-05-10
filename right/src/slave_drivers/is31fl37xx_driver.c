@@ -2,6 +2,7 @@
 #include "slave_drivers/is31fl37xx_driver.h"
 #include "slave_scheduler.h"
 #include "led_display.h"
+#include "device.h"
 
 uint8_t KeyBacklightBrightness = 0xff;
 uint8_t LedDriverValues[LED_DRIVER_MAX_COUNT][LED_DRIVER_LED_COUNT];

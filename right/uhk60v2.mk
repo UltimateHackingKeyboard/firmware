@@ -1,0 +1,3 @@
+PROJECT_NAME = uhk60v2
+DEVICE_ID = DEVICE_ID_UHK60V2
+include right.mk

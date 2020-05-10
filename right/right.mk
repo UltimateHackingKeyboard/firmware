@@ -11,8 +11,15 @@
 # Web      :  http://www.lauszus.com
 # e-mail   :  lauszus@gmail.com
 
-# Set project name.
-PROJECT_NAME = uhk_right
+ifndef DEVICE_ID
+$(error DEVICE_ID is not set)
+endif
+
+ifndef PROJECT_NAME
+$(error PROJECT_NAME is not set)
+endif
+
+BUILD_DIR = build_make/$(PROJECT_NAME)
 
 # Defines the part type that this project uses.
 PART = MK22FN512VLH12
