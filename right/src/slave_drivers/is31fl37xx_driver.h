@@ -9,7 +9,11 @@
 // Macros:
 
     #define LED_DRIVER_MAX_COUNT 2
-    #define LED_CONTROL_REGISTERS_COMMAND_LENGTH 19
+
+    #define LED_CONTROL_REGISTERS_COMMAND_LENGTH_IS31FL3731 19
+    #define LED_CONTROL_REGISTERS_COMMAND_LENGTH_IS31FL3737 25
+    #define LED_CONTROL_REGISTERS_COMMAND_LENGTH_MAX MAX(LED_CONTROL_REGISTERS_COMMAND_LENGTH_IS31FL3731, LED_CONTROL_REGISTERS_COMMAND_LENGTH_IS31FL3737)
+
     #define PMW_REGISTER_UPDATE_CHUNK_SIZE 8
     #define PWM_REGISTER_BUFFER_LENGTH (1 + PMW_REGISTER_UPDATE_CHUNK_SIZE)
 
@@ -42,7 +46,8 @@
         uint8_t ledIndex;
         uint8_t i2cAddress;
         uint8_t frameRegisterPwmFirst;
-        uint8_t setupLedControlRegistersCommand[LED_CONTROL_REGISTERS_COMMAND_LENGTH];
+        uint8_t setupLedControlRegistersCommandLength;
+        uint8_t setupLedControlRegistersCommand[LED_CONTROL_REGISTERS_COMMAND_LENGTH_MAX];
     } led_driver_state_t;
 
 // Variables:

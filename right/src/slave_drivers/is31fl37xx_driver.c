@@ -12,6 +12,7 @@ static led_driver_state_t ledDriverStates[LED_DRIVER_MAX_COUNT] = {
         .i2cAddress = I2C_ADDRESS_IS31FL3731_RIGHT,
         .frameRegisterPwmFirst = FRAME_REGISTER_PWM_FIRST_IS31FL3731,
         .ledCount = LED_DRIVER_LED_COUNT_IS31FL3731,
+        .setupLedControlRegistersCommandLength = LED_CONTROL_REGISTERS_COMMAND_LENGTH_IS31FL3731,
         .setupLedControlRegistersCommand = {
             FRAME_REGISTER_LED_CONTROL_FIRST,
             0b01111111, // key row 1
@@ -38,6 +39,7 @@ static led_driver_state_t ledDriverStates[LED_DRIVER_MAX_COUNT] = {
         .i2cAddress = I2C_ADDRESS_IS31FL3731_LEFT,
         .frameRegisterPwmFirst = FRAME_REGISTER_PWM_FIRST_IS31FL3731,
         .ledCount = LED_DRIVER_LED_COUNT_IS31FL3731,
+        .setupLedControlRegistersCommandLength = LED_CONTROL_REGISTERS_COMMAND_LENGTH_IS31FL3731,
         .setupLedControlRegistersCommand = {
             FRAME_REGISTER_LED_CONTROL_FIRST,
             0b01111111, // key row 1
@@ -127,7 +129,7 @@ status_t LedSlaveDriver_Update(uint8_t ledDriverId)
             *ledDriverPhase = LedDriverPhase_InitLedControlRegisters;
             break;
         case LedDriverPhase_InitLedControlRegisters:
-            status = I2cAsyncWrite(ledDriverAddress, currentLedDriverState->setupLedControlRegistersCommand, LED_CONTROL_REGISTERS_COMMAND_LENGTH);
+            status = I2cAsyncWrite(ledDriverAddress, currentLedDriverState->setupLedControlRegistersCommand, currentLedDriverState->setupLedControlRegistersCommandLength);
             *ledDriverPhase = LedDriverPhase_InitLedValues;
             break;
         case LedDriverPhase_InitLedValues:
