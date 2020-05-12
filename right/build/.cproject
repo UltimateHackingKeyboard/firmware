@@ -882,6 +882,9 @@
 		<configuration configurationName="uhk60-right_debug_standalone">
 			<resource resourceType="PROJECT" workspacePath="/uhk-right"/>
 		</configuration>
+		<configuration configurationName="uhk60v2-right_release">
+			<resource resourceType="PROJECT" workspacePath="/uhk60v2-right"/>
+		</configuration>
 		<configuration configurationName="uhk60v1-right_release">
 			<resource resourceType="PROJECT" workspacePath="/uhk60v2-right"/>
 		</configuration>
