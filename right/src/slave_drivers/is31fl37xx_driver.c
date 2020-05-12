@@ -7,8 +7,11 @@
 uint8_t KeyBacklightBrightness = 0xff;
 uint8_t LedDriverValues[LED_DRIVER_MAX_COUNT][LED_DRIVER_LED_COUNT_MAX];
 
+#if DEVICE_ID == DEVICE_ID_UHK60V1
 static uint8_t setShutdownModeNormalBufferIS31FL3731[] = {LED_DRIVER_REGISTER_SHUTDOWN, SHUTDOWN_MODE_NORMAL};
+#elif DEVICE_ID == DEVICE_ID_UHK60V2
 static uint8_t setShutdownModeNormalBufferIS31FL3737[] = {LED_DRIVER_REGISTER_CONFIGURATION, SHUTDOWN_MODE_NORMAL};
+#endif
 
 #if DEVICE_ID == DEVICE_ID_UHK60V1
 
