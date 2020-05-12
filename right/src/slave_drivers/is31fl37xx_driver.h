@@ -38,7 +38,7 @@
     typedef struct {
         led_driver_phase_t phase;
         uint8_t ledCount;
-        uint8_t targetLedValues[LED_DRIVER_LED_COUNT];
+        uint8_t targetLedValues[LED_DRIVER_LED_COUNT_MAX];
         uint8_t ledIndex;
         uint8_t i2cAddress;
         uint8_t setupLedControlRegistersCommand[LED_CONTROL_REGISTERS_COMMAND_LENGTH];
@@ -47,7 +47,7 @@
 // Variables:
 
     extern uint8_t KeyBacklightBrightness;
-    extern uint8_t LedDriverValues[LED_DRIVER_MAX_COUNT][LED_DRIVER_LED_COUNT];
+    extern uint8_t LedDriverValues[LED_DRIVER_MAX_COUNT][LED_DRIVER_LED_COUNT_MAX];
 
 // Functions:
 

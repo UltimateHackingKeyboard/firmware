@@ -5,7 +5,7 @@
 #include "device.h"
 
 uint8_t KeyBacklightBrightness = 0xff;
-uint8_t LedDriverValues[LED_DRIVER_MAX_COUNT][LED_DRIVER_LED_COUNT];
+uint8_t LedDriverValues[LED_DRIVER_MAX_COUNT][LED_DRIVER_LED_COUNT_MAX];
 
 static led_driver_state_t ledDriverStates[LED_DRIVER_MAX_COUNT] = {
     {
