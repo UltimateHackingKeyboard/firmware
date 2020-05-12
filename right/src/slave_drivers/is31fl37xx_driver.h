@@ -41,6 +41,7 @@
         uint8_t targetLedValues[LED_DRIVER_LED_COUNT_MAX];
         uint8_t ledIndex;
         uint8_t i2cAddress;
+        uint8_t frameRegisterPwmFirst;
         uint8_t setupLedControlRegistersCommand[LED_CONTROL_REGISTERS_COMMAND_LENGTH];
     } led_driver_state_t;
 

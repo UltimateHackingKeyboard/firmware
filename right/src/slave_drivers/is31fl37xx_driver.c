@@ -10,6 +10,7 @@ uint8_t LedDriverValues[LED_DRIVER_MAX_COUNT][LED_DRIVER_LED_COUNT_MAX];
 static led_driver_state_t ledDriverStates[LED_DRIVER_MAX_COUNT] = {
     {
         .i2cAddress = I2C_ADDRESS_IS31FL3731_RIGHT,
+        .frameRegisterPwmFirst = FRAME_REGISTER_PWM_FIRST_IS31FL3731,
         .ledCount = LED_DRIVER_LED_COUNT_IS31FL3731,
         .setupLedControlRegistersCommand = {
             FRAME_REGISTER_LED_CONTROL_FIRST,
@@ -35,6 +36,7 @@ static led_driver_state_t ledDriverStates[LED_DRIVER_MAX_COUNT] = {
     },
     {
         .i2cAddress = I2C_ADDRESS_IS31FL3731_LEFT,
+        .frameRegisterPwmFirst = FRAME_REGISTER_PWM_FIRST_IS31FL3731,
         .ledCount = LED_DRIVER_LED_COUNT_IS31FL3731,
         .setupLedControlRegistersCommand = {
             FRAME_REGISTER_LED_CONTROL_FIRST,
@@ -105,6 +107,7 @@ status_t LedSlaveDriver_Update(uint8_t ledDriverId)
     uint8_t *ledDriverPhase = &currentLedDriverState->phase;
     uint8_t ledDriverAddress = currentLedDriverState->i2cAddress;
     uint8_t ledCount = currentLedDriverState->ledCount;
+    uint8_t frameRegisterPwmFirst = currentLedDriverState->frameRegisterPwmFirst;
     uint8_t *ledIndex = &currentLedDriverState->ledIndex;
 
     switch (*ledDriverPhase) {
@@ -128,7 +131,7 @@ status_t LedSlaveDriver_Update(uint8_t ledDriverId)
             *ledDriverPhase = LedDriverPhase_InitLedValues;
             break;
         case LedDriverPhase_InitLedValues:
-            updatePwmRegistersBuffer[0] = FRAME_REGISTER_PWM_FIRST + *ledIndex;
+            updatePwmRegistersBuffer[0] = frameRegisterPwmFirst + *ledIndex;
             uint8_t chunkSize = MIN(ledCount - *ledIndex, PMW_REGISTER_UPDATE_CHUNK_SIZE);
             memcpy(updatePwmRegistersBuffer+1, ledValues + *ledIndex, chunkSize);
             status = I2cAsyncWrite(ledDriverAddress, updatePwmRegistersBuffer, chunkSize + 1);
@@ -171,7 +174,7 @@ status_t LedSlaveDriver_Update(uint8_t ledDriverId)
                 }
             }
 
-            updatePwmRegistersBuffer[0] = FRAME_REGISTER_PWM_FIRST + startLedIndex;
+            updatePwmRegistersBuffer[0] = frameRegisterPwmFirst + startLedIndex;
             uint8_t length = endLedIndex - startLedIndex + 1;
             memcpy(updatePwmRegistersBuffer+1, ledValues + startLedIndex, length);
             memcpy(currentLedDriverState->targetLedValues + startLedIndex, ledValues + startLedIndex, length);
