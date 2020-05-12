@@ -184,7 +184,9 @@ void LedSlaveDriver_Init(uint8_t ledDriverId)
     }
 
     led_driver_state_t *currentLedDriverState = ledDriverStates + ledDriverId;
-    currentLedDriverState->phase = LedDriverPhase_SetFunctionFrame;
+    currentLedDriverState->phase = currentLedDriverState->ledDriverIc == LedDriverIc_IS31FL3731
+        ? LedDriverPhase_SetFunctionFrame
+        : LedDriverPhase_UnlockCommandRegister1;
     currentLedDriverState->ledIndex = 0;
     memset(LedDriverValues[ledDriverId], KeyBacklightBrightness, currentLedDriverState->ledCount);
 
@@ -205,15 +207,33 @@ status_t LedSlaveDriver_Update(uint8_t ledDriverId)
     uint8_t *ledIndex = &currentLedDriverState->ledIndex;
 
     switch (*ledDriverPhase) {
+        case LedDriverPhase_UnlockCommandRegister1:
+            status = I2cAsyncWrite(ledDriverAddress, unlockCommandRegisterOnce, sizeof(unlockCommandRegisterOnce));
+            *ledDriverPhase = LedDriverPhase_SetFunctionFrame;
+            break;
         case LedDriverPhase_SetFunctionFrame:
             if (ledDriverId == LedDriverId_Left && !Slaves[SlaveId_LeftKeyboardHalf].isConnected) {
                 break;
             }
-            status = I2cAsyncWrite(ledDriverAddress, setFunctionFrameBuffer, sizeof(setFunctionFrameBuffer));
+            if (currentLedDriverState->ledDriverIc == LedDriverIc_IS31FL3731) {
+                status = I2cAsyncWrite(ledDriverAddress, setFunctionFrameBuffer, sizeof(setFunctionFrameBuffer));
+            } else {
+                status = I2cAsyncWrite(ledDriverAddress, setFrame4Buffer, sizeof(setFrame4Buffer));
+            }
             *ledDriverPhase = LedDriverPhase_SetShutdownModeNormal;
             break;
         case LedDriverPhase_SetShutdownModeNormal:
             status = I2cAsyncWrite(ledDriverAddress, currentLedDriverState->setShutdownModeNormalBuffer, currentLedDriverState->setShutdownModeNormalBufferLength);
+            *ledDriverPhase = currentLedDriverState->ledDriverIc == LedDriverIc_IS31FL3731
+                ? LedDriverPhase_SetFrame1
+                : LedDriverPhase_SetGlobalCurrent;
+            break;
+        case LedDriverPhase_SetGlobalCurrent:
+            status = I2cAsyncWrite(ledDriverAddress, setGlobalCurrentBuffer, sizeof(setGlobalCurrentBuffer));
+            *ledDriverPhase = LedDriverPhase_UnlockCommandRegister2;
+            break;
+        case LedDriverPhase_UnlockCommandRegister2:
+            status = I2cAsyncWrite(ledDriverAddress, unlockCommandRegisterOnce, sizeof(unlockCommandRegisterOnce));
             *ledDriverPhase = LedDriverPhase_SetFrame1;
             break;
         case LedDriverPhase_SetFrame1:
@@ -222,6 +242,16 @@ status_t LedSlaveDriver_Update(uint8_t ledDriverId)
             break;
         case LedDriverPhase_InitLedControlRegisters:
             status = I2cAsyncWrite(ledDriverAddress, currentLedDriverState->setupLedControlRegistersCommand, currentLedDriverState->setupLedControlRegistersCommandLength);
+            *ledDriverPhase = currentLedDriverState->ledDriverIc == LedDriverIc_IS31FL3731
+                ? LedDriverPhase_InitLedValues
+                : LedDriverPhase_UnlockCommandRegister3;
+            break;
+        case LedDriverPhase_UnlockCommandRegister3:
+            status = I2cAsyncWrite(ledDriverAddress, unlockCommandRegisterOnce, sizeof(unlockCommandRegisterOnce));
+            *ledDriverPhase = LedDriverPhase_SetFrame2;
+            break;
+        case LedDriverPhase_SetFrame2:
+            status = I2cAsyncWrite(ledDriverAddress, setFrame2Buffer, sizeof(setFrame2Buffer));
             *ledDriverPhase = LedDriverPhase_InitLedValues;
             break;
         case LedDriverPhase_InitLedValues:
