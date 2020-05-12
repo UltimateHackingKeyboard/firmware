@@ -7,6 +7,8 @@
 uint8_t KeyBacklightBrightness = 0xff;
 uint8_t LedDriverValues[LED_DRIVER_MAX_COUNT][LED_DRIVER_LED_COUNT_MAX];
 
+#if DEVICE_ID == DEVICE_ID_UHK60V1
+
 static led_driver_state_t ledDriverStates[LED_DRIVER_MAX_COUNT] = {
     {
         .i2cAddress = I2C_ADDRESS_IS31FL3731_RIGHT,
@@ -63,6 +65,78 @@ static led_driver_state_t ledDriverStates[LED_DRIVER_MAX_COUNT] = {
         }
     },
 };
+
+#elif DEVICE_ID == DEVICE_ID_UHK60V2
+
+static led_driver_state_t ledDriverStates[LED_DRIVER_MAX_COUNT] = {
+    {
+        .i2cAddress = I2C_ADDRESS_IS31FL3737_RIGHT,
+        .frameRegisterPwmFirst = FRAME_REGISTER_PWM_FIRST_IS31FL3737,
+        .ledCount = LED_DRIVER_LED_COUNT_IS31FL3737,
+        .setupLedControlRegistersCommandLength = LED_CONTROL_REGISTERS_COMMAND_LENGTH_IS31FL3737,
+        .setupLedControlRegistersCommand = {
+            FRAME_REGISTER_LED_CONTROL_FIRST,
+            0b00111111,
+            0b00111111,
+            0b00111111,
+            0b00111111,
+            0b00111111,
+            0b00111111,
+            0b00111111,
+            0b00111111,
+            0b00111111,
+            0b00111111,
+            0b00111111,
+            0b00111111,
+            0b00111111,
+            0b00111111,
+            0b00111111,
+            0b00111111,
+            0b00111111,
+            0b00111111,
+            0b00111111,
+            0b00111111,
+            0b00111111,
+            0b00111111,
+            0b00111111,
+            0b00111111,
+        }
+    },
+    {
+        .i2cAddress = I2C_ADDRESS_IS31FL3737_LEFT,
+        .frameRegisterPwmFirst = FRAME_REGISTER_PWM_FIRST_IS31FL3737,
+        .ledCount = LED_DRIVER_LED_COUNT_IS31FL3737,
+        .setupLedControlRegistersCommandLength = LED_CONTROL_REGISTERS_COMMAND_LENGTH_IS31FL3737,
+        .setupLedControlRegistersCommand = {
+            FRAME_REGISTER_LED_CONTROL_FIRST,
+            0b00111111,
+            0b00111111,
+            0b00111111,
+            0b00111111,
+            0b00111111,
+            0b00111111,
+            0b00111111,
+            0b00111111,
+            0b00111111,
+            0b00111111,
+            0b00111111,
+            0b00111111,
+            0b00111111,
+            0b00111111,
+            0b00111111,
+            0b00111111,
+            0b00111111,
+            0b00111111,
+            0b00111111,
+            0b00111111,
+            0b00111111,
+            0b00111111,
+            0b00111111,
+            0b00111111,
+        }
+    },
+};
+#endif
 
 static uint8_t setFunctionFrameBuffer[] = {LED_DRIVER_REGISTER_FRAME, LED_DRIVER_FRAME_FUNCTION};
 static uint8_t setShutdownModeNormalBuffer[] = {LED_DRIVER_REGISTER_SHUTDOWN, SHUTDOWN_MODE_NORMAL};
