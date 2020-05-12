@@ -15,6 +15,7 @@ static uint8_t setShutdownModeNormalBufferIS31FL3737[] = {LED_DRIVER_REGISTER_CO
 static led_driver_state_t ledDriverStates[LED_DRIVER_MAX_COUNT] = {
     {
         .i2cAddress = I2C_ADDRESS_IS31FL3731_RIGHT,
+        .ledDriverIc = LedDriverIc_IS31FL3731,
         .frameRegisterPwmFirst = FRAME_REGISTER_PWM_FIRST_IS31FL3731,
         .ledCount = LED_DRIVER_LED_COUNT_IS31FL3731,
         .setShutdownModeNormalBufferLength = 2,
@@ -44,6 +45,7 @@ static led_driver_state_t ledDriverStates[LED_DRIVER_MAX_COUNT] = {
     },
     {
         .i2cAddress = I2C_ADDRESS_IS31FL3731_LEFT,
+        .ledDriverIc = LedDriverIc_IS31FL3731,
         .frameRegisterPwmFirst = FRAME_REGISTER_PWM_FIRST_IS31FL3731,
         .ledCount = LED_DRIVER_LED_COUNT_IS31FL3731,
         .setShutdownModeNormalBufferLength = 2,
@@ -78,6 +80,7 @@ static led_driver_state_t ledDriverStates[LED_DRIVER_MAX_COUNT] = {
 static led_driver_state_t ledDriverStates[LED_DRIVER_MAX_COUNT] = {
     {
         .i2cAddress = I2C_ADDRESS_IS31FL3737_RIGHT,
+        .ledDriverIc = LedDriverIc_IS31FL3737,
         .frameRegisterPwmFirst = FRAME_REGISTER_PWM_FIRST_IS31FL3737,
         .ledCount = LED_DRIVER_LED_COUNT_IS31FL3737,
         .setShutdownModeNormalBufferLength = 2,
@@ -113,6 +116,7 @@ static led_driver_state_t ledDriverStates[LED_DRIVER_MAX_COUNT] = {
     },
     {
         .i2cAddress = I2C_ADDRESS_IS31FL3737_LEFT,
+        .ledDriverIc = LedDriverIc_IS31FL3737,
         .frameRegisterPwmFirst = FRAME_REGISTER_PWM_FIRST_IS31FL3737,
         .ledCount = LED_DRIVER_LED_COUNT_IS31FL3737,
         .setShutdownModeNormalBufferLength = 2,

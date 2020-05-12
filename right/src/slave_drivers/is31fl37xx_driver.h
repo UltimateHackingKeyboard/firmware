@@ -25,6 +25,11 @@
 // Typedefs:
 
     typedef enum {
+        LedDriverIc_IS31FL3731,
+        LedDriverIc_IS31FL3737,
+    } led_driver_ic_t;
+
+    typedef enum {
         LedDriverId_Right,
         LedDriverId_Left,
         LedDriverId_Last = LedDriverId_Left,
@@ -50,6 +55,7 @@
         uint8_t targetLedValues[LED_DRIVER_LED_COUNT_MAX];
         uint8_t ledIndex;
         uint8_t i2cAddress;
+        led_driver_ic_t ledDriverIc;
         uint8_t frameRegisterPwmFirst;
         uint8_t setShutdownModeNormalBufferLength;
         uint8_t *setShutdownModeNormalBuffer;
