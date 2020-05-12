@@ -7,6 +7,9 @@
 uint8_t KeyBacklightBrightness = 0xff;
 uint8_t LedDriverValues[LED_DRIVER_MAX_COUNT][LED_DRIVER_LED_COUNT_MAX];
 
+static uint8_t setShutdownModeNormalBufferIS31FL3731[] = {LED_DRIVER_REGISTER_SHUTDOWN, SHUTDOWN_MODE_NORMAL};
+static uint8_t setShutdownModeNormalBufferIS31FL3737[] = {LED_DRIVER_REGISTER_CONFIGURATION, SHUTDOWN_MODE_NORMAL};
+
 #if DEVICE_ID == DEVICE_ID_UHK60V1
 
 static led_driver_state_t ledDriverStates[LED_DRIVER_MAX_COUNT] = {
@@ -14,6 +17,8 @@ static led_driver_state_t ledDriverStates[LED_DRIVER_MAX_COUNT] = {
         .i2cAddress = I2C_ADDRESS_IS31FL3731_RIGHT,
         .frameRegisterPwmFirst = FRAME_REGISTER_PWM_FIRST_IS31FL3731,
         .ledCount = LED_DRIVER_LED_COUNT_IS31FL3731,
+        .setShutdownModeNormalBufferLength = 2,
+        .setShutdownModeNormalBuffer = setShutdownModeNormalBufferIS31FL3731,
         .setupLedControlRegistersCommandLength = LED_CONTROL_REGISTERS_COMMAND_LENGTH_IS31FL3731,
         .setupLedControlRegistersCommand = {
             FRAME_REGISTER_LED_CONTROL_FIRST,
@@ -41,6 +46,8 @@ static led_driver_state_t ledDriverStates[LED_DRIVER_MAX_COUNT] = {
         .i2cAddress = I2C_ADDRESS_IS31FL3731_LEFT,
         .frameRegisterPwmFirst = FRAME_REGISTER_PWM_FIRST_IS31FL3731,
         .ledCount = LED_DRIVER_LED_COUNT_IS31FL3731,
+        .setShutdownModeNormalBufferLength = 2,
+        .setShutdownModeNormalBuffer = setShutdownModeNormalBufferIS31FL3731,
         .setupLedControlRegistersCommandLength = LED_CONTROL_REGISTERS_COMMAND_LENGTH_IS31FL3731,
         .setupLedControlRegistersCommand = {
             FRAME_REGISTER_LED_CONTROL_FIRST,
@@ -73,6 +80,8 @@ static led_driver_state_t ledDriverStates[LED_DRIVER_MAX_COUNT] = {
         .i2cAddress = I2C_ADDRESS_IS31FL3737_RIGHT,
         .frameRegisterPwmFirst = FRAME_REGISTER_PWM_FIRST_IS31FL3737,
         .ledCount = LED_DRIVER_LED_COUNT_IS31FL3737,
+        .setShutdownModeNormalBufferLength = 2,
+        .setShutdownModeNormalBuffer = setShutdownModeNormalBufferIS31FL3737,
         .setupLedControlRegistersCommandLength = LED_CONTROL_REGISTERS_COMMAND_LENGTH_IS31FL3737,
         .setupLedControlRegistersCommand = {
             FRAME_REGISTER_LED_CONTROL_FIRST,
@@ -106,6 +115,8 @@ static led_driver_state_t ledDriverStates[LED_DRIVER_MAX_COUNT] = {
         .i2cAddress = I2C_ADDRESS_IS31FL3737_LEFT,
         .frameRegisterPwmFirst = FRAME_REGISTER_PWM_FIRST_IS31FL3737,
         .ledCount = LED_DRIVER_LED_COUNT_IS31FL3737,
+        .setShutdownModeNormalBufferLength = 2,
+        .setShutdownModeNormalBuffer = setShutdownModeNormalBufferIS31FL3737,
         .setupLedControlRegistersCommandLength = LED_CONTROL_REGISTERS_COMMAND_LENGTH_IS31FL3737,
         .setupLedControlRegistersCommand = {
             FRAME_REGISTER_LED_CONTROL_FIRST,
@@ -138,9 +149,12 @@ static led_driver_state_t ledDriverStates[LED_DRIVER_MAX_COUNT] = {
 };
 #endif
 
+static uint8_t unlockCommandRegisterOnce[] = {LED_DRIVER_REGISTER_WRITE_LOCK, LED_DRIVER_WRITE_LOCK_ENABLE_ONCE};
 static uint8_t setFunctionFrameBuffer[] = {LED_DRIVER_REGISTER_FRAME, LED_DRIVER_FRAME_FUNCTION};
-static uint8_t setShutdownModeNormalBuffer[] = {LED_DRIVER_REGISTER_SHUTDOWN, SHUTDOWN_MODE_NORMAL};
+static uint8_t setGlobalCurrentBuffer[] = {LED_DRIVER_REGISTER_GLOBAL_CURRENT, 0xff};
 static uint8_t setFrame1Buffer[] = {LED_DRIVER_REGISTER_FRAME, LED_DRIVER_FRAME_1};
+static uint8_t setFrame2Buffer[] = {LED_DRIVER_REGISTER_FRAME, LED_DRIVER_FRAME_2};
+static uint8_t setFrame4Buffer[] = {LED_DRIVER_REGISTER_FRAME, LED_DRIVER_FRAME_4};
 static uint8_t updatePwmRegistersBuffer[PWM_REGISTER_BUFFER_LENGTH];
 
 void LedSlaveDriver_DisableLeds(void)
@@ -195,7 +209,7 @@ status_t LedSlaveDriver_Update(uint8_t ledDriverId)
             *ledDriverPhase = LedDriverPhase_SetShutdownModeNormal;
             break;
         case LedDriverPhase_SetShutdownModeNormal:
-            status = I2cAsyncWrite(ledDriverAddress, setShutdownModeNormalBuffer, sizeof(setShutdownModeNormalBuffer));
+            status = I2cAsyncWrite(ledDriverAddress, currentLedDriverState->setShutdownModeNormalBuffer, currentLedDriverState->setShutdownModeNormalBufferLength);
             *ledDriverPhase = LedDriverPhase_SetFrame1;
             break;
         case LedDriverPhase_SetFrame1:

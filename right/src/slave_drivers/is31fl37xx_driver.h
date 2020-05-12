@@ -31,10 +31,15 @@
     } led_driver_id_t;
 
     typedef enum {
+        LedDriverPhase_UnlockCommandRegister1,
         LedDriverPhase_SetFunctionFrame,
         LedDriverPhase_SetShutdownModeNormal,
+        LedDriverPhase_SetGlobalCurrent,
+        LedDriverPhase_UnlockCommandRegister2,
         LedDriverPhase_SetFrame1,
         LedDriverPhase_InitLedControlRegisters,
+        LedDriverPhase_UnlockCommandRegister3,
+        LedDriverPhase_SetFrame2,
         LedDriverPhase_InitLedValues,
         LedDriverPhase_UpdateChangedLedValues,
     } led_driver_phase_t;
@@ -46,6 +51,8 @@
         uint8_t ledIndex;
         uint8_t i2cAddress;
         uint8_t frameRegisterPwmFirst;
+        uint8_t setShutdownModeNormalBufferLength;
+        uint8_t *setShutdownModeNormalBuffer;
         uint8_t setupLedControlRegistersCommandLength;
         uint8_t setupLedControlRegistersCommand[LED_CONTROL_REGISTERS_COMMAND_LENGTH_MAX];
     } led_driver_state_t;
