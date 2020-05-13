@@ -1,0 +1,146 @@
+LEFT HALF:
+
+0 tab red
+1 mouse red
+2 q red
+3 a red
+4 w red
+5 s red
+8 e red
+9 d red
+10 r red
+11 f red
+12 t red
+13 g red
+16 tab green
+17 mouse green
+18 q green
+19 a green
+20 w green
+21 s green
+24 e green
+25 d green
+26 r green
+27 f green
+28 t green
+29 g green
+32 tab blue
+33 mouse blue
+34 q blue
+35 a blue
+36 w blue
+37 s blue
+40 e blue
+41 d blue
+42 r blue
+43 f blue
+44 t blue
+45 g blue
+48 ansi lshift red
+49 lctrl red
+50 isokey red
+51 lsuper red
+52 z red
+53 lalt red
+56 x red
+57 left fn red
+58 c red
+59 v red
+60 lmod red
+61 b red
+64 ansi lshift green
+65 lctrl green
+66 isokey green
+67 lsuper green
+68 z green
+69 lalt green
+72 x green
+73 left fn green
+74 c green
+75 v green
+76 lmod green
+77 b green
+80 ansi lshift blue
+81 lctrl blue
+82 isokey blue
+83 lsuper blue
+84 z blue
+85 lalt blue
+88 x blue
+89 left fn blue
+90 c blue
+91 v blue
+92 lmod blue
+93 b blue
+96 seg 0 0
+97 seg 0 5
+98 seg  0 12
+99 seg 0 13
+100 seg 0 8
+101 seg 0 1
+104 seg 0 11
+105 icon caps lock
+106 ` red
+107 1 red
+108 2 red
+109 iso lshift red
+112 seg 0 6
+113 seg 0 7
+114 seg 0 2
+115 seg 0 3
+116 seg 0 4
+117 seg 0 9
+120 seg 0 10
+121 icon agent
+122 ` green
+123 1 green
+124 2 green
+125 iso lshift green
+128 seg 1 0
+129 seg 0 5
+130 seg 1 12
+131 seg 1 13
+132 seg 1 8
+133 seg 1 1
+136 seg 1 11
+137 icon adaptive
+138 ` blue
+139 1 blue
+140 2 blue
+141 iso lshift blue
+144 seg 1 6
+145 seg 1 7
+146 seg 1 2
+147 seg 1 3
+148 seg 1 4
+149 seg 1 9
+152 seg 1 10
+153 led mod
+154 3 red
+155 4 red
+156 5 red
+157 6 red
+160 seg 2 0
+161 seg 2 5
+162 seg 2 12
+163 seg 2 13
+164 seg 2 8
+165 seg 2 1
+168 seg 2 11
+169 led fn
+170 3 green
+171 4 green
+172 5 green
+173 6 green
+176 seg 2 6
+177 seg 2 7
+178 seg 2 2
+179 seg 2 3
+180 seg 2 4
+181 seg 2 9
+184 seg 2 10
+185 led mouse
+186 3 blue
+187 4 blue
+188 5 blue
+189 6 blue
