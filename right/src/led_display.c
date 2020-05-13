@@ -2,6 +2,7 @@
 #include "slave_drivers/is31fl37xx_driver.h"
 #include "layer.h"
 #include "keymap.h"
+#include "device.h"
 
 uint8_t IconsAndLayerTextsBrightness = 0xff;
 uint8_t AlphanumericSegmentsBrightness = 0xff;
@@ -76,16 +77,30 @@ static const uint16_t letterToSegmentMap[] = {
     0b00000000000000, // `
 };
 
-static const uint8_t layerLedIds[LAYER_COUNT-1] = {13, 29, 45};
-static const uint8_t iconLedIds[LedDisplayIcon_Count] = {8, 9, 10};
-
 #define maxSegmentChars 3
 #define ledCountPerChar 14
+
+#if DEVICE_ID == DEVICE_ID_UHK60V1
+
+static const uint8_t layerLedIds[LAYER_COUNT-1] = {13, 29, 45};
+static const uint8_t iconLedIds[LedDisplayIcon_Count] = {8, 9, 10};
 static const uint8_t segmentLedIds[maxSegmentChars][ledCountPerChar] = {
     {11, 27, 41, 42, 43, 12, 28, 40, 26, 44, 56, 57, 24, 25},
     {58, 74, 88, 89, 90, 59, 75, 76, 73, 91, 92, 104, 60, 72},
     {105, 121, 124, 136, 137, 106, 122, 123, 120, 138, 139, 140, 107, 108},
 };
+
+#elif DEVICE_ID == DEVICE_ID_UHK60V2
+
+static const uint8_t layerLedIds[LAYER_COUNT-1] = {153, 169, 185};
+static const uint8_t iconLedIds[LedDisplayIcon_Count] = {105, 121, 137};
+static const uint8_t segmentLedIds[maxSegmentChars][ledCountPerChar] = {
+    {96, 101, 114, 115, 116, 97, 112, 113, 100, 117, 120, 104, 98, 99},
+    {128, 133, 146, 147, 148, 129, 144, 145, 132, 149, 152, 136, 130, 131},
+    {160, 165, 178, 179, 180, 161, 176, 177, 164, 181, 184, 168, 162, 163},
+};
+
+#endif
 
 void LedDisplay_SetText(uint8_t length, const char* text)
 {
