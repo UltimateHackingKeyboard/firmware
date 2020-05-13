@@ -860,18 +860,6 @@
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
 	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
 	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
-	<storageModule moduleId="scannerConfiguration">
-		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		<scannerConfigBuildInfo instanceId="ilg.gnuarmeclipse.managedbuild.cross.config.elf.release.1939339834.1692217331;ilg.gnuarmeclipse.managedbuild.cross.config.elf.release.1939339834.1692217331.;ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.813655335;ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.input.1817138590">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="ilg.gnuarmeclipse.managedbuild.cross.config.elf.debug.1792027861;ilg.gnuarmeclipse.managedbuild.cross.config.elf.debug.1792027861.;ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.1397207158;ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.input.1895544709">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="ilg.gnuarmeclipse.managedbuild.cross.config.elf.release.1939339834;ilg.gnuarmeclipse.managedbuild.cross.config.elf.release.1939339834.;ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.955273220;ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.input.1711058916">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-	</storageModule>
 	<storageModule moduleId="refreshScope" versionNumber="2">
 		<configuration configurationName="uhk60-right_debug">
 			<resource resourceType="PROJECT" workspacePath="/uhk-right"/>
@@ -895,8 +883,11 @@
 	<storageModule moduleId="com.crt.config">
 		<projectStorage>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
 &lt;TargetConfig&gt;
-&lt;Properties property_3="NXP" property_4="MK22FN512xxx12" property_count="5" version="100200"/&gt;
-&lt;infoList vendor="NXP"&gt;&lt;info chip="MK22FN512xxx12" name="MK22FN512xxx12"&gt;&lt;chip&gt;&lt;name&gt;MK22FN512xxx12&lt;/name&gt;
+&lt;Properties property_3="NXP" property_4="MK22FN512xxx12" property_count="5" version="100300"/&gt;
+&lt;infoList vendor="NXP"&gt;
+&lt;info chip="MK22FN512xxx12" name="MK22FN512xxx12"&gt;
+&lt;chip&gt;
+&lt;name&gt;MK22FN512xxx12&lt;/name&gt;
 &lt;family&gt;K2x&lt;/family&gt;
 &lt;vendor&gt;NXP&lt;/vendor&gt;
 &lt;memory can_program="true" id="Flash" is_ro="true" size="0" type="Flash"/&gt;
@@ -963,7 +954,8 @@
 &lt;peripheralInstance derived_from="NVIC" determined="infoFile" id="NVIC" location="0xE000E100"/&gt;
 &lt;peripheralInstance derived_from="MCM" determined="infoFile" id="MCM" location="0xE0080000"/&gt;
 &lt;/chip&gt;
-&lt;processor&gt;&lt;name gcc_name="cortex-m4"&gt;Cortex-M4&lt;/name&gt;
+&lt;processor&gt;
+&lt;name gcc_name="cortex-m4"&gt;Cortex-M4&lt;/name&gt;
 &lt;family&gt;Cortex-M&lt;/family&gt;
 &lt;/processor&gt;
 &lt;link href="MK22F51212_internal_peripheral.xml" show="embed" type="simple"/&gt;
@@ -974,5 +966,20 @@
 	<storageModule moduleId="com.nxp.mcuxpresso.core.datamodels">
 		<sdkName>SDK_2.x_MK22FN512xxx12</sdkName>
 		<sdkVersion>2.2.0</sdkVersion>
+	</storageModule>
+	<storageModule moduleId="scannerConfiguration">
+		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		<scannerConfigBuildInfo instanceId="ilg.gnuarmeclipse.managedbuild.cross.config.elf.release.1939339834.1692217331.1752486116;ilg.gnuarmeclipse.managedbuild.cross.config.elf.release.1939339834.1692217331.1752486116.;ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.2140380147;ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.input.988648224">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="ilg.gnuarmeclipse.managedbuild.cross.config.elf.release.1939339834;ilg.gnuarmeclipse.managedbuild.cross.config.elf.release.1939339834.;ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.955273220;ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.input.1711058916">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="ilg.gnuarmeclipse.managedbuild.cross.config.elf.release.1939339834.1692217331;ilg.gnuarmeclipse.managedbuild.cross.config.elf.release.1939339834.1692217331.;ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.813655335;ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.input.1817138590">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="ilg.gnuarmeclipse.managedbuild.cross.config.elf.debug.1792027861;ilg.gnuarmeclipse.managedbuild.cross.config.elf.debug.1792027861.;ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.1397207158;ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.input.1895544709">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
 	</storageModule>
 </cproject>
