@@ -9,7 +9,7 @@ and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
 Device Protocol: 4.7.0 | Module Protocol: 4.1.0 | User Config: 4.**2.0** | Hardware Config: 1.0.0
 
-- Implement the $+-*/|\<>?_'",`@={} characters for the LED segment display.
+- Implement the $+-*/|\\<>?_'",\`@={} characters for the LED segment display. `USERCONFIG:MINOR`
 
 ## [8.9.3] - 2020-05-03
 
