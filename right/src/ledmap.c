@@ -1,6 +1,17 @@
 #include "ledmap.h"
 
-rgb_key_ids_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
+rgb_t KeyActionColors[] = {
+    {.red=0, .green=0, .blue=0}, // KeyActionColor_None
+    {.red=255, .green=255, .blue=255}, // KeyActionColor_Scancode
+    {.red=0, .green=255, .blue=0}, // KeyActionColor_Modifier
+    {.red=0, .green=0, .blue=255}, // KeyActionColor_Shortcut
+    {.red=255, .green=255, .blue=0}, // KeyActionColor_LayerSwitch
+    {.red=255, .green=0, .blue=0}, // KeyActionColor_KeymapSwitch
+    {.red=0, .green=255, .blue=255}, // KeyActionColor_Mouse
+    {.red=255, .green=0, .blue=255}, // KeyActionColor_Macro
+};
+
+rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
     // Right keyboard half
     {
         // Row 1

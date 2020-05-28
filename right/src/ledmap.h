@@ -7,14 +7,26 @@
 
 // Typedefs:
 
+    typedef enum {
+        KeyActionColor_None,
+        KeyActionColor_Scancode,
+        KeyActionColor_Modifier,
+        KeyActionColor_Shortcut,
+        KeyActionColor_LayerSwitch,
+        KeyActionColor_KeymapSwitch,
+        KeyActionColor_Mouse,
+        KeyActionColor_Macro,
+    } key_action_color;
+
     typedef struct {
         uint8_t red;
         uint8_t green;
         uint8_t blue;
-    } rgb_key_ids_t;
+    } rgb_t;
 
 // Variables:
 
-    extern rgb_key_ids_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
+    extern rgb_t KeyActionColors[];
+    extern rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
 
 #endif
