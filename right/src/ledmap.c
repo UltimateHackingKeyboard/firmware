@@ -52,48 +52,49 @@ rgb_key_ids_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
     // Left keyboard half
     {
         // Row 1
-        { .red=0, .green=0, .blue=0 }, // `
-        { .red=0, .green=0, .blue=0 }, // 1
-        { .red=0, .green=0, .blue=0 }, // 2
-        { .red=0, .green=0, .blue=0 }, // 3
-        { .red=0, .green=0, .blue=0 }, // 4
-        { .red=0, .green=0, .blue=0 }, // 5
-        { .red=0, .green=0, .blue=0 }, // 6
+        { .red=106, .green=122, .blue=138 }, // `
+        { .red=107, .green=123, .blue=139 }, // 1
+        { .red=108, .green=124, .blue=140 }, // 2
+        { .red=154, .green=170, .blue=186 }, // 3
+        { .red=155, .green=171, .blue=187 }, // 4
+        { .red=156, .green=172, .blue=188 }, // 5
+        { .red=157, .green=173, .blue=189 }, // 6
 
         // Row 2
-        { .red=0, .green=0, .blue=0 }, // Tab
-        { .red=0, .green=0, .blue=0 }, // Q
-        { .red=0, .green=0, .blue=0 }, // W
-        { .red=0, .green=0, .blue=0 }, // E
-        { .red=0, .green=0, .blue=0 }, // R
+        { .red=0, .green=16, .blue=29 }, // Tab
+        { .red=2, .green=18, .blue=34 }, // Q
+        { .red=4, .green=20, .blue=36 }, // W
+        { .red=8, .green=24, .blue=40 }, // E
+        { .red=10, .green=26, .blue=42 }, // R
         { .red=0, .green=0, .blue=0 }, // Unused
-        { .red=0, .green=0, .blue=0 }, // T
+        { .red=12, .green=28, .blue=44 }, // T
 
         // Row 3
-        { .red=0, .green=0, .blue=0 }, // Mouse
-        { .red=0, .green=0, .blue=0 }, // A
-        { .red=0, .green=0, .blue=0 }, // S
-        { .red=0, .green=0, .blue=0 }, // D
-        { .red=0, .green=0, .blue=0 }, // F
+        { .red=1, .green=17, .blue=33 }, // Mouse
+        { .red=3, .green=19, .blue=35 }, // A
+        { .red=5, .green=21, .blue=37 }, // S
+        { .red=9, .green=25, .blue=41 }, // D
+        { .red=11, .green=27, .blue=43 }, // F
         { .red=0, .green=0, .blue=0 }, // Unused
-        { .red=0, .green=0, .blue=0 }, // G
+        { .red=13, .green=29, .blue=45 }, // G
 
         // Row 4
-        { .red=0, .green=0, .blue=0 }, // Left Shit
-        { .red=0, .green=0, .blue=0 }, // ISO Key
-        { .red=0, .green=0, .blue=0 }, // Z
-        { .red=0, .green=0, .blue=0 }, // X
-        { .red=0, .green=0, .blue=0 }, // C
-        { .red=0, .green=0, .blue=0 }, // V
-        { .red=0, .green=0, .blue=0 }, // B
+        { .red=48, .green=64, .blue=80 }, // ANSI Left Shift
+//        { .red=109, .green=125, .blue=141 }, // ISO Left Shift
+        { .red=50, .green=66, .blue=82 }, // ISO Key
+        { .red=52, .green=68, .blue=84 }, // Z
+        { .red=56, .green=72, .blue=88 }, // X
+        { .red=58, .green=74, .blue=90 }, // C
+        { .red=59, .green=75, .blue=91 }, // V
+        { .red=61, .green=77, .blue=93 }, // B
 
         // Row 5
-        { .red=0, .green=0, .blue=0 }, // Left Control
-        { .red=0, .green=0, .blue=0 }, // Left Super
-        { .red=0, .green=0, .blue=0 }, // Left Alt
-        { .red=0, .green=0, .blue=0 }, // Left Fn
+        { .red=49, .green=65, .blue=81 }, // Left Control
+        { .red=51, .green=67, .blue=83 }, // Left Super
+        { .red=53, .green=69, .blue=85 }, // Left Alt
+        { .red=57, .green=73, .blue=89 }, // Left Fn
         { .red=0, .green=0, .blue=0 }, // Left Space
-        { .red=0, .green=0, .blue=0 }, // Left Mod
+        { .red=60, .green=76, .blue=92 }, // Left Mod
         { .red=0, .green=0, .blue=0 } // Unused
     },
 };
