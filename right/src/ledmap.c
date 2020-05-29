@@ -1,13 +1,16 @@
+#include "keymap.h"
+#include "layer_switcher.h"
 #include "ledmap.h"
+#include "slave_drivers/is31fl37xx_driver.h"
 
 rgb_t KeyActionColors[] = {
     {.red=0, .green=0, .blue=0}, // KeyActionColor_None
     {.red=255, .green=255, .blue=255}, // KeyActionColor_Scancode
-    {.red=0, .green=255, .blue=0}, // KeyActionColor_Modifier
+    {.red=0, .green=255, .blue=255}, // KeyActionColor_Modifier
     {.red=0, .green=0, .blue=255}, // KeyActionColor_Shortcut
-    {.red=255, .green=255, .blue=0}, // KeyActionColor_LayerSwitch
-    {.red=255, .green=0, .blue=0}, // KeyActionColor_KeymapSwitch
-    {.red=0, .green=255, .blue=255}, // KeyActionColor_Mouse
+    {.red=255, .green=255, .blue=0}, // KeyActionColor_SwitchLayer
+    {.red=255, .green=0, .blue=0}, // KeyActionColor_SwitchKeymap
+    {.red=0, .green=255, .blue=0}, // KeyActionColor_Mouse
     {.red=255, .green=0, .blue=255}, // KeyActionColor_Macro
 };
 
@@ -109,3 +112,48 @@ rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
         { .red=0, .green=0, .blue=0 } // Unused
     },
 };
+
+
+
+void UpdateLayerLeds(void) {
+    for (uint8_t slotId=0; slotId<2; slotId++) {
+        for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
+            key_action_color_t keyActionColor;
+//            key_action_t (*layerKeyActions)[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = &CurrentKeymap[ActiveLayer];
+//            key_action_t *keyAction = layerKeyActions[slotId][keyId];
+            key_action_t *keyAction = &CurrentKeymap[ActiveLayer][slotId][keyId];
+            switch (keyAction->type) {
+                case KeyActionType_Keystroke:
+                    if (keyAction->keystroke.scancode && keyAction->keystroke.modifiers) {
+                        keyActionColor = KeyActionColor_Shortcut;
+                    } else if (keyAction->keystroke.modifiers) {
+                        keyActionColor = KeyActionColor_Modifier;
+                    } else {
+                        keyActionColor = KeyActionColor_Scancode;
+                    }
+                    break;
+                case KeyActionType_SwitchLayer:
+                    keyActionColor = KeyActionColor_SwitchLayer;
+                    break;
+                case KeyActionType_Mouse:
+                    keyActionColor = KeyActionColor_Mouse;
+                    break;
+                case KeyActionType_SwitchKeymap:
+                    keyActionColor = KeyActionColor_SwitchKeymap;
+                    break;
+                case KeyActionType_PlayMacro:
+                    keyActionColor = KeyActionColor_Macro;
+                    break;
+                default:
+                    keyActionColor = KeyActionColor_None;
+                    break;
+            }
+
+            rgb_t *keyActionColorValues = &KeyActionColors[keyActionColor];
+            rgb_t *ledMapItem = &LedMap[slotId][keyId];
+            LedDriverValues[slotId][ledMapItem->red] = keyActionColorValues->red;
+            LedDriverValues[slotId][ledMapItem->green] = keyActionColorValues->green;
+            LedDriverValues[slotId][ledMapItem->blue] = keyActionColorValues->blue;
+        }
+    }
+}

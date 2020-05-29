@@ -1,4 +1,5 @@
 #include "layer_switcher.h"
+#include "ledmap.h"
 #include "timer.h"
 
 static uint16_t DoubleTapSwitchLayerTimeout = 300;
@@ -50,7 +51,7 @@ void updateActiveLayer() {
     //(write actual ActiveLayer atomically, so that random observer is not confused)
     ActiveLayer = activeLayer;
     ActiveLayerHeld = heldLayer == ActiveLayer && ActiveLayer != LayerId_Base;
-
+    UpdateLayerLeds();
 }
 
 /*

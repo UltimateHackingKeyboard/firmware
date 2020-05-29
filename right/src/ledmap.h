@@ -12,11 +12,11 @@
         KeyActionColor_Scancode,
         KeyActionColor_Modifier,
         KeyActionColor_Shortcut,
-        KeyActionColor_LayerSwitch,
-        KeyActionColor_KeymapSwitch,
+        KeyActionColor_SwitchLayer,
+        KeyActionColor_SwitchKeymap,
         KeyActionColor_Mouse,
         KeyActionColor_Macro,
-    } key_action_color;
+    } key_action_color_t;
 
     typedef struct {
         uint8_t red;
@@ -28,5 +28,9 @@
 
     extern rgb_t KeyActionColors[];
     extern rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
+
+// Functions:
+
+    extern void UpdateLayerLeds(void);
 
 #endif
