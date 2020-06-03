@@ -36,7 +36,7 @@ can be combined. E.g.:
 
     ![Example macro showing double-shift-to-caps lock.](https://github.com/kareltucek/firmware/raw/master/macroExample.png)
 
-    If you are on Mac, this macro probably won't work. See known issues and examples.
+    If you are on Mac, this macro may not work, but you get the idea. (If you actually want to get it running, see known issues and examples.)
 
 3) Understanding this readme:
 
@@ -228,7 +228,7 @@ The following grammar is supported:
     COMMAND = {stopRecording | stopRecordingBlind}
     COMMAND = playMacro [<slot identifier (MACROID)>]
     COMMAND = {startMouse|stopMouse} {move DIRECTION|scroll DIRECTION|accelerate|decelerate}
-    COMMAND = setStickyModsEnabled {0|1}
+    COMMAND = setStickyModsEnabled {0|never|smart|always|1}
     COMMAND = setCompensateDiagonalSpeed {0|1}
     COMMAND = setDebounceDelay <time in ms, at most 250 (NUMBER)>
     COMMAND = setReg <register index (NUMBER)> <value (NUMBER)> 
@@ -407,7 +407,7 @@ The following grammar is supported:
   - `{addReg|subReg|mulReg} <register index> <value>` adds value to the register 
   - Register values can also be used in place of all numeric arguments by prefixing register index by '#'. E.g., waiting until release or for amount of time defined by reg 1 can be achieved by `$delayUntilReleaseMax #1`
 - Global configuration options:
-  - `setStickyModsEnabled` globally turns on or off sticky modifiers
+  - `setStickyModsEnabled` globally turns on or off sticky modifiers. This affects only standard scancode actions. Macro actions (both gui and command ones) are always nonsticky, unless `sticky` flag is included in `tapKey|holdKey|pressKey` commands. Default value is `smart`, which is the official behaviour - i.e., `<alt/ctrl/gui> + <tab/arrows>` are sticky. Furthermore `0 == never` and `1 == always`.
   - `setCompensateDiagonalSpeed` will divide diagonal mouse speed by sqrt(2) if enabled.
   - `setDebounceDelay <time in ms, at most 250>` prevents key state from changing for some time after every state change. This is needed because contacts of mechanical switches can bounce after contact and therefore change state multiple times in span of a few milliseconds. Official firmware debounce time is 50 ms for both press and release. Recommended value is 10-50, default is 50.
 - Argument parsing rules:

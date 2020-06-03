@@ -1348,8 +1348,20 @@ bool processPostponeKeysCommand()
 
 bool processSetStickyModsEnabledCommand(const char* arg, const char *argEnd)
 {
-    uint8_t enabled = parseNUM(arg,  argEnd);
-    StickyModifiersEnabled = enabled;
+    if(TokenMatches(arg, argEnd, "never")) {
+        StickyModifierStrategy = Stick_Never;
+    }
+    else if(TokenMatches(arg, argEnd, "always")) {
+        StickyModifierStrategy = Stick_Always;
+    }
+    else if(TokenMatches(arg, argEnd, "smart")) {
+        StickyModifierStrategy = Stick_Smart;
+    }
+    else {
+        uint8_t enabled = parseNUM(arg,  argEnd);
+        //enabled means official default, which is smart.
+        StickyModifierStrategy = enabled ? Stick_Smart : Stick_Never;
+    }
     return false;
 }
 

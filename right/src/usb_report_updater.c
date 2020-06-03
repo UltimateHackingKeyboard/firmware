@@ -33,7 +33,7 @@ uint8_t HardwareModifierState;
 uint8_t HardwareModifierStatePrevious;
 bool SuppressMods = false;
 bool SuppressKeys = false;
-bool StickyModifiersEnabled = true;//TODO: refactor this
+sticky_strategy_t StickyModifierStrategy = Stick_Smart;//TODO: refactor this
 
 key_state_t* EmergencyKey = NULL;
 
@@ -134,7 +134,14 @@ static bool isStickyShortcut(key_action_t * action)
 
 static bool shouldStickAction(key_action_t * action)
 {
-    return ActiveLayerHeld && isStickyShortcut(action) && StickyModifiersEnabled;
+    switch(StickyModifierStrategy) {
+    case Stick_Always:
+        return true;
+    case Stick_Never:
+        return false;
+    case Stick_Smart:
+        return ActiveLayerHeld && isStickyShortcut(action);
+    }
 }
 
 static void activateStickyMods(key_state_t *keyState, key_action_t *action)

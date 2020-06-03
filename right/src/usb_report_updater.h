@@ -32,6 +32,12 @@
         SecondaryRole_Mouse
     } secondary_role_t;
 
+    typedef enum {
+        Stick_Never,
+        Stick_Smart,
+        Stick_Always
+    } sticky_strategy_t;
+
 // Variables:
 
     extern uint32_t UsbReportUpdateCounter;
@@ -41,7 +47,7 @@
     extern uint8_t HardwareModifierStatePrevious;
     extern bool SuppressMods;
     extern bool PostponeKeys;
-    extern bool StickyModifiersEnabled;
+    extern sticky_strategy_t StickyModifierStrategy;
     extern uint16_t KeystrokeDelay;
     extern bool PendingPostponedAndReleased;
     extern bool ActivateOnRelease;
