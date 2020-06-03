@@ -1510,8 +1510,18 @@ macro_action_t decodeKey(const char* arg1, const char* argEnd) {
 }
 
 bool processKeyCommand(macro_sub_action_t type, const char* arg1, const char* argEnd) {
+    bool isSticky = false;
+    if(TokenMatches(arg1, argEnd, "sticky")) {
+        isSticky = true;
+        arg1 = NextTok(arg1, argEnd);
+    }
+
     macro_action_t action = decodeKey(arg1, argEnd);
     action.key.action = type;
+
+    if(action.type == MacroActionType_Key) {
+        action.key.sticky = isSticky;
+    }
 
     switch (action.type) {
         case MacroActionType_Key:

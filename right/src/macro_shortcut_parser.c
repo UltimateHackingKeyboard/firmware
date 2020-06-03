@@ -456,13 +456,8 @@ static macro_action_t parseAbbrev(const char* str, const char* strEnd) {
 
 macro_action_t MacroShortcutParser_Parse(const char* str, const char* strEnd) {
     macro_action_t action;
-    bool isSticky = false;
-
     initialize();
-    if(TokenMatches(str, strEnd, "sticky")) {
-        isSticky = true;
-        str = NextTok(str, strEnd);
-    }
+
     if(FindChar('-', str, strEnd) == strEnd) {
         //"-" notation not used
         action = parseAbbrev(str, strEnd);
@@ -476,9 +471,6 @@ macro_action_t MacroShortcutParser_Parse(const char* str, const char* strEnd) {
         }
 
         action.key.modifierMask = parseMods(str, delim);
-    }
-    if(action.type == MacroActionType_Key) {
-        action.key.sticky = isSticky;
     }
     return action;
 }
