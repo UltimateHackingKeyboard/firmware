@@ -36,7 +36,7 @@ static uint16_t playbackPosition;
 static bool delayActive;
 static uint32_t delayStart;
 
-void initHeaderSlot(uint16_t id) {
+static void initHeaderSlot(uint16_t id) {
     recordingHeader = &headers[headersLen];
     headersLen++;
     recordingHeader->id = id;
@@ -44,7 +44,7 @@ void initHeaderSlot(uint16_t id) {
     recordingHeader->length = 0;
 }
 
-void discardHeaderSlot(uint8_t headerSlot) {
+static void discardHeaderSlot(uint8_t headerSlot) {
     uint16_t offsetLeft = headers[headerSlot].offset;
     uint16_t offsetRight = headers[headerSlot].offset + headers[headerSlot].length;
     uint16_t length = headers[headerSlot].length;
@@ -59,14 +59,14 @@ void discardHeaderSlot(uint8_t headerSlot) {
     }
 }
 
-void discardLastHeaderSlot() {
+static void discardLastHeaderSlot() {
     uint8_t headerSlot = headersLen - 1;
     uint16_t length = headers[headerSlot].length;
     reportBufferLength = reportBufferLength - length;
     headersLen = headersLen-1;
 }
 
-void resolveRecordingHeader(uint16_t id) {
+static void resolveRecordingHeader(uint16_t id) {
     for(int i = 0; i < headersLen; i++)
     {
         if(headers[i].id == id)
@@ -81,7 +81,7 @@ void resolveRecordingHeader(uint16_t id) {
     initHeaderSlot(id);
 }
 
-bool resolvePlaybackHeader(uint16_t id) {
+static bool resolvePlaybackHeader(uint16_t id) {
     for(int i = 0; i < headersLen; i++)
     {
         if(headers[i].id == id)
@@ -98,43 +98,43 @@ bool resolvePlaybackHeader(uint16_t id) {
 }
 
 //id is an arbitrary slot identifier
-void recordRuntimeMacroStart(uint16_t id, bool blind) {
+static void recordRuntimeMacroStart(uint16_t id, bool blind) {
     resolveRecordingHeader(id);
     RuntimeMacroRecording = true;
     RuntimeMacroRecordingBlind = blind;
     LedDisplay_SetIcon(LedDisplayIcon_Adaptive, true);
 }
 
-void writeByte(uint8_t b) {
+static void writeByte(uint8_t b) {
     reportBuffer[reportBufferLength] = b;
     reportBufferLength++;
     recordingHeader->length++;
 }
 
 
-void writeUInt16(uint16_t b) {
+static void writeUInt16(uint16_t b) {
     writeByte(((uint8_t*)&b)[0]);
     writeByte(((uint8_t*)&b)[1]);
 }
 
-void recordRuntimeMacroEnd() {
+static void recordRuntimeMacroEnd() {
     RuntimeMacroRecording = false;
     RuntimeMacroRecordingBlind = false;
     LedDisplay_SetIcon(LedDisplayIcon_Adaptive, false);
 }
 
-uint8_t readByte() {
+static uint8_t readByte() {
     return reportBuffer[playbackPosition++];
 }
 
-uint16_t readUInt16() {
+static uint16_t readUInt16() {
     uint16_t b;
     ((uint8_t*)&b)[0] = reportBuffer[playbackPosition++];
     ((uint8_t*)&b)[1] = reportBuffer[playbackPosition++];
     return b;
 }
 
-void playReport(usb_basic_keyboard_report_t *report) {
+static void playReport(usb_basic_keyboard_report_t *report) {
     macro_report_type_t type = readByte();
     switch(type) {
     case BasicKeyboardEmpty:
@@ -176,7 +176,7 @@ void playReport(usb_basic_keyboard_report_t *report) {
     }
 }
 
-bool playRuntimeMacroBegin(uint16_t id) {
+static bool playRuntimeMacroBegin(uint16_t id) {
     if(!resolvePlaybackHeader(id)) {
         return false;
     }
@@ -185,7 +185,7 @@ bool playRuntimeMacroBegin(uint16_t id) {
     return true;
 }
 
-bool playRuntimeMacroContinue(usb_basic_keyboard_report_t* report) {
+static bool playRuntimeMacroContinue(usb_basic_keyboard_report_t* report) {
     if(!RuntimeMacroPlaying) {
         return false;
     }
