@@ -222,6 +222,7 @@ The following grammar is supported:
     COMMAND = clearStatus 
     COMMAND = setLedTxt <timeout (NUMBER)> <custom text>
     COMMAND = write <custom text>
+    COMMAND = writeExpr NUMBER
     COMMAND = goTo <index (ADDRESS)>
     COMMAND = repeatFor <register index (NUMBER)> <action adr (ADDRESS)>
     COMMAND = recordMacroDelay
@@ -292,6 +293,7 @@ The following grammar is supported:
   - `setLedTxt <time> <custom text>` will set led display to supplemented text for the given time. (Blocks for the given time.)
 - Triggering keyboard actions (pressing keys, clicking, etc.):
   - `write <custom text>` will type rest of the string. Same as the plain text command. This is just easier to use with conditionals... If you want to interpolate register values, use (e.g.) `$setStatus Register 0 contains #0; $printStatus`.
+  - `writeExpr NUMBER` serves for writing out contents of registers or otherwise computed numbers. E.g., `$writeExpr #5` or `$writeExpr @-2`.
   - `startMouse/stopMouse` start/stop corresponding mouse action. E.g., `startMouse move left`
   - `pressKey|holdKey|tapKey|releaseKey` Presses/holds/taps/releases the provided scancode. E.g., `pressKey mouseBtnLeft`, `tapKey LC-v` (Left Control + (lowercase) v), `tapKey CS-f5` (Ctrl + Shift + F5).
     - press means adding the scancode into a list of "active keys" and continuing the macro. The key is released once the macro ends. I.e., if the command is not followed by any sort of delay, the key will be released again almost immediately.

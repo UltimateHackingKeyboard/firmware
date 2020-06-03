@@ -2,7 +2,7 @@
 #include "config_parser/parse_keymap.h"
 #include "macros.h"
 
-int32_t ParseInt32(const char *a, const char *aEnd)
+int32_t ParseInt32_2(const char *a, const char *aEnd, const char* *parsedTill)
 {
     bool negate = false;
     if(*a == '-')
@@ -24,7 +24,14 @@ int32_t ParseInt32(const char *a, const char *aEnd)
     if(!numFound) {
         Macros_ReportError("Integer expected", NULL, NULL);
     }
+    if(parsedTill != NULL) {
+        *parsedTill = a;
+    }
     return n;
+}
+
+int32_t ParseInt32(const char *a, const char *aEnd) {
+    return ParseInt32_2(a, aEnd, NULL);
 }
 
 bool StrLessOrEqual(const char* a, const char* aEnd, const char* b, const char* bEnd)

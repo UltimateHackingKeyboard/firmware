@@ -9,6 +9,7 @@
 // Functions:
 
     int32_t ParseInt32(const char *a, const char *aEnd);
+    int32_t ParseInt32_2(const char *a, const char *aEnd, const char* *parsedTill);
     bool StrLessOrEqual(const char* a, const char* aEnd, const char* b, const char* bEnd);
     bool StrEqual(const char* a, const char* aEnd, const char* b, const char* bEnd);
     const char* FindChar(char c, const char* str, const char* strEnd);

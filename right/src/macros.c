@@ -53,6 +53,7 @@ static uint16_t doubletapConditionTimeout = 300;
 
 
 int32_t parseNUM(const char *a, const char *aEnd);
+int32_t parseNUM2(const char *a, const char *aEnd, const char* *parsedTill);
 bool processCommand(const char* cmd, const char* cmdEnd);
 bool continueMacro(void);
 bool execMacro(uint8_t macroIndex);
@@ -427,8 +428,8 @@ void setStatusStringInterpolated(const char* text, const char *textEnd, bool int
     }
     while(*text && statusBufferLen < STATUS_BUFFER_MAX_LENGTH && (text < textEnd || textEnd == NULL)) {
         if(*text == '#' && interpolated) {
-            int32_t parsed = parseNUM(text, textEnd);
-            text = TokEnd(text, textEnd);
+            int32_t parsed = parseNUM2(text, textEnd, &text);
+            //text should be now set to next character after a number, even if it was e.g., "'#3'"
             Macros_SetStatusNumSpaced(parsed, false);
         } else {
             statusBuffer[statusBufferLen] = *text;
@@ -610,6 +611,23 @@ bool validReg(uint8_t idx) {
     return true;
 }
 
+bool writeNum(uint32_t a) {
+    char num[11];
+    num[10] = '\0';
+    int at = 9;
+    while ((a > 0 || at == 9) && at >= 0) {
+        num[at] = a % 10 + 48;
+        a = a/10;
+        at--;
+    }
+
+    if(!dispatchText(&num[at+1], 9 - at)){
+        PostponerExtended_ConsumePendingKeypresses(1, true);
+        return false;
+    }
+    return true;
+}
+
 bool isNUM(const char *a, const char *aEnd) {
     switch(*a) {
     case '0'...'9':
@@ -623,14 +641,17 @@ bool isNUM(const char *a, const char *aEnd) {
     }
 }
 
-int32_t parseNUM(const char *a, const char *aEnd)
+int32_t parseNUM2(const char *a, const char *aEnd, const char* *parsedTill)
 {
     if(*a == '#') {
         a++;
         if(TokenMatches(a, aEnd, "key")) {
+            if(parsedTill != NULL) {
+                *parsedTill = a+3;
+            }
             return Utils_KeyStateToKeyId(s->currentMacroKey);
         }
-        uint8_t adr = parseNUM(a, aEnd);
+        uint8_t adr = parseNUM2(a, aEnd, parsedTill);
         if(validReg(adr)) {
             return regs[adr];
         } else {
@@ -639,7 +660,7 @@ int32_t parseNUM(const char *a, const char *aEnd)
     }
     else if(*a == '%') {
         a++;
-        uint8_t idx = parseNUM(a, aEnd);
+        uint8_t idx = parseNUM2(a, aEnd, parsedTill);
         if(idx >= PostponerQuery_PendingKeypressCount()) {
             Macros_ReportError("Not enough pending keys! Note that this is zero-indexed!",  NULL,  NULL);
             return 0;
@@ -648,14 +669,18 @@ int32_t parseNUM(const char *a, const char *aEnd)
     }
     else if(*a == '@') {
         a++;
-        return s->currentMacroActionIndex + parseNUM(a, aEnd);
+        return s->currentMacroActionIndex + parseNUM2(a, aEnd, parsedTill);
     }
     else
     {
-        return ParseInt32(a, aEnd);
+        return ParseInt32_2(a, aEnd, parsedTill);
     }
 }
 
+int32_t parseNUM(const char *a, const char *aEnd)
+{
+    return parseNUM2(a, aEnd, NULL);
+}
 
 uint8_t parseAddress(const char* arg, const char* argEnd)
 {
@@ -1334,6 +1359,13 @@ bool processWriteCommand(const char* arg, const char *argEnd)
     return dispatchText(arg, argEnd - arg);
 }
 
+
+bool processWriteExprCommand(const char* arg, const char *argEnd)
+{
+    uint32_t num = parseNUM(arg, argEnd);
+    return writeNum(num);
+}
+
 bool processSuppressModsCommand()
 {
     SuppressMods = true;
@@ -1534,16 +1566,11 @@ bool processKeyCommand(macro_sub_action_t type, const char* arg1, const char* ar
 }
 
 bool processResolveNextKeyIdCommand() {
-    char num[4];
     postponeCurrentCycle();
     if(PostponerQuery_PendingKeypressCount() == 0) {
         return true;
     }
-    num[0] = PostponerExtended_PendingId(0) / 100 % 10 + 48;
-    num[1] = PostponerExtended_PendingId(0) / 10 % 10 + 48;
-    num[2] = PostponerExtended_PendingId(0) % 10 + 48;
-    num[3] = '\0';
-    if(!dispatchText(num, 3)){
+    if(!writeNum(PostponerExtended_PendingId(0))) {
         PostponerExtended_ConsumePendingKeypresses(1, true);
         return false;
     }
@@ -2280,6 +2307,9 @@ bool processCommand(const char* cmd, const char* cmdEnd)
         case 'w':
             if(TokenMatches(cmd, cmdEnd, "write")) {
                 return processWriteCommand(arg1, cmdEnd);
+            }
+            else if(TokenMatches(cmd, cmdEnd, "writeExpr")) {
+                return processWriteExprCommand(arg1, cmdEnd);
             }
             else {
                 goto failed;
