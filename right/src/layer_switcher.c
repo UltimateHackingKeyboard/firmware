@@ -58,7 +58,6 @@ void updateActiveLayer() {
     //(write actual ActiveLayer atomically, so that random observer is not confused)
     ActiveLayer = activeLayer;
     ActiveLayerHeld = activeLayerHeld;
-
 }
 
 /*

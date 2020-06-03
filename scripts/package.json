@@ -1,5 +1,6 @@
 {
   "name": "uhk-firmware",
+  "private": true,
   "homepage": "https://UltimateHackingKeyboard.com",
   "description": "The firmware of the Ultimate Hacking Keyboard",
   "repository": {
@@ -7,7 +8,7 @@
     "url": "git+ssh://git@github.com/UltimateHackingKeyboard/firmware.git"
   },
   "author": "Ultimate Gadget Laboratories",
-  "license": "GPL-3.0",
+  "license": "See in LICENSE",
   "bugs": {
     "url": "https://github.com/UltimateHackingKeyboard/firmware/issues"
   },
@@ -15,10 +16,10 @@
     "commander": "^2.11.0",
     "shelljs": "^0.7.8"
   },
-  "firmwareVersion": "8.9.2",
+  "firmwareVersion": "8.10.0",
   "deviceProtocolVersion": "4.7.0",
   "moduleProtocolVersion": "4.1.0",
-  "userConfigVersion": "4.1.1",
+  "userConfigVersion": "4.2.0",
   "hardwareConfigVersion": "1.0.0",
   "devices": [
     {
