@@ -271,6 +271,7 @@ bool processKey(macro_action_t macro_action)
     keystroke_type_t type = macro_action.key.type;
     uint8_t modifierMask = macro_action.key.modifierMask;
     uint16_t scancode = macro_action.key.scancode;
+    bool isSticky = macro_action.key.sticky;
 
     s->pressPhase++;
 
@@ -280,6 +281,9 @@ bool processKey(macro_action_t macro_action)
             switch(s->pressPhase) {
                 case 1:
                     addModifiers(modifierMask);
+                    if(isSticky) {
+                        ActivateStickyMods(s->currentMacroKey, modifierMask);
+                    }
                     return true;
                 case 2:
                     addScancode(scancode, type);
@@ -312,6 +316,9 @@ bool processKey(macro_action_t macro_action)
             switch (s->pressPhase) {
                 case 1:
                     addModifiers(modifierMask);
+                    if(isSticky) {
+                        ActivateStickyMods(s->currentMacroKey, modifierMask);
+                    }
                     return true;
                 case 2:
                     addScancode(scancode, type);

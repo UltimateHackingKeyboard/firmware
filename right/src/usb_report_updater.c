@@ -144,6 +144,13 @@ static void activateStickyMods(key_state_t *keyState, key_action_t *action)
     stickyModifierShouldStick = shouldStickAction(action);
 }
 
+void ActivateStickyMods(key_state_t *keyState, uint8_t mods)
+{
+    stickyModifiers = mods;
+    stickyModifierKey = keyState;
+    stickyModifierShouldStick = true;
+}
+
 static void applyKeystrokePrimary(key_state_t *keyState, key_action_t *action)
 {
     if (KeyState_Active(keyState)) {

@@ -455,15 +455,30 @@ static macro_action_t parseAbbrev(const char* str, const char* strEnd) {
 }
 
 macro_action_t MacroShortcutParser_Parse(const char* str, const char* strEnd) {
+    macro_action_t action;
+    bool isSticky = false;
+
     initialize();
+    if(TokenMatches(str, strEnd, "sticky")) {
+        isSticky = true;
+        str = NextTok(str, strEnd);
+    }
     if(FindChar('-', str, strEnd) == strEnd) {
-        return parseAbbrev(str, strEnd);
+        //"-" notation not used
+        action = parseAbbrev(str, strEnd);
     }
     else {
         const char* delim = FindChar('-', str, strEnd);
-        macro_action_t action;
         action = parseAbbrev(delim+1, strEnd);
+
+        if(action.type != MacroActionType_Key) {
+            Macros_ReportError("This action is not allowed to have modifiers!", str, strEnd);
+        }
+
         action.key.modifierMask = parseMods(str, delim);
-        return action;
     }
+    if(action.type == MacroActionType_Key) {
+        action.key.sticky = isSticky;
+    }
+    return action;
 }

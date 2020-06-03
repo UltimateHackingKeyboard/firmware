@@ -61,6 +61,7 @@
                 keystroke_type_t type;
                 uint16_t scancode;
                 uint8_t modifierMask;
+                bool sticky;
             } ATTR_PACKED key;
             struct {
                 macro_sub_action_t action;
