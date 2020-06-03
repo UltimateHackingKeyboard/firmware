@@ -42,11 +42,13 @@ can be combined. E.g.:
 
     - Go through the sections of the reference manual below - just reading the top section lines will give you some idea about available  types of commands.
     - Read through examples in order to understand how the constructs can be combined.
-    - Understand how to read the stated ebnf grammar. The grammar gives you precise instructions about how your commands should be constructed. Some commands may even be mentioned only in the grammar. In case you don't know anything about grammars:
+    - Understand how to read the stated ebnf grammar. The grammar gives you precise instructions about available features and their parameters, as well as correct syntax. Note that some commands and parameters are only mentioned in the grammar! In case you don't know anything about grammars:
         - The grammar describes a valid expression via a set of rules. At the beginning, the expression equals "BODY". Every capital word of the expression is to be "rewritten" by a corresponding rule - i.e., the identifier is to be replaced by an expression which matches right side of the rule. 
         - Notation: `<>` mark informal (human-understandable) explanation of what is to be entered. `|` operator indicates choice between left and right operand. It is typically enclosed in `{}`, in order to separate the group from the rest of the rule. `[]` denote optional arguments. Especially `[]+` marks "one or more" and `[]*` arbitrary number.
+    - If you are still not sure about some feature or syntax, do not hesitate to ask.
 
-    
+4) If you encounter a bug, let me know. There are lots of features and quite few users around this codebase - if you do not report problems you find, chances are that no one else will (since most likely no one else has noticed). 
+
 ## Examples
 **Note that every command (i.e., every line in the examples) has to be inputted as a separate action!** Also note that macros are being run "asynchronously" (i.e., interleaved with other event handling) at a pace of at most one action per update cycle per macro. A macro action may take one or more update cycles to complete (esp. delay commands and all commands which interfere with usb reports).
 
