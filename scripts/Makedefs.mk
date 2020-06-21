@@ -38,6 +38,14 @@ ifeq ($(OS),Windows_NT) # Native Windows.
     WIN = 1
 endif
 
+# If linux, and arm-none-eabi is not on the path, 
+# this is the default install location on Linux
+ifeq ($(WIN),0)
+    ifeq (, $(shell which arm-none-eabi))
+        PREFIX = /usr/local/mcuxpressoide/ide/tools/bin/arm-none-eabi
+    endif
+endif
+
 # Set J-Link executable.
 ifeq ($(WIN),1)
     JLINK := JLink.exe
