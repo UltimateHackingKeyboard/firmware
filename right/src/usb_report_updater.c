@@ -170,11 +170,8 @@ static void applyKeystrokePrimary(key_state_t *keyState, key_action_t *action)
                 activateStickyMods(keyState, action);
             }
         } else {
-            if(!SuppressMods) {
-                ActiveUsbBasicKeyboardReport->modifiers |= action->keystroke.modifiers;
-            }
+            HardwareModifierState |= action->keystroke.modifiers;
         }
-        HardwareModifierState |= action->keystroke.modifiers;
         // If there are mods: first cycle send just mods, in next cycle start sending mods+scancode
         if (!stickyModifiersChanged || KeyState_ActivatedEarlier(keyState)) {
             switch (action->keystroke.keystrokeType) {
@@ -322,6 +319,9 @@ void mergeReports(void)
             ActiveUsbMouseReport->wheelX += s->macroMouseReport.wheelX;
             ActiveUsbMouseReport->wheelY += s->macroMouseReport.wheelY;
         }
+    }
+    if(!SuppressMods) {
+        ActiveUsbBasicKeyboardReport->modifiers |= HardwareModifierState ;
     }
 }
 
