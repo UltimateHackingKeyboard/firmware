@@ -3,6 +3,7 @@
 #include "slave_scheduler.h"
 #include "led_display.h"
 #include "device.h"
+#include "ledmap.h"
 
 uint8_t KeyBacklightBrightness = 0xff;
 uint8_t LedDriverValues[LED_DRIVER_MAX_COUNT][LED_DRIVER_LED_COUNT_MAX];
@@ -176,7 +177,7 @@ void LedSlaveDriver_UpdateLeds(void)
     for (uint8_t ledDriverId=0; ledDriverId<=LedDriverId_Last; ledDriverId++) {
         memset(LedDriverValues[ledDriverId], KeyBacklightBrightness, ledDriverStates[ledDriverId].ledCount);
     }
-
+    UpdateLayerLeds();
     LedDisplay_UpdateAll();
 }
 
@@ -194,6 +195,7 @@ void LedSlaveDriver_Init(uint8_t ledDriverId)
     memset(LedDriverValues[ledDriverId], KeyBacklightBrightness, currentLedDriverState->ledCount);
 
     if (ledDriverId == LedDriverId_Left) {
+        UpdateLayerLeds();
         LedDisplay_UpdateAll();
     }
 }
