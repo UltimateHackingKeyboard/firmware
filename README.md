@@ -16,7 +16,7 @@ If you're one of the brave few who wants to hack the firmware then read on.
 
 3. Install the GNU ARM Eclipse Plugins for in McuXpresso IDE. This is needed to make indexing work, and to avoid the "Orphaned configuration" error message in project properties. 
     1. In MCUXpresso IDE, go to Help > "Install New Software...", then a new dialog will appear.
-    2. In the Name field type "Eclipse Embedded CDT Plug-ins" and in the Location field type "https://download.eclipse.org/embed-cdt/updates/neon", then click on the Add button.
+    2. In the Name field type `Eclipse Embedded CDT Plug-ins` and in the Location field type `https://download.eclipse.org/embed-cdt/updates/neon`, then click on the Add button.
     3. Go with the flow and install the plugin.
     
 4. In the IDE, import this project by invoking *File -> Import -> General -> Existing Projects into Workspace*, select the *left* or *right* directory depending on the desired firmware, then click on the *Finish* button.
