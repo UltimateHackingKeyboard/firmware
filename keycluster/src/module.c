@@ -75,6 +75,8 @@ tpm_channel_t tpmChannels[] = {
 
 void Tpm_Init(void)
 {
+    CLOCK_SetTpmClock(1U);
+
     tpm_config_t tpmInfo;
     TPM_GetDefaultConfig(&tpmInfo);
     tpmInfo.prescale = kTPM_Prescale_Divide_4;
