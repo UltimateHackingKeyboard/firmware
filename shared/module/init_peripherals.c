@@ -65,7 +65,7 @@ void initI2c(void)
 
     I2C_SlaveGetDefaultConfig(&slaveConfig);
     slaveConfig.slaveAddress = I2C_ADDRESS_MODULE_FIRMWARE;
-    I2C_SlaveInit(I2C_BUS_BASEADDR, &slaveConfig);
+    I2C_SlaveInit(I2C_BUS_BASEADDR, &slaveConfig, I2C_BUS_BAUD_RATE);
     I2C_SlaveTransferCreateHandle(I2C_BUS_BASEADDR, &slaveHandle, i2cSlaveCallback, &userData);
     I2C_SlaveTransferNonBlocking(I2C_BUS_BASEADDR, &slaveHandle, kI2C_SlaveAddressMatchEvent);
 }
