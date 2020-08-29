@@ -200,6 +200,11 @@ static void processTouchpadActions() {
     TouchpadEvents.x = 0;
     TouchpadEvents.y = 0;
 
+    ActiveUsbMouseReport->wheelX += TouchpadEvents.wheelX;
+    ActiveUsbMouseReport->wheelY -= TouchpadEvents.wheelY;
+    TouchpadEvents.wheelX = 0;
+    TouchpadEvents.wheelY = 0;
+
     if (TouchpadEvents.singleTap) {
         ActiveUsbMouseReport->buttons |= MouseButton_Left;
         TouchpadEvents.singleTap = false;
