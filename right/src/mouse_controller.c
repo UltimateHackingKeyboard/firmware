@@ -194,6 +194,13 @@ static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
     kineticState->wasMoveAction = isMoveAction;
 }
 
+static void processTouchpadActions() {
+    ActiveUsbMouseReport->x += TouchpadEvents.x;
+    ActiveUsbMouseReport->y += TouchpadEvents.y;
+    TouchpadEvents.x = 0;
+    TouchpadEvents.y = 0;
+}
+
 void MouseController_ProcessMouseActions()
 {
     mouseElapsedTime = Timer_GetElapsedTimeAndSetCurrent(&mouseUsbReportUpdateTime);
@@ -210,10 +217,7 @@ void MouseController_ProcessMouseActions()
     MouseScrollState.xOut = 0;
     MouseScrollState.yOut = 0;
 
-    ActiveUsbMouseReport->x += TouchpadUsbMouseReport.x;
-    ActiveUsbMouseReport->y += TouchpadUsbMouseReport.y;
-    TouchpadUsbMouseReport.x = 0;
-    TouchpadUsbMouseReport.y = 0;
+    processTouchpadActions();
 
     for (uint8_t moduleId=0; moduleId<UHK_MODULE_MAX_COUNT; moduleId++) {
         uhk_module_state_t *moduleState = UhkModuleStates + moduleId;

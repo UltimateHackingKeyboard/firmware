@@ -33,7 +33,6 @@ static gesture_events1_t gestureEvents1;
 
 uint8_t address = I2C_ADDRESS_RIGHT_IQS5XX_FIRMWARE;
 touchpad_events_t TouchpadEvents;
-usb_mouse_report_t TouchpadUsbMouseReport;
 uint8_t phase = 0;
 static uint8_t enableEventMode[] = {0x05, 0x8f, 0x07};
 static uint8_t getGestureEvents0[] = {0x00, 0x0d};
@@ -123,6 +122,6 @@ status_t TouchpadDriver_Update(uint8_t uhkModuleDriverId)
 
 void TouchpadDriver_Disconnect(uint8_t uhkModuleDriverId)
 {
-    TouchpadUsbMouseReport.x = 0;
-    TouchpadUsbMouseReport.y = 0;
+    TouchpadEvents.x = 0;
+    TouchpadEvents.y = 0;
 }
