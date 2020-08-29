@@ -32,7 +32,7 @@ static gesture_events0_t gestureEvents0;
 static gesture_events1_t gestureEvents1;
 
 uint8_t address = I2C_ADDRESS_RIGHT_IQS5XX_FIRMWARE;
-extern touchpad_events_t TouchpadEvents;
+touchpad_events_t TouchpadEvents;
 usb_mouse_report_t TouchpadUsbMouseReport;
 uint8_t phase = 0;
 static uint8_t enableEventMode[] = {0x05, 0x8f, 0x07};
@@ -100,9 +100,9 @@ status_t TouchpadDriver_Update(uint8_t uhkModuleDriverId)
             break;
         }
         case 9: {
-//            LedDisplay_SetIcon(LedDisplayIcon_Adaptive, gestureEvents0.singleTap);
-            LedDisplay_SetIcon(LedDisplayIcon_Adaptive, gestureEvents0.tapAndHold);
-//            LedDisplay_SetIcon(LedDisplayIcon_Adaptive, gestureEvents1.twoFingerTap);
+            TouchpadEvents.singleTap |= gestureEvents0.singleTap;
+            TouchpadEvents.twoFingerTap |= gestureEvents1.twoFingerTap;
+            TouchpadEvents.tapAndHold = gestureEvents0.tapAndHold;
 //            LedDisplay_SetIcon(LedDisplayIcon_Adaptive, gestureEvents1.scroll);
 //            LedDisplay_SetIcon(LedDisplayIcon_Adaptive, gestureEvents1.zoom);
             status = I2cAsyncWrite(address, closeCommunicationWindow, sizeof(closeCommunicationWindow));
