@@ -56,46 +56,46 @@ status_t TouchpadDriver_Update(uint8_t uhkModuleDriverId)
             break;
         }
         case 1: {
-            status = I2cAsyncWrite(address, getRelativePixelsXCommand, sizeof(getRelativePixelsXCommand));
+            status = I2cAsyncWrite(address, getGestureEvents0, sizeof(getGestureEvents0));
             phase = 2;
             break;
         }
         case 2: {
-            status = I2cAsyncRead(address, buffer, 2);
-            deltaX = (int16_t)(buffer[1] | buffer[0]<<8);
+            status = I2cAsyncRead(address, (uint8_t*)&gestureEvents0, 1);
             phase = 3;
             break;
         }
         case 3: {
-            status = I2cAsyncWrite(address, getRelativePixelsYCommand, sizeof(getRelativePixelsYCommand));
+            status = I2cAsyncWrite(address, getGestureEvents1, sizeof(getGestureEvents1));
             phase = 4;
             break;
         }
         case 4: {
-            status = I2cAsyncRead(address, buffer, 2);
-            deltaY = (int16_t)(buffer[1] | buffer[0]<<8);
-            TouchpadUsbMouseReport.x -= deltaX;
-            TouchpadUsbMouseReport.y += deltaY;
+            status = I2cAsyncRead(address, (uint8_t*)&gestureEvents1, 1);
             phase = 5;
             break;
         }
         case 5: {
-            status = I2cAsyncWrite(address, getGestureEvents0, sizeof(getGestureEvents0));
+            status = I2cAsyncWrite(address, getRelativePixelsXCommand, sizeof(getRelativePixelsXCommand));
             phase = 6;
             break;
         }
         case 6: {
-            status = I2cAsyncRead(address, (uint8_t*)&gestureEvents0, 1);
+            status = I2cAsyncRead(address, buffer, 2);
+            deltaX = (int16_t)(buffer[1] | buffer[0]<<8);
             phase = 7;
             break;
         }
         case 7: {
-            status = I2cAsyncWrite(address, getGestureEvents1, sizeof(getGestureEvents1));
+            status = I2cAsyncWrite(address, getRelativePixelsYCommand, sizeof(getRelativePixelsYCommand));
             phase = 8;
             break;
         }
         case 8: {
-            status = I2cAsyncRead(address, (uint8_t*)&gestureEvents1, 1);
+            status = I2cAsyncRead(address, buffer, 2);
+            deltaY = (int16_t)(buffer[1] | buffer[0]<<8);
+            TouchpadUsbMouseReport.x -= deltaX;
+            TouchpadUsbMouseReport.y += deltaY;
             phase = 9;
             break;
         }
