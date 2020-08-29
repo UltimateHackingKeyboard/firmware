@@ -94,8 +94,6 @@ status_t TouchpadDriver_Update(uint8_t uhkModuleDriverId)
         case 8: {
             status = I2cAsyncRead(address, buffer, 2);
             deltaY = (int16_t)(buffer[1] | buffer[0]<<8);
-            TouchpadUsbMouseReport.x -= deltaX;
-            TouchpadUsbMouseReport.y += deltaY;
             phase = 9;
             break;
         }
@@ -103,6 +101,15 @@ status_t TouchpadDriver_Update(uint8_t uhkModuleDriverId)
             TouchpadEvents.singleTap |= gestureEvents0.singleTap;
             TouchpadEvents.twoFingerTap |= gestureEvents1.twoFingerTap;
             TouchpadEvents.tapAndHold = gestureEvents0.tapAndHold;
+            if (gestureEvents1.scroll) {
+                TouchpadEvents.wheelX -= deltaX;
+                TouchpadEvents.wheelY += deltaY;
+            } else if (gestureEvents1.zoom) {
+                TouchpadEvents.zoomLevel += deltaY;
+            } else {
+                TouchpadEvents.x -= deltaX;
+                TouchpadEvents.y += deltaY;
+            }
 //            LedDisplay_SetIcon(LedDisplayIcon_Adaptive, gestureEvents1.scroll);
 //            LedDisplay_SetIcon(LedDisplayIcon_Adaptive, gestureEvents1.zoom);
             status = I2cAsyncWrite(address, closeCommunicationWindow, sizeof(closeCommunicationWindow));
