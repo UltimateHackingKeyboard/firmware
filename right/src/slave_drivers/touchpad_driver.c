@@ -8,7 +8,6 @@
 #include "crc16.h"
 #include "key_states.h"
 #include "usb_interfaces/usb_interface_mouse.h"
-#include "led_display.h"
 #include "touchpad_driver.h"
 
 void TouchpadDriver_Init(uint8_t uhkModuleDriverId)
@@ -100,6 +99,7 @@ status_t TouchpadDriver_Update(uint8_t uhkModuleDriverId)
             TouchpadEvents.singleTap |= gestureEvents0.singleTap;
             TouchpadEvents.twoFingerTap |= gestureEvents1.twoFingerTap;
             TouchpadEvents.tapAndHold = gestureEvents0.tapAndHold;
+
             if (gestureEvents1.scroll) {
                 TouchpadEvents.wheelX -= deltaX;
                 TouchpadEvents.wheelY += deltaY;
@@ -109,8 +109,7 @@ status_t TouchpadDriver_Update(uint8_t uhkModuleDriverId)
                 TouchpadEvents.x -= deltaX;
                 TouchpadEvents.y += deltaY;
             }
-//            LedDisplay_SetIcon(LedDisplayIcon_Adaptive, gestureEvents1.scroll);
-//            LedDisplay_SetIcon(LedDisplayIcon_Adaptive, gestureEvents1.zoom);
+
             status = I2cAsyncWrite(address, closeCommunicationWindow, sizeof(closeCommunicationWindow));
             phase = 1;
             break;
