@@ -194,16 +194,25 @@ static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
     kineticState->wasMoveAction = isMoveAction;
 }
 
+uint8_t touchpadScrollDivisor = 8;
 static void processTouchpadActions() {
     ActiveUsbMouseReport->x += TouchpadEvents.x;
     ActiveUsbMouseReport->y += TouchpadEvents.y;
     TouchpadEvents.x = 0;
     TouchpadEvents.y = 0;
 
-    ActiveUsbMouseReport->wheelX += TouchpadEvents.wheelX;
-    ActiveUsbMouseReport->wheelY -= TouchpadEvents.wheelY;
-    TouchpadEvents.wheelX = 0;
-    TouchpadEvents.wheelY = 0;
+    uint8_t wheelXInteger = TouchpadEvents.wheelX / touchpadScrollDivisor;
+    if (wheelXInteger) {
+        ActiveUsbMouseReport->wheelX += wheelXInteger;
+        TouchpadEvents.wheelX = TouchpadEvents.wheelX % touchpadScrollDivisor;
+    }
+
+    uint8_t wheelYInteger = TouchpadEvents.wheelY / touchpadScrollDivisor;
+    if (wheelYInteger) {
+        ActiveUsbMouseReport->wheelY -= wheelYInteger;
+        TouchpadEvents.wheelY = TouchpadEvents.wheelY % touchpadScrollDivisor;
+    }
+
 
     if (TouchpadEvents.singleTap) {
         ActiveUsbMouseReport->buttons |= MouseButton_Left;
