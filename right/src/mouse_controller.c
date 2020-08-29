@@ -209,6 +209,10 @@ static void processTouchpadActions() {
         ActiveUsbMouseReport->buttons |= MouseButton_Right;
         TouchpadEvents.twoFingerTap = false;
     }
+
+    if (TouchpadEvents.tapAndHold) {
+        ActiveUsbMouseReport->buttons |= MouseButton_Left;
+    }
 }
 
 void MouseController_ProcessMouseActions()
