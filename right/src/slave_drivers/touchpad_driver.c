@@ -9,6 +9,7 @@
 #include "key_states.h"
 #include "usb_interfaces/usb_interface_mouse.h"
 #include "led_display.h"
+#include "touchpad_driver.h"
 
 void TouchpadDriver_Init(uint8_t uhkModuleDriverId)
 {
@@ -31,6 +32,7 @@ static gesture_events0_t gestureEvents0;
 static gesture_events1_t gestureEvents1;
 
 uint8_t address = I2C_ADDRESS_RIGHT_IQS5XX_FIRMWARE;
+extern touchpad_events_t TouchpadEvents;
 usb_mouse_report_t TouchpadUsbMouseReport;
 uint8_t phase = 0;
 static uint8_t enableEventMode[] = {0x05, 0x8f, 0x07};

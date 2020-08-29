@@ -29,6 +29,7 @@
 // Variables:
 
     extern usb_mouse_report_t TouchpadUsbMouseReport;
+    extern touchpad_events_t TouchpadEvents;
 
 // Functions:
 
