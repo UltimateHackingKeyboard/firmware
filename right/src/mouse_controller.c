@@ -13,6 +13,7 @@
 #include "secondary_role_driver.h"
 #include "slave_drivers/touchpad_driver.h"
 #include "mouse_controller.h"
+#include "slave_scheduler.h"
 
 static uint32_t mouseUsbReportUpdateTime = 0;
 static uint32_t mouseElapsedTime;
@@ -245,7 +246,9 @@ void MouseController_ProcessMouseActions()
     MouseScrollState.xOut = 0;
     MouseScrollState.yOut = 0;
 
-    processTouchpadActions();
+    if (Slaves[SlaveId_RightTouchpad].isConnected) {
+        processTouchpadActions();
+    }
 
     for (uint8_t moduleId=0; moduleId<UHK_MODULE_MAX_COUNT; moduleId++) {
         uhk_module_state_t *moduleState = UhkModuleStates + moduleId;
