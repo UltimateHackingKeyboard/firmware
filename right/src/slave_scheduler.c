@@ -91,9 +91,6 @@ static void slaveSchedulerCallback(I2C_Type *base, i2c_master_handle_t *handle, 
             LogI2cError(currentSlaveId, currentStatus);
         }
         isTransferScheduled = currentStatus != kStatus_Uhk_IdleSlave && currentStatus != kStatus_Uhk_IdleCycle;
-        if (isTransferScheduled) {
-            currentSlave->isConnected = true;
-        }
 
         if (currentStatus != kStatus_Uhk_IdleCycle) {
             previousSlaveId = currentSlaveId++;
