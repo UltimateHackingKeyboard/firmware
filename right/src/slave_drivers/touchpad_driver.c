@@ -98,7 +98,7 @@ status_t TouchpadDriver_Update(uint8_t uhkModuleDriverId)
         case 9: {
             TouchpadEvents.singleTap |= gestureEvents0.singleTap;
             TouchpadEvents.twoFingerTap |= gestureEvents1.twoFingerTap;
-            TouchpadEvents.tapAndHold = gestureEvents0.tapAndHold;
+            //TouchpadEvents.tapAndHold = gestureEvents0.tapAndHold;
 
             if (gestureEvents1.scroll) {
                 TouchpadEvents.wheelX -= deltaX;
