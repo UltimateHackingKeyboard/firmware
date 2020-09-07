@@ -36,9 +36,8 @@ uint8_t phase = 0;
 static uint8_t enableEventMode[] = {0x05, 0x8f, 0x07};
 static uint8_t getGestureEvents0[] = {0x00, 0x0d};
 static uint8_t getRelativePixelsXCommand[] = {0x00, 0x12};
-static uint8_t getRelativePixelsYCommand[] = {0x00, 0x14};
 static uint8_t closeCommunicationWindow[] = {0xee, 0xee, 0xee};
-static uint8_t buffer[2];
+static uint8_t buffer[4];
 int16_t deltaX;
 int16_t deltaY;
 
@@ -68,23 +67,13 @@ status_t TouchpadDriver_Update(uint8_t uhkModuleDriverId)
             break;
         }
         case 4: {
-            status = I2cAsyncRead(address, buffer, 2);
-            deltaX = (int16_t)(buffer[1] | buffer[0]<<8);
+            status = I2cAsyncRead(address, buffer, 4);
+            deltaY = (int16_t)(buffer[1] | buffer[0]<<8);
+            deltaX = (int16_t)(buffer[3] | buffer[2]<<8);
             phase = 5;
             break;
         }
         case 5: {
-            status = I2cAsyncWrite(address, getRelativePixelsYCommand, sizeof(getRelativePixelsYCommand));
-            phase = 6;
-            break;
-        }
-        case 6: {
-            status = I2cAsyncRead(address, buffer, 2);
-            deltaY = (int16_t)(buffer[1] | buffer[0]<<8);
-            phase = 7;
-            break;
-        }
-        case 7: {
             TouchpadEvents.singleTap |= gestureEvents.events0.singleTap;
             TouchpadEvents.twoFingerTap |= gestureEvents.events1.twoFingerTap;
 
