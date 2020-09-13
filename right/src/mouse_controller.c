@@ -17,7 +17,7 @@
 static uint32_t mouseUsbReportUpdateTime = 0;
 static uint32_t mouseElapsedTime;
 
-bool ActiveMouseStates[ACTIVE_MOUSE_STATES_COUNT];
+uint8_t ActiveMouseStates[ACTIVE_MOUSE_STATES_COUNT];
 
 static bool toggledMouseStates[ACTIVE_MOUSE_STATES_COUNT];
 
@@ -113,13 +113,18 @@ static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
         kineticState->currentSpeed = initialSpeed;
     }
 
+    bool doublePressedStateExists = ActiveMouseStates[kineticState->upState] > 1 ||
+            ActiveMouseStates[kineticState->downState] > 1 ||
+            ActiveMouseStates[kineticState->leftState] > 1 ||
+            ActiveMouseStates[kineticState->rightState] > 1;
+
     bool isMoveAction = ActiveMouseStates[kineticState->upState] ||
                         ActiveMouseStates[kineticState->downState] ||
                         ActiveMouseStates[kineticState->leftState] ||
                         ActiveMouseStates[kineticState->rightState];
 
     mouse_speed_t mouseSpeed = MouseSpeed_Normal;
-    if (ActiveMouseStates[SerializedMouseAction_Accelerate]) {
+    if (ActiveMouseStates[SerializedMouseAction_Accelerate] || doublePressedStateExists) {
         kineticState->targetSpeed = acceleratedSpeed;
         mouseSpeed = MouseSpeed_Accelerated;
     } else if (ActiveMouseStates[SerializedMouseAction_Decelerate]) {

@@ -255,7 +255,7 @@ static void applyKeyAction(key_state_t *keyState, key_action_t *action, key_acti
                 stickyModifiers = 0;
                 MouseController_ActivateDirectionSigns(action->mouseAction);
             }
-            ActiveMouseStates[action->mouseAction] = true;
+            ActiveMouseStates[action->mouseAction]++;
             break;
         case KeyActionType_SwitchLayer:
             if (keyState->current != keyState->previous) {
