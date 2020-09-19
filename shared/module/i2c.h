@@ -6,9 +6,10 @@
     #define I2C_BUS_BASEADDR  I2C0
     #define I2C_BUS_CLK_SRC   I2C0_CLK_SRC
     #define I2C_BUS_BAUD_RATE 100000 // 100 kHz works even with a 20 meter long bridge cable.
-    #define I2C_BUS_MUX       kPORT_MuxAlt4
 
 #ifdef CPU_MKL17Z32VFM4
+    #define I2C_BUS_MUX       kPORT_MuxAlt4
+
     #define I2C_BUS_SDA_PORT  PORTE
     #define I2C_BUS_SDA_CLOCK kCLOCK_PortE
     #define I2C_BUS_SDA_PIN   18
@@ -17,6 +18,8 @@
     #define I2C_BUS_SCL_CLOCK kCLOCK_PortE
     #define I2C_BUS_SCL_PIN   19
 #else
+    #define I2C_BUS_MUX       kPORT_MuxAlt2
+
     #define I2C_BUS_SDA_PORT  PORTB
     #define I2C_BUS_SDA_CLOCK kCLOCK_PortB
     #define I2C_BUS_SDA_PIN   4
