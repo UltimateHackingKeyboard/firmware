@@ -68,8 +68,8 @@ tpm_channel_t tpmChannels[] = {
     {.clock=kCLOCK_PortD, .port=PORTD, .pin=4U, .mux=kPORT_MuxAlt4, .tpmBase=TPM0, .chnlNumber=4U, .dutyCyclePercent=100},
     {.clock=kCLOCK_PortC, .port=PORTC, .pin=4U, .mux=kPORT_MuxAlt4, .tpmBase=TPM0, .chnlNumber=3U, .dutyCyclePercent=100},
     {.clock=kCLOCK_PortD, .port=PORTD, .pin=5U, .mux=kPORT_MuxAlt4, .tpmBase=TPM0, .chnlNumber=5U, .dutyCyclePercent=100},
-    {.clock=kCLOCK_PortB, .port=PORTB, .pin=0U, .mux=kPORT_MuxAlt3, .tpmBase=TPM1, .chnlNumber=0U, .dutyCyclePercent=100},
-    {.clock=kCLOCK_PortB, .port=PORTB, .pin=1U, .mux=kPORT_MuxAlt3, .tpmBase=TPM1, .chnlNumber=1U, .dutyCyclePercent=100},
+//    {.clock=kCLOCK_PortB, .port=PORTB, .pin=0U, .mux=kPORT_MuxAlt3, .tpmBase=TPM1, .chnlNumber=0U, .dutyCyclePercent=100},
+//    {.clock=kCLOCK_PortB, .port=PORTB, .pin=1U, .mux=kPORT_MuxAlt3, .tpmBase=TPM1, .chnlNumber=1U, .dutyCyclePercent=100},
     {.clock=kCLOCK_PortA, .port=PORTA, .pin=1U, .mux=kPORT_MuxAlt3, .tpmBase=TPM2, .chnlNumber=0U, .dutyCyclePercent=100},
 };
 
