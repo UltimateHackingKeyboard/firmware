@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [8.10.2] - 2020-09-21
+
+Device Protocol: 4.7.0 | Module Protocol: 4.1.0 | User Config: 4.2.0 | Hardware Config: 1.0.0
+
+- Migrate key cluster module MCU from MKL03Z32VFK4 to MKL17Z32VFM4.
+- Fix trackball module right button port.
+- Handle touchpad module single tap, two finger tap, and scroll events.
+
+## [8.10.1] - 2020-06-21
+
+Device Protocol: 4.7.0 | Module Protocol: 4.1.0 | User Config: 4.2.0 | Hardware Config: 1.0.0
+
+- Fix USB 3.x compatibility issues which mostly affected Ryzen PCs.
+
 ## [8.10.0] - 2020-05-25
 
 Device Protocol: 4.7.0 | Module Protocol: 4.1.0 | User Config: 4.**2.0** | Hardware Config: 1.0.0

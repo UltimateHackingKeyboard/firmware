@@ -25,6 +25,8 @@ void LedPwm_Init(void)
 
 void LedPwm_SetBrightness(uint8_t brightnessPercent)
 {
+#ifndef CPU_MKL17Z32VFM4
     TPM_UpdatePwmDutycycle(LED_PWM_TPM_BASEADDR, LED_PWM_TPM_CHANNEL,
                            kTPM_EdgeAlignedPwm, 100 - brightnessPercent);
+#endif
 }

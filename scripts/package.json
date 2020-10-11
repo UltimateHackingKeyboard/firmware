@@ -16,7 +16,7 @@
     "commander": "^2.11.0",
     "shelljs": "^0.7.8"
   },
-  "firmwareVersion": "8.10.0",
+  "firmwareVersion": "8.10.2",
   "deviceProtocolVersion": "4.7.0",
   "moduleProtocolVersion": "4.1.0",
   "userConfigVersion": "4.2.0",

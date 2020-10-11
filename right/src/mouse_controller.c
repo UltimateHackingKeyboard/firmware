@@ -13,6 +13,7 @@
 #include "secondary_role_driver.h"
 #include "slave_drivers/touchpad_driver.h"
 #include "mouse_controller.h"
+#include "slave_scheduler.h"
 
 static uint32_t mouseUsbReportUpdateTime = 0;
 static uint32_t mouseElapsedTime;
@@ -194,6 +195,41 @@ static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
     kineticState->wasMoveAction = isMoveAction;
 }
 
+uint8_t touchpadScrollDivisor = 8;
+static void processTouchpadActions() {
+    ActiveUsbMouseReport->x += TouchpadEvents.x;
+    ActiveUsbMouseReport->y += TouchpadEvents.y;
+    TouchpadEvents.x = 0;
+    TouchpadEvents.y = 0;
+
+    uint8_t wheelXInteger = TouchpadEvents.wheelX / touchpadScrollDivisor;
+    if (wheelXInteger) {
+        ActiveUsbMouseReport->wheelX += wheelXInteger;
+        TouchpadEvents.wheelX = TouchpadEvents.wheelX % touchpadScrollDivisor;
+    }
+
+    uint8_t wheelYInteger = TouchpadEvents.wheelY / touchpadScrollDivisor;
+    if (wheelYInteger) {
+        ActiveUsbMouseReport->wheelY -= wheelYInteger;
+        TouchpadEvents.wheelY = TouchpadEvents.wheelY % touchpadScrollDivisor;
+    }
+
+
+    if (TouchpadEvents.singleTap) {
+        ActiveUsbMouseReport->buttons |= MouseButton_Left;
+        TouchpadEvents.singleTap = false;
+    }
+
+    if (TouchpadEvents.twoFingerTap) {
+        ActiveUsbMouseReport->buttons |= MouseButton_Right;
+        TouchpadEvents.twoFingerTap = false;
+    }
+
+    if (TouchpadEvents.tapAndHold) {
+        ActiveUsbMouseReport->buttons |= MouseButton_Left;
+    }
+}
+
 void MouseController_ProcessMouseActions()
 {
     mouseElapsedTime = Timer_GetElapsedTimeAndSetCurrent(&mouseUsbReportUpdateTime);
@@ -210,10 +246,9 @@ void MouseController_ProcessMouseActions()
     MouseScrollState.xOut = 0;
     MouseScrollState.yOut = 0;
 
-    ActiveUsbMouseReport->x += TouchpadUsbMouseReport.x;
-    ActiveUsbMouseReport->y += TouchpadUsbMouseReport.y;
-    TouchpadUsbMouseReport.x = 0;
-    TouchpadUsbMouseReport.y = 0;
+    if (Slaves[SlaveId_RightTouchpad].isConnected) {
+        processTouchpadActions();
+    }
 
     for (uint8_t moduleId=0; moduleId<UHK_MODULE_MAX_COUNT; moduleId++) {
         uhk_module_state_t *moduleState = UhkModuleStates + moduleId;
