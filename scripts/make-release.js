@@ -29,8 +29,7 @@ for (sourcePath of sourcePaths) {
     exec(`cd ${buildDir}/..; make clean; make -j8`);
 }
 
-exec(`git pull origin master; git checkout master`, { cwd: agentDir });
-exec(`npm ci`, { cwd: agentDir });
+exec(`git pull origin master; git checkout master; npm ci; npm run build`, { cwd: agentDir });
 
 for (const device of package.devices) {
     const deviceDir = `${releaseDir}/devices/${device.name}`;
