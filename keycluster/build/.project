@@ -64,92 +64,92 @@
 		<link>
 			<name>drivers/fsl_clock.c</name>
 			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/drivers/fsl_clock.c</locationURI>
+			<locationURI>PARENT-2-PROJECT_LOC/lib/SDK_2.8.0_MKL17Z32xxx4/devices/MKL17Z644/drivers/fsl_clock.c</locationURI>
 		</link>
 		<link>
 			<name>drivers/fsl_clock.h</name>
 			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/drivers/fsl_clock.h</locationURI>
+			<locationURI>PARENT-2-PROJECT_LOC/lib/SDK_2.8.0_MKL17Z32xxx4/devices/MKL17Z644/drivers/fsl_clock.h</locationURI>
 		</link>
 		<link>
 			<name>drivers/fsl_gpio.c</name>
 			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/drivers/fsl_gpio.c</locationURI>
+			<locationURI>PARENT-2-PROJECT_LOC/lib/SDK_2.8.0_MKL17Z32xxx4/devices/MKL17Z644/drivers/fsl_gpio.c</locationURI>
 		</link>
 		<link>
 			<name>drivers/fsl_gpio.h</name>
 			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/drivers/fsl_gpio.h</locationURI>
+			<locationURI>PARENT-2-PROJECT_LOC/lib/SDK_2.8.0_MKL17Z32xxx4/devices/MKL17Z644/drivers/fsl_gpio.h</locationURI>
 		</link>
 		<link>
 			<name>drivers/fsl_i2c.c</name>
 			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/drivers/fsl_i2c.c</locationURI>
+			<locationURI>PARENT-2-PROJECT_LOC/lib/SDK_2.8.0_MKL17Z32xxx4/devices/MKL17Z644/drivers/fsl_i2c.c</locationURI>
 		</link>
 		<link>
 			<name>drivers/fsl_i2c.h</name>
 			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/drivers/fsl_i2c.h</locationURI>
+			<locationURI>PARENT-2-PROJECT_LOC/lib/SDK_2.8.0_MKL17Z32xxx4/devices/MKL17Z644/drivers/fsl_i2c.h</locationURI>
 		</link>
 		<link>
 			<name>drivers/fsl_lptmr.c</name>
 			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/drivers/fsl_lptmr.c</locationURI>
+			<locationURI>PARENT-2-PROJECT_LOC/lib/SDK_2.8.0_MKL17Z32xxx4/devices/MKL17Z644/drivers/fsl_lptmr.c</locationURI>
 		</link>
 		<link>
 			<name>drivers/fsl_lptmr.h</name>
 			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/drivers/fsl_lptmr.h</locationURI>
+			<locationURI>PARENT-2-PROJECT_LOC/lib/SDK_2.8.0_MKL17Z32xxx4/devices/MKL17Z644/drivers/fsl_lptmr.h</locationURI>
 		</link>
 		<link>
 			<name>drivers/fsl_port.h</name>
 			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/drivers/fsl_port.h</locationURI>
+			<locationURI>PARENT-2-PROJECT_LOC/lib/SDK_2.8.0_MKL17Z32xxx4/devices/MKL17Z644/drivers/fsl_port.h</locationURI>
 		</link>
 		<link>
 			<name>drivers/fsl_smc.c</name>
 			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/drivers/fsl_smc.c</locationURI>
+			<locationURI>PARENT-2-PROJECT_LOC/lib/SDK_2.8.0_MKL17Z32xxx4/devices/MKL17Z644/drivers/fsl_smc.c</locationURI>
 		</link>
 		<link>
 			<name>drivers/fsl_smc.h</name>
 			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/drivers/fsl_smc.h</locationURI>
+			<locationURI>PARENT-2-PROJECT_LOC/lib/SDK_2.8.0_MKL17Z32xxx4/devices/MKL17Z644/drivers/fsl_smc.h</locationURI>
 		</link>
 		<link>
 			<name>drivers/fsl_spi.c</name>
 			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/drivers/fsl_spi.c</locationURI>
+			<locationURI>PARENT-2-PROJECT_LOC/lib/SDK_2.8.0_MKL17Z32xxx4/devices/MKL17Z644/drivers/fsl_spi.c</locationURI>
 		</link>
 		<link>
 			<name>drivers/fsl_spi.h</name>
 			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/drivers/fsl_spi.h</locationURI>
+			<locationURI>PARENT-2-PROJECT_LOC/lib/SDK_2.8.0_MKL17Z32xxx4/devices/MKL17Z644/drivers/fsl_spi.h</locationURI>
 		</link>
 		<link>
 			<name>drivers/fsl_tpm.c</name>
 			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/drivers/fsl_tpm.c</locationURI>
+			<locationURI>PARENT-2-PROJECT_LOC/lib/SDK_2.8.0_MKL17Z32xxx4/devices/MKL17Z644/drivers/fsl_tpm.c</locationURI>
 		</link>
 		<link>
 			<name>drivers/fsl_tpm.h</name>
 			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/drivers/fsl_tpm.h</locationURI>
+			<locationURI>PARENT-2-PROJECT_LOC/lib/SDK_2.8.0_MKL17Z32xxx4/devices/MKL17Z644/drivers/fsl_tpm.h</locationURI>
 		</link>
 		<link>
-			<name>startup/startup_MKL03Z4.S</name>
+			<name>startup/startup_MKL17Z644.S</name>
 			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/gcc/startup_MKL03Z4.S</locationURI>
+			<locationURI>PARENT-2-PROJECT_LOC/lib/SDK_2.8.0_MKL17Z32xxx4/devices/MKL17Z644/gcc/startup_MKL17Z644.S</locationURI>
 		</link>
 		<link>
-			<name>startup/system_MKL03Z4.c</name>
+			<name>startup/system_MKL17Z644.c</name>
 			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/system_MKL03Z4.c</locationURI>
+			<locationURI>PARENT-2-PROJECT_LOC/lib/SDK_2.8.0_MKL17Z32xxx4/devices/MKL17Z644/system_MKL17Z644.c</locationURI>
 		</link>
 		<link>
-			<name>startup/system_MKL03Z4.h</name>
+			<name>startup/system_MKL17Z644.h</name>
 			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/system_MKL03Z4.h</locationURI>
+			<locationURI>PARENT-2-PROJECT_LOC/lib/SDK_2.8.0_MKL17Z32xxx4/devices/MKL17Z644/system_MKL17Z644.h</locationURI>
 		</link>
 	</linkedResources>
 </projectDescription>

@@ -10,3 +10,6 @@
 [submodule "lib/agent"]
 	path = lib/agent
 	url = https://github.com/UltimateHackingKeyboard/agent.git
+[submodule "lib/SDK_2.8.0_MKL17Z32xxx4"]
+	path = lib/SDK_2.8.0_MKL17Z32xxx4
+	url = https://github.com/UltimateHackingKeyboard/SDK_2.8.0_MKL17Z32xxx4.git

@@ -121,6 +121,7 @@ static bool isStickyShortcut(key_action_t * action)
     const uint8_t ctrl = HID_KEYBOARD_MODIFIER_LEFTCTRL | HID_KEYBOARD_MODIFIER_RIGHTCTRL;
 
     switch(action->keystroke.scancode) {
+        case HID_KEYBOARD_SC_GRAVE_ACCENT_AND_TILDE:
         case HID_KEYBOARD_SC_TAB:
         case HID_KEYBOARD_SC_LEFT_ARROW:
         case HID_KEYBOARD_SC_RIGHT_ARROW:

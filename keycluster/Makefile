@@ -15,10 +15,10 @@
 PROJECT_NAME = uhk_keycluster
 
 # Defines the part type that this project uses.
-PART = MKL03Z32VFK4
+PART = MKL17Z32VFM4
 
 # Defines the linker script to use for the application.
-LDSCRIPT = ../lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/gcc/MKL03Z32xxx4_flash.ld
+LDSCRIPT = ../lib/SDK_2.8.0_MKL17Z32xxx4/devices/MKL17Z644/gcc/MKL17Z32xxx4_flash.ld
 
 # Size of the heap and stack.
 HEAP_SIZE = 0
@@ -36,22 +36,22 @@ JLINK_SCRIPT = ../scripts/flash-keycluster.jlink
 
 # Source files.
 SOURCE = $(wildcard src/*.c) \
-         ../lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/system_MKL03Z4.c \
-         ../lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/gcc/startup_MKL03Z4.S \
-         ../lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/drivers/fsl_clock.c \
-         ../lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/drivers/fsl_gpio.c \
-         ../lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/drivers/fsl_i2c.c \
-         ../lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/drivers/fsl_lptmr.c \
-         ../lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/drivers/fsl_spi.c \
-         ../lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/drivers/fsl_tpm.c \
+         ../lib/SDK_2.8.0_MKL17Z32xxx4/devices/MKL17Z644/system_MKL17Z644.c \
+         ../lib/SDK_2.8.0_MKL17Z32xxx4/devices/MKL17Z644/gcc/startup_MKL17Z644.S \
+         ../lib/SDK_2.8.0_MKL17Z32xxx4/devices/MKL17Z644/drivers/fsl_clock.c \
+         ../lib/SDK_2.8.0_MKL17Z32xxx4/devices/MKL17Z644/drivers/fsl_gpio.c \
+         ../lib/SDK_2.8.0_MKL17Z32xxx4/devices/MKL17Z644/drivers/fsl_i2c.c \
+         ../lib/SDK_2.8.0_MKL17Z32xxx4/devices/MKL17Z644/drivers/fsl_lptmr.c \
+         ../lib/SDK_2.8.0_MKL17Z32xxx4/devices/MKL17Z644/drivers/fsl_spi.c \
+         ../lib/SDK_2.8.0_MKL17Z32xxx4/devices/MKL17Z644/drivers/fsl_tpm.c \
          $(wildcard ../shared/*.c) \
          $(wildcard ../shared/module/*.c)
 
 # Header files.
 IPATH = src \
-        ../lib/KSDK_2.0_MKL03Z8xxx4/CMSIS/Include \
-        ../lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4 \
-        ../lib/KSDK_2.0_MKL03Z8xxx4/devices/MKL03Z4/drivers \
+        ../lib/SDK_2.8.0_MKL17Z32xxx4/CMSIS/Include \
+        ../lib/SDK_2.8.0_MKL17Z32xxx4/devices/MKL17Z644 \
+        ../lib/SDK_2.8.0_MKL17Z32xxx4/devices/MKL17Z644/drivers \
         ../shared
 
 # Include main Makefile.
