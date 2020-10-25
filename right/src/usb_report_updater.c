@@ -35,6 +35,8 @@ bool SuppressMods = false;
 bool SuppressKeys = false;
 sticky_strategy_t StickyModifierStrategy = Stick_Smart;
 
+uint16_t KeystrokeDelay = 0;
+
 key_state_t* EmergencyKey = NULL;
 
 // Holds are applied on current base layer.
@@ -459,10 +461,23 @@ static void updateActiveUsbReports(void)
 }
 
 uint32_t UsbReportUpdateCounter;
+void justPreprocessInput(void) {
+    // Make preprocessKeyState push new events into postponer queue.
+    // As a side-effect, postpone first cycle after we switch back to regular update loop
+    PostponerCore_PostponeNCycles(0);
+    for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
+        for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
+            key_state_t *keyState = &KeyStates[slotId][keyId];
+
+            preprocessKeyState(keyState);
+        }
+    }
+}
 
 void UpdateUsbReports(void)
 {
     static uint32_t lastUpdateTime;
+    static uint32_t lastReportTime;
 
     for (uint8_t keyId = 0; keyId < RIGHT_KEY_MATRIX_KEY_COUNT; keyId++) {
         KeyStates[SlotId_RightKeyboardHalf][keyId].hardwareSwitchState = RightKeyMatrix.keyStates[keyId];
@@ -474,6 +489,11 @@ void UpdateUsbReports(void)
         } else {
             UsbReportUpdateSemaphore = 0;
         }
+    }
+
+    if(Timer_GetElapsedTime(&lastReportTime) < KeystrokeDelay) {
+        justPreprocessInput();
+        return;
     }
 
     lastUpdateTime = CurrentTime;
@@ -506,6 +526,7 @@ void UpdateUsbReports(void)
                 //TODO: consider either making it atomic, or lowering semaphore reset delay
                 UsbReportUpdateSemaphore &= ~(1 << USB_BASIC_KEYBOARD_INTERFACE_INDEX);
             }
+            lastReportTime = CurrentTime;
         }
     }
 

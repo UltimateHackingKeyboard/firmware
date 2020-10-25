@@ -52,6 +52,8 @@
     extern bool PendingPostponedAndReleased;
     extern bool ActivateOnRelease;
     extern key_state_t* EmergencyKey;
+    extern uint16_t KeystrokeDelay;
+
 
 // Functions:
 

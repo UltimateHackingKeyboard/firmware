@@ -234,6 +234,7 @@ The following grammar is supported:
     COMMAND = setStickyModsEnabled {0|never|smart|always|1}
     COMMAND = setCompensateDiagonalSpeed {0|1}
     COMMAND = setDebounceDelay <time in ms, at most 250 (NUMBER)>
+    COMMAND = setKeystrokeDelay <time in ms, at most 65535 (NUMBER)>
     COMMAND = setReg <register index (NUMBER)> <value (NUMBER)> 
     COMMAND = setEmergencyKey KEYID
     COMMAND = {addReg|subReg|mulReg} <register index (NUMBER)> <value (NUMBER)>
@@ -285,7 +286,6 @@ The following grammar is supported:
     #REMOVEWD#
     ##########
     COMMAND = setSplitCompositeKeystroke {0|1}
-    COMMAND = setKeystrokeDelay <time in ms, at most 250 (NUMBER)>
     COMMAND = setActivateOnRelease {0|1}
     MODIFIER = suppressKeys
 
@@ -414,6 +414,7 @@ The following grammar is supported:
   - `setStickyModsEnabled` globally turns on or off sticky modifiers. This affects only standard scancode actions. Macro actions (both gui and command ones) are always nonsticky, unless `sticky` flag is included in `tapKey|holdKey|pressKey` commands. Default value is `smart`, which is the official behaviour - i.e., `<alt/ctrl/gui> + <tab/arrows>` are sticky. Furthermore `0 == never` and `1 == always`.
   - `setCompensateDiagonalSpeed` will divide diagonal mouse speed by sqrt(2) if enabled.
   - `setDebounceDelay <time in ms, at most 250>` prevents key state from changing for some time after every state change. This is needed because contacts of mechanical switches can bounce after contact and therefore change state multiple times in span of a few milliseconds. Official firmware debounce time is 50 ms for both press and release. Recommended value is 10-50, default is 50.
+  - `setKeystrokeDelay <time in ms, at most 65535>` allows slowing down keyboard input. This is handy for lousily written RDP clients and other software which just scans keys once a while and processes them in wrong order if multiple keys have been pressed inbetween. In more detail, this setting adds a delay whenever a basic usb report is sent. During this delay, key matrix is still scanned and keys are debounced, but instead of activating, the keys are added into a queue to be replayed later. 
 - Argument parsing rules:
   - `NUMBER` is parsed as a 32 bit signed integer and then assigned into the target variable. However, the target variable is often only 8 or 16 bit unsigned. If a number is prefixed with '#', it is interpretted as a register address (index). If a number is prefixed with '@', current macro index is added to the final value. `#key` returns activation key's hardware id. If prefixed with `%`, returns keyid of nth press event in the postponer queue (e.g., `%0` returns `KEYID` of first key which is postponed but not yet activated).
   - `KEYMAPID` - is assumed to be 3 characters long abbreviation of a keymap.

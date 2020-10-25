@@ -1415,6 +1415,13 @@ bool processSetDebounceDelayCommand(const char* arg, const char *argEnd)
     return false;
 }
 
+bool processSetKeystrokeDelayCommand(const char* arg, const char *argEnd)
+{
+    uint16_t delay = parseNUM(arg,  argEnd);
+    KeystrokeDelay = delay;
+    return false;
+}
+
 bool processStatsRuntimeCommand()
 {
     int ms = Timer_GetElapsedTime(&s->currentMacroStartTime);
@@ -2274,6 +2281,9 @@ bool processCommand(const char* cmd, const char* cmdEnd)
             }
             else if(TokenMatches(cmd, cmdEnd, "setDebounceDelay")) {
                 return processSetDebounceDelayCommand(arg1, cmdEnd);
+            }
+            else if(TokenMatches(cmd, cmdEnd, "setKeystrokeDelay")) {
+                return processSetKeystrokeDelayCommand(arg1, cmdEnd);
             }
             else if(TokenMatches(cmd, cmdEnd, "setEmergencyKey")) {
                 return processSetEmergencyKeyCommand(arg1, cmdEnd);
