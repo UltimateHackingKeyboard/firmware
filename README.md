@@ -117,7 +117,7 @@ Regular secondary role: (Activates the secondary role immediately and if no othe
 
 Regular secondary role with prevention of accidential key taps: (Activates the secondary role immediately, but activates the primary role only if the key has been pressed for at least a certain amount of time. This could be used to emulate the [Space Cadet Shift feature](https://beta.docs.qmk.fm/using-qmk/advanced-keycodes/feature_space_cadet).)
 
-    $holdLayer leftShift
+    $holdKey leftShift
     $ifInterrupted break
     $ifPlaytime 200 break
     $tapKey S-9
