@@ -19,8 +19,7 @@ static uint32_t mouseUsbReportUpdateTime = 0;
 static uint32_t mouseElapsedTime;
 
 uint8_t ActiveMouseStates[ACTIVE_MOUSE_STATES_COUNT];
-
-static bool toggledMouseStates[ACTIVE_MOUSE_STATES_COUNT];
+uint8_t ToggledMouseStates[ACTIVE_MOUSE_STATES_COUNT];
 
 bool CompensateDiagonalSpeed = false;
 
@@ -314,5 +313,11 @@ void MouseController_ProcessMouseActions()
 
 void ToggleMouseState(serialized_mouse_action_t action, bool activate)
 {
-    toggledMouseStates[action] = activate;
+    if (activate) {
+        ToggledMouseStates[action]++;
+        MouseController_ActivateDirectionSigns(action);
+    }
+    else{
+        ToggledMouseStates[action] -= ToggledMouseStates[action] > 0 ? 1 : 0;
+    }
 }

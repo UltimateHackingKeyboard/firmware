@@ -399,7 +399,7 @@ static void updateActiveUsbReports(void)
         Macros_ContinueMacro();
     }
 
-    memset(ActiveMouseStates, 0, ACTIVE_MOUSE_STATES_COUNT);
+    memcpy(ActiveMouseStates, ToggledMouseStates, ACTIVE_MOUSE_STATES_COUNT);
 
     basicScancodeIndex = 0;
     mediaScancodeIndex = 0;
