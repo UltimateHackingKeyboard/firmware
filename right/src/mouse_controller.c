@@ -315,6 +315,9 @@ void ToggleMouseState(serialized_mouse_action_t action, bool activate)
 {
     if (activate) {
         ToggledMouseStates[action]++;
+        // First macro action is ran during key update cycle, i.e., after ActiveMouseStates is copied from ToggledMouseStates.
+        // Otherwise, direction sign will be resetted at the end of this cycle
+        ActiveMouseStates[action]++;
         MouseController_ActivateDirectionSigns(action);
     }
     else{
