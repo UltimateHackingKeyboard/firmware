@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 const fs = require('fs');
 const path = require('path');
 require('shelljs/global');
@@ -29,7 +30,12 @@ for (sourcePath of sourcePaths) {
     exec(`cd ${buildDir}/..; make clean; make -j8`);
 }
 
-exec(`git pull origin master; git checkout master; npm ci; npm run build`, { cwd: agentDir });
+// --skip-agent: don't build Agent, just get minimal dependencies
+if (process.argv.slice(2).includes("--skip-agent")) {
+    exec('npm ci', { cwd: agentDir });
+} else {
+    exec(`git pull origin master; git checkout master; npm ci; npm run build`, { cwd: agentDir });
+}
 
 for (const device of package.devices) {
     const deviceDir = `${releaseDir}/devices/${device.name}`;

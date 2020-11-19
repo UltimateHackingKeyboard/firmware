@@ -8,6 +8,18 @@ If you want to use the latest firmware version for your UHK, then instead of goi
 
 If you're one of the brave few who wants to hack the firmware then read on.
 
+## Building
+
+1. Make sure to clone this repo with:
+
+`git clone --recursive git@github.com:UltimateHackingKeyboard/firmware.git`
+
+2. Install `arm-none-eabi-binutils`, `arm-none-eabi-gcc`, `arm-none-eabi-newlib` and Node.js v12.
+
+3. `cd scripts && npm install && ./make-release.js --skip-agent`
+
+## Full development setup
+
 1. Make sure to clone this repo with:
 
 `git clone --recursive git@github.com:UltimateHackingKeyboard/firmware.git`
