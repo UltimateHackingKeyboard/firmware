@@ -116,16 +116,22 @@ static const uint8_t segmentLedIds[maxSegmentChars][ledCountPerChar] = {
     {105, 121, 124, 136, 137, 106, 122, 123, 120, 138, 139, 140, 107, 108},
 };
 
+void LedDisplay_SetRawSegment(uint8_t charId, uint16_t charBits) {
+    if (charId > 2) return;
+
+    for (uint8_t ledId=0; ledId<ledCountPerChar; ledId++) {
+        uint8_t ledIdx = segmentLedIds[charId][ledId];
+        bool isLedOn = charBits & (1 << ledId);
+        LedDriverValues[LedDriverId_Left][ledIdx] = isLedOn ? AlphanumericSegmentsBrightness : 0;
+    }
+}
+
 void LedDisplay_SetText(uint8_t length, const char* text)
 {
     for (uint8_t charId=0; charId<LED_DISPLAY_KEYMAP_NAME_LENGTH; charId++) {
         char keymapChar = charId < length ? text[charId] : ' ';
         uint16_t charBits = letterToSegmentMap[keymapChar - ' '];
-        for (uint8_t ledId=0; ledId<ledCountPerChar; ledId++) {
-            uint8_t ledIdx = segmentLedIds[charId][ledId];
-            bool isLedOn = charBits & (1 << ledId);
-            LedDriverValues[LedDriverId_Left][ledIdx] = isLedOn ? AlphanumericSegmentsBrightness : 0;
-        }
+        LedDisplay_SetRawSegment(charId, charBits);
     }
 }
 

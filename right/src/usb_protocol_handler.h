@@ -36,6 +36,9 @@
         UsbCommandId_SwitchKeymap             = 0x11,
         UsbCommandId_GetVariable              = 0x12,
         UsbCommandId_SetVariable              = 0x13,
+
+        UsbCommandId_SetLedSegments_Text      = 0x21,
+        UsbCommandId_SetLedSegments_Raw       = 0x22,
     } usb_command_id_t;
 
     typedef enum {

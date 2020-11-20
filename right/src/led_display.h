@@ -30,6 +30,7 @@
 
 // Functions:
 
+    void LedDisplay_SetRawSegment(uint8_t charId, uint16_t charBits);
     void LedDisplay_SetText(uint8_t length, const char* text);
     void LedDisplay_SetLayer(layer_id_t layerId);
     bool LedDisplay_GetIcon(led_display_icon_t icon);

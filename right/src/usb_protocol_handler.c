@@ -85,6 +85,12 @@ void UsbProtocolHandler(void)
         case UsbCommandId_SetVariable:
             UsbCommand_SetVariable();
             break;
+        case UsbCommandId_SetLedSegments_Text:
+            UsbCommand_SetLedSegments_Text();
+            break;
+        case UsbCommandId_SetLedSegments_Raw:
+            UsbCommand_SetLedSegments_Raw();
+            break;
         default:
             SetUsbTxBufferUint8(0, UsbStatusCode_InvalidCommand);
             break;
