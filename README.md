@@ -6,11 +6,17 @@ This repository hosts the firmware of the [Ultimate Hacking Keyboard](https://ul
 
 If you want to use the latest firmware version for your UHK, then instead of going through the pain of building the firmware, simply download the [latest release of Agent](https://github.com/UltimateHackingKeyboard/agent/releases/latest) and update to the latest firmware version within Agent with a click of a button.
 
+## Developing
+
 If you're one of the brave few who wants to hack the firmware then read on.
 
 1. Make sure to clone this repo with:
 
 `git clone --recursive git@github.com:UltimateHackingKeyboard/firmware.git`
+
+Then, depending whether you want a full IDE experience or just minimal tools for building and flashing firmware, read *IDE setup* or *Minimal development setup* (if you prefer a text editor + command line).
+
+### IDE setup
 
 2. Download and install MCUXpresso IDE for [Linux](https://storage.googleapis.com/ugl-static/mcuxpresso-ide/mcuxpressoide-11.2.0_4120.x86_64.deb.bin), [Mac](https://storage.googleapis.com/ugl-static/mcuxpresso-ide/MCUXpressoIDE_11.2.0_4120.pkg), or [Windows](https://storage.googleapis.com/ugl-static/mcuxpresso-ide/MCUXpressoIDE_11.2.0_4120.exe).
 
@@ -26,6 +32,20 @@ If you're one of the brave few who wants to hack the firmware then read on.
 6. Finally, in the IDE, click on *Run -> External Tools -> External Tools Configurations*, then select a release firmware to be flashed such as *uhk60-right_release_kboot*, and click on the *Run* button.
 
 Going forward, it's easier to flash the firmware of your choice by using the downwards toolbar icon which is located rightwards of the *green play + toolbox icon*.
+
+### Minimal development setup
+
+1. Install the ARM cross-compiler, cross-assembler and stdlib implementation. Eg. on Arch Linux the packages `arm-none-eabi-binutils`, `arm-none-eabi-gcc`, `arm-none-eabi-newlib`.
+
+2. Install Node.js v12. If you have a later version, editing the version requirement in `lib/agent/package.json` *might* work.
+
+3. Build UHK Agent. `cd lib/agent && git pull --autostash && npm ci && npm run build`.
+
+4. Still inside the Agent submodule, compile flashing util scripts. `cd packages/usb && npx tsc`.
+
+5. When developing, cd to the directory you're working on (`left`/`right`). To build and flash the firmware, run `make flash`. Plain `make` just builds without flashing.
+
+6. To build a full firmware tarball, run `scripts/make-release.js`. The created tarball `scripts/uhk-firmware-VERSION.tar.gz` can be flashed with UHK Agent.
 
 ## Contributing
 
