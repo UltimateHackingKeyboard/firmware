@@ -39,7 +39,7 @@ Going forward, it's easier to flash the firmware of your choice by using the dow
 
 2. Install Node.js v12. If you have a later version, editing the version requirement in `lib/agent/package.json` *might* work.
 
-3. Build UHK Agent. `cd lib/agent && git pull --autostash && npm ci && npm run build`.
+3. Build UHK Agent. `cd lib/agent && npm ci && npm run build`.
 
 4. Still inside the Agent submodule, compile flashing util scripts. `cd packages/usb && npx tsc`.
 
