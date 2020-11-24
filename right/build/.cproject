@@ -57,7 +57,7 @@
 							<option id="ilg.gnuarmeclipse.managedbuild.cross.option.warnings.toerrors.1518272175" name="Generate errors instead of warnings (-Werror)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.warnings.toerrors" value="false" valueType="boolean"/>
 							<option id="ilg.gnuarmeclipse.managedbuild.cross.option.addtools.createlisting.104956045" name="Create extended listing" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.addtools.createlisting" value="false" valueType="boolean"/>
 							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="ilg.gnuarmeclipse.managedbuild.cross.targetPlatform.1135747399" isAbstract="false" osList="all" superClass="ilg.gnuarmeclipse.managedbuild.cross.targetPlatform"/>
-							<builder arguments="-f uhk60v1.mk" buildPath="${workspace_loc:/uhk60v2-right}/../" command="${cross_make}" id="ilg.gnuarmeclipse.managedbuild.cross.builder.789002772" incrementalBuildTarget="all DEBUG=0" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Gnu Make Builder" parallelBuildOn="true" parallelizationNumber="optimal" stopOnErr="false" superClass="ilg.gnuarmeclipse.managedbuild.cross.builder"/>
+							<builder arguments="-f uhk60v1.mk" buildPath="${workspace_loc:/uhk-right}/../" command="${cross_make}" id="ilg.gnuarmeclipse.managedbuild.cross.builder.789002772" incrementalBuildTarget="all DEBUG=0" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Gnu Make Builder" parallelBuildOn="true" parallelizationNumber="optimal" stopOnErr="false" superClass="ilg.gnuarmeclipse.managedbuild.cross.builder"/>
 							<tool id="ilg.gnuarmeclipse.managedbuild.cross.tool.assembler.2026990925" name="Cross ARM GNU Assembler" superClass="ilg.gnuarmeclipse.managedbuild.cross.tool.assembler">
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.usepreprocessor.494477502" name="Use preprocessor" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.usepreprocessor" value="true" valueType="boolean"/>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.include.paths.1465555477" name="Include paths (-I)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.include.paths"/>
@@ -197,7 +197,7 @@
 							<option id="ilg.gnuarmeclipse.managedbuild.cross.option.warnings.toerrors.2098763517" name="Generate errors instead of warnings (-Werror)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.warnings.toerrors" value="false" valueType="boolean"/>
 							<option id="ilg.gnuarmeclipse.managedbuild.cross.option.addtools.createlisting.836473542" name="Create extended listing" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.addtools.createlisting" value="false" valueType="boolean"/>
 							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="ilg.gnuarmeclipse.managedbuild.cross.targetPlatform.1768350063" isAbstract="false" osList="all" superClass="ilg.gnuarmeclipse.managedbuild.cross.targetPlatform"/>
-							<builder arguments="-f uhk60v1.mk" buildPath="${workspace_loc:/uhk60v2-right}/../" command="${cross_make}" id="ilg.gnuarmeclipse.managedbuild.cross.builder.1931309296" incrementalBuildTarget="all DEBUG=1" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Gnu Make Builder" parallelBuildOn="true" parallelizationNumber="optimal" stopOnErr="false" superClass="ilg.gnuarmeclipse.managedbuild.cross.builder"/>
+							<builder arguments="-f uhk60v1.mk" buildPath="${workspace_loc:/uhk-right}/../" command="${cross_make}" id="ilg.gnuarmeclipse.managedbuild.cross.builder.1931309296" incrementalBuildTarget="all DEBUG=1" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Gnu Make Builder" parallelBuildOn="true" parallelizationNumber="optimal" stopOnErr="false" superClass="ilg.gnuarmeclipse.managedbuild.cross.builder"/>
 							<tool id="ilg.gnuarmeclipse.managedbuild.cross.tool.assembler.894450" name="Cross ARM GNU Assembler" superClass="ilg.gnuarmeclipse.managedbuild.cross.tool.assembler">
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.usepreprocessor.555709175" name="Use preprocessor" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.usepreprocessor" value="true" valueType="boolean"/>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.include.paths.1619685061" name="Include paths (-I)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.include.paths"/>
@@ -340,7 +340,7 @@
 							<option id="ilg.gnuarmeclipse.managedbuild.cross.option.warnings.toerrors.2124713168" name="Generate errors instead of warnings (-Werror)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.warnings.toerrors" value="false" valueType="boolean"/>
 							<option id="ilg.gnuarmeclipse.managedbuild.cross.option.addtools.createlisting.1228214828" name="Create extended listing" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.addtools.createlisting" value="false" valueType="boolean"/>
 							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="ilg.gnuarmeclipse.managedbuild.cross.targetPlatform.1911575583" isAbstract="false" osList="all" superClass="ilg.gnuarmeclipse.managedbuild.cross.targetPlatform"/>
-							<builder arguments="-f uhk60v1.mk" buildPath="${workspace_loc:/uhk60v2-right}/../" command="${cross_make}" id="ilg.gnuarmeclipse.managedbuild.cross.builder.1942759303" incrementalBuildTarget="all DEBUG=1 BL_APP_VECTOR_TABLE_ADDRESS=0" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Gnu Make Builder" parallelBuildOn="true" parallelizationNumber="optimal" stopOnErr="false" superClass="ilg.gnuarmeclipse.managedbuild.cross.builder"/>
+							<builder arguments="-f uhk60v1.mk" buildPath="${workspace_loc:/uhk-right}/../" command="${cross_make}" id="ilg.gnuarmeclipse.managedbuild.cross.builder.1942759303" incrementalBuildTarget="all DEBUG=1 BL_APP_VECTOR_TABLE_ADDRESS=0" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Gnu Make Builder" parallelBuildOn="true" parallelizationNumber="optimal" stopOnErr="false" superClass="ilg.gnuarmeclipse.managedbuild.cross.builder"/>
 							<tool id="ilg.gnuarmeclipse.managedbuild.cross.tool.assembler.1355758441" name="Cross ARM GNU Assembler" superClass="ilg.gnuarmeclipse.managedbuild.cross.tool.assembler">
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.usepreprocessor.511724221" name="Use preprocessor" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.usepreprocessor" value="true" valueType="boolean"/>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.include.paths.1130167410" name="Include paths (-I)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.include.paths"/>
@@ -428,7 +428,7 @@
 			<storageModule moduleId="ilg.gnuarmeclipse.managedbuild.packs"/>
 		</cconfiguration>
 		<cconfiguration id="ilg.gnuarmeclipse.managedbuild.cross.config.elf.release.1939339834.1692217331.1752486116">
-			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="ilg.gnuarmeclipse.managedbuild.cross.config.elf.release.1939339834.1692217331.1752486116" moduleId="org.eclipse.cdt.core.settings" name="uhk60v2-right_release">
+			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="ilg.gnuarmeclipse.managedbuild.cross.config.elf.release.1939339834.1692217331.1752486116" moduleId="org.eclipse.cdt.core.settings" name="uhk-right_release">
 				<externalSettings/>
 				<extensions>
 					<extension id="org.eclipse.cdt.core.ELF" point="org.eclipse.cdt.core.BinaryParser"/>
@@ -440,7 +440,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactExtension="elf" artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="${cross_rm} -rf" description="" id="ilg.gnuarmeclipse.managedbuild.cross.config.elf.release.1939339834.1692217331.1752486116" name="uhk60v2-right_release" parent="ilg.gnuarmeclipse.managedbuild.cross.config.elf.release">
+				<configuration artifactExtension="elf" artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="${cross_rm} -rf" description="" id="ilg.gnuarmeclipse.managedbuild.cross.config.elf.release.1939339834.1692217331.1752486116" name="uhk-right_release" parent="ilg.gnuarmeclipse.managedbuild.cross.config.elf.release">
 					<folderInfo id="ilg.gnuarmeclipse.managedbuild.cross.config.elf.release.1939339834.1692217331.1752486116." name="/" resourcePath="">
 						<toolChain id="ilg.gnuarmeclipse.managedbuild.cross.toolchain.elf.release.1908966540" name="Cross ARM GCC" superClass="ilg.gnuarmeclipse.managedbuild.cross.toolchain.elf.release">
 							<option id="ilg.gnuarmeclipse.managedbuild.cross.option.optimization.level.1601315862" name="Optimization Level" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.optimization.level" value="ilg.gnuarmeclipse.managedbuild.cross.option.optimization.level.most" valueType="enumerated"/>
@@ -483,7 +483,7 @@
 							<option id="ilg.gnuarmeclipse.managedbuild.cross.option.warnings.toerrors.949595182" name="Generate errors instead of warnings (-Werror)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.warnings.toerrors" value="false" valueType="boolean"/>
 							<option id="ilg.gnuarmeclipse.managedbuild.cross.option.addtools.createlisting.1373272205" name="Create extended listing" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.addtools.createlisting" value="false" valueType="boolean"/>
 							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="ilg.gnuarmeclipse.managedbuild.cross.targetPlatform.1439491834" isAbstract="false" osList="all" superClass="ilg.gnuarmeclipse.managedbuild.cross.targetPlatform"/>
-							<builder arguments="-f uhk60v2.mk" buildPath="${workspace_loc:/uhk60v2-right}/../" command="${cross_make}" id="ilg.gnuarmeclipse.managedbuild.cross.builder.1819722408" incrementalBuildTarget="all DEBUG=0" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Gnu Make Builder" parallelBuildOn="true" parallelizationNumber="optimal" stopOnErr="false" superClass="ilg.gnuarmeclipse.managedbuild.cross.builder"/>
+							<builder arguments="-f uhk.mk" buildPath="${workspace_loc:/uhk-right}/../" command="${cross_make}" id="ilg.gnuarmeclipse.managedbuild.cross.builder.1819722408" incrementalBuildTarget="all DEBUG=0" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Gnu Make Builder" parallelBuildOn="true" parallelizationNumber="optimal" stopOnErr="false" superClass="ilg.gnuarmeclipse.managedbuild.cross.builder"/>
 							<tool id="ilg.gnuarmeclipse.managedbuild.cross.tool.assembler.565354625" name="Cross ARM GNU Assembler" superClass="ilg.gnuarmeclipse.managedbuild.cross.tool.assembler">
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.usepreprocessor.1508443877" name="Use preprocessor" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.usepreprocessor" value="true" valueType="boolean"/>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.include.paths.278884716" name="Include paths (-I)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.include.paths"/>
@@ -568,7 +568,7 @@
 			<storageModule moduleId="ilg.gnuarmeclipse.managedbuild.packs"/>
 		</cconfiguration>
 		<cconfiguration id="ilg.gnuarmeclipse.managedbuild.cross.config.elf.release.1939339834.1692217331.1297236062.1584168738">
-			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="ilg.gnuarmeclipse.managedbuild.cross.config.elf.release.1939339834.1692217331.1297236062.1584168738" moduleId="org.eclipse.cdt.core.settings" name="uhk60v2-right_debug">
+			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="ilg.gnuarmeclipse.managedbuild.cross.config.elf.release.1939339834.1692217331.1297236062.1584168738" moduleId="org.eclipse.cdt.core.settings" name="uhk-right_debug">
 				<externalSettings/>
 				<extensions>
 					<extension id="org.eclipse.cdt.core.ELF" point="org.eclipse.cdt.core.BinaryParser"/>
@@ -580,7 +580,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactExtension="elf" artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="${cross_rm} -rf" description="" id="ilg.gnuarmeclipse.managedbuild.cross.config.elf.release.1939339834.1692217331.1297236062.1584168738" name="uhk60v2-right_debug" parent="ilg.gnuarmeclipse.managedbuild.cross.config.elf.release">
+				<configuration artifactExtension="elf" artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="${cross_rm} -rf" description="" id="ilg.gnuarmeclipse.managedbuild.cross.config.elf.release.1939339834.1692217331.1297236062.1584168738" name="uhk-right_debug" parent="ilg.gnuarmeclipse.managedbuild.cross.config.elf.release">
 					<folderInfo id="ilg.gnuarmeclipse.managedbuild.cross.config.elf.release.1939339834.1692217331.1297236062.1584168738." name="/" resourcePath="">
 						<toolChain id="ilg.gnuarmeclipse.managedbuild.cross.toolchain.elf.release.1306140015" name="Cross ARM GCC" superClass="ilg.gnuarmeclipse.managedbuild.cross.toolchain.elf.release">
 							<option id="ilg.gnuarmeclipse.managedbuild.cross.option.optimization.level.1239514995" name="Optimization Level" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.optimization.level" value="ilg.gnuarmeclipse.managedbuild.cross.option.optimization.level.none" valueType="enumerated"/>
@@ -623,7 +623,7 @@
 							<option id="ilg.gnuarmeclipse.managedbuild.cross.option.warnings.toerrors.32939667" name="Generate errors instead of warnings (-Werror)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.warnings.toerrors" value="false" valueType="boolean"/>
 							<option id="ilg.gnuarmeclipse.managedbuild.cross.option.addtools.createlisting.357666395" name="Create extended listing" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.addtools.createlisting" value="false" valueType="boolean"/>
 							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="ilg.gnuarmeclipse.managedbuild.cross.targetPlatform.749574924" isAbstract="false" osList="all" superClass="ilg.gnuarmeclipse.managedbuild.cross.targetPlatform"/>
-							<builder arguments="-f uhk60v2.mk" buildPath="${workspace_loc:/uhk60v2-right}/../" command="${cross_make}" id="ilg.gnuarmeclipse.managedbuild.cross.builder.546154798" incrementalBuildTarget="all DEBUG=1" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Gnu Make Builder" parallelBuildOn="true" parallelizationNumber="optimal" stopOnErr="false" superClass="ilg.gnuarmeclipse.managedbuild.cross.builder"/>
+							<builder arguments="-f uhk.mk" buildPath="${workspace_loc:/uhk-right}/../" command="${cross_make}" id="ilg.gnuarmeclipse.managedbuild.cross.builder.546154798" incrementalBuildTarget="all DEBUG=1" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Gnu Make Builder" parallelBuildOn="true" parallelizationNumber="optimal" stopOnErr="false" superClass="ilg.gnuarmeclipse.managedbuild.cross.builder"/>
 							<tool id="ilg.gnuarmeclipse.managedbuild.cross.tool.assembler.1042133600" name="Cross ARM GNU Assembler" superClass="ilg.gnuarmeclipse.managedbuild.cross.tool.assembler">
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.usepreprocessor.27288652" name="Use preprocessor" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.usepreprocessor" value="true" valueType="boolean"/>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.include.paths.1074104611" name="Include paths (-I)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.include.paths"/>
@@ -711,7 +711,7 @@
 			<storageModule moduleId="ilg.gnuarmeclipse.managedbuild.packs"/>
 		</cconfiguration>
 		<cconfiguration id="ilg.gnuarmeclipse.managedbuild.cross.config.elf.release.1939339834.1692217331.1297236062.2081695142.537626752">
-			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="ilg.gnuarmeclipse.managedbuild.cross.config.elf.release.1939339834.1692217331.1297236062.2081695142.537626752" moduleId="org.eclipse.cdt.core.settings" name="uhk60v2-right_debug_standalone">
+			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="ilg.gnuarmeclipse.managedbuild.cross.config.elf.release.1939339834.1692217331.1297236062.2081695142.537626752" moduleId="org.eclipse.cdt.core.settings" name="uhk-right_debug_standalone">
 				<externalSettings/>
 				<extensions>
 					<extension id="org.eclipse.cdt.core.ELF" point="org.eclipse.cdt.core.BinaryParser"/>
@@ -723,7 +723,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactExtension="elf" artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="${cross_rm} -rf" description="Debug version of uhk60v2-right without the bootloader" id="ilg.gnuarmeclipse.managedbuild.cross.config.elf.release.1939339834.1692217331.1297236062.2081695142.537626752" name="uhk60v2-right_debug_standalone" parent="ilg.gnuarmeclipse.managedbuild.cross.config.elf.release">
+				<configuration artifactExtension="elf" artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="${cross_rm} -rf" description="Debug version of uhk-right without the bootloader" id="ilg.gnuarmeclipse.managedbuild.cross.config.elf.release.1939339834.1692217331.1297236062.2081695142.537626752" name="uhk-right_debug_standalone" parent="ilg.gnuarmeclipse.managedbuild.cross.config.elf.release">
 					<folderInfo id="ilg.gnuarmeclipse.managedbuild.cross.config.elf.release.1939339834.1692217331.1297236062.2081695142.537626752." name="/" resourcePath="">
 						<toolChain id="ilg.gnuarmeclipse.managedbuild.cross.toolchain.elf.release.109724347" name="Cross ARM GCC" superClass="ilg.gnuarmeclipse.managedbuild.cross.toolchain.elf.release">
 							<option id="ilg.gnuarmeclipse.managedbuild.cross.option.optimization.level.1412684938" name="Optimization Level" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.optimization.level" value="ilg.gnuarmeclipse.managedbuild.cross.option.optimization.level.none" valueType="enumerated"/>
@@ -766,7 +766,7 @@
 							<option id="ilg.gnuarmeclipse.managedbuild.cross.option.warnings.toerrors.1838571124" name="Generate errors instead of warnings (-Werror)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.warnings.toerrors" value="false" valueType="boolean"/>
 							<option id="ilg.gnuarmeclipse.managedbuild.cross.option.addtools.createlisting.1078471419" name="Create extended listing" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.addtools.createlisting" value="false" valueType="boolean"/>
 							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="ilg.gnuarmeclipse.managedbuild.cross.targetPlatform.491795311" isAbstract="false" osList="all" superClass="ilg.gnuarmeclipse.managedbuild.cross.targetPlatform"/>
-							<builder arguments="-f uhk60v2.mk" buildPath="${workspace_loc:/uhk60v2-right}/../" command="${cross_make}" id="ilg.gnuarmeclipse.managedbuild.cross.builder.998523056" incrementalBuildTarget="all DEBUG=1 BL_APP_VECTOR_TABLE_ADDRESS=0" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Gnu Make Builder" parallelBuildOn="true" parallelizationNumber="optimal" stopOnErr="false" superClass="ilg.gnuarmeclipse.managedbuild.cross.builder"/>
+							<builder arguments="-f uhk.mk" buildPath="${workspace_loc:/uhk-right}/../" command="${cross_make}" id="ilg.gnuarmeclipse.managedbuild.cross.builder.998523056" incrementalBuildTarget="all DEBUG=1 BL_APP_VECTOR_TABLE_ADDRESS=0" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Gnu Make Builder" parallelBuildOn="true" parallelizationNumber="optimal" stopOnErr="false" superClass="ilg.gnuarmeclipse.managedbuild.cross.builder"/>
 							<tool id="ilg.gnuarmeclipse.managedbuild.cross.tool.assembler.182699530" name="Cross ARM GNU Assembler" superClass="ilg.gnuarmeclipse.managedbuild.cross.tool.assembler">
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.usepreprocessor.1379230144" name="Use preprocessor" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.usepreprocessor" value="true" valueType="boolean"/>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.include.paths.11456393" name="Include paths (-I)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.include.paths"/>
@@ -870,14 +870,14 @@
 		<configuration configurationName="uhk60-right_debug_standalone">
 			<resource resourceType="PROJECT" workspacePath="/uhk-right"/>
 		</configuration>
-		<configuration configurationName="uhk60v2-right_release">
-			<resource resourceType="PROJECT" workspacePath="/uhk60v2-right"/>
+		<configuration configurationName="uhk-right_release">
+			<resource resourceType="PROJECT" workspacePath="/uhk-right"/>
 		</configuration>
 		<configuration configurationName="uhk60v1-right_release">
-			<resource resourceType="PROJECT" workspacePath="/uhk60v2-right"/>
+			<resource resourceType="PROJECT" workspacePath="/uhk-right"/>
 		</configuration>
 		<configuration configurationName="uhk60v1-right_debug">
-			<resource resourceType="PROJECT" workspacePath="/uhk60v2-right"/>
+			<resource resourceType="PROJECT" workspacePath="/uhk-right"/>
 		</configuration>
 	</storageModule>
 	<storageModule moduleId="com.crt.config">
