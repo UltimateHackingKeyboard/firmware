@@ -31,12 +31,12 @@ pointer_delta_t PointerDelta;
 key_vector_t keyVector = {
     .itemNum = KEYBOARD_VECTOR_ITEMS_NUM,
     .items = (key_vector_pin_t[]) {
-        {PORTC, GPIOC, kCLOCK_PortC,  5}, // top key
-        {PORTC, GPIOC, kCLOCK_PortC,  6}, // left key
-        {PORTD, GPIOD, kCLOCK_PortD,  7}, // right key
-        {PORTC, GPIOC, kCLOCK_PortC,  7}, // left microswitch
-        {PORTA, GPIOA, kCLOCK_PortA, 19}, // trackball microswitch
-        {PORTD, GPIOD, kCLOCK_PortD,  6}, // right microswitch
+        {PORTB, GPIOB, kCLOCK_PortB, 10}, // top key
+        {PORTA, GPIOA, kCLOCK_PortA,  6}, // left key
+        {PORTB, GPIOB, kCLOCK_PortB,  2}, // right key
+        {PORTB, GPIOB, kCLOCK_PortB,  1}, // left microswitch
+        {PORTB, GPIOB, kCLOCK_PortB,  7}, // trackball microswitch
+        {PORTA, GPIOA, kCLOCK_PortA,  8}, // right microswitch
     },
 };
 
