@@ -18,10 +18,10 @@
     #define MODULE_KEY_COUNT KEYBOARD_VECTOR_ITEMS_NUM
     #define MODULE_POINTER_COUNT 1
 
-    #define TEST_LED_GPIO  GPIOA
-    #define TEST_LED_PORT  PORTA
-    #define TEST_LED_CLOCK kCLOCK_PortA
-    #define TEST_LED_PIN   18
+    #define TEST_LED_GPIO  GPIOB
+    #define TEST_LED_PORT  PORTB
+    #define TEST_LED_CLOCK kCLOCK_PortB
+    #define TEST_LED_PIN   11
 
     #define KEY_ARRAY_TYPE KEY_ARRAY_TYPE_VECTOR
     #define KEYBOARD_VECTOR_ITEMS_NUM 6
