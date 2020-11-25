@@ -26,18 +26,6 @@
     #define KEY_ARRAY_TYPE KEY_ARRAY_TYPE_VECTOR
     #define KEYBOARD_VECTOR_ITEMS_NUM 6
 
-// Typedefs
-
-    typedef struct {
-        clock_ip_name_t clock;
-        PORT_Type *port;
-        uint32_t pin;
-        port_mux_t mux;
-        TPM_Type *tpmBase;
-        tpm_chnl_t chnlNumber;
-        uint8_t dutyCyclePercent;
-    } tpm_channel_t;
-
 // Variables:
 
     extern key_vector_t keyVector;

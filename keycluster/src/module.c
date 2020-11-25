@@ -59,46 +59,6 @@ void BlackberryTrackball_Init(void)
         &(port_pin_config_t){.pullSelect=kPORT_PullUp, .mux=kPORT_MuxAsGpio});
 }
 
-#define TPM_SOURCE_CLOCK (CLOCK_GetFreq(kCLOCK_McgIrc48MClk) / 4)
-
-tpm_channel_t tpmChannels[] = {
-    {.clock=kCLOCK_PortC, .port=PORTC, .pin=2U, .mux=kPORT_MuxAlt4, .tpmBase=TPM0, .chnlNumber=1U, .dutyCyclePercent=100},
-    {.clock=kCLOCK_PortC, .port=PORTC, .pin=3U, .mux=kPORT_MuxAlt4, .tpmBase=TPM0, .chnlNumber=2U, .dutyCyclePercent=100},
-    {.clock=kCLOCK_PortC, .port=PORTC, .pin=1U, .mux=kPORT_MuxAlt4, .tpmBase=TPM0, .chnlNumber=0U, .dutyCyclePercent=100},
-    {.clock=kCLOCK_PortD, .port=PORTD, .pin=4U, .mux=kPORT_MuxAlt4, .tpmBase=TPM0, .chnlNumber=4U, .dutyCyclePercent=100},
-    {.clock=kCLOCK_PortC, .port=PORTC, .pin=4U, .mux=kPORT_MuxAlt4, .tpmBase=TPM0, .chnlNumber=3U, .dutyCyclePercent=100},
-    {.clock=kCLOCK_PortD, .port=PORTD, .pin=5U, .mux=kPORT_MuxAlt4, .tpmBase=TPM0, .chnlNumber=5U, .dutyCyclePercent=100},
-    {.clock=kCLOCK_PortB, .port=PORTB, .pin=0U, .mux=kPORT_MuxAlt3, .tpmBase=TPM1, .chnlNumber=0U, .dutyCyclePercent=100},
-    {.clock=kCLOCK_PortB, .port=PORTB, .pin=1U, .mux=kPORT_MuxAlt3, .tpmBase=TPM1, .chnlNumber=1U, .dutyCyclePercent=100},
-    {.clock=kCLOCK_PortA, .port=PORTA, .pin=1U, .mux=kPORT_MuxAlt3, .tpmBase=TPM2, .chnlNumber=0U, .dutyCyclePercent=100},
-};
-
-void Tpm_Init(void)
-{
-    CLOCK_SetTpmClock(1U);
-
-    tpm_config_t tpmInfo;
-    TPM_GetDefaultConfig(&tpmInfo);
-    tpmInfo.prescale = kTPM_Prescale_Divide_4;
-
-    tpm_chnl_pwm_signal_param_t tpmParam;
-    tpmParam.level = kTPM_LowTrue;
-
-    uint8_t count = sizeof(tpmChannels) / sizeof(tpmChannels[0]);
-
-    for (uint8_t i=0; i<count; i++) {
-        CLOCK_EnableClock(tpmChannels[i].clock);
-        PORT_SetPinMux(tpmChannels[i].port, tpmChannels[i].pin, tpmChannels[i].mux);
-
-        tpmParam.chnlNumber = tpmChannels[i].chnlNumber;
-        tpmParam.dutyCyclePercent = tpmChannels[i].dutyCyclePercent;
-
-        TPM_Init(tpmChannels[i].tpmBase, &tpmInfo);
-        TPM_SetupPwm(tpmChannels[i].tpmBase, &tpmParam, 1U, kTPM_EdgeAlignedPwm, 24000U, TPM_SOURCE_CLOCK);
-        TPM_StartTimer(tpmChannels[i].tpmBase, kTPM_SystemClock);
-    }
-}
-
 bool oldLeft, oldRight, oldUp, oldDown;
 
 void BlackberryTrackball_Update(void)
@@ -132,7 +92,6 @@ void Module_Init(void)
 {
     KeyVector_Init(&keyVector);
     BlackberryTrackball_Init();
-    Tpm_Init();
 }
 
 void Module_Loop(void)
