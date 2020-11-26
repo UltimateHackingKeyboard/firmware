@@ -27,6 +27,7 @@
     typedef enum {
         LedDriverIc_IS31FL3731,
         LedDriverIc_IS31FL3737,
+        LedDriverIc_IS31FL3199,
     } led_driver_ic_t;
 
     typedef enum {
