@@ -14,9 +14,8 @@ static uint8_t setShutdownModeNormalBufferIS31FL3731[] = {LED_DRIVER_REGISTER_SH
 static uint8_t setShutdownModeNormalBufferIS31FL3737[] = {LED_DRIVER_REGISTER_CONFIGURATION, SHUTDOWN_MODE_NORMAL};
 #endif
 
-#if DEVICE_ID == DEVICE_ID_UHK60V1
-
 static led_driver_state_t ledDriverStates[LED_DRIVER_MAX_COUNT] = {
+#if DEVICE_ID == DEVICE_ID_UHK60V1
     {
         .i2cAddress = I2C_ADDRESS_IS31FL3731_RIGHT,
         .ledDriverIc = LedDriverIc_IS31FL3731,
@@ -77,11 +76,7 @@ static led_driver_state_t ledDriverStates[LED_DRIVER_MAX_COUNT] = {
             0b00011111, // display row 9
         }
     },
-};
-
 #elif DEVICE_ID == DEVICE_ID_UHK60V2
-
-static led_driver_state_t ledDriverStates[LED_DRIVER_MAX_COUNT] = {
     {
         .i2cAddress = I2C_ADDRESS_IS31FL3737_RIGHT,
         .ledDriverIc = LedDriverIc_IS31FL3737,
@@ -154,8 +149,8 @@ static led_driver_state_t ledDriverStates[LED_DRIVER_MAX_COUNT] = {
             0b00111111,
         }
     },
-};
 #endif
+};
 
 static uint8_t unlockCommandRegisterOnce[] = {LED_DRIVER_REGISTER_WRITE_LOCK, LED_DRIVER_WRITE_LOCK_ENABLE_ONCE};
 static uint8_t setFunctionFrameBuffer[] = {LED_DRIVER_REGISTER_FRAME, LED_DRIVER_FRAME_FUNCTION};
