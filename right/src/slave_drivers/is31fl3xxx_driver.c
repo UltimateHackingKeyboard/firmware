@@ -10,9 +10,8 @@ uint8_t LedDriverValues[LED_DRIVER_MAX_COUNT][LED_DRIVER_LED_COUNT_MAX];
 
 #if DEVICE_ID == DEVICE_ID_UHK60V1
 static uint8_t setShutdownModeNormalBufferIS31FL3731[] = {LED_DRIVER_REGISTER_SHUTDOWN, SHUTDOWN_MODE_NORMAL};
-#elif DEVICE_ID == DEVICE_ID_UHK60V2
-static uint8_t setShutdownModeNormalBufferIS31FL3737[] = {LED_DRIVER_REGISTER_CONFIGURATION, SHUTDOWN_MODE_NORMAL};
 #endif
+static uint8_t setShutdownModeNormalBufferIS31FL_3199_3737[] = {LED_DRIVER_REGISTER_CONFIGURATION, SHUTDOWN_MODE_NORMAL};
 
 static led_driver_state_t ledDriverStates[LED_DRIVER_MAX_COUNT] = {
 #if DEVICE_ID == DEVICE_ID_UHK60V1
@@ -83,7 +82,7 @@ static led_driver_state_t ledDriverStates[LED_DRIVER_MAX_COUNT] = {
         .frameRegisterPwmFirst = FRAME_REGISTER_PWM_FIRST_IS31FL3737,
         .ledCount = LED_DRIVER_LED_COUNT_IS31FL3737,
         .setShutdownModeNormalBufferLength = 2,
-        .setShutdownModeNormalBuffer = setShutdownModeNormalBufferIS31FL3737,
+        .setShutdownModeNormalBuffer = setShutdownModeNormalBufferIS31FL_3199_3737,
         .setupLedControlRegistersCommandLength = LED_CONTROL_REGISTERS_COMMAND_LENGTH_IS31FL3737,
         .setupLedControlRegistersCommand = {
             FRAME_REGISTER_LED_CONTROL_FIRST,
@@ -119,7 +118,7 @@ static led_driver_state_t ledDriverStates[LED_DRIVER_MAX_COUNT] = {
         .frameRegisterPwmFirst = FRAME_REGISTER_PWM_FIRST_IS31FL3737,
         .ledCount = LED_DRIVER_LED_COUNT_IS31FL3737,
         .setShutdownModeNormalBufferLength = 2,
-        .setShutdownModeNormalBuffer = setShutdownModeNormalBufferIS31FL3737,
+        .setShutdownModeNormalBuffer = setShutdownModeNormalBufferIS31FL_3199_3737,
         .setupLedControlRegistersCommandLength = LED_CONTROL_REGISTERS_COMMAND_LENGTH_IS31FL3737,
         .setupLedControlRegistersCommand = {
             FRAME_REGISTER_LED_CONTROL_FIRST,
@@ -150,6 +149,16 @@ static led_driver_state_t ledDriverStates[LED_DRIVER_MAX_COUNT] = {
         }
     },
 #endif
+    {
+        .i2cAddress = I2C_ADDRESS_IS31FL3199_MODULE_LEFT,
+        .ledDriverIc = LedDriverIc_IS31FL3199,
+        .frameRegisterPwmFirst = FRAME_REGISTER_PWM_FIRST_IS31FL3199,
+        .ledCount = LED_DRIVER_LED_COUNT_IS31FL3199,
+        .setShutdownModeNormalBufferLength = 2,
+        .setShutdownModeNormalBuffer = setShutdownModeNormalBufferIS31FL_3199_3737,
+        .setupLedControlRegistersCommandLength = 0,
+        .setupLedControlRegistersCommand = {}
+    },
 };
 
 static uint8_t unlockCommandRegisterOnce[] = {LED_DRIVER_REGISTER_WRITE_LOCK, LED_DRIVER_WRITE_LOCK_ENABLE_ONCE};
@@ -183,9 +192,17 @@ void LedSlaveDriver_Init(uint8_t ledDriverId)
     }
 
     led_driver_state_t *currentLedDriverState = ledDriverStates + ledDriverId;
-    currentLedDriverState->phase = currentLedDriverState->ledDriverIc == LedDriverIc_IS31FL3731
-        ? LedDriverPhase_SetFunctionFrame
-        : LedDriverPhase_UnlockCommandRegister1;
+    switch (currentLedDriverState->ledDriverIc) {
+        case LedDriverIc_IS31FL3199:
+            currentLedDriverState->phase = LedDriverPhase_SetShutdownModeNormal;
+            break;
+        case LedDriverIc_IS31FL3731:
+            currentLedDriverState->phase = LedDriverPhase_SetFunctionFrame;
+            break;
+        case LedDriverIc_IS31FL3737:
+            currentLedDriverState->phase = LedDriverPhase_UnlockCommandRegister1;
+            break;
+    }
     currentLedDriverState->ledIndex = 0;
     memset(LedDriverValues[ledDriverId], KeyBacklightBrightness, currentLedDriverState->ledCount);
 
@@ -224,9 +241,17 @@ status_t LedSlaveDriver_Update(uint8_t ledDriverId)
             break;
         case LedDriverPhase_SetShutdownModeNormal:
             status = I2cAsyncWrite(ledDriverAddress, currentLedDriverState->setShutdownModeNormalBuffer, currentLedDriverState->setShutdownModeNormalBufferLength);
-            *ledDriverPhase = currentLedDriverState->ledDriverIc == LedDriverIc_IS31FL3731
-                ? LedDriverPhase_SetFrame1
-                : LedDriverPhase_SetGlobalCurrent;
+            switch (currentLedDriverState->ledDriverIc) {
+                case LedDriverIc_IS31FL3199:
+                    *ledDriverPhase = LedDriverPhase_InitLedValues;
+                    break;
+                case LedDriverIc_IS31FL3731:
+                    *ledDriverPhase = LedDriverPhase_SetFrame1;
+                    break;
+                case LedDriverIc_IS31FL3737:
+                    *ledDriverPhase = LedDriverPhase_SetGlobalCurrent;
+                    break;
+            }
             break;
         case LedDriverPhase_SetGlobalCurrent:
             status = I2cAsyncWrite(ledDriverAddress, setGlobalCurrentBuffer, sizeof(setGlobalCurrentBuffer));

@@ -8,7 +8,7 @@
 
 // Macros:
 
-    #define LED_DRIVER_MAX_COUNT 2
+    #define LED_DRIVER_MAX_COUNT 3
 
     #define LED_CONTROL_REGISTERS_COMMAND_LENGTH_IS31FL3731 19
     #define LED_CONTROL_REGISTERS_COMMAND_LENGTH_IS31FL3737 25
@@ -33,7 +33,8 @@
     typedef enum {
         LedDriverId_Right,
         LedDriverId_Left,
-        LedDriverId_Last = LedDriverId_Left,
+        LedDriverId_ModuleLeft,
+        LedDriverId_Last = LedDriverId_ModuleLeft,
     } led_driver_id_t;
 
     typedef enum {
