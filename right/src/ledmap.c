@@ -1,7 +1,7 @@
 #include "keymap.h"
 #include "layer_switcher.h"
 #include "ledmap.h"
-#include "slave_drivers/is31fl37xx_driver.h"
+#include "slave_drivers/is31fl3xxx_driver.h"
 
 rgb_t KeyActionColors[] = {
     {.red=0, .green=0, .blue=0}, // KeyActionColor_None

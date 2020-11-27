@@ -4,7 +4,7 @@
 #include "layer.h"
 #include "usb_interfaces/usb_interface_mouse.h"
 #include "peripherals/test_led.h"
-#include "slave_drivers/is31fl37xx_driver.h"
+#include "slave_drivers/is31fl3xxx_driver.h"
 #include "slave_drivers/uhk_module_driver.h"
 #include "timer.h"
 #include "config_parser/parse_keymap.h"

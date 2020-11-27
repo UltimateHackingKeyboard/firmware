@@ -1,5 +1,5 @@
 #include "led_display.h"
-#include "slave_drivers/is31fl37xx_driver.h"
+#include "slave_drivers/is31fl3xxx_driver.h"
 #include "layer.h"
 #include "keymap.h"
 #include "device.h"
