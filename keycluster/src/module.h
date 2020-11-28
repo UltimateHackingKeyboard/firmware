@@ -23,6 +23,11 @@
     #define TEST_LED_CLOCK kCLOCK_PortB
     #define TEST_LED_PIN   11
 
+    #define SDB_GPIO  GPIOA
+    #define SDB_PORT  PORTA
+    #define SDB_CLOCK kCLOCK_PortA
+    #define SDB_PIN   5
+
     #define KEY_ARRAY_TYPE KEY_ARRAY_TYPE_VECTOR
     #define KEYBOARD_VECTOR_ITEMS_NUM 6
 

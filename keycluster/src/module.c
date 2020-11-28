@@ -59,6 +59,15 @@ void BlackberryTrackball_Init(void)
         &(port_pin_config_t){.pullSelect=kPORT_PullUp, .mux=kPORT_MuxAsGpio});
 }
 
+void InitLedDriverSdb(void)
+{
+    CLOCK_EnableClock(SDB_CLOCK);
+    PORT_SetPinMux(SDB_PORT, SDB_PIN, kPORT_MuxAsGpio);
+    GPIO_PinInit(SDB_GPIO, SDB_PIN, &(gpio_pin_config_t){kGPIO_DigitalOutput, 0});
+    GPIO_WritePinOutput(SDB_GPIO, SDB_PIN, 1);
+}
+
+
 bool oldLeft, oldRight, oldUp, oldDown;
 
 void BlackberryTrackball_Update(void)
@@ -92,6 +101,7 @@ void Module_Init(void)
 {
     KeyVector_Init(&keyVector);
     BlackberryTrackball_Init();
+    InitLedDriverSdb();
 }
 
 void Module_Loop(void)
