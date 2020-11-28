@@ -167,6 +167,7 @@ static uint8_t setGlobalCurrentBuffer[] = {LED_DRIVER_REGISTER_GLOBAL_CURRENT, 0
 static uint8_t setFrame1Buffer[] = {LED_DRIVER_REGISTER_FRAME, LED_DRIVER_FRAME_1};
 static uint8_t setFrame2Buffer[] = {LED_DRIVER_REGISTER_FRAME, LED_DRIVER_FRAME_2};
 static uint8_t setFrame4Buffer[] = {LED_DRIVER_REGISTER_FRAME, LED_DRIVER_FRAME_4};
+static uint8_t updateDataBuffer[] = {0x10, 0x00};
 static uint8_t updatePwmRegistersBuffer[PWM_REGISTER_BUFFER_LENGTH];
 
 void LedSlaveDriver_DisableLeds(void)
@@ -288,8 +289,14 @@ status_t LedSlaveDriver_Update(uint8_t ledDriverId)
             if (*ledIndex >= ledCount) {
                 *ledIndex = 0;
                 memcpy(currentLedDriverState->targetLedValues, ledValues, ledCount);
-                *ledDriverPhase = LedDriverPhase_UpdateChangedLedValues;
+                *ledDriverPhase = currentLedDriverState->ledDriverIc == LedDriverIc_IS31FL3199
+                    ? LedDriverPhase_UpdateData
+                    : LedDriverPhase_UpdateChangedLedValues;
             }
+            break;
+        case LedDriverPhase_UpdateData:
+            status = I2cAsyncWrite(ledDriverAddress, updateDataBuffer, sizeof(updateDataBuffer));
+            *ledDriverPhase = LedDriverPhase_UpdateChangedLedValues;
             break;
         case LedDriverPhase_UpdateChangedLedValues: {
             uint8_t *targetLedValues = currentLedDriverState->targetLedValues;
