@@ -51,6 +51,11 @@ uhk_slave_t Slaves[] = {
         .perDriverId = LedDriverId_Left,
     },
     {
+        .init = LedSlaveDriver_Init,
+        .update = LedSlaveDriver_Update,
+        .perDriverId = LedDriverId_ModuleLeft,
+    },
+    {
         .init = KbootSlaveDriver_Init,
         .update = KbootSlaveDriver_Update,
         .perDriverId = KbootDriverId_Singleton,
