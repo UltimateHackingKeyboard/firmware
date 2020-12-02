@@ -49,6 +49,7 @@
         LedDriverPhase_SetFrame2,
         LedDriverPhase_InitLedValues,
         LedDriverPhase_UpdateData,
+        LedDriverPhase_SetLedBrightness,
         LedDriverPhase_UpdateChangedLedValues,
     } led_driver_phase_t;
 

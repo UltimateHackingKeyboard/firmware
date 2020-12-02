@@ -168,6 +168,7 @@ static uint8_t setFrame1Buffer[] = {LED_DRIVER_REGISTER_FRAME, LED_DRIVER_FRAME_
 static uint8_t setFrame2Buffer[] = {LED_DRIVER_REGISTER_FRAME, LED_DRIVER_FRAME_2};
 static uint8_t setFrame4Buffer[] = {LED_DRIVER_REGISTER_FRAME, LED_DRIVER_FRAME_4};
 static uint8_t updateDataBuffer[] = {0x10, 0x00};
+static uint8_t setLedBrightness[] = {0x04, 0b00110000};
 static uint8_t updatePwmRegistersBuffer[PWM_REGISTER_BUFFER_LENGTH];
 
 void LedSlaveDriver_DisableLeds(void)
@@ -296,6 +297,10 @@ status_t LedSlaveDriver_Update(uint8_t ledDriverId)
             break;
         case LedDriverPhase_UpdateData:
             status = I2cAsyncWrite(ledDriverAddress, updateDataBuffer, sizeof(updateDataBuffer));
+            *ledDriverPhase = LedDriverPhase_UpdateChangedLedValues;
+            break;
+        case LedDriverPhase_SetLedBrightness:
+            status = I2cAsyncWrite(ledDriverAddress, setLedBrightness, sizeof(setLedBrightness));
             *ledDriverPhase = LedDriverPhase_UpdateChangedLedValues;
             break;
         case LedDriverPhase_UpdateChangedLedValues: {
