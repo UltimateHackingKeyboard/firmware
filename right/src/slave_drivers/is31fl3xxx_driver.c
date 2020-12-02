@@ -297,7 +297,7 @@ status_t LedSlaveDriver_Update(uint8_t ledDriverId)
             break;
         case LedDriverPhase_UpdateData:
             status = I2cAsyncWrite(ledDriverAddress, updateDataBuffer, sizeof(updateDataBuffer));
-            *ledDriverPhase = LedDriverPhase_UpdateChangedLedValues;
+            *ledDriverPhase = LedDriverPhase_SetLedBrightness;
             break;
         case LedDriverPhase_SetLedBrightness:
             status = I2cAsyncWrite(ledDriverAddress, setLedBrightness, sizeof(setLedBrightness));
