@@ -111,12 +111,21 @@ rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
         { .red=60, .green=76, .blue=92 }, // Left Mod
         { .red=0, .green=0, .blue=0 } // Unused
     },
+
+    // Left module
+    {
+        { .red=5, .green=4, .blue=3 },
+        { .red=2, .green=1, .blue=0 },
+        { .red=7, .green=6, .blue=8 },
+    },
+
+    // Right module
+    {
+    },
 };
 
-
-
 void UpdateLayerLeds(void) {
-    for (uint8_t slotId=0; slotId<2; slotId++) {
+    for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
             key_action_color_t keyActionColor;
 //            key_action_t (*layerKeyActions)[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = &CurrentKeymap[ActiveLayer];

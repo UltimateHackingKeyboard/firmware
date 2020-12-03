@@ -291,13 +291,9 @@ status_t LedSlaveDriver_Update(uint8_t ledDriverId)
                 *ledIndex = 0;
                 memcpy(currentLedDriverState->targetLedValues, ledValues, ledCount);
                 *ledDriverPhase = currentLedDriverState->ledDriverIc == LedDriverIc_IS31FL3199
-                    ? LedDriverPhase_UpdateData
+                    ? LedDriverPhase_SetLedBrightness
                     : LedDriverPhase_UpdateChangedLedValues;
             }
-            break;
-        case LedDriverPhase_UpdateData:
-            status = I2cAsyncWrite(ledDriverAddress, updateDataBuffer, sizeof(updateDataBuffer));
-            *ledDriverPhase = LedDriverPhase_SetLedBrightness;
             break;
         case LedDriverPhase_SetLedBrightness:
             status = I2cAsyncWrite(ledDriverAddress, setLedBrightness, sizeof(setLedBrightness));
@@ -321,7 +317,7 @@ status_t LedSlaveDriver_Update(uint8_t ledDriverId)
             }
 
             bool foundStartIndex = count < ledCount;
-            if (!foundStartIndex) {
+            if (!foundStartIndex && currentLedDriverState->ledDriverIc != LedDriverIc_IS31FL3199) {
                 *ledIndex = 0;
                 break;
             }
@@ -344,8 +340,16 @@ status_t LedSlaveDriver_Update(uint8_t ledDriverId)
             if (*ledIndex >= ledCount) {
                 *ledIndex = 0;
             }
+
+            if (currentLedDriverState->ledDriverIc == LedDriverIc_IS31FL3199) {
+                *ledDriverPhase = LedDriverPhase_UpdateData;
+            }
             break;
         }
+        case LedDriverPhase_UpdateData:
+            status = I2cAsyncWrite(ledDriverAddress, updateDataBuffer, sizeof(updateDataBuffer));
+            *ledDriverPhase = LedDriverPhase_UpdateChangedLedValues;
+            break;
     }
 
     return status;
