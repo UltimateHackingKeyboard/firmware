@@ -160,9 +160,9 @@ void UpdateLayerLeds(void) {
 
             rgb_t *keyActionColorValues = &KeyActionColors[keyActionColor];
             rgb_t *ledMapItem = &LedMap[slotId][keyId];
-            LedDriverValues[slotId][ledMapItem->red] = slotId == SlotId_LeftModule ? 0.5 * keyActionColorValues->red : keyActionColorValues->red;
-            LedDriverValues[slotId][ledMapItem->green] = slotId == SlotId_LeftModule ? 0.27 * keyActionColorValues->green : keyActionColorValues->green;
-            LedDriverValues[slotId][ledMapItem->blue] = slotId == SlotId_LeftModule ? 0.4 * keyActionColorValues->blue : keyActionColorValues->blue;
+            LedDriverValues[slotId][ledMapItem->red] = slotId == SlotId_LeftModule ? 1 * keyActionColorValues->red : keyActionColorValues->red;
+            LedDriverValues[slotId][ledMapItem->green] = slotId == SlotId_LeftModule ? 0.5 * keyActionColorValues->green : keyActionColorValues->green;
+            LedDriverValues[slotId][ledMapItem->blue] = slotId == SlotId_LeftModule ? 1 * keyActionColorValues->blue : keyActionColorValues->blue;
         }
     }
 }
