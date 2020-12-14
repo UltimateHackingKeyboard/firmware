@@ -33,7 +33,7 @@ Some of the usecases which can be achieved via these commands are:
 
 1) Flash the firmware via Agent. You will find the newest firmware release under "code/releases" tab of github. I.e., at https://github.com/kareltucek/firmware/releases/ . 
 
-Agent is the UHK configuration tool. You can get it at https://github.com/UltimateHackingKeyboard/agent/releases . When you start the Agent up, go to 'firmware' and 'Choose firmware file and flash it'. 
+   Agent is the UHK configuration tool. You can get it at https://github.com/UltimateHackingKeyboard/agent/releases . When you start the Agent up, go to 'firmware' and 'Choose firmware file and flash it'. 
 
 2) Create some macro. Enter each command as **a single write text action**. (Lines prefixed with `$` are interpretted .) All action types
 can be combined. E.g.:
