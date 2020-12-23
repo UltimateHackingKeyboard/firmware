@@ -2,6 +2,7 @@
 #include "layer_switcher.h"
 #include "ledmap.h"
 #include "slave_drivers/is31fl3xxx_driver.h"
+#include "device.h"
 
 rgb_t KeyActionColors[] = {
     {.red=0, .green=0, .blue=0}, // KeyActionColor_None
@@ -125,6 +126,7 @@ rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
 };
 
 void UpdateLayerLeds(void) {
+#if DEVICE_ID == DEVICE_ID_UHK60V2
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
             key_action_color_t keyActionColor;
@@ -165,4 +167,5 @@ void UpdateLayerLeds(void) {
             LedDriverValues[slotId][ledMapItem->blue] = slotId == SlotId_LeftModule ? 1 * keyActionColorValues->blue : keyActionColorValues->blue;
         }
     }
+#endif
 }
