@@ -1,4 +1,5 @@
 #include "layer_switcher.h"
+#include "ledmap.h"
 #include "timer.h"
 #include "macros.h"
 
@@ -58,6 +59,7 @@ void updateActiveLayer() {
     //(write actual ActiveLayer atomically, so that random observer is not confused)
     ActiveLayer = activeLayer;
     ActiveLayerHeld = activeLayerHeld;
+    UpdateLayerLeds();
 }
 
 /*

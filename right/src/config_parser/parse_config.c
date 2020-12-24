@@ -6,7 +6,7 @@
 #include "macros.h"
 #include "led_display.h"
 #include "slave_scheduler.h"
-#include "slave_drivers/is31fl37xx_driver.h"
+#include "slave_drivers/is31fl3xxx_driver.h"
 #include "config.h"
 #include "mouse_controller.h"
 

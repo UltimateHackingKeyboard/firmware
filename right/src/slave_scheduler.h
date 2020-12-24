@@ -22,6 +22,7 @@
         SlaveId_RightTouchpad,
         SlaveId_RightLedDriver,
         SlaveId_LeftLedDriver,
+        SlaveId_ModuleLeftLedDriver,
         SlaveId_KbootDriver,
     } slave_id_t;
 

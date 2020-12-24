@@ -2,6 +2,7 @@
 #include "arduino_hid/SystemAPI.h"
 #include "keymap.h"
 #include "led_display.h"
+#include "ledmap.h"
 #include "config_parser/parse_keymap.h"
 #include "config_parser/config_globals.h"
 #include "macros.h"
@@ -24,6 +25,7 @@ void SwitchKeymapById(uint8_t index)
     ValidatedUserConfigBuffer.offset = AllKeymaps[index].offset;
     ParseKeymap(&ValidatedUserConfigBuffer, index, AllKeymapsCount, AllMacrosCount);
     LedDisplay_UpdateText();
+    UpdateLayerLeds();
 }
 
 uint8_t FindKeymapByAbbreviation(uint8_t length, const char *abbrev) {

@@ -79,6 +79,7 @@ CFLAGS = -mthumb                    \
          $(CPU)                     \
          $(FPU)                     \
          $(DEPS)                    \
+         -DDEVICE_ID=$(DEVICE_ID)   \
          -fno-builtin               \
          -ffunction-sections        \
          -fdata-sections            \

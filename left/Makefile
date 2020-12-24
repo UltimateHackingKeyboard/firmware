@@ -29,7 +29,7 @@ CPU = -mcpu=cortex-m0plus
 FPU = -mfloat-abi=soft
 
 # Command for flashing the left half of the keyboard.
-FLASH_CMD = node ../lib/agent/packages/usb/update-module-firmware.js leftHalf $(PROJECT_OBJ:.axf=.bin)
+FLASH_CMD = ../lib/agent/node_modules/.bin/ts-node-script ../lib/agent/packages/usb/update-module-firmware.ts leftHalf $(PROJECT_OBJ:.axf=.bin)
 
 # Path to the JLink script used for the left half.
 JLINK_SCRIPT = ../scripts/flash-left.jlink
