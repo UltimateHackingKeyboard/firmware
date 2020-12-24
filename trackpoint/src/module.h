@@ -22,11 +22,11 @@
     #define TEST_LED_CLOCK kCLOCK_PortA
     #define TEST_LED_PIN   5
 
-    #define PS2_DATA_GPIO  GPIOA
-    #define PS2_DATA_PORT  PORTA
-    #define PS2_DATA_IRQ   PORTA_IRQn
-    #define PS2_DATA_CLOCK kCLOCK_PortA
-    #define PS2_DATA_PIN   7
+    #define PS2_DATA_GPIO  GPIOB
+    #define PS2_DATA_PORT  PORTB
+    #define PS2_DATA_IRQ   PORTB_IRQn
+    #define PS2_DATA_CLOCK kCLOCK_PortB
+    #define PS2_DATA_PIN   1
 
     #define PS2_CLOCK_GPIO  GPIOB
     #define PS2_CLOCK_PORT  PORTB

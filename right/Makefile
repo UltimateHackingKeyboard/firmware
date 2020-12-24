@@ -11,14 +11,21 @@
 # Web      :  http://www.lauszus.com
 # e-mail   :  lauszus@gmail.com
 
-# Set project name.
-PROJECT_NAME = uhk_right
+ifndef DEVICE_ID
+$(error DEVICE_ID is not set. Run make in a device build subdirectory such as uhk60v1)
+endif
+
+ifndef PROJECT_NAME
+$(error PROJECT_NAME is not set. Run make in a device build subdirectory such as uhk60v1)
+endif
+
+BUILD_DIR = build_make
 
 # Defines the part type that this project uses.
 PART = MK22FN512VLH12
 
 # Defines the linker script to use for the application.
-LDSCRIPT = src/link/MK22FN512xxx12_flash.ld
+LDSCRIPT = ../src/link/MK22FN512xxx12_flash.ld
 
 # Size of the heap and stack.
 HEAP_SIZE = 0x2000
@@ -29,10 +36,10 @@ CPU = -mcpu=cortex-m4
 FPU = -mfpu=fpv4-sp-d16 -mfloat-abi=hard
 
 # Command for flashing the right half of the keyboard.
-FLASH_CMD = node ../lib/agent/packages/usb/update-device-firmware.js $(PROJECT_OBJ:.axf=.hex)
+FLASH_CMD = ../../lib/agent/node_modules/.bin/ts-node-script ../../lib/agent/packages/usb/update-device-firmware.ts $(PROJECT_OBJ:.axf=.hex)
 
 # Path to the JLink script used for the right half.
-JLINK_SCRIPT = ../scripts/flash-right.jlink
+JLINK_SCRIPT = ../../scripts/flash-right.jlink
 
 # Preprocessor directives.
 BUILD_FLAGS = -DCPU_$(PART)_cm4 -DUSB_STACK_BM -DBL_HAS_BOOTLOADER_CONFIG=1
@@ -41,36 +48,36 @@ BUILD_FLAGS = -DCPU_$(PART)_cm4 -DUSB_STACK_BM -DBL_HAS_BOOTLOADER_CONFIG=1
 BL_APP_VECTOR_TABLE_ADDRESS ?= 0xc000
 
 # Source files.
-SOURCE = $(wildcard src/*.c) \
-         $(wildcard src/*/*.c) \
-         $(wildcard src/*/*/*.c) \
-         ../lib/bootloader/src/bootloader/src/wormhole.c \
-         $(wildcard ../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0/device/*.c) \
-         $(wildcard ../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0/osa/*.c) \
-         ../lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212/system_MK22F51212.c \
-         ../lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212/gcc/startup_MK22F51212.S \
-         ../lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212/drivers/fsl_adc16.c \
-         ../lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212/drivers/fsl_clock.c \
-         ../lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212/drivers/fsl_ftm.c \
-         ../lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212/drivers/fsl_gpio.c \
-         ../lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212/drivers/fsl_i2c.c \
-         ../lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212/drivers/fsl_pit.c \
-         ../lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212/drivers/fsl_smc.c \
-         $(wildcard ../shared/*.c)
+SOURCE = $(wildcard ../src/*.c) \
+         $(wildcard ../src/*/*.c) \
+         $(wildcard ../src/*/*/*.c) \
+         ../../lib/bootloader/src/bootloader/src/wormhole.c \
+         $(wildcard ../../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0/device/*.c) \
+         $(wildcard ../../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0/osa/*.c) \
+         ../../lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212/system_MK22F51212.c \
+         ../../lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212/gcc/startup_MK22F51212.S \
+         ../../lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212/drivers/fsl_adc16.c \
+         ../../lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212/drivers/fsl_clock.c \
+         ../../lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212/drivers/fsl_ftm.c \
+         ../../lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212/drivers/fsl_gpio.c \
+         ../../lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212/drivers/fsl_i2c.c \
+         ../../lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212/drivers/fsl_pit.c \
+         ../../lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212/drivers/fsl_smc.c \
+         $(wildcard ../../shared/*.c)
 
 # Header files.
-IPATH = src \
-        src/ksdk_usb \
-        src/buspal \
-        src/buspal/bm_usb \
-        ../lib/bootloader/src \
-        ../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0/device \
-        ../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0/include \
-        ../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0/osa \
-        ../lib/KSDK_2.0_MK22FN512xxx12/CMSIS/Include \
-        ../lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212 \
-        ../lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212/drivers \
-        ../shared
+IPATH = ../src \
+        ../src/ksdk_usb \
+        ../src/buspal \
+        ../src/buspal/bm_usb \
+        ../../lib/bootloader/src \
+        ../../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0/device \
+        ../../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0/include \
+        ../../lib/KSDK_2.0_MK22FN512xxx12/middleware/usb_1.0.0/osa \
+        ../../lib/KSDK_2.0_MK22FN512xxx12/CMSIS/Include \
+        ../../lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212 \
+        ../../lib/KSDK_2.0_MK22FN512xxx12/devices/MK22F51212/drivers \
+        ../../shared
 
 # Include main Makefile.
-include ../scripts/Makedefs.mk
+include ../../scripts/Makedefs.mk

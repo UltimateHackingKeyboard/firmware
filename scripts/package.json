@@ -16,7 +16,7 @@
     "commander": "^2.11.0",
     "shelljs": "^0.7.8"
   },
-  "firmwareVersion": "8.10.2",
+  "firmwareVersion": "8.10.3",
   "deviceProtocolVersion": "4.7.0",
   "moduleProtocolVersion": "4.1.0",
   "userConfigVersion": "4.2.0",
@@ -25,7 +25,12 @@
     {
       "deviceId": 1,
       "name": "uhk60-right",
-      "source": "right/build_make/uhk_right.hex"
+      "source": "right/uhk60v1/build_make/uhk60v1.hex"
+    },
+    {
+      "deviceId": 2,
+      "name": "uhk60v2-right",
+      "source": "right/uhk60v2/build_make/uhk60v2.hex"
     }
   ],
   "modules": [

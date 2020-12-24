@@ -50,15 +50,17 @@ key_vector_t keyVector = {
 #define MOTION_BIT (1<<7)
 
 typedef enum {
-    ModulePhase_PoweredUp,
+    ModulePhase_SetResolution,
+    ModulePhase_Initialized,
     ModulePhase_ProcessMotion,
     ModulePhase_ProcessDeltaY,
     ModulePhase_ProcessDeltaX,
 } module_phase_t;
 
-module_phase_t modulePhase = ModulePhase_PoweredUp;
+module_phase_t modulePhase = ModulePhase_SetResolution;
 
 uint8_t txBufferPowerUpReset[] = {0xba, 0x5a};
+uint8_t txSetResolution[] = {0x91, 0b10000000};
 uint8_t txBufferGetMotion[] = {0x02, 0x00};
 uint8_t txBufferGetDeltaY[] = {0x03, 0x00};
 uint8_t txBufferGetDeltaX[] = {0x04, 0x00};
@@ -78,7 +80,11 @@ void tx(uint8_t *txBuff)
 void trackballUpdate(SPI_Type *base, spi_master_handle_t *masterHandle, status_t status, void *userData)
 {
     switch (modulePhase) {
-        case ModulePhase_PoweredUp:
+        case ModulePhase_SetResolution:
+            tx(txSetResolution);
+            modulePhase = ModulePhase_Initialized;
+            break;
+        case ModulePhase_Initialized:
             tx(txBufferGetMotion);
             modulePhase = ModulePhase_ProcessMotion;
             break;
