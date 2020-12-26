@@ -2,6 +2,42 @@
 #include "config_parser/parse_keymap.h"
 #include "macros.h"
 
+float ParseFloat(const char *a, const char *aEnd)
+{
+    bool negate = false;
+    if(*a == '-')
+    {
+        negate = !negate;
+        a++;
+    }
+    float n = 0;
+    bool numFound = false;
+    while(*a > 47 && *a < 58 && a < aEnd) {
+        n = n*10 + ((uint8_t)(*a))-48;
+        a++;
+        numFound = true;
+    }
+    if(*a == '.') {
+        a++;
+    }
+    float b = 0.1;
+    float d = 0.0f;
+    while(*a > 47 && *a < 58 && a < aEnd) {
+        d = d + (((uint8_t)(*a))-48)*b;
+        b = b/10.0f;
+        a++;
+    }
+    n += d;
+    if(negate)
+    {
+        n = -n;
+    }
+    if(!numFound) {
+        Macros_ReportError("Float expected", NULL, NULL);
+    }
+    return n;
+}
+
 int32_t ParseInt32_2(const char *a, const char *aEnd, const char* *parsedTill)
 {
     bool negate = false;
