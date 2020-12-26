@@ -23,6 +23,9 @@ uint8_t ToggledMouseStates[ACTIVE_MOUSE_STATES_COUNT];
 
 bool CompensateDiagonalSpeed = false;
 
+static float expDriver(int16_t x, int16_t y);
+static void recalculateSpeed(int16_t inx, int16_t iny);
+
 mouse_kinetic_state_t MouseMoveState = {
     .isScroll = false,
     .upState = SerializedMouseAction_MoveUp,
@@ -209,8 +212,10 @@ static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
 
 uint8_t touchpadScrollDivisor = 8;
 static void processTouchpadActions() {
-    ActiveUsbMouseReport->x += TouchpadEvents.x;
-    ActiveUsbMouseReport->y += TouchpadEvents.y;
+    recalculateSpeed(TouchpadEvents.x, TouchpadEvents.y);
+    float q = expDriver(TouchpadEvents.x, TouchpadEvents.y);
+    ActiveUsbMouseReport->x += q*TouchpadEvents.x;
+    ActiveUsbMouseReport->y += q*TouchpadEvents.y;
     TouchpadEvents.x = 0;
     TouchpadEvents.y = 0;
 
@@ -242,6 +247,99 @@ static void processTouchpadActions() {
     }
 }
 
+static float avgSpeedPerS = 0.0f;
+
+static void recalculateSpeed(int16_t inx, int16_t iny) {
+    if(inx != 0 || iny != 0) {
+        float x = (int16_t)inx;
+        float y = (int16_t)iny;
+        static uint32_t lastUpdate = 0;
+
+        float diffMs = CurrentTime - lastUpdate;
+        float weightFactor = 1.0f;
+        float speedDiffPerS = (float)sqrt(x*x + y*y) * 1000.0f / diffMs;
+        avgSpeedPerS = avgSpeedPerS*(1.0f - weightFactor) + speedDiffPerS*(weightFactor);
+        lastUpdate = CurrentTime;
+    }
+}
+
+static float expDriver(int16_t x, int16_t y)
+{
+    // This means, that the largest downscaling will be to 0.5 of the native speed
+    // (Such downscaling applies at 0px/s.)
+    const float minSpeedCoef = 0.5f;
+    // This means that speed 2500px/s will be scaled 1:1 w.r.t. native speed.
+    // Peek speeds of the trackball are around 5000-8000px/s
+    const float midSpeed = 2500;
+    // Further values are given by the exponential defined by the above two parameters
+    const float exp = 1/minSpeedCoef;
+    float origNormSpeed = avgSpeedPerS/midSpeed;
+    return pow(exp, origNormSpeed);
+}
+
+
+void inertiaDriver(int16_t x, int16_t y, int16_t* outx, int16_t* outy)
+{
+    static int16_t inerX = 0;
+    static int16_t inerY = 0;
+    static double inerLen = 0;
+    static int16_t acumX = 0;
+    static int16_t acumY = 0;
+    static int16_t lastX = 0;
+    static int16_t lastY = 0;
+    static double inertiaCredit = 0;
+    static double inerFalloff = 0.9 ;
+    static double inerFalloff2 = 0.98;
+    static double inerCof = 1.0f;
+
+    acumX += x;
+    acumY += y;
+
+    double len = sqrt(acumX*acumX + acumY * acumY);
+    double coef = 0.0f;
+
+    /* first we handle inertia potential */
+    /* 10 is to preserve necessary precision */
+    if(len > 10.0f) {
+        double projectionLength = (acumX*lastX + acumY*lastY)/(len*inertiaCredit);
+        coef = MAX(pow(projectionLength, 2), 0.2);
+
+        inertiaCredit = inertiaCredit*coef + len;
+        lastX = lastX*coef + acumX;
+        lastY = lastY*coef + acumY;
+        acumX = 0;
+        acumY = 0;
+    }
+
+    /* if current movement is faster than inertia, update inertia */
+    double currentLen = sqrt(x*x + y*y);
+    if(inertiaCredit > 100 && inerLen < currentLen && coef > 0.5f) {
+          inerLen = currentLen;
+          inerX = x;
+          inerY = y;
+          inerCof = 1.0f;
+    }
+
+    /* if we can apply inertia, do so */
+    if(inertiaCredit > 100 && inerLen*inerCof > 1.0f && inerLen > currentLen) {
+        *outx = inerCof * inerX + x;
+        *outy = inerCof * inerY + y;
+        if(inerLen*inerCof > 5.0f)
+            inerCof = inerCof * inerFalloff;
+        else
+            inerCof = inerCof * inerFalloff2;
+    } else {
+        if(inertiaCredit > 100 && inerLen*inerCof <= 10.0f) {
+            lastX = 0;
+            lastY = 0;
+            inertiaCredit = 0;
+            inerLen = 0;
+        }
+      *outx = x;
+      *outy = y;
+    }
+}
+
 void MouseController_ProcessMouseActions()
 {
     mouseElapsedTime = Timer_GetElapsedTimeAndSetCurrent(&mouseUsbReportUpdateTime);
@@ -265,12 +363,34 @@ void MouseController_ProcessMouseActions()
     for (uint8_t moduleId=0; moduleId<UHK_MODULE_MAX_COUNT; moduleId++) {
         uhk_module_state_t *moduleState = UhkModuleStates + moduleId;
         if (moduleState->pointerCount) {
-            if (moduleState->moduleId == ModuleId_KeyClusterLeft) {
+            switch(moduleState -> moduleId) {
+            case ModuleId_KeyClusterLeft:
                 ActiveUsbMouseReport->wheelX += moduleState->pointerDelta.x;
                 ActiveUsbMouseReport->wheelY -= moduleState->pointerDelta.y;
-            } else {
+                break;
+            case ModuleId_TouchpadRight:
+            {
+                /** Nothing is here, look elsewhere! */
+            }
+                break;
+            case ModuleId_TrackballRight:
+            {
+                //this recalculates average speed, which is needed for the inertia and exponent drivers
+                recalculateSpeed(moduleState -> pointerDelta.x, moduleState -> pointerDelta.y);
+                int16_t x = moduleState->pointerDelta.x;
+                int16_t y = moduleState -> pointerDelta.y;
+                float q = expDriver(x, y);
+                x = x*q;
+                y = y*q;
+                //inertiaDriver(q*moduleState->pointerDelta.x, q*moduleState->pointerDelta.y, &x, &y);
+                ActiveUsbMouseReport->x += x;
+                ActiveUsbMouseReport->y -= y;
+            }
+                break;
+            case ModuleId_TrackpointRight:
                 ActiveUsbMouseReport->x += moduleState->pointerDelta.x;
                 ActiveUsbMouseReport->y -= moduleState->pointerDelta.y;
+                break;
             }
             moduleState->pointerDelta.x = 0;
             moduleState->pointerDelta.y = 0;
