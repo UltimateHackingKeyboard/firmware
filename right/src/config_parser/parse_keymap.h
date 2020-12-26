@@ -53,7 +53,8 @@
         SerializedMouseAction_Button_6,
         SerializedMouseAction_Button_7,
         SerializedMouseAction_Button_8,
-        SerializedMouseAction_Last = SerializedMouseAction_Button_8,
+        SerializedMouseAction_ScrollMode,
+        SerializedMouseAction_Last = SerializedMouseAction_ScrollMode,
     } serialized_mouse_action_t;
 
 // Functions:
