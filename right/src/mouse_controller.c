@@ -26,6 +26,9 @@ bool CompensateDiagonalSpeed = false;
 static float expDriver(int16_t x, int16_t y);
 static void recalculateSpeed(int16_t inx, int16_t iny);
 
+static float expDriver(int16_t x, int16_t y);
+static void recalculateSpeed(int16_t inx, int16_t iny);
+
 mouse_kinetic_state_t MouseMoveState = {
     .isScroll = false,
     .upState = SerializedMouseAction_MoveUp,
@@ -275,7 +278,14 @@ static float expDriver(int16_t x, int16_t y)
     // Further values are given by the exponential defined by the above two parameters
     const float exp = midSpeedCoef/minSpeedCoef;
     float origNormSpeed = avgSpeedPerS/midSpeed;
-    return pow(exp, origNormSpeed - 1);
+    return pow(exp, origNormSpeed + log(minSpeedCoef)/log(exp));
+void MouseController_SetExpDriverParams(float minSpeedCoef_, float midSpeed_, float midSpeedCoef_)
+{
+    expBase = midSpeedCoef/minSpeedCoef;
+    expShift = log(minSpeedCoef)/log(expBase);
+    minSpeedCoef = minSpeedCoef_;
+    midSpeed = midSpeed_;
+    midSpeedCoef = midSpeedCoef_;
 }
 
 
@@ -370,9 +380,7 @@ void MouseController_ProcessMouseActions()
                 ActiveUsbMouseReport->wheelY -= moduleState->pointerDelta.y;
                 break;
             case ModuleId_TouchpadRight:
-            {
                 /** Nothing is here, look elsewhere! */
-            }
                 break;
             case ModuleId_TrackballRight:
             {

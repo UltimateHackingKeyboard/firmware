@@ -1415,6 +1415,17 @@ bool processSetDebounceDelayCommand(const char* arg, const char *argEnd)
     return false;
 }
 
+bool processSetExpDriverCommand(const char* arg, const char *argEnd)
+{
+    const char* arg2 = NextTok(arg, argEnd);
+    const char* arg3 = NextTok(arg2, argEnd);
+    float minSpeedCoef = ParseFloat(arg, argEnd);
+    float midSpeed = ParseFloat(arg2,  argEnd);
+    float midSpeedCoef = ParseFloat(arg3, argEnd);
+    MouseController_SetExpDriverParams(minSpeedCoef, midSpeed, midSpeedCoef);
+    return false;
+}
+
 bool processSetKeystrokeDelayCommand(const char* arg, const char *argEnd)
 {
     uint16_t delay = parseNUM(arg,  argEnd);
@@ -2287,6 +2298,9 @@ bool processCommand(const char* cmd, const char* cmdEnd)
             }
             else if(TokenMatches(cmd, cmdEnd, "setEmergencyKey")) {
                 return processSetEmergencyKeyCommand(arg1, cmdEnd);
+            }
+            else if(TokenMatches(cmd, cmdEnd, "setExpDriver")) {
+                return processSetExpDriverCommand(arg1, cmdEnd);
             }
             else {
                 goto failed;
