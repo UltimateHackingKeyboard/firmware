@@ -266,19 +266,25 @@ static void recalculateSpeed(int16_t inx, int16_t iny) {
     }
 }
 
+// This means, that the largest downscaling will be to 0.5 of the native speed
+// (Such downscaling applies at 0px/s.)
+static float minSpeedCoef = 0.5f;
+// This means that this speed will be scaled 1:1 w.r.t. native speed.
+// Peek speeds of the trackball are around 5000-8000px/s
+static float midSpeed = 2000;
+static float midSpeedCoef = 1.0f;
+// Precompute the logarithms as:
+// expBase = midSpeedCoef/minSpeedCoef;
+// expShift = log(minSpeedCoef)/log(expBase);
+static float expBase = 2.0f;
+static float expShift = -1.0f;
+
 static float expDriver(int16_t x, int16_t y)
 {
-    // This means, that the largest downscaling will be to 0.5 of the native speed
-    // (Such downscaling applies at 0px/s.)
-    const float minSpeedCoef = 0.5f;
-    // This means that this speed will be scaled 1:1 w.r.t. native speed.
-    // Peek speeds of the trackball are around 5000-8000px/s
-    const float midSpeed = 2000;
-    const float midSpeedCoef = 1.0f;
-    // Further values are given by the exponential defined by the above two parameters
-    const float exp = midSpeedCoef/minSpeedCoef;
     float origNormSpeed = avgSpeedPerS/midSpeed;
-    return pow(exp, origNormSpeed + log(minSpeedCoef)/log(exp));
+    return pow(expBase, origNormSpeed + expShift);
+}
+
 void MouseController_SetExpDriverParams(float minSpeedCoef_, float midSpeed_, float midSpeedCoef_)
 {
     expBase = midSpeedCoef/minSpeedCoef;
