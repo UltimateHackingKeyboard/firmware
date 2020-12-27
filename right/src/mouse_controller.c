@@ -268,13 +268,14 @@ static float expDriver(int16_t x, int16_t y)
     // This means, that the largest downscaling will be to 0.5 of the native speed
     // (Such downscaling applies at 0px/s.)
     const float minSpeedCoef = 0.5f;
-    // This means that speed 2500px/s will be scaled 1:1 w.r.t. native speed.
+    // This means that this speed will be scaled 1:1 w.r.t. native speed.
     // Peek speeds of the trackball are around 5000-8000px/s
-    const float midSpeed = 2500;
+    const float midSpeed = 2000;
+    const float midSpeedCoef = 1.0f;
     // Further values are given by the exponential defined by the above two parameters
-    const float exp = 1/minSpeedCoef;
+    const float exp = midSpeedCoef/minSpeedCoef;
     float origNormSpeed = avgSpeedPerS/midSpeed;
-    return pow(exp, origNormSpeed);
+    return pow(exp, origNormSpeed - 1);
 }
 
 
