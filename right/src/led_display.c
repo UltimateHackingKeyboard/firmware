@@ -113,9 +113,6 @@ static const uint16_t aboveUpperToSegmentMap[] = {
     0b0000010100100000, // ~
 };
 
-static const uint8_t layerLedIds[LAYER_COUNT-1] = {13, 29, 45};
-static const uint8_t iconLedIds[LedDisplayIcon_Count] = {8, 9, 10};
-
 static uint16_t characterToSegmentMap(char character)
 {
     switch (character) {
