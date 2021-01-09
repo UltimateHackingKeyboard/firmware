@@ -53,6 +53,8 @@
     extern bool ActivateOnRelease;
     extern key_state_t* EmergencyKey;
     extern uint16_t KeystrokeDelay;
+    extern uint8_t basicScancodeIndex;
+
 
 
 // Functions:

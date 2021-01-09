@@ -1415,17 +1415,6 @@ bool processSetDebounceDelayCommand(const char* arg, const char *argEnd)
     return false;
 }
 
-bool processSetExpDriverCommand(const char* arg, const char *argEnd)
-{
-    const char* arg2 = NextTok(arg, argEnd);
-    const char* arg3 = NextTok(arg2, argEnd);
-    float minSpeedCoef = ParseFloat(arg, argEnd);
-    float midSpeed = ParseFloat(arg2,  argEnd);
-    float midSpeedCoef = ParseFloat(arg3, argEnd);
-    MouseController_SetExpDriverParams(minSpeedCoef, midSpeed, midSpeedCoef);
-    return false;
-}
-
 bool processSetKeystrokeDelayCommand(const char* arg, const char *argEnd)
 {
     uint16_t delay = parseNUM(arg,  argEnd);
@@ -1811,6 +1800,19 @@ bool processExecCommand(const char* arg1, const char* cmdEnd) {
 bool processCallCommand(const char* arg1, const char* cmdEnd) {
     uint8_t macroIndex = FindMacroIndexByName(arg1, TokEnd(arg1, cmdEnd));
     return callMacro(macroIndex);
+}
+
+bool processSetExpDriverCommand(const char* arg, const char *argEnd)
+{
+    const char* arg2 = NextTok(arg, argEnd);
+    const char* arg3 = NextTok(arg2, argEnd);
+    const char* arg4 = NextTok(arg3, argEnd);
+    float a1 = ParseFloat(arg, argEnd);
+    float a2 = ParseFloat(arg2,  argEnd);
+    float a3 = ParseFloat(arg3, argEnd);
+    float a4 = ParseFloat(arg4, argEnd);
+    MouseController_SetExpDriverParams(a1, a2, a3, a4);
+    return false;
 }
 
 bool processCommand(const char* cmd, const char* cmdEnd)
