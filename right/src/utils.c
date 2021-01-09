@@ -45,17 +45,3 @@ void Utils_reportReport(usb_basic_keyboard_report_t* report) {
     }
     Macros_SetStatusString("\n", NULL);
 }
-
-void ShowNumberMag(int a) {
-    char b[3];
-    int mag = 0;
-    int num = a;
-    while(num >= 100) {
-        mag++;
-        num /= 10;
-    }
-    b[0] = '0' + num/10;
-    b[1] = '0' + num%10;
-    b[2] = '0' + mag;
-    LedDisplay_SetText(3,  b);
-}
