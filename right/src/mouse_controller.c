@@ -255,7 +255,7 @@ static float currentSpeed = 0.0f;
 
 static void recalculateCurrentSpeed(float x, float y) {
     if(x != 0 || y != 0) {
-        static uint16_t lastUpdate = 0;
+        static uint32_t lastUpdate = 0;
         currentSpeed = (float)sqrt(x*x + y*y) * 1000.0f / (CurrentTime - lastUpdate);
         lastUpdate = CurrentTime;
     }
