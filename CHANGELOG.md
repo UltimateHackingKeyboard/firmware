@@ -10,7 +10,7 @@ and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 Device Protocol: 4.7.0 | Module Protocol: 4.1.0 | User Config: 4.2.0 | Hardware Config: 1.0.0
 
 - Support the UHK 60 v2.
-- Migrate the key cluster module MCU back from to MKL17Z32VFM4 to MKL03Z32VFK4.
+- Migrate the key cluster module MCU back from MKL17Z32VFM4 to MKL03Z32VFK4.
 - Add IS31FL3199 LED driver support which is utilized in the key cluster module.
 - Change touchpad module I2C address.
 - Increase trackball sensor resolution from 500 CPI to 1000 CPI.
