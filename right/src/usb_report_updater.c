@@ -415,7 +415,7 @@ static void updateActiveUsbReports(void)
 
     handleUsbStackTestMode();
 
-    if ( PostponerCore_IsActive() ) {
+    if (PostponerCore_IsActive()) {
         PostponerCore_RunPostponedEvents();
     }
 
