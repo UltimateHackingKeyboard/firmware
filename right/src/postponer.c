@@ -54,6 +54,7 @@ void PostponerCore_TrackKeyEvent(key_state_t *keyState, bool active)
 {
     uint8_t pos = POS(bufferSize);
     buffer[pos] = (struct postponer_buffer_record_type_t) {
+            .time = CurrentTime,
             .key = keyState,
             .active = active,
     };

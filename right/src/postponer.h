@@ -32,6 +32,7 @@
 // Typedefs:
 
     struct postponer_buffer_record_type_t {
+        uint32_t time;
         key_state_t * key;
         bool active;
     };
