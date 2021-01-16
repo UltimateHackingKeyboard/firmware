@@ -23,6 +23,10 @@
 // Macros:
 
 // Typedefs:
+    typedef enum {
+        SecondaryRoleStrategy_Simple,
+        SecondaryRoleStrategy_Timeout
+    } secondary_role_strategy_t;
 
     typedef enum {
         SecondaryRoleState_DontKnowYet,

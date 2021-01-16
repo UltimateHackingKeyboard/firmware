@@ -8,12 +8,30 @@ static uint8_t bufferSize = 0;
 static uint8_t bufferPosition = 0;
 
 static uint8_t cyclesUntilActivation = 0;
-static key_state_t* Postponer_NextEventKey;
 static uint32_t lastPressTime;
 
+key_state_t* Postponer_NextEventKey;
 uint32_t CurrentPostponedTime = 0;
 
 #define POS(idx) ((bufferPosition + (idx)) % POSTPONER_BUFFER_SIZE)
+
+//##############################
+//### Implementation Helpers ###
+//##############################
+
+static uint8_t getPendingKeypressIdx(uint8_t n)
+{
+    for ( int i = 0; i < bufferSize; i++ ) {
+        if (buffer[POS(i)].active) {
+            if (n == 0) {
+                return i;
+            } else {
+                n--;
+            }
+        }
+    }
+    return 255;
+}
 
 static void consumeEvent(uint8_t count)
 {
@@ -111,3 +129,39 @@ bool PostponerQuery_IsKeyReleased(key_state_t* key)
     }
     return false;
 }
+
+void PostponerQuery_InfoByKeystate(key_state_t* key, struct postponer_buffer_record_type_t** press, struct postponer_buffer_record_type_t** release)
+{
+    *press = NULL;
+    *release = NULL;
+    for ( int i = 0; i < bufferSize; i++ ) {
+        struct postponer_buffer_record_type_t* record = &buffer[POS(i)];
+        if (record->key == key) {
+            if (record->active) {
+                *press = record;
+            } else {
+                *release = record;
+                return;
+            }
+        }
+    }
+}
+
+void PostponerQuery_InfoByQueueIdx(uint8_t idx, struct postponer_buffer_record_type_t** press, struct postponer_buffer_record_type_t** release)
+{
+    *press = NULL;
+    *release = NULL;
+    uint8_t startIdx = getPendingKeypressIdx(idx);
+    if(startIdx == 255) {
+        return;
+    }
+    *press = &buffer[POS(startIdx)];
+    for ( int i = startIdx; i < bufferSize; i++ ) {
+        struct postponer_buffer_record_type_t* record = &buffer[POS(i)];
+        if (!record->active && record->key == (*press)->key) {
+            *release = record;
+            return;
+        }
+    }
+}
+
