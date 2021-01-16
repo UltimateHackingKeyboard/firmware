@@ -11,6 +11,7 @@ static uint8_t cyclesUntilActivation = 0;
 static key_state_t* Postponer_NextEventKey;
 static uint32_t lastPressTime;
 
+uint32_t CurrentPostponedTime = 0;
 
 #define POS(idx) ((bufferPosition + (idx)) % POSTPONER_BUFFER_SIZE)
 
@@ -19,6 +20,7 @@ static void consumeEvent(uint8_t count)
     bufferPosition = POS(count);
     bufferSize = count > bufferSize ? 0 : bufferSize - count;
     Postponer_NextEventKey = bufferSize == 0 ? NULL : buffer[bufferPosition].key;
+    CurrentPostponedTime = buffer[POS(bufferPosition-1+POSTPONER_BUFFER_SIZE)].time;
 }
 
 //######################
@@ -76,6 +78,9 @@ void PostponerCore_RunPostponedEvents(void)
 void PostponerCore_FinishCycle(void)
 {
     cyclesUntilActivation -= cyclesUntilActivation > 0 ? 1 : 0;
+    if(bufferSize == 0 && cyclesUntilActivation == 0) {
+        CurrentPostponedTime = CurrentTime;
+    }
 }
 
 //#######################

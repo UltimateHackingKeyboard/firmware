@@ -40,6 +40,7 @@
 // Variables:
 
     extern key_state_t* Postponer_NextEventKey;
+    extern uint32_t CurrentPostponedTime;
 
 // Functions (Core hooks):
 

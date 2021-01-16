@@ -4,6 +4,7 @@
 
 static key_state_t* resolutionKey;
 static secondary_role_state_t resolutionState;
+static uint32_t resolutionStartTime;
 
 static void activatePrimary()
 {
@@ -52,6 +53,7 @@ static secondary_role_state_t resolveCurrentKey()
 static secondary_role_state_t startResolution(key_state_t* keyState)
 {
     resolutionKey = keyState;
+    resolutionStartTime = CurrentPostponedTime;
     return SecondaryRoleState_DontKnowYet;
 }
 
