@@ -2,8 +2,8 @@
 #include "postponer.h"
 #include "led_display.h"
 
-key_state_t* resolutionKey;
-secondary_role_state_t resolutionState;
+static key_state_t* resolutionKey;
+static secondary_role_state_t resolutionState;
 
 static void activatePrimary()
 {

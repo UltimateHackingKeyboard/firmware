@@ -4,12 +4,13 @@
 #include "timer.h"
 
 struct postponer_buffer_record_type_t buffer[POSTPONER_BUFFER_SIZE];
-uint8_t bufferSize = 0;
-uint8_t bufferPosition = 0;
+static uint8_t bufferSize = 0;
+static uint8_t bufferPosition = 0;
 
-uint8_t cyclesUntilActivation = 0;
-key_state_t* Postponer_NextEventKey;
-uint32_t lastPressTime;
+static uint8_t cyclesUntilActivation = 0;
+static key_state_t* Postponer_NextEventKey;
+static uint32_t lastPressTime;
+
 
 #define POS(idx) ((bufferPosition + (idx)) % POSTPONER_BUFFER_SIZE)
 
