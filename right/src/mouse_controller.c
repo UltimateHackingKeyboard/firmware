@@ -379,8 +379,16 @@ void MouseController_ProcessMouseActions()
                 /** Nothing is here, look elsewhere! */
             }
                 break;
-            case ModuleId_TrackballRight:
             case ModuleId_TrackpointRight:
+            {
+                float x = (int16_t)moduleState->pointerDelta.x;
+                float y = (int16_t)moduleState->pointerDelta.y;
+                float q = baseSpeedCoef+midSpeedCoef;
+                sumX += q*x;
+                sumY -= q*y;
+            }
+            break;
+            case ModuleId_TrackballRight:
             {
                 float x = (int16_t)moduleState->pointerDelta.x;
                 float y = (int16_t)moduleState->pointerDelta.y;
@@ -389,6 +397,7 @@ void MouseController_ProcessMouseActions()
                 sumX += q*x;
                 sumY -= q*y;
             }
+            break;
             }
             moduleState->pointerDelta.x = 0;
             moduleState->pointerDelta.y = 0;
