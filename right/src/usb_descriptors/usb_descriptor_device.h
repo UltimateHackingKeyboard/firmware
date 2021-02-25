@@ -1,10 +1,18 @@
 #ifndef __USB_DESCRIPTOR_DEVICE_H__
 #define __USB_DESCRIPTOR_DEVICE_H__
 
+// Includes:
+
+    #include "device.h"
+
 // Macros:
 
     #define USB_DEVICE_VENDOR_ID 0x1D50
+#if DEVICE_ID == DEVICE_ID_UHK60V1
     #define USB_DEVICE_PRODUCT_ID 0x6122
+#elif DEVICE_ID == DEVICE_ID_UHK60V2
+    #define USB_DEVICE_PRODUCT_ID 0x6124
+#endif
     #define USB_DEVICE_RELEASE_NUMBER 0x0101
 
     #define USB_DEVICE_SPECIFICATION_VERSION 0x0200

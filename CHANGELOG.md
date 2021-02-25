@@ -5,12 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [8.10.5] - 2021-02-15
+
+Device Protocol: 4.7.1 | Module Protocol: 4.1.0 | User Config: 4.2.0 | Hardware Config: 1.0.0
+
+- Disable touchpad auto-sleep mode.
+- Don't query touchpad delta values, resulting in a much faster refresh rate.
+- Change UHK 60 v2 USB product ID from 0x6122 to 0x6124.
+- Change USB product name to "UHK 60 v1" and "UHK 60 v2" according to the actual device.
+
+## [8.10.4] - 2021-01-13
+
+Device Protocol: 4.7.**1** | Module Protocol: 4.1.0 | User Config: 4.2.0 | Hardware Config: 1.0.0
+
+- Make the GetKeyboardState USB command show the presence of the touchpad module. `DEVICEPROTOCOL:PATCH`
+
 ## [8.10.3] - 2020-12-23
 
 Device Protocol: 4.7.0 | Module Protocol: 4.1.0 | User Config: 4.2.0 | Hardware Config: 1.0.0
 
 - Support the UHK 60 v2.
-- Migrate the key cluster module MCU back from to MKL17Z32VFM4 to MKL03Z32VFK4.
+- Migrate the key cluster module MCU back from MKL17Z32VFM4 to MKL03Z32VFK4.
 - Add IS31FL3199 LED driver support which is utilized in the key cluster module.
 - Change touchpad module I2C address.
 - Increase trackball sensor resolution from 500 CPI to 1000 CPI.
