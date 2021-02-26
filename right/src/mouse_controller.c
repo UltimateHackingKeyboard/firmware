@@ -243,7 +243,9 @@ static float currentSpeed = 0.0f;
 static void recalculateCurrentSpeed(float x, float y) {
     if (x != 0 || y != 0) {
         static uint32_t lastUpdate = 0;
-        currentSpeed = (float)sqrt(x*x + y*y) * 1000.0f / (CurrentTime - lastUpdate);
+        uint32_t elapsedTime = CurrentTime - lastUpdate;
+        float distance = sqrt(x*x + y*y);
+        currentSpeed = distance * 1000.0f / elapsedTime;
         lastUpdate = CurrentTime;
     }
 }
