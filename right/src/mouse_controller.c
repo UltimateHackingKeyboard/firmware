@@ -245,7 +245,7 @@ static void recalculateCurrentSpeed(float x, float y) {
         static uint32_t lastUpdate = 0;
         uint32_t elapsedTime = CurrentTime - lastUpdate;
         float distance = sqrt(x*x + y*y);
-        currentSpeed = distance * 1000.0f / elapsedTime;
+        currentSpeed = distance / elapsedTime;
         lastUpdate = CurrentTime;
     }
 }
@@ -261,7 +261,7 @@ static void recalculateCurrentSpeed(float x, float y) {
  * - acceleration = accelerationExp
  */
 static float baseSpeedCoef = 0.0f;
-static float midSpeed = 3000.0f;
+static float midSpeed = 3.0f;
 static float midSpeedCoef = 1.0f;
 static float accelerationExp = 0.5f;
 
@@ -312,6 +312,7 @@ void MouseController_ProcessMouseActions()
                 case ModuleId_TrackpointRight: {
                     float x = (int16_t)moduleState->pointerDelta.x;
                     float y = (int16_t)moduleState->pointerDelta.y;
+                    recalculateCurrentSpeed(x, y);
                     float q = baseSpeedCoef + midSpeedCoef;
                     sumX += q*x;
                     sumY -= q*y;
