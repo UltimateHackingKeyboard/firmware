@@ -241,7 +241,7 @@ static void processTouchpadActions(float* outX, float*outY) {
 static float currentSpeed = 0.0f;
 
 static void recalculateCurrentSpeed(float x, float y) {
-    if(x != 0 || y != 0) {
+    if (x != 0 || y != 0) {
         static uint32_t lastUpdate = 0;
         currentSpeed = (float)sqrt(x*x + y*y) * 1000.0f / (CurrentTime - lastUpdate);
         lastUpdate = CurrentTime;
@@ -271,7 +271,6 @@ static float expDriver(float x, float y)
 
 void MouseController_ProcessMouseActions()
 {
-
     static float sumX = 0.0f;
     static float sumY = 0.0f;
     bool moveDeltaChanged = false;
@@ -299,33 +298,32 @@ void MouseController_ProcessMouseActions()
         uhk_module_state_t *moduleState = UhkModuleStates + moduleId;
         if (moduleState->pointerCount) {
             moveDeltaChanged = true;
-            switch(moduleState -> moduleId) {
-            case ModuleId_KeyClusterLeft:
-                ActiveUsbMouseReport->wheelX += moduleState->pointerDelta.x;
-                ActiveUsbMouseReport->wheelY -= moduleState->pointerDelta.y;
-                break;
-            case ModuleId_TouchpadRight:
-                /** Nothing is here, look elsewhere! */
-                break;
-            case ModuleId_TrackpointRight:
-            {
-                float x = (int16_t)moduleState->pointerDelta.x;
-                float y = (int16_t)moduleState->pointerDelta.y;
-                float q = baseSpeedCoef+midSpeedCoef;
-                sumX += q*x;
-                sumY -= q*y;
-            }
-            break;
-            case ModuleId_TrackballRight:
-            {
-                float x = (int16_t)moduleState->pointerDelta.x;
-                float y = (int16_t)moduleState->pointerDelta.y;
-                recalculateCurrentSpeed(x, y);
-                float q = expDriver(x, y);
-                sumX += q*x;
-                sumY -= q*y;
-            }
-            break;
+            switch (moduleState -> moduleId) {
+                case ModuleId_KeyClusterLeft: {
+                    ActiveUsbMouseReport->wheelX += moduleState->pointerDelta.x;
+                    ActiveUsbMouseReport->wheelY -= moduleState->pointerDelta.y;
+                    break;
+                }
+                case ModuleId_TouchpadRight: {
+                    break;
+                }
+                case ModuleId_TrackpointRight: {
+                    float x = (int16_t)moduleState->pointerDelta.x;
+                    float y = (int16_t)moduleState->pointerDelta.y;
+                    float q = baseSpeedCoef + midSpeedCoef;
+                    sumX += q*x;
+                    sumY -= q*y;
+                    break;
+                }
+                case ModuleId_TrackballRight: {
+                    float x = (int16_t)moduleState->pointerDelta.x;
+                    float y = (int16_t)moduleState->pointerDelta.y;
+                    recalculateCurrentSpeed(x, y);
+                    float q = expDriver(x, y);
+                    sumX += q*x;
+                    sumY -= q*y;
+                    break;
+                }
             }
             moduleState->pointerDelta.x = 0;
             moduleState->pointerDelta.y = 0;
@@ -333,16 +331,16 @@ void MouseController_ProcessMouseActions()
     }
 
     const float scrollSpeedDivisor = 8.0f;
-    if(moveDeltaChanged) {
+    if (moveDeltaChanged) {
         float xSumInt;
         float ySumInt;
-        if(ActiveLayer == LayerId_Mouse) {
+        if (ActiveLayer == LayerId_Mouse) {
             sumX /= scrollSpeedDivisor;
             sumY /= scrollSpeedDivisor;
         }
         sumX = modff(sumX, &xSumInt);
         sumY = modff(sumY, &ySumInt);
-        if(ActiveLayer == LayerId_Mouse) {
+        if (ActiveLayer == LayerId_Mouse) {
             ActiveUsbMouseReport->wheelX += xSumInt;
             ActiveUsbMouseReport->wheelY -= ySumInt;
             sumX *= scrollSpeedDivisor;
