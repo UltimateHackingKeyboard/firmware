@@ -336,13 +336,13 @@ void MouseController_ProcessMouseActions()
     if(moveDeltaChanged) {
         float xSumInt;
         float ySumInt;
-        if(ActiveMouseStates[SerializedMouseAction_ScrollMode]) {
+        if(ActiveLayer == LayerId_Mouse) {
             sumX /= scrollSpeedDivisor;
             sumY /= scrollSpeedDivisor;
         }
         sumX = modff(sumX, &xSumInt);
         sumY = modff(sumY, &ySumInt);
-        if(ActiveMouseStates[SerializedMouseAction_ScrollMode]) {
+        if(ActiveLayer == LayerId_Mouse) {
             ActiveUsbMouseReport->wheelX += xSumInt;
             ActiveUsbMouseReport->wheelY -= ySumInt;
             sumX *= scrollSpeedDivisor;
