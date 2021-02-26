@@ -47,6 +47,7 @@
     extern bool ActiveMouseStates[ACTIVE_MOUSE_STATES_COUNT];
 
 // Functions:
+
     void MouseController_ActivateDirectionSigns(uint8_t state);
     void MouseController_ProcessMouseActions();
 

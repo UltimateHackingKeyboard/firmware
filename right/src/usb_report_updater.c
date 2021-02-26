@@ -83,7 +83,7 @@ static void handleEventInterrupts(key_state_t *keyState) {
     }
 }
 
-uint8_t basicScancodeIndex = 0;
+static uint8_t basicScancodeIndex = 0;
 static uint8_t mediaScancodeIndex = 0;
 static uint8_t systemScancodeIndex = 0;
 
