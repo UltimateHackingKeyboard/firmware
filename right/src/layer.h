@@ -17,7 +17,7 @@
         LayerId_Fn,
         LayerId_Mouse,
         LayerId_Last = LayerId_Mouse,
-        LayerId_Count = LayerId_Last - 1,
+        LayerId_Count = LayerId_Last + 1,
     } layer_id_t;
 
 #endif /* SRC_LAYER_H_ */
