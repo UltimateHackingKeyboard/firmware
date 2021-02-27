@@ -14,11 +14,16 @@
 #include "slave_drivers/touchpad_driver.h"
 #include "mouse_controller.h"
 #include "slave_scheduler.h"
+#include "layer_switcher.h"
+#include "usb_report_updater.h"
 
 static uint32_t mouseUsbReportUpdateTime = 0;
 static uint32_t mouseElapsedTime;
 
 bool ActiveMouseStates[ACTIVE_MOUSE_STATES_COUNT];
+
+static float expDriver(float x, float y);
+static void recalculateCurrentSpeed(float x, float y);
 
 mouse_kinetic_state_t MouseMoveState = {
     .isScroll = false,
@@ -196,9 +201,11 @@ static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
 }
 
 uint8_t touchpadScrollDivisor = 8;
-static void processTouchpadActions() {
-    ActiveUsbMouseReport->x += TouchpadEvents.x;
-    ActiveUsbMouseReport->y += TouchpadEvents.y;
+static void processTouchpadActions(float* outX, float*outY) {
+    recalculateCurrentSpeed(TouchpadEvents.x, TouchpadEvents.y);
+    float q = expDriver(TouchpadEvents.x, TouchpadEvents.y);
+    *outX += q*TouchpadEvents.x;
+    *outY += q*TouchpadEvents.y;
     TouchpadEvents.x = 0;
     TouchpadEvents.y = 0;
 
@@ -230,8 +237,46 @@ static void processTouchpadActions() {
     }
 }
 
+//This is current calculated pointer speed in px/ms
+static float currentSpeed = 0.0f;
+
+static void recalculateCurrentSpeed(float x, float y) {
+    if (x != 0 || y != 0) {
+        static uint32_t lastUpdate = 0;
+        uint32_t elapsedTime = CurrentTime - lastUpdate;
+        float distance = sqrt(x*x + y*y);
+        currentSpeed = distance / elapsedTime;
+        lastUpdate = CurrentTime;
+    }
+}
+
+/*
+ * Interpretation
+ * - (baseSpeedCoef) is fixed part of the multiplier, which is not affected by acceleration
+ * - (midSpeedCoef)  is variable part of the multiplier, which is then affected by acceleration exponent
+ * - (baseSpeedCoef + midSpeedCoef) is speed multiplier achieved at speed midSpeed (px/ms).
+ *
+ * For simple configuration, leave baseSpeedCoef and midSpeed unchanged, while exposing:
+ * - speed        = midSpeedCoef
+ * - acceleration = accelerationExp
+ */
+static float baseSpeedCoef = 0.0f;
+static float midSpeed = 3.0f;
+static float midSpeedCoef = 1.0f;
+static float accelerationExp = 0.5f;
+
+static float expDriver(float x, float y)
+{
+    float normalizedSpeed = currentSpeed/midSpeed;
+    return baseSpeedCoef + midSpeedCoef*(float)pow(normalizedSpeed, accelerationExp);
+}
+
 void MouseController_ProcessMouseActions()
 {
+    static float sumX = 0.0f;
+    static float sumY = 0.0f;
+    bool moveDeltaChanged = false;
+
     mouseElapsedTime = Timer_GetElapsedTimeAndSetCurrent(&mouseUsbReportUpdateTime);
 
     processMouseKineticState(&MouseMoveState);
@@ -247,21 +292,65 @@ void MouseController_ProcessMouseActions()
     MouseScrollState.yOut = 0;
 
     if (Slaves[SlaveId_RightTouchpad].isConnected) {
-        processTouchpadActions();
+        moveDeltaChanged = true;
+        processTouchpadActions(&sumX, &sumY);
     }
 
     for (uint8_t moduleId=0; moduleId<UHK_MODULE_MAX_COUNT; moduleId++) {
         uhk_module_state_t *moduleState = UhkModuleStates + moduleId;
         if (moduleState->pointerCount) {
-            if (moduleState->moduleId == ModuleId_KeyClusterLeft) {
-                ActiveUsbMouseReport->wheelX += moduleState->pointerDelta.x;
-                ActiveUsbMouseReport->wheelY -= moduleState->pointerDelta.y;
-            } else {
-                ActiveUsbMouseReport->x += moduleState->pointerDelta.x;
-                ActiveUsbMouseReport->y -= moduleState->pointerDelta.y;
+            moveDeltaChanged = true;
+            switch (moduleState -> moduleId) {
+                case ModuleId_KeyClusterLeft: {
+                    ActiveUsbMouseReport->wheelX += moduleState->pointerDelta.x;
+                    ActiveUsbMouseReport->wheelY -= moduleState->pointerDelta.y;
+                    break;
+                }
+                case ModuleId_TouchpadRight: {
+                    break;
+                }
+                case ModuleId_TrackpointRight: {
+                    float x = (int16_t)moduleState->pointerDelta.x;
+                    float y = (int16_t)moduleState->pointerDelta.y;
+                    recalculateCurrentSpeed(x, y);
+                    float q = baseSpeedCoef + midSpeedCoef;
+                    sumX += q*x;
+                    sumY -= q*y;
+                    break;
+                }
+                case ModuleId_TrackballRight: {
+                    float x = (int16_t)moduleState->pointerDelta.x;
+                    float y = (int16_t)moduleState->pointerDelta.y;
+                    recalculateCurrentSpeed(x, y);
+                    float q = expDriver(x, y);
+                    sumX += q*x;
+                    sumY -= q*y;
+                    break;
+                }
             }
             moduleState->pointerDelta.x = 0;
             moduleState->pointerDelta.y = 0;
+        }
+    }
+
+    const float scrollSpeedDivisor = 8.0f;
+    if (moveDeltaChanged) {
+        float xSumInt;
+        float ySumInt;
+        if (ActiveLayer == LayerId_Mouse) {
+            sumX /= scrollSpeedDivisor;
+            sumY /= scrollSpeedDivisor;
+        }
+        sumX = modff(sumX, &xSumInt);
+        sumY = modff(sumY, &ySumInt);
+        if (ActiveLayer == LayerId_Mouse) {
+            ActiveUsbMouseReport->wheelX += xSumInt;
+            ActiveUsbMouseReport->wheelY -= ySumInt;
+            sumX *= scrollSpeedDivisor;
+            sumY *= scrollSpeedDivisor;
+        } else {
+            ActiveUsbMouseReport->x += xSumInt;
+            ActiveUsbMouseReport->y += ySumInt;
         }
     }
 
