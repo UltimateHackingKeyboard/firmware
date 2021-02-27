@@ -296,8 +296,8 @@ void MouseController_ProcessMouseActions()
         processTouchpadActions(&sumX, &sumY);
     }
 
-    for (uint8_t moduleId=0; moduleId<UHK_MODULE_MAX_COUNT; moduleId++) {
-        uhk_module_state_t *moduleState = UhkModuleStates + moduleId;
+    for (uint8_t moduleSlotId=0; moduleSlotId<UHK_MODULE_MAX_SLOT_COUNT; moduleSlotId++) {
+        uhk_module_state_t *moduleState = UhkModuleStates + moduleSlotId;
         if (moduleState->pointerCount) {
             moveDeltaChanged = true;
             switch (moduleState->moduleId) {
@@ -325,7 +325,7 @@ void MouseController_ProcessMouseActions()
                     break;
                 }
                 case ModuleId_TouchpadRight: {
-                    // See processTouchpadActions()
+                    // The touchpad has its own driver. See processTouchpadActions()
                     break;
                 }
             }
