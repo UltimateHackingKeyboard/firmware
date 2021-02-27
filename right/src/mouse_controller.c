@@ -237,7 +237,7 @@ static void processTouchpadActions(float* outX, float*outY) {
     }
 }
 
-//This is current calculated pointer speed in px/s
+//This is current calculated pointer speed in px/ms
 static float currentSpeed = 0.0f;
 
 static void recalculateCurrentSpeed(float x, float y) {
@@ -254,7 +254,7 @@ static void recalculateCurrentSpeed(float x, float y) {
  * Interpretation
  * - (baseSpeedCoef) is fixed part of the multiplier, which is not affected by acceleration
  * - (midSpeedCoef)  is variable part of the multiplier, which is then affected by acceleration exponent
- * - (baseSpeedCoef + midSpeedCoef) is speed multiplier achieved at speed midSpeed (px/s).
+ * - (baseSpeedCoef + midSpeedCoef) is speed multiplier achieved at speed midSpeed (px/ms).
  *
  * For simple configuration, leave baseSpeedCoef and midSpeed unchanged, while exposing:
  * - speed        = midSpeedCoef
