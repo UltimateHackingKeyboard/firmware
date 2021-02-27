@@ -300,13 +300,19 @@ void MouseController_ProcessMouseActions()
         uhk_module_state_t *moduleState = UhkModuleStates + moduleId;
         if (moduleState->pointerCount) {
             moveDeltaChanged = true;
-            switch (moduleState -> moduleId) {
+            switch (moduleState->moduleId) {
                 case ModuleId_KeyClusterLeft: {
                     ActiveUsbMouseReport->wheelX += moduleState->pointerDelta.x;
                     ActiveUsbMouseReport->wheelY -= moduleState->pointerDelta.y;
                     break;
                 }
-                case ModuleId_TouchpadRight: {
+                case ModuleId_TrackballRight: {
+                    float x = (int16_t)moduleState->pointerDelta.x;
+                    float y = (int16_t)moduleState->pointerDelta.y;
+                    recalculateCurrentSpeed(x, y);
+                    float q = expDriver(x, y);
+                    sumX += q*x;
+                    sumY -= q*y;
                     break;
                 }
                 case ModuleId_TrackpointRight: {
@@ -318,13 +324,8 @@ void MouseController_ProcessMouseActions()
                     sumY -= q*y;
                     break;
                 }
-                case ModuleId_TrackballRight: {
-                    float x = (int16_t)moduleState->pointerDelta.x;
-                    float y = (int16_t)moduleState->pointerDelta.y;
-                    recalculateCurrentSpeed(x, y);
-                    float q = expDriver(x, y);
-                    sumX += q*x;
-                    sumY -= q*y;
+                case ModuleId_TouchpadRight: {
+                    // See processTouchpadActions()
                     break;
                 }
             }
