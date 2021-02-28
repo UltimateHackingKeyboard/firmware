@@ -250,17 +250,7 @@ static void recalculateCurrentSpeed(float x, float y) {
     }
 }
 
-/*
- * Interpretation
- * - (baseSpeedCoef) is fixed part of the multiplier, which is not affected by acceleration
- * - (midSpeedCoef)  is variable part of the multiplier, which is then affected by acceleration exponent
- * - (baseSpeedCoef + midSpeedCoef) is speed multiplier achieved at speed midSpeed (px/ms).
- *
- * For simple configuration, leave baseSpeedCoef and midSpeed unchanged, while exposing:
- * - speed        = midSpeedCoef
- * - acceleration = accelerationExp
- */
-static float baseSpeedCoef = 0.0f;
+// (moduleSpeed) is speed multiplier achieved at speed midSpeed (px/ms).
 static float midSpeed = 3.0f;
 static float accelerationExp = 0.5f;
 
@@ -274,7 +264,7 @@ static float moduleAcceleration = 1.0; // trackball min:0.1, opt:5.0, max:10.0
 static float expDriver(float x, float y)
 {
     float normalizedSpeed = currentSpeed/midSpeed;
-    return baseSpeedCoef + moduleSpeed*(float)pow(moduleAcceleration*normalizedSpeed, accelerationExp);
+    return moduleSpeed*(float)pow(moduleAcceleration*normalizedSpeed, accelerationExp);
 }
 
 void MouseController_ProcessMouseActions()
