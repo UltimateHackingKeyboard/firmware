@@ -262,13 +262,19 @@ static void recalculateCurrentSpeed(float x, float y) {
  */
 static float baseSpeedCoef = 0.0f;
 static float midSpeed = 3.0f;
-static float midSpeedCoef = 1.0f;
 static float accelerationExp = 0.5f;
+
+static float moduleSpeed = 1.0; // trackball min:0.2, opt:1.0, max:5
+static float moduleAcceleration = 1.0; // trackball min:0.1, opt:5.0, max:10.0
+//static float moduleSpeed = 1.0; // trackpoint min:0.2, opt:1.0, max:5
+//static float moduleAcceleration = 5.0; // trackpoint min:0.1, opt:5.0, max:10.0
+//static float moduleSpeed = 1.0; // touchpad min:0.2, opt:1.0, max:1.8
+//static float moduleAcceleration = 2.0; // touchpad min:0.1, opt:2.0, max:10.0
 
 static float expDriver(float x, float y)
 {
     float normalizedSpeed = currentSpeed/midSpeed;
-    return baseSpeedCoef + midSpeedCoef*(float)pow(normalizedSpeed, accelerationExp);
+    return baseSpeedCoef + moduleSpeed*(float)pow(moduleAcceleration*normalizedSpeed, accelerationExp);
 }
 
 void MouseController_ProcessMouseActions()
@@ -306,20 +312,12 @@ void MouseController_ProcessMouseActions()
                     ActiveUsbMouseReport->wheelY -= moduleState->pointerDelta.y;
                     break;
                 }
-                case ModuleId_TrackballRight: {
-                    float x = (int16_t)moduleState->pointerDelta.x;
-                    float y = (int16_t)moduleState->pointerDelta.y;
-                    recalculateCurrentSpeed(x, y);
-                    float q = expDriver(x, y);
-                    sumX += q*x;
-                    sumY -= q*y;
-                    break;
-                }
+                case ModuleId_TrackballRight:
                 case ModuleId_TrackpointRight: {
                     float x = (int16_t)moduleState->pointerDelta.x;
                     float y = (int16_t)moduleState->pointerDelta.y;
                     recalculateCurrentSpeed(x, y);
-                    float q = baseSpeedCoef + midSpeedCoef;
+                    float q = expDriver(x, y);
                     sumX += q*x;
                     sumY -= q*y;
                     break;
