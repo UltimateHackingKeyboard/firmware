@@ -13,12 +13,6 @@
 
 // Typedefs:
 
-    typedef struct {
-        uint8_t acceleration;
-        uint8_t maxSpeed;
-        uint8_t roles[LAYER_COUNT];
-    } pointer_t;
-
     typedef enum {
         NavigationMode_Cursor,
         NavigationMode_Scroll,
@@ -26,8 +20,14 @@
         NavigationMode_Media,
     } navigation_mode_t;
 
+    typedef struct {
+        float speed;
+        float acceleration;
+        navigation_mode_t navigationModes[LayerId_Count];
+    } module_configuration_t;
+
 // Variables:
 
-    extern navigation_mode_t ModuleNavigationModes[ModuleId_Count][LayerId_Count];
+    extern module_configuration_t ModuleConfigurations[ModuleId_Count];
 
 #endif
