@@ -22,7 +22,7 @@ static uint32_t mouseElapsedTime;
 
 bool ActiveMouseStates[ACTIVE_MOUSE_STATES_COUNT];
 
-static float recalculateCurrentSpeed(float x, float y);
+static float computeModuleSpeed(float x, float y);
 
 mouse_kinetic_state_t MouseMoveState = {
     .isScroll = false,
@@ -201,9 +201,9 @@ static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
 
 uint8_t touchpadScrollDivisor = 8;
 static void processTouchpadActions(float* outX, float*outY) {
-    float q = recalculateCurrentSpeed(TouchpadEvents.x, TouchpadEvents.y);
-    *outX += q*TouchpadEvents.x;
-    *outY += q*TouchpadEvents.y;
+    float speed = computeModuleSpeed(TouchpadEvents.x, TouchpadEvents.y);
+    *outX += speed*TouchpadEvents.x;
+    *outY += speed*TouchpadEvents.y;
     TouchpadEvents.x = 0;
     TouchpadEvents.y = 0;
 
@@ -235,8 +235,6 @@ static void processTouchpadActions(float* outX, float*outY) {
     }
 }
 
-
-
 // (moduleSpeed) is speed multiplier achieved at speed midSpeed (px/ms).
 static float midSpeed = 3.0f;
 static float accelerationExp = 0.5f;
@@ -248,7 +246,7 @@ static float moduleAcceleration = 1.0; // trackball min:0.1, opt:5.0, max:10.0
 //static float moduleSpeed = 1.0; // touchpad min:0.2, opt:1.0, max:1.8
 //static float moduleAcceleration = 2.0; // touchpad min:0.1, opt:2.0, max:10.0
 
-static float recalculateCurrentSpeed(float x, float y)
+static float computeModuleSpeed(float x, float y)
 {
     static float currentSpeed = 0.0f; // px/ms
     if (x != 0 || y != 0) {
@@ -302,9 +300,9 @@ void MouseController_ProcessMouseActions()
                 case ModuleId_TrackpointRight: {
                     float x = (int16_t)moduleState->pointerDelta.x;
                     float y = (int16_t)moduleState->pointerDelta.y;
-                    float q = recalculateCurrentSpeed(x, y);
-                    sumX += q*x;
-                    sumY -= q*y;
+                    float speed = computeModuleSpeed(x, y);
+                    sumX += speed*x;
+                    sumY -= speed*y;
                     break;
                 }
                 case ModuleId_TouchpadRight: {
