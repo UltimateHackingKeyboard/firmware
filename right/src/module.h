@@ -21,6 +21,7 @@
     } navigation_mode_t;
 
     typedef struct {
+        float currentSpeed; // px/ms
         float speed;
         float acceleration;
         navigation_mode_t navigationModes[LayerId_Count];
@@ -29,5 +30,9 @@
 // Variables:
 
     extern module_configuration_t ModuleConfigurations[ModuleId_Count];
+
+// Functions:
+
+    module_configuration_t* GetModuleConfiguration(int8_t moduleId);
 
 #endif

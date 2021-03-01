@@ -201,31 +201,25 @@ static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
 static float midSpeed = 3.0f;
 static float accelerationExp = 0.5f;
 
-static float moduleSpeed = 1.0; // trackball min:0.2, opt:1.0, max:5
-static float moduleAcceleration = 1.0; // trackball min:0.1, opt:5.0, max:10.0
-//static float moduleSpeed = 1.0; // trackpoint min:0.2, opt:1.0, max:5
-//static float moduleAcceleration = 5.0; // trackpoint min:0.1, opt:5.0, max:10.0
-//static float moduleSpeed = 1.0; // touchpad min:0.2, opt:1.0, max:1.8
-//static float moduleAcceleration = 2.0; // touchpad min:0.1, opt:2.0, max:10.0
-
-static float computeModuleSpeed(float x, float y)
+static float computeModuleSpeed(float x, float y, uint8_t moduleId)
 {
-    static float currentSpeed = 0.0f; // px/ms
+    module_configuration_t *moduleConfiguration = GetModuleConfiguration(moduleId);
+    float *currentSpeed = &moduleConfiguration->currentSpeed;
     if (x != 0 || y != 0) {
         static uint32_t lastUpdate = 0;
         uint32_t elapsedTime = CurrentTime - lastUpdate;
         float distance = sqrt(x*x + y*y);
-        currentSpeed = distance / elapsedTime;
+        *currentSpeed = distance / elapsedTime;
         lastUpdate = CurrentTime;
     }
 
-    float normalizedSpeed = currentSpeed/midSpeed;
-    return moduleSpeed*(float)pow(moduleAcceleration*normalizedSpeed, accelerationExp);
+    float normalizedSpeed = *currentSpeed/midSpeed;
+    return moduleConfiguration->speed*(float)pow(moduleConfiguration->acceleration * normalizedSpeed, accelerationExp);
 }
 
 uint8_t touchpadScrollDivisor = 8;
-static void processTouchpadActions(float* outX, float*outY) {
-    float speed = computeModuleSpeed(TouchpadEvents.x, TouchpadEvents.y);
+static void processTouchpadActions(float *outX, float *outY) {
+    float speed = computeModuleSpeed(TouchpadEvents.x, TouchpadEvents.y, ModuleId_TouchpadRight);
     *outX += speed*TouchpadEvents.x;
     *outY += speed*TouchpadEvents.y;
     TouchpadEvents.x = 0;
@@ -298,7 +292,7 @@ void MouseController_ProcessMouseActions()
                 case ModuleId_TrackpointRight: {
                     float x = (int16_t)moduleState->pointerDelta.x;
                     float y = (int16_t)moduleState->pointerDelta.y;
-                    float speed = computeModuleSpeed(x, y);
+                    float speed = computeModuleSpeed(x, y, moduleState->moduleId);
                     sumX += speed*x;
                     sumY -= speed*y;
                     break;

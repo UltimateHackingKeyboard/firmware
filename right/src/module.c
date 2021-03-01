@@ -42,3 +42,7 @@ module_configuration_t ModuleConfigurations[ModuleId_Count] = {
         }
     }
 };
+
+module_configuration_t* GetModuleConfiguration(int8_t moduleId) {
+    return ModuleConfigurations + moduleId - ModuleId_FirstModule;
+}
