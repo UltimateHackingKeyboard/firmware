@@ -10,6 +10,9 @@ static uint32_t resolutionStartTime;
 
 static secondary_role_strategy_t strategy = SecondaryRoleStrategy_Timeout;
 
+static key_state_t* previousResolutionKey;
+static uint32_t previousResolutionTime;
+
 static void activatePrimary()
 {
     // Activate the key "again", but now in "SecondaryRoleState_Primary".
@@ -30,11 +33,29 @@ static void activateSecondary()
     PostponerCore_PostponeNCycles(0); //just for aesthetics - we are already postponed for this cycle so this is no-op
 }
 
-uint16_t timeoutStrategyTriggerTime = 200;
+
+/*
+ * Conservative settings (safely preventing collisions) (triggered via distinct && correct release sequence):
+ * TriggerTime = 350
+ * SafetyMargin = 50
+ * AllowTriggerByRelease = true
+ *
+ * Less conservative (triggered via prolonged press of modifier):
+ * TriggerTime = 200
+ * SafetyMargin = 0
+ * AllowTriggerByRelease = false
+ */
+
+uint16_t timeoutStrategyDoubletapTime = 200;
+uint16_t timeoutStrategyTriggerTime = 350;
+uint16_t timeoutStrategySafetyMargin = 50;
 bool timeoutStrategyAllowTriggerByRelease = true;
+bool timeoutStrategyDoubletapActivatesPrimary = true;
+secondary_role_state_t timeoutStrategyTimeoutAction = SecondaryRoleState_Primary;
 
 static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
 {
+    //gather data
     uint32_t dualRolePressTime = resolutionStartTime;
     struct postponer_buffer_record_type_t* dummy;
     struct postponer_buffer_record_type_t* dualRoleRelease;
@@ -44,6 +65,16 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
     PostponerQuery_InfoByKeystate(resolutionKey, &dummy, &dualRoleRelease);
     PostponerQuery_InfoByQueueIdx(0, &actionPress, &actionRelease);
 
+    //handle doubletap logic
+    if(
+            timeoutStrategyDoubletapActivatesPrimary
+            && resolutionKey == previousResolutionKey
+            && resolutionStartTime - previousResolutionTime < timeoutStrategyDoubletapTime
+    ) {
+        return timeoutStrategyTimeoutAction;
+    }
+
+    //action key has not been pressed yet -> timeout scenarios
     if(actionPress == NULL) {
         if(dualRoleRelease != NULL) {
             activatePrimary();
@@ -52,12 +83,16 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
             activatePrimary();
             return SecondaryRoleState_Primary;
         } else {
-            return SecondaryRoleState_DontKnowYet;
+        	return SecondaryRoleState_DontKnowYet;
         }
     }
 
+    //handle trigger by release
     if(timeoutStrategyAllowTriggerByRelease) {
-        if (actionRelease != NULL && (dualRoleRelease == NULL || actionRelease->time < dualRoleRelease->time)) {
+        bool actionKeyWasReleasedButDualkeyNot = actionRelease != NULL && (dualRoleRelease == NULL && CurrentTime - actionRelease->time > timeoutStrategySafetyMargin);
+        bool actionKeyWasReleasedFirst = actionRelease != NULL && (actionRelease->time < dualRoleRelease->time - timeoutStrategySafetyMargin);
+
+        if (actionKeyWasReleasedFirst || actionKeyWasReleasedButDualkeyNot) {
             activateSecondary();
             return SecondaryRoleState_Secondary;
         }
@@ -65,7 +100,7 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
 
     uint32_t activeTime = (dualRoleRelease == NULL ? CurrentTime : dualRoleRelease->time) - dualRolePressTime;
 
-    if ( activeTime > timeoutStrategyTriggerTime ) {
+    if ( activeTime > timeoutStrategyTriggerTime + timeoutStrategySafetyMargin ) {
         activateSecondary();
         return SecondaryRoleState_Secondary;
     } else {
@@ -112,6 +147,8 @@ static secondary_role_state_t resolveCurrentKey()
 
 static secondary_role_state_t startResolution(key_state_t* keyState)
 {
+    previousResolutionKey = resolutionKey;
+    previousResolutionTime = resolutionStartTime;
     resolutionKey = keyState;
     resolutionStartTime = CurrentPostponedTime;
     return SecondaryRoleState_DontKnowYet;
