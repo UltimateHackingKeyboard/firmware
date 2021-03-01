@@ -22,8 +22,6 @@ static uint32_t mouseElapsedTime;
 
 bool ActiveMouseStates[ACTIVE_MOUSE_STATES_COUNT];
 
-static float computeModuleSpeed(float x, float y);
-
 mouse_kinetic_state_t MouseMoveState = {
     .isScroll = false,
     .upState = SerializedMouseAction_MoveUp,
@@ -199,6 +197,32 @@ static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
     kineticState->wasMoveAction = isMoveAction;
 }
 
+// (moduleSpeed) is speed multiplier achieved at speed midSpeed (px/ms).
+static float midSpeed = 3.0f;
+static float accelerationExp = 0.5f;
+
+static float moduleSpeed = 1.0; // trackball min:0.2, opt:1.0, max:5
+static float moduleAcceleration = 1.0; // trackball min:0.1, opt:5.0, max:10.0
+//static float moduleSpeed = 1.0; // trackpoint min:0.2, opt:1.0, max:5
+//static float moduleAcceleration = 5.0; // trackpoint min:0.1, opt:5.0, max:10.0
+//static float moduleSpeed = 1.0; // touchpad min:0.2, opt:1.0, max:1.8
+//static float moduleAcceleration = 2.0; // touchpad min:0.1, opt:2.0, max:10.0
+
+static float computeModuleSpeed(float x, float y)
+{
+    static float currentSpeed = 0.0f; // px/ms
+    if (x != 0 || y != 0) {
+        static uint32_t lastUpdate = 0;
+        uint32_t elapsedTime = CurrentTime - lastUpdate;
+        float distance = sqrt(x*x + y*y);
+        currentSpeed = distance / elapsedTime;
+        lastUpdate = CurrentTime;
+    }
+
+    float normalizedSpeed = currentSpeed/midSpeed;
+    return moduleSpeed*(float)pow(moduleAcceleration*normalizedSpeed, accelerationExp);
+}
+
 uint8_t touchpadScrollDivisor = 8;
 static void processTouchpadActions(float* outX, float*outY) {
     float speed = computeModuleSpeed(TouchpadEvents.x, TouchpadEvents.y);
@@ -233,32 +257,6 @@ static void processTouchpadActions(float* outX, float*outY) {
     if (TouchpadEvents.tapAndHold) {
         ActiveUsbMouseReport->buttons |= MouseButton_Left;
     }
-}
-
-// (moduleSpeed) is speed multiplier achieved at speed midSpeed (px/ms).
-static float midSpeed = 3.0f;
-static float accelerationExp = 0.5f;
-
-static float moduleSpeed = 1.0; // trackball min:0.2, opt:1.0, max:5
-static float moduleAcceleration = 1.0; // trackball min:0.1, opt:5.0, max:10.0
-//static float moduleSpeed = 1.0; // trackpoint min:0.2, opt:1.0, max:5
-//static float moduleAcceleration = 5.0; // trackpoint min:0.1, opt:5.0, max:10.0
-//static float moduleSpeed = 1.0; // touchpad min:0.2, opt:1.0, max:1.8
-//static float moduleAcceleration = 2.0; // touchpad min:0.1, opt:2.0, max:10.0
-
-static float computeModuleSpeed(float x, float y)
-{
-    static float currentSpeed = 0.0f; // px/ms
-    if (x != 0 || y != 0) {
-        static uint32_t lastUpdate = 0;
-        uint32_t elapsedTime = CurrentTime - lastUpdate;
-        float distance = sqrt(x*x + y*y);
-        currentSpeed = distance / elapsedTime;
-        lastUpdate = CurrentTime;
-    }
-
-    float normalizedSpeed = currentSpeed/midSpeed;
-    return moduleSpeed*(float)pow(moduleAcceleration*normalizedSpeed, accelerationExp);
 }
 
 void MouseController_ProcessMouseActions()
