@@ -197,14 +197,13 @@ static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
     kineticState->wasMoveAction = isMoveAction;
 }
 
-// (moduleSpeed) is speed multiplier achieved at speed midSpeed (px/ms).
-static float midSpeed = 3.0f;
-static float accelerationExp = 0.5f;
-
 static float computeModuleSpeed(float x, float y, uint8_t moduleId)
 {
+    static float midSpeed = 3.0f;
+    static float accelerationExp = 0.5f;
     module_configuration_t *moduleConfiguration = GetModuleConfiguration(moduleId);
     float *currentSpeed = &moduleConfiguration->currentSpeed;
+
     if (x != 0 || y != 0) {
         static uint32_t lastUpdate = 0;
         uint32_t elapsedTime = CurrentTime - lastUpdate;
