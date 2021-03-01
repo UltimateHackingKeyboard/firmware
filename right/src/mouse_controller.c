@@ -256,7 +256,6 @@ void MouseController_ProcessMouseActions()
 {
     static float sumX = 0.0f;
     static float sumY = 0.0f;
-    bool moveDeltaChanged = false;
 
     mouseElapsedTime = Timer_GetElapsedTimeAndSetCurrent(&mouseUsbReportUpdateTime);
 
@@ -273,14 +272,12 @@ void MouseController_ProcessMouseActions()
     MouseScrollState.yOut = 0;
 
     if (Slaves[SlaveId_RightTouchpad].isConnected) {
-        moveDeltaChanged = true;
         processTouchpadActions(&sumX, &sumY);
     }
 
     for (uint8_t moduleSlotId=0; moduleSlotId<UHK_MODULE_MAX_SLOT_COUNT; moduleSlotId++) {
         uhk_module_state_t *moduleState = UhkModuleStates + moduleSlotId;
         if (moduleState->pointerCount) {
-            moveDeltaChanged = true;
             module_configuration_t *moduleConfiguration = GetModuleConfiguration(moduleState->moduleId);
             switch (moduleState->moduleId) {
                 case ModuleId_KeyClusterLeft:
@@ -315,24 +312,22 @@ void MouseController_ProcessMouseActions()
     }
 
     const float scrollSpeedDivisor = 8.0f;
-    if (moveDeltaChanged) {
-        float xSumInt;
-        float ySumInt;
-        if (ActiveLayer == LayerId_Mouse) {
-            sumX /= scrollSpeedDivisor;
-            sumY /= scrollSpeedDivisor;
-        }
-        sumX = modff(sumX, &xSumInt);
-        sumY = modff(sumY, &ySumInt);
-        if (ActiveLayer == LayerId_Mouse) {
-            ActiveUsbMouseReport->wheelX += xSumInt;
-            ActiveUsbMouseReport->wheelY -= ySumInt;
-            sumX *= scrollSpeedDivisor;
-            sumY *= scrollSpeedDivisor;
-        } else {
-            ActiveUsbMouseReport->x += xSumInt;
-            ActiveUsbMouseReport->y += ySumInt;
-        }
+    float xSumInt;
+    float ySumInt;
+    if (ActiveLayer == LayerId_Mouse) {
+        sumX /= scrollSpeedDivisor;
+        sumY /= scrollSpeedDivisor;
+    }
+    sumX = modff(sumX, &xSumInt);
+    sumY = modff(sumY, &ySumInt);
+    if (ActiveLayer == LayerId_Mouse) {
+        ActiveUsbMouseReport->wheelX += xSumInt;
+        ActiveUsbMouseReport->wheelY -= ySumInt;
+        sumX *= scrollSpeedDivisor;
+        sumY *= scrollSpeedDivisor;
+    } else {
+        ActiveUsbMouseReport->x += xSumInt;
+        ActiveUsbMouseReport->y += ySumInt;
     }
 
 //  The following line makes the firmware crash for some reason:
