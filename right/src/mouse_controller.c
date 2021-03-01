@@ -248,10 +248,9 @@ static float moduleAcceleration = 1.0; // trackball min:0.1, opt:5.0, max:10.0
 //static float moduleSpeed = 1.0; // touchpad min:0.2, opt:1.0, max:1.8
 //static float moduleAcceleration = 2.0; // touchpad min:0.1, opt:2.0, max:10.0
 
-//This is current calculated pointer speed in px/ms
-static float currentSpeed = 0.0f;
-
-static float recalculateCurrentSpeed(float x, float y) {
+static float recalculateCurrentSpeed(float x, float y)
+{
+    static float currentSpeed = 0.0f; // px/ms
     if (x != 0 || y != 0) {
         static uint32_t lastUpdate = 0;
         uint32_t elapsedTime = CurrentTime - lastUpdate;
