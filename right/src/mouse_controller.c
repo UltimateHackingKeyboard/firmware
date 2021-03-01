@@ -281,19 +281,27 @@ void MouseController_ProcessMouseActions()
         uhk_module_state_t *moduleState = UhkModuleStates + moduleSlotId;
         if (moduleState->pointerCount) {
             moveDeltaChanged = true;
+            module_configuration_t *moduleConfiguration = GetModuleConfiguration(moduleState->moduleId);
             switch (moduleState->moduleId) {
-                case ModuleId_KeyClusterLeft: {
-                    ActiveUsbMouseReport->wheelX += moduleState->pointerDelta.x;
-                    ActiveUsbMouseReport->wheelY -= moduleState->pointerDelta.y;
-                    break;
-                }
+                case ModuleId_KeyClusterLeft:
                 case ModuleId_TrackballRight:
                 case ModuleId_TrackpointRight: {
                     float x = (int16_t)moduleState->pointerDelta.x;
                     float y = (int16_t)moduleState->pointerDelta.y;
                     float speed = computeModuleSpeed(x, y, moduleState->moduleId);
-                    sumX += speed*x;
-                    sumY -= speed*y;
+                    navigation_mode_t navigationMode = moduleConfiguration->navigationModes[ActiveLayer];
+                    switch (navigationMode) {
+                        case NavigationMode_Cursor:
+                            sumX += speed*x;
+                            sumY -= speed*y;
+                            break;
+                        case NavigationMode_Scroll:
+                            ActiveUsbMouseReport->wheelX += moduleState->pointerDelta.x;
+                            ActiveUsbMouseReport->wheelY -= moduleState->pointerDelta.y;
+                            break;
+                        default:
+                            break;
+                    }
                     break;
                 }
                 case ModuleId_TouchpadRight: {
