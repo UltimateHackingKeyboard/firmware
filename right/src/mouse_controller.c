@@ -22,8 +22,7 @@ static uint32_t mouseElapsedTime;
 
 bool ActiveMouseStates[ACTIVE_MOUSE_STATES_COUNT];
 
-static float expDriver(float x, float y);
-static void recalculateCurrentSpeed(float x, float y);
+static float recalculateCurrentSpeed(float x, float y);
 
 mouse_kinetic_state_t MouseMoveState = {
     .isScroll = false,
@@ -202,8 +201,7 @@ static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
 
 uint8_t touchpadScrollDivisor = 8;
 static void processTouchpadActions(float* outX, float*outY) {
-    recalculateCurrentSpeed(TouchpadEvents.x, TouchpadEvents.y);
-    float q = expDriver(TouchpadEvents.x, TouchpadEvents.y);
+    float q = recalculateCurrentSpeed(TouchpadEvents.x, TouchpadEvents.y);
     *outX += q*TouchpadEvents.x;
     *outY += q*TouchpadEvents.y;
     TouchpadEvents.x = 0;
@@ -237,18 +235,7 @@ static void processTouchpadActions(float* outX, float*outY) {
     }
 }
 
-//This is current calculated pointer speed in px/ms
-static float currentSpeed = 0.0f;
 
-static void recalculateCurrentSpeed(float x, float y) {
-    if (x != 0 || y != 0) {
-        static uint32_t lastUpdate = 0;
-        uint32_t elapsedTime = CurrentTime - lastUpdate;
-        float distance = sqrt(x*x + y*y);
-        currentSpeed = distance / elapsedTime;
-        lastUpdate = CurrentTime;
-    }
-}
 
 // (moduleSpeed) is speed multiplier achieved at speed midSpeed (px/ms).
 static float midSpeed = 3.0f;
@@ -261,8 +248,18 @@ static float moduleAcceleration = 1.0; // trackball min:0.1, opt:5.0, max:10.0
 //static float moduleSpeed = 1.0; // touchpad min:0.2, opt:1.0, max:1.8
 //static float moduleAcceleration = 2.0; // touchpad min:0.1, opt:2.0, max:10.0
 
-static float expDriver(float x, float y)
-{
+//This is current calculated pointer speed in px/ms
+static float currentSpeed = 0.0f;
+
+static float recalculateCurrentSpeed(float x, float y) {
+    if (x != 0 || y != 0) {
+        static uint32_t lastUpdate = 0;
+        uint32_t elapsedTime = CurrentTime - lastUpdate;
+        float distance = sqrt(x*x + y*y);
+        currentSpeed = distance / elapsedTime;
+        lastUpdate = CurrentTime;
+    }
+
     float normalizedSpeed = currentSpeed/midSpeed;
     return moduleSpeed*(float)pow(moduleAcceleration*normalizedSpeed, accelerationExp);
 }
@@ -306,8 +303,7 @@ void MouseController_ProcessMouseActions()
                 case ModuleId_TrackpointRight: {
                     float x = (int16_t)moduleState->pointerDelta.x;
                     float y = (int16_t)moduleState->pointerDelta.y;
-                    recalculateCurrentSpeed(x, y);
-                    float q = expDriver(x, y);
+                    float q = recalculateCurrentSpeed(x, y);
                     sumX += q*x;
                     sumY -= q*y;
                     break;
