@@ -25,7 +25,7 @@
     extern uint8_t AllKeymapsCount;
     extern uint8_t DefaultKeymapIndex;
     extern uint8_t CurrentKeymapIndex;
-    extern key_action_t CurrentKeymap[LAYER_COUNT][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
+    extern key_action_t CurrentKeymap[LayerId_Count][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
 
 // Functions:
 

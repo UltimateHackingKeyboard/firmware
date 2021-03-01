@@ -212,13 +212,31 @@ static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
     kineticState->wasMoveAction = isMoveAction;
 }
 
+static float computeModuleSpeed(float x, float y, uint8_t moduleId)
+{
+    static float midSpeed = 3.0f;
+    static float accelerationExp = 0.5f;
+    module_configuration_t *moduleConfiguration = GetModuleConfiguration(moduleId);
+    float *currentSpeed = &moduleConfiguration->currentSpeed;
+
+    if (x != 0 || y != 0) {
+        static uint32_t lastUpdate = 0;
+        uint32_t elapsedTime = CurrentTime - lastUpdate;
+        float distance = sqrt(x*x + y*y);
+        *currentSpeed = distance / elapsedTime;
+        lastUpdate = CurrentTime;
+    }
+
+    float normalizedSpeed = *currentSpeed/midSpeed;
+    return moduleConfiguration->speed*(float)pow(moduleConfiguration->acceleration * normalizedSpeed, accelerationExp);
+}
+
 uint8_t touchpadScrollDivisor = 8;
 
-static void processTouchpadActions(float* outX, float*outY) {
-    recalculateCurrentSpeed(TouchpadEvents.x, TouchpadEvents.y);
-    float q = expDriver(TouchpadEvents.x, TouchpadEvents.y);
-    *outX += q*TouchpadEvents.x;
-    *outY += q*TouchpadEvents.y;
+static void processTouchpadActions(float *outX, float *outY) {
+    float speed = computeModuleSpeed(TouchpadEvents.x, TouchpadEvents.y, ModuleId_TouchpadRight);
+    *outX += speed*TouchpadEvents.x;
+    *outY += speed*TouchpadEvents.y;
     TouchpadEvents.x = 0;
     TouchpadEvents.y = 0;
 
@@ -329,151 +347,200 @@ void MouseController_ProcessMouseActions()
         processTouchpadActions(&sumX, &sumY);
     }
 
-    for (uint8_t moduleId=0; moduleId<UHK_MODULE_MAX_COUNT; moduleId++) {
-        uhk_module_state_t *moduleState = UhkModuleStates + moduleId;
+    for (uint8_t moduleSlotId=0; moduleSlotId<UHK_MODULE_MAX_SLOT_COUNT; moduleSlotId++) {
+        uhk_module_state_t *moduleState = UhkModuleStates + moduleSlotId;
         if (moduleState->pointerCount) {
-            moveDeltaChanged = true;
-            switch(moduleState -> moduleId) {
-            case ModuleId_KeyClusterLeft:
-                ActiveUsbMouseReport->wheelX += moduleState->pointerDelta.x;
-                ActiveUsbMouseReport->wheelY -= moduleState->pointerDelta.y;
-//                if(moduleState -> pointerDelta.x != 0 || moduleState -> pointerDelta.y != 0) {
-//                    if(CurrentTime - lastUpdate > 1000) {
-//                        wX = 0;
-//                        wY = 0;
-//                        wLastX = NONE;
-//                    }
-//                    lastUpdate = CurrentTime;
-//                }
-//
-//                wX += moduleState->pointerDelta.x;
-//                wY += moduleState->pointerDelta.y;
-//
-//                if((wX >= wC && wLastX == LX) || wX >= wC*wTrsh) {
-//                    ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = HID_KEYBOARD_SC_RIGHT_ARROW;
-//                    wX = 0;
-//                    wY = 0;
-//                    wLastX = LX;
-//                }
-//                if((wX <= -wC && wLastX == LX) || wX <= -wC*wTrsh) {
-//                    ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = HID_KEYBOARD_SC_LEFT_ARROW;
-//                    wX = 0;
-//                    wY = 0;
-//                    wLastX = LX;
-//                }
-//                if((wY >= wC && wLastX == LY) || wY >= wC*wTrsh) {
-//                    ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = HID_KEYBOARD_SC_DOWN_ARROW;
-//                    wX = 0;
-//                    wY = 0;
-//                    wLastX = LY;
-//                }
-//                if((wY <= -wC && wLastX == LY) || wY <= -wC*wTrsh) {
-//                    ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = HID_KEYBOARD_SC_UP_ARROW;
-//                    wX = 0;
-//                    wY = 0;
-//                    wLastX = LY;
-//                }
-                break;
-            case ModuleId_TouchpadRight:
-            {
-                /** Nothing is here, look elsewhere! */
-            }
-                break;
-            case ModuleId_TrackballRight:
-            case ModuleId_TrackpointRight:
-            {
-                float x = (int16_t)moduleState->pointerDelta.x;
-                float y = (int16_t)moduleState->pointerDelta.y;
-                recalculateCurrentSpeed(x, y);
-                float q = expDriver(x, y);
-                sumX += q*x;
-                sumY -= q*y;
-            }
+//            /*
+//            moveDeltaChanged = true;
+//            switch(moduleState -> moduleId) {
+//            case ModuleId_KeyClusterLeft:
+//                ActiveUsbMouseReport->wheelX += moduleState->pointerDelta.x;
+//                ActiveUsbMouseReport->wheelY -= moduleState->pointerDelta.y;
+////                if(moduleState -> pointerDelta.x != 0 || moduleState -> pointerDelta.y != 0) {
+////                    if(CurrentTime - lastUpdate > 1000) {
+////                        wX = 0;
+////                        wY = 0;
+////                        wLastX = NONE;
+////                    }
+////                    lastUpdate = CurrentTime;
+////                }
+////
+////                wX += moduleState->pointerDelta.x;
+////                wY += moduleState->pointerDelta.y;
+////
+////                if((wX >= wC && wLastX == LX) || wX >= wC*wTrsh) {
+////                    ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = HID_KEYBOARD_SC_RIGHT_ARROW;
+////                    wX = 0;
+////                    wY = 0;
+////                    wLastX = LX;
+////                }
+////                if((wX <= -wC && wLastX == LX) || wX <= -wC*wTrsh) {
+////                    ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = HID_KEYBOARD_SC_LEFT_ARROW;
+////                    wX = 0;
+////                    wY = 0;
+////                    wLastX = LX;
+////                }
+////                if((wY >= wC && wLastX == LY) || wY >= wC*wTrsh) {
+////                    ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = HID_KEYBOARD_SC_DOWN_ARROW;
+////                    wX = 0;
+////                    wY = 0;
+////                    wLastX = LY;
+////                }
+////                if((wY <= -wC && wLastX == LY) || wY <= -wC*wTrsh) {
+////                    ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = HID_KEYBOARD_SC_UP_ARROW;
+////                    wX = 0;
+////                    wY = 0;
+////                    wLastX = LY;
+////                }
+//                break;
+//            case ModuleId_TouchpadRight:
+//            {
+//                /** Nothing is here, look elsewhere! */
+//            }
+//                break;
+//            case ModuleId_TrackballRight:
+//            case ModuleId_TrackpointRight:
+//            {
+//                float x = (int16_t)moduleState->pointerDelta.x;
+//                float y = (int16_t)moduleState->pointerDelta.y;
+//                recalculateCurrentSpeed(x, y);
+//                float q = expDriver(x, y);
+//                sumX += q*x;
+//                sumY -= q*y;
+//            }
+//*/
+            module_configuration_t *moduleConfiguration = GetModuleConfiguration(moduleState->moduleId);
+            switch (moduleState->moduleId) {
+                case ModuleId_KeyClusterLeft:
+                case ModuleId_TrackballRight:
+                case ModuleId_TrackpointRight: {
+                    float x = (int16_t)moduleState->pointerDelta.x;
+                    float y = (int16_t)moduleState->pointerDelta.y;
+                    float speed = computeModuleSpeed(x, y, moduleState->moduleId);
+                    navigation_mode_t navigationMode = moduleConfiguration->navigationModes[ActiveLayer];
+                    switch (navigationMode) {
+                        case NavigationMode_Cursor:
+                            sumX += speed*x;
+                            sumY -= speed*y;
+                            break;
+                        case NavigationMode_Scroll:
+                            ActiveUsbMouseReport->wheelX += moduleState->pointerDelta.x;
+                            ActiveUsbMouseReport->wheelY -= moduleState->pointerDelta.y;
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
+                }
+                case ModuleId_TouchpadRight: {
+                    // The touchpad has its own driver. See processTouchpadActions()
+                    break;
+                }
             }
             moduleState->pointerDelta.x = 0;
             moduleState->pointerDelta.y = 0;
         }
     }
 
-    bool scrollMode = ActiveLayer == LayerId_Mouse;
-    bool caretMode = ActiveLayer == LayerId_Fn;
-    float scrollSpeedDivisor = 8.0f;
-    if(moveDeltaChanged) {
-        float xSumInt;
-        float ySumInt;
-        if(scrollMode) {
-            sumX /= scrollSpeedDivisor;
-            sumY /= scrollSpeedDivisor;
-        }
-        sumX = modff(sumX, &xSumInt);
-        sumY = modff(sumY, &ySumInt);
-        if(scrollMode) {
-            ActiveUsbMouseReport->wheelX += xSumInt;
-            ActiveUsbMouseReport->wheelY -= ySumInt;
-            sumX *= scrollSpeedDivisor;
-            sumY *= scrollSpeedDivisor;
-        } else if (caretMode) {
-            if(xSumInt != 0 || ySumInt != 0) {
-                if(firstTick && CurrentTime - lastUpdate < 100 && false) {
-                    xSumInt = 0;
-                    ySumInt = 0;
-                } else {
-                    firstTick = false;
-
-                    if(CurrentTime - lastUpdate > 500) {
-                        wX = 0;
-                        wY = 0;
-                        wLastX = NONE;
-                    }
-
-                    lastUpdate = CurrentTime;
-                }
-            }
-
-            wX += xSumInt;
-            wY += ySumInt;
-
-#define FIRST_TICK(ax) (ax > wC && wLastX == NONE)
-#define FIRST_TICKB(ax) (ax > wC && wLastX == NONE)
-
-            uint8_t prevMode = wLastX;
-
-            if((wX >= wC && wLastX == LX) || wX >= wC*wTrsh || FIRST_TICK(wX)) {
-                ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = HID_KEYBOARD_SC_RIGHT_ARROW;
-                wX = 0;
-                wY = 0;
-                wLastX = LX;
-                lastTick = CurrentTime;
-            }
-            if((wX <= -wC && wLastX == LX) || wX <= -wC*wTrsh || FIRST_TICK(-wX)) {
-                ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = HID_KEYBOARD_SC_LEFT_ARROW;
-                wX = 0;
-                wY = 0;
-                wLastX = LX;
-                lastTick = CurrentTime;
-            }
-            if((wY >= wC && wLastX == LY) || wY >= wC*wTrsh || FIRST_TICK(wY)) {
-                ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = HID_KEYBOARD_SC_DOWN_ARROW;
-                wX = 0;
-                wY = 0;
-                wLastX = LY;
-                lastTick = CurrentTime;
-            }
-            if((wY <= -wC && wLastX == LY) || wY <= -wC*wTrsh || FIRST_TICK(-wY)) {
-                ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = HID_KEYBOARD_SC_UP_ARROW;
-                wX = 0;
-                wY = 0;
-                wLastX = LY;
-                lastTick = CurrentTime;
-            }
-
-            if(wLastX != NONE && prevMode == NONE) {
-                firstTick = true;
-            }
-        } else {
-            ActiveUsbMouseReport->x += xSumInt;
-            ActiveUsbMouseReport->y += ySumInt;
-        }
+//<<<<<<< HEAD
+//    bool scrollMode = ActiveLayer == LayerId_Mouse;
+//    bool caretMode = ActiveLayer == LayerId_Fn;
+//    float scrollSpeedDivisor = 8.0f;
+//    if(moveDeltaChanged) {
+//        float xSumInt;
+//        float ySumInt;
+//        if(scrollMode) {
+//            sumX /= scrollSpeedDivisor;
+//            sumY /= scrollSpeedDivisor;
+//        }
+//        sumX = modff(sumX, &xSumInt);
+//        sumY = modff(sumY, &ySumInt);
+//        if(scrollMode) {
+//            ActiveUsbMouseReport->wheelX += xSumInt;
+//            ActiveUsbMouseReport->wheelY -= ySumInt;
+//            sumX *= scrollSpeedDivisor;
+//            sumY *= scrollSpeedDivisor;
+//        } else if (caretMode) {
+//            if(xSumInt != 0 || ySumInt != 0) {
+//                if(firstTick && CurrentTime - lastUpdate < 100 && false) {
+//                    xSumInt = 0;
+//                    ySumInt = 0;
+//                } else {
+//                    firstTick = false;
+//
+//                    if(CurrentTime - lastUpdate > 500) {
+//                        wX = 0;
+//                        wY = 0;
+//                        wLastX = NONE;
+//                    }
+//
+//                    lastUpdate = CurrentTime;
+//                }
+//            }
+//
+//            wX += xSumInt;
+//            wY += ySumInt;
+//
+//#define FIRST_TICK(ax) (ax > wC && wLastX == NONE)
+//#define FIRST_TICKB(ax) (ax > wC && wLastX == NONE)
+//
+//            uint8_t prevMode = wLastX;
+//
+//            if((wX >= wC && wLastX == LX) || wX >= wC*wTrsh || FIRST_TICK(wX)) {
+//                ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = HID_KEYBOARD_SC_RIGHT_ARROW;
+//                wX = 0;
+//                wY = 0;
+//                wLastX = LX;
+//                lastTick = CurrentTime;
+//            }
+//            if((wX <= -wC && wLastX == LX) || wX <= -wC*wTrsh || FIRST_TICK(-wX)) {
+//                ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = HID_KEYBOARD_SC_LEFT_ARROW;
+//                wX = 0;
+//                wY = 0;
+//                wLastX = LX;
+//                lastTick = CurrentTime;
+//            }
+//            if((wY >= wC && wLastX == LY) || wY >= wC*wTrsh || FIRST_TICK(wY)) {
+//                ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = HID_KEYBOARD_SC_DOWN_ARROW;
+//                wX = 0;
+//                wY = 0;
+//                wLastX = LY;
+//                lastTick = CurrentTime;
+//            }
+//            if((wY <= -wC && wLastX == LY) || wY <= -wC*wTrsh || FIRST_TICK(-wY)) {
+//                ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = HID_KEYBOARD_SC_UP_ARROW;
+//                wX = 0;
+//                wY = 0;
+//                wLastX = LY;
+//                lastTick = CurrentTime;
+//            }
+//
+//            if(wLastX != NONE && prevMode == NONE) {
+//                firstTick = true;
+//            }
+//        } else {
+//            ActiveUsbMouseReport->x += xSumInt;
+//            ActiveUsbMouseReport->y += ySumInt;
+//        }
+//=======
+    const float scrollSpeedDivisor = 8.0f;
+    float xSumInt;
+    float ySumInt;
+    if (ActiveLayer == LayerId_Mouse) {
+        sumX /= scrollSpeedDivisor;
+        sumY /= scrollSpeedDivisor;
+    }
+    sumX = modff(sumX, &xSumInt);
+    sumY = modff(sumY, &ySumInt);
+    if (ActiveLayer == LayerId_Mouse) {
+        ActiveUsbMouseReport->wheelX += xSumInt;
+        ActiveUsbMouseReport->wheelY -= ySumInt;
+        sumX *= scrollSpeedDivisor;
+        sumY *= scrollSpeedDivisor;
+    } else {
+        ActiveUsbMouseReport->x += xSumInt;
+        ActiveUsbMouseReport->y += ySumInt;
+//>>>>>>> origin/master
     }
 
 //  The following line makes the firmware crash for some reason:

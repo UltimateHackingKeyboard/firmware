@@ -142,7 +142,7 @@ void LayerSwitcher_UnToggleLayerOnly(layer_id_t layer) {
  * B released  ; //layer B is active   B's A-Layer action is active
  */
 
-static bool heldLayers[LAYER_COUNT];
+static bool heldLayers[LayerId_Count];
 
 // Called by pressed hold-layer keys during every cycle
 void LayerSwitcher_HoldLayer(layer_id_t layer) {

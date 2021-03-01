@@ -11,7 +11,7 @@
 
 // Macros:
 
-    #define UHK_MODULE_MAX_COUNT (SLOT_COUNT-1)
+    #define UHK_MODULE_MAX_SLOT_COUNT (SLOT_COUNT-1)
     #define MAX_PWM_BRIGHTNESS 0x64
 
 // Typedefs:
@@ -93,7 +93,7 @@
 
 // Variables:
 
-    extern uhk_module_state_t UhkModuleStates[UHK_MODULE_MAX_COUNT];
+    extern uhk_module_state_t UhkModuleStates[UHK_MODULE_MAX_SLOT_COUNT];
 
 // Functions:
 

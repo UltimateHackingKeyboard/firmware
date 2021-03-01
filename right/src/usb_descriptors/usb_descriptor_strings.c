@@ -1,5 +1,6 @@
 #include "usb_api.h"
 #include "usb_descriptor_strings.h"
+#include "device.h"
 
 uint8_t UsbLanguageListStringDescriptor[USB_LANGUAGE_LIST_STRING_DESCRIPTOR_LENGTH] = {
     sizeof(UsbLanguageListStringDescriptor),
@@ -41,35 +42,41 @@ uint8_t UsbManufacturerString[USB_MANUFACTURER_STRING_DESCRIPTOR_LENGTH] = {
     's', 0x00U,
 };
 
+#if DEVICE_ID == DEVICE_ID_UHK60V1
+
+#define USB_PRODUCT_STRING_DESCRIPTOR_LENGTH 20
 uint8_t UsbProductString[USB_PRODUCT_STRING_DESCRIPTOR_LENGTH] = {
     sizeof(UsbProductString),
     USB_DESCRIPTOR_TYPE_STRING,
     'U', 0x00U,
-    'l', 0x00U,
-    't', 0x00U,
-    'i', 0x00U,
-    'm', 0x00U,
-    'a', 0x00U,
-    't', 0x00U,
-    'e', 0x00U,
-    ' ', 0x00U,
     'H', 0x00U,
-    'a', 0x00U,
-    'c', 0x00U,
-    'k', 0x00U,
-    'i', 0x00U,
-    'n', 0x00U,
-    'g', 0x00U,
-    ' ', 0x00U,
     'K', 0x00U,
-    'e', 0x00U,
-    'y', 0x00U,
-    'b', 0x00U,
-    'o', 0x00U,
-    'a', 0x00U,
-    'r', 0x00U,
-    'd', 0x00U,
+    ' ', 0x00U,
+    '6', 0x00U,
+    '0', 0x00U,
+    ' ', 0x00U,
+    'v', 0x00U,
+    '1', 0x00U,
 };
+
+#elif DEVICE_ID == DEVICE_ID_UHK60V2
+
+#define USB_PRODUCT_STRING_DESCRIPTOR_LENGTH 20
+uint8_t UsbProductString[USB_PRODUCT_STRING_DESCRIPTOR_LENGTH] = {
+    sizeof(UsbProductString),
+    USB_DESCRIPTOR_TYPE_STRING,
+    'U', 0x00U,
+    'H', 0x00U,
+    'K', 0x00U,
+    ' ', 0x00U,
+    '6', 0x00U,
+    '0', 0x00U,
+    ' ', 0x00U,
+    'v', 0x00U,
+    '2', 0x00U,
+};
+
+#endif
 
 uint32_t UsbStringDescriptorLengths[USB_STRING_DESCRIPTOR_COUNT] = {
     sizeof(UsbLanguageListStringDescriptor),

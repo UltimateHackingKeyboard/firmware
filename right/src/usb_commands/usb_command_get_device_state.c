@@ -7,6 +7,7 @@
 #include "usb_report_updater.h"
 #include "timer.h"
 #include "layer_switcher.h"
+#include "slave_scheduler.h"
 
 void UsbCommand_GetKeyboardState(void)
 {
@@ -14,7 +15,10 @@ void UsbCommand_GetKeyboardState(void)
     SetUsbTxBufferUint8(2, MERGE_SENSOR_IS_MERGED);
     SetUsbTxBufferUint8(3, UhkModuleStates[UhkModuleDriverId_LeftKeyboardHalf].moduleId);
     SetUsbTxBufferUint8(4, UhkModuleStates[UhkModuleDriverId_LeftModule].moduleId);
-    SetUsbTxBufferUint8(5, UhkModuleStates[UhkModuleDriverId_RightModule].moduleId);
+    uint8_t rightSlotModuleId = Slaves[SlaveId_RightTouchpad].isConnected
+        ? ModuleId_TouchpadRight
+        : UhkModuleStates[UhkModuleDriverId_RightModule].moduleId;
+    SetUsbTxBufferUint8(5, rightSlotModuleId);
     SetUsbTxBufferUint8(6, ActiveLayer | (ActiveLayer != LayerId_Base && !ActiveLayerHeld ? (1 << 7) : 0) ); //Active layer + most significant bit if layer is toggled
     LastUsbGetKeyboardStateRequestTimestamp = CurrentTime;
 }

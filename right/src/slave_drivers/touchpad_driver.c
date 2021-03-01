@@ -36,11 +36,8 @@ uint8_t phase = 0;
 static uint8_t enableEventMode[] = {0x05, 0x8f, 0x07};
 static uint8_t getGestureEvents0[] = {0x00, 0x0d};
 static uint8_t getRelativePixelsXCommand[] = {0x00, 0x12};
-static uint8_t getDeltaValues[] = {0x01, 0xc1};
 static uint8_t closeCommunicationWindow[] = {0xee, 0xee, 0xee};
-#define deltaRange 59
 static uint8_t buffer[4];
-static uint8_t buffer2[deltaRange];
 int16_t deltaX;
 int16_t deltaY;
 
@@ -92,16 +89,6 @@ status_t TouchpadDriver_Update(uint8_t uhkModuleDriverId)
             }
 
             status = I2cAsyncWrite(address, closeCommunicationWindow, sizeof(closeCommunicationWindow));
-            phase = 6;
-            break;
-        }
-        case 6: {
-            status = I2cAsyncWrite(address, getDeltaValues, sizeof(getDeltaValues));
-            phase = 7;
-            break;
-        }
-        case 7: {
-            status = I2cAsyncRead(address, buffer2, deltaRange);
             phase = 1;
             break;
         }
