@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [8.10.6] - 2021-03-02
+
+Device Protocol: 4.7.1 | Module Protocol: 4.1.0 | User Config: 4.2.0 | Hardware Config: 1.0.0
+
+- Use optimized per-module speed and acceleration settings.
+- Use cursor navigation mode on base layer and scroll mode on the mouse layer for right-sided modules and vice versa for the key cluster module.
+
 ## [8.10.5] - 2021-02-15
 
 Device Protocol: 4.7.1 | Module Protocol: 4.1.0 | User Config: 4.2.0 | Hardware Config: 1.0.0
