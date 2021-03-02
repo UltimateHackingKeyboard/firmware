@@ -216,27 +216,7 @@ static float computeModuleSpeed(float x, float y, uint8_t moduleId)
     return moduleConfiguration->speed*(float)pow(moduleConfiguration->acceleration * normalizedSpeed, accelerationExp);
 }
 
-uint8_t touchpadScrollDivisor = 8;
-static void processTouchpadActions(float *outX, float *outY) {
-    float speed = computeModuleSpeed(TouchpadEvents.x, TouchpadEvents.y, ModuleId_TouchpadRight);
-    *outX += speed*TouchpadEvents.x;
-    *outY += speed*TouchpadEvents.y;
-    TouchpadEvents.x = 0;
-    TouchpadEvents.y = 0;
-
-    uint8_t wheelXInteger = TouchpadEvents.wheelX / touchpadScrollDivisor;
-    if (wheelXInteger) {
-        ActiveUsbMouseReport->wheelX += wheelXInteger;
-        TouchpadEvents.wheelX = TouchpadEvents.wheelX % touchpadScrollDivisor;
-    }
-
-    uint8_t wheelYInteger = TouchpadEvents.wheelY / touchpadScrollDivisor;
-    if (wheelYInteger) {
-        ActiveUsbMouseReport->wheelY -= wheelYInteger;
-        TouchpadEvents.wheelY = TouchpadEvents.wheelY % touchpadScrollDivisor;
-    }
-
-
+static void processTouchpadActions() {
     if (TouchpadEvents.singleTap) {
         ActiveUsbMouseReport->buttons |= MouseButton_Left;
         TouchpadEvents.singleTap = false;
@@ -252,11 +232,60 @@ static void processTouchpadActions(float *outX, float *outY) {
     }
 }
 
+void processModuleActions(uint8_t moduleId, float x, float y) {
+    module_configuration_t *moduleConfiguration = GetModuleConfiguration(moduleId);
+    navigation_mode_t navigationMode = moduleConfiguration->navigationModes[ActiveLayer];
+    int16_t yInversion = moduleId == ModuleId_KeyClusterLeft ||  moduleId == ModuleId_TouchpadRight ? -1 : 1;
+    int8_t scrollSpeedDivisor = 8;
+    float speed = computeModuleSpeed(x, y, moduleId);
+
+    if (moduleId == ModuleId_KeyClusterLeft) {
+        scrollSpeedDivisor = 1;
+        speed = navigationMode == NavigationMode_Scroll ? 1 : 5;
+    }
+
+    switch (navigationMode) {
+        case NavigationMode_Cursor: {
+            ActiveUsbMouseReport->x += speed*x;
+            ActiveUsbMouseReport->y -= yInversion*speed*y;
+            break;
+        }
+        case NavigationMode_Scroll: {
+            static int8_t wheelX;
+            static int8_t wheelY;
+
+            if (moduleId == ModuleId_KeyClusterLeft) {
+                wheelX = wheelY = 0;
+            }
+
+            wheelX += speed*x;
+            wheelY += yInversion*speed*y;
+
+            int8_t wheelXInteger = wheelX / scrollSpeedDivisor;
+            if (wheelXInteger) {
+                ActiveUsbMouseReport->wheelX += wheelXInteger;
+                wheelX = wheelX % scrollSpeedDivisor;
+            }
+
+            int8_t wheelYInteger = wheelY / scrollSpeedDivisor;
+            if (wheelYInteger) {
+                ActiveUsbMouseReport->wheelY += wheelYInteger;
+                wheelY = wheelY % scrollSpeedDivisor;
+            }
+
+            break;
+        }
+        case NavigationMode_Caret: {
+            break;
+        }
+        case NavigationMode_Media: {
+            break;
+        }
+    }
+}
+
 void MouseController_ProcessMouseActions()
 {
-    static float sumX = 0.0f;
-    static float sumY = 0.0f;
-
     mouseElapsedTime = Timer_GetElapsedTimeAndSetCurrent(&mouseUsbReportUpdateTime);
 
     processMouseKineticState(&MouseMoveState);
@@ -272,71 +301,22 @@ void MouseController_ProcessMouseActions()
     MouseScrollState.yOut = 0;
 
     if (Slaves[SlaveId_RightTouchpad].isConnected) {
-        processTouchpadActions(&sumX, &sumY);
+        processTouchpadActions();
+        processModuleActions(ModuleId_TouchpadRight, (int16_t)TouchpadEvents.x, (int16_t)TouchpadEvents.y);
+        TouchpadEvents.x = 0;
+        TouchpadEvents.y = 0;
     }
 
     for (uint8_t moduleSlotId=0; moduleSlotId<UHK_MODULE_MAX_SLOT_COUNT; moduleSlotId++) {
         uhk_module_state_t *moduleState = UhkModuleStates + moduleSlotId;
-        if (moduleState->pointerCount) {
-            module_configuration_t *moduleConfiguration = GetModuleConfiguration(moduleState->moduleId);
-            switch (moduleState->moduleId) {
-                case ModuleId_KeyClusterLeft:
-                case ModuleId_TrackballRight:
-                case ModuleId_TrackpointRight: {
-                    float x = (int16_t)moduleState->pointerDelta.x;
-                    float y = (int16_t)moduleState->pointerDelta.y;
-                    float speed = computeModuleSpeed(x, y, moduleState->moduleId);
-                    navigation_mode_t navigationMode = moduleConfiguration->navigationModes[ActiveLayer];
-                    switch (navigationMode) {
-                        case NavigationMode_Cursor:
-                            sumX += speed*x;
-                            sumY -= speed*y;
-                            break;
-                        case NavigationMode_Scroll:
-                            ActiveUsbMouseReport->wheelX += moduleState->pointerDelta.x;
-                            ActiveUsbMouseReport->wheelY -= moduleState->pointerDelta.y;
-                            break;
-                        default:
-                            break;
-                    }
-                    break;
-                }
-                case ModuleId_TouchpadRight: {
-                    // The touchpad has its own driver. See processTouchpadActions()
-                    break;
-                }
-            }
-            moduleState->pointerDelta.x = 0;
-            moduleState->pointerDelta.y = 0;
+        if (moduleState->moduleId == ModuleId_Unavailable || moduleState->pointerCount == 0) {
+            continue;
         }
-    }
 
-    const float scrollSpeedDivisor = 8.0f;
-    float xSumInt;
-    float ySumInt;
-    if (ActiveLayer == LayerId_Mouse) {
-        sumX /= scrollSpeedDivisor;
-        sumY /= scrollSpeedDivisor;
+        processModuleActions(moduleState->moduleId, (int16_t)moduleState->pointerDelta.x, (int16_t)moduleState->pointerDelta.y);
+        moduleState->pointerDelta.x = 0;
+        moduleState->pointerDelta.y = 0;
     }
-    sumX = modff(sumX, &xSumInt);
-    sumY = modff(sumY, &ySumInt);
-    if (ActiveLayer == LayerId_Mouse) {
-        ActiveUsbMouseReport->wheelX += xSumInt;
-        ActiveUsbMouseReport->wheelY -= ySumInt;
-        sumX *= scrollSpeedDivisor;
-        sumY *= scrollSpeedDivisor;
-    } else {
-        ActiveUsbMouseReport->x += xSumInt;
-        ActiveUsbMouseReport->y += ySumInt;
-    }
-
-//  The following line makes the firmware crash for some reason:
-//  SetDebugBufferFloat(60, mouseScrollState.currentSpeed);
-//  TODO: Figure out why.
-//  Oddly, the following line (which is the inlined version of the above) works:
-//  *(float*)(DebugBuffer + 60) = mouseScrollState.currentSpeed;
-//  The value parameter of SetDebugBufferFloat() seems to be the culprit because
-//  if it's not used within the function it doesn't crash anymore.
 
     if (ActiveMouseStates[SerializedMouseAction_LeftClick]) {
         ActiveUsbMouseReport->buttons |= MouseButton_Left;

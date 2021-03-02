@@ -35,6 +35,7 @@
     } slave_property_t;
 
     typedef enum {
+        ModuleId_Unavailable = 0,
         ModuleId_LeftKeyboardHalf = 1,
         ModuleId_KeyClusterLeft   = 2,
         ModuleId_TrackballRight   = 3,
