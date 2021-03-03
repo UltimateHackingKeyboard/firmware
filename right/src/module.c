@@ -34,8 +34,8 @@ module_configuration_t ModuleConfigurations[ModuleId_ModuleCount] = {
         }
     },
     { // ModuleId_TouchpadRight
-        .speed = 1.0, // min:0.2, opt:1.0, max:1.8
-        .acceleration = 2.0, // min:0.1, opt:2.0, max:10.0
+        .speed = 1.3, // min:0.2, opt:1.0, max:1.8
+        .acceleration = 1.0, // min:0.1, opt:2.0, max:10.0
         .navigationModes = {
             NavigationMode_Cursor, // Base layer
             NavigationMode_Caret, // Mod layer
