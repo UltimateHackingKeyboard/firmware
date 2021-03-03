@@ -18,5 +18,13 @@ install:
 script:
   - make -C left clean && make -j2 -C left DEBUG=1
   - make -C left clean && make -j2 -C left DEBUG=0
-  - make -C right clean && make -j2 -C right DEBUG=1
-  - make -C right clean && make -j2 -C right DEBUG=0
+  - make -C right/uhk60v1 clean && make -j2 -C right/uhk60v1 DEBUG=1
+  - make -C right/uhk60v1 clean && make -j2 -C right/uhk60v1 DEBUG=0
+  - make -C right/uhk60v2 clean && make -j2 -C right/uhk60v2 DEBUG=1
+  - make -C right/uhk60v2 clean && make -j2 -C right/uhk60v2 DEBUG=0
+  - make -C keycluster clean && make -j2 -C keycluster DEBUG=1
+  - make -C keycluster clean && make -j2 -C keycluster DEBUG=0
+  - make -C trackball clean && make -j2 -C trackball DEBUG=1
+  - make -C trackball clean && make -j2 -C trackball DEBUG=0
+  - make -C trackpoint clean && make -j2 -C trackpoint DEBUG=1
+  - make -C trackpoint clean && make -j2 -C trackpoint DEBUG=0
