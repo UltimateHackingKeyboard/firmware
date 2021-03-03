@@ -1,6 +1,8 @@
 #include "module.h"
+#include "slave_scheduler.h"
+#include "slave_drivers/uhk_module_driver.h"
 
-module_configuration_t ModuleConfigurations[ModuleId_Count] = {
+module_configuration_t ModuleConfigurations[ModuleId_ModuleCount] = {
     { // ModuleId_KeyClusterLeft
         .speed = 1.0,
         .acceleration = 1.0,
@@ -45,4 +47,37 @@ module_configuration_t ModuleConfigurations[ModuleId_Count] = {
 
 module_configuration_t* GetModuleConfiguration(int8_t moduleId) {
     return ModuleConfigurations + moduleId - ModuleId_FirstModule;
+}
+
+bool IsModuleAttached(module_id_t moduleId) {
+    switch (moduleId) {
+        case ModuleId_RightKeyboardHalf:
+            return true;
+        case ModuleId_LeftKeyboardHalf:
+        case ModuleId_KeyClusterLeft:
+        case ModuleId_TrackballRight:
+        case ModuleId_TrackpointRight:
+            return UhkModuleStates[UhkModuleDriverId_RightModule].moduleId;
+        case ModuleId_TouchpadRight:
+            return Slaves[SlaveId_RightTouchpad].isConnected;
+        default:
+            return false;
+    }
+}
+
+slot_t ModuleIdToSlotId(module_id_t moduleId) {
+    switch (moduleId) {
+        case ModuleId_RightKeyboardHalf:
+            return SlotId_RightKeyboardHalf;
+        case ModuleId_LeftKeyboardHalf:
+            return SlotId_LeftKeyboardHalf;
+        case ModuleId_KeyClusterLeft:
+            return SlotId_LeftModule;
+        case ModuleId_TrackballRight:
+        case ModuleId_TrackpointRight:
+        case ModuleId_TouchpadRight:
+            return SlotId_RightModule;
+        default:
+            return 0;
+    }
 }

@@ -36,14 +36,17 @@
 
     typedef enum {
         ModuleId_Unavailable = 0,
+        ModuleId_RightKeyboardHalf = 0, // Always connected
         ModuleId_LeftKeyboardHalf = 1,
-        ModuleId_KeyClusterLeft   = 2,
-        ModuleId_TrackballRight   = 3,
-        ModuleId_TrackpointRight  = 4,
-        ModuleId_TouchpadRight    = 5,
+        ModuleId_KeyClusterLeft = 2,
+        ModuleId_FirstRealModule = ModuleId_KeyClusterLeft,
+        ModuleId_TrackballRight = 3,
+        ModuleId_TrackpointRight = 4,
+        ModuleId_TouchpadRight = 5,
         ModuleId_FirstModule = ModuleId_KeyClusterLeft,
         ModuleId_Last = ModuleId_TouchpadRight,
-        ModuleId_Count = ModuleId_Last - 1,
+        ModuleId_ModuleCount = ModuleId_Last - ModuleId_FirstRealModule + 1,
+        ModuleId_AllCount = ModuleId_Last + 1,
     } module_id_t;
 
     typedef struct {
