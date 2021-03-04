@@ -108,7 +108,7 @@ rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
         { .red=51, .green=67, .blue=83 }, // Left Super
         { .red=53, .green=69, .blue=85 }, // Left Alt
         { .red=57, .green=73, .blue=89 }, // Left Fn
-        { .red=0, .green=0, .blue=0 }, // Left Space
+        { .red=0, .green=0, .blue=0 }, // Left Space (no backlight)
         { .red=60, .green=76, .blue=92 }, // Left Mod
         { .red=0, .green=0, .blue=0 } // Unused
     },
@@ -123,6 +123,13 @@ rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
     // Right module
     {
     },
+};
+
+uint8_t validZeroKeyIds[SLOT_COUNT] = {
+    6, // Right keyboard half
+    7, // Left keyboard half
+    1, // Left module
+    0, // Right module
 };
 
 void UpdateLayerLeds(void) {
@@ -162,9 +169,15 @@ void UpdateLayerLeds(void) {
 
             rgb_t *keyActionColorValues = &KeyActionColors[keyActionColor];
             rgb_t *ledMapItem = &LedMap[slotId][keyId];
-            LedDriverValues[slotId][ledMapItem->red] = slotId == SlotId_LeftModule ? 1 * keyActionColorValues->red : keyActionColorValues->red;
-            LedDriverValues[slotId][ledMapItem->green] = slotId == SlotId_LeftModule ? 0.5 * keyActionColorValues->green : keyActionColorValues->green;
-            LedDriverValues[slotId][ledMapItem->blue] = slotId == SlotId_LeftModule ? 1 * keyActionColorValues->blue : keyActionColorValues->blue;
+            if (ledMapItem->red != 0 || (ledMapItem->red == 0 && validZeroKeyIds[slotId] == keyId)) {
+                LedDriverValues[slotId][ledMapItem->red] = slotId == SlotId_LeftModule ? 1 * keyActionColorValues->red : keyActionColorValues->red;
+            }
+            if (ledMapItem->green != 0 || (ledMapItem->green== 0 && validZeroKeyIds[slotId] == keyId)) {
+                LedDriverValues[slotId][ledMapItem->green] = slotId == SlotId_LeftModule ? 0.5 * keyActionColorValues->green : keyActionColorValues->green;
+            }
+            if (ledMapItem->blue != 0 || (ledMapItem->blue == 0 && validZeroKeyIds[slotId] == keyId)) {
+                LedDriverValues[slotId][ledMapItem->blue] = slotId == SlotId_LeftModule ? 1 * keyActionColorValues->blue : keyActionColorValues->blue;
+            }
         }
     }
 #endif
