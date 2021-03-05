@@ -8,9 +8,9 @@ module_configuration_t ModuleConfigurations[ModuleId_ModuleCount] = {
         .acceleration = 1.0,
         .navigationModes = {
             NavigationMode_Scroll, // Base layer
-            NavigationMode_Caret, // Mod layer
-            NavigationMode_Media, // Fn layer
-            NavigationMode_Cursor, // Mouse layer
+            NavigationMode_Cursor, // Mod layer
+            NavigationMode_Caret, // Fn layer
+            NavigationMode_Scroll, // Mouse layer
         }
     },
     { // ModuleId_TrackballRight
@@ -18,9 +18,9 @@ module_configuration_t ModuleConfigurations[ModuleId_ModuleCount] = {
         .acceleration = 1.0, // min:0.1, opt:1.0, max:10.0
         .navigationModes = {
             NavigationMode_Cursor, // Base layer
-            NavigationMode_Caret, // Mod layer
-            NavigationMode_Media, // Fn layer
-            NavigationMode_Scroll, // Mouse layer
+            NavigationMode_Scroll, // Mod layer
+            NavigationMode_Caret, // Fn layer
+            NavigationMode_Cursor, // Mouse layer
         }
     },
     { // ModuleId_TrackpointRight
@@ -28,9 +28,9 @@ module_configuration_t ModuleConfigurations[ModuleId_ModuleCount] = {
         .acceleration = 5.0, // min:0.1, opt:5.0, max:10.0
         .navigationModes = {
             NavigationMode_Cursor, // Base layer
-            NavigationMode_Caret, // Mod layer
-            NavigationMode_Media, // Fn layer
-            NavigationMode_Scroll, // Mouse layer
+            NavigationMode_Scroll, // Mod layer
+            NavigationMode_Caret, // Fn layer
+            NavigationMode_Cursor, // Mouse layer
         }
     },
     { // ModuleId_TouchpadRight
@@ -38,9 +38,9 @@ module_configuration_t ModuleConfigurations[ModuleId_ModuleCount] = {
         .acceleration = 1.0, // min:0.1, opt:2.0, max:10.0
         .navigationModes = {
             NavigationMode_Cursor, // Base layer
-            NavigationMode_Caret, // Mod layer
-            NavigationMode_Media, // Fn layer
-            NavigationMode_Scroll, // Mouse layer
+            NavigationMode_Scroll, // Mod layer
+            NavigationMode_Caret, // Fn layer
+            NavigationMode_Cursor, // Mouse layer
         }
     }
 };
