@@ -170,13 +170,14 @@ void UpdateLayerLeds(void) {
             rgb_t *keyActionColorValues = &KeyActionColors[keyActionColor];
             rgb_t *ledMapItem = &LedMap[slotId][keyId];
             if (ledMapItem->red != 0 || (ledMapItem->red == 0 && validZeroKeyIds[slotId] == keyId)) {
-                LedDriverValues[slotId][ledMapItem->red] = slotId == SlotId_LeftModule ? 1 * keyActionColorValues->red : keyActionColorValues->red;
+                LedDriverValues[slotId][ledMapItem->red] = keyActionColorValues->red * KeyBacklightBrightness / 255;
             }
             if (ledMapItem->green != 0 || (ledMapItem->green== 0 && validZeroKeyIds[slotId] == keyId)) {
-                LedDriverValues[slotId][ledMapItem->green] = slotId == SlotId_LeftModule ? 0.5 * keyActionColorValues->green : keyActionColorValues->green;
+                float brightnessDivisor = slotId == SlotId_LeftModule ? 2 : 1;
+                LedDriverValues[slotId][ledMapItem->green] = keyActionColorValues->green * KeyBacklightBrightness / brightnessDivisor / 255;
             }
             if (ledMapItem->blue != 0 || (ledMapItem->blue == 0 && validZeroKeyIds[slotId] == keyId)) {
-                LedDriverValues[slotId][ledMapItem->blue] = slotId == SlotId_LeftModule ? 1 * keyActionColorValues->blue : keyActionColorValues->blue;
+                LedDriverValues[slotId][ledMapItem->blue] = keyActionColorValues->blue * KeyBacklightBrightness / 255;
             }
         }
     }
