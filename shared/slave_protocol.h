@@ -43,8 +43,9 @@
         ModuleId_TrackballRight = 3,
         ModuleId_TrackpointRight = 4,
         ModuleId_TouchpadRight = 5,
+        ModuleId_Next = 6,
         ModuleId_FirstModule = ModuleId_KeyClusterLeft,
-        ModuleId_Last = ModuleId_TouchpadRight,
+        ModuleId_Last = ModuleId_Next,
         ModuleId_ModuleCount = ModuleId_Last - ModuleId_FirstRealModule + 1,
         ModuleId_AllCount = ModuleId_Last + 1,
     } module_id_t;

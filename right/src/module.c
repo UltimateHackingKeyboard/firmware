@@ -42,7 +42,17 @@ module_configuration_t ModuleConfigurations[ModuleId_ModuleCount] = {
             NavigationMode_Caret, // Fn layer
             NavigationMode_Cursor, // Mouse layer
         }
-    }
+    },
+    { // ModuleId_Next
+        .speed = 1.0, // min:0.2, opt:1.0, max:5
+        .acceleration = 5.0, // min:0.1, opt:5.0, max:10.0
+        .navigationModes = {
+            NavigationMode_Cursor, // Base layer
+            NavigationMode_Scroll, // Mod layer
+            NavigationMode_Caret, // Fn layer
+            NavigationMode_Cursor, // Mouse layer
+        }
+    },
 };
 
 module_configuration_t* GetModuleConfiguration(int8_t moduleId) {
