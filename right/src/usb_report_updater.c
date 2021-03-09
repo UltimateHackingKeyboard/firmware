@@ -2,6 +2,7 @@
 #include "key_action.h"
 #include "led_display.h"
 #include "layer.h"
+#include "usb_interfaces/usb_interface_basic_keyboard.h"
 #include "usb_interfaces/usb_interface_mouse.h"
 #include "keymap.h"
 #include "peripherals/test_led.h"
@@ -154,15 +155,17 @@ static void applyKeystrokePrimary(key_state_t *keyState, key_action_t *action)
         // If there are mods: first cycle send just mods, in next cycle start sending mods+scancode
         if (!stickyModifiersChanged || KeyState_ActivatedEarlier(keyState)) {
             switch (action->keystroke.keystrokeType) {
-                case KeystrokeType_Basic:
-                    if (basicScancodeIndex >= USB_BASIC_KEYBOARD_MAX_KEYS && action->keystroke.scancode != 0)  {
+                case KeystrokeType_Basic: {
+                    uint16_t maxKeys =  usbBasicKeyboardProtocol == 0 ? USB_BOOT_KEYBOARD_MAX_KEYS : USB_BASIC_KEYBOARD_MAX_KEYS;
+                    if (basicScancodeIndex >= maxKeys && action->keystroke.scancode != 0)  {
                         if (ActiveUsbBasicKeyboardReport->scancodes[0] != HID_KEYBOARD_SC_ERROR_ROLLOVER) {
-                            memset(ActiveUsbBasicKeyboardReport->scancodes, HID_KEYBOARD_SC_ERROR_ROLLOVER, USB_BASIC_KEYBOARD_MAX_KEYS);
+                            memset(ActiveUsbBasicKeyboardReport->scancodes, HID_KEYBOARD_SC_ERROR_ROLLOVER, maxKeys);
                         }
                     } else if (action->keystroke.scancode != 0) {
                         ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = action->keystroke.scancode;
                     }
                     break;
+                }
                 case KeystrokeType_Media:
                     if (mediaScancodeIndex >= USB_MEDIA_KEYBOARD_MAX_KEYS) {
                         break;

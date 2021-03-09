@@ -4,7 +4,7 @@
 #include "timer.h"
 
 static usb_basic_keyboard_report_t usbBasicKeyboardReports[2];
-static uint8_t usbBasicKeyboardProtocol = 1;
+uint8_t usbBasicKeyboardProtocol = 1;
 static uint8_t usbBasicKeyboardInBuffer[USB_BASIC_KEYBOARD_SET_REPORT_LENGTH];
 static uint32_t usbBasicKeyboardReportLastSendTime = 0;
 uint32_t UsbBasicKeyboardActionCounter;
@@ -31,9 +31,11 @@ usb_status_t UsbBasicKeyboardAction(void)
         return kStatus_USB_Error; // The device is not attached
     }
 
+    uint16_t length = usbBasicKeyboardProtocol == 0 ? USB_BOOT_KEYBOARD_REPORT_LENGTH : USB_BASIC_KEYBOARD_REPORT_LENGTH;
+
     usb_status_t usb_status = USB_DeviceHidSend(
         UsbCompositeDevice.basicKeyboardHandle, USB_BASIC_KEYBOARD_ENDPOINT_INDEX,
-        (uint8_t *)ActiveUsbBasicKeyboardReport, USB_BASIC_KEYBOARD_REPORT_LENGTH);
+        (uint8_t *)ActiveUsbBasicKeyboardReport, length);
     if (usb_status == kStatus_USB_Success) {
         usbBasicKeyboardReportLastSendTime = CurrentTime;
         UsbBasicKeyboardActionCounter++;

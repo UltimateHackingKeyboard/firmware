@@ -19,8 +19,6 @@
     #define USB_BASIC_KEYBOARD_INTERRUPT_IN_PACKET_SIZE 8
     #define USB_BASIC_KEYBOARD_INTERRUPT_IN_INTERVAL 1
 
-    #define USB_BASIC_KEYBOARD_REPORT_LENGTH 8
-    #define USB_BASIC_KEYBOARD_SET_REPORT_LENGTH 1
 // Typedefs:
 
     // Note: We support boot protocol mode in this interface, thus the keyboard
@@ -39,6 +37,7 @@
 
     extern uint32_t UsbBasicKeyboardActionCounter;
     extern usb_basic_keyboard_report_t* ActiveUsbBasicKeyboardReport;
+    extern uint8_t usbBasicKeyboardProtocol;
 
 // Functions:
 
