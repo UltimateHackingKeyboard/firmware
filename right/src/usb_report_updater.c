@@ -155,10 +155,13 @@ static void applyKeystrokePrimary(key_state_t *keyState, key_action_t *action)
         if (!stickyModifiersChanged || KeyState_ActivatedEarlier(keyState)) {
             switch (action->keystroke.keystrokeType) {
                 case KeystrokeType_Basic:
-                    if (basicScancodeIndex >= USB_BASIC_KEYBOARD_MAX_KEYS || action->keystroke.scancode == 0) {
-                        break;
+                    if (basicScancodeIndex >= USB_BASIC_KEYBOARD_MAX_KEYS && action->keystroke.scancode != 0)  {
+                        if (ActiveUsbBasicKeyboardReport->scancodes[0] != HID_KEYBOARD_SC_ERROR_ROLLOVER) {
+                            memset(ActiveUsbBasicKeyboardReport->scancodes, HID_KEYBOARD_SC_ERROR_ROLLOVER, USB_BASIC_KEYBOARD_MAX_KEYS);
+                        }
+                    } else if (action->keystroke.scancode != 0) {
+                        ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = action->keystroke.scancode;
                     }
-                    ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = action->keystroke.scancode;
                     break;
                 case KeystrokeType_Media:
                     if (mediaScancodeIndex >= USB_MEDIA_KEYBOARD_MAX_KEYS) {
