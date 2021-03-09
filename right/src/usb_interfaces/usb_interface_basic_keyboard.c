@@ -3,7 +3,7 @@
 #include "usb_report_updater.h"
 
 static usb_basic_keyboard_report_t usbBasicKeyboardReports[2];
-static uint8_t usbBasicKeyboardInBuffer[USB_BASIC_KEYBOARD_REPORT_LENGTH];
+static uint8_t usbBasicKeyboardOutBuffer[USB_BASIC_KEYBOARD_OUT_REPORT_LENGTH];
 uint32_t UsbBasicKeyboardActionCounter;
 usb_basic_keyboard_report_t* ActiveUsbBasicKeyboardReport = usbBasicKeyboardReports;
 
@@ -89,7 +89,7 @@ usb_status_t UsbBasicKeyboardCallback(class_handle_t handle, uint32_t event, voi
 
         case kUSB_DeviceHidEventSetReport: {
             usb_device_hid_report_struct_t *report = (usb_device_hid_report_struct_t*)param;
-            if (report->reportType == USB_DEVICE_HID_REQUEST_GET_REPORT_TYPE_OUPUT && report->reportId == 0 && report->reportLength == 1) {
+            if (report->reportType == USB_DEVICE_HID_REQUEST_GET_REPORT_TYPE_OUPUT && report->reportId == 0 && report->reportLength == sizeof(usbBasicKeyboardOutBuffer)) {
                 LedDisplay_SetIcon(LedDisplayIcon_CapsLock, report->reportBuffer[0] & HID_KEYBOARD_LED_CAPSLOCK);
                 error = kStatus_USB_Success;
             } else {
@@ -99,8 +99,8 @@ usb_status_t UsbBasicKeyboardCallback(class_handle_t handle, uint32_t event, voi
         }
         case kUSB_DeviceHidEventRequestReportBuffer: {
             usb_device_hid_report_struct_t *report = (usb_device_hid_report_struct_t*)param;
-            if (report->reportLength <= USB_BASIC_KEYBOARD_REPORT_LENGTH) {
-                report->reportBuffer = usbBasicKeyboardInBuffer;
+            if (report->reportLength <= sizeof(usbBasicKeyboardOutBuffer)) {
+                report->reportBuffer = usbBasicKeyboardOutBuffer;
                 error = kStatus_USB_Success;
             } else {
                 error = kStatus_USB_AllocFail;

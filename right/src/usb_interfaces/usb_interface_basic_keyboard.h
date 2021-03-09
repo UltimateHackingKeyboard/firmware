@@ -20,7 +20,7 @@
     #define USB_BASIC_KEYBOARD_INTERRUPT_IN_INTERVAL 1
 
     #define USB_BASIC_KEYBOARD_REPORT_LENGTH 8
-
+    #define USB_BASIC_KEYBOARD_OUT_REPORT_LENGTH 1
 // Typedefs:
 
     // Note: We support boot protocol mode in this interface, thus the keyboard
