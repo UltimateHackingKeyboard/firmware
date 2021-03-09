@@ -5,7 +5,7 @@
 
 static usb_basic_keyboard_report_t usbBasicKeyboardReports[2];
 static uint8_t usbBasicKeyboardProtocol = 1;
-static uint8_t usbBasicKeyboardInBuffer[USB_BASIC_KEYBOARD_REPORT_LENGTH];
+static uint8_t usbBasicKeyboardInBuffer[USB_BASIC_KEYBOARD_SET_REPORT_LENGTH];
 static uint32_t usbBasicKeyboardReportLastSendTime = 0;
 uint32_t UsbBasicKeyboardActionCounter;
 usb_basic_keyboard_report_t* ActiveUsbBasicKeyboardReport = usbBasicKeyboardReports;
@@ -102,7 +102,7 @@ usb_status_t UsbBasicKeyboardCallback(class_handle_t handle, uint32_t event, voi
         }
         case kUSB_DeviceHidEventRequestReportBuffer: {
             usb_device_hid_report_struct_t *report = (usb_device_hid_report_struct_t*)param;
-            if (report->reportLength <= USB_BASIC_KEYBOARD_REPORT_LENGTH) {
+            if (report->reportLength <= USB_BASIC_KEYBOARD_SET_REPORT_LENGTH) {
                 report->reportBuffer = usbBasicKeyboardInBuffer;
                 error = kStatus_USB_Success;
             } else {
