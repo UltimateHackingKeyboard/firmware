@@ -213,7 +213,7 @@ static float computeModuleSpeed(float x, float y, uint8_t moduleId)
     }
 
     float normalizedSpeed = *currentSpeed/midSpeed;
-    return moduleConfiguration->speed*(float)pow(normalizedSpeed, moduleConfiguration->acceleration);
+    return moduleConfiguration->baseSpeed + moduleConfiguration->speed*(float)pow(normalizedSpeed, moduleConfiguration->acceleration);
 }
 
 static void processTouchpadActions() {

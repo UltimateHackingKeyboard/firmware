@@ -22,6 +22,7 @@
 
     typedef struct {
         float currentSpeed; // px/ms
+        float baseSpeed;
         float speed;
         float acceleration;
         navigation_mode_t navigationModes[LayerId_Count];
