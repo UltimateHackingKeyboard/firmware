@@ -199,8 +199,8 @@ static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
 
 static float computeModuleSpeed(float x, float y, uint8_t moduleId)
 {
+    //means that driver multiplier equals 1.0 at average speed midSpeed px/ms
     static float midSpeed = 3.0f;
-    static float accelerationExp = 0.5f;
     module_configuration_t *moduleConfiguration = GetModuleConfiguration(moduleId);
     float *currentSpeed = &moduleConfiguration->currentSpeed;
 
@@ -213,7 +213,7 @@ static float computeModuleSpeed(float x, float y, uint8_t moduleId)
     }
 
     float normalizedSpeed = *currentSpeed/midSpeed;
-    return moduleConfiguration->speed*(float)pow(moduleConfiguration->acceleration * normalizedSpeed, accelerationExp);
+    return moduleConfiguration->speed*(float)pow(normalizedSpeed, moduleConfiguration->acceleration);
 }
 
 static void processTouchpadActions() {
