@@ -9,6 +9,7 @@ and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
 Device Protocol: 4.7.1 | Module Protocol: 4.1.0 | User Config: 4.2.0 | Hardware Config: 1.0.0
 
+- Allow saving the mapping of more than three modules which fixes the "Response code: 5" Agent error message.
 - Adjust per-module speed and acceleration settings and add base speed setting.
 - Make touchpad sensing more stable by adjusting Prox Hardware Settings firmware values.
 - Set touchpad resolution to 1,000 DPI.
