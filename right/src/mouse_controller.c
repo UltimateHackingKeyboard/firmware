@@ -239,6 +239,11 @@ void processModuleActions(uint8_t moduleId, float x, float y) {
     int8_t scrollSpeedDivisor = 8;
     float speed = computeModuleSpeed(x, y, moduleId);
 
+    static float xFractionRemainder = 0.0f;
+    static float yFractionRemainder = 0.0f;
+    float xIntegerPart;
+    float yIntegerPart;
+
     if (moduleId == ModuleId_KeyClusterLeft) {
         scrollSpeedDivisor = 1;
         speed = navigationMode == NavigationMode_Scroll ? 1 : 5;
@@ -246,33 +251,25 @@ void processModuleActions(uint8_t moduleId, float x, float y) {
 
     switch (navigationMode) {
         case NavigationMode_Cursor: {
-            ActiveUsbMouseReport->x += speed*x;
-            ActiveUsbMouseReport->y -= yInversion*speed*y;
+            xFractionRemainder = modff(xFractionRemainder + x * speed, &xIntegerPart);
+            yFractionRemainder = modff(yFractionRemainder + y * speed, &yIntegerPart);
+
+            ActiveUsbMouseReport->x += xIntegerPart;
+            ActiveUsbMouseReport->y -= yInversion*yIntegerPart;
+
             break;
         }
         case NavigationMode_Scroll: {
-            static int8_t wheelX;
-            static int8_t wheelY;
-
             if (moduleId == ModuleId_KeyClusterLeft) {
-                wheelX = wheelY = 0;
+                xFractionRemainder = 0;
+                yFractionRemainder = 0;
             }
 
-            wheelX += speed*x;
-            wheelY += yInversion*speed*y;
+            xFractionRemainder = modff(xFractionRemainder + x * speed / scrollSpeedDivisor, &xIntegerPart);
+            yFractionRemainder = modff(yFractionRemainder + y * speed / scrollSpeedDivisor, &yIntegerPart);
 
-            int8_t wheelXInteger = wheelX / scrollSpeedDivisor;
-            if (wheelXInteger) {
-                ActiveUsbMouseReport->wheelX += wheelXInteger;
-                wheelX = wheelX % scrollSpeedDivisor;
-            }
-
-            int8_t wheelYInteger = wheelY / scrollSpeedDivisor;
-            if (wheelYInteger) {
-                ActiveUsbMouseReport->wheelY += wheelYInteger;
-                wheelY = wheelY % scrollSpeedDivisor;
-            }
-
+            ActiveUsbMouseReport->wheelX += xIntegerPart;
+            ActiveUsbMouseReport->wheelY += yInversion*yIntegerPart;
             break;
         }
         case NavigationMode_Caret: {
