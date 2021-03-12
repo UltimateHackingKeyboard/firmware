@@ -19,11 +19,11 @@
     #define USB_BASIC_KEYBOARD_INTERRUPT_IN_PACKET_SIZE 8
     #define USB_BASIC_KEYBOARD_INTERRUPT_IN_INTERVAL 1
 
-    #define USB_BASIC_KEYBOARD_REPORT_LENGTH 8
     #define USB_BASIC_KEYBOARD_OUT_REPORT_LENGTH 1
 
     #define USB_BOOT_KEYBOARD_REPORT_LENGTH 8
     #define USB_BOOT_KEYBOARD_MAX_KEYS 6
+
 // Typedefs:
 
     // Note: We support boot protocol mode in this interface, thus the keyboard
@@ -34,8 +34,13 @@
     // mode.
     typedef struct {
         uint8_t modifiers;
-        uint8_t reserved; // Always must be 0
-        uint8_t scancodes[USB_BASIC_KEYBOARD_MAX_KEYS];
+        union {
+            struct {
+                uint8_t reserved; // Always must be 0
+                uint8_t scancodes[USB_BOOT_KEYBOARD_MAX_KEYS];
+            } ATTR_PACKED boot;
+            uint8_t bitfield[USB_BASIC_KEYBOARD_BITFIELD_LENGTH];
+        }ATTR_PACKED;
     } ATTR_PACKED usb_basic_keyboard_report_t;
 
 // Variables:
@@ -53,6 +58,16 @@
     usb_status_t UsbBasicKeyboardCheckIdleElapsed();
     usb_status_t UsbBasicKeyboardCheckReportReady();
 
+    static inline bool UsbBasicKeyboard_IsModifier(uint8_t scancode)
+    {
+        return (scancode >= USB_BASIC_KEYBOARD_MIN_MODIFIERS_SCANCODE) &&
+               (scancode <= USB_BASIC_KEYBOARD_MAX_MODIFIERS_SCANCODE);
+    }
+    static inline bool UsbBasicKeyboard_IsInBitfield(uint8_t scancode)
+    {
+        return (scancode >= USB_BASIC_KEYBOARD_MIN_BITFIELD_SCANCODE) &&
+               (scancode <= USB_BASIC_KEYBOARD_MAX_BITFIELD_SCANCODE);
+    }
     bool UsbBasicKeyboard_IsFullScancodes(const usb_basic_keyboard_report_t* report);
     bool UsbBasicKeyboard_AddScancode(usb_basic_keyboard_report_t* report, uint8_t scancode);
     void UsbBasicKeyboard_RemoveScancode(usb_basic_keyboard_report_t* report, uint8_t scancode);

@@ -25,25 +25,34 @@ void UsbBasicKeyboardResetActiveReport(void)
 
 usb_hid_protocol_t UsbBasicKeyboardGetProtocol(void)
 {
-    return USB_HID_BOOT_PROTOCOL;
+    return usbBasicKeyboardProtocol;
 }
 
 usb_status_t UsbBasicKeyboardAction(void)
 {
+    usb_status_t usb_status = kStatus_USB_Error;
+
     if (!UsbCompositeDevice.attach) {
-        return kStatus_USB_Error; // The device is not attached
+        return usb_status; // The device is not attached
     }
 
-    usb_status_t usb_status = USB_DeviceHidSend(
+    if (usbBasicKeyboardProtocol != ((usb_device_hid_struct_t*)UsbCompositeDevice.basicKeyboardHandle)->protocol) {
+        // The protocol changed while the report was assembled
+        UsbBasicKeyboardResetActiveReport();
+
+        // latch the active protocol to avoid ISR <-> Thread race
+        usbBasicKeyboardProtocol = ((usb_device_hid_struct_t*)UsbCompositeDevice.basicKeyboardHandle)->protocol;
+        return usb_status;
+    }
+
+    usb_status = USB_DeviceHidSend(
         UsbCompositeDevice.basicKeyboardHandle, USB_BASIC_KEYBOARD_ENDPOINT_INDEX,
-        (uint8_t *)ActiveUsbBasicKeyboardReport, USB_BASIC_KEYBOARD_REPORT_LENGTH);
+        (uint8_t *)ActiveUsbBasicKeyboardReport, UsbBasicKeyboardGetProtocol() == USB_HID_BOOT_PROTOCOL ?
+                USB_BOOT_KEYBOARD_REPORT_LENGTH : USB_BASIC_KEYBOARD_REPORT_LENGTH);
     if (usb_status == kStatus_USB_Success) {
         UsbBasicKeyboardActionCounter++;
         SwitchActiveUsbBasicKeyboardReport();
     }
-
-    // latch the active protocol to avoid ISR <-> Thread race
-    usbBasicKeyboardProtocol = ((usb_device_hid_struct_t*)UsbCompositeDevice.basicKeyboardHandle)->protocol;
 
     return usb_status;
 }
@@ -139,15 +148,15 @@ usb_status_t UsbBasicKeyboardCallback(class_handle_t handle, uint32_t event, voi
 
 static void setRolloverError(usb_basic_keyboard_report_t* report)
 {
-    if (report->scancodes[0] != HID_KEYBOARD_SC_ERROR_ROLLOVER) {
-        memset(report->scancodes, HID_KEYBOARD_SC_ERROR_ROLLOVER, ARRAY_SIZE(report->scancodes));
+    if (report->boot.scancodes[0] != HID_KEYBOARD_SC_ERROR_ROLLOVER) {
+        memset(report->boot.scancodes, HID_KEYBOARD_SC_ERROR_ROLLOVER, ARRAY_SIZE(report->boot.scancodes));
     }
 }
 
 bool UsbBasicKeyboard_IsFullScancodes(const usb_basic_keyboard_report_t* report)
 {
     if (UsbBasicKeyboardGetProtocol() == USB_HID_BOOT_PROTOCOL) {
-        return report->scancodes[ARRAY_SIZE(report->scancodes) - 1] != 0;
+        return report->boot.scancodes[ARRAY_SIZE(report->boot.scancodes) - 1] != 0;
     } else {
         return false;
     }
@@ -158,42 +167,59 @@ bool UsbBasicKeyboard_AddScancode(usb_basic_keyboard_report_t* report, uint8_t s
     if (scancode == 0)
         return true;
 
-    if (UsbBasicKeyboardGetProtocol() == USB_HID_BOOT_PROTOCOL) {
-        for (uint8_t i = 0; i < ARRAY_SIZE(report->scancodes); i++) {
-            if (report->scancodes[i] == 0) {
-                report->scancodes[i] = scancode;
+    if (UsbBasicKeyboard_IsModifier(scancode)) {
+        // modifiers are kept the same place in both report layouts
+        set_bit(scancode - USB_BASIC_KEYBOARD_MIN_MODIFIERS_SCANCODE, &report->modifiers);
+        return true;
+    } else if (UsbBasicKeyboardGetProtocol() == USB_HID_BOOT_PROTOCOL) {
+        for (uint8_t i = 0; i < ARRAY_SIZE(report->boot.scancodes); i++) {
+            if (report->boot.scancodes[i] == 0) {
+                report->boot.scancodes[i] = scancode;
                 return true;
             }
         }
 
         setRolloverError(report);
         return false;
-    } else {
+    } else if (UsbBasicKeyboard_IsInBitfield(scancode)) {
+        set_bit(scancode - USB_BASIC_KEYBOARD_MIN_BITFIELD_SCANCODE, report->bitfield);
         return true;
+    } else {
+        return false;
     }
 }
 
 void UsbBasicKeyboard_RemoveScancode(usb_basic_keyboard_report_t* report, uint8_t scancode)
 {
-    if (UsbBasicKeyboardGetProtocol() == USB_HID_BOOT_PROTOCOL) {
-        for (uint8_t i = 0; i < ARRAY_SIZE(report->scancodes); i++) {
-            if (report->scancodes[i] == scancode) {
-                report->scancodes[i] = 0;
+    if (UsbBasicKeyboard_IsModifier(scancode)) {
+        // modifiers are kept the same place in both report layouts
+        clear_bit(scancode - USB_BASIC_KEYBOARD_MIN_MODIFIERS_SCANCODE, &report->modifiers);
+    } else if (UsbBasicKeyboardGetProtocol() == USB_HID_BOOT_PROTOCOL) {
+        for (uint8_t i = 0; i < ARRAY_SIZE(report->boot.scancodes); i++) {
+            if (report->boot.scancodes[i] == scancode) {
+                report->boot.scancodes[i] = 0;
                 return;
             }
         }
+    } else if (UsbBasicKeyboard_IsInBitfield(scancode)) {
+        clear_bit(scancode - USB_BASIC_KEYBOARD_MIN_BITFIELD_SCANCODE, report->bitfield);
     }
 }
 
 bool UsbBasicKeyboard_ContainsScancode(const usb_basic_keyboard_report_t* report, uint8_t scancode)
 {
-    if (UsbBasicKeyboardGetProtocol() == USB_HID_BOOT_PROTOCOL) {
-        for (uint8_t i = 0; i < ARRAY_SIZE(report->scancodes); i++) {
-            if (report->scancodes[i] == scancode) {
+    if (UsbBasicKeyboard_IsModifier(scancode)) {
+        // modifiers are kept the same place in both report layouts
+        return test_bit(scancode - USB_BASIC_KEYBOARD_MIN_MODIFIERS_SCANCODE, &report->modifiers);
+    } else if (UsbBasicKeyboardGetProtocol() == USB_HID_BOOT_PROTOCOL) {
+        for (uint8_t i = 0; i < ARRAY_SIZE(report->boot.scancodes); i++) {
+            if (report->boot.scancodes[i] == scancode) {
                 return true;
             }
         }
         return false;
+    } else if (UsbBasicKeyboard_IsInBitfield(scancode)) {
+        return test_bit(scancode - USB_BASIC_KEYBOARD_MIN_BITFIELD_SCANCODE, report->bitfield);
     } else {
         return false;
     }
@@ -203,8 +229,14 @@ size_t UsbBasicKeyboard_ScancodeCount(const usb_basic_keyboard_report_t* report)
 {
     size_t size = 0;
     if (UsbBasicKeyboardGetProtocol() == USB_HID_BOOT_PROTOCOL) {
-        while ((size < ARRAY_SIZE(report->scancodes)) && (report->scancodes[size] != 0)) {
+        while ((size < ARRAY_SIZE(report->boot.scancodes)) && (report->boot.scancodes[size] != 0)) {
             size++;
+        }
+    } else {
+        for (uint8_t i = 0; i < ARRAY_SIZE(report->bitfield); i++) {
+            for (uint8_t b = report->bitfield[i]; b > 0; b >>= 1) {
+                size += (b & 1);
+            }
         }
     }
     return size;
@@ -212,34 +244,47 @@ size_t UsbBasicKeyboard_ScancodeCount(const usb_basic_keyboard_report_t* report)
 
 void UsbBasicKeyboard_MergeReports(const usb_basic_keyboard_report_t* sourceReport, usb_basic_keyboard_report_t* targetReport)
 {
+    targetReport->modifiers |= sourceReport->modifiers;
+
     if (UsbBasicKeyboardGetProtocol() == USB_HID_BOOT_PROTOCOL) {
         uint8_t idx, i = 0;
 
-        targetReport->modifiers |= sourceReport->modifiers;
-
         /* find empty position */
-        for (idx = 0; idx < ARRAY_SIZE(targetReport->scancodes); idx++) {
-            if (targetReport->scancodes[idx] == 0) {
+        for (idx = 0; idx < ARRAY_SIZE(targetReport->boot.scancodes); idx++) {
+            if (targetReport->boot.scancodes[idx] == 0) {
                 break;
             }
         }
         /* copy into empty positions */
-        while ((i < ARRAY_SIZE(sourceReport->scancodes)) && (sourceReport->scancodes[i] != 0) && (idx < ARRAY_SIZE(targetReport->scancodes))) {
-            targetReport->scancodes[idx++] = sourceReport->scancodes[i++];
+        while ((i < ARRAY_SIZE(sourceReport->boot.scancodes)) && (sourceReport->boot.scancodes[i] != 0) && (idx < ARRAY_SIZE(targetReport->boot.scancodes))) {
+            targetReport->boot.scancodes[idx++] = sourceReport->boot.scancodes[i++];
         }
 
         /* target is full, but source isn't copied -> set error */
-        if ((idx == ARRAY_SIZE(targetReport->scancodes)) && (i < ARRAY_SIZE(sourceReport->scancodes)) && (sourceReport->scancodes[i] != 0)) {
+        if ((idx == ARRAY_SIZE(targetReport->boot.scancodes)) && (i < ARRAY_SIZE(sourceReport->boot.scancodes)) && (sourceReport->boot.scancodes[i] != 0)) {
             setRolloverError(targetReport);
+        }
+    } else {
+        for (uint8_t i = 0; i < ARRAY_SIZE(targetReport->bitfield); i++) {
+            targetReport->bitfield[i] |= sourceReport->bitfield[i];
         }
     }
 }
 
 void UsbBasicKeyboard_ForeachScancode(const usb_basic_keyboard_report_t* report, void(*action)(uint8_t))
 {
+    // TODO: do we need to consider modifiers?
     if (UsbBasicKeyboardGetProtocol() == USB_HID_BOOT_PROTOCOL) {
-        for (uint8_t i = 0; (i < ARRAY_SIZE(report->scancodes)) && (report->scancodes[i] != 0); i++) {
-            action(report->scancodes[i]);
+        for (uint8_t i = 0; (i < ARRAY_SIZE(report->boot.scancodes)) && (report->boot.scancodes[i] != 0); i++) {
+            action(report->boot.scancodes[i]);
+        }
+    } else {
+        for (uint8_t i = 0; i < ARRAY_SIZE(report->bitfield); i++) {
+            for (uint8_t j = 0, b = report->bitfield[i]; b > 0; j++, b >>= 1) {
+                if (b & 1) {
+                    action(USB_BASIC_KEYBOARD_MIN_BITFIELD_SCANCODE + i * 8 + j);
+                }
+            }
         }
     }
 }
