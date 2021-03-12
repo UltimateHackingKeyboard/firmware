@@ -3,14 +3,21 @@
 
 // Macros:
 
-    #define USB_BASIC_KEYBOARD_REPORT_DESCRIPTOR_LENGTH 64
+    #define USB_BASIC_KEYBOARD_REPORT_DESCRIPTOR_LENGTH 80
     #define USB_BOOT_KEYBOARD_REPORT_LENGTH 8
-    #define USB_BOOT_KEYBOARD_MAX_KEYS 6
-
     #define USB_BASIC_KEYBOARD_SET_REPORT_LENGTH 1
-    // 34 (right) + 31 (left) + 3 (Key module) - 6 (modifiers)
-    #define USB_BASIC_KEYBOARD_MAX_KEYS 62 
-    #define USB_BASIC_KEYBOARD_REPORT_LENGTH (USB_BASIC_KEYBOARD_MAX_KEYS+2)
+
+    #define USB_BASIC_KEYBOARD_MAX_KEYS 6
+    // Calculated so that max scan code >= 0x65
+    #define USB_BASIC_KEYBOARD_BITFIELD_LENGTH 13
+    // the first 4 codes are error codes, so not needed in bitmask
+    #define USB_BASIC_KEYBOARD_MIN_BITFIELD_SCANCODE 4
+    #define USB_BASIC_KEYBOARD_MAX_BITFIELD_SCANCODE  (8 * USB_BASIC_KEYBOARD_BITFIELD_LENGTH + USB_BASIC_KEYBOARD_MIN_BITFIELD_SCANCODE - 1)
+    #if USB_BASIC_KEYBOARD_MAX_BITFIELD_SCANCODE < 0x65    
+        #warning USB_BASIC_KEYBOARD_MAX_BITFIELD_SCANCODE less than maximum standard keyboard scancodes
+    #endif
+
+    #define USB_BASIC_KEYBOARD_REPORT_LENGTH (2 + USB_BASIC_KEYBOARD_MAX_KEYS + USB_BASIC_KEYBOARD_BITFIELD_LENGTH)
     #if USB_BASIC_KEYBOARD_REPORT_LENGTH > 64
         #error USB_BASIC_KEYBOARD_REPORT_LENGTH greater than max usb report length (64)
     #endif
