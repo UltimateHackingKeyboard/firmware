@@ -91,40 +91,24 @@ usb_status_t UsbSystemKeyboardCallback(class_handle_t handle, uint32_t event, vo
 
 bool UsbSystemKeyboard_AddScancode(usb_system_keyboard_report_t* report, uint8_t scancode)
 {
-    if (scancode == 0)
-        return true;
+    if (!UsbSystemKeyboard_UsedScancode(scancode))
+        return false;
 
-    for (uint8_t i = 0; i < ARRAY_SIZE(report->scancodes); i++) {
-        if (report->scancodes[i] == 0) {
-            report->scancodes[i] = scancode;
-            return true;
-        }
-    }
-
-    return false;
+    set_bit(scancode - USB_SYSTEM_KEYBOARD_MIN_BITFIELD_SCANCODE, report->bitfield);
+    return true;
 }
 
 void UsbSystemKeyboard_RemoveScancode(usb_system_keyboard_report_t* report, uint8_t scancode)
 {
-    for (uint8_t i = 0; i < ARRAY_SIZE(report->scancodes); i++) {
-        if (report->scancodes[i] == scancode) {
-            report->scancodes[i] = 0;
-            return;
-        }
-    }
+    if (!UsbSystemKeyboard_UsedScancode(scancode))
+        return;
+
+    clear_bit(scancode - USB_SYSTEM_KEYBOARD_MIN_BITFIELD_SCANCODE, report->bitfield);
 }
 
 void UsbSystemKeyboard_MergeReports(const usb_system_keyboard_report_t* sourceReport, usb_system_keyboard_report_t* targetReport)
 {
-    uint8_t idx, i = 0;
-    /* find empty position */
-    for (idx = 0; idx < ARRAY_SIZE(targetReport->scancodes); idx++) {
-        if (targetReport->scancodes[idx] == 0) {
-            break;
-        }
-    }
-    /* copy into empty positions */
-    while ((i < ARRAY_SIZE(sourceReport->scancodes)) && (sourceReport->scancodes[i] != 0) && (idx < ARRAY_SIZE(targetReport->scancodes))) {
-        targetReport->scancodes[idx++] = sourceReport->scancodes[i++];
+    for (uint8_t i = 0; i < ARRAY_SIZE(targetReport->bitfield); i++) {
+        targetReport->bitfield[i] |= sourceReport->bitfield[i];
     }
 }
