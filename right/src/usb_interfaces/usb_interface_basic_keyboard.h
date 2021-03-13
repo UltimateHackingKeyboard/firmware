@@ -19,7 +19,9 @@
     #define USB_BASIC_KEYBOARD_INTERRUPT_IN_PACKET_SIZE 8
     #define USB_BASIC_KEYBOARD_INTERRUPT_IN_INTERVAL 1
 
-    #define USB_BASIC_KEYBOARD_IS_IN_BITFIELD(scancode) (usbBasicKeyboardProtocol == 1 && ((scancode) >= USB_BASIC_KEYBOARD_MIN_BITFIELD_SCANCODE) && ((scancode) <= USB_BASIC_KEYBOARD_MAX_BITFIELD_SCANCODE)) 
+    #define USB_BASIC_KEYBOARD_IS_IN_BITFIELD(scancode) (((scancode) >= USB_BASIC_KEYBOARD_MIN_BITFIELD_SCANCODE) && ((scancode) <= USB_BASIC_KEYBOARD_MAX_BITFIELD_SCANCODE))
+    #define USB_BASIC_KEYBOARD_IS_IN_MODIFIERS(scancode) (((scancode) >= USB_BASIC_KEYBOARD_MIN_MODIFIERS_SCANCODE) && ((scancode) <= USB_BASIC_KEYBOARD_MAX_MODIFIERS_SCANCODE)) 
+
 
 // Typedefs:
 
@@ -32,8 +34,10 @@
     typedef struct {
         uint8_t modifiers;
         uint8_t reserved; // Always must be 0
-        uint8_t scancodes[USB_BASIC_KEYBOARD_MAX_KEYS];
-        uint8_t bitfield[USB_BASIC_KEYBOARD_BITFIELD_LENGTH];
+        union {
+            uint8_t scancodes[USB_BOOT_KEYBOARD_MAX_KEYS];
+            uint8_t bitfield[USB_BASIC_KEYBOARD_BITFIELD_LENGTH];
+        };
     } ATTR_PACKED usb_basic_keyboard_report_t;
 
 // Variables:

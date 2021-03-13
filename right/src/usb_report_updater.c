@@ -158,17 +158,20 @@ static void applyKeystrokePrimary(key_state_t *keyState, key_action_t *action)
             switch (action->keystroke.keystrokeType) {
                 case KeystrokeType_Basic:
                     if (action->keystroke.scancode != 0) {
-                        if (USB_BASIC_KEYBOARD_IS_IN_BITFIELD(action->keystroke.scancode)) {
-                            set_bit(action->keystroke.scancode - USB_BASIC_KEYBOARD_MIN_BITFIELD_SCANCODE, ActiveUsbBasicKeyboardReport->bitfield);
-                        } else {
-                            if (basicScancodeIndex >=  USB_BASIC_KEYBOARD_MAX_KEYS) {
+                        if (usbBasicKeyboardProtocol==0) {
+                            if (basicScancodeIndex >=  USB_BOOT_KEYBOARD_MAX_KEYS) {
                                 // Rollover error
                                 if (ActiveUsbBasicKeyboardReport->scancodes[0] != HID_KEYBOARD_SC_ERROR_ROLLOVER) {
-                                    memset(ActiveUsbBasicKeyboardReport->scancodes, HID_KEYBOARD_SC_ERROR_ROLLOVER, USB_BASIC_KEYBOARD_MAX_KEYS);
+                                    memset(ActiveUsbBasicKeyboardReport->scancodes, HID_KEYBOARD_SC_ERROR_ROLLOVER, USB_BOOT_KEYBOARD_MAX_KEYS);
                                 }
                             } else {
                                 ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = action->keystroke.scancode;
                             }
+                        } else if (USB_BASIC_KEYBOARD_IS_IN_BITFIELD(action->keystroke.scancode)) {
+                            set_bit(action->keystroke.scancode - USB_BASIC_KEYBOARD_MIN_BITFIELD_SCANCODE, ActiveUsbBasicKeyboardReport->bitfield);                            
+                        } else if (USB_BASIC_KEYBOARD_IS_IN_MODIFIERS(action->keystroke.scancode)) {
+                            // TODO: Does this Intreact with stickyMods?
+                            set_bit(action->keystroke.scancode - USB_BASIC_KEYBOARD_MIN_MODIFIERS_SCANCODE, &ActiveUsbBasicKeyboardReport->modifiers);
                         }
                     }
                     break;

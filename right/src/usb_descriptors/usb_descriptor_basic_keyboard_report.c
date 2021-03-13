@@ -34,6 +34,7 @@ uint8_t UsbBasicKeyboardReportDescriptor[USB_BASIC_KEYBOARD_REPORT_DESCRIPTOR_LE
         HID_RI_REPORT_SIZE(8, 0x03),
         HID_RI_OUTPUT(8, HID_IOF_CONSTANT),
 
+        /* Scancodes are part of the BOOT profile isn't described by these descriptors
         // Scancodes
         HID_RI_LOGICAL_MINIMUM(8, 0x00),
         HID_RI_LOGICAL_MAXIMUM(16, 0xFF),
@@ -43,6 +44,7 @@ uint8_t UsbBasicKeyboardReportDescriptor[USB_BASIC_KEYBOARD_REPORT_DESCRIPTOR_LE
         HID_RI_REPORT_COUNT(8, USB_BASIC_KEYBOARD_MAX_KEYS),
         HID_RI_REPORT_SIZE(8, 0x08),
         HID_RI_INPUT(8, HID_IOF_DATA | HID_IOF_ARRAY | HID_IOF_ABSOLUTE),
+        */
 
         // Scancode Bitmask
         HID_RI_USAGE_PAGE(8, HID_RI_USAGE_PAGE_KEY_CODES),
