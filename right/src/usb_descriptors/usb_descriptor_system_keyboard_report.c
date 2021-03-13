@@ -12,6 +12,8 @@ uint8_t UsbSystemKeyboardReportDescriptor[USB_SYSTEM_KEYBOARD_REPORT_DESCRIPTOR_
         HID_RI_USAGE_MAXIMUM(8, 0x83),
         HID_RI_REPORT_SIZE(8, 1),
         HID_RI_REPORT_COUNT(8, 3),
+        HID_RI_LOGICAL_MINIMUM(8, 0x00),
+        HID_RI_LOGICAL_MAXIMUM(8, 0x01),        
         HID_RI_INPUT(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_ABSOLUTE),
 
         // Padding

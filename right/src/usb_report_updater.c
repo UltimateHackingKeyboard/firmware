@@ -3,6 +3,7 @@
 #include "led_display.h"
 #include "layer.h"
 #include "usb_interfaces/usb_interface_basic_keyboard.h"
+#include "usb_interfaces/usb_interface_system_keyboard.h"
 #include "usb_interfaces/usb_interface_mouse.h"
 #include "keymap.h"
 #include "peripherals/test_led.h"
@@ -178,10 +179,9 @@ static void applyKeystrokePrimary(key_state_t *keyState, key_action_t *action)
                     ActiveUsbMediaKeyboardReport->scancodes[mediaScancodeIndex++] = action->keystroke.scancode;
                     break;
                 case KeystrokeType_System:
-                    if (systemScancodeIndex >= USB_SYSTEM_KEYBOARD_MAX_KEYS) {
-                        break;
+                    if (USB_SYSTEM_KEYBOARD_IS_IN_BITFIELD(action->keystroke.scancode)) {
+                        set_bit(action->keystroke.scancode - USB_SYSTEM_KEYBOARD_MIN_BITFIELD_SCANCODE, ActiveUsbSystemKeyboardReport->bitfield);
                     }
-                    ActiveUsbSystemKeyboardReport->scancodes[systemScancodeIndex++] = action->keystroke.scancode;
                     break;
             }
         }

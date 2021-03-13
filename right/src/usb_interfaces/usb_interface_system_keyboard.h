@@ -19,12 +19,12 @@
     #define USB_SYSTEM_KEYBOARD_INTERRUPT_IN_PACKET_SIZE 8
     #define USB_SYSTEM_KEYBOARD_INTERRUPT_IN_INTERVAL 1
 
-    #define USB_SYSTEM_KEYBOARD_REPORT_LENGTH 1
+    #define USB_SYSTEM_KEYBOARD_IS_IN_BITFIELD(scancode) (((scancode) >= USB_SYSTEM_KEYBOARD_MIN_BITFIELD_SCANCODE) && ((scancode) <= USB_SYSTEM_KEYBOARD_MAX_BITFIELD_SCANCODE)) 
 
 // Typedefs:
 
     typedef struct {
-        uint8_t scancodes[USB_SYSTEM_KEYBOARD_MAX_KEYS];
+        uint8_t bitfield[USB_SYSTEM_KEYBOARD_REPORT_LENGTH];
     } ATTR_PACKED usb_system_keyboard_report_t;
 
 // Variables:
