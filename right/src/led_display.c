@@ -10,6 +10,9 @@ bool ledIconStates[LedDisplayIcon_Count];
 char LedDisplay_DebugString[] = "   ";
 
 static const uint16_t letterToSegmentMap[] = {
+    
+
+    //DCLMNEGgBKJHFA
     0b00000000000000, // space
     0b00000000000000, // !
     0b00000000001010, // "
@@ -111,22 +114,27 @@ static const uint16_t letterToSegmentMap[] = {
 
 #if DEVICE_ID == DEVICE_ID_UHK60V1
 
-static const uint8_t layerLedIds[LayerId_Count-1] = {13, 29, 45};
-static const uint8_t iconLedIds[LedDisplayIcon_Count] = {8, 9, 10};
+static const uint8_t layerLedIds[LayerId_Count-1] = {0x0d, 0x1d, 0x2d};
+static const uint8_t iconLedIds[LedDisplayIcon_Count] = {0x8, 0x09, 0x0a}; 
 static const uint8_t segmentLedIds[maxSegmentChars][ledCountPerChar] = {
-    {11, 27, 41, 42, 43, 12, 28, 40, 26, 44, 56, 57, 24, 25},
-    {58, 74, 88, 89, 90, 59, 75, 76, 73, 91, 92, 104, 60, 72},
-    {105, 121, 124, 136, 137, 106, 122, 123, 120, 138, 139, 140, 107, 108},
+    //  A,    F,    H,    J,    K,    B,   G1,   G2,    E,    N,    M,    L,    C     D
+    {0x0b, 0x1b, 0x29, 0x2a, 0x2b, 0x0c, 0x1c, 0x28, 0x1a, 0x2c, 0x38, 0x39, 0x18, 0x19},
+    {0x3a, 0x4a, 0x58, 0x59, 0x5a, 0x3b, 0x4b, 0x4c, 0x49, 0x5b, 0x5c, 0x68, 0x3c, 0x48},
+    {0x69, 0x79, 0x7c, 0x88, 0x89, 0x6a, 0x7a, 0x7b, 0x78, 0x8a, 0x8b, 0x8c, 0x6b, 0x6c},
+
+
 };
 
 #elif DEVICE_ID == DEVICE_ID_UHK60V2
 
-static const uint8_t layerLedIds[LayerId_Count-1] = {153, 169, 185};
-static const uint8_t iconLedIds[LedDisplayIcon_Count] = {105, 121, 137};
+static const uint8_t layerLedIds[LayerId_Count-1] = {0x99, 0xa9, 0xb9};
+static const uint8_t iconLedIds[LedDisplayIcon_Count] = {0x69, 0x79, 0x89};
 static const uint8_t segmentLedIds[maxSegmentChars][ledCountPerChar] = {
-    {96, 101, 114, 115, 116, 97, 112, 113, 100, 117, 120, 104, 98, 99},
-    {128, 133, 146, 147, 148, 129, 144, 145, 132, 149, 152, 136, 130, 131},
-    {160, 165, 178, 179, 180, 161, 176, 177, 164, 181, 184, 168, 162, 163},
+    //  A,    F,    H,    J,    K,    B,   G1,   G2,    E,    N,    M,    L,    C     D
+    {0x60, 0x65, 0x72, 0x73, 0x74, 0x61, 0x70, 0x71, 0x64, 0x75 ,0x78, 0x68, 0x62, 0x63},
+    {0x80, 0x85, 0x92, 0x93, 0x94, 0x81, 0x90, 0x91, 0x84, 0x95 ,0x98, 0x88, 0x82, 0x83},
+    {0xa0, 0xa5, 0xb2, 0xb3, 0xb4, 0xa1, 0xb0, 0xb1, 0xa4, 0xb5 ,0xb8, 0xa8, 0xa2, 0xa3},
+
 };
 
 #endif
