@@ -76,7 +76,7 @@ rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
         { .red=157, .green=173, .blue=189 }, // 6
 
         // Row 2
-        { .red=0, .green=16, .blue=29 }, // Tab
+        { .red=0, .green=16, .blue=32 }, // Tab
         { .red=2, .green=18, .blue=34 }, // Q
         { .red=4, .green=20, .blue=36 }, // W
         { .red=8, .green=24, .blue=40 }, // E
