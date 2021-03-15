@@ -139,8 +139,6 @@ void UpdateLayerLeds(void) {
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
             key_action_color_t keyActionColor;
-//            key_action_t (*layerKeyActions)[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = &CurrentKeymap[ActiveLayer];
-//            key_action_t *keyAction = layerKeyActions[slotId][keyId];
             key_action_t *keyAction = &CurrentKeymap[ActiveLayer][slotId][keyId];
             switch (keyAction->type) {
                 case KeyActionType_Keystroke:
