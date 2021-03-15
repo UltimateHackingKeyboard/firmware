@@ -21,8 +21,9 @@ rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
     // Right keyboard half
     {
         // IS31FL3737 has a weird memory layout for PWM values:
-        // 0x?0 - 0x?5 and  0x?8 - 0x?D
-        //   where ? is  0-B
+        // 0x?0 - 0x?5 and 0x?8 - 0x?D
+        // where ? is 0-B
+
         // Row 1
         { .red=0x90, .green=0xA0, .blue=0x20 }, // 7
         { .red=0x91, .green=0xA1, .blue=0x21 }, // 8
@@ -71,8 +72,9 @@ rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
     // Left keyboard half
     {
         // IS31FL3737 has a weird memory layout for PWM values:
-        // 0x?0 - 0x?5 and  0x?8 - 0x?D
-        //   where ? is  0-B        
+        // 0x?0 - 0x?5 and 0x?8 - 0x?D
+        // where ? is 0-B
+
         // Row 1
         { .red=0x6A, .green=0x7A, .blue=0x8A }, // `
         { .red=0x6B, .green=0x7B, .blue=0x8B }, // 1
