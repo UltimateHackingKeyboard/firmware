@@ -5,6 +5,8 @@
 
     #include "layer.h"
     #include "config_parser/parse_keymap.h"
+    #include "key_states.h"
+    #include "key_action.h"
 
 // Macros:
 
@@ -40,5 +42,6 @@
 // Functions:
 
     void UpdateUsbReports(void);
+    void ApplyKeyAction(key_state_t *keyState, key_action_t *action, key_action_t *actionBase);
 
 #endif
