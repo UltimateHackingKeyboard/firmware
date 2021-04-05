@@ -25,12 +25,14 @@
     {
       "deviceId": 1,
       "name": "uhk60-right",
-      "source": "right/uhk60v1/build_make/uhk60v1.hex"
+      "source": "right/uhk60v1/build_make/uhk60v1.hex",
+      "mmap": "right/uhk60v1/build_make/uhk60v1.map"
     },
     {
       "deviceId": 2,
       "name": "uhk60v2-right",
-      "source": "right/uhk60v2/build_make/uhk60v2.hex"
+      "source": "right/uhk60v2/build_make/uhk60v2.hex",
+      "mmap": "right/uhk60v2/build_make/uhk60v2.map"
     }
   ],
   "modules": [

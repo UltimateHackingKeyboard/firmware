@@ -34,9 +34,11 @@ exec(`npm ci; npm run build`, { cwd: agentDir });
 for (const device of package.devices) {
     const deviceDir = `${releaseDir}/devices/${device.name}`;
     const deviceSource = `${__dirname}/../${device.source}`;
+    const deviceMMap = `${__dirname}/../${device.mmap}`;
     mkdir('-p', deviceDir);
     chmod(644, deviceSource);
     cp(deviceSource, `${deviceDir}/firmware.hex`);
+    cp(deviceMMap, `${deviceDir}/firmware.map`);
     exec(`npm run convert-user-config-to-bin -- ${deviceDir}/config.bin`, { cwd: agentDir });
 }
 
