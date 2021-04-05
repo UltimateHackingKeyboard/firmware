@@ -8,9 +8,8 @@
 
 // Macros:
 
-    #define SLAVE_COUNT (sizeof(Slaves) / sizeof(uhk_slave_t))
-    #define MAX_SLAVE_COUNT 8
-    #define IS_VALID_SLAVE_ID(slaveId) (0 <= slaveId && slaveId < MAX_SLAVE_COUNT)
+    #define SLAVE_COUNT 8
+    #define IS_VALID_SLAVE_ID(slaveId) (0 <= slaveId && slaveId < SLAVE_COUNT)
     #define IS_STATUS_I2C_ERROR(status) (kStatus_I2C_Busy <= status && status <= kStatus_I2C_Timeout)
 
 // Typedefs:
