@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [8.10.8] - 2021-03-31
+
+Device Protocol: 4.7.1 | Module Protocol: 4.1.0 | User Config: 4.2.0 | Hardware Config: 1.0.0
+
+- Make module cursor movement more accurate, especially at slower speed.
+- Update the default user configuration and factory configuration so that "double tap to lock" is only enabled for the Mouse key.
+- Fix the backlight color of Tab and Backspace.
+
 ## [8.10.7] - 2021-03-11
 
 Device Protocol: 4.7.1 | Module Protocol: 4.1.0 | User Config: 4.2.0 | Hardware Config: 1.0.0
