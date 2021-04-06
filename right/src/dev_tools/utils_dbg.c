@@ -40,10 +40,10 @@ void WatchValue(int v, uint8_t n)
     }
 }
 
-void WatchString(int v, char const * c)
+void WatchString(char const * v, uint8_t n)
 {
     if(CurrentTime - lastWatch > watchInterval) {
-        LedDisplay_SetText(3,  c);
+        LedDisplay_SetText(3,  v);
         lastWatch = CurrentTime;
     }
 }
