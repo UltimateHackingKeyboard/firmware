@@ -49,7 +49,7 @@
 
 // Variables:
 
-    extern uhk_slave_t Slaves[];
+    extern uhk_slave_t Slaves[SLAVE_COUNT];
     extern uint32_t I2cSlaveScheduler_Counter;
 
 // Functions:
