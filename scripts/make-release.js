@@ -45,9 +45,11 @@ for (const device of package.devices) {
 for (const module of package.modules) {
     const moduleDir = `${releaseDir}/modules`;
     const moduleSource = `${__dirname}/../${module.source}`;
+    const moduleMMap = `${__dirname}/../${module.mmap}`;
     mkdir('-p', moduleDir);
     chmod(644, moduleSource);
     cp(moduleSource, `${moduleDir}/${module.name}.bin`);
+    cp(moduleMMap, `${moduleDir}/${module.name}.map`);
 }
 
 cp(`${__dirname}/package.json`, releaseDir);

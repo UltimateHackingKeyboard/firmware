@@ -39,22 +39,26 @@
     {
       "moduleId": 1,
       "name": "uhk60-left",
-      "source": "left/build_make/uhk_left.bin"
+      "source": "left/build_make/uhk_left.bin",
+      "mmap": "left/build_make/uhk_left.map"
     },
     {
       "moduleId": 2,
       "name": "keycluster-left",
-      "source": "keycluster/build_make/uhk_keycluster.bin"
+      "source": "keycluster/build_make/uhk_keycluster.bin",
+      "mmap": "keycluster/build_make/uhk_keycluster.map"
     },
     {
       "moduleId": 3,
       "name": "trackball-right",
-      "source": "trackball/build_make/uhk_trackball.bin"
+      "source": "trackball/build_make/uhk_trackball.bin",
+      "mmap": "trackball/build_make/uhk_trackball.map"
     },
     {
       "moduleId": 4,
       "name": "trackpoint-right",
-      "source": "trackpoint/build_make/uhk_trackpoint.bin"
+      "source": "trackpoint/build_make/uhk_trackpoint.bin",
+      "mmap": "trackpoint/build_make/uhk_trackpoint.map"
     }
   ]
 }
