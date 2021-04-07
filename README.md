@@ -48,12 +48,9 @@ Going forward, it's easier to flash the firmware of your choice by using the dow
 ### Releasing
 
 6. To build a full firmware tarball:
-
-  1. Run `npm install` in `scripts`
-
-  2. Run `scripts/make-release.js`.
-
-  3. Now, the created tarball `scripts/uhk-firmware-VERSION.tar.gz` can be flashed with UHK Agent.
+    1. Run `npm install` in `scripts`.
+    2. Run `scripts/make-release.js`.
+    3. Now, the created tarball `scripts/uhk-firmware-VERSION.tar.gz` can be flashed with UHK Agent.
 
 ## Contributing
 
