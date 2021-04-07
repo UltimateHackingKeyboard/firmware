@@ -8,7 +8,7 @@ static key_state_t* resolutionKey;
 static secondary_role_state_t resolutionState;
 static uint32_t resolutionStartTime;
 
-static secondary_role_strategy_t strategy = SecondaryRoleStrategy_Timeout;
+static secondary_role_strategy_t strategy = SecondaryRoleStrategy_Simple;
 
 static key_state_t* previousResolutionKey;
 static uint32_t previousResolutionTime;
