@@ -69,7 +69,9 @@ bool IsModuleAttached(module_id_t moduleId) {
         case ModuleId_RightKeyboardHalf:
             return true;
         case ModuleId_LeftKeyboardHalf:
+            return UhkModuleStates[UhkModuleDriverId_LeftKeyboardHalf].moduleId == moduleId;
         case ModuleId_KeyClusterLeft:
+            return UhkModuleStates[UhkModuleDriverId_LeftModule].moduleId == moduleId;
         case ModuleId_TrackballRight:
         case ModuleId_TrackpointRight:
             return UhkModuleStates[UhkModuleDriverId_RightModule].moduleId == moduleId;
