@@ -24,7 +24,7 @@
 
 // Variables:
 
-    extern i2c_slave_error_counter_t I2cSlaveErrorCounters[MAX_SLAVE_COUNT];
+    extern i2c_slave_error_counter_t I2cSlaveErrorCounters[SLAVE_COUNT];
 
 // Functions:
 
