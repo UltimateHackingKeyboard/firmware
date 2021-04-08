@@ -72,7 +72,7 @@ bool IsModuleAttached(module_id_t moduleId) {
         case ModuleId_KeyClusterLeft:
         case ModuleId_TrackballRight:
         case ModuleId_TrackpointRight:
-            return UhkModuleStates[UhkModuleDriverId_RightModule].moduleId;
+            return UhkModuleStates[UhkModuleDriverId_RightModule].moduleId == moduleId;
         case ModuleId_TouchpadRight:
             return Slaves[SlaveId_RightTouchpad].isConnected;
         default:
