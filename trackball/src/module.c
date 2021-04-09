@@ -55,6 +55,7 @@ typedef enum {
     ModulePhase_ProcessMotion,
     ModulePhase_ProcessDeltaY,
     ModulePhase_ProcessDeltaX,
+    ModulePhase_ProcessSqual,
 } module_phase_t;
 
 module_phase_t modulePhase = ModulePhase_SetResolution;
@@ -64,6 +65,9 @@ uint8_t txSetResolution[] = {0x91, 0b10000000};
 uint8_t txBufferGetMotion[] = {0x02, 0x00};
 uint8_t txBufferGetDeltaY[] = {0x03, 0x00};
 uint8_t txBufferGetDeltaX[] = {0x04, 0x00};
+uint8_t txBufferGetSQUAL[] = {0x05, 0x00};
+
+
 
 uint8_t rxBuffer[BUFFER_SIZE];
 spi_master_handle_t handle;
@@ -107,6 +111,12 @@ void trackballUpdate(SPI_Type *base, spi_master_handle_t *masterHandle, status_t
         case ModulePhase_ProcessDeltaX: ;
             int8_t deltaX = (int8_t)rxBuffer[1];
             PointerDelta.y += deltaX; // This is correct given the sensor orientation.
+            tx(txBufferGetSQUAL);
+            modulePhase = ModulePhase_ProcessSqual;
+            break;
+        case ModulePhase_ProcessSqual: ;
+            uint8_t squal = (int8_t)rxBuffer[1];
+            PointerDelta.squal = squal;
             tx(txBufferGetMotion);
             modulePhase = ModulePhase_ProcessMotion;
             break;

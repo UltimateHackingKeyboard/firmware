@@ -101,6 +101,7 @@ void SlaveTxHandler(void)
                 pointer_delta_t *pointerDelta = (pointer_delta_t*)(TxMessage.data + messageLength);
                 pointerDelta->x = PointerDelta.x;
                 pointerDelta->y = PointerDelta.y;
+                pointerDelta->squal = PointerDelta.squal;
                 PointerDelta.x = 0;
                 PointerDelta.y = 0;
                 messageLength += sizeof(pointer_delta_t);

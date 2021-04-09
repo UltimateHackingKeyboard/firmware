@@ -56,13 +56,19 @@ void ShowNumberMag(int a) {
     if(num < 0) {
         LedDisplay_SetText(3,  "NEG");
     } else {
-        while(num >= 100) {
-            mag++;
-            num /= 10;
+        if(num < 1000) {
+            b[0] = '0' + num/100;
+            b[1] = '0' + num%100/10;
+            b[2] = '0' + num%10;
+        } else {
+            while(num >= 100) {
+                mag++;
+                num /= 10;
+            }
+            b[0] = mag == 0 ? '0' : ('A' - 1 + mag);
+            b[1] = '0' + num/10;
+            b[2] = '0' + num%10;
         }
-        b[0] = mag == 0 ? '0' : ('A' - 1 + mag);
-        b[1] = '0' + num/10;
-        b[2] = '0' + num%10;
         LedDisplay_SetText(3,  b);
     }
 }

@@ -16,6 +16,7 @@
 #include "slave_scheduler.h"
 #include "layer_switcher.h"
 #include "usb_report_updater.h"
+#include "dev_tools/utils_dbg.h"
 
 static uint32_t mouseUsbReportUpdateTime = 0;
 static uint32_t mouseElapsedTime;
@@ -308,6 +309,10 @@ void MouseController_ProcessMouseActions()
         uhk_module_state_t *moduleState = UhkModuleStates + moduleSlotId;
         if (moduleState->moduleId == ModuleId_Unavailable || moduleState->pointerCount == 0) {
             continue;
+        }
+
+        if(moduleState->moduleId == ModuleId_TrackballRight){
+            WATCH_VALUE(moduleState->pointerDelta.squal, 0);
         }
 
         processModuleActions(moduleState->moduleId, (int16_t)moduleState->pointerDelta.x, (int16_t)moduleState->pointerDelta.y);

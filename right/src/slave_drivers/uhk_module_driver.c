@@ -245,6 +245,7 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
                     pointer_delta_t *pointerDelta = (pointer_delta_t*)(rxMessage->data + keyStatesLength);
                     uhkModuleState->pointerDelta.x += pointerDelta->x;
                     uhkModuleState->pointerDelta.y += pointerDelta->y;
+                    uhkModuleState->pointerDelta.squal = pointerDelta->squal;
                 }
             }
             status = kStatus_Uhk_IdleCycle;
