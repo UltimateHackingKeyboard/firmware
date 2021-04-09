@@ -21,6 +21,7 @@
 #include "slave_drivers/touchpad_driver.h"
 #include "layer_switcher.h"
 #include "mouse_controller.h"
+#include "dev_tools/utils_dbg.h"
 
 bool TestUsbStack = false;
 static key_action_t actionCache[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
@@ -251,6 +252,7 @@ static void applyKeyAction(key_state_t *keyState, key_action_t *action, key_acti
 
 static void commitKeyState(key_state_t *keyState, bool active)
 {
+    WATCH_TRIGGER(keyState);
     if (PostponerCore_IsActive()) {
         PostponerCore_TrackKeyEvent(keyState, active);
     } else {
