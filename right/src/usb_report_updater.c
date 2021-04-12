@@ -21,7 +21,7 @@
 #include "slave_drivers/touchpad_driver.h"
 #include "layer_switcher.h"
 #include "mouse_controller.h"
-#include "dev_tools/utils_dbg.h"
+#include "debug.h"
 
 bool TestUsbStack = false;
 static key_action_t actionCache[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
