@@ -40,7 +40,7 @@ void TriggerWatch(key_state_t *keyState)
 {
     int16_t key = (keyState - &KeyStates[SlotId_LeftKeyboardHalf][0]);
     if (0 <= key && key <= 7) {
-        //set the LED value to RES until next update occurs.
+        // Set the LED value to RES until next update occurs.
         LedDisplay_SetText(3, "RES");
         CurrentWatch = key;
     }

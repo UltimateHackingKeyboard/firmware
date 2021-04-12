@@ -4,14 +4,11 @@
 #ifndef SRC_UTILS_DBG_H_
 #define SRC_UTILS_DBG_H_
 
-/*
- When a key '~' to '6' is pressed, corresponding slot (identified by numbers 0-6) is activated.
- This means that, corresponding watched value is shown on the LED display) and then updated in certain intervals.
-
- Numbers are outputted in an exponent notation in form '[0A-Z]' + '[0-9][0-9]' where letter denotes added magnitude (A = *10^1, B = *10^2...).
- Letters are used for magnitude so that brain is not confused by seeing three digit numbers.
-
-*/
+// When a key '~' to '6' is pressed, corresponding slot (identified by numbers 0-6) is activated.
+// This means that, corresponding watched value is shown on the LED display) and then updated in certain intervals.
+//
+// Numbers are outputted in an exponent notation in form '[0-9][0-9]' + '[0A-Z]' where letter denotes added magnitude (A = *10^1, B = *10^2...).
+// Letters are used for magnitude so that brain is not confused by seeing three digit numbers.
 
 // Includes:
 
