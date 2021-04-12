@@ -42,9 +42,11 @@
     }
 
 // Variables:
+
 	extern uint8_t CurrentWatch;
 
 // Functions:
+
 	void TriggerWatch(key_state_t *keyState);
 	void WatchTime(uint8_t n);
 	void WatchValue(int v, uint8_t n);
@@ -54,6 +56,7 @@
 #else
 
 // Macros:
+
 	#define WATCH_TRIGGER(N)
 	#define WATCH_TIME(N)
 	#define WATCH_VALUE(V, N)
