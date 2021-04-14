@@ -64,12 +64,22 @@ void WatchValue(int v, uint8_t n)
     }
 }
 
+void ShowValue(int v, uint8_t n)
+{
+    ShowNumberExp(v);
+}
+
 void WatchString(char const *v, uint8_t n)
 {
     if (CurrentTime - lastWatch > watchInterval) {
         LedDisplay_SetText(3, v);
         lastWatch = CurrentTime;
     }
+}
+
+void ShowString(char const *v, uint8_t n)
+{
+	LedDisplay_SetText(3, v);
 }
 
 #endif

@@ -1,4 +1,4 @@
-//#define WATCHES
+#define WATCHES
 
 #ifdef WATCHES
 #ifndef SRC_UTILS_DBG_H_
@@ -38,6 +38,18 @@
         WatchString(V, N);   \
     }
 
+	// Shows string V in slot N.
+	#define SHOW_STRING(V, N)   \
+    if (CurrentWatch == N) { \
+        ShowString(V, N);   \
+    }
+
+	// Shows string V in slot N.
+	#define SHOW_VALUE(V, N)   \
+    if (CurrentWatch == N) { \
+        ShowValue(V, N);   \
+    }
+
 // Variables:
 
 	extern uint8_t CurrentWatch;
@@ -49,6 +61,9 @@
 	void WatchValue(int v, uint8_t n);
 	void WatchString(char const *v, uint8_t n);
 
+	void ShowValue(int v, uint8_t n);
+	void ShowString(char const *v, uint8_t n);
+
 #endif /* SRC_UTILS_DBG_H_ */
 #else
 
@@ -57,5 +72,9 @@
 	#define WATCH_TRIGGER(N)
 	#define WATCH_TIME(N)
 	#define WATCH_VALUE(V, N)
+	#define WATCH_STRING(V, N)
+
+	#define SHOW_VALUE(V, N)k
+	#define SHOW_STRING(V, N)
 
 #endif
