@@ -30,13 +30,13 @@ caret_configuration_t caretCaretMode = {
 };
 
 caret_configuration_t* GetModuleCaretConfiguration(int8_t moduleId, navigation_mode_t mode) {
-    switch(mode) {
-    case NavigationMode_Caret:
-        return &caretCaretMode;
-    case NavigationMode_Media:
-        return &caretMediaMode;
-    default:
-        return &caretCaretMode;
+    switch (mode) {
+        case NavigationMode_Caret:
+            return &caretCaretMode;
+        case NavigationMode_Media:
+            return &caretMediaMode;
+        default:
+            return &caretCaretMode;
     }
 }
 

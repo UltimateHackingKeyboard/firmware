@@ -285,7 +285,7 @@ void processModuleActions(uint8_t moduleId, float x, float y) {
         case NavigationMode_Media:
         case NavigationMode_Caret: {
             //optimize this out if nothing is going on
-            if(x == 0 && y == 0 && caretAxis == CaretAxis_None) {
+            if (x == 0 && y == 0 && caretAxis == CaretAxis_None) {
                 break;
             }
             caret_configuration_t* currentCaretConfig = GetModuleCaretConfiguration(moduleId, navigationMode);
@@ -294,7 +294,7 @@ void processModuleActions(uint8_t moduleId, float x, float y) {
             if (x != 0 || y != 0) {
                 static uint16_t lastUpdate = 0;
 
-                if(CurrentTime - lastUpdate > 500 && caretAxis != CaretAxis_None) {
+                if (CurrentTime - lastUpdate > 500 && caretAxis != CaretAxis_None) {
                     xFractionRemainder = 0;
                     yFractionRemainder = 0;
                     caretAxis = CaretAxis_None;
@@ -306,7 +306,7 @@ void processModuleActions(uint8_t moduleId, float x, float y) {
             float caretXModeMultiplier;
             float caretYModeMultiplier;
 
-            if(caretAxis == CaretAxis_None) {
+            if (caretAxis == CaretAxis_None) {
                 // if no axis is locked atm, tweak trigger sensitivity depending on module
                 if (moduleId == ModuleId_KeyClusterLeft) {
                     caretXModeMultiplier = caretSkewStrength;
@@ -325,7 +325,7 @@ void processModuleActions(uint8_t moduleId, float x, float y) {
 
 
             //If there is an ongoing action, just handle that action via a fake state. Ensure that full lifecycle of a key gets executed.
-            if(caretFakeKeystate.current || caretFakeKeystate.previous) {
+            if (caretFakeKeystate.current || caretFakeKeystate.previous) {
                 bool tmp = caretFakeKeystate.current;
                 caretFakeKeystate.current = !caretFakeKeystate.previous;
                 caretFakeKeystate.previous = tmp;
