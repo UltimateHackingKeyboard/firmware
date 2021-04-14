@@ -3,6 +3,7 @@
 #include "led_display.h"
 #include "timer.h"
 #include "math.h"
+#include "debug.h"
 
 /*
  * ## Strategies:
@@ -50,13 +51,13 @@
  *     - AllowTriggerByRelease = true
  */
 
-static key_state_t* resolutionKey;
+static key_state_t *resolutionKey;
 static secondary_role_state_t resolutionState;
 static uint32_t resolutionStartTime;
 
-static secondary_role_strategy_t strategy = SecondaryRoleStrategy_Simple;
+static secondary_role_strategy_t strategy = SecondaryRoleStrategy_Timeout;
 
-static key_state_t* previousResolutionKey;
+static key_state_t *previousResolutionKey;
 static uint32_t previousResolutionTime;
 
 static void activatePrimary()
@@ -78,7 +79,6 @@ static void activateSecondary()
     // Let the secondary role take place before allowing the affected key to execute. Postponing rest of this cycle should suffice.
     PostponerCore_PostponeNCycles(0); //just for aesthetics - we are already postponed for this cycle so this is no-op
 }
-
 
 /*
  * Conservative settings (safely preventing collisions) (triggered via distinct && correct release sequence):
@@ -142,7 +142,7 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
     }
 
     //handle trigger by release
-    if(timeoutStrategyAllowTriggerByRelease) {
+    if (timeoutStrategyAllowTriggerByRelease) {
         bool actionKeyWasReleasedButDualkeyNot = actionRelease != NULL && (dualRoleRelease == NULL && CurrentTime - actionRelease->time > timeoutStrategySafetyMargin);
         bool actionKeyWasReleasedFirst = actionRelease != NULL && (actionRelease->time < dualRoleRelease->time - timeoutStrategySafetyMargin);
 
@@ -154,11 +154,11 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
 
     uint32_t activeTime = (dualRoleRelease == NULL ? CurrentTime : dualRoleRelease->time) - dualRolePressTime;
 
-    if ( activeTime > timeoutStrategyTriggerTime + timeoutStrategySafetyMargin ) {
+    if (activeTime > timeoutStrategyTriggerTime + timeoutStrategySafetyMargin) {
         activateSecondary();
         return SecondaryRoleState_Secondary;
     } else {
-        if ( dualRoleRelease != NULL ) {
+        if (dualRoleRelease != NULL) {
             activatePrimary();
             return SecondaryRoleState_Primary;
         } else {
@@ -169,10 +169,10 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
 
 static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowSimple()
 {
-    if ( PostponerQuery_PendingKeypressCount() > 0 && !PostponerQuery_IsKeyReleased(resolutionKey) ) {
+    if (PostponerQuery_PendingKeypressCount() > 0 && !PostponerQuery_IsKeyReleased(resolutionKey)) {
         activateSecondary();
         return SecondaryRoleState_Secondary;
-    } else if ( PostponerQuery_IsKeyReleased(resolutionKey) /*assume PostponerQuery_PendingKeypressCount() == 0, but gather race conditions too*/ ) {
+    } else if (PostponerQuery_IsKeyReleased(resolutionKey) /*assume PostponerQuery_PendingKeypressCount() == 0, but gather race conditions too*/) {
         activatePrimary();
         return SecondaryRoleState_Primary;
     } else {
@@ -187,7 +187,7 @@ static secondary_role_state_t resolveCurrentKey()
     case SecondaryRoleState_Secondary:
         return resolutionState;
     case SecondaryRoleState_DontKnowYet:
-        switch(strategy) {
+        switch (strategy) {
         case SecondaryRoleStrategy_Simple:
             return resolveCurrentKeyRoleIfDontKnowSimple();
         default:
@@ -199,7 +199,7 @@ static secondary_role_state_t resolveCurrentKey()
     }
 }
 
-static secondary_role_state_t startResolution(key_state_t* keyState)
+static secondary_role_state_t startResolution(key_state_t *keyState)
 {
     previousResolutionKey = resolutionKey;
     previousResolutionTime = resolutionStartTime;
@@ -208,14 +208,14 @@ static secondary_role_state_t startResolution(key_state_t* keyState)
     return SecondaryRoleState_DontKnowYet;
 }
 
-secondary_role_state_t SecondaryRoles_ResolveState(key_state_t* keyState)
+secondary_role_state_t SecondaryRoles_ResolveState(key_state_t *keyState)
 {
     // Since postponer is active during resolutions, KeyState_ActivatedNow can happen only after previous
     // resolution has finished - i.e., if primary action has been activated, carried out and
     // released, or if previous resolution has been resolved as secondary. Therefore,
     // it suffices to deal with the `resolutionKey` only. Any other queried key is a finished resoluton.
 
-    if ( KeyState_ActivatedNow(keyState) ) {
+    if (KeyState_ActivatedNow(keyState)) {
         //start new resolution
         resolutionState = startResolution(keyState);
         resolutionState = resolveCurrentKey();
@@ -230,4 +230,3 @@ secondary_role_state_t SecondaryRoles_ResolveState(key_state_t* keyState)
         }
     }
 }
-
