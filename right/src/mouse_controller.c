@@ -199,11 +199,8 @@ static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
     kineticState->wasMoveAction = isMoveAction;
 }
 
-static float computeModuleSpeed(float x, float y, uint8_t moduleId)
+static void recalculateCurrentModuleSpeed(float x, float y, module_configuration_t *moduleConfiguration)
 {
-    //means that driver multiplier equals 1.0 at average speed midSpeed px/ms
-    static float midSpeed = 3.0f;
-    module_configuration_t *moduleConfiguration = GetModuleConfiguration(moduleId);
     float *currentSpeed = &moduleConfiguration->currentSpeed;
 
     if (x != 0 || y != 0) {
@@ -213,9 +210,17 @@ static float computeModuleSpeed(float x, float y, uint8_t moduleId)
         *currentSpeed = distance / elapsedTime;
         lastUpdate = CurrentTime;
     }
+}
+
+
+static float computeModuleAcceleration(module_configuration_t *moduleConfiguration, float additionalSpeedup)
+{
+    //means that driver multiplier equals 1.0 at average speed midSpeed px/ms
+    static float midSpeed = 3.0f;
+    float *currentSpeed = &moduleConfiguration->currentSpeed;
 
     float normalizedSpeed = *currentSpeed/midSpeed;
-    return moduleConfiguration->baseSpeed + moduleConfiguration->speed*(float)pow(normalizedSpeed, moduleConfiguration->acceleration);
+    return moduleConfiguration->baseSpeed + moduleConfiguration->speed*(float)pow(normalizedSpeed, moduleConfiguration->acceleration + additionalSpeedup);
 }
 
 static void processTouchpadActions() {
@@ -246,7 +251,8 @@ void processModuleActions(uint8_t moduleId, float x, float y) {
     float caretSpeedDivisor = 16;
     float caretSkewStrength = 0.5f;
 
-    float speed = computeModuleSpeed(x, y, moduleId);
+    recalculateCurrentModuleSpeed(x, y, moduleConfiguration);
+    float speed = computeModuleAcceleration(moduleConfiguration, 0);
 
     static float xFractionRemainder = 0.0f;
     static float yFractionRemainder = 0.0f;
@@ -301,6 +307,9 @@ void processModuleActions(uint8_t moduleId, float x, float y) {
                 }
                 lastUpdate = CurrentTime;
             }
+
+            // apply some additional acceleration in this mode
+            speed = computeModuleAcceleration(moduleConfiguration, 0.5f);
 
             // caretAxis tries to lock to one direction, therefore we "skew" the other one
             float caretXModeMultiplier;
