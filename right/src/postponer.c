@@ -38,7 +38,7 @@ static void consumeEvent(uint8_t count)
     bufferPosition = POS(count);
     bufferSize = count > bufferSize ? 0 : bufferSize - count;
     Postponer_NextEventKey = bufferSize == 0 ? NULL : buffer[bufferPosition].key;
-    CurrentPostponedTime = buffer[POS(bufferPosition-1+POSTPONER_BUFFER_SIZE)].time;
+    CurrentPostponedTime = buffer[POS(0-1+POSTPONER_BUFFER_SIZE)].time;
 }
 
 //######################
@@ -61,6 +61,10 @@ static void consumeEvent(uint8_t count)
 // call this once with the required number.
 void PostponerCore_PostponeNCycles(uint8_t n)
 {
+	if(bufferSize == 0 && cyclesUntilActivation == 0) {
+        // ensure correct CurrentPostponedTime when postponing starts, since current postponed time is the time of last executed action
+        buffer[POS(0-1+POSTPONER_BUFFER_SIZE)].time = CurrentTime;
+	}
     cyclesUntilActivation = MAX(n + 1, cyclesUntilActivation);
 }
 
