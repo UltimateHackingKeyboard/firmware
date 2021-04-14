@@ -303,22 +303,8 @@ void processModuleActions(uint8_t moduleId, float x, float y) {
             }
 
             // caretAxis tries to lock to one direction, therefore we "skew" the other one
-            float caretXModeMultiplier;
-            float caretYModeMultiplier;
-
-            if (caretAxis == CaretAxis_None) {
-                // if no axis is locked atm, tweak trigger sensitivity depending on module
-                if (moduleId == ModuleId_KeyClusterLeft) {
-                    caretXModeMultiplier = caretSkewStrength;
-                    caretYModeMultiplier = caretSkewStrength;
-                } else {
-                    caretXModeMultiplier = 1.0f/caretSkewStrength;
-                    caretYModeMultiplier = 1.0f/caretSkewStrength;
-                }
-            } else {
-                caretXModeMultiplier = caretAxis == CaretAxis_Horizontal ? 1.0f : caretSkewStrength;
-                caretYModeMultiplier = caretAxis == CaretAxis_Vertical ? 1.0f : caretSkewStrength;
-            }
+            float caretXModeMultiplier = caretAxis == CaretAxis_Horizontal ? 1.0f : caretSkewStrength;
+            float caretYModeMultiplier = caretAxis == CaretAxis_Vertical ? 1.0f : caretSkewStrength;
 
             xFractionRemainder += x * speed / caretSpeedDivisor * caretXModeMultiplier;
             yFractionRemainder += y * speed / caretSpeedDivisor * caretYModeMultiplier;
