@@ -315,7 +315,7 @@ void processModuleActions(uint8_t moduleId, float x, float y) {
             float caretXModeMultiplier;
             float caretYModeMultiplier;
 
-            if(caretAxis == CaretAxis_None) {
+            if (caretAxis == CaretAxis_None) {
                 // if no axis is locked atm, tweak trigger sensitivity depending on module
                 if (moduleId == ModuleId_KeyClusterLeft) {
                     caretXModeMultiplier = caretSkewStrength;
