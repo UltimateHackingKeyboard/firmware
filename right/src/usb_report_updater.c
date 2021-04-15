@@ -215,7 +215,7 @@ static void applyKeystroke(key_state_t *keyState, key_action_t *action, key_acti
     }
 }
 
-static void applyKeyAction(key_state_t *keyState, key_action_t *action, key_action_t *actionBase, uint8_t slotId, uint8_t keyId)
+void ApplyKeyAction(key_state_t *keyState, key_action_t *action, key_action_t *actionBase)
 {
     switch (action->type) {
         case KeyActionType_Keystroke:
@@ -364,7 +364,7 @@ static void updateActiveUsbReports(void)
                 applyLayerHolds(keyState, actionBase);
 
                 //apply active-layer action
-                applyKeyAction(keyState, action, actionBase, slotId, keyId);
+                ApplyKeyAction(keyState, action, actionBase);
 
                 keyState->previous = keyState->current;
             }
