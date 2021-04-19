@@ -354,7 +354,7 @@ void processModuleActions(uint8_t moduleId, float x, float y) {
                 if ( axisCandidate < CaretAxis_Count ) {
                     caretAxis = axisCandidate;
                     float sgn = axisIntegerParts[axisCandidate] > 0 ? 1 : -1;
-                    uint8_t currentAxisInversion = axisCandidate == CaretAxis_Vertical ? yInversion : 1;
+                    int8_t currentAxisInversion = axisCandidate == CaretAxis_Vertical ? yInversion : 1;
                     *axisFractionRemainders[1 - axisCandidate] = 0.0f;
                     *axisFractionRemainders[axisCandidate] -= sgn;
                     caret_dir_action_t* dirActions = &currentCaretConfig->axisActions[caretAxis];
