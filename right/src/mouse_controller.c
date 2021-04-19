@@ -256,7 +256,7 @@ void processModuleActions(uint8_t moduleId, float x, float y) {
     if (moduleId == ModuleId_KeyClusterLeft) {
         scrollSpeedDivisor = 1;
         caretSpeedDivisor = 1;
-        speed = navigationMode == NavigationMode_Scroll ? 5 : 1;
+        speed = navigationMode == NavigationMode_Cursor ? 5 : 1;
     }
 
     switch (navigationMode) {
