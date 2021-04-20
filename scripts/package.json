@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "commander": "^2.11.0",
-    "shelljs": "^0.7.8"
+    "shelljs": "^0.8.4"
   },
   "firmwareVersion": "8.10.8",
   "deviceProtocolVersion": "4.7.1",
