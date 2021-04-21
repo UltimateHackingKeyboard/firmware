@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [8.10.9] - 2021-04-21
+
+Device Protocol: 4.7.1 | Module Protocol: 4.1.0 | User Config: 4.2.0 | Hardware Config: 1.0.0
+
+- Add caret navigation mode and bind it to the Fn layer.
+- Fix the configuration parser to use the configuration of the attached modules upon applying the configuration.
+- Fix the double tap to hold feature to not hold the layer when a key gets pressed during the second tap of the double tap.
+- Fix a potential memory corruption bug related to SLAVE_COUNT that may result in random bugs occasionally.
+
 ## [8.10.8] - 2021-03-31
 
 Device Protocol: 4.7.1 | Module Protocol: 4.1.0 | User Config: 4.2.0 | Hardware Config: 1.0.0
