@@ -443,8 +443,8 @@ void UpdateUsbReports(void)
             //This is *not* asynchronously safe as long as multiple reports of different type can be sent at the same time.
             //TODO: consider either making it atomic, or lowering semaphore reset delay
             UsbReportUpdateSemaphore &= ~(1 << USB_BASIC_KEYBOARD_INTERFACE_INDEX);
-            lastReportTime = CurrentTime;
         }
+        lastReportTime = CurrentTime;
     }
 
     if (HasUsbMediaKeyboardReportChanged) {
