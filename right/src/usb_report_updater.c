@@ -394,6 +394,15 @@ void justPreprocessInput(void) {
             preprocessKeyState(keyState);
         }
     }
+
+    for (uint8_t moduleSlotId=0; moduleSlotId<UHK_MODULE_MAX_SLOT_COUNT; moduleSlotId++) {
+        uhk_module_state_t *moduleState = UhkModuleStates + moduleSlotId;
+        if (moduleState->moduleId == ModuleId_Unavailable || moduleState->pointerCount == 0) {
+            continue;
+        }
+        moduleState->pointerDelta.x = 0;
+        moduleState->pointerDelta.y = 0;
+    }
 }
 
 uint32_t UsbReportUpdateCounter;
