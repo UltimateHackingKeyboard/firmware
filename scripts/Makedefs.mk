@@ -87,6 +87,9 @@ CFLAGS = -mthumb                    \
          -Wdouble-promotion         \
          -Woverflow                 \
          -Wall                      \
+         -Wextra                    \
+         -Wno-unused-parameter      \
+         -Wno-type-limits           \
          -Wshadow                   \
          -flto                      \
          $(BUILD_FLAGS)
