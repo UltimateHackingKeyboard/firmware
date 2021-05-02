@@ -52,6 +52,13 @@ bool PostponerCore_IsActive(void)
 void PostponerCore_TrackKeyEvent(key_state_t *keyState, bool active)
 {
     uint8_t pos = POS(bufferSize);
+
+    //if the buffer is totally filled, at least make sure the key doesn't get stuck
+    if (bufferSize == POSTPONER_BUFFER_SIZE) {
+        buffer[pos].key->current = buffer[bufferPosition].active;
+        consumeEvent(1);
+    }
+
     buffer[pos] = (struct postponer_buffer_record_type_t) {
             .key = keyState,
             .active = active,

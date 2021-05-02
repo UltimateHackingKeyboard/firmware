@@ -28,6 +28,8 @@ static key_action_t actionCache[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
 
 volatile uint8_t UsbReportUpdateSemaphore = 0;
 
+static uint16_t keystrokeDelay = 0;
+
 // Holds are applied on current base layer.
 static void applyLayerHolds(key_state_t *keyState, key_action_t *action) {
     if (action->type == KeyActionType_SwitchLayer && KeyState_Active(keyState)) {
@@ -381,11 +383,34 @@ static void updateActiveUsbReports(void)
     ActiveUsbBasicKeyboardReport->modifiers |= stickyModifiers;
 }
 
+void justPreprocessInput(void) {
+    // Make preprocessKeyState push new events into postponer queue.
+    // As a side-effect, postpone first cycle after we switch back to regular update loop
+    PostponerCore_PostponeNCycles(0);
+    for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
+        for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
+            key_state_t *keyState = &KeyStates[slotId][keyId];
+
+            preprocessKeyState(keyState);
+        }
+    }
+
+    for (uint8_t moduleSlotId=0; moduleSlotId<UHK_MODULE_MAX_SLOT_COUNT; moduleSlotId++) {
+        uhk_module_state_t *moduleState = UhkModuleStates + moduleSlotId;
+        if (moduleState->moduleId == ModuleId_Unavailable || moduleState->pointerCount == 0) {
+            continue;
+        }
+        moduleState->pointerDelta.x = 0;
+        moduleState->pointerDelta.y = 0;
+    }
+}
+
 uint32_t UsbReportUpdateCounter;
 
 void UpdateUsbReports(void)
 {
     static uint32_t lastUpdateTime;
+    static uint32_t lastReportTime;
 
     for (uint8_t keyId = 0; keyId < RIGHT_KEY_MATRIX_KEY_COUNT; keyId++) {
         KeyStates[SlotId_RightKeyboardHalf][keyId].hardwareSwitchState = RightKeyMatrix.keyStates[keyId];
@@ -397,6 +422,11 @@ void UpdateUsbReports(void)
         } else {
             UsbReportUpdateSemaphore = 0;
         }
+    }
+
+    if(Timer_GetElapsedTime(&lastReportTime) < keystrokeDelay) {
+        justPreprocessInput();
+        return;
     }
 
     lastUpdateTime = CurrentTime;
@@ -423,6 +453,7 @@ void UpdateUsbReports(void)
             //TODO: consider either making it atomic, or lowering semaphore reset delay
             UsbReportUpdateSemaphore &= ~(1 << USB_BASIC_KEYBOARD_INTERFACE_INDEX);
         }
+        lastReportTime = CurrentTime;
     }
 
     if (HasUsbMediaKeyboardReportChanged) {
