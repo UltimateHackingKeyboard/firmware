@@ -38,6 +38,7 @@ key_vector_t keyVector = {
         {PORTB, GPIOB, kCLOCK_PortB,  7}, // trackball microswitch
         {PORTA, GPIOA, kCLOCK_PortA,  8}, // right microswitch
     },
+    .keyStates = {0}
 };
 
 void BlackberryTrackball_Init(void)

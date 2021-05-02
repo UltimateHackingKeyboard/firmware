@@ -20,5 +20,6 @@ key_matrix_t RightKeyMatrix = {
         {PORTC, GPIOC, kCLOCK_PortC, 1},
         {PORTC, GPIOC, kCLOCK_PortC, 0},
         {PORTD, GPIOD, kCLOCK_PortD, 5}
-    }
+    },
+    .keyStates = {0}
 };
