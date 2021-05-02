@@ -271,6 +271,7 @@ bool processKeyAction(void)
                     pressPhase = 0;
                     return false;
             }
+            break;
         case MacroSubAction_Release:
             switch (pressPhase) {
                 case 1:
@@ -281,6 +282,7 @@ bool processKeyAction(void)
                     pressPhase = 0;
                     return false;
             }
+            break;
         case MacroSubAction_Press:
             switch (pressPhase) {
                 case 1:
@@ -291,6 +293,7 @@ bool processKeyAction(void)
                     pressPhase = 0;
                     return false;
             }
+            break;
     }
     return false;
 }

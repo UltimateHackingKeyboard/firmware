@@ -170,6 +170,7 @@ void PS2_CLOCK_IRQ_HANDLER(void) {
             bitId = 0;
             buffer = 0xf4;
             phase = 5;
+            break;
         }
         case 5: {
             if (writeByte()) {
