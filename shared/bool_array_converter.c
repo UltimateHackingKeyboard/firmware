@@ -1,7 +1,7 @@
 #include <string.h>
 #include "bool_array_converter.h"
 
-void BoolBytesToBits(uint8_t *srcBytes, uint8_t *dstBits, uint8_t byteCount)
+void BoolBytesToBits(const uint8_t *srcBytes, uint8_t *dstBits, uint8_t byteCount)
 {
     memset(dstBits, 0, byteCount/8 + (byteCount % 8 ? 1 : 0));
     for (uint8_t i=0; i<byteCount; i++) {

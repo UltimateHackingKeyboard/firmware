@@ -20,7 +20,8 @@ key_matrix_t keyMatrix = {
         {PORTA, GPIOA, kCLOCK_PortA,  5},
         {PORTA, GPIOA, kCLOCK_PortA,  7},
         {PORTA, GPIOA, kCLOCK_PortA,  4}
-    }
+    },
+    .keyStates = {0}
 };
 
 void Module_Init(void)

@@ -87,6 +87,9 @@ CFLAGS = -mthumb                    \
          -Wdouble-promotion         \
          -Woverflow                 \
          -Wall                      \
+         -Wextra                    \
+         -Wno-unused-parameter      \
+         -Wno-type-limits           \
          -Wshadow                   \
          $(BUILD_FLAGS)
 
@@ -123,9 +126,9 @@ endif
 # Check if the DEBUG environment variable is set.
 DEBUG ?= 0
 ifeq ($(DEBUG),1)
-    CFLAGS += -O3 -g3 -DDEBUG
+    CFLAGS += -Os -g3 -DDEBUG
 else
-    CFLAGS += -O3 -DNDEBUG
+    CFLAGS += -Os -DNDEBUG
 endif
 
 # Add the include file paths to AFLAGS and CFLAGS.

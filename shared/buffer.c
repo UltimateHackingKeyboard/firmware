@@ -1,31 +1,31 @@
 #include "buffer.h"
 
-uint8_t GetBufferUint8(uint8_t *buffer, uint32_t offset)
+uint8_t GetBufferUint8(const uint8_t *buffer, uint32_t offset)
 {
-    return *(uint8_t*)(buffer + offset);
+    return *(const uint8_t*)(buffer + offset);
 }
 
-uint16_t GetBufferUint16(uint8_t *buffer, uint32_t offset)
+uint16_t GetBufferUint16(const uint8_t *buffer, uint32_t offset)
 {
-    return *(uint16_t*)(buffer+ offset);
+    return *(const uint16_t*)(buffer+ offset);
 }
 
-uint32_t GetBufferUint32(uint8_t *buffer, uint32_t offset)
+uint32_t GetBufferUint32(const uint8_t *buffer, uint32_t offset)
 {
-    return *(uint32_t*)(buffer + offset);
+    return *(const uint32_t*)(buffer + offset);
 }
 
-uint8_t  GetBufferUint8Be(uint8_t *buffer, uint32_t offset)
+uint8_t  GetBufferUint8Be(const uint8_t *buffer, uint32_t offset)
 {
     return buffer[offset];
 }
 
-uint16_t GetBufferUint16Be(uint8_t *buffer, uint32_t offset)
+uint16_t GetBufferUint16Be(const uint8_t *buffer, uint32_t offset)
 {
     return (buffer[offset] << 8) + (buffer[offset+1] << 0);
 }
 
-uint32_t GetBufferUint32Be(uint8_t *buffer, uint32_t offset)
+uint32_t GetBufferUint32Be(const uint8_t *buffer, uint32_t offset)
 {
     return (buffer[offset] << 24) + (buffer[offset+1] << 16) + (buffer[offset+2] << 8) + (buffer[offset+3] << 0);
 }

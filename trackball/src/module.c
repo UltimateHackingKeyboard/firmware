@@ -44,6 +44,7 @@ key_vector_t keyVector = {
         {PORTA, GPIOA, kCLOCK_PortA, 3}, // left button
         {PORTA, GPIOA, kCLOCK_PortA, 12}, // right button
     },
+    .keyStates = {0}
 };
 
 #define BUFFER_SIZE 2
