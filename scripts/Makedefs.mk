@@ -91,7 +91,6 @@ CFLAGS = -mthumb                    \
          -Wno-unused-parameter      \
          -Wno-type-limits           \
          -Wshadow                   \
-         -flto                      \
          $(BUILD_FLAGS)
 
 # Compiler options for C++ only.
