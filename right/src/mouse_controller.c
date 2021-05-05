@@ -364,6 +364,8 @@ void processModuleActions(uint8_t moduleId, float x, float y) {
                 }
             }
             break;
+        case NavigationMode_None:
+            break;
         }
     }
 }

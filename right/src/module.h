@@ -18,6 +18,7 @@
         NavigationMode_Scroll,
         NavigationMode_Caret,
         NavigationMode_Media,
+        NavigationMode_None,
     } navigation_mode_t;
 
     typedef struct {
