@@ -83,12 +83,11 @@ static void slaveSchedulerCallback(I2C_Type *base, i2c_master_handle_t *handle, 
             if (wasPreviousSlaveConnected && !previousSlave->isConnected && previousSlave->disconnect) {
                 previousSlave->disconnect(previousSlaveId);
             }
+            else if (! wasPreviousSlaveConnected && previousSlave->isConnected) {
+                previousSlave->init(previousSlave->perDriverId);
+            }
 
             isFirstCycle = false;
-        }
-
-        if (!currentSlave->isConnected) {
-            currentSlave->init(currentSlave->perDriverId);
         }
 
         status_t currentStatus = currentSlave->update(currentSlave->perDriverId);
@@ -115,6 +114,7 @@ void InitSlaveScheduler(void)
     for (uint8_t i=0; i<SLAVE_COUNT; i++) {
         uhk_slave_t *currentSlave = Slaves + i;
         currentSlave->isConnected = false;
+        currentSlave->init(currentSlave->perDriverId);
     }
 
     I2C_MasterTransferCreateHandle(I2C_MAIN_BUS_BASEADDR, &I2cMasterHandle, slaveSchedulerCallback, NULL);
