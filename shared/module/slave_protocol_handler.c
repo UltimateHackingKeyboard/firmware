@@ -92,9 +92,9 @@ void SlaveTxHandler(void)
         }
         case SlaveCommand_RequestKeyStates: {
             #if KEY_ARRAY_TYPE == KEY_ARRAY_TYPE_VECTOR
-                BoolBytesToBits(keyVector.keyStates, TxMessage.data, MODULE_KEY_COUNT);
+                BoolBytesToBits(KeyVector.keyStates, TxMessage.data, MODULE_KEY_COUNT);
             #elif KEY_ARRAY_TYPE == KEY_ARRAY_TYPE_MATRIX
-                BoolBytesToBits(keyMatrix.keyStates, TxMessage.data, MODULE_KEY_COUNT);
+                BoolBytesToBits(KeyMatrix.keyStates, TxMessage.data, MODULE_KEY_COUNT);
             #endif
             uint8_t messageLength = BOOL_BYTES_TO_BITS_COUNT(MODULE_KEY_COUNT);
             if (MODULE_POINTER_COUNT) {
