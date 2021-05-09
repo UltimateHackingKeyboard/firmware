@@ -2,7 +2,7 @@
 
 pointer_delta_t PointerDelta;
 
-key_matrix_t keyMatrix = {
+key_matrix_t KeyMatrix = {
     .colNum = KEYBOARD_MATRIX_COLS_NUM,
     .rowNum = KEYBOARD_MATRIX_ROWS_NUM,
     .cols = (key_matrix_pin_t[]) {
@@ -26,7 +26,7 @@ key_matrix_t keyMatrix = {
 
 void Module_Init(void)
 {
-    KeyMatrix_Init(&keyMatrix);
+    KeyMatrix_Init(&KeyMatrix);
 }
 
 void Module_Loop(void)

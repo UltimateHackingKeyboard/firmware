@@ -5,9 +5,9 @@
 void KEY_SCANNER_HANDLER(void)
 {
     #if KEY_ARRAY_TYPE == KEY_ARRAY_TYPE_VECTOR
-        KeyVector_Scan(&keyVector);
+        KeyVector_Scan(&KeyVector);
     #elif KEY_ARRAY_TYPE == KEY_ARRAY_TYPE_MATRIX
-        KeyMatrix_ScanRow(&keyMatrix);
+        KeyMatrix_ScanRow(&KeyMatrix);
     #endif
     RunWatchdog();
     LPTMR_ClearStatusFlags(KEY_SCANNER_LPTMR_BASEADDR, kLPTMR_TimerCompareFlag);

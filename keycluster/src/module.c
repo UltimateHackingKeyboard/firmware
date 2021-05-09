@@ -28,7 +28,7 @@
 
 pointer_delta_t PointerDelta;
 
-key_vector_t keyVector = {
+key_vector_t KeyVector = {
     .itemNum = KEYBOARD_VECTOR_ITEMS_NUM,
     .items = (key_vector_pin_t[]) {
         {PORTB, GPIOB, kCLOCK_PortB, 10}, // top key
@@ -68,11 +68,10 @@ void InitLedDriverSdb(void)
     GPIO_WritePinOutput(SDB_GPIO, SDB_PIN, 1);
 }
 
-
-bool oldLeft, oldRight, oldUp, oldDown;
-
 void BlackberryTrackball_Update(void)
 {
+    static bool oldLeft = false, oldRight = false, oldUp = false, oldDown = false;
+
     uint8_t newLeft = GPIO_ReadPinInput(BLACKBERRY_TRACKBALL_LEFT_GPIO, BLACKBERRY_TRACKBALL_LEFT_PIN);
     if (oldLeft != newLeft) {
         PointerDelta.x--;
@@ -100,7 +99,7 @@ void BlackberryTrackball_Update(void)
 
 void Module_Init(void)
 {
-    KeyVector_Init(&keyVector);
+    KeyVector_Init(&KeyVector);
     BlackberryTrackball_Init();
     InitLedDriverSdb();
 }
