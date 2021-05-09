@@ -1,6 +1,6 @@
 # Ultimate Hacking Keyboard firmware
 
-[![Build Status](https://travis-ci.org/UltimateHackingKeyboard/firmware.svg?branch=master)](https://travis-ci.org/UltimateHackingKeyboard/firmware)
+[![Build Status](https://cloud.drone.io/api/badges/UltimateHackingKeyboard/firmware/status.svg)](https://cloud.drone.io/UltimateHackingKeyboard/firmware)
 
 This repository hosts the firmware of the [Ultimate Hacking Keyboard](https://ultimatehackingkeyboard.com/).
 

@@ -100,8 +100,8 @@ CXXFLAGS = -felide-constructors -fno-exceptions -fno-rtti
 CSTD = -std=gnu11
 CXXSTD = -std=gnu++14
 
-# Make all warnings into errors when building using Travis CI.
-ifdef TRAVIS
+# Make all warnings into errors when building using CI.
+ifeq ($(CI_BUILD),1)
     CFLAGS += -Werror
 endif
 

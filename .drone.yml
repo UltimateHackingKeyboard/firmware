@@ -16,6 +16,8 @@ steps:
   image: abcminiuser/docker-ci-arm-toolchain:latest
   pull: always
   commands:
+  - export CI_BUILD=1
+  - export VERBOSE=1
   - make -j -C left DEBUG=1
   - make -j -C left DEBUG=0
   - make -j -C right/uhk60v1 DEBUG=1

@@ -151,7 +151,7 @@ Header files are composed of sections. The order of sections is fixed. Every hea
 
 ## Semantics
 
-The build process must not yield any warnings, and the build must pass [on Travis](https://travis-ci.org/UltimateHackingKeyboard/firmware).
+The build process must not yield any warnings, and the build must pass [on on the current CI build platform](https://cloud.drone.io/UltimateHackingKeyboard/firmware).
 
 ## Clang format
 
