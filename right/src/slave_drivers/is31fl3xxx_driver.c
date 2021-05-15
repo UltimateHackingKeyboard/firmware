@@ -206,12 +206,6 @@ void LedSlaveDriver_Init(uint8_t ledDriverId)
             break;
     }
     currentLedDriverState->ledIndex = 0;
-    memset(LedDriverValues[ledDriverId], KeyBacklightBrightness, currentLedDriverState->ledCount);
-
-    if (ledDriverId == LedDriverId_Left || ledDriverId == LedDriverId_ModuleLeft) {
-        UpdateLayerLeds();
-        LedDisplay_UpdateAll();
-    }
 }
 
 status_t LedSlaveDriver_Update(uint8_t ledDriverId)
