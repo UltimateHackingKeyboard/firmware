@@ -22,7 +22,7 @@
 
 void UsbProtocolHandler(void)
 {
-    bzero(GenericHidOutBuffer, USB_GENERIC_HID_OUT_BUFFER_LENGTH);
+    bzero(GenericHidInBuffer, USB_GENERIC_HID_IN_BUFFER_LENGTH);
     uint8_t command = GetUsbRxBufferUint8(0);
     switch (command) {
         case UsbCommandId_GetDeviceProperty:
@@ -93,30 +93,30 @@ void UsbProtocolHandler(void)
 
 uint8_t GetUsbRxBufferUint8(uint32_t offset)
 {
-    return GetBufferUint8(GenericHidInBuffer, offset);
+    return GetBufferUint8(GenericHidOutBuffer, offset);
 }
 
 uint16_t GetUsbRxBufferUint16(uint32_t offset)
 {
-    return GetBufferUint16(GenericHidInBuffer, offset);
+    return GetBufferUint16(GenericHidOutBuffer, offset);
 }
 
 uint32_t GetUsbRxBufferUint32(uint32_t offset)
 {
-    return GetBufferUint32(GenericHidInBuffer, offset);
+    return GetBufferUint32(GenericHidOutBuffer, offset);
 }
 
 void SetUsbTxBufferUint8(uint32_t offset, uint8_t value)
 {
-    SetBufferUint8(GenericHidOutBuffer, offset, value);
+    SetBufferUint8(GenericHidInBuffer, offset, value);
 }
 
 void SetUsbTxBufferUint16(uint32_t offset, uint16_t value)
 {
-    SetBufferUint16(GenericHidOutBuffer, offset, value);
+    SetBufferUint16(GenericHidInBuffer, offset, value);
 }
 
 void SetUsbTxBufferUint32(uint32_t offset, uint32_t value)
 {
-    SetBufferUint32(GenericHidOutBuffer, offset, value);
+    SetBufferUint32(GenericHidInBuffer, offset, value);
 }

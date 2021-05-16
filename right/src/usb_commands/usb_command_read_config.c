@@ -13,7 +13,7 @@ void UsbCommand_ReadConfig()
         SetUsbTxBufferUint8(0, UsbStatusCode_ReadConfig_InvalidConfigBufferId);
     }
 
-    if (length > USB_GENERIC_HID_OUT_BUFFER_LENGTH - USB_STATUS_CODE_SIZE) {
+    if (length > USB_GENERIC_HID_IN_BUFFER_LENGTH - USB_STATUS_CODE_SIZE) {
         SetUsbTxBufferUint8(0, UsbStatusCode_ReadConfig_LengthTooLarge);
         return;
     }
@@ -26,5 +26,5 @@ void UsbCommand_ReadConfig()
         return;
     }
 
-    memcpy(GenericHidOutBuffer + USB_STATUS_CODE_SIZE, buffer->buffer + offset, length);
+    memcpy(GenericHidInBuffer + USB_STATUS_CODE_SIZE, buffer->buffer + offset, length);
 }

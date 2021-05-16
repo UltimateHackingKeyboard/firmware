@@ -52,19 +52,19 @@ void UsbCommand_GetDeviceProperty(void)
 
     switch (propertyId) {
         case DevicePropertyId_DeviceProtocolVersion:
-            memcpy(GenericHidOutBuffer+1, (uint8_t*)&deviceProtocolVersion, sizeof(deviceProtocolVersion));
+            memcpy(GenericHidInBuffer+1, (uint8_t*)&deviceProtocolVersion, sizeof(deviceProtocolVersion));
             break;
         case DevicePropertyId_ProtocolVersions:
-            memcpy(GenericHidOutBuffer+1, (uint8_t*)&protocolVersions, sizeof(protocolVersions));
+            memcpy(GenericHidInBuffer+1, (uint8_t*)&protocolVersions, sizeof(protocolVersions));
             break;
         case DevicePropertyId_ConfigSizes:
-            memcpy(GenericHidOutBuffer+1, (uint8_t*)&configSizes, sizeof(configSizes));
+            memcpy(GenericHidInBuffer+1, (uint8_t*)&configSizes, sizeof(configSizes));
             break;
         case DevicePropertyId_CurrentKbootCommand:
-            GenericHidOutBuffer[1] = KbootDriverState.command;
+            GenericHidInBuffer[1] = KbootDriverState.command;
             break;
         case DevicePropertyId_I2cMainBusBaudRate:
-            GenericHidOutBuffer[1] = I2C_MAIN_BUS_BASEADDR->F;
+            GenericHidInBuffer[1] = I2C_MAIN_BUS_BASEADDR->F;
             SetUsbTxBufferUint32(2, I2cMainBusRequestedBaudRateBps);
             SetUsbTxBufferUint32(6, I2cMainBusActualBaudRateBps);
             break;
