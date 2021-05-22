@@ -17,9 +17,9 @@ void UsbCommand_GetModuleProperty()
         case ModulePropertyId_VersionNumbers: {
             uint8_t moduleDriverId = UhkModuleSlaveDriver_SlotIdToDriverId(slotId);
             uhk_module_state_t *moduleState = UhkModuleStates + moduleDriverId;
-            GenericHidOutBuffer[1] = moduleState->moduleId;
-            memcpy(GenericHidOutBuffer + 2, &moduleState->moduleProtocolVersion, sizeof(version_t));
-            memcpy(GenericHidOutBuffer + 8, &moduleState->firmwareVersion, sizeof(version_t));
+            GenericHidInBuffer[1] = moduleState->moduleId;
+            memcpy(GenericHidInBuffer + 2, &moduleState->moduleProtocolVersion, sizeof(version_t));
+            memcpy(GenericHidInBuffer + 8, &moduleState->firmwareVersion, sizeof(version_t));
             break;
         }
     }

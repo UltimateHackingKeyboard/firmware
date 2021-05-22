@@ -12,7 +12,7 @@
 #include "usb_interfaces/usb_interface_system_keyboard.h"
 #include "usb_interfaces/usb_interface_mouse.h"
 
-uint8_t DebugBuffer[USB_GENERIC_HID_OUT_BUFFER_LENGTH];
+uint8_t DebugBuffer[USB_GENERIC_HID_IN_BUFFER_LENGTH];
 
 void UsbCommand_GetDebugBuffer(void)
 {
@@ -29,7 +29,7 @@ void UsbCommand_GetDebugBuffer(void)
     SetDebugBufferUint32(41, UsbSystemKeyboardActionCounter);
     SetDebugBufferUint32(45, UsbMouseActionCounter);
 
-    memcpy(GenericHidOutBuffer, DebugBuffer, USB_GENERIC_HID_OUT_BUFFER_LENGTH);
+    memcpy(GenericHidInBuffer, DebugBuffer, USB_GENERIC_HID_IN_BUFFER_LENGTH);
 }
 
 void SetDebugBufferUint8(uint32_t offset, uint8_t value)

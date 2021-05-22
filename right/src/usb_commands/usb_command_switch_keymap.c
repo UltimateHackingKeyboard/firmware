@@ -5,7 +5,7 @@
 void UsbCommand_SwitchKeymap(void)
 {
     uint32_t keymapLength = GetUsbRxBufferUint8(1);
-    char *keymapAbbrev = (char*)GenericHidInBuffer + 2;
+    char *keymapAbbrev = (char*)GenericHidOutBuffer + 2;
 
     if (keymapLength > KEYMAP_ABBREVIATION_LENGTH) {
         SetUsbTxBufferUint8(0, UsbStatusCode_SwitchKeymap_InvalidAbbreviationLength);
