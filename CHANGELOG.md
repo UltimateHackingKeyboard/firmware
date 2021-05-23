@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [8.10.10] - 2021-05-23
+
+Device Protocol: 4.7.1 | Module Protocol: 4.1.0 | User Config: 4.2.0 | Hardware Config: 1.0.0
+
+- Fix occasional, accidental scrolling on key cluster module initialization.
+- Always initialize key cluster module LEDs with the correct colors.
+- Fix a number of USB-related compliance issues potentially resolving various USB issues.
+
 ## [8.10.9] - 2021-04-21
 
 Device Protocol: 4.7.1 | Module Protocol: 4.1.0 | User Config: 4.2.0 | Hardware Config: 1.0.0
