@@ -70,7 +70,7 @@ void InitLedDriverSdb(void)
 
 void BlackberryTrackball_Update(void)
 {
-    static bool oldLeft = false, oldRight = false, oldUp = false, oldDown = false;
+    static bool oldLeft, oldRight, oldUp, oldDown, firstRun=true;
 
     uint8_t newLeft = GPIO_ReadPinInput(BLACKBERRY_TRACKBALL_LEFT_GPIO, BLACKBERRY_TRACKBALL_LEFT_PIN);
     if (oldLeft != newLeft) {
@@ -94,6 +94,12 @@ void BlackberryTrackball_Update(void)
     if (oldDown != newDown) {
         PointerDelta.y++;
         oldDown = newDown;
+    }
+
+    if (firstRun) {
+        PointerDelta.x = 0;
+        PointerDelta.y = 0;
+        firstRun = false;
     }
 }
 
