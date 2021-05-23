@@ -273,6 +273,11 @@ static usb_status_t usbDeviceCallback(usb_device_handle handle, uint32_t event, 
             wakeUpHostAllowed = *temp8;
             status = kStatus_USB_Success;
             break;
+        case kUSB_DeviceEventGetDeviceStatus:
+            if (wakeUpHostAllowed)
+                *temp16 |= (USB_DEVICE_CONFIG_REMOTE_WAKEUP << (USB_REQUSET_STANDARD_GET_STATUS_DEVICE_REMOTE_WARKUP_SHIFT));
+            status = kStatus_USB_Success;
+            break;
     }
 
     return status;
