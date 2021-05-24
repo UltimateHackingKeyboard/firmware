@@ -11,7 +11,7 @@ Device Protocol: 4.7.1 | Module Protocol: 4.1.0 | User Config: 4.2.0 | Hardware 
 
 - Fix occasional, accidental scrolling on key cluster module initialization.
 - Always initialize key cluster module LEDs with the correct colors.
-- Fix a number of USB-related compliance issues potentially resolving various USB issues.
+- Fix macOS wake up and a number of USB-related compliance issues potentially resolving other USB issues.
 
 ## [8.10.9] - 2021-04-21
 
