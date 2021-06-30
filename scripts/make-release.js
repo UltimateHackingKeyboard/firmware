@@ -29,23 +29,27 @@ for (sourcePath of sourcePaths) {
     exec(`cd ${buildDir}/..; make clean; make -j8`);
 }
 
-exec(`git pull origin master; git checkout master; npm ci; npm run build`, { cwd: agentDir });
+exec(`npm ci; npm run build`, { cwd: agentDir });
 
 for (const device of package.devices) {
     const deviceDir = `${releaseDir}/devices/${device.name}`;
     const deviceSource = `${__dirname}/../${device.source}`;
+    const deviceMMap = `${__dirname}/../${device.mmap}`;
     mkdir('-p', deviceDir);
     chmod(644, deviceSource);
     cp(deviceSource, `${deviceDir}/firmware.hex`);
+    cp(deviceMMap, `${deviceDir}/firmware.map`);
     exec(`npm run convert-user-config-to-bin -- ${deviceDir}/config.bin`, { cwd: agentDir });
 }
 
 for (const module of package.modules) {
     const moduleDir = `${releaseDir}/modules`;
     const moduleSource = `${__dirname}/../${module.source}`;
+    const moduleMMap = `${__dirname}/../${module.mmap}`;
     mkdir('-p', moduleDir);
     chmod(644, moduleSource);
     cp(moduleSource, `${moduleDir}/${module.name}.bin`);
+    cp(moduleMMap, `${moduleDir}/${module.name}.map`);
 }
 
 cp(`${__dirname}/package.json`, releaseDir);

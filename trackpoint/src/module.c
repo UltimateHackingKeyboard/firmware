@@ -3,22 +3,23 @@
 
 pointer_delta_t PointerDelta;
 
-key_vector_t keyVector = {
+key_vector_t KeyVector = {
     .itemNum = KEYBOARD_VECTOR_ITEMS_NUM,
     .items = (key_vector_pin_t[]) {
         {PORTB, GPIOB, kCLOCK_PortB,  5}, // left microswitch
         {PORTA, GPIOA, kCLOCK_PortA,  12}, // right microswitch
     },
+    .keyStates = {0}
 };
 
 void Module_Init(void)
 {
-    KeyVector_Init(&keyVector);
+    KeyVector_Init(&KeyVector);
 
     CLOCK_EnableClock(PS2_CLOCK_CLOCK);
     PORT_SetPinConfig(PS2_CLOCK_PORT, PS2_CLOCK_PIN,
                       &(port_pin_config_t){/*.pullSelect=kPORT_PullDown,*/ .mux=kPORT_MuxAsGpio});
-    GPIO_PinInit(PS2_CLOCK_GPIO, PS2_CLOCK_PIN, &(gpio_pin_config_t){kGPIO_DigitalInput});
+    GPIO_PinInit(PS2_CLOCK_GPIO, PS2_CLOCK_PIN, &(gpio_pin_config_t){.pinDirection=kGPIO_DigitalInput, .outputLogic=0});
 
     PORT_SetPinInterruptConfig(PS2_CLOCK_PORT, PS2_CLOCK_PIN, kPORT_InterruptEitherEdge);
     EnableIRQ(PS2_CLOCK_IRQ);
@@ -27,7 +28,7 @@ void Module_Init(void)
     CLOCK_EnableClock(PS2_DATA_CLOCK);
     PORT_SetPinConfig(PS2_DATA_PORT, PS2_DATA_PIN,
                       &(port_pin_config_t){/*.pullSelect=kPORT_PullDown,*/ .mux=kPORT_MuxAsGpio});
-    GPIO_PinInit(PS2_DATA_GPIO, PS2_DATA_PIN, &(gpio_pin_config_t){kGPIO_DigitalInput});
+    GPIO_PinInit(PS2_DATA_GPIO, PS2_DATA_PIN, &(gpio_pin_config_t){.pinDirection=kGPIO_DigitalInput, .outputLogic=0});
 
 }
 
@@ -40,14 +41,14 @@ uint32_t downTransitionCount = 0;
 void requestToSend()
 {
     for (volatile uint32_t i=0; i<150; i++);
-    GPIO_PinInit(PS2_CLOCK_GPIO, PS2_CLOCK_PIN, &(gpio_pin_config_t){kGPIO_DigitalOutput});
+    GPIO_PinInit(PS2_CLOCK_GPIO, PS2_CLOCK_PIN, &(gpio_pin_config_t){.pinDirection=kGPIO_DigitalOutput, .outputLogic=0});
     GPIO_WritePinOutput(PS2_CLOCK_GPIO, PS2_CLOCK_PIN, 0);
     for (volatile uint32_t i=0; i<150; i++);
-    GPIO_PinInit(PS2_DATA_GPIO, PS2_DATA_PIN, &(gpio_pin_config_t){kGPIO_DigitalOutput});
+    GPIO_PinInit(PS2_DATA_GPIO, PS2_DATA_PIN, &(gpio_pin_config_t){.pinDirection=kGPIO_DigitalOutput, .outputLogic=0});
     GPIO_WritePinOutput(PS2_DATA_GPIO, PS2_DATA_PIN, 0);
     for (volatile uint32_t i=0; i<150; i++);
     GPIO_WritePinOutput(PS2_CLOCK_GPIO, PS2_CLOCK_PIN, 1);
-    GPIO_PinInit(PS2_CLOCK_GPIO, PS2_CLOCK_PIN, &(gpio_pin_config_t){kGPIO_DigitalInput});
+    GPIO_PinInit(PS2_CLOCK_GPIO, PS2_CLOCK_PIN, &(gpio_pin_config_t){.pinDirection=kGPIO_DigitalInput, .outputLogic=0});
 }
 
 uint8_t bitId = 0;
@@ -59,7 +60,7 @@ bool writeByte()
     static bool parityBit;
 
     if (bitId == 10 && clockState == 0) {
-        GPIO_PinInit(PS2_DATA_GPIO, PS2_DATA_PIN, &(gpio_pin_config_t){kGPIO_DigitalInput});
+        GPIO_PinInit(PS2_DATA_GPIO, PS2_DATA_PIN, &(gpio_pin_config_t){.pinDirection=kGPIO_DigitalInput, .outputLogic=0});
         return true;
     }
 
@@ -71,7 +72,7 @@ bool writeByte()
         case 0 ... 7: {
             if (bitId == 0) {
                 parityBit = 1;
-                GPIO_PinInit(PS2_DATA_GPIO, PS2_DATA_PIN, &(gpio_pin_config_t){kGPIO_DigitalOutput});
+                GPIO_PinInit(PS2_DATA_GPIO, PS2_DATA_PIN, &(gpio_pin_config_t){.pinDirection=kGPIO_DigitalOutput, .outputLogic=0});
             }
             bool dataBit = buffer & (1 << bitId);
             if (dataBit) {
@@ -169,6 +170,7 @@ void PS2_CLOCK_IRQ_HANDLER(void) {
             bitId = 0;
             buffer = 0xf4;
             phase = 5;
+            break;
         }
         case 5: {
             if (writeByte()) {

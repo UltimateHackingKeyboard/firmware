@@ -48,6 +48,7 @@ usb_device_interface_struct_t g_hid_generic_interface[] = { {
         USB_HID_GENERIC_ENDPOINT_COUNT, /* Endpoint count */
         g_hid_generic_endpoints,        /* Endpoints handle */
     },
+    NULL
 } };
 
 usb_device_interfaces_struct_t g_hid_generic_interfaces[USB_HID_GENERIC_INTERFACE_COUNT] = { {

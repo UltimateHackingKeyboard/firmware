@@ -16,6 +16,8 @@
 #include "slave_scheduler.h"
 #include "layer_switcher.h"
 #include "usb_report_updater.h"
+#include "caret_config.h"
+#include "keymap.h"
 
 static uint32_t mouseUsbReportUpdateTime = 0;
 static uint32_t mouseElapsedTime;
@@ -214,8 +216,8 @@ static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
 
 static float computeModuleSpeed(float x, float y, uint8_t moduleId)
 {
+    //means that driver multiplier equals 1.0 at average speed midSpeed px/ms
     static float midSpeed = 3.0f;
-    static float accelerationExp = 0.5f;
     module_configuration_t *moduleConfiguration = GetModuleConfiguration(moduleId);
     float *currentSpeed = &moduleConfiguration->currentSpeed;
 
@@ -228,31 +230,10 @@ static float computeModuleSpeed(float x, float y, uint8_t moduleId)
     }
 
     float normalizedSpeed = *currentSpeed/midSpeed;
-    return moduleConfiguration->speed*(float)pow(moduleConfiguration->acceleration * normalizedSpeed, accelerationExp);
+    return moduleConfiguration->baseSpeed + moduleConfiguration->speed*(float)pow(normalizedSpeed, moduleConfiguration->acceleration);
 }
 
-uint8_t touchpadScrollDivisor = 8;
-
-static void processTouchpadActions(float *outX, float *outY) {
-    float speed = computeModuleSpeed(TouchpadEvents.x, TouchpadEvents.y, ModuleId_TouchpadRight);
-    *outX += speed*TouchpadEvents.x;
-    *outY += speed*TouchpadEvents.y;
-    TouchpadEvents.x = 0;
-    TouchpadEvents.y = 0;
-
-    uint8_t wheelXInteger = TouchpadEvents.wheelX / touchpadScrollDivisor;
-    if (wheelXInteger) {
-        ActiveUsbMouseReport->wheelX += wheelXInteger;
-        TouchpadEvents.wheelX = TouchpadEvents.wheelX % touchpadScrollDivisor;
-    }
-
-    uint8_t wheelYInteger = TouchpadEvents.wheelY / touchpadScrollDivisor;
-    if (wheelYInteger) {
-        ActiveUsbMouseReport->wheelY -= wheelYInteger;
-        TouchpadEvents.wheelY = TouchpadEvents.wheelY % touchpadScrollDivisor;
-    }
-
-
+static void processTouchpadActions() {
     if (TouchpadEvents.singleTap) {
         ActiveUsbMouseReport->buttons |= MouseButton_Left;
         TouchpadEvents.singleTap = false;
@@ -268,66 +249,144 @@ static void processTouchpadActions(float *outX, float *outY) {
     }
 }
 
-//This is current calculated pointer speed in px/s
-static float currentSpeed = 0.0f;
+//todo: break this function into parts
+void processModuleActions(uint8_t moduleId, float x, float y) {
+    module_configuration_t *moduleConfiguration = GetModuleConfiguration(moduleId);
+    navigation_mode_t navigationMode = moduleConfiguration->navigationModes[ActiveLayer];
+    int16_t yInversion = moduleId == ModuleId_KeyClusterLeft ||  moduleId == ModuleId_TouchpadRight ? -1 : 1;
+    static caret_axis_t caretAxis = CaretAxis_None;
+    static key_state_t caretFakeKeystate = {};
+    static key_action_t* caretAction = &CurrentKeymap[0][0][0];
+    int8_t scrollSpeedDivisor = 8;
+    float caretSpeedDivisor = 16;
+    float caretSkewStrength = 0.5f;
 
-static void recalculateCurrentSpeed(float x, float y) {
-    if(x != 0 || y != 0) {
-        static uint32_t lastUpdate = 0;
-        currentSpeed = (float)sqrt(x*x + y*y) * 1000.0f / (CurrentTime - lastUpdate);
-        lastUpdate = CurrentTime;
+    float speed = computeModuleSpeed(x, y, moduleId);
+
+    static float xFractionRemainder = 0.0f;
+    static float yFractionRemainder = 0.0f;
+    float xIntegerPart;
+    float yIntegerPart;
+
+    if (moduleId == ModuleId_KeyClusterLeft) {
+        scrollSpeedDivisor = 1;
+        caretSpeedDivisor = 1;
+        speed = navigationMode == NavigationMode_Cursor ? 5 : 1;
+    }
+
+    switch (navigationMode) {
+        case NavigationMode_Cursor: {
+            xFractionRemainder = modff(xFractionRemainder + x * speed, &xIntegerPart);
+            yFractionRemainder = modff(yFractionRemainder + y * speed, &yIntegerPart);
+
+            ActiveUsbMouseReport->x += xIntegerPart;
+            ActiveUsbMouseReport->y -= yInversion*yIntegerPart;
+
+            break;
+        }
+        case NavigationMode_Scroll: {
+            if (moduleId == ModuleId_KeyClusterLeft && (x != 0 || y != 0)) {
+                xFractionRemainder = 0;
+                yFractionRemainder = 0;
+            }
+
+            xFractionRemainder = modff(xFractionRemainder + x * speed / scrollSpeedDivisor, &xIntegerPart);
+            yFractionRemainder = modff(yFractionRemainder + y * speed / scrollSpeedDivisor, &yIntegerPart);
+
+            ActiveUsbMouseReport->wheelX += xIntegerPart;
+            ActiveUsbMouseReport->wheelY += yInversion*yIntegerPart;
+            break;
+        }
+        case NavigationMode_Media:
+        case NavigationMode_Caret: {
+            //optimize this out if nothing is going on
+            if (x == 0 && y == 0 && caretAxis == CaretAxis_None) {
+                break;
+            }
+            caret_configuration_t* currentCaretConfig = GetModuleCaretConfiguration(moduleId, navigationMode);
+
+            //unlock axis if inactive for some time and re-activate tick trashold`
+            if (x != 0 || y != 0) {
+                static uint16_t lastUpdate = 0;
+
+                if (CurrentTime - lastUpdate > 500 && caretAxis != CaretAxis_None) {
+                    xFractionRemainder = 0;
+                    yFractionRemainder = 0;
+                    caretAxis = CaretAxis_None;
+                }
+                lastUpdate = CurrentTime;
+            }
+
+            // caretAxis tries to lock to one direction, therefore we "skew" the other one
+            float caretXModeMultiplier;
+            float caretYModeMultiplier;
+
+            if(caretAxis == CaretAxis_None) {
+                // if no axis is locked atm, tweak trigger sensitivity depending on module
+                if (moduleId == ModuleId_KeyClusterLeft) {
+                    caretXModeMultiplier = caretSkewStrength;
+                    caretYModeMultiplier = caretSkewStrength;
+                } else {
+                    caretXModeMultiplier = 1.0f;
+                    caretYModeMultiplier = 1.0f;
+                }
+            } else {
+                caretXModeMultiplier = caretAxis == CaretAxis_Horizontal ? 1.0f : caretSkewStrength;
+                caretYModeMultiplier = caretAxis == CaretAxis_Vertical ? 1.0f : caretSkewStrength;
+            }
+
+            xFractionRemainder += x * speed / caretSpeedDivisor * caretXModeMultiplier;
+            yFractionRemainder += y * speed / caretSpeedDivisor * caretYModeMultiplier;
+
+
+            //If there is an ongoing action, just handle that action via a fake state. Ensure that full lifecycle of a key gets executed.
+            if (caretFakeKeystate.current || caretFakeKeystate.previous) {
+                bool tmp = caretFakeKeystate.current;
+                caretFakeKeystate.current = !caretFakeKeystate.previous;
+                caretFakeKeystate.previous = tmp;
+                ApplyKeyAction(&caretFakeKeystate, caretAction, caretAction);
+            }
+            //If we want to start a new action (new "tick")
+            else {
+                // determine current axis properties and setup indirections for easier handling
+                caret_axis_t axisCandidate = caretAxis == CaretAxis_Inactive ? CaretAxis_Vertical : caretAxis;
+                float* axisFractionRemainders [CaretAxis_Count] = {&xFractionRemainder, &yFractionRemainder};
+                float axisIntegerParts [CaretAxis_Count] = { 0, 0 };
+
+                modff(xFractionRemainder, &axisIntegerParts[CaretAxis_Horizontal]);
+                modff(yFractionRemainder, &axisIntegerParts[CaretAxis_Vertical]);
+
+                // pick axis to apply action on, if possible - check previously active axis first
+                if ( axisIntegerParts[axisCandidate] != 0 ) {
+                    axisCandidate = axisCandidate;
+                } else if ( axisIntegerParts[1 - axisCandidate] != 0 ) {
+                    axisCandidate = 1 - axisCandidate;
+                } else {
+                    axisCandidate = CaretAxis_None;
+                }
+
+                // handle the action
+                if ( axisCandidate < CaretAxis_Count ) {
+                    caretAxis = axisCandidate;
+                    float sgn = axisIntegerParts[axisCandidate] > 0 ? 1 : -1;
+                    int8_t currentAxisInversion = axisCandidate == CaretAxis_Vertical ? yInversion : 1;
+                    *axisFractionRemainders[1 - axisCandidate] = 0.0f;
+                    *axisFractionRemainders[axisCandidate] -= sgn;
+                    caret_dir_action_t* dirActions = &currentCaretConfig->axisActions[caretAxis];
+                    caretAction = sgn*currentAxisInversion > 0 ? &dirActions->positiveAction : &dirActions->negativeAction;
+                    caretFakeKeystate.current = true;
+                    ApplyKeyAction(&caretFakeKeystate, caretAction, caretAction);
+                }
+            }
+            break;
+        case NavigationMode_None:
+            break;
+        }
     }
 }
 
-/*
- * Interpretation
- * - (baseSpeedCoef) is fixed part of the multiplier, which is not affected by acceleration
- * - (midSpeedCoef)  is variable part of the multiplier, which is then affected by acceleration exponent
- * - (baseSpeedCoef + midSpeedCoef) is speed multiplier achieved at speed midSpeed (px/s).
- *
- * For simple configuration, leave baseSpeedCoef and midSpeed unchanged, while exposing:
- * - speed        = midSpeedCoef
- * - acceleration = accelerationExp
- */
-static float baseSpeedCoef = 0.0f;
-static float midSpeed = 3000.0f;
-static float midSpeedCoef = 1.0f;
-static float accelerationExp = 0.5f;
-
-static float expDriver(float x, float y)
-{
-    float normalizedSpeed = currentSpeed/midSpeed;
-    return baseSpeedCoef + midSpeedCoef*(float)pow(normalizedSpeed, accelerationExp);
-}
-
-void MouseController_SetExpDriverParams(float baseSpeedCoef_, float midSpeedCoef_, float accelerationExp_, float midSpeed_)
-{
-    baseSpeedCoef = baseSpeedCoef_;
-    midSpeed = midSpeed_;
-    midSpeedCoef = midSpeedCoef_;
-    accelerationExp = accelerationExp_;
-
-}
-
-#define NONE 0
-#define LX 1
-#define LY 2
-
 void MouseController_ProcessMouseActions()
 {
-    const uint8_t wC = 10;
-    const uint8_t wTrsh = 2;
-    static uint8_t wLastX = NONE;
-    static int8_t wX = 0;
-    static int8_t wY = 0;
-    static uint32_t lastUpdate = 0;
-    static uint32_t lastTick = 0;
-
-    static float sumX = 0.0f;
-    static float sumY = 0.0f;
-    static bool firstTick = false;
-    bool moveDeltaChanged = false;
-
     mouseElapsedTime = Timer_GetElapsedTimeAndSetCurrent(&mouseUsbReportUpdateTime);
 
     processMouseKineticState(&MouseMoveState);
@@ -343,213 +402,22 @@ void MouseController_ProcessMouseActions()
     MouseScrollState.yOut = 0;
 
     if (Slaves[SlaveId_RightTouchpad].isConnected) {
-        moveDeltaChanged = true;
-        processTouchpadActions(&sumX, &sumY);
+        processTouchpadActions();
+        processModuleActions(ModuleId_TouchpadRight, (int16_t)TouchpadEvents.x, (int16_t)TouchpadEvents.y);
+        TouchpadEvents.x = 0;
+        TouchpadEvents.y = 0;
     }
 
     for (uint8_t moduleSlotId=0; moduleSlotId<UHK_MODULE_MAX_SLOT_COUNT; moduleSlotId++) {
         uhk_module_state_t *moduleState = UhkModuleStates + moduleSlotId;
-        if (moduleState->pointerCount) {
-//            /*
-//            moveDeltaChanged = true;
-//            switch(moduleState -> moduleId) {
-//            case ModuleId_KeyClusterLeft:
-//                ActiveUsbMouseReport->wheelX += moduleState->pointerDelta.x;
-//                ActiveUsbMouseReport->wheelY -= moduleState->pointerDelta.y;
-////                if(moduleState -> pointerDelta.x != 0 || moduleState -> pointerDelta.y != 0) {
-////                    if(CurrentTime - lastUpdate > 1000) {
-////                        wX = 0;
-////                        wY = 0;
-////                        wLastX = NONE;
-////                    }
-////                    lastUpdate = CurrentTime;
-////                }
-////
-////                wX += moduleState->pointerDelta.x;
-////                wY += moduleState->pointerDelta.y;
-////
-////                if((wX >= wC && wLastX == LX) || wX >= wC*wTrsh) {
-////                    ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = HID_KEYBOARD_SC_RIGHT_ARROW;
-////                    wX = 0;
-////                    wY = 0;
-////                    wLastX = LX;
-////                }
-////                if((wX <= -wC && wLastX == LX) || wX <= -wC*wTrsh) {
-////                    ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = HID_KEYBOARD_SC_LEFT_ARROW;
-////                    wX = 0;
-////                    wY = 0;
-////                    wLastX = LX;
-////                }
-////                if((wY >= wC && wLastX == LY) || wY >= wC*wTrsh) {
-////                    ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = HID_KEYBOARD_SC_DOWN_ARROW;
-////                    wX = 0;
-////                    wY = 0;
-////                    wLastX = LY;
-////                }
-////                if((wY <= -wC && wLastX == LY) || wY <= -wC*wTrsh) {
-////                    ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = HID_KEYBOARD_SC_UP_ARROW;
-////                    wX = 0;
-////                    wY = 0;
-////                    wLastX = LY;
-////                }
-//                break;
-//            case ModuleId_TouchpadRight:
-//            {
-//                /** Nothing is here, look elsewhere! */
-//            }
-//                break;
-//            case ModuleId_TrackballRight:
-//            case ModuleId_TrackpointRight:
-//            {
-//                float x = (int16_t)moduleState->pointerDelta.x;
-//                float y = (int16_t)moduleState->pointerDelta.y;
-//                recalculateCurrentSpeed(x, y);
-//                float q = expDriver(x, y);
-//                sumX += q*x;
-//                sumY -= q*y;
-//            }
-//*/
-            module_configuration_t *moduleConfiguration = GetModuleConfiguration(moduleState->moduleId);
-            switch (moduleState->moduleId) {
-                case ModuleId_KeyClusterLeft:
-                case ModuleId_TrackballRight:
-                case ModuleId_TrackpointRight: {
-                    float x = (int16_t)moduleState->pointerDelta.x;
-                    float y = (int16_t)moduleState->pointerDelta.y;
-                    float speed = computeModuleSpeed(x, y, moduleState->moduleId);
-                    navigation_mode_t navigationMode = moduleConfiguration->navigationModes[ActiveLayer];
-                    switch (navigationMode) {
-                        case NavigationMode_Cursor:
-                            sumX += speed*x;
-                            sumY -= speed*y;
-                            break;
-                        case NavigationMode_Scroll:
-                            ActiveUsbMouseReport->wheelX += moduleState->pointerDelta.x;
-                            ActiveUsbMouseReport->wheelY -= moduleState->pointerDelta.y;
-                            break;
-                        default:
-                            break;
-                    }
-                    break;
-                }
-                case ModuleId_TouchpadRight: {
-                    // The touchpad has its own driver. See processTouchpadActions()
-                    break;
-                }
-            }
-            moduleState->pointerDelta.x = 0;
-            moduleState->pointerDelta.y = 0;
+        if (moduleState->moduleId == ModuleId_Unavailable || moduleState->pointerCount == 0) {
+            continue;
         }
-    }
 
-//<<<<<<< HEAD
-//    bool scrollMode = ActiveLayer == LayerId_Mouse;
-//    bool caretMode = ActiveLayer == LayerId_Fn;
-//    float scrollSpeedDivisor = 8.0f;
-//    if(moveDeltaChanged) {
-//        float xSumInt;
-//        float ySumInt;
-//        if(scrollMode) {
-//            sumX /= scrollSpeedDivisor;
-//            sumY /= scrollSpeedDivisor;
-//        }
-//        sumX = modff(sumX, &xSumInt);
-//        sumY = modff(sumY, &ySumInt);
-//        if(scrollMode) {
-//            ActiveUsbMouseReport->wheelX += xSumInt;
-//            ActiveUsbMouseReport->wheelY -= ySumInt;
-//            sumX *= scrollSpeedDivisor;
-//            sumY *= scrollSpeedDivisor;
-//        } else if (caretMode) {
-//            if(xSumInt != 0 || ySumInt != 0) {
-//                if(firstTick && CurrentTime - lastUpdate < 100 && false) {
-//                    xSumInt = 0;
-//                    ySumInt = 0;
-//                } else {
-//                    firstTick = false;
-//
-//                    if(CurrentTime - lastUpdate > 500) {
-//                        wX = 0;
-//                        wY = 0;
-//                        wLastX = NONE;
-//                    }
-//
-//                    lastUpdate = CurrentTime;
-//                }
-//            }
-//
-//            wX += xSumInt;
-//            wY += ySumInt;
-//
-//#define FIRST_TICK(ax) (ax > wC && wLastX == NONE)
-//#define FIRST_TICKB(ax) (ax > wC && wLastX == NONE)
-//
-//            uint8_t prevMode = wLastX;
-//
-//            if((wX >= wC && wLastX == LX) || wX >= wC*wTrsh || FIRST_TICK(wX)) {
-//                ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = HID_KEYBOARD_SC_RIGHT_ARROW;
-//                wX = 0;
-//                wY = 0;
-//                wLastX = LX;
-//                lastTick = CurrentTime;
-//            }
-//            if((wX <= -wC && wLastX == LX) || wX <= -wC*wTrsh || FIRST_TICK(-wX)) {
-//                ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = HID_KEYBOARD_SC_LEFT_ARROW;
-//                wX = 0;
-//                wY = 0;
-//                wLastX = LX;
-//                lastTick = CurrentTime;
-//            }
-//            if((wY >= wC && wLastX == LY) || wY >= wC*wTrsh || FIRST_TICK(wY)) {
-//                ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = HID_KEYBOARD_SC_DOWN_ARROW;
-//                wX = 0;
-//                wY = 0;
-//                wLastX = LY;
-//                lastTick = CurrentTime;
-//            }
-//            if((wY <= -wC && wLastX == LY) || wY <= -wC*wTrsh || FIRST_TICK(-wY)) {
-//                ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = HID_KEYBOARD_SC_UP_ARROW;
-//                wX = 0;
-//                wY = 0;
-//                wLastX = LY;
-//                lastTick = CurrentTime;
-//            }
-//
-//            if(wLastX != NONE && prevMode == NONE) {
-//                firstTick = true;
-//            }
-//        } else {
-//            ActiveUsbMouseReport->x += xSumInt;
-//            ActiveUsbMouseReport->y += ySumInt;
-//        }
-//=======
-    const float scrollSpeedDivisor = 8.0f;
-    float xSumInt;
-    float ySumInt;
-    if (ActiveLayer == LayerId_Mouse) {
-        sumX /= scrollSpeedDivisor;
-        sumY /= scrollSpeedDivisor;
+        processModuleActions(moduleState->moduleId, (int16_t)moduleState->pointerDelta.x, (int16_t)moduleState->pointerDelta.y);
+        moduleState->pointerDelta.x = 0;
+        moduleState->pointerDelta.y = 0;
     }
-    sumX = modff(sumX, &xSumInt);
-    sumY = modff(sumY, &ySumInt);
-    if (ActiveLayer == LayerId_Mouse) {
-        ActiveUsbMouseReport->wheelX += xSumInt;
-        ActiveUsbMouseReport->wheelY -= ySumInt;
-        sumX *= scrollSpeedDivisor;
-        sumY *= scrollSpeedDivisor;
-    } else {
-        ActiveUsbMouseReport->x += xSumInt;
-        ActiveUsbMouseReport->y += ySumInt;
-//>>>>>>> origin/master
-    }
-
-//  The following line makes the firmware crash for some reason:
-//  SetDebugBufferFloat(60, mouseScrollState.currentSpeed);
-//  TODO: Figure out why.
-//  Oddly, the following line (which is the inlined version of the above) works:
-//  *(float*)(DebugBuffer + 60) = mouseScrollState.currentSpeed;
-//  The value parameter of SetDebugBufferFloat() seems to be the culprit because
-//  if it's not used within the function it doesn't crash anymore.
 
     if (ActiveMouseStates[SerializedMouseAction_LeftClick]) {
         ActiveUsbMouseReport->buttons |= MouseButton_Left;

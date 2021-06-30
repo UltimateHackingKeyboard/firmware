@@ -18,10 +18,12 @@
         NavigationMode_Scroll,
         NavigationMode_Caret,
         NavigationMode_Media,
+        NavigationMode_None,
     } navigation_mode_t;
 
     typedef struct {
         float currentSpeed; // px/ms
+        float baseSpeed;
         float speed;
         float acceleration;
         navigation_mode_t navigationModes[LayerId_Count];
@@ -29,10 +31,12 @@
 
 // Variables:
 
-    extern module_configuration_t ModuleConfigurations[ModuleId_Count];
+    extern module_configuration_t ModuleConfigurations[ModuleId_ModuleCount];
 
 // Functions:
 
     module_configuration_t* GetModuleConfiguration(int8_t moduleId);
+    bool IsModuleAttached(module_id_t moduleId);
+    slot_t ModuleIdToSlotId(module_id_t moduleId);
 
 #endif

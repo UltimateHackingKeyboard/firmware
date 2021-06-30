@@ -33,7 +33,7 @@
 
 // Variables:
 
-    extern key_vector_t keyVector;
+    extern key_vector_t KeyVector;
     extern pointer_delta_t PointerDelta;
 
 // Functions:

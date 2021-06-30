@@ -125,8 +125,10 @@ static parser_error_t parseKeyActions(uint8_t targetLayer, config_buffer_t *buff
     if (actionCount > MAX_KEY_COUNT_PER_MODULE) {
         return ParserError_InvalidActionCount;
     }
+    bool parserRunDry = IsModuleAttached(moduleId) ? ParserRunDry : true;
+    slot_t slotId = ModuleIdToSlotId(moduleId);
     for (uint8_t actionIdx = 0; actionIdx < actionCount; actionIdx++) {
-        errorCode = parseKeyAction(ParserRunDry ? &dummyKeyAction : &CurrentKeymap[targetLayer][moduleId][actionIdx], buffer);
+        errorCode = parseKeyAction(parserRunDry ? &dummyKeyAction : &CurrentKeymap[targetLayer][slotId][actionIdx], buffer);
         if (errorCode != ParserError_Success) {
             return errorCode;
         }
@@ -145,7 +147,7 @@ static parser_error_t parseLayer(config_buffer_t *buffer, uint8_t layer)
     parser_error_t errorCode;
     uint16_t moduleCount = ReadCompactLength(buffer);
 
-    if (moduleCount > SLOT_COUNT) {
+    if (moduleCount > ModuleId_AllCount) {
         return ParserError_InvalidModuleCount;
     }
     for (uint8_t moduleIdx = 0; moduleIdx < moduleCount; moduleIdx++) {

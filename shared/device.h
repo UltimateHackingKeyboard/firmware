@@ -3,8 +3,8 @@
 
 // Macros:
 
-    #define DEVICE_ID_UHK60V1 0
-    #define DEVICE_ID_UHK60V2 1
+    #define DEVICE_ID_UHK60V1 1
+    #define DEVICE_ID_UHK60V2 2
 
 #ifndef DEVICE_ID
     #error "DEVICE_ID is undefined!"

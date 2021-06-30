@@ -1,11 +1,13 @@
 #include "usb_composite_device.h"
 #include "usb_report_updater.h"
+#include "timer.h"
 
 uint32_t UsbMediaKeyboardActionCounter;
 static usb_media_keyboard_report_t usbMediaKeyboardReports[2];
 usb_media_keyboard_report_t* ActiveUsbMediaKeyboardReport = usbMediaKeyboardReports;
+static uint32_t usbMediaKeyboardReportLastSendTime = 0;
 
-usb_media_keyboard_report_t* GetInactiveUsbMediaKeyboardReport(void)
+static usb_media_keyboard_report_t* GetInactiveUsbMediaKeyboardReport(void)
 {
     return ActiveUsbMediaKeyboardReport == usbMediaKeyboardReports ? usbMediaKeyboardReports+1 : usbMediaKeyboardReports;
 }
@@ -15,7 +17,7 @@ static void SwitchActiveUsbMediaKeyboardReport(void)
     ActiveUsbMediaKeyboardReport = GetInactiveUsbMediaKeyboardReport();
 }
 
-void ResetActiveUsbMediaKeyboardReport(void)
+void UsbMediaKeyboardResetActiveReport(void)
 {
     bzero(ActiveUsbMediaKeyboardReport, USB_MEDIA_KEYBOARD_REPORT_LENGTH);
 }
@@ -36,12 +38,30 @@ usb_status_t UsbMediaKeyboardAction(void)
     return usb_status;
 }
 
+usb_status_t UsbMediaKeyboardCheckIdleElapsed()
+{
+    uint16_t idlePeriodUs = ((usb_device_hid_struct_t*)UsbCompositeDevice.mediaKeyboardHandle)->idleRate * 4 * 1000; // idleRate is in 4ms units.
+    if (!idlePeriodUs) {
+        return kStatus_USB_Busy;
+    }
+
+    bool hasIdleElapsed = Timer_GetElapsedTimeMicros(&usbMediaKeyboardReportLastSendTime) > idlePeriodUs;
+    return hasIdleElapsed ? kStatus_USB_Success : kStatus_USB_Busy;
+}
+
+usb_status_t UsbMediaKeyboardCheckReportReady()
+{
+    if (memcmp(ActiveUsbMediaKeyboardReport, GetInactiveUsbMediaKeyboardReport(), sizeof(usb_media_keyboard_report_t)) != 0)
+        return kStatus_USB_Success;
+
+    return UsbMediaKeyboardCheckIdleElapsed();
+}
+
 usb_status_t UsbMediaKeyboardCallback(class_handle_t handle, uint32_t event, void *param)
 {
     usb_status_t error = kStatus_USB_Error;
 
     switch (event) {
-        // This event is received when the report has been sent
         case kUSB_DeviceHidEventSendResponse:
             UsbReportUpdateSemaphore &= ~(1 << USB_MEDIA_KEYBOARD_INTERFACE_INDEX);
             if (UsbCompositeDevice.attach) {
@@ -49,16 +69,42 @@ usb_status_t UsbMediaKeyboardCallback(class_handle_t handle, uint32_t event, voi
             }
             break;
         case kUSB_DeviceHidEventRecvResponse:
-        case kUSB_DeviceHidEventGetReport:
+            error = kStatus_USB_InvalidRequest;
+            break;
+
+        case kUSB_DeviceHidEventGetReport: {
+            usb_device_hid_report_struct_t *report = (usb_device_hid_report_struct_t*)param;
+            if (report->reportType == USB_DEVICE_HID_REQUEST_GET_REPORT_TYPE_INPUT && report->reportId == 0 && report->reportLength <= USB_MEDIA_KEYBOARD_REPORT_LENGTH) {
+                report->reportBuffer = (void*)ActiveUsbMediaKeyboardReport;
+                UsbMediaKeyboardActionCounter++;
+                SwitchActiveUsbMediaKeyboardReport();
+            } else {
+                error = kStatus_USB_InvalidRequest;
+            }
+            break;
+        }
+
+        // SetReport is not required for this interface.
         case kUSB_DeviceHidEventSetReport:
         case kUSB_DeviceHidEventRequestReportBuffer:
             error = kStatus_USB_InvalidRequest;
             break;
+
         case kUSB_DeviceHidEventGetIdle:
-        case kUSB_DeviceHidEventGetProtocol:
-        case kUSB_DeviceHidEventSetIdle:
-        case kUSB_DeviceHidEventSetProtocol:
+            error = kStatus_USB_Success;
             break;
+
+        case kUSB_DeviceHidEventSetIdle:
+            usbMediaKeyboardReportLastSendTime = CurrentTime;
+            error = kStatus_USB_Success;
+            break;
+
+        // No boot protocol support for this interface.
+        case kUSB_DeviceHidEventGetProtocol:
+        case kUSB_DeviceHidEventSetProtocol:
+            error = kStatus_USB_InvalidRequest;
+            break;
+
         default:
             break;
     }

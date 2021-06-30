@@ -21,6 +21,12 @@
 
 // Typedefs:
 
+    // Note: We support boot protocol mode in this interface, thus the mouse
+    // report may not exceed 8 bytes and must conform to the HID mouse boot
+    // protocol as specified in the USB HID specification. If a different or
+    // longer format is desired in the future, we will need to translate sent
+    // reports to the boot protocol format when the host has set boot protocol
+    // mode.
     typedef struct {
         uint8_t buttons;
         int16_t x;
@@ -40,8 +46,9 @@
     usb_status_t UsbMouseSetConfiguration(class_handle_t handle, uint8_t configuration);
     usb_status_t UsbMouseSetInterface(class_handle_t handle, uint8_t interface, uint8_t alternateSetting);
 
-    void ResetActiveUsbMouseReport(void);
-    usb_mouse_report_t* GetInactiveUsbMouseReport(void);
+    void UsbMouseResetActiveReport(void);
     usb_status_t UsbMouseAction(void);
+    usb_status_t UsbMouseCheckIdleElapsed();
+    usb_status_t UsbMouseCheckReportReady();
 
 #endif

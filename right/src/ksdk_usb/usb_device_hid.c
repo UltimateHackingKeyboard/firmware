@@ -454,7 +454,7 @@ usb_status_t USB_DeviceHidEvent(void *handle, uint32_t event, void *param)
                     case USB_DEVICE_HID_REQUEST_GET_PROTOCOL:
                         /* Get protocol request */
                         error = hidHandle->configStruct->classCallback(
-                            (class_handle_t)hidHandle, kUSB_DeviceHidEventGetIdle, &hidHandle->protocol);
+                            (class_handle_t)hidHandle, kUSB_DeviceHidEventGetProtocol, &hidHandle->protocol);
                         controlRequest->buffer = &hidHandle->protocol;
                         break;
                     case USB_DEVICE_HID_REQUEST_SET_REPORT:

@@ -5,6 +5,51 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [8.10.10] - 2021-05-23
+
+Device Protocol: 4.7.1 | Module Protocol: 4.1.0 | User Config: 4.2.0 | Hardware Config: 1.0.0
+
+- Fix occasional, accidental scrolling on key cluster module initialization.
+- Always initialize key cluster module LEDs with the correct colors.
+- Fix macOS wake up and a number of USB-related compliance issues potentially resolving other USB issues.
+
+## [8.10.9] - 2021-04-21
+
+Device Protocol: 4.7.1 | Module Protocol: 4.1.0 | User Config: 4.2.0 | Hardware Config: 1.0.0
+
+- Add caret navigation mode and bind it to the Fn layer.
+- Fix the configuration parser to use the configuration of the attached modules upon applying the configuration.
+- Fix the double tap to hold feature to not hold the layer when a key gets pressed during the second tap of the double tap.
+- Fix a potential memory corruption bug related to SLAVE_COUNT that may result in random bugs occasionally.
+
+## [8.10.8] - 2021-03-31
+
+Device Protocol: 4.7.1 | Module Protocol: 4.1.0 | User Config: 4.2.0 | Hardware Config: 1.0.0
+
+- Make module cursor movement more accurate, especially at slower speed.
+- Update the default user configuration and factory configuration so that "double tap to lock" is only enabled for the Mouse key.
+- Fix the backlight color of Tab and Backspace.
+
+## [8.10.7] - 2021-03-11
+
+Device Protocol: 4.7.1 | Module Protocol: 4.1.0 | User Config: 4.2.0 | Hardware Config: 1.0.0
+
+- Allow saving the mapping of more than three modules which fixes the "Response code: 5" Agent error message.
+- Adjust per-module speed and acceleration settings and add base speed setting.
+- Make touchpad sensing more stable by adjusting Prox Hardware Settings firmware values.
+- Set touchpad resolution to 1,000 DPI.
+- Change default navigation modes to not affect mouse layer functionality.
+- Improve the factory keymap in regard to modules.
+- Fix the color of tab, backspace, and key cluster backspace keys on the base and mod layers.
+- Adjust UHK 60 v2 backlighting according to the key backlight brightness setting.
+
+## [8.10.6] - 2021-03-02
+
+Device Protocol: 4.7.1 | Module Protocol: 4.1.0 | User Config: 4.2.0 | Hardware Config: 1.0.0
+
+- Use optimized per-module speed and acceleration settings.
+- Use cursor navigation mode on base layer and scroll mode on the mouse layer for right-sided modules and vice versa for the key cluster module.
+
 ## [8.10.5] - 2021-02-15
 
 Device Protocol: 4.7.1 | Module Protocol: 4.1.0 | User Config: 4.2.0 | Hardware Config: 1.0.0

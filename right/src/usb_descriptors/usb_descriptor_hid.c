@@ -68,7 +68,7 @@ usb_status_t USB_DeviceGetHidReportDescriptor(
             break;
         case USB_SYSTEM_KEYBOARD_INTERFACE_INDEX:
             hidReportDescriptor->buffer = UsbSystemKeyboardReportDescriptor;
-            hidReportDescriptor->length = USB_MEDIA_KEYBOARD_REPORT_DESCRIPTOR_LENGTH;
+            hidReportDescriptor->length = USB_SYSTEM_KEYBOARD_REPORT_DESCRIPTOR_LENGTH;
             break;
         case USB_MOUSE_INTERFACE_INDEX:
             hidReportDescriptor->buffer = UsbMouseReportDescriptor;

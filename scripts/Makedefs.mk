@@ -60,6 +60,9 @@ LD = $(PREFIX)-g++$(SUFFIX)
 # The command for extracting images from the linked executables.
 OBJCOPY = $(PREFIX)-objcopy$(SUFFIX)
 
+# The command to dump information from a linked executable.
+OBJDUMP = $(PREFIX)-objdump$(SUFFIX)
+
 # The command for the size tool.
 SIZE = $(PREFIX)-size$(SUFFIX)
 
@@ -87,6 +90,12 @@ CFLAGS = -mthumb                    \
          -Wdouble-promotion         \
          -Woverflow                 \
          -Wall                      \
+         -Wextra                    \
+         -Wno-unused-parameter      \
+         -Wno-type-limits           \
+         -Wlogical-op               \
+         -Wrestrict                 \
+         -Wnull-dereference         \
          -Wshadow                   \
          $(BUILD_FLAGS)
 
@@ -97,8 +106,8 @@ CXXFLAGS = -felide-constructors -fno-exceptions -fno-rtti
 CSTD = -std=gnu11
 CXXSTD = -std=gnu++14
 
-# Make all warnings into errors when building using Travis CI.
-ifdef TRAVIS
+# Make all warnings into errors when building using CI.
+ifeq ($(CI_BUILD),1)
     CFLAGS += -Werror
 endif
 
@@ -123,9 +132,9 @@ endif
 # Check if the DEBUG environment variable is set.
 DEBUG ?= 0
 ifeq ($(DEBUG),1)
-    CFLAGS += -O3 -g3 -DDEBUG
+    CFLAGS += -Os -g3 -DDEBUG
 else
-    CFLAGS += -O3 -DNDEBUG
+    CFLAGS += -Os -DNDEBUG
 endif
 
 # Add the include file paths to AFLAGS and CFLAGS.
@@ -194,6 +203,7 @@ $(PROJECT_OBJ): $(OBJS) $(LDSCRIPT)
 	@echo
 	@if [ '$(VERBOSE)' = 1 ]; then                               \
 	     $(SIZE) -Ax $(@);                                       \
+	     $(OBJDUMP) -h -d -S -z $(@) > $(@:.axf=.lss);           \
 	 fi
 	@$(OBJCOPY) -O binary $(@) $(@:.axf=.bin)
 	@$(OBJCOPY) -O ihex $(@) $(@:.axf=.hex)

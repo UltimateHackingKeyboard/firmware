@@ -156,8 +156,8 @@ static usb_status_t USB_DeviceCh9GetStatus(usb_device_common_class_struct_t *cla
     if ((setup->bmRequestType & USB_REQUEST_TYPE_RECIPIENT_MASK) == USB_REQUEST_TYPE_RECIPIENT_DEVICE)
     {
         /* Get the device status */
-        error =
-            USB_DeviceGetStatus(classHandle->handle, kUSB_DeviceStatusDevice, &classHandle->standardTranscationBuffer);
+        classHandle->standardTranscationBuffer = 0;
+        error = USB_DeviceClassCallback(classHandle->handle, kUSB_DeviceEventGetDeviceStatus, &classHandle->standardTranscationBuffer);
         classHandle->standardTranscationBuffer = classHandle->standardTranscationBuffer & USB_GET_STATUS_DEVICE_MASK;
         classHandle->standardTranscationBuffer = USB_SHORT_TO_LITTLE_ENDIAN(classHandle->standardTranscationBuffer);
         /* The device status length must be USB_DEVICE_STATUS_SIZE. */

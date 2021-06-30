@@ -470,6 +470,25 @@ Some measurements:
 - According to my experience, 250ms is a good double-tap delay trashold. 
 - According to my experience, 350ms is a good trashold for secondary role activation. I.e., at this time, it can be safely assumed that the key held was prolonged at purpose. 
 
+### Minimal development setup
+
+1. Install the ARM cross-compiler, cross-assembler and stdlib implementation. Eg. on Arch Linux the packages `arm-none-eabi-binutils`, `arm-none-eabi-gcc`, `arm-none-eabi-newlib`.
+
+2. Install Node.js v12. If you have a later version, editing the version requirement in `lib/agent/package.json` *might* work.
+
+3. Build UHK Agent. `cd lib/agent && npm ci && npm run build`.
+
+4. Still inside the Agent submodule, compile flashing util scripts. `cd packages/usb && npx tsc`.
+
+5. When developing, cd to the directory you're working on (`left`/`right`). To build and flash the firmware, run `make flash`. Plain `make` just builds without flashing.
+
+### Releasing
+
+6. To build a full firmware tarball:
+    1. Run `npm install` in `scripts`.
+    2. Run `scripts/make-release.js`.
+    3. Now, the created tarball `scripts/uhk-firmware-VERSION.tar.gz` can be flashed with UHK Agent.
+
 ## Contributing
 
 If you wish some functionality, feel free to fire tickets with feature requests. If you wish something already present on the tracker (e.g., in 'idea' tickets), say so in comments. (Feel totally free to harass me over desired functionality :-).) If you feel brave, fork the repo, implement the desired functionality and post a PR.

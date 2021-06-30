@@ -14,6 +14,6 @@ void UsbCommand_GetSlaveI2cErrors()
 
     i2c_slave_error_counter_t *i2cSlaveErrorCounter =  I2cSlaveErrorCounters + slaveId;
 
-    GenericHidOutBuffer[1] = i2cSlaveErrorCounter->errorTypeCount;
-    memcpy(GenericHidOutBuffer + 2, i2cSlaveErrorCounter->errors, sizeof(i2c_error_count_t) * MAX_LOGGED_I2C_ERROR_TYPES_PER_SLAVE);
+    GenericHidInBuffer[1] = i2cSlaveErrorCounter->errorTypeCount;
+    memcpy(GenericHidInBuffer + 2, i2cSlaveErrorCounter->errors, sizeof(i2c_error_count_t) * MAX_LOGGED_I2C_ERROR_TYPES_PER_SLAVE);
 }

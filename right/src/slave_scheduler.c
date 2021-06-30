@@ -15,7 +15,7 @@ uint32_t I2cSlaveScheduler_Counter;
 static uint8_t previousSlaveId;
 static uint8_t currentSlaveId;
 
-uhk_slave_t Slaves[] = {
+uhk_slave_t Slaves[SLAVE_COUNT] = {
     {
         .init = UhkModuleSlaveDriver_Init,
         .update = UhkModuleSlaveDriver_Update,

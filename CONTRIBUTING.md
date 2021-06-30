@@ -151,4 +151,8 @@ Header files are composed of sections. The order of sections is fixed. Every hea
 
 ## Semantics
 
-The build process must not yield any warnings, and the build must pass [on Travis](https://travis-ci.org/UltimateHackingKeyboard/firmware).
+The build process must not yield any warnings, and the build must pass [on on the current CI build platform](https://cloud.drone.io/UltimateHackingKeyboard/firmware).
+
+## Clang format
+
+There is a `.clang-format` present, which allows you to format your `.c` files simply by `clang-format -i <your source file>`. (It does **not** ensure the required header file structure though!) 
