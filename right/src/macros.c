@@ -1802,19 +1802,6 @@ bool processCallCommand(const char* arg1, const char* cmdEnd) {
     return callMacro(macroIndex);
 }
 
-bool processSetExpDriverCommand(const char* arg, const char *argEnd)
-{
-    const char* arg2 = NextTok(arg, argEnd);
-    const char* arg3 = NextTok(arg2, argEnd);
-    const char* arg4 = NextTok(arg3, argEnd);
-    float a1 = ParseFloat(arg, argEnd);
-    float a2 = ParseFloat(arg2,  argEnd);
-    float a3 = ParseFloat(arg3, argEnd);
-    float a4 = ParseFloat(arg4, argEnd);
-    MouseController_SetExpDriverParams(a1, a2, a3, a4);
-    return false;
-}
-
 bool processCommand(const char* cmd, const char* cmdEnd)
 {
     const char* cmdTokEnd = TokEnd(cmd, cmdEnd);
@@ -2300,9 +2287,6 @@ bool processCommand(const char* cmd, const char* cmdEnd)
             }
             else if(TokenMatches(cmd, cmdEnd, "setEmergencyKey")) {
                 return processSetEmergencyKeyCommand(arg1, cmdEnd);
-            }
-            else if(TokenMatches(cmd, cmdEnd, "setExpDriver")) {
-                return processSetExpDriverCommand(arg1, cmdEnd);
             }
             else {
                 goto failed;

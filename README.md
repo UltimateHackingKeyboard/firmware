@@ -248,7 +248,6 @@ The following grammar is supported:
     COMMAND = setKeystrokeDelay <time in ms, at most 65535 (NUMBER)>
     COMMAND = setReg <register index (NUMBER)> <value (NUMBER)> 
     COMMAND = setEmergencyKey KEYID
-    COMMAND = setExpDriver <baseSpeedCoef (FLOAT:0.0)> <midSpeedCoef (FLOAT:1.0)> <midSpeedExp (FLOAT:0.5)> <midSpeed (FLOAT:3000)>
     COMMAND = {addReg|subReg|mulReg} <register index (NUMBER)> <value (NUMBER)>
     COMMAND = {pressKey|holdKey|tapKey|releaseKey} [sticky] SHORTCUT
     CONDITION = {ifShortcut | ifNotShortcut} [IFSHORTCUTFLAGS]* [KEYID]*
@@ -297,6 +296,7 @@ The following grammar is supported:
     ##########
     #REMOVEWD#
     ##########
+    COMMAND = setExpDriver <baseSpeedCoef (FLOAT:0.0)> <midSpeedCoef (FLOAT:1.0)> <midSpeedExp (FLOAT:0.5)> <midSpeed (FLOAT:3000)>
     COMMAND = setSplitCompositeKeystroke {0|1}
     COMMAND = setActivateOnRelease {0|1}
     MODIFIER = suppressKeys
@@ -427,7 +427,7 @@ The following grammar is supported:
   - `setCompensateDiagonalSpeed` will divide diagonal mouse speed by sqrt(2) if enabled.
   - `setDebounceDelay <time in ms, at most 250>` prevents key state from changing for some time after every state change. This is needed because contacts of mechanical switches can bounce after contact and therefore change state multiple times in span of a few milliseconds. Official firmware debounce time is 50 ms for both press and release. Recommended value is 10-50, default is 50.
   - `setKeystrokeDelay <time in ms, at most 65535>` allows slowing down keyboard input. This is handy for lousily written RDP clients and other software which just scans keys once a while and processes them in wrong order if multiple keys have been pressed inbetween. In more detail, this setting adds a delay whenever a basic usb report is sent. During this delay, key matrix is still scanned and keys are debounced, but instead of activating, the keys are added into a queue to be replayed later. 
-  - `setExpDriver <baseSpeedCoef (FLOAT)> <midSpeedCoef (FLOAT)> <midSpeedExp (FLOAT)> <midSpeed (FLOAT)> ` modifies speed characteristics of right side modules. Simplified formula is `modifiedSpeed(speed 's' per midSpeed) = baseSpeedCoef*s + midSpeedCoef*(s^midSpeedExp)`. Actual formula is `appliedDistance(distance d, time t) = d*(baseSpeedCoef*((d/t)/midSpeed) + midSpeedCoef*(((d/t)/midSpeed)^midSpeedExp))`. (`d/t` is actual speed in px/s, `(d/t)/midSpeed` is normalizedSpeed which acts as base for the exponent)
+  - (temporarily disabled) `setExpDriver <baseSpeedCoef (FLOAT)> <midSpeedCoef (FLOAT)> <midSpeedExp (FLOAT)> <midSpeed (FLOAT)> ` modifies speed characteristics of right side modules. Simplified formula is `modifiedSpeed(speed 's' per midSpeed) = baseSpeedCoef*s + midSpeedCoef*(s^midSpeedExp)`. Actual formula is `appliedDistance(distance d, time t) = d*(baseSpeedCoef*((d/t)/midSpeed) + midSpeedCoef*(((d/t)/midSpeed)^midSpeedExp))`. (`d/t` is actual speed in px/s, `(d/t)/midSpeed` is normalizedSpeed which acts as base for the exponent)
     - `baseSpeedCoef` is base speed multiplier which is not affected by acceleration. I.e., if `midSpeedCoef = 0`, then traveled distance is `reportedDistance*baseSpeedCoef`
     - `midSpeedCoef` multiplies effect of acceleration expression. I.e., simply multiplies the reported distance when the actual speed equals `midSpeed`.
     - `midSpeedExp` is exponent applied to the speed normalized w.r.t midSpeed. I.e., acceleration expression of the formula is `midSpeedCoef*(reportedSpeed/midSpeed)^(midSpeedExp)`. I.e., no acceleration = 0, reasonable (square root) acceleration = 0.5.

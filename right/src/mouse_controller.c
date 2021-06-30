@@ -27,9 +27,6 @@ uint8_t ToggledMouseStates[ACTIVE_MOUSE_STATES_COUNT];
 
 bool CompensateDiagonalSpeed = false;
 
-static float expDriver(float x, float y);
-static void recalculateCurrentSpeed(float inx, float iny);
-
 mouse_kinetic_state_t MouseMoveState = {
     .isScroll = false,
     .upState = SerializedMouseAction_MoveUp,

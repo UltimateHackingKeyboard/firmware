@@ -485,18 +485,6 @@ void justPreprocessInput(void) {
 }
 
 uint32_t UsbReportUpdateCounter;
-void justPreprocessInput(void) {
-    // Make preprocessKeyState push new events into postponer queue.
-    // As a side-effect, postpone first cycle after we switch back to regular update loop
-    PostponerCore_PostponeNCycles(0);
-    for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
-        for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
-            key_state_t *keyState = &KeyStates[slotId][keyId];
-
-            preprocessKeyState(keyState);
-        }
-    }
-}
 
 void UpdateUsbReports(void)
 {
@@ -515,7 +503,7 @@ void UpdateUsbReports(void)
         }
     }
 
-    if (Timer_GetElapsedTime(&lastReportTime) < keystrokeDelay) {
+    if (Timer_GetElapsedTime(&lastReportTime) < KeystrokeDelay) {
         justPreprocessInput();
         return;
     }
@@ -535,7 +523,7 @@ void UpdateUsbReports(void)
 
         if(RuntimeMacroRecordingBlind) {
             //just switch reports without sending the report
-            ActiveUsbBasicKeyboardReport = GetInactiveUsbBasicKeyboardReport();
+            UsbBasicKeyboardResetActiveReport();
 		} else {
             UsbReportUpdateSemaphore |= 1 << USB_BASIC_KEYBOARD_INTERFACE_INDEX;
             usb_status_t status = UsbBasicKeyboardAction();
