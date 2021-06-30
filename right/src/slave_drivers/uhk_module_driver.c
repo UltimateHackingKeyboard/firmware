@@ -9,7 +9,7 @@
 #include "key_states.h"
 #include "usb_report_updater.h"
 
-uhk_module_state_t UhkModuleStates[UHK_MODULE_MAX_COUNT];
+uhk_module_state_t UhkModuleStates[UHK_MODULE_MAX_SLOT_COUNT];
 
 uint8_t UhkModuleSlaveDriver_SlotIdToDriverId(uint8_t slotId)
 {

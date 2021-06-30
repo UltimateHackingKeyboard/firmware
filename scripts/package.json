@@ -14,10 +14,10 @@
   },
   "dependencies": {
     "commander": "^2.11.0",
-    "shelljs": "^0.7.8"
+    "shelljs": "^0.8.4"
   },
-  "firmwareVersion": "8.10.3",
-  "deviceProtocolVersion": "4.7.0",
+  "firmwareVersion": "8.10.10",
+  "deviceProtocolVersion": "4.7.1",
   "moduleProtocolVersion": "4.1.0",
   "userConfigVersion": "4.2.0",
   "hardwareConfigVersion": "1.0.0",
@@ -25,34 +25,40 @@
     {
       "deviceId": 1,
       "name": "uhk60-right",
-      "source": "right/uhk60v1/build_make/uhk60v1.hex"
+      "source": "right/uhk60v1/build_make/uhk60v1.hex",
+      "mmap": "right/uhk60v1/build_make/uhk60v1.map"
     },
     {
       "deviceId": 2,
       "name": "uhk60v2-right",
-      "source": "right/uhk60v2/build_make/uhk60v2.hex"
+      "source": "right/uhk60v2/build_make/uhk60v2.hex",
+      "mmap": "right/uhk60v2/build_make/uhk60v2.map"
     }
   ],
   "modules": [
     {
       "moduleId": 1,
       "name": "uhk60-left",
-      "source": "left/build_make/uhk_left.bin"
+      "source": "left/build_make/uhk_left.bin",
+      "mmap": "left/build_make/uhk_left.map"
     },
     {
       "moduleId": 2,
       "name": "keycluster-left",
-      "source": "keycluster/build_make/uhk_keycluster.bin"
+      "source": "keycluster/build_make/uhk_keycluster.bin",
+      "mmap": "keycluster/build_make/uhk_keycluster.map"
     },
     {
       "moduleId": 3,
       "name": "trackball-right",
-      "source": "trackball/build_make/uhk_trackball.bin"
+      "source": "trackball/build_make/uhk_trackball.bin",
+      "mmap": "trackball/build_make/uhk_trackball.map"
     },
     {
       "moduleId": 4,
       "name": "trackpoint-right",
-      "source": "trackpoint/build_make/uhk_trackpoint.bin"
+      "source": "trackpoint/build_make/uhk_trackpoint.bin",
+      "mmap": "trackpoint/build_make/uhk_trackpoint.map"
     }
   ]
 }

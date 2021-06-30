@@ -103,8 +103,9 @@ void LayerSwitcher_DoubleTapToggle(layer_id_t layer, key_state_t* keyState) {
 }
 
 // If some other key is pressed between taps of a possible doubletap, discard the doubletap
+// Also, doubleTapSwitchKey is used to cancel long hold toggle, so reset it only if no layer is locked
 void LayerSwitcher_DoubleTapInterrupt(key_state_t* keyState) {
-    if (doubleTapSwitchLayerKey != keyState) {
+    if (doubleTapSwitchLayerKey != keyState && toggledLayer == LayerId_Base) {
         doubleTapSwitchLayerKey = NULL;
     }
 }
@@ -142,7 +143,7 @@ void LayerSwitcher_UnToggleLayerOnly(layer_id_t layer) {
  * B released  ; //layer B is active   B's A-Layer action is active
  */
 
-static bool heldLayers[LAYER_COUNT];
+static bool heldLayers[LayerId_Count];
 
 // Called by pressed hold-layer keys during every cycle
 void LayerSwitcher_HoldLayer(layer_id_t layer) {

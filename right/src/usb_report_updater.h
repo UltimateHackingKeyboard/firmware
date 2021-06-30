@@ -6,6 +6,7 @@
     #include "layer.h"
     #include "config_parser/parse_keymap.h"
     #include "key_states.h"
+    #include "key_action.h"
 
 // Macros:
 
@@ -63,5 +64,6 @@
     void ToggleMouseState(serialized_mouse_action_t action, bool activate);
     void ActivateKey(key_state_t *keyState, bool debounce);
     void ActivateStickyMods(key_state_t *keyState, uint8_t mods);
+    void ApplyKeyAction(key_state_t *keyState, key_action_t *action, key_action_t *actionBase);
 
 #endif

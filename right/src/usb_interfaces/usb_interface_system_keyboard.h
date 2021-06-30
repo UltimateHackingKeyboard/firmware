@@ -16,7 +16,7 @@
     #define USB_SYSTEM_KEYBOARD_ENDPOINT_INDEX 5
     #define USB_SYSTEM_KEYBOARD_ENDPOINT_COUNT 1
 
-    #define USB_SYSTEM_KEYBOARD_INTERRUPT_IN_PACKET_SIZE 1
+    #define USB_SYSTEM_KEYBOARD_INTERRUPT_IN_PACKET_SIZE 8
     #define USB_SYSTEM_KEYBOARD_INTERRUPT_IN_INTERVAL 1
 
     #define USB_SYSTEM_KEYBOARD_REPORT_LENGTH 1
@@ -38,8 +38,9 @@
     usb_status_t UsbSystemKeyboardSetConfiguration(class_handle_t handle, uint8_t configuration);
     usb_status_t UsbSystemKeyboardSetInterface(class_handle_t handle, uint8_t interface, uint8_t alternateSetting);
 
-    void ResetActiveUsbSystemKeyboardReport(void);
-    usb_system_keyboard_report_t* GetInactiveUsbSystemKeyboardReport();
+    void UsbSystemKeyboardResetActiveReport(void);
     usb_status_t UsbSystemKeyboardAction(void);
+    usb_status_t UsbSystemKeyboardCheckIdleElapsed();
+    usb_status_t UsbSystemKeyboardCheckReportReady();
 
 #endif

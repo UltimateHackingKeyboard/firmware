@@ -7,9 +7,9 @@ static uint8_t ATTR_DATA2 stagingUserConfig[USER_CONFIG_SIZE];
 static uint8_t validatedUserConfig[USER_CONFIG_SIZE];
 
 uint16_t ValidatedUserConfigLength;
-config_buffer_t HardwareConfigBuffer = { hardwareConfig };
-config_buffer_t StagingUserConfigBuffer = { stagingUserConfig };
-config_buffer_t ValidatedUserConfigBuffer = { validatedUserConfig };
+config_buffer_t HardwareConfigBuffer = { .buffer = hardwareConfig, .offset = 0 };
+config_buffer_t StagingUserConfigBuffer = { .buffer = stagingUserConfig, .offset = 0 };
+config_buffer_t ValidatedUserConfigBuffer = { .buffer = validatedUserConfig, .offset = 0 };
 
 hardware_config_t *HardwareConfig = (hardware_config_t*)hardwareConfig;
 

@@ -7,7 +7,7 @@
 
 // Variables:
 
-    extern uint8_t DebugBuffer[USB_GENERIC_HID_OUT_BUFFER_LENGTH];
+    extern uint8_t DebugBuffer[USB_GENERIC_HID_IN_BUFFER_LENGTH];
 
 // Functions:
 

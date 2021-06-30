@@ -3,6 +3,9 @@
 #include "macros.h"
 #include "timer.h"
 #include "utils.h"
+#include "layer_switcher.h"
+#include "keymap.h"
+#include "key_action.h"
 
 struct postponer_buffer_record_type_t buffer[POSTPONER_BUFFER_SIZE];
 uint8_t bufferSize = 0;
@@ -13,6 +16,10 @@ key_state_t* Postponer_NextEventKey;
 uint32_t lastPressTime;
 
 #define POS(idx) ((bufferPosition + (idx)) % POSTPONER_BUFFER_SIZE)
+
+bool Chording = false;
+static void chording();
+
 
 //##############################
 //### Implementation Helpers ###
@@ -75,14 +82,22 @@ void PostponerCore_PostponeNCycles(uint8_t n)
 
 bool PostponerCore_IsActive(void)
 {
-    return bufferSize > 0 || cyclesUntilActivation > 0;
+    return bufferSize > 0 || cyclesUntilActivation > 0 || Chording;
 }
 
 
 void PostponerCore_TrackKeyEvent(key_state_t *keyState, bool active)
 {
     uint8_t pos = POS(bufferSize);
+
+    //if the buffer is totally filled, at least make sure the key doesn't get stuck
+    if (bufferSize == POSTPONER_BUFFER_SIZE) {
+        buffer[pos].key->current = buffer[bufferPosition].active;
+        consumeEvent(1);
+    }
+
     buffer[pos] = (struct postponer_buffer_record_type_t) {
+            .time = CurrentTime,
             .key = keyState,
             .active = active,
     };
@@ -106,9 +121,13 @@ bool PostponerCore_RunKey(key_state_t* key, bool active)
     return active;
 }*/
 
+
 //TODO: remove either this or RunKey
 void PostponerCore_RunPostponedEvents(void)
 {
+    if(Chording) {
+        chording();
+    }
     // Process one event every two cycles. (Unless someone keeps Postponer active by touching cycles_until_activation.)
     if (bufferSize != 0 && (cyclesUntilActivation == 0 || bufferSize > POSTPONER_BUFFER_MAX_FILL)) {
         buffer[bufferPosition].key->current = buffer[bufferPosition].active;
@@ -228,5 +247,58 @@ void PostponerExtended_PrintContent()
             Macros_SetStatusString(" <last", NULL);
         }
         Macros_SetStatusString("\n", NULL);
+    }
+}
+
+//##########################
+//### Chording ###
+//##########################
+
+static uint8_t priority(key_state_t *key, bool active) {
+    if(!active) {
+        return 0;
+    }
+    key_action_t* a = &CurrentKeymap[ActiveLayer][0][0] + (key - &KeyStates[0][0]);
+    switch (a->type) {
+        case KeyActionType_Keystroke:
+            if(a->keystroke.secondaryRole || a->keystroke.scancode == 0) {
+                return 1;
+            }
+            return 0;
+            break;
+        case KeyActionType_Mouse:
+            return 0;
+        case KeyActionType_SwitchLayer:
+        case KeyActionType_SwitchKeymap:
+            return 2;
+        case KeyActionType_PlayMacro:
+            return 1;
+    }
+}
+
+static void chording()
+{
+    const uint16_t limit = 50;
+    if (bufferSize == 0 || CurrentTime - buffer[bufferPosition].time < limit ) {
+        PostponerCore_PostponeNCycles(0);
+    } else {
+        bool activated = false;
+        for ( uint8_t i = 0; i < bufferSize - 1; i++ ) {
+            struct postponer_buffer_record_type_t* a = &buffer[POS(i)];
+            struct postponer_buffer_record_type_t* b = &buffer[POS(i+1)];
+            uint8_t pa = priority(a->key, a->active);
+            uint8_t pb = priority(b->key, b->active);
+            if( (a->active && !b->active) || (a->active && b->active && pa < pb) ) {
+                if(a->key != b->key && b->time - a->time < limit) {
+                    struct postponer_buffer_record_type_t tmp = *a;
+                    *a = *b;
+                    *b = tmp;
+                    activated = true;
+                }
+            }
+        }
+        if(activated) {
+            PostponerCore_PostponeNCycles(0);
+        }
     }
 }

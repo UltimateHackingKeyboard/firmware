@@ -23,6 +23,12 @@
 
 // Typedefs:
 
+    // Note: We support boot protocol mode in this interface, thus the keyboard
+    // report may not exceed 8 bytes and must conform to the HID keyboard boot
+    // protocol as specified in the USB HID specification. If a different or
+    // longer format is desired in the future, we will need to translate sent
+    // reports to the boot protocol format when the host has set boot protocol
+    // mode.
     typedef struct {
         uint8_t modifiers;
         uint8_t reserved; // Always must be 0
@@ -40,8 +46,9 @@
     usb_status_t UsbBasicKeyboardSetConfiguration(class_handle_t handle, uint8_t configuration);
     usb_status_t UsbBasicKeyboardSetInterface(class_handle_t handle, uint8_t interface, uint8_t alternateSetting);
 
-    void ResetActiveUsbBasicKeyboardReport(void);
-    usb_basic_keyboard_report_t* GetInactiveUsbBasicKeyboardReport(void);
+    void UsbBasicKeyboardResetActiveReport(void);
     usb_status_t UsbBasicKeyboardAction(void);
+    usb_status_t UsbBasicKeyboardCheckIdleElapsed();
+    usb_status_t UsbBasicKeyboardCheckReportReady();
 
 #endif

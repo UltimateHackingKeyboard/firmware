@@ -248,7 +248,6 @@ The following grammar is supported:
     COMMAND = setKeystrokeDelay <time in ms, at most 65535 (NUMBER)>
     COMMAND = setReg <register index (NUMBER)> <value (NUMBER)> 
     COMMAND = setEmergencyKey KEYID
-    COMMAND = setExpDriver <baseSpeedCoef (FLOAT:0.0)> <midSpeedCoef (FLOAT:1.0)> <midSpeedExp (FLOAT:0.5)> <midSpeed (FLOAT:3000)>
     COMMAND = {addReg|subReg|mulReg} <register index (NUMBER)> <value (NUMBER)>
     COMMAND = {pressKey|holdKey|tapKey|releaseKey} [sticky] SHORTCUT
     CONDITION = {ifShortcut | ifNotShortcut} [IFSHORTCUTFLAGS]* [KEYID]*
@@ -297,6 +296,7 @@ The following grammar is supported:
     ##########
     #REMOVEWD#
     ##########
+    COMMAND = setExpDriver <baseSpeedCoef (FLOAT:0.0)> <midSpeedCoef (FLOAT:1.0)> <midSpeedExp (FLOAT:0.5)> <midSpeed (FLOAT:3000)>
     COMMAND = setSplitCompositeKeystroke {0|1}
     COMMAND = setActivateOnRelease {0|1}
     MODIFIER = suppressKeys
@@ -427,7 +427,7 @@ The following grammar is supported:
   - `setCompensateDiagonalSpeed` will divide diagonal mouse speed by sqrt(2) if enabled.
   - `setDebounceDelay <time in ms, at most 250>` prevents key state from changing for some time after every state change. This is needed because contacts of mechanical switches can bounce after contact and therefore change state multiple times in span of a few milliseconds. Official firmware debounce time is 50 ms for both press and release. Recommended value is 10-50, default is 50.
   - `setKeystrokeDelay <time in ms, at most 65535>` allows slowing down keyboard input. This is handy for lousily written RDP clients and other software which just scans keys once a while and processes them in wrong order if multiple keys have been pressed inbetween. In more detail, this setting adds a delay whenever a basic usb report is sent. During this delay, key matrix is still scanned and keys are debounced, but instead of activating, the keys are added into a queue to be replayed later. 
-  - `setExpDriver <baseSpeedCoef (FLOAT)> <midSpeedCoef (FLOAT)> <midSpeedExp (FLOAT)> <midSpeed (FLOAT)> ` modifies speed characteristics of right side modules. Simplified formula is `modifiedSpeed(speed 's' per midSpeed) = baseSpeedCoef*s + midSpeedCoef*(s^midSpeedExp)`. Actual formula is `appliedDistance(distance d, time t) = d*(baseSpeedCoef*((d/t)/midSpeed) + midSpeedCoef*(((d/t)/midSpeed)^midSpeedExp))`. (`d/t` is actual speed in px/s, `(d/t)/midSpeed` is normalizedSpeed which acts as base for the exponent)
+  - (temporarily disabled) `setExpDriver <baseSpeedCoef (FLOAT)> <midSpeedCoef (FLOAT)> <midSpeedExp (FLOAT)> <midSpeed (FLOAT)> ` modifies speed characteristics of right side modules. Simplified formula is `modifiedSpeed(speed 's' per midSpeed) = baseSpeedCoef*s + midSpeedCoef*(s^midSpeedExp)`. Actual formula is `appliedDistance(distance d, time t) = d*(baseSpeedCoef*((d/t)/midSpeed) + midSpeedCoef*(((d/t)/midSpeed)^midSpeedExp))`. (`d/t` is actual speed in px/s, `(d/t)/midSpeed` is normalizedSpeed which acts as base for the exponent)
     - `baseSpeedCoef` is base speed multiplier which is not affected by acceleration. I.e., if `midSpeedCoef = 0`, then traveled distance is `reportedDistance*baseSpeedCoef`
     - `midSpeedCoef` multiplies effect of acceleration expression. I.e., simply multiplies the reported distance when the actual speed equals `midSpeed`.
     - `midSpeedExp` is exponent applied to the speed normalized w.r.t midSpeed. I.e., acceleration expression of the formula is `midSpeedCoef*(reportedSpeed/midSpeed)^(midSpeedExp)`. I.e., no acceleration = 0, reasonable (square root) acceleration = 0.5.
@@ -469,6 +469,25 @@ Some measurements:
 - According to my measurements, typical key tap takes between 90 and 230 ms, with quite large variation (i.e., full range is encountered when writing regularly). Currently, debouncing delay is set to 50 ms, which means that after any change of state, the state is prevented from changing for the next 50 ms. This means that one key tap cannot last less than 50 ms with UHK (except for macro-induced taps and secondary roles). It also means that a key cannot be repeated faster than once per 100ms (in ideal conditions).
 - According to my experience, 250ms is a good double-tap delay trashold. 
 - According to my experience, 350ms is a good trashold for secondary role activation. I.e., at this time, it can be safely assumed that the key held was prolonged at purpose. 
+
+### Minimal development setup
+
+1. Install the ARM cross-compiler, cross-assembler and stdlib implementation. Eg. on Arch Linux the packages `arm-none-eabi-binutils`, `arm-none-eabi-gcc`, `arm-none-eabi-newlib`.
+
+2. Install Node.js v12. If you have a later version, editing the version requirement in `lib/agent/package.json` *might* work.
+
+3. Build UHK Agent. `cd lib/agent && npm ci && npm run build`.
+
+4. Still inside the Agent submodule, compile flashing util scripts. `cd packages/usb && npx tsc`.
+
+5. When developing, cd to the directory you're working on (`left`/`right`). To build and flash the firmware, run `make flash`. Plain `make` just builds without flashing.
+
+### Releasing
+
+6. To build a full firmware tarball:
+    1. Run `npm install` in `scripts`.
+    2. Run `scripts/make-release.js`.
+    3. Now, the created tarball `scripts/uhk-firmware-VERSION.tar.gz` can be flashed with UHK Agent.
 
 ## Contributing
 
