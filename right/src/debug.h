@@ -47,7 +47,7 @@
 	void WatchValueMin(int v, uint8_t n);
 	void WatchValueMax(int v, uint8_t n);
 	void WatchString(char const * v, uint8_t n);
-	void ShowNumberMag(int a);
+	void ShowNumberExp(int32_t a);
 
 #endif /* SRC_UTILS_DBG_H_ */
 #else

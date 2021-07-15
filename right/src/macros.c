@@ -13,7 +13,7 @@
 #include "utils.h"
 #include "layer_switcher.h"
 #include "mouse_controller.h"
-
+#include "debug.h"
 
 macro_reference_t AllMacros[MAX_MACRO_NUM];
 uint8_t AllMacrosCount;
@@ -254,6 +254,9 @@ void postponeCurrentCycle() {
  * initiates postponing in the current cycle.
  */
 bool currentMacroKeyIsActive() {
+    if (s->currentMacroKey == NULL) {
+        return false;
+    }
     if(s->postponeNextNCommands > 0 || s->weInitiatedPostponing) {
         return KeyState_Active(s->currentMacroKey) && !PostponerQuery_IsKeyReleased(s->currentMacroKey);
     } else {
@@ -2428,19 +2431,18 @@ bool execMacro(uint8_t index) {
 }
 
 bool callMacro(uint8_t macroIndex) {
-    macro_state_t* oldState = s;
     s->macroSleeping = true;
     uint32_t ptr1 = (uint32_t)(macro_state_t*)s;
     uint32_t ptr2 = (uint32_t)(macro_state_t*)&(MacroState[0]);
     uint32_t slotIndex = (ptr1 - ptr2) / sizeof(macro_state_t);
     Macros_StartMacro(macroIndex, s->currentMacroKey, slotIndex);
-    s = oldState;
     return false;
 }
 
 //partentMacroSlot == 255 means no parent
 void Macros_StartMacro(uint8_t index, key_state_t *keyState, uint8_t parentMacroSlot)
 {
+    macro_state_t* oldState = s;
     if(!findFreeStateSlot() || AllMacros[index].macroActionsCount == 0)  {
        return;
     }
@@ -2473,7 +2475,7 @@ void Macros_StartMacro(uint8_t index, key_state_t *keyState, uint8_t parentMacro
         //The condition ensures that a called macro executes exactly one action in the same eventloop cycle.
         continueMacro();
     }
-    s = NULL;
+    s = oldState;
 }
 
 bool continueMacro(void)

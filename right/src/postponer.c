@@ -274,6 +274,7 @@ static uint8_t priority(key_state_t *key, bool active) {
         case KeyActionType_PlayMacro:
             return 1;
     }
+    return 0;
 }
 
 static void chording()

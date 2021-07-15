@@ -12,7 +12,7 @@ uint8_t CurrentWatch = 0;
 static uint32_t lastWatch = 0;
 static uint32_t watchInterval = 500;
 
-static void ShowNumberExp(int32_t a)
+void ShowNumberExp(int32_t a)
 {
     char b[3];
     int mag = 0;
@@ -68,7 +68,7 @@ void WatchValue(int v, uint8_t n)
 void WatchString(char const *v, uint8_t n)
 {
     if (CurrentTime - lastWatch > watchInterval) {
-        LedDisplay_SetText(3, v);
+        LedDisplay_SetText(strlen(v), v);
         lastWatch = CurrentTime;
     }
 }
@@ -82,7 +82,7 @@ void WatchValueMin(int v, uint8_t n)
     }
 
     if(CurrentTime - lastWatch > watchInterval) {
-        ShowNumberMag(m);
+        ShowNumberExp(m);
         lastWatch = CurrentTime;
         m = INT_MAX;
     }
@@ -97,10 +97,11 @@ void WatchValueMax(int v, uint8_t n)
     }
 
     if(CurrentTime - lastWatch > watchInterval) {
-        ShowNumberMag(m);
+        ShowNumberExp(m);
         lastWatch = CurrentTime;
         m = INT_MIN;
     }
+}
 
 
 #endif

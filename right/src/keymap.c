@@ -6,6 +6,7 @@
 #include "config_parser/parse_keymap.h"
 #include "config_parser/config_globals.h"
 #include "macros.h"
+#include "macro_events.h"
 
 keymap_reference_t AllKeymaps[MAX_KEYMAP_NUM] = {
     {
@@ -26,6 +27,7 @@ void SwitchKeymapById(uint8_t index)
     ParseKeymap(&ValidatedUserConfigBuffer, index, AllKeymapsCount, AllMacrosCount);
     LedDisplay_UpdateText();
     UpdateLayerLeds();
+    MacroEvent_OnKeymapChange(index);
 }
 
 uint8_t FindKeymapByAbbreviation(uint8_t length, const char *abbrev) {

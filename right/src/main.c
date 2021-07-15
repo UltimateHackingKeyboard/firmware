@@ -11,6 +11,7 @@
 #include "peripherals/reset_button.h"
 #include "config_parser/config_globals.h"
 #include "usb_report_updater.h"
+#include "macro_events.h"
 
 static bool IsEepromInitialized = false;
 static bool IsConfigInitialized = false;
@@ -49,6 +50,7 @@ int main(void)
         while (1) {
             if (!IsConfigInitialized && IsEepromInitialized) {
                 UsbCommand_ApplyConfig();
+                MacroEvent_OnInit();
                 IsConfigInitialized = true;
             }
             KeyMatrix_ScanRow(&RightKeyMatrix);
