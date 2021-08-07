@@ -41,12 +41,12 @@ usb_status_t UsbMouseAction(void)
 
 usb_status_t UsbMouseCheckIdleElapsed()
 {
-    uint16_t idlePeriodUs = ((usb_device_hid_struct_t*)UsbCompositeDevice.mouseHandle)->idleRate * 4 * 1000; // idleRate is in 4ms units.
-    if (!idlePeriodUs) {
+    uint16_t idlePeriodMs = ((usb_device_hid_struct_t*)UsbCompositeDevice.mouseHandle)->idleRate * 4; // idleRate is in 4ms units.
+    if (!idlePeriodMs) {
         return kStatus_USB_Busy;
     }
 
-    bool hasIdleElapsed = Timer_GetElapsedTimeMicros(&usbMouseReportLastSendTime) > idlePeriodUs;
+    bool hasIdleElapsed = (Timer_GetElapsedTimeMicros(&usbMouseReportLastSendTime) / 1000) > idlePeriodMs;
     return hasIdleElapsed ? kStatus_USB_Success : kStatus_USB_Busy;
 }
 
