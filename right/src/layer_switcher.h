@@ -25,4 +25,6 @@
 
     void LayerSwitcher_UpdateActiveLayer();
 
+    void LayerSwitcher_RecalculateLayerComposition();
+
 #endif /* SRC_LAYER_SWITCHER_H_ */

@@ -16,12 +16,16 @@
         SerializedMacroActionType_MoveMouseMacroAction,
         SerializedMacroActionType_ScrollMouseMacroAction,
         SerializedMacroActionType_DelayMacroAction,
-        SerializedMacroActionType_TextMacroAction
+        SerializedMacroActionType_TextMacroAction,
+        SerializedMacroActionType_CommandMacroAction
     } serialized_macro_action_type_t;
 
 // Functions:
 
     parser_error_t ParseMacroAction(config_buffer_t *buffer, macro_action_t *macroAction);
     parser_error_t ParseMacro(config_buffer_t *buffer, uint8_t macroIdx);
+
+    uint8_t FindMacroIndexByName(const char* name, const char* nameEnd, bool reportIfFailed);
+    void FindMacroName(const macro_reference_t* macro, const char** name, const char** nameEnd);
 
 #endif
