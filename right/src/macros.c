@@ -808,15 +808,7 @@ static bool processStatsLayerStackCommand()
         Macros_SetStatusString("\n", NULL);
     }
 
-    return dispatchText(s->currentMacroAction.text.text, s->currentMacroAction.text.textLen);
-}
-
-static bool validReg(uint8_t idx) {
-    if(idx >= MAX_REG_COUNT) {
-        Macros_ReportErrorNum("Invalid register index:", idx);
-        return false;
-    }
-    return true;
+    return false;
 }
 
 static bool processStatsActiveKeysCommand()
