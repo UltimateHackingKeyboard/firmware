@@ -6,6 +6,7 @@
 
     #include <stdint.h>
     #include <stdbool.h>
+    #include "macros.h"
 
 // Typedefs:
 

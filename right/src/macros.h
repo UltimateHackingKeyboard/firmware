@@ -17,6 +17,7 @@
     #define LAYER_STACK_SIZE 10
     #define MACRO_STATE_POOL_SIZE 20
     #define MAX_REG_COUNT 32
+    #define KT_FORK true
 
     #define ALTMASK (HID_KEYBOARD_MODIFIER_LEFTALT | HID_KEYBOARD_MODIFIER_RIGHTALT)
     #define CTRLMASK (HID_KEYBOARD_MODIFIER_LEFTCTRL | HID_KEYBOARD_MODIFIER_RIGHTCTRL)
@@ -52,6 +53,7 @@
         MacroActionType_ScrollMouse,
         MacroActionType_Delay,
         MacroActionType_Text,
+        MacroActionType_Command,
     } macro_action_type_t;
 
     typedef struct {
@@ -82,6 +84,11 @@
                 const char *text;
                 uint16_t textLen;
             } ATTR_PACKED text;
+            struct {
+                const char *text;
+                uint16_t textLen;
+                uint8_t cmdCount;
+            } ATTR_PACKED cmd;
         };
         macro_action_type_t type;
     } ATTR_PACKED macro_action_t;

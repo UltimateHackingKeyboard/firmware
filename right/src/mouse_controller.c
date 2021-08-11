@@ -18,6 +18,7 @@
 #include "usb_report_updater.h"
 #include "caret_config.h"
 #include "keymap.h"
+#include "macros.h"
 
 static uint32_t mouseUsbReportUpdateTime = 0;
 static uint32_t mouseElapsedTime;
@@ -222,7 +223,7 @@ static float computeModuleSpeed(float x, float y, uint8_t moduleId)
         static uint32_t lastUpdate = 0;
         uint32_t elapsedTime = CurrentTime - lastUpdate;
         float distance = sqrt(x*x + y*y);
-        *currentSpeed = distance / elapsedTime;
+        *currentSpeed = distance / (elapsedTime + 1);
         lastUpdate = CurrentTime;
     }
 

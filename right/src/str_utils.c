@@ -1,6 +1,7 @@
 #include "str_utils.h"
 #include "config_parser/parse_keymap.h"
 #include "macros.h"
+#include "slave_protocol.h"
 
 float ParseFloat(const char *a, const char *aEnd)
 {
@@ -140,7 +141,7 @@ bool TokenMatches(const char *a, const char *aEnd, const char *b)
             return false;
         }
     }
-    return (*a <= 32 || a == aEnd) && *b <= 32;
+    return (*a <= 32 || a == aEnd || *a == '.') && *b <= 32;
 }
 
 bool TokenMatches2(const char *a, const char *aEnd, const char *b, const char *bEnd)
@@ -153,7 +154,7 @@ bool TokenMatches2(const char *a, const char *aEnd, const char *b, const char *b
             return false;
         }
     }
-    return (*a <= 32 || a == aEnd) && (*b <= 32 || b == bEnd);
+    return (*a <= 32 || a == aEnd || *a == '.') && (*b <= 32 || b == bEnd);
 }
 
 uint8_t TokLen(const char *a, const char *aEnd)
@@ -186,4 +187,69 @@ const char* NextTok(const char* cmd, const char *cmdEnd)
         return cmdEnd;
     }
     return cmd;
+}
+
+const char* NextCmd(const char* cmd, const char *cmdEnd)
+{
+    while(*cmd != '\n' && *cmd != '\r' && cmd < cmdEnd)    {
+        cmd++;
+    }
+    while(*cmd <= 32 && cmd < cmdEnd) {
+        cmd++;
+    }
+    return cmd;
+}
+
+layer_id_t ParseLayerId(const char* arg1, const char* cmdEnd) {
+    if(TokenMatches(arg1, cmdEnd, "fn")) {
+        return LayerId_Fn;
+    }
+    else if(TokenMatches(arg1, cmdEnd, "mouse")) {
+        return LayerId_Mouse;
+    }
+    else if(TokenMatches(arg1, cmdEnd, "mod")) {
+        return LayerId_Mod;
+    }
+    else if(TokenMatches(arg1, cmdEnd, "base")) {
+        return LayerId_Base;
+    }
+    Macros_ReportError("Layer not recognized: ", arg1, cmdEnd);
+    return 0;
+}
+
+module_id_t ParseModuleId(const char* arg1, const char* cmdEnd) {
+    if(TokenMatches(arg1, cmdEnd, "keycluster")) {
+        return ModuleId_KeyClusterLeft;
+    }
+    else if(TokenMatches(arg1, cmdEnd, "trackball")) {
+        return ModuleId_TrackballRight;
+    }
+    else if(TokenMatches(arg1, cmdEnd, "trackpoint")) {
+        return ModuleId_TrackpointRight;
+    }
+    else if(TokenMatches(arg1, cmdEnd, "touchpad")) {
+        return ModuleId_TouchpadRight;
+    }
+    Macros_ReportError("Module not recognized: ", arg1, cmdEnd);
+    return 0;
+}
+
+navigation_mode_t ParseNavigationModeId(const char* arg1, const char* cmdEnd) {
+    if(TokenMatches(arg1, cmdEnd, "cursor")) {
+        return NavigationMode_Cursor;
+    }
+    else if(TokenMatches(arg1, cmdEnd, "scroll")) {
+        return NavigationMode_Scroll;
+    }
+    else if(TokenMatches(arg1, cmdEnd, "caret")) {
+        return NavigationMode_Caret;
+    }
+    else if(TokenMatches(arg1, cmdEnd, "media")) {
+        return NavigationMode_Media;
+    }
+    else if(TokenMatches(arg1, cmdEnd, "none")) {
+        return NavigationMode_None;
+    }
+    Macros_ReportError("Mode not recognized: ", arg1, cmdEnd);
+    return 0;
 }

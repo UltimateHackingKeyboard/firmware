@@ -9,7 +9,7 @@
 void MacroEvent_OnInit()
 {
     const char* s = "$onInit";
-    uint8_t idx = FindMacroIndexByName(s, s + strlen(s));
+    uint8_t idx = FindMacroIndexByName(s, s + strlen(s), false);
     if(idx != 255) {
         Macros_StartMacro(idx, NULL, 255);
     }

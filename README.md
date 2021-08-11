@@ -242,14 +242,25 @@ The following grammar is supported:
     COMMAND = {stopRecording | stopRecordingBlind}
     COMMAND = playMacro [<slot identifier (MACROID)>]
     COMMAND = {startMouse|stopMouse} {move DIRECTION|scroll DIRECTION|accelerate|decelerate}
-    COMMAND = setStickyModsEnabled {0|never|smart|always|1}
-    COMMAND = setCompensateDiagonalSpeed {0|1}
-    COMMAND = setDebounceDelay <time in ms, at most 250 (NUMBER)>
-    COMMAND = setKeystrokeDelay <time in ms, at most 65535 (NUMBER)>
-    COMMAND = setReg <register index (NUMBER)> <value (NUMBER)> 
-    COMMAND = setEmergencyKey KEYID
-    COMMAND = {addReg|subReg|mulReg} <register index (NUMBER)> <value (NUMBER)>
+    COMMAND = {setReg|addReg|subReg|mulReg} <register index (NUMBER)> <value (NUMBER)>
     COMMAND = {pressKey|holdKey|tapKey|releaseKey} [sticky] SHORTCUT
+    COMMAND = set module.MODULEID.navigationMode.LAYERID NAVIGATIONMODE
+    COMMAND = set module.MODULEID.baseSpeed <speed multiplier part that always applies, 0-10.0 (FLOAT)>
+    COMMAND = set module.MODULEID.speed <speed multiplier part that is affected by acceleration, 0-10.0 (FLOAT)>
+    COMMAND = set module.MODULEID.acceleration <exponent 0-1.0 (FLOAT)>
+    #NOTIMPLEMENTED COMMAND = set module.MODULEID.{caretSkewStrength|caretSpeedDivisor|scrollSpeedDivisor} FLOAT
+    #NOTIMPLEMENTED COMMAND = set secondaryRoles
+    COMMAND = set mouseKeys.{move|scroll}.initialSpeed <px/s, -100/20 (NUMBER)>
+    COMMAND = set mouseKeys.{move|scroll}.baseSpeed <px/s, -800/20 (NUMBER)>
+    COMMAND = set mouseKeys.{move|scroll}.initialAcceleration <px/s, ~1700/20 (NUMBER)>
+    COMMAND = set mouseKeys.{move|scroll}.deceleratedSpeed <px/s, ~200/10 (NUMBER)>
+    COMMAND = set mouseKeys.{move|scroll}.acceleratedSpeed <px/s, ~1600/50 (NUMBER)>
+    #NOTIMPLEMENTED COMMAND = set mouseKeys.{move|scroll}.axisSkew FLOAT
+    COMMAND = set compensateDiagonalSpeed {0|1}
+    COMMAND = set stickyMods {0|never|smart|always|1}
+    COMMAND = set debounceDelay <time in ms, at most 250 (NUMBER)>
+    COMMAND = set keystrokeDelay <time in ms, at most 65535 (NUMBER)>
+    COMMAND = set setEmergencyKey KEYID
     CONDITION = {ifShortcut | ifNotShortcut} [IFSHORTCUTFLAGS]* [KEYID]*
     CONDITION = {ifGesture | ifNotGesture} [IFSHORTCUTFLAGS]* [KEYID]*
     CONDITION = {ifPrimary | ifSecondary}
@@ -275,11 +286,14 @@ The following grammar is supported:
     KEYMAPID = <abbrev>|last
     MACROID = last|CHAR|NUMBER
     NUMBER = [0-9]+ | -[0-9]+ | #<register idx (NUMBER)> | #key | @<relative macro action index(NUMBER)> | %<key idx in postponer queue (NUMBER)>
+    FLOAT = [0-9]+{.[0-9]+} | -FLOAT
     CHAR = <any nonwhite ascii char>
     KEYID = <id of hardware key obtained by resolveNextKeyId (NUMBER)>
     LABEL = <string identifier>
     SHORTCUT = MODMASK-KEY | KEY
     MODMASK = [MODMASK]+ | [L|R]{S|C|A|G}
+    NAVIGATIONMODE = cursor | scroll | caret | media | none
+    MODULEID = trackball | touchpad | trackpoint | keycluster
     KEY = CHAR|KEYABBREV
     ADDRESS = LABEL|NUMBER
     KEYABBREV = enter | escape | backspace | tab | space | minusAndUnderscore | equalAndPlus | openingBracketAndOpeningBrace | closingBracketAndClosingBrace | backslashAndPipeIso | backslashAndPipe | nonUsHashmarkAndTilde | semicolonAndColon | apostropheAndQuote | graveAccentAndTilde | commaAndLessThanSign | dotAndGreaterThanSign | slashAndQuestionMark | capsLock | f1 | f2 | f3 | f4 | f5 | f6 | f7 | f8 | f9 | f10 | f11 | f12 | printScreen | scrollLock | pause | insert | home | pageUp | delete | end | pageDown | rightArrow | leftArrow | downArrow | upArrow | numLock | keypadSlash | keypadAsterisk | keypadMinus | keypadPlus | keypadEnter | keypad1AndEnd | keypad2AndDownArrow | keypad3AndPageDown | keypad4AndLeftArrow | keypad5 | keypad6AndRightArrow | keypad7AndHome | keypad8AndUpArrow | keypad9AndPageUp | keypad0AndInsert | keypadDotAndDelete | nonUsBackslashAndPipe | application | power | keypadEqualSign | f13 | f14 | f15 | f16 | f17 | f18 | f19 | f20 | f21 | f22 | f23 | f24 | execute | help | menu | select | stop | again | undo | cut | copy | paste | find | mute | volumeUp | volumeDown | lockingCapsLock | lockingNumLock | lockingScrollLock | keypadComma | keypadEqualSignAs400 | international1 | international2 | international3 | international4 | international5 | international6 | international7 | international8 | international9 | lang1 | lang2 | lang3 | lang4 | lang5 | lang6 | lang7 | lang8 | lang9 | alternateErase | sysreq | cancel | clear | prior | return | separator | out | oper | clearAndAgain | crselAndProps | exsel | keypad00 | keypad000 | thousandsSeparator | decimalSeparator | currencyUnit | currencySubUnit | keypadOpeningParenthesis | keypadClosingParenthesis | keypadOpeningBrace | keypadClosingBrace | keypadTab | keypadBackspace | keypadA | keypadB | keypadC | keypadD | keypadE | keypadF | keypadXor | keypadCaret | keypadPercentage | keypadLessThanSign | keypadGreaterThanSign | keypadAmp | keypadAmpAmp | keypadPipe | keypadPipePipe | keypadColon | keypadHashmark | keypadSpace | keypadAt | keypadExclamationSign | keypadMemoryStore | keypadMemoryRecall | keypadMemoryClear | keypadMemoryAdd | keypadMemorySubtract | keypadMemoryMultiply | keypadMemoryDivide | keypadPlusAndMinus | keypadClear | keypadClearEntry | keypadBinary | keypadOctal | keypadDecimal | keypadHexadecimal | leftControl | leftShift | leftAlt | leftGui | rightControl | rightShift | rightAlt | rightGui 
@@ -296,10 +310,16 @@ The following grammar is supported:
     ##########
     #REMOVEWD#
     ##########
-    COMMAND = setExpDriver <baseSpeedCoef (FLOAT:0.0)> <midSpeedCoef (FLOAT:1.0)> <midSpeedExp (FLOAT:0.5)> <midSpeed (FLOAT:3000)>
+    COMMAND = setExpDriver <baseSpeed (FLOAT:0.0)> <speed (FLOAT:1.0)> <acceleration (FLOAT:0.5)> <midSpeed (FLOAT:3000)>
     COMMAND = setSplitCompositeKeystroke {0|1}
     COMMAND = setActivateOnRelease {0|1}
     MODIFIER = suppressKeys
+    COMMAND = setStickyModsEnabled {0|never|smart|always|1}
+    COMMAND = setCompensateDiagonalSpeed {0|1}
+    COMMAND = setDebounceDelay <time in ms, at most 250 (NUMBER)>
+    COMMAND = setKeystrokeDelay <time in ms, at most 65535 (NUMBER)>
+    COMMAND = setReg <register index (NUMBER)> <value (NUMBER)> 
+    COMMAND = setEmergencyKey KEYID
 
 - Uncategorized commands:
   - `setLedTxt <time> <custom text>` will set led display to supplemented text for the given time. (Blocks for the given time.)
@@ -423,15 +443,22 @@ The following grammar is supported:
   - `{addReg|subReg|mulReg} <register index> <value>` adds value to the register 
   - Register values can also be used in place of all numeric arguments by prefixing register index by '#'. E.g., waiting until release or for amount of time defined by reg 1 can be achieved by `$delayUntilReleaseMax #1`
 - Global configuration options:
-  - `setStickyModsEnabled` globally turns on or off sticky modifiers. This affects only standard scancode actions. Macro actions (both gui and command ones) are always nonsticky, unless `sticky` flag is included in `tapKey|holdKey|pressKey` commands. Default value is `smart`, which is the official behaviour - i.e., `<alt/ctrl/gui> + <tab/arrows>` are sticky. Furthermore `0 == never` and `1 == always`.
-  - `setCompensateDiagonalSpeed` will divide diagonal mouse speed by sqrt(2) if enabled.
-  - `setDebounceDelay <time in ms, at most 250>` prevents key state from changing for some time after every state change. This is needed because contacts of mechanical switches can bounce after contact and therefore change state multiple times in span of a few milliseconds. Official firmware debounce time is 50 ms for both press and release. Recommended value is 10-50, default is 50.
-  - `setKeystrokeDelay <time in ms, at most 65535>` allows slowing down keyboard input. This is handy for lousily written RDP clients and other software which just scans keys once a while and processes them in wrong order if multiple keys have been pressed inbetween. In more detail, this setting adds a delay whenever a basic usb report is sent. During this delay, key matrix is still scanned and keys are debounced, but instead of activating, the keys are added into a queue to be replayed later. 
-  - (temporarily disabled) `setExpDriver <baseSpeedCoef (FLOAT)> <midSpeedCoef (FLOAT)> <midSpeedExp (FLOAT)> <midSpeed (FLOAT)> ` modifies speed characteristics of right side modules. Simplified formula is `modifiedSpeed(speed 's' per midSpeed) = baseSpeedCoef*s + midSpeedCoef*(s^midSpeedExp)`. Actual formula is `appliedDistance(distance d, time t) = d*(baseSpeedCoef*((d/t)/midSpeed) + midSpeedCoef*(((d/t)/midSpeed)^midSpeedExp))`. (`d/t` is actual speed in px/s, `(d/t)/midSpeed` is normalizedSpeed which acts as base for the exponent)
-    - `baseSpeedCoef` is base speed multiplier which is not affected by acceleration. I.e., if `midSpeedCoef = 0`, then traveled distance is `reportedDistance*baseSpeedCoef`
-    - `midSpeedCoef` multiplies effect of acceleration expression. I.e., simply multiplies the reported distance when the actual speed equals `midSpeed`.
-    - `midSpeedExp` is exponent applied to the speed normalized w.r.t midSpeed. I.e., acceleration expression of the formula is `midSpeedCoef*(reportedSpeed/midSpeed)^(midSpeedExp)`. I.e., no acceleration = 0, reasonable (square root) acceleration = 0.5.
-    - `midSpeed` represents "middle" speed, where the user can easily imagine behaviour of the device (e.g., 2000) and henceforth easily set the coefficient. At this speed, `modifiedSpeed = (baseSpeedCoef + midSpeedCoef)*reportedSpeed` 
+    
+  - `set stickyMods {0|never|smart|always|1}` globally turns on or off sticky modifiers. This affects only standard scancode actions. Macro actions (both gui and command ones) are always nonsticky, unless `sticky` flag is included in `tapKey|holdKey|pressKey` commands. Default value is `smart`, which is the official behaviour - i.e., `<alt/ctrl/gui> + <tab/arrows>` are sticky. Furthermore `0 == never` and `1 == always`.
+  - `set compensateDiagonalSpeed {0|1}` will divide diagonal mouse speed by sqrt(2) if enabled.
+  - `set debounceDelay <time in ms, at most 250>` prevents key state from changing for some time after every state change. This is needed because contacts of mechanical switches can bounce after contact and therefore change state multiple times in span of a few milliseconds. Official firmware debounce time is 50 ms for both press and release. Recommended value is 10-50, default is 50.
+  - `set keystrokeDelay <time in ms, at most 65535>` allows slowing down keyboard output. This is handy for lousily written RDP clients and other software which just scans keys once a while and processes them in wrong order if multiple keys have been pressed inbetween. In more detail, this setting adds a delay whenever a basic usb report is sent. During this delay, key matrix is still scanned and keys are debounced, but instead of activating, the keys are added into a queue to be replayed later. Recommended value is 10 if you have issues with RDP missing modifier keys, 0 otherwise.
+  - `set mouseKeys.{move|scroll}.{...} NUMBER` please refer to Agent for more details
+    - `initialSpeed` - the speed that is active when key is pressed
+    - `initialAcceleration,baseSpeed` - when mouse key is held, speed increases until it reaches baseSpeed
+    - `deceleratedSpeed` - speed as affected by deceleration modifier
+    - `acceleratedSpeed` - speed as affected by acceleration modifier
+    - `axisSkew`
+  - `set module.MODULEID.{baseSpeed|speed|acceleration}` modifies speed characteristics of right side modules. Simplified formula is `modifiedSpeed(normalizedSpeed) = baseSpeed*s + speed*(normalizedSpeed^acceleration)` where `normalizedSpeed = actualSpeed / midSpeed`. Therefore `appliedDistance(distance d, time t) = d*(baseSpeed*((d/t)/midSpeed) + speed*(((d/t)/midSpeed)^acceleration))`. (`d/t` is actual speed in px/s, `(d/t)/midSpeed` is normalizedSpeed which acts as base for the exponent)
+    - `baseSpeed` is base speed multiplier which is not affected by acceleration. I.e., if `speed = 0`, then traveled distance is `reportedDistance*baseSpeed`
+    - `speed` multiplies effect of acceleration expression. I.e., simply multiplies the reported distance when the actual speed equals `midSpeed`.
+    - `acceleration` is exponent applied to the speed normalized w.r.t midSpeed. I.e., acceleration expression of the formula is `speed*(reportedSpeed/midSpeed)^(acceleration)`. I.e., no acceleration = 0, reasonable (square root) acceleration = 0.5. Highest recommended value is 1.0.
+    - `midSpeed` represents "middle" speed, where the user can easily imagine behaviour of the device (currently fixed 3000 px/s) and henceforth easily set the coefficient. At this speed, `modifiedSpeed = (baseSpeed + speed)*reportedSpeed` 
     - Recommended settings - e.g. `0.0 1.0 0.5 3000` (square root multiplier, starting at 0 speed - allowing for very precise movement at low speed) or `0.5 0.5 1.0 3000` (linear speedup starting at 0.5 - providing more uniform acceleration).
 - Argument parsing rules:
   - `NUMBER` is parsed as a 32 bit signed integer and then assigned into the target variable. However, the target variable is often only 8 or 16 bit unsigned. If a number is prefixed with '#', it is interpretted as a register address (index). If a number is prefixed with '@', current macro index is added to the final value. `#key` returns activation key's hardware id. If prefixed with `%`, returns keyid of nth press event in the postponer queue (e.g., `%0` returns `KEYID` of first key which is postponed but not yet activated).
