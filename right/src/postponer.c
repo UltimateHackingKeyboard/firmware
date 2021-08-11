@@ -125,7 +125,7 @@ bool PostponerCore_RunKey(key_state_t* key, bool active)
 //TODO: remove either this or RunKey
 void PostponerCore_RunPostponedEvents(void)
 {
-    if(Chording) {
+    if (Chording) {
         chording();
     }
     // Process one event every two cycles. (Unless someone keeps Postponer active by touching cycles_until_activation.)
@@ -254,14 +254,15 @@ void PostponerExtended_PrintContent()
 //### Chording ###
 //##########################
 
-static uint8_t priority(key_state_t *key, bool active) {
-    if(!active) {
+static uint8_t priority(key_state_t *key, bool active)
+{
+    if (!active) {
         return 0;
     }
     key_action_t* a = &CurrentKeymap[ActiveLayer][0][0] + (key - &KeyStates[0][0]);
     switch (a->type) {
         case KeyActionType_Keystroke:
-            if(a->keystroke.secondaryRole || a->keystroke.scancode == 0) {
+            if (a->keystroke.secondaryRole || a->keystroke.scancode == 0) {
                 return 1;
             }
             return 0;
@@ -289,8 +290,8 @@ static void chording()
             struct postponer_buffer_record_type_t* b = &buffer[POS(i+1)];
             uint8_t pa = priority(a->key, a->active);
             uint8_t pb = priority(b->key, b->active);
-            if( (a->active && !b->active) || (a->active && b->active && pa < pb) ) {
-                if(a->key != b->key && b->time - a->time < limit) {
+            if ( (a->active && !b->active) || (a->active && b->active && pa < pb) ) {
+                if (a->key != b->key && b->time - a->time < limit) {
                     struct postponer_buffer_record_type_t tmp = *a;
                     *a = *b;
                     *b = tmp;
@@ -298,7 +299,7 @@ static void chording()
                 }
             }
         }
-        if(activated) {
+        if (activated) {
             PostponerCore_PostponeNCycles(0);
         }
     }

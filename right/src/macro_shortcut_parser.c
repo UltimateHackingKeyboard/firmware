@@ -327,10 +327,11 @@ lookup_record_t lookup_table[] = {
 
 size_t lookup_size = sizeof(lookup_table)/sizeof(lookup_table[0]);
 
-static void sortLookup() {
-    for(uint8_t i = 0; i < lookup_size; i++) {
-        for(uint8_t j = 0; j < lookup_size - 1; j++) {
-            if(!StrLessOrEqual(lookup_table[j].id, NULL, lookup_table[j+1].id, NULL)) {
+static void sortLookup()
+{
+    for (uint8_t i = 0; i < lookup_size; i++) {
+        for (uint8_t j = 0; j < lookup_size - 1; j++) {
+            if (!StrLessOrEqual(lookup_table[j].id, NULL, lookup_table[j+1].id, NULL)) {
                 lookup_record_t tmp = lookup_table[j];
                 lookup_table[j] = lookup_table[j+1];
                 lookup_table[j+1] = tmp;
@@ -339,9 +340,10 @@ static void sortLookup() {
     }
 }
 
-static void initialize() {
+static void initialize()
+{
     static bool initialized = false;
-    if(initialized) {
+    if (initialized) {
         return;
     }
 
@@ -350,7 +352,8 @@ static void initialize() {
 }
 
 
-static macro_action_t parseSingleChar(char c) {
+static macro_action_t parseSingleChar(char c)
+{
     macro_action_t action;
     action.type = MacroActionType_Key;
     action.key.type = KeystrokeType_Basic;
@@ -359,7 +362,8 @@ static macro_action_t parseSingleChar(char c) {
     return action;
 }
 
-static uint8_t parseMods(const char* str, const char* strEnd) {
+static uint8_t parseMods(const char* str, const char* strEnd)
+{
     const char* orig = str;
     uint8_t modMask = 0;
     bool left = true;
@@ -404,25 +408,27 @@ static uint8_t parseMods(const char* str, const char* strEnd) {
     return modMask;
 }
 
-static lookup_record_t* lookup(uint8_t begin, uint8_t end, const char* str, const char* strEnd) {
+static lookup_record_t* lookup(uint8_t begin, uint8_t end, const char* str, const char* strEnd)
+{
     uint8_t pivot = begin + (end-begin)/2;
-    if(begin == end) {
-        if(StrLessOrEqual(str, strEnd, lookup_table[pivot].id, NULL) && StrLessOrEqual(lookup_table[pivot].id, NULL, str, strEnd)) {
+    if (begin == end) {
+        if (StrLessOrEqual(str, strEnd, lookup_table[pivot].id, NULL) && StrLessOrEqual(lookup_table[pivot].id, NULL, str, strEnd)) {
             return &lookup_table[pivot];
         } else {
             Macros_ReportError("Unrecognized key abbreviation:", str, strEnd);
             return &lookup_table[0];
         }
     }
-    else if(StrLessOrEqual(str, strEnd, lookup_table[pivot].id, NULL)) {
+    else if (StrLessOrEqual(str, strEnd, lookup_table[pivot].id, NULL)) {
         return lookup(begin, pivot, str, strEnd);
     } else {
         return lookup(pivot + 1, end, str, strEnd);
     }
 }
 
-static macro_action_t parseAbbrev(const char* str, const char* strEnd) {
-    if(str + 1 == strEnd) {
+static macro_action_t parseAbbrev(const char* str, const char* strEnd)
+{
+    if (str + 1 == strEnd) {
         return parseSingleChar(*str);
     }
 
@@ -454,11 +460,12 @@ static macro_action_t parseAbbrev(const char* str, const char* strEnd) {
     return action;
 }
 
-macro_action_t MacroShortcutParser_Parse(const char* str, const char* strEnd) {
+macro_action_t MacroShortcutParser_Parse(const char* str, const char* strEnd)
+{
     macro_action_t action;
     initialize();
 
-    if(FindChar('-', str, strEnd) == strEnd) {
+    if (FindChar('-', str, strEnd) == strEnd) {
         //"-" notation not used
         action = parseAbbrev(str, strEnd);
     }
@@ -466,7 +473,7 @@ macro_action_t MacroShortcutParser_Parse(const char* str, const char* strEnd) {
         const char* delim = FindChar('-', str, strEnd);
         action = parseAbbrev(delim+1, strEnd);
 
-        if(action.type != MacroActionType_Key) {
+        if (action.type != MacroActionType_Key) {
             Macros_ReportError("This action is not allowed to have modifiers!", str, strEnd);
         }
 

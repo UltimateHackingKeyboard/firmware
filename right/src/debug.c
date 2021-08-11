@@ -77,11 +77,11 @@ void WatchValueMin(int v, uint8_t n)
 {
     static int m = 0;
 
-    if(v < m) {
+    if (v < m) {
         m = v;
     }
 
-    if(CurrentTime - lastWatch > watchInterval) {
+    if (CurrentTime - lastWatch > watchInterval) {
         ShowNumberExp(m);
         lastWatch = CurrentTime;
         m = INT_MAX;
@@ -92,11 +92,11 @@ void WatchValueMax(int v, uint8_t n)
 {
     static int m = 0;
 
-    if(v > m) {
+    if (v > m) {
         m = v;
     }
 
-    if(CurrentTime - lastWatch > watchInterval) {
+    if (CurrentTime - lastWatch > watchInterval) {
         ShowNumberExp(m);
         lastWatch = CurrentTime;
         m = INT_MIN;

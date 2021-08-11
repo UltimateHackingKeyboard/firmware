@@ -6,7 +6,7 @@
 
 //this is noop at the moment, prepared for time when MAX_KEY_COUNT_PER_MODULE changes
 //the purpose is to preserve current keyids
-uint16_t recodeId(uint16_t newFormat, uint16_t fromBase, uint16_t toBase)
+static uint16_t recodeId(uint16_t newFormat, uint16_t fromBase, uint16_t toBase)
 {
     return toBase * (newFormat / fromBase) + (newFormat % fromBase);
 }
@@ -36,10 +36,11 @@ void Utils_DecodeId(uint16_t keyid, uint8_t* outSlotId, uint8_t* outSlotIdx)
     *outSlotIdx = keyid%64;
 }
 
-void Utils_reportReport(usb_basic_keyboard_report_t* report) {
+void Utils_reportReport(usb_basic_keyboard_report_t* report)
+{
     Macros_SetStatusString("Reporting ", NULL);
     for ( int i = 0; i < USB_BASIC_KEYBOARD_MAX_KEYS; i++) {
-        if(report->scancodes[i] != 0){
+        if (report->scancodes[i] != 0) {
             Macros_SetStatusChar(MacroShortcutParser_ScancodeToCharacter(report->scancodes[i]));
         }
     }

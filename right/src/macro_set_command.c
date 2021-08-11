@@ -37,7 +37,7 @@ static void moduleSpeed(const char* arg1, const char *textEnd, module_configurat
 {
     const char* arg2 = NextTok(arg1, textEnd);
 
-    if(TokenMatches(arg1, textEnd, "baseSpeed")) {
+    if (TokenMatches(arg1, textEnd, "baseSpeed")) {
         module->baseSpeed = ParseFloat(arg2, textEnd);
     }
     else if (TokenMatches(arg1, textEnd, "speed")) {
@@ -56,7 +56,7 @@ static void module(const char* arg1, const char *textEnd)
 
     const char* arg2 = proceedByDot(arg1, textEnd);
 
-    if(TokenMatches(arg2, textEnd, "navigationMode")) {
+    if (TokenMatches(arg2, textEnd, "navigationMode")) {
         const char* arg3 = proceedByDot(arg2, textEnd);
         moduleNavigationMode(arg3, textEnd, module);
     }
@@ -99,12 +99,12 @@ static void mouseKeys(const char* arg1, const char *textEnd)
     }
     else if (TokenMatches(arg2, textEnd, "acceleratedSpeed")) {
         state->acceleratedSpeed = ParseInt32(arg3, textEnd);
-    } 
+    }
     /* axis skew */
     else if (TokenMatches(arg1, textEnd, "axisSkew")) {
         //module->axisSkew = ParseInt32(arg3, textEnd);
         // TODO
-    } 
+    }
     else {
         Macros_ReportError("parameter not recognized:", arg1, textEnd);
     }
@@ -114,13 +114,13 @@ static void stickyMods(const char* arg1, const char *textEnd)
 {
     if (TokenMatches(arg1, textEnd, "0") || TokenMatches(arg1, textEnd, "never")) {
         StickyModifierStrategy = Stick_Never;
-    } 
+    }
     else if (TokenMatches(arg1, textEnd, "smart")) {
         StickyModifierStrategy = Stick_Smart;
-    } 
+    }
     else if (TokenMatches(arg1, textEnd, "1") || TokenMatches(arg1, textEnd, "always")) {
         StickyModifierStrategy = Stick_Always;
-    } 
+    }
     else {
         Macros_ReportError("parameter not recognized:", arg1, textEnd);
     }
@@ -130,34 +130,34 @@ bool MacroSetCommand(const char* arg1, const char *textEnd)
 {
     const char* arg2 = NextTok(arg1, textEnd);
 
-    if(TokenMatches(arg1, textEnd, "module")) {
+    if (TokenMatches(arg1, textEnd, "module")) {
         module(proceedByDot(arg1, textEnd), textEnd);
     }
-    else if(TokenMatches(arg1, textEnd, "secondaryRoles")) {
+    else if (TokenMatches(arg1, textEnd, "secondaryRoles")) {
         secondaryRoles(proceedByDot(arg1, textEnd), textEnd);
     }
-    else if(TokenMatches(arg1, textEnd, "mouseKeys")) {
+    else if (TokenMatches(arg1, textEnd, "mouseKeys")) {
         mouseKeys(proceedByDot(arg1, textEnd), textEnd);
     }
     else if (TokenMatches(arg1, textEnd, "compensateDiagonalSpeed")) {
         CompensateDiagonalSpeed = ParseInt32(arg2, textEnd);
-    } 
+    }
     else if (TokenMatches(arg1, textEnd, "stickyMods")) {
         stickyMods(arg2, textEnd);
-    } 
+    }
     else if (TokenMatches(arg1, textEnd, "debounceDelay")) {
         uint16_t time = ParseInt32(arg2, textEnd);
 
         DebounceTimePress = time;
         DebounceTimeRelease = time;
-    } 
+    }
     else if (TokenMatches(arg1, textEnd, "keystrokeDelay")) {
         KeystrokeDelay = ParseInt32(arg2, textEnd);
-    } 
+    }
     else if (TokenMatches(arg1, textEnd, "emergencyKey")) {
         uint16_t key = ParseInt32(arg2, textEnd);
         EmergencyKey = Utils_KeyIdToKeyState(key);
-    } 
+    }
     else {
         Macros_ReportError("parameter not recognized:", arg1, textEnd);
     }

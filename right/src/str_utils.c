@@ -6,7 +6,7 @@
 float ParseFloat(const char *a, const char *aEnd)
 {
     bool negate = false;
-    if(*a == '-')
+    if (*a == '-')
     {
         negate = !negate;
         a++;
@@ -18,7 +18,7 @@ float ParseFloat(const char *a, const char *aEnd)
         a++;
         numFound = true;
     }
-    if(*a == '.') {
+    if (*a == '.') {
         a++;
     }
     float b = 0.1;
@@ -29,11 +29,11 @@ float ParseFloat(const char *a, const char *aEnd)
         a++;
     }
     n += d;
-    if(negate)
+    if (negate)
     {
         n = -n;
     }
-    if(!numFound) {
+    if (!numFound) {
         Macros_ReportError("Float expected", NULL, NULL);
     }
     return n;
@@ -42,7 +42,7 @@ float ParseFloat(const char *a, const char *aEnd)
 int32_t ParseInt32_2(const char *a, const char *aEnd, const char* *parsedTill)
 {
     bool negate = false;
-    if(*a == '-')
+    if (*a == '-')
     {
         negate = !negate;
         a++;
@@ -54,33 +54,34 @@ int32_t ParseInt32_2(const char *a, const char *aEnd, const char* *parsedTill)
         a++;
         numFound = true;
     }
-    if(negate)
+    if (negate)
     {
         n = -n;
     }
-    if(!numFound) {
+    if (!numFound) {
         Macros_ReportError("Integer expected", NULL, NULL);
     }
-    if(parsedTill != NULL) {
+    if (parsedTill != NULL) {
         *parsedTill = a;
     }
     return n;
 }
 
-int32_t ParseInt32(const char *a, const char *aEnd) {
+int32_t ParseInt32(const char *a, const char *aEnd)
+{
     return ParseInt32_2(a, aEnd, NULL);
 }
 
 bool StrLessOrEqual(const char* a, const char* aEnd, const char* b, const char* bEnd)
 {
     while(true) {
-        if((*a == '\0' || a==aEnd) && (*b == '\0' || b==bEnd)) {
+        if ((*a == '\0' || a==aEnd) && (*b == '\0' || b==bEnd)) {
             return true;
         }
-        else if(*a == '\0' || a==aEnd) {
+        else if (*a == '\0' || a==aEnd) {
             return true;
         }
-        else if(*b == '\0' || b==bEnd) {
+        else if (*b == '\0' || b==bEnd) {
             return false;
         }
         else if (*a < *b) {
@@ -100,13 +101,13 @@ bool StrLessOrEqual(const char* a, const char* aEnd, const char* b, const char* 
 bool StrEqual(const char* a, const char* aEnd, const char* b, const char* bEnd)
 {
     while(true) {
-        if((*a == '\0' || a==aEnd) && (*b == '\0' || b==bEnd)) {
+        if ((*a == '\0' || a==aEnd) && (*b == '\0' || b==bEnd)) {
             return true;
         }
-        else if(*a == '\0' || a==aEnd) {
+        else if (*a == '\0' || a==aEnd) {
             return false;
         }
-        else if(*b == '\0' || b==bEnd) {
+        else if (*b == '\0' || b==bEnd) {
             return false;
         }
         else if (*a != *b) {
@@ -122,7 +123,7 @@ bool StrEqual(const char* a, const char* aEnd, const char* b, const char* bEnd)
 const char* FindChar(char c, const char* str, const char* strEnd)
 {
     while(str < strEnd) {
-        if(*str == c) {
+        if (*str == c) {
             return str;
         }
         str++;
@@ -134,10 +135,10 @@ const char* FindChar(char c, const char* str, const char* strEnd)
 bool TokenMatches(const char *a, const char *aEnd, const char *b)
 {
     while(a < aEnd && *b) {
-        if(*a <= 32 || a == aEnd || *b <= 32) {
+        if (*a <= 32 || a == aEnd || *b <= 32) {
             return (*a <= 32 || a == aEnd) && *b <= 32;
         }
-        if(*a++ != *b++){
+        if (*a++ != *b++) {
             return false;
         }
     }
@@ -147,10 +148,10 @@ bool TokenMatches(const char *a, const char *aEnd, const char *b)
 bool TokenMatches2(const char *a, const char *aEnd, const char *b, const char *bEnd)
 {
     while(a < aEnd && b < bEnd) {
-        if(*a <= 32 || a == aEnd || *b <= 32 || b == bEnd) {
+        if (*a <= 32 || a == aEnd || *b <= 32 || b == bEnd) {
             return (*a <= 32 || a == aEnd) && *b <= 32;
         }
-        if(*a++ != *b++){
+        if (*a++ != *b++) {
             return false;
         }
     }
@@ -183,7 +184,7 @@ const char* NextTok(const char* cmd, const char *cmdEnd)
     while(*cmd <= 32 && cmd < cmdEnd) {
         cmd++;
     }
-    if(cmd < cmdEnd - 1 && cmd[0] == '/' && cmd[1] == '/') {
+    if (cmd < cmdEnd - 1 && cmd[0] == '/' && cmd[1] == '/') {
         return cmdEnd;
     }
     return cmd;
@@ -200,54 +201,57 @@ const char* NextCmd(const char* cmd, const char *cmdEnd)
     return cmd;
 }
 
-layer_id_t ParseLayerId(const char* arg1, const char* cmdEnd) {
-    if(TokenMatches(arg1, cmdEnd, "fn")) {
+layer_id_t ParseLayerId(const char* arg1, const char* cmdEnd)
+{
+    if (TokenMatches(arg1, cmdEnd, "fn")) {
         return LayerId_Fn;
     }
-    else if(TokenMatches(arg1, cmdEnd, "mouse")) {
+    else if (TokenMatches(arg1, cmdEnd, "mouse")) {
         return LayerId_Mouse;
     }
-    else if(TokenMatches(arg1, cmdEnd, "mod")) {
+    else if (TokenMatches(arg1, cmdEnd, "mod")) {
         return LayerId_Mod;
     }
-    else if(TokenMatches(arg1, cmdEnd, "base")) {
+    else if (TokenMatches(arg1, cmdEnd, "base")) {
         return LayerId_Base;
     }
     Macros_ReportError("Layer not recognized: ", arg1, cmdEnd);
     return 0;
 }
 
-module_id_t ParseModuleId(const char* arg1, const char* cmdEnd) {
-    if(TokenMatches(arg1, cmdEnd, "keycluster")) {
+module_id_t ParseModuleId(const char* arg1, const char* cmdEnd)
+{
+    if (TokenMatches(arg1, cmdEnd, "keycluster")) {
         return ModuleId_KeyClusterLeft;
     }
-    else if(TokenMatches(arg1, cmdEnd, "trackball")) {
+    else if (TokenMatches(arg1, cmdEnd, "trackball")) {
         return ModuleId_TrackballRight;
     }
-    else if(TokenMatches(arg1, cmdEnd, "trackpoint")) {
+    else if (TokenMatches(arg1, cmdEnd, "trackpoint")) {
         return ModuleId_TrackpointRight;
     }
-    else if(TokenMatches(arg1, cmdEnd, "touchpad")) {
+    else if (TokenMatches(arg1, cmdEnd, "touchpad")) {
         return ModuleId_TouchpadRight;
     }
     Macros_ReportError("Module not recognized: ", arg1, cmdEnd);
     return 0;
 }
 
-navigation_mode_t ParseNavigationModeId(const char* arg1, const char* cmdEnd) {
-    if(TokenMatches(arg1, cmdEnd, "cursor")) {
+navigation_mode_t ParseNavigationModeId(const char* arg1, const char* cmdEnd)
+{
+    if (TokenMatches(arg1, cmdEnd, "cursor")) {
         return NavigationMode_Cursor;
     }
-    else if(TokenMatches(arg1, cmdEnd, "scroll")) {
+    else if (TokenMatches(arg1, cmdEnd, "scroll")) {
         return NavigationMode_Scroll;
     }
-    else if(TokenMatches(arg1, cmdEnd, "caret")) {
+    else if (TokenMatches(arg1, cmdEnd, "caret")) {
         return NavigationMode_Caret;
     }
-    else if(TokenMatches(arg1, cmdEnd, "media")) {
+    else if (TokenMatches(arg1, cmdEnd, "media")) {
         return NavigationMode_Media;
     }
-    else if(TokenMatches(arg1, cmdEnd, "none")) {
+    else if (TokenMatches(arg1, cmdEnd, "none")) {
         return NavigationMode_None;
     }
     Macros_ReportError("Mode not recognized: ", arg1, cmdEnd);
