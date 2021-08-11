@@ -32,6 +32,7 @@
 // Typedefs:
 
     struct postponer_buffer_record_type_t {
+        uint32_t time;
         key_state_t * key;
         bool active;
     };
@@ -44,6 +45,7 @@
 
     bool PostponerCore_IsActive(void);
     void PostponerCore_PostponeNCycles(uint8_t n);
+    bool PostponerCore_RunKey(key_state_t* key, bool active);
     void PostponerCore_TrackKeyEvent(key_state_t *keyState, bool active);
     void PostponerCore_RunPostponedEvents(void);
     void PostponerCore_FinishCycle(void);
@@ -52,5 +54,14 @@
 
     uint8_t PostponerQuery_PendingKeypressCount();
     bool PostponerQuery_IsKeyReleased(key_state_t* key);
+
+// Functions (Query APIs extended):
+    uint16_t PostponerExtended_PendingId(uint16_t idx);
+    uint32_t PostponerExtended_LastPressTime(void);
+    bool PostponerExtended_IsPendingKeyReleased(uint8_t idx);
+    void PostponerExtended_ConsumePendingKeypresses(int count, bool suppress);
+    void PostponerExtended_ResetPostponer(void);
+
+    void PostponerExtended_PrintContent();
 
 #endif /* SRC_POSTPONER_H_ */

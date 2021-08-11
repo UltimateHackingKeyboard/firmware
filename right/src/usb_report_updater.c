@@ -16,6 +16,8 @@
 #include "config_parser/parse_keymap.h"
 #include "usb_commands/usb_command_get_debug_buffer.h"
 #include "arduino_hid/ConsumerAPI.h"
+#include "macro_recorder.h"
+#include "macro_shortcut_parser.h"
 #include "postponer.h"
 #include "secondary_role_driver.h"
 #include "slave_drivers/touchpad_driver.h"
@@ -28,7 +30,15 @@ static key_action_t actionCache[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
 
 volatile uint8_t UsbReportUpdateSemaphore = 0;
 
-static uint16_t keystrokeDelay = 0;
+uint8_t HardwareModifierState;
+uint8_t HardwareModifierStatePrevious;
+bool SuppressMods = false;
+bool SuppressKeys = false;
+sticky_strategy_t StickyModifierStrategy = Stick_Smart;
+
+uint16_t KeystrokeDelay = 0;
+
+key_state_t* EmergencyKey = NULL;
 
 // Holds are applied on current base layer.
 static void applyLayerHolds(key_state_t *keyState, key_action_t *action) {
@@ -86,7 +96,7 @@ static void handleEventInterrupts(key_state_t *keyState) {
     }
 }
 
-static uint8_t basicScancodeIndex = 0;
+uint8_t basicScancodeIndex = 0;
 static uint8_t mediaScancodeIndex = 0;
 static uint8_t systemScancodeIndex = 0;
 
@@ -128,7 +138,15 @@ static bool isStickyShortcut(key_action_t * action)
 
 static bool shouldStickAction(key_action_t * action)
 {
-    return ActiveLayerHeld && isStickyShortcut(action);
+    switch(StickyModifierStrategy) {
+    case Stick_Always:
+        return true;
+    case Stick_Never:
+        return false;
+    default:
+    case Stick_Smart:
+        return ActiveLayerHeld && isStickyShortcut(action);
+    }
 }
 
 static void activateStickyMods(key_state_t *keyState, key_action_t *action)
@@ -136,6 +154,13 @@ static void activateStickyMods(key_state_t *keyState, key_action_t *action)
     stickyModifiers = action->keystroke.modifiers;
     stickyModifierKey = keyState;
     stickyModifierShouldStick = shouldStickAction(action);
+}
+
+void ActivateStickyMods(key_state_t *keyState, uint8_t mods)
+{
+    stickyModifiers = mods;
+    stickyModifierKey = keyState;
+    stickyModifierShouldStick = true;
 }
 
 static void applyKeystrokePrimary(key_state_t *keyState, key_action_t *action)
@@ -149,7 +174,7 @@ static void applyKeystrokePrimary(key_state_t *keyState, key_action_t *action)
                 activateStickyMods(keyState, action);
             }
         } else {
-            ActiveUsbBasicKeyboardReport->modifiers |= action->keystroke.modifiers;
+            HardwareModifierState |= action->keystroke.modifiers;
         }
         // If there are mods: first cycle send just mods, in next cycle start sending mods+scancode
         if (!stickyModifiersChanged || KeyState_ActivatedEarlier(keyState)) {
@@ -219,6 +244,10 @@ static void applyKeystroke(key_state_t *keyState, key_action_t *action, key_acti
 
 void ApplyKeyAction(key_state_t *keyState, key_action_t *action, key_action_t *actionBase)
 {
+    if (KeyState_ActivatedNow(keyState)) {
+        Macros_SignalInterrupt();
+    }
+
     switch (action->type) {
         case KeyActionType_Keystroke:
             if (KeyState_NonZero(keyState)) {
@@ -230,7 +259,7 @@ void ApplyKeyAction(key_state_t *keyState, key_action_t *action, key_action_t *a
                 stickyModifiers = 0;
                 MouseController_ActivateDirectionSigns(action->mouseAction);
             }
-            ActiveMouseStates[action->mouseAction] = true;
+            ActiveMouseStates[action->mouseAction]++;
             break;
         case KeyActionType_SwitchLayer:
             if (keyState->current != keyState->previous) {
@@ -241,14 +270,62 @@ void ApplyKeyAction(key_state_t *keyState, key_action_t *action, key_action_t *a
             if (KeyState_ActivatedNow(keyState)) {
                 stickyModifiers = 0;
                 SwitchKeymapById(action->switchKeymap.keymapId);
+                Macros_UpdateLayerStack();
             }
             break;
         case KeyActionType_PlayMacro:
             if (KeyState_ActivatedNow(keyState)) {
                 stickyModifiers = 0;
-                Macros_StartMacro(action->playMacro.macroId);
+                Macros_StartMacro(action->playMacro.macroId, keyState, 255);
             }
             break;
+    }
+}
+
+void clearActiveReports(void)
+{
+    memset(ActiveUsbMouseReport, 0, sizeof *ActiveUsbMouseReport);
+    memset(ActiveUsbBasicKeyboardReport, 0, sizeof *ActiveUsbBasicKeyboardReport);
+    memset(ActiveUsbMediaKeyboardReport, 0, sizeof *ActiveUsbMediaKeyboardReport);
+    memset(ActiveUsbSystemKeyboardReport, 0, sizeof *ActiveUsbSystemKeyboardReport);
+    basicScancodeIndex = 0;
+    mediaScancodeIndex = 0;
+    systemScancodeIndex = 0;
+}
+
+
+void mergeReports(void)
+{
+    for(uint8_t j = 0; j < MACRO_STATE_POOL_SIZE; j++) {
+        if(MacroState[j].reportsUsed) {
+            //if the macro ended right now, we still want to flush the last report
+            MacroState[j].reportsUsed &= MacroState[j].macroPlaying;
+            macro_state_t *s = &MacroState[j];
+            ActiveUsbBasicKeyboardReport->modifiers |= s->macroBasicKeyboardReport.modifiers;
+            for ( int i = 0; i < USB_BASIC_KEYBOARD_MAX_KEYS && s->macroBasicKeyboardReport.scancodes[i] != 0; i++) {
+                if( basicScancodeIndex < USB_BASIC_KEYBOARD_MAX_KEYS ) {
+                    ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = s->macroBasicKeyboardReport.scancodes[i];
+                }
+            }
+            for ( int i = 0; i < USB_MEDIA_KEYBOARD_MAX_KEYS && s->macroMediaKeyboardReport.scancodes[i] != 0 ; i++) {
+                if( mediaScancodeIndex < USB_MEDIA_KEYBOARD_MAX_KEYS ) {
+                    ActiveUsbMediaKeyboardReport->scancodes[mediaScancodeIndex++] = s->macroMediaKeyboardReport.scancodes[i];
+                }
+            }
+            for ( int i = 0; i < USB_SYSTEM_KEYBOARD_MAX_KEYS && s->macroSystemKeyboardReport.scancodes[i] != 0; i++) {
+                if( systemScancodeIndex < USB_SYSTEM_KEYBOARD_MAX_KEYS ) {
+                    ActiveUsbSystemKeyboardReport->scancodes[systemScancodeIndex++] = s->macroSystemKeyboardReport.scancodes[i];
+                }
+            }
+            ActiveUsbMouseReport->buttons |= s->macroMouseReport.buttons;
+            ActiveUsbMouseReport->x += s->macroMouseReport.x;
+            ActiveUsbMouseReport->y += s->macroMouseReport.y;
+            ActiveUsbMouseReport->wheelX += s->macroMouseReport.wheelX;
+            ActiveUsbMouseReport->wheelY += s->macroMouseReport.wheelY;
+        }
+    }
+    if(!SuppressMods) {
+        ActiveUsbBasicKeyboardReport->modifiers |= HardwareModifierState ;
     }
 }
 
@@ -315,16 +392,16 @@ static void handleLayerChanges() {
 
 static void updateActiveUsbReports(void)
 {
+    clearActiveReports();
+    HardwareModifierStatePrevious = HardwareModifierState;
+    HardwareModifierState = 0;
+    SuppressMods = false;
+
     if (MacroPlaying) {
         Macros_ContinueMacro();
-        memcpy(ActiveUsbMouseReport, &MacroMouseReport, sizeof MacroMouseReport);
-        memcpy(ActiveUsbBasicKeyboardReport, &MacroBasicKeyboardReport, sizeof MacroBasicKeyboardReport);
-        memcpy(ActiveUsbMediaKeyboardReport, &MacroMediaKeyboardReport, sizeof MacroMediaKeyboardReport);
-        memcpy(ActiveUsbSystemKeyboardReport, &MacroSystemKeyboardReport, sizeof MacroSystemKeyboardReport);
-        return;
     }
 
-    memset(ActiveMouseStates, 0, ACTIVE_MOUSE_STATES_COUNT);
+    memcpy(ActiveMouseStates, ToggledMouseStates, ACTIVE_MOUSE_STATES_COUNT);
 
     basicScancodeIndex = 0;
     mediaScancodeIndex = 0;
@@ -338,7 +415,7 @@ static void updateActiveUsbReports(void)
 
     handleUsbStackTestMode();
 
-    if ( PostponerCore_IsActive() ) {
+    if (PostponerCore_IsActive()) {
         PostponerCore_RunPostponedEvents();
     }
 
@@ -376,6 +453,8 @@ static void updateActiveUsbReports(void)
     MouseController_ProcessMouseActions();
 
     PostponerCore_FinishCycle();
+
+    mergeReports();
 
     // When a layer switcher key gets pressed along with another key that produces some modifiers
     // and the accomanying key gets released then keep the related modifiers active a long as the
@@ -424,7 +503,7 @@ void UpdateUsbReports(void)
         }
     }
 
-    if (Timer_GetElapsedTime(&lastReportTime) < keystrokeDelay) {
+    if (Timer_GetElapsedTime(&lastReportTime) < KeystrokeDelay) {
         justPreprocessInput();
         return;
     }
@@ -440,13 +519,21 @@ void UpdateUsbReports(void)
     updateActiveUsbReports();
 
     if (UsbBasicKeyboardCheckReportReady() == kStatus_USB_Success) {
-        UsbReportUpdateSemaphore |= 1 << USB_BASIC_KEYBOARD_INTERFACE_INDEX;
-        usb_status_t status = UsbBasicKeyboardAction();
-        //The semaphore has to be set before the call. Assume what happens if a bus reset happens asynchronously here. (Deadlock.)
-        if (status != kStatus_USB_Success) {
-            //This is *not* asynchronously safe as long as multiple reports of different type can be sent at the same time.
-            //TODO: consider either making it atomic, or lowering semaphore reset delay
-            UsbReportUpdateSemaphore &= ~(1 << USB_BASIC_KEYBOARD_INTERFACE_INDEX);
+        MacroRecorder_RecordBasicReport(ActiveUsbBasicKeyboardReport);
+
+        if(RuntimeMacroRecordingBlind) {
+            //just switch reports without sending the report
+            UsbBasicKeyboardResetActiveReport();
+		} else {
+            UsbReportUpdateSemaphore |= 1 << USB_BASIC_KEYBOARD_INTERFACE_INDEX;
+            usb_status_t status = UsbBasicKeyboardAction();
+            //The semaphore has to be set before the call. Assume what happens if a bus reset happens asynchronously here. (Deadlock.)
+            if (status != kStatus_USB_Success) {
+                //This is *not* asynchronously safe as long as multiple reports of different type can be sent at the same time.
+                //TODO: consider either making it atomic, or lowering semaphore reset delay
+                UsbReportUpdateSemaphore &= ~(1 << USB_BASIC_KEYBOARD_INTERFACE_INDEX);
+            }
+            lastReportTime = CurrentTime;
         }
         lastReportTime = CurrentTime;
     }
