@@ -53,6 +53,4 @@
     void MouseController_ActivateDirectionSigns(uint8_t state);
     void MouseController_ProcessMouseActions();
 
-    void MouseController_SetExpDriverParams(float baseSpeedCoef_, float midSpeedCoef_, float accelerationExp_, float midSpeed_);
-
 #endif

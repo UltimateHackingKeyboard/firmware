@@ -801,7 +801,6 @@ static bool processStatsLayerStackCommand()
         Macros_SetStatusNum(layerIdxStack[pos].removed);
         Macros_SetStatusString("\n", NULL);
     }
-
     return false;
 }
 

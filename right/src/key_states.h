@@ -9,15 +9,6 @@
 
 // Typedefs:
 
-/*
- * TODO:remove this
-    typedef enum {
-        KeyState_Hw = 1,
-        KeyState_HwDebounced = 2,
-        KeyState_Sw = 4
-    } key_state_mask_t;
-    */
-
     // Next is used as an accumulator of the state - asynchronous state updates
     // are stored there. The hardwareSwitchState always contains the most up-to-date
     // information about hardware state of the switch.

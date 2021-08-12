@@ -102,27 +102,9 @@ void PostponerCore_TrackKeyEvent(key_state_t *keyState, bool active)
             .active = active,
     };
     bufferSize = bufferSize < POSTPONER_BUFFER_SIZE ? bufferSize + 1 : bufferSize;
-    /*TODO: FORK ONLY!!!*/ //postponeNCycles(POSTPONER_MIN_CYCLES_PER_ACTIVATION);
-    /*TODO: FORK ONLY!!!*/ //Postponer_NextEventKey = buffer_size == 1 ? buffer[buffer_position].key : Postponer_NextEventKey;
     lastPressTime = active ? CurrentTime : lastPressTime;
 }
 
-/*
-bool PostponerCore_RunKey(key_state_t* key, bool active)
-{
-    if (key == buffer[buffer_position].key) {
-        if (cycles_until_activation == 0 || buffer_size > POSTPONER_BUFFER_MAX_FILL) {
-            bool res = buffer[buffer_position].active;
-            consumeEvent(1);
-            postponeNCycles(POSTPONER_MIN_CYCLES_PER_ACTIVATION);
-            return res;
-        }
-    }
-    return active;
-}*/
-
-
-//TODO: remove either this or RunKey
 void PostponerCore_RunPostponedEvents(void)
 {
     if (Chording) {
