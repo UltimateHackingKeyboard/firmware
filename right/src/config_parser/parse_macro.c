@@ -1,5 +1,6 @@
 #include "parse_macro.h"
 #include "config_globals.h"
+#include "str_utils.h"
 #include "macros.h"
 
 parser_error_t parseKeyMacroAction(config_buffer_t *buffer, macro_action_t *macroAction, serialized_macro_action_type_t macroActionType)
@@ -22,6 +23,7 @@ parser_error_t parseKeyMacroAction(config_buffer_t *buffer, macro_action_t *macr
     macroAction->key.type = type;
     macroAction->key.scancode = scancode;
     macroAction->key.modifierMask = modifierMask;
+    macroAction->key.sticky = false;
     return ParserError_Success;
 }
 
@@ -75,6 +77,37 @@ parser_error_t parseTextMacroAction(config_buffer_t *buffer, macro_action_t *mac
     macroAction->type = MacroActionType_Text;
     macroAction->text.text = text;
     macroAction->text.textLen = textLen;
+
+    return ParserError_Success;
+}
+
+uint8_t countCommands(macro_action_t *macroAction)
+{
+    uint8_t count = 0;
+    const char* text = macroAction->cmd.text;
+    const char* textEnd = macroAction->cmd.text + macroAction->cmd.textLen;
+
+    while (true) {
+        if (text == textEnd) {
+            return count;
+        }
+        if (*text > 32) {
+            count++;
+        }
+        text = NextCmd(text, textEnd);
+    }
+}
+
+parser_error_t parseCommandMacroAction(config_buffer_t *buffer, macro_action_t *macroAction)
+{
+    uint16_t textLen;
+    const char *text = ReadString(buffer, &textLen);
+
+    macroAction->type = MacroActionType_Command;
+    macroAction->cmd.text = text;
+    macroAction->cmd.textLen = textLen;
+    macroAction->cmd.cmdCount = countCommands(macroAction);
+
     return ParserError_Success;
 }
 
@@ -95,9 +128,36 @@ parser_error_t ParseMacroAction(config_buffer_t *buffer, macro_action_t *macroAc
             return parseDelayMacroAction(buffer, macroAction);
         case SerializedMacroActionType_TextMacroAction:
             return parseTextMacroAction(buffer, macroAction);
+        case SerializedMacroActionType_CommandMacroAction:
+            return parseCommandMacroAction(buffer, macroAction);
     }
     return ParserError_InvalidSerializedMacroActionType;
 }
+
+void FindMacroName(const macro_reference_t* macro, const char** name, const char** nameEnd)
+{
+    uint16_t nameLen;
+    config_buffer_t buffer = ValidatedUserConfigBuffer;
+    buffer.offset = macro->firstMacroActionOffset - macro->macroNameOffset;
+    *name = ReadString(&buffer, &nameLen);
+    *nameEnd = *name + nameLen;
+}
+
+uint8_t FindMacroIndexByName(const char* name, const char* nameEnd, bool reportIfFailed)
+{
+    for (int i = 0; i < AllMacrosCount; i++) {
+        const char *thisName, *thisNameEnd;
+        FindMacroName(&AllMacros[i], &thisName, &thisNameEnd);
+        if(StrEqual(name, nameEnd, thisName, thisNameEnd)) {
+            return i;
+        }
+    }
+    if (reportIfFailed) {
+        Macros_ReportError("Macro name not found", name, nameEnd);
+    }
+    return 255;
+}
+
 
 parser_error_t ParseMacro(config_buffer_t *buffer, uint8_t macroIdx)
 {
@@ -105,9 +165,11 @@ parser_error_t ParseMacro(config_buffer_t *buffer, uint8_t macroIdx)
     uint16_t nameLen;
     bool isLooped = ReadBool(buffer);
     bool isPrivate = ReadBool(buffer);
+    uint16_t nameOffset = buffer->offset;
     const char *name = ReadString(buffer, &nameLen);
     uint16_t macroActionsCount = ReadCompactLength(buffer);
     uint16_t firstMacroActionOffset = buffer->offset;
+    uint16_t relativeNameOffset = firstMacroActionOffset - nameOffset;
     macro_action_t dummyMacroAction;
 
     (void)isLooped;
@@ -116,6 +178,7 @@ parser_error_t ParseMacro(config_buffer_t *buffer, uint8_t macroIdx)
     if (!ParserRunDry) {
         AllMacros[macroIdx].firstMacroActionOffset = firstMacroActionOffset;
         AllMacros[macroIdx].macroActionsCount = macroActionsCount;
+        AllMacros[macroIdx].macroNameOffset = relativeNameOffset;
     }
     for (uint16_t i = 0; i < macroActionsCount; i++) {
         errorCode = ParseMacroAction(buffer, &dummyMacroAction);

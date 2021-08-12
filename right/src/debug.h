@@ -17,26 +17,23 @@
 
 // Macros:
 
-	// This hook is to be placed in usb_report_updater and to be called whenever a key is activated (i.e., on key-down event).
-	#define WATCH_TRIGGER(STATE) TriggerWatch(STATE);
+    // This hook is to be placed in usb_report_updater and to be called whenever a key is activated (i.e., on key-down event).
+    #define WATCH_TRIGGER(STATE) TriggerWatch(STATE);
 
-	// When placed into the code, time between calls to this macro is being watched in slot N.
-	#define WATCH_TIME(N)        \
-    if (CurrentWatch == N) { \
-        WatchTime(N);        \
-    }
+    // When placed into the code, time between calls to this macro is being watched in slot N.
+    #define WATCH_TIME(N) if(CurrentWatch == N) { WatchTime(N); }
 
-	// Watches value V in slot N.
-	#define WATCH_VALUE(V, N)    \
-    if (CurrentWatch == N) { \
-        WatchValue(V, N);    \
-    }
+    // Watches value V in slot N.
+    #define WATCH_VALUE(V, N) if(CurrentWatch == N) { WatchValue(V, N); }
 
-	// Watches string V in slot N.
-	#define WATCH_STRING(V, N)   \
-    if (CurrentWatch == N) { \
-        WatchString(V, N);   \
-    }
+    // Watches value V in slot N.
+    #define WATCH_VALUE_MIN(V, N) if(CurrentWatch == N) { WatchValueMin(V, N); }
+
+    // Watches value V in slot N.
+    #define WATCH_VALUE_MAX(V, N) if(CurrentWatch == N) { WatchValueMax(V, N); }
+
+    // Watches string V in slot N.
+    #define WATCH_STRING(V, N) if(CurrentWatch == N) { WatchString(V, N); }
 
 // Variables:
 
@@ -47,15 +44,21 @@
 	void TriggerWatch(key_state_t *keyState);
 	void WatchTime(uint8_t n);
 	void WatchValue(int v, uint8_t n);
-	void WatchString(char const *v, uint8_t n);
+	void WatchValueMin(int v, uint8_t n);
+	void WatchValueMax(int v, uint8_t n);
+	void WatchString(char const * v, uint8_t n);
+	void ShowNumberExp(int32_t a);
 
 #endif /* SRC_UTILS_DBG_H_ */
 #else
 
 // Macros:
 
-	#define WATCH_TRIGGER(N)
-	#define WATCH_TIME(N)
-	#define WATCH_VALUE(V, N)
+    #define WATCH_TRIGGER(N)
+    #define WATCH_TIME(N)
+    #define WATCH_VALUE(V, N)
+    #define WATCH_VALUE_MIN(V, N)
+    #define WATCH_VALUE_MAX(V, N)
+    #define WATCH_STRING(V, N)
 
 #endif

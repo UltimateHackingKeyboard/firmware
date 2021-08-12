@@ -45,12 +45,17 @@ Going forward, it's easier to flash the firmware of your choice by using the dow
 
 5. When developing, cd to the directory you're working on (`left`/`right`). To build and flash the firmware, run `make flash`. Plain `make` just builds without flashing.
 
+
 ### Releasing
 
 6. To build a full firmware tarball:
     1. Run `npm install` in `scripts`.
     2. Run `scripts/make-release.js`.
     3. Now, the created tarball `scripts/uhk-firmware-VERSION.tar.gz` can be flashed with UHK Agent.
+
+### Extended macro engine
+
+To build with extended macro engine, use `make CUSTOM_CFLAGS=-DEXTENDED_MACROS` or `scripts/make-release.js --extendedMacros`. For usage, see [MACRO_DOCS.md](MACRO_DOCS.md).
 
 ## Contributing
 
