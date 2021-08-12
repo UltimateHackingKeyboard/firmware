@@ -92,52 +92,70 @@
         macro_action_type_t type;
     } ATTR_PACKED macro_action_t;
 
-    //TODO: break this down to a union once memory starts to be a problem
     typedef struct {
-        bool macroInterrupted;
-        bool macroBroken;
-        bool macroPlaying;
-        bool macroSleeping;
+        // persistent scope data
+        // these need to live in between macro calls
+        struct {
+            uint32_t previousMacroStartTime;
+            uint8_t previousMacroIndex;
+        } ps;
 
-        uint8_t currentMacroIndex;
-        uint16_t currentMacroActionIndex;
-        macro_action_t currentMacroAction;
-        key_state_t *currentMacroKey;
-        uint8_t previousMacroIndex;
-        uint32_t previousMacroEndTime;
-        uint32_t previousMacroStartTime;
-        uint32_t currentMacroStartTime;
+        // macro scope data
+        // these can be destroyed at the end of macro runtime, and probably should be re-initialized with each macro start
+        struct {
+            macro_action_t currentMacroAction;
+            key_state_t *currentMacroKey;
+            uint32_t currentMacroStartTime;
+            uint16_t currentMacroActionIndex;
+            uint16_t bufferOffset;
+            uint8_t parentMacroSlot;
+            uint8_t currentMacroIndex;
+            uint8_t postponeNextNCommands;
+            bool macroInterrupted : 1;
+            bool macroSleeping : 1;
+            bool macroBroken : 1;
+            bool macroPlaying : 1;
+            bool reportsUsed : 1;
 
-        uint8_t pressPhase;
-        bool mouseMoveInMotion;
-        bool mouseScrollInMotion;
-        uint16_t dispatchTextIndex;
-        uint8_t dispatchReportIndex;
+            usb_mouse_report_t macroMouseReport;
+            usb_basic_keyboard_report_t macroBasicKeyboardReport;
+            usb_media_keyboard_report_t macroMediaKeyboardReport;
+            usb_system_keyboard_report_t macroSystemKeyboardReport;
+        } ms;
 
-        bool currentConditionPassed;
-        bool currentIfShortcutConditionPassed;
-        bool currentIfSecondaryConditionPassed;
-        uint8_t postponeNextNCommands;
-        bool weInitiatedPostponing;
+        // action scope data
+        struct {
+            //private data
+            union {
+                struct {
+                    uint16_t textIdx;
+                    uint8_t reportIdx;
+                } dispatchData;
 
-        bool delayActive;
-        uint32_t delayStart;
-        uint32_t resolveSecondaryPhase2StartTime;
+                struct {
+                    uint32_t start;
+                } delayData;
 
-        bool holdActive;
-        uint8_t holdLayerIdx;
+                struct {
+                    uint32_t phase2Start;
+                } secondaryRoleData;
 
-        uint16_t bufferOffset;
+                struct {
+                    uint8_t layerIdx;
 
-        uint8_t parentMacroSlot;
+                } holdLayerData;
+            };
 
+            //shared data
+            uint8_t actionPhase;
+            bool actionActive : 1;
+            bool currentConditionPassed : 1;
+            bool currentIfShortcutConditionPassed : 1;
+            bool currentIfSecondaryConditionPassed : 1;
+            bool weInitiatedPostponing : 1;
 
-        bool reportsUsed;
-        usb_mouse_report_t macroMouseReport;
-        usb_basic_keyboard_report_t macroBasicKeyboardReport;
-        usb_media_keyboard_report_t macroMediaKeyboardReport;
-        usb_system_keyboard_report_t macroSystemKeyboardReport;
-    } macro_state_t;
+        } as;
+    }  macro_state_t;
 
 // Variables:
 

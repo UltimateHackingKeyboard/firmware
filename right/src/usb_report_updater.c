@@ -297,31 +297,31 @@ void clearActiveReports(void)
 void mergeReports(void)
 {
     for(uint8_t j = 0; j < MACRO_STATE_POOL_SIZE; j++) {
-        if(MacroState[j].reportsUsed) {
+        if(MacroState[j].ms.reportsUsed) {
             //if the macro ended right now, we still want to flush the last report
-            MacroState[j].reportsUsed &= MacroState[j].macroPlaying;
+            MacroState[j].ms.reportsUsed &= MacroState[j].ms.macroPlaying;
             macro_state_t *s = &MacroState[j];
-            ActiveUsbBasicKeyboardReport->modifiers |= s->macroBasicKeyboardReport.modifiers;
-            for ( int i = 0; i < USB_BASIC_KEYBOARD_MAX_KEYS && s->macroBasicKeyboardReport.scancodes[i] != 0; i++) {
+            ActiveUsbBasicKeyboardReport->modifiers |= s->ms.macroBasicKeyboardReport.modifiers;
+            for ( int i = 0; i < USB_BASIC_KEYBOARD_MAX_KEYS && s->ms.macroBasicKeyboardReport.scancodes[i] != 0; i++) {
                 if( basicScancodeIndex < USB_BASIC_KEYBOARD_MAX_KEYS ) {
-                    ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = s->macroBasicKeyboardReport.scancodes[i];
+                    ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = s->ms.macroBasicKeyboardReport.scancodes[i];
                 }
             }
-            for ( int i = 0; i < USB_MEDIA_KEYBOARD_MAX_KEYS && s->macroMediaKeyboardReport.scancodes[i] != 0 ; i++) {
+            for ( int i = 0; i < USB_MEDIA_KEYBOARD_MAX_KEYS && s->ms.macroMediaKeyboardReport.scancodes[i] != 0 ; i++) {
                 if( mediaScancodeIndex < USB_MEDIA_KEYBOARD_MAX_KEYS ) {
-                    ActiveUsbMediaKeyboardReport->scancodes[mediaScancodeIndex++] = s->macroMediaKeyboardReport.scancodes[i];
+                    ActiveUsbMediaKeyboardReport->scancodes[mediaScancodeIndex++] = s->ms.macroMediaKeyboardReport.scancodes[i];
                 }
             }
-            for ( int i = 0; i < USB_SYSTEM_KEYBOARD_MAX_KEYS && s->macroSystemKeyboardReport.scancodes[i] != 0; i++) {
+            for ( int i = 0; i < USB_SYSTEM_KEYBOARD_MAX_KEYS && s->ms.macroSystemKeyboardReport.scancodes[i] != 0; i++) {
                 if( systemScancodeIndex < USB_SYSTEM_KEYBOARD_MAX_KEYS ) {
-                    ActiveUsbSystemKeyboardReport->scancodes[systemScancodeIndex++] = s->macroSystemKeyboardReport.scancodes[i];
+                    ActiveUsbSystemKeyboardReport->scancodes[systemScancodeIndex++] = s->ms.macroSystemKeyboardReport.scancodes[i];
                 }
             }
-            ActiveUsbMouseReport->buttons |= s->macroMouseReport.buttons;
-            ActiveUsbMouseReport->x += s->macroMouseReport.x;
-            ActiveUsbMouseReport->y += s->macroMouseReport.y;
-            ActiveUsbMouseReport->wheelX += s->macroMouseReport.wheelX;
-            ActiveUsbMouseReport->wheelY += s->macroMouseReport.wheelY;
+            ActiveUsbMouseReport->buttons |= s->ms.macroMouseReport.buttons;
+            ActiveUsbMouseReport->x += s->ms.macroMouseReport.x;
+            ActiveUsbMouseReport->y += s->ms.macroMouseReport.y;
+            ActiveUsbMouseReport->wheelX += s->ms.macroMouseReport.wheelX;
+            ActiveUsbMouseReport->wheelY += s->ms.macroMouseReport.wheelY;
         }
     }
     if(!SuppressMods) {
