@@ -2514,7 +2514,7 @@ void Macros_StartMacro(uint8_t index, key_state_t *keyState, uint8_t parentMacro
     MacroPlaying = true;
 
     memset(&s->ms, 0, sizeof s->ms);
-    memset(&s->as, 0, sizeof s->ms);
+    memset(&s->as, 0, sizeof s->as);
 
     s->ms.macroPlaying = true;
     s->ms.currentMacroIndex = index;
