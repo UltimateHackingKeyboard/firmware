@@ -25,6 +25,8 @@
 
     // Functions:
 
+    void ShortcutParser_initialize();
+
     macro_action_t MacroShortcutParser_Parse(const char* str, const char* strEnd);
     uint8_t MacroShortcutParser_CharacterToScancode(char character);
     bool MacroShortcutParser_CharacterToShift(char character);

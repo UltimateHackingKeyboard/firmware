@@ -27,7 +27,7 @@ static const char* proceedByDot(const char* cmd, const char *cmdEnd)
 
 static void moduleNavigationMode(const char* arg1, const char *textEnd, module_configuration_t* module)
 {
-    layer_id_t layerId = ParseLayerId(arg1, textEnd);
+    layer_id_t layerId = Macros_ParseLayerId(arg1, textEnd);
     navigation_mode_t modeId = ParseNavigationModeId(NextTok(arg1, textEnd), textEnd);
 
     module->navigationModes[layerId] = modeId;
@@ -86,23 +86,23 @@ static void mouseKeys(const char* arg1, const char *textEnd)
     const char* arg3 = NextTok(arg2, textEnd);
 
     if (TokenMatches(arg2, textEnd, "initialSpeed")) {
-        state->initialSpeed = ParseInt32(arg3, textEnd);
+        state->initialSpeed = Macros_ParseInt(arg3, textEnd, NULL);
     }
     else if (TokenMatches(arg2, textEnd, "baseSpeed")) {
-        state->baseSpeed = ParseInt32(arg3, textEnd);
+        state->baseSpeed = Macros_ParseInt(arg3, textEnd, NULL);
     }
     else if (TokenMatches(arg2, textEnd, "initialAcceleration")) {
-        state->acceleration = ParseInt32(arg3, textEnd);
+        state->acceleration = Macros_ParseInt(arg3, textEnd, NULL);
     }
     else if (TokenMatches(arg2, textEnd, "deceleratedSpeed")) {
-        state->deceleratedSpeed = ParseInt32(arg3, textEnd);
+        state->deceleratedSpeed = Macros_ParseInt(arg3, textEnd, NULL);
     }
     else if (TokenMatches(arg2, textEnd, "acceleratedSpeed")) {
-        state->acceleratedSpeed = ParseInt32(arg3, textEnd);
+        state->acceleratedSpeed = Macros_ParseInt(arg3, textEnd, NULL);
     }
     /* axis skew */
     else if (TokenMatches(arg1, textEnd, "axisSkew")) {
-        //module->axisSkew = ParseInt32(arg3, textEnd);
+        //module->axisSkew = Macros_ParseInt(arg3, textEnd, NULL);
         // TODO
     }
     else {
@@ -140,22 +140,25 @@ bool MacroSetCommand(const char* arg1, const char *textEnd)
         mouseKeys(proceedByDot(arg1, textEnd), textEnd);
     }
     else if (TokenMatches(arg1, textEnd, "compensateDiagonalSpeed")) {
-        CompensateDiagonalSpeed = ParseInt32(arg2, textEnd);
+        CompensateDiagonalSpeed = Macros_ParseInt(arg2, textEnd, NULL);
     }
     else if (TokenMatches(arg1, textEnd, "stickyMods")) {
         stickyMods(arg2, textEnd);
     }
     else if (TokenMatches(arg1, textEnd, "debounceDelay")) {
-        uint16_t time = ParseInt32(arg2, textEnd);
+        uint16_t time = Macros_ParseInt(arg2, textEnd, NULL);
 
         DebounceTimePress = time;
         DebounceTimeRelease = time;
     }
     else if (TokenMatches(arg1, textEnd, "keystrokeDelay")) {
-        KeystrokeDelay = ParseInt32(arg2, textEnd);
+        KeystrokeDelay = Macros_ParseInt(arg2, textEnd, NULL);
+    }
+    else if (TokenMatches(arg1, textEnd, "chording")) {
+        Chording = Macros_ParseInt(arg2, textEnd, NULL);
     }
     else if (TokenMatches(arg1, textEnd, "emergencyKey")) {
-        uint16_t key = ParseInt32(arg2, textEnd);
+        uint16_t key = Macros_ParseInt(arg2, textEnd, NULL);
         EmergencyKey = Utils_KeyIdToKeyState(key);
     }
     else {

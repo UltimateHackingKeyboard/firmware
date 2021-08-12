@@ -516,6 +516,10 @@ Some measurements:
     2. Run `scripts/make-release.js`.
     3. Now, the created tarball `scripts/uhk-firmware-VERSION.tar.gz` can be flashed with UHK Agent.
 
+### Extended macro engine
+
+To build with extended macro engine, use `make CUSTOM_CFLAGS=-DEXTENDED_MACROS` or `scripts/make-release.js --extendedMacros`. For usage, see [MACRO_DOCS.md](MACRO_DOCS.md).
+
 ## Contributing
 
 If you wish some functionality, feel free to fire tickets with feature requests. If you wish something already present on the tracker (e.g., in 'idea' tickets), say so in comments. (Feel totally free to harass me over desired functionality :-).) If you feel brave, fork the repo, implement the desired functionality and post a PR.

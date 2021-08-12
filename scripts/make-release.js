@@ -12,8 +12,14 @@ const package = JSON.parse(fs.readFileSync(`${__dirname}/package.json`));
 const version = package.firmwareVersion;
 const releaseName = `uhk-firmware-${version}`;
 const releaseDir = `${__dirname}/${releaseName}`;
-const releaseFile = `${__dirname}/${releaseName}.tar.gz`;
 const agentDir = `${__dirname}/../lib/agent`;
+var releaseFile = `${__dirname}/${releaseName}.tar.gz`;
+var mkArgs = '';
+
+if( process.argv.includes('--extendedMacros')) {
+    mkArgs = mkArgs + 'CUSTOM_CFLAGS=-DEXTENDED_MACROS'
+    releaseFile = `${__dirname}/${releaseName}-extendedMacros.tar.gz`;
+}
 
 const deviceSourceFirmwares = package.devices.map(device => `${__dirname}/../${device.source}`);
 const moduleSourceFirmwares = package.modules.map(module => `${__dirname}/../${module.source}`);
@@ -26,7 +32,7 @@ const sourcePaths = [
 for (sourcePath of sourcePaths) {
     const buildDir = path.dirname(`${__dirname}/../${sourcePath}`);
     mkdir('-p', buildDir);
-    exec(`cd ${buildDir}/..; make clean; make -j8`);
+    exec(`cd ${buildDir}/..; make clean; make -j8 ${mkArgs}`);
 }
 
 exec(`npm ci; npm run build`, { cwd: agentDir });

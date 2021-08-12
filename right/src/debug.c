@@ -12,6 +12,15 @@ uint8_t CurrentWatch = 0;
 static uint32_t lastWatch = 0;
 static uint32_t watchInterval = 500;
 
+static void printReport(usb_basic_keyboard_report_t *report)
+{
+    Macros_SetStatusNum(report->modifiers);
+    for (int i = 0; i < 6; i++) {
+        Macros_SetStatusNum(report->scancodes[i]);
+    }
+    Macros_SetStatusString("\n", NULL);
+}
+
 void ShowNumberExp(int32_t a)
 {
     char b[3];

@@ -201,24 +201,6 @@ const char* NextCmd(const char* cmd, const char *cmdEnd)
     return cmd;
 }
 
-layer_id_t ParseLayerId(const char* arg1, const char* cmdEnd)
-{
-    if (TokenMatches(arg1, cmdEnd, "fn")) {
-        return LayerId_Fn;
-    }
-    else if (TokenMatches(arg1, cmdEnd, "mouse")) {
-        return LayerId_Mouse;
-    }
-    else if (TokenMatches(arg1, cmdEnd, "mod")) {
-        return LayerId_Mod;
-    }
-    else if (TokenMatches(arg1, cmdEnd, "base")) {
-        return LayerId_Base;
-    }
-    Macros_ReportError("Layer not recognized: ", arg1, cmdEnd);
-    return 0;
-}
-
 module_id_t ParseModuleId(const char* arg1, const char* cmdEnd)
 {
     if (TokenMatches(arg1, cmdEnd, "keycluster")) {

@@ -192,10 +192,7 @@ static void consumeOneKeypress()
             shifting_by++;
             releaseFound = true;
         }
-    }/* TODO: remove this
-    if (removedKeypress != NULL && !release_found && suppress) {
-        removedKeypress->suppressed = true;
-    }*/
+    }
     bufferSize -= shifting_by;
     Postponer_NextEventKey = bufferSize == 0 ? NULL : buffer[bufferPosition].key;
 }

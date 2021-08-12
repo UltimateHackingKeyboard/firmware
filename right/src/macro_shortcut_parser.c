@@ -320,9 +320,14 @@ lookup_record_t lookup_table[] = {
         {"mouseBtnLeft", MouseButton_Left, scType_mouseBtn},
         {"mouseBtnRight", MouseButton_Right, scType_mouseBtn},
         {"mouseBtnMiddle", MouseButton_Middle, scType_mouseBtn},
+        {"mouseBtn1", MouseButton_Left, scType_mouseBtn},
+        {"mouseBtn2", MouseButton_Right, scType_mouseBtn},
+        {"mouseBtn3", MouseButton_Middle, scType_mouseBtn},
         {"mouseBtn4", MouseButton_4, scType_mouseBtn},
         {"mouseBtn5", MouseButton_5, scType_mouseBtn},
         {"mouseBtn6", MouseButton_6, scType_mouseBtn},
+        {"mouseBtn7", MouseButton_7, scType_mouseBtn},
+        {"mouseBtn8", MouseButton_8, scType_mouseBtn},
 };
 
 size_t lookup_size = sizeof(lookup_table)/sizeof(lookup_table[0]);
@@ -340,15 +345,9 @@ static void sortLookup()
     }
 }
 
-static void initialize()
+void ShortcutParser_initialize()
 {
-    static bool initialized = false;
-    if (initialized) {
-        return;
-    }
-
     sortLookup();
-    initialized = true;
 }
 
 
@@ -463,7 +462,6 @@ static macro_action_t parseAbbrev(const char* str, const char* strEnd)
 macro_action_t MacroShortcutParser_Parse(const char* str, const char* strEnd)
 {
     macro_action_t action;
-    initialize();
 
     if (FindChar('-', str, strEnd) == strEnd) {
         //"-" notation not used

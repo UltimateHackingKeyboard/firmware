@@ -54,7 +54,6 @@ static uint16_t doubletapConditionTimeout = 300;
 
 
 static int32_t parseNUM(const char *a, const char *aEnd);
-static int32_t parseNUM2(const char *a, const char *aEnd, const char* *parsedTill);
 static bool processCommand(const char* cmd, const char* cmdEnd);
 static bool processCommandAction(void);
 static bool continueMacro(void);
@@ -440,7 +439,7 @@ static void setStatusStringInterpolated(const char* text, const char *textEnd, b
     }
     while(*text && statusBufferLen < STATUS_BUFFER_MAX_LENGTH && (text < textEnd || textEnd == NULL)) {
         if (*text == '#' && interpolated) {
-            int32_t parsed = parseNUM2(text, textEnd, &text);
+            int32_t parsed = Macros_ParseInt(text, textEnd, &text);
             //text should be now set to next character after a number, even if it was e.g., "'#3'"
             Macros_SetStatusNumSpaced(parsed, false);
         } else {
@@ -527,15 +526,6 @@ void Macros_ReportErrorNum(const char* err, uint32_t num)
     Macros_SetStatusString("\n", NULL);
 }
 
-static void printReport(usb_basic_keyboard_report_t *report)
-{
-    Macros_SetStatusNum(report->modifiers);
-    for (int i = 0; i < 6; i++) {
-        Macros_SetStatusNum(report->scancodes[i]);
-    }
-    Macros_SetStatusString("\n", NULL);
-}
-
 static void clearScancodes()
 {
     uint8_t oldMods = MacroBasicKeyboardReport.modifiers;
@@ -614,17 +604,17 @@ static bool dispatchText(const char* text, uint16_t textLen)
 
 static bool processTextAction(void)
 {
-    if (KT_FORK) {
-        if (s->currentMacroAction.text.text[0] == '$') {
-            bool actionInProgress = processCommandAction();
-            s->currentConditionPassed = actionInProgress;
-            return actionInProgress;
-        } else if (s->currentMacroAction.text.text[0] == '#') {
-            return false;
-        } else if (s->currentMacroAction.text.text[0] == '/' && s->currentMacroAction.text.text[1] == '/') {
-            return false;
-        }
+#ifdef EXTENDED_MACROS
+    if (s->currentMacroAction.text.text[0] == '$') {
+        bool actionInProgress = processCommandAction();
+        s->currentConditionPassed = actionInProgress;
+        return actionInProgress;
+    } else if (s->currentMacroAction.text.text[0] == '#') {
+        return false;
+    } else if (s->currentMacroAction.text.text[0] == '/' && s->currentMacroAction.text.text[1] == '/') {
+        return false;
     }
+#endif
 
     return dispatchText(s->currentMacroAction.text.text, s->currentMacroAction.text.textLen);
 }
@@ -670,7 +660,7 @@ static bool isNUM(const char *a, const char *aEnd)
     }
 }
 
-static int32_t parseNUM2(const char *a, const char *aEnd, const char* *parsedTill)
+int32_t Macros_ParseInt(const char *a, const char *aEnd, const char* *parsedTill)
 {
     if (*a == '#') {
         a++;
@@ -680,7 +670,7 @@ static int32_t parseNUM2(const char *a, const char *aEnd, const char* *parsedTil
             }
             return Utils_KeyStateToKeyId(s->currentMacroKey);
         }
-        uint8_t adr = parseNUM2(a, aEnd, parsedTill);
+        uint8_t adr = Macros_ParseInt(a, aEnd, parsedTill);
         if (validReg(adr)) {
             return regs[adr];
         } else {
@@ -689,7 +679,7 @@ static int32_t parseNUM2(const char *a, const char *aEnd, const char* *parsedTil
     }
     else if (*a == '%') {
         a++;
-        uint8_t idx = parseNUM2(a, aEnd, parsedTill);
+        uint8_t idx = Macros_ParseInt(a, aEnd, parsedTill);
         if (idx >= PostponerQuery_PendingKeypressCount()) {
             Macros_ReportError("Not enough pending keys! Note that this is zero-indexed!",  NULL,  NULL);
             return 0;
@@ -698,7 +688,7 @@ static int32_t parseNUM2(const char *a, const char *aEnd, const char* *parsedTil
     }
     else if (*a == '@') {
         a++;
-        return s->currentMacroActionIndex + parseNUM2(a, aEnd, parsedTill);
+        return s->currentMacroActionIndex + Macros_ParseInt(a, aEnd, parsedTill);
     }
     else
     {
@@ -708,11 +698,15 @@ static int32_t parseNUM2(const char *a, const char *aEnd, const char* *parsedTil
 
 static int32_t parseNUM(const char *a, const char *aEnd)
 {
-    return parseNUM2(a, aEnd, NULL);
+    return Macros_ParseInt(a, aEnd, NULL);
 }
 
 static uint8_t parseAddress(const char* arg, const char* argEnd)
 {
+    /**
+     * TODO: fix this to work with macro commands instead of text actions
+     * TODO: make this compatible with multilines
+     */
     if (isNUM(arg, argEnd)) {
         return parseNUM(arg, argEnd);
     } else {
@@ -747,7 +741,7 @@ static uint8_t parseAddress(const char* arg, const char* argEnd)
 }
 
 
-static int32_t parseMacroId(const char *a, const char *aEnd)
+static int32_t parseRuntimeMacroSlotId(const char *a, const char *aEnd)
 {
     const char* end = TokEnd(a, aEnd);
     static uint16_t lastMacroId = 0;
@@ -958,7 +952,7 @@ static uint8_t parseKeymapId(const char* arg1, const char* cmdEnd)
     }
 }
 
-static uint8_t parseLayerId(const char* arg1, const char* cmdEnd)
+uint8_t Macros_ParseLayerId(const char* arg1, const char* cmdEnd)
 {
     if (TokenMatches(arg1, cmdEnd, "fn")) {
         return LayerId_Fn;
@@ -977,6 +971,9 @@ static uint8_t parseLayerId(const char* arg1, const char* cmdEnd)
     }
     else if (TokenMatches(arg1, cmdEnd, "previous")) {
         return layerIdxStack[findPreviousLayerRecordIdx()].layer;
+    }
+    else if (TokenMatches(arg1, cmdEnd, "current")) {
+        return ActiveLayer;
     }
     else {
         return false;
@@ -1003,6 +1000,9 @@ static uint8_t parseLayerKeymapId(const char* arg1, const char* cmdEnd)
     else if (TokenMatches(arg1, cmdEnd, "previous")) {
         return layerIdxStack[findPreviousLayerRecordIdx()].keymap;
     }
+    else if (TokenMatches(arg1, cmdEnd, "current")) {
+        return CurrentKeymapIndex;
+    }
     else {
         return false;
     }
@@ -1025,7 +1025,7 @@ static bool processSwitchKeymapLayerCommand(const char* arg1, const char* cmdEnd
 {
     uint8_t tmpLayerIdx = Macros_ActiveLayer;
     uint8_t tmpLayerKeymapIdx = CurrentKeymapIndex;
-    pushStack(parseLayerId(NextTok(arg1, cmdEnd), cmdEnd), parseKeymapId(arg1, cmdEnd), false);
+    pushStack(Macros_ParseLayerId(NextTok(arg1, cmdEnd), cmdEnd), parseKeymapId(arg1, cmdEnd), false);
     lastLayerIdx = tmpLayerIdx;
     lastLayerKeymapIdx = tmpLayerKeymapIdx;
     return false;
@@ -1040,7 +1040,7 @@ static bool processSwitchLayerCommand(const char* arg1, const char* cmdEnd)
         popLayerStack(true, false);
     }
     else {
-        pushStack(parseLayerId(arg1, cmdEnd), parseLayerKeymapId(arg1, cmdEnd), false);
+        pushStack(Macros_ParseLayerId(arg1, cmdEnd), parseLayerKeymapId(arg1, cmdEnd), false);
     }
     lastLayerIdx = tmpLayerIdx;
     lastLayerKeymapIdx = tmpLayerKeymapIdx;
@@ -1052,7 +1052,7 @@ static bool processToggleKeymapLayerCommand(const char* arg1, const char* cmdEnd
 {
     uint8_t tmpLayerIdx = Macros_ActiveLayer;
     uint8_t tmpLayerKeymapIdx = CurrentKeymapIndex;
-    pushStack(parseLayerId(NextTok(arg1, cmdEnd), cmdEnd), parseKeymapId(arg1, cmdEnd), false);
+    pushStack(Macros_ParseLayerId(NextTok(arg1, cmdEnd), cmdEnd), parseKeymapId(arg1, cmdEnd), false);
     lastLayerIdx = tmpLayerIdx;
     lastLayerKeymapIdx = tmpLayerKeymapIdx;
     return false;
@@ -1062,7 +1062,7 @@ static bool processToggleLayerCommand(const char* arg1, const char* cmdEnd)
 {
     uint8_t tmpLayerIdx = Macros_ActiveLayer;
     uint8_t tmpLayerKeymapIdx = CurrentKeymapIndex;
-    pushStack(parseLayerId(arg1, cmdEnd), parseLayerKeymapId(arg1, cmdEnd), false);
+    pushStack(Macros_ParseLayerId(arg1, cmdEnd), parseLayerKeymapId(arg1, cmdEnd), false);
     lastLayerIdx = tmpLayerIdx;
     lastLayerKeymapIdx = tmpLayerKeymapIdx;
     return false;
@@ -1107,26 +1107,26 @@ bool Macros_IsLayerHeld()
 
 static bool processHoldLayerCommand(const char* arg1, const char* cmdEnd)
 {
-    return processHoldLayer(parseLayerId(arg1, cmdEnd), parseLayerKeymapId(arg1, cmdEnd), 0xFFFF);
+    return processHoldLayer(Macros_ParseLayerId(arg1, cmdEnd), parseLayerKeymapId(arg1, cmdEnd), 0xFFFF);
 }
 
 static bool processHoldLayerMaxCommand(const char* arg1, const char* cmdEnd)
 {
     const char* arg2 = NextTok(arg1, cmdEnd);
-    return processHoldLayer(parseLayerId(arg1, cmdEnd), parseLayerKeymapId(arg1, cmdEnd), parseNUM(arg2, cmdEnd));
+    return processHoldLayer(Macros_ParseLayerId(arg1, cmdEnd), parseLayerKeymapId(arg1, cmdEnd), parseNUM(arg2, cmdEnd));
 }
 
 static bool processHoldKeymapLayerCommand(const char* arg1, const char* cmdEnd)
 {
     const char* arg2 = NextTok(arg1, cmdEnd);
-    return processHoldLayer(parseLayerId(arg2, cmdEnd), parseKeymapId(arg1, cmdEnd), 0xFFFF);
+    return processHoldLayer(Macros_ParseLayerId(arg2, cmdEnd), parseKeymapId(arg1, cmdEnd), 0xFFFF);
 }
 
 static bool processHoldKeymapLayerMaxCommand(const char* arg1, const char* cmdEnd)
 {
     const char* arg2 = NextTok(arg1, cmdEnd);
     const char* arg3 = NextTok(arg2, cmdEnd);
-    return processHoldLayer(parseLayerId(arg2, cmdEnd), parseKeymapId(arg1, cmdEnd), parseNUM(arg3, cmdEnd));
+    return processHoldLayer(Macros_ParseLayerId(arg2, cmdEnd), parseKeymapId(arg1, cmdEnd), parseNUM(arg3, cmdEnd));
 }
 
 static bool processDelayUntilReleaseMaxCommand(const char* arg1, const char* cmdEnd)
@@ -1196,7 +1196,7 @@ static bool processIfRecordingCommand(bool negate)
 
 static bool processIfRecordingIdCommand(bool negate, const char* arg, const char *argEnd)
 {
-    uint16_t id = parseMacroId(arg, argEnd);
+    uint16_t id = parseRuntimeMacroSlotId(arg, argEnd);
     bool res = MacroRecorder_RecordingId() == id;
     return res != negate;
 }
@@ -1383,21 +1383,21 @@ static bool processMouseCommand(bool enable, const char* arg1, const char *argEn
 
 static bool processRecordMacroCommand(const char* arg, const char *argEnd, bool blind)
 {
-    uint16_t id = parseMacroId(arg, argEnd);
+    uint16_t id = parseRuntimeMacroSlotId(arg, argEnd);
     MacroRecorder_RecordRuntimeMacroSmart(id, blind);
     return false;
 }
 
 static bool processStartRecordingCommand(const char* arg, const char *argEnd, bool blind)
 {
-    uint16_t id = parseMacroId(arg, argEnd);
+    uint16_t id = parseRuntimeMacroSlotId(arg, argEnd);
     MacroRecorder_StartRecording(id, blind);
     return false;
 }
 
 static bool processPlayMacroCommand(const char* arg, const char *argEnd)
 {
-    uint16_t id = parseMacroId(arg, argEnd);
+    uint16_t id = parseRuntimeMacroSlotId(arg, argEnd);
     return MacroRecorder_PlayRuntimeMacroSmart(id, &s->macroBasicKeyboardReport);
 }
 
@@ -1422,50 +1422,6 @@ static bool processSuppressModsCommand()
 static bool processPostponeKeysCommand()
 {
     postponeCurrentCycle();
-    return false;
-}
-
-static bool processSetStickyModsEnabledCommand(const char* arg, const char *argEnd)
-{
-    if (TokenMatches(arg, argEnd, "never")) {
-        StickyModifierStrategy = Stick_Never;
-    }
-    else if (TokenMatches(arg, argEnd, "always")) {
-        StickyModifierStrategy = Stick_Always;
-    }
-    else if (TokenMatches(arg, argEnd, "smart")) {
-        StickyModifierStrategy = Stick_Smart;
-    }
-    else {
-        uint8_t enabled = parseNUM(arg,  argEnd);
-        //enabled means official default, which is smart.
-        StickyModifierStrategy = enabled ? Stick_Smart : Stick_Never;
-    }
-    return false;
-}
-
-
-
-static bool processSetCompensateDiagonalSpeedCommand(const char* arg, const char *argEnd)
-{
-    uint8_t enabled = parseNUM(arg,  argEnd);
-    CompensateDiagonalSpeed = enabled;
-    return false;
-}
-
-static bool processSetDebounceDelayCommand(const char* arg, const char *argEnd)
-{
-    uint16_t delay = parseNUM(arg,  argEnd);
-    delay = delay < 250 ? delay : 250;
-    DebounceTimePress = delay;
-    DebounceTimeRelease = delay;
-    return false;
-}
-
-static bool processSetKeystrokeDelayCommand(const char* arg, const char *argEnd)
-{
-    uint16_t delay = parseNUM(arg,  argEnd);
-    KeystrokeDelay = delay;
     return false;
 }
 
@@ -1845,13 +1801,6 @@ static bool processRepeatForCommand(const char* arg1, const char* argEnd)
             }
         }
     }
-    return false;
-}
-
-static bool processSetEmergencyKeyCommand(const char* arg1, const char* argEnd)
-{
-    uint16_t key = parseNUM(arg1, argEnd);
-    EmergencyKey = Utils_KeyIdToKeyState(key);
     return false;
 }
 
@@ -2351,21 +2300,6 @@ static bool processCommand(const char* cmd, const char* cmdEnd)
             else if (TokenMatches(cmd, cmdEnd, "suppressMods")) {
                 processSuppressModsCommand();
             }
-            else if (TokenMatches(cmd, cmdEnd, "setStickyModsEnabled")) {
-                return processSetStickyModsEnabledCommand(arg1, cmdEnd);
-            }
-            else if (TokenMatches(cmd, cmdEnd, "setCompensateDiagonalSpeed")) {
-                return processSetCompensateDiagonalSpeedCommand(arg1, cmdEnd);
-            }
-            else if (TokenMatches(cmd, cmdEnd, "setDebounceDelay")) {
-                return processSetDebounceDelayCommand(arg1, cmdEnd);
-            }
-            else if (TokenMatches(cmd, cmdEnd, "setKeystrokeDelay")) {
-                return processSetKeystrokeDelayCommand(arg1, cmdEnd);
-            }
-            else if (TokenMatches(cmd, cmdEnd, "setEmergencyKey")) {
-                return processSetEmergencyKeyCommand(arg1, cmdEnd);
-            }
             else {
                 goto failed;
             }
@@ -2476,11 +2410,11 @@ static bool processCommandAction(void)
         return false;
     }
 
-    if (KT_FORK) {
-        return processCommand(cmd, cmdEnd);
-    } else {
-        return processStockCommandAction(cmd, cmdEnd);
-    }
+#ifdef EXTENDED_MACROS
+    return processCommand(cmd, cmdEnd);
+#else
+    return processStockCommandAction(cmd, cmdEnd);
+#endif
 }
 
 static bool processCurrentMacroAction(void)
@@ -2579,6 +2513,7 @@ void Macros_StartMacro(uint8_t index, key_state_t *keyState, uint8_t parentMacro
         initialize();
     }
     MacroPlaying = true;
+    s->delayActive = false;
     s->macroPlaying = true;
     s->macroInterrupted = false;
     s->currentMacroIndex = index;
@@ -2613,7 +2548,7 @@ bool continueMacro(void)
         PostponerCore_PostponeNCycles(1);
     }
     s->weInitiatedPostponing = false;
-    if (processCurrentMacroAction() && !s->macroBroken) {
+    if (!s->macroBroken && processCurrentMacroAction() && !s->macroBroken) {
         //if action consists of multiple subactions, break here
         return true;
     }

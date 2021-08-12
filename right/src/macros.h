@@ -17,7 +17,6 @@
     #define LAYER_STACK_SIZE 10
     #define MACRO_STATE_POOL_SIZE 20
     #define MAX_REG_COUNT 32
-    #define KT_FORK true
 
     #define ALTMASK (HID_KEYBOARD_MODIFIER_LEFTALT | HID_KEYBOARD_MODIFIER_RIGHTALT)
     #define CTRLMASK (HID_KEYBOARD_MODIFIER_LEFTCTRL | HID_KEYBOARD_MODIFIER_RIGHTCTRL)
@@ -165,5 +164,7 @@
     void Macros_SetStatusChar(char n);
     void Macros_UpdateLayerStack();
     bool Macros_IsLayerHeld();
+    uint8_t Macros_ParseLayerId(const char* arg1, const char* cmdEnd);
+    int32_t Macros_ParseInt(const char *a, const char *aEnd, const char* *parsedTill);
 
 #endif

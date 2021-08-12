@@ -39,6 +39,7 @@
 
 // Variables:
 
+    extern bool Chording;
     extern key_state_t* Postponer_NextEventKey;
 
 // Functions (Core hooks):

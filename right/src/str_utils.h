@@ -22,7 +22,6 @@
     const char* NextTok(const char* cmd, const char *cmdEnd);
     const char* NextCmd(const char* cmd, const char *cmdEnd);
     const char* TokEnd(const char* cmd, const char *cmdEnd);
-    layer_id_t ParseLayerId(const char* arg1, const char* cmdEnd);
     module_id_t ParseModuleId(const char* arg1, const char* cmdEnd);
     navigation_mode_t ParseNavigationModeId(const char* arg1, const char* cmdEnd);
 

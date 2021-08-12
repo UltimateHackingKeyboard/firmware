@@ -42,14 +42,13 @@ uint8_t FindKeymapByAbbreviation(uint8_t length, const char *abbrev) {
 
 bool SwitchKeymapByAbbreviation(uint8_t length, const char *abbrev)
 {
-    for (uint8_t i=0; i<AllKeymapsCount; i++) {
-        keymap_reference_t *keymap = AllKeymaps + i;
-        if (keymap->abbreviationLen == length && memcmp(keymap->abbreviation, abbrev, length) == 0) {
-            SwitchKeymapById(i);
-            return true;
-        }
+    uint8_t keymapId = FindKeymapByAbbreviation(length, abbrev);
+
+    if (keymapId != 0xFF) {
+        return true;
+    } else {
+        return false;
     }
-    return false;
 }
 
 // The factory keymap is initialized before it gets overwritten by the default keymap of the EEPROM.

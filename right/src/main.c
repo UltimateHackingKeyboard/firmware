@@ -12,6 +12,7 @@
 #include "config_parser/config_globals.h"
 #include "usb_report_updater.h"
 #include "macro_events.h"
+#include "macro_shortcut_parser.h"
 
 static bool IsEepromInitialized = false;
 static bool IsConfigInitialized = false;
@@ -51,6 +52,7 @@ int main(void)
             if (!IsConfigInitialized && IsEepromInitialized) {
                 UsbCommand_ApplyConfig();
                 MacroEvent_OnInit();
+                ShortcutParser_initialize();
                 IsConfigInitialized = true;
             }
             KeyMatrix_ScanRow(&RightKeyMatrix);

@@ -6,6 +6,12 @@
 #include "led_display.h"
 #include "debug.h"
 
+/**
+ * Future possible extensions:
+ * - generalize change to always handle "in" and "out" events
+ * - add onKeymapLayerChange, onKeymapKeyPress, onKeyPress, onLayerChange events. These would be indexed when keymap is changed and kept at hand, so we could run them without any performance impact.
+ */
+
 void MacroEvent_OnInit()
 {
     const char* s = "$onInit";
