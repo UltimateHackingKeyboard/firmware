@@ -1544,26 +1544,15 @@ conditionPassed:
     return processCommand(arg, argEnd);
 }
 
-static macro_action_t decodeKey(const char* arg1, const char* argEnd)
+static macro_action_t decodeKey(const char* arg1, const char* argEnd, macro_sub_action_t defaultSubAction)
 {
-    macro_action_t action = MacroShortcutParser_Parse(arg1, TokEnd(arg1, argEnd));
+    macro_action_t action = MacroShortcutParser_Parse(arg1, TokEnd(arg1, argEnd), defaultSubAction);
     return action;
 }
 
 static bool processKeyCommand(macro_sub_action_t type, const char* arg1, const char* argEnd)
 {
-    bool isSticky = false;
-    if (TokenMatches(arg1, argEnd, "sticky")) {
-        isSticky = true;
-        arg1 = NextTok(arg1, argEnd);
-    }
-
-    macro_action_t action = decodeKey(arg1, argEnd);
-    action.key.action = type;
-
-    if (action.type == MacroActionType_Key) {
-        action.key.sticky = isSticky;
-    }
+    macro_action_t action = decodeKey(arg1, argEnd, type);
 
     switch (action.type) {
         case MacroActionType_Key:
@@ -1573,6 +1562,24 @@ static bool processKeyCommand(macro_sub_action_t type, const char* arg1, const c
         default:
             return false;
     }
+}
+
+static bool processTapKeySeqCommand(const char* arg1, const char* argEnd)
+{
+    for(uint8_t i = 0; i < s->as.keySeqData.atKeyIdx; i++) {
+        arg1 = NextTok(arg1, argEnd);
+
+        if(arg1 == argEnd) {
+            s->as.keySeqData.atKeyIdx = 0;
+            return false;
+        };
+    }
+
+    if(!processKeyCommand(MacroSubAction_Tap, arg1, argEnd)) {
+        s->as.keySeqData.atKeyIdx++;
+    }
+
+    return true;
 }
 
 static bool processResolveNextKeyIdCommand()
@@ -2320,6 +2327,9 @@ static bool processCommand(const char* cmd, const char* cmdEnd)
             }
             else if (TokenMatches(cmd, cmdEnd, "tapKey")) {
                 return processKeyCommand(MacroSubAction_Tap, arg1, cmdEnd);
+            }
+            else if (TokenMatches(cmd, cmdEnd, "tapKeySeq")) {
+                return processTapKeySeqCommand(arg1, cmdEnd);
             }
             else {
                 goto failed;

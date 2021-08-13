@@ -144,6 +144,9 @@
                     uint8_t layerIdx;
 
                 } holdLayerData;
+                struct {
+                    uint8_t atKeyIdx;
+                } keySeqData;
             };
 
             //shared data

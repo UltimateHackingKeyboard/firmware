@@ -361,42 +361,52 @@ static macro_action_t parseSingleChar(char c)
     return action;
 }
 
-static uint8_t parseMods(const char* str, const char* strEnd)
+static void parseMods(const char* str, const char* strEnd, macro_action_t* action)
 {
     const char* orig = str;
     uint8_t modMask = 0;
     bool left = true;
+    bool sticky = false;
+    macro_sub_action_t actionType = action->key.action;
     while(str < strEnd) {
         switch(*str) {
-        case 'l':
         case 'L':
             left = true;
             break;
-        case 'r':
         case 'R':
             left = false;
             break;
-        case 's':
         case 'S':
             modMask |= left ? HID_KEYBOARD_MODIFIER_LEFTSHIFT : HID_KEYBOARD_MODIFIER_RIGHTSHIFT;
             left = true;
             break;
-        case 'c':
         case 'C':
             modMask |= left ? HID_KEYBOARD_MODIFIER_LEFTCTRL : HID_KEYBOARD_MODIFIER_RIGHTCTRL;
             left = true;
             break;
-        case 'a':
         case 'A':
             modMask |= left ? HID_KEYBOARD_MODIFIER_LEFTALT : HID_KEYBOARD_MODIFIER_RIGHTALT;
             left = true;
             break;
-        case 'w':
         case 'W':
-        case 'g':
         case 'G':
             modMask |= left ? HID_KEYBOARD_MODIFIER_LEFTGUI : HID_KEYBOARD_MODIFIER_RIGHTGUI;
             left = true;
+            break;
+        case 's':
+            sticky = true;
+            break;
+        case 'p':
+            actionType = MacroSubAction_Press;
+            break;
+        case 'r':
+            actionType = MacroSubAction_Release;
+            break;
+        case 't':
+            actionType = MacroSubAction_Tap;
+            break;
+        case 'h':
+            actionType = MacroSubAction_Hold;
             break;
         default:
             Macros_ReportError("Unrecognized mod abbreviation:", orig, strEnd);
@@ -404,7 +414,14 @@ static uint8_t parseMods(const char* str, const char* strEnd)
         }
         str++;
     }
-    return modMask;
+
+    if (action->type != MacroActionType_Key && modMask != 0) {
+        Macros_ReportError("This action is not allowed to have modifiers!", str, strEnd);
+    } else {
+        action->key.modifierMask = modMask;
+        action->key.sticky = sticky;
+    }
+    action->key.action = actionType;
 }
 
 static lookup_record_t* lookup(uint8_t begin, uint8_t end, const char* str, const char* strEnd)
@@ -459,23 +476,21 @@ static macro_action_t parseAbbrev(const char* str, const char* strEnd)
     return action;
 }
 
-macro_action_t MacroShortcutParser_Parse(const char* str, const char* strEnd)
+macro_action_t MacroShortcutParser_Parse(const char* str, const char* strEnd, macro_sub_action_t type)
 {
     macro_action_t action;
 
     if (FindChar('-', str, strEnd) == strEnd) {
         //"-" notation not used
         action = parseAbbrev(str, strEnd);
+        action.key.action = type;
     }
     else {
         const char* delim = FindChar('-', str, strEnd);
         action = parseAbbrev(delim+1, strEnd);
+        action.key.action = type;
 
-        if (action.type != MacroActionType_Key) {
-            Macros_ReportError("This action is not allowed to have modifiers!", str, strEnd);
-        }
-
-        action.key.modifierMask = parseMods(str, delim);
+        parseMods(str, delim, &action);
     }
     return action;
 }

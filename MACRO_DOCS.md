@@ -162,6 +162,11 @@ Similar command can be used to implement "loose gestures" - i.e., shortcuts wher
 
 In the above examples, `tapKey` can be (and probably should be) replaced by `holdKey`. "Hold" activates the scancode for as long as the key is pressed while "tap" activates it just for a fraction of a second. This distinction may seem unimportant, but just as long as you don't try to play some games with it.
 
+Complex key sequences can be achieved using `tapKeySeq`. For instance, following emoji macro - tap `thisMacro + s + h` (as shrug) to get shrugging person, or `thisMacro + s + w` to get sweaty smile.
+
+    $ifGesture 80 73 final tapKeySeq CS-u 1 f 6 0 5 space
+    $ifGesture 80 21 final tapKeySeq CS-u 1 f 9 3 7 space
+
 You can simplify writing macros by using `#` and `@` characters. The first resolves a number as an index of a register. The second interprets the number as a relative action index. For instance the following macro will write out five "a"s with 50 ms delays
     
     //you can comment your code via two slashes. 
@@ -251,7 +256,8 @@ The following grammar is supported:
     COMMAND = playMacro [<slot identifier (MACROID)>]
     COMMAND = {startMouse|stopMouse} {move DIRECTION|scroll DIRECTION|accelerate|decelerate}
     COMMAND = {setReg|addReg|subReg|mulReg} <register index (NUMBER)> <value (NUMBER)>
-    COMMAND = {pressKey|holdKey|tapKey|releaseKey} [sticky] SHORTCUT
+    COMMAND = {pressKey|holdKey|tapKey|releaseKey} SHORTCUT
+    COMMAND = tapKeySeq [SHORTCUT]+
     COMMAND = set module.MODULEID.navigationMode.LAYERID NAVIGATIONMODE
     COMMAND = set module.MODULEID.baseSpeed <speed multiplier part that always applies, 0-10.0 (FLOAT)>
     COMMAND = set module.MODULEID.speed <speed multiplier part that is affected by acceleration, 0-10.0 (FLOAT)>
@@ -270,8 +276,8 @@ The following grammar is supported:
     COMMAND = set debounceDelay <time in ms, at most 250 (NUMBER)>
     COMMAND = set keystrokeDelay <time in ms, at most 65535 (NUMBER)>
     COMMAND = set setEmergencyKey KEYID
-    CONDITION = {ifShortcut | ifNotShortcut} [IFSHORTCUTFLAGS]* [KEYID]*
-    CONDITION = {ifGesture | ifNotGesture} [IFSHORTCUTFLAGS]* [KEYID]*
+    CONDITION = {ifShortcut | ifNotShortcut} [IFSHORTCUTFLAGS]* [KEYID]+
+    CONDITION = {ifGesture | ifNotGesture} [IFSHORTCUTFLAGS]* [KEYID]+
     CONDITION = {ifPrimary | ifSecondary}
     CONDITION = {ifDoubletap | ifNotDoubletap}
     CONDITION = {ifInterrupted | ifNotInterrupted}
@@ -299,8 +305,8 @@ The following grammar is supported:
     CHAR = <any nonwhite ascii char>
     KEYID = <id of hardware key obtained by resolveNextKeyId (NUMBER)>
     LABEL = <string identifier>
-    SHORTCUT = MODMASK-KEY | KEY
-    MODMASK = [MODMASK]+ | [L|R]{S|C|A|G}
+    SHORTCUT = MODMASK- | MODMASK-KEY | KEY
+    MODMASK = [MODMASK]+ | [L|R]{S|C|A|G} | {p|r|h|t} | s
     NAVIGATIONMODE = cursor | scroll | caret | media | none
     MODULEID = trackball | touchpad | trackpoint | keycluster
     KEY = CHAR|KEYABBREV
@@ -339,11 +345,19 @@ The following grammar is supported:
 - `write <custom text>` will type rest of the string. Same as the plain text command. This is just easier to use with conditionals... If you want to interpolate register values, use (e.g.) `$setStatus Register 0 contains #0; $printStatus`.
 - `writeExpr NUMBER` serves for writing out contents of registers or otherwise computed numbers. E.g., `$writeExpr #5` or `$writeExpr @-2`.
 - `startMouse/stopMouse` start/stop corresponding mouse action. E.g., `startMouse move left`
-- `pressKey|holdKey|tapKey|releaseKey` Presses/holds/taps/releases the provided scancode. E.g., `pressKey mouseBtnLeft`, `tapKey LC-v` (Left Control + (lowercase) v), `tapKey CS-f5` (Ctrl + Shift + F5).
+- `pressKey|holdKey|tapKey|releaseKey` Presses/holds/taps/releases the provided scancode. E.g., `pressKey mouseBtnLeft`, `tapKey LC-v` (Left Control + (lowercase) v), `tapKey CS-f5` (Ctrl + Shift + F5), `LS-` (just tap left Shift).
   - press means adding the scancode into a list of "active keys" and continuing the macro. The key is released once the macro ends. I.e., if the command is not followed by any sort of delay, the key will be released again almost immediately.
   - release means removing the scancode from the list of "active keys". I.e., it negates effect of `pressKey` within the same macro. This does not affect scancodes emited by different keyboard actions.
   - tap means pressing a key (more precisely, activating the scancode) and immediately releasing it again
   - hold means pressing the key, waiting until key which activated the macro is released and then releasing the key again. I.e., `$holdKey <x>` is equivalent to `$pressKey <x>; $delayUntilRelease; $releaseKey <x>`, while `$tapKey <x>` is equivalent to `$pressKey <x>; $releaseKey <x>`.
+  - tapKeySeq can be used for executing custom sequences. Default action for each shortcut in sequence is tap. Other actions can be specified using `MODMASK`. E.g.:
+    - `CS-u 1 2 3 space` - control shift U + number + space - linux shortcut for custom unicode character.
+    - `pA- tab tab rA-` - tap alt tab twice to bring forward second background window.
+  - `MODMASK` meaning:
+    - `{S|C|A|G}` - Shift Control Alt Gui
+    - `[L|R]` - Left Right (which hand side modifier should be used)
+    - `s` - sticky 
+    - `{p|r|h|t}` - press release hold tap - by default corresponds to the command used to invoke the sequence, but can be overriden for any.
 
 ### Control flow, macro execution (aka "functions"):
 
