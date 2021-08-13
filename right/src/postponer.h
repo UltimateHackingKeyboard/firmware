@@ -55,6 +55,7 @@
 
     uint8_t PostponerQuery_PendingKeypressCount();
     bool PostponerQuery_IsKeyReleased(key_state_t* key);
+    bool PostponerQuery_IsActiveEventually(key_state_t* key);
 
 // Functions (Query APIs extended):
     uint16_t PostponerExtended_PendingId(uint16_t idx);

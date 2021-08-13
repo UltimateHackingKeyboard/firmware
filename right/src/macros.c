@@ -1782,8 +1782,13 @@ static bool processActivateKeyPostponedCommand(const char* arg1, const char* arg
 {
     uint16_t keyid = parseNUM(arg1, argEnd);
     key_state_t* key = Utils_KeyIdToKeyState(keyid);
-    PostponerCore_TrackKeyEvent(key, true);
-    PostponerCore_TrackKeyEvent(key, false);
+    if(PostponerQuery_IsActiveEventually(key)) {
+        PostponerCore_TrackKeyEvent(key, false);
+        PostponerCore_TrackKeyEvent(key, true);
+    } else {
+        PostponerCore_TrackKeyEvent(key, true);
+        PostponerCore_TrackKeyEvent(key, false);
+    }
     return false;
 }
 

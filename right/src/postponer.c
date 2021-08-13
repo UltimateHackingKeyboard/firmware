@@ -140,6 +140,7 @@ uint8_t PostponerQuery_PendingKeypressCount()
     return cnt;
 }
 
+
 bool PostponerQuery_IsKeyReleased(key_state_t* key)
 {
     if (key == NULL) {
@@ -151,6 +152,19 @@ bool PostponerQuery_IsKeyReleased(key_state_t* key)
         }
     }
     return false;
+}
+
+bool PostponerQuery_IsActiveEventually(key_state_t* key)
+{
+    if (key == NULL) {
+        return false;
+    }
+    for ( int8_t i = bufferSize - 1; i >= 0; i-- ) {
+        if (buffer[POS(i)].key == key) {
+            return buffer[POS(i)].active;
+        }
+    }
+    return KeyState_Active(key);
 }
 
 //##########################
