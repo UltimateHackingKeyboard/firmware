@@ -60,6 +60,7 @@
     uint16_t PostponerExtended_PendingId(uint16_t idx);
     uint32_t PostponerExtended_LastPressTime(void);
     bool PostponerExtended_IsPendingKeyReleased(uint8_t idx);
+    bool PostponerQuery_ContainsKeyId(uint8_t keyid);
     void PostponerExtended_ConsumePendingKeypresses(int count, bool suppress);
     void PostponerExtended_ResetPostponer(void);
 

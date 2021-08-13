@@ -1634,6 +1634,7 @@ static bool processIfShortcutCommand(bool negate, const char* arg, const char* a
     //parse optional flags
     bool consume = true;
     bool transitive = false;
+    bool fixedOrder = true;
     uint16_t cancelIn = 0;
     uint16_t timeoutIn= 0;
     while(arg < argEnd && !isNUM(arg, argEnd)) {
@@ -1651,6 +1652,9 @@ static bool processIfShortcutCommand(bool negate, const char* arg, const char* a
             arg = NextTok(arg, argEnd);
             cancelIn = parseNUM(arg, argEnd);
             arg = NextTok(arg, argEnd);
+        } else if (TokenMatches(arg, argEnd, "anyOrder")) {
+            arg = NextTok(arg, argEnd);
+            fixedOrder = false;
         } else {
             Macros_ReportError("Unrecognized option", arg, argEnd);
             arg = NextTok(arg, argEnd);
@@ -1699,7 +1703,14 @@ static bool processIfShortcutCommand(bool negate, const char* arg, const char* a
                 }
             }
         }
-        else if (PostponerExtended_PendingId(numArgs - 1) != argKeyid) {
+        else if (fixedOrder && PostponerExtended_PendingId(numArgs - 1) != argKeyid) {
+            if (negate) {
+                goto conditionPassed;
+            } else {
+                return false;
+            }
+        }
+        else if (!fixedOrder && !PostponerQuery_ContainsKeyId(argKeyid)) {
             if (negate) {
                 goto conditionPassed;
             } else {

@@ -229,6 +229,22 @@ void PostponerExtended_PrintContent()
     }
 }
 
+bool PostponerQuery_ContainsKeyId(uint8_t keyid)
+{
+    key_state_t* key = Utils_KeyIdToKeyState(keyid);
+
+    if (key == NULL) {
+        return false;
+    }
+    for ( uint8_t i = 0; i < bufferSize; i++ ) {
+        if (buffer[POS(i)].key == key) {
+            return true;
+        }
+    }
+    return false;
+}
+
+
 //##########################
 //### Chording ###
 //##########################
