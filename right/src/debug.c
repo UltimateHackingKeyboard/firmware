@@ -1,18 +1,20 @@
 #include "debug.h"
 
+#define WATCHES
 #ifdef WATCHES
 
 #include "led_display.h"
 #include "timer.h"
 #include "key_states.h"
 #include <limits.h>
+#include "usb_interfaces/usb_interface_basic_keyboard.h"
 
 uint8_t CurrentWatch = 0;
 
 static uint32_t lastWatch = 0;
 static uint32_t watchInterval = 500;
 
-static void printReport(usb_basic_keyboard_report_t *report)
+void AddReportToStatusBuffer(usb_basic_keyboard_report_t *report)
 {
     Macros_SetStatusNum(report->modifiers);
     for (int i = 0; i < 6; i++) {

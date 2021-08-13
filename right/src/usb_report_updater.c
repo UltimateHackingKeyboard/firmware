@@ -36,7 +36,7 @@ bool SuppressMods = false;
 bool SuppressKeys = false;
 sticky_strategy_t StickyModifierStrategy = Stick_Smart;
 
-uint16_t KeystrokeDelay = 0;
+uint8_t KeystrokeDelay = 0;
 
 key_state_t* EmergencyKey = NULL;
 

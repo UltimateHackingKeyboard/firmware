@@ -19,10 +19,6 @@
 macro_reference_t AllMacros[MAX_MACRO_NUM];
 uint8_t AllMacrosCount;
 bool MacroPlaying = false;
-usb_mouse_report_t MacroMouseReport;
-usb_basic_keyboard_report_t MacroBasicKeyboardReport;
-usb_media_keyboard_report_t MacroMediaKeyboardReport;
-usb_system_keyboard_report_t MacroSystemKeyboardReport;
 
 uint8_t MacroBasicScancodeIndex = 0;
 uint8_t MacroMediaScancodeIndex = 0;
@@ -528,9 +524,9 @@ void Macros_ReportErrorNum(const char* err, uint32_t num)
 
 static void clearScancodes()
 {
-    uint8_t oldMods = MacroBasicKeyboardReport.modifiers;
-    memset(&MacroBasicKeyboardReport, 0, sizeof MacroBasicKeyboardReport);
-    MacroBasicKeyboardReport.modifiers = oldMods;
+    uint8_t oldMods = s->ms.macroBasicKeyboardReport.modifiers;
+    memset(&s->ms.macroBasicKeyboardReport, 0, sizeof s->ms.macroBasicKeyboardReport);
+    s->ms.macroBasicKeyboardReport.modifiers = oldMods;
 }
 
 static bool dispatchText(const char* text, uint16_t textLen)
@@ -582,6 +578,7 @@ static bool dispatchText(const char* text, uint16_t textLen)
     // Whenever the report is full, we clear the report and send it empty before continuing.
     if (s->as.dispatchData.reportIdx == max_keys) {
         s->as.dispatchData.reportIdx = 0;
+
         memset(&s->ms.macroBasicKeyboardReport, 0, sizeof s->ms.macroBasicKeyboardReport);
         return true;
     }
