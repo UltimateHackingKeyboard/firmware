@@ -43,23 +43,23 @@ static layer_id_t heldLayer = LayerId_Base;
 
 // Recompute active layer whenever state of the layer locks changes.
 void updateActiveLayer() {
-    layer_id_t activeLayer = LayerId_Base;
-    layer_id_t activeLayerHeld = LayerId_Base;
-    if(activeLayer == LayerId_Base) {
-        activeLayer = toggledLayer;
+    layer_id_t newActiveLayer = LayerId_Base;
+    layer_id_t newActiveLayerHeld = LayerId_Base;
+    if(newActiveLayer == LayerId_Base) {
+        newActiveLayer = toggledLayer;
     }
-    if(activeLayer == LayerId_Base) {
-        activeLayer = heldLayer;
+    if(newActiveLayer == LayerId_Base) {
+        newActiveLayer = heldLayer;
     }
-    activeLayerHeld = heldLayer == ActiveLayer && ActiveLayer != LayerId_Base;
+    newActiveLayerHeld = newActiveLayer == heldLayer && newActiveLayer != LayerId_Base;
 
-    if(activeLayer == LayerId_Base) {
-        activeLayer = Macros_ActiveLayer;
-        activeLayerHeld = Macros_ActiveLayer;
+    if(newActiveLayer == LayerId_Base) {
+        newActiveLayer = Macros_ActiveLayer;
+        newActiveLayerHeld = Macros_ActiveLayer;
     }
     //(write actual ActiveLayer atomically, so that random observer is not confused)
-    ActiveLayer = activeLayer;
-    ActiveLayerHeld = activeLayerHeld;
+    ActiveLayer = newActiveLayer;
+    ActiveLayerHeld = newActiveLayerHeld;
     UpdateLayerLeds();
 }
 
