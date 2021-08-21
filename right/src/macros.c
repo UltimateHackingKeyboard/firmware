@@ -601,7 +601,6 @@ static bool dispatchText(const char* text, uint16_t textLen)
 
 static bool processTextAction(void)
 {
-#ifdef EXTENDED_MACROS
     if (s->ms.currentMacroAction.text.text[0] == '$') {
         bool actionInProgress = processCommandAction();
         s->as.currentConditionPassed = actionInProgress;
@@ -611,7 +610,6 @@ static bool processTextAction(void)
     } else if (s->ms.currentMacroAction.text.text[0] == '/' && s->ms.currentMacroAction.text.text[1] == '/') {
         return false;
     }
-#endif
 
     return dispatchText(s->ms.currentMacroAction.text.text, s->ms.currentMacroAction.text.textLen);
 }
@@ -2370,6 +2368,8 @@ static bool processCommand(const char* cmd, const char* cmdEnd)
     return false;
 }
 
+//TODO: removethis
+/*
 static bool processStockCommandAction(const char* cmd, const char* cmdEnd)
 {
     const char* cmdTokEnd = TokEnd(cmd, cmdEnd);
@@ -2416,6 +2416,7 @@ static bool processStockCommandAction(const char* cmd, const char* cmdEnd)
     }
     return false;
 }
+*/
 
 
 static bool processCommandAction(void)
@@ -2432,11 +2433,7 @@ static bool processCommandAction(void)
         return false;
     }
 
-#ifdef EXTENDED_MACROS
     return processCommand(cmd, cmdEnd);
-#else
-    return processStockCommandAction(cmd, cmdEnd);
-#endif
 }
 
 static bool processCurrentMacroAction(void)
