@@ -162,7 +162,7 @@ Similar command can be used to implement "loose gestures" - i.e., shortcuts wher
 
 In the above examples, `tapKey` can be (and probably should be) replaced by `holdKey`. "Hold" activates the scancode for as long as the key is pressed while "tap" activates it just for a fraction of a second. This distinction may seem unimportant, but just as long as you don't try to play some games with it.
 
-Complex key sequences can be achieved using `tapKeySeq`. For instance, following emoji macro - tap `thisMacro + s + h` (as shrug) to get shrugging person, or `thisMacro + s + w` to get sweaty smile.
+Complex key sequences can be achieved using `tapKeySeq`. For instance, following emoji macro (uses linux  Ctrl+U notation) - tap `thisMacro + s + h` (as shrug) to get shrugging person, or `thisMacro + s + w` to get sweaty smile.
 
     $ifGesture 80 73 final tapKeySeq CS-u 1 f 6 0 5 space
     $ifGesture 80 21 final tapKeySeq CS-u 1 f 9 3 7 space
