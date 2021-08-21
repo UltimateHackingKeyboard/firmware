@@ -2,6 +2,7 @@
 #include "ledmap.h"
 #include "timer.h"
 #include "macros.h"
+#include "debug.h"
 
 static uint16_t DoubleTapSwitchLayerTimeout = 300;
 static uint16_t DoubleTapSwitchLayerReleaseTimeout = 200;

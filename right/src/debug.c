@@ -8,6 +8,7 @@
 #include "key_states.h"
 #include <limits.h>
 #include "usb_interfaces/usb_interface_basic_keyboard.h"
+#include "macros.h"
 
 uint8_t CurrentWatch = 0;
 
@@ -83,6 +84,17 @@ void WatchString(char const *v, uint8_t n)
         lastWatch = CurrentTime;
     }
 }
+
+void ShowString(char const *v, uint8_t n)
+{
+    LedDisplay_SetText(strlen(v), v);
+}
+
+void ShowValue(int v, uint8_t n)
+{
+    ShowNumberExp(v);
+}
+
 
 void WatchValueMin(int v, uint8_t n)
 {
