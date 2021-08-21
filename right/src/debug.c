@@ -1,6 +1,5 @@
 #include "debug.h"
 
-#define WATCHES
 #ifdef WATCHES
 
 #include "led_display.h"
