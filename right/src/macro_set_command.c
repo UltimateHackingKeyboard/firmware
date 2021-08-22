@@ -46,7 +46,21 @@ static void moduleSpeed(const char* arg1, const char *textEnd, module_configurat
     else if (TokenMatches(arg1, textEnd, "acceleration")) {
         module->acceleration = ParseFloat(arg2, textEnd);
     }
-    //TODO: caretSkewStrength, caretSpeedDivisor, scrollSpeedDivisor
+    else if (TokenMatches(arg1, textEnd, "caretSpeedDivisor")) {
+        module->caretSpeedDivisor = ParseFloat(arg2, textEnd);
+    }
+    else if (TokenMatches(arg1, textEnd, "scrollSpeedDivisor")) {
+        module->scrollSpeedDivisor = ParseFloat(arg2, textEnd);
+    }
+    else if (TokenMatches(arg1, textEnd, "caretLockStrength")) {
+        module->caretLockSkew = 1.0f - ParseFloat(arg2, textEnd);
+    }
+    else if (TokenMatches(arg1, textEnd, "caretLockFirstTick")) {
+        module->caretLockFirstTick = Macros_ParseInt(arg2, textEnd, NULL);
+    }
+    else {
+        Macros_ReportError("parameter not recognized:", arg1, textEnd);
+    }
 }
 
 static void module(const char* arg1, const char *textEnd)

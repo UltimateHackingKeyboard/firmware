@@ -262,7 +262,10 @@ The following grammar is supported:
     COMMAND = set module.MODULEID.baseSpeed <speed multiplier part that always applies, 0-10.0 (FLOAT)>
     COMMAND = set module.MODULEID.speed <speed multiplier part that is affected by acceleration, 0-10.0 (FLOAT)>
     COMMAND = set module.MODULEID.acceleration <exponent 0-1.0 (FLOAT)>
-    #NOTIMPLEMENTED COMMAND = set module.MODULEID.{caretSkewStrength|caretSpeedDivisor|scrollSpeedDivisor} FLOAT
+    COMMAND = set module.MODULEID.caretSpeedDivisor <1-100 (FLOAT)>
+    COMMAND = set module.MODULEID.scrollSpeedDivisor <1-100 (FLOAT)>
+    COMMAND = set module.MODULEID.caretLockStrength <0-1.0 (FLOAT)>
+    COMMAND = set module.MODULEID.caretLockFirstTick {0|1}
     #NOTIMPLEMENTED COMMAND = set secondaryRoles
     COMMAND = set mouseKeys.{move|scroll}.initialSpeed <px/s, -100/20 (NUMBER)>
     COMMAND = set mouseKeys.{move|scroll}.baseSpeed <px/s, -800/20 (NUMBER)>
@@ -565,6 +568,12 @@ For the purpose of toggling functionality on and off, and for global constants m
       - at 3000 px/s, speed multiplier is 1x
       - at 6000 px/s, speed multiplier is 4x
       - not recommended - the curve will behave in very non-linear fashion.
+- `set module.MODULEID.{caretLockStrength|caretSpeedDivisor|scrollSpeedDivisor}` modifies scrolling and caret behaviour:
+    - `caretLockStrength` controls caret axis locking. Defaults to 0.5, valid values are 0-1.0.
+      When you first move in navigation mode that has axis locking enabled, axis is locked to one of the axes. Furthermore, as long as this axis is active, the other axis input is multiplied by `1 - caretLockStrength` and gets zeroed with every tick. This means that in order to change locked direction (with 0.5 value), you have to produce stroke that goes at least twice as fast in the non-locked direction compared to the locked one.
+    - `caretLockFirstTick {0|1}` - controls whether first tick is affected by `caretLockStrength` or not. Defaults to 0.
+    - `caretSpeedDivisor` (default: 16) is used to divide input in caret mode. This means that per one tick, you have to move by 16 pixels (or whatever the unit is).
+    - `scrollSpeedDivisor` (default: 8) is used to divide input in scroll mode. This means that while scrolling, every 8 pixels produce one scroll tick.
 
 
 ### Argument parsing rules:
@@ -578,6 +587,15 @@ For the purpose of toggling functionality on and off, and for global constants m
 - `SHORTCUT` is an abbreviation of a key possibly accompanied by modifiers. Describes at most one scancode action. Can be prefixed by `C/S/A/G` denoting `Control/Shift/Alt/Gui`. Mods can further be prefixed by `L/R`, denoting left or right modifier. If a single ascii character is entered, it is translated into corresponding key combination (shift mask + scancode) according to standard EN-US layout. E.g., `pressKey mouseBtnLeft`, `tapKey LC-v` (Left Control + (lowercase) V (scancode)), `tapKey CS-f5` (Ctrl + Shift + F5), `tapKey v` (V), `tapKey V` (Shift + V).
 - `LABEL` is and identifier marking some lines of the macro. When a string is encountered in a context of an address, UHK looks for a command beginning by `$<the string>:` and returns its addres (index). If same label is present multiple times, the next one w.r.t. currently processed command is returned.
 - `ADDRESS` is either a `NUMBER` (including `#`, `@`, etc syntaxies) or a string which denotes label identifier. E.g., `$goTo 0` (go to beginning), `$goTo @-1` (go to previous command, since `@` resolves relative adresses to absolute), `$goTo @0` (active waiting), `$goTo default` (go to line which begins by `$default: ...`). 
+
+### Navigation modes:
+
+UHK modules feature four navigation modes, which are mapped by layer and module. This mapping can be changed by the `set module.MODULEID.navigationMode.LAYERID NAVIGATIONMODE` command.
+
+- Cursor mode - in this mode, modules control mouse movement. Default mode for all modules except keycluster's trackball.
+- Scroll mode - in this mode, module can be used to scroll. Default mode for mod layer. This means that apart from switching layer, your mod layer switches also make your right hand modules act as very comfortable scroll wheels. Sensitivity is controlled by the `scrollSpeedDivisor` value.
+- Caret mode - in this mode, module produces arrow key taps. This can be used to move comfortably in text editor, since in this mode, cursor is also locked to one of the two directions, preventing unwanted line changes. Sensitivity is controlled by the `caretSpeedDivisor`, `caretLockFirstTick` and `caretLockStrength`.
+- Media mode - in this mode, up/down directions control volume (via media key scancodes), while horizontal play/pause and switch to next track. At the moment, this mode is not enabled by default on any layer. Sensitivity is shared with the caret mode.
 
 ### Error handling
 

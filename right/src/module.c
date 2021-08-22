@@ -7,6 +7,10 @@ module_configuration_t ModuleConfigurations[ModuleId_ModuleCount] = {
         .speed = 1.0,
         .baseSpeed = 0.0,
         .acceleration = 0.0,
+        .scrollSpeedDivisor = 1.0f,
+        .caretSpeedDivisor = 1.0f,
+        .caretLockSkew = 0.5f,
+        .caretLockFirstTick = false,
         .navigationModes = {
             NavigationMode_Scroll, // Base layer
             NavigationMode_Cursor, // Mod layer
@@ -18,6 +22,10 @@ module_configuration_t ModuleConfigurations[ModuleId_ModuleCount] = {
         .speed = 0.5, // min:0.2, opt:1.0/0.5, max:5
         .baseSpeed = 0.5, // min: 0, opt:0.0/0.5, max 5
         .acceleration = 1.0, // min:0.0, opt:0.5/1.0, max:2.0
+        .scrollSpeedDivisor = 8.0f,
+        .caretSpeedDivisor = 16.0f,
+        .caretLockSkew = 0.5f,
+        .caretLockFirstTick = false,
         .navigationModes = {
             NavigationMode_Cursor, // Base layer
             NavigationMode_Scroll, // Mod layer
@@ -29,6 +37,10 @@ module_configuration_t ModuleConfigurations[ModuleId_ModuleCount] = {
         .speed = 1.0, // min:0.2, opt:1.0, max:5
         .baseSpeed = 0.0, // min: 0, opt = 0.0, max 5
         .acceleration = 0.0, // min:0.0, opt:0.0, max:2.0
+        .scrollSpeedDivisor = 8.0f,
+        .caretSpeedDivisor = 16.0f,
+        .caretLockSkew = 0.5f,
+        .caretLockFirstTick = false,
         .navigationModes = {
             NavigationMode_Cursor, // Base layer
             NavigationMode_Scroll, // Mod layer
@@ -40,6 +52,10 @@ module_configuration_t ModuleConfigurations[ModuleId_ModuleCount] = {
         .speed = 0.7, // min:0.2, opt:1.3/0.6, max:1.8
         .baseSpeed = 0.5, // min: 0, opt = 0.0/0.5, max 5
         .acceleration = 1.0, // min:0.0, opt:0.5/1.0, max:2.0
+        .scrollSpeedDivisor = 8.0f,
+        .caretSpeedDivisor = 16.0f,
+        .caretLockSkew = 0.5f,
+        .caretLockFirstTick = false,
         .navigationModes = {
             NavigationMode_Cursor, // Base layer
             NavigationMode_Scroll, // Mod layer
@@ -51,6 +67,10 @@ module_configuration_t ModuleConfigurations[ModuleId_ModuleCount] = {
         .speed = 1.0, // min:0.2, opt:1.0, max:5
         .baseSpeed = 0.5, // min: 0, opt = 0.0/0.5, max 5
         .acceleration = 5.0, // min:0.1, opt:5.0, max:10.0
+        .scrollSpeedDivisor = 8.0f,
+        .caretSpeedDivisor = 16.0f,
+        .caretLockSkew = 0.5f,
+        .caretLockFirstTick = false,
         .navigationModes = {
             NavigationMode_Cursor, // Base layer
             NavigationMode_Scroll, // Mod layer

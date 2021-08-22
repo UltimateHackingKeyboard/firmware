@@ -22,10 +22,20 @@
     } navigation_mode_t;
 
     typedef struct {
+        // working 'cache'
         float currentSpeed; // px/ms
+
+        // acceleration configurations
         float baseSpeed;
         float speed;
         float acceleration;
+
+        // navigation mode configurations
+        float scrollSpeedDivisor;
+        float caretSpeedDivisor;
+        float caretLockSkew;
+        bool caretLockFirstTick;
+
         navigation_mode_t navigationModes[LayerId_Count];
     } module_configuration_t;
 
