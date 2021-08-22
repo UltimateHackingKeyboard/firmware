@@ -4,11 +4,11 @@
 
 module_configuration_t ModuleConfigurations[ModuleId_ModuleCount] = {
     { // ModuleId_KeyClusterLeft
-        .speed = 1.0,
-        .baseSpeed = 0.0,
+        .speed = 0.0,
+        .baseSpeed = 5.0,
         .acceleration = 0.0,
-        .scrollSpeedDivisor = 1.0f,
-        .caretSpeedDivisor = 1.0f,
+        .scrollSpeedDivisor = 5.0f,
+        .caretSpeedDivisor = 5.0f,
         .caretLockSkew = 0.5f,
         .caretLockSkewFirstTick = 0.5f,
         .cursorAxisLock = false,

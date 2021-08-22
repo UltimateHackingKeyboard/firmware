@@ -362,15 +362,6 @@ static void processAxisLocking(float x, float y, float speed, int16_t yInversion
 
 
             handleNewCaretModeAction(ks->caretAxis, sgn*currentAxisInversion, axisIntegerParts[axisCandidate]*currentAxisInversion, ks);
-
-            /*
-             * TODO: remove this once the code is tested!
-            caret_configuration_t* currentCaretConfig = GetModuleCaretConfiguration(ks->currentModuleId, ks->currentNavigationMode);
-            caret_dir_action_t* dirActions = &currentCaretConfig->axisActions[ks->caretAxis];
-            ks->caretAction = sgn*currentAxisInversion > 0 ? &dirActions->positiveAction : &dirActions->negativeAction;
-            ks->caretFakeKeystate.current = true;
-            ApplyKeyAction(&ks->caretFakeKeystate, ks->caretAction, ks->caretAction);
-            */
         }
     }
 }
@@ -380,11 +371,7 @@ static void processModuleKineticState(float x, float y, module_configuration_t* 
 
     int16_t yInversion = ks->currentModuleId == ModuleId_KeyClusterLeft || ks->currentModuleId == ModuleId_TouchpadRight ? -1 : 1;
 
-    if (ks->currentModuleId == ModuleId_KeyClusterLeft) {
-        speed = ks->currentNavigationMode == NavigationMode_Cursor ? 5 : 1;
-    } else {
-        speed = computeModuleSpeed(x, y, ks->currentModuleId);
-    }
+    speed = computeModuleSpeed(x, y, ks->currentModuleId);
 
     switch (ks->currentNavigationMode) {
         case NavigationMode_Cursor: {
