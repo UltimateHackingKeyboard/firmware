@@ -11,7 +11,15 @@
         LayerId_Mod,
         LayerId_Fn,
         LayerId_Mouse,
-        LayerId_Last = LayerId_Mouse,
+        LayerId_Fn2,
+        LayerId_Fn3,
+        LayerId_Fn4,
+        LayerId_Fn5,
+        LayerId_Shift,
+        LayerId_Control,
+        LayerId_Alt,
+        LayerId_Super,
+        LayerId_Last = LayerId_Super,
         LayerId_Count = LayerId_Last + 1,
     } layer_id_t;
 

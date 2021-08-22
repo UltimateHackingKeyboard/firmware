@@ -56,6 +56,22 @@
         SerializedMouseAction_Last = SerializedMouseAction_Button_8,
     } serialized_mouse_action_t;
 
+    typedef enum {
+        SerializedLayerName_mod,
+        SerializedLayerName_fn,
+        SerializedLayerName_mouse,
+        SerializedLayerName_fn2,
+        SerializedLayerName_fn3,
+        SerializedLayerName_fn4,
+        SerializedLayerName_fn5,
+        SerializedLayerName_shift,
+        SerializedLayerName_control,
+        SerializedLayerName_alt,
+        SerializedLayerName_super,
+        SerializedLayerName_base = 255
+    } serialized_layer_id;
+
+
 // Functions:
 
     parser_error_t ParseKeymap(config_buffer_t *buffer, uint8_t keymapIdx, uint8_t keymapCount, uint8_t macroCount);

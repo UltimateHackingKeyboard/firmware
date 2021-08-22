@@ -163,7 +163,7 @@ void LayerSwitcher_UpdateActiveLayer() {
     if(!heldLayers[heldLayer]) {
         heldLayer = LayerId_Base;
     }
-    for (layer_id_t layerId = LayerId_Mod; layerId <= LayerId_Mouse; layerId++) {
+    for (layer_id_t layerId = LayerId_Mod; layerId < LayerId_Last; layerId++) {
         if (heldLayers[layerId] && heldLayer == LayerId_Base) {
             heldLayer = layerId;
         }

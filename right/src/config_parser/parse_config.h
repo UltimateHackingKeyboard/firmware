@@ -23,7 +23,12 @@
         ParserError_InvalidMacroCount                   = 12,
         ParserError_InvalidSerializedPlayMacroAction    = 13,
         ParserError_InvalidMouseKineticProperty         = 14,
+        ParserError_InvalidLayerId                      = 15,
     } parser_error_t;
+
+    extern uint16_t DataModelMajorVersion;
+    extern uint16_t DataModelMinorVersion;
+    extern uint16_t DataModelPatchVersion;
 
 // Functions:
 
