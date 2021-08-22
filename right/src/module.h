@@ -41,6 +41,7 @@
 
         bool scrollAxisLock;
         bool cursorAxisLock;
+        bool invertAxis;
     } module_configuration_t;
 
 // Variables:

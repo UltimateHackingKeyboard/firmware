@@ -13,6 +13,7 @@ module_configuration_t ModuleConfigurations[ModuleId_ModuleCount] = {
         .caretLockSkewFirstTick = 0.5f,
         .cursorAxisLock = false,
         .scrollAxisLock = true,
+        .invertAxis = false,
         .navigationModes = {
             NavigationMode_Scroll, // Base layer
             NavigationMode_Cursor, // Mod layer
@@ -30,6 +31,7 @@ module_configuration_t ModuleConfigurations[ModuleId_ModuleCount] = {
         .caretLockSkewFirstTick = 1.0f,
         .cursorAxisLock = false,
         .scrollAxisLock = false,
+        .invertAxis = false,
         .navigationModes = {
             NavigationMode_Cursor, // Base layer
             NavigationMode_Scroll, // Mod layer
@@ -47,6 +49,7 @@ module_configuration_t ModuleConfigurations[ModuleId_ModuleCount] = {
         .caretLockSkewFirstTick = 1.0f,
         .cursorAxisLock = false,
         .scrollAxisLock = false,
+        .invertAxis = false,
         .navigationModes = {
             NavigationMode_Cursor, // Base layer
             NavigationMode_Scroll, // Mod layer
@@ -64,6 +67,7 @@ module_configuration_t ModuleConfigurations[ModuleId_ModuleCount] = {
         .caretLockSkewFirstTick = 1.0f,
         .cursorAxisLock = false,
         .scrollAxisLock = false,
+        .invertAxis = false,
         .navigationModes = {
             NavigationMode_Cursor, // Base layer
             NavigationMode_Scroll, // Mod layer
@@ -81,6 +85,7 @@ module_configuration_t ModuleConfigurations[ModuleId_ModuleCount] = {
         .caretLockSkewFirstTick = 1.0f,
         .cursorAxisLock = false,
         .scrollAxisLock = false,
+        .invertAxis = false,
         .navigationModes = {
             NavigationMode_Cursor, // Base layer
             NavigationMode_Scroll, // Mod layer

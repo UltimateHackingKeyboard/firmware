@@ -457,6 +457,12 @@ static void processModuleActions(uint8_t moduleId, float x, float y)
     }
 
     if (moduleKineticState.currentModuleId == moduleId && moduleKineticState.currentNavigationMode == navigationMode) {
+        if(moduleConfiguration->invertAxis) {
+            float tmp = x;
+            x = y;
+            y = tmp;
+        }
+
         //we want to process kinetic state even if x == 0 && y == 0, at least as long as caretAxis != CaretAxis_None because of fake key states that may be active.
         processModuleKineticState(x, y, moduleConfiguration, &moduleKineticState);
     }
