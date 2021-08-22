@@ -120,10 +120,8 @@ static void mouseKeys(const char* arg1, const char *textEnd)
     else if (TokenMatches(arg2, textEnd, "acceleratedSpeed")) {
         state->acceleratedSpeed = Macros_ParseInt(arg3, textEnd, NULL);
     }
-    /* axis skew */
-    else if (TokenMatches(arg1, textEnd, "axisSkew")) {
-        //module->axisSkew = Macros_ParseInt(arg3, textEnd, NULL);
-        // TODO
+    else if (TokenMatches(arg2, textEnd, "axisSkew")) {
+        state->axisSkew = ParseFloat(arg3, textEnd);
     }
     else {
         Macros_ReportError("parameter not recognized:", arg1, textEnd);

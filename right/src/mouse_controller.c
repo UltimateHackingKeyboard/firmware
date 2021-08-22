@@ -43,6 +43,7 @@ mouse_kinetic_state_t MouseMoveState = {
     .deceleratedSpeed = 10,
     .baseSpeed = 40,
     .acceleratedSpeed = 80,
+    .axisSkew = 1.0f,
 };
 
 mouse_kinetic_state_t MouseScrollState = {
@@ -59,6 +60,7 @@ mouse_kinetic_state_t MouseScrollState = {
     .deceleratedSpeed = 10,
     .baseSpeed = 20,
     .acceleratedSpeed = 50,
+    .axisSkew = 1.0f,
 };
 
 module_kinetic_state_t moduleKineticState = {
@@ -185,8 +187,8 @@ static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
             distance /= 1.41f;
         }
 
-        kineticState->xSum += distance * kineticState->horizontalStateSign;
-        kineticState->ySum += distance * kineticState->verticalStateSign;
+        kineticState->xSum += distance * kineticState->horizontalStateSign * kineticState->axisSkew;
+        kineticState->ySum += distance * kineticState->verticalStateSign / kineticState->axisSkew;
 
         // Update horizontal state
 

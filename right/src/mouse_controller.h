@@ -29,6 +29,7 @@
         float intMultiplier;
         float currentSpeed;
         float targetSpeed;
+        float axisSkew;
         uint8_t initialSpeed;
         uint8_t acceleration;
         uint8_t deceleratedSpeed;

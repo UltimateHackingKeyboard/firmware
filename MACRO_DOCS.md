@@ -44,6 +44,7 @@ can be combined. E.g.:
     - Understand how to read the stated ebnf grammar. The grammar gives you precise instructions about available features and their parameters, as well as correct syntax. Note that some commands and parameters are only mentioned in the grammar! In case you don't know anything about grammars:
         - The grammar describes a valid expression via a set of rules. At the beginning, the expression equals "BODY". Every capital word of the expression is to be "rewritten" by a corresponding rule - i.e., the identifier is to be replaced by an expression which matches right side of the rule. 
         - Notation: `<>` mark informal (human-understandable) explanation of what is to be entered. `|` operator indicates choice between left and right operand. It is typically enclosed in `{}`, in order to separate the group from the rest of the rule. `[]` denote optional arguments. Especially `[]+` marks "one or more" and `[]*` arbitrary number.
+        - Provided value bounds are informational only - they denote values that seem to make sense. Sometimes default values are marked.
     - If you are still not sure about some feature or syntax, do not hesitate to ask.
 
 4) If you encounter a bug, let me know. There are lots of features and quite few users around this codebase - if you do not report problems you find, chances are that no one else will (since most likely no one else has noticed). 
@@ -274,7 +275,7 @@ The following grammar is supported:
     COMMAND = set mouseKeys.{move|scroll}.initialAcceleration <px/s, ~1700/20 (NUMBER)>
     COMMAND = set mouseKeys.{move|scroll}.deceleratedSpeed <px/s, ~200/10 (NUMBER)>
     COMMAND = set mouseKeys.{move|scroll}.acceleratedSpeed <px/s, ~1600/50 (NUMBER)>
-    #NOTIMPLEMENTED COMMAND = set mouseKeys.{move|scroll}.axisSkew FLOAT
+    COMMAND = set mouseKeys.{move|scroll}.axisSkew <multiplier, 0.5-2.0 (FLOAT)>
     COMMAND = set compensateDiagonalSpeed {0|1}
     COMMAND = set chording {0|1}
     COMMAND = set stickyMods {0|never|smart|always|1}
@@ -545,7 +546,7 @@ For the purpose of toggling functionality on and off, and for global constants m
   - `initialAcceleration,baseSpeed` - when mouse key is held, speed increases until it reaches baseSpeed
   - `deceleratedSpeed` - speed as affected by deceleration modifier
   - `acceleratedSpeed` - speed as affected by acceleration modifier
-  - `axisSkew`
+  - `axisSkew` - axis skew multiplies horizontal axis and divides vertical. Default value is 1.0, reasonable between 0.5-2.0 Useful for very niche usecases.
 - `set module.MODULEID.{baseSpeed|speed|acceleration}` modifies speed characteristics of right side modules. Simplified formula is `speedMultiplier(normalizedSpeed) = baseSpeed + speed*(normalizedSpeed^acceleration)` where `normalizedSpeed = actualSpeed / midSpeed`. Therefore `appliedDistance(distance d, time t) = d*(baseSpeed*((d/t)/midSpeed) + d*speed*(((d/t)/midSpeed)^acceleration))`. (`d/t` is actual speed in px/s, `(d/t)/midSpeed` is normalizedSpeed which acts as base for the exponent)
   - `baseSpeed` is base speed multiplier which is not affected by acceleration. I.e., if `speed = 0`, then traveled distance is `reportedDistance*baseSpeed`
   - `speed` multiplies effect of acceleration expression. I.e., simply multiplies the reported distance when the actual speed equals `midSpeed`.
