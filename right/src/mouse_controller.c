@@ -318,11 +318,11 @@ static void processAxisLocking(float x, float y, float speed, int16_t yInversion
     float caretYModeMultiplier;
 
     if(ks->caretAxis == CaretAxis_None) {
-        caretXModeMultiplier = moduleConfiguration->caretLockSkewFirstTick;
-        caretYModeMultiplier = moduleConfiguration->caretLockSkewFirstTick;
+        caretXModeMultiplier = moduleConfiguration->axisLockSkewFirstTick;
+        caretYModeMultiplier = moduleConfiguration->axisLockSkewFirstTick;
     } else {
-        caretXModeMultiplier = ks->caretAxis == CaretAxis_Horizontal ? 1.0f : moduleConfiguration->caretLockSkew;
-        caretYModeMultiplier = ks->caretAxis == CaretAxis_Vertical ? 1.0f : moduleConfiguration->caretLockSkew;
+        caretXModeMultiplier = ks->caretAxis == CaretAxis_Horizontal ? 1.0f : moduleConfiguration->axisLockSkew;
+        caretYModeMultiplier = ks->caretAxis == CaretAxis_Vertical ? 1.0f : moduleConfiguration->axisLockSkew;
     }
 
     ks->xFractionRemainder += x * speed / speedDivisor * caretXModeMultiplier;

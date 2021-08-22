@@ -53,10 +53,10 @@ static void moduleSpeed(const char* arg1, const char *textEnd, module_configurat
         module->scrollSpeedDivisor = ParseFloat(arg2, textEnd);
     }
     else if (TokenMatches(arg1, textEnd, "axisLockStrength")) {
-        module->caretLockSkew = 1.0f - ParseFloat(arg2, textEnd);
+        module->axisLockSkew = 1.0f - ParseFloat(arg2, textEnd);
     }
     else if (TokenMatches(arg1, textEnd, "axisLockStrengthFirstTick")) {
-        module->caretLockSkewFirstTick = 1.0f - ParseFloat(arg2, textEnd);
+        module->axisLockSkewFirstTick = 1.0f - ParseFloat(arg2, textEnd);
     }
     else if (TokenMatches(arg1, textEnd, "cursorAxisLockEnabled")) {
         module->cursorAxisLock = Macros_ParseInt(arg2, textEnd, NULL);

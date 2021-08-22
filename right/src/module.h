@@ -34,8 +34,8 @@
         float scrollSpeedDivisor;
         float caretSpeedDivisor;
 
-        float caretLockSkew;
-        float caretLockSkewFirstTick;
+        float axisLockSkew;
+        float axisLockSkewFirstTick;
 
         navigation_mode_t navigationModes[LayerId_Count];
 
