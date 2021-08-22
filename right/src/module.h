@@ -9,7 +9,7 @@
 
 // Macros:
 
-    #define MAX_KEY_COUNT_PER_MODULE     64
+    #define MAX_KEY_COUNT_PER_MODULE     35
 
 // Typedefs:
 

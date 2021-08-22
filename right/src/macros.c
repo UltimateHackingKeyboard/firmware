@@ -948,57 +948,78 @@ static uint8_t parseKeymapId(const char* arg1, const char* cmdEnd)
 
 uint8_t Macros_ParseLayerId(const char* arg1, const char* cmdEnd)
 {
-    if (TokenMatches(arg1, cmdEnd, "fn")) {
-        return LayerId_Fn;
+    switch(*arg1) {
+        case 'a':
+            if (TokenMatches(arg1, cmdEnd, "alt")) {
+                return LayerId_Alt;
+            }
+            break;
+        case 'b':
+            if (TokenMatches(arg1, cmdEnd, "base")) {
+                return LayerId_Base;
+            }
+            break;
+        case 'c':
+            if (TokenMatches(arg1, cmdEnd, "current")) {
+                return ActiveLayer;
+            } else if (TokenMatches(arg1, cmdEnd, "control")) {
+                return LayerId_Control;
+            }
+            break;
+        case 'm':
+            if (TokenMatches(arg1, cmdEnd, "mouse")) {
+                return LayerId_Mouse;
+            } else if (TokenMatches(arg1, cmdEnd, "mod")) {
+                return LayerId_Mod;
+            }
+            break;
+        case 'f':
+            if (TokenMatches(arg1, cmdEnd, "fn")) {
+                return LayerId_Fn;
+            } else if (TokenMatches(arg1, cmdEnd, "fn2")) {
+                return LayerId_Fn2;
+            } else if (TokenMatches(arg1, cmdEnd, "fn3")) {
+                return LayerId_Fn3;
+            } else if (TokenMatches(arg1, cmdEnd, "fn4")) {
+                return LayerId_Fn4;
+            } else if (TokenMatches(arg1, cmdEnd, "fn5")) {
+                return LayerId_Fn5;
+            }
+            break;
+        case 'l':
+            if (TokenMatches(arg1, cmdEnd, "last")) {
+                return lastLayerIdx;
+            }
+            break;
+        case 'p':
+            if (TokenMatches(arg1, cmdEnd, "previous")) {
+                return layerIdxStack[findPreviousLayerRecordIdx()].layer;
+            }
+            break;
+        case 's':
+            if (TokenMatches(arg1, cmdEnd, "shift")) {
+                return LayerId_Shift;
+            } else if (TokenMatches(arg1, cmdEnd, "super")) {
+                return LayerId_Super;
+            }
+            break;
     }
-    else if (TokenMatches(arg1, cmdEnd, "mouse")) {
-        return LayerId_Mouse;
-    }
-    else if (TokenMatches(arg1, cmdEnd, "mod")) {
-        return LayerId_Mod;
-    }
-    else if (TokenMatches(arg1, cmdEnd, "base")) {
-        return LayerId_Base;
-    }
-    else if (TokenMatches(arg1, cmdEnd, "last")) {
-        return lastLayerIdx;
-    }
-    else if (TokenMatches(arg1, cmdEnd, "previous")) {
-        return layerIdxStack[findPreviousLayerRecordIdx()].layer;
-    }
-    else if (TokenMatches(arg1, cmdEnd, "current")) {
-        return ActiveLayer;
-    }
-    else {
-        return false;
-    }
+
+    Macros_ReportError("Unrecognized layer.", arg1, cmdEnd);
+    return LayerId_Base;
 }
+
 
 static uint8_t parseLayerKeymapId(const char* arg1, const char* cmdEnd)
 {
-    if (TokenMatches(arg1, cmdEnd, "fn")) {
-        return CurrentKeymapIndex;
-    }
-    else if (TokenMatches(arg1, cmdEnd, "mouse")) {
-        return CurrentKeymapIndex;
-    }
-    else if (TokenMatches(arg1, cmdEnd, "mod")) {
-        return CurrentKeymapIndex;
-    }
-    else if (TokenMatches(arg1, cmdEnd, "base")) {
-        return CurrentKeymapIndex;
-    }
-    else if (TokenMatches(arg1, cmdEnd, "last")) {
+    if (TokenMatches(arg1, cmdEnd, "last")) {
         return lastLayerKeymapIdx;
     }
     else if (TokenMatches(arg1, cmdEnd, "previous")) {
         return layerIdxStack[findPreviousLayerRecordIdx()].keymap;
     }
-    else if (TokenMatches(arg1, cmdEnd, "current")) {
-        return CurrentKeymapIndex;
-    }
     else {
-        return false;
+        return CurrentKeymapIndex;
     }
 }
 
