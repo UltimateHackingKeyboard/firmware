@@ -260,7 +260,119 @@ static void processTouchpadActions() {
     }
 }
 
-//todo: break this function into parts
+
+static void handleNewCaretModeAction(caret_axis_t axis, uint8_t resultSign, int16_t value, module_kinetic_state_t* ks) {
+    switch(ks->currentNavigationMode) {
+        case NavigationMode_Cursor: {
+            ActiveUsbMouseReport->x += axis == CaretAxis_Horizontal ? value : 0;
+            ActiveUsbMouseReport->y -= axis == CaretAxis_Vertical ? value : 0;
+            break;
+        }
+        case NavigationMode_Scroll: {
+            ActiveUsbMouseReport->wheelX += axis == CaretAxis_Horizontal ? value : 0;
+            ActiveUsbMouseReport->wheelY += axis == CaretAxis_Vertical ? value : 0;
+            break;
+        }
+        case NavigationMode_Media:
+        case NavigationMode_Caret: {
+            caret_configuration_t* currentCaretConfig = GetModuleCaretConfiguration(ks->currentModuleId, ks->currentNavigationMode);
+            caret_dir_action_t* dirActions = &currentCaretConfig->axisActions[ks->caretAxis];
+            ks->caretAction = resultSign > 0 ? &dirActions->positiveAction : &dirActions->negativeAction;
+            ks->caretFakeKeystate.current = true;
+            ApplyKeyAction(&ks->caretFakeKeystate, ks->caretAction, ks->caretAction);
+            break;
+        }
+        case NavigationMode_None:
+            break;
+    }
+}
+
+static void handleRunningCaretModeAction(module_kinetic_state_t* ks) {
+    bool tmp = ks->caretFakeKeystate.current;
+    ks->caretFakeKeystate.current = !ks->caretFakeKeystate.previous;
+    ks->caretFakeKeystate.previous = tmp;
+    ApplyKeyAction(&ks->caretFakeKeystate, ks->caretAction, ks->caretAction);
+}
+
+static void processAxisLocking(float x, float y, float speed, int16_t yInversion, float speedDivisor, module_configuration_t* moduleConfiguration, module_kinetic_state_t* ks) {
+    //optimize this out if nothing is going on
+    if (x == 0 && y == 0 && ks->caretAxis == CaretAxis_None) {
+        return;
+    }
+
+    //unlock axis if inactive for some time and re-activate tick trashold`
+    if (x != 0 || y != 0) {
+        if (Timer_GetElapsedTime(&ks->lastUpdate) > 500 && ks->caretAxis != CaretAxis_None) {
+            ks->xFractionRemainder = 0;
+            ks->yFractionRemainder = 0;
+            ks->caretAxis = CaretAxis_None;
+        }
+
+        ks->lastUpdate = CurrentTime;
+    }
+
+    // caretAxis tries to lock to one direction, therefore we "skew" the other one
+    float caretXModeMultiplier;
+    float caretYModeMultiplier;
+
+    if(ks->caretAxis == CaretAxis_None) {
+        caretXModeMultiplier = moduleConfiguration->caretLockSkewFirstTick;
+        caretYModeMultiplier = moduleConfiguration->caretLockSkewFirstTick;
+    } else {
+        caretXModeMultiplier = ks->caretAxis == CaretAxis_Horizontal ? 1.0f : moduleConfiguration->caretLockSkew;
+        caretYModeMultiplier = ks->caretAxis == CaretAxis_Vertical ? 1.0f : moduleConfiguration->caretLockSkew;
+    }
+
+    ks->xFractionRemainder += x * speed / speedDivisor * caretXModeMultiplier;
+    ks->yFractionRemainder += y * speed / speedDivisor * caretYModeMultiplier;
+
+
+    //If there is an ongoing action, just handle that action via a fake state. Ensure that full lifecycle of a key gets executed.
+    if (ks->caretFakeKeystate.current || ks->caretFakeKeystate.previous) {
+        handleRunningCaretModeAction(ks);
+    }
+    //If we want to start a new action (new "tick")
+    else {
+        // determine current axis properties and setup indirections for easier handling
+        caret_axis_t axisCandidate = ks->caretAxis == CaretAxis_Inactive ? CaretAxis_Vertical : ks->caretAxis;
+        float* axisFractionRemainders [CaretAxis_Count] = {&ks->xFractionRemainder, &ks->yFractionRemainder};
+        float axisIntegerParts [CaretAxis_Count] = { 0, 0 };
+
+        modff(ks->xFractionRemainder, &axisIntegerParts[CaretAxis_Horizontal]);
+        modff(ks->yFractionRemainder, &axisIntegerParts[CaretAxis_Vertical]);
+
+        // pick axis to apply action on, if possible - check previously active axis first
+        if ( axisIntegerParts[axisCandidate] != 0 ) {
+            axisCandidate = axisCandidate;
+        } else if ( axisIntegerParts[1 - axisCandidate] != 0 ) {
+            axisCandidate = 1 - axisCandidate;
+        } else {
+            axisCandidate = CaretAxis_None;
+        }
+
+        // handle the action
+        if ( axisCandidate < CaretAxis_Count ) {
+            ks->caretAxis = axisCandidate;
+            float sgn = axisIntegerParts[axisCandidate] > 0 ? 1 : -1;
+            int8_t currentAxisInversion = axisCandidate == CaretAxis_Vertical ? yInversion : 1;
+            *axisFractionRemainders[1 - axisCandidate] = 0.0f;
+            *axisFractionRemainders[axisCandidate] -= sgn;
+
+
+            handleNewCaretModeAction(ks->caretAxis, sgn*currentAxisInversion, axisIntegerParts[axisCandidate]*currentAxisInversion, ks);
+
+            /*
+             * TODO: remove this once the code is tested!
+            caret_configuration_t* currentCaretConfig = GetModuleCaretConfiguration(ks->currentModuleId, ks->currentNavigationMode);
+            caret_dir_action_t* dirActions = &currentCaretConfig->axisActions[ks->caretAxis];
+            ks->caretAction = sgn*currentAxisInversion > 0 ? &dirActions->positiveAction : &dirActions->negativeAction;
+            ks->caretFakeKeystate.current = true;
+            ApplyKeyAction(&ks->caretFakeKeystate, ks->caretAction, ks->caretAction);
+            */
+        }
+    }
+}
+
 static void processModuleKineticState(float x, float y, module_configuration_t* moduleConfiguration, module_kinetic_state_t* ks) {
     float speed;
 
@@ -274,108 +386,38 @@ static void processModuleKineticState(float x, float y, module_configuration_t* 
 
     switch (ks->currentNavigationMode) {
         case NavigationMode_Cursor: {
-            float xIntegerPart;
-            float yIntegerPart;
+            if (!moduleConfiguration->cursorAxisLock) {
+                float xIntegerPart;
+                float yIntegerPart;
 
-            ks->xFractionRemainder = modff(ks->xFractionRemainder + x * speed, &xIntegerPart);
-            ks->yFractionRemainder = modff(ks->yFractionRemainder + y * speed, &yIntegerPart);
+                ks->xFractionRemainder = modff(ks->xFractionRemainder + x * speed, &xIntegerPart);
+                ks->yFractionRemainder = modff(ks->yFractionRemainder + y * speed, &yIntegerPart);
 
-            ActiveUsbMouseReport->x += xIntegerPart;
-            ActiveUsbMouseReport->y -= yInversion*yIntegerPart;
-
+                ActiveUsbMouseReport->x += xIntegerPart;
+                ActiveUsbMouseReport->y -= yInversion*yIntegerPart;
+            } else {
+                processAxisLocking(x, y, speed, yInversion, 1.0f, moduleConfiguration, ks);
+            }
             break;
         }
-        case NavigationMode_Scroll: {
-            float xIntegerPart;
-            float yIntegerPart;
+        case NavigationMode_Scroll:  {
+            if (!moduleConfiguration->scrollAxisLock) {
+                float xIntegerPart;
+                float yIntegerPart;
 
-            ks->xFractionRemainder = modff(ks->xFractionRemainder + x * speed / moduleConfiguration->caretSpeedDivisor, &xIntegerPart);
-            ks->yFractionRemainder = modff(ks->yFractionRemainder + y * speed / moduleConfiguration->caretSpeedDivisor, &yIntegerPart);
+                ks->xFractionRemainder = modff(ks->xFractionRemainder + x * speed / moduleConfiguration->scrollSpeedDivisor, &xIntegerPart);
+                ks->yFractionRemainder = modff(ks->yFractionRemainder + y * speed / moduleConfiguration->scrollSpeedDivisor, &yIntegerPart);
 
-            ActiveUsbMouseReport->wheelX += xIntegerPart;
-            ActiveUsbMouseReport->wheelY += yInversion*yIntegerPart;
+                ActiveUsbMouseReport->wheelX += xIntegerPart;
+                ActiveUsbMouseReport->wheelY += yInversion*yIntegerPart;
+            } else {
+                processAxisLocking(x, y, speed, yInversion, moduleConfiguration->scrollSpeedDivisor, moduleConfiguration, ks);
+            }
             break;
         }
         case NavigationMode_Media:
         case NavigationMode_Caret: {
-            //optimize this out if nothing is going on
-            if (x == 0 && y == 0 && ks->caretAxis == CaretAxis_None) {
-                break;
-            }
-            caret_configuration_t* currentCaretConfig = GetModuleCaretConfiguration(ks->currentModuleId, ks->currentNavigationMode);
-
-            //unlock axis if inactive for some time and re-activate tick trashold`
-            if (x != 0 || y != 0) {
-                if (Timer_GetElapsedTime(&ks->lastUpdate) > 500 && ks->caretAxis != CaretAxis_None) {
-                    ks->xFractionRemainder = 0;
-                    ks->yFractionRemainder = 0;
-                    ks->caretAxis = CaretAxis_None;
-                }
-
-                ks->lastUpdate = CurrentTime;
-            }
-
-            // caretAxis tries to lock to one direction, therefore we "skew" the other one
-            float caretXModeMultiplier;
-            float caretYModeMultiplier;
-
-            if(ks->caretAxis == CaretAxis_None) {
-                // if no axis is locked atm, tweak trigger sensitivity depending on module
-                if (moduleConfiguration->caretLockFirstTick) {
-                    caretXModeMultiplier = moduleConfiguration->caretLockSkew;
-                    caretYModeMultiplier = moduleConfiguration->caretLockSkew;
-                } else {
-                    caretXModeMultiplier = 1.0f;
-                    caretYModeMultiplier = 1.0f;
-                }
-            } else {
-                caretXModeMultiplier = ks->caretAxis == CaretAxis_Horizontal ? 1.0f : moduleConfiguration->caretLockSkew;
-                caretYModeMultiplier = ks->caretAxis == CaretAxis_Vertical ? 1.0f : moduleConfiguration->caretLockSkew;
-            }
-
-            ks->xFractionRemainder += x * speed / moduleConfiguration->caretSpeedDivisor * caretXModeMultiplier;
-            ks->yFractionRemainder += y * speed / moduleConfiguration->caretSpeedDivisor * caretYModeMultiplier;
-
-
-            //If there is an ongoing action, just handle that action via a fake state. Ensure that full lifecycle of a key gets executed.
-            if (ks->caretFakeKeystate.current || ks->caretFakeKeystate.previous) {
-                bool tmp = ks->caretFakeKeystate.current;
-                ks->caretFakeKeystate.current = !ks->caretFakeKeystate.previous;
-                ks->caretFakeKeystate.previous = tmp;
-                ApplyKeyAction(&ks->caretFakeKeystate, ks->caretAction, ks->caretAction);
-            }
-            //If we want to start a new action (new "tick")
-            else {
-                // determine current axis properties and setup indirections for easier handling
-                caret_axis_t axisCandidate = ks->caretAxis == CaretAxis_Inactive ? CaretAxis_Vertical : ks->caretAxis;
-                float* axisFractionRemainders [CaretAxis_Count] = {&ks->xFractionRemainder, &ks->yFractionRemainder};
-                float axisIntegerParts [CaretAxis_Count] = { 0, 0 };
-
-                modff(ks->xFractionRemainder, &axisIntegerParts[CaretAxis_Horizontal]);
-                modff(ks->yFractionRemainder, &axisIntegerParts[CaretAxis_Vertical]);
-
-                // pick axis to apply action on, if possible - check previously active axis first
-                if ( axisIntegerParts[axisCandidate] != 0 ) {
-                    axisCandidate = axisCandidate;
-                } else if ( axisIntegerParts[1 - axisCandidate] != 0 ) {
-                    axisCandidate = 1 - axisCandidate;
-                } else {
-                    axisCandidate = CaretAxis_None;
-                }
-
-                // handle the action
-                if ( axisCandidate < CaretAxis_Count ) {
-                    ks->caretAxis = axisCandidate;
-                    float sgn = axisIntegerParts[axisCandidate] > 0 ? 1 : -1;
-                    int8_t currentAxisInversion = axisCandidate == CaretAxis_Vertical ? yInversion : 1;
-                    *axisFractionRemainders[1 - axisCandidate] = 0.0f;
-                    *axisFractionRemainders[axisCandidate] -= sgn;
-                    caret_dir_action_t* dirActions = &currentCaretConfig->axisActions[ks->caretAxis];
-                    ks->caretAction = sgn*currentAxisInversion > 0 ? &dirActions->positiveAction : &dirActions->negativeAction;
-                    ks->caretFakeKeystate.current = true;
-                    ApplyKeyAction(&ks->caretFakeKeystate, ks->caretAction, ks->caretAction);
-                }
-            }
+            processAxisLocking(x, y, speed, yInversion, moduleConfiguration->caretSpeedDivisor, moduleConfiguration, ks);
             break;
         case NavigationMode_None:
             break;
