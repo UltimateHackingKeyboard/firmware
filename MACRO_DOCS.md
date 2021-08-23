@@ -595,7 +595,7 @@ If your favourite text editor is vim, following two commands will do the trick:
 
 ```
     :g/macroActionType.*text/normal 02ftcecommand
-    :g/macroActionType.*command/normal j0ftcecommand
+    :g/^ *"text":/normal 0ftcecommand
     :g/^ *"command": "\$/ normal 0f$x
 ```
 

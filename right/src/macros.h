@@ -55,6 +55,18 @@
         MacroActionType_Command,
     } macro_action_type_t;
 
+    typedef enum {
+        MacroResult_InProgressFlag = 1,
+        MacroResult_ActionFinishedFlag = 2,
+        MacroResult_DoneFlag = 4,
+        MacroResult_YieldFlag = 8,
+        MacroResult_Blocking = MacroResult_InProgressFlag,
+        MacroResult_Waiting = MacroResult_InProgressFlag | MacroResult_YieldFlag,
+        MacroResult_Finished = MacroResult_ActionFinishedFlag,
+        MacroResult_JumpedForward = MacroResult_DoneFlag,
+        MacroResult_JumpedBackward = MacroResult_DoneFlag | MacroResult_YieldFlag,
+    } macro_result_t;
+
     typedef struct {
         union {
             struct {
