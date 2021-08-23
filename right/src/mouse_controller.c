@@ -296,7 +296,7 @@ static void handleRunningCaretModeAction(module_kinetic_state_t* ks) {
     ApplyKeyAction(&ks->caretFakeKeystate, ks->caretAction, ks->caretAction);
 }
 
-static void processAxisLocking(float x, float y, float speed, int16_t yInversion, float speedDivisor, module_configuration_t* moduleConfiguration, module_kinetic_state_t* ks) {
+static void processAxisLocking(float x, float y, float speed, int16_t yInversion, float speedDivisor, module_configuration_t* moduleConfiguration, module_kinetic_state_t* ks, bool continuous) {
     //optimize this out if nothing is going on
     if (x == 0 && y == 0 && ks->caretAxis == CaretAxis_None) {
         return;
@@ -357,11 +357,10 @@ static void processAxisLocking(float x, float y, float speed, int16_t yInversion
             ks->caretAxis = axisCandidate;
             float sgn = axisIntegerParts[axisCandidate] > 0 ? 1 : -1;
             int8_t currentAxisInversion = axisCandidate == CaretAxis_Vertical ? yInversion : 1;
+            float consumedAmount = continuous ? axisIntegerParts[axisCandidate] : sgn;
             *axisFractionRemainders[1 - axisCandidate] = 0.0f;
-            *axisFractionRemainders[axisCandidate] -= sgn;
-
-
-            handleNewCaretModeAction(ks->caretAxis, sgn*currentAxisInversion, axisIntegerParts[axisCandidate]*currentAxisInversion, ks);
+            *axisFractionRemainders[axisCandidate] -= consumedAmount;
+            handleNewCaretModeAction(ks->caretAxis, sgn*currentAxisInversion, consumedAmount*currentAxisInversion, ks);
         }
     }
 }
@@ -385,7 +384,7 @@ static void processModuleKineticState(float x, float y, module_configuration_t* 
                 ActiveUsbMouseReport->x += xIntegerPart;
                 ActiveUsbMouseReport->y -= yInversion*yIntegerPart;
             } else {
-                processAxisLocking(x, y, speed, yInversion, 1.0f, moduleConfiguration, ks);
+                processAxisLocking(x, y, speed, yInversion, 1.0f, moduleConfiguration, ks, true);
             }
             break;
         }
@@ -400,13 +399,13 @@ static void processModuleKineticState(float x, float y, module_configuration_t* 
                 ActiveUsbMouseReport->wheelX += xIntegerPart;
                 ActiveUsbMouseReport->wheelY += yInversion*yIntegerPart;
             } else {
-                processAxisLocking(x, y, speed, yInversion, moduleConfiguration->scrollSpeedDivisor, moduleConfiguration, ks);
+                processAxisLocking(x, y, speed, yInversion, moduleConfiguration->scrollSpeedDivisor, moduleConfiguration, ks, true);
             }
             break;
         }
         case NavigationMode_Media:
         case NavigationMode_Caret: {
-            processAxisLocking(x, y, speed, yInversion, moduleConfiguration->caretSpeedDivisor, moduleConfiguration, ks);
+            processAxisLocking(x, y, speed, yInversion, moduleConfiguration->caretSpeedDivisor, moduleConfiguration, ks, false);
             break;
         case NavigationMode_None:
             break;
