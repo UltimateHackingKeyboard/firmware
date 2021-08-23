@@ -53,6 +53,7 @@ int main(void)
                 UsbCommand_ApplyConfig();
                 MacroEvent_OnInit();
                 ShortcutParser_initialize();
+                Macros_Initialize();
                 IsConfigInitialized = true;
             }
             KeyMatrix_ScanRow(&RightKeyMatrix);

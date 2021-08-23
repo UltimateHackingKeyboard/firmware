@@ -108,9 +108,12 @@
             uint32_t currentMacroStartTime;
             uint16_t currentMacroActionIndex;
             uint16_t bufferOffset;
+            uint16_t commandBegin;
+            uint16_t commandEnd;
             uint8_t parentMacroSlot;
             uint8_t currentMacroIndex;
             uint8_t postponeNextNCommands;
+            uint8_t commandAddress;
             bool macroInterrupted : 1;
             bool macroSleeping : 1;
             bool macroBroken : 1;
@@ -184,6 +187,7 @@
     void Macros_SetStatusNumSpaced(uint32_t n, bool space);
     void Macros_SetStatusChar(char n);
     void Macros_UpdateLayerStack();
+    void Macros_Initialize();
     bool Macros_IsLayerHeld();
     uint8_t Macros_ParseLayerId(const char* arg1, const char* cmdEnd);
     int32_t Macros_ParseInt(const char *a, const char *aEnd, const char* *parsedTill);
