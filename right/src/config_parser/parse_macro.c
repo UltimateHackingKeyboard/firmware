@@ -83,18 +83,22 @@ parser_error_t parseTextMacroAction(config_buffer_t *buffer, macro_action_t *mac
 
 uint8_t countCommands(macro_action_t *macroAction)
 {
-    uint8_t count = 0;
+    uint8_t count = 1;
     const char* text = macroAction->cmd.text;
     const char* textEnd = macroAction->cmd.text + macroAction->cmd.textLen;
 
+    while ( *text <= 32 && text < textEnd) {
+        text++;
+    }
+
     while (true) {
+        text = NextCmd(text, textEnd);
         if (text == textEnd) {
             return count;
         }
         if (*text > 32) {
             count++;
         }
-        text = NextCmd(text, textEnd);
     }
 }
 

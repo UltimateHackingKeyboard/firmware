@@ -72,5 +72,6 @@
     #define WATCH_VALUE_MAX(V, N)
     #define WATCH_STRING(V, N)
     #define SHOW_STRING(V, N)
+    #define SHOW_VALUE(V, N)
 
 #endif
