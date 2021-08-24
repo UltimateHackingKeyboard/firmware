@@ -1330,9 +1330,11 @@ static macro_result_t goToLabel(const char* arg, const char* argEnd)
             reachedEnd = !loadNextCommand() && !loadNextAction();
         }
 
-        resetToAddressZero(s->ms.currentMacroIndex);
-        secondPass = true;
-        reachedEnd = false;
+        if (!secondPass) {
+            resetToAddressZero(s->ms.currentMacroIndex);
+            secondPass = true;
+            reachedEnd = false;
+        }
     }
 
     Macros_ReportError("Label not found", arg, argEnd);
