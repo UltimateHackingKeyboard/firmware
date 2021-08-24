@@ -1971,9 +1971,6 @@ static macro_result_t processCommand(const char* cmd, const char* cmdEnd)
             break;
         case 'g':
             if (TokenMatches(cmd, cmdEnd, "goTo")) {
-                static int i = 0;
-                i++;
-                SHOW_VALUE(2, 1);
                 return processGoToCommand(arg1, cmdEnd);
             }
             else {
