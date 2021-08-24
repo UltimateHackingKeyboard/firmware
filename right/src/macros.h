@@ -15,7 +15,7 @@
     #define MAX_MACRO_NUM 255
     #define STATUS_BUFFER_MAX_LENGTH 1024
     #define LAYER_STACK_SIZE 10
-    #define MACRO_STATE_POOL_SIZE 20
+    #define MACRO_STATE_POOL_SIZE 32
     #define MAX_REG_COUNT 32
 
     #define ALTMASK (HID_KEYBOARD_MODIFIER_LEFTALT | HID_KEYBOARD_MODIFIER_RIGHTALT)
@@ -46,6 +46,11 @@
     } macro_sub_action_t;
 
     typedef enum {
+        Scheduler_Preemptive,
+        Scheduler_Blocking,
+    } macro_scheduler_t;
+
+    typedef enum {
         MacroActionType_Key,
         MacroActionType_MouseButton,
         MacroActionType_MoveMouse,
@@ -60,7 +65,8 @@
         MacroResult_ActionFinishedFlag = 2,
         MacroResult_DoneFlag = 4,
         MacroResult_YieldFlag = 8,
-        MacroResult_Blocking = MacroResult_InProgressFlag,
+        MacroResult_BlockingFlag = 16,
+        MacroResult_Blocking = MacroResult_InProgressFlag | MacroResult_BlockingFlag,
         MacroResult_Waiting = MacroResult_InProgressFlag | MacroResult_YieldFlag,
         MacroResult_Finished = MacroResult_ActionFinishedFlag,
         MacroResult_JumpedForward = MacroResult_DoneFlag,
@@ -183,6 +189,8 @@
     extern bool MacroPlaying;
     extern layer_id_t Macros_ActiveLayer;
     extern bool Macros_ActiveLayerHeld;
+    extern macro_scheduler_t Macros_Scheduler;
+    extern uint8_t Macros_SchedulerBlockingBatchSize;
 
 // Functions:
 

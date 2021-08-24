@@ -1,9 +1,12 @@
 #include "macros.h"
+#include "usb_interfaces/usb_interface_basic_keyboard.h"
+#include "usb_interfaces/usb_interface_media_keyboard.h"
+#include "usb_interfaces/usb_interface_mouse.h"
+#include "usb_interfaces/usb_interface_system_keyboard.h"
 #include "config_parser/parse_macro.h"
 #include "config_parser/config_globals.h"
 #include "timer.h"
 #include "keymap.h"
-#include "key_matrix.h"
 #include "usb_report_updater.h"
 #include "led_display.h"
 #include "postponer.h"
@@ -15,6 +18,8 @@
 #include "mouse_controller.h"
 #include "debug.h"
 #include "macro_set_command.h"
+#include <stddef.h>
+#include <string.h>
 
 macro_reference_t AllMacros[MAX_MACRO_NUM];
 uint8_t AllMacrosCount;
@@ -26,6 +31,9 @@ uint8_t MacroSystemScancodeIndex = 0;
 
 layer_id_t Macros_ActiveLayer = LayerId_Base;
 bool Macros_ActiveLayerHeld = false;
+
+macro_scheduler_t Macros_Scheduler = Scheduler_Preemptive;
+uint8_t Macros_SchedulerBlockingBatchSize = 10;
 
 static char statusBuffer[STATUS_BUFFER_MAX_LENGTH];
 static uint16_t statusBufferLen;
@@ -2638,7 +2646,7 @@ macro_result_t continueMacro(void)
 }
 
 
-void Macros_ContinueMacro(void)
+static void executePreemptive(void)
 {
     bool someonePlaying = false;
     for (uint8_t i = 0; i < MACRO_STATE_POOL_SIZE; i++) {
@@ -2650,4 +2658,88 @@ void Macros_ContinueMacro(void)
     }
     s = NULL;
     MacroPlaying &= someonePlaying;
+}
+
+static uint8_t yield(uint8_t firstAbandoned, uint8_t lastAbandoned)
+{
+    bool secondPass = lastAbandoned < firstAbandoned;
+    bool reachedEnd = false;
+    uint8_t candidate = lastAbandoned + 1;
+
+    while ( !secondPass || candidate < firstAbandoned) {
+        while ( !reachedEnd && (!secondPass || candidate < firstAbandoned) ) {
+
+            if(MacroState[candidate].ms.macroPlaying && !MacroState[candidate].ms.macroSleeping) {
+                return candidate;
+            }
+
+            candidate = candidate + 1;
+            reachedEnd = candidate >= MACRO_STATE_POOL_SIZE;
+        }
+
+        if (!secondPass) {
+            candidate = 0;
+            secondPass = true;
+            reachedEnd = false;
+        }
+    }
+
+    return firstAbandoned;
+}
+
+static void executeBlocking(void)
+{
+    bool someoneStillStruggling = false;
+    bool someoneStillAlive = false;
+    bool someoneBlocking = false;
+    bool everyoneYielded = false;
+    static uint8_t chosenOne = 0;
+    uint8_t firstToBeAbandoned = chosenOne;
+    uint8_t remainingExecution = Macros_SchedulerBlockingBatchSize;
+
+    while (remainingExecution > 0) {
+        macro_result_t res = MacroResult_YieldFlag;
+
+        if (MacroState[chosenOne].ms.macroPlaying && !MacroState[chosenOne].ms.macroSleeping) {
+            s = &MacroState[chosenOne];
+            res = continueMacro();
+        }
+
+        if ((someoneBlocking = (res & MacroResult_BlockingFlag))) {
+            someoneStillAlive |= s->ms.macroPlaying || s->ms.macroSleeping;
+            break;
+        }
+
+        if ((res & MacroResult_YieldFlag) || !s->ms.macroPlaying || s->ms.macroSleeping) {
+            someoneStillAlive |= s->ms.macroPlaying || s->ms.macroSleeping;
+            chosenOne = yield(firstToBeAbandoned, chosenOne);
+            if((everyoneYielded = (chosenOne == firstToBeAbandoned))) {
+                break;
+            }
+        }
+
+        remainingExecution--;
+    }
+
+    someoneStillStruggling = someoneBlocking || (remainingExecution == 0);
+
+    if(someoneStillStruggling) {
+        PostponerCore_PostponeNCycles(1);
+    }
+
+    MacroPlaying &= someoneStillStruggling || someoneStillAlive;
+}
+
+void Macros_ContinueMacro(void)
+{
+    switch (Macros_Scheduler) {
+    case Scheduler_Preemptive:
+        executePreemptive();
+        break;
+    case Scheduler_Blocking:
+        executeBlocking();
+        break;
+    default:
+        break;
+    }
 }
