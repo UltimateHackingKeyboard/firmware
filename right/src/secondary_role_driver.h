@@ -20,9 +20,35 @@
 
     #include "key_states.h"
 
+
 // Macros:
 
+    #define IS_SECONDARY_ROLE_MODIFIER(secondaryRole) (SecondaryRole_LeftCtrl <= (secondaryRole) && (secondaryRole) <= SecondaryRole_RightSuper)
+    #define IS_SECONDARY_ROLE_LAYER_SWITCHER(secondaryRole) (SecondaryRole_Mod <= (secondaryRole) && (secondaryRole) <= SecondaryRole_Mouse)
+    #define SECONDARY_ROLE_MODIFIER_TO_HID_MODIFIER(secondaryRoleModifier) (1 << ((secondaryRoleModifier) - 1))
+    #define SECONDARY_ROLE_LAYER_TO_LAYER_ID(secondaryRoleLayer) ((secondaryRoleLayer) - SecondaryRole_RightSuper)
+
 // Typedefs:
+
+    typedef enum {
+        SecondaryRole_LeftCtrl = 1,
+        SecondaryRole_LeftShift,
+        SecondaryRole_LeftAlt,
+        SecondaryRole_LeftSuper,
+        SecondaryRole_RightCtrl,
+        SecondaryRole_RightShift,
+        SecondaryRole_RightAlt,
+        SecondaryRole_RightSuper,
+        SecondaryRole_Mod,
+        SecondaryRole_Fn,
+        SecondaryRole_Mouse
+    } secondary_role_t;
+
+    typedef enum {
+        Stick_Never,
+        Stick_Smart,
+        Stick_Always
+    } sticky_strategy_t;
 
     typedef enum {
         SecondaryRoleState_DontKnowYet,
@@ -30,10 +56,13 @@
         SecondaryRoleState_Primary,
     } secondary_role_state_t;
 
+// Variables:
+
+    extern secondary_role_t SecondaryRolePreview;
 
 // Functions:
 
-    secondary_role_state_t SecondaryRoles_ResolveState(key_state_t* keyState);
+    secondary_role_state_t SecondaryRoles_ResolveState(key_state_t* keyState, secondary_role_t rolePreview);
 
 
 

@@ -225,7 +225,7 @@ static void applyKeystrokeSecondary(key_state_t *keyState, key_action_t *action,
 static void applyKeystroke(key_state_t *keyState, key_action_t *action, key_action_t *actionBase)
 {
     if (action->keystroke.secondaryRole) {
-        switch (SecondaryRoles_ResolveState(keyState)) {
+        switch (SecondaryRoles_ResolveState(keyState, action->keystroke.secondaryRole)) {
             case SecondaryRoleState_Primary:
                 applyKeystrokePrimary(keyState, action);
                 return;
