@@ -282,6 +282,8 @@ The following grammar is supported:
     COMMAND = set debounceDelay <time in ms, at most 250 (NUMBER)>
     COMMAND = set keystrokeDelay <time in ms, at most 65535 (NUMBER)>
     COMMAND = set setEmergencyKey KEYID
+    COMMAND = set macroEngine.scheduler {blocking|preemptive}
+    COMMAND = set macroEngine.blockingBatchSize <number of commands to execute per one update cycle NUMBER>
     CONDITION = {ifShortcut | ifNotShortcut} [IFSHORTCUTFLAGS]* [KEYID]+
     CONDITION = {ifGesture | ifNotGesture} [IFSHORTCUTFLAGS]* [KEYID]+
     CONDITION = {ifPrimary | ifSecondary}
@@ -405,7 +407,7 @@ The following grammar is supported:
 - `statsActiveMacros` will output all active macros (into the buffer).
 - `statsRegs` will output content of all registers (into the buffer).
 - `diagnose` will deactivate all keys and macros and print diagnostic information into the status buffer.
-- `setEmergencyKey KEYID` will make the one key be ignored by postponing mechanisms. `diagnose` command on such key can be used to recover keyboard from conditions like infinite postponing loop...
+- `set emergencyKey KEYID` will make the one key be ignored by postponing mechanisms. `diagnose` command on such key can be used to recover keyboard from conditions like infinite postponing loop...
 
 ### Delays:
 
@@ -590,6 +592,21 @@ For the purpose of toggling functionality on and off, and for global constants m
   - `axisLockStrengthFirstTick` - same meaning as `axisLockStrength`, but controls whether axis locking applies on first tick. Nonzero value means that firt tick will require a "push" before cursor starts moving. 
   - `cursorAxisLockEnabled {0|1}` - turns axis locking on for cursor mode. Not recommended, but possible.
   - `scrollAxisLockEnabled {0|1}` - turns axis locking on for scroll mode. Default for keycluster trackball.
+- `macroEngine`
+  - terminology:
+       - action - one action as shown in the agent.
+       - subAction - some actions have multiple phases (such as tapKey which consists at least of press and release, or delay). Such actions may take multiple update cycles to complete. 
+       - command - in case of command action, action consists of multiple commands. Command is defined as any nonempty text line. Commands are treated as actions, which means that macro action context is resetted for every command line. Every command line has its own address.
+  - `scheduler` controls how are macros executed.
+    - `preemptive` default old one - freely interleaves commands. It gives every macro slot an oppotunity to execute one action or subaction or command. This means that no macro can block operation of ther macros, but comes at a cost of quirkiness and nondeterminism.
+      - `blocking` experimental scheduler. This scheduler keeps track of macro states and allows only one macro to run at a time. If macro yields (either enters waiting state or explicitly yields), another macro gets the exclusive privilege of running. As long as there are running (nonsleeping / waiting) macros, rest of the keyboard is in postponing state. 
+       - `blockingBatchSize` parameter controls how many commands can be executed per one macro engine invocation. If the number is exceeded, normal update cycle resumes in postponing state. This means that if a macro takes many actions, keyboard keys get queued in a queue to be executed later in correct order.
+       - Macro states roughly correspond to following:
+          - In progress - means that current action progresses state of the macro - i.e., does some work. As long as macro actions/subactions/commands return this state, they can be all executed within one keyboard update cycle.  
+          - In progress blocking - corresponds to commands that operate on usb reports - e.g., tap keys, etc.. If macro returns with this state, macro engine allows keyboard to perform one update cycle to send usb reports. This update cycle is performed in postponing mode. Macro engine is then resumed at the same action.
+          - In progress waiting - corresponds to waiting states, such as `delayUntil`, `ifGesture`, `ifSecondary`. Whenever they get running privilege, they check their state and yield, allowing rest of the keyboard to run uninterrupted. These don't initiate postponing unless it is part of their function.
+          - Sleeping - if one macro calls another, caller sleeps until callee finishes.
+          - Backward jump - any backward jump also yields. This should prevent unwanted endless loops, as well as need for the user to manage yielding logic manually.
 
 
 ### Argument parsing rules:
@@ -602,7 +619,7 @@ For the purpose of toggling functionality on and off, and for global constants m
 - `KEYID` is a numeric id obtained by `resolveNextKeyId` macro.
 - `SHORTCUT` is an abbreviation of a key possibly accompanied by modifiers. Describes at most one scancode action. Can be prefixed by `C/S/A/G` denoting `Control/Shift/Alt/Gui`. Mods can further be prefixed by `L/R`, denoting left or right modifier. If a single ascii character is entered, it is translated into corresponding key combination (shift mask + scancode) according to standard EN-US layout. E.g., `pressKey mouseBtnLeft`, `tapKey LC-v` (Left Control + (lowercase) V (scancode)), `tapKey CS-f5` (Ctrl + Shift + F5), `tapKey v` (V), `tapKey V` (Shift + V).
 - `LABEL` is and identifier marking some lines of the macro. When a string is encountered in a context of an address, UHK looks for a command beginning by `<the string>:` and returns its addres (index). If same label is present multiple times, the next one w.r.t. currently processed command is returned.
-- `ADDRESS` is either a `NUMBER` (including `#`, `@`, etc syntaxies) or a string which denotes label identifier. E.g., `goTo 0` (go to beginning), `goTo @-1` (go to previous command, since `@` resolves relative adresses to absolute), `goTo @0` (active waiting), `goTo default` (go to line which begins by `default: ...`). 
+- `ADDRESS` addresses allow jumping between macro instructions. Every action or command has its own address, numbered from zero. Formally, address is either a `NUMBER` (including `#`, `@`, etc syntaxies) or a string which denotes label identifier. Every action consumes at least one address. (Except for command action, exactly one.) Every command (non-empty line of command action) consumes one address. E.g., `goTo 0` (go to beginning), `goTo @-1` (go to previous command, since `@` resolves relative adresses to absolute), `goTo @0` (active waiting), `goTo default` (go to line which begins by `default: ...`). 
 
 ### Navigation modes:
 

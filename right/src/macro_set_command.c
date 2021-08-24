@@ -147,6 +147,32 @@ static void stickyMods(const char* arg1, const char *textEnd)
     }
 }
 
+static void macroEngineScheduler(const char* arg1, const char *textEnd)
+{
+    if (TokenMatches(arg1, textEnd, "preemptive")) {
+        Macros_Scheduler = Scheduler_Preemptive;
+    }
+    else if (TokenMatches(arg1, textEnd, "blocking")) {
+        Macros_Scheduler = Scheduler_Blocking;
+    }
+    else {
+        Macros_ReportError("parameter not recognized:", arg1, textEnd);
+    }
+}
+
+static void macroEngine(const char* arg1, const char *textEnd)
+{
+    if (TokenMatches(arg1, textEnd, "scheduler")) {
+        macroEngineScheduler(NextTok(arg1,  textEnd), textEnd);
+    }
+    else if (TokenMatches(arg1, textEnd, "blockingBatchSize")) {
+        Macros_SchedulerBlockingBatchSize = Macros_ParseInt(arg1, textEnd, NULL);
+    }
+    else {
+        Macros_ReportError("parameter not recognized:", arg1, textEnd);
+    }
+}
+
 bool MacroSetCommand(const char* arg1, const char *textEnd)
 {
     const char* arg2 = NextTok(arg1, textEnd);
@@ -159,6 +185,9 @@ bool MacroSetCommand(const char* arg1, const char *textEnd)
     }
     else if (TokenMatches(arg1, textEnd, "mouseKeys")) {
         mouseKeys(proceedByDot(arg1, textEnd), textEnd);
+    }
+    else if (TokenMatches(arg1, textEnd, "macroEngine")) {
+        macroEngine(proceedByDot(arg1, textEnd), textEnd);
     }
     else if (TokenMatches(arg1, textEnd, "compensateDiagonalSpeed")) {
         CompensateDiagonalSpeed = Macros_ParseInt(arg2, textEnd, NULL);
