@@ -20,6 +20,7 @@
 #include "keymap.h"
 #include "macros.h"
 #include "debug.h"
+#include "secondary_role_driver.h"
 
 static uint32_t mouseUsbReportUpdateTime = 0;
 static uint32_t mouseElapsedTime;
@@ -425,10 +426,17 @@ static void resetKineticModuleState(module_kinetic_state_t* kineticState)
     //leave caretFakeKeystate & caretAction intact - this will ensure that any ongoing key action will complete properly
 }
 
+static layer_id_t determineEffectiveLayer() {
+    bool secondaryRoleResolutionInProgress = ActiveLayer == LayerId_Base && IS_SECONDARY_ROLE_LAYER_SWITCHER(SecondaryRolePreview);
+
+    return secondaryRoleResolutionInProgress ? SECONDARY_ROLE_LAYER_TO_LAYER_ID(SecondaryRolePreview) : ActiveLayer;
+}
+
 static void processModuleActions(uint8_t moduleId, float x, float y)
 {
     module_configuration_t *moduleConfiguration = GetModuleConfiguration(moduleId);
-    navigation_mode_t navigationMode = moduleConfiguration->navigationModes[ActiveLayer];
+
+    navigation_mode_t navigationMode = moduleConfiguration->navigationModes[determineEffectiveLayer()];
 
     bool moduleIsActive = x != 0 || y != 0;
     bool keystateOwnerDiffers = moduleKineticState.currentModuleId != moduleId || moduleKineticState.currentNavigationMode != navigationMode;
