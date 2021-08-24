@@ -1386,6 +1386,11 @@ static macro_result_t processGoToCommand(const char* arg, const char *argEnd)
     return goTo(arg, argEnd);
 }
 
+static macro_result_t processYieldCommand(const char* arg, const char *argEnd)
+{
+    return MacroResult_ActionFinishedFlag | MacroResult_YieldFlag;
+}
+
 static macro_result_t processStopRecordingCommand()
 {
     MacroRecorder_StopRecording();
@@ -2426,6 +2431,14 @@ static macro_result_t processCommand(const char* cmd, const char* cmdEnd)
             }
             else if (TokenMatches(cmd, cmdEnd, "writeExpr")) {
                 return processWriteExprCommand(arg1, cmdEnd);
+            }
+            else {
+                goto failed;
+            }
+            break;
+        case 'y':
+            if (TokenMatches(cmd, cmdEnd, "yield")) {
+                return processYieldCommand(arg1, cmdEnd);
             }
             else {
                 goto failed;

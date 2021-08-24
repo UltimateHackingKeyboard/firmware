@@ -232,6 +232,7 @@ The following grammar is supported:
     COMMAND = postponeNext <number of commands (NUMER)>
     COMMAND = break
     COMMAND = noOp
+    COMMAND = yield
     COMMAND = {exec|call|fork} MACRONAME
     COMMAND = stopAllMacros
     COMMAND = statsRuntime
@@ -389,7 +390,8 @@ The following grammar is supported:
 - `goTo ADDRESS` will go to action index int. Actions are indexed from zero. See `ADDRESS`
 - `repeatFor <register index> ADDRESS` - abbreviation to simplify cycles. Will decrement the supplemented register and perform `goTo` to `adr` if the value is still greater than zero. Intended usecase - place after command which is to be repeated with the register containing number of repeats and adr `@-1` (or similar).
 - `break` will end playback of the current macro
-- `noOp` does nothing - i.e., stops macro for exactly one update cycle and then continues.
+- `noOp` does nothing - i.e., stops macro for exactly one update cycle and then continues. 
+- `yield` forces macro to yield, if blocking scheduler is used. With preemptive scheduler acts just as `noOp`.
 - `exec MACRONAME` will execute different macro in current state slot. I.e., the macro will be executed in current context and will *not* return. First action of the called macro is executed within the same eventloop cycle.
 - `call MACRONAME` will execute another macro in a new state slot and enters sleep mode. After the called macro finishes, the control returns to the caller macro. First action of the called macro is executed within the same eventloop cycle. The called macro has its own context (e.g., its own ifInterrupted flag, its own postponing counter and flags etc.) Beware, the state pool is small - do not use deep call trees!
 - `call MACRONAME` will execute another macro in a new state slot, without entering sleep mode.
