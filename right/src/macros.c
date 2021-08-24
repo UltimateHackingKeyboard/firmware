@@ -2671,7 +2671,7 @@ macro_result_t continueMacro(void)
 
     if ((s->ms.macroBroken && endMacro()) || (!loadNextCommand() && !loadNextAction() && endMacro())) {
         //macro was ended either because it was broken or because we are out of actions to perform.
-        return MacroResult_DoneFlag && MacroResult_YieldFlag;
+        return MacroResult_DoneFlag | MacroResult_YieldFlag;
     } else {
         //we are still running - return last action's return value
         return res;
