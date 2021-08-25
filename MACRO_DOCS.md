@@ -180,6 +180,16 @@ You can simplify writing macros by using `#` and `@` characters. The first resol
     noOp                   //note the @ character - it resolves relative address to absolute (i.e., adds current adr)
     default: tapKey b      //<string>: denotes a label, which can be used as jump target
 
+You can use `goTo @0` as active wait loop. Consider following example. If briefly tapped, produces `@@` (play last vim macro). If held, prepends any other key tap with a `@` key. E.g., `thisMacro + p + p` produces `@p@p` (play vim macro in register p, twice). 
+
+    begin: postponeKeys ifNotPending 1 ifNotReleased goTo @0
+    postponeKeys ifReleased final ifNotInterrupted ifNotPlaytime 300 tapKeySeq @ @
+    postponeKeys ifPending 1 tapKey @
+    postponeKeys setReg 0 %0
+    ifPending 1 goTo @0
+    ifKeyActive #0 goTo @0
+    goTo begin
+
 ## Example Keymaps
 
 I am including my user config in [examples/mirroring_keymap.json](examples/mirroring_keymap.json) as an advanced example of abilities of UHK with this firmware. Some basic documentation is included within the keymap as description of layers in Agent.
@@ -644,7 +654,7 @@ Originally, macros used writeText action and were triggered by '$' symbol. Also,
 
 In order to migrate to the new notation, you can export your configuration, edit the json file and import again. 
 
-If your favourite text editor is vim, following two commands will do the trick:
+If your favourite text editor is vim, following commands will do the trick:
 
 ```
     :g/macroActionType.*text/normal 02ftcecommand
@@ -662,7 +672,7 @@ Otherwise, you want to find your own way to effortlessly transform lines of form
 to:
 ```
     "macroActionType": "command",
-    "command": "holdKey sticky LA-a"
+    "command": "set module.trackball.navigationMode.mouse scroll"
 ```
 
 ## Known issues/limitations
