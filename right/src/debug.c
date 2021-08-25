@@ -68,6 +68,20 @@ void WatchTime(uint8_t n)
     lastUpdate = CurrentTime;
 }
 
+void WatchTimeMicros(uint8_t n)
+{
+    static uint32_t lastUpdate = 0;
+    static uint16_t i = 0;
+
+    i++;
+
+    if (i == 1000) {
+        ShowNumberExp(CurrentTime - lastUpdate);
+        lastUpdate = CurrentTime;
+        i = 0;
+    }
+}
+
 void WatchValue(int v, uint8_t n)
 {
     if (CurrentTime - lastWatch > watchInterval) {
