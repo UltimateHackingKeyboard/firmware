@@ -1850,14 +1850,21 @@ static bool processIfKeyDefinedCommand(bool negate, const char* arg1, const char
 
 static macro_result_t processActivateKeyPostponedCommand(const char* arg1, const char* argEnd)
 {
+    uint8_t layer = 255;
+    if (TokenMatches(arg1, argEnd, "atLayer")) {
+        const char* arg2 = NextTok(arg1, argEnd);
+        layer = Macros_ParseLayerId(arg2, argEnd);
+        arg1 = NextTok(arg2, argEnd);
+    }
+
     uint16_t keyid = parseNUM(arg1, argEnd);
     key_state_t* key = Utils_KeyIdToKeyState(keyid);
-    if(PostponerQuery_IsActiveEventually(key)) {
-        PostponerCore_TrackKeyEvent(key, false);
-        PostponerCore_TrackKeyEvent(key, true);
+    if (PostponerQuery_IsActiveEventually(key)) {
+        PostponerCore_TrackKeyEvent(key, false, layer);
+        PostponerCore_TrackKeyEvent(key, true, layer);
     } else {
-        PostponerCore_TrackKeyEvent(key, true);
-        PostponerCore_TrackKeyEvent(key, false);
+        PostponerCore_TrackKeyEvent(key, true, layer);
+        PostponerCore_TrackKeyEvent(key, false, layer);
     }
     return MacroResult_Finished;
 }

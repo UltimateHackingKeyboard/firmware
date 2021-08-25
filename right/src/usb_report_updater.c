@@ -333,7 +333,7 @@ static void commitKeyState(key_state_t *keyState, bool active)
 {
     WATCH_TRIGGER(keyState);
     if (PostponerCore_IsActive()) {
-        PostponerCore_TrackKeyEvent(keyState, active);
+        PostponerCore_TrackKeyEvent(keyState, active, 255);
     } else {
         keyState->current = active;
     }
@@ -432,7 +432,12 @@ static void updateActiveUsbReports(void)
                     if (SleepModeActive) {
                         WakeUpHost();
                     }
-                    actionCache[slotId][keyId] = CurrentKeymap[ActiveLayer][slotId][keyId];
+                    if (Postponer_LastKeyLayer != 255 && PostponerCore_IsActive()) {
+                        actionCache[slotId][keyId] = CurrentKeymap[Postponer_LastKeyLayer][slotId][keyId];
+                        Postponer_LastKeyLayer = 255;
+                    } else {
+                        actionCache[slotId][keyId] = CurrentKeymap[ActiveLayer][slotId][keyId];
+                    }
                     handleEventInterrupts(keyState);
                 }
 
