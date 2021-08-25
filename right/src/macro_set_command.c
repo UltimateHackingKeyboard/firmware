@@ -12,7 +12,8 @@
 #include "layer_switcher.h"
 #include "mouse_controller.h"
 #include "debug.h"
-
+#include "caret_config.h"
+#include "config_parser/parse_macro.h"
 
 static const char* proceedByDot(const char* cmd, const char *cmdEnd)
 {
@@ -173,6 +174,55 @@ static void macroEngine(const char* arg1, const char *textEnd)
     }
 }
 
+static void navigationModeAction(const char* arg1, const char *textEnd)
+{
+    navigation_mode_t navigationMode = NavigationMode_Caret;
+    bool positive = true;
+    caret_axis_t axis = CaretAxis_Horizontal;
+
+    const char* arg2 = proceedByDot(arg1, textEnd);
+    const char* arg3 = NextTok(arg2, textEnd);
+
+    if (TokenMatches(arg1, textEnd, "caret")) {
+        navigationMode = NavigationMode_Caret;
+    }
+    else if (TokenMatches(arg1, textEnd, "media")) {
+        navigationMode = NavigationMode_Media;
+    }
+    else {
+        Macros_ReportError("parameter not recognized:", arg1, textEnd);
+    }
+
+    if (TokenMatches(arg2, textEnd, "left")) {
+        axis = CaretAxis_Horizontal;
+        positive = false;
+    }
+    else if (TokenMatches(arg2, textEnd, "up")) {
+        axis = CaretAxis_Vertical;
+        positive = false;
+    }
+    else if (TokenMatches(arg2, textEnd, "right")) {
+        axis = CaretAxis_Horizontal;
+        positive = true;
+    }
+    else if (TokenMatches(arg2, textEnd, "down")) {
+        axis = CaretAxis_Vertical;
+        positive = true;
+    }
+    else {
+        Macros_ReportError("parameter not recognized:", arg1, textEnd);
+    }
+
+    uint8_t macroIndex;
+    if (TokenMatches(arg3, textEnd, "none")) {
+        macroIndex = 255;
+    } else {
+        macroIndex = FindMacroIndexByName(arg3, TokEnd(arg3, textEnd), true);
+    }
+
+    SetModuleCaretConfiguration(navigationMode, axis, positive, macroIndex);
+}
+
 bool MacroSetCommand(const char* arg1, const char *textEnd)
 {
     const char* arg2 = NextTok(arg1, textEnd);
@@ -185,6 +235,9 @@ bool MacroSetCommand(const char* arg1, const char *textEnd)
     }
     else if (TokenMatches(arg1, textEnd, "mouseKeys")) {
         mouseKeys(proceedByDot(arg1, textEnd), textEnd);
+    }
+    else if (TokenMatches(arg1, textEnd, "navigationModeAction")) {
+        navigationModeAction(proceedByDot(arg1, textEnd), textEnd);
     }
     else if (TokenMatches(arg1, textEnd, "macroEngine")) {
         macroEngine(proceedByDot(arg1, textEnd), textEnd);

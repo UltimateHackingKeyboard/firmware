@@ -295,6 +295,7 @@ The following grammar is supported:
     COMMAND = set setEmergencyKey KEYID
     COMMAND = set macroEngine.scheduler {blocking|preemptive}
     COMMAND = set macroEngine.blockingBatchSize <number of commands to execute per one update cycle NUMBER>
+    COMMAND = set navigationModeAction.{caret|media}.{DIRECTION|none} MACROID
     CONDITION = {ifShortcut | ifNotShortcut} [IFSHORTCUTFLAGS]* [KEYID]+
     CONDITION = {ifGesture | ifNotGesture} [IFSHORTCUTFLAGS]* [KEYID]+
     CONDITION = {ifPrimary | ifSecondary}
@@ -604,6 +605,8 @@ For the purpose of toggling functionality on and off, and for global constants m
   - `axisLockStrengthFirstTick` - same meaning as `axisLockStrength`, but controls whether axis locking applies on first tick. Nonzero value means that firt tick will require a "push" before cursor starts moving. 
   - `cursorAxisLockEnabled {0|1}` - turns axis locking on for cursor mode. Not recommended, but possible.
   - `scrollAxisLockEnabled {0|1}` - turns axis locking on for scroll mode. Default for keycluster trackball.
+
+- `set navigationModeAction.{caret|media}.{DIRECTION|none} MACROID` can be used to customize caret or media mode behaviour by binding directions to macros. This action is global and reversible only by powercycling.
 - `macroEngine`
   - terminology:
        - action - one action as shown in the agent.
@@ -637,10 +640,12 @@ For the purpose of toggling functionality on and off, and for global constants m
 
 UHK modules feature four navigation modes, which are mapped by layer and module. This mapping can be changed by the `set module.MODULEID.navigationMode.LAYERID NAVIGATIONMODE` command.
 
-- Cursor mode - in this mode, modules control mouse movement. Default mode for all modules except keycluster's trackball.
-- Scroll mode - in this mode, module can be used to scroll. Default mode for mod layer. This means that apart from switching layer, your mod layer switches also make your right hand modules act as very comfortable scroll wheels. Sensitivity is controlled by the `scrollSpeedDivisor` value.
-- Caret mode - in this mode, module produces arrow key taps. This can be used to move comfortably in text editor, since in this mode, cursor is also locked to one of the two directions, preventing unwanted line changes. Sensitivity is controlled by the `caretSpeedDivisor`, `axisLockStrengthFirstTick` and `axisLockStrength`.
-- Media mode - in this mode, up/down directions control volume (via media key scancodes), while horizontal play/pause and switch to next track. At the moment, this mode is not enabled by default on any layer. Sensitivity is shared with the caret mode.
+- **Cursor mode** - in this mode, modules control mouse movement. Default mode for all modules except keycluster's trackball.
+- **Scroll mode** - in this mode, module can be used to scroll. Default mode for mod layer. This means that apart from switching layer, your mod layer switches also make your right hand modules act as very comfortable scroll wheels. Sensitivity is controlled by the `scrollSpeedDivisor` value.
+- **Caret mode** - in this mode, module produces arrow key taps. This can be used to move comfortably in text editor, since in this mode, cursor is also locked to one of the two directions, preventing unwanted line changes. Sensitivity is controlled by the `caretSpeedDivisor`, `axisLockStrengthFirstTick` and `axisLockStrength`.
+- **Media mode** - in this mode, up/down directions control volume (via media key scancodes), while horizontal play/pause and switch to next track. At the moment, this mode is not enabled by default on any layer. Sensitivity is shared with the caret mode.
+
+Caret and media modes can be customized by `set navigationModeAction` command.
 
 ### Error handling
 
