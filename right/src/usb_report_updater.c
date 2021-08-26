@@ -337,6 +337,7 @@ static void commitKeyState(key_state_t *keyState, bool active)
     } else {
         keyState->current = active;
     }
+    WAKE_MACROS_ON_KEYSTATE_CHANGE();
 }
 
 static inline void preprocessKeyState(key_state_t *keyState)
@@ -397,7 +398,7 @@ static void updateActiveUsbReports(void)
     HardwareModifierState = 0;
     SuppressMods = false;
 
-    if (MacroPlaying) {
+    if (MacroPlaying || (Macros_WakeMeOnTime < CurrentTime && (Macros_WakedBecauseOfTime = true) && (MacroPlaying = true))) {
         Macros_ContinueMacro();
     }
 
@@ -425,10 +426,13 @@ static void updateActiveUsbReports(void)
             key_action_t *action;
             key_action_t *actionBase;
 
-            if(((uint8_t*)keyState)[1] != 0) {
+            if(((uint8_t*)keyState)[1] == 0) {
+                continue;
+            }
 
-                preprocessKeyState(keyState);
+            preprocessKeyState(keyState);
 
+            if (KeyState_NonZero(keyState)) {
                 if (KeyState_ActivatedNow(keyState)) {
                     if (SleepModeActive) {
                         WakeUpHost();
