@@ -1740,7 +1740,17 @@ static macro_result_t processIfShortcutCommand(bool negate, const char* arg, con
             bool cancelInTimedOut = cancelIn != 0 && elapsedSinceReference > cancelIn;
             bool timeoutInTimedOut = timeoutIn != 0 && elapsedSinceReference > timeoutIn;
             if (!shortcutTimedOut && !gestureDefaultTimedOut && !cancelInTimedOut && !timeoutInTimedOut) {
-                return MacroResult_Waiting;
+                if (!untilRelease && cancelIn == 0 && timeoutIn == 0) {
+                    sleepTillTime(referenceTime+1000);
+                }
+                if (cancelIn != 0) {
+                    sleepTillTime(referenceTime+cancelIn);
+                }
+                if (timeoutIn != 0) {
+                    sleepTillTime(referenceTime+timeoutIn);
+                }
+                sleepTillKeystateChange();
+                return MacroResult_Sleeping;
             }
             else if (cancelInTimedOut) {
                 PostponerExtended_ConsumePendingKeypresses(numArgs, true);
