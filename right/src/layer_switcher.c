@@ -3,6 +3,7 @@
 #include "timer.h"
 #include "macros.h"
 #include "debug.h"
+#include "led_display.h"
 
 static uint16_t DoubleTapSwitchLayerTimeout = 300;
 static uint16_t DoubleTapSwitchLayerReleaseTimeout = 200;
@@ -62,6 +63,7 @@ void updateActiveLayer() {
     ActiveLayer = activeLayer;
     ActiveLayerHeld = activeLayerHeld;
     UpdateLayerLeds();
+    LedDisplay_SetLayer(ActiveLayer);
 }
 
 /*

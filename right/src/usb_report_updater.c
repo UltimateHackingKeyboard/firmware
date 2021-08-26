@@ -282,7 +282,7 @@ void ApplyKeyAction(key_state_t *keyState, key_action_t *action, key_action_t *a
     }
 }
 
-void clearActiveReports(void)
+static void clearActiveReports(void)
 {
     memset(ActiveUsbMouseReport, 0, sizeof *ActiveUsbMouseReport);
     memset(ActiveUsbBasicKeyboardReport, 0, sizeof *ActiveUsbBasicKeyboardReport);
@@ -294,7 +294,7 @@ void clearActiveReports(void)
 }
 
 
-void mergeReports(void)
+static void mergeReports(void)
 {
     for(uint8_t j = 0; j < MACRO_STATE_POOL_SIZE; j++) {
         if(MacroState[j].ms.reportsUsed) {
@@ -409,9 +409,9 @@ static void updateActiveUsbReports(void)
 
     handleLayerChanges();
 
-    LedDisplay_SetLayer(ActiveLayer);
-
-    LedDisplay_SetIcon(LedDisplayIcon_Agent, CurrentTime - LastUsbGetKeyboardStateRequestTimestamp < 1000);
+    if ( CurrentTime - LastUsbGetKeyboardStateRequestTimestamp < 2000) {
+       LedDisplay_SetIcon(LedDisplayIcon_Agent, CurrentTime - LastUsbGetKeyboardStateRequestTimestamp < 1000);
+    }
 
     handleUsbStackTestMode();
 
@@ -425,9 +425,10 @@ static void updateActiveUsbReports(void)
             key_action_t *action;
             key_action_t *actionBase;
 
-            preprocessKeyState(keyState);
+            if(((uint8_t*)keyState)[1] != 0) {
 
-            if (KeyState_NonZero(keyState)) {
+                preprocessKeyState(keyState);
+
                 if (KeyState_ActivatedNow(keyState)) {
                     if (SleepModeActive) {
                         WakeUpHost();
