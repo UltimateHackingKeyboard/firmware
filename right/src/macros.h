@@ -68,6 +68,7 @@
         MacroResult_BlockingFlag = 16,
         MacroResult_Blocking = MacroResult_InProgressFlag | MacroResult_BlockingFlag,
         MacroResult_Waiting = MacroResult_InProgressFlag | MacroResult_YieldFlag,
+        MacroResult_Sleeping = MacroResult_InProgressFlag | MacroResult_YieldFlag,
         MacroResult_Finished = MacroResult_ActionFinishedFlag,
         MacroResult_JumpedForward = MacroResult_DoneFlag,
         MacroResult_JumpedBackward = MacroResult_DoneFlag | MacroResult_YieldFlag,
@@ -137,6 +138,8 @@
             bool macroBroken : 1;
             bool macroPlaying : 1;
             bool reportsUsed : 1;
+            bool wakeMeOnTime : 1;
+            bool wakeMeOnKeystateChange: 1;
 
             usb_mouse_report_t macroMouseReport;
             usb_basic_keyboard_report_t macroBasicKeyboardReport;
@@ -191,6 +194,10 @@
     extern bool Macros_ActiveLayerHeld;
     extern macro_scheduler_t Macros_Scheduler;
     extern uint8_t Macros_SchedulerBlockingBatchSize;
+    extern uint32_t Macros_WakeMeOnTime;
+    extern bool Macros_WakeMeOnKeystateChange;
+    extern bool Macros_WakedBecauseOfTime;
+    extern bool Macros_WakedBecauseOfKeystateChange;
 
 // Functions:
 
@@ -211,5 +218,11 @@
     bool Macros_IsLayerHeld();
     uint8_t Macros_ParseLayerId(const char* arg1, const char* cmdEnd);
     int32_t Macros_ParseInt(const char *a, const char *aEnd, const char* *parsedTill);
+
+#define WAKE_MACROS_ON_KEYSTATE_CHANGE()  if (Macros_WakeMeOnKeystateChange) { \
+                                              Macros_WakedBecauseOfKeystateChange = true; \
+                                              MacroPlaying = true; \
+                                          }
+
 
 #endif

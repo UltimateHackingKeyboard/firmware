@@ -23,7 +23,6 @@
 
 macro_reference_t AllMacros[MAX_MACRO_NUM];
 uint8_t AllMacrosCount;
-bool MacroPlaying = false;
 
 uint8_t MacroBasicScancodeIndex = 0;
 uint8_t MacroMediaScancodeIndex = 0;
@@ -31,6 +30,12 @@ uint8_t MacroSystemScancodeIndex = 0;
 
 layer_id_t Macros_ActiveLayer = LayerId_Base;
 bool Macros_ActiveLayerHeld = false;
+bool MacroPlaying = false;
+bool Macros_WakedBecauseOfTime = false;
+bool Macros_WakedBecauseOfKeystateChange = false;
+uint32_t Macros_WakeMeOnTime = 0xFFFFFFFF;
+bool Macros_WakeMeOnKeystateChange = false;
+
 
 macro_scheduler_t Macros_Scheduler = Scheduler_Preemptive;
 uint8_t Macros_SchedulerBlockingBatchSize = 10;
@@ -51,9 +56,7 @@ static int32_t regs[MAX_REG_COUNT];
 macro_state_t MacroState[MACRO_STATE_POOL_SIZE];
 static macro_state_t *s = MacroState;
 
-
 static uint16_t doubletapConditionTimeout = 300;
-
 
 static int32_t parseNUM(const char *a, const char *aEnd);
 static macro_result_t processCommand(const char* cmd, const char* cmdEnd);
@@ -66,7 +69,8 @@ static bool loadNextCommand();
 static bool loadNextAction();
 static void resetToAddressZero(uint8_t macroIndex);
 static uint8_t currentActionCmdCount();
-
+static macro_result_t sleepTillTime(uint32_t time);
+static macro_result_t sleepTillKeystateChange();
 
 bool Macros_ClaimReports()
 {
@@ -234,12 +238,14 @@ static macro_result_t processDelay(uint32_t time)
     if (s->as.actionActive) {
         if (Timer_GetElapsedTime(&s->as.delayData.start) >= time) {
             s->as.actionActive = false;
+            return MacroResult_Finished;
         }
+        return sleepTillTime(s->as.delayData.start + time);
     } else {
         s->as.delayData.start = CurrentTime;
         s->as.actionActive = true;
+        return MacroResult_Waiting;
     }
-    return s->as.actionActive ? MacroResult_Waiting : MacroResult_Finished;
 }
 
 static macro_result_t processDelayAction()
@@ -307,7 +313,7 @@ static macro_result_t processKey(macro_action_t macro_action)
                 case 3:
                     if (currentMacroKeyIsActive() && action == MacroSubAction_Hold) {
                         s->as.actionPhase--;
-                        return MacroResult_Blocking;
+                        return sleepTillKeystateChange();
                     }
                     deleteScancode(scancode, type);
                     return MacroResult_Blocking;
@@ -375,7 +381,7 @@ static macro_result_t processMouseButton(macro_action_t macro_action)
             case 2:
                 if (currentMacroKeyIsActive() && action == MacroSubAction_Hold) {
                     s->as.actionPhase--;
-                    return MacroResult_Waiting;
+                    return sleepTillKeystateChange();
                 }
                 s->ms.macroMouseReport.buttons &= ~mouseButtonMask;
                 return MacroResult_Blocking;
@@ -835,6 +841,7 @@ static macro_result_t stopAllMacrosCommand()
     for (uint8_t i = 0; i < MACRO_STATE_POOL_SIZE; i++) {
         if (&MacroState[i] != s) {
             MacroState[i].ms.macroBroken = true;
+            MacroState[i].ms.macroSleeping = false;
         }
     }
     return MacroResult_Finished;
@@ -1077,7 +1084,9 @@ static macro_result_t processHoldLayer(uint8_t layer, uint8_t keymap, uint16_t t
     }
     else {
         if (currentMacroKeyIsActive() && (Timer_GetElapsedTime(&s->ms.currentMacroStartTime) < timeout || s->ms.macroInterrupted)) {
-            return MacroResult_Waiting;
+            sleepTillTime(s->ms.currentMacroStartTime + timeout);
+            sleepTillKeystateChange();
+            return MacroResult_Sleeping;
         }
         else {
             s->as.actionActive = false;
@@ -1122,7 +1131,9 @@ static macro_result_t processDelayUntilReleaseMaxCommand(const char* arg1, const
 {
     uint32_t timeout = parseNUM(arg1, cmdEnd);
     if (currentMacroKeyIsActive() && Timer_GetElapsedTime(&s->ms.currentMacroStartTime) < timeout) {
-        return MacroResult_Waiting;
+        sleepTillKeystateChange();
+        sleepTillTime(s->ms.currentMacroStartTime + timeout);
+        return MacroResult_Sleeping;
     }
     return MacroResult_Finished;
 }
@@ -1130,7 +1141,7 @@ static macro_result_t processDelayUntilReleaseMaxCommand(const char* arg1, const
 static macro_result_t processDelayUntilReleaseCommand()
 {
     if (currentMacroKeyIsActive()) {
-        return MacroResult_Waiting;
+        return sleepTillKeystateChange();
     }
     return MacroResult_Finished;
 }
@@ -1256,13 +1267,14 @@ static macro_result_t processSetStatusCommand(const char* arg, const char *argEn
 static macro_result_t processSetLedTxtCommand(const char* arg1, const char *argEnd)
 {
     int16_t time = parseNUM(arg1, argEnd);
-    const char* str = NextTok(arg1, argEnd);
-    LedDisplay_SetText(TokLen(str, argEnd), str);
-    if (!processDelay(time)) {
+    macro_result_t res = MacroResult_Finished;
+    if ((res = processDelay(time)) == MacroResult_Finished) {
         LedDisplay_UpdateText();
         return MacroResult_Finished;
     } else {
-        return MacroResult_Waiting;
+        const char* str = NextTok(arg1, argEnd);
+        LedDisplay_SetText(TokLen(str, argEnd), str);
+        return res;
     }
 }
 
@@ -1762,7 +1774,17 @@ static macro_result_t processIfShortcutCommand(bool negate, const char* arg, con
             bool cancelInTimedOut = cancelIn != 0 && elapsedSinceReference > cancelIn;
             bool timeoutInTimedOut = timeoutIn != 0 && elapsedSinceReference > timeoutIn;
             if (!shortcutTimedOut && !gestureDefaultTimedOut && !cancelInTimedOut && !timeoutInTimedOut) {
-                return MacroResult_Waiting;
+                if (!untilRelease && cancelIn == 0 && timeoutIn == 0) {
+                    sleepTillTime(referenceTime+1000);
+                }
+                if (cancelIn != 0) {
+                    sleepTillTime(referenceTime+cancelIn);
+                }
+                if (timeoutIn != 0) {
+                    sleepTillTime(referenceTime+timeoutIn);
+                }
+                sleepTillKeystateChange();
+                return MacroResult_Sleeping;
             }
             else if (cancelInTimedOut) {
                 PostponerExtended_ConsumePendingKeypresses(numArgs, true);
@@ -2525,6 +2547,7 @@ static uint8_t currentActionCmdCount() {
 
 static bool endMacro(void)
 {
+    s->ms.macroSleeping = false;
     s->ms.macroPlaying = false;
     s->ms.macroBroken = false;
     s->ps.previousMacroIndex = s->ms.currentMacroIndex;
@@ -2685,9 +2708,50 @@ macro_result_t continueMacro(void)
     }
 }
 
+static macro_result_t sleepTillKeystateChange()
+{
+    Macros_WakeMeOnKeystateChange = true;
+    s->ms.wakeMeOnKeystateChange = true;
+    s->ms.macroSleeping = true;
+    return MacroResult_Sleeping;
+}
+
+static macro_result_t sleepTillTime(uint32_t time)
+{
+    Macros_WakeMeOnTime = time < Macros_WakeMeOnTime ? time : Macros_WakeMeOnTime;
+    s->ms.wakeMeOnTime = true;
+    s->ms.macroSleeping = true;
+    return MacroResult_Sleeping;
+}
+
+static void wakeSleepers()
+{
+    if (Macros_WakedBecauseOfKeystateChange) {
+        Macros_WakedBecauseOfKeystateChange = false;
+        Macros_WakeMeOnKeystateChange = false;
+        for (uint8_t i = 0; i < MACRO_STATE_POOL_SIZE; i++) {
+            if (MacroState[i].ms.wakeMeOnKeystateChange) {
+                MacroState[i].ms.macroSleeping = false;
+                MacroState[i].ms.wakeMeOnKeystateChange = false;
+            }
+        }
+    }
+    if (Macros_WakedBecauseOfTime) {
+        Macros_WakedBecauseOfTime = false;
+        Macros_WakeMeOnTime = 0xFFFFFFFF;
+        for (uint8_t i = 0; i < MACRO_STATE_POOL_SIZE; i++) {
+            if (MacroState[i].ms.wakeMeOnTime) {
+                MacroState[i].ms.macroSleeping = false;
+                MacroState[i].ms.wakeMeOnTime = false;
+            }
+        }
+    }
+}
 
 static void executePreemptive(void)
 {
+    wakeSleepers();
+
     bool someonePlaying = false;
     for (uint8_t i = 0; i < MACRO_STATE_POOL_SIZE; i++) {
         if (MacroState[i].ms.macroPlaying && !MacroState[i].ms.macroSleeping) {
