@@ -20,6 +20,7 @@
 #include "keymap.h"
 #include "macros.h"
 #include "debug.h"
+#include "postponer.h"
 #include "secondary_role_driver.h"
 
 static uint32_t mouseUsbReportUpdateTime = 0;
@@ -75,6 +76,9 @@ module_kinetic_state_t moduleKineticState = {
     .yFractionRemainder = 0.0f,
     .lastUpdate = 0,
 };
+
+static void processAxisLocking(float x, float y, float speed, int16_t yInversion, float speedDivisor, float axisLockSkew, float axisLockSkewFirstTick, module_kinetic_state_t* ks, bool continuous);
+static void handleRunningCaretModeAction(module_kinetic_state_t* ks);
 
 static void updateOneDirectionSign(int8_t* sign, int8_t expectedSign, uint8_t expectedState, uint8_t otherState) {
     if (*sign == expectedSign && !ActiveMouseStates[expectedState]) {
@@ -247,22 +251,129 @@ static float computeModuleSpeed(float x, float y, uint8_t moduleId)
     return moduleConfiguration->baseSpeed + moduleConfiguration->speed*(float)pow(normalizedSpeed, moduleConfiguration->acceleration);
 }
 
-static void processTouchpadActions() {
-    if (TouchpadEvents.singleTap) {
-        ActiveUsbMouseReport->buttons |= MouseButton_Left;
-        TouchpadEvents.singleTap = false;
-    }
 
-    if (TouchpadEvents.twoFingerTap) {
-        ActiveUsbMouseReport->buttons |= MouseButton_Right;
-        TouchpadEvents.twoFingerTap = false;
-    }
+typedef enum {
+    State_Zero,
+    State_Tap,
+    State_TapAndHold
+} tap_hold_state_t;
 
-    if (TouchpadEvents.tapAndHold) {
-        ActiveUsbMouseReport->buttons |= MouseButton_Left;
+typedef enum {
+    Event_None,
+    Event_NewTap,
+    Event_Timeout,
+    Event_FingerIn,
+    Event_FingerOut,
+    Event_TapAndHold,
+} tap_hold_event_t;
+
+typedef enum {
+    Action_ResetTimer = 1,
+    Action_Press = 2,
+    Action_Release = 4
+} tap_hold_action_t;
+
+static tap_hold_state_t tapHoldAutomatonState = State_Zero;
+
+static tap_hold_action_t tapHoldStateMachine(tap_hold_event_t event)
+{
+    switch (tapHoldAutomatonState) {
+    // We are waiting for something to happen. Either tap, or native tapAndHold.
+    case State_Zero:
+        switch (event) {
+        case Event_NewTap:
+            tapHoldAutomatonState = State_Tap;
+            return Action_ResetTimer | Action_Press;
+        case Event_TapAndHold:
+            tapHoldAutomatonState = State_TapAndHold;
+            return Action_Press;
+        default:
+            return 0;
+        }
+    case State_Tap:
+    // Last event was tap. We keep the tap active until timeout or next event, so that in case of doubletap-induced tap and hold, there is no release.
+        switch (event) {
+        case Event_NewTap:
+            tapHoldAutomatonState = State_Tap;
+            return Action_ResetTimer | Action_Release | Action_Press;
+        case Event_Timeout:
+            tapHoldAutomatonState = State_Zero;
+            return Action_Release;
+        case Event_TapAndHold:
+        case Event_FingerIn:
+            tapHoldAutomatonState = State_TapAndHold;
+            return 0;
+        default:
+            return 0;
+        }
+    case State_TapAndHold:
+    // We entered tapAndHold state. This is kept alive either by noFingers == 1, or by native tapAndHold.
+    // It still might turn out that finger event was just beginning of another tap.
+        switch (event) {
+        case Event_NewTap:
+            tapHoldAutomatonState = State_Tap;
+            return Action_ResetTimer | Action_Release | Action_Press;
+        case Event_FingerOut:
+            tapHoldAutomatonState = State_Zero;
+            return Action_Release;
+        default:
+            return 0;
+        }
     }
+    return 0;
 }
 
+static void feedTapHoldStateMachine()
+{
+    key_state_t* singleTap = &KeyStates[SlotId_RightModule][0];
+    //todo: finetune this value. Low value will yield natural doubletaps, but requires fast doubletap to trigger tapAndHold.
+    //      Or add artificial delay bellow.
+    const uint16_t tapTimeout = 200;
+    static uint32_t lastSingleTapTime = 0;
+    static bool lastFinger = false;
+    static bool lastSingleTapValue = false;
+    static bool lastTapAndHoldValue = false;
+    tap_hold_action_t action = 0;
+    tap_hold_event_t event = 0;
+
+    if(!lastSingleTapValue && TouchpadEvents.singleTap) {
+        event = Event_NewTap;
+        lastSingleTapValue = true;
+    } else if (!lastTapAndHoldValue && TouchpadEvents.tapAndHold) {
+        event = Event_TapAndHold;
+        lastTapAndHoldValue = true;
+    } else if (lastFinger != (TouchpadEvents.noFingers == 1)) {
+        event = lastFinger ? Event_FingerOut : Event_FingerIn ;
+        lastFinger = !lastFinger;
+    } else if(lastSingleTapTime + tapTimeout < CurrentTime) {
+        event = Event_Timeout;
+    }
+
+    action = tapHoldStateMachine(event);
+
+    if (action & Action_ResetTimer) {
+        lastSingleTapTime = CurrentTime;
+    }
+    if (action & Action_Release) {
+        PostponerCore_TrackKeyEvent(singleTap, false);
+        /** TODO: consider adding an explicit delay here - at least my linux machine does not like the idea of releases shorther than 25 ms */
+    }
+    if (action & Action_Press) {
+        PostponerCore_TrackKeyEvent(singleTap, true);
+    }
+
+    lastSingleTapValue &= TouchpadEvents.singleTap;
+    lastTapAndHoldValue &= TouchpadEvents.tapAndHold;
+}
+
+static void processTouchpadActions() {
+
+    if (TouchpadEvents.singleTap || TouchpadEvents.tapAndHold || tapHoldAutomatonState != State_Zero) {
+        feedTapHoldStateMachine();
+    }
+
+    KeyStates[SlotId_RightModule][1].hardwareSwitchState = TouchpadEvents.twoFingerTap;
+}
 
 static void handleNewCaretModeAction(caret_axis_t axis, uint8_t resultSign, int16_t value, module_kinetic_state_t* ks) {
     switch(ks->currentNavigationMode) {
@@ -276,6 +387,7 @@ static void handleNewCaretModeAction(caret_axis_t axis, uint8_t resultSign, int1
             ActiveUsbMouseReport->wheelY += axis == CaretAxis_Vertical ? value : 0;
             break;
         }
+        case NavigationMode_Zoom:
         case NavigationMode_Media:
         case NavigationMode_Caret: {
             caret_configuration_t* currentCaretConfig = GetModuleCaretConfiguration(ks->currentModuleId, ks->currentNavigationMode);
@@ -297,7 +409,8 @@ static void handleRunningCaretModeAction(module_kinetic_state_t* ks) {
     ApplyKeyAction(&ks->caretFakeKeystate, ks->caretAction, ks->caretAction);
 }
 
-static void processAxisLocking(float x, float y, float speed, int16_t yInversion, float speedDivisor, module_configuration_t* moduleConfiguration, module_kinetic_state_t* ks, bool continuous) {
+static void processAxisLocking(float x, float y, float speed, int16_t yInversion, float speedDivisor, float axisLockSkew, float axisLockSkewFirstTick, module_kinetic_state_t* ks, bool continuous)
+{
     //optimize this out if nothing is going on
     if (x == 0 && y == 0 && ks->caretAxis == CaretAxis_None) {
         return;
@@ -319,11 +432,11 @@ static void processAxisLocking(float x, float y, float speed, int16_t yInversion
     float caretYModeMultiplier;
 
     if(ks->caretAxis == CaretAxis_None) {
-        caretXModeMultiplier = moduleConfiguration->axisLockSkewFirstTick;
-        caretYModeMultiplier = moduleConfiguration->axisLockSkewFirstTick;
+        caretXModeMultiplier = axisLockSkewFirstTick;
+        caretYModeMultiplier = axisLockSkewFirstTick;
     } else {
-        caretXModeMultiplier = ks->caretAxis == CaretAxis_Horizontal ? 1.0f : moduleConfiguration->axisLockSkew;
-        caretYModeMultiplier = ks->caretAxis == CaretAxis_Vertical ? 1.0f : moduleConfiguration->axisLockSkew;
+        caretXModeMultiplier = ks->caretAxis == CaretAxis_Horizontal ? 1.0f : axisLockSkew;
+        caretYModeMultiplier = ks->caretAxis == CaretAxis_Vertical ? 1.0f : axisLockSkew;
     }
 
     ks->xFractionRemainder += x * speed / speedDivisor * caretXModeMultiplier;
@@ -385,7 +498,7 @@ static void processModuleKineticState(float x, float y, module_configuration_t* 
                 ActiveUsbMouseReport->x += xIntegerPart;
                 ActiveUsbMouseReport->y -= yInversion*yIntegerPart;
             } else {
-                processAxisLocking(x, y, speed, yInversion, 1.0f, moduleConfiguration, ks, true);
+                processAxisLocking(x, y, speed, yInversion, 1.0f, moduleConfiguration->axisLockSkew, moduleConfiguration->axisLockSkewFirstTick, ks, true);
             }
             break;
         }
@@ -400,13 +513,14 @@ static void processModuleKineticState(float x, float y, module_configuration_t* 
                 ActiveUsbMouseReport->wheelX += xIntegerPart;
                 ActiveUsbMouseReport->wheelY += yInversion*yIntegerPart;
             } else {
-                processAxisLocking(x, y, speed, yInversion, moduleConfiguration->scrollSpeedDivisor, moduleConfiguration, ks, true);
+                processAxisLocking(x, y, speed, yInversion, moduleConfiguration->scrollSpeedDivisor, moduleConfiguration->axisLockSkew, moduleConfiguration->axisLockSkewFirstTick, ks, true);
             }
             break;
         }
+        case NavigationMode_Zoom:
         case NavigationMode_Media:
         case NavigationMode_Caret: {
-            processAxisLocking(x, y, speed, yInversion, moduleConfiguration->caretSpeedDivisor, moduleConfiguration, ks, false);
+            processAxisLocking(x, y, speed, yInversion, moduleConfiguration->caretSpeedDivisor, moduleConfiguration->axisLockSkew, moduleConfiguration->axisLockSkewFirstTick, ks, false);
             break;
         case NavigationMode_None:
             break;
@@ -432,11 +546,17 @@ static layer_id_t determineEffectiveLayer() {
     return secondaryRoleResolutionInProgress ? SECONDARY_ROLE_LAYER_TO_LAYER_ID(SecondaryRolePreview) : ActiveLayer;
 }
 
-static void processModuleActions(uint8_t moduleId, float x, float y)
+static void processModuleActions(uint8_t moduleId, float x, float y, uint8_t forcedNavigationMode)
 {
     module_configuration_t *moduleConfiguration = GetModuleConfiguration(moduleId);
 
-    navigation_mode_t navigationMode = moduleConfiguration->navigationModes[determineEffectiveLayer()];
+    navigation_mode_t navigationMode;
+
+    if(forcedNavigationMode == 0xFF) {
+        navigationMode = moduleConfiguration->navigationModes[determineEffectiveLayer()];
+    } else {
+        navigationMode = forcedNavigationMode;
+    }
 
     bool moduleIsActive = x != 0 || y != 0;
     bool keystateOwnerDiffers = moduleKineticState.currentModuleId != moduleId || moduleKineticState.currentNavigationMode != navigationMode;
@@ -478,9 +598,15 @@ void MouseController_ProcessMouseActions()
     MouseScrollState.xOut = 0;
     MouseScrollState.yOut = 0;
 
+
     if (Slaves[SlaveId_RightTouchpad].isConnected) {
         processTouchpadActions();
-        processModuleActions(ModuleId_TouchpadRight, (int16_t)TouchpadEvents.x, (int16_t)TouchpadEvents.y);
+        processModuleActions(ModuleId_TouchpadRight, (int16_t)TouchpadEvents.x, (int16_t)TouchpadEvents.y, 0xFF);
+        processModuleActions(ModuleId_TouchpadRight, (int16_t)TouchpadEvents.wheelX, (int16_t)TouchpadEvents.wheelY, NavigationMode_Scroll);
+        processModuleActions(ModuleId_TouchpadRight, 0, (int16_t)TouchpadEvents.zoomLevel, NavigationMode_Zoom);
+        TouchpadEvents.zoomLevel = 0;
+        TouchpadEvents.wheelX = 0;
+        TouchpadEvents.wheelY = 0;
         TouchpadEvents.x = 0;
         TouchpadEvents.y = 0;
     }
@@ -491,7 +617,7 @@ void MouseController_ProcessMouseActions()
             continue;
         }
 
-        processModuleActions(moduleState->moduleId, (int16_t)moduleState->pointerDelta.x, (int16_t)moduleState->pointerDelta.y);
+        processModuleActions(moduleState->moduleId, (int16_t)moduleState->pointerDelta.x, (int16_t)moduleState->pointerDelta.y, 0xFF);
         moduleState->pointerDelta.x = 0;
         moduleState->pointerDelta.y = 0;
     }

@@ -18,6 +18,7 @@
         NavigationMode_Scroll,
         NavigationMode_Caret,
         NavigationMode_Media,
+        NavigationMode_Zoom,
         NavigationMode_None,
     } navigation_mode_t;
 
