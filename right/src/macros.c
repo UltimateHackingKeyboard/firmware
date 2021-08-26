@@ -2810,12 +2810,11 @@ static void executeBlocking(void)
         }
 
         if ((someoneBlocking = (res & MacroResult_BlockingFlag))) {
-            someoneStillAlive |= s->ms.macroPlaying || s->ms.macroSleeping;
             break;
         }
 
         if ((res & MacroResult_YieldFlag) || !s->ms.macroPlaying || s->ms.macroSleeping) {
-            someoneStillAlive |= s->ms.macroPlaying || s->ms.macroSleeping;
+            someoneStillAlive |= s->ms.macroPlaying && !s->ms.macroSleeping;
             chosenOne = yield(firstToBeAbandoned, chosenOne);
             if((everyoneYielded = (chosenOne == firstToBeAbandoned))) {
                 break;
