@@ -2750,7 +2750,6 @@ static void wakeSleepers()
 
 static void executePreemptive(void)
 {
-    wakeSleepers();
 
     bool someonePlaying = false;
     for (uint8_t i = 0; i < MACRO_STATE_POOL_SIZE; i++) {
@@ -2835,6 +2834,8 @@ static void executeBlocking(void)
 
 void Macros_ContinueMacro(void)
 {
+    wakeSleepers();
+
     switch (Macros_Scheduler) {
     case Scheduler_Preemptive:
         executePreemptive();
