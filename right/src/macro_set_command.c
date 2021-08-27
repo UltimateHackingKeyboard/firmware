@@ -53,6 +53,9 @@ static void moduleSpeed(const char* arg1, const char *textEnd, module_configurat
     else if (TokenMatches(arg1, textEnd, "scrollSpeedDivisor")) {
         module->scrollSpeedDivisor = ParseFloat(arg2, textEnd);
     }
+    else if (TokenMatches(arg1, textEnd, "zoomSpeedDivisor")) {
+        module->zoomSpeedDivisor = ParseFloat(arg2, textEnd);
+    }
     else if (TokenMatches(arg1, textEnd, "axisLockStrength")) {
         module->axisLockSkew = 1.0f - ParseFloat(arg2, textEnd);
     }
