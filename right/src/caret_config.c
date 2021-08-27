@@ -36,8 +36,8 @@ caret_configuration_t zoomMode = {
             .negativeAction = { .type = KeyActionType_None },
         },
         { // vertical axis
-            .positiveAction = { .type = KeyActionType_Keystroke, .keystroke = { .keystrokeType = KeystrokeType_Basic, .scancode = HID_KEYBOARD_SC_EQUAL_AND_PLUS, .modifiers = HID_KEYBOARD_MODIFIER_LEFTCTRL | HID_KEYBOARD_MODIFIER_LEFTSHIFT}},
-            .negativeAction = { .type = KeyActionType_Keystroke, .keystroke = { .keystrokeType = KeystrokeType_Basic, .scancode = HID_KEYBOARD_SC_MINUS_AND_UNDERSCORE, .modifiers = HID_KEYBOARD_MODIFIER_LEFTCTRL}},
+            .positiveAction = { .type = KeyActionType_Keystroke, .keystroke = { .keystrokeType = KeystrokeType_Basic, .scancode = HID_KEYBOARD_SC_MINUS_AND_UNDERSCORE, .modifiers = HID_KEYBOARD_MODIFIER_LEFTCTRL}},
+            .negativeAction = { .type = KeyActionType_Keystroke, .keystroke = { .keystrokeType = KeystrokeType_Basic, .scancode = HID_KEYBOARD_SC_EQUAL_AND_PLUS, .modifiers = HID_KEYBOARD_MODIFIER_LEFTCTRL | HID_KEYBOARD_MODIFIER_LEFTSHIFT}},
         }
     }
 };

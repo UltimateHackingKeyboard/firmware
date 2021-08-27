@@ -518,13 +518,15 @@ static void processModuleKineticState(float x, float y, module_configuration_t* 
             break;
         }
         case NavigationMode_Zoom:
+            processAxisLocking(x, y, speed, yInversion, moduleConfiguration->zoomSpeedDivisor, moduleConfiguration->axisLockSkew, moduleConfiguration->axisLockSkewFirstTick, ks, false);
+            break;
         case NavigationMode_Media:
-        case NavigationMode_Caret: {
+        case NavigationMode_Caret:
             processAxisLocking(x, y, speed, yInversion, moduleConfiguration->caretSpeedDivisor, moduleConfiguration->axisLockSkew, moduleConfiguration->axisLockSkewFirstTick, ks, false);
             break;
         case NavigationMode_None:
             break;
-        }
+
     }
 }
 
