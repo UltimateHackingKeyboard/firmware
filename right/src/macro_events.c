@@ -34,7 +34,7 @@ void MacroEvent_OnKeymapChange(uint8_t keymapIdx)
         if (TokenMatches(thisName, thisNameEnd, "$onKeymapChange")) {
             const char* macroArg = NextTok(thisName,thisNameEnd);
 
-            if (TokenMatches2(macroArg, thisNameEnd, curAbbrev, curAbbrevEnd)) {
+            if (TokenMatches2(macroArg, thisNameEnd, curAbbrev, curAbbrevEnd) || TokenMatches(macroArg, thisNameEnd, "any")) {
                 Macros_StartMacro(i, NULL, 255);
             }
         }

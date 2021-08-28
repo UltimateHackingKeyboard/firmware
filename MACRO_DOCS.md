@@ -207,10 +207,10 @@ If you wish to feature your keymap here, feel free to post a PR or a ticket with
 
 Macro events allow hooking special behaviour, such as applying specific configuration, to events. This is done via a special naming scheme. Currently, following names are supported:
 
-    onInit
-    onKeymapChange <keymap 3char abbreviation(KEYMAPID)>
+    $onInit
+    $onKeymapChange {KEYMAPID|any}
 
-I.e., if you want to customize acceleration driver for your trackball module on keymap QWR, create macro named `onKeymapChange QWR`, with content e.g.:
+I.e., if you want to customize acceleration driver for your trackball module on keymap QWR, create macro named `$onKeymapChange QWR`, with content e.g.:
 
     set module.trackball.baseSpeed 0.5
     set module.trackball.speed 1.0
