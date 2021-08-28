@@ -295,7 +295,8 @@ The following grammar is supported:
     COMMAND = set setEmergencyKey KEYID
     COMMAND = set macroEngine.scheduler {blocking|preemptive}
     COMMAND = set macroEngine.blockingBatchSize <number of commands to execute per one update cycle NUMBER>
-    COMMAND = set navigationModeAction.{caret|media}.{DIRECTION|none} MACROID
+    COMMAND = set navigationModeAction.{caret|media|zoom}.{DIRECTION} {MACROID|none}
+    COMMAND = set keymapAction.LAYERID.KEYID {MACROID|none}
     CONDITION = {ifShortcut | ifNotShortcut} [IFSHORTCUTFLAGS]* [KEYID]+
     CONDITION = {ifGesture | ifNotGesture} [IFSHORTCUTFLAGS]* [KEYID]+
     CONDITION = {ifPrimary | ifSecondary}
@@ -606,7 +607,10 @@ For the purpose of toggling functionality on and off, and for global constants m
   - `cursorAxisLockEnabled {0|1}` - turns axis locking on for cursor mode. Not recommended, but possible.
   - `scrollAxisLockEnabled {0|1}` - turns axis locking on for scroll mode. Default for keycluster trackball.
 
-- `set navigationModeAction.{caret|media}.{DIRECTION|none} MACROID` can be used to customize caret or media mode behaviour by binding directions to macros. This action is global and reversible only by powercycling.
+- Remapping keys:
+  - `set navigationModeAction.{caret|media}.{DIRECTION|none} MACROID` can be used to customize caret or media mode behaviour by binding directions to macros. This action is global and reversible only by powercycling.
+  - `set keymapAction.LAYERID.KEYID {MACROID|none}` can be used to remap any action that lives in standard keymap. All remappable ids should be retriavable with `resolveNextKeyId`. Keyid can also be constructed manually - see `KEYID`. This map applies only until next keymap switch.
+
 - `macroEngine`
   - terminology:
        - action - one action as shown in the agent.
@@ -631,7 +635,15 @@ For the purpose of toggling functionality on and off, and for global constants m
 - `MACROID` - macro slot identifier is either a number or a single ascii character (interpretted as a one-byte value). `#key` can be used so that the same macro refers to different slots when assigned to different keys.
 - `register index` is an integer in the appropriate range, used as an index to the register array.
 - `custom text` is an arbitrary text starting on next non-space character and ending at the end of the text action. (Yes, this should be refactored in the future.)
-- `KEYID` is a numeric id obtained by `resolveNextKeyId` macro.
+- `KEYID` is a numeric id obtained by `resolveNextKeyId` macro. It can also be constructed manually, as an index (starting at zero) added to an offset of `64*slotid`.  This means that starting offsets are:
+
+```
+  RightKeyboardHalf = 0
+  LeftKeyboardHalf  = 64
+  LeftModule        = 128
+  RightModule       = 192
+```
+
 - `SHORTCUT` is an abbreviation of a key possibly accompanied by modifiers. Describes at most one scancode action. Can be prefixed by `C/S/A/G` denoting `Control/Shift/Alt/Gui`. Mods can further be prefixed by `L/R`, denoting left or right modifier. If a single ascii character is entered, it is translated into corresponding key combination (shift mask + scancode) according to standard EN-US layout. E.g., `pressKey mouseBtnLeft`, `tapKey LC-v` (Left Control + (lowercase) V (scancode)), `tapKey CS-f5` (Ctrl + Shift + F5), `tapKey v` (V), `tapKey V` (Shift + V).
 - `LABEL` is and identifier marking some lines of the macro. When a string is encountered in a context of an address, UHK looks for a command beginning by `<the string>:` and returns its addres (index). If same label is present multiple times, the next one w.r.t. currently processed command is returned.
 - `ADDRESS` addresses allow jumping between macro instructions. Every action or command has its own address, numbered from zero. Formally, address is either a `NUMBER` (including `#`, `@`, etc syntaxies) or a string which denotes label identifier. Every action consumes at least one address. (Except for command action, exactly one.) Every command (non-empty line of command action) consumes one address. E.g., `goTo 0` (go to beginning), `goTo @-1` (go to previous command, since `@` resolves relative adresses to absolute), `goTo @0` (active waiting), `goTo default` (go to line which begins by `default: ...`). 

@@ -186,14 +186,10 @@ static void navigationModeAction(const char* arg1, const char *textEnd)
     const char* arg2 = proceedByDot(arg1, textEnd);
     const char* arg3 = NextTok(arg2, textEnd);
 
-    if (TokenMatches(arg1, textEnd, "caret")) {
-        navigationMode = NavigationMode_Caret;
-    }
-    else if (TokenMatches(arg1, textEnd, "media")) {
-        navigationMode = NavigationMode_Media;
-    }
-    else {
-        Macros_ReportError("parameter not recognized:", arg1, textEnd);
+    navigationMode = ParseNavigationModeId(arg1, textEnd);
+
+    if(navigationMode != NavigationMode_Caret && navigationMode != NavigationMode_Media && navigationMode != NavigationMode_Zoom) {
+        Macros_ReportError("Invalid or non-remapable navigation mode", arg1, textEnd);
     }
 
     if (TokenMatches(arg2, textEnd, "left")) {
@@ -226,6 +222,33 @@ static void navigationModeAction(const char* arg1, const char *textEnd)
     SetModuleCaretConfiguration(navigationMode, axis, positive, macroIndex);
 }
 
+static void keymapAction(const char* arg1, const char *textEnd)
+{
+    const char* arg2 = proceedByDot(arg1, textEnd);
+    const char* arg3 = NextTok(arg2, textEnd);
+
+    uint8_t layerId = Macros_ParseLayerId(arg1, textEnd);
+    uint16_t keyId = Macros_ParseInt(arg2, textEnd, NULL);
+
+    uint8_t macroIndex = FindMacroIndexByName(arg3, TokEnd(arg3, textEnd), true);
+
+    uint8_t slotIdx = keyId/64;
+    uint8_t inSlotIdx = keyId%64;
+
+    if(slotIdx > SLOT_COUNT || inSlotIdx > MAX_KEY_COUNT_PER_MODULE) {
+        Macros_ReportError("invalid key id:", arg2, textEnd);
+    }
+
+    key_action_t* action = &CurrentKeymap[layerId][slotIdx][inSlotIdx];
+
+    if(macroIndex == 255) {
+        action->type = KeyActionType_None;
+    } else {
+        action->type = KeyActionType_PlayMacro;
+        action->playMacro.macroId = macroIndex;
+    }
+}
+
 bool MacroSetCommand(const char* arg1, const char *textEnd)
 {
     const char* arg2 = NextTok(arg1, textEnd);
@@ -238,6 +261,9 @@ bool MacroSetCommand(const char* arg1, const char *textEnd)
     }
     else if (TokenMatches(arg1, textEnd, "mouseKeys")) {
         mouseKeys(proceedByDot(arg1, textEnd), textEnd);
+    }
+    else if (TokenMatches(arg1, textEnd, "keymapAction")) {
+        keymapAction(proceedByDot(arg1, textEnd), textEnd);
     }
     else if (TokenMatches(arg1, textEnd, "navigationModeAction")) {
         navigationModeAction(proceedByDot(arg1, textEnd), textEnd);
