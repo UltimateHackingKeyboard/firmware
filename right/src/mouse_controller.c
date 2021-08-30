@@ -575,7 +575,7 @@ static void processModuleActions(uint8_t moduleId, float x, float y, uint8_t for
     }
 
     if (moduleKineticState.currentModuleId == moduleId && moduleKineticState.currentNavigationMode == navigationMode) {
-        if(moduleConfiguration->invertAxis) {
+        if(moduleConfiguration->swapAxes) {
             float tmp = x;
             x = y;
             y = tmp;
