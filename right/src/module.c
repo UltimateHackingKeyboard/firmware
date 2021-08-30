@@ -14,7 +14,8 @@ module_configuration_t ModuleConfigurations[ModuleId_ModuleCount] = {
         .axisLockSkewFirstTick = 0.5f,
         .cursorAxisLock = false,
         .scrollAxisLock = true,
-        .invertAxis = false,
+        .swapAxes = false,
+        .invertScrollDirection = false,
         .navigationModes = {
             NavigationMode_Scroll, // Base layer
             NavigationMode_Cursor, // Mod layer
@@ -33,7 +34,8 @@ module_configuration_t ModuleConfigurations[ModuleId_ModuleCount] = {
         .axisLockSkewFirstTick = 1.0f,
         .cursorAxisLock = false,
         .scrollAxisLock = false,
-        .invertAxis = false,
+        .swapAxes = false,
+        .invertScrollDirection = false,
         .navigationModes = {
             NavigationMode_Cursor, // Base layer
             NavigationMode_Scroll, // Mod layer
@@ -52,7 +54,8 @@ module_configuration_t ModuleConfigurations[ModuleId_ModuleCount] = {
         .axisLockSkewFirstTick = 1.0f,
         .cursorAxisLock = false,
         .scrollAxisLock = false,
-        .invertAxis = false,
+        .swapAxes = false,
+        .invertScrollDirection = false,
         .navigationModes = {
             NavigationMode_Cursor, // Base layer
             NavigationMode_Scroll, // Mod layer
@@ -71,7 +74,8 @@ module_configuration_t ModuleConfigurations[ModuleId_ModuleCount] = {
         .axisLockSkewFirstTick = 1.0f,
         .cursorAxisLock = false,
         .scrollAxisLock = false,
-        .invertAxis = false,
+        .swapAxes = false,
+        .invertScrollDirection = false,
         .navigationModes = {
             NavigationMode_Cursor, // Base layer
             NavigationMode_Scroll, // Mod layer
@@ -90,7 +94,8 @@ module_configuration_t ModuleConfigurations[ModuleId_ModuleCount] = {
         .axisLockSkewFirstTick = 1.0f,
         .cursorAxisLock = false,
         .scrollAxisLock = false,
-        .invertAxis = false,
+        .swapAxes = false,
+        .invertScrollDirection = false,
         .navigationModes = {
             NavigationMode_Cursor, // Base layer
             NavigationMode_Scroll, // Mod layer

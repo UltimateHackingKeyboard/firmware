@@ -280,7 +280,8 @@ The following grammar is supported:
     COMMAND = set module.MODULEID.axisLockStrengthFirstTick <0-1.0 (FLOAT)>
     COMMAND = set module.MODULEID.scrollAxisLock {0|1}
     COMMAND = set module.MODULEID.cursorAxisLock {0|1}
-    COMMAND = set module.MODULEID.invertAxis {0|1}
+    COMMAND = set module.MODULEID.swapAxes {0|1}
+    COMMAND = set module.MODULEID.invertScrollDirection {0|1}
     #NOTIMPLEMENTED COMMAND = set secondaryRoles
     COMMAND = set mouseKeys.{move|scroll}.initialSpeed <px/s, -100/20 (NUMBER)>
     COMMAND = set mouseKeys.{move|scroll}.baseSpeed <px/s, -800/20 (NUMBER)>
@@ -589,11 +590,12 @@ For the purpose of toggling functionality on and off, and for global constants m
       - at 3000 px/s, speed multiplier is 1x
       - at 6000 px/s, speed multiplier is 4x
       - not recommended - the curve will behave in very non-linear fashion.
-- `set module.MODULEID.{caretSpeedDivisor|scrollSpeedDivisor|zoomSpeedDivisor}` modifies scrolling and caret behaviour:
+- `set module.MODULEID.{caretSpeedDivisor|scrollSpeedDivisor|zoomSpeedDivisor|swapAxes|invertScrollDirection}` modifies scrolling and caret behaviour:
     - `caretSpeedDivisor` (default: 16) is used to divide input in caret mode. This means that per one tick, you have to move by 16 pixels (or whatever the unit is). (This is furthermore modified by axisLocking strength, as well as acceleration.)
     - `scrollSpeedDivisor` (default: 8) is used to divide input in scroll mode. This means that while scrolling, every 8 pixels produce one scroll tick. (This is furthermore modified by axisLocking strength, as well as acceleration.)
     - `zoomSpeedDivisor` (default: 4 (?)) is used specifically for touchpad's zoom gesture, therefore its default value is supposed to be quite nonstandard.
-    - `invertAxis` swaps x and y coordinates of the module. Intened use is for keycluster trackball, since sideways scrolling is easier.
+    - `swapAxes` swaps x and y coordinates of the module. Intened use is for keycluster trackball, since sideways scrolling is easier.
+    - `invertScrollDirection` inverts scroll direction...
 
 - `set module.MODULEID.{axisLockStrength|axisLockStrengthFirstTick|cursorAxisLockEnabled|scrollAxisLockEnabled}` control axis locking feature:
 

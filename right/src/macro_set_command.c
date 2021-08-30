@@ -68,8 +68,11 @@ static void moduleSpeed(const char* arg1, const char *textEnd, module_configurat
     else if (TokenMatches(arg1, textEnd, "scrollAxisLockEnabled")) {
         module->scrollAxisLock = Macros_ParseInt(arg2, textEnd, NULL);
     }
-    else if (TokenMatches(arg1, textEnd, "invertAxis")) {
-        module->invertAxis = Macros_ParseInt(arg2, textEnd, NULL);
+    else if (TokenMatches(arg1, textEnd, "swapAxes")) {
+        module->swapAxes = Macros_ParseInt(arg2, textEnd, NULL);
+    }
+    else if (TokenMatches(arg1, textEnd, "invertScrollDirection")) {
+        module->invertScrollDirection = Macros_ParseInt(arg2, textEnd, NULL);
     }
     else {
         Macros_ReportError("parameter not recognized:", arg1, textEnd);

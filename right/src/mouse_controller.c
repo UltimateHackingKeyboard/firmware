@@ -482,7 +482,9 @@ static void processAxisLocking(float x, float y, float speed, int16_t yInversion
 static void processModuleKineticState(float x, float y, module_configuration_t* moduleConfiguration, module_kinetic_state_t* ks) {
     float speed;
 
-    int16_t yInversion = ks->currentModuleId == ModuleId_KeyClusterLeft || ks->currentModuleId == ModuleId_TouchpadRight ? -1 : 1;
+    bool moduleYInversion = ks->currentModuleId == ModuleId_KeyClusterLeft || ks->currentModuleId == ModuleId_TouchpadRight;
+    bool scrollYInversion = moduleConfiguration->invertScrollDirection && ks->currentNavigationMode == NavigationMode_Scroll;
+    int16_t yInversion = moduleYInversion != scrollYInversion ? -1 : 1;
 
     speed = computeModuleSpeed(x, y, ks->currentModuleId);
 
@@ -573,7 +575,7 @@ static void processModuleActions(uint8_t moduleId, float x, float y, uint8_t for
     }
 
     if (moduleKineticState.currentModuleId == moduleId && moduleKineticState.currentNavigationMode == navigationMode) {
-        if(moduleConfiguration->invertAxis) {
+        if(moduleConfiguration->swapAxes) {
             float tmp = x;
             x = y;
             y = tmp;
