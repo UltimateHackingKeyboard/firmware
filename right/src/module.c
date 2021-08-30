@@ -15,6 +15,7 @@ module_configuration_t ModuleConfigurations[ModuleId_ModuleCount] = {
         .cursorAxisLock = false,
         .scrollAxisLock = true,
         .invertAxis = false,
+        .invertScrollDirection = false,
         .navigationModes = {
             NavigationMode_Scroll, // Base layer
             NavigationMode_Cursor, // Mod layer
@@ -34,6 +35,7 @@ module_configuration_t ModuleConfigurations[ModuleId_ModuleCount] = {
         .cursorAxisLock = false,
         .scrollAxisLock = false,
         .invertAxis = false,
+        .invertScrollDirection = false,
         .navigationModes = {
             NavigationMode_Cursor, // Base layer
             NavigationMode_Scroll, // Mod layer
@@ -53,6 +55,7 @@ module_configuration_t ModuleConfigurations[ModuleId_ModuleCount] = {
         .cursorAxisLock = false,
         .scrollAxisLock = false,
         .invertAxis = false,
+        .invertScrollDirection = false,
         .navigationModes = {
             NavigationMode_Cursor, // Base layer
             NavigationMode_Scroll, // Mod layer
@@ -72,6 +75,7 @@ module_configuration_t ModuleConfigurations[ModuleId_ModuleCount] = {
         .cursorAxisLock = false,
         .scrollAxisLock = false,
         .invertAxis = false,
+        .invertScrollDirection = false,
         .navigationModes = {
             NavigationMode_Cursor, // Base layer
             NavigationMode_Scroll, // Mod layer
@@ -91,6 +95,7 @@ module_configuration_t ModuleConfigurations[ModuleId_ModuleCount] = {
         .cursorAxisLock = false,
         .scrollAxisLock = false,
         .invertAxis = false,
+        .invertScrollDirection = false,
         .navigationModes = {
             NavigationMode_Cursor, // Base layer
             NavigationMode_Scroll, // Mod layer
