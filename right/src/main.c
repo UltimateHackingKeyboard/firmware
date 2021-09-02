@@ -51,7 +51,6 @@ int main(void)
         while (1) {
             if (!IsConfigInitialized && IsEepromInitialized) {
                 UsbCommand_ApplyConfig();
-                MacroEvent_OnInit();
                 ShortcutParser_initialize();
                 Macros_Initialize();
                 IsConfigInitialized = true;
