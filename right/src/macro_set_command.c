@@ -154,7 +154,6 @@ static void stickyMods(const char* arg1, const char *textEnd)
     }
 }
 
-<<<<<<< HEAD
 static void macroEngineScheduler(const char* arg1, const char *textEnd)
 {
     if (TokenMatches(arg1, textEnd, "preemptive")) {

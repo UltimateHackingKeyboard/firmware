@@ -2520,11 +2520,16 @@ static macro_result_t processCurrentMacroAction(void)
     return MacroResult_Finished;
 }
 
+static uint8_t slotSearchOffset = 0;
+
 static bool findFreeStateSlot()
 {
+    uint8_t offset = Macros_Scheduler == Scheduler_Blocking ? slotSearchOffset : 0;
+
     for (uint8_t i = 0; i < MACRO_STATE_POOL_SIZE; i++) {
-        if (!MacroState[i].ms.macroPlaying) {
-            s = &MacroState[i];
+        uint8_t candidate = (i + offset) % MACRO_STATE_POOL_SIZE;
+        if (!MacroState[candidate].ms.macroPlaying) {
+            s = &MacroState[candidate];
             return true;
         }
     }
@@ -2637,9 +2642,7 @@ static macro_result_t execMacro(uint8_t index)
 static macro_result_t callMacro(uint8_t macroIndex)
 {
     s->ms.macroSleeping = true;
-    uint32_t ptr1 = (uint32_t)(macro_state_t*)s;
-    uint32_t ptr2 = (uint32_t)(macro_state_t*)&(MacroState[0]);
-    uint32_t slotIndex = (ptr1 - ptr2) / sizeof(macro_state_t);
+    uint32_t slotIndex = s - MacroState;
     Macros_StartMacro(macroIndex, s->ms.currentMacroKey, slotIndex, true);
     return MacroResult_Finished | MacroResult_YieldFlag;
 }
@@ -2673,10 +2676,15 @@ void Macros_StartMacro(uint8_t index, key_state_t *keyState, uint8_t parentMacro
     //this loads the first action and resets all adresses
     resetToAddressZero(index);
 
-    if (runFirstAction && (parentMacroSlot == 255 || s < &MacroState[parentMacroSlot])) {
+    if (Macros_Scheduler == Scheduler_Preemptive && runFirstAction && (parentMacroSlot == 255 || s < &MacroState[parentMacroSlot])) {
         //execute first action if macro has no caller Or is being called and its caller has higher slot index.
         //The condition ensures that a called macro executes exactly one action in the same eventloop cycle.
         continueMacro();
+    }
+
+    if (Macros_Scheduler == Scheduler_Blocking) {
+        // We don't care. Let it execute in regular macro execution loop, irrespectively whether this cycle or next.
+        PostponerCore_PostponeNCycles(0);
     }
     s = oldState;
 }
@@ -2819,6 +2827,7 @@ static void executeBlocking(void)
         if ((res & MacroResult_YieldFlag) || !s->ms.macroPlaying || s->ms.macroSleeping) {
             someoneStillAlive |= s->ms.macroPlaying && !s->ms.macroSleeping;
             chosenOne = yield(firstToBeAbandoned, chosenOne);
+            slotSearchOffset = chosenOne;
             if((everyoneYielded = (chosenOne == firstToBeAbandoned))) {
                 break;
             }
