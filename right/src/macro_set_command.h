@@ -8,6 +8,7 @@
     #include "key_action.h"
     #include "usb_device_config.h"
     #include "key_states.h"
+    #include "macros.h"
 
 // Macros:
 
@@ -16,6 +17,6 @@
 // Variables:
 
 // Functions:
-    bool MacroSetCommand(const char* text, const char *textEnd);
+    macro_result_t MacroSetCommand(const char* text, const char *textEnd);
 
 #endif /* __MACRO_SET_COMMAND_H__ */
