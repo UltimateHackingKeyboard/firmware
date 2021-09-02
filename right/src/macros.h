@@ -193,7 +193,7 @@
     extern layer_id_t Macros_ActiveLayer;
     extern bool Macros_ActiveLayerHeld;
     extern macro_scheduler_t Macros_Scheduler;
-    extern uint8_t Macros_SchedulerBlockingBatchSize;
+    extern uint8_t Macros_MaxBatchSize;
     extern uint32_t Macros_WakeMeOnTime;
     extern bool Macros_WakeMeOnKeystateChange;
     extern bool Macros_WakedBecauseOfTime;

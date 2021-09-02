@@ -172,8 +172,8 @@ static void macroEngine(const char* arg1, const char *textEnd)
     if (TokenMatches(arg1, textEnd, "scheduler")) {
         macroEngineScheduler(NextTok(arg1,  textEnd), textEnd);
     }
-    else if (TokenMatches(arg1, textEnd, "blockingBatchSize")) {
-        Macros_SchedulerBlockingBatchSize = Macros_ParseInt(arg1, textEnd, NULL);
+    else if (TokenMatches(arg1, textEnd, "batchSize")) {
+        Macros_MaxBatchSize = Macros_ParseInt(NextTok(arg1,  textEnd), textEnd, NULL);
     }
     else {
         Macros_ReportError("parameter not recognized:", arg1, textEnd);

@@ -296,7 +296,7 @@ The following grammar is supported:
     COMMAND = set keystrokeDelay <time in ms, at most 65535 (NUMBER)>
     COMMAND = set setEmergencyKey KEYID
     COMMAND = set macroEngine.scheduler {blocking|preemptive}
-    COMMAND = set macroEngine.blockingBatchSize <number of commands to execute per one update cycle NUMBER>
+    COMMAND = set macroEngine.batchSize <number of commands to execute per one update cycle NUMBER>
     COMMAND = set navigationModeAction.{caret|media|zoom}.{DIRECTION} {MACROID|none}
     COMMAND = set keymapAction.LAYERID.KEYID {MACROID|none}
     CONDITION = {ifShortcut | ifNotShortcut} [IFSHORTCUTFLAGS]* [KEYID]+
@@ -622,14 +622,15 @@ For the purpose of toggling functionality on and off, and for global constants m
        - command - in case of command action, action consists of multiple commands. Command is defined as any nonempty text line. Commands are treated as actions, which means that macro action context is resetted for every command line. Every command line has its own address.
   - `scheduler` controls how are macros executed.
     - `preemptive` default old one - freely interleaves commands. It gives every macro slot an oppotunity to execute one action or subaction or command. This means that no macro can block operation of ther macros, but comes at a cost of quirkiness and nondeterminism.
-      - `blocking` experimental scheduler. This scheduler keeps track of macro states and allows only one macro to run at a time. If macro yields (either enters waiting state or explicitly yields), another macro gets the exclusive privilege of running. As long as there are running (nonsleeping / waiting) macros, rest of the keyboard is in postponing state. 
-       - `blockingBatchSize` parameter controls how many commands can be executed per one macro engine invocation. If the number is exceeded, normal update cycle resumes in postponing state. This means that if a macro takes many actions, keyboard keys get queued in a queue to be executed later in correct order.
-       - Macro states roughly correspond to following:
-          - In progress - means that current action progresses state of the macro - i.e., does some work. As long as macro actions/subactions/commands return this state, they can be all executed within one keyboard update cycle.  
-          - In progress blocking - corresponds to commands that operate on usb reports - e.g., tap keys, etc.. If macro returns with this state, macro engine allows keyboard to perform one update cycle to send usb reports. This update cycle is performed in postponing mode. Macro engine is then resumed at the same action.
-          - In progress waiting - corresponds to waiting states, such as `delayUntil`, `ifGesture`, `ifSecondary`. Whenever they get running privilege, they check their state and yield, allowing rest of the keyboard to run uninterrupted. These don't initiate postponing unless it is part of their function.
-          - Sleeping - if one macro calls another, caller sleeps until callee finishes.
-          - Backward jump - any backward jump also yields. This should prevent unwanted endless loops, as well as need for the user to manage yielding logic manually.
+      - `batchSize` limits how many commands can be executed per one macro slot per macro engine invocation. 
+    - `blocking` experimental scheduler. This scheduler keeps track of macro states and allows only one macro to run at a time. If macro yields (either enters waiting state or explicitly yields), another macro gets the exclusive privilege of running. As long as there are running (nonsleeping / waiting) macros, rest of the keyboard is in postponing state. 
+      - `batchSize` parameter controls how many commands can be executed per one macro engine invocation. If the number is exceeded, normal update cycle resumes in postponing state. This means that if a macro takes many actions, keyboard keys get queued in a queue to be executed later in correct order.
+      - Macro states roughly correspond to following:
+        - In progress - means that current action progresses state of the macro - i.e., does some work. As long as macro actions/subactions/commands return this state, they can be all executed within one keyboard update cycle.  
+        - In progress blocking - corresponds to commands that operate on usb reports - e.g., tap keys, etc.. If macro returns with this state, macro engine allows keyboard to perform one update cycle to send usb reports. This update cycle is performed in postponing mode. Macro engine is then resumed at the same action.
+        - In progress waiting - corresponds to waiting states, such as `delayUntil`, `ifGesture`, `ifSecondary`. Whenever they get running privilege, they check their state and yield, allowing rest of the keyboard to run uninterrupted. These don't initiate postponing unless it is part of their function.
+        - Sleeping - if one macro calls another, caller sleeps until callee finishes.
+        - Backward jump - any backward jump also yields. This should prevent unwanted endless loops, as well as need for the user to manage yielding logic manually.
 
 
 ### Argument parsing rules:

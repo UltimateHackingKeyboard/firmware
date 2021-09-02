@@ -38,7 +38,7 @@ bool Macros_WakeMeOnKeystateChange = false;
 
 
 macro_scheduler_t Macros_Scheduler = Scheduler_Preemptive;
-uint8_t Macros_SchedulerBlockingBatchSize = 10;
+uint8_t Macros_MaxBatchSize = 50;
 
 static char statusBuffer[STATUS_BUFFER_MAX_LENGTH];
 static uint16_t statusBufferLen;
@@ -2766,8 +2766,10 @@ static void executePreemptive(void)
             s = &MacroState[i];
 
             macro_result_t res = MacroResult_Finished;
-            while (MacroState[i].ms.macroPlaying && !MacroState[i].ms.macroSleeping && res == MacroResult_Finished) {
+            uint8_t remainingExecution = Macros_MaxBatchSize;
+            while (MacroState[i].ms.macroPlaying && !MacroState[i].ms.macroSleeping && res == MacroResult_Finished && remainingExecution > 0) {
                 res = continueMacro();
+                remainingExecution --;
             }
         }
     }
@@ -2810,7 +2812,7 @@ static void executeBlocking(void)
     bool everyoneYielded = false;
     static uint8_t chosenOne = 0;
     uint8_t firstToBeAbandoned = chosenOne;
-    uint8_t remainingExecution = Macros_SchedulerBlockingBatchSize;
+    uint8_t remainingExecution = Macros_MaxBatchSize;
 
     while (remainingExecution > 0) {
         macro_result_t res = MacroResult_YieldFlag;
