@@ -186,7 +186,7 @@
 
 // Functions:
 
-    void Macros_StartMacro(uint8_t index, key_state_t *keyState, uint8_t parentMacroSlot);
+    void Macros_StartMacro(uint8_t index, key_state_t *keyState, uint8_t parentMacroSlot, bool runFirstAction);
     void Macros_ContinueMacro(void);
     void Macros_SignalInterrupt(void);
     bool Macros_ClaimReports(void);

@@ -126,7 +126,7 @@ static void stickyMods(const char* arg1, const char *textEnd)
     }
 }
 
-bool MacroSetCommand(const char* arg1, const char *textEnd)
+macro_result_t MacroSetCommand(const char* arg1, const char *textEnd)
 {
     const char* arg2 = NextTok(arg1, textEnd);
 
@@ -164,5 +164,5 @@ bool MacroSetCommand(const char* arg1, const char *textEnd)
     else {
         Macros_ReportError("parameter not recognized:", arg1, textEnd);
     }
-    return false;
+    return MacroResult_Finished;
 }

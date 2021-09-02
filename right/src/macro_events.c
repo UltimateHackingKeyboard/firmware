@@ -17,7 +17,7 @@ void MacroEvent_OnInit()
     const char* s = "$onInit";
     uint8_t idx = FindMacroIndexByName(s, s + strlen(s), false);
     if (idx != 255) {
-        Macros_StartMacro(idx, NULL, 255);
+        Macros_StartMacro(idx, NULL, 255, false);
     }
 }
 
@@ -35,7 +35,7 @@ void MacroEvent_OnKeymapChange(uint8_t keymapIdx)
             const char* macroArg = NextTok(thisName,thisNameEnd);
 
             if (TokenMatches2(macroArg, thisNameEnd, curAbbrev, curAbbrevEnd)) {
-                Macros_StartMacro(i, NULL, 255);
+                Macros_StartMacro(i, NULL, 255, false);
             }
         }
     }
