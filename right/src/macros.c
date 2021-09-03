@@ -2550,7 +2550,7 @@ static uint8_t currentActionCmdCount() {
     }
 }
 
-static bool endMacro(void)
+static macro_result_t endMacro(void)
 {
     s->ms.macroSleeping = false;
     s->ms.macroPlaying = false;
@@ -2560,8 +2560,9 @@ static bool endMacro(void)
     if (s->ms.parentMacroSlot != 255) {
         //resume our calee, if this macro was called by another macro
         MacroState[s->ms.parentMacroSlot].ms.macroSleeping = false;
+        return MacroResult_YieldFlag | MacroResult_OtherActivityFlag;
     }
-    return true;
+    return MacroResult_YieldFlag;
 }
 
 static void loadAction()
@@ -2634,7 +2635,9 @@ static macro_result_t execMacro(uint8_t index)
     //reset to address zero and load first address
     resetToAddressZero(index);
 
-    continueMacro();
+    if (Macros_Scheduler == Scheduler_Preemptive) {
+        continueMacro();
+    }
 
     return MacroResult_JumpedForward;
 }
@@ -2644,24 +2647,20 @@ static macro_result_t callMacro(uint8_t macroIndex)
     s->ms.macroSleeping = true;
     uint32_t slotIndex = s - MacroState;
     Macros_StartMacro(macroIndex, s->ms.currentMacroKey, slotIndex, true);
-    return MacroResult_Finished | MacroResult_YieldFlag;
+    return MacroResult_Finished | MacroResult_YieldFlag | MacroResult_OtherActivityFlag;
 }
 
 static macro_result_t forkMacro(uint8_t macroIndex)
 {
     Macros_StartMacro(macroIndex, s->ms.currentMacroKey, 255, true);
-    return MacroResult_Finished;
+    return MacroResult_Finished | MacroResult_OtherActivityFlag;
 }
 
-
-//partentMacroSlot == 255 means no parent
-void Macros_StartMacro(uint8_t index, key_state_t *keyState, uint8_t parentMacroSlot, bool runFirstAction)
+uint8_t initMacro(uint8_t index, key_state_t *keyState, uint8_t parentMacroSlot)
 {
-    macro_state_t* oldState = s;
     if (!findFreeStateSlot() || AllMacros[index].macroActionsCount == 0)  {
-       return;
+       return 255;
     }
-
 
     MacroPlaying = true;
 
@@ -2676,6 +2675,21 @@ void Macros_StartMacro(uint8_t index, key_state_t *keyState, uint8_t parentMacro
     //this loads the first action and resets all adresses
     resetToAddressZero(index);
 
+    return s - MacroState;
+}
+
+
+//partentMacroSlot == 255 means no parent
+uint8_t Macros_StartMacro(uint8_t index, key_state_t *keyState, uint8_t parentMacroSlot, bool runFirstAction)
+{
+    macro_state_t* oldState = s;
+
+    uint8_t slotIndex = initMacro(index, keyState, parentMacroSlot);
+
+    if (slotIndex == 255) {
+        return slotIndex;
+    }
+
     if (Macros_Scheduler == Scheduler_Preemptive && runFirstAction && (parentMacroSlot == 255 || s < &MacroState[parentMacroSlot])) {
         //execute first action if macro has no caller Or is being called and its caller has higher slot index.
         //The condition ensures that a called macro executes exactly one action in the same eventloop cycle.
@@ -2686,7 +2700,32 @@ void Macros_StartMacro(uint8_t index, key_state_t *keyState, uint8_t parentMacro
         // We don't care. Let it execute in regular macro execution loop, irrespectively whether this cycle or next.
         PostponerCore_PostponeNCycles(0);
     }
+
     s = oldState;
+    return slotIndex;
+}
+
+uint8_t Macros_QueueMacro(uint8_t index, key_state_t *keyState, uint8_t queueAfterSlot)
+{
+    macro_state_t* oldState = s;
+
+    uint8_t slotIndex = initMacro(index, keyState, 255);
+
+    if (slotIndex == 255) {
+        return slotIndex;
+    }
+
+    uint8_t childSlotIndex = queueAfterSlot;
+
+    while (MacroState[childSlotIndex].ms.parentMacroSlot != 255) {
+        childSlotIndex = MacroState[childSlotIndex].ms.parentMacroSlot;
+    }
+
+    MacroState[childSlotIndex].ms.parentMacroSlot = slotIndex;
+    s->ms.macroSleeping = true;
+
+    s = oldState;
+    return slotIndex;
 }
 
 macro_result_t continueMacro(void)
@@ -2696,7 +2735,7 @@ macro_result_t continueMacro(void)
     }
     s->as.weInitiatedPostponing = false;
 
-    macro_result_t res = MacroResult_DoneFlag | MacroResult_YieldFlag;
+    macro_result_t res = MacroResult_YieldFlag;
 
     if (!s->ms.macroBroken && ((res = processCurrentMacroAction()) & (MacroResult_InProgressFlag | MacroResult_DoneFlag)) && !s->ms.macroBroken) {
         // InProgressFlag means that action is still in progress
@@ -2707,9 +2746,9 @@ macro_result_t continueMacro(void)
     //at this point, current action/command has finished
     s->ms.postponeNextNCommands = s->ms.postponeNextNCommands > 0 ? s->ms.postponeNextNCommands - 1 : 0;
 
-    if ((s->ms.macroBroken && endMacro()) || (!loadNextCommand() && !loadNextAction() && endMacro())) {
+    if ((s->ms.macroBroken) || (!loadNextCommand() && !loadNextAction())) {
         //macro was ended either because it was broken or because we are out of actions to perform.
-        return MacroResult_DoneFlag | MacroResult_YieldFlag;
+        return endMacro() | res;
     } else {
         //we are still running - return last action's return value
         return res;
@@ -2769,6 +2808,7 @@ static void executePreemptive(void)
             uint8_t remainingExecution = Macros_MaxBatchSize;
             while (MacroState[i].ms.macroPlaying && !MacroState[i].ms.macroSleeping && res == MacroResult_Finished && remainingExecution > 0) {
                 res = continueMacro();
+                someonePlaying |= res & MacroResult_OtherActivityFlag;
                 remainingExecution --;
             }
         }
@@ -2810,6 +2850,7 @@ static void executeBlocking(void)
     bool someoneStillAlive = false;
     bool someoneBlocking = false;
     bool everyoneYielded = false;
+    bool otherActivity= false;
     static uint8_t chosenOne = 0;
     uint8_t firstToBeAbandoned = chosenOne;
     uint8_t remainingExecution = Macros_MaxBatchSize;
@@ -2820,6 +2861,7 @@ static void executeBlocking(void)
         if (MacroState[chosenOne].ms.macroPlaying && !MacroState[chosenOne].ms.macroSleeping) {
             s = &MacroState[chosenOne];
             res = continueMacro();
+            otherActivity |= res & MacroResult_OtherActivityFlag;
         }
 
         if ((someoneBlocking = (res & MacroResult_BlockingFlag))) {
@@ -2838,7 +2880,7 @@ static void executeBlocking(void)
         remainingExecution--;
     }
 
-    someoneStillStruggling = someoneBlocking || (remainingExecution == 0);
+    someoneStillStruggling = someoneBlocking || remainingExecution == 0 || otherActivity;
 
     if(someoneStillStruggling) {
         PostponerCore_PostponeNCycles(1);

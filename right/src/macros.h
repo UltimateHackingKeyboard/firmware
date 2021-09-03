@@ -66,6 +66,7 @@
         MacroResult_DoneFlag = 4,
         MacroResult_YieldFlag = 8,
         MacroResult_BlockingFlag = 16,
+        MacroResult_OtherActivityFlag = 32,
         MacroResult_Blocking = MacroResult_InProgressFlag | MacroResult_BlockingFlag,
         MacroResult_Waiting = MacroResult_InProgressFlag | MacroResult_YieldFlag,
         MacroResult_Sleeping = MacroResult_InProgressFlag | MacroResult_YieldFlag,
@@ -201,7 +202,8 @@
 
 // Functions:
 
-    void Macros_StartMacro(uint8_t index, key_state_t *keyState, uint8_t parentMacroSlot, bool runFirstAction);
+    uint8_t Macros_StartMacro(uint8_t index, key_state_t *keyState, uint8_t parentMacroSlot, bool runFirstAction);
+    uint8_t Macros_QueueMacro(uint8_t index, key_state_t *keyState, uint8_t queueAfterSlot);
     void Macros_ContinueMacro(void);
     void Macros_SignalInterrupt(void);
     bool Macros_ClaimReports(void);
