@@ -72,12 +72,6 @@ static uint8_t currentActionCmdCount();
 static macro_result_t sleepTillTime(uint32_t time);
 static macro_result_t sleepTillKeystateChange();
 
-bool Macros_ClaimReports()
-{
-    s->ms.reportsUsed = true;
-    return true;
-}
-
 /**
  * This ensures integration/interface between macro layer mechanism
  * and official layer mechanism - we expose our layer via

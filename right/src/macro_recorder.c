@@ -253,9 +253,6 @@ void MacroRecorder_RecordDelay(uint16_t delay)
 
 bool MacroRecorder_PlayRuntimeMacroSmart(uint16_t id, usb_basic_keyboard_report_t* report)
 {
-    if (!Macros_ClaimReports()) {
-        return true;
-    }
     if (!RuntimeMacroPlaying) {
         if (!playRuntimeMacroBegin(id)) {
             return false;
