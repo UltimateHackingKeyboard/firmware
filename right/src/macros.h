@@ -134,6 +134,7 @@
             uint8_t currentMacroIndex;
             uint8_t postponeNextNCommands;
             uint8_t commandAddress;
+            uint8_t nextSlot;
             bool macroInterrupted : 1;
             bool macroSleeping : 1;
             bool macroBroken : 1;
@@ -184,6 +185,14 @@
 
         } as;
     }  macro_state_t;
+
+    typedef struct {
+        uint8_t previousSlotIdx;
+        uint8_t currentSlotIdx;
+        uint8_t lastQueuedSlot;
+        uint8_t activeSlotCount;
+        uint8_t remainingCount;
+    } scheduler_state_t;
 
 // Variables:
 

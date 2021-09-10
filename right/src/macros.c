@@ -38,7 +38,14 @@ bool Macros_WakeMeOnKeystateChange = false;
 
 
 macro_scheduler_t Macros_Scheduler = Scheduler_Preemptive;
-uint8_t Macros_MaxBatchSize = 50;
+uint8_t Macros_MaxBatchSize = 20;
+static scheduler_state_t scheduler = {
+    .previousSlotIdx = 0,
+    .currentSlotIdx = 0,
+    .lastQueuedSlot = 0,
+    .activeSlotCount = 0,
+    .remainingCount = 0,
+};
 
 static char statusBuffer[STATUS_BUFFER_MAX_LENGTH];
 static uint16_t statusBufferLen;
@@ -58,6 +65,8 @@ static macro_state_t *s = MacroState;
 
 static uint16_t doubletapConditionTimeout = 300;
 
+static void scheduleSlot(uint8_t slotIdx);
+static void unscheduleCurrentSlot();
 static int32_t parseNUM(const char *a, const char *aEnd);
 static macro_result_t processCommand(const char* cmd, const char* cmdEnd);
 static macro_result_t processCommandAction(void);
@@ -2514,16 +2523,12 @@ static macro_result_t processCurrentMacroAction(void)
     return MacroResult_Finished;
 }
 
-static uint8_t slotSearchOffset = 0;
 
 static bool findFreeStateSlot()
 {
-    uint8_t offset = Macros_Scheduler == Scheduler_Blocking ? slotSearchOffset : 0;
-
     for (uint8_t i = 0; i < MACRO_STATE_POOL_SIZE; i++) {
-        uint8_t candidate = (i + offset) % MACRO_STATE_POOL_SIZE;
-        if (!MacroState[candidate].ms.macroPlaying) {
-            s = &MacroState[candidate];
+        if (!MacroState[i].ms.macroPlaying) {
+            s = &MacroState[i];
             return true;
         }
     }
@@ -2551,9 +2556,11 @@ static macro_result_t endMacro(void)
     s->ms.macroBroken = false;
     s->ps.previousMacroIndex = s->ms.currentMacroIndex;
     s->ps.previousMacroStartTime = s->ms.currentMacroStartTime;
+    unscheduleCurrentSlot();
     if (s->ms.parentMacroSlot != 255) {
         //resume our calee, if this macro was called by another macro
         MacroState[s->ms.parentMacroSlot].ms.macroSleeping = false;
+        scheduleSlot(s->ms.parentMacroSlot);
         return MacroResult_YieldFlag | MacroResult_OtherActivityFlag;
     }
     return MacroResult_YieldFlag;
@@ -2639,6 +2646,8 @@ static macro_result_t execMacro(uint8_t index)
 static macro_result_t callMacro(uint8_t macroIndex)
 {
     s->ms.macroSleeping = true;
+    s->ms.wakeMeOnKeystateChange = false;
+    s->ms.wakeMeOnTime = false;
     uint32_t slotIndex = s - MacroState;
     Macros_StartMacro(macroIndex, s->ms.currentMacroKey, slotIndex, true);
     return MacroResult_Finished | MacroResult_YieldFlag | MacroResult_OtherActivityFlag;
@@ -2690,6 +2699,7 @@ uint8_t Macros_StartMacro(uint8_t index, key_state_t *keyState, uint8_t parentMa
         continueMacro();
     }
 
+    scheduleSlot(slotIndex);
     if (Macros_Scheduler == Scheduler_Blocking) {
         // We don't care. Let it execute in regular macro execution loop, irrespectively whether this cycle or next.
         PostponerCore_PostponeNCycles(0);
@@ -2751,6 +2761,9 @@ macro_result_t continueMacro(void)
 
 static macro_result_t sleepTillKeystateChange()
 {
+    if (!s->ms.macroSleeping) {
+        unscheduleCurrentSlot();
+    }
     Macros_WakeMeOnKeystateChange = true;
     s->ms.wakeMeOnKeystateChange = true;
     s->ms.macroSleeping = true;
@@ -2759,6 +2772,9 @@ static macro_result_t sleepTillKeystateChange()
 
 static macro_result_t sleepTillTime(uint32_t time)
 {
+    if (!s->ms.macroSleeping) {
+        unscheduleCurrentSlot();
+    }
     Macros_WakeMeOnTime = time < Macros_WakeMeOnTime ? time : Macros_WakeMeOnTime;
     s->ms.wakeMeOnTime = true;
     s->ms.macroSleeping = true;
@@ -2773,7 +2789,9 @@ static void wakeSleepers()
         for (uint8_t i = 0; i < MACRO_STATE_POOL_SIZE; i++) {
             if (MacroState[i].ms.wakeMeOnKeystateChange) {
                 MacroState[i].ms.macroSleeping = false;
+                MacroState[i].ms.wakeMeOnTime = false;
                 MacroState[i].ms.wakeMeOnKeystateChange = false;
+                scheduleSlot(i);
             }
         }
     }
@@ -2784,6 +2802,8 @@ static void wakeSleepers()
             if (MacroState[i].ms.wakeMeOnTime) {
                 MacroState[i].ms.macroSleeping = false;
                 MacroState[i].ms.wakeMeOnTime = false;
+                MacroState[i].ms.wakeMeOnKeystateChange = false;
+                scheduleSlot(i);
             }
         }
     }
@@ -2811,51 +2831,59 @@ static void executePreemptive(void)
     MacroPlaying &= someonePlaying;
 }
 
-static uint8_t yield(uint8_t firstAbandoned, uint8_t lastAbandoned)
+static void scheduleSlot(uint8_t slotIdx)
 {
-    bool secondPass = lastAbandoned < firstAbandoned;
-    bool reachedEnd = false;
-    uint8_t candidate = lastAbandoned + 1;
-
-    while ( !secondPass || candidate < firstAbandoned) {
-        while ( !reachedEnd && (!secondPass || candidate < firstAbandoned) ) {
-
-            if(MacroState[candidate].ms.macroPlaying && !MacroState[candidate].ms.macroSleeping) {
-                return candidate;
-            }
-
-            candidate = candidate + 1;
-            reachedEnd = candidate >= MACRO_STATE_POOL_SIZE;
-        }
-
-        if (!secondPass) {
-            candidate = 0;
-            secondPass = true;
-            reachedEnd = false;
+    if(scheduler.activeSlotCount == 0) {
+        MacroState[slotIdx].ms.nextSlot = slotIdx;
+        scheduler.previousSlotIdx = slotIdx;
+        scheduler.currentSlotIdx = slotIdx;
+        scheduler.lastQueuedSlot = slotIdx;
+        scheduler.activeSlotCount++;
+        scheduler.remainingCount++;
+    } else {
+        MacroState[slotIdx].ms.nextSlot = MacroState[scheduler.lastQueuedSlot].ms.nextSlot;
+        MacroState[scheduler.lastQueuedSlot].ms.nextSlot = slotIdx;
+        scheduler.lastQueuedSlot = slotIdx;
+        scheduler.activeSlotCount++;
+        scheduler.remainingCount++;
+        if(scheduler.activeSlotCount == 2) {
+            scheduler.previousSlotIdx = slotIdx;
         }
     }
+}
 
-    return firstAbandoned;
+static void unscheduleCurrentSlot()
+{
+    MacroState[scheduler.previousSlotIdx].ms.nextSlot = MacroState[scheduler.currentSlotIdx].ms.nextSlot;
+    scheduler.lastQueuedSlot = scheduler.lastQueuedSlot == scheduler.currentSlotIdx ? scheduler.previousSlotIdx : scheduler.lastQueuedSlot;
+    scheduler.currentSlotIdx = scheduler.previousSlotIdx;
+    scheduler.activeSlotCount--;
+}
+
+static void getNextScheduledSlot()
+{
+    if (scheduler.remainingCount > 0) {
+        uint8_t nextSlot = MacroState[scheduler.currentSlotIdx].ms.nextSlot;
+        scheduler.previousSlotIdx = scheduler.currentSlotIdx;
+        scheduler.lastQueuedSlot = scheduler.lastQueuedSlot == scheduler.currentSlotIdx ? nextSlot : scheduler.lastQueuedSlot;
+        scheduler.currentSlotIdx = nextSlot;
+        scheduler.remainingCount--;
+    }
 }
 
 static void executeBlocking(void)
 {
-    bool someoneStillStruggling = false;
     bool someoneStillAlive = false;
     bool someoneBlocking = false;
-    bool everyoneYielded = false;
-    bool otherActivity= false;
-    static uint8_t chosenOne = 0;
-    uint8_t firstToBeAbandoned = chosenOne;
     uint8_t remainingExecution = Macros_MaxBatchSize;
+    scheduler.remainingCount = scheduler.activeSlotCount;
 
-    while (remainingExecution > 0) {
+    while (scheduler.remainingCount > 0 && remainingExecution > 0) {
         macro_result_t res = MacroResult_YieldFlag;
+        s = &MacroState[scheduler.currentSlotIdx];
 
-        if (MacroState[chosenOne].ms.macroPlaying && !MacroState[chosenOne].ms.macroSleeping) {
-            s = &MacroState[chosenOne];
+        if (s->ms.macroPlaying && !s->ms.macroSleeping) {
             res = continueMacro();
-            otherActivity |= res & MacroResult_OtherActivityFlag;
         }
 
         if ((someoneBlocking = (res & MacroResult_BlockingFlag))) {
@@ -2864,23 +2892,18 @@ static void executeBlocking(void)
 
         if ((res & MacroResult_YieldFlag) || !s->ms.macroPlaying || s->ms.macroSleeping) {
             someoneStillAlive |= s->ms.macroPlaying && !s->ms.macroSleeping;
-            chosenOne = yield(firstToBeAbandoned, chosenOne);
-            slotSearchOffset = chosenOne;
-            if((everyoneYielded = (chosenOne == firstToBeAbandoned))) {
-                break;
-            }
+            getNextScheduledSlot();
         }
 
         remainingExecution--;
     }
 
-    someoneStillStruggling = someoneBlocking || remainingExecution == 0 || otherActivity;
-
-    if(someoneStillStruggling) {
+    if(someoneBlocking || remainingExecution == 0) {
         PostponerCore_PostponeNCycles(1);
     }
 
-    MacroPlaying &= someoneStillStruggling || someoneStillAlive;
+    MacroPlaying &= someoneBlocking || remainingExecution == 0 || someoneStillAlive;
+    s = NULL;
 }
 
 void Macros_ContinueMacro(void)
