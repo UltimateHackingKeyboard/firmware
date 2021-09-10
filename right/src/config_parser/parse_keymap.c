@@ -133,6 +133,11 @@ static parser_error_t parseKeyActions(uint8_t targetLayer, config_buffer_t *buff
             return errorCode;
         }
     }
+    /* default second touchpad action to right button */
+    if (!parserRunDry && moduleId == ModuleId_TouchpadRight) {
+        CurrentKeymap[targetLayer][slotId][1].type = KeyActionType_Mouse;
+        CurrentKeymap[targetLayer][slotId][1].mouseAction = SerializedMouseAction_RightClick;
+    }
     return ParserError_Success;
 }
 
