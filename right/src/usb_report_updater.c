@@ -398,7 +398,11 @@ static void updateActiveUsbReports(void)
     HardwareModifierState = 0;
     SuppressMods = false;
 
-    if (MacroPlaying || (Macros_WakeMeOnTime < CurrentTime && (Macros_WakedBecauseOfTime = true) && (MacroPlaying = true))) {
+    if (MacroPlaying) {
+        if (Macros_WakeMeOnTime < CurrentTime) {
+            Macros_WakedBecauseOfTime = true;
+            MacroPlaying = true;
+        }
         Macros_ContinueMacro();
     }
 

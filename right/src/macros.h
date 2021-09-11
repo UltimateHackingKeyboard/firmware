@@ -66,7 +66,6 @@
         MacroResult_DoneFlag = 4,
         MacroResult_YieldFlag = 8,
         MacroResult_BlockingFlag = 16,
-        MacroResult_OtherActivityFlag = 32,
         MacroResult_Blocking = MacroResult_InProgressFlag | MacroResult_BlockingFlag,
         MacroResult_Waiting = MacroResult_InProgressFlag | MacroResult_YieldFlag,
         MacroResult_Sleeping = MacroResult_InProgressFlag | MacroResult_YieldFlag,
@@ -181,7 +180,8 @@
             bool currentConditionPassed : 1;
             bool currentIfShortcutConditionPassed : 1;
             bool currentIfSecondaryConditionPassed : 1;
-            bool weInitiatedPostponing : 1;
+            bool modifierPostpone : 1;
+            bool modifierSuppressMods : 1;
 
         } as;
     }  macro_state_t;
