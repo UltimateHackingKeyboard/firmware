@@ -1,4 +1,5 @@
 #include "macros.h"
+#include <math.h>
 #include "usb_interfaces/usb_interface_basic_keyboard.h"
 #include "usb_interfaces/usb_interface_media_keyboard.h"
 #include "usb_interfaces/usb_interface_mouse.h"
@@ -494,15 +495,20 @@ void Macros_SetStatusBool(bool b)
     Macros_SetStatusString(b ? "1" : "0", NULL);
 }
 
-void Macros_SetStatusNumSpaced(uint32_t n, bool spaced)
+void Macros_SetStatusNumSpaced(int32_t n, bool spaced)
 {
-    uint32_t orig = n;
     char buff[2];
     buff[0] = ' ';
     buff[1] = '\0';
     if (spaced) {
+        Macros_SetStatusString(" ", NULL);
+    }
+    if (n < 0) {
+        n = -n;
+        buff[0] = '-';
         Macros_SetStatusString(buff, NULL);
     }
+    int32_t orig = n;
     for (uint32_t div = 1000000000; div > 0; div /= 10) {
         buff[0] = (char)(((uint8_t)(n/div)) + '0');
         n = n%div;
@@ -512,7 +518,16 @@ void Macros_SetStatusNumSpaced(uint32_t n, bool spaced)
     }
 }
 
-void Macros_SetStatusNum(uint32_t n)
+void Macros_SetStatusFloat(float n)
+{
+    float intPart = 0;
+    float fraPart = modff(n, &intPart);
+    Macros_SetStatusNumSpaced(intPart, true);
+    Macros_SetStatusString(".", NULL);
+    Macros_SetStatusNumSpaced((int32_t)(fraPart * 1000 / 1), false);
+}
+
+void Macros_SetStatusNum(int32_t n)
 {
     Macros_SetStatusNumSpaced(n, true);
 }
@@ -548,7 +563,16 @@ void Macros_ReportError(const char* err, const char* arg, const char *argEnd)
     Macros_SetStatusString("\n", NULL);
 }
 
-void Macros_ReportErrorNum(const char* err, uint32_t num)
+void Macros_ReportErrorFloat(const char* err, float num)
+{
+    LedDisplay_SetText(3, "ERR");
+    reportErrorHeader();
+    Macros_SetStatusString(err, NULL);
+    Macros_SetStatusFloat(num);
+    Macros_SetStatusString("\n", NULL);
+}
+
+void Macros_ReportErrorNum(const char* err, int32_t num)
 {
     LedDisplay_SetText(3, "ERR");
     reportErrorHeader();
@@ -2967,7 +2991,7 @@ static void applySleepingMods()
     }
     MacroPlaying = someoneAlive;
     s = NULL;
-} 
+}
 
 void Macros_ContinueMacro(void)
 {
