@@ -65,6 +65,7 @@ static macro_state_t *s = MacroState;
 
 static uint16_t doubletapConditionTimeout = 300;
 
+static void wakeMacroInSlot(uint8_t slotIdx);
 static void scheduleSlot(uint8_t slotIdx);
 static void unscheduleCurrentSlot();
 static int32_t parseNUM(const char *a, const char *aEnd);
@@ -809,9 +810,30 @@ static macro_result_t processStatsPostponerStackCommand()
     return MacroResult_Finished;
 }
 
+static void describeSchedulerState()
+{
+    Macros_SetStatusString("s:", NULL);
+    Macros_SetStatusNum(scheduler.currentSlotIdx);
+    Macros_SetStatusNum(scheduler.previousSlotIdx);
+    Macros_SetStatusNum(scheduler.activeSlotCount);
+    Macros_SetStatusNum(scheduler.lastQueuedSlot);
+
+    Macros_SetStatusString(":", NULL);
+    uint8_t slot = scheduler.currentSlotIdx;
+    for (int i = 0; i < scheduler.activeSlotCount; i++) {
+        Macros_SetStatusNum(slot);
+        Macros_SetStatusString(" ", NULL);
+        slot = MacroState[slot].ms.nextSlot;
+    }
+    Macros_SetStatusString("\n", NULL);
+}
+
 static macro_result_t processStatsActiveMacrosCommand()
 {
-    Macros_SetStatusString("macro/adr\n", NULL);
+    Macros_SetStatusString("Macro playing: ", NULL);
+    Macros_SetStatusNum(MacroPlaying);
+    Macros_SetStatusString("\n", NULL);
+    Macros_SetStatusString("macro/slot/adr/properties\n", NULL);
     for (int i = 0; i < MACRO_STATE_POOL_SIZE; i++) {
         if (MacroState[i].ms.macroPlaying) {
             const char *name, *nameEnd;
@@ -819,11 +841,30 @@ static macro_result_t processStatsActiveMacrosCommand()
             Macros_SetStatusString(" ", NULL);
             Macros_SetStatusString(name, nameEnd);
             Macros_SetStatusString("/", NULL);
+            Macros_SetStatusNum((&MacroState[i]) - MacroState);
+            Macros_SetStatusString("/", NULL);
             Macros_SetStatusNum(MacroState[i].ms.currentMacroActionIndex);
+            Macros_SetStatusString("/", NULL);
+            if (MacroState[i].as.modifierPostpone) {
+                Macros_SetStatusString("mp ", NULL);
+            }
+            if (MacroState[i].as.modifierSuppressMods) {
+                Macros_SetStatusString("ms ", NULL);
+            }
+            if (MacroState[i].ms.macroSleeping) {
+                Macros_SetStatusString("s ", NULL);
+            }
+            if (MacroState[i].ms.wakeMeOnKeystateChange) {
+                Macros_SetStatusString("ws ", NULL);
+            }
+            if (MacroState[i].ms.wakeMeOnTime) {
+                Macros_SetStatusString("wt ", NULL);
+            }
             Macros_SetStatusString("\n", NULL);
 
         }
     }
+    describeSchedulerState();
     return MacroResult_Finished;
 }
 
@@ -1087,7 +1128,9 @@ static macro_result_t processHoldLayer(uint8_t layer, uint8_t keymap, uint16_t t
     }
     else {
         if (currentMacroKeyIsActive() && (Timer_GetElapsedTime(&s->ms.currentMacroStartTime) < timeout || s->ms.macroInterrupted)) {
-            sleepTillTime(s->ms.currentMacroStartTime + timeout);
+            if (!s->ms.macroInterrupted) {
+                sleepTillTime(s->ms.currentMacroStartTime + timeout);
+            }
             sleepTillKeystateChange();
             return MacroResult_Sleeping;
         }
@@ -2561,8 +2604,7 @@ static macro_result_t endMacro(void)
     unscheduleCurrentSlot();
     if (s->ms.parentMacroSlot != 255) {
         //resume our calee, if this macro was called by another macro
-        MacroState[s->ms.parentMacroSlot].ms.macroSleeping = false;
-        scheduleSlot(s->ms.parentMacroSlot);
+        wakeMacroInSlot(s->ms.parentMacroSlot);
         return MacroResult_YieldFlag;
     }
     return MacroResult_YieldFlag;
@@ -2793,10 +2835,7 @@ static void wakeSleepers()
         Macros_WakeMeOnKeystateChange = false;
         for (uint8_t i = 0; i < MACRO_STATE_POOL_SIZE; i++) {
             if (MacroState[i].ms.wakeMeOnKeystateChange) {
-                MacroState[i].ms.macroSleeping = false;
-                MacroState[i].ms.wakeMeOnTime = false;
-                MacroState[i].ms.wakeMeOnKeystateChange = false;
-                scheduleSlot(i);
+                wakeMacroInSlot(i);
             }
         }
     }
@@ -2805,10 +2844,7 @@ static void wakeSleepers()
         Macros_WakeMeOnTime = 0xFFFFFFFF;
         for (uint8_t i = 0; i < MACRO_STATE_POOL_SIZE; i++) {
             if (MacroState[i].ms.wakeMeOnTime) {
-                MacroState[i].ms.macroSleeping = false;
-                MacroState[i].ms.wakeMeOnTime = false;
-                MacroState[i].ms.wakeMeOnKeystateChange = false;
-                scheduleSlot(i);
+                wakeMacroInSlot(i);
             }
         }
     }
@@ -2831,6 +2867,16 @@ static void executePreemptive(void)
     s = NULL;
 }
 
+static void wakeMacroInSlot(uint8_t slotIdx)
+{
+    if (MacroState[slotIdx].ms.macroSleeping) {
+        MacroState[slotIdx].ms.macroSleeping = false;
+        MacroState[slotIdx].ms.wakeMeOnTime = false;
+        MacroState[slotIdx].ms.wakeMeOnKeystateChange = false;
+        scheduleSlot(slotIdx);
+    }
+}
+
 static void scheduleSlot(uint8_t slotIdx)
 {
     if(scheduler.activeSlotCount == 0) {
@@ -2841,12 +2887,13 @@ static void scheduleSlot(uint8_t slotIdx)
         scheduler.activeSlotCount++;
         scheduler.remainingCount++;
     } else {
+        bool shouldInheritPrevious = scheduler.lastQueuedSlot == scheduler.previousSlotIdx;
         MacroState[slotIdx].ms.nextSlot = MacroState[scheduler.lastQueuedSlot].ms.nextSlot;
         MacroState[scheduler.lastQueuedSlot].ms.nextSlot = slotIdx;
         scheduler.lastQueuedSlot = slotIdx;
         scheduler.activeSlotCount++;
         scheduler.remainingCount++;
-        if(scheduler.activeSlotCount == 2) {
+        if(shouldInheritPrevious) {
             scheduler.previousSlotIdx = slotIdx;
         }
     }
