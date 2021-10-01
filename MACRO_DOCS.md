@@ -278,8 +278,8 @@ The following grammar is supported:
     COMMAND = set module.MODULEID.zoomSpeedDivisor <1-100 (FLOAT)>
     COMMAND = set module.MODULEID.axisLockStrength <0-1.0 (FLOAT)>
     COMMAND = set module.MODULEID.axisLockStrengthFirstTick <0-1.0 (FLOAT)>
-    COMMAND = set module.MODULEID.scrollAxisLock {0|1}
-    COMMAND = set module.MODULEID.cursorAxisLock {0|1}
+    COMMAND = set module.MODULEID.scrollAxisLockEnabled {0|1}
+    COMMAND = set module.MODULEID.cursorAxisLockEnabled {0|1}
     COMMAND = set module.MODULEID.swapAxes {0|1}
     COMMAND = set module.MODULEID.invertScrollDirection {0|1}
     #NOTIMPLEMENTED COMMAND = set secondaryRoles
