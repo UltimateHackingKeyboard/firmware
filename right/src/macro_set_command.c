@@ -1,4 +1,5 @@
 #include "macro_set_command.h"
+#include "ledmap.h"
 #include "timer.h"
 #include "keymap.h"
 #include "key_matrix.h"
@@ -180,6 +181,48 @@ static void macroEngine(const char* arg1, const char *textEnd)
     }
 }
 
+static void backlightStrategy(const char* arg1, const char *textEnd)
+{
+    if (TokenMatches(arg1, textEnd, "functional")) {
+        LedMap_BacklightStrategy = BacklightStrategy_Functional;
+    }
+    else if (TokenMatches(arg1, textEnd, "constantRgb")) {
+        LedMap_BacklightStrategy = BacklightStrategy_ConstantRGB;
+    }
+    else {
+        Macros_ReportError("parameter not recognized:", arg1, textEnd);
+    }
+}
+
+static void constantRgb(const char* arg1, const char *textEnd)
+{
+    if (TokenMatches(arg1, textEnd, "rgb")) {
+        const char* r = NextTok(arg1,  textEnd);
+        const char* g = NextTok(r, textEnd);
+        const char* b = NextTok(g, textEnd);
+        LedMap_ConstantRGB.red = Macros_ParseInt(r, textEnd, NULL);
+        LedMap_ConstantRGB.green = Macros_ParseInt(g, textEnd, NULL);
+        LedMap_ConstantRGB.blue = Macros_ParseInt(b, textEnd, NULL);
+    }
+    else {
+        Macros_ReportError("parameter not recognized:", arg1, textEnd);
+    }
+}
+
+
+static void backlight(const char* arg1, const char *textEnd)
+{
+    if (TokenMatches(arg1, textEnd, "strategy")) {
+        backlightStrategy(NextTok(arg1, textEnd), textEnd);
+    }
+    else if (TokenMatches(arg1, textEnd, "constantRgb")) {
+        constantRgb(proceedByDot(arg1, textEnd), textEnd);
+    }
+    else {
+        Macros_ReportError("parameter not recognized:", arg1, textEnd);
+    }
+}
+
 static void navigationModeAction(const char* arg1, const char *textEnd)
 {
     navigation_mode_t navigationMode = NavigationMode_Caret;
@@ -273,6 +316,9 @@ macro_result_t MacroSetCommand(const char* arg1, const char *textEnd)
     }
     else if (TokenMatches(arg1, textEnd, "macroEngine")) {
         macroEngine(proceedByDot(arg1, textEnd), textEnd);
+    }
+    else if (TokenMatches(arg1, textEnd, "backlight")) {
+        backlight(proceedByDot(arg1, textEnd), textEnd);
     }
     else if (TokenMatches(arg1, textEnd, "compensateDiagonalSpeed")) {
         CompensateDiagonalSpeed = Macros_ParseInt(arg2, textEnd, NULL);

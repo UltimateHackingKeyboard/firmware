@@ -299,6 +299,8 @@ The following grammar is supported:
     COMMAND = set macroEngine.batchSize <number of commands to execute per one update cycle NUMBER>
     COMMAND = set navigationModeAction.{caret|media|zoom}.{DIRECTION} {MACROID|none}
     COMMAND = set keymapAction.LAYERID.KEYID {MACROID|none}
+    COMMAND = set backlight.strategy { functional | constantRgb }
+    COMMAND = set backlight.constantRgb.rgb <number 0-255 (NUMBER)> <number 0-255 (NUMBER)> <number 0-255 (NUMBER)><number 0-255 (NUMBER)>
     CONDITION = {ifShortcut | ifNotShortcut} [IFSHORTCUTFLAGS]* [KEYID]+
     CONDITION = {ifGesture | ifNotGesture} [IFSHORTCUTFLAGS]* [KEYID]+
     CONDITION = {ifPrimary | ifSecondary}
@@ -632,6 +634,9 @@ For the purpose of toggling functionality on and off, and for global constants m
         - Sleeping - if one macro calls another, caller sleeps until callee finishes.
         - Backward jump - any backward jump also yields. This should prevent unwanted endless loops, as well as need for the user to manage yielding logic manually.
 
+- backlight:
+    - `backlight.strategy { functional | constantRgb }` sets backlight strategy.
+    - `backlight.constantRgb.rgb NUMBER NUMBER NUMBER` allows setting custom constant colour for entire keyboard. E.g.: `set backlight.strategy constantRgb; set backlight.constantRgb.rgb 255 0 0` to make entire keyboard shine red.
 
 ### Argument parsing rules:
 
