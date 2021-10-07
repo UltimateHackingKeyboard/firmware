@@ -13,6 +13,7 @@
 #include "usb_report_updater.h"
 #include "macro_events.h"
 #include "macro_shortcut_parser.h"
+#include "ledmap.h"
 
 static bool IsEepromInitialized = false;
 static bool IsConfigInitialized = false;
@@ -24,6 +25,7 @@ static void userConfigurationReadFinished(void)
 
 static void hardwareConfigurationReadFinished(void)
 {
+    InitLedLayout();
     if (IsFactoryResetModeEnabled) {
         HardwareConfig->signatureLength = HARDWARE_CONFIG_SIGNATURE_LENGTH;
         strncpy(HardwareConfig->signature, "FTY", HARDWARE_CONFIG_SIGNATURE_LENGTH);
