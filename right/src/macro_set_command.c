@@ -89,19 +89,19 @@ static void mouseKeys(const char* arg1, const char *textEnd)
     const char* arg3 = NextTok(arg2, textEnd);
 
     if (TokenMatches(arg2, textEnd, "initialSpeed")) {
-        state->initialSpeed = Macros_ParseInt(arg3, textEnd, NULL);
+        state->initialSpeed = Macros_ParseInt(arg3, textEnd, NULL) / state->intMultiplier;
     }
     else if (TokenMatches(arg2, textEnd, "baseSpeed")) {
-        state->baseSpeed = Macros_ParseInt(arg3, textEnd, NULL);
+        state->baseSpeed = Macros_ParseInt(arg3, textEnd, NULL) / state->intMultiplier;
     }
     else if (TokenMatches(arg2, textEnd, "initialAcceleration")) {
-        state->acceleration = Macros_ParseInt(arg3, textEnd, NULL);
+        state->acceleration = Macros_ParseInt(arg3, textEnd, NULL) / state->intMultiplier;
     }
     else if (TokenMatches(arg2, textEnd, "deceleratedSpeed")) {
-        state->deceleratedSpeed = Macros_ParseInt(arg3, textEnd, NULL);
+        state->deceleratedSpeed = Macros_ParseInt(arg3, textEnd, NULL) / state->intMultiplier;
     }
     else if (TokenMatches(arg2, textEnd, "acceleratedSpeed")) {
-        state->acceleratedSpeed = Macros_ParseInt(arg3, textEnd, NULL);
+        state->acceleratedSpeed = Macros_ParseInt(arg3, textEnd, NULL) / state->intMultiplier;
     }
     /* axis skew */
     else if (TokenMatches(arg1, textEnd, "axisSkew")) {
