@@ -114,7 +114,7 @@ static void mouseKeys(const char* arg1, const char *textEnd)
     }
 }
 
-static void stickyMods(const char* arg1, const char *textEnd)
+static void stickyModifiers(const char* arg1, const char *textEnd)
 {
     if (TokenMatches(arg1, textEnd, "never")) {
         StickyModifierStrategy = Stick_Never;
@@ -146,8 +146,8 @@ macro_result_t MacroSetCommand(const char* arg1, const char *textEnd)
     else if (TokenMatches(arg1, textEnd, "diagonalSpeedCompensation")) {
         DiagonalSpeedCompensation = Macros_ParseBoolean(arg2, textEnd);
     }
-    else if (TokenMatches(arg1, textEnd, "stickyMods")) {
-        stickyMods(arg2, textEnd);
+    else if (TokenMatches(arg1, textEnd, "stickyModifiers")) {
+        stickyModifiers(arg2, textEnd);
     }
     else if (TokenMatches(arg1, textEnd, "debounceDelay")) {
         uint16_t time = Macros_ParseInt(arg2, textEnd, NULL);
