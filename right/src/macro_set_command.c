@@ -46,6 +46,9 @@ static void moduleSpeed(const char* arg1, const char *textEnd, module_configurat
     else if (TokenMatches(arg1, textEnd, "acceleration")) {
         module->acceleration = ParseFloat(arg2, textEnd);
     }
+    else {
+        Macros_ReportError("parameter not recognized:", arg1, textEnd);
+    }
     //TODO: caretSkewStrength, caretSpeedDivisor, scrollSpeedDivisor
 }
 
@@ -67,7 +70,7 @@ static void module(const char* arg1, const char *textEnd)
 
 static void secondaryRoles(const char* arg1, const char *textEnd)
 {
-    //Todo when they are merged
+    Macros_ReportError("command not recognized:", arg1, textEnd);
 }
 
 static void mouseKeys(const char* arg1, const char *textEnd)
@@ -104,6 +107,7 @@ static void mouseKeys(const char* arg1, const char *textEnd)
     else if (TokenMatches(arg1, textEnd, "axisSkew")) {
         //module->axisSkew = Macros_ParseInt(arg3, textEnd, NULL);
         // TODO
+        Macros_ReportError("axis skew not implemented yet", arg1, textEnd);
     }
     else {
         Macros_ReportError("parameter not recognized:", arg1, textEnd);
