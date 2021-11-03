@@ -143,8 +143,8 @@ macro_result_t MacroSetCommand(const char* arg1, const char *textEnd)
     else if (TokenMatches(arg1, textEnd, "mouseKeys")) {
         mouseKeys(proceedByDot(arg1, textEnd), textEnd);
     }
-    else if (TokenMatches(arg1, textEnd, "compensateDiagonalSpeed")) {
-        CompensateDiagonalSpeed = Macros_ParseInt(arg2, textEnd, NULL);
+    else if (TokenMatches(arg1, textEnd, "diagonalSpeedCompensation")) {
+        DiagonalSpeedCompensation = Macros_ParseInt(arg2, textEnd, NULL);
     }
     else if (TokenMatches(arg1, textEnd, "stickyMods")) {
         stickyMods(arg2, textEnd);

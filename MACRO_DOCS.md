@@ -99,8 +99,8 @@ Or with Mac (which requires prolonged press of caps lock):
 
 Enables and disables compensation of diagonal speed.
 
-    ifShift setCompensateDiagonalSpeed 1
-    ifNotShift setCompensateDiagonalSpeed 0
+    ifShift set diagonalSpeedCompensation 1
+    ifNotShift set diagonalSpeedCompensation 0
 
 Smart toggle (if tapped, locks layer; if used with a key, acts as a secondary role):
 
@@ -269,7 +269,7 @@ The following grammar is supported:
     COMMAND = set mouseKeys.{move|scroll}.deceleratedSpeed <px/s, ~200/10 (NUMBER)>
     COMMAND = set mouseKeys.{move|scroll}.acceleratedSpeed <px/s, ~1600/50 (NUMBER)>
     #NOTIMPLEMENTED COMMAND = set mouseKeys.{move|scroll}.axisSkew FLOAT
-    COMMAND = set compensateDiagonalSpeed {0|1}
+    COMMAND = set diagonalSpeedCompensation {0|1}
     COMMAND = set chording {0|1}
     COMMAND = set stickyMods {0|never|smart|always|1}
     COMMAND = set debounceDelay <time in ms, at most 250 (NUMBER)>
@@ -527,7 +527,7 @@ For the purpose of toggling functionality on and off, and for global constants m
 ### Configuration options:
     
 - `set stickyMods {0|never|smart|always|1}` globally turns on or off sticky modifiers. This affects only standard scancode actions. Macro actions (both gui and command ones) are always nonsticky, unless `sticky` flag is included in `tapKey|holdKey|pressKey` commands. Default value is `smart`, which is the official behaviour - i.e., `<alt/ctrl/gui> + <tab/arrows>` are sticky. Furthermore `0 == never` and `1 == always`.
-- `set compensateDiagonalSpeed {0|1}` will divide diagonal mouse speed by sqrt(2) if enabled.
+- `set diagonalSpeedCompensation {0|1}` will divide diagonal mouse speed by sqrt(2) if enabled.
 - `set chording {0|1}` If enabled, keyboard will delay *all* key actions by 50ms. If another key is pressed during this time, pending key actions will be sorted according to their type:
   1) Keymap/layer switches
   2) Macros
