@@ -739,6 +739,22 @@ int32_t Macros_ParseInt(const char *a, const char *aEnd, const char* *parsedTill
     }
 }
 
+bool Macros_ParseBoolean(const char *a, const char *aEnd)
+{
+    if (TokenMatches(a, aEnd, "true")) {
+        return true;
+    }
+    else if (TokenMatches(a, aEnd, "false")) {
+        return false;
+    }
+    else if (isNUM(a, aEnd)) {
+        return Macros_ParseInt(a, aEnd, NULL);
+    } else {
+        Macros_ReportError("Boolean value expected, got:",  a, aEnd);
+        return false;
+    }
+}
+
 static int32_t parseNUM(const char *a, const char *aEnd)
 {
     return Macros_ParseInt(a, aEnd, NULL);
@@ -2554,6 +2570,52 @@ static macro_result_t processCommand(const char* cmd, const char* cmdEnd)
     return MacroResult_Finished;
 }
 
+static macro_result_t processStockCommandAction(const char* cmd, const char* cmdEnd)
+{
+    if (*cmd == '$') {
+        cmd++;
+    }
+
+    const char* cmdTokEnd = TokEnd(cmd, cmdEnd);
+    if (cmdTokEnd > cmd && cmdTokEnd[-1] == ':') {
+        //skip labels
+        cmd = NextTok(cmd, cmdEnd);
+        if (cmd == cmdEnd) {
+            return MacroResult_Finished;
+        }
+    }
+    while(*cmd && cmd < cmdEnd) {
+        const char* arg1 = NextTok(cmd, cmdEnd);
+        switch(*cmd) {
+        case 'p':
+            if (TokenMatches(cmd, cmdEnd, "printStatus")) {
+                return processPrintStatusCommand();
+            }
+            else {
+                goto failed;
+            }
+            break;
+        case 's':
+            if (TokenMatches(cmd, cmdEnd, "set")) {
+                return MacroSetCommand(arg1, cmdEnd);
+            }
+            else {
+                goto failed;
+            }
+            break;
+        default:
+        failed:
+            Macros_ReportError("unrecognized command", cmd, cmdEnd);
+            return MacroResult_Finished;
+            break;
+        }
+        cmd = arg1;
+    }
+    //this is reachable if there is a train of conditions/modifiers/labels without any command
+    return MacroResult_Finished;
+
+}
+
 static macro_result_t processCommandAction(void)
 {
     const char* cmd = s->ms.currentMacroAction.cmd.text + s->ms.commandBegin;
@@ -2566,7 +2628,12 @@ static macro_result_t processCommandAction(void)
         return MacroResult_Finished;
     }
 
+#ifdef EXTENDED_MACROS
     macro_result_t actionInProgress = processCommand(cmd, cmdEnd);
+#else
+    macro_result_t actionInProgress = processStockCommandAction(cmd, cmdEnd);
+#endif
+
     s->as.currentConditionPassed = actionInProgress & MacroResult_InProgressFlag;
     return actionInProgress;
 }
@@ -3009,4 +3076,9 @@ void Macros_ContinueMacro(void)
     default:
         break;
     }
+}
+
+void Macros_ClearStatus(void)
+{
+    processClearStatusCommand();
 }

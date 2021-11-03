@@ -64,16 +64,16 @@ static void moduleSpeed(const char* arg1, const char *textEnd, module_configurat
         module->axisLockSkewFirstTick = 1.0f - ParseFloat(arg2, textEnd);
     }
     else if (TokenMatches(arg1, textEnd, "cursorAxisLockEnabled")) {
-        module->cursorAxisLock = Macros_ParseInt(arg2, textEnd, NULL);
+        module->cursorAxisLock = Macros_ParseBoolean(arg2, textEnd);
     }
     else if (TokenMatches(arg1, textEnd, "scrollAxisLockEnabled")) {
-        module->scrollAxisLock = Macros_ParseInt(arg2, textEnd, NULL);
+        module->scrollAxisLock = Macros_ParseBoolean(arg2, textEnd);
     }
     else if (TokenMatches(arg1, textEnd, "swapAxes")) {
-        module->swapAxes = Macros_ParseInt(arg2, textEnd, NULL);
+        module->swapAxes = Macros_ParseBoolean(arg2, textEnd);
     }
     else if (TokenMatches(arg1, textEnd, "invertScrollDirection")) {
-        module->invertScrollDirection = Macros_ParseInt(arg2, textEnd, NULL);
+        module->invertScrollDirection = Macros_ParseBoolean(arg2, textEnd);
     }
     else {
         Macros_ReportError("parameter not recognized:", arg1, textEnd);
@@ -98,7 +98,7 @@ static void module(const char* arg1, const char *textEnd)
 
 static void secondaryRoles(const char* arg1, const char *textEnd)
 {
-    //Todo when they are merged
+    Macros_ReportError("command not recognized:", arg1, textEnd);
 }
 
 static void mouseKeys(const char* arg1, const char *textEnd)
@@ -117,19 +117,19 @@ static void mouseKeys(const char* arg1, const char *textEnd)
     const char* arg3 = NextTok(arg2, textEnd);
 
     if (TokenMatches(arg2, textEnd, "initialSpeed")) {
-        state->initialSpeed = Macros_ParseInt(arg3, textEnd, NULL);
+        state->initialSpeed = Macros_ParseInt(arg3, textEnd, NULL) / state->intMultiplier;
     }
     else if (TokenMatches(arg2, textEnd, "baseSpeed")) {
-        state->baseSpeed = Macros_ParseInt(arg3, textEnd, NULL);
+        state->baseSpeed = Macros_ParseInt(arg3, textEnd, NULL) / state->intMultiplier;
     }
     else if (TokenMatches(arg2, textEnd, "initialAcceleration")) {
-        state->acceleration = Macros_ParseInt(arg3, textEnd, NULL);
+        state->acceleration = Macros_ParseInt(arg3, textEnd, NULL) / state->intMultiplier;
     }
     else if (TokenMatches(arg2, textEnd, "deceleratedSpeed")) {
-        state->deceleratedSpeed = Macros_ParseInt(arg3, textEnd, NULL);
+        state->deceleratedSpeed = Macros_ParseInt(arg3, textEnd, NULL) / state->intMultiplier;
     }
     else if (TokenMatches(arg2, textEnd, "acceleratedSpeed")) {
-        state->acceleratedSpeed = Macros_ParseInt(arg3, textEnd, NULL);
+        state->acceleratedSpeed = Macros_ParseInt(arg3, textEnd, NULL) / state->intMultiplier;
     }
     else if (TokenMatches(arg2, textEnd, "axisSkew")) {
         state->axisSkew = ParseFloat(arg3, textEnd);
@@ -139,15 +139,15 @@ static void mouseKeys(const char* arg1, const char *textEnd)
     }
 }
 
-static void stickyMods(const char* arg1, const char *textEnd)
+static void stickyModifiers(const char* arg1, const char *textEnd)
 {
-    if (TokenMatches(arg1, textEnd, "0") || TokenMatches(arg1, textEnd, "never")) {
+    if (TokenMatches(arg1, textEnd, "never")) {
         StickyModifierStrategy = Stick_Never;
     }
     else if (TokenMatches(arg1, textEnd, "smart")) {
         StickyModifierStrategy = Stick_Smart;
     }
-    else if (TokenMatches(arg1, textEnd, "1") || TokenMatches(arg1, textEnd, "always")) {
+    else if (TokenMatches(arg1, textEnd, "always")) {
         StickyModifierStrategy = Stick_Always;
     }
     else {
@@ -320,11 +320,11 @@ macro_result_t MacroSetCommand(const char* arg1, const char *textEnd)
     else if (TokenMatches(arg1, textEnd, "backlight")) {
         backlight(proceedByDot(arg1, textEnd), textEnd);
     }
-    else if (TokenMatches(arg1, textEnd, "compensateDiagonalSpeed")) {
-        CompensateDiagonalSpeed = Macros_ParseInt(arg2, textEnd, NULL);
+    else if (TokenMatches(arg1, textEnd, "diagonalSpeedCompensation")) {
+        DiagonalSpeedCompensation = Macros_ParseBoolean(arg2, textEnd);
     }
-    else if (TokenMatches(arg1, textEnd, "stickyMods")) {
-        stickyMods(arg2, textEnd);
+    else if (TokenMatches(arg1, textEnd, "stickyModifiers")) {
+        stickyModifiers(arg2, textEnd);
     }
     else if (TokenMatches(arg1, textEnd, "debounceDelay")) {
         uint16_t time = Macros_ParseInt(arg2, textEnd, NULL);
@@ -336,7 +336,7 @@ macro_result_t MacroSetCommand(const char* arg1, const char *textEnd)
         KeystrokeDelay = Macros_ParseInt(arg2, textEnd, NULL);
     }
     else if (TokenMatches(arg1, textEnd, "chording")) {
-        Chording = Macros_ParseInt(arg2, textEnd, NULL);
+        Chording = Macros_ParseBoolean(arg2, textEnd);
     }
     else if (TokenMatches(arg1, textEnd, "emergencyKey")) {
         uint16_t key = Macros_ParseInt(arg2, textEnd, NULL);

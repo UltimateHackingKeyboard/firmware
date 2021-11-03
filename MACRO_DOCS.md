@@ -100,8 +100,8 @@ Or with Mac (which requires prolonged press of caps lock):
 
 Enables and disables compensation of diagonal speed.
 
-    ifShift setCompensateDiagonalSpeed 1
-    ifNotShift setCompensateDiagonalSpeed 0
+    ifShift set diagonalSpeedCompensation true
+    ifNotShift set diagonalSpeedCompensation false
 
 Smart toggle (if tapped, locks layer; if used with a key, acts as a secondary role):
 
@@ -278,10 +278,10 @@ The following grammar is supported:
     COMMAND = set module.MODULEID.zoomSpeedDivisor <1-100 (FLOAT)>
     COMMAND = set module.MODULEID.axisLockStrength <0-1.0 (FLOAT)>
     COMMAND = set module.MODULEID.axisLockStrengthFirstTick <0-1.0 (FLOAT)>
-    COMMAND = set module.MODULEID.scrollAxisLockEnabled {0|1}
-    COMMAND = set module.MODULEID.cursorAxisLockEnabled {0|1}
-    COMMAND = set module.MODULEID.swapAxes {0|1}
-    COMMAND = set module.MODULEID.invertScrollDirection {0|1}
+    COMMAND = set module.MODULEID.scrollAxisLockEnabled BOOLEAN
+    COMMAND = set module.MODULEID.cursorAxisLockEnabled BOOLEAN
+    COMMAND = set module.MODULEID.swapAxes BOOLEAN
+    COMMAND = set module.MODULEID.invertScrollDirection BOOLEAN
     #NOTIMPLEMENTED COMMAND = set secondaryRoles
     COMMAND = set mouseKeys.{move|scroll}.initialSpeed <px/s, -100/20 (NUMBER)>
     COMMAND = set mouseKeys.{move|scroll}.baseSpeed <px/s, -800/20 (NUMBER)>
@@ -289,9 +289,9 @@ The following grammar is supported:
     COMMAND = set mouseKeys.{move|scroll}.deceleratedSpeed <px/s, ~200/10 (NUMBER)>
     COMMAND = set mouseKeys.{move|scroll}.acceleratedSpeed <px/s, ~1600/50 (NUMBER)>
     COMMAND = set mouseKeys.{move|scroll}.axisSkew <multiplier, 0.5-2.0 (FLOAT)>
-    COMMAND = set compensateDiagonalSpeed {0|1}
-    COMMAND = set chording {0|1}
-    COMMAND = set stickyMods {0|never|smart|always|1}
+    COMMAND = set compensateDiagonalSpeed BOOLEAN
+    COMMAND = set chording BOOLEAN
+    COMMAND = set stickyMods {never|smart|always}
     COMMAND = set debounceDelay <time in ms, at most 250 (NUMBER)>
     COMMAND = set keystrokeDelay <time in ms, at most 65535 (NUMBER)>
     COMMAND = set setEmergencyKey KEYID
@@ -326,6 +326,7 @@ The following grammar is supported:
     KEYMAPID = <abbrev>|last
     MACROID = last|CHAR|NUMBER
     NUMBER = [0-9]+ | -[0-9]+ | #<register idx (NUMBER)> | #key | @<relative macro action index(NUMBER)> | %<key idx in postponer queue (NUMBER)>
+    BOOLEAN = true | false | NUMBER
     FLOAT = [0-9]+{.[0-9]+} | -FLOAT
     CHAR = <any nonwhite ascii char>
     KEYID = <id of hardware key obtained by resolveNextKeyId (NUMBER)>
@@ -553,9 +554,9 @@ For the purpose of toggling functionality on and off, and for global constants m
 
 ### Configuration options:
     
-- `set stickyMods {0|never|smart|always|1}` globally turns on or off sticky modifiers. This affects only standard scancode actions. Macro actions (both gui and command ones) are always nonsticky, unless `sticky` flag is included in `tapKey|holdKey|pressKey` commands. Default value is `smart`, which is the official behaviour - i.e., `<alt/ctrl/gui> + <tab/arrows>` are sticky. Furthermore `0 == never` and `1 == always`.
-- `set compensateDiagonalSpeed {0|1}` will divide diagonal mouse speed by sqrt(2) if enabled.
-- `set chording {0|1}` If enabled, keyboard will delay *all* key actions by 50ms. If another key is pressed during this time, pending key actions will be sorted according to their type:
+- `set stickyModifiers {never|smart|always}` globally turns on or off sticky modifiers. This affects only standard scancode actions. Macro actions (both gui and command ones) are always nonsticky, unless `sticky` flag is included in `tapKey|holdKey|pressKey` commands. Default value is `smart`, which is the official behaviour - i.e., `<alt/ctrl/gui> + <tab/arrows>` are sticky.
+- `set diagonalSpeedCompensation BOOLEAN` will divide diagonal mouse speed by sqrt(2) if enabled.
+- `set chording BOOLEAN` If enabled, keyboard will delay *all* key actions by 50ms. If another key is pressed during this time, pending key actions will be sorted according to their type:
   1) Keymap/layer switches
   2) Macros
   3) Keystrokes and mouse actions
@@ -610,8 +611,8 @@ For the purpose of toggling functionality on and off, and for global constants m
   - `axisLockStrength` controls caret axis locking. Defaults to 0.5, valid values are 0-1.0.
     When you first move in navigation mode that has axis locking enabled, axis is locked to one of the axes. Furthermore, as long as this axis is active, the other axis input is multiplied by `1 - axisLockStrength` and gets zeroed with every tick. This means that in order to change locked direction (with 0.5 value), you have to produce stroke that goes at least twice as fast in the non-locked direction compared to the locked one.
   - `axisLockStrengthFirstTick` - same meaning as `axisLockStrength`, but controls whether axis locking applies on first tick. Nonzero value means that firt tick will require a "push" before cursor starts moving. 
-  - `cursorAxisLockEnabled {0|1}` - turns axis locking on for cursor mode. Not recommended, but possible.
-  - `scrollAxisLockEnabled {0|1}` - turns axis locking on for scroll mode. Default for keycluster trackball.
+  - `cursorAxisLockEnabled BOOLEAN` - turns axis locking on for cursor mode. Not recommended, but possible.
+  - `scrollAxisLockEnabled BOOLEAN` - turns axis locking on for scroll mode. Default for keycluster trackball.
 
 - Remapping keys:
   - `set navigationModeAction.{caret|media}.{DIRECTION|none} MACROID` can be used to customize caret or media mode behaviour by binding directions to macros. This action is global and reversible only by powercycling.

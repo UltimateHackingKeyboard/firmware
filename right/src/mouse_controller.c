@@ -29,7 +29,7 @@ static uint32_t mouseElapsedTime;
 uint8_t ActiveMouseStates[ACTIVE_MOUSE_STATES_COUNT];
 uint8_t ToggledMouseStates[ACTIVE_MOUSE_STATES_COUNT];
 
-bool CompensateDiagonalSpeed = false;
+bool DiagonalSpeedCompensation = false;
 
 mouse_kinetic_state_t MouseMoveState = {
     .isScroll = false,
@@ -188,7 +188,7 @@ static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
 
         updateDirectionSigns(kineticState);
 
-        if ( kineticState->horizontalStateSign != 0 && kineticState->verticalStateSign != 0 && CompensateDiagonalSpeed ) {
+        if ( kineticState->horizontalStateSign != 0 && kineticState->verticalStateSign != 0 && DiagonalSpeedCompensation ) {
             distance /= 1.41f;
         }
 

@@ -57,6 +57,10 @@ Going forward, it's easier to flash the firmware of your choice by using the dow
 
 Want to contribute? Let us show you [how](/CONTRIBUTING.md).
 
+## Extended macros
+
+In order to build with extended macro support, either specify `--extendedMacros` as parameter to `make-release.js`, or specify `CUSTOM_CFLAGS=-DEXTENDED_MACROS` as parameter to `make`.
+
 ## Custom Firmwares
 
 The following list contains unofficial forks of the firmware. These forks provide functionality unavailable in the official firmware, but come without guarantees of any kind:
