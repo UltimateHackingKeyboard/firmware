@@ -116,13 +116,13 @@ static void mouseKeys(const char* arg1, const char *textEnd)
 
 static void stickyMods(const char* arg1, const char *textEnd)
 {
-    if (TokenMatches(arg1, textEnd, "0") || TokenMatches(arg1, textEnd, "never")) {
+    if (TokenMatches(arg1, textEnd, "never")) {
         StickyModifierStrategy = Stick_Never;
     }
     else if (TokenMatches(arg1, textEnd, "smart")) {
         StickyModifierStrategy = Stick_Smart;
     }
-    else if (TokenMatches(arg1, textEnd, "1") || TokenMatches(arg1, textEnd, "always")) {
+    else if (TokenMatches(arg1, textEnd, "always")) {
         StickyModifierStrategy = Stick_Always;
     }
     else {
@@ -144,7 +144,7 @@ macro_result_t MacroSetCommand(const char* arg1, const char *textEnd)
         mouseKeys(proceedByDot(arg1, textEnd), textEnd);
     }
     else if (TokenMatches(arg1, textEnd, "diagonalSpeedCompensation")) {
-        DiagonalSpeedCompensation = Macros_ParseInt(arg2, textEnd, NULL);
+        DiagonalSpeedCompensation = Macros_ParseBoolean(arg2, textEnd);
     }
     else if (TokenMatches(arg1, textEnd, "stickyMods")) {
         stickyMods(arg2, textEnd);
@@ -159,7 +159,7 @@ macro_result_t MacroSetCommand(const char* arg1, const char *textEnd)
         KeystrokeDelay = Macros_ParseInt(arg2, textEnd, NULL);
     }
     else if (TokenMatches(arg1, textEnd, "chording")) {
-        Chording = Macros_ParseInt(arg2, textEnd, NULL);
+        Chording = Macros_ParseBoolean(arg2, textEnd);
     }
     else if (TokenMatches(arg1, textEnd, "emergencyKey")) {
         uint16_t key = Macros_ParseInt(arg2, textEnd, NULL);

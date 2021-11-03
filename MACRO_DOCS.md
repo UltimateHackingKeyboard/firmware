@@ -269,9 +269,9 @@ The following grammar is supported:
     COMMAND = set mouseKeys.{move|scroll}.deceleratedSpeed <px/s, ~200/10 (NUMBER)>
     COMMAND = set mouseKeys.{move|scroll}.acceleratedSpeed <px/s, ~1600/50 (NUMBER)>
     #NOTIMPLEMENTED COMMAND = set mouseKeys.{move|scroll}.axisSkew FLOAT
-    COMMAND = set diagonalSpeedCompensation {0|1}
-    COMMAND = set chording {0|1}
-    COMMAND = set stickyMods {0|never|smart|always|1}
+    COMMAND = set diagonalSpeedCompensation BOOLEAN
+    COMMAND = set chording BOOLEAN
+    COMMAND = set stickyMods {never|smart|always}
     COMMAND = set debounceDelay <time in ms, at most 250 (NUMBER)>
     COMMAND = set keystrokeDelay <time in ms, at most 65535 (NUMBER)>
     COMMAND = set setEmergencyKey KEYID
@@ -300,6 +300,7 @@ The following grammar is supported:
     KEYMAPID = <abbrev>|last
     MACROID = last|CHAR|NUMBER
     NUMBER = [0-9]+ | -[0-9]+ | #<register idx (NUMBER)> | #key | @<relative macro action index(NUMBER)> | %<key idx in postponer queue (NUMBER)>
+    BOOLEAN = true | false | NUMBER
     FLOAT = [0-9]+{.[0-9]+} | -FLOAT
     CHAR = <any nonwhite ascii char>
     KEYID = <id of hardware key obtained by resolveNextKeyId (NUMBER)>
@@ -526,7 +527,7 @@ For the purpose of toggling functionality on and off, and for global constants m
 
 ### Configuration options:
     
-- `set stickyMods {0|never|smart|always|1}` globally turns on or off sticky modifiers. This affects only standard scancode actions. Macro actions (both gui and command ones) are always nonsticky, unless `sticky` flag is included in `tapKey|holdKey|pressKey` commands. Default value is `smart`, which is the official behaviour - i.e., `<alt/ctrl/gui> + <tab/arrows>` are sticky. Furthermore `0 == never` and `1 == always`.
+- `set stickyMods {never|smart|always}` globally turns on or off sticky modifiers. This affects only standard scancode actions. Macro actions (both gui and command ones) are always nonsticky, unless `sticky` flag is included in `tapKey|holdKey|pressKey` commands. Default value is `smart`, which is the official behaviour - i.e., `<alt/ctrl/gui> + <tab/arrows>` are sticky.
 - `set diagonalSpeedCompensation {0|1}` will divide diagonal mouse speed by sqrt(2) if enabled.
 - `set chording {0|1}` If enabled, keyboard will delay *all* key actions by 50ms. If another key is pressed during this time, pending key actions will be sorted according to their type:
   1) Keymap/layer switches

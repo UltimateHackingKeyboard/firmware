@@ -697,6 +697,22 @@ int32_t Macros_ParseInt(const char *a, const char *aEnd, const char* *parsedTill
     }
 }
 
+bool Macros_ParseBoolean(const char *a, const char *aEnd)
+{
+    if (TokenMatches(a, aEnd, "true")) {
+        return true;
+    }
+    else if (TokenMatches(a, aEnd, "false")) {
+        return false;
+    }
+    else if (isNUM(a, aEnd)) {
+        return Macros_ParseInt(a, aEnd, NULL);
+    } else {
+        Macros_ReportError("Boolean value expected, got:",  a, aEnd);
+        return false;
+    }
+}
+
 static int32_t parseNUM(const char *a, const char *aEnd)
 {
     return Macros_ParseInt(a, aEnd, NULL);
