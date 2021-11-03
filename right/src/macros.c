@@ -2705,3 +2705,8 @@ void Macros_ContinueMacro(void)
     s = NULL;
     MacroPlaying &= someonePlaying;
 }
+
+void Macros_ClearStatus(void)
+{
+    processClearStatusCommand();
+}
