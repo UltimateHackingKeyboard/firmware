@@ -335,8 +335,8 @@ macro_result_t MacroSetCommand(const char* arg1, const char *textEnd)
     else if (TokenMatches(arg1, textEnd, "keystrokeDelay")) {
         KeystrokeDelay = Macros_ParseInt(arg2, textEnd, NULL);
     }
-    else if (TokenMatches(arg1, textEnd, "chording")) {
-        Chording = Macros_ParseBoolean(arg2, textEnd);
+    else if (TokenMatches(arg1, textEnd, "chordingDelay")) {
+        ChordingDelay = Macros_ParseInt(arg2, textEnd, NULL);
     }
     else if (TokenMatches(arg1, textEnd, "emergencyKey")) {
         uint16_t key = Macros_ParseInt(arg2, textEnd, NULL);
