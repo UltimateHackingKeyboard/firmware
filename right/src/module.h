@@ -29,7 +29,7 @@
         // acceleration configurations
         float baseSpeed;
         float speed;
-        float acceleration;
+        float xceleration;
 
         // navigation mode configurations
         float scrollSpeedDivisor;

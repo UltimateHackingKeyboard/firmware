@@ -29,7 +29,7 @@ static uint32_t mouseElapsedTime;
 uint8_t ActiveMouseStates[ACTIVE_MOUSE_STATES_COUNT];
 uint8_t ToggledMouseStates[ACTIVE_MOUSE_STATES_COUNT];
 
-bool CompensateDiagonalSpeed = false;
+bool DiagonalSpeedCompensation = false;
 
 mouse_kinetic_state_t MouseMoveState = {
     .isScroll = false,
@@ -188,7 +188,7 @@ static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
 
         updateDirectionSigns(kineticState);
 
-        if ( kineticState->horizontalStateSign != 0 && kineticState->verticalStateSign != 0 && CompensateDiagonalSpeed ) {
+        if ( kineticState->horizontalStateSign != 0 && kineticState->verticalStateSign != 0 && DiagonalSpeedCompensation ) {
             distance /= 1.41f;
         }
 
@@ -232,6 +232,24 @@ static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
     kineticState->wasMoveAction = isMoveAction;
 }
 
+static float fast_pow (float a, float b)
+{
+    // https://nic.schraudolph.org/pubs/Schraudolph99.pdf
+    // https://martin.ankerl.com/2007/10/04/optimized-pow-approximation-for-java-and-c-c/
+    if ( b == 0.0f ) {
+        return 1.0f;
+    } else {
+        union {
+            float f;
+            int16_t x[2];
+        } u = { a } ;
+
+        u.x[1] = (int16_t)(b * (u.x[1] - 16249) + 16249);
+        u.x[0] = 0;
+        return u.f;
+    }
+}
+
 static float computeModuleSpeed(float x, float y, uint8_t moduleId)
 {
     //means that driver multiplier equals 1.0 at average speed midSpeed px/ms
@@ -248,7 +266,7 @@ static float computeModuleSpeed(float x, float y, uint8_t moduleId)
     }
 
     float normalizedSpeed = *currentSpeed/midSpeed;
-    return moduleConfiguration->baseSpeed + moduleConfiguration->speed*(float)pow(normalizedSpeed, moduleConfiguration->acceleration);
+    return moduleConfiguration->baseSpeed + moduleConfiguration->speed*(float)fast_pow(normalizedSpeed, moduleConfiguration->xceleration);
 }
 
 
@@ -604,6 +622,7 @@ void MouseController_ProcessMouseActions()
 
 
     if (Slaves[SlaveId_RightTouchpad].isConnected) {
+        // TODO: this is still unsafe w.r.t interrupts
         processTouchpadActions();
         processModuleActions(ModuleId_TouchpadRight, (int16_t)TouchpadEvents.x, (int16_t)TouchpadEvents.y, 0xFF);
         processModuleActions(ModuleId_TouchpadRight, (int16_t)TouchpadEvents.wheelX, (int16_t)TouchpadEvents.wheelY, NavigationMode_Scroll);
@@ -621,9 +640,17 @@ void MouseController_ProcessMouseActions()
             continue;
         }
 
-        processModuleActions(moduleState->moduleId, (int16_t)moduleState->pointerDelta.x, (int16_t)moduleState->pointerDelta.y, 0xFF);
+        __disable_irq();
+        // Gcc compiles those int16_t assignments as sequences of
+        // single-byte instructions, therefore we need to make the
+        // sequence atomic.
+        int16_t x = moduleState->pointerDelta.x;
+        int16_t y = moduleState->pointerDelta.y;
         moduleState->pointerDelta.x = 0;
         moduleState->pointerDelta.y = 0;
+        __enable_irq();
+
+        processModuleActions(moduleState->moduleId, x, y, 0xFF);
     }
 
     if (ActiveMouseStates[SerializedMouseAction_LeftClick]) {

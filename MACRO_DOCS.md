@@ -30,13 +30,11 @@ Some of the usecases which can be achieved via these commands are:
 
    Agent is the UHK configuration tool. You can get it at https://github.com/UltimateHackingKeyboard/agent/releases . When you start the Agent up, go to 'firmware' and 'Choose firmware file and flash it'. 
 
-2) Create some macro. Enter each command as **a single write text action**. (Lines prefixed with `$` are interpretted .) All action types
-can be combined. E.g.:
+2) Create some macro with some command action. For instance:
 
-    ![Example macro showing double-shift-to-caps lock.](https://github.com/kareltucek/firmware/raw/master/macroExample.png)
-
-    If you are on Mac, this macro may not work, but you get the idea. (If you actually want to get it running, see known issues and examples.)
-
+    holdKey leftShift
+    ifDoubletap tapKey capsLock
+    
 3) Understanding this readme:
 
     - Go through the sections of the reference manual below - just reading the top section lines will give you some idea about available  types of commands.
@@ -50,136 +48,137 @@ can be combined. E.g.:
 4) If you encounter a bug, let me know. There are lots of features and quite few users around this codebase - if you do not report problems you find, chances are that no one else will (since most likely no one else has noticed). 
 
 ## Examples
-**Note that every command (i.e., every line in the examples) has to be inputted as a separate action!** Also note that macros are being run "asynchronously" (i.e., interleaved with other event handling) at a pace of at most one action per update cycle per macro. A macro action may take one or more update cycles to complete (esp. delay commands and all commands which interfere with usb reports).
+
+Every nonempty line is considered as one command. Empty line, or commented line too. Empty lines are skipped. Exception is empty command action, which counts for one command. Note that macros are being run "asynchronously" (i.e., interleaved with other event handling) at a pace of at most one action per update cycle per macro. A macro action may take one or more update cycles to complete (esp. delay commands and all commands which interfere with usb reports).
 
 For instance, if the following text is pasted as a macro text action, playing the macro will result in switching to QWR keymap.
     
-    $switchKeymap QWR
+    switchKeymap QWR
     
 Runtime macro recorder example. In this setup, shift+key will start recording (indicated by the "adaptive mode" led), another shift+key will stop recording. Hiting the key alone will then replay the macro (e.g., a simple repetitive text edit). Alternatively, virtual register `#key` can be used as an argument in order to assign every key to different slot.
 
-    $ifShift recordMacro A
-    $ifNotShift playMacro A
+    ifShift recordMacro A
+    ifNotShift playMacro A
 
 Implementation of standard double-tap-locking hold modifier in recursive version could look like: ("Recursivity" refers to ability to toggle another layer on top of the toggled layer.)
 
-    $holdLayer fn
-    $ifDoubletap toggleLayer fn
+    holdLayer fn
+    ifDoubletap toggleLayer fn
 
 Once the layer is toggled, the target layer needs to contain another macro to allow return to the base layer. For instance:
 
-    $holdLayer previous
-    $ifDoubletap unToggleLayer
+    holdLayer previous
+    ifDoubletap unToggleLayer
     
 Alternative way to implement the above example would be the following. However, using `holdLayer` for "hold" mechanisms is strongly encouraged due to more elaborate release logic:
 
-    $toggleLayer fn
-    $delayUntilRelease
-    $untoggleLayer 
-    $ifDoubletap toggleLayer fn
+    toggleLayer fn
+    delayUntilRelease
+    untoggleLayer 
+    ifDoubletap toggleLayer fn
 
 Creating double-shift-to-caps may look like:
    
     <press Shift>
-    $delayUntilRelease
+    delayUntilRelease
     <releaseShift>
-    $ifNotDoubletap break
+    ifNotDoubletap break
     <tap CapsLock>
 
 Or (with newer releases):
 
-    $holdKey leftShift
-    $ifDoubletap tapKey capsLock
+    holdKey leftShift
+    ifDoubletap tapKey capsLock
 
 Or with Mac (which requires prolonged press of caps lock):
 
-    $holdKey leftShift
-    $ifNotDoubletap break
-    $pressKey capsLock
-    $delayUntil 400
-    $releaseKey capsLock
+    holdKey leftShift
+    ifNotDoubletap break
+    pressKey capsLock
+    delayUntil 400
+    releaseKey capsLock
 
 Enables and disables compensation of diagonal speed.
 
-    $ifShift setCompensateDiagonalSpeed 1
-    $ifNotShift setCompensateDiagonalSpeed 0
+    ifShift set diagonalSpeedCompensation 1
+    ifNotShift set diagonalSpeedCompensation 0
 
 Smart toggle (if tapped, locks layer; if used with a key, acts as a secondary role):
 
-    $holdLayer mouse
-    $ifNotInterrupted toggleLayer mouse
+    holdLayer mouse
+    ifNotInterrupted toggleLayer mouse
 
 Regular secondary role: (Activates the secondary role immediately and if no other key is pressed prior to its release, activates the primary role on release.)
 
-    $holdLayer mouse
-    $ifInterrupted break
+    holdLayer mouse
+    ifInterrupted break
     <regular action>
 
 Regular secondary role with prevention of accidential key taps: (Activates the secondary role immediately, but activates the primary role only if the key has been pressed for at least a certain amount of time. This could be used to emulate the [Space Cadet Shift feature](https://beta.docs.qmk.fm/using-qmk/advanced-keycodes/feature_space_cadet).)
 
-    $holdKey leftShift
-    $ifInterrupted break
-    $ifPlaytime 200 break
-    $tapKey S-9
+    holdKey leftShift
+    ifInterrupted break
+    ifPlaytime 200 break
+    tapKey S-9
 
 You can refer to layers of different keymaps via a set of `keymapLayer` commands. E.g.:
 
-    $holdKeymapLayer QWR base
+    holdKeymapLayer QWR base
 
 Mapping shift/nonshift scancodes independently:
 
-    $ifShift suppressMods write 4
-    $ifNotShift write %
+    ifShift suppressMods write 4
+    ifNotShift write %
     
 Secondary role (i.e., a role which becomes active if another key is pressed with this key) can be implemented in two variants: regular and postponed. 
 
-  - Regular version can be implemented for instance as `$holdLayer mouse; ifNotInterrupted tapKey enter` - it always triggers secondary role, and once the key is released it either triggers primary role or not. 
+  - Regular version can be implemented for instance as `holdLayer mouse; ifNotInterrupted tapKey enter` - it always triggers secondary role, and once the key is released it either triggers primary role or not. 
   - Postponed version postpones all other keypresses until it can distinguish between primary and secondary role. This is handy for alphabetic keys, because regular version would trigger on overlaps of alphabetic keys when writing regular textx. The postponed version can be used either via `ifPrimary` and `ifSecondary` conditions, or via a `resolveSecondary`. 
 
 Postponed secondary role switch - simple version using `ifPrimary`. 
 
-    $ifPrimary final holdKey a
-    $holdLayer mouse
+    ifPrimary final holdKey a
+    holdLayer mouse
 
 Postponed secondary role switch - `resolveSeccondary` is a bit more flexible and less user-friendly version of the `ifPrimary`/`ifSecondary` command. The `resolveSecondary` will listen for some time and once it decides whether the current situation fits primary or secondary action, it will issue goTo to the "second" line (line 1 since we index from 0) or the last line (line 3). Actions are indexed from 0. 
 
-    $resolveSecondary 350 1 3
-    $write f
-    $break
-    $holdLayer mod
+    resolveSecondary 350 1 3
+    write f
+    break
+    holdLayer mod
 
 Mapping custom shortcuts may be done using `ifShortcut` command. The macro needs to be placed on the first key of the shortcut, and refers to other keys by their hardware ids obtained by `resolveNextKeyId` command (i.e., activating the command and pressing the key while having a text editor focused). The (`ifShortcut`) command will postpone other actions until sufficient number of keys is pressed. If the pressed keys correspond to the arguments, the keys are consumed and the rest of the command performed. Otherwise, postponed keypresses are either used up by the rest of the macro or replayed back. The `final` modifier breaks the command after the "modified" `tapKey` command finishes. 
 
-    $ifShortcut 90 final tapKey v
-    $ifShortcut 88 final tapKey x
-    $ifShortcut 70 71 final tapKey CG-a
-    $tapKey c
+    ifShortcut 90 final tapKey v
+    ifShortcut 88 final tapKey x
+    ifShortcut 70 71 final tapKey CG-a
+    tapKey c
 
 Similar command can be used to implement "loose gestures" - i.e., shortcuts where the second keypress can follow without continuity of press of the first key. It suffices to replace the `ifShortcut` by `ifGesture`. Vim-like gt and gT (g+shift+t) tab switching:
 
-    $ifGesture 077 final tapKey C-pageUp 
-    $ifGesture 085 077 final tapKey C-pageDown
-    $tapKey g
+    ifGesture 077 final tapKey C-pageUp 
+    ifGesture 085 077 final tapKey C-pageDown
+    tapKey g
 
 In the above examples, `tapKey` can be (and probably should be) replaced by `holdKey`. "Hold" activates the scancode for as long as the key is pressed while "tap" activates it just for a fraction of a second. This distinction may seem unimportant, but just as long as you don't try to play some games with it.
 
 Complex key sequences can be achieved using `tapKeySeq`. For instance, following emoji macro (uses linux  Ctrl+U notation) - tap `thisMacro + s + h` (as shrug) to get shrugging person, or `thisMacro + s + w` to get sweaty smile.
 
-    $ifGesture 80 73 final tapKeySeq CS-u 1 f 6 0 5 space
-    $ifGesture 80 21 final tapKeySeq CS-u 1 f 9 3 7 space
+    ifGesture 80 73 final tapKeySeq CS-u 1 f 6 0 5 space
+    ifGesture 80 21 final tapKeySeq CS-u 1 f 9 3 7 space
 
 You can simplify writing macros by using `#` and `@` characters. The first resolves a number as an index of a register. The second interprets the number as a relative action index. For instance the following macro will write out five "a"s with 50 ms delays
     
     //you can comment your code via two slashes. 
-    $ifCtrl goTo default    //goto can also go to labels, absolute adresses and relative adresses
-    $ifShift final tapKey a //final modifier ends the macro once the command has finished
-    $setReg 0 50            //store number 50 into register 0
-    $setReg 1 5
-    $tapKey a
-    $delayUntil #0          //the #0 is expanded to content of register 0
-    $repeatFor 1 @-2        //decrement register 1; if it is non-zero, return by two commands to the tapKey command
-    $noOp                   //note the @ character - it resolves relative address to absolute (i.e., adds current adr)
-    $default: tapKey b      //$<string>: denotes a label, which can be used as jump target
+    ifCtrl goTo default    //goto can also go to labels, absolute adresses and relative adresses
+    ifShift final tapKey a //final modifier ends the macro once the command has finished
+    setReg 0 50            //store number 50 into register 0
+    setReg 1 5
+    tapKey a
+    delayUntil #0          //the #0 is expanded to content of register 0
+    repeatFor 1 @-2        //decrement register 1; if it is non-zero, return by two commands to the tapKey command
+    noOp                   //note the @ character - it resolves relative address to absolute (i.e., adds current adr)
+    default: tapKey b      //<string>: denotes a label, which can be used as jump target
 
 ## Example Keymaps
 
@@ -198,14 +197,14 @@ If you wish to feature your keymap here, feel free to post a PR or a ticket with
 
 Macro events allow hooking special behaviour, such as applying specific configuration, to events. This is done via a special naming scheme. Currently, following names are supported:
 
-    $onInit
-    $onKeymapChange <keymap 3char abbreviation(KEYMAPID)>
+    onInit
+    onKeymapChange <keymap 3char abbreviation(KEYMAPID)>
 
-I.e., if you want to customize acceleration driver for your trackball module on keymap QWR, create macro named `$onKeymapChange QWR`, with content e.g.:
+I.e., if you want to customize acceleration driver for your trackball module on keymap QWR, create macro named `onKeymapChange QWR`, with content e.g.:
 
     set module.trackball.baseSpeed 0.5
     set module.trackball.speed 1.0
-    set module.trackball.acceleration 1.0
+    set module.trackball.xceleration 1.0
 
 # Macro commands
 
@@ -213,7 +212,7 @@ The following grammar is supported:
 
     BODY = #<comment>
     BODY = //<comment>
-    BODY = $[LABEL:] COMMAND [//<comment, excluding commands taking custom text arguments>]
+    BODY = [LABEL:] COMMAND [//<comment, excluding commands taking custom text arguments>]
     COMMAND = [CONDITION|MODIFIER]* COMMAND
     COMMAND = delayUntilRelease
     COMMAND = delayUntil <timeout (NUMBER)>
@@ -233,7 +232,7 @@ The following grammar is supported:
     COMMAND = postponeNext <number of commands (NUMER)>
     COMMAND = break
     COMMAND = noOp
-    COMMAND = {exec|call} MACRONAME
+    COMMAND = {exec|call|fork} MACRONAME
     COMMAND = stopAllMacros
     COMMAND = statsRuntime
     COMMAND = statsLayerStack
@@ -261,8 +260,8 @@ The following grammar is supported:
     COMMAND = tapKeySeq [SHORTCUT]+
     COMMAND = set module.MODULEID.navigationMode.LAYERID NAVIGATIONMODE
     COMMAND = set module.MODULEID.baseSpeed <speed multiplier part that always applies, 0-10.0 (FLOAT)>
-    COMMAND = set module.MODULEID.speed <speed multiplier part that is affected by acceleration, 0-10.0 (FLOAT)>
-    COMMAND = set module.MODULEID.acceleration <exponent 0-1.0 (FLOAT)>
+    COMMAND = set module.MODULEID.speed <speed multiplier part that is affected by xceleration, 0-10.0 (FLOAT)>
+    COMMAND = set module.MODULEID.xceleration <exponent 0-1.0 (FLOAT)>
     COMMAND = set module.MODULEID.caretSpeedDivisor <1-100 (FLOAT)>
     COMMAND = set module.MODULEID.scrollSpeedDivisor <1-100 (FLOAT)>
     COMMAND = set module.MODULEID.zoomSpeedDivisor <1-100 (FLOAT)>
@@ -279,9 +278,9 @@ The following grammar is supported:
     COMMAND = set mouseKeys.{move|scroll}.deceleratedSpeed <px/s, ~200/10 (NUMBER)>
     COMMAND = set mouseKeys.{move|scroll}.acceleratedSpeed <px/s, ~1600/50 (NUMBER)>
     COMMAND = set mouseKeys.{move|scroll}.axisSkew <multiplier, 0.5-2.0 (FLOAT)>
-    COMMAND = set compensateDiagonalSpeed {0|1}
-    COMMAND = set chording {0|1}
-    COMMAND = set stickyMods {0|never|smart|always|1}
+    COMMAND = set diagonalSpeedCompensation BOOLEAN
+    COMMAND = set chordingDelay <time in ms (NUMBER)>
+    COMMAND = set stickyModifiers {never|smart|always}
     COMMAND = set debounceDelay <time in ms, at most 250 (NUMBER)>
     COMMAND = set keystrokeDelay <time in ms, at most 65535 (NUMBER)>
     COMMAND = set setEmergencyKey KEYID
@@ -310,6 +309,7 @@ The following grammar is supported:
     KEYMAPID = <abbrev>|last
     MACROID = last|CHAR|NUMBER
     NUMBER = [0-9]+ | -[0-9]+ | #<register idx (NUMBER)> | #key | @<relative macro action index(NUMBER)> | %<key idx in postponer queue (NUMBER)>
+    BOOLEAN = 0 | 1
     FLOAT = [0-9]+{.[0-9]+} | -FLOAT
     CHAR = <any nonwhite ascii char>
     KEYID = <id of hardware key obtained by resolveNextKeyId (NUMBER)>
@@ -368,14 +368,14 @@ The following grammar is supported:
 
 ### Triggering keyboard actions (pressing keys, clicking, etc.):
 
-- `write <custom text>` will type rest of the string. Same as the plain text command. This is just easier to use with conditionals... If you want to interpolate register values, use (e.g.) `$setStatus Register 0 contains #0; $printStatus`.
-- `writeExpr NUMBER` serves for writing out contents of registers or otherwise computed numbers. E.g., `$writeExpr #5` or `$writeExpr @-2`.
+- `write <custom text>` will type rest of the string. Same as the plain text command. This is just easier to use with conditionals... If you want to interpolate register values, use (e.g.) `setStatus Register 0 contains #0; printStatus`.
+- `writeExpr NUMBER` serves for writing out contents of registers or otherwise computed numbers. E.g., `writeExpr #5` or `writeExpr @-2`.
 - `startMouse/stopMouse` start/stop corresponding mouse action. E.g., `startMouse move left`
 - `pressKey|holdKey|tapKey|releaseKey` Presses/holds/taps/releases the provided scancode. E.g., `pressKey mouseBtnLeft`, `tapKey LC-v` (Left Control + (lowercase) v), `tapKey CS-f5` (Ctrl + Shift + F5), `LS-` (just tap left Shift).
   - press means adding the scancode into a list of "active keys" and continuing the macro. The key is released once the macro ends. I.e., if the command is not followed by any sort of delay, the key will be released again almost immediately.
   - release means removing the scancode from the list of "active keys". I.e., it negates effect of `pressKey` within the same macro. This does not affect scancodes emited by different keyboard actions.
   - tap means pressing a key (more precisely, activating the scancode) and immediately releasing it again
-  - hold means pressing the key, waiting until key which activated the macro is released and then releasing the key again. I.e., `$holdKey <x>` is equivalent to `$pressKey <x>; $delayUntilRelease; $releaseKey <x>`, while `$tapKey <x>` is equivalent to `$pressKey <x>; $releaseKey <x>`.
+  - hold means pressing the key, waiting until key which activated the macro is released and then releasing the key again. I.e., `holdKey <x>` is equivalent to `pressKey <x>; delayUntilRelease; releaseKey <x>`, while `tapKey <x>` is equivalent to `pressKey <x>; releaseKey <x>`.
   - tapKeySeq can be used for executing custom sequences. Default action for each shortcut in sequence is tap. Other actions can be specified using `MODMASK`. E.g.:
     - `CS-u 1 2 3 space` - control shift U + number + space - linux shortcut for custom unicode character.
     - `pA- tab tab rA-` - tap alt tab twice to bring forward second background window.
@@ -392,7 +392,8 @@ The following grammar is supported:
 - `break` will end playback of the current macro
 - `noOp` does nothing - i.e., stops macro for exactly one update cycle and then continues.
 - `exec MACRONAME` will execute different macro in current state slot. I.e., the macro will be executed in current context and will *not* return. First action of the called macro is executed within the same eventloop cycle.
-- `call MACRONAME` will execute another macro in a new state slot. After the called macro finishes, the control returns to the caller macro. First action of the called macro is executed within the same eventloop cycle. The called macro has its own context (e.g., its own ifInterrupted flag, its own postponing counter and flags etc.) Beware, the state pool is small - do not use deep call trees!
+- `call MACRONAME` will execute another macro in a new state slot and enters sleep mode. After the called macro finishes, the control returns to the caller macro. First action of the called macro is executed within the same eventloop cycle. The called macro has its own context (e.g., its own ifInterrupted flag, its own postponing counter and flags etc.) Beware, the state pool is small - do not use deep call trees!
+- `call MACRONAME` will execute another macro in a new state slot, without entering sleep mode.
 - `stopAllMacros` interrupts all macros. 
 
 ### Status buffer/Debugging tools
@@ -407,7 +408,7 @@ The following grammar is supported:
 - `statsActiveMacros` will output all active macros (into the buffer).
 - `statsRegs` will output content of all registers (into the buffer).
 - `diagnose` will deactivate all keys and macros and print diagnostic information into the status buffer.
-- `setEmergencyKey KEYID` will make the one key be ignored by postponing mechanisms. `diagnose` command on such key can be used to recover keyboard from conditions like infinite postponing loop...
+- `set emergencyKey KEYID` will make the one key be ignored by postponing mechanisms. `diagnose` command on such key can be used to recover keyboard from conditions like infinite postponing loop...
 
 ### Delays:
 
@@ -452,7 +453,7 @@ Commands:
 
 ### Postponing mechanisms. 
 
-We allow postponing key activations in order to allow deciding between some scenarios depending on the next pressed key and then activating the keys pressed in "past" in the newly determined context. The postponing mechanism happens in key state preprocessing phase - i.e., works prior to activation of the key's action, including all macros. Postponing mechanism registers and postpones both key presses and releases, but does not preserve delays between them. Postponing affects even macro keystate queries, unless the macro in question is the one which initiates the postponing state (otherwise `$postponeKeys delayUntilRelease` would indefinitely postpone its own release). Replay of postponed keys happens every `CYCLES_PER_ACTIVATION` update cycles, currently 2.The following commands either use this feature or allow control of the queue.
+We allow postponing key activations in order to allow deciding between some scenarios depending on the next pressed key and then activating the keys pressed in "past" in the newly determined context. The postponing mechanism happens in key state preprocessing phase - i.e., works prior to activation of the key's action, including all macros. Postponing mechanism registers and postpones both key presses and releases, but does not preserve delays between them. Postponing affects even macro keystate queries, unless the macro in question is the one which initiates the postponing state (otherwise `postponeKeys delayUntilRelease` would indefinitely postpone its own release). Replay of postponed keys happens every `CYCLES_PER_ACTIVATION` update cycles, currently 2.The following commands either use this feature or allow control of the queue.
 
 - `postponeKeys` modifier prefixed before another command keeps the firmware in postponing mode. Once no instance of postponeKeys modifer is active, the postponer will start replaying the keys. Replaying happens with normal event loop, which means that postponed keys will be replayed even during macro execution (most likely after next macro action). Some commands (thos from this section) apply this modifier implicitly. See MODIFIER section. 
 - `postponeNext <n>` command will apply `postponeKeys` modifier on the current command and following next n commands (macro actions).
@@ -531,17 +532,17 @@ For the purpose of toggling functionality on and off, and for global constants m
 - `setReg <register index> <value>` will set register identified by index to value.
 - `ifRegEq|ifNotRegEq` see CONDITION section
 - `{addReg|subReg|mulReg} <register index> <value>` adds value to the register 
-- Register values can also be used in place of all numeric arguments by prefixing register index by '#'. E.g., waiting until release or for amount of time defined by reg 1 can be achieved by `$delayUntilReleaseMax #1`
+- Register values can also be used in place of all numeric arguments by prefixing register index by '#'. E.g., waiting until release or for amount of time defined by reg 1 can be achieved by `delayUntilReleaseMax #1`
 
 ### Configuration options:
     
-- `set stickyMods {0|never|smart|always|1}` globally turns on or off sticky modifiers. This affects only standard scancode actions. Macro actions (both gui and command ones) are always nonsticky, unless `sticky` flag is included in `tapKey|holdKey|pressKey` commands. Default value is `smart`, which is the official behaviour - i.e., `<alt/ctrl/gui> + <tab/arrows>` are sticky. Furthermore `0 == never` and `1 == always`.
-- `set compensateDiagonalSpeed {0|1}` will divide diagonal mouse speed by sqrt(2) if enabled.
-- `set chording {0|1}` If enabled, keyboard will delay *all* key actions by 50ms. If another key is pressed during this time, pending key actions will be sorted according to their type:
+- `set stickyModifiers {never|smart|always}` globally turns on or off sticky modifiers. This affects only standard scancode actions. Macro actions (both gui and command ones) are always nonsticky, unless `sticky` flag is included in `tapKey|holdKey|pressKey` commands. Default value is `smart`, which is the official behaviour - i.e., `<alt/ctrl/gui> + <tab/arrows>` are sticky.
+- `set diagonalSpeedCompensation {0|1}` will divide diagonal mouse speed by sqrt(2) if enabled.
+- `set chordingDelay 0 | <time in ms (NUMBER)>` If nonzero, keyboard will delay *all* key actions by the specified time (recommended 50ms). If another key is pressed during this time, pending key actions will be sorted according to their type:
   1) Keymap/layer switches
   2) Macros
   3) Keystrokes and mouse actions
-  This allows the user to trigger chorded shortcuts in arbitrary ordrer (all at the "same" time).
+  This allows the user to trigger chorded shortcuts in arbitrary ordrer (all at the "same" time). E.g., if `A+Ctrl` is pressed instead of `Ctrl+A`, keyboard will still send `Ctrl+A` if the two key presses follow within the specified time.
 - `set debounceDelay <time in ms, at most 250>` prevents key state from changing for some time after every state change. This is needed because contacts of mechanical switches can bounce after contact and therefore change state multiple times in span of a few milliseconds. Official firmware debounce time is 50 ms for both press and release. Recommended value is 10-50, default is 50.
 - `set keystrokeDelay <time in ms, at most 65535>` allows slowing down keyboard output. This is handy for lousily written RDP clients and other software which just scans keys once a while and processes them in wrong order if multiple keys have been pressed inbetween. In more detail, this setting adds a delay whenever a basic usb report is sent. During this delay, key matrix is still scanned and keys are debounced, but instead of activating, the keys are added into a queue to be replayed later. Recommended value is 10 if you have issues with RDP missing modifier keys, 0 otherwise.
 - `set mouseKeys.{move|scroll}.{...} NUMBER` please refer to Agent for more details
@@ -550,13 +551,25 @@ For the purpose of toggling functionality on and off, and for global constants m
   - `deceleratedSpeed` - speed as affected by deceleration modifier
   - `acceleratedSpeed` - speed as affected by acceleration modifier
   - `axisSkew` - axis skew multiplies horizontal axis and divides vertical. Default value is 1.0, reasonable between 0.5-2.0 Useful for very niche usecases.
-- `set module.MODULEID.{baseSpeed|speed|acceleration}` modifies speed characteristics of right side modules. Simplified formula is `speedMultiplier(normalizedSpeed) = baseSpeed + speed*(normalizedSpeed^acceleration)` where `normalizedSpeed = actualSpeed / midSpeed`. Therefore `appliedDistance(distance d, time t) = d*(baseSpeed*((d/t)/midSpeed) + d*speed*(((d/t)/midSpeed)^acceleration))`. (`d/t` is actual speed in px/s, `(d/t)/midSpeed` is normalizedSpeed which acts as base for the exponent)
-  - `baseSpeed` is base speed multiplier which is not affected by acceleration. I.e., if `speed = 0`, then traveled distance is `reportedDistance*baseSpeed`
-  - `speed` multiplies effect of acceleration expression. I.e., simply multiplies the reported distance when the actual speed equals `midSpeed`.
-  - `acceleration` is exponent applied to the speed normalized w.r.t midSpeed. I.e., acceleration expression of the formula is `speed*(reportedSpeed/midSpeed)^(acceleration)`. I.e., no acceleration = 0, reasonable (square root) acceleration = 0.5. Highest recommended value is 1.0.
+- `set module.MODULEID.{baseSpeed|speed|xceleration}` modifies speed characteristics of right side modules. Simplified formula is `speedMultiplier(normalizedSpeed) = baseSpeed + speed*(normalizedSpeed^xceleration)` where `normalizedSpeed = actualSpeed / midSpeed`. Therefore `appliedDistance(distance d, time t) = d*(baseSpeed*((d/t)/midSpeed) + d*speed*(((d/t)/midSpeed)^xceleration))`. (`d/t` is actual speed in px/s, `(d/t)/midSpeed` is normalizedSpeed which acts as base for the exponent)
+  - `baseSpeed` is base speed multiplier which is not affected by xceleration. I.e., if `speed = 0`, then traveled distance is `reportedDistance*baseSpeed`
+  - `speed` multiplies effect of xceleration expression. I.e., simply multiplies the reported distance when the actual speed equals `midSpeed`.
+  - `xceleration` is exponent applied to the speed normalized w.r.t midSpeed. It makes cursor move relatively slower at low speeds and faster with aggresive swipes. It increases non-linearity of the curve, yet does not alone make the cursor faster and more responsive - thence "xceleration" rather than "acceleration" to avoid confusion. I.e., xceleration expression of the formula is `speed*(reportedSpeed/midSpeed)^(xceleration)`. I.e., no acceleration is xceleration = 0, reasonable (square root) acceleration is xceleration = 0.5. Highest recommended value is 1.0. 
   - `midSpeed` represents "middle" speed, where the user can easily imagine behaviour of the device (currently fixed 3000 px/s) and henceforth easily set the coefficient. At this speed, acceleration formula yields `1.0`, i.e., `speedModifier = (baseSpeed + speed)`.
-  - (Mostly) reasonable examples (`baseSpeed speed acceleration baseSpeed`):
-    - `0.0 1.0 0.0 3000` (no acceleration)
+  - Generally:
+    - If your cursor is sluggish at low speeds, you want to:
+      - either lower xceleration
+      - or increase baseSpeed
+    - If you struggle to cover large distance with single swipe, you want to:
+      - set xceleration to either `0.5` or `1.0` (or somewhere inbetween)
+      - and then increase speed till you are satisfied
+    - If cursor moves non-intuitively:
+      - you want to either lower xceleration (`0.5` is a reasonable value)
+      - or increase baseSpeed
+    - If you want to make cursor more responsive overall:
+      - you want to increase speed
+  - (Mostly) reasonable examples (`baseSpeed speed xceleration midSpeed`):
+    - `0.0 1.0 0.0 3000` (no xceleration)
       - speed multiplier is always 1x at all speeds
     - `0.0 1.0 0.5 3000` (square root multiplier)
       - starts at 0x speed multiplier - allowing for very precise movement at low speed)
@@ -566,7 +579,7 @@ For the purpose of toggling functionality on and off, and for global constants m
       - starts at 0.5x speed multipier - meaning that resulting cursor speed is half the picked up movement at low speeds
       - at 3000 px/s, speed multiplier is 1x
       - at 12000 px/s, speed multiplier is 2.5x
-      - (notice that linear acceleration actually means quadratic overall curve)
+      - (notice that linear xceleration actually means quadratic overall curve)
     - `1.0 1.0 1.0 3000`
       - same as before, but resulting cursor speed is double. I.e., 1x at 0 speed, 2x at 3000 px/s, 5x at 12000 px/s
     - `0.0 1.0 1.0 3000` (linear speedup starting at 0)
@@ -605,8 +618,8 @@ For the purpose of toggling functionality on and off, and for global constants m
 - `custom text` is an arbitrary text starting on next non-space character and ending at the end of the text action. (Yes, this should be refactored in the future.)
 - `KEYID` is a numeric id obtained by `resolveNextKeyId` macro.
 - `SHORTCUT` is an abbreviation of a key possibly accompanied by modifiers. Describes at most one scancode action. Can be prefixed by `C/S/A/G` denoting `Control/Shift/Alt/Gui`. Mods can further be prefixed by `L/R`, denoting left or right modifier. If a single ascii character is entered, it is translated into corresponding key combination (shift mask + scancode) according to standard EN-US layout. E.g., `pressKey mouseBtnLeft`, `tapKey LC-v` (Left Control + (lowercase) V (scancode)), `tapKey CS-f5` (Ctrl + Shift + F5), `tapKey v` (V), `tapKey V` (Shift + V).
-- `LABEL` is and identifier marking some lines of the macro. When a string is encountered in a context of an address, UHK looks for a command beginning by `$<the string>:` and returns its addres (index). If same label is present multiple times, the next one w.r.t. currently processed command is returned.
-- `ADDRESS` is either a `NUMBER` (including `#`, `@`, etc syntaxies) or a string which denotes label identifier. E.g., `$goTo 0` (go to beginning), `$goTo @-1` (go to previous command, since `@` resolves relative adresses to absolute), `$goTo @0` (active waiting), `$goTo default` (go to line which begins by `$default: ...`). 
+- `LABEL` is and identifier marking some lines of the macro. When a string is encountered in a context of an address, UHK looks for a command beginning by `<the string>:` and returns its addres (index). If same label is present multiple times, the next one w.r.t. currently processed command is returned.
+- `ADDRESS` is either a `NUMBER` (including `#`, `@`, etc syntaxies) or a string which denotes label identifier. E.g., `goTo 0` (go to beginning), `goTo @-1` (go to previous command, since `@` resolves relative adresses to absolute), `goTo @0` (active waiting), `goTo default` (go to line which begins by `default: ...`). 
 
 ### Navigation modes:
 
@@ -620,18 +633,47 @@ UHK modules feature four navigation modes, which are mapped by layer and module.
 
 ### Error handling
 
-This version of firmware includes basic error handling. If an error is encountered, led display will change to `ERR` and error message written into the status buffer. Error log can be retrieved via the `$printStatus` command. (E.g., focus some text area (for instance, open notepad), and press key with corresponding macro).)
+This version of firmware includes basic error handling. If an error is encountered, led display will change to `ERR` and error message written into the status buffer. Error log can be retrieved via the `printStatus` command. (E.g., focus some text area (for instance, open notepad), and press key with corresponding macro).)
 
 # Other notes
+
+## Old notation && migration
+
+Originally, macros used writeText action and were triggered by '$' symbol. Also, only one-line actions were supported. 
+
+In order to migrate to the new notation, you can export your configuration, edit the json file and import again. 
+
+If your favourite text editor is vim, following two commands will do the trick:
+
+```
+    :g/macroActionType.*text/normal 02ftcecommand
+    :g/^ *"text":/normal 0ftcecommand
+    :g/^ *"command": "\$/ normal 0f$x
+```
+
+Otherwise, you want to find your own way to effortlessly transform lines of form:
+
+
+```
+    "macroActionType": "text",
+    "text": "$set module.trackball.navigationMode.mouse scroll"
+```
+to:
+```
+    "macroActionType": "command",
+    "command": "holdKey sticky LA-a"
+```
 
 ## Known issues/limitations
 
 Bugs and features of this firmware:
-- Integration of legacy layer switching and our layer switching is mechanism is complicated. Generally, if legacy layer hold is active, it takes precedence over macro layer holds. However, "hold keymap layer" implicit keymap switching still takes place. 
+- Integration of legacy layer switching and our layer switching is complicated. Generally, if legacy layer hold is active, it takes precedence over macro layer holds. 
 
   This should give mostly correct and sane results, however it is still recommendable to use only one of the mechanisms at a time. Still, please let me know about any unexpected behaviour.
-- Only one-liners are allowed, due to our need to respect firmware's indexation of actions.
-- Global settings and recorded macros are remembered until power cycling only. (We recommend you to create an "init" layer, which will contain only one macro which will set all global settings and then switch to your keymap.) 
+
+- Global settings and recorded macros are remembered until power cycling only. Persistent settings can be achieved using an `$onInit` macro event. 
+
+  Or, if you want more control, you can create an "init" layer, which will contain only one macro which will set all global settings and then switch to your keymap.
 
 General troubleshooting:
 - MacOS requires prolonged press of capsLock, so secondaries, `tapKey` and in certain contexts `holdKey` won't work.
