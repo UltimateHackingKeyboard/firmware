@@ -212,6 +212,24 @@ static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
     kineticState->wasMoveAction = isMoveAction;
 }
 
+static float fast_pow (float a, float b)
+{
+    // https://nic.schraudolph.org/pubs/Schraudolph99.pdf
+    // https://martin.ankerl.com/2007/10/04/optimized-pow-approximation-for-java-and-c-c/
+    if ( b == 0.0f ) {
+        return 1.0f;
+    } else {
+        union {
+            float f;
+            int16_t x[2];
+        } u = { a } ;
+
+        u.x[1] = (int16_t)(b * (u.x[1] - 16249) + 16249);
+        u.x[0] = 0;
+        return u.f;
+    }
+}
+
 static float computeModuleSpeed(float x, float y, uint8_t moduleId)
 {
     //means that driver multiplier equals 1.0 at average speed midSpeed px/ms
@@ -228,7 +246,7 @@ static float computeModuleSpeed(float x, float y, uint8_t moduleId)
     }
 
     float normalizedSpeed = *currentSpeed/midSpeed;
-    return moduleConfiguration->baseSpeed + moduleConfiguration->speed*(float)pow(normalizedSpeed, moduleConfiguration->acceleration);
+    return moduleConfiguration->baseSpeed + moduleConfiguration->speed*(float)fast_pow(normalizedSpeed, moduleConfiguration->acceleration);
 }
 
 static void processTouchpadActions() {
