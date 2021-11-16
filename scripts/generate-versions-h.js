@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 const fs = require('fs');
 
-const versionPropertyPrefixes = ['firmware', 'deviceProtocol', 'moduleProtocol', 'userConfig', 'hardwareConfig'];
+const versionPropertyPrefixes = ['firmware', 'deviceProtocol', 'moduleProtocol', 'userConfig', 'hardwareConfig', 'smartMacros'];
 const patchVersions = ['Major', 'Minor', 'Patch'];
 const package = JSON.parse(fs.readFileSync(`${__dirname}/package.json`));
 

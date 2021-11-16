@@ -107,6 +107,7 @@ static const uint16_t letterToSegmentMap[] = {
     0b00100001010000, // {
     0b00010000001000, // |
     0b00001010000100, // }
+    0b00010100100000, // ~
 };
 
 #define maxSegmentChars 3

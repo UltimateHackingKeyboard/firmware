@@ -18,11 +18,15 @@
 #include "usb_report_updater.h"
 #include "caret_config.h"
 #include "keymap.h"
+#include "macros.h"
 
 static uint32_t mouseUsbReportUpdateTime = 0;
 static uint32_t mouseElapsedTime;
 
-bool ActiveMouseStates[ACTIVE_MOUSE_STATES_COUNT];
+uint8_t ActiveMouseStates[ACTIVE_MOUSE_STATES_COUNT];
+uint8_t ToggledMouseStates[ACTIVE_MOUSE_STATES_COUNT];
+
+bool DiagonalSpeedCompensation = false;
 
 mouse_kinetic_state_t MouseMoveState = {
     .isScroll = false,
@@ -114,13 +118,18 @@ static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
         kineticState->currentSpeed = initialSpeed;
     }
 
+    bool doublePressedStateExists = ActiveMouseStates[kineticState->upState] > 1 ||
+            ActiveMouseStates[kineticState->downState] > 1 ||
+            ActiveMouseStates[kineticState->leftState] > 1 ||
+            ActiveMouseStates[kineticState->rightState] > 1;
+
     bool isMoveAction = ActiveMouseStates[kineticState->upState] ||
                         ActiveMouseStates[kineticState->downState] ||
                         ActiveMouseStates[kineticState->leftState] ||
                         ActiveMouseStates[kineticState->rightState];
 
     mouse_speed_t mouseSpeed = MouseSpeed_Normal;
-    if (ActiveMouseStates[SerializedMouseAction_Accelerate]) {
+    if (ActiveMouseStates[SerializedMouseAction_Accelerate] || doublePressedStateExists) {
         kineticState->targetSpeed = acceleratedSpeed;
         mouseSpeed = MouseSpeed_Accelerated;
     } else if (ActiveMouseStates[SerializedMouseAction_Decelerate]) {
@@ -158,6 +167,10 @@ static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
         // Update travelled distances
 
         updateDirectionSigns(kineticState);
+
+        if ( kineticState->horizontalStateSign != 0 && kineticState->verticalStateSign != 0 && DiagonalSpeedCompensation ) {
+            distance /= 1.41f;
+        }
 
         kineticState->xSum += distance * kineticState->horizontalStateSign;
         kineticState->ySum += distance * kineticState->verticalStateSign;
@@ -199,6 +212,24 @@ static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
     kineticState->wasMoveAction = isMoveAction;
 }
 
+static float fast_pow (float a, float b)
+{
+    // https://nic.schraudolph.org/pubs/Schraudolph99.pdf
+    // https://martin.ankerl.com/2007/10/04/optimized-pow-approximation-for-java-and-c-c/
+    if ( b == 0.0f ) {
+        return 1.0f;
+    } else {
+        union {
+            float f;
+            int16_t x[2];
+        } u = { a } ;
+
+        u.x[1] = (int16_t)(b * (u.x[1] - 16249) + 16249);
+        u.x[0] = 0;
+        return u.f;
+    }
+}
+
 static float computeModuleSpeed(float x, float y, uint8_t moduleId)
 {
     //means that driver multiplier equals 1.0 at average speed midSpeed px/ms
@@ -210,12 +241,12 @@ static float computeModuleSpeed(float x, float y, uint8_t moduleId)
         static uint32_t lastUpdate = 0;
         uint32_t elapsedTime = CurrentTime - lastUpdate;
         float distance = sqrt(x*x + y*y);
-        *currentSpeed = distance / elapsedTime;
+        *currentSpeed = distance / (elapsedTime + 1);
         lastUpdate = CurrentTime;
     }
 
     float normalizedSpeed = *currentSpeed/midSpeed;
-    return moduleConfiguration->baseSpeed + moduleConfiguration->speed*(float)pow(normalizedSpeed, moduleConfiguration->acceleration);
+    return moduleConfiguration->baseSpeed + moduleConfiguration->speed*(float)fast_pow(normalizedSpeed, moduleConfiguration->xceleration);
 }
 
 static void processTouchpadActions() {
@@ -436,5 +467,19 @@ void MouseController_ProcessMouseActions()
     }
     if (ActiveMouseStates[SerializedMouseAction_Button_8]) {
         ActiveUsbMouseReport->buttons |= MouseButton_8;
+    }
+}
+
+void ToggleMouseState(serialized_mouse_action_t action, bool activate)
+{
+    if (activate) {
+        ToggledMouseStates[action]++;
+        // First macro action is ran during key update cycle, i.e., after ActiveMouseStates is copied from ToggledMouseStates.
+        // Otherwise, direction sign will be resetted at the end of this cycle
+        ActiveMouseStates[action]++;
+        MouseController_ActivateDirectionSigns(action);
+    }
+    else{
+        ToggledMouseStates[action] -= ToggledMouseStates[action] > 0 ? 1 : 0;
     }
 }

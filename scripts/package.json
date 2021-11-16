@@ -21,6 +21,7 @@
   "moduleProtocolVersion": "4.1.0",
   "userConfigVersion": "4.2.0",
   "hardwareConfigVersion": "1.0.0",
+  "smartMacrosVersion": "1.0.0",
   "devices": [
     {
       "deviceId": 1,

@@ -45,6 +45,7 @@ Going forward, it's easier to flash the firmware of your choice by using the dow
 
 5. When developing, cd to the directory you're working on (`left`/`right`). To build and flash the firmware, run `make flash`. Plain `make` just builds without flashing.
 
+
 ### Releasing
 
 6. To build a full firmware tarball:
@@ -55,6 +56,10 @@ Going forward, it's easier to flash the firmware of your choice by using the dow
 ## Contributing
 
 Want to contribute? Let us show you [how](/CONTRIBUTING.md).
+
+## Extended macros
+
+In order to build with extended macro support, either specify `--extendedMacros` as parameter to `make-release.js`, or specify `CUSTOM_CFLAGS=-DEXTENDED_MACROS` as parameter to `make`.
 
 ## Custom Firmwares
 
