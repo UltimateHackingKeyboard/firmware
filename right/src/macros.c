@@ -64,7 +64,7 @@ static int32_t regs[MAX_REG_COUNT];
 macro_state_t MacroState[MACRO_STATE_POOL_SIZE];
 static macro_state_t *s = MacroState;
 
-static uint16_t doubletapConditionTimeout = 300;
+uint16_t DoubletapConditionTimeout = 300;
 
 static void wakeMacroInSlot(uint8_t slotIdx);
 static void scheduleSlot(uint8_t slotIdx);
@@ -1250,13 +1250,13 @@ static bool processIfDoubletapCommand(bool negate)
     bool doubletapFound = false;
 
     for (uint8_t i = 0; i < MACRO_STATE_POOL_SIZE; i++) {
-        if (s->ms.currentMacroStartTime - MacroState[i].ps.previousMacroStartTime <= doubletapConditionTimeout && s->ms.currentMacroIndex == MacroState[i].ps.previousMacroIndex) {
+        if (s->ms.currentMacroStartTime - MacroState[i].ps.previousMacroStartTime <= DoubletapConditionTimeout && s->ms.currentMacroIndex == MacroState[i].ps.previousMacroIndex) {
             doubletapFound = true;
         }
         if (
             MacroState[i].ms.macroPlaying &&
             MacroState[i].ms.currentMacroStartTime < s->ms.currentMacroStartTime &&
-            s->ms.currentMacroStartTime - MacroState[i].ms.currentMacroStartTime <= doubletapConditionTimeout &&
+            s->ms.currentMacroStartTime - MacroState[i].ms.currentMacroStartTime <= DoubletapConditionTimeout &&
             s->ms.currentMacroIndex == MacroState[i].ms.currentMacroIndex &&
             &MacroState[i] != s
         ) {

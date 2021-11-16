@@ -328,12 +328,16 @@ macro_result_t MacroSetCommand(const char* arg1, const char *textEnd)
     }
     else if (TokenMatches(arg1, textEnd, "debounceDelay")) {
         uint16_t time = Macros_ParseInt(arg2, textEnd, NULL);
-
         DebounceTimePress = time;
         DebounceTimeRelease = time;
     }
     else if (TokenMatches(arg1, textEnd, "keystrokeDelay")) {
         KeystrokeDelay = Macros_ParseInt(arg2, textEnd, NULL);
+    }
+    else if (TokenMatches(arg1, textEnd, "doubletapDelay")) {
+        uint16_t delay = Macros_ParseInt(arg2, textEnd, NULL);
+        DoubleTapSwitchLayerTimeout = delay;
+        DoubletapConditionTimeout = delay;
     }
     else if (TokenMatches(arg1, textEnd, "chordingDelay")) {
         ChordingDelay = Macros_ParseInt(arg2, textEnd, NULL);
