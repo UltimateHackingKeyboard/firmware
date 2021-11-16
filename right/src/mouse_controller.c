@@ -418,6 +418,7 @@ void MouseController_ProcessMouseActions()
     MouseScrollState.yOut = 0;
 
     if (Slaves[SlaveId_RightTouchpad].isConnected) {
+        // TODO: this is still unsafe w.r.t interrupts
         processTouchpadActions();
         processModuleActions(ModuleId_TouchpadRight, (int16_t)TouchpadEvents.x, (int16_t)TouchpadEvents.y);
         TouchpadEvents.x = 0;
@@ -430,9 +431,17 @@ void MouseController_ProcessMouseActions()
             continue;
         }
 
-        processModuleActions(moduleState->moduleId, (int16_t)moduleState->pointerDelta.x, (int16_t)moduleState->pointerDelta.y);
+        __disable_irq();
+        // Gcc compiles those int16_t assignments as sequences of
+        // single-byte instructions, therefore we need to make the
+        // sequence atomic.
+        int16_t x = moduleState->pointerDelta.x;
+        int16_t y = moduleState->pointerDelta.y;
         moduleState->pointerDelta.x = 0;
         moduleState->pointerDelta.y = 0;
+        __enable_irq();
+
+        processModuleActions(moduleState->moduleId, x, y);
     }
 
     if (ActiveMouseStates[SerializedMouseAction_LeftClick]) {
