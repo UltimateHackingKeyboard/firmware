@@ -232,7 +232,7 @@ static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
     kineticState->wasMoveAction = isMoveAction;
 }
 
-static float fast_pow (float a, float b)
+static float fastPow (float a, float b)
 {
     // https://nic.schraudolph.org/pubs/Schraudolph99.pdf
     // https://martin.ankerl.com/2007/10/04/optimized-pow-approximation-for-java-and-c-c/
@@ -266,7 +266,7 @@ static float computeModuleSpeed(float x, float y, uint8_t moduleId)
     }
 
     float normalizedSpeed = *currentSpeed/midSpeed;
-    return moduleConfiguration->baseSpeed + moduleConfiguration->speed*(float)fast_pow(normalizedSpeed, moduleConfiguration->xceleration);
+    return moduleConfiguration->baseSpeed + moduleConfiguration->speed*fastPow(normalizedSpeed, moduleConfiguration->xceleration);
 }
 
 
