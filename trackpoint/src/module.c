@@ -21,7 +21,7 @@ void Module_Init(void)
                       &(port_pin_config_t){/*.pullSelect=kPORT_PullDown,*/ .mux=kPORT_MuxAsGpio});
     GPIO_PinInit(PS2_CLOCK_GPIO, PS2_CLOCK_PIN, &(gpio_pin_config_t){.pinDirection=kGPIO_DigitalInput, .outputLogic=0});
 
-    PORT_SetPinInterruptConfig(PS2_CLOCK_PORT, PS2_CLOCK_PIN, kPORT_InterruptEitherEdge);
+    PORT_SetPinInterruptConfig(PS2_CLOCK_PORT, PS2_CLOCK_PIN, kPORT_InterruptFallingEdge);
     EnableIRQ(PS2_CLOCK_IRQ);
     GPIO_PinInit(PS2_CLOCK_GPIO, PS2_CLOCK_PIN, &(gpio_pin_config_t){.pinDirection=kGPIO_DigitalInput, .outputLogic=0});
 
@@ -29,14 +29,11 @@ void Module_Init(void)
     PORT_SetPinConfig(PS2_DATA_PORT, PS2_DATA_PIN,
                       &(port_pin_config_t){/*.pullSelect=kPORT_PullDown,*/ .mux=kPORT_MuxAsGpio});
     GPIO_PinInit(PS2_DATA_GPIO, PS2_DATA_PIN, &(gpio_pin_config_t){.pinDirection=kGPIO_DigitalInput, .outputLogic=0});
-
 }
 
 uint8_t phase = 0;
-bool clockState;
 uint32_t transitionCount = 1;
-uint32_t upTransitionCount = 0;
-uint32_t downTransitionCount = 0;
+uint8_t errno = 0;
 
 void requestToSend()
 {
@@ -51,20 +48,23 @@ void requestToSend()
     GPIO_PinInit(PS2_CLOCK_GPIO, PS2_CLOCK_PIN, &(gpio_pin_config_t){.pinDirection=kGPIO_DigitalInput, .outputLogic=0});
 }
 
+bool clockValue = 0;
+bool bitValue = 0;
 uint8_t bitId = 0;
 uint8_t buffer;
 
+static void reportError(uint8_t err) {
+    errno |= err;
+}
+
 // Write a PS/2 byte to buffer bit by bit, and return true when finished.
-bool writeByte()
+static bool writeByte()
 {
     static bool parityBit;
 
-    if (bitId == 10 && clockState == 0) {
-        GPIO_PinInit(PS2_DATA_GPIO, PS2_DATA_PIN, &(gpio_pin_config_t){.pinDirection=kGPIO_DigitalInput, .outputLogic=0});
-        return true;
-    }
-
-    if (clockState == 1) {
+    if (clockValue) {
+        // Even though we are hooked on InteruptFallingEdge, we are receiving
+        // one spurious wakeup during the initiation sequence
         return false;
     }
 
@@ -90,6 +90,11 @@ bool writeByte()
             GPIO_WritePinOutput(PS2_DATA_GPIO, PS2_DATA_PIN, stopBit);
             break;
         }
+        case 10: {
+            GPIO_PinInit(PS2_DATA_GPIO, PS2_DATA_PIN, &(gpio_pin_config_t){.pinDirection=kGPIO_DigitalInput, .outputLogic=0});
+            bitId = 0;
+            return true;
+        }
     }
 
     bitId++;
@@ -97,26 +102,31 @@ bool writeByte()
 }
 
 // Read a PS/2 byte from buffer bit by bit, and return true when finished.
-bool readByte()
+static bool readByte()
 {
-    if (bitId == 10 && clockState == 0) {
-        return true;
-    }
-
-    if (clockState == 1) {
-        return false;
-    }
+    static bool parityBit = 1;
 
     switch (bitId) {
         case 0: {
             buffer = 0;
+            parityBit = 1;
             break;
         }
         case 1 ... 8: {
-            bool bit = GPIO_ReadPinInput(PS2_DATA_GPIO, PS2_DATA_PIN) ? 1 : 0;
-            buffer = buffer | (bit << (bitId-1));
+            parityBit ^= bitValue;
+            buffer = buffer | (bitValue << (bitId-1));
             break;
         }
+        case 9: {
+            if (parityBit != bitValue) {
+                reportError(4);
+            }
+            break;
+        }
+        case 10: {
+             bitId = 0;
+             return true;
+         }
     }
 
     bitId++;
@@ -127,27 +137,40 @@ void PS2_CLOCK_IRQ_HANDLER(void) {
     static uint8_t byte1 = 0;
     static uint16_t deltaX = 0;
     static uint16_t deltaY = 0;
+    static uint16_t lastX = 0;
+    static uint16_t lastY = 0;
+    static uint16_t lastClock;
 
     GPIO_ClearPinsInterruptFlags(PS2_CLOCK_GPIO, 1U << PS2_CLOCK_PIN);
 
-    transitionCount++;
-    clockState = GPIO_ReadPinInput(PS2_CLOCK_GPIO, PS2_CLOCK_PIN);
-    if (clockState) {
-        upTransitionCount++;
-    } else {
-        downTransitionCount++;
+    bitValue = GPIO_ReadPinInput(PS2_CLOCK_GPIO, PS2_DATA_PIN);
+    clockValue = GPIO_ReadPinInput(PS2_CLOCK_GPIO, PS2_CLOCK_PIN);
+
+    uint16_t currentClock = SysTick->VAL;
+    uint16_t diff = lastClock - currentClock;
+    lastClock = currentClock;
+
+    if ((diff < 200 || diff > 240 ) && currentClock < lastClock && bitId > 0 && phase >= 7) {
+        // In current configuration, SysTick value is internal clock divided by
+        // 16, and *de*creasing by one by one. CPU clock frequency is 48Mhz.
+        // Observed PS2 period is 220 SysTick ticks. This means one tick every
+        // 73 us. This gives 13.6 kHz on PS2 clock.
+        //
+        // If timing is bad, perform rest of the handler as normally, but mark
+        // it as corrupted.
+        reportError(16);
     }
 
     switch (phase) {
         case 0: {
-            if (transitionCount == 44) {
+            transitionCount++;
+            if (transitionCount == 22) {
                 phase = 1;
             }
             break;
         }
         case 1: {
             requestToSend();
-            bitId = 0;
             buffer = 0xff;
             phase = 2;
             break;
@@ -160,44 +183,51 @@ void PS2_CLOCK_IRQ_HANDLER(void) {
             break;
         }
         case 3: {
-            if (transitionCount == 66) {
+            if (readByte()) {
                 phase = 4;
             }
             break;
         }
         case 4: {
             requestToSend();
-            bitId = 0;
             buffer = 0xf4;
             phase = 5;
             break;
         }
         case 5: {
             if (writeByte()) {
-                bitId = 0;
                 phase = 6;
             }
             break;
         }
         case 6: {
             if (readByte()) { // read ACK
-                bitId = 0;
                 phase = 7;
+                if ( buffer != 0xfa ) {
+                    reportError(1);
+                }
             }
             break;
         }
         case 7: {
             if (readByte()) {
-                byte1 = buffer;
-                bitId = 0;
-                phase = 8;
+                if ((buffer & 0xc8) == 0x08) {
+                    byte1 = buffer;
+                    phase = 8;
+                } else {
+                    // If message format does not match the expected, assume
+                    // the worst - falling out of sync with clock - and reset.
+                    // In case of other errors, just ignore the corrupted frame
+                    // and report the errno.
+                    reportError(2);
+                    phase = 1;
+                }
             }
             break;
         }
         case 8: {
             if (readByte()) {
                 deltaX = buffer;
-                bitId = 0;
                 phase = 9;
             }
             break;
@@ -211,9 +241,16 @@ void PS2_CLOCK_IRQ_HANDLER(void) {
                 if (byte1 & (1 << 5)) {
                     deltaY |= 0xff00;
                 }
-                PointerDelta.x -= deltaX;
-                PointerDelta.y -= deltaY;
-                bitId = 0;
+                if ( errno == 0 ) {
+                    PointerDelta.x -= deltaX;
+                    PointerDelta.y -= deltaY;
+                    lastX = deltaX;
+                    lastY = deltaY;
+                } else {
+                    PointerDelta.x -= lastX;
+                    PointerDelta.y -= lastY;
+                }
+                errno = 0;
                 phase = 7;
             }
             break;

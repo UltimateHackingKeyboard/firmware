@@ -4,6 +4,8 @@
 #include "peripherals/reset_button.h"
 #include "usb_protocol_handler.h"
 #include "keymap.h"
+#include "macro_events.h"
+#include "macros.h"
 
 void updateUsbBuffer(uint8_t usbStatusCode, uint16_t parserOffset, parser_stage_t parserStage)
 {
@@ -48,6 +50,10 @@ void UsbCommand_ApplyConfig(void)
     if (parseConfigStatus != UsbStatusCode_Success) {
         return;
     }
+
+    Macros_ClearStatus();
+
+    MacroEvent_OnInit();
 
     // Switch to the keymap of the updated configuration of the same name or the default keymap.
     if (SwitchKeymapByAbbreviation(oldKeymapAbbreviationLen, oldKeymapAbbreviation)) {

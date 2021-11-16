@@ -17,7 +17,7 @@ uint32_t lastPressTime;
 
 #define POS(idx) ((bufferPosition + (idx)) % POSTPONER_BUFFER_SIZE)
 
-bool Chording = false;
+uint8_t ChordingDelay = 0;
 static void chording();
 
 
@@ -82,7 +82,7 @@ void PostponerCore_PostponeNCycles(uint8_t n)
 
 bool PostponerCore_IsActive(void)
 {
-    return bufferSize > 0 || cyclesUntilActivation > 0 || Chording;
+    return bufferSize > 0 || cyclesUntilActivation > 0 || ChordingDelay;
 }
 
 
@@ -107,7 +107,7 @@ void PostponerCore_TrackKeyEvent(key_state_t *keyState, bool active)
 
 void PostponerCore_RunPostponedEvents(void)
 {
-    if (Chording) {
+    if (ChordingDelay) {
         chording();
     }
     // Process one event every two cycles. (Unless someone keeps Postponer active by touching cycles_until_activation.)
@@ -291,8 +291,7 @@ static uint8_t priority(key_state_t *key, bool active)
 
 static void chording()
 {
-    const uint16_t limit = 50;
-    if (bufferSize == 0 || CurrentTime - buffer[bufferPosition].time < limit ) {
+    if (bufferSize == 0 || CurrentTime - buffer[bufferPosition].time < ChordingDelay ) {
         PostponerCore_PostponeNCycles(0);
     } else {
         bool activated = false;
@@ -302,7 +301,7 @@ static void chording()
             uint8_t pa = priority(a->key, a->active);
             uint8_t pb = priority(b->key, b->active);
             if ( (a->active && !b->active) || (a->active && b->active && pa < pb) ) {
-                if (a->key != b->key && b->time - a->time < limit) {
+                if (a->key != b->key && b->time - a->time < ChordingDelay) {
                     struct postponer_buffer_record_type_t tmp = *a;
                     *a = *b;
                     *b = tmp;

@@ -32,5 +32,6 @@
 // Functions:
 
     extern void UpdateLayerLeds(void);
+    extern void InitLedLayout(void);
 
 #endif

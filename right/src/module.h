@@ -25,7 +25,7 @@
         float currentSpeed; // px/ms
         float baseSpeed;
         float speed;
-        float acceleration;
+        float xceleration;
         navigation_mode_t navigationModes[LayerId_Count];
     } module_configuration_t;
 

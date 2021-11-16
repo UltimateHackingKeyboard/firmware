@@ -3,6 +3,7 @@
 #include "ledmap.h"
 #include "slave_drivers/is31fl3xxx_driver.h"
 #include "device.h"
+#include "config_parser/config_globals.h"
 
 rgb_t KeyActionColors[] = {
     {.red=0, .green=0, .blue=0}, // KeyActionColor_None
@@ -177,6 +178,16 @@ void UpdateLayerLeds(void) {
             LedDriverValues[slotId][ledMapItem->green] = keyActionColorValues->green * KeyBacklightBrightness / brightnessDivisor / 255;
             LedDriverValues[slotId][ledMapItem->blue] = keyActionColorValues->blue * KeyBacklightBrightness / 255;
         }
+    }
+#endif
+}
+
+void InitLedLayout(void) {
+#if DEVICE_ID == DEVICE_ID_UHK60V2
+    if (HardwareConfig->isIso) {
+        LedMap[SlotId_LeftKeyboardHalf][21].red = 0x6D;
+        LedMap[SlotId_LeftKeyboardHalf][21].green = 0x7D;
+        LedMap[SlotId_LeftKeyboardHalf][21].blue = 0x8D;
     }
 #endif
 }

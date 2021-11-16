@@ -99,8 +99,8 @@ Or with Mac (which requires prolonged press of caps lock):
 
 Enables and disables compensation of diagonal speed.
 
-    ifShift setCompensateDiagonalSpeed 1
-    ifNotShift setCompensateDiagonalSpeed 0
+    ifShift set diagonalSpeedCompensation 1
+    ifNotShift set diagonalSpeedCompensation 0
 
 Smart toggle (if tapped, locks layer; if used with a key, acts as a secondary role):
 
@@ -203,7 +203,7 @@ I.e., if you want to customize acceleration driver for your trackball module on 
 
     set module.trackball.baseSpeed 0.5
     set module.trackball.speed 1.0
-    set module.trackball.acceleration 1.0
+    set module.trackball.xceleration 1.0
 
 # Macro commands
 
@@ -259,8 +259,8 @@ The following grammar is supported:
     COMMAND = tapKeySeq [SHORTCUT]+
     COMMAND = set module.MODULEID.navigationMode.LAYERID NAVIGATIONMODE
     COMMAND = set module.MODULEID.baseSpeed <speed multiplier part that always applies, 0-10.0 (FLOAT)>
-    COMMAND = set module.MODULEID.speed <speed multiplier part that is affected by acceleration, 0-10.0 (FLOAT)>
-    COMMAND = set module.MODULEID.acceleration <exponent 0-1.0 (FLOAT)>
+    COMMAND = set module.MODULEID.speed <speed multiplier part that is affected by xceleration, 0-10.0 (FLOAT)>
+    COMMAND = set module.MODULEID.xceleration <exponent 0-1.0 (FLOAT)>
     #NOTIMPLEMENTED COMMAND = set module.MODULEID.{caretSkewStrength|caretSpeedDivisor|scrollSpeedDivisor} FLOAT
     #NOTIMPLEMENTED COMMAND = set secondaryRoles
     COMMAND = set mouseKeys.{move|scroll}.initialSpeed <px/s, -100/20 (NUMBER)>
@@ -269,9 +269,9 @@ The following grammar is supported:
     COMMAND = set mouseKeys.{move|scroll}.deceleratedSpeed <px/s, ~200/10 (NUMBER)>
     COMMAND = set mouseKeys.{move|scroll}.acceleratedSpeed <px/s, ~1600/50 (NUMBER)>
     #NOTIMPLEMENTED COMMAND = set mouseKeys.{move|scroll}.axisSkew FLOAT
-    COMMAND = set compensateDiagonalSpeed {0|1}
-    COMMAND = set chording {0|1}
-    COMMAND = set stickyMods {0|never|smart|always|1}
+    COMMAND = set diagonalSpeedCompensation BOOLEAN
+    COMMAND = set chordingDelay <time in ms (NUMBER)>
+    COMMAND = set stickyModifiers {never|smart|always}
     COMMAND = set debounceDelay <time in ms, at most 250 (NUMBER)>
     COMMAND = set keystrokeDelay <time in ms, at most 65535 (NUMBER)>
     COMMAND = set setEmergencyKey KEYID
@@ -300,6 +300,7 @@ The following grammar is supported:
     KEYMAPID = <abbrev>|last
     MACROID = last|CHAR|NUMBER
     NUMBER = [0-9]+ | -[0-9]+ | #<register idx (NUMBER)> | #key | @<relative macro action index(NUMBER)> | %<key idx in postponer queue (NUMBER)>
+    BOOLEAN = 0 | 1
     FLOAT = [0-9]+{.[0-9]+} | -FLOAT
     CHAR = <any nonwhite ascii char>
     KEYID = <id of hardware key obtained by resolveNextKeyId (NUMBER)>
@@ -526,13 +527,13 @@ For the purpose of toggling functionality on and off, and for global constants m
 
 ### Configuration options:
     
-- `set stickyMods {0|never|smart|always|1}` globally turns on or off sticky modifiers. This affects only standard scancode actions. Macro actions (both gui and command ones) are always nonsticky, unless `sticky` flag is included in `tapKey|holdKey|pressKey` commands. Default value is `smart`, which is the official behaviour - i.e., `<alt/ctrl/gui> + <tab/arrows>` are sticky. Furthermore `0 == never` and `1 == always`.
-- `set compensateDiagonalSpeed {0|1}` will divide diagonal mouse speed by sqrt(2) if enabled.
-- `set chording {0|1}` If enabled, keyboard will delay *all* key actions by 50ms. If another key is pressed during this time, pending key actions will be sorted according to their type:
+- `set stickyModifiers {never|smart|always}` globally turns on or off sticky modifiers. This affects only standard scancode actions. Macro actions (both gui and command ones) are always nonsticky, unless `sticky` flag is included in `tapKey|holdKey|pressKey` commands. Default value is `smart`, which is the official behaviour - i.e., `<alt/ctrl/gui> + <tab/arrows>` are sticky.
+- `set diagonalSpeedCompensation {0|1}` will divide diagonal mouse speed by sqrt(2) if enabled.
+- `set chordingDelay 0 | <time in ms (NUMBER)>` If nonzero, keyboard will delay *all* key actions by the specified time (recommended 50ms). If another key is pressed during this time, pending key actions will be sorted according to their type:
   1) Keymap/layer switches
   2) Macros
   3) Keystrokes and mouse actions
-  This allows the user to trigger chorded shortcuts in arbitrary ordrer (all at the "same" time).
+  This allows the user to trigger chorded shortcuts in arbitrary ordrer (all at the "same" time). E.g., if `A+Ctrl` is pressed instead of `Ctrl+A`, keyboard will still send `Ctrl+A` if the two key presses follow within the specified time.
 - `set debounceDelay <time in ms, at most 250>` prevents key state from changing for some time after every state change. This is needed because contacts of mechanical switches can bounce after contact and therefore change state multiple times in span of a few milliseconds. Official firmware debounce time is 50 ms for both press and release. Recommended value is 10-50, default is 50.
 - `set keystrokeDelay <time in ms, at most 65535>` allows slowing down keyboard output. This is handy for lousily written RDP clients and other software which just scans keys once a while and processes them in wrong order if multiple keys have been pressed inbetween. In more detail, this setting adds a delay whenever a basic usb report is sent. During this delay, key matrix is still scanned and keys are debounced, but instead of activating, the keys are added into a queue to be replayed later. Recommended value is 10 if you have issues with RDP missing modifier keys, 0 otherwise.
 - `set mouseKeys.{move|scroll}.{...} NUMBER` please refer to Agent for more details
@@ -541,13 +542,25 @@ For the purpose of toggling functionality on and off, and for global constants m
   - `deceleratedSpeed` - speed as affected by deceleration modifier
   - `acceleratedSpeed` - speed as affected by acceleration modifier
   - `axisSkew`
-- `set module.MODULEID.{baseSpeed|speed|acceleration}` modifies speed characteristics of right side modules. Simplified formula is `speedMultiplier(normalizedSpeed) = baseSpeed + speed*(normalizedSpeed^acceleration)` where `normalizedSpeed = actualSpeed / midSpeed`. Therefore `appliedDistance(distance d, time t) = d*(baseSpeed*((d/t)/midSpeed) + d*speed*(((d/t)/midSpeed)^acceleration))`. (`d/t` is actual speed in px/s, `(d/t)/midSpeed` is normalizedSpeed which acts as base for the exponent)
-  - `baseSpeed` is base speed multiplier which is not affected by acceleration. I.e., if `speed = 0`, then traveled distance is `reportedDistance*baseSpeed`
-  - `speed` multiplies effect of acceleration expression. I.e., simply multiplies the reported distance when the actual speed equals `midSpeed`.
-  - `acceleration` is exponent applied to the speed normalized w.r.t midSpeed. I.e., acceleration expression of the formula is `speed*(reportedSpeed/midSpeed)^(acceleration)`. I.e., no acceleration = 0, reasonable (square root) acceleration = 0.5. Highest recommended value is 1.0.
+- `set module.MODULEID.{baseSpeed|speed|xceleration}` modifies speed characteristics of right side modules. Simplified formula is `speedMultiplier(normalizedSpeed) = baseSpeed + speed*(normalizedSpeed^xceleration)` where `normalizedSpeed = actualSpeed / midSpeed`. Therefore `appliedDistance(distance d, time t) = d*(baseSpeed*((d/t)/midSpeed) + d*speed*(((d/t)/midSpeed)^xceleration))`. (`d/t` is actual speed in px/s, `(d/t)/midSpeed` is normalizedSpeed which acts as base for the exponent)
+  - `baseSpeed` is base speed multiplier which is not affected by xceleration. I.e., if `speed = 0`, then traveled distance is `reportedDistance*baseSpeed`
+  - `speed` multiplies effect of xceleration expression. I.e., simply multiplies the reported distance when the actual speed equals `midSpeed`.
+  - `xceleration` is exponent applied to the speed normalized w.r.t midSpeed. It makes cursor move relatively slower at low speeds and faster with aggresive swipes. It increases non-linearity of the curve, yet does not alone make the cursor faster and more responsive - thence "xceleration" rather than "acceleration" to avoid confusion. I.e., xceleration expression of the formula is `speed*(reportedSpeed/midSpeed)^(xceleration)`. I.e., no acceleration is xceleration = 0, reasonable (square root) acceleration is xceleration = 0.5. Highest recommended value is 1.0. 
   - `midSpeed` represents "middle" speed, where the user can easily imagine behaviour of the device (currently fixed 3000 px/s) and henceforth easily set the coefficient. At this speed, acceleration formula yields `1.0`, i.e., `speedModifier = (baseSpeed + speed)`.
-  - (Mostly) reasonable examples (`baseSpeed speed acceleration baseSpeed`):
-    - `0.0 1.0 0.0 3000` (no acceleration)
+  - Generally:
+    - If your cursor is sluggish at low speeds, you want to:
+      - either lower xceleration
+      - or increase baseSpeed
+    - If you struggle to cover large distance with single swipe, you want to:
+      - set xceleration to either `0.5` or `1.0` (or somewhere inbetween)
+      - and then increase speed till you are satisfied
+    - If cursor moves non-intuitively:
+      - you want to either lower xceleration (`0.5` is a reasonable value)
+      - or increase baseSpeed
+    - If you want to make cursor more responsive overall:
+      - you want to increase speed
+  - (Mostly) reasonable examples (`baseSpeed speed xceleration midSpeed`):
+    - `0.0 1.0 0.0 3000` (no xceleration)
       - speed multiplier is always 1x at all speeds
     - `0.0 1.0 0.5 3000` (square root multiplier)
       - starts at 0x speed multiplier - allowing for very precise movement at low speed)
@@ -557,7 +570,7 @@ For the purpose of toggling functionality on and off, and for global constants m
       - starts at 0.5x speed multipier - meaning that resulting cursor speed is half the picked up movement at low speeds
       - at 3000 px/s, speed multiplier is 1x
       - at 12000 px/s, speed multiplier is 2.5x
-      - (notice that linear acceleration actually means quadratic overall curve)
+      - (notice that linear xceleration actually means quadratic overall curve)
     - `1.0 1.0 1.0 3000`
       - same as before, but resulting cursor speed is double. I.e., 1x at 0 speed, 2x at 3000 px/s, 5x at 12000 px/s
     - `0.0 1.0 1.0 3000` (linear speedup starting at 0)

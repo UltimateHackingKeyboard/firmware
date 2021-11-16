@@ -193,7 +193,7 @@
 
 // Functions:
 
-    void Macros_StartMacro(uint8_t index, key_state_t *keyState, uint8_t parentMacroSlot);
+    void Macros_StartMacro(uint8_t index, key_state_t *keyState, uint8_t parentMacroSlot, bool runFirstAction);
     void Macros_ContinueMacro(void);
     void Macros_SignalInterrupt(void);
     bool Macros_ClaimReports(void);
@@ -207,9 +207,11 @@
     void Macros_SetStatusChar(char n);
     void Macros_UpdateLayerStack();
     void Macros_Initialize();
+    void Macros_ClearStatus();
     bool Macros_IsLayerHeld();
     uint8_t Macros_ParseLayerId(const char* arg1, const char* cmdEnd);
     int32_t Macros_ParseInt(const char *a, const char *aEnd, const char* *parsedTill);
+    bool Macros_ParseBoolean(const char *a, const char *aEnd);
 
 #define WAKE_MACROS_ON_KEYSTATE_CHANGE()  if (Macros_WakeMeOnKeystateChange) { \
                                               Macros_WakedBecauseOfKeystateChange = true; \

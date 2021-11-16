@@ -703,6 +703,19 @@ int32_t Macros_ParseInt(const char *a, const char *aEnd, const char* *parsedTill
     }
 }
 
+bool Macros_ParseBoolean(const char *a, const char *aEnd)
+{
+    if (TokenMatches(a, aEnd, "1")) {
+        return true;
+    }
+    else if (TokenMatches(a, aEnd, "0")) {
+        return false;
+    } else {
+        Macros_ReportError("Boolean value expected, got:",  a, aEnd);
+        return false;
+    }
+}
+
 static int32_t parseNUM(const char *a, const char *aEnd)
 {
     return Macros_ParseInt(a, aEnd, NULL);
@@ -2433,6 +2446,52 @@ static macro_result_t processCommand(const char* cmd, const char* cmdEnd)
     return MacroResult_Finished;
 }
 
+static macro_result_t processStockCommandAction(const char* cmd, const char* cmdEnd)
+{
+    if (*cmd == '$') {
+        cmd++;
+    }
+
+    const char* cmdTokEnd = TokEnd(cmd, cmdEnd);
+    if (cmdTokEnd > cmd && cmdTokEnd[-1] == ':') {
+        //skip labels
+        cmd = NextTok(cmd, cmdEnd);
+        if (cmd == cmdEnd) {
+            return MacroResult_Finished;
+        }
+    }
+    while(*cmd && cmd < cmdEnd) {
+        const char* arg1 = NextTok(cmd, cmdEnd);
+        switch(*cmd) {
+        case 'p':
+            if (TokenMatches(cmd, cmdEnd, "printStatus")) {
+                return processPrintStatusCommand();
+            }
+            else {
+                goto failed;
+            }
+            break;
+        case 's':
+            if (TokenMatches(cmd, cmdEnd, "set")) {
+                return MacroSetCommand(arg1, cmdEnd);
+            }
+            else {
+                goto failed;
+            }
+            break;
+        default:
+        failed:
+            Macros_ReportError("unrecognized command", cmd, cmdEnd);
+            return MacroResult_Finished;
+            break;
+        }
+        cmd = arg1;
+    }
+    //this is reachable if there is a train of conditions/modifiers/labels without any command
+    return MacroResult_Finished;
+
+}
+
 static macro_result_t processCommandAction(void)
 {
     const char* cmd = s->ms.currentMacroAction.cmd.text + s->ms.commandBegin;
@@ -2445,7 +2504,12 @@ static macro_result_t processCommandAction(void)
         return MacroResult_Finished;
     }
 
+#ifdef EXTENDED_MACROS
     macro_result_t actionInProgress = processCommand(cmd, cmdEnd);
+#else
+    macro_result_t actionInProgress = processStockCommandAction(cmd, cmdEnd);
+#endif
+
     s->as.currentConditionPassed = actionInProgress & MacroResult_InProgressFlag;
     return actionInProgress;
 }
@@ -2591,19 +2655,19 @@ static macro_result_t callMacro(uint8_t macroIndex)
     uint32_t ptr1 = (uint32_t)(macro_state_t*)s;
     uint32_t ptr2 = (uint32_t)(macro_state_t*)&(MacroState[0]);
     uint32_t slotIndex = (ptr1 - ptr2) / sizeof(macro_state_t);
-    Macros_StartMacro(macroIndex, s->ms.currentMacroKey, slotIndex);
+    Macros_StartMacro(macroIndex, s->ms.currentMacroKey, slotIndex, true);
     return MacroResult_Finished | MacroResult_YieldFlag;
 }
 
 static macro_result_t forkMacro(uint8_t macroIndex)
 {
-    Macros_StartMacro(macroIndex, s->ms.currentMacroKey, 255);
+    Macros_StartMacro(macroIndex, s->ms.currentMacroKey, 255, true);
     return MacroResult_Finished;
 }
 
 
 //partentMacroSlot == 255 means no parent
-void Macros_StartMacro(uint8_t index, key_state_t *keyState, uint8_t parentMacroSlot)
+void Macros_StartMacro(uint8_t index, key_state_t *keyState, uint8_t parentMacroSlot, bool runFirstAction)
 {
     macro_state_t* oldState = s;
     if (!findFreeStateSlot() || AllMacros[index].macroActionsCount == 0)  {
@@ -2624,7 +2688,7 @@ void Macros_StartMacro(uint8_t index, key_state_t *keyState, uint8_t parentMacro
     //this loads the first action and resets all adresses
     resetToAddressZero(index);
 
-    if (parentMacroSlot == 255 || s < &MacroState[parentMacroSlot]) {
+    if (runFirstAction && (parentMacroSlot == 255 || s < &MacroState[parentMacroSlot])) {
         //execute first action if macro has no caller Or is being called and its caller has higher slot index.
         //The condition ensures that a called macro executes exactly one action in the same eventloop cycle.
         continueMacro();
@@ -2708,9 +2772,18 @@ void Macros_ContinueMacro(void)
         if (MacroState[i].ms.macroPlaying && !MacroState[i].ms.macroSleeping) {
             someonePlaying = true;
             s = &MacroState[i];
-            continueMacro();
+
+            macro_result_t res = MacroResult_Finished;
+            while (MacroState[i].ms.macroPlaying && !MacroState[i].ms.macroSleeping && res == MacroResult_Finished) {
+                res = continueMacro();
+            }
         }
     }
     s = NULL;
     MacroPlaying &= someonePlaying;
+}
+
+void Macros_ClearStatus(void)
+{
+    processClearStatusCommand();
 }

@@ -97,7 +97,8 @@ CFLAGS = -mthumb                    \
          -Wrestrict                 \
          -Wnull-dereference         \
          -Wshadow                   \
-         $(BUILD_FLAGS)
+         $(BUILD_FLAGS)             \
+         $(CUSTOM_CFLAGS)
 
 # Compiler options for C++ only.
 CXXFLAGS = -felide-constructors -fno-exceptions -fno-rtti
