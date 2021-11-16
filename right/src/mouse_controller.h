@@ -47,7 +47,7 @@
     extern uint8_t ActiveMouseStates[ACTIVE_MOUSE_STATES_COUNT];
     extern uint8_t ToggledMouseStates[ACTIVE_MOUSE_STATES_COUNT];
 
-    extern bool CompensateDiagonalSpeed;
+    extern bool DiagonalSpeedCompensation;
 
 // Functions:
     void MouseController_ActivateDirectionSigns(uint8_t state);

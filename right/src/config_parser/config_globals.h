@@ -4,6 +4,7 @@
 // Includes:
 
     #include "fsl_common.h"
+    #include "attributes.h"
     #include "basic_types.h"
 
 // Macros:
@@ -29,7 +30,7 @@
         uint32_t uniqueId;
         bool isVendorModeOn;
         bool isIso;
-    } hardware_config_t;
+    } ATTR_PACKED hardware_config_t;
 
 // Variables:
 

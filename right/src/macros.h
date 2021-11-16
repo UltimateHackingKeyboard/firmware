@@ -55,6 +55,18 @@
         MacroActionType_Command,
     } macro_action_type_t;
 
+    typedef enum {
+        MacroResult_InProgressFlag = 1,
+        MacroResult_ActionFinishedFlag = 2,
+        MacroResult_DoneFlag = 4,
+        MacroResult_YieldFlag = 8,
+        MacroResult_Blocking = MacroResult_InProgressFlag,
+        MacroResult_Waiting = MacroResult_InProgressFlag | MacroResult_YieldFlag,
+        MacroResult_Finished = MacroResult_ActionFinishedFlag,
+        MacroResult_JumpedForward = MacroResult_DoneFlag,
+        MacroResult_JumpedBackward = MacroResult_DoneFlag | MacroResult_YieldFlag,
+    } macro_result_t;
+
     typedef struct {
         union {
             struct {
@@ -108,9 +120,12 @@
             uint32_t currentMacroStartTime;
             uint16_t currentMacroActionIndex;
             uint16_t bufferOffset;
+            uint16_t commandBegin;
+            uint16_t commandEnd;
             uint8_t parentMacroSlot;
             uint8_t currentMacroIndex;
             uint8_t postponeNextNCommands;
+            uint8_t commandAddress;
             bool macroInterrupted : 1;
             bool macroSleeping : 1;
             bool macroBroken : 1;
@@ -171,7 +186,7 @@
 
 // Functions:
 
-    void Macros_StartMacro(uint8_t index, key_state_t *keyState, uint8_t parentMacroSlot);
+    void Macros_StartMacro(uint8_t index, key_state_t *keyState, uint8_t parentMacroSlot, bool runFirstAction);
     void Macros_ContinueMacro(void);
     void Macros_SignalInterrupt(void);
     bool Macros_ClaimReports(void);
@@ -184,8 +199,11 @@
     void Macros_SetStatusNumSpaced(uint32_t n, bool space);
     void Macros_SetStatusChar(char n);
     void Macros_UpdateLayerStack();
+    void Macros_Initialize();
+    void Macros_ClearStatus();
     bool Macros_IsLayerHeld();
     uint8_t Macros_ParseLayerId(const char* arg1, const char* cmdEnd);
     int32_t Macros_ParseInt(const char *a, const char *aEnd, const char* *parsedTill);
+    bool Macros_ParseBoolean(const char *a, const char *aEnd);
 
 #endif

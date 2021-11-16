@@ -276,7 +276,7 @@ void ApplyKeyAction(key_state_t *keyState, key_action_t *action, key_action_t *a
         case KeyActionType_PlayMacro:
             if (KeyState_ActivatedNow(keyState)) {
                 stickyModifiers = 0;
-                Macros_StartMacro(action->playMacro.macroId, keyState, 255);
+                Macros_StartMacro(action->playMacro.macroId, keyState, 255, true);
             }
             break;
     }
