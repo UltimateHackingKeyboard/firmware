@@ -203,7 +203,7 @@ I.e., if you want to customize acceleration driver for your trackball module on 
 
     set module.trackball.baseSpeed 0.5
     set module.trackball.speed 1.0
-    set module.trackball.acceleration 1.0
+    set module.trackball.xceleration 1.0
 
 # Macro commands
 
@@ -259,8 +259,8 @@ The following grammar is supported:
     COMMAND = tapKeySeq [SHORTCUT]+
     COMMAND = set module.MODULEID.navigationMode.LAYERID NAVIGATIONMODE
     COMMAND = set module.MODULEID.baseSpeed <speed multiplier part that always applies, 0-10.0 (FLOAT)>
-    COMMAND = set module.MODULEID.speed <speed multiplier part that is affected by acceleration, 0-10.0 (FLOAT)>
-    COMMAND = set module.MODULEID.acceleration <exponent 0-1.0 (FLOAT)>
+    COMMAND = set module.MODULEID.speed <speed multiplier part that is affected by xceleration, 0-10.0 (FLOAT)>
+    COMMAND = set module.MODULEID.xceleration <exponent 0-1.0 (FLOAT)>
     #NOTIMPLEMENTED COMMAND = set module.MODULEID.{caretSkewStrength|caretSpeedDivisor|scrollSpeedDivisor} FLOAT
     #NOTIMPLEMENTED COMMAND = set secondaryRoles
     COMMAND = set mouseKeys.{move|scroll}.initialSpeed <px/s, -100/20 (NUMBER)>
@@ -542,13 +542,25 @@ For the purpose of toggling functionality on and off, and for global constants m
   - `deceleratedSpeed` - speed as affected by deceleration modifier
   - `acceleratedSpeed` - speed as affected by acceleration modifier
   - `axisSkew`
-- `set module.MODULEID.{baseSpeed|speed|acceleration}` modifies speed characteristics of right side modules. Simplified formula is `speedMultiplier(normalizedSpeed) = baseSpeed + speed*(normalizedSpeed^acceleration)` where `normalizedSpeed = actualSpeed / midSpeed`. Therefore `appliedDistance(distance d, time t) = d*(baseSpeed*((d/t)/midSpeed) + d*speed*(((d/t)/midSpeed)^acceleration))`. (`d/t` is actual speed in px/s, `(d/t)/midSpeed` is normalizedSpeed which acts as base for the exponent)
-  - `baseSpeed` is base speed multiplier which is not affected by acceleration. I.e., if `speed = 0`, then traveled distance is `reportedDistance*baseSpeed`
-  - `speed` multiplies effect of acceleration expression. I.e., simply multiplies the reported distance when the actual speed equals `midSpeed`.
-  - `acceleration` is exponent applied to the speed normalized w.r.t midSpeed. I.e., acceleration expression of the formula is `speed*(reportedSpeed/midSpeed)^(acceleration)`. I.e., no acceleration = 0, reasonable (square root) acceleration = 0.5. Highest recommended value is 1.0.
+- `set module.MODULEID.{baseSpeed|speed|xceleration}` modifies speed characteristics of right side modules. Simplified formula is `speedMultiplier(normalizedSpeed) = baseSpeed + speed*(normalizedSpeed^xceleration)` where `normalizedSpeed = actualSpeed / midSpeed`. Therefore `appliedDistance(distance d, time t) = d*(baseSpeed*((d/t)/midSpeed) + d*speed*(((d/t)/midSpeed)^xceleration))`. (`d/t` is actual speed in px/s, `(d/t)/midSpeed` is normalizedSpeed which acts as base for the exponent)
+  - `baseSpeed` is base speed multiplier which is not affected by xceleration. I.e., if `speed = 0`, then traveled distance is `reportedDistance*baseSpeed`
+  - `speed` multiplies effect of xceleration expression. I.e., simply multiplies the reported distance when the actual speed equals `midSpeed`.
+  - `xceleration` is exponent applied to the speed normalized w.r.t midSpeed. It makes cursor move relatively slower at low speeds and faster with aggresive swipes. It increases non-linearity of the curve, yet does not alone make the cursor faster and more responsive - thence "xceleration" rather than "acceleration" to avoid confusion. I.e., xceleration expression of the formula is `speed*(reportedSpeed/midSpeed)^(xceleration)`. I.e., no acceleration is xceleration = 0, reasonable (square root) acceleration is xceleration = 0.5. Highest recommended value is 1.0. 
   - `midSpeed` represents "middle" speed, where the user can easily imagine behaviour of the device (currently fixed 3000 px/s) and henceforth easily set the coefficient. At this speed, acceleration formula yields `1.0`, i.e., `speedModifier = (baseSpeed + speed)`.
-  - (Mostly) reasonable examples (`baseSpeed speed acceleration baseSpeed`):
-    - `0.0 1.0 0.0 3000` (no acceleration)
+  - Generally:
+    - If your cursor is sluggish at low speeds, you want to:
+      - either lower xceleration
+      - or increase baseSpeed
+    - If you struggle to cover large distance with single swipe, you want to:
+      - set xceleration to either `0.5` or `1.0` (or somewhere inbetween)
+      - and then increase speed till you are satisfied
+    - If cursor moves non-intuitively:
+      - you want to either lower xceleration (`0.5` is a reasonable value)
+      - or increase baseSpeed
+    - If you want to make cursor more responsive overall:
+      - you want to increase speed
+  - (Mostly) reasonable examples (`baseSpeed speed xceleration midSpeed`):
+    - `0.0 1.0 0.0 3000` (no xceleration)
       - speed multiplier is always 1x at all speeds
     - `0.0 1.0 0.5 3000` (square root multiplier)
       - starts at 0x speed multiplier - allowing for very precise movement at low speed)
@@ -558,7 +570,7 @@ For the purpose of toggling functionality on and off, and for global constants m
       - starts at 0.5x speed multipier - meaning that resulting cursor speed is half the picked up movement at low speeds
       - at 3000 px/s, speed multiplier is 1x
       - at 12000 px/s, speed multiplier is 2.5x
-      - (notice that linear acceleration actually means quadratic overall curve)
+      - (notice that linear xceleration actually means quadratic overall curve)
     - `1.0 1.0 1.0 3000`
       - same as before, but resulting cursor speed is double. I.e., 1x at 0 speed, 2x at 3000 px/s, 5x at 12000 px/s
     - `0.0 1.0 1.0 3000` (linear speedup starting at 0)

@@ -43,8 +43,8 @@ static void moduleSpeed(const char* arg1, const char *textEnd, module_configurat
     else if (TokenMatches(arg1, textEnd, "speed")) {
         module->speed = ParseFloat(arg2, textEnd);
     }
-    else if (TokenMatches(arg1, textEnd, "acceleration")) {
-        module->acceleration = ParseFloat(arg2, textEnd);
+    else if (TokenMatches(arg1, textEnd, "xceleration")) {
+        module->xceleration = ParseFloat(arg2, textEnd);
     }
     else {
         Macros_ReportError("parameter not recognized:", arg1, textEnd);
