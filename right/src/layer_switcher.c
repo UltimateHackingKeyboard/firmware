@@ -5,7 +5,7 @@
 #include "debug.h"
 #include "led_display.h"
 
-uint16_t DoubleTapSwitchLayerTimeout = 300;
+uint16_t DoubleTapSwitchLayerTimeout = 400;
 uint16_t DoubleTapSwitchLayerReleaseTimeout = 200;
 
 layer_id_t ActiveLayer = LayerId_Base;

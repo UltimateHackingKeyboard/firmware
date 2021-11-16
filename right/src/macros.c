@@ -64,7 +64,7 @@ static int32_t regs[MAX_REG_COUNT];
 macro_state_t MacroState[MACRO_STATE_POOL_SIZE];
 static macro_state_t *s = MacroState;
 
-uint16_t DoubletapConditionTimeout = 300;
+uint16_t DoubletapConditionTimeout = 400;
 
 static void wakeMacroInSlot(uint8_t slotIdx);
 static void scheduleSlot(uint8_t slotIdx);
