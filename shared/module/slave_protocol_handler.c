@@ -99,10 +99,16 @@ void SlaveTxHandler(void)
             uint8_t messageLength = BOOL_BYTES_TO_BITS_COUNT(MODULE_KEY_COUNT);
             if (MODULE_POINTER_COUNT) {
                 pointer_delta_t *pointerDelta = (pointer_delta_t*)(TxMessage.data + messageLength);
+                __disable_irq();
+                // Gcc compiles those int16_t assignments as sequences of
+                // single-byte instructions, therefore we need to make the
+                // sequence atomic in order to prevent race conditions.
+                // (This handler can be interrupted by sensor interrupts.)
                 pointerDelta->x = PointerDelta.x;
                 pointerDelta->y = PointerDelta.y;
                 PointerDelta.x = 0;
                 PointerDelta.y = 0;
+                __enable_irq();
                 messageLength += sizeof(pointer_delta_t);
             }
             TxMessage.length = messageLength;
