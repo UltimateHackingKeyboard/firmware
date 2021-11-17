@@ -282,7 +282,7 @@ void ApplyKeyAction(key_state_t *keyState, key_action_t *action, key_action_t *a
     }
 }
 
-void clearActiveReports(void)
+static void clearActiveReports(void)
 {
     memset(ActiveUsbMouseReport, 0, sizeof *ActiveUsbMouseReport);
     memset(ActiveUsbBasicKeyboardReport, 0, sizeof *ActiveUsbBasicKeyboardReport);
@@ -294,7 +294,7 @@ void clearActiveReports(void)
 }
 
 
-void mergeReports(void)
+static void mergeReports(void)
 {
     for(uint8_t j = 0; j < MACRO_STATE_POOL_SIZE; j++) {
         if(MacroState[j].ms.reportsUsed) {
@@ -337,6 +337,7 @@ static void commitKeyState(key_state_t *keyState, bool active)
     } else {
         keyState->current = active;
     }
+    WAKE_MACROS_ON_KEYSTATE_CHANGE();
 }
 
 static inline void preprocessKeyState(key_state_t *keyState)
@@ -397,7 +398,7 @@ static void updateActiveUsbReports(void)
     HardwareModifierState = 0;
     SuppressMods = false;
 
-    if (MacroPlaying) {
+    if (MacroPlaying || (Macros_WakeMeOnTime < CurrentTime && (Macros_WakedBecauseOfTime = true) && (MacroPlaying = true))) {
         Macros_ContinueMacro();
     }
 
@@ -409,9 +410,9 @@ static void updateActiveUsbReports(void)
 
     handleLayerChanges();
 
-    LedDisplay_SetLayer(ActiveLayer);
-
-    LedDisplay_SetIcon(LedDisplayIcon_Agent, CurrentTime - LastUsbGetKeyboardStateRequestTimestamp < 1000);
+    if ( CurrentTime - LastUsbGetKeyboardStateRequestTimestamp < 2000) {
+       LedDisplay_SetIcon(LedDisplayIcon_Agent, CurrentTime - LastUsbGetKeyboardStateRequestTimestamp < 1000);
+    }
 
     handleUsbStackTestMode();
 
@@ -424,6 +425,10 @@ static void updateActiveUsbReports(void)
             key_state_t *keyState = &KeyStates[slotId][keyId];
             key_action_t *action;
             key_action_t *actionBase;
+
+            if(((uint8_t*)keyState)[1] == 0) {
+                continue;
+            }
 
             preprocessKeyState(keyState);
 

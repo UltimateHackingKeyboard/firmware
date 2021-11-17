@@ -11,6 +11,7 @@
 
 uint8_t CurrentWatch = 0;
 
+static uint16_t tickCount = 0;
 static uint32_t lastWatch = 0;
 static uint32_t watchInterval = 500;
 
@@ -55,6 +56,7 @@ void TriggerWatch(key_state_t *keyState)
         // Set the LED value to RES until next update occurs.
         LedDisplay_SetText(3, "RES");
         CurrentWatch = key;
+        tickCount = 0;
     }
 }
 
@@ -66,6 +68,31 @@ void WatchTime(uint8_t n)
         lastWatch = CurrentTime;
     }
     lastUpdate = CurrentTime;
+}
+
+void WatchTimeMicros(uint8_t n)
+{
+    static uint32_t lastUpdate = 0;
+    static uint16_t i = 0;
+
+    i++;
+
+    if (i == 1000) {
+        ShowNumberExp(CurrentTime - lastUpdate);
+        lastUpdate = CurrentTime;
+        i = 0;
+    }
+}
+
+
+void WatchCallCount(uint8_t n)
+{
+    tickCount++;
+
+    if (CurrentTime - lastWatch > watchInterval) {
+        ShowNumberExp(tickCount);
+        lastWatch = CurrentTime;
+    }
 }
 
 void WatchValue(int v, uint8_t n)

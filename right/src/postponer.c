@@ -116,6 +116,8 @@ void PostponerCore_RunPostponedEvents(void)
         consumeEvent(1);
         // This gives the key two ticks (this and next) to get properly processed before execution of next queued event.
         PostponerCore_PostponeNCycles(1);
+        // wake macros
+        WAKE_MACROS_ON_KEYSTATE_CHANGE();
     }
 }
 

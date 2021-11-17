@@ -5,9 +5,9 @@
 #define SRC_UTILS_DBG_H_
 
 // When a key '~' to '6' is pressed, corresponding slot (identified by numbers 0-6) is activated.
-// This means that, corresponding watched value is shown on the LED display) and then updated in certain intervals.
+// This means that corresponding watched value is shown on the LED display and then updated in certain intervals.
 //
-// Numbers are outputted in an exponent notation in form '[0-9][0-9]' + '[0A-Z]' where letter denotes added magnitude (A = *10^1, B = *10^2...).
+// Numbers are outputted in an exponent notation in form '[0-9][0-9]' + '[0A-Z]' where letter denotes added magnitude (10A = 1000, 10B = 10000...).
 // Letters are used for magnitude so that brain is not confused by seeing three digit numbers.
 
 // Includes:
@@ -21,8 +21,14 @@
     // This hook is to be placed in usb_report_updater and to be called whenever a key is activated (i.e., on key-down event).
     #define WATCH_TRIGGER(STATE) TriggerWatch(STATE);
 
-    // When placed into the code, time between calls to this macro is being watched in slot N.
+    // Shows time between calls.
     #define WATCH_TIME(N) if(CurrentWatch == N) { WatchTime(N); }
+
+    // Shows time between calls, averaged over 1000 calls.
+    #define WATCH_TIME_MICROS(N) if(CurrentWatch == N) { WatchTimeMicros(N); }
+
+    // Shows time between calls, averaged over 1000 calls.
+    #define WATCH_CALL_COUNT(N) if(CurrentWatch == N) { WatchCallCount(N); }
 
     // Watches value V in slot N.
     #define WATCH_VALUE(V, N) if(CurrentWatch == N) { WatchValue(V, N); }
@@ -36,7 +42,7 @@
     // Watches string V in slot N.
     #define WATCH_STRING(V, N) if(CurrentWatch == N) { WatchString(V, N); }
 
-    // Watches value V in slot N.
+    // Always show value, but respect slot logic
     #define SHOW_VALUE(V, N) if(CurrentWatch == N) { ShowValue(V, N); }
 
     // Always show string (no timing logic is applied), but respect slot logic.
@@ -50,6 +56,8 @@
 
     void TriggerWatch(key_state_t *keyState);
     void WatchTime(uint8_t n);
+    void WatchTimeMicros(uint8_t n);
+    void WatchCallCount(uint8_t n);
     void WatchValue(int v, uint8_t n);
     void WatchValueMin(int v, uint8_t n);
     void WatchValueMax(int v, uint8_t n);
@@ -67,6 +75,8 @@
 
     #define WATCH_TRIGGER(N)
     #define WATCH_TIME(N)
+    #define WATCH_TIME_MICROS(N)
+    #define WATCH_CALL_COUNT(N)
     #define WATCH_VALUE(V, N)
     #define WATCH_VALUE_MIN(V, N)
     #define WATCH_VALUE_MAX(V, N)
