@@ -186,11 +186,22 @@
         } as;
     }  macro_state_t;
 
+    // Schedule is given by a single-linked circular list.
     typedef struct {
+        // Current slot is the next slot to be run. Previous reference is
+        // required in order to be able to unschedule current slot.
         uint8_t previousSlotIdx;
         uint8_t currentSlotIdx;
+        // LastQueuedSlot is the slot after which the new schedules should be
+        // added. Either points to current (usually) or to the last added
+        // element (if it still waits to be executed for the first time).
         uint8_t lastQueuedSlot;
+        // Total number of scheduled slots.
         uint8_t activeSlotCount;
+        // Slots that remain to be executed in current cycle. (They might get
+        // executed or not - if quota is exceeded or if some macro returns
+        // blocking state, then schedule cycle is not completed within one
+        // UHK update cycle.)
         uint8_t remainingCount;
     } scheduler_state_t;
 
