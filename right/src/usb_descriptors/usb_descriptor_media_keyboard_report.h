@@ -8,6 +8,6 @@
 
 // Variables:
 
-    extern uint8_t UsbMediaKeyboardReportDescriptor[USB_MEDIA_KEYBOARD_REPORT_DESCRIPTOR_LENGTH];
+    extern USB_DESC_STORAGE_TYPE UsbMediaKeyboardReportDescriptor[USB_MEDIA_KEYBOARD_REPORT_DESCRIPTOR_LENGTH];
 
 #endif

@@ -17,6 +17,6 @@
 
 // Variables:
 
-    extern uint8_t UsbMouseReportDescriptor[USB_MOUSE_REPORT_DESCRIPTOR_LENGTH];
+    extern USB_DESC_STORAGE_TYPE UsbMouseReportDescriptor[USB_MOUSE_REPORT_DESCRIPTOR_LENGTH];
 
 #endif

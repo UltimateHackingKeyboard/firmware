@@ -12,6 +12,6 @@
 
 // Variables:
 
-    extern uint8_t UsbGenericHidReportDescriptor[USB_GENERIC_HID_REPORT_DESCRIPTOR_LENGTH];
+    extern USB_DESC_STORAGE_TYPE UsbGenericHidReportDescriptor[USB_GENERIC_HID_REPORT_DESCRIPTOR_LENGTH];
 
 #endif
