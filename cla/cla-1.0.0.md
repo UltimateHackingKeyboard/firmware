@@ -110,3 +110,4 @@ I have read this Agreement, and fully agree to it by signing it with my GitHub u
 - @xxxajk
 - @dancek
 - @steamraven
+- @benedekkupper
