@@ -1,9 +1,7 @@
 #include "usb_composite_device.h"
 #include "usb_report_updater.h"
-#include "timer.h"
 
 static usb_mouse_report_t usbMouseReports[2];
-static uint32_t usbMouseReportLastSendTime = 0;
 uint32_t UsbMouseActionCounter;
 usb_mouse_report_t* ActiveUsbMouseReport = usbMouseReports;
 
@@ -40,13 +38,7 @@ usb_status_t UsbMouseAction(void)
 
 usb_status_t UsbMouseCheckIdleElapsed()
 {
-    uint16_t idlePeriodMs = ((usb_device_hid_struct_t*)UsbCompositeDevice.mouseHandle)->idleRate * 4; // idleRate is in 4ms units.
-    if (!idlePeriodMs) {
-        return kStatus_USB_Busy;
-    }
-
-    bool hasIdleElapsed = (Timer_GetElapsedTimeMicros(&usbMouseReportLastSendTime) / 1000) > idlePeriodMs;
-    return hasIdleElapsed ? kStatus_USB_Success : kStatus_USB_Busy;
+    return kStatus_USB_Busy;
 }
 
 usb_status_t UsbMouseCheckReportReady()
@@ -91,11 +83,6 @@ usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param
             }
             break;
         }
-
-        case kUSB_DeviceHidEventSetIdle:
-            usbMouseReportLastSendTime = CurrentTime;
-            error = kStatus_USB_Success;
-            break;
 
         case kUSB_DeviceHidEventSetProtocol: {
             uint8_t report = *(uint16_t*)param;
