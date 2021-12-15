@@ -63,6 +63,15 @@ usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param
     usb_status_t error = kStatus_USB_InvalidRequest;
 
     switch (event) {
+        case ((uint32_t)-kUSB_DeviceEventSetConfiguration):
+            error = kStatus_USB_Success;
+            break;
+        case ((uint32_t)-kUSB_DeviceEventSetInterface):
+            if (*(uint8_t*)param == 0) {
+                error = kStatus_USB_Success;
+            }
+            break;
+
         case kUSB_DeviceHidEventSendResponse:
             UsbReportUpdateSemaphore &= ~(1 << USB_MOUSE_INTERFACE_INDEX);
             if (UsbCompositeDevice.attach) {
@@ -105,14 +114,4 @@ usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param
     }
 
     return error;
-}
-
-usb_status_t UsbMouseSetConfiguration(class_handle_t handle, uint8_t configuration)
-{
-    return kStatus_USB_Error;
-}
-
-usb_status_t UsbMouseSetInterface(class_handle_t handle, uint8_t interface, uint8_t alternateSetting)
-{
-    return kStatus_USB_Error;
 }
