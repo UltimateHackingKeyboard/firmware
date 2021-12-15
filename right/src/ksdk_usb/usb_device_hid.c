@@ -485,11 +485,10 @@ usb_status_t USB_DeviceHidEvent(void *handle, uint32_t event, void *param)
                         }
                         break;
                     case USB_DEVICE_HID_REQUEST_SET_IDLE:
-                        /* Set idle request */
+                        /* Set idle request - only accept no repeat setting, otherwise reject */
+                        if (((controlRequest->setup->wValue & 0xFF00U) >> 0x08U) == 0)
                         {
-                            hidHandle->idleRate = (controlRequest->setup->wValue & 0xFF00U) >> 0x08U;
-                            error = hidHandle->configStruct->classCallback(
-                                (class_handle_t)hidHandle, kUSB_DeviceHidEventSetIdle, &controlRequest->setup->wValue);
+                            error = kStatus_USB_Success;
                         }
                         break;
                     case USB_DEVICE_HID_REQUEST_SET_PROTOCOL:

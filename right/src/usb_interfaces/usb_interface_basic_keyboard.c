@@ -1,11 +1,9 @@
 #include "led_display.h"
 #include "usb_composite_device.h"
 #include "usb_report_updater.h"
-#include "timer.h"
 
 static usb_basic_keyboard_report_t usbBasicKeyboardReports[2];
 static uint8_t usbBasicKeyboardInBuffer[USB_BASIC_KEYBOARD_REPORT_LENGTH];
-static uint32_t usbBasicKeyboardReportLastSendTime = 0;
 uint32_t UsbBasicKeyboardActionCounter;
 usb_basic_keyboard_report_t* ActiveUsbBasicKeyboardReport = usbBasicKeyboardReports;
 
@@ -34,7 +32,6 @@ usb_status_t UsbBasicKeyboardAction(void)
         UsbCompositeDevice.basicKeyboardHandle, USB_BASIC_KEYBOARD_ENDPOINT_INDEX,
         (uint8_t *)ActiveUsbBasicKeyboardReport, USB_BASIC_KEYBOARD_REPORT_LENGTH);
     if (usb_status == kStatus_USB_Success) {
-        usbBasicKeyboardReportLastSendTime = CurrentTime;
         UsbBasicKeyboardActionCounter++;
         SwitchActiveUsbBasicKeyboardReport();
     }
@@ -43,13 +40,7 @@ usb_status_t UsbBasicKeyboardAction(void)
 
 usb_status_t UsbBasicKeyboardCheckIdleElapsed()
 {
-    uint16_t idlePeriodMs = ((usb_device_hid_struct_t*)UsbCompositeDevice.basicKeyboardHandle)->idleRate * 4; // idleRate is in 4ms units.
-    if (!idlePeriodMs) {
-        return kStatus_USB_Busy;
-    }
-
-    bool hasIdleElapsed = (Timer_GetElapsedTimeMicros(&usbBasicKeyboardReportLastSendTime) / 1000) > idlePeriodMs;
-    return hasIdleElapsed ? kStatus_USB_Success : kStatus_USB_Busy;
+    return kStatus_USB_Busy;
 }
 
 usb_status_t UsbBasicKeyboardCheckReportReady()
@@ -87,7 +78,6 @@ usb_status_t UsbBasicKeyboardCallback(class_handle_t handle, uint32_t event, voi
             if (report->reportType == USB_DEVICE_HID_REQUEST_GET_REPORT_TYPE_INPUT && report->reportId == 0 && report->reportLength <= USB_BASIC_KEYBOARD_REPORT_LENGTH) {
                 report->reportBuffer = (void*)ActiveUsbBasicKeyboardReport;
 
-                usbBasicKeyboardReportLastSendTime = CurrentTime;
                 UsbBasicKeyboardActionCounter++;
                 SwitchActiveUsbBasicKeyboardReport();
                 error = kStatus_USB_Success;
@@ -117,11 +107,6 @@ usb_status_t UsbBasicKeyboardCallback(class_handle_t handle, uint32_t event, voi
             }
             break;
         }
-
-        case kUSB_DeviceHidEventSetIdle:
-            usbBasicKeyboardReportLastSendTime = CurrentTime;
-            error = kStatus_USB_Success;
-            break;
 
         case kUSB_DeviceHidEventSetProtocol: {
             uint8_t report = *(uint16_t*)param;

@@ -1,11 +1,9 @@
 #include "usb_composite_device.h"
 #include "usb_report_updater.h"
-#include "timer.h"
 
 uint32_t UsbSystemKeyboardActionCounter;
 static usb_system_keyboard_report_t usbSystemKeyboardReports[2];
 usb_system_keyboard_report_t* ActiveUsbSystemKeyboardReport = usbSystemKeyboardReports;
-static uint32_t usbSystemKeyboardReportLastSendTime = 0;
 
 static usb_system_keyboard_report_t* GetInactiveUsbSystemKeyboardReport()
 {
@@ -40,13 +38,7 @@ usb_status_t UsbSystemKeyboardAction(void)
 
 usb_status_t UsbSystemKeyboardCheckIdleElapsed()
 {
-    uint16_t idlePeriodUs = ((usb_device_hid_struct_t*)UsbCompositeDevice.systemKeyboardHandle)->idleRate * 4 * 1000; // idleRate is in 4ms units.
-    if (!idlePeriodUs) {
-        return kStatus_USB_Busy;
-    }
-
-    bool hasIdleElapsed = Timer_GetElapsedTimeMicros(&usbSystemKeyboardReportLastSendTime) > idlePeriodUs;
-    return hasIdleElapsed ? kStatus_USB_Success : kStatus_USB_Busy;
+    return kStatus_USB_Busy;
 }
 
 usb_status_t UsbSystemKeyboardCheckReportReady()
@@ -89,11 +81,6 @@ usb_status_t UsbSystemKeyboardCallback(class_handle_t handle, uint32_t event, vo
             }
             break;
         }
-
-        case kUSB_DeviceHidEventSetIdle:
-            usbSystemKeyboardReportLastSendTime = CurrentTime;
-            error = kStatus_USB_Success;
-            break;
 
         default:
             break;
