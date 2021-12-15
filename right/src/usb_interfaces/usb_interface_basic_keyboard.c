@@ -4,7 +4,6 @@
 #include "timer.h"
 
 static usb_basic_keyboard_report_t usbBasicKeyboardReports[2];
-static uint8_t usbBasicKeyboardProtocol = 1;
 static uint8_t usbBasicKeyboardInBuffer[USB_BASIC_KEYBOARD_REPORT_LENGTH];
 static uint32_t usbBasicKeyboardReportLastSendTime = 0;
 uint32_t UsbBasicKeyboardActionCounter;
@@ -63,7 +62,8 @@ usb_status_t UsbBasicKeyboardCheckReportReady()
 
 usb_status_t UsbBasicKeyboardCallback(class_handle_t handle, uint32_t event, void *param)
 {
-    usb_status_t error = kStatus_USB_Error;
+    usb_device_hid_struct_t *hidHandle = (usb_device_hid_struct_t *)handle;
+    usb_status_t error = kStatus_USB_InvalidRequest;
 
     switch (event) {
         case kUSB_DeviceHidEventSendResponse:
@@ -71,9 +71,6 @@ usb_status_t UsbBasicKeyboardCallback(class_handle_t handle, uint32_t event, voi
             if (UsbCompositeDevice.attach) {
                 error = kStatus_USB_Success;
             }
-            break;
-        case kUSB_DeviceHidEventRecvResponse:
-            error = kStatus_USB_InvalidRequest;
             break;
 
         case kUSB_DeviceHidEventGetReport: {
@@ -84,6 +81,7 @@ usb_status_t UsbBasicKeyboardCallback(class_handle_t handle, uint32_t event, voi
                 usbBasicKeyboardReportLastSendTime = CurrentTime;
                 UsbBasicKeyboardActionCounter++;
                 SwitchActiveUsbBasicKeyboardReport();
+                error = kStatus_USB_Success;
             } else {
                 error = kStatus_USB_InvalidRequest;
             }
@@ -111,29 +109,22 @@ usb_status_t UsbBasicKeyboardCallback(class_handle_t handle, uint32_t event, voi
             break;
         }
 
-        case kUSB_DeviceHidEventGetIdle:
-            error = kStatus_USB_Success;
-            break;
-
         case kUSB_DeviceHidEventSetIdle:
             usbBasicKeyboardReportLastSendTime = CurrentTime;
             error = kStatus_USB_Success;
             break;
 
-        case kUSB_DeviceHidEventGetProtocol:
-            *(uint8_t*)param = usbBasicKeyboardProtocol;
-            error = kStatus_USB_Success;
-            break;
-
-        case kUSB_DeviceHidEventSetProtocol:
-            if (*(uint8_t*)param <= 1) {
-                usbBasicKeyboardProtocol = *(uint8_t*)param;
+        case kUSB_DeviceHidEventSetProtocol: {
+            uint8_t report = *(uint16_t*)param;
+            if (report <= 1) {
+                hidHandle->protocol = report;
                 error = kStatus_USB_Success;
             }
             else {
                 error = kStatus_USB_InvalidRequest;
             }
             break;
+        }
 
         default:
             break;
@@ -144,7 +135,6 @@ usb_status_t UsbBasicKeyboardCallback(class_handle_t handle, uint32_t event, voi
 
 usb_status_t UsbBasicKeyboardSetConfiguration(class_handle_t handle, uint8_t configuration)
 {
-    usbBasicKeyboardProtocol = 1; // HID Interfaces with boot protocol support start in report protocol mode.
     return kStatus_USB_Error;
 }
 

@@ -37,7 +37,7 @@ usb_status_t UsbGenericHidCheckReportReady()
 
 usb_status_t UsbGenericHidCallback(class_handle_t handle, uint32_t event, void *param)
 {
-    usb_status_t error = kStatus_USB_Error;
+    usb_status_t error = kStatus_USB_InvalidRequest;
 
     switch (event) {
         case kUSB_DeviceHidEventSendResponse:
@@ -45,6 +45,7 @@ usb_status_t UsbGenericHidCallback(class_handle_t handle, uint32_t event, void *
                 error = kStatus_USB_Success;
             }
             break;
+
         case kUSB_DeviceHidEventRecvResponse:
             UsbProtocolHandler();
 
@@ -53,38 +54,24 @@ usb_status_t UsbGenericHidCallback(class_handle_t handle, uint32_t event, void *
                               GenericHidInBuffer,
                               USB_GENERIC_HID_IN_BUFFER_LENGTH);
             UsbGenericHidActionCounter++;
-            return UsbReceiveData();
+            error = UsbReceiveData();
+            break;
 
         case kUSB_DeviceHidEventGetReport: {
             usb_device_hid_report_struct_t *report = (usb_device_hid_report_struct_t*)param;
             if (report->reportType == USB_DEVICE_HID_REQUEST_GET_REPORT_TYPE_INPUT && report->reportId == 0 && report->reportLength <= USB_GENERIC_HID_IN_BUFFER_LENGTH) {
                 report->reportBuffer = GenericHidInBuffer;
                 UsbGenericHidActionCounter++;
+                error = kStatus_USB_Success;
             } else {
                 error = kStatus_USB_InvalidRequest;
             }
             break;
         }
 
-        // SetReport is not required for this interface.
-        case kUSB_DeviceHidEventSetReport:
-        case kUSB_DeviceHidEventRequestReportBuffer:
-            error = kStatus_USB_InvalidRequest;
-            break;
-
-        case kUSB_DeviceHidEventGetIdle:
-            error = kStatus_USB_Success;
-            break;
-
         case kUSB_DeviceHidEventSetIdle:
             usbGenericHidReportLastSendTime = CurrentTime;
             error = kStatus_USB_Success;
-            break;
-
-        // No boot protocol support for this interface.
-        case kUSB_DeviceHidEventGetProtocol:
-        case kUSB_DeviceHidEventSetProtocol:
-            error = kStatus_USB_InvalidRequest;
             break;
 
         default:

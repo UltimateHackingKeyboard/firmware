@@ -356,6 +356,15 @@ usb_status_t USB_DeviceHidEvent(void *handle, uint32_t event, void *param)
             /* Clear the alternate setting value. */
             hidHandle->alternate = 0U;
 
+            /* From the HID spec: When initialized, all devices default to report protocol.
+             * of course there is no enum defined, so I have to spell it out here:
+             * 0 = Boot protocol
+             * 1 = Report protocol */
+            hidHandle->protocol = 1;
+
+            /* Reset idle rate in any case */
+            hidHandle->idleRate = 0;
+
             /* Initialize the endpoints of the new current configuration by using the alternate setting 0. */
             error = USB_DeviceHidEndpointsInit(hidHandle);
             break;
@@ -447,15 +456,13 @@ usb_status_t USB_DeviceHidEvent(void *handle, uint32_t event, void *param)
                         break;
                     case USB_DEVICE_HID_REQUEST_GET_IDLE:
                         /* Get idle request */
-                        error = hidHandle->configStruct->classCallback(
-                            (class_handle_t)hidHandle, kUSB_DeviceHidEventGetIdle, &hidHandle->idleRate);
                         controlRequest->buffer = &hidHandle->idleRate;
+                        error = kStatus_USB_Success;
                         break;
                     case USB_DEVICE_HID_REQUEST_GET_PROTOCOL:
                         /* Get protocol request */
-                        error = hidHandle->configStruct->classCallback(
-                            (class_handle_t)hidHandle, kUSB_DeviceHidEventGetProtocol, &hidHandle->protocol);
                         controlRequest->buffer = &hidHandle->protocol;
+                        error = kStatus_USB_Success;
                         break;
                     case USB_DEVICE_HID_REQUEST_SET_REPORT:
                         /* Set report request */
@@ -486,11 +493,11 @@ usb_status_t USB_DeviceHidEvent(void *handle, uint32_t event, void *param)
                         }
                         break;
                     case USB_DEVICE_HID_REQUEST_SET_PROTOCOL:
-                        /* Set protocol request */
+                        /* Set protocol request - only supported for BOOT subclass */
+                        if (hidHandle->configStruct->classInfomation->interfaceList->interfaces->subclassCode == USB_HID_SUBCLASS_BOOT)
                         {
-                            hidHandle->protocol = (controlRequest->setup->wValue & 0x00FFU);
                             error = hidHandle->configStruct->classCallback(
-                                (class_handle_t)hidHandle, kUSB_DeviceHidEventSetProtocol, &hidHandle->protocol);
+                                (class_handle_t)hidHandle, kUSB_DeviceHidEventSetProtocol, &controlRequest->setup->wValue);
                         }
                         break;
                     default:
