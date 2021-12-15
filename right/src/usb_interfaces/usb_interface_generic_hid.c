@@ -40,6 +40,17 @@ usb_status_t UsbGenericHidCallback(class_handle_t handle, uint32_t event, void *
     usb_status_t error = kStatus_USB_InvalidRequest;
 
     switch (event) {
+        case ((uint32_t)-kUSB_DeviceEventSetConfiguration):
+            if (*(uint8_t*)param > 0) {
+                error = UsbReceiveData();
+            }
+            break;
+        case ((uint32_t)-kUSB_DeviceEventSetInterface):
+            if (*(uint8_t*)param == 0) {
+                error = UsbReceiveData();
+            }
+            break;
+
         case kUSB_DeviceHidEventSendResponse:
             if (UsbCompositeDevice.attach) {
                 error = kStatus_USB_Success;
@@ -79,20 +90,4 @@ usb_status_t UsbGenericHidCallback(class_handle_t handle, uint32_t event, void *
     }
 
     return error;
-}
-
-usb_status_t UsbGenericHidSetConfiguration(class_handle_t handle, uint8_t configuration)
-{
-    if (USB_COMPOSITE_CONFIGURATION_INDEX == configuration) {
-        return UsbReceiveData();
-    }
-    return kStatus_USB_Error;
-}
-
-usb_status_t UsbGenericHidSetInterface(class_handle_t handle, uint8_t interface, uint8_t alternateSetting)
-{
-    if (USB_GENERIC_HID_INTERFACE_INDEX == interface) {
-        return UsbReceiveData();
-    }
-    return kStatus_USB_Error;
 }
