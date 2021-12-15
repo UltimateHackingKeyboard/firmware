@@ -59,7 +59,7 @@ usb_status_t UsbSystemKeyboardCheckReportReady()
 
 usb_status_t UsbSystemKeyboardCallback(class_handle_t handle, uint32_t event, void *param)
 {
-    usb_status_t error = kStatus_USB_Error;
+    usb_status_t error = kStatus_USB_InvalidRequest;
 
     switch (event) {
         case kUSB_DeviceHidEventSendResponse:
@@ -67,9 +67,6 @@ usb_status_t UsbSystemKeyboardCallback(class_handle_t handle, uint32_t event, vo
             if (UsbCompositeDevice.attach) {
                 error = kStatus_USB_Success;
             }
-            break;
-        case kUSB_DeviceHidEventRecvResponse:
-            error = kStatus_USB_InvalidRequest;
             break;
 
         case kUSB_DeviceHidEventGetReport: {
@@ -84,25 +81,9 @@ usb_status_t UsbSystemKeyboardCallback(class_handle_t handle, uint32_t event, vo
             break;
         }
 
-        // SetReport is not required for this interface.
-        case kUSB_DeviceHidEventSetReport:
-        case kUSB_DeviceHidEventRequestReportBuffer:
-            error = kStatus_USB_InvalidRequest;
-            break;
-
-        case kUSB_DeviceHidEventGetIdle:
-            error = kStatus_USB_Success;
-            break;
-
         case kUSB_DeviceHidEventSetIdle:
             usbSystemKeyboardReportLastSendTime = CurrentTime;
             error = kStatus_USB_Success;
-            break;
-
-        // No boot protocol support for this interface.
-        case kUSB_DeviceHidEventGetProtocol:
-        case kUSB_DeviceHidEventSetProtocol:
-            error = kStatus_USB_InvalidRequest;
             break;
 
         default:
