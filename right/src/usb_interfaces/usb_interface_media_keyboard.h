@@ -34,8 +34,6 @@
 // Functions:
 
     usb_status_t UsbMediaKeyboardCallback(class_handle_t handle, uint32_t event, void *param);
-    usb_status_t UsbMediaKeyboardSetConfiguration(class_handle_t handle, uint8_t configuration);
-    usb_status_t UsbMediaKeyboardSetInterface(class_handle_t handle, uint8_t interface, uint8_t alternateSetting);
 
     void UsbMediaKeyboardResetActiveReport(void);
     usb_status_t UsbMediaKeyboardAction();
