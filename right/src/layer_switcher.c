@@ -57,7 +57,7 @@ void updateActiveLayer() {
 
     if(activeLayer == LayerId_Base) {
         activeLayer = Macros_ActiveLayer;
-        activeLayerHeld = Macros_ActiveLayer;
+        activeLayerHeld = Macros_ActiveLayerHeld;
     }
     //(write actual ActiveLayer atomically, so that random observer is not confused)
     ActiveLayer = activeLayer;
