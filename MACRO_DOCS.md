@@ -383,6 +383,7 @@ The following grammar is supported:
 ### Uncategorized commands:
 
 - `setLedTxt <time> <custom text>` will set led display to supplemented text for the given time. (Blocks for the given time.)
+    - If the given time is zero, i.e. `<time> = 0`, the led text will be set indefinitely (until the display is refreshed by other text) and this command will returns immediately (non-blocking).
 
 ### Triggering keyboard actions (pressing keys, clicking, etc.):
 
