@@ -412,7 +412,7 @@ The following grammar is supported:
 - `yield` forces macro to yield, if blocking scheduler is used. With preemptive scheduler acts just as `noOp`.
 - `exec MACRONAME` will execute different macro in current state slot. I.e., the macro will be executed in current context and will *not* return. First action of the called macro is executed within the same eventloop cycle.
 - `call MACRONAME` will execute another macro in a new state slot and enters sleep mode. After the called macro finishes, the control returns to the caller macro. First action of the called macro is executed within the same eventloop cycle. The called macro has its own context (e.g., its own ifInterrupted flag, its own postponing counter and flags etc.) Beware, the state pool is small - do not use deep call trees!
-- `call MACRONAME` will execute another macro in a new state slot, without entering sleep mode.
+- `fork MACRONAME` will execute another macro in a new state slot, without entering sleep mode.
 - `stopAllMacros` interrupts all macros. 
 
 ### Status buffer/Debugging tools
