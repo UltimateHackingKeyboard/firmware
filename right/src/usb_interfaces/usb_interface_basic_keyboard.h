@@ -43,8 +43,6 @@
 // Functions:
 
     usb_status_t UsbBasicKeyboardCallback(class_handle_t handle, uint32_t event, void *param);
-    usb_status_t UsbBasicKeyboardSetConfiguration(class_handle_t handle, uint8_t configuration);
-    usb_status_t UsbBasicKeyboardSetInterface(class_handle_t handle, uint8_t interface, uint8_t alternateSetting);
 
     void UsbBasicKeyboardResetActiveReport(void);
     usb_status_t UsbBasicKeyboardAction(void);

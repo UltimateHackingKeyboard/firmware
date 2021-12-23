@@ -184,7 +184,7 @@ void LedSlaveDriver_DisableLeds(void)
 void LedSlaveDriver_UpdateLeds(void)
 {
     for (uint8_t ledDriverId=0; ledDriverId<=LedDriverId_Last; ledDriverId++) {
-        memset(LedDriverValues[ledDriverId], KeyBacklightBrightness, ledDriverStates[ledDriverId].ledCount);
+        memset(LedDriverValues[ledDriverId], 0, ledDriverStates[ledDriverId].ledCount);
     }
     UpdateLayerLeds();
     LedDisplay_UpdateAll();

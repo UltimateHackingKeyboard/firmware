@@ -212,17 +212,19 @@ static usb_status_t usbDeviceCallback(usb_device_handle handle, uint32_t event, 
             wakeUpUhk();
             status = kStatus_USB_Success;
             break;
-        case kUSB_DeviceEventSetConfiguration:
+        case kUSB_DeviceEventSetConfiguration: {
+            uint8_t interface;
             UsbCompositeDevice.attach = 1;
             wakeUpUhk();
+            for (interface = 0; interface < USB_DEVICE_CONFIG_HID; ++interface) {
+                usb_device_class_config_struct_t *intf = &UsbDeviceCompositeConfigList.config[interface];
+
+                /* event enums collide with HID ones, so invert the value */
+                status |= intf->classCallback(intf->classHandle, (uint32_t)-kUSB_DeviceEventSetConfiguration, temp8);
+            }
             UsbCompositeDevice.currentConfiguration = *temp8;
-            UsbGenericHidSetConfiguration(UsbCompositeDevice.genericHidHandle, *temp8);
-            UsbBasicKeyboardSetConfiguration(UsbCompositeDevice.basicKeyboardHandle, *temp8);
-            UsbMediaKeyboardSetConfiguration(UsbCompositeDevice.mediaKeyboardHandle, *temp8);
-            UsbSystemKeyboardSetConfiguration(UsbCompositeDevice.systemKeyboardHandle, *temp8);
-            UsbMouseSetConfiguration(UsbCompositeDevice.mouseHandle, *temp8);
-            status = kStatus_USB_Success;
             break;
+        }
         case kUSB_DeviceEventGetConfiguration:
             *temp8 = UsbCompositeDevice.currentConfiguration;
             status = kStatus_USB_Success;
@@ -232,13 +234,11 @@ static usb_status_t usbDeviceCallback(usb_device_handle handle, uint32_t event, 
                 uint8_t interface = (uint8_t)((*temp16 & 0xFF00U) >> 8);
                 uint8_t alternateSetting = (uint8_t)(*temp16 & 0x00FF);
                 if (interface < USB_DEVICE_CONFIG_HID) {
+                    usb_device_class_config_struct_t *intf = &UsbDeviceCompositeConfigList.config[interface];
+
+                    /* event enums collide with HID ones, so invert the value */
+                    status = intf->classCallback(intf->classHandle, (uint32_t)-kUSB_DeviceEventSetInterface, &alternateSetting);
                     UsbCompositeDevice.currentInterfaceAlternateSetting[interface] = alternateSetting;
-                    UsbGenericHidSetInterface(UsbCompositeDevice.genericHidHandle, interface, alternateSetting);
-                    UsbBasicKeyboardSetInterface(UsbCompositeDevice.basicKeyboardHandle, interface, alternateSetting);
-                    UsbMediaKeyboardSetInterface(UsbCompositeDevice.mediaKeyboardHandle, interface, alternateSetting);
-                    UsbSystemKeyboardSetInterface(UsbCompositeDevice.systemKeyboardHandle, interface, alternateSetting);
-                    UsbMouseSetInterface(UsbCompositeDevice.mouseHandle, interface, alternateSetting);
-                    status = kStatus_USB_Success;
                 }
             }
             break;
