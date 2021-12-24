@@ -1351,7 +1351,7 @@ static macro_result_t processSetLedTxtCommand(const char* arg1, const char *argE
 {
     int16_t time = parseNUM(arg1, argEnd);
     macro_result_t res = MacroResult_Finished;
-    if ((res = processDelay(time)) == MacroResult_Finished) {
+    if (time > 0 && (res = processDelay(time)) == MacroResult_Finished) {
         LedDisplay_UpdateText();
         return MacroResult_Finished;
     } else {
