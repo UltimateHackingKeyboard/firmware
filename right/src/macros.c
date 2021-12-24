@@ -1806,6 +1806,7 @@ static macro_result_t processIfShortcutCommand(bool negate, const char* arg, con
     bool consume = true;
     bool transitive = false;
     bool fixedOrder = true;
+    bool orGate = false;
     uint16_t cancelIn = 0;
     uint16_t timeoutIn= 0;
     while(arg < argEnd && !isNUM(arg, argEnd)) {
@@ -1826,6 +1827,9 @@ static macro_result_t processIfShortcutCommand(bool negate, const char* arg, con
         } else if (TokenMatches(arg, argEnd, "anyOrder")) {
             arg = NextTok(arg, argEnd);
             fixedOrder = false;
+        } else if (TokenMatches(arg, argEnd, "orGate")) {
+            arg = NextTok(arg, argEnd);
+            orGate = true;
         } else {
             Macros_ReportError("Unrecognized option", arg, argEnd);
             arg = NextTok(arg, argEnd);
@@ -1884,6 +1888,30 @@ static macro_result_t processIfShortcutCommand(bool negate, const char* arg, con
                 }
             }
         }
+        else if (orGate) {
+            // go through all canidates all at once
+            while (true) {
+                // first keyid had already been processed.
+                if (PostponerQuery_ContainsKeyId(argKeyid)) {
+                    if (negate) {
+                        return MacroResult_Finished;
+                    } else {
+                        goto conditionPassed;
+                    }
+                }
+                if (!(isNUM(arg, argEnd) && arg < argEnd)) {
+                    break;
+                }
+                argKeyid = parseNUM(arg, argEnd);
+                arg = NextTok(arg, argEnd);
+            }
+            // none is matched
+            if (negate) {
+                goto conditionPassed;
+            } else {
+                return MacroResult_Finished;
+            }
+        }
         else if (fixedOrder && PostponerExtended_PendingId(numArgs - 1) != argKeyid) {
             if (negate) {
                 goto conditionPassed;
@@ -1903,15 +1931,12 @@ static macro_result_t processIfShortcutCommand(bool negate, const char* arg, con
         }
     }
     //all keys match
+    if (consume) {
+        PostponerExtended_ConsumePendingKeypresses(numArgs, true);
+    }
     if (negate) {
-        if (consume) {
-            PostponerExtended_ConsumePendingKeypresses(numArgs, true);
-        }
         return MacroResult_Finished;
     } else {
-        if (consume) {
-            PostponerExtended_ConsumePendingKeypresses(numArgs, true);
-        }
         goto conditionPassed;
     }
 conditionPassed:
