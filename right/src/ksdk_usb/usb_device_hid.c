@@ -200,18 +200,18 @@ static usb_status_t USB_DeviceHidEndpointsInit(usb_device_hid_struct_t *hidHandl
 {
     usb_device_interface_list_t *interfaceList;
     usb_device_interface_struct_t *interface = (usb_device_interface_struct_t *)NULL;
-    usb_status_t error = kStatus_USB_Error;
+    usb_status_t error = kStatus_USB_Success;
 
     /* Check the configuration is valid or not. */
     if (hidHandle->configuration > hidHandle->configStruct->classInfomation->configurations)
     {
-        return error;
+        return kStatus_USB_Error;
     }
 
     /* Get the interface list of the new configuration. */
     if (NULL == hidHandle->configStruct->classInfomation->interfaceList)
     {
-        return error;
+        return kStatus_USB_Error;
     }
     interfaceList = &hidHandle->configStruct->classInfomation->interfaceList[hidHandle->configuration - 1U];
 
@@ -235,7 +235,7 @@ static usb_status_t USB_DeviceHidEndpointsInit(usb_device_hid_struct_t *hidHandl
     if (!interface)
     {
         /* Return error if the interface is not found. */
-        return error;
+        return kStatus_USB_Error;
     }
 
     /* Keep new interface handle. */
@@ -262,7 +262,7 @@ static usb_status_t USB_DeviceHidEndpointsInit(usb_device_hid_struct_t *hidHandl
         }
         ep_callback.callbackParam = hidHandle;
 
-        error = USB_DeviceInitEndpoint(hidHandle->handle, &epInitStruct, &ep_callback);
+        error |= USB_DeviceInitEndpoint(hidHandle->handle, &epInitStruct, &ep_callback);
     }
     return error;
 }
@@ -356,6 +356,15 @@ usb_status_t USB_DeviceHidEvent(void *handle, uint32_t event, void *param)
             /* Clear the alternate setting value. */
             hidHandle->alternate = 0U;
 
+            /* From the HID spec: When initialized, all devices default to report protocol.
+             * of course there is no enum defined, so I have to spell it out here:
+             * 0 = Boot protocol
+             * 1 = Report protocol */
+            hidHandle->protocol = 1;
+
+            /* Reset idle rate in any case */
+            hidHandle->idleRate = 0;
+
             /* Initialize the endpoints of the new current configuration by using the alternate setting 0. */
             error = USB_DeviceHidEndpointsInit(hidHandle);
             break;
@@ -447,15 +456,13 @@ usb_status_t USB_DeviceHidEvent(void *handle, uint32_t event, void *param)
                         break;
                     case USB_DEVICE_HID_REQUEST_GET_IDLE:
                         /* Get idle request */
-                        error = hidHandle->configStruct->classCallback(
-                            (class_handle_t)hidHandle, kUSB_DeviceHidEventGetIdle, &hidHandle->idleRate);
                         controlRequest->buffer = &hidHandle->idleRate;
+                        error = kStatus_USB_Success;
                         break;
                     case USB_DEVICE_HID_REQUEST_GET_PROTOCOL:
                         /* Get protocol request */
-                        error = hidHandle->configStruct->classCallback(
-                            (class_handle_t)hidHandle, kUSB_DeviceHidEventGetProtocol, &hidHandle->protocol);
                         controlRequest->buffer = &hidHandle->protocol;
+                        error = kStatus_USB_Success;
                         break;
                     case USB_DEVICE_HID_REQUEST_SET_REPORT:
                         /* Set report request */
@@ -478,19 +485,18 @@ usb_status_t USB_DeviceHidEvent(void *handle, uint32_t event, void *param)
                         }
                         break;
                     case USB_DEVICE_HID_REQUEST_SET_IDLE:
-                        /* Set idle request */
+                        /* Set idle request - only accept no repeat setting, otherwise reject */
+                        if (((controlRequest->setup->wValue & 0xFF00U) >> 0x08U) == 0)
                         {
-                            hidHandle->idleRate = (controlRequest->setup->wValue & 0xFF00U) >> 0x08U;
-                            error = hidHandle->configStruct->classCallback(
-                                (class_handle_t)hidHandle, kUSB_DeviceHidEventSetIdle, &controlRequest->setup->wValue);
+                            error = kStatus_USB_Success;
                         }
                         break;
                     case USB_DEVICE_HID_REQUEST_SET_PROTOCOL:
-                        /* Set protocol request */
+                        /* Set protocol request - only supported for BOOT subclass */
+                        if (hidHandle->configStruct->classInfomation->interfaceList->interfaces->subclassCode == USB_HID_SUBCLASS_BOOT)
                         {
-                            hidHandle->protocol = (controlRequest->setup->wValue & 0x00FFU);
                             error = hidHandle->configStruct->classCallback(
-                                (class_handle_t)hidHandle, kUSB_DeviceHidEventSetProtocol, &hidHandle->protocol);
+                                (class_handle_t)hidHandle, kUSB_DeviceHidEventSetProtocol, &controlRequest->setup->wValue);
                         }
                         break;
                     default:
