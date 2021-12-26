@@ -24,6 +24,7 @@
         int8_t wheelY;
         int8_t wheelX;
         int8_t zoomLevel;
+        int8_t noFingers;
     } touchpad_events_t;
 
 // Variables:
