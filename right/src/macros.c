@@ -1320,6 +1320,18 @@ static bool processIfRegEqCommand(bool negate, const char* arg1, const char *arg
     }
 }
 
+static bool processIfKeymapCommand(bool negate, const char* arg1, const char *argEnd)
+{
+    uint8_t queryKeymapIdx = parseKeymapId(arg1, argEnd);
+    return (queryKeymapIdx == CurrentKeymapIndex) != negate;
+}
+
+static bool processIfLayerCommand(bool negate, const char* arg1, const char *argEnd)
+{
+    uint8_t queryLayerIdx = Macros_ParseLayerId(arg1, argEnd);
+    return (queryLayerIdx == Macros_ActiveLayer) != negate;
+}
+
 static macro_result_t processBreakCommand()
 {
     s->ms.macroBroken = true;
@@ -2213,6 +2225,34 @@ static macro_result_t processCommand(const char* cmd, const char* cmdEnd)
                     return MacroResult_Finished;
                 }
                 cmd = NextTok(arg1, cmdEnd); //shift by 2
+                arg1 = NextTok(cmd, cmdEnd);
+            }
+            else if (TokenMatches(cmd, cmdEnd, "ifKeymap")) {
+                if (!processIfKeymapCommand(false, arg1, cmdEnd) && !s->as.currentConditionPassed) {
+                    return MacroResult_Finished;
+                }
+                cmd = arg1; //shift by 1
+                arg1 = NextTok(cmd, cmdEnd);
+            }
+            else if (TokenMatches(cmd, cmdEnd, "ifNotKeymap")) {
+                if (!processIfKeymapCommand(true, arg1, cmdEnd) && !s->as.currentConditionPassed) {
+                    return MacroResult_Finished;
+                }
+                cmd = arg1; //shift by 1
+                arg1 = NextTok(cmd, cmdEnd);
+            }
+            else if (TokenMatches(cmd, cmdEnd, "ifLayer")) {
+                if (!processIfLayerCommand(false, arg1, cmdEnd) && !s->as.currentConditionPassed) {
+                    return MacroResult_Finished;
+                }
+                cmd = arg1; //shift by 1
+                arg1 = NextTok(cmd, cmdEnd);
+            }
+            else if (TokenMatches(cmd, cmdEnd, "ifNotLayer")) {
+                if (!processIfLayerCommand(true, arg1, cmdEnd) && !s->as.currentConditionPassed) {
+                    return MacroResult_Finished;
+                }
+                cmd = arg1; //shift by 1
                 arg1 = NextTok(cmd, cmdEnd);
             }
             else if (TokenMatches(cmd, cmdEnd, "ifPlaytime")) {
