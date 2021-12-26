@@ -5,39 +5,15 @@
 
     #include "layer.h"
     #include "config_parser/parse_keymap.h"
+    #include "secondary_role_driver.h"
     #include "key_states.h"
     #include "key_action.h"
 
 // Macros:
 
-    #define IS_SECONDARY_ROLE_MODIFIER(secondaryRole) (SecondaryRole_LeftCtrl <= (secondaryRole) && (secondaryRole) <= SecondaryRole_RightSuper)
-    #define IS_SECONDARY_ROLE_LAYER_SWITCHER(secondaryRole) (SecondaryRole_Mod <= (secondaryRole) && (secondaryRole) <= SecondaryRole_Mouse)
-    #define SECONDARY_ROLE_MODIFIER_TO_HID_MODIFIER(secondaryRoleModifier) (1 << ((secondaryRoleModifier) - 1))
-    #define SECONDARY_ROLE_LAYER_TO_LAYER_ID(secondaryRoleLayer) ((secondaryRoleLayer) - SecondaryRole_RightSuper)
-
     #define USB_SEMAPHORE_TIMEOUT 100 // ms
 
 // Typedefs:
-
-    typedef enum {
-        SecondaryRole_LeftCtrl = 1,
-        SecondaryRole_LeftShift,
-        SecondaryRole_LeftAlt,
-        SecondaryRole_LeftSuper,
-        SecondaryRole_RightCtrl,
-        SecondaryRole_RightShift,
-        SecondaryRole_RightAlt,
-        SecondaryRole_RightSuper,
-        SecondaryRole_Mod,
-        SecondaryRole_Fn,
-        SecondaryRole_Mouse
-    } secondary_role_t;
-
-    typedef enum {
-        Stick_Never,
-        Stick_Smart,
-        Stick_Always
-    } sticky_strategy_t;
 
 // Variables:
 
@@ -54,8 +30,6 @@
     extern bool ActivateOnRelease;
     extern key_state_t* EmergencyKey;
     extern uint8_t basicScancodeIndex;
-
-
 
 // Functions:
 

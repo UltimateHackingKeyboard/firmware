@@ -5,8 +5,11 @@
 key_state_t* resolutionKey;
 secondary_role_state_t resolutionState;
 
+secondary_role_t SecondaryRolePreview;
+
 static void activatePrimary()
 {
+    SecondaryRolePreview = 0;
     // Activate the key "again", but now in "SecondaryRoleState_Primary".
     resolutionKey->current = true;
     resolutionKey->previous = false;
@@ -16,6 +19,7 @@ static void activatePrimary()
 
 static void activateSecondary()
 {
+    SecondaryRolePreview = 0;
     // Activate the key "again", but now in "SecondaryRoleState_Secondary".
     resolutionKey->current = true;
     resolutionKey->previous = false;
@@ -55,7 +59,7 @@ static secondary_role_state_t startResolution(key_state_t* keyState)
     return SecondaryRoleState_DontKnowYet;
 }
 
-secondary_role_state_t SecondaryRoles_ResolveState(key_state_t* keyState)
+secondary_role_state_t SecondaryRoles_ResolveState(key_state_t* keyState, secondary_role_t rolePreview)
 {
     // Since postponer is active during resolutions, KeyState_ActivatedNow can happen only after previous
     // resolution has finished - i.e., if primary action has been activated, carried out and
@@ -66,6 +70,7 @@ secondary_role_state_t SecondaryRoles_ResolveState(key_state_t* keyState)
         //start new resolution
         resolutionState = startResolution(keyState);
         resolutionState = resolveCurrentKey();
+        SecondaryRolePreview = rolePreview;
         return resolutionState;
     } else {
         //handle old resolution

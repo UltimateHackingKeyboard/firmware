@@ -42,6 +42,7 @@ Some of the usecases which can be achieved via these commands are:
     - Understand how to read the stated ebnf grammar. The grammar gives you precise instructions about available features and their parameters, as well as correct syntax. Note that some commands and parameters are only mentioned in the grammar! In case you don't know anything about grammars:
         - The grammar describes a valid expression via a set of rules. At the beginning, the expression equals "BODY". Every capital word of the expression is to be "rewritten" by a corresponding rule - i.e., the identifier is to be replaced by an expression which matches right side of the rule. 
         - Notation: `<>` mark informal (human-understandable) explanation of what is to be entered. `|` operator indicates choice between left and right operand. It is typically enclosed in `{}`, in order to separate the group from the rest of the rule. `[]` denote optional arguments. Especially `[]+` marks "one or more" and `[]*` arbitrary number.
+        - Provided value bounds are informational only - they denote values that seem to make sense. Sometimes default values are marked.
     - If you are still not sure about some feature or syntax, do not hesitate to ask.
 
 4) If you encounter a bug, let me know. There are lots of features and quite few users around this codebase - if you do not report problems you find, chances are that no one else will (since most likely no one else has noticed). 
@@ -261,14 +262,22 @@ The following grammar is supported:
     COMMAND = set module.MODULEID.baseSpeed <speed multiplier part that always applies, 0-10.0 (FLOAT)>
     COMMAND = set module.MODULEID.speed <speed multiplier part that is affected by xceleration, 0-10.0 (FLOAT)>
     COMMAND = set module.MODULEID.xceleration <exponent 0-1.0 (FLOAT)>
-    #NOTIMPLEMENTED COMMAND = set module.MODULEID.{caretSkewStrength|caretSpeedDivisor|scrollSpeedDivisor} FLOAT
+    COMMAND = set module.MODULEID.caretSpeedDivisor <1-100 (FLOAT)>
+    COMMAND = set module.MODULEID.scrollSpeedDivisor <1-100 (FLOAT)>
+    COMMAND = set module.MODULEID.zoomSpeedDivisor <1-100 (FLOAT)>
+    COMMAND = set module.MODULEID.axisLockStrength <0-1.0 (FLOAT)>
+    COMMAND = set module.MODULEID.axisLockStrengthFirstTick <0-1.0 (FLOAT)>
+    COMMAND = set module.MODULEID.scrollAxisLock {0|1}
+    COMMAND = set module.MODULEID.cursorAxisLock {0|1}
+    COMMAND = set module.MODULEID.swapAxes {0|1}
+    COMMAND = set module.MODULEID.invertScrollDirection {0|1}
     #NOTIMPLEMENTED COMMAND = set secondaryRoles
     COMMAND = set mouseKeys.{move|scroll}.initialSpeed <px/s, -100/20 (NUMBER)>
     COMMAND = set mouseKeys.{move|scroll}.baseSpeed <px/s, -800/20 (NUMBER)>
     COMMAND = set mouseKeys.{move|scroll}.initialAcceleration <px/s, ~1700/20 (NUMBER)>
     COMMAND = set mouseKeys.{move|scroll}.deceleratedSpeed <px/s, ~200/10 (NUMBER)>
     COMMAND = set mouseKeys.{move|scroll}.acceleratedSpeed <px/s, ~1600/50 (NUMBER)>
-    #NOTIMPLEMENTED COMMAND = set mouseKeys.{move|scroll}.axisSkew FLOAT
+    COMMAND = set mouseKeys.{move|scroll}.axisSkew <multiplier, 0.5-2.0 (FLOAT)>
     COMMAND = set diagonalSpeedCompensation BOOLEAN
     COMMAND = set chordingDelay <time in ms (NUMBER)>
     COMMAND = set stickyModifiers {never|smart|always}
@@ -307,7 +316,7 @@ The following grammar is supported:
     LABEL = <string identifier>
     SHORTCUT = MODMASK- | MODMASK-KEY | KEY
     MODMASK = [MODMASK]+ | [L|R]{S|C|A|G} | {p|r|h|t} | s
-    NAVIGATIONMODE = cursor | scroll | caret | media | none
+    NAVIGATIONMODE = cursor | scroll | caret | media | zoom | none
     MODULEID = trackball | touchpad | trackpoint | keycluster
     KEY = CHAR|KEYABBREV
     ADDRESS = LABEL|NUMBER
@@ -541,7 +550,7 @@ For the purpose of toggling functionality on and off, and for global constants m
   - `initialAcceleration,baseSpeed` - when mouse key is held, speed increases until it reaches baseSpeed
   - `deceleratedSpeed` - speed as affected by deceleration modifier
   - `acceleratedSpeed` - speed as affected by acceleration modifier
-  - `axisSkew`
+  - `axisSkew` - axis skew multiplies horizontal axis and divides vertical. Default value is 1.0, reasonable between 0.5-2.0 Useful for very niche usecases.
 - `set module.MODULEID.{baseSpeed|speed|xceleration}` modifies speed characteristics of right side modules. Simplified formula is `speedMultiplier(normalizedSpeed) = baseSpeed + speed*(normalizedSpeed^xceleration)` where `normalizedSpeed = actualSpeed / midSpeed`. Therefore `appliedDistance(distance d, time t) = d*(baseSpeed*((d/t)/midSpeed) + d*speed*(((d/t)/midSpeed)^xceleration))`. (`d/t` is actual speed in px/s, `(d/t)/midSpeed` is normalizedSpeed which acts as base for the exponent)
   - `baseSpeed` is base speed multiplier which is not affected by xceleration. I.e., if `speed = 0`, then traveled distance is `reportedDistance*baseSpeed`
   - `speed` multiplies effect of xceleration expression. I.e., simply multiplies the reported distance when the actual speed equals `midSpeed`.
@@ -578,6 +587,26 @@ For the purpose of toggling functionality on and off, and for global constants m
       - at 3000 px/s, speed multiplier is 1x
       - at 6000 px/s, speed multiplier is 4x
       - not recommended - the curve will behave in very non-linear fashion.
+- `set module.MODULEID.{caretSpeedDivisor|scrollSpeedDivisor|zoomSpeedDivisor|swapAxes|invertScrollDirection}` modifies scrolling and caret behaviour:
+    - `caretSpeedDivisor` (default: 16) is used to divide input in caret mode. This means that per one tick, you have to move by 16 pixels (or whatever the unit is). (This is furthermore modified by axisLocking strength, as well as acceleration.)
+    - `scrollSpeedDivisor` (default: 8) is used to divide input in scroll mode. This means that while scrolling, every 8 pixels produce one scroll tick. (This is furthermore modified by axisLocking strength, as well as acceleration.)
+    - `zoomSpeedDivisor` (default: 4 (?)) is used specifically for touchpad's zoom gesture, therefore its default value is supposed to be quite nonstandard.
+    - `swapAxes` swaps x and y coordinates of the module. Intened use is for keycluster trackball, since sideways scrolling is easier.
+    - `invertScrollDirection` inverts scroll direction...
+
+- `set module.MODULEID.{axisLockStrength|axisLockStrengthFirstTick|cursorAxisLockEnabled|scrollAxisLockEnabled}` control axis locking feature:
+
+  When you first move in navigation mode that has axis locking enabled, axis is locked to one of the axes. Furthermore, as long as this axis is active, the other axis input is multiplied by `1 - axisLockStrength` and gets zeroed with every successfull tick. This means that in order to change locked direction (with 0.5 value), you have to produce stroke that goes at least twice as fast in the non-locked direction compared to the locked one. This also means that axis locking with strength 0 still affects behaviour, because it always picks only one of the two axes and zeroes the other.
+
+  Behaviour of first tick (the one that initiates mechanism) can be controlled independently.
+
+  By default, axis locking is enabled in caret and media mode for right hand modules, and for scroll, caret and media modes for keycluster. Caret and media mode require axis locking for their function. 
+
+  - `axisLockStrength` controls caret axis locking. Defaults to 0.5, valid values are 0-1.0.
+    When you first move in navigation mode that has axis locking enabled, axis is locked to one of the axes. Furthermore, as long as this axis is active, the other axis input is multiplied by `1 - axisLockStrength` and gets zeroed with every tick. This means that in order to change locked direction (with 0.5 value), you have to produce stroke that goes at least twice as fast in the non-locked direction compared to the locked one.
+  - `axisLockStrengthFirstTick` - same meaning as `axisLockStrength`, but controls whether axis locking applies on first tick. Nonzero value means that firt tick will require a "push" before cursor starts moving. 
+  - `cursorAxisLockEnabled {0|1}` - turns axis locking on for cursor mode. Not recommended, but possible.
+  - `scrollAxisLockEnabled {0|1}` - turns axis locking on for scroll mode. Default for keycluster trackball.
 
 
 ### Argument parsing rules:
@@ -591,6 +620,16 @@ For the purpose of toggling functionality on and off, and for global constants m
 - `SHORTCUT` is an abbreviation of a key possibly accompanied by modifiers. Describes at most one scancode action. Can be prefixed by `C/S/A/G` denoting `Control/Shift/Alt/Gui`. Mods can further be prefixed by `L/R`, denoting left or right modifier. If a single ascii character is entered, it is translated into corresponding key combination (shift mask + scancode) according to standard EN-US layout. E.g., `pressKey mouseBtnLeft`, `tapKey LC-v` (Left Control + (lowercase) V (scancode)), `tapKey CS-f5` (Ctrl + Shift + F5), `tapKey v` (V), `tapKey V` (Shift + V).
 - `LABEL` is and identifier marking some lines of the macro. When a string is encountered in a context of an address, UHK looks for a command beginning by `<the string>:` and returns its addres (index). If same label is present multiple times, the next one w.r.t. currently processed command is returned.
 - `ADDRESS` is either a `NUMBER` (including `#`, `@`, etc syntaxies) or a string which denotes label identifier. E.g., `goTo 0` (go to beginning), `goTo @-1` (go to previous command, since `@` resolves relative adresses to absolute), `goTo @0` (active waiting), `goTo default` (go to line which begins by `default: ...`). 
+
+### Navigation modes:
+
+UHK modules feature four navigation modes, which are mapped by layer and module. This mapping can be changed by the `set module.MODULEID.navigationMode.LAYERID NAVIGATIONMODE` command.
+
+- Cursor mode - in this mode, modules control mouse movement. Default mode for all modules except keycluster's trackball.
+- Scroll mode - in this mode, module can be used to scroll. Default mode for mod layer. This means that apart from switching layer, your mod layer switches also make your right hand modules act as very comfortable scroll wheels. Sensitivity is controlled by the `scrollSpeedDivisor` value.
+- Caret mode - in this mode, module produces arrow key taps. This can be used to move comfortably in text editor, since in this mode, cursor is also locked to one of the two directions, preventing unwanted line changes. Sensitivity is controlled by the `caretSpeedDivisor`, `axisLockStrengthFirstTick` and `axisLockStrength`.
+- Media mode - in this mode, up/down directions control volume (via media key scancodes), while horizontal play/pause and switch to next track. At the moment, this mode is not enabled by default on any layer. Sensitivity is shared with the caret mode.
+- Zoom mode - in this mode, `Ctrl +`/`Ctrl -` shortcuts are produced. This mode serves specifically to implement touchpad's gesture.
 
 ### Error handling
 

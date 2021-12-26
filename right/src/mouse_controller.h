@@ -2,6 +2,9 @@
 #define __MOUSE_CONTROLLER_H__
 
 // Includes:
+    #include "caret_config.h"
+    #include "key_action.h"
+    #include "key_states.h"
 
 // Macros:
 
@@ -26,6 +29,7 @@
         float intMultiplier;
         float currentSpeed;
         float targetSpeed;
+        float axisSkew;
         uint8_t initialSpeed;
         uint8_t acceleration;
         uint8_t deceleratedSpeed;
@@ -38,6 +42,18 @@
         int8_t verticalStateSign;
         int8_t horizontalStateSign;
     } mouse_kinetic_state_t;
+
+    typedef struct {
+        key_action_t* caretAction;
+        key_state_t caretFakeKeystate;
+        float xFractionRemainder;
+        float yFractionRemainder;
+        uint32_t lastUpdate;
+
+        uint8_t caretAxis;
+        uint8_t currentModuleId;
+        uint8_t currentNavigationMode;
+    } module_kinetic_state_t;
 
 // Variables:
 

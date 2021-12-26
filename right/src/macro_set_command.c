@@ -46,10 +46,36 @@ static void moduleSpeed(const char* arg1, const char *textEnd, module_configurat
     else if (TokenMatches(arg1, textEnd, "xceleration")) {
         module->xceleration = ParseFloat(arg2, textEnd);
     }
+    else if (TokenMatches(arg1, textEnd, "caretSpeedDivisor")) {
+        module->caretSpeedDivisor = ParseFloat(arg2, textEnd);
+    }
+    else if (TokenMatches(arg1, textEnd, "scrollSpeedDivisor")) {
+        module->scrollSpeedDivisor = ParseFloat(arg2, textEnd);
+    }
+    else if (TokenMatches(arg1, textEnd, "zoomSpeedDivisor")) {
+        module->zoomSpeedDivisor = ParseFloat(arg2, textEnd);
+    }
+    else if (TokenMatches(arg1, textEnd, "axisLockStrength")) {
+        module->axisLockSkew = 1.0f - ParseFloat(arg2, textEnd);
+    }
+    else if (TokenMatches(arg1, textEnd, "axisLockStrengthFirstTick")) {
+        module->axisLockSkewFirstTick = 1.0f - ParseFloat(arg2, textEnd);
+    }
+    else if (TokenMatches(arg1, textEnd, "cursorAxisLockEnabled")) {
+        module->cursorAxisLock = Macros_ParseInt(arg2, textEnd, NULL);
+    }
+    else if (TokenMatches(arg1, textEnd, "scrollAxisLockEnabled")) {
+        module->scrollAxisLock = Macros_ParseInt(arg2, textEnd, NULL);
+    }
+    else if (TokenMatches(arg1, textEnd, "swapAxes")) {
+        module->swapAxes = Macros_ParseInt(arg2, textEnd, NULL);
+    }
+    else if (TokenMatches(arg1, textEnd, "invertScrollDirection")) {
+        module->invertScrollDirection = Macros_ParseInt(arg2, textEnd, NULL);
+    }
     else {
         Macros_ReportError("parameter not recognized:", arg1, textEnd);
     }
-    //TODO: caretSkewStrength, caretSpeedDivisor, scrollSpeedDivisor
 }
 
 static void module(const char* arg1, const char *textEnd)
@@ -103,11 +129,8 @@ static void mouseKeys(const char* arg1, const char *textEnd)
     else if (TokenMatches(arg2, textEnd, "acceleratedSpeed")) {
         state->acceleratedSpeed = Macros_ParseInt(arg3, textEnd, NULL) / state->intMultiplier;
     }
-    /* axis skew */
-    else if (TokenMatches(arg1, textEnd, "axisSkew")) {
-        //module->axisSkew = Macros_ParseInt(arg3, textEnd, NULL);
-        // TODO
-        Macros_ReportError("axis skew not implemented yet", arg1, textEnd);
+    else if (TokenMatches(arg2, textEnd, "axisSkew")) {
+        state->axisSkew = ParseFloat(arg3, textEnd);
     }
     else {
         Macros_ReportError("parameter not recognized:", arg1, textEnd);
