@@ -18,6 +18,11 @@
         KeyActionColor_Macro,
     } key_action_color_t;
 
+    typedef enum {
+        LedMapIndex_LeftSlot_LeftShift = 21,
+        LedMapIndex_LeftSlot_IsoKey = 22,
+    } led_map_index_t;
+
     typedef struct {
         uint8_t red;
         uint8_t green;
