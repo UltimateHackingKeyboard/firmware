@@ -38,7 +38,7 @@ uint32_t Macros_WakeMeOnTime = 0xFFFFFFFF;
 bool Macros_WakeMeOnKeystateChange = false;
 
 
-macro_scheduler_t Macros_Scheduler = Scheduler_Preemptive;
+macro_scheduler_t Macros_Scheduler = Scheduler_Blocking;
 uint8_t Macros_MaxBatchSize = 20;
 static scheduler_state_t scheduler = {
     .previousSlotIdx = 0,
