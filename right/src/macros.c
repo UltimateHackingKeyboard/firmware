@@ -1320,6 +1320,18 @@ static bool processIfRegEqCommand(bool negate, const char* arg1, const char *arg
     }
 }
 
+static bool processIfKeymapCommand(bool negate, const char* arg1, const char *argEnd)
+{
+    uint8_t queryKeymapIdx = parseKeymapId(arg1, argEnd);
+    return (queryKeymapIdx == CurrentKeymapIndex) != negate;
+}
+
+static bool processIfLayerCommand(bool negate, const char* arg1, const char *argEnd)
+{
+    uint8_t queryLayerIdx = Macros_ParseLayerId(arg1, argEnd);
+    return (queryLayerIdx == Macros_ActiveLayer) != negate;
+}
+
 static macro_result_t processBreakCommand()
 {
     s->ms.macroBroken = true;
@@ -1351,7 +1363,7 @@ static macro_result_t processSetLedTxtCommand(const char* arg1, const char *argE
 {
     int16_t time = parseNUM(arg1, argEnd);
     macro_result_t res = MacroResult_Finished;
-    if ((res = processDelay(time)) == MacroResult_Finished) {
+    if (time > 0 && (res = processDelay(time)) == MacroResult_Finished) {
         LedDisplay_UpdateText();
         return MacroResult_Finished;
     } else {
@@ -1806,6 +1818,7 @@ static macro_result_t processIfShortcutCommand(bool negate, const char* arg, con
     bool consume = true;
     bool transitive = false;
     bool fixedOrder = true;
+    bool orGate = false;
     uint16_t cancelIn = 0;
     uint16_t timeoutIn= 0;
     while(arg < argEnd && !isNUM(arg, argEnd)) {
@@ -1826,6 +1839,9 @@ static macro_result_t processIfShortcutCommand(bool negate, const char* arg, con
         } else if (TokenMatches(arg, argEnd, "anyOrder")) {
             arg = NextTok(arg, argEnd);
             fixedOrder = false;
+        } else if (TokenMatches(arg, argEnd, "orGate")) {
+            arg = NextTok(arg, argEnd);
+            orGate = true;
         } else {
             Macros_ReportError("Unrecognized option", arg, argEnd);
             arg = NextTok(arg, argEnd);
@@ -1884,6 +1900,30 @@ static macro_result_t processIfShortcutCommand(bool negate, const char* arg, con
                 }
             }
         }
+        else if (orGate) {
+            // go through all canidates all at once
+            while (true) {
+                // first keyid had already been processed.
+                if (PostponerQuery_ContainsKeyId(argKeyid)) {
+                    if (negate) {
+                        return MacroResult_Finished;
+                    } else {
+                        goto conditionPassed;
+                    }
+                }
+                if (!(isNUM(arg, argEnd) && arg < argEnd)) {
+                    break;
+                }
+                argKeyid = parseNUM(arg, argEnd);
+                arg = NextTok(arg, argEnd);
+            }
+            // none is matched
+            if (negate) {
+                goto conditionPassed;
+            } else {
+                return MacroResult_Finished;
+            }
+        }
         else if (fixedOrder && PostponerExtended_PendingId(numArgs - 1) != argKeyid) {
             if (negate) {
                 goto conditionPassed;
@@ -1903,15 +1943,12 @@ static macro_result_t processIfShortcutCommand(bool negate, const char* arg, con
         }
     }
     //all keys match
+    if (consume) {
+        PostponerExtended_ConsumePendingKeypresses(numArgs, true);
+    }
     if (negate) {
-        if (consume) {
-            PostponerExtended_ConsumePendingKeypresses(numArgs, true);
-        }
         return MacroResult_Finished;
     } else {
-        if (consume) {
-            PostponerExtended_ConsumePendingKeypresses(numArgs, true);
-        }
         goto conditionPassed;
     }
 conditionPassed:
@@ -2188,6 +2225,34 @@ static macro_result_t processCommand(const char* cmd, const char* cmdEnd)
                     return MacroResult_Finished;
                 }
                 cmd = NextTok(arg1, cmdEnd); //shift by 2
+                arg1 = NextTok(cmd, cmdEnd);
+            }
+            else if (TokenMatches(cmd, cmdEnd, "ifKeymap")) {
+                if (!processIfKeymapCommand(false, arg1, cmdEnd) && !s->as.currentConditionPassed) {
+                    return MacroResult_Finished;
+                }
+                cmd = arg1; //shift by 1
+                arg1 = NextTok(cmd, cmdEnd);
+            }
+            else if (TokenMatches(cmd, cmdEnd, "ifNotKeymap")) {
+                if (!processIfKeymapCommand(true, arg1, cmdEnd) && !s->as.currentConditionPassed) {
+                    return MacroResult_Finished;
+                }
+                cmd = arg1; //shift by 1
+                arg1 = NextTok(cmd, cmdEnd);
+            }
+            else if (TokenMatches(cmd, cmdEnd, "ifLayer")) {
+                if (!processIfLayerCommand(false, arg1, cmdEnd) && !s->as.currentConditionPassed) {
+                    return MacroResult_Finished;
+                }
+                cmd = arg1; //shift by 1
+                arg1 = NextTok(cmd, cmdEnd);
+            }
+            else if (TokenMatches(cmd, cmdEnd, "ifNotLayer")) {
+                if (!processIfLayerCommand(true, arg1, cmdEnd) && !s->as.currentConditionPassed) {
+                    return MacroResult_Finished;
+                }
+                cmd = arg1; //shift by 1
                 arg1 = NextTok(cmd, cmdEnd);
             }
             else if (TokenMatches(cmd, cmdEnd, "ifPlaytime")) {

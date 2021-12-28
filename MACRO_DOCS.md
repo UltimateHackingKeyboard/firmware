@@ -316,12 +316,14 @@ The following grammar is supported:
     CONDITION = {ifPlaytime | ifNotPlaytime} <timeout in ms (NUMBER)>
     CONDITION = {ifShift | ifAlt | ifCtrl | ifGui | ifAnyMod | ifNotShift | ifNotAlt | ifNotCtrl | ifNotGui | ifNotAnyMod}
     CONDITION = {ifRegEq | ifNotRegEq} <register index (NUMBER)> <value (NUMBER)>
+    CONDITION = {ifKeymap | ifNotKeymap} KEYMAPID
+    CONDITION = {ifLayer | ifNotLayer} LAYERID
     CONDITION = {ifRecording | ifNotRecording}
     CONDITION = {ifRecordingId | ifNotRecordingId} MACROID
     MODIFIER = suppressMods
     MODIFIER = postponeKeys
     MODIFIER = final
-    IFSHORTCUTFLAGS = noConsume | transitive | anyOrder | timeoutIn <time in ms (NUMBER)> | cancelIn <time in ms(NUMBER)>
+    IFSHORTCUTFLAGS = noConsume | transitive | anyOrder | orGate | timeoutIn <time in ms (NUMBER)> | cancelIn <time in ms(NUMBER)>
     DIRECTION = {left|right|up|down}
     LAYERID = {fn|mouse|mod|base}|last|previous
     KEYMAPID = <abbrev>|last
@@ -383,6 +385,7 @@ The following grammar is supported:
 ### Uncategorized commands:
 
 - `setLedTxt <time> <custom text>` will set led display to supplemented text for the given time. (Blocks for the given time.)
+    - If the given time is zero, i.e. `<time> = 0`, the led text will be set indefinitely (until the display is refreshed by other text) and this command will returns immediately (non-blocking).
 
 ### Triggering keyboard actions (pressing keys, clicking, etc.):
 
@@ -490,6 +493,7 @@ We allow postponing key activations in order to allow deciding between some scen
     - `noConsume` allows not consuming the keys. Useful if the next action is a standalone action, yet we want to branch behaviour of current action depending on it. 
     - `transitive` makes termination conditions relate to that key of the queue whose result is most permissive (normally, they always refer to the activation key) - e.g., in transitive mode with 3-key shortcut, first key can be released if second key is being held. Timers count time since last performed action in this mode. Both `timeoutIn` and `cancelIn` behave according to this flag. In non-transitive mode, timers are counted since activation key press - i.e., since macro start.
     - `anyOrder` will check only presence of mentioned keyIds in postponer queue.
+    - `orGate` will treat the given list of keys as *or-conditions* (rather than as *and-conditions*). Check any presence of mentioned keyIds in postponer queue for the next key press. Implies `anyOrder`.
     - `timeoutIn <time (NUMBER)>` adds a timeout timer to both `Shortcut` and `Gesture` commands. If the timer times out (i.e., the condition does not suceed or fail earlier), the command continues as if matching KEYIDs failed. Can be used to shorten life of `Shortcut` resolution. 
     - `cancelIn <time (NUMBER)>` adds a timer to both commands. If this timer times out, all related keys are consumed and macro is broken. *"This action has never happened, lets not talk about it anymore."* (Note that this is an only condition which behaves same in both `if` and `ifNot` cases.)
 - DEPRECATED (use `ifShortcut/ifGesture` instead) `resolveNextKeyEq <queue idx> <key id> <timeout> <adr1> <adr2>` will wait for next (n) key press(es). When the key press happens, it will compare its id with the `<key id>` argument. If the id equals, it issues goto to adr1. Otherwise, to adr2. See examples. Implicitly applies `postponeKeys` modifier.
@@ -515,6 +519,7 @@ Conditions are checked before processing the rest of the command. If the conditi
 - `ifPlaytime/ifNotPlaytime <timeout in ms>` is true if at least `timeout` milliseconds passed since macro was started.
 - `ifShift/ifAlt/ifCtrl/ifGui/ifAnyMod/ifNotShift/ifNotAlt/ifNotCtrl/ifNotGui/ifNotAnyMod` is true if either right or left modifier was held in the previous update cycle. This does not indicate modifiers which were triggered from macroes. 
 - `{ifRegEq|ifNotRegEq} <register inex> <value>` will test if the value in the register identified by first argument equals second argument.
+- `{ifKeymap|ifNotKeymap|ifLayer|ifNotLayer} <value>` will test if the current Keymap/Layer are equals to the first argument (uses the same parsing rule as `switchKeymap` and `switchLayer`.
 - `ifRecording/ifNotRecording` and `ifRecordingId/ifNotRecordingId MACROID` test if the runtime macro recorder is in recording state. 
 - `ifShortcut/ifNotShortcut [IFSHORTCUTFLAGS]* [KEYID]*` will wait for next keypresses and compare them to the argument. See postponer mechanism section.
 - `ifGesture/ifNotGesture [IFSHORTCUTFLAGS]* [KEYID]*` just as `ifShortcut`, but breaks after 1000ms instead of when the key is released. See postponer mechanism section.
