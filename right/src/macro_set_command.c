@@ -203,6 +203,7 @@ static void constantRgb(const char* arg1, const char *textEnd)
         LedMap_ConstantRGB.red = Macros_ParseInt(r, textEnd, NULL);
         LedMap_ConstantRGB.green = Macros_ParseInt(g, textEnd, NULL);
         LedMap_ConstantRGB.blue = Macros_ParseInt(b, textEnd, NULL);
+        LedMap_BacklightStrategy = BacklightStrategy_ConstantRGB;
     }
     else {
         Macros_ReportError("parameter not recognized:", arg1, textEnd);
