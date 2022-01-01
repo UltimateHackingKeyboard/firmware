@@ -4,6 +4,7 @@
 
 static usb_basic_keyboard_report_t usbBasicKeyboardReports[2];
 static uint8_t usbBasicKeyboardOutBuffer[USB_BASIC_KEYBOARD_OUT_REPORT_LENGTH];
+usb_hid_protocol_t usbBasicKeyboardProtocol;
 uint32_t UsbBasicKeyboardActionCounter;
 usb_basic_keyboard_report_t* ActiveUsbBasicKeyboardReport = usbBasicKeyboardReports;
 
@@ -22,6 +23,11 @@ void UsbBasicKeyboardResetActiveReport(void)
     bzero(ActiveUsbBasicKeyboardReport, USB_BASIC_KEYBOARD_REPORT_LENGTH);
 }
 
+usb_hid_protocol_t UsbBasicKeyboardGetProtocol(void)
+{
+    return usbBasicKeyboardProtocol;
+}
+
 usb_status_t UsbBasicKeyboardAction(void)
 {
     if (!UsbCompositeDevice.attach) {
@@ -35,6 +41,10 @@ usb_status_t UsbBasicKeyboardAction(void)
         UsbBasicKeyboardActionCounter++;
         SwitchActiveUsbBasicKeyboardReport();
     }
+
+    // latch the active protocol to avoid ISR <-> Thread race
+    usbBasicKeyboardProtocol = ((usb_device_hid_struct_t*)UsbCompositeDevice.basicKeyboardHandle)->protocol;
+
     return usb_status;
 }
 

@@ -44,6 +44,7 @@
 
     usb_status_t UsbBasicKeyboardCallback(class_handle_t handle, uint32_t event, void *param);
 
+    usb_hid_protocol_t UsbBasicKeyboardGetProtocol(void);
     void UsbBasicKeyboardResetActiveReport(void);
     usb_status_t UsbBasicKeyboardAction(void);
     usb_status_t UsbBasicKeyboardCheckIdleElapsed();
