@@ -2,6 +2,7 @@
 #include "usb_report_updater.h"
 
 static usb_mouse_report_t usbMouseReports[2];
+usb_hid_protocol_t usbMouseProtocol;
 uint32_t UsbMouseActionCounter;
 usb_mouse_report_t* ActiveUsbMouseReport = usbMouseReports;
 
@@ -20,6 +21,11 @@ void UsbMouseResetActiveReport(void)
     bzero(ActiveUsbMouseReport, USB_MOUSE_REPORT_LENGTH);
 }
 
+usb_hid_protocol_t UsbMouseGetProtocol(void)
+{
+    return usbMouseProtocol;
+}
+
 usb_status_t UsbMouseAction(void)
 {
     if (!UsbCompositeDevice.attach) {
@@ -33,6 +39,10 @@ usb_status_t UsbMouseAction(void)
         UsbMouseActionCounter++;
         SwitchActiveUsbMouseReport();
     }
+
+    // latch the active protocol to avoid ISR <-> Thread race
+    usbMouseProtocol = ((usb_device_hid_struct_t*)UsbCompositeDevice.mouseHandle)->protocol;
+
     return usb_status;
 }
 

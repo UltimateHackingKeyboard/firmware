@@ -20,7 +20,7 @@
     #define USB_BASIC_KEYBOARD_INTERRUPT_IN_INTERVAL 1
 
     #define USB_BASIC_KEYBOARD_REPORT_LENGTH 8
-
+    #define USB_BASIC_KEYBOARD_OUT_REPORT_LENGTH 1
 // Typedefs:
 
     // Note: We support boot protocol mode in this interface, thus the keyboard
@@ -44,6 +44,7 @@
 
     usb_status_t UsbBasicKeyboardCallback(class_handle_t handle, uint32_t event, void *param);
 
+    usb_hid_protocol_t UsbBasicKeyboardGetProtocol(void);
     void UsbBasicKeyboardResetActiveReport(void);
     usb_status_t UsbBasicKeyboardAction(void);
     usb_status_t UsbBasicKeyboardCheckIdleElapsed();

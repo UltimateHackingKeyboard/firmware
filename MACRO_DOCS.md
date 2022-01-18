@@ -278,10 +278,10 @@ The following grammar is supported:
     COMMAND = set module.MODULEID.zoomSpeedDivisor <1-100 (FLOAT)>
     COMMAND = set module.MODULEID.axisLockStrength <0-1.0 (FLOAT)>
     COMMAND = set module.MODULEID.axisLockStrengthFirstTick <0-1.0 (FLOAT)>
-    COMMAND = set module.MODULEID.scrollAxisLockEnabled BOOLEAN
-    COMMAND = set module.MODULEID.cursorAxisLockEnabled BOOLEAN
-    COMMAND = set module.MODULEID.swapAxes BOOLEAN
-    COMMAND = set module.MODULEID.invertScrollDirection BOOLEAN
+    COMMAND = set module.MODULEID.scrollAxisLock {0|1}
+    COMMAND = set module.MODULEID.cursorAxisLock {0|1}
+    COMMAND = set module.MODULEID.swapAxes {0|1}
+    COMMAND = set module.MODULEID.invertScrollDirection {0|1}
     #NOTIMPLEMENTED COMMAND = set secondaryRoles
     COMMAND = set mouseKeys.{move|scroll}.initialSpeed <px/s, -100/20 (NUMBER)>
     COMMAND = set mouseKeys.{move|scroll}.baseSpeed <px/s, -800/20 (NUMBER)>
@@ -291,7 +291,7 @@ The following grammar is supported:
     COMMAND = set mouseKeys.{move|scroll}.axisSkew <multiplier, 0.5-2.0 (FLOAT)>
     COMMAND = set diagonalSpeedCompensation BOOLEAN
     COMMAND = set chordingDelay <time in ms (NUMBER)>
-    COMMAND = set stickyMods {never|smart|always}
+    COMMAND = set stickyModifiers {never|smart|always}
     COMMAND = set debounceDelay <time in ms, at most 250 (NUMBER)>
     COMMAND = set doubletapDelay <time in ms, at most 65535 (NUMBER)>
     COMMAND = set keystrokeDelay <time in ms, at most 65535 (NUMBER)>
