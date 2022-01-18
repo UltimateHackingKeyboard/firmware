@@ -21,6 +21,9 @@
 
     #define USB_BASIC_KEYBOARD_REPORT_LENGTH 8
     #define USB_BASIC_KEYBOARD_OUT_REPORT_LENGTH 1
+
+    #define USB_BOOT_KEYBOARD_REPORT_LENGTH 8
+    #define USB_BOOT_KEYBOARD_MAX_KEYS 6
 // Typedefs:
 
     // Note: We support boot protocol mode in this interface, thus the keyboard
@@ -49,5 +52,12 @@
     usb_status_t UsbBasicKeyboardAction(void);
     usb_status_t UsbBasicKeyboardCheckIdleElapsed();
     usb_status_t UsbBasicKeyboardCheckReportReady();
+
+    void UsbBasicKeyboard_AddScancode(usb_basic_keyboard_report_t* report, uint8_t scancode, uint8_t* idx);
+    void UsbBasicKeyboard_RemoveScancode(usb_basic_keyboard_report_t* report, uint8_t scancode);
+    bool UsbBasicKeyboard_ContainsScancode(const usb_basic_keyboard_report_t* report, uint8_t scancode);
+    size_t UsbBasicKeyboard_ScancodeCount(const usb_basic_keyboard_report_t* report);
+    void UsbBasicKeyboard_MergeReports(const usb_basic_keyboard_report_t* sourceReport, usb_basic_keyboard_report_t* targetReport, uint8_t* idx);
+    void UsbBasicKeyboard_ForeachScancode(const usb_basic_keyboard_report_t* report, void(*action)(uint8_t));
 
 #endif

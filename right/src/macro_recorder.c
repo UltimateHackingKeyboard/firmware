@@ -15,8 +15,8 @@
  *     - 1 bit = left shift
  *     - 1 bit = right shift
  *     - both = full mod mask follow
- *   - 3 bits= number of scancodes
- * - further bytes mod mask and scancodes as specified by header
+ *   - 3 bits = number of scancodes, 7 = full size follows
+ * - further bytes: mod mask and scancodes as specified by header
  */
 
 bool RuntimeMacroPlaying = false;
@@ -154,7 +154,7 @@ static void playReport(usb_basic_keyboard_report_t *report)
         break;
     case BasicKeyboardSimple:
         memset(report, 0, sizeof *report);
-        report->scancodes[0] = readByte();
+        UsbBasicKeyboard_AddScancode(report, readByte(), NULL);
         break;
     case BasicKeyboard:
         memset(report, 0, sizeof *report);
@@ -162,7 +162,7 @@ static void playReport(usb_basic_keyboard_report_t *report)
             uint8_t size = readByte();
             report->modifiers = readByte();
             for (int i = 0; i < size; i++) {
-                report->scancodes[i] = readByte();
+                UsbBasicKeyboard_AddScancode(report, readByte(), NULL);
             }
         }
         break;
@@ -208,38 +208,41 @@ static bool playRuntimeMacroContinue(usb_basic_keyboard_report_t* report)
     return RuntimeMacroPlaying;
 }
 
+void writeReportScancodes(usb_basic_keyboard_report_t *report)
+{
+    UsbBasicKeyboard_ForeachScancode(report, &writeByte);
+}
+
 void MacroRecorder_RecordBasicReport(usb_basic_keyboard_report_t *report)
 {
     if (!RuntimeMacroRecording) {
         return;
     }
+
+    uint8_t sc = UsbBasicKeyboard_ScancodeCount(report);
+
     if (
-            (reportBufferLength + REPORT_BUFFER_SAFETY_MARGIN >= REPORT_BUFFER_MAX_LENGTH) ||
-            (recordingHeader->length >= REPORT_BUFFER_MAX_MACRO_LENGTH)
+            (reportBufferLength + 3 + sc > REPORT_BUFFER_MAX_LENGTH) ||
+            (recordingHeader->length + 1 > REPORT_BUFFER_MAX_MACRO_LENGTH)
     ) {
         recordRuntimeMacroEnd();
         discardLastHeaderSlot();
         return;
     }
-    if (report->modifiers == 0 && report->scancodes[0] == 0) {
+    if ((report->modifiers == 0) && (sc == 0)) {
         writeByte(BasicKeyboardEmpty);
         return;
     }
-    if (report->modifiers == 0 && report->scancodes[1] == 0) {
+    if ((report->modifiers == 0) && (sc == 1)) {
         writeByte(BasicKeyboardSimple);
-        writeByte(report->scancodes[0]);
+        writeReportScancodes(report);
         return;
     }
+
     writeByte(BasicKeyboard);
-    uint8_t size = 0;
-    while( size < USB_BASIC_KEYBOARD_MAX_KEYS && report->scancodes[size] != 0) {
-        size++;
-    }
-    writeByte(size);
+    writeByte(sc);
     writeByte(report->modifiers);
-    for (int i = 0; i < size; i++) {
-        writeByte(report->scancodes[i]);
-    }
+    writeReportScancodes(report);
 }
 
 void MacroRecorder_RecordDelay(uint16_t delay)

@@ -180,26 +180,13 @@ static void applyKeystrokePrimary(key_state_t *keyState, key_action_t *action)
         if (!stickyModifiersChanged || KeyState_ActivatedEarlier(keyState)) {
             switch (action->keystroke.keystrokeType) {
                 case KeystrokeType_Basic:
-                    if (action->keystroke.scancode == 0) {
-                        break;
-                    } else if (basicScancodeIndex < USB_BASIC_KEYBOARD_MAX_KEYS) {
-                        ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = action->keystroke.scancode;
-                    } else if (ActiveUsbBasicKeyboardReport->scancodes[0] != HID_KEYBOARD_SC_ERROR_ROLLOVER) {
-                        memset(ActiveUsbBasicKeyboardReport->scancodes, HID_KEYBOARD_SC_ERROR_ROLLOVER,
-                                USB_BASIC_KEYBOARD_MAX_KEYS);
-                    }
+                    UsbBasicKeyboard_AddScancode(ActiveUsbBasicKeyboardReport, action->keystroke.scancode, &basicScancodeIndex);
                     break;
                 case KeystrokeType_Media:
-                    if (mediaScancodeIndex >= USB_MEDIA_KEYBOARD_MAX_KEYS) {
-                        break;
-                    }
-                    ActiveUsbMediaKeyboardReport->scancodes[mediaScancodeIndex++] = action->keystroke.scancode;
+                    UsbMediaKeyboard_AddScancode(ActiveUsbMediaKeyboardReport, action->keystroke.scancode, &mediaScancodeIndex);
                     break;
                 case KeystrokeType_System:
-                    if (systemScancodeIndex >= USB_SYSTEM_KEYBOARD_MAX_KEYS) {
-                        break;
-                    }
-                    ActiveUsbSystemKeyboardReport->scancodes[systemScancodeIndex++] = action->keystroke.scancode;
+                    UsbSystemKeyboard_AddScancode(ActiveUsbSystemKeyboardReport, action->keystroke.scancode, &systemScancodeIndex);
                     break;
             }
         }
@@ -305,22 +292,11 @@ static void mergeReports(void)
             //if the macro ended right now, we still want to flush the last report
             MacroState[j].ms.reportsUsed &= MacroState[j].ms.macroPlaying;
             macro_state_t *s = &MacroState[j];
-            ActiveUsbBasicKeyboardReport->modifiers |= s->ms.macroBasicKeyboardReport.modifiers;
-            for ( int i = 0; i < USB_BASIC_KEYBOARD_MAX_KEYS && s->ms.macroBasicKeyboardReport.scancodes[i] != 0; i++) {
-                if( basicScancodeIndex < USB_BASIC_KEYBOARD_MAX_KEYS ) {
-                    ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = s->ms.macroBasicKeyboardReport.scancodes[i];
-                }
-            }
-            for ( int i = 0; i < USB_MEDIA_KEYBOARD_MAX_KEYS && s->ms.macroMediaKeyboardReport.scancodes[i] != 0 ; i++) {
-                if( mediaScancodeIndex < USB_MEDIA_KEYBOARD_MAX_KEYS ) {
-                    ActiveUsbMediaKeyboardReport->scancodes[mediaScancodeIndex++] = s->ms.macroMediaKeyboardReport.scancodes[i];
-                }
-            }
-            for ( int i = 0; i < USB_SYSTEM_KEYBOARD_MAX_KEYS && s->ms.macroSystemKeyboardReport.scancodes[i] != 0; i++) {
-                if( systemScancodeIndex < USB_SYSTEM_KEYBOARD_MAX_KEYS ) {
-                    ActiveUsbSystemKeyboardReport->scancodes[systemScancodeIndex++] = s->ms.macroSystemKeyboardReport.scancodes[i];
-                }
-            }
+
+            UsbBasicKeyboard_MergeReports(&(s->ms.macroBasicKeyboardReport), ActiveUsbBasicKeyboardReport, &basicScancodeIndex);
+            UsbMediaKeyboard_MergeReports(&(s->ms.macroMediaKeyboardReport), ActiveUsbMediaKeyboardReport, &mediaScancodeIndex);
+            UsbSystemKeyboard_MergeReports(&(s->ms.macroSystemKeyboardReport), ActiveUsbSystemKeyboardReport, &systemScancodeIndex);
+
             ActiveUsbMouseReport->buttons |= s->ms.macroMouseReport.buttons;
             ActiveUsbMouseReport->x += s->ms.macroMouseReport.x;
             ActiveUsbMouseReport->y += s->ms.macroMouseReport.y;
@@ -373,10 +349,12 @@ static void handleUsbStackTestMode() {
         }
         if (simulateKeypresses) {
             isEven = !isEven;
-            ActiveUsbBasicKeyboardReport->scancodes[basicScancodeIndex++] = isEven ? HID_KEYBOARD_SC_A : HID_KEYBOARD_SC_BACKSPACE;
+            UsbBasicKeyboard_AddScancode(ActiveUsbBasicKeyboardReport,
+                    isEven ? HID_KEYBOARD_SC_A : HID_KEYBOARD_SC_BACKSPACE, &basicScancodeIndex);
             if (++mediaCounter % 200 == 0) {
                 isEvenMedia = !isEvenMedia;
-                ActiveUsbMediaKeyboardReport->scancodes[mediaScancodeIndex++] = isEvenMedia ? MEDIA_VOLUME_DOWN : MEDIA_VOLUME_UP;
+                UsbMediaKeyboard_AddScancode(ActiveUsbMediaKeyboardReport,
+                        isEvenMedia ? MEDIA_VOLUME_DOWN : MEDIA_VOLUME_UP, &mediaScancodeIndex);
             }
             MouseMoveState.xOut = isEven ? -5 : 5;
         }
