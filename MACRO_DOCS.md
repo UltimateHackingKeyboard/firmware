@@ -100,8 +100,8 @@ Or with Mac (which requires prolonged press of caps lock):
 
 Enables and disables compensation of diagonal speed.
 
-    ifShift set diagonalSpeedCompensation true
-    ifNotShift set diagonalSpeedCompensation false
+    ifShift set diagonalSpeedCompensation 1
+    ifNotShift set diagonalSpeedCompensation 0
 
 Smart toggle (if tapped, locks layer; if used with a key, acts as a secondary role):
 
@@ -278,10 +278,10 @@ The following grammar is supported:
     COMMAND = set module.MODULEID.zoomSpeedDivisor <1-100 (FLOAT)>
     COMMAND = set module.MODULEID.axisLockStrength <0-1.0 (FLOAT)>
     COMMAND = set module.MODULEID.axisLockStrengthFirstTick <0-1.0 (FLOAT)>
-    COMMAND = set module.MODULEID.scrollAxisLock {0|1}
-    COMMAND = set module.MODULEID.cursorAxisLock {0|1}
-    COMMAND = set module.MODULEID.swapAxes {0|1}
-    COMMAND = set module.MODULEID.invertScrollDirection {0|1}
+    COMMAND = set module.MODULEID.scrollAxisLock BOOLEAN
+    COMMAND = set module.MODULEID.cursorAxisLock BOOLEAN
+    COMMAND = set module.MODULEID.swapAxes BOOLEAN
+    COMMAND = set module.MODULEID.invertScrollDirection BOOLEAN
     #NOTIMPLEMENTED COMMAND = set secondaryRoles
     COMMAND = set mouseKeys.{move|scroll}.initialSpeed <px/s, -100/20 (NUMBER)>
     COMMAND = set mouseKeys.{move|scroll}.baseSpeed <px/s, -800/20 (NUMBER)>
