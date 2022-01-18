@@ -233,6 +233,9 @@ navigation_mode_t ParseNavigationModeId(const char* arg1, const char* cmdEnd)
     else if (TokenMatches(arg1, cmdEnd, "media")) {
         return NavigationMode_Media;
     }
+    else if (TokenMatches(arg1, cmdEnd, "zoom")) {
+        return NavigationMode_Zoom;
+    }
     else if (TokenMatches(arg1, cmdEnd, "none")) {
         return NavigationMode_None;
     }

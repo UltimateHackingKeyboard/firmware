@@ -44,6 +44,7 @@
 
     usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param);
 
+    usb_hid_protocol_t UsbMouseGetProtocol(void);
     void UsbMouseResetActiveReport(void);
     usb_status_t UsbMouseAction(void);
     usb_status_t UsbMouseCheckIdleElapsed();

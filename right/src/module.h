@@ -18,15 +18,33 @@
         NavigationMode_Scroll,
         NavigationMode_Caret,
         NavigationMode_Media,
+        NavigationMode_Zoom,
         NavigationMode_None,
     } navigation_mode_t;
 
     typedef struct {
+        // working 'cache'
         float currentSpeed; // px/ms
+
+        // acceleration configurations
         float baseSpeed;
         float speed;
         float xceleration;
+
+        // navigation mode configurations
+        float scrollSpeedDivisor;
+        float caretSpeedDivisor;
+        float zoomSpeedDivisor;
+
+        float axisLockSkew;
+        float axisLockSkewFirstTick;
+
         navigation_mode_t navigationModes[LayerId_Count];
+
+        bool scrollAxisLock;
+        bool cursorAxisLock;
+        bool swapAxes;
+        bool invertScrollDirection;
     } module_configuration_t;
 
 // Variables:

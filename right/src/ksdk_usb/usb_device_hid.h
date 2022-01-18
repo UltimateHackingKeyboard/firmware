@@ -59,6 +59,11 @@
 /*! @brief Request code to set protocol of HID class. */
 #define USB_DEVICE_HID_REQUEST_SET_PROTOCOL (0x0BU)
 
+#define USB_HID_BOOT_PROTOCOL   0U
+#define USB_HID_REPORT_PROTOCOL 1U
+
+typedef uint8_t usb_hid_protocol_t;
+
 /*! @brief Available common EVENT types in HID class callback */
 typedef enum _usb_device_hid_event
 {

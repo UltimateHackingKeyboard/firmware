@@ -356,11 +356,8 @@ usb_status_t USB_DeviceHidEvent(void *handle, uint32_t event, void *param)
             /* Clear the alternate setting value. */
             hidHandle->alternate = 0U;
 
-            /* From the HID spec: When initialized, all devices default to report protocol.
-             * of course there is no enum defined, so I have to spell it out here:
-             * 0 = Boot protocol
-             * 1 = Report protocol */
-            hidHandle->protocol = 1;
+            /* From the HID spec: When initialized, all devices default to report protocol. */
+            hidHandle->protocol = USB_HID_REPORT_PROTOCOL;
 
             /* Reset idle rate in any case */
             hidHandle->idleRate = 0;

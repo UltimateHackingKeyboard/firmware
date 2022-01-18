@@ -185,9 +185,13 @@ void UpdateLayerLeds(void) {
 void InitLedLayout(void) {
 #if DEVICE_ID == DEVICE_ID_UHK60V2
     if (HardwareConfig->isIso) {
-        LedMap[SlotId_LeftKeyboardHalf][21].red = 0x6D;
-        LedMap[SlotId_LeftKeyboardHalf][21].green = 0x7D;
-        LedMap[SlotId_LeftKeyboardHalf][21].blue = 0x8D;
+        LedMap[SlotId_LeftKeyboardHalf][LedMapIndex_LeftSlot_LeftShift].red = 0x6D;
+        LedMap[SlotId_LeftKeyboardHalf][LedMapIndex_LeftSlot_LeftShift].green = 0x7D;
+        LedMap[SlotId_LeftKeyboardHalf][LedMapIndex_LeftSlot_LeftShift].blue = 0x8D;
+    } else {
+        LedMap[SlotId_LeftKeyboardHalf][LedMapIndex_LeftSlot_IsoKey].red = 0;
+        LedMap[SlotId_LeftKeyboardHalf][LedMapIndex_LeftSlot_IsoKey].green = 0;
+        LedMap[SlotId_LeftKeyboardHalf][LedMapIndex_LeftSlot_IsoKey].blue = 0;
     }
 #endif
 }
