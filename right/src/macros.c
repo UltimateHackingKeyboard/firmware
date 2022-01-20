@@ -65,6 +65,8 @@ macro_state_t MacroState[MACRO_STATE_POOL_SIZE];
 static macro_state_t *s = MacroState;
 
 uint16_t DoubletapConditionTimeout = 400;
+uint16_t AutoRepeatInitialDelay = 500;
+uint16_t AutoRepeatDelayRate = 50;
 
 static void wakeMacroInSlot(uint8_t slotIdx);
 static void scheduleSlot(uint8_t slotIdx);
@@ -1960,6 +1962,68 @@ conditionPassed:
     return processCommand(arg, argEnd);
 }
 
+static macro_result_t processAutoRepeatCommand(const char* arg1, const char* argEnd) {
+    uint32_t wait_until = 0;
+    uint32_t next_delay = AutoRepeatInitialDelay;
+    switch(s->as.autoRepeatPhase) {
+    case AutoRepeatState_Starting:
+        goto run_command;
+    case AutoRepeatState_InitialDelay:
+        wait_until = AutoRepeatInitialDelay;
+        next_delay = AutoRepeatDelayRate;
+        goto process_delay;
+    case AutoRepeatState_Repeating:
+        wait_until = AutoRepeatDelayRate;
+        next_delay = AutoRepeatDelayRate;
+        goto process_delay;
+    }
+
+process_delay:
+    if(s->as.actionActive) {
+        // check for key remains to be pressed
+        bool pendingReleased = PostponerQuery_IsKeyReleased(s->ms.currentMacroKey);
+        bool currentKeyIsActive = currentMacroKeyIsActive();
+        if (!currentKeyIsActive || pendingReleased) {
+            return MacroResult_Finished;
+        }
+        // wait until configured delays
+        if(Timer_GetElapsedTime(&s->as.delayData.start) < wait_until) {
+            return MacroResult_Sleeping;
+        }
+        memset(&s->as.delayData, 0, sizeof s->as.delayData);
+        s->as.actionActive = false;
+    }
+run_command:
+    macro_result_t res = processCommand(arg1, argEnd);
+    if (!(res & MacroResult_ActionFinishedFlag)) {
+        return res;
+    }
+
+    // switch flag
+    switch(s->as.autoRepeatPhase) {
+    case AutoRepeatState_Starting:
+        // check for key hold here as well to avoid fictitiousdelay
+        bool pendingReleased = PostponerQuery_IsKeyReleased(s->ms.currentMacroKey);
+        bool currentKeyIsActive = currentMacroKeyIsActive();
+        if (!currentKeyIsActive || pendingReleased) {
+            return MacroResult_Finished;
+        }
+        s->as.autoRepeatPhase = AutoRepeatState_InitialDelay;
+        break;
+    case AutoRepeatState_InitialDelay:
+        s->as.autoRepeatPhase = AutoRepeatState_Repeating;
+        break;
+    case AutoRepeatState_Repeating:
+        break;
+    }
+    // assign delay data
+    s->as.delayData.start = CurrentTime;
+    s->as.actionActive = true;
+    sleepTillTime(s->as.delayData.start + next_delay);
+    sleepTillKeystateChange();
+    return MacroResult_Sleeping;
+}
+
 static bool processIfKeyPendingAtCommand(bool negate, const char* arg1, const char* argEnd)
 {
     const char* arg2 = NextTok(arg1, argEnd);
@@ -2085,6 +2149,9 @@ static macro_result_t processCommand(const char* cmd, const char* cmdEnd)
             }
             else if (TokenMatches(cmd, cmdEnd, "activateKeyPostponed")) {
                 return processActivateKeyPostponedCommand(arg1, cmdEnd);
+            }
+            else if (TokenMatches(cmd, cmdEnd, "autoRepeat")) {
+                return processAutoRepeatCommand(NextTok(cmd, cmdEnd), cmdEnd);
             }
             else {
                 goto failed;

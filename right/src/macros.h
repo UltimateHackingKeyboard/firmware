@@ -111,6 +111,12 @@
         macro_action_type_t type;
     } ATTR_PACKED macro_action_t;
 
+    typedef enum {
+        AutoRepeatState_Starting = 0,
+        AutoRepeatState_InitialDelay= 1,
+        AutoRepeatState_Repeating = 2
+    } macro_autorepeat_state_t;
+
     typedef struct {
         // persistent scope data
         // these need to live in between macro calls
@@ -182,6 +188,7 @@
             bool currentIfSecondaryConditionPassed : 1;
             bool modifierPostpone : 1;
             bool modifierSuppressMods : 1;
+            macro_autorepeat_state_t autoRepeatPhase: 2;
 
         } as;
     }  macro_state_t;
@@ -220,6 +227,8 @@
     extern bool Macros_WakedBecauseOfTime;
     extern bool Macros_WakedBecauseOfKeystateChange;
     extern uint16_t DoubletapConditionTimeout;
+    extern uint16_t AutoRepeatInitialDelay;
+    extern uint16_t AutoRepeatDelayRate;
 
 // Functions:
 
