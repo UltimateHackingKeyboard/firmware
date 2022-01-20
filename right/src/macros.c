@@ -1320,6 +1320,21 @@ static bool processIfRegEqCommand(bool negate, const char* arg1, const char *arg
     }
 }
 
+static bool processIfRegInequalityCommand(bool greaterThan, const char* arg1, const char *argEnd)
+{
+    int32_t *address = getReg(arg1, argEnd, NULL);
+    uint8_t param = parseNUM(NextTok(arg1, argEnd), argEnd);
+    if (address) {
+        if (greaterThan) {
+            return (*address) > param;
+        } else {
+            return (*address) < param;
+        }
+    } else {
+        return false;
+    }
+}
+
 static bool processIfKeymapCommand(bool negate, const char* arg1, const char *argEnd)
 {
     uint8_t queryKeymapIdx = parseKeymapId(arg1, argEnd);
@@ -2222,6 +2237,20 @@ static macro_result_t processCommand(const char* cmd, const char* cmdEnd)
             }
             else if (TokenMatches(cmd, cmdEnd, "ifNotRegEq")) {
                 if (!processIfRegEqCommand(true, arg1, cmdEnd) && !s->as.currentConditionPassed) {
+                    return MacroResult_Finished;
+                }
+                cmd = NextTok(arg1, cmdEnd); //shift by 2
+                arg1 = NextTok(cmd, cmdEnd);
+            }
+            else if (TokenMatches(cmd, cmdEnd, "ifRegGt")) {
+                if (!processIfRegInequalityCommand(true, arg1, cmdEnd) && !s->as.currentConditionPassed) {
+                    return MacroResult_Finished;
+                }
+                cmd = NextTok(arg1, cmdEnd); //shift by 2
+                arg1 = NextTok(cmd, cmdEnd);
+            }
+            else if (TokenMatches(cmd, cmdEnd, "ifRegLt")) {
+                if (!processIfRegInequalityCommand(false, arg1, cmdEnd) && !s->as.currentConditionPassed) {
                     return MacroResult_Finished;
                 }
                 cmd = NextTok(arg1, cmdEnd); //shift by 2
