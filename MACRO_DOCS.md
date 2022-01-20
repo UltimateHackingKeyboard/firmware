@@ -315,7 +315,7 @@ The following grammar is supported:
     CONDITION = {ifPendingKeyReleased | ifNotPendingKeyReleased} <queue idx (NUMBER)>
     CONDITION = {ifPlaytime | ifNotPlaytime} <timeout in ms (NUMBER)>
     CONDITION = {ifShift | ifAlt | ifCtrl | ifGui | ifAnyMod | ifNotShift | ifNotAlt | ifNotCtrl | ifNotGui | ifNotAnyMod}
-    CONDITION = {ifRegEq | ifNotRegEq} <register index (NUMBER)> <value (NUMBER)>
+    CONDITION = {ifRegEq | ifNotRegEq | ifRegGt | ifRegLt} <register index (NUMBER)> <value (NUMBER)>
     CONDITION = {ifKeymap | ifNotKeymap} KEYMAPID
     CONDITION = {ifLayer | ifNotLayer} LAYERID
     CONDITION = {ifRecording | ifNotRecording}
@@ -519,6 +519,7 @@ Conditions are checked before processing the rest of the command. If the conditi
 - `ifPlaytime/ifNotPlaytime <timeout in ms>` is true if at least `timeout` milliseconds passed since macro was started.
 - `ifShift/ifAlt/ifCtrl/ifGui/ifAnyMod/ifNotShift/ifNotAlt/ifNotCtrl/ifNotGui/ifNotAnyMod` is true if either right or left modifier was held in the previous update cycle. This does not indicate modifiers which were triggered from macroes. 
 - `{ifRegEq|ifNotRegEq} <register inex> <value>` will test if the value in the register identified by first argument equals second argument.
+- `{ifRegGt|ifRegLt} <register inex> <value>` will test if the value in the register identified by first argument is greater than/less than second argument.
 - `{ifKeymap|ifNotKeymap|ifLayer|ifNotLayer} <value>` will test if the current Keymap/Layer are equals to the first argument (uses the same parsing rule as `switchKeymap` and `switchLayer`.
 - `ifRecording/ifNotRecording` and `ifRecordingId/ifNotRecordingId MACROID` test if the runtime macro recorder is in recording state. 
 - `ifShortcut/ifNotShortcut [IFSHORTCUTFLAGS]* [KEYID]*` will wait for next keypresses and compare them to the argument. See postponer mechanism section.
@@ -554,7 +555,7 @@ Macro slots are identified by a single character or a number or `#key` (meaning 
 For the purpose of toggling functionality on and off, and for global constants management, we provide 32 numeric registers (namely of type int32_t). 
 
 - `setReg <register index> <value>` will set register identified by index to value.
-- `ifRegEq|ifNotRegEq` see CONDITION section
+- `ifRegEq|ifNotRegEq|ifRegGt|ifRegLt` see CONDITION section
 - `{addReg|subReg|mulReg} <register index> <value>` adds value to the register 
 - Register values can also be used in place of all numeric arguments by prefixing register index by '#'. E.g., waiting until release or for amount of time defined by reg 1 can be achieved by `delayUntilReleaseMax #1`
 
