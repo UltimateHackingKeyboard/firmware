@@ -1322,13 +1322,13 @@ static bool processIfRegEqCommand(bool negate, const char* arg1, const char *arg
 
 static bool processIfRegInequalityCommand(bool greaterThan, const char* arg1, const char *argEnd)
 {
-    int32_t *address = getReg(arg1, argEnd, NULL);
+    uint8_t address = parseNUM(arg1, argEnd);
     uint8_t param = parseNUM(NextTok(arg1, argEnd), argEnd);
-    if (address) {
+    if (validReg(address)) {
         if (greaterThan) {
-            return (*address) > param;
+            return regs[address] > param;
         } else {
-            return (*address) < param;
+            return regs[address] < param;
         }
     } else {
         return false;
