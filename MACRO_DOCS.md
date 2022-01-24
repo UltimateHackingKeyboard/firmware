@@ -180,6 +180,16 @@ You can simplify writing macros by using `#` and `@` characters. The first resol
     noOp                   //note the @ character - it resolves relative address to absolute (i.e., adds current adr)
     default: tapKey b      //<string>: denotes a label, which can be used as jump target
 
+You can use `goTo @0` as active wait loop. Consider following example. If briefly tapped, produces `@@` (play last vim macro). If held, prepends any other key tap with a `@` key. E.g., `thisMacro + p + p` produces `@p@p` (play vim macro in register p, twice). 
+
+    begin: postponeKeys ifNotPending 1 ifNotReleased goTo @0
+    postponeKeys ifReleased final ifNotInterrupted ifNotPlaytime 300 tapKeySeq @ @
+    postponeKeys ifPending 1 tapKey @
+    postponeKeys setReg 0 %0
+    ifPending 1 goTo @0
+    ifKeyActive #0 goTo @0
+    goTo begin
+
 ## Example Keymaps
 
 I am including my user config in [examples/mirroring_keymap.json](examples/mirroring_keymap.json) as an advanced example of abilities of UHK with this firmware. Some basic documentation is included within the keymap as description of layers in Agent.
@@ -197,10 +207,10 @@ If you wish to feature your keymap here, feel free to post a PR or a ticket with
 
 Macro events allow hooking special behaviour, such as applying specific configuration, to events. This is done via a special naming scheme. Currently, following names are supported:
 
-    onInit
-    onKeymapChange <keymap 3char abbreviation(KEYMAPID)>
+    $onInit
+    $onKeymapChange {KEYMAPID|any}
 
-I.e., if you want to customize acceleration driver for your trackball module on keymap QWR, create macro named `onKeymapChange QWR`, with content e.g.:
+I.e., if you want to customize acceleration driver for your trackball module on keymap QWR, create macro named `$onKeymapChange QWR`, with content e.g.:
 
     set module.trackball.baseSpeed 0.5
     set module.trackball.speed 1.0
@@ -227,11 +237,12 @@ The following grammar is supported:
     COMMAND = holdKeymapLayerMax KEYMAPID LAYERID <time in ms (NUMBER)>
     COMMAND = resolveSecondary <time in ms (NUMBER)> [<time in ms (NUMBER)>] <primary action macro action index (ADDRESS)> <secondary action macro action index (ADDRESS)>
     COMMAND = resolveNextKeyId 
-    COMMAND = activateKeyPostponed KEYID
+    COMMAND = activateKeyPostponed [atLayer LAYERID] KEYID
     COMMAND = consumePending <number of keys (NUMBER)>
     COMMAND = postponeNext <number of commands (NUMER)>
     COMMAND = break
     COMMAND = noOp
+    COMMAND = yield
     COMMAND = {exec|call|fork} MACRONAME
     COMMAND = stopAllMacros
     COMMAND = statsRuntime
@@ -267,10 +278,10 @@ The following grammar is supported:
     COMMAND = set module.MODULEID.zoomSpeedDivisor <1-100 (FLOAT)>
     COMMAND = set module.MODULEID.axisLockStrength <0-1.0 (FLOAT)>
     COMMAND = set module.MODULEID.axisLockStrengthFirstTick <0-1.0 (FLOAT)>
-    COMMAND = set module.MODULEID.scrollAxisLock {0|1}
-    COMMAND = set module.MODULEID.cursorAxisLock {0|1}
-    COMMAND = set module.MODULEID.swapAxes {0|1}
-    COMMAND = set module.MODULEID.invertScrollDirection {0|1}
+    COMMAND = set module.MODULEID.scrollAxisLock BOOLEAN
+    COMMAND = set module.MODULEID.cursorAxisLock BOOLEAN
+    COMMAND = set module.MODULEID.swapAxes BOOLEAN
+    COMMAND = set module.MODULEID.invertScrollDirection BOOLEAN
     #NOTIMPLEMENTED COMMAND = set secondaryRoles
     COMMAND = set mouseKeys.{move|scroll}.initialSpeed <px/s, -100/20 (NUMBER)>
     COMMAND = set mouseKeys.{move|scroll}.baseSpeed <px/s, -800/20 (NUMBER)>
@@ -282,8 +293,15 @@ The following grammar is supported:
     COMMAND = set chordingDelay <time in ms (NUMBER)>
     COMMAND = set stickyModifiers {never|smart|always}
     COMMAND = set debounceDelay <time in ms, at most 250 (NUMBER)>
+    COMMAND = set doubletapDelay <time in ms, at most 65535 (NUMBER)>
     COMMAND = set keystrokeDelay <time in ms, at most 65535 (NUMBER)>
     COMMAND = set setEmergencyKey KEYID
+    COMMAND = set macroEngine.scheduler {blocking|preemptive}
+    COMMAND = set macroEngine.batchSize <number of commands to execute per one update cycle NUMBER>
+    COMMAND = set navigationModeAction.{caret|media|zoom}.{DIRECTION} {MACROID|none}
+    COMMAND = set keymapAction.LAYERID.KEYID {MACROID|none}
+    COMMAND = set backlight.strategy { functional | constantRgb }
+    COMMAND = set backlight.constantRgb.rgb <number 0-255 (NUMBER)> <number 0-255 (NUMBER)> <number 0-255 (NUMBER)><number 0-255 (NUMBER)>
     CONDITION = {ifShortcut | ifNotShortcut} [IFSHORTCUTFLAGS]* [KEYID]+
     CONDITION = {ifGesture | ifNotGesture} [IFSHORTCUTFLAGS]* [KEYID]+
     CONDITION = {ifPrimary | ifSecondary}
@@ -297,13 +315,15 @@ The following grammar is supported:
     CONDITION = {ifPendingKeyReleased | ifNotPendingKeyReleased} <queue idx (NUMBER)>
     CONDITION = {ifPlaytime | ifNotPlaytime} <timeout in ms (NUMBER)>
     CONDITION = {ifShift | ifAlt | ifCtrl | ifGui | ifAnyMod | ifNotShift | ifNotAlt | ifNotCtrl | ifNotGui | ifNotAnyMod}
-    CONDITION = {ifRegEq | ifNotRegEq} <register index (NUMBER)> <value (NUMBER)>
+    CONDITION = {ifRegEq | ifNotRegEq | ifRegGt | ifRegLt} <register index (NUMBER)> <value (NUMBER)>
+    CONDITION = {ifKeymap | ifNotKeymap} KEYMAPID
+    CONDITION = {ifLayer | ifNotLayer} LAYERID
     CONDITION = {ifRecording | ifNotRecording}
     CONDITION = {ifRecordingId | ifNotRecordingId} MACROID
     MODIFIER = suppressMods
     MODIFIER = postponeKeys
     MODIFIER = final
-    IFSHORTCUTFLAGS = noConsume | transitive | anyOrder | timeoutIn <time in ms (NUMBER)> | cancelIn <time in ms(NUMBER)>
+    IFSHORTCUTFLAGS = noConsume | transitive | anyOrder | orGate | timeoutIn <time in ms (NUMBER)> | cancelIn <time in ms(NUMBER)>
     DIRECTION = {left|right|up|down}
     LAYERID = {fn|mouse|mod|base}|last|previous
     KEYMAPID = <abbrev>|last
@@ -365,6 +385,7 @@ The following grammar is supported:
 ### Uncategorized commands:
 
 - `setLedTxt <time> <custom text>` will set led display to supplemented text for the given time. (Blocks for the given time.)
+    - If the given time is zero, i.e. `<time> = 0`, the led text will be set indefinitely (until the display is refreshed by other text) and this command will returns immediately (non-blocking).
 
 ### Triggering keyboard actions (pressing keys, clicking, etc.):
 
@@ -390,10 +411,11 @@ The following grammar is supported:
 - `goTo ADDRESS` will go to action index int. Actions are indexed from zero. See `ADDRESS`
 - `repeatFor <register index> ADDRESS` - abbreviation to simplify cycles. Will decrement the supplemented register and perform `goTo` to `adr` if the value is still greater than zero. Intended usecase - place after command which is to be repeated with the register containing number of repeats and adr `@-1` (or similar).
 - `break` will end playback of the current macro
-- `noOp` does nothing - i.e., stops macro for exactly one update cycle and then continues.
+- `noOp` does nothing - i.e., stops macro for exactly one update cycle and then continues. 
+- `yield` forces macro to yield, if blocking scheduler is used. With preemptive scheduler acts just as `noOp`.
 - `exec MACRONAME` will execute different macro in current state slot. I.e., the macro will be executed in current context and will *not* return. First action of the called macro is executed within the same eventloop cycle.
 - `call MACRONAME` will execute another macro in a new state slot and enters sleep mode. After the called macro finishes, the control returns to the caller macro. First action of the called macro is executed within the same eventloop cycle. The called macro has its own context (e.g., its own ifInterrupted flag, its own postponing counter and flags etc.) Beware, the state pool is small - do not use deep call trees!
-- `call MACRONAME` will execute another macro in a new state slot, without entering sleep mode.
+- `fork MACRONAME` will execute another macro in a new state slot, without entering sleep mode.
 - `stopAllMacros` interrupts all macros. 
 
 ### Status buffer/Debugging tools
@@ -461,7 +483,7 @@ We allow postponing key activations in order to allow deciding between some scen
 - `ifPendingKeyReleased/ifNotPendingKeyReleased <queue idx>` is true if the key pending at `idx` in queue has been released. I.e., if there exists matching release event in the queue.
 - `ifKeyPendingAt/ifNotKeyPendingAt <idx> <keyId>` looks into postponing queue at `idx`th waiting key nad compares it to the `keyId`. 
 - `consumePending <n>` will remove n records from the queue.
-- `activateKeyPostponed KEYID` will add tap of KEYID at the end of queue.
+- `activateKeyPostponed KEYID` will add tap of KEYID at the end of queue. If `atLayer LAYERID` is specified, action will be taken from that layer rather than current one.
 - `resolveSecondary` allows resolution of secondary roles depending on the next key - this allows us to accurately distinguish random press from intentional press of shortcut via secondary role. See `resolveSecondary` entry under Layer switching. Implicitly applies `postponeKeys` modifier.
 - `ifPrimary/ifSecondary` act as an abreviation for `resolveSecondary`. They use postponing mechanism and allow distinguishing between primary and secondary roles.
 - `ifShortcut/ifNotShortcut/ifGesture/ifNotGesture [IFSHORTCUTFLAGS]* [KEYID]*` will wait for next keypresses until sufficient number of keys has been pressed. If the next keypresses correspond to the provided arguments (hardware ids), the keypresses are consumed and the condition is performed. Consuming takes place in both `if` and `ifNot` versions if the full list is matched. E.g., `ifShortcut 090 089 final tapKey C-V; holdKey v`. 
@@ -471,6 +493,7 @@ We allow postponing key activations in order to allow deciding between some scen
     - `noConsume` allows not consuming the keys. Useful if the next action is a standalone action, yet we want to branch behaviour of current action depending on it. 
     - `transitive` makes termination conditions relate to that key of the queue whose result is most permissive (normally, they always refer to the activation key) - e.g., in transitive mode with 3-key shortcut, first key can be released if second key is being held. Timers count time since last performed action in this mode. Both `timeoutIn` and `cancelIn` behave according to this flag. In non-transitive mode, timers are counted since activation key press - i.e., since macro start.
     - `anyOrder` will check only presence of mentioned keyIds in postponer queue.
+    - `orGate` will treat the given list of keys as *or-conditions* (rather than as *and-conditions*). Check any presence of mentioned keyIds in postponer queue for the next key press. Implies `anyOrder`.
     - `timeoutIn <time (NUMBER)>` adds a timeout timer to both `Shortcut` and `Gesture` commands. If the timer times out (i.e., the condition does not suceed or fail earlier), the command continues as if matching KEYIDs failed. Can be used to shorten life of `Shortcut` resolution. 
     - `cancelIn <time (NUMBER)>` adds a timer to both commands. If this timer times out, all related keys are consumed and macro is broken. *"This action has never happened, lets not talk about it anymore."* (Note that this is an only condition which behaves same in both `if` and `ifNot` cases.)
 - DEPRECATED (use `ifShortcut/ifGesture` instead) `resolveNextKeyEq <queue idx> <key id> <timeout> <adr1> <adr2>` will wait for next (n) key press(es). When the key press happens, it will compare its id with the `<key id>` argument. If the id equals, it issues goto to adr1. Otherwise, to adr2. See examples. Implicitly applies `postponeKeys` modifier.
@@ -496,6 +519,8 @@ Conditions are checked before processing the rest of the command. If the conditi
 - `ifPlaytime/ifNotPlaytime <timeout in ms>` is true if at least `timeout` milliseconds passed since macro was started.
 - `ifShift/ifAlt/ifCtrl/ifGui/ifAnyMod/ifNotShift/ifNotAlt/ifNotCtrl/ifNotGui/ifNotAnyMod` is true if either right or left modifier was held in the previous update cycle. This does not indicate modifiers which were triggered from macroes. 
 - `{ifRegEq|ifNotRegEq} <register inex> <value>` will test if the value in the register identified by first argument equals second argument.
+- `{ifRegGt|ifRegLt} <register inex> <value>` will test if the value in the register identified by first argument is greater than/less than second argument.
+- `{ifKeymap|ifNotKeymap|ifLayer|ifNotLayer} <value>` will test if the current Keymap/Layer are equals to the first argument (uses the same parsing rule as `switchKeymap` and `switchLayer`.
 - `ifRecording/ifNotRecording` and `ifRecordingId/ifNotRecordingId MACROID` test if the runtime macro recorder is in recording state. 
 - `ifShortcut/ifNotShortcut [IFSHORTCUTFLAGS]* [KEYID]*` will wait for next keypresses and compare them to the argument. See postponer mechanism section.
 - `ifGesture/ifNotGesture [IFSHORTCUTFLAGS]* [KEYID]*` just as `ifShortcut`, but breaks after 1000ms instead of when the key is released. See postponer mechanism section.
@@ -530,20 +555,21 @@ Macro slots are identified by a single character or a number or `#key` (meaning 
 For the purpose of toggling functionality on and off, and for global constants management, we provide 32 numeric registers (namely of type int32_t). 
 
 - `setReg <register index> <value>` will set register identified by index to value.
-- `ifRegEq|ifNotRegEq` see CONDITION section
+- `ifRegEq|ifNotRegEq|ifRegGt|ifRegLt` see CONDITION section
 - `{addReg|subReg|mulReg} <register index> <value>` adds value to the register 
 - Register values can also be used in place of all numeric arguments by prefixing register index by '#'. E.g., waiting until release or for amount of time defined by reg 1 can be achieved by `delayUntilReleaseMax #1`
 
 ### Configuration options:
     
 - `set stickyModifiers {never|smart|always}` globally turns on or off sticky modifiers. This affects only standard scancode actions. Macro actions (both gui and command ones) are always nonsticky, unless `sticky` flag is included in `tapKey|holdKey|pressKey` commands. Default value is `smart`, which is the official behaviour - i.e., `<alt/ctrl/gui> + <tab/arrows>` are sticky.
-- `set diagonalSpeedCompensation {0|1}` will divide diagonal mouse speed by sqrt(2) if enabled.
+- `set diagonalSpeedCompensation BOOLEAN` will divide diagonal mouse speed by sqrt(2) if enabled.
 - `set chordingDelay 0 | <time in ms (NUMBER)>` If nonzero, keyboard will delay *all* key actions by the specified time (recommended 50ms). If another key is pressed during this time, pending key actions will be sorted according to their type:
   1) Keymap/layer switches
   2) Macros
   3) Keystrokes and mouse actions
   This allows the user to trigger chorded shortcuts in arbitrary ordrer (all at the "same" time). E.g., if `A+Ctrl` is pressed instead of `Ctrl+A`, keyboard will still send `Ctrl+A` if the two key presses follow within the specified time.
 - `set debounceDelay <time in ms, at most 250>` prevents key state from changing for some time after every state change. This is needed because contacts of mechanical switches can bounce after contact and therefore change state multiple times in span of a few milliseconds. Official firmware debounce time is 50 ms for both press and release. Recommended value is 10-50, default is 50.
+- `set doubletapDelay <time in ms, at most 65535>` controls doubletap timeouts for both layer switchers and for the `ifDoubletap` condition.
 - `set keystrokeDelay <time in ms, at most 65535>` allows slowing down keyboard output. This is handy for lousily written RDP clients and other software which just scans keys once a while and processes them in wrong order if multiple keys have been pressed inbetween. In more detail, this setting adds a delay whenever a basic usb report is sent. During this delay, key matrix is still scanned and keys are debounced, but instead of activating, the keys are added into a queue to be replayed later. Recommended value is 10 if you have issues with RDP missing modifier keys, 0 otherwise.
 - `set mouseKeys.{move|scroll}.{...} NUMBER` please refer to Agent for more details
   - `initialSpeed` - the speed that is active when key is pressed
@@ -605,9 +631,33 @@ For the purpose of toggling functionality on and off, and for global constants m
   - `axisLockStrength` controls caret axis locking. Defaults to 0.5, valid values are 0-1.0.
     When you first move in navigation mode that has axis locking enabled, axis is locked to one of the axes. Furthermore, as long as this axis is active, the other axis input is multiplied by `1 - axisLockStrength` and gets zeroed with every tick. This means that in order to change locked direction (with 0.5 value), you have to produce stroke that goes at least twice as fast in the non-locked direction compared to the locked one.
   - `axisLockStrengthFirstTick` - same meaning as `axisLockStrength`, but controls whether axis locking applies on first tick. Nonzero value means that firt tick will require a "push" before cursor starts moving. 
-  - `cursorAxisLockEnabled {0|1}` - turns axis locking on for cursor mode. Not recommended, but possible.
-  - `scrollAxisLockEnabled {0|1}` - turns axis locking on for scroll mode. Default for keycluster trackball.
+  - `cursorAxisLockEnabled BOOLEAN` - turns axis locking on for cursor mode. Not recommended, but possible.
+  - `scrollAxisLockEnabled BOOLEAN` - turns axis locking on for scroll mode. Default for keycluster trackball.
 
+- Remapping keys:
+  - `set navigationModeAction.{caret|media}.{DIRECTION|none} MACROID` can be used to customize caret or media mode behaviour by binding directions to macros. This action is global and reversible only by powercycling.
+  - `set keymapAction.LAYERID.KEYID {MACROID|none}` can be used to remap any action that lives in standard keymap. All remappable ids should be retriavable with `resolveNextKeyId`. Keyid can also be constructed manually - see `KEYID`. This map applies only until next keymap switch.
+
+- `macroEngine`
+  - terminology:
+       - action - one action as shown in the agent.
+       - subAction - some actions have multiple phases (such as tapKey which consists at least of press and release, or delay). Such actions may take multiple update cycles to complete. 
+       - command - in case of command action, action consists of multiple commands. Command is defined as any nonempty text line. Commands are treated as actions, which means that macro action context is resetted for every command line. Every command line has its own address.
+  - `scheduler` controls how are macros executed.
+    - `preemptive` default old one - freely interleaves commands. It gives every macro slot an oppotunity to execute one action or subaction or command. This means that no macro can block operation of ther macros, but comes at a cost of quirkiness and nondeterminism.
+      - `batchSize` limits how many commands can be executed per one macro slot per macro engine invocation. 
+    - `blocking` experimental scheduler. This scheduler keeps track of macro states and allows only one macro to run at a time. If macro yields (either enters waiting state or explicitly yields), another macro gets the exclusive privilege of running. As long as there are running (nonsleeping / waiting) macros, rest of the keyboard is in postponing state. 
+      - `batchSize` parameter controls how many commands can be executed per one macro engine invocation. If the number is exceeded, normal update cycle resumes in postponing state. This means that if a macro takes many actions, keyboard keys get queued in a queue to be executed later in correct order.
+      - Macro states roughly correspond to following:
+        - In progress - means that current action progresses state of the macro - i.e., does some work. As long as macro actions/subactions/commands return this state, they can be all executed within one keyboard update cycle.  
+        - In progress blocking - corresponds to commands that operate on usb reports - e.g., tap keys, etc.. If macro returns with this state, macro engine allows keyboard to perform one update cycle to send usb reports. This update cycle is performed in postponing mode. Macro engine is then resumed at the same action.
+        - In progress waiting - corresponds to waiting states, such as `delayUntil`, `ifGesture`, `ifSecondary`. Whenever they get running privilege, they check their state and yield, allowing rest of the keyboard to run uninterrupted. These don't initiate postponing unless it is part of their function.
+        - Sleeping - if one macro calls another, caller sleeps until callee finishes.
+        - Backward jump - any backward jump also yields. This should prevent unwanted endless loops, as well as need for the user to manage yielding logic manually.
+
+- backlight:
+    - `backlight.strategy { functional | constantRgb }` sets backlight strategy.
+    - `backlight.constantRgb.rgb NUMBER NUMBER NUMBER` allows setting custom constant colour for entire keyboard. E.g.: `set backlight.strategy constantRgb; set backlight.constantRgb.rgb 255 0 0` to make entire keyboard shine red.
 
 ### Argument parsing rules:
 
@@ -616,20 +666,30 @@ For the purpose of toggling functionality on and off, and for global constants m
 - `MACROID` - macro slot identifier is either a number or a single ascii character (interpretted as a one-byte value). `#key` can be used so that the same macro refers to different slots when assigned to different keys.
 - `register index` is an integer in the appropriate range, used as an index to the register array.
 - `custom text` is an arbitrary text starting on next non-space character and ending at the end of the text action. (Yes, this should be refactored in the future.)
-- `KEYID` is a numeric id obtained by `resolveNextKeyId` macro.
+- `KEYID` is a numeric id obtained by `resolveNextKeyId` macro. It can also be constructed manually, as an index (starting at zero) added to an offset of `64*slotid`.  This means that starting offsets are:
+
+```
+  RightKeyboardHalf = 0
+  LeftKeyboardHalf  = 64
+  LeftModule        = 128
+  RightModule       = 192
+```
+
 - `SHORTCUT` is an abbreviation of a key possibly accompanied by modifiers. Describes at most one scancode action. Can be prefixed by `C/S/A/G` denoting `Control/Shift/Alt/Gui`. Mods can further be prefixed by `L/R`, denoting left or right modifier. If a single ascii character is entered, it is translated into corresponding key combination (shift mask + scancode) according to standard EN-US layout. E.g., `pressKey mouseBtnLeft`, `tapKey LC-v` (Left Control + (lowercase) V (scancode)), `tapKey CS-f5` (Ctrl + Shift + F5), `tapKey v` (V), `tapKey V` (Shift + V).
 - `LABEL` is and identifier marking some lines of the macro. When a string is encountered in a context of an address, UHK looks for a command beginning by `<the string>:` and returns its addres (index). If same label is present multiple times, the next one w.r.t. currently processed command is returned.
-- `ADDRESS` is either a `NUMBER` (including `#`, `@`, etc syntaxies) or a string which denotes label identifier. E.g., `goTo 0` (go to beginning), `goTo @-1` (go to previous command, since `@` resolves relative adresses to absolute), `goTo @0` (active waiting), `goTo default` (go to line which begins by `default: ...`). 
+- `ADDRESS` addresses allow jumping between macro instructions. Every action or command has its own address, numbered from zero. Formally, address is either a `NUMBER` (including `#`, `@`, etc syntaxies) or a string which denotes label identifier. Every action consumes at least one address. (Except for command action, exactly one.) Every command (non-empty line of command action) consumes one address. E.g., `goTo 0` (go to beginning), `goTo @-1` (go to previous command, since `@` resolves relative adresses to absolute), `goTo @0` (active waiting), `goTo default` (go to line which begins by `default: ...`). 
 
 ### Navigation modes:
 
 UHK modules feature four navigation modes, which are mapped by layer and module. This mapping can be changed by the `set module.MODULEID.navigationMode.LAYERID NAVIGATIONMODE` command.
 
-- Cursor mode - in this mode, modules control mouse movement. Default mode for all modules except keycluster's trackball.
-- Scroll mode - in this mode, module can be used to scroll. Default mode for mod layer. This means that apart from switching layer, your mod layer switches also make your right hand modules act as very comfortable scroll wheels. Sensitivity is controlled by the `scrollSpeedDivisor` value.
-- Caret mode - in this mode, module produces arrow key taps. This can be used to move comfortably in text editor, since in this mode, cursor is also locked to one of the two directions, preventing unwanted line changes. Sensitivity is controlled by the `caretSpeedDivisor`, `axisLockStrengthFirstTick` and `axisLockStrength`.
-- Media mode - in this mode, up/down directions control volume (via media key scancodes), while horizontal play/pause and switch to next track. At the moment, this mode is not enabled by default on any layer. Sensitivity is shared with the caret mode.
-- Zoom mode - in this mode, `Ctrl +`/`Ctrl -` shortcuts are produced. This mode serves specifically to implement touchpad's gesture.
+- **Cursor mode** - in this mode, modules control mouse movement. Default mode for all modules except keycluster's trackball.
+- **Scroll mode** - in this mode, module can be used to scroll. Default mode for mod layer. This means that apart from switching layer, your mod layer switches also make your right hand modules act as very comfortable scroll wheels. Sensitivity is controlled by the `scrollSpeedDivisor` value.
+- **Caret mode** - in this mode, module produces arrow key taps. This can be used to move comfortably in text editor, since in this mode, cursor is also locked to one of the two directions, preventing unwanted line changes. Sensitivity is controlled by the `caretSpeedDivisor`, `axisLockStrengthFirstTick` and `axisLockStrength`.
+- **Media mode** - in this mode, up/down directions control volume (via media key scancodes), while horizontal play/pause and switch to next track. At the moment, this mode is not enabled by default on any layer. Sensitivity is shared with the caret mode.
+- **Zoom mode** - in this mode, `Ctrl +`/`Ctrl -` shortcuts are produced. This mode serves specifically to implement touchpad's gesture.
+
+Caret and media modes can be customized by `set navigationModeAction` command.
 
 ### Error handling
 
@@ -643,7 +703,7 @@ Originally, macros used writeText action and were triggered by '$' symbol. Also,
 
 In order to migrate to the new notation, you can export your configuration, edit the json file and import again. 
 
-If your favourite text editor is vim, following two commands will do the trick:
+If your favourite text editor is vim, following commands will do the trick:
 
 ```
     :g/macroActionType.*text/normal 02ftcecommand
@@ -661,7 +721,7 @@ Otherwise, you want to find your own way to effortlessly transform lines of form
 to:
 ```
     "macroActionType": "command",
-    "command": "holdKey sticky LA-a"
+    "command": "set module.trackball.navigationMode.mouse scroll"
 ```
 
 ## Known issues/limitations

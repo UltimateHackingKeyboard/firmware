@@ -15,7 +15,7 @@
     #define MAX_MACRO_NUM 255
     #define STATUS_BUFFER_MAX_LENGTH 1024
     #define LAYER_STACK_SIZE 10
-    #define MACRO_STATE_POOL_SIZE 20
+    #define MACRO_STATE_POOL_SIZE 16
     #define MAX_REG_COUNT 32
 
     #define ALTMASK (HID_KEYBOARD_MODIFIER_LEFTALT | HID_KEYBOARD_MODIFIER_RIGHTALT)
@@ -46,6 +46,11 @@
     } macro_sub_action_t;
 
     typedef enum {
+        Scheduler_Preemptive,
+        Scheduler_Blocking,
+    } macro_scheduler_t;
+
+    typedef enum {
         MacroActionType_Key,
         MacroActionType_MouseButton,
         MacroActionType_MoveMouse,
@@ -60,7 +65,8 @@
         MacroResult_ActionFinishedFlag = 2,
         MacroResult_DoneFlag = 4,
         MacroResult_YieldFlag = 8,
-        MacroResult_Blocking = MacroResult_InProgressFlag,
+        MacroResult_BlockingFlag = 16,
+        MacroResult_Blocking = MacroResult_InProgressFlag | MacroResult_BlockingFlag,
         MacroResult_Waiting = MacroResult_InProgressFlag | MacroResult_YieldFlag,
         MacroResult_Sleeping = MacroResult_InProgressFlag | MacroResult_YieldFlag,
         MacroResult_Finished = MacroResult_ActionFinishedFlag,
@@ -127,6 +133,7 @@
             uint8_t currentMacroIndex;
             uint8_t postponeNextNCommands;
             uint8_t commandAddress;
+            uint8_t nextSlot;
             bool macroInterrupted : 1;
             bool macroSleeping : 1;
             bool macroBroken : 1;
@@ -173,10 +180,30 @@
             bool currentConditionPassed : 1;
             bool currentIfShortcutConditionPassed : 1;
             bool currentIfSecondaryConditionPassed : 1;
-            bool weInitiatedPostponing : 1;
+            bool modifierPostpone : 1;
+            bool modifierSuppressMods : 1;
 
         } as;
     }  macro_state_t;
+
+    // Schedule is given by a single-linked circular list.
+    typedef struct {
+        // Current slot is the next slot to be run. Previous reference is
+        // required in order to be able to unschedule current slot.
+        uint8_t previousSlotIdx;
+        uint8_t currentSlotIdx;
+        // LastQueuedSlot is the slot after which the new schedules should be
+        // added. Either points to current (usually) or to the last added
+        // element (if it still waits to be executed for the first time).
+        uint8_t lastQueuedSlot;
+        // Total number of scheduled slots.
+        uint8_t activeSlotCount;
+        // Slots that remain to be executed in current cycle. (They might get
+        // executed or not - if quota is exceeded or if some macro returns
+        // blocking state, then schedule cycle is not completed within one
+        // UHK update cycle.)
+        uint8_t remainingCount;
+    } scheduler_state_t;
 
 // Variables:
 
@@ -186,24 +213,30 @@
     extern bool MacroPlaying;
     extern layer_id_t Macros_ActiveLayer;
     extern bool Macros_ActiveLayerHeld;
+    extern macro_scheduler_t Macros_Scheduler;
+    extern uint8_t Macros_MaxBatchSize;
     extern uint32_t Macros_WakeMeOnTime;
     extern bool Macros_WakeMeOnKeystateChange;
     extern bool Macros_WakedBecauseOfTime;
     extern bool Macros_WakedBecauseOfKeystateChange;
+    extern uint16_t DoubletapConditionTimeout;
 
 // Functions:
 
-    void Macros_StartMacro(uint8_t index, key_state_t *keyState, uint8_t parentMacroSlot, bool runFirstAction);
+    uint8_t Macros_StartMacro(uint8_t index, key_state_t *keyState, uint8_t parentMacroSlot, bool runFirstAction);
+    uint8_t Macros_QueueMacro(uint8_t index, key_state_t *keyState, uint8_t queueAfterSlot);
     void Macros_ContinueMacro(void);
     void Macros_SignalInterrupt(void);
     bool Macros_ClaimReports(void);
     void Macros_ReportError(const char* err, const char* arg, const char *argEnd);
-    void Macros_ReportErrorNum(const char* err, uint32_t num);
+    void Macros_ReportErrorNum(const char* err, int32_t num);
+    void Macros_ReportErrorFloat(const char* err, float num);
     void Macros_SetStatusString(const char* text, const char *textEnd);
     void Macros_SetStatusStringInterpolated(const char* text, const char *textEnd);
     void Macros_SetStatusBool(bool b);
-    void Macros_SetStatusNum(uint32_t n);
-    void Macros_SetStatusNumSpaced(uint32_t n, bool space);
+    void Macros_SetStatusFloat(float n);
+    void Macros_SetStatusNum(int32_t n);
+    void Macros_SetStatusNumSpaced(int32_t n, bool space);
     void Macros_SetStatusChar(char n);
     void Macros_UpdateLayerStack();
     void Macros_Initialize();

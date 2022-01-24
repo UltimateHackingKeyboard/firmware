@@ -31,23 +31,25 @@
 
 // Typedefs:
 
-    struct postponer_buffer_record_type_t {
+    typedef struct {
         uint32_t time;
         key_state_t * key;
         bool active;
-    };
+        uint8_t layer;
+    } postponer_buffer_record_type_t;
 
 // Variables:
 
     extern uint8_t ChordingDelay;
     extern key_state_t* Postponer_NextEventKey;
+    extern uint8_t Postponer_LastKeyLayer;
 
 // Functions (Core hooks):
 
     bool PostponerCore_IsActive(void);
     void PostponerCore_PostponeNCycles(uint8_t n);
     bool PostponerCore_RunKey(key_state_t* key, bool active);
-    void PostponerCore_TrackKeyEvent(key_state_t *keyState, bool active);
+    void PostponerCore_TrackKeyEvent(key_state_t *keyState, bool active, uint8_t layer);
     void PostponerCore_RunPostponedEvents(void);
     void PostponerCore_FinishCycle(void);
 

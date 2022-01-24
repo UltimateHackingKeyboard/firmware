@@ -10,7 +10,7 @@ bool ledIconStates[LedDisplayIcon_Count];
 char LedDisplay_DebugString[] = "   ";
 
 static const uint16_t letterToSegmentMap[] = {
-    
+
 
     //DCLMNEGgBKJHFA
     0b00000000000000, // space
@@ -116,7 +116,7 @@ static const uint16_t letterToSegmentMap[] = {
 #if DEVICE_ID == DEVICE_ID_UHK60V1
 
 static const uint8_t layerLedIds[LayerId_Count-1] = {0x0d, 0x1d, 0x2d};
-static const uint8_t iconLedIds[LedDisplayIcon_Count] = {0x8, 0x09, 0x0a}; 
+static const uint8_t iconLedIds[LedDisplayIcon_Count] = {0x8, 0x09, 0x0a};
 static const uint8_t segmentLedIds[maxSegmentChars][ledCountPerChar] = {
     //  A,    F,    H,    J,    K,    B,   G1,   G2,    E,    N,    M,    L,    C     D
     {0x0b, 0x1b, 0x29, 0x2a, 0x2b, 0x0c, 0x1c, 0x28, 0x1a, 0x2c, 0x38, 0x39, 0x18, 0x19},
@@ -155,7 +155,8 @@ void LedDisplay_SetText(uint8_t length, const char* text)
 
 void LedDisplay_SetLayer(layer_id_t layerId)
 {
-    for (uint8_t i=1; i<LayerId_Count; i++) {
+    // layerLedIds is defined for just three values atm
+    for (uint8_t i=1; i<4; i++) {
         LedDriverValues[LedDriverId_Left][layerLedIds[i-1]] = layerId == i ? IconsAndLayerTextsBrightness : 0;
     }
 }

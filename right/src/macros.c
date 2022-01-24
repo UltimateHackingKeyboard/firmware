@@ -1,9 +1,13 @@
 #include "macros.h"
+#include <math.h>
+#include "usb_interfaces/usb_interface_basic_keyboard.h"
+#include "usb_interfaces/usb_interface_media_keyboard.h"
+#include "usb_interfaces/usb_interface_mouse.h"
+#include "usb_interfaces/usb_interface_system_keyboard.h"
 #include "config_parser/parse_macro.h"
 #include "config_parser/config_globals.h"
 #include "timer.h"
 #include "keymap.h"
-#include "key_matrix.h"
 #include "usb_report_updater.h"
 #include "led_display.h"
 #include "postponer.h"
@@ -15,6 +19,8 @@
 #include "mouse_controller.h"
 #include "debug.h"
 #include "macro_set_command.h"
+#include <stddef.h>
+#include <string.h>
 
 macro_reference_t AllMacros[MAX_MACRO_NUM];
 uint8_t AllMacrosCount;
@@ -32,6 +38,16 @@ uint32_t Macros_WakeMeOnTime = 0xFFFFFFFF;
 bool Macros_WakeMeOnKeystateChange = false;
 
 
+macro_scheduler_t Macros_Scheduler = Scheduler_Blocking;
+uint8_t Macros_MaxBatchSize = 20;
+static scheduler_state_t scheduler = {
+    .previousSlotIdx = 0,
+    .currentSlotIdx = 0,
+    .lastQueuedSlot = 0,
+    .activeSlotCount = 0,
+    .remainingCount = 0,
+};
+
 static char statusBuffer[STATUS_BUFFER_MAX_LENGTH];
 static uint16_t statusBufferLen;
 static bool statusBufferPrinting;
@@ -48,8 +64,11 @@ static int32_t regs[MAX_REG_COUNT];
 macro_state_t MacroState[MACRO_STATE_POOL_SIZE];
 static macro_state_t *s = MacroState;
 
-static uint16_t doubletapConditionTimeout = 300;
+uint16_t DoubletapConditionTimeout = 400;
 
+static void wakeMacroInSlot(uint8_t slotIdx);
+static void scheduleSlot(uint8_t slotIdx);
+static void unscheduleCurrentSlot();
 static int32_t parseNUM(const char *a, const char *aEnd);
 static macro_result_t processCommand(const char* cmd, const char* cmdEnd);
 static macro_result_t processCommandAction(void);
@@ -63,12 +82,6 @@ static void resetToAddressZero(uint8_t macroIndex);
 static uint8_t currentActionCmdCount();
 static macro_result_t sleepTillTime(uint32_t time);
 static macro_result_t sleepTillKeystateChange();
-
-bool Macros_ClaimReports()
-{
-    s->ms.reportsUsed = true;
-    return true;
-}
 
 /**
  * This ensures integration/interface between macro layer mechanism
@@ -249,14 +262,14 @@ static macro_result_t processDelayAction()
 static void postponeNextN(uint8_t count)
 {
     s->ms.postponeNextNCommands = count + 1;
-    s->as.weInitiatedPostponing = true;
+    s->as.modifierPostpone = true;
     PostponerCore_PostponeNCycles(MACRO_CYCLES_TO_POSTPONE);
 }
 
 static void postponeCurrentCycle()
 {
     PostponerCore_PostponeNCycles(MACRO_CYCLES_TO_POSTPONE);
-    s->as.weInitiatedPostponing = true;
+    s->as.modifierPostpone = true;
 }
 
 /**
@@ -270,7 +283,7 @@ static bool currentMacroKeyIsActive()
     if (s->ms.currentMacroKey == NULL) {
         return false;
     }
-    if (s->ms.postponeNextNCommands > 0 || s->as.weInitiatedPostponing) {
+    if (s->ms.postponeNextNCommands > 0 || s->as.modifierPostpone) {
         return KeyState_Active(s->ms.currentMacroKey) && !PostponerQuery_IsKeyReleased(s->ms.currentMacroKey);
     } else {
         return KeyState_Active(s->ms.currentMacroKey);
@@ -482,15 +495,20 @@ void Macros_SetStatusBool(bool b)
     Macros_SetStatusString(b ? "1" : "0", NULL);
 }
 
-void Macros_SetStatusNumSpaced(uint32_t n, bool spaced)
+void Macros_SetStatusNumSpaced(int32_t n, bool spaced)
 {
-    uint32_t orig = n;
     char buff[2];
     buff[0] = ' ';
     buff[1] = '\0';
     if (spaced) {
+        Macros_SetStatusString(" ", NULL);
+    }
+    if (n < 0) {
+        n = -n;
+        buff[0] = '-';
         Macros_SetStatusString(buff, NULL);
     }
+    int32_t orig = n;
     for (uint32_t div = 1000000000; div > 0; div /= 10) {
         buff[0] = (char)(((uint8_t)(n/div)) + '0');
         n = n%div;
@@ -500,7 +518,16 @@ void Macros_SetStatusNumSpaced(uint32_t n, bool spaced)
     }
 }
 
-void Macros_SetStatusNum(uint32_t n)
+void Macros_SetStatusFloat(float n)
+{
+    float intPart = 0;
+    float fraPart = modff(n, &intPart);
+    Macros_SetStatusNumSpaced(intPart, true);
+    Macros_SetStatusString(".", NULL);
+    Macros_SetStatusNumSpaced((int32_t)(fraPart * 1000 / 1), false);
+}
+
+void Macros_SetStatusNum(int32_t n)
 {
     Macros_SetStatusNumSpaced(n, true);
 }
@@ -536,7 +563,16 @@ void Macros_ReportError(const char* err, const char* arg, const char *argEnd)
     Macros_SetStatusString("\n", NULL);
 }
 
-void Macros_ReportErrorNum(const char* err, uint32_t num)
+void Macros_ReportErrorFloat(const char* err, float num)
+{
+    LedDisplay_SetText(3, "ERR");
+    reportErrorHeader();
+    Macros_SetStatusString(err, NULL);
+    Macros_SetStatusFloat(num);
+    Macros_SetStatusString("\n", NULL);
+}
+
+void Macros_ReportErrorNum(const char* err, int32_t num)
 {
     LedDisplay_SetText(3, "ERR");
     reportErrorHeader();
@@ -811,9 +847,30 @@ static macro_result_t processStatsPostponerStackCommand()
     return MacroResult_Finished;
 }
 
+static void describeSchedulerState()
+{
+    Macros_SetStatusString("s:", NULL);
+    Macros_SetStatusNum(scheduler.currentSlotIdx);
+    Macros_SetStatusNum(scheduler.previousSlotIdx);
+    Macros_SetStatusNum(scheduler.activeSlotCount);
+    Macros_SetStatusNum(scheduler.lastQueuedSlot);
+
+    Macros_SetStatusString(":", NULL);
+    uint8_t slot = scheduler.currentSlotIdx;
+    for (int i = 0; i < scheduler.activeSlotCount; i++) {
+        Macros_SetStatusNum(slot);
+        Macros_SetStatusString(" ", NULL);
+        slot = MacroState[slot].ms.nextSlot;
+    }
+    Macros_SetStatusString("\n", NULL);
+}
+
 static macro_result_t processStatsActiveMacrosCommand()
 {
-    Macros_SetStatusString("macro/adr\n", NULL);
+    Macros_SetStatusString("Macro playing: ", NULL);
+    Macros_SetStatusNum(MacroPlaying);
+    Macros_SetStatusString("\n", NULL);
+    Macros_SetStatusString("macro/slot/adr/properties\n", NULL);
     for (int i = 0; i < MACRO_STATE_POOL_SIZE; i++) {
         if (MacroState[i].ms.macroPlaying) {
             const char *name, *nameEnd;
@@ -821,11 +878,30 @@ static macro_result_t processStatsActiveMacrosCommand()
             Macros_SetStatusString(" ", NULL);
             Macros_SetStatusString(name, nameEnd);
             Macros_SetStatusString("/", NULL);
+            Macros_SetStatusNum((&MacroState[i]) - MacroState);
+            Macros_SetStatusString("/", NULL);
             Macros_SetStatusNum(MacroState[i].ms.currentMacroActionIndex);
+            Macros_SetStatusString("/", NULL);
+            if (MacroState[i].as.modifierPostpone) {
+                Macros_SetStatusString("mp ", NULL);
+            }
+            if (MacroState[i].as.modifierSuppressMods) {
+                Macros_SetStatusString("ms ", NULL);
+            }
+            if (MacroState[i].ms.macroSleeping) {
+                Macros_SetStatusString("s ", NULL);
+            }
+            if (MacroState[i].ms.wakeMeOnKeystateChange) {
+                Macros_SetStatusString("ws ", NULL);
+            }
+            if (MacroState[i].ms.wakeMeOnTime) {
+                Macros_SetStatusString("wt ", NULL);
+            }
             Macros_SetStatusString("\n", NULL);
 
         }
     }
+    describeSchedulerState();
     return MacroResult_Finished;
 }
 
@@ -934,57 +1010,78 @@ static uint8_t parseKeymapId(const char* arg1, const char* cmdEnd)
 
 uint8_t Macros_ParseLayerId(const char* arg1, const char* cmdEnd)
 {
-    if (TokenMatches(arg1, cmdEnd, "fn")) {
-        return LayerId_Fn;
+    switch(*arg1) {
+        case 'a':
+            if (TokenMatches(arg1, cmdEnd, "alt")) {
+                return LayerId_Alt;
+            }
+            break;
+        case 'b':
+            if (TokenMatches(arg1, cmdEnd, "base")) {
+                return LayerId_Base;
+            }
+            break;
+        case 'c':
+            if (TokenMatches(arg1, cmdEnd, "current")) {
+                return ActiveLayer;
+            } else if (TokenMatches(arg1, cmdEnd, "control")) {
+                return LayerId_Control;
+            }
+            break;
+        case 'm':
+            if (TokenMatches(arg1, cmdEnd, "mouse")) {
+                return LayerId_Mouse;
+            } else if (TokenMatches(arg1, cmdEnd, "mod")) {
+                return LayerId_Mod;
+            }
+            break;
+        case 'f':
+            if (TokenMatches(arg1, cmdEnd, "fn")) {
+                return LayerId_Fn;
+            } else if (TokenMatches(arg1, cmdEnd, "fn2")) {
+                return LayerId_Fn2;
+            } else if (TokenMatches(arg1, cmdEnd, "fn3")) {
+                return LayerId_Fn3;
+            } else if (TokenMatches(arg1, cmdEnd, "fn4")) {
+                return LayerId_Fn4;
+            } else if (TokenMatches(arg1, cmdEnd, "fn5")) {
+                return LayerId_Fn5;
+            }
+            break;
+        case 'l':
+            if (TokenMatches(arg1, cmdEnd, "last")) {
+                return lastLayerIdx;
+            }
+            break;
+        case 'p':
+            if (TokenMatches(arg1, cmdEnd, "previous")) {
+                return layerIdxStack[findPreviousLayerRecordIdx()].layer;
+            }
+            break;
+        case 's':
+            if (TokenMatches(arg1, cmdEnd, "shift")) {
+                return LayerId_Shift;
+            } else if (TokenMatches(arg1, cmdEnd, "super")) {
+                return LayerId_Super;
+            }
+            break;
     }
-    else if (TokenMatches(arg1, cmdEnd, "mouse")) {
-        return LayerId_Mouse;
-    }
-    else if (TokenMatches(arg1, cmdEnd, "mod")) {
-        return LayerId_Mod;
-    }
-    else if (TokenMatches(arg1, cmdEnd, "base")) {
-        return LayerId_Base;
-    }
-    else if (TokenMatches(arg1, cmdEnd, "last")) {
-        return lastLayerIdx;
-    }
-    else if (TokenMatches(arg1, cmdEnd, "previous")) {
-        return layerIdxStack[findPreviousLayerRecordIdx()].layer;
-    }
-    else if (TokenMatches(arg1, cmdEnd, "current")) {
-        return ActiveLayer;
-    }
-    else {
-        return false;
-    }
+
+    Macros_ReportError("Unrecognized layer.", arg1, cmdEnd);
+    return LayerId_Base;
 }
+
 
 static uint8_t parseLayerKeymapId(const char* arg1, const char* cmdEnd)
 {
-    if (TokenMatches(arg1, cmdEnd, "fn")) {
-        return CurrentKeymapIndex;
-    }
-    else if (TokenMatches(arg1, cmdEnd, "mouse")) {
-        return CurrentKeymapIndex;
-    }
-    else if (TokenMatches(arg1, cmdEnd, "mod")) {
-        return CurrentKeymapIndex;
-    }
-    else if (TokenMatches(arg1, cmdEnd, "base")) {
-        return CurrentKeymapIndex;
-    }
-    else if (TokenMatches(arg1, cmdEnd, "last")) {
+    if (TokenMatches(arg1, cmdEnd, "last")) {
         return lastLayerKeymapIdx;
     }
     else if (TokenMatches(arg1, cmdEnd, "previous")) {
         return layerIdxStack[findPreviousLayerRecordIdx()].keymap;
     }
-    else if (TokenMatches(arg1, cmdEnd, "current")) {
-        return CurrentKeymapIndex;
-    }
     else {
-        return false;
+        return CurrentKeymapIndex;
     }
 }
 
@@ -1068,7 +1165,9 @@ static macro_result_t processHoldLayer(uint8_t layer, uint8_t keymap, uint16_t t
     }
     else {
         if (currentMacroKeyIsActive() && (Timer_GetElapsedTime(&s->ms.currentMacroStartTime) < timeout || s->ms.macroInterrupted)) {
-            sleepTillTime(s->ms.currentMacroStartTime + timeout);
+            if (!s->ms.macroInterrupted) {
+                sleepTillTime(s->ms.currentMacroStartTime + timeout);
+            }
             sleepTillKeystateChange();
             return MacroResult_Sleeping;
         }
@@ -1151,13 +1250,13 @@ static bool processIfDoubletapCommand(bool negate)
     bool doubletapFound = false;
 
     for (uint8_t i = 0; i < MACRO_STATE_POOL_SIZE; i++) {
-        if (s->ms.currentMacroStartTime - MacroState[i].ps.previousMacroStartTime <= doubletapConditionTimeout && s->ms.currentMacroIndex == MacroState[i].ps.previousMacroIndex) {
+        if (s->ms.currentMacroStartTime - MacroState[i].ps.previousMacroStartTime <= DoubletapConditionTimeout && s->ms.currentMacroIndex == MacroState[i].ps.previousMacroIndex) {
             doubletapFound = true;
         }
         if (
             MacroState[i].ms.macroPlaying &&
             MacroState[i].ms.currentMacroStartTime < s->ms.currentMacroStartTime &&
-            s->ms.currentMacroStartTime - MacroState[i].ms.currentMacroStartTime <= doubletapConditionTimeout &&
+            s->ms.currentMacroStartTime - MacroState[i].ms.currentMacroStartTime <= DoubletapConditionTimeout &&
             s->ms.currentMacroIndex == MacroState[i].ms.currentMacroIndex &&
             &MacroState[i] != s
         ) {
@@ -1221,6 +1320,33 @@ static bool processIfRegEqCommand(bool negate, const char* arg1, const char *arg
     }
 }
 
+static bool processIfRegInequalityCommand(bool greaterThan, const char* arg1, const char *argEnd)
+{
+    uint8_t address = parseNUM(arg1, argEnd);
+    uint8_t param = parseNUM(NextTok(arg1, argEnd), argEnd);
+    if (validReg(address)) {
+        if (greaterThan) {
+            return regs[address] > param;
+        } else {
+            return regs[address] < param;
+        }
+    } else {
+        return false;
+    }
+}
+
+static bool processIfKeymapCommand(bool negate, const char* arg1, const char *argEnd)
+{
+    uint8_t queryKeymapIdx = parseKeymapId(arg1, argEnd);
+    return (queryKeymapIdx == CurrentKeymapIndex) != negate;
+}
+
+static bool processIfLayerCommand(bool negate, const char* arg1, const char *argEnd)
+{
+    uint8_t queryLayerIdx = Macros_ParseLayerId(arg1, argEnd);
+    return (queryLayerIdx == Macros_ActiveLayer) != negate;
+}
+
 static macro_result_t processBreakCommand()
 {
     s->ms.macroBroken = true;
@@ -1252,7 +1378,7 @@ static macro_result_t processSetLedTxtCommand(const char* arg1, const char *argE
 {
     int16_t time = parseNUM(arg1, argEnd);
     macro_result_t res = MacroResult_Finished;
-    if ((res = processDelay(time)) == MacroResult_Finished) {
+    if (time > 0 && (res = processDelay(time)) == MacroResult_Finished) {
         LedDisplay_UpdateText();
         return MacroResult_Finished;
     } else {
@@ -1382,6 +1508,11 @@ static macro_result_t processGoToCommand(const char* arg, const char *argEnd)
     return goTo(arg, argEnd);
 }
 
+static macro_result_t processYieldCommand(const char* arg, const char *argEnd)
+{
+    return MacroResult_ActionFinishedFlag | MacroResult_YieldFlag;
+}
+
 static macro_result_t processStopRecordingCommand()
 {
     MacroRecorder_StopRecording();
@@ -1472,11 +1603,13 @@ static macro_result_t processWriteExprCommand(const char* arg, const char *argEn
 static void processSuppressModsCommand()
 {
     SuppressMods = true;
+    s->as.modifierSuppressMods = true;
 }
 
 static void processPostponeKeysCommand()
 {
     postponeCurrentCycle();
+    s->as.modifierSuppressMods = true;
 }
 
 static macro_result_t processStatsRuntimeCommand()
@@ -1700,6 +1833,7 @@ static macro_result_t processIfShortcutCommand(bool negate, const char* arg, con
     bool consume = true;
     bool transitive = false;
     bool fixedOrder = true;
+    bool orGate = false;
     uint16_t cancelIn = 0;
     uint16_t timeoutIn= 0;
     while(arg < argEnd && !isNUM(arg, argEnd)) {
@@ -1720,6 +1854,9 @@ static macro_result_t processIfShortcutCommand(bool negate, const char* arg, con
         } else if (TokenMatches(arg, argEnd, "anyOrder")) {
             arg = NextTok(arg, argEnd);
             fixedOrder = false;
+        } else if (TokenMatches(arg, argEnd, "orGate")) {
+            arg = NextTok(arg, argEnd);
+            orGate = true;
         } else {
             Macros_ReportError("Unrecognized option", arg, argEnd);
             arg = NextTok(arg, argEnd);
@@ -1778,6 +1915,30 @@ static macro_result_t processIfShortcutCommand(bool negate, const char* arg, con
                 }
             }
         }
+        else if (orGate) {
+            // go through all canidates all at once
+            while (true) {
+                // first keyid had already been processed.
+                if (PostponerQuery_ContainsKeyId(argKeyid)) {
+                    if (negate) {
+                        return MacroResult_Finished;
+                    } else {
+                        goto conditionPassed;
+                    }
+                }
+                if (!(isNUM(arg, argEnd) && arg < argEnd)) {
+                    break;
+                }
+                argKeyid = parseNUM(arg, argEnd);
+                arg = NextTok(arg, argEnd);
+            }
+            // none is matched
+            if (negate) {
+                goto conditionPassed;
+            } else {
+                return MacroResult_Finished;
+            }
+        }
         else if (fixedOrder && PostponerExtended_PendingId(numArgs - 1) != argKeyid) {
             if (negate) {
                 goto conditionPassed;
@@ -1797,15 +1958,12 @@ static macro_result_t processIfShortcutCommand(bool negate, const char* arg, con
         }
     }
     //all keys match
+    if (consume) {
+        PostponerExtended_ConsumePendingKeypresses(numArgs, true);
+    }
     if (negate) {
-        if (consume) {
-            PostponerExtended_ConsumePendingKeypresses(numArgs, true);
-        }
         return MacroResult_Finished;
     } else {
-        if (consume) {
-            PostponerExtended_ConsumePendingKeypresses(numArgs, true);
-        }
         goto conditionPassed;
     }
 conditionPassed:
@@ -1851,14 +2009,21 @@ static bool processIfKeyDefinedCommand(bool negate, const char* arg1, const char
 
 static macro_result_t processActivateKeyPostponedCommand(const char* arg1, const char* argEnd)
 {
+    uint8_t layer = 255;
+    if (TokenMatches(arg1, argEnd, "atLayer")) {
+        const char* arg2 = NextTok(arg1, argEnd);
+        layer = Macros_ParseLayerId(arg2, argEnd);
+        arg1 = NextTok(arg2, argEnd);
+    }
+
     uint16_t keyid = parseNUM(arg1, argEnd);
     key_state_t* key = Utils_KeyIdToKeyState(keyid);
-    if(PostponerQuery_IsActiveEventually(key)) {
-        PostponerCore_TrackKeyEvent(key, false);
-        PostponerCore_TrackKeyEvent(key, true);
+    if (PostponerQuery_IsActiveEventually(key)) {
+        PostponerCore_TrackKeyEvent(key, false, layer);
+        PostponerCore_TrackKeyEvent(key, true, layer);
     } else {
-        PostponerCore_TrackKeyEvent(key, true);
-        PostponerCore_TrackKeyEvent(key, false);
+        PostponerCore_TrackKeyEvent(key, true, layer);
+        PostponerCore_TrackKeyEvent(key, false, layer);
     }
     return MacroResult_Finished;
 }
@@ -2075,6 +2240,48 @@ static macro_result_t processCommand(const char* cmd, const char* cmdEnd)
                     return MacroResult_Finished;
                 }
                 cmd = NextTok(arg1, cmdEnd); //shift by 2
+                arg1 = NextTok(cmd, cmdEnd);
+            }
+            else if (TokenMatches(cmd, cmdEnd, "ifRegGt")) {
+                if (!processIfRegInequalityCommand(true, arg1, cmdEnd) && !s->as.currentConditionPassed) {
+                    return MacroResult_Finished;
+                }
+                cmd = NextTok(arg1, cmdEnd); //shift by 2
+                arg1 = NextTok(cmd, cmdEnd);
+            }
+            else if (TokenMatches(cmd, cmdEnd, "ifRegLt")) {
+                if (!processIfRegInequalityCommand(false, arg1, cmdEnd) && !s->as.currentConditionPassed) {
+                    return MacroResult_Finished;
+                }
+                cmd = NextTok(arg1, cmdEnd); //shift by 2
+                arg1 = NextTok(cmd, cmdEnd);
+            }
+            else if (TokenMatches(cmd, cmdEnd, "ifKeymap")) {
+                if (!processIfKeymapCommand(false, arg1, cmdEnd) && !s->as.currentConditionPassed) {
+                    return MacroResult_Finished;
+                }
+                cmd = arg1; //shift by 1
+                arg1 = NextTok(cmd, cmdEnd);
+            }
+            else if (TokenMatches(cmd, cmdEnd, "ifNotKeymap")) {
+                if (!processIfKeymapCommand(true, arg1, cmdEnd) && !s->as.currentConditionPassed) {
+                    return MacroResult_Finished;
+                }
+                cmd = arg1; //shift by 1
+                arg1 = NextTok(cmd, cmdEnd);
+            }
+            else if (TokenMatches(cmd, cmdEnd, "ifLayer")) {
+                if (!processIfLayerCommand(false, arg1, cmdEnd) && !s->as.currentConditionPassed) {
+                    return MacroResult_Finished;
+                }
+                cmd = arg1; //shift by 1
+                arg1 = NextTok(cmd, cmdEnd);
+            }
+            else if (TokenMatches(cmd, cmdEnd, "ifNotLayer")) {
+                if (!processIfLayerCommand(true, arg1, cmdEnd) && !s->as.currentConditionPassed) {
+                    return MacroResult_Finished;
+                }
+                cmd = arg1; //shift by 1
                 arg1 = NextTok(cmd, cmdEnd);
             }
             else if (TokenMatches(cmd, cmdEnd, "ifPlaytime")) {
@@ -2434,6 +2641,14 @@ static macro_result_t processCommand(const char* cmd, const char* cmdEnd)
                 goto failed;
             }
             break;
+        case 'y':
+            if (TokenMatches(cmd, cmdEnd, "yield")) {
+                return processYieldCommand(arg1, cmdEnd);
+            }
+            else {
+                goto failed;
+            }
+            break;
         default:
         failed:
             Macros_ReportError("unrecognized command", cmd, cmdEnd);
@@ -2535,6 +2750,7 @@ static macro_result_t processCurrentMacroAction(void)
     return MacroResult_Finished;
 }
 
+
 static bool findFreeStateSlot()
 {
     for (uint8_t i = 0; i < MACRO_STATE_POOL_SIZE; i++) {
@@ -2560,18 +2776,20 @@ static uint8_t currentActionCmdCount() {
     }
 }
 
-static bool endMacro(void)
+static macro_result_t endMacro(void)
 {
     s->ms.macroSleeping = false;
     s->ms.macroPlaying = false;
     s->ms.macroBroken = false;
     s->ps.previousMacroIndex = s->ms.currentMacroIndex;
     s->ps.previousMacroStartTime = s->ms.currentMacroStartTime;
+    unscheduleCurrentSlot();
     if (s->ms.parentMacroSlot != 255) {
         //resume our calee, if this macro was called by another macro
-        MacroState[s->ms.parentMacroSlot].ms.macroSleeping = false;
+        wakeMacroInSlot(s->ms.parentMacroSlot);
+        return MacroResult_YieldFlag;
     }
-    return true;
+    return MacroResult_YieldFlag;
 }
 
 static void loadAction()
@@ -2644,7 +2862,9 @@ static macro_result_t execMacro(uint8_t index)
     //reset to address zero and load first address
     resetToAddressZero(index);
 
-    continueMacro();
+    if (Macros_Scheduler == Scheduler_Preemptive) {
+        continueMacro();
+    }
 
     return MacroResult_JumpedForward;
 }
@@ -2652,9 +2872,9 @@ static macro_result_t execMacro(uint8_t index)
 static macro_result_t callMacro(uint8_t macroIndex)
 {
     s->ms.macroSleeping = true;
-    uint32_t ptr1 = (uint32_t)(macro_state_t*)s;
-    uint32_t ptr2 = (uint32_t)(macro_state_t*)&(MacroState[0]);
-    uint32_t slotIndex = (ptr1 - ptr2) / sizeof(macro_state_t);
+    s->ms.wakeMeOnKeystateChange = false;
+    s->ms.wakeMeOnTime = false;
+    uint32_t slotIndex = s - MacroState;
     Macros_StartMacro(macroIndex, s->ms.currentMacroKey, slotIndex, true);
     return MacroResult_Finished | MacroResult_YieldFlag;
 }
@@ -2665,15 +2885,11 @@ static macro_result_t forkMacro(uint8_t macroIndex)
     return MacroResult_Finished;
 }
 
-
-//partentMacroSlot == 255 means no parent
-void Macros_StartMacro(uint8_t index, key_state_t *keyState, uint8_t parentMacroSlot, bool runFirstAction)
+uint8_t initMacro(uint8_t index, key_state_t *keyState, uint8_t parentMacroSlot)
 {
-    macro_state_t* oldState = s;
     if (!findFreeStateSlot() || AllMacros[index].macroActionsCount == 0)  {
-       return;
+       return 255;
     }
-
 
     MacroPlaying = true;
 
@@ -2688,22 +2904,71 @@ void Macros_StartMacro(uint8_t index, key_state_t *keyState, uint8_t parentMacro
     //this loads the first action and resets all adresses
     resetToAddressZero(index);
 
-    if (runFirstAction && (parentMacroSlot == 255 || s < &MacroState[parentMacroSlot])) {
+    return s - MacroState;
+}
+
+
+//partentMacroSlot == 255 means no parent
+uint8_t Macros_StartMacro(uint8_t index, key_state_t *keyState, uint8_t parentMacroSlot, bool runFirstAction)
+{
+    macro_state_t* oldState = s;
+
+    uint8_t slotIndex = initMacro(index, keyState, parentMacroSlot);
+
+    if (slotIndex == 255) {
+        return slotIndex;
+    }
+
+    if (Macros_Scheduler == Scheduler_Preemptive && runFirstAction && (parentMacroSlot == 255 || s < &MacroState[parentMacroSlot])) {
         //execute first action if macro has no caller Or is being called and its caller has higher slot index.
         //The condition ensures that a called macro executes exactly one action in the same eventloop cycle.
         continueMacro();
     }
+
+    scheduleSlot(slotIndex);
+    if (Macros_Scheduler == Scheduler_Blocking) {
+        // We don't care. Let it execute in regular macro execution loop, irrespectively whether this cycle or next.
+        PostponerCore_PostponeNCycles(0);
+    }
+
     s = oldState;
+    return slotIndex;
+}
+
+uint8_t Macros_QueueMacro(uint8_t index, key_state_t *keyState, uint8_t queueAfterSlot)
+{
+    macro_state_t* oldState = s;
+
+    uint8_t slotIndex = initMacro(index, keyState, 255);
+
+    if (slotIndex == 255) {
+        return slotIndex;
+    }
+
+    uint8_t childSlotIndex = queueAfterSlot;
+
+    while (MacroState[childSlotIndex].ms.parentMacroSlot != 255) {
+        childSlotIndex = MacroState[childSlotIndex].ms.parentMacroSlot;
+    }
+
+    MacroState[childSlotIndex].ms.parentMacroSlot = slotIndex;
+    s->ms.macroSleeping = true;
+
+    s = oldState;
+    return slotIndex;
 }
 
 macro_result_t continueMacro(void)
 {
+    s->as.modifierPostpone = false;
+    s->as.modifierSuppressMods = false;
+
     if (s->ms.postponeNextNCommands > 0) {
+        s->as.modifierPostpone = true;
         PostponerCore_PostponeNCycles(1);
     }
-    s->as.weInitiatedPostponing = false;
 
-    macro_result_t res = MacroResult_DoneFlag | MacroResult_YieldFlag;
+    macro_result_t res = MacroResult_YieldFlag;
 
     if (!s->ms.macroBroken && ((res = processCurrentMacroAction()) & (MacroResult_InProgressFlag | MacroResult_DoneFlag)) && !s->ms.macroBroken) {
         // InProgressFlag means that action is still in progress
@@ -2714,9 +2979,9 @@ macro_result_t continueMacro(void)
     //at this point, current action/command has finished
     s->ms.postponeNextNCommands = s->ms.postponeNextNCommands > 0 ? s->ms.postponeNextNCommands - 1 : 0;
 
-    if ((s->ms.macroBroken && endMacro()) || (!loadNextCommand() && !loadNextAction() && endMacro())) {
+    if ((s->ms.macroBroken) || (!loadNextCommand() && !loadNextAction())) {
         //macro was ended either because it was broken or because we are out of actions to perform.
-        return MacroResult_DoneFlag && MacroResult_YieldFlag;
+        return endMacro() | res;
     } else {
         //we are still running - return last action's return value
         return res;
@@ -2725,6 +2990,9 @@ macro_result_t continueMacro(void)
 
 static macro_result_t sleepTillKeystateChange()
 {
+    if (!s->ms.macroSleeping) {
+        unscheduleCurrentSlot();
+    }
     Macros_WakeMeOnKeystateChange = true;
     s->ms.wakeMeOnKeystateChange = true;
     s->ms.macroSleeping = true;
@@ -2733,6 +3001,9 @@ static macro_result_t sleepTillKeystateChange()
 
 static macro_result_t sleepTillTime(uint32_t time)
 {
+    if (!s->ms.macroSleeping) {
+        unscheduleCurrentSlot();
+    }
     Macros_WakeMeOnTime = time < Macros_WakeMeOnTime ? time : Macros_WakeMeOnTime;
     s->ms.wakeMeOnTime = true;
     s->ms.macroSleeping = true;
@@ -2746,8 +3017,7 @@ static void wakeSleepers()
         Macros_WakeMeOnKeystateChange = false;
         for (uint8_t i = 0; i < MACRO_STATE_POOL_SIZE; i++) {
             if (MacroState[i].ms.wakeMeOnKeystateChange) {
-                MacroState[i].ms.macroSleeping = false;
-                MacroState[i].ms.wakeMeOnKeystateChange = false;
+                wakeMacroInSlot(i);
             }
         }
     }
@@ -2756,31 +3026,147 @@ static void wakeSleepers()
         Macros_WakeMeOnTime = 0xFFFFFFFF;
         for (uint8_t i = 0; i < MACRO_STATE_POOL_SIZE; i++) {
             if (MacroState[i].ms.wakeMeOnTime) {
-                MacroState[i].ms.macroSleeping = false;
-                MacroState[i].ms.wakeMeOnTime = false;
+                wakeMacroInSlot(i);
             }
         }
     }
+}
+
+static void executePreemptive(void)
+{
+    for (uint8_t i = 0; i < MACRO_STATE_POOL_SIZE; i++) {
+        if (MacroState[i].ms.macroPlaying && !MacroState[i].ms.macroSleeping) {
+            s = &MacroState[i];
+
+            macro_result_t res = MacroResult_Finished;
+            uint8_t remainingExecution = Macros_MaxBatchSize;
+            while (MacroState[i].ms.macroPlaying && !MacroState[i].ms.macroSleeping && res == MacroResult_Finished && remainingExecution > 0) {
+                res = continueMacro();
+                remainingExecution --;
+            }
+        }
+    }
+    s = NULL;
+}
+
+static void wakeMacroInSlot(uint8_t slotIdx)
+{
+    if (MacroState[slotIdx].ms.macroSleeping) {
+        MacroState[slotIdx].ms.macroSleeping = false;
+        MacroState[slotIdx].ms.wakeMeOnTime = false;
+        MacroState[slotIdx].ms.wakeMeOnKeystateChange = false;
+        scheduleSlot(slotIdx);
+    }
+}
+
+static void scheduleSlot(uint8_t slotIdx)
+{
+    if(scheduler.activeSlotCount == 0) {
+        MacroState[slotIdx].ms.nextSlot = slotIdx;
+        scheduler.previousSlotIdx = slotIdx;
+        scheduler.currentSlotIdx = slotIdx;
+        scheduler.lastQueuedSlot = slotIdx;
+        scheduler.activeSlotCount++;
+        scheduler.remainingCount++;
+    } else {
+        bool shouldInheritPrevious = scheduler.lastQueuedSlot == scheduler.previousSlotIdx;
+        MacroState[slotIdx].ms.nextSlot = MacroState[scheduler.lastQueuedSlot].ms.nextSlot;
+        MacroState[scheduler.lastQueuedSlot].ms.nextSlot = slotIdx;
+        scheduler.lastQueuedSlot = slotIdx;
+        scheduler.activeSlotCount++;
+        scheduler.remainingCount++;
+        if(shouldInheritPrevious) {
+            scheduler.previousSlotIdx = slotIdx;
+        }
+    }
+}
+
+static void unscheduleCurrentSlot()
+{
+    MacroState[scheduler.previousSlotIdx].ms.nextSlot = MacroState[scheduler.currentSlotIdx].ms.nextSlot;
+    scheduler.lastQueuedSlot = scheduler.lastQueuedSlot == scheduler.currentSlotIdx ? scheduler.previousSlotIdx : scheduler.lastQueuedSlot;
+    scheduler.currentSlotIdx = scheduler.previousSlotIdx;
+    scheduler.activeSlotCount--;
+}
+
+static void getNextScheduledSlot()
+{
+    if (scheduler.remainingCount > 0) {
+        uint8_t nextSlot = MacroState[scheduler.currentSlotIdx].ms.nextSlot;
+        scheduler.previousSlotIdx = scheduler.currentSlotIdx;
+        scheduler.lastQueuedSlot = scheduler.lastQueuedSlot == scheduler.currentSlotIdx ? nextSlot : scheduler.lastQueuedSlot;
+        scheduler.currentSlotIdx = nextSlot;
+        scheduler.remainingCount--;
+    }
+}
+
+static void executeBlocking(void)
+{
+    bool someoneBlocking = false;
+    uint8_t remainingExecution = Macros_MaxBatchSize;
+    scheduler.remainingCount = scheduler.activeSlotCount;
+
+    while (scheduler.remainingCount > 0 && remainingExecution > 0) {
+        macro_result_t res = MacroResult_YieldFlag;
+        s = &MacroState[scheduler.currentSlotIdx];
+
+        if (s->ms.macroPlaying && !s->ms.macroSleeping) {
+            res = continueMacro();
+        }
+
+        if ((someoneBlocking = (res & MacroResult_BlockingFlag))) {
+            break;
+        }
+
+        if ((res & MacroResult_YieldFlag) || !s->ms.macroPlaying || s->ms.macroSleeping) {
+            getNextScheduledSlot();
+        }
+
+        remainingExecution--;
+    }
+
+    if(someoneBlocking || remainingExecution == 0) {
+        PostponerCore_PostponeNCycles(0);
+    }
+
+    s = NULL;
+}
+
+static void applySleepingMods()
+{
+    bool someoneAlive = false;
+    for (uint8_t i = 0; i < MACRO_STATE_POOL_SIZE; i++) {
+        if (MacroState[i].ms.macroPlaying) {
+            s = &MacroState[i];
+            someoneAlive = true;
+            if ( s->as.modifierPostpone ) {
+                PostponerCore_PostponeNCycles(0);
+            }
+            if ( s->as.modifierSuppressMods ) {
+                SuppressMods = true;
+            }
+        }
+    }
+    MacroPlaying = someoneAlive;
+    s = NULL;
 }
 
 void Macros_ContinueMacro(void)
 {
     wakeSleepers();
 
-    bool someonePlaying = false;
-    for (uint8_t i = 0; i < MACRO_STATE_POOL_SIZE; i++) {
-        if (MacroState[i].ms.macroPlaying && !MacroState[i].ms.macroSleeping) {
-            someonePlaying = true;
-            s = &MacroState[i];
-
-            macro_result_t res = MacroResult_Finished;
-            while (MacroState[i].ms.macroPlaying && !MacroState[i].ms.macroSleeping && res == MacroResult_Finished) {
-                res = continueMacro();
-            }
-        }
+    switch (Macros_Scheduler) {
+    case Scheduler_Preemptive:
+        executePreemptive();
+        applySleepingMods();
+        break;
+    case Scheduler_Blocking:
+        executeBlocking();
+        applySleepingMods();
+        break;
+    default:
+        break;
     }
-    s = NULL;
-    MacroPlaying &= someonePlaying;
 }
 
 void Macros_ClearStatus(void)

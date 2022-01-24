@@ -12,6 +12,7 @@
 // Variables:
     extern layer_id_t ActiveLayer;
     extern bool ActiveLayerHeld;
+    extern uint16_t DoubleTapSwitchLayerTimeout;
 
 // Functions - event triggers:
 

@@ -10,6 +10,10 @@
 #include "config.h"
 #include "mouse_controller.h"
 
+    uint16_t DataModelMajorVersion = 0;
+    uint16_t DataModelMinorVersion = 0;
+    uint16_t DataModelPatchVersion = 0;
+
 static parser_error_t parseModuleConfiguration(config_buffer_t *buffer)
 {
     uint8_t id = ReadUInt8(buffer);
@@ -44,16 +48,13 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
     uint16_t keymapCount;
     parser_error_t errorCode;
 
-    uint16_t dataModelMajorVersion = ReadUInt16(buffer);
-    uint16_t dataModelMinorVersion = ReadUInt16(buffer);
-    uint16_t dataModelPatchVersion = ReadUInt16(buffer);
+    DataModelMajorVersion = ReadUInt16(buffer);
+    DataModelMinorVersion = ReadUInt16(buffer);
+    DataModelPatchVersion = ReadUInt16(buffer);
     uint16_t userConfigLength = ReadUInt16(buffer);
     const char *deviceName = ReadString(buffer, &len);
     uint16_t doubleTapSwitchLayerTimeout = ReadUInt16(buffer);
 
-    (void)dataModelMajorVersion;
-    (void)dataModelMinorVersion;
-    (void)dataModelPatchVersion;
     (void)deviceName;
     (void)doubleTapSwitchLayerTimeout;
 

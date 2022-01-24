@@ -232,7 +232,7 @@ static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
     kineticState->wasMoveAction = isMoveAction;
 }
 
-static float fast_pow (float a, float b)
+static float fastPow (float a, float b)
 {
     // https://nic.schraudolph.org/pubs/Schraudolph99.pdf
     // https://martin.ankerl.com/2007/10/04/optimized-pow-approximation-for-java-and-c-c/
@@ -266,7 +266,7 @@ static float computeModuleSpeed(float x, float y, uint8_t moduleId)
     }
 
     float normalizedSpeed = *currentSpeed/midSpeed;
-    return moduleConfiguration->baseSpeed + moduleConfiguration->speed*(float)fast_pow(normalizedSpeed, moduleConfiguration->xceleration);
+    return moduleConfiguration->baseSpeed + moduleConfiguration->speed*fastPow(normalizedSpeed, moduleConfiguration->xceleration);
 }
 
 
@@ -373,11 +373,11 @@ static void feedTapHoldStateMachine()
         lastSingleTapTime = CurrentTime;
     }
     if (action & Action_Release) {
-        PostponerCore_TrackKeyEvent(singleTap, false);
+        PostponerCore_TrackKeyEvent(singleTap, false, 0xff);
         /** TODO: consider adding an explicit delay here - at least my linux machine does not like the idea of releases shorther than 25 ms */
     }
     if (action & Action_Press) {
-        PostponerCore_TrackKeyEvent(singleTap, true);
+        PostponerCore_TrackKeyEvent(singleTap, true, 0xff);
     }
 
     lastSingleTapValue &= TouchpadEvents.singleTap;

@@ -1,4 +1,5 @@
 #include "macro_set_command.h"
+#include "ledmap.h"
 #include "timer.h"
 #include "keymap.h"
 #include "key_matrix.h"
@@ -12,7 +13,8 @@
 #include "layer_switcher.h"
 #include "mouse_controller.h"
 #include "debug.h"
-
+#include "caret_config.h"
+#include "config_parser/parse_macro.h"
 
 static const char* proceedByDot(const char* cmd, const char *cmdEnd)
 {
@@ -62,16 +64,16 @@ static void moduleSpeed(const char* arg1, const char *textEnd, module_configurat
         module->axisLockSkewFirstTick = 1.0f - ParseFloat(arg2, textEnd);
     }
     else if (TokenMatches(arg1, textEnd, "cursorAxisLockEnabled")) {
-        module->cursorAxisLock = Macros_ParseInt(arg2, textEnd, NULL);
+        module->cursorAxisLock = Macros_ParseBoolean(arg2, textEnd);
     }
     else if (TokenMatches(arg1, textEnd, "scrollAxisLockEnabled")) {
-        module->scrollAxisLock = Macros_ParseInt(arg2, textEnd, NULL);
+        module->scrollAxisLock = Macros_ParseBoolean(arg2, textEnd);
     }
     else if (TokenMatches(arg1, textEnd, "swapAxes")) {
-        module->swapAxes = Macros_ParseInt(arg2, textEnd, NULL);
+        module->swapAxes = Macros_ParseBoolean(arg2, textEnd);
     }
     else if (TokenMatches(arg1, textEnd, "invertScrollDirection")) {
-        module->invertScrollDirection = Macros_ParseInt(arg2, textEnd, NULL);
+        module->invertScrollDirection = Macros_ParseBoolean(arg2, textEnd);
     }
     else {
         Macros_ReportError("parameter not recognized:", arg1, textEnd);
@@ -153,6 +155,147 @@ static void stickyModifiers(const char* arg1, const char *textEnd)
     }
 }
 
+static void macroEngineScheduler(const char* arg1, const char *textEnd)
+{
+    if (TokenMatches(arg1, textEnd, "preemptive")) {
+        Macros_Scheduler = Scheduler_Preemptive;
+    }
+    else if (TokenMatches(arg1, textEnd, "blocking")) {
+        Macros_Scheduler = Scheduler_Blocking;
+    }
+    else {
+        Macros_ReportError("parameter not recognized:", arg1, textEnd);
+    }
+}
+
+static void macroEngine(const char* arg1, const char *textEnd)
+{
+    if (TokenMatches(arg1, textEnd, "scheduler")) {
+        macroEngineScheduler(NextTok(arg1,  textEnd), textEnd);
+    }
+    else if (TokenMatches(arg1, textEnd, "batchSize")) {
+        Macros_MaxBatchSize = Macros_ParseInt(NextTok(arg1,  textEnd), textEnd, NULL);
+    }
+    else {
+        Macros_ReportError("parameter not recognized:", arg1, textEnd);
+    }
+}
+
+static void backlightStrategy(const char* arg1, const char *textEnd)
+{
+    if (TokenMatches(arg1, textEnd, "functional")) {
+        LedMap_BacklightStrategy = BacklightStrategy_Functional;
+    }
+    else if (TokenMatches(arg1, textEnd, "constantRgb")) {
+        LedMap_BacklightStrategy = BacklightStrategy_ConstantRGB;
+    }
+    else {
+        Macros_ReportError("parameter not recognized:", arg1, textEnd);
+    }
+}
+
+static void constantRgb(const char* arg1, const char *textEnd)
+{
+    if (TokenMatches(arg1, textEnd, "rgb")) {
+        const char* r = NextTok(arg1,  textEnd);
+        const char* g = NextTok(r, textEnd);
+        const char* b = NextTok(g, textEnd);
+        LedMap_ConstantRGB.red = Macros_ParseInt(r, textEnd, NULL);
+        LedMap_ConstantRGB.green = Macros_ParseInt(g, textEnd, NULL);
+        LedMap_ConstantRGB.blue = Macros_ParseInt(b, textEnd, NULL);
+        LedMap_BacklightStrategy = BacklightStrategy_ConstantRGB;
+    }
+    else {
+        Macros_ReportError("parameter not recognized:", arg1, textEnd);
+    }
+}
+
+
+static void backlight(const char* arg1, const char *textEnd)
+{
+    if (TokenMatches(arg1, textEnd, "strategy")) {
+        backlightStrategy(NextTok(arg1, textEnd), textEnd);
+    }
+    else if (TokenMatches(arg1, textEnd, "constantRgb")) {
+        constantRgb(proceedByDot(arg1, textEnd), textEnd);
+    }
+    else {
+        Macros_ReportError("parameter not recognized:", arg1, textEnd);
+    }
+}
+
+static void navigationModeAction(const char* arg1, const char *textEnd)
+{
+    navigation_mode_t navigationMode = NavigationMode_Caret;
+    bool positive = true;
+    caret_axis_t axis = CaretAxis_Horizontal;
+
+    const char* arg2 = proceedByDot(arg1, textEnd);
+    const char* arg3 = NextTok(arg2, textEnd);
+
+    navigationMode = ParseNavigationModeId(arg1, textEnd);
+
+    if(navigationMode != NavigationMode_Caret && navigationMode != NavigationMode_Media && navigationMode != NavigationMode_Zoom) {
+        Macros_ReportError("Invalid or non-remapable navigation mode", arg1, textEnd);
+    }
+
+    if (TokenMatches(arg2, textEnd, "left")) {
+        axis = CaretAxis_Horizontal;
+        positive = false;
+    }
+    else if (TokenMatches(arg2, textEnd, "up")) {
+        axis = CaretAxis_Vertical;
+        positive = false;
+    }
+    else if (TokenMatches(arg2, textEnd, "right")) {
+        axis = CaretAxis_Horizontal;
+        positive = true;
+    }
+    else if (TokenMatches(arg2, textEnd, "down")) {
+        axis = CaretAxis_Vertical;
+        positive = true;
+    }
+    else {
+        Macros_ReportError("parameter not recognized:", arg1, textEnd);
+    }
+
+    uint8_t macroIndex;
+    if (TokenMatches(arg3, textEnd, "none")) {
+        macroIndex = 255;
+    } else {
+        macroIndex = FindMacroIndexByName(arg3, TokEnd(arg3, textEnd), true);
+    }
+
+    SetModuleCaretConfiguration(navigationMode, axis, positive, macroIndex);
+}
+
+static void keymapAction(const char* arg1, const char *textEnd)
+{
+    const char* arg2 = proceedByDot(arg1, textEnd);
+    const char* arg3 = NextTok(arg2, textEnd);
+
+    uint8_t layerId = Macros_ParseLayerId(arg1, textEnd);
+    uint16_t keyId = Macros_ParseInt(arg2, textEnd, NULL);
+
+    uint8_t macroIndex = FindMacroIndexByName(arg3, TokEnd(arg3, textEnd), true);
+
+    uint8_t slotIdx = keyId/64;
+    uint8_t inSlotIdx = keyId%64;
+
+    if(slotIdx > SLOT_COUNT || inSlotIdx > MAX_KEY_COUNT_PER_MODULE) {
+        Macros_ReportError("invalid key id:", arg2, textEnd);
+    }
+
+    key_action_t* action = &CurrentKeymap[layerId][slotIdx][inSlotIdx];
+
+    if(macroIndex == 255) {
+        action->type = KeyActionType_None;
+    } else {
+        action->type = KeyActionType_PlayMacro;
+        action->playMacro.macroId = macroIndex;
+    }
+}
+
 macro_result_t MacroSetCommand(const char* arg1, const char *textEnd)
 {
     const char* arg2 = NextTok(arg1, textEnd);
@@ -166,6 +309,18 @@ macro_result_t MacroSetCommand(const char* arg1, const char *textEnd)
     else if (TokenMatches(arg1, textEnd, "mouseKeys")) {
         mouseKeys(proceedByDot(arg1, textEnd), textEnd);
     }
+    else if (TokenMatches(arg1, textEnd, "keymapAction")) {
+        keymapAction(proceedByDot(arg1, textEnd), textEnd);
+    }
+    else if (TokenMatches(arg1, textEnd, "navigationModeAction")) {
+        navigationModeAction(proceedByDot(arg1, textEnd), textEnd);
+    }
+    else if (TokenMatches(arg1, textEnd, "macroEngine")) {
+        macroEngine(proceedByDot(arg1, textEnd), textEnd);
+    }
+    else if (TokenMatches(arg1, textEnd, "backlight")) {
+        backlight(proceedByDot(arg1, textEnd), textEnd);
+    }
     else if (TokenMatches(arg1, textEnd, "diagonalSpeedCompensation")) {
         DiagonalSpeedCompensation = Macros_ParseBoolean(arg2, textEnd);
     }
@@ -174,12 +329,16 @@ macro_result_t MacroSetCommand(const char* arg1, const char *textEnd)
     }
     else if (TokenMatches(arg1, textEnd, "debounceDelay")) {
         uint16_t time = Macros_ParseInt(arg2, textEnd, NULL);
-
         DebounceTimePress = time;
         DebounceTimeRelease = time;
     }
     else if (TokenMatches(arg1, textEnd, "keystrokeDelay")) {
         KeystrokeDelay = Macros_ParseInt(arg2, textEnd, NULL);
+    }
+    else if (TokenMatches(arg1, textEnd, "doubletapDelay")) {
+        uint16_t delay = Macros_ParseInt(arg2, textEnd, NULL);
+        DoubleTapSwitchLayerTimeout = delay;
+        DoubletapConditionTimeout = delay;
     }
     else if (TokenMatches(arg1, textEnd, "chordingDelay")) {
         ChordingDelay = Macros_ParseInt(arg2, textEnd, NULL);

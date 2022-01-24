@@ -55,3 +55,20 @@ caret_configuration_t* GetModuleCaretConfiguration(int8_t moduleId, navigation_m
     }
 }
 
+
+void SetModuleCaretConfiguration(navigation_mode_t mode, caret_axis_t axis, bool positive, uint8_t macroIndex) {
+    caret_configuration_t* config = &caretMediaMode;
+
+    if(mode == NavigationMode_Caret) {
+        config = &caretCaretMode;
+    }
+
+    key_action_t* action = positive ? &config->axisActions[axis].positiveAction : &config->axisActions[axis].negativeAction;
+
+    if(macroIndex == 255) {
+        action->type = KeyActionType_None;
+    } else {
+        action->type = KeyActionType_PlayMacro;
+        action->playMacro.macroId = macroIndex;
+    }
+}

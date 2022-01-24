@@ -5,6 +5,10 @@
 #include "device.h"
 #include "config_parser/config_globals.h"
 
+backlight_strategy_t LedMap_BacklightStrategy = BacklightStrategy_Functional;
+
+rgb_t LedMap_ConstantRGB = { .red = 255, .green=255, .blue=255 };
+
 rgb_t KeyActionColors[] = {
     {.red=0, .green=0, .blue=0}, // KeyActionColor_None
     {.red=255, .green=255, .blue=255}, // KeyActionColor_Scancode
@@ -18,7 +22,7 @@ rgb_t KeyActionColors[] = {
 
 rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
     // All three values must be set to 0 for unused
-    
+
     // Right keyboard half
     {
         // IS31FL3737 has a weird memory layout for PWM values:
@@ -135,7 +139,25 @@ rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
     },
 };
 
-void UpdateLayerLeds(void) {
+static void updateLedsByConstantRgbStrategy() {
+#if DEVICE_ID == DEVICE_ID_UHK60V2
+    for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
+        for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
+            rgb_t *keyActionColorValues = &LedMap_ConstantRGB;
+            rgb_t *ledMapItem = &LedMap[slotId][keyId];
+            if (ledMapItem->red == 0 && ledMapItem->green == 0 && ledMapItem->blue == 0) {
+                continue;
+            }
+            LedDriverValues[slotId][ledMapItem->red] = keyActionColorValues->red * KeyBacklightBrightness / 255;
+            float brightnessDivisor = slotId == SlotId_LeftModule ? 2 : 1;
+            LedDriverValues[slotId][ledMapItem->green] = keyActionColorValues->green * KeyBacklightBrightness / brightnessDivisor / 255;
+            LedDriverValues[slotId][ledMapItem->blue] = keyActionColorValues->blue * KeyBacklightBrightness / 255;
+        }
+    }
+#endif
+}
+
+static void updateLedsByFunctionalStrategy() {
 #if DEVICE_ID == DEVICE_ID_UHK60V2
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
@@ -180,6 +202,18 @@ void UpdateLayerLeds(void) {
         }
     }
 #endif
+}
+
+void UpdateLayerLeds(void) {
+    switch (LedMap_BacklightStrategy) {
+        case BacklightStrategy_Functional:
+            updateLedsByFunctionalStrategy();
+            break;
+        case BacklightStrategy_ConstantRGB:
+            updateLedsByConstantRgbStrategy();
+            break;
+
+    }
 }
 
 void InitLedLayout(void) {
