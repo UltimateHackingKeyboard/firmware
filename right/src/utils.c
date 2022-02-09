@@ -3,6 +3,7 @@
 #include "macros.h"
 #include "macro_shortcut_parser.h"
 #include "led_display.h"
+#include <string.h>
 
 //this is noop at the moment, prepared for time when MAX_KEY_COUNT_PER_MODULE changes
 //the purpose is to preserve current keyids
@@ -48,4 +49,10 @@ void Utils_reportReport(usb_basic_keyboard_report_t* report)
     UsbBasicKeyboard_ForeachScancode(report, &Utils_SetStatusScancodeCharacter);
 
     Macros_SetStatusString("\n", NULL);
+}
+
+void Utils_SafeStrCopy(char* target, const char* src, uint8_t max) {
+    uint8_t stringlength = MIN(strlen(src)+1, (max));
+    memcpy(target, src, stringlength);
+    target[stringlength-1] = '\0';
 }

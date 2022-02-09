@@ -14,6 +14,8 @@
     #define UHK_MODULE_MAX_SLOT_COUNT (SLOT_COUNT-1)
     #define MAX_PWM_BRIGHTNESS 0x64
 
+    #define MAX_STRING_PROPERTY_LENGTH 63
+
 // Typedefs:
 
     typedef enum {
@@ -59,6 +61,16 @@
         UhkModulePhase_ReceiveKeystates,
         UhkModulePhase_ProcessKeystates,
 
+        // Get git tag
+        UhkModulePhase_RequestGitTag,
+        UhkModulePhase_ReceiveGitTag,
+        UhkModulePhase_ProcessGitTag,
+
+        // Get git repo
+        UhkModulePhase_RequestGitRepo,
+        UhkModulePhase_ReceiveGitRepo,
+        UhkModulePhase_ProcessGitRepo,
+
         // Misc phases
         UhkModulePhase_SetTestLed,
         UhkModulePhase_SetLedPwmBrightness,
@@ -84,6 +96,8 @@
         uint8_t keyCount;
         uint8_t pointerCount;
         pointer_delta_t pointerDelta;
+        char gitRepo[MAX_STRING_PROPERTY_LENGTH];
+        char gitTag[MAX_STRING_PROPERTY_LENGTH];
     } uhk_module_state_t;
 
     typedef struct {

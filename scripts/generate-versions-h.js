@@ -37,6 +37,15 @@ fs.writeFileSync(`${__dirname}/../shared/versions.h`,
 
     #include "fsl_common.h"
 
+// Macros:
+
+#define VERSION_AT_LEAST(v, MAJ, MIN, PATCH) \\
+    (\\
+        ((v).major > (MAJ)) \\
+        || ((v).major == (MAJ) && (v).minor > (MIN))\\
+        || ((v).major == (MAJ) && (v).minor == (MIN) && (v).patch >= (PATCH))\\
+    )
+
 // Typedefs:
 
     typedef struct {
@@ -49,8 +58,8 @@ fs.writeFileSync(`${__dirname}/../shared/versions.h`,
 
 ${versionVariables}
 
-#define REPOSITORY "${repo}"
-#define TAG "${tag}"
+#define GIT_REPO "${repo}"
+#define GIT_TAG "${tag}"
 
 #endif
 `);

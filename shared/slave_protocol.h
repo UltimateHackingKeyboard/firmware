@@ -32,6 +32,8 @@
         SlaveProperty_ModuleId,
         SlaveProperty_KeyCount,
         SlaveProperty_PointerCount,
+        SlaveProperty_GitTag,
+        SlaveProperty_GitRepo,
     } slave_property_t;
 
     typedef enum {
