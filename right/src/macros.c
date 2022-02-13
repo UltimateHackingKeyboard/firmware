@@ -1963,65 +1963,63 @@ conditionPassed:
 }
 
 static macro_result_t processAutoRepeatCommand(const char* arg1, const char* argEnd) {
-    uint32_t wait_until = 0;
-    uint32_t next_delay = AutoRepeatInitialDelay;
-    switch(s->as.autoRepeatPhase) {
-    case AutoRepeatState_Starting:
+    macro_result_t res;
+    switch (s->ms.autoRepeatPhase) {
+    case AutoRepeatState_Waiting:
+        goto process_delay;
+    case AutoRepeatState_Executing:
+    default:
         goto run_command;
-    case AutoRepeatState_InitialDelay:
-        wait_until = AutoRepeatInitialDelay;
-        next_delay = AutoRepeatDelayRate;
-        goto process_delay;
-    case AutoRepeatState_Repeating:
-        wait_until = AutoRepeatDelayRate;
-        next_delay = AutoRepeatDelayRate;
-        goto process_delay;
     }
+
+assign_delay_data:
+    // finish executing, switch to waiting state
+    s->ms.autoRepeatPhase = AutoRepeatState_Waiting;
+    // assign delay data
+    memset(&s->as.delayData, 0, sizeof s->as.delayData);
+    s->as.delayData.start = CurrentTime;
 
 process_delay:
-    if(s->as.actionActive) {
-        // check for key remains to be pressed
-        bool pendingReleased = PostponerQuery_IsKeyReleased(s->ms.currentMacroKey);
-        bool currentKeyIsActive = currentMacroKeyIsActive();
-        if (!currentKeyIsActive || pendingReleased) {
-            return MacroResult_Finished;
-        }
-        // wait until configured delays
-        if(Timer_GetElapsedTime(&s->as.delayData.start) < wait_until) {
-            return MacroResult_Sleeping;
-        }
-        memset(&s->as.delayData, 0, sizeof s->as.delayData);
-        s->as.actionActive = false;
+    // check for key remains to be pressed
+    bool pendingReleased = PostponerQuery_IsKeyReleased(s->ms.currentMacroKey);
+    bool currentKeyIsActive = currentMacroKeyIsActive();
+    if (!currentKeyIsActive || pendingReleased) {
+        // finish up the current key-repeat actions
+        res = MacroResult_Finished;
+        goto finished_autorepeat;
     }
-run_command:
-    macro_result_t res = processCommand(arg1, argEnd);
-    if (!(res & MacroResult_ActionFinishedFlag)) {
-        return res;
+    // wait until configured delays
+    uint32_t wait_until;
+    if (!s->ms.autoRepeatInitialDelayPassed) {
+        wait_until = AutoRepeatInitialDelay;
+    } else {
+        wait_until = AutoRepeatDelayRate;
     }
+    if (Timer_GetElapsedTime(&s->as.delayData.start) < wait_until) {
+        sleepTillTime(s->as.delayData.start + wait_until);
+        sleepTillKeystateChange();
+        return MacroResult_Sleeping;
+    }
+    // delay reached
+    s->ms.autoRepeatInitialDelayPassed = true;
+    memset(&s->as.delayData, 0, sizeof s->as.delayData);
+    s->ms.autoRepeatPhase = AutoRepeatState_Executing;
 
-    // switch flag
-    switch(s->as.autoRepeatPhase) {
-    case AutoRepeatState_Starting:
-        // check for key hold here as well to avoid fictitiousdelay
-        bool pendingReleased = PostponerQuery_IsKeyReleased(s->ms.currentMacroKey);
-        bool currentKeyIsActive = currentMacroKeyIsActive();
-        if (!currentKeyIsActive || pendingReleased) {
-            return MacroResult_Finished;
-        }
-        s->as.autoRepeatPhase = AutoRepeatState_InitialDelay;
-        break;
-    case AutoRepeatState_InitialDelay:
-        s->as.autoRepeatPhase = AutoRepeatState_Repeating;
-        break;
-    case AutoRepeatState_Repeating:
-        break;
+run_command:
+    res = processCommand(arg1, argEnd);
+    if (res & MacroResult_DoneFlag) {
+        goto finished_autorepeat;
     }
-    // assign delay data
-    s->as.delayData.start = CurrentTime;
-    s->as.actionActive = true;
-    sleepTillTime(s->as.delayData.start + next_delay);
-    sleepTillKeystateChange();
-    return MacroResult_Sleeping;
+    if (!(res & MacroResult_ActionFinishedFlag)) {
+        return MacroResult_InProgressFlag | res;
+    }
+    goto assign_delay_data;
+
+finished_autorepeat:
+    // reset autorepeat state to their default state in the macro scope
+    s->ms.autoRepeatPhase = 0;  // defaults to AutoRepeatState_Executing
+    s->ms.autoRepeatInitialDelayPassed = false;
+    return res;
 }
 
 static bool processIfKeyPendingAtCommand(bool negate, const char* arg1, const char* argEnd)

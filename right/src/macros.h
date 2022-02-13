@@ -112,9 +112,8 @@
     } ATTR_PACKED macro_action_t;
 
     typedef enum {
-        AutoRepeatState_Starting = 0,
-        AutoRepeatState_InitialDelay= 1,
-        AutoRepeatState_Repeating = 2
+        AutoRepeatState_Executing = 0,
+        AutoRepeatState_Waiting = 1
     } macro_autorepeat_state_t;
 
     typedef struct {
@@ -147,6 +146,8 @@
             bool reportsUsed : 1;
             bool wakeMeOnTime : 1;
             bool wakeMeOnKeystateChange: 1;
+            bool autoRepeatInitialDelayPassed: 1;
+            macro_autorepeat_state_t autoRepeatPhase: 1;
 
             usb_mouse_report_t macroMouseReport;
             usb_basic_keyboard_report_t macroBasicKeyboardReport;
@@ -188,7 +189,6 @@
             bool currentIfSecondaryConditionPassed : 1;
             bool modifierPostpone : 1;
             bool modifierSuppressMods : 1;
-            macro_autorepeat_state_t autoRepeatPhase: 2;
 
         } as;
     }  macro_state_t;
