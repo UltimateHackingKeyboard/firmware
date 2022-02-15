@@ -154,7 +154,11 @@
             union {
                 struct {
                     uint16_t textIdx;
-                    uint8_t reportIdx;
+                    enum {
+                        REPORT_EMPTY = 0,
+                        REPORT_PARTIAL,
+                        REPORT_FULL
+                    } reportState : 8;
                 } dispatchData;
 
                 struct {

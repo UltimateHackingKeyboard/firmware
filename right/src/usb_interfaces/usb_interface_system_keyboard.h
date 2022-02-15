@@ -41,8 +41,8 @@
     usb_status_t UsbSystemKeyboardCheckIdleElapsed();
     usb_status_t UsbSystemKeyboardCheckReportReady();
 
-    void UsbSystemKeyboard_AddScancode(usb_system_keyboard_report_t* report, uint8_t scancode, uint8_t* idx);
+    bool UsbSystemKeyboard_AddScancode(usb_system_keyboard_report_t* report, uint8_t scancode);
     void UsbSystemKeyboard_RemoveScancode(usb_system_keyboard_report_t* report, uint8_t scancode);
-    void UsbSystemKeyboard_MergeReports(const usb_system_keyboard_report_t* sourceReport, usb_system_keyboard_report_t* targetReport, uint8_t* idx);
+    void UsbSystemKeyboard_MergeReports(const usb_system_keyboard_report_t* sourceReport, usb_system_keyboard_report_t* targetReport);
 
 #endif

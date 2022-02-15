@@ -154,7 +154,7 @@ static void playReport(usb_basic_keyboard_report_t *report)
         break;
     case BasicKeyboardSimple:
         memset(report, 0, sizeof *report);
-        UsbBasicKeyboard_AddScancode(report, readByte(), NULL);
+        UsbBasicKeyboard_AddScancode(report, readByte());
         break;
     case BasicKeyboard:
         memset(report, 0, sizeof *report);
@@ -162,7 +162,7 @@ static void playReport(usb_basic_keyboard_report_t *report)
             uint8_t size = readByte();
             report->modifiers = readByte();
             for (int i = 0; i < size; i++) {
-                UsbBasicKeyboard_AddScancode(report, readByte(), NULL);
+                UsbBasicKeyboard_AddScancode(report, readByte());
             }
         }
         break;

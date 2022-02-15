@@ -144,27 +144,32 @@ static void setRolloverError(usb_basic_keyboard_report_t* report)
     }
 }
 
-void UsbBasicKeyboard_AddScancode(usb_basic_keyboard_report_t* report, uint8_t scancode, uint8_t* idx)
+bool UsbBasicKeyboard_IsFullScancodes(const usb_basic_keyboard_report_t* report)
+{
+    if (UsbBasicKeyboardGetProtocol() == USB_HID_BOOT_PROTOCOL) {
+        return report->scancodes[ARRAY_SIZE(report->scancodes) - 1] != 0;
+    } else {
+        return false;
+    }
+}
+
+bool UsbBasicKeyboard_AddScancode(usb_basic_keyboard_report_t* report, uint8_t scancode)
 {
     if (scancode == 0)
-        return;
+        return true;
 
     if (UsbBasicKeyboardGetProtocol() == USB_HID_BOOT_PROTOCOL) {
-        if (idx == NULL) {
-            for (uint8_t i = 0; i < ARRAY_SIZE(report->scancodes); i++) {
-                if (report->scancodes[i] == 0) {
-                    report->scancodes[i] = scancode;
-                    return;
-                }
+        for (uint8_t i = 0; i < ARRAY_SIZE(report->scancodes); i++) {
+            if (report->scancodes[i] == 0) {
+                report->scancodes[i] = scancode;
+                return true;
             }
-        } else if (*idx < ARRAY_SIZE(report->scancodes)) {
-            report->scancodes[(*idx)++] = scancode;
-            return;
-        } else {
-            /* invalid index */
         }
 
         setRolloverError(report);
+        return false;
+    } else {
+        return true;
     }
 }
 
@@ -205,17 +210,27 @@ size_t UsbBasicKeyboard_ScancodeCount(const usb_basic_keyboard_report_t* report)
     return size;
 }
 
-void UsbBasicKeyboard_MergeReports(const usb_basic_keyboard_report_t* sourceReport, usb_basic_keyboard_report_t* targetReport, uint8_t* idx)
+void UsbBasicKeyboard_MergeReports(const usb_basic_keyboard_report_t* sourceReport, usb_basic_keyboard_report_t* targetReport)
 {
     if (UsbBasicKeyboardGetProtocol() == USB_HID_BOOT_PROTOCOL) {
+        uint8_t idx, i = 0;
+
         targetReport->modifiers |= sourceReport->modifiers;
-        for (uint8_t i = 0; (i < ARRAY_SIZE(sourceReport->scancodes)) && (sourceReport->scancodes[i] != 0); i++) {
-            if (*idx < ARRAY_SIZE(sourceReport->scancodes)) {
-                targetReport->scancodes[(*idx)++] = sourceReport->scancodes[i];
-            } else {
-                setRolloverError(targetReport);
-                return;
+
+        /* find empty position */
+        for (idx = 0; idx < ARRAY_SIZE(targetReport->scancodes); idx++) {
+            if (targetReport->scancodes[idx] == 0) {
+                break;
             }
+        }
+        /* copy into empty positions */
+        while ((i < ARRAY_SIZE(sourceReport->scancodes)) && (sourceReport->scancodes[i] != 0) && (idx < ARRAY_SIZE(targetReport->scancodes))) {
+            targetReport->scancodes[idx++] = sourceReport->scancodes[i++];
+        }
+
+        /* target is full, but source isn't copied -> set error */
+        if ((idx == ARRAY_SIZE(targetReport->scancodes)) && (i < ARRAY_SIZE(sourceReport->scancodes)) && (sourceReport->scancodes[i] != 0)) {
+            setRolloverError(targetReport);
         }
     }
 }

@@ -89,24 +89,19 @@ usb_status_t UsbSystemKeyboardCallback(class_handle_t handle, uint32_t event, vo
     return error;
 }
 
-void UsbSystemKeyboard_AddScancode(usb_system_keyboard_report_t* report, uint8_t scancode, uint8_t* idx)
+bool UsbSystemKeyboard_AddScancode(usb_system_keyboard_report_t* report, uint8_t scancode)
 {
     if (scancode == 0)
-        return;
+        return true;
 
-    if (idx == NULL) {
-        for (uint8_t i = 0; i < ARRAY_SIZE(report->scancodes); i++) {
-            if (report->scancodes[i] == 0) {
-                report->scancodes[i] = scancode;
-                return;
-            }
+    for (uint8_t i = 0; i < ARRAY_SIZE(report->scancodes); i++) {
+        if (report->scancodes[i] == 0) {
+            report->scancodes[i] = scancode;
+            return true;
         }
-    } else if (*idx < ARRAY_SIZE(report->scancodes)) {
-        report->scancodes[(*idx)++] = scancode;
-        return;
-    } else {
-        /* invalid index */
     }
+
+    return false;
 }
 
 void UsbSystemKeyboard_RemoveScancode(usb_system_keyboard_report_t* report, uint8_t scancode)
@@ -119,11 +114,17 @@ void UsbSystemKeyboard_RemoveScancode(usb_system_keyboard_report_t* report, uint
     }
 }
 
-void UsbSystemKeyboard_MergeReports(const usb_system_keyboard_report_t* sourceReport, usb_system_keyboard_report_t* targetReport, uint8_t* idx)
+void UsbSystemKeyboard_MergeReports(const usb_system_keyboard_report_t* sourceReport, usb_system_keyboard_report_t* targetReport)
 {
-    for (uint8_t i = 0; (i < ARRAY_SIZE(sourceReport->scancodes)) && (sourceReport->scancodes[i] != 0); i++) {
-        if (*idx < ARRAY_SIZE(sourceReport->scancodes)) {
-            targetReport->scancodes[(*idx)++] = sourceReport->scancodes[i];
+    uint8_t idx, i = 0;
+    /* find empty position */
+    for (idx = 0; idx < ARRAY_SIZE(targetReport->scancodes); idx++) {
+        if (targetReport->scancodes[idx] == 0) {
+            break;
         }
+    }
+    /* copy into empty positions */
+    while ((i < ARRAY_SIZE(sourceReport->scancodes)) && (sourceReport->scancodes[i] != 0) && (idx < ARRAY_SIZE(targetReport->scancodes))) {
+        targetReport->scancodes[idx++] = sourceReport->scancodes[i++];
     }
 }

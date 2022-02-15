@@ -112,7 +112,7 @@ static void addBasicScancode(uint8_t scancode)
         return;
     }
     if (!UsbBasicKeyboard_ContainsScancode(&s->ms.macroBasicKeyboardReport, scancode)) {
-        UsbBasicKeyboard_AddScancode(&s->ms.macroBasicKeyboardReport, scancode, NULL);
+        UsbBasicKeyboard_AddScancode(&s->ms.macroBasicKeyboardReport, scancode);
     }
 }
 
@@ -170,7 +170,7 @@ static void addSystemScancode(uint8_t scancode)
     if (!scancode) {
         return;
     }
-    UsbSystemKeyboard_AddScancode(&s->ms.macroSystemKeyboardReport, scancode, NULL);
+    UsbSystemKeyboard_AddScancode(&s->ms.macroSystemKeyboardReport, scancode);
 }
 
 static void deleteSystemScancode(uint8_t scancode)
@@ -570,14 +570,10 @@ static macro_result_t dispatchText(const char* text, uint16_t textLen)
     } else {
         dispatchMutex = s;
     }
-    uint8_t max_keys;
     char character = 0;
     uint8_t scancode = 0;
     uint8_t mods = 0;
 
-    if (UsbBasicKeyboardGetProtocol() == USB_HID_BOOT_PROTOCOL) {
-        max_keys = USB_BOOT_KEYBOARD_MAX_KEYS - 2;
-    }
     // Precompute modifiers and scancode.
     if (s->as.dispatchData.textIdx != textLen) {
         character = text[s->as.dispatchData.textIdx];
@@ -589,8 +585,8 @@ static macro_result_t dispatchText(const char* text, uint16_t textLen)
     // containing only old modifiers. Then set new modifiers and send that new report.
     // Just then continue.
     if (mods != s->ms.macroBasicKeyboardReport.modifiers) {
-        if (s->as.dispatchData.reportIdx != 0) {
-            s->as.dispatchData.reportIdx = 0;
+        if (s->as.dispatchData.reportState != REPORT_EMPTY) {
+            s->as.dispatchData.reportState = REPORT_EMPTY;
             clearScancodes();
             return MacroResult_Blocking;
         } else {
@@ -602,15 +598,15 @@ static macro_result_t dispatchText(const char* text, uint16_t textLen)
     // If all characters have been sent, finish.
     if (s->as.dispatchData.textIdx == textLen) {
         s->as.dispatchData.textIdx = 0;
-        s->as.dispatchData.reportIdx = max_keys;
+        s->as.dispatchData.reportState = REPORT_FULL;
         memset(&s->ms.macroBasicKeyboardReport, 0, sizeof s->ms.macroBasicKeyboardReport);
         dispatchMutex = NULL;
         return MacroResult_Finished;
     }
 
     // Whenever the report is full, we clear the report and send it empty before continuing.
-    if (s->as.dispatchData.reportIdx == max_keys) {
-        s->as.dispatchData.reportIdx = 0;
+    if (s->as.dispatchData.reportState == REPORT_FULL) {
+        s->as.dispatchData.reportState = REPORT_EMPTY;
 
         memset(&s->ms.macroBasicKeyboardReport, 0, sizeof s->ms.macroBasicKeyboardReport);
         return MacroResult_Blocking;
@@ -620,12 +616,14 @@ static macro_result_t dispatchText(const char* text, uint16_t textLen)
     // release it first. We do so by artificially marking the report
     // full. Next call will do rest of the work for us.
     if (UsbBasicKeyboard_ContainsScancode(&s->ms.macroBasicKeyboardReport, scancode)) {
-        s->as.dispatchData.reportIdx = max_keys;
+        s->as.dispatchData.reportState = REPORT_FULL;
         return MacroResult_Blocking;
     }
 
     // Send the scancode.
-    UsbBasicKeyboard_AddScancode(&s->ms.macroBasicKeyboardReport, scancode, &s->as.dispatchData.reportIdx);
+    UsbBasicKeyboard_AddScancode(&s->ms.macroBasicKeyboardReport, scancode);
+    s->as.dispatchData.reportState = UsbBasicKeyboard_IsFullScancodes(&s->ms.macroBasicKeyboardReport) ?
+            REPORT_FULL : REPORT_PARTIAL;
     ++s->as.dispatchData.textIdx;
     return MacroResult_Blocking;
 }

@@ -96,10 +96,6 @@ static void handleEventInterrupts(key_state_t *keyState) {
     }
 }
 
-uint8_t basicScancodeIndex = 0;
-static uint8_t mediaScancodeIndex = 0;
-static uint8_t systemScancodeIndex = 0;
-
 // Sticky modifiers are all "action modifiers" - i.e., modifiers of composed
 // keystrokes whose purpose is to activate concrete shortcut. They are
 // activated once on keydown, and reset when another key gets activated (even
@@ -180,13 +176,13 @@ static void applyKeystrokePrimary(key_state_t *keyState, key_action_t *action)
         if (!stickyModifiersChanged || KeyState_ActivatedEarlier(keyState)) {
             switch (action->keystroke.keystrokeType) {
                 case KeystrokeType_Basic:
-                    UsbBasicKeyboard_AddScancode(ActiveUsbBasicKeyboardReport, action->keystroke.scancode, &basicScancodeIndex);
+                    UsbBasicKeyboard_AddScancode(ActiveUsbBasicKeyboardReport, action->keystroke.scancode);
                     break;
                 case KeystrokeType_Media:
-                    UsbMediaKeyboard_AddScancode(ActiveUsbMediaKeyboardReport, action->keystroke.scancode, &mediaScancodeIndex);
+                    UsbMediaKeyboard_AddScancode(ActiveUsbMediaKeyboardReport, action->keystroke.scancode);
                     break;
                 case KeystrokeType_System:
-                    UsbSystemKeyboard_AddScancode(ActiveUsbSystemKeyboardReport, action->keystroke.scancode, &systemScancodeIndex);
+                    UsbSystemKeyboard_AddScancode(ActiveUsbSystemKeyboardReport, action->keystroke.scancode);
                     break;
             }
         }
@@ -279,9 +275,6 @@ static void clearActiveReports(void)
     memset(ActiveUsbBasicKeyboardReport, 0, sizeof *ActiveUsbBasicKeyboardReport);
     memset(ActiveUsbMediaKeyboardReport, 0, sizeof *ActiveUsbMediaKeyboardReport);
     memset(ActiveUsbSystemKeyboardReport, 0, sizeof *ActiveUsbSystemKeyboardReport);
-    basicScancodeIndex = 0;
-    mediaScancodeIndex = 0;
-    systemScancodeIndex = 0;
 }
 
 
@@ -293,9 +286,9 @@ static void mergeReports(void)
             MacroState[j].ms.reportsUsed &= MacroState[j].ms.macroPlaying;
             macro_state_t *s = &MacroState[j];
 
-            UsbBasicKeyboard_MergeReports(&(s->ms.macroBasicKeyboardReport), ActiveUsbBasicKeyboardReport, &basicScancodeIndex);
-            UsbMediaKeyboard_MergeReports(&(s->ms.macroMediaKeyboardReport), ActiveUsbMediaKeyboardReport, &mediaScancodeIndex);
-            UsbSystemKeyboard_MergeReports(&(s->ms.macroSystemKeyboardReport), ActiveUsbSystemKeyboardReport, &systemScancodeIndex);
+            UsbBasicKeyboard_MergeReports(&(s->ms.macroBasicKeyboardReport), ActiveUsbBasicKeyboardReport);
+            UsbMediaKeyboard_MergeReports(&(s->ms.macroMediaKeyboardReport), ActiveUsbMediaKeyboardReport);
+            UsbSystemKeyboard_MergeReports(&(s->ms.macroSystemKeyboardReport), ActiveUsbSystemKeyboardReport);
 
             ActiveUsbMouseReport->buttons |= s->ms.macroMouseReport.buttons;
             ActiveUsbMouseReport->x += s->ms.macroMouseReport.x;
@@ -350,11 +343,11 @@ static void handleUsbStackTestMode() {
         if (simulateKeypresses) {
             isEven = !isEven;
             UsbBasicKeyboard_AddScancode(ActiveUsbBasicKeyboardReport,
-                    isEven ? HID_KEYBOARD_SC_A : HID_KEYBOARD_SC_BACKSPACE, &basicScancodeIndex);
+                    isEven ? HID_KEYBOARD_SC_A : HID_KEYBOARD_SC_BACKSPACE);
             if (++mediaCounter % 200 == 0) {
                 isEvenMedia = !isEvenMedia;
                 UsbMediaKeyboard_AddScancode(ActiveUsbMediaKeyboardReport,
-                        isEvenMedia ? MEDIA_VOLUME_DOWN : MEDIA_VOLUME_UP, &mediaScancodeIndex);
+                        isEvenMedia ? MEDIA_VOLUME_DOWN : MEDIA_VOLUME_UP);
             }
             MouseMoveState.xOut = isEven ? -5 : 5;
         }
@@ -389,10 +382,6 @@ static void updateActiveUsbReports(void)
     }
 
     memcpy(ActiveMouseStates, ToggledMouseStates, ACTIVE_MOUSE_STATES_COUNT);
-
-    basicScancodeIndex = 0;
-    mediaScancodeIndex = 0;
-    systemScancodeIndex = 0;
 
     handleLayerChanges();
 

@@ -53,11 +53,12 @@
     usb_status_t UsbBasicKeyboardCheckIdleElapsed();
     usb_status_t UsbBasicKeyboardCheckReportReady();
 
-    void UsbBasicKeyboard_AddScancode(usb_basic_keyboard_report_t* report, uint8_t scancode, uint8_t* idx);
+    bool UsbBasicKeyboard_IsFullScancodes(const usb_basic_keyboard_report_t* report);
+    bool UsbBasicKeyboard_AddScancode(usb_basic_keyboard_report_t* report, uint8_t scancode);
     void UsbBasicKeyboard_RemoveScancode(usb_basic_keyboard_report_t* report, uint8_t scancode);
     bool UsbBasicKeyboard_ContainsScancode(const usb_basic_keyboard_report_t* report, uint8_t scancode);
     size_t UsbBasicKeyboard_ScancodeCount(const usb_basic_keyboard_report_t* report);
-    void UsbBasicKeyboard_MergeReports(const usb_basic_keyboard_report_t* sourceReport, usb_basic_keyboard_report_t* targetReport, uint8_t* idx);
+    void UsbBasicKeyboard_MergeReports(const usb_basic_keyboard_report_t* sourceReport, usb_basic_keyboard_report_t* targetReport);
     void UsbBasicKeyboard_ForeachScancode(const usb_basic_keyboard_report_t* report, void(*action)(uint8_t));
 
 #endif
