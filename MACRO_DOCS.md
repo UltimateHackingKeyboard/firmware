@@ -295,6 +295,8 @@ The following grammar is supported:
     COMMAND = set debounceDelay <time in ms, at most 250 (NUMBER)>
     COMMAND = set doubletapDelay <time in ms, at most 65535 (NUMBER)>
     COMMAND = set keystrokeDelay <time in ms, at most 65535 (NUMBER)>
+    COMMAND = set autoRepeatDelay <time in ms, at most 65535 (NUMBER)>
+    COMMAND = set autoRepeatRate <time in ms, at most 65535 (NUMBER)>
     COMMAND = set setEmergencyKey KEYID
     COMMAND = set macroEngine.scheduler {blocking|preemptive}
     COMMAND = set macroEngine.batchSize <number of commands to execute per one update cycle NUMBER>
@@ -323,6 +325,7 @@ The following grammar is supported:
     MODIFIER = suppressMods
     MODIFIER = postponeKeys
     MODIFIER = final
+    MODIFIER = autoRepeat
     IFSHORTCUTFLAGS = noConsume | transitive | anyOrder | orGate | timeoutIn <time in ms (NUMBER)> | cancelIn <time in ms(NUMBER)>
     DIRECTION = {left|right|up|down}
     LAYERID = {fn|mouse|mod|base}|last|previous
@@ -533,6 +536,7 @@ Modifiers modify behaviour of the rest of the keyboard while the rest of the com
 - `suppressMods` will supress any modifiers except those applied via macro engine. Can be used to remap shift and nonShift characters independently.
 - `postponeKeys` will postpone all new key activations for as long as any instance of this modifier is active. See postponing mechanisms section.
 - `final` will end macro playback after the "modified" action is properly finished. Simplifies control flow. "Implicit break."
+- `autoRepeat` will continuously repeats the following command while holding the macro key, with some configurable delay. See `set autoRepeatDelay <time>` and `set autoRepeatRate <time>` for more details. This enables you to use keyrepeat feature (which is typically implemented in the OS level) with any macro action. For example, you can use something like `autoRepeat tapKey down` or `ifShift autoRepeat tapKeySeq C-right right`.
 
 ### Runtime macros:
 
@@ -571,6 +575,7 @@ For the purpose of toggling functionality on and off, and for global constants m
 - `set debounceDelay <time in ms, at most 250>` prevents key state from changing for some time after every state change. This is needed because contacts of mechanical switches can bounce after contact and therefore change state multiple times in span of a few milliseconds. Official firmware debounce time is 50 ms for both press and release. Recommended value is 10-50, default is 50.
 - `set doubletapDelay <time in ms, at most 65535>` controls doubletap timeouts for both layer switchers and for the `ifDoubletap` condition.
 - `set keystrokeDelay <time in ms, at most 65535>` allows slowing down keyboard output. This is handy for lousily written RDP clients and other software which just scans keys once a while and processes them in wrong order if multiple keys have been pressed inbetween. In more detail, this setting adds a delay whenever a basic usb report is sent. During this delay, key matrix is still scanned and keys are debounced, but instead of activating, the keys are added into a queue to be replayed later. Recommended value is 10 if you have issues with RDP missing modifier keys, 0 otherwise.
+- `set autoRepeatDelay <time in ms, at most 65535>` and `set autoRepeatRate <time in ms, at most 65535>` allows you to set the initial delay (default: 500 ms) and the repeat delay (default: 50 ms) when using `autoRepeat`. When you run the command `autoRepeat <command>`, the `<command>` is first run without delay. Then, it will waits `autoRepeatDelay` amount of time before running `<command>` again. Then and thereafter, it will waits `autoRepeatRate` amount of time before repeating `<command>` again. This is consistent with typical OS keyrepeat feature.
 - `set mouseKeys.{move|scroll}.{...} NUMBER` please refer to Agent for more details
   - `initialSpeed` - the speed that is active when key is pressed
   - `initialAcceleration,baseSpeed` - when mouse key is held, speed increases until it reaches baseSpeed

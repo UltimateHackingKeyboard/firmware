@@ -111,6 +111,11 @@
         macro_action_type_t type;
     } ATTR_PACKED macro_action_t;
 
+    typedef enum {
+        AutoRepeatState_Executing = 0,
+        AutoRepeatState_Waiting = 1
+    } macro_autorepeat_state_t;
+
     typedef struct {
         // persistent scope data
         // these need to live in between macro calls
@@ -141,6 +146,8 @@
             bool reportsUsed : 1;
             bool wakeMeOnTime : 1;
             bool wakeMeOnKeystateChange: 1;
+            bool autoRepeatInitialDelayPassed: 1;
+            macro_autorepeat_state_t autoRepeatPhase: 1;
 
             usb_mouse_report_t macroMouseReport;
             usb_basic_keyboard_report_t macroBasicKeyboardReport;
@@ -220,6 +227,8 @@
     extern bool Macros_WakedBecauseOfTime;
     extern bool Macros_WakedBecauseOfKeystateChange;
     extern uint16_t DoubletapConditionTimeout;
+    extern uint16_t AutoRepeatInitialDelay;
+    extern uint16_t AutoRepeatDelayRate;
 
 // Functions:
 

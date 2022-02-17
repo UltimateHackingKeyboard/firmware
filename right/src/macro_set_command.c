@@ -340,6 +340,14 @@ macro_result_t MacroSetCommand(const char* arg1, const char *textEnd)
         DoubleTapSwitchLayerTimeout = delay;
         DoubletapConditionTimeout = delay;
     }
+    else if (TokenMatches(arg1, textEnd, "autoRepeatDelay")) {
+        uint16_t delay = Macros_ParseInt(arg2, textEnd, NULL);
+        AutoRepeatInitialDelay = delay;
+    }
+    else if (TokenMatches(arg1, textEnd, "autoRepeatRate")) {
+        uint16_t delay = Macros_ParseInt(arg2, textEnd, NULL);
+        AutoRepeatDelayRate = delay;
+    }
     else if (TokenMatches(arg1, textEnd, "chordingDelay")) {
         ChordingDelay = Macros_ParseInt(arg2, textEnd, NULL);
     }
