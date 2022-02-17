@@ -21,6 +21,7 @@
 #include "macros.h"
 #include "debug.h"
 #include "postponer.h"
+#include "layer.h"
 #include "secondary_role_driver.h"
 
 static uint32_t mouseUsbReportUpdateTime = 0;
@@ -71,7 +72,7 @@ module_kinetic_state_t moduleKineticState = {
 
     .caretAxis = CaretAxis_None,
     .caretFakeKeystate = {},
-    .caretAction = &CurrentKeymap[0][0][0],
+    .caretAction.action = { .type = KeyActionType_None },
     .xFractionRemainder = 0.0f,
     .yFractionRemainder = 0.0f,
     .lastUpdate = 0,
@@ -417,7 +418,7 @@ static void progressZoomAction(module_kinetic_state_t* ks) {
 
         caret_configuration_t* currentCaretConfig = GetModuleCaretConfiguration(ks->currentModuleId, mode);
         caret_dir_action_t* dirActions = &currentCaretConfig->axisActions[CaretAxis_Vertical];
-        ks->caretAction = ks->zoomSign > 0 ? &dirActions->positiveAction : &dirActions->negativeAction;
+        ks->caretAction.action = ks->zoomSign > 0 ? dirActions->positiveAction : dirActions->negativeAction;
     }
 
     // progress current action
@@ -442,9 +443,9 @@ static void handleNewCaretModeAction(caret_axis_t axis, uint8_t resultSign, int1
         case NavigationMode_Caret: {
             caret_configuration_t* currentCaretConfig = GetModuleCaretConfiguration(ks->currentModuleId, ks->currentNavigationMode);
             caret_dir_action_t* dirActions = &currentCaretConfig->axisActions[ks->caretAxis];
-            ks->caretAction = resultSign > 0 ? &dirActions->positiveAction : &dirActions->negativeAction;
+            ks->caretAction.action = resultSign > 0 ? dirActions->positiveAction : dirActions->negativeAction;
             ks->caretFakeKeystate.current = true;
-            ApplyKeyAction(&ks->caretFakeKeystate, ks->caretAction, ks->caretAction);
+            ApplyKeyAction(&ks->caretFakeKeystate, &ks->caretAction, &ks->caretAction.action);
             break;
         }
         case NavigationMode_Zoom:
@@ -465,7 +466,7 @@ static void handleSimpleRunningAction(module_kinetic_state_t* ks) {
     bool tmp = ks->caretFakeKeystate.current;
     ks->caretFakeKeystate.current = !ks->caretFakeKeystate.previous;
     ks->caretFakeKeystate.previous = tmp;
-    ApplyKeyAction(&ks->caretFakeKeystate, ks->caretAction, ks->caretAction);
+    ApplyKeyAction(&ks->caretFakeKeystate, &ks->caretAction, &ks->caretAction.action);
 }
 
 static void handleRunningCaretModeAction(module_kinetic_state_t* ks) {

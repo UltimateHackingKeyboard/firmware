@@ -302,6 +302,7 @@ The following grammar is supported:
     COMMAND = set keymapAction.LAYERID.KEYID {MACROID|none}
     COMMAND = set backlight.strategy { functional | constantRgb }
     COMMAND = set backlight.constantRgb.rgb <number 0-255 (NUMBER)> <number 0-255 (NUMBER)> <number 0-255 (NUMBER)><number 0-255 (NUMBER)>
+    COMMAND = set modifierLayerTriggers.{shift|alt|super|control} {left|right|both}
     CONDITION = {ifShortcut | ifNotShortcut} [IFSHORTCUTFLAGS]* [KEYID]+
     CONDITION = {ifGesture | ifNotGesture} [IFSHORTCUTFLAGS]* [KEYID]+
     CONDITION = {ifPrimary | ifSecondary}
@@ -335,7 +336,7 @@ The following grammar is supported:
     KEYID = <id of hardware key obtained by resolveNextKeyId (NUMBER)>
     LABEL = <string identifier>
     SHORTCUT = MODMASK- | MODMASK-KEY | KEY
-    MODMASK = [MODMASK]+ | [L|R]{S|C|A|G} | {p|r|h|t} | s
+    MODMASK = [MODMASK]+ | [L|R]{S|C|A|G} | {p|r|h|t} | {s|i|o}
     NAVIGATIONMODE = cursor | scroll | caret | media | zoom | zoomPc | zoomMac | none
     NAVIGATIONMODECUSTOM = caret | media | zoomPc | zoomMac
     MODULEID = trackball | touchpad | trackpoint | keycluster
@@ -404,7 +405,14 @@ The following grammar is supported:
   - `MODMASK` meaning:
     - `{S|C|A|G}` - Shift Control Alt Gui
     - `[L|R]` - Left Right (which hand side modifier should be used)
-    - `s` - sticky 
+    - `{s|i|o}` - modifiers (ctrl, alt, shift, gui) exist in three composition modes within UHK - sticky, input, output:
+        - sticky modifiers are modifiers of composite shortcuts. These are applied only until next key press. In certain contexts, they will take effect even after their activation key was released (e.g., to support alt + tab on non-base layers).
+        - input modifiers are queried by `ifMod` conditions, and can be suppressed by `suppressMods`.
+        - output modifiers are ignored by `ifMod` conditions, and are not suppressed by `suppressMods`.
+        By default:
+        - modifiers of normal non-macro scancode actions are treated as `sticky` when accompanied by a scancode. 
+        - normal non-macro modifiers (not accompanied by a scancode) are treated as `input` by default.
+        - macro modifiers are treated as `output`.
     - `{p|r|h|t}` - press release hold tap - by default corresponds to the command used to invoke the sequence, but can be overriden for any.
 
 ### Control flow, macro execution (aka "functions"):
@@ -659,6 +667,9 @@ For the purpose of toggling functionality on and off, and for global constants m
 - backlight:
     - `backlight.strategy { functional | constantRgb }` sets backlight strategy.
     - `backlight.constantRgb.rgb NUMBER NUMBER NUMBER` allows setting custom constant colour for entire keyboard. E.g.: `set backlight.strategy constantRgb; set backlight.constantRgb.rgb 255 0 0` to make entire keyboard shine red.
+
+- modifier layer triggers:
+    - `set modifierLayerTriggers.{shift|alt|super|control} { left | right | both }` controls whether modifier layers are triggered by left or right or either of the modifiers.
 
 ### Argument parsing rules:
 

@@ -1,15 +1,18 @@
 #include "layer_switcher.h"
+#include "layer.h"
 #include "ledmap.h"
 #include "timer.h"
 #include "macros.h"
 #include "debug.h"
 #include "led_display.h"
+#include "usb_report_updater.h"
 
 uint16_t DoubleTapSwitchLayerTimeout = 400;
 uint16_t DoubleTapSwitchLayerReleaseTimeout = 200;
 
 layer_id_t ActiveLayer = LayerId_Base;
 bool ActiveLayerHeld = false;
+uint8_t ActiveLayerModifierMask = 0;
 
 static layer_id_t toggledLayer = LayerId_Base;
 static layer_id_t heldLayer = LayerId_Base;
@@ -159,14 +162,31 @@ void LayerSwitcher_HoldLayer(layer_id_t layer) {
     }
 }
 
+static bool layerMeetsHoldConditions(uint8_t layer, uint8_t* maskOutput) {
+    if (heldLayers[layer]) {
+        return true;
+    }
+    layer_config_t* cfg = &LayerConfig[layer];
+    if (cfg->layerIsDefined && cfg->modifierLayerMask) {
+        uint8_t maskOverlap = cfg->modifierLayerMask & InputModifiersPrevious;
+        if (maskOverlap == cfg->modifierLayerMask || (!cfg->exactModifierMatch && maskOverlap)) {
+            if (maskOutput != NULL) {
+                *maskOutput = maskOverlap;
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
 // Gathers states set by LayerSwitcher_HoldLayer during previous update cycle and updates heldLayer.
 void LayerSwitcher_UpdateActiveLayer() {
     layer_id_t previousHeldLayer = heldLayer;
-    if(!heldLayers[heldLayer]) {
+    if (!layerMeetsHoldConditions(heldLayer, NULL)) {
         heldLayer = LayerId_Base;
     }
     for (layer_id_t layerId = LayerId_Mod; layerId < LayerId_Count; layerId++) {
-        if (heldLayers[layerId] && heldLayer == LayerId_Base) {
+        if (heldLayer == LayerId_Base && layerMeetsHoldConditions(layerId, &ActiveLayerModifierMask)) {
             heldLayer = layerId;
         }
         heldLayers[layerId] = false;
