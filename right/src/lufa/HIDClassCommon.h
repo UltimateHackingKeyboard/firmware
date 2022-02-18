@@ -86,6 +86,15 @@
         #define HID_KEYBOARD_MODIFIER_RIGHTGUI                    (1 << 7)
         //@}
 
+        /** \name Keyboard Standard Report LED Usage IDs */
+        //@{
+        #define HID_LED_UID_NUMLOCK                          1
+        #define HID_LED_UID_CAPSLOCK                         2
+        #define HID_LED_UID_SCROLLLOCK                       3
+        #define HID_LED_UID_COMPOSE                          4
+        #define HID_LED_UID_KANA                             5
+        //@}
+
         /** \name Keyboard Standard Report LED Masks */
         //@{
         /** Constant for a keyboard output report LED byte, indicating that the host's NUM LOCK mode is currently set. */

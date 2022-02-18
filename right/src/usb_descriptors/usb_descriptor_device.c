@@ -2,7 +2,7 @@
 #include "usb_composite_device.h"
 #include "usb_descriptor_strings.h"
 
-uint8_t UsbDeviceDescriptor[USB_DESCRIPTOR_LENGTH_DEVICE] = {
+USB_DESC_STORAGE_TYPE UsbDeviceDescriptor[USB_DESCRIPTOR_LENGTH_DEVICE] = {
     USB_DESCRIPTOR_LENGTH_DEVICE,
     USB_DESCRIPTOR_TYPE_DEVICE,
     USB_SHORT_GET_LOW(USB_DEVICE_SPECIFICATION_VERSION),
@@ -26,7 +26,7 @@ uint8_t UsbDeviceDescriptor[USB_DESCRIPTOR_LENGTH_DEVICE] = {
 usb_status_t USB_DeviceGetDeviceDescriptor(
     usb_device_handle handle, usb_device_get_device_descriptor_struct_t *deviceDescriptor)
 {
-    deviceDescriptor->buffer = UsbDeviceDescriptor;
+    deviceDescriptor->buffer = (uint8_t*)UsbDeviceDescriptor;
     deviceDescriptor->length = USB_DESCRIPTOR_LENGTH_DEVICE;
     return kStatus_USB_Success;
 }

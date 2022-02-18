@@ -18,7 +18,7 @@
 
 // Variables:
 
-    extern uint8_t UsbConfigurationDescriptor[USB_CONFIGURATION_DESCRIPTOR_TOTAL_LENGTH];
+    extern USB_DESC_STORAGE_TYPE UsbConfigurationDescriptor[USB_CONFIGURATION_DESCRIPTOR_TOTAL_LENGTH];
 
 // Functions:
 
