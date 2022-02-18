@@ -325,7 +325,7 @@ The following grammar is supported:
     MODIFIER = final
     IFSHORTCUTFLAGS = noConsume | transitive | anyOrder | orGate | timeoutIn <time in ms (NUMBER)> | cancelIn <time in ms(NUMBER)>
     DIRECTION = {left|right|up|down}
-    LAYERID = {fn|mouse|mod|base}|last|previous
+    LAYERID = {fn|mouse|mod|base|fn2|fn3|fn4|fn5|alt|shift|super|control}|last|previous
     KEYMAPID = <abbrev>|last
     MACROID = last|CHAR|NUMBER
     NUMBER = [0-9]+ | -[0-9]+ | #<register idx (NUMBER)> | #key | @<relative macro action index(NUMBER)> | %<key idx in postponer queue (NUMBER)>
