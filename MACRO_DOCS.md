@@ -275,8 +275,8 @@ The following grammar is supported:
     COMMAND = set module.MODULEID.xceleration <exponent 0-1.0 (FLOAT)>
     COMMAND = set module.MODULEID.caretSpeedDivisor <1-100 (FLOAT)>
     COMMAND = set module.MODULEID.scrollSpeedDivisor <1-100 (FLOAT)>
-    COMMAND = set module.MODULEID.axisLockSkew <0-1.0 (FLOAT)>
-    COMMAND = set module.MODULEID.axisLockFirstTickSkew <0-1.0 (FLOAT)>
+    COMMAND = set module.MODULEID.axisLockSkew <0-2.0 (FLOAT)>
+    COMMAND = set module.MODULEID.axisLockFirstTickSkew <0-2.0 (FLOAT)>
     COMMAND = set module.MODULEID.scrollAxisLock BOOLEAN
     COMMAND = set module.MODULEID.cursorAxisLock BOOLEAN
     COMMAND = set module.MODULEID.swapAxes BOOLEAN
