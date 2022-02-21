@@ -275,13 +275,13 @@ The following grammar is supported:
     COMMAND = set module.MODULEID.xceleration <exponent 0-1.0 (FLOAT)>
     COMMAND = set module.MODULEID.caretSpeedDivisor <1-100 (FLOAT)>
     COMMAND = set module.MODULEID.scrollSpeedDivisor <1-100 (FLOAT)>
-    COMMAND = set module.MODULEID.zoomSpeedDivisor <1-100 (FLOAT)>
     COMMAND = set module.MODULEID.axisLockStrength <0-1.0 (FLOAT)>
     COMMAND = set module.MODULEID.axisLockStrengthFirstTick <0-1.0 (FLOAT)>
     COMMAND = set module.MODULEID.scrollAxisLock BOOLEAN
     COMMAND = set module.MODULEID.cursorAxisLock BOOLEAN
     COMMAND = set module.MODULEID.swapAxes BOOLEAN
     COMMAND = set module.MODULEID.invertScrollDirection BOOLEAN
+    COMMAND = set module.touchpad.pinchZoomDivisor <1-100 (FLOAT)>
     #NOTIMPLEMENTED COMMAND = set secondaryRoles
     COMMAND = set mouseKeys.{move|scroll}.initialSpeed <px/s, -100/20 (NUMBER)>
     COMMAND = set mouseKeys.{move|scroll}.baseSpeed <px/s, -800/20 (NUMBER)>
@@ -298,7 +298,7 @@ The following grammar is supported:
     COMMAND = set setEmergencyKey KEYID
     COMMAND = set macroEngine.scheduler {blocking|preemptive}
     COMMAND = set macroEngine.batchSize <number of commands to execute per one update cycle NUMBER>
-    COMMAND = set navigationModeAction.{caret|media|zoom}.{DIRECTION} {MACROID|none}
+    COMMAND = set navigationModeAction.NAVIGATIONMODECUSTOM.{DIRECTION} {MACROID|none}
     COMMAND = set keymapAction.LAYERID.KEYID {MACROID|none}
     COMMAND = set backlight.strategy { functional | constantRgb }
     COMMAND = set backlight.constantRgb.rgb <number 0-255 (NUMBER)> <number 0-255 (NUMBER)> <number 0-255 (NUMBER)><number 0-255 (NUMBER)>
@@ -336,7 +336,8 @@ The following grammar is supported:
     LABEL = <string identifier>
     SHORTCUT = MODMASK- | MODMASK-KEY | KEY
     MODMASK = [MODMASK]+ | [L|R]{S|C|A|G} | {p|r|h|t} | s
-    NAVIGATIONMODE = cursor | scroll | caret | media | zoom | none
+    NAVIGATIONMODE = cursor | scroll | caret | media | zoom | zoomPc | zoomMac | none
+    NAVIGATIONMODECUSTOM = caret | media | zoomPc | zoomMac
     MODULEID = trackball | touchpad | trackpoint | keycluster
     KEY = CHAR|KEYABBREV
     ADDRESS = LABEL|NUMBER
@@ -613,10 +614,10 @@ For the purpose of toggling functionality on and off, and for global constants m
       - at 3000 px/s, speed multiplier is 1x
       - at 6000 px/s, speed multiplier is 4x
       - not recommended - the curve will behave in very non-linear fashion.
-- `set module.MODULEID.{caretSpeedDivisor|scrollSpeedDivisor|zoomSpeedDivisor|swapAxes|invertScrollDirection}` modifies scrolling and caret behaviour:
+- `set module.MODULEID.{caretSpeedDivisor|scrollSpeedDivisor|pinchZoomDivisor|swapAxes|invertScrollDirection}` modifies scrolling and caret behaviour:
     - `caretSpeedDivisor` (default: 16) is used to divide input in caret mode. This means that per one tick, you have to move by 16 pixels (or whatever the unit is). (This is furthermore modified by axisLocking strength, as well as acceleration.)
     - `scrollSpeedDivisor` (default: 8) is used to divide input in scroll mode. This means that while scrolling, every 8 pixels produce one scroll tick. (This is furthermore modified by axisLocking strength, as well as acceleration.)
-    - `zoomSpeedDivisor` (default: 4 (?)) is used specifically for touchpad's zoom gesture, therefore its default value is supposed to be quite nonstandard.
+    - `pinchZoomDivisor` (default: 4 (?)) is used specifically for touchpad's zoom gesture, therefore its default value is nonstandard. Only valid for touchpad.
     - `swapAxes` swaps x and y coordinates of the module. Intened use is for keycluster trackball, since sideways scrolling is easier.
     - `invertScrollDirection` inverts scroll direction...
 
@@ -687,7 +688,8 @@ UHK modules feature four navigation modes, which are mapped by layer and module.
 - **Scroll mode** - in this mode, module can be used to scroll. Default mode for mod layer. This means that apart from switching layer, your mod layer switches also make your right hand modules act as very comfortable scroll wheels. Sensitivity is controlled by the `scrollSpeedDivisor` value.
 - **Caret mode** - in this mode, module produces arrow key taps. This can be used to move comfortably in text editor, since in this mode, cursor is also locked to one of the two directions, preventing unwanted line changes. Sensitivity is controlled by the `caretSpeedDivisor`, `axisLockStrengthFirstTick` and `axisLockStrength`.
 - **Media mode** - in this mode, up/down directions control volume (via media key scancodes), while horizontal play/pause and switch to next track. At the moment, this mode is not enabled by default on any layer. Sensitivity is shared with the caret mode.
-- **Zoom mode** - in this mode, `Ctrl +`/`Ctrl -` shortcuts are produced. This mode serves specifically to implement touchpad's gesture.
+- **Zoom mode pc / mac** - in this mode, `Ctrl +`/`Ctrl -` or `Alt +`/`Alt -` shortcuts are produced. 
+- **Zoom mode** - This mode serves specifically to implement touchpad's gesture. It alternates actions of zoomPc and zoomMac modes.
 
 Caret and media modes can be customized by `set navigationModeAction` command.
 

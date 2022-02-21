@@ -79,6 +79,7 @@ module_kinetic_state_t moduleKineticState = {
 
 static void processAxisLocking(float x, float y, float speed, int16_t yInversion, float speedDivisor, float axisLockSkew, float axisLockSkewFirstTick, module_kinetic_state_t* ks, bool continuous);
 static void handleRunningCaretModeAction(module_kinetic_state_t* ks);
+static void handleSimpleRunningAction(module_kinetic_state_t* ks);
 
 static void updateOneDirectionSign(int8_t* sign, int8_t expectedSign, uint8_t expectedState, uint8_t otherState) {
     if (*sign == expectedSign && !ActiveMouseStates[expectedState]) {
@@ -393,6 +394,36 @@ static void processTouchpadActions() {
     KeyStates[SlotId_RightModule][1].hardwareSwitchState = TouchpadEvents.twoFingerTap;
 }
 
+static void progressZoomAction(module_kinetic_state_t* ks) {
+    bool actionIsInactive = ks->caretFakeKeystate.current == false && ks->caretFakeKeystate.previous == false;
+
+    // progress to next phase/mode
+    if (actionIsInactive) {
+        ks->zoomPhase++;
+        uint8_t mode = 0;
+        switch(ks->zoomPhase) {
+        case 1:
+            mode = NavigationMode_ZoomPc;
+            break;
+        case 2:
+            mode = NavigationMode_ZoomMac;
+            break;
+        case 3:
+            ks->zoomActive = false;
+            ks->zoomPhase = false;
+            ks->zoomSign = 0;
+            return;
+        }
+
+        caret_configuration_t* currentCaretConfig = GetModuleCaretConfiguration(ks->currentModuleId, mode);
+        caret_dir_action_t* dirActions = &currentCaretConfig->axisActions[CaretAxis_Vertical];
+        ks->caretAction = ks->zoomSign > 0 ? &dirActions->positiveAction : &dirActions->negativeAction;
+    }
+
+    // progress current action
+    handleSimpleRunningAction(ks);
+}
+
 static void handleNewCaretModeAction(caret_axis_t axis, uint8_t resultSign, int16_t value, module_kinetic_state_t* ks) {
     switch(ks->currentNavigationMode) {
         case NavigationMode_Cursor: {
@@ -405,7 +436,8 @@ static void handleNewCaretModeAction(caret_axis_t axis, uint8_t resultSign, int1
             ActiveUsbMouseReport->wheelY += axis == CaretAxis_Vertical ? value : 0;
             break;
         }
-        case NavigationMode_Zoom:
+        case NavigationMode_ZoomMac:
+        case NavigationMode_ZoomPc:
         case NavigationMode_Media:
         case NavigationMode_Caret: {
             caret_configuration_t* currentCaretConfig = GetModuleCaretConfiguration(ks->currentModuleId, ks->currentNavigationMode);
@@ -415,16 +447,33 @@ static void handleNewCaretModeAction(caret_axis_t axis, uint8_t resultSign, int1
             ApplyKeyAction(&ks->caretFakeKeystate, ks->caretAction, ks->caretAction);
             break;
         }
+        case NavigationMode_Zoom:
+            if (axis != CaretAxis_Vertical) {
+                return;
+            }
+            ks->zoomActive = 1;
+            ks->zoomPhase = 0;
+            ks->zoomSign = resultSign;
+            progressZoomAction(ks);
+            break;
         case NavigationMode_None:
             break;
     }
 }
 
-static void handleRunningCaretModeAction(module_kinetic_state_t* ks) {
+static void handleSimpleRunningAction(module_kinetic_state_t* ks) {
     bool tmp = ks->caretFakeKeystate.current;
     ks->caretFakeKeystate.current = !ks->caretFakeKeystate.previous;
     ks->caretFakeKeystate.previous = tmp;
     ApplyKeyAction(&ks->caretFakeKeystate, ks->caretAction, ks->caretAction);
+}
+
+static void handleRunningCaretModeAction(module_kinetic_state_t* ks) {
+    if (ks->zoomActive) {
+        progressZoomAction(ks);
+    } else {
+        handleSimpleRunningAction(ks);
+    }
 }
 
 static void processAxisLocking(float x, float y, float speed, int16_t yInversion, float speedDivisor, float axisLockSkew, float axisLockSkewFirstTick, module_kinetic_state_t* ks, bool continuous)
@@ -436,7 +485,9 @@ static void processAxisLocking(float x, float y, float speed, int16_t yInversion
 
     //unlock axis if inactive for some time and re-activate tick trashold`
     if (x != 0 || y != 0) {
-        if (Timer_GetElapsedTime(&ks->lastUpdate) > 500 && ks->caretAxis != CaretAxis_None) {
+        if (Timer_GetElapsedTime(&ks->lastUpdate) > 500
+                && ks->caretAxis != CaretAxis_None
+                ) {
             ks->xFractionRemainder = 0;
             ks->yFractionRemainder = 0;
             ks->caretAxis = CaretAxis_None;
@@ -462,7 +513,7 @@ static void processAxisLocking(float x, float y, float speed, int16_t yInversion
 
 
     //If there is an ongoing action, just handle that action via a fake state. Ensure that full lifecycle of a key gets executed.
-    if (ks->caretFakeKeystate.current || ks->caretFakeKeystate.previous) {
+    if (ks->caretFakeKeystate.current || ks->caretFakeKeystate.previous || ks->zoomActive) {
         handleRunningCaretModeAction(ks);
     }
     //If we want to start a new action (new "tick")
@@ -497,7 +548,7 @@ static void processAxisLocking(float x, float y, float speed, int16_t yInversion
     }
 }
 
-static void processModuleKineticState(float x, float y, module_configuration_t* moduleConfiguration, module_kinetic_state_t* ks) {
+static void processModuleKineticState(float x, float y, module_configuration_t* moduleConfiguration, module_kinetic_state_t* ks, uint8_t forcedNavigationMode) {
     float speed;
 
     bool moduleYInversion = ks->currentModuleId == ModuleId_KeyClusterLeft || ks->currentModuleId == ModuleId_TouchpadRight;
@@ -538,11 +589,14 @@ static void processModuleKineticState(float x, float y, module_configuration_t* 
             break;
         }
         case NavigationMode_Zoom:
-            processAxisLocking(x, y, speed, yInversion, moduleConfiguration->zoomSpeedDivisor, moduleConfiguration->axisLockSkew, moduleConfiguration->axisLockSkewFirstTick, ks, false);
-            break;
+        case NavigationMode_ZoomPc:
+        case NavigationMode_ZoomMac:
         case NavigationMode_Media:
-        case NavigationMode_Caret:
-            processAxisLocking(x, y, speed, yInversion, moduleConfiguration->caretSpeedDivisor, moduleConfiguration->axisLockSkew, moduleConfiguration->axisLockSkewFirstTick, ks, false);
+        case NavigationMode_Caret:;
+            // forced zoom = touchpad pinch zoom; it needs special coefficient
+            // forced scroll = touchpad scroll;
+            float speedDivisor = forcedNavigationMode == NavigationMode_Zoom ? moduleConfiguration->zoomSpeedDivisor : moduleConfiguration->caretSpeedDivisor;
+            processAxisLocking(x, y, speed, yInversion, speedDivisor, moduleConfiguration->axisLockSkew, moduleConfiguration->axisLockSkewFirstTick, ks, false);
             break;
         case NavigationMode_None:
             break;
@@ -582,7 +636,10 @@ static void processModuleActions(uint8_t moduleId, float x, float y, uint8_t for
 
     bool moduleIsActive = x != 0 || y != 0;
     bool keystateOwnerDiffers = moduleKineticState.currentModuleId != moduleId || moduleKineticState.currentNavigationMode != navigationMode;
-    bool keyActionIsNotActive = moduleKineticState.caretFakeKeystate.current == false && moduleKineticState.caretFakeKeystate.previous == false;
+    bool keyActionIsNotActive = true
+        && moduleKineticState.caretFakeKeystate.current == false
+        && moduleKineticState.caretFakeKeystate.previous == false
+        && moduleKineticState.zoomActive == 0;
 
     if (moduleIsActive && keystateOwnerDiffers && keyActionIsNotActive) {
         // Currently, we share the state among modules & navigation modes, and reset it whenever the user starts to use other mode.
@@ -600,7 +657,7 @@ static void processModuleActions(uint8_t moduleId, float x, float y, uint8_t for
         }
 
         //we want to process kinetic state even if x == 0 && y == 0, at least as long as caretAxis != CaretAxis_None because of fake key states that may be active.
-        processModuleKineticState(x, y, moduleConfiguration, &moduleKineticState);
+        processModuleKineticState(x, y, moduleConfiguration, &moduleKineticState, forcedNavigationMode);
     }
 }
 

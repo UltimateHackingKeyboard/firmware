@@ -35,7 +35,7 @@ static void moduleNavigationMode(const char* arg1, const char *textEnd, module_c
     module->navigationModes[layerId] = modeId;
 }
 
-static void moduleSpeed(const char* arg1, const char *textEnd, module_configuration_t* module)
+static void moduleSpeed(const char* arg1, const char *textEnd, module_configuration_t* module, uint8_t moduleId)
 {
     const char* arg2 = NextTok(arg1, textEnd);
 
@@ -54,7 +54,7 @@ static void moduleSpeed(const char* arg1, const char *textEnd, module_configurat
     else if (TokenMatches(arg1, textEnd, "scrollSpeedDivisor")) {
         module->scrollSpeedDivisor = ParseFloat(arg2, textEnd);
     }
-    else if (TokenMatches(arg1, textEnd, "zoomSpeedDivisor")) {
+    else if (TokenMatches(arg1, textEnd, "pinchZoomDivisor") && moduleId == ModuleId_TouchpadRight) {
         module->zoomSpeedDivisor = ParseFloat(arg2, textEnd);
     }
     else if (TokenMatches(arg1, textEnd, "axisLockStrength")) {
@@ -92,7 +92,7 @@ static void module(const char* arg1, const char *textEnd)
         moduleNavigationMode(arg3, textEnd, module);
     }
     else {
-        moduleSpeed(arg2, textEnd, module);
+        moduleSpeed(arg2, textEnd, module, moduleId);
     }
 }
 

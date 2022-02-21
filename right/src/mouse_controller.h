@@ -53,6 +53,9 @@
         uint8_t caretAxis;
         uint8_t currentModuleId;
         uint8_t currentNavigationMode;
+        uint8_t zoomPhase;
+        uint8_t zoomSign;
+        bool zoomActive;
     } module_kinetic_state_t;
 
 // Variables:
