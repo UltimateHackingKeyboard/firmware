@@ -39,12 +39,13 @@
         float zoomSpeedDivisor;
 
         float axisLockSkew;
-        float axisLockSkewFirstTick;
+        float axisLockFirstTickSkew;
 
         navigation_mode_t navigationModes[LayerId_Count];
 
         bool scrollAxisLock;
         bool cursorAxisLock;
+        bool caretAxisLock;
         bool swapAxes;
         bool invertScrollDirection;
     } module_configuration_t;

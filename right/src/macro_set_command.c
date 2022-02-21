@@ -57,11 +57,11 @@ static void moduleSpeed(const char* arg1, const char *textEnd, module_configurat
     else if (TokenMatches(arg1, textEnd, "pinchZoomDivisor") && moduleId == ModuleId_TouchpadRight) {
         module->zoomSpeedDivisor = ParseFloat(arg2, textEnd);
     }
-    else if (TokenMatches(arg1, textEnd, "axisLockStrength")) {
-        module->axisLockSkew = 1.0f - ParseFloat(arg2, textEnd);
+    else if (TokenMatches(arg1, textEnd, "axisLockSkew")) {
+        module->axisLockSkew = ParseFloat(arg2, textEnd);
     }
-    else if (TokenMatches(arg1, textEnd, "axisLockStrengthFirstTick")) {
-        module->axisLockSkewFirstTick = 1.0f - ParseFloat(arg2, textEnd);
+    else if (TokenMatches(arg1, textEnd, "axisLockFirstTickSkew")) {
+        module->axisLockFirstTickSkew = ParseFloat(arg2, textEnd);
     }
     else if (TokenMatches(arg1, textEnd, "cursorAxisLockEnabled")) {
         module->cursorAxisLock = Macros_ParseBoolean(arg2, textEnd);

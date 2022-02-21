@@ -9,6 +9,7 @@
 // Macros:
 
     #define ACTIVE_MOUSE_STATES_COUNT (SerializedMouseAction_Last + 1)
+    #define ABS(A) ((A) < 0 ? (-A) : (A))
 
 // Typedefs:
 

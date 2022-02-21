@@ -78,7 +78,7 @@ module_kinetic_state_t moduleKineticState = {
     .lastUpdate = 0,
 };
 
-static void processAxisLocking(float x, float y, float speed, int16_t yInversion, float speedDivisor, float axisLockSkew, float axisLockSkewFirstTick, module_kinetic_state_t* ks, bool continuous);
+static void processAxisLocking( float x, float y, float speed, int16_t yInversion, float speedDivisor, bool axisLockEnabled, float axisLockSkew, float axisLockSkewFirstTick, module_kinetic_state_t* ks, bool continuous);
 static void handleRunningCaretModeAction(module_kinetic_state_t* ks);
 static void handleSimpleRunningAction(module_kinetic_state_t* ks);
 
@@ -477,8 +477,18 @@ static void handleRunningCaretModeAction(module_kinetic_state_t* ks) {
     }
 }
 
-static void processAxisLocking(float x, float y, float speed, int16_t yInversion, float speedDivisor, float axisLockSkew, float axisLockSkewFirstTick, module_kinetic_state_t* ks, bool continuous)
-{
+static void processAxisLocking(
+        float x,
+        float y,
+        float speed,
+        int16_t yInversion,
+        float speedDivisor,
+        bool axisLockEnabled,
+        float axisLockSkew,
+        float axisLockSkewFirstTick,
+        module_kinetic_state_t* ks,
+        bool continuous
+) {
     //optimize this out if nothing is going on
     if (x == 0 && y == 0 && ks->caretAxis == CaretAxis_None) {
         return;
@@ -486,9 +496,13 @@ static void processAxisLocking(float x, float y, float speed, int16_t yInversion
 
     //unlock axis if inactive for some time and re-activate tick trashold`
     if (x != 0 || y != 0) {
-        if (Timer_GetElapsedTime(&ks->lastUpdate) > 500
+        if (
+                Timer_GetElapsedTime(&ks->lastUpdate) > 500
                 && ks->caretAxis != CaretAxis_None
-                ) {
+                && ks->zoomActive == false
+                && ks->caretFakeKeystate.current == false
+                && ks->caretFakeKeystate.previous == false
+        ) {
             ks->xFractionRemainder = 0;
             ks->yFractionRemainder = 0;
             ks->caretAxis = CaretAxis_None;
@@ -501,7 +515,11 @@ static void processAxisLocking(float x, float y, float speed, int16_t yInversion
     float caretXModeMultiplier;
     float caretYModeMultiplier;
 
-    if(ks->caretAxis == CaretAxis_None) {
+    if (!axisLockEnabled) {
+        caretXModeMultiplier = 1.0f;
+        caretYModeMultiplier =  1.0f;
+    }
+    else if (ks->caretAxis == CaretAxis_None) {
         caretXModeMultiplier = axisLockSkewFirstTick;
         caretYModeMultiplier = axisLockSkewFirstTick;
     } else {
@@ -519,10 +537,23 @@ static void processAxisLocking(float x, float y, float speed, int16_t yInversion
     }
     //If we want to start a new action (new "tick")
     else {
-        // determine current axis properties and setup indirections for easier handling
-        caret_axis_t axisCandidate = ks->caretAxis == CaretAxis_Inactive ? CaretAxis_Vertical : ks->caretAxis;
+        // determine default axis
+        caret_axis_t axisCandidate;
+
+        if ( ks->caretAxis == CaretAxis_Inactive ) {
+            float absX = ABS(ks->xFractionRemainder);
+            float absY = ABS(ks->yFractionRemainder);
+            axisCandidate = absX > absY ? CaretAxis_Horizontal : CaretAxis_Vertical;
+        } else {
+            axisCandidate = ks->caretAxis;
+        }
+
+        // setup the indirections
+
         float* axisFractionRemainders [CaretAxis_Count] = {&ks->xFractionRemainder, &ks->yFractionRemainder};
         float axisIntegerParts [CaretAxis_Count] = { 0, 0 };
+
+        // determine integer parts
 
         modff(ks->xFractionRemainder, &axisIntegerParts[CaretAxis_Horizontal]);
         modff(ks->yFractionRemainder, &axisIntegerParts[CaretAxis_Vertical]);
@@ -538,18 +569,34 @@ static void processAxisLocking(float x, float y, float speed, int16_t yInversion
 
         // handle the action
         if ( axisCandidate < CaretAxis_Count ) {
-            ks->caretAxis = axisCandidate;
             float sgn = axisIntegerParts[axisCandidate] > 0 ? 1 : -1;
             int8_t currentAxisInversion = axisCandidate == CaretAxis_Vertical ? yInversion : 1;
             float consumedAmount = continuous ? axisIntegerParts[axisCandidate] : sgn;
-            *axisFractionRemainders[1 - axisCandidate] = 0.0f;
             *axisFractionRemainders[axisCandidate] -= consumedAmount;
+            if (axisLockEnabled) {
+                // if not axis locking, than allow accumulation of secondary axis
+                *axisFractionRemainders[1 - axisCandidate] = 0.0f;
+            }
+            if (ks->caretAxis == CaretAxis_None) {
+                // zero state after first tick, in order to support
+                // skews greater than 1
+                *axisFractionRemainders[CaretAxis_Vertical] = 0.0f;
+                *axisFractionRemainders[CaretAxis_Horizontal] = 0.0f;
+            }
+            ks->caretAxis = axisCandidate;
+
             handleNewCaretModeAction(ks->caretAxis, sgn*currentAxisInversion, consumedAmount*currentAxisInversion, ks);
         }
     }
 }
 
-static void processModuleKineticState(float x, float y, module_configuration_t* moduleConfiguration, module_kinetic_state_t* ks, uint8_t forcedNavigationMode) {
+static void processModuleKineticState(
+        float x,
+        float y,
+        module_configuration_t* moduleConfiguration,
+        module_kinetic_state_t* ks,
+        uint8_t forcedNavigationMode
+ ) {
     float speed;
 
     bool moduleYInversion = ks->currentModuleId == ModuleId_KeyClusterLeft || ks->currentModuleId == ModuleId_TouchpadRight;
@@ -570,7 +617,7 @@ static void processModuleKineticState(float x, float y, module_configuration_t* 
                 ActiveUsbMouseReport->x += xIntegerPart;
                 ActiveUsbMouseReport->y -= yInversion*yIntegerPart;
             } else {
-                processAxisLocking(x, y, speed, yInversion, 1.0f, moduleConfiguration->axisLockSkew, moduleConfiguration->axisLockSkewFirstTick, ks, true);
+                processAxisLocking(x, y, speed, yInversion, 1.0f, true, moduleConfiguration->axisLockSkew, moduleConfiguration->axisLockFirstTickSkew, ks, true);
             }
             break;
         }
@@ -585,7 +632,7 @@ static void processModuleKineticState(float x, float y, module_configuration_t* 
                 ActiveUsbMouseReport->wheelX += xIntegerPart;
                 ActiveUsbMouseReport->wheelY += yInversion*yIntegerPart;
             } else {
-                processAxisLocking(x, y, speed, yInversion, moduleConfiguration->scrollSpeedDivisor, moduleConfiguration->axisLockSkew, moduleConfiguration->axisLockSkewFirstTick, ks, true);
+                processAxisLocking(x, y, speed, yInversion, moduleConfiguration->scrollSpeedDivisor, true, moduleConfiguration->axisLockSkew, moduleConfiguration->axisLockFirstTickSkew, ks, true);
             }
             break;
         }
@@ -597,7 +644,7 @@ static void processModuleKineticState(float x, float y, module_configuration_t* 
             // forced zoom = touchpad pinch zoom; it needs special coefficient
             // forced scroll = touchpad scroll;
             float speedDivisor = forcedNavigationMode == NavigationMode_Zoom ? moduleConfiguration->zoomSpeedDivisor : moduleConfiguration->caretSpeedDivisor;
-            processAxisLocking(x, y, speed, yInversion, speedDivisor, moduleConfiguration->axisLockSkew, moduleConfiguration->axisLockSkewFirstTick, ks, false);
+            processAxisLocking(x, y, speed, yInversion, speedDivisor, moduleConfiguration->caretAxisLock, moduleConfiguration->axisLockSkew, moduleConfiguration->axisLockFirstTickSkew, ks, false);
             break;
         case NavigationMode_None:
             break;
