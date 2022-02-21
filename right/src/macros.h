@@ -80,8 +80,9 @@
                 macro_sub_action_t action;
                 keystroke_type_t type;
                 uint16_t scancode;
-                uint8_t modifierMask;
-                bool sticky;
+                uint8_t outputModMask;
+                uint8_t stickyModMask;
+                uint8_t inputModMask;
             } ATTR_PACKED key;
             struct {
                 macro_sub_action_t action;
@@ -142,6 +143,7 @@
             bool wakeMeOnTime : 1;
             bool wakeMeOnKeystateChange: 1;
 
+            uint8_t inputModifierMask;
             usb_mouse_report_t macroMouseReport;
             usb_basic_keyboard_report_t macroBasicKeyboardReport;
             usb_media_keyboard_report_t macroMediaKeyboardReport;

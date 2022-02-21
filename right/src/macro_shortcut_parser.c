@@ -367,16 +367,18 @@ static macro_action_t parseSingleChar(char c)
     action.type = MacroActionType_Key;
     action.key.type = KeystrokeType_Basic;
     action.key.scancode = MacroShortcutParser_CharacterToScancode(c);
-    action.key.modifierMask = MacroShortcutParser_CharacterToShift(c) ? HID_KEYBOARD_MODIFIER_LEFTSHIFT : 0;
+    action.key.outputModMask = MacroShortcutParser_CharacterToShift(c) ? HID_KEYBOARD_MODIFIER_LEFTSHIFT : 0;
     return action;
 }
 
 static void parseMods(const char* str, const char* strEnd, macro_action_t* action)
 {
     const char* orig = str;
-    uint8_t modMask = 0;
+    uint8_t inputModMask = 0;
+    uint8_t outputModMask = 0;
+    uint8_t stickyModMask = 0;
+    uint8_t* modMask = &outputModMask;
     bool left = true;
-    bool sticky = false;
     macro_sub_action_t actionType = action->key.action;
     while(str < strEnd) {
         switch(*str) {
@@ -387,24 +389,30 @@ static void parseMods(const char* str, const char* strEnd, macro_action_t* actio
             left = false;
             break;
         case 'S':
-            modMask |= left ? HID_KEYBOARD_MODIFIER_LEFTSHIFT : HID_KEYBOARD_MODIFIER_RIGHTSHIFT;
+            *modMask |= left ? HID_KEYBOARD_MODIFIER_LEFTSHIFT : HID_KEYBOARD_MODIFIER_RIGHTSHIFT;
             left = true;
             break;
         case 'C':
-            modMask |= left ? HID_KEYBOARD_MODIFIER_LEFTCTRL : HID_KEYBOARD_MODIFIER_RIGHTCTRL;
+            *modMask |= left ? HID_KEYBOARD_MODIFIER_LEFTCTRL : HID_KEYBOARD_MODIFIER_RIGHTCTRL;
             left = true;
             break;
         case 'A':
-            modMask |= left ? HID_KEYBOARD_MODIFIER_LEFTALT : HID_KEYBOARD_MODIFIER_RIGHTALT;
+            *modMask |= left ? HID_KEYBOARD_MODIFIER_LEFTALT : HID_KEYBOARD_MODIFIER_RIGHTALT;
             left = true;
             break;
         case 'W':
         case 'G':
-            modMask |= left ? HID_KEYBOARD_MODIFIER_LEFTGUI : HID_KEYBOARD_MODIFIER_RIGHTGUI;
+            *modMask |= left ? HID_KEYBOARD_MODIFIER_LEFTGUI : HID_KEYBOARD_MODIFIER_RIGHTGUI;
             left = true;
             break;
         case 's':
-            sticky = true;
+            modMask = &stickyModMask;
+            break;
+        case 'i':
+            modMask = &inputModMask;
+            break;
+        case 'o':
+            modMask = &outputModMask;
             break;
         case 'p':
             actionType = MacroSubAction_Press;
@@ -425,11 +433,12 @@ static void parseMods(const char* str, const char* strEnd, macro_action_t* actio
         str++;
     }
 
-    if (action->type != MacroActionType_Key && modMask != 0) {
+    if (action->type != MacroActionType_Key && inputModMask != 0) {
         Macros_ReportError("This action is not allowed to have modifiers!", str, strEnd);
     } else {
-        action->key.modifierMask = modMask;
-        action->key.sticky = sticky;
+        action->key.inputModMask = inputModMask;
+        action->key.outputModMask = outputModMask;
+        action->key.stickyModMask = stickyModMask;
     }
     action->key.action = actionType;
 }

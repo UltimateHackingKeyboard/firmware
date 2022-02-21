@@ -296,6 +296,49 @@ static void keymapAction(const char* arg1, const char *textEnd)
     }
 }
 
+static void modLayerTriggers(const char* arg1, const char *textEnd)
+{
+    const char* specifier = NextTok(arg1, textEnd);
+    uint8_t layerId = Macros_ParseLayerId(arg1, textEnd);
+    uint8_t left = 0;
+    uint8_t right = 0;
+
+    switch (layerId) {
+    case LayerId_Shift:
+        left = HID_KEYBOARD_MODIFIER_LEFTSHIFT ;
+        right = HID_KEYBOARD_MODIFIER_RIGHTSHIFT ;
+        break;
+    case LayerId_Control:
+        left = HID_KEYBOARD_MODIFIER_LEFTCTRL ;
+        right = HID_KEYBOARD_MODIFIER_RIGHTCTRL ;
+        break;
+    case LayerId_Alt:
+        left = HID_KEYBOARD_MODIFIER_LEFTALT ;
+        right = HID_KEYBOARD_MODIFIER_RIGHTALT ;
+        break;
+    case LayerId_Super:
+        left = HID_KEYBOARD_MODIFIER_LEFTGUI ;
+        right = HID_KEYBOARD_MODIFIER_RIGHTGUI ;
+        break;
+    default:
+        Macros_ReportError("This layer does not allow modifier triggers.", arg1, specifier);
+        return;
+    }
+
+    if (TokenMatches(specifier, textEnd, "left")) {
+        LayerConfig[layerId].modifierLayerMask = left;
+    }
+    else if (TokenMatches(specifier, textEnd, "right")) {
+        LayerConfig[layerId].modifierLayerMask = right;
+    }
+    else if (TokenMatches(specifier, textEnd, "both")) {
+        LayerConfig[layerId].modifierLayerMask = left | right;
+    }
+    else {
+        Macros_ReportError("Specifier not recognized", specifier, textEnd);
+    }
+}
+
 macro_result_t MacroSetCommand(const char* arg1, const char *textEnd)
 {
     const char* arg2 = NextTok(arg1, textEnd);
@@ -320,6 +363,9 @@ macro_result_t MacroSetCommand(const char* arg1, const char *textEnd)
     }
     else if (TokenMatches(arg1, textEnd, "backlight")) {
         backlight(proceedByDot(arg1, textEnd), textEnd);
+    }
+    else if (TokenMatches(arg1, textEnd, "modifierLayerTriggers")) {
+        modLayerTriggers(proceedByDot(arg1, textEnd), textEnd);
     }
     else if (TokenMatches(arg1, textEnd, "diagonalSpeedCompensation")) {
         DiagonalSpeedCompensation = Macros_ParseBoolean(arg2, textEnd);

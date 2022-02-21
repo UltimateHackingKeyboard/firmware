@@ -163,6 +163,10 @@ static parser_error_t parseLayer(config_buffer_t *buffer, uint8_t layer)
         }
     }
 
+    if (!ParserRunDry) {
+        LayerConfig[layer].layerIsDefined = true;
+    }
+
     parser_error_t errorCode;
     uint16_t moduleCount = ReadCompactLength(buffer);
 
@@ -203,6 +207,9 @@ parser_error_t ParseKeymap(config_buffer_t *buffer, uint8_t keymapIdx, uint8_t k
         AllKeymaps[keymapIdx].abbreviation = abbreviation;
         AllKeymaps[keymapIdx].abbreviationLen = abbreviationLen;
         AllKeymaps[keymapIdx].offset = offset;
+        for (uint8_t layerIdx = 0; layerIdx < LayerId_Count; layerIdx++) {
+            LayerConfig[layerIdx].layerIsDefined = false;
+        }
         if (isDefault) {
             DefaultKeymapIndex = keymapIdx;
         }

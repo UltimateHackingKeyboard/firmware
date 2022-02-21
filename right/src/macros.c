@@ -124,14 +124,16 @@ static void deleteBasicScancode(uint8_t scancode)
     UsbBasicKeyboard_RemoveScancode(&s->ms.macroBasicKeyboardReport, scancode);
 }
 
-static void addModifiers(uint8_t modifiers)
+static void addModifiers(uint8_t inputModifiers, uint8_t outputModifiers)
 {
-    s->ms.macroBasicKeyboardReport.modifiers |= modifiers;
+    s->ms.inputModifierMask |= inputModifiers;
+    s->ms.macroBasicKeyboardReport.modifiers |= outputModifiers;
 }
 
-static void deleteModifiers(uint8_t modifiers)
+static void deleteModifiers(uint8_t inputModifiers, uint8_t outputModifiers)
 {
-    s->ms.macroBasicKeyboardReport.modifiers &= ~modifiers;
+    s->ms.inputModifierMask &= ~inputModifiers;
+    s->ms.macroBasicKeyboardReport.modifiers &= ~outputModifiers;
 }
 
 static void addMediaScancode(uint16_t scancode)
@@ -269,9 +271,10 @@ static macro_result_t processKey(macro_action_t macro_action)
     s->ms.reportsUsed = true;
     macro_sub_action_t action = macro_action.key.action;
     keystroke_type_t type = macro_action.key.type;
-    uint8_t modifierMask = macro_action.key.modifierMask;
+    uint8_t outputModMask = macro_action.key.outputModMask;
+    uint8_t inputModMask = macro_action.key.inputModMask;
     uint16_t scancode = macro_action.key.scancode;
-    bool isSticky = macro_action.key.sticky;
+    bool stickyModMask = macro_action.key.stickyModMask;
 
     s->as.actionPhase++;
 
@@ -280,9 +283,9 @@ static macro_result_t processKey(macro_action_t macro_action)
         case MacroSubAction_Tap:
             switch(s->as.actionPhase) {
                 case 1:
-                    addModifiers(modifierMask);
-                    if (isSticky) {
-                        ActivateStickyMods(s->ms.currentMacroKey, modifierMask);
+                    addModifiers(inputModMask, outputModMask);
+                    if (stickyModMask) {
+                        ActivateStickyMods(s->ms.currentMacroKey, stickyModMask);
                     }
                     return MacroResult_Blocking;
                 case 2:
@@ -296,7 +299,7 @@ static macro_result_t processKey(macro_action_t macro_action)
                     deleteScancode(scancode, type);
                     return MacroResult_Blocking;
                 case 4:
-                    deleteModifiers(modifierMask);
+                    deleteModifiers(inputModMask, outputModMask);
                     return MacroResult_Blocking;
                 case 5:
                     s->as.actionPhase = 0;
@@ -309,7 +312,7 @@ static macro_result_t processKey(macro_action_t macro_action)
                     deleteScancode(scancode, type);
                     return MacroResult_Blocking;
                 case 2:
-                    deleteModifiers(modifierMask);
+                    deleteModifiers(inputModMask, outputModMask);
                     return MacroResult_Blocking;
                 case 3:
                     s->as.actionPhase = 0;
@@ -319,9 +322,9 @@ static macro_result_t processKey(macro_action_t macro_action)
         case MacroSubAction_Press:
             switch (s->as.actionPhase) {
                 case 1:
-                    addModifiers(modifierMask);
-                    if (isSticky) {
-                        ActivateStickyMods(s->ms.currentMacroKey, modifierMask);
+                    addModifiers(inputModMask, outputModMask);
+                    if (stickyModMask) {
+                        ActivateStickyMods(s->ms.currentMacroKey, stickyModMask);
                     }
                     return MacroResult_Blocking;
                 case 2:
@@ -1241,7 +1244,7 @@ static bool processIfDoubletapCommand(bool negate)
 
 static bool processIfModifierCommand(bool negate, uint8_t modmask)
 {
-    return ((HardwareModifierStatePrevious & modmask) > 0) != negate;
+    return ((InputModifiersPrevious & modmask) > 0) != negate;
 }
 
 static bool processIfRecordingCommand(bool negate)

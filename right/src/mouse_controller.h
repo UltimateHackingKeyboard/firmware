@@ -44,7 +44,7 @@
     } mouse_kinetic_state_t;
 
     typedef struct {
-        key_action_t* caretAction;
+        key_action_cached_t caretAction;
         key_state_t caretFakeKeystate;
         float xFractionRemainder;
         float yFractionRemainder;
