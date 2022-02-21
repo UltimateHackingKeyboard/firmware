@@ -629,19 +629,25 @@ For the purpose of toggling functionality on and off, and for global constants m
     - `swapAxes` swaps x and y coordinates of the module. Intened use is for keycluster trackball, since sideways scrolling is easier.
     - `invertScrollDirection` inverts scroll direction...
 
-- `set module.MODULEID.{axisLockSkew|axisLockFirstTickSkew|cursorAxisLockEnabled|scrollAxisLockEnabled}` control axis locking feature:
+- `set module.MODULEID.{axisLockSkew|axisLockFirstTickSkew|cursorAxisLock|scrollAxisLock}` control axis locking feature:
 
-  When you first move in navigation mode that has axis locking enabled, axis is locked to one of the axes. Furthermore, as long as this axis is active, the other axis input is multiplied by `axisLockSkew` and gets zeroed with every successfull tick. This means that in order to change locked direction (with 0.5 value), you have to produce stroke that goes at least twice as fast in the non-locked direction compared to the locked one. This also means that axis locking with skew 1 still affects behaviour, because it always picks only one of the two axes and zeroes the other.
+  When you first move in navigation mode that has axis locking enabled, axis is locked to one of the axes. Axis locking behaviour is defined by two characteristis:
 
-  Behaviour of first tick (the one that initiates mechanism) can be controlled independently.
+  - axis skew: when axis is locked, the secondary axis value is multiplied by `axisLockSkew`. This means that in order to change locked direction (with 0.5 value), you have to produce stroke that goes at least twice as fast in the non-locked direction compared to the locked one. 
+  - secondary axis zeroing: whenever the locked (primary) axis produces an event, the 
 
-  By default, axis locking is enabled in caret and media mode for right hand modules, and for scroll, caret and media modes for keycluster. Caret and media mode require axis locking for their function. 
+  Behaviour of first tick (the one that initiates mechanism) can be controlled independently. The first tick (the first event produced when axis is not yet locked) skew is applied to *both* the axis. This allows following tweaks:
+
+  - use `axisLockFirstTickSkew = 0.5` in order to require stronger "push" at the beginning of movement. Useful for the mini trackball, since it is likely to produce an unwanted move event when you try  to just click it. With `0.5` value, it will require two roll events to activate.
+  - use `axisLockFirstTickSkew = 2.0` in order to make the first event more responsive. E.g., caret mode will make the fist character move even with a very gently push, while consecutive activations will need greater momentum.
+
+  By default, axis locking is enabled in scroll and discreet modes for right hand modules, and for scroll, caret and media modes for keycluster.
 
   - `axisLockSkew` controls caret axis locking. Defaults to 0.5, valid/reasonable values are 0-100, centered around 1.
-    When you first move in navigation mode that has axis locking enabled, axis is locked to one of the axes. Furthermore, as long as this axis is active, the other axis input is multiplied by `axisLockSkew` and gets zeroed with every tick. This means that in order to change locked direction (with 0.5 value), you have to produce stroke that goes at least twice as fast in the non-locked direction compared to the locked one.
   - `axisLockFirstTickSkew` - same meaning as `axisLockSkew`, but controls how axis locking applies on first tick. Nonzero value means that firt tick will require a "push" before cursor starts moving. Or will require less "force" if the value is greater than 1.
-  - `cursorAxisLockEnabled BOOLEAN` - turns axis locking on for cursor mode. Not recommended, but possible.
-  - `scrollAxisLockEnabled BOOLEAN` - turns axis locking on for scroll mode. Default for keycluster trackball.
+  - `cursorAxisLock BOOLEAN` - turns axis locking on for cursor mode. Not recommended, but possible.
+  - `scrollAxisLock BOOLEAN` - turns axis locking on for scroll mode. Default for keycluster trackball.
+  - `caretAxisLock BOOLEAN` - turns axis locking on for all discrete modes. 
 
 - Remapping keys:
   - `set navigationModeAction.{caret|media}.{DIRECTION|none} MACROID` can be used to customize caret or media mode behaviour by binding directions to macros. This action is global and reversible only by powercycling.
