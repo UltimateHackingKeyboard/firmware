@@ -530,7 +530,6 @@ static void processAxisLocking(
     ks->xFractionRemainder += x * speed / speedDivisor * caretXModeMultiplier;
     ks->yFractionRemainder += y * speed / speedDivisor * caretYModeMultiplier;
 
-
     //If there is an ongoing action, just handle that action via a fake state. Ensure that full lifecycle of a key gets executed.
     if (ks->caretFakeKeystate.current || ks->caretFakeKeystate.previous || ks->zoomActive) {
         handleRunningCaretModeAction(ks);
@@ -643,7 +642,8 @@ static void processModuleKineticState(
         case NavigationMode_Caret:;
             // forced zoom = touchpad pinch zoom; it needs special coefficient
             // forced scroll = touchpad scroll;
-            float speedDivisor = forcedNavigationMode == NavigationMode_Zoom ? moduleConfiguration->zoomSpeedDivisor : moduleConfiguration->caretSpeedDivisor;
+            bool isPinchGesture = forcedNavigationMode == NavigationMode_Zoom;
+            float speedDivisor = isPinchGesture ? moduleConfiguration->pinchZoomSpeedDivisor : moduleConfiguration->caretSpeedDivisor;
             processAxisLocking(x, y, speed, yInversion, speedDivisor, moduleConfiguration->caretAxisLock, moduleConfiguration->axisLockSkew, moduleConfiguration->axisLockFirstTickSkew, ks, false);
             break;
         case NavigationMode_None:

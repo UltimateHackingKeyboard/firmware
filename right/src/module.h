@@ -36,7 +36,7 @@
         // navigation mode configurations
         float scrollSpeedDivisor;
         float caretSpeedDivisor;
-        float zoomSpeedDivisor;
+        float pinchZoomSpeedDivisor;
 
         float axisLockSkew;
         float axisLockFirstTickSkew;
