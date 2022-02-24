@@ -186,12 +186,16 @@ void LayerSwitcher_UpdateActiveLayer() {
         heldLayer = LayerId_Base;
     }
     for (layer_id_t layerId = LayerId_Mod; layerId < LayerId_Count; layerId++) {
-        if (heldLayer == LayerId_Base && layerMeetsHoldConditions(layerId, &ActiveLayerModifierMask)) {
+        bool heldLayerCanBeOverriden = heldLayer == LayerId_Base || (IS_MODIFIER_LAYER(heldLayer) && !IS_MODIFIER_LAYER(layerId));
+        if (heldLayerCanBeOverriden && layerMeetsHoldConditions(layerId, &ActiveLayerModifierMask)) {
             heldLayer = layerId;
         }
         heldLayers[layerId] = false;
     }
-    if(previousHeldLayer != heldLayer) {
+    if (!LayerConfig[heldLayer].modifierLayerMask) {
+        ActiveLayerModifierMask = 0;
+    }
+    if (previousHeldLayer != heldLayer) {
         updateActiveLayer();
     }
 }
