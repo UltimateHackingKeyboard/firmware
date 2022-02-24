@@ -5,6 +5,10 @@
 #include <stdbool.h>
 #include "attributes.h"
 
+// Macros:
+
+#define IS_MODIFIER_LAYER(L) (LayerId_Shift <= (L) && (L) <= LayerId_Super)
+
 // Typedefs:
 
     typedef enum {
