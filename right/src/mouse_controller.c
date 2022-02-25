@@ -66,7 +66,19 @@ mouse_kinetic_state_t MouseScrollState = {
     .axisSkew = 1.0f,
 };
 
-module_kinetic_state_t moduleKineticState = {
+module_kinetic_state_t leftModuleKineticState = {
+    .currentModuleId = 0,
+    .currentNavigationMode = 0,
+
+    .caretAxis = CaretAxis_None,
+    .caretFakeKeystate = {},
+    .caretAction.action = { .type = KeyActionType_None },
+    .xFractionRemainder = 0.0f,
+    .yFractionRemainder = 0.0f,
+    .lastUpdate = 0,
+};
+
+module_kinetic_state_t rightModuleKineticState = {
     .currentModuleId = 0,
     .currentNavigationMode = 0,
 
@@ -623,9 +635,14 @@ static layer_id_t determineEffectiveLayer() {
     return secondaryRoleResolutionInProgress ? SECONDARY_ROLE_LAYER_TO_LAYER_ID(SecondaryRolePreview) : ActiveLayer;
 }
 
-static void processModuleActions(uint8_t moduleId, float x, float y, uint8_t forcedNavigationMode)
-{
+static void processModuleActions(
+        uint8_t moduleId,
+        float x,
+        float y,
+        uint8_t forcedNavigationMode
+) {
     module_configuration_t *moduleConfiguration = GetModuleConfiguration(moduleId);
+    module_kinetic_state_t *ks = moduleId == ModuleId_KeyClusterLeft ? &leftModuleKineticState : &rightModuleKineticState;
 
     navigation_mode_t navigationMode;
 
@@ -636,30 +653,32 @@ static void processModuleActions(uint8_t moduleId, float x, float y, uint8_t for
     }
 
     bool moduleIsActive = x != 0 || y != 0;
-    bool keystateOwnerDiffers = moduleKineticState.currentModuleId != moduleId || moduleKineticState.currentNavigationMode != navigationMode;
+    bool keystateOwnerDiffers = ks->currentModuleId != moduleId || ks->currentNavigationMode != navigationMode;
     bool keyActionIsNotActive = true
-        && moduleKineticState.caretFakeKeystate.current == false
-        && moduleKineticState.caretFakeKeystate.previous == false
-        && moduleKineticState.zoomActive == 0;
+        && ks->caretFakeKeystate.current == false
+        && ks->caretFakeKeystate.previous == false
+        && ks->zoomActive == 0;
 
     if (moduleIsActive && keystateOwnerDiffers && keyActionIsNotActive) {
-        // Currently, we share the state among modules & navigation modes, and reset it whenever the user starts to use other mode.
-        resetKineticModuleState(&moduleKineticState);
+        // Currently, we share the state among (different right-hand) modules &
+        // navigation modes, and reset it whenever the user starts to use other
+        // mode.
+        resetKineticModuleState(ks);
 
-        moduleKineticState.currentModuleId = moduleId;
-        moduleKineticState.currentNavigationMode = navigationMode;
+        ks->currentModuleId = moduleId;
+        ks->currentNavigationMode = navigationMode;
     }
 
-    if (moduleKineticState.currentModuleId == moduleId && moduleKineticState.currentNavigationMode == navigationMode) {
-        if(moduleConfiguration->swapAxes) {
-            float tmp = x;
-            x = y;
-            y = tmp;
-        }
-
-        //we want to process kinetic state even if x == 0 && y == 0, at least as long as caretAxis != CaretAxis_None because of fake key states that may be active.
-        processModuleKineticState(x, y, moduleConfiguration, &moduleKineticState, forcedNavigationMode);
+    if(moduleConfiguration->swapAxes) {
+        float tmp = x;
+        x = y;
+        y = tmp;
     }
+
+    //we want to process kinetic state even if x == 0 && y == 0, at least as
+    //long as caretAxis != CaretAxis_None because of fake key states that may
+    //be active.
+    processModuleKineticState(x, y, moduleConfiguration, ks, forcedNavigationMode);
 }
 
 void MouseController_ProcessMouseActions()
