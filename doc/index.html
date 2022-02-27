@@ -49,7 +49,97 @@ When the UHK powers up or its configuration gets saved, first <code>$onInit</cod
 
 <p>The <code>set</code> command sets variables that affect the behavior of the UHK and its modules. This command has many different parameters which are explaned below.</p>
 
-<h3>set &mdash; module navigation modes</h3>
+<h3>set &raquo; module speeds</h3>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th scope="col"></th>
+            <th scope="col">Trackball</th>
+            <th scope="col">Trackpoint</th>
+            <th scope="col">Touchpad</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Base speed</td>
+            <td class="no-wrap"><input type="range">1.0</td>
+            <td class="no-wrap"><input type="range">1.0</td>
+            <td class="no-wrap"><input type="range">1.0</td>
+        </tr>
+        <tr>
+            <td>Speed</td>
+            <td class="no-wrap"><input type="range">1.0</td>
+            <td class="no-wrap"><input type="range">1.0</td>
+            <td class="no-wrap"><input type="range">1.0</td>
+        </tr>
+        <tr>
+            <td>Acceleration</td>
+            <td class="no-wrap"><input type="range">1.0</td>
+            <td class="no-wrap"><input type="range">1.0</td>
+            <td class="no-wrap"><input type="range">1.0</td>
+        </tr>
+        <tr>
+            <td>Caret speed divisor</td>
+            <td class="no-wrap"><input type="range">1.0</td>
+            <td class="no-wrap"><input type="range">1.0</td>
+            <td class="no-wrap"><input type="range">1.0</td>
+        </tr>
+        <tr>
+            <td>Scroll speed divisor</td>
+            <td class="no-wrap"><input type="range">1.0</td>
+            <td class="no-wrap"><input type="range">1.0</td>
+            <td class="no-wrap"><input type="range">1.0</td>
+        </tr>
+    </tbody>
+</table>
+
+baseSpeed
+speed
+xceleration
+caretSpeedDivisor
+scrollSpeedDivisor
+
+<h3>set &raquo; module axis locking</h3>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th scope="col"></th>
+            <th scope="col">Trackball</th>
+            <th scope="col">Trackpoint</th>
+            <th scope="col">Touchpad</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Axis lock skew</td>
+            <td class="no-wrap"><input type="range">1.0</td>
+            <td class="no-wrap"><input type="range">1.0</td>
+            <td class="no-wrap"><input type="range">1.0</td>
+        </tr>
+        <tr>
+            <td>Axis lock first tick skew</td>
+            <td class="no-wrap"><input type="range">1.0</td>
+            <td class="no-wrap"><input type="range">1.0</td>
+            <td class="no-wrap"><input type="range">1.0</td>
+        </tr>
+        <tr>
+            <td>Scroll axis lock enabled</td>
+            <td><input type="checkbox"></td>
+            <td><input type="checkbox"></td>
+            <td><input type="checkbox"></td>
+        </tr>
+        <tr>
+            <td>Invert scroll direction</td>
+            <td><input type="checkbox"></td>
+            <td><input type="checkbox"></td>
+            <td><input type="checkbox"></td>
+        </tr>
+    </tbody>
+</table>
+
+<h3>set &raquo; module navigation modes</h3>
 
 <p>UHK modules feature the following navigation modes, which are mapped by layer and module:</p>
 
