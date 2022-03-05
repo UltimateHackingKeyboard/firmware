@@ -67,6 +67,11 @@
         };
     } ATTR_PACKED key_action_t;
 
+    typedef struct {
+        key_action_t action;
+        uint8_t modifierLayerMask;
+    } ATTR_PACKED key_action_cached_t;
+
 // Variables:
 
     void UpdateActiveUsbReports(void);

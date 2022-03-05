@@ -36,13 +36,16 @@ void Utils_DecodeId(uint16_t keyid, uint8_t* outSlotId, uint8_t* outSlotIdx)
     *outSlotIdx = keyid%64;
 }
 
+static void Utils_SetStatusScancodeCharacter(uint8_t scancode)
+{
+    Macros_SetStatusChar(MacroShortcutParser_ScancodeToCharacter(scancode));
+}
+
 void Utils_reportReport(usb_basic_keyboard_report_t* report)
 {
     Macros_SetStatusString("Reporting ", NULL);
-    for ( int i = 0; i < USB_BASIC_KEYBOARD_MAX_KEYS; i++) {
-        if (report->scancodes[i] != 0) {
-            Macros_SetStatusChar(MacroShortcutParser_ScancodeToCharacter(report->scancodes[i]));
-        }
-    }
+
+    UsbBasicKeyboard_ForeachScancode(report, &Utils_SetStatusScancodeCharacter);
+
     Macros_SetStatusString("\n", NULL);
 }

@@ -30,19 +30,19 @@ usb_status_t USB_DeviceGetHidDescriptor(
 
     switch (hidDescriptor->interfaceNumber) {
         case USB_GENERIC_HID_INTERFACE_INDEX:
-            hidDescriptor->buffer = &UsbConfigurationDescriptor[USB_GENERIC_HID_DESCRIPTOR_INDEX];
+            hidDescriptor->buffer = (uint8_t*)&UsbConfigurationDescriptor[USB_GENERIC_HID_DESCRIPTOR_INDEX];
             break;
         case USB_BASIC_KEYBOARD_INTERFACE_INDEX:
-            hidDescriptor->buffer = &UsbConfigurationDescriptor[USB_BASIC_KEYBOARD_HID_DESCRIPTOR_INDEX];
+            hidDescriptor->buffer = (uint8_t*)&UsbConfigurationDescriptor[USB_BASIC_KEYBOARD_HID_DESCRIPTOR_INDEX];
             break;
         case USB_MEDIA_KEYBOARD_INTERFACE_INDEX:
-            hidDescriptor->buffer = &UsbConfigurationDescriptor[USB_MEDIA_KEYBOARD_HID_DESCRIPTOR_INDEX];
+            hidDescriptor->buffer = (uint8_t*)&UsbConfigurationDescriptor[USB_MEDIA_KEYBOARD_HID_DESCRIPTOR_INDEX];
             break;
         case USB_SYSTEM_KEYBOARD_INTERFACE_INDEX:
-            hidDescriptor->buffer = &UsbConfigurationDescriptor[USB_SYSTEM_KEYBOARD_HID_DESCRIPTOR_INDEX];
+            hidDescriptor->buffer = (uint8_t*)&UsbConfigurationDescriptor[USB_SYSTEM_KEYBOARD_HID_DESCRIPTOR_INDEX];
             break;
         case USB_MOUSE_INTERFACE_INDEX:
-            hidDescriptor->buffer = &UsbConfigurationDescriptor[USB_MOUSE_HID_DESCRIPTOR_INDEX];
+            hidDescriptor->buffer = (uint8_t*)&UsbConfigurationDescriptor[USB_MOUSE_HID_DESCRIPTOR_INDEX];
             break;
         default:
             return kStatus_USB_InvalidRequest;
@@ -55,23 +55,23 @@ usb_status_t USB_DeviceGetHidReportDescriptor(
 {
     switch (hidReportDescriptor->interfaceNumber) {
         case USB_GENERIC_HID_INTERFACE_INDEX:
-            hidReportDescriptor->buffer = UsbGenericHidReportDescriptor;
+            hidReportDescriptor->buffer = (uint8_t*)UsbGenericHidReportDescriptor;
             hidReportDescriptor->length = USB_GENERIC_HID_REPORT_DESCRIPTOR_LENGTH;
             break;
         case USB_BASIC_KEYBOARD_INTERFACE_INDEX:
-            hidReportDescriptor->buffer = UsbBasicKeyboardReportDescriptor;
+            hidReportDescriptor->buffer = (uint8_t*)UsbBasicKeyboardReportDescriptor;
             hidReportDescriptor->length = USB_BASIC_KEYBOARD_REPORT_DESCRIPTOR_LENGTH;
             break;
         case USB_MEDIA_KEYBOARD_INTERFACE_INDEX:
-            hidReportDescriptor->buffer = UsbMediaKeyboardReportDescriptor;
+            hidReportDescriptor->buffer = (uint8_t*)UsbMediaKeyboardReportDescriptor;
             hidReportDescriptor->length = USB_MEDIA_KEYBOARD_REPORT_DESCRIPTOR_LENGTH;
             break;
         case USB_SYSTEM_KEYBOARD_INTERFACE_INDEX:
-            hidReportDescriptor->buffer = UsbSystemKeyboardReportDescriptor;
+            hidReportDescriptor->buffer = (uint8_t*)UsbSystemKeyboardReportDescriptor;
             hidReportDescriptor->length = USB_SYSTEM_KEYBOARD_REPORT_DESCRIPTOR_LENGTH;
             break;
         case USB_MOUSE_INTERFACE_INDEX:
-            hidReportDescriptor->buffer = UsbMouseReportDescriptor;
+            hidReportDescriptor->buffer = (uint8_t*)UsbMouseReportDescriptor;
             hidReportDescriptor->length = USB_MOUSE_REPORT_DESCRIPTOR_LENGTH;
             break;
         default:

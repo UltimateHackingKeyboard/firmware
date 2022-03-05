@@ -9,6 +9,7 @@
 // Macros:
 
     #define ACTIVE_MOUSE_STATES_COUNT (SerializedMouseAction_Last + 1)
+    #define ABS(A) ((A) < 0 ? (-A) : (A))
 
 // Typedefs:
 
@@ -44,7 +45,7 @@
     } mouse_kinetic_state_t;
 
     typedef struct {
-        key_action_t* caretAction;
+        key_action_cached_t caretAction;
         key_state_t caretFakeKeystate;
         float xFractionRemainder;
         float yFractionRemainder;
@@ -53,6 +54,9 @@
         uint8_t caretAxis;
         uint8_t currentModuleId;
         uint8_t currentNavigationMode;
+        uint8_t zoomPhase;
+        uint8_t zoomSign;
+        bool zoomActive;
     } module_kinetic_state_t;
 
 // Variables:

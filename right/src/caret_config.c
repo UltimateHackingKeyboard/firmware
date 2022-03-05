@@ -1,6 +1,7 @@
 #include "caret_config.h"
 #include "arduino_hid/ConsumerAPI.h"
 #include "arduino_hid/SystemAPI.h"
+#include "macros.h"
 
 caret_configuration_t caretMediaMode = {
     .axisActions = { //axis array
@@ -29,7 +30,20 @@ caret_configuration_t caretCaretMode = {
     }
 };
 
-caret_configuration_t zoomMode = {
+caret_configuration_t zoomMacMode = {
+    .axisActions = { //axis array
+        { // horizontal axis
+            .positiveAction = { .type = KeyActionType_None },
+            .negativeAction = { .type = KeyActionType_None },
+        },
+        { // vertical axis
+            .positiveAction = { .type = KeyActionType_Keystroke, .keystroke = { .keystrokeType = KeystrokeType_Basic, .scancode = HID_KEYBOARD_SC_MINUS_AND_UNDERSCORE, .modifiers = HID_KEYBOARD_MODIFIER_LEFTGUI}},
+            .negativeAction = { .type = KeyActionType_Keystroke, .keystroke = { .keystrokeType = KeystrokeType_Basic, .scancode = HID_KEYBOARD_SC_EQUAL_AND_PLUS, .modifiers = HID_KEYBOARD_MODIFIER_LEFTGUI | HID_KEYBOARD_MODIFIER_LEFTSHIFT}},
+        }
+    }
+};
+
+caret_configuration_t zoomPcMode = {
     .axisActions = { //axis array
         { // horizontal axis
             .positiveAction = { .type = KeyActionType_None },
@@ -48,10 +62,13 @@ caret_configuration_t* GetModuleCaretConfiguration(int8_t moduleId, navigation_m
             return &caretCaretMode;
         case NavigationMode_Media:
             return &caretMediaMode;
-        case NavigationMode_Zoom:
-            return &zoomMode;
+        case NavigationMode_ZoomPc:
+            return &zoomPcMode;
+        case NavigationMode_ZoomMac:
+            return &zoomMacMode;
         default:
-            return &caretCaretMode;
+            Macros_ReportErrorNum("Mode referenced in in valid context:", mode);
+            return NULL;
     }
 }
 

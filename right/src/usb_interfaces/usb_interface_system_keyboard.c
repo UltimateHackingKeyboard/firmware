@@ -88,3 +88,27 @@ usb_status_t UsbSystemKeyboardCallback(class_handle_t handle, uint32_t event, vo
 
     return error;
 }
+
+bool UsbSystemKeyboard_AddScancode(usb_system_keyboard_report_t* report, uint8_t scancode)
+{
+    if (!UsbSystemKeyboard_UsedScancode(scancode))
+        return false;
+
+    set_bit(scancode - USB_SYSTEM_KEYBOARD_MIN_BITFIELD_SCANCODE, report->bitfield);
+    return true;
+}
+
+void UsbSystemKeyboard_RemoveScancode(usb_system_keyboard_report_t* report, uint8_t scancode)
+{
+    if (!UsbSystemKeyboard_UsedScancode(scancode))
+        return;
+
+    clear_bit(scancode - USB_SYSTEM_KEYBOARD_MIN_BITFIELD_SCANCODE, report->bitfield);
+}
+
+void UsbSystemKeyboard_MergeReports(const usb_system_keyboard_report_t* sourceReport, usb_system_keyboard_report_t* targetReport)
+{
+    for (uint8_t i = 0; i < ARRAY_SIZE(targetReport->bitfield); i++) {
+        targetReport->bitfield[i] |= sourceReport->bitfield[i];
+    }
+}

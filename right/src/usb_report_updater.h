@@ -20,8 +20,9 @@
     extern uint32_t UsbReportUpdateCounter;
     extern volatile uint8_t UsbReportUpdateSemaphore;
     extern bool TestUsbStack;
-    extern uint8_t HardwareModifierState;
-    extern uint8_t HardwareModifierStatePrevious;
+    extern uint8_t InputModifiers;
+    extern uint8_t InputModifiersPrevious;
+    extern uint8_t OutputModifiers;
     extern bool SuppressMods;
     extern bool PostponeKeys;
     extern sticky_strategy_t StickyModifierStrategy;
@@ -37,6 +38,6 @@
     void ToggleMouseState(serialized_mouse_action_t action, bool activate);
     void ActivateKey(key_state_t *keyState, bool debounce);
     void ActivateStickyMods(key_state_t *keyState, uint8_t mods);
-    void ApplyKeyAction(key_state_t *keyState, key_action_t *action, key_action_t *actionBase);
+    void ApplyKeyAction(key_state_t *keyState, key_action_cached_t *cachedAction, key_action_t *actionBase);
 
 #endif
