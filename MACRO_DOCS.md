@@ -275,13 +275,13 @@ The following grammar is supported:
     COMMAND = set module.MODULEID.xceleration <exponent 0-1.0 (FLOAT)>
     COMMAND = set module.MODULEID.caretSpeedDivisor <1-100 (FLOAT)>
     COMMAND = set module.MODULEID.scrollSpeedDivisor <1-100 (FLOAT)>
-    COMMAND = set module.MODULEID.zoomSpeedDivisor <1-100 (FLOAT)>
-    COMMAND = set module.MODULEID.axisLockStrength <0-1.0 (FLOAT)>
-    COMMAND = set module.MODULEID.axisLockStrengthFirstTick <0-1.0 (FLOAT)>
+    COMMAND = set module.MODULEID.axisLockSkew <0-2.0 (FLOAT)>
+    COMMAND = set module.MODULEID.axisLockFirstTickSkew <0-2.0 (FLOAT)>
     COMMAND = set module.MODULEID.scrollAxisLock BOOLEAN
     COMMAND = set module.MODULEID.cursorAxisLock BOOLEAN
     COMMAND = set module.MODULEID.swapAxes BOOLEAN
     COMMAND = set module.MODULEID.invertScrollDirection BOOLEAN
+    COMMAND = set module.touchpad.pinchZoomDivisor <1-100 (FLOAT)>
     #NOTIMPLEMENTED COMMAND = set secondaryRoles
     COMMAND = set mouseKeys.{move|scroll}.initialSpeed <px/s, -100/20 (NUMBER)>
     COMMAND = set mouseKeys.{move|scroll}.baseSpeed <px/s, -800/20 (NUMBER)>
@@ -298,10 +298,11 @@ The following grammar is supported:
     COMMAND = set setEmergencyKey KEYID
     COMMAND = set macroEngine.scheduler {blocking|preemptive}
     COMMAND = set macroEngine.batchSize <number of commands to execute per one update cycle NUMBER>
-    COMMAND = set navigationModeAction.{caret|media|zoom}.{DIRECTION} {MACROID|none}
+    COMMAND = set navigationModeAction.NAVIGATIONMODECUSTOM.{DIRECTION} {MACROID|none}
     COMMAND = set keymapAction.LAYERID.KEYID {MACROID|none}
     COMMAND = set backlight.strategy { functional | constantRgb }
     COMMAND = set backlight.constantRgb.rgb <number 0-255 (NUMBER)> <number 0-255 (NUMBER)> <number 0-255 (NUMBER)><number 0-255 (NUMBER)>
+    COMMAND = set modifierLayerTriggers.{shift|alt|super|control} {left|right|both}
     CONDITION = {ifShortcut | ifNotShortcut} [IFSHORTCUTFLAGS]* [KEYID]+
     CONDITION = {ifGesture | ifNotGesture} [IFSHORTCUTFLAGS]* [KEYID]+
     CONDITION = {ifPrimary | ifSecondary}
@@ -335,8 +336,9 @@ The following grammar is supported:
     KEYID = <id of hardware key obtained by resolveNextKeyId (NUMBER)>
     LABEL = <string identifier>
     SHORTCUT = MODMASK- | MODMASK-KEY | KEY
-    MODMASK = [MODMASK]+ | [L|R]{S|C|A|G} | {p|r|h|t} | s
-    NAVIGATIONMODE = cursor | scroll | caret | media | zoom | none
+    MODMASK = [MODMASK]+ | [L|R]{S|C|A|G} | {p|r|h|t} | {s|i|o}
+    NAVIGATIONMODE = cursor | scroll | caret | media | zoom | zoomPc | zoomMac | none
+    NAVIGATIONMODECUSTOM = caret | media | zoomPc | zoomMac
     MODULEID = trackball | touchpad | trackpoint | keycluster
     KEY = CHAR|KEYABBREV
     ADDRESS = LABEL|NUMBER
@@ -403,7 +405,14 @@ The following grammar is supported:
   - `MODMASK` meaning:
     - `{S|C|A|G}` - Shift Control Alt Gui
     - `[L|R]` - Left Right (which hand side modifier should be used)
-    - `s` - sticky 
+    - `{s|i|o}` - modifiers (ctrl, alt, shift, gui) exist in three composition modes within UHK - sticky, input, output:
+        - sticky modifiers are modifiers of composite shortcuts. These are applied only until next key press. In certain contexts, they will take effect even after their activation key was released (e.g., to support alt + tab on non-base layers).
+        - input modifiers are queried by `ifMod` conditions, and can be suppressed by `suppressMods`.
+        - output modifiers are ignored by `ifMod` conditions, and are not suppressed by `suppressMods`.
+        By default:
+        - modifiers of normal non-macro scancode actions are treated as `sticky` when accompanied by a scancode. 
+        - normal non-macro modifiers (not accompanied by a scancode) are treated as `input` by default.
+        - macro modifiers are treated as `output`.
     - `{p|r|h|t}` - press release hold tap - by default corresponds to the command used to invoke the sequence, but can be overriden for any.
 
 ### Control flow, macro execution (aka "functions"):
@@ -614,25 +623,31 @@ For the purpose of toggling functionality on and off, and for global constants m
       - at 6000 px/s, speed multiplier is 4x
       - not recommended - the curve will behave in very non-linear fashion.
 - `set module.MODULEID.{caretSpeedDivisor|scrollSpeedDivisor|zoomSpeedDivisor|swapAxes|invertScrollDirection}` modifies scrolling and caret behaviour:
-    - `caretSpeedDivisor` (default: 16) is used to divide input in caret mode. This means that per one tick, you have to move by 16 pixels (or whatever the unit is). (This is furthermore modified by axisLocking strength, as well as acceleration.)
-    - `scrollSpeedDivisor` (default: 8) is used to divide input in scroll mode. This means that while scrolling, every 8 pixels produce one scroll tick. (This is furthermore modified by axisLocking strength, as well as acceleration.)
-    - `zoomSpeedDivisor` (default: 4 (?)) is used specifically for touchpad's zoom gesture, therefore its default value is supposed to be quite nonstandard.
+    - `caretSpeedDivisor` (default: 16) is used to divide input in caret mode. This means that per one tick, you have to move by 16 pixels (or whatever the unit is). (This is furthermore modified by axisLocking skew, as well as acceleration.)
+    - `scrollSpeedDivisor` (default: 8) is used to divide input in scroll mode. This means that while scrolling, every 8 pixels produce one scroll tick. (This is furthermore modified by axisLocking skew, as well as acceleration.)
+    - `pinchZoomDivisor` (default: 4 (?)) is used specifically for touchpad's zoom gesture, therefore its default value is nonstandard. Only valid for touchpad.
     - `swapAxes` swaps x and y coordinates of the module. Intened use is for keycluster trackball, since sideways scrolling is easier.
     - `invertScrollDirection` inverts scroll direction...
 
-- `set module.MODULEID.{axisLockStrength|axisLockStrengthFirstTick|cursorAxisLockEnabled|scrollAxisLockEnabled}` control axis locking feature:
+- `set module.MODULEID.{axisLockSkew|axisLockFirstTickSkew|cursorAxisLock|scrollAxisLock}` control axis locking feature:
 
-  When you first move in navigation mode that has axis locking enabled, axis is locked to one of the axes. Furthermore, as long as this axis is active, the other axis input is multiplied by `1 - axisLockStrength` and gets zeroed with every successfull tick. This means that in order to change locked direction (with 0.5 value), you have to produce stroke that goes at least twice as fast in the non-locked direction compared to the locked one. This also means that axis locking with strength 0 still affects behaviour, because it always picks only one of the two axes and zeroes the other.
+  When you first move in navigation mode that has axis locking enabled, axis is locked to one of the axes. Axis locking behaviour is defined by two characteristis:
 
-  Behaviour of first tick (the one that initiates mechanism) can be controlled independently.
+  - axis skew: when axis is locked, the secondary axis value is multiplied by `axisLockSkew`. This means that in order to change locked direction (with 0.5 value), you have to produce stroke that goes at least twice as fast in the non-locked direction compared to the locked one. 
+  - secondary axis zeroing: whenever the locked (primary) axis produces an event, the 
 
-  By default, axis locking is enabled in caret and media mode for right hand modules, and for scroll, caret and media modes for keycluster. Caret and media mode require axis locking for their function. 
+  Behaviour of first tick (the one that initiates mechanism) can be controlled independently. The first tick (the first event produced when axis is not yet locked) skew is applied to *both* the axis. This allows following tweaks:
 
-  - `axisLockStrength` controls caret axis locking. Defaults to 0.5, valid values are 0-1.0.
-    When you first move in navigation mode that has axis locking enabled, axis is locked to one of the axes. Furthermore, as long as this axis is active, the other axis input is multiplied by `1 - axisLockStrength` and gets zeroed with every tick. This means that in order to change locked direction (with 0.5 value), you have to produce stroke that goes at least twice as fast in the non-locked direction compared to the locked one.
-  - `axisLockStrengthFirstTick` - same meaning as `axisLockStrength`, but controls whether axis locking applies on first tick. Nonzero value means that firt tick will require a "push" before cursor starts moving. 
-  - `cursorAxisLockEnabled BOOLEAN` - turns axis locking on for cursor mode. Not recommended, but possible.
-  - `scrollAxisLockEnabled BOOLEAN` - turns axis locking on for scroll mode. Default for keycluster trackball.
+  - use `axisLockFirstTickSkew = 0.5` in order to require stronger "push" at the beginning of movement. Useful for the mini trackball, since it is likely to produce an unwanted move event when you try  to just click it. With `0.5` value, it will require two roll events to activate.
+  - use `axisLockFirstTickSkew = 2.0` in order to make the first event more responsive. E.g., caret mode will make the fist character move even with a very gently push, while consecutive activations will need greater momentum.
+
+  By default, axis locking is enabled in scroll and discreet modes for right hand modules, and for scroll, caret and media modes for keycluster.
+
+  - `axisLockSkew` controls caret axis locking. Defaults to 0.5, valid/reasonable values are 0-100, centered around 1.
+  - `axisLockFirstTickSkew` - same meaning as `axisLockSkew`, but controls how axis locking applies on first tick. Nonzero value means that firt tick will require a "push" before cursor starts moving. Or will require less "force" if the value is greater than 1.
+  - `cursorAxisLock BOOLEAN` - turns axis locking on for cursor mode. Not recommended, but possible.
+  - `scrollAxisLock BOOLEAN` - turns axis locking on for scroll mode. Default for keycluster trackball.
+  - `caretAxisLock BOOLEAN` - turns axis locking on for all discrete modes. 
 
 - Remapping keys:
   - `set navigationModeAction.{caret|media}.{DIRECTION|none} MACROID` can be used to customize caret or media mode behaviour by binding directions to macros. This action is global and reversible only by powercycling.
@@ -658,6 +673,9 @@ For the purpose of toggling functionality on and off, and for global constants m
 - backlight:
     - `backlight.strategy { functional | constantRgb }` sets backlight strategy.
     - `backlight.constantRgb.rgb NUMBER NUMBER NUMBER` allows setting custom constant colour for entire keyboard. E.g.: `set backlight.strategy constantRgb; set backlight.constantRgb.rgb 255 0 0` to make entire keyboard shine red.
+
+- modifier layer triggers:
+    - `set modifierLayerTriggers.{shift|alt|super|control} { left | right | both }` controls whether modifier layers are triggered by left or right or either of the modifiers.
 
 ### Argument parsing rules:
 
@@ -687,7 +705,8 @@ UHK modules feature four navigation modes, which are mapped by layer and module.
 - **Scroll mode** - in this mode, module can be used to scroll. Default mode for mod layer. This means that apart from switching layer, your mod layer switches also make your right hand modules act as very comfortable scroll wheels. Sensitivity is controlled by the `scrollSpeedDivisor` value.
 - **Caret mode** - in this mode, module produces arrow key taps. This can be used to move comfortably in text editor, since in this mode, cursor is also locked to one of the two directions, preventing unwanted line changes. Sensitivity is controlled by the `caretSpeedDivisor`, `axisLockStrengthFirstTick` and `axisLockStrength`.
 - **Media mode** - in this mode, up/down directions control volume (via media key scancodes), while horizontal play/pause and switch to next track. At the moment, this mode is not enabled by default on any layer. Sensitivity is shared with the caret mode.
-- **Zoom mode** - in this mode, `Ctrl +`/`Ctrl -` shortcuts are produced. This mode serves specifically to implement touchpad's gesture.
+- **Zoom mode pc / mac** - in this mode, `Ctrl +`/`Ctrl -` or `Alt +`/`Alt -` shortcuts are produced. 
+- **Zoom mode** - This mode serves specifically to implement touchpad's gesture. It alternates actions of zoomPc and zoomMac modes.
 
 Caret and media modes can be customized by `set navigationModeAction` command.
 

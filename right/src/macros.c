@@ -7,6 +7,7 @@
 #include "config_parser/parse_macro.h"
 #include "config_parser/config_globals.h"
 #include "timer.h"
+#include "usb_interfaces/usb_interface_basic_keyboard.h"
 #include "keymap.h"
 #include "usb_report_updater.h"
 #include "led_display.h"
@@ -110,16 +111,8 @@ static void addBasicScancode(uint8_t scancode)
     if (!scancode) {
         return;
     }
-    for (uint8_t i = 0; i < USB_BASIC_KEYBOARD_MAX_KEYS; i++) {
-        if (s->ms.macroBasicKeyboardReport.scancodes[i] == scancode) {
-            return;
-        }
-    }
-    for (uint8_t i = 0; i < USB_BASIC_KEYBOARD_MAX_KEYS; i++) {
-        if (!s->ms.macroBasicKeyboardReport.scancodes[i]) {
-            s->ms.macroBasicKeyboardReport.scancodes[i] = scancode;
-            break;
-        }
+    if (!UsbBasicKeyboard_ContainsScancode(&s->ms.macroBasicKeyboardReport, scancode)) {
+        UsbBasicKeyboard_AddScancode(&s->ms.macroBasicKeyboardReport, scancode);
     }
 }
 
@@ -128,22 +121,19 @@ static void deleteBasicScancode(uint8_t scancode)
     if (!scancode) {
         return;
     }
-    for (uint8_t i = 0; i < USB_BASIC_KEYBOARD_MAX_KEYS; i++) {
-        if (s->ms.macroBasicKeyboardReport.scancodes[i] == scancode) {
-            s->ms.macroBasicKeyboardReport.scancodes[i] = 0;
-            return;
-        }
-    }
+    UsbBasicKeyboard_RemoveScancode(&s->ms.macroBasicKeyboardReport, scancode);
 }
 
-static void addModifiers(uint8_t modifiers)
+static void addModifiers(uint8_t inputModifiers, uint8_t outputModifiers)
 {
-    s->ms.macroBasicKeyboardReport.modifiers |= modifiers;
+    s->ms.inputModifierMask |= inputModifiers;
+    s->ms.macroBasicKeyboardReport.modifiers |= outputModifiers;
 }
 
-static void deleteModifiers(uint8_t modifiers)
+static void deleteModifiers(uint8_t inputModifiers, uint8_t outputModifiers)
 {
-    s->ms.macroBasicKeyboardReport.modifiers &= ~modifiers;
+    s->ms.inputModifierMask &= ~inputModifiers;
+    s->ms.macroBasicKeyboardReport.modifiers &= ~outputModifiers;
 }
 
 static void addMediaScancode(uint16_t scancode)
@@ -182,17 +172,7 @@ static void addSystemScancode(uint8_t scancode)
     if (!scancode) {
         return;
     }
-    for (uint8_t i = 0; i < USB_SYSTEM_KEYBOARD_MAX_KEYS; i++) {
-        if (s->ms.macroSystemKeyboardReport.scancodes[i] == scancode) {
-            return;
-        }
-    }
-    for (uint8_t i = 0; i < USB_SYSTEM_KEYBOARD_MAX_KEYS; i++) {
-        if (!s->ms.macroSystemKeyboardReport.scancodes[i]) {
-            s->ms.macroSystemKeyboardReport.scancodes[i] = scancode;
-            break;
-        }
-    }
+    UsbSystemKeyboard_AddScancode(&s->ms.macroSystemKeyboardReport, scancode);
 }
 
 static void deleteSystemScancode(uint8_t scancode)
@@ -200,12 +180,7 @@ static void deleteSystemScancode(uint8_t scancode)
     if (!scancode) {
         return;
     }
-    for (uint8_t i = 0; i < USB_SYSTEM_KEYBOARD_MAX_KEYS; i++) {
-        if (s->ms.macroSystemKeyboardReport.scancodes[i] == scancode) {
-            s->ms.macroSystemKeyboardReport.scancodes[i] = 0;
-            return;
-        }
-    }
+    UsbSystemKeyboard_RemoveScancode(&s->ms.macroSystemKeyboardReport, scancode);
 }
 
 static void addScancode(uint16_t scancode, keystroke_type_t type)
@@ -296,9 +271,10 @@ static macro_result_t processKey(macro_action_t macro_action)
     s->ms.reportsUsed = true;
     macro_sub_action_t action = macro_action.key.action;
     keystroke_type_t type = macro_action.key.type;
-    uint8_t modifierMask = macro_action.key.modifierMask;
+    uint8_t outputModMask = macro_action.key.outputModMask;
+    uint8_t inputModMask = macro_action.key.inputModMask;
     uint16_t scancode = macro_action.key.scancode;
-    bool isSticky = macro_action.key.sticky;
+    bool stickyModMask = macro_action.key.stickyModMask;
 
     s->as.actionPhase++;
 
@@ -307,9 +283,9 @@ static macro_result_t processKey(macro_action_t macro_action)
         case MacroSubAction_Tap:
             switch(s->as.actionPhase) {
                 case 1:
-                    addModifiers(modifierMask);
-                    if (isSticky) {
-                        ActivateStickyMods(s->ms.currentMacroKey, modifierMask);
+                    addModifiers(inputModMask, outputModMask);
+                    if (stickyModMask) {
+                        ActivateStickyMods(s->ms.currentMacroKey, stickyModMask);
                     }
                     return MacroResult_Blocking;
                 case 2:
@@ -323,7 +299,7 @@ static macro_result_t processKey(macro_action_t macro_action)
                     deleteScancode(scancode, type);
                     return MacroResult_Blocking;
                 case 4:
-                    deleteModifiers(modifierMask);
+                    deleteModifiers(inputModMask, outputModMask);
                     return MacroResult_Blocking;
                 case 5:
                     s->as.actionPhase = 0;
@@ -336,7 +312,7 @@ static macro_result_t processKey(macro_action_t macro_action)
                     deleteScancode(scancode, type);
                     return MacroResult_Blocking;
                 case 2:
-                    deleteModifiers(modifierMask);
+                    deleteModifiers(inputModMask, outputModMask);
                     return MacroResult_Blocking;
                 case 3:
                     s->as.actionPhase = 0;
@@ -346,9 +322,9 @@ static macro_result_t processKey(macro_action_t macro_action)
         case MacroSubAction_Press:
             switch (s->as.actionPhase) {
                 case 1:
-                    addModifiers(modifierMask);
-                    if (isSticky) {
-                        ActivateStickyMods(s->ms.currentMacroKey, modifierMask);
+                    addModifiers(inputModMask, outputModMask);
+                    if (stickyModMask) {
+                        ActivateStickyMods(s->ms.currentMacroKey, stickyModMask);
                     }
                     return MacroResult_Blocking;
                 case 2:
@@ -597,7 +573,6 @@ static macro_result_t dispatchText(const char* text, uint16_t textLen)
     } else {
         dispatchMutex = s;
     }
-    uint8_t max_keys = USB_BASIC_KEYBOARD_MAX_KEYS/2;
     char character = 0;
     uint8_t scancode = 0;
     uint8_t mods = 0;
@@ -613,8 +588,8 @@ static macro_result_t dispatchText(const char* text, uint16_t textLen)
     // containing only old modifiers. Then set new modifiers and send that new report.
     // Just then continue.
     if (mods != s->ms.macroBasicKeyboardReport.modifiers) {
-        if (s->as.dispatchData.reportIdx != 0) {
-            s->as.dispatchData.reportIdx = 0;
+        if (s->as.dispatchData.reportState != REPORT_EMPTY) {
+            s->as.dispatchData.reportState = REPORT_EMPTY;
             clearScancodes();
             return MacroResult_Blocking;
         } else {
@@ -626,15 +601,15 @@ static macro_result_t dispatchText(const char* text, uint16_t textLen)
     // If all characters have been sent, finish.
     if (s->as.dispatchData.textIdx == textLen) {
         s->as.dispatchData.textIdx = 0;
-        s->as.dispatchData.reportIdx = max_keys;
+        s->as.dispatchData.reportState = REPORT_FULL;
         memset(&s->ms.macroBasicKeyboardReport, 0, sizeof s->ms.macroBasicKeyboardReport);
         dispatchMutex = NULL;
         return MacroResult_Finished;
     }
 
     // Whenever the report is full, we clear the report and send it empty before continuing.
-    if (s->as.dispatchData.reportIdx == max_keys) {
-        s->as.dispatchData.reportIdx = 0;
+    if (s->as.dispatchData.reportState == REPORT_FULL) {
+        s->as.dispatchData.reportState = REPORT_EMPTY;
 
         memset(&s->ms.macroBasicKeyboardReport, 0, sizeof s->ms.macroBasicKeyboardReport);
         return MacroResult_Blocking;
@@ -643,15 +618,15 @@ static macro_result_t dispatchText(const char* text, uint16_t textLen)
     // If current character is already contained in the report, we need to
     // release it first. We do so by artificially marking the report
     // full. Next call will do rest of the work for us.
-    for (uint8_t i = 0; i < s->as.dispatchData.reportIdx; i++) {
-        if (s->ms.macroBasicKeyboardReport.scancodes[i] == scancode) {
-            s->as.dispatchData.reportIdx = max_keys;
-            return MacroResult_Blocking;
-        }
+    if (UsbBasicKeyboard_ContainsScancode(&s->ms.macroBasicKeyboardReport, scancode)) {
+        s->as.dispatchData.reportState = REPORT_FULL;
+        return MacroResult_Blocking;
     }
 
     // Send the scancode.
-    s->ms.macroBasicKeyboardReport.scancodes[s->as.dispatchData.reportIdx++] = scancode;
+    UsbBasicKeyboard_AddScancode(&s->ms.macroBasicKeyboardReport, scancode);
+    s->as.dispatchData.reportState = UsbBasicKeyboard_IsFullScancodes(&s->ms.macroBasicKeyboardReport) ?
+            REPORT_FULL : REPORT_PARTIAL;
     ++s->as.dispatchData.textIdx;
     return MacroResult_Blocking;
 }
@@ -1269,7 +1244,7 @@ static bool processIfDoubletapCommand(bool negate)
 
 static bool processIfModifierCommand(bool negate, uint8_t modmask)
 {
-    return ((HardwareModifierStatePrevious & modmask) > 0) != negate;
+    return ((InputModifiersPrevious & modmask) > 0) != negate;
 }
 
 static bool processIfRecordingCommand(bool negate)

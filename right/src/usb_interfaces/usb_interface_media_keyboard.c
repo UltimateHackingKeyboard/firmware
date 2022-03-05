@@ -89,3 +89,33 @@ usb_status_t UsbMediaKeyboardCallback(class_handle_t handle, uint32_t event, voi
 
     return error;
 }
+
+bool UsbMediaKeyboard_AddScancode(usb_media_keyboard_report_t* report, uint8_t scancode)
+{
+    if (scancode == 0)
+        return true;
+
+    for (uint8_t i = 0; i < ARRAY_SIZE(report->scancodes); i++) {
+        if (report->scancodes[i] == 0) {
+            report->scancodes[i] = scancode;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void UsbMediaKeyboard_MergeReports(const usb_media_keyboard_report_t* sourceReport, usb_media_keyboard_report_t* targetReport)
+{
+    uint8_t idx, i = 0;
+    /* find empty position */
+    for (idx = 0; idx < ARRAY_SIZE(targetReport->scancodes); idx++) {
+        if (targetReport->scancodes[idx] == 0) {
+            break;
+        }
+    }
+    /* copy into empty positions */
+    while ((i < ARRAY_SIZE(sourceReport->scancodes)) && (sourceReport->scancodes[i] != 0) && (idx < ARRAY_SIZE(targetReport->scancodes))) {
+        targetReport->scancodes[idx++] = sourceReport->scancodes[i++];
+    }
+}

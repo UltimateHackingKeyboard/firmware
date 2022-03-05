@@ -3,7 +3,7 @@
 #include "usb_descriptor_mouse_report.h"
 #include "usb_descriptor_generic_hid_report.h"
 
-uint8_t UsbConfigurationDescriptor[USB_CONFIGURATION_DESCRIPTOR_TOTAL_LENGTH] = {
+USB_DESC_STORAGE_TYPE UsbConfigurationDescriptor[USB_CONFIGURATION_DESCRIPTOR_TOTAL_LENGTH] = {
 
     // Configuration descriptor
     USB_DESCRIPTOR_LENGTH_CONFIGURE,
@@ -186,7 +186,7 @@ usb_status_t USB_DeviceGetConfigurationDescriptor(
     usb_device_handle handle, usb_device_get_configuration_descriptor_struct_t *configurationDescriptor)
 {
     if (USB_COMPOSITE_CONFIGURATION_INDEX > configurationDescriptor->configuration) {
-        configurationDescriptor->buffer = UsbConfigurationDescriptor;
+        configurationDescriptor->buffer = (uint8_t*)UsbConfigurationDescriptor;
         configurationDescriptor->length = USB_CONFIGURATION_DESCRIPTOR_TOTAL_LENGTH;
         return kStatus_USB_Success;
     }

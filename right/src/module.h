@@ -19,6 +19,8 @@
         NavigationMode_Caret,
         NavigationMode_Media,
         NavigationMode_Zoom,
+        NavigationMode_ZoomPc,
+        NavigationMode_ZoomMac,
         NavigationMode_None,
     } navigation_mode_t;
 
@@ -34,15 +36,16 @@
         // navigation mode configurations
         float scrollSpeedDivisor;
         float caretSpeedDivisor;
-        float zoomSpeedDivisor;
+        float pinchZoomSpeedDivisor;
 
         float axisLockSkew;
-        float axisLockSkewFirstTick;
+        float axisLockFirstTickSkew;
 
         navigation_mode_t navigationModes[LayerId_Count];
 
         bool scrollAxisLock;
         bool cursorAxisLock;
+        bool caretAxisLock;
         bool swapAxes;
         bool invertScrollDirection;
     } module_configuration_t;

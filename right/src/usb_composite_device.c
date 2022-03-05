@@ -307,5 +307,6 @@ void InitUsb(void)
     uint8_t irqNumber = usbDeviceKhciIrq[CONTROLLER_ID - kUSB_ControllerKhci0];
     NVIC_EnableIRQ((IRQn_Type)irqNumber);
 
+    FMC->PFAPR |= (1 << FMC_PFAPR_M3AP_SHIFT) | (1 << FMC_PFAPR_M4AP_SHIFT); // allow USB controller to read from Flash
     USB_DeviceRun(UsbCompositeDevice.deviceHandle);
 }

@@ -10,6 +10,7 @@
 // Macros:
 
 // Variables:
+    extern uint8_t ActiveLayerModifierMask;
     extern layer_id_t ActiveLayer;
     extern bool ActiveLayerHeld;
     extern uint16_t DoubleTapSwitchLayerTimeout;

@@ -3,6 +3,7 @@
 
 // Includes:
 
+    #include <stdbool.h>
     #include "usb.h"
     #include "usb_device.h"
     #include "ksdk_usb/usb_device_class.h"
@@ -12,6 +13,9 @@
     #include "lufa/HIDClassCommon.h"
 
 // Macros:
+
+    #define USB_ALIGNMENT           __attribute__((aligned(4))) // required by USB DMA engine
+    #define USB_DESC_STORAGE_TYPE   const uint8_t USB_ALIGNMENT
 
     // General constants
 
@@ -62,5 +66,22 @@
     #define HID_RI_COLLECTION_PHYSICAL    0x00
     #define HID_RI_COLLECTION_APPLICATION 0x01
     #define HID_RI_COLLECTION_LOGICAL     0x02
+
+// Functions:
+    static inline bool test_bit(unsigned nr, const uint8_t *addr)
+    {
+        const uint8_t *p = addr;
+        return ((1UL << (nr & 7)) & (p[nr >> 3])) != 0;
+    }
+    static inline void set_bit(unsigned nr, uint8_t *addr)
+    {
+        uint8_t *p = (uint8_t *)addr;
+        p[nr >> 3] |= (1UL << (nr & 7));
+    }
+    static inline void clear_bit(unsigned nr, uint8_t *addr)
+    {
+        uint8_t *p = (uint8_t *)addr;
+        p[nr >> 3] &= ~(1UL << (nr & 7));
+    }
 
 #endif

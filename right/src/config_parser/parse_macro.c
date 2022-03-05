@@ -22,8 +22,9 @@ parser_error_t parseKeyMacroAction(config_buffer_t *buffer, macro_action_t *macr
     macroAction->key.action = action;
     macroAction->key.type = type;
     macroAction->key.scancode = scancode;
-    macroAction->key.modifierMask = modifierMask;
-    macroAction->key.sticky = false;
+    macroAction->key.outputModMask = modifierMask;
+    macroAction->key.inputModMask = 0;
+    macroAction->key.stickyModMask = 0;
     return ParserError_Success;
 }
 
