@@ -37,6 +37,7 @@ Some of the usecases which can be achieved via these commands are:
     
 3) Understanding this readme:
 
+    - Use Ctrl+F (or equivalent) a lot.
     - Go through the sections of the reference manual below - just reading the top section lines will give you some idea about available  types of commands.
     - Read through examples in order to understand how the constructs can be combined.
     - Understand how to read the stated ebnf grammar. The grammar gives you precise instructions about available features and their parameters, as well as correct syntax. Note that some commands and parameters are only mentioned in the grammar! In case you don't know anything about grammars:
@@ -512,6 +513,7 @@ We allow postponing key activations in order to allow deciding between some scen
   - `arg4 - adr1` index of macro action to go to if the `arg1`th next key's hardware identifier equals `arg2`.
   - `arg5 - adr2` index of macro action to go to otherwise.
 - `resolveNextKeyId` will wait for next key press. When the next key is pressed, it will type a unique identifier identifying the pressed hardware key. 
+  - E.g., create a macro containing this command, and bint it to key `a`. Focus text editor. Tap `a`, tap `b`. Now, you should see `91` in your text editor, which is `b`'s `KEYID`.
 
 ### Conditions 
 
