@@ -16,7 +16,7 @@ const agentDir = `${__dirname}/../lib/agent`;
 var releaseFile = `${__dirname}/${releaseName}.tar.gz`;
 var mkArgs = '';
 
-if( process.argv.includes('--extendedMacros')) {
+if (process.argv.includes('--extendedMacros')) {
     mkArgs = mkArgs + 'CUSTOM_CFLAGS=-DEXTENDED_MACROS'
     releaseFile = `${__dirname}/${releaseName}-extendedMacros.tar.gz`;
 }
@@ -29,7 +29,7 @@ const sourcePaths = [
     ...package.devices.map(device => device.source),
     ...package.modules.map(module => module.source),
 ];
-for (sourcePath of sourcePaths) {
+for (const sourcePath of sourcePaths) {
     const buildDir = path.dirname(`${__dirname}/../${sourcePath}`);
     mkdir('-p', buildDir);
     exec(`cd ${buildDir}/..; make clean; make -j8 ${mkArgs}`);
