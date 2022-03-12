@@ -59,4 +59,5 @@ for (const module of package.modules) {
 }
 
 cp(`${__dirname}/package.json`, releaseDir);
+cp('-R', `${__dirname}/../doc/dist`, `${releaseDir}/doc`);
 exec(`tar -czvf ${releaseFile} -C ${releaseDir} .`);
