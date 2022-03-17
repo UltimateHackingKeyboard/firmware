@@ -17,11 +17,8 @@ static uint32_t watchInterval = 500;
 
 void AddReportToStatusBuffer(usb_basic_keyboard_report_t *report)
 {
-    Macros_SetStatusNum(report->modifiers);
-    for (int i = 0; i < 6; i++) {
-        Macros_SetStatusNum(report->scancodes[i]);
-    }
-    Macros_SetStatusString("\n", NULL);
+    // TODO: reimplement this using the new interfaces
+    Macros_SetStatusString("todo: reimplement this\n", NULL);
 }
 
 void ShowNumberExp(int32_t a)
