@@ -3,6 +3,8 @@
 #include "usb_protocol_handler.h"
 #include "slot.h"
 #include "slave_drivers/uhk_module_driver.h"
+#include <string.h>
+#include "utils.h"
 
 void UsbCommand_GetModuleProperty()
 {
@@ -20,6 +22,18 @@ void UsbCommand_GetModuleProperty()
             GenericHidInBuffer[1] = moduleState->moduleId;
             memcpy(GenericHidInBuffer + 2, &moduleState->moduleProtocolVersion, sizeof(version_t));
             memcpy(GenericHidInBuffer + 8, &moduleState->firmwareVersion, sizeof(version_t));
+            break;
+        }
+        case ModulePropertyId_GitTag: {
+            uint8_t moduleDriverId = UhkModuleSlaveDriver_SlotIdToDriverId(slotId);
+            uhk_module_state_t *moduleState = UhkModuleStates + moduleDriverId;
+            Utils_SafeStrCopy(((char*)GenericHidInBuffer) + 1, moduleState->gitTag, sizeof(GenericHidInBuffer) - 1);
+            break;
+        }
+        case ModulePropertyId_GitRepo: {
+            uint8_t moduleDriverId = UhkModuleSlaveDriver_SlotIdToDriverId(slotId);
+            uhk_module_state_t *moduleState = UhkModuleStates + moduleDriverId;
+            Utils_SafeStrCopy(((char*)GenericHidInBuffer) + 1, moduleState->gitRepo, sizeof(GenericHidInBuffer) - 1);
             break;
         }
     }

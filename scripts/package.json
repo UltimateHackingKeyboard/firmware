@@ -17,8 +17,8 @@
     "shelljs": "^0.8.4"
   },
   "firmwareVersion": "9.0.0",
-  "deviceProtocolVersion": "4.7.1",
-  "moduleProtocolVersion": "4.1.0",
+  "deviceProtocolVersion": "4.8.0",
+  "moduleProtocolVersion": "4.2.0",
   "userConfigVersion": "5.0.0",
   "hardwareConfigVersion": "1.0.0",
   "smartMacrosVersion": "1.0.0",

@@ -10,6 +10,8 @@
         DevicePropertyId_CurrentKbootCommand   = 3,
         DevicePropertyId_I2cMainBusBaudRate    = 4,
         DevicePropertyId_Uptime                = 5,
+        DevicePropertyId_GitTag                = 6,
+        DevicePropertyId_GitRepo               = 7,
     } device_property_t;
 
     typedef enum {
