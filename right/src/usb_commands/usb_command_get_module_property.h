@@ -9,6 +9,8 @@
 
     typedef enum {
         ModulePropertyId_VersionNumbers = 0,
+        ModulePropertyId_GitTag = 1,
+        ModulePropertyId_GitRepo = 2,
     } module_property_id_t;
 
     typedef enum {

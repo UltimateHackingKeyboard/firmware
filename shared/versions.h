@@ -8,6 +8,15 @@
 
     #include "fsl_common.h"
 
+// Macros:
+
+#define VERSION_AT_LEAST(v, MAJ, MIN, PATCH) \
+    (\
+        ((v).major > (MAJ)) \
+        || ((v).major == (MAJ) && (v).minor > (MIN))\
+        || ((v).major == (MAJ) && (v).minor == (MIN) && (v).patch >= (PATCH))\
+    )
+
 // Typedefs:
 
     typedef struct {
@@ -23,11 +32,11 @@
     #define FIRMWARE_PATCH_VERSION 0
 
     #define DEVICE_PROTOCOL_MAJOR_VERSION 4
-    #define DEVICE_PROTOCOL_MINOR_VERSION 7
-    #define DEVICE_PROTOCOL_PATCH_VERSION 1
+    #define DEVICE_PROTOCOL_MINOR_VERSION 8
+    #define DEVICE_PROTOCOL_PATCH_VERSION 0
 
     #define MODULE_PROTOCOL_MAJOR_VERSION 4
-    #define MODULE_PROTOCOL_MINOR_VERSION 1
+    #define MODULE_PROTOCOL_MINOR_VERSION 2
     #define MODULE_PROTOCOL_PATCH_VERSION 0
 
     #define USER_CONFIG_MAJOR_VERSION 5
@@ -41,5 +50,9 @@
     #define SMART_MACROS_MAJOR_VERSION 1
     #define SMART_MACROS_MINOR_VERSION 0
     #define SMART_MACROS_PATCH_VERSION 0
+
+
+#define GIT_REPO ""
+#define GIT_TAG ""
 
 #endif
