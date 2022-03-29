@@ -758,6 +758,18 @@ Syntax is <code>set module.{moduleId}.{layerId} {navigationMode}</code><br>
 set module.keycluster.navigationMode.base scroll
 </pre>
 
+<h3>set &raquo; navigation mode action</h3>
+
+<p>Customize caret or media navigation mode behaviour by binding directions to macros. This action is global and reversible only by powercycling.</p>
+
+Syntax is <code>set navigationModeAction.{mode}.{direction} {macroName}</code><br>
+
+<ul>
+<li><code>{mode}</code> is of <code>caret</code>, <code>media</code></li>
+<li><code>{direction}</code> is of <code>left</code>, <code>right</code>, <code>up</code>, <code>down</code></li>
+<li><code>{macroName}</code> is the name of a macro to be used</li>
+</ul>
+
 <h3>set &raquo; modifier layer triggers</h3>
 
 <table class="table w-auto">
@@ -870,7 +882,6 @@ Syntax is <code>set mouseKeys.{mode}.{property} {floatValue}</code><br>
         </tr>
     </tbody>
 </table>
-
 
 </div>
 </body>
