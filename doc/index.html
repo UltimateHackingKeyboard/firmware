@@ -813,6 +813,22 @@ set module.keycluster.navigationMode.base scroll
 
 <h3>set &raquo; mouse key speeds</h3>
 
+Syntax is <code>set mouseKeys.{mode}.{property} {floatValue}</code><br>
+
+<ul>
+<li><code>{mode}</code> is of <code>move</code>, <code>scroll</code></li>
+<li><code>{property}</code> is of
+    <ul>
+        <li><code>initialSpeed</code>: the speed that is active when key is pressed</li>
+        <li><code>initialAcceleration</code>: when mouse key is held, speed increases until it reaches baseSpeed</li>
+        <li><code>baseSpeed</code>: when mouse key is held, speed increases until it reaches baseSpeed</li>
+        <li><code>deceleratedSpeed</code>: speed as affected by deceleration modifier</li>
+        <li><code>acceleratedSpeed</code>: speed as affected by acceleration modifier</li>
+        <li><code>axisSkew</code>: axis skew multiplies horizontal axis and divides vertical. Default value is 1.0, reasonable between 0.5-2.0 Useful for very niche usecases.</li>
+    </ul>
+</li>
+</ul>
+
 <table class="table">
     <thead>
         <tr>
