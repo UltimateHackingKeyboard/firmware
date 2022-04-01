@@ -934,6 +934,11 @@ Syntax is <code>set stickyModifiers {stickyMode}</code><br>
 
 <p>Syntax is <code>keystrokeDelay {time in milliseconds, at most 65535}</code></p>
 
+<h3>set &raquo; chording delay</h3>
+
+<p>If nonzero, this setting allows triggering chorded shortcuts in arbitrary order. For example, if `A+Ctrl` is pressed instead of `Ctrl+A`, the keyboard will still send `Ctrl+A` if the two key presses follow within the specified time.</p>
+
+<p>Syntax is <code>chordingDelay {time in milliseconds, at most 255}</code></p>
 
 </div>
 </body>
