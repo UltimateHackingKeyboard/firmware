@@ -51,6 +51,23 @@ When the UHK powers up or its configuration gets saved, first <code>$onInit</cod
 
 <h3>set &raquo; module speeds</h3>
 
+<p>Set module speeds.</p>
+
+Syntax is <code>set module.{module}.{property} {value}</code><br>
+
+<ul>
+<li><code>{module}</code> is of <code>keycluster</code>, <code>trackball</code>, <code>trackpoint</code>, <code>touchpad</code></li>
+<li><code>{property}</code> is of
+    <ul>
+        <li><code>baseSpeed</code>: speed multiplier part that always applies, 0-10.0 (FLOAT)</li>
+        <li><code>speed</code>: speed multiplier part that is affected by xceleration, 0-10.0 (FLOAT)</li>
+        <li><code>xceleration</code>: exponent 0-1.0 (FLOAT)</li>
+        <li><code>caretSpeedDivisor</code>: (default: 16) is used to divide input in caret mode. This means that per one tick, you have to move by 16 pixels (or whatever the unit is). (This is furthermore modified by axisLocking skew, as well as acceleration.)</li>
+        <li><code>scrollSpeedDivisor</code>: (default: 8) is used to divide input in scroll mode. This means that while scrolling, every 8 pixels produce one scroll tick. (This is furthermore modified by axisLocking skew, as well as acceleration.)</li>
+    </ul>
+</li>
+</ul>
+
 <table class="table">
     <thead>
         <tr>
