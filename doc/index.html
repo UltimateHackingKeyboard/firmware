@@ -916,6 +916,24 @@ Syntax is <code>set stickyModifiers {stickyMode}</code><br>
 </li>
 </ul>
 
+<h3>set &raquo; switch debounce delay</h3>
+
+<p>Prevents key state from changing for some time after every state change. This is needed because contacts of mechanical switches can bounce after contact and therefore change state multiple times in span of a few milliseconds. Official firmware debounce time is 50 ms for both press and release. Recommended value is 10-50, default is 50.</p>
+
+<p>Syntax is <code>debounceDelay {time in milliseconds, at most 250}</code></p>
+
+<h3>set &raquo; double tap delay</h3>
+
+<p>Controls doubletap timeouts for both layer switchers.</p>
+
+<p>Syntax is <code>doubletapDelay {time in milliseconds, at most 65535}</code></p>
+
+<h3>set &raquo; keystroke delay</h3>
+
+<p>Allows slowing down keyboard output. This is handy for lousily written RDP clients and other software which just scans keys once a while and processes them in wrong order if multiple keys have been pressed inbetween. In more detail, this setting adds a delay whenever a basic usb report is sent. During this delay, key matrix is still scanned and keys are debounced, but instead of activating, the keys are added into a queue to be replayed later. Recommended value is 10 if you have issues with RDP missing modifier keys, 0 otherwise.</p>
+
+<p>Syntax is <code>keystrokeDelay {time in milliseconds, at most 65535}</code></p>
+
 
 </div>
 </body>
