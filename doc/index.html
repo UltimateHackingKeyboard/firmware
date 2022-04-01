@@ -900,6 +900,23 @@ Syntax is <code>set mouseKeys.{mode}.{property} {floatValue}</code><br>
 
 <p><input type="checkbox"> Enable diagonal speed compensation</p>
 
+<h3>set &raquo; sticky modifiers</h3>
+
+<p>The sticky modifiers setting affects the behavior of shortcuts on non-base layers. For example, if Mod+d is mapped to Alt+Tab and Mod+d is pressed, Alt+Tab is triggered, then if d is released while Mod is still held, Alt is held, too, hence, the modifier is sticky.</p>
+
+Syntax is <code>set stickyModifiers {stickyMode}</code><br>
+
+<ul>
+<li><code>{stickyMode}</code> is of
+    <ul>
+        <li><strong><code>smart</code></strong>: make only a select few shortcuts sticky, namely when Alt, Super, or Control is pressed along with Tilde, Tab, or an arrow key.</li>
+        <li><code>never</code>: make every key non-sticky</li>
+        <li><code>always</code>: make every key sticky</li>
+    </ul>
+</li>
+</ul>
+
+
 </div>
 </body>
 </html>
