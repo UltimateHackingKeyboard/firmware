@@ -352,15 +352,19 @@ macro_result_t MacroSetCommand(const char* arg1, const char *textEnd)
     else if (TokenMatches(arg1, textEnd, "mouseKeys")) {
         mouseKeys(proceedByDot(arg1, textEnd), textEnd);
     }
+#ifdef EXTENDED_MACROS
     else if (TokenMatches(arg1, textEnd, "keymapAction")) {
         keymapAction(proceedByDot(arg1, textEnd), textEnd);
     }
+#endif
     else if (TokenMatches(arg1, textEnd, "navigationModeAction")) {
         navigationModeAction(proceedByDot(arg1, textEnd), textEnd);
     }
+#ifdef EXTENDED_MACROS
     else if (TokenMatches(arg1, textEnd, "macroEngine")) {
         macroEngine(proceedByDot(arg1, textEnd), textEnd);
     }
+#endif
     else if (TokenMatches(arg1, textEnd, "backlight")) {
         backlight(proceedByDot(arg1, textEnd), textEnd);
     }
@@ -389,10 +393,12 @@ macro_result_t MacroSetCommand(const char* arg1, const char *textEnd)
     else if (TokenMatches(arg1, textEnd, "chordingDelay")) {
         ChordingDelay = Macros_ParseInt(arg2, textEnd, NULL);
     }
+#ifdef EXTENDED_MACROS
     else if (TokenMatches(arg1, textEnd, "emergencyKey")) {
         uint16_t key = Macros_ParseInt(arg2, textEnd, NULL);
         EmergencyKey = Utils_KeyIdToKeyState(key);
     }
+#endif
     else {
         Macros_ReportError("parameter not recognized:", arg1, textEnd);
     }
