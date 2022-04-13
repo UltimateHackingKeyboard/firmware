@@ -32,6 +32,10 @@ static void moduleNavigationMode(const char* arg1, const char *textEnd, module_c
     layer_id_t layerId = Macros_ParseLayerId(arg1, textEnd);
     navigation_mode_t modeId = ParseNavigationModeId(NextTok(arg1, textEnd), textEnd);
 
+    if (Macros_ParserError) {
+        return;
+    }
+
     module->navigationModes[layerId] = modeId;
 }
 
@@ -86,6 +90,10 @@ static void module(const char* arg1, const char *textEnd)
     module_configuration_t* module = GetModuleConfiguration(moduleId);
 
     const char* arg2 = proceedByDot(arg1, textEnd);
+
+    if (Macros_ParserError) {
+        return;
+    }
 
     if (TokenMatches(arg2, textEnd, "navigationMode")) {
         const char* arg3 = proceedByDot(arg2, textEnd);
@@ -235,8 +243,12 @@ static void navigationModeAction(const char* arg1, const char *textEnd)
 
     navigationMode = ParseNavigationModeId(arg1, textEnd);
 
-    if(navigationMode != NavigationMode_Caret && navigationMode != NavigationMode_Media && navigationMode != NavigationMode_Zoom) {
+    if(navigationMode < NavigationMode_RemappableFirst || navigationMode > NavigationMode_RemappableLast) {
         Macros_ReportError("Invalid or non-remapable navigation mode", arg1, textEnd);
+    }
+
+    if (Macros_ParserError) {
+        return;
     }
 
     if (TokenMatches(arg2, textEnd, "left")) {
@@ -286,6 +298,10 @@ static void keymapAction(const char* arg1, const char *textEnd)
         Macros_ReportError("invalid key id:", arg2, textEnd);
     }
 
+    if (Macros_ParserError) {
+        return;
+    }
+
     key_action_t* action = &CurrentKeymap[layerId][slotIdx][inSlotIdx];
 
     if(macroIndex == 255) {
@@ -322,6 +338,10 @@ static void modLayerTriggers(const char* arg1, const char *textEnd)
         break;
     default:
         Macros_ReportError("This layer does not allow modifier triggers.", arg1, specifier);
+        return;
+    }
+
+    if (Macros_ParserError) {
         return;
     }
 
