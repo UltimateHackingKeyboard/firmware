@@ -38,6 +38,8 @@ bool Macros_WakedBecauseOfKeystateChange = false;
 uint32_t Macros_WakeMeOnTime = 0xFFFFFFFF;
 bool Macros_WakeMeOnKeystateChange = false;
 
+bool Macros_ParserError = false;
+
 
 macro_scheduler_t Macros_Scheduler = Scheduler_Blocking;
 uint8_t Macros_MaxBatchSize = 20;
@@ -529,6 +531,7 @@ static void reportErrorHeader()
 
 void Macros_ReportError(const char* err, const char* arg, const char *argEnd)
 {
+    Macros_ParserError = true;
     LedDisplay_SetText(3, "ERR");
     reportErrorHeader();
     Macros_SetStatusString(err, NULL);
@@ -541,6 +544,7 @@ void Macros_ReportError(const char* err, const char* arg, const char *argEnd)
 
 void Macros_ReportErrorFloat(const char* err, float num)
 {
+    Macros_ParserError = true;
     LedDisplay_SetText(3, "ERR");
     reportErrorHeader();
     Macros_SetStatusString(err, NULL);
@@ -550,6 +554,7 @@ void Macros_ReportErrorFloat(const char* err, float num)
 
 void Macros_ReportErrorNum(const char* err, int32_t num)
 {
+    Macros_ParserError = true;
     LedDisplay_SetText(3, "ERR");
     reportErrorHeader();
     Macros_SetStatusString(err, NULL);
@@ -1065,6 +1070,11 @@ static macro_result_t processSwitchKeymapCommand(const char* arg1, const char* c
     uint8_t tmpKeymapIdx = CurrentKeymapIndex;
     {
         uint8_t newKeymapIdx = parseKeymapId(arg1, cmdEnd);
+
+        if (Macros_ParserError) {
+            return MacroResult_Finished;
+        }
+
         SwitchKeymapById(newKeymapIdx);
         Macros_ResetLayerStack();
     }
@@ -1077,7 +1087,14 @@ static macro_result_t processSwitchKeymapLayerCommand(const char* arg1, const ch
 {
     uint8_t tmpLayerIdx = Macros_ActiveLayer;
     uint8_t tmpLayerKeymapIdx = CurrentKeymapIndex;
-    pushStack(Macros_ParseLayerId(NextTok(arg1, cmdEnd), cmdEnd), parseKeymapId(arg1, cmdEnd), false);
+    uint8_t layer = Macros_ParseLayerId(NextTok(arg1, cmdEnd), cmdEnd);
+    uint8_t keymap = parseKeymapId(arg1, cmdEnd);
+
+    if (Macros_ParserError) {
+        return MacroResult_Finished;
+    }
+
+    pushStack(layer, keymap, false);
     lastLayerIdx = tmpLayerIdx;
     lastLayerKeymapIdx = tmpLayerKeymapIdx;
     return MacroResult_Finished;
@@ -1092,7 +1109,14 @@ static macro_result_t processSwitchLayerCommand(const char* arg1, const char* cm
         popLayerStack(true, false);
     }
     else {
-        pushStack(Macros_ParseLayerId(arg1, cmdEnd), parseLayerKeymapId(arg1, cmdEnd), false);
+        uint8_t layer = Macros_ParseLayerId(arg1, cmdEnd);
+        uint8_t keymap = parseKeymapId(arg1, cmdEnd);
+
+        if (Macros_ParserError) {
+            return MacroResult_Finished;
+        }
+
+        pushStack(layer, keymap, false);
     }
     lastLayerIdx = tmpLayerIdx;
     lastLayerKeymapIdx = tmpLayerKeymapIdx;
@@ -1104,7 +1128,14 @@ static macro_result_t processToggleKeymapLayerCommand(const char* arg1, const ch
 {
     uint8_t tmpLayerIdx = Macros_ActiveLayer;
     uint8_t tmpLayerKeymapIdx = CurrentKeymapIndex;
-    pushStack(Macros_ParseLayerId(NextTok(arg1, cmdEnd), cmdEnd), parseKeymapId(arg1, cmdEnd), false);
+    uint8_t layer = Macros_ParseLayerId(NextTok(arg1, cmdEnd), cmdEnd);
+    uint8_t keymap = parseKeymapId(arg1, cmdEnd);
+
+    if (Macros_ParserError) {
+        return MacroResult_Finished;
+    }
+
+    pushStack(layer, keymap, false);
     lastLayerIdx = tmpLayerIdx;
     lastLayerKeymapIdx = tmpLayerKeymapIdx;
     return MacroResult_Finished;
@@ -1114,7 +1145,14 @@ static macro_result_t processToggleLayerCommand(const char* arg1, const char* cm
 {
     uint8_t tmpLayerIdx = Macros_ActiveLayer;
     uint8_t tmpLayerKeymapIdx = CurrentKeymapIndex;
-    pushStack(Macros_ParseLayerId(arg1, cmdEnd), parseLayerKeymapId(arg1, cmdEnd), false);
+    uint8_t layer = Macros_ParseLayerId(arg1, cmdEnd);
+    uint8_t keymap = parseLayerKeymapId(arg1, cmdEnd);
+
+    if (Macros_ParserError) {
+        return MacroResult_Finished;
+    }
+
+    pushStack(layer, keymap, false);
     lastLayerIdx = tmpLayerIdx;
     lastLayerKeymapIdx = tmpLayerKeymapIdx;
     return MacroResult_Finished;
@@ -1163,31 +1201,68 @@ bool Macros_IsLayerHeld()
 
 static macro_result_t processHoldLayerCommand(const char* arg1, const char* cmdEnd)
 {
-    return processHoldLayer(Macros_ParseLayerId(arg1, cmdEnd), parseLayerKeymapId(arg1, cmdEnd), 0xFFFF);
+    uint8_t layer = Macros_ParseLayerId(arg1, cmdEnd);
+    uint8_t keymap = parseLayerKeymapId(arg1, cmdEnd);
+
+    if (Macros_ParserError) {
+        return MacroResult_Finished;
+    }
+
+    return processHoldLayer(layer, keymap, 0xFFFF);
 }
 
 static macro_result_t processHoldLayerMaxCommand(const char* arg1, const char* cmdEnd)
 {
     const char* arg2 = NextTok(arg1, cmdEnd);
-    return processHoldLayer(Macros_ParseLayerId(arg1, cmdEnd), parseLayerKeymapId(arg1, cmdEnd), parseNUM(arg2, cmdEnd));
+
+    uint8_t layer = Macros_ParseLayerId(arg1, cmdEnd);
+    uint8_t keymap = parseLayerKeymapId(arg1, cmdEnd);
+    uint16_t timeout = parseNUM(arg2, cmdEnd);
+
+    if (Macros_ParserError) {
+        return MacroResult_Finished;
+    }
+
+    return processHoldLayer(layer, keymap, timeout);
 }
 
 static macro_result_t processHoldKeymapLayerCommand(const char* arg1, const char* cmdEnd)
 {
     const char* arg2 = NextTok(arg1, cmdEnd);
-    return processHoldLayer(Macros_ParseLayerId(arg2, cmdEnd), parseKeymapId(arg1, cmdEnd), 0xFFFF);
+    uint8_t layer = Macros_ParseLayerId(arg2, cmdEnd);
+    uint8_t keymap = parseKeymapId(arg1, cmdEnd);
+
+    if (Macros_ParserError) {
+        return MacroResult_Finished;
+    }
+
+    return processHoldLayer(layer, keymap, 0xFFFF);
 }
 
 static macro_result_t processHoldKeymapLayerMaxCommand(const char* arg1, const char* cmdEnd)
 {
     const char* arg2 = NextTok(arg1, cmdEnd);
     const char* arg3 = NextTok(arg2, cmdEnd);
-    return processHoldLayer(Macros_ParseLayerId(arg2, cmdEnd), parseKeymapId(arg1, cmdEnd), parseNUM(arg3, cmdEnd));
+
+    uint8_t layer = Macros_ParseLayerId(arg2, cmdEnd);
+    uint8_t keymap = parseKeymapId(arg1, cmdEnd);
+    uint16_t timeout = parseNUM(arg3, cmdEnd);
+
+    if (Macros_ParserError) {
+        return MacroResult_Finished;
+    }
+
+    return processHoldLayer(layer, keymap, timeout);
 }
 
 static macro_result_t processDelayUntilReleaseMaxCommand(const char* arg1, const char* cmdEnd)
 {
     uint32_t timeout = parseNUM(arg1, cmdEnd);
+
+    if (Macros_ParserError) {
+        return MacroResult_Finished;
+    }
+
     if (currentMacroKeyIsActive() && Timer_GetElapsedTime(&s->ms.currentMacroStartTime) < timeout) {
         sleepTillKeystateChange();
         sleepTillTime(s->ms.currentMacroStartTime + timeout);
@@ -1207,6 +1282,11 @@ static macro_result_t processDelayUntilReleaseCommand()
 static macro_result_t processDelayUntilCommand(const char* arg1, const char* cmdEnd)
 {
     uint32_t time = parseNUM(arg1,  cmdEnd);
+
+    if (Macros_ParserError) {
+        return MacroResult_Finished;
+    }
+
     return processDelay(time);
 }
 
@@ -1989,6 +2069,10 @@ static macro_result_t processActivateKeyPostponedCommand(const char* arg1, const
         const char* arg2 = NextTok(arg1, argEnd);
         layer = Macros_ParseLayerId(arg2, argEnd);
         arg1 = NextTok(arg2, argEnd);
+    }
+
+    if (Macros_ParserError) {
+        return MacroResult_Finished;
     }
 
     uint16_t keyid = parseNUM(arg1, argEnd);
@@ -2935,6 +3019,7 @@ uint8_t Macros_QueueMacro(uint8_t index, key_state_t *keyState, uint8_t queueAft
 
 macro_result_t continueMacro(void)
 {
+    Macros_ParserError = false;
     s->as.modifierPostpone = false;
     s->as.modifierSuppressMods = false;
 

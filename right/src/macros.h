@@ -226,6 +226,7 @@
     extern bool Macros_WakedBecauseOfTime;
     extern bool Macros_WakedBecauseOfKeystateChange;
     extern uint16_t DoubletapConditionTimeout;
+    extern bool Macros_ParserError;
 
 // Functions:
 
