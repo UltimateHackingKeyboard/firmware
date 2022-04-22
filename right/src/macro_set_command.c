@@ -407,7 +407,9 @@ macro_result_t MacroSetCommand(const char* arg1, const char *textEnd)
     }
     else if (
             TokenMatches(arg1, textEnd, "doubletapTimeout")  // new name
+#ifdef EXTENDED_MACROS
             || TokenMatches(arg1, textEnd, "doubletapDelay") // deprecated alias - old name
+#endif
             ) {
         uint16_t delay = Macros_ParseInt(arg2, textEnd, NULL);
         DoubleTapSwitchLayerTimeout = delay;
