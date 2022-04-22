@@ -405,7 +405,10 @@ macro_result_t MacroSetCommand(const char* arg1, const char *textEnd)
     else if (TokenMatches(arg1, textEnd, "keystrokeDelay")) {
         KeystrokeDelay = Macros_ParseInt(arg2, textEnd, NULL);
     }
-    else if (TokenMatches(arg1, textEnd, "doubletapDelay")) {
+    else if (
+            TokenMatches(arg1, textEnd, "doubletapTimeout")  // new name
+            || TokenMatches(arg1, textEnd, "doubletapDelay") // deprecated alias - old name
+            ) {
         uint16_t delay = Macros_ParseInt(arg2, textEnd, NULL);
         DoubleTapSwitchLayerTimeout = delay;
         DoubletapConditionTimeout = delay;
