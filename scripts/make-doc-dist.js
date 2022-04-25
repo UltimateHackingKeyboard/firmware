@@ -8,8 +8,10 @@ config.verbose = true;
 const docFiles = [
     'index.html',
     'style.css',
+    'script.mjs',
     'agent-onInit.png',
     'node_modules/bootstrap/dist/css/bootstrap.min.css',
+    'node_modules/vue/dist/vue.esm-browser.prod.js',
 ];
 
 for (const docFile of docFiles) {
