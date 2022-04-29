@@ -3,11 +3,21 @@ import {createApp} from './node_modules/vue/dist/vue.esm-browser.prod.js';
 // Components
 
 const Slider = {
-    template: `<input type="range" ref="range" @input="onInput()">1.0`,
+    template: `<input type="range" ref="range" @input="updateValue()">{{ value }}`,
+    data() {
+        return {
+            value: '',
+        };
+    },
+    mounted() {
+        this.updateValue();
+    },
     methods: {
-        onInput() {
-            console.log(this.$refs.range.value);
+        updateValue() {
+            this.value = this.$refs.range.value;
+            console.log(this.value);
         },
+
     },
 };
 
