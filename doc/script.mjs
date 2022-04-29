@@ -2,8 +2,15 @@ import {createApp} from './node_modules/vue/dist/vue.esm-browser.prod.js';
 
 // Components
 
+function setVariable(name, value) {
+    console.log(`set ${name} ${value}`);
+}
+
 const Slider = {
-    template: `<input type="range" ref="range" @input="updateValue()">{{ value }}`,
+    template: `<input type="range" ref="range" @input="updateValue()">{{value}}`,
+    props: {
+        name: String,
+    },
     data() {
         return {
             value: '',
@@ -15,9 +22,8 @@ const Slider = {
     methods: {
         updateValue() {
             this.value = this.$refs.range.value;
-            console.log(this.value);
+            setVariable(this.name, this.value);
         },
-
     },
 };
 
