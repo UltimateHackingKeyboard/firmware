@@ -10,3 +10,4 @@ const Slider = {
 
 const app = createApp({});
 app.component('Slider', Slider);
+app.mount('body');
