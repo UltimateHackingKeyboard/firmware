@@ -261,6 +261,7 @@ The following grammar is supported:
     COMMAND = writeExpr NUMBER
     COMMAND = goTo <index (ADDRESS)>
     COMMAND = repeatFor <register index (NUMBER)> <action adr (ADDRESS)>
+    COMMAND = progressHue
     COMMAND = recordMacroDelay
     COMMAND = {startRecording | startRecordingBlind} [<slot identifier (MACROID)>]
     COMMAND = {recordMacro | recordMacroBlind} [<slot identifier (MACROID)>]
@@ -392,6 +393,7 @@ The following grammar is supported:
 
 - `setLedTxt <time> <custom text>` will set led display to supplemented text for the given time. (Blocks for the given time.)
     - If the given time is zero, i.e. `<time> = 0`, the led text will be set indefinitely (until the display is refreshed by other text) and this command will returns immediately (non-blocking).
+- `progressHue` or better `autoRepeat progressHue` will slowly adjust constantRGB value in order to rotate the per-key-RGB backlight through all hues. 
 
 ### Triggering keyboard actions (pressing keys, clicking, etc.):
 

@@ -12,6 +12,7 @@
 #include "usb_report_updater.h"
 #include "led_display.h"
 #include "postponer.h"
+#include "ledmap.h"
 #include "macro_recorder.h"
 #include "macro_shortcut_parser.h"
 #include "str_utils.h"
@@ -2105,6 +2106,41 @@ static macro_result_t processForkCommand(const char* arg1, const char* cmdEnd)
     return forkMacro(macroIndex);
 }
 
+
+static macro_result_t processProgressHueCommand()
+{
+#define C(I) (*cols[((phase + I + 3) % 3)])
+
+    const uint8_t step = 10;
+    static uint8_t phase = 0;
+
+    uint8_t* cols[] = {
+        &LedMap_ConstantRGB.red,
+        &LedMap_ConstantRGB.green,
+        &LedMap_ConstantRGB.blue
+    };
+
+    bool progressed = false;
+    if (C(-1) > step) {
+        C(-1) -= step;
+        progressed = true;
+    }
+    if (C(0) < 255-step+1) {
+        C(0) += step;
+        progressed = true;
+    }
+    if (!progressed) {
+        C(-1) = 0;
+        C(0) = 255;
+        phase++;
+    }
+
+    LedMap_BacklightStrategy = BacklightStrategy_ConstantRGB;
+    UpdateLayerLeds();
+    return MacroResult_Finished;
+#undef C
+}
+
 static macro_result_t processCommand(const char* cmd, const char* cmdEnd)
 {
     if (*cmd == '$') {
@@ -2528,6 +2564,9 @@ static macro_result_t processCommand(const char* cmd, const char* cmdEnd)
             }
             else if (TokenMatches(cmd, cmdEnd, "postponeNext")) {
                 return processPostponeNextNCommand(arg1, cmdEnd);
+            }
+            else if (TokenMatches(cmd, cmdEnd, "progressHue")) {
+                return processProgressHueCommand();
             }
             else {
                 goto failed;
