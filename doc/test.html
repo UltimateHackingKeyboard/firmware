@@ -6,10 +6,10 @@
 <body>
 <div class="split" style="height:100%">
     <div id="left">
-        <label><input type="checkbox" name="keycluster" @change="change">Key cluster</label>
-        <label><input type="checkbox" name="trackball" @change="change">Trackball</label>
-        <label><input type="checkbox" name="trackpoint" @change="change">Trackpoint</label>
-        <label><input type="checkbox" name="touchpad" @change="change">Touchpad</label>
+        <label><input type="checkbox" v-model="keycluster" @change="change('module')">Key cluster</label>
+        <label><input type="checkbox" v-model="trackball" @change="change('module')">Trackball</label>
+        <label><input type="checkbox" v-model="trackpoint" @change="change('module')">Trackpoint</label>
+        <label><input type="checkbox" v-model="touchpad" @change="change('module')">Touchpad</label>
         <textarea name="command1" @focus="change" style="width:99%; height:48%; margin-bottom:10px;"></textarea>
         <textarea name="command2" @focus="change" style="width:99%; height:48%"></textarea>
     </div>

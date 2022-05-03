@@ -4,7 +4,11 @@ import Split from './node_modules/split.js/dist/split.es.js';
 const app = createApp({
     data() {
         return {
-            count: 0,
+            keycluster: false,
+            trackball: false,
+            trackpoint: false,
+            touchpad: false,
+            command: '',
         };
     },
     mounted() {
@@ -13,8 +17,18 @@ const app = createApp({
         });
     },
     methods: {
-        change(target) {
-            console.log(target.target);
+        change(event) {
+            const obj = {
+                keycluster: this.keycluster,
+                trackball: this.trackball,
+                trackpoint: this.trackpoint,
+                touchpad: this.touchpad,
+                command: this.command,
+            };
+            if (event !== 'module') {
+                this.command = event.target.value
+            }
+            console.log(obj);
         },
     },
 });
