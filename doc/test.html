@@ -4,10 +4,14 @@
 <link rel="stylesheet" href="test.css">
 </head>
 <body>
-<div class="split">
+<div class="split" style="height:100%">
     <div id="left">
-        <textarea cols="110" rows="30" style="margin-bottom: 10px;"></textarea>
-        <textarea cols="110" rows="30"></textarea>
+        <label><input type="checkbox" name="keycluster" @change="change">Key cluster</label>
+        <label><input type="checkbox" name="trackball" @change="change">Trackball</label>
+        <label><input type="checkbox" name="trackpoint" @change="change">Trackpoint</label>
+        <label><input type="checkbox" name="touchpad" @change="change">Touchpad</label>
+        <textarea name="command1" @focus="change" style="width:99%; height:48%; margin-bottom:10px;"></textarea>
+        <textarea name="command2" @focus="change" style="width:99%; height:48%"></textarea>
     </div>
     <div id="right">
         <iframe src="index.html" frameborder="0" width="100%" height="100%" style="overflow:hidden;height:100%;width:100%"></iframe>
