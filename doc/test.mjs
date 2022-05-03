@@ -18,6 +18,9 @@ const app = createApp({
     },
     methods: {
         change(event) {
+            if (event !== 'module') {
+                this.command = event.target.value;
+            }
             const obj = {
                 keycluster: this.keycluster,
                 trackball: this.trackball,
@@ -25,9 +28,6 @@ const app = createApp({
                 touchpad: this.touchpad,
                 command: this.command,
             };
-            if (event !== 'module') {
-                this.command = event.target.value
-            }
             console.log(obj);
         },
     },
