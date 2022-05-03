@@ -21,14 +21,17 @@ const app = createApp({
             if (event !== 'module') {
                 this.command = event.target.value;
             }
-            const obj = {
-                keycluster: this.keycluster,
-                trackball: this.trackball,
-                trackpoint: this.trackpoint,
-                touchpad: this.touchpad,
+            const message = {
+                modules: {
+                    keycluster: this.keycluster,
+                    trackball: this.trackball,
+                    trackpoint: this.trackpoint,
+                    touchpad: this.touchpad,
+                },
                 command: this.command,
             };
-            console.log(obj);
+            console.log(message);
+            this.$refs.iframe.contentWindow.postMessage(message, "*");
         },
     },
 });
