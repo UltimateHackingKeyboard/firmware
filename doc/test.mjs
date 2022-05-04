@@ -15,6 +15,9 @@ const app = createApp({
         Split(['#left', '#right'], {
             sizes: [50, 50],
         });
+        window.addEventListener('message', function(event) {
+            console.log('parent receive:', event.data);
+        });
     },
     methods: {
         change(event) {

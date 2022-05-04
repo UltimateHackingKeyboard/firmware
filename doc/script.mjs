@@ -35,6 +35,9 @@ const Slider = {
             this.value = this.$refs.range.value;
             if (!isInit) {
                 setVariable(this.name, this.value);
+                const message = {value: this.value};
+                console.log('child send:', message);
+                window.parent.postMessage(message);
             }
         },
     },
