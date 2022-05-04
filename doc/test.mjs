@@ -1,6 +1,8 @@
 import {createApp} from './node_modules/vue/dist/vue.esm-browser.prod.js';
 import Split from './node_modules/split.js/dist/split.es.js';
 
+let currentTarget;
+
 const app = createApp({
     data() {
         return {
@@ -17,12 +19,14 @@ const app = createApp({
         });
         window.addEventListener('message', function(event) {
             console.log('parent receive:', event.data);
+            currentTarget.value = event.data.command;
         });
     },
     methods: {
         change(event) {
             if (event !== 'module') {
-                this.command = event.target.value;
+                currentTarget = event.target;
+                this.command = currentTarget.value;
             }
             const message = {
                 version: '1.0.0',
