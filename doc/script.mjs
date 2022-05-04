@@ -10,12 +10,10 @@ function initWidgetValue(name, value) {
 }
 
 function setVariable(name, value) {
-    const regexVarName = name.replace(/\\./g, '.');
+    const regexVarName = name.replace(/\\./g, '\\.');
     const regex = new RegExp(`(set +${regexVarName} +)\\S+( *#?)`);
-    const newCommand = currentCommand.replace(regex, `$1${value}$2`);
-    console.log(`set ${name} ${value}`);
-    const message = {command: newCommand};
-    console.log('child send:', message);
+    currentCommand = currentCommand.replace(regex, `$1${value}$2`);
+    const message = {command: currentCommand};
     window.parent.postMessage(message);
 }
 
@@ -52,7 +50,6 @@ const Slider = {
 const app = createApp({
     created() {
         window.addEventListener('message', function(event) {
-            console.log('child receive:', event.data);
             currentCommand = event.data.command;
         });
     },

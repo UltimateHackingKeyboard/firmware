@@ -18,7 +18,6 @@ const app = createApp({
             sizes: [50, 50],
         });
         window.addEventListener('message', function(event) {
-            console.log('parent receive:', event.data);
             currentTarget.value = event.data.command;
         });
     },
@@ -39,7 +38,6 @@ const app = createApp({
                 },
                 command: this.command,
             };
-            console.log('parent send:', message);
             this.$refs.iframe.contentWindow.postMessage(message, '*');
         },
     },
