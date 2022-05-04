@@ -22,6 +22,8 @@ const app = createApp({
                 this.command = event.target.value;
             }
             const message = {
+                version: '1.0.0',
+                method: 'change',
                 modules: {
                     keycluster: this.keycluster,
                     trackball: this.trackball,
@@ -31,7 +33,7 @@ const app = createApp({
                 command: this.command,
             };
             console.log(message);
-            this.$refs.iframe.contentWindow.postMessage(message, "*");
+            this.$refs.iframe.contentWindow.postMessage(message, '*');
         },
     },
 });
