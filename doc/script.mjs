@@ -42,6 +42,12 @@ const Slider = {
 
 // Init Vue
 
-const app = createApp({});
+const app = createApp({
+    created() {
+        window.addEventListener('message', function(event) {
+            console.log('child receive:', event.data);
+        });
+    },
+});
 app.component('Slider', Slider);
 app.mount('body');

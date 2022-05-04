@@ -32,7 +32,7 @@ const app = createApp({
                 },
                 command: this.command,
             };
-            console.log(message);
+            console.log('parent send:', message);
             this.$refs.iframe.contentWindow.postMessage(message, '*');
         },
     },

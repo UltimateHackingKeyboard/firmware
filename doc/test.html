@@ -10,8 +10,8 @@
         <label><input type="checkbox" v-model="trackball" @change="change('module')">Trackball</label>
         <label><input type="checkbox" v-model="trackpoint" @change="change('module')">Trackpoint</label>
         <label><input type="checkbox" v-model="touchpad" @change="change('module')">Touchpad</label>
-        <textarea @focus="change" style="width:99%; height:48%; margin-bottom:10px;">set module.trackball.baseSpeed 1</textarea>
-        <textarea @focus="change" style="width:99%; height:48%"></textarea>
+        <textarea @focus="change" @keydown="change" style="width:99%; height:48%; margin-bottom:10px;">set module.trackball.baseSpeed 1</textarea>
+        <textarea @focus="change" @keydown="change" style="width:99%; height:48%"></textarea>
     </div>
     <div id="right">
         <iframe src="index.html" ref="iframe" frameborder="0" width="100%" height="100%" style="overflow:hidden; height:100%; width:100%"></iframe>
