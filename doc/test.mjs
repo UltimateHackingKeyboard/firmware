@@ -6,8 +6,8 @@ let currentTarget;
 const app = createApp({
     data() {
         return {
-            keycluster: false,
-            trackball: false,
+            keycluster: true,
+            trackball: true,
             trackpoint: false,
             touchpad: false,
             command: '',
@@ -27,17 +27,22 @@ const app = createApp({
                 currentTarget = event.target;
                 this.command = currentTarget.value;
             }
+
+            const modules = [
+                {moduleId: 2, isAttached: this.keycluster},
+                {moduleId: 3, isAttached: this.trackball},
+                {moduleId: 4, isAttached: this.trackpoint},
+                {moduleId: 5, isAttached: this.touchpad},
+            ].filter(module => module.isAttached)
+            .map(module => module.moduleId);
+
             const message = {
                 version: '1.0.0',
                 method: 'change',
-                modules: {
-                    keycluster: this.keycluster,
-                    trackball: this.trackball,
-                    trackpoint: this.trackpoint,
-                    touchpad: this.touchpad,
-                },
+                modules,
                 command: this.command,
             };
+
             this.$refs.iframe.contentWindow.postMessage(message, '*');
         },
     },

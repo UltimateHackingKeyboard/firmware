@@ -68,45 +68,33 @@ Syntax is <code>set module.{module}.{property} {value}</code><br>
 </li>
 </ul>
 
-<table class="table">
+<table v-show="rightModules.length" class="table">
     <thead>
         <tr>
             <th scope="col"></th>
-            <th scope="col">Trackball</th>
-            <th scope="col">Trackpoint</th>
-            <th scope="col">Touchpad</th>
+            <th v-for="module in rightModules" scope="col">{{moduleDescriptions[module]}}</th>
         </tr>
     </thead>
     <tbody>
         <tr>
             <td>Base speed</td>
-            <td class="no-wrap"><slider name="module.trackball.baseSpeed"/></td>
-            <td class="no-wrap"><slider name="module.trackpoint.baseSpeed"/></td>
-            <td class="no-wrap"><slider name="module.touchpad.baseSpeed"/></td>
+            <td v-for="module in rightModules" class="no-wrap"><slider :name="`module.${moduleStrings[module]}.baseSpeed`"/></td>
         </tr>
         <tr>
             <td>Speed</td>
-            <td class="no-wrap"><slider/></td>
-            <td class="no-wrap"><slider/></td>
-            <td class="no-wrap"><slider/></td>
+            <td v-for="module in rightModules" class="no-wrap"><slider :name="`module.${moduleStrings[module]}.speed`"/></td>
         </tr>
         <tr>
             <td>Acceleration</td>
-            <td class="no-wrap"><slider/></td>
-            <td class="no-wrap"><slider/></td>
-            <td class="no-wrap"><slider/></td>
+            <td v-for="module in rightModules" class="no-wrap"><slider :name="`module.${moduleStrings[module]}.xceleration`"/></td>
         </tr>
         <tr>
             <td>Caret speed divisor</td>
-            <td class="no-wrap"><slider/></td>
-            <td class="no-wrap"><slider/></td>
-            <td class="no-wrap"><slider/></td>
+            <td v-for="module in rightModules" class="no-wrap"><slider :name="`module.${moduleStrings[module]}.caretSpeedDivisor`"/></td>
         </tr>
         <tr>
             <td>Scroll speed divisor</td>
-            <td class="no-wrap"><slider/></td>
-            <td class="no-wrap"><slider/></td>
-            <td class="no-wrap"><slider/></td>
+            <td v-for="module in rightModules" class="no-wrap"><slider :name="`module.${moduleStrings[module]}.scrollSpeedDivisor`"/></td>
         </tr>
     </tbody>
 </table>

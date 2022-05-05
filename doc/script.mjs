@@ -28,6 +28,7 @@ const Slider = {
         };
     },
     mounted() {
+        console.log('slider name', this.name)
         this.updateValue();
         variablesToWidgets[this.name] = this;
     },
@@ -48,11 +49,36 @@ const Slider = {
 // Init Vue
 
 const app = createApp({
+    data() {
+        return {
+            modules: [],
+            moduleStrings: {
+                2: 'keycluster',
+                3: 'trackball',
+                4: 'trackpoint',
+                5: 'touchpad',
+            },
+            moduleDescriptions: {
+                2: 'Key cluster',
+                3: 'Trackball',
+                4: 'Trackpoint',
+                5: 'Touchpad',
+            },
+        };
+    },
     created() {
+        const self = this;
         window.addEventListener('message', function(event) {
-            currentCommand = event.data.command;
+            const data = event.data;
+            currentCommand = data.command;
+            self.modules = data.modules;
         });
     },
+    computed: {
+        rightModules() {
+            return this.modules.filter(module => module !== 2);
+        }
+    }
 });
 app.component('Slider', Slider);
 app.mount('body');
