@@ -69,7 +69,11 @@
 
 // Variables:
 
+    extern bool LedsEnabled;
+    extern bool LedSleepModeActive;
+    extern float LedBrightnessMultiplier;
     extern uint8_t KeyBacklightBrightness;
+    extern uint8_t KeyBacklightBrightnessDefault;
     extern uint8_t LedDriverValues[LED_DRIVER_MAX_COUNT][LED_DRIVER_LED_COUNT_MAX];
 
 // Functions:
