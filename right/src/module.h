@@ -14,14 +14,21 @@
 // Typedefs:
 
     typedef enum {
+        /* fixed behaviour */
         NavigationMode_Cursor,
         NavigationMode_Scroll,
+        NavigationMode_Zoom,
+        NavigationMode_None,
+
+        /* action_t mapped behaviour */
         NavigationMode_Caret,
         NavigationMode_Media,
-        NavigationMode_Zoom,
         NavigationMode_ZoomPc,
         NavigationMode_ZoomMac,
-        NavigationMode_None,
+
+        /* helpers */
+        NavigationMode_RemappableFirst = NavigationMode_Caret,
+        NavigationMode_RemappableLast = NavigationMode_ZoomMac,
     } navigation_mode_t;
 
     typedef struct {

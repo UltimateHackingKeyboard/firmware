@@ -235,6 +235,7 @@
     extern uint16_t DoubletapConditionTimeout;
     extern uint16_t AutoRepeatInitialDelay;
     extern uint16_t AutoRepeatDelayRate;
+    extern bool Macros_ParserError;
 
 // Functions:
 

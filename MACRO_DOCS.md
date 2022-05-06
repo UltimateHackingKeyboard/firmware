@@ -295,7 +295,7 @@ The following grammar is supported:
     COMMAND = set chordingDelay <time in ms (NUMBER)>
     COMMAND = set stickyModifiers {never|smart|always}
     COMMAND = set debounceDelay <time in ms, at most 250 (NUMBER)>
-    COMMAND = set doubletapDelay <time in ms, at most 65535 (NUMBER)>
+    COMMAND = set doubletapTimeout <time in ms, at most 65535 (NUMBER)>
     COMMAND = set keystrokeDelay <time in ms, at most 65535 (NUMBER)>
     COMMAND = set autoRepeatDelay <time in ms, at most 65535 (NUMBER)>
     COMMAND = set autoRepeatRate <time in ms, at most 65535 (NUMBER)>
@@ -372,6 +372,7 @@ The following grammar is supported:
     ############
     #DEPRECATED#
     ############
+    COMMAND = set doubletapDelay <time in ms, at most 65535, alias to doubletapTimeout (NUMBER)>
     COMMAND = switchLayer LAYERID
     COMMAND = switchKeymapLayer KEYMAPID LAYERID
     COMMAND = resolveNextKeyEq <queue position (NUMBER)> KEYID {<time in ms>|untilRelease} <action adr (ADDRESS)> <action adr (ADDRESS)>
@@ -586,7 +587,7 @@ For the purpose of toggling functionality on and off, and for global constants m
   3) Keystrokes and mouse actions
   This allows the user to trigger chorded shortcuts in arbitrary ordrer (all at the "same" time). E.g., if `A+Ctrl` is pressed instead of `Ctrl+A`, keyboard will still send `Ctrl+A` if the two key presses follow within the specified time.
 - `set debounceDelay <time in ms, at most 250>` prevents key state from changing for some time after every state change. This is needed because contacts of mechanical switches can bounce after contact and therefore change state multiple times in span of a few milliseconds. Official firmware debounce time is 50 ms for both press and release. Recommended value is 10-50, default is 50.
-- `set doubletapDelay <time in ms, at most 65535>` controls doubletap timeouts for both layer switchers and for the `ifDoubletap` condition.
+- `set doubletapTimeout <time in ms, at most 65535>` controls doubletap timeouts for both layer switchers and for the `ifDoubletap` condition.
 - `set keystrokeDelay <time in ms, at most 65535>` allows slowing down keyboard output. This is handy for lousily written RDP clients and other software which just scans keys once a while and processes them in wrong order if multiple keys have been pressed inbetween. In more detail, this setting adds a delay whenever a basic usb report is sent. During this delay, key matrix is still scanned and keys are debounced, but instead of activating, the keys are added into a queue to be replayed later. Recommended value is 10 if you have issues with RDP missing modifier keys, 0 otherwise.
 - `set autoRepeatDelay <time in ms, at most 65535>` and `set autoRepeatRate <time in ms, at most 65535>` allows you to set the initial delay (default: 500 ms) and the repeat delay (default: 50 ms) when using `autoRepeat`. When you run the command `autoRepeat <command>`, the `<command>` is first run without delay. Then, it will waits `autoRepeatDelay` amount of time before running `<command>` again. Then and thereafter, it will waits `autoRepeatRate` amount of time before repeating `<command>` again. This is consistent with typical OS keyrepeat feature.
 - `set mouseKeys.{move|scroll}.{...} NUMBER` please refer to Agent for more details

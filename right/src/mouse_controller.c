@@ -616,6 +616,13 @@ static void processModuleKineticState(
 
     speed = computeModuleSpeed(x, y, ks->currentModuleId);
 
+    if (ActiveMouseStates[SerializedMouseAction_Accelerate] ) {
+        speed *= 2.0f;
+    }
+    if (ActiveMouseStates[SerializedMouseAction_Decelerate] ) {
+        speed /= 2.0f;
+    }
+
     switch (ks->currentNavigationMode) {
         case NavigationMode_Cursor: {
             if (!moduleConfiguration->cursorAxisLock) {

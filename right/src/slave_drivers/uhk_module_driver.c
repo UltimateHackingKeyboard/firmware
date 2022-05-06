@@ -8,6 +8,7 @@
 #include "crc16.h"
 #include "key_states.h"
 #include "usb_report_updater.h"
+#include "utils.h"
 
 uhk_module_state_t UhkModuleStates[UHK_MODULE_MAX_SLOT_COUNT];
 
@@ -219,10 +220,64 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
                 uhkModuleState->pointerCount = rxMessage->data[0];
             }
             status = kStatus_Uhk_IdleCycle;
-            *uhkModulePhase = isMessageValid ? UhkModulePhase_RequestKeyStates : UhkModulePhase_RequestModulePointerCount;
+
+            if (!isMessageValid) {
+                *uhkModulePhase = UhkModulePhase_RequestModulePointerCount;
+            } else if (VERSION_AT_LEAST(uhkModuleState->moduleProtocolVersion, 4, 2, 0)) {
+                *uhkModulePhase = UhkModulePhase_RequestGitTag;
+            } else {
+                uhkModuleState->gitTag[0] = '\0';
+                uhkModuleState->gitRepo[0] = '\0';
+                *uhkModulePhase = UhkModulePhase_RequestKeyStates;
+            }
             break;
         }
 
+        // Get module git tag
+        case UhkModulePhase_RequestGitTag:
+            txMessage.data[0] = SlaveCommand_RequestProperty;
+            txMessage.data[1] = SlaveProperty_GitTag;
+            txMessage.length = 2;
+            status = tx(i2cAddress);
+            *uhkModulePhase = UhkModulePhase_ReceiveGitTag;
+            break;
+        case UhkModulePhase_ReceiveGitTag:
+            status = rx(rxMessage, i2cAddress);
+            *uhkModulePhase = UhkModulePhase_ProcessGitTag;
+            break;
+        case UhkModulePhase_ProcessGitTag: {
+            bool isMessageValid = CRC16_IsMessageValid(rxMessage);
+            if (isMessageValid) {
+                Utils_SafeStrCopy(uhkModuleState->gitTag, (const char*)rxMessage->data, sizeof(uhkModuleState->gitTag));
+            }
+            status = kStatus_Uhk_IdleCycle;
+            *uhkModulePhase = isMessageValid ? UhkModulePhase_RequestGitRepo : UhkModulePhase_RequestGitTag;
+            break;
+        }
+
+        // Get module git repo
+        case UhkModulePhase_RequestGitRepo:
+            txMessage.data[0] = SlaveCommand_RequestProperty;
+            txMessage.data[1] = SlaveProperty_GitRepo;
+            txMessage.length = 2;
+            status = tx(i2cAddress);
+            *uhkModulePhase = UhkModulePhase_ReceiveGitRepo;
+            break;
+        case UhkModulePhase_ReceiveGitRepo:
+            status = rx(rxMessage, i2cAddress);
+            *uhkModulePhase = UhkModulePhase_ProcessGitRepo;
+            break;
+        case UhkModulePhase_ProcessGitRepo: {
+            bool isMessageValid = CRC16_IsMessageValid(rxMessage);
+            if (isMessageValid) {
+                Utils_SafeStrCopy(uhkModuleState->gitRepo, (const char*)rxMessage->data, sizeof(uhkModuleState->gitRepo));
+            }
+            status = kStatus_Uhk_IdleCycle;
+            *uhkModulePhase = isMessageValid ? UhkModulePhase_RequestKeyStates : UhkModulePhase_RequestGitRepo;
+            break;
+        }
+
+        // Update loop start
         // Get key states
         case UhkModulePhase_RequestKeyStates:
             txMessage.data[0] = SlaveCommand_RequestKeyStates;

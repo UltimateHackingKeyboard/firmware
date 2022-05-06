@@ -8,6 +8,8 @@
 #include "init_peripherals.h"
 #include "fsl_i2c.h"
 #include "timer.h"
+#include "utils.h"
+#include "versions.h"
 
 version_t deviceProtocolVersion = {
     DEVICE_PROTOCOL_MAJOR_VERSION,
@@ -75,6 +77,12 @@ void UsbCommand_GetDeviceProperty(void)
             break;
         case DevicePropertyId_Uptime:
             SetUsbTxBufferUint32(1, CurrentTime);
+            break;
+        case DevicePropertyId_GitTag:
+            Utils_SafeStrCopy(((char*)GenericHidInBuffer) + 1, GIT_TAG, sizeof(GenericHidInBuffer)-1);
+            break;
+        case DevicePropertyId_GitRepo:
+            Utils_SafeStrCopy(((char*)GenericHidInBuffer) + 1, GIT_REPO, sizeof(GenericHidInBuffer)-1);
             break;
         default:
             SetUsbTxBufferUint8(0, UsbStatusCode_GetDeviceProperty_InvalidProperty);

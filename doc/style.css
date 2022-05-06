@@ -3,7 +3,8 @@ pre {
 }
 
 img {
-    max-width: 100%;
+    width: 100%;
+    max-width: 1024px;
     padding: 10px 0;
 }
 
@@ -11,7 +12,7 @@ img {
     white-space: nowrap;
 }
 
-table.table td {
+table.table td, table.table th {
     vertical-align: middle;
 }
 

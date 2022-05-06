@@ -9,6 +9,7 @@
 #include "bootloader.h"
 #include "module.h"
 #include "versions.h"
+#include <string.h>
 
 i2c_message_t RxMessage;
 i2c_message_t TxMessage;
@@ -24,6 +25,9 @@ static version_t firmwareVersion = {
     FIRMWARE_MINOR_VERSION,
     FIRMWARE_PATCH_VERSION,
 };
+
+static const char* gitTag = GIT_TAG;
+static const char* gitRepo = GIT_REPO;
 
 void SlaveRxHandler(void)
 {
@@ -85,6 +89,20 @@ void SlaveTxHandler(void)
                 case SlaveProperty_PointerCount: {
                     TxMessage.data[0] = MODULE_POINTER_COUNT;
                     TxMessage.length = 1;
+                    break;
+                }
+                case SlaveProperty_GitTag: {
+                    size_t len = MIN(strlen(gitTag)+1, sizeof(TxMessage.data));
+                    memcpy(TxMessage.data, gitTag, len);
+                    TxMessage.data[len-1] = '\0';
+                    TxMessage.length = len;
+                    break;
+                }
+                case SlaveProperty_GitRepo: {
+                    size_t len = MIN(strlen(gitRepo)+1, sizeof(TxMessage.data));
+                    memcpy(TxMessage.data, gitRepo, len);
+                    TxMessage.data[len-1] = '\0';
+                    TxMessage.length = len;
                     break;
                 }
             }
