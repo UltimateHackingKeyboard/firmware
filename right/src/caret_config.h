@@ -29,6 +29,6 @@
 // Functions:
 
     caret_configuration_t* GetModuleCaretConfiguration(int8_t moduleId, navigation_mode_t mode);
-    void SetModuleCaretConfiguration(navigation_mode_t mode, caret_axis_t axis, bool positive, uint8_t macroIndex);
+    void SetModuleCaretConfiguration(navigation_mode_t mode, caret_axis_t axis, bool positive, key_action_t action);
 
 #endif

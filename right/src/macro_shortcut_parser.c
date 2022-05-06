@@ -1,3 +1,4 @@
+#include "key_action.h"
 #include "macros.h"
 #include "arduino_hid/ConsumerAPI.h"
 #include "arduino_hid/SystemAPI.h"
@@ -361,25 +362,39 @@ void ShortcutParser_initialize()
 }
 
 
-static macro_action_t parseSingleChar(char c)
+static bool parseSingleChar(char c, macro_action_t* outMacroAction, key_action_t* outKeyAction)
 {
-    macro_action_t action;
-    action.type = MacroActionType_Key;
-    action.key.type = KeystrokeType_Basic;
-    action.key.scancode = MacroShortcutParser_CharacterToScancode(c);
-    action.key.outputModMask = MacroShortcutParser_CharacterToShift(c) ? HID_KEYBOARD_MODIFIER_LEFTSHIFT : 0;
-    return action;
+    if (outMacroAction != NULL) {
+        outMacroAction->type = MacroActionType_Key;
+        outMacroAction->key.type = KeystrokeType_Basic;
+        outMacroAction->key.scancode = MacroShortcutParser_CharacterToScancode(c);
+        outMacroAction->key.outputModMask = MacroShortcutParser_CharacterToShift(c) ? HID_KEYBOARD_MODIFIER_LEFTSHIFT : 0;
+    }
+
+    if (outKeyAction != NULL) {
+        outKeyAction->type = KeyActionType_Keystroke;
+        outKeyAction->keystroke.keystrokeType = KeystrokeType_Basic;
+        outKeyAction->keystroke.scancode = MacroShortcutParser_CharacterToScancode(c);
+        outKeyAction->keystroke.modifiers = MacroShortcutParser_CharacterToShift(c) ? HID_KEYBOARD_MODIFIER_LEFTSHIFT : 0;
+    }
+
+    return true;
 }
 
-static void parseMods(const char* str, const char* strEnd, macro_action_t* action)
+static bool parseMods(const char* str, const char* strEnd, macro_action_t* outMacroAction, key_action_t* outKeyAction)
 {
-    const char* orig = str;
     uint8_t inputModMask = 0;
     uint8_t outputModMask = 0;
     uint8_t stickyModMask = 0;
     uint8_t* modMask = &outputModMask;
+    bool explicitModType = false;
+    bool explicitSubAction = false;
+    bool success = true;
     bool left = true;
-    macro_sub_action_t actionType = action->key.action;
+    macro_sub_action_t subAction = 0;
+    if (outMacroAction != NULL) {
+        subAction = outMacroAction->key.action;
+    }
     while(str < strEnd) {
         switch(*str) {
         case 'L':
@@ -407,40 +422,88 @@ static void parseMods(const char* str, const char* strEnd, macro_action_t* actio
             break;
         case 's':
             modMask = &stickyModMask;
+            explicitModType = true;
             break;
         case 'i':
             modMask = &inputModMask;
+            explicitModType = true;
             break;
         case 'o':
             modMask = &outputModMask;
+            explicitModType = true;
             break;
         case 'p':
-            actionType = MacroSubAction_Press;
+            subAction = MacroSubAction_Press;
+            explicitSubAction = true;
             break;
         case 'r':
-            actionType = MacroSubAction_Release;
+            subAction = MacroSubAction_Release;
+            explicitSubAction = true;
             break;
         case 't':
-            actionType = MacroSubAction_Tap;
+            subAction = MacroSubAction_Tap;
+            explicitSubAction = true;
             break;
         case 'h':
-            actionType = MacroSubAction_Hold;
+            subAction = MacroSubAction_Hold;
+            explicitSubAction = true;
             break;
         default:
-            Macros_ReportError("Unrecognized mod abbreviation:", orig, strEnd);
+            success = false;
             break;
         }
         str++;
     }
 
-    if (action->type != MacroActionType_Key && inputModMask != 0) {
-        Macros_ReportError("This action is not allowed to have modifiers!", str, strEnd);
-    } else {
-        action->key.inputModMask = inputModMask;
-        action->key.outputModMask = outputModMask;
-        action->key.stickyModMask = stickyModMask;
+    if (success && outMacroAction != NULL) {
+        if (outMacroAction->type != MacroActionType_Key && inputModMask != 0) {
+            Macros_ReportError("This action is not allowed to have modifiers!", str, strEnd);
+        } else {
+            outMacroAction->key.inputModMask = inputModMask;
+            outMacroAction->key.outputModMask = outputModMask;
+            outMacroAction->key.stickyModMask = stickyModMask;
+        }
+        outMacroAction->key.action = subAction;
     }
-    action->key.action = actionType;
+
+    if (success && outKeyAction != NULL) {
+        uint8_t jointMask = inputModMask | outputModMask | stickyModMask;
+
+        if (explicitModType || explicitSubAction) {
+            Macros_ReportError("iosprth are not supported in this context!", str, strEnd);
+        } else if (outKeyAction->type != KeyActionType_Keystroke && jointMask != 0) {
+            Macros_ReportError("This action is not allowed to have modifiers!", str, strEnd);
+        } else {
+            outKeyAction->keystroke.modifiers = jointMask;
+        }
+    }
+
+    return success;
+}
+
+static serialized_mouse_action_t mouseBtnToSerializedMouseAction(mouse_button_t btn)
+{
+    switch (btn) {
+        case MouseButton_Left:
+            return SerializedMouseAction_LeftClick;
+        case MouseButton_Right:
+            return SerializedMouseAction_RightClick;
+        case MouseButton_Middle:
+            return SerializedMouseAction_MiddleClick;
+        case MouseButton_4:
+            return SerializedMouseAction_Button_4;
+        case MouseButton_5:
+            return SerializedMouseAction_Button_5;
+        case MouseButton_6:
+            return SerializedMouseAction_Button_6;
+        case MouseButton_7:
+            return SerializedMouseAction_Button_7;
+        case MouseButton_8:
+            return SerializedMouseAction_Button_8;
+        default:
+            Macros_ReportErrorNum("Unknown button encountered:", btn);
+            return 0;
+    }
 }
 
 static lookup_record_t* lookup(uint8_t begin, uint8_t end, const char* str, const char* strEnd)
@@ -450,8 +513,7 @@ static lookup_record_t* lookup(uint8_t begin, uint8_t end, const char* str, cons
         if (StrLessOrEqual(str, strEnd, lookup_table[pivot].id, NULL) && StrLessOrEqual(lookup_table[pivot].id, NULL, str, strEnd)) {
             return &lookup_table[pivot];
         } else {
-            Macros_ReportError("Unrecognized key abbreviation:", str, strEnd);
-            return &lookup_table[0];
+            return NULL;
         }
     }
     else if (StrLessOrEqual(str, strEnd, lookup_table[pivot].id, NULL)) {
@@ -461,55 +523,99 @@ static lookup_record_t* lookup(uint8_t begin, uint8_t end, const char* str, cons
     }
 }
 
-static macro_action_t parseAbbrev(const char* str, const char* strEnd)
+static bool parseAbbrev(const char* str, const char* strEnd, macro_action_t* outMacroAction, key_action_t* outKeyAction)
 {
     if (str + 1 == strEnd) {
-        return parseSingleChar(*str);
+        return parseSingleChar(*str, outMacroAction, outKeyAction);
     }
 
     lookup_record_t* record = lookup(0, lookup_size-1, str, strEnd);
-    macro_action_t action;
-    memset(&action, 0, sizeof action);
 
-    switch(record->type) {
-    case scType_basic:
-        action.type = MacroActionType_Key;
-        action.key.type = KeystrokeType_Basic;
-        action.key.scancode = record->scancode;
-        break;
-    case scType_system:
-        action.type = MacroActionType_Key;
-        action.key.type = KeystrokeType_System;
-        action.key.scancode = record->scancode;
-        break;
-    case scType_media:
-        action.type = MacroActionType_Key;
-        action.key.type = KeystrokeType_Media;
-        action.key.scancode = record->scancode;
-        break;
-    case scType_mouseBtn:
-        action.type = MacroActionType_MouseButton;
-        action.mouseButton.mouseButtonsMask = record->scancode;
-        break;
+    if (record == NULL) {
+        return false;
     }
-    return action;
+
+    if (outMacroAction != NULL) {
+        memset(outMacroAction, 0, sizeof *outMacroAction);
+
+        switch(record->type) {
+            case scType_basic:
+                outMacroAction->type = MacroActionType_Key;
+                outMacroAction->key.type = KeystrokeType_Basic;
+                outMacroAction->key.scancode = record->scancode;
+                break;
+            case scType_system:
+                outMacroAction->type = MacroActionType_Key;
+                outMacroAction->key.type = KeystrokeType_System;
+                outMacroAction->key.scancode = record->scancode;
+                break;
+            case scType_media:
+                outMacroAction->type = MacroActionType_Key;
+                outMacroAction->key.type = KeystrokeType_Media;
+                outMacroAction->key.scancode = record->scancode;
+                break;
+            case scType_mouseBtn:
+                outMacroAction->type = MacroActionType_MouseButton;
+                outMacroAction->mouseButton.mouseButtonsMask = record->scancode;
+                break;
+        }
+    }
+
+    if (outKeyAction != NULL) {
+        memset(outKeyAction, 0, sizeof *outKeyAction);
+
+        switch(record->type) {
+            case scType_basic:
+                outKeyAction->type = KeyActionType_Keystroke;
+                outKeyAction->keystroke.keystrokeType = KeystrokeType_Basic;
+                outKeyAction->keystroke.scancode = record->scancode;
+                break;
+            case scType_system:
+                outKeyAction->type = KeyActionType_Keystroke;
+                outKeyAction->keystroke.keystrokeType = KeystrokeType_System;
+                outKeyAction->keystroke.scancode = record->scancode;
+                break;
+            case scType_media:
+                outKeyAction->type = KeyActionType_Keystroke;
+                outKeyAction->keystroke.keystrokeType = KeystrokeType_Media;
+                outKeyAction->keystroke.scancode = record->scancode;
+                break;
+            case scType_mouseBtn:
+                outKeyAction->type = KeyActionType_Mouse;
+                outKeyAction->mouseAction = mouseBtnToSerializedMouseAction(record->scancode);
+                break;
+        }
+    }
+    return true;
 }
 
-macro_action_t MacroShortcutParser_Parse(const char* str, const char* strEnd, macro_sub_action_t type)
+bool MacroShortcutParser_Parse(const char* str, const char* strEnd, macro_sub_action_t type, macro_action_t* outMacroAction, key_action_t* outKeyAction)
 {
-    macro_action_t action;
+
+    bool success = false;
 
     if (FindChar('-', str, strEnd) == strEnd) {
         //"-" notation not used
-        action = parseAbbrev(str, strEnd);
-        action.key.action = type;
+        success = success || parseAbbrev(str, strEnd, outMacroAction, outKeyAction);
+        success = success || parseMods(str, strEnd, outMacroAction, outKeyAction);
+
+        if (outMacroAction != NULL) {
+            outMacroAction->key.action = type;
+        }
     }
     else {
         const char* delim = FindChar('-', str, strEnd);
-        action = parseAbbrev(delim+1, strEnd);
-        action.key.action = type;
+        success = success || parseAbbrev(delim+1, strEnd, outMacroAction, outKeyAction);
 
-        parseMods(str, delim, &action);
+        if (outMacroAction != NULL) {
+            outMacroAction->key.action = type;
+        }
+
+        success = success && parseMods(str, delim, outMacroAction, outKeyAction);
     }
-    return action;
+
+    if (!success) {
+        Macros_ReportError("Unrecognized key abbreviation:", str, strEnd);
+    }
+    return success;
 }

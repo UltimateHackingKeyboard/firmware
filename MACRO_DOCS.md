@@ -1,8 +1,8 @@
-# Ultimate Hacking Keyboard firmware with extended macro engine
+# Extended macro engine guide and reference manual
 
 ## Features
 
-The firmware implements:
+The extended engine implements:
 - macro commands for (almost?) all basic features of the keyboard otherwise unreachable via agent. 
 - macro commands for conditionals, jumps and sync mechanisms 
 - some extended configuration options (composite-keystroke delay, sticky modifiers)
@@ -302,8 +302,8 @@ The following grammar is supported:
     COMMAND = set setEmergencyKey KEYID
     COMMAND = set macroEngine.scheduler {blocking|preemptive}
     COMMAND = set macroEngine.batchSize <number of commands to execute per one update cycle NUMBER>
-    COMMAND = set navigationModeAction.NAVIGATIONMODECUSTOM.{DIRECTION} {MACROID|none}
-    COMMAND = set keymapAction.LAYERID.KEYID {MACROID|none}
+    COMMAND = set navigationModeAction.NAVIGATIONMODECUSTOM.DIRECTION ACTION
+    COMMAND = set keymapAction.LAYERID.KEYID ACTION
     COMMAND = set backlight.strategy { functional | constantRgb }
     COMMAND = set backlight.constantRgb.rgb <number 0-255 (NUMBER)> <number 0-255 (NUMBER)> <number 0-255 (NUMBER)><number 0-255 (NUMBER)>
     COMMAND = set modifierLayerTriggers.{shift|alt|super|control} {left|right|both}
@@ -340,13 +340,14 @@ The following grammar is supported:
     CHAR = <any nonwhite ascii char>
     KEYID = <id of hardware key obtained by resolveNextKeyId (NUMBER)>
     LABEL = <string identifier>
-    SHORTCUT = MODMASK- | MODMASK-KEY | KEY
+    SHORTCUT = MODMASK- | MODMASK-KEY | KEY | MODMASK
     MODMASK = [MODMASK]+ | [L|R]{S|C|A|G} | {p|r|h|t} | {s|i|o}
     NAVIGATIONMODE = cursor | scroll | caret | media | zoom | zoomPc | zoomMac | none
     NAVIGATIONMODECUSTOM = caret | media | zoomPc | zoomMac
     MODULEID = trackball | touchpad | trackpoint | keycluster
     KEY = CHAR|KEYABBREV
     ADDRESS = LABEL|NUMBER
+    ACTION = { macro MACROID | keystroke SHORTCUT | none }
     KEYABBREV = enter | escape | backspace | tab | space | minusAndUnderscore | equalAndPlus | openingBracketAndOpeningBrace | closingBracketAndClosingBrace
     KEYABBREV = backslashAndPipeIso | backslashAndPipe | nonUsHashmarkAndTilde | semicolonAndColon | apostropheAndQuote | graveAccentAndTilde | commaAndLessThanSign
     KEYABBREV = dotAndGreaterThanSign | slashAndQuestionMark | capsLock | printScreen | scrollLock | pause | insert | home | pageUp | delete | end | pageDown | numLock
@@ -660,8 +661,8 @@ For the purpose of toggling functionality on and off, and for global constants m
   - `caretAxisLock BOOLEAN` - turns axis locking on for all discrete modes. 
 
 - Remapping keys:
-  - `set navigationModeAction.{caret|media}.{DIRECTION|none} MACROID` can be used to customize caret or media mode behaviour by binding directions to macros. This action is global and reversible only by powercycling.
-  - `set keymapAction.LAYERID.KEYID {MACROID|none}` can be used to remap any action that lives in standard keymap. All remappable ids should be retriavable with `resolveNextKeyId`. Keyid can also be constructed manually - see `KEYID`. This map applies only until next keymap switch.
+  - `set navigationModeAction.{caret|media}.{DIRECTION|none} ACTION` can be used to customize caret or media mode behaviour by binding directions to macros. This action is global and reversible only by powercycling.
+  - `set keymapAction.LAYERID.KEYID ACTION` can be used to remap any action that lives in standard keymap. Most remappable ids can be retrieved with `resolveNextKeyId`. Keyid can also be constructed manually - see `KEYID`. Binding applies only until next keymap switch. E.g., `set keymapAction.base.64 keystroke escape` (maps `~` key to escape), or `set keymapAction.fn.193 macro TouchpadAction` (maps touchpad twofinger action to macro `TouchpadAction`).
 
 - `macroEngine`
   - terminology:
@@ -715,7 +716,7 @@ UHK modules feature four navigation modes, which are mapped by layer and module.
 - **Scroll mode** - in this mode, module can be used to scroll. Default mode for mod layer. This means that apart from switching layer, your mod layer switches also make your right hand modules act as very comfortable scroll wheels. Sensitivity is controlled by the `scrollSpeedDivisor` value.
 - **Caret mode** - in this mode, module produces arrow key taps. This can be used to move comfortably in text editor, since in this mode, cursor is also locked to one of the two directions, preventing unwanted line changes. Sensitivity is controlled by the `caretSpeedDivisor`, `axisLockStrengthFirstTick` and `axisLockStrength`.
 - **Media mode** - in this mode, up/down directions control volume (via media key scancodes), while horizontal play/pause and switch to next track. At the moment, this mode is not enabled by default on any layer. Sensitivity is shared with the caret mode.
-- **Zoom mode pc / mac** - in this mode, `Ctrl +`/`Ctrl -` or `Alt +`/`Alt -` shortcuts are produced. 
+- **Zoom mode pc / mac** - in this mode, `Ctrl +`/`Ctrl -` or `Gui +`/`Gui -` shortcuts are produced. 
 - **Zoom mode** - This mode serves specifically to implement touchpad's gesture. It alternates actions of zoomPc and zoomMac modes.
 
 Caret and media modes can be customized by `set navigationModeAction` command.

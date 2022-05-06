@@ -1796,7 +1796,9 @@ conditionPassed:
 
 static macro_action_t decodeKey(const char* arg1, const char* argEnd, macro_sub_action_t defaultSubAction)
 {
-    macro_action_t action = MacroShortcutParser_Parse(arg1, TokEnd(arg1, argEnd), defaultSubAction);
+    macro_action_t action;
+    MacroShortcutParser_Parse(arg1, TokEnd(arg1, argEnd), defaultSubAction, &action, NULL);
+
     return action;
 }
 
