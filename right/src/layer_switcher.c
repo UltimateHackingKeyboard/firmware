@@ -14,8 +14,11 @@ layer_id_t ActiveLayer = LayerId_Base;
 bool ActiveLayerHeld = false;
 uint8_t ActiveLayerModifierMask = 0;
 
-static layer_id_t toggledLayer = LayerId_Base;
-static layer_id_t heldLayer = LayerId_Base;
+#define NONE 0xFF
+
+static layer_id_t toggledLayer = NONE;
+static layer_id_t heldLayer = NONE;
+
 
 /**
  * General logic.
@@ -48,20 +51,29 @@ static layer_id_t heldLayer = LayerId_Base;
 // Recompute active layer whenever state of the layer locks changes.
 void updateActiveLayer() {
     // beware lower-upper case typos!
-    layer_id_t activeLayer = LayerId_Base;
-    layer_id_t activeLayerHeld = LayerId_Base;
-    if(activeLayer == LayerId_Base) {
-        activeLayer = toggledLayer;
-    }
-    if(activeLayer == LayerId_Base) {
+
+    // apply stock layer switching
+    layer_id_t activeLayer = NONE;
+    bool activeLayerHeld = false;
+    if(activeLayer == NONE) {
         activeLayer = heldLayer;
     }
-    activeLayerHeld = activeLayer == heldLayer && activeLayer != LayerId_Base;
+    if(activeLayer == NONE) {
+        activeLayer = toggledLayer;
+    }
+    activeLayerHeld = activeLayer == heldLayer && activeLayer != NONE;
 
-    if(activeLayer == LayerId_Base) {
+    // apply macro engine layer
+    if(activeLayer == NONE) {
         activeLayer = Macros_ActiveLayer;
         activeLayerHeld = Macros_ActiveLayerHeld;
     }
+
+    // apply default
+    if(activeLayer == NONE) {
+        activeLayer = LayerId_Base;
+    }
+
     //(write actual ActiveLayer atomically, so that random observer is not confused)
     ActiveLayer = activeLayer;
     ActiveLayerHeld = activeLayerHeld;
@@ -87,7 +99,7 @@ void LayerSwitcher_DoubleTapToggle(layer_id_t layer, key_state_t* keyState) {
     static uint32_t doubleTapSwitchLayerTriggerTime = 0;
 
     if(KeyState_ActivatedNow(keyState)) {
-        toggledLayer = LayerId_Base;
+        toggledLayer = NONE;
         if (doubleTapSwitchLayerKey == keyState && Timer_GetElapsedTimeAndSetCurrent(&doubleTapSwitchLayerStartTime) < DoubleTapSwitchLayerTimeout) {
             toggledLayer = layer;
             doubleTapSwitchLayerTriggerTime = CurrentTime;
@@ -103,7 +115,7 @@ void LayerSwitcher_DoubleTapToggle(layer_id_t layer, key_state_t* keyState) {
         //If current press is too long, cancel current toggle
         if ( doubleTapSwitchLayerKey == keyState && Timer_GetElapsedTime(&doubleTapSwitchLayerTriggerTime) > DoubleTapSwitchLayerReleaseTimeout)
         {
-            toggledLayer = LayerId_Base;
+            toggledLayer = NONE;
             updateActiveLayer();
         }
     }
@@ -112,24 +124,24 @@ void LayerSwitcher_DoubleTapToggle(layer_id_t layer, key_state_t* keyState) {
 // If some other key is pressed between taps of a possible doubletap, discard the doubletap
 // Also, doubleTapSwitchKey is used to cancel long hold toggle, so reset it only if no layer is locked
 void LayerSwitcher_DoubleTapInterrupt(key_state_t* keyState) {
-    if (doubleTapSwitchLayerKey != keyState && toggledLayer == LayerId_Base) {
+    if (doubleTapSwitchLayerKey != keyState && toggledLayer == NONE) {
         doubleTapSwitchLayerKey = NULL;
     }
 }
 
 void LayerSwitcher_ToggleLayer(layer_id_t layer) {
-    if(toggledLayer == LayerId_Base) {
+    if(toggledLayer == NONE) {
         toggledLayer = layer;
     } else {
-        toggledLayer = LayerId_Base;
+        toggledLayer = NONE;
     }
     updateActiveLayer();
 }
 
 
 void LayerSwitcher_UnToggleLayerOnly(layer_id_t layer) {
-    if (toggledLayer != LayerId_Base) {
-        toggledLayer = LayerId_Base;
+    if (toggledLayer != NONE) {
+        toggledLayer = NONE;
         updateActiveLayer();
     }
 }
@@ -153,15 +165,17 @@ void LayerSwitcher_UnToggleLayerOnly(layer_id_t layer) {
 static bool heldLayers[LayerId_Count];
 
 // Called by pressed hold-layer keys during every cycle
-void LayerSwitcher_HoldLayer(layer_id_t layer) {
+void LayerSwitcher_HoldLayer(layer_id_t layer, bool forceSwap) {
     heldLayers[layer] = true;
     //no other switcher is active, so we may as well activate it straight away.
-    if(heldLayer == LayerId_Base) {
+    if(heldLayer == NONE || forceSwap) {
         heldLayer = layer;
         updateActiveLayer();
     }
 }
 
+// If modifier layer is active, maskOutput will be used as a negative sticky modifier
+// mask in order to negate effect of the activation modifier.
 static bool layerMeetsHoldConditions(uint8_t layer, uint8_t* maskOutput) {
     if (heldLayers[layer]) {
         return true;
@@ -182,11 +196,21 @@ static bool layerMeetsHoldConditions(uint8_t layer, uint8_t* maskOutput) {
 // Gathers states set by LayerSwitcher_HoldLayer during previous update cycle and updates heldLayer.
 void LayerSwitcher_UpdateActiveLayer() {
     layer_id_t previousHeldLayer = heldLayer;
-    if (!layerMeetsHoldConditions(heldLayer, NULL)) {
-        heldLayer = LayerId_Base;
+
+    // Include macro held layer into computation
+    if (Macros_ActiveLayer != NONE && Macros_ActiveLayerHeld) {
+        heldLayers[Macros_ActiveLayer] = true;
     }
-    for (layer_id_t layerId = LayerId_Mod; layerId < LayerId_Count; layerId++) {
-        bool heldLayerCanBeOverriden = heldLayer == LayerId_Base || (IS_MODIFIER_LAYER(heldLayer) && !IS_MODIFIER_LAYER(layerId));
+
+    // Reset held layer if no longer relevant
+    if (heldLayer != NONE && !layerMeetsHoldConditions(heldLayer, NULL)) {
+        heldLayer = NONE;
+    }
+
+    // Find first relevant layer, and reset the array
+    for (layer_id_t layerId = LayerId_Base; layerId < LayerId_Count; layerId++) {
+        // normal layer should take precedence over modifier layers
+        bool heldLayerCanBeOverriden = heldLayer == NONE || (IS_MODIFIER_LAYER(heldLayer) && !IS_MODIFIER_LAYER(layerId));
         if (heldLayerCanBeOverriden && layerMeetsHoldConditions(layerId, &ActiveLayerModifierMask)) {
             heldLayer = layerId;
         }

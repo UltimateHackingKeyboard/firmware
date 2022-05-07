@@ -98,8 +98,12 @@ static macro_result_t sleepTillKeystateChange();
 static void activateLayer(layer_id_t layer)
 {
     Macros_ActiveLayer = layer;
-    Macros_ActiveLayerHeld = Macros_IsLayerHeld();
-    LayerSwitcher_RecalculateLayerComposition();
+    Macros_ActiveLayerHeld = layerIdxStack[layerIdxStackTop].held;
+    if (Macros_ActiveLayerHeld) {
+        LayerSwitcher_HoldLayer(layer, true);
+    } else {
+        LayerSwitcher_RecalculateLayerComposition();
+    }
 }
 
 void Macros_SignalInterrupt()
@@ -1190,11 +1194,6 @@ static macro_result_t processHoldLayer(uint8_t layer, uint8_t keymap, uint16_t t
             return MacroResult_Finished;
         }
     }
-}
-
-bool Macros_IsLayerHeld()
-{
-    return layerIdxStack[layerIdxStackTop].held;
 }
 
 static macro_result_t processHoldLayerCommand(const char* arg1, const char* cmdEnd)
