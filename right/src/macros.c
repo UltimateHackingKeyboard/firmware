@@ -940,9 +940,7 @@ static void popLayerStack(bool forceRemoveTop, bool toggledInsteadOfTop)
         removeStackTop(false);
     }
     if (layerIdxStackSize == 0) {
-        layerIdxStack[layerIdxStackTop].layer = LayerId_Base;
-        layerIdxStack[layerIdxStackTop].removed = false;
-        layerIdxStack[layerIdxStackTop].held = false;
+        Macros_ResetLayerStack();
     }
     if (layerIdxStack[layerIdxStackTop].keymap != CurrentKeymapIndex) {
         SwitchKeymapById(layerIdxStack[layerIdxStackTop].keymap);
@@ -950,19 +948,15 @@ static void popLayerStack(bool forceRemoveTop, bool toggledInsteadOfTop)
     activateLayer(layerIdxStack[layerIdxStackTop].layer);
 }
 
-void Macros_UpdateLayerStack()
-{
-    for (int i = 0; i < LAYER_STACK_SIZE; i++) {
-        layerIdxStack[i].keymap = CurrentKeymapIndex;
-    }
-}
-
+// Always maintain protected base layer record. This record cannot be implicit
+// due to *KeymapLayer commands.
 void Macros_ResetLayerStack()
 {
-    for (int i = 0; i < LAYER_STACK_SIZE; i++) {
-        layerIdxStack[i].keymap = CurrentKeymapIndex;
-    }
     layerIdxStackSize = 1;
+    layerIdxStack[layerIdxStackTop].keymap = CurrentKeymapIndex;
+    layerIdxStack[layerIdxStackTop].layer = LayerId_Base;
+    layerIdxStack[layerIdxStackTop].removed = false;
+    layerIdxStack[layerIdxStackTop].held = false;
 }
 
 static void pushStack(uint8_t layer, uint8_t keymap, bool hold)
@@ -2921,7 +2915,7 @@ static bool findFreeStateSlot()
 
 
 void Macros_Initialize() {
-    Macros_UpdateLayerStack();
+    Macros_ResetLayerStack();
 }
 
 static uint8_t currentActionCmdCount() {

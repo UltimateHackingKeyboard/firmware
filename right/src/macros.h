@@ -254,7 +254,7 @@
     void Macros_SetStatusNum(int32_t n);
     void Macros_SetStatusNumSpaced(int32_t n, bool space);
     void Macros_SetStatusChar(char n);
-    void Macros_UpdateLayerStack();
+    void Macros_ResetLayerStack();
     void Macros_Initialize();
     void Macros_ClearStatus();
     bool Macros_IsLayerHeld();

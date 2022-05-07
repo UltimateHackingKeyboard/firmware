@@ -280,7 +280,7 @@ void ApplyKeyAction(key_state_t *keyState, key_action_cached_t *cachedAction, ke
                 stickyModifiers = 0;
                 stickyModifiersNegative = 0;
                 SwitchKeymapById(action->switchKeymap.keymapId);
-                Macros_UpdateLayerStack();
+                Macros_ResetLayerStack();
             }
             break;
         case KeyActionType_PlayMacro:
