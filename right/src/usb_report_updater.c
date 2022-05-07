@@ -223,7 +223,7 @@ static void applyKeystrokeSecondary(key_state_t *keyState, key_action_t *action,
             LayerSwitcher_HoldLayer(SECONDARY_ROLE_LAYER_TO_LAYER_ID(secondaryRole), false);
         }
     } else if (IS_SECONDARY_ROLE_MODIFIER(secondaryRole)) {
-        ActiveUsbBasicKeyboardReport->modifiers |= SECONDARY_ROLE_MODIFIER_TO_HID_MODIFIER(secondaryRole);
+        InputModifiers |= SECONDARY_ROLE_MODIFIER_TO_HID_MODIFIER(secondaryRole);
     }
 }
 
