@@ -17,6 +17,35 @@ function setVariable(name, value) {
     window.parent.postMessage(message);
 }
 
+const Checkbox = {
+    template: `<input type="checkbox" ref="input" @input="updateValue(false)">`,
+    props: {
+        name: String,
+    },
+    data() {
+        return {
+            value: false,
+        };
+    },
+    mounted() {
+        console.log('checkbox name', this.name)
+        this.updateValue();
+        variablesToWidgets[this.name] = this;
+    },
+    methods: {
+        initValue(value) {
+            this.$refs.input.value = value;
+            this.updateValue(true);
+        },
+        updateValue(isInit=false) {
+            this.value = this.$refs.input.checked ? 1 : 0;
+            if (!isInit) {
+                setVariable(this.name, this.value);
+            }
+        },
+    },
+};
+
 const Slider = {
     template: `<input type="range" ref="range" @input="updateValue(false)">{{value}}`,
     props: {
@@ -80,5 +109,6 @@ const app = createApp({
         }
     }
 });
+app.component('Checkbox', Checkbox);
 app.component('Slider', Slider);
 app.mount('body');
