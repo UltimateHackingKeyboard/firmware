@@ -9,16 +9,20 @@ function initWidgetValue(name, value) {
     variablesToWidgets[name]?.initValue(value);
 }
 
-function setVariable(name, value) {
+function setVariable(name, value, isInit) {
     const regexVarName = name.replace(/\\./g, '\\.');
     const regex = new RegExp(`(set +${regexVarName} +)\\S+( *#?)`);
-    currentCommand = currentCommand.replace(regex, `$1${value}$2`);
+    if (regex.test(currentCommand)) {
+        currentCommand = currentCommand.replace(regex, `$1${value}$2`);
+    } else {
+        currentCommand += (currentCommand.endsWith('\n') ? '' : '\n') + `set ${regexVarName} ${value}\n`;
+    }
     const message = {command: currentCommand};
     window.parent.postMessage(message);
 }
 
 const Checkbox = {
-    template: `<input type="checkbox" ref="input" @input="updateValue(false)">`,
+    template: `<input type="checkbox" ref="input" @input="updateValue">`,
     props: {
         name: String,
     },
@@ -29,25 +33,21 @@ const Checkbox = {
     },
     mounted() {
         console.log('checkbox name', this.name)
-        this.updateValue();
+        this.updateValue(true);
         variablesToWidgets[this.name] = this;
     },
     methods: {
-        initValue(value) {
-            this.$refs.input.value = value;
-            this.updateValue(true);
-        },
-        updateValue(isInit=false) {
+        updateValue(isInit) {
             this.value = this.$refs.input.checked ? 1 : 0;
-            if (!isInit) {
-                setVariable(this.name, this.value);
+            if (isInit !== true) {
+                setVariable(this.name, this.value, isInit);
             }
         },
     },
 };
 
 const Slider = {
-    template: `<input type="range" ref="range" @input="updateValue(false)">{{value}}`,
+    template: `<input type="range" ref="range" @input="updateValue">{{value}}`,
     props: {
         name: String,
     },
@@ -58,18 +58,14 @@ const Slider = {
     },
     mounted() {
         console.log('slider name', this.name)
-        this.updateValue();
+        this.updateValue(true);
         variablesToWidgets[this.name] = this;
     },
     methods: {
-        initValue(value) {
-            this.$refs.range.value = value;
-            this.updateValue(true);
-        },
-        updateValue(isInit=false) {
+        updateValue(isInit) {
             this.value = this.$refs.range.value;
-            if (!isInit) {
-                setVariable(this.name, this.value);
+            if (isInit !== true) {
+                setVariable(this.name, this.value, isInit);
             }
         },
     },
