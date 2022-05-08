@@ -47,7 +47,7 @@ const Checkbox = {
 };
 
 const Slider = {
-    template: `<input type="range" ref="range" @input="updateValue">{{value}}`,
+    template: `<input type="range" ref="input" @input="updateValue">{{value}}`,
     props: {
         name: String,
     },
@@ -63,7 +63,7 @@ const Slider = {
     },
     methods: {
         updateValue(isInit) {
-            this.value = this.$refs.range.value;
+            this.value = this.$refs.input.value;
             if (isInit !== true) {
                 setVariable(this.name, this.value, isInit);
             }
