@@ -143,9 +143,9 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
 
         ValidatedUserConfigLength = userConfigLength;
 
-        IconsAndLayerTextsBrightness = iconsAndLayerTextsBrightness;
-        AlphanumericSegmentsBrightness = alphanumericSegmentsBrightness;
-        KeyBacklightBrightness = keyBacklightBrightness;
+        IconsAndLayerTextsBrightnessDefault = iconsAndLayerTextsBrightness;
+        AlphanumericSegmentsBrightnessDefault = alphanumericSegmentsBrightness;
+        KeyBacklightBrightnessDefault = keyBacklightBrightness;
 
         LedSlaveDriver_UpdateLeds();
 

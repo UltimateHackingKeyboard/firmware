@@ -302,6 +302,9 @@ The following grammar is supported:
     COMMAND = set keymapAction.LAYERID.KEYID {MACROID|none}
     COMMAND = set backlight.strategy { functional | constantRgb }
     COMMAND = set backlight.constantRgb.rgb <number 0-255 (NUMBER)> <number 0-255 (NUMBER)> <number 0-255 (NUMBER)><number 0-255 (NUMBER)>
+    COMMAND = set leds.enabled BOOLEAN
+    COMMAND = set leds.brightness <0-1 multiple of default (FLOAT)>
+    COMMAND = set leds.fadeTimeout <minutes to fade after (NUMBER)>
     COMMAND = set modifierLayerTriggers.{shift|alt|super|control} {left|right|both}
     CONDITION = {ifShortcut | ifNotShortcut} [IFSHORTCUTFLAGS]* [KEYID]+
     CONDITION = {ifGesture | ifNotGesture} [IFSHORTCUTFLAGS]* [KEYID]+

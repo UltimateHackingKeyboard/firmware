@@ -24,8 +24,11 @@
 
 // Variables:
 
+    extern uint32_t LedSleepTimeout;
     extern uint8_t IconsAndLayerTextsBrightness;
+    extern uint8_t IconsAndLayerTextsBrightnessDefault;
     extern uint8_t AlphanumericSegmentsBrightness;
+    extern uint8_t AlphanumericSegmentsBrightnessDefault;
     extern char LedDisplay_DebugString[];
 
 // Functions:
