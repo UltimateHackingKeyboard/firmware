@@ -253,46 +253,11 @@ Syntax is <code>set modifierLayerTriggers.{layer} {modifiers}</code><br>
         </tr>
     </thead>
     <tbody>
-        <tr>
-            <th scope="row">Shift</th>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option selected>Both</option>
-                    <option>Left</option>
-                    <option>Right</option>
-                </select>
-            </td>
+        <tr v-for="modifier in modifiers">
+            <th scope="row">{{modifier}}</th>
+            <td><dropdown :name="`modifierLayerTriggers.${modifier.toLowerCase()}`" options="modifierTriggers"/></td>
         </tr>
         <tr>
-            <th scope="row">Ctrl</th>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option selected>Both</option>
-                    <option>Left</option>
-                    <option>Right</option>
-                </select>
-            </td>
-        </tr>
-        <tr>
-            <th scope="row">Alt</th>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option selected>Both</option>
-                    <option>Left</option>
-                    <option>Right</option>
-                </select>
-            </td>
-        </tr>
-        <tr>
-            <th scope="row">Super</th>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option selected>Both</option>
-                    <option>Left</option>
-                    <option>Right</option>
-                </select>
-            </td>
-        </tr>
     </tbody>
 </table>
 

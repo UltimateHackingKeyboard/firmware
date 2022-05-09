@@ -157,6 +157,17 @@ const app = createApp({
                 'Alt',
                 'Super',
             ],
+            modifiers: [
+                'Shift',
+                'Ctrl',
+                'Alt',
+                'Super',
+            ],
+            modifierTriggers: [
+                'Both',
+                'Left',
+                'Right',
+            ],
         };
     },
     created() {
