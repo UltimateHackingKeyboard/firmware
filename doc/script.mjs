@@ -136,6 +136,13 @@ const app = createApp({
                 4: 'Trackpoint',
                 5: 'Touchpad',
             },
+            speedProps: [
+                {name:'baseSpeed', desc:'Base speed'},
+                {name:'speed', desc:'Speed'},
+                {name:'xceleration', desc:'Acceleration speed'},
+                {name:'caretSpeedDivisor', desc:'Caret speed divisor'},
+                {name:'scrollSpeedDivisor', desc:'Scroll speed divisor'},
+            ],
             layers: [
                 'Base',
                 'Mod',

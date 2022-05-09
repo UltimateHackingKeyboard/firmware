@@ -76,25 +76,9 @@ Syntax is <code>set module.{module}.{property} {value}</code><br>
         </tr>
     </thead>
     <tbody>
-        <tr>
-            <td>Base speed</td>
-            <td v-for="module in rightModules" class="no-wrap"><slider :name="`module.${moduleStrings[module]}.baseSpeed`"/></td>
-        </tr>
-        <tr>
-            <td>Speed</td>
-            <td v-for="module in rightModules" class="no-wrap"><slider :name="`module.${moduleStrings[module]}.speed`"/></td>
-        </tr>
-        <tr>
-            <td>Acceleration</td>
-            <td v-for="module in rightModules" class="no-wrap"><slider :name="`module.${moduleStrings[module]}.xceleration`"/></td>
-        </tr>
-        <tr>
-            <td>Caret speed divisor</td>
-            <td v-for="module in rightModules" class="no-wrap"><slider :name="`module.${moduleStrings[module]}.caretSpeedDivisor`"/></td>
-        </tr>
-        <tr>
-            <td>Scroll speed divisor</td>
-            <td v-for="module in rightModules" class="no-wrap"><slider :name="`module.${moduleStrings[module]}.scrollSpeedDivisor`"/></td>
+        <tr v-for="speedProp in speedProps">
+            <td>{{speedProp.desc}}</td>
+            <td v-for="module in rightModules" class="no-wrap"><slider :name="`module.${moduleStrings[module]}.${speedProp.name}`"/></td>
         </tr>
     </tbody>
 </table>
