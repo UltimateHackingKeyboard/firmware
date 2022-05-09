@@ -32,7 +32,6 @@ const Checkbox = {
         };
     },
     mounted() {
-        console.log('checkbox name', this.name)
         this.updateValue(true);
         variablesToWidgets[this.name] = this;
     },
@@ -76,10 +75,7 @@ const Dropdown = {
                 {label:'None', value:'none'},
             ],
         }
-        console.log('dropdown name', this.name)
         this.selectOptions = allOptions[this.options];
-
-        console.log('selectOptions', this.selectOptions, this.selectOptions[0].label)
         this.updateValue(true);
         variablesToWidgets[this.name] = this;
     },
@@ -104,7 +100,6 @@ const Slider = {
         };
     },
     mounted() {
-        console.log('slider name', this.name)
         this.updateValue(true);
         variablesToWidgets[this.name] = this;
     },
