@@ -151,19 +151,13 @@ Syntax is <code>set module.{module}.invertScrollDirection {0|1}</code><br>
     <thead>
         <tr>
             <th scope="col"></th>
-            <th scope="col">Key cluster</th>
-            <th scope="col">Trackball</th>
-            <th scope="col">Trackpoint</th>
-            <th scope="col">Touchpad</th>
+            <th v-for="module in rightModules" scope="col">{{moduleDescriptions[module]}}</th>
         </tr>
     </thead>
     <tbody>
         <tr>
             <td>Invert scroll direction</td>
-            <td><input type="checkbox"></td>
-            <td><input type="checkbox"></td>
-            <td><input type="checkbox"></td>
-            <td><input type="checkbox"></td>
+            <td v-for="module in rightModules"><checkbox :name="`module.${moduleStrings[module]}.invertScrollDirection`"/></td>
         </tr>
     </tbody>
 </table>
