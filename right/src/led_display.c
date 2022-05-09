@@ -1,6 +1,7 @@
 #include "led_display.h"
 #include "slave_drivers/is31fl3xxx_driver.h"
 #include "layer.h"
+#include "layer_switcher.h"
 #include "keymap.h"
 #include "device.h"
 
@@ -195,5 +196,6 @@ void LedDisplay_UpdateText(void)
 void LedDisplay_UpdateAll(void)
 {
     LedDisplay_UpdateIcons();
+    LedDisplay_SetLayer(ActiveLayer);
     LedDisplay_UpdateText();
 }

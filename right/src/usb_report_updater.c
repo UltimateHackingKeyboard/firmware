@@ -512,7 +512,7 @@ uint32_t UsbReportUpdateCounter;
 static void updateLedSleepModeState(uint32_t lastActivityTime) {
     uint32_t elapsedTime = Timer_GetElapsedTime(&lastActivityTime);
 
-    if (elapsedTime > LedSleepTimeout && !LedSleepModeActive) {
+    if (elapsedTime > LedSleepTimeout && !LedSleepModeActive && LedSleepTimeout) {
         LedSleepModeActive = true;
         LedSlaveDriver_UpdateLeds();
     } else if (elapsedTime < LedSleepTimeout && LedSleepModeActive) {
