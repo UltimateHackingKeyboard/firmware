@@ -46,6 +46,53 @@ const Checkbox = {
     },
 };
 
+const Dropdown = {
+    template: `<select ref="input" @input="updateValue" class="form-select"><option v-for="option in selectOptions" :value="option.value">{{option.label}}</option></select>`,
+    props: {
+        name: String,
+        options: String,
+    },
+    data() {
+        return {
+            value: [],
+            selectOptions: [],
+        };
+    },
+    mounted() {
+        const allOptions = {
+            modifierTriggers: [
+                {label:'Both', value:'both'},
+                {label:'Left', value:'left'},
+                {label:'Right', value:'right'},
+            ],
+            navigationModes: [
+                {label:'Cursor', value:'cursor'},
+                {label:'Scroll', value:'scroll'},
+                {label:'Caret', value:'caret'},
+                {label:'Media', value:'media'},
+                {label:'Zoom', value:'zoom'},
+                {label:'Zoom PC', value:'zoomPc'},
+                {label:'Zoom Mac', value:'zoomMac'},
+                {label:'None', value:'none'},
+            ],
+        }
+        console.log('dropdown name', this.name)
+        this.selectOptions = allOptions[this.options];
+
+        console.log('selectOptions', this.selectOptions, this.selectOptions[0].label)
+        this.updateValue(true);
+        variablesToWidgets[this.name] = this;
+    },
+    methods: {
+        updateValue(isInit) {
+            this.value = this.$refs.input.value;
+            if (isInit !== true) {
+                setVariable(this.name, this.value, isInit);
+            }
+        },
+    },
+};
+
 const Slider = {
     template: `<input type="range" ref="input" @input="updateValue">{{value}}`,
     props: {
@@ -89,6 +136,20 @@ const app = createApp({
                 4: 'Trackpoint',
                 5: 'Touchpad',
             },
+            layers: [
+                'Base',
+                'Mod',
+                'Mouse',
+                'Fn',
+                'Fn2',
+                'Fn3',
+                'Fn4',
+                'Fn5',
+                'Shift',
+                'Ctrl',
+                'Alt',
+                'Super',
+            ],
         };
     },
     created() {
@@ -105,6 +166,9 @@ const app = createApp({
         }
     }
 });
+
 app.component('Checkbox', Checkbox);
+app.component('Dropdown', Dropdown);
 app.component('Slider', Slider);
+
 app.mount('body');
