@@ -178,7 +178,7 @@ static void macroEngineScheduler(const char* arg1, const char *textEnd)
     }
 }
 
-static void macroEngine(const char* arg1, const char *textEnd)
+static ATTR_UNUSED void macroEngine(const char* arg1, const char *textEnd)
 {
     if (TokenMatches(arg1, textEnd, "scheduler")) {
         macroEngineScheduler(NextTok(arg1,  textEnd), textEnd);
@@ -220,7 +220,7 @@ static void constantRgb(const char* arg1, const char *textEnd)
     }
 }
 
-static void leds(const char* arg1, const char *textEnd)
+static ATTR_UNUSED void leds(const char* arg1, const char *textEnd)
 {
     const char* value = NextTok(arg1, textEnd);
     if (TokenMatches(arg1, textEnd, "fadeTimeout")) {
@@ -298,7 +298,7 @@ static void navigationModeAction(const char* arg1, const char *textEnd)
     SetModuleCaretConfiguration(navigationMode, axis, positive, macroIndex);
 }
 
-static void keymapAction(const char* arg1, const char *textEnd)
+static ATTR_UNUSED void keymapAction(const char* arg1, const char *textEnd)
 {
     const char* arg2 = proceedByDot(arg1, textEnd);
     const char* arg3 = NextTok(arg2, textEnd);

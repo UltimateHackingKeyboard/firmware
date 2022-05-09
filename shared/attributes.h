@@ -3,6 +3,7 @@
 
 // Macros:
 
+    #define ATTR_UNUSED __attribute__((unused))
     #define ATTR_PACKED __attribute__ ((packed))
     #define ATTR_NO_INIT __attribute__ ((section (".noinit")))
     #define ATTR_DATA2 __attribute__((section (".m_data_2")))
