@@ -76,7 +76,7 @@ Syntax is <code>set module.{module}.{property} {value}</code><br>
         </tr>
     </thead>
     <tbody>
-        <tr v-for="speedProp in speedProps">
+        <tr v-for="speedProp in moduleSpeedProps">
             <td>{{speedProp.desc}}</td>
             <td v-for="module in rightModules" class="no-wrap"><slider :name="`module.${moduleStrings[module]}.${speedProp.name}`"/></td>
         </tr>
@@ -290,35 +290,10 @@ Syntax is <code>set mouseKeys.{mode}.{property} {floatValue}</code><br>
         </tr>
     </thead>
     <tbody>
-        <tr>
-            <td>Initial speed</td>
-            <td class="no-wrap"><slider/></td>
-            <td class="no-wrap"><slider/></td>
-        </tr>
-        <tr>
-            <td>Base speed</td>
-            <td class="no-wrap"><slider/></td>
-            <td class="no-wrap"><slider/></td>
-        </tr>
-        <tr>
-            <td>Acceleration</td>
-            <td class="no-wrap"><slider/></td>
-            <td class="no-wrap"><slider/></td>
-        </tr>
-        <tr>
-            <td>Decelerated speed</td>
-            <td class="no-wrap"><slider/></td>
-            <td class="no-wrap"><slider/></td>
-        </tr>
-        <tr>
-            <td>Accelerated speed</td>
-            <td class="no-wrap"><slider/></td>
-            <td class="no-wrap"><slider/></td>
-        </tr>
-        <tr>
-            <td>Axis skew</td>
-            <td class="no-wrap"><slider/></td>
-            <td class="no-wrap"><slider/></td>
+        <tr v-for="prop in keySpeedProps">
+            <td>{{prop.desc}}</td>
+            <td class="no-wrap"><slider :name="`module.move.${prop.name}`"/></td>
+            <td class="no-wrap"><slider :name="`module.scroll.${prop.name}`"/></td>
         </tr>
     </tbody>
 </table>

@@ -136,7 +136,7 @@ const app = createApp({
                 4: 'Trackpoint',
                 5: 'Touchpad',
             },
-            speedProps: [
+            moduleSpeedProps: [
                 {name:'baseSpeed', desc:'Base speed'},
                 {name:'speed', desc:'Speed'},
                 {name:'xceleration', desc:'Acceleration speed'},
@@ -167,6 +167,14 @@ const app = createApp({
                 'Both',
                 'Left',
                 'Right',
+            ],
+            keySpeedProps: [
+                {name:'initialSpeed', desc:'Initial speed'},
+                {name:'baseSpeed', desc:'Base speed'},
+                {name:'acceleration', desc:'Acceleration'},
+                {name:'deceleratedSpeed', desc:'Decelerated speed'},
+                {name:'acceleratedSpeed', desc:'Accelerated speed'},
+                {name:'axisSkew', desc:'Axis skew'},
             ],
         };
     },
