@@ -17,8 +17,12 @@ function setVariable(name, value, isInit) {
     } else {
         currentCommand += (currentCommand.endsWith('\n') ? '' : '\n') + `set ${regexVarName} ${value}\n`;
     }
-    const message = {command: currentCommand};
-    window.parent.postMessage(message);
+    const message = {
+        action: 'doc-message-set-macro',
+        command: currentCommand
+    };
+
+    window.parent.postMessage(message, '*');
 }
 
 const Checkbox = {
@@ -176,10 +180,22 @@ const app = createApp({
     created() {
         const self = this;
         window.addEventListener('message', function(event) {
-            const data = event.data;
-            currentCommand = data.command;
-            self.modules = data.modules;
+            switch (event.data.action) {
+                case 'agent-message-editor-got-focus': {
+                    const data = event.data;
+                    currentCommand = data.command;
+                    self.modules = data.modules;
+                    break;
+                }
+
+                case 'agent-message-editor-lost-focus': {
+                    const data = event.data;
+                    currentCommand = '';
+                    self.modules = data.modules
+                }
+            }
         });
+        window.parent.postMessage({action: 'doc-message-inited'}, '*');
     },
     computed: {
         rightModules() {
