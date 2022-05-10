@@ -19,7 +19,7 @@ const app = createApp({
         });
         window.addEventListener('message', function(event) {
             switch (event.data.action) {
-                case 'docMessage-set-macro': {
+                case 'doc-message-set-macro': {
                     currentTarget.value = event.data.command;
                     break;
                 }
@@ -43,7 +43,7 @@ const app = createApp({
 
             const message = {
                 version: '1.0.0',
-                action: 'agentMessage-editor-got-focus',
+                action: 'agent-message-editor-got-focus',
                 modules,
                 command: this.command,
             };
