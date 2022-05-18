@@ -509,10 +509,23 @@ void justPreprocessInput(void) {
 
 uint32_t UsbReportUpdateCounter;
 
+static void updateLedSleepModeState(uint32_t lastActivityTime) {
+    uint32_t elapsedTime = Timer_GetElapsedTime(&lastActivityTime);
+
+    if (elapsedTime > LedSleepTimeout && !LedSleepModeActive && LedSleepTimeout) {
+        LedSleepModeActive = true;
+        LedSlaveDriver_UpdateLeds();
+    } else if (elapsedTime < LedSleepTimeout && LedSleepModeActive) {
+        LedSleepModeActive = false;
+        LedSlaveDriver_UpdateLeds();
+    }
+}
+
 void UpdateUsbReports(void)
 {
     static uint32_t lastUpdateTime;
     static uint32_t lastReportTime;
+    static uint32_t lastActivityTime;
 
     for (uint8_t keyId = 0; keyId < RIGHT_KEY_MATRIX_KEY_COUNT; keyId++) {
         KeyStates[SlotId_RightKeyboardHalf][keyId].hardwareSwitchState = RightKeyMatrix.keyStates[keyId];
@@ -541,6 +554,8 @@ void UpdateUsbReports(void)
 
     updateActiveUsbReports();
 
+    updateLedSleepModeState(lastActivityTime);
+
     if (UsbBasicKeyboardCheckReportReady() == kStatus_USB_Success) {
         MacroRecorder_RecordBasicReport(ActiveUsbBasicKeyboardReport);
 
@@ -556,9 +571,9 @@ void UpdateUsbReports(void)
                 //TODO: consider either making it atomic, or lowering semaphore reset delay
                 UsbReportUpdateSemaphore &= ~(1 << USB_BASIC_KEYBOARD_INTERFACE_INDEX);
             }
-            lastReportTime = CurrentTime;
         }
         lastReportTime = CurrentTime;
+        lastActivityTime = CurrentTime;
     }
 
     if (UsbMediaKeyboardCheckReportReady() == kStatus_USB_Success) {
@@ -567,6 +582,7 @@ void UpdateUsbReports(void)
         if (status != kStatus_USB_Success) {
             UsbReportUpdateSemaphore &= ~(1 << USB_MEDIA_KEYBOARD_INTERFACE_INDEX);
         }
+        lastActivityTime = CurrentTime;
     }
 
     if (UsbSystemKeyboardCheckReportReady() == kStatus_USB_Success) {
@@ -575,6 +591,7 @@ void UpdateUsbReports(void)
         if (status != kStatus_USB_Success) {
             UsbReportUpdateSemaphore &= ~(1 << USB_SYSTEM_KEYBOARD_INTERFACE_INDEX);
         }
+        lastActivityTime = CurrentTime;
     }
 
     // Send out the mouse position and wheel values continuously if the report is not zeros, but only send the mouse button states when they change.
@@ -585,5 +602,6 @@ void UpdateUsbReports(void)
         if (status != kStatus_USB_Success) {
             UsbReportUpdateSemaphore &= ~(1 << USB_MOUSE_INTERFACE_INDEX);
         }
+        lastActivityTime = CurrentTime;
     }
 }

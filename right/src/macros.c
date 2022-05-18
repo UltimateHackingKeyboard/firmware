@@ -2185,7 +2185,6 @@ static macro_result_t processForkCommand(const char* arg1, const char* cmdEnd)
     return forkMacro(macroIndex);
 }
 
-
 static macro_result_t processProgressHueCommand()
 {
 #define C(I) (*cols[((phase + I + 3) % 3)])
@@ -2220,7 +2219,7 @@ static macro_result_t processProgressHueCommand()
 #undef C
 }
 
-static macro_result_t processCommand(const char* cmd, const char* cmdEnd)
+static ATTR_UNUSED macro_result_t processCommand(const char* cmd, const char* cmdEnd)
 {
     if (*cmd == '$') {
         cmd++;
@@ -2810,7 +2809,7 @@ static macro_result_t processCommand(const char* cmd, const char* cmdEnd)
     return MacroResult_Finished;
 }
 
-static macro_result_t processStockCommandAction(const char* cmd, const char* cmdEnd)
+static ATTR_UNUSED macro_result_t processStockCommandAction(const char* cmd, const char* cmdEnd)
 {
     if (*cmd == '$') {
         cmd++;

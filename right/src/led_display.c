@@ -1,11 +1,15 @@
 #include "led_display.h"
 #include "slave_drivers/is31fl3xxx_driver.h"
 #include "layer.h"
+#include "layer_switcher.h"
 #include "keymap.h"
 #include "device.h"
 
+uint32_t LedSleepTimeout = 1000 * 60 * 15;
 uint8_t IconsAndLayerTextsBrightness = 0xff;
+uint8_t IconsAndLayerTextsBrightnessDefault = 0xff;
 uint8_t AlphanumericSegmentsBrightness = 0xff;
+uint8_t AlphanumericSegmentsBrightnessDefault = 0xff;
 bool ledIconStates[LedDisplayIcon_Count];
 char LedDisplay_DebugString[] = "   ";
 
@@ -192,5 +196,6 @@ void LedDisplay_UpdateText(void)
 void LedDisplay_UpdateAll(void)
 {
     LedDisplay_UpdateIcons();
+    LedDisplay_SetLayer(ActiveLayer);
     LedDisplay_UpdateText();
 }

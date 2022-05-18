@@ -76,25 +76,9 @@ Syntax is <code>set module.{module}.{property} {value}</code><br>
         </tr>
     </thead>
     <tbody>
-        <tr>
-            <td>Base speed</td>
-            <td v-for="module in rightModules" class="no-wrap"><slider :name="`module.${moduleStrings[module]}.baseSpeed`"/></td>
-        </tr>
-        <tr>
-            <td>Speed</td>
-            <td v-for="module in rightModules" class="no-wrap"><slider :name="`module.${moduleStrings[module]}.speed`"/></td>
-        </tr>
-        <tr>
-            <td>Acceleration</td>
-            <td v-for="module in rightModules" class="no-wrap"><slider :name="`module.${moduleStrings[module]}.xceleration`"/></td>
-        </tr>
-        <tr>
-            <td>Caret speed divisor</td>
-            <td v-for="module in rightModules" class="no-wrap"><slider :name="`module.${moduleStrings[module]}.caretSpeedDivisor`"/></td>
-        </tr>
-        <tr>
-            <td>Scroll speed divisor</td>
-            <td v-for="module in rightModules" class="no-wrap"><slider :name="`module.${moduleStrings[module]}.scrollSpeedDivisor`"/></td>
+        <tr v-for="speedProp in moduleSpeedProps">
+            <td>{{speedProp.desc}}</td>
+            <td v-for="module in rightModules" class="no-wrap"><slider :name="`module.${moduleStrings[module]}.${speedProp.name}`"/></td>
         </tr>
     </tbody>
 </table>
@@ -130,33 +114,25 @@ Syntax is <code>set module.{module}.{property} {value}</code><br>
 </li>
 </ul>
 
-<table class="table w-auto">
+<table v-show="rightModules.length" class="table w-auto">
     <thead>
         <tr>
             <th scope="col"></th>
-            <th scope="col">Trackball</th>
-            <th scope="col">Trackpoint</th>
-            <th scope="col">Touchpad</th>
+            <th v-for="module in rightModules" scope="col">{{moduleDescriptions[module]}}</th>
         </tr>
     </thead>
     <tbody>
         <tr>
             <td>Axis lock skew</td>
-            <td class="no-wrap"><slider/></td>
-            <td class="no-wrap"><slider/></td>
-            <td class="no-wrap"><slider/></td>
+            <td v-for="module in rightModules" class="no-wrap"><slider :name="`module.${moduleStrings[module]}.axisLockSkew`"/></td>
         </tr>
         <tr>
             <td>Axis lock first tick skew</td>
-            <td class="no-wrap"><slider/></td>
-            <td class="no-wrap"><slider/></td>
-            <td class="no-wrap"><slider/></td>
+            <td v-for="module in rightModules" class="no-wrap"><slider :name="`module.${moduleStrings[module]}.axisLockFirstTickSkew`"/></td>
         </tr>
         <tr>
             <td>Scroll axis lock enabled</td>
-            <td><input type="checkbox"></td>
-            <td><input type="checkbox"></td>
-            <td><input type="checkbox"></td>
+            <td v-for="module in rightModules" class="no-wrap"><checkbox :name="`module.${moduleStrings[module]}.scrollAxisLock`"/></td>
         </tr>
     </tbody>
 </table>
@@ -175,19 +151,13 @@ Syntax is <code>set module.{module}.invertScrollDirection {0|1}</code><br>
     <thead>
         <tr>
             <th scope="col"></th>
-            <th scope="col">Key cluster</th>
-            <th scope="col">Trackball</th>
-            <th scope="col">Trackpoint</th>
-            <th scope="col">Touchpad</th>
+            <th v-for="module in rightModules" scope="col">{{moduleDescriptions[module]}}</th>
         </tr>
     </thead>
     <tbody>
         <tr>
             <td>Invert scroll direction</td>
-            <td><input type="checkbox"></td>
-            <td><input type="checkbox"></td>
-            <td><input type="checkbox"></td>
-            <td><input type="checkbox"></td>
+            <td v-for="module in rightModules"><checkbox :name="`module.${moduleStrings[module]}.invertScrollDirection`"/></td>
         </tr>
     </tbody>
 </table>
@@ -202,7 +172,7 @@ Syntax is <code>set module.{module}.swapAxes {0|1}</code><br>
 <li><code>{module}</code> is of <code>keycluster</code>, <code>trackball</code>, <code>trackpoint</code>, <code>touchpad</code></li>
 </ul>
 
-<p><input type="checkbox"> Swap the X and Y axes of key cluster module's mini trackball</p>
+<p><checkbox name="module.keycluster.swapAxes"></checkbox> Swap the X and Y axes of key cluster module's mini trackball</p>
 
 <h3>set &raquo; touchpad pinch-to-zoom divisor</h3>
 
@@ -210,7 +180,7 @@ Syntax is <code>set module.{module}.swapAxes {0|1}</code><br>
 
 <p>Syntax is <code>set module.touchpad.pinchZoomDivisor {value}</code></p>
 
-<p><input type="range"></p>
+<p><slider name="module.touchpad.pinchZoomDivisor"/></p>
 
 <h3>set &raquo; module navigation modes</h3>
 
@@ -233,628 +203,17 @@ Syntax is <code>set module.{moduleId}.{layerId} {navigationMode}</code><br>
 <li><code>{navigationMode}</code> is of <code>cursor</code>, <code>scroll</code>, <code>caret</code>, <code>media</code>, <code>zoom</code>, <code>zoomPc</code>, <code>zoomMac</code>, <code>none</code></li>
 </ul>
 
-<table class="table w-auto">
+<table v-show="modules.length" class="table w-auto">
     <thead>
         <tr>
             <th scope="col">Layer</th>
-            <th scope="col">Key cluster</th>
-            <th scope="col">Trackball</th>
-            <th scope="col">Trackpoint</th>
-            <th scope="col">Touchpad</th>
+            <th v-for="module in modules" scope="col">{{moduleDescriptions[module]}}</th>
         </tr>
     </thead>
     <tbody>
-        <tr>
-            <th scope="row">Base</th>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option>Cursor</option>
-                    <option selected>Scroll</option>
-                    <option>Caret</option>
-                    <option>Media</option>
-                    <option>Zoom</option>
-                    <option>Zoom PC</option>
-                    <option>Zoom Mac</option>
-                    <option>None</option>
-                </select>
-            </td>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option selected>Cursor</option>
-                    <option>Scroll</option>
-                    <option>Caret</option>
-                    <option>Media</option>
-                    <option>Zoom</option>
-                    <option>Zoom PC</option>
-                    <option>Zoom Mac</option>
-                    <option>None</option>
-                </select>
-            </td>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option selected>Cursor</option>
-                    <option>Scroll</option>
-                    <option>Caret</option>
-                    <option>Media</option>
-                    <option>Zoom</option>
-                    <option>Zoom PC</option>
-                    <option>Zoom Mac</option>
-                    <option>None</option>
-                </select>
-            </td>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option selected>Cursor</option>
-                    <option>Scroll</option>
-                    <option>Caret</option>
-                    <option>Media</option>
-                    <option>Zoom</option>
-                    <option>Zoom PC</option>
-                    <option>Zoom Mac</option>
-                    <option>None</option>
-                </select>
-            </td>
-        </tr>
-        <tr>
-            <th scope="row">Mod</th>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option selected>Cursor</option>
-                    <option>Scroll</option>
-                    <option>Caret</option>
-                    <option>Media</option>
-                    <option>Zoom</option>
-                    <option>Zoom PC</option>
-                    <option>Zoom Mac</option>
-                    <option>None</option>
-                </select>
-            </td>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option>Cursor</option>
-                    <option selected>Scroll</option>
-                    <option>Caret</option>
-                    <option>Media</option>
-                    <option>Zoom</option>
-                    <option>Zoom PC</option>
-                    <option>Zoom Mac</option>
-                    <option>None</option>
-                </select>
-            </td>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option>Cursor</option>
-                    <option selected>Scroll</option>
-                    <option>Caret</option>
-                    <option>Media</option>
-                    <option>Zoom</option>
-                    <option>Zoom PC</option>
-                    <option>Zoom Mac</option>
-                    <option>None</option>
-                </select>
-            </td>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option>Cursor</option>
-                    <option selected>Scroll</option>
-                    <option>Caret</option>
-                    <option>Media</option>
-                    <option>Zoom</option>
-                    <option>Zoom PC</option>
-                    <option>Zoom Mac</option>
-                    <option>None</option>
-                </select>
-            </td>
-        </tr>
-        <tr>
-            <th scope="row">Mouse</th>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option>Cursor</option>
-                    <option>Scroll</option>
-                    <option>Caret</option>
-                    <option>Media</option>
-                    <option>Zoom</option>
-                    <option>Zoom PC</option>
-                    <option>Zoom Mac</option>
-                    <option selected>None</option>
-                </select>
-            </td>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option>Cursor</option>
-                    <option>Scroll</option>
-                    <option>Caret</option>
-                    <option>Media</option>
-                    <option>Zoom</option>
-                    <option>Zoom PC</option>
-                    <option>Zoom Mac</option>
-                    <option selected>None</option>
-                </select>
-            </td>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option>Cursor</option>
-                    <option>Scroll</option>
-                    <option>Caret</option>
-                    <option>Media</option>
-                    <option>Zoom</option>
-                    <option>Zoom PC</option>
-                    <option>Zoom Mac</option>
-                    <option selected>None</option>
-                </select>
-            </td>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option>Cursor</option>
-                    <option>Scroll</option>
-                    <option>Caret</option>
-                    <option>Media</option>
-                    <option>Zoom</option>
-                    <option>Zoom PC</option>
-                    <option>Zoom Mac</option>
-                    <option selected>None</option>
-                </select>
-            </td>
-        </tr>
-        <tr>
-            <th scope="row">Fn</th>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option>Cursor</option>
-                    <option>Scroll</option>
-                    <option selected>Caret</option>
-                    <option>Media</option>
-                    <option>Zoom</option>
-                    <option>Zoom PC</option>
-                    <option>Zoom Mac</option>
-                    <option>None</option>
-                </select>
-            </td>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option>Cursor</option>
-                    <option>Scroll</option>
-                    <option selected>Caret</option>
-                    <option>Media</option>
-                    <option>Zoom</option>
-                    <option>Zoom PC</option>
-                    <option>Zoom Mac</option>
-                    <option>None</option>
-                </select>
-            </td>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option>Cursor</option>
-                    <option>Scroll</option>
-                    <option selected>Caret</option>
-                    <option>Media</option>
-                    <option>Zoom</option>
-                    <option>Zoom PC</option>
-                    <option>Zoom Mac</option>
-                    <option>None</option>
-                </select>
-            </td>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option>Cursor</option>
-                    <option>Scroll</option>
-                    <option selected>Caret</option>
-                    <option>Media</option>
-                    <option>Zoom</option>
-                    <option>Zoom PC</option>
-                    <option>Zoom Mac</option>
-                    <option>None</option>
-                </select>
-            </td>
-        </tr>
-        <tr>
-            <th scope="row">Fn2</th>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option>Cursor</option>
-                    <option>Scroll</option>
-                    <option>Caret</option>
-                    <option>Media</option>
-                    <option>Zoom</option>
-                    <option>Zoom PC</option>
-                    <option>Zoom Mac</option>
-                    <option selected>None</option>
-                </select>
-            </td>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option>Cursor</option>
-                    <option>Scroll</option>
-                    <option>Caret</option>
-                    <option>Media</option>
-                    <option>Zoom</option>
-                    <option>Zoom PC</option>
-                    <option>Zoom Mac</option>
-                    <option selected>None</option>
-                </select>
-            </td>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option>Cursor</option>
-                    <option>Scroll</option>
-                    <option>Caret</option>
-                    <option>Media</option>
-                    <option>Zoom</option>
-                    <option>Zoom PC</option>
-                    <option>Zoom Mac</option>
-                    <option selected>None</option>
-                </select>
-            </td>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option>Cursor</option>
-                    <option>Scroll</option>
-                    <option>Caret</option>
-                    <option>Media</option>
-                    <option>Zoom</option>
-                    <option>Zoom PC</option>
-                    <option>Zoom Mac</option>
-                    <option selected>None</option>
-                </select>
-            </td>
-        </tr>
-        <tr>
-            <th scope="row">Fn3</th>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option>Cursor</option>
-                    <option>Scroll</option>
-                    <option>Caret</option>
-                    <option>Media</option>
-                    <option>Zoom</option>
-                    <option>Zoom PC</option>
-                    <option>Zoom Mac</option>
-                    <option selected>None</option>
-                </select>
-            </td>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option>Cursor</option>
-                    <option>Scroll</option>
-                    <option>Caret</option>
-                    <option>Media</option>
-                    <option>Zoom</option>
-                    <option>Zoom PC</option>
-                    <option>Zoom Mac</option>
-                    <option selected>None</option>
-                </select>
-            </td>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option>Cursor</option>
-                    <option>Scroll</option>
-                    <option>Caret</option>
-                    <option>Media</option>
-                    <option>Zoom</option>
-                    <option>Zoom PC</option>
-                    <option>Zoom Mac</option>
-                    <option selected>None</option>
-                </select>
-            </td>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option>Cursor</option>
-                    <option>Scroll</option>
-                    <option>Caret</option>
-                    <option>Media</option>
-                    <option>Zoom</option>
-                    <option>Zoom PC</option>
-                    <option>Zoom Mac</option>
-                    <option selected>None</option>
-                </select>
-            </td>
-        </tr>
-        <tr>
-            <th scope="row">Fn4</th>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option>Cursor</option>
-                    <option>Scroll</option>
-                    <option>Caret</option>
-                    <option>Media</option>
-                    <option>Zoom</option>
-                    <option>Zoom PC</option>
-                    <option>Zoom Mac</option>
-                    <option selected>None</option>
-                </select>
-            </td>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option>Cursor</option>
-                    <option>Scroll</option>
-                    <option>Caret</option>
-                    <option>Media</option>
-                    <option>Zoom</option>
-                    <option>Zoom PC</option>
-                    <option>Zoom Mac</option>
-                    <option selected>None</option>
-                </select>
-            </td>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option>Cursor</option>
-                    <option>Scroll</option>
-                    <option>Caret</option>
-                    <option>Media</option>
-                    <option>Zoom</option>
-                    <option>Zoom PC</option>
-                    <option>Zoom Mac</option>
-                    <option selected>None</option>
-                </select>
-            </td>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option>Cursor</option>
-                    <option>Scroll</option>
-                    <option>Caret</option>
-                    <option>Media</option>
-                    <option>Zoom</option>
-                    <option>Zoom PC</option>
-                    <option>Zoom Mac</option>
-                    <option selected>None</option>
-                </select>
-            </td>
-        </tr>
-        <tr>
-            <th scope="row">Fn5</th>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option>Cursor</option>
-                    <option>Scroll</option>
-                    <option>Caret</option>
-                    <option>Media</option>
-                    <option>Zoom</option>
-                    <option>Zoom PC</option>
-                    <option>Zoom Mac</option>
-                    <option selected>None</option>
-                </select>
-            </td>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option>Cursor</option>
-                    <option>Scroll</option>
-                    <option>Caret</option>
-                    <option>Media</option>
-                    <option>Zoom</option>
-                    <option>Zoom PC</option>
-                    <option>Zoom Mac</option>
-                    <option selected>None</option>
-                </select>
-            </td>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option>Cursor</option>
-                    <option>Scroll</option>
-                    <option>Caret</option>
-                    <option>Media</option>
-                    <option>Zoom</option>
-                    <option>Zoom PC</option>
-                    <option>Zoom Mac</option>
-                    <option selected>None</option>
-                </select>
-            </td>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option>Cursor</option>
-                    <option>Scroll</option>
-                    <option>Caret</option>
-                    <option>Media</option>
-                    <option>Zoom</option>
-                    <option>Zoom PC</option>
-                    <option>Zoom Mac</option>
-                    <option selected>None</option>
-                </select>
-            </td>
-        </tr>
-        <tr>
-            <th scope="row">Shift</th>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option>Cursor</option>
-                    <option>Scroll</option>
-                    <option>Caret</option>
-                    <option>Media</option>
-                    <option>Zoom</option>
-                    <option>Zoom PC</option>
-                    <option>Zoom Mac</option>
-                    <option selected>None</option>
-                </select>
-            </td>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option>Cursor</option>
-                    <option>Scroll</option>
-                    <option>Caret</option>
-                    <option>Media</option>
-                    <option>Zoom</option>
-                    <option>Zoom PC</option>
-                    <option>Zoom Mac</option>
-                    <option selected>None</option>
-                </select>
-            </td>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option>Cursor</option>
-                    <option>Scroll</option>
-                    <option>Caret</option>
-                    <option>Media</option>
-                    <option>Zoom</option>
-                    <option>Zoom PC</option>
-                    <option>Zoom Mac</option>
-                    <option selected>None</option>
-                </select>
-            </td>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option>Cursor</option>
-                    <option>Scroll</option>
-                    <option>Caret</option>
-                    <option>Media</option>
-                    <option>Zoom</option>
-                    <option>Zoom PC</option>
-                    <option>Zoom Mac</option>
-                    <option selected>None</option>
-                </select>
-            </td>
-        </tr>
-        <tr>
-            <th scope="row">Ctrl</th>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option>Cursor</option>
-                    <option>Scroll</option>
-                    <option>Caret</option>
-                    <option>Media</option>
-                    <option>Zoom</option>
-                    <option>Zoom PC</option>
-                    <option>Zoom Mac</option>
-                    <option selected>None</option>
-                </select>
-            </td>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option>Cursor</option>
-                    <option>Scroll</option>
-                    <option>Caret</option>
-                    <option>Media</option>
-                    <option>Zoom</option>
-                    <option>Zoom PC</option>
-                    <option>Zoom Mac</option>
-                    <option selected>None</option>
-                </select>
-            </td>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option>Cursor</option>
-                    <option>Scroll</option>
-                    <option>Caret</option>
-                    <option>Media</option>
-                    <option>Zoom</option>
-                    <option>Zoom PC</option>
-                    <option>Zoom Mac</option>
-                    <option selected>None</option>
-                </select>
-            </td>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option>Cursor</option>
-                    <option>Scroll</option>
-                    <option>Caret</option>
-                    <option>Media</option>
-                    <option>Zoom</option>
-                    <option>Zoom PC</option>
-                    <option>Zoom Mac</option>
-                    <option selected>None</option>
-                </select>
-            </td>
-        </tr>
-        <tr>
-            <th scope="row">Alt</th>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option>Cursor</option>
-                    <option>Scroll</option>
-                    <option>Caret</option>
-                    <option>Media</option>
-                    <option>Zoom</option>
-                    <option>Zoom PC</option>
-                    <option>Zoom Mac</option>
-                    <option selected>None</option>
-                </select>
-            </td>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option>Cursor</option>
-                    <option>Scroll</option>
-                    <option>Caret</option>
-                    <option>Media</option>
-                    <option>Zoom</option>
-                    <option>Zoom PC</option>
-                    <option>Zoom Mac</option>
-                    <option selected>None</option>
-                </select>
-            </td>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option>Cursor</option>
-                    <option>Scroll</option>
-                    <option>Caret</option>
-                    <option>Media</option>
-                    <option>Zoom</option>
-                    <option>Zoom PC</option>
-                    <option>Zoom Mac</option>
-                    <option selected>None</option>
-                </select>
-            </td>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option>Cursor</option>
-                    <option>Scroll</option>
-                    <option>Caret</option>
-                    <option>Media</option>
-                    <option>Zoom</option>
-                    <option>Zoom PC</option>
-                    <option>Zoom Mac</option>
-                    <option selected>None</option>
-                </select>
-            </td>
-        </tr>
-        <tr>
-            <th scope="row">Super</th>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option>Cursor</option>
-                    <option>Scroll</option>
-                    <option>Caret</option>
-                    <option>Media</option>
-                    <option>Zoom</option>
-                    <option>Zoom PC</option>
-                    <option>Zoom Mac</option>
-                    <option selected>None</option>
-                </select>
-            </td>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option>Cursor</option>
-                    <option>Scroll</option>
-                    <option>Caret</option>
-                    <option>Media</option>
-                    <option>Zoom</option>
-                    <option>Zoom PC</option>
-                    <option>Zoom Mac</option>
-                    <option selected>None</option>
-                </select>
-            </td>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option>Cursor</option>
-                    <option>Scroll</option>
-                    <option>Caret</option>
-                    <option>Media</option>
-                    <option>Zoom</option>
-                    <option>Zoom PC</option>
-                    <option>Zoom Mac</option>
-                    <option selected>None</option>
-                </select>
-            </td>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option>Cursor</option>
-                    <option>Scroll</option>
-                    <option>Caret</option>
-                    <option>Media</option>
-                    <option>Zoom</option>
-                    <option>Zoom PC</option>
-                    <option>Zoom Mac</option>
-                    <option selected>None</option>
-                </select>
-            </td>
+        <tr v-for="layer in layers">
+            <th scope="row">{{layer}}</th>
+            <td v-for="module in modules"><dropdown :name="`module.${moduleStrings[module]}.${layer.toLowerCase()}`" options="navigationModes"/></td>
         </tr>
     </tbody>
   </table>
@@ -894,46 +253,11 @@ Syntax is <code>set modifierLayerTriggers.{layer} {modifiers}</code><br>
         </tr>
     </thead>
     <tbody>
-        <tr>
-            <th scope="row">Shift</th>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option selected>Both</option>
-                    <option>Left</option>
-                    <option>Right</option>
-                </select>
-            </td>
+        <tr v-for="modifier in modifiers">
+            <th scope="row">{{modifier}}</th>
+            <td><dropdown :name="`modifierLayerTriggers.${modifier.toLowerCase()}`" options="modifierTriggers"/></td>
         </tr>
         <tr>
-            <th scope="row">Ctrl</th>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option selected>Both</option>
-                    <option>Left</option>
-                    <option>Right</option>
-                </select>
-            </td>
-        </tr>
-        <tr>
-            <th scope="row">Alt</th>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option selected>Both</option>
-                    <option>Left</option>
-                    <option>Right</option>
-                </select>
-            </td>
-        </tr>
-        <tr>
-            <th scope="row">Super</th>
-            <td>
-                <select class="form-select" aria-label="Default select example">
-                    <option selected>Both</option>
-                    <option>Left</option>
-                    <option>Right</option>
-                </select>
-            </td>
-        </tr>
     </tbody>
 </table>
 
@@ -966,35 +290,10 @@ Syntax is <code>set mouseKeys.{mode}.{property} {floatValue}</code><br>
         </tr>
     </thead>
     <tbody>
-        <tr>
-            <td>Initial speed</td>
-            <td class="no-wrap"><slider/></td>
-            <td class="no-wrap"><slider/></td>
-        </tr>
-        <tr>
-            <td>Base speed</td>
-            <td class="no-wrap"><slider/></td>
-            <td class="no-wrap"><slider/></td>
-        </tr>
-        <tr>
-            <td>Acceleration</td>
-            <td class="no-wrap"><slider/></td>
-            <td class="no-wrap"><slider/></td>
-        </tr>
-        <tr>
-            <td>Decelerated speed</td>
-            <td class="no-wrap"><slider/></td>
-            <td class="no-wrap"><slider/></td>
-        </tr>
-        <tr>
-            <td>Accelerated speed</td>
-            <td class="no-wrap"><slider/></td>
-            <td class="no-wrap"><slider/></td>
-        </tr>
-        <tr>
-            <td>Axis skew</td>
-            <td class="no-wrap"><slider/></td>
-            <td class="no-wrap"><slider/></td>
+        <tr v-for="prop in keySpeedProps">
+            <td>{{prop.desc}}</td>
+            <td class="no-wrap"><slider :name="`module.move.${prop.name}`"/></td>
+            <td class="no-wrap"><slider :name="`module.scroll.${prop.name}`"/></td>
         </tr>
     </tbody>
 </table>
@@ -1005,7 +304,7 @@ Syntax is <code>set mouseKeys.{mode}.{property} {floatValue}</code><br>
 
 <p>Syntax is <code>set diagonalSpeedCompensation {0|1}</code></p>
 
-<p><input type="checkbox"> Enable diagonal speed compensation</p>
+<p><checkbox name="diagonalSpeedCompensation"></checkbox> Enable diagonal speed compensation</p>
 
 <h3>set &raquo; sticky modifiers</h3>
 
@@ -1046,6 +345,32 @@ Syntax is <code>set stickyModifiers {stickyMode}</code><br>
 <p>If nonzero, this setting allows triggering chorded shortcuts in arbitrary order. For example, if `A+Ctrl` is pressed instead of `Ctrl+A`, the keyboard will still send `Ctrl+A` if the two key presses follow within the specified time.</p>
 
 <p>Syntax is <code>chordingDelay {time in milliseconds, at most 255}</code></p>
+
+<h3>set &raquo; enable/disable LEDs</h3>
+
+<p>Enable/disable all LEDs.</p>
+
+<p>Syntax is <code>set leds.enabled {0|1}</code></p>
+
+<h3>set &raquo; LED brightness</h3>
+
+<p>Set the brightness of all LEDs.</p>
+
+Syntax is <code>set leds.brightness {brightness}</code><br>
+
+<ul>
+    <li><code>{brightness}</code>: 0-1 multiple of default (FLOAT)</li>
+</ul>
+
+<h3>set &raquo; LED fade timeout</h3>
+
+<p>Set timeout after which all LEDs will fade out to save power until the next user interaction.</p>
+
+Syntax is <code>set leds.fadeTimeout {timeout}</code><br>
+
+<ul>
+    <li><code>{timeout}</code>: Zero value means disabled fade timeout. Otherwise, the timeout value specified in minutes.</li>
+</ul>
 
 </div>
 <script type="module" src="script.mjs"></script>

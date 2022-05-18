@@ -1,5 +1,6 @@
 #include "macro_set_command.h"
 #include "ledmap.h"
+#include "macros.h"
 #include "timer.h"
 #include "keymap.h"
 #include "key_matrix.h"
@@ -15,6 +16,7 @@
 #include "debug.h"
 #include "caret_config.h"
 #include "config_parser/parse_macro.h"
+#include "slave_drivers/is31fl3xxx_driver.h"
 
 static const char* proceedByDot(const char* cmd, const char *cmdEnd)
 {
@@ -176,7 +178,7 @@ static void macroEngineScheduler(const char* arg1, const char *textEnd)
     }
 }
 
-static void macroEngine(const char* arg1, const char *textEnd)
+static ATTR_UNUSED void macroEngine(const char* arg1, const char *textEnd)
 {
     if (TokenMatches(arg1, textEnd, "scheduler")) {
         macroEngineScheduler(NextTok(arg1,  textEnd), textEnd);
@@ -218,6 +220,21 @@ static void constantRgb(const char* arg1, const char *textEnd)
     }
 }
 
+static ATTR_UNUSED void leds(const char* arg1, const char *textEnd)
+{
+    const char* value = NextTok(arg1, textEnd);
+    if (TokenMatches(arg1, textEnd, "fadeTimeout")) {
+        LedSleepTimeout = 1000*60*Macros_ParseInt(value, textEnd, NULL);
+    } else if (TokenMatches(arg1, textEnd, "brightness")) {
+        LedBrightnessMultiplier = ParseFloat(value, textEnd);
+    } else if (TokenMatches(arg1, textEnd, "enabled")) {
+        LedsEnabled = Macros_ParseBoolean(value, textEnd);
+    } else {
+        Macros_ReportError("parameter not recognized:", arg1, textEnd);
+    }
+
+    LedSlaveDriver_UpdateLeds();
+}
 
 static void backlight(const char* arg1, const char *textEnd)
 {
@@ -305,7 +322,7 @@ static void navigationModeAction(const char* arg1, const char *textEnd)
     SetModuleCaretConfiguration(navigationMode, axis, positive, action);
 }
 
-static void keymapAction(const char* arg1, const char *textEnd)
+static ATTR_UNUSED void keymapAction(const char* arg1, const char *textEnd)
 {
     const char* arg2 = proceedByDot(arg1, textEnd);
     const char* arg3 = NextTok(arg2, textEnd);
@@ -406,6 +423,9 @@ macro_result_t MacroSetCommand(const char* arg1, const char *textEnd)
 #endif
     else if (TokenMatches(arg1, textEnd, "backlight")) {
         backlight(proceedByDot(arg1, textEnd), textEnd);
+    }
+    else if (TokenMatches(arg1, textEnd, "leds")) {
+        leds(proceedByDot(arg1, textEnd), textEnd);
     }
     else if (TokenMatches(arg1, textEnd, "modifierLayerTriggers")) {
         modLayerTriggers(proceedByDot(arg1, textEnd), textEnd);
