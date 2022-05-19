@@ -78,7 +78,9 @@ Syntax is <code>set module.{module}.{property} {value}</code><br>
     <tbody>
         <tr v-for="speedProp in moduleSpeedProps">
             <td>{{speedProp.desc}}</td>
-            <td v-for="module in rightModules" class="no-wrap"><slider :name="`module.${moduleStrings[module]}.${speedProp.name}`"/></td>
+            <td v-for="module in rightModules" class="no-wrap">
+                <slider :name="`module.${moduleStrings[module]}.${speedProp.name}`" :min="speedProp.min" default="1" :max="speedProp.max" :step="speedProp.step"/>
+            </td>
         </tr>
     </tbody>
 </table>

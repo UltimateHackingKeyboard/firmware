@@ -144,11 +144,11 @@ const app = createApp({
                 5: 'Touchpad',
             },
             moduleSpeedProps: [
-                {name:'baseSpeed', desc:'Base speed'},
-                {name:'speed', desc:'Speed'},
-                {name:'xceleration', desc:'Acceleration speed'},
-                {name:'caretSpeedDivisor', desc:'Caret speed divisor'},
-                {name:'scrollSpeedDivisor', desc:'Scroll speed divisor'},
+                {name:'baseSpeed', desc:'Base speed', min:0, max:10, step:0.1},
+                {name:'speed', desc:'Speed', min:0, max:10, step:0.1},
+                {name:'xceleration', desc:'Acceleration speed', min:0, max:1, step:0.1},
+                {name:'caretSpeedDivisor', desc:'Caret speed divisor', min:0, max:100, step:1},
+                {name:'scrollSpeedDivisor', desc:'Scroll speed divisor', min:0, max:100, step:1},
             ],
             layers: [
                 'Base',
