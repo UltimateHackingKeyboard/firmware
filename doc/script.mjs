@@ -94,9 +94,12 @@ const Dropdown = {
 };
 
 const Slider = {
-    template: `<input type="range" ref="input" @input="updateValue">{{value}}`,
+    template: `<input type="range" ref="input" @input="updateValue" :min="min" :max="max" :step="step">{{value}}`,
     props: {
         name: String,
+        min: Number,
+        max: Number,
+        step: Number,
     },
     data() {
         return {
