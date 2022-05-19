@@ -103,7 +103,6 @@ const Slider = {
         default: Number,
     },
     data() {
-        console.log('default', this.default)
         return {
             value: this.default,
         };
@@ -144,11 +143,21 @@ const app = createApp({
                 5: 'Touchpad',
             },
             moduleSpeedProps: [
-                {name:'baseSpeed', desc:'Base speed', min:0, max:10, step:0.1},
-                {name:'speed', desc:'Speed', min:0, max:10, step:0.1},
-                {name:'xceleration', desc:'Acceleration speed', min:0, max:1, step:0.1},
-                {name:'caretSpeedDivisor', desc:'Caret speed divisor', min:0, max:100, step:1},
-                {name:'scrollSpeedDivisor', desc:'Scroll speed divisor', min:0, max:100, step:1},
+                {name:'baseSpeed', desc:'Base speed', min:0, max:10, step:0.1,
+                    perModuleDefaults: {3:0.5, 4:0.0, 5:0.5},
+                },
+                {name:'speed', desc:'Speed', min:0, max:10, step:0.1,
+                    perModuleDefaults: {3:0.5, 4:1.0, 5:0.7},
+                },
+                {name:'xceleration', desc:'Acceleration speed', min:0, max:1, step:0.1,
+                    perModuleDefaults: {3:1.0, 4:0.0, 5:1.0},
+                },
+                {name:'caretSpeedDivisor', desc:'Caret speed divisor', min:0, max:100, step:1,
+                    perModuleDefaults: {3:16.0, 4:16.0, 5:16.0},
+                },
+                {name:'scrollSpeedDivisor', desc:'Scroll speed divisor', min:0, max:100, step:1,
+                    perModuleDefaults: {3:8.0, 4:8.0, 5:8.0},
+                },
             ],
             layers: [
                 'Base',
