@@ -100,10 +100,12 @@ const Slider = {
         min: Number,
         max: Number,
         step: Number,
+        default: Number,
     },
     data() {
+        console.log('default', this.default)
         return {
-            value: '',
+            value: this.default,
         };
     },
     mounted() {
@@ -112,6 +114,9 @@ const Slider = {
     },
     methods: {
         updateValue(isInit) {
+            if (isInit === true) {
+                this.$refs.input.value = this.default;
+            }
             this.value = this.$refs.input.value;
             if (isInit !== true) {
                 setVariable(this.name, this.value, isInit);
