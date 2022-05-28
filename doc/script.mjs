@@ -159,6 +159,8 @@ const app = createApp({
                     perModuleDefaults: {3:8.0, 4:8.0, 5:8.0},
                 },
             ],
+            axisLockSkewDefaults: {2:0.5, 3:0.5, 4:0.5, 5:0.5},
+            axisLockFirstTickSkewDefaults: {2:0.5, 3:2.0, 4:2.0, 5:2.0},
             layers: [
                 'Base',
                 'Mod',
