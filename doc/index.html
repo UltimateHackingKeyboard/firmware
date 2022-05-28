@@ -139,7 +139,7 @@ Syntax is <code>set module.{module}.{property} {value}</code><br>
         <tr>
             <td>Scroll axis lock enabled</td>
             <td v-for="module in modules" class="no-wrap">
-                <checkbox :name="`module.${moduleStrings[module]}.scrollAxisLock`"/>
+                <checkbox :name="`module.${moduleStrings[module]}.scrollAxisLock`" default="1"/>
             </td>
         </tr>
     </tbody>
@@ -165,7 +165,7 @@ Syntax is <code>set module.{module}.invertScrollDirection {0|1}</code><br>
     <tbody>
         <tr>
             <td>Invert scroll direction</td>
-            <td v-for="module in rightModules"><checkbox :name="`module.${moduleStrings[module]}.invertScrollDirection`"/></td>
+            <td v-for="module in rightModules"><checkbox :name="`module.${moduleStrings[module]}.invertScrollDirection`" default="0"/></td>
         </tr>
     </tbody>
 </table>
@@ -180,7 +180,7 @@ Syntax is <code>set module.{module}.swapAxes {0|1}</code><br>
 <li><code>{module}</code> is of <code>keycluster</code>, <code>trackball</code>, <code>trackpoint</code>, <code>touchpad</code></li>
 </ul>
 
-<p><checkbox name="module.keycluster.swapAxes"></checkbox> Swap the X and Y axes of key cluster module's mini trackball</p>
+<p><checkbox name="module.keycluster.swapAxes" default="0"></checkbox> Swap the X and Y axes of key cluster module's mini trackball</p>
 
 <h3>set &raquo; touchpad pinch-to-zoom divisor</h3>
 

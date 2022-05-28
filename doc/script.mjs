@@ -29,10 +29,11 @@ const Checkbox = {
     template: `<input type="checkbox" ref="input" @input="updateValue">`,
     props: {
         name: String,
+        default: Number,
     },
     data() {
         return {
-            value: false,
+            value: this.default,
         };
     },
     mounted() {
@@ -41,7 +42,10 @@ const Checkbox = {
     },
     methods: {
         updateValue(isInit) {
-            this.value = this.$refs.input.checked ? 1 : 0;
+            if (isInit === true) {
+                this.$refs.input.checked = this.default === '1' ? 'checked' : 0;
+            }
+            this.value = +this.$refs.input.checked ? 1 : 0;
             if (isInit !== true) {
                 setVariable(this.name, this.value, isInit);
             }
