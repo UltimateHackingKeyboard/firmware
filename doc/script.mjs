@@ -58,14 +58,15 @@ const Dropdown = {
     props: {
         name: String,
         options: String,
+        default: String,
     },
     data() {
         return {
-            value: [],
+            value: this.default,
             selectOptions: [],
         };
     },
-    mounted() {
+    async mounted() {
         const allOptions = {
             modifierTriggers: [
                 {label:'Both', value:'both'},
@@ -84,11 +85,16 @@ const Dropdown = {
             ],
         }
         this.selectOptions = allOptions[this.options];
+        await this.$nextTick();
         this.updateValue(true);
         variablesToWidgets[this.name] = this;
     },
     methods: {
         updateValue(isInit) {
+            if (isInit === true) {
+                this.$refs.input.value = this.default;
+            }
+
             this.value = this.$refs.input.value;
             if (isInit !== true) {
                 setVariable(this.name, this.value, isInit);
