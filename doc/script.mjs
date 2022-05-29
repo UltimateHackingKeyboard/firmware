@@ -226,6 +226,14 @@ const app = createApp({
         });
         window.parent.postMessage({action: 'doc-message-inited'}, '*');
     },
+    methods: {
+        getNavigationMode(module, layer) {
+            if (module === 2) {
+                return {Base:'scroll', Mod:'cursor', Fn:'caret'}[layer] ?? 'cursor';
+            }
+            return {Base:'cursor', Mod:'scroll', Fn:'caret'}[layer] ?? 'cursor';
+        },
+    },
     computed: {
         rightModules() {
             return this.modules.filter(module => module !== 2);

@@ -221,7 +221,9 @@ Syntax is <code>set module.{moduleId}.{layerId} {navigationMode}</code><br>
     <tbody>
         <tr v-for="layer in layers">
             <th scope="row">{{layer}}</th>
-            <td v-for="module in modules"><dropdown :name="`module.${moduleStrings[module]}.${layer.toLowerCase()}`" options="navigationModes"/></td>
+            <td v-for="module in modules">
+                <dropdown :name="`module.${moduleStrings[module]}.${layer.toLowerCase()}`" options="navigationModes" :default="getNavigationMode(module, layer)"/>
+            </td>
         </tr>
     </tbody>
   </table>
