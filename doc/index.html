@@ -265,7 +265,7 @@ Syntax is <code>set modifierLayerTriggers.{layer} {modifiers}</code><br>
     <tbody>
         <tr v-for="modifier in modifiers">
             <th scope="row">{{modifier}}</th>
-            <td><dropdown :name="`modifierLayerTriggers.${modifier.toLowerCase()}`" options="modifierTriggers"/></td>
+            <td><dropdown :name="`modifierLayerTriggers.${modifier.toLowerCase()}`" options="modifierTriggers" default="both"/></td>
         </tr>
         <tr>
     </tbody>
