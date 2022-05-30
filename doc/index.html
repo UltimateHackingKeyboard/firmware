@@ -302,8 +302,24 @@ Syntax is <code>set mouseKeys.{mode}.{property} {floatValue}</code><br>
     <tbody>
         <tr v-for="prop in keySpeedProps">
             <td>{{prop.desc}}</td>
-            <td class="no-wrap"><slider :name="`module.move.${prop.name}`"/></td>
-            <td class="no-wrap"><slider :name="`module.scroll.${prop.name}`"/></td>
+            <td class="no-wrap">
+                <slider
+                    :name="`module.move.${prop.name}`"
+                    :min="prop.sliderProps.move.min"
+                    :default="prop.sliderProps.move.default"
+                    :max="prop.sliderProps.move.max"
+                    :step="prop.sliderProps.move.step"
+                />
+            </td>
+            <td class="no-wrap">
+                <slider
+                    :name="`module.scroll.${prop.name}`"
+                    :min="prop.sliderProps.scroll.min"
+                    :default="prop.sliderProps.scroll.default"
+                    :max="prop.sliderProps.scroll.max"
+                    :step="prop.sliderProps.scroll.step"
+                />
+            </td>
         </tr>
     </tbody>
 </table>

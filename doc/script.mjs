@@ -197,12 +197,54 @@ const app = createApp({
                 'Right',
             ],
             keySpeedProps: [
-                {name:'initialSpeed', desc:'Initial speed'},
-                {name:'baseSpeed', desc:'Base speed'},
-                {name:'acceleration', desc:'Acceleration'},
-                {name:'deceleratedSpeed', desc:'Decelerated speed'},
-                {name:'acceleratedSpeed', desc:'Accelerated speed'},
-                {name:'axisSkew', desc:'Axis skew'},
+                {
+                    name:'initialSpeed',
+                    desc:'Initial speed',
+                    sliderProps: {
+                        move: {min:25, default:100, max:6375, step:25},
+                        scroll: {min:1, default:20, max:255, step:1},
+                    },
+                },
+                {
+                    name:'baseSpeed',
+                    desc:'Base speed',
+                    sliderProps: {
+                        move: {min:25, default:800, max:6375, step:25},
+                        scroll: {min:1, default:20, max:255, step:1},
+                    },
+                },
+                {
+                    name:'acceleration',
+                    desc:'Acceleration',
+                    sliderProps: {
+                        move: {min:25, default:1700, max:6375, step:25},
+                        scroll: {min:1, default:20, max:255, step:1},
+                    },
+                },
+                {
+                    name:'deceleratedSpeed',
+                    desc:'Decelerated speed',
+                    sliderProps: {
+                        move: {min:25, default:200, max:6375, step:25},
+                        scroll: {min:1, default:10, max:255, step:1},
+                    },
+                },
+                {
+                    name:'acceleratedSpeed',
+                    desc:'Accelerated speed',
+                    sliderProps: {
+                        move: {min:25, default:1600, max:6375, step:25},
+                        scroll: {min:1, default:50, max:255, step:1},
+                    },
+                },
+                {
+                    name:'axisSkew',
+                    desc:'Axis skew',
+                    sliderProps: {
+                        move: {min:0.5, default:1, max:2, step:0.1},
+                        scroll: {min:0.5, default:1, max:2, step:0.1},
+                    },
+                },
             ],
         };
     },
