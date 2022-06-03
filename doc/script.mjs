@@ -3,13 +3,24 @@ import {createApp} from './node_modules/vue/dist/vue.esm-browser.prod.js';
 // Components
 
 let currentCommand = '';
-const variablesToWidgets = {};
+const widgetDict = {};
 
-function initWidgetValue(name, value) {
-    variablesToWidgets[name]?.initValue(value);
+function updateWidgets() {
+    for (const widgetName in widgetDict) {
+        const widget = widgetDict[widgetName];
+        widget.initWidget();
+    }
 }
 
-function setVariable(name, value, isInit) {
+function getVariable(name) {
+    const regexVarName = name.replace(/\\./g, '\\.');
+    const regex = new RegExp(`set +${regexVarName} +(\\S+) *#?`);
+    const matches = currentCommand.match(regex);
+    const value = matches?.[1];
+    return value;
+}
+
+function setVariable(name, value) {
     const regexVarName = name.replace(/\\./g, '\\.');
     const regex = new RegExp(`(set +${regexVarName} +)\\S+( *#?)`);
     if (regex.test(currentCommand)) {
@@ -19,7 +30,7 @@ function setVariable(name, value, isInit) {
     }
     const message = {
         action: 'doc-message-set-macro',
-        command: currentCommand
+        command: currentCommand,
     };
 
     window.parent.postMessage(message, '*');
@@ -38,9 +49,13 @@ const Checkbox = {
     },
     mounted() {
         this.updateValue(true);
-        variablesToWidgets[this.name] = this;
+        widgetDict[this.name] = this;
     },
     methods: {
+        initWidget() {
+            const value = getVariable(this.name) ?? this.default;
+            this.value = this.$refs.input.value = value;
+        },
         updateValue(isInit) {
             if (isInit === true) {
                 this.$refs.input.checked = this.default === '1' ? 'checked' : 0;
@@ -87,9 +102,13 @@ const Dropdown = {
         this.selectOptions = allOptions[this.options];
         await this.$nextTick();
         this.updateValue(true);
-        variablesToWidgets[this.name] = this;
+        widgetDict[this.name] = this;
     },
     methods: {
+        initWidget() {
+            const value = getVariable(this.name) ?? this.default;
+            this.value = this.$refs.input.value = value;
+        },
         updateValue(isInit) {
             if (isInit === true) {
                 this.$refs.input.value = this.default;
@@ -119,9 +138,13 @@ const Slider = {
     },
     mounted() {
         this.updateValue(true);
-        variablesToWidgets[this.name] = this;
+        widgetDict[this.name] = this;
     },
     methods: {
+        initWidget() {
+            const value = getVariable(this.name) ?? this.default;
+            this.value = this.$refs.input.value = value;
+        },
         updateValue(isInit) {
             if (isInit === true) {
                 this.$refs.input.value = this.default;
@@ -256,13 +279,16 @@ const app = createApp({
                     const data = event.data;
                     currentCommand = data.command;
                     self.modules = data.modules;
+                    updateWidgets();
                     break;
                 }
 
                 case 'agent-message-editor-lost-focus': {
                     const data = event.data;
                     currentCommand = '';
-                    self.modules = data.modules
+                    self.modules = data.modules;
+                    updateWidgets();
+                    break;
                 }
             }
         });
