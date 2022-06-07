@@ -11,27 +11,38 @@
 <body>
 <div class="container-fluid">
 
-<h1>Smart macro quick start guide</h1>
+<h1>Smart macro reference</h1>
 
-<p>Smart macros enable advanced customizations of the UHK and its modules.</p>
+<p>Smart macros enable the advanced customization of your UHK and its modules.</p>
 
-<h2>Terminology</h2>
+<p>This documentation is a reference for smart macros, but let's start with a quick guide on how to use them.</p>
+
+<h2>Basic concepts</h2>
+
+<p>Create a new macro named <code>$onInit</code>, add a new macro action to the macro, select the Command tab, type the <code>set module.trackball.speed 1</code> command, save the macro command, and save your configuration.</p>
 
 <img src="agent-onInit.png">
 
-<p>A <strong>macro event</strong> is a specially named macro, such as <code>$onInit</code>, that is executed on select occasions.</p>
+<p><code>$onInit</code> is a special macro name. It's a <b>macro event</b> that executes each time your UHK gets powered and when you save its configuration.</p>
 
-<p>A <strong>command action</strong> is a macro action that is interpreted by the UHK firmware. A macro can have any number of macro commands, but it's usually practical to have only one.</p>
+<p>The <code>set module.trackball.baseSpeed 1</code> <b>macro command</b> sets the base speed of the trackball module to 1.</p>
 
-<p>A <strong>macro command</strong>, such as <code>set module.trackball.baseSpeed 1</code>, is a command, which is interpreted in a command action.</p>
+<p>Macro commands work in any macros, not only in macro events, and you can bind them to any key. This way, you can make Fn+1 set your trackball base speed to 1 and make Fn+2 set it to 2, for example.</p>
+
+<h2>Productivity tips</h2>
+
+<p>A macro can have any number of macro commands, but it's usually practical to have only one.</p>
+
+<p>Following is a reference of macro events and macro commands.</p>
 
 <h1>Macro events</h1>
 
-<p>The <code>$onInit</code> macro event is triggered when the UHK powers up.</p>
+<p>Macro events are a specially named macros that are executed on select occasions. When your UHK powers up and when you save its configuration, the relevant macro events are executed in the following order:</p>
 
-<p>The <code>$onKeymapChange {keymapId}</code> event is triggered when the relevant keymap, such as <code>QWR</code>, is activated.</p>
-
-When the UHK powers up or its configuration gets saved, first <code>$onInit</code> gets triggered, then <code>$onKeymapChange {keymapId}</code>.
+<ol>
+<li>The <code>$onInit</code> event is always executed.</li>
+<li>The <code>$onKeymapChange {keymapId}</code> event, such as <code>$onKeymapChange QWR</code>, is executed when a keymap, such as <code>QWR</code>, is activated.</li>
+</ol>
 
 <h1>Macro commands</h1>
 
