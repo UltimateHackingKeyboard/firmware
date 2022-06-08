@@ -769,7 +769,7 @@ void MouseController_ProcessMouseActions()
 
         processModuleActions(ks, ModuleId_TouchpadRight, (int16_t)TouchpadEvents.x, (int16_t)TouchpadEvents.y, 0xFF);
         processModuleActions(ks, ModuleId_TouchpadRight, (int16_t)TouchpadEvents.wheelX, (int16_t)TouchpadEvents.wheelY, NavigationMode_Scroll);
-        processModuleActions(ks, ModuleId_TouchpadRight, 0, (int16_t)TouchpadEvents.zoomLevel, NavigationMode_Zoom);
+        processModuleActions(ks, ModuleId_TouchpadRight, 0, (int16_t)TouchpadEvents.zoomLevel, TouchpadPinchZoomMode);
         TouchpadEvents.zoomLevel = 0;
         TouchpadEvents.wheelX = 0;
         TouchpadEvents.wheelY = 0;

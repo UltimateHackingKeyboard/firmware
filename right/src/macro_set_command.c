@@ -63,6 +63,9 @@ static void moduleSpeed(const char* arg1, const char *textEnd, module_configurat
     else if (TokenMatches(arg1, textEnd, "pinchZoomDivisor") && moduleId == ModuleId_TouchpadRight) {
         module->pinchZoomSpeedDivisor = ParseFloat(arg2, textEnd);
     }
+    else if (TokenMatches(arg1, textEnd, "pinchZoomMode") && moduleId == ModuleId_TouchpadRight) {
+        TouchpadPinchZoomMode = ParseNavigationModeId(arg2, textEnd);
+    }
     else if (TokenMatches(arg1, textEnd, "axisLockSkew")) {
         module->axisLockSkew = ParseFloat(arg2, textEnd);
     }
@@ -88,7 +91,7 @@ static void moduleSpeed(const char* arg1, const char *textEnd, module_configurat
 
 static void module(const char* arg1, const char *textEnd)
 {
-    layer_id_t moduleId = ParseModuleId(arg1, textEnd);
+    module_id_t moduleId = ParseModuleId(arg1, textEnd);
     module_configuration_t* module = GetModuleConfiguration(moduleId);
 
     const char* arg2 = proceedByDot(arg1, textEnd);
