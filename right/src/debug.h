@@ -65,7 +65,7 @@
     void ShowValue(int v, uint8_t n);
     void ShowString(char const * v, uint8_t n);
     void ShowNumberExp(int32_t a);
-    void AddReportToStatusBuffer(usb_basic_keyboard_report_t *report);
+    void AddReportToStatusBuffer(char* dbgTag, usb_basic_keyboard_report_t *report);
 
 
 #endif /* SRC_UTILS_DBG_H_ */

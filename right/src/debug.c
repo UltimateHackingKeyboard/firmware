@@ -8,6 +8,7 @@
 #include <limits.h>
 #include "usb_interfaces/usb_interface_basic_keyboard.h"
 #include "macros.h"
+#include "keymap.h"
 
 uint8_t CurrentWatch = 0;
 
@@ -15,10 +16,21 @@ static uint16_t tickCount = 0;
 static uint32_t lastWatch = 0;
 static uint32_t watchInterval = 500;
 
-void AddReportToStatusBuffer(usb_basic_keyboard_report_t *report)
+static void writeScancode(uint8_t b)
 {
-    // TODO: reimplement this using the new interfaces
-    Macros_SetStatusString("todo: reimplement this\n", NULL);
+    Macros_SetStatusChar(' ');
+    Macros_SetStatusNum(b);
+}
+
+void AddReportToStatusBuffer(char* dbgTag, usb_basic_keyboard_report_t *report)
+{
+    if (dbgTag != NULL && *dbgTag != '\0') {
+        Macros_SetStatusString(dbgTag, NULL);
+        Macros_SetStatusChar(' ');
+    }
+    Macros_SetStatusNum(report->modifiers);
+    UsbBasicKeyboard_ForeachScancode(report, &writeScancode);
+    Macros_SetStatusChar('\n');
 }
 
 void ShowNumberExp(int32_t a)
