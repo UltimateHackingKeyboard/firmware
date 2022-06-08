@@ -12,6 +12,7 @@
 #include "usb_report_updater.h"
 #include "led_display.h"
 #include "postponer.h"
+#include "ledmap.h"
 #include "macro_recorder.h"
 #include "macro_shortcut_parser.h"
 #include "str_utils.h"
@@ -68,6 +69,8 @@ macro_state_t MacroState[MACRO_STATE_POOL_SIZE];
 static macro_state_t *s = MacroState;
 
 uint16_t DoubletapConditionTimeout = 400;
+uint16_t AutoRepeatInitialDelay = 500;
+uint16_t AutoRepeatDelayRate = 50;
 
 static void wakeMacroInSlot(uint8_t slotIdx);
 static void scheduleSlot(uint8_t slotIdx);
@@ -95,8 +98,12 @@ static macro_result_t sleepTillKeystateChange();
 static void activateLayer(layer_id_t layer)
 {
     Macros_ActiveLayer = layer;
-    Macros_ActiveLayerHeld = Macros_IsLayerHeld();
-    LayerSwitcher_RecalculateLayerComposition();
+    Macros_ActiveLayerHeld = layerIdxStack[layerIdxStackTop].held;
+    if (Macros_ActiveLayerHeld) {
+        LayerSwitcher_HoldLayer(layer, true);
+    } else {
+        LayerSwitcher_RecalculateLayerComposition();
+    }
 }
 
 void Macros_SignalInterrupt()
@@ -222,11 +229,12 @@ static macro_result_t processDelay(uint32_t time)
             s->as.actionActive = false;
             return MacroResult_Finished;
         }
-        return sleepTillTime(s->as.delayData.start + time);
+        sleepTillTime(s->as.delayData.start + time);
+        return MacroResult_Sleeping;
     } else {
         s->as.delayData.start = CurrentTime;
         s->as.actionActive = true;
-        return MacroResult_Waiting;
+        return processDelay(time);
     }
 }
 
@@ -936,9 +944,7 @@ static void popLayerStack(bool forceRemoveTop, bool toggledInsteadOfTop)
         removeStackTop(false);
     }
     if (layerIdxStackSize == 0) {
-        layerIdxStack[layerIdxStackTop].layer = LayerId_Base;
-        layerIdxStack[layerIdxStackTop].removed = false;
-        layerIdxStack[layerIdxStackTop].held = false;
+        Macros_ResetLayerStack();
     }
     if (layerIdxStack[layerIdxStackTop].keymap != CurrentKeymapIndex) {
         SwitchKeymapById(layerIdxStack[layerIdxStackTop].keymap);
@@ -946,19 +952,15 @@ static void popLayerStack(bool forceRemoveTop, bool toggledInsteadOfTop)
     activateLayer(layerIdxStack[layerIdxStackTop].layer);
 }
 
-void Macros_UpdateLayerStack()
-{
-    for (int i = 0; i < LAYER_STACK_SIZE; i++) {
-        layerIdxStack[i].keymap = CurrentKeymapIndex;
-    }
-}
-
+// Always maintain protected base layer record. This record cannot be implicit
+// due to *KeymapLayer commands.
 void Macros_ResetLayerStack()
 {
-    for (int i = 0; i < LAYER_STACK_SIZE; i++) {
-        layerIdxStack[i].keymap = CurrentKeymapIndex;
-    }
     layerIdxStackSize = 1;
+    layerIdxStack[layerIdxStackTop].keymap = CurrentKeymapIndex;
+    layerIdxStack[layerIdxStackTop].layer = LayerId_Base;
+    layerIdxStack[layerIdxStackTop].removed = false;
+    layerIdxStack[layerIdxStackTop].held = false;
 }
 
 static void pushStack(uint8_t layer, uint8_t keymap, bool hold)
@@ -1192,11 +1194,6 @@ static macro_result_t processHoldLayer(uint8_t layer, uint8_t keymap, uint16_t t
             return MacroResult_Finished;
         }
     }
-}
-
-bool Macros_IsLayerHeld()
-{
-    return layerIdxStack[layerIdxStackTop].held;
 }
 
 static macro_result_t processHoldLayerCommand(const char* arg1, const char* cmdEnd)
@@ -1792,7 +1789,9 @@ conditionPassed:
 
 static macro_action_t decodeKey(const char* arg1, const char* argEnd, macro_sub_action_t defaultSubAction)
 {
-    macro_action_t action = MacroShortcutParser_Parse(arg1, TokEnd(arg1, argEnd), defaultSubAction);
+    macro_action_t action;
+    MacroShortcutParser_Parse(arg1, TokEnd(arg1, argEnd), defaultSubAction, &action, NULL);
+
     return action;
 }
 
@@ -2030,6 +2029,56 @@ conditionPassed:
     return processCommand(arg, argEnd);
 }
 
+static macro_result_t processAutoRepeatCommand(const char* arg1, const char* argEnd) {
+    switch (s->ms.autoRepeatPhase) {
+    case AutoRepeatState_Waiting:
+        goto process_delay;
+    case AutoRepeatState_Executing:
+    default:
+        goto run_command;
+    }
+
+process_delay:;
+    uint16_t delay = s->ms.autoRepeatInitialDelayPassed ? AutoRepeatDelayRate : AutoRepeatInitialDelay;
+    bool pendingReleased = PostponerQuery_IsKeyReleased(s->ms.currentMacroKey);
+    bool currentKeyIsActive = currentMacroKeyIsActive();
+
+    if (!currentKeyIsActive || pendingReleased) {
+        // reset delay state in case it was interrupted by key release
+        memset(&s->as.delayData, 0, sizeof s->as.delayData);
+        s->as.actionActive = 0;
+        s->ms.autoRepeatPhase = AutoRepeatState_Executing;
+
+        return MacroResult_Finished;
+    }
+
+    if (processDelay(delay) == MacroResult_Finished) {
+        s->ms.autoRepeatInitialDelayPassed = true;
+        s->ms.autoRepeatPhase = AutoRepeatState_Executing;
+        goto run_command;
+    } else {
+        sleepTillKeystateChange();
+        return MacroResult_Sleeping;
+    }
+
+
+run_command:;
+    macro_result_t res = processCommand(arg1, argEnd);
+    if (res & MacroResult_ActionFinishedFlag) {
+        s->ms.autoRepeatPhase = AutoRepeatState_Waiting;
+        //tidy the state in case someone left it dirty
+        memset(&s->as.delayData, 0, sizeof s->as.delayData);
+        s->as.actionActive = false;
+        s->as.actionPhase = 0;
+        return (res & ~MacroResult_ActionFinishedFlag) | MacroResult_InProgressFlag;
+    } else if (res & MacroResult_DoneFlag) {
+        s->ms.autoRepeatPhase = AutoRepeatState_Waiting;
+        return res;
+    } else {
+        return res;
+    }
+}
+
 static bool processIfKeyPendingAtCommand(bool negate, const char* arg1, const char* argEnd)
 {
     const char* arg2 = NextTok(arg1, argEnd);
@@ -2136,6 +2185,40 @@ static macro_result_t processForkCommand(const char* arg1, const char* cmdEnd)
     return forkMacro(macroIndex);
 }
 
+static macro_result_t processProgressHueCommand()
+{
+#define C(I) (*cols[((phase + I + 3) % 3)])
+
+    const uint8_t step = 10;
+    static uint8_t phase = 0;
+
+    uint8_t* cols[] = {
+        &LedMap_ConstantRGB.red,
+        &LedMap_ConstantRGB.green,
+        &LedMap_ConstantRGB.blue
+    };
+
+    bool progressed = false;
+    if (C(-1) > step) {
+        C(-1) -= step;
+        progressed = true;
+    }
+    if (C(0) < 255-step+1) {
+        C(0) += step;
+        progressed = true;
+    }
+    if (!progressed) {
+        C(-1) = 0;
+        C(0) = 255;
+        phase++;
+    }
+
+    LedMap_BacklightStrategy = BacklightStrategy_ConstantRGB;
+    UpdateLayerLeds();
+    return MacroResult_Finished;
+#undef C
+}
+
 static ATTR_UNUSED macro_result_t processCommand(const char* cmd, const char* cmdEnd)
 {
     if (*cmd == '$') {
@@ -2159,6 +2242,9 @@ static ATTR_UNUSED macro_result_t processCommand(const char* cmd, const char* cm
             }
             else if (TokenMatches(cmd, cmdEnd, "activateKeyPostponed")) {
                 return processActivateKeyPostponedCommand(arg1, cmdEnd);
+            }
+            else if (TokenMatches(cmd, cmdEnd, "autoRepeat")) {
+                return processAutoRepeatCommand(NextTok(cmd, cmdEnd), cmdEnd);
             }
             else {
                 goto failed;
@@ -2557,6 +2643,9 @@ static ATTR_UNUSED macro_result_t processCommand(const char* cmd, const char* cm
             else if (TokenMatches(cmd, cmdEnd, "postponeNext")) {
                 return processPostponeNextNCommand(arg1, cmdEnd);
             }
+            else if (TokenMatches(cmd, cmdEnd, "progressHue")) {
+                return processProgressHueCommand();
+            }
             else {
                 goto failed;
             }
@@ -2824,7 +2913,7 @@ static bool findFreeStateSlot()
 
 
 void Macros_Initialize() {
-    Macros_UpdateLayerStack();
+    Macros_ResetLayerStack();
 }
 
 static uint8_t currentActionCmdCount() {

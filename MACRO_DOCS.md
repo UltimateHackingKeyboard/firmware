@@ -1,8 +1,8 @@
-# Ultimate Hacking Keyboard firmware with extended macro engine
+# Extended macro engine guide and reference manual
 
 ## Features
 
-The firmware implements:
+The extended engine implements:
 - macro commands for (almost?) all basic features of the keyboard otherwise unreachable via agent. 
 - macro commands for conditionals, jumps and sync mechanisms 
 - some extended configuration options (composite-keystroke delay, sticky modifiers)
@@ -37,6 +37,7 @@ Some of the usecases which can be achieved via these commands are:
     
 3) Understanding this readme:
 
+    - Use Ctrl+F (or equivalent) a lot.
     - Go through the sections of the reference manual below - just reading the top section lines will give you some idea about available  types of commands.
     - Read through examples in order to understand how the constructs can be combined.
     - Understand how to read the stated ebnf grammar. The grammar gives you precise instructions about available features and their parameters, as well as correct syntax. Note that some commands and parameters are only mentioned in the grammar! In case you don't know anything about grammars:
@@ -260,6 +261,7 @@ The following grammar is supported:
     COMMAND = writeExpr NUMBER
     COMMAND = goTo <index (ADDRESS)>
     COMMAND = repeatFor <register index (NUMBER)> <action adr (ADDRESS)>
+    COMMAND = progressHue
     COMMAND = recordMacroDelay
     COMMAND = {startRecording | startRecordingBlind} [<slot identifier (MACROID)>]
     COMMAND = {recordMacro | recordMacroBlind} [<slot identifier (MACROID)>]
@@ -295,11 +297,13 @@ The following grammar is supported:
     COMMAND = set debounceDelay <time in ms, at most 250 (NUMBER)>
     COMMAND = set doubletapTimeout <time in ms, at most 65535 (NUMBER)>
     COMMAND = set keystrokeDelay <time in ms, at most 65535 (NUMBER)>
+    COMMAND = set autoRepeatDelay <time in ms, at most 65535 (NUMBER)>
+    COMMAND = set autoRepeatRate <time in ms, at most 65535 (NUMBER)>
     COMMAND = set setEmergencyKey KEYID
     COMMAND = set macroEngine.scheduler {blocking|preemptive}
     COMMAND = set macroEngine.batchSize <number of commands to execute per one update cycle NUMBER>
-    COMMAND = set navigationModeAction.NAVIGATIONMODECUSTOM.{DIRECTION} {MACROID|none}
-    COMMAND = set keymapAction.LAYERID.KEYID {MACROID|none}
+    COMMAND = set navigationModeAction.NAVIGATIONMODECUSTOM.DIRECTION ACTION
+    COMMAND = set keymapAction.LAYERID.KEYID ACTION
     COMMAND = set backlight.strategy { functional | constantRgb }
     COMMAND = set backlight.constantRgb.rgb <number 0-255 (NUMBER)> <number 0-255 (NUMBER)> <number 0-255 (NUMBER)><number 0-255 (NUMBER)>
     COMMAND = set leds.enabled BOOLEAN
@@ -327,9 +331,10 @@ The following grammar is supported:
     MODIFIER = suppressMods
     MODIFIER = postponeKeys
     MODIFIER = final
+    MODIFIER = autoRepeat
     IFSHORTCUTFLAGS = noConsume | transitive | anyOrder | orGate | timeoutIn <time in ms (NUMBER)> | cancelIn <time in ms(NUMBER)>
     DIRECTION = {left|right|up|down}
-    LAYERID = {fn|mouse|mod|base}|last|previous
+    LAYERID = {fn|mouse|mod|base|fn2|fn3|fn4|fn5|alt|shift|super|control}|last|previous
     KEYMAPID = <abbrev>|last
     MACROID = last|CHAR|NUMBER
     NUMBER = [0-9]+ | -[0-9]+ | #<register idx (NUMBER)> | #key | @<relative macro action index(NUMBER)> | %<key idx in postponer queue (NUMBER)>
@@ -338,13 +343,14 @@ The following grammar is supported:
     CHAR = <any nonwhite ascii char>
     KEYID = <id of hardware key obtained by resolveNextKeyId (NUMBER)>
     LABEL = <string identifier>
-    SHORTCUT = MODMASK- | MODMASK-KEY | KEY
+    SHORTCUT = MODMASK- | MODMASK-KEY | KEY | MODMASK
     MODMASK = [MODMASK]+ | [L|R]{S|C|A|G} | {p|r|h|t} | {s|i|o}
     NAVIGATIONMODE = cursor | scroll | caret | media | zoom | zoomPc | zoomMac | none
     NAVIGATIONMODECUSTOM = caret | media | zoomPc | zoomMac
     MODULEID = trackball | touchpad | trackpoint | keycluster
     KEY = CHAR|KEYABBREV
     ADDRESS = LABEL|NUMBER
+    ACTION = { macro MACROID | keystroke SHORTCUT | none }
     KEYABBREV = enter | escape | backspace | tab | space | minusAndUnderscore | equalAndPlus | openingBracketAndOpeningBrace | closingBracketAndClosingBrace
     KEYABBREV = backslashAndPipeIso | backslashAndPipe | nonUsHashmarkAndTilde | semicolonAndColon | apostropheAndQuote | graveAccentAndTilde | commaAndLessThanSign
     KEYABBREV = dotAndGreaterThanSign | slashAndQuestionMark | capsLock | printScreen | scrollLock | pause | insert | home | pageUp | delete | end | pageDown | numLock
@@ -392,6 +398,7 @@ The following grammar is supported:
 
 - `setLedTxt <time> <custom text>` will set led display to supplemented text for the given time. (Blocks for the given time.)
     - If the given time is zero, i.e. `<time> = 0`, the led text will be set indefinitely (until the display is refreshed by other text) and this command will returns immediately (non-blocking).
+- `progressHue` or better `autoRepeat progressHue` will slowly adjust constantRGB value in order to rotate the per-key-RGB backlight through all hues. 
 
 ### Triggering keyboard actions (pressing keys, clicking, etc.):
 
@@ -516,6 +523,7 @@ We allow postponing key activations in order to allow deciding between some scen
   - `arg4 - adr1` index of macro action to go to if the `arg1`th next key's hardware identifier equals `arg2`.
   - `arg5 - adr2` index of macro action to go to otherwise.
 - `resolveNextKeyId` will wait for next key press. When the next key is pressed, it will type a unique identifier identifying the pressed hardware key. 
+  - E.g., create a macro containing this command, and bint it to key `a`. Focus text editor. Tap `a`, tap `b`. Now, you should see `91` in your text editor, which is `b`'s `KEYID`.
 
 ### Conditions 
 
@@ -546,6 +554,7 @@ Modifiers modify behaviour of the rest of the keyboard while the rest of the com
 - `suppressMods` will supress any modifiers except those applied via macro engine. Can be used to remap shift and nonShift characters independently.
 - `postponeKeys` will postpone all new key activations for as long as any instance of this modifier is active. See postponing mechanisms section.
 - `final` will end macro playback after the "modified" action is properly finished. Simplifies control flow. "Implicit break."
+- `autoRepeat` will continuously repeats the following command while holding the macro key, with some configurable delay. See `set autoRepeatDelay <time>` and `set autoRepeatRate <time>` for more details. This enables you to use keyrepeat feature (which is typically implemented in the OS level) with any macro action. For example, you can use something like `autoRepeat tapKey down` or `ifShift autoRepeat tapKeySeq C-right right`.
 
 ### Runtime macros:
 
@@ -584,6 +593,7 @@ For the purpose of toggling functionality on and off, and for global constants m
 - `set debounceDelay <time in ms, at most 250>` prevents key state from changing for some time after every state change. This is needed because contacts of mechanical switches can bounce after contact and therefore change state multiple times in span of a few milliseconds. Official firmware debounce time is 50 ms for both press and release. Recommended value is 10-50, default is 50.
 - `set doubletapTimeout <time in ms, at most 65535>` controls doubletap timeouts for both layer switchers and for the `ifDoubletap` condition.
 - `set keystrokeDelay <time in ms, at most 65535>` allows slowing down keyboard output. This is handy for lousily written RDP clients and other software which just scans keys once a while and processes them in wrong order if multiple keys have been pressed inbetween. In more detail, this setting adds a delay whenever a basic usb report is sent. During this delay, key matrix is still scanned and keys are debounced, but instead of activating, the keys are added into a queue to be replayed later. Recommended value is 10 if you have issues with RDP missing modifier keys, 0 otherwise.
+- `set autoRepeatDelay <time in ms, at most 65535>` and `set autoRepeatRate <time in ms, at most 65535>` allows you to set the initial delay (default: 500 ms) and the repeat delay (default: 50 ms) when using `autoRepeat`. When you run the command `autoRepeat <command>`, the `<command>` is first run without delay. Then, it will waits `autoRepeatDelay` amount of time before running `<command>` again. Then and thereafter, it will waits `autoRepeatRate` amount of time before repeating `<command>` again. This is consistent with typical OS keyrepeat feature.
 - `set mouseKeys.{move|scroll}.{...} NUMBER` please refer to Agent for more details
   - `initialSpeed` - the speed that is active when key is pressed
   - `initialAcceleration,baseSpeed` - when mouse key is held, speed increases until it reaches baseSpeed
@@ -654,8 +664,8 @@ For the purpose of toggling functionality on and off, and for global constants m
   - `caretAxisLock BOOLEAN` - turns axis locking on for all discrete modes. 
 
 - Remapping keys:
-  - `set navigationModeAction.{caret|media}.{DIRECTION|none} MACROID` can be used to customize caret or media mode behaviour by binding directions to macros. This action is global and reversible only by powercycling.
-  - `set keymapAction.LAYERID.KEYID {MACROID|none}` can be used to remap any action that lives in standard keymap. All remappable ids should be retriavable with `resolveNextKeyId`. Keyid can also be constructed manually - see `KEYID`. This map applies only until next keymap switch.
+  - `set navigationModeAction.{caret|media}.{DIRECTION|none} ACTION` can be used to customize caret or media mode behaviour by binding directions to macros. This action is global and reversible only by powercycling.
+  - `set keymapAction.LAYERID.KEYID ACTION` can be used to remap any action that lives in standard keymap. Most remappable ids can be retrieved with `resolveNextKeyId`. Keyid can also be constructed manually - see `KEYID`. Binding applies only until next keymap switch. E.g., `set keymapAction.base.64 keystroke escape` (maps `~` key to escape), or `set keymapAction.fn.193 macro TouchpadAction` (maps touchpad twofinger action to macro `TouchpadAction`).
 
 - `macroEngine`
   - terminology:
@@ -709,7 +719,7 @@ UHK modules feature four navigation modes, which are mapped by layer and module.
 - **Scroll mode** - in this mode, module can be used to scroll. Default mode for mod layer. This means that apart from switching layer, your mod layer switches also make your right hand modules act as very comfortable scroll wheels. Sensitivity is controlled by the `scrollSpeedDivisor` value.
 - **Caret mode** - in this mode, module produces arrow key taps. This can be used to move comfortably in text editor, since in this mode, cursor is also locked to one of the two directions, preventing unwanted line changes. Sensitivity is controlled by the `caretSpeedDivisor`, `axisLockStrengthFirstTick` and `axisLockStrength`.
 - **Media mode** - in this mode, up/down directions control volume (via media key scancodes), while horizontal play/pause and switch to next track. At the moment, this mode is not enabled by default on any layer. Sensitivity is shared with the caret mode.
-- **Zoom mode pc / mac** - in this mode, `Ctrl +`/`Ctrl -` or `Alt +`/`Alt -` shortcuts are produced. 
+- **Zoom mode pc / mac** - in this mode, `Ctrl +`/`Ctrl -` or `Gui +`/`Gui -` shortcuts are produced. 
 - **Zoom mode** - This mode serves specifically to implement touchpad's gesture. It alternates actions of zoomPc and zoomMac modes.
 
 Caret and media modes can be customized by `set navigationModeAction` command.

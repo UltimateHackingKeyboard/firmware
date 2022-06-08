@@ -249,6 +249,31 @@ static void backlight(const char* arg1, const char *textEnd)
     }
 }
 
+static key_action_t parseKeyAction(const char* arg1, const char *textEnd) {
+    const char* arg2 = NextTok(arg1, textEnd);
+
+    key_action_t action = { .type = KeyActionType_None };
+
+    if (TokenMatches(arg1, textEnd, "macro")) {
+        uint8_t macroIndex = FindMacroIndexByName(arg2, TokEnd(arg2, textEnd), true);
+
+        action.type = KeyActionType_PlayMacro;
+        action.playMacro.macroId = macroIndex;
+    }
+    else if (TokenMatches(arg1, textEnd, "keystroke")) {
+        MacroShortcutParser_Parse(arg2, TokEnd(arg2, textEnd), MacroSubAction_Press, NULL, &action);
+    }
+    else if (TokenMatches(arg1, textEnd, "none")) {
+        action.type = KeyActionType_None;
+    }
+    else {
+        Macros_ReportError("parameter not recognized:", arg1, textEnd);
+    }
+
+    return action;
+}
+
+
 static void navigationModeAction(const char* arg1, const char *textEnd)
 {
     navigation_mode_t navigationMode = NavigationMode_Caret;
@@ -288,14 +313,13 @@ static void navigationModeAction(const char* arg1, const char *textEnd)
         Macros_ReportError("parameter not recognized:", arg1, textEnd);
     }
 
-    uint8_t macroIndex;
-    if (TokenMatches(arg3, textEnd, "none")) {
-        macroIndex = 255;
-    } else {
-        macroIndex = FindMacroIndexByName(arg3, TokEnd(arg3, textEnd), true);
+    key_action_t action = parseKeyAction(arg3, textEnd);
+
+    if (Macros_ParserError) {
+        return;
     }
 
-    SetModuleCaretConfiguration(navigationMode, axis, positive, macroIndex);
+    SetModuleCaretConfiguration(navigationMode, axis, positive, action);
 }
 
 static ATTR_UNUSED void keymapAction(const char* arg1, const char *textEnd)
@@ -306,7 +330,7 @@ static ATTR_UNUSED void keymapAction(const char* arg1, const char *textEnd)
     uint8_t layerId = Macros_ParseLayerId(arg1, textEnd);
     uint16_t keyId = Macros_ParseInt(arg2, textEnd, NULL);
 
-    uint8_t macroIndex = FindMacroIndexByName(arg3, TokEnd(arg3, textEnd), true);
+    key_action_t action = parseKeyAction(arg3, textEnd);
 
     uint8_t slotIdx = keyId/64;
     uint8_t inSlotIdx = keyId%64;
@@ -319,14 +343,9 @@ static ATTR_UNUSED void keymapAction(const char* arg1, const char *textEnd)
         return;
     }
 
-    key_action_t* action = &CurrentKeymap[layerId][slotIdx][inSlotIdx];
+    key_action_t* actionSlot = &CurrentKeymap[layerId][slotIdx][inSlotIdx];
 
-    if(macroIndex == 255) {
-        action->type = KeyActionType_None;
-    } else {
-        action->type = KeyActionType_PlayMacro;
-        action->playMacro.macroId = macroIndex;
-    }
+    *actionSlot = action;
 }
 
 static void modLayerTriggers(const char* arg1, const char *textEnd)
@@ -434,6 +453,14 @@ macro_result_t MacroSetCommand(const char* arg1, const char *textEnd)
         uint16_t delay = Macros_ParseInt(arg2, textEnd, NULL);
         DoubleTapSwitchLayerTimeout = delay;
         DoubletapConditionTimeout = delay;
+    }
+    else if (TokenMatches(arg1, textEnd, "autoRepeatDelay")) {
+        uint16_t delay = Macros_ParseInt(arg2, textEnd, NULL);
+        AutoRepeatInitialDelay = delay;
+    }
+    else if (TokenMatches(arg1, textEnd, "autoRepeatRate")) {
+        uint16_t delay = Macros_ParseInt(arg2, textEnd, NULL);
+        AutoRepeatDelayRate = delay;
     }
     else if (TokenMatches(arg1, textEnd, "chordingDelay")) {
         ChordingDelay = Macros_ParseInt(arg2, textEnd, NULL);

@@ -58,7 +58,7 @@ static void applyLayerHolds(key_state_t *keyState, key_action_t *action) {
         switch(action->switchLayer.mode) {
             case SwitchLayerMode_HoldAndDoubleTapToggle:
             case SwitchLayerMode_Hold:
-                LayerSwitcher_HoldLayer(action->switchLayer.layer);
+                LayerSwitcher_HoldLayer(action->switchLayer.layer, false);
                 break;
             case SwitchLayerMode_Toggle:
                 //this switch handles only "hold" effects, therefore toggle not present here.
@@ -77,7 +77,7 @@ static void applyLayerHolds(key_state_t *keyState, key_action_t *action) {
         // This makes secondary layer holds act just as standard layer holds.
         // Also, this is a no-op until some other event causes deactivation of the currently active
         // layer - then this layer switcher becomes active due to hold semantics.
-        LayerSwitcher_HoldLayer(SECONDARY_ROLE_LAYER_TO_LAYER_ID(action->keystroke.secondaryRole));
+        LayerSwitcher_HoldLayer(SECONDARY_ROLE_LAYER_TO_LAYER_ID(action->keystroke.secondaryRole), false);
     }
 }
 
@@ -220,10 +220,10 @@ static void applyKeystrokeSecondary(key_state_t *keyState, key_action_t *action,
         // If the cached action is the current base role, then hold, otherwise keymap was changed. In that case do nothing just
         // as a well behaved hold action should.
         if(action->type == actionBase->type && action->keystroke.secondaryRole == actionBase->keystroke.secondaryRole) {
-            LayerSwitcher_HoldLayer(SECONDARY_ROLE_LAYER_TO_LAYER_ID(secondaryRole));
+            LayerSwitcher_HoldLayer(SECONDARY_ROLE_LAYER_TO_LAYER_ID(secondaryRole), false);
         }
     } else if (IS_SECONDARY_ROLE_MODIFIER(secondaryRole)) {
-        ActiveUsbBasicKeyboardReport->modifiers |= SECONDARY_ROLE_MODIFIER_TO_HID_MODIFIER(secondaryRole);
+        InputModifiers |= SECONDARY_ROLE_MODIFIER_TO_HID_MODIFIER(secondaryRole);
     }
 }
 
@@ -280,7 +280,7 @@ void ApplyKeyAction(key_state_t *keyState, key_action_cached_t *cachedAction, ke
                 stickyModifiers = 0;
                 stickyModifiersNegative = 0;
                 SwitchKeymapById(action->switchKeymap.keymapId);
-                Macros_UpdateLayerStack();
+                Macros_ResetLayerStack();
             }
             break;
         case KeyActionType_PlayMacro:

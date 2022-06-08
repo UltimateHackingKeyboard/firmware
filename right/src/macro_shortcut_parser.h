@@ -27,7 +27,7 @@
 
     void ShortcutParser_initialize();
 
-    macro_action_t MacroShortcutParser_Parse(const char* str, const char* strEnd, macro_sub_action_t type);
+    bool MacroShortcutParser_Parse(const char* str, const char* strEnd, macro_sub_action_t type, macro_action_t* outMacroAction, key_action_t* outKeyAction);
     uint8_t MacroShortcutParser_CharacterToScancode(char character);
     bool MacroShortcutParser_CharacterToShift(char character);
     char MacroShortcutParser_ScancodeToCharacter(uint16_t scancode);
