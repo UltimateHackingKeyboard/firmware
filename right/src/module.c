@@ -2,6 +2,8 @@
 #include "slave_scheduler.h"
 #include "slave_drivers/uhk_module_driver.h"
 
+navigation_mode_t TouchpadPinchZoomMode = NavigationMode_Zoom;
+
 module_configuration_t ModuleConfigurations[ModuleId_ModuleCount] = {
     { // ModuleId_KeyClusterLeft
         .speed = 0.0,

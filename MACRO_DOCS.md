@@ -284,6 +284,7 @@ The following grammar is supported:
     COMMAND = set module.MODULEID.swapAxes BOOLEAN
     COMMAND = set module.MODULEID.invertScrollDirection BOOLEAN
     COMMAND = set module.touchpad.pinchZoomDivisor <1-100 (FLOAT)>
+    COMMAND = set module.touchpad.pinchZoomMode NAVIGATIONMODE
     #NOTIMPLEMENTED COMMAND = set secondaryRoles
     COMMAND = set mouseKeys.{move|scroll}.initialSpeed <px/s, -100/20 (NUMBER)>
     COMMAND = set mouseKeys.{move|scroll}.baseSpeed <px/s, -800/20 (NUMBER)>

@@ -59,6 +59,7 @@
 
 // Variables:
 
+    extern navigation_mode_t TouchpadPinchZoomMode;
     extern module_configuration_t ModuleConfigurations[ModuleId_ModuleCount];
 
 // Functions:

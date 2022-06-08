@@ -489,6 +489,10 @@ static void handleRunningCaretModeAction(module_kinetic_state_t* ks) {
     }
 }
 
+static bool caretModeActionIsRunning(module_kinetic_state_t* ks) {
+    return ks->caretFakeKeystate.current || ks->caretFakeKeystate.previous || ks->zoomActive;
+}
+
 static void processAxisLocking(
         float x,
         float y,
@@ -542,12 +546,8 @@ static void processAxisLocking(
     ks->xFractionRemainder += x * speed / speedDivisor * caretXModeMultiplier;
     ks->yFractionRemainder += y * speed / speedDivisor * caretYModeMultiplier;
 
-    //If there is an ongoing action, just handle that action via a fake state. Ensure that full lifecycle of a key gets executed.
-    if (ks->caretFakeKeystate.current || ks->caretFakeKeystate.previous || ks->zoomActive) {
-        handleRunningCaretModeAction(ks);
-    }
-    //If we want to start a new action (new "tick")
-    else {
+    // Start a new action (new "tick"), unless there is an action in progress.
+    if (!caretModeActionIsRunning(ks)) {
         // determine default axis
         caret_axis_t axisCandidate;
 
@@ -693,19 +693,29 @@ static layer_id_t determineEffectiveLayer() {
     return secondaryRoleResolutionInProgress ? SECONDARY_ROLE_LAYER_TO_LAYER_ID(SecondaryRolePreview) : ActiveLayer;
 }
 
+static module_kinetic_state_t* getKineticState(uint8_t moduleId)
+{
+    return moduleId == ModuleId_KeyClusterLeft ? &leftModuleKineticState : &rightModuleKineticState;
+}
+
 static void processModuleActions(
+        module_kinetic_state_t* ks,
         uint8_t moduleId,
         float x,
         float y,
         uint8_t forcedNavigationMode
 ) {
     module_configuration_t *moduleConfiguration = GetModuleConfiguration(moduleId);
-    module_kinetic_state_t *ks = moduleId == ModuleId_KeyClusterLeft ? &leftModuleKineticState : &rightModuleKineticState;
 
     navigation_mode_t navigationMode;
 
     if(forcedNavigationMode == 0xFF) {
         navigationMode = moduleConfiguration->navigationModes[determineEffectiveLayer()];
+    } else if (forcedNavigationMode == NavigationMode_Zoom) {
+        // set kineticState navigation mode to the actual target mode, but forward
+        // forcedNavigationMode == NavigationMode_Zoom to unambiguously signal that
+        // the mode is actually touchpad pinch zoom gesture
+        navigationMode = TouchpadPinchZoomMode;
     } else {
         navigationMode = forcedNavigationMode;
     }
@@ -759,9 +769,16 @@ void MouseController_ProcessMouseActions()
     if (Slaves[SlaveId_RightTouchpad].isConnected) {
         // TODO: this is still unsafe w.r.t interrupts
         processTouchpadActions();
-        processModuleActions(ModuleId_TouchpadRight, (int16_t)TouchpadEvents.x, (int16_t)TouchpadEvents.y, 0xFF);
-        processModuleActions(ModuleId_TouchpadRight, (int16_t)TouchpadEvents.wheelX, (int16_t)TouchpadEvents.wheelY, NavigationMode_Scroll);
-        processModuleActions(ModuleId_TouchpadRight, 0, (int16_t)TouchpadEvents.zoomLevel, NavigationMode_Zoom);
+
+        module_kinetic_state_t *ks = getKineticState(ModuleId_TouchpadRight);
+
+        if (caretModeActionIsRunning(ks)) {
+            handleRunningCaretModeAction(ks);
+        }
+
+        processModuleActions(ks, ModuleId_TouchpadRight, (int16_t)TouchpadEvents.x, (int16_t)TouchpadEvents.y, 0xFF);
+        processModuleActions(ks, ModuleId_TouchpadRight, (int16_t)TouchpadEvents.wheelX, (int16_t)TouchpadEvents.wheelY, NavigationMode_Scroll);
+        processModuleActions(ks, ModuleId_TouchpadRight, 0, (int16_t)TouchpadEvents.zoomLevel, NavigationMode_Zoom);
         TouchpadEvents.zoomLevel = 0;
         TouchpadEvents.wheelX = 0;
         TouchpadEvents.wheelY = 0;
@@ -785,7 +802,13 @@ void MouseController_ProcessMouseActions()
         moduleState->pointerDelta.y = 0;
         __enable_irq();
 
-        processModuleActions(moduleState->moduleId, x, y, 0xFF);
+        module_kinetic_state_t *ks = getKineticState(ModuleId_TouchpadRight);
+
+        if (caretModeActionIsRunning(ks)) {
+            handleRunningCaretModeAction(ks);
+        }
+
+        processModuleActions(ks, moduleState->moduleId, x, y, 0xFF);
     }
 
     if (ActiveMouseStates[SerializedMouseAction_LeftClick]) {
