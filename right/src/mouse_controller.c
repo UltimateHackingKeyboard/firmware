@@ -584,6 +584,10 @@ static void processAxisLocking(
             int8_t currentAxisInversion = axisCandidate == CaretAxis_Vertical ? yInversion : 1;
             float consumedAmount = continuous ? axisIntegerParts[axisCandidate] : sgn;
             *axisFractionRemainders[axisCandidate] -= consumedAmount;
+
+            //always zero primary axis - experimental
+            *axisFractionRemainders[axisCandidate] = 0.0f;
+
             if (axisLockEnabled) {
                 // if not axis locking, than allow accumulation of secondary axis
                 *axisFractionRemainders[1 - axisCandidate] = 0.0f;
