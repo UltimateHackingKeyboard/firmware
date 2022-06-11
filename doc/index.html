@@ -17,9 +17,9 @@
 
 <p>This documentation is a reference for smart macros, but let's start with a quick guide on how to use them.</p>
 
-<h2>Basic concepts</h2>
+<h1>Basic concepts and usage</h1>
 
-<p>Create a new macro named <code>$onInit</code>, add a new macro action to the macro, select the Command tab, type the <code>set module.trackball.speed 1</code> command, save the macro command, and save your configuration.</p>
+<p>See the following screenshot which shows a macro named <code>$onInit</code> containing a command macro action that contains multiple macro commands:</p>
 
 <img src="agent-onInit.png">
 
@@ -27,13 +27,21 @@
 
 <p>The <code>set module.trackball.baseSpeed 1</code> <b>macro command</b> sets the base speed of the trackball module to 1.</p>
 
+<p>Comments are allowed after the <code>#</code> character per line. You can comment out commands or add helpful comments.</p>
+
 <p>Macro commands work in any macros, not only in macro events, and you can bind them to any key. This way, you can make Fn+1 set your trackball base speed to 1 and make Fn+2 set it to 2, for example.</p>
 
-<h2>Productivity tips</h2>
+<p>After creating a macro command action, it becomes in-place editable, so you can simply click into it to edit its commands. You'll want to save your macro commands many times, in which case, it's quicker to hit Ctrl+S instead of clicking the "Save to keyboard" button.</p>
 
-<p>A macro can have any number of macro commands, but it's usually practical to have only one.</p>
+<p>When encountering an invalid macro command, the LED display of your UHK will show "ERR". The <code>printStatus</code> command reveals the cause of the error. Create a printStatus Macro:</p>
 
-<p>Following is a reference of macro events and macro commands.</p>
+<img src="agent-printStatus-macro.png">
+
+<p>Bind it to Fn+`:</p>
+
+<p>Then open an editor and hit Fn+` to see the error message:</p>
+
+<p>Last, but not least, when a command macro action is selected, many interactive widgets, such as sliders, comboboxes and checkboxes appear in this sidebar, some are based on the currently attached modules. By interacting with these widgets, the relevant commands appear in the current command macro action without writing any code:</p>
 
 <h1>Macro events</h1>
 
@@ -45,8 +53,6 @@
 </ol>
 
 <h1>Macro commands</h1>
-
-<p>In a command action, you can add any number of macro commands, one per line. Comments are allowed following the <code>#</code> character in any line.</p>
 
 <p>Following is the list of available macro commands.</p>
 
@@ -247,10 +253,10 @@ set module.keycluster.navigationMode.base scroll
 
 <p>Customize caret or media navigation mode behaviour by binding directions to macros. This action is global and reversible only by powercycling.</p>
 
-Syntax is <code>set navigationModeAction.{mode}.{direction} {macroName}</code><br>
+Syntax is <code>set navigationModeAction.{mode}.{direction} (macro MACRONAME | keystroke SHORTCUT)</code><br>
 
 <ul>
-<li><code>{mode}</code> is of <code>caret</code>, <code>media</code></li>
+<li><code>{mode}</code> is of <code>caret</code>, <code>media</code>, <code>zoomPc</code>, <code>zoomMac</code></li>
 <li><code>{direction}</code> is of <code>left</code>, <code>right</code>, <code>up</code>, <code>down</code></li>
 <li><code>{macroName}</code> is the name of a macro to be used</li>
 </ul>
