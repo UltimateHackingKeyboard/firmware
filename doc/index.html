@@ -360,7 +360,7 @@ Syntax is <code>set stickyModifiers {stickyMode}</code><br>
 <ul>
 <li><code>{stickyMode}</code> is of
     <ul>
-        <li><code>smart (default)</code>: Make only a select few shortcuts sticky, namely when <kbd>Alt</kbd>, <kbd>Super</kbd>, or <kbd>Control</kbd> is pressed along with <kbd>~</kbd>, <kbd>Tab</kbd>, or an arrow key.</li>
+        <li><code>smart (default)</code>: Make only a select few shortcuts sticky, namely when <kbd>Alt</kbd>, <kbd>Super</kbd>, or <kbd>Ctrl</kbd> is pressed along with <kbd>~</kbd>, <kbd>Tab</kbd>, or an arrow key.</li>
         <li><code>never</code>: Make every key non-sticky.</li>
         <li><code>always</code>: Make every key sticky.</li>
     </ul>
@@ -381,13 +381,19 @@ Syntax is <code>set stickyModifiers {stickyMode}</code><br>
 
 <h3>set &raquo; keystroke delay</h3>
 
-<p>Allows slowing down keyboard output. This is handy for lousily written RDP clients and other software which just scans keys once a while and processes them in wrong order if multiple keys have been pressed inbetween. In more detail, this setting adds a delay whenever a basic usb report is sent. During this delay, key matrix is still scanned and keys are debounced, but instead of activating, the keys are added into a queue to be replayed later. Recommended value is 10 if you have issues with RDP missing modifier keys, 0 otherwise.</p>
+<p>Allows slowing down keyboard output. This is handy for lousily written RDP clients and other software which scans keys once a while and processes them in wrong order if multiple keys have been pressed in between.</p>
 
-<p>Syntax is <code>keystrokeDelay {time in milliseconds, at most 65535}</code></p>
+<p>This setting adds a delay whenever a basic USB report is sent. During this delay, the key matrix is still scanned and keys are debounced, but instead of activating, the keys are added into a queue to be replayed later. </p>
+
+Syntax is <code>keystrokeDelay {delay}</code><br>
+
+<ul>
+    <li><code>{delay} integer of 0 to 1000</code> : Delay in milliseconds. Recommended value is <code>10</code> if you have issues with RDP missing modifier keys, <code>0</code> otherwise.</li>
+</ul>
 
 <h3>set &raquo; chording delay</h3>
 
-<p>This setting allows triggering chorded shortcuts in arbitrary order. For example, if <kbd>A</kbd> + <kbd>Ctrl</kbd> is pressed instead of <kbd>Ctrl</kbd> + <kbd>A</kbd>, the keyboard will still send <kbd>Ctrl</kbd> + <kbd>A</kbd> if the two key presses follow within the specified time.</p>
+<p>Allows triggering chorded shortcuts in arbitrary order. For example, if <kbd>A</kbd> + <kbd>Ctrl</kbd> is pressed instead of <kbd>Ctrl</kbd> + <kbd>A</kbd>, the keyboard will still send <kbd>Ctrl</kbd> + <kbd>A</kbd> if the two key presses follow within the specified time.</p>
 
 Syntax is <code>set chordingDelay {delay}</code><br>
 
