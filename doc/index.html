@@ -33,13 +33,15 @@
 
 <p>After creating a macro command action, it becomes in-place editable, so you can simply click into it to edit its commands. You'll want to save your macro commands many times, in which case, it's quicker to hit Ctrl+S instead of clicking the "Save to keyboard" button.</p>
 
-<p>When encountering an invalid macro command, the LED display of your UHK will show "ERR". The <code>printStatus</code> command reveals the cause of the error. Create a printStatus Macro:</p>
+<p>When encountering an invalid macro command, the LED display of your UHK will show <code>ERR</code>. The <code>printStatus</code> command reveals the cause of the error. Create a macro named <code>printStatus</code> containing the <code>printStatus</code> command:</p>
 
 <img src="agent-printStatus-macro.png">
 
-<p>Bind it to Fn+`:</p>
+<p>Bind it to a key, such as Fn+`:</p>
 
-<p>Then open an editor and hit Fn+` to see the error message:</p>
+<img src="agent-printStatus-mapping.png">
+
+<p>Then open an editor and hit Fn+` to see the error message.</p>
 
 <p>Last, but not least, when a command macro action is selected, many interactive widgets, such as sliders, comboboxes and checkboxes appear in this sidebar, some are based on the currently attached modules. By interacting with these widgets, the relevant commands appear in the current command macro action without writing any code:</p>
 
