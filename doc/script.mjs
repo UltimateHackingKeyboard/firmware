@@ -26,7 +26,7 @@ function setVariable(name, value) {
     if (regex.test(currentCommand)) {
         currentCommand = currentCommand.replace(regex, `$1${value}$2`);
     } else {
-        currentCommand += (currentCommand.endsWith('\n') ? '' : '\n') + `set ${regexVarName} ${value}\n`;
+        currentCommand += (currentCommand.endsWith('\n') || currentCommand.trim() === '' ? '' : '\n') + `set ${regexVarName} ${value}\n`;
     }
     const message = {
         action: 'doc-message-set-macro',
