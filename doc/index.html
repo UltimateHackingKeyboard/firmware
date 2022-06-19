@@ -301,7 +301,7 @@ Syntax is <code>set modifierLayerTriggers.{layer} {modifiers}</code><br>
 
 <h3>set &raquo; mouse key speeds</h3>
 
-<p>With the exception of `axisSkew`, these settings are already featured on the "Mouse key speed" page of Agent which should be used primarily. Regardless, all of these settings make sense for keymap-specific mouse key speed settings.</p>
+<p>With the exception of <code>axisSkew</code>, these settings are already featured on the "Mouse key speed" page of Agent which should be used primarily. Regardless of Agent settings, these settings are still useful for keymap-specific mouse key speed settings.</p>
 
 Syntax is <code>set mouseKeys.{mode}.{property} {floatValue}</code><br>
 
@@ -309,12 +309,12 @@ Syntax is <code>set mouseKeys.{mode}.{property} {floatValue}</code><br>
 <li><code>{mode}</code> is of <code>move</code>, <code>scroll</code></li>
 <li><code>{property}</code> is of
     <ul>
-        <li><code>initialSpeed</code>: the speed that is active when key is pressed</li>
-        <li><code>initialAcceleration</code>: when mouse key is held, speed increases until it reaches baseSpeed</li>
-        <li><code>baseSpeed</code>: when mouse key is held, speed increases until it reaches baseSpeed</li>
-        <li><code>deceleratedSpeed</code>: speed as affected by deceleration modifier</li>
-        <li><code>acceleratedSpeed</code>: speed as affected by acceleration modifier</li>
-        <li><code>axisSkew</code>: axis skew multiplies horizontal axis and divides vertical. Default value is 1.0, reasonable between 0.5-2.0 Useful for very niche usecases.</li>
+        <li><code>initialSpeed</code>: When mouse movement begins, this is the staring speed.</li>
+        <li><code>baseSpeed</code>: When a mouse key is held, speed increases until it reaches this speed.</li>
+        <li><code>initialAcceleration</code>: The rate of acceleration from the initial speed to the base speed.</li>
+        <li><code>deceleratedSpeed</code>: This speed is used when using a mouse key along with the decelerate key.</li>
+        <li><code>acceleratedSpeed</code>: This speed is used when using a mouse key along with the decelerate key.</li>
+        <li><code>axisSkew</code>: Multiplies horizontal axis and divides vertical axis. Can be useful for wide or tall screens. <code>{floatValue}</code> is reasonable from <code>0.5</code> to <code>2.0</code>, and defaults to <code>1.0</code></li>
     </ul>
 </li>
 </ul>
