@@ -345,9 +345,12 @@ Syntax is <code>set mouseKeys.{mode}.{property} {floatValue}</code><br>
 
 <h3>set &raquo; diagonal speed compensation</h3>
 
-<p>Divide diagonal mouse speed by sqrt(2) if enabled.</p>
+<p>By default, the mouse pointer is faster diagonally than horizontally or vertically when using the mouse keys. This setting slows down the pointer diagonally when the mouse keys are used, so its speed matches horizontal and vertical speeds.</p>
 
-<p>Syntax is <code>set diagonalSpeedCompensation {0|1}</code></p>
+Syntax is <code>set diagonalSpeedCompensation {compensationEnabled}</code><br>
+<ul>
+    <li><code>{compensationEnabled} boolean</code> : <code>0</code> disables compensation, <code>1</code> enables compensation.</li>
+</ul>
 
 <p><checkbox name="diagonalSpeedCompensation" default="0"></checkbox> Enable diagonal speed compensation</p>
 
@@ -416,7 +419,7 @@ Syntax is <code>set chordingDelay {delay}</code><br>
 Syntax is <code>set leds.enabled {ledStatus}</code><br>
 
 <ul>
-    <li><code>{ledStatus} boolean</code> : 0 disables LEDs, 1 enables LEDs.</li>
+    <li><code>{ledStatus} boolean</code> : <code>0</code> disables LEDs, <code>1</code> enables LEDs.</li>
 </ul>
 
 <h3>set &raquo; LED brightness</h3>
@@ -436,7 +439,7 @@ Syntax is <code>set leds.brightness {brightness}</code><br>
 Syntax is <code>set leds.fadeTimeout {timeout}</code><br>
 
 <ul>
-    <li><code>{timeout} integer of 0 to 100, defaults to 0</code> : Zero means disabled fade timeout. Otherwise, the timeout value specified in minutes.</li>
+    <li><code>{timeout} integer of 0 to 100, defaults to 0</code> : <code>0</code> means disabled fade timeout. Otherwise, the timeout value specified in minutes.</li>
 </ul>
 
 <p><slider name="leds.fadeTimeout" min="0" default="0" max="100" step="1"/></p>
