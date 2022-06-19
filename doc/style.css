@@ -16,7 +16,7 @@ table.table td, table.table th {
     vertical-align: middle;
 }
 
-table.table input[type="range"] {
+input[type="range"] {
     margin-right: 10px;
 }
 
