@@ -369,9 +369,13 @@ Syntax is <code>set stickyModifiers {stickyMode}</code><br>
 
 <h3>set &raquo; switch debounce delay</h3>
 
-<p>Prevents key state from changing for some time after every state change. This is needed because contacts of mechanical switches can bounce after contact and therefore change state multiple times in span of a few milliseconds. Official firmware debounce time is 50 ms for both press and release. Recommended value is 10-50, default is 50.</p>
+<p>Prevents key state from changing for some time after every state change. This is needed because contacts of mechanical switches can bounce after contact and therefore change state multiple times in a few milliseconds.</p>
 
-<p>Syntax is <code>debounceDelay {time in milliseconds, at most 250}</code></p>
+Syntax is <code>set debounceDelay {delay}</code><br>
+
+<ul>
+    <li><code>{delay} integer of 0 to 250, defaults to 50</code> : Delay in milliseconds. Recommended value is <code>10</code> to <code>50</code>.</li>
+</ul>
 
 <h3>set &raquo; double tap timeout</h3>
 
