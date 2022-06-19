@@ -375,9 +375,13 @@ Syntax is <code>set stickyModifiers {stickyMode}</code><br>
 
 <h3>set &raquo; double tap timeout</h3>
 
-<p>Controls doubletap timeouts for both layer switchers.</p>
+<p>Controls the double tap timeout for layer locking.</p>
 
-<p>Syntax is <code>doubletapTimeout {time in milliseconds, at most 65535}</code></p>
+Syntax is <code>set doubletapTimeout {timeout}</code><br>
+
+<ul>
+    <li><code>{timeout} integer of 0 to 1000</code> : Timeout in milliseconds.</li>
+</ul>
 
 <h3>set &raquo; keystroke delay</h3>
 
