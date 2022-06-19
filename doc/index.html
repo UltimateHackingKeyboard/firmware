@@ -207,7 +207,16 @@ Syntax is <code>set module.{module}.swapAxes {0|1}</code><br>
 
 <p>Syntax is <code>set module.touchpad.pinchZoomDivisor {value}</code></p>
 
-<p><slider name="module.touchpad.pinchZoomDivisor" min="1" default="4" max="10" step="1"/></p>
+<table class="table table-borderless w-auto">
+    <tbody>
+        <tr>
+            <td style="padding-left:0">Touchpad pinch-to-zoom divisor</td>
+            <td class="no-wrap">
+                <slider name="module.touchpad.pinchZoomDivisor" min="1" default="4" max="10" step="1"/>
+            </td>
+        </tr>
+    </tbody>
+</table>
 
 <h3>set &raquo; module navigation modes</h3>
 
@@ -442,7 +451,16 @@ Syntax is <code>set leds.fadeTimeout {timeout}</code><br>
     <li><code>{timeout} integer of 0 to 100, defaults to 0</code> : <code>0</code> means disabled fade timeout. Otherwise, the timeout value specified in minutes.</li>
 </ul>
 
-<p><slider name="leds.fadeTimeout" min="0" default="0" max="100" step="1"/></p>
+<table class="table table-borderless w-auto">
+    <tbody>
+        <tr>
+            <td style="padding-left:0">LED fade timeout</td>
+            <td class="no-wrap">
+                <slider name="leds.fadeTimeout" min="0" default="0" max="100" step="1"/>
+            </td>
+        </tr>
+    </tbody>
+</table>
 
 </div>
 <script type="module" src="script.mjs"></script>
