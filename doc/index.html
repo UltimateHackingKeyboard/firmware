@@ -220,18 +220,19 @@ Syntax is <code>set module.{module}.swapAxes {0|1}</code><br>
 
 <h3>set &raquo; module navigation modes</h3>
 
-<p>UHK modules feature the following navigation modes, which are mapped by layer and module:</p>
+<p>UHK modules support the following navigation modes, which are mapped by layer and module:</p>
 
 <ul>
-    <li><strong>Cursor mode</strong>: In this mode, the module controls mouse movement. This is the default mode for all modules except key clusters trackball, which scrolls by default.</li>
-    <li><strong>Scroll mode</strong>: In this mode, the module can be used to scroll. Default mode for the Mod layer. This means that apart from switching layer, your Mod layer switches also make your right hand modules act as scroll wheels.</li>
-    <li><strong>Caret mode</strong>: In this mode, the module produces arrow key taps. This can be used to move in text editors.</li>
-    <li><strong>Media mode</strong>: In this mode, the module controls volume via up/down directions and  while horizontal play/pause and switch to next track. At the moment, this mode is not enabled by default on any layer.</li>
-    <li><strong>Zoom mode pc / mac</strong>: in this mode, Ctrl +/Ctrl - or Alt +/Alt - shortcuts are produced.</li>
-    <li><strong>Zoom mode</strong>: This mode serves specifically to implement touchpad's gesture. It alternates actions of zoomPc and zoomMac modes.</li>
-    </ul>
+    <li><strong>Cursor mode</strong>: In this mode, the module controls mouse movement. This is the default mode for the Base layer except for the key cluster whose mini trackball is not well-suited for controlling the pointer due to its limited resolution, hence, it scrolls by default.</li>
+    <li><strong>Scroll mode</strong>: In this mode, the module is used for scrolling. This is the default mode for the Mod layer except for the key cluster which moves the pointer on the Mod layer by default.</li>
+    <li><strong>Caret mode</strong>: In this mode, the module produces arrow key taps, which can be used to move in text editors. This is the default mode for the Fn layer.</li>
+    <li><strong>Media mode</strong>: In this mode, the module controls volume via up/down directions and  while horizontal play/pause and switch to next track. This mode is not enabled by default on any layer.</li>
+    <li><strong>Zoom PC mode</strong>: In this mode, <kbd>Ctrl</kbd> + <kbd>-</kbd> and <kbd>Ctrl</kbd> + <kbd>+</kbd> shortcuts are produced via up and down directions.</li>
+    <li><strong>Zoom Mac mode</strong>: In this mode, <kbd>Cmd</kbd> + <kbd>-</kbd> and <kbd>Cmd</kbd> + <kbd>+</kbd> shortcuts are produced via up and down directions.</li>
+    <li><strong>Zoom mode</strong>: In this mode, both PC and Mac zoom shortcuts are produced via up and down directions. Theoretically, this behavior is OS-agnostic, and it works with some applications, but other applications may produce unwanted <kbd>+</kbd> / <kbd>-</kbd> characters.</li>
+</ul>
 
-Syntax is <code>set module.{moduleId}.{layerId} {navigationMode}</code><br>
+Syntax is <code>set module.{moduleId}.navigationMode.{layerId} {navigationMode}</code><br>
 
 <ul>
 <li><code>{moduleId}</code> is of <code>keycluster</code>, <code>trackball</code>, <code>trackpoint</code>, <code>touchpad</code></li>
@@ -250,26 +251,22 @@ Syntax is <code>set module.{moduleId}.{layerId} {navigationMode}</code><br>
         <tr v-for="layer in layers">
             <th scope="row">{{layer}}</th>
             <td v-for="module in modules">
-                <dropdown :name="`module.${moduleStrings[module]}.${layer.toLowerCase()}`" options="navigationModes" :default="getNavigationMode(module, layer)"/>
+                <dropdown :name="`module.${moduleStrings[module]}.navigationMode.${layer.toLowerCase()}`" options="navigationModes" :default="getNavigationMode(module, layer)"/>
             </td>
         </tr>
     </tbody>
   </table>
 
-<pre>
-set module.keycluster.navigationMode.base scroll
-</pre>
-
 <h3>set &raquo; navigation mode action</h3>
 
-<p>Customize caret or media navigation mode behaviour by binding directions to macros. This action is global and reversible only by powercycling.</p>
+<p>Customize caret or media navigation mode behaviour by binding directions to shortcuts or macros.</p>
 
 Syntax is <code>set navigationModeAction.{mode}.{direction} (macro MACRONAME | keystroke SHORTCUT)</code><br>
 
 <ul>
 <li><code>{mode}</code> is of <code>caret</code>, <code>media</code>, <code>zoomPc</code>, <code>zoomMac</code></li>
 <li><code>{direction}</code> is of <code>left</code>, <code>right</code>, <code>up</code>, <code>down</code></li>
-<li><code>{macroName}</code> is the name of a macro to be used</li>
+<li><code>{macroName}</code> is the case sensitive macro name to be used which must not contain spaces.</li>
 </ul>
 
 <h3>set &raquo; modifier layer triggers</h3>
