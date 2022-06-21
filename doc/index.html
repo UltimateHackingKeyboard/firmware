@@ -205,7 +205,12 @@ Syntax is <code>set module.{module}.swapAxes {0|1}</code><br>
 
 <p>Controls the sensitivity of the touchpad's pinch-to-zoom gesture.</p>
 
-<p>Syntax is <code>set module.touchpad.pinchZoomDivisor {value}</code></p>
+<p>The touchpad pinch-to-zoom gesture emits the same shortcuts as the zoom navigation mode, whose actions can be remapped via navigation mode actions</a>.</p>
+
+Syntax is <code>set module.touchpad.pinchZoomDivisor {value}</code><br>
+<ul>
+    <li><code>{value} integer of 0 to 10, defaults to 4</code>: The higher the value, the larger gesture is needed for zooming.</li>
+</ul>
 
 <table class="table table-borderless w-auto">
     <tbody>
@@ -354,8 +359,9 @@ Syntax is <code>set mouseKeys.{mode}.{property} {floatValue}</code><br>
 <p>By default, the mouse pointer is faster diagonally than horizontally or vertically when using the mouse keys. This setting slows down the pointer diagonally when the mouse keys are used, so its speed matches horizontal and vertical speeds.</p>
 
 Syntax is <code>set diagonalSpeedCompensation {compensationEnabled}</code><br>
+
 <ul>
-    <li><code>{compensationEnabled} boolean</code> : <code>0</code> disables compensation, <code>1</code> enables compensation.</li>
+    <li><code>{compensationEnabled} boolean</code>: <code>0</code> disables compensation, <code>1</code> enables compensation.</li>
 </ul>
 
 <p><checkbox id="diagonalSpeedCompensation" name="diagonalSpeedCompensation" default="0"></checkbox> <label for="diagonalSpeedCompensation">Enable diagonal speed compensation</label></p>
@@ -383,7 +389,7 @@ Syntax is <code>set stickyModifiers {stickyMode}</code><br>
 Syntax is <code>set debounceDelay {delay}</code><br>
 
 <ul>
-    <li><code>{delay} integer of 0 to 250, defaults to 50</code> : Delay in milliseconds. Recommended value is <code>10</code> to <code>50</code>.</li>
+    <li><code>{delay} integer of 0 to 250, defaults to 50</code>: Delay in milliseconds. Recommended value is <code>10</code> to <code>50</code>.</li>
 </ul>
 
 <h3>set &raquo; double tap timeout</h3>
@@ -393,7 +399,7 @@ Syntax is <code>set debounceDelay {delay}</code><br>
 Syntax is <code>set doubletapTimeout {timeout}</code><br>
 
 <ul>
-    <li><code>{timeout} integer of 0 to 1000</code> : Timeout in milliseconds.</li>
+    <li><code>{timeout} integer of 0 to 1000</code>: Timeout in milliseconds.</li>
 </ul>
 
 <h3>set &raquo; keystroke delay</h3>
@@ -405,7 +411,7 @@ Syntax is <code>set doubletapTimeout {timeout}</code><br>
 Syntax is <code>keystrokeDelay {delay}</code><br>
 
 <ul>
-    <li><code>{delay} integer of 0 to 1000</code> : Delay in milliseconds. Recommended value is <code>10</code> if you have issues with RDP missing modifier keys, <code>0</code> otherwise.</li>
+    <li><code>{delay} integer of 0 to 1000</code>: Delay in milliseconds. Recommended value is <code>10</code> if you have issues with RDP missing modifier keys, <code>0</code> otherwise.</li>
 </ul>
 
 <h3>set &raquo; chording delay</h3>
@@ -415,7 +421,7 @@ Syntax is <code>keystrokeDelay {delay}</code><br>
 Syntax is <code>set chordingDelay {delay}</code><br>
 
 <ul>
-    <li><code>{delay} integer of 0 to 255, defaults to 0</code> : Delay in milliseconds.</li>
+    <li><code>{delay} integer of 0 to 255, defaults to 0</code>: Delay in milliseconds.</li>
 </ul>
 
 <h3>set &raquo; enable/disable LEDs</h3>
@@ -425,7 +431,7 @@ Syntax is <code>set chordingDelay {delay}</code><br>
 Syntax is <code>set leds.enabled {ledStatus}</code><br>
 
 <ul>
-    <li><code>{ledStatus} boolean</code> : <code>0</code> disables LEDs, <code>1</code> enables LEDs.</li>
+    <li><code>{ledStatus} boolean</code>: <code>0</code> disables LEDs, <code>1</code> enables LEDs.</li>
 </ul>
 
 <h3>set &raquo; LED brightness</h3>
@@ -435,7 +441,7 @@ Syntax is <code>set leds.enabled {ledStatus}</code><br>
 Syntax is <code>set leds.brightness {brightness}</code><br>
 
 <ul>
-    <li><code>{brightness} float of 0.0 to 1.0</code> : The level of brightness.</li>
+    <li><code>{brightness} float of 0.0 to 1.0</code>: The level of brightness.</li>
 </ul>
 
 <h3>set &raquo; LED fade timeout</h3>
@@ -445,7 +451,7 @@ Syntax is <code>set leds.brightness {brightness}</code><br>
 Syntax is <code>set leds.fadeTimeout {timeout}</code><br>
 
 <ul>
-    <li><code>{timeout} integer of 0 to 100, defaults to 0</code> : <code>0</code> means disabled fade timeout. Otherwise, the timeout value specified in minutes.</li>
+    <li><code>{timeout} integer of 0 to 100, defaults to 0</code>: <code>0</code> means disabled fade timeout. Otherwise, the timeout value specified in minutes.</li>
 </ul>
 
 <table class="table table-borderless w-auto">
