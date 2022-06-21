@@ -191,12 +191,13 @@ Syntax is <code>set module.{module}.invertScrollDirection {0|1}</code><br>
 
 <h3>set &raquo; key cluster axis swapping</h3>
 
-<p>Swaps the X and Y axes of the key cluster module's mini trackball. It's easier to roll the mini trackball along the horizontal axis, but people usually scroll vertically, so this feature can be useful. This setting is available for all modules, but we only recommend using it with the key cluster.</p>
+<p>Swaps the X and Y axes of the key cluster's mini trackball, which can be useful because it's easier to roll the mini trackball along the horizontal axis with the thumb. This setting is available for all modules, but we only recommend using it with the key cluster.</p>
 
-Syntax is <code>set module.{module}.swapAxes {0|1}</code><br>
+Syntax is <code>set module.{module}.swapAxes {value}</code><br>
 
 <ul>
-<li><code>{module}</code> is of <code>keycluster</code>, <code>trackball</code>, <code>trackpoint</code>, <code>touchpad</code></li>
+    <li><code>{module}</code> is of <code>keycluster</code>, <code>trackball</code>, <code>trackpoint</code>, <code>touchpad</code></li>
+    <li><code>{value} boolean</code>: <code>0</code> leaves axes unswapped, <code>1</code> swaps axes.</li>
 </ul>
 
 <p><checkbox id="module.keycluster.swapAxes" name="module.keycluster.swapAxes" default="0"></checkbox> <label for="module.keycluster.swapAxes">Swap the X and Y axes of key cluster module's mini trackball</label></p>
