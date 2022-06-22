@@ -59,7 +59,7 @@ Want to contribute? Let us show you [how](/CONTRIBUTING.md).
 
 ## Extended macros
 
-In order to build with extended macro support, either specify `--extendedMacros` as parameter to `make-release.js`, or specify `CUSTOM_CFLAGS=-DEXTENDED_MACROS` as parameter to `make`.
+In order to build with extended macro support, either specify `--extendedMacros` as parameter to `make-release.js`, or specify `CUSTOM_CFLAGS=-DEXTENDED_MACROS` as parameter to `make`. Further documentation is available in [doc-dev](doc-dev).
 
 ## Custom Firmwares
 
