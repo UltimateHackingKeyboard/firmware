@@ -70,7 +70,7 @@
 
 <h3>set &raquo; module speeds</h3>
 
-<p>Set module speeds.</p>
+<p>Sets module speeds. These settings are not useful for the key cluster due to the limited resolution of its mini trackball.</p>
 
 Syntax is <code>set module.{module}.{property} {value}</code><br>
 
@@ -78,12 +78,13 @@ Syntax is <code>set module.{module}.{property} {value}</code><br>
 <li><code>{module}</code> is of <code>keycluster</code>, <code>trackball</code>, <code>trackpoint</code>, <code>touchpad</code></li>
 <li><code>{property}</code> is of
     <ul>
-        <li><code>baseSpeed</code>: speed multiplier part that always applies, 0-10.0 (FLOAT)</li>
-        <li><code>speed</code>: speed multiplier part that is affected by xceleration, 0-10.0 (FLOAT)</li>
-        <li><code>xceleration</code>: exponent 0-1.0 (FLOAT)</li>
-        <li><code>caretSpeedDivisor</code>: (default: 16) is used to divide input in caret mode. This means that per one tick, you have to move by 16 pixels (or whatever the unit is). (This is furthermore modified by axisLocking skew, as well as acceleration.)</li>
-        <li><code>scrollSpeedDivisor</code>: (default: 8) is used to divide input in scroll mode. This means that while scrolling, every 8 pixels produce one scroll tick. (This is furthermore modified by axisLocking skew, as well as acceleration.)</li>
+        <li><code>baseSpeed</code>: The speed multiplier part that always applies. <code>{value}</code> ranges from <code>0</code> to <code>10.0</code> and defaults to <code>0.5</code> for the trackball and touchpad, and <code>0</code> for the touchpad.</li>
+        <li><code>speed</code>: The speed multiplier part that is affected by <code>xceleration</code>. <code>{value}</code> ranges from <code>0</code> to <code>10.0</code> and defaults to <code>0.5</code> for the trackball, <code>1.0</code> for the trackpoint, and <code>0.7</code> for the touchpad.</li>
+        <li><code>xceleration</code>: The acceleration/deceleration exponent. <code>{value}</code> ranges from <code>0</code> to <code>1.0</code> and defaults to <code>1</code> for the trackball and touchpad, and <code>0</code> for the trackpoint.</li>
+        <li><code>caretSpeedDivisor</code>: Divisor that affects speed in caret mode. The higher the value, the slower the caret speed. <code>{value}</code> ranges from <code>1</code> to <code>100</code> and defaults to <code>16</code>.</li>
+        <li><code>ScrollSpeedDivisor</code>: Divisor that affects speed in caret mode. The higher the value, the slower the scroll speed. <code>{value}</code> ranges from <code>1</code> to <code>100</code> and defaults to <code>8</code>.</li>
     </ul>
+    <li><code>{value} float</code>: The range is dependent on <code>{property}</code>.</li>
 </li>
 </ul>
 
@@ -119,21 +120,6 @@ Syntax is <code>set module.{module}.{property} {value}</code><br>
 </ul>
 
 <p>By default, axis locking is enabled in scroll and discreet modes for right hand modules, and for scroll, caret and media modes for keycluster.</p>
-
-Syntax is <code>set module.{module}.{property} {value}</code><br>
-
-<ul>
-<li><code>{module}</code> is of <code>keycluster</code>, <code>trackball</code>, <code>trackpoint</code>, <code>touchpad</code></li>
-<li><code>{property}</code> is of
-    <ul>
-        <li><code>baseSpeed</code>: speed multiplier part that always applies, 0-10.0 (FLOAT)</li>
-        <li><code>speed</code>: speed multiplier part that is affected by xceleration, 0-10.0 (FLOAT)</li>
-        <li><code>xceleration</code>: exponent 0-1.0 (FLOAT)</li>
-        <li><code>caretSpeedDivisor</code>: (default: 16) is used to divide input in caret mode. This means that per one tick, you have to move by 16 pixels (or whatever the unit is). (This is furthermore modified by axisLocking skew, as well as acceleration.)</li>
-        <li><code>scrollSpeedDivisor</code>: (default: 8) is used to divide input in scroll mode. This means that while scrolling, every 8 pixels produce one scroll tick. (This is furthermore modified by axisLocking skew, as well as acceleration.)</li>
-    </ul>
-</li>
-</ul>
 
 <table v-show="modules.length" class="table w-auto">
     <thead>
