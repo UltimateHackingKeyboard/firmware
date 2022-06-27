@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 const fs = require('fs');
 const path = require('path');
+const common = require('./common.js');
 require('shelljs/global');
 
 config.fatal = true;
@@ -58,6 +59,9 @@ for (const module of package.modules) {
     cp(moduleMMap, `${moduleDir}/${module.name}.map`);
 }
 
-cp(`${__dirname}/package.json`, releaseDir);
+const gitInfo = common.getGitInfo();
+const updatedPackage = Object.assign({}, package, { gitInfo: gitInfo });
+fs.writeFileSync(`${releaseDir}/package.json`, JSON.stringify(updatedPackage, null, 2));
+
 cp('-R', `${__dirname}/../doc/dist`, `${releaseDir}/doc`);
 exec(`tar -czvf ${releaseFile} -C ${releaseDir} .`);
