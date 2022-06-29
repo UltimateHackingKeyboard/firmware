@@ -223,7 +223,7 @@ The following grammar is supported:
     - `CS-u 1 2 3 space` - control shift U + number + space - linux shortcut for custom unicode character.
     - `pA- tab tab rA-` - tap alt tab twice to bring forward second background window.
   - `MODMASK` meaning:
-    - `{S|C|A|G}` - Shift Control Alt Gui
+    - `{S|C|A|G}` - Shift Control Alt Gui. (Windows, Super and Gui are the same thing. ) 
     - `[L|R]` - Left Right (which hand side modifier should be used)
     - `{s|i|o}` - modifiers (ctrl, alt, shift, gui) exist in three composition modes within UHK - sticky, input, output:
         - sticky modifiers are modifiers of composite shortcuts. These are applied only until next key press. In certain contexts, they will take effect even after their activation key was released (e.g., to support alt + tab on non-base layers).
