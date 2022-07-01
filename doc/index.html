@@ -198,7 +198,7 @@ Syntax is <code>set module.touchpad.pinchZoomDivisor {value}</code><br>
     <li><code>{value} integer of 0 to 10, defaults to 4</code>: The higher the value, the larger gesture is needed for zooming.</li>
 </ul>
 
-<table class="table table-borderless w-auto">
+<table v-show="isTouchpadAttached" class="table table-borderless w-auto">
     <tbody>
         <tr>
             <td style="padding-left:0">Touchpad pinch-to-zoom divisor</td>
@@ -218,7 +218,7 @@ Syntax is <code>set module.touchpad.pinchZoomMode {navigationMode}</code><br>
     <li><code>{navigationMode}</code> is of <code>media</code>, <code>zoom</code>, <code>zoomPc</code>, <code>zoomMac</code>, <code>none</code>. The default <code>zoom</code> navigation mode usually works fine, but extra <kbd>+</kbd> and <kbd>-</kbd> characters may be displayed by some applications in which case the more specific <code>zoomPc</code> or <code>zoomMac</code> mode should be used. The <code>media</code> navigation mode adjusts volulme. See <a href="#set-module-navigation-modes">set &raquo; module navigation modes</a> for more details.</li>
 </ul>
 
-<table class="table table-borderless w-auto">
+<table v-show="isTouchpadAttached" class="table table-borderless w-auto">
     <tbody>
         <tr>
             <td style="padding-left:0">Touchpad pinch-to-zoom mode</td>

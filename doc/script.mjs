@@ -312,6 +312,9 @@ const app = createApp({
     computed: {
         rightModules() {
             return this.modules.filter(module => module !== 2);
+        },
+        isTouchpadAttached() {
+            return this.modules.includes(5);
         }
     }
 });
