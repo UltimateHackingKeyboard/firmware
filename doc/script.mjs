@@ -98,6 +98,13 @@ const Dropdown = {
                 {label:'Zoom Mac', value:'zoomMac'},
                 {label:'None', value:'none'},
             ],
+            touchpadNavigationModes: [
+                {label:'Zoom', value:'zoom'},
+                {label:'Zoom PC', value:'zoomPc'},
+                {label:'Zoom Mac', value:'zoomMac'},
+                {label:'Media', value:'media'},
+                {label:'None', value:'none'},
+            ],
         }
         this.selectOptions = allOptions[this.options];
         await this.$nextTick();
