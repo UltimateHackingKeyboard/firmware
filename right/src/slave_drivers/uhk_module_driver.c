@@ -9,6 +9,8 @@
 #include "key_states.h"
 #include "usb_report_updater.h"
 #include "utils.h"
+#include "keymap.h"
+#include "debug.h"
 
 uhk_module_state_t UhkModuleStates[UHK_MODULE_MAX_SLOT_COUNT];
 
@@ -71,6 +73,25 @@ void UhkModuleSlaveDriver_Init(uint8_t uhkModuleDriverId)
 
     uhkModuleState->pointerDelta.x = 0;
     uhkModuleState->pointerDelta.y = 0;
+}
+
+// When module is swapped, we need to reload its Keymap once we know its
+// moduleId. However, this triggers macro events, and we don't want to trigger
+// the same macro multiple times if we can detect that another module is also
+// going through the initialization sequence.
+void ReloadKeymapIfNeeded()
+{
+    bool someoneElseWillDoTheJob = false;
+    for (uint8_t i = 0; i < UHK_MODULE_MAX_SLOT_COUNT; i++) {
+        uhk_module_state_t *uhkModuleState = UhkModuleStates + i;
+        uhk_slave_t* slave = Slaves + i;
+
+        someoneElseWillDoTheJob = uhkModuleState->moduleId == 0 && slave->isConnected;
+    }
+
+    if (!someoneElseWillDoTheJob) {
+        SwitchKeymapById(CurrentKeymapIndex);
+    }
 }
 
 status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
@@ -174,6 +195,7 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
             bool isMessageValid = CRC16_IsMessageValid(rxMessage);
             if (isMessageValid) {
                 uhkModuleState->moduleId = rxMessage->data[0];
+                ReloadKeymapIfNeeded();
             }
             status = kStatus_Uhk_IdleCycle;
             *uhkModulePhase = isMessageValid ? UhkModulePhase_RequestModuleKeyCount : UhkModulePhase_RequestModuleId;
