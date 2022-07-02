@@ -23,6 +23,7 @@
         SlaveCommand_RequestKeyStates,
         SlaveCommand_SetTestLed,
         SlaveCommand_SetLedPwmBrightness,
+        SlaveCommand_ResetTrackpoint,
     } slave_command_t;
 
     typedef enum {

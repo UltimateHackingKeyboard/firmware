@@ -24,6 +24,11 @@ uint8_t UhkModuleSlaveDriver_DriverIdToSlotId(uint8_t uhkModuleDriverId)
     return uhkModuleDriverId+1;
 }
 
+void UhkModuleSlaveDriver_ResetTrackpoint()
+{
+    UhkModuleStates[UhkModuleDriverId_RightModule].phase = UhkModulePhase_ResetTrackpoint;
+}
+
 static uint8_t keyStatesBuffer[MAX_KEY_COUNT_PER_MODULE];
 static i2c_message_t txMessage;
 
@@ -356,6 +361,16 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
             }
             *uhkModulePhase = UhkModulePhase_RequestKeyStates;
             break;
+
+        // Other commands
+        // Force reset
+        case UhkModulePhase_ResetTrackpoint:
+            txMessage.data[0] = SlaveCommand_ResetTrackpoint;
+            txMessage.length = 1;
+            status = tx(i2cAddress);
+            *uhkModulePhase = UhkModulePhase_RequestKeyStates;
+            break;
+
     }
 
     return status;

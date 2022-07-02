@@ -75,6 +75,7 @@
         UhkModulePhase_SetTestLed,
         UhkModulePhase_SetLedPwmBrightness,
         UhkModulePhase_JumpToBootloader,
+        UhkModulePhase_ResetTrackpoint,
 
     } uhk_module_phase_t;
 
@@ -117,5 +118,7 @@
     void UhkModuleSlaveDriver_Init(uint8_t uhkModuleDriverId);
     status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId);
     void UhkModuleSlaveDriver_Disconnect(uint8_t uhkModuleDriverId);
+
+    void UhkModuleSlaveDriver_ResetTrackpoint();
 
 #endif

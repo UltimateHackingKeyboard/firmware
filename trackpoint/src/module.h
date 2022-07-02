@@ -35,6 +35,11 @@
     #define PS2_CLOCK_PIN   0
     #define PS2_CLOCK_IRQ_HANDLER PORTB_IRQHandler
 
+    #define TP_RST_GPIO  GPIOA
+    #define TP_RST_PORT  PORTA
+    #define TP_RST_CLOCK kCLOCK_PortA
+    #define TP_RST_PIN   7
+
     #define KEY_ARRAY_TYPE KEY_ARRAY_TYPE_VECTOR
     #define KEYBOARD_VECTOR_ITEMS_NUM 2
 
@@ -47,5 +52,6 @@
 
     void Module_Init(void);
     void Module_Loop(void);
+    void Module_ResetTrackpoint(void);
 
 #endif
