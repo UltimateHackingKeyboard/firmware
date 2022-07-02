@@ -14,6 +14,8 @@
 
 uhk_module_state_t UhkModuleStates[UHK_MODULE_MAX_SLOT_COUNT];
 
+static bool shouldResetTrackpoint = false;
+
 uint8_t UhkModuleSlaveDriver_SlotIdToDriverId(uint8_t slotId)
 {
     return slotId-1;
@@ -22,6 +24,11 @@ uint8_t UhkModuleSlaveDriver_SlotIdToDriverId(uint8_t slotId)
 uint8_t UhkModuleSlaveDriver_DriverIdToSlotId(uint8_t uhkModuleDriverId)
 {
     return uhkModuleDriverId+1;
+}
+
+void UhkModuleSlaveDriver_ResetTrackpoint()
+{
+    shouldResetTrackpoint = true;
 }
 
 static uint8_t keyStatesBuffer[MAX_KEY_COUNT_PER_MODULE];
@@ -354,6 +361,21 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
                 status = tx(i2cAddress);
                 uhkModuleTargetVars->ledPwmBrightness = uhkModuleSourceVars->ledPwmBrightness;
             }
+            if (shouldResetTrackpoint && uhkModuleDriverId == UhkModuleDriverId_RightModule) {
+                *uhkModulePhase = UhkModulePhase_ResetTrackpoint;
+            } else {
+                *uhkModulePhase = UhkModulePhase_RequestKeyStates;
+            }
+            break;
+
+        // Other commands
+        // Force reset
+        case UhkModulePhase_ResetTrackpoint:
+            shouldResetTrackpoint = false;
+            txMessage.data[0] = SlaveCommand_ModuleSpecificCommand;
+            txMessage.data[1] = ModuleSpecificCommand_ResetTrackpoint;
+            txMessage.length = 2;
+            status = tx(i2cAddress);
             *uhkModulePhase = UhkModulePhase_RequestKeyStates;
             break;
     }

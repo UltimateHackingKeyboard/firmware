@@ -23,7 +23,12 @@
         SlaveCommand_RequestKeyStates,
         SlaveCommand_SetTestLed,
         SlaveCommand_SetLedPwmBrightness,
+        SlaveCommand_ModuleSpecificCommand,
     } slave_command_t;
+
+    typedef enum {
+        ModuleSpecificCommand_ResetTrackpoint,
+    } module_specific_command_t;
 
     typedef enum {
         SlaveProperty_Sync,

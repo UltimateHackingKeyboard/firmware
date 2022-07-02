@@ -51,6 +51,10 @@ void SlaveRxHandler(void)
             uint8_t brightnessPercent = RxMessage.data[1];
             LedPwm_SetBrightness(brightnessPercent);
             break;
+        case SlaveCommand_ModuleSpecificCommand: {
+           Module_ModuleSpecificCommand(RxMessage.data[1]);
+           break;
+       }
     }
 }
 
