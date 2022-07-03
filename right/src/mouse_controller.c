@@ -802,7 +802,7 @@ void MouseController_ProcessMouseActions()
         moduleState->pointerDelta.y = 0;
         __enable_irq();
 
-        module_kinetic_state_t *ks = getKineticState(ModuleId_TouchpadRight);
+        module_kinetic_state_t *ks = getKineticState(moduleState->moduleId);
 
         if (caretModeActionIsRunning(ks)) {
             handleRunningCaretModeAction(ks);
