@@ -107,19 +107,27 @@ Syntax is <code>set module.{module}.{property} {value}</code><br>
 
 <h3>set &raquo; module axis locking</h3>
 
-<p>When you first move in navigation mode that has axis locking enabled, axis is locked to one of the axes. Axis locking behaviour is defined by two characteristis:</p>
+<p>When first moving in a navigation mode that has axis locking enabled, axis is locked to one of the axes. Axis locking behaviour is defined by the following variables.</p>
+
+Syntax is <code>set module.{module}.{property} {value}</code><br>
 
 <ul>
-    <li>axis skew: when axis is locked, the secondary axis value is multiplied by `axisLockSkew`. This means that in order to change locked direction (with 0.5 value), you have to produce stroke that goes at least twice as fast in the non-locked direction compared to the locked one. </li>
-    <li>secondary axis zeroing: whenever the locked (primary) axis produces an event, the behaviour of first tick (the one that initiates mechanism) can be controlled independently. The first tick (the first event produced when axis is not yet locked) skew is applied to *both* the axis. This allows following tweaks:</li>
+<li><code>{module}</code> is of <code>keycluster</code>, <code>trackball</code>, <code>trackpoint</code>, <code>touchpad</code></li>
+<li><code>{property}</code> is of
+    <ul>
+        <li><code>{scrollAxisLock} boolean</code>: <code>0</code> disables scroll axis locking, <code>1</code> enables scroll axis locking. By default, axis locking is enabled in scroll and discreet modes for right hand modules, and for scroll, caret and media modes for the key cluster.</li>
+        <li><code>{axisLockFirstTickSkew} float of 0.5 to 2.0</code>: The first event produced when axis is not yet locked can be adjusted as follows.
+            <ul>
+                <li>Set <code>{value}</code> to <code>0.5</code> to require a stronger push at the beginning of movement. Useful for the mini trackball to not produce an unwanted move event when trying to just click it. With this value, it will require two roll events to activate.</li>
+                <li>Set <code>{value}</code> to <code>2.0</code> to make the first event more responsive. For example, caret mode will make the first character move even with a very gently push, while consecutive activations will need greater momentum.</li>
+            </ul>
+        </li>
+        <li><code>axisLockSkew float of 0.5 to 2.0</code>: Affects how hard it is to change the locked direction once the axis is locked. With <code>{value}</code> of <code>0.5</code>, you have to produce stroke that goes at least twice as fast in the non-locked direction compared to the locked one. A <code>{value}</code> of <code>2.0</code> allows changing axes easily.</li>
+    </ul>
+    <li><code>{value} float</code>: The range is dependent on <code>{property}</code>.</li>
+</li>
 </ul>
 
-<ul>
-    <li>use `axisLockFirstTickSkew = 0.5` in order to require stronger "push" at the beginning of movement. Useful for the mini trackball, since it is likely to produce an unwanted move event when you try  to just click it. With `0.5` value, it will require two roll events to activate.</li>
-    <li>use `axisLockFirstTickSkew = 2.0` in order to make the first event more responsive. E.g., caret mode will make the fist character move even with a very gently push, while consecutive activations will need greater momentum.</li>
-</ul>
-
-<p>By default, axis locking is enabled in scroll and discreet modes for right hand modules, and for scroll, caret and media modes for keycluster.</p>
 
 <table v-show="modules.length" class="table w-auto">
     <thead>
@@ -130,9 +138,9 @@ Syntax is <code>set module.{module}.{property} {value}</code><br>
     </thead>
     <tbody>
         <tr>
-            <td>Axis lock skew</td>
+            <td>Scroll axis lock enabled</td>
             <td v-for="module in modules" class="no-wrap">
-                <slider :name="`module.${moduleStrings[module]}.axisLockSkew`" min="0.5" :default="axisLockSkewDefaults[module]" max="2" step="0.1"/>
+                <checkbox :name="`module.${moduleStrings[module]}.scrollAxisLock`" default="1"/>
             </td>
         </tr>
         <tr>
@@ -142,9 +150,9 @@ Syntax is <code>set module.{module}.{property} {value}</code><br>
             </td>
         </tr>
         <tr>
-            <td>Scroll axis lock enabled</td>
+            <td>Axis lock skew</td>
             <td v-for="module in modules" class="no-wrap">
-                <checkbox :name="`module.${moduleStrings[module]}.scrollAxisLock`" default="1"/>
+                <slider :name="`module.${moduleStrings[module]}.axisLockSkew`" min="0.5" :default="axisLockSkewDefaults[module]" max="2" step="0.1"/>
             </td>
         </tr>
     </tbody>
@@ -193,14 +201,12 @@ Syntax is <code>set module.{module}.swapAxes {value}</code><br>
 
 <p>Controls the sensitivity of the touchpad's pinch-to-zoom gesture.</p>
 
-<p>The touchpad pinch-to-zoom gesture emits the same shortcuts as the zoom navigation mode, whose actions can be remapped via navigation mode actions</a>.</p>
-
 Syntax is <code>set module.touchpad.pinchZoomDivisor {value}</code><br>
 <ul>
     <li><code>{value} integer of 0 to 10, defaults to 4</code>: The higher the value, the larger gesture is needed for zooming.</li>
 </ul>
 
-<table class="table table-borderless w-auto">
+<table v-show="isTouchpadAttached" class="table table-borderless w-auto">
     <tbody>
         <tr>
             <td style="padding-left:0">Touchpad pinch-to-zoom divisor</td>
@@ -211,7 +217,27 @@ Syntax is <code>set module.touchpad.pinchZoomDivisor {value}</code><br>
     </tbody>
 </table>
 
-<h3>set &raquo; module navigation modes</h3>
+<h3>set &raquo; touchpad pinch-to-zoom mode</h3>
+
+<p>Controls the behavior of the touchpad's pinch-to-zoom gesture.</p>
+
+Syntax is <code>set module.touchpad.pinchZoomMode {navigationMode}</code><br>
+<ul>
+    <li><code>{navigationMode}</code> is of <code>media</code>, <code>zoom</code>, <code>zoomPc</code>, <code>zoomMac</code>, <code>none</code>. The default <code>zoom</code> navigation mode usually works fine, but extra <kbd>+</kbd> and <kbd>-</kbd> characters may be displayed by some applications in which case the more specific <code>zoomPc</code> or <code>zoomMac</code> mode should be used. The <code>media</code> navigation mode adjusts volulme. See <a href="#set-module-navigation-modes">set &raquo; module navigation modes</a> for more details.</li>
+</ul>
+
+<table v-show="isTouchpadAttached" class="table table-borderless w-auto">
+    <tbody>
+        <tr>
+            <td style="padding-left:0">Touchpad pinch-to-zoom mode</td>
+            <td class="no-wrap">
+                <dropdown name="module.touchpad.pinchZoomMode" options="touchpadNavigationModes" default="zoom"/>
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+<h3 id="set-module-navigation-modes">set &raquo; module navigation modes</h3>
 
 <p>UHK modules support the following navigation modes, which are mapped by layer and module:</p>
 

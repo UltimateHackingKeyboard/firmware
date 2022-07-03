@@ -141,7 +141,7 @@ status_t TouchpadDriver_Update(uint8_t uhkModuleDriverId)
                 TouchpadEvents.wheelX -= deltaX;
                 TouchpadEvents.wheelY += deltaY;
             } else if (gestureEvents.events1.zoom) {
-                TouchpadEvents.zoomLevel += deltaY;
+                TouchpadEvents.zoomLevel -= deltaY;
             } else {
                 TouchpadEvents.x -= deltaX;
                 TouchpadEvents.y += deltaY;

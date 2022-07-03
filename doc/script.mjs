@@ -98,6 +98,13 @@ const Dropdown = {
                 {label:'Zoom Mac', value:'zoomMac'},
                 {label:'None', value:'none'},
             ],
+            touchpadNavigationModes: [
+                {label:'Zoom', value:'zoom'},
+                {label:'Zoom PC', value:'zoomPc'},
+                {label:'Zoom Mac', value:'zoomMac'},
+                {label:'Media', value:'media'},
+                {label:'None', value:'none'},
+            ],
         }
         this.selectOptions = allOptions[this.options];
         await this.$nextTick();
@@ -305,6 +312,9 @@ const app = createApp({
     computed: {
         rightModules() {
             return this.modules.filter(module => module !== 2);
+        },
+        isTouchpadAttached() {
+            return this.modules.includes(5);
         }
     }
 });
