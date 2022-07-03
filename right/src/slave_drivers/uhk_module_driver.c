@@ -79,7 +79,7 @@ void UhkModuleSlaveDriver_Init(uint8_t uhkModuleDriverId)
 // moduleId. However, this triggers macro events, and we don't want to trigger
 // the same macro multiple times if we can detect that another module is also
 // going through the initialization sequence.
-void ReloadKeymapIfNeeded()
+static void reloadKeymapIfNeeded()
 {
     bool someoneElseWillDoTheJob = false;
     for (uint8_t i = 0; i < UHK_MODULE_MAX_SLOT_COUNT; i++) {
@@ -195,7 +195,7 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
             bool isMessageValid = CRC16_IsMessageValid(rxMessage);
             if (isMessageValid) {
                 uhkModuleState->moduleId = rxMessage->data[0];
-                ReloadKeymapIfNeeded();
+                reloadKeymapIfNeeded();
             }
             status = kStatus_Uhk_IdleCycle;
             *uhkModulePhase = isMessageValid ? UhkModulePhase_RequestModuleKeyCount : UhkModulePhase_RequestModuleId;
