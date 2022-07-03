@@ -86,7 +86,7 @@ static void reloadKeymapIfNeeded()
         uhk_module_state_t *uhkModuleState = UhkModuleStates + i;
         uhk_slave_t* slave = Slaves + i;
 
-        someoneElseWillDoTheJob = uhkModuleState->moduleId == 0 && slave->isConnected;
+        someoneElseWillDoTheJob |= uhkModuleState->moduleId == 0 && slave->isConnected;
     }
 
     if (!someoneElseWillDoTheJob) {
