@@ -83,7 +83,7 @@ static void slaveSchedulerCallback(I2C_Type *base, i2c_master_handle_t *handle, 
             bool wasPreviousSlaveConnected = previousSlave->isConnected;
             previousSlave->isConnected = previousStatus == kStatus_Success;
             if (wasPreviousSlaveConnected && !previousSlave->isConnected && previousSlave->disconnect) {
-                previousSlave->disconnect(previousSlaveId);
+                previousSlave->disconnect(previousSlave->perDriverId);
             }
 
             isFirstCycle = false;
