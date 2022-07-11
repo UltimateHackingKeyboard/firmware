@@ -1,4 +1,5 @@
 import {createApp} from './node_modules/vue/dist/vue.esm-browser.prod.js';
+//import Select2 from './node_modules/v-select2-component/dist/Select2.esm.js';
 
 // Components
 
@@ -164,6 +165,42 @@ const Slider = {
     },
 };
 
+const Select2 = {
+    props: ["options", "value"],
+    template: "<select><slot></slot></select>",
+    mounted: function() {
+      var vm = this;
+      $(this.$el)
+        // init select2
+        .select2({ data: this.options })
+        .val(this.value)
+        .trigger("change")
+        // emit event on change.
+        .on("change", function() {
+          vm.$emit("input", this.value);
+        });
+    },
+    watch: {
+      value: function(value) {
+        // update value
+        $(this.$el)
+          .val(value)
+          .trigger("change");
+      },
+      options: function(options) {
+        // update options
+        $(this.$el)
+          .empty()
+          .select2({ data: options });
+      }
+    },
+    destroyed: function() {
+      $(this.$el)
+        .off()
+        .select2("destroy");
+    }
+};
+
 // Init Vue
 
 const app = createApp({
@@ -276,7 +313,228 @@ const app = createApp({
                     },
                 },
             ],
-        };
+            scancodes: [
+                'enter',
+                'escape',
+                'backspace',
+                'tab',
+                'space',
+                'minusAndUnderscore',
+                'equalAndPlus',
+                'openingBracketAndOpeningBrace',
+                'closingBracketAndClosingBrace',
+                'backslashAndPipeIso',
+                'backslashAndPipe',
+                'nonUsHashmarkAndTilde',
+                'semicolonAndColon',
+                'apostropheAndQuote',
+                'graveAccentAndTilde',
+                'commaAndLessThanSign',
+                'dotAndGreaterThanSign',
+                'slashAndQuestionMark',
+                'capsLock',
+                'printScreen',
+                'scrollLock',
+                'pause',
+                'insert',
+                'home',
+                'pageUp',
+                'delete',
+                'end',
+                'pageDown',
+                'numLock',
+                'nonUsBackslashAndPipe',
+                'application',
+                'power',
+                'keypadEqualSign',
+                'execute',
+                'help',
+                'menu',
+                'select',
+                'stop',
+                'again',
+                'undo',
+                'cut',
+                'copy',
+                'paste',
+                'find',
+                'mute',
+                'volumeUp',
+                'volumeDown',
+                'lockingCapsLock',
+                'lockingNumLock',
+                'lockingScrollLock',
+                'keypadComma',
+                'keypadEqualSignAs400',
+                'international1',
+                'international2',
+                'international3',
+                'international4',
+                'international5',
+                'international6',
+                'international7',
+                'international8',
+                'international9',
+                'lang1',
+                'lang2',
+                'lang3',
+                'lang4',
+                'lang5',
+                'lang6',
+                'lang7',
+                'lang8',
+                'lang9',
+                'alternateErase',
+                'sysreq',
+                'cancel',
+                'clear',
+                'prior',
+                'return',
+                'separator',
+                'out',
+                'oper',
+                'clearAndAgain',
+                'crselAndProps',
+                'exsel',
+                'keypad00',
+                'keypad000',
+                'thousandsSeparator',
+                'decimalSeparator',
+                'currencyUnit',
+                'currencySubUnit',
+                'keypadOpeningParenthesis',
+                'keypadClosingParenthesis',
+                'keypadOpeningBrace',
+                'keypadClosingBrace',
+                'keypadTab',
+                'keypadBackspace',
+                'keypadA',
+                'keypadB',
+                'keypadC',
+                'keypadD',
+                'keypadE',
+                'keypadF',
+                'keypadXor',
+                'keypadCaret',
+                'keypadPercentage',
+                'keypadLessThanSign',
+                'keypadGreaterThanSign',
+                'keypadAmp',
+                'keypadAmpAmp',
+                'keypadPipe',
+                'keypadPipePipe',
+                'keypadColon',
+                'keypadHashmark',
+                'keypadSpace',
+                'keypadAt',
+                'keypadExclamationSign',
+                'keypadMemoryStore',
+                'keypadMemoryRecall',
+                'keypadMemoryClear',
+                'keypadMemoryAdd',
+                'keypadMemorySubtract',
+                'keypadMemoryMultiply',
+                'keypadMemoryDivide',
+                'keypadPlusAndMinus',
+                'keypadClear',
+                'keypadClearEntry',
+                'keypadBinary',
+                'keypadOctal',
+                'keypadDecimal',
+                'keypadHexadecimal',
+                'keypadSlash',
+                'keypadAsterisk',
+                'keypadMinus',
+                'keypadPlus',
+                'keypadEnter',
+                'keypad1AndEnd',
+                'keypad2AndDownArrow',
+                'keypad3AndPageDown',
+                'keypad4AndLeftArrow',
+                'keypad5',
+                'keypad6AndRightArrow',
+                'keypad7AndHome',
+                'keypad8AndUpArrow',
+                'keypad9AndPageUp',
+                'keypad0AndInsert',
+                'keypadDotAndDelete',
+                'leftControl',
+                'leftShift',
+                'leftAlt',
+                'leftGui',
+                'rightControl',
+                'rightShift',
+                'rightAlt',
+                'rightGui',
+                'up',
+                'down',
+                'left',
+                'right',
+                'upArrow',
+                'downArrow',
+                'leftArrow',
+                'rightArrow',
+                'np0',
+                'np1',
+                'np2',
+                'np3',
+                'np4',
+                'np5',
+                'np6',
+                'np7',
+                'np8',
+                'np9',
+                'f1',
+                'f2',
+                'f3',
+                'f4',
+                'f5',
+                'f6',
+                'f7',
+                'f8',
+                'f9',
+                'f10',
+                'f11',
+                'f12',
+                'f13',
+                'f14',
+                'f15',
+                'f16',
+                'f17',
+                'f18',
+                'f19',
+                'f20',
+                'f21',
+                'f22',
+                'f23',
+                'f24',
+                'mediaVolumeMute',
+                'mediaVolumeUp',
+                'mediaVolumeDown',
+                'mediaRecord',
+                'mediaFastForward',
+                'mediaRewind',
+                'mediaNext',
+                'mediaPrevious',
+                'mediaStop',
+                'mediaPlayPause',
+                'mediaPause',
+                'systemPowerDown',
+                'systemSleep',
+                'systemWakeUp',
+                'mouseBtnLeft',
+                'mouseBtnRight',
+                'mouseBtnMiddle',
+                'mouseBtn4',
+                'mouseBtn5',
+                'mouseBtn6',
+                'mouseBtn7',
+                'mouseBtn8',
+            ],
+            myVal:'x',
+            selected: 1,
+            options: [{ id: 1, text: "Hello" }, { id: 2, text: "World" }],
+        }
     },
     created() {
         const self = this;
@@ -316,11 +574,18 @@ const app = createApp({
         isTouchpadAttached() {
             return this.modules.includes(5);
         }
-    }
+    },
+    myChangeEvent(val){
+        console.log(val);
+    },
+    mySelectEvent({id, text}){
+        console.log({id, text})
+    },
 });
 
 app.component('Checkbox', Checkbox);
 app.component('Dropdown', Dropdown);
 app.component('Slider', Slider);
+app.component('Select2', Select2);
 
 app.mount('body');

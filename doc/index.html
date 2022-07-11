@@ -4,6 +4,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css">
+        <link rel="stylesheet" href="node_modules/select2/dist/css/select2.min.css">
         <link rel="stylesheet" href="style.css">
         <title>UHK firmware smart macro reference</title>
     </head>
@@ -290,6 +291,8 @@ Syntax is <code>set navigationModeAction.{mode}.{direction} (macro MACRONAME | k
 <li><code>{macroName}</code> is the case sensitive macro name to be used which must not contain spaces.</li>
 </ul>
 
+<select2 :options="scancodes" :options="{width: 'resolve'}" v-model="selected" style="width: 100%"></select2>
+
 <h3>set &raquo; modifier layer triggers</h3>
 
 <p>Controls whether modifier layers are triggered by the left, right or either modifiers.</p>
@@ -482,6 +485,8 @@ Syntax is <code>set leds.fadeTimeout {timeout}</code><br>
 </table>
 
 </div>
+<script src="./node_modules/jquery/dist/jquery.min.js"></script>
+<script src="./node_modules/select2/dist/js/select2.min.js"></script>
 <script type="module" src="script.mjs"></script>
 </body>
 </html>
