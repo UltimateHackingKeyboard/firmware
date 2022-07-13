@@ -179,7 +179,7 @@ const Select2 = {
         $(this.$el)
             .select2({data: this.options})
             .val(this.value)
-            .trigger('change')
+            .trigger('update:modelValue')
             .on('change', function() {
                 vm.$emit('update:modelValue', this.value);
             });
