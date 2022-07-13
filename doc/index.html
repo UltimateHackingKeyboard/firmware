@@ -283,16 +283,27 @@ Syntax is <code>set module.{moduleId}.navigationMode.{layerId} {navigationMode}<
 
 <p>Customize caret or media navigation mode behaviour by binding directions to shortcuts or macros.</p>
 
-Syntax is <code>set navigationModeAction.{mode}.{direction} (macro MACRONAME | keystroke SHORTCUT)</code><br>
+Syntax is <code>set navigationModeAction.{mode}.{direction} {action}</code><br>
 
 <ul>
 <li><code>{mode}</code> is of <code>caret</code>, <code>media</code>, <code>zoomPc</code>, <code>zoomMac</code></li>
 <li><code>{direction}</code> is of <code>left</code>, <code>right</code>, <code>up</code>, <code>down</code></li>
-<li><code>{macroName}</code> is the case sensitive macro name to be used which must not contain spaces.</li>
+<li><code>{action}</code> is of <code>macro {macroName}</code>, <code>keystroke {shortcut}</code></li>
+<li><code>{macroName}</code> is the case-sensitive macro name which must not contain spaces.</li>
+<li><code>{shortcut}</code> is of <code>{modifiers}</code>, <code>{key}</code>, <code>{modifiers}-{key}</code></li>
+<li><code>{modifiers}</code> is formatted as <code>[L|R]{S|C|A|G}</code> of which <code>[L|R]</code> is an optional left or right side modifier and <code>{S|C|A|G}</code> is Ctrl, Alt, Shift, or Gui.</li>
+<li><code>{key}</code> describes the key, such as <code>enter</code>. See the full range of keys in the examples below.</li>
 </ul>
 
-<select2 :options="scancodes" :options="{width: 'resolve'}" v-model="selected" style="width: 100%"></select2>
-{{selected}}
+<h4>Macro name example</h4>
+<code>set navigationModeAction.{mode}.{direction} macro YourMacroName</code></p>
+
+<h4>Shortcut example</h4>
+
+<p><select2 :options="scancodes" :options="{width: 'resolve'}" v-model="scancode" style="width: 100%"></select2></p>
+
+<code>set navigationModeAction.{mode}.{direction} keystroke {{scancode}}</code></p>
+
 <h3>set &raquo; modifier layer triggers</h3>
 
 <p>Controls whether modifier layers are triggered by the left, right or either modifiers.</p>
