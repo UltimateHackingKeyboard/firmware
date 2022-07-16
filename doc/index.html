@@ -296,13 +296,16 @@ Syntax is <code>set navigationModeAction.{mode}.{direction} {action}</code><br>
 </ul>
 
 <h4>Macro name example</h4>
-<code>set navigationModeAction.{mode}.{direction} macro YourMacroName</code></p>
+
+<dropdown options="touchpadNavigationModes" default="media" v-model="navigationModeActionMode"></dropdown>
+
+<code>set navigationModeAction.{{navigationModeActionMode}}.{direction} macro YourMacroName</code></p>
 
 <h4>Shortcut example</h4>
 
-<p><select2 :options="scancodes" :options="{width: 'resolve'}" v-model="scancode" style="width: 100%"></select2></p>
+<p><select2 :options="scancodes" v-model="scancode" style="width: 100%"></select2></p>
 
-<code>set navigationModeAction.{mode}.{direction} keystroke {{scancode}}</code></p>
+<code>set navigationModeAction.{{navigationModeActionMode}}.{direction} keystroke {{scancode}}</code></p>
 
 <h3>set &raquo; modifier layer triggers</h3>
 

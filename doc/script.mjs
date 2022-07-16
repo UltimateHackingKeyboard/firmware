@@ -1,5 +1,4 @@
 import {createApp} from './node_modules/vue/dist/vue.esm-browser.prod.js';
-//import Select2 from './node_modules/v-select2-component/dist/Select2.esm.js';
 
 // Components
 
@@ -14,6 +13,9 @@ function updateWidgets() {
 }
 
 function getVariable(name) {
+    if (!name) {
+        return undefined;
+    }
     const regexVarName = name.replace(/\\./g, '\\.');
     const regex = new RegExp(`set +${regexVarName} +(\\S+) *#?`);
     const matches = currentCommand.match(regex);
@@ -22,6 +24,9 @@ function getVariable(name) {
 }
 
 function setVariable(name, value) {
+    if (!name) {
+        return;
+    }
     const regexVarName = name.replace(/\\./g, '\\.');
     const regex = new RegExp(`(set +${regexVarName} +)\\S+( *#?)`);
     if (regex.test(currentCommand)) {
@@ -62,7 +67,7 @@ const Checkbox = {
                 this.$refs.input.checked = this.default === '1' ? 'checked' : 0;
             }
             this.value = +this.$refs.input.checked ? 1 : 0;
-            if (isInit !== true) {
+            if (isInit !== true && this.name) {
                 setVariable(this.name, this.value, isInit);
             }
         },
@@ -71,10 +76,14 @@ const Checkbox = {
 
 const Dropdown = {
     template: `<select ref="input" @input="updateValue" class="form-select"><option v-for="option in selectOptions" :value="option.value">{{option.label}}</option></select>`,
+    emits: [
+        'update:modelValue',
+    ],
     props: {
         name: String,
-        options: String,
+        options: Array,
         default: String,
+        modelValue: String,
     },
     data() {
         return {
@@ -82,7 +91,7 @@ const Dropdown = {
             selectOptions: [],
         };
     },
-    async mounted() {
+    mounted() {
         const allOptions = {
             modifierTriggers: [
                 {label:'Both', value:'both'},
@@ -108,7 +117,6 @@ const Dropdown = {
             ],
         }
         this.selectOptions = allOptions[this.options];
-        await this.$nextTick();
         this.updateValue(true);
         widgetDict[this.name] = this;
     },
@@ -117,14 +125,16 @@ const Dropdown = {
             const value = getVariable(this.name) ?? this.default;
             this.value = this.$refs.input.value = value;
         },
-        updateValue(isInit) {
+        async updateValue(isInit) {
             if (isInit === true) {
                 this.$refs.input.value = this.default;
+                this.$emit('update:modelValue', this.default);
             }
 
             this.value = this.$refs.input.value;
             if (isInit !== true) {
                 setVariable(this.name, this.value, isInit);
+                this.$emit('update:modelValue', this.value);
             }
         },
     },
@@ -179,7 +189,6 @@ const Select2 = {
         $(this.$el)
             .select2({data: this.options})
             .val(this.value)
-            .trigger('update:modelValue')
             .on('change', function() {
                 vm.$emit('update:modelValue', this.value);
             });
@@ -569,12 +578,6 @@ const app = createApp({
         isTouchpadAttached() {
             return this.modules.includes(5);
         }
-    },
-    myChangeEvent(val){
-        console.log(val);
-    },
-    mySelectEvent({id, text}){
-        console.log({id, text})
     },
 });
 
