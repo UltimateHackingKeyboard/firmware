@@ -307,9 +307,7 @@ Syntax is <code>set navigationModeAction.{mode}.{direction} {action}</code><br>
         </tr>
         <tr>
             <td style="padding-left:0"><code>{direction}</code> :</td>
-            <td class="no-wrap">
-                <dropdown options="directions" default="up" v-model="navigationModeActionDirection"></dropdown>
-            </td>
+            <td><dropdown options="directions" default="up" v-model="navigationModeActionDirection"></dropdown></td>
         </tr>
     </tbody>
 </table>
@@ -318,7 +316,27 @@ Syntax is <code>set navigationModeAction.{mode}.{direction} {action}</code><br>
 
 <h5>Shortcut example</h5>
 
-<p><select2 :options="scancodes" v-model="scancode" style="width: 100%"></select2></p>
+<table class="table table-borderless w-auto">
+    <tbody>
+        <tr>
+            <td style="padding-left:0" class="no-wrap"><code>{shortcut}</code> :</td>
+            <td>
+                <span class="no-wrap"><checkbox id="lshift" default="0"></checkbox> <label for="lshift">LShift</label></span>&nbsp;
+                <span class="no-wrap"><checkbox id="lctrl" default="0"></checkbox> <label for="lctrl">LCtrl</label></span>&nbsp;
+                <span class="no-wrap"><checkbox id="lalt" default="0"></checkbox> <label for="lalt">LAlt</label></span>&nbsp;
+                <span class="no-wrap"><checkbox id="lsuper" default="0"></checkbox> <label for="lsuper">LSuper</label></span>&nbsp;
+                <span class="no-wrap"><checkbox id="rshift" default="0"></checkbox> <label for="rshift">RShift</label></span>&nbsp;
+                <span class="no-wrap"><checkbox id="rctrl" default="0"></checkbox> <label for="rctrl">RCtrl</label></span>&nbsp;
+                <span class="no-wrap"><checkbox id="ralt" default="0"></checkbox> <label for="ralt">RAlt</label></span>&nbsp;
+                <span class="no-wrap"><checkbox id="rsuper" default="0"></checkbox> <label for="rsuper">RSuper</label></span>
+            </td>
+        </tr>
+        <tr>
+            <td style="padding-left:0"><code>{key}</code> :</td>
+            <td><select2 :options="scancodes" v-model="scancode" style="min-width: 200px; width: 100%"></select2></td>
+        </tr>
+    </tbody>
+</table>
 
 <code>set navigationModeAction.{{navigationModeActionMode}}.{{navigationModeActionDirection}} keystroke {{scancode}}</code></p>
 
