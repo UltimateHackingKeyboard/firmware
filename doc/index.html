@@ -287,7 +287,7 @@ Syntax is <code>set navigationModeAction.{mode}.{direction} {action}</code><br>
 
 <ul>
 <li><code>{mode}</code> is of <code>caret</code>, <code>media</code>, <code>zoomPc</code>, <code>zoomMac</code></li>
-<li><code>{direction}</code> is of <code>left</code>, <code>right</code>, <code>up</code>, <code>down</code></li>
+<li><code>{direction}</code> is of <code>up</code>, <code>down</code>, <code>left</code>, <code>right</code></li>
 <li><code>{action}</code> is of <code>macro {macroName}</code>, <code>keystroke {shortcut}</code></li>
 <li><code>{macroName}</code> is the case-sensitive macro name which must not contain spaces.</li>
 <li><code>{shortcut}</code> is of <code>{modifiers}</code>, <code>{key}</code>, <code>{modifiers}-{key}</code></li>
@@ -295,17 +295,32 @@ Syntax is <code>set navigationModeAction.{mode}.{direction} {action}</code><br>
 <li><code>{key}</code> describes the key, such as <code>enter</code>. See the full range of keys in the examples below.</li>
 </ul>
 
-<h4>Macro name example</h4>
+<h5>Macro name example</h5>
 
-<dropdown options="touchpadNavigationModes" default="media" v-model="navigationModeActionMode"></dropdown>
+<table class="table table-borderless w-auto">
+    <tbody>
+        <tr>
+            <td style="padding-left:0"><code>{mode}</code> :</td>
+            <td class="no-wrap">
+                <dropdown options="touchpadNavigationModes" default="media" v-model="navigationModeActionMode"></dropdown>
+            </td>
+        </tr>
+        <tr>
+            <td style="padding-left:0"><code>{direction}</code> :</td>
+            <td class="no-wrap">
+                <dropdown options="directions" default="up" v-model="navigationModeActionDirection"></dropdown>
+            </td>
+        </tr>
+    </tbody>
+</table>
 
-<code>set navigationModeAction.{{navigationModeActionMode}}.{direction} macro YourMacroName</code></p>
+<code>set navigationModeAction.{{navigationModeActionMode}}.{{navigationModeActionDirection}} macro YourMacroName</code></p>
 
-<h4>Shortcut example</h4>
+<h5>Shortcut example</h5>
 
 <p><select2 :options="scancodes" v-model="scancode" style="width: 100%"></select2></p>
 
-<code>set navigationModeAction.{{navigationModeActionMode}}.{direction} keystroke {{scancode}}</code></p>
+<code>set navigationModeAction.{{navigationModeActionMode}}.{{navigationModeActionDirection}} keystroke {{scancode}}</code></p>
 
 <h3>set &raquo; modifier layer triggers</h3>
 

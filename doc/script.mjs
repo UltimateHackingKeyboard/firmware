@@ -115,6 +115,12 @@ const Dropdown = {
                 {label:'Media', value:'media'},
                 {label:'None', value:'none'},
             ],
+            directions: [
+                {label:'Up', value:'up'},
+                {label:'Down', value:'down'},
+                {label:'Left', value:'left'},
+                {label:'Right', value:'right'},
+            ],
         }
         this.selectOptions = allOptions[this.options];
         this.updateValue(true);
