@@ -324,6 +324,9 @@ const app = createApp({
                     },
                 },
             ],
+            navigationModeActionMode: '',
+            navigationModeActionDirection: '',
+            scancode: 'enter',
             scancodes: [
                 'enter',
                 'escape',
@@ -542,8 +545,6 @@ const app = createApp({
                 'mouseBtn7',
                 'mouseBtn8',
             ],
-            scancode: 'enter',
-            options: [{ id: 1, text: "Hello" }, { id: 2, text: "World" }],
         }
     },
     created() {
