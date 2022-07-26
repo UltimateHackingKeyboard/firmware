@@ -321,14 +321,14 @@ Syntax is <code>set navigationModeAction.{mode}.{direction} {action}</code><br>
         <tr>
             <td style="padding-left:0" class="no-wrap"><code>{shortcut}</code> :</td>
             <td>
-                <span class="no-wrap"><checkbox id="lshift" default="0"></checkbox> <label for="lshift">LShift</label></span>&nbsp;
-                <span class="no-wrap"><checkbox id="lctrl" default="0"></checkbox> <label for="lctrl">LCtrl</label></span>&nbsp;
-                <span class="no-wrap"><checkbox id="lalt" default="0"></checkbox> <label for="lalt">LAlt</label></span>&nbsp;
-                <span class="no-wrap"><checkbox id="lsuper" default="0"></checkbox> <label for="lsuper">LSuper</label></span>&nbsp;
-                <span class="no-wrap"><checkbox id="rshift" default="0"></checkbox> <label for="rshift">RShift</label></span>&nbsp;
-                <span class="no-wrap"><checkbox id="rctrl" default="0"></checkbox> <label for="rctrl">RCtrl</label></span>&nbsp;
-                <span class="no-wrap"><checkbox id="ralt" default="0"></checkbox> <label for="ralt">RAlt</label></span>&nbsp;
-                <span class="no-wrap"><checkbox id="rsuper" default="0"></checkbox> <label for="rsuper">RSuper</label></span>
+                <span class="no-wrap"><checkbox id="lshift" v-model="lshift" default="1"></checkbox> <label for="lshift">LShift</label></span>&nbsp;
+                <span class="no-wrap"><checkbox id="lctrl" v-model="lctrl" default="0"></checkbox> <label for="lctrl">LCtrl</label></span>&nbsp;
+                <span class="no-wrap"><checkbox id="lalt" v-model="lalt" default="0"></checkbox> <label for="lalt">LAlt</label></span>&nbsp;
+                <span class="no-wrap"><checkbox id="lsuper" v-model="lsuper" default="0"></checkbox> <label for="lsuper">LSuper</label></span>&nbsp;
+                <span class="no-wrap"><checkbox id="rshift" v-model="rshift" default="0"></checkbox> <label for="rshift">RShift</label></span>&nbsp;
+                <span class="no-wrap"><checkbox id="rctrl" v-model="rctrl" default="0"></checkbox> <label for="rctrl">RCtrl</label></span>&nbsp;
+                <span class="no-wrap"><checkbox id="ralt" v-model="ralt" default="0"></checkbox> <label for="ralt">RAlt</label></span>&nbsp;
+                <span class="no-wrap"><checkbox id="rsuper" v-model="rsuper" default="0"></checkbox> <label for="rsuper">RSuper</label></span>
             </td>
         </tr>
         <tr>
@@ -338,7 +338,7 @@ Syntax is <code>set navigationModeAction.{mode}.{direction} {action}</code><br>
     </tbody>
 </table>
 
-<code>set navigationModeAction.{{navigationModeActionMode}}.{{navigationModeActionDirection}} keystroke {{scancode}}</code></p>
+<code>set navigationModeAction.{{navigationModeActionMode}}.{{navigationModeActionDirection}} keystroke {{getScancode()}}</code></p>
 
 <h3>set &raquo; modifier layer triggers</h3>
 

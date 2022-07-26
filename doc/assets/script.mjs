@@ -43,10 +43,14 @@ function setVariable(name, value) {
 }
 
 const Checkbox = {
-    template: `<input type="checkbox" ref="input" @input="updateValue">`,
+    template: `<input type="checkbox" ref="input" @change="updateValue" v-model="checked">`,
+    emits: [
+        'update:modelValue',
+    ],
     props: {
         name: String,
         default: Number,
+        modelValue: String,
     },
     data() {
         return {
@@ -59,17 +63,18 @@ const Checkbox = {
     },
     methods: {
         initWidget() {
-            const value = getVariable(this.name) ?? this.default;
-            this.value = this.$refs.input.value = value;
+            this.checked = getVariable(this.name) ?? this.default === '1';
         },
         updateValue(isInit) {
             if (isInit === true) {
-                this.$refs.input.checked = this.default === '1' ? 'checked' : 0;
+                this.checked = this.default === '1';
             }
-            this.value = +this.$refs.input.checked ? 1 : 0;
+
             if (isInit !== true && this.name) {
-                setVariable(this.name, this.value, isInit);
+                setVariable(this.name, this.checked ? '0' : '1', isInit);
             }
+
+            this.$emit('update:modelValue', this.checked);
         },
     },
 };
@@ -131,7 +136,7 @@ const Dropdown = {
             const value = getVariable(this.name) ?? this.default;
             this.value = this.$refs.input.value = value;
         },
-        async updateValue(isInit) {
+        updateValue(isInit) {
             if (isInit === true) {
                 this.$refs.input.value = this.default;
                 this.$emit('update:modelValue', this.default);
@@ -326,6 +331,14 @@ const app = createApp({
             ],
             navigationModeActionMode: '',
             navigationModeActionDirection: '',
+            lshift: '0',
+            lctrl: '0',
+            lalt: '0',
+            lsuper: '0',
+            rshift: '0',
+            rctrl: '0',
+            ralt: '0',
+            rsuper: '0',
             scancode: 'enter',
             scancodes: [
                 'enter',
@@ -577,6 +590,21 @@ const app = createApp({
             }
             return {Base:'cursor', Mod:'scroll', Fn:'caret'}[layer] ?? 'cursor';
         },
+        getScancode() {
+            const vm = this;
+            const modifierNameToMask = [
+                {name:'lshift', mask:'LS'},
+                {name:'lctrl', mask:'LC'},
+                {name:'lalt', mask:'LA'},
+                {name:'lsuper', mask:'LG'},
+                {name:'rshift', mask:'RS'},
+                {name:'rctrl', mask:'RC'},
+                {name:'ralt', mask:'RA'},
+                {name:'rsuper', mask:'RG'},
+            ];
+            const modifierMask = modifierNameToMask.filter(modifier => vm[modifier.name]).map(modifier => modifier.mask).join('');
+            return `${modifierMask} ${this.scancode}`;
+        }
     },
     computed: {
         rightModules() {
