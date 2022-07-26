@@ -1,4 +1,4 @@
-import {createApp} from './node_modules/vue/dist/vue.esm-browser.prod.js';
+import {createApp} from './vue.esm-browser.prod.js';
 
 // Components
 

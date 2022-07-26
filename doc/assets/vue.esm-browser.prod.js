@@ -1,0 +1,1 @@
+../node_modules/vue/dist/vue.esm-browser.prod.js
