@@ -588,7 +588,13 @@ const app = createApp({
                 }
             }
         });
+
+        // Open select2 upon clicking on it.
         window.parent.postMessage({action: 'doc-message-inited'}, '*');
+        $(document).on('select2:open', () => {
+            document.querySelector('.select2-search__field').focus();
+        });
+
     },
     methods: {
         getNavigationMode(module, layer) {
