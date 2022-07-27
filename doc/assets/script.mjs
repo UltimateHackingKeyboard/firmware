@@ -120,6 +120,12 @@ const Dropdown = {
                 {label:'Media', value:'media'},
                 {label:'None', value:'none'},
             ],
+            navigationModeActionModes: [
+                {label:'Caret', value:'caret'},
+                {label:'Media', value:'media'},
+                {label:'Zoom PC', value:'zoomPc'},
+                {label:'Zoom Mac', value:'zoomMac'},
+            ],
             directions: [
                 {label:'Up', value:'up'},
                 {label:'Down', value:'down'},
