@@ -339,8 +339,9 @@ const app = createApp({
             rctrl: '0',
             ralt: '0',
             rsuper: '0',
-            scancode: 'enter',
+            scancode: '(none)',
             scancodes: [
+                '(none)',
                 'enter',
                 'escape',
                 'backspace',
@@ -603,7 +604,9 @@ const app = createApp({
                 {name:'rsuper', mask:'RG'},
             ];
             const modifierMask = modifierNameToMask.filter(modifier => vm[modifier.name]).map(modifier => modifier.mask).join('');
-            return `${modifierMask} ${this.scancode}`;
+            const separator = modifierMask && this.scancode !== '(none)' ? '-' : '';
+            const scancode = this.scancode === '(none)' ? '' : this.scancode;
+            return `${modifierMask}${separator}${scancode}`;
         }
     },
     computed: {
