@@ -302,7 +302,7 @@ static void navigationModeAction(const char* arg1, const char *textEnd)
     }
     else if (TokenMatches(arg2, textEnd, "up")) {
         axis = CaretAxis_Vertical;
-        positive = false;
+        positive = true;
     }
     else if (TokenMatches(arg2, textEnd, "right")) {
         axis = CaretAxis_Horizontal;
@@ -310,7 +310,7 @@ static void navigationModeAction(const char* arg1, const char *textEnd)
     }
     else if (TokenMatches(arg2, textEnd, "down")) {
         axis = CaretAxis_Vertical;
-        positive = true;
+        positive = false;
     }
     else {
         Macros_ReportError("parameter not recognized:", arg1, textEnd);
