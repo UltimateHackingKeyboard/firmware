@@ -439,11 +439,13 @@ macro_result_t MacroSetCommand(const char* arg1, const char *textEnd)
     else if (TokenMatches(arg1, textEnd, "stickyModifiers")) {
         stickyModifiers(arg2, textEnd);
     }
+#ifdef EXTENDED_MACROS
     else if (TokenMatches(arg1, textEnd, "debounceDelay")) {
         uint16_t time = Macros_ParseInt(arg2, textEnd, NULL);
         DebounceTimePress = time;
         DebounceTimeRelease = time;
     }
+#endif
     else if (TokenMatches(arg1, textEnd, "keystrokeDelay")) {
         KeystrokeDelay = Macros_ParseInt(arg2, textEnd, NULL);
     }
