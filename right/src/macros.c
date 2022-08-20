@@ -2844,6 +2844,14 @@ static ATTR_UNUSED macro_result_t processStockCommandAction(const char* cmd, con
                 goto failed;
             }
             break;
+        case 'r':
+            if (TokenMatches(cmd, cmdEnd, "resetTrackpoint")) {
+                return processResetTrackpointCommand();
+            }
+            else {
+                goto failed;
+            }
+            break;
         case 's':
             if (TokenMatches(cmd, cmdEnd, "set")) {
                 return MacroSetCommand(arg1, cmdEnd);
