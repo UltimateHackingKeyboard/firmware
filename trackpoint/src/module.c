@@ -3,7 +3,7 @@
 
 pointer_delta_t PointerDelta;
 
-bool shouldReset = true;
+bool shouldReset = false;
 uint8_t resetTimer = 0;
 
 key_vector_t KeyVector = {
