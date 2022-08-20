@@ -114,3 +114,11 @@ void Module_Loop(void)
 {
     BlackberryTrackball_Update();
 }
+
+void Module_ModuleSpecificCommand(module_specific_command_t command)
+{
+}
+
+void Module_OnScan(void)
+{
+}

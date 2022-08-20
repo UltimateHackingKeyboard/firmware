@@ -18,7 +18,7 @@
   },
   "firmwareVersion": "9.0.0",
   "deviceProtocolVersion": "4.8.0",
-  "moduleProtocolVersion": "4.2.0",
+  "moduleProtocolVersion": "4.3.0",
   "userConfigVersion": "5.0.0",
   "hardwareConfigVersion": "1.0.0",
   "smartMacrosVersion": "1.0.0",
