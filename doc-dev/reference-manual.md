@@ -89,6 +89,7 @@ The following grammar is supported:
     COMMAND = set module.MODULEID.axisLockFirstTickSkew <0-2.0 (FLOAT)>
     COMMAND = set module.MODULEID.scrollAxisLock BOOLEAN
     COMMAND = set module.MODULEID.cursorAxisLock BOOLEAN
+    COMMAND = set module.MODULEID.caretAxisLock BOOLEAN
     COMMAND = set module.MODULEID.swapAxes BOOLEAN
     COMMAND = set module.MODULEID.invertScrollDirection BOOLEAN
     COMMAND = set module.touchpad.pinchZoomDivisor <1-100 (FLOAT)>
