@@ -60,6 +60,7 @@ The following grammar is supported:
     COMMAND = statsActiveKeys
     COMMAND = statsActiveMacros
     COMMAND = statsRegs
+    COMMAND = resetTrackpoint
     COMMAND = diagnose
     COMMAND = printStatus
     COMMAND = {setStatus  | setStatusPart} <custom text>
@@ -209,6 +210,7 @@ The following grammar is supported:
 - `setLedTxt <time> <custom text>` will set led display to supplemented text for the given time. (Blocks for the given time.)
     - If the given time is zero, i.e. `<time> = 0`, the led text will be set indefinitely (until the display is refreshed by other text) and this command will returns immediately (non-blocking).
 - `progressHue` or better `autoRepeat progressHue` will slowly adjust constantRGB value in order to rotate the per-key-RGB backlight through all hues.
+- `resetTrackpoint` resets the internal trackpoint board. Can be used to recover the trackpoint from drift conditions. Drifts usually happen if you keep the cursor moving at slow constant speeds, because of the boards's internal adaptive calibration. Since the board's parameters cannot be altered, the only way around is or you to learn not to do the type of movement which triggers them.
 
 ### Triggering keyboard actions (pressing keys, clicking, etc.):
 

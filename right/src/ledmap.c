@@ -163,6 +163,11 @@ static void updateLedsByFunctionalStrategy() {
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
             key_action_color_t keyActionColor;
             key_action_t *keyAction = &CurrentKeymap[ActiveLayer][slotId][keyId];
+
+            if (keyAction->type == KeyActionType_None && IS_MODIFIER_LAYER(ActiveLayer)) {
+                keyAction = &CurrentKeymap[LayerId_Base][slotId][keyId];
+            }
+
             switch (keyAction->type) {
                 case KeyActionType_Keystroke:
                     if (keyAction->keystroke.scancode && keyAction->keystroke.modifiers) {

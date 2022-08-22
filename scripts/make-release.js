@@ -63,5 +63,5 @@ const gitInfo = common.getGitInfo();
 const updatedPackage = Object.assign({}, package, { gitInfo: gitInfo });
 fs.writeFileSync(`${releaseDir}/package.json`, JSON.stringify(updatedPackage, null, 2));
 
-cp('-R', `${__dirname}/../doc/dist`, `${releaseDir}/doc`);
+cp('-RL', `${__dirname}/../doc/dist`, `${releaseDir}/doc`);
 exec(`tar -czvf ${releaseFile} -C ${releaseDir} .`);

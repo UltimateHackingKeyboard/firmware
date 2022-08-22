@@ -21,6 +21,7 @@
 #include "mouse_controller.h"
 #include "debug.h"
 #include "macro_set_command.h"
+#include "slave_drivers/uhk_module_driver.h"
 #include <stddef.h>
 #include <string.h>
 
@@ -2173,6 +2174,12 @@ static macro_result_t processRepeatForCommand(const char* arg1, const char* argE
     return MacroResult_Finished;
 }
 
+static macro_result_t processResetTrackpointCommand()
+{
+    UhkModuleSlaveDriver_ResetTrackpoint();
+    return MacroResult_Finished;
+}
+
 static macro_result_t processExecCommand(const char* arg1, const char* cmdEnd)
 {
     uint8_t macroIndex = FindMacroIndexByName(arg1, TokEnd(arg1, cmdEnd), true);
@@ -2681,6 +2688,9 @@ static ATTR_UNUSED macro_result_t processCommand(const char* cmd, const char* cm
             else if (TokenMatches(cmd, cmdEnd, "repeatFor")) {
                 return processRepeatForCommand(arg1, cmdEnd);
             }
+            else if (TokenMatches(cmd, cmdEnd, "resetTrackpoint")) {
+                return processResetTrackpointCommand();
+            }
             else {
                 goto failed;
             }
@@ -2835,6 +2845,14 @@ static ATTR_UNUSED macro_result_t processStockCommandAction(const char* cmd, con
         case 'p':
             if (TokenMatches(cmd, cmdEnd, "printStatus")) {
                 return processPrintStatusCommand();
+            }
+            else {
+                goto failed;
+            }
+            break;
+        case 'r':
+            if (TokenMatches(cmd, cmdEnd, "resetTrackpoint")) {
+                return processResetTrackpointCommand();
             }
             else {
                 goto failed;

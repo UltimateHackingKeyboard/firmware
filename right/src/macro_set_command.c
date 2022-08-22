@@ -308,7 +308,7 @@ static void navigationModeAction(const char* arg1, const char *textEnd)
     }
     else if (TokenMatches(arg2, textEnd, "up")) {
         axis = CaretAxis_Vertical;
-        positive = false;
+        positive = true;
     }
     else if (TokenMatches(arg2, textEnd, "right")) {
         axis = CaretAxis_Horizontal;
@@ -316,7 +316,7 @@ static void navigationModeAction(const char* arg1, const char *textEnd)
     }
     else if (TokenMatches(arg2, textEnd, "down")) {
         axis = CaretAxis_Vertical;
-        positive = true;
+        positive = false;
     }
     else {
         Macros_ReportError("parameter not recognized:", arg1, textEnd);
@@ -445,11 +445,13 @@ macro_result_t MacroSetCommand(const char* arg1, const char *textEnd)
     else if (TokenMatches(arg1, textEnd, "stickyModifiers")) {
         stickyModifiers(arg2, textEnd);
     }
+#ifdef EXTENDED_MACROS
     else if (TokenMatches(arg1, textEnd, "debounceDelay")) {
         uint16_t time = Macros_ParseInt(arg2, textEnd, NULL);
         DebounceTimePress = time;
         DebounceTimeRelease = time;
     }
+#endif
     else if (TokenMatches(arg1, textEnd, "keystrokeDelay")) {
         KeystrokeDelay = Macros_ParseInt(arg2, textEnd, NULL);
     }

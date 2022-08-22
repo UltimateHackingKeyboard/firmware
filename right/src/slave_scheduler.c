@@ -9,6 +9,8 @@
 #include "i2c_addresses.h"
 #include "config.h"
 #include "i2c_error_logger.h"
+#include "macros.h"
+#include "debug.h"
 
 uint32_t I2cSlaveScheduler_Counter;
 
@@ -81,7 +83,7 @@ static void slaveSchedulerCallback(I2C_Type *base, i2c_master_handle_t *handle, 
             bool wasPreviousSlaveConnected = previousSlave->isConnected;
             previousSlave->isConnected = previousStatus == kStatus_Success;
             if (wasPreviousSlaveConnected && !previousSlave->isConnected && previousSlave->disconnect) {
-                previousSlave->disconnect(previousSlaveId);
+                previousSlave->disconnect(previousSlave->perDriverId);
             }
 
             isFirstCycle = false;
@@ -114,6 +116,9 @@ void InitSlaveScheduler(void)
 
     for (uint8_t i=0; i<SLAVE_COUNT; i++) {
         uhk_slave_t *currentSlave = Slaves + i;
+        if (currentSlave->isConnected && currentSlave->disconnect) {
+            currentSlave->disconnect(currentSlave->perDriverId);
+        }
         currentSlave->isConnected = false;
     }
 

@@ -3,7 +3,8 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-        <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css">
+        <link rel="stylesheet" href="bootstrap.min.css">
+        <link rel="stylesheet" href="select2.min.css">
         <link rel="stylesheet" href="style.css">
         <title>UHK firmware smart macro reference</title>
     </head>
@@ -19,35 +20,39 @@
 
 <h1>Basic concepts and usage</h1>
 
-<p>See the following screenshot which shows a macro named <code>$onInit</code> containing a command macro action that contains multiple macro commands:</p>
+<p>See the following screenshot, which shows a macro named <code>$onInit</code> containing a command macro action that contains multiple macro commands:</p>
 
 <img src="agent-onInit.png">
 
 <p><code>$onInit</code> is a special macro name. It's a <b>macro event</b> that executes each time your UHK gets powered and when you save its configuration.</p>
 
-<p>The <code>set module.trackball.baseSpeed 1</code> <b>macro command</b> sets the base speed of the trackball module to <code>1</code>.</p>
+<p><code>set module.trackball.baseSpeed 1</code> is a <b>macro command</b> that sets the base speed of the trackball module to <code>1</code>.</p>
 
 <p>Comments are allowed after the <code>#</code> character per line. You can comment out commands or add helpful comments.</p>
 
 <p>Macro commands work in any macros, not only in macro events, and you can bind them to any key. This way, you can make <kbd>Fn</kbd> + <kbd>1</kbd> set your trackball base speed to <code>1</code> and make <kbd>Fn</kbd> + <kbd>2</kbd> set it to <code>2</code>, for example.</p>
 
-<p>After creating a macro command action, it becomes in-place editable, so you can simply click into it to edit its commands. You'll want to save your macro commands many times, in which case, it's quicker to hit <kbd>Ctrl</kbd> + <kbd>S</kbd> instead of clicking the "Save to keyboard" button.</p>
+<p>After creating a macro command action, it becomes in-place editable, so you can simply click into it to edit its commands. You'll likely save your macro commands many times to tweak them, in which case, it's quicker to hit <kbd>Ctrl</kbd> + <kbd>S</kbd> instead of clicking the "Save to keyboard" button.</p>
 
-<p>When encountering an invalid macro command, the LED display of your UHK will show <code>ERR</code>. The <code>printStatus</code> command reveals the cause of the error. Create a macro named <code>printStatus</code> containing the <code>printStatus</code> command:</p>
+<p>When your UHK encounters an invalid macro command, its LED display will show <code>ERR</code>. The <code>printStatus</code> command reveals the cause of the error. Create a macro named <code>printStatus</code> containing the <code>printStatus</code> command:</p>
 
 <img src="agent-printStatus-macro.png">
 
-<p>Bind it to a key, such as <kbd>Fn</kbd> + <kbd>`</kbd> :</p>
+<p>Bind the macro to a shortcut, such as <kbd>Fn</kbd> + <kbd>`</kbd> :</p>
 
 <img src="agent-printStatus-mapping.png">
 
 <p>Then open an editor and hit <kbd>Fn</kbd> + <kbd>`</kbd> to see the error message.</p>
 
-<p>Last, but not least, when a command macro action is selected, many interactive widgets, such as sliders, comboboxes and checkboxes appear in this documentation, some depending on the currently attached modules. By interacting with these widgets, the relevant commands appear in the current command macro action without writing any code:</p>
+<p>Last but not least, when a command macro action is selected, many interactive widgets, such as sliders, comboboxes, and checkboxes appear in this documentation, some depending on the currently attached modules. By interacting with these widgets, the relevant commands appear in the current command macro action without writing any code:</p>
+
+<video autoplay="autoplay" loop="loop" muted="muted">
+    <source src="agent-macro-variable-slider.mp4" type="video/mp4">
+</video>
 
 <h1>Macro events</h1>
 
-<p>Macro events are a specially named macros that are executed on select occasions. When your UHK powers up and when you save its configuration, the relevant macro events are executed in the following order:</p>
+<p>Macro events are specially named macros that are executed on select occasions. When your UHK powers up and when you save its configuration, the relevant macro events are executed in the following order:</p>
 
 <ol>
 <li>The <code>$onInit</code> event is always executed.</li>
@@ -60,13 +65,19 @@
 
 <h2>printStatus</h2>
 
-<p>When the UHK encounters an invalid macro command, the LED display will display ERR, and the status buffer will contain the error message. This command "types" the content of the status buffer for debugging purposes.</p>
+<p>When the UHK encounters an invalid macro command, the LED display will display <code>ERR</code>, and the status buffer will contain the error message. This command "types" the content of the status buffer for debugging purposes.</p>
 
-<p>We recommend binding this command to a key, such as <key>Fn+`</key> for easy accessibility and triggering it in a text editor when encountering an error.</p>
+<p>We recommend binding this command to a shortcut, such as <kbd>Fn</kbd> + <kbd>`</kbd>, for easy accessibility and triggering it in a text editor when encountering an error.</p>
+
+<h2>resetTrackpoint</h2>
+
+<p>The trackpoint module sometimes makes the mouse cursor drift. Drifting happens because the auto-calibration mechanism of the trackpoint hardware sometimes kicks in when resting a finger on the trackpoint for several seconds. This issue also affects IBM ThinkPad trackpoints, but given their position, they're not as affected by resting fingers as the UHK trackpoint module.</p>
+
+<p>Avoiding resting fingers on the trackpoint should make this a non-issue. Alternatively, this command resets the trackpoint and recovers it from drift conditions.</p>
 
 <h2>set</h2>
 
-<p>The <code>set</code> command sets variables that affect the behavior of the UHK and its modules. This command has many different parameters which are explaned below.</p>
+<p>The <code>set</code> command sets variables that affect the behavior of the UHK and its modules. This command has many different parameters, which are explained below.</p>
 
 <h3>set &raquo; module speeds</h3>
 
@@ -78,11 +89,11 @@ Syntax is <code>set module.{module}.{property} {value}</code><br>
 <li><code>{module}</code> is of <code>keycluster</code>, <code>trackball</code>, <code>trackpoint</code>, <code>touchpad</code></li>
 <li><code>{property}</code> is of
     <ul>
-        <li><code>baseSpeed</code>: The speed multiplier part that always applies. <code>{value}</code> ranges from <code>0</code> to <code>10.0</code> and defaults to <code>0.5</code> for the trackball and touchpad, and <code>0</code> for the touchpad.</li>
+        <li><code>baseSpeed</code>: The speed multiplier part that always applies. <code>{value}</code> ranges from <code>0</code> to <code>10.0</code> and defaults to <code>0.5</code> for the trackball and touchpad and <code>0</code> for the touchpad.</li>
         <li><code>speed</code>: The speed multiplier part that is affected by <code>xceleration</code>. <code>{value}</code> ranges from <code>0</code> to <code>10.0</code> and defaults to <code>0.5</code> for the trackball, <code>1.0</code> for the trackpoint, and <code>0.7</code> for the touchpad.</li>
-        <li><code>xceleration</code>: The acceleration/deceleration exponent. <code>{value}</code> ranges from <code>0</code> to <code>1.0</code> and defaults to <code>1</code> for the trackball and touchpad, and <code>0</code> for the trackpoint.</li>
-        <li><code>caretSpeedDivisor</code>: Divisor that affects speed in caret mode. The higher the value, the slower the caret speed. <code>{value}</code> ranges from <code>1</code> to <code>100</code> and defaults to <code>16</code>.</li>
-        <li><code>ScrollSpeedDivisor</code>: Divisor that affects speed in caret mode. The higher the value, the slower the scroll speed. <code>{value}</code> ranges from <code>1</code> to <code>100</code> and defaults to <code>8</code>.</li>
+        <li><code>xceleration</code>: The acceleration/deceleration exponent. <code>{value}</code> ranges from <code>0</code> to <code>1.0</code>, defaults to <code>1</code> for the trackball and touchpad, and <code>0</code> for the trackpoint.</li>
+        <li><code>caretSpeedDivisor</code>: Divisor that affects the speed in caret mode. The higher the value, the slower the caret speed. <code>{value}</code> ranges from <code>1</code> to <code>100</code> and defaults to <code>16</code>.</li>
+        <li><code>ScrollSpeedDivisor</code>: Divisor that affects the speed in caret mode. The higher the value, the slower the scroll speed. <code>{value}</code> ranges from <code>1</code> to <code>100</code> and defaults to <code>8</code>.</li>
     </ul>
     <li><code>{value} float</code>: The range is dependent on <code>{property}</code>.</li>
 </li>
@@ -105,9 +116,11 @@ Syntax is <code>set module.{module}.{property} {value}</code><br>
     </tbody>
 </table>
 
+<img src="module-speed-diagram.svg">
+
 <h3>set &raquo; module axis locking</h3>
 
-<p>When first moving in a navigation mode that has axis locking enabled, axis is locked to one of the axes. Axis locking behaviour is defined by the following variables.</p>
+<p>When first moving in a navigation mode with axis locking enabled, the axis is locked to one of the axes. The following variables define axis locking behavior.</p>
 
 Syntax is <code>set module.{module}.{property} {value}</code><br>
 
@@ -115,14 +128,14 @@ Syntax is <code>set module.{module}.{property} {value}</code><br>
 <li><code>{module}</code> is of <code>keycluster</code>, <code>trackball</code>, <code>trackpoint</code>, <code>touchpad</code></li>
 <li><code>{property}</code> is of
     <ul>
-        <li><code>{scrollAxisLock} boolean</code>: <code>0</code> disables scroll axis locking, <code>1</code> enables scroll axis locking. By default, axis locking is enabled in scroll and discreet modes for right hand modules, and for scroll, caret and media modes for the key cluster.</li>
-        <li><code>{axisLockFirstTickSkew} float of 0.5 to 2.0</code>: The first event produced when axis is not yet locked can be adjusted as follows.
+        <li><code>{scrollAxisLock} boolean</code>: <code>0</code> disables scroll axis locking, <code>1</code> enables scroll axis locking. By default, axis locking is enabled in scroll and discreet modes for right-hand modules and scroll, caret, and media modes for the key cluster.</li>
+        <li><code>{axisLockFirstTickSkew} float of 0.5 to 2.0</code>: The first event produced when the axis is not yet locked can be adjusted as follows.
             <ul>
-                <li>Set <code>{value}</code> to <code>0.5</code> to require a stronger push at the beginning of movement. Useful for the mini trackball to not produce an unwanted move event when trying to just click it. With this value, it will require two roll events to activate.</li>
-                <li>Set <code>{value}</code> to <code>2.0</code> to make the first event more responsive. For example, caret mode will make the first character move even with a very gently push, while consecutive activations will need greater momentum.</li>
+                <li>Set <code>{value}</code> to <code>0.5</code> to require a stronger push at the beginning of a movement. Useful for the mini trackball to not produce an unwanted move event when trying just to click it. With this value, it will require two roll events to activate.</li>
+                <li>Set <code>{value}</code> to <code>2.0</code> to make the first event more responsive. For example, caret mode will make the first character move with a very gentle push, while consecutive activations will need greater momentum.</li>
             </ul>
         </li>
-        <li><code>axisLockSkew float of 0.5 to 2.0</code>: Affects how hard it is to change the locked direction once the axis is locked. With <code>{value}</code> of <code>0.5</code>, you have to produce stroke that goes at least twice as fast in the non-locked direction compared to the locked one. A <code>{value}</code> of <code>2.0</code> allows changing axes easily.</li>
+        <li><code>axisLockSkew float of 0.5 to 2.0</code>: Affects how hard it is to change the locked direction once the axis is locked. With <code>{value}</code> of <code>0.5</code>, you have to produce a stroke that goes at least twice as fast in the non-locked direction compared to the locked one. A <code>{value}</code> of <code>2.0</code> allows changing axes easily.</li>
     </ul>
     <li><code>{value} float</code>: The range is dependent on <code>{property}</code>.</li>
 </li>
@@ -195,7 +208,7 @@ Syntax is <code>set module.{module}.swapAxes {value}</code><br>
     <li><code>{value} boolean</code>: <code>0</code> leaves axes unswapped, <code>1</code> swaps axes.</li>
 </ul>
 
-<p><checkbox id="module.keycluster.swapAxes" name="module.keycluster.swapAxes" default="0"></checkbox> <label for="module.keycluster.swapAxes">Swap the X and Y axes of key cluster module's mini trackball</label></p>
+<p><checkbox id="module.keycluster.swapAxes" name="module.keycluster.swapAxes" default="0"></checkbox> <label for="module.keycluster.swapAxes">Swap the X and Y axes of the key cluster module's mini trackball</label></p>
 
 <h3>set &raquo; touchpad pinch-to-zoom divisor</h3>
 
@@ -223,7 +236,7 @@ Syntax is <code>set module.touchpad.pinchZoomDivisor {value}</code><br>
 
 Syntax is <code>set module.touchpad.pinchZoomMode {navigationMode}</code><br>
 <ul>
-    <li><code>{navigationMode}</code> is of <code>media</code>, <code>zoom</code>, <code>zoomPc</code>, <code>zoomMac</code>, <code>none</code>. The default <code>zoom</code> navigation mode usually works fine, but extra <kbd>+</kbd> and <kbd>-</kbd> characters may be displayed by some applications in which case the more specific <code>zoomPc</code> or <code>zoomMac</code> mode should be used. The <code>media</code> navigation mode adjusts volulme. See <a href="#set-module-navigation-modes">set &raquo; module navigation modes</a> for more details.</li>
+    <li><code>{navigationMode}</code> is of <code>media</code>, <code>zoom</code>, <code>zoomPc</code>, <code>zoomMac</code>, <code>none</code>. The default <code>zoom</code> navigation mode usually works fine, but extra <kbd>+</kbd> and <kbd>-</kbd> characters may be displayed by some applications, in which case the more specific <code>zoomPc</code> or <code>zoomMac</code> mode should be used. The <code>media</code> navigation mode adjusts the volume. See <a href="#set-module-navigation-modes">set &raquo; module navigation modes</a> for more details.</li>
 </ul>
 
 <table v-show="isTouchpadAttached" class="table table-borderless w-auto">
@@ -242,8 +255,8 @@ Syntax is <code>set module.touchpad.pinchZoomMode {navigationMode}</code><br>
 <p>UHK modules support the following navigation modes, which are mapped by layer and module:</p>
 
 <ul>
-    <li><strong>Cursor mode</strong>: In this mode, the module controls mouse movement. This is the default mode for the Base layer except for the key cluster whose mini trackball is not well-suited for controlling the pointer due to its limited resolution, hence, it scrolls by default.</li>
-    <li><strong>Scroll mode</strong>: In this mode, the module is used for scrolling. This is the default mode for the Mod layer except for the key cluster which moves the pointer on the Mod layer by default.</li>
+    <li><strong>Cursor mode</strong>: In this mode, the module controls mouse movement. This is the default mode for the Base layer except for the key cluster, whose mini trackball is not well-suited for controlling the pointer due to its limited resolution; hence, it scrolls by default.</li>
+    <li><strong>Scroll mode</strong>: In this mode, the module is used for scrolling. This is the default mode for the Mod layer except for the key cluster, which moves the pointer on the Mod layer by default.</li>
     <li><strong>Caret mode</strong>: In this mode, the module produces arrow key taps, which can be used to move in text editors. This is the default mode for the Fn layer.</li>
     <li><strong>Media mode</strong>: In this mode, the module increases/decreases volume via up/down directions and switches to the previous/next track via left/right directions. This mode is not enabled by default on any layer.</li>
     <li><strong>Zoom PC mode</strong>: In this mode, <kbd>Ctrl</kbd> + <kbd>+</kbd> and <kbd>Ctrl</kbd> + <kbd>-</kbd> shortcuts are produced via up and down directions.</li>
@@ -278,19 +291,68 @@ Syntax is <code>set module.{moduleId}.navigationMode.{layerId} {navigationMode}<
 
 <h3>set &raquo; navigation mode action</h3>
 
-<p>Customize caret or media navigation mode behaviour by binding directions to shortcuts or macros.</p>
+<p>Customize caret or media navigation mode behavior by binding directions to shortcuts or macros.</p>
 
-Syntax is <code>set navigationModeAction.{mode}.{direction} (macro MACRONAME | keystroke SHORTCUT)</code><br>
+Syntax is <code>set navigationModeAction.{mode}.{direction} {action}</code><br>
 
 <ul>
 <li><code>{mode}</code> is of <code>caret</code>, <code>media</code>, <code>zoomPc</code>, <code>zoomMac</code></li>
-<li><code>{direction}</code> is of <code>left</code>, <code>right</code>, <code>up</code>, <code>down</code></li>
-<li><code>{macroName}</code> is the case sensitive macro name to be used which must not contain spaces.</li>
+<li><code>{direction}</code> is of <code>up</code>, <code>down</code>, <code>left</code>, <code>right</code></li>
+<li><code>{action}</code> is of <code>macro {macroName}</code>, <code>keystroke {shortcut}</code></li>
+<li><code>{macroName}</code> is the case-sensitive macro name that must not contain spaces.</li>
+<li><code>{shortcut}</code> is of <code>{modifiers}</code>, <code>{key}</code>, <code>{modifiers}-{key}</code></li>
+<li><code>{modifiers}</code> is formatted as <code>[L|R]{S|C|A|G}</code> of which <code>[L|R]</code> is an optional left or right side modifier and <code>{S|C|A|G}</code> is Ctrl, Alt, Shift, or Gui.</li>
+<li><code>{key}</code> describes the key, such as <code>enter</code>. See the full range of keys in the examples below.</li>
 </ul>
+
+<h5>Macro name example</h5>
+
+<table class="table table-borderless w-auto">
+    <tbody>
+        <tr>
+            <td style="padding-left:0"><code>{mode}</code> :</td>
+            <td class="no-wrap">
+                <dropdown options="navigationModeActionModes" default="media" v-model="navigationModeActionMode"></dropdown>
+            </td>
+        </tr>
+        <tr>
+            <td style="padding-left:0"><code>{direction}</code> :</td>
+            <td><dropdown options="directions" default="up" v-model="navigationModeActionDirection"></dropdown></td>
+        </tr>
+    </tbody>
+</table>
+
+<code>set navigationModeAction.{{navigationModeActionMode}}.{{navigationModeActionDirection}} macro YourMacroName</code></p>
+
+<h5>Shortcut example</h5>
+
+<table class="table table-borderless w-auto">
+    <tbody>
+        <tr>
+            <td style="padding-left:0" class="no-wrap"><code>{shortcut}</code> :</td>
+            <td>
+                <span class="no-wrap"><checkbox id="lshift" v-model="lshift" default="0"></checkbox> <label for="lshift">LShift</label></span>&nbsp;
+                <span class="no-wrap"><checkbox id="lctrl" v-model="lctrl" default="0"></checkbox> <label for="lctrl">LCtrl</label></span>&nbsp;
+                <span class="no-wrap"><checkbox id="lalt" v-model="lalt" default="0"></checkbox> <label for="lalt">LAlt</label></span>&nbsp;
+                <span class="no-wrap"><checkbox id="lsuper" v-model="lsuper" default="0"></checkbox> <label for="lsuper">LSuper</label></span>&nbsp;
+                <span class="no-wrap"><checkbox id="rshift" v-model="rshift" default="0"></checkbox> <label for="rshift">RShift</label></span>&nbsp;
+                <span class="no-wrap"><checkbox id="rctrl" v-model="rctrl" default="0"></checkbox> <label for="rctrl">RCtrl</label></span>&nbsp;
+                <span class="no-wrap"><checkbox id="ralt" v-model="ralt" default="0"></checkbox> <label for="ralt">RAlt</label></span>&nbsp;
+                <span class="no-wrap"><checkbox id="rsuper" v-model="rsuper" default="0"></checkbox> <label for="rsuper">RSuper</label></span>
+            </td>
+        </tr>
+        <tr>
+            <td style="padding-left:0"><code>{key}</code> :</td>
+            <td><select2 :options="scancodes" v-model="scancode" style="min-width: 200px; width: 100%"></select2></td>
+        </tr>
+    </tbody>
+</table>
+
+<code>set navigationModeAction.{{navigationModeActionMode}}.{{navigationModeActionDirection}} keystroke {{getScancode()}}</code></p>
 
 <h3>set &raquo; modifier layer triggers</h3>
 
-<p>Controls whether modifier layers are triggered by the left, right or either modifiers.</p>
+<p>Controls whether modifier layers are triggered by the left, right, or either modifier.</p>
 
 Syntax is <code>set modifierLayerTriggers.{layer} {modifiers}</code><br>
 
@@ -317,7 +379,7 @@ Syntax is <code>set modifierLayerTriggers.{layer} {modifiers}</code><br>
 
 <h3>set &raquo; mouse key speeds</h3>
 
-<p>With the exception of <code>axisSkew</code>, these settings are already featured on the "Mouse key speed" page of Agent which should be used primarily. These settings are still useful for keymap-specific mouse key speed settings.</p>
+<p>Except for <code>axisSkew</code>, these settings are already featured on Agent's "Mouse key speed" page, which should be used primarily. These settings are still useful for keymap-specific mouse key speed settings.</p>
 
 Syntax is <code>set mouseKeys.{mode}.{property} {floatValue}</code><br>
 
@@ -325,12 +387,12 @@ Syntax is <code>set mouseKeys.{mode}.{property} {floatValue}</code><br>
 <li><code>{mode}</code> is of <code>move</code>, <code>scroll</code></li>
 <li><code>{property}</code> is of
     <ul>
-        <li><code>initialSpeed</code>: When mouse movement begins, this is the staring speed.</li>
+        <li><code>initialSpeed</code>: When mouse movement begins, this is the starting speed.</li>
         <li><code>baseSpeed</code>: When a mouse key is held, speed increases until it reaches this speed.</li>
         <li><code>initialAcceleration</code>: The rate of acceleration from the initial speed to the base speed.</li>
         <li><code>deceleratedSpeed</code>: This speed is used when using a mouse key along with the decelerate key.</li>
         <li><code>acceleratedSpeed</code>: This speed is used when using a mouse key along with the decelerate key.</li>
-        <li><code>axisSkew</code>: Multiplies horizontal axis and divides vertical axis. Can be useful for wide or tall screens. <code>{floatValue}</code> is reasonable from <code>0.5</code> to <code>2.0</code>, and defaults to <code>1.0</code></li>
+        <li><code>axisSkew</code>: Multiplies horizontal axis and divides vertical axis. It can be useful for wide or tall screens. <code>{floatValue}</code> is reasonable from <code>0.5</code> to <code>2.0</code>, and defaults to <code>1.0</code></li>
     </ul>
 </li>
 </ul>
@@ -382,7 +444,7 @@ Syntax is <code>set diagonalSpeedCompensation {compensationEnabled}</code><br>
 
 <h3>set &raquo; sticky modifiers</h3>
 
-<p>This setting affects the behavior of shortcuts on non-base layers. For example, if <kbd>Mod</kbd> + <kbd>d</kbd> is mapped to <kbd>Alt</kbd> + <kbd>Tab</kbd> and <kbd>Mod</kbd> + <kbd>d</kbd> is pressed, <kbd>Alt</kbd> + <kbd>Tab</kbd> is triggered, then if <kbd>d</kbd> is released while <kbd>Mod</kbd> is still held, <kbd>Alt</kbd> is held, too, hence, the modifier is sticky.</p>
+<p>This setting affects the behavior of shortcuts on non-base layers. For example, if <kbd>Mod</kbd> + <kbd>d</kbd> is mapped to <kbd>Alt</kbd> + <kbd>Tab</kbd> and <kbd>Mod</kbd> + <kbd>d</kbd> is pressed, <kbd>Alt</kbd> + <kbd>Tab</kbd> is triggered, then if <kbd>d</kbd> is released while <kbd>Mod</kbd> is still held, <kbd>Alt</kbd> is held, too; hence, the modifier is sticky.</p>
 
 Syntax is <code>set stickyModifiers {stickyMode}</code><br>
 
@@ -394,16 +456,6 @@ Syntax is <code>set stickyModifiers {stickyMode}</code><br>
         <li><code>always</code>: Make every key sticky.</li>
     </ul>
 </li>
-</ul>
-
-<h3>set &raquo; switch debounce delay</h3>
-
-<p>Prevents key state from changing for some time after every state change. This is needed because contacts of mechanical switches can bounce after contact and therefore change state multiple times in a few milliseconds.</p>
-
-Syntax is <code>set debounceDelay {delay}</code><br>
-
-<ul>
-    <li><code>{delay} integer of 0 to 250, defaults to 50</code>: Delay in milliseconds. Recommended value is <code>10</code> to <code>50</code>.</li>
 </ul>
 
 <h3>set &raquo; double tap timeout</h3>
@@ -418,14 +470,14 @@ Syntax is <code>set doubletapTimeout {timeout}</code><br>
 
 <h3>set &raquo; keystroke delay</h3>
 
-<p>Allows slowing down keyboard output. This is handy for lousily written RDP clients and other software which scans keys once a while and processes them in wrong order if multiple keys have been pressed in between.</p>
+<p>Allows slowing down keyboard output. This setting is handy for lousily written RDP clients and other software which scans keys once a while and processes them in the wrong order if multiple keys have been pressed in between.</p>
 
-<p>This setting adds a delay whenever a basic USB report is sent. During this delay, the key matrix is still scanned and keys are debounced, but instead of activating, the keys are added into a queue to be replayed later. </p>
+<p>This setting adds a delay whenever a basic USB report is sent. During this delay, the key matrix is still scanned, and keys are debounced, but instead of activating, the keys are added into a queue to be replayed later. </p>
 
 Syntax is <code>keystrokeDelay {delay}</code><br>
 
 <ul>
-    <li><code>{delay} integer of 0 to 1000</code>: Delay in milliseconds. Recommended value is <code>10</code> if you have issues with RDP missing modifier keys, <code>0</code> otherwise.</li>
+    <li><code>{delay} integer of 0 to 1000</code>: Delay in milliseconds. The recommended value is <code>10</code> if you have issues with RDP missing modifier keys, <code>0</code> otherwise.</li>
 </ul>
 
 <h3>set &raquo; chording delay</h3>
@@ -460,12 +512,12 @@ Syntax is <code>set leds.brightness {brightness}</code><br>
 
 <h3>set &raquo; LED fade timeout</h3>
 
-<p>Set timeout after which all LEDs fade out to save power until the next user interaction.</p>
+<p>Set timeout, after which all LEDs fade out to save power until the next user interaction.</p>
 
 Syntax is <code>set leds.fadeTimeout {timeout}</code><br>
 
 <ul>
-    <li><code>{timeout} integer of 0 to 100, defaults to 0</code>: <code>0</code> means disabled fade timeout. Otherwise, the timeout value specified in minutes.</li>
+    <li><code>{timeout} integer of 0 to 100, defaults to 0</code>: <code>0</code> means disabled fade timeout. Otherwise, the timeout value is specified in minutes.</li>
 </ul>
 
 <table class="table table-borderless w-auto">
@@ -479,7 +531,23 @@ Syntax is <code>set leds.fadeTimeout {timeout}</code><br>
     </tbody>
 </table>
 
+<h3>set &raquo; enable/disable extended macro commands</h3>
+
+<p>Enable/disable the extended commands of the macro engine.</p>
+
+<p>There are <a href="https://github.com/UltimateHackingKeyboard/firmware/blob/master/doc-dev/user-guide.md" target="_blank">extended macro commands</a> available besides the ones mentioned here, but they're disabled by default because most of them are quite niche. These commands can be explicitly enabled via this variable, after which they can be used just like the commands featured here.</p>
+
+<p>We plan to make most or possibly all of the extended commands directly accessible and include them in this documentation step by step after careful consideration.</p>
+
+Syntax is <code>set macroEngine.extendedCommands {extendedCommandsEnabled}</code><br>
+
+<ul>
+    <li><code>{extendedCommandsEnabled} boolean</code>: <code>0</code> disables extended commands (default), <code>1</code> enables extended commands.</li>
+</ul>
+
 </div>
+<script src="jquery.min.js"></script>
+<script src="select2.min.js"></script>
 <script type="module" src="script.mjs"></script>
 </body>
 </html>

@@ -3,6 +3,9 @@
 
 pointer_delta_t PointerDelta;
 
+bool shouldReset = false;
+uint8_t resetTimer = 0;
+
 key_vector_t KeyVector = {
     .itemNum = KEYBOARD_VECTOR_ITEMS_NUM,
     .items = (key_vector_pin_t[]) {
@@ -29,6 +32,16 @@ void Module_Init(void)
     PORT_SetPinConfig(PS2_DATA_PORT, PS2_DATA_PIN,
                       &(port_pin_config_t){/*.pullSelect=kPORT_PullDown,*/ .mux=kPORT_MuxAsGpio});
     GPIO_PinInit(PS2_DATA_GPIO, PS2_DATA_PIN, &(gpio_pin_config_t){.pinDirection=kGPIO_DigitalInput, .outputLogic=0});
+
+    CLOCK_EnableClock(TP_RST_CLOCK);
+    PORT_SetPinConfig(TP_RST_PORT, TP_RST_PIN, &(port_pin_config_t){.pullSelect=kPORT_PullDown, .mux=kPORT_MuxAsGpio});
+    GPIO_PinInit(TP_RST_GPIO, TP_RST_PIN, &(gpio_pin_config_t){.pinDirection=kGPIO_DigitalOutput, .outputLogic=1});
+}
+
+static void resetBoard()
+{
+    resetTimer = 50;
+    GPIO_WritePinOutput(TP_RST_GPIO, TP_RST_PIN, 0);
 }
 
 uint8_t phase = 0;
@@ -47,6 +60,7 @@ void requestToSend()
     GPIO_WritePinOutput(PS2_CLOCK_GPIO, PS2_CLOCK_PIN, 1);
     GPIO_PinInit(PS2_CLOCK_GPIO, PS2_CLOCK_PIN, &(gpio_pin_config_t){.pinDirection=kGPIO_DigitalInput, .outputLogic=0});
 }
+
 
 bool clockValue = 0;
 bool bitValue = 0;
@@ -251,7 +265,14 @@ void PS2_CLOCK_IRQ_HANDLER(void) {
                     PointerDelta.y -= lastY;
                 }
                 errno = 0;
-                phase = 7;
+                if (shouldReset) {
+                    shouldReset = false;
+                    resetBoard();
+                    phase = 1;
+
+                } else {
+                    phase = 7;
+                }
             }
             break;
         }
@@ -260,4 +281,21 @@ void PS2_CLOCK_IRQ_HANDLER(void) {
 
 void Module_Loop(void)
 {
+}
+
+void Module_OnScan(void)
+{
+    // finish reset sequence
+    if (resetTimer > 0 && --resetTimer == 0) {
+        GPIO_WritePinOutput(TP_RST_GPIO, TP_RST_PIN, 1);
+    }
+}
+
+void Module_ModuleSpecificCommand(module_specific_command_t command)
+{
+    switch (command) {
+        case ModuleSpecificCommand_ResetTrackpoint:
+            shouldReset = true;
+            break;
+    }
 }

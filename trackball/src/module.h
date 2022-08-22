@@ -34,5 +34,7 @@
 
     void Module_Init(void);
     void Module_Loop(void);
+    void Module_OnScan(void);
+    void Module_ModuleSpecificCommand(module_specific_command_t command);
 
 #endif
