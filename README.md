@@ -43,7 +43,9 @@ Going forward, it's easier to flash the firmware of your choice by using the dow
 
 4. Still inside the Agent submodule, compile flashing util scripts. `cd packages/usb && npx tsc`.
 
-5. When developing, cd to the directory you're working on (`left`/`right`). To build and flash the firmware, run `make flash`. Plain `make` just builds without flashing.
+5. Generate `versions.h`. `cd scripts && npm ci && ./generate-versions-h.js`
+
+6. When developing, cd to the directory you're working on (`left`/`right`). To build and flash the firmware, run `make flash`. Plain `make` just builds without flashing.
 
 
 ### Releasing
