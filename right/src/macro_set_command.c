@@ -72,11 +72,14 @@ static void moduleSpeed(const char* arg1, const char *textEnd, module_configurat
     else if (TokenMatches(arg1, textEnd, "axisLockFirstTickSkew")) {
         module->axisLockFirstTickSkew = ParseFloat(arg2, textEnd);
     }
-    else if (TokenMatches(arg1, textEnd, "cursorAxisLockEnabled")) {
+    else if (TokenMatches(arg1, textEnd, "cursorAxisLock")) {
         module->cursorAxisLock = Macros_ParseBoolean(arg2, textEnd);
     }
-    else if (TokenMatches(arg1, textEnd, "scrollAxisLockEnabled")) {
+    else if (TokenMatches(arg1, textEnd, "scrollAxisLock")) {
         module->scrollAxisLock = Macros_ParseBoolean(arg2, textEnd);
+    }
+    else if (TokenMatches(arg1, textEnd, "caretAxisLock")) {
+        module->caretAxisLock = Macros_ParseBoolean(arg2, textEnd);
     }
     else if (TokenMatches(arg1, textEnd, "swapAxes")) {
         module->swapAxes = Macros_ParseBoolean(arg2, textEnd);
@@ -198,9 +201,11 @@ static void backlightStrategy(const char* arg1, const char *textEnd)
 {
     if (TokenMatches(arg1, textEnd, "functional")) {
         LedMap_BacklightStrategy = BacklightStrategy_Functional;
+        LedSlaveDriver_UpdateLeds();
     }
     else if (TokenMatches(arg1, textEnd, "constantRgb")) {
         LedMap_BacklightStrategy = BacklightStrategy_ConstantRGB;
+        LedSlaveDriver_UpdateLeds();
     }
     else {
         Macros_ReportError("parameter not recognized:", arg1, textEnd);
@@ -217,6 +222,7 @@ static void constantRgb(const char* arg1, const char *textEnd)
         LedMap_ConstantRGB.green = Macros_ParseInt(g, textEnd, NULL);
         LedMap_ConstantRGB.blue = Macros_ParseInt(b, textEnd, NULL);
         LedMap_BacklightStrategy = BacklightStrategy_ConstantRGB;
+        LedSlaveDriver_UpdateLeds();
     }
     else {
         Macros_ReportError("parameter not recognized:", arg1, textEnd);

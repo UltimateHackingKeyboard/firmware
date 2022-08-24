@@ -1677,7 +1677,13 @@ static macro_result_t processStatsRuntimeCommand()
 
 static macro_result_t processNoOpCommand()
 {
-    return MacroResult_Blocking;
+    if (!s->as.actionActive) {
+        s->as.actionActive = true;
+        return MacroResult_Blocking;
+    } else {
+        s->as.actionActive = false;
+        return MacroResult_Finished;
+    }
 }
 
 #define RESOLVESEC_RESULT_DONTKNOWYET 0

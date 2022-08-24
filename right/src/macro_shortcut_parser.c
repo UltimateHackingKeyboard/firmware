@@ -534,8 +534,6 @@ static bool parseAbbrev(const char* str, const char* strEnd, macro_action_t* out
     }
 
     if (outMacroAction != NULL) {
-        memset(outMacroAction, 0, sizeof *outMacroAction);
-
         switch(record->type) {
             case scType_basic:
                 outMacroAction->type = MacroActionType_Key;
@@ -560,8 +558,6 @@ static bool parseAbbrev(const char* str, const char* strEnd, macro_action_t* out
     }
 
     if (outKeyAction != NULL) {
-        memset(outKeyAction, 0, sizeof *outKeyAction);
-
         switch(record->type) {
             case scType_basic:
                 outKeyAction->type = KeyActionType_Keystroke;
@@ -589,6 +585,12 @@ static bool parseAbbrev(const char* str, const char* strEnd, macro_action_t* out
 
 bool MacroShortcutParser_Parse(const char* str, const char* strEnd, macro_sub_action_t type, macro_action_t* outMacroAction, key_action_t* outKeyAction)
 {
+    if (outMacroAction != NULL) {
+        memset(outMacroAction, 0, sizeof *outMacroAction);
+    }
+    if (outKeyAction != NULL) {
+        memset(outKeyAction, 0, sizeof *outKeyAction);
+    }
 
     bool success = false;
 

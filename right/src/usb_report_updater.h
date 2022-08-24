@@ -26,7 +26,7 @@
     extern bool SuppressMods;
     extern bool PostponeKeys;
     extern sticky_strategy_t StickyModifierStrategy;
-    extern uint8_t KeystrokeDelay;
+    extern uint16_t KeystrokeDelay;
     extern bool PendingPostponedAndReleased;
     extern bool ActivateOnRelease;
     extern key_state_t* EmergencyKey;

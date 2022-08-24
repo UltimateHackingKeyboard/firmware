@@ -90,6 +90,7 @@ The following grammar is supported:
     COMMAND = set module.MODULEID.axisLockFirstTickSkew <0-2.0 (FLOAT)>
     COMMAND = set module.MODULEID.scrollAxisLock BOOLEAN
     COMMAND = set module.MODULEID.cursorAxisLock BOOLEAN
+    COMMAND = set module.MODULEID.caretAxisLock BOOLEAN
     COMMAND = set module.MODULEID.swapAxes BOOLEAN
     COMMAND = set module.MODULEID.invertScrollDirection BOOLEAN
     COMMAND = set module.touchpad.pinchZoomDivisor <1-100 (FLOAT)>
@@ -225,7 +226,7 @@ The following grammar is supported:
     - `CS-u 1 2 3 space` - control shift U + number + space - linux shortcut for custom unicode character.
     - `pA- tab tab rA-` - tap alt tab twice to bring forward second background window.
   - `MODMASK` meaning:
-    - `{S|C|A|G}` - Shift Control Alt Gui
+    - `{S|C|A|G}` - Shift Control Alt Gui. (Windows, Super and Gui are the same thing. ) 
     - `[L|R]` - Left Right (which hand side modifier should be used)
     - `{s|i|o}` - modifiers (ctrl, alt, shift, gui) exist in three composition modes within UHK - sticky, input, output:
         - sticky modifiers are modifiers of composite shortcuts. These are applied only until next key press. In certain contexts, they will take effect even after their activation key was released (e.g., to support alt + tab on non-base layers).
@@ -411,12 +412,19 @@ For the purpose of toggling functionality on and off, and for global constants m
   - `deceleratedSpeed` - speed as affected by deceleration modifier
   - `acceleratedSpeed` - speed as affected by acceleration modifier
   - `axisSkew` - axis skew multiplies horizontal axis and divides vertical. Default value is 1.0, reasonable between 0.5-2.0 Useful for very niche usecases.
-- `set module.MODULEID.{baseSpeed|speed|xceleration}` modifies speed characteristics of right side modules. Simplified formula is `speedMultiplier(normalizedSpeed) = baseSpeed + speed*(normalizedSpeed^xceleration)` where `normalizedSpeed = actualSpeed / midSpeed`. Therefore `appliedDistance(distance d, time t) = d*(baseSpeed*((d/t)/midSpeed) + d*speed*(((d/t)/midSpeed)^xceleration))`. (`d/t` is actual speed in px/s, `(d/t)/midSpeed` is normalizedSpeed which acts as base for the exponent)
-  - `baseSpeed` is base speed multiplier which is not affected by xceleration. I.e., if `speed = 0`, then traveled distance is `reportedDistance*baseSpeed`
+- `set module.MODULEID.{baseSpeed|speed|xceleration}` modifies speed characteristics of right side modules. 
+    
+    Simply speaking, `xceleration` increases sensitivity at high speeds, while decreasing sensitivity at low speeds. Furthermore, `speed` controls contribution of the acceleration formula. The `baseSpeed` can be used to offset the low-speed-sensitivity-decrease effect by making some raw input be applied directlo to the output.
+
+    ![speed relations](resources/mouse_speeds.svg)
+    
+    Actual formula is is something like `speedMultiplier(normalizedSpeed) = baseSpeed + speed*(normalizedSpeed^xceleration)` where `normalizedSpeed = actualSpeed / midSpeed`. Therefore `appliedDistance(distance d, time t) = d*(baseSpeed*((d/t)/midSpeed) + d*speed*(((d/t)/midSpeed)^xceleration))`. (`d/t` is actual speed in px/s, `(d/t)/midSpeed` is normalizedSpeed which acts as base for the exponent). 
+  - `baseSpeed` makes portion of the raw input contribute directly to the output. I.e., if `speed = 0`, then traveled distance is `reportedDistance*baseSpeed`
   - `speed` multiplies effect of xceleration expression. I.e., simply multiplies the reported distance when the actual speed equals `midSpeed`.
   - `xceleration` is exponent applied to the speed normalized w.r.t midSpeed. It makes cursor move relatively slower at low speeds and faster with aggresive swipes. It increases non-linearity of the curve, yet does not alone make the cursor faster and more responsive - thence "xceleration" rather than "acceleration" to avoid confusion. I.e., xceleration expression of the formula is `speed*(reportedSpeed/midSpeed)^(xceleration)`. I.e., no acceleration is xceleration = 0, reasonable (square root) acceleration is xceleration = 0.5. Highest recommended value is 1.0.
   - `midSpeed` represents "middle" speed, where the user can easily imagine behaviour of the device (currently fixed 3000 px/s) and henceforth easily set the coefficient. At this speed, acceleration formula yields `1.0`, i.e., `speedModifier = (baseSpeed + speed)`.
-  - Generally:
+  
+  General guidelines are:
     - If your cursor is sluggish at low speeds, you want to:
       - either lower xceleration
       - or increase baseSpeed
@@ -428,7 +436,7 @@ For the purpose of toggling functionality on and off, and for global constants m
       - or increase baseSpeed
     - If you want to make cursor more responsive overall:
       - you want to increase speed
-  - (Mostly) reasonable examples (`baseSpeed speed xceleration midSpeed`):
+  (Mostly) reasonable examples (`baseSpeed speed xceleration midSpeed`):
     - `0.0 1.0 0.0 3000` (no xceleration)
       - speed multiplier is always 1x at all speeds
     - `0.0 1.0 0.5 3000` (square root multiplier)
