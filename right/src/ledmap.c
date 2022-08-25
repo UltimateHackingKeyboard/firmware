@@ -4,8 +4,11 @@
 #include "slave_drivers/is31fl3xxx_driver.h"
 #include "device.h"
 #include "config_parser/config_globals.h"
+#include "debug.h"
 
 backlight_strategy_t LedMap_BacklightStrategy = BacklightStrategy_Functional;
+
+static rgb_t black = { .red = 0, .green = 0, .blue = 0 };
 
 rgb_t LedMap_ConstantRGB = { .red = 255, .green=255, .blue=255 };
 
@@ -139,19 +142,23 @@ rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
     },
 };
 
+static void setPerKeyRGB(const rgb_t* color, uint8_t slotId, uint8_t keyId)
+{
+    rgb_t *ledMapItem = &LedMap[slotId][keyId];
+    if (ledMapItem->red == 0 && ledMapItem->green == 0 && ledMapItem->blue == 0) {
+        return;
+    }
+    LedDriverValues[slotId][ledMapItem->red] = color->red * KeyBacklightBrightness / 255;
+    float brightnessDivisor = slotId == SlotId_LeftModule ? 2 : 1;
+    LedDriverValues[slotId][ledMapItem->green] = color->green * KeyBacklightBrightness / brightnessDivisor / 255;
+    LedDriverValues[slotId][ledMapItem->blue] = color->blue * KeyBacklightBrightness / 255;
+}
+
 static void updateLedsByConstantRgbStrategy() {
 #if DEVICE_ID == DEVICE_ID_UHK60V2
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
-            rgb_t *keyActionColorValues = &LedMap_ConstantRGB;
-            rgb_t *ledMapItem = &LedMap[slotId][keyId];
-            if (ledMapItem->red == 0 && ledMapItem->green == 0 && ledMapItem->blue == 0) {
-                continue;
-            }
-            LedDriverValues[slotId][ledMapItem->red] = keyActionColorValues->red * KeyBacklightBrightness / 255;
-            float brightnessDivisor = slotId == SlotId_LeftModule ? 2 : 1;
-            LedDriverValues[slotId][ledMapItem->green] = keyActionColorValues->green * KeyBacklightBrightness / brightnessDivisor / 255;
-            LedDriverValues[slotId][ledMapItem->blue] = keyActionColorValues->blue * KeyBacklightBrightness / 255;
+            setPerKeyRGB(&LedMap_ConstantRGB, slotId, keyId);
         }
     }
 #endif
@@ -195,15 +202,7 @@ static void updateLedsByFunctionalStrategy() {
                     break;
             }
 
-            rgb_t *keyActionColorValues = &KeyActionColors[keyActionColor];
-            rgb_t *ledMapItem = &LedMap[slotId][keyId];
-            if (ledMapItem->red == 0 && ledMapItem->green == 0 && ledMapItem->blue == 0) {
-                continue;
-            }
-            LedDriverValues[slotId][ledMapItem->red] = keyActionColorValues->red * KeyBacklightBrightness / 255;
-            float brightnessDivisor = slotId == SlotId_LeftModule ? 2 : 1;
-            LedDriverValues[slotId][ledMapItem->green] = keyActionColorValues->green * KeyBacklightBrightness / brightnessDivisor / 255;
-            LedDriverValues[slotId][ledMapItem->blue] = keyActionColorValues->blue * KeyBacklightBrightness / 255;
+            setPerKeyRGB(&KeyActionColors[keyActionColor], slotId, keyId);
         }
     }
 #endif
@@ -217,12 +216,14 @@ void UpdateLayerLeds(void) {
         case BacklightStrategy_ConstantRGB:
             updateLedsByConstantRgbStrategy();
             break;
-
     }
 }
 
 void InitLedLayout(void) {
 #if DEVICE_ID == DEVICE_ID_UHK60V2
+    // clear the RGB first, since the default mapping will no longer be reachable
+    setPerKeyRGB(&black, SlotId_LeftKeyboardHalf, LedMapIndex_LeftSlot_IsoKey);
+
     if (HardwareConfig->isIso) {
         LedMap[SlotId_LeftKeyboardHalf][LedMapIndex_LeftSlot_LeftShift].red = 0x6D;
         LedMap[SlotId_LeftKeyboardHalf][LedMapIndex_LeftSlot_LeftShift].green = 0x7D;
@@ -234,3 +235,4 @@ void InitLedLayout(void) {
     }
 #endif
 }
+
