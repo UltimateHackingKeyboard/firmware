@@ -42,6 +42,11 @@ bool Macros_WakeMeOnKeystateChange = false;
 
 bool Macros_ParserError = false;
 
+#ifdef EXTENDED_MACROS
+bool Macros_ExtendedCommands = true;
+#else
+bool Macros_ExtendedCommands = false;
+#endif
 
 macro_scheduler_t Macros_Scheduler = Scheduler_Blocking;
 uint8_t Macros_MaxBatchSize = 20;
@@ -2232,7 +2237,7 @@ static macro_result_t processProgressHueCommand()
 #undef C
 }
 
-static ATTR_UNUSED macro_result_t processCommand(const char* cmd, const char* cmdEnd)
+static macro_result_t processCommand(const char* cmd, const char* cmdEnd)
 {
     if (*cmd == '$') {
         cmd++;
@@ -2825,7 +2830,7 @@ static ATTR_UNUSED macro_result_t processCommand(const char* cmd, const char* cm
     return MacroResult_Finished;
 }
 
-static ATTR_UNUSED macro_result_t processStockCommandAction(const char* cmd, const char* cmdEnd)
+static macro_result_t processStockCommandAction(const char* cmd, const char* cmdEnd)
 {
     if (*cmd == '$') {
         cmd++;
@@ -2891,11 +2896,12 @@ static macro_result_t processCommandAction(void)
         return MacroResult_Finished;
     }
 
-#ifdef EXTENDED_MACROS
-    macro_result_t actionInProgress = processCommand(cmd, cmdEnd);
-#else
-    macro_result_t actionInProgress = processStockCommandAction(cmd, cmdEnd);
-#endif
+    macro_result_t actionInProgress;
+    if (Macros_ExtendedCommands) {
+        actionInProgress = processCommand(cmd, cmdEnd);
+    } else {
+        actionInProgress = processStockCommandAction(cmd, cmdEnd);
+    }
 
     s->as.currentConditionPassed = actionInProgress & MacroResult_InProgressFlag;
     return actionInProgress;

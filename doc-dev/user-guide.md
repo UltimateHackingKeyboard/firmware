@@ -1,6 +1,6 @@
 # Extended macro engine
 
-Extended macro engine is developed on kareltucek/firmware and occasionally merged into the stock firmware. However, just some of its features are available in stock firmware (mostly just `printStatus` and `set` commands). Full engine can be built using either `make-release.js --extendedMacros` or `make CUSTOM_CFLAGS=-DEXTENDED_MACROS`, or obtained at https://github.com/kareltucek/firmware/releases/.
+Extended macro engine is developed on kareltucek/firmware and occasionally merged into the stock firmware. However, just some of its features are available in stock firmware (mostly just `printStatus` and `set` commands). Full engine can be built using either `make-release.js --extendedMacros` or `make CUSTOM_CFLAGS=-DEXTENDED_MACROS` or enabled by `set macroEngine.extendedCommands 1` or obtained at https://github.com/kareltucek/firmware/releases/. Needless to say, extended commands are not officially supported. These commands are also not thoroughly tested, and are more likely to be removed or renamed in the future.
 
 The extended engine implements:
 - macro commands for most features of the keyboard
@@ -25,12 +25,16 @@ Some of the usecases which can be achieved via these commands are:
 
    Agent is the UHK configuration tool. You can get it at https://github.com/UltimateHackingKeyboard/agent/releases . When you start the Agent up, go to 'firmware' and 'Choose firmware file and flash it'.
 
-2) Create some macro with some command action. For instance:
+2) If you are using stock firmware and want to use full power of the engine, you need to create a macro named `$onInit` with following content. Skip this step if you are using firmware from kareltucek/firmware repository. (This is a macro event, which will be automatically executed whenever the keyboard is powercycled.):
+
+    set macroEngine.extendedCommands 1
+
+3) Create some macro with some command action. (And bind it in your keymap.) For instance:
 
     holdKey leftShift
     ifDoubletap tapKey capsLock
 
-3) Understand how this guide and the reference manual work:
+4) Understand how this guide and the reference manual work:
 
     - Use Ctrl+F (or equivalent) a lot - here, and in the [reference manual](reference-manual.md).
     - Go through the sections of the reference manual - just reading the top section lines will give you some idea about available types of commands.
@@ -41,15 +45,18 @@ Some of the usecases which can be achieved via these commands are:
         - Provided value bounds are informational only - they denote values that seem to make sense. Sometimes default values are marked.
     - If you are still not sure about some feature or syntax, do not hesitate to ask.
 
-4) If `ERR` appears up on the display, you can retrieve description by using `printStatus` over a focused text editor. Or, using above point, just search the [reference manual](reference-manual.md) for `ERR`.
+5) If `ERR` appears up on the display, you can retrieve description by using `printStatus` over a focused text editor. Or, using above point, just search the [reference manual](reference-manual.md) for `ERR`.
 
-5) If you encounter a bug, let me know. There are lots of features and quite few users around this codebase - if you do not report problems you find, chances are that no one else will (since most likely no one else has noticed).
+6) If you encounter a bug, let me know. There are lots of features and quite few users around this codebase - if you do not report problems you find, chances are that no one else will (since most likely no one else has noticed).
 
 ## Examples
 
 Every nonempty line is considered as one command. Empty line, or commented line too. Empty lines are skipped. Exception is empty command action, which counts for one command.
 
 Configuration of the keyboard can be modified globally or per-keymap by using [macro events](reference-manual.md). For instance, macro named `$onInit` may contain following speed configuration:
+
+    //enable extended commands in case you are using stock firmware.
+    set macroEngine.extendedCommands 1
 
     //accel driver
     set module.trackball.baseSpeed 0.5

@@ -4,7 +4,7 @@ This file contains (semi)formal documentation of all features of the extended en
 
 - You might want to start by reading [user-guide manual](user-guide.md), especially the point on understanding the docs.
 
-- Most of these commands are available only when built with `--extendedMacros` flag. Only `printStatus` and (some portion of) `set` are available otherwise. (Official releases are built *without* this flag.)
+- Note that most of these commands are disabled (and unsupported) in stock builds. The rest can be turned on with `set macroEngine.extendedCommands 1`. Otherwise, only `printStatus`, `resetTrackpoint` and (some portion of) `set` are available.
 
 - The grammar is meant to be the ultimate information source. Not all commands or parameters are described in the later text.
 
