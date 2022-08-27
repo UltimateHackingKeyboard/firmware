@@ -71,7 +71,7 @@ const Checkbox = {
             }
 
             if (isInit !== true && this.name) {
-                setVariable(this.name, this.checked ? '0' : '1', isInit);
+                setVariable(this.name, this.checked ? '1' : '0', isInit);
             }
 
             this.$emit('update:modelValue', this.checked);
