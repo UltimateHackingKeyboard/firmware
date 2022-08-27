@@ -184,13 +184,16 @@ static void macroEngineScheduler(const char* arg1, const char *textEnd)
     }
 }
 
-static ATTR_UNUSED void macroEngine(const char* arg1, const char *textEnd)
+static void macroEngine(const char* arg1, const char *textEnd)
 {
-    if (TokenMatches(arg1, textEnd, "scheduler")) {
+    if (Macros_ExtendedCommands && TokenMatches(arg1, textEnd, "scheduler")) {
         macroEngineScheduler(NextTok(arg1,  textEnd), textEnd);
     }
-    else if (TokenMatches(arg1, textEnd, "batchSize")) {
+    else if (Macros_ExtendedCommands && TokenMatches(arg1, textEnd, "batchSize")) {
         Macros_MaxBatchSize = Macros_ParseInt(NextTok(arg1,  textEnd), textEnd, NULL);
+    }
+    else if (TokenMatches(arg1, textEnd, "extendedCommands")) {
+        Macros_ExtendedCommands = Macros_ParseBoolean(NextTok(arg1,  textEnd), textEnd);
     }
     else {
         Macros_ReportError("parameter not recognized:", arg1, textEnd);
@@ -229,7 +232,7 @@ static void constantRgb(const char* arg1, const char *textEnd)
     }
 }
 
-static ATTR_UNUSED void leds(const char* arg1, const char *textEnd)
+static void leds(const char* arg1, const char *textEnd)
 {
     const char* value = NextTok(arg1, textEnd);
     if (TokenMatches(arg1, textEnd, "fadeTimeout")) {
@@ -331,7 +334,7 @@ static void navigationModeAction(const char* arg1, const char *textEnd)
     SetModuleCaretConfiguration(navigationMode, axis, positive, action);
 }
 
-static ATTR_UNUSED void keymapAction(const char* arg1, const char *textEnd)
+static void keymapAction(const char* arg1, const char *textEnd)
 {
     const char* arg2 = proceedByDot(arg1, textEnd);
     const char* arg3 = NextTok(arg2, textEnd);
@@ -417,19 +420,15 @@ macro_result_t MacroSetCommand(const char* arg1, const char *textEnd)
     else if (TokenMatches(arg1, textEnd, "mouseKeys")) {
         mouseKeys(proceedByDot(arg1, textEnd), textEnd);
     }
-#ifdef EXTENDED_MACROS
-    else if (TokenMatches(arg1, textEnd, "keymapAction")) {
+    else if (Macros_ExtendedCommands && TokenMatches(arg1, textEnd, "keymapAction")) {
         keymapAction(proceedByDot(arg1, textEnd), textEnd);
     }
-#endif
     else if (TokenMatches(arg1, textEnd, "navigationModeAction")) {
         navigationModeAction(proceedByDot(arg1, textEnd), textEnd);
     }
-#ifdef EXTENDED_MACROS
     else if (TokenMatches(arg1, textEnd, "macroEngine")) {
         macroEngine(proceedByDot(arg1, textEnd), textEnd);
     }
-#endif
     else if (TokenMatches(arg1, textEnd, "backlight")) {
         backlight(proceedByDot(arg1, textEnd), textEnd);
     }
@@ -445,21 +444,17 @@ macro_result_t MacroSetCommand(const char* arg1, const char *textEnd)
     else if (TokenMatches(arg1, textEnd, "stickyModifiers")) {
         stickyModifiers(arg2, textEnd);
     }
-#ifdef EXTENDED_MACROS
-    else if (TokenMatches(arg1, textEnd, "debounceDelay")) {
+    else if (Macros_ExtendedCommands && TokenMatches(arg1, textEnd, "debounceDelay")) {
         uint16_t time = Macros_ParseInt(arg2, textEnd, NULL);
         DebounceTimePress = time;
         DebounceTimeRelease = time;
     }
-#endif
     else if (TokenMatches(arg1, textEnd, "keystrokeDelay")) {
         KeystrokeDelay = Macros_ParseInt(arg2, textEnd, NULL);
     }
     else if (
             TokenMatches(arg1, textEnd, "doubletapTimeout")  // new name
-#ifdef EXTENDED_MACROS
-            || TokenMatches(arg1, textEnd, "doubletapDelay") // deprecated alias - old name
-#endif
+            || (Macros_ExtendedCommands && TokenMatches(arg1, textEnd, "doubletapDelay")) // deprecated alias - old name
             ) {
         uint16_t delay = Macros_ParseInt(arg2, textEnd, NULL);
         DoubleTapSwitchLayerTimeout = delay;
@@ -476,12 +471,10 @@ macro_result_t MacroSetCommand(const char* arg1, const char *textEnd)
     else if (TokenMatches(arg1, textEnd, "chordingDelay")) {
         ChordingDelay = Macros_ParseInt(arg2, textEnd, NULL);
     }
-#ifdef EXTENDED_MACROS
-    else if (TokenMatches(arg1, textEnd, "emergencyKey")) {
+    else if (Macros_ExtendedCommands && TokenMatches(arg1, textEnd, "emergencyKey")) {
         uint16_t key = Macros_ParseInt(arg2, textEnd, NULL);
         EmergencyKey = Utils_KeyIdToKeyState(key);
     }
-#endif
     else {
         Macros_ReportError("parameter not recognized:", arg1, textEnd);
     }
