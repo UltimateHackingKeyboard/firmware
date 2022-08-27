@@ -128,7 +128,8 @@ Syntax is <code>set module.{module}.{property} {value}</code><br>
 <li><code>{module}</code> is of <code>keycluster</code>, <code>trackball</code>, <code>trackpoint</code>, <code>touchpad</code></li>
 <li><code>{property}</code> is of
     <ul>
-        <li><code>{scrollAxisLock} boolean</code>: <code>0</code> disables scroll axis locking, <code>1</code> enables scroll axis locking. By default, axis locking is enabled in scroll and discreet modes for right-hand modules and scroll, caret, and media modes for the key cluster.</li>
+        <li><code>{scrollAxisLock} boolean</code>: <code>0</code> disables scroll axis locking, <code>1</code> (default) enables scroll axis locking.</li>
+        <li><code>{caretAxisLock} boolean</code>: <code>0</code> disables caret axis locking, <code>1</code> (default) enables caret axis locking.</li>
         <li><code>{axisLockFirstTickSkew} float of 0.5 to 2.0</code>: The first event produced when the axis is not yet locked can be adjusted as follows.
             <ul>
                 <li>Set <code>{value}</code> to <code>0.5</code> to require a stronger push at the beginning of a movement. Useful for the mini trackball to not produce an unwanted move event when trying just to click it. With this value, it will require two roll events to activate.</li>
@@ -154,6 +155,12 @@ Syntax is <code>set module.{module}.{property} {value}</code><br>
             <td>Scroll axis lock enabled</td>
             <td v-for="module in modules" class="no-wrap">
                 <checkbox :name="`module.${moduleStrings[module]}.scrollAxisLock`" default="1"/>
+            </td>
+        </tr>
+        <tr>
+            <td>Caret axis lock enabled</td>
+            <td v-for="module in modules" class="no-wrap">
+                <checkbox :name="`module.${moduleStrings[module]}.caretAxisLock`" default="1"/>
             </td>
         </tr>
         <tr>
