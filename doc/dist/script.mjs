@@ -252,6 +252,8 @@ const app = createApp({
                 {name:'xceleration', desc:'Xceleration speed', min:0, max:1, step:0.1,
                     perModuleDefaults: {3:1.0, 4:0.0, 5:1.0},
                 },
+            ],
+            moduleDivisorProps: [
                 {name:'caretSpeedDivisor', desc:'Caret speed divisor', min:0, max:100, step:1,
                     perModuleDefaults: {3:16.0, 4:16.0, 5:16.0},
                 },

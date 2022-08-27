@@ -92,8 +92,6 @@ Syntax is <code>set module.{module}.{property} {value}</code><br>
         <li><code>baseSpeed</code>: The speed multiplier part that always applies. <code>{value}</code> ranges from <code>0</code> to <code>10.0</code> and defaults to <code>0.5</code> for the trackball and touchpad and <code>0</code> for the touchpad.</li>
         <li><code>speed</code>: The speed multiplier part that is affected by <code>xceleration</code>. <code>{value}</code> ranges from <code>0</code> to <code>10.0</code> and defaults to <code>0.5</code> for the trackball, <code>1.0</code> for the trackpoint, and <code>0.7</code> for the touchpad.</li>
         <li><code>xceleration</code>: The acceleration/deceleration exponent. <code>{value}</code> ranges from <code>0</code> to <code>1.0</code>, defaults to <code>1</code> for the trackball and touchpad, and <code>0</code> for the trackpoint.</li>
-        <li><code>caretSpeedDivisor</code>: Divisor that affects the speed in caret mode. The higher the value, the slower the caret speed. <code>{value}</code> ranges from <code>1</code> to <code>100</code> and defaults to <code>16</code>.</li>
-        <li><code>ScrollSpeedDivisor</code>: Divisor that affects the speed in caret mode. The higher the value, the slower the scroll speed. <code>{value}</code> ranges from <code>1</code> to <code>100</code> and defaults to <code>8</code>.</li>
     </ul>
     <li><code>{value} float</code>: The range is dependent on <code>{property}</code>.</li>
 </li>
@@ -117,6 +115,41 @@ Syntax is <code>set module.{module}.{property} {value}</code><br>
 </table>
 
 <img src="module-speed-diagram.svg">
+
+<h3>set &raquo; module speed divisors</h3>
+
+<p>Sets module speed divisors. These settings are not useful for the key cluster due to the limited resolution of its mini trackball.</p>
+
+Syntax is <code>set module.{module}.{property} {value}</code><br>
+
+<ul>
+<li><code>{module}</code> is of <code>keycluster</code>, <code>trackball</code>, <code>trackpoint</code>, <code>touchpad</code></li>
+<li><code>{property}</code> is of
+    <ul>
+
+        <li><code>caretSpeedDivisor</code>: Divisor that affects the speed in caret mode. The higher the value, the slower the caret speed. <code>{value}</code> ranges from <code>1</code> to <code>100</code> and defaults to <code>16</code>.</li>
+        <li><code>ScrollSpeedDivisor</code>: Divisor that affects the speed in caret mode. The higher the value, the slower the scroll speed. <code>{value}</code> ranges from <code>1</code> to <code>100</code> and defaults to <code>8</code>.</li>
+    </ul>
+    <li><code>{value} float</code>: The range is dependent on <code>{property}</code>.</li>
+</li>
+</ul>
+
+<table v-show="rightModules.length" class="table w-auto">
+    <thead>
+        <tr>
+            <th scope="col"></th>
+            <th v-for="module in rightModules" scope="col">{{moduleDescriptions[module]}}</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr v-for="speedProp in moduleDivisorProps">
+            <td>{{speedProp.desc}}</td>
+            <td v-for="module in rightModules" class="no-wrap">
+                <slider :name="`module.${moduleStrings[module]}.${speedProp.name}`" :min="speedProp.min" :default="speedProp.perModuleDefaults[module]" :max="speedProp.max" :step="speedProp.step"/>
+            </td>
+        </tr>
+    </tbody>
+</table>
 
 <h3>set &raquo; module axis locking</h3>
 
