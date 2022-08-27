@@ -431,7 +431,7 @@ Syntax is <code>set mouseKeys.{mode}.{property} {floatValue}</code><br>
             <td>{{prop.desc}}</td>
             <td class="no-wrap">
                 <slider
-                    :name="`module.move.${prop.name}`"
+                    :name="`mouseKeys.move.${prop.name}`"
                     :min="prop.sliderProps.move.min"
                     :default="prop.sliderProps.move.default"
                     :max="prop.sliderProps.move.max"
@@ -440,7 +440,7 @@ Syntax is <code>set mouseKeys.{mode}.{property} {floatValue}</code><br>
             </td>
             <td class="no-wrap">
                 <slider
-                    :name="`module.scroll.${prop.name}`"
+                    :name="`mouseKeys.scroll.${prop.name}`"
                     :min="prop.sliderProps.scroll.min"
                     :default="prop.sliderProps.scroll.default"
                     :max="prop.sliderProps.scroll.max"
