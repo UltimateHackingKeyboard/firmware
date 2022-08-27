@@ -249,7 +249,7 @@ const app = createApp({
                 {name:'speed', desc:'Speed', min:0, max:10, step:0.1,
                     perModuleDefaults: {3:0.5, 4:1.0, 5:0.7},
                 },
-                {name:'xceleration', desc:'Acceleration speed', min:0, max:1, step:0.1,
+                {name:'xceleration', desc:'Xceleration speed', min:0, max:1, step:0.1,
                     perModuleDefaults: {3:1.0, 4:0.0, 5:1.0},
                 },
                 {name:'caretSpeedDivisor', desc:'Caret speed divisor', min:0, max:100, step:1,
