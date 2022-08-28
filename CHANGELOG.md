@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [9.0.0] - 2022-??-??
+
+Device Protocol: 4.**8.0** | Module Protocol: 4.**2.0** | User Config: **5.0.0** | Hardware Config: 1.0.0 | Smart Macros: 1.0.0
+
+The features marked with (*) can only be used with Agent 2.0.0 to be released soon, or above.
+
+- Add smart macro engine. (*) `USERCONFIG:MINOR`
+- Extend the original 4 layers with 4 regular layers (Fn2, Fn3, Fn4, Fn5) and 4 modifier layers (Shift, Ctrl, Alt, Super). (*) `USERCONFIG:MAJOR`
+- Fix USB descriptors which caused high CPU load on Macintosh computers.
+- Implement touchpad pinch-to-zoom and two-finger scrolling.
+- Fix occasional trackpoint pointer jumps.
+- Reload keymap when a module is swapped.
+- Properly disconnect slaves on I2C reinitialization.
+- Implement N-key rollover.
+- Make accelerate and decelerate actions work with modules.
+- Add resetTrackpoint macro command. `MODULEPROTOCOL:MINOR`
+- Expose device and module git and version properties. `DEVICEPROTOCOL:MINOR` `MODULEPROTOCOL:MINOR`
+
 ## [8.10.12] - 2021-10-27
 
 Device Protocol: 4.7.1 | Module Protocol: 4.1.0 | User Config: 4.2.0 | Hardware Config: 1.0.0
