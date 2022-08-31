@@ -86,13 +86,51 @@
 Syntax is <code>set module.{module}.{property} {value}</code><br>
 
 <ul>
-<li><code>{module}</code> is of <code>keycluster</code>, <code>trackball</code>, <code>trackpoint</code>, <code>touchpad</code></li>
+<li><code>{module}</code> is of <code>trackball</code>, <code>trackpoint</code>, <code>touchpad</code></li>
 <li><code>{property}</code> is of
     <ul>
-        <li><code>baseSpeed</code>: The speed multiplier part that always applies. <code>{value}</code> ranges from <code>0</code> to <code>10.0</code> and defaults to <code>0.5</code> for the trackball and touchpad and <code>0</code> for the touchpad.</li>
-        <li><code>speed</code>: The speed multiplier part that is affected by <code>xceleration</code>. <code>{value}</code> ranges from <code>0</code> to <code>10.0</code> and defaults to <code>0.5</code> for the trackball, <code>1.0</code> for the trackpoint, and <code>0.7</code> for the touchpad.</li>
-        <li><code>xceleration</code>: The acceleration/deceleration exponent. <code>{value}</code> ranges from <code>0</code> to <code>1.0</code>, defaults to <code>1</code> for the trackball and touchpad, and <code>0</code> for the trackpoint.</li>
+        <li><code>baseSpeed</code>: Increasing <code>baseSpeed</code> increases module sensitivity evenly in both low speeds and high speeds.</li>
+        <li><code>speed</code>: Increasing <code>speed</code> increases module sensitivity unevenly, depending on xceleration value.</li>
+        <li><code>xceleration</code>: <code>xceleration</code> exponent modulates <code>speed</code>'s contribution. Increasing <code>xceleration</code> decreases sensitivity at low speeds while also increasing sensitivity at high speeds.</li>
     </ul>
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">property name</th>
+                <th scope="col">min</th>
+                <th scope="col">max</th>
+                <th scope="col">trackball default</th>
+                <th scope="col">trackpoint default</th>
+                <th scope="col">touchpad default</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>baseSpeed</code></td>
+                <td>0.0</td>
+                <td>10.0</td>
+                <td>0.5</td>
+                <td>0.5</td>
+                <td>0.0</td>
+            </tr>
+            <tr>
+                <td><code>speed</code></td>
+                <td>0.0</td>
+                <td>10.0</td>
+                <td>0.5</td>
+                <td>1.0</td>
+                <td>0.7</td>
+            </tr>
+            <tr>
+                <td><code>xceleration</code></td>
+                <td>0.0</td>
+                <td>1.0</td>
+                <td>1.0</td>
+                <td>1.0</td>
+                <td>0.0</td>
+            </tr>
+        </tbody>
+    </table>
     <li><code>{value} float</code>: The range is dependent on <code>{property}</code>.</li>
 </li>
 </ul>
