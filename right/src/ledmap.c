@@ -6,24 +6,28 @@
 #include "config_parser/config_globals.h"
 #include "debug.h"
 
-backlight_strategy_t LedMap_BacklightStrategy = BacklightStrategy_Functional;
+#define RGB(R, G, B) { .red = (R), .green = (G), .blue = (B)}
 
-static rgb_t black = { .red = 0, .green = 0, .blue = 0 };
+rgb_t LedMap_ConstantRGB = RGB(0xFF, 0xFF, 0xFF);
 
-rgb_t LedMap_ConstantRGB = { .red = 255, .green=255, .blue=255 };
+#if DEVICE_ID == DEVICE_ID_UHK60V2
 
-rgb_t KeyActionColors[] = {
-    {.red=0, .green=0, .blue=0}, // KeyActionColor_None
-    {.red=255, .green=255, .blue=255}, // KeyActionColor_Scancode
-    {.red=0, .green=255, .blue=255}, // KeyActionColor_Modifier
-    {.red=0, .green=0, .blue=255}, // KeyActionColor_Shortcut
-    {.red=255, .green=255, .blue=0}, // KeyActionColor_SwitchLayer
-    {.red=255, .green=0, .blue=0}, // KeyActionColor_SwitchKeymap
-    {.red=0, .green=255, .blue=0}, // KeyActionColor_Mouse
-    {.red=255, .green=0, .blue=255}, // KeyActionColor_Macro
+static backlight_strategy_t LedMap_BacklightStrategy = BacklightStrategy_Functional;
+
+static const rgb_t black = RGB(0x00, 0x00, 0x00);
+
+static const rgb_t KeyActionColors[] = {
+    RGB(0x00, 0x00, 0x00), // KeyActionColor_None
+    RGB(0xFF, 0xFF, 0xFF), // KeyActionColor_Scancode
+    RGB(0x00, 0xFF, 0xFF), // KeyActionColor_Modifier
+    RGB(0x00, 0x00, 0xFF), // KeyActionColor_Shortcut
+    RGB(0xFF, 0xFF, 0x00), // KeyActionColor_SwitchLayer
+    RGB(0xFF, 0x00, 0x00), // KeyActionColor_SwitchKeymap
+    RGB(0x00, 0xFF, 0x00), // KeyActionColor_Mouse
+    RGB(0xFF, 0x00, 0xFF), // KeyActionColor_Macro
 };
 
-rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
+static rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
     // All three values must be set to 0 for unused
 
     // Right keyboard half
@@ -33,48 +37,48 @@ rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
         // where ? is 0-B
 
         // Row 1
-        { .red=0x90, .green=0xA0, .blue=0x20 }, // 7
-        { .red=0x91, .green=0xA1, .blue=0x21 }, // 8
-        { .red=0x92, .green=0xA2, .blue=0x22 }, // 9
-        { .red=0x93, .green=0xA3, .blue=0x23 }, // 0
-        { .red=0x94, .green=0xA4, .blue=0x24 }, // -
-        { .red=0x95, .green=0xA5, .blue=0x25 }, // =
-        { .red=0x98, .green=0xA8, .blue=0x28 }, // Backspace
+        RGB(0x90, 0xA0, 0x20), // 7
+        RGB(0x91, 0xA1, 0x21), // 8
+        RGB(0x92, 0xA2, 0x22), // 9
+        RGB(0x93, 0xA3, 0x23), // 0
+        RGB(0x94, 0xA4, 0x24), // -
+        RGB(0x95, 0xA5, 0x25), // =
+        RGB(0x98, 0xA8, 0x28), // Backspace
         // Row 2
-        { .red=0x99, .green=0xA9, .blue=0x29 }, // U
-        { .red=0x9A, .green=0xAA, .blue=0x2A }, // I
-        { .red=0x9B, .green=0xAB, .blue=0x2B }, // O
-        { .red=0x9C, .green=0xAC, .blue=0x2C }, // P
-        { .red=0x60, .green=0x70, .blue=0x80 }, // [
-        { .red=0x61, .green=0x71, .blue=0x81 }, // ]
-        { .red=0x62, .green=0x72, .blue=0x82 }, // Backslash
-        { .red=0x9D, .green=0xAD, .blue=0x2D }, // Y
+        RGB(0x99, 0xA9, 0x29), // U
+        RGB(0x9A, 0xAA, 0x2A), // I
+        RGB(0x9B, 0xAB, 0x2B), // O
+        RGB(0x9C, 0xAC, 0x2C), // P
+        RGB(0x60, 0x70, 0x80), // [
+        RGB(0x61, 0x71, 0x81), // ]
+        RGB(0x62, 0x72, 0x82), // Backslash
+        RGB(0x9D, 0xAD, 0x2D), // Y
 
         // Row 3
-        { .red=0x30, .green=0x40, .blue=0x50 }, // J
-        { .red=0x31, .green=0x41, .blue=0x51 }, // K
-        { .red=0x32, .green=0x42, .blue=0x52 }, // L
-        { .red=0x33, .green=0x43, .blue=0x53 }, // ;
-        { .red=0x34, .green=0x44, .blue=0x54 }, // '
-        { .red=0x35, .green=0x45, .blue=0x55 }, // Enter
-        { .red=0x3D, .green=0x4D, .blue=0x5D }, // H
+        RGB(0x30, 0x40, 0x50), // J
+        RGB(0x31, 0x41, 0x51), // K
+        RGB(0x32, 0x42, 0x52), // L
+        RGB(0x33, 0x43, 0x53), // ;
+        RGB(0x34, 0x44, 0x54), // '
+        RGB(0x35, 0x45, 0x55), // Enter
+        RGB(0x3D, 0x4D, 0x5D), // H
 
         // Row 4
-        { .red=0x39, .green=0x49, .blue=0x59 }, // N
-        { .red=0x3A, .green=0x4A, .blue=0x5A }, // M
-        { .red=0x3B, .green=0x4B, .blue=0x5B }, // ,
-        { .red=0x3C, .green=0x4C, .blue=0x5C }, // .
-        { .red=0x38, .green=0x48, .blue=0x58 }, // /
-        { .red=0x63, .green=0x73, .blue=0x83}, // Right Shift
-        { .red=0,    .green=0,    .blue=0   }, // Unused
+        RGB(0x39, 0x49, 0x59), // N
+        RGB(0x3A, 0x4A, 0x5A), // M
+        RGB(0x3B, 0x4B, 0x5B), // ,
+        RGB(0x3C, 0x4C, 0x5C), // .
+        RGB(0x38, 0x48, 0x58), // /
+        RGB(0x63, 0x73, 0x83), // Right Shift
+        RGB(0x00, 0x00, 0x00), // Unused
 
         // Row 5
-        { .red=0x69, .green=0x79, .blue=0x89 }, // Right Space
-        { .red=0,    .green=0,    .blue=0    }, // Right Mod (no backlight)
-        { .red=0x6A, .green=0x7A, .blue=0x8A }, // Right Fn
-        { .red=0x68, .green=0x78, .blue=0x88 }, // Right Alt
-        { .red=0x64, .green=0x74, .blue=0x84 }, // Right Super
-        { .red=0x65, .green=0x75, .blue=0x85 }, // Right Control
+        RGB(0x69, 0x79, 0x89), // Right Space
+        RGB(0x00, 0x00, 0x00), // Right Mod (no backlight)
+        RGB(0x6A, 0x7A, 0x8A), // Right Fn
+        RGB(0x68, 0x78, 0x88), // Right Alt
+        RGB(0x64, 0x74, 0x84), // Right Super
+        RGB(0x65, 0x75, 0x85), // Right Control
     },
 
     // Left keyboard half
@@ -84,57 +88,57 @@ rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
         // where ? is 0-B
 
         // Row 1
-        { .red=0x6A, .green=0x7A, .blue=0x8A }, // `
-        { .red=0x6B, .green=0x7B, .blue=0x8B }, // 1
-        { .red=0x6C, .green=0x7C, .blue=0x8C }, // 2
-        { .red=0x9A, .green=0xAA, .blue=0xBA }, // 3
-        { .red=0x9B, .green=0xAB, .blue=0xBB }, // 4
-        { .red=0x9C, .green=0xAC, .blue=0xBC }, // 5
-        { .red=0x9D, .green=0xAD, .blue=0xBD }, // 6
+        RGB(0x6A, 0x7A, 0x8A), // `
+        RGB(0x6B, 0x7B, 0x8B), // 1
+        RGB(0x6C, 0x7C, 0x8C), // 2
+        RGB(0x9A, 0xAA, 0xBA), // 3
+        RGB(0x9B, 0xAB, 0xBB), // 4
+        RGB(0x9C, 0xAC, 0xBC), // 5
+        RGB(0x9D, 0xAD, 0xBD), // 6
 
         // Row 2
-        { .red=0x00, .green=0x10, .blue=0x20 }, // Tab
-        { .red=0x02, .green=0x12, .blue=0x22 }, // Q
-        { .red=0x04, .green=0x14, .blue=0x24 }, // W
-        { .red=0x08, .green=0x18, .blue=0x28 }, // E
-        { .red=0x0A, .green=0x1A, .blue=0x2A }, // R
-        { .red=0,    .green=0,    .blue=0    }, // Unused
-        { .red=0x0C, .green=0x1C, .blue=0x2c }, // T
+        RGB(0x00, 0x10, 0x20), // Tab
+        RGB(0x02, 0x12, 0x22), // Q
+        RGB(0x04, 0x14, 0x24), // W
+        RGB(0x08, 0x18, 0x28), // E
+        RGB(0x0A, 0x1A, 0x2A), // R
+        RGB(0x00, 0x00, 0x00), // Unused
+        RGB(0x0C, 0x1C, 0x2c), // T
 
         // Row 3
-        { .red=0x01, .green=0x11, .blue=0x21 }, // Mouse
-        { .red=0x03, .green=0x13, .blue=0x23 }, // A
-        { .red=0x05, .green=0x15, .blue=0x25 }, // S
-        { .red=0x09, .green=0x19, .blue=0x29 }, // D
-        { .red=0x0B, .green=0x1B, .blue=0x2B }, // F
-        { .red=0,    .green=0,    .blue=0    }, // Unused
-        { .red=0x0D, .green=0x1D, .blue=0x2D }, // G
+        RGB(0x01, 0x11, 0x21), // Mouse
+        RGB(0x03, 0x13, 0x23), // A
+        RGB(0x05, 0x15, 0x25), // S
+        RGB(0x09, 0x19, 0x29), // D
+        RGB(0x0B, 0x1B, 0x2B), // F
+        RGB(0x00, 0x00, 0x00), // Unused
+        RGB(0x0D, 0x1D, 0x2D), // G
 
         // Row 4
-        { .red=0x30, .green=0x40, .blue=0x50 }, // ANSI Left Shift
-//        { .red=0x6D, .green=0x7D, .blue=0x8D }, // ISO Left Shift
-        { .red=0x32, .green=0x42, .blue=0x52 }, // ISO Key
-        { .red=0x34, .green=0x44, .blue=0x54 }, // Z
-        { .red=0x38, .green=0x48, .blue=0x58 }, // X
-        { .red=0x3A, .green=0x4A, .blue=0x5A }, // C
-        { .red=0x3B, .green=0x4B, .blue=0x5B }, // V
-        { .red=0x3D, .green=0x4D, .blue=0x5D }, // B
+        RGB(0x30, 0x40, 0x50), // ANSI Left Shift
+//        RGB(0x6D, 0x7D, 0x8D), // ISO Left Shift
+        RGB(0x32, 0x42, 0x52), // ISO Key
+        RGB(0x34, 0x44, 0x54), // Z
+        RGB(0x38, 0x48, 0x58), // X
+        RGB(0x3A, 0x4A, 0x5A), // C
+        RGB(0x3B, 0x4B, 0x5B), // V
+        RGB(0x3D, 0x4D, 0x5D), // B
 
         // Row 5
-        { .red=0x31, .green=0x41, .blue=0x51 }, // Left Control
-        { .red=0x33, .green=0x43, .blue=0x53 }, // Left Super
-        { .red=0x35, .green=0x45, .blue=0x55 }, // Left Alt
-        { .red=0x39, .green=0x49, .blue=0x59 }, // Left Fn
-        { .red=0,    .green=0,    .blue=0    }, // Left Space (no backlight)
-        { .red=0x3C, .green=0x4C, .blue=0x5C }, // Left Mod
-        { .red=0,    .green=0,    .blue=0 } // Unused
+        RGB(0x31, 0x41, 0x51), // Left Control
+        RGB(0x33, 0x43, 0x53), // Left Super
+        RGB(0x35, 0x45, 0x55), // Left Alt
+        RGB(0x39, 0x49, 0x59), // Left Fn
+        RGB(0x00, 0x00, 0x00), // Left Space (no backlight)
+        RGB(0x3C, 0x4C, 0x5C), // Left Mod
+        RGB(0x00, 0x00, 0x00), // Unused
     },
 
     // Left module
     {
-        { .red=0x05, .green=0x04, .blue=0x03 },
-        { .red=0x02, .green=0x01, .blue=0x00 },
-        { .red=0x07, .green=0x06, .blue=0x08 },
+        RGB(0x05, 0x04, 0x03),
+        RGB(0x02, 0x01, 0x00),
+        RGB(0x07, 0x06, 0x08),
     },
 
     // Right module
@@ -144,7 +148,7 @@ rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
 
 static void setPerKeyRGB(const rgb_t* color, uint8_t slotId, uint8_t keyId)
 {
-    rgb_t *ledMapItem = &LedMap[slotId][keyId];
+    const rgb_t *ledMapItem = &LedMap[slotId][keyId];
     if (ledMapItem->red == 0 && ledMapItem->green == 0 && ledMapItem->blue == 0) {
         return;
     }
@@ -155,17 +159,14 @@ static void setPerKeyRGB(const rgb_t* color, uint8_t slotId, uint8_t keyId)
 }
 
 static void updateLedsByConstantRgbStrategy() {
-#if DEVICE_ID == DEVICE_ID_UHK60V2
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
             setPerKeyRGB(&LedMap_ConstantRGB, slotId, keyId);
         }
     }
-#endif
 }
 
 static void updateLedsByFunctionalStrategy() {
-#if DEVICE_ID == DEVICE_ID_UHK60V2
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
             key_action_color_t keyActionColor;
@@ -205,7 +206,6 @@ static void updateLedsByFunctionalStrategy() {
             setPerKeyRGB(&KeyActionColors[keyActionColor], slotId, keyId);
         }
     }
-#endif
 }
 
 void UpdateLayerLeds(void) {
@@ -220,7 +220,6 @@ void UpdateLayerLeds(void) {
 }
 
 void InitLedLayout(void) {
-#if DEVICE_ID == DEVICE_ID_UHK60V2
     // clear the RGB first, since the default mapping will no longer be reachable
     setPerKeyRGB(&black, SlotId_LeftKeyboardHalf, LedMapIndex_LeftSlot_IsoKey);
 
@@ -233,6 +232,26 @@ void InitLedLayout(void) {
         LedMap[SlotId_LeftKeyboardHalf][LedMapIndex_LeftSlot_IsoKey].green = 0;
         LedMap[SlotId_LeftKeyboardHalf][LedMapIndex_LeftSlot_IsoKey].blue = 0;
     }
-#endif
 }
 
+void SetLedBacklightStrategy(backlight_strategy_t newStrategy)
+{
+    LedMap_BacklightStrategy = newStrategy;
+}
+
+#else /* DEVICE_ID == DEVICE_ID_UHK60V2 */
+
+void UpdateLayerLeds(void)
+{
+}
+
+void InitLedLayout(void)
+{
+}
+
+void SetLedBacklightStrategy(backlight_strategy_t newStrategy)
+{
+    (void)(sizeof(newStrategy));
+}
+
+#endif

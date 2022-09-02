@@ -2231,7 +2231,7 @@ static macro_result_t processProgressHueCommand()
         phase++;
     }
 
-    LedMap_BacklightStrategy = BacklightStrategy_ConstantRGB;
+    SetLedBacklightStrategy(BacklightStrategy_ConstantRGB);
     UpdateLayerLeds();
     return MacroResult_Finished;
 #undef C

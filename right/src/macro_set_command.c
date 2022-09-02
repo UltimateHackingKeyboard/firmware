@@ -203,11 +203,11 @@ static void macroEngine(const char* arg1, const char *textEnd)
 static void backlightStrategy(const char* arg1, const char *textEnd)
 {
     if (TokenMatches(arg1, textEnd, "functional")) {
-        LedMap_BacklightStrategy = BacklightStrategy_Functional;
+        SetLedBacklightStrategy(BacklightStrategy_Functional);
         LedSlaveDriver_UpdateLeds();
     }
     else if (TokenMatches(arg1, textEnd, "constantRgb")) {
-        LedMap_BacklightStrategy = BacklightStrategy_ConstantRGB;
+        SetLedBacklightStrategy(BacklightStrategy_ConstantRGB);
         LedSlaveDriver_UpdateLeds();
     }
     else {
@@ -224,7 +224,7 @@ static void constantRgb(const char* arg1, const char *textEnd)
         LedMap_ConstantRGB.red = Macros_ParseInt(r, textEnd, NULL);
         LedMap_ConstantRGB.green = Macros_ParseInt(g, textEnd, NULL);
         LedMap_ConstantRGB.blue = Macros_ParseInt(b, textEnd, NULL);
-        LedMap_BacklightStrategy = BacklightStrategy_ConstantRGB;
+        SetLedBacklightStrategy(BacklightStrategy_ConstantRGB);
         LedSlaveDriver_UpdateLeds();
     }
     else {

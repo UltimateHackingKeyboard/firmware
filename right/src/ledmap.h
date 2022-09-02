@@ -35,14 +35,12 @@
 
 // Variables:
 
-    extern backlight_strategy_t LedMap_BacklightStrategy;
     extern rgb_t LedMap_ConstantRGB;
-    extern rgb_t KeyActionColors[];
-    extern rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
 
 // Functions:
 
-    extern void UpdateLayerLeds(void);
-    extern void InitLedLayout(void);
+    void UpdateLayerLeds(void);
+    void InitLedLayout(void);
+    void SetLedBacklightStrategy(backlight_strategy_t newStrategy);
 
 #endif
