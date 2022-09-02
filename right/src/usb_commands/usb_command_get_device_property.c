@@ -9,7 +9,6 @@
 #include "fsl_i2c.h"
 #include "timer.h"
 #include "utils.h"
-#include "versions.h"
 
 version_t deviceProtocolVersion = {
     DEVICE_PROTOCOL_MAJOR_VERSION,
