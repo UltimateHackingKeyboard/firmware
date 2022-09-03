@@ -27,24 +27,7 @@ fs.writeFileSync(`${__dirname}/../shared/versions.h`,
 
 // Includes:
 
-    #include "fsl_common.h"
-
-// Macros:
-
-#define VERSION_AT_LEAST(v, MAJ, MIN, PATCH) \\
-    (\\
-        ((v).major > (MAJ)) \\
-        || ((v).major == (MAJ) && (v).minor > (MIN))\\
-        || ((v).major == (MAJ) && (v).minor == (MIN) && (v).patch >= (PATCH))\\
-    )
-
-// Typedefs:
-
-    typedef struct {
-        uint16_t major;
-        uint16_t minor;
-        uint16_t patch;
-    } version_t;
+    #include "versioning.h"
 
 // Variables:
 

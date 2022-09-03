@@ -28,11 +28,6 @@
         #warning USB_BASIC_KEYBOARD_MAX_BITFIELD_SCANCODE less than maximum standard keyboard scancodes
     #endif
 
-    #define USB_BASIC_KEYBOARD_REPORT_LENGTH (1 + USB_BASIC_KEYBOARD_BITFIELD_LENGTH)
-    #if USB_BASIC_KEYBOARD_REPORT_LENGTH > 64
-        #error USB_BASIC_KEYBOARD_REPORT_LENGTH greater than max usb report length (64)
-    #endif
-
 // Variables:
 
     static USB_DESC_STORAGE_TYPE UsbBasicKeyboardReportDescriptor[] = {

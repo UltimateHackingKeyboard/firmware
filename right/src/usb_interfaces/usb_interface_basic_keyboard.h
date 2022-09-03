@@ -16,22 +16,21 @@
     #define USB_BASIC_KEYBOARD_ENDPOINT_INDEX 3
     #define USB_BASIC_KEYBOARD_ENDPOINT_COUNT 1
 
-    #define USB_BASIC_KEYBOARD_INTERRUPT_IN_PACKET_SIZE 8
+    #define USB_BASIC_KEYBOARD_INTERRUPT_IN_PACKET_SIZE (USB_BASIC_KEYBOARD_REPORT_LENGTH)
     #define USB_BASIC_KEYBOARD_INTERRUPT_IN_INTERVAL 1
+
+    #define USB_BASIC_KEYBOARD_REPORT_LENGTH (1 + USB_BASIC_KEYBOARD_BITFIELD_LENGTH)
+    #if USB_BASIC_KEYBOARD_REPORT_LENGTH > 64
+        #error USB_BASIC_KEYBOARD_REPORT_LENGTH greater than max usb report length (64)
+    #endif
 
     #define USB_BASIC_KEYBOARD_OUT_REPORT_LENGTH 1
 
-    #define USB_BOOT_KEYBOARD_REPORT_LENGTH 8
+    #define USB_BOOT_KEYBOARD_REPORT_LENGTH (2 + USB_BOOT_KEYBOARD_MAX_KEYS)
     #define USB_BOOT_KEYBOARD_MAX_KEYS 6
 
 // Typedefs:
 
-    // Note: We support boot protocol mode in this interface, thus the keyboard
-    // report may not exceed 8 bytes and must conform to the HID keyboard boot
-    // protocol as specified in the USB HID specification. If a different or
-    // longer format is desired in the future, we will need to translate sent
-    // reports to the boot protocol format when the host has set boot protocol
-    // mode.
     typedef struct {
         uint8_t modifiers;
         union {
