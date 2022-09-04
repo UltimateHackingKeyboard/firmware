@@ -14,7 +14,8 @@ The features marked with (*) can only be used with Agent 2.0.0 to be released so
 - Add smart macro engine. (*) `USERCONFIG:MINOR`
 - Extend the original 4 layers with 4 regular layers (Fn2, Fn3, Fn4, Fn5) and 4 modifier layers (Shift, Ctrl, Alt, Super). (*) `USERCONFIG:MAJOR`
 - Fix USB descriptors which caused high CPU load on Macintosh computers.
-- Implement touchpad pinch-to-zoom and two-finger scrolling.
+- Implement touchpad pinch-to-zoom, two-finger scrolling, and doubletap-to-drag.
+- Allow rebinding touchpad tap action.
 - Fix occasional trackpoint pointer jumps.
 - Reload keymap when a module is swapped.
 - Properly disconnect slaves on I2C reinitialization.
