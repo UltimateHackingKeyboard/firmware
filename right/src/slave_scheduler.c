@@ -81,8 +81,23 @@ static void slaveSchedulerCallback(I2C_Type *base, i2c_master_handle_t *handle, 
             }
 
             bool wasPreviousSlaveConnected = previousSlave->isConnected;
-            previousSlave->isConnected = previousStatus == kStatus_Success;
-            if (wasPreviousSlaveConnected && !previousSlave->isConnected && previousSlave->disconnect) {
+            bool isPreviousSlaveConnected = previousStatus == kStatus_Success;
+
+            if (previousSlaveId == SlaveId_RightTouchpad) {
+                // Touchpad automatically enters sleep mode. Protocol for
+                // forced communication includes one NACK exchange.
+                static uint8_t nackCount = 0;
+                if (isPreviousSlaveConnected) {
+                    nackCount = 0;
+                }
+                if (nackCount < 2 && !isPreviousSlaveConnected) {
+                    nackCount++;
+                    isPreviousSlaveConnected = true;
+                }
+            }
+
+            previousSlave->isConnected = isPreviousSlaveConnected;
+            if (wasPreviousSlaveConnected && !isPreviousSlaveConnected && previousSlave->disconnect) {
                 previousSlave->disconnect(previousSlave->perDriverId);
             }
 
