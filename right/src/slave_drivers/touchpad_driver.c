@@ -78,6 +78,7 @@ uint8_t address = I2C_ADDRESS_RIGHT_IQS5XX_FIRMWARE;
 touchpad_events_t TouchpadEvents;
 uint8_t phase = 0;
 static uint8_t enableEventMode[] = {0x05, 0x8f, 0x07};
+static uint8_t enableManualMode[] = {0x05, 0x8e, 0xec};
 static uint8_t getGestureEvents0[] = {0x00, 0x0d};
 static uint8_t getRelativePixelsXCommand[] = {0x00, 0x12};
 static uint8_t closeCommunicationWindow[] = {0xee, 0xee, 0xee};
@@ -98,36 +99,41 @@ status_t TouchpadDriver_Update(uint8_t uhkModuleDriverId)
             break;
         }
         case 1: {
-            status = I2cAsyncWrite(address, getGestureEvents0, sizeof(getGestureEvents0));
+            status = I2cAsyncWrite(address, enableManualMode, sizeof(enableManualMode));
             phase = 2;
             break;
         }
         case 2: {
-            status = I2cAsyncRead(address, (uint8_t*)&gestureEvents, sizeof(gesture_events_t));
+            status = I2cAsyncWrite(address, getGestureEvents0, sizeof(getGestureEvents0));
             phase = 3;
             break;
         }
         case 3: {
-            status = I2cAsyncWrite(address, getNoFingers, sizeof(getNoFingers));
+            status = I2cAsyncRead(address, (uint8_t*)&gestureEvents, sizeof(gesture_events_t));
             phase = 4;
             break;
         }
         case 4: {
-            status = I2cAsyncRead(address, &noFingers, 1);
+            status = I2cAsyncWrite(address, getNoFingers, sizeof(getNoFingers));
             phase = 5;
             break;
         }
         case 5: {
-            status = I2cAsyncWrite(address, getRelativePixelsXCommand, sizeof(getRelativePixelsXCommand));
+            status = I2cAsyncRead(address, &noFingers, 1);
             phase = 6;
             break;
         }
         case 6: {
-            status = I2cAsyncRead(address, buffer, 5);
+            status = I2cAsyncWrite(address, getRelativePixelsXCommand, sizeof(getRelativePixelsXCommand));
             phase = 7;
             break;
         }
         case 7: {
+            status = I2cAsyncRead(address, buffer, 5);
+            phase = 8;
+            break;
+        }
+        case 8: {
             deltaY = (int16_t)(buffer[1] | buffer[0]<<8);
             deltaX = (int16_t)(buffer[3] | buffer[2]<<8);
 
@@ -148,7 +154,7 @@ status_t TouchpadDriver_Update(uint8_t uhkModuleDriverId)
             }
 
             status = I2cAsyncWrite(address, closeCommunicationWindow, sizeof(closeCommunicationWindow));
-            phase = 1;
+            phase = 2;
             break;
         }
     }
