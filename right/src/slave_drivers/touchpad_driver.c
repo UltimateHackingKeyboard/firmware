@@ -52,10 +52,6 @@ two taps:
 
 
 
-void TouchpadDriver_Init(uint8_t uhkModuleDriverId)
-{
-}
-
 typedef struct {
     struct {
         bool singleTap: 1;
@@ -87,6 +83,11 @@ static uint8_t buffer[5];
 uint8_t noFingers;
 int16_t deltaX;
 int16_t deltaY;
+
+void TouchpadDriver_Init(uint8_t uhkModuleDriverId)
+{
+    phase = 0;
+}
 
 status_t TouchpadDriver_Update(uint8_t uhkModuleDriverId)
 {
