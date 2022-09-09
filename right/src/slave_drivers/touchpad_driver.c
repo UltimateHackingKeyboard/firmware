@@ -9,45 +9,45 @@
 #include "key_states.h"
 #include "usb_interfaces/usb_interface_mouse.h"
 #include "touchpad_driver.h"
-
+#include "debug.h"
+#include "timer.h"
 
 /*
-Actually produced sequences:
-
-1       single tap
-2       tap and hold
-      1 number of fingers
-
-Tap:
-
-0  0  0
-0  0  1
-1  0  0
-
-
-tap and hold:
-
-0  0  0
-0  0  1
-2  0  1
-
-tap and hold (separate):
-
-0  0  0
-0  0  1
-1  0  0
-0  0  0
-0  0  1
-2  0  1
-
-two taps:
-
-0  0  0
-0  0  1
-1  0  0
-0  0  0
-0  0  1
-1  0  0
+|  Actually produced sequences:
+| 1       single tap
+| 2       tap and hold
+|       1 number of fingers
+|
+| Tap:
+|
+| 0  0  0
+| 0  0  1
+| 1  0  0
+|
+|
+| tap and hold:
+|
+| 0  0  0
+| 0  0  1
+| 2  0  1
+|
+| tap and hold (separate):
+|
+| 0  0  0
+| 0  0  1
+| 1  0  0
+| 0  0  0
+| 0  0  1
+| 2  0  1
+|
+| two taps:
+|
+| 0  0  0
+| 0  0  1
+| 1  0  0
+| 0  0  0
+| 0  0  1
+| 1  0  0
 */
 
 
@@ -75,6 +75,8 @@ touchpad_events_t TouchpadEvents;
 uint8_t phase = 0;
 static uint8_t enableEventMode[] = {0x05, 0x8f, 0x07};
 static uint8_t enableManualMode[] = {0x05, 0x8e, 0xec};
+/* The touchpad wil NAK if we ask it more often than the configured report rate. */
+static uint8_t setReportRate[] = {0x05, 0x7b, 0x01};
 static uint8_t getGestureEvents0[] = {0x00, 0x0d};
 static uint8_t getRelativePixelsXCommand[] = {0x00, 0x12};
 static uint8_t closeCommunicationWindow[] = {0xee, 0xee, 0xee};
@@ -105,36 +107,41 @@ status_t TouchpadDriver_Update(uint8_t uhkModuleDriverId)
             break;
         }
         case 2: {
-            status = I2cAsyncWrite(address, getGestureEvents0, sizeof(getGestureEvents0));
+            status = I2cAsyncWrite(address, setReportRate, sizeof(setReportRate));
             phase = 3;
             break;
         }
         case 3: {
-            status = I2cAsyncRead(address, (uint8_t*)&gestureEvents, sizeof(gesture_events_t));
+            status = I2cAsyncWrite(address, getGestureEvents0, sizeof(getGestureEvents0));
             phase = 4;
             break;
         }
         case 4: {
-            status = I2cAsyncWrite(address, getNoFingers, sizeof(getNoFingers));
+            status = I2cAsyncRead(address, (uint8_t*)&gestureEvents, sizeof(gesture_events_t));
             phase = 5;
             break;
         }
         case 5: {
-            status = I2cAsyncRead(address, &noFingers, 1);
+            status = I2cAsyncWrite(address, getNoFingers, sizeof(getNoFingers));
             phase = 6;
             break;
         }
         case 6: {
-            status = I2cAsyncWrite(address, getRelativePixelsXCommand, sizeof(getRelativePixelsXCommand));
+            status = I2cAsyncRead(address, &noFingers, 1);
             phase = 7;
             break;
         }
         case 7: {
-            status = I2cAsyncRead(address, buffer, 5);
+            status = I2cAsyncWrite(address, getRelativePixelsXCommand, sizeof(getRelativePixelsXCommand));
             phase = 8;
             break;
         }
         case 8: {
+            status = I2cAsyncRead(address, buffer, 5);
+            phase = 9;
+            break;
+        }
+        case 9: {
             deltaY = (int16_t)(buffer[1] | buffer[0]<<8);
             deltaX = (int16_t)(buffer[3] | buffer[2]<<8);
 
@@ -155,7 +162,7 @@ status_t TouchpadDriver_Update(uint8_t uhkModuleDriverId)
             }
 
             status = I2cAsyncWrite(address, closeCommunicationWindow, sizeof(closeCommunicationWindow));
-            phase = 2;
+            phase = 3;
             break;
         }
     }
