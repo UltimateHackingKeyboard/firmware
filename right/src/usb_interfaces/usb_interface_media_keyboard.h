@@ -40,7 +40,7 @@
     usb_status_t UsbMediaKeyboardCheckIdleElapsed();
     usb_status_t UsbMediaKeyboardCheckReportReady();
 
-    bool UsbMediaKeyboard_AddScancode(usb_media_keyboard_report_t* report, uint8_t scancode);
+    bool UsbMediaKeyboard_AddScancode(usb_media_keyboard_report_t* report, uint16_t scancode);
     void UsbMediaKeyboard_MergeReports(const usb_media_keyboard_report_t* sourceReport, usb_media_keyboard_report_t* targetReport);
 
 #endif

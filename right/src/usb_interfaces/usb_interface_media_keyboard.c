@@ -90,7 +90,7 @@ usb_status_t UsbMediaKeyboardCallback(class_handle_t handle, uint32_t event, voi
     return error;
 }
 
-bool UsbMediaKeyboard_AddScancode(usb_media_keyboard_report_t* report, uint8_t scancode)
+bool UsbMediaKeyboard_AddScancode(usb_media_keyboard_report_t* report, uint16_t scancode)
 {
     if (scancode == 0)
         return true;
