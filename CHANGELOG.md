@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [9.0.1] - 2022-09-10
+
+Device Protocol: 4.8.0 | Module Protocol: 4.2.0 | User Config: 5.0.0 | Hardware Config: 1.0.0 | Smart Macros: 1.0.0
+
+- Fix 16-bit scancodes, such as "start calculator".
+- Make the smart macro documentation of the repo self-contained, and add docDir property to /doc/package.json, allowing Agent to fetch the online documentation of any firmware release.
+
 ## [9.0.0] - 2022-09-05
 
 Device Protocol: 4.**8.0** | Module Protocol: 4.**2.0** | User Config: **5.0.0** | Hardware Config: 1.0.0 | Smart Macros: 1.0.0
