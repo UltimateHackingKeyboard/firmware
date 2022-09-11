@@ -24,7 +24,7 @@
 // Macros:
 
     #define IS_SECONDARY_ROLE_MODIFIER(secondaryRole) (SecondaryRole_LeftCtrl <= (secondaryRole) && (secondaryRole) <= SecondaryRole_RightSuper)
-    #define IS_SECONDARY_ROLE_LAYER_SWITCHER(secondaryRole) (SecondaryRole_Mod <= (secondaryRole) && (secondaryRole) <= SecondaryRole_Mouse)
+    #define IS_SECONDARY_ROLE_LAYER_SWITCHER(secondaryRole) (SecondaryRole_LayerFirst <= (secondaryRole) && (secondaryRole) <= SecondaryRole_LayerLast)
     #define SECONDARY_ROLE_MODIFIER_TO_HID_MODIFIER(secondaryRoleModifier) (1 << ((secondaryRoleModifier) - 1))
     #define SECONDARY_ROLE_LAYER_TO_LAYER_ID(secondaryRoleLayer) ((secondaryRoleLayer) - SecondaryRole_RightSuper)
 
@@ -41,7 +41,13 @@
         SecondaryRole_RightSuper,
         SecondaryRole_Mod,
         SecondaryRole_Fn,
-        SecondaryRole_Mouse
+        SecondaryRole_Mouse,
+        SecondaryRole_Fn2,
+        SecondaryRole_Fn3,
+        SecondaryRole_Fn4,
+        SecondaryRole_Fn5,
+        SecondaryRole_LayerFirst = SecondaryRole_Mod,
+        SecondaryRole_LayerLast = SecondaryRole_Fn5,
     } secondary_role_t;
 
     typedef enum {
