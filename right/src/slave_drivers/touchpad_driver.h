@@ -33,7 +33,7 @@
 // Functions:
 
     void TouchpadDriver_Init(uint8_t uhkModuleDriverId);
-    status_t TouchpadDriver_Update(uint8_t uhkModuleDriverId);
+    status_t TouchpadDriver_Update(uint8_t uhkModuleDriverId, bool *yield);
     void TouchpadDriver_Disconnect(uint8_t uhkModuleDriverId);
 
 #endif

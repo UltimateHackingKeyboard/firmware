@@ -101,7 +101,7 @@ static void reloadKeymapIfNeeded()
     }
 }
 
-status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
+status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId, bool *yield)
 {
     status_t status = kStatus_Uhk_IdleSlave;
     uhk_module_state_t *uhkModuleState = UhkModuleStates + uhkModuleDriverId;
@@ -312,10 +312,12 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
             txMessage.data[0] = SlaveCommand_RequestKeyStates;
             txMessage.length = 1;
             status = tx(i2cAddress);
+            *yield = false;
             *uhkModulePhase = UhkModulePhase_ReceiveKeystates;
             break;
         case UhkModulePhase_ReceiveKeystates:
             status = rx(rxMessage, i2cAddress);
+            *yield = false;
             *uhkModulePhase = UhkModulePhase_ProcessKeystates;
             break;
         case UhkModulePhase_ProcessKeystates:
@@ -333,6 +335,7 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
                 }
             }
             status = kStatus_Uhk_IdleCycle;
+            *yield = false;
             *uhkModulePhase = UhkModulePhase_SetTestLed;
             break;
 
@@ -347,6 +350,7 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
                 status = tx(i2cAddress);
                 uhkModuleTargetVars->isTestLedOn = uhkModuleSourceVars->isTestLedOn;
             }
+            *yield = false;
             *uhkModulePhase = UhkModulePhase_SetLedPwmBrightness;
             break;
 
@@ -361,6 +365,7 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
                 status = tx(i2cAddress);
                 uhkModuleTargetVars->ledPwmBrightness = uhkModuleSourceVars->ledPwmBrightness;
             }
+            *yield = true;
             if (shouldResetTrackpoint && uhkModuleDriverId == UhkModuleDriverId_RightModule) {
                 *uhkModulePhase = UhkModulePhase_ResetTrackpoint;
             } else {

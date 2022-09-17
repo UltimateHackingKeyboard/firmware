@@ -91,9 +91,11 @@ void TouchpadDriver_Init(uint8_t uhkModuleDriverId)
     phase = 0;
 }
 
-status_t TouchpadDriver_Update(uint8_t uhkModuleDriverId)
+status_t TouchpadDriver_Update(uint8_t uhkModuleDriverId, bool *yield)
 {
     status_t status = kStatus_Uhk_IdleSlave;
+
+    *yield = false;
 
     switch (phase) {
         case 0: {
@@ -163,6 +165,7 @@ status_t TouchpadDriver_Update(uint8_t uhkModuleDriverId)
 
             status = I2cAsyncWrite(address, closeCommunicationWindow, sizeof(closeCommunicationWindow));
             phase = 3;
+            *yield = true;
             break;
         }
     }

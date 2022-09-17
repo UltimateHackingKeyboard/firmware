@@ -52,6 +52,6 @@
 // Functions:
 
     void KbootSlaveDriver_Init(uint8_t kbootInstanceId);
-    status_t KbootSlaveDriver_Update(uint8_t kbootInstanceId);
+    status_t KbootSlaveDriver_Update(uint8_t kbootInstanceId, bool *yield);
 
 #endif

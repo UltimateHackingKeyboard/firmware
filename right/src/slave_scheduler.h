@@ -26,7 +26,7 @@
     } slave_id_t;
 
     typedef void (slave_init_t)(uint8_t);
-    typedef status_t (slave_update_t)(uint8_t);
+    typedef status_t (slave_update_t)(uint8_t, bool*);
     typedef void (slave_disconnect_t)(uint8_t);
 
     typedef struct {

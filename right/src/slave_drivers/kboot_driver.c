@@ -23,7 +23,7 @@ void KbootSlaveDriver_Init(uint8_t kbootInstanceId)
 {
 }
 
-status_t KbootSlaveDriver_Update(uint8_t kbootInstanceId)
+status_t KbootSlaveDriver_Update(uint8_t kbootInstanceId, bool *yield)
 {
     status_t status = kStatus_Uhk_IdleSlave;
 

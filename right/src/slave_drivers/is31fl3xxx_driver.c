@@ -235,7 +235,7 @@ void LedSlaveDriver_Init(uint8_t ledDriverId)
     currentLedDriverState->ledIndex = 0;
 }
 
-status_t LedSlaveDriver_Update(uint8_t ledDriverId)
+status_t LedSlaveDriver_Update(uint8_t ledDriverId, bool *yield)
 {
     status_t status = kStatus_Uhk_IdleSlave;
     uint8_t *ledValues = LedDriverValues[ledDriverId];
