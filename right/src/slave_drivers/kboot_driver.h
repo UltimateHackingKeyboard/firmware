@@ -4,6 +4,7 @@
 // Includes:
 
     #include "fsl_common.h"
+#include "slave_scheduler.h"
 
 // Macros:
 
@@ -52,6 +53,6 @@
 // Functions:
 
     void KbootSlaveDriver_Init(uint8_t kbootInstanceId);
-    status_t KbootSlaveDriver_Update(uint8_t kbootInstanceId);
+    slave_result_t KbootSlaveDriver_Update(uint8_t kbootInstanceId);
 
 #endif

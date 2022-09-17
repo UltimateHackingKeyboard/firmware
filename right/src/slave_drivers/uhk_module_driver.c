@@ -11,6 +11,7 @@
 #include "utils.h"
 #include "keymap.h"
 #include "debug.h"
+#include "macros.h"
 
 uhk_module_state_t UhkModuleStates[UHK_MODULE_MAX_SLOT_COUNT];
 
@@ -101,9 +102,10 @@ static void reloadKeymapIfNeeded()
     }
 }
 
-status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
+slave_result_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
 {
-    status_t status = kStatus_Uhk_IdleSlave;
+    slave_result_t res = { .status = kStatus_Uhk_IdleSlave, .hold = false };
+
     uhk_module_state_t *uhkModuleState = UhkModuleStates + uhkModuleDriverId;
     uhk_module_vars_t *uhkModuleSourceVars = &uhkModuleState->sourceVars;
     uhk_module_vars_t *uhkModuleTargetVars = &uhkModuleState->targetVars;
@@ -117,7 +119,7 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
         case UhkModulePhase_JumpToBootloader:
             txMessage.data[0] = SlaveCommand_JumpToBootloader;
             txMessage.length = 1;
-            status = tx(i2cAddress);
+            res.status = tx(i2cAddress);
             break;
 
         // Sync communication
@@ -125,17 +127,17 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
             txMessage.data[0] = SlaveCommand_RequestProperty;
             txMessage.data[1] = SlaveProperty_Sync;
             txMessage.length = 2;
-            status = tx(i2cAddress);
+            res.status = tx(i2cAddress);
             *uhkModulePhase = UhkModulePhase_ReceiveSync;
             break;
         case UhkModulePhase_ReceiveSync:
-            status = rx(rxMessage, i2cAddress);
+            res.status = rx(rxMessage, i2cAddress);
             *uhkModulePhase = UhkModulePhase_ProcessSync;
             break;
         case UhkModulePhase_ProcessSync: {
             bool isMessageValid = CRC16_IsMessageValid(rxMessage);
             bool isSyncValid = memcmp(rxMessage->data, SlaveSyncString, SLAVE_SYNC_STRING_LENGTH) == 0;
-            status = kStatus_Uhk_IdleCycle;
+            res.status = kStatus_Uhk_IdleCycle;
             *uhkModulePhase = isSyncValid && isMessageValid
                 ? UhkModulePhase_RequestModuleProtocolVersion
                 : UhkModulePhase_RequestSync;
@@ -147,11 +149,11 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
             txMessage.data[0] = SlaveCommand_RequestProperty;
             txMessage.data[1] = SlaveProperty_ModuleProtocolVersion;
             txMessage.length = 2;
-            status = tx(i2cAddress);
+            res.status = tx(i2cAddress);
             *uhkModulePhase = UhkModulePhase_ReceiveModuleProtocolVersion;
             break;
         case UhkModulePhase_ReceiveModuleProtocolVersion:
-            status = rx(rxMessage, i2cAddress);
+            res.status = rx(rxMessage, i2cAddress);
             *uhkModulePhase = UhkModulePhase_ProcessModuleProtocolVersion;
             break;
         case UhkModulePhase_ProcessModuleProtocolVersion: {
@@ -159,7 +161,7 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
             if (isMessageValid) {
                 memcpy(&uhkModuleState->moduleProtocolVersion, rxMessage->data, sizeof(version_t));
             }
-            status = kStatus_Uhk_IdleCycle;
+            res.status = kStatus_Uhk_IdleCycle;
             *uhkModulePhase = isMessageValid ? UhkModulePhase_RequestFirmwareVersion : UhkModulePhase_RequestModuleProtocolVersion;
             break;
         }
@@ -169,11 +171,11 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
             txMessage.data[0] = SlaveCommand_RequestProperty;
             txMessage.data[1] = SlaveProperty_FirmwareVersion;
             txMessage.length = 2;
-            status = tx(i2cAddress);
+            res.status = tx(i2cAddress);
             *uhkModulePhase = UhkModulePhase_ReceiveFirmwareVersion;
             break;
         case UhkModulePhase_ReceiveFirmwareVersion:
-            status = rx(rxMessage, i2cAddress);
+            res.status = rx(rxMessage, i2cAddress);
             *uhkModulePhase = UhkModulePhase_ProcessFirmwareVersion;
             break;
         case UhkModulePhase_ProcessFirmwareVersion: {
@@ -181,7 +183,7 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
             if (isMessageValid) {
                 memcpy(&uhkModuleState->firmwareVersion, rxMessage->data, sizeof(version_t));
             }
-            status = kStatus_Uhk_IdleCycle;
+            res.status = kStatus_Uhk_IdleCycle;
             *uhkModulePhase = isMessageValid ? UhkModulePhase_RequestModuleId : UhkModulePhase_RequestFirmwareVersion;
             break;
         }
@@ -191,11 +193,11 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
             txMessage.data[0] = SlaveCommand_RequestProperty;
             txMessage.data[1] = SlaveProperty_ModuleId;
             txMessage.length = 2;
-            status = tx(i2cAddress);
+            res.status = tx(i2cAddress);
             *uhkModulePhase = UhkModulePhase_ReceiveModuleId;
             break;
         case UhkModulePhase_ReceiveModuleId:
-            status = rx(rxMessage, i2cAddress);
+            res.status = rx(rxMessage, i2cAddress);
             *uhkModulePhase = UhkModulePhase_ProcessModuleId;
             break;
         case UhkModulePhase_ProcessModuleId: {
@@ -204,7 +206,7 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
                 uhkModuleState->moduleId = rxMessage->data[0];
                 reloadKeymapIfNeeded();
             }
-            status = kStatus_Uhk_IdleCycle;
+            res.status = kStatus_Uhk_IdleCycle;
             *uhkModulePhase = isMessageValid ? UhkModulePhase_RequestModuleKeyCount : UhkModulePhase_RequestModuleId;
             break;
         }
@@ -214,11 +216,11 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
             txMessage.data[0] = SlaveCommand_RequestProperty;
             txMessage.data[1] = SlaveProperty_KeyCount;
             txMessage.length = 2;
-            status = tx(i2cAddress);
+            res.status = tx(i2cAddress);
             *uhkModulePhase = UhkModulePhase_ReceiveModuleKeyCount;
             break;
         case UhkModulePhase_ReceiveModuleKeyCount:
-            status = rx(rxMessage, i2cAddress);
+            res.status = rx(rxMessage, i2cAddress);
             *uhkModulePhase = UhkModulePhase_ProcessModuleKeyCount;
             break;
         case UhkModulePhase_ProcessModuleKeyCount: {
@@ -226,7 +228,7 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
             if (isMessageValid) {
                 uhkModuleState->keyCount = rxMessage->data[0];
             }
-            status = kStatus_Uhk_IdleCycle;
+            res.status = kStatus_Uhk_IdleCycle;
             *uhkModulePhase = isMessageValid ? UhkModulePhase_RequestModulePointerCount : UhkModulePhase_RequestModuleKeyCount;
             break;
         }
@@ -236,11 +238,11 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
             txMessage.data[0] = SlaveCommand_RequestProperty;
             txMessage.data[1] = SlaveProperty_PointerCount;
             txMessage.length = 2;
-            status = tx(i2cAddress);
+            res.status = tx(i2cAddress);
             *uhkModulePhase = UhkModulePhase_ReceiveModulePointerCount;
             break;
         case UhkModulePhase_ReceiveModulePointerCount:
-            status = rx(rxMessage, i2cAddress);
+            res.status = rx(rxMessage, i2cAddress);
             *uhkModulePhase = UhkModulePhase_ProcessModulePointerCount;
             break;
         case UhkModulePhase_ProcessModulePointerCount: {
@@ -248,7 +250,7 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
             if (isMessageValid) {
                 uhkModuleState->pointerCount = rxMessage->data[0];
             }
-            status = kStatus_Uhk_IdleCycle;
+            res.status = kStatus_Uhk_IdleCycle;
 
             if (!isMessageValid) {
                 *uhkModulePhase = UhkModulePhase_RequestModulePointerCount;
@@ -267,11 +269,11 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
             txMessage.data[0] = SlaveCommand_RequestProperty;
             txMessage.data[1] = SlaveProperty_GitTag;
             txMessage.length = 2;
-            status = tx(i2cAddress);
+            res.status = tx(i2cAddress);
             *uhkModulePhase = UhkModulePhase_ReceiveGitTag;
             break;
         case UhkModulePhase_ReceiveGitTag:
-            status = rx(rxMessage, i2cAddress);
+            res.status = rx(rxMessage, i2cAddress);
             *uhkModulePhase = UhkModulePhase_ProcessGitTag;
             break;
         case UhkModulePhase_ProcessGitTag: {
@@ -279,7 +281,7 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
             if (isMessageValid) {
                 Utils_SafeStrCopy(uhkModuleState->gitTag, (const char*)rxMessage->data, sizeof(uhkModuleState->gitTag));
             }
-            status = kStatus_Uhk_IdleCycle;
+            res.status = kStatus_Uhk_IdleCycle;
             *uhkModulePhase = isMessageValid ? UhkModulePhase_RequestGitRepo : UhkModulePhase_RequestGitTag;
             break;
         }
@@ -289,11 +291,11 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
             txMessage.data[0] = SlaveCommand_RequestProperty;
             txMessage.data[1] = SlaveProperty_GitRepo;
             txMessage.length = 2;
-            status = tx(i2cAddress);
+            res.status = tx(i2cAddress);
             *uhkModulePhase = UhkModulePhase_ReceiveGitRepo;
             break;
         case UhkModulePhase_ReceiveGitRepo:
-            status = rx(rxMessage, i2cAddress);
+            res.status = rx(rxMessage, i2cAddress);
             *uhkModulePhase = UhkModulePhase_ProcessGitRepo;
             break;
         case UhkModulePhase_ProcessGitRepo: {
@@ -301,7 +303,7 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
             if (isMessageValid) {
                 Utils_SafeStrCopy(uhkModuleState->gitRepo, (const char*)rxMessage->data, sizeof(uhkModuleState->gitRepo));
             }
-            status = kStatus_Uhk_IdleCycle;
+            res.status = kStatus_Uhk_IdleCycle;
             *uhkModulePhase = isMessageValid ? UhkModulePhase_RequestKeyStates : UhkModulePhase_RequestGitRepo;
             break;
         }
@@ -311,11 +313,13 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
         case UhkModulePhase_RequestKeyStates:
             txMessage.data[0] = SlaveCommand_RequestKeyStates;
             txMessage.length = 1;
-            status = tx(i2cAddress);
+            res.status = tx(i2cAddress);
+            res.hold = true;
             *uhkModulePhase = UhkModulePhase_ReceiveKeystates;
             break;
         case UhkModulePhase_ReceiveKeystates:
-            status = rx(rxMessage, i2cAddress);
+            res.status = rx(rxMessage, i2cAddress);
+            res.hold = true;
             *uhkModulePhase = UhkModulePhase_ProcessKeystates;
             break;
         case UhkModulePhase_ProcessKeystates:
@@ -332,19 +336,22 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
                     uhkModuleState->pointerDelta.y += pointerDelta->y;
                 }
             }
-            status = kStatus_Uhk_IdleCycle;
+            res.status = kStatus_Uhk_IdleCycle;
+            res.hold = true;
             *uhkModulePhase = UhkModulePhase_SetTestLed;
             break;
 
         // Set test LED
         case UhkModulePhase_SetTestLed:
             if (uhkModuleSourceVars->isTestLedOn == uhkModuleTargetVars->isTestLedOn) {
-                status = kStatus_Uhk_IdleCycle;
+                res.status = kStatus_Uhk_IdleCycle;
+                res.hold = true;
             } else {
                 txMessage.data[0] = SlaveCommand_SetTestLed;
                 txMessage.data[1] = uhkModuleSourceVars->isTestLedOn;
                 txMessage.length = 2;
-                status = tx(i2cAddress);
+                res.status = tx(i2cAddress);
+                res.hold = true;
                 uhkModuleTargetVars->isTestLedOn = uhkModuleSourceVars->isTestLedOn;
             }
             *uhkModulePhase = UhkModulePhase_SetLedPwmBrightness;
@@ -353,12 +360,14 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
         // Set PWM brightness
         case UhkModulePhase_SetLedPwmBrightness:
             if (uhkModuleSourceVars->ledPwmBrightness == uhkModuleTargetVars->ledPwmBrightness) {
-                status = kStatus_Uhk_IdleCycle;
+                res.status = kStatus_Uhk_IdleCycle;
+                res.hold = false;
             } else {
                 txMessage.data[0] = SlaveCommand_SetLedPwmBrightness;
                 txMessage.data[1] = uhkModuleSourceVars->ledPwmBrightness;
                 txMessage.length = 2;
-                status = tx(i2cAddress);
+                res.status = tx(i2cAddress);
+                res.hold = false;
                 uhkModuleTargetVars->ledPwmBrightness = uhkModuleSourceVars->ledPwmBrightness;
             }
             if (shouldResetTrackpoint && uhkModuleDriverId == UhkModuleDriverId_RightModule) {
@@ -375,12 +384,12 @@ status_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
             txMessage.data[0] = SlaveCommand_ModuleSpecificCommand;
             txMessage.data[1] = ModuleSpecificCommand_ResetTrackpoint;
             txMessage.length = 2;
-            status = tx(i2cAddress);
+            res.status = tx(i2cAddress);
             *uhkModulePhase = UhkModulePhase_RequestKeyStates;
             break;
     }
 
-    return status;
+    return res;
 }
 
 void UhkModuleSlaveDriver_Disconnect(uint8_t uhkModuleDriverId)

@@ -25,8 +25,13 @@
         SlaveId_KbootDriver,
     } slave_id_t;
 
+    typedef struct {
+        status_t status;
+        bool hold;
+    } slave_result_t;
+
     typedef void (slave_init_t)(uint8_t);
-    typedef status_t (slave_update_t)(uint8_t);
+    typedef slave_result_t (slave_update_t)(uint8_t);
     typedef void (slave_disconnect_t)(uint8_t);
 
     typedef struct {
