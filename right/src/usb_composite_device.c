@@ -5,9 +5,12 @@
 #include "usb_composite_device.h"
 #include "usb_descriptors/usb_descriptor_hid.h"
 #include "usb_descriptors/usb_descriptor_strings.h"
+#include "usb_descriptors/usb_descriptors_microsoft.h"
+#include "usb_microsoft_os.h"
 #include "bus_pal_hardware.h"
 #include "bootloader/wormhole.h"
 
+static uint8_t MsAltEnumMode = 0;
 usb_composite_device_t UsbCompositeDevice;
 static usb_status_t usbDeviceCallback(usb_device_handle handle, uint32_t event, void *param);
 
@@ -236,6 +239,7 @@ static usb_status_t usbDeviceCallback(usb_device_handle handle, uint32_t event, 
     switch (event) {
         case kUSB_DeviceEventBusReset:
             UsbCompositeDevice.attach = 0;
+            MsAltEnumMode = 0;
             status = kStatus_USB_Success;
             break;
         case kUSB_DeviceEventSuspend:
@@ -291,7 +295,8 @@ static usb_status_t usbDeviceCallback(usb_device_handle handle, uint32_t event, 
             status = USB_DeviceGetDeviceDescriptor(handle, (usb_device_get_device_descriptor_struct_t *)param);
             break;
         case kUSB_DeviceEventGetConfigurationDescriptor:
-            status = USB_DeviceGetConfigurationDescriptor(handle, (usb_device_get_configuration_descriptor_struct_t *)param);
+            status = USB_DeviceGetConfigurationDescriptor(handle, (usb_device_get_configuration_descriptor_struct_t *)param,
+                    MsAltEnumMode);
             break;
         case kUSB_DeviceEventGetStringDescriptor:
             status = USB_DeviceGetStringDescriptor(handle, (usb_device_get_string_descriptor_struct_t *)param);
@@ -313,6 +318,21 @@ static usb_status_t usbDeviceCallback(usb_device_handle handle, uint32_t event, 
             if (wakeUpHostAllowed)
                 *temp16 |= (USB_DEVICE_CONFIG_REMOTE_WAKEUP << (USB_REQUSET_STANDARD_GET_STATUS_DEVICE_REMOTE_WARKUP_SHIFT));
             status = kStatus_USB_Success;
+            break;
+        case kUSB_DeviceEventVendorRequest: ;
+#if (USBD_MS_OS_DESC_VERSION == 2)
+            usb_device_control_request_struct_t *controlRequest = (usb_device_control_request_struct_t *)param;
+
+            if (controlRequest->setup->bRequest == USB_REQ_MICROSOFT_OS) {
+                if (controlRequest->setup->wIndex == USB_MS_OS_2p0_GET_DESCRIPTOR_INDEX) {
+                    status = USB_DeviceGetMsOsDescriptor(handle, controlRequest);
+                }
+                else if (controlRequest->setup->wIndex == USB_MS_OS_2p0_SET_ALT_ENUMERATION_INDEX) {
+                    MsAltEnumMode = controlRequest->setup->wValue >> 8;
+                    status = kStatus_USB_Success;
+                }
+            }
+#endif /* (USBD_MS_OS_DESC_VERSION == 2) */
             break;
     }
 

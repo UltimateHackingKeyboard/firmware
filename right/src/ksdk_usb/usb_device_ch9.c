@@ -99,6 +99,9 @@ static usb_status_t USB_DeviceCh9SynchFrame(usb_device_common_class_struct_t *cl
                                             uint8_t **buffer,
                                             uint32_t *length);
 
+extern usb_status_t USB_DeviceGetBosDescriptor(
+    usb_device_handle handle, usb_device_get_descriptor_common_struct_t *descriptor);
+
 /*******************************************************************************
  * Variables
  ******************************************************************************/
@@ -398,6 +401,10 @@ static usb_status_t USB_DeviceCh9GetDescriptor(usb_device_common_class_struct_t 
         commonDescriptor.stringDescriptor.languageId = setup->wIndex;
         error = USB_DeviceClassCallback(classHandle->handle, kUSB_DeviceEventGetStringDescriptor,
                                         &commonDescriptor.stringDescriptor);
+    }
+    else if (USB_DESCRIPTOR_TYPE_BINARY_OBJECT_STORE == descriptorType)
+    {
+        error = USB_DeviceGetBosDescriptor(classHandle->handle, &commonDescriptor.commonDescriptor);
     }
 #if (defined(USB_DEVICE_CONFIG_HID) && (USB_DEVICE_CONFIG_HID > 0U))
     else if (USB_DESCRIPTOR_TYPE_HID == descriptorType)

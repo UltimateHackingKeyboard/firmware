@@ -20,6 +20,9 @@
 
     // General constants
 
+    #define USB_DESCRIPTOR_TYPE_BINARY_OBJECT_STORE (0x0FU)
+    #define USB_DESCRIPTOR_TYPE_DEVICE_CAPABILITY   (0x10U)
+
     #define USB_DEVICE_CLASS 0x00
     #define USB_DEVICE_SUBCLASS 0x00
     #define USB_DEVICE_PROTOCOL 0x00
@@ -28,6 +31,8 @@
     #define USB_INTERFACE_ALTERNATE_SETTING_NONE 0x00
     #define USB_STRING_DESCRIPTOR_NONE           0x00
     #define USB_LANGUAGE_ID_UNITED_STATES        0x0409
+
+    //#define USBD_MS_OS_DESC_VERSION 2
 
     // HID related constants
 

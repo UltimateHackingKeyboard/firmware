@@ -282,7 +282,7 @@ usb_status_t USB_DeviceGetHidDescriptor(
 }
 
 usb_status_t USB_DeviceGetConfigurationDescriptor(
-    usb_device_handle handle, usb_device_get_configuration_descriptor_struct_t *configurationDescriptor)
+    usb_device_handle handle, usb_device_get_configuration_descriptor_struct_t *configurationDescriptor, uint8_t msAltEnumCode)
 {
     if (USB_COMPOSITE_CONFIGURATION_INDEX > configurationDescriptor->configuration) {
         configurationDescriptor->buffer = (uint8_t*)UsbConfigurationDescriptor;

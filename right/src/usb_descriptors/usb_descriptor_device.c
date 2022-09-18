@@ -2,7 +2,7 @@
 #include "usb_composite_device.h"
 #include "usb_descriptor_strings.h"
 
-USB_DESC_STORAGE_TYPE(uint8_t) UsbDeviceDescriptor[USB_DESCRIPTOR_LENGTH_DEVICE] = {
+static USB_DESC_STORAGE_TYPE(uint8_t) UsbDeviceDescriptor[USB_DESCRIPTOR_LENGTH_DEVICE] = {
     USB_DESCRIPTOR_LENGTH_DEVICE,
     USB_DESCRIPTOR_TYPE_DEVICE,
     USB_SHORT_GET_LOW(USB_DEVICE_SPECIFICATION_VERSION),
