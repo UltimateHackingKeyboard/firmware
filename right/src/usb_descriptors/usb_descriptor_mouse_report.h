@@ -21,7 +21,7 @@
 
 // Variables:
 
-    static USB_DESC_STORAGE_TYPE UsbMouseReportDescriptor[] = {
+    static USB_DESC_STORAGE_TYPE(uint8_t) UsbMouseReportDescriptor[] = {
         HID_RI_USAGE_PAGE(8, HID_RI_USAGE_PAGE_GENERIC_DESKTOP),
         HID_RI_USAGE(8, HID_RI_USAGE_GENERIC_DESKTOP_MOUSE),
         HID_RI_COLLECTION(8, HID_RI_COLLECTION_APPLICATION),
