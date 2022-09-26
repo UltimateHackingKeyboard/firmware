@@ -107,7 +107,7 @@ static USB_DESC_STORAGE_TYPE(USBD_BOSType) usbd_bosDesc = {
             .dwWindowsVersion = USB_MS_OS_2P0_MIN_WINDOWS_VERSION,
             .wMSOSDescriptorSetTotalLength = sizeof(USB_MSOS_DescType),
             .bMS_VendorCode = USB_REQ_MICROSOFT_OS,
-            .bAltEnumCode = 0,
+            .bAltEnumCode = 1,
         },
     },
 #endif /* (USBD_MS_OS_DESC_VERSION == 2) */
