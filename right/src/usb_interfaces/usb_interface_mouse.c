@@ -53,7 +53,10 @@ usb_status_t UsbMouseCheckIdleElapsed()
 
 usb_status_t UsbMouseCheckReportReady()
 {
-    if (memcmp(ActiveUsbMouseReport, GetInactiveUsbMouseReport(), sizeof(usb_mouse_report_t)) != 0)
+    // Send out the mouse position and wheel values continuously if the report is not zeros, but only send the mouse button states when they change.
+    if ((memcmp(ActiveUsbMouseReport, GetInactiveUsbMouseReport(), sizeof(usb_mouse_report_t)) != 0) ||
+            ActiveUsbMouseReport->x || ActiveUsbMouseReport->y ||
+            ActiveUsbMouseReport->wheelX || ActiveUsbMouseReport->wheelY)
         return kStatus_USB_Success;
 
     return UsbMouseCheckIdleElapsed();

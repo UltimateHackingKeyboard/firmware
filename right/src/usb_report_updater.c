@@ -585,9 +585,7 @@ void UpdateUsbReports(void)
         lastActivityTime = CurrentTime;
     }
 
-    // Send out the mouse position and wheel values continuously if the report is not zeros, but only send the mouse button states when they change.
-    if (UsbMouseCheckReportReady() == kStatus_USB_Success || ActiveUsbMouseReport->x || ActiveUsbMouseReport->y ||
-            ActiveUsbMouseReport->wheelX || ActiveUsbMouseReport->wheelY) {
+    if (UsbMouseCheckReportReady() == kStatus_USB_Success) {
         UsbReportUpdateSemaphore |= 1 << USB_MOUSE_INTERFACE_INDEX;
         usb_status_t status = UsbMouseAction();
         if (status != kStatus_USB_Success) {
