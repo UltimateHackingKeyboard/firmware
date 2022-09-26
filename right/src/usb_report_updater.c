@@ -542,6 +542,7 @@ void UpdateUsbReports(void)
     UsbMediaKeyboardResetActiveReport();
     UsbSystemKeyboardResetActiveReport();
     UsbMouseResetActiveReport();
+    UsbGamepadResetActiveReport();
 
     updateActiveUsbReports();
 

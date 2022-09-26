@@ -11,6 +11,7 @@
 #include "usb_interfaces/usb_interface_media_keyboard.h"
 #include "usb_interfaces/usb_interface_system_keyboard.h"
 #include "usb_interfaces/usb_interface_mouse.h"
+#include "usb_interfaces/usb_interface_gamepad.h"
 
 uint8_t DebugBuffer[USB_GENERIC_HID_IN_BUFFER_LENGTH];
 
@@ -28,6 +29,7 @@ void UsbCommand_GetDebugBuffer(void)
     SetDebugBufferUint32(37, UsbMediaKeyboardActionCounter);
     SetDebugBufferUint32(41, UsbSystemKeyboardActionCounter);
     SetDebugBufferUint32(45, UsbMouseActionCounter);
+    SetDebugBufferUint32(49, UsbGamepadActionCounter);
 
     memcpy(GenericHidInBuffer, DebugBuffer, USB_GENERIC_HID_IN_BUFFER_LENGTH);
 }

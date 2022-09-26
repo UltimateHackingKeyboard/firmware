@@ -14,6 +14,7 @@
 
 // Macros:
 
+    #define PACKED(X) X __packed
     #define USB_ALIGNMENT               __attribute__((aligned(4))) // required by USB DMA engine
     #define USB_DESC_STORAGE_TYPE(T)    const T USB_ALIGNMENT
 
@@ -57,7 +58,12 @@
     #define HID_RI_USAGE_GENERIC_DESKTOP_CONSUMER              0x0C
     #define HID_RI_USAGE_GENERIC_DESKTOP_X                     0x30
     #define HID_RI_USAGE_GENERIC_DESKTOP_Y                     0x31
+    #define HID_RI_USAGE_GENERIC_DESKTOP_Z                     0x32
+    #define HID_RI_USAGE_GENERIC_DESKTOP_RX                    0x33
+    #define HID_RI_USAGE_GENERIC_DESKTOP_RY                    0x34
+    #define HID_RI_USAGE_GENERIC_DESKTOP_RZ                    0x35
     #define HID_RI_USAGE_GENERIC_DESKTOP_WHEEL                 0x38
+    #define HID_RI_USAGE_GENERIC_DESKTOP_HAT_SWITCH            0x39
     #define HID_RI_USAGE_GENERIC_DESKTOP_RESOLUTION_MULTIPLIER 0x48
     #define HID_RI_USAGE_GENERIC_DESKTOP_SYSTEM_CONTROL        0x80
     #define HID_RI_USAGE_CONSUMER_CONTROL                      0x01
