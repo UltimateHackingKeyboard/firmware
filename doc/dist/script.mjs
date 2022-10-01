@@ -580,11 +580,12 @@ const app = createApp({
     },
     created() {
         const self = this;
+        let contextModules = [];
         window.addEventListener('message', function(event) {
             switch (event.data.action) {
                 case 'agent-message-context': {
                     const data = event.data;
-                    self.modules = data.modules;
+                    contextModules = data.modules;
                     self.firmwareRepoInfo = data.firmwareRepoInfo || DEFAULT_FIRMWARE_REPO_INFO;
                     self.isRunningInAgent = data.isRunningInAgent;
                     updateWidgets();
@@ -594,12 +595,14 @@ const app = createApp({
                 case 'agent-message-editor-got-focus': {
                     const data = event.data;
                     currentCommand = data.command;
+                    self.modules = contextModules;
                     updateWidgets();
                     break;
                 }
 
                 case 'agent-message-editor-lost-focus': {
                     currentCommand = '';
+                    self.modules = [];
                     updateWidgets();
                     break;
                 }
