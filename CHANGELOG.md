@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [9.1.0] - 2022-10-04
+
+Device Protocol: 4.8.0 | Module Protocol: 4.2.0 | User Config: 5.**1**.0 | Hardware Config: 1.0.0 | Smart Macros: 1.0.0
+
+- Fix layer activation order. When enabling the mouse layer via layer toggling, the acceleration function of the mouse layer couldn't be used before.
+- Add the new layers to the list of secondary role layers. `USERCONFIG:MINOR`
+- Hide the widgets of the smart macro documentation when no macro command is focused.
+
 ## [9.0.1] - 2022-09-10
 
 Device Protocol: 4.8.0 | Module Protocol: 4.2.0 | User Config: 5.0.0 | Hardware Config: 1.0.0 | Smart Macros: 1.0.0
