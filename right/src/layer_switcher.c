@@ -56,10 +56,10 @@ void updateActiveLayer() {
     layer_id_t activeLayer = NONE;
     bool activeLayerHeld = false;
     if(activeLayer == NONE) {
-        activeLayer = heldLayer;
+        activeLayer = toggledLayer;
     }
     if(activeLayer == NONE) {
-        activeLayer = toggledLayer;
+        activeLayer = heldLayer;
     }
     activeLayerHeld = activeLayer == heldLayer && activeLayer != NONE;
 
