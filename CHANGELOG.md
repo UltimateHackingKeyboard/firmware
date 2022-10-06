@@ -9,7 +9,7 @@ and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
 Device Protocol: 4.8.0 | Module Protocol: 4.2.0 | User Config: 5.**1**.0 | Hardware Config: 1.0.0 | Smart Macros: 1.0.0
 
-- Fix layer activation order. When enabling the mouse layer via layer toggling, the acceleration function of the mouse layer couldn't be used before.
+- Fix layer activation/toggle priority. (Since v9.0.0, any layer activation, according to the base layer, released the toggled layer insteading of triggering the relevant action on non-base layers.)
 - Add the new layers to the list of secondary role layers. `USERCONFIG:MINOR`
 - Hide the widgets of the smart macro documentation when no macro command is focused.
 
