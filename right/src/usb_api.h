@@ -32,7 +32,7 @@
     #define USB_STRING_DESCRIPTOR_NONE           0x00
     #define USB_LANGUAGE_ID_UNITED_STATES        0x0409
 
-    //#define USBD_MS_OS_DESC_VERSION 2
+    #define USBD_MS_OS_DESC_VERSION 2
 
     // HID related constants
 
