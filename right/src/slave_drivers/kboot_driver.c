@@ -23,9 +23,9 @@ void KbootSlaveDriver_Init(uint8_t kbootInstanceId)
 {
 }
 
-status_t KbootSlaveDriver_Update(uint8_t kbootInstanceId)
+slave_result_t KbootSlaveDriver_Update(uint8_t kbootInstanceId)
 {
-    status_t status = kStatus_Uhk_IdleSlave;
+    slave_result_t res = { .status = kStatus_Uhk_IdleSlave, .hold = false };
 
     switch (KbootDriverState.command) {
         case KbootCommand_Idle:
@@ -33,7 +33,7 @@ status_t KbootSlaveDriver_Update(uint8_t kbootInstanceId)
         case KbootCommand_Ping:
             switch (KbootDriverState.phase) {
                 case KbootPhase_SendPing:
-                    status = tx(pingCommand, sizeof(pingCommand));
+                    res.status = tx(pingCommand, sizeof(pingCommand));
                     KbootDriverState.phase = KbootPhase_CheckPingStatus;
                     break;
                 case KbootPhase_CheckPingStatus:
@@ -41,9 +41,11 @@ status_t KbootSlaveDriver_Update(uint8_t kbootInstanceId)
                     KbootDriverState.phase = KbootDriverState.status == kStatus_Success
                         ? KbootPhase_ReceivePingResponse
                         : KbootPhase_SendPing;
-                    return kStatus_Uhk_IdleCycle;
+                    res.status =  kStatus_Uhk_IdleCycle;
+                    res.hold = true;
+                    break;
                 case KbootPhase_ReceivePingResponse:
-                    status = rx(KBOOT_PACKAGE_LENGTH_PING_RESPONSE);
+                    res.status = rx(KBOOT_PACKAGE_LENGTH_PING_RESPONSE);
                     KbootDriverState.phase = KbootPhase_CheckPingResponseStatus;
                     break;
                 case KbootPhase_CheckPingResponseStatus:
@@ -52,31 +54,33 @@ status_t KbootSlaveDriver_Update(uint8_t kbootInstanceId)
                         KbootDriverState.command = KbootCommand_Idle;
                     } else {
                         KbootDriverState.phase = KbootPhase_SendPing;
-                        return kStatus_Uhk_IdleCycle;
+                        res.status =  kStatus_Uhk_IdleCycle;
+                        res.hold = true;
                     }
+                    break;
                 }
             break;
         case KbootCommand_Reset:
             switch (KbootDriverState.phase) {
                 case KbootPhase_SendReset:
-                    status = tx(resetCommand, sizeof(resetCommand));
+                    res.status = tx(resetCommand, sizeof(resetCommand));
                     KbootDriverState.phase = KbootPhase_ReceiveResetAck;
                     break;
                 case KbootPhase_ReceiveResetAck:
-                    status = rx(KBOOT_PACKAGE_LENGTH_ACK);
+                    res.status = rx(KBOOT_PACKAGE_LENGTH_ACK);
                     KbootDriverState.phase = KbootPhase_ReceiveResetGenericResponse;
                     break;
                 case KbootPhase_ReceiveResetGenericResponse:
-                    status = rx(KBOOT_PACKAGE_LENGTH_GENERIC_RESPONSE);
+                    res.status = rx(KBOOT_PACKAGE_LENGTH_GENERIC_RESPONSE);
                     KbootDriverState.phase = KbootPhase_CheckResetSendAck;
                     break;
                 case KbootPhase_CheckResetSendAck:
-                    status = tx(ackMessage, sizeof(ackMessage));
+                    res.status = tx(ackMessage, sizeof(ackMessage));
                     KbootDriverState.command = KbootCommand_Idle;
                     break;
             }
             break;
     }
 
-    return status;
+    return res;
 }
