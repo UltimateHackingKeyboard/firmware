@@ -80,7 +80,6 @@ static void slaveSchedulerCallback(I2C_Type *base, i2c_master_handle_t *handle, 
             previousSlave->previousStatus = previousStatus;
             if (IS_STATUS_I2C_ERROR(previousStatus)) {
                 LogI2cError(previousSlaveId, previousStatus);
-            } else {
             }
 
             bool wasPreviousSlaveConnected = previousSlave->isConnected;
