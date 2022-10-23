@@ -314,7 +314,7 @@ const app = createApp({
                     },
                 },
                 {
-                    name:'acceleration',
+                    name:'initialAcceleration',
                     desc:'Acceleration',
                     sliderProps: {
                         move: {min:25, default:1700, max:6375, step:25},
