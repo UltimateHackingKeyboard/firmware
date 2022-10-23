@@ -1649,6 +1649,11 @@ static macro_result_t processPlayMacroCommand(const char* arg, const char *argEn
 
 static macro_result_t processWriteCommand(const char* arg, const char *argEnd)
 {
+    // todo: clean this up when refactoring write tokenization
+    while (argEnd > arg && (argEnd[-1] == '\n' || argEnd[-1] == '\r')) {
+        argEnd--;
+    }
+
     return dispatchText(arg, argEnd - arg);
 }
 
