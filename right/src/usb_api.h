@@ -14,10 +14,14 @@
 
 // Macros:
 
-    #define USB_ALIGNMENT           __attribute__((aligned(4))) // required by USB DMA engine
-    #define USB_DESC_STORAGE_TYPE   const uint8_t USB_ALIGNMENT
+    #define PACKED(X) X __packed
+    #define USB_ALIGNMENT               __attribute__((aligned(4))) // required by USB DMA engine
+    #define USB_DESC_STORAGE_TYPE(T)    const T USB_ALIGNMENT
 
     // General constants
+
+    #define USB_DESCRIPTOR_TYPE_BINARY_OBJECT_STORE (0x0FU)
+    #define USB_DESCRIPTOR_TYPE_DEVICE_CAPABILITY   (0x10U)
 
     #define USB_DEVICE_CLASS 0x00
     #define USB_DEVICE_SUBCLASS 0x00
@@ -27,6 +31,8 @@
     #define USB_INTERFACE_ALTERNATE_SETTING_NONE 0x00
     #define USB_STRING_DESCRIPTOR_NONE           0x00
     #define USB_LANGUAGE_ID_UNITED_STATES        0x0409
+
+    #define USBD_MS_OS_DESC_VERSION 2
 
     // HID related constants
 
@@ -57,7 +63,12 @@
     #define HID_RI_USAGE_GENERIC_DESKTOP_CONSUMER              0x0C
     #define HID_RI_USAGE_GENERIC_DESKTOP_X                     0x30
     #define HID_RI_USAGE_GENERIC_DESKTOP_Y                     0x31
+    #define HID_RI_USAGE_GENERIC_DESKTOP_Z                     0x32
+    #define HID_RI_USAGE_GENERIC_DESKTOP_RX                    0x33
+    #define HID_RI_USAGE_GENERIC_DESKTOP_RY                    0x34
+    #define HID_RI_USAGE_GENERIC_DESKTOP_RZ                    0x35
     #define HID_RI_USAGE_GENERIC_DESKTOP_WHEEL                 0x38
+    #define HID_RI_USAGE_GENERIC_DESKTOP_HAT_SWITCH            0x39
     #define HID_RI_USAGE_GENERIC_DESKTOP_RESOLUTION_MULTIPLIER 0x48
     #define HID_RI_USAGE_GENERIC_DESKTOP_SYSTEM_CONTROL        0x80
     #define HID_RI_USAGE_CONSUMER_CONTROL                      0x01

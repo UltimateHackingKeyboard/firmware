@@ -30,7 +30,7 @@
 
 // Variables:
 
-    static USB_DESC_STORAGE_TYPE UsbBasicKeyboardReportDescriptor[] = {
+    static USB_DESC_STORAGE_TYPE(uint8_t) UsbBasicKeyboardReportDescriptor[] = {
         HID_RI_USAGE_PAGE(8, HID_RI_USAGE_PAGE_GENERIC_DESKTOP),
         HID_RI_USAGE(8, HID_RI_USAGE_GENERIC_DESKTOP_KEYBOARD),
         HID_RI_COLLECTION(8, HID_RI_COLLECTION_APPLICATION),

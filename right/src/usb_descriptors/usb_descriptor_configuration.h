@@ -12,17 +12,13 @@
 // Macros:
 
     #define USB_COMPOSITE_CONFIGURATION_INDEX 1
-    #define USB_CONFIGURATION_DESCRIPTOR_TOTAL_LENGTH \
-    (5 * USB_DESCRIPTOR_LENGTH_INTERFACE + 5 * USB_DESCRIPTOR_LENGTH_HID + \
-    6 * USB_DESCRIPTOR_LENGTH_ENDPOINT + USB_DESCRIPTOR_LENGTH_CONFIGURE)
-
-// Variables:
-
-    extern USB_DESC_STORAGE_TYPE UsbConfigurationDescriptor[USB_CONFIGURATION_DESCRIPTOR_TOTAL_LENGTH];
 
 // Functions:
 
+    usb_status_t USB_DeviceGetHidDescriptor(
+        usb_device_handle handle, usb_device_get_hid_descriptor_struct_t *hidDescriptor);
+
     usb_status_t USB_DeviceGetConfigurationDescriptor(
-        usb_device_handle handle, usb_device_get_configuration_descriptor_struct_t *configurationDescriptor);
+        usb_device_handle handle, usb_device_get_configuration_descriptor_struct_t *configurationDescriptor, uint8_t msAltEnumCode);
 
 #endif

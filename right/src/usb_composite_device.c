@@ -5,16 +5,20 @@
 #include "usb_composite_device.h"
 #include "usb_descriptors/usb_descriptor_hid.h"
 #include "usb_descriptors/usb_descriptor_strings.h"
+#include "usb_descriptors/usb_descriptors_microsoft.h"
+#include "usb_microsoft_os.h"
 #include "bus_pal_hardware.h"
 #include "bootloader/wormhole.h"
 
+static uint8_t MsAltEnumMode = 0;
 usb_composite_device_t UsbCompositeDevice;
 static usb_status_t usbDeviceCallback(usb_device_handle handle, uint32_t event, void *param);
 
 static usb_device_class_config_list_struct_t UsbDeviceCompositeConfigList = {
     .deviceCallback = usbDeviceCallback,
     .count = USB_DEVICE_CONFIG_HID,
-    .config = (usb_device_class_config_struct_t[USB_DEVICE_CONFIG_HID]) {{
+    .config = (usb_device_class_config_struct_t[USB_DEVICE_CONFIG_HID]) {
+    {
         .classCallback = UsbGenericHidCallback,
         .classInfomation = (usb_device_class_struct_t[]) {{
             .type = kUSB_DeviceClassTypeHid,
@@ -86,8 +90,8 @@ static usb_device_class_config_list_struct_t UsbDeviceCompositeConfigList = {
                 .count = USB_MEDIA_KEYBOARD_INTERFACE_COUNT,
                 .interfaces = (usb_device_interfaces_struct_t[USB_MEDIA_KEYBOARD_INTERFACE_COUNT]) {{
                     .classCode = USB_CLASS_HID,
-                    .subclassCode = USB_HID_SUBCLASS_BOOT,
-                    .protocolCode = USB_HID_PROTOCOL_KEYBOARD,
+                    .subclassCode = USB_HID_SUBCLASS_NONE,
+                    .protocolCode = USB_HID_PROTOCOL_NONE,
                     .interfaceNumber = USB_MEDIA_KEYBOARD_INTERFACE_INDEX,
                     .count = 1,
                     .interface = (usb_device_interface_struct_t[]) {{
@@ -114,8 +118,8 @@ static usb_device_class_config_list_struct_t UsbDeviceCompositeConfigList = {
                 .count = USB_SYSTEM_KEYBOARD_INTERFACE_COUNT,
                 .interfaces = (usb_device_interfaces_struct_t[USB_SYSTEM_KEYBOARD_INTERFACE_COUNT]) {{
                     .classCode = USB_CLASS_HID,
-                    .subclassCode = USB_HID_SUBCLASS_BOOT,
-                    .protocolCode = USB_HID_PROTOCOL_KEYBOARD,
+                    .subclassCode = USB_HID_SUBCLASS_NONE,
+                    .protocolCode = USB_HID_PROTOCOL_NONE,
                     .interfaceNumber = USB_SYSTEM_KEYBOARD_INTERFACE_INDEX,
                     .count = 1,
                     .interface = (usb_device_interface_struct_t[]) {{
@@ -160,7 +164,42 @@ static usb_device_class_config_list_struct_t UsbDeviceCompositeConfigList = {
                 }}
             }}
         }}
-    }
+    },
+    {
+        .classCallback = UsbGamepadCallback,
+        .classInfomation = (usb_device_class_struct_t[]) {{
+            .type = kUSB_DeviceClassTypeHid,
+            .configurations = USB_DEVICE_CONFIGURATION_COUNT,
+            .interfaceList = (usb_device_interface_list_t[USB_DEVICE_CONFIGURATION_COUNT]) {{
+                .count = USB_GAMEPAD_INTERFACE_COUNT,
+                .interfaces = (usb_device_interfaces_struct_t[USB_GAMEPAD_INTERFACE_COUNT]) {{
+                    .classCode = USB_CLASS_HID,
+                    .subclassCode = USB_HID_SUBCLASS_NONE,
+                    .protocolCode = USB_HID_PROTOCOL_NONE,
+                    .interfaceNumber = USB_GAMEPAD_INTERFACE_INDEX,
+                    .count = 1,
+                    .interface = (usb_device_interface_struct_t[]) {{
+                        .alternateSetting = USB_INTERFACE_ALTERNATE_SETTING_NONE,
+                        .endpointList = {
+                            .count = USB_GAMEPAD_ENDPOINT_COUNT,
+                            .endpoint = (usb_device_endpoint_struct_t[USB_GENERIC_HID_ENDPOINT_COUNT]) {
+                                {
+                                    .endpointAddress = USB_GAMEPAD_ENDPOINT_INDEX | (USB_IN << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT),
+                                    .transferType = USB_ENDPOINT_INTERRUPT,
+                                    .maxPacketSize = USB_GAMEPAD_INTERRUPT_IN_PACKET_SIZE,
+                                },
+                                {
+                                    .endpointAddress = USB_GAMEPAD_ENDPOINT_INDEX | (USB_OUT << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT),
+                                    .transferType = USB_ENDPOINT_INTERRUPT,
+                                    .maxPacketSize = USB_GAMEPAD_INTERRUPT_OUT_PACKET_SIZE,
+                                }
+                            }
+                        }
+                    }}
+                }}
+            }}
+        }}
+    },
 }};
 
 volatile bool SleepModeActive = true;
@@ -200,6 +239,7 @@ static usb_status_t usbDeviceCallback(usb_device_handle handle, uint32_t event, 
     switch (event) {
         case kUSB_DeviceEventBusReset:
             UsbCompositeDevice.attach = 0;
+            MsAltEnumMode = 0;
             status = kStatus_USB_Success;
             break;
         case kUSB_DeviceEventSuspend:
@@ -255,7 +295,8 @@ static usb_status_t usbDeviceCallback(usb_device_handle handle, uint32_t event, 
             status = USB_DeviceGetDeviceDescriptor(handle, (usb_device_get_device_descriptor_struct_t *)param);
             break;
         case kUSB_DeviceEventGetConfigurationDescriptor:
-            status = USB_DeviceGetConfigurationDescriptor(handle, (usb_device_get_configuration_descriptor_struct_t *)param);
+            status = USB_DeviceGetConfigurationDescriptor(handle, (usb_device_get_configuration_descriptor_struct_t *)param,
+                    MsAltEnumMode);
             break;
         case kUSB_DeviceEventGetStringDescriptor:
             status = USB_DeviceGetStringDescriptor(handle, (usb_device_get_string_descriptor_struct_t *)param);
@@ -277,6 +318,21 @@ static usb_status_t usbDeviceCallback(usb_device_handle handle, uint32_t event, 
             if (wakeUpHostAllowed)
                 *temp16 |= (USB_DEVICE_CONFIG_REMOTE_WAKEUP << (USB_REQUSET_STANDARD_GET_STATUS_DEVICE_REMOTE_WARKUP_SHIFT));
             status = kStatus_USB_Success;
+            break;
+        case kUSB_DeviceEventVendorRequest: ;
+#if (USBD_MS_OS_DESC_VERSION == 2)
+            usb_device_control_request_struct_t *controlRequest = (usb_device_control_request_struct_t *)param;
+
+            if (controlRequest->setup->bRequest == USB_REQ_MICROSOFT_OS) {
+                if (controlRequest->setup->wIndex == USB_MS_OS_2p0_GET_DESCRIPTOR_INDEX) {
+                    status = USB_DeviceGetMsOsDescriptor(handle, controlRequest);
+                }
+                else if (controlRequest->setup->wIndex == USB_MS_OS_2p0_SET_ALT_ENUMERATION_INDEX) {
+                    MsAltEnumMode = controlRequest->setup->wValue >> 8;
+                    status = kStatus_USB_Success;
+                }
+            }
+#endif /* (USBD_MS_OS_DESC_VERSION == 2) */
             break;
     }
 

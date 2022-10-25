@@ -9,6 +9,7 @@
 #include "usb_interfaces/usb_interface_media_keyboard.h"
 #include "usb_interfaces/usb_interface_system_keyboard.h"
 #include "usb_interfaces/usb_interface_mouse.h"
+#include "usb_interfaces/usb_interface_gamepad.h"
 
 // Device instance count, the sum of KHCI and EHCI instance counts
 #define USB_DEVICE_CONFIG_NUM 1
@@ -19,8 +20,9 @@
     USB_BASIC_KEYBOARD_INTERFACE_COUNT + \
     USB_MEDIA_KEYBOARD_INTERFACE_COUNT + \
     USB_SYSTEM_KEYBOARD_INTERFACE_COUNT + \
-    USB_MOUSE_INTERFACE_COUNT \
-)
+    USB_MOUSE_INTERFACE_COUNT + \
+    USB_GAMEPAD_INTERFACE_COUNT + \
+0)
 
 // Whether the device is self-powered: 1 supported, 0 not supported
 #define USB_DEVICE_CONFIG_SELF_POWER 0
@@ -38,8 +40,9 @@
     USB_BASIC_KEYBOARD_ENDPOINT_COUNT + \
     USB_MEDIA_KEYBOARD_ENDPOINT_COUNT + \
     USB_SYSTEM_KEYBOARD_ENDPOINT_COUNT + \
-    USB_MOUSE_ENDPOINT_COUNT \
-)
+    USB_MOUSE_ENDPOINT_COUNT + \
+    USB_GAMEPAD_ENDPOINT_COUNT + \
+0)
 
 // The maximum buffer length for the KHCI DMA workaround
 #define USB_DEVICE_CONFIG_KHCI_DMA_ALIGN_BUFFER_LENGTH 64

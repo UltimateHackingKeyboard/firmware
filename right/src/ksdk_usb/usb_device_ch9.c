@@ -99,6 +99,9 @@ static usb_status_t USB_DeviceCh9SynchFrame(usb_device_common_class_struct_t *cl
                                             uint8_t **buffer,
                                             uint32_t *length);
 
+extern usb_status_t USB_DeviceGetBosDescriptor(
+    usb_device_handle handle, usb_device_get_descriptor_common_struct_t *descriptor);
+
 /*******************************************************************************
  * Variables
  ******************************************************************************/
@@ -398,6 +401,10 @@ static usb_status_t USB_DeviceCh9GetDescriptor(usb_device_common_class_struct_t 
         commonDescriptor.stringDescriptor.languageId = setup->wIndex;
         error = USB_DeviceClassCallback(classHandle->handle, kUSB_DeviceEventGetStringDescriptor,
                                         &commonDescriptor.stringDescriptor);
+    }
+    else if (USB_DESCRIPTOR_TYPE_BINARY_OBJECT_STORE == descriptorType)
+    {
+        error = USB_DeviceGetBosDescriptor(classHandle->handle, &commonDescriptor.commonDescriptor);
     }
 #if (defined(USB_DEVICE_CONFIG_HID) && (USB_DEVICE_CONFIG_HID > 0U))
     else if (USB_DESCRIPTOR_TYPE_HID == descriptorType)
@@ -752,86 +759,44 @@ usb_status_t USB_DeviceControlCallback(usb_device_handle handle,
         if ((deviceSetup->bmRequestType & USB_REQUEST_TYPE_TYPE_MASK) == USB_REQUEST_TYPE_TYPE_STANDARD)
         {
             /* Handle the standard request */
-            if (s_UsbDeviceStandardRequest[deviceSetup->bRequest] != (usb_standard_request_callback_t)NULL)
+            if ((deviceSetup->bRequest < (sizeof(s_UsbDeviceStandardRequest) / 4U)) &&
+                (s_UsbDeviceStandardRequest[deviceSetup->bRequest] != (usb_standard_request_callback_t)NULL))
             {
                 error = s_UsbDeviceStandardRequest[deviceSetup->bRequest](classHandle, deviceSetup, &buffer, &length);
             }
         }
         else
         {
-            if ((deviceSetup->wLength) &&
-                ((deviceSetup->bmRequestType & USB_REQUSET_TYPE_DIR_MASK) == USB_REQUEST_TYPE_DIR_OUT))
+            usb_device_control_request_struct_t controlRequest;
+            controlRequest.buffer = (uint8_t *)NULL;
+            controlRequest.isSetup = 1U;
+            controlRequest.setup = deviceSetup;
+            controlRequest.length = deviceSetup->wLength;
+
+            switch (deviceSetup->bmRequestType & USB_REQUEST_TYPE_TYPE_MASK)
             {
-                /* Class or vendor request with the OUT data phase. */
-                if ((deviceSetup->wLength) &&
-                    ((deviceSetup->bmRequestType & USB_REQUEST_TYPE_TYPE_CLASS) == USB_REQUEST_TYPE_TYPE_CLASS))
-                {
-                    /* Get data buffer to receive the data from the host. */
-                    usb_device_control_request_struct_t controlRequest;
-                    controlRequest.buffer = (uint8_t *)NULL;
-                    controlRequest.isSetup = 1U;
-                    controlRequest.setup = deviceSetup;
-                    controlRequest.length = deviceSetup->wLength;
+                case USB_REQUEST_TYPE_TYPE_CLASS:
                     error = USB_DeviceClassEvent(handle, kUSB_DeviceClassEventClassRequest, &controlRequest);
-                    length = controlRequest.length;
-                    buffer = controlRequest.buffer;
-                }
-                else if ((deviceSetup->wLength) &&
-                         ((deviceSetup->bmRequestType & USB_REQUEST_TYPE_TYPE_VENDOR) == USB_REQUEST_TYPE_TYPE_VENDOR))
-                {
-                    /* Get data buffer to receive the data from the host. */
-                    usb_device_control_request_struct_t controlRequest;
-                    controlRequest.buffer = (uint8_t *)NULL;
-                    controlRequest.isSetup = 1U;
-                    controlRequest.setup = deviceSetup;
-                    controlRequest.length = deviceSetup->wLength;
+                    break;
+                case USB_REQUEST_TYPE_TYPE_VENDOR:
                     error = USB_DeviceClassCallback(handle, kUSB_DeviceEventVendorRequest, &controlRequest);
-                    length = controlRequest.length;
-                    buffer = controlRequest.buffer;
-                }
-                else
-                {
-                }
-                if (kStatus_USB_Success == error)
-                {
-                    /* Prime an OUT transfer */
-                    error = USB_DeviceRecvRequest(handle, USB_CONTROL_ENDPOINT, buffer, deviceSetup->wLength);
-                    return error;
-                }
+                    break;
+                default: /* standard, handled above */
+                    break;
             }
-            else
+            length = controlRequest.length;
+            buffer = controlRequest.buffer;
+
+            if ((deviceSetup->wLength) &&
+                ((deviceSetup->bmRequestType & USB_REQUSET_TYPE_DIR_MASK) == USB_REQUEST_TYPE_DIR_OUT) &&
+                (kStatus_USB_Success == error))
             {
-                /* Class or vendor request with the IN data phase. */
-                if (((deviceSetup->bmRequestType & USB_REQUEST_TYPE_TYPE_CLASS) == USB_REQUEST_TYPE_TYPE_CLASS))
-                {
-                    /* Get data buffer to response the host. */
-                    usb_device_control_request_struct_t controlRequest;
-                    controlRequest.buffer = (uint8_t *)NULL;
-                    controlRequest.isSetup = 1U;
-                    controlRequest.setup = deviceSetup;
-                    controlRequest.length = deviceSetup->wLength;
-                    error = USB_DeviceClassEvent(handle, kUSB_DeviceClassEventClassRequest, &controlRequest);
-                    length = controlRequest.length;
-                    buffer = controlRequest.buffer;
-                }
-                else if (((deviceSetup->bmRequestType & USB_REQUEST_TYPE_TYPE_VENDOR) == USB_REQUEST_TYPE_TYPE_VENDOR))
-                {
-                    /* Get data buffer to response the host. */
-                    usb_device_control_request_struct_t controlRequest;
-                    controlRequest.buffer = (uint8_t *)NULL;
-                    controlRequest.isSetup = 1U;
-                    controlRequest.setup = deviceSetup;
-                    controlRequest.length = deviceSetup->wLength;
-                    error = USB_DeviceClassCallback(handle, kUSB_DeviceEventVendorRequest, &controlRequest);
-                    length = controlRequest.length;
-                    buffer = controlRequest.buffer;
-                }
-                else
-                {
-                }
+                /* Prime an OUT transfer */
+                error = USB_DeviceRecvRequest(handle, USB_CONTROL_ENDPOINT, buffer, deviceSetup->wLength);
+                return error;
             }
         }
-        /* Send the reponse to the host. */
+        /* Send the response to the host. */
         error = USB_DeviceControlCallbackFeedback(handle, deviceSetup, error, kUSB_DeviceControlPipeSetupStage, &buffer,
                                                   &length);
     }
@@ -852,30 +817,24 @@ usb_status_t USB_DeviceControlCallback(usb_device_handle handle,
     else if ((message->length) && (deviceSetup->wLength) &&
              ((deviceSetup->bmRequestType & USB_REQUSET_TYPE_DIR_MASK) == USB_REQUEST_TYPE_DIR_OUT))
     {
-        if (((deviceSetup->bmRequestType & USB_REQUEST_TYPE_TYPE_CLASS) == USB_REQUEST_TYPE_TYPE_CLASS))
+        usb_device_control_request_struct_t controlRequest;
+        controlRequest.buffer = message->buffer;
+        controlRequest.isSetup = 0U;
+        controlRequest.setup = deviceSetup;
+        controlRequest.length = message->length;
+
+        switch (deviceSetup->bmRequestType & USB_REQUEST_TYPE_TYPE_MASK)
         {
-            /* Data received in OUT phase, and notify the class driver. */
-            usb_device_control_request_struct_t controlRequest;
-            controlRequest.buffer = message->buffer;
-            controlRequest.isSetup = 0U;
-            controlRequest.setup = deviceSetup;
-            controlRequest.length = message->length;
-            error = USB_DeviceClassEvent(handle, kUSB_DeviceClassEventClassRequest, &controlRequest);
+            case USB_REQUEST_TYPE_TYPE_CLASS:
+                error = USB_DeviceClassEvent(handle, kUSB_DeviceClassEventClassRequest, &controlRequest);
+                break;
+            case USB_REQUEST_TYPE_TYPE_VENDOR:
+                error = USB_DeviceClassCallback(handle, kUSB_DeviceEventVendorRequest, &controlRequest);
+                break;
+            default: /* standard, handled above */
+                break;
         }
-        else if (((deviceSetup->bmRequestType & USB_REQUEST_TYPE_TYPE_VENDOR) == USB_REQUEST_TYPE_TYPE_VENDOR))
-        {
-            /* Data received in OUT phase, and notify the application. */
-            usb_device_control_request_struct_t controlRequest;
-            controlRequest.buffer = message->buffer;
-            controlRequest.isSetup = 0U;
-            controlRequest.setup = deviceSetup;
-            controlRequest.length = message->length;
-            error = USB_DeviceClassCallback(handle, kUSB_DeviceEventVendorRequest, &controlRequest);
-        }
-        else
-        {
-        }
-        /* Send the reponse to the host. */
+        /* Send the response to the host. */
         error = USB_DeviceControlCallbackFeedback(handle, deviceSetup, error, kUSB_DeviceControlPipeDataStage, &buffer,
                                                   &length);
     }
