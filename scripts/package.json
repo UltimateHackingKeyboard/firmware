@@ -16,12 +16,12 @@
     "commander": "^2.11.0",
     "shelljs": "^0.8.4"
   },
-  "firmwareVersion": "9.1.1",
+  "firmwareVersion": "9.1.2",
   "deviceProtocolVersion": "4.8.0",
   "moduleProtocolVersion": "4.2.0",
   "userConfigVersion": "5.1.0",
   "hardwareConfigVersion": "1.0.0",
-  "smartMacrosVersion": "1.0.0",
+  "smartMacrosVersion": "1.0.1",
   "devices": [
     {
       "deviceId": 1,
