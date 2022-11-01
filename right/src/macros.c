@@ -233,6 +233,7 @@ static macro_result_t processDelay(uint32_t time)
     if (s->as.actionActive) {
         if (Timer_GetElapsedTime(&s->as.delayData.start) >= time) {
             s->as.actionActive = false;
+            s->as.delayData.start = 0;
             return MacroResult_Finished;
         }
         sleepTillTime(s->as.delayData.start + time);
@@ -1648,6 +1649,11 @@ static macro_result_t processPlayMacroCommand(const char* arg, const char *argEn
 
 static macro_result_t processWriteCommand(const char* arg, const char *argEnd)
 {
+    // todo: clean this up when refactoring write tokenization
+    while (argEnd > arg && (argEnd[-1] == '\n' || argEnd[-1] == '\r')) {
+        argEnd--;
+    }
+
     return dispatchText(arg, argEnd - arg);
 }
 
@@ -3007,6 +3013,8 @@ static bool loadNextCommand()
     if (s->ms.currentMacroAction.type != MacroActionType_Command) {
         return false;
     }
+
+    memset(&s->as, 0, sizeof s->as);
 
     const char* actionEnd = s->ms.currentMacroAction.cmd.text + s->ms.currentMacroAction.cmd.textLen;
     const char* nextCommand = s->ms.currentMacroAction.cmd.text + s->ms.commandEnd;
