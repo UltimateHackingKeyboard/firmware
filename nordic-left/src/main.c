@@ -30,10 +30,6 @@
 #include <zephyr/bluetooth/services/dis.h>
 #include <dk_buttons_and_leds.h>
 
-
-#define LOG_LEVEL LOG_LEVEL_DBG
-LOG_MODULE_REGISTER(main);
-
 static const uint8_t hid_keyboard_report_desc[] = HID_KEYBOARD_REPORT_DESC();
 static const uint8_t hid_mouse_report_desc[] = HID_MOUSE_REPORT_DESC(2);
 
@@ -54,7 +50,7 @@ const struct device *hid_mouse_dev;
 
 static void status_cb(enum usb_dc_status_code status, const uint8_t *param)
 {
-	LOG_DBG("usb %i", status);
+	printk("usb %i", status);
 	usb_status = status;
 	if (status == USB_DC_CONFIGURED) {
 		hid_int_ep_write(hid_mouse_dev, mouse_report, sizeof(mouse_report), NULL);
