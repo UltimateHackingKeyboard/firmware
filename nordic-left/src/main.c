@@ -34,20 +34,6 @@
 #define LOG_LEVEL LOG_LEVEL_DBG
 LOG_MODULE_REGISTER(main);
 
-#define SW0_NODE DT_ALIAS(sw0)
-#define SW1_NODE DT_ALIAS(sw1)
-#define SW2_NODE DT_ALIAS(sw2)
-#define SW3_NODE DT_ALIAS(sw3)
-#define LED0_NODE DT_ALIAS(led0)
-
-#define GPIO_SPEC(node_id) GPIO_DT_SPEC_GET_OR(node_id, gpios, {0})
-
-static const struct gpio_dt_spec sw0 = GPIO_SPEC(SW0_NODE),
-	sw1 = GPIO_SPEC(SW1_NODE),
-	sw2 = GPIO_SPEC(SW2_NODE),
-	sw3 = GPIO_SPEC(SW3_NODE),
-	led0 = GPIO_SPEC(LED0_NODE);
-
 static const uint8_t hid_keyboard_report_desc[] = HID_KEYBOARD_REPORT_DESC();
 static const uint8_t hid_mouse_report_desc[] = HID_MOUSE_REPORT_DESC(2);
 
@@ -86,14 +72,16 @@ static void status_cb(enum usb_dc_status_code status, const uint8_t *param)
 */
 
 void int_in_ready_mouse(const struct device *dev) {
-	mouse_report[MOUSE_X_REPORT_POS] = gpio_pin_get_dt(&sw0) ? 5 : 0;
-	mouse_report[MOUSE_Y_REPORT_POS] = gpio_pin_get_dt(&sw1) ? 5 : 0;
-	mouse_report[MOUSE_BTN_REPORT_POS] = gpio_pin_get_dt(&sw2) ? MOUSE_BTN_LEFT : 0;
+	uint32_t buttons = dk_get_buttons();
+	mouse_report[MOUSE_X_REPORT_POS] = buttons & DK_BTN1_MSK ? 5 : 0;
+	mouse_report[MOUSE_Y_REPORT_POS] = buttons & DK_BTN2_MSK ? 5 : 0;
+	mouse_report[MOUSE_BTN_REPORT_POS] = buttons & DK_BTN3_MSK ? MOUSE_BTN_LEFT : 0;
 	hid_int_ep_write(hid_mouse_dev, mouse_report, sizeof(mouse_report), NULL);
 }
 
 void int_in_ready_keyboard(const struct device *dev) {
-	keyboard_report[2] = gpio_pin_get_dt(&sw3) ? HID_KEY_A : 0;
+	uint32_t buttons = dk_get_buttons();
+	keyboard_report[2] = buttons & DK_BTN4_MSK ? HID_KEY_A : 0;
 	hid_int_ep_write(hid_keyboard_dev, keyboard_report, sizeof(keyboard_report), NULL);
 }
 
@@ -879,17 +867,8 @@ static void button_changed(uint32_t button_state, uint32_t has_changed)
 
 static void configure_gpio(void)
 {
-	int err;
-
-	err = dk_buttons_init(button_changed);
-	if (err) {
-		printk("Cannot init buttons (err: %d)\n", err);
-	}
-
-	err = dk_leds_init();
-	if (err) {
-		printk("Cannot init LEDs (err: %d)\n", err);
-	}
+	dk_buttons_init(button_changed);
+	dk_leds_init();
 }
 
 
@@ -922,11 +901,7 @@ void main(void)
 	hid_keyboard_dev = device_get_binding("HID_0");
 	hid_mouse_dev = device_get_binding("HID_1");
 
-	gpio_pin_configure_dt(&led0, GPIO_OUTPUT);
-	gpio_pin_configure_dt(&sw0, GPIO_INPUT);
-	gpio_pin_configure_dt(&sw1, GPIO_INPUT);
-	gpio_pin_configure_dt(&sw2, GPIO_INPUT);
-	gpio_pin_configure_dt(&sw3, GPIO_INPUT);
+	configure_gpio();
 
 	usb_hid_register_device(hid_keyboard_dev, hid_keyboard_report_desc, sizeof(hid_keyboard_report_desc), &hidops_keyboard);
 	usb_hid_register_device(hid_mouse_dev, hid_mouse_report_desc, sizeof(hid_mouse_report_desc), &hidops_mouse);
@@ -942,7 +917,6 @@ void main(void)
 
 	printk("Starting Bluetooth Peripheral HIDS keyboard example\n");
 
-	configure_gpio();
 
 	bt_conn_auth_cb_register(&conn_auth_callbacks);
 	bt_conn_auth_info_cb_register(&conn_auth_info_callbacks);
