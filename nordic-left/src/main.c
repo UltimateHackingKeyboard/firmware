@@ -185,7 +185,7 @@ static const struct bt_data sd[] = {
 static struct conn_mode {
 	struct bt_conn *conn;
 	bool in_boot_mode;
-} conn_mode[CONFIG_BT_HIDS_MAX_CLIENT_COUNT];
+} conn_mode;
 
 static const uint8_t hello_world_str[] = {
 	0x0b,	/* Key h */
@@ -282,19 +282,10 @@ static void connected(struct bt_conn *conn, uint8_t err)
 		return;
 	}
 
-	for (size_t i = 0; i < CONFIG_BT_HIDS_MAX_CLIENT_COUNT; i++) {
-		if (!conn_mode[i].conn) {
-			conn_mode[i].conn = conn;
-			conn_mode[i].in_boot_mode = false;
-			break;
-		}
-	}
-
-	for (size_t i = 0; i < CONFIG_BT_HIDS_MAX_CLIENT_COUNT; i++) {
-		if (!conn_mode[i].conn) {
-			advertising_start();
-			return;
-		}
+	if (!conn_mode.conn) {
+		conn_mode.conn = conn;
+		conn_mode.in_boot_mode = false;
+		advertising_start();
 	}
 
 	is_adv = false;
@@ -317,14 +308,10 @@ static void disconnected(struct bt_conn *conn, uint8_t reason)
 		printk("Failed to notify HID service about disconnection\n");
 	}
 
-	for (size_t i = 0; i < CONFIG_BT_HIDS_MAX_CLIENT_COUNT; i++) {
-		if (conn_mode[i].conn == conn) {
-			conn_mode[i].conn = NULL;
-		} else {
-			if (conn_mode[i].conn) {
-				is_any_dev_connected = true;
-			}
-		}
+	if (conn_mode.conn == conn) {
+		conn_mode.conn = NULL;
+	} else if (conn_mode.conn) {
+		is_any_dev_connected = true;
 	}
 
 	if (!is_any_dev_connected) {
@@ -404,15 +391,8 @@ static void hids_pm_evt_handler(enum bt_hids_pm_evt evt,
 				struct bt_conn *conn)
 {
 	char addr[BT_ADDR_LE_STR_LEN];
-	size_t i;
 
-	for (i = 0; i < CONFIG_BT_HIDS_MAX_CLIENT_COUNT; i++) {
-		if (conn_mode[i].conn == conn) {
-			break;
-		}
-	}
-
-	if (i >= CONFIG_BT_HIDS_MAX_CLIENT_COUNT) {
+	if (conn_mode.conn != conn) {
 		printk("Cannot find connection handle when processing PM");
 		return;
 	}
@@ -422,12 +402,12 @@ static void hids_pm_evt_handler(enum bt_hids_pm_evt evt,
 	switch (evt) {
 	case BT_HIDS_PM_EVT_BOOT_MODE_ENTERED:
 		printk("Boot mode entered %s\n", addr);
-		conn_mode[i].in_boot_mode = true;
+		conn_mode.in_boot_mode = true;
 		break;
 
 	case BT_HIDS_PM_EVT_REPORT_MODE_ENTERED:
 		printk("Report mode entered %s\n", addr);
-		conn_mode[i].in_boot_mode = false;
+		conn_mode.in_boot_mode = false;
 		break;
 
 	default:
@@ -655,17 +635,15 @@ static int key_report_con_send(const struct keyboard_state *state,
  */
 static int key_report_send(void)
 {
-	for (size_t i = 0; i < CONFIG_BT_HIDS_MAX_CLIENT_COUNT; i++) {
-		if (conn_mode[i].conn) {
-			int err;
+	if (conn_mode.conn) {
+		int err;
 
-			err = key_report_con_send(&hid_keyboard_state,
-						  conn_mode[i].in_boot_mode,
-						  conn_mode[i].conn);
-			if (err) {
-				printk("Key report send error: %d\n", err);
-				return err;
-			}
+		err = key_report_con_send(&hid_keyboard_state,
+						conn_mode.in_boot_mode,
+						conn_mode.conn);
+		if (err) {
+			printk("Key report send error: %d\n", err);
+			return err;
 		}
 	}
 	return 0;
