@@ -148,17 +148,15 @@ static const struct bt_data sd[] = {
 	BT_DATA(BT_DATA_NAME_COMPLETE, DEVICE_NAME, DEVICE_NAME_LEN),
 };
 
-static struct conn_mode {
+static struct {
 	struct bt_conn *conn;
 	bool in_boot_mode;
 } conn_mode;
 
-struct pairing_data_mitm {
+struct {
 	struct bt_conn *conn;
 	unsigned int passkey;
-};
-
-K_MSGQ_DEFINE(mitm_queue, sizeof(struct pairing_data_mitm), CONFIG_BT_HIDS_MAX_CLIENT_COUNT, 4);
+} pairing_data;
 
 static void advertising_start(void) {
 	struct bt_le_adv_param *adv_param = BT_LE_ADV_PARAM(
@@ -184,17 +182,12 @@ static void advertising_start(void) {
 }
 
 static void pairing_process() {
-	struct pairing_data_mitm pairing_data;
-
-	char addr[BT_ADDR_LE_STR_LEN];
-
-	int err = k_msgq_peek(&mitm_queue, &pairing_data);
-	if (err) {
+	if (!pairing_data.conn) {
 		return;
 	}
 
+	char addr[BT_ADDR_LE_STR_LEN];
 	bt_addr_le_to_str(bt_conn_get_dst(pairing_data.conn), addr, sizeof(addr));
-
 	printk("Passkey for %s: %06u\n", addr, pairing_data.passkey);
 	printk("Press Button 1 to confirm, Button 2 to reject.\n");
 }
@@ -423,25 +416,9 @@ static void auth_passkey_display(struct bt_conn *conn, unsigned int passkey) {
 }
 
 static void auth_passkey_confirm(struct bt_conn *conn, unsigned int passkey) {
-	struct pairing_data_mitm pairing_data;
-
 	pairing_data.conn    = bt_conn_ref(conn);
 	pairing_data.passkey = passkey;
-
-	int err = k_msgq_put(&mitm_queue, &pairing_data, K_NO_WAIT);
-	if (err) {
-		printk("Pairing queue is full. Purge previous data.\n");
-	}
-
-	/* In the case of multiple pairing requests, trigger
-	 * pairing confirmation which needed user interaction only
-	 * once to avoid display information about all devices at
-	 * the same time. Passkey confirmation for next devices will
-	 * be proccess from queue after handling the earlier ones.
-	 */
-	if (k_msgq_num_used_get(&mitm_queue) == 1) {
-		pairing_process();
-	}
+	pairing_process();
 }
 
 static void auth_cancel(struct bt_conn *conn) {
@@ -465,18 +442,16 @@ static void pairing_complete(struct bt_conn *conn, bool bonded) {
 }
 
 static void pairing_failed(struct bt_conn *conn, enum bt_security_err reason) {
-	char addr[BT_ADDR_LE_STR_LEN];
-	struct pairing_data_mitm pairing_data;
-
-	if (k_msgq_peek(&mitm_queue, &pairing_data) != 0) {
+	if (!pairing_data.conn) {
 		return;
 	}
 
 	if (pairing_data.conn == conn) {
 		bt_conn_unref(pairing_data.conn);
-		k_msgq_get(&mitm_queue, &pairing_data, K_NO_WAIT);
+		pairing_data.conn = NULL;
 	}
 
+	char addr[BT_ADDR_LE_STR_LEN];
 	bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
 	printk("Pairing failed conn: %s, reason %d\n", addr, reason);
 }
@@ -509,10 +484,9 @@ static int key_report_send(bool down) {
 }
 
 static void num_comp_reply(bool accept) {
-	struct pairing_data_mitm pairing_data;
 	struct bt_conn *conn;
 
-	if (k_msgq_get(&mitm_queue, &pairing_data, K_NO_WAIT) != 0) {
+	if (!pairing_data.conn) {
 		return;
 	}
 
@@ -527,10 +501,7 @@ static void num_comp_reply(bool accept) {
 	}
 
 	bt_conn_unref(pairing_data.conn);
-
-	if (k_msgq_num_used_get(&mitm_queue)) {
-		pairing_process();
-	}
+	pairing_data.conn = NULL;
 }
 
 static void button_changed(uint32_t button_state, uint32_t has_changed) {
@@ -538,7 +509,7 @@ static void button_changed(uint32_t button_state, uint32_t has_changed) {
 
 	uint32_t buttons = button_state & has_changed;
 
-	if (k_msgq_num_used_get(&mitm_queue)) {
+	if (pairing_data.conn) {
 		if (buttons & KEY_PAIRING_ACCEPT) {
 			pairing_button_pressed = true;
 			num_comp_reply(true);
@@ -553,8 +524,7 @@ static void button_changed(uint32_t button_state, uint32_t has_changed) {
 	}
 
 	/* Do not take any action if the pairing button is released. */
-	if (pairing_button_pressed &&
-	    (has_changed & (KEY_PAIRING_ACCEPT | KEY_PAIRING_REJECT))) {
+	if (pairing_button_pressed && (has_changed & (KEY_PAIRING_ACCEPT | KEY_PAIRING_REJECT))) {
 		pairing_button_pressed = false;
 		return;
 	}
