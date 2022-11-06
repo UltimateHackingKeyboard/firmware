@@ -178,7 +178,6 @@ static struct conn_mode {
 	bool in_boot_mode;
 } conn_mode;
 
-static struct k_work pairing_work;
 struct pairing_data_mitm {
 	struct bt_conn *conn;
 	unsigned int passkey;
@@ -209,7 +208,7 @@ static void advertising_start(void) {
 	printk("Advertising successfully started\n");
 }
 
-static void pairing_process(struct k_work *work) {
+static void pairing_process() {
 	struct pairing_data_mitm pairing_data;
 
 	char addr[BT_ADDR_LE_STR_LEN];
@@ -466,7 +465,7 @@ static void auth_passkey_confirm(struct bt_conn *conn, unsigned int passkey) {
 	 * be proccess from queue after handling the earlier ones.
 	 */
 	if (k_msgq_num_used_get(&mitm_queue) == 1) {
-		k_work_submit(&pairing_work);
+		pairing_process();
 	}
 }
 
@@ -555,7 +554,7 @@ static void num_comp_reply(bool accept) {
 	bt_conn_unref(pairing_data.conn);
 
 	if (k_msgq_num_used_get(&mitm_queue)) {
-		k_work_submit(&pairing_work);
+		pairing_process();
 	}
 }
 
@@ -633,7 +632,6 @@ void main(void) {
 
 	printk("Starting Bluetooth Peripheral HIDS keyboard example\n");
 
-
 	bt_conn_auth_cb_register(&conn_auth_callbacks);
 	bt_conn_auth_info_cb_register(&conn_auth_info_callbacks);
 	bt_enable(NULL);
@@ -647,8 +645,6 @@ void main(void) {
 	}
 
 	advertising_start();
-
-	k_work_init(&pairing_work, pairing_process);
 
 	for (;;) {
 		if (is_adv) {
