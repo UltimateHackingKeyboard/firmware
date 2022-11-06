@@ -656,18 +656,7 @@ void main(void) {
 		} else {
 			dk_set_led_off(ADV_STATUS_LED);
 		}
-/*
-		if (conn_mode.conn&& bt_conn_auth_passkey_confirm(conn_mode.conn) == 0) {
-			uint32_t buttons = dk_get_buttons();
-			hid_keyboard_state.keys_state[1] = buttons & DK_BTN4_MSK ? HID_KEY_A : 0;
-			printk(".");
-			int err = key_report_con_send(&hid_keyboard_state, conn_mode.in_boot_mode, conn_mode.conn);
-			if (err) {
-				printk("Key report send error: %d\n", err);
-				return err;
-			}
-		}
-*/
+
 		k_sleep(K_MSEC(ADV_LED_BLINK_INTERVAL));
 		/* Battery level simulation */
 		bas_notify();
