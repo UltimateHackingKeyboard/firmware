@@ -89,8 +89,6 @@ void int_in_ready_keyboard(const struct device *dev) {
 #define OUTPUT_REPORT_BIT_MASK_CAPS_LOCK 0x02
 #define INPUT_REP_KEYS_REF_ID            1
 #define OUTPUT_REP_KEYS_REF_ID           1
-#define MODIFIER_KEY_POS                 0
-#define SHIFT_KEY_CODE                   0x02
 #define SCAN_CODE_POS                    2
 #define KEYS_MAX_LEN                    (INPUT_REPORT_KEYS_MAX_LEN - SCAN_CODE_POS)
 
@@ -101,59 +99,36 @@ void int_in_ready_keyboard(const struct device *dev) {
 #define LED_CAPS_LOCK  DK_LED3
 #define KEY_TEXT_MASK  DK_BTN1_MSK
 
-/* Key used to accept or reject passkey value */
+// Key used to accept or reject passkey value
 #define KEY_PAIRING_ACCEPT DK_BTN1_MSK
 #define KEY_PAIRING_REJECT DK_BTN2_MSK
 
-/* HIDs queue elements. */
-#define HIDS_QUEUE_SIZE 10
+// Note: The configuration below is the same as BOOT mode configuration
+// This simplifies the code as the BOOT mode is the same as REPORT mode.
+// Changing this configuration would require separate implementation of
+// BOOT mode report generation.
+#define KEY_PRESS_MAX 6 // Maximum number of non-control keys pressed simultaneously
 
-/* ********************* */
-/* Buttons configuration */
-
-/* Note: The configuration below is the same as BOOT mode configuration
- * This simplifies the code as the BOOT mode is the same as REPORT mode.
- * Changing this configuration would require separate implementation of
- * BOOT mode report generation.
- */
-#define KEY_CTRL_CODE_MIN 224 /* Control key codes - required 8 of them */
-#define KEY_CTRL_CODE_MAX 231 /* Control key codes - required 8 of them */
-#define KEY_CODE_MIN      0   /* Normal key codes */
-#define KEY_CODE_MAX      101 /* Normal key codes */
-#define KEY_PRESS_MAX     6   /* Maximum number of non-control keys
-			       * pressed simultaneously
-			       */
-
-/* Number of bytes in key report
- *
- * 1B - control keys
- * 1B - reserved
- * rest - non-control keys
- */
+// Number of bytes in key report
+//
+// 1 byte: modifier keys
+// 1 byte: reserved
+// rest: non-control keys
 #define INPUT_REPORT_KEYS_MAX_LEN (1 + 1 + KEY_PRESS_MAX)
 
-/* Current report map construction requires exactly 8 buttons */
-BUILD_ASSERT((KEY_CTRL_CODE_MAX - KEY_CTRL_CODE_MIN) + 1 == 8);
-
-/* OUT report internal indexes.
- *
- * This is a position in internal report table and is not related to
- * report ID.
- */
+// OUT report internal indexes.
+// This is a position in internal report table and is not related to report ID.
 enum {
 	OUTPUT_REP_KEYS_IDX = 0
 };
 
-/* INPUT report internal indexes.
- *
- * This is a position in internal report table and is not related to
- * report ID.
- */
+// INPUT report internal indexes.
+// This is a position in internal report table and is not related to report ID.
 enum {
 	INPUT_REP_KEYS_IDX = 0
 };
 
-/* HIDS instance. */
+// HIDS instance.
 BT_HIDS_DEF(hids_obj,
 	    OUTPUT_REPORT_MAX_LEN,
 	    INPUT_REPORT_KEYS_MAX_LEN);
