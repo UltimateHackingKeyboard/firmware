@@ -591,11 +591,6 @@ static void button_changed(uint32_t button_state, uint32_t has_changed) {
 	}
 }
 
-static void configure_gpio(void) {
-	dk_buttons_init(button_changed);
-	dk_leds_init();
-}
-
 static void bas_notify(void) {
 	uint8_t battery_level = bt_bas_get_battery_level();
 
@@ -622,7 +617,8 @@ void main(void) {
 	hid_keyboard_dev = device_get_binding("HID_0");
 	hid_mouse_dev = device_get_binding("HID_1");
 
-	configure_gpio();
+	dk_buttons_init(button_changed);
+	dk_leds_init();
 
 	usb_hid_register_device(hid_keyboard_dev, hid_keyboard_report_desc, sizeof(hid_keyboard_report_desc), &hidops_keyboard);
 	usb_hid_register_device(hid_mouse_dev, hid_mouse_report_desc, sizeof(hid_mouse_report_desc), &hidops_mouse);
