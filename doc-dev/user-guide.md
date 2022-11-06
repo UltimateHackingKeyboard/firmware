@@ -163,12 +163,16 @@ Postponed secondary role switch - `resolveSeccondary` is a bit more flexible and
     break
     holdLayer mod
 
-Mapping custom shortcuts may be done using `ifShortcut` command. The macro needs to be placed on the first key of the shortcut, and refers to other keys by their hardware ids obtained by `resolveNextKeyId` command (i.e., activating the command and pressing the key while having a text editor focused). The (`ifShortcut`) command will postpone other actions until sufficient number of keys is pressed. If the pressed keys correspond to the arguments, the keys are consumed and the rest of the command performed. Otherwise, postponed keypresses are either used up by the rest of the macro or replayed back. The `final` modifier breaks the command after the "modified" `tapKey` command finishes.
+You can use `ifShortcut` when you want to map an action to a combination of keys. E.g, if I want z+x to produce Control+x, z+c to produce Control+c, z+v to produce Control+v, I will map following macro on the z key:
 
-    ifShortcut 90 final tapKey v
-    ifShortcut 88 final tapKey x
-    ifShortcut 70 71 final tapKey CG-a
-    tapKey c
+```
+    ifShortcut 88 final tapKey C-x
+    ifShortcut 89 final tapKey C-c
+    ifShortcut 90 final tapKey C-v
+    holdKey z
+```
+
+An `ifShortcut` macro needs to be placed on the first key of the shortcut, and refers to other keys by Their hardware ids obtained by `resolveNextKeyId` command (i.e., activating the command and pressing the key while having a text editor focused). The (`ifShortcut`) command will postpone other actions until sufficient number of keys is pressed. If the pressed keys correspond to the arguments, the keys are consumed and the rest of the command performed. Otherwise, postponed keypresses are either used up by the rest of the macro or replayed back. The `final` modifier breaks the command after the "modified" `tapKey` command finishes.
 
 Similar command can be used to implement "loose gestures" - i.e., shortcuts where the second keypress can follow without continuity of press of the first key. It suffices to replace the `ifShortcut` by `ifGesture`. Vim-like gt and gT (g+shift+t) tab switching:
 
