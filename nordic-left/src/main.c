@@ -361,28 +361,37 @@ static void hid_init(void) {
 		0xC0              /* End Collection (Application) */
 	};
 
-	struct bt_hids_init_param hids_init_obj = {0};
-	hids_init_obj.rep_map.data = report_map;
-	hids_init_obj.rep_map.size = sizeof(report_map);
-
-	hids_init_obj.info.bcd_hid = BASE_USB_HID_SPEC_VERSION;
-	hids_init_obj.info.b_country_code = 0x00;
-	hids_init_obj.info.flags = (BT_HIDS_REMOTE_WAKE | BT_HIDS_NORMALLY_CONNECTABLE);
-
-	struct bt_hids_inp_rep *hids_inp_rep = &hids_init_obj.inp_rep_group_init.reports[INPUT_REP_KEYS_IDX];
-	hids_inp_rep->size = INPUT_REPORT_KEYS_MAX_LEN;
-	hids_inp_rep->id = INPUT_REP_KEYS_REF_ID;
-	hids_init_obj.inp_rep_group_init.cnt++;
-
-	struct bt_hids_outp_feat_rep *hids_outp_rep = &hids_init_obj.outp_rep_group_init.reports[OUTPUT_REP_KEYS_IDX];
-	hids_outp_rep->size = OUTPUT_REPORT_MAX_LEN;
-	hids_outp_rep->id = OUTPUT_REP_KEYS_REF_ID;
-	hids_outp_rep->handler = hids_outp_rep_handler;
-	hids_init_obj.outp_rep_group_init.cnt++;
-
-	hids_init_obj.is_kb = true;
-	hids_init_obj.boot_kb_outp_rep_handler = hids_boot_kb_outp_rep_handler;
-	hids_init_obj.pm_evt_handler = hids_pm_evt_handler;
+	struct bt_hids_init_param hids_init_obj = {
+		.rep_map.data = report_map,
+		.rep_map.size = sizeof(report_map),
+		.info = {
+			.bcd_hid = BASE_USB_HID_SPEC_VERSION,
+			.b_country_code = 0x00,
+			.flags = BT_HIDS_REMOTE_WAKE | BT_HIDS_NORMALLY_CONNECTABLE,
+		},
+		.inp_rep_group_init = {
+			.reports = {
+				{
+					.size = INPUT_REPORT_KEYS_MAX_LEN,
+					.id = INPUT_REP_KEYS_REF_ID,
+				}
+			},
+			.cnt = 1,
+		},
+		.outp_rep_group_init = {
+			.reports = {
+				{
+					.size = OUTPUT_REPORT_MAX_LEN,
+					.id = OUTPUT_REP_KEYS_REF_ID,
+					.handler = hids_outp_rep_handler,
+				}
+			},
+			.cnt =  1,
+		},
+		.is_kb = true,
+		.boot_kb_outp_rep_handler = hids_boot_kb_outp_rep_handler,
+		.pm_evt_handler = hids_pm_evt_handler,
+	};
 
 	int err = bt_hids_init(&hids_obj, &hids_init_obj);
 	__ASSERT(err == 0, "HIDS initialization failed\n");
