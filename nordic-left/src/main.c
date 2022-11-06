@@ -48,8 +48,7 @@ uint8_t keyboard_report[8] = { 0x00 };
 const struct device *hid_keyboard_dev;
 const struct device *hid_mouse_dev;
 
-static void status_cb(enum usb_dc_status_code status, const uint8_t *param)
-{
+static void status_cb(enum usb_dc_status_code status, const uint8_t *param) {
 	printk("USB status code change: %i\n", status);
 	usb_status = status;
 	if (status == USB_DC_CONFIGURED) {
@@ -194,8 +193,7 @@ struct pairing_data_mitm {
 
 K_MSGQ_DEFINE(mitm_queue, sizeof(struct pairing_data_mitm), CONFIG_BT_HIDS_MAX_CLIENT_COUNT, 4);
 
-static void advertising_start(void)
-{
+static void advertising_start(void) {
 	struct bt_le_adv_param *adv_param = BT_LE_ADV_PARAM(
 						BT_LE_ADV_OPT_CONNECTABLE | BT_LE_ADV_OPT_ONE_TIME,
 						BT_GAP_ADV_FAST_INT_MIN_2,
@@ -218,8 +216,7 @@ static void advertising_start(void)
 	printk("Advertising successfully started\n");
 }
 
-static void pairing_process(struct k_work *work)
-{
+static void pairing_process(struct k_work *work) {
 	struct pairing_data_mitm pairing_data;
 
 	char addr[BT_ADDR_LE_STR_LEN];
@@ -235,8 +232,7 @@ static void pairing_process(struct k_work *work)
 	printk("Press Button 1 to confirm, Button 2 to reject.\n");
 }
 
-static void connected(struct bt_conn *conn, uint8_t err)
-{
+static void connected(struct bt_conn *conn, uint8_t err) {
 	char addr[BT_ADDR_LE_STR_LEN];
 
 	bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
@@ -265,8 +261,7 @@ static void connected(struct bt_conn *conn, uint8_t err)
 	is_adv = false;
 }
 
-static void disconnected(struct bt_conn *conn, uint8_t reason)
-{
+static void disconnected(struct bt_conn *conn, uint8_t reason) {
 	int err;
 	bool is_any_dev_connected = false;
 	char addr[BT_ADDR_LE_STR_LEN];
@@ -294,8 +289,7 @@ static void disconnected(struct bt_conn *conn, uint8_t reason)
 	advertising_start();
 }
 
-static void security_changed(struct bt_conn *conn, bt_security_t level, enum bt_security_err err)
-{
+static void security_changed(struct bt_conn *conn, bt_security_t level, enum bt_security_err err) {
 	char addr[BT_ADDR_LE_STR_LEN];
 	bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
 
@@ -312,14 +306,12 @@ BT_CONN_CB_DEFINE(conn_callbacks) = {
 	.security_changed = security_changed,
 };
 
-static void caps_lock_handler(const struct bt_hids_rep *rep)
-{
+static void caps_lock_handler(const struct bt_hids_rep *rep) {
 	uint8_t report_val = ((*rep->data) & OUTPUT_REPORT_BIT_MASK_CAPS_LOCK) ? 1 : 0;
 	dk_set_led(LED_CAPS_LOCK, report_val);
 }
 
-static void hids_outp_rep_handler(struct bt_hids_rep *rep, struct bt_conn *conn, bool write)
-{
+static void hids_outp_rep_handler(struct bt_hids_rep *rep, struct bt_conn *conn, bool write) {
 	char addr[BT_ADDR_LE_STR_LEN];
 
 	if (!write) {
@@ -332,8 +324,7 @@ static void hids_outp_rep_handler(struct bt_hids_rep *rep, struct bt_conn *conn,
 	caps_lock_handler(rep);
 }
 
-static void hids_boot_kb_outp_rep_handler(struct bt_hids_rep *rep, struct bt_conn *conn, bool write)
-{
+static void hids_boot_kb_outp_rep_handler(struct bt_hids_rep *rep, struct bt_conn *conn, bool write) {
 	char addr[BT_ADDR_LE_STR_LEN];
 
 	if (!write) {
@@ -346,8 +337,7 @@ static void hids_boot_kb_outp_rep_handler(struct bt_hids_rep *rep, struct bt_con
 	caps_lock_handler(rep);
 }
 
-static void hids_pm_evt_handler(enum bt_hids_pm_evt evt, struct bt_conn *conn)
-{
+static void hids_pm_evt_handler(enum bt_hids_pm_evt evt, struct bt_conn *conn) {
 	char addr[BT_ADDR_LE_STR_LEN];
 
 	if (conn_mode.conn != conn) {
@@ -371,8 +361,7 @@ static void hids_pm_evt_handler(enum bt_hids_pm_evt evt, struct bt_conn *conn)
 	}
 }
 
-static void hid_init(void)
-{
+static void hid_init(void) {
 	int err;
 	struct bt_hids_init_param    hids_init_obj = { 0 };
 	struct bt_hids_inp_rep       *hids_inp_rep;
@@ -454,15 +443,13 @@ static void hid_init(void)
 	__ASSERT(err == 0, "HIDS initialization failed\n");
 }
 
-static void auth_passkey_display(struct bt_conn *conn, unsigned int passkey)
-{
+static void auth_passkey_display(struct bt_conn *conn, unsigned int passkey) {
 	char addr[BT_ADDR_LE_STR_LEN];
 	bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
 	printk("Passkey for %s: %06u\n", addr, passkey);
 }
 
-static void auth_passkey_confirm(struct bt_conn *conn, unsigned int passkey)
-{
+static void auth_passkey_confirm(struct bt_conn *conn, unsigned int passkey) {
 	struct pairing_data_mitm pairing_data;
 
 	pairing_data.conn    = bt_conn_ref(conn);
@@ -484,22 +471,19 @@ static void auth_passkey_confirm(struct bt_conn *conn, unsigned int passkey)
 	}
 }
 
-static void auth_cancel(struct bt_conn *conn)
-{
+static void auth_cancel(struct bt_conn *conn) {
 	char addr[BT_ADDR_LE_STR_LEN];
 	bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
 	printk("Pairing cancelled: %s\n", addr);
 }
 
-static void pairing_complete(struct bt_conn *conn, bool bonded)
-{
+static void pairing_complete(struct bt_conn *conn, bool bonded) {
 	char addr[BT_ADDR_LE_STR_LEN];
 	bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
 	printk("Pairing completed: %s, bonded: %d\n", addr, bonded);
 }
 
-static void pairing_failed(struct bt_conn *conn, enum bt_security_err reason)
-{
+static void pairing_failed(struct bt_conn *conn, enum bt_security_err reason) {
 	char addr[BT_ADDR_LE_STR_LEN];
 	struct pairing_data_mitm pairing_data;
 
@@ -527,8 +511,7 @@ static struct bt_conn_auth_info_cb conn_auth_info_callbacks = {
 	.pairing_failed = pairing_failed
 };
 
-static int key_report_con_send(const struct keyboard_state *state, bool boot_mode, struct bt_conn *conn, bool down)
-{
+static int key_report_con_send(const struct keyboard_state *state, bool boot_mode, struct bt_conn *conn, bool down) {
 	uint8_t chr = down ? HID_KEY_A : 0;
 	uint8_t  data[INPUT_REPORT_KEYS_MAX_LEN] = {state->ctrl_keys_state, 0, chr, 0, 0, 0, 0, 0};
 
@@ -541,8 +524,7 @@ static int key_report_con_send(const struct keyboard_state *state, bool boot_mod
 	return err;
 }
 
-static int key_report_send(bool down)
-{
+static int key_report_send(bool down) {
 	if (conn_mode.conn) {
 		int err = key_report_con_send(&hid_keyboard_state, conn_mode.in_boot_mode, conn_mode.conn, down);
 		if (err) {
@@ -553,8 +535,7 @@ static int key_report_send(bool down)
 	return 0;
 }
 
-static void num_comp_reply(bool accept)
-{
+static void num_comp_reply(bool accept) {
 	struct pairing_data_mitm pairing_data;
 	struct bt_conn *conn;
 
@@ -579,8 +560,7 @@ static void num_comp_reply(bool accept)
 	}
 }
 
-static void button_changed(uint32_t button_state, uint32_t has_changed)
-{
+static void button_changed(uint32_t button_state, uint32_t has_changed) {
 	static bool pairing_button_pressed;
 
 	uint32_t buttons = button_state & has_changed;
@@ -611,14 +591,12 @@ static void button_changed(uint32_t button_state, uint32_t has_changed)
 	}
 }
 
-static void configure_gpio(void)
-{
+static void configure_gpio(void) {
 	dk_buttons_init(button_changed);
 	dk_leds_init();
 }
 
-static void bas_notify(void)
-{
+static void bas_notify(void) {
 	uint8_t battery_level = bt_bas_get_battery_level();
 
 	battery_level--;
@@ -630,8 +608,7 @@ static void bas_notify(void)
 	bt_bas_set_battery_level(battery_level);
 }
 
-void main(void)
-{
+void main(void) {
 	// USB
 
 	struct hid_ops hidops_mouse = {
