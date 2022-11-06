@@ -165,8 +165,7 @@ static void advertising_start(void) {
 						BT_GAP_ADV_FAST_INT_MAX_2,
 						NULL);
 
-	int err = bt_le_adv_start(adv_param, ad, ARRAY_SIZE(ad), sd,
-			      ARRAY_SIZE(sd));
+	int err = bt_le_adv_start(adv_param, ad, ARRAY_SIZE(ad), sd, ARRAY_SIZE(sd));
 	if (err) {
 		if (err == -EALREADY) {
 			printk("Advertising continued\n");
@@ -196,7 +195,6 @@ static void pairing_process() {
 
 static void connected(struct bt_conn *conn, uint8_t err) {
 	char addr[BT_ADDR_LE_STR_LEN];
-
 	bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
 
 	if (err) {
@@ -224,30 +222,17 @@ static void connected(struct bt_conn *conn, uint8_t err) {
 }
 
 static void disconnected(struct bt_conn *conn, uint8_t reason) {
-	int err;
-	bool is_any_dev_connected = false;
 	char addr[BT_ADDR_LE_STR_LEN];
-
 	bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
-
 	printk("Disconnected from %s (reason %u)\n", addr, reason);
 
-	err = bt_hids_disconnected(&hids_obj, conn);
-
+	int err = bt_hids_disconnected(&hids_obj, conn);
 	if (err) {
 		printk("Failed to notify HID service about disconnection\n");
 	}
 
-	if (conn_mode.conn == conn) {
-		conn_mode.conn = NULL;
-	} else if (conn_mode.conn) {
-		is_any_dev_connected = true;
-	}
-
-	if (!is_any_dev_connected) {
-		dk_set_led_off(CON_STATUS_LED);
-	}
-
+	conn_mode.conn = NULL;
+	dk_set_led_off(CON_STATUS_LED);
 	advertising_start();
 }
 
