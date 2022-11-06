@@ -50,7 +50,7 @@ const struct device *hid_mouse_dev;
 
 static void status_cb(enum usb_dc_status_code status, const uint8_t *param)
 {
-	printk("usb %i", status);
+	printk("USB status code change: %i\n", status);
 	usb_status = status;
 	if (status == USB_DC_CONFIGURED) {
 		hid_int_ep_write(hid_mouse_dev, mouse_report, sizeof(mouse_report), NULL);
@@ -102,7 +102,6 @@ void int_in_ready_keyboard(const struct device *dev) {
 #define LED_CAPS_LOCK  DK_LED3
 #define NFC_LED	       DK_LED4
 #define KEY_TEXT_MASK  DK_BTN1_MSK
-#define KEY_SHIFT_MASK DK_BTN2_MSK
 #define KEY_ADV_MASK   DK_BTN4_MSK
 
 /* Key used to accept or reject passkey value */
@@ -190,8 +189,6 @@ static const uint8_t hello_world_str[] = {
 	0x12,	/* Key o */
 	0x28,	/* Key Return */
 };
-
-static const uint8_t shift_key[] = { 225 };
 
 /* Current report status
  */
@@ -311,14 +308,12 @@ static void disconnected(struct bt_conn *conn, uint8_t reason)
 static void security_changed(struct bt_conn *conn, bt_security_t level, enum bt_security_err err)
 {
 	char addr[BT_ADDR_LE_STR_LEN];
-
 	bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
 
 	if (!err) {
 		printk("Security changed: %s level %u\n", addr, level);
 	} else {
-		printk("Security failed: %s level %u err %d\n", addr, level,
-			err);
+		printk("Security failed: %s level %u err %d\n", addr, level, err);
 	}
 }
 
@@ -594,32 +589,8 @@ static int key_report_send(void)
 	return 0;
 }
 
-/** @brief Change key code to ctrl code mask
- *
- *  Function changes the key code to the mask in the control code
- *  field inside the raport.
- *  Returns 0 if key code is not a control key.
- *
- *  @param key Key code
- *
- *  @return Mask of the control key or 0.
- */
-static uint8_t button_ctrl_code(uint8_t key)
-{
-	if (KEY_CTRL_CODE_MIN <= key && key <= KEY_CTRL_CODE_MAX) {
-		return (uint8_t)(1U << (key - KEY_CTRL_CODE_MIN));
-	}
-	return 0;
-}
-
 static int hid_kbd_state_key_set(uint8_t key)
 {
-	uint8_t ctrl_mask = button_ctrl_code(key);
-
-	if (ctrl_mask) {
-		hid_keyboard_state.ctrl_keys_state |= ctrl_mask;
-		return 0;
-	}
 	for (size_t i = 0; i < KEY_CTRL_CODE_MAX; ++i) {
 		if (hid_keyboard_state.keys_state[i] == 0) {
 			hid_keyboard_state.keys_state[i] = key;
@@ -632,12 +603,6 @@ static int hid_kbd_state_key_set(uint8_t key)
 
 static int hid_kbd_state_key_clear(uint8_t key)
 {
-	uint8_t ctrl_mask = button_ctrl_code(key);
-
-	if (ctrl_mask) {
-		hid_keyboard_state.ctrl_keys_state &= ~ctrl_mask;
-		return 0;
-	}
 	for (size_t i = 0; i < KEY_CTRL_CODE_MAX; ++i) {
 		if (hid_keyboard_state.keys_state[i] == key) {
 			hid_keyboard_state.keys_state[i] = 0;
@@ -704,15 +669,6 @@ static void button_text_changed(bool down)
 	}
 }
 
-static void button_shift_changed(bool down)
-{
-	if (down) {
-		hid_buttons_press(shift_key, 1);
-	} else {
-		hid_buttons_release(shift_key, 1);
-	}
-}
-
 static void num_comp_reply(bool accept)
 {
 	struct pairing_data_mitm pairing_data;
@@ -768,9 +724,6 @@ static void button_changed(uint32_t button_state, uint32_t has_changed)
 
 	if (has_changed & KEY_TEXT_MASK) {
 		button_text_changed((button_state & KEY_TEXT_MASK) != 0);
-	}
-	if (has_changed & KEY_SHIFT_MASK) {
-		button_shift_changed((button_state & KEY_SHIFT_MASK) != 0);
 	}
 }
 
@@ -847,6 +800,18 @@ void main(void)
 		} else {
 			dk_set_led_off(ADV_STATUS_LED);
 		}
+/*
+		if (conn_mode.conn&& bt_conn_auth_passkey_confirm(conn_mode.conn) == 0) {
+			uint32_t buttons = dk_get_buttons();
+			hid_keyboard_state.keys_state[1] = buttons & DK_BTN4_MSK ? HID_KEY_A : 0;
+			printk(".");
+			int err = key_report_con_send(&hid_keyboard_state, conn_mode.in_boot_mode, conn_mode.conn);
+			if (err) {
+				printk("Key report send error: %d\n", err);
+				return err;
+			}
+		}
+*/
 		k_sleep(K_MSEC(ADV_LED_BLINK_INTERVAL));
 		/* Battery level simulation */
 		bas_notify();
