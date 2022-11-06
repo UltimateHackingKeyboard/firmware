@@ -103,36 +103,6 @@ void int_in_ready_keyboard(const struct device *dev) {
 #define KEY_PAIRING_ACCEPT DK_BTN1_MSK
 #define KEY_PAIRING_REJECT DK_BTN2_MSK
 
-// Note: The configuration below is the same as BOOT mode configuration
-// This simplifies the code as the BOOT mode is the same as REPORT mode.
-// Changing this configuration would require separate implementation of
-// BOOT mode report generation.
-#define KEY_PRESS_MAX 6 // Maximum number of non-control keys pressed simultaneously
-
-// Number of bytes in key report
-//
-// 1 byte: modifier keys
-// 1 byte: reserved
-// rest: non-control keys
-#define INPUT_REPORT_KEYS_MAX_LEN (1 + 1 + KEY_PRESS_MAX)
-
-// OUT report internal indexes.
-// This is a position in internal report table and is not related to report ID.
-enum {
-	OUTPUT_REP_KEYS_IDX = 0
-};
-
-// INPUT report internal indexes.
-// This is a position in internal report table and is not related to report ID.
-enum {
-	INPUT_REP_KEYS_IDX = 0
-};
-
-// Keyboard HIDS instance
-BT_HIDS_DEF(hids_keyboard_obj,
-	    OUTPUT_REPORT_MAX_LEN,
-	    INPUT_REPORT_KEYS_MAX_LEN);
-
 static volatile bool is_adv;
 
 static const struct bt_data ad[] = {
@@ -190,68 +160,6 @@ static void pairing_process() {
 	printk("Passkey for %s: %06u\n", addr, pairing_data.passkey);
 	printk("Press Button 1 to confirm, Button 2 to reject.\n");
 }
-
-// Connection callbacks
-
-static void connected(struct bt_conn *conn, uint8_t err) {
-	char addr[BT_ADDR_LE_STR_LEN];
-	bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
-
-	if (err) {
-		printk("Failed to connect to %s (%u)\n", addr, err);
-		return;
-	}
-
-	printk("Connected %s\n", addr);
-	dk_set_led_on(CON_STATUS_LED);
-
-	err = bt_hids_connected(&hids_keyboard_obj, conn);
-
-	if (err) {
-		printk("Failed to notify HID service about connection\n");
-		return;
-	}
-
-	if (!conn_mode.conn) {
-		conn_mode.conn = conn;
-		conn_mode.in_boot_mode = false;
-		advertising_start();
-	}
-
-	is_adv = false;
-}
-
-static void disconnected(struct bt_conn *conn, uint8_t reason) {
-	char addr[BT_ADDR_LE_STR_LEN];
-	bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
-	printk("Disconnected from %s (reason %u)\n", addr, reason);
-
-	int err = bt_hids_disconnected(&hids_keyboard_obj, conn);
-	if (err) {
-		printk("Failed to notify HID service about disconnection\n");
-	}
-
-	conn_mode.conn = NULL;
-	dk_set_led_off(CON_STATUS_LED);
-	advertising_start();
-}
-
-static void security_changed(struct bt_conn *conn, bt_security_t level, enum bt_security_err err) {
-	char addr[BT_ADDR_LE_STR_LEN];
-	bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
-
-	if (!err) {
-		printk("Security changed: %s level %u\n", addr, level);
-	} else {
-		printk("Security failed: %s level %u err %d\n", addr, level, err);
-	}
-}
-
-BT_CONN_CB_DEFINE(conn_callbacks) = {
-	.connected = connected,
-	.disconnected = disconnected,
-	.security_changed = security_changed,
-};
 
 // HID init
 
@@ -311,6 +219,29 @@ static void hids_pm_evt_handler(enum bt_hids_pm_evt evt, struct bt_conn *conn) {
 }
 
 // Bluetooth keyboard
+
+// Note: The configuration below is the same as BOOT mode configuration
+// This simplifies the code as the BOOT mode is the same as REPORT mode.
+// Changing this configuration would require separate implementation of
+// BOOT mode report generation.
+#define KEY_PRESS_MAX 6 // Maximum number of non-control keys pressed simultaneously
+
+// Number of bytes in key report
+//
+// 1 byte: modifier keys
+// 1 byte: reserved
+// rest: non-control keys
+#define INPUT_REPORT_KEYS_MAX_LEN (1 + 1 + KEY_PRESS_MAX)
+
+// INPUT report internal indexes.
+// This is a position in internal report table and is not related to report ID.
+enum {
+	INPUT_REP_KEYS_IDX = 0
+};
+
+BT_HIDS_DEF(hids_keyboard_obj,
+	    OUTPUT_REPORT_MAX_LEN,
+	    INPUT_REPORT_KEYS_MAX_LEN);
 
 static void hid_keyboard_init(void) {
 	static const uint8_t report_map[] = {
@@ -414,7 +345,6 @@ static void hid_keyboard_init(void) {
 // Id of reference to Mouse Input Report containing media player data.
 #define INPUT_REP_REF_MPLAYER_ID    3
 
-// Mouse HIDS instance
 BT_HIDS_DEF(hids_mouse_obj,
 	    INPUT_REP_BUTTONS_LEN,
 	    INPUT_REP_MOVEMENT_LEN,
@@ -533,6 +463,68 @@ static void hid_mouse_init(void)
 	int err = bt_hids_init(&hids_mouse_obj, &hids_init_param);
 	__ASSERT(err == 0, "HIDS mouse initialization failed\n");
 }
+
+// Connection callbacks
+
+static void connected(struct bt_conn *conn, uint8_t err) {
+	char addr[BT_ADDR_LE_STR_LEN];
+	bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
+
+	if (err) {
+		printk("Failed to connect to %s (%u)\n", addr, err);
+		return;
+	}
+
+	printk("Connected %s\n", addr);
+	dk_set_led_on(CON_STATUS_LED);
+
+	err = bt_hids_connected(&hids_keyboard_obj, conn);
+
+	if (err) {
+		printk("Failed to notify HID service about connection\n");
+		return;
+	}
+
+	if (!conn_mode.conn) {
+		conn_mode.conn = conn;
+		conn_mode.in_boot_mode = false;
+		advertising_start();
+	}
+
+	is_adv = false;
+}
+
+static void disconnected(struct bt_conn *conn, uint8_t reason) {
+	char addr[BT_ADDR_LE_STR_LEN];
+	bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
+	printk("Disconnected from %s (reason %u)\n", addr, reason);
+
+	int err = bt_hids_disconnected(&hids_keyboard_obj, conn);
+	if (err) {
+		printk("Failed to notify HID service about disconnection\n");
+	}
+
+	conn_mode.conn = NULL;
+	dk_set_led_off(CON_STATUS_LED);
+	advertising_start();
+}
+
+static void security_changed(struct bt_conn *conn, bt_security_t level, enum bt_security_err err) {
+	char addr[BT_ADDR_LE_STR_LEN];
+	bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
+
+	if (!err) {
+		printk("Security changed: %s level %u\n", addr, level);
+	} else {
+		printk("Security failed: %s level %u err %d\n", addr, level, err);
+	}
+}
+
+BT_CONN_CB_DEFINE(conn_callbacks) = {
+	.connected = connected,
+	.disconnected = disconnected,
+	.security_changed = security_changed,
+};
 
 // Auth callbacks
 
