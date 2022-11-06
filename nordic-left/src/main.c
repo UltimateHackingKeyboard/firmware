@@ -705,10 +705,7 @@ void main(void) {
 	hid_keyboard_init();
 	hid_mouse_init();
 
-	if (IS_ENABLED(CONFIG_SETTINGS)) {
-		settings_load();
-	}
-
+	settings_load();
 	advertising_start();
 
 	for (;;) {
