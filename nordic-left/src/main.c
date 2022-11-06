@@ -128,8 +128,8 @@ enum {
 	INPUT_REP_KEYS_IDX = 0
 };
 
-// HIDS instance.
-BT_HIDS_DEF(hids_obj,
+// Keyboard HIDS instance
+BT_HIDS_DEF(hids_keyboard_obj,
 	    OUTPUT_REPORT_MAX_LEN,
 	    INPUT_REPORT_KEYS_MAX_LEN);
 
@@ -205,7 +205,7 @@ static void connected(struct bt_conn *conn, uint8_t err) {
 	printk("Connected %s\n", addr);
 	dk_set_led_on(CON_STATUS_LED);
 
-	err = bt_hids_connected(&hids_obj, conn);
+	err = bt_hids_connected(&hids_keyboard_obj, conn);
 
 	if (err) {
 		printk("Failed to notify HID service about connection\n");
@@ -226,7 +226,7 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
 	bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
 	printk("Disconnected from %s (reason %u)\n", addr, reason);
 
-	int err = bt_hids_disconnected(&hids_obj, conn);
+	int err = bt_hids_disconnected(&hids_keyboard_obj, conn);
 	if (err) {
 		printk("Failed to notify HID service about disconnection\n");
 	}
@@ -310,7 +310,9 @@ static void hids_pm_evt_handler(enum bt_hids_pm_evt evt, struct bt_conn *conn) {
 	}
 }
 
-static void hid_init(void) {
+// Bluetooth keyboard
+
+static void hid_keyboard_init(void) {
 	static const uint8_t report_map[] = {
 		0x05, 0x01,       /* Usage Page (Generic Desktop) */
 		0x09, 0x06,       /* Usage (Keyboard) */
@@ -393,8 +395,143 @@ static void hid_init(void) {
 		.pm_evt_handler = hids_pm_evt_handler,
 	};
 
-	int err = bt_hids_init(&hids_obj, &hids_init_obj);
-	__ASSERT(err == 0, "HIDS initialization failed\n");
+	int err = bt_hids_init(&hids_keyboard_obj, &hids_init_obj);
+	__ASSERT(err == 0, "HIDS keyboard initialization failed\n");
+}
+
+// Bluetooth mouse
+
+// Length of Mouse Input Report containing button data.
+#define INPUT_REP_BUTTONS_LEN       3
+// Length of Mouse Input Report containing movement data.
+#define INPUT_REP_MOVEMENT_LEN      3
+// Length of Mouse Input Report containing media player data.
+#define INPUT_REP_MEDIA_PLAYER_LEN  1
+// Id of reference to Mouse Input Report containing button data.
+#define INPUT_REP_REF_BUTTONS_ID    1
+// Id of reference to Mouse Input Report containing movement data.
+#define INPUT_REP_REF_MOVEMENT_ID   2
+// Id of reference to Mouse Input Report containing media player data.
+#define INPUT_REP_REF_MPLAYER_ID    3
+
+// Mouse HIDS instance
+BT_HIDS_DEF(hids_mouse_obj,
+	    INPUT_REP_BUTTONS_LEN,
+	    INPUT_REP_MOVEMENT_LEN,
+	    INPUT_REP_MEDIA_PLAYER_LEN);
+
+static void hid_mouse_init(void)
+{
+	static const uint8_t report_map[] = {
+		0x05, 0x01,     // Usage Page (Generic Desktop)
+		0x09, 0x02,     // Usage (Mouse)
+
+		0xA1, 0x01,     // Collection (Application)
+
+		// Report ID 1: Mouse buttons + scroll/pan
+		0x85, 0x01,       // Report Id 1
+		0x09, 0x01,       // Usage (Pointer)
+		0xA1, 0x00,       // Collection (Physical)
+		0x95, 0x05,       // Report Count (3)
+		0x75, 0x01,       // Report Size (1)
+		0x05, 0x09,       // Usage Page (Buttons)
+		0x19, 0x01,       // Usage Minimum (01)
+		0x29, 0x05,       // Usage Maximum (05)
+		0x15, 0x00,       // Logical Minimum (0)
+		0x25, 0x01,       // Logical Maximum (1)
+		0x81, 0x02,       // Input (Data, Variable, Absolute)
+		0x95, 0x01,       // Report Count (1)
+		0x75, 0x03,       // Report Size (3)
+		0x81, 0x01,       // Input (Constant) for padding
+		0x75, 0x08,       // Report Size (8)
+		0x95, 0x01,       // Report Count (1)
+		0x05, 0x01,       // Usage Page (Generic Desktop)
+		0x09, 0x38,       // Usage (Wheel)
+		0x15, 0x81,       // Logical Minimum (-127)
+		0x25, 0x7F,       // Logical Maximum (127)
+		0x81, 0x06,       // Input (Data, Variable, Relative)
+		0x05, 0x0C,       // Usage Page (Consumer)
+		0x0A, 0x38, 0x02, // Usage (AC Pan)
+		0x95, 0x01,       // Report Count (1)
+		0x81, 0x06,       // Input (Data,Value,Relative,Bit Field)
+		0xC0,             // End Collection (Physical)
+
+		// Report ID 2: Mouse motion
+		0x85, 0x02,       // Report Id 2
+		0x09, 0x01,       // Usage (Pointer)
+		0xA1, 0x00,       // Collection (Physical)
+		0x75, 0x0C,       // Report Size (12)
+		0x95, 0x02,       // Report Count (2)
+		0x05, 0x01,       // Usage Page (Generic Desktop)
+		0x09, 0x30,       // Usage (X)
+		0x09, 0x31,       // Usage (Y)
+		0x16, 0x01, 0xF8, // Logical maximum (2047)
+		0x26, 0xFF, 0x07, // Logical minimum (-2047)
+		0x81, 0x06,       // Input (Data, Variable, Relative)
+		0xC0,             // End Collection (Physical)
+		0xC0,             // End Collection (Application)
+
+		// Report ID 3: Advanced buttons
+		0x05, 0x0C,       // Usage Page (Consumer)
+		0x09, 0x01,       // Usage (Consumer Control)
+		0xA1, 0x01,       // Collection (Application)
+		0x85, 0x03,       // Report Id (3)
+		0x15, 0x00,       // Logical minimum (0)
+		0x25, 0x01,       // Logical maximum (1)
+		0x75, 0x01,       // Report Size (1)
+		0x95, 0x01,       // Report Count (1)
+
+		0x09, 0xCD,       // Usage (Play/Pause)
+		0x81, 0x06,       // Input (Data,Value,Relative,Bit Field)
+		0x0A, 0x83, 0x01, // Usage (Consumer Control Configuration)
+		0x81, 0x06,       // Input (Data,Value,Relative,Bit Field)
+		0x09, 0xB5,       // Usage (Scan Next Track)
+		0x81, 0x06,       // Input (Data,Value,Relative,Bit Field)
+		0x09, 0xB6,       // Usage (Scan Previous Track)
+		0x81, 0x06,       // Input (Data,Value,Relative,Bit Field)
+
+		0x09, 0xEA,       // Usage (Volume Down)
+		0x81, 0x06,       // Input (Data,Value,Relative,Bit Field)
+		0x09, 0xE9,       // Usage (Volume Up)
+		0x81, 0x06,       // Input (Data,Value,Relative,Bit Field)
+		0x0A, 0x25, 0x02, // Usage (AC Forward)
+		0x81, 0x06,       // Input (Data,Value,Relative,Bit Field)
+		0x0A, 0x24, 0x02, // Usage (AC Back)
+		0x81, 0x06,       // Input (Data,Value,Relative,Bit Field)
+		0xC0              // End Collection
+	};
+
+	struct bt_hids_init_param hids_init_param = { 0 };
+	hids_init_param.rep_map.data = report_map;
+	hids_init_param.rep_map.size = sizeof(report_map);
+
+	hids_init_param.info.bcd_hid = BASE_USB_HID_SPEC_VERSION;
+	hids_init_param.info.b_country_code = 0x00;
+	hids_init_param.info.flags = BT_HIDS_REMOTE_WAKE | BT_HIDS_NORMALLY_CONNECTABLE;
+
+	struct bt_hids_inp_rep *hids_inp_rep;
+	hids_inp_rep = &hids_init_param.inp_rep_group_init.reports[0];
+	hids_inp_rep->size = INPUT_REP_BUTTONS_LEN;
+	hids_inp_rep->id = INPUT_REP_REF_BUTTONS_ID;
+	hids_init_param.inp_rep_group_init.cnt++;
+
+	static const uint8_t mouse_movement_mask[ceiling_fraction(INPUT_REP_MOVEMENT_LEN, 8)] = {0};
+	hids_inp_rep++;
+	hids_inp_rep->size = INPUT_REP_MOVEMENT_LEN;
+	hids_inp_rep->id = INPUT_REP_REF_MOVEMENT_ID;
+	hids_inp_rep->rep_mask = mouse_movement_mask;
+	hids_init_param.inp_rep_group_init.cnt++;
+
+	hids_inp_rep++;
+	hids_inp_rep->size = INPUT_REP_MEDIA_PLAYER_LEN;
+	hids_inp_rep->id = INPUT_REP_REF_MPLAYER_ID;
+	hids_init_param.inp_rep_group_init.cnt++;
+
+	hids_init_param.is_mouse = true;
+	hids_init_param.pm_evt_handler = hids_pm_evt_handler;
+
+	int err = bt_hids_init(&hids_mouse_obj, &hids_init_param);
+	__ASSERT(err == 0, "HIDS mouse initialization failed\n");
 }
 
 // Auth callbacks
@@ -461,9 +598,9 @@ static int key_report_send(bool down) {
 
 	int err = 0;
 	if (conn_mode.in_boot_mode) {
-		err = bt_hids_boot_kb_inp_rep_send(&hids_obj, conn_mode.conn, data, sizeof(data), NULL);
+		err = bt_hids_boot_kb_inp_rep_send(&hids_keyboard_obj, conn_mode.conn, data, sizeof(data), NULL);
 	} else {
-		err = bt_hids_inp_rep_send(&hids_obj, conn_mode.conn, INPUT_REP_KEYS_IDX, data, sizeof(data), NULL);
+		err = bt_hids_inp_rep_send(&hids_keyboard_obj, conn_mode.conn, INPUT_REP_KEYS_IDX, data, sizeof(data), NULL);
 	}
 
 	if (err) {
@@ -573,7 +710,8 @@ void main(void) {
 
 	printk("Bluetooth initialized\n");
 
-	hid_init();
+	hid_keyboard_init();
+	hid_mouse_init();
 
 	if (IS_ENABLED(CONFIG_SETTINGS)) {
 		settings_load();
