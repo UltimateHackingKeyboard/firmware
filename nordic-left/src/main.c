@@ -178,13 +178,6 @@ static struct conn_mode {
 	bool in_boot_mode;
 } conn_mode;
 
-/* Current report status
- */
-static struct keyboard_state {
-	uint8_t ctrl_keys_state; /* Current keys state */
-	uint8_t keys_state[KEY_PRESS_MAX];
-} hid_keyboard_state;
-
 static struct k_work pairing_work;
 struct pairing_data_mitm {
 	struct bt_conn *conn;
@@ -231,6 +224,8 @@ static void pairing_process(struct k_work *work) {
 	printk("Passkey for %s: %06u\n", addr, pairing_data.passkey);
 	printk("Press Button 1 to confirm, Button 2 to reject.\n");
 }
+
+// Connection callbacks
 
 static void connected(struct bt_conn *conn, uint8_t err) {
 	char addr[BT_ADDR_LE_STR_LEN];
@@ -305,6 +300,8 @@ BT_CONN_CB_DEFINE(conn_callbacks) = {
 	.disconnected = disconnected,
 	.security_changed = security_changed,
 };
+
+// HID init
 
 static void caps_lock_handler(const struct bt_hids_rep *rep) {
 	uint8_t report_val = ((*rep->data) & OUTPUT_REPORT_BIT_MASK_CAPS_LOCK) ? 1 : 0;
@@ -443,6 +440,8 @@ static void hid_init(void) {
 	__ASSERT(err == 0, "HIDS initialization failed\n");
 }
 
+// Auth callbacks
+
 static void auth_passkey_display(struct bt_conn *conn, unsigned int passkey) {
 	char addr[BT_ADDR_LE_STR_LEN];
 	bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
@@ -477,6 +476,14 @@ static void auth_cancel(struct bt_conn *conn) {
 	printk("Pairing cancelled: %s\n", addr);
 }
 
+static struct bt_conn_auth_cb conn_auth_callbacks = {
+	.passkey_display = auth_passkey_display,
+	.passkey_confirm = auth_passkey_confirm,
+	.cancel = auth_cancel,
+};
+
+// Auth info callbacks
+
 static void pairing_complete(struct bt_conn *conn, bool bonded) {
 	char addr[BT_ADDR_LE_STR_LEN];
 	bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
@@ -500,39 +507,31 @@ static void pairing_failed(struct bt_conn *conn, enum bt_security_err reason) {
 	printk("Pairing failed conn: %s, reason %d\n", addr, reason);
 }
 
-static struct bt_conn_auth_cb conn_auth_callbacks = {
-	.passkey_display = auth_passkey_display,
-	.passkey_confirm = auth_passkey_confirm,
-	.cancel = auth_cancel,
-};
-
 static struct bt_conn_auth_info_cb conn_auth_info_callbacks = {
 	.pairing_complete = pairing_complete,
 	.pairing_failed = pairing_failed
 };
 
-static int key_report_con_send(const struct keyboard_state *state, bool boot_mode, struct bt_conn *conn, bool down) {
+static int key_report_send(bool down) {
+	if (!conn_mode.conn) {
+		return 0;
+	}
+
 	uint8_t chr = down ? HID_KEY_A : 0;
-	uint8_t  data[INPUT_REPORT_KEYS_MAX_LEN] = {state->ctrl_keys_state, 0, chr, 0, 0, 0, 0, 0};
+	uint8_t data[INPUT_REPORT_KEYS_MAX_LEN] = {0 /* modifiers */, 0, chr, 0, 0, 0, 0, 0};
 
 	int err = 0;
-	if (boot_mode) {
-		err = bt_hids_boot_kb_inp_rep_send(&hids_obj, conn, data, sizeof(data), NULL);
+	if (conn_mode.in_boot_mode) {
+		err = bt_hids_boot_kb_inp_rep_send(&hids_obj, conn_mode.conn, data, sizeof(data), NULL);
 	} else {
-		err = bt_hids_inp_rep_send(&hids_obj, conn, INPUT_REP_KEYS_IDX, data, sizeof(data), NULL);
+		err = bt_hids_inp_rep_send(&hids_obj, conn_mode.conn, INPUT_REP_KEYS_IDX, data, sizeof(data), NULL);
 	}
-	return err;
-}
 
-static int key_report_send(bool down) {
-	if (conn_mode.conn) {
-		int err = key_report_con_send(&hid_keyboard_state, conn_mode.in_boot_mode, conn_mode.conn, down);
-		if (err) {
-			printk("Key report send error: %d\n", err);
-			return err;
-		}
+	if (err) {
+		printk("Key report send error: %d\n", err);
 	}
-	return 0;
+
+	return err;
 }
 
 static void num_comp_reply(bool accept) {
