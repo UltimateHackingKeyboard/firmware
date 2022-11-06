@@ -100,9 +100,7 @@ void int_in_ready_keyboard(const struct device *dev) {
 #define ADV_STATUS_LED DK_LED1
 #define CON_STATUS_LED DK_LED2
 #define LED_CAPS_LOCK  DK_LED3
-#define NFC_LED	       DK_LED4
 #define KEY_TEXT_MASK  DK_BTN1_MSK
-#define KEY_ADV_MASK   DK_BTN4_MSK
 
 /* Key used to accept or reject passkey value */
 #define KEY_PAIRING_ACCEPT DK_BTN1_MSK
