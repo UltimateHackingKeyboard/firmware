@@ -311,11 +311,6 @@ static void hids_pm_evt_handler(enum bt_hids_pm_evt evt, struct bt_conn *conn) {
 }
 
 static void hid_init(void) {
-	int err;
-	struct bt_hids_init_param    hids_init_obj = { 0 };
-	struct bt_hids_inp_rep       *hids_inp_rep;
-	struct bt_hids_outp_feat_rep *hids_outp_rep;
-
 	static const uint8_t report_map[] = {
 		0x05, 0x01,       /* Usage Page (Generic Desktop) */
 		0x09, 0x06,       /* Usage (Keyboard) */
@@ -357,15 +352,16 @@ static void hid_init(void) {
 		0x19, 0x01,       /* Usage Minimum (1) */
 		0x29, 0x05,       /* Usage Maximum (5) */
 		0x91, 0x02,       /* Output (Data, Variable, Absolute), */
-				  /* Led report */
+   	    /* Led report */
 		0x95, 0x01,       /* Report Count (1) */
 		0x75, 0x03,       /* Report Size (3) */
 		0x91, 0x01,       /* Output (Data, Variable, Absolute), */
-				  /* Led report padding */
+		/* Led report padding */
 
 		0xC0              /* End Collection (Application) */
 	};
 
+	struct bt_hids_init_param hids_init_obj = {0};
 	hids_init_obj.rep_map.data = report_map;
 	hids_init_obj.rep_map.size = sizeof(report_map);
 
@@ -373,12 +369,12 @@ static void hid_init(void) {
 	hids_init_obj.info.b_country_code = 0x00;
 	hids_init_obj.info.flags = (BT_HIDS_REMOTE_WAKE | BT_HIDS_NORMALLY_CONNECTABLE);
 
-	hids_inp_rep = &hids_init_obj.inp_rep_group_init.reports[INPUT_REP_KEYS_IDX];
+	struct bt_hids_inp_rep *hids_inp_rep = &hids_init_obj.inp_rep_group_init.reports[INPUT_REP_KEYS_IDX];
 	hids_inp_rep->size = INPUT_REPORT_KEYS_MAX_LEN;
 	hids_inp_rep->id = INPUT_REP_KEYS_REF_ID;
 	hids_init_obj.inp_rep_group_init.cnt++;
 
-	hids_outp_rep = &hids_init_obj.outp_rep_group_init.reports[OUTPUT_REP_KEYS_IDX];
+	struct bt_hids_outp_feat_rep *hids_outp_rep = &hids_init_obj.outp_rep_group_init.reports[OUTPUT_REP_KEYS_IDX];
 	hids_outp_rep->size = OUTPUT_REPORT_MAX_LEN;
 	hids_outp_rep->id = OUTPUT_REP_KEYS_REF_ID;
 	hids_outp_rep->handler = hids_outp_rep_handler;
@@ -388,7 +384,7 @@ static void hid_init(void) {
 	hids_init_obj.boot_kb_outp_rep_handler = hids_boot_kb_outp_rep_handler;
 	hids_init_obj.pm_evt_handler = hids_pm_evt_handler;
 
-	err = bt_hids_init(&hids_obj, &hids_init_obj);
+	int err = bt_hids_init(&hids_obj, &hids_init_obj);
 	__ASSERT(err == 0, "HIDS initialization failed\n");
 }
 
