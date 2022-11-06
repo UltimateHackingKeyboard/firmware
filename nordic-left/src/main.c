@@ -338,6 +338,8 @@ static void hid_keyboard_init(void) {
 #define INPUT_REP_MOVEMENT_LEN      3
 // Length of Mouse Input Report containing media player data.
 #define INPUT_REP_MEDIA_PLAYER_LEN  1
+// Index of Mouse Input Report containing movement data.
+#define INPUT_REP_MOVEMENT_INDEX    1
 // Id of reference to Mouse Input Report containing button data.
 #define INPUT_REP_REF_BUTTONS_ID    1
 // Id of reference to Mouse Input Report containing movement data.
@@ -580,7 +582,7 @@ static struct bt_conn_auth_info_cb conn_auth_info_callbacks = {
 	.pairing_failed = pairing_failed
 };
 
-static int key_report_send(bool down) {
+void key_report_send(bool down) {
 	if (!conn_mode.conn) {
 		return 0;
 	}
@@ -588,18 +590,23 @@ static int key_report_send(bool down) {
 	uint8_t chr = down ? HID_KEY_A : 0;
 	uint8_t data[INPUT_REPORT_KEYS_MAX_LEN] = {0 /* modifiers */, 0, chr, 0, 0, 0, 0, 0};
 
-	int err = 0;
+	int keyboard_err = 0;
+	int mouse_err = 0;
 	if (conn_mode.in_boot_mode) {
-		err = bt_hids_boot_kb_inp_rep_send(&hids_keyboard_obj, conn_mode.conn, data, sizeof(data), NULL);
+		keyboard_err = bt_hids_boot_kb_inp_rep_send(&hids_keyboard_obj, conn_mode.conn, data, sizeof(data), NULL);
+		mouse_err = bt_hids_boot_mouse_inp_rep_send(&hids_mouse_obj, conn_mode.conn, NULL, 5, 0, NULL);
 	} else {
-		err = bt_hids_inp_rep_send(&hids_keyboard_obj, conn_mode.conn, INPUT_REP_KEYS_IDX, data, sizeof(data), NULL);
+		uint8_t buffer[INPUT_REP_MOVEMENT_LEN] = {5, 0, 0};
+		keyboard_err = bt_hids_inp_rep_send(&hids_keyboard_obj, conn_mode.conn, INPUT_REP_KEYS_IDX, data, sizeof(data), NULL);
+		mouse_err = bt_hids_inp_rep_send(&hids_mouse_obj, conn_mode.conn, INPUT_REP_MOVEMENT_INDEX, buffer, sizeof(buffer), NULL);
 	}
 
-	if (err) {
-		printk("Key report send error: %d\n", err);
+	if (keyboard_err) {
+		printk("Key report send error: %d\n", keyboard_err);
 	}
-
-	return err;
+	if (mouse_err) {
+		printk("Mouse report send error: %d\n", mouse_err);
+	}
 }
 
 static void num_comp_reply(bool accept) {
