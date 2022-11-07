@@ -481,11 +481,17 @@ static void connected(struct bt_conn *conn, uint8_t err) {
 	dk_set_led_on(CON_STATUS_LED);
 
 	err = bt_hids_connected(&hids_keyboard_obj, conn);
-
 	if (err) {
-		printk("Failed to notify HID service about connection\n");
+		printk("Failed to notify keyboard HID service about connection\n");
 		return;
 	}
+
+	err = bt_hids_connected(&hids_mouse_obj, conn);
+	if (err) {
+		printk("Failed to notify mouse HID service about connection\n");
+		return;
+	}
+
 
 	if (!conn_mode.conn) {
 		conn_mode.conn = conn;
@@ -503,7 +509,12 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
 
 	int err = bt_hids_disconnected(&hids_keyboard_obj, conn);
 	if (err) {
-		printk("Failed to notify HID service about disconnection\n");
+		printk("Failed to notify keyboard HID service about disconnection\n");
+	}
+
+	err = bt_hids_disconnected(&hids_mouse_obj, conn);
+	if (err) {
+		printk("Failed to notify mouse HID service about disconnection\n");
 	}
 
 	conn_mode.conn = NULL;
@@ -596,7 +607,7 @@ void key_report_send(bool down) {
 		keyboard_err = bt_hids_boot_kb_inp_rep_send(&hids_keyboard_obj, conn_mode.conn, data, sizeof(data), NULL);
 		mouse_err = bt_hids_boot_mouse_inp_rep_send(&hids_mouse_obj, conn_mode.conn, NULL, 5, 0, NULL);
 	} else {
-		uint8_t buffer[INPUT_REP_MOVEMENT_LEN] = {5, 0, 0};
+		uint8_t buffer[INPUT_REP_MOVEMENT_LEN] = {0, 0, 5};
 		keyboard_err = bt_hids_inp_rep_send(&hids_keyboard_obj, conn_mode.conn, INPUT_REP_KEYS_IDX, data, sizeof(data), NULL);
 		mouse_err = bt_hids_inp_rep_send(&hids_mouse_obj, conn_mode.conn, INPUT_REP_MOVEMENT_INDEX, buffer, sizeof(buffer), NULL);
 	}
