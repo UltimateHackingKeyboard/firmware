@@ -433,34 +433,39 @@ static void hid_mouse_init(void)
 		0xC0              // End Collection
 	};
 
-	struct bt_hids_init_param hids_init_param = { 0 };
-	hids_init_param.rep_map.data = report_map;
-	hids_init_param.rep_map.size = sizeof(report_map);
-
-	hids_init_param.info.bcd_hid = BASE_USB_HID_SPEC_VERSION;
-	hids_init_param.info.b_country_code = 0x00;
-	hids_init_param.info.flags = BT_HIDS_REMOTE_WAKE | BT_HIDS_NORMALLY_CONNECTABLE;
-
-	struct bt_hids_inp_rep *hids_inp_rep;
-	hids_inp_rep = &hids_init_param.inp_rep_group_init.reports[0];
-	hids_inp_rep->size = INPUT_REP_BUTTONS_LEN;
-	hids_inp_rep->id = INPUT_REP_REF_BUTTONS_ID;
-	hids_init_param.inp_rep_group_init.cnt++;
-
 	static const uint8_t mouse_movement_mask[ceiling_fraction(INPUT_REP_MOVEMENT_LEN, 8)] = {0};
-	hids_inp_rep++;
-	hids_inp_rep->size = INPUT_REP_MOVEMENT_LEN;
-	hids_inp_rep->id = INPUT_REP_REF_MOVEMENT_ID;
-	hids_inp_rep->rep_mask = mouse_movement_mask;
-	hids_init_param.inp_rep_group_init.cnt++;
 
-	hids_inp_rep++;
-	hids_inp_rep->size = INPUT_REP_MEDIA_PLAYER_LEN;
-	hids_inp_rep->id = INPUT_REP_REF_MPLAYER_ID;
-	hids_init_param.inp_rep_group_init.cnt++;
-
-	hids_init_param.is_mouse = true;
-	hids_init_param.pm_evt_handler = hids_pm_evt_handler;
+	struct bt_hids_init_param hids_init_param = {
+		.rep_map = {
+			.data = report_map,
+			.size = sizeof(report_map),
+		},
+		.info = {
+			.bcd_hid = BASE_USB_HID_SPEC_VERSION,
+			.b_country_code = 0x00,
+			.flags = BT_HIDS_REMOTE_WAKE | BT_HIDS_NORMALLY_CONNECTABLE,
+		},
+		.inp_rep_group_init = {
+			.reports = {
+				{
+					.size = INPUT_REP_BUTTONS_LEN,
+					.id = INPUT_REP_REF_BUTTONS_ID,
+				},
+				{
+					.size = INPUT_REP_MOVEMENT_LEN,
+					.id = INPUT_REP_REF_MOVEMENT_ID,
+					.rep_mask = mouse_movement_mask,
+				},
+				{
+					.size = INPUT_REP_MEDIA_PLAYER_LEN,
+					.id = INPUT_REP_REF_MPLAYER_ID,
+				},
+			},
+			.cnt = 3,
+		},
+		.is_mouse = true,
+		.pm_evt_handler = hids_pm_evt_handler,
+	};
 
 	int err = bt_hids_init(&hids_mouse_obj, &hids_init_param);
 	__ASSERT(err == 0, "HIDS mouse initialization failed\n");
