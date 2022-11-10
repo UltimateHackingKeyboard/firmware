@@ -187,6 +187,8 @@ Complex key sequences can be achieved using `tapKeySeq`. For instance, following
     ifGesture 80 73 final tapKeySeq CS-u 1 f 6 0 5 space
     ifGesture 80 21 final tapKeySeq CS-u 1 f 9 3 7 space
 
+## Advanced commands:
+
 You can simplify writing macros by using `#` and `@` characters. The first resolves a number as an index of a register. The second interprets the number as a relative action index. For instance the following macro will write out five "a"s with 50 ms delays
 
     //you can comment your code via two slashes.
@@ -223,6 +225,54 @@ on space:
 
     holdKey space
     setReg 5 0
+
+## Per-key LEDs fun:
+
+Colour picker for constant colours. Bound on fn+r, fn+r+r turns colour to red, fn+r+v to violet, etc..
+
+    ifGesture transitive 75 final set backlight.constantRgb.rgb 255 32 0  // r - red
+    ifGesture transitive 84 final set backlight.constantRgb.rgb 192 255 0  // g - green
+    ifGesture transitive 91 final set backlight.constantRgb.rgb 128 192 255 // b - blue
+    ifGesture transitive 14 final set backlight.constantRgb.rgb 255 192 0 // y - yellow
+    ifGesture transitive 90 final set backlight.constantRgb.rgb 192 64 255 // v - violet
+    ifGesture transitive 9 final set backlight.constantRgb.rgb 255 128 0 // o - orange
+    ifGesture transitive 73 final set backlight.constantRgb.rgb 192 32 0 // w - wine
+    ifGesture transitive 21 final set backlight.constantRgb.rgb 128 48 0 // b - brown
+    ifGesture transitive 22 final set backlight.constantRgb.rgb 255 192 32 // n - warm white, as "normal"
+    ifGesture transitive 82 final set backlight.strategy functional // f to functional backlight
+    ifGesture transitive 72 final set leds.enabled 0 // q - to turn off
+    ifGesture transitive 10 final set leds.enabled 1 // p - to turn back on
+
+To see all possible UHK hues (maximum saturation), hold a key with the following macro:
+
+    autoRepeat progressHue
+
+In order to make UHK slowly rotate through all rainbow colors all the time, you can use the following macro:
+
+    progressHue
+    delayUntil 1000
+    goTo 0
+
+In order to prevent it from running multiple times:
+
+    # prevent the macro from running multiple times via (randomly picked) register 22
+    setReg 22 1
+    delayUntil 2000
+    setReg 22 0
+    beginLoop:
+    ifRegEq 22 1 break
+    # the important part begins here
+    progressHue
+    delayUntil 1000
+    goTo beginLoop
+
+You can also start this from `$onInit` by `fork rotateHues` (given you have the macro named `rotateHues`). Or add following lines to the colour picker:
+
+    # put this at the beginning of the picker, to stop rotateHues when another choice is made.
+    setReg 22 1
+    # start the `rotateHues` macro on 'c' - as "changing"
+    ifGesture transitive 89 final fork rotateHues
+
 
 # Further reading
 
