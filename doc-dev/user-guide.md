@@ -210,6 +210,20 @@ You can use `goTo @0` as active wait loop. Consider following example. If briefl
     ifKeyActive #0 goTo @0
     goTo begin
 
+Simple active wait loop example, to simulate qmk "caps words" - a feature which acts as a caps lock, but automatically turns off on space character:
+
+On activation key:
+
+    pressKey LS-
+    setReg 5 1
+    ifRegEq 5 1 goTo @0
+    #at the end of macro, the shift gets released automatically
+
+on space:
+
+    holdKey space
+    setReg 5 0
+
 # Further reading
 
 - [reference manual](reference-manual.md)
