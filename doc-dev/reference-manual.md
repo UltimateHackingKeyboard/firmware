@@ -438,6 +438,7 @@ For the purpose of toggling functionality on and off, and for global constants m
       - or increase baseSpeed
     - If you want to make cursor more responsive overall:
       - you want to increase speed
+
   (Mostly) reasonable examples (`baseSpeed speed xceleration midSpeed`):
     - `0.0 1.0 0.0 3000` (no xceleration)
       - speed multiplier is always 1x at all speeds
@@ -545,4 +546,9 @@ UHK modules feature four navigation modes, which are mapped by layer and module.
 
 Caret and media modes can be customized by `set navigationModeAction` command.
 
+### Modifier layers:
+
+Modifier layers are meant to allow easy overriding of modifier scancodes. If you bind an action there, it will be activated from the base layer when the corresponding modifier is pressed. E.g., allowing different scancode for shifted key compared to non-shifted keys. As such, they are not really layers.
+
+These layers work through an elaborate setup of positive and negative sticky layer masks.
 
