@@ -1493,13 +1493,13 @@ static macro_result_t goToAddress(uint8_t address)
     uint8_t oldAddress = s->ms.commandAddress;
 
     //if we jump back, we have to reset and go from beginning
-    if(address < s->ms.commandAddress) {
+    if (address < s->ms.commandAddress) {
         resetToAddressZero(s->ms.currentMacroIndex);
     }
 
     //if we are in the middle of multicommand action, parse till the end
     if(s->ms.commandAddress < address && s->ms.commandAddress != 0) {
-        while(loadNextCommand()) ;
+        while (s->ms.commandAddress < address && loadNextCommand());
     }
 
     //skip across actions without having to read entire action
