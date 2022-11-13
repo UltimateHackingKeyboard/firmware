@@ -105,7 +105,7 @@ static USB_DESC_STORAGE_TYPE(USBD_BOSType) usbd_bosDesc = {
         },
         .CapabilityData.DescInfoSet = {
             .dwWindowsVersion = USB_MS_OS_2P0_MIN_WINDOWS_VERSION,
-            .wMSOSDescriptorSetTotalLength = sizeof(USB_MSOS_DescType),
+            .wMSOSDescriptorSetTotalLength = 0,
             .bMS_VendorCode = USB_REQ_MICROSOFT_OS,
             .bAltEnumCode = 1,
         },
@@ -163,8 +163,8 @@ usb_status_t USB_DeviceGetMsOsDescriptor(
     usb_device_handle handle, usb_device_control_request_struct_t *controlRequest)
 {
 #if (USBD_MS_OS_DESC_VERSION == 2)
-    controlRequest->buffer = (uint8_t*)&usbd_msosDesc;
-    controlRequest->length = sizeof(usbd_msosDesc);
+    controlRequest->buffer = (uint8_t*)NULL;
+    controlRequest->length = 0;
     return kStatus_USB_Success;
 #else
     return kStatus_USB_InvalidRequest;

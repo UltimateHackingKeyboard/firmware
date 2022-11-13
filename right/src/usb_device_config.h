@@ -21,7 +21,6 @@
     USB_MEDIA_KEYBOARD_INTERFACE_COUNT + \
     USB_SYSTEM_KEYBOARD_INTERFACE_COUNT + \
     USB_MOUSE_INTERFACE_COUNT + \
-    USB_GAMEPAD_INTERFACE_COUNT + \
 0)
 
 // Whether the device is self-powered: 1 supported, 0 not supported
