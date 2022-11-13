@@ -144,6 +144,7 @@
             bool macroSleeping : 1;
             bool macroBroken : 1;
             bool macroPlaying : 1;
+            bool macroScheduled : 1;
             bool reportsUsed : 1;
             bool wakeMeOnTime : 1;
             bool wakeMeOnKeystateChange: 1;
