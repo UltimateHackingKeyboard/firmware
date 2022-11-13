@@ -594,4 +594,13 @@ void UpdateUsbReports(void)
         }
         lastActivityTime = CurrentTime;
     }
+
+    if (UsbGamepadCheckReportReady() == kStatus_USB_Success) {
+        UsbReportUpdateSemaphore |= 1 << USB_GAMEPAD_INTERFACE_INDEX;
+        usb_status_t status = UsbGamepadAction();
+        if (status != kStatus_USB_Success) {
+            UsbReportUpdateSemaphore &= ~(1 << USB_GAMEPAD_INTERFACE_INDEX);
+        }
+        lastActivityTime = CurrentTime;
+    }
 }
