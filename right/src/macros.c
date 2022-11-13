@@ -3249,37 +3249,43 @@ static void wakeMacroInSlot(uint8_t slotIdx)
 
 static void scheduleSlot(uint8_t slotIdx)
 {
-    ASSERT(!MacroState[slotIdx].ms.macroScheduled);
-    if(scheduler.activeSlotCount == 0) {
-        MacroState[slotIdx].ms.nextSlot = slotIdx;
-        MacroState[slotIdx].ms.macroScheduled = true;
-        scheduler.previousSlotIdx = slotIdx;
-        scheduler.currentSlotIdx = slotIdx;
-        scheduler.lastQueuedSlot = slotIdx;
-        scheduler.activeSlotCount++;
-        scheduler.remainingCount++;
-    } else {
-        bool shouldInheritPrevious = scheduler.lastQueuedSlot == scheduler.previousSlotIdx;
-        MacroState[slotIdx].ms.nextSlot = MacroState[scheduler.lastQueuedSlot].ms.nextSlot;
-        MacroState[scheduler.lastQueuedSlot].ms.nextSlot = slotIdx;
-        MacroState[slotIdx].ms.macroScheduled = true;
-        scheduler.lastQueuedSlot = slotIdx;
-        scheduler.activeSlotCount++;
-        scheduler.remainingCount++;
-        if(shouldInheritPrevious) {
+    if (!MacroState[slotIdx].ms.macroScheduled) {
+        if (scheduler.activeSlotCount == 0) {
+            MacroState[slotIdx].ms.nextSlot = slotIdx;
+            MacroState[slotIdx].ms.macroScheduled = true;
             scheduler.previousSlotIdx = slotIdx;
+            scheduler.currentSlotIdx = slotIdx;
+            scheduler.lastQueuedSlot = slotIdx;
+            scheduler.activeSlotCount++;
+            scheduler.remainingCount++;
+        } else {
+            bool shouldInheritPrevious = scheduler.lastQueuedSlot == scheduler.previousSlotIdx;
+            MacroState[slotIdx].ms.nextSlot = MacroState[scheduler.lastQueuedSlot].ms.nextSlot;
+            MacroState[scheduler.lastQueuedSlot].ms.nextSlot = slotIdx;
+            MacroState[slotIdx].ms.macroScheduled = true;
+            scheduler.lastQueuedSlot = slotIdx;
+            scheduler.activeSlotCount++;
+            scheduler.remainingCount++;
+            if(shouldInheritPrevious) {
+                scheduler.previousSlotIdx = slotIdx;
+            }
         }
+    } else {
+        ERR("Scheduling an already scheduled slot attempted!");
     }
 }
 
 static void unscheduleCurrentSlot()
 {
-    ASSERT(MacroState[scheduler.currentSlotIdx].ms.macroScheduled);
-    MacroState[scheduler.previousSlotIdx].ms.nextSlot = MacroState[scheduler.currentSlotIdx].ms.nextSlot;
-    MacroState[scheduler.currentSlotIdx].ms.macroScheduled = false;
-    scheduler.lastQueuedSlot = scheduler.lastQueuedSlot == scheduler.currentSlotIdx ? scheduler.previousSlotIdx : scheduler.lastQueuedSlot;
-    scheduler.currentSlotIdx = scheduler.previousSlotIdx;
-    scheduler.activeSlotCount--;
+    if (MacroState[scheduler.currentSlotIdx].ms.macroScheduled) {
+        MacroState[scheduler.previousSlotIdx].ms.nextSlot = MacroState[scheduler.currentSlotIdx].ms.nextSlot;
+        MacroState[scheduler.currentSlotIdx].ms.macroScheduled = false;
+        scheduler.lastQueuedSlot = scheduler.lastQueuedSlot == scheduler.currentSlotIdx ? scheduler.previousSlotIdx : scheduler.lastQueuedSlot;
+        scheduler.currentSlotIdx = scheduler.previousSlotIdx;
+        scheduler.activeSlotCount--;
+    } else {
+        ERR("Unsechuling non-scheduled slot attempted!");
+    }
 }
 
 static void getNextScheduledSlot()
