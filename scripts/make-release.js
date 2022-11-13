@@ -9,6 +9,7 @@ config.verbose = true;
 
 exec(`${__dirname}/generate-versions-h.js`);
 
+const gitInfo = common.getGitInfo();
 const package = JSON.parse(fs.readFileSync(`${__dirname}/package.json`));
 const version = package.firmwareVersion;
 const releaseName = `uhk-firmware-${version}`;
@@ -16,6 +17,11 @@ const releaseDir = `${__dirname}/${releaseName}`;
 const agentDir = `${__dirname}/../lib/agent`;
 var releaseFile = `${__dirname}/${releaseName}.tar.gz`;
 var mkArgs = '';
+
+if (gitInfo.tag != `v${version}` && !process.argv.includes('--allowSha')) {
+    console.error(`Git tag '${gitInfo.tag}' !~ 'v{version}'. Please run with '--allowSha' if this is intentional.`);
+    process.exit(1);
+}
 
 if (process.argv.includes('--extendedMacros')) {
     mkArgs = mkArgs + 'CUSTOM_CFLAGS=-DEXTENDED_MACROS'
@@ -59,7 +65,6 @@ for (const module of package.modules) {
     cp(moduleMMap, `${moduleDir}/${module.name}.map`);
 }
 
-const gitInfo = common.getGitInfo();
 const updatedPackage = Object.assign({}, package, { gitInfo: gitInfo });
 fs.writeFileSync(`${releaseDir}/package.json`, JSON.stringify(updatedPackage, null, 2));
 
