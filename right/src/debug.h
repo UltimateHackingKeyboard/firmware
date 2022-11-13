@@ -48,6 +48,12 @@
     // Always show string (no timing logic is applied), but respect slot logic.
     #define SHOW_STRING(V, N) if(CurrentWatch == N) { ShowString(V, N); }
 
+    #define ERR(E) Macros_ReportError(E, NULL, NULL);
+
+    #define ERRN(E, N) if(CurrentWatch == N) { Macros_ReportError(E, NULL, NULL); }
+
+    #define ASSERT(C) if (!(C)) { Macros_ReportError("Assertion failed: "#C, NULL, NULL); }
+
 // Variables:
 
     extern uint8_t CurrentWatch;
@@ -83,5 +89,8 @@
     #define WATCH_STRING(V, N)
     #define SHOW_STRING(V, N)
     #define SHOW_VALUE(V, N)
+    #define ERR(E)
+    #define ERRN(E, N)
+    #define ASSERT(C)
 
 #endif

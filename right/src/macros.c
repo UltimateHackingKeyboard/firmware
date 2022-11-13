@@ -847,8 +847,8 @@ static void describeSchedulerState()
     Macros_SetStatusString("s:", NULL);
     Macros_SetStatusNum(scheduler.currentSlotIdx);
     Macros_SetStatusNum(scheduler.previousSlotIdx);
-    Macros_SetStatusNum(scheduler.activeSlotCount);
     Macros_SetStatusNum(scheduler.lastQueuedSlot);
+    Macros_SetStatusNum(scheduler.activeSlotCount);
 
     Macros_SetStatusString(":", NULL);
     uint8_t slot = scheduler.currentSlotIdx;
@@ -3057,6 +3057,7 @@ static macro_result_t execMacro(uint8_t index)
 
 static macro_result_t callMacro(uint8_t macroIndex)
 {
+    unscheduleCurrentSlot();
     s->ms.macroSleeping = true;
     s->ms.wakeMeOnKeystateChange = false;
     s->ms.wakeMeOnTime = false;
@@ -3248,8 +3249,10 @@ static void wakeMacroInSlot(uint8_t slotIdx)
 
 static void scheduleSlot(uint8_t slotIdx)
 {
+    ASSERT(!MacroState[slotIdx].ms.macroScheduled);
     if(scheduler.activeSlotCount == 0) {
         MacroState[slotIdx].ms.nextSlot = slotIdx;
+        MacroState[slotIdx].ms.macroScheduled = true;
         scheduler.previousSlotIdx = slotIdx;
         scheduler.currentSlotIdx = slotIdx;
         scheduler.lastQueuedSlot = slotIdx;
@@ -3259,6 +3262,7 @@ static void scheduleSlot(uint8_t slotIdx)
         bool shouldInheritPrevious = scheduler.lastQueuedSlot == scheduler.previousSlotIdx;
         MacroState[slotIdx].ms.nextSlot = MacroState[scheduler.lastQueuedSlot].ms.nextSlot;
         MacroState[scheduler.lastQueuedSlot].ms.nextSlot = slotIdx;
+        MacroState[slotIdx].ms.macroScheduled = true;
         scheduler.lastQueuedSlot = slotIdx;
         scheduler.activeSlotCount++;
         scheduler.remainingCount++;
@@ -3270,7 +3274,9 @@ static void scheduleSlot(uint8_t slotIdx)
 
 static void unscheduleCurrentSlot()
 {
+    ASSERT(MacroState[scheduler.currentSlotIdx].ms.macroScheduled);
     MacroState[scheduler.previousSlotIdx].ms.nextSlot = MacroState[scheduler.currentSlotIdx].ms.nextSlot;
+    MacroState[scheduler.currentSlotIdx].ms.macroScheduled = false;
     scheduler.lastQueuedSlot = scheduler.lastQueuedSlot == scheduler.currentSlotIdx ? scheduler.previousSlotIdx : scheduler.lastQueuedSlot;
     scheduler.currentSlotIdx = scheduler.previousSlotIdx;
     scheduler.activeSlotCount--;
