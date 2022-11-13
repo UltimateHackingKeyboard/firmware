@@ -295,20 +295,14 @@
     USB_GAMEPAD_INTERRUPT_OUT_INTERVAL
 
 #define USB_CONFIGURATION_DESCRIPTOR_TOTAL_LENGTH    (USB_CONFIGURATION_DESCRIPTOR_BASE_LENGTH + \
-            (USB_DESCRIPTOR_LENGTH_INTERFACE + USB_DESCRIPTOR_LENGTH_HID + (2 * USB_DESCRIPTOR_LENGTH_ENDPOINT)))
+            0)
 
 static USB_DESC_STORAGE_TYPE(uint8_t) UsbConfigurationDescriptor[USB_CONFIGURATION_DESCRIPTOR_TOTAL_LENGTH] = {
     BASE_CONFIGURATION_DESCRIPTOR(USB_CONFIGURATION_DESCRIPTOR_TOTAL_LENGTH),
-    GAMEPAD_HID_CONFIGURATION_DESCRIPTOR
 };
 
 #define USB_MS_CONFIGURATION_DESCRIPTOR_TOTAL_LENGTH    (USB_CONFIGURATION_DESCRIPTOR_BASE_LENGTH + \
             (USB_DESCRIPTOR_LENGTH_INTERFACE + 0x11 + (2 * USB_DESCRIPTOR_LENGTH_ENDPOINT)))
-
-static USB_DESC_STORAGE_TYPE(uint8_t) UsbMsConfigurationDescriptor[USB_MS_CONFIGURATION_DESCRIPTOR_TOTAL_LENGTH] = {
-    BASE_CONFIGURATION_DESCRIPTOR(USB_MS_CONFIGURATION_DESCRIPTOR_TOTAL_LENGTH),
-    GAMEPAD_XINPUT_CONFIGURATION_DESCRIPTOR
-};
 
 usb_status_t USB_DeviceGetHidDescriptor(
     usb_device_handle handle, usb_device_get_hid_descriptor_struct_t *hidDescriptor)
@@ -331,9 +325,6 @@ usb_status_t USB_DeviceGetHidDescriptor(
         case USB_MOUSE_INTERFACE_INDEX:
             hidDescriptor->buffer = (uint8_t*)&UsbConfigurationDescriptor[USB_MOUSE_HID_DESCRIPTOR_INDEX];
             break;
-        case USB_GAMEPAD_INTERFACE_INDEX:
-            hidDescriptor->buffer = (uint8_t*)&UsbConfigurationDescriptor[USB_GAMEPAD_HID_DESCRIPTOR_INDEX];
-            break;
         default:
             return kStatus_USB_InvalidRequest;
     }
@@ -348,8 +339,8 @@ usb_status_t USB_DeviceGetConfigurationDescriptor(
             configurationDescriptor->buffer = (uint8_t*)UsbConfigurationDescriptor;
             configurationDescriptor->length = sizeof(UsbConfigurationDescriptor);
         } else {
-            configurationDescriptor->buffer = (uint8_t*)UsbMsConfigurationDescriptor;
-            configurationDescriptor->length = sizeof(UsbMsConfigurationDescriptor);
+            configurationDescriptor->buffer = (uint8_t*)UsbConfigurationDescriptor;
+            configurationDescriptor->length = sizeof(UsbConfigurationDescriptor);
         }
         return kStatus_USB_Success;
     }
