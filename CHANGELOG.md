@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [9.1.4] - 2022-11-14
+
+Device Protocol: 4.8.0 | Module Protocol: 4.2.0 | User Config: 5.1.0 | Hardware Config: 1.0.0 | Smart Macros: 1.0.**3**
+
+- Fix `goTo` and related smart macro command bug. `SMARTMACROS:PATCH`
+- Fix scheduling error in `call` smart macro command. `SMARTMACROS:PATCH`
+- Disable USB gamepad interface as it interferes with gamepads. Will re-enable it later after exposing its feature set via Agent.
+
 ## [9.1.3] - 2022-11-10
 
 Device Protocol: 4.8.0 | Module Protocol: 4.2.0 | User Config: 5.1.0 | Hardware Config: 1.0.0 | Smart Macros: 1.0.**2**
