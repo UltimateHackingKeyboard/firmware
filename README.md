@@ -52,7 +52,7 @@ Going forward, it's easier to flash the firmware of your choice by using the dow
 
 6. To build a full firmware tarball:
     1. Run `npm install` in `scripts`.
-    2. Run `scripts/make-release.js`.
+    2. Run `scripts/make-release.js`. (Or `scripts/make-release.js --allowSha` for development purposes.)
     3. Now, the created tarball `scripts/uhk-firmware-VERSION.tar.gz` can be flashed with UHK Agent.
 
 ## Contributing
@@ -61,7 +61,7 @@ Want to contribute? Let us show you [how](/CONTRIBUTING.md).
 
 ## Extended macros
 
-In order to build with extended macro support, either specify `--extendedMacros` as parameter to `make-release.js`, or specify `CUSTOM_CFLAGS=-DEXTENDED_MACROS` as parameter to `make`. Further documentation is available in [doc-dev](doc-dev).
+Extended macro commands are built in by default, but need to be enabled by `set macroEngine.extendedCommands 1`. It is also possible to just pass `make-release.js --extendedMacros`, or `make CUSTOM_CFLAGS=-DEXTENDED_MACROS`.   Further documentation is available in Agent's macro reference side pane, or (in more technical terms) in [doc-dev](doc-dev).
 
 ## Custom Firmwares
 
