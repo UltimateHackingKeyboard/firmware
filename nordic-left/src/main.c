@@ -116,7 +116,7 @@ void main(void) {
 	bluetooth_init();
 
 	for (;;) {
-		bluetooth_set_adv_led(blink_status);
+		bluetooth_set_adv_led(&blink_status);
 		k_sleep(K_MSEC(ADV_LED_BLINK_INTERVAL));
 		// Battery level simulation
 		bas_notify();
