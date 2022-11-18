@@ -1370,7 +1370,7 @@ static bool processIfReleasedCommand(bool negate)
 static bool processIfRegEqCommand(bool negate, const char* arg1, const char *argEnd)
 {
     uint8_t address = parseNUM(arg1, argEnd);
-    uint8_t param = parseNUM(NextTok(arg1, argEnd), argEnd);
+    int32_t param = parseNUM(NextTok(arg1, argEnd), argEnd);
     if (validReg(address)) {
         bool res = regs[address] == param;
         return res != negate;
@@ -1382,7 +1382,7 @@ static bool processIfRegEqCommand(bool negate, const char* arg1, const char *arg
 static bool processIfRegInequalityCommand(bool greaterThan, const char* arg1, const char *argEnd)
 {
     uint8_t address = parseNUM(arg1, argEnd);
-    uint8_t param = parseNUM(NextTok(arg1, argEnd), argEnd);
+    int32_t param = parseNUM(NextTok(arg1, argEnd), argEnd);
     if (validReg(address)) {
         if (greaterThan) {
             return regs[address] > param;
