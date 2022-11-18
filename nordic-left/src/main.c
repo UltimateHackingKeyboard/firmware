@@ -2,10 +2,6 @@
 #include <zephyr/device.h>
 #include <zephyr/drivers/gpio.h>
 
-#include <zephyr/usb/usb_device.h>
-#include <zephyr/usb/class/usb_hid.h>
-
-
 #include <zephyr/types.h>
 #include <stddef.h>
 #include <string.h>
@@ -15,19 +11,7 @@
 #include <zephyr/kernel.h>
 #include <soc.h>
 #include <assert.h>
-#include <zephyr/spinlock.h>
 
-#include <zephyr/settings/settings.h>
-
-#include <zephyr/bluetooth/bluetooth.h>
-#include <zephyr/bluetooth/hci.h>
-#include <zephyr/bluetooth/conn.h>
-#include <zephyr/bluetooth/uuid.h>
-#include <zephyr/bluetooth/gatt.h>
-
-#include <zephyr/bluetooth/services/bas.h>
-#include <bluetooth/services/hids.h>
-#include <zephyr/bluetooth/services/dis.h>
 #include <dk_buttons_and_leds.h>
 
 #include "usb.h"

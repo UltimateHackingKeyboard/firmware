@@ -2,9 +2,7 @@
 #include <zephyr/device.h>
 #include <zephyr/drivers/gpio.h>
 
-#include <zephyr/usb/usb_device.h>
 #include <zephyr/usb/class/usb_hid.h>
-
 
 #include <zephyr/types.h>
 #include <stddef.h>
