@@ -1,6 +1,6 @@
 # Extended macro engine
 
-Extended macro engine is developed on kareltucek/firmware and occasionally merged into the stock firmware. However, just some of its features are available in stock firmware by default (mostly just `printStatus` and `set` commands). Full engine can be built using either `make-release.js --extendedMacros` or `make CUSTOM_CFLAGS=-DEXTENDED_MACROS` or enabled by `set macroEngine.extendedCommands 1` or obtained at https://github.com/kareltucek/firmware/releases/. Needless to say, extended commands are not officially supported. These commands are also not thoroughly tested, and are more likely to be removed or reshaped in the future.
+Extended macro engine is developed on kareltucek/firmware and occasionally merged into the stock firmware. The extended macro engine can be enabled by `set macroEngine.extendedCommands 1` or built using either `make-release.js --extendedMacros` or `make CUSTOM_CFLAGS=-DEXTENDED_MACROS`. Otherwise, stock builds are limited to just a few commands - approximately to `set` and `printStatus`. The extended features are not thoroughly tested, and are more likely to be removed or reshaped in the future.
 
 The extended engine implements:
 - macro commands for most features of the keyboard
