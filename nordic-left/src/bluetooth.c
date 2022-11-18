@@ -645,6 +645,8 @@ void bluetooth_set_adv_led(int *blink_status) {
 }
 
 void bluetooth_init() {
+   	printk("Starting Bluetooth Peripheral HIDS keyboard\n");
+
 	bt_conn_auth_cb_register(&conn_auth_callbacks);
 	bt_conn_auth_info_cb_register(&conn_auth_info_callbacks);
 	bt_enable(NULL);
