@@ -37,7 +37,7 @@ Going forward, it's easier to flash the firmware of your choice by using the dow
 
 1. Install the ARM cross-compiler, cross-assembler and stdlib implementation. Eg. on Arch Linux the packages `arm-none-eabi-binutils`, `arm-none-eabi-gcc`, `arm-none-eabi-newlib`.
 
-2. Install Node.js v12. If you have a later version, editing the version requirement in `lib/agent/package.json` *might* work.
+2. Install Node.js. You find the expected Node.js version in `lib/agent/.nvmrc` file. Use your OS package manager to install it. [Check the NodeJS site for more info.](https://nodejs.org/en/download/package-manager/ "Installing Node.js via package manager") Mac OS users can simply `brew install node` to get both. Should you need multiple Node.js versions on the same computer, use Node Version Manager for [Mac/Linux](https://github.com/creationix/nvm) or for [Windows](https://github.com/coreybutler/nvm-windows)
 
 3. Build UHK Agent. `cd lib/agent && npm ci && npm run build`.
 
