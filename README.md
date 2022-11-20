@@ -61,7 +61,7 @@ Want to contribute? Let us show you [how](/CONTRIBUTING.md).
 
 ## Extended macros
 
-Extended macro commands are built in by default, but need to be enabled by `set macroEngine.extendedCommands 1`. It is also possible to just pass `make-release.js --extendedMacros`, or `make CUSTOM_CFLAGS=-DEXTENDED_MACROS`.   Further documentation is available in Agent's macro reference side pane, or (in more technical terms) in [doc-dev](doc-dev).
+Extended macro commands are built in by default, but need to be enabled by `set macroEngine.extendedCommands 1` macro command. It is also possible to build with `make-release.js --extendedMacros`, or `make CUSTOM_CFLAGS=-DEXTENDED_MACROS`. Further documentation is available in Agent's macro reference side pane, or (in more technical terms) in [doc-dev](doc-dev).
 
 ## Custom Firmwares
 
