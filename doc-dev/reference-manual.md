@@ -467,12 +467,12 @@ For the purpose of toggling functionality on and off, and for global constants m
 
 - `set module.MODULEID.{axisLockSkew|axisLockFirstTickSkew|cursorAxisLock|scrollAxisLock}` control axis locking feature:
 
-  When you first move in navigation mode that has axis locking enabled, axis is locked to one of the axes. Axis locking behaviour is defined by two characteristis:
+  When you first move in navigation mode that has axis locking enabled, axis is locked to one of the axes. Axis locking behaviour is defined by two characteristics:
 
   - axis skew: when axis is locked, the secondary axis value is multiplied by `axisLockSkew`. This means that in order to change locked direction (with 0.5 value), you have to produce stroke that goes at least twice as fast in the non-locked direction compared to the locked one.
-  - secondary axis zeroing: whenever the locked (primary) axis produces an event, the
+  - secondary axis zeroing: whenever the locked (primary) axis produces an event, the secondary axis is zeroed.
 
-  Behaviour of first tick (the one that initiates mechanism) can be controlled independently. The first tick (the first event produced when axis is not yet locked) skew is applied to *both* the axis. This allows following tweaks:
+  Behaviour of first tick (the one which locks the axis) can be controlled independently. The first tick (the first event produced when axis is not yet locked) skew is applied to *both* the axis. This allows following tweaks:
 
   - use `axisLockFirstTickSkew = 0.5` in order to require stronger "push" at the beginning of movement. Useful for the mini trackball, since it is likely to produce an unwanted move event when you try  to just click it. With `0.5` value, it will require two roll events to activate.
   - use `axisLockFirstTickSkew = 2.0` in order to make the first event more responsive. E.g., caret mode will make the fist character move even with a very gently push, while consecutive activations will need greater momentum.

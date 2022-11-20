@@ -440,18 +440,18 @@ setReg 27 0
 Colour picker for constant colours. Bound on fn+r, fn+r+r turns colour to red, fn+r+v to violet, etc..
 
 ```
-ifGesture transitive 75 final set backlight.constantRgb.rgb 255 32 0  // r - red
-ifGesture transitive 84 final set backlight.constantRgb.rgb 192 255 0  // g - green
-ifGesture transitive 91 final set backlight.constantRgb.rgb 128 192 255 // b - blue
-ifGesture transitive 14 final set backlight.constantRgb.rgb 255 192 0 // y - yellow
-ifGesture transitive 90 final set backlight.constantRgb.rgb 192 64 255 // v - violet
-ifGesture transitive 9 final set backlight.constantRgb.rgb 255 128 0 // o - orange
-ifGesture transitive 73 final set backlight.constantRgb.rgb 192 32 0 // w - wine
-ifGesture transitive 21 final set backlight.constantRgb.rgb 128 48 0 // b - brown
-ifGesture transitive 22 final set backlight.constantRgb.rgb 255 192 32 // n - warm white, as "normal"
-ifGesture transitive 82 final set backlight.strategy functional // f to functional backlight
-ifGesture transitive 72 final set leds.enabled 0 // q - to turn off
-ifGesture transitive 10 final set leds.enabled 1 // p - to turn back on
+ifGesture 75 final set backlight.constantRgb.rgb 255 32 0  // r - red
+ifGesture 84 final set backlight.constantRgb.rgb 192 255 0  // g - green
+ifGesture 91 final set backlight.constantRgb.rgb 128 192 255 // b - blue
+ifGesture 14 final set backlight.constantRgb.rgb 255 192 0 // y - yellow
+ifGesture 90 final set backlight.constantRgb.rgb 192 64 255 // v - violet
+ifGesture 9 final set backlight.constantRgb.rgb 255 128 0 // o - orange
+ifGesture 73 final set backlight.constantRgb.rgb 192 32 0 // w - wine
+ifGesture 21 final set backlight.constantRgb.rgb 128 48 0 // b - brown
+ifGesture 22 final set backlight.constantRgb.rgb 255 192 32 // n - warm white, as "normal"
+ifGesture 82 final set backlight.strategy functional // f to functional backlight
+ifGesture 72 final set leds.enabled 0 // q - to turn off
+ifGesture 10 final set leds.enabled 1 // p - to turn back on
 ```
 
 To see all possible UHK hues (maximum saturation), hold a key with the following macro:
@@ -488,7 +488,7 @@ You can also start this from `$onInit` by `fork rotateHues` (given you have the 
 # put this at the beginning of the picker, to stop rotateHues when another choice is made.
 setReg 22 1
 # start the `rotateHues` macro on 'c' - as "changing"
-ifGesture transitive 89 final fork rotateHues
+ifGesture 89 final fork rotateHues
 ```
 
 # Further reading
