@@ -21,7 +21,7 @@ Some of the usecases which can be achieved via these commands are:
 
 0.1) Get your UHK :-). https://ultimatehackingkeyboard.com/
 
-0.2) Unless you specifically wish to use the extended command set, you may wish to start with officially supported macros. In that case, please see the smart macro reference included in the right-side pane of Agent. Its quality is far superior to this document, and features various interactive 
+0.2) Unless you specifically wish to use the extended command set, you may wish to start with officially supported macros. In that case, please see the smart macro reference included in the right-side pane of Agent. Its quality is far superior to this document, and features various interactive widgets that allow you to construct macros by just clicking and sliding GUI elements.
 
 1) If you are using stock firmware and want to use full power of the engine, you need to create a macro named `$onInit` with following content. Skip this step if you are using firmware from kareltucek/firmware repository. (This is a macro event, which will be automatically executed whenever the keyboard is powercycled.):
 
@@ -61,7 +61,7 @@ Every nonempty line is considered as one command. Empty line, or commented line 
 
 ### Configuration
 
-Configuration of the keyboard can be modified globally or per-keymap by using [macro events](reference-manual.md). For instance, macro named `$onInit` may contain following speed configuration:
+Configuration of the keyboard can be modified globally or per-keymap by using [macro events](reference-manual.md). For instance, macro named `$onInit` is executed on power-cycling and on config reload. For instance, it may contain following module configuration:
 
 ```
 # enable extended commands in case you are using stock firmware.
@@ -113,12 +113,13 @@ Key lifecycle consists of two important points:
 - key press
 - key release
 
-Various combinations of lifecycles are abstracted into four key actions:
+Various combinations of lifecycles are abstracted into following actions:
 
 - `pressKey` - just activate the scancode
 - `releaseKey` - just deactivate it
 - `tapKey` - activate the scancode and then immediately release it
 - `holdKey` - activate the scancode and hold it for as long as the key is physically held, then release it
+- `delayUntilRelease` - will wait until the key that activated the macro is released
 
 So if we wanted to replace a regular 'a' key with a macro, we would use:
 
@@ -146,9 +147,9 @@ pressKey a
 releaseKey a
 ```
 
-Complex key sequences can be achieved using `tapKeySeq`. For instance, following emoji macro (uses linux  Ctrl+U notation) - tap `thisMacro + s + h` (as shrug) to get shrugging person, or `thisMacro + s + w` to get sweaty smile. 
+Complex key sequences can be achieved using `tapKeySeq`. For instance, following emoji macro (uses linux  Ctrl+U notation) will produce a shrugging person.
 ```
-ifGesture 80 73 final tapKeySeq CS-u 1 f 6 0 5 space
+tapKeySeq CS-u 1 f 6 0 5 space
 ```
 
 With these commands, modifiers are encoded using `CSAG`, with optional `LR` for left and right side. E.g., `LC-a` means `left control + a`.
@@ -445,7 +446,7 @@ ifGesture 84 final set backlight.constantRgb.rgb 192 255 0  // g - green
 ifGesture 91 final set backlight.constantRgb.rgb 128 192 255 // b - blue
 ifGesture 14 final set backlight.constantRgb.rgb 255 192 0 // y - yellow
 ifGesture 90 final set backlight.constantRgb.rgb 192 64 255 // v - violet
-ifGesture 9 final set backlight.constantRgb.rgb 255 128 0 // o - orange
+ifGesture 9  final set backlight.constantRgb.rgb 255 128 0 // o - orange
 ifGesture 73 final set backlight.constantRgb.rgb 192 32 0 // w - wine
 ifGesture 21 final set backlight.constantRgb.rgb 128 48 0 // b - brown
 ifGesture 22 final set backlight.constantRgb.rgb 255 192 32 // n - warm white, as "normal"
