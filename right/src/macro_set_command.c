@@ -17,6 +17,7 @@
 #include "caret_config.h"
 #include "config_parser/parse_macro.h"
 #include "slave_drivers/is31fl3xxx_driver.h"
+#include "init_peripherals.h"
 
 static const char* proceedByDot(const char* cmd, const char *cmdEnd)
 {
@@ -470,6 +471,10 @@ macro_result_t MacroSetCommand(const char* arg1, const char *textEnd)
     }
     else if (TokenMatches(arg1, textEnd, "chordingDelay")) {
         ChordingDelay = Macros_ParseInt(arg2, textEnd, NULL);
+    }
+    else if (TokenMatches(arg1, textEnd, "i2cBaudRate")) {
+        uint32_t baudRate = Macros_ParseInt(arg2, textEnd, NULL);
+        ChangeI2cBaudRate(baudRate);
     }
     else if (Macros_ExtendedCommands && TokenMatches(arg1, textEnd, "emergencyKey")) {
         uint16_t key = Macros_ParseInt(arg2, textEnd, NULL);

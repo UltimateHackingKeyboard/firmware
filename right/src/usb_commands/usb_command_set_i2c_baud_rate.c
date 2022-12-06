@@ -6,6 +6,5 @@
 void UsbCommand_SetI2cBaudRate(void)
 {
     uint32_t i2cBaudRate = GetUsbRxBufferUint32(1);
-    I2cMainBusRequestedBaudRateBps = i2cBaudRate;
-    ReinitI2cMainBus();
+    ChangeI2cBaudRate(i2cBaudRate);
 }
