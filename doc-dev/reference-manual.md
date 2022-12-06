@@ -122,7 +122,7 @@ The following grammar is supported:
     COMMAND = set leds.enabled BOOLEAN
     COMMAND = set leds.brightness <0-1 multiple of default (FLOAT)>
     COMMAND = set leds.fadeTimeout <minutes to fade after (NUMBER)>
-    COMMAND = set modifierLayerTriggers.{shift|alt|super|control} {left|right|both}
+    COMMAND = set modifierLayerTriggers.{shift|alt|gui|ctrl} {left|right|both}
     CONDITION = {ifShortcut | ifNotShortcut} [IFSHORTCUTFLAGS]* [KEYID]+
     CONDITION = {ifGesture | ifNotGesture} [IFSHORTCUTFLAGS]* [KEYID]+
     CONDITION = {ifPrimary | ifSecondary}
@@ -147,7 +147,7 @@ The following grammar is supported:
     MODIFIER = autoRepeat
     IFSHORTCUTFLAGS = noConsume | transitive | anyOrder | orGate | timeoutIn <time in ms (NUMBER)> | cancelIn <time in ms(NUMBER)>
     DIRECTION = {left|right|up|down}
-    LAYERID = {fn|mouse|mod|base|fn2|fn3|fn4|fn5|alt|shift|super|control}|last|previous
+    LAYERID = {fn|mouse|mod|base|fn2|fn3|fn4|fn5|alt|shift|gui|ctrl}|last|previous
     KEYMAPID = <abbrev>|last
     MACROID = last|CHAR|NUMBER
     NUMBER = [0-9]+ | -[0-9]+ | #<register idx (NUMBER)> | #key | @<relative macro action index(NUMBER)> | %<key idx in postponer queue (NUMBER)>
@@ -193,9 +193,11 @@ The following grammar is supported:
     COMMAND = switchLayer LAYERID
     COMMAND = switchKeymapLayer KEYMAPID LAYERID
     COMMAND = resolveNextKeyEq <queue position (NUMBER)> KEYID {<time in ms>|untilRelease} <action adr (ADDRESS)> <action adr (ADDRESS)>
-    ##########
-    #REMOVEWD#
-    ##########
+    COMMAND = set modifierLayerTriggers.{super|control} {left|right|both}
+    LAYERID = super | control
+    #########
+    #REMOVED#
+    #########
     COMMAND = setExpDriver <baseSpeed (FLOAT:0.0)> <speed (FLOAT:1.0)> <acceleration (FLOAT:0.5)> <midSpeed (FLOAT:3000)>
     COMMAND = setSplitCompositeKeystroke {0|1}
     COMMAND = setActivateOnRelease {0|1}
@@ -239,6 +241,7 @@ The following grammar is supported:
         - normal non-macro modifiers (not accompanied by a scancode) are treated as `input` by default.
         - macro modifiers are treated as `output`.
     - `{p|r|h|t}` - press release hold tap - by default corresponds to the command used to invoke the sequence, but can be overriden for any.
+    - windows, super, gui - all these are different names for the same key. For sake of consistency, we choose `gui`.
 
 ### Control flow, macro execution (aka "functions"):
 
@@ -511,7 +514,7 @@ For the purpose of toggling functionality on and off, and for global constants m
     - `backlight.constantRgb.rgb NUMBER NUMBER NUMBER` allows setting custom constant colour for entire keyboard. E.g.: `set backlight.strategy constantRgb; set backlight.constantRgb.rgb 255 0 0` to make entire keyboard shine red.
 
 - modifier layer triggers:
-    - `set modifierLayerTriggers.{shift|alt|super|control} { left | right | both }` controls whether modifier layers are triggered by left or right or either of the modifiers.
+    - `set modifierLayerTriggers.{shift|alt|gui|ctrl} { left | right | both }` controls whether modifier layers are triggered by left or right or either of the modifiers.
 
 ### Argument parsing rules:
 

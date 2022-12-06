@@ -372,7 +372,7 @@ static void modLayerTriggers(const char* arg1, const char *textEnd)
         left = HID_KEYBOARD_MODIFIER_LEFTSHIFT ;
         right = HID_KEYBOARD_MODIFIER_RIGHTSHIFT ;
         break;
-    case LayerId_Control:
+    case LayerId_Ctrl:
         left = HID_KEYBOARD_MODIFIER_LEFTCTRL ;
         right = HID_KEYBOARD_MODIFIER_RIGHTCTRL ;
         break;
@@ -380,7 +380,7 @@ static void modLayerTriggers(const char* arg1, const char *textEnd)
         left = HID_KEYBOARD_MODIFIER_LEFTALT ;
         right = HID_KEYBOARD_MODIFIER_RIGHTALT ;
         break;
-    case LayerId_Super:
+    case LayerId_Gui:
         left = HID_KEYBOARD_MODIFIER_LEFTGUI ;
         right = HID_KEYBOARD_MODIFIER_RIGHTGUI ;
         break;
