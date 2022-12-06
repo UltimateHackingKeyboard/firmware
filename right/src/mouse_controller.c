@@ -428,7 +428,7 @@ static void progressZoomAction(module_kinetic_state_t* ks) {
             return;
         }
 
-        caret_configuration_t* currentCaretConfig = GetModuleCaretConfiguration(ks->currentModuleId, mode);
+        caret_configuration_t* currentCaretConfig = GetNavigationModeConfiguration(mode);
         caret_dir_action_t* dirActions = &currentCaretConfig->axisActions[CaretAxis_Vertical];
         ks->caretAction.action = ks->zoomSign > 0 ? dirActions->positiveAction : dirActions->negativeAction;
     }
@@ -453,7 +453,7 @@ static void handleNewCaretModeAction(caret_axis_t axis, uint8_t resultSign, int1
         case NavigationMode_ZoomPc:
         case NavigationMode_Media:
         case NavigationMode_Caret: {
-            caret_configuration_t* currentCaretConfig = GetModuleCaretConfiguration(ks->currentModuleId, ks->currentNavigationMode);
+            caret_configuration_t* currentCaretConfig = GetNavigationModeConfiguration(ks->currentNavigationMode);
             caret_dir_action_t* dirActions = &currentCaretConfig->axisActions[ks->caretAxis];
             ks->caretAction.action = resultSign > 0 ? dirActions->positiveAction : dirActions->negativeAction;
             ks->caretFakeKeystate.current = true;
