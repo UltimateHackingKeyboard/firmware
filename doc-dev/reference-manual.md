@@ -104,6 +104,7 @@ The following grammar is supported:
     COMMAND = set mouseKeys.{move|scroll}.deceleratedSpeed <px/s, ~200/10 (NUMBER)>
     COMMAND = set mouseKeys.{move|scroll}.acceleratedSpeed <px/s, ~1600/50 (NUMBER)>
     COMMAND = set mouseKeys.{move|scroll}.axisSkew <multiplier, 0.5-2.0 (FLOAT)>
+    COMMAND = set i2cBaudRate <baud rate, default 100000(NUMBER)>
     COMMAND = set diagonalSpeedCompensation BOOLEAN
     COMMAND = set chordingDelay <time in ms (NUMBER)>
     COMMAND = set stickyModifiers {never|smart|always}
@@ -213,6 +214,7 @@ The following grammar is supported:
     - If the given time is zero, i.e. `<time> = 0`, the led text will be set indefinitely (until the display is refreshed by other text) and this command will returns immediately (non-blocking).
 - `progressHue` or better `autoRepeat progressHue` will slowly adjust constantRGB value in order to rotate the per-key-RGB backlight through all hues.
 - `resetTrackpoint` resets the internal trackpoint board. Can be used to recover the trackpoint from drift conditions. Drifts usually happen if you keep the cursor moving at slow constant speeds, because of the boards's internal adaptive calibration. Since the board's parameters cannot be altered, the only way around is or you to learn not to do the type of movement which triggers them.
+- `i2cBaudRate <baud rate, default 100000(NUMBER)>` sets i2c baud rate. Lowering this value may improve module reliability, while increasing latency.
 
 ### Triggering keyboard actions (pressing keys, clicking, etc.):
 

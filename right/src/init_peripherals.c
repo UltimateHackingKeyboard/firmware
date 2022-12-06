@@ -158,3 +158,9 @@ void InitPeripherals(void)
     InitI2cWatchdog();
     EEPROM_Init();
 }
+
+void ChangeI2cBaudRate(uint32_t i2cBaudRate)
+{
+    I2cMainBusRequestedBaudRateBps = i2cBaudRate;
+    ReinitI2cMainBus();
+}
