@@ -24,8 +24,16 @@
 #include "slave_drivers/uhk_module_driver.h"
 #include <stddef.h>
 #include <string.h>
+#include "usb_commands/usb_command_exec_macro_command.h"
 
-macro_reference_t AllMacros[MAX_MACRO_NUM];
+macro_reference_t AllMacros[MAX_MACRO_NUM] = {
+    // 254 is reserved for USB command execution
+    // 255 is reserved as empty value
+    // TODO: make sure parser accepts just 254 user-defined macros
+    [254] = {
+        .macroActionsCount = 1,
+    }
+};
 uint8_t AllMacrosCount;
 
 uint8_t MacroBasicScancodeIndex = 0;
@@ -2978,10 +2986,22 @@ static macro_result_t endMacro(void)
 
 static void loadAction()
 {
-    //otherwise parse next action
-    ValidatedUserConfigBuffer.offset = s->ms.bufferOffset;
-    ParseMacroAction(&ValidatedUserConfigBuffer, &s->ms.currentMacroAction);
-    s->ms.bufferOffset = ValidatedUserConfigBuffer.offset;
+    if (s->ms.currentMacroIndex == MacroIndex_UsbCmdReserved) {
+        // fill in action from memory
+        s->ms.currentMacroAction = (macro_action_t){
+            .type = MacroActionType_Command,
+            .cmd = {
+                .text = UsbMacroCommand,
+                .textLen = UsbMacroCommandLength,
+                .cmdCount = CountCommands(UsbMacroCommand, UsbMacroCommandLength)
+            }
+        };
+    } else {
+        // parse one macro action
+        ValidatedUserConfigBuffer.offset = s->ms.bufferOffset;
+        ParseMacroAction(&ValidatedUserConfigBuffer, &s->ms.currentMacroAction);
+        s->ms.bufferOffset = ValidatedUserConfigBuffer.offset;
+    }
 
     memset(&s->as, 0, sizeof s->as);
 

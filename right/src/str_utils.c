@@ -248,3 +248,23 @@ navigation_mode_t ParseNavigationModeId(const char* arg1, const char* cmdEnd)
     Macros_ReportError("Mode not recognized: ", arg1, cmdEnd);
     return 0;
 }
+
+uint8_t CountCommands(const char* text, uint16_t textLen)
+{
+    uint8_t count = 1;
+    const char* textEnd = text + textLen;
+
+    while ( *text <= 32 && text < textEnd) {
+        text++;
+    }
+
+    while (true) {
+        text = NextCmd(text, textEnd);
+        if (text == textEnd) {
+            return count;
+        }
+        if (*text > 32) {
+            count++;
+        }
+    }
+}
