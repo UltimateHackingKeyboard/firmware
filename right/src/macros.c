@@ -1013,15 +1013,10 @@ uint8_t Macros_ParseLayerId(const char* arg1, const char* cmdEnd)
         case 'c':
             if (TokenMatches(arg1, cmdEnd, "current")) {
                 return ActiveLayer;
+            } else if (TokenMatches(arg1, cmdEnd, "ctrl")) {
+                return LayerId_Ctrl;
             } else if (TokenMatches(arg1, cmdEnd, "control")) {
-                return LayerId_Control;
-            }
-            break;
-        case 'm':
-            if (TokenMatches(arg1, cmdEnd, "mouse")) {
-                return LayerId_Mouse;
-            } else if (TokenMatches(arg1, cmdEnd, "mod")) {
-                return LayerId_Mod;
+                return LayerId_Ctrl;
             }
             break;
         case 'f':
@@ -1037,9 +1032,21 @@ uint8_t Macros_ParseLayerId(const char* arg1, const char* cmdEnd)
                 return LayerId_Fn5;
             }
             break;
+        case 'g':
+            if (TokenMatches(arg1, cmdEnd, "gui")) {
+                return LayerId_Gui;
+            }
+            break;
         case 'l':
             if (TokenMatches(arg1, cmdEnd, "last")) {
                 return lastLayerIdx;
+            }
+            break;
+        case 'm':
+            if (TokenMatches(arg1, cmdEnd, "mouse")) {
+                return LayerId_Mouse;
+            } else if (TokenMatches(arg1, cmdEnd, "mod")) {
+                return LayerId_Mod;
             }
             break;
         case 'p':
@@ -1051,7 +1058,7 @@ uint8_t Macros_ParseLayerId(const char* arg1, const char* cmdEnd)
             if (TokenMatches(arg1, cmdEnd, "shift")) {
                 return LayerId_Shift;
             } else if (TokenMatches(arg1, cmdEnd, "super")) {
-                return LayerId_Super;
+                return LayerId_Gui;
             }
             break;
     }

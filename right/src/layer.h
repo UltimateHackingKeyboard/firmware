@@ -7,7 +7,7 @@
 
 // Macros:
 
-#define IS_MODIFIER_LAYER(L) (LayerId_Shift <= (L) && (L) <= LayerId_Super)
+#define IS_MODIFIER_LAYER(L) (LayerId_Shift <= (L) && (L) <= LayerId_Gui)
 
 // Typedefs:
 
@@ -21,10 +21,10 @@
         LayerId_Fn4,
         LayerId_Fn5,
         LayerId_Shift,
-        LayerId_Control,
+        LayerId_Ctrl,
         LayerId_Alt,
-        LayerId_Super,
-        LayerId_Last = LayerId_Super,
+        LayerId_Gui,
+        LayerId_Last = LayerId_Gui,
         LayerId_Count = LayerId_Last + 1,
     } layer_id_t;
 
