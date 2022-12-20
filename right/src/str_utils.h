@@ -7,6 +7,7 @@
     #include <stdbool.h>
     #include "layer.h"
     #include "module.h"
+    #include "macros.h"
 
 // Functions:
 
@@ -21,6 +22,7 @@
     uint8_t TokLen(const char *a, const char *aEnd);
     const char* NextTok(const char* cmd, const char *cmdEnd);
     const char* NextCmd(const char* cmd, const char *cmdEnd);
+    uint8_t CountCommands(const char* text, uint16_t textLen);
     const char* TokEnd(const char* cmd, const char *cmdEnd);
     module_id_t ParseModuleId(const char* arg1, const char* cmdEnd);
     navigation_mode_t ParseNavigationModeId(const char* arg1, const char* cmdEnd);

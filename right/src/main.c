@@ -1,6 +1,7 @@
 #include "config.h"
 #include "init_clock.h"
 #include "init_peripherals.h"
+#include "usb_commands/usb_command_exec_macro_command.h"
 #include "usb_composite_device.h"
 #include "slave_scheduler.h"
 #include "bus_pal_hardware.h"
@@ -60,6 +61,9 @@ int main(void)
             KeyMatrix_ScanRow(&RightKeyMatrix);
             ++MatrixScanCounter;
             UpdateUsbReports();
+            if (UsbMacroCommandWaitingForExecution) {
+                UsbMacroCommand_ExecuteSynchronously();
+            }
             __WFI();
         }
     }

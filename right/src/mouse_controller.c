@@ -586,6 +586,9 @@ static void processAxisLocking(
             *axisFractionRemainders[axisCandidate] -= consumedAmount;
 
             //always zero primary axis - experimental
+            // TODO: this slows down maximum rate, as right half processing is much faster than module refresh rate.
+            //       We should solve this by zeroing remainder before next event, rather than at the end of previous one.
+            //       In order for this to work, we will have to acknowledge received zeroes.
             *axisFractionRemainders[axisCandidate] = 0.0f;
 
             if (axisLockEnabled) {

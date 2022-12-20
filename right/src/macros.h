@@ -23,12 +23,18 @@
     #define SHIFTMASK (HID_KEYBOARD_MODIFIER_LEFTSHIFT | HID_KEYBOARD_MODIFIER_RIGHTSHIFT)
     #define GUIMASK (HID_KEYBOARD_MODIFIER_LEFTGUI | HID_KEYBOARD_MODIFIER_RIGHTGUI)
 
+    typedef enum {
+        MacroIndex_MaxCount = 254,
+        MacroIndex_UsbCmdReserved = 254,
+        MacroIndex_None = 255,
+    } macro_index_t;
+
 // Typedefs:
 
     typedef struct {
         uint16_t firstMacroActionOffset;
-        uint8_t macroActionsCount; //official uses uint16_t, we think that 256 actions per macro should suffice
-        uint8_t macroNameOffset; //negative w.r.t. firstMacroActionOffset, we think that 256 chars per name should suffice
+        uint8_t macroActionsCount;
+        uint8_t macroNameOffset; //negative w.r.t. firstMacroActionOffset
     } macro_reference_t;
 
     typedef struct {
