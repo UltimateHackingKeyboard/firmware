@@ -61,7 +61,7 @@ Every nonempty line is considered as one command. Empty line, or commented line 
 
 ### Configuration
 
-Configuration of the keyboard can be modified globally or per-keymap by using [macro events](reference-manual.md). For instance, macro named `$onInit` is executed on power-cycling and on config reload. For instance, it may contain following module configuration:
+Configuration of the keyboard can be modified globally or per-keymap by using [macro events](reference-manual.md). For instance, macro named `$onInit` is executed on power-cycling and on config reload. E.g., it may look like this:
 
 ```
 # enable extended commands in case you are using stock firmware.
@@ -134,6 +134,7 @@ pressKey a
 delayUntilRelease
 releaseKey a
 ```
+
 
 If we just want to quickly produce the `a` scancode/character, we would use:
 
@@ -408,6 +409,8 @@ setReg 5 0
 ```
 
 ### Macro recorder
+
+Runtime macro recorder allows capturing and replaying sequences of scancodes. Each such macro is identified by a number or a character (or `#key` which resolves to the `KEYID` of the current key, therefore allowing generic key-associated macros). (Runtime macrose are unrelated to the macros that can be created via Agent.)
 
 In this setup, shift+key will start recording (indicated by the "adaptive mode" led), another shift+key will stop recording. Hiting the key alone will then replay the macro (e.g., a simple repetitive text edit). Alternatively, virtual register `#key` can be used as an argument in order to assign every key to different slot.
 
