@@ -26,11 +26,10 @@
 #include <string.h>
 #include "usb_commands/usb_command_exec_macro_command.h"
 
-macro_reference_t AllMacros[MAX_MACRO_NUM] = {
+macro_reference_t AllMacros[MacroIndex_MaxCount] = {
     // 254 is reserved for USB command execution
     // 255 is reserved as empty value
-    // TODO: make sure parser accepts just 254 user-defined macros
-    [254] = {
+    [MacroIndex_UsbCmdReserved] = {
         .macroActionsCount = 1,
     }
 };

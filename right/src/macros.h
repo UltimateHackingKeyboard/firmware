@@ -24,9 +24,11 @@
     #define GUIMASK (HID_KEYBOARD_MODIFIER_LEFTGUI | HID_KEYBOARD_MODIFIER_RIGHTGUI)
 
     typedef enum {
-        MacroIndex_MaxCount = 254,
         MacroIndex_UsbCmdReserved = 254,
         MacroIndex_None = 255,
+
+        MacroIndex_MaxUserDefinableCount = 254,
+        MacroIndex_MaxCount = 255,
     } macro_index_t;
 
 // Typedefs:
@@ -227,7 +229,7 @@
 
 // Variables:
 
-    extern macro_reference_t AllMacros[MAX_MACRO_NUM];
+    extern macro_reference_t AllMacros[MacroIndex_MaxCount];
     extern uint8_t AllMacrosCount;
     extern macro_state_t MacroState[MACRO_STATE_POOL_SIZE];
     extern bool MacroPlaying;
