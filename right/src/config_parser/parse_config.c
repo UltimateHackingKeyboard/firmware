@@ -109,7 +109,7 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
     // Macros
 
     macroCount = ReadCompactLength(buffer);
-    if (macroCount > MAX_MACRO_NUM) {
+    if (macroCount > MacroIndex_MaxUserDefinableCount) {
         return ParserError_InvalidMacroCount;
     }
 
