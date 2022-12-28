@@ -56,6 +56,8 @@
 
     #define ASSERT(C) if (!(C)) { Macros_ReportError("Assertion failed: "#C, NULL, NULL); }
 
+    #define IF_DEBUG(CMD) CMD
+
 // Variables:
 
     extern uint8_t CurrentWatch;
@@ -94,5 +96,6 @@
     #define ERR(E)
     #define ERRN(E, N)
     #define ASSERT(C)
+    #define IF_DEBUG(CMD)
 
 #endif

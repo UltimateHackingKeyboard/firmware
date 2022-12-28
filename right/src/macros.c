@@ -85,6 +85,7 @@ uint16_t DoubletapConditionTimeout = 400;
 uint16_t AutoRepeatInitialDelay = 500;
 uint16_t AutoRepeatDelayRate = 50;
 
+static void checkSchedulerHealth(const char* tag);
 static void wakeMacroInSlot(uint8_t slotIdx);
 static void scheduleSlot(uint8_t slotIdx);
 static void unscheduleCurrentSlot();
@@ -3273,6 +3274,61 @@ static void wakeMacroInSlot(uint8_t slotIdx)
     }
 }
 
+static void __attribute__((__unused__)) checkSchedulerHealth(const char* tag) {
+    static const char* lastCmd = NULL;
+    uint8_t scheduledCount = 0;
+    uint8_t playingCount = 0;
+
+    // count active macros
+    for (uint8_t i = 0; i < MACRO_STATE_POOL_SIZE; i++) {
+        if (MacroState[i].ms.macroPlaying && !MacroState[i].ms.macroSleeping) {
+            playingCount++;
+        }
+    }
+
+    // count length of the scheduling loop
+    if (scheduler.activeSlotCount != 0) {
+        uint8_t currentSlot = scheduler.currentSlotIdx;
+        uint8_t startedAt = currentSlot;
+        for (uint8_t i = 0; i < MACRO_STATE_POOL_SIZE; i++) {
+            scheduledCount++;
+
+            if (!MacroState[currentSlot].ms.macroPlaying) {
+                Macros_ReportErrorNum("This slot is not playing, but is scheduled!", currentSlot);
+            }
+
+            if (MacroState[currentSlot].ms.macroSleeping) {
+                Macros_ReportErrorNum("This slot is sleeping, but is scheduled!", currentSlot);
+            }
+
+            currentSlot = MacroState[currentSlot].ms.nextSlot;
+            if (currentSlot == startedAt) {
+                break;
+            }
+        }
+    }
+
+    const char* thisCmd = NULL;
+
+    // retrieve currently running command if possible
+    if (s != NULL && s->ms.currentMacroAction.type == MacroActionType_Command) {
+        thisCmd = s->ms.currentMacroAction.cmd.text + s->ms.commandBegin;
+    }
+
+    // check the results
+    if (scheduledCount != playingCount || scheduledCount != scheduler.activeSlotCount) {
+        Macros_ReportError("Scheduled counts don't match up!", tag, NULL);
+        Macros_ReportErrorNum("Scheduled", scheduledCount);
+        Macros_ReportErrorNum("Playing", playingCount);
+        Macros_ReportErrorNum("Active slot count", scheduler.activeSlotCount);
+        Macros_ReportError("Prev cmd", lastCmd, lastCmd+10);
+        Macros_ReportError("This cmd", thisCmd, thisCmd+10);
+        processStatsActiveMacrosCommand();
+    }
+
+    lastCmd = thisCmd;
+}
+
 static void scheduleSlot(uint8_t slotIdx)
 {
     if (!MacroState[slotIdx].ms.macroScheduled) {
@@ -3303,13 +3359,19 @@ static void scheduleSlot(uint8_t slotIdx)
 
 static void unscheduleCurrentSlot()
 {
-    if (MacroState[scheduler.currentSlotIdx].ms.macroScheduled) {
+    if (scheduler.currentSlotIdx == (s - MacroState) && MacroState[scheduler.currentSlotIdx].ms.macroScheduled) {
         MacroState[scheduler.previousSlotIdx].ms.nextSlot = MacroState[scheduler.currentSlotIdx].ms.nextSlot;
         MacroState[scheduler.currentSlotIdx].ms.macroScheduled = false;
         scheduler.lastQueuedSlot = scheduler.lastQueuedSlot == scheduler.currentSlotIdx ? scheduler.previousSlotIdx : scheduler.lastQueuedSlot;
         scheduler.currentSlotIdx = scheduler.previousSlotIdx;
         scheduler.activeSlotCount--;
+    } else if (scheduler.currentSlotIdx != (s - MacroState) && !s->ms.macroScheduled) {
+        // This means that current slot is already unscheduled but scheduler state is fine.
+        // This may happen (for instance) if callMacro is the last command of a macro.
+        // (We get one unschedule attempt for sleeping the macro, but at the same time for macro end.)
+        return;
     } else {
+        // this means that the state is inconsistent for some reason
         ERR("Unsechuling non-scheduled slot attempted!");
     }
 }
@@ -3336,7 +3398,9 @@ static void executeBlocking(void)
         s = &MacroState[scheduler.currentSlotIdx];
 
         if (s->ms.macroPlaying && !s->ms.macroSleeping) {
+            IF_DEBUG(checkSchedulerHealth("co1"));
             res = continueMacro();
+            IF_DEBUG(checkSchedulerHealth("co2"));
         }
 
         if ((someoneBlocking = (res & MacroResult_BlockingFlag))) {
