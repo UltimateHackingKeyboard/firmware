@@ -26,6 +26,19 @@ const struct spi_buf_set spiBufSet = {
 
 const struct device *spi0_dev = DEVICE_DT_GET(DT_NODELABEL(spi1));
 
+static const struct gpio_dt_spec oledCsDt = GPIO_DT_SPEC_GET_OR(DT_ALIAS(oled_cs), gpios, {0});
+
+
+//const struct device *oledCs_dev = DEVICE_DT_GET(DT_NODELABEL(oled_cs));
+//const struct device *oledCs_dev = DEVICE_DT_NAME(DT_PATH(oled_cs));
+//const struct device *oledCs_dev = DEVICE_DT_GET(DT_PATH());
+//device_get_binding("oled_cs");
+
+void setCs(bool state)
+{
+	gpio_pin_set_dt(&oledCsDt, state);
+}
+
 void writeSpi(uint8_t data)
 {
 	buf[0] = data;
@@ -34,11 +47,15 @@ void writeSpi(uint8_t data)
 
 void main(void)
 {
+	gpio_pin_configure_dt(&oledCsDt, GPIO_OUTPUT);
+
 	while (true) {
 //		printk("spi send: a\n");
+		setCs(true);
 		for (uint8_t i=0; i<4; i++) {
 			writeSpi(i);
 		}
+		setCs(false);
         k_msleep(1);
 	}
 }
