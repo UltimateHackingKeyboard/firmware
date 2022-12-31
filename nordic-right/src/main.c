@@ -49,6 +49,8 @@ void main(void)
 	gpio_pin_configure_dt(&oledCsDt, GPIO_OUTPUT);
 	gpio_pin_configure_dt(&oledA0Dt, GPIO_OUTPUT);
 
+	uint32_t counter = 0;
+	bool pixel = 1;
 	while (true) {
 //		printk("spi send: a\n");
 		setA0(false);
@@ -58,8 +60,13 @@ void main(void)
 
 		setA0(true);
 		setCs(false);
-		writeSpi(0b10010100);
+		writeSpi(pixel ? 0xff : 0x00);
 		setCs(true);
 //        k_msleep(1);
+
+		if (counter++ > 19) {
+			pixel = !pixel;
+			counter = 0;
+		}
 	}
 }
