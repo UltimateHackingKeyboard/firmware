@@ -25,14 +25,7 @@ const struct spi_buf_set spiBufSet = {
 };
 
 const struct device *spi0_dev = DEVICE_DT_GET(DT_NODELABEL(spi1));
-
-static const struct gpio_dt_spec oledCsDt = GPIO_DT_SPEC_GET_OR(DT_ALIAS(oled_cs), gpios, {0});
-
-
-//const struct device *oledCs_dev = DEVICE_DT_GET(DT_NODELABEL(oled_cs));
-//const struct device *oledCs_dev = DEVICE_DT_NAME(DT_PATH(oled_cs));
-//const struct device *oledCs_dev = DEVICE_DT_GET(DT_PATH());
-//device_get_binding("oled_cs");
+static const struct gpio_dt_spec oledCsDt = GPIO_DT_SPEC_GET(DT_ALIAS(oled_cs), gpios);
 
 void setCs(bool state)
 {
