@@ -51,13 +51,15 @@ void main(void)
 
 	while (true) {
 //		printk("spi send: a\n");
-		setCs(true);
 		setA0(false);
-		for (uint8_t i=0; i<4; i++) {
-			writeSpi(i);
-		}
 		setCs(false);
+		writeSpi(0xaf);
+		setCs(true);
+
 		setA0(true);
-        k_msleep(1);
+		setCs(false);
+		writeSpi(0b10010100);
+		setCs(true);
+//        k_msleep(1);
 	}
 }
