@@ -28,6 +28,10 @@
             gpios = <&gpio0 2 GPIO_ACTIVE_HIGH>;
             label = "oled_cs";
         };
+        leds_cs: leds_cs {
+            gpios = <&gpio0 4 GPIO_ACTIVE_HIGH>;
+            label = "leds_cs";
+        };
         oled_a0: oled_a0 {
             gpios = <&gpio0 26 GPIO_ACTIVE_HIGH>;
             label = "oled_a0";
@@ -35,6 +39,7 @@
     };
     aliases {
         oled-cs = &oled_cs;
+        leds-cs = &leds_cs;
         oled-a0 = &oled_a0;
     };
 };
