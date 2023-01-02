@@ -2,6 +2,7 @@
 #include <zephyr/zephyr.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/uart.h>
 #include <string.h>
 #include <drivers/spi.h>
 
@@ -53,6 +54,7 @@ void writeSpi(uint8_t data)
 
 void main(void)
 {
+//  struct device *uart_dev = DEVICE_DT_GET(DT_NODELABEL(uart1));
     gpio_pin_configure_dt(&oledCsDt, GPIO_OUTPUT);
     gpio_pin_configure_dt(&ledsCsDt, GPIO_OUTPUT);
     gpio_pin_configure_dt(&oledA0Dt, GPIO_OUTPUT);
@@ -60,6 +62,8 @@ void main(void)
     uint32_t counter = 0;
     bool pixel = 1;
     while (true) {
+//      uart_poll_out(uart_dev, 'a');
+
 //      printk("spi send: a\n");
         setA0(false);
         setOledCs(false);
