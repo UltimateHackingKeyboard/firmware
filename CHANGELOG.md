@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [9.2.0] - 2023-01-10
+
+Device Protocol: 4.**9**.0 | Module Protocol: 4.2.0 | User Config: 5.1.0 | Hardware Config: 1.0.0 | Smart Macros: 1.**1.0**
+
+- Allow executing macro commands via USB. `DEVICEPROTOCOL:MINOR`
+- Add set `i2cBaudRate` macro command. `SMARTMACROS:MINOR`
+- Rename super to gui and control to ctrl for the sake of consistency for smart macros. The old naming remains to be supported. `SMARTMACROS:MINOR`
+- Fix bug that altered media navigation mode when the zoom mode was altered. `SMARTMACROS:PATCH`
+- Make `ifRegEq`, `ifNotRegEq`, `ifRegGt`, and `ifRegLt` macro commands treat registers as 32-bit values as they are instead of 8-bit values. `SMARTMACROS:PATCH`
+- Fix a macro unscheduling bug that made some macros stuck during or after using the `call` smart macro command. `SMARTMACROS:PATCH`
+- Fix maxiumum macro count.
+
 ## [9.1.4] - 2022-11-14
 
 Device Protocol: 4.8.0 | Module Protocol: 4.2.0 | User Config: 5.1.0 | Hardware Config: 1.0.0 | Smart Macros: 1.0.**3**
