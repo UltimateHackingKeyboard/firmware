@@ -497,7 +497,7 @@ ifGesture 89 final fork rotateHues
 
 ### Executing commands over USB
 
-One way is to use the the npm script which is packed with agent source code:
+One way is to use the npm script that is packed with agent source code:
 
 1. Build the agent.
 2. Navigate to `agent/packages/usb`
