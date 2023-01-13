@@ -59,10 +59,6 @@ Going forward, it's easier to flash the firmware of your choice by using the dow
 
 Want to contribute? Let us show you [how](/CONTRIBUTING.md).
 
-## Extended macros
-
-Extended macro commands are built in by default, but need to be enabled by `set macroEngine.extendedCommands 1` macro command. It is also possible to build with `make-release.js --extendedMacros`, or `make CUSTOM_CFLAGS=-DEXTENDED_MACROS`. Further documentation is available in Agent's macro reference side pane, or (in more technical terms) in [doc-dev](doc-dev).
-
 ## Custom Firmwares
 
 The following list contains unofficial forks of the firmware. These forks provide functionality unavailable in the official firmware, but come without guarantees of any kind:

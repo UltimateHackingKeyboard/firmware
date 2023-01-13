@@ -23,11 +23,6 @@ if (gitInfo.tag != `v${version}` && !process.argv.includes('--allowSha')) {
     process.exit(1);
 }
 
-if (process.argv.includes('--extendedMacros')) {
-    mkArgs = mkArgs + 'CUSTOM_CFLAGS=-DEXTENDED_MACROS'
-    releaseFile = `${__dirname}/${releaseName}-extendedMacros.tar.gz`;
-}
-
 const deviceSourceFirmwares = package.devices.map(device => `${__dirname}/../${device.source}`);
 const moduleSourceFirmwares = package.modules.map(module => `${__dirname}/../${module.source}`);
 rm('-rf', releaseDir, releaseFile, deviceSourceFirmwares, moduleSourceFirmwares);

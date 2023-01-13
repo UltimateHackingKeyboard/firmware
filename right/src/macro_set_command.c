@@ -187,14 +187,11 @@ static void macroEngineScheduler(const char* arg1, const char *textEnd)
 
 static void macroEngine(const char* arg1, const char *textEnd)
 {
-    if (Macros_ExtendedCommands && TokenMatches(arg1, textEnd, "scheduler")) {
+    if (TokenMatches(arg1, textEnd, "scheduler")) {
         macroEngineScheduler(NextTok(arg1,  textEnd), textEnd);
     }
-    else if (Macros_ExtendedCommands && TokenMatches(arg1, textEnd, "batchSize")) {
+    else if (TokenMatches(arg1, textEnd, "batchSize")) {
         Macros_MaxBatchSize = Macros_ParseInt(NextTok(arg1,  textEnd), textEnd, NULL);
-    }
-    else if (TokenMatches(arg1, textEnd, "extendedCommands")) {
-        Macros_ExtendedCommands = Macros_ParseBoolean(NextTok(arg1,  textEnd), textEnd);
     }
     else {
         Macros_ReportError("parameter not recognized:", arg1, textEnd);
@@ -421,7 +418,7 @@ macro_result_t MacroSetCommand(const char* arg1, const char *textEnd)
     else if (TokenMatches(arg1, textEnd, "mouseKeys")) {
         mouseKeys(proceedByDot(arg1, textEnd), textEnd);
     }
-    else if (Macros_ExtendedCommands && TokenMatches(arg1, textEnd, "keymapAction")) {
+    else if (TokenMatches(arg1, textEnd, "keymapAction")) {
         keymapAction(proceedByDot(arg1, textEnd), textEnd);
     }
     else if (TokenMatches(arg1, textEnd, "navigationModeAction")) {
@@ -445,7 +442,7 @@ macro_result_t MacroSetCommand(const char* arg1, const char *textEnd)
     else if (TokenMatches(arg1, textEnd, "stickyModifiers")) {
         stickyModifiers(arg2, textEnd);
     }
-    else if (Macros_ExtendedCommands && TokenMatches(arg1, textEnd, "debounceDelay")) {
+    else if (TokenMatches(arg1, textEnd, "debounceDelay")) {
         uint16_t time = Macros_ParseInt(arg2, textEnd, NULL);
         DebounceTimePress = time;
         DebounceTimeRelease = time;
@@ -455,7 +452,7 @@ macro_result_t MacroSetCommand(const char* arg1, const char *textEnd)
     }
     else if (
             TokenMatches(arg1, textEnd, "doubletapTimeout")  // new name
-            || (Macros_ExtendedCommands && TokenMatches(arg1, textEnd, "doubletapDelay")) // deprecated alias - old name
+            || (TokenMatches(arg1, textEnd, "doubletapDelay")) // deprecated alias - old name
             ) {
         uint16_t delay = Macros_ParseInt(arg2, textEnd, NULL);
         DoubleTapSwitchLayerTimeout = delay;
@@ -476,7 +473,7 @@ macro_result_t MacroSetCommand(const char* arg1, const char *textEnd)
         uint32_t baudRate = Macros_ParseInt(arg2, textEnd, NULL);
         ChangeI2cBaudRate(baudRate);
     }
-    else if (Macros_ExtendedCommands && TokenMatches(arg1, textEnd, "emergencyKey")) {
+    else if (TokenMatches(arg1, textEnd, "emergencyKey")) {
         uint16_t key = Macros_ParseInt(arg2, textEnd, NULL);
         EmergencyKey = Utils_KeyIdToKeyState(key);
     }

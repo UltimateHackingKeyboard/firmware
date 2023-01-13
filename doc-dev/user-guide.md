@@ -1,8 +1,8 @@
 # Extended macro engine
 
-Extended macro engine is developed on kareltucek/firmware and occasionally merged into the stock firmware. The extended macro engine can be enabled by `set macroEngine.extendedCommands 1` or built using either `make-release.js --extendedMacros` or `make CUSTOM_CFLAGS=-DEXTENDED_MACROS`. Otherwise, stock builds are limited to just a few commands - approximately to `set` and `printStatus`. The extended features are not thoroughly tested, and are more likely to be removed or reshaped in the future.
+Extended macro engine originates in kareltucek/firmware and is fully merged and enabled by default in stock firmware. Some of the commands are featured officially in Agent's sidepane reference, some are not. The latter group is provided without guarantees and may be removed or reshaped in future.
 
-The extended engine implements:
+The engine implements:
 - macro commands for most features of the keyboard
 - conditionals, jumps and sync mechanisms
 - runtime macro recorder implemented on scancode level, for vim-like macro functionality
@@ -23,15 +23,7 @@ Some of the usecases which can be achieved via these commands are:
 
 0.2) Unless you specifically wish to use the extended command set, you may wish to start with officially supported macros. In that case, please see the smart macro reference included in the right-side pane of Agent. Its quality is far superior to this document, and features various interactive widgets that allow you to construct macros by just clicking and sliding GUI elements.
 
-1) If you are using stock firmware and want to use full power of the engine, you need to create a macro named `$onInit` with following content. Skip this step if you are using firmware from kareltucek/firmware repository. (This is a macro event, which will be automatically executed whenever the keyboard is powercycled.):
-
-```
-set macroEngine.extendedCommands 1
-```
-
-![onInit macro](resources/onInit_macro.png)
-
-2) Create some macro with some command action. (And bind it in your keymap.) For instance:
+1) Create some macro with some command action. (And bind it in your keymap.) For instance:
 
 ```
 holdKey leftShift
@@ -40,7 +32,7 @@ ifDoubletap tapKey capsLock
 
 ![Doubletap to caps-lock macro](resources/caps_macro.png)
 
-3) Understand how this guide and the reference manual work:
+2) Understand how this guide and the reference manual work:
 
     - Use Ctrl+F (or equivalent) a lot - here, and in the [reference manual](reference-manual.md).
     - Go through the sections of the reference manual - just reading the top section lines will give you some idea about available types of commands.
@@ -51,9 +43,9 @@ ifDoubletap tapKey capsLock
         - Provided value bounds are informational only - they denote values that seem to make sense. Sometimes default values are marked.
     - If you are still not sure about some feature or syntax, do not hesitate to ask.
 
-4) If `ERR` appears up on the display, you can retrieve description by using `printStatus` over a focused text editor. Or, using above point, just search the [reference manual](reference-manual.md) for `ERR`.
+3) If `ERR` appears up on the display, you can retrieve description by using `printStatus` over a focused text editor. Or, using above point, just search the [reference manual](reference-manual.md) for `ERR`.
 
-5) If you encounter a bug, let me know. There are lots of features and quite few users around this codebase - if you do not report problems you find, chances are that no one else will (since most likely no one else has noticed).
+4) If you encounter a bug, let me know. There are lots of features and quite few users around this codebase - if you do not report problems you find, chances are that no one else will (since most likely no one else has noticed).
 
 ## Examples
 
@@ -64,9 +56,6 @@ Every nonempty line is considered as one command. Empty line, or commented line 
 Configuration of the keyboard can be modified globally or per-keymap by using [macro events](reference-manual.md). For instance, macro named `$onInit` is executed on power-cycling and on config reload. E.g., it may look like this:
 
 ```
-# enable extended commands in case you are using stock firmware.
-set macroEngine.extendedCommands 1
-
 # accel driver
 set module.trackball.baseSpeed 0.5
 set module.trackball.speed 1.0

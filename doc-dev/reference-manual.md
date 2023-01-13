@@ -4,8 +4,6 @@ This file contains (semi)formal documentation of all features of the extended en
 
 - You might want to start by reading [user-guide manual](user-guide.md), especially the point on understanding the docs.
 
-- Note that by default, only `printStatus`, `resetTrackpoint` and (some portion of) `set` are available. Rest can be enabled by `set macroEngine.extendedCommands 1`, but are not officially supported, and are more likely to be unstable, or removed in the future.
-
 - The grammar is meant to be the ultimate information source. Not all commands or parameters are described in the later text.
 
 ### Error handling
@@ -114,7 +112,6 @@ The following grammar is supported:
     COMMAND = set autoRepeatDelay <time in ms, at most 65535 (NUMBER)>
     COMMAND = set autoRepeatRate <time in ms, at most 65535 (NUMBER)>
     COMMAND = set setEmergencyKey KEYID
-    COMMAND = set macroEngine.scheduler {blocking|preemptive}
     COMMAND = set macroEngine.batchSize <number of commands to execute per one update cycle NUMBER>
     COMMAND = set navigationModeAction.NAVIGATIONMODECUSTOM.DIRECTION ACTION
     COMMAND = set keymapAction.LAYERID.KEYID ACTION
@@ -190,6 +187,7 @@ The following grammar is supported:
     ############
     #DEPRECATED#
     ############
+    COMMAND = set macroEngine.scheduler {blocking|preemptive}
     COMMAND = set doubletapDelay <time in ms, at most 65535, alias to doubletapTimeout (NUMBER)>
     COMMAND = switchLayer LAYERID
     COMMAND = switchKeymapLayer KEYMAPID LAYERID
