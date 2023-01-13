@@ -594,7 +594,7 @@ bool MacroShortcutParser_Parse(const char* str, const char* strEnd, macro_sub_ac
 
     bool success = false;
 
-    if (FindChar('-', str, strEnd) == strEnd) {
+    if (FindChar('-', str, strEnd) == strEnd || str+1 == strEnd) {
         //"-" notation not used
         success = success || parseAbbrev(str, strEnd, outMacroAction, outKeyAction);
         success = success || parseMods(str, strEnd, outMacroAction, outKeyAction);
