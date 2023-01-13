@@ -507,7 +507,7 @@ Or, in linux, you can put following script into your path... and then use it as 
 
 ```
 #!/bin/bash
-hidraw=`grep 'UHK 60' /sys/class/hidraw/hidraw*/device/uevent | head -n 1 | grep -o 'hidraw[0-9][0-9]*'`
+hidraw=`grep 'UHK 60' /sys/class/hidraw/hidraw*/device/uevent | LC_ALL=C sort -h | head -n 1 | grep -o 'hidraw[0-9][0-9]*'`
 echo -e "\x14$*" > "/dev/$hidraw"
 ```
 
