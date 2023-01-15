@@ -70,9 +70,15 @@ void main(void)
         writeSpi(0xaf);
         setOledCs(true);
 
+        setA0(false);
+        setOledCs(false);
+        writeSpi(0x81);
+        writeSpi(0xff);
+        setOledCs(true);
+
         setA0(true);
         setOledCs(false);
-        writeSpi(pixel ? 0xff : 0x00);
+        writeSpi(pixel ? 0xff : 0xff);
         setOledCs(true);
 
         setLedsCs(false);
