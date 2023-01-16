@@ -495,6 +495,23 @@ setReg 22 1
 ifGesture 89 final fork rotateHues
 ```
 
+### Executing commands over USB
+
+One way is to use the npm script that is packed with agent source code:
+
+1. Build the agent.
+2. Navigate to `agent/packages/usb`
+3. Execute `./exec-macro-command.ts "write hello world!"`
+
+Or, in linux, you can put following script into your path... and then use it as `uhkcmd "write hello world!"`:
+
+```
+#!/bin/bash
+hidraw=`grep 'UHK 60' /sys/class/hidraw/hidraw*/device/uevent | LC_ALL=C sort -h | head -n 1 | grep -o 'hidraw[0-9][0-9]*'`
+echo -e "\x14$*" > "/dev/$hidraw"
+```
+
+
 # Further reading
 
 - [reference manual](reference-manual.md)
