@@ -68,6 +68,20 @@ void serial_cb(const struct device *dev, void *user_data)
     }
 }
 
+static const struct gpio_dt_spec row1 = GPIO_DT_SPEC_GET(DT_ALIAS(row1), gpios);
+static const struct gpio_dt_spec row2 = GPIO_DT_SPEC_GET(DT_ALIAS(row2), gpios);
+static const struct gpio_dt_spec row3 = GPIO_DT_SPEC_GET(DT_ALIAS(row3), gpios);
+static const struct gpio_dt_spec row4 = GPIO_DT_SPEC_GET(DT_ALIAS(row4), gpios);
+static const struct gpio_dt_spec row5 = GPIO_DT_SPEC_GET(DT_ALIAS(row5), gpios);
+static const struct gpio_dt_spec row6 = GPIO_DT_SPEC_GET(DT_ALIAS(row6), gpios);
+//static const struct gpio_dt_spec col1 = GPIO_DT_SPEC_GET(DT_ALIAS(col1), gpios);
+static const struct gpio_dt_spec col2 = GPIO_DT_SPEC_GET(DT_ALIAS(col2), gpios);
+static const struct gpio_dt_spec col3 = GPIO_DT_SPEC_GET(DT_ALIAS(col3), gpios);
+static const struct gpio_dt_spec col4 = GPIO_DT_SPEC_GET(DT_ALIAS(col4), gpios);
+static const struct gpio_dt_spec col5 = GPIO_DT_SPEC_GET(DT_ALIAS(col5), gpios);
+static const struct gpio_dt_spec col6 = GPIO_DT_SPEC_GET(DT_ALIAS(col6), gpios);
+static const struct gpio_dt_spec col7 = GPIO_DT_SPEC_GET(DT_ALIAS(col7), gpios);
+
 void main(void) {
     printk("UHK 80 nordic-left");
     gpio_pin_configure_dt(&ledsCsDt, GPIO_OUTPUT);
