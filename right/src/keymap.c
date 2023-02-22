@@ -53,7 +53,7 @@ bool SwitchKeymapByAbbreviation(uint8_t length, const char *abbrev)
 }
 
 // The factory keymap is initialized before it gets overwritten by the default keymap of the EEPROM.
-key_action_t CurrentKeymap[LayerId_Count][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
+ATTR_DATA2 key_action_t CurrentKeymap[LayerId_Count][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
     // Base layer
     {
         // Right keyboard half
