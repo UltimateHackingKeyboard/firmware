@@ -239,7 +239,7 @@ void SetLedBacklightStrategy(backlight_strategy_t newStrategy)
     LedMap_BacklightStrategy = newStrategy;
 }
 
-#else /* DEVICE_ID == DEVICE_ID_UHK60V2 */
+#elif DEVICE_ID == DEVICE_ID_UHK60V1
 
 void UpdateLayerLeds(void)
 {
