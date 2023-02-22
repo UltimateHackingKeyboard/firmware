@@ -1,0 +1,17 @@
+{
+    "version": 4,
+    "configurations": [
+        {
+            "name": "UHK 60 v1",
+            "defines": [
+                "DEVICE_ID=DEVICE_ID_UHK60V1"
+            ]
+        },
+        {
+            "name": "UHK 60 v2",
+            "defines": [
+                "DEVICE_ID=DEVICE_ID_UHK60V2"
+            ]
+        }
+    ]
+}
