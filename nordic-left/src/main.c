@@ -105,20 +105,12 @@ void main(void) {
     printk("UHK 80 nordic-left");
     gpio_pin_configure_dt(&ledsCsDt, GPIO_OUTPUT);
 
-    gpio_pin_configure_dt(&row1, GPIO_OUTPUT);
-    gpio_pin_configure_dt(&row2, GPIO_OUTPUT);
-    gpio_pin_configure_dt(&row3, GPIO_OUTPUT);
-    gpio_pin_configure_dt(&row4, GPIO_OUTPUT);
-    gpio_pin_configure_dt(&row5, GPIO_OUTPUT);
-    gpio_pin_configure_dt(&row6, GPIO_OUTPUT);
-
-    gpio_pin_configure_dt(&col1, GPIO_INPUT);
-    gpio_pin_configure_dt(&col2, GPIO_INPUT);
-    gpio_pin_configure_dt(&col3, GPIO_INPUT);
-    gpio_pin_configure_dt(&col4, GPIO_INPUT);
-    gpio_pin_configure_dt(&col5, GPIO_INPUT);
-    gpio_pin_configure_dt(&col6, GPIO_INPUT);
-    gpio_pin_configure_dt(&col7, GPIO_INPUT);
+    for (uint8_t rowId=0; rowId<6; rowId++) {
+        gpio_pin_configure_dt(&rows[rowId], GPIO_OUTPUT);
+    }
+    for (uint8_t colId=0; colId<7; colId++) {
+        gpio_pin_configure_dt(&cols[colId], GPIO_INPUT);
+    }
 
     if (!device_is_ready(uart_dev)) {
         printk("UART device not found!");
