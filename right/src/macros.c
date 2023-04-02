@@ -1720,7 +1720,7 @@ static macro_result_t processNoOpCommand()
 static uint8_t processResolveSecondary(uint16_t timeout1, uint16_t timeout2)
 {
     postponeCurrentCycle();
-    bool pendingReleased = PostponerQuery_IsKeyReleased(s->ms.currentMacroKey);
+    bool pendingReleased = PostponerExtended_IsPendingKeyReleased(0);
     bool currentKeyIsActive = currentMacroKeyIsActive();
 
     //phase 1 - wait until some other key is released, then write down its release time
