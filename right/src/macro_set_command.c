@@ -193,6 +193,9 @@ static void macroEngine(const char* arg1, const char *textEnd)
     else if (TokenMatches(arg1, textEnd, "batchSize")) {
         Macros_MaxBatchSize = Macros_ParseInt(NextTok(arg1,  textEnd), textEnd, NULL);
     }
+    else if (TokenMatches(arg1, textEnd, "extendedCommands")) {
+        /* this option was removed -> accept the command & do nothing */
+    }
     else {
         Macros_ReportError("parameter not recognized:", arg1, textEnd);
     }
