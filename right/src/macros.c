@@ -3001,15 +3001,22 @@ static void resetToAddressZero(uint8_t macroIndex)
     loadAction();  //loads first action, sets offset to second action
 }
 
-static macro_result_t execMacro(uint8_t index)
+static bool macroIsValid(uint8_t index)
 {
-    if (AllMacros[index].macroActionsCount == 0)  {
+    bool isNonEmpty = AllMacros[index].macroActionsCount != 0;
+    bool exists = index != MacroIndex_None;
+    return exists && isNonEmpty;
+}
+
+static macro_result_t execMacro(uint8_t macroIndex)
+{
+    if (!macroIsValid(macroIndex))  {
        s->ms.macroBroken = true;
        return MacroResult_Finished;
     }
 
     //reset to address zero and load first address
-    resetToAddressZero(index);
+    resetToAddressZero(macroIndex);
 
     if (Macros_Scheduler == Scheduler_Preemptive) {
         continueMacro();
@@ -3020,12 +3027,16 @@ static macro_result_t execMacro(uint8_t index)
 
 static macro_result_t callMacro(uint8_t macroIndex)
 {
-    unscheduleCurrentSlot();
-    s->ms.macroSleeping = true;
-    s->ms.wakeMeOnKeystateChange = false;
-    s->ms.wakeMeOnTime = false;
-    uint32_t slotIndex = s - MacroState;
-    Macros_StartMacro(macroIndex, s->ms.currentMacroKey, slotIndex, true);
+    uint32_t parentSlotIndex = s - MacroState;
+    uint8_t childSlotIndex = Macros_StartMacro(macroIndex, s->ms.currentMacroKey, parentSlotIndex, true);
+
+    if (childSlotIndex != 255) {
+        unscheduleCurrentSlot();
+        s->ms.macroSleeping = true;
+        s->ms.wakeMeOnKeystateChange = false;
+        s->ms.wakeMeOnTime = false;
+    }
+
     return MacroResult_Finished | MacroResult_YieldFlag;
 }
 
@@ -3037,7 +3048,7 @@ static macro_result_t forkMacro(uint8_t macroIndex)
 
 uint8_t initMacro(uint8_t index, key_state_t *keyState, uint8_t parentMacroSlot)
 {
-    if (!findFreeStateSlot() || AllMacros[index].macroActionsCount == 0)  {
+    if (!macroIsValid(index) || !findFreeStateSlot())  {
        return 255;
     }
 
@@ -3066,6 +3077,7 @@ uint8_t Macros_StartMacro(uint8_t index, key_state_t *keyState, uint8_t parentMa
     uint8_t slotIndex = initMacro(index, keyState, parentMacroSlot);
 
     if (slotIndex == 255) {
+        s = oldState;
         return slotIndex;
     }
 
