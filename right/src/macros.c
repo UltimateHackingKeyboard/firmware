@@ -49,12 +49,6 @@ bool Macros_WakeMeOnKeystateChange = false;
 
 bool Macros_ParserError = false;
 
-#ifdef EXTENDED_MACROS
-bool Macros_ExtendedCommands = true;
-#else
-bool Macros_ExtendedCommands = false;
-#endif
-
 macro_scheduler_t Macros_Scheduler = Scheduler_Blocking;
 uint8_t Macros_MaxBatchSize = 20;
 static scheduler_state_t scheduler = {
@@ -2851,60 +2845,6 @@ static macro_result_t processCommand(const char* cmd, const char* cmdEnd)
     return MacroResult_Finished;
 }
 
-static macro_result_t processStockCommandAction(const char* cmd, const char* cmdEnd)
-{
-    if (*cmd == '$') {
-        cmd++;
-    }
-
-    const char* cmdTokEnd = TokEnd(cmd, cmdEnd);
-    if (cmdTokEnd > cmd && cmdTokEnd[-1] == ':') {
-        //skip labels
-        cmd = NextTok(cmd, cmdEnd);
-        if (cmd == cmdEnd) {
-            return MacroResult_Finished;
-        }
-    }
-    while(*cmd && cmd < cmdEnd) {
-        const char* arg1 = NextTok(cmd, cmdEnd);
-        switch(*cmd) {
-        case 'p':
-            if (TokenMatches(cmd, cmdEnd, "printStatus")) {
-                return processPrintStatusCommand();
-            }
-            else {
-                goto failed;
-            }
-            break;
-        case 'r':
-            if (TokenMatches(cmd, cmdEnd, "resetTrackpoint")) {
-                return processResetTrackpointCommand();
-            }
-            else {
-                goto failed;
-            }
-            break;
-        case 's':
-            if (TokenMatches(cmd, cmdEnd, "set")) {
-                return MacroSetCommand(arg1, cmdEnd);
-            }
-            else {
-                goto failed;
-            }
-            break;
-        default:
-        failed:
-            Macros_ReportError("unrecognized command", cmd, cmdEnd);
-            return MacroResult_Finished;
-            break;
-        }
-        cmd = arg1;
-    }
-    //this is reachable if there is a train of conditions/modifiers/labels without any command
-    return MacroResult_Finished;
-
-}
-
 static macro_result_t processCommandAction(void)
 {
     const char* cmd = s->ms.currentMacroAction.cmd.text + s->ms.commandBegin;
@@ -2918,11 +2858,7 @@ static macro_result_t processCommandAction(void)
     }
 
     macro_result_t actionInProgress;
-    if (Macros_ExtendedCommands) {
-        actionInProgress = processCommand(cmd, cmdEnd);
-    } else {
-        actionInProgress = processStockCommandAction(cmd, cmdEnd);
-    }
+    actionInProgress = processCommand(cmd, cmdEnd);
 
     s->as.currentConditionPassed = actionInProgress & MacroResult_InProgressFlag;
     return actionInProgress;
