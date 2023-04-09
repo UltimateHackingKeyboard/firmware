@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [9.2.3] - 2023-04-09
+
+Device Protocol: 4.9.0 | Module Protocol: 4.2.0 | User Config: 5.1.0 | Hardware Config: 1.0.0 | Smart Macros: 1.1.2
+
+- Fix the initialization of non-base layers, resolving the fallback of unmapped modifier layer actions.
+
 ## [9.2.2] - 2023-04-03
 
 Device Protocol: 4.9.0 | Module Protocol: 4.2.0 | User Config: 5.1.0 | Hardware Config: 1.0.0 | Smart Macros: 1.1.2
