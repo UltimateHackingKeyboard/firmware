@@ -213,6 +213,9 @@ parser_error_t ParseKeymap(config_buffer_t *buffer, uint8_t keymapIdx, uint8_t k
         if (isDefault) {
             DefaultKeymapIndex = keymapIdx;
         }
+
+        /* Clear the actions, since Agent may specify just part of a layer. */
+        memset(CurrentKeymap, 0, sizeof CurrentKeymap);
     }
     tempKeymapCount = keymapCount;
     tempMacroCount = macroCount;
