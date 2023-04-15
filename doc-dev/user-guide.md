@@ -139,7 +139,7 @@ releaseKey a
 
 Complex key sequences can be achieved using `tapKeySeq`. For instance, following emoji macro (uses linux  Ctrl+U notation) will produce a shrugging person.
 ```
-tapKeySeq CS-u 1 f 6 0 5 space
+tapKeySeq CS-u 1 f 9 3 7 space
 ```
 
 With these commands, modifiers are encoded using `CSAG`, with optional `LR` for left and right side. E.g., `LC-a` means `left control + a`.
