@@ -290,7 +290,7 @@ holdLayer mouse
 ifNotInterrupted tapKey enter
 ```
 
-Regular secondary role with prevention of accidential key taps: (Activates the secondary role immediately, but activates the primary role only if the key has been pressed for at least a certain amount of time. This could be used to emulate the [Space Cadet Shift feature](https://beta.docs.qmk.fm/using-qmk/advanced-keycodes/feature_space_cadet).)
+Regular secondary role with prevention of accidential key taps: (Activates the secondary role immediately, but activates the primary role only if the key has been pressed for at least a certain amount of time. This could be used to emulate the [Space Cadet Shift feature](https://docs.qmk.fm/#/feature_space_cadet).)
 
 ```
 holdKey leftShift
