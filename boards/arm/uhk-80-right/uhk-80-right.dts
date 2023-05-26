@@ -1,0 +1,57 @@
+// Copyright (c) 2023 Nordic Semiconductor ASA
+// SPDX-License-Identifier: Apache-2.0
+
+/dts-v1/;
+#include <nordic/nrf52811_qfaa.dtsi>
+
+/ {
+    model = "UHK 80 right";
+    compatible = "uhk-80-right";
+
+    chosen {
+        zephyr,sram = &sram0;
+        zephyr,flash = &flash0;
+        zephyr,code-partition = &slot0_partition;
+    };
+
+    gpios {
+        compatible = "gpio-keys";
+        oled_en: oled_en {
+            gpios = <&gpio0 19 GPIO_ACTIVE_HIGH>;
+            label = "oled_en";
+        };
+    };
+
+    aliases {
+        oled-en = &oled_en;
+    };
+};
+
+&flash0 {
+    partitions {
+        compatible = "fixed-partitions";
+        #address-cells = <1>;
+        #size-cells = <1>;
+
+        boot_partition: partition@0 {
+            label = "mcuboot";
+            reg = <0x0 0xc000>;
+        };
+        slot0_partition: partition@c000 {
+            label = "image-0";
+            reg = <0xc000 0xa000>;
+        };
+        slot1_partition: partition@16000 {
+            label = "image-1";
+            reg = <0x16000 0xa000>;
+        };
+        scratch_partition: partition@20000 {
+            label = "image-scratch";
+            reg = <0x20000 0xa000>;
+        };
+        storage_partition: partition@2a000 {
+            label = "storage";
+            reg = <0x2a000 0x6000>;
+        };
+    };
+};
