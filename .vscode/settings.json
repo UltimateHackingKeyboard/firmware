@@ -4,5 +4,11 @@
     "nrf-connect.applications": [
         "${workspaceFolder}/nordic-left",
         "${workspaceFolder}/nordic-right"
-    ]
+    ],
+    "nrf-connect.boardRoots": [
+        "${workspaceFolder}/"
+    ],
+    "files.associations": {
+        "gpio.h": "c"
+    }
 }
