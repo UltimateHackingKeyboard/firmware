@@ -4,6 +4,31 @@
 /dts-v1/;
 #include <nordic/nrf52811_qfaa.dtsi>
 
+&pinctrl {
+    spi1_default: spi1_default {
+        group1 {
+            psels = <NRF_PSEL(SPIM_SCK, 0, 7)>,
+                    <NRF_PSEL(SPIM_MOSI, 0, 6)>;
+        };
+    };
+
+    spi1_sleep: spi1_sleep {
+        group1 {
+            psels = <NRF_PSEL(SPIM_SCK, 0, 7)>,
+                    <NRF_PSEL(SPIM_MOSI, 0, 6)>;
+            low-power-enable;
+        };
+    };
+};
+
+&spi1 {
+    compatible = "nordic,nrf-spi";
+    status = "okay";
+    pinctrl-0 = <&spi1_default>;
+    pinctrl-1 = <&spi1_sleep>;
+    pinctrl-names = "default", "sleep";
+};
+
 / {
     model = "UHK 80 right";
     compatible = "uhk-80-right";
@@ -20,10 +45,25 @@
             gpios = <&gpio0 19 GPIO_ACTIVE_HIGH>;
             label = "oled_en";
         };
+        oled_a0: oled_a0 {
+            gpios = <&gpio0 24 GPIO_ACTIVE_HIGH>;
+            label = "oled_a0";
+        };
+        oled_cs: oled_cs {
+            gpios = <&gpio0 23 GPIO_ACTIVE_HIGH>;
+            label = "oled_cs";
+        };
+        leds_cs: leds_cs {
+            gpios = <&gpio0 8 GPIO_ACTIVE_HIGH>;
+            label = "leds_cs";
+        };
     };
 
     aliases {
         oled-en = &oled_en;
+        oled-a0 = &oled_a0;
+        oled-cs = &oled_cs;
+        leds-cs = &leds_cs;
     };
 };
 
