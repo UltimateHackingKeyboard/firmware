@@ -4,6 +4,39 @@
 /dts-v1/;
 #include <nordic/nrf52840_qiaa.dtsi>
 
+&gpio0 {
+	status = "okay";
+};
+
+&gpio1 {
+	status = "okay";
+};
+
+&pinctrl {
+    spi1_default: spi1_default {
+        group1 {
+            psels = <NRF_PSEL(SPIM_SCK, 0, 8)>,
+                    <NRF_PSEL(SPIM_MOSI, 0, 6)>;
+        };
+    };
+
+    spi1_sleep: spi1_sleep {
+        group1 {
+            psels = <NRF_PSEL(SPIM_SCK, 0, 8)>,
+                    <NRF_PSEL(SPIM_MOSI, 0, 6)>;
+            low-power-enable;
+        };
+    };
+};
+
+&spi1 {
+    compatible = "nordic,nrf-spi";
+    status = "okay";
+    pinctrl-0 = <&spi1_default>;
+    pinctrl-1 = <&spi1_sleep>;
+    pinctrl-names = "default", "sleep";
+};
+
 / {
 	model = "UHK 80 left";
 	compatible = "uhk-80-left";
@@ -13,6 +46,23 @@
 		zephyr,flash = &flash0;
 		zephyr,code-partition = &slot0_partition;
 	};
+
+    gpios {
+        compatible = "gpio-keys";
+        leds_cs: leds_cs {
+            gpios = <&gpio1 9 GPIO_ACTIVE_HIGH>;
+            label = "leds_cs";
+        };
+    };
+
+    aliases {
+        leds-cs = &leds_cs;
+    };
+};
+
+zephyr_udc0: &usbd {
+	compatible = "nordic,nrf-usbd";
+	status = "okay";
 };
 
 &flash0 {
@@ -43,4 +93,3 @@
 		};
 	};
 };
-
