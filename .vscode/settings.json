@@ -9,6 +9,7 @@
         "${workspaceFolder}/"
     ],
     "files.associations": {
-        "gpio.h": "c"
+        "*.h": "c",
+        "*.c": "c"
     }
 }
