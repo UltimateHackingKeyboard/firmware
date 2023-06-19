@@ -622,17 +622,20 @@ static macro_result_t dispatchText(const char* text, uint16_t textLen)
 
     // If all characters have been sent, finish.
     if (s->as.dispatchData.textIdx == textLen) {
-        s->as.dispatchData.textIdx = 0;
-        s->as.dispatchData.reportState = REPORT_FULL;
-        memset(&s->ms.macroBasicKeyboardReport, 0, sizeof s->ms.macroBasicKeyboardReport);
-        dispatchMutex = NULL;
-        return MacroResult_Finished;
+        if (s->as.dispatchData.reportState != REPORT_EMPTY) {
+            s->as.dispatchData.reportState = REPORT_EMPTY;
+            memset(&s->ms.macroBasicKeyboardReport, 0, sizeof s->ms.macroBasicKeyboardReport);
+            return MacroResult_Blocking;
+        } else {
+            s->as.dispatchData.textIdx = 0;
+            dispatchMutex = NULL;
+            return MacroResult_Finished;
+        }
     }
 
     // Whenever the report is full, we clear the report and send it empty before continuing.
     if (s->as.dispatchData.reportState == REPORT_FULL) {
         s->as.dispatchData.reportState = REPORT_EMPTY;
-
         memset(&s->ms.macroBasicKeyboardReport, 0, sizeof s->ms.macroBasicKeyboardReport);
         return MacroResult_Blocking;
     }
