@@ -18,11 +18,9 @@
 
 #include <zephyr/settings/settings.h>
 
-#include <dk_buttons_and_leds.h>
-
 #include "bluetooth.h"
 
-
+char volatile c = 0;
 static const uint8_t hid_keyboard_report_desc[] = HID_KEYBOARD_REPORT_DESC();
 static const uint8_t hid_mouse_report_desc[] = HID_MOUSE_REPORT_DESC(2);
 
@@ -60,16 +58,16 @@ static void status_cb(enum usb_dc_status_code status, const uint8_t *param) {
 */
 
 void int_in_ready_mouse(const struct device *dev) {
-    uint32_t buttons = dk_get_buttons();
-    mouse_report[MOUSE_X_REPORT_POS] = buttons & DK_BTN1_MSK ? 5 : 0;
-    mouse_report[MOUSE_Y_REPORT_POS] = buttons & DK_BTN2_MSK ? 5 : 0;
-    mouse_report[MOUSE_BTN_REPORT_POS] = buttons & DK_BTN3_MSK ? MOUSE_BTN_LEFT : 0;
+    // mouse_report[MOUSE_X_REPORT_POS] = buttons & DK_BTN1_MSK ? 5 : 0;
+    // mouse_report[MOUSE_Y_REPORT_POS] = buttons & DK_BTN2_MSK ? 5 : 0;
+    // mouse_report[MOUSE_BTN_REPORT_POS] = buttons & DK_BTN3_MSK ? MOUSE_BTN_LEFT : 0;
     hid_int_ep_write(hid_mouse_dev, mouse_report, sizeof(mouse_report), NULL);
 }
 
+// bool c=false;
 void int_in_ready_keyboard(const struct device *dev) {
-    uint32_t buttons = dk_get_buttons();
-    keyboard_report[2] = buttons & DK_BTN4_MSK ? HID_KEY_A : 0;
+    // c=!c;
+    keyboard_report[2] = c ? HID_KEY_A : 0;
     hid_int_ep_write(hid_keyboard_dev, keyboard_report, sizeof(keyboard_report), NULL);
 }
 

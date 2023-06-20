@@ -2,6 +2,7 @@
 #include <zephyr/device.h>
 #include <zephyr/drivers/gpio.h>
 // #include <zephyr/drivers/uart.h>
+#include <zephyr/usb/class/usb_hid.h>
 #include <drivers/spi.h>
 
 #include <zephyr/types.h>
@@ -68,48 +69,34 @@ void writeSpi(uint8_t data)
 //     }
 // }
 
-// static const struct gpio_dt_spec row1 = GPIO_DT_SPEC_GET(DT_ALIAS(row1), gpios);
-// static const struct gpio_dt_spec row2 = GPIO_DT_SPEC_GET(DT_ALIAS(row2), gpios);
-// static const struct gpio_dt_spec row3 = GPIO_DT_SPEC_GET(DT_ALIAS(row3), gpios);
-// static const struct gpio_dt_spec row4 = GPIO_DT_SPEC_GET(DT_ALIAS(row4), gpios);
-// static const struct gpio_dt_spec row5 = GPIO_DT_SPEC_GET(DT_ALIAS(row5), gpios);
-// static const struct gpio_dt_spec row6 = GPIO_DT_SPEC_GET(DT_ALIAS(row6), gpios);
-// static const struct gpio_dt_spec col1 = GPIO_DT_SPEC_GET(DT_ALIAS(col1), gpios);
-// static const struct gpio_dt_spec col2 = GPIO_DT_SPEC_GET(DT_ALIAS(col2), gpios);
-// static const struct gpio_dt_spec col3 = GPIO_DT_SPEC_GET(DT_ALIAS(col3), gpios);
-// static const struct gpio_dt_spec col4 = GPIO_DT_SPEC_GET(DT_ALIAS(col4), gpios);
-// static const struct gpio_dt_spec col5 = GPIO_DT_SPEC_GET(DT_ALIAS(col5), gpios);
-// static const struct gpio_dt_spec col6 = GPIO_DT_SPEC_GET(DT_ALIAS(col6), gpios);
-// static const struct gpio_dt_spec col7 = GPIO_DT_SPEC_GET(DT_ALIAS(col7), gpios);
+static struct gpio_dt_spec rows[] = {
+    GPIO_DT_SPEC_GET(DT_ALIAS(row1), gpios),
+    GPIO_DT_SPEC_GET(DT_ALIAS(row2), gpios),
+    GPIO_DT_SPEC_GET(DT_ALIAS(row3), gpios),
+    GPIO_DT_SPEC_GET(DT_ALIAS(row4), gpios),
+    GPIO_DT_SPEC_GET(DT_ALIAS(row5), gpios),
+    GPIO_DT_SPEC_GET(DT_ALIAS(row6), gpios),
+};
 
-// static struct gpio_dt_spec rows[] = {
-//     GPIO_DT_SPEC_GET(DT_ALIAS(row1), gpios),
-//     GPIO_DT_SPEC_GET(DT_ALIAS(row2), gpios),
-//     GPIO_DT_SPEC_GET(DT_ALIAS(row3), gpios),
-//     GPIO_DT_SPEC_GET(DT_ALIAS(row4), gpios),
-//     GPIO_DT_SPEC_GET(DT_ALIAS(row5), gpios),
-//     GPIO_DT_SPEC_GET(DT_ALIAS(row6), gpios),
-// };
-
-// static struct gpio_dt_spec cols[] = {
-//     GPIO_DT_SPEC_GET(DT_ALIAS(col1), gpios),
-//     GPIO_DT_SPEC_GET(DT_ALIAS(col2), gpios),
-//     GPIO_DT_SPEC_GET(DT_ALIAS(col3), gpios),
-//     GPIO_DT_SPEC_GET(DT_ALIAS(col4), gpios),
-//     GPIO_DT_SPEC_GET(DT_ALIAS(col5), gpios),
-//     GPIO_DT_SPEC_GET(DT_ALIAS(col6), gpios),
-//     GPIO_DT_SPEC_GET(DT_ALIAS(col7), gpios),
-// };
+static struct gpio_dt_spec cols[] = {
+    GPIO_DT_SPEC_GET(DT_ALIAS(col1), gpios),
+    GPIO_DT_SPEC_GET(DT_ALIAS(col2), gpios),
+    GPIO_DT_SPEC_GET(DT_ALIAS(col3), gpios),
+    GPIO_DT_SPEC_GET(DT_ALIAS(col4), gpios),
+    GPIO_DT_SPEC_GET(DT_ALIAS(col5), gpios),
+    GPIO_DT_SPEC_GET(DT_ALIAS(col6), gpios),
+    GPIO_DT_SPEC_GET(DT_ALIAS(col7), gpios),
+};
 
 void main(void) {
     gpio_pin_configure_dt(&ledsCsDt, GPIO_OUTPUT);
 
-    // for (uint8_t rowId=0; rowId<6; rowId++) {
-    //     gpio_pin_configure_dt(&rows[rowId], GPIO_OUTPUT);
-    // }
-    // for (uint8_t colId=0; colId<7; colId++) {
-    //     gpio_pin_configure_dt(&cols[colId], GPIO_INPUT);
-    // }
+    for (uint8_t rowId=0; rowId<6; rowId++) {
+        gpio_pin_configure_dt(&rows[rowId], GPIO_OUTPUT);
+    }
+    for (uint8_t colId=0; colId<7; colId++) {
+        gpio_pin_configure_dt(&cols[colId], GPIO_INPUT);
+    }
 
     // if (!device_is_ready(uart_dev)) {
     //     printk("UART device not found!");
@@ -126,16 +113,19 @@ void main(void) {
     // uart_irq_rx_enable(uart_dev);
 //  int blink_status = 0;
     for (;;) {
+        c = 0;
+        // c = !c;
         // printk(".");
-        // for (uint8_t rowId=0; rowId<6; rowId++) {
-        //     gpio_pin_set_dt(&rows[rowId], 1);
-        //     for (uint8_t colId=0; colId<7; colId++) {
-        //         if (gpio_pin_get_dt(&cols[colId])) {
-        //             printk("SW%c%c ", rowId+'1', colId+'1');
-        //         }
-        //     }
-        //     gpio_pin_set_dt(&rows[rowId], 0);
-        // }
+        for (uint8_t rowId=0; rowId<6; rowId++) {
+            gpio_pin_set_dt(&rows[rowId], 1);
+            for (uint8_t colId=0; colId<7; colId++) {
+                if (gpio_pin_get_dt(&cols[colId])) {
+                    c = HID_KEY_A;
+                    // printk("SW%c%c ", rowId+'1', colId+'1');
+                }
+            }
+            gpio_pin_set_dt(&rows[rowId], 0);
+        }
 
         setLedsCs(false);
         writeSpi(LedPagePrefix | 2);
@@ -153,7 +143,7 @@ void main(void) {
         writeSpi(LedPagePrefix | 0);
         writeSpi(0x00);
         for (int i=0; i<255; i++) {
-            writeSpi(0xff);
+            writeSpi(c?0xff:0);
         }
         setLedsCs(true);
 
@@ -161,7 +151,7 @@ void main(void) {
         writeSpi(LedPagePrefix | 1);
         writeSpi(0x00);
         for (int i=0; i<255; i++) {
-            writeSpi(0xff);
+            writeSpi(c?0xff:0);
         }
         setLedsCs(true);
 
