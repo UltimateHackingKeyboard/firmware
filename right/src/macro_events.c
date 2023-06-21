@@ -80,6 +80,9 @@ void MacroEvent_RegisterLayerMacros()
     memset(layerChangeMacro, MacroIndex_None, sizeof layerChangeMacro);
     memset(keymapLayerChangeMacro, MacroIndex_None, sizeof layerChangeMacro);
 
+    bool oldParserStatus = Macros_ParserError;
+    Macros_ParserError = false;
+
     for (int i = 0; i < AllMacrosCount; i++) {
         const char *thisName, *thisNameEnd;
         FindMacroName(&AllMacros[i], &thisName, &thisNameEnd);
@@ -89,21 +92,26 @@ void MacroEvent_RegisterLayerMacros()
             const char* macroArg2 = NextTok(macroArg,thisNameEnd);
             const layer_id_t layerId = Macros_ParseLayerId(macroArg2, thisNameEnd);
 
-            if (TokenMatches2(macroArg, thisNameEnd, curAbbrev, curAbbrevEnd)) {
+            if (TokenMatches2(macroArg, thisNameEnd, curAbbrev, curAbbrevEnd) && !Macros_ParserError) {
                 keymapLayerChangeMacro[layerId] = i;
             }
         }
 
         if (TokenMatches(thisName, thisNameEnd, "$onLayerChange")) {
             const char* macroArg = NextTok(thisName,thisNameEnd);
-            if (TokenMatches(macroArg, thisNameEnd, "any")) {
+            if (TokenMatches(macroArg, thisNameEnd, "any") && !Macros_ParserError) {
                 anyLayerChangeMacro = i;
             } else {
                 const layer_id_t layerId = Macros_ParseLayerId(macroArg, thisNameEnd);
-                layerChangeMacro[layerId] = i;
+                if (!Macros_ParserError) {
+                    layerChangeMacro[layerId] = i;
+                }
             }
         }
+        Macros_ParserError = false;
     }
+
+    Macros_ParserError = oldParserStatus;
 }
 
 void MacroEvent_OnLayerChange(layer_id_t layerId)
