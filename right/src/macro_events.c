@@ -1,3 +1,5 @@
+#include "layer.h"
+#include "string.h"
 #include "str_utils.h"
 #include "macro_events.h"
 #include "config_parser/parse_macro.h"
@@ -5,6 +7,11 @@
 #include "keymap.h"
 #include "led_display.h"
 #include "debug.h"
+
+
+static macro_index_t anyLayerChangeMacro = MacroIndex_None;
+static macro_index_t layerChangeMacro[LayerId_Count];
+static macro_index_t keymapLayerChangeMacro[LayerId_Count];
 
 /**
  * Future possible extensions:
@@ -26,7 +33,15 @@ void MacroEvent_OnInit()
     }
 }
 
-void processOnKeymapChange(const char* curAbbrev, const char* curAbbrevEnd)
+static void startMacroInSlot(macro_index_t macroIndex, uint8_t* slotId) {
+    if (*slotId != 255 && MacroState[*slotId].ms.macroPlaying) {
+        *slotId = Macros_QueueMacro(macroIndex, NULL, *slotId);
+    } else {
+        *slotId = Macros_StartMacro(macroIndex, NULL, 255, false);
+    }
+}
+
+static void processOnKeymapChange(const char* curAbbrev, const char* curAbbrevEnd)
 {
     for (int i = 0; i < AllMacrosCount; i++) {
         const char *thisName, *thisNameEnd;
@@ -36,17 +51,12 @@ void processOnKeymapChange(const char* curAbbrev, const char* curAbbrevEnd)
             const char* macroArg = NextTok(thisName,thisNameEnd);
 
             if (TokenMatches2(macroArg, thisNameEnd, curAbbrev, curAbbrevEnd)) {
-                if (previousEventMacroSlot != 255 && MacroState[previousEventMacroSlot].ms.macroPlaying) {
-                    previousEventMacroSlot = Macros_QueueMacro(i, NULL, previousEventMacroSlot);
-                } else {
-                    previousEventMacroSlot = Macros_StartMacro(i, NULL, 255, false);
-                }
+                startMacroInSlot(i, &previousEventMacroSlot);
             }
         }
     }
 
 }
-
 
 void MacroEvent_OnKeymapChange(uint8_t keymapIdx)
 {
@@ -58,6 +68,63 @@ void MacroEvent_OnKeymapChange(uint8_t keymapIdx)
 
     processOnKeymapChange(any, any + strlen(any));
     processOnKeymapChange(curAbbrev, curAbbrevEnd);
+}
+
+void MacroEvent_RegisterLayerMacros()
+{
+    keymap_reference_t *keymap = AllKeymaps + CurrentKeymapIndex;
+    const char* curAbbrev = keymap->abbreviation;
+    const char* curAbbrevEnd = keymap->abbreviation + keymap->abbreviationLen;
+
+    anyLayerChangeMacro = MacroIndex_None;
+    memset(layerChangeMacro, MacroIndex_None, sizeof layerChangeMacro);
+    memset(keymapLayerChangeMacro, MacroIndex_None, sizeof layerChangeMacro);
+
+    bool oldParserStatus = Macros_ParserError;
+    Macros_ParserError = false;
+
+    for (int i = 0; i < AllMacrosCount; i++) {
+        const char *thisName, *thisNameEnd;
+        FindMacroName(&AllMacros[i], &thisName, &thisNameEnd);
+
+        if (TokenMatches(thisName, thisNameEnd, "$onKeymapLayerChange")) {
+            const char* macroArg = NextTok(thisName,thisNameEnd);
+            const char* macroArg2 = NextTok(macroArg,thisNameEnd);
+            const layer_id_t layerId = Macros_ParseLayerId(macroArg2, thisNameEnd);
+
+            if (TokenMatches2(macroArg, thisNameEnd, curAbbrev, curAbbrevEnd) && !Macros_ParserError) {
+                keymapLayerChangeMacro[layerId] = i;
+            }
+        }
+
+        if (TokenMatches(thisName, thisNameEnd, "$onLayerChange")) {
+            const char* macroArg = NextTok(thisName,thisNameEnd);
+            if (TokenMatches(macroArg, thisNameEnd, "any") && !Macros_ParserError) {
+                anyLayerChangeMacro = i;
+            } else {
+                const layer_id_t layerId = Macros_ParseLayerId(macroArg, thisNameEnd);
+                if (!Macros_ParserError) {
+                    layerChangeMacro[layerId] = i;
+                }
+            }
+        }
+        Macros_ParserError = false;
+    }
+
+    Macros_ParserError = oldParserStatus;
+}
+
+void MacroEvent_OnLayerChange(layer_id_t layerId)
+{
+    macro_index_t macrosToTry[3] = {
+        anyLayerChangeMacro,
+        layerChangeMacro[layerId],
+        keymapLayerChangeMacro[layerId],
+    };
+
+    for (uint8_t i = 0; i < sizeof macrosToTry; i++) {
+        startMacroInSlot(macrosToTry[i], &previousEventMacroSlot);
+    }
 
     previousEventMacroSlot = 255;
 }

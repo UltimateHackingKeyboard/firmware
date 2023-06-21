@@ -268,6 +268,7 @@
     void Macros_Initialize();
     void Macros_ClearStatus();
     bool Macros_IsLayerHeld();
+    bool Macros_MacroHasActiveInstance(macro_index_t macroIdx);
     uint8_t Macros_ParseLayerId(const char* arg1, const char* cmdEnd);
     int32_t Macros_ParseInt(const char *a, const char *aEnd, const char* *parsedTill);
     bool Macros_ParseBoolean(const char *a, const char *aEnd);
