@@ -22,5 +22,7 @@
 
     void MacroEvent_OnInit();
     void MacroEvent_OnKeymapChange(uint8_t keymapIdx);
+    void MacroEvent_OnLayerChange(layer_id_t layerId);
+    void MacroEvent_RegisterLayerMacros();
 
 #endif
