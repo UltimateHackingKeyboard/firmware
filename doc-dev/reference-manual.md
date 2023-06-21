@@ -119,7 +119,7 @@ The following grammar is supported:
     COMMAND = set backlight.constantRgb.rgb <number 0-255 (NUMBER)> <number 0-255 (NUMBER)> <number 0-255 (NUMBER)><number 0-255 (NUMBER)>
     COMMAND = set leds.enabled BOOLEAN
     COMMAND = set leds.brightness <0-1 multiple of default (FLOAT)>
-    COMMAND = set leds.fadeTimeout <minutes to fade after (NUMBER)>
+    COMMAND = set leds.fadeTimeout <seconds to fade after (NUMBER)>
     COMMAND = set modifierLayerTriggers.{shift|alt|super|ctrl} {left|right|both}
     CONDITION = {ifShortcut | ifNotShortcut} [IFSHORTCUTFLAGS]* [KEYID]+
     CONDITION = {ifGesture | ifNotGesture} [IFSHORTCUTFLAGS]* [KEYID]+
@@ -512,6 +512,11 @@ For the purpose of toggling functionality on and off, and for global constants m
 - backlight:
     - `backlight.strategy { functional | constantRgb }` sets backlight strategy.
     - `backlight.constantRgb.rgb NUMBER NUMBER NUMBER` allows setting custom constant colour for entire keyboard. E.g.: `set backlight.strategy constantRgb; set backlight.constantRgb.rgb 255 0 0` to make entire keyboard shine red.
+
+- general led configuration:
+    - `leds.enabled BOOLEAN` turns on/off all keyboard leds: i.e., backlight, indicator leds, segment display
+    - `leds.brightness <0-1 multiple of default (FLOAT)>` allows scaling default brightness. E.g., `0.5` will dim entire keyboard to half of the default values that are configured in Agent
+    - `leds.fadeTimeout <seconds to fade after (NUMBER)>` will turn off leds after configured interval.
 
 - modifier layer triggers:
     - `set modifierLayerTriggers.{shift|alt|super|ctrl} {left|right|both}` controls whether modifier layers are triggered by left or right or either of the modifiers.
