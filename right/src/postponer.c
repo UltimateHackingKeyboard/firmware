@@ -17,7 +17,7 @@ uint8_t cyclesUntilActivation = 0;
 key_state_t* Postponer_NextEventKey;
 uint32_t lastPressTime;
 
-#define POS(idx) ((bufferPosition + (idx)) % POSTPONER_BUFFER_SIZE)
+#define POS(idx) ((bufferPosition + POSTPONER_BUFFER_SIZE + (idx)) % POSTPONER_BUFFER_SIZE)
 
 uint8_t ChordingDelay = 0;
 static void chording();
@@ -88,6 +88,26 @@ bool PostponerCore_IsActive(void)
 }
 
 
+void PostponerCore_PrependKeyEvent(key_state_t *keyState, bool active, uint8_t layer)
+{
+    uint8_t pos = POS(-1);
+
+    if (bufferSize == POSTPONER_BUFFER_SIZE) {
+        return;
+    }
+
+    buffer[pos] = (postponer_buffer_record_type_t) {
+            .time = CurrentTime,
+            .key = keyState,
+            .active = active,
+            .layer = layer,
+    };
+    lastPressTime = active && bufferSize == 0 ? CurrentTime : lastPressTime;
+    bufferSize = bufferSize < POSTPONER_BUFFER_SIZE ? bufferSize + 1 : bufferSize;
+    bufferPosition--;
+}
+
+
 void PostponerCore_TrackKeyEvent(key_state_t *keyState, bool active, uint8_t layer)
 {
     uint8_t pos = POS(bufferSize);
@@ -104,8 +124,8 @@ void PostponerCore_TrackKeyEvent(key_state_t *keyState, bool active, uint8_t lay
             .active = active,
             .layer = layer,
     };
-    bufferSize = bufferSize < POSTPONER_BUFFER_SIZE ? bufferSize + 1 : bufferSize;
     lastPressTime = active ? CurrentTime : lastPressTime;
+    bufferSize = bufferSize < POSTPONER_BUFFER_SIZE ? bufferSize + 1 : bufferSize;
 }
 
 void PostponerCore_RunPostponedEvents(void)

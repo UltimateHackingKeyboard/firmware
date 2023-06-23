@@ -49,6 +49,7 @@
     bool PostponerCore_IsActive(void);
     void PostponerCore_PostponeNCycles(uint8_t n);
     bool PostponerCore_RunKey(key_state_t* key, bool active);
+    void PostponerCore_PrependKeyEvent(key_state_t *keyState, bool active, uint8_t layer);
     void PostponerCore_TrackKeyEvent(key_state_t *keyState, bool active, uint8_t layer);
     void PostponerCore_RunPostponedEvents(void);
     void PostponerCore_FinishCycle(void);
