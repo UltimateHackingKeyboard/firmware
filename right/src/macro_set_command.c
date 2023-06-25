@@ -1,4 +1,5 @@
 #include "macro_set_command.h"
+#include "layer.h"
 #include "ledmap.h"
 #include "macros.h"
 #include "timer.h"
@@ -34,6 +35,11 @@ static void moduleNavigationMode(const char* arg1, const char *textEnd, module_c
 {
     layer_id_t layerId = Macros_ParseLayerId(arg1, textEnd);
     navigation_mode_t modeId = ParseNavigationModeId(NextTok(arg1, textEnd), textEnd);
+
+    if (IS_MODIFIER_LAYER(layerId)) {
+        Macros_ReportError("Navigation mode cannot be changed for modifier layers!", NULL, NULL);
+        return;
+    }
 
     if (Macros_ParserError) {
         return;
@@ -237,7 +243,7 @@ static void leds(const char* arg1, const char *textEnd)
 {
     const char* value = NextTok(arg1, textEnd);
     if (TokenMatches(arg1, textEnd, "fadeTimeout")) {
-        LedSleepTimeout = 1000*60*Macros_ParseInt(value, textEnd, NULL);
+        LedSleepTimeout = 1000*Macros_ParseInt(value, textEnd, NULL);
     } else if (TokenMatches(arg1, textEnd, "brightness")) {
         LedBrightnessMultiplier = ParseFloat(value, textEnd);
     } else if (TokenMatches(arg1, textEnd, "enabled")) {

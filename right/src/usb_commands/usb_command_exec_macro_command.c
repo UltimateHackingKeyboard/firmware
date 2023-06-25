@@ -27,11 +27,8 @@ static bool canExecute()
         return false;
     }
 
-    // make sure there is no other instance running
-    for(uint8_t j = 0; j < MACRO_STATE_POOL_SIZE; j++) {
-        if(MacroState[j].ms.macroPlaying && MacroState[j].ms.currentMacroIndex == MacroIndex_UsbCmdReserved) {
-            return false;
-        }
+    if (Macros_MacroHasActiveInstance(MacroIndex_UsbCmdReserved)) {
+        return false;
     }
 
     return true;

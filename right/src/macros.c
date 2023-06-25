@@ -622,17 +622,20 @@ static macro_result_t dispatchText(const char* text, uint16_t textLen)
 
     // If all characters have been sent, finish.
     if (s->as.dispatchData.textIdx == textLen) {
-        s->as.dispatchData.textIdx = 0;
-        s->as.dispatchData.reportState = REPORT_FULL;
-        memset(&s->ms.macroBasicKeyboardReport, 0, sizeof s->ms.macroBasicKeyboardReport);
-        dispatchMutex = NULL;
-        return MacroResult_Finished;
+        if (s->as.dispatchData.reportState != REPORT_EMPTY) {
+            s->as.dispatchData.reportState = REPORT_EMPTY;
+            memset(&s->ms.macroBasicKeyboardReport, 0, sizeof s->ms.macroBasicKeyboardReport);
+            return MacroResult_Blocking;
+        } else {
+            s->as.dispatchData.textIdx = 0;
+            dispatchMutex = NULL;
+            return MacroResult_Finished;
+        }
     }
 
     // Whenever the report is full, we clear the report and send it empty before continuing.
     if (s->as.dispatchData.reportState == REPORT_FULL) {
         s->as.dispatchData.reportState = REPORT_EMPTY;
-
         memset(&s->ms.macroBasicKeyboardReport, 0, sizeof s->ms.macroBasicKeyboardReport);
         return MacroResult_Blocking;
     }
@@ -2141,10 +2144,27 @@ static bool processIfKeyDefinedCommand(bool negate, const char* arg1, const char
 static macro_result_t processActivateKeyPostponedCommand(const char* arg1, const char* argEnd)
 {
     uint8_t layer = 255;
-    if (TokenMatches(arg1, argEnd, "atLayer")) {
-        const char* arg2 = NextTok(arg1, argEnd);
-        layer = Macros_ParseLayerId(arg2, argEnd);
-        arg1 = NextTok(arg2, argEnd);
+    bool options = true;
+    bool append = true;
+
+    while (options) {
+        options = false;
+        if (TokenMatches(arg1, argEnd, "atLayer")) {
+            const char* arg2 = NextTok(arg1, argEnd);
+            layer = Macros_ParseLayerId(arg2, argEnd);
+            arg1 = NextTok(arg2, argEnd);
+            options = true;
+        }
+        if (TokenMatches(arg1, argEnd, "append")) {
+            arg1 = NextTok(arg1, argEnd);
+            append = true;
+            options = true;
+        }
+        if (TokenMatches(arg1, argEnd, "prepend")) {
+            arg1 = NextTok(arg1, argEnd);
+            append = false;
+            options = true;
+        }
     }
 
     if (Macros_ParserError) {
@@ -2153,12 +2173,24 @@ static macro_result_t processActivateKeyPostponedCommand(const char* arg1, const
 
     uint16_t keyid = parseNUM(arg1, argEnd);
     key_state_t* key = Utils_KeyIdToKeyState(keyid);
-    if (PostponerQuery_IsActiveEventually(key)) {
-        PostponerCore_TrackKeyEvent(key, false, layer);
-        PostponerCore_TrackKeyEvent(key, true, layer);
+
+    if (append) {
+        if (PostponerQuery_IsActiveEventually(key)) {
+            PostponerCore_TrackKeyEvent(key, false, layer);
+            PostponerCore_TrackKeyEvent(key, true, layer);
+        } else {
+            PostponerCore_TrackKeyEvent(key, true, layer);
+            PostponerCore_TrackKeyEvent(key, false, layer);
+        }
     } else {
-        PostponerCore_TrackKeyEvent(key, true, layer);
-        PostponerCore_TrackKeyEvent(key, false, layer);
+        if (KeyState_Active(key)) {
+            //reverse order when prepending
+            PostponerCore_PrependKeyEvent(key, true, layer);
+            PostponerCore_PrependKeyEvent(key, false, layer);
+        } else {
+            PostponerCore_PrependKeyEvent(key, false, layer);
+            PostponerCore_PrependKeyEvent(key, true, layer);
+        }
     }
     return MacroResult_Finished;
 }
@@ -3409,4 +3441,14 @@ void Macros_ContinueMacro(void)
 void Macros_ClearStatus(void)
 {
     processClearStatusCommand();
+}
+
+bool Macros_MacroHasActiveInstance(macro_index_t macroIdx)
+{
+    for(uint8_t j = 0; j < MACRO_STATE_POOL_SIZE; j++) {
+        if(MacroState[j].ms.macroPlaying && MacroState[j].ms.currentMacroIndex == MacroIndex_UsbCmdReserved) {
+            return true;
+        }
+    }
+    return false;
 }

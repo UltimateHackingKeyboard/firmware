@@ -1,6 +1,7 @@
 #include "layer_switcher.h"
 #include "layer.h"
 #include "ledmap.h"
+#include "macro_events.h"
 #include "timer.h"
 #include "macros.h"
 #include "debug.h"
@@ -53,6 +54,7 @@ void updateActiveLayer() {
     // beware lower-upper case typos!
 
     // apply stock layer switching
+    layer_id_t previousLayer = ActiveLayer;
     layer_id_t activeLayer = NONE;
     bool activeLayerHeld = false;
     if(activeLayer == NONE) {
@@ -77,8 +79,12 @@ void updateActiveLayer() {
     //(write actual ActiveLayer atomically, so that random observer is not confused)
     ActiveLayer = activeLayer;
     ActiveLayerHeld = activeLayerHeld;
-    UpdateLayerLeds();
     LedDisplay_SetLayer(ActiveLayer);
+
+    if (ActiveLayer != previousLayer) {
+        UpdateLayerLeds();
+        MacroEvent_OnLayerChange(activeLayer);
+    }
 }
 
 /*

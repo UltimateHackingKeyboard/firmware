@@ -139,7 +139,7 @@ releaseKey a
 
 Complex key sequences can be achieved using `tapKeySeq`. For instance, following emoji macro (uses linux  Ctrl+U notation) will produce a shrugging person.
 ```
-tapKeySeq CS-u 1 f 6 0 5 space
+tapKeySeq CS-u 1 f 9 3 7 space
 ```
 
 With these commands, modifiers are encoded using `CSAG`, with optional `LR` for left and right side. E.g., `LC-a` means `left control + a`.
@@ -290,7 +290,7 @@ holdLayer mouse
 ifNotInterrupted tapKey enter
 ```
 
-Regular secondary role with prevention of accidential key taps: (Activates the secondary role immediately, but activates the primary role only if the key has been pressed for at least a certain amount of time. This could be used to emulate the [Space Cadet Shift feature](https://beta.docs.qmk.fm/using-qmk/advanced-keycodes/feature_space_cadet).)
+Regular secondary role with prevention of accidential key taps: (Activates the secondary role immediately, but activates the primary role only if the key has been pressed for at least a certain amount of time. This could be used to emulate the [Space Cadet Shift feature](https://docs.qmk.fm/#/feature_space_cadet).)
 
 ```
 holdKey leftShift
