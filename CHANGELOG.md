@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [9.3.0] - 2023-06-25
+
+Device Protocol: 4.9.0 | Module Protocol: 4.2.0 | User Config: 5.1.0 | Hardware Config: 1.0.0 | Smart Macros: 1.**2.0**
+
+- Send empty report after every write command, fixing the bug that resulted in 'onewo' when encountering consecutive 'one', 'two' write commands. `SMARTMACROS:PATCH`
+- Disallow navigation modes in modifier layers. `SMARTMACROS:MINOR`
+- Switch leds.fadeTimeout value from minutes to seconds. `SMARTMACROS:MINOR`
+- Add onLayerChange and onKeymapLayerChange macro events. `SMARTMACROS:MINOR`
+- Add prepend activateKeyPostponed option. `SMARTMACROS:MINOR`
+
 ## [9.2.3] - 2023-04-09
 
 Device Protocol: 4.9.0 | Module Protocol: 4.2.0 | User Config: 5.1.0 | Hardware Config: 1.0.0 | Smart Macros: 1.1.2
