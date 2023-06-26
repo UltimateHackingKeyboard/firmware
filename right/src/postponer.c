@@ -8,18 +8,21 @@
 #include "key_action.h"
 
 postponer_buffer_record_type_t buffer[POSTPONER_BUFFER_SIZE];
-uint8_t bufferSize = 0;
-uint8_t bufferPosition = 0;
+static uint8_t bufferSize = 0;
+static uint8_t bufferPosition = 0;
 
 uint8_t Postponer_LastKeyLayer = 255;
 
-uint8_t cyclesUntilActivation = 0;
+static uint8_t cyclesUntilActivation = 0;
+static uint32_t lastPressTime;
+
 key_state_t* Postponer_NextEventKey;
-uint32_t lastPressTime;
 
 #define POS(idx) ((bufferPosition + POSTPONER_BUFFER_SIZE + (idx)) % POSTPONER_BUFFER_SIZE)
 
 uint8_t ChordingDelay = 0;
+uint32_t CurrentPostponedTime = 0;
+
 static void chording();
 
 
@@ -79,6 +82,10 @@ static void consumeEvent(uint8_t count)
 // call this once with the required number.
 void PostponerCore_PostponeNCycles(uint8_t n)
 {
+    if(bufferSize == 0 && cyclesUntilActivation == 0) {
+        // ensure correct CurrentPostponedTime when postponing starts, since current postponed time is the time of last executed action
+        buffer[POS(0-1+POSTPONER_BUFFER_SIZE)].time = CurrentTime;
+	}
     cyclesUntilActivation = MAX(n + 1, cyclesUntilActivation);
 }
 
@@ -148,6 +155,9 @@ void PostponerCore_RunPostponedEvents(void)
 void PostponerCore_FinishCycle(void)
 {
     cyclesUntilActivation -= cyclesUntilActivation > 0 ? 1 : 0;
+    if(bufferSize == 0 && cyclesUntilActivation == 0) {
+        CurrentPostponedTime = CurrentTime;
+    }
 }
 
 //#######################
@@ -191,6 +201,41 @@ bool PostponerQuery_IsActiveEventually(key_state_t* key)
         }
     }
     return KeyState_Active(key);
+}
+
+void PostponerQuery_InfoByKeystate(key_state_t* key, struct postponer_buffer_record_type_t** press, struct postponer_buffer_record_type_t** release)
+{
+    *press = NULL;
+    *release = NULL;
+    for ( int i = 0; i < bufferSize; i++ ) {
+        struct postponer_buffer_record_type_t* record = &buffer[POS(i)];
+        if (record->key == key) {
+            if (record->active) {
+                *press = record;
+            } else {
+                *release = record;
+                return;
+            }
+        }
+    }
+}
+
+void PostponerQuery_InfoByQueueIdx(uint8_t idx, struct postponer_buffer_record_type_t** press, struct postponer_buffer_record_type_t** release)
+{
+    *press = NULL;
+    *release = NULL;
+    uint8_t startIdx = getPendingKeypressIdx(idx);
+    if(startIdx == 255) {
+        return;
+    }
+    *press = &buffer[POS(startIdx)];
+    for ( int i = startIdx; i < bufferSize; i++ ) {
+        struct postponer_buffer_record_type_t* record = &buffer[POS(i)];
+        if (!record->active && record->key == (*press)->key) {
+            *release = record;
+            return;
+        }
+    }
 }
 
 //##########################

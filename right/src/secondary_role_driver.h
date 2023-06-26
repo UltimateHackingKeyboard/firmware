@@ -62,6 +62,11 @@
         SecondaryRoleState_Primary,
     } secondary_role_state_t;
 
+    typedef enum {
+        SecondaryRoleStrategy_Simple,
+        SecondaryRoleStrategy_Timeout
+    } secondary_role_strategy_t;
+
 // Variables:
 
     extern secondary_role_t SecondaryRolePreview;
