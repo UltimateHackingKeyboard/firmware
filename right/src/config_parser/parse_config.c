@@ -5,6 +5,7 @@
 #include "config_globals.h"
 #include "macros.h"
 #include "led_display.h"
+#include "ledmap.h"
 #include "slave_scheduler.h"
 #include "slave_drivers/is31fl3xxx_driver.h"
 #include "config.h"
@@ -39,6 +40,14 @@ static parser_error_t parseModuleConfiguration(config_buffer_t *buffer)
     return ParserError_Success;
 }
 
+void readRgbColor(config_buffer_t *buffer, key_action_color_t keyActionColor)
+{
+    rgb_t *color = &KeyActionColors[keyActionColor];
+    color->red = ReadUInt8(buffer);
+    color->green = ReadUInt8(buffer);
+    color->blue = ReadUInt8(buffer);
+}
+
 parser_error_t ParseConfig(config_buffer_t *buffer)
 {
     // Miscellaneous properties
@@ -51,7 +60,7 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
     DataModelMajorVersion = ReadUInt16(buffer);
     DataModelMinorVersion = ReadUInt16(buffer);
     DataModelPatchVersion = ReadUInt16(buffer);
-    uint16_t userConfigLength = ReadUInt16(buffer);
+    uint32_t userConfigLength = DataModelMajorVersion < 6 ? ReadUInt16(buffer) : ReadUInt32(buffer);
     const char *deviceName = ReadString(buffer, &len);
     uint16_t doubleTapSwitchLayerTimeout = ReadUInt16(buffer);
 
@@ -63,6 +72,19 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
     uint8_t iconsAndLayerTextsBrightness = ReadUInt8(buffer);
     uint8_t alphanumericSegmentsBrightness = ReadUInt8(buffer);
     uint8_t keyBacklightBrightness = ReadUInt8(buffer);
+
+    if (DataModelMajorVersion >= 6) {
+        /*uint8_t backlightingMode =*/ ReadUInt8(buffer);
+
+        readRgbColor(buffer, KeyActionColor_None);
+        readRgbColor(buffer, KeyActionColor_Scancode);
+        readRgbColor(buffer, KeyActionColor_Modifier);
+        readRgbColor(buffer, KeyActionColor_Shortcut);
+        readRgbColor(buffer, KeyActionColor_SwitchLayer);
+        readRgbColor(buffer, KeyActionColor_SwitchKeymap);
+        readRgbColor(buffer, KeyActionColor_Mouse);
+        readRgbColor(buffer, KeyActionColor_Macro);
+    }
 
     // Mouse kinetic properties
 

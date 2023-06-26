@@ -20,6 +20,8 @@
         KeyActionColor_SwitchKeymap,
         KeyActionColor_Mouse,
         KeyActionColor_Macro,
+        keyActionColor_Last = KeyActionColor_Macro,
+        keyActionColor_Length = keyActionColor_Last + 1,
     } key_action_color_t;
 
     typedef enum {
@@ -36,6 +38,7 @@
 // Variables:
 
     extern rgb_t LedMap_ConstantRGB;
+    extern rgb_t KeyActionColors[keyActionColor_Length];
 
 // Functions:
 

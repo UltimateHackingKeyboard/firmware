@@ -16,7 +16,7 @@ static backlight_strategy_t LedMap_BacklightStrategy = BacklightStrategy_Functio
 
 static const rgb_t black = RGB(0x00, 0x00, 0x00);
 
-static const rgb_t KeyActionColors[] = {
+rgb_t KeyActionColors[keyActionColor_Length] = {
     RGB(0x00, 0x00, 0x00), // KeyActionColor_None
     RGB(0xFF, 0xFF, 0xFF), // KeyActionColor_Scancode
     RGB(0x00, 0xFF, 0xFF), // KeyActionColor_Modifier

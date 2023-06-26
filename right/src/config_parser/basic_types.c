@@ -17,6 +17,15 @@ int16_t ReadInt16(config_buffer_t *buffer)
     return ReadUInt16(buffer);
 }
 
+uint32_t ReadUInt32(config_buffer_t *buffer)
+{
+    uint32_t uInt32 = ReadUInt8(buffer);
+    uInt32 |= ReadUInt8(buffer) << 8;
+    uInt32 |= ReadUInt8(buffer) << 8;
+    uInt32 |= ReadUInt8(buffer) << 8;
+    return uInt32;
+}
+
 bool ReadBool(config_buffer_t *buffer)
 {
     return ReadUInt8(buffer);
