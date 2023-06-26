@@ -19,18 +19,18 @@
  *
  * Timeout strategy works mainly with key releases:
  *
- * - Secondary role is activated if timeout (i.e., triggerTime) is reached.
- * - Secondary role is activated if action key is pressed and released within the span of press of the dual role key. (If allowTriggerByRelease is active.)
+ * - Secondary role is activated if timeout (i.e., Timeout) is reached.
+ * - Secondary role is activated if action key is pressed and released within the span of press of the dual role key. (If triggerByRelease is active.)
  * - Long hold of primary action can be achieved by doubletapping the key. (If doubletapActivatedPrimary is active.)
  *
  * Configuration params:
  *
- * - DoubletapTime - if dual-role key is tapped and press within this time (press-to-press), then primary role is activated.
- * - TriggerTime configures the basic timeout of the dual-role key.
- * - TimeoutAction - after triggerTime, the key is defaulted to timeoutAction. Typically to secondary role.
+ * - Timeout configures the basic timeout of the dual-role key.
+ * - TimeoutAction - after Timeout, the key is defaulted to timeoutAction. Typically to secondary role.
  * - SafetyMargin decreases probability of unintentional secondary role, by offsetting release time of the keys by the amount.
- * - AllowTriggerByRelease - if set to false, the only way to trigger secondary role is to press it for more than triggerTime.
- * - DoubletapActivatesPrimary - if set to false, doubletap logic is disabled. Useful if you prefer tap and hold evaluate to primary role.
+ * - TriggerByRelease - if set to false, the only way to trigger secondary role is to press it for more than Timeout.
+ * - DoubletapTime - if dual-role key is tapped and press within this time (press-to-press), then primary role is activated.
+ * - DoubletapToPrimary - if set to false, doubletap logic is disabled. Useful if you prefer tap and hold evaluate to primary role.
  *
  * This yields two most basic activation modes:
  *
@@ -38,17 +38,17 @@
  *   - Pros: works with short timeout.
  *   - Cons: some typing styles may cause unwanted activations of secondary role.
  *   - Recommended params:
- *     - TriggerTime = 200
+ *     - Timeout = 200
  *     - SafetyMargin = 0
- *     - AllowTriggerByRelease = false
+ *     - TriggerByRelease = false
  *
  * - Via release order. Triggered mainly by correct release sequence.
  *   - Pros: is more reliable in suppressing unwanted secondary role activations.
  *   - Cons: activation might require a bit longer hold.
  *   - Recommended params:
- *     - TriggerTime = 350
+ *     - Timeout = 350
  *     - SafetyMargin = 50
- *     - AllowTriggerByRelease = true
+ *     - TriggerByRelease = true
  */
 
 secondary_role_t SecondaryRolePreview;
@@ -56,7 +56,7 @@ static key_state_t *resolutionKey;
 static secondary_role_state_t resolutionState;
 static uint32_t resolutionStartTime;
 
-static secondary_role_strategy_t strategy = SecondaryRoleStrategy_Timeout;
+secondary_role_strategy_t SecondaryRoles_Strategy = SecondaryRoleStrategy_Advanced;
 
 static key_state_t *previousResolutionKey;
 static uint32_t previousResolutionTime;
@@ -85,40 +85,40 @@ static void activateSecondary()
 
 /*
  * Conservative settings (safely preventing collisions) (triggered via distinct && correct release sequence):
- * TriggerTime = 350
+ * Timeout = 350
  * SafetyMargin = 50
- * AllowTriggerByRelease = true
+ * TriggerByRelease = true
  *
  * Less conservative (triggered via prolonged press of modifier):
- * TriggerTime = 200
+ * Timeout = 200
  * SafetyMargin = 0
- * AllowTriggerByRelease = false
+ * TriggerByRelease = false
  */
 
-uint16_t timeoutStrategyDoubletapTime = 200;
-uint16_t timeoutStrategyTriggerTime = 350;
-uint16_t timeoutStrategySafetyMargin = 50;
-bool timeoutStrategyAllowTriggerByRelease = true;
-bool timeoutStrategyDoubletapActivatesPrimary = true;
-secondary_role_state_t timeoutStrategyTimeoutAction = SecondaryRoleState_Secondary;
+uint16_t SecondaryRoles_AdvancedStrategyDoubletapTime = 200;
+uint16_t SecondaryRoles_AdvancedStrategyTimeout = 350;
+uint16_t SecondaryRoles_AdvancedStrategySafetyMargin = 50;
+bool SecondaryRoles_AdvancedStrategyTriggerByRelease = true;
+bool SecondaryRoles_AdvancedStrategyDoubletapToPrimary = true;
+secondary_role_state_t SecondaryRoles_AdvancedStrategyTimeoutAction = SecondaryRoleState_Secondary;
 
 static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
 {
     //gather data
     uint32_t dualRolePressTime = resolutionStartTime;
-    struct postponer_buffer_record_type_t *dummy;
-    struct postponer_buffer_record_type_t *dualRoleRelease;
-    struct postponer_buffer_record_type_t *actionPress;
-    struct postponer_buffer_record_type_t *actionRelease;
+    postponer_buffer_record_type_t *dummy;
+    postponer_buffer_record_type_t *dualRoleRelease;
+    postponer_buffer_record_type_t *actionPress;
+    postponer_buffer_record_type_t *actionRelease;
 
     PostponerQuery_InfoByKeystate(resolutionKey, &dummy, &dualRoleRelease);
     PostponerQuery_InfoByQueueIdx(0, &actionPress, &actionRelease);
 
     //handle doubletap logic
     if (
-        timeoutStrategyDoubletapActivatesPrimary
+        SecondaryRoles_AdvancedStrategyDoubletapToPrimary
         && resolutionKey == previousResolutionKey
-        && resolutionStartTime - previousResolutionTime < timeoutStrategyDoubletapTime) {
+        && resolutionStartTime - previousResolutionTime < SecondaryRoles_AdvancedStrategyDoubletapTime) {
         activatePrimary();
         return SecondaryRoleState_Primary;
     }
@@ -128,8 +128,8 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
         if (dualRoleRelease != NULL) {
             activatePrimary();
             return SecondaryRoleState_Primary;
-        } else if (CurrentTime - dualRolePressTime > timeoutStrategyTriggerTime) {
-            switch (timeoutStrategyTimeoutAction) {
+        } else if (CurrentTime - dualRolePressTime > SecondaryRoles_AdvancedStrategyTimeout) {
+            switch (SecondaryRoles_AdvancedStrategyTimeoutAction) {
             case SecondaryRoleState_Primary:
                 activatePrimary();
                 return SecondaryRoleState_Primary;
@@ -145,9 +145,9 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
     }
 
     //handle trigger by release
-    if (timeoutStrategyAllowTriggerByRelease) {
-        bool actionKeyWasReleasedButDualkeyNot = actionRelease != NULL && (dualRoleRelease == NULL && CurrentTime - actionRelease->time > timeoutStrategySafetyMargin);
-        bool actionKeyWasReleasedFirst = actionRelease != NULL && (actionRelease->time < dualRoleRelease->time - timeoutStrategySafetyMargin);
+    if (SecondaryRoles_AdvancedStrategyTriggerByRelease) {
+        bool actionKeyWasReleasedButDualkeyNot = actionRelease != NULL && (dualRoleRelease == NULL && CurrentTime - actionRelease->time > SecondaryRoles_AdvancedStrategySafetyMargin);
+        bool actionKeyWasReleasedFirst = actionRelease != NULL && dualRoleRelease != NULL && (actionRelease->time < dualRoleRelease->time - SecondaryRoles_AdvancedStrategySafetyMargin);
 
         if (actionKeyWasReleasedFirst || actionKeyWasReleasedButDualkeyNot) {
             activateSecondary();
@@ -157,7 +157,7 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
 
     uint32_t activeTime = (dualRoleRelease == NULL ? CurrentTime : dualRoleRelease->time) - dualRolePressTime;
 
-    if (activeTime > timeoutStrategyTriggerTime + timeoutStrategySafetyMargin) {
+    if (activeTime > SecondaryRoles_AdvancedStrategyTimeout + SecondaryRoles_AdvancedStrategySafetyMargin) {
         activateSecondary();
         return SecondaryRoleState_Secondary;
     } else {
@@ -190,11 +190,11 @@ static secondary_role_state_t resolveCurrentKey()
     case SecondaryRoleState_Secondary:
         return resolutionState;
     case SecondaryRoleState_DontKnowYet:
-        switch (strategy) {
+        switch (SecondaryRoles_Strategy) {
         case SecondaryRoleStrategy_Simple:
             return resolveCurrentKeyRoleIfDontKnowSimple();
         default:
-        case SecondaryRoleStrategy_Timeout:
+        case SecondaryRoleStrategy_Advanced:
             return resolveCurrentKeyRoleIfDontKnowTimeout();
         }
     default:

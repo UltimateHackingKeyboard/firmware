@@ -64,12 +64,19 @@
 
     typedef enum {
         SecondaryRoleStrategy_Simple,
-        SecondaryRoleStrategy_Timeout
+        SecondaryRoleStrategy_Advanced
     } secondary_role_strategy_t;
 
 // Variables:
 
     extern secondary_role_t SecondaryRolePreview;
+    extern secondary_role_strategy_t SecondaryRoles_Strategy;
+    extern uint16_t SecondaryRoles_AdvancedStrategyDoubletapTime;
+    extern uint16_t SecondaryRoles_AdvancedStrategyTimeout;
+    extern uint16_t SecondaryRoles_AdvancedStrategySafetyMargin;
+    extern bool SecondaryRoles_AdvancedStrategyTriggerByRelease;
+    extern bool SecondaryRoles_AdvancedStrategyDoubletapToPrimary;
+    extern secondary_role_state_t SecondaryRoles_AdvancedStrategyTimeoutAction;
 
 // Functions:
 

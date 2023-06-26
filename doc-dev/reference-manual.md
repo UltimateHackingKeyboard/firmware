@@ -95,7 +95,18 @@ The following grammar is supported:
     COMMAND = set module.MODULEID.invertScrollDirection BOOLEAN
     COMMAND = set module.touchpad.pinchZoomDivisor <1-100 (FLOAT)>
     COMMAND = set module.touchpad.pinchZoomMode NAVIGATIONMODE
-    #NOTIMPLEMENTED COMMAND = set secondaryRoles
+
+    COMMAND = set secondaryRole.defaultStrategy { simple | advanced }
+    COMMAND = set secondaryRole.advanced.timeout <ms, 350 (NUMBER)>
+    COMMAND = set secondaryRole.advanced.timeoutAction { primary | secondary }
+    COMMAND = set secondaryRole.advanced.safetyMargin <ms, 50 (NUMBER)>
+    COMMAND = set secondaryRole.advanced.triggerByRelease BOOLEAN
+    COMMAND = set secondaryRole.advanced.doubletapToPrimary BOOLEAN
+    COMMAND = set secondaryRole.advanced.doubletapTime <ms, 200 (NUMBER)>
+
+    TODO: write docs
+    TODO: connect macros to regular secondary role
+
     COMMAND = set mouseKeys.{move|scroll}.initialSpeed <px/s, -100/20 (NUMBER)>
     COMMAND = set mouseKeys.{move|scroll}.baseSpeed <px/s, -800/20 (NUMBER)>
     COMMAND = set mouseKeys.{move|scroll}.initialAcceleration <px/s, ~1700/20 (NUMBER)>

@@ -203,12 +203,12 @@ bool PostponerQuery_IsActiveEventually(key_state_t* key)
     return KeyState_Active(key);
 }
 
-void PostponerQuery_InfoByKeystate(key_state_t* key, struct postponer_buffer_record_type_t** press, struct postponer_buffer_record_type_t** release)
+void PostponerQuery_InfoByKeystate(key_state_t* key, postponer_buffer_record_type_t** press, postponer_buffer_record_type_t** release)
 {
     *press = NULL;
     *release = NULL;
     for ( int i = 0; i < bufferSize; i++ ) {
-        struct postponer_buffer_record_type_t* record = &buffer[POS(i)];
+        postponer_buffer_record_type_t* record = &buffer[POS(i)];
         if (record->key == key) {
             if (record->active) {
                 *press = record;
@@ -220,7 +220,7 @@ void PostponerQuery_InfoByKeystate(key_state_t* key, struct postponer_buffer_rec
     }
 }
 
-void PostponerQuery_InfoByQueueIdx(uint8_t idx, struct postponer_buffer_record_type_t** press, struct postponer_buffer_record_type_t** release)
+void PostponerQuery_InfoByQueueIdx(uint8_t idx, postponer_buffer_record_type_t** press, postponer_buffer_record_type_t** release)
 {
     *press = NULL;
     *release = NULL;
@@ -230,7 +230,7 @@ void PostponerQuery_InfoByQueueIdx(uint8_t idx, struct postponer_buffer_record_t
     }
     *press = &buffer[POS(startIdx)];
     for ( int i = startIdx; i < bufferSize; i++ ) {
-        struct postponer_buffer_record_type_t* record = &buffer[POS(i)];
+        postponer_buffer_record_type_t* record = &buffer[POS(i)];
         if (!record->active && record->key == (*press)->key) {
             *release = record;
             return;
