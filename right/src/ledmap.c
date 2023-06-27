@@ -9,6 +9,7 @@
 #define RGB(R, G, B) { .red = (R), .green = (G), .blue = (B)}
 
 rgb_t LedMap_ConstantRGB = RGB(0xFF, 0xFF, 0xFF);
+backlighting_mode_t BacklightingMode = BacklightingMode_FunctionalBacklighting;
 
 #if DEVICE_ID == DEVICE_ID_UHK60V2
 
@@ -208,14 +209,27 @@ static void updateLedsByFunctionalStrategy() {
     }
 }
 
+static void updateLedsByPerKeyKeyStragegy() {
+    for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
+        for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
+            key_action_t *keyAction = &CurrentKeymap[ActiveLayer][slotId][keyId];
+            setPerKeyRGB(&keyAction->color, slotId, keyId);
+        }
+    }
+}
+
 void UpdateLayerLeds(void) {
-    switch (LedMap_BacklightStrategy) {
-        case BacklightStrategy_Functional:
-            updateLedsByFunctionalStrategy();
-            break;
-        case BacklightStrategy_ConstantRGB:
-            updateLedsByConstantRgbStrategy();
-            break;
+    if (BacklightingMode == BacklightingMode_PerKeyBacklighting) {
+        updateLedsByPerKeyKeyStragegy();
+    } else {
+        switch (LedMap_BacklightStrategy) {
+            case BacklightStrategy_Functional:
+                updateLedsByFunctionalStrategy();
+                break;
+            case BacklightStrategy_ConstantRGB:
+                updateLedsByConstantRgbStrategy();
+                break;
+        }
     }
 }
 

@@ -3,14 +3,25 @@
 #include "config_parser/parse_keymap.h"
 #include "key_action.h"
 #include "keymap.h"
+#include "ledmap.h"
 #include "led_display.h"
 
 static uint8_t tempKeymapCount;
 static uint8_t tempMacroCount;
 
+static void parseKeyActionColor(key_action_t *keyAction, config_buffer_t *buffer)
+{
+    if (BacklightingMode != BacklightingMode_FunctionalBacklighting) {
+        keyAction->color.red = ReadUInt8(buffer);
+        keyAction->color.green = ReadUInt8(buffer);
+        keyAction->color.blue = ReadUInt8(buffer);
+    }
+}
+
 static parser_error_t parseNoneAction(key_action_t *keyAction, config_buffer_t *buffer)
 {
     keyAction->type = KeyActionType_None;
+    parseKeyActionColor(keyAction, buffer);
     return ParserError_Success;
 }
 
@@ -42,17 +53,19 @@ static parser_error_t parseKeyStrokeAction(key_action_t *keyAction, uint8_t keyS
     keyAction->keystroke.secondaryRole = keyStrokeAction & SERIALIZED_KEYSTROKE_TYPE_MASK_HAS_LONGPRESS
         ? ReadUInt8(buffer) + 1
         : 0;
+    parseKeyActionColor(keyAction, buffer);
     return ParserError_Success;
 }
 
-static parser_error_t parseSwitchLayerAction(key_action_t *KeyAction, config_buffer_t *buffer)
+static parser_error_t parseSwitchLayerAction(key_action_t *keyAction, config_buffer_t *buffer)
 {
     uint8_t layer = ReadUInt8(buffer) + 1;
     switch_layer_mode_t mode = ReadUInt8(buffer);
 
-    KeyAction->type = KeyActionType_SwitchLayer;
-    KeyAction->switchLayer.layer = layer;
-    KeyAction->switchLayer.mode = mode;
+    keyAction->type = KeyActionType_SwitchLayer;
+    keyAction->switchLayer.layer = layer;
+    keyAction->switchLayer.mode = mode;
+    parseKeyActionColor(keyAction, buffer);
     return ParserError_Success;
 }
 
@@ -65,6 +78,7 @@ static parser_error_t parseSwitchKeymapAction(key_action_t *keyAction, config_bu
     }
     keyAction->type = KeyActionType_SwitchKeymap;
     keyAction->switchKeymap.keymapId = keymapIndex;
+    parseKeyActionColor(keyAction, buffer);
     return ParserError_Success;
 }
 
@@ -77,6 +91,7 @@ static parser_error_t parsePlayMacroAction(key_action_t *keyAction, config_buffe
     }
     keyAction->type = KeyActionType_PlayMacro;
     keyAction->playMacro.macroId = macroIndex;
+    parseKeyActionColor(keyAction, buffer);
     return ParserError_Success;
 }
 
@@ -91,6 +106,8 @@ static parser_error_t parseMouseAction(key_action_t *keyAction, config_buffer_t 
 
     memset(&keyAction->mouseAction, 0, sizeof keyAction->mouseAction);
     keyAction->mouseAction = mouseAction;
+
+    parseKeyActionColor(keyAction, buffer);
 
     return ParserError_Success;
 }

@@ -6,6 +6,13 @@
     #include "key_action.h"
 
 // Typedefs:
+
+    typedef enum {
+        BacklightingMode_FunctionalBacklighting,
+        BacklightingMode_PerKeyBacklighting,
+        BacklightingMode_FunctionalBacklightingWithPerKeyValues,
+    } backlighting_mode_t;
+
     typedef enum {
         BacklightStrategy_Functional,
         BacklightStrategy_ConstantRGB,
@@ -29,14 +36,9 @@
         LedMapIndex_LeftSlot_IsoKey = 22,
     } led_map_index_t;
 
-    typedef struct {
-        uint8_t red;
-        uint8_t green;
-        uint8_t blue;
-    } rgb_t;
-
 // Variables:
 
+    extern backlighting_mode_t BacklightingMode;
     extern rgb_t LedMap_ConstantRGB;
     extern rgb_t KeyActionColors[keyActionColor_Length];
 

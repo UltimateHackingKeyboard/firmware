@@ -74,7 +74,7 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
     uint8_t keyBacklightBrightness = ReadUInt8(buffer);
 
     if (DataModelMajorVersion >= 6) {
-        /*uint8_t backlightingMode =*/ ReadUInt8(buffer);
+        BacklightingMode = ReadUInt8(buffer);
 
         readRgbColor(buffer, KeyActionColor_None);
         readRgbColor(buffer, KeyActionColor_Scancode);
