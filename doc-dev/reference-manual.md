@@ -44,7 +44,6 @@ The following grammar is supported:
     COMMAND = holdLayerMax LAYERID <time in ms (NUMBER)>
     COMMAND = holdKeymapLayer KEYMAPID LAYERID
     COMMAND = holdKeymapLayerMax KEYMAPID LAYERID <time in ms (NUMBER)>
-    COMMAND = resolveSecondary <time in ms (NUMBER)> [<time in ms (NUMBER)>] <primary action macro action index (ADDRESS)> <secondary action macro action index (ADDRESS)>
     COMMAND = resolveNextKeyId
     COMMAND = activateKeyPostponed [atLayer LAYERID] [append | prepend]  KEYID
     COMMAND = consumePending <number of keys (NUMBER)>
@@ -95,18 +94,13 @@ The following grammar is supported:
     COMMAND = set module.MODULEID.invertScrollDirection BOOLEAN
     COMMAND = set module.touchpad.pinchZoomDivisor <1-100 (FLOAT)>
     COMMAND = set module.touchpad.pinchZoomMode NAVIGATIONMODE
-
     COMMAND = set secondaryRole.defaultStrategy { simple | advanced }
-    COMMAND = set secondaryRole.advanced.timeout <ms, 350 (NUMBER)>
+    COMMAND = set secondaryRole.advanced.timeout <ms, 0-500 (NUMBER)>
     COMMAND = set secondaryRole.advanced.timeoutAction { primary | secondary }
-    COMMAND = set secondaryRole.advanced.safetyMargin <ms, 50 (NUMBER)>
+    COMMAND = set secondaryRole.advanced.safetyMargin <ms, -50 - 50 (NUMBER)>
     COMMAND = set secondaryRole.advanced.triggerByRelease BOOLEAN
     COMMAND = set secondaryRole.advanced.doubletapToPrimary BOOLEAN
-    COMMAND = set secondaryRole.advanced.doubletapTime <ms, 200 (NUMBER)>
-
-    TODO: write docs
-    TODO: connect macros to regular secondary role
-
+    COMMAND = set secondaryRole.advanced.doubletapTime <ms, 0 - 500 (NUMBER)>
     COMMAND = set mouseKeys.{move|scroll}.initialSpeed <px/s, -100/20 (NUMBER)>
     COMMAND = set mouseKeys.{move|scroll}.baseSpeed <px/s, -800/20 (NUMBER)>
     COMMAND = set mouseKeys.{move|scroll}.initialAcceleration <px/s, ~1700/20 (NUMBER)>
@@ -134,7 +128,7 @@ The following grammar is supported:
     COMMAND = set modifierLayerTriggers.{shift|alt|super|ctrl} {left|right|both}
     CONDITION = {ifShortcut | ifNotShortcut} [IFSHORTCUTFLAGS]* [KEYID]+
     CONDITION = {ifGesture | ifNotGesture} [IFSHORTCUTFLAGS]* [KEYID]+
-    CONDITION = {ifPrimary | ifSecondary}
+    CONDITION = {ifPrimary | ifSecondary} [ simpleStrategy | advancedStrategy ]
     CONDITION = {ifDoubletap | ifNotDoubletap}
     CONDITION = {ifInterrupted | ifNotInterrupted}
     CONDITION = {ifReleased | ifNotReleased}
@@ -218,6 +212,7 @@ The following grammar is supported:
     COMMAND = setKeystrokeDelay <time in ms, at most 65535 (NUMBER)>
     COMMAND = setReg <register index (NUMBER)> <value (NUMBER)>
     COMMAND = setEmergencyKey KEYID
+    COMMAND = resolveSecondary <time in ms (NUMBER)> [<time in ms (NUMBER)>] <primary action macro action index (ADDRESS)> <secondary action macro action index (ADDRESS)>
 
 ### Uncategorized commands:
 
@@ -241,7 +236,7 @@ The following grammar is supported:
     - `CS-u 1 2 3 space` - control shift U + number + space - linux shortcut for custom unicode character.
     - `pA- tab tab rA-` - tap alt tab twice to bring forward second background window.
   - `MODMASK` meaning:
-    - `{S|C|A|G}` - Shift Control Alt Gui. (Windows, Super and Gui are the same thing. ) 
+    - `{S|C|A|G}` - Shift Control Alt Gui. (Windows, Super and Gui are the same thing. )
     - `[L|R]` - Left Right (which hand side modifier should be used)
     - `{s|i|o}` - modifiers (ctrl, alt, shift, gui) exist in three composition modes within UHK - sticky, input, output:
         - sticky modifiers are modifiers of composite shortcuts. These are applied only until next key press. In certain contexts, they will take effect even after their activation key was released (e.g., to support alt + tab on non-base layers).
@@ -312,14 +307,7 @@ Commands:
 - `holdLayer LAYERID` mostly corresponds to the sequence `toggleLayer <layer>; delayUntilRelease; unToggleLayer`, except for more elaborate conflict resolution (releasing holds in incorrect order).
 - `holdKeymapLayer KEYMAPID LAYERID` just as holdLayer, but allows referring to layer of different keymap. This reloads the entire keymap, so it may be very inefficient.
 - `holdLayerMax/holdKeymapLayerMax` will timeout after <timeout> ms if no action is performed in that time.
-- `ifPrimary/ifSecondary` act as an abreviation for `resolveSecondary`. They use postponing mechanism and allow distinguishing between primary and secondary roles.
-- `resolveSecondary <timeout in ms> [<safety margin delay in ms>] <primary action macro action index> <secondary action macro action index>` is a special action used to resolve secondary roles on alphabetic keys. The following commands are supposed to determine behaviour of primary action and the secondary role. The command takes liberty to wait for the time specified by the first argument. If the key is held for more than the time, or if the algorithm decides that secondary role should be activated, goTo to secondary action is issued. Otherwise goTo to primary action is issued. Actions are indexed from 0. Any keys pressed during resolution are postponed until the first command after the jump is performed. See examples.
-
-  In more detail, the resolution waits for the first key release - if the switch key is released first or within the safety margin delay after release of the postponed key, it is taken for a primary action and goes to the section of the "primary action", then the postponed key is activated; if the postponed key is released first, then the switcher branches the secondary role (e.g., activates layer hold) and then the postponed key is activated; if the time given by first argument passes, the "secondary" branch is activated as in the previous case.
-
-  - `arg1` - total timeout of the resolution. If the timeout is exceeded and the switcher key (the key which activated the macro) is still being held, goto to secondary action is issued. Recommended value is 350ms.
-  - `arg2` - safety margin delay. If the postponed key is released first, we still wait for this delay (or for timeout of the arg1 delay - whichever happens first). If the switcher key is released within this delay (starting counting at release of the key), the switcher key is still taken to have been released first. Valid value is between 0 and `arg1`, meaningful values are approximately between 0 and `arg1/2`. If only three arguments are passed, this argument defaults to `arg1`.
-  - `arg3`/`arg4` - primary/secondary action macro action index. When the resolution is finished, the macro jumps to one of the two indices (I.e., this command is a conditional goTo.).
+- `ifPrimary/ifSecondary [ simpleStrategy | advancedStrategy ] ... COMMAND` will wait untill the firmware can distinguish whether primary or secondary action should be activated and then either execute `COMMAND` or skip it.
 
 ### Postponing mechanisms.
 
@@ -332,8 +320,7 @@ We allow postponing key activations in order to allow deciding between some scen
 - `ifKeyPendingAt/ifNotKeyPendingAt <idx> <keyId>` looks into postponing queue at `idx`th waiting key nad compares it to the `keyId`.
 - `consumePending <n>` will remove n records from the queue.
 - `activateKeyPostponed KEYID` will add tap of KEYID at the end of queue. If `atLayer LAYERID` is specified, action will be taken from that layer rather than current one. If `prepend` option is specified, event will be place at the beginning of the queue.
-- `resolveSecondary` allows resolution of secondary roles depending on the next key - this allows us to accurately distinguish random press from intentional press of shortcut via secondary role. See `resolveSecondary` entry under Layer switching. Implicitly applies `postponeKeys` modifier.
-- `ifPrimary/ifSecondary` act as an abreviation for `resolveSecondary`. They use postponing mechanism and allow distinguishing between primary and secondary roles.
+- `ifPrimary/ifSecondary [ simpleStrategy | advancedStrategy ] ... COMMAND` will wait untill the firmware can distinguish whether primary or secondary action should be activated and then either execute `COMMAND` or skip it.
 - `ifShortcut/ifNotShortcut/ifGesture/ifNotGesture [IFSHORTCUTFLAGS]* [KEYID]*` will wait for next keypresses until sufficient number of keys has been pressed. If the next keypresses correspond to the provided arguments (hardware ids), the keypresses are consumed and the condition is performed. Consuming takes place in both `if` and `ifNot` versions if the full list is matched. E.g., `ifShortcut 090 089 final tapKey C-V; holdKey v`.
   - `Shortcut` requires continual press of keys (e.g., like Ctrl+c). By default, timeouts with release of the activation key.
   - `Gesture` allows noncontinual sequence of keys (e.g., vim's gg). By default, timeouts in 1000 ms since activation.
@@ -373,7 +360,7 @@ Conditions are checked before processing the rest of the command. If the conditi
 - `ifRecording/ifNotRecording` and `ifRecordingId/ifNotRecordingId MACROID` test if the runtime macro recorder is in recording state.
 - `ifShortcut/ifNotShortcut [IFSHORTCUTFLAGS]* [KEYID]*` will wait for next keypresses and compare them to the argument. See postponer mechanism section.
 - `ifGesture/ifNotGesture [IFSHORTCUTFLAGS]* [KEYID]*` just as `ifShortcut`, but breaks after 1000ms instead of when the key is released. See postponer mechanism section.
-- `ifPrimary/ifSecondary` act as an abreviation for `resolveSecondary`. They use postponing mechanism and allow distinguishing between primary and secondary roles.
+- `ifPrimary/ifSecondary [ simpleStrategy | advancedStrategy ] ... COMMAND` will wait untill the firmware can distinguish whether primary or secondary action should be activated and then either execute `COMMAND` or skip it.
 
 ### Modifiers
 
@@ -428,18 +415,18 @@ For the purpose of toggling functionality on and off, and for global constants m
   - `deceleratedSpeed` - speed as affected by deceleration modifier
   - `acceleratedSpeed` - speed as affected by acceleration modifier
   - `axisSkew` - axis skew multiplies horizontal axis and divides vertical. Default value is 1.0, reasonable between 0.5-2.0 Useful for very niche usecases.
-- `set module.MODULEID.{baseSpeed|speed|xceleration}` modifies speed characteristics of right side modules. 
-    
+- `set module.MODULEID.{baseSpeed|speed|xceleration}` modifies speed characteristics of right side modules.
+
     Simply speaking, `xceleration` increases sensitivity at high speeds, while decreasing sensitivity at low speeds. Furthermore, `speed` controls contribution of the acceleration formula. The `baseSpeed` can be used to offset the low-speed-sensitivity-decrease effect by making some raw input be applied directlo to the output.
 
     ![speed relations](resources/mouse_speeds.svg)
-    
-    Actual formula is is something like `speedMultiplier(normalizedSpeed) = baseSpeed + speed*(normalizedSpeed^xceleration)` where `normalizedSpeed = actualSpeed / midSpeed`. Therefore `appliedDistance(distance d, time t) = d*(baseSpeed*((d/t)/midSpeed) + d*speed*(((d/t)/midSpeed)^xceleration))`. (`d/t` is actual speed in px/s, `(d/t)/midSpeed` is normalizedSpeed which acts as base for the exponent). 
+
+    Actual formula is is something like `speedMultiplier(normalizedSpeed) = baseSpeed + speed*(normalizedSpeed^xceleration)` where `normalizedSpeed = actualSpeed / midSpeed`. Therefore `appliedDistance(distance d, time t) = d*(baseSpeed*((d/t)/midSpeed) + d*speed*(((d/t)/midSpeed)^xceleration))`. (`d/t` is actual speed in px/s, `(d/t)/midSpeed` is normalizedSpeed which acts as base for the exponent).
   - `baseSpeed` makes portion of the raw input contribute directly to the output. I.e., if `speed = 0`, then traveled distance is `reportedDistance*baseSpeed`
   - `speed` multiplies effect of xceleration expression. I.e., simply multiplies the reported distance when the actual speed equals `midSpeed`.
   - `xceleration` is exponent applied to the speed normalized w.r.t midSpeed. It makes cursor move relatively slower at low speeds and faster with aggresive swipes. It increases non-linearity of the curve, yet does not alone make the cursor faster and more responsive - thence "xceleration" rather than "acceleration" to avoid confusion. I.e., xceleration expression of the formula is `speed*(reportedSpeed/midSpeed)^(xceleration)`. I.e., no acceleration is xceleration = 0, reasonable (square root) acceleration is xceleration = 0.5. Highest recommended value is 1.0.
   - `midSpeed` represents "middle" speed, where the user can easily imagine behaviour of the device (currently fixed 3000 px/s) and henceforth easily set the coefficient. At this speed, acceleration formula yields `1.0`, i.e., `speedModifier = (baseSpeed + speed)`.
-  
+
   General guidelines are:
     - If your cursor is sluggish at low speeds, you want to:
       - either lower xceleration
@@ -502,6 +489,18 @@ For the purpose of toggling functionality on and off, and for global constants m
 - Remapping keys:
   - `set navigationModeAction.{caret|media}.{DIRECTION|none} ACTION` can be used to customize caret or media mode behaviour by binding directions to macros. This action is global and reversible only by powercycling.
   - `set keymapAction.LAYERID.KEYID ACTION` can be used to remap any action that lives in standard keymap. Most remappable ids can be retrieved with `resolveNextKeyId`. Keyid can also be constructed manually - see `KEYID`. Binding applies only until next keymap switch. E.g., `set keymapAction.base.64 keystroke escape` (maps `~` key to escape), or `set keymapAction.fn.193 macro TouchpadAction` (maps touchpad twofinger action to macro `TouchpadAction`).
+
+- Secondary roles configure resolution strategy used for controlling both the native (agent-mapped) secondary role, and `ifPrimary`, `ifSecondary` conditions.
+
+  - `set secondaryRole.defaultStrategy [ simple | advanced ]` sets default resolution strategy to be used. Furthermore, `ifPrimary/ifSecondary` can specify explicitly which strategy to use (e.g., `ifPrimary advancedStrategy final tapKey a`).
+    - simple strategy listens for other key activations until the dual-role key is released. If there is any such activation, it activates the secondary role before activating the action of the other key. If there is no such other action, it performs primary role on the dual-role key release.
+    - advanced strategy may trigger secondary role depending on timeout, or depending on key release order.
+      - `set secondaryRole.advanced.timeout <timeout in ms, 350 (NUMBER)>` if this timeout is reached, `timeoutAction` (secondary by default) role is activated.
+      - `set secondaryRole.advanced.timeoutAction { primary | secondary }` defines whether primary or secondary role should be activated when timeout is reached
+      - `set secondaryRole.advanced.triggerByRelease BOOLEAN` if enabled, secondary role is chosen depending on release order of the keys (`press-A, press-B, release-B, releaseA` leads to secondary action; `press-A, press-B, release-A, release-B` leads to primary action).
+      - `set secondaryRole.advanced.safetyMargin <ms, -50 - 50 (NUMBER)>` finetunes sensitivity of the trigger-by-release behaviour by adding the value to the dual-role-key release. I.e., if both keys are released simultaneously (i.e., at most `safetyMargin` ms from each other), then positive value favors primary action.
+      - `set secondaryRole.advanced.doubletapToPrimary BOOLEAN` allows initiating hold of primary action by doubletap. (Useful if you want dual key on space key.)
+      - `set secondaryRole.advanced.doubletapTime <ms, 200 (NUMBER)>` configures the above timeout (measured press-to-press).
 
 - `macroEngine`
   - terminology:
