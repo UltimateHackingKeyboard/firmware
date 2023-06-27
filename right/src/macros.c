@@ -1,5 +1,6 @@
 #include "macros.h"
 #include <math.h>
+#include "secondary_role_driver.h"
 #include "usb_interfaces/usb_interface_basic_keyboard.h"
 #include "usb_interfaces/usb_interface_media_keyboard.h"
 #include "usb_interfaces/usb_interface_mouse.h"
@@ -1709,80 +1710,6 @@ static macro_result_t processNoOpCommand()
     }
 }
 
-#define RESOLVESEC_RESULT_DONTKNOWYET 0
-#define RESOLVESEC_RESULT_PRIMARY 1
-#define RESOLVESEC_RESULT_SECONDARY 2
-
-
-static uint8_t processResolveSecondary(uint16_t timeout1, uint16_t timeout2)
-{
-    postponeCurrentCycle();
-    bool pendingReleased = PostponerExtended_IsPendingKeyReleased(0);
-    bool currentKeyIsActive = currentMacroKeyIsActive();
-
-    //phase 1 - wait until some other key is released, then write down its release time
-    bool timer1Exceeded = Timer_GetElapsedTime(&s->ms.currentMacroStartTime) >= timeout1;
-    if (!timer1Exceeded && currentKeyIsActive && !pendingReleased) {
-        s->as.secondaryRoleData.phase2Start = 0;
-        return RESOLVESEC_RESULT_DONTKNOWYET;
-    }
-    if (s->as.secondaryRoleData.phase2Start == 0) {
-        s->as.secondaryRoleData.phase2Start = CurrentTime;
-    }
-    //phase 2 - "safety margin" - wait another `timeout2` ms, and if the switcher is released during this time, still interpret it as a primary action
-    bool timer2Exceeded = Timer_GetElapsedTime(&s->as.secondaryRoleData.phase2Start) >= timeout2;
-    if (!timer1Exceeded && !timer2Exceeded &&  currentKeyIsActive && pendingReleased && PostponerQuery_PendingKeypressCount() < 3) {
-        return RESOLVESEC_RESULT_DONTKNOWYET;
-    }
-    //phase 3 - resolve the situation - if the switcher is released first or within the "safety margin", interpret it as primary action, otherwise secondary
-    if (timer1Exceeded || (pendingReleased && timer2Exceeded)) {
-        return RESOLVESEC_RESULT_SECONDARY;
-    }
-    else {
-        return RESOLVESEC_RESULT_PRIMARY;
-    }
-
-}
-
-static macro_result_t processResolveSecondaryCommand(const char* arg1, const char* argEnd)
-{
-    const char* arg2 = NextTok(arg1, argEnd);
-    const char* arg3 = NextTok(arg2, argEnd);
-    const char* arg4 = NextTok(arg3, argEnd);
-
-    const char* primaryAdr;
-    const char* secondaryAdr;
-    uint16_t timeout1;
-    uint16_t timeout2;
-
-    if (arg4 == argEnd) {
-        timeout1 = parseNUM(arg1, argEnd);
-        timeout2 = timeout1;
-        primaryAdr = arg2;
-        secondaryAdr = arg3;
-    } else {
-        timeout1 = parseNUM(arg1, argEnd);
-        timeout2 = parseNUM(arg2, argEnd);
-        primaryAdr = arg3;
-        secondaryAdr = arg4;
-    }
-
-    uint8_t res = processResolveSecondary(timeout1, timeout2);
-
-    switch(res) {
-    case RESOLVESEC_RESULT_DONTKNOWYET:
-        return MacroResult_Waiting;
-    case RESOLVESEC_RESULT_PRIMARY:
-        postponeNextN(1);
-        return goTo(primaryAdr, argEnd);
-    case RESOLVESEC_RESULT_SECONDARY:
-        return goTo(secondaryAdr, argEnd);
-    }
-    //this is unreachable, prevents warning
-    return MacroResult_Finished;
-}
-
-
 static macro_result_t processIfSecondaryCommand(bool negate, const char* arg, const char* argEnd)
 {
     if (s->as.currentIfSecondaryConditionPassed) {
@@ -1793,18 +1720,29 @@ static macro_result_t processIfSecondaryCommand(bool negate, const char* arg, co
         }
     }
 
-    uint8_t res = processResolveSecondary(350, 50);
+    secondary_role_strategy_t strategy = SecondaryRoles_Strategy;
 
-    switch(res) {
-    case RESOLVESEC_RESULT_DONTKNOWYET:
+    if (TokenMatches(arg, argEnd, "simpleStrategy")) {
+        strategy = SecondaryRoleStrategy_Simple;
+    }
+    if (TokenMatches(arg, argEnd, "advancedStrategy")) {
+        strategy = SecondaryRoleStrategy_Advanced;
+    }
+
+    secondary_role_result_t res = SecondaryRoles_ResolveState(s->ms.currentMacroKey, 0, strategy, !s->as.actionActive);
+
+    s->as.actionActive = res.state == SecondaryRoleState_DontKnowYet;
+
+    switch(res.state) {
+    case SecondaryRoleState_DontKnowYet:
         return MacroResult_Waiting;
-    case RESOLVESEC_RESULT_PRIMARY:
+    case SecondaryRoleState_Primary:
         if (negate) {
             goto conditionPassed;
         } else {
             return MacroResult_Finished;
         }
-    case RESOLVESEC_RESULT_SECONDARY:
+    case SecondaryRoleState_Secondary:
         if (negate) {
             return MacroResult_Finished;
         } else {
@@ -2724,9 +2662,6 @@ static macro_result_t processCommand(const char* cmd, const char* cmdEnd)
             }
             else if (TokenMatches(cmd, cmdEnd, "recordMacroDelay")) {
                 return processRecordMacroDelayCommand();
-            }
-            else if (TokenMatches(cmd, cmdEnd, "resolveSecondary")) {
-                return processResolveSecondaryCommand(arg1, cmdEnd);
             }
             else if (TokenMatches(cmd, cmdEnd, "resolveNextKeyId")) {
                 return processResolveNextKeyIdCommand();

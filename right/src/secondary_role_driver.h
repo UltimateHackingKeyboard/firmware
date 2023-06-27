@@ -67,6 +67,11 @@
         SecondaryRoleStrategy_Advanced
     } secondary_role_strategy_t;
 
+    typedef struct {
+        secondary_role_state_t state;
+        bool activatedNow;
+    } secondary_role_result_t;
+
 // Variables:
 
     extern secondary_role_t SecondaryRolePreview;
@@ -80,7 +85,8 @@
 
 // Functions:
 
-    secondary_role_state_t SecondaryRoles_ResolveState(key_state_t* keyState, secondary_role_t rolePreview);
+    secondary_role_result_t SecondaryRoles_ResolveState(key_state_t* keyState, secondary_role_t rolePreview, secondary_role_strategy_t strategy, bool isNewResolution);
+    void SecondaryRoles_FakeActivation(secondary_role_result_t res);
 
 
 

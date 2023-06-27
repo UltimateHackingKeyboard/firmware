@@ -475,7 +475,7 @@ macro_result_t MacroSetCommand(const char* arg1, const char *textEnd)
     if (TokenMatches(arg1, textEnd, "module")) {
         module(proceedByDot(arg1, textEnd), textEnd);
     }
-    else if (TokenMatches(arg1, textEnd, "secondaryRoles")) {
+    else if (TokenMatches(arg1, textEnd, "secondaryRole")) {
         secondaryRoles(proceedByDot(arg1, textEnd), textEnd);
     }
     else if (TokenMatches(arg1, textEnd, "mouseKeys")) {
