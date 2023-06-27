@@ -104,7 +104,7 @@ void PostponerCore_PrependKeyEvent(key_state_t *keyState, bool active, uint8_t l
     }
 
     buffer[pos] = (postponer_buffer_record_type_t) {
-            .time = CurrentTime,
+            .time = CurrentPostponedTime,
             .key = keyState,
             .active = active,
             .layer = layer,
