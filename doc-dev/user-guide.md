@@ -326,7 +326,7 @@ tapKey escape
 This strategy does the same as the `ifNotInterrupted` version, except it activates secondary role only after the other key is pressed. This strategy does not use any complicated postponing.
 
 Pros: it is reliable.
-Cons: it will activate during writing if you put it on alphanumeric key.
+Cons: it will activate during writing if you put it on an alphanumeric key.
 
 #### Native secondary role - advanced strategy
 

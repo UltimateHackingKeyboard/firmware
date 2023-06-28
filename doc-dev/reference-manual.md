@@ -198,6 +198,7 @@ The following grammar is supported:
     COMMAND = switchKeymapLayer KEYMAPID LAYERID
     COMMAND = resolveNextKeyEq <queue position (NUMBER)> KEYID {<time in ms>|untilRelease} <action adr (ADDRESS)> <action adr (ADDRESS)>
     COMMAND = set modifierLayerTriggers.{control} {left|right|both}
+    COMMAND = resolveSecondary <time in ms (NUMBER)> [<time in ms (NUMBER)>] <primary action macro action index (ADDRESS)> <secondary action macro action index (ADDRESS)>
     LAYERID = control
     #########
     #REMOVED#
@@ -212,7 +213,6 @@ The following grammar is supported:
     COMMAND = setKeystrokeDelay <time in ms, at most 65535 (NUMBER)>
     COMMAND = setReg <register index (NUMBER)> <value (NUMBER)>
     COMMAND = setEmergencyKey KEYID
-    COMMAND = resolveSecondary <time in ms (NUMBER)> [<time in ms (NUMBER)>] <primary action macro action index (ADDRESS)> <secondary action macro action index (ADDRESS)>
 
 ### Uncategorized commands:
 
@@ -321,6 +321,7 @@ We allow postponing key activations in order to allow deciding between some scen
 - `consumePending <n>` will remove n records from the queue.
 - `activateKeyPostponed KEYID` will add tap of KEYID at the end of queue. If `atLayer LAYERID` is specified, action will be taken from that layer rather than current one. If `prepend` option is specified, event will be place at the beginning of the queue.
 - `ifPrimary/ifSecondary [ simpleStrategy | advancedStrategy ] ... COMMAND` will wait untill the firmware can distinguish whether primary or secondary action should be activated and then either execute `COMMAND` or skip it.
+- `resolveSecondary` please, get rid of this by migrating to `ifSecondary advancedStrategy goTo ...`. It is kept for backward compatibility only.
 - `ifShortcut/ifNotShortcut/ifGesture/ifNotGesture [IFSHORTCUTFLAGS]* [KEYID]*` will wait for next keypresses until sufficient number of keys has been pressed. If the next keypresses correspond to the provided arguments (hardware ids), the keypresses are consumed and the condition is performed. Consuming takes place in both `if` and `ifNot` versions if the full list is matched. E.g., `ifShortcut 090 089 final tapKey C-V; holdKey v`.
   - `Shortcut` requires continual press of keys (e.g., like Ctrl+c). By default, timeouts with release of the activation key.
   - `Gesture` allows noncontinual sequence of keys (e.g., vim's gg). By default, timeouts in 1000 ms since activation.
@@ -493,12 +494,12 @@ For the purpose of toggling functionality on and off, and for global constants m
 - Secondary roles configure resolution strategy used for controlling both the native (agent-mapped) secondary role, and `ifPrimary`, `ifSecondary` conditions.
 
   - `set secondaryRole.defaultStrategy [ simple | advanced ]` sets default resolution strategy to be used. Furthermore, `ifPrimary/ifSecondary` can specify explicitly which strategy to use (e.g., `ifPrimary advancedStrategy final tapKey a`).
-    - simple strategy listens for other key activations until the dual-role key is released. If there is any such activation, it activates the secondary role before activating the action of the other key. If there is no such other action, it performs primary role on the dual-role key release.
+    - simple strategy listens for other key activations until the dual-role key is released. If there is any such activation, it activates the secondary role and then the action of the other key without any further delays. If there is no such other action, it performs primary role on the dual-role key release.
     - advanced strategy may trigger secondary role depending on timeout, or depending on key release order.
       - `set secondaryRole.advanced.timeout <timeout in ms, 350 (NUMBER)>` if this timeout is reached, `timeoutAction` (secondary by default) role is activated.
       - `set secondaryRole.advanced.timeoutAction { primary | secondary }` defines whether primary or secondary role should be activated when timeout is reached
-      - `set secondaryRole.advanced.triggerByRelease BOOLEAN` if enabled, secondary role is chosen depending on release order of the keys (`press-A, press-B, release-B, releaseA` leads to secondary action; `press-A, press-B, release-A, release-B` leads to primary action).
-      - `set secondaryRole.advanced.safetyMargin <ms, -50 - 50 (NUMBER)>` finetunes sensitivity of the trigger-by-release behaviour by adding the value to the dual-role-key release. I.e., if both keys are released simultaneously (i.e., at most `safetyMargin` ms from each other), then positive value favors primary action.
+      - `set secondaryRole.advanced.triggerByRelease BOOLEAN` if enabled, secondary role is chosen depending on release order of the keys (`press-A, press-B, release-B, release-A` leads to secondary action; `press-A, press-B, release-A, release-B` leads to primary action).
+      - `set secondaryRole.advanced.safetyMargin <ms, -50 - 50 (NUMBER)>` finetunes sensitivity of the trigger-by-release behaviour by adding the value to the dual-role-key release time. I.e., if both keys are released simultaneously (i.e., at most `safetyMargin` ms from each other), then positive values favor primary role, negative values secondary role.
       - `set secondaryRole.advanced.doubletapToPrimary BOOLEAN` allows initiating hold of primary action by doubletap. (Useful if you want dual key on space key.)
       - `set secondaryRole.advanced.doubletapTime <ms, 200 (NUMBER)>` configures the above timeout (measured press-to-press).
 
