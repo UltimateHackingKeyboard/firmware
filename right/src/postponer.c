@@ -324,7 +324,9 @@ static void chording()
             postponer_buffer_record_type_t* b = &buffer[POS(i+1)];
             uint8_t pa = priority(a->key, a->active);
             uint8_t pb = priority(b->key, b->active);
-            if ( (a->active && !b->active) || (a->active && b->active && pa < pb) ) {
+            // Originally, this also swapped releases to go before presses.
+            // Not sure why anymore, but it caused race condition on secondary role.
+            if ( a->active && b->active && pa < pb ) {
                 if (a->key != b->key && b->time - a->time < ChordingDelay) {
                     postponer_buffer_record_type_t tmp = *a;
                     *a = *b;
