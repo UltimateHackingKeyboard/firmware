@@ -1,4 +1,5 @@
 #include "macro_set_command.h"
+#include "config_parser/parse_config.h"
 #include "layer.h"
 #include "ledmap.h"
 #include "macros.h"
@@ -216,6 +217,14 @@ static void backlightStrategy(const char* arg1, const char *textEnd)
     else if (TokenMatches(arg1, textEnd, "constantRgb")) {
         SetLedBacklightingMode(BacklightingMode_ConstantRGB);
         LedSlaveDriver_UpdateLeds();
+    }
+    else if (TokenMatches(arg1, textEnd, "perKeyRgb")) {
+        if (PerKeyDataPresent) {
+            SetLedBacklightingMode(BacklightingMode_PerKeyRgb);
+            LedSlaveDriver_UpdateLeds();
+        } else {
+            Macros_ReportError("Cannot set perKeyRgb mode when perKeyRgb maps are not available. Please, consult Agent's led section...", NULL, NULL);
+        }
     }
     else {
         Macros_ReportError("parameter not recognized:", arg1, textEnd);

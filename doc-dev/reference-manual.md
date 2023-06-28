@@ -115,7 +115,7 @@ The following grammar is supported:
     COMMAND = set macroEngine.batchSize <number of commands to execute per one update cycle NUMBER>
     COMMAND = set navigationModeAction.NAVIGATIONMODECUSTOM.DIRECTION ACTION
     COMMAND = set keymapAction.LAYERID.KEYID ACTION
-    COMMAND = set backlight.strategy { functional | constantRgb }
+    COMMAND = set backlight.strategy { functional | constantRgb | perKeyRgb }
     COMMAND = set backlight.constantRgb.rgb <number 0-255 (NUMBER)> <number 0-255 (NUMBER)> <number 0-255 (NUMBER)><number 0-255 (NUMBER)>
     COMMAND = set leds.enabled BOOLEAN
     COMMAND = set leds.brightness <0-1 multiple of default (FLOAT)>
@@ -510,7 +510,7 @@ For the purpose of toggling functionality on and off, and for global constants m
         - Backward jump - any backward jump also yields. This should prevent unwanted endless loops, as well as need for the user to manage yielding logic manually.
 
 - backlight:
-    - `backlight.strategy { functional | constantRgb }` sets backlight strategy.
+    - `backlight.strategy { functional | constantRgb | perKeyRgb }` sets backlight strategy.
     - `backlight.constantRgb.rgb NUMBER NUMBER NUMBER` allows setting custom constant colour for entire keyboard. E.g.: `set backlight.strategy constantRgb; set backlight.constantRgb.rgb 255 0 0` to make entire keyboard shine red.
 
 - general led configuration:
