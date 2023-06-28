@@ -2278,7 +2278,7 @@ static macro_result_t processProgressHueCommand()
         phase++;
     }
 
-    SetLedBacklightStrategy(BacklightStrategy_ConstantRGB);
+    SetLedBacklightingMode(BacklightingMode_ConstantRGB);
     UpdateLayerLeds();
     return MacroResult_Finished;
 #undef C

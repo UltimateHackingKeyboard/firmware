@@ -8,15 +8,10 @@
 // Typedefs:
 
     typedef enum {
-        BacklightingMode_FunctionalBacklighting,
-        BacklightingMode_PerKeyBacklighting,
-        BacklightingMode_FunctionalBacklightingWithPerKeyValues,
+        BacklightingMode_Functional,
+        BacklightingMode_PerKeyRgb,
+        BacklightingMode_ConstantRGB,
     } backlighting_mode_t;
-
-    typedef enum {
-        BacklightStrategy_Functional,
-        BacklightStrategy_ConstantRGB,
-    } backlight_strategy_t;
 
     typedef enum {
         KeyActionColor_None,
@@ -46,6 +41,6 @@
 
     void UpdateLayerLeds(void);
     void InitLedLayout(void);
-    void SetLedBacklightStrategy(backlight_strategy_t newStrategy);
+    void SetLedBacklightingMode(backlighting_mode_t newMode);
 
 #endif

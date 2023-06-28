@@ -9,11 +9,9 @@
 #define RGB(R, G, B) { .red = (R), .green = (G), .blue = (B)}
 
 rgb_t LedMap_ConstantRGB = RGB(0xFF, 0xFF, 0xFF);
-backlighting_mode_t BacklightingMode = BacklightingMode_FunctionalBacklighting;
+backlighting_mode_t BacklightingMode = BacklightingMode_Functional;
 
 #if DEVICE_ID == DEVICE_ID_UHK60V2
-
-static backlight_strategy_t LedMap_BacklightStrategy = BacklightStrategy_Functional;
 
 static const rgb_t black = RGB(0x00, 0x00, 0x00);
 
@@ -219,17 +217,16 @@ static void updateLedsByPerKeyKeyStragegy() {
 }
 
 void UpdateLayerLeds(void) {
-    if (BacklightingMode == BacklightingMode_PerKeyBacklighting) {
-        updateLedsByPerKeyKeyStragegy();
-    } else {
-        switch (LedMap_BacklightStrategy) {
-            case BacklightStrategy_Functional:
-                updateLedsByFunctionalStrategy();
-                break;
-            case BacklightStrategy_ConstantRGB:
-                updateLedsByConstantRgbStrategy();
-                break;
-        }
+    switch (BacklightingMode) {
+        case BacklightingMode_PerKeyRgb:
+            updateLedsByPerKeyKeyStragegy();
+            break;
+        case BacklightingMode_Functional:
+            updateLedsByFunctionalStrategy();
+            break;
+        case BacklightingMode_ConstantRGB:
+            updateLedsByConstantRgbStrategy();
+            break;
     }
 }
 
@@ -248,9 +245,9 @@ void InitLedLayout(void) {
     }
 }
 
-void SetLedBacklightStrategy(backlight_strategy_t newStrategy)
+void SetLedBacklightingMode(backlighting_mode_t newMode)
 {
-    LedMap_BacklightStrategy = newStrategy;
+    BacklightingMode = newMode;
 }
 
 #elif DEVICE_ID == DEVICE_ID_UHK60V1
@@ -263,9 +260,9 @@ void InitLedLayout(void)
 {
 }
 
-void SetLedBacklightStrategy(backlight_strategy_t newStrategy)
+void SetLedBacklightingMode(backlighting_mode_t newMode)
 {
-    (void)(sizeof(newStrategy));
+    BacklightingMode = newMode;
 }
 
 #endif

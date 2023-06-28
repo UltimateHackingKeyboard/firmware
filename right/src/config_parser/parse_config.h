@@ -30,6 +30,8 @@
     extern uint16_t DataModelMinorVersion;
     extern uint16_t DataModelPatchVersion;
 
+    extern bool PerKeyDataPresent;
+
 // Functions:
 
     parser_error_t ParseConfig(config_buffer_t *buffer);

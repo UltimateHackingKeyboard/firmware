@@ -11,7 +11,7 @@ static uint8_t tempMacroCount;
 
 static void parseKeyActionColor(key_action_t *keyAction, config_buffer_t *buffer)
 {
-    if (BacklightingMode != BacklightingMode_FunctionalBacklighting) {
+    if (PerKeyDataPresent) {
         keyAction->color.red = ReadUInt8(buffer);
         keyAction->color.green = ReadUInt8(buffer);
         keyAction->color.blue = ReadUInt8(buffer);
