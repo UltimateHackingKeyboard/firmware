@@ -18,6 +18,8 @@ Macro events allow hooking special behaviour, such as applying specific configur
 
     $onInit
     $onKeymapChange {KEYMAPID|any}
+    $onLayerChange {LAYERID|any}
+    $onKeymapLayerChange KEYMAPID LAYERID
 
 I.e., if you want to customize acceleration driver for your trackball module on keymap QWR, create macro named `$onKeymapChange QWR`, with content e.g.:
 
