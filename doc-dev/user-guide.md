@@ -353,11 +353,11 @@ set secondaryRole.defaultStrategy advanced
 set secondaryRole.advanced.timeout 350
 set secondaryRole.advanced.timeoutAction secondary
 set secondaryRole.advanced.safetyMargin 50
-set secondaryRole.advanced.triggerByRelease true
-set secondaryRole.advanced.doubletapToPrimary false
+set secondaryRole.advanced.triggerByRelease 1
+set secondaryRole.advanced.doubletapToPrimary 0
 ```
 
-This configuration distinguishes roles based on release order of the keys. I.e., `press-A, press-B, release-B, releaseA` leads to secondary action; `press-A, press-B, release-A, release-B` leads to primary action. This configuration does not mind if you release keys lazily during writing.
+Above configuration distinguishes roles based on release order of the keys. I.e., `press-A, press-B, release-B, releaseA` leads to secondary action; `press-A, press-B, release-A, release-B` leads to primary action. This configuration does not mind if you release keys lazily during writing.
 
 More conventional timeout-triggered configuration:
 
@@ -366,12 +366,12 @@ set secondaryRole.defaultStrategy advanced
 set secondaryRole.advanced.timeout 200
 set secondaryRole.advanced.timeoutAction secondary
 set secondaryRole.advanced.safetyMargin 0
-set secondaryRole.advanced.triggerByRelease false
-set secondaryRole.advanced.doubletapToPrimary true
+set secondaryRole.advanced.triggerByRelease 0
+set secondaryRole.advanced.doubletapToPrimary 1
 set secondaryRole.advanced.doubletapTime 200
 ```
 
-This configuration will trigger secondary role whenever the dual-role key is pressed for more than 200ms, i.e., just a very slightly prolonged activation will trigger secondary role.
+Above configuration will trigger secondary role whenever the dual-role key is pressed for more than 200ms, i.e., just a very slightly prolonged activation will trigger secondary role.
 
 Furthermore, this configuration allows you to activate primary role by doubletap and hold. You may want this on your space key, or other primary key that is often used to produce a row of characters.
 
