@@ -231,7 +231,11 @@ static void applyKeystroke(key_state_t *keyState, key_action_cached_t *cachedAct
 {
     key_action_t* action = &cachedAction->action;
     if (action->keystroke.secondaryRole) {
-        switch (SecondaryRoles_ResolveState(keyState, action->keystroke.secondaryRole)) {
+        secondary_role_result_t res = SecondaryRoles_ResolveState(keyState, action->keystroke.secondaryRole, SecondaryRoles_Strategy, KeyState_ActivatedNow(keyState));
+        if (res.activatedNow) {
+            SecondaryRoles_FakeActivation(res);
+        }
+        switch (res.state) {
             case SecondaryRoleState_Primary:
                 applyKeystrokePrimary(keyState, cachedAction);
                 return;

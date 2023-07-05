@@ -2,6 +2,7 @@
 #include "layer.h"
 #include "ledmap.h"
 #include "macros.h"
+#include "secondary_role_driver.h"
 #include "timer.h"
 #include "keymap.h"
 #include "key_matrix.h"
@@ -119,9 +120,61 @@ static void module(const char* arg1, const char *textEnd)
     }
 }
 
+static void secondaryRoleAdvanced(const char* arg1, const char *textEnd)
+{
+    const char* arg2 = NextTok(arg1, textEnd);
+
+    if (TokenMatches(arg1, textEnd, "timeout")) {
+        SecondaryRoles_AdvancedStrategyTimeout = Macros_ParseInt(arg2, textEnd, NULL);
+    }
+    else if (TokenMatches(arg1, textEnd, "timeoutAction")) {
+        if (TokenMatches(arg2, textEnd, "primary")) {
+            SecondaryRoles_AdvancedStrategyTimeoutAction = SecondaryRoleState_Primary;
+        }
+        else if (TokenMatches(arg2, textEnd, "secondary")) {
+            SecondaryRoles_AdvancedStrategyTimeoutAction = SecondaryRoleState_Secondary;
+        }
+        else {
+            Macros_ReportError("parameter not recognized:", arg2, textEnd);
+        }
+    }
+    else if (TokenMatches(arg1, textEnd, "safetyMargin")) {
+        SecondaryRoles_AdvancedStrategySafetyMargin = Macros_ParseInt(arg2, textEnd, NULL);
+    }
+    else if (TokenMatches(arg1, textEnd, "triggerByRelease")) {
+        SecondaryRoles_AdvancedStrategyTriggerByRelease = Macros_ParseBoolean(arg2, textEnd);
+    }
+    else if (TokenMatches(arg1, textEnd, "doubletapToPrimary")) {
+        SecondaryRoles_AdvancedStrategyDoubletapToPrimary = Macros_ParseBoolean(arg2, textEnd);
+    }
+    else if (TokenMatches(arg1, textEnd, "doubletapTime")) {
+        SecondaryRoles_AdvancedStrategyDoubletapTime = Macros_ParseInt(arg2, textEnd, NULL);
+    }
+    else {
+        Macros_ReportError("parameter not recognized:", arg1, textEnd);
+    }
+}
+
 static void secondaryRoles(const char* arg1, const char *textEnd)
 {
-    Macros_ReportError("command not recognized:", arg1, textEnd);
+    if (TokenMatches(arg1, textEnd, "defaultStrategy")) {
+        const char* arg2 = NextTok(arg1, textEnd);
+        if (TokenMatches(arg2, textEnd, "simple")) {
+            SecondaryRoles_Strategy = SecondaryRoleStrategy_Simple;
+        }
+        else if (TokenMatches(arg2, textEnd, "advanced")) {
+            SecondaryRoles_Strategy = SecondaryRoleStrategy_Advanced;
+        }
+        else {
+            Macros_ReportError("parameter not recognized:", arg2, textEnd);
+        }
+    }
+    else if (TokenMatches(arg1, textEnd, "advanced")) {
+        secondaryRoleAdvanced(proceedByDot(arg1, textEnd), textEnd);
+    }
+    else {
+        Macros_ReportError("parameter not recognized:", arg1, textEnd);
+    }
 }
 
 static void mouseKeys(const char* arg1, const char *textEnd)
@@ -414,6 +467,7 @@ static void modLayerTriggers(const char* arg1, const char *textEnd)
     }
 }
 
+
 macro_result_t MacroSetCommand(const char* arg1, const char *textEnd)
 {
     const char* arg2 = NextTok(arg1, textEnd);
@@ -421,7 +475,7 @@ macro_result_t MacroSetCommand(const char* arg1, const char *textEnd)
     if (TokenMatches(arg1, textEnd, "module")) {
         module(proceedByDot(arg1, textEnd), textEnd);
     }
-    else if (TokenMatches(arg1, textEnd, "secondaryRoles")) {
+    else if (TokenMatches(arg1, textEnd, "secondaryRole")) {
         secondaryRoles(proceedByDot(arg1, textEnd), textEnd);
     }
     else if (TokenMatches(arg1, textEnd, "mouseKeys")) {
