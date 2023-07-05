@@ -309,7 +309,7 @@ Commands:
 - `holdLayer LAYERID` mostly corresponds to the sequence `toggleLayer <layer>; delayUntilRelease; unToggleLayer`, except for more elaborate conflict resolution (releasing holds in incorrect order).
 - `holdKeymapLayer KEYMAPID LAYERID` just as holdLayer, but allows referring to layer of different keymap. This reloads the entire keymap, so it may be very inefficient.
 - `holdLayerMax/holdKeymapLayerMax` will timeout after <timeout> ms if no action is performed in that time.
-- `ifPrimary/ifSecondary [ simpleStrategy | advancedStrategy ] ... COMMAND` will wait untill the firmware can distinguish whether primary or secondary action should be activated and then either execute `COMMAND` or skip it.
+- `ifPrimary/ifSecondary [ simpleStrategy | advancedStrategy ] ... COMMAND` will wait until the firmware can distinguish whether primary or secondary action should be activated and then either execute `COMMAND` or skip it.
 
 ### Postponing mechanisms.
 
@@ -322,7 +322,7 @@ We allow postponing key activations in order to allow deciding between some scen
 - `ifKeyPendingAt/ifNotKeyPendingAt <idx> <keyId>` looks into postponing queue at `idx`th waiting key nad compares it to the `keyId`.
 - `consumePending <n>` will remove n records from the queue.
 - `activateKeyPostponed KEYID` will add tap of KEYID at the end of queue. If `atLayer LAYERID` is specified, action will be taken from that layer rather than current one. If `prepend` option is specified, event will be place at the beginning of the queue.
-- `ifPrimary/ifSecondary [ simpleStrategy | advancedStrategy ] ... COMMAND` will wait untill the firmware can distinguish whether primary or secondary action should be activated and then either execute `COMMAND` or skip it.
+- `ifPrimary/ifSecondary [ simpleStrategy | advancedStrategy ] ... COMMAND` will wait until the firmware can distinguish whether primary or secondary action should be activated and then either execute `COMMAND` or skip it.
 - `resolveSecondary` please, get rid of this by migrating to `ifSecondary advancedStrategy goTo ...`. It is kept for backward compatibility only.
 - `ifShortcut/ifNotShortcut/ifGesture/ifNotGesture [IFSHORTCUTFLAGS]* [KEYID]*` will wait for next keypresses until sufficient number of keys has been pressed. If the next keypresses correspond to the provided arguments (hardware ids), the keypresses are consumed and the condition is performed. Consuming takes place in both `if` and `ifNot` versions if the full list is matched. E.g., `ifShortcut 090 089 final tapKey C-V; holdKey v`.
   - `Shortcut` requires continual press of keys (e.g., like Ctrl+c). By default, timeouts with release of the activation key.
@@ -363,7 +363,7 @@ Conditions are checked before processing the rest of the command. If the conditi
 - `ifRecording/ifNotRecording` and `ifRecordingId/ifNotRecordingId MACROID` test if the runtime macro recorder is in recording state.
 - `ifShortcut/ifNotShortcut [IFSHORTCUTFLAGS]* [KEYID]*` will wait for next keypresses and compare them to the argument. See postponer mechanism section.
 - `ifGesture/ifNotGesture [IFSHORTCUTFLAGS]* [KEYID]*` just as `ifShortcut`, but breaks after 1000ms instead of when the key is released. See postponer mechanism section.
-- `ifPrimary/ifSecondary [ simpleStrategy | advancedStrategy ] ... COMMAND` will wait untill the firmware can distinguish whether primary or secondary action should be activated and then either execute `COMMAND` or skip it.
+- `ifPrimary/ifSecondary [ simpleStrategy | advancedStrategy ] ... COMMAND` will wait until the firmware can distinguish whether primary or secondary action should be activated and then either execute `COMMAND` or skip it.
 
 ### Modifiers
 
