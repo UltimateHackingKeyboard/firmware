@@ -48,7 +48,7 @@
         GAMEPAD_LEFT_STICK_Y = 33,
         GAMEPAD_RIGHT_STICK_X = 34,
         GAMEPAD_RIGHT_STICK_Y = 35,
-    }usb_gamepad_property_t;
+    } usb_gamepad_property_t;
 
     typedef PACKED(union) {
         PACKED(struct) {
@@ -84,8 +84,8 @@
 #if (USB_GAMEPAD_REPORT_IN_PADDING > 0)
             uint8_t reserved[USB_GAMEPAD_REPORT_IN_PADDING];
 #endif
-        }X360;
-    }usb_gamepad_report_t;
+        } X360;
+    } usb_gamepad_report_t;
 
 // Variables:
 
@@ -101,6 +101,9 @@
     usb_status_t UsbGamepadCheckIdleElapsed();
     usb_status_t UsbGamepadCheckReportReady();
 
+    uint16_t UsbGamepad_GetPropertyMask(usb_gamepad_property_t key);
+
     void UsbGamepadSetProperty(usb_gamepad_report_t* report, usb_gamepad_property_t key, int value);
+    void UsbGamepad_MergeReports(const usb_gamepad_report_t* sourceReport, usb_gamepad_report_t* targetReport);
 
 #endif

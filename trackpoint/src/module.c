@@ -258,6 +258,7 @@ void PS2_CLOCK_IRQ_HANDLER(void) {
                 if ( errno == 0 ) {
                     PointerDelta.x -= deltaX;
                     PointerDelta.y -= deltaY;
+                    PointerDelta.scanCount++;
                     lastX = deltaX;
                     lastY = deltaY;
                 } else {

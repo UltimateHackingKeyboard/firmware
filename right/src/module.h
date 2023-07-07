@@ -17,6 +17,8 @@
         /* fixed behaviour */
         NavigationMode_Cursor,
         NavigationMode_Scroll,
+        NavigationMode_GamepadStickLeft,
+        NavigationMode_GamepadStickRight,
         NavigationMode_Zoom,
         NavigationMode_None,
 

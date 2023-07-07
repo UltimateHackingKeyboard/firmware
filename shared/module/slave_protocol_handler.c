@@ -128,8 +128,10 @@ void SlaveTxHandler(void)
                 // (This handler can be interrupted by sensor interrupts.)
                 pointerDelta->x = PointerDelta.x;
                 pointerDelta->y = PointerDelta.y;
+                pointerDelta->scanCount = PointerDelta.scanCount;
                 PointerDelta.x = 0;
                 PointerDelta.y = 0;
+                PointerDelta.scanCount = 0;
                 __enable_irq();
                 messageLength += sizeof(pointer_delta_t);
             }

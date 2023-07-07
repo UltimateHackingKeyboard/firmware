@@ -1,4 +1,5 @@
 #include "usb_composite_device.h"
+#include "usb_interfaces/usb_interface_gamepad.h"
 #include "usb_report_updater.h"
 
 /* key: usb_gamepad_property_t, value: shift for button in X360 buttons field */
@@ -55,10 +56,20 @@ usb_status_t UsbGamepadCheckIdleElapsed()
 
 usb_status_t UsbGamepadCheckReportReady()
 {
-    if (memcmp(ActiveUsbGamepadReport, GetInactiveUsbGamepadReport(), sizeof(usb_gamepad_report_t)) != 0)
+    if (memcmp(ActiveUsbGamepadReport, GetInactiveUsbGamepadReport(), sizeof(usb_gamepad_report_t)) != 0
+            || ActiveUsbGamepadReport->X360.lX
+            || ActiveUsbGamepadReport->X360.lY
+            || ActiveUsbGamepadReport->X360.rX
+            || ActiveUsbGamepadReport->X360.rY
+            )
         return kStatus_USB_Success;
 
     return UsbGamepadCheckIdleElapsed();
+}
+
+uint16_t UsbGamepad_GetPropertyMask(usb_gamepad_property_t key)
+{
+    return 1 << x360padButtonMap[key];
 }
 
 void UsbGamepadSetProperty(usb_gamepad_report_t* report, usb_gamepad_property_t key, int value)
@@ -118,4 +129,9 @@ usb_status_t UsbGamepadCallback(class_handle_t handle, uint32_t event, void *par
     }
 
     return error;
+}
+
+void UsbGamepad_MergeReports(const usb_gamepad_report_t* sourceReport, usb_gamepad_report_t* targetReport)
+{
+    targetReport->X360.buttons |= sourceReport->X360.buttons;
 }

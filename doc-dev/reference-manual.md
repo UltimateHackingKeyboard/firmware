@@ -158,7 +158,7 @@ The following grammar is supported:
     LABEL = <string identifier>
     SHORTCUT = MODMASK- | MODMASK-KEY | KEY | MODMASK
     MODMASK = [MODMASK]+ | [L|R]{S|C|A|G} | {p|r|h|t} | {s|i|o}
-    NAVIGATIONMODE = cursor | scroll | caret | media | zoom | zoomPc | zoomMac | none
+    NAVIGATIONMODE = cursor | scroll | caret | media | zoom | zoomPc | zoomMac | none | gamepadStickLeft | gamepadStickRight
     NAVIGATIONMODECUSTOM = caret | media | zoomPc | zoomMac
     MODULEID = trackball | touchpad | trackpoint | keycluster
     KEY = CHAR|KEYABBREV
@@ -184,11 +184,14 @@ The following grammar is supported:
     KEYABBREV = f1 | f2 | f3 | f4 | f5 | f6 | f7 | f8 | f9 | f10 | f11 | f12 | f13 | f14 | f15 | f16 | f17 | f18 | f19 | f20 | f21 | f22 | f23 | f24
     KEYABBREV = mediaVolumeMute | mediaVolumeUp | mediaVolumeDown | mediaRecord | mediaFastForward | mediaRewind | mediaNext | mediaPrevious | mediaStop | mediaPlayPause | mediaPause
     KEYABBREV = systemPowerDown | systemSleep | systemWakeUp
-    KEYABBREV = mouseBtnLeft | mouseBtnRight | mouseBtnMiddle | mouseBtn4 | mouseBtn5 | mouseBtn6 | mouseBtn7 | mouseBtn8
+    KEYABBREV = mouse.btn1 | mouse.btn2 | mouse.btn3 | mouse.btn4 | mouse.btn5 | mouse.btn6 | mouse.btn7 | mouse.btn8 | mouse.btnLeft | mouse.btnMiddle | mouse.btnRight
+    KEYABBREV = gamepad.a | gamepad.b | gamepad.back | gamepad.dPadDown | gamepad.dPadLeft | gamepad.dPadRight | gamepad.dPadUp | gamepad.home
+    KEYABBREV = gamepad.leftBumper | gamepad.leftStick | gamepad.rightBumper | gamepad.rightStick | gamepad.start | gamepad.x | gamepad.y
     MACRONAME = <Case sensitive macro identifier as named in Agent. Identifier shall not contain spaces.>
     ############
     #DEPRECATED#
     ############
+    KEYABBREV = mouseBtnLeft | mouseBtnRight | mouseBtnMiddle | mouseBtn4 | mouseBtn5 | mouseBtn6 | mouseBtn7 | mouseBtn8
     COMMAND = set macroEngine.scheduler {blocking|preemptive}
     COMMAND = set doubletapDelay <time in ms, at most 65535, alias to doubletapTimeout (NUMBER)>
     COMMAND = switchLayer LAYERID
@@ -553,6 +556,7 @@ UHK modules feature four navigation modes, which are mapped by layer and module.
 - **Media mode** - in this mode, up/down directions control volume (via media key scancodes), while horizontal play/pause and switch to next track. At the moment, this mode is not enabled by default on any layer. Sensitivity is shared with the caret mode.
 - **Zoom mode pc / mac** - in this mode, `Ctrl +`/`Ctrl -` or `Gui +`/`Gui -` shortcuts are produced.
 - **Zoom mode** - This mode serves specifically to implement touchpad's gesture. It alternates actions of zoomPc and zoomMac modes. Can be customized via `set module.touchpad.pinchZoomMode NAVIGATIONMODE`.
+- **gamepadStickLeft / gamepadStickRight** - in this module, trackpoint acts as a gamepad thumbstick.
 
 Caret and media modes can be customized by `set navigationModeAction` command.
 

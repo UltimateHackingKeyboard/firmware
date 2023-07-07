@@ -57,6 +57,25 @@
     } serialized_mouse_action_t;
 
     typedef enum {
+        SerializedGamepadAction_A = 0,
+        SerializedGamepadAction_B = 1,
+        SerializedGamepadAction_X = 2,
+        SerializedGamepadAction_Y = 3,
+        SerializedGamepadAction_Left_Bumper = 4,
+        SerializedGamepadAction_Right_Bumper = 5,
+        SerializedGamepadAction_Back = 8,
+        SerializedGamepadAction_Start = 9,
+        SerializedGamepadAction_Left_Stick_Press = 10,
+        SerializedGamepadAction_Right_Stick_Press = 11,
+        SerializedGamepadAction_Dpad_Up = 12,
+        SerializedGamepadAction_Dpad_Down = 13,
+        SerializedGamepadAction_Dpad_Left = 14,
+        SerializedGamepadAction_Dpad_Right = 15,
+        SerializedGamepadAction_Home = 16,
+        SerializedGamepadAction_Last = SerializedGamepadAction_Home,
+    } serialized_gamepad_action_t;
+
+    typedef enum {
         SerializedLayerName_mod,
         SerializedLayerName_fn,
         SerializedLayerName_mouse,

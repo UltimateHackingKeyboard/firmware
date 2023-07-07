@@ -19,6 +19,7 @@
         KeyActionType_SwitchLayer,
         KeyActionType_SwitchKeymap,
         KeyActionType_PlayMacro,
+        KeyActionType_Gamepad,
     } key_action_type_t;
 
     typedef enum {
@@ -51,6 +52,10 @@
     } rgb_t;
 
     typedef struct {
+        uint8_t property;
+    } gamepad_action_t;
+
+    typedef struct {
         uint8_t type;
         union {
             struct {
@@ -60,6 +65,7 @@
                 uint16_t scancode;
             } ATTR_PACKED keystroke;
             serialized_mouse_action_t mouseAction;
+            serialized_gamepad_action_t gamepadPropertyId;
             struct {
                 switch_layer_mode_t mode;
                 uint8_t layer;

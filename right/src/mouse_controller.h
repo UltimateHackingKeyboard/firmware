@@ -10,6 +10,7 @@
 
     #define ACTIVE_MOUSE_STATES_COUNT (SerializedMouseAction_Last + 1)
     #define ABS(A) ((A) < 0 ? (-A) : (A))
+    #define COERCE(V, MIN, MAX) ((V) < (MIN) ? (MIN) : ((V) > (MAX) ? (MAX) : (V)))
 
 // Typedefs:
 
@@ -49,6 +50,8 @@
         key_state_t caretFakeKeystate;
         float xFractionRemainder;
         float yFractionRemainder;
+        float lastX;
+        float lastY;
         uint32_t lastUpdate;
 
         uint8_t caretAxis;

@@ -2,6 +2,7 @@
 #include "key_action.h"
 #include "led_display.h"
 #include "layer.h"
+#include "usb_interfaces/usb_interface_gamepad.h"
 #include "usb_interfaces/usb_interface_mouse.h"
 #include "keymap.h"
 #include "peripherals/test_led.h"
@@ -270,6 +271,9 @@ void ApplyKeyAction(key_state_t *keyState, key_action_cached_t *cachedAction, ke
             }
             ActiveMouseStates[action->mouseAction]++;
             break;
+        case KeyActionType_Gamepad:
+            UsbGamepadSetProperty(ActiveUsbGamepadReport, (usb_gamepad_property_t)action->gamepadPropertyId, 1);
+            break;
         case KeyActionType_SwitchLayer:
             if (keyState->current != keyState->previous) {
                 applyToggleLayerAction(keyState, action);
@@ -293,15 +297,6 @@ void ApplyKeyAction(key_state_t *keyState, key_action_cached_t *cachedAction, ke
     }
 }
 
-static void clearActiveReports(void)
-{
-    memset(ActiveUsbMouseReport, 0, sizeof *ActiveUsbMouseReport);
-    memset(ActiveUsbBasicKeyboardReport, 0, sizeof *ActiveUsbBasicKeyboardReport);
-    memset(ActiveUsbMediaKeyboardReport, 0, sizeof *ActiveUsbMediaKeyboardReport);
-    memset(ActiveUsbSystemKeyboardReport, 0, sizeof *ActiveUsbSystemKeyboardReport);
-}
-
-
 static void mergeReports(void)
 {
     for(uint8_t j = 0; j < MACRO_STATE_POOL_SIZE; j++) {
@@ -321,6 +316,8 @@ static void mergeReports(void)
             ActiveUsbMouseReport->y += s->ms.macroMouseReport.y;
             ActiveUsbMouseReport->wheelX += s->ms.macroMouseReport.wheelX;
             ActiveUsbMouseReport->wheelY += s->ms.macroMouseReport.wheelY;
+
+            ActiveUsbGamepadReport->X360.buttons |= s->ms.macroGamepadReportButtonMask;
         }
     }
 }
@@ -392,7 +389,6 @@ static void handleLayerChanges() {
 
 static void updateActiveUsbReports(void)
 {
-    clearActiveReports();
     InputModifiersPrevious = InputModifiers;
     InputModifiers = 0;
     OutputModifiers = 0;
@@ -512,6 +508,7 @@ static void updateLedSleepModeState(uint32_t lastActivityTime) {
     }
 }
 
+
 void UpdateUsbReports(void)
 {
     static uint32_t lastUpdateTime;
@@ -582,6 +579,17 @@ void UpdateUsbReports(void)
         usb_status_t status = UsbSystemKeyboardAction();
         if (status != kStatus_USB_Success) {
             UsbReportUpdateSemaphore &= ~(1 << USB_SYSTEM_KEYBOARD_INTERFACE_INDEX);
+        }
+        lastActivityTime = CurrentTime;
+    }
+
+
+    if (UsbGamepadCheckReportReady() == kStatus_USB_Success) {
+        WATCH_CALL_COUNT(2);
+        UsbReportUpdateSemaphore |= 1 << USB_GAMEPAD_INTERFACE_INDEX;
+        usb_status_t status = UsbGamepadAction();
+        if (status != kStatus_USB_Success) {
+            UsbReportUpdateSemaphore &= ~(1 << USB_MOUSE_INTERFACE_INDEX);
         }
         lastActivityTime = CurrentTime;
     }

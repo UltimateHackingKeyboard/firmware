@@ -176,6 +176,21 @@ const lookup_record_t lookup_table[] = {
         {"f8", HID_KEYBOARD_SC_F8, scType_basic},
         {"f9", HID_KEYBOARD_SC_F9, scType_basic},
         {"find", HID_KEYBOARD_SC_FIND, scType_basic},
+        {"gamepad.a", GAMEPAD_A, scType_gamepad},
+        {"gamepad.b", GAMEPAD_B, scType_gamepad},
+        {"gamepad.back", GAMEPAD_BACK, scType_gamepad},
+        {"gamepad.dPadDown", GAMEPAD_DPAD_DOWN, scType_gamepad},
+        {"gamepad.dPadLeft", GAMEPAD_DPAD_LEFT, scType_gamepad},
+        {"gamepad.dPadRight", GAMEPAD_DPAD_RIGHT, scType_gamepad},
+        {"gamepad.dPadUp", GAMEPAD_DPAD_UP, scType_gamepad},
+        {"gamepad.home", GAMEPAD_HOME, scType_gamepad},
+        {"gamepad.leftBumper", GAMEPAD_LEFT_BUMPER, scType_gamepad},
+        {"gamepad.leftStick", GAMEPAD_LEFT_STICK_PRESS, scType_gamepad},
+        {"gamepad.rightBumper", GAMEPAD_RIGHT_BUMPER, scType_gamepad},
+        {"gamepad.rightStick", GAMEPAD_RIGHT_STICK_PRESS, scType_gamepad},
+        {"gamepad.start", GAMEPAD_START, scType_gamepad},
+        {"gamepad.x", GAMEPAD_X, scType_gamepad},
+        {"gamepad.y", GAMEPAD_Y, scType_gamepad},
         {"graveAccentAndTilde", HID_KEYBOARD_SC_GRAVE_ACCENT_AND_TILDE, scType_basic},
         {"help", HID_KEYBOARD_SC_HELP, scType_basic},
         {"home", HID_KEYBOARD_SC_HOME, scType_basic},
@@ -281,6 +296,17 @@ const lookup_record_t lookup_table[] = {
         {"mediaVolumeUp", MEDIA_VOLUME_UP, scType_media},
         {"menu", HID_KEYBOARD_SC_MENU, scType_basic},
         {"minusAndUnderscore", HID_KEYBOARD_SC_MINUS_AND_UNDERSCORE, scType_basic},
+        {"mouse.btn1", MouseButton_Left, scType_mouseBtn},
+        {"mouse.btn2", MouseButton_Right, scType_mouseBtn},
+        {"mouse.btn3", MouseButton_Middle, scType_mouseBtn},
+        {"mouse.btn4", MouseButton_4, scType_mouseBtn},
+        {"mouse.btn5", MouseButton_5, scType_mouseBtn},
+        {"mouse.btn6", MouseButton_6, scType_mouseBtn},
+        {"mouse.btn7", MouseButton_7, scType_mouseBtn},
+        {"mouse.btn8", MouseButton_8, scType_mouseBtn},
+        {"mouse.btnLeft", MouseButton_Left, scType_mouseBtn},
+        {"mouse.btnMiddle", MouseButton_Middle, scType_mouseBtn},
+        {"mouse.btnRight", MouseButton_Right, scType_mouseBtn},
         {"mouseBtn1", MouseButton_Left, scType_mouseBtn},
         {"mouseBtn2", MouseButton_Right, scType_mouseBtn},
         {"mouseBtn3", MouseButton_Middle, scType_mouseBtn},
@@ -554,6 +580,10 @@ static bool parseAbbrev(const char* str, const char* strEnd, macro_action_t* out
                 outMacroAction->type = MacroActionType_MouseButton;
                 outMacroAction->mouseButton.mouseButtonsMask = record->scancode;
                 break;
+            case scType_gamepad:
+                outMacroAction->type = MacroActionType_GamepadButton;
+                outMacroAction->gamepadButton.propertyId = record->scancode;
+                break;
         }
     }
 
@@ -577,6 +607,10 @@ static bool parseAbbrev(const char* str, const char* strEnd, macro_action_t* out
             case scType_mouseBtn:
                 outKeyAction->type = KeyActionType_Mouse;
                 outKeyAction->mouseAction = mouseBtnToSerializedMouseAction(record->scancode);
+                break;
+            case scType_gamepad:
+                outKeyAction->type = KeyActionType_Gamepad;
+                outKeyAction->gamepadPropertyId = record->scancode;
                 break;
         }
     }

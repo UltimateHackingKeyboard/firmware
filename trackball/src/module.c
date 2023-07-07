@@ -116,6 +116,7 @@ void trackballUpdate(SPI_Type *base, spi_master_handle_t *masterHandle, status_t
             PointerDelta.y += deltaX; // This is correct given the sensor orientation.
             tx(txBufferGetMotion);
             modulePhase = ModulePhase_ProcessMotion;
+            PointerDelta.scanCount++;
             break;
     }
 }

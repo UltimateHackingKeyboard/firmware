@@ -14,7 +14,8 @@
         scType_basic,
         scType_system,
         scType_media,
-        scType_mouseBtn
+        scType_mouseBtn,
+        scType_gamepad,
     } shortcut_type_t;
 
     typedef struct {

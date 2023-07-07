@@ -5,9 +5,11 @@
 
     #include <stdint.h>
     #include <stdbool.h>
+    #include "attributes.h"
     #include "key_action.h"
     #include "usb_device_config.h"
     #include "key_states.h"
+    #include "usb_interfaces/usb_interface_gamepad.h"
 
 // Macros:
     #define MACRO_CYCLES_TO_POSTPONE 4
@@ -66,6 +68,7 @@
         MacroActionType_Delay,
         MacroActionType_Text,
         MacroActionType_Command,
+        MacroActionType_GamepadButton,
     } macro_action_type_t;
 
     typedef enum {
@@ -100,6 +103,10 @@
                 int16_t x;
                 int16_t y;
             } ATTR_PACKED moveMouse;
+            struct {
+                macro_sub_action_t action;
+                uint8_t propertyId;
+            } ATTR_PACKED gamepadButton;
             struct {
                 int16_t x;
                 int16_t y;
@@ -160,6 +167,7 @@
             macro_autorepeat_state_t autoRepeatPhase: 1;
 
             uint8_t inputModifierMask;
+            uint16_t macroGamepadReportButtonMask;
             usb_mouse_report_t macroMouseReport;
             usb_basic_keyboard_report_t macroBasicKeyboardReport;
             usb_media_keyboard_report_t macroMediaKeyboardReport;

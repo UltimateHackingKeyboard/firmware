@@ -334,6 +334,11 @@ slave_result_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
                     pointer_delta_t *pointerDelta = (pointer_delta_t*)(rxMessage->data + keyStatesLength);
                     uhkModuleState->pointerDelta.x += pointerDelta->x;
                     uhkModuleState->pointerDelta.y += pointerDelta->y;
+                    if (VERSION_AT_LEAST(uhkModuleState->moduleProtocolVersion, 4, 3, 0)) {
+                        uhkModuleState->pointerDelta.scanCount += pointerDelta->scanCount;
+                    } else {
+                        uhkModuleState->pointerDelta.scanCount = 1;
+                    }
                 }
             }
             res.status = kStatus_Uhk_IdleCycle;

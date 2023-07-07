@@ -1,6 +1,7 @@
 #include "str_utils.h"
 #include "config_parser/parse_keymap.h"
 #include "macros.h"
+#include "module.h"
 #include "slave_protocol.h"
 
 float ParseFloat(const char *a, const char *aEnd)
@@ -241,6 +242,12 @@ navigation_mode_t ParseNavigationModeId(const char* arg1, const char* cmdEnd)
     }
     else if (TokenMatches(arg1, cmdEnd, "zoomMac")) {
         return NavigationMode_ZoomMac;
+    }
+    else if (TokenMatches(arg1, cmdEnd, "gamepadStickLeft")) {
+        return NavigationMode_GamepadStickLeft;
+    }
+    else if (TokenMatches(arg1, cmdEnd, "gamepadStickRight")) {
+        return NavigationMode_GamepadStickRight;
     }
     else if (TokenMatches(arg1, cmdEnd, "none")) {
         return NavigationMode_None;

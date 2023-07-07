@@ -2,6 +2,8 @@
 #include "layer.h"
 #include "ledmap.h"
 #include "macros.h"
+#include "module.h"
+#include "slave_protocol.h"
 #include "timer.h"
 #include "keymap.h"
 #include "key_matrix.h"
@@ -31,13 +33,20 @@ static const char* proceedByDot(const char* cmd, const char *cmdEnd)
     return cmd+1;
 }
 
-static void moduleNavigationMode(const char* arg1, const char *textEnd, module_configuration_t* module)
+static void moduleNavigationMode(const char* arg1, const char *textEnd, module_id_t moduleId, module_configuration_t* module)
 {
     layer_id_t layerId = Macros_ParseLayerId(arg1, textEnd);
     navigation_mode_t modeId = ParseNavigationModeId(NextTok(arg1, textEnd), textEnd);
 
     if (IS_MODIFIER_LAYER(layerId)) {
         Macros_ReportError("Navigation mode cannot be changed for modifier layers!", NULL, NULL);
+        return;
+    }
+
+    bool isGamepadMode = modeId == NavigationMode_GamepadStickLeft || modeId == NavigationMode_GamepadStickRight;
+    bool isGamepadCompatible = moduleId == ModuleId_TrackpointRight;
+    if (isGamepadMode && !isGamepadCompatible) {
+        Macros_ReportError("This module is not compatible with gamepad stick output!", NULL, NULL);
         return;
     }
 
@@ -112,7 +121,7 @@ static void module(const char* arg1, const char *textEnd)
 
     if (TokenMatches(arg2, textEnd, "navigationMode")) {
         const char* arg3 = proceedByDot(arg2, textEnd);
-        moduleNavigationMode(arg3, textEnd, module);
+        moduleNavigationMode(arg3, textEnd, moduleId, module);
     }
     else {
         moduleSpeed(arg2, textEnd, module, moduleId);

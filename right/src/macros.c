@@ -420,6 +420,66 @@ static macro_result_t processMouseButtonAction(void)
     return processMouseButton(s->ms.currentMacroAction);
 }
 
+
+static macro_result_t processGamepadButton(macro_action_t macro_action)
+{
+    s->ms.reportsUsed = true;
+    uint8_t propertyId = macro_action.gamepadButton.propertyId;
+    macro_sub_action_t action = macro_action.mouseButton.action;
+
+    uint16_t propertyMask = UsbGamepad_GetPropertyMask(propertyId);
+
+    s->as.actionPhase++;
+
+    switch (macro_action.mouseButton.action) {
+        case MacroSubAction_Hold:
+        case MacroSubAction_Tap:
+            switch(s->as.actionPhase) {
+            case 1:
+                s->ms.macroGamepadReportButtonMask |= propertyMask;
+                return MacroResult_Blocking;
+            case 2:
+                if (currentMacroKeyIsActive() && action == MacroSubAction_Hold) {
+                    s->as.actionPhase--;
+                    return sleepTillKeystateChange();
+                }
+                s->ms.macroGamepadReportButtonMask &= ~propertyMask;
+                return MacroResult_Blocking;
+            case 3:
+                s->as.actionPhase = 0;
+                return MacroResult_Finished;
+
+            }
+            break;
+        case MacroSubAction_Release:
+            switch(s->as.actionPhase) {
+            case 1:
+                s->ms.macroGamepadReportButtonMask &= ~propertyMask;
+                return MacroResult_Blocking;
+            case 2:
+                s->as.actionPhase = 0;
+                return MacroResult_Finished;
+            }
+            break;
+        case MacroSubAction_Press:
+            switch(s->as.actionPhase) {
+            case 1:
+                s->ms.macroGamepadReportButtonMask |= propertyMask;
+                return MacroResult_Blocking;
+            case 2:
+                s->as.actionPhase = 0;
+                return MacroResult_Finished;
+            }
+            break;
+    }
+    return MacroResult_Finished;
+}
+
+static macro_result_t processGamepadButtonAction(void)
+{
+    return processGamepadButton(s->ms.currentMacroAction);
+}
+
 static macro_result_t processMoveMouseAction(void)
 {
     s->ms.reportsUsed = true;
@@ -2905,6 +2965,8 @@ static macro_result_t processCurrentMacroAction(void)
             return processKeyAction();
         case MacroActionType_MouseButton:
             return processMouseButtonAction();
+        case MacroActionType_GamepadButton:
+            return processGamepadButtonAction();
         case MacroActionType_MoveMouse:
             return processMoveMouseAction();
         case MacroActionType_ScrollMouse:

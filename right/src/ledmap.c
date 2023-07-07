@@ -26,6 +26,7 @@ rgb_t KeyActionColors[keyActionColor_Length] = {
     RGB(0xFF, 0x00, 0x00), // KeyActionColor_SwitchKeymap
     RGB(0x00, 0xFF, 0x00), // KeyActionColor_Mouse
     RGB(0xFF, 0x00, 0xFF), // KeyActionColor_Macro
+    RGB(0x55, 0xFF, 0x00), // KeyActionColor_Gamepad
 };
 
 static rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
@@ -192,6 +193,9 @@ static void updateLedsByFunctionalStrategy() {
                     break;
                 case KeyActionType_Mouse:
                     keyActionColor = KeyActionColor_Mouse;
+                    break;
+                case KeyActionType_Gamepad:
+                    keyActionColor = KeyActionColor_Gamepad;
                     break;
                 case KeyActionType_SwitchKeymap:
                     keyActionColor = KeyActionColor_SwitchKeymap;

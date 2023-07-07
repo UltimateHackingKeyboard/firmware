@@ -2,6 +2,8 @@
 #include "key_action.h"
 #include "led_display.h"
 #include "layer.h"
+#include "module.h"
+#include "usb_interfaces/usb_interface_gamepad.h"
 #include "usb_interfaces/usb_interface_mouse.h"
 #include "peripherals/test_led.h"
 #include "slave_drivers/is31fl3xxx_driver.h"
@@ -611,6 +613,7 @@ static void processAxisLocking(
 static void processModuleKineticState(
         float x,
         float y,
+        uint8_t scanCount,
         module_configuration_t* moduleConfiguration,
         module_kinetic_state_t* ks,
         uint8_t forcedNavigationMode
@@ -661,6 +664,21 @@ static void processModuleKineticState(
             }
             break;
         }
+        case NavigationMode_GamepadStickLeft:
+        case NavigationMode_GamepadStickRight: {
+            if (scanCount > 0) {
+                ks->lastX = x / scanCount;
+                ks->lastY = y / scanCount;
+            }
+            if (ks->currentNavigationMode == NavigationMode_GamepadStickLeft) {
+                ActiveUsbGamepadReport->X360.lX = COERCE(ks->lastX, -32, 32)*1024;
+                ActiveUsbGamepadReport->X360.lY = -COERCE(ks->lastY, -32, 32)*1024;
+            } else {
+                ActiveUsbGamepadReport->X360.rX += COERCE(ks->lastX, -32, 32)*1024;
+                ActiveUsbGamepadReport->X360.rY += -COERCE(ks->lastY, -32, 32)*1024;
+            }
+            break;
+        }
         case NavigationMode_Zoom:
         case NavigationMode_ZoomPc:
         case NavigationMode_ZoomMac:
@@ -706,6 +724,7 @@ static void processModuleActions(
         uint8_t moduleId,
         float x,
         float y,
+        uint8_t scanCount,
         uint8_t forcedNavigationMode
 ) {
     module_configuration_t *moduleConfiguration = GetModuleConfiguration(moduleId);
@@ -749,7 +768,7 @@ static void processModuleActions(
     //we want to process kinetic state even if x == 0 && y == 0, at least as
     //long as caretAxis != CaretAxis_None because of fake key states that may
     //be active.
-    processModuleKineticState(x, y, moduleConfiguration, ks, forcedNavigationMode);
+    processModuleKineticState(x, y, scanCount, moduleConfiguration, ks, forcedNavigationMode);
 }
 
 void MouseController_ProcessMouseActions()
@@ -779,9 +798,9 @@ void MouseController_ProcessMouseActions()
             handleRunningCaretModeAction(ks);
         }
 
-        processModuleActions(ks, ModuleId_TouchpadRight, (int16_t)TouchpadEvents.x, (int16_t)TouchpadEvents.y, 0xFF);
-        processModuleActions(ks, ModuleId_TouchpadRight, (int16_t)TouchpadEvents.wheelX, (int16_t)TouchpadEvents.wheelY, NavigationMode_Scroll);
-        processModuleActions(ks, ModuleId_TouchpadRight, 0, (int16_t)TouchpadEvents.zoomLevel, NavigationMode_Zoom);
+        processModuleActions(ks, ModuleId_TouchpadRight, (int16_t)TouchpadEvents.x, (int16_t)TouchpadEvents.y, 1, 0xFF);
+        processModuleActions(ks, ModuleId_TouchpadRight, (int16_t)TouchpadEvents.wheelX, (int16_t)TouchpadEvents.wheelY, 1, NavigationMode_Scroll);
+        processModuleActions(ks, ModuleId_TouchpadRight, 0, (int16_t)TouchpadEvents.zoomLevel, 1, NavigationMode_Zoom);
         TouchpadEvents.zoomLevel = 0;
         TouchpadEvents.wheelX = 0;
         TouchpadEvents.wheelY = 0;
@@ -801,8 +820,10 @@ void MouseController_ProcessMouseActions()
         // sequence atomic.
         int16_t x = moduleState->pointerDelta.x;
         int16_t y = moduleState->pointerDelta.y;
+        uint8_t scanCount = moduleState->pointerDelta.scanCount;
         moduleState->pointerDelta.x = 0;
         moduleState->pointerDelta.y = 0;
+        moduleState->pointerDelta.scanCount = 0;
         __enable_irq();
 
         module_kinetic_state_t *ks = getKineticState(moduleState->moduleId);
@@ -811,7 +832,7 @@ void MouseController_ProcessMouseActions()
             handleRunningCaretModeAction(ks);
         }
 
-        processModuleActions(ks, moduleState->moduleId, x, y, 0xFF);
+        processModuleActions(ks, moduleState->moduleId, x, y, scanCount, 0xFF);
     }
 
     if (ActiveMouseStates[SerializedMouseAction_LeftClick]) {
