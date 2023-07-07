@@ -313,7 +313,7 @@ Simple strategy can be activated by `ifSecondary simpleStrategy` or `ifPrimary s
 It can be explicitly set by:
 
 ```
-set secondaryRole.defaultStrategy advanced
+set secondaryRole.defaultStrategy simple
 ```
 
 However, at the moment of writing this, it already is the default strategy, so even without above command, it can be activated by:
