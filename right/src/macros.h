@@ -157,6 +157,7 @@
             bool wakeMeOnTime : 1;
             bool wakeMeOnKeystateChange: 1;
             bool autoRepeatInitialDelayPassed: 1;
+            bool oneShotActive : 1;
             macro_autorepeat_state_t autoRepeatPhase: 1;
 
             uint8_t inputModifierMask;
