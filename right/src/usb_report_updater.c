@@ -542,6 +542,7 @@ void UpdateUsbReports(void)
     UsbMediaKeyboardResetActiveReport();
     UsbSystemKeyboardResetActiveReport();
     UsbMouseResetActiveReport();
+    UsbGamepadResetActiveReport();
 
     updateActiveUsbReports();
 
@@ -590,6 +591,15 @@ void UpdateUsbReports(void)
         usb_status_t status = UsbMouseAction();
         if (status != kStatus_USB_Success) {
             UsbReportUpdateSemaphore &= ~(1 << USB_MOUSE_INTERFACE_INDEX);
+        }
+        lastActivityTime = CurrentTime;
+    }
+
+    if (UsbGamepadCheckReportReady() == kStatus_USB_Success) {
+        UsbReportUpdateSemaphore |= 1 << USB_GAMEPAD_INTERFACE_INDEX;
+        usb_status_t status = UsbGamepadAction();
+        if (status != kStatus_USB_Success) {
+            UsbReportUpdateSemaphore &= ~(1 << USB_GAMEPAD_INTERFACE_INDEX);
         }
         lastActivityTime = CurrentTime;
     }
