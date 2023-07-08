@@ -11,11 +11,8 @@
 rgb_t LedMap_ConstantRGB = RGB(0xFF, 0xFF, 0xFF);
 backlighting_mode_t BacklightingMode = BacklightingMode_FunctionalBacklighting;
 
-#if DEVICE_ID == DEVICE_ID_UHK60V2
-
 static backlight_strategy_t LedMap_BacklightStrategy = BacklightStrategy_Functional;
 
-static const rgb_t black = RGB(0x00, 0x00, 0x00);
 
 rgb_t KeyActionColors[keyActionColor_Length] = {
     RGB(0x00, 0x00, 0x00), // KeyActionColor_None
@@ -27,6 +24,10 @@ rgb_t KeyActionColors[keyActionColor_Length] = {
     RGB(0x00, 0xFF, 0x00), // KeyActionColor_Mouse
     RGB(0xFF, 0x00, 0xFF), // KeyActionColor_Macro
 };
+
+#if DEVICE_ID == DEVICE_ID_UHK60V2
+
+static const rgb_t black = RGB(0x00, 0x00, 0x00);
 
 static rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
     // All three values must be set to 0 for unused
