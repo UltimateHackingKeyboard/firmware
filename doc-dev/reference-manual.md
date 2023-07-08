@@ -230,24 +230,24 @@ The following grammar is supported:
 - `writeExpr NUMBER` serves for writing out contents of registers or otherwise computed numbers. E.g., `writeExpr #5` or `writeExpr @-2`.
 - `startMouse/stopMouse` start/stop corresponding mouse action. E.g., `startMouse move left`
 - `pressKey|holdKey|tapKey|releaseKey` Presses/holds/taps/releases the provided scancode. E.g., `pressKey mouseBtnLeft`, `tapKey LC-v` (Left Control + (lowercase) v), `tapKey CS-f5` (Ctrl + Shift + F5), `LS-` (just tap left Shift).
-  - press means adding the scancode into a list of "active keys" and continuing the macro. The key is released once the macro ends. I.e., if the command is not followed by any sort of delay, the key will be released again almost immediately.
-  - release means removing the scancode from the list of "active keys". I.e., it negates effect of `pressKey` within the same macro. This does not affect scancodes emited by different keyboard actions.
-  - tap means pressing a key (more precisely, activating the scancode) and immediately releasing it again
-  - hold means pressing the key, waiting until key which activated the macro is released and then releasing the key again. I.e., `holdKey <x>` is equivalent to `pressKey <x>; delayUntilRelease; releaseKey <x>`, while `tapKey <x>` is equivalent to `pressKey <x>; releaseKey <x>`.
-  - tapKeySeq can be used for executing custom sequences. Default action for each shortcut in sequence is tap. Other actions can be specified using `MODMASK`. E.g.:
+  - **press** means adding the scancode into a list of "active keys" and continuing the macro. The key is released once the macro ends. I.e., if the command is not followed by any sort of delay, the key will be released again almost immediately.
+  - **release** means removing the scancode from the list of "active keys". I.e., it negates effect of `pressKey` within the same macro. This does not affect scancodes emited by different keyboard actions.
+  - **tap** means pressing a key (more precisely, activating the scancode) and immediately releasing it again
+  - **hold** means pressing the key, waiting until key which activated the macro is released and then releasing the key again. I.e., `holdKey <x>` is equivalent to `pressKey <x>; delayUntilRelease; releaseKey <x>`, while `tapKey <x>` is equivalent to `pressKey <x>; releaseKey <x>`.
+  - `tapKeySeq` can be used for executing custom sequences. Default action for each shortcut in sequence is tap. Other actions can be specified using `MODMASK`. E.g.:
     - `CS-u 1 2 3 space` - control shift U + number + space - linux shortcut for custom unicode character.
     - `pA- tab tab rA-` - tap alt tab twice to bring forward second background window.
   - `MODMASK` meaning:
-    - `{S|C|A|G}` - Shift Control Alt Gui. (Windows, Super and Gui are the same thing. )
-    - `[L|R]` - Left Right (which hand side modifier should be used)
+    - `{S|C|A|G}` - Shift Control Alt Gui. (Windows, Super and Gui are the same thing.)
+    - `[L|R]` - Left Right (which hand side modifier should be used) E.g. `holdKey RA-c` (right alt + c).
     - `{s|i|o}` - modifiers (ctrl, alt, shift, gui) exist in three composition modes within UHK - sticky, input, output:
-        - sticky modifiers are modifiers of composite shortcuts. These are applied only until next key press. In certain contexts, they will take effect even after their activation key was released (e.g., to support alt + tab on non-base layers).
-        - input modifiers are queried by `ifMod` conditions, and can be suppressed by `suppressMods`.
-        - output modifiers are ignored by `ifMod` conditions, and are not suppressed by `suppressMods`.
+        - **sticky modifiers** are modifiers of composite shortcuts. These are applied only until next key press. In certain contexts, they will take effect even after their activation key was released (e.g., to support alt + tab on non-base layers, you can do `holdKey sLA-tab`).
+        - *input modifiers** are queried by `ifMod` conditions, and can be suppressed by `suppressMods`. E.g. `holdKey iLS`.
+        - **output modifiers** are ignored by `ifMod` conditions, and are not suppressed by `suppressMods`.
         By default:
-        - modifiers of normal non-macro scancode actions are treated as `sticky` when accompanied by a scancode.
-        - normal non-macro modifiers (not accompanied by a scancode) are treated as `input` by default.
-        - macro modifiers are treated as `output`.
+        - modifiers of normal non-macro scancode actions are treated as **sticky** when accompanied by a scancode.
+        - normal non-macro modifiers (not accompanied by a scancode) are treated as **input** by default.
+        - macro modifiers are treated as **output**.
     - `{p|r|h|t}` - press release hold tap - by default corresponds to the command used to invoke the sequence, but can be overriden for any.
     - windows, super, gui - all these are different names for the same key. For sake of consistency, we choose `gui`.
 
