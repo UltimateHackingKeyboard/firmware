@@ -291,10 +291,10 @@ static macro_result_t processKey(macro_action_t macro_action)
     s->ms.reportsUsed = true;
     macro_sub_action_t action = macro_action.key.action;
     keystroke_type_t type = macro_action.key.type;
-    uint8_t outputModMask = macro_action.key.outputModMask;
     uint8_t inputModMask = macro_action.key.inputModMask;
+    uint8_t outputModMask = macro_action.key.outputModMask;
+    uint8_t stickyModMask = macro_action.key.stickyModMask;
     uint16_t scancode = macro_action.key.scancode;
-    bool stickyModMask = macro_action.key.stickyModMask;
 
     s->as.actionPhase++;
 
