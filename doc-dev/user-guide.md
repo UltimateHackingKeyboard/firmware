@@ -275,15 +275,22 @@ In order to bind some action to doubletap, you may use two strategies:
     holdKey a
 ```
 
-Another concept which may or may not use our time machine is secondary roles.
+Another concept which may or may not use our time machine is secondary roles, namely the advanced strategy.
 
-Secondary role is a role which becomes active if another key is pressed with this key. It can be implemented in two variants: regular and postponed.
+### Secondary roles
 
-- Regular version can be implemented using `ifNotInterrupted`  - such macro always triggers secondary role, and once the key is released it either triggers primary role or not.
+Secondary role is a role which becomes active if another key is pressed with this key. It can be implemented in following variants: 
 
-- Postponed version postpones all other keypresses until it can distinguish between primary and secondary role. This is handy for alphabetic keys, or if the secondary role is not a no-op. The postponed version can be used either via `ifPrimary` and `ifSecondary` conditions, or via a `resolveSecondary`.
+- Using `ifInterrupted` command.
+- Using native secondary role driver (via `ifPrimary`/`ifSecondary` or GUI-mapping) with one of following resolution strategies:
+  - simple strategy
+  - advanced strategy which uses our time machine
 
-Regular implementation of secondary role:
+#### Simulating secondary roles without secondary roles
+
+Secondary role can be implemented using `ifNotInterrupted` condition  - such macro always triggers secondary role, and once the key is released it either triggers primary role or not.
+
+For instance:
 
 ```
 holdLayer mouse
@@ -299,21 +306,74 @@ ifPlaytime 200 break
 tapKey S-9
 ```
 
-Postponed secondary role switch using `ifPrimary`:
+#### Native secondary role - simple strategy
+
+Simple strategy can be activated by `ifSecondary simpleStrategy` or `ifPrimary simpleStrategy`, or from agent GUI.
+
+It can be explicitly set by:
+
+```
+set secondaryRole.defaultStrategy simple
+```
+
+However, at the moment of writing this, it already is the default strategy, so even without above command, it can be activated by:
+
+```
+ifSecondary final holdLayer mouse
+tapKey escape
+```
+
+This strategy does the same as the `ifNotInterrupted` version, except it activates secondary role only after the other key is pressed. This strategy does not use any complicated postponing.
+
+Pros: it is reliable.
+Cons: it will activate during writing if you put it on an alphanumeric key.
+
+#### Native secondary role - advanced strategy
+
+Advanced strategy postpones all other keypresses until it can distinguish between primary and secondary role. This is handy for alphabetic keys, or if the secondary role is not a no-op. This strategy can be used via `ifPrimary advancedStrategy` and `ifSecondary advancedStrategy` conditions.
+
+It can be made default by:
+```
+set secondaryRole.defaultStrategy advanced
+```
+
+Then it can be activated via GUI-mapped secondary role, or simply:
 
 ```
 ifPrimary final holdKey a
 holdLayer mouse
 ```
 
-Postponed secondary role switch - `resolveSeccondary` is a bit more flexible and less user-friendly version of the `ifPrimary`/`ifSecondary` command. The `resolveSecondary` will listen for some time and once it decides whether the current situation fits primary or secondary action, it will issue goTo to the "second" line (line 1 since we index from 0) or the last line (line 3). Actions are indexed from 0.
+Advanced strategy has the disadvantage that its configuration depends on typing style of the user. Please see reference manual for meaning of all its configuration values. Two example configurations follow.
+
+Release-order configuration:
 
 ```
-resolveSecondary 350 1 3
-write f
-break
-holdLayer mod
+set secondaryRole.defaultStrategy advanced
+set secondaryRole.advanced.timeout 350
+set secondaryRole.advanced.timeoutAction secondary
+set secondaryRole.advanced.safetyMargin 50
+set secondaryRole.advanced.triggerByRelease 1
+set secondaryRole.advanced.doubletapToPrimary 0
 ```
+
+Above configuration distinguishes roles based on release order of the keys. I.e., `press-A, press-B, release-B, releaseA` leads to secondary action; `press-A, press-B, release-A, release-B` leads to primary action. This configuration does not mind if you release keys lazily during writing.
+
+More conventional timeout-triggered configuration:
+
+```
+set secondaryRole.defaultStrategy advanced
+set secondaryRole.advanced.timeout 200
+set secondaryRole.advanced.timeoutAction secondary
+set secondaryRole.advanced.safetyMargin 0
+set secondaryRole.advanced.triggerByRelease 0
+set secondaryRole.advanced.doubletapToPrimary 1
+set secondaryRole.advanced.doubletapTime 200
+```
+
+Above configuration will trigger secondary role whenever the dual-role key is pressed for more than 200ms, i.e., just a very slightly prolonged activation will trigger secondary role.
+
+Furthermore, this configuration allows you to activate primary role by doubletap and hold. You may want this on your space key, or other primary key that is often used to produce a row of characters.
 
 ### Advanced key binding
 

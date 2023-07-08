@@ -43,6 +43,7 @@
     extern uint8_t ChordingDelay;
     extern key_state_t* Postponer_NextEventKey;
     extern uint8_t Postponer_LastKeyLayer;
+    extern uint32_t CurrentPostponedTime;
 
 // Functions (Core hooks):
 
@@ -59,6 +60,8 @@
     uint8_t PostponerQuery_PendingKeypressCount();
     bool PostponerQuery_IsKeyReleased(key_state_t* key);
     bool PostponerQuery_IsActiveEventually(key_state_t* key);
+    void PostponerQuery_InfoByKeystate(key_state_t* key, postponer_buffer_record_type_t** press, postponer_buffer_record_type_t** release);
+    void PostponerQuery_InfoByQueueIdx(uint8_t idx, postponer_buffer_record_type_t** press, postponer_buffer_record_type_t** release);
 
 // Functions (Query APIs extended):
     uint16_t PostponerExtended_PendingId(uint16_t idx);

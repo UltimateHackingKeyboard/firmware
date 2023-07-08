@@ -1,5 +1,6 @@
 #include "macros.h"
 #include <math.h>
+#include "secondary_role_driver.h"
 #include "usb_interfaces/usb_interface_basic_keyboard.h"
 #include "usb_interfaces/usb_interface_media_keyboard.h"
 #include "usb_interfaces/usb_interface_mouse.h"
@@ -1783,6 +1784,7 @@ static macro_result_t processResolveSecondaryCommand(const char* arg1, const cha
 }
 
 
+
 static macro_result_t processIfSecondaryCommand(bool negate, const char* arg, const char* argEnd)
 {
     if (s->as.currentIfSecondaryConditionPassed) {
@@ -1793,18 +1795,29 @@ static macro_result_t processIfSecondaryCommand(bool negate, const char* arg, co
         }
     }
 
-    uint8_t res = processResolveSecondary(350, 50);
+    secondary_role_strategy_t strategy = SecondaryRoles_Strategy;
 
-    switch(res) {
-    case RESOLVESEC_RESULT_DONTKNOWYET:
+    if (TokenMatches(arg, argEnd, "simpleStrategy")) {
+        strategy = SecondaryRoleStrategy_Simple;
+    }
+    if (TokenMatches(arg, argEnd, "advancedStrategy")) {
+        strategy = SecondaryRoleStrategy_Advanced;
+    }
+
+    secondary_role_result_t res = SecondaryRoles_ResolveState(s->ms.currentMacroKey, 0, strategy, !s->as.actionActive);
+
+    s->as.actionActive = res.state == SecondaryRoleState_DontKnowYet;
+
+    switch(res.state) {
+    case SecondaryRoleState_DontKnowYet:
         return MacroResult_Waiting;
-    case RESOLVESEC_RESULT_PRIMARY:
+    case SecondaryRoleState_Primary:
         if (negate) {
             goto conditionPassed;
         } else {
             return MacroResult_Finished;
         }
-    case RESOLVESEC_RESULT_SECONDARY:
+    case SecondaryRoleState_Secondary:
         if (negate) {
             return MacroResult_Finished;
         } else {
