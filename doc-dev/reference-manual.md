@@ -6,6 +6,8 @@ This file contains (semi)formal documentation of all features of the extended en
 
 - The grammar is meant to be the ultimate information source. Not all commands or parameters are described in the later text.
 
+- Most values in the following text are just recommended ranges. The firmware will usually accept even values outside these ranges.
+
 ### Error handling
 
 Whenever a garbled command is encountered, `ERR` will light up on the display, and details are appended to the error buffer. You can retrieve it by running a `printStatus` macro command over a focused text editor.
@@ -47,22 +49,22 @@ The following grammar is supported:
     BODY = [LABEL:] COMMAND [//<comment, excluding commands taking custom text arguments>]
     COMMAND = [CONDITION|MODIFIER]* COMMAND
     COMMAND = delayUntilRelease
-    COMMAND = delayUntil <timeout (NUMBER)>
-    COMMAND = delayUntilReleaseMax <timeout (NUMBER)>
+    COMMAND = delayUntil <timeout (INT)>
+    COMMAND = delayUntilReleaseMax <timeout (INT)>
     COMMAND = switchKeymap KEYMAPID
     COMMAND = toggleLayer LAYERID
     COMMAND = toggleKeymapLayer KEYMAPID LAYERID
     COMMAND = untoggleLayer
     COMMAND = holdLayer LAYERID
-    COMMAND = holdLayerMax LAYERID <time in ms (NUMBER)>
+    COMMAND = holdLayerMax LAYERID <time in ms (INT)>
     COMMAND = holdKeymapLayer KEYMAPID LAYERID
-    COMMAND = holdKeymapLayerMax KEYMAPID LAYERID <time in ms (NUMBER)>
+    COMMAND = holdKeymapLayerMax KEYMAPID LAYERID <time in ms (INT)>
     COMMAND = overlayKeymap KEYMAPID
     COMMAND = overlayLayer <target layer (LAYERID)> <source keymap (KEYMAPID)> <source layer (LAYERID)>
     COMMAND = replaceLayer <target layer (LAYERID)> <source keymap (KEYMAPID)> <source layer (LAYERID)>
     COMMAND = resolveNextKeyId
     COMMAND = activateKeyPostponed [atLayer LAYERID] [append | prepend]  KEYID
-    COMMAND = consumePending <number of keys (NUMBER)>
+    COMMAND = consumePending <number of keys (INT)>
     COMMAND = postponeNext <number of commands (NUMER)>
     COMMAND = break
     COMMAND = noOp
@@ -70,11 +72,10 @@ The following grammar is supported:
     COMMAND = {exec|call|fork} MACRONAME
     COMMAND = resetTrackpoint
     COMMAND = printStatus
-    COMMAND = setLedTxt <timeout (NUMBER)> <custom text>
-    COMMAND = write <custom text>
-    COMMAND = writeExpr NUMBER
+    COMMAND = setLedTxt <timeout (INT)> { STRING | EXPRESSION }
+    COMMAND = write STRING
     COMMAND = goTo <index (ADDRESS)>
-    COMMAND = repeatFor <register index (NUMBER)> <action adr (ADDRESS)>
+    COMMAND = repeatFor <var name (IDENTIFIER)> <action adr (ADDRESS)>
     COMMAND = progressHue
     COMMAND = recordMacroDelay
     COMMAND = {startRecording | startRecordingBlind} [<slot identifier (MACROID)>]
@@ -82,7 +83,7 @@ The following grammar is supported:
     COMMAND = {stopRecording | stopRecordingBlind}
     COMMAND = playMacro [<slot identifier (MACROID)>]
     COMMAND = {startMouse|stopMouse} {move DIRECTION|scroll DIRECTION|accelerate|decelerate}
-    COMMAND = {setReg|addReg|subReg|mulReg} <register index (NUMBER)> <value (NUMBER)>
+    COMMAND = setVar <var name (IDENTIFIER)> <value (PARENTHESSED_EXPRESSION)>
     COMMAND = {pressKey|holdKey|tapKey|releaseKey} SHORTCUT
     COMMAND = tapKeySeq [SHORTCUT]+
     COMMAND = set module.MODULEID.navigationMode.LAYERID_BASIC NAVIGATION_MODE
@@ -93,47 +94,48 @@ The following grammar is supported:
     COMMAND = set module.MODULEID.scrollSpeedDivisor <1-100 (FLOAT)>
     COMMAND = set module.MODULEID.axisLockSkew <0-2.0 (FLOAT)>
     COMMAND = set module.MODULEID.axisLockFirstTickSkew <0-2.0 (FLOAT)>
-    COMMAND = set module.MODULEID.scrollAxisLock BOOLEAN
-    COMMAND = set module.MODULEID.cursorAxisLock BOOLEAN
-    COMMAND = set module.MODULEID.caretAxisLock BOOLEAN
-    COMMAND = set module.MODULEID.swapAxes BOOLEAN
-    COMMAND = set module.MODULEID.invertScrollDirectionX BOOLEAN
-    COMMAND = set module.MODULEID.invertScrollDirectionY BOOLEAN
+    COMMAND = set module.MODULEID.scrollAxisLock BOOL
+    COMMAND = set module.MODULEID.cursorAxisLock BOOL
+    COMMAND = set module.MODULEID.caretAxisLock BOOL
+    COMMAND = set module.MODULEID.swapAxes BOOL
+    COMMAND = set module.MODULEID.invertScrollDirectionX BOOL
+    COMMAND = set module.MODULEID.invertScrollDirectionY BOOL
     COMMAND = set module.touchpad.pinchZoomDivisor <1-100 (FLOAT)>
     COMMAND = set module.touchpad.pinchZoomMode NAVIGATION_MODE
     COMMAND = set secondaryRole.defaultStrategy { simple | advanced }
-    COMMAND = set secondaryRole.advanced.timeout <ms, 0-500 (NUMBER)>
+    COMMAND = set secondaryRole.advanced.timeout <ms, 0-500 (INT)>
     COMMAND = set secondaryRole.advanced.timeoutAction { primary | secondary }
-    COMMAND = set secondaryRole.advanced.safetyMargin <ms, -50 - 50 (NUMBER)>
-    COMMAND = set secondaryRole.advanced.triggerByRelease BOOLEAN
-    COMMAND = set secondaryRole.advanced.doubletapToPrimary BOOLEAN
-    COMMAND = set secondaryRole.advanced.doubletapTime <ms, 0 - 500 (NUMBER)>
-    COMMAND = set mouseKeys.{move|scroll}.initialSpeed <px/s, -100/20 (NUMBER)>
-    COMMAND = set mouseKeys.{move|scroll}.baseSpeed <px/s, -800/20 (NUMBER)>
-    COMMAND = set mouseKeys.{move|scroll}.initialAcceleration <px/s, ~1700/20 (NUMBER)>
-    COMMAND = set mouseKeys.{move|scroll}.deceleratedSpeed <px/s, ~200/10 (NUMBER)>
-    COMMAND = set mouseKeys.{move|scroll}.acceleratedSpeed <px/s, ~1600/50 (NUMBER)>
+    COMMAND = set secondaryRole.advanced.safetyMargin <ms, -50 - 50 (INT)>
+    COMMAND = set secondaryRole.advanced.triggerByRelease BOOL
+    COMMAND = set secondaryRole.advanced.doubletapToPrimary BOOL
+    COMMAND = set secondaryRole.advanced.doubletapTime <ms, 0 - 500 (INT)>
+    COMMAND = set mouseKeys.{move|scroll}.initialSpeed <px/s, -100/20 (INT)>
+    COMMAND = set mouseKeys.{move|scroll}.baseSpeed <px/s, -800/20 (INT)>
+    COMMAND = set mouseKeys.{move|scroll}.initialAcceleration <px/s, ~1700/20 (INT)>
+    COMMAND = set mouseKeys.{move|scroll}.deceleratedSpeed <px/s, ~200/10 (INT)>
+    COMMAND = set mouseKeys.{move|scroll}.acceleratedSpeed <px/s, ~1600/50 (INT)>
     COMMAND = set mouseKeys.{move|scroll}.axisSkew <multiplier, 0.5-2.0 (FLOAT)>
-    COMMAND = set i2cBaudRate <baud rate, default 100000(NUMBER)>
-    COMMAND = set diagonalSpeedCompensation BOOLEAN
-    COMMAND = set chordingDelay <time in ms (NUMBER)>
-    COMMAND = set autoShiftDelay <time in ms (NUMBER)>
+    COMMAND = set i2cBaudRate <baud rate, default 100000(INT)>
+    COMMAND = set diagonalSpeedCompensation BOOL
+    COMMAND = set chordingDelay <time in ms (INT)>
+    COMMAND = set autoShiftDelay <time in ms (INT)>
     COMMAND = set stickyModifiers {never|smart|always}
-    COMMAND = set debounceDelay <time in ms, at most 250 (NUMBER)>
-    COMMAND = set doubletapTimeout <time in ms, at most 65535 (NUMBER)>
-    COMMAND = set keystrokeDelay <time in ms, at most 65535 (NUMBER)>
-    COMMAND = set autoRepeatDelay <time in ms, at most 65535 (NUMBER)>
-    COMMAND = set autoRepeatRate <time in ms, at most 65535 (NUMBER)>
-    COMMAND = set macroEngine.batchSize <number of commands to execute per one update cycle NUMBER>
+    COMMAND = set debounceDelay <time in ms, at most 250 (INT)>
+    COMMAND = set doubletapTimeout <time in ms, at most 65535 (INT)>
+    COMMAND = set keystrokeDelay <time in ms, at most 65535 (INT)>
+    COMMAND = set autoRepeatDelay <time in ms, at most 65535 (INT)>
+    COMMAND = set autoRepeatRate <time in ms, at most 65535 (INT)>
+    COMMAND = set macroEngine.batchSize <number of commands to execute per one update cycle INT>
     COMMAND = set navigationModeAction.NAVIGATION_MODE_CUSTOM.DIRECTION ACTION
     COMMAND = set keymapAction.LAYERID.KEYID ACTION
     COMMAND = set backlight.strategy { functional | constantRgb | perKeyRgb }
-    COMMAND = set backlight.constantRgb.rgb <number 0-255 (NUMBER)> <number 0-255 (NUMBER)> <number 0-255 (NUMBER)><number 0-255 (NUMBER)>
-    COMMAND = set backlight.keyRgb.LAYERID.KEYID <number 0-255 (NUMBER)> <number 0-255 (NUMBER)> <number 0-255 (NUMBER)>
-    COMMAND = set leds.enabled BOOLEAN
+    COMMAND = set backlight.constantRgb.rgb <number 0-255 (INT)> <number 0-255 (INT)> <number 0-255 (INT)><number 0-255 (INT)>
+    COMMAND = set backlight.keyRgb.LAYERID.KEYID <number 0-255 (INT)> <number 0-255 (INT)> <number 0-255 (INT)>
+    COMMAND = set leds.enabled BOOL
     COMMAND = set leds.brightness <0-1 multiple of default (FLOAT)>
-    COMMAND = set leds.fadeTimeout <seconds to fade after (NUMBER)>
+    COMMAND = set leds.fadeTimeout <seconds to fade after (INT)>
     COMMAND = set modifierLayerTriggers.{shift|alt|super|ctrl} {left|right|both}
+    CONDITION = if (EXPRESSION)
     CONDITION = {ifShortcut | ifNotShortcut} [IFSHORTCUT_OPTIONS]* [KEYID]+
     CONDITION = {ifGesture | ifNotGesture} [IFSHORTCUT_OPTIONS]* [KEYID]+
     CONDITION = {ifPrimary | ifSecondary} [ simpleStrategy | advancedStrategy ]
@@ -142,13 +144,12 @@ The following grammar is supported:
     CONDITION = {ifReleased | ifNotReleased}
     CONDITION = {ifKeyActive | ifNotKeyActive} KEYID
     CONDITION = {ifKeyDefined | ifNotKeyDefined} KEYID
-    CONDITION = {ifKeyPendingAt | ifNotKeyPendingAt} <idx in buffer (NUMBER)> KEYID
-    CONDITION = {ifPending | ifNotPending} <n (NUMBER)>
-    CONDITION = {ifPendingKeyReleased | ifNotPendingKeyReleased} <queue idx (NUMBER)>
-    CONDITION = {ifPlaytime | ifNotPlaytime} <timeout in ms (NUMBER)>
+    CONDITION = {ifKeyPendingAt | ifNotKeyPendingAt} <idx in buffer (INT)> KEYID
+    CONDITION = {ifPending | ifNotPending} <n (INT)>
+    CONDITION = {ifPendingKeyReleased | ifNotPendingKeyReleased} <queue idx (INT)>
+    CONDITION = {ifPlaytime | ifNotPlaytime} <timeout in ms (INT)>
     CONDITION = {ifShift | ifAlt | ifCtrl | ifGui | ifAnyMod | ifNotShift | ifNotAlt | ifNotCtrl | ifNotGui | ifNotAnyMod}
     CONDITION = {ifCapsLockOn | ifNotCapsLockOn | ifScrollLockOn | ifNotScrollLockOn | ifNumLockOn | ifNotNumLockOn}
-    CONDITION = {ifRegEq | ifNotRegEq | ifRegGt | ifRegLt} <register index (NUMBER)> <value (NUMBER)>
     CONDITION = {ifKeymap | ifNotKeymap} KEYMAPID
     CONDITION = {ifLayer | ifNotLayer} LAYERID
     CONDITION = {ifRecording | ifNotRecording}
@@ -158,47 +159,61 @@ The following grammar is supported:
     MODIFIER = final
     MODIFIER = autoRepeat
     MODIFIER = oneShot
-    IFSHORTCUT_OPTIONS = noConsume | transitive | anyOrder | orGate | timeoutIn <time in ms (NUMBER)> | cancelIn <time in ms(NUMBER)>
+    IFSHORTCUT_OPTIONS = noConsume | transitive | anyOrder | orGate | timeoutIn <time in ms (INT)> | cancelIn <time in ms(INT)>
     DIRECTION = {left|right|up|down}
     LAYERID = {fn|mouse|mod|base|fn2|fn3|fn4|fn5|alt|shift|super|ctrl}|last|previous
     LAYERID_BASIC = {fn|mouse|mod|base|fn2|fn3|fn4|fn5}
     KEYMAPID = <abbrev>|last
-    MACROID = last|CHAR|NUMBER
-    NUMBER = [0-9]+ | -[0-9]+ | #<register idx (NUMBER)> | #key | @<relative macro action index(NUMBER)> | %<key idx in postponer queue (NUMBER)>
-    BOOLEAN = 0 | 1
-    FLOAT = [0-9]+{.[0-9]+} | -FLOAT
+    MACROID = last|CHAR|INT
+    OPERATOR = + | - | * | / | % | < | > | <= | >= | == | != 
+    VARIABLE_EXPANSION = $<variable name> | $<config value name> | $currentAddress | $thisKeyId | $queuedKeyId.<queue index (INT)> | $keyId.KEYID_ABBREV
+    EXPRESSION = (EXPRESSION) | INT | BOOL | FLOAT | VARIABLE_EXPANSION | EXPRESSION OPERATOR EXPRESSION | !EXPRESSION | min(EXPRESSION [, EXPRESSION]+) | max(EXPRESSION [, EXPRESSION]+)
+    PARENTHESSED_EXPRESSION = (EXPRESSION)
+    INT = PARENTHESSED_EXPRESSION | VARIABLE_EXPANSION | [0-9]+ | -[0-9]+
+    BOOL = PARENTHESSED_EXPRESSION | VARIABLE_EXPANSION | 0 | 1 
+    FLOAT = PARENTHESSED_EXPRESSION | VARIABLE_EXPANSION | [0-9]*.[0-9]+ | -FLOAT
+    VALUE = INT | BOOL | FLOAT
+    STRING = "<interpolated string>" | '<literal string>'
+    IDENTIFIER = [a-zA-Z0-9_]+
     CHAR = <any nonwhite ascii char>
-    KEYID = <id of hardware key obtained by resolveNextKeyId (NUMBER)>
     LABEL = <string identifier>
-    SHORTCUT = MODMASK- | MODMASK-KEY | KEY | MODMASK
     MODMASK = [MODMASK]+ | [L|R]{S|C|A|G} | {p|r|h|t} | {s|i|o}
     NAVIGATION_MODE = cursor | scroll | caret | media | zoom | zoomPc | zoomMac | none
     NAVIGATION_MODE_CUSTOM = caret | media | zoomPc | zoomMac
     MODULEID = trackball | touchpad | trackpoint | keycluster
-    KEY = CHAR|KEY_ABBREV
-    ADDRESS = LABEL|NUMBER
+    ADDRESS = LABEL | INT
     ACTION = { macro MACROID | keystroke SHORTCUT | none }
-    KEY_ABBREV = enter | escape | backspace | tab | space | minusAndUnderscore | equalAndPlus | openingBracketAndOpeningBrace | closingBracketAndClosingBrace
-    KEY_ABBREV = backslashAndPipeIso | backslashAndPipe | nonUsHashmarkAndTilde | semicolonAndColon | apostropheAndQuote | graveAccentAndTilde | commaAndLessThanSign
-    KEY_ABBREV = dotAndGreaterThanSign | slashAndQuestionMark | capsLock | printScreen | scrollLock | pause | insert | home | pageUp | delete | end | pageDown | numLock
-    KEY_ABBREV = nonUsBackslashAndPipe | application | power | keypadEqualSign |  execute | help | menu | select | stop | again | undo | cut | copy | paste | find | mute
-    KEY_ABBREV = volumeUp | volumeDown | lockingCapsLock | lockingNumLock | lockingScrollLock | keypadComma | keypadEqualSignAs400 | international1 | international2
-    KEY_ABBREV = international3 | international4 | international5 | international6 | international7 | international8 | international9 | lang1 | lang2 | lang3 | lang4 | lang5
-    KEY_ABBREV = lang6 | lang7 | lang8 | lang9 | alternateErase | sysreq | cancel | clear | prior | return | separator | out | oper | clearAndAgain | crselAndProps | exsel
-    KEY_ABBREV = keypad00 | keypad000 | thousandsSeparator | decimalSeparator | currencyUnit | currencySubUnit | keypadOpeningParenthesis | keypadClosingParenthesis
-    KEY_ABBREV = keypadOpeningBrace | keypadClosingBrace | keypadTab | keypadBackspace | keypadA | keypadB | keypadC | keypadD | keypadE | keypadF | keypadXor | keypadCaret
-    KEY_ABBREV = keypadPercentage | keypadLessThanSign | keypadGreaterThanSign | keypadAmp | keypadAmpAmp | keypadPipe | keypadPipePipe | keypadColon | keypadHashmark
-    KEY_ABBREV = keypadSpace | keypadAt | keypadExclamationSign | keypadMemoryStore | keypadMemoryRecall | keypadMemoryClear | keypadMemoryAdd | keypadMemorySubtract
-    KEY_ABBREV = keypadMemoryMultiply | keypadMemoryDivide | keypadPlusAndMinus | keypadClear | keypadClearEntry | keypadBinary | keypadOctal | keypadDecimal
-    KEY_ABBREV = keypadHexadecimal | keypadSlash | keypadAsterisk | keypadMinus | keypadPlus | keypadEnter | keypad1AndEnd | keypad2AndDownArrow | keypad3AndPageDown
-    KEY_ABBREV = keypad4AndLeftArrow | keypad5 | keypad6AndRightArrow | keypad7AndHome | keypad8AndUpArrow | keypad9AndPageUp | keypad0AndInsert | keypadDotAndDelete
-    KEY_ABBREV = leftControl | leftShift | leftAlt | leftGui | rightControl | rightShift | rightAlt | rightGui
-    KEY_ABBREV = up | down | left | right | upArrow | downArrow | leftArrow | rightArrow
-    KEY_ABBREV = np0 | np1 | np2 | np3 | np4 | np5 | np6 | np7 | np8 | np9
-    KEY_ABBREV = f1 | f2 | f3 | f4 | f5 | f6 | f7 | f8 | f9 | f10 | f11 | f12 | f13 | f14 | f15 | f16 | f17 | f18 | f19 | f20 | f21 | f22 | f23 | f24
-    KEY_ABBREV = mediaVolumeMute | mediaVolumeUp | mediaVolumeDown | mediaRecord | mediaFastForward | mediaRewind | mediaNext | mediaPrevious | mediaStop | mediaPlayPause | mediaPause
-    KEY_ABBREV = systemPowerDown | systemSleep | systemWakeUp
-    KEY_ABBREV = mouseBtnLeft | mouseBtnRight | mouseBtnMiddle | mouseBtn4 | mouseBtn5 | mouseBtn6 | mouseBtn7 | mouseBtn8
+    SCANCODE = CHAR | SCANCODE_ABBREV
+    SHORTCUT = MODMASK- | MODMASK-SCANCODE | SCANCODE | MODMASK
+    SCANCODE_ABBREV = enter | escape | backspace | tab | space | minusAndUnderscore | equalAndPlus | openingBracketAndOpeningBrace | closingBracketAndClosingBrace
+    SCANCODE_ABBREV = backslashAndPipeIso | backslashAndPipe | nonUsHashmarkAndTilde | semicolonAndColon | apostropheAndQuote | graveAccentAndTilde | commaAndLessThanSign
+    SCANCODE_ABBREV = dotAndGreaterThanSign | slashAndQuestionMark | capsLock | printScreen | scrollLock | pause | insert | home | pageUp | delete | end | pageDown | numLock
+    SCANCODE_ABBREV = nonUsBackslashAndPipe | application | power | keypadEqualSign |  execute | help | menu | select | stop | again | undo | cut | copy | paste | find | mute
+    SCANCODE_ABBREV = volumeUp | volumeDown | lockingCapsLock | lockingNumLock | lockingScrollLock | keypadComma | keypadEqualSignAs400 | international1 | international2
+    SCANCODE_ABBREV = international3 | international4 | international5 | international6 | international7 | international8 | international9 | lang1 | lang2 | lang3 | lang4 | lang5
+    SCANCODE_ABBREV = lang6 | lang7 | lang8 | lang9 | alternateErase | sysreq | cancel | clear | prior | return | separator | out | oper | clearAndAgain | crselAndProps | exsel
+    SCANCODE_ABBREV = keypad00 | keypad000 | thousandsSeparator | decimalSeparator | currencyUnit | currencySubUnit | keypadOpeningParenthesis | keypadClosingParenthesis
+    SCANCODE_ABBREV = keypadOpeningBrace | keypadClosingBrace | keypadTab | keypadBackspace | keypadA | keypadB | keypadC | keypadD | keypadE | keypadF | keypadXor | keypadCaret
+    SCANCODE_ABBREV = keypadPercentage | keypadLessThanSign | keypadGreaterThanSign | keypadAmp | keypadAmpAmp | keypadPipe | keypadPipePipe | keypadColon | keypadHashmark
+    SCANCODE_ABBREV = keypadSpace | keypadAt | keypadExclamationSign | keypadMemoryStore | keypadMemoryRecall | keypadMemoryClear | keypadMemoryAdd | keypadMemorySubtract
+    SCANCODE_ABBREV = keypadMemoryMultiply | keypadMemoryDivide | keypadPlusAndMinus | keypadClear | keypadClearEntry | keypadBinary | keypadOctal | keypadDecimal
+    SCANCODE_ABBREV = keypadHexadecimal | keypadSlash | keypadAsterisk | keypadMinus | keypadPlus | keypadEnter | keypad1AndEnd | keypad2AndDownArrow | keypad3AndPageDown
+    SCANCODE_ABBREV = keypad4AndLeftArrow | keypad5 | keypad6AndRightArrow | keypad7AndHome | keypad8AndUpArrow | keypad9AndPageUp | keypad0AndInsert | keypadDotAndDelete
+    SCANCODE_ABBREV = leftControl | leftShift | leftAlt | leftGui | rightControl | rightShift | rightAlt | rightGui
+    SCANCODE_ABBREV = up | down | left | right | upArrow | downArrow | leftArrow | rightArrow
+    SCANCODE_ABBREV = np0 | np1 | np2 | np3 | np4 | np5 | np6 | np7 | np8 | np9
+    SCANCODE_ABBREV = f1 | f2 | f3 | f4 | f5 | f6 | f7 | f8 | f9 | f10 | f11 | f12 | f13 | f14 | f15 | f16 | f17 | f18 | f19 | f20 | f21 | f22 | f23 | f24
+    SCANCODE_ABBREV = mediaVolumeMute | mediaVolumeUp | mediaVolumeDown | mediaRecord | mediaFastForward | mediaRewind | mediaNext | mediaPrevious | mediaStop | mediaPlayPause | mediaPause
+    SCANCODE_ABBREV = systemPowerDown | systemSleep | systemWakeUp
+    SCANCODE_ABBREV = mouseBtnLeft | mouseBtnRight | mouseBtnMiddle | mouseBtn4 | mouseBtn5 | mouseBtn6 | mouseBtn7 | mouseBtn8
+    KEYID = INT | KEYID_ABBREV
+    KEYID_ABBREV = ' | , | - | . | / | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | ; | = | [ | ] | ` 
+    KEYID_ABBREV = a | q | w | e | r | t | y | u | i | o | p | a | s | d | f | g | h | j | k | l | z | x | c | v | b | n | m 
+    KEYID_ABBREV = apostropheAndQuote | backspace | capsLock | closingBracketAndClosingBrace | commaAndLessThanSign | dotAndGreaterThanSign | enter 
+    KEYID_ABBREV = equalAndPlus | graveAccentAndTilde | isoKey | semicolonAndColon | slashAndQuestionMark | tab | minusAndUnderscore | openingBracketAndOpeningBrace 
+    KEYID_ABBREV = leftAlt | leftCtrl | leftFn | leftMod | leftMouse | leftShift | leftSpace | leftSuper 
+    KEYID_ABBREV = leftModule.key1 | leftModule.key2 | leftModule.key3 | leftModule.leftButton | leftModule.middleButton | leftModule.rightButton 
+    KEYID_ABBREV = rightAlt | rightCtrl | rightFn | rightMod | rightShift | rightSpace | rightSuper | rightModule.leftButton | rightModule.rightButton 
     MACRONAME = <Case sensitive macro identifier as named in Agent. Identifier shall not contain spaces.>
     ###################
     #DEVELOPMENT TOOLS#
@@ -215,17 +230,23 @@ The following grammar is supported:
     COMMAND = {setStatus  | setStatusPart} <custom text>
     COMMAND = clearStatus
     COMMAND = set setEmergencyKey KEYID
+    COMMAND = validateUserConfig
     ############
     #DEPRECATED#
     ############
-    COMMAND = set module.MODULEID.invertScrollDirection BOOLEAN
+    INT = #<register idx (INT)> | #key | @<relative macro action index(INT)> | %<key idx in postponer queue (INT)>
+    COMMAND = writeExpr INT
+    CONDITION = {ifRegEq | ifNotRegEq | ifRegGt | ifRegLt} <register index (INT)> <value (INT)>
+    COMMAND = setStatusPart <custom text>
+    COMMAND = {setReg|addReg|subReg|mulReg} <register index (INT)> <value (INT)>
+    COMMAND = set module.MODULEID.invertScrollDirection BOOL
     COMMAND = set macroEngine.scheduler {blocking|preemptive}
-    COMMAND = set doubletapDelay <time in ms, at most 65535, alias to doubletapTimeout (NUMBER)>
+    COMMAND = set doubletapDelay <time in ms, at most 65535, alias to doubletapTimeout (INT)>
     COMMAND = switchLayer LAYERID
     COMMAND = switchKeymapLayer KEYMAPID LAYERID
-    COMMAND = resolveNextKeyEq <queue position (NUMBER)> KEYID {<time in ms>|untilRelease} <action adr (ADDRESS)> <action adr (ADDRESS)>
+    COMMAND = resolveNextKeyEq <queue position (INT)> KEYID {<time in ms>|untilRelease} <action adr (ADDRESS)> <action adr (ADDRESS)>
     COMMAND = set modifierLayerTriggers.{control} {left|right|both}
-    COMMAND = resolveSecondary <time in ms (NUMBER)> [<time in ms (NUMBER)>] <primary action macro action index (ADDRESS)> <secondary action macro action index (ADDRESS)>
+    COMMAND = resolveSecondary <time in ms (INT)> [<time in ms (INT)>] <primary action macro action index (ADDRESS)> <secondary action macro action index (ADDRESS)>
     COMMAND = untoggleLayer
     LAYERID = control
     #########
@@ -237,23 +258,23 @@ The following grammar is supported:
     MODIFIER = suppressKeys
     COMMAND = setStickyModsEnabled {0|never|smart|always|1}
     COMMAND = setCompensateDiagonalSpeed {0|1}
-    COMMAND = setDebounceDelay <time in ms, at most 250 (NUMBER)>
-    COMMAND = setKeystrokeDelay <time in ms, at most 65535 (NUMBER)>
-    COMMAND = setReg <register index (NUMBER)> <value (NUMBER)>
+    COMMAND = setDebounceDelay <time in ms, at most 250 (INT)>
+    COMMAND = setKeystrokeDelay <time in ms, at most 65535 (INT)>
+    COMMAND = setReg <register index (INT)> <value (INT)>
     COMMAND = setEmergencyKey KEYID
 
 ### Uncategorized commands:
 
-- `setLedTxt <time> <custom text>` will set led display to supplemented text for the given time. (Blocks for the given time.)
-    - If the given time is zero, i.e. `<time> = 0`, the led text will be set indefinitely (until the display is refreshed by other text) and this command will returns immediately (non-blocking).
+- `setLedTxt <time> { STRING | VALUE }` will set led display to the supplemented text and block for the given time before updating display back to default value.
+    - If the given time is zero, i.e. `<time> = 0`, the led text will be set indefinitely (until the display is refreshed by other text) and this command will return immediately.
+    - If `VALUE` is given (e.g., `$keystrokeDelay`), will be shown in notation that shows first two significant digits and a letter denoting floating point shift. E.g., `A23 = 2.3`, `Y23 = -0.23`, `23B = 2300`...
 - `progressHue` or better `autoRepeat progressHue` will slowly adjust constantRGB value in order to rotate the per-key-RGB backlight through all hues.
 - `resetTrackpoint` resets the internal trackpoint board. Can be used to recover the trackpoint from drift conditions. Drifts usually happen if you keep the cursor moving at slow constant speeds, because of the boards's internal adaptive calibration. Since the board's parameters cannot be altered, the only way around is or you to learn not to do the type of movement which triggers them.
-- `i2cBaudRate <baud rate, default 100000(NUMBER)>` sets i2c baud rate. Lowering this value may improve module reliability, while increasing latency.
+- `i2cBaudRate <baud rate, default 100000(INT)>` sets i2c baud rate. Lowering this value may improve module reliability, while increasing latency.
 
 ### Triggering keyboard actions (pressing keys, clicking, etc.):
 
-- `write <custom text>` will type rest of the string. Same as the plain text command. This is just easier to use with conditionals... If you want to interpolate register values, use (e.g.) `setStatus Register 0 contains #0; printStatus`.
-- `writeExpr NUMBER` serves for writing out contents of registers or otherwise computed numbers. E.g., `writeExpr #5` or `writeExpr @-2`.
+- `write <custom text>` will type rest of the string. Same as the plain text command. Strings are single quote (for literal strings) or double quote (for interpolated strings) enclosed. E.g., `write "keystrokeDelay is $keystrokeDelay, 1+1=$(1+1)\n"`, or `'$ will show as literal dollar sign.'`. 
 - `startMouse/stopMouse` start/stop corresponding mouse action. E.g., `startMouse move left`
 - `pressKey|holdKey|tapKey|releaseKey` Presses/holds/taps/releases the provided scancode. E.g., `pressKey mouseBtnLeft`, `tapKey LC-v` (Left Control + (lowercase) v), `tapKey CS-f5` (Ctrl + Shift + F5), `LS-` (just tap left Shift).
   - **press** means adding the scancode into a list of "active keys" and continuing the macro. The key is released once the macro ends. I.e., if the command is not followed by any sort of delay, the key will be released again almost immediately.
@@ -281,7 +302,7 @@ The following grammar is supported:
 ### Control flow, macro execution (aka "functions"):
 
 - `goTo ADDRESS` will go to action index int. Actions are indexed from zero. See `ADDRESS`
-- `repeatFor <register index> ADDRESS` - abbreviation to simplify cycles. Will decrement the supplemented register and perform `goTo` to `adr` if the value is still greater than zero. Intended usecase - place after command which is to be repeated with the register containing number of repeats and adr `@-1` (or similar).
+- `repeatFor <variable name> ADDRESS` - abbreviation to simplify cycles. Will decrement the supplemented register and perform `goTo` to `adr` if the value is still greater than zero. Intended usecase - place after command which is to be repeated with the register containing number of repeats and adr `($currentAddress-1)` (or similar).
 - `break` will end playback of the current macro
 - `noOp` does nothing - i.e., stops macro for exactly one update cycle and then continues.
 - `yield` forces macro to yield, if blocking scheduler is used. With preemptive scheduler acts just as `noOp`.
@@ -293,7 +314,7 @@ The following grammar is supported:
 ### Status buffer/Debugging tools
 
 - `printStatus` will "type" content of status buffer (256 or 1024 chars, depends on my mood) on the keyboard. Mainly for debug purposes.
-- `{setStatus | setStatusPart} <custom text>` will append <custom text> to the status buffer, if there is enough space for that. This text can then be printed by `printStatus`. This command interpolates register expressions. `setStatus` automatically appends newline, `setStatusPart` does not.
+- `setStatus STRING` will append STRING to the status buffer, if there is enough space for that. This text can then be printed by `printStatus`.
 - `clearStatus` will clear the buffer.
 - `statsRuntime` will output information about runtime of current macro into the status buffer. The time is measured before the printing mechanism is initiated.
 - `statsLayerStack` will output information about layer stack (into the buffer).
@@ -370,8 +391,8 @@ We allow postponing key activations in order to allow deciding between some scen
     - `transitive` makes termination conditions relate to that key of the queue whose result is most permissive (normally, they always refer to the activation key) - e.g., in transitive mode with 3-key shortcut, first key can be released if second key is being held. Timers count time since last performed action in this mode. Both `timeoutIn` and `cancelIn` behave according to this flag. In non-transitive mode, timers are counted since activation key press - i.e., since macro start.
     - `anyOrder` will check only presence of mentioned keyIds in postponer queue.
     - `orGate` will treat the given list of keys as *or-conditions* (rather than as *and-conditions*). Check any presence of mentioned keyIds in postponer queue for the next key press. Implies `anyOrder`.
-    - `timeoutIn <time (NUMBER)>` adds a timeout timer to both `Shortcut` and `Gesture` commands. If the timer times out (i.e., the condition does not suceed or fail earlier), the command continues as if matching KEYIDs failed. Can be used to shorten life of `Shortcut` resolution.
-    - `cancelIn <time (NUMBER)>` adds a timer to both commands. If this timer times out, all related keys are consumed and macro is broken. *"This action has never happened, lets not talk about it anymore."* (Note that this is an only condition which behaves same in both `if` and `ifNot` cases.)
+    - `timeoutIn <time (INT)>` adds a timeout timer to both `Shortcut` and `Gesture` commands. If the timer times out (i.e., the condition does not suceed or fail earlier), the command continues as if matching KEYIDs failed. Can be used to shorten life of `Shortcut` resolution.
+    - `cancelIn <time (INT)>` adds a timer to both commands. If this timer times out, all related keys are consumed and macro is broken. *"This action has never happened, lets not talk about it anymore."* (Note that this is an only condition which behaves same in both `if` and `ifNot` cases.)
 - DEPRECATED (use `ifShortcut/ifGesture` instead) `resolveNextKeyEq <queue idx> <key id> <timeout> <adr1> <adr2>` will wait for next (n) key press(es). When the key press happens, it will compare its id with the `<key id>` argument. If the id equals, it issues goto to adr1. Otherwise, to adr2. See examples. Implicitly applies `postponeKeys` modifier.
   - `arg1 - queue idx` idx of key to compare, indexed from 0. Typically 0, if we want to resolve the key after next key then 1, etc.
   - `arg2 - key id` key id obtained by `resolveNextKeyId`. This is static identifier of the hardware key.
@@ -385,9 +406,10 @@ We allow postponing key activations in order to allow deciding between some scen
 
 Conditions are checked before processing the rest of the command. If the condition does not hold, the rest of the command is skipped entirelly. If the command is evaluated multiple times (i.e., if it internally consists of multiple steps, such as the delay, which is evaluated repeatedly until the desired time has passed), the condition is evaluated only in the first iteration.
 
+- `if BOOL` allows switching based on custom expression. E.g., `if ($keystrokeDelay > 10) ...`
 - `ifDoubletap/ifNotDoubletap` is true if the macro was started at most 300ms after start of another instance of the same macro.
 - `ifInterrupted/ifNotInterrupted` is true if a keystroke action or mouse action was triggered during macro runtime. Allows fake implementation of secondary roles. Also allows interruption of cycles.
-- `ifReleased/ifNotReleased` is true if the key which activated current macro has been released. If the key has been physically released but the release has been postponed by another key, the conditien yields false. If the key has been physically released and the postponing mode was initiated by this macro (e.g., `postponeKeys ifReleased goTo @2`), it returns non-postponed release state (i.e., true if there's a matching release event in the postponing queue).
+- `ifReleased/ifNotReleased` is true if the key which activated current macro has been released. If the key has been physically released but the release has been postponed by another key, the conditien yields false. If the key has been physically released and the postponing mode was initiated by this macro (e.g., `postponeKeys ifReleased goTo ($currentAddress+2)`), it returns non-postponed release state (i.e., true if there's a matching release event in the postponing queue).
 - `ifPending/ifNotPending <n>` is true if there is at least `n` postponed keys in the postponing queue. In context of postponing mechanism, this condition acts similar in place of ifInterrupted.
 - `ifPendingKeyReleased/ifNotPendingKeyReleased <queue idx>` is true if the key pending at `idx` in queue has been released. I.e., if there exists matching release event in the queue.
 - `ifKeyPendingAt/ifNotKeyPendingAt <idx> KEYID` looks into postponing queue at `idx`th waiting key and compares it to the `keyId`. See `resolveNextKeyId`.
@@ -425,7 +447,7 @@ Usage (e.g.): call `recordMacro a`, do some work, end recording by another `reco
 
 Only BasicKeyboard scancodes are available at the moment. These macros are recorded into RAM only. Number of macros is limited by memory (current limit is set to approximately 500 keystrokes (4kb) (maximum is ~1000 if we used all available memory)). If less than 1/4 of dedicated memory is free, oldest macro slot is freed. If currently recorded macro is longer than 1/4 of dedicated memory, recording is stopped and the macro is freed (prevents unwanted deletion of macros).
 
-Macro slots are identified by a single character or a number or `#key` (meaning "this key").
+Macro slots are identified by a single character or a number or `$thisKeyId` (meaning "this key").
 
 - `recordMacroDelay` will measure time until key release (i.e., works like `delayUntilRelease`) and insert delay of that length into the currently recorded macro. This can be used to wait for window manager's reaction etc.
 - `recordMacro [<macro slot id(MACROID)>]` will toggle recording (i.e., either start or stop)
@@ -434,29 +456,30 @@ Macro slots are identified by a single character or a number or `#key` (meaning 
 - If the `MACROID` argument is ommited, last id is used.
 - `{startRecordingBlind | stopRecordingBlind | recordMacroBlind} ...` work similarly, except that basic scancode output of keyboard is suppressed.
 
-### Registers:
-For the purpose of toggling functionality on and off, and for global constants management, we provide 32 numeric registers (namely of type int32_t).
+### Named variables:
 
-- `setReg <register index> <value>` will set register identified by index to value.
-- `ifRegEq|ifNotRegEq|ifRegGt|ifRegLt` see CONDITION section
-- `{addReg|subReg|mulReg} <register index> <value>` adds value to the register
-- Register values can also be used in place of all numeric arguments by prefixing register index by '#'. E.g., waiting until release or for amount of time defined by reg 1 can be achieved by `delayUntilReleaseMax #1`
+`setVar <name> <value>` allows setting/creating custom named variable. E.g., `setVar foo ($abc + 3)`. Value then can be accessed via `$foo` in place of numeric argument.
+
+Internally, values are saved in one of the following types, and types are automatically converted as needed in expressions:
+- `INT` - as a int32_t. E.g., `(7/3)` yields 2
+- `FLOA`T - as 32-bit floating point value. E.g., `(7/3.0)` yields 2.333...
+- `BOOL` - 1 or 0 value 
 
 ### Configuration options:
 
 - `set stickyModifiers {never|smart|always}` globally turns on or off sticky modifiers. This affects only standard scancode actions. Macro actions (both gui and command ones) are always nonsticky, unless `sticky` flag is included in `tapKey|holdKey|pressKey` commands. Default value is `smart`, which is the official behaviour - i.e., `<alt/ctrl/gui> + <tab/arrows>` are sticky.
-- `set diagonalSpeedCompensation BOOLEAN` will divide diagonal mouse speed by sqrt(2) if enabled.
-- `set chordingDelay 0 | <time in ms (NUMBER)>` If nonzero, keyboard will delay *all* key actions by the specified time (recommended 50ms). If another key is pressed during this time, pending key actions will be sorted according to their type:
+- `set diagonalSpeedCompensation BOOL` will divide diagonal mouse speed by sqrt(2) if enabled.
+- `set chordingDelay 0 | <time in ms (INT)>` If nonzero, keyboard will delay *all* key actions by the specified time (recommended 50ms). If another key is pressed during this time, pending key actions will be sorted according to their type:
   1) Keymap/layer switches
   2) Macros
   3) Keystrokes and mouse actions
   This allows the user to trigger chorded shortcuts in arbitrary ordrer (all at the "same" time). E.g., if `A+Ctrl` is pressed instead of `Ctrl+A`, keyboard will still send `Ctrl+A` if the two key presses follow within the specified time.
-- `set autoShiftDelay 0 | <time in ms (NUMBER)>` If nonzero, autoshift feature is turned on. This adds shift to a scancode when the key is held for at least `autoShiftDelay` ms. (E.g., tapping a results in 'a', pressing 'a' for a little bit longer results in 'A'.)
+- `set autoShiftDelay 0 | <time in ms (INT)>` If nonzero, autoshift feature is turned on. This adds shift to a scancode when the key is held for at least `autoShiftDelay` ms. (E.g., tapping a results in 'a', pressing 'a' for a little bit longer results in 'A'.)
 - `set debounceDelay <time in ms, at most 250>` prevents key state from changing for some time after every state change. This is needed because contacts of mechanical switches can bounce after contact and therefore change state multiple times in span of a few milliseconds. Official firmware debounce time is 50 ms for both press and release. Recommended value is 10-50, default is 50.
 - `set doubletapTimeout <time in ms, at most 65535>` controls doubletap timeouts for both layer switchers and for the `ifDoubletap` condition.
 - `set keystrokeDelay <time in ms, at most 65535>` allows slowing down keyboard output. This is handy for lousily written RDP clients and other software which just scans keys once a while and processes them in wrong order if multiple keys have been pressed inbetween. In more detail, this setting adds a delay whenever a basic usb report is sent. During this delay, key matrix is still scanned and keys are debounced, but instead of activating, the keys are added into a queue to be replayed later. Recommended value is 10 if you have issues with RDP missing modifier keys, 0 otherwise.
 - `set autoRepeatDelay <time in ms, at most 65535>` and `set autoRepeatRate <time in ms, at most 65535>` allows you to set the initial delay (default: 500 ms) and the repeat delay (default: 50 ms) when using `autoRepeat`. When you run the command `autoRepeat <command>`, the `<command>` is first run without delay. Then, it will waits `autoRepeatDelay` amount of time before running `<command>` again. Then and thereafter, it will waits `autoRepeatRate` amount of time before repeating `<command>` again. This is consistent with typical OS keyrepeat feature.
-- `set mouseKeys.{move|scroll}.{...} NUMBER` please refer to Agent for more details
+- `set mouseKeys.{move|scroll}.{...} INT` please refer to Agent for more details
   - `initialSpeed` - the speed that is active when key is pressed
   - `initialAcceleration,baseSpeed` - when mouse key is held, speed increases until it reaches baseSpeed
   - `deceleratedSpeed` - speed as affected by deceleration modifier
@@ -531,9 +554,9 @@ For the purpose of toggling functionality on and off, and for global constants m
 
   - `axisLockSkew` controls caret axis locking. Defaults to 0.5, valid/reasonable values are 0-100, centered around 1.
   - `axisLockFirstTickSkew` - same meaning as `axisLockSkew`, but controls how axis locking applies on first tick. Nonzero value means that firt tick will require a "push" before cursor starts moving. Or will require less "force" if the value is greater than 1.
-  - `cursorAxisLock BOOLEAN` - turns axis locking on for cursor mode. Not recommended, but possible.
-  - `scrollAxisLock BOOLEAN` - turns axis locking on for scroll mode. Default for keycluster trackball.
-  - `caretAxisLock BOOLEAN` - turns axis locking on for all discrete modes.
+  - `cursorAxisLock BOOL` - turns axis locking on for cursor mode. Not recommended, but possible.
+  - `scrollAxisLock BOOL` - turns axis locking on for scroll mode. Default for keycluster trackball.
+  - `caretAxisLock BOOL` - turns axis locking on for all discrete modes.
 
 - Remapping keys:
   - `set navigationModeAction.{caret|media}.{DIRECTION|none} ACTION` can be used to customize caret or media mode behaviour by binding directions to macros. This action is global and reversible only by powercycling.
@@ -544,12 +567,12 @@ For the purpose of toggling functionality on and off, and for global constants m
   - `set secondaryRole.defaultStrategy [ simple | advanced ]` sets default resolution strategy to be used. Furthermore, `ifPrimary/ifSecondary` can specify explicitly which strategy to use (e.g., `ifPrimary advancedStrategy final tapKey a`).
     - simple strategy listens for other key activations until the dual-role key is released. If there is any such activation, it activates the secondary role and then the action of the other key without any further delays. If there is no such other action, it performs primary role on the dual-role key release.
     - advanced strategy may trigger secondary role depending on timeout, or depending on key release order.
-      - `set secondaryRole.advanced.timeout <timeout in ms, 350 (NUMBER)>` if this timeout is reached, `timeoutAction` (secondary by default) role is activated.
+      - `set secondaryRole.advanced.timeout <timeout in ms, 350 (INT)>` if this timeout is reached, `timeoutAction` (secondary by default) role is activated.
       - `set secondaryRole.advanced.timeoutAction { primary | secondary }` defines whether primary or secondary role should be activated when timeout is reached
-      - `set secondaryRole.advanced.triggerByRelease BOOLEAN` if enabled, secondary role is chosen depending on release order of the keys (`press-A, press-B, release-B, release-A` leads to secondary action; `press-A, press-B, release-A, release-B` leads to primary action).
-      - `set secondaryRole.advanced.safetyMargin <ms, -50 - 50 (NUMBER)>` finetunes sensitivity of the trigger-by-release behaviour by adding the value to the dual-role-key release time. I.e., if both keys are released simultaneously (i.e., at most `safetyMargin` ms from each other), then positive values favor primary role, negative values secondary role.
-      - `set secondaryRole.advanced.doubletapToPrimary BOOLEAN` allows initiating hold of primary action by doubletap. (Useful if you want dual key on space key.)
-      - `set secondaryRole.advanced.doubletapTime <ms, 200 (NUMBER)>` configures the above timeout (measured press-to-press).
+      - `set secondaryRole.advanced.triggerByRelease BOOL` if enabled, secondary role is chosen depending on release order of the keys (`press-A, press-B, release-B, release-A` leads to secondary action; `press-A, press-B, release-A, release-B` leads to primary action).
+      - `set secondaryRole.advanced.safetyMargin <ms, -50 - 50 (INT)>` finetunes sensitivity of the trigger-by-release behaviour by adding the value to the dual-role-key release time. I.e., if both keys are released simultaneously (i.e., at most `safetyMargin` ms from each other), then positive values favor primary role, negative values secondary role.
+      - `set secondaryRole.advanced.doubletapToPrimary BOOL` allows initiating hold of primary action by doubletap. (Useful if you want dual key on space key.)
+      - `set secondaryRole.advanced.doubletapTime <ms, 200 (INT)>` configures the above timeout (measured press-to-press).
 
 - `macroEngine`
   - terminology:
@@ -570,22 +593,34 @@ For the purpose of toggling functionality on and off, and for global constants m
 
 - backlight:
     - `backlight.strategy { functional | constantRgb | perKeyRgb }` sets backlight strategy.
-    - `backlight.constantRgb.rgb NUMBER NUMBER NUMBER` allows setting custom constant colour for entire keyboard. E.g.: `set backlight.strategy constantRgb; set backlight.constantRgb.rgb 255 0 0` to make entire keyboard shine red.
-    - `backlight.keyRgb.LAYERID.KEYID NUMBER NUMBER NUMBER` allows overriding color of the key. This override will last until reload of keymap and will apply to all backlight strategies.
+    - `backlight.constantRgb.rgb INT INT INT` allows setting custom constant colour for entire keyboard. E.g.: `set backlight.strategy constantRgb; set backlight.constantRgb.rgb 255 0 0` to make entire keyboard shine red.
+    - `backlight.keyRgb.LAYERID.KEYID INT INT INT` allows overriding color of the key. This override will last until reload of keymap and will apply to all backlight strategies.
 
 - general led configuration:
-    - `leds.enabled BOOLEAN` turns on/off all keyboard leds: i.e., backlight, indicator leds, segment display
+    - `leds.enabled BOOL` turns on/off all keyboard leds: i.e., backlight, indicator leds, segment display
     - `leds.brightness <0-1 multiple of default (FLOAT)>` allows scaling default brightness. E.g., `0.5` will dim entire keyboard to half of the default values that are configured in Agent
-    - `leds.fadeTimeout <seconds to fade after (NUMBER)>` will turn off leds after configured interval.
+    - `leds.fadeTimeout <seconds to fade after (INT)>` will turn off leds after configured interval.
 
 - modifier layer triggers:
     - `set modifierLayerTriggers.{shift|alt|super|ctrl} {left|right|both}` controls whether modifier layers are triggered by left or right or either of the modifiers.
 
 ### Argument parsing rules:
 
-- `NUMBER` is parsed as a 32 bit signed integer and then assigned into the target variable. However, the target variable is often only 8 or 16 bit unsigned. If a number is prefixed with '#', it is interpretted as a register address (index). If a number is prefixed with '@', current macro index is added to the final value. `#key` returns activation key's hardware id. If prefixed with `%`, returns keyid of nth press event in the postponer queue (e.g., `%0` returns `KEYID` of first key which is postponed but not yet activated).
+- `INT` is parsed as a 32 bit signed integer and then assigned into the target variable. However, the target variable is often only 8 or 16 bit unsigned. 
+- `EXPRESSION` / variables - all numeric/boolean arguments also accept arbitrary expressions. These have to be enclosed in parentheses.
+  - Following operators are accepted:
+    - `+,-,*,/,%` - addition, subtraction, multiplication, division and modulo
+    - `min(),max()` - minimum, maximum, e.g. `min($a, 2, 3, 4)`
+    - `<,<=,>,>=` - less than, less or equal, greater than, greater or equal
+    - `==,!=` - equals, not equals
+    - `!` - unary boolean negation
+  - Following special identifiers are supported:
+    - `$thisKeyId` which stands for keyid of the key which activated the macro.
+    - `$keyId.<keyId abbreviation>` which stands for keyid of the key which activated the macro.
+    - `$currentAddress` which stands for address of the command in which it is found.
+    - `$queuedKeyId.<index (NUMBER)>` which stands for a zero-indexed position in postponer's queue.
 - `KEYMAPID` - is assumed to be 3 characters long abbreviation of a keymap.
-- `MACROID` - macro slot identifier is either a number or a single ascii character (interpretted as a one-byte value). `#key` can be used so that the same macro refers to different slots when assigned to different keys.
+- `MACROID` - macro slot identifier is either a number or a single ascii character (interpretted as a one-byte value). `$thisKeyId` can be used so that the same macro refers to different slots when assigned to different keys.
 - `register index` is an integer in the appropriate range, used as an index to the register array.
 - `custom text` is an arbitrary text starting on next non-space character and ending at the end of the text action. (Yes, this should be refactored in the future.)
 - `KEYID` is a numeric id obtained by `resolveNextKeyId` macro. It can also be constructed manually, as an index (starting at zero) added to an offset of `64*slotid`.  This means that starting offsets are:
@@ -599,7 +634,7 @@ For the purpose of toggling functionality on and off, and for global constants m
 
 - `SHORTCUT` is an abbreviation of a key possibly accompanied by modifiers. Describes at most one scancode action. Can be prefixed by `C/S/A/G` denoting `Control/Shift/Alt/Gui`. Mods can further be prefixed by `L/R`, denoting left or right modifier. If a single ascii character is entered, it is translated into corresponding key combination (shift mask + scancode) according to standard EN-US layout. E.g., `pressKey mouseBtnLeft`, `tapKey LC-v` (Left Control + (lowercase) V (scancode)), `tapKey CS-f5` (Ctrl + Shift + F5), `tapKey v` (V), `tapKey V` (Shift + V).
 - `LABEL` is and identifier marking some lines of the macro. When a string is encountered in a context of an address, UHK looks for a command beginning by `<the string>:` and returns its addres (index). If same label is present multiple times, the next one w.r.t. currently processed command is returned.
-- `ADDRESS` addresses allow jumping between macro instructions. Every action or command has its own address, numbered from zero. Formally, address is either a `NUMBER` (including `#`, `@`, etc syntaxies) or a string which denotes label identifier. Every action consumes at least one address. (Except for command action, exactly one.) Every command (non-empty line of command action) consumes one address. E.g., `goTo 0` (go to beginning), `goTo @-1` (go to previous command, since `@` resolves relative adresses to absolute), `goTo @0` (active waiting), `goTo default` (go to line which begins by `default: ...`).
+- `ADDRESS` addresses allow jumping between macro instructions. Every action or command has its own address, numbered from zero. Formally, address is either a `INT` or a string which denotes label identifier. Every action consumes at least one address. (Except for command action, exactly one.) Every command (non-empty line of command action) consumes one address. E.g., `goTo 0` (go to beginning), `goTo ($currentAddress-1)` (go to previous command), `goTo $currentAddress` (active waiting), `goTo default` (go to line which begins by `default: ...`).
 
 ### Navigation modes:
 

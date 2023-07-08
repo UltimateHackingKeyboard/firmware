@@ -236,19 +236,19 @@ One concept which uses this feature is _shortcuts and gestures_.
 You can use `ifShortcut` when you want to map an action to a combination of keys. E.g, if I want z+x to produce Control+x, z+c to produce Control+c, z+v to produce Control+v, I will map following macro on the z key:
 
 ```
-ifShortcut 88 final tapKey C-x
-ifShortcut 89 final tapKey C-c
-ifShortcut 90 final tapKey C-v
+ifShortcut x final tapKey C-x
+ifShortcut c final tapKey C-c
+ifShortcut v final tapKey C-v
 holdKey z
 ```
 
-An `ifShortcut` macro needs to be placed on the first key of the shortcut, and refers to other keys by Their hardware ids. These ids can be obtained by `resolveNextKeyId` command (i.e., activating the command and pressing the key while having a text editor focused). The `final` modifier breaks the command after the "modified" `tapKey` command finishes.
+An `ifShortcut` macro needs to be placed on the first key of the shortcut, and refers to other keys by Their hardware ids. These ids can be entered in numeric form obtained by `resolveNextKeyId` command (i.e., activating the command and pressing the key while having a text editor focused), or abbreviations may be used (as shown above). The `final` modifier breaks the command after the "modified" `tapKey` command finishes.
 
 `ifGesture` can be used to implement "loose gestures" - i.e., shortcuts where the second keypress can follow without continuity of press of the first key. Vim-like gt and gT (g+shift+t) tab switching:
 
 ```
-ifGesture 077 final tapKey C-pageUp
-ifGesture 085 077 final tapKey C-pageDown
+ifGesture t final tapKey C-pageUp
+ifGesture leftShift t final tapKey C-pageDown
 holdKey g
 ```
 
@@ -265,18 +265,27 @@ In order to bind some action to doubletap, you may use two strategies:
 - simple `ifDoubletap` condition, which just checks whether another instance of the same macro was activae lately. Doubletapping this will result in sequence `ab`:
 
 ```
-    ifDoubletap final tapKey b
-    holdKey a
+ifDoubletap final tapKey b
+holdKey a
 ```
 
 - time-machine `ifGesture` condition. Doubletapping this will produce a slight delay and then output just `b`:
 
 ```
-    ifGesture #key final tapKey b
-    holdKey a
+ifGesture #key final tapKey b
+holdKey a
 ```
 
 Another concept which may or may not use our time machine is secondary roles, namely the advanced strategy.
+
+### Keyids vs Scancodes
+
+Please note the difference between key ids and scancodes. Both notation use human-readable abbreviations and are therefore easy to mix up.
+
+- _key ids_ identify specific hardware key. Human readable key id abbreviations are assigned to match the printed key labels according to the default en-US layout. If you wish to use numeric key ids, then be sure that the numbers have always at least two digits (e.g., `ifGesture 03 ...`).
+- _scancode_ abbreviations describe scancodes as communicated to the PC, mapped according to en-US scancode mapping.
+
+For instance, if you rebind your UHK to Dvorak, then the key identified by hardware id `s` will be mapped to the `o` scancode (i.e., will read `o` in Agent, or contain `holdKey o` macro command). That is, issuing `activateKeyPostponed s` will produce the same thing as `holdKey o`. (Of course, if you furthermore choose some non-standard language mapping in your OS, you may end up with yet another character produced on screen.)
 
 ### Secondary roles
 
@@ -409,6 +418,36 @@ set keymapAction.base.192 macro TouchpadLeft
 set keymapAction.base.193 macro TouchpadRight
 ```
 
+### Strings, variables and expressions
+
+Write command accepts (not exactly) bash-style interpolated strings. E.g.:
+
+```
+write "Current keystrokeDelay is $keystrokeDelay. One plus one is $(1 + 1).\n"
+write 'This is literal "$" character. And here you have an apostrophe '"'"'.'
+```
+
+You can save values into named variables via following syntax:
+
+```
+setVar foo 42
+write "\$foo value is $foo."
+```
+
+You can use your variables, or configuration values in commands. E.g. to control led brightness, you may:
+
+```
+ifShift set leds.brightness ($leds.brightness * 1.5 + 0.01)
+ifNotShift set leds.brightness ($leds.brightness / 1.5)
+```
+
+Following operators are accepted:
+- `+,-,*,/,%` - addition, subtraction, multiplication, division and modulo
+- `min(),max()` - minimum, maximum, e.g. `min($a, 2, 3, 4)`
+- `<,<=,>,>=` - less than, less or equal, greater than, greater or equal
+- `==,!=` - equals, not equals
+- `!` - unary boolean negation
+
 ### Advanced commands:
 
 You can simplify writing macros by using `#` and `@` characters. The first resolves a number as an index of a register. The second interprets the number as a relative action index. For instance the following macro will write out five "a"s with 50 ms delays
@@ -419,24 +458,24 @@ You can simplify writing macros by using `#` and `@` characters. The first resol
 // yes, this is a totally meaningless example
 ifCtrl goTo default    //goto can also go to labels, absolute adresses and relative adresses
 ifShift final tapKey a //final modifier ends the macro once the command has finished
-setReg 0 50            //store number 50 into register 0
-setReg 1 5
+setVar foo 50            //store number 50 into variable foo
+setVar bar 5
 tapKey a
-delayUntil #0          //the #0 is expanded to content of register 0
-repeatFor 1 @-2        //decrement register 1; if it is non-zero, return by two commands to the tapKey command
-noOp                   //note the @ character - it resolves relative address to absolute (i.e., adds current adr)
+delayUntil $foo
+repeatFor bar $currentAddress-2        //decrement $bar; if it is non-zero, return by two commands to the tapKey command
+noOp                   
 default: tapKey b      //<string>: denotes a label, which can be used as jump target
 ```
 
-You can use `goTo @0` as an active wait loop. Consider following example. If briefly tapped, it produces `@@` (play last vim macro). If held, it prepends any other key tap with a `@` key. E.g., `thisMacro + p + p + p` produces `@p@p@p` (play vim macro in register p, twice).
+You can use `goTo $currentAddress` as an active wait loop. Consider following example. If briefly tapped, it produces `@@` (play last vim macro). If held, it prepends any other key tap with a `@` key. E.g., `thisMacro + p + p + p` produces `@p@p@p` (play vim macro in register p, twice).
 
 ```
-begin: postponeKeys ifNotPending 1 ifNotReleased goTo @0
+begin: postponeKeys ifNotPending 1 ifNotReleased goTo $currentAddress
 postponeKeys ifReleased final ifNotInterrupted ifNotPlaytime 300 tapKeySeq @ @
 postponeKeys ifPending 1 tapKey @
-postponeKeys setReg 0 %0
-ifPending 1 goTo @0
-ifKeyActive #0 goTo @0
+postponeKeys setVar savedKey $queuedKeyId.0
+ifPending 1 goTo $currentAddress
+ifKeyActive $savedKey goTo $currentAddress
 goTo begin
 ```
 
@@ -446,8 +485,8 @@ On activation key:
 
 ```
 pressKey LS-
-setReg 5 1
-ifRegEq 5 1 goTo @0
+setVar capsActive 1
+if ($capsActive) goTo $currentAddress
 #at the end of macro, the shift gets released automatically
 ```
 
@@ -455,7 +494,7 @@ on space:
 
 ```
 holdKey space
-setReg 5 0
+setVar capsActive 0
 ```
 
 ### Macro recorder
@@ -473,20 +512,20 @@ Above examples can be combined into more elaborate setups. Assume we bind follow
 
 ```
 # perKeyMacro
-ifShift final recordMacro #key
-ifRegEq 27 1 final recordMacro #key
-playMacro #key
+ifShift final recordMacro $thisKeyId
+if ($qActive) final recordMacro $thisKeyId
+playMacro $thisKeyId
 ```
 
 ```
 # recordKey
 ifRecording final stopRecording
-ifRegEq 27 1 final setReg 27 0
-setReg 27 1
+if $qActive final setVar qActive 0
+setVar qActive 1
 toggleLayer fn
-ifNotRecording ifNotPlaytime 5000 ifRegEq 27 1 goTo @0
+ifNotRecording ifNotPlaytime 5000 if ($qActive) goTo @0
 untoggleLayer
-setReg 27 0
+setVar qActive 0
 ```
 
 ### Per-key LEDs fun:
@@ -494,18 +533,18 @@ setReg 27 0
 Colour picker for constant colours. Bound on fn+r, fn+r+r turns colour to red, fn+r+v to violet, etc..
 
 ```
-ifGesture 75 final set backlight.constantRgb.rgb 255 32 0  // r - red
-ifGesture 84 final set backlight.constantRgb.rgb 192 255 0  // g - green
-ifGesture 91 final set backlight.constantRgb.rgb 128 192 255 // b - blue
-ifGesture 14 final set backlight.constantRgb.rgb 255 192 0 // y - yellow
-ifGesture 90 final set backlight.constantRgb.rgb 192 64 255 // v - violet
-ifGesture 9  final set backlight.constantRgb.rgb 255 128 0 // o - orange
-ifGesture 73 final set backlight.constantRgb.rgb 192 32 0 // w - wine
-ifGesture 21 final set backlight.constantRgb.rgb 128 48 0 // b - brown
-ifGesture 22 final set backlight.constantRgb.rgb 255 192 32 // n - warm white, as "normal"
-ifGesture 82 final set backlight.strategy functional // f to functional backlight
-ifGesture 72 final set leds.enabled 0 // q - to turn off
-ifGesture 10 final set leds.enabled 1 // p - to turn back on
+ifGesture r final set backlight.constantRgb.rgb 255 32 0  // r - red
+ifGesture g final set backlight.constantRgb.rgb 192 255 0  // g - green
+ifGesture b final set backlight.constantRgb.rgb 128 192 255 // b - blue
+ifGesture y final set backlight.constantRgb.rgb 255 192 0 // y - yellow
+ifGesture v final set backlight.constantRgb.rgb 192 64 255 // v - violet
+ifGesture o final set backlight.constantRgb.rgb 255 128 0 // o - orange
+ifGesture w final set backlight.constantRgb.rgb 192 32 0 // w - wine
+ifGesture b final set backlight.constantRgb.rgb 128 48 0 // b - brown
+ifGesture n final set backlight.constantRgb.rgb 255 192 32 // n - warm white, as "normal"
+ifGesture f final set backlight.strategy functional // f to functional backlight
+ifGesture q final set leds.enabled 0 // q - to turn off
+ifGesture p final set leds.enabled 1 // p - to turn back on
 ```
 
 To see all possible UHK hues (maximum saturation), hold a key with the following macro:
@@ -526,11 +565,11 @@ Above macro will not terminate, not even when ran multiple times. In order to fi
 
 ```
 # prevent the macro from running multiple times via (randomly picked) register 22
-setReg 22 1
+setVar hueStopper 1
 delayUntil 2000
-setReg 22 0
+setVar hueStopper 0
 beginLoop:
-ifRegEq 22 1 break
+if $hueStopper break
 progressHue
 delayUntil 1000
 goTo beginLoop
@@ -542,7 +581,7 @@ You can also start this from `$onInit` by `fork rotateHues` (given you have the 
 # put this at the beginning of the picker, to stop rotateHues when another choice is made.
 setReg 22 1
 # start the `rotateHues` macro on 'c' - as "changing"
-ifGesture 89 final fork rotateHues
+ifGesture c final fork rotateHues
 ```
 
 ### Executing commands over USB

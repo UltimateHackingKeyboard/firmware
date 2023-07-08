@@ -7,6 +7,19 @@
 #include "macro_shortcut_parser.h"
 #include "str_utils.h"
 
+typedef enum {
+    scType_basic,
+    scType_system,
+    scType_media,
+    scType_mouseBtn
+} shortcut_type_t;
+
+typedef struct {
+    const char* id;
+    uint8_t scancode;
+    shortcut_type_t type;
+} lookup_record_t;
+
 static const lookup_record_t* lookup(uint8_t begin, uint8_t end, const char* str, const char* strEnd);
 
 char MacroShortcutParser_ScancodeToCharacter(uint16_t scancode)
@@ -119,7 +132,7 @@ bool MacroShortcutParser_CharacterToShift(char character)
     return false;
 }
 
-const lookup_record_t lookup_table[] = {
+static const lookup_record_t lookup_table[] = {
         // ALWAYS keep the array sorted by `LC_ALL=C sort`
         {"", 0, scType_basic},
         {"again", HID_KEYBOARD_SC_AGAIN, scType_basic},
@@ -343,9 +356,9 @@ const lookup_record_t lookup_table[] = {
         {"volumeUp", HID_KEYBOARD_SC_VOLUME_UP, scType_basic},
 };
 
-size_t lookup_size = sizeof(lookup_table)/sizeof(lookup_table[0]);
+static size_t lookup_size = sizeof(lookup_table)/sizeof(lookup_table[0]);
 
-void testLookup()
+static void testLookup()
 {
     for (uint8_t i = 0; i < lookup_size - 1; i++) {
         if (!StrLessOrEqual(lookup_table[i].id, NULL, lookup_table[i+1].id, NULL)) {

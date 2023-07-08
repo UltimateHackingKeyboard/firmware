@@ -10,19 +10,6 @@
 
 // Typedefs:
 
-    typedef enum {
-        scType_basic,
-        scType_system,
-        scType_media,
-        scType_mouseBtn
-    } shortcut_type_t;
-
-    typedef struct {
-        const char* id;
-        uint8_t scancode;
-        shortcut_type_t type;
-    } lookup_record_t;
-
     // Functions:
 
     void ShortcutParser_initialize();
