@@ -242,9 +242,9 @@ The following grammar is supported:
     - `[L|R]` - Left Right (which hand side modifier should be used) E.g. `holdKey RA-c` (right alt + c).
     - `{s|i|o}` - modifiers (ctrl, alt, shift, gui) exist in three composition modes within UHK - sticky, input, output:
         - **sticky modifiers** are modifiers of composite shortcuts. These are applied only until next key press. In certain contexts, they will take effect even after their activation key was released (e.g., to support alt + tab on non-base layers, you can do `holdKey sLA-tab`).
-        - *input modifiers** are queried by `ifMod` conditions, and can be suppressed by `suppressMods`. E.g. `holdKey iLS`.
+        - **input modifiers** are queried by `ifMod` conditions, and can be suppressed by `suppressMods`. E.g. `holdKey iLS`.
         - **output modifiers** are ignored by `ifMod` conditions, and are not suppressed by `suppressMods`.
-        By default:
+      By default:
         - modifiers of normal non-macro scancode actions are treated as **sticky** when accompanied by a scancode.
         - normal non-macro modifiers (not accompanied by a scancode) are treated as **input** by default.
         - macro modifiers are treated as **output**.
