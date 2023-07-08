@@ -15,6 +15,8 @@
     uint16_t DataModelMinorVersion = 0;
     uint16_t DataModelPatchVersion = 0;
 
+    bool PerKeyDataPresent = false;
+
 static parser_error_t parseModuleConfiguration(config_buffer_t *buffer)
 {
     uint8_t id = ReadUInt8(buffer);
@@ -74,6 +76,7 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
     uint8_t keyBacklightBrightness = ReadUInt8(buffer);
 
     if (DataModelMajorVersion >= 6) {
+        PerKeyDataPresent = ReadBool(buffer);
         BacklightingMode = ReadUInt8(buffer);
 
         readRgbColor(buffer, KeyActionColor_None);
