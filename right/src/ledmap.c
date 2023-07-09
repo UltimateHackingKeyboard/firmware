@@ -11,10 +11,6 @@
 rgb_t LedMap_ConstantRGB = RGB(0xFF, 0xFF, 0xFF);
 backlighting_mode_t BacklightingMode = BacklightingMode_Functional;
 
-#if DEVICE_ID == DEVICE_ID_UHK60V2
-
-static const rgb_t black = RGB(0x00, 0x00, 0x00);
-
 rgb_t KeyActionColors[keyActionColor_Length] = {
     RGB(0x00, 0x00, 0x00), // KeyActionColor_None
     RGB(0xFF, 0xFF, 0xFF), // KeyActionColor_Scancode
