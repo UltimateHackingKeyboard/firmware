@@ -76,7 +76,7 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
     uint8_t keyBacklightBrightness = ReadUInt8(buffer);
 
     if (DataModelMajorVersion >= 6) {
-        LedsFadeTimeout = ReadUInt16(buffer);
+        LedsFadeTimeout = 1000 * ReadUInt16(buffer);
         PerKeyRgbPresent = ReadBool(buffer);
         BacklightingMode = ReadUInt8(buffer);
 
