@@ -24,7 +24,7 @@
 
 // Variables:
 
-    extern uint32_t LedSleepTimeout;
+    extern uint32_t LedsFadeTimeout;
     extern uint8_t IconsAndLayerTextsBrightness;
     extern uint8_t IconsAndLayerTextsBrightnessDefault;
     extern uint8_t AlphanumericSegmentsBrightness;

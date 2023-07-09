@@ -305,7 +305,7 @@ static void leds(const char* arg1, const char *textEnd)
 {
     const char* value = NextTok(arg1, textEnd);
     if (TokenMatches(arg1, textEnd, "fadeTimeout")) {
-        LedSleepTimeout = 1000*Macros_ParseInt(value, textEnd, NULL);
+        LedsFadeTimeout = 1000*Macros_ParseInt(value, textEnd, NULL);
     } else if (TokenMatches(arg1, textEnd, "brightness")) {
         LedBrightnessMultiplier = ParseFloat(value, textEnd);
     } else if (TokenMatches(arg1, textEnd, "enabled")) {

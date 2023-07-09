@@ -5,7 +5,7 @@
 #include "keymap.h"
 #include "device.h"
 
-uint32_t LedSleepTimeout = 0;
+uint32_t LedsFadeTimeout = 0;
 uint8_t IconsAndLayerTextsBrightness = 0xff;
 uint8_t IconsAndLayerTextsBrightnessDefault = 0xff;
 uint8_t AlphanumericSegmentsBrightness = 0xff;
