@@ -272,7 +272,7 @@ static void backlightStrategy(const char* arg1, const char *textEnd)
         LedSlaveDriver_UpdateLeds();
     }
     else if (TokenMatches(arg1, textEnd, "perKeyRgb")) {
-        if (PerKeyDataPresent) {
+        if (PerKeyRgbPresent) {
             SetLedBacklightingMode(BacklightingMode_PerKeyRgb);
             LedSlaveDriver_UpdateLeds();
         } else {

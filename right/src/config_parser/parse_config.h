@@ -30,7 +30,7 @@
     extern uint16_t DataModelMinorVersion;
     extern uint16_t DataModelPatchVersion;
 
-    extern bool PerKeyDataPresent;
+    extern bool PerKeyRgbPresent;
 
 // Functions:
 
