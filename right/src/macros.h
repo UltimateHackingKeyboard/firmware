@@ -88,9 +88,9 @@
                 macro_sub_action_t action;
                 keystroke_type_t type;
                 uint16_t scancode;
+                uint8_t inputModMask;
                 uint8_t outputModMask;
                 uint8_t stickyModMask;
-                uint8_t inputModMask;
             } ATTR_PACKED key;
             struct {
                 macro_sub_action_t action;
