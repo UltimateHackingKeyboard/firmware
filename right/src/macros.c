@@ -276,12 +276,14 @@ static void postponeCurrentCycle()
 static bool currentMacroKeyIsActive()
 {
     if (s->ms.currentMacroKey == NULL) {
-        return false;
+        return s->ms.oneShotActive;
     }
     if (s->ms.postponeNextNCommands > 0 || s->as.modifierPostpone) {
-        return KeyState_Active(s->ms.currentMacroKey) && !PostponerQuery_IsKeyReleased(s->ms.currentMacroKey);
+        bool keyIsActive = (KeyState_Active(s->ms.currentMacroKey) && !PostponerQuery_IsKeyReleased(s->ms.currentMacroKey));
+        return  keyIsActive || s->ms.oneShotActive;
     } else {
-        return KeyState_Active(s->ms.currentMacroKey);
+        bool keyIsActive = KeyState_Active(s->ms.currentMacroKey);
+        return keyIsActive || s->ms.oneShotActive;
     }
 }
 
@@ -2122,6 +2124,16 @@ run_command:;
     }
 }
 
+
+static macro_result_t processOneShotCommand(const char* arg1, const char* argEnd) {
+    s->ms.oneShotActive = !s->ms.macroInterrupted;
+    macro_result_t res = processCommand(arg1, argEnd);
+    if (res & MacroResult_ActionFinishedFlag || res & MacroResult_DoneFlag) {
+        s->ms.oneShotActive = false;
+    }
+    return res;
+}
+
 static bool processIfKeyPendingAtCommand(bool negate, const char* arg1, const char* argEnd)
 {
     const char* arg2 = NextTok(arg1, argEnd);
@@ -2700,6 +2712,14 @@ static macro_result_t processCommand(const char* cmd, const char* cmdEnd)
         case 'n':
             if (TokenMatches(cmd, cmdEnd, "noOp")) {
                 return processNoOpCommand();
+            }
+            else {
+                goto failed;
+            }
+            break;
+        case 'o':
+            if (TokenMatches(cmd, cmdEnd, "oneShot")) {
+                return processOneShotCommand(arg1, cmdEnd);
             }
             else {
                 goto failed;

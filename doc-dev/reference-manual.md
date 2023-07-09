@@ -150,6 +150,7 @@ The following grammar is supported:
     MODIFIER = postponeKeys
     MODIFIER = final
     MODIFIER = autoRepeat
+    MODIFIER = oneShot
     IFSHORTCUTFLAGS = noConsume | transitive | anyOrder | orGate | timeoutIn <time in ms (NUMBER)> | cancelIn <time in ms(NUMBER)>
     DIRECTION = {left|right|up|down}
     LAYERID = {fn|mouse|mod|base|fn2|fn3|fn4|fn5|alt|shift|super|ctrl}|last|previous
@@ -374,6 +375,7 @@ Modifiers modify behaviour of the rest of the keyboard while the rest of the com
 - `postponeKeys` will postpone all new key activations for as long as any instance of this modifier is active. See postponing mechanisms section.
 - `final` will end macro playback after the "modified" action is properly finished. Simplifies control flow. "Implicit break."
 - `autoRepeat` will continuously repeats the following command while holding the macro key, with some configurable delay. See `set autoRepeatDelay <time>` and `set autoRepeatRate <time>` for more details. This enables you to use keyrepeat feature (which is typically implemented in the OS level) with any macro action. For example, you can use something like `autoRepeat tapKey down` or `ifShift autoRepeat tapKeySeq C-right right`.
+- `oneShot` prolongs this key's press until another action takes place. E.g., `oneShot holdLayer mod`.
 
 ### Runtime macros:
 

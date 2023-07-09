@@ -186,6 +186,7 @@ There is also a concept of modifiers, which can modify keyboard's or command's b
 - `final` - ends macro after the "modified" command. Basically a syntactic sugar.
 - `postponeKeys` - in order to mess with our time machine.
 - `autoRepeat` - if we need to autorepeat manually from keyboard. For instance `autoRepeat progressHue`.
+- `oneShot` prolongs this key's press until another action takes place. E.g., `oneShot holdLayer mod`.
 
 ### Handling layers
 
