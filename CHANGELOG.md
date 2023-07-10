@@ -5,15 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [10.0.0] - 2023-07-10
+
+Device Protocol: 4.9.0 | Module Protocol: 4.2.0 | User Config: **6.0.0** | Hardware Config: 1.0.0 | Smart Macros: 1.**3.0**
+
+- Add backlighting mode, per-key RGB values, functional backlighting color values, and LED fade timeout to the user configuration. `USERCONFIG:MAJOR`
+- Add `oneShot` smart macro command. `SMARTMACROS:MINOR`
+- Add advanced secondary role resolution strategy via `secondaryRole.*` smart macro variables. `SMARTMACROS:MINOR`
+- Fix simple secondary role resolution when chording swaps releases.
+- Fix macro-activated sticky modifiers.
+
 ## [9.3.0] - 2023-06-25
 
 Device Protocol: 4.9.0 | Module Protocol: 4.2.0 | User Config: 5.1.0 | Hardware Config: 1.0.0 | Smart Macros: 1.**2.0**
 
-- Send empty report after every write command, fixing the bug that resulted in 'onewo' when encountering consecutive 'one', 'two' write commands. `SMARTMACROS:PATCH`
+- Send empty report after every USB write command, fixing the bug that resulted in 'onewo' when encountering consecutive 'one', 'two' write commands. `SMARTMACROS:PATCH`
 - Disallow navigation modes in modifier layers. `SMARTMACROS:MINOR`
-- Switch leds.fadeTimeout value from minutes to seconds. `SMARTMACROS:MINOR`
-- Add onLayerChange and onKeymapLayerChange macro events. `SMARTMACROS:MINOR`
-- Add prepend activateKeyPostponed option. `SMARTMACROS:MINOR`
+- Switch the `leds.fadeTimeout` smart macro variable from minutes to seconds. `SMARTMACROS:MINOR`
+- Add `onLayerChange` and `onKeymapLayerChange` macro events. `SMARTMACROS:MINOR`
+- Add `prepend` option for the `activateKeyPostponed` command. `SMARTMACROS:MINOR`
 
 ## [9.2.3] - 2023-04-09
 
