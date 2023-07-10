@@ -11,9 +11,13 @@ Device Protocol: 4.9.0 | Module Protocol: 4.2.0 | User Config: **6.0.0** | Hardw
 
 - Add backlighting mode, per-key RGB values, functional backlighting color values, and LED fade timeout to the user configuration. `USERCONFIG:MAJOR`
 - Add `oneShot` smart macro command. `SMARTMACROS:MINOR`
-- Add advanced secondary role resolution strategy via `secondaryRole.*` smart macro variables. `SMARTMACROS:MINOR`
+- Add advanced, alphanumeric-friendly secondary role resolution strategy via `secondaryRole.*` smart macro variables. `SMARTMACROS:MINOR`
 - Fix simple secondary role resolution when chording swaps releases.
 - Fix macro-activated sticky modifiers.
+
+Smart macro migration guide:
+- `ifPrimary` and `ifSecondary` commands have been connected to the `simple` secondary role resolution strategy. Please migrate `ifPrimary` to `ifPrimary advancedStrategy` and `ifSecondary` to `ifSecondary advancedStrategy` in your macro commands.
+- `resolveSecondary` is kept for backward compatibility without changes. We strongly advise to avoid it.
 
 ## [9.3.0] - 2023-06-25
 
