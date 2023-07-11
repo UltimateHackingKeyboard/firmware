@@ -321,7 +321,7 @@ We allow postponing key activations in order to allow deciding between some scen
 - `postponeNext <n>` command will apply `postponeKeys` modifier on the current command and following next n commands (macro actions).
 - `ifPending/ifNotPending <n>` is true if there is at least `n` postponed keys in the queue.
 - `ifPendingKeyReleased/ifNotPendingKeyReleased <queue idx>` is true if the key pending at `idx` in queue has been released. I.e., if there exists matching release event in the queue.
-- `ifKeyPendingAt/ifNotKeyPendingAt <idx> <keyId>` looks into postponing queue at `idx`th waiting key nad compares it to the `keyId`.
+- `ifKeyPendingAt/ifNotKeyPendingAt <idx> <keyId>` looks into postponing queue at `idx`th waiting key and compares it to the `keyId`.
 - `consumePending <n>` will remove n records from the queue.
 - `activateKeyPostponed KEYID` will add tap of KEYID at the end of queue. If `atLayer LAYERID` is specified, action will be taken from that layer rather than current one. If `prepend` option is specified, event will be place at the beginning of the queue.
 - `ifPrimary/ifSecondary [ simpleStrategy | advancedStrategy ] ... COMMAND` will wait until the firmware can distinguish whether primary or secondary action should be activated and then either execute `COMMAND` or skip it.
@@ -354,7 +354,7 @@ Conditions are checked before processing the rest of the command. If the conditi
 - `ifReleased/ifNotReleased` is true if the key which activated current macro has been released. If the key has been physically released but the release has been postponed by another key, the conditien yields false. If the key has been physically released and the postponing mode was initiated by this macro (e.g., `postponeKeys ifReleased goTo @2`), it returns non-postponed release state (i.e., true if there's a matching release event in the postponing queue).
 - `ifPending/ifNotPending <n>` is true if there is at least `n` postponed keys in the postponing queue. In context of postponing mechanism, this condition acts similar in place of ifInterrupted.
 - `ifPendingKeyReleased/ifNotPendingKeyReleased <queue idx>` is true if the key pending at `idx` in queue has been released. I.e., if there exists matching release event in the queue.
-- `ifKeyPendingAt/ifNotKeyPendingAt <idx> KEYID` looks into postponing queue at `idx`th waiting key nad compares it to the `keyId`. See `resolveNextKeyId`.
+- `ifKeyPendingAt/ifNotKeyPendingAt <idx> KEYID` looks into postponing queue at `idx`th waiting key and compares it to the `keyId`. See `resolveNextKeyId`.
 - `ifKeyActive/ifNotKeyActive KEYID` is true if the key is pressed at the moment. This considers *postponed* states (I.e., reads state as processed by postponer, not reading actual hardware states).
 - `ifKeyDefined/ifNotKeyDefined KEYID` is true if the key in parameter has defined action on the current keymap && layer. If you wish to test keys from different layers/keymaps, you will have to toggle them manually first.
 - `ifPlaytime/ifNotPlaytime <timeout in ms>` is true if at least `timeout` milliseconds passed since macro was started.
