@@ -148,6 +148,7 @@
             uint8_t postponeNextNCommands;
             uint8_t commandAddress;
             uint8_t nextSlot;
+            uint8_t oneShotState : 2;
             bool macroInterrupted : 1;
             bool macroSleeping : 1;
             bool macroBroken : 1;
@@ -157,7 +158,6 @@
             bool wakeMeOnTime : 1;
             bool wakeMeOnKeystateChange: 1;
             bool autoRepeatInitialDelayPassed: 1;
-            bool oneShotActive : 1;
             macro_autorepeat_state_t autoRepeatPhase: 1;
 
             uint8_t inputModifierMask;
