@@ -81,7 +81,7 @@ The following grammar is supported:
     COMMAND = {setReg|addReg|subReg|mulReg} <register index (NUMBER)> <value (NUMBER)>
     COMMAND = {pressKey|holdKey|tapKey|releaseKey} SHORTCUT
     COMMAND = tapKeySeq [SHORTCUT]+
-    COMMAND = set module.MODULEID.navigationMode.LAYERID NAVIGATIONMODE
+    COMMAND = set module.MODULEID.navigationMode.LAYERID_BASIC NAVIGATION_MODE
     COMMAND = set module.MODULEID.baseSpeed <speed multiplier part that always applies, 0-10.0 (FLOAT)>
     COMMAND = set module.MODULEID.speed <speed multiplier part that is affected by xceleration, 0-10.0 (FLOAT)>
     COMMAND = set module.MODULEID.xceleration <exponent 0-1.0 (FLOAT)>
@@ -95,7 +95,7 @@ The following grammar is supported:
     COMMAND = set module.MODULEID.swapAxes BOOLEAN
     COMMAND = set module.MODULEID.invertScrollDirection BOOLEAN
     COMMAND = set module.touchpad.pinchZoomDivisor <1-100 (FLOAT)>
-    COMMAND = set module.touchpad.pinchZoomMode NAVIGATIONMODE
+    COMMAND = set module.touchpad.pinchZoomMode NAVIGATION_MODE
     COMMAND = set secondaryRole.defaultStrategy { simple | advanced }
     COMMAND = set secondaryRole.advanced.timeout <ms, 0-500 (NUMBER)>
     COMMAND = set secondaryRole.advanced.timeoutAction { primary | secondary }
@@ -120,7 +120,7 @@ The following grammar is supported:
     COMMAND = set autoRepeatRate <time in ms, at most 65535 (NUMBER)>
     COMMAND = set setEmergencyKey KEYID
     COMMAND = set macroEngine.batchSize <number of commands to execute per one update cycle NUMBER>
-    COMMAND = set navigationModeAction.NAVIGATIONMODECUSTOM.DIRECTION ACTION
+    COMMAND = set navigationModeAction.NAVIGATION_MODE_CUSTOM.DIRECTION ACTION
     COMMAND = set keymapAction.LAYERID.KEYID ACTION
     COMMAND = set backlight.strategy { functional | constantRgb | perKeyRgb }
     COMMAND = set backlight.constantRgb.rgb <number 0-255 (NUMBER)> <number 0-255 (NUMBER)> <number 0-255 (NUMBER)><number 0-255 (NUMBER)>
@@ -128,8 +128,8 @@ The following grammar is supported:
     COMMAND = set leds.brightness <0-1 multiple of default (FLOAT)>
     COMMAND = set leds.fadeTimeout <seconds to fade after (NUMBER)>
     COMMAND = set modifierLayerTriggers.{shift|alt|super|ctrl} {left|right|both}
-    CONDITION = {ifShortcut | ifNotShortcut} [IFSHORTCUTFLAGS]* [KEYID]+
-    CONDITION = {ifGesture | ifNotGesture} [IFSHORTCUTFLAGS]* [KEYID]+
+    CONDITION = {ifShortcut | ifNotShortcut} [IFSHORTCUT_OPTIONS]* [KEYID]+
+    CONDITION = {ifGesture | ifNotGesture} [IFSHORTCUT_OPTIONS]* [KEYID]+
     CONDITION = {ifPrimary | ifSecondary} [ simpleStrategy | advancedStrategy ]
     CONDITION = {ifDoubletap | ifNotDoubletap}
     CONDITION = {ifInterrupted | ifNotInterrupted}
@@ -151,9 +151,10 @@ The following grammar is supported:
     MODIFIER = final
     MODIFIER = autoRepeat
     MODIFIER = oneShot
-    IFSHORTCUTFLAGS = noConsume | transitive | anyOrder | orGate | timeoutIn <time in ms (NUMBER)> | cancelIn <time in ms(NUMBER)>
+    IFSHORTCUT_OPTIONS = noConsume | transitive | anyOrder | orGate | timeoutIn <time in ms (NUMBER)> | cancelIn <time in ms(NUMBER)>
     DIRECTION = {left|right|up|down}
     LAYERID = {fn|mouse|mod|base|fn2|fn3|fn4|fn5|alt|shift|super|ctrl}|last|previous
+    LAYERID_BASIC = {fn|mouse|mod|base|fn2|fn3|fn4|fn5}
     KEYMAPID = <abbrev>|last
     MACROID = last|CHAR|NUMBER
     NUMBER = [0-9]+ | -[0-9]+ | #<register idx (NUMBER)> | #key | @<relative macro action index(NUMBER)> | %<key idx in postponer queue (NUMBER)>
@@ -164,33 +165,33 @@ The following grammar is supported:
     LABEL = <string identifier>
     SHORTCUT = MODMASK- | MODMASK-KEY | KEY | MODMASK
     MODMASK = [MODMASK]+ | [L|R]{S|C|A|G} | {p|r|h|t} | {s|i|o}
-    NAVIGATIONMODE = cursor | scroll | caret | media | zoom | zoomPc | zoomMac | none
-    NAVIGATIONMODECUSTOM = caret | media | zoomPc | zoomMac
+    NAVIGATION_MODE = cursor | scroll | caret | media | zoom | zoomPc | zoomMac | none
+    NAVIGATION_MODE_CUSTOM = caret | media | zoomPc | zoomMac
     MODULEID = trackball | touchpad | trackpoint | keycluster
-    KEY = CHAR|KEYABBREV
+    KEY = CHAR|KEY_ABBREV
     ADDRESS = LABEL|NUMBER
     ACTION = { macro MACROID | keystroke SHORTCUT | none }
-    KEYABBREV = enter | escape | backspace | tab | space | minusAndUnderscore | equalAndPlus | openingBracketAndOpeningBrace | closingBracketAndClosingBrace
-    KEYABBREV = backslashAndPipeIso | backslashAndPipe | nonUsHashmarkAndTilde | semicolonAndColon | apostropheAndQuote | graveAccentAndTilde | commaAndLessThanSign
-    KEYABBREV = dotAndGreaterThanSign | slashAndQuestionMark | capsLock | printScreen | scrollLock | pause | insert | home | pageUp | delete | end | pageDown | numLock
-    KEYABBREV = nonUsBackslashAndPipe | application | power | keypadEqualSign |  execute | help | menu | select | stop | again | undo | cut | copy | paste | find | mute
-    KEYABBREV = volumeUp | volumeDown | lockingCapsLock | lockingNumLock | lockingScrollLock | keypadComma | keypadEqualSignAs400 | international1 | international2
-    KEYABBREV = international3 | international4 | international5 | international6 | international7 | international8 | international9 | lang1 | lang2 | lang3 | lang4 | lang5
-    KEYABBREV = lang6 | lang7 | lang8 | lang9 | alternateErase | sysreq | cancel | clear | prior | return | separator | out | oper | clearAndAgain | crselAndProps | exsel
-    KEYABBREV = keypad00 | keypad000 | thousandsSeparator | decimalSeparator | currencyUnit | currencySubUnit | keypadOpeningParenthesis | keypadClosingParenthesis
-    KEYABBREV = keypadOpeningBrace | keypadClosingBrace | keypadTab | keypadBackspace | keypadA | keypadB | keypadC | keypadD | keypadE | keypadF | keypadXor | keypadCaret
-    KEYABBREV = keypadPercentage | keypadLessThanSign | keypadGreaterThanSign | keypadAmp | keypadAmpAmp | keypadPipe | keypadPipePipe | keypadColon | keypadHashmark
-    KEYABBREV = keypadSpace | keypadAt | keypadExclamationSign | keypadMemoryStore | keypadMemoryRecall | keypadMemoryClear | keypadMemoryAdd | keypadMemorySubtract
-    KEYABBREV = keypadMemoryMultiply | keypadMemoryDivide | keypadPlusAndMinus | keypadClear | keypadClearEntry | keypadBinary | keypadOctal | keypadDecimal
-    KEYABBREV = keypadHexadecimal | keypadSlash | keypadAsterisk | keypadMinus | keypadPlus | keypadEnter | keypad1AndEnd | keypad2AndDownArrow | keypad3AndPageDown
-    KEYABBREV = keypad4AndLeftArrow | keypad5 | keypad6AndRightArrow | keypad7AndHome | keypad8AndUpArrow | keypad9AndPageUp | keypad0AndInsert | keypadDotAndDelete
-    KEYABBREV = leftControl | leftShift | leftAlt | leftGui | rightControl | rightShift | rightAlt | rightGui
-    KEYABBREV = up | down | left | right | upArrow | downArrow | leftArrow | rightArrow
-    KEYABBREV = np0 | np1 | np2 | np3 | np4 | np5 | np6 | np7 | np8 | np9
-    KEYABBREV = f1 | f2 | f3 | f4 | f5 | f6 | f7 | f8 | f9 | f10 | f11 | f12 | f13 | f14 | f15 | f16 | f17 | f18 | f19 | f20 | f21 | f22 | f23 | f24
-    KEYABBREV = mediaVolumeMute | mediaVolumeUp | mediaVolumeDown | mediaRecord | mediaFastForward | mediaRewind | mediaNext | mediaPrevious | mediaStop | mediaPlayPause | mediaPause
-    KEYABBREV = systemPowerDown | systemSleep | systemWakeUp
-    KEYABBREV = mouseBtnLeft | mouseBtnRight | mouseBtnMiddle | mouseBtn4 | mouseBtn5 | mouseBtn6 | mouseBtn7 | mouseBtn8
+    KEY_ABBREV = enter | escape | backspace | tab | space | minusAndUnderscore | equalAndPlus | openingBracketAndOpeningBrace | closingBracketAndClosingBrace
+    KEY_ABBREV = backslashAndPipeIso | backslashAndPipe | nonUsHashmarkAndTilde | semicolonAndColon | apostropheAndQuote | graveAccentAndTilde | commaAndLessThanSign
+    KEY_ABBREV = dotAndGreaterThanSign | slashAndQuestionMark | capsLock | printScreen | scrollLock | pause | insert | home | pageUp | delete | end | pageDown | numLock
+    KEY_ABBREV = nonUsBackslashAndPipe | application | power | keypadEqualSign |  execute | help | menu | select | stop | again | undo | cut | copy | paste | find | mute
+    KEY_ABBREV = volumeUp | volumeDown | lockingCapsLock | lockingNumLock | lockingScrollLock | keypadComma | keypadEqualSignAs400 | international1 | international2
+    KEY_ABBREV = international3 | international4 | international5 | international6 | international7 | international8 | international9 | lang1 | lang2 | lang3 | lang4 | lang5
+    KEY_ABBREV = lang6 | lang7 | lang8 | lang9 | alternateErase | sysreq | cancel | clear | prior | return | separator | out | oper | clearAndAgain | crselAndProps | exsel
+    KEY_ABBREV = keypad00 | keypad000 | thousandsSeparator | decimalSeparator | currencyUnit | currencySubUnit | keypadOpeningParenthesis | keypadClosingParenthesis
+    KEY_ABBREV = keypadOpeningBrace | keypadClosingBrace | keypadTab | keypadBackspace | keypadA | keypadB | keypadC | keypadD | keypadE | keypadF | keypadXor | keypadCaret
+    KEY_ABBREV = keypadPercentage | keypadLessThanSign | keypadGreaterThanSign | keypadAmp | keypadAmpAmp | keypadPipe | keypadPipePipe | keypadColon | keypadHashmark
+    KEY_ABBREV = keypadSpace | keypadAt | keypadExclamationSign | keypadMemoryStore | keypadMemoryRecall | keypadMemoryClear | keypadMemoryAdd | keypadMemorySubtract
+    KEY_ABBREV = keypadMemoryMultiply | keypadMemoryDivide | keypadPlusAndMinus | keypadClear | keypadClearEntry | keypadBinary | keypadOctal | keypadDecimal
+    KEY_ABBREV = keypadHexadecimal | keypadSlash | keypadAsterisk | keypadMinus | keypadPlus | keypadEnter | keypad1AndEnd | keypad2AndDownArrow | keypad3AndPageDown
+    KEY_ABBREV = keypad4AndLeftArrow | keypad5 | keypad6AndRightArrow | keypad7AndHome | keypad8AndUpArrow | keypad9AndPageUp | keypad0AndInsert | keypadDotAndDelete
+    KEY_ABBREV = leftControl | leftShift | leftAlt | leftGui | rightControl | rightShift | rightAlt | rightGui
+    KEY_ABBREV = up | down | left | right | upArrow | downArrow | leftArrow | rightArrow
+    KEY_ABBREV = np0 | np1 | np2 | np3 | np4 | np5 | np6 | np7 | np8 | np9
+    KEY_ABBREV = f1 | f2 | f3 | f4 | f5 | f6 | f7 | f8 | f9 | f10 | f11 | f12 | f13 | f14 | f15 | f16 | f17 | f18 | f19 | f20 | f21 | f22 | f23 | f24
+    KEY_ABBREV = mediaVolumeMute | mediaVolumeUp | mediaVolumeDown | mediaRecord | mediaFastForward | mediaRewind | mediaNext | mediaPrevious | mediaStop | mediaPlayPause | mediaPause
+    KEY_ABBREV = systemPowerDown | systemSleep | systemWakeUp
+    KEY_ABBREV = mouseBtnLeft | mouseBtnRight | mouseBtnMiddle | mouseBtn4 | mouseBtn5 | mouseBtn6 | mouseBtn7 | mouseBtn8
     MACRONAME = <Case sensitive macro identifier as named in Agent. Identifier shall not contain spaces.>
     ############
     #DEPRECATED#
@@ -326,10 +327,10 @@ We allow postponing key activations in order to allow deciding between some scen
 - `activateKeyPostponed KEYID` will add tap of KEYID at the end of queue. If `atLayer LAYERID` is specified, action will be taken from that layer rather than current one. If `prepend` option is specified, event will be place at the beginning of the queue.
 - `ifPrimary/ifSecondary [ simpleStrategy | advancedStrategy ] ... COMMAND` will wait until the firmware can distinguish whether primary or secondary action should be activated and then either execute `COMMAND` or skip it.
 - `resolveSecondary` please, get rid of this by migrating to `ifSecondary advancedStrategy goTo ...`. It is kept for backward compatibility only.
-- `ifShortcut/ifNotShortcut/ifGesture/ifNotGesture [IFSHORTCUTFLAGS]* [KEYID]*` will wait for next keypresses until sufficient number of keys has been pressed. If the next keypresses correspond to the provided arguments (hardware ids), the keypresses are consumed and the condition is performed. Consuming takes place in both `if` and `ifNot` versions if the full list is matched. E.g., `ifShortcut 090 089 final tapKey C-V; holdKey v`.
+- `ifShortcut/ifNotShortcut/ifGesture/ifNotGesture [IFSHORTCUT_OPTIONS]* [KEYID]*` will wait for next keypresses until sufficient number of keys has been pressed. If the next keypresses correspond to the provided arguments (hardware ids), the keypresses are consumed and the condition is performed. Consuming takes place in both `if` and `ifNot` versions if the full list is matched. E.g., `ifShortcut 090 089 final tapKey C-V; holdKey v`.
   - `Shortcut` requires continual press of keys (e.g., like Ctrl+c). By default, timeouts with release of the activation key.
   - `Gesture` allows noncontinual sequence of keys (e.g., vim's gg). By default, timeouts in 1000 ms since activation.
-  - `IFSHORTCUTFLAGS`:
+  - `IFSHORTCUT_OPTIONS`:
     - `noConsume` allows not consuming the keys. Useful if the next action is a standalone action, yet we want to branch behaviour of current action depending on it.
     - `transitive` makes termination conditions relate to that key of the queue whose result is most permissive (normally, they always refer to the activation key) - e.g., in transitive mode with 3-key shortcut, first key can be released if second key is being held. Timers count time since last performed action in this mode. Both `timeoutIn` and `cancelIn` behave according to this flag. In non-transitive mode, timers are counted since activation key press - i.e., since macro start.
     - `anyOrder` will check only presence of mentioned keyIds in postponer queue.
@@ -363,8 +364,8 @@ Conditions are checked before processing the rest of the command. If the conditi
 - `{ifRegGt|ifRegLt} <register inex> <value>` will test if the value in the register identified by first argument is greater than/less than second argument.
 - `{ifKeymap|ifNotKeymap|ifLayer|ifNotLayer} <value>` will test if the current Keymap/Layer are equals to the first argument (uses the same parsing rule as `switchKeymap` and `switchLayer`.
 - `ifRecording/ifNotRecording` and `ifRecordingId/ifNotRecordingId MACROID` test if the runtime macro recorder is in recording state.
-- `ifShortcut/ifNotShortcut [IFSHORTCUTFLAGS]* [KEYID]*` will wait for next keypresses and compare them to the argument. See postponer mechanism section.
-- `ifGesture/ifNotGesture [IFSHORTCUTFLAGS]* [KEYID]*` just as `ifShortcut`, but breaks after 1000ms instead of when the key is released. See postponer mechanism section.
+- `ifShortcut/ifNotShortcut [IFSHORTCUT_OPTIONS]* [KEYID]*` will wait for next keypresses and compare them to the argument. See postponer mechanism section.
+- `ifGesture/ifNotGesture [IFSHORTCUT_OPTIONS]* [KEYID]*` just as `ifShortcut`, but breaks after 1000ms instead of when the key is released. See postponer mechanism section.
 - `ifPrimary/ifSecondary [ simpleStrategy | advancedStrategy ] ... COMMAND` will wait until the firmware can distinguish whether primary or secondary action should be activated and then either execute `COMMAND` or skip it.
 
 ### Modifiers
@@ -559,14 +560,14 @@ For the purpose of toggling functionality on and off, and for global constants m
 
 ### Navigation modes:
 
-UHK modules feature four navigation modes, which are mapped by layer and module. This mapping can be changed by the `set module.MODULEID.navigationMode.LAYERID NAVIGATIONMODE` command.
+UHK modules feature four navigation modes, which are mapped by layer and module. This mapping can be changed by the `set module.MODULEID.navigationMode.LAYERID_BASIC NAVIGATION_MODE` command.
 
 - **Cursor mode** - in this mode, modules control mouse movement. Default mode for all modules except keycluster's trackball.
 - **Scroll mode** - in this mode, module can be used to scroll. Default mode for mod layer. This means that apart from switching layer, your mod layer switches also make your right hand modules act as very comfortable scroll wheels. Sensitivity is controlled by the `scrollSpeedDivisor` value.
 - **Caret mode** - in this mode, module produces arrow key taps. This can be used to move comfortably in text editor, since in this mode, cursor is also locked to one of the two directions, preventing unwanted line changes. Sensitivity is controlled by the `caretSpeedDivisor`, `axisLockStrengthFirstTick` and `axisLockStrength`.
 - **Media mode** - in this mode, up/down directions control volume (via media key scancodes), while horizontal play/pause and switch to next track. At the moment, this mode is not enabled by default on any layer. Sensitivity is shared with the caret mode.
 - **Zoom mode pc / mac** - in this mode, `Ctrl +`/`Ctrl -` or `Gui +`/`Gui -` shortcuts are produced.
-- **Zoom mode** - This mode serves specifically to implement touchpad's gesture. It alternates actions of zoomPc and zoomMac modes. Can be customized via `set module.touchpad.pinchZoomMode NAVIGATIONMODE`.
+- **Zoom mode** - This mode serves specifically to implement touchpad's gesture. It alternates actions of zoomPc and zoomMac modes. Can be customized via `set module.touchpad.pinchZoomMode NAVIGATION_MODE`.
 
 Caret and media modes can be customized by `set navigationModeAction` command.
 
