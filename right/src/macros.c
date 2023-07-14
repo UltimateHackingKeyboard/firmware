@@ -276,14 +276,14 @@ static void postponeCurrentCycle()
 static bool currentMacroKeyIsActive()
 {
     if (s->ms.currentMacroKey == NULL) {
-        return s->ms.oneShotActive;
+        return s->ms.oneShotState;
     }
     if (s->ms.postponeNextNCommands > 0 || s->as.modifierPostpone) {
         bool keyIsActive = (KeyState_Active(s->ms.currentMacroKey) && !PostponerQuery_IsKeyReleased(s->ms.currentMacroKey));
-        return  keyIsActive || s->ms.oneShotActive;
+        return  keyIsActive || s->ms.oneShotState;
     } else {
         bool keyIsActive = KeyState_Active(s->ms.currentMacroKey);
-        return keyIsActive || s->ms.oneShotActive;
+        return keyIsActive || s->ms.oneShotState;
     }
 }
 
@@ -2126,12 +2126,28 @@ run_command:;
 
 
 static macro_result_t processOneShotCommand(const char* arg1, const char* argEnd) {
-    s->ms.oneShotActive = !s->ms.macroInterrupted;
+    /* In order for modifiers of a scancode action to be applied properly, we need to
+     * make the action live at least one cycle after macroInterrupted becomes true.
+     *
+     * Also, we need to prevent the command to go sleeping after this because
+     * we would not be woken up.
+     * */
+    if (!s->ms.macroInterrupted) {
+        s->ms.oneShotState = 1;
+    } else if (s->ms.oneShotState < 3) {
+        s->ms.oneShotState++;
+    } else {
+        s->ms.oneShotState = 0;
+    }
     macro_result_t res = processCommand(arg1, argEnd);
     if (res & MacroResult_ActionFinishedFlag || res & MacroResult_DoneFlag) {
-        s->ms.oneShotActive = false;
+        s->ms.oneShotState = 0;
     }
-    return res;
+    if (s->ms.oneShotState > 1) {
+        return res | MacroResult_Blocking;
+    } else {
+        return res;
+    }
 }
 
 static bool processIfKeyPendingAtCommand(bool negate, const char* arg1, const char* argEnd)
@@ -3218,6 +3234,9 @@ macro_result_t continueMacro(void)
 
 static macro_result_t sleepTillKeystateChange()
 {
+    if(s->ms.oneShotState > 1) {
+        return MacroResult_Blocking;
+    }
     if (!s->ms.macroSleeping) {
         unscheduleCurrentSlot();
     }
@@ -3229,6 +3248,9 @@ static macro_result_t sleepTillKeystateChange()
 
 static macro_result_t sleepTillTime(uint32_t time)
 {
+    if(s->ms.oneShotState > 1) {
+        return MacroResult_Blocking;
+    }
     if (!s->ms.macroSleeping) {
         unscheduleCurrentSlot();
     }
