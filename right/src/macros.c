@@ -1789,6 +1789,17 @@ static macro_result_t processResolveSecondaryCommand(const char* arg1, const cha
 
 static macro_result_t processIfSecondaryCommand(bool negate, const char* arg, const char* argEnd)
 {
+    secondary_role_strategy_t strategy = SecondaryRoles_Strategy;
+
+    if (TokenMatches(arg, argEnd, "simpleStrategy")) {
+        arg = NextTok(arg, argEnd);
+        strategy = SecondaryRoleStrategy_Simple;
+    }
+    if (TokenMatches(arg, argEnd, "advancedStrategy")) {
+        arg = NextTok(arg, argEnd);
+        strategy = SecondaryRoleStrategy_Advanced;
+    }
+
     if (s->as.currentIfSecondaryConditionPassed) {
         if (s->as.currentConditionPassed) {
             goto conditionPassed;
@@ -1797,15 +1808,7 @@ static macro_result_t processIfSecondaryCommand(bool negate, const char* arg, co
         }
     }
 
-    secondary_role_strategy_t strategy = SecondaryRoles_Strategy;
-
-    if (TokenMatches(arg, argEnd, "simpleStrategy")) {
-        strategy = SecondaryRoleStrategy_Simple;
-    }
-    if (TokenMatches(arg, argEnd, "advancedStrategy")) {
-        strategy = SecondaryRoleStrategy_Advanced;
-    }
-
+    postponeCurrentCycle();
     secondary_role_result_t res = SecondaryRoles_ResolveState(s->ms.currentMacroKey, 0, strategy, !s->as.actionActive);
 
     s->as.actionActive = res.state == SecondaryRoleState_DontKnowYet;
@@ -1817,6 +1820,7 @@ static macro_result_t processIfSecondaryCommand(bool negate, const char* arg, co
         if (negate) {
             goto conditionPassed;
         } else {
+            postponeNextN(0);
             return MacroResult_Finished;
         }
     case SecondaryRoleState_Secondary:
