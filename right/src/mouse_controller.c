@@ -355,7 +355,7 @@ static tap_hold_action_t tapHoldStateMachine(tap_hold_event_t event)
     return 0;
 }
 
-static void feedTapHoldStateMachine()
+static void feedTapHoldStateMachine(touchpad_events_t events)
 {
     key_state_t* singleTap = &KeyStates[SlotId_RightModule][0];
     //todo: finetune this value. Low value will yield natural doubletaps, but requires fast doubletap to trigger tapAndHold.
@@ -368,13 +368,14 @@ static void feedTapHoldStateMachine()
     tap_hold_action_t action = 0;
     tap_hold_event_t event = 0;
 
-    if(!lastSingleTapValue && TouchpadEvents.singleTap) {
+    if(!lastSingleTapValue && events.singleTap) {
         event = Event_NewTap;
         lastSingleTapValue = true;
-    } else if (!lastTapAndHoldValue && TouchpadEvents.tapAndHold) {
+    } else if (!lastTapAndHoldValue && events.tapAndHold) {
         event = Event_TapAndHold;
+
         lastTapAndHoldValue = true;
-    } else if (lastFinger != (TouchpadEvents.noFingers == 1)) {
+    } else if (lastFinger != (events.noFingers == 1)) {
         event = lastFinger ? Event_FingerOut : Event_FingerIn ;
         lastFinger = !lastFinger;
     } else if(lastSingleTapTime + tapTimeout < CurrentTime) {
@@ -394,17 +395,17 @@ static void feedTapHoldStateMachine()
         PostponerCore_TrackKeyEvent(singleTap, true, 0xff);
     }
 
-    lastSingleTapValue &= TouchpadEvents.singleTap;
-    lastTapAndHoldValue &= TouchpadEvents.tapAndHold;
+    lastSingleTapValue &= events.singleTap;
+    lastTapAndHoldValue &= events.tapAndHold;
 }
 
-static void processTouchpadActions() {
+static void processTouchpadActions(touchpad_events_t events) {
 
-    if (TouchpadEvents.singleTap || TouchpadEvents.tapAndHold || tapHoldAutomatonState != State_Zero) {
-        feedTapHoldStateMachine();
+    if (events.singleTap || events.tapAndHold || tapHoldAutomatonState != State_Zero) {
+        feedTapHoldStateMachine(events);
     }
 
-    KeyStates[SlotId_RightModule][1].hardwareSwitchState = TouchpadEvents.twoFingerTap;
+    KeyStates[SlotId_RightModule][1].hardwareSwitchState = events.twoFingerTap;
 }
 
 static void progressZoomAction(module_kinetic_state_t* ks) {
@@ -691,9 +692,7 @@ static void resetKineticModuleState(module_kinetic_state_t* kineticState)
 }
 
 static layer_id_t determineEffectiveLayer() {
-    if(ActiveLayer == LayerId_Base && IS_SECONDARY_ROLE_LAYER_SWITCHER(SecondaryRolePreview)) {
-        return SECONDARY_ROLE_LAYER_TO_LAYER_ID(SecondaryRolePreview);
-    } else if (IS_MODIFIER_LAYER(ActiveLayer)) {
+    if (IS_MODIFIER_LAYER(ActiveLayer)) {
         return LayerId_Base;
     } else {
         return ActiveLayer;
@@ -756,6 +755,16 @@ static void processModuleActions(
     processModuleKineticState(x, y, moduleConfiguration, ks, forcedNavigationMode);
 }
 
+bool canWeRun()
+{
+    if (Postponer_MouseBlocked) {
+        PostponerExtended_RequestUnblockMouse();
+        return false;
+    } else {
+        return true;
+    }
+}
+
 void MouseController_ProcessMouseActions()
 {
     mouseElapsedTime = Timer_GetElapsedTimeAndSetCurrent(&mouseUsbReportUpdateTime);
@@ -775,7 +784,6 @@ void MouseController_ProcessMouseActions()
 
     if (Slaves[SlaveId_RightTouchpad].isConnected) {
         // TODO: this is still unsafe w.r.t interrupts
-        processTouchpadActions();
 
         module_kinetic_state_t *ks = getKineticState(ModuleId_TouchpadRight);
 
@@ -783,14 +791,25 @@ void MouseController_ProcessMouseActions()
             handleRunningCaretModeAction(ks);
         }
 
-        processModuleActions(ks, ModuleId_TouchpadRight, (int16_t)TouchpadEvents.x, (int16_t)TouchpadEvents.y, 0xFF);
-        processModuleActions(ks, ModuleId_TouchpadRight, (int16_t)TouchpadEvents.wheelX, (int16_t)TouchpadEvents.wheelY, NavigationMode_Scroll);
-        processModuleActions(ks, ModuleId_TouchpadRight, 0, (int16_t)TouchpadEvents.zoomLevel, NavigationMode_Zoom);
-        TouchpadEvents.zoomLevel = 0;
-        TouchpadEvents.wheelX = 0;
-        TouchpadEvents.wheelY = 0;
-        TouchpadEvents.x = 0;
-        TouchpadEvents.y = 0;
+        bool eventsIsNonzero = memcmp(&TouchpadEvents, &ZeroTouchpadEvents, sizeof TouchpadEvents) != 0;
+        if (!eventsIsNonzero || (eventsIsNonzero && canWeRun())) {
+            //eventsIsNonzero is needed for touchpad action state automaton timer
+            __disable_irq();
+            touchpad_events_t events = TouchpadEvents;
+            TouchpadEvents.zoomLevel = 0;
+            TouchpadEvents.wheelX = 0;
+            TouchpadEvents.wheelY = 0;
+            TouchpadEvents.x = 0;
+            TouchpadEvents.y = 0;
+            // note that not all fields are resetted and that's correct
+            __enable_irq();
+
+            processTouchpadActions(events);
+
+            processModuleActions(ks, ModuleId_TouchpadRight, (int16_t)events.x, (int16_t)events.y, 0xFF);
+            processModuleActions(ks, ModuleId_TouchpadRight, (int16_t)events.wheelX, (int16_t)events.wheelY, NavigationMode_Scroll);
+            processModuleActions(ks, ModuleId_TouchpadRight, 0, (int16_t)events.zoomLevel, NavigationMode_Zoom);
+        }
     }
 
     for (uint8_t moduleSlotId=0; moduleSlotId<UHK_MODULE_MAX_SLOT_COUNT; moduleSlotId++) {
@@ -799,23 +818,27 @@ void MouseController_ProcessMouseActions()
             continue;
         }
 
-        __disable_irq();
-        // Gcc compiles those int16_t assignments as sequences of
-        // single-byte instructions, therefore we need to make the
-        // sequence atomic.
-        int16_t x = moduleState->pointerDelta.x;
-        int16_t y = moduleState->pointerDelta.y;
-        moduleState->pointerDelta.x = 0;
-        moduleState->pointerDelta.y = 0;
-        __enable_irq();
-
         module_kinetic_state_t *ks = getKineticState(moduleState->moduleId);
 
         if (caretModeActionIsRunning(ks)) {
             handleRunningCaretModeAction(ks);
         }
 
-        processModuleActions(ks, moduleState->moduleId, x, y, 0xFF);
+
+        bool eventsIsNonzero = moduleState->pointerDelta.x || moduleState->pointerDelta.y;
+        if (eventsIsNonzero && canWeRun()) {
+            __disable_irq();
+            // Gcc compiles those int16_t assignments as sequences of
+            // single-byte instructions, therefore we need to make the
+            // sequence atomic.
+            int16_t x = moduleState->pointerDelta.x;
+            int16_t y = moduleState->pointerDelta.y;
+            moduleState->pointerDelta.x = 0;
+            moduleState->pointerDelta.y = 0;
+            __enable_irq();
+
+            processModuleActions(ks, moduleState->moduleId, x, y, 0xFF);
+        }
     }
 
     if (ActiveMouseStates[SerializedMouseAction_LeftClick]) {

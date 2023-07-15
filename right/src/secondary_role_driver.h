@@ -74,7 +74,6 @@
 
 // Variables:
 
-    extern secondary_role_t SecondaryRolePreview;
     extern secondary_role_strategy_t SecondaryRoles_Strategy;
     extern uint16_t SecondaryRoles_AdvancedStrategyDoubletapTime;
     extern uint16_t SecondaryRoles_AdvancedStrategyTimeout;
@@ -87,6 +86,7 @@
 
     secondary_role_result_t SecondaryRoles_ResolveState(key_state_t* keyState, secondary_role_t rolePreview, secondary_role_strategy_t strategy, bool isNewResolution);
     void SecondaryRoles_FakeActivation(secondary_role_result_t res);
+    void SecondaryRoles_ActivateSecondaryImmediately();
 
 
 
