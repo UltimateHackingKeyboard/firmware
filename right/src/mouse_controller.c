@@ -691,9 +691,13 @@ static void resetKineticModuleState(module_kinetic_state_t* kineticState)
 }
 
 static layer_id_t determineEffectiveLayer() {
-    bool secondaryRoleResolutionInProgress = ActiveLayer == LayerId_Base && IS_SECONDARY_ROLE_LAYER_SWITCHER(SecondaryRolePreview);
-
-    return secondaryRoleResolutionInProgress ? SECONDARY_ROLE_LAYER_TO_LAYER_ID(SecondaryRolePreview) : ActiveLayer;
+    if(ActiveLayer == LayerId_Base && IS_SECONDARY_ROLE_LAYER_SWITCHER(SecondaryRolePreview)) {
+        return SECONDARY_ROLE_LAYER_TO_LAYER_ID(SecondaryRolePreview);
+    } else if (IS_MODIFIER_LAYER(ActiveLayer)) {
+        return LayerId_Base;
+    } else {
+        return ActiveLayer;
+    }
 }
 
 static module_kinetic_state_t* getKineticState(uint8_t moduleId)
