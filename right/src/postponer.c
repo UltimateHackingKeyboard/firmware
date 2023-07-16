@@ -79,6 +79,21 @@ static void applyEventAndConsume(postponer_buffer_record_type_t* rec) {
             PostponerCore_PostponeNCycles(1);
             consumeEvent(1);
             break;
+        case PostponerEventType_Delay: {
+            static bool delayActive = false;
+            static uint32_t delayStartedAt = 0;
+            if (!delayActive) {
+                delayStartedAt = CurrentTime;
+                delayActive = true;
+            } else {
+                if (Timer_GetElapsedTime(&delayStartedAt) >= rec->event.delay.length) {
+                    delayActive = false;
+                    consumeEvent(1);
+                }
+            }
+            break;
+        }
+
     }
 }
 
@@ -174,6 +189,19 @@ void PostponerCore_TrackKeyEvent(key_state_t *keyState, bool active, uint8_t lay
                         .keyState = keyState,
                         .active = active,
                         .layer = layer,
+                    }
+                }
+            );
+}
+
+
+void PostponerCore_TrackDelay(uint32_t length)
+{
+    appendEvent(
+                (postponer_event_t){
+                    .type = PostponerEventType_Delay,
+                    .delay = {
+                        .length = length,
                     }
                 }
             );
@@ -350,6 +378,10 @@ void PostponerExtended_PrintContent()
             break;
         case PostponerEventType_UnblockMouse:
             Macros_SetStatusString("unblock mouse", NULL);
+            break;
+        case PostponerEventType_Delay:
+            Macros_SetStatusString("delay ", NULL);
+            Macros_SetStatusNum(rec->event.delay.length);
             break;
         }
         if (rec == first) {

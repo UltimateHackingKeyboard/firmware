@@ -36,6 +36,7 @@
         PostponerEventType_PressKey,
         PostponerEventType_ReleaseKey,
         PostponerEventType_UnblockMouse,
+        PostponerEventType_Delay,
     } postponer_event_type_t;
 
     typedef struct {
@@ -71,6 +72,7 @@
     bool PostponerCore_RunKey(key_state_t* key, bool active);
     void PostponerCore_PrependKeyEvent(key_state_t *keyState, bool active, uint8_t layer);
     void PostponerCore_TrackKeyEvent(key_state_t *keyState, bool active, uint8_t layer);
+    void PostponerCore_TrackDelay(uint32_t length) ;
     void PostponerCore_RunPostponedEvents(void);
     void PostponerCore_FinishCycle(void);
 

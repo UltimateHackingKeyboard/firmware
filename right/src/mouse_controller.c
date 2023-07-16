@@ -302,7 +302,8 @@ typedef enum {
 typedef enum {
     Action_ResetTimer = 1,
     Action_Press = 2,
-    Action_Release = 4
+    Action_Release = 4,
+    Action_Doubletap = 8,
 } tap_hold_action_t;
 
 static tap_hold_state_t tapHoldAutomatonState = State_Zero;
@@ -327,7 +328,7 @@ static tap_hold_action_t tapHoldStateMachine(tap_hold_event_t event)
         switch (event) {
         case Event_NewTap:
             tapHoldAutomatonState = State_Tap;
-            return Action_ResetTimer | Action_Release | Action_Press;
+            return Action_ResetTimer | Action_Doubletap;
         case Event_Timeout:
             tapHoldAutomatonState = State_Zero;
             return Action_Release;
@@ -344,7 +345,7 @@ static tap_hold_action_t tapHoldStateMachine(tap_hold_event_t event)
         switch (event) {
         case Event_NewTap:
             tapHoldAutomatonState = State_Tap;
-            return Action_ResetTimer | Action_Release | Action_Press;
+            return Action_ResetTimer | Action_Doubletap;
         case Event_FingerOut:
             tapHoldAutomatonState = State_Zero;
             return Action_Release;
@@ -389,11 +390,16 @@ static void feedTapHoldStateMachine(touchpad_events_t events)
     }
     if (action & Action_Release) {
         PostponerCore_TrackKeyEvent(singleTap, false, 0xff);
-        /** TODO: consider adding an explicit delay here - at least my linux machine does not like the idea of releases shorther than 25 ms */
     }
     if (action & Action_Press) {
         PostponerCore_TrackKeyEvent(singleTap, true, 0xff);
     }
+    if (action & Action_Doubletap) {
+        PostponerCore_TrackKeyEvent(singleTap, false, 0xff);
+        PostponerCore_TrackDelay(20);
+        PostponerCore_TrackKeyEvent(singleTap, true, 0xff);
+    }
+
 
     lastSingleTapValue &= events.singleTap;
     lastTapAndHoldValue &= events.tapAndHold;
