@@ -46,6 +46,9 @@ The following grammar is supported:
     COMMAND = holdLayerMax LAYERID <time in ms (NUMBER)>
     COMMAND = holdKeymapLayer KEYMAPID LAYERID
     COMMAND = holdKeymapLayerMax KEYMAPID LAYERID <time in ms (NUMBER)>
+    COMMAND = overlayKeymap KEYMAPID
+    COMMAND = overlayLayer <target layer (LAYERID)> <source keymap (KEYMAPID)> <source layer (LAYERID)>
+    COMMAND = replaceLayer <target layer (LAYERID)> <source keymap (KEYMAPID)> <source layer (LAYERID)>
     COMMAND = resolveNextKeyId
     COMMAND = activateKeyPostponed [atLayer LAYERID] [append | prepend]  KEYID
     COMMAND = consumePending <number of keys (NUMBER)>
@@ -313,6 +316,16 @@ Commands:
 - `holdKeymapLayer KEYMAPID LAYERID` just as holdLayer, but allows referring to layer of different keymap. This reloads the entire keymap, so it may be very inefficient.
 - `holdLayerMax/holdKeymapLayerMax` will timeout after <timeout> ms if no action is performed in that time.
 - `ifPrimary/ifSecondary [ simpleStrategy | advancedStrategy ] ... COMMAND` will wait until the firmware can distinguish whether primary or secondary action should be activated and then either execute `COMMAND` or skip it.
+
+### Layer/Keymap loading manipulation / shared layers:
+
+Following commands allow altering current keymap in RAM. Typically, you can use this to share layers among keymaps, or modify/construct your layers/keymaps on the fly out of pre-fabricated pieces (e.g., changing ijkl to arrows by a shortcut).
+
+These alterations will last only until keymap is reloaded. I.e., switching keymap, or issuing `holdKeymapLayer` will destroy all changes done by following commands.
+
+- `replaceLayer <target layer (LAYERID)> <source keymap (KEYMAPID)> <source layer (LAYERID)>` will replace one layer with a layer from another keymap. You can use this to share layers across keymaps. For instance, add `replaceLayer mod QWR fn` to your `$onKeymapChange QTY` macro event to "permanently" replace mod layer of your QTY keymap by fn layer of QWR keymap
+- `overlayLayer <target layer (LAYERID)> <source keymap (KEYMAPID)> <source layer (LAYERID)>` will take defined actions from source layer and apply them on the target layer. Assume `ARR base` layer containing just arrows on `ijkl` keys. Now, in your QWERTY layout, call `overlayLayer base ARR base` and you get QWERTY that has arrows on `ijkl`.
+- `overlayKeymap KEYMAPID` as overlayLayer, but overlays all layers by corresponding layers of the provided keymap.
 
 ### Postponing mechanisms.
 

@@ -153,8 +153,12 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
         return ParserError_InvalidKeymapCount;
     }
 
+    parse_config_t parseConfig = (parse_config_t) {
+        .mode = ParserRunDry ? ParseKeymapMode_DryRun : ParseKeymapMode_FullRun
+    };
+
     for (uint8_t keymapIdx = 0; keymapIdx < keymapCount; keymapIdx++) {
-        errorCode = ParseKeymap(buffer, keymapIdx, keymapCount, macroCount);
+        errorCode = ParseKeymap(buffer, keymapIdx, keymapCount, macroCount, parseConfig);
         if (errorCode != ParserError_Success) {
             return errorCode;
         }

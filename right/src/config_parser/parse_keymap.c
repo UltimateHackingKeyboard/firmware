@@ -3,6 +3,7 @@
 #include "config_parser/parse_keymap.h"
 #include "key_action.h"
 #include "keymap.h"
+#include "layer.h"
 #include "ledmap.h"
 #include "led_display.h"
 
@@ -112,9 +113,16 @@ static parser_error_t parseMouseAction(key_action_t *keyAction, config_buffer_t 
     return ParserError_Success;
 }
 
-static parser_error_t parseKeyAction(key_action_t *keyAction, config_buffer_t *buffer)
+static parser_error_t parseKeyAction(key_action_t *keyAction, config_buffer_t *buffer, parse_mode_t parseMode)
 {
     uint8_t keyActionType = ReadUInt8(buffer);
+    key_action_t dummyKeyAction;
+
+    if(parseMode == ParseMode_DryRun) {
+        keyAction = &dummyKeyAction;
+    } else if (parseMode == ParseMode_Overlay && keyActionType == SerializedKeyActionType_None) {
+        keyAction = &dummyKeyAction;
+    }
 
     switch (keyActionType) {
         case SerializedKeyActionType_None:
@@ -133,54 +141,60 @@ static parser_error_t parseKeyAction(key_action_t *keyAction, config_buffer_t *b
     return ParserError_InvalidSerializedKeyActionType;
 }
 
-static parser_error_t parseKeyActions(uint8_t targetLayer, config_buffer_t *buffer, uint8_t moduleId)
+static parser_error_t parseKeyActions(uint8_t targetLayer, config_buffer_t *buffer, uint8_t moduleId, parse_mode_t parseMode)
 {
     parser_error_t errorCode;
     uint16_t actionCount = ReadCompactLength(buffer);
-    key_action_t dummyKeyAction;
 
     if (actionCount > MAX_KEY_COUNT_PER_MODULE) {
         return ParserError_InvalidActionCount;
     }
-    bool parserRunDry = IsModuleAttached(moduleId) ? ParserRunDry : true;
+    parseMode = IsModuleAttached(moduleId) ? parseMode : ParseMode_DryRun;
     slot_t slotId = ModuleIdToSlotId(moduleId);
     for (uint8_t actionIdx = 0; actionIdx < actionCount; actionIdx++) {
-        errorCode = parseKeyAction(parserRunDry ? &dummyKeyAction : &CurrentKeymap[targetLayer][slotId][actionIdx], buffer);
+        errorCode = parseKeyAction(&CurrentKeymap[targetLayer][slotId][actionIdx], buffer, parseMode);
         if (errorCode != ParserError_Success) {
             return errorCode;
         }
     }
     /* default second touchpad action to right button */
-    if (!parserRunDry && moduleId == ModuleId_TouchpadRight) {
+    if (parseMode != ParseMode_DryRun && moduleId == ModuleId_TouchpadRight) {
         CurrentKeymap[targetLayer][slotId][1].type = KeyActionType_Mouse;
         CurrentKeymap[targetLayer][slotId][1].mouseAction = SerializedMouseAction_RightClick;
     }
     return ParserError_Success;
 }
 
-static parser_error_t parseModule(config_buffer_t *buffer, uint8_t layer)
+static parser_error_t parseModule(config_buffer_t *buffer, uint8_t layer, parse_mode_t parseMode)
 {
     uint8_t moduleId = ReadUInt8(buffer);
-    return parseKeyActions(layer, buffer, moduleId);
+    return parseKeyActions(layer, buffer, moduleId, parseMode);
 }
 
-static parser_error_t parseLayer(config_buffer_t *buffer, uint8_t layer)
+static parser_error_t parseLayerId(config_buffer_t *buffer, uint8_t layer, layer_id_t* parsedLayerId)
 {
     if(DataModelMajorVersion >= 5) {
         uint8_t layerId = ReadUInt8(buffer);
         switch(layerId) {
         case SerializedLayerName_base:
-            layer = LayerId_Base;
+            *parsedLayerId = LayerId_Base;
             break;
         case SerializedLayerName_mod ... SerializedLayerName_super:
-            layer = layerId + 1;
+            *parsedLayerId = layerId + 1;
             break;
         default:
             return ParserError_InvalidLayerId;
         }
+    } else {
+        *parsedLayerId = layer;
     }
 
-    if (!ParserRunDry) {
+    return ParserError_Success;
+}
+
+static parser_error_t parseLayer(config_buffer_t *buffer, uint8_t layer, parse_mode_t parseMode)
+{
+    if (parseMode != ParseMode_DryRun) {
         LayerConfig[layer].layerIsDefined = true;
     }
 
@@ -191,7 +205,7 @@ static parser_error_t parseLayer(config_buffer_t *buffer, uint8_t layer)
         return ParserError_InvalidModuleCount;
     }
     for (uint8_t moduleIdx = 0; moduleIdx < moduleCount; moduleIdx++) {
-        errorCode = parseModule(buffer, layer);
+        errorCode = parseModule(buffer, layer, parseMode);
         if (errorCode != ParserError_Success) {
             return errorCode;
         }
@@ -199,7 +213,43 @@ static parser_error_t parseLayer(config_buffer_t *buffer, uint8_t layer)
     return ParserError_Success;
 }
 
-parser_error_t ParseKeymap(config_buffer_t *buffer, uint8_t keymapIdx, uint8_t keymapCount, uint8_t macroCount)
+void interpretConfig(parse_config_t parseConfig, layer_id_t srcLayer, layer_id_t* tgtLayer, parse_mode_t* parseMode)
+{
+    switch (parseConfig.mode) {
+        case ParseKeymapMode_DryRun:
+            *tgtLayer = srcLayer;
+            *parseMode = ParseMode_DryRun;
+            break;
+        case ParseKeymapMode_FullRun:
+            *tgtLayer = srcLayer;
+            *parseMode = ParseMode_FullRun;
+            break;
+        case ParseKeymapMode_OverlayKeymap:
+            *tgtLayer = srcLayer;
+            *parseMode = ParseMode_Overlay;
+            break;
+        case ParseKeymapMode_OverlayLayer:
+            if (parseConfig.srcLayer == srcLayer) {
+                *tgtLayer = parseConfig.tgtLayer;
+                *parseMode = ParseMode_Overlay;
+            } else {
+                *tgtLayer = srcLayer;
+                *parseMode = ParseMode_DryRun;
+            }
+            break;
+        case ParseKeymapMode_ReplaceLayer:
+            if (parseConfig.srcLayer == srcLayer) {
+                *tgtLayer = parseConfig.tgtLayer;
+                *parseMode = ParseMode_FullRun;
+            } else {
+                *tgtLayer = srcLayer;
+                *parseMode = ParseMode_DryRun;
+            }
+            break;
+    }
+}
+
+parser_error_t ParseKeymap(config_buffer_t *buffer, uint8_t keymapIdx, uint8_t keymapCount, uint8_t macroCount, parse_config_t parseConfig)
 {
     uint16_t offset = buffer->offset;
     parser_error_t errorCode;
@@ -220,7 +270,7 @@ parser_error_t ParseKeymap(config_buffer_t *buffer, uint8_t keymapIdx, uint8_t k
     if (layerCount > LayerId_Count) {
         return ParserError_InvalidLayerCount;
     }
-    if (!ParserRunDry) {
+    if (parseConfig.mode == ParseKeymapMode_FullRun) {
         AllKeymaps[keymapIdx].abbreviation = abbreviation;
         AllKeymaps[keymapIdx].abbreviationLen = abbreviationLen;
         AllKeymaps[keymapIdx].offset = offset;
@@ -237,7 +287,15 @@ parser_error_t ParseKeymap(config_buffer_t *buffer, uint8_t keymapIdx, uint8_t k
     tempKeymapCount = keymapCount;
     tempMacroCount = macroCount;
     for (uint8_t layerIdx = 0; layerIdx < layerCount; layerIdx++) {
-        errorCode = parseLayer(buffer, layerIdx);
+        parse_mode_t parseMode;
+        layer_id_t tgtLayer;
+        layer_id_t srcLayer;
+        errorCode = parseLayerId(buffer, layerIdx, &srcLayer);
+        if (errorCode != ParserError_Success) {
+            return errorCode;
+        }
+        interpretConfig(parseConfig, srcLayer, &tgtLayer, &parseMode);
+        errorCode = parseLayer(buffer, tgtLayer, parseMode);
         if (errorCode != ParserError_Success) {
             return errorCode;
         }
