@@ -28,22 +28,42 @@
     #define POSTPONER_BUFFER_SAFETY_GAP 5
     #define POSTPONER_BUFFER_SIZE 32
     #define POSTPONER_BUFFER_MAX_FILL (POSTPONER_BUFFER_SIZE-POSTPONER_BUFFER_SAFETY_GAP)
+    #define POSTPONER_IS_KEY_EVENT(E) ((E) == PostponerEventType_PressKey || (E)==PostponerEventType_ReleaseKey)
 
 // Typedefs:
 
+    typedef enum {
+        PostponerEventType_PressKey,
+        PostponerEventType_ReleaseKey,
+        PostponerEventType_UnblockMouse,
+        PostponerEventType_Delay,
+    } postponer_event_type_t;
+
+    typedef struct {
+        union {
+           struct {
+            key_state_t* keyState;
+            bool active;
+            uint8_t layer;
+           } ATTR_PACKED key;
+           struct {
+            uint32_t length;
+           } ATTR_PACKED delay;
+        };
+        postponer_event_type_t type;
+    } ATTR_PACKED postponer_event_t;
+
     typedef struct {
         uint32_t time;
-        key_state_t * key;
-        bool active;
-        uint8_t layer;
+        postponer_event_t event;
     } postponer_buffer_record_type_t;
 
 // Variables:
 
     extern uint8_t ChordingDelay;
-    extern key_state_t* Postponer_NextEventKey;
     extern uint8_t Postponer_LastKeyLayer;
     extern uint32_t CurrentPostponedTime;
+    extern bool Postponer_MouseBlocked;
 
 // Functions (Core hooks):
 
@@ -52,6 +72,7 @@
     bool PostponerCore_RunKey(key_state_t* key, bool active);
     void PostponerCore_PrependKeyEvent(key_state_t *keyState, bool active, uint8_t layer);
     void PostponerCore_TrackKeyEvent(key_state_t *keyState, bool active, uint8_t layer);
+    void PostponerCore_TrackDelay(uint32_t length) ;
     void PostponerCore_RunPostponedEvents(void);
     void PostponerCore_FinishCycle(void);
 
@@ -62,15 +83,19 @@
     bool PostponerQuery_IsActiveEventually(key_state_t* key);
     void PostponerQuery_InfoByKeystate(key_state_t* key, postponer_buffer_record_type_t** press, postponer_buffer_record_type_t** release);
     void PostponerQuery_InfoByQueueIdx(uint8_t idx, postponer_buffer_record_type_t** press, postponer_buffer_record_type_t** release);
+    bool PostponerQuery_ContainsKeyId(uint8_t keyid);
 
 // Functions (Query APIs extended):
     uint16_t PostponerExtended_PendingId(uint16_t idx);
     uint32_t PostponerExtended_LastPressTime(void);
     bool PostponerExtended_IsPendingKeyReleased(uint8_t idx);
-    bool PostponerQuery_ContainsKeyId(uint8_t keyid);
     void PostponerExtended_ConsumePendingKeypresses(int count, bool suppress);
     void PostponerExtended_ResetPostponer(void);
 
     void PostponerExtended_PrintContent();
+
+    void PostponerExtended_BlockMouse();
+    void PostponerExtended_UnblockMouse();
+    void PostponerExtended_RequestUnblockMouse();
 
 #endif /* SRC_POSTPONER_H_ */

@@ -51,7 +51,6 @@
  *     - TriggerByRelease = true
  */
 
-secondary_role_t SecondaryRolePreview;
 static key_state_t *resolutionKey;
 static secondary_role_state_t resolutionState;
 static uint32_t resolutionStartTime;
@@ -60,10 +59,10 @@ secondary_role_strategy_t SecondaryRoles_Strategy = SecondaryRoleStrategy_Simple
 
 static key_state_t *previousResolutionKey;
 static uint32_t previousResolutionTime;
+static bool activateSecondaryImmediately;
 
 static void activatePrimary()
 {
-    SecondaryRolePreview = 0;
     // Activate the key "again", but now in "SecondaryRoleState_Primary".
     resolutionKey->current = true;
     resolutionKey->previous = false;
@@ -74,7 +73,6 @@ static void activatePrimary()
 
 static void activateSecondary()
 {
-    SecondaryRolePreview = 0;
     // Activate the key "again", but now in "SecondaryRoleState_Secondary".
     resolutionKey->current = true;
     resolutionKey->previous = false;
@@ -196,6 +194,10 @@ static secondary_role_state_t resolveCurrentKey(secondary_role_strategy_t strate
     case SecondaryRoleState_Secondary:
         return resolutionState;
     case SecondaryRoleState_DontKnowYet:
+        if (activateSecondaryImmediately) {
+            activateSecondaryImmediately = false;
+            return SecondaryRoleState_Secondary;
+        }
         switch (strategy) {
         case SecondaryRoleStrategy_Simple:
             return resolveCurrentKeyRoleIfDontKnowSimple();
@@ -214,7 +216,15 @@ static secondary_role_state_t startResolution(key_state_t *keyState)
     previousResolutionTime = resolutionStartTime;
     resolutionKey = keyState;
     resolutionStartTime = CurrentPostponedTime;
+    PostponerExtended_BlockMouse();
     return SecondaryRoleState_DontKnowYet;
+}
+
+void SecondaryRoles_ActivateSecondaryImmediately() {
+    if (resolutionState == SecondaryRoleState_DontKnowYet) {
+        activateSecondaryImmediately = true;
+    }
+
 }
 
 secondary_role_result_t SecondaryRoles_ResolveState(key_state_t* keyState, secondary_role_t rolePreview, secondary_role_strategy_t strategy, bool isNewResolution)
@@ -228,7 +238,6 @@ secondary_role_result_t SecondaryRoles_ResolveState(key_state_t* keyState, secon
         //start new resolution
         resolutionState = startResolution(keyState);
         resolutionState = resolveCurrentKey(strategy);
-        SecondaryRolePreview = rolePreview;
         return (secondary_role_result_t){
             .state = resolutionState,
             .activatedNow = resolutionState != SecondaryRoleState_DontKnowYet
@@ -238,6 +247,9 @@ secondary_role_result_t SecondaryRoles_ResolveState(key_state_t* keyState, secon
         if (keyState == resolutionKey) {
             secondary_role_state_t oldState = resolutionState;
             resolutionState = resolveCurrentKey(strategy);
+            if (oldState != resolutionState) {
+                PostponerExtended_UnblockMouse();
+            }
             return (secondary_role_result_t){
                 .state = resolutionState,
                 .activatedNow = oldState != resolutionState

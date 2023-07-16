@@ -73,6 +73,7 @@ static gesture_events_t gestureEvents;
 
 uint8_t address = I2C_ADDRESS_RIGHT_IQS5XX_FIRMWARE;
 touchpad_events_t TouchpadEvents;
+const touchpad_events_t ZeroTouchpadEvents;
 uint8_t phase = 0;
 static uint8_t enableEventMode[] = {0x05, 0x8f, 0x07};
 

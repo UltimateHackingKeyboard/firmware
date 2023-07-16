@@ -1,4 +1,5 @@
 #include "postponer.h"
+#include "key_states.h"
 #include "usb_report_updater.h"
 #include "macros.h"
 #include "timer.h"
@@ -16,12 +17,12 @@ uint8_t Postponer_LastKeyLayer = 255;
 static uint8_t cyclesUntilActivation = 0;
 static uint32_t lastPressTime;
 
-key_state_t* Postponer_NextEventKey;
-
 #define POS(idx) ((bufferPosition + POSTPONER_BUFFER_SIZE + (idx)) % POSTPONER_BUFFER_SIZE)
 
 uint8_t ChordingDelay = 0;
 uint32_t CurrentPostponedTime = 0;
+
+bool Postponer_MouseBlocked = false;
 
 static void chording();
 
@@ -33,7 +34,8 @@ static void chording();
 static uint8_t getPendingKeypressIdx(uint8_t n)
 {
     for ( int i = 0; i < bufferSize; i++ ) {
-        if (buffer[POS(i)].active) {
+        postponer_buffer_record_type_t* rec = &buffer[POS(i)];
+        if (rec->event.type == PostponerEventType_PressKey) {
             if (n == 0) {
                 return i;
             } else {
@@ -50,7 +52,7 @@ static key_state_t* getPendingKeypress(uint8_t n)
     if (idx == 255) {
         return NULL;
     } else {
-        return buffer[POS(idx)].key;
+        return buffer[POS(idx)].event.key.keyState;
     }
 }
 
@@ -58,9 +60,78 @@ static void consumeEvent(uint8_t count)
 {
     bufferPosition = POS(count);
     bufferSize = count > bufferSize ? 0 : bufferSize - count;
-    Postponer_NextEventKey = bufferSize == 0 ? NULL : buffer[bufferPosition].key;
 }
 
+static void applyEventAndConsume(postponer_buffer_record_type_t* rec) {
+    switch (rec->event.type) {
+        case PostponerEventType_PressKey:
+        case PostponerEventType_ReleaseKey:
+            rec->event.key.keyState->current = rec->event.key.active;
+            Postponer_LastKeyLayer = rec->event.key.layer;
+            // This gives the key two ticks (this and next) to get properly processed before execution of next queued event.
+            PostponerCore_PostponeNCycles(1);
+            WAKE_MACROS_ON_KEYSTATE_CHANGE();
+            consumeEvent(1);
+            break;
+        case PostponerEventType_UnblockMouse:
+            Postponer_MouseBlocked = false;
+            Postponer_LastKeyLayer = 255;
+            PostponerCore_PostponeNCycles(1);
+            consumeEvent(1);
+            break;
+        case PostponerEventType_Delay: {
+            static bool delayActive = false;
+            static uint32_t delayStartedAt = 0;
+            if (!delayActive) {
+                delayStartedAt = CurrentTime;
+                delayActive = true;
+            } else {
+                if (Timer_GetElapsedTime(&delayStartedAt) >= rec->event.delay.length) {
+                    delayActive = false;
+                    consumeEvent(1);
+                }
+            }
+            break;
+        }
+
+    }
+}
+
+
+static void prependEvent(postponer_event_t event)
+{
+    uint8_t pos = POS(-1);
+
+    if (bufferSize == POSTPONER_BUFFER_SIZE) {
+        return;
+    }
+
+    buffer[pos].event = event;
+    buffer[pos].time = CurrentPostponedTime;
+
+    lastPressTime = true
+        && event.type == PostponerEventType_PressKey
+        && bufferSize == 0 ? CurrentTime : lastPressTime;
+    bufferSize = bufferSize < POSTPONER_BUFFER_SIZE ? bufferSize + 1 : bufferSize;
+    bufferPosition--;
+}
+
+static void appendEvent(postponer_event_t event)
+{
+
+    //if the buffer is totally filled, at least make sure the key doesn't get stuck
+    if (bufferSize == POSTPONER_BUFFER_SIZE) {
+        applyEventAndConsume(&buffer[bufferPosition]);
+    }
+
+    uint8_t pos = POS(bufferSize);
+
+    buffer[pos].event = event;
+    buffer[pos].time = CurrentTime;
+
+    lastPressTime = event.type == PostponerEventType_PressKey ? CurrentTime : lastPressTime;
+    bufferSize = bufferSize < POSTPONER_BUFFER_SIZE ? bufferSize + 1 : bufferSize;
+}
 
 //######################
 //### Core Functions ###
@@ -97,43 +168,45 @@ bool PostponerCore_IsActive(void)
 
 void PostponerCore_PrependKeyEvent(key_state_t *keyState, bool active, uint8_t layer)
 {
-    uint8_t pos = POS(-1);
-
-    if (bufferSize == POSTPONER_BUFFER_SIZE) {
-        return;
-    }
-
-    buffer[pos] = (postponer_buffer_record_type_t) {
-            .time = CurrentPostponedTime,
-            .key = keyState,
-            .active = active,
-            .layer = layer,
-    };
-    lastPressTime = active && bufferSize == 0 ? CurrentTime : lastPressTime;
-    bufferSize = bufferSize < POSTPONER_BUFFER_SIZE ? bufferSize + 1 : bufferSize;
-    bufferPosition--;
+    prependEvent(
+                (postponer_event_t){
+                    .type = active ? PostponerEventType_PressKey : PostponerEventType_ReleaseKey,
+                    .key = {
+                        .keyState = keyState,
+                        .active = active,
+                        .layer = layer,
+                    }
+                }
+            );
 }
-
 
 void PostponerCore_TrackKeyEvent(key_state_t *keyState, bool active, uint8_t layer)
 {
-    uint8_t pos = POS(bufferSize);
-
-    //if the buffer is totally filled, at least make sure the key doesn't get stuck
-    if (bufferSize == POSTPONER_BUFFER_SIZE) {
-        buffer[pos].key->current = buffer[bufferPosition].active;
-        consumeEvent(1);
-    }
-
-    buffer[pos] = (postponer_buffer_record_type_t) {
-            .time = CurrentTime,
-            .key = keyState,
-            .active = active,
-            .layer = layer,
-    };
-    lastPressTime = active ? CurrentTime : lastPressTime;
-    bufferSize = bufferSize < POSTPONER_BUFFER_SIZE ? bufferSize + 1 : bufferSize;
+    appendEvent(
+                (postponer_event_t){
+                    .type = active ? PostponerEventType_PressKey : PostponerEventType_ReleaseKey,
+                    .key = {
+                        .keyState = keyState,
+                        .active = active,
+                        .layer = layer,
+                    }
+                }
+            );
 }
+
+
+void PostponerCore_TrackDelay(uint32_t length)
+{
+    appendEvent(
+                (postponer_event_t){
+                    .type = PostponerEventType_Delay,
+                    .delay = {
+                        .length = length,
+                    }
+                }
+            );
+}
+
 
 void PostponerCore_RunPostponedEvents(void)
 {
@@ -142,13 +215,7 @@ void PostponerCore_RunPostponedEvents(void)
     }
     // Process one event every two cycles. (Unless someone keeps Postponer active by touching cycles_until_activation.)
     if (bufferSize != 0 && (cyclesUntilActivation == 0 || bufferSize > POSTPONER_BUFFER_MAX_FILL)) {
-        buffer[bufferPosition].key->current = buffer[bufferPosition].active;
-        Postponer_LastKeyLayer = buffer[bufferPosition].layer;
-        consumeEvent(1);
-        // This gives the key two ticks (this and next) to get properly processed before execution of next queued event.
-        PostponerCore_PostponeNCycles(1);
-        // wake macros
-        WAKE_MACROS_ON_KEYSTATE_CHANGE();
+        applyEventAndConsume(&buffer[bufferPosition]);
     }
 }
 
@@ -169,7 +236,7 @@ uint8_t PostponerQuery_PendingKeypressCount()
 {
     uint8_t cnt = 0;
     for ( uint8_t i = 0; i < bufferSize; i++ ) {
-        if (buffer[POS(i)].active) {
+        if (buffer[POS(i)].event.type == PostponerEventType_PressKey) {
             cnt++;
         }
     }
@@ -183,7 +250,7 @@ bool PostponerQuery_IsKeyReleased(key_state_t* key)
         return false;
     }
     for ( uint8_t i = 0; i < bufferSize; i++ ) {
-        if (buffer[POS(i)].key == key && !buffer[POS(i)].active) {
+        if (buffer[POS(i)].event.type == PostponerEventType_ReleaseKey && buffer[POS(i)].event.key.keyState == key) {
             return true;
         }
     }
@@ -196,8 +263,8 @@ bool PostponerQuery_IsActiveEventually(key_state_t* key)
         return false;
     }
     for ( int8_t i = bufferSize - 1; i >= 0; i-- ) {
-        if (buffer[POS(i)].key == key) {
-            return buffer[POS(i)].active;
+        if (POSTPONER_IS_KEY_EVENT(buffer[POS(i)].event.type)) {
+            return buffer[POS(i)].event.key.active;
         }
     }
     return KeyState_Active(key);
@@ -208,12 +275,12 @@ void PostponerQuery_InfoByKeystate(key_state_t* key, postponer_buffer_record_typ
     *press = NULL;
     *release = NULL;
     for ( int i = 0; i < bufferSize; i++ ) {
-        postponer_buffer_record_type_t* record = &buffer[POS(i)];
-        if (record->key == key) {
-            if (record->active) {
-                *press = record;
+        postponer_buffer_record_type_t* rec = &buffer[POS(i)];
+        if (POSTPONER_IS_KEY_EVENT(rec->event.type) && rec->event.key.keyState == key) {
+            if (rec->event.key.active) {
+                *press = rec;
             } else {
-                *release = record;
+                *release = rec;
                 return;
             }
         }
@@ -230,9 +297,9 @@ void PostponerQuery_InfoByQueueIdx(uint8_t idx, postponer_buffer_record_type_t**
     }
     *press = &buffer[POS(startIdx)];
     for ( int i = startIdx; i < bufferSize; i++ ) {
-        postponer_buffer_record_type_t* record = &buffer[POS(i)];
-        if (!record->active && record->key == (*press)->key) {
-            *release = record;
+        postponer_buffer_record_type_t* rec = &buffer[POS(i)];
+        if (rec->event.type == PostponerEventType_ReleaseKey && rec->event.key.keyState == (*press)->event.key.keyState) {
+            *release = rec;
             return;
         }
     }
@@ -252,16 +319,15 @@ static void consumeOneKeypress()
         if (releaseFound) {
             continue;
         }
-        if (buffer[POS(i)].active && removedKeypress == NULL) {
+        if (buffer[POS(i)].event.type == PostponerEventType_PressKey && removedKeypress == NULL) {
             shifting_by++;
-            removedKeypress = buffer[POS(i)].key;
-        } else if (!buffer[POS(i)].active && buffer[POS(i)].key == removedKeypress) {
+            removedKeypress = buffer[POS(i)].event.key.keyState;
+        } else if (buffer[POS(i)].event.type == PostponerEventType_ReleaseKey && buffer[POS(i)].event.key.keyState == removedKeypress) {
             shifting_by++;
             releaseFound = true;
         }
     }
     bufferSize -= shifting_by;
-    Postponer_NextEventKey = bufferSize == 0 ? NULL : buffer[bufferPosition].key;
 }
 
 void PostponerExtended_ResetPostponer(void)
@@ -300,14 +366,28 @@ void PostponerExtended_PrintContent()
     Macros_SetStatusNum(bufferSize);
     Macros_SetStatusString("\n", NULL);
     for (int i = 0; i < POSTPONER_BUFFER_SIZE; i++) {
-        postponer_buffer_record_type_t* ptr = &buffer[i];
-        Macros_SetStatusNum(Utils_KeyStateToKeyId(ptr->key));
-        Macros_SetStatusString("/", NULL);
-        Macros_SetStatusNum(ptr->active);
-        if (ptr == first) {
+        postponer_buffer_record_type_t* rec = &buffer[i];
+        switch(rec->event.type) {
+        case PostponerEventType_PressKey:
+            Macros_SetStatusString("press ", NULL);
+            Macros_SetStatusNum(Utils_KeyStateToKeyId(rec->event.key.keyState));
+            break;
+        case PostponerEventType_ReleaseKey:
+            Macros_SetStatusString("release ", NULL);
+            Macros_SetStatusNum(Utils_KeyStateToKeyId(rec->event.key.keyState));
+            break;
+        case PostponerEventType_UnblockMouse:
+            Macros_SetStatusString("unblock mouse", NULL);
+            break;
+        case PostponerEventType_Delay:
+            Macros_SetStatusString("delay ", NULL);
+            Macros_SetStatusNum(rec->event.delay.length);
+            break;
+        }
+        if (rec == first) {
             Macros_SetStatusString(" <first", NULL);
         }
-        if (ptr == last) {
+        if (rec == last) {
             Macros_SetStatusString(" <last", NULL);
         }
         Macros_SetStatusString("\n", NULL);
@@ -322,13 +402,26 @@ bool PostponerQuery_ContainsKeyId(uint8_t keyid)
         return false;
     }
     for ( uint8_t i = 0; i < bufferSize; i++ ) {
-        if (buffer[POS(i)].key == key) {
+        if (POSTPONER_IS_KEY_EVENT(buffer[POS(i)].event.type) && buffer[POS(i)].event.key.keyState == key) {
             return true;
         }
     }
     return false;
 }
 
+void PostponerExtended_BlockMouse() {
+    Postponer_MouseBlocked = true;
+}
+
+void PostponerExtended_UnblockMouse() {
+    appendEvent((postponer_event_t){ .type = PostponerEventType_UnblockMouse });
+}
+
+void PostponerExtended_RequestUnblockMouse() {
+    if (Postponer_MouseBlocked) {
+        SecondaryRoles_ActivateSecondaryImmediately();
+    }
+}
 
 //##########################
 //### Chording ###
@@ -367,16 +460,22 @@ static void chording()
         for ( uint8_t i = 0; i < bufferSize - 1; i++ ) {
             postponer_buffer_record_type_t* a = &buffer[POS(i)];
             postponer_buffer_record_type_t* b = &buffer[POS(i+1)];
-            uint8_t pa = priority(a->key, a->active);
-            uint8_t pb = priority(b->key, b->active);
-            // Originally, this also swapped releases to go before presses.
-            // Not sure why anymore, but it caused race condition on secondary role.
-            if ( a->active && b->active && pa < pb ) {
-                if (a->key != b->key && b->time - a->time < ChordingDelay) {
-                    postponer_buffer_record_type_t tmp = *a;
-                    *a = *b;
-                    *b = tmp;
-                    activated = true;
+            if (POSTPONER_IS_KEY_EVENT(a->event.type) && POSTPONER_IS_KEY_EVENT(b->event.type)) {
+                bool aIsActive = a->event.type == PostponerEventType_PressKey;
+                bool bIsActive = b->event.type == PostponerEventType_PressKey;
+                uint8_t pa = priority(a->event.key.keyState, aIsActive);
+                uint8_t pb = priority(b->event.key.keyState, bIsActive);
+                key_state_t* aKeyState = a->event.key.keyState;
+                key_state_t* bKeyState = b->event.key.keyState;
+                // Originally, this also swapped releases to go before presses.
+                // Not sure why anymore, but it caused race condition on secondary role.
+                if ( aIsActive && bIsActive && pa < pb ) {
+                    if (aKeyState != bKeyState && b->time - a->time < ChordingDelay) {
+                        postponer_buffer_record_type_t tmp = *a;
+                        *a = *b;
+                        *b = tmp;
+                        activated = true;
+                    }
                 }
             }
         }
@@ -385,3 +484,4 @@ static void chording()
         }
     }
 }
+
