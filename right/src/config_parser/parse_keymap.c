@@ -213,36 +213,36 @@ static parser_error_t parseLayer(config_buffer_t *buffer, uint8_t layer, parse_m
     return ParserError_Success;
 }
 
-void interpretConfig(parse_config_t parseConfig, layer_id_t srcLayer, layer_id_t* tgtLayer, parse_mode_t* parseMode)
+void interpretConfig(parse_config_t parseConfig, layer_id_t srcLayer, layer_id_t* dstLayer, parse_mode_t* parseMode)
 {
     switch (parseConfig.mode) {
         case ParseKeymapMode_DryRun:
-            *tgtLayer = srcLayer;
+            *dstLayer = srcLayer;
             *parseMode = ParseMode_DryRun;
             break;
         case ParseKeymapMode_FullRun:
-            *tgtLayer = srcLayer;
+            *dstLayer = srcLayer;
             *parseMode = ParseMode_FullRun;
             break;
         case ParseKeymapMode_OverlayKeymap:
-            *tgtLayer = srcLayer;
+            *dstLayer = srcLayer;
             *parseMode = ParseMode_Overlay;
             break;
         case ParseKeymapMode_OverlayLayer:
             if (parseConfig.srcLayer == srcLayer) {
-                *tgtLayer = parseConfig.tgtLayer;
+                *dstLayer = parseConfig.dstLayer;
                 *parseMode = ParseMode_Overlay;
             } else {
-                *tgtLayer = srcLayer;
+                *dstLayer = srcLayer;
                 *parseMode = ParseMode_DryRun;
             }
             break;
         case ParseKeymapMode_ReplaceLayer:
             if (parseConfig.srcLayer == srcLayer) {
-                *tgtLayer = parseConfig.tgtLayer;
+                *dstLayer = parseConfig.dstLayer;
                 *parseMode = ParseMode_FullRun;
             } else {
-                *tgtLayer = srcLayer;
+                *dstLayer = srcLayer;
                 *parseMode = ParseMode_DryRun;
             }
             break;
@@ -288,14 +288,14 @@ parser_error_t ParseKeymap(config_buffer_t *buffer, uint8_t keymapIdx, uint8_t k
     tempMacroCount = macroCount;
     for (uint8_t layerIdx = 0; layerIdx < layerCount; layerIdx++) {
         parse_mode_t parseMode;
-        layer_id_t tgtLayer;
+        layer_id_t dstLayer;
         layer_id_t srcLayer;
         errorCode = parseLayerId(buffer, layerIdx, &srcLayer);
         if (errorCode != ParserError_Success) {
             return errorCode;
         }
-        interpretConfig(parseConfig, srcLayer, &tgtLayer, &parseMode);
-        errorCode = parseLayer(buffer, tgtLayer, parseMode);
+        interpretConfig(parseConfig, srcLayer, &dstLayer, &parseMode);
+        errorCode = parseLayer(buffer, dstLayer, parseMode);
         if (errorCode != ParserError_Success) {
             return errorCode;
         }

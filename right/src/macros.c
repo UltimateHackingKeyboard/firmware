@@ -2167,7 +2167,7 @@ static macro_result_t processReplaceLayerCommand(const char* arg1, const char* a
 {
     const char* arg2 = NextTok(arg1, argEnd);
     const char* arg3 = NextTok(arg2, argEnd);
-    layer_id_t tgtLayerId = Macros_ParseLayerId(arg1, argEnd);
+    layer_id_t dstLayerId = Macros_ParseLayerId(arg1, argEnd);
     uint8_t srcKeymapId = parseKeymapId(arg2, argEnd);
     layer_id_t srcLayerId = Macros_ParseLayerId(arg3, argEnd);
 
@@ -2175,7 +2175,7 @@ static macro_result_t processReplaceLayerCommand(const char* arg1, const char* a
         return MacroResult_Finished;
     }
 
-    ReplaceLayer(tgtLayerId, srcKeymapId, srcLayerId);
+    ReplaceLayer(dstLayerId, srcKeymapId, srcLayerId);
     return MacroResult_Finished;
 }
 
@@ -2183,7 +2183,7 @@ static macro_result_t processOverlayLayerCommand(const char* arg1, const char* a
 {
     const char* arg2 = NextTok(arg1, argEnd);
     const char* arg3 = NextTok(arg2, argEnd);
-    layer_id_t tgtLayerId = Macros_ParseLayerId(arg1, argEnd);
+    layer_id_t dstLayerId = Macros_ParseLayerId(arg1, argEnd);
     uint8_t srcKeymapId = parseKeymapId(arg2, argEnd);
     layer_id_t srcLayerId = Macros_ParseLayerId(arg3, argEnd);
 
@@ -2191,7 +2191,7 @@ static macro_result_t processOverlayLayerCommand(const char* arg1, const char* a
         return MacroResult_Finished;
     }
 
-    OverlayLayer(tgtLayerId, srcKeymapId, srcLayerId);
+    OverlayLayer(dstLayerId, srcKeymapId, srcLayerId);
     return MacroResult_Finished;
 }
 

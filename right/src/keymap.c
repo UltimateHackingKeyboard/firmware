@@ -68,23 +68,23 @@ void OverlayKeymap(uint8_t srcKeymap)
     ParseKeymap(&ValidatedUserConfigBuffer, srcKeymap, AllKeymapsCount, AllMacrosCount, parseConfig);
 }
 
-void OverlayLayer(layer_id_t tgtLayer, uint8_t srcKeymap, layer_id_t srcLayer)
+void OverlayLayer(layer_id_t dstLayer, uint8_t srcKeymap, layer_id_t srcLayer)
 {
     parse_config_t parseConfig = (parse_config_t) {
         .mode = ParseKeymapMode_OverlayLayer,
         .srcLayer = srcLayer,
-        .tgtLayer = tgtLayer,
+        .dstLayer = dstLayer,
     };
     ValidatedUserConfigBuffer.offset = AllKeymaps[srcKeymap].offset;
     ParseKeymap(&ValidatedUserConfigBuffer, srcKeymap, AllKeymapsCount, AllMacrosCount, parseConfig);
 }
 
-void ReplaceLayer(layer_id_t tgtLayer, uint8_t srcKeymap, layer_id_t srcLayer)
+void ReplaceLayer(layer_id_t dstLayer, uint8_t srcKeymap, layer_id_t srcLayer)
 {
     parse_config_t parseConfig = (parse_config_t) {
         .mode = ParseKeymapMode_ReplaceLayer,
         .srcLayer = srcLayer,
-        .tgtLayer = tgtLayer,
+        .dstLayer = dstLayer,
     };
     ValidatedUserConfigBuffer.offset = AllKeymaps[srcKeymap].offset;
     ParseKeymap(&ValidatedUserConfigBuffer, srcKeymap, AllKeymapsCount, AllMacrosCount, parseConfig);

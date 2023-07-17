@@ -89,7 +89,7 @@
     typedef struct {
         parse_keymap_mode_t mode;
         layer_id_t srcLayer;
-        layer_id_t tgtLayer;
+        layer_id_t dstLayer;
     } ATTR_PACKED parse_config_t;
 
 // Functions:

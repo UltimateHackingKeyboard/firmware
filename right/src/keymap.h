@@ -34,7 +34,7 @@
     uint8_t FindKeymapByAbbreviation(uint8_t length, const char *abbrev);
 
     void OverlayKeymap(uint8_t srcKeymap);
-    void OverlayLayer(layer_id_t tgtLayer, uint8_t srcKeymap, layer_id_t srcLayer);
-    void ReplaceLayer(layer_id_t tgtLayer, uint8_t srcKeymap, layer_id_t srcLayer);
+    void OverlayLayer(layer_id_t dstLayer, uint8_t srcKeymap, layer_id_t srcLayer);
+    void ReplaceLayer(layer_id_t dstLayer, uint8_t srcKeymap, layer_id_t srcLayer);
 
 #endif
