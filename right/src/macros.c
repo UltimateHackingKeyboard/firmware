@@ -1,5 +1,6 @@
 #include "macros.h"
 #include <math.h>
+#include "layer.h"
 #include "secondary_role_driver.h"
 #include "usb_interfaces/usb_interface_basic_keyboard.h"
 #include "usb_interfaces/usb_interface_media_keyboard.h"
@@ -2154,6 +2155,50 @@ static macro_result_t processOneShotCommand(const char* arg1, const char* argEnd
     }
 }
 
+static macro_result_t processOverlayKeymapCommand(const char* arg1, const char* argEnd)
+{
+    uint8_t srcKeymapId = parseKeymapId(arg1, argEnd);
+
+    if (Macros_ParserError) {
+        return MacroResult_Finished;
+    }
+
+    OverlayKeymap(srcKeymapId);
+    return MacroResult_Finished;
+}
+
+static macro_result_t processReplaceLayerCommand(const char* arg1, const char* argEnd)
+{
+    const char* arg2 = NextTok(arg1, argEnd);
+    const char* arg3 = NextTok(arg2, argEnd);
+    layer_id_t dstLayerId = Macros_ParseLayerId(arg1, argEnd);
+    uint8_t srcKeymapId = parseKeymapId(arg2, argEnd);
+    layer_id_t srcLayerId = Macros_ParseLayerId(arg3, argEnd);
+
+    if (Macros_ParserError) {
+        return MacroResult_Finished;
+    }
+
+    ReplaceLayer(dstLayerId, srcKeymapId, srcLayerId);
+    return MacroResult_Finished;
+}
+
+static macro_result_t processOverlayLayerCommand(const char* arg1, const char* argEnd)
+{
+    const char* arg2 = NextTok(arg1, argEnd);
+    const char* arg3 = NextTok(arg2, argEnd);
+    layer_id_t dstLayerId = Macros_ParseLayerId(arg1, argEnd);
+    uint8_t srcKeymapId = parseKeymapId(arg2, argEnd);
+    layer_id_t srcLayerId = Macros_ParseLayerId(arg3, argEnd);
+
+    if (Macros_ParserError) {
+        return MacroResult_Finished;
+    }
+
+    OverlayLayer(dstLayerId, srcKeymapId, srcLayerId);
+    return MacroResult_Finished;
+}
+
 static bool processIfKeyPendingAtCommand(bool negate, const char* arg1, const char* argEnd)
 {
     const char* arg2 = NextTok(arg1, argEnd);
@@ -2741,6 +2786,12 @@ static macro_result_t processCommand(const char* cmd, const char* cmdEnd)
             if (TokenMatches(cmd, cmdEnd, "oneShot")) {
                 return processOneShotCommand(arg1, cmdEnd);
             }
+            if (TokenMatches(cmd, cmdEnd, "overlayLayer")) {
+                return processOverlayLayerCommand(arg1, cmdEnd);
+            }
+            if (TokenMatches(cmd, cmdEnd, "overlayKeymap")) {
+                return processOverlayKeymapCommand(arg1, cmdEnd);
+            }
             else {
                 goto failed;
             }
@@ -2795,6 +2846,9 @@ static macro_result_t processCommand(const char* cmd, const char* cmdEnd)
             }
             else if (TokenMatches(cmd, cmdEnd, "resetTrackpoint")) {
                 return processResetTrackpointCommand();
+            }
+            else if (TokenMatches(cmd, cmdEnd, "replaceLayer")) {
+                return processReplaceLayerCommand(arg1, cmdEnd);
             }
             else {
                 goto failed;
