@@ -3559,7 +3559,7 @@ void Macros_ClearStatus(void)
 bool Macros_MacroHasActiveInstance(macro_index_t macroIdx)
 {
     for(uint8_t j = 0; j < MACRO_STATE_POOL_SIZE; j++) {
-        if(MacroState[j].ms.macroPlaying && MacroState[j].ms.currentMacroIndex == MacroIndex_UsbCmdReserved) {
+        if(MacroState[j].ms.macroPlaying && MacroState[j].ms.currentMacroIndex == macroIdx) {
             return true;
         }
     }
