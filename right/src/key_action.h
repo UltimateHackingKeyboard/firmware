@@ -72,6 +72,7 @@
             } ATTR_PACKED playMacro;
         };
         rgb_t color;
+        bool colorOverriden;
     } ATTR_PACKED key_action_t;
 
     typedef struct {

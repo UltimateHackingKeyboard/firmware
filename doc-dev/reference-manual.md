@@ -128,6 +128,7 @@ The following grammar is supported:
     COMMAND = set keymapAction.LAYERID.KEYID ACTION
     COMMAND = set backlight.strategy { functional | constantRgb | perKeyRgb }
     COMMAND = set backlight.constantRgb.rgb <number 0-255 (NUMBER)> <number 0-255 (NUMBER)> <number 0-255 (NUMBER)><number 0-255 (NUMBER)>
+    COMMAND = set backlight.keyRgb.LAYERID.KEYID <number 0-255 (NUMBER)> <number 0-255 (NUMBER)> <number 0-255 (NUMBER)>
     COMMAND = set leds.enabled BOOLEAN
     COMMAND = set leds.brightness <0-1 multiple of default (FLOAT)>
     COMMAND = set leds.fadeTimeout <seconds to fade after (NUMBER)>
@@ -546,6 +547,7 @@ For the purpose of toggling functionality on and off, and for global constants m
 - backlight:
     - `backlight.strategy { functional | constantRgb | perKeyRgb }` sets backlight strategy.
     - `backlight.constantRgb.rgb NUMBER NUMBER NUMBER` allows setting custom constant colour for entire keyboard. E.g.: `set backlight.strategy constantRgb; set backlight.constantRgb.rgb 255 0 0` to make entire keyboard shine red.
+    - `backlight.keyRgb.LAYERID.KEYID NUMBER NUMBER NUMBER` allows overriding color of the key. This override will last until reload of keymap and will apply to all backlight strategies.
 
 - general led configuration:
     - `leds.enabled BOOLEAN` turns on/off all keyboard leds: i.e., backlight, indicator leds, segment display
