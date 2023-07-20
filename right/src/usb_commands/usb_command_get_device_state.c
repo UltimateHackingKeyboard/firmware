@@ -9,16 +9,18 @@
 #include "layer_switcher.h"
 #include "slave_scheduler.h"
 
+#define MODULE_CONNECTION_STATE(SLOT_ID) ( \
+        Timer_GetElapsedTime(&ModuleConnectionStates[SLOT_ID].lastTimeConnected) < 350 ? \
+        ModuleConnectionStates[SLOT_ID].moduleId : 0 \
+    )
+
 void UsbCommand_GetKeyboardState(void)
 {
     SetUsbTxBufferUint8(1, IsEepromBusy);
     SetUsbTxBufferUint8(2, MERGE_SENSOR_IS_MERGED);
-    SetUsbTxBufferUint8(3, UhkModuleStates[UhkModuleDriverId_LeftKeyboardHalf].moduleId);
-    SetUsbTxBufferUint8(4, UhkModuleStates[UhkModuleDriverId_LeftModule].moduleId);
-    uint8_t rightSlotModuleId = Slaves[SlaveId_RightTouchpad].isConnected
-        ? ModuleId_TouchpadRight
-        : UhkModuleStates[UhkModuleDriverId_RightModule].moduleId;
-    SetUsbTxBufferUint8(5, rightSlotModuleId);
+    SetUsbTxBufferUint8(3, MODULE_CONNECTION_STATE(UhkModuleDriverId_LeftKeyboardHalf));
+    SetUsbTxBufferUint8(4, MODULE_CONNECTION_STATE(UhkModuleDriverId_LeftModule));
+    SetUsbTxBufferUint8(5, MODULE_CONNECTION_STATE(UhkModuleDriverId_RightModule));
     SetUsbTxBufferUint8(6, ActiveLayer | (ActiveLayer != LayerId_Base && !ActiveLayerHeld ? (1 << 7) : 0) ); //Active layer + most significant bit if layer is toggled
     LastUsbGetKeyboardStateRequestTimestamp = CurrentTime;
 }
