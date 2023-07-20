@@ -10,7 +10,7 @@
 #include "slave_scheduler.h"
 
 #define MODULE_CONNECTION_STATE(SLOT_ID) ( \
-        Timer_GetElapsedTime(&ModuleConnectionStates[SLOT_ID].lastTimeConnected) < 500 ? \
+        Timer_GetElapsedTime(&ModuleConnectionStates[SLOT_ID].lastTimeConnected) < 350 ? \
         ModuleConnectionStates[SLOT_ID].moduleId : 0 \
     )
 
