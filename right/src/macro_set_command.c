@@ -284,6 +284,39 @@ static void backlightStrategy(const char* arg1, const char *textEnd)
     }
 }
 
+static void perKeyRgb(const char* arg1, const char *textEnd)
+{
+    const char* arg2 = proceedByDot(arg1, textEnd);
+    const char* arg3 = proceedByDot(arg2, textEnd);
+
+    if (TokenMatches(arg3, textEnd, "rgb")) {
+        layer_id_t layerId = Macros_ParseLayerId(arg1, textEnd);
+        uint8_t keyId = Macros_ParseInt(arg2, textEnd, NULL);
+        const char* r = NextTok(arg3,  textEnd);
+        const char* g = NextTok(r, textEnd);
+        const char* b = NextTok(g, textEnd);
+        rgb_t rgb;
+        rgb.red = Macros_ParseInt(r, textEnd, NULL);
+        rgb.green = Macros_ParseInt(g, textEnd, NULL);
+        rgb.blue = Macros_ParseInt(b, textEnd, NULL);
+
+        if (Macros_ParserError) {
+            return;
+        }
+
+        uint8_t slotIdx = keyId/64;
+        uint8_t inSlotIdx = keyId%64;
+
+        CurrentKeymap[layerId][slotIdx][inSlotIdx].color = rgb;
+
+        SetLedBacklightingMode(BacklightingMode_PerKeyRgb);
+        LedSlaveDriver_UpdateLeds();
+    } else {
+        Macros_ReportError("parameter not recognized:", arg1, textEnd);
+    }
+}
+
+
 static void constantRgb(const char* arg1, const char *textEnd)
 {
     if (TokenMatches(arg1, textEnd, "rgb")) {
@@ -324,6 +357,9 @@ static void backlight(const char* arg1, const char *textEnd)
     }
     else if (TokenMatches(arg1, textEnd, "constantRgb")) {
         constantRgb(proceedByDot(arg1, textEnd), textEnd);
+    }
+    else if (TokenMatches(arg1, textEnd, "perKeyRgb")) {
+        perKeyRgb(proceedByDot(arg1, textEnd), textEnd);
     }
     else {
         Macros_ReportError("parameter not recognized:", arg1, textEnd);
