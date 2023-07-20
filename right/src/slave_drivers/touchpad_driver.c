@@ -100,6 +100,7 @@ int16_t deltaY;
 
 void TouchpadDriver_Init(uint8_t uhkModuleDriverId)
 {
+    phase = 0;
 }
 
 slave_result_t TouchpadDriver_Update(uint8_t uhkModuleDriverId)
@@ -114,6 +115,7 @@ slave_result_t TouchpadDriver_Update(uint8_t uhkModuleDriverId)
         }
         case 1: {
             res.status = I2cAsyncWrite(address, enableManualMode, sizeof(enableManualMode));
+            ModuleConnectionStates[UhkModuleDriverId_RightModule].moduleId = ModuleId_TouchpadRight;
             phase = 2;
             break;
         }
@@ -156,6 +158,7 @@ slave_result_t TouchpadDriver_Update(uint8_t uhkModuleDriverId)
             deltaY = (int16_t)(buffer[1] | buffer[0]<<8);
             deltaX = (int16_t)(buffer[3] | buffer[2]<<8);
 
+            ModuleConnectionStates[UhkModuleDriverId_RightModule].lastTimeConnected = CurrentTime;
 
             TouchpadEvents.singleTap = gestureEvents.events0.singleTap;
             TouchpadEvents.twoFingerTap = gestureEvents.events1.twoFingerTap;

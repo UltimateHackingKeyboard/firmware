@@ -7,6 +7,7 @@
 #include "bool_array_converter.h"
 #include "crc16.h"
 #include "key_states.h"
+#include "timer.h"
 #include "usb_report_updater.h"
 #include "utils.h"
 #include "keymap.h"
@@ -14,6 +15,7 @@
 #include "macros.h"
 
 uhk_module_state_t UhkModuleStates[UHK_MODULE_MAX_SLOT_COUNT];
+module_connection_state_t ModuleConnectionStates[UHK_MODULE_MAX_SLOT_COUNT];
 
 static bool shouldResetTrackpoint = false;
 
@@ -106,6 +108,7 @@ slave_result_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
 {
     slave_result_t res = { .status = kStatus_Uhk_IdleSlave, .hold = false };
 
+    module_connection_state_t *moduleConnectionState = ModuleConnectionStates + uhkModuleDriverId;
     uhk_module_state_t *uhkModuleState = UhkModuleStates + uhkModuleDriverId;
     uhk_module_vars_t *uhkModuleSourceVars = &uhkModuleState->sourceVars;
     uhk_module_vars_t *uhkModuleTargetVars = &uhkModuleState->targetVars;
@@ -204,6 +207,7 @@ slave_result_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
             bool isMessageValid = CRC16_IsMessageValid(rxMessage);
             if (isMessageValid) {
                 uhkModuleState->moduleId = rxMessage->data[0];
+                moduleConnectionState->moduleId = rxMessage->data[0];
                 reloadKeymapIfNeeded();
             }
             res.status = kStatus_Uhk_IdleCycle;
@@ -315,6 +319,7 @@ slave_result_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
             txMessage.length = 1;
             res.status = tx(i2cAddress);
             res.hold = true;
+            moduleConnectionState->lastTimeConnected = CurrentTime;
             *uhkModulePhase = UhkModulePhase_ReceiveKeystates;
             break;
         case UhkModulePhase_ReceiveKeystates:
