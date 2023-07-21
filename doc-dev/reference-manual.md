@@ -115,6 +115,7 @@ The following grammar is supported:
     COMMAND = set i2cBaudRate <baud rate, default 100000(NUMBER)>
     COMMAND = set diagonalSpeedCompensation BOOLEAN
     COMMAND = set chordingDelay <time in ms (NUMBER)>
+    COMMAND = set autoShiftDelay <time in ms (NUMBER)>
     COMMAND = set stickyModifiers {never|smart|always}
     COMMAND = set debounceDelay <time in ms, at most 250 (NUMBER)>
     COMMAND = set doubletapTimeout <time in ms, at most 65535 (NUMBER)>
@@ -425,6 +426,7 @@ For the purpose of toggling functionality on and off, and for global constants m
   2) Macros
   3) Keystrokes and mouse actions
   This allows the user to trigger chorded shortcuts in arbitrary ordrer (all at the "same" time). E.g., if `A+Ctrl` is pressed instead of `Ctrl+A`, keyboard will still send `Ctrl+A` if the two key presses follow within the specified time.
+- `set autoShiftDelay 0 | <time in ms (NUMBER)>` If nonzero, autoshift feature is turned on. This adds shift to a scancode when the key is held for at least `autoShiftDelay` ms. (E.g., tapping a results in 'a', pressing 'a' for a little bit longer results in 'A'.)
 - `set debounceDelay <time in ms, at most 250>` prevents key state from changing for some time after every state change. This is needed because contacts of mechanical switches can bounce after contact and therefore change state multiple times in span of a few milliseconds. Official firmware debounce time is 50 ms for both press and release. Recommended value is 10-50, default is 50.
 - `set doubletapTimeout <time in ms, at most 65535>` controls doubletap timeouts for both layer switchers and for the `ifDoubletap` condition.
 - `set keystrokeDelay <time in ms, at most 65535>` allows slowing down keyboard output. This is handy for lousily written RDP clients and other software which just scans keys once a while and processes them in wrong order if multiple keys have been pressed inbetween. In more detail, this setting adds a delay whenever a basic usb report is sent. During this delay, key matrix is still scanned and keys are debounced, but instead of activating, the keys are added into a queue to be replayed later. Recommended value is 10 if you have issues with RDP missing modifier keys, 0 otherwise.

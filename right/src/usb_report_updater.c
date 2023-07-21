@@ -457,6 +457,10 @@ static void updateActiveUsbReports(void)
                     } else {
                         actionCache[slotId][keyId].action = CurrentKeymap[ActiveLayer][slotId][keyId];
                     }
+                    if (Postponer_LastKeyMods != 0) {
+                        actionCache[slotId][keyId].action.keystroke.modifiers = Postponer_LastKeyMods;
+                        Postponer_LastKeyMods = 0;
+                    }
                     handleEventInterrupts(keyState);
                 }
 
