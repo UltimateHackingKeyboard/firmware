@@ -273,6 +273,7 @@
     uint8_t Macros_ParseLayerId(const char* arg1, const char* cmdEnd);
     int32_t Macros_ParseInt(const char *a, const char *aEnd, const char* *parsedTill);
     bool Macros_ParseBoolean(const char *a, const char *aEnd);
+    void Macros_ResetBasicKeyboardReports();
 
 #define WAKE_MACROS_ON_KEYSTATE_CHANGE()  if (Macros_WakeMeOnKeystateChange) { \
                                               Macros_WakedBecauseOfKeystateChange = true; \
