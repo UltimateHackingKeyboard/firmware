@@ -75,7 +75,7 @@ static uint8_t lastKeymapIdx;
 static int32_t regs[MAX_REG_COUNT];
 
 macro_state_t MacroState[MACRO_STATE_POOL_SIZE];
-static macro_state_t *s = MacroState;
+static macro_state_t *s = NULL;
 
 uint16_t DoubletapConditionTimeout = 400;
 uint16_t AutoRepeatInitialDelay = 500;
