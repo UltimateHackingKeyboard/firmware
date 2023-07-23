@@ -17,6 +17,9 @@
 
 // Variables:
 
+    extern bool MacroEvent_CapsLockStateChanged;
+    extern bool MacroEvent_NumLockStateChanged;
+    extern bool MacroEvent_ScrollLockStateChanged;
 
 // Functions:
 
@@ -24,5 +27,6 @@
     void MacroEvent_OnKeymapChange(uint8_t keymapIdx);
     void MacroEvent_OnLayerChange(layer_id_t layerId);
     void MacroEvent_RegisterLayerMacros();
+    void MacroEvent_ProcessStateKeyEvents();
 
 #endif

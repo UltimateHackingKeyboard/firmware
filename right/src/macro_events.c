@@ -12,12 +12,22 @@
 static macro_index_t anyLayerChangeMacro = MacroIndex_None;
 static macro_index_t layerChangeMacro[LayerId_Count];
 static macro_index_t keymapLayerChangeMacro[LayerId_Count];
+static macro_index_t capsLockChangeMacro = MacroIndex_None;
+static macro_index_t scrollLockChangeMacro = MacroIndex_None;
+static macro_index_t numLockChangeMacro = MacroIndex_None;
+
+bool MacroEvent_CapsLockStateChanged = false;
+bool MacroEvent_NumLockStateChanged = false;
+bool MacroEvent_ScrollLockStateChanged = false;
 
 /**
  * Future possible extensions:
  * - generalize change to always handle "in" and "out" events
  * - add onKeymapLayerChange, onKeymapKeyPress, onKeyPress, onLayerChange events. These would be indexed when keymap is changed and kept at hand, so we could run them without any performance impact.
  */
+
+
+static void registerKeyboardStates();
 
 /**
  * Macro events should be executed in order and wait for each other - first onInit, then `onKmeymapChange any`, finally other `onKeymapChange` ones.
@@ -31,6 +41,8 @@ void MacroEvent_OnInit()
     if (idx != 255) {
         previousEventMacroSlot = Macros_StartMacro(idx, NULL, 255, false);
     }
+
+    registerKeyboardStates();
 }
 
 static void startMacroInSlot(macro_index_t macroIndex, uint8_t* slotId) {
@@ -126,5 +138,40 @@ void MacroEvent_OnLayerChange(layer_id_t layerId)
         startMacroInSlot(macrosToTry[i], &previousEventMacroSlot);
     }
 
+    previousEventMacroSlot = 255;
+}
+
+static void registerKeyboardStates()
+{
+    for (int i = 0; i < AllMacrosCount; i++) {
+        const char *thisName, *thisNameEnd;
+        FindMacroName(&AllMacros[i], &thisName, &thisNameEnd);
+
+        if (TokenMatches(thisName, thisNameEnd, "$onCapsLockStateChange")) {
+            capsLockChangeMacro = i;
+        }
+        if (TokenMatches(thisName, thisNameEnd, "$onNumLockStateChange")) {
+            numLockChangeMacro = i;
+        }
+        if (TokenMatches(thisName, thisNameEnd, "$onScrollLockStateChange")) {
+            scrollLockChangeMacro = i;
+        }
+    }
+}
+
+void MacroEvent_ProcessStateKeyEvents()
+{
+    if (MacroEvent_CapsLockStateChanged && capsLockChangeMacro != MacroIndex_None) {
+        MacroEvent_CapsLockStateChanged = false;
+        startMacroInSlot(capsLockChangeMacro, &previousEventMacroSlot);
+    }
+    if (MacroEvent_NumLockStateChanged && numLockChangeMacro != MacroIndex_None) {
+        MacroEvent_NumLockStateChanged = false;
+        startMacroInSlot(numLockChangeMacro, &previousEventMacroSlot);
+    }
+    if (MacroEvent_ScrollLockStateChanged && scrollLockChangeMacro != MacroIndex_None) {
+        MacroEvent_ScrollLockStateChanged = false;
+        startMacroInSlot(scrollLockChangeMacro, &previousEventMacroSlot);
+    }
     previousEventMacroSlot = 255;
 }
