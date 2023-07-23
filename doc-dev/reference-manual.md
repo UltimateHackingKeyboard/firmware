@@ -97,6 +97,8 @@ The following grammar is supported:
     COMMAND = set module.MODULEID.caretAxisLock BOOLEAN
     COMMAND = set module.MODULEID.swapAxes BOOLEAN
     COMMAND = set module.MODULEID.invertScrollDirection BOOLEAN
+    COMMAND = set module.MODULEID.invertScrollDirectionX BOOLEAN
+    COMMAND = set module.MODULEID.invertScrollDirectionY BOOLEAN
     COMMAND = set module.touchpad.pinchZoomDivisor <1-100 (FLOAT)>
     COMMAND = set module.touchpad.pinchZoomMode NAVIGATION_MODE
     COMMAND = set secondaryRole.defaultStrategy { simple | advanced }
@@ -479,12 +481,14 @@ For the purpose of toggling functionality on and off, and for global constants m
       - at 3000 px/s, speed multiplier is 1x
       - at 6000 px/s, speed multiplier is 4x
       - not recommended - the curve will behave in very non-linear fashion.
-- `set module.MODULEID.{caretSpeedDivisor|scrollSpeedDivisor|zoomSpeedDivisor|swapAxes|invertScrollDirection}` modifies scrolling and caret behaviour:
+- `set module.MODULEID.{caretSpeedDivisor|scrollSpeedDivisor|zoomSpeedDivisor|swapAxes|invertScrollDirection|invertScrollDirectionX|invertScrollDirectionY}` modifies scrolling and caret behaviour:
     - `caretSpeedDivisor` (default: 16) is used to divide input in caret mode. This means that per one tick, you have to move by 16 pixels (or whatever the unit is). (This is furthermore modified by axisLocking skew, as well as acceleration.)
     - `scrollSpeedDivisor` (default: 8) is used to divide input in scroll mode. This means that while scrolling, every 8 pixels produce one scroll tick. (This is furthermore modified by axisLocking skew, as well as acceleration.)
     - `pinchZoomDivisor` (default: 4 (?)) is used specifically for touchpad's zoom gesture, therefore its default value is nonstandard. Only valid for touchpad.
     - `swapAxes` swaps x and y coordinates of the module. Intened use is for keycluster trackball, since sideways scrolling is easier.
-    - `invertScrollDirection` inverts scroll direction...
+    - `invertScrollDirection` inverts scroll direction in y axis...
+    - `invertScrollDirectionX` explicitly inverts scroll direction in x axis...
+    - `invertScrollDirectionY` explicitly inverts scroll direction in y axis...
 
 - `set module.MODULEID.{axisLockSkew|axisLockFirstTickSkew|cursorAxisLock|scrollAxisLock}` control axis locking feature:
 
