@@ -96,7 +96,6 @@ The following grammar is supported:
     COMMAND = set module.MODULEID.cursorAxisLock BOOLEAN
     COMMAND = set module.MODULEID.caretAxisLock BOOLEAN
     COMMAND = set module.MODULEID.swapAxes BOOLEAN
-    COMMAND = set module.MODULEID.invertScrollDirection BOOLEAN
     COMMAND = set module.MODULEID.invertScrollDirectionX BOOLEAN
     COMMAND = set module.MODULEID.invertScrollDirectionY BOOLEAN
     COMMAND = set module.touchpad.pinchZoomDivisor <1-100 (FLOAT)>
@@ -201,6 +200,7 @@ The following grammar is supported:
     ############
     #DEPRECATED#
     ############
+    COMMAND = set module.MODULEID.invertScrollDirection BOOLEAN
     COMMAND = set macroEngine.scheduler {blocking|preemptive}
     COMMAND = set doubletapDelay <time in ms, at most 65535, alias to doubletapTimeout (NUMBER)>
     COMMAND = switchLayer LAYERID
