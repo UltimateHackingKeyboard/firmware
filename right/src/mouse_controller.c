@@ -32,6 +32,20 @@ uint8_t ToggledMouseStates[ACTIVE_MOUSE_STATES_COUNT];
 
 bool DiagonalSpeedCompensation = false;
 
+typedef struct {
+    float x;
+    float y;
+    float speed;
+    int16_t yInversion;
+    int16_t xInversion;
+    float speedDivisor;
+    bool axisLockEnabled;
+    float axisLockSkew;
+    float axisLockFirstTickSkew;
+    module_kinetic_state_t* ks;
+    bool continuous;
+} axis_locking_args_t;
+
 mouse_kinetic_state_t MouseMoveState = {
     .isScroll = false,
     .upState = SerializedMouseAction_MoveUp,
@@ -90,7 +104,7 @@ module_kinetic_state_t rightModuleKineticState = {
     .lastUpdate = 0,
 };
 
-static void processAxisLocking( float x, float y, float speed, int16_t yInversion, int16_t xInversion, float speedDivisor, bool axisLockEnabled, float axisLockSkew, float axisLockSkewFirstTick, module_kinetic_state_t* ks, bool continuous );
+static void processAxisLocking(axis_locking_args_t args);
 static void handleRunningCaretModeAction(module_kinetic_state_t* ks);
 static void handleSimpleRunningAction(module_kinetic_state_t* ks);
 
@@ -501,22 +515,25 @@ static bool caretModeActionIsRunning(module_kinetic_state_t* ks) {
 }
 
 static void processAxisLocking(
-        float x,
-        float y,
-        float speed,
-        int16_t yInversion,
-        int16_t xInversion,
-        float speedDivisor,
-        bool axisLockEnabled,
-        float axisLockSkew,
-        float axisLockSkewFirstTick,
-        module_kinetic_state_t* ks,
-        bool continuous
+    axis_locking_args_t args
 ) {
     //optimize this out if nothing is going on
-    if (x == 0 && y == 0 && ks->caretAxis == CaretAxis_None) {
+    if (args.x == 0 && args.y == 0 && args.ks->caretAxis == CaretAxis_None) {
         return;
     }
+
+    //unpack args for better readability
+    float x = args.x;
+    float y = args.y;
+    float speed = args.speed;
+    int16_t yInversion = args.yInversion;
+    int16_t xInversion = args.xInversion;
+    float speedDivisor = args.speedDivisor;
+    bool axisLockEnabled = args.axisLockEnabled;
+    float axisLockSkew = args.axisLockSkew;
+    float axisLockSkewFirstTick = args.axisLockFirstTickSkew;
+    module_kinetic_state_t *ks = args.ks;
+    bool continuous  = args.continuous;
 
     //unlock axis if inactive for some time and re-activate tick trashold`
     if (x != 0 || y != 0) {
@@ -616,6 +633,7 @@ static void processAxisLocking(
     }
 }
 
+
 static void processModuleKineticState(
         float x,
         float y,
@@ -653,7 +671,19 @@ static void processModuleKineticState(
                 ActiveUsbMouseReport->x += xInversion*xIntegerPart;
                 ActiveUsbMouseReport->y -= yInversion*yIntegerPart;
             } else {
-                processAxisLocking(x, y, speed, yInversion, xInversion, 1.0f, true, moduleConfiguration->axisLockSkew, moduleConfiguration->axisLockFirstTickSkew, ks, true);
+                processAxisLocking((axis_locking_args_t) {
+                    .x = x,
+                    .y = y,
+                    .speed = speed,
+                    .yInversion = yInversion,
+                    .xInversion = xInversion,
+                    .speedDivisor = 1.0,
+                    .axisLockEnabled = true,
+                    .axisLockSkew = moduleConfiguration->axisLockSkew,
+                    .axisLockFirstTickSkew = moduleConfiguration->axisLockFirstTickSkew,
+                    .ks = ks,
+                    .continuous = true,
+                });
             }
             break;
         }
@@ -668,7 +698,20 @@ static void processModuleKineticState(
                 ActiveUsbMouseReport->wheelX += xInversion*xIntegerPart;
                 ActiveUsbMouseReport->wheelY += yInversion*yIntegerPart;
             } else {
-                processAxisLocking(x, y, speed, yInversion, xInversion, moduleConfiguration->scrollSpeedDivisor, true, moduleConfiguration->axisLockSkew, moduleConfiguration->axisLockFirstTickSkew, ks, true);
+
+                processAxisLocking((axis_locking_args_t) {
+                    .x = x,
+                    .y = y,
+                    .speed = speed,
+                    .yInversion = yInversion,
+                    .xInversion = xInversion,
+                    .speedDivisor = moduleConfiguration->scrollSpeedDivisor,
+                    .axisLockEnabled = true,
+                    .axisLockSkew = moduleConfiguration->axisLockSkew,
+                    .axisLockFirstTickSkew = moduleConfiguration->axisLockFirstTickSkew,
+                    .ks = ks,
+                    .continuous = true,
+                });
             }
             break;
         }
@@ -681,7 +724,19 @@ static void processModuleKineticState(
             // forced scroll = touchpad scroll;
             bool isPinchGesture = forcedNavigationMode == NavigationMode_Zoom;
             float speedDivisor = isPinchGesture ? moduleConfiguration->pinchZoomSpeedDivisor : moduleConfiguration->caretSpeedDivisor;
-            processAxisLocking(x, y, speed, yInversion, xInversion, speedDivisor, moduleConfiguration->caretAxisLock, moduleConfiguration->axisLockSkew, moduleConfiguration->axisLockFirstTickSkew, ks, false);
+            processAxisLocking((axis_locking_args_t) {
+                .x = x,
+                .y = y,
+                .speed = speed,
+                .yInversion = yInversion,
+                .xInversion = xInversion,
+                .speedDivisor = speedDivisor,
+                .axisLockEnabled = moduleConfiguration->caretAxisLock,
+                .axisLockSkew = moduleConfiguration->axisLockSkew,
+                .axisLockFirstTickSkew = moduleConfiguration->axisLockFirstTickSkew,
+                .ks = ks,
+                .continuous = false,
+            });
             break;
         case NavigationMode_None:
             break;
