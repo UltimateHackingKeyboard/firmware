@@ -94,7 +94,13 @@ static void moduleSpeed(const char* arg1, const char *textEnd, module_configurat
         module->swapAxes = Macros_ParseBoolean(arg2, textEnd);
     }
     else if (TokenMatches(arg1, textEnd, "invertScrollDirection")) {
-        module->invertScrollDirection = Macros_ParseBoolean(arg2, textEnd);
+        module->invertScrollDirectionY = Macros_ParseBoolean(arg2, textEnd);
+    }
+    else if (TokenMatches(arg1, textEnd, "invertScrollDirectionY")) {
+        module->invertScrollDirectionY = Macros_ParseBoolean(arg2, textEnd);
+    }
+    else if (TokenMatches(arg1, textEnd, "invertScrollDirectionX")) {
+        module->invertScrollDirectionX = Macros_ParseBoolean(arg2, textEnd);
     }
     else {
         Macros_ReportError("parameter not recognized:", arg1, textEnd);

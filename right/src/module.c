@@ -18,7 +18,8 @@ module_configuration_t ModuleConfigurations[ModuleId_ModuleCount] = {
         .scrollAxisLock = true,
         .caretAxisLock = true,
         .swapAxes = false,
-        .invertScrollDirection = false,
+        .invertScrollDirectionX = false,
+        .invertScrollDirectionY = false,
         .navigationModes = {
             NavigationMode_Scroll, // Base layer
             NavigationMode_Cursor, // Mod layer
@@ -39,7 +40,8 @@ module_configuration_t ModuleConfigurations[ModuleId_ModuleCount] = {
         .scrollAxisLock = true,
         .caretAxisLock = true,
         .swapAxes = false,
-        .invertScrollDirection = false,
+        .invertScrollDirectionX = false,
+        .invertScrollDirectionY = false,
         .navigationModes = {
             NavigationMode_Cursor, // Base layer
             NavigationMode_Scroll, // Mod layer
@@ -60,7 +62,8 @@ module_configuration_t ModuleConfigurations[ModuleId_ModuleCount] = {
         .scrollAxisLock = true,
         .caretAxisLock = true,
         .swapAxes = false,
-        .invertScrollDirection = false,
+        .invertScrollDirectionX = false,
+        .invertScrollDirectionY = false,
         .navigationModes = {
             NavigationMode_Cursor, // Base layer
             NavigationMode_Scroll, // Mod layer
@@ -81,7 +84,8 @@ module_configuration_t ModuleConfigurations[ModuleId_ModuleCount] = {
         .scrollAxisLock = true,
         .caretAxisLock = true,
         .swapAxes = false,
-        .invertScrollDirection = false,
+        .invertScrollDirectionX = false,
+        .invertScrollDirectionY = false,
         .navigationModes = {
             NavigationMode_Cursor, // Base layer
             NavigationMode_Scroll, // Mod layer
@@ -102,7 +106,8 @@ module_configuration_t ModuleConfigurations[ModuleId_ModuleCount] = {
         .scrollAxisLock = false,
         .caretAxisLock = true,
         .swapAxes = false,
-        .invertScrollDirection = false,
+        .invertScrollDirectionX = false,
+        .invertScrollDirectionY = false,
         .navigationModes = {
             NavigationMode_Cursor, // Base layer
             NavigationMode_Scroll, // Mod layer
