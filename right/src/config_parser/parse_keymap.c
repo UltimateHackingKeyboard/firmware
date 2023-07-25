@@ -16,12 +16,12 @@ static void parseKeyActionColor(key_action_t *keyAction, config_buffer_t *buffer
         keyAction->color.red = ReadUInt8(buffer);
         keyAction->color.green = ReadUInt8(buffer);
         keyAction->color.blue = ReadUInt8(buffer);
-        keyAction->colorOverriden = false;
+        keyAction->colorOverridden = false;
     } else {
         keyAction->color.red = 0;
         keyAction->color.green = 0;
         keyAction->color.blue = 0;
-        keyAction->colorOverriden = false;
+        keyAction->colorOverridden = false;
     }
 }
 

@@ -161,7 +161,7 @@ static void updateLedsByConstantRgbStrategy() {
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
             key_action_t *keyAction = &CurrentKeymap[ActiveLayer][slotId][keyId];
-            if (keyAction->colorOverriden) {
+            if (keyAction->colorOverridden) {
                 setPerKeyRGB(&keyAction->color, slotId, keyId);
             } else {
                 setPerKeyRGB(&LedMap_ConstantRGB, slotId, keyId);
@@ -207,7 +207,7 @@ static void updateLedsByFunctionalStrategy() {
                     break;
             }
 
-            if (keyAction->colorOverriden) {
+            if (keyAction->colorOverridden) {
                 setPerKeyRGB(&keyAction->color, slotId, keyId);
             } else {
                 setPerKeyRGB(&KeyActionColors[keyActionColor], slotId, keyId);

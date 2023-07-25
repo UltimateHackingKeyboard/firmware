@@ -311,7 +311,7 @@ static void keyRgb(const char* arg1, const char *textEnd)
     uint8_t slotIdx = keyId/64;
     uint8_t inSlotIdx = keyId%64;
 
-    CurrentKeymap[layerId][slotIdx][inSlotIdx].colorOverriden = true;
+    CurrentKeymap[layerId][slotIdx][inSlotIdx].colorOverridden = true;
     CurrentKeymap[layerId][slotIdx][inSlotIdx].color = rgb;
 
     SetLedBacklightingMode(BacklightingMode_PerKeyRgb);
