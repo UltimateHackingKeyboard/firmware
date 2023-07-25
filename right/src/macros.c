@@ -1347,6 +1347,11 @@ static bool processIfModifierCommand(bool negate, uint8_t modmask)
     return ((InputModifiersPrevious & modmask) > 0) != negate;
 }
 
+static bool processIfStateKeyCommand(bool negate, bool *state)
+{
+    return *state != negate;
+}
+
 static bool processIfRecordingCommand(bool negate)
 {
     return MacroRecorder_IsRecording() != negate;
@@ -2645,6 +2650,36 @@ static macro_result_t processCommand(const char* cmd, const char* cmdEnd)
             }
             else if (TokenMatches(cmd, cmdEnd, "ifNotGui")) {
                 if (!processIfModifierCommand(true, GUIMASK) && !s->as.currentConditionPassed) {
+                    return MacroResult_Finished;
+                }
+            }
+            else if (TokenMatches(cmd, cmdEnd, "ifCapsLockOn")) {
+                if (!processIfStateKeyCommand(false, &UsbBasicKeyboard_CapsLockOn) && !s->as.currentConditionPassed) {
+                    return MacroResult_Finished;
+                }
+            }
+            else if (TokenMatches(cmd, cmdEnd, "ifNotCapsLockOn")) {
+                if (!processIfStateKeyCommand(true, &UsbBasicKeyboard_CapsLockOn) && !s->as.currentConditionPassed) {
+                    return MacroResult_Finished;
+                }
+            }
+            else if (TokenMatches(cmd, cmdEnd, "ifNumLockOn")) {
+                if (!processIfStateKeyCommand(false, &UsbBasicKeyboard_NumLockOn) && !s->as.currentConditionPassed) {
+                    return MacroResult_Finished;
+                }
+            }
+            else if (TokenMatches(cmd, cmdEnd, "ifNotNumLockOn")) {
+                if (!processIfStateKeyCommand(true, &UsbBasicKeyboard_NumLockOn) && !s->as.currentConditionPassed) {
+                    return MacroResult_Finished;
+                }
+            }
+            else if (TokenMatches(cmd, cmdEnd, "ifScrollLockOn")) {
+                if (!processIfStateKeyCommand(false, &UsbBasicKeyboard_ScrollLockOn) && !s->as.currentConditionPassed) {
+                    return MacroResult_Finished;
+                }
+            }
+            else if (TokenMatches(cmd, cmdEnd, "ifNotScrollLockOn")) {
+                if (!processIfStateKeyCommand(true, &UsbBasicKeyboard_ScrollLockOn) && !s->as.currentConditionPassed) {
                     return MacroResult_Finished;
                 }
             }

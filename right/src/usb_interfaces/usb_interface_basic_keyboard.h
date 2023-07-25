@@ -44,6 +44,9 @@
 
 // Variables:
     extern bool UsbBasicKeyboard_ProtocolChanged;
+    extern bool UsbBasicKeyboard_CapsLockOn;
+    extern bool UsbBasicKeyboard_NumLockOn;
+    extern bool UsbBasicKeyboard_ScrollLockOn;
     extern uint32_t UsbBasicKeyboardActionCounter;
     extern usb_basic_keyboard_report_t* ActiveUsbBasicKeyboardReport;
 

@@ -1,5 +1,7 @@
 #include "led_display.h"
+#include "lufa/HIDClassCommon.h"
 #include "macros.h"
+#include "macro_events.h"
 #include "usb_composite_device.h"
 #include "usb_report_updater.h"
 
@@ -9,6 +11,10 @@ static uint8_t usbBasicKeyboardOutBuffer[USB_BASIC_KEYBOARD_OUT_REPORT_LENGTH];
 usb_hid_protocol_t usbBasicKeyboardProtocol;
 uint32_t UsbBasicKeyboardActionCounter;
 usb_basic_keyboard_report_t* ActiveUsbBasicKeyboardReport = usbBasicKeyboardReports;
+
+bool UsbBasicKeyboard_CapsLockOn = false;
+bool UsbBasicKeyboard_NumLockOn = false;
+bool UsbBasicKeyboard_ScrollLockOn = false;
 
 static usb_basic_keyboard_report_t* GetInactiveUsbBasicKeyboardReport(void)
 {
@@ -82,6 +88,14 @@ usb_status_t UsbBasicKeyboardCheckReportReady()
     return UsbBasicKeyboardCheckIdleElapsed();
 }
 
+static void processStateChange(bool *targetVar, bool value, bool *onChange)
+{
+    if (value != *targetVar) {
+        *targetVar = value;
+        *onChange = true;
+    }
+}
+
 usb_status_t UsbBasicKeyboardCallback(class_handle_t handle, uint32_t event, void *param)
 {
     usb_device_hid_struct_t *hidHandle = (usb_device_hid_struct_t *)handle;
@@ -122,6 +136,11 @@ usb_status_t UsbBasicKeyboardCallback(class_handle_t handle, uint32_t event, voi
             usb_device_hid_report_struct_t *report = (usb_device_hid_report_struct_t*)param;
             if (report->reportType == USB_DEVICE_HID_REQUEST_GET_REPORT_TYPE_OUPUT && report->reportId == 0 && report->reportLength == sizeof(usbBasicKeyboardOutBuffer)) {
                 LedDisplay_SetIcon(LedDisplayIcon_CapsLock, report->reportBuffer[0] & HID_KEYBOARD_LED_CAPSLOCK);
+
+                processStateChange(&UsbBasicKeyboard_CapsLockOn,   report->reportBuffer[0] & HID_KEYBOARD_LED_CAPSLOCK,   &MacroEvent_CapsLockStateChanged  );
+                processStateChange(&UsbBasicKeyboard_NumLockOn,    report->reportBuffer[0] & HID_KEYBOARD_LED_NUMLOCK,    &MacroEvent_NumLockStateChanged   );
+                processStateChange(&UsbBasicKeyboard_ScrollLockOn, report->reportBuffer[0] & HID_KEYBOARD_LED_SCROLLLOCK, &MacroEvent_ScrollLockStateChanged);
+
                 error = kStatus_USB_Success;
             } else {
                 error = kStatus_USB_InvalidRequest;

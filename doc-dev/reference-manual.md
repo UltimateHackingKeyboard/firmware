@@ -20,6 +20,13 @@ Macro events allow hooking special behaviour, such as applying specific configur
     $onKeymapChange {KEYMAPID|any}
     $onLayerChange {LAYERID|any}
     $onKeymapLayerChange KEYMAPID LAYERID
+    $onCapsLockStateChange
+    $onNumLockStateChange
+    $onScrollLockStateChange
+
+Please note that:
+  - under Linux, scroll lock is by disabled by default. As a consequence, the macro event does not trigger.
+  - under MacOS, scroll lock dims the screen but does not toggle scroll lock state. As a consequence, the macro event does not trigger.
 
 I.e., if you want to customize acceleration driver for your trackball module on keymap QWR, create macro named `$onKeymapChange QWR`, with content e.g.:
 
@@ -128,6 +135,7 @@ The following grammar is supported:
     COMMAND = set keymapAction.LAYERID.KEYID ACTION
     COMMAND = set backlight.strategy { functional | constantRgb | perKeyRgb }
     COMMAND = set backlight.constantRgb.rgb <number 0-255 (NUMBER)> <number 0-255 (NUMBER)> <number 0-255 (NUMBER)><number 0-255 (NUMBER)>
+    COMMAND = set backlight.keyRgb.LAYERID.KEYID <number 0-255 (NUMBER)> <number 0-255 (NUMBER)> <number 0-255 (NUMBER)>
     COMMAND = set leds.enabled BOOLEAN
     COMMAND = set leds.brightness <0-1 multiple of default (FLOAT)>
     COMMAND = set leds.fadeTimeout <seconds to fade after (NUMBER)>
@@ -145,6 +153,7 @@ The following grammar is supported:
     CONDITION = {ifPendingKeyReleased | ifNotPendingKeyReleased} <queue idx (NUMBER)>
     CONDITION = {ifPlaytime | ifNotPlaytime} <timeout in ms (NUMBER)>
     CONDITION = {ifShift | ifAlt | ifCtrl | ifGui | ifAnyMod | ifNotShift | ifNotAlt | ifNotCtrl | ifNotGui | ifNotAnyMod}
+    CONDITION = {ifCapsLockOn | ifNotCapsLockOn | ifScrollLockOn | ifNotScrollLockOn | ifNumLockOn | ifNotNumLockOn}
     CONDITION = {ifRegEq | ifNotRegEq | ifRegGt | ifRegLt} <register index (NUMBER)> <value (NUMBER)>
     CONDITION = {ifKeymap | ifNotKeymap} KEYMAPID
     CONDITION = {ifLayer | ifNotLayer} LAYERID
@@ -375,6 +384,10 @@ Conditions are checked before processing the rest of the command. If the conditi
 - `ifKeyDefined/ifNotKeyDefined KEYID` is true if the key in parameter has defined action on the current keymap && layer. If you wish to test keys from different layers/keymaps, you will have to toggle them manually first.
 - `ifPlaytime/ifNotPlaytime <timeout in ms>` is true if at least `timeout` milliseconds passed since macro was started.
 - `ifShift/ifAlt/ifCtrl/ifGui/ifAnyMod/ifNotShift/ifNotAlt/ifNotCtrl/ifNotGui/ifNotAnyMod` is true if either right or left modifier was held in the previous update cycle. This does not indicate modifiers which were triggered from macroes.
+- `ifCapsLockOn/ifNotCapsLockOn/ifScrollLockOn/ifNotScrollLockOn/ifNumLockOn/ifNotNumLockOn` is true if corresponding caps lock / num lock / scroll lock is set to true by the host OS.
+  - Please note that:
+      - under Linux, scroll lock is by disabled by default. As a consequence, the macro event does not trigger.
+      - under MacOS, scroll lock dims the screen but does not toggle scroll lock state. As a consequence, the macro event does not trigger.
 - `{ifRegEq|ifNotRegEq} <register inex> <value>` will test if the value in the register identified by first argument equals second argument.
 - `{ifRegGt|ifRegLt} <register inex> <value>` will test if the value in the register identified by first argument is greater than/less than second argument.
 - `{ifKeymap|ifNotKeymap|ifLayer|ifNotLayer} <value>` will test if the current Keymap/Layer are equals to the first argument (uses the same parsing rule as `switchKeymap` and `switchLayer`.
@@ -546,6 +559,7 @@ For the purpose of toggling functionality on and off, and for global constants m
 - backlight:
     - `backlight.strategy { functional | constantRgb | perKeyRgb }` sets backlight strategy.
     - `backlight.constantRgb.rgb NUMBER NUMBER NUMBER` allows setting custom constant colour for entire keyboard. E.g.: `set backlight.strategy constantRgb; set backlight.constantRgb.rgb 255 0 0` to make entire keyboard shine red.
+    - `backlight.keyRgb.LAYERID.KEYID NUMBER NUMBER NUMBER` allows overriding color of the key. This override will last until reload of keymap and will apply to all backlight strategies.
 
 - general led configuration:
     - `leds.enabled BOOLEAN` turns on/off all keyboard leds: i.e., backlight, indicator leds, segment display
