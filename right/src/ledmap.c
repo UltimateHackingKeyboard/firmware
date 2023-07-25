@@ -160,7 +160,12 @@ static void setPerKeyRGB(const rgb_t* color, uint8_t slotId, uint8_t keyId)
 static void updateLedsByConstantRgbStrategy() {
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
-            setPerKeyRGB(&LedMap_ConstantRGB, slotId, keyId);
+            key_action_t *keyAction = &CurrentKeymap[ActiveLayer][slotId][keyId];
+            if (keyAction->colorOverridden) {
+                setPerKeyRGB(&keyAction->color, slotId, keyId);
+            } else {
+                setPerKeyRGB(&LedMap_ConstantRGB, slotId, keyId);
+            }
         }
     }
 }
@@ -202,7 +207,11 @@ static void updateLedsByFunctionalStrategy() {
                     break;
             }
 
-            setPerKeyRGB(&KeyActionColors[keyActionColor], slotId, keyId);
+            if (keyAction->colorOverridden) {
+                setPerKeyRGB(&keyAction->color, slotId, keyId);
+            } else {
+                setPerKeyRGB(&KeyActionColors[keyActionColor], slotId, keyId);
+            }
         }
     }
 }
