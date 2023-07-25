@@ -64,6 +64,9 @@ int main(void)
             if (UsbMacroCommandWaitingForExecution) {
                 UsbMacroCommand_ExecuteSynchronously();
             }
+            if (MacroEvent_ScrollLockStateChanged || MacroEvent_NumLockStateChanged || MacroEvent_CapsLockStateChanged) {
+                MacroEvent_ProcessStateKeyEvents();
+            }
             __WFI();
         }
     }

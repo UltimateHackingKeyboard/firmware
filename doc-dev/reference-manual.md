@@ -20,6 +20,13 @@ Macro events allow hooking special behaviour, such as applying specific configur
     $onKeymapChange {KEYMAPID|any}
     $onLayerChange {LAYERID|any}
     $onKeymapLayerChange KEYMAPID LAYERID
+    $onCapsLockStateChange
+    $onNumLockStateChange
+    $onScrollLockStateChange
+
+Please note that:
+  - under Linux, scroll lock is by disabled by default. As a consequence, the macro event does not trigger.
+  - under MacOS, scroll lock dims the screen but does not toggle scroll lock state. As a consequence, the macro event does not trigger.
 
 I.e., if you want to customize acceleration driver for your trackball module on keymap QWR, create macro named `$onKeymapChange QWR`, with content e.g.:
 
@@ -145,6 +152,7 @@ The following grammar is supported:
     CONDITION = {ifPendingKeyReleased | ifNotPendingKeyReleased} <queue idx (NUMBER)>
     CONDITION = {ifPlaytime | ifNotPlaytime} <timeout in ms (NUMBER)>
     CONDITION = {ifShift | ifAlt | ifCtrl | ifGui | ifAnyMod | ifNotShift | ifNotAlt | ifNotCtrl | ifNotGui | ifNotAnyMod}
+    CONDITION = {ifCapsLockOn | ifNotCapsLockOn | ifScrollLockOn | ifNotScrollLockOn | ifNumLockOn | ifNotNumLockOn}
     CONDITION = {ifRegEq | ifNotRegEq | ifRegGt | ifRegLt} <register index (NUMBER)> <value (NUMBER)>
     CONDITION = {ifKeymap | ifNotKeymap} KEYMAPID
     CONDITION = {ifLayer | ifNotLayer} LAYERID
@@ -375,6 +383,10 @@ Conditions are checked before processing the rest of the command. If the conditi
 - `ifKeyDefined/ifNotKeyDefined KEYID` is true if the key in parameter has defined action on the current keymap && layer. If you wish to test keys from different layers/keymaps, you will have to toggle them manually first.
 - `ifPlaytime/ifNotPlaytime <timeout in ms>` is true if at least `timeout` milliseconds passed since macro was started.
 - `ifShift/ifAlt/ifCtrl/ifGui/ifAnyMod/ifNotShift/ifNotAlt/ifNotCtrl/ifNotGui/ifNotAnyMod` is true if either right or left modifier was held in the previous update cycle. This does not indicate modifiers which were triggered from macroes.
+- `ifCapsLockOn/ifNotCapsLockOn/ifScrollLockOn/ifNotScrollLockOn/ifNumLockOn/ifNotNumLockOn` is true if corresponding caps lock / num lock / scroll lock is set to true by the host OS.
+  - Please note that:
+      - under Linux, scroll lock is by disabled by default. As a consequence, the macro event does not trigger.
+      - under MacOS, scroll lock dims the screen but does not toggle scroll lock state. As a consequence, the macro event does not trigger.
 - `{ifRegEq|ifNotRegEq} <register inex> <value>` will test if the value in the register identified by first argument equals second argument.
 - `{ifRegGt|ifRegLt} <register inex> <value>` will test if the value in the register identified by first argument is greater than/less than second argument.
 - `{ifKeymap|ifNotKeymap|ifLayer|ifNotLayer} <value>` will test if the current Keymap/Layer are equals to the first argument (uses the same parsing rule as `switchKeymap` and `switchLayer`.
