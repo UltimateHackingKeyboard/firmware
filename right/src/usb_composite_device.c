@@ -10,6 +10,8 @@
 #include "bus_pal_hardware.h"
 #include "bootloader/wormhole.h"
 
+uint8_t ReportDescriptorsTouched = 0;
+
 static uint8_t MsAltEnumMode = 0;
 usb_composite_device_t UsbCompositeDevice;
 static usb_status_t usbDeviceCallback(usb_device_handle handle, uint32_t event, void *param);
@@ -270,6 +272,7 @@ static usb_status_t usbDeviceCallback(usb_device_handle handle, uint32_t event, 
             status = USB_DeviceGetHidDescriptor(handle, (usb_device_get_hid_descriptor_struct_t *)param);
             break;
         case kUSB_DeviceEventGetHidReportDescriptor:
+            ReportDescriptorsTouched++;
             status = USB_DeviceGetHidReportDescriptor(handle, (usb_device_get_hid_report_descriptor_struct_t *)param);
             break;
         case kUSB_DeviceEventGetHidPhysicalDescriptor:
