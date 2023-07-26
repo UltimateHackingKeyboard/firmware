@@ -285,6 +285,16 @@ const app = createApp({
                 'Alt',
                 'Super',
             ],
+            nonModifierlayers: [
+                'Base',
+                'Mod',
+                'Mouse',
+                'Fn',
+                'Fn2',
+                'Fn3',
+                'Fn4',
+                'Fn5',
+            ],
             modifiers: [
                 'Shift',
                 'Ctrl',
