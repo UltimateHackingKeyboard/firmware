@@ -10,7 +10,7 @@ and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 Device Protocol: 4.9.0 | Module Protocol: 4.2.0 | User Config: 6.0.0 | Hardware Config: 1.0.0 | Smart Macros: 1.**4.0**
 
 - Fix `oneShot` macro command for the proper composition of modifiers. `SMARTMACROS:PATCH`
-- Fix `ifPrimary` and `ifSecondary` macro commands, which were not functional after reconnection onto default secondary role mechanism. `SMARTMACROS:PATCH`
+- Fix `ifPrimary` and `ifSecondary` macro commands, which were not functional after reconnection onto the default secondary role mechanism. `SMARTMACROS:PATCH`
 - Fix the navigation mode of modifier layers to always correspond to the base layer.
 - Make non-keypress actions in modifier layers not receive the relevant modifier.
 - Add `overlayKeymap`, `overlayLayer`, and `replaceLayer` macro commands. `SMARTMACROS:MINOR`
@@ -18,9 +18,9 @@ Device Protocol: 4.9.0 | Module Protocol: 4.2.0 | User Config: 6.0.0 | Hardware 
 - Add `$onCapsLockStateChange`, `$onNumLockStateChange`, and `$onScrollLockStateChange` macro events. Scroll Lock only works as expected on Windows. `SMARTMACROS:MINOR`
 - Add `ifCapsLockOn`, `ifNotCapsLockOn`, `ifScrollLockOn`, `ifNotScrollLockOn`, `ifNumLockOn`, `ifNotNumLockOn` conditional macro commands. Scroll Lock only works as expected on Windows. `SMARTMACROS:MINOR`
 - Add `set backlight.keyRgb.LAYERID.KEYID` macro command. `SMARTMACROS:MINOR`
-- Add Artificial delay between touchpad presses and releases, fixing doubletap-to-select-word for systems which ignore sub-20ms mouse button releases.
+- Add Artificial delay between touchpad presses and releases, fixing doubletap-to-select-word for systems that ignore sub-20ms mouse button releases.
 - Any module pointer action now triggers secondary roles.
-- Make module states not oscillate temporarily upon module attachment/deattachment.
+- Make module states not oscillate temporarily upon module attachment/detachment.
 
 ## [10.0.0] - 2023-07-10
 
