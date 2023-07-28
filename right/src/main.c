@@ -70,17 +70,6 @@ static void sendFirstReport()
     }
 }
 
-static void waitUntilUsbInitialized()
-{
-    while (ReportDescriptorsTouched < USB_DEVICE_CONFIG_HID && !UsbBasicKeyboard_ProtocolChanged && CurrentTime < 5000) {
-        __WFI();
-    }
-    uint32_t waitUntil = ReportDescriptorsTouched == USB_DEVICE_CONFIG_HID ? CurrentTime + 200 : CurrentTime;
-    while (CurrentTime < waitUntil) {
-        __WFI();
-    }
-}
-
 int main(void)
 {
     InitClock();
@@ -98,7 +87,6 @@ int main(void)
         KeyMatrix_Init(&RightKeyMatrix);
         InitUsb();
         initConfig();
-        waitUntilUsbInitialized();
         sendFirstReport();
 
         while (1) {
