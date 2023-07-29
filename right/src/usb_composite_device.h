@@ -29,6 +29,7 @@
 
 // Variables:
 
+    extern uint8_t ReportDescriptorsTouched;
     extern volatile bool SleepModeActive;
     extern usb_composite_device_t UsbCompositeDevice;
 

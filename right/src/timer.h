@@ -4,6 +4,7 @@
 // Includes:
 
     #include "peripherals/pit.h"
+    #include <stdint.h>
 
 // Macros:
 

@@ -3600,3 +3600,10 @@ bool Macros_MacroHasActiveInstance(macro_index_t macroIdx)
     }
     return false;
 }
+
+void Macros_ResetBasicKeyboardReports()
+{
+    for(uint8_t j = 0; j < MACRO_STATE_POOL_SIZE; j++) {
+        memset(&MacroState[j].ms.macroBasicKeyboardReport, 0, sizeof MacroState[j].ms.macroBasicKeyboardReport);
+    }
+}

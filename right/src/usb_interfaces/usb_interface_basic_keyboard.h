@@ -43,7 +43,7 @@
     } ATTR_PACKED usb_basic_keyboard_report_t;
 
 // Variables:
-
+    extern bool UsbBasicKeyboard_ProtocolChanged;
     extern bool UsbBasicKeyboard_CapsLockOn;
     extern bool UsbBasicKeyboard_NumLockOn;
     extern bool UsbBasicKeyboard_ScrollLockOn;
@@ -77,5 +77,6 @@
     size_t UsbBasicKeyboard_ScancodeCount(const usb_basic_keyboard_report_t* report);
     void UsbBasicKeyboard_MergeReports(const usb_basic_keyboard_report_t* sourceReport, usb_basic_keyboard_report_t* targetReport);
     void UsbBasicKeyboard_ForeachScancode(const usb_basic_keyboard_report_t* report, void(*action)(uint8_t));
+    void UsbBasicKeyboard_HandleProtocolChange();
 
 #endif

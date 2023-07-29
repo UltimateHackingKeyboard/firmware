@@ -1,9 +1,11 @@
 #include "led_display.h"
 #include "lufa/HIDClassCommon.h"
+#include "macros.h"
 #include "macro_events.h"
 #include "usb_composite_device.h"
 #include "usb_report_updater.h"
 
+bool UsbBasicKeyboard_ProtocolChanged = false;
 static usb_basic_keyboard_report_t usbBasicKeyboardReports[2];
 static uint8_t usbBasicKeyboardOutBuffer[USB_BASIC_KEYBOARD_OUT_REPORT_LENGTH];
 usb_hid_protocol_t usbBasicKeyboardProtocol;
@@ -34,6 +36,20 @@ usb_hid_protocol_t UsbBasicKeyboardGetProtocol(void)
     return usbBasicKeyboardProtocol;
 }
 
+void UsbBasicKeyboard_HandleProtocolChange()
+{
+    if (usbBasicKeyboardProtocol != ((usb_device_hid_struct_t*)UsbCompositeDevice.basicKeyboardHandle)->protocol) {
+        // The protocol changed while the report was assembled
+        UsbBasicKeyboardResetActiveReport();
+        Macros_ResetBasicKeyboardReports();
+
+        // latch the active protocol to avoid ISR <-> Thread race
+        usbBasicKeyboardProtocol = ((usb_device_hid_struct_t*)UsbCompositeDevice.basicKeyboardHandle)->protocol;
+
+        UsbBasicKeyboard_ProtocolChanged = false;
+    }
+}
+
 usb_status_t UsbBasicKeyboardAction(void)
 {
     usb_status_t usb_status = kStatus_USB_Error;
@@ -43,11 +59,7 @@ usb_status_t UsbBasicKeyboardAction(void)
     }
 
     if (usbBasicKeyboardProtocol != ((usb_device_hid_struct_t*)UsbCompositeDevice.basicKeyboardHandle)->protocol) {
-        // The protocol changed while the report was assembled
-        UsbBasicKeyboardResetActiveReport();
-
-        // latch the active protocol to avoid ISR <-> Thread race
-        usbBasicKeyboardProtocol = ((usb_device_hid_struct_t*)UsbCompositeDevice.basicKeyboardHandle)->protocol;
+        UsbBasicKeyboard_HandleProtocolChange();
         return usb_status;
     }
 
@@ -149,6 +161,7 @@ usb_status_t UsbBasicKeyboardCallback(class_handle_t handle, uint32_t event, voi
         case kUSB_DeviceHidEventSetProtocol: {
             uint8_t report = *(uint16_t*)param;
             if (report <= 1) {
+                UsbBasicKeyboard_ProtocolChanged = true;
                 hidHandle->protocol = report;
                 error = kStatus_USB_Success;
             }

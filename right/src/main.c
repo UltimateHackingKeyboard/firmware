@@ -1,6 +1,8 @@
 #include "config.h"
+#include "timer.h"
 #include "init_clock.h"
 #include "init_peripherals.h"
+#include "lufa/HIDClassCommon.h"
 #include "usb_commands/usb_command_exec_macro_command.h"
 #include "usb_composite_device.h"
 #include "slave_scheduler.h"
@@ -11,10 +13,12 @@
 #include "usb_commands/usb_command_apply_config.h"
 #include "peripherals/reset_button.h"
 #include "config_parser/config_globals.h"
+#include "usb_interfaces/usb_interface_basic_keyboard.h"
 #include "usb_report_updater.h"
 #include "macro_events.h"
 #include "macro_shortcut_parser.h"
 #include "ledmap.h"
+#include "debug.h"
 
 static bool IsEepromInitialized = false;
 static bool IsConfigInitialized = false;
@@ -34,6 +38,38 @@ static void hardwareConfigurationReadFinished(void)
     EEPROM_LaunchTransfer(EepromOperation_Read, ConfigBufferId_StagingUserConfig, userConfigurationReadFinished);
 }
 
+static void initConfig()
+{
+    while (!IsConfigInitialized) {
+        if (IsEepromInitialized) {
+            UsbCommand_ApplyConfig();
+            ShortcutParser_initialize();
+            Macros_Initialize();
+            IsConfigInitialized = true;
+        } else {
+            __WFI();
+        }
+    }
+}
+
+static void sendFirstReport()
+{
+    bool success = false;
+    while (!success) {
+        UsbReportUpdateSemaphore |= 1 << USB_BASIC_KEYBOARD_INTERFACE_INDEX;
+        usb_status_t status = UsbBasicKeyboardAction();
+        if (status != kStatus_USB_Success) {
+            UsbReportUpdateSemaphore &= ~(1 << USB_BASIC_KEYBOARD_INTERFACE_INDEX);
+            __WFI();
+        } else {
+            success = true;
+        }
+    }
+    while (UsbReportUpdateSemaphore) {
+            __WFI();
+    }
+}
+
 int main(void)
 {
     InitClock();
@@ -50,23 +86,24 @@ int main(void)
         InitSlaveScheduler();
         KeyMatrix_Init(&RightKeyMatrix);
         InitUsb();
+        initConfig();
+        sendFirstReport();
 
         while (1) {
-            if (!IsConfigInitialized && IsEepromInitialized) {
-                UsbCommand_ApplyConfig();
-                ShortcutParser_initialize();
-                Macros_Initialize();
-                IsConfigInitialized = true;
+            if (UsbBasicKeyboard_ProtocolChanged) {
+                UsbBasicKeyboard_HandleProtocolChange();
             }
-            KeyMatrix_ScanRow(&RightKeyMatrix);
-            ++MatrixScanCounter;
-            UpdateUsbReports();
             if (UsbMacroCommandWaitingForExecution) {
                 UsbMacroCommand_ExecuteSynchronously();
             }
             if (MacroEvent_ScrollLockStateChanged || MacroEvent_NumLockStateChanged || MacroEvent_CapsLockStateChanged) {
                 MacroEvent_ProcessStateKeyEvents();
             }
+
+            KeyMatrix_ScanRow(&RightKeyMatrix);
+            ++MatrixScanCounter;
+            UpdateUsbReports();
+
             __WFI();
         }
     }
