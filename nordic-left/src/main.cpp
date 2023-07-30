@@ -1,9 +1,9 @@
-#include <zephyr/zephyr.h>
+extern "C"
+{
 #include <zephyr/device.h>
 #include <zephyr/drivers/gpio.h>
 // #include <zephyr/drivers/uart.h>
-#include <zephyr/usb/class/usb_hid.h>
-#include <drivers/spi.h>
+#include <zephyr/drivers/spi.h>
 
 #include <zephyr/types.h>
 #include <stddef.h>
@@ -17,8 +17,9 @@
 
 #include <dk_buttons_and_leds.h>
 
-#include "usb.h"
 #include "bluetooth.h"
+}
+#include "usb.hpp"
 
 #define LedPagePrefix 0b01010000
 
@@ -88,7 +89,9 @@ static struct gpio_dt_spec cols[] = {
     GPIO_DT_SPEC_GET(DT_ALIAS(col7), gpios),
 };
 
-void main(void) {
+volatile char c {};
+
+int main(void) {
     gpio_pin_configure_dt(&ledsCsDt, GPIO_OUTPUT);
 
     for (uint8_t rowId=0; rowId<6; rowId++) {
@@ -106,7 +109,7 @@ void main(void) {
     // dk_buttons_init(button_changed);
     // dk_leds_init();
 
-    usb_init();
+    usb_init(DEVICE_DT_GET(DT_NODELABEL(zephyr_udc0)));
     bluetooth_init();
 
     // uart_irq_callback_user_data_set(uart_dev, serial_cb, NULL);
@@ -120,7 +123,7 @@ void main(void) {
             gpio_pin_set_dt(&rows[rowId], 1);
             for (uint8_t colId=0; colId<7; colId++) {
                 if (gpio_pin_get_dt(&cols[colId])) {
-                    c = HID_KEY_A;
+                    c = 1;
                     // printk("SW%c%c ", rowId+'1', colId+'1');
                 }
             }
