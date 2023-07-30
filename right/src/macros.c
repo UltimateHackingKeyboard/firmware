@@ -1,5 +1,5 @@
 #include "macros.h"
-#include "calendar.h"
+#include "event_scheduler.h"
 #include <math.h>
 #include "layer.h"
 #include "secondary_role_driver.h"
@@ -3349,7 +3349,7 @@ static macro_result_t sleepTillTime(uint32_t time)
     if (!s->ms.macroSleeping) {
         unscheduleCurrentSlot();
     }
-    Calendar_Schedule(time, CalendarEvent_MacroWakeOnTime);
+    EventScheduler_Schedule(time, EventSchedulerEvent_MacroWakeOnTime);
     s->ms.wakeMeOnTime = true;
     s->ms.macroSleeping = true;
     return MacroResult_Sleeping;

@@ -1,5 +1,5 @@
 #include "segment_display.h"
-#include "calendar.h"
+#include "event_scheduler.h"
 #include "led_display.h"
 #include "macros.h"
 #include "timer.h"
@@ -29,7 +29,7 @@ static void changeSlot() {
     }
     lastChange = CurrentTime;
     if (activeSlotCount > 1) {
-        Calendar_Schedule(CurrentTime + changeInterval, CalendarEvent_SegmentDisplayUpdate);
+        EventScheduler_Schedule(CurrentTime + changeInterval, EventSchedulerEvent_SegmentDisplayUpdate);
     }
 }
 
@@ -43,7 +43,7 @@ void SegmentDisplay_SetText(uint8_t len, const char* text, segment_display_slot_
     currentSlot = slot;
     LedDisplay_SetText(len, text);
     if (activeSlotCount > 1) {
-        Calendar_Schedule(CurrentTime + changeInterval, CalendarEvent_SegmentDisplayUpdate);
+        EventScheduler_Schedule(CurrentTime + changeInterval, EventSchedulerEvent_SegmentDisplayUpdate);
     }
 }
 

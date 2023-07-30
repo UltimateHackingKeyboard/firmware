@@ -20,7 +20,7 @@
 #include "macro_shortcut_parser.h"
 #include "ledmap.h"
 #include "debug.h"
-#include "calendar.h"
+#include "event_scheduler.h"
 
 static bool IsEepromInitialized = false;
 static bool IsConfigInitialized = false;
@@ -106,8 +106,8 @@ int main(void)
             ++MatrixScanCounter;
             UpdateUsbReports();
 
-            if (Calendar_IsActive) {
-                Calendar_Process();
+            if (EventScheduler_IsActive) {
+                EventScheduler_Process();
             }
             if (SegmentDisplay_NeedsUpdate) {
                 SegmentDisplay_Update();

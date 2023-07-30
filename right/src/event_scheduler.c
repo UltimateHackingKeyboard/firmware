@@ -1,34 +1,34 @@
-#include "calendar.h"
+#include "event_scheduler.h"
 #include "segment_display.h"
 #include "timer.h"
 #include "macros.h"
 
-uint32_t times[CalendarEvent_Count] = {};
-calendar_event_t nextEvent;
+uint32_t times[EventSchedulerEvent_Count] = {};
+event_scheduler_event_t nextEvent;
 uint32_t nextEventAt;
-bool Calendar_IsActive = false;
+bool EventScheduler_IsActive = false;
 
 static void scheduleNext()
 {
     bool gotAny = false;
-    for (uint8_t i = 0; i < CalendarEvent_Count; i++) {
+    for (uint8_t i = 0; i < EventSchedulerEvent_Count; i++) {
         if (times[i] != 0 && (!gotAny || times[i] < nextEventAt)) {
             nextEvent = i;
             nextEventAt = times[i];
         }
     }
     if (!gotAny) {
-        Calendar_IsActive = false;
+        EventScheduler_IsActive = false;
     }
 }
 
-static void processEvt(calendar_event_t evt)
+static void processEvt(event_scheduler_event_t evt)
 {
     switch (evt) {
-        case CalendarEvent_SegmentDisplayUpdate:
+        case EventSchedulerEvent_SegmentDisplayUpdate:
             SegmentDisplay_NeedsUpdate = true;
             break;
-        case CalendarEvent_MacroWakeOnTime:
+        case EventSchedulerEvent_MacroWakeOnTime:
             Macros_WakedBecauseOfTime = true;
             MacroPlaying = true;
             break;
@@ -38,7 +38,7 @@ static void processEvt(calendar_event_t evt)
 }
 
 
-void Calendar_Reschedule(uint32_t at, calendar_event_t evt)
+void EventScheduler_Reschedule(uint32_t at, event_scheduler_event_t evt)
 {
     times[evt] = at;
     if (nextEvent == evt) {
@@ -47,10 +47,10 @@ void Calendar_Reschedule(uint32_t at, calendar_event_t evt)
         nextEventAt = at;
         nextEvent = evt;
     }
-    Calendar_IsActive = true;
+    EventScheduler_IsActive = true;
 }
 
-void Calendar_Schedule(uint32_t at, calendar_event_t evt)
+void EventScheduler_Schedule(uint32_t at, event_scheduler_event_t evt)
 {
     if (times[evt] == 0 || at < times[evt]) {
         times[evt] = at;
@@ -59,14 +59,14 @@ void Calendar_Schedule(uint32_t at, calendar_event_t evt)
         nextEventAt = at;
         nextEvent = evt;
     }
-    Calendar_IsActive = true;
+    EventScheduler_IsActive = true;
 }
 
 
-void Calendar_Process()
+void EventScheduler_Process()
 {
     if (nextEvent <= CurrentTime) {
-        calendar_event_t evt = nextEvent;
+        event_scheduler_event_t evt = nextEvent;
         times[nextEvent] = 0;
         scheduleNext();
         processEvt(evt);
