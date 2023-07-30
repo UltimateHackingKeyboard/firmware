@@ -20,6 +20,7 @@
 #include "macro_shortcut_parser.h"
 #include "ledmap.h"
 #include "debug.h"
+#include "calendar.h"
 
 static bool IsEepromInitialized = false;
 static bool IsConfigInitialized = false;
