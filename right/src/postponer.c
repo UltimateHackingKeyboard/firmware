@@ -524,6 +524,13 @@ static bool isEligibleForAutoShift()
     switch (a->keystroke.scancode) {
         case HID_KEYBOARD_SC_A ... HID_KEYBOARD_SC_Z:
         case HID_KEYBOARD_SC_1_AND_EXCLAMATION ... HID_KEYBOARD_SC_0_AND_CLOSING_PARENTHESIS:
+        case HID_KEYBOARD_SC_MINUS_AND_UNDERSCORE ... HID_KEYBOARD_SC_SLASH_AND_QUESTION_MARK:
+        case HID_KEYBOARD_SC_F1 ... HID_KEYBOARD_SC_F12:
+        case HID_KEYBOARD_SC_RIGHT_ARROW ... HID_KEYBOARD_SC_UP_ARROW:
+        case HID_KEYBOARD_SC_HOME:
+        case HID_KEYBOARD_SC_PAGE_UP:
+        case HID_KEYBOARD_SC_END:
+        case HID_KEYBOARD_SC_PAGE_DOWN:
             return true;
         default:
             return false;
