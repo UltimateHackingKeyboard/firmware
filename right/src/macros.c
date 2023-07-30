@@ -460,7 +460,28 @@ static macro_result_t processScrollMouseAction(void)
 static macro_result_t processClearStatusCommand()
 {
     statusBufferLen = 0;
+    SegmentDisplay_DeactivateSlot(SegmentDisplaySlot_Error);
+    SegmentDisplay_DeactivateSlot(SegmentDisplaySlot_Warn);
     return MacroResult_Finished;
+}
+
+
+char Macros_ConsumeStatusChar()
+{
+    static uint16_t readingPos = 0;
+    char res;
+
+    if (readingPos < statusBufferLen) {
+        res = statusBuffer[readingPos++];
+    } else {
+        res = '\0';
+        statusBufferLen = 0;
+        readingPos = 0;
+        SegmentDisplay_DeactivateSlot(SegmentDisplaySlot_Error);
+        SegmentDisplay_DeactivateSlot(SegmentDisplaySlot_Warn);
+    }
+
+    return res;
 }
 
 //textEnd is allowed to be null if text is null-terminated
@@ -539,16 +560,18 @@ void Macros_SetStatusChar(char n)
     Macros_SetStatusString(&n, &n+1);
 }
 
-static void reportErrorHeader()
+static void reportErrorHeader(const char* status)
 {
     if (s != NULL) {
         const char *name, *nameEnd;
         FindMacroName(&AllMacros[s->ms.currentMacroIndex], &name, &nameEnd);
+        Macros_SetStatusString(status, NULL);
+        Macros_SetStatusString(" at ", NULL);
         Macros_SetStatusString(name, nameEnd);
-        Macros_SetStatusString(":", NULL);
-        Macros_SetStatusNum(s->ms.currentMacroActionIndex);
-        Macros_SetStatusString(":", NULL);
-        Macros_SetStatusNum(s->ms.commandAddress);
+        Macros_SetStatusString(" ", NULL);
+        Macros_SetStatusNumSpaced(s->ms.currentMacroActionIndex, false);
+        Macros_SetStatusString("/", NULL);
+        Macros_SetStatusNumSpaced(s->ms.commandAddress, false);
         Macros_SetStatusString(": ", NULL);
     }
 }
@@ -558,7 +581,19 @@ void Macros_ReportError(const char* err, const char* arg, const char *argEnd)
 {
     Macros_ParserError = true;
     SegmentDisplay_SetText(3, "ERR", SegmentDisplaySlot_Error);
-    reportErrorHeader();
+    reportErrorHeader("Error");
+    Macros_SetStatusString(err, NULL);
+    if (arg != NULL) {
+        Macros_SetStatusString(": ", NULL);
+        Macros_SetStatusString(arg, argEnd);
+    }
+    Macros_SetStatusString("\n", NULL);
+}
+
+void Macros_ReportWarn(const char* err, const char* arg, const char *argEnd)
+{
+    SegmentDisplay_SetText(3, "WRN", SegmentDisplaySlot_Warn);
+    reportErrorHeader("Warning");
     Macros_SetStatusString(err, NULL);
     if (arg != NULL) {
         Macros_SetStatusString(": ", NULL);
@@ -582,7 +617,7 @@ void Macros_ReportErrorFloat(const char* err, float num)
 {
     Macros_ParserError = true;
     SegmentDisplay_SetText(3, "ERR", SegmentDisplaySlot_Error);
-    reportErrorHeader();
+    reportErrorHeader("Error");
     Macros_SetStatusString(err, NULL);
     Macros_SetStatusFloat(num);
     Macros_SetStatusString("\n", NULL);
@@ -592,7 +627,7 @@ void Macros_ReportErrorNum(const char* err, int32_t num)
 {
     Macros_ParserError = true;
     SegmentDisplay_SetText(3, "ERR", SegmentDisplaySlot_Error);
-    reportErrorHeader();
+    reportErrorHeader("Error");
     Macros_SetStatusString(err, NULL);
     Macros_SetStatusNum(num);
     Macros_SetStatusString("\n", NULL);
@@ -1457,6 +1492,7 @@ static macro_result_t processPrintStatusCommand()
         statusBufferPrinting = false;
     }
     SegmentDisplay_DeactivateSlot(SegmentDisplaySlot_Error);
+    SegmentDisplay_DeactivateSlot(SegmentDisplaySlot_Warn);
     return res;
 }
 

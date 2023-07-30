@@ -16,6 +16,7 @@
         SegmentDisplaySlot_Macro,
         SegmentDisplaySlot_Recording,
         SegmentDisplaySlot_Error,
+        SegmentDisplaySlot_Warn,
         SegmentDisplaySlot_Debug,
         SegmentDisplaySlot_Count,
     } segment_display_slot_t;
@@ -37,5 +38,6 @@
     void SegmentDisplay_SetInt(int32_t a, segment_display_slot_t slot);
     void SegmentDisplay_DeactivateSlot(segment_display_slot_t slot);
     void SegmentDisplay_UpdateKeymapText();
+    bool SegmentDisplay_SlotIsActive(segment_display_slot_t slot);
 
 #endif
