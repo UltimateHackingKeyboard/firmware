@@ -9,6 +9,7 @@
 #include "config_parser/config_globals.h"
 #include "macros.h"
 #include "macro_events.h"
+#include "segment_display.h"
 
 keymap_reference_t AllKeymaps[MAX_KEYMAP_NUM] = {
     {
@@ -30,8 +31,8 @@ void SwitchKeymapById(uint8_t index)
     CurrentKeymapIndex = index;
     ValidatedUserConfigBuffer.offset = AllKeymaps[index].offset;
     ParseKeymap(&ValidatedUserConfigBuffer, index, AllKeymapsCount, AllMacrosCount, parseConfig);
-    LedDisplay_UpdateText();
-    UpdateLayerLeds();
+    SegmentDisplay_UpdateKeymapText();
+    Ledmap_UpdateBacklightLeds();
     MacroEvent_RegisterLayerMacros();
     MacroEvent_OnKeymapChange(index);
     MacroEvent_OnLayerChange(ActiveLayer);

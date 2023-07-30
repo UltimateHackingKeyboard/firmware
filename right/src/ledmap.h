@@ -39,8 +39,8 @@
 
 // Functions:
 
-    void UpdateLayerLeds(void);
-    void InitLedLayout(void);
-    void SetLedBacklightingMode(backlighting_mode_t newMode);
+    void Ledmap_UpdateBacklightLeds(void);
+    void Ledmap_InitLedLayout(void);
+    void Ledmap_SetLedBacklightingMode(backlighting_mode_t newMode);
 
 #endif

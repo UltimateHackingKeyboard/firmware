@@ -1,7 +1,9 @@
 #include "macros.h"
+#include "calendar.h"
 #include <math.h>
 #include "layer.h"
 #include "secondary_role_driver.h"
+#include "segment_display.h"
 #include "usb_interfaces/usb_interface_basic_keyboard.h"
 #include "usb_interfaces/usb_interface_media_keyboard.h"
 #include "usb_interfaces/usb_interface_mouse.h"
@@ -553,7 +555,7 @@ static void reportErrorHeader()
 void Macros_ReportError(const char* err, const char* arg, const char *argEnd)
 {
     Macros_ParserError = true;
-    LedDisplay_SetText(3, "ERR");
+    SegmentDisplay_SetText(3, "ERR", SegmentDisplaySlot_Error);
     reportErrorHeader();
     Macros_SetStatusString(err, NULL);
     if (arg != NULL) {
@@ -566,7 +568,7 @@ void Macros_ReportError(const char* err, const char* arg, const char *argEnd)
 void Macros_ReportErrorFloat(const char* err, float num)
 {
     Macros_ParserError = true;
-    LedDisplay_SetText(3, "ERR");
+    SegmentDisplay_SetText(3, "ERR", SegmentDisplaySlot_Error);
     reportErrorHeader();
     Macros_SetStatusString(err, NULL);
     Macros_SetStatusFloat(num);
@@ -576,7 +578,7 @@ void Macros_ReportErrorFloat(const char* err, float num)
 void Macros_ReportErrorNum(const char* err, int32_t num)
 {
     Macros_ParserError = true;
-    LedDisplay_SetText(3, "ERR");
+    SegmentDisplay_SetText(3, "ERR", SegmentDisplaySlot_Error);
     reportErrorHeader();
     Macros_SetStatusString(err, NULL);
     Macros_SetStatusNum(num);
@@ -1441,7 +1443,7 @@ static macro_result_t processPrintStatusCommand()
         statusBufferLen = 0;
         statusBufferPrinting = false;
     }
-    LedDisplay_UpdateText();
+    SegmentDisplay_DeactivateSlot(SegmentDisplaySlot_Error);
     return res;
 }
 
@@ -1459,11 +1461,11 @@ static macro_result_t processSetLedTxtCommand(const char* arg1, const char *argE
     int16_t time = parseNUM(arg1, argEnd);
     macro_result_t res = MacroResult_Finished;
     if (time > 0 && (res = processDelay(time)) == MacroResult_Finished) {
-        LedDisplay_UpdateText();
+        SegmentDisplay_DeactivateSlot(SegmentDisplaySlot_Macro);
         return MacroResult_Finished;
     } else {
         const char* str = NextTok(arg1, argEnd);
-        LedDisplay_SetText(TokLen(str, argEnd), str);
+        SegmentDisplay_SetText(TokLen(str, argEnd), str, SegmentDisplaySlot_Macro);
         return res;
     }
 }
@@ -2373,8 +2375,8 @@ static macro_result_t processProgressHueCommand()
         phase++;
     }
 
-    SetLedBacklightingMode(BacklightingMode_ConstantRGB);
-    UpdateLayerLeds();
+    Ledmap_SetLedBacklightingMode(BacklightingMode_ConstantRGB);
+    Ledmap_UpdateBacklightLeds();
     return MacroResult_Finished;
 #undef C
 }
@@ -3347,7 +3349,7 @@ static macro_result_t sleepTillTime(uint32_t time)
     if (!s->ms.macroSleeping) {
         unscheduleCurrentSlot();
     }
-    Macros_WakeMeOnTime = time < Macros_WakeMeOnTime ? time : Macros_WakeMeOnTime;
+    Calendar_Schedule(time, CalendarEvent_MacroWakeOnTime);
     s->ms.wakeMeOnTime = true;
     s->ms.macroSleeping = true;
     return MacroResult_Sleeping;

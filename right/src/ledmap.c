@@ -225,7 +225,7 @@ static void updateLedsByPerKeyKeyStragegy() {
     }
 }
 
-void UpdateLayerLeds(void) {
+void Ledmap_UpdateBacklightLeds(void) {
     switch (BacklightingMode) {
         case BacklightingMode_PerKeyRgb:
             updateLedsByPerKeyKeyStragegy();
@@ -239,7 +239,7 @@ void UpdateLayerLeds(void) {
     }
 }
 
-void InitLedLayout(void) {
+void Ledmap_InitLedLayout(void) {
     // clear the RGB first, since the default mapping will no longer be reachable
     setPerKeyRGB(&black, SlotId_LeftKeyboardHalf, LedMapIndex_LeftSlot_IsoKey);
 
@@ -254,22 +254,22 @@ void InitLedLayout(void) {
     }
 }
 
-void SetLedBacklightingMode(backlighting_mode_t newMode)
+void Ledmap_SetLedBacklightingMode(backlighting_mode_t newMode)
 {
     BacklightingMode = newMode;
 }
 
 #elif DEVICE_ID == DEVICE_ID_UHK60V1
 
-void UpdateLayerLeds(void)
+void Ledmap_UpdateBacklightLeds(void)
 {
 }
 
-void InitLedLayout(void)
+void Ledmap_InitLedLayout(void)
 {
 }
 
-void SetLedBacklightingMode(backlighting_mode_t newMode)
+void Ledmap_SetLedBacklightingMode(backlighting_mode_t newMode)
 {
     BacklightingMode = newMode;
 }

@@ -208,7 +208,7 @@ void LedSlaveDriver_UpdateLeds(void)
         memset(LedDriverValues[ledDriverId], KeyBacklightBrightness, ledDriverStates[ledDriverId].ledCount);
     }
 #else
-    UpdateLayerLeds();
+    Ledmap_UpdateBacklightLeds();
 #endif
 
     LedDisplay_UpdateAll();
