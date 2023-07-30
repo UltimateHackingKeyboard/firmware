@@ -1160,6 +1160,7 @@ static macro_result_t processSwitchKeymapCommand(const char* arg1, const char* c
 /**DEPRECATED**/
 static macro_result_t processSwitchKeymapLayerCommand(const char* arg1, const char* cmdEnd)
 {
+    Macros_ReportWarn("Command deprecated. Please, replace switchKeymapLayer by toggleKeymapLayer or holdKeymapLayer. Or complain on github that you actually need this command.", NULL, NULL);
     uint8_t tmpLayerIdx = Macros_ActiveLayer;
     uint8_t tmpLayerKeymapIdx = CurrentKeymapIndex;
     uint8_t layer = Macros_ParseLayerId(NextTok(arg1, cmdEnd), cmdEnd);
@@ -1178,6 +1179,7 @@ static macro_result_t processSwitchKeymapLayerCommand(const char* arg1, const ch
 /**DEPRECATED**/
 static macro_result_t processSwitchLayerCommand(const char* arg1, const char* cmdEnd)
 {
+    Macros_ReportWarn("Command deprecated. Please, replace switchLayer by toggleLayer or holdLayer. Or complain on github that you actually need this command.", NULL, NULL);
     uint8_t tmpLayerIdx = Macros_ActiveLayer;
     uint8_t tmpLayerKeymapIdx = CurrentKeymapIndex;
     if (TokenMatches(arg1, cmdEnd, "previous")) {
@@ -1810,6 +1812,7 @@ static uint8_t processResolveSecondary(uint16_t timeout1, uint16_t timeout2)
 
 static macro_result_t processResolveSecondaryCommand(const char* arg1, const char* argEnd)
 {
+
     const char* arg2 = NextTok(arg1, argEnd);
     const char* arg3 = NextTok(arg2, argEnd);
     const char* arg4 = NextTok(arg3, argEnd);
@@ -1838,6 +1841,7 @@ static macro_result_t processResolveSecondaryCommand(const char* arg1, const cha
         return MacroResult_Waiting;
     case RESOLVESEC_RESULT_PRIMARY:
         postponeNextN(1);
+        Macros_ReportWarn("Command deprecated. Please, replace resolveSecondary by `ifPrimary advancedStrategy goTo ...` or `ifSecondary advancedStrategy goTo ...`.", NULL, NULL);
         return goTo(primaryAdr, argEnd);
     case RESOLVESEC_RESULT_SECONDARY:
         return goTo(secondaryAdr, argEnd);
@@ -1955,6 +1959,7 @@ static macro_result_t processResolveNextKeyIdCommand()
 
 static macro_result_t processResolveNextKeyEqCommand(const char* arg1, const char* argEnd)
 {
+    Macros_ReportWarn("Command deprecated. Please, replace resolveNextKeyEq by ifShortcut or ifGesture, or complain at github that you actually need this.", NULL, NULL);
     postponeCurrentCycle();
     const char* arg2 = NextTok(arg1, argEnd);
     const char* arg3 = NextTok(arg2, argEnd);
