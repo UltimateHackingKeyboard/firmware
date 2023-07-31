@@ -37,6 +37,7 @@
         UsbCommandId_GetVariable              = 0x12,
         UsbCommandId_SetVariable              = 0x13,
         UsbCommandId_ExecMacroCommand         = 0x14,
+        UsbCommandId_ToggleLayer              = 0x15,
     } usb_command_id_t;
 
     typedef enum {

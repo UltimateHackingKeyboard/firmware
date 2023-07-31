@@ -4,6 +4,7 @@
 #include "usb_commands/usb_command_get_module_property.h"
 #include "usb_commands/usb_command_reenumerate.h"
 #include "usb_commands/usb_command_set_test_led.h"
+#include "usb_commands/usb_command_toggle_layer.h"
 #include "usb_commands/usb_command_write_config.h"
 #include "usb_commands/usb_command_apply_config.h"
 #include "usb_commands/usb_command_set_led_pwm_brightness.h"
@@ -20,6 +21,8 @@
 #include "usb_commands/usb_command_get_variable.h"
 #include "usb_commands/usb_command_set_variable.h"
 #include "usb_commands/usb_command_exec_macro_command.h"
+#include "usb_commands/usb_command_toggle_layer.h"
+#include "debug.h"
 
 void UsbProtocolHandler(void)
 {
@@ -88,6 +91,9 @@ void UsbProtocolHandler(void)
             break;
         case UsbCommandId_ExecMacroCommand:
             UsbCommand_ExecMacroCommand();
+            break;
+        case UsbCommandId_ToggleLayer:
+            UsbCommand_ToggleLayer();
             break;
         default:
             SetUsbTxBufferUint8(0, UsbStatusCode_InvalidCommand);
