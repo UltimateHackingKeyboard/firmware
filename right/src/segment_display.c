@@ -17,12 +17,20 @@ segment_display_slot_t currentSlot = SegmentDisplaySlot_Keymap;
 
 bool SegmentDisplay_NeedsUpdate = false;
 
-static void changeSlot() {
+static bool overrideSlot() {
     if (slots[SegmentDisplaySlot_Debug].active) {
         currentSlot = SegmentDisplaySlot_Debug;
+        return true;
     } else if (slots[SegmentDisplaySlot_Macro].active) {
         currentSlot = SegmentDisplaySlot_Macro;
+        return true;
     } else {
+        return false;
+    }
+}
+
+static void changeSlot() {
+    if (!overrideSlot()) {
         do {
             currentSlot = (currentSlot + 1) % SegmentDisplaySlot_Count;
         } while (!slots[currentSlot].active);
@@ -41,7 +49,8 @@ void SegmentDisplay_SetText(uint8_t len, const char* text, segment_display_slot_
     slots[slot].active = true;
     lastChange = CurrentTime;
     currentSlot = slot;
-    LedDisplay_SetText(len, text);
+    overrideSlot();
+    LedDisplay_SetText(slots[currentSlot].len, slots[currentSlot].text);
     if (activeSlotCount > 1) {
         EventScheduler_Schedule(CurrentTime + changeInterval, EventSchedulerEvent_SegmentDisplayUpdate);
     }
