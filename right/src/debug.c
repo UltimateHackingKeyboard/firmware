@@ -1,4 +1,5 @@
 #include "debug.h"
+#include "segment_display.h"
 
 #ifdef WATCHES
 
@@ -39,7 +40,7 @@ void ShowNumberExp(int32_t a)
     int mag = 0;
     int num = a;
     if (num < 0) {
-        LedDisplay_SetText(3, "NEG");
+        SegmentDisplay_SetText(3, "NEG", SegmentDisplaySlot_Debug);
     } else {
         if (num < 1000) {
             b[0] = '0' + num / 100;
@@ -54,7 +55,7 @@ void ShowNumberExp(int32_t a)
             b[1] = '0' + num % 10;
             b[2] = mag == 0 ? '0' : ('A' - 2 + mag);
         }
-        LedDisplay_SetText(3, b);
+        SegmentDisplay_SetText(3, b, SegmentDisplaySlot_Debug);
     }
 }
 
@@ -63,7 +64,7 @@ void TriggerWatch(key_state_t *keyState)
     int16_t key = (keyState - &KeyStates[SlotId_LeftKeyboardHalf][0]);
     if (0 <= key && key <= 7) {
         // Set the LED value to RES until next update occurs.
-        LedDisplay_SetText(3, "RES");
+        SegmentDisplay_SetText(3, "RES", SegmentDisplaySlot_Debug);
         CurrentWatch = key;
         tickCount = 0;
     }
@@ -115,14 +116,14 @@ void WatchValue(int v, uint8_t n)
 void WatchString(char const *v, uint8_t n)
 {
     if (CurrentTime - lastWatch > watchInterval) {
-        LedDisplay_SetText(strlen(v), v);
+        SegmentDisplay_SetText(strlen(v), v, SegmentDisplaySlot_Debug);
         lastWatch = CurrentTime;
     }
 }
 
 void ShowString(char const *v, uint8_t n)
 {
-    LedDisplay_SetText(strlen(v), v);
+    SegmentDisplay_SetText(strlen(v), v, SegmentDisplaySlot_Debug);
 }
 
 void ShowValue(int v, uint8_t n)
