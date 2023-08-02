@@ -578,6 +578,9 @@ macro_result_t MacroSetCommand(const char* arg1, const char *textEnd)
     else if (TokenMatches(arg1, textEnd, "chordingDelay")) {
         ChordingDelay = Macros_ParseInt(arg2, textEnd, NULL);
     }
+    else if (TokenMatches(arg1, textEnd, "autoShiftDelay")) {
+        AutoShiftDelay = Macros_ParseInt(arg2, textEnd, NULL);
+    }
     else if (TokenMatches(arg1, textEnd, "i2cBaudRate")) {
         uint32_t baudRate = Macros_ParseInt(arg2, textEnd, NULL);
         ChangeI2cBaudRate(baudRate);

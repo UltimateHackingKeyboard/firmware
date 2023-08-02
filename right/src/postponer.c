@@ -7,23 +7,27 @@
 #include "layer_switcher.h"
 #include "keymap.h"
 #include "key_action.h"
+#include "debug.h"
 
 postponer_buffer_record_type_t buffer[POSTPONER_BUFFER_SIZE];
 static uint8_t bufferSize = 0;
 static uint8_t bufferPosition = 0;
 
 uint8_t Postponer_LastKeyLayer = 255;
+uint8_t Postponer_LastKeyMods = 0;
 
 static uint8_t cyclesUntilActivation = 0;
 static uint32_t lastPressTime;
 
 #define POS(idx) ((bufferPosition + POSTPONER_BUFFER_SIZE + (idx)) % POSTPONER_BUFFER_SIZE)
 
+uint16_t AutoShiftDelay = 0;
 uint8_t ChordingDelay = 0;
 uint32_t CurrentPostponedTime = 0;
 
 bool Postponer_MouseBlocked = false;
 
+static void autoShift();
 static void chording();
 
 
@@ -68,6 +72,7 @@ static void applyEventAndConsume(postponer_buffer_record_type_t* rec) {
         case PostponerEventType_ReleaseKey:
             rec->event.key.keyState->current = rec->event.key.active;
             Postponer_LastKeyLayer = rec->event.key.layer;
+            Postponer_LastKeyMods = rec->event.key.modifiers;
             // This gives the key two ticks (this and next) to get properly processed before execution of next queued event.
             PostponerCore_PostponeNCycles(1);
             WAKE_MACROS_ON_KEYSTATE_CHANGE();
@@ -76,6 +81,7 @@ static void applyEventAndConsume(postponer_buffer_record_type_t* rec) {
         case PostponerEventType_UnblockMouse:
             Postponer_MouseBlocked = false;
             Postponer_LastKeyLayer = 255;
+            Postponer_LastKeyMods = 0;
             PostponerCore_PostponeNCycles(1);
             consumeEvent(1);
             break;
@@ -162,7 +168,7 @@ void PostponerCore_PostponeNCycles(uint8_t n)
 
 bool PostponerCore_IsActive(void)
 {
-    return bufferSize > 0 || cyclesUntilActivation > 0 || ChordingDelay;
+    return bufferSize > 0 || cyclesUntilActivation > 0 || ChordingDelay || AutoShiftDelay;
 }
 
 
@@ -175,6 +181,7 @@ void PostponerCore_PrependKeyEvent(key_state_t *keyState, bool active, uint8_t l
                         .keyState = keyState,
                         .active = active,
                         .layer = layer,
+                        .modifiers = 0,
                     }
                 }
             );
@@ -189,6 +196,7 @@ void PostponerCore_TrackKeyEvent(key_state_t *keyState, bool active, uint8_t lay
                         .keyState = keyState,
                         .active = active,
                         .layer = layer,
+                        .modifiers = 0,
                     }
                 }
             );
@@ -212,6 +220,9 @@ void PostponerCore_RunPostponedEvents(void)
 {
     if (ChordingDelay) {
         chording();
+    }
+    if (AutoShiftDelay) {
+        autoShift();
     }
     // Process one event every two cycles. (Unless someone keeps Postponer active by touching cycles_until_activation.)
     if (bufferSize != 0 && (cyclesUntilActivation == 0 || bufferSize > POSTPONER_BUFFER_MAX_FILL)) {
@@ -485,3 +496,66 @@ static void chording()
     }
 }
 
+//##########################
+//### AutoShift ###
+//##########################
+
+static bool isEligibleForAutoShift()
+{
+    postponer_event_t* evt = &buffer[bufferPosition].event;
+    key_state_t *key = evt->key.keyState;
+
+    if (evt->type != PostponerEventType_PressKey) {
+        return false;
+    }
+
+    uint8_t effectiveLayer = evt->key.layer == 255 ? ActiveLayer : evt->key.layer;
+
+    key_action_t* a = &CurrentKeymap[effectiveLayer][0][0] + (key - &KeyStates[0][0]);
+
+    if (a->type != KeyActionType_Keystroke) {
+        return false;
+    }
+
+    if (a->keystroke.modifiers || a->keystroke.secondaryRole || a->keystroke.keystrokeType != KeystrokeType_Basic) {
+        return false;
+    }
+
+    switch (a->keystroke.scancode) {
+        case HID_KEYBOARD_SC_A ... HID_KEYBOARD_SC_Z:
+        case HID_KEYBOARD_SC_1_AND_EXCLAMATION ... HID_KEYBOARD_SC_0_AND_CLOSING_PARENTHESIS:
+        case HID_KEYBOARD_SC_MINUS_AND_UNDERSCORE ... HID_KEYBOARD_SC_SLASH_AND_QUESTION_MARK:
+        case HID_KEYBOARD_SC_F1 ... HID_KEYBOARD_SC_F12:
+        case HID_KEYBOARD_SC_RIGHT_ARROW ... HID_KEYBOARD_SC_UP_ARROW:
+        case HID_KEYBOARD_SC_HOME:
+        case HID_KEYBOARD_SC_PAGE_UP:
+        case HID_KEYBOARD_SC_END:
+        case HID_KEYBOARD_SC_PAGE_DOWN:
+            return true;
+        default:
+            return false;
+    }
+
+}
+
+static void autoShift()
+{
+    if (bufferSize >= 1 && isEligibleForAutoShift()) {
+        postponer_buffer_record_type_t *press, *release;
+        key_state_t *keyState = buffer[bufferPosition].event.key.keyState;
+        PostponerQuery_InfoByKeystate(keyState, &press, &release);
+
+        if (release == NULL) {
+            if ( CurrentTime - buffer[bufferPosition].time < AutoShiftDelay ) {
+                PostponerCore_PostponeNCycles(0);
+            } else {
+                buffer[bufferPosition].event.key.modifiers = HID_KEYBOARD_MODIFIER_LEFTSHIFT;
+            }
+        }
+        else if (release != NULL && release->time - press->time >= AutoShiftDelay) {
+            buffer[bufferPosition].event.key.modifiers = HID_KEYBOARD_MODIFIER_LEFTSHIFT;
+        }
+    } else if (bufferSize == 0) {
+        PostponerCore_PostponeNCycles(0);
+    }
+}
