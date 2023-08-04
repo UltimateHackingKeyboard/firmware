@@ -19,80 +19,31 @@ extern "C"
 #include "bluetooth.h"
 }
 #include "usb.hpp"
+#include "keyboard_app.hpp"
+#include "mouse_app.hpp"
 #include "usb/df/device.hpp"
 #include "usb/df/port/zephyr/udc_mac.hpp"
+#include "usb/df/class/hid.hpp"
 
-
-keyboard_app::keyboard_app(hid::page::keyboard_keypad key, hid::page::leds led)
-        : hid::application(report_prot()),
-            key_(static_cast<uint8_t>(key)),
-            led_mask_(1 << (static_cast<uint8_t>(led) - 1))
-{
-}
-
-void keyboard_app::start(hid::protocol prot)
-{
-    prot_ = prot;
-
-    // start receiving reports
-    receive_report(&leds_buffer_);
-}
-
-void keyboard_app::stop()
-{
-}
-
-void keyboard_app::set_report(hid::report::type type, const std::span<const uint8_t>& data)
-{
-    // only one report is receivable
-    auto *out_report = reinterpret_cast<const kb_leds_report*>(data.data());
-
-    // DEMO if the selected LED is on, send the key to turn it off
-    if ((out_report->leds & led_mask_) != 0) {
-        keys_buffer_.scancodes[0] = key_;
-        send_report(&keys_buffer_);
-    }
-
-    // always keep receiving new reports
-    // if the report data is processed immediately, the same buffer can be used
-    receive_report(&leds_buffer_);
-}
-
-void keyboard_app::in_report_sent(const std::span<const uint8_t>& data)
-{
-    // DEMO release the key once it has been pressed
-    if (keys_buffer_.scancodes[0] == key_) {
-        keys_buffer_.scancodes[0] = 0;
-        send_report(&keys_buffer_);
-    }
-}
-
-void keyboard_app::get_report(hid::report::selector select, const std::span<uint8_t>& buffer)
-{
-    // fetch the report data
-    send_report(&keys_buffer_);
-}
-
-keyboard_app kb {hid::page::keyboard_keypad::CAPSLOCK,
-    hid::page::leds::CAPS_LOCK };
+// TODO fill valid product info
+constexpr usb::product_info prinfo {
+    0xfff0, "UGL",
+    0xffff, "UHK", usb::version("1.0")
+};
 
 void usb_init(const device* dev) {
+    static constexpr auto speed = usb::speed::FULL;
     static usb::df::zephyr::udc_mac mac {dev};
 
-    static usb::df::hid::function usb_kb { kb, usb::hid::boot_protocol_mode::KEYBOARD };
+    static usb::df::hid::function usb_kb { keyboard_app::handle(), usb::hid::boot_protocol_mode::KEYBOARD };
+    static usb::df::hid::function usb_mouse { mouse_app::handle(), usb::hid::boot_protocol_mode::MOUSE };
 
-    static const auto single_config = usb::df::config::make_config(usb::df::config::header(usb::df::config::power::bus()),
-            usb::df::hid::config(usb_kb, usb::speed::FULL, usb::endpoint::address(0x81), 5)
+    static const auto single_config = usb::df::config::make_config(usb::df::config::header(usb::df::config::power::bus(500, true)),
+            usb::df::hid::config(usb_kb, speed, usb::endpoint::address(0x81), 1),
+            usb::df::hid::config(usb_mouse, speed, usb::endpoint::address(0x82), 1)
     );
 
-    // TODO fill valid product info
-    static constexpr usb::product_info prinfo { 
-        0xfff0, "UGL", 
-        0xffff, "UHK", usb::version("1.0")
-    };
-    static usb::df::device_instance<usb::speeds(usb::speed::FULL)> device {mac, prinfo
-        , std::span<uint8_t>()
-    };
+    static usb::df::device_instance<usb::speeds(usb::speed::FULL)> device {mac, prinfo};
     device.set_config(single_config);
     device.open();
 }
