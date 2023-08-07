@@ -5,14 +5,15 @@
 #include "timer.h"
 #include <string.h>
 #include "keymap.h"
+#include "utils.h"
 
 
 uint16_t changeInterval = 2000;
 uint32_t lastChange = 0;
 segment_display_slot_record_t slots[SegmentDisplaySlot_Count] = {
-    [0] = { .text = "   ", .active = true, .len = 3 }
+    [SegmentDisplaySlot_Keymap] = { .text = "   ", .active = true, .len = 3 }
 };
-uint8_t activeSlotCount = 0;
+uint8_t activeSlotCount = 1;
 segment_display_slot_t currentSlot = SegmentDisplaySlot_Keymap;
 
 bool SegmentDisplay_NeedsUpdate = false;

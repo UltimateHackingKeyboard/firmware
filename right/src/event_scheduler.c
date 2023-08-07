@@ -43,11 +43,12 @@ void EventScheduler_Reschedule(uint32_t at, event_scheduler_event_t evt)
     times[evt] = at;
     if (nextEvent == evt) {
         scheduleNext();
-    } else if (at < nextEventAt) {
+    }
+    if (at < nextEventAt || !EventScheduler_IsActive) {
         nextEventAt = at;
         nextEvent = evt;
+        EventScheduler_IsActive = true;
     }
-    EventScheduler_IsActive = true;
 }
 
 void EventScheduler_Schedule(uint32_t at, event_scheduler_event_t evt)
@@ -55,11 +56,11 @@ void EventScheduler_Schedule(uint32_t at, event_scheduler_event_t evt)
     if (times[evt] == 0 || at < times[evt]) {
         times[evt] = at;
     }
-    if (at < nextEventAt) {
+    if (at < nextEventAt || !EventScheduler_IsActive) {
         nextEventAt = at;
         nextEvent = evt;
+        EventScheduler_IsActive = true;
     }
-    EventScheduler_IsActive = true;
 }
 
 

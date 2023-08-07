@@ -1,6 +1,18 @@
 #ifndef SRC_UTILS_H_
 #define SRC_UTILS_H_
 
+// Macros:
+
+#define REENTRANCY_GUARD_BEGIN                   \
+static bool reentrancyGuard_active = false;      \
+if (reentrancyGuard_active) {                    \
+    return;                                      \
+} else {                                         \
+    reentrancyGuard_active = true;               \
+}
+#define REENTRANCY_GUARD_END                     \
+    reentrancyGuard_active = false;
+
 // Includes:
 
 #include "key_states.h"
