@@ -552,6 +552,7 @@ static void reportErrorHeader()
     }
 }
 
+
 void Macros_ReportError(const char* err, const char* arg, const char *argEnd)
 {
     Macros_ParserError = true;
@@ -3590,6 +3591,7 @@ void Macros_ContinueMacro(void)
 
 void Macros_ClearStatus(void)
 {
+    SegmentDisplay_DeactivateSlot(SegmentDisplaySlot_Error);
     processClearStatusCommand();
 }
 
