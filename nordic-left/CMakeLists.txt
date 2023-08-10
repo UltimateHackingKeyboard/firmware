@@ -17,28 +17,11 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive")
 
 set(C2USB_PATH "c2usb")
 
-# Add the c2usb sources, and the support libraries
-add_subdirectory(${C2USB_PATH}/c2usb)
-add_subdirectory(${C2USB_PATH}/modules/magic_enum)
-add_subdirectory(${C2USB_PATH}/modules/etl)
-add_subdirectory(${C2USB_PATH}/modules/hid-rp)
+add_subdirectory(${C2USB_PATH})
+# link c2usb to the abstract Zephyr interface to inherit the build flags
+target_link_libraries(c2usb zephyr_interface)
 
-# Add the c2usb sources to your app build
-target_sources(app PRIVATE
-    ${C2USB_PUBLIC_HEADERS}
-    ${C2USB_PRIVATE_HEADERS}
-    ${C2USB_SOURCES}
-)
-
-# Add c2usb include path
-target_include_directories(app PUBLIC
-    c2usb/c2usb
-    c2usb/examples
-)
-
-# Link to c2usb's dependencies
+# Link app to c2usb
 target_link_libraries(app PRIVATE
-    magic_enum
-    etl
-    hid-rp
+    c2usb
 )
