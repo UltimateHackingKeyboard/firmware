@@ -40,6 +40,8 @@ static void changeSlot() {
     if (activeSlotCount > 1) {
         EventScheduler_Schedule(CurrentTime + changeInterval, EventSchedulerEvent_SegmentDisplayUpdate);
     }
+
+    LedDisplay_SetText(slots[currentSlot].len, slots[currentSlot].text);
 }
 
 void SegmentDisplay_SetText(uint8_t len, const char* text, segment_display_slot_t slot)
@@ -71,8 +73,6 @@ void SegmentDisplay_Update()
     if (CurrentTime - lastChange >= changeInterval) {
         changeSlot();
     }
-
-    LedDisplay_SetText(slots[currentSlot].len, slots[currentSlot].text);
 }
 
 void SegmentDisplay_UpdateKeymapText()
