@@ -1,4 +1,5 @@
 #include "debug.h"
+#include "segment_display.h"
 
 #ifdef WATCHES
 
@@ -33,37 +34,13 @@ void AddReportToStatusBuffer(char* dbgTag, usb_basic_keyboard_report_t *report)
     Macros_SetStatusChar('\n');
 }
 
-void ShowNumberExp(int32_t a)
-{
-    char b[3];
-    int mag = 0;
-    int num = a;
-    if (num < 0) {
-        LedDisplay_SetText(3, "NEG");
-    } else {
-        if (num < 1000) {
-            b[0] = '0' + num / 100;
-            b[1] = '0' + num % 100 / 10;
-            b[2] = '0' + num % 10;
-        } else {
-            while (num >= 100) {
-                mag++;
-                num /= 10;
-            }
-            b[0] = '0' + num / 10;
-            b[1] = '0' + num % 10;
-            b[2] = mag == 0 ? '0' : ('A' - 2 + mag);
-        }
-        LedDisplay_SetText(3, b);
-    }
-}
 
 void TriggerWatch(key_state_t *keyState)
 {
     int16_t key = (keyState - &KeyStates[SlotId_LeftKeyboardHalf][0]);
     if (0 <= key && key <= 7) {
         // Set the LED value to RES until next update occurs.
-        LedDisplay_SetText(3, "RES");
+        SegmentDisplay_SetText(3, "RES", SegmentDisplaySlot_Debug);
         CurrentWatch = key;
         tickCount = 0;
     }
@@ -73,7 +50,7 @@ void WatchTime(uint8_t n)
 {
     static uint32_t lastUpdate = 0;
     if (CurrentTime - lastWatch > watchInterval) {
-        ShowNumberExp(CurrentTime - lastUpdate);
+        SegmentDisplay_SetInt(CurrentTime - lastUpdate, SegmentDisplaySlot_Debug);
         lastWatch = CurrentTime;
     }
     lastUpdate = CurrentTime;
@@ -87,7 +64,7 @@ void WatchTimeMicros(uint8_t n)
     i++;
 
     if (i == 1000) {
-        ShowNumberExp(CurrentTime - lastUpdate);
+        SegmentDisplay_SetInt(CurrentTime - lastUpdate, SegmentDisplaySlot_Debug);
         lastUpdate = CurrentTime;
         i = 0;
     }
@@ -99,7 +76,7 @@ void WatchCallCount(uint8_t n)
     tickCount++;
 
     if (CurrentTime - lastWatch > watchInterval) {
-        ShowNumberExp(tickCount);
+        SegmentDisplay_SetInt(tickCount, SegmentDisplaySlot_Debug);
         lastWatch = CurrentTime;
     }
 }
@@ -107,7 +84,7 @@ void WatchCallCount(uint8_t n)
 void WatchValue(int v, uint8_t n)
 {
     if (CurrentTime - lastWatch > watchInterval) {
-        ShowNumberExp(v);
+        SegmentDisplay_SetInt(v, SegmentDisplaySlot_Debug);
         lastWatch = CurrentTime;
     }
 }
@@ -115,19 +92,19 @@ void WatchValue(int v, uint8_t n)
 void WatchString(char const *v, uint8_t n)
 {
     if (CurrentTime - lastWatch > watchInterval) {
-        LedDisplay_SetText(strlen(v), v);
+        SegmentDisplay_SetText(strlen(v), v, SegmentDisplaySlot_Debug);
         lastWatch = CurrentTime;
     }
 }
 
 void ShowString(char const *v, uint8_t n)
 {
-    LedDisplay_SetText(strlen(v), v);
+    SegmentDisplay_SetText(strlen(v), v, SegmentDisplaySlot_Debug);
 }
 
 void ShowValue(int v, uint8_t n)
 {
-    ShowNumberExp(v);
+    SegmentDisplay_SetInt(v, SegmentDisplaySlot_Debug);
 }
 
 
@@ -140,7 +117,7 @@ void WatchValueMin(int v, uint8_t n)
     }
 
     if (CurrentTime - lastWatch > watchInterval) {
-        ShowNumberExp(m);
+        SegmentDisplay_SetInt(m, SegmentDisplaySlot_Debug);
         lastWatch = CurrentTime;
         m = INT_MAX;
     }
@@ -155,7 +132,7 @@ void WatchValueMax(int v, uint8_t n)
     }
 
     if (CurrentTime - lastWatch > watchInterval) {
-        ShowNumberExp(m);
+        SegmentDisplay_SetInt(m, SegmentDisplaySlot_Debug);
         lastWatch = CurrentTime;
         m = INT_MIN;
     }

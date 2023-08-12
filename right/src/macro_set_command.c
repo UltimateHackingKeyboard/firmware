@@ -270,17 +270,17 @@ static void macroEngine(const char* arg1, const char *textEnd)
 static void backlightStrategy(const char* arg1, const char *textEnd)
 {
     if (TokenMatches(arg1, textEnd, "functional")) {
-        SetLedBacklightingMode(BacklightingMode_Functional);
-        LedSlaveDriver_UpdateLeds();
+        Ledmap_SetLedBacklightingMode(BacklightingMode_Functional);
+        Ledmap_UpdateBacklightLeds();
     }
     else if (TokenMatches(arg1, textEnd, "constantRgb")) {
-        SetLedBacklightingMode(BacklightingMode_ConstantRGB);
-        LedSlaveDriver_UpdateLeds();
+        Ledmap_SetLedBacklightingMode(BacklightingMode_ConstantRGB);
+        Ledmap_UpdateBacklightLeds();
     }
     else if (TokenMatches(arg1, textEnd, "perKeyRgb")) {
         if (PerKeyRgbPresent) {
-            SetLedBacklightingMode(BacklightingMode_PerKeyRgb);
-            LedSlaveDriver_UpdateLeds();
+            Ledmap_SetLedBacklightingMode(BacklightingMode_PerKeyRgb);
+            Ledmap_UpdateBacklightLeds();
         } else {
             Macros_ReportError("Cannot set perKeyRgb mode when perKeyRgb maps are not available. Please, consult Agent's led section...", NULL, NULL);
         }
@@ -314,7 +314,7 @@ static void keyRgb(const char* arg1, const char *textEnd)
     CurrentKeymap[layerId][slotIdx][inSlotIdx].colorOverridden = true;
     CurrentKeymap[layerId][slotIdx][inSlotIdx].color = rgb;
 
-    LedSlaveDriver_UpdateLeds();
+    Ledmap_UpdateBacklightLeds();
 }
 
 
@@ -327,8 +327,8 @@ static void constantRgb(const char* arg1, const char *textEnd)
         LedMap_ConstantRGB.red = Macros_ParseInt(r, textEnd, NULL);
         LedMap_ConstantRGB.green = Macros_ParseInt(g, textEnd, NULL);
         LedMap_ConstantRGB.blue = Macros_ParseInt(b, textEnd, NULL);
-        SetLedBacklightingMode(BacklightingMode_ConstantRGB);
-        LedSlaveDriver_UpdateLeds();
+        Ledmap_SetLedBacklightingMode(BacklightingMode_ConstantRGB);
+        Ledmap_UpdateBacklightLeds();
     }
     else {
         Macros_ReportError("parameter not recognized:", arg1, textEnd);

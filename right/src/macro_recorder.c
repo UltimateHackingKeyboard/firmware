@@ -1,6 +1,7 @@
 #include "macro_recorder.h"
 #include "led_display.h"
 #include "macros.h"
+#include "segment_display.h"
 #include "timer.h"
 
 /**
@@ -108,7 +109,7 @@ static void recordRuntimeMacroStart(uint16_t id, bool blind)
     resolveRecordingHeader(id);
     RuntimeMacroRecording = true;
     RuntimeMacroRecordingBlind = blind;
-    LedDisplay_SetIcon(LedDisplayIcon_Adaptive, true);
+    SegmentDisplay_SetText(3, "REC", SegmentDisplaySlot_Recording);
 }
 
 static void writeByte(uint8_t b)
@@ -129,7 +130,7 @@ static void recordRuntimeMacroEnd()
 {
     RuntimeMacroRecording = false;
     RuntimeMacroRecordingBlind = false;
-    LedDisplay_SetIcon(LedDisplayIcon_Adaptive, false);
+    SegmentDisplay_DeactivateSlot(SegmentDisplaySlot_Recording);
 }
 
 static uint8_t readByte()

@@ -403,10 +403,6 @@ static void updateActiveUsbReports(void)
     SuppressMods = false;
 
     if (MacroPlaying) {
-        if (Macros_WakeMeOnTime < CurrentTime) {
-            Macros_WakedBecauseOfTime = true;
-            MacroPlaying = true;
-        }
         Macros_ContinueMacro();
     }
 

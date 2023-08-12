@@ -3,6 +3,7 @@
 #include "init_clock.h"
 #include "init_peripherals.h"
 #include "lufa/HIDClassCommon.h"
+#include "segment_display.h"
 #include "usb_commands/usb_command_exec_macro_command.h"
 #include "usb_composite_device.h"
 #include "slave_scheduler.h"
@@ -19,6 +20,7 @@
 #include "macro_shortcut_parser.h"
 #include "ledmap.h"
 #include "debug.h"
+#include "event_scheduler.h"
 
 static bool IsEepromInitialized = false;
 static bool IsConfigInitialized = false;
@@ -30,7 +32,7 @@ static void userConfigurationReadFinished(void)
 
 static void hardwareConfigurationReadFinished(void)
 {
-    InitLedLayout();
+    Ledmap_InitLedLayout();
     if (IsFactoryResetModeEnabled) {
         HardwareConfig->signatureLength = HARDWARE_CONFIG_SIGNATURE_LENGTH;
         strncpy(HardwareConfig->signature, "FTY", HARDWARE_CONFIG_SIGNATURE_LENGTH);
@@ -104,6 +106,12 @@ int main(void)
             ++MatrixScanCounter;
             UpdateUsbReports();
 
+            if (EventScheduler_IsActive) {
+                EventScheduler_Process();
+            }
+            if (SegmentDisplay_NeedsUpdate) {
+                SegmentDisplay_Update();
+            }
             __WFI();
         }
     }

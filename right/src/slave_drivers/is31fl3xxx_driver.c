@@ -194,6 +194,7 @@ static void recalculateLedBrightness() {
 
 void LedSlaveDriver_DisableLeds(void)
 {
+    recalculateLedBrightness();
     for (uint8_t ledDriverId=0; ledDriverId<=LedDriverId_Last; ledDriverId++) {
         memset(LedDriverValues[ledDriverId], 0, ledDriverStates[ledDriverId].ledCount);
     }
@@ -208,7 +209,7 @@ void LedSlaveDriver_UpdateLeds(void)
         memset(LedDriverValues[ledDriverId], KeyBacklightBrightness, ledDriverStates[ledDriverId].ledCount);
     }
 #else
-    UpdateLayerLeds();
+    Ledmap_UpdateBacklightLeds();
 #endif
 
     LedDisplay_UpdateAll();

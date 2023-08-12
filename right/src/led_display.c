@@ -4,6 +4,7 @@
 #include "layer_switcher.h"
 #include "keymap.h"
 #include "device.h"
+#include "segment_display.h"
 
 uint32_t LedsFadeTimeout = 0;
 uint8_t IconsAndLayerTextsBrightness = 0xff;
@@ -11,7 +12,6 @@ uint8_t IconsAndLayerTextsBrightnessDefault = 0xff;
 uint8_t AlphanumericSegmentsBrightness = 0xff;
 uint8_t AlphanumericSegmentsBrightnessDefault = 0xff;
 bool ledIconStates[LedDisplayIcon_Count];
-char LedDisplay_DebugString[] = "   ";
 
 static const uint16_t letterToSegmentMap[] = {
 
@@ -183,19 +183,9 @@ void LedDisplay_UpdateIcons(void)
     }
 }
 
-void LedDisplay_UpdateText(void)
-{
-#if LED_DISPLAY_DEBUG_MODE == 0
-    keymap_reference_t *currentKeymap = AllKeymaps + CurrentKeymapIndex;
-    LedDisplay_SetText(currentKeymap->abbreviationLen, currentKeymap->abbreviation);
-#else
-    LedDisplay_SetText(strlen(LedDisplay_DebugString), LedDisplay_DebugString);
-#endif
-}
-
 void LedDisplay_UpdateAll(void)
 {
     LedDisplay_UpdateIcons();
     LedDisplay_SetLayer(ActiveLayer);
-    LedDisplay_UpdateText();
+    SegmentDisplay_UpdateKeymapText();
 }

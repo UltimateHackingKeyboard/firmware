@@ -82,7 +82,7 @@ void updateActiveLayer() {
     LedDisplay_SetLayer(ActiveLayer);
 
     if (ActiveLayer != previousLayer) {
-        UpdateLayerLeds();
+        Ledmap_UpdateBacklightLeds();
         MacroEvent_OnLayerChange(activeLayer);
     }
 }
