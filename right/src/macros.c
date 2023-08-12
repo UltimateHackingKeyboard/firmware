@@ -1,4 +1,5 @@
 #include "macros.h"
+#include "layer_stack.h"
 #include <stdarg.h>
 #include "event_scheduler.h"
 #include <math.h>
@@ -44,8 +45,6 @@ uint8_t MacroBasicScancodeIndex = 0;
 uint8_t MacroMediaScancodeIndex = 0;
 uint8_t MacroSystemScancodeIndex = 0;
 
-layer_id_t Macros_ActiveLayer = LayerId_Base;
-bool Macros_ActiveLayerHeld = false;
 bool MacroPlaying = false;
 bool Macros_WakedBecauseOfTime = false;
 bool Macros_WakedBecauseOfKeystateChange = false;
@@ -70,9 +69,6 @@ static char statusBuffer[STATUS_BUFFER_MAX_LENGTH];
 static uint16_t statusBufferLen;
 static bool statusBufferPrinting;
 
-static layerStackRecord layerIdxStack[LAYER_STACK_SIZE];
-static uint8_t layerIdxStackTop;
-static uint8_t layerIdxStackSize;
 static uint8_t lastLayerIdx;
 static uint8_t lastLayerKeymapIdx;
 static uint8_t lastKeymapIdx;
@@ -104,22 +100,6 @@ static uint8_t currentActionCmdCount();
 static macro_result_t sleepTillTime(uint32_t time);
 static macro_result_t sleepTillKeystateChange();
 
-/**
- * This ensures integration/interface between macro layer mechanism
- * and official layer mechanism - we expose our layer via
- * Macros_ActiveLayer/Macros_ActiveLayerHeld and let the layer switcher
- * make its mind.
- */
-static void activateLayer(layer_id_t layer)
-{
-    Macros_ActiveLayer = layer;
-    Macros_ActiveLayerHeld = layerIdxStack[layerIdxStackTop].held;
-    if (Macros_ActiveLayerHeld) {
-        LayerSwitcher_HoldLayer(layer, true);
-    } else {
-        LayerSwitcher_RecalculateLayerComposition();
-    }
-}
 
 void Macros_SignalInterrupt()
 {
@@ -826,47 +806,20 @@ static int32_t parseRuntimeMacroSlotId(const char *a, const char *aEnd)
     return lastMacroId;
 }
 
-static void removeStackTop(bool toggledInsteadOfTop)
-{
-    if (toggledInsteadOfTop) {
-        for (int i = 0; i < layerIdxStackSize-1; i++) {
-            uint8_t pos = (layerIdxStackTop + LAYER_STACK_SIZE - i) % LAYER_STACK_SIZE;
-            if (!layerIdxStack[pos].held && !layerIdxStack[pos].removed) {
-                layerIdxStack[pos].removed = true;
-                return;
-            }
-        }
-    } else {
-        layerIdxStackTop = (layerIdxStackTop + LAYER_STACK_SIZE - 1) % LAYER_STACK_SIZE;
-        layerIdxStackSize--;
-    }
-}
-
-static uint8_t findPreviousLayerRecordIdx()
-{
-    for (int i = 1; i < layerIdxStackSize; i++) {
-        uint8_t pos = (layerIdxStackTop + LAYER_STACK_SIZE - i) % LAYER_STACK_SIZE;
-        if (!layerIdxStack[pos].removed) {
-            return pos;
-        }
-    }
-    return layerIdxStackTop;
-}
-
 static macro_result_t processStatsLayerStackCommand()
 {
     Macros_SetStatusString("kmp/layer/held/removed; size is ", NULL);
-    Macros_SetStatusNum(layerIdxStackSize);
+    Macros_SetStatusNum(LayerStack_Size);
     Macros_SetStatusString("\n", NULL);
-    for (int i = 0; i < layerIdxStackSize; i++) {
-        uint8_t pos = (layerIdxStackTop + LAYER_STACK_SIZE - i) % LAYER_STACK_SIZE;
-        Macros_SetStatusNum(layerIdxStack[pos].keymap);
+    for (int i = 0; i < LayerStack_Size; i++) {
+        uint8_t pos = (LayerStack_TopIdx + LAYER_STACK_SIZE - i) % LAYER_STACK_SIZE;
+        Macros_SetStatusNum(LayerStack[pos].keymap);
         Macros_SetStatusString("/", NULL);
-        Macros_SetStatusNum(layerIdxStack[pos].layer);
+        Macros_SetStatusNum(LayerStack[pos].layer);
         Macros_SetStatusString("/", NULL);
-        Macros_SetStatusNum(layerIdxStack[pos].held);
+        Macros_SetStatusNum(LayerStack[pos].held);
         Macros_SetStatusString("/", NULL);
-        Macros_SetStatusNum(layerIdxStack[pos].removed);
+        Macros_SetStatusNum(LayerStack[pos].removed);
         Macros_SetStatusString("\n", NULL);
     }
     return MacroResult_Finished;
@@ -999,47 +952,6 @@ static macro_result_t processDiagnoseCommand()
     return MacroResult_Finished;
 }
 
-static void popLayerStack(bool forceRemoveTop, bool toggledInsteadOfTop)
-{
-    if (layerIdxStackSize > 0 && forceRemoveTop) {
-        removeStackTop(toggledInsteadOfTop);
-    }
-    while(layerIdxStackSize > 0 && layerIdxStack[layerIdxStackTop].removed) {
-        removeStackTop(false);
-    }
-    if (layerIdxStackSize == 0) {
-        Macros_ResetLayerStack();
-    }
-    if (layerIdxStack[layerIdxStackTop].keymap != CurrentKeymapIndex) {
-        SwitchKeymapById(layerIdxStack[layerIdxStackTop].keymap);
-    }
-    activateLayer(layerIdxStack[layerIdxStackTop].layer);
-}
-
-// Always maintain protected base layer record. This record cannot be implicit
-// due to *KeymapLayer commands.
-void Macros_ResetLayerStack()
-{
-    layerIdxStackSize = 1;
-    layerIdxStack[layerIdxStackTop].keymap = CurrentKeymapIndex;
-    layerIdxStack[layerIdxStackTop].layer = LayerId_Base;
-    layerIdxStack[layerIdxStackTop].removed = false;
-    layerIdxStack[layerIdxStackTop].held = false;
-}
-
-static void pushStack(uint8_t layer, uint8_t keymap, bool hold)
-{
-    layerIdxStackTop = (layerIdxStackTop + 1) % LAYER_STACK_SIZE;
-    layerIdxStack[layerIdxStackTop].layer = layer;
-    layerIdxStack[layerIdxStackTop].keymap = keymap;
-    layerIdxStack[layerIdxStackTop].held = hold;
-    layerIdxStack[layerIdxStackTop].removed = false;
-    if (keymap != CurrentKeymapIndex) {
-        SwitchKeymapById(keymap);
-    }
-    activateLayer(layerIdxStack[layerIdxStackTop].layer);
-    layerIdxStackSize = layerIdxStackSize < LAYER_STACK_SIZE - 1 ? layerIdxStackSize+1 : layerIdxStackSize;
-}
 
 static uint8_t parseKeymapId(const char* arg1, const char* cmdEnd)
 {
@@ -1108,7 +1020,7 @@ uint8_t Macros_ParseLayerId(const char* arg1, const char* cmdEnd)
             break;
         case 'p':
             if (TokenMatches(arg1, cmdEnd, "previous")) {
-                return layerIdxStack[findPreviousLayerRecordIdx()].layer;
+                return LayerStack[LayerStack_FindPreviousLayerRecordIdx()].layer;
             }
             break;
         case 's':
@@ -1131,7 +1043,7 @@ static uint8_t parseLayerKeymapId(const char* arg1, const char* cmdEnd)
         return lastLayerKeymapIdx;
     }
     else if (TokenMatches(arg1, cmdEnd, "previous")) {
-        return layerIdxStack[findPreviousLayerRecordIdx()].keymap;
+        return LayerStack[LayerStack_FindPreviousLayerRecordIdx()].keymap;
     }
     else {
         return CurrentKeymapIndex;
@@ -1149,7 +1061,7 @@ static macro_result_t processSwitchKeymapCommand(const char* arg1, const char* c
         }
 
         SwitchKeymapById(newKeymapIdx);
-        Macros_ResetLayerStack();
+        LayerStack_Reset();
     }
     lastKeymapIdx = tmpKeymapIdx;
     return MacroResult_Finished;
@@ -1159,7 +1071,7 @@ static macro_result_t processSwitchKeymapCommand(const char* arg1, const char* c
 static macro_result_t processSwitchKeymapLayerCommand(const char* arg1, const char* cmdEnd)
 {
     Macros_ReportWarn("Command deprecated. Please, replace switchKeymapLayer by toggleKeymapLayer or holdKeymapLayer. Or complain on github that you actually need this command.", NULL, NULL);
-    uint8_t tmpLayerIdx = Macros_ActiveLayer;
+    uint8_t tmpLayerIdx = LayerStack_ActiveLayer;
     uint8_t tmpLayerKeymapIdx = CurrentKeymapIndex;
     uint8_t layer = Macros_ParseLayerId(NextTok(arg1, cmdEnd), cmdEnd);
     uint8_t keymap = parseKeymapId(arg1, cmdEnd);
@@ -1168,7 +1080,7 @@ static macro_result_t processSwitchKeymapLayerCommand(const char* arg1, const ch
         return MacroResult_Finished;
     }
 
-    pushStack(layer, keymap, false);
+    LayerStack_Push(layer, keymap, false);
     lastLayerIdx = tmpLayerIdx;
     lastLayerKeymapIdx = tmpLayerKeymapIdx;
     return MacroResult_Finished;
@@ -1178,10 +1090,10 @@ static macro_result_t processSwitchKeymapLayerCommand(const char* arg1, const ch
 static macro_result_t processSwitchLayerCommand(const char* arg1, const char* cmdEnd)
 {
     Macros_ReportWarn("Command deprecated. Please, replace switchLayer by toggleLayer or holdLayer. Or complain on github that you actually need this command.", NULL, NULL);
-    uint8_t tmpLayerIdx = Macros_ActiveLayer;
+    uint8_t tmpLayerIdx = LayerStack_ActiveLayer;
     uint8_t tmpLayerKeymapIdx = CurrentKeymapIndex;
     if (TokenMatches(arg1, cmdEnd, "previous")) {
-        popLayerStack(true, false);
+        LayerStack_Pop(true, false);
     }
     else {
         uint8_t layer = Macros_ParseLayerId(arg1, cmdEnd);
@@ -1191,7 +1103,7 @@ static macro_result_t processSwitchLayerCommand(const char* arg1, const char* cm
             return MacroResult_Finished;
         }
 
-        pushStack(layer, keymap, false);
+        LayerStack_Push(layer, keymap, false);
     }
     lastLayerIdx = tmpLayerIdx;
     lastLayerKeymapIdx = tmpLayerKeymapIdx;
@@ -1201,7 +1113,7 @@ static macro_result_t processSwitchLayerCommand(const char* arg1, const char* cm
 
 static macro_result_t processToggleKeymapLayerCommand(const char* arg1, const char* cmdEnd)
 {
-    uint8_t tmpLayerIdx = Macros_ActiveLayer;
+    uint8_t tmpLayerIdx = LayerStack_ActiveLayer;
     uint8_t tmpLayerKeymapIdx = CurrentKeymapIndex;
     uint8_t layer = Macros_ParseLayerId(NextTok(arg1, cmdEnd), cmdEnd);
     uint8_t keymap = parseKeymapId(arg1, cmdEnd);
@@ -1210,7 +1122,7 @@ static macro_result_t processToggleKeymapLayerCommand(const char* arg1, const ch
         return MacroResult_Finished;
     }
 
-    pushStack(layer, keymap, false);
+    LayerStack_Push(layer, keymap, false);
     lastLayerIdx = tmpLayerIdx;
     lastLayerKeymapIdx = tmpLayerKeymapIdx;
     return MacroResult_Finished;
@@ -1218,7 +1130,7 @@ static macro_result_t processToggleKeymapLayerCommand(const char* arg1, const ch
 
 static macro_result_t processToggleLayerCommand(const char* arg1, const char* cmdEnd)
 {
-    uint8_t tmpLayerIdx = Macros_ActiveLayer;
+    uint8_t tmpLayerIdx = LayerStack_ActiveLayer;
     uint8_t tmpLayerKeymapIdx = CurrentKeymapIndex;
     uint8_t layer = Macros_ParseLayerId(arg1, cmdEnd);
     uint8_t keymap = parseLayerKeymapId(arg1, cmdEnd);
@@ -1227,7 +1139,7 @@ static macro_result_t processToggleLayerCommand(const char* arg1, const char* cm
         return MacroResult_Finished;
     }
 
-    pushStack(layer, keymap, false);
+    LayerStack_Push(layer, keymap, false);
     lastLayerIdx = tmpLayerIdx;
     lastLayerKeymapIdx = tmpLayerKeymapIdx;
     return MacroResult_Finished;
@@ -1235,9 +1147,9 @@ static macro_result_t processToggleLayerCommand(const char* arg1, const char* cm
 
 static macro_result_t processUnToggleLayerCommand()
 {
-    uint8_t tmpLayerIdx = Macros_ActiveLayer;
+    uint8_t tmpLayerIdx = LayerStack_ActiveLayer;
     uint8_t tmpLayerKeymapIdx = CurrentKeymapIndex;
-    popLayerStack(true, true);
+    LayerStack_Pop(true, true);
     lastLayerIdx = tmpLayerIdx;
     lastLayerKeymapIdx = tmpLayerKeymapIdx;
     return MacroResult_Finished;
@@ -1247,8 +1159,8 @@ static macro_result_t processHoldLayer(uint8_t layer, uint8_t keymap, uint16_t t
 {
     if (!s->as.actionActive) {
         s->as.actionActive = true;
-        pushStack(layer, keymap, true);
-        s->as.holdLayerData.layerIdx = layerIdxStackTop;
+        LayerStack_Push(layer, keymap, true);
+        s->as.holdLayerData.layerStackIdx = LayerStack_TopIdx;
         return MacroResult_Waiting;
     }
     else {
@@ -1261,9 +1173,8 @@ static macro_result_t processHoldLayer(uint8_t layer, uint8_t keymap, uint16_t t
         }
         else {
             s->as.actionActive = false;
-            layerIdxStack[s->as.holdLayerData.layerIdx].removed = true;
-            layerIdxStack[s->as.holdLayerData.layerIdx].held = false;
-            popLayerStack(false, false);
+            LayerStack_RemoveRecord(s->as.holdLayerData.layerStackIdx);
+            LayerStack_Pop(false, false);
             return MacroResult_Finished;
         }
     }
@@ -1474,7 +1385,7 @@ static bool processIfKeymapCommand(bool negate, const char* arg1, const char *ar
 static bool processIfLayerCommand(bool negate, const char* arg1, const char *argEnd)
 {
     uint8_t queryLayerIdx = Macros_ParseLayerId(arg1, argEnd);
-    return (queryLayerIdx == Macros_ActiveLayer) != negate;
+    return (queryLayerIdx == LayerStack_ActiveLayer) != negate;
 }
 
 static macro_result_t processBreakCommand()
@@ -3130,7 +3041,7 @@ static bool findFreeStateSlot()
 
 
 void Macros_Initialize() {
-    Macros_ResetLayerStack();
+    LayerStack_Reset();
 }
 
 static uint8_t currentActionCmdCount() {
