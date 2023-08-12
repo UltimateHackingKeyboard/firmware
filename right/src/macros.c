@@ -1,4 +1,5 @@
 #include "macros.h"
+#include <stdarg.h>
 #include "event_scheduler.h"
 #include <math.h>
 #include "layer.h"
@@ -564,6 +565,17 @@ void Macros_ReportError(const char* err, const char* arg, const char *argEnd)
         Macros_SetStatusString(arg, argEnd);
     }
     Macros_SetStatusString("\n", NULL);
+}
+
+
+void Macros_ReportErrorPrintf(const char *fmt, ...)
+{
+    va_list myargs;
+    va_start(myargs, fmt);
+    char buffer[256];
+    vsprintf(buffer, fmt, myargs);
+    Macros_ReportError(buffer, NULL, NULL);
+
 }
 
 void Macros_ReportErrorFloat(const char* err, float num)
@@ -1461,7 +1473,11 @@ static macro_result_t processSetLedTxtCommand(const char* arg1, const char *argE
 {
     int16_t time = parseNUM(arg1, argEnd);
     macro_result_t res = MacroResult_Finished;
-    if (time > 0 && (res = processDelay(time)) == MacroResult_Finished) {
+    if (time == 0) {
+        const char* str = NextTok(arg1, argEnd);
+        SegmentDisplay_SetText(TokLen(str, argEnd), str, SegmentDisplaySlot_Macro);
+        return MacroResult_Finished;
+    } else if ((res = processDelay(time)) == MacroResult_Finished) {
         SegmentDisplay_DeactivateSlot(SegmentDisplaySlot_Macro);
         return MacroResult_Finished;
     } else {

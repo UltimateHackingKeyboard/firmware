@@ -2,6 +2,7 @@
 #include "segment_display.h"
 #include "timer.h"
 #include "macros.h"
+#include "utils.h"
 
 uint32_t times[EventSchedulerEvent_Count] = {};
 event_scheduler_event_t nextEvent;
@@ -13,13 +14,12 @@ static void scheduleNext()
     bool gotAny = false;
     for (uint8_t i = 0; i < EventSchedulerEvent_Count; i++) {
         if (times[i] != 0 && (!gotAny || times[i] < nextEventAt)) {
+            gotAny = true;
             nextEvent = i;
             nextEventAt = times[i];
         }
     }
-    if (!gotAny) {
-        EventScheduler_IsActive = false;
-    }
+    EventScheduler_IsActive = gotAny;
 }
 
 static void processEvt(event_scheduler_event_t evt)
@@ -66,7 +66,7 @@ void EventScheduler_Schedule(uint32_t at, event_scheduler_event_t evt)
 
 void EventScheduler_Process()
 {
-    if (nextEvent <= CurrentTime) {
+    if (nextEventAt <= CurrentTime) {
         event_scheduler_event_t evt = nextEvent;
         times[nextEvent] = 0;
         scheduleNext();

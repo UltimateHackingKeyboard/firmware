@@ -74,7 +74,6 @@
     void WatchString(char const * v, uint8_t n);
     void ShowValue(int v, uint8_t n);
     void ShowString(char const * v, uint8_t n);
-    void ShowNumberExp(int32_t a);
     void AddReportToStatusBuffer(char* dbgTag, usb_basic_keyboard_report_t *report);
 
 

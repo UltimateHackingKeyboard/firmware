@@ -21,7 +21,7 @@
     } segment_display_slot_t;
 
     typedef struct {
-        const char* text;
+        char text[3];
         uint8_t len;
         bool active;
     } segment_display_slot_record_t;
@@ -34,6 +34,7 @@
 
     void SegmentDisplay_Update();
     void SegmentDisplay_SetText(uint8_t len, const char* text, segment_display_slot_t slot);
+    void SegmentDisplay_SetInt(int32_t a, segment_display_slot_t slot);
     void SegmentDisplay_DeactivateSlot(segment_display_slot_t slot);
     void SegmentDisplay_UpdateKeymapText();
 
