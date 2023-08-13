@@ -29,7 +29,7 @@ static uhk_error_state_t getErrorState()
 void UsbCommand_GetKeyboardState(void)
 {
     SetUsbTxBufferUint8(1, IsEepromBusy);
-    SetUsbTxBufferUint8(2, MERGE_SENSOR_IS_MERGED | (getErrorState() << 1));
+    SetUsbTxBufferUint8(2, (MERGE_SENSOR_IS_MERGED) | (getErrorState() << 1));
     SetUsbTxBufferUint8(3, MODULE_CONNECTION_STATE(UhkModuleDriverId_LeftKeyboardHalf));
     SetUsbTxBufferUint8(4, MODULE_CONNECTION_STATE(UhkModuleDriverId_LeftModule));
     SetUsbTxBufferUint8(5, MODULE_CONNECTION_STATE(UhkModuleDriverId_RightModule));
