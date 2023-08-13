@@ -3,6 +3,7 @@
 #include "key_matrix.h"
 #include "test_switches.h"
 #include "usb_report_updater.h"
+#include "macros.h"
 
 void UsbCommand_GetVariable(void)
 {
@@ -23,6 +24,11 @@ void UsbCommand_GetVariable(void)
             break;
         case UsbVariable_UsbReportSemaphore:
             SetUsbTxBufferUint8(1, UsbReportUpdateSemaphore);
+            break;
+        case UsbVariable_StatusBuffer:
+            for (uint8_t i = 1; i < sizeof(GenericHidInBuffer); i++) {
+                SetUsbTxBufferUint8(i, Macros_ConsumeStatusChar());
+            }
             break;
     }
 }

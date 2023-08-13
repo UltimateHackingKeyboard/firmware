@@ -54,6 +54,8 @@ bool Macros_WakeMeOnKeystateChange = false;
 
 bool Macros_ParserError = false;
 
+uint8_t consumeStatusCharReadingPos = 0;
+
 macro_scheduler_t Macros_Scheduler = Scheduler_Blocking;
 uint8_t Macros_MaxBatchSize = 20;
 static scheduler_state_t scheduler = {
@@ -460,7 +462,24 @@ static macro_result_t processScrollMouseAction(void)
 static macro_result_t processClearStatusCommand()
 {
     statusBufferLen = 0;
+    consumeStatusCharReadingPos = 0;
+    SegmentDisplay_DeactivateSlot(SegmentDisplaySlot_Error);
+    SegmentDisplay_DeactivateSlot(SegmentDisplaySlot_Warn);
     return MacroResult_Finished;
+}
+
+
+char Macros_ConsumeStatusChar()
+{
+    char res;
+
+    if (consumeStatusCharReadingPos < statusBufferLen) {
+        res = statusBuffer[consumeStatusCharReadingPos++];
+    } else {
+        res = '\0';
+    }
+
+    return res;
 }
 
 //textEnd is allowed to be null if text is null-terminated
@@ -539,16 +558,18 @@ void Macros_SetStatusChar(char n)
     Macros_SetStatusString(&n, &n+1);
 }
 
-static void reportErrorHeader()
+static void reportErrorHeader(const char* status)
 {
     if (s != NULL) {
         const char *name, *nameEnd;
         FindMacroName(&AllMacros[s->ms.currentMacroIndex], &name, &nameEnd);
+        Macros_SetStatusString(status, NULL);
+        Macros_SetStatusString(" at ", NULL);
         Macros_SetStatusString(name, nameEnd);
-        Macros_SetStatusString(":", NULL);
-        Macros_SetStatusNum(s->ms.currentMacroActionIndex);
-        Macros_SetStatusString(":", NULL);
-        Macros_SetStatusNum(s->ms.commandAddress);
+        Macros_SetStatusString(" ", NULL);
+        Macros_SetStatusNumSpaced(s->ms.currentMacroActionIndex, false);
+        Macros_SetStatusString("/", NULL);
+        Macros_SetStatusNumSpaced(s->ms.commandAddress, false);
         Macros_SetStatusString(": ", NULL);
     }
 }
@@ -558,7 +579,19 @@ void Macros_ReportError(const char* err, const char* arg, const char *argEnd)
 {
     Macros_ParserError = true;
     SegmentDisplay_SetText(3, "ERR", SegmentDisplaySlot_Error);
-    reportErrorHeader();
+    reportErrorHeader("Error");
+    Macros_SetStatusString(err, NULL);
+    if (arg != NULL) {
+        Macros_SetStatusString(": ", NULL);
+        Macros_SetStatusString(arg, argEnd);
+    }
+    Macros_SetStatusString("\n", NULL);
+}
+
+void Macros_ReportWarn(const char* err, const char* arg, const char *argEnd)
+{
+    SegmentDisplay_SetText(3, "WRN", SegmentDisplaySlot_Warn);
+    reportErrorHeader("Warning");
     Macros_SetStatusString(err, NULL);
     if (arg != NULL) {
         Macros_SetStatusString(": ", NULL);
@@ -582,7 +615,7 @@ void Macros_ReportErrorFloat(const char* err, float num)
 {
     Macros_ParserError = true;
     SegmentDisplay_SetText(3, "ERR", SegmentDisplaySlot_Error);
-    reportErrorHeader();
+    reportErrorHeader("Error");
     Macros_SetStatusString(err, NULL);
     Macros_SetStatusFloat(num);
     Macros_SetStatusString("\n", NULL);
@@ -592,7 +625,7 @@ void Macros_ReportErrorNum(const char* err, int32_t num)
 {
     Macros_ParserError = true;
     SegmentDisplay_SetText(3, "ERR", SegmentDisplaySlot_Error);
-    reportErrorHeader();
+    reportErrorHeader("Error");
     Macros_SetStatusString(err, NULL);
     Macros_SetStatusNum(num);
     Macros_SetStatusString("\n", NULL);
@@ -1125,6 +1158,7 @@ static macro_result_t processSwitchKeymapCommand(const char* arg1, const char* c
 /**DEPRECATED**/
 static macro_result_t processSwitchKeymapLayerCommand(const char* arg1, const char* cmdEnd)
 {
+    Macros_ReportWarn("Command deprecated. Please, replace switchKeymapLayer by toggleKeymapLayer or holdKeymapLayer. Or complain on github that you actually need this command.", NULL, NULL);
     uint8_t tmpLayerIdx = Macros_ActiveLayer;
     uint8_t tmpLayerKeymapIdx = CurrentKeymapIndex;
     uint8_t layer = Macros_ParseLayerId(NextTok(arg1, cmdEnd), cmdEnd);
@@ -1143,6 +1177,7 @@ static macro_result_t processSwitchKeymapLayerCommand(const char* arg1, const ch
 /**DEPRECATED**/
 static macro_result_t processSwitchLayerCommand(const char* arg1, const char* cmdEnd)
 {
+    Macros_ReportWarn("Command deprecated. Please, replace switchLayer by toggleLayer or holdLayer. Or complain on github that you actually need this command.", NULL, NULL);
     uint8_t tmpLayerIdx = Macros_ActiveLayer;
     uint8_t tmpLayerKeymapIdx = CurrentKeymapIndex;
     if (TokenMatches(arg1, cmdEnd, "previous")) {
@@ -1453,10 +1488,9 @@ static macro_result_t processPrintStatusCommand()
     statusBufferPrinting = true;
     macro_result_t res = dispatchText(statusBuffer, statusBufferLen);
     if (res == MacroResult_Finished) {
-        statusBufferLen = 0;
+        processClearStatusCommand();
         statusBufferPrinting = false;
     }
-    SegmentDisplay_DeactivateSlot(SegmentDisplaySlot_Error);
     return res;
 }
 
@@ -1774,6 +1808,7 @@ static uint8_t processResolveSecondary(uint16_t timeout1, uint16_t timeout2)
 
 static macro_result_t processResolveSecondaryCommand(const char* arg1, const char* argEnd)
 {
+
     const char* arg2 = NextTok(arg1, argEnd);
     const char* arg3 = NextTok(arg2, argEnd);
     const char* arg4 = NextTok(arg3, argEnd);
@@ -1802,6 +1837,7 @@ static macro_result_t processResolveSecondaryCommand(const char* arg1, const cha
         return MacroResult_Waiting;
     case RESOLVESEC_RESULT_PRIMARY:
         postponeNextN(1);
+        Macros_ReportWarn("Command deprecated. Please, replace resolveSecondary by `ifPrimary advancedStrategy goTo ...` or `ifSecondary advancedStrategy goTo ...`.", NULL, NULL);
         return goTo(primaryAdr, argEnd);
     case RESOLVESEC_RESULT_SECONDARY:
         return goTo(secondaryAdr, argEnd);
@@ -1919,6 +1955,7 @@ static macro_result_t processResolveNextKeyIdCommand()
 
 static macro_result_t processResolveNextKeyEqCommand(const char* arg1, const char* argEnd)
 {
+    Macros_ReportWarn("Command deprecated. Please, replace resolveNextKeyEq by ifShortcut or ifGesture, or complain at github that you actually need this.", NULL, NULL);
     postponeCurrentCycle();
     const char* arg2 = NextTok(arg1, argEnd);
     const char* arg3 = NextTok(arg2, argEnd);

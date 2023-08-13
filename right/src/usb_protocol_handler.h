@@ -45,6 +45,7 @@
         UsbVariable_DebounceTimePress,
         UsbVariable_DebounceTimeRelease,
         UsbVariable_UsbReportSemaphore,
+        UsbVariable_StatusBuffer,
     } usb_variable_id_t;
 
     typedef enum {

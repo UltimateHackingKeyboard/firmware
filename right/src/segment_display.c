@@ -93,7 +93,6 @@ void SegmentDisplay_UpdateKeymapText()
     SegmentDisplay_SetText(currentKeymap->abbreviationLen, currentKeymap->abbreviation, SegmentDisplaySlot_Keymap);
 }
 
-
 void SegmentDisplay_SetInt(int32_t a, segment_display_slot_t slot)
 {
     char b[3];
@@ -117,4 +116,9 @@ void SegmentDisplay_SetInt(int32_t a, segment_display_slot_t slot)
         }
         SegmentDisplay_SetText(3, b, slot);
     }
+}
+
+bool SegmentDisplay_SlotIsActive(segment_display_slot_t slot)
+{
+    return slots[slot].active;
 }

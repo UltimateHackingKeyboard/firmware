@@ -259,6 +259,7 @@
     void Macros_ReportErrorPrintf(const char *fmt, ...);
     void Macros_ReportErrorNum(const char* err, int32_t num);
     void Macros_ReportErrorFloat(const char* err, float num);
+    void Macros_ReportWarn(const char* err, const char* arg, const char *argEnd);
     void Macros_SetStatusString(const char* text, const char *textEnd);
     void Macros_SetStatusStringInterpolated(const char* text, const char *textEnd);
     void Macros_SetStatusBool(bool b);
@@ -275,6 +276,7 @@
     int32_t Macros_ParseInt(const char *a, const char *aEnd, const char* *parsedTill);
     bool Macros_ParseBoolean(const char *a, const char *aEnd);
     void Macros_ResetBasicKeyboardReports();
+    char Macros_ConsumeStatusChar();
 
 #define WAKE_MACROS_ON_KEYSTATE_CHANGE()  if (Macros_WakeMeOnKeystateChange) { \
                                               Macros_WakedBecauseOfKeystateChange = true; \
