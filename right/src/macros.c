@@ -54,6 +54,8 @@ bool Macros_WakeMeOnKeystateChange = false;
 
 bool Macros_ParserError = false;
 
+uint8_t consumeStatusCharReadingPos = 0;
+
 macro_scheduler_t Macros_Scheduler = Scheduler_Blocking;
 uint8_t Macros_MaxBatchSize = 20;
 static scheduler_state_t scheduler = {
@@ -460,6 +462,7 @@ static macro_result_t processScrollMouseAction(void)
 static macro_result_t processClearStatusCommand()
 {
     statusBufferLen = 0;
+    consumeStatusCharReadingPos = 0;
     SegmentDisplay_DeactivateSlot(SegmentDisplaySlot_Error);
     SegmentDisplay_DeactivateSlot(SegmentDisplaySlot_Warn);
     return MacroResult_Finished;
@@ -468,17 +471,12 @@ static macro_result_t processClearStatusCommand()
 
 char Macros_ConsumeStatusChar()
 {
-    static uint16_t readingPos = 0;
     char res;
 
-    if (readingPos < statusBufferLen) {
-        res = statusBuffer[readingPos++];
+    if (consumeStatusCharReadingPos < statusBufferLen) {
+        res = statusBuffer[consumeStatusCharReadingPos++];
     } else {
         res = '\0';
-        statusBufferLen = 0;
-        readingPos = 0;
-        SegmentDisplay_DeactivateSlot(SegmentDisplaySlot_Error);
-        SegmentDisplay_DeactivateSlot(SegmentDisplaySlot_Warn);
     }
 
     return res;
@@ -1490,11 +1488,9 @@ static macro_result_t processPrintStatusCommand()
     statusBufferPrinting = true;
     macro_result_t res = dispatchText(statusBuffer, statusBufferLen);
     if (res == MacroResult_Finished) {
-        statusBufferLen = 0;
+        processClearStatusCommand();
         statusBufferPrinting = false;
     }
-    SegmentDisplay_DeactivateSlot(SegmentDisplaySlot_Error);
-    SegmentDisplay_DeactivateSlot(SegmentDisplaySlot_Warn);
     return res;
 }
 

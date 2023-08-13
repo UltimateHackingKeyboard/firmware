@@ -26,7 +26,7 @@ void UsbCommand_GetVariable(void)
             SetUsbTxBufferUint8(1, UsbReportUpdateSemaphore);
             break;
         case UsbVariable_StatusBuffer:
-            for (uint8_t i = 1; i < 64; i++) {
+            for (uint8_t i = 1; i < sizeof(GenericHidInBuffer); i++) {
                 SetUsbTxBufferUint8(i, Macros_ConsumeStatusChar());
             }
             break;
