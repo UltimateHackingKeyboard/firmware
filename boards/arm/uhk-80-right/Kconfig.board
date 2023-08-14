@@ -3,4 +3,4 @@
 
 config BOARD_UHK_80_RIGHT
 	bool "UHK 80 right"
-	depends on SOC_NRF52811_QFAA
+	depends on SOC_NRF52840_QIAA

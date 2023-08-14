@@ -2,7 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /dts-v1/;
-#include <nordic/nrf52811_qfaa.dtsi>
+#include <nordic/nrf52840_qiaa.dtsi>
+
+&gpio0 {
+	status = "okay";
+};
+
+&gpio1 {
+	status = "okay";
+};
 
 &pinctrl {
     spi1_default: spi1_default {
