@@ -2,5 +2,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
 config BOARD_UHK_80_LEFT
-	bool "UHK 80 left"
-	depends on SOC_NRF52840_QIAA
+    bool "UHK 80 left"
+    depends on SOC_NRF52840_QIAA

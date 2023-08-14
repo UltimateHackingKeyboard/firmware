@@ -5,11 +5,11 @@
 #include <nordic/nrf52840_qiaa.dtsi>
 
 &gpio0 {
-	status = "okay";
+    status = "okay";
 };
 
 &gpio1 {
-	status = "okay";
+    status = "okay";
 };
 
 &pinctrl {
