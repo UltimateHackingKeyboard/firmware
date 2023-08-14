@@ -46,6 +46,12 @@
 
     gpios {
         compatible = "gpio-keys";
+
+        charger_en: charger_en {
+            gpios = <&gpio0 27 GPIO_ACTIVE_HIGH>;
+            label = "charger_en";
+        };
+
         oled_en: oled_en {
             gpios = <&gpio1 3 GPIO_ACTIVE_HIGH>;
             label = "oled_en";
@@ -132,9 +138,11 @@
             gpios = <&gpio0 6 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
             label = "col10";
         };
- };
+    };
 
     aliases {
+        charger-en = &charger_en;
+
         oled-en = &oled_en;
         oled-reset = &oled_reset;
         oled-a0 = &oled_a0;

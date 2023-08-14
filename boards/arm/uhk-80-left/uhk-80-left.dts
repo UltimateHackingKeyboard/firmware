@@ -46,6 +46,12 @@
 
     gpios {
         compatible = "gpio-keys";
+
+        charger_en: charger_en {
+            gpios = <&gpio1 10 GPIO_ACTIVE_HIGH>;
+            label = "charger_en";
+        };
+
         leds_cs: leds_cs {
             gpios = <&gpio1 9 GPIO_ACTIVE_HIGH>;
             label = "leds_cs";
@@ -107,6 +113,8 @@
     };
 
     aliases {
+        charger-en = &charger_en;
+
         leds-cs = &leds_cs;
 
         row1 = &row1;
