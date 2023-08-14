@@ -51,6 +51,10 @@
             gpios = <&gpio1 10 GPIO_ACTIVE_HIGH>;
             label = "charger_en";
         };
+        charger_stat: charger_stat {
+            gpios = <&gpio1 11 GPIO_ACTIVE_HIGH>;
+            label = "charger_stat";
+        };
 
         leds_sdb: leds_sdb {
             gpios = <&gpio1 13 GPIO_ACTIVE_HIGH>;
@@ -118,6 +122,7 @@
 
     aliases {
         charger-en = &charger_en;
+        charger-stat = &charger_stat;
 
         leds-sdb = &leds_sdb;
         leds-cs = &leds_cs;
