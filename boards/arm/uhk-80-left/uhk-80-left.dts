@@ -47,6 +47,11 @@
     gpios {
         compatible = "gpio-keys";
 
+        merge_sense: merge_sense {
+            gpios = <&gpio1 15 GPIO_ACTIVE_HIGH>;
+            label = "merge_sense";
+        };
+
         charger_en: charger_en {
             gpios = <&gpio1 10 GPIO_ACTIVE_HIGH>;
             label = "charger_en";
@@ -121,6 +126,8 @@
     };
 
     aliases {
+        merge-sense = &merge_sense;
+
         charger-en = &charger_en;
         charger-stat = &charger_stat;
 
