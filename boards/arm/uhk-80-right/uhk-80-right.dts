@@ -52,6 +52,11 @@
             label = "charger_en";
         };
 
+        leds_sdb: leds_sdb {
+            gpios = <&gpio0 30 GPIO_ACTIVE_HIGH>;
+            label = "leds_sdb";
+        };
+
         oled_en: oled_en {
             gpios = <&gpio1 3 GPIO_ACTIVE_HIGH>;
             label = "oled_en";
@@ -142,6 +147,8 @@
 
     aliases {
         charger-en = &charger_en;
+
+        leds-sdb = &leds_sdb;
 
         oled-en = &oled_en;
         oled-reset = &oled_reset;
