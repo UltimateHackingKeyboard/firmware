@@ -62,6 +62,31 @@
             gpios = <&gpio0 8 GPIO_ACTIVE_HIGH>;
             label = "leds_cs";
         };
+
+        row1: row1 {
+            gpios = <&gpio0 31 (GPIO_ACTIVE_HIGH)>;
+            label = "row1";
+        };
+        row2: row2 {
+            gpios = <&gpio0 17 (GPIO_ACTIVE_HIGH)>;
+            label = "row2";
+        };
+        row3: row3 {
+            gpios = <&gpio1 6 (GPIO_ACTIVE_HIGH)>;
+            label = "row3";
+        };
+        row4: row4 {
+            gpios = <&gpio0 26 (GPIO_ACTIVE_HIGH)>;
+            label = "row4";
+        };
+        row5: row5 {
+            gpios = <&gpio0 2 (GPIO_ACTIVE_HIGH)>;
+            label = "row5";
+        };
+        row6: row6 {
+            gpios = <&gpio0 28 (GPIO_ACTIVE_HIGH)>;
+            label = "row6";
+        };
     };
 
     aliases {
@@ -69,6 +94,12 @@
         oled-a0 = &oled_a0;
         oled-cs = &oled_cs;
         leds-cs = &leds_cs;
+        row1 = &row1;
+        row2 = &row2;
+        row3 = &row3;
+        row4 = &row4;
+        row5 = &row5;
+        row6 = &row6;
     };
 };
 
