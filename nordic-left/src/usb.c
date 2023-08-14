@@ -1,4 +1,4 @@
-#include <zephyr/zephyr.h>
+#include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/gpio.h>
 
@@ -11,7 +11,6 @@
 #include <errno.h>
 #include <zephyr/sys/printk.h>
 #include <zephyr/sys/byteorder.h>
-#include <zephyr/kernel.h>
 #include <soc.h>
 #include <assert.h>
 #include <zephyr/spinlock.h>

@@ -1,9 +1,9 @@
-#include <zephyr/zephyr.h>
+#include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/gpio.h>
 // #include <zephyr/drivers/uart.h>
 #include <zephyr/usb/class/usb_hid.h>
-#include <drivers/spi.h>
+#include <zephyr/drivers/spi.h>
 
 #include <zephyr/types.h>
 #include <stddef.h>
@@ -11,7 +11,6 @@
 #include <errno.h>
 #include <zephyr/sys/printk.h>
 #include <zephyr/sys/byteorder.h>
-#include <zephyr/kernel.h>
 #include <soc.h>
 #include <assert.h>
 

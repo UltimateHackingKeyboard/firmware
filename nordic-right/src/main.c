@@ -1,10 +1,9 @@
 #include <zephyr/kernel.h>
-#include <zephyr/zephyr.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/uart.h>
 #include <string.h>
-#include <drivers/spi.h>
+#include <zephyr/drivers/spi.h>
 
 #define LedPagePrefix 0b01010000
 

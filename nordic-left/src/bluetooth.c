@@ -1,4 +1,4 @@
-#include <zephyr/zephyr.h>
+#include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/gpio.h>
 
@@ -10,7 +10,6 @@
 #include <errno.h>
 #include <zephyr/sys/printk.h>
 #include <zephyr/sys/byteorder.h>
-#include <zephyr/kernel.h>
 #include <soc.h>
 #include <assert.h>
 #include <zephyr/spinlock.h>
@@ -546,7 +545,7 @@ static struct bt_conn_auth_info_cb conn_auth_info_callbacks = {
 
 void key_report_send(bool down) {
     if (!conn_mode.conn) {
-        return 0;
+        return;
     }
 
     uint8_t chr = down ? HID_KEY_A : 0;
