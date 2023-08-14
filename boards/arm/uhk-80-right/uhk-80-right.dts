@@ -87,7 +87,48 @@
             gpios = <&gpio0 28 (GPIO_ACTIVE_HIGH)>;
             label = "row6";
         };
-    };
+
+        col1: col1 {
+            gpios = <&gpio1 7 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+            label = "col1";
+         };
+         col2: col2 {
+             gpios = <&gpio0 8 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+             label = "col2";
+         };
+         col3: col3 {
+             gpios = <&gpio1 9 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+             label = "col3";
+         };
+         col4: col4 {
+             gpios = <&gpio1 5 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+             label = "col4";
+         };
+         col5: col5 {
+             gpios = <&gpio0 13 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+             label = "col5";
+         };
+         col6: col6 {
+             gpios = <&gpio0 15 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+             label = "col6";
+         };
+         col7: col7 {
+             gpios = <&gpio0 20 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+             label = "col7";
+         };
+         col8: col8 {
+            gpios = <&gpio0 19 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+            label = "col8";
+        };
+        col9: col9 {
+            gpios = <&gpio0 29 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+            label = "col9";
+        };
+        col10: col10 {
+            gpios = <&gpio0 6 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+            label = "col10";
+        };
+ };
 
     aliases {
         oled-en = &oled_en;
@@ -100,6 +141,16 @@
         row4 = &row4;
         row5 = &row5;
         row6 = &row6;
+        col1 = &col1;
+        col2 = &col2;
+        col3 = &col3;
+        col4 = &col4;
+        col5 = &col5;
+        col6 = &col6;
+        col7 = &col7;
+        col8 = &col8;
+        col9 = &col9;
+        col10 = &col10;
     };
 };
 
