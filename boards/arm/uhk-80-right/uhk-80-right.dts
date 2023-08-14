@@ -50,6 +50,10 @@
             gpios = <&gpio1 3 GPIO_ACTIVE_HIGH>;
             label = "oled_en";
         };
+        oled_reset: oled_reset {
+            gpios = <&gpio1 2 GPIO_ACTIVE_HIGH>;
+            label = "oled_reset";
+        };
         oled_a0: oled_a0 {
             gpios = <&gpio0 16 GPIO_ACTIVE_HIGH>;
             label = "oled_a0";
@@ -132,8 +136,10 @@
 
     aliases {
         oled-en = &oled_en;
+        oled-reset = &oled_reset;
         oled-a0 = &oled_a0;
         oled-cs = &oled_cs;
+
         leds-cs = &leds_cs;
 
         row1 = &row1;
