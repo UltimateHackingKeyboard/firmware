@@ -47,19 +47,19 @@
     gpios {
         compatible = "gpio-keys";
         oled_en: oled_en {
-            gpios = <&gpio0 19 GPIO_ACTIVE_HIGH>;
+            gpios = <&gpio1 3 GPIO_ACTIVE_HIGH>;
             label = "oled_en";
         };
         oled_a0: oled_a0 {
-            gpios = <&gpio0 24 GPIO_ACTIVE_HIGH>;
+            gpios = <&gpio0 16 GPIO_ACTIVE_HIGH>;
             label = "oled_a0";
         };
         oled_cs: oled_cs {
-            gpios = <&gpio0 23 GPIO_ACTIVE_HIGH>;
+            gpios = <&gpio1 0 GPIO_ACTIVE_HIGH>;
             label = "oled_cs";
         };
         leds_cs: leds_cs {
-            gpios = <&gpio0 8 GPIO_ACTIVE_HIGH>;
+            gpios = <&gpio0 7 GPIO_ACTIVE_HIGH>;
             label = "leds_cs";
         };
 
