@@ -4,3 +4,5 @@ build_make
 .cache
 samples
 build
+CMakeCache.txt
+build.ninja
