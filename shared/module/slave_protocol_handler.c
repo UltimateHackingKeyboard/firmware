@@ -8,6 +8,8 @@
 #include "bool_array_converter.h"
 #include "bootloader.h"
 #include "module.h"
+#include "device.h"
+#include "versioning.h"
 #include "versions.h"
 #include <string.h>
 
@@ -107,6 +109,11 @@ void SlaveTxHandler(void)
                     memcpy(TxMessage.data, gitRepo, len);
                     TxMessage.data[len-1] = '\0';
                     TxMessage.length = len;
+                    break;
+                }
+                case SlaveProperty_FirmwareChecksum: {
+                    memcpy(TxMessage.data, ModuleMD5Checksums[MODULE_ID], MD5_CHECKSUM_LENGTH);
+                    TxMessage.length = MD5_CHECKSUM_LENGTH;
                     break;
                 }
             }
