@@ -14,7 +14,6 @@
 
     #define MAX_MACRO_NUM 255
     #define STATUS_BUFFER_MAX_LENGTH 1024
-    #define LAYER_STACK_SIZE 10
     #define MACRO_STATE_POOL_SIZE 16
     #define MAX_REG_COUNT 32
 
@@ -38,13 +37,6 @@
         uint8_t macroActionsCount;
         uint8_t macroNameOffset; //negative w.r.t. firstMacroActionOffset
     } macro_reference_t;
-
-    typedef struct {
-        uint8_t layer;
-        uint8_t keymap;
-        bool held;
-        bool removed;
-    } layerStackRecord;
 
     typedef enum {
         MacroSubAction_Tap,
@@ -189,7 +181,7 @@
                 } secondaryRoleData;
 
                 struct {
-                    uint8_t layerIdx;
+                    uint8_t layerStackIdx;
 
                 } holdLayerData;
                 struct {
@@ -234,8 +226,6 @@
     extern uint8_t AllMacrosCount;
     extern macro_state_t MacroState[MACRO_STATE_POOL_SIZE];
     extern bool MacroPlaying;
-    extern layer_id_t Macros_ActiveLayer;
-    extern bool Macros_ActiveLayerHeld;
     extern macro_scheduler_t Macros_Scheduler;
     extern bool Macros_ExtendedCommands;
     extern uint8_t Macros_MaxBatchSize;
@@ -267,7 +257,6 @@
     void Macros_SetStatusNum(int32_t n);
     void Macros_SetStatusNumSpaced(int32_t n, bool space);
     void Macros_SetStatusChar(char n);
-    void Macros_ResetLayerStack();
     void Macros_Initialize();
     void Macros_ClearStatus();
     bool Macros_IsLayerHeld();

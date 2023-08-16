@@ -21,6 +21,7 @@
 #include "secondary_role_driver.h"
 #include "slave_drivers/touchpad_driver.h"
 #include "layer_switcher.h"
+#include "layer_stack.h"
 #include "mouse_controller.h"
 #include "debug.h"
 
@@ -284,7 +285,7 @@ void ApplyKeyAction(key_state_t *keyState, key_action_cached_t *cachedAction, ke
                 stickyModifiers = 0;
                 stickyModifiersNegative = cachedAction->modifierLayerMask;
                 SwitchKeymapById(action->switchKeymap.keymapId);
-                Macros_ResetLayerStack();
+                LayerStack_Reset();
             }
             break;
         case KeyActionType_PlayMacro:

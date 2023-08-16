@@ -190,9 +190,7 @@ There is also a concept of modifiers, which can modify keyboard's or command's b
 
 ### Handling layers
 
-**WARNING:** macro engine has separate layer system from the native layer action. Layers toggled from macros need to also be untoggled from macros. There may be some other problems regarding integration of these two system - if you notice any, please do report them.
-
-Main benefit of the macro layer system is that it keeps full-fledged layer stack, therefore allowing nested layer holds, and various interactive features.
+In case of layer handling, macro layer switching commands have slightly different semantics from the native layer switching commands, allowing for more fine-tuned control of the behavior such as nested layer holds or toggles.
 
 Following macro will result in switching to QWR keymap.
 
@@ -200,7 +198,7 @@ Following macro will result in switching to QWR keymap.
 switchKeymap QWR
 ```
 
-Implementation of standard double-tap-locking hold modifier in recursive version could look like: ("Recursivity" refers to ability to toggle another layer on top of the toggled layer.)
+Implementation of standard double-tap-locking hold modifier in nested version could look like:
 
 ```
 holdLayer fn
