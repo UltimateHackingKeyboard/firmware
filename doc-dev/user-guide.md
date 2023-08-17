@@ -209,7 +209,7 @@ Once the layer is toggled, the target layer needs to contain another macro to al
 
 ```
 holdLayer previous
-ifDoubletap unToggleLayer
+ifDoubletap untoggleLayer
 ```
 
 Smart toggle (if tapped, locks layer; if used with a key, acts as a simple secondary role):
@@ -483,7 +483,7 @@ ifRegEq 27 1 final setReg 27 0
 setReg 27 1
 toggleLayer fn
 ifNotRecording ifNotPlaytime 5000 ifRegEq 27 1 goTo @0
-unToggleLayer
+untoggleLayer
 setReg 27 0
 ```
 

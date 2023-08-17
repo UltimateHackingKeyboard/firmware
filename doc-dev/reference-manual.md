@@ -48,7 +48,7 @@ The following grammar is supported:
     COMMAND = switchKeymap KEYMAPID
     COMMAND = toggleLayer LAYERID
     COMMAND = toggleKeymapLayer KEYMAPID LAYERID
-    COMMAND = unToggleLayer
+    COMMAND = untoggleLayer
     COMMAND = holdLayer LAYERID
     COMMAND = holdLayerMax LAYERID <time in ms (NUMBER)>
     COMMAND = holdKeymapLayer KEYMAPID LAYERID
@@ -218,6 +218,7 @@ The following grammar is supported:
     COMMAND = resolveNextKeyEq <queue position (NUMBER)> KEYID {<time in ms>|untilRelease} <action adr (ADDRESS)> <action adr (ADDRESS)>
     COMMAND = set modifierLayerTriggers.{control} {left|right|both}
     COMMAND = resolveSecondary <time in ms (NUMBER)> [<time in ms (NUMBER)>] <primary action macro action index (ADDRESS)> <secondary action macro action index (ADDRESS)>
+    COMMAND = untoggleLayer
     LAYERID = control
     #########
     #REMOVED#
@@ -322,9 +323,9 @@ Commands:
 - `switchKeymap` will load the keymap by its abbreviation and reset the stack.
 - `switchLayer/switchKeymapLayer` are deprecated. They simply push the layer onto stack (or pop in case of `previous`) without any further handling. Should be replaced by toggle/untoggle/hold layer commands.
 - `toggleLayer` toggles the layer.
-- `unToggleLayer` pops topmost non-held layer from the stack. (I.e., untoggles layer which was toggled via "toggle" or "switch" feature.)
+- `untoggleLayer` pops topmost non-held layer from the stack. (I.e., untoggles layer which was toggled via "toggle" or "switch" feature.)
 - `toggleKeymapLayer` toggles layer from different keymap.
-- `holdLayer LAYERID` mostly corresponds to the sequence `toggleLayer <layer>; delayUntilRelease; unToggleLayer`, except for more elaborate conflict resolution (releasing holds in incorrect order).
+- `holdLayer LAYERID` mostly corresponds to the sequence `toggleLayer <layer>; delayUntilRelease; untoggleLayer`, except for more elaborate conflict resolution (releasing holds in incorrect order).
 - `holdKeymapLayer KEYMAPID LAYERID` just as holdLayer, but allows referring to layer of different keymap. This reloads the entire keymap, so it may be very inefficient.
 - `holdLayerMax/holdKeymapLayerMax` will timeout after <timeout> ms if no action is performed in that time.
 - `ifPrimary/ifSecondary [ simpleStrategy | advancedStrategy ] ... COMMAND` will wait until the firmware can distinguish whether primary or secondary action should be activated and then either execute `COMMAND` or skip it.
