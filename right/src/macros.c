@@ -2951,6 +2951,9 @@ static macro_result_t processCommand(const char* cmd, const char* cmdEnd)
             if (TokenMatches(cmd, cmdEnd, "unToggleLayer")) {
                 return processUnToggleLayerCommand();
             }
+            else if (TokenMatches(cmd, cmdEnd, "untoggleLayer")) {
+                return processUnToggleLayerCommand();
+            }
             else {
                 goto failed;
             }
