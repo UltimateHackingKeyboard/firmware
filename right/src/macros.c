@@ -1,4 +1,5 @@
 #include "macros.h"
+#include "eeprom.h"
 #include "layer_stack.h"
 #include <stdarg.h>
 #include "event_scheduler.h"
@@ -29,6 +30,7 @@
 #include "macro_set_command.h"
 #include "slave_drivers/uhk_module_driver.h"
 #include <stddef.h>
+#include <stdint.h>
 #include <string.h>
 #include "usb_commands/usb_command_exec_macro_command.h"
 
@@ -542,18 +544,23 @@ static void reportErrorHeader(const char* status)
 {
     if (s != NULL) {
         const char *name, *nameEnd;
+        uint16_t lineCount = 1;
+        for (const char* c = s->ms.currentMacroAction.cmd.text; c < s->ms.currentMacroAction.cmd.text + s->ms.commandBegin; c++) {
+            if (*c == '\n') {
+                lineCount++;
+            }
+        }
         FindMacroName(&AllMacros[s->ms.currentMacroIndex], &name, &nameEnd);
         Macros_SetStatusString(status, NULL);
         Macros_SetStatusString(" at ", NULL);
         Macros_SetStatusString(name, nameEnd);
         Macros_SetStatusString(" ", NULL);
-        Macros_SetStatusNumSpaced(s->ms.currentMacroActionIndex, false);
+        Macros_SetStatusNumSpaced(s->ms.currentMacroActionIndex+1, false);
         Macros_SetStatusString("/", NULL);
-        Macros_SetStatusNumSpaced(s->ms.commandAddress, false);
+        Macros_SetStatusNumSpaced(lineCount, false);
         Macros_SetStatusString(": ", NULL);
     }
 }
-
 
 void Macros_ReportError(const char* err, const char* arg, const char *argEnd)
 {
@@ -563,7 +570,17 @@ void Macros_ReportError(const char* err, const char* arg, const char *argEnd)
     Macros_SetStatusString(err, NULL);
     if (arg != NULL) {
         Macros_SetStatusString(": ", NULL);
-        Macros_SetStatusString(arg, argEnd);
+        bool argIsCommand = ValidatedUserConfigBuffer.buffer <= (uint8_t*)arg && (uint8_t*)arg < ValidatedUserConfigBuffer.buffer + USER_CONFIG_SIZE;
+        if (argIsCommand && s != NULL) {
+            const char* startOfLine = s->ms.currentMacroAction.cmd.text + s->ms.commandBegin;
+            if (startOfLine != arg) {
+                Macros_SetStatusString(startOfLine, arg);
+                Macros_SetStatusString("HERE->", NULL);
+            }
+            Macros_SetStatusString(arg, argEnd);
+        } else {
+            Macros_SetStatusString(arg, argEnd);
+        }
     }
     Macros_SetStatusString("\n", NULL);
 }
@@ -1514,9 +1531,6 @@ static macro_result_t goToLabel(const char* arg, const char* argEnd)
                 const char* cmdEnd = s->ms.currentMacroAction.cmd.text + s->ms.commandEnd;
                 const char* cmdTokEnd = TokEnd(cmd, cmdEnd);
 
-                Macros_SetStatusNum(s->ms.commandAddress);
-                Macros_SetStatusString("\n",  NULL);
-
                 if(cmdTokEnd[-1] == ':' && TokenMatches2(cmd, cmdTokEnd-1, arg, argEnd)) {
                     return s->ms.commandAddress > startedAtAdr ? MacroResult_JumpedForward : MacroResult_JumpedBackward;
                 }
@@ -1634,11 +1648,6 @@ static macro_result_t processPlayMacroCommand(const char* arg, const char *argEn
 
 static macro_result_t processWriteCommand(const char* arg, const char *argEnd)
 {
-    // todo: clean this up when refactoring write tokenization
-    while (argEnd > arg && (argEnd[-1] == '\n' || argEnd[-1] == '\r')) {
-        argEnd--;
-    }
-
     return dispatchText(arg, argEnd - arg);
 }
 
@@ -3096,7 +3105,7 @@ static void loadAction()
             cmd++;
         }
         s->ms.commandBegin = cmd - s->ms.currentMacroAction.cmd.text;
-        s->ms.commandEnd = NextCmd(cmd, actionEnd) - s->ms.currentMacroAction.cmd.text;
+        s->ms.commandEnd = CmdEnd(cmd, actionEnd) - s->ms.currentMacroAction.cmd.text;
     }
 }
 
@@ -3121,14 +3130,14 @@ static bool loadNextCommand()
     memset(&s->as, 0, sizeof s->as);
 
     const char* actionEnd = s->ms.currentMacroAction.cmd.text + s->ms.currentMacroAction.cmd.textLen;
-    const char* nextCommand = s->ms.currentMacroAction.cmd.text + s->ms.commandEnd;
+    const char* nextCommand = SkipWhite(s->ms.currentMacroAction.cmd.text + s->ms.commandEnd, actionEnd);
 
     if (nextCommand == actionEnd) {
         return false;
     } else {
         s->ms.commandAddress++;
         s->ms.commandBegin = nextCommand - s->ms.currentMacroAction.cmd.text;
-        s->ms.commandEnd = NextCmd(nextCommand, actionEnd) - s->ms.currentMacroAction.cmd.text;
+        s->ms.commandEnd = CmdEnd(nextCommand, actionEnd) - s->ms.currentMacroAction.cmd.text;
         return true;
     }
 }

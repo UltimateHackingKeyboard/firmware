@@ -201,6 +201,23 @@ const char* NextCmd(const char* cmd, const char *cmdEnd)
     return cmd;
 }
 
+
+const char* CmdEnd(const char* cmd, const char *cmdEnd)
+{
+    while(*cmd != '\n' && *cmd != '\r' && cmd < cmdEnd)    {
+        cmd++;
+    }
+    return cmd;
+}
+
+const char* SkipWhite(const char* cmd, const char *cmdEnd)
+{
+    while(*cmd <= 32 && cmd < cmdEnd) {
+        cmd++;
+    }
+    return cmd;
+}
+
 module_id_t ParseModuleId(const char* arg1, const char* cmdEnd)
 {
     if (TokenMatches(arg1, cmdEnd, "keycluster")) {
