@@ -71,6 +71,7 @@ The following grammar is supported:
     COMMAND = statsActiveKeys
     COMMAND = statsActiveMacros
     COMMAND = statsRegs
+    COMMAND = statsRecordKeyTiming
     COMMAND = resetTrackpoint
     COMMAND = diagnose
     COMMAND = printStatus
@@ -292,6 +293,7 @@ The following grammar is supported:
 - `statsActiveKeys` will output all active keys and their states (into the buffer).
 - `statsActiveMacros` will output all active macros (into the buffer).
 - `statsRegs` will output content of all registers (into the buffer).
+- `statsRecordKeyTiming` will write timing information of pressed and released keys into status buffer until invoked again.
 - `diagnose` will deactivate all keys and macros and print diagnostic information into the status buffer.
 - `set emergencyKey KEYID` will make the one key be ignored by postponing mechanisms. `diagnose` command on such key can be used to recover keyboard from conditions like infinite postponing loop...
 
