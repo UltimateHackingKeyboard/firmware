@@ -226,6 +226,7 @@ void PostponerCore_RunPostponedEvents(void)
     }
     // Process one event every two cycles. (Unless someone keeps Postponer active by touching cycles_until_activation.)
     if (bufferSize != 0 && (cyclesUntilActivation == 0 || bufferSize > POSTPONER_BUFFER_MAX_FILL)) {
+        CurrentPostponedTime = buffer[bufferPosition].time;
         applyEventAndConsume(&buffer[bufferPosition]);
     }
 }
