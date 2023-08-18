@@ -8,7 +8,6 @@
 #include "bool_array_converter.h"
 #include "bootloader.h"
 #include "module.h"
-#include "device.h"
 #include "versioning.h"
 #include "versions.h"
 #include <string.h>

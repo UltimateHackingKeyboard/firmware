@@ -1,6 +1,6 @@
 #include "usb_api.h"
 #include "usb_descriptor_strings.h"
-#include "device.h"
+#include "device/device.h"
 
 USB_DESC_STORAGE_TYPE(uint8_t) UsbLanguageListStringDescriptor[USB_LANGUAGE_LIST_STRING_DESCRIPTOR_LENGTH] = {
     sizeof(UsbLanguageListStringDescriptor),

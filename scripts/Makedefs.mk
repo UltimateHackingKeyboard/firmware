@@ -69,6 +69,11 @@ SIZE = $(PREFIX)-size$(SUFFIX)
 # Auto-dependency generation flags.
 DEPS = -MMD -MP
 
+
+ifneq ($(DEVICE_ID),)
+DEVICE_ID_DEFINITION = -DDEVICE_ID=$(DEVICE_ID)
+endif
+
 # The flags passed to the assembler.
 AFLAGS = -mthumb                    \
          $(CPU)                     \
@@ -82,7 +87,7 @@ CFLAGS = -mthumb                    \
          $(CPU)                     \
          $(FPU)                     \
          $(DEPS)                    \
-         -DDEVICE_ID=$(DEVICE_ID)   \
+         $(DEVICE_ID_DEFINITION)   \
          -fno-builtin               \
          -ffunction-sections        \
          -fdata-sections            \

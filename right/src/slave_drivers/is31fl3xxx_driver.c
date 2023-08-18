@@ -2,7 +2,7 @@
 #include "slave_drivers/is31fl3xxx_driver.h"
 #include "slave_scheduler.h"
 #include "led_display.h"
-#include "device.h"
+#include "device/device.h"
 #include "ledmap.h"
 
 
