@@ -2,7 +2,7 @@
 #include "layer_switcher.h"
 #include "ledmap.h"
 #include "slave_drivers/is31fl3xxx_driver.h"
-#include "device.h"
+#include "device/device.h"
 #include "config_parser/config_globals.h"
 #include "debug.h"
 

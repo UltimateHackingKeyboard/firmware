@@ -3,7 +3,7 @@
 #include "layer.h"
 #include "layer_switcher.h"
 #include "keymap.h"
-#include "device.h"
+#include "device/device.h"
 #include "segment_display.h"
 
 uint32_t LedsFadeTimeout = 0;

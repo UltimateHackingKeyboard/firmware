@@ -23,6 +23,10 @@ if (gitInfo.tag != `v${version}` && !process.argv.includes('--allowSha')) {
     process.exit(1);
 }
 
+if (gitInfo.tag != `v${version}`) {
+    releaseFile = `${__dirname}/${releaseName}-${gitInfo.tag}.tar.gz`;
+}
+
 const deviceSourceFirmwares = package.devices.map(device => `${__dirname}/../${device.source}`);
 const moduleSourceFirmwares = package.modules.map(module => `${__dirname}/../${module.source}`);
 rm('-rf', releaseDir, releaseFile, deviceSourceFirmwares, moduleSourceFirmwares);
@@ -36,6 +40,14 @@ for (const sourcePath of sourcePaths) {
     mkdir('-p', buildDir);
     exec(`cd ${buildDir}/..; make clean; make -j8 ${mkArgs}`);
 }
+
+exec(`${__dirname}/generate-versions-h.js --withMd5Sums`);
+
+for (const sourcePath of sourcePaths) {
+    const buildDir = path.dirname(`${__dirname}/../${sourcePath}`);
+    exec(`cd ${buildDir}/..; make -j8 ${mkArgs}`);
+}
+
 
 exec(`npm ci; npm run build`, { cwd: agentDir });
 

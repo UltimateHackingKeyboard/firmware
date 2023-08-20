@@ -12,6 +12,7 @@
         DevicePropertyId_Uptime                = 5,
         DevicePropertyId_GitTag                = 6,
         DevicePropertyId_GitRepo               = 7,
+        DevicePropertyId_FirmwareChecksum      = 8,
     } device_property_t;
 
     typedef enum {

@@ -5,6 +5,7 @@
 #include "slave_drivers/uhk_module_driver.h"
 #include <string.h>
 #include "utils.h"
+#include "versioning.h"
 
 void UsbCommand_GetModuleProperty()
 {
@@ -34,6 +35,12 @@ void UsbCommand_GetModuleProperty()
             uint8_t moduleDriverId = UhkModuleSlaveDriver_SlotIdToDriverId(slotId);
             uhk_module_state_t *moduleState = UhkModuleStates + moduleDriverId;
             Utils_SafeStrCopy(((char*)GenericHidInBuffer) + 1, moduleState->gitRepo, sizeof(GenericHidInBuffer) - 1);
+            break;
+        }
+        case ModulePropertyId_FirmwareChecksum: {
+            uint8_t moduleDriverId = UhkModuleSlaveDriver_SlotIdToDriverId(slotId);
+            uhk_module_state_t *moduleState = UhkModuleStates + moduleDriverId;
+            Utils_SafeStrCopy(((char*)GenericHidInBuffer) + 1, moduleState->firmwareChecksum, MD5_CHECKSUM_LENGTH);
             break;
         }
     }

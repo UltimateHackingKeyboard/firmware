@@ -3,7 +3,7 @@
 
 // Includes:
 
-    #include "device.h"
+    #include "device/device.h"
 
 // Macros:
 

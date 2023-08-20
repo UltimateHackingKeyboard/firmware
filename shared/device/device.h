@@ -6,6 +6,8 @@
     #define DEVICE_ID_UHK60V1 1
     #define DEVICE_ID_UHK60V2 2
 
+    #define DEVICE_COUNT 2
+
 #ifndef DEVICE_ID
     #error "DEVICE_ID is undefined!"
 #endif

@@ -72,6 +72,11 @@
         UhkModulePhase_ReceiveGitRepo,
         UhkModulePhase_ProcessGitRepo,
 
+        // Get firmware checksum
+        UhkModulePhase_RequestFirmwareChecksum,
+        UhkModulePhase_ReceiveFirmwareChecksum,
+        UhkModulePhase_ProcessFirmwareChecksum,
+
         // Misc phases
         UhkModulePhase_SetTestLed,
         UhkModulePhase_SetLedPwmBrightness,
@@ -100,6 +105,7 @@
         pointer_delta_t pointerDelta;
         char gitRepo[MAX_STRING_PROPERTY_LENGTH];
         char gitTag[MAX_STRING_PROPERTY_LENGTH];
+        char firmwareChecksum[MD5_CHECKSUM_LENGTH];
     } uhk_module_state_t;
 
     typedef struct {
