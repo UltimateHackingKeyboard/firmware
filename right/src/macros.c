@@ -1,5 +1,6 @@
 #include "macros.h"
 #include "eeprom.h"
+#include "fsl_rtos_abstraction.h"
 #include "layer_stack.h"
 #include <stdarg.h>
 #include "event_scheduler.h"
@@ -540,16 +541,25 @@ void Macros_SetStatusChar(char n)
     Macros_SetStatusString(&n, &n+1);
 }
 
-static void reportErrorHeader(const char* status)
+static uint16_t findCurrentCommandLine()
 {
     if (s != NULL) {
-        const char *name, *nameEnd;
         uint16_t lineCount = 1;
         for (const char* c = s->ms.currentMacroAction.cmd.text; c < s->ms.currentMacroAction.cmd.text + s->ms.commandBegin; c++) {
             if (*c == '\n') {
                 lineCount++;
             }
         }
+        return lineCount;
+    }
+    return 0;
+}
+
+static void reportErrorHeader(const char* status)
+{
+    if (s != NULL) {
+        const char *name, *nameEnd;
+        uint16_t lineCount = findCurrentCommandLine(status);
         FindMacroName(&AllMacros[s->ms.currentMacroIndex], &name, &nameEnd);
         Macros_SetStatusString(status, NULL);
         Macros_SetStatusString(" at ", NULL);
@@ -562,27 +572,51 @@ static void reportErrorHeader(const char* status)
     }
 }
 
+static void reportCommandLocation(uint16_t line, uint16_t pos, const char* begin, const char* end)
+{
+    uint16_t l = statusBufferLen;
+    Macros_SetStatusNumSpaced(line, false);
+    l = statusBufferLen - l;
+    Macros_SetStatusString(" | ", NULL);
+    Macros_SetStatusString(begin, end);
+    Macros_SetStatusString("\n", NULL);
+    for (uint8_t i = 0; i < l; i++) {
+        Macros_SetStatusString(" ", NULL);
+    }
+    Macros_SetStatusString(" | ", NULL);
+    for (uint8_t i = 0; i < pos; i++) {
+        Macros_SetStatusString(" ", NULL);
+    }
+    Macros_SetStatusString("^", NULL);
+}
+
+void reportStringArg(const char* arg, const char *argEnd)
+{
+    if (arg != NULL) {
+        bool argIsCommand = ValidatedUserConfigBuffer.buffer <= (uint8_t*)arg && (uint8_t*)arg < ValidatedUserConfigBuffer.buffer + USER_CONFIG_SIZE;
+        if (argIsCommand && s != NULL) {
+            Macros_SetStatusString(arg, TokEnd(arg, argEnd));
+            Macros_SetStatusString("\n", NULL);
+            const char* startOfLine = s->ms.currentMacroAction.cmd.text + s->ms.commandBegin;
+            uint16_t line = findCurrentCommandLine();
+            reportCommandLocation(line, arg-startOfLine, startOfLine, argEnd);
+            Macros_SetStatusString("\n", NULL);
+        } else {
+            Macros_SetStatusString(arg, argEnd);
+            Macros_SetStatusString("\n", NULL);
+        }
+    }
+}
+
+
 void Macros_ReportError(const char* err, const char* arg, const char *argEnd)
 {
     Macros_ParserError = true;
     SegmentDisplay_SetText(3, "ERR", SegmentDisplaySlot_Error);
     reportErrorHeader("Error");
     Macros_SetStatusString(err, NULL);
-    if (arg != NULL) {
-        Macros_SetStatusString(": ", NULL);
-        bool argIsCommand = ValidatedUserConfigBuffer.buffer <= (uint8_t*)arg && (uint8_t*)arg < ValidatedUserConfigBuffer.buffer + USER_CONFIG_SIZE;
-        if (argIsCommand && s != NULL) {
-            const char* startOfLine = s->ms.currentMacroAction.cmd.text + s->ms.commandBegin;
-            if (startOfLine != arg) {
-                Macros_SetStatusString(startOfLine, arg);
-                Macros_SetStatusString("HERE->", NULL);
-            }
-            Macros_SetStatusString(arg, argEnd);
-        } else {
-            Macros_SetStatusString(arg, argEnd);
-        }
-    }
-    Macros_SetStatusString("\n", NULL);
+    Macros_SetStatusString(": ", NULL);
+    reportStringArg(arg, argEnd);
 }
 
 void Macros_ReportWarn(const char* err, const char* arg, const char *argEnd)
@@ -590,11 +624,8 @@ void Macros_ReportWarn(const char* err, const char* arg, const char *argEnd)
     SegmentDisplay_SetText(3, "WRN", SegmentDisplaySlot_Warn);
     reportErrorHeader("Warning");
     Macros_SetStatusString(err, NULL);
-    if (arg != NULL) {
-        Macros_SetStatusString(": ", NULL);
-        Macros_SetStatusString(arg, argEnd);
-    }
-    Macros_SetStatusString("\n", NULL);
+    Macros_SetStatusString(": ", NULL);
+    reportStringArg(arg, argEnd);
 }
 
 
