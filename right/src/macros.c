@@ -572,22 +572,27 @@ static void reportErrorHeader(const char* status)
     }
 }
 
-static void reportCommandLocation(uint16_t line, uint16_t pos, const char* begin, const char* end)
+static void reportCommandLocation(uint16_t line, uint16_t pos, const char* begin, const char* end, bool reportPosition)
 {
+    Macros_SetStatusString("> ", NULL);
     uint16_t l = statusBufferLen;
     Macros_SetStatusNumSpaced(line, false);
     l = statusBufferLen - l;
     Macros_SetStatusString(" | ", NULL);
     Macros_SetStatusString(begin, end);
     Macros_SetStatusString("\n", NULL);
-    for (uint8_t i = 0; i < l; i++) {
-        Macros_SetStatusString(" ", NULL);
+    if (reportPosition) {
+        Macros_SetStatusString("> ", NULL);
+        for (uint8_t i = 0; i < l; i++) {
+            Macros_SetStatusString(" ", NULL);
+        }
+        Macros_SetStatusString(" | ", NULL);
+        for (uint8_t i = 0; i < pos; i++) {
+            Macros_SetStatusString(" ", NULL);
+        }
+        Macros_SetStatusString("^", NULL);
+        Macros_SetStatusString("\n", NULL);
     }
-    Macros_SetStatusString(" | ", NULL);
-    for (uint8_t i = 0; i < pos; i++) {
-        Macros_SetStatusString(" ", NULL);
-    }
-    Macros_SetStatusString("^", NULL);
 }
 
 void reportStringArg(const char* arg, const char *argEnd)
@@ -599,10 +604,19 @@ void reportStringArg(const char* arg, const char *argEnd)
             Macros_SetStatusString("\n", NULL);
             const char* startOfLine = s->ms.currentMacroAction.cmd.text + s->ms.commandBegin;
             uint16_t line = findCurrentCommandLine();
-            reportCommandLocation(line, arg-startOfLine, startOfLine, argEnd);
-            Macros_SetStatusString("\n", NULL);
+            reportCommandLocation(line, arg-startOfLine, startOfLine, argEnd, true);
         } else {
             Macros_SetStatusString(arg, argEnd);
+            Macros_SetStatusString("\n", NULL);
+        }
+    } else {
+        if (s != NULL) {
+            Macros_SetStatusString("\n", NULL);
+            const char* startOfLine = s->ms.currentMacroAction.cmd.text + s->ms.commandBegin;
+            const char* endOfLine = s->ms.currentMacroAction.cmd.text + s->ms.commandEnd;
+            uint16_t line = findCurrentCommandLine();
+            reportCommandLocation(line, 0, startOfLine, endOfLine, false);
+        } else {
             Macros_SetStatusString("\n", NULL);
         }
     }

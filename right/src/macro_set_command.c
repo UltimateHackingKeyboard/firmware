@@ -94,7 +94,7 @@ static void moduleSpeed(const char* arg1, const char *textEnd, module_configurat
         module->swapAxes = Macros_ParseBoolean(arg2, textEnd);
     }
     else if (TokenMatches(arg1, textEnd, "invertScrollDirection")) {
-        Macros_ReportWarn("Command deprecated. Please, replace invertScrollDirection by invertScrollDirectionY.", NULL, NULL);
+        Macros_ReportWarn("Command deprecated. Please, replace invertScrollDirection by invertScrollDirectionY.", arg1, textEnd);
         module->invertScrollDirectionY = Macros_ParseBoolean(arg2, textEnd);
     }
     else if (TokenMatches(arg1, textEnd, "invertScrollDirectionY")) {
