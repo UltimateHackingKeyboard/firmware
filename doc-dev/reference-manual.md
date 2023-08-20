@@ -68,18 +68,8 @@ The following grammar is supported:
     COMMAND = noOp
     COMMAND = yield
     COMMAND = {exec|call|fork} MACRONAME
-    COMMAND = stopAllMacros
-    COMMAND = statsRuntime
-    COMMAND = statsLayerStack
-    COMMAND = statsPostponerStack
-    COMMAND = statsActiveKeys
-    COMMAND = statsActiveMacros
-    COMMAND = statsRegs
     COMMAND = resetTrackpoint
-    COMMAND = diagnose
     COMMAND = printStatus
-    COMMAND = {setStatus  | setStatusPart} <custom text>
-    COMMAND = clearStatus
     COMMAND = setLedTxt <timeout (NUMBER)> <custom text>
     COMMAND = write <custom text>
     COMMAND = writeExpr NUMBER
@@ -134,7 +124,6 @@ The following grammar is supported:
     COMMAND = set keystrokeDelay <time in ms, at most 65535 (NUMBER)>
     COMMAND = set autoRepeatDelay <time in ms, at most 65535 (NUMBER)>
     COMMAND = set autoRepeatRate <time in ms, at most 65535 (NUMBER)>
-    COMMAND = set setEmergencyKey KEYID
     COMMAND = set macroEngine.batchSize <number of commands to execute per one update cycle NUMBER>
     COMMAND = set navigationModeAction.NAVIGATION_MODE_CUSTOM.DIRECTION ACTION
     COMMAND = set keymapAction.LAYERID.KEYID ACTION
@@ -211,6 +200,21 @@ The following grammar is supported:
     KEY_ABBREV = systemPowerDown | systemSleep | systemWakeUp
     KEY_ABBREV = mouseBtnLeft | mouseBtnRight | mouseBtnMiddle | mouseBtn4 | mouseBtn5 | mouseBtn6 | mouseBtn7 | mouseBtn8
     MACRONAME = <Case sensitive macro identifier as named in Agent. Identifier shall not contain spaces.>
+    ###################
+    #DEVELOPMENT TOOLS#
+    ###################
+    COMMAND = stopAllMacros
+    COMMAND = statsRuntime
+    COMMAND = statsLayerStack
+    COMMAND = statsPostponerStack
+    COMMAND = statsActiveKeys
+    COMMAND = statsActiveMacros
+    COMMAND = statsRegs
+    COMMAND = statsRecordKeyTiming
+    COMMAND = diagnose
+    COMMAND = {setStatus  | setStatusPart} <custom text>
+    COMMAND = clearStatus
+    COMMAND = set setEmergencyKey KEYID
     ############
     #DEPRECATED#
     ############
@@ -297,6 +301,7 @@ The following grammar is supported:
 - `statsActiveKeys` will output all active keys and their states (into the buffer).
 - `statsActiveMacros` will output all active macros (into the buffer).
 - `statsRegs` will output content of all registers (into the buffer).
+- `statsRecordKeyTiming` will write timing information of pressed and released keys into status buffer until invoked again.
 - `diagnose` will deactivate all keys and macros and print diagnostic information into the status buffer.
 - `set emergencyKey KEYID` will make the one key be ignored by postponing mechanisms. `diagnose` command on such key can be used to recover keyboard from conditions like infinite postponing loop...
 

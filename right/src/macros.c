@@ -85,6 +85,8 @@ uint16_t DoubletapConditionTimeout = 400;
 uint16_t AutoRepeatInitialDelay = 500;
 uint16_t AutoRepeatDelayRate = 50;
 
+bool RecordKeyTiming = false;
+
 static void checkSchedulerHealth(const char* tag);
 static void wakeMacroInSlot(uint8_t slotIdx);
 static void scheduleSlot(uint8_t slotIdx);
@@ -1709,6 +1711,12 @@ static void processPostponeKeysCommand()
     s->as.modifierSuppressMods = true;
 }
 
+static macro_result_t processStatsRecordKeyTimingCommand()
+{
+    RecordKeyTiming = !RecordKeyTiming;
+    return MacroResult_Finished;
+}
+
 static macro_result_t processStatsRuntimeCommand()
 {
     int ms = Timer_GetElapsedTime(&s->ms.currentMacroStartTime);
@@ -2928,6 +2936,9 @@ static macro_result_t processCommand(const char* cmd, const char* cmdEnd)
             }
             else if (TokenMatches(cmd, cmdEnd, "statsRuntime")) {
                 return processStatsRuntimeCommand();
+            }
+            else if (TokenMatches(cmd, cmdEnd, "statsRecordKeyTiming")) {
+                return processStatsRecordKeyTimingCommand();
             }
             else if (TokenMatches(cmd, cmdEnd, "statsLayerStack")) {
                 return processStatsLayerStackCommand();

@@ -23,6 +23,7 @@
 #include "layer_switcher.h"
 #include "layer_stack.h"
 #include "mouse_controller.h"
+#include "utils.h"
 #include "debug.h"
 
 bool TestUsbStack = false;
@@ -333,6 +334,14 @@ static void mergeReports(void)
 static void commitKeyState(key_state_t *keyState, bool active)
 {
     WATCH_TRIGGER(keyState);
+    if (RecordKeyTiming) {
+        Macros_SetStatusString( active ? "DOWN" : "UP", NULL);
+        Macros_SetStatusNum(Utils_KeyStateToKeyId(keyState));
+        Macros_SetStatusNum(CurrentTime);
+        Macros_SetStatusNum(CurrentPostponedTime);
+        Macros_SetStatusChar('\n');
+    }
+
     if (PostponerCore_IsActive()) {
         PostponerCore_TrackKeyEvent(keyState, active, 255);
     } else {
