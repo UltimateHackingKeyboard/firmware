@@ -595,82 +595,76 @@ static void reportCommandLocation(uint16_t line, uint16_t pos, const char* begin
     }
 }
 
-void reportStringArg(const char* arg, const char *argEnd)
-{
-    if (arg != NULL) {
+static void reportError(
+    const char* err,
+    const char* arg,
+    const char* argEnd
+) {
+    Macros_SetStatusString(err, NULL);
+
+    if (s != NULL) {
         bool argIsCommand = ValidatedUserConfigBuffer.buffer <= (uint8_t*)arg && (uint8_t*)arg < ValidatedUserConfigBuffer.buffer + USER_CONFIG_SIZE;
-        if (argIsCommand && s != NULL) {
+        if (arg != NULL && arg != argEnd) {
+            Macros_SetStatusString(" ", NULL);
             Macros_SetStatusString(arg, TokEnd(arg, argEnd));
-            Macros_SetStatusString("\n", NULL);
-            const char* startOfLine = s->ms.currentMacroAction.cmd.text + s->ms.commandBegin;
-            uint16_t line = findCurrentCommandLine();
-            reportCommandLocation(line, arg-startOfLine, startOfLine, argEnd, true);
-        } else {
-            Macros_SetStatusString(arg, argEnd);
-            Macros_SetStatusString("\n", NULL);
         }
+        Macros_SetStatusString("\n", NULL);
+        const char* startOfLine = s->ms.currentMacroAction.cmd.text + s->ms.commandBegin;
+        const char* endOfLine = s->ms.currentMacroAction.cmd.text + s->ms.commandEnd;
+        uint16_t line = findCurrentCommandLine();
+        reportCommandLocation(line, arg-startOfLine, startOfLine, endOfLine, argIsCommand);
     } else {
-        if (s != NULL) {
-            Macros_SetStatusString("\n", NULL);
-            const char* startOfLine = s->ms.currentMacroAction.cmd.text + s->ms.commandBegin;
-            const char* endOfLine = s->ms.currentMacroAction.cmd.text + s->ms.commandEnd;
-            uint16_t line = findCurrentCommandLine();
-            reportCommandLocation(line, 0, startOfLine, endOfLine, false);
-        } else {
-            Macros_SetStatusString("\n", NULL);
+        if (arg != NULL && arg != argEnd) {
+            Macros_SetStatusString(" ", NULL);
+            Macros_SetStatusString(arg, argEnd);
         }
+        Macros_SetStatusString("\n", NULL);
     }
 }
-
 
 void Macros_ReportError(const char* err, const char* arg, const char *argEnd)
 {
     Macros_ParserError = true;
     SegmentDisplay_SetText(3, "ERR", SegmentDisplaySlot_Error);
     reportErrorHeader("Error");
-    Macros_SetStatusString(err, NULL);
-    Macros_SetStatusString(": ", NULL);
-    reportStringArg(arg, argEnd);
+    reportError(err, arg, argEnd);
 }
 
 void Macros_ReportWarn(const char* err, const char* arg, const char *argEnd)
 {
     SegmentDisplay_SetText(3, "WRN", SegmentDisplaySlot_Warn);
     reportErrorHeader("Warning");
-    Macros_SetStatusString(err, NULL);
-    Macros_SetStatusString(": ", NULL);
-    reportStringArg(arg, argEnd);
+    reportError(err, arg, argEnd);
 }
 
-
-void Macros_ReportErrorPrintf(const char *fmt, ...)
+void Macros_ReportErrorPrintf(const char* pos, const char *fmt, ...)
 {
     va_list myargs;
     va_start(myargs, fmt);
     char buffer[256];
     vsprintf(buffer, fmt, myargs);
-    Macros_ReportError(buffer, NULL, NULL);
+    Macros_ReportError(buffer, pos, pos);
 
 }
 
-void Macros_ReportErrorFloat(const char* err, float num)
+void Macros_ReportErrorFloat(const char* err, float num, const char* pos)
 {
     Macros_ParserError = true;
     SegmentDisplay_SetText(3, "ERR", SegmentDisplaySlot_Error);
     reportErrorHeader("Error");
     Macros_SetStatusString(err, NULL);
     Macros_SetStatusFloat(num);
-    Macros_SetStatusString("\n", NULL);
+    reportError("", pos, pos);
 }
 
-void Macros_ReportErrorNum(const char* err, int32_t num)
+void Macros_ReportErrorNum(const char* err, int32_t num, const char* pos)
 {
     Macros_ParserError = true;
     SegmentDisplay_SetText(3, "ERR", SegmentDisplaySlot_Error);
     reportErrorHeader("Error");
     Macros_SetStatusString(err, NULL);
     Macros_SetStatusNum(num);
-    Macros_SetStatusString("\n", NULL);
+    reportError("", pos, pos);
 }
 
 static void clearScancodes()
@@ -755,10 +749,10 @@ static macro_result_t processTextAction(void)
     return dispatchText(s->ms.currentMacroAction.text.text, s->ms.currentMacroAction.text.textLen);
 }
 
-static bool validReg(uint8_t idx)
+static bool validReg(uint8_t idx, const char* pos)
 {
     if (idx >= MAX_REG_COUNT) {
-        Macros_ReportErrorNum("Invalid register index:", idx);
+        Macros_ReportErrorNum("Invalid register index:", idx, pos);
         return false;
     }
     return true;
@@ -808,7 +802,7 @@ int32_t Macros_ParseInt(const char *a, const char *aEnd, const char* *parsedTill
             return Utils_KeyStateToKeyId(s->ms.currentMacroKey);
         }
         uint8_t adr = Macros_ParseInt(a, aEnd, parsedTill);
-        if (validReg(adr)) {
+        if (validReg(adr, a)) {
             return regs[adr];
         } else {
             return 0;
@@ -818,7 +812,7 @@ int32_t Macros_ParseInt(const char *a, const char *aEnd, const char* *parsedTill
         a++;
         uint8_t idx = Macros_ParseInt(a, aEnd, parsedTill);
         if (idx >= PostponerQuery_PendingKeypressCount()) {
-            Macros_ReportError("Not enough pending keys! Note that this is zero-indexed!",  NULL,  NULL);
+            Macros_ReportError("Not enough pending keys! Note that this is zero-indexed!",  a, a);
             return 0;
         }
         return PostponerExtended_PendingId(idx);
@@ -1022,7 +1016,7 @@ static uint8_t parseKeymapId(const char* arg1, const char* cmdEnd)
     } else {
         uint8_t idx = FindKeymapByAbbreviation(TokLen(arg1, cmdEnd), arg1);
         if (idx == 0xFF) {
-            Macros_ReportError("Keymap not recognized: ", arg1, cmdEnd);
+            Macros_ReportError("Keymap not recognized:", arg1, cmdEnd);
         }
         return idx;
     }
@@ -1094,7 +1088,7 @@ uint8_t Macros_ParseLayerId(const char* arg1, const char* cmdEnd)
             break;
     }
 
-    Macros_ReportError("Unrecognized layer.", arg1, cmdEnd);
+    Macros_ReportError("Unrecognized layer:", arg1, cmdEnd);
     return LayerId_Base;
 }
 
@@ -1132,7 +1126,7 @@ static macro_result_t processSwitchKeymapCommand(const char* arg1, const char* c
 /**DEPRECATED**/
 static macro_result_t processSwitchKeymapLayerCommand(const char* arg1, const char* cmdEnd)
 {
-    Macros_ReportWarn("Command deprecated. Please, replace switchKeymapLayer by toggleKeymapLayer or holdKeymapLayer. Or complain on github that you actually need this command.", NULL, NULL);
+    Macros_ReportWarn("Command deprecated. Please, replace switchKeymapLayer by toggleKeymapLayer or holdKeymapLayer. Or complain on github that you actually need this command.", arg1, arg1);
     uint8_t tmpLayerIdx = LayerStack_ActiveLayer;
     uint8_t tmpLayerKeymapIdx = CurrentKeymapIndex;
     uint8_t layer = Macros_ParseLayerId(NextTok(arg1, cmdEnd), cmdEnd);
@@ -1151,7 +1145,7 @@ static macro_result_t processSwitchKeymapLayerCommand(const char* arg1, const ch
 /**DEPRECATED**/
 static macro_result_t processSwitchLayerCommand(const char* arg1, const char* cmdEnd)
 {
-    Macros_ReportWarn("Command deprecated. Please, replace switchLayer by toggleLayer or holdLayer. Or complain on github that you actually need this command.", NULL, NULL);
+    Macros_ReportWarn("Command deprecated. Please, replace switchLayer by toggleLayer or holdLayer. Or complain on github that you actually need this command.", arg1, arg1);
     uint8_t tmpLayerIdx = LayerStack_ActiveLayer;
     uint8_t tmpLayerKeymapIdx = CurrentKeymapIndex;
     if (TokenMatches(arg1, cmdEnd, "previous")) {
@@ -1415,7 +1409,7 @@ static bool processIfRegEqCommand(bool negate, const char* arg1, const char *arg
 {
     uint8_t address = parseNUM(arg1, argEnd);
     int32_t param = parseNUM(NextTok(arg1, argEnd), argEnd);
-    if (validReg(address)) {
+    if (validReg(address, arg1)) {
         bool res = regs[address] == param;
         return res != negate;
     } else {
@@ -1427,7 +1421,7 @@ static bool processIfRegInequalityCommand(bool greaterThan, const char* arg1, co
 {
     uint8_t address = parseNUM(arg1, argEnd);
     int32_t param = parseNUM(NextTok(arg1, argEnd), argEnd);
-    if (validReg(address)) {
+    if (validReg(address, arg1)) {
         if (greaterThan) {
             return regs[address] > param;
         } else {
@@ -1498,7 +1492,7 @@ static macro_result_t processSetRegCommand(const char* arg1, const char *argEnd)
 {
     uint8_t address = parseNUM(arg1, argEnd);
     int32_t param = parseNUM(NextTok(arg1, argEnd), argEnd);
-    if (validReg(address)) {
+    if (validReg(address, arg1)) {
         regs[address] = param;
     }
     return MacroResult_Finished;
@@ -1508,7 +1502,7 @@ static macro_result_t processRegAddCommand(const char* arg1, const char *argEnd,
 {
     uint8_t address = parseNUM(arg1, argEnd);
     int32_t param = parseNUM(NextTok(arg1, argEnd), argEnd);
-    if (validReg(address)) {
+    if (validReg(address, arg1)) {
         if (invert) {
             regs[address] = regs[address] - param;
         } else {
@@ -1522,7 +1516,7 @@ static macro_result_t processRegMulCommand(const char* arg1, const char *argEnd)
 {
     uint8_t address = parseNUM(arg1, argEnd);
     int32_t param = parseNUM(NextTok(arg1, argEnd), argEnd);
-    if (validReg(address)) {
+    if (validReg(address, arg1)) {
         regs[address] = regs[address]*param;
     }
     return MacroResult_Finished;
@@ -1591,7 +1585,7 @@ static macro_result_t goToLabel(const char* arg, const char* argEnd)
         }
     }
 
-    Macros_ReportError("Label not found", arg, argEnd);
+    Macros_ReportError("Label not found:", arg, argEnd);
     s->ms.macroBroken = true;
 
     return MacroResult_Finished;
@@ -1642,7 +1636,7 @@ static macro_result_t processMouseCommand(bool enable, const char* arg1, const c
         baseAction = SerializedMouseAction_Decelerate;
     }
     else {
-        Macros_ReportError("unrecognized argument", arg1, argEnd);
+        Macros_ReportError("Unrecognized argument:", arg1, argEnd);
     }
 
     if (baseAction == SerializedMouseAction_MoveUp || baseAction == SerializedMouseAction_ScrollUp) {
@@ -1659,7 +1653,7 @@ static macro_result_t processMouseCommand(bool enable, const char* arg1, const c
             dirOffset = 3;
         }
         else {
-            Macros_ReportError("unrecognized argument", arg2, argEnd);
+            Macros_ReportError("Unrecognized argument:", arg2, argEnd);
         }
     }
 
@@ -1940,7 +1934,7 @@ static macro_result_t processResolveNextKeyEqCommand(const char* arg1, const cha
 
 
     if (idx > POSTPONER_BUFFER_MAX_FILL) {
-        Macros_ReportErrorNum("Invalid argument 1, allowed at most: ", idx);
+        Macros_ReportErrorNum("Invalid argument 1, allowed at most:", idx, arg1);
     }
 
     if (untilRelease ? !currentMacroKeyIsActive() : Timer_GetElapsedTime(&s->ms.currentMacroStartTime) >= timeout) {
@@ -1988,7 +1982,7 @@ static macro_result_t processIfShortcutCommand(bool negate, const char* arg, con
             arg = NextTok(arg, argEnd);
             orGate = true;
         } else {
-            Macros_ReportError("Unrecognized option", arg, argEnd);
+            Macros_ReportError("Unrecognized option:", arg, argEnd);
             arg = NextTok(arg, argEnd);
         }
     }
@@ -2331,7 +2325,7 @@ static macro_result_t processRepeatForCommand(const char* arg1, const char* argE
 {
     uint8_t idx = parseNUM(arg1, argEnd);
     const char* adr = NextTok(arg1, argEnd);
-    if (validReg(idx)) {
+    if (validReg(idx, arg1)) {
         if (regs[idx] > 0) {
             regs[idx]--;
             if (regs[idx] > 0) {
@@ -3030,7 +3024,7 @@ static macro_result_t processCommand(const char* cmd, const char* cmdEnd)
             break;
         default:
         failed:
-            Macros_ReportError("unrecognized command", cmd, cmdEnd);
+            Macros_ReportError("Unrecognized command:", cmd, cmdEnd);
             return MacroResult_Finished;
             break;
         }
@@ -3089,7 +3083,7 @@ static bool findFreeStateSlot()
             return true;
         }
     }
-    Macros_ReportError("Too many macros running at one time", "", NULL);
+    Macros_ReportError("Too many macros running at one time!", NULL, NULL);
     return false;
 }
 
@@ -3443,11 +3437,11 @@ static void __attribute__((__unused__)) checkSchedulerHealth(const char* tag) {
             scheduledCount++;
 
             if (!MacroState[currentSlot].ms.macroPlaying) {
-                Macros_ReportErrorNum("This slot is not playing, but is scheduled!", currentSlot);
+                Macros_ReportErrorNum("This slot is not playing, but is scheduled:", currentSlot, NULL);
             }
 
             if (MacroState[currentSlot].ms.macroSleeping) {
-                Macros_ReportErrorNum("This slot is sleeping, but is scheduled!", currentSlot);
+                Macros_ReportErrorNum("This slot is sleeping, but is scheduled:", currentSlot, NULL);
             }
 
             currentSlot = MacroState[currentSlot].ms.nextSlot;
@@ -3467,9 +3461,9 @@ static void __attribute__((__unused__)) checkSchedulerHealth(const char* tag) {
     // check the results
     if (scheduledCount != playingCount || scheduledCount != scheduler.activeSlotCount) {
         Macros_ReportError("Scheduled counts don't match up!", tag, NULL);
-        Macros_ReportErrorNum("Scheduled", scheduledCount);
-        Macros_ReportErrorNum("Playing", playingCount);
-        Macros_ReportErrorNum("Active slot count", scheduler.activeSlotCount);
+        Macros_ReportErrorNum("Scheduled", scheduledCount, NULL);
+        Macros_ReportErrorNum("Playing", playingCount, NULL);
+        Macros_ReportErrorNum("Active slot count", scheduler.activeSlotCount, NULL);
         Macros_ReportError("Prev cmd", lastCmd, lastCmd+10);
         Macros_ReportError("This cmd", thisCmd, thisCmd+10);
         processStatsActiveMacrosCommand();

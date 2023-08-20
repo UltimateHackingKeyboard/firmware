@@ -63,7 +63,7 @@ caret_configuration_t* GetNavigationModeConfiguration(navigation_mode_t mode) {
     if (NavigationMode_RemappableFirst <= mode && mode <= NavigationMode_RemappableLast) {
         return &remappableModes[mode - NavigationMode_RemappableFirst];
     } else {
-            Macros_ReportErrorNum("Mode referenced in invalid context. Only remappable modes are supported here.", mode);
+            Macros_ReportErrorNum("Mode referenced in invalid context. Only remappable modes are supported here:", mode, NULL);
             return NULL;
     }
 }

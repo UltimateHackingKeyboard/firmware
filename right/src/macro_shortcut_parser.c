@@ -499,7 +499,7 @@ static serialized_mouse_action_t mouseBtnToSerializedMouseAction(mouse_button_t 
         case MouseButton_8:
             return SerializedMouseAction_Button_8;
         default:
-            Macros_ReportErrorNum("Unknown button encountered:", btn);
+            Macros_ReportErrorNum("Unknown button encountered:", btn, NULL);
             return 0;
     }
 }
