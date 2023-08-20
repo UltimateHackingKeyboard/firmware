@@ -10,7 +10,11 @@ This file contains (semi)formal documentation of all features of the extended en
 
 Whenever a garbled command is encountered, `ERR` will light up on the display, and details are appended to the error buffer. You can retrieve it by running a `printStatus` macro command over a focused text editor.
 
-Logs are prefixed with macro name, action index and command address.
+Errors have following format:
+
+```
+{Error|Warning} at <macro name> <action index>/<line>: <message>: <failed command>
+```
 
 ## Macro events
 

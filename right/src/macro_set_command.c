@@ -28,7 +28,7 @@ static const char* proceedByDot(const char* cmd, const char *cmdEnd)
         cmd++;
     }
     if (*cmd != '.') {
-        Macros_ReportError("'.' expected", NULL, NULL);
+        Macros_ReportError("'.' expected", cmd, cmd);
     }
     return cmd+1;
 }
@@ -39,7 +39,7 @@ static void moduleNavigationMode(const char* arg1, const char *textEnd, module_c
     navigation_mode_t modeId = ParseNavigationModeId(NextTok(arg1, textEnd), textEnd);
 
     if (IS_MODIFIER_LAYER(layerId)) {
-        Macros_ReportError("Navigation mode cannot be changed for modifier layers!", NULL, NULL);
+        Macros_ReportError("Navigation mode cannot be changed for modifier layers!", arg1, arg1);
         return;
     }
 
@@ -94,7 +94,7 @@ static void moduleSpeed(const char* arg1, const char *textEnd, module_configurat
         module->swapAxes = Macros_ParseBoolean(arg2, textEnd);
     }
     else if (TokenMatches(arg1, textEnd, "invertScrollDirection")) {
-        Macros_ReportWarn("Command deprecated. Please, replace invertScrollDirection by invertScrollDirectionY.", NULL, NULL);
+        Macros_ReportWarn("Command deprecated. Please, replace invertScrollDirection by invertScrollDirectionY.", arg1, arg1);
         module->invertScrollDirectionY = Macros_ParseBoolean(arg2, textEnd);
     }
     else if (TokenMatches(arg1, textEnd, "invertScrollDirectionY")) {
@@ -104,7 +104,7 @@ static void moduleSpeed(const char* arg1, const char *textEnd, module_configurat
         module->invertScrollDirectionX = Macros_ParseBoolean(arg2, textEnd);
     }
     else {
-        Macros_ReportError("parameter not recognized:", arg1, textEnd);
+        Macros_ReportError("Parameter not recognized:", arg1, textEnd);
     }
 }
 
@@ -143,7 +143,7 @@ static void secondaryRoleAdvanced(const char* arg1, const char *textEnd)
             SecondaryRoles_AdvancedStrategyTimeoutAction = SecondaryRoleState_Secondary;
         }
         else {
-            Macros_ReportError("parameter not recognized:", arg2, textEnd);
+            Macros_ReportError("Parameter not recognized:", arg2, textEnd);
         }
     }
     else if (TokenMatches(arg1, textEnd, "safetyMargin")) {
@@ -159,7 +159,7 @@ static void secondaryRoleAdvanced(const char* arg1, const char *textEnd)
         SecondaryRoles_AdvancedStrategyDoubletapTime = Macros_ParseInt(arg2, textEnd, NULL);
     }
     else {
-        Macros_ReportError("parameter not recognized:", arg1, textEnd);
+        Macros_ReportError("Parameter not recognized:", arg1, textEnd);
     }
 }
 
@@ -174,14 +174,14 @@ static void secondaryRoles(const char* arg1, const char *textEnd)
             SecondaryRoles_Strategy = SecondaryRoleStrategy_Advanced;
         }
         else {
-            Macros_ReportError("parameter not recognized:", arg2, textEnd);
+            Macros_ReportError("Parameter not recognized:", arg2, textEnd);
         }
     }
     else if (TokenMatches(arg1, textEnd, "advanced")) {
         secondaryRoleAdvanced(proceedByDot(arg1, textEnd), textEnd);
     }
     else {
-        Macros_ReportError("parameter not recognized:", arg1, textEnd);
+        Macros_ReportError("Parameter not recognized:", arg1, textEnd);
     }
 }
 
@@ -194,7 +194,7 @@ static void mouseKeys(const char* arg1, const char *textEnd)
     } else if (TokenMatches(arg1, textEnd, "scroll")) {
         state = &MouseScrollState;
     } else {
-        Macros_ReportError("scroll or move expected", NULL, NULL);
+        Macros_ReportError("Scroll or move expected", arg1, arg1);
     }
 
     const char* arg2 = proceedByDot(arg1, textEnd);
@@ -219,7 +219,7 @@ static void mouseKeys(const char* arg1, const char *textEnd)
         state->axisSkew = ParseFloat(arg3, textEnd);
     }
     else {
-        Macros_ReportError("parameter not recognized:", arg1, textEnd);
+        Macros_ReportError("Parameter not recognized:", arg1, textEnd);
     }
 }
 
@@ -235,7 +235,7 @@ static void stickyModifiers(const char* arg1, const char *textEnd)
         StickyModifierStrategy = Stick_Always;
     }
     else {
-        Macros_ReportError("parameter not recognized:", arg1, textEnd);
+        Macros_ReportError("Parameter not recognized:", arg1, textEnd);
     }
 }
 
@@ -248,7 +248,7 @@ static void macroEngineScheduler(const char* arg1, const char *textEnd)
         Macros_Scheduler = Scheduler_Blocking;
     }
     else {
-        Macros_ReportError("parameter not recognized:", arg1, textEnd);
+        Macros_ReportError("Parameter not recognized:", arg1, textEnd);
     }
 }
 
@@ -264,7 +264,7 @@ static void macroEngine(const char* arg1, const char *textEnd)
         /* this option was removed -> accept the command & do nothing */
     }
     else {
-        Macros_ReportError("parameter not recognized:", arg1, textEnd);
+        Macros_ReportError("Parameter not recognized:", arg1, textEnd);
     }
 }
 
@@ -283,11 +283,11 @@ static void backlightStrategy(const char* arg1, const char *textEnd)
             Ledmap_SetLedBacklightingMode(BacklightingMode_PerKeyRgb);
             Ledmap_UpdateBacklightLeds();
         } else {
-            Macros_ReportError("Cannot set perKeyRgb mode when perKeyRgb maps are not available. Please, consult Agent's led section...", NULL, NULL);
+            Macros_ReportError("Cannot set perKeyRgb mode when perKeyRgb maps are not available. Please, consult Agent's led section...", arg1, arg1);
         }
     }
     else {
-        Macros_ReportError("parameter not recognized:", arg1, textEnd);
+        Macros_ReportError("Parameter not recognized:", arg1, textEnd);
     }
 }
 
@@ -332,7 +332,7 @@ static void constantRgb(const char* arg1, const char *textEnd)
         Ledmap_UpdateBacklightLeds();
     }
     else {
-        Macros_ReportError("parameter not recognized:", arg1, textEnd);
+        Macros_ReportError("Parameter not recognized:", arg1, textEnd);
     }
 }
 
@@ -346,7 +346,7 @@ static void leds(const char* arg1, const char *textEnd)
     } else if (TokenMatches(arg1, textEnd, "enabled")) {
         LedsEnabled = Macros_ParseBoolean(value, textEnd);
     } else {
-        Macros_ReportError("parameter not recognized:", arg1, textEnd);
+        Macros_ReportError("Parameter not recognized:", arg1, textEnd);
     }
 
     LedSlaveDriver_UpdateLeds();
@@ -364,7 +364,7 @@ static void backlight(const char* arg1, const char *textEnd)
         keyRgb(proceedByDot(arg1, textEnd), textEnd);
     }
     else {
-        Macros_ReportError("parameter not recognized:", arg1, textEnd);
+        Macros_ReportError("Parameter not recognized:", arg1, textEnd);
     }
 }
 
@@ -386,7 +386,7 @@ static key_action_t parseKeyAction(const char* arg1, const char *textEnd) {
         action.type = KeyActionType_None;
     }
     else {
-        Macros_ReportError("parameter not recognized:", arg1, textEnd);
+        Macros_ReportError("Parameter not recognized:", arg1, textEnd);
     }
 
     return action;
@@ -405,7 +405,7 @@ static void navigationModeAction(const char* arg1, const char *textEnd)
     navigationMode = ParseNavigationModeId(arg1, textEnd);
 
     if(navigationMode < NavigationMode_RemappableFirst || navigationMode > NavigationMode_RemappableLast) {
-        Macros_ReportError("Invalid or non-remapable navigation mode", arg1, textEnd);
+        Macros_ReportError("Invalid or non-remapable navigation mode:", arg1, textEnd);
     }
 
     if (Macros_ParserError) {
@@ -429,7 +429,7 @@ static void navigationModeAction(const char* arg1, const char *textEnd)
         positive = false;
     }
     else {
-        Macros_ReportError("parameter not recognized:", arg1, textEnd);
+        Macros_ReportError("Parameter not recognized:", arg1, textEnd);
     }
 
     key_action_t action = parseKeyAction(arg3, textEnd);
@@ -455,7 +455,7 @@ static void keymapAction(const char* arg1, const char *textEnd)
     uint8_t inSlotIdx = keyId%64;
 
     if(slotIdx > SLOT_COUNT || inSlotIdx > MAX_KEY_COUNT_PER_MODULE) {
-        Macros_ReportError("invalid key id:", arg2, textEnd);
+        Macros_ReportError("Invalid key id:", arg2, textEnd);
     }
 
     if (Macros_ParserError) {
@@ -492,7 +492,7 @@ static void modLayerTriggers(const char* arg1, const char *textEnd)
         right = HID_KEYBOARD_MODIFIER_RIGHTGUI ;
         break;
     default:
-        Macros_ReportError("This layer does not allow modifier triggers.", arg1, specifier);
+        Macros_ReportError("This layer does not allow modifier triggers:", arg1, specifier);
         return;
     }
 
@@ -510,7 +510,7 @@ static void modLayerTriggers(const char* arg1, const char *textEnd)
         LayerConfig[layerId].modifierLayerMask = left | right;
     }
     else {
-        Macros_ReportError("Specifier not recognized", specifier, textEnd);
+        Macros_ReportError("Specifier not recognized:", specifier, textEnd);
     }
 }
 
@@ -591,7 +591,7 @@ macro_result_t MacroSetCommand(const char* arg1, const char *textEnd)
         EmergencyKey = Utils_KeyIdToKeyState(key);
     }
     else {
-        Macros_ReportError("parameter not recognized:", arg1, textEnd);
+        Macros_ReportError("Parameter not recognized:", arg1, textEnd);
     }
     return MacroResult_Finished;
 }

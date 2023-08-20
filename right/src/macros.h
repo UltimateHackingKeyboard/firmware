@@ -246,9 +246,9 @@
     void Macros_SignalInterrupt(void);
     bool Macros_ClaimReports(void);
     void Macros_ReportError(const char* err, const char* arg, const char *argEnd);
-    void Macros_ReportErrorPrintf(const char *fmt, ...);
-    void Macros_ReportErrorNum(const char* err, int32_t num);
-    void Macros_ReportErrorFloat(const char* err, float num);
+    void Macros_ReportErrorPrintf(const char* pos, const char *fmt, ...);
+    void Macros_ReportErrorNum(const char* err, int32_t num, const char* pos);
+    void Macros_ReportErrorFloat(const char* err, float num, const char* pos);
     void Macros_ReportWarn(const char* err, const char* arg, const char *argEnd);
     void Macros_SetStatusString(const char* text, const char *textEnd);
     void Macros_SetStatusStringInterpolated(const char* text, const char *textEnd);
