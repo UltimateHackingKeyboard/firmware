@@ -64,19 +64,8 @@ The following grammar is supported:
     COMMAND = noOp
     COMMAND = yield
     COMMAND = {exec|call|fork} MACRONAME
-    COMMAND = stopAllMacros
-    COMMAND = statsRuntime
-    COMMAND = statsLayerStack
-    COMMAND = statsPostponerStack
-    COMMAND = statsActiveKeys
-    COMMAND = statsActiveMacros
-    COMMAND = statsRegs
-    COMMAND = statsRecordKeyTiming
     COMMAND = resetTrackpoint
-    COMMAND = diagnose
     COMMAND = printStatus
-    COMMAND = {setStatus  | setStatusPart} <custom text>
-    COMMAND = clearStatus
     COMMAND = setLedTxt <timeout (NUMBER)> <custom text>
     COMMAND = write <custom text>
     COMMAND = writeExpr NUMBER
@@ -131,7 +120,6 @@ The following grammar is supported:
     COMMAND = set keystrokeDelay <time in ms, at most 65535 (NUMBER)>
     COMMAND = set autoRepeatDelay <time in ms, at most 65535 (NUMBER)>
     COMMAND = set autoRepeatRate <time in ms, at most 65535 (NUMBER)>
-    COMMAND = set setEmergencyKey KEYID
     COMMAND = set macroEngine.batchSize <number of commands to execute per one update cycle NUMBER>
     COMMAND = set navigationModeAction.NAVIGATION_MODE_CUSTOM.DIRECTION ACTION
     COMMAND = set keymapAction.LAYERID.KEYID ACTION
@@ -208,6 +196,21 @@ The following grammar is supported:
     KEY_ABBREV = systemPowerDown | systemSleep | systemWakeUp
     KEY_ABBREV = mouseBtnLeft | mouseBtnRight | mouseBtnMiddle | mouseBtn4 | mouseBtn5 | mouseBtn6 | mouseBtn7 | mouseBtn8
     MACRONAME = <Case sensitive macro identifier as named in Agent. Identifier shall not contain spaces.>
+    ###################
+    #DEVELOPMENT TOOLS#
+    ###################
+    COMMAND = stopAllMacros
+    COMMAND = statsRuntime
+    COMMAND = statsLayerStack
+    COMMAND = statsPostponerStack
+    COMMAND = statsActiveKeys
+    COMMAND = statsActiveMacros
+    COMMAND = statsRegs
+    COMMAND = statsRecordKeyTiming
+    COMMAND = diagnose
+    COMMAND = {setStatus  | setStatusPart} <custom text>
+    COMMAND = clearStatus
+    COMMAND = set setEmergencyKey KEYID
     ############
     #DEPRECATED#
     ############
