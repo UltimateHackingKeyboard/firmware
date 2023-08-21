@@ -15,6 +15,16 @@ target_sources(app PRIVATE ${app_sources} ${app_cpp_sources})
 # C headers compiled with C++ give pointer conversion errors, turn them to warnings
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive")
 
+# missing python debugging
+find_package(Python 3 REQUIRED)
+execute_process(
+    COMMAND python --version
+)
+find_package(Python3 REQUIRED)
+execute_process(
+    COMMAND python3 --version
+)
+
 set(C2USB_PATH "c2usb")
 
 add_subdirectory(${C2USB_PATH})
