@@ -17,8 +17,6 @@ class mouse_app : public hid::application
     {}
 
 public:
-    using mouse_boot_report = hid::app::mouse::report<0>;
-
     template<uint8_t REPORT_ID>
     struct mouse_report_base : public hid::report::base<hid::report::type::INPUT, REPORT_ID>
     {
@@ -47,13 +45,8 @@ public:
     }
     void in_report_sent(const std::span<const uint8_t>& data) override;
     void get_report(hid::report::selector select, const std::span<uint8_t>& buffer) override;
-    hid::protocol get_protocol() const override
-    {
-        return prot_;
-    }
 
 private:
-    hid::protocol prot_ {};
 };
 
 #endif // __KEYBOARD_APP_HEADER__

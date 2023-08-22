@@ -60,8 +60,6 @@ mouse_app& mouse_app::handle()
 
 void mouse_app::start(hid::protocol prot)
 {
-    prot_ = prot;
-
     // TODO start handling mouse events
 }
 

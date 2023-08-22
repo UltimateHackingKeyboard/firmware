@@ -36,7 +36,7 @@ void usb_init(const device* dev) {
     static usb::df::zephyr::udc_mac mac {dev};
 
     static usb::df::hid::function usb_kb { keyboard_app::handle(), usb::hid::boot_protocol_mode::KEYBOARD };
-    static usb::df::hid::function usb_mouse { mouse_app::handle(), usb::hid::boot_protocol_mode::MOUSE };
+    static usb::df::hid::function usb_mouse { mouse_app::handle() };
 
     static const auto single_config = usb::df::config::make_config(usb::df::config::header(usb::df::config::power::bus(500, true)),
             usb::df::hid::config(usb_kb, speed, usb::endpoint::address(0x81), 1),
