@@ -60,117 +60,117 @@ static void moduleSpeed(const char* arg1, const char *textEnd, module_configurat
     const char* arg2 = NextTok(arg1, textEnd);
 
     if (TokenMatches(arg1, textEnd, "baseSpeed")) {
-        float v = ParseFloat(arg2, textEnd);
+        float baseSpeed = ParseFloat(arg2, textEnd);
         if (Macros_DryRun) {
             return;
         }
-        module->baseSpeed = v;
+        module->baseSpeed = baseSpeed;
     }
     else if (TokenMatches(arg1, textEnd, "speed")) {
-        float v = ParseFloat(arg2, textEnd);
+        float speed = ParseFloat(arg2, textEnd);
         if (Macros_DryRun) {
             return;
         }
-        module->speed = v;
+        module->speed = speed;
     }
     else if (TokenMatches(arg1, textEnd, "xceleration")) {
-        float v = ParseFloat(arg2, textEnd);
+        float xceleration = ParseFloat(arg2, textEnd);
         if (Macros_DryRun) {
             return;
         }
-        module->xceleration = v;
+        module->xceleration = xceleration;
     }
     else if (TokenMatches(arg1, textEnd, "caretSpeedDivisor")) {
-        float v = ParseFloat(arg2, textEnd);
+        float caretSpeedDivisor = ParseFloat(arg2, textEnd);
         if (Macros_DryRun) {
             return;
         }
-        module->caretSpeedDivisor = v;
+        module->caretSpeedDivisor = caretSpeedDivisor;
     }
     else if (TokenMatches(arg1, textEnd, "scrollSpeedDivisor")) {
-        float v = ParseFloat(arg2, textEnd);
+        float scrollSpeedDivisor = ParseFloat(arg2, textEnd);
         if (Macros_DryRun) {
             return;
         }
-        module->scrollSpeedDivisor = v;
+        module->scrollSpeedDivisor = scrollSpeedDivisor;
     }
     else if (TokenMatches(arg1, textEnd, "pinchZoomDivisor") && moduleId == ModuleId_TouchpadRight) {
-        float v = ParseFloat(arg2, textEnd);
+        float pinchZoomSpeedDivisor = ParseFloat(arg2, textEnd);
         if (Macros_DryRun) {
             return;
         }
-        module->pinchZoomSpeedDivisor = v;
+        module->pinchZoomSpeedDivisor = pinchZoomSpeedDivisor;
     }
     else if (TokenMatches(arg1, textEnd, "pinchZoomMode") && moduleId == ModuleId_TouchpadRight) {
-        navigation_mode_t v = ParseNavigationModeId(arg2, textEnd);
+        navigation_mode_t touchpadPinchZoomMode = ParseNavigationModeId(arg2, textEnd);
         if (Macros_DryRun) {
             return;
         }
-        TouchpadPinchZoomMode = v;
+        touchpadPinchZoomMode = touchpadPinchZoomMode;
     }
     else if (TokenMatches(arg1, textEnd, "axisLockSkew")) {
-        float v = ParseFloat(arg2, textEnd);
+        float axisLockSkew = ParseFloat(arg2, textEnd);
         if (Macros_DryRun) {
             return;
         }
-        module->axisLockSkew = v;
+        module->axisLockSkew = axisLockSkew;
     }
     else if (TokenMatches(arg1, textEnd, "axisLockFirstTickSkew")) {
-        float v = ParseFloat(arg2, textEnd);
+        float axisLockFirstTickSkew = ParseFloat(arg2, textEnd);
         if (Macros_DryRun) {
             return;
         }
-        module->axisLockFirstTickSkew = v;
+        module->axisLockFirstTickSkew = axisLockFirstTickSkew;
     }
     else if (TokenMatches(arg1, textEnd, "cursorAxisLock")) {
-        bool v = Macros_ParseBoolean(arg2, textEnd);
+        bool cursorAxisLock = Macros_ParseBoolean(arg2, textEnd);
         if (Macros_DryRun) {
             return;
         }
-        module->cursorAxisLock = v;
+        module->cursorAxisLock = cursorAxisLock;
     }
     else if (TokenMatches(arg1, textEnd, "scrollAxisLock")) {
-        bool v = Macros_ParseBoolean(arg2, textEnd);
+        bool scrollAxisLock = Macros_ParseBoolean(arg2, textEnd);
         if (Macros_DryRun) {
             return;
         }
-        module->scrollAxisLock = v;
+        module->scrollAxisLock = scrollAxisLock;
     }
     else if (TokenMatches(arg1, textEnd, "caretAxisLock")) {
-        bool v = Macros_ParseBoolean(arg2, textEnd);
+        bool caretAxisLock = Macros_ParseBoolean(arg2, textEnd);
         if (Macros_DryRun) {
             return;
         }
-        module->caretAxisLock = v;
+        module->caretAxisLock = caretAxisLock;
     }
     else if (TokenMatches(arg1, textEnd, "swapAxes")) {
-        bool v = Macros_ParseBoolean(arg2, textEnd);
+        bool swapAxes = Macros_ParseBoolean(arg2, textEnd);
         if (Macros_DryRun) {
             return;
         }
-        module->swapAxes = v;
+        module->swapAxes = swapAxes;
     }
     else if (TokenMatches(arg1, textEnd, "invertScrollDirection")) {
-        bool v = Macros_ParseBoolean(arg2, textEnd);
+        bool invertScrollDirectionY = Macros_ParseBoolean(arg2, textEnd);
         if (Macros_DryRun) {
             Macros_ReportWarn("Command deprecated. Please, replace invertScrollDirection by invertScrollDirectionY.", arg1, arg1);
             return;
         }
-        module->invertScrollDirectionY = v;
+        module->invertScrollDirectionY = invertScrollDirectionY;
     }
     else if (TokenMatches(arg1, textEnd, "invertScrollDirectionY")) {
-        bool v = Macros_ParseBoolean(arg2, textEnd);
+        bool invertScrollDirectionY = Macros_ParseBoolean(arg2, textEnd);
         if (Macros_DryRun) {
             return;
         }
-        module->invertScrollDirectionY = v;
+        module->invertScrollDirectionY = invertScrollDirectionY;
     }
     else if (TokenMatches(arg1, textEnd, "invertScrollDirectionX")) {
-        bool v = Macros_ParseBoolean(arg2, textEnd);
+        bool invertScrollDirectionX = Macros_ParseBoolean(arg2, textEnd);
         if (Macros_DryRun) {
             return;
         }
-        module->invertScrollDirectionX = v;
+        module->invertScrollDirectionX = invertScrollDirectionX;
     }
     else {
         Macros_ReportError("Parameter not recognized:", arg1, textEnd);
@@ -202,11 +202,11 @@ static void secondaryRoleAdvanced(const char* arg1, const char *textEnd)
     const char* arg2 = NextTok(arg1, textEnd);
 
     if (TokenMatches(arg1, textEnd, "timeout")) {
-        uint32_t v = Macros_ParseInt(arg2, textEnd, NULL);
+        uint32_t timeout = Macros_ParseInt(arg2, textEnd, NULL);
         if (Macros_DryRun) {
             return;
         }
-        SecondaryRoles_AdvancedStrategyTimeout = v;
+        timeout = timeout;
     }
     else if (TokenMatches(arg1, textEnd, "timeoutAction")) {
         if (TokenMatches(arg2, textEnd, "primary")) {
@@ -226,32 +226,32 @@ static void secondaryRoleAdvanced(const char* arg1, const char *textEnd)
         }
     }
     else if (TokenMatches(arg1, textEnd, "safetyMargin")) {
-        uint32_t v = Macros_ParseInt(arg2, textEnd, NULL);
+        uint32_t safetyMargin = Macros_ParseInt(arg2, textEnd, NULL);
         if (Macros_DryRun) {
             return;
         }
-        SecondaryRoles_AdvancedStrategySafetyMargin = v;
+        safetyMargin = safetyMargin;
     }
     else if (TokenMatches(arg1, textEnd, "triggerByRelease")) {
-        bool v = Macros_ParseBoolean(arg2, textEnd);
+        bool triggerByRelease = Macros_ParseBoolean(arg2, textEnd);
         if (Macros_DryRun) {
             return;
         }
-        SecondaryRoles_AdvancedStrategyTriggerByRelease = v;
+        SecondaryRoles_AdvancedStrategyTriggerByRelease = triggerByRelease;
     }
     else if (TokenMatches(arg1, textEnd, "doubletapToPrimary")) {
-        bool v = Macros_ParseBoolean(arg2, textEnd);
+        bool doubletapToPrimary = Macros_ParseBoolean(arg2, textEnd);
         if (Macros_DryRun) {
             return;
         }
-        SecondaryRoles_AdvancedStrategyDoubletapToPrimary = v;
+        SecondaryRoles_AdvancedStrategyDoubletapToPrimary = doubletapToPrimary;
     }
     else if (TokenMatches(arg1, textEnd, "doubletapTime")) {
-        int32_t v = Macros_ParseInt(arg2, textEnd, NULL);
+        int32_t doubletapTime = Macros_ParseInt(arg2, textEnd, NULL);
         if (Macros_DryRun) {
             return;
         }
-        SecondaryRoles_AdvancedStrategyDoubletapTime = v;
+        SecondaryRoles_AdvancedStrategyDoubletapTime = doubletapTime;
     }
     else {
         Macros_ReportError("Parameter not recognized:", arg1, textEnd);
@@ -302,46 +302,46 @@ static void mouseKeys(const char* arg1, const char *textEnd)
     const char* arg3 = NextTok(arg2, textEnd);
 
     if (TokenMatches(arg2, textEnd, "initialSpeed")) {
-        int32_t v = Macros_ParseInt(arg3, textEnd, NULL) / state->intMultiplier;
+        int32_t initialSpeed = Macros_ParseInt(arg3, textEnd, NULL) / state->intMultiplier;
         if (Macros_DryRun) {
             return;
         }
-        state->initialSpeed = v;
+        state->initialSpeed = initialSpeed;
     }
     else if (TokenMatches(arg2, textEnd, "baseSpeed")) {
-        int32_t v = Macros_ParseInt(arg3, textEnd, NULL) / state->intMultiplier;
+        int32_t baseSpeed = Macros_ParseInt(arg3, textEnd, NULL) / state->intMultiplier;
         if (Macros_DryRun) {
             return;
         }
-        state->baseSpeed = v;
+        state->baseSpeed = baseSpeed;
     }
     else if (TokenMatches(arg2, textEnd, "initialAcceleration")) {
-        int32_t v = Macros_ParseInt(arg3, textEnd, NULL) / state->intMultiplier;
+        int32_t acceleration = Macros_ParseInt(arg3, textEnd, NULL) / state->intMultiplier;
         if (Macros_DryRun) {
             return;
         }
-        state->acceleration = v;
+        state->acceleration = acceleration;
     }
     else if (TokenMatches(arg2, textEnd, "deceleratedSpeed")) {
-        int32_t v = Macros_ParseInt(arg3, textEnd, NULL) / state->intMultiplier;
+        int32_t deceleratedSpeed = Macros_ParseInt(arg3, textEnd, NULL) / state->intMultiplier;
         if (Macros_DryRun) {
             return;
         }
-        state->deceleratedSpeed = v;
+        state->deceleratedSpeed = deceleratedSpeed;
     }
     else if (TokenMatches(arg2, textEnd, "acceleratedSpeed")) {
-        int32_t v = Macros_ParseInt(arg3, textEnd, NULL) / state->intMultiplier;
+        int32_t acceleratedSpeed = Macros_ParseInt(arg3, textEnd, NULL) / state->intMultiplier;
         if (Macros_DryRun) {
             return;
         }
-        state->acceleratedSpeed = v;
+        state->acceleratedSpeed = acceleratedSpeed;
     }
     else if (TokenMatches(arg2, textEnd, "axisSkew")) {
-        float v = ParseFloat(arg3, textEnd);
+        float axisSkew = ParseFloat(arg3, textEnd);
         if (Macros_DryRun) {
             return;
         }
-        state->axisSkew = v;
+        state->axisSkew = axisSkew;
     }
     else {
         Macros_ReportError("Parameter not recognized:", arg1, textEnd);
@@ -351,25 +351,25 @@ static void mouseKeys(const char* arg1, const char *textEnd)
 static void stickyModifiers(const char* arg1, const char *textEnd)
 {
     if (TokenMatches(arg1, textEnd, "never")) {
-        sticky_strategy_t v = Stick_Never;
+        sticky_strategy_t stickyStrategy = Stick_Never;
         if (Macros_DryRun) {
             return;
         }
-        StickyModifierStrategy = v;
+        StickyModifierStrategy = stickyStrategy;
     }
     else if (TokenMatches(arg1, textEnd, "smart")) {
-        sticky_strategy_t v = Stick_Smart;
+        sticky_strategy_t stickyStrategy = Stick_Smart;
         if (Macros_DryRun) {
             return;
         }
-        StickyModifierStrategy = v;
+        StickyModifierStrategy = stickyStrategy;
     }
     else if (TokenMatches(arg1, textEnd, "always")) {
-        sticky_strategy_t v = Stick_Always;
+        sticky_strategy_t stickyStrategy = Stick_Always;
         if (Macros_DryRun) {
             return;
         }
-        StickyModifierStrategy = v;
+        StickyModifierStrategy = stickyStrategy;
     }
     else {
         Macros_ReportError("Parameter not recognized:", arg1, textEnd);
@@ -379,18 +379,18 @@ static void stickyModifiers(const char* arg1, const char *textEnd)
 static void macroEngineScheduler(const char* arg1, const char *textEnd)
 {
     if (TokenMatches(arg1, textEnd, "preemptive")) {
-        macro_scheduler_t v = Scheduler_Preemptive;
+        macro_scheduler_t scheduler = Scheduler_Preemptive;
         if (Macros_DryRun) {
             return;
         }
-        Macros_Scheduler = v;
+        Macros_Scheduler = scheduler;
     }
     else if (TokenMatches(arg1, textEnd, "blocking")) {
-        macro_scheduler_t v = Scheduler_Blocking;
+        macro_scheduler_t scheduler = Scheduler_Blocking;
         if (Macros_DryRun) {
             return;
         }
-        Macros_Scheduler = v;
+        Macros_Scheduler = scheduler;
     }
     else {
         Macros_ReportError("Parameter not recognized:", arg1, textEnd);
@@ -403,11 +403,11 @@ static void macroEngine(const char* arg1, const char *textEnd)
         macroEngineScheduler(NextTok(arg1,  textEnd), textEnd);
     }
     else if (TokenMatches(arg1, textEnd, "batchSize")) {
-        int32_t v = Macros_ParseInt(NextTok(arg1,  textEnd), textEnd, NULL);
+        int32_t batchSize = Macros_ParseInt(NextTok(arg1,  textEnd), textEnd, NULL);
         if (Macros_DryRun) {
             return;
         }
-        Macros_MaxBatchSize = v;
+        Macros_MaxBatchSize = batchSize;
     }
     else if (TokenMatches(arg1, textEnd, "extendedCommands")) {
         /* this option was removed -> accept the command & do nothing */
@@ -508,23 +508,23 @@ static void leds(const char* arg1, const char *textEnd)
 {
     const char* value = NextTok(arg1, textEnd);
     if (TokenMatches(arg1, textEnd, "fadeTimeout")) {
-        int32_t v = 1000*Macros_ParseInt(value, textEnd, NULL);
+        int32_t fadeTimeout = 1000*Macros_ParseInt(value, textEnd, NULL);
         if (Macros_DryRun) {
             return;
         }
-        LedsFadeTimeout = v;
+        LedsFadeTimeout = fadeTimeout;
     } else if (TokenMatches(arg1, textEnd, "brightness")) {
-        float v = ParseFloat(value, textEnd);
+        float brightnessMultiplier = ParseFloat(value, textEnd);
         if (Macros_DryRun) {
             return;
         }
-        LedBrightnessMultiplier = v;
+        LedBrightnessMultiplier = brightnessMultiplier;
     } else if (TokenMatches(arg1, textEnd, "enabled")) {
-        bool v = Macros_ParseBoolean(value, textEnd);
+        bool ledsEnabled = Macros_ParseBoolean(value, textEnd);
         if (Macros_DryRun) {
             return;
         }
-        LedsEnabled = v;
+        LedsEnabled = ledsEnabled;
     } else {
         Macros_ReportError("Parameter not recognized:", arg1, textEnd);
     }
@@ -736,11 +736,11 @@ macro_result_t Macro_ProcessSetCommand(const char* arg1, const char *textEnd)
         modLayerTriggers(proceedByDot(arg1, textEnd), textEnd);
     }
     else if (TokenMatches(arg1, textEnd, "diagonalSpeedCompensation")) {
-        bool v = Macros_ParseBoolean(arg2, textEnd);
+        bool diagonalSpeedCompensation = Macros_ParseBoolean(arg2, textEnd);
         if (Macros_DryRun) {
             return MacroResult_Finished;
         }
-        DiagonalSpeedCompensation = v;
+        DiagonalSpeedCompensation = diagonalSpeedCompensation;
     }
     else if (TokenMatches(arg1, textEnd, "stickyModifiers")) {
         stickyModifiers(arg2, textEnd);
@@ -754,11 +754,11 @@ macro_result_t Macro_ProcessSetCommand(const char* arg1, const char *textEnd)
         DebounceTimeRelease = time;
     }
     else if (TokenMatches(arg1, textEnd, "keystrokeDelay")) {
-        uint32_t d = Macros_ParseInt(arg2, textEnd, NULL);
+        uint32_t keystrokeDelay = Macros_ParseInt(arg2, textEnd, NULL);
         if (Macros_DryRun) {
             return MacroResult_Finished;
         }
-        KeystrokeDelay = d;
+        KeystrokeDelay = keystrokeDelay;
     }
     else if (
             TokenMatches(arg1, textEnd, "doubletapTimeout")  // new name
@@ -786,18 +786,18 @@ macro_result_t Macro_ProcessSetCommand(const char* arg1, const char *textEnd)
         AutoRepeatDelayRate = delay;
     }
     else if (TokenMatches(arg1, textEnd, "chordingDelay")) {
-        uint32_t d = Macros_ParseInt(arg2, textEnd, NULL);
+        uint32_t chordingDelay = Macros_ParseInt(arg2, textEnd, NULL);
         if (Macros_DryRun) {
             return MacroResult_Finished;
         }
-        ChordingDelay = d;
+        ChordingDelay = chordingDelay;
     }
     else if (TokenMatches(arg1, textEnd, "autoShiftDelay")) {
-        uint32_t d = Macros_ParseInt(arg2, textEnd, NULL);
+        uint32_t chordingDelay = Macros_ParseInt(arg2, textEnd, NULL);
         if (Macros_DryRun) {
             return MacroResult_Finished;
         }
-        AutoShiftDelay = d;
+        AutoShiftDelay = chordingDelay;
     }
     else if (TokenMatches(arg1, textEnd, "i2cBaudRate")) {
         uint32_t baudRate = Macros_ParseInt(arg2, textEnd, NULL);
