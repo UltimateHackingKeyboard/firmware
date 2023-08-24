@@ -13,7 +13,7 @@
     #define MACRO_CYCLES_TO_POSTPONE 4
 
     #define MAX_MACRO_NUM 255
-    #define STATUS_BUFFER_MAX_LENGTH 1024
+    #define STATUS_BUFFER_MAX_LENGTH 5000
     #define MACRO_STATE_POOL_SIZE 16
     #define MAX_REG_COUNT 32
 
@@ -238,6 +238,7 @@
     extern uint16_t AutoRepeatDelayRate;
     extern bool Macros_ParserError;
     extern bool RecordKeyTiming;
+    extern bool Macros_DryRun;
 
 // Functions:
 
@@ -260,6 +261,7 @@
     void Macros_SetStatusChar(char n);
     void Macros_Initialize();
     void Macros_ClearStatus();
+    void Macros_ValidateAllMacros();
     bool Macros_IsLayerHeld();
     bool Macros_MacroHasActiveInstance(macro_index_t macroIdx);
     uint8_t Macros_ParseLayerId(const char* arg1, const char* cmdEnd);

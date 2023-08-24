@@ -17,6 +17,6 @@
 // Variables:
 
 // Functions:
-    macro_result_t MacroSetCommand(const char* text, const char *textEnd);
+    macro_result_t Macro_ProcessSetCommand(const char* text, const char *textEnd);
 
 #endif /* __MACRO_SET_COMMAND_H__ */
