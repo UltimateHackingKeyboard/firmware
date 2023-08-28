@@ -26,7 +26,7 @@ Some of the usecases which can be achieved via these commands are:
 1) Create some macro with some command action. (And bind it in your keymap.) For instance:
 
 ```
-holdKey leftShift
+holdKey iLS
 ifDoubletap tapKey capsLock
 ```
 
@@ -151,19 +151,21 @@ In macros, we also may chain multiple actions, and include various conditions.
 For instance, shift which also toggles caps lock on doubletap:
 
 ```
-holdKey leftShift
+holdKey iLS
 ifDoubletap tapKey capsLock
 ```
 
 Or with Mac (which requires prolonged press of caps lock):
 
 ```
-holdKey leftShift
+holdKey iLS
 ifNotDoubletap break
 pressKey capsLock
 delayUntil 400
 releaseKey capsLock
 ```
+
+_sidenote: `i` in `iLS` makes the shift behave as regular native shift, which is needed to trigger `ifShift` conditions. For more info, search reference manual for "composition modes"._
 
 Mapping shift/nonshift scancodes independently:
 
