@@ -1,4 +1,0 @@
-# config USB_DEVICE_PID
-# 	default USB_PID_HID_MOUSE_SAMPLE
-
-source "Kconfig.zephyr"
