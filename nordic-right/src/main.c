@@ -27,8 +27,10 @@ const struct spi_buf_set spiBufSet = {
 
 const struct device *spi0_dev = DEVICE_DT_GET(DT_NODELABEL(spi1));
 static const struct gpio_dt_spec oledEn = GPIO_DT_SPEC_GET(DT_ALIAS(oled_en), gpios);
+static const struct gpio_dt_spec oledResetDt = GPIO_DT_SPEC_GET(DT_ALIAS(oled_reset), gpios);
 static const struct gpio_dt_spec oledCsDt = GPIO_DT_SPEC_GET(DT_ALIAS(oled_cs), gpios);
 static const struct gpio_dt_spec ledsCsDt = GPIO_DT_SPEC_GET(DT_ALIAS(leds_cs), gpios);
+static const struct gpio_dt_spec ledsSdb = GPIO_DT_SPEC_GET(DT_ALIAS(leds_sdb), gpios);
 static const struct gpio_dt_spec oledA0Dt = GPIO_DT_SPEC_GET(DT_ALIAS(oled_a0), gpios);
 
 void setLedsCs(bool state)
@@ -52,79 +54,73 @@ void writeSpi(uint8_t data)
     spi_write(spi0_dev, &spiConf, &spiBufSet);
 }
 
-// static const struct gpio_dt_spec row1 = GPIO_DT_SPEC_GET(DT_ALIAS(row1), gpios);
-// static const struct gpio_dt_spec row2 = GPIO_DT_SPEC_GET(DT_ALIAS(row2), gpios);
-// static const struct gpio_dt_spec row3 = GPIO_DT_SPEC_GET(DT_ALIAS(row3), gpios);
-// static const struct gpio_dt_spec row4 = GPIO_DT_SPEC_GET(DT_ALIAS(row4), gpios);
-// static const struct gpio_dt_spec row5 = GPIO_DT_SPEC_GET(DT_ALIAS(row5), gpios);
-// static const struct gpio_dt_spec row6 = GPIO_DT_SPEC_GET(DT_ALIAS(row6), gpios);
-// static const struct gpio_dt_spec col1 = GPIO_DT_SPEC_GET(DT_ALIAS(col1), gpios);
-// static const struct gpio_dt_spec col2 = GPIO_DT_SPEC_GET(DT_ALIAS(col2), gpios);
-// static const struct gpio_dt_spec col3 = GPIO_DT_SPEC_GET(DT_ALIAS(col3), gpios);
-// static const struct gpio_dt_spec col4 = GPIO_DT_SPEC_GET(DT_ALIAS(col4), gpios);
-// static const struct gpio_dt_spec col5 = GPIO_DT_SPEC_GET(DT_ALIAS(col5), gpios);
-// static const struct gpio_dt_spec col6 = GPIO_DT_SPEC_GET(DT_ALIAS(col6), gpios);
-// static const struct gpio_dt_spec col7 = GPIO_DT_SPEC_GET(DT_ALIAS(col7), gpios);
-// static const struct gpio_dt_spec col8 = GPIO_DT_SPEC_GET(DT_ALIAS(col8), gpios);
-// static const struct gpio_dt_spec col9 = GPIO_DT_SPEC_GET(DT_ALIAS(col9), gpios);
-// static const struct gpio_dt_spec col10 = GPIO_DT_SPEC_GET(DT_ALIAS(col10), gpios);
+static struct gpio_dt_spec rows[] = {
+    GPIO_DT_SPEC_GET(DT_ALIAS(row1), gpios),
+    GPIO_DT_SPEC_GET(DT_ALIAS(row2), gpios),
+    GPIO_DT_SPEC_GET(DT_ALIAS(row3), gpios),
+    GPIO_DT_SPEC_GET(DT_ALIAS(row4), gpios),
+    GPIO_DT_SPEC_GET(DT_ALIAS(row5), gpios),
+    GPIO_DT_SPEC_GET(DT_ALIAS(row6), gpios),
+};
 
-// static struct gpio_dt_spec rows[] = {
-//     GPIO_DT_SPEC_GET(DT_ALIAS(row1), gpios),
-//     GPIO_DT_SPEC_GET(DT_ALIAS(row2), gpios),
-//     GPIO_DT_SPEC_GET(DT_ALIAS(row3), gpios),
-//     GPIO_DT_SPEC_GET(DT_ALIAS(row4), gpios),
-//     GPIO_DT_SPEC_GET(DT_ALIAS(row5), gpios),
-//     GPIO_DT_SPEC_GET(DT_ALIAS(row6), gpios),
-// };
+static struct gpio_dt_spec cols[] = {
+    GPIO_DT_SPEC_GET(DT_ALIAS(col1), gpios),
+    GPIO_DT_SPEC_GET(DT_ALIAS(col2), gpios),
+    GPIO_DT_SPEC_GET(DT_ALIAS(col3), gpios),
+    GPIO_DT_SPEC_GET(DT_ALIAS(col4), gpios),
+    GPIO_DT_SPEC_GET(DT_ALIAS(col5), gpios),
+    GPIO_DT_SPEC_GET(DT_ALIAS(col6), gpios),
+    GPIO_DT_SPEC_GET(DT_ALIAS(col7), gpios),
+    GPIO_DT_SPEC_GET(DT_ALIAS(col8), gpios),
+    GPIO_DT_SPEC_GET(DT_ALIAS(col9), gpios),
+    GPIO_DT_SPEC_GET(DT_ALIAS(col10), gpios),
+};
 
-// static struct gpio_dt_spec cols[] = {
-//     GPIO_DT_SPEC_GET(DT_ALIAS(col1), gpios),
-//     GPIO_DT_SPEC_GET(DT_ALIAS(col2), gpios),
-//     GPIO_DT_SPEC_GET(DT_ALIAS(col3), gpios),
-//     GPIO_DT_SPEC_GET(DT_ALIAS(col4), gpios),
-//     GPIO_DT_SPEC_GET(DT_ALIAS(col5), gpios),
-//     GPIO_DT_SPEC_GET(DT_ALIAS(col6), gpios),
-//     GPIO_DT_SPEC_GET(DT_ALIAS(col7), gpios),
-//     GPIO_DT_SPEC_GET(DT_ALIAS(col8), gpios),
-//     GPIO_DT_SPEC_GET(DT_ALIAS(col9), gpios),
-//     GPIO_DT_SPEC_GET(DT_ALIAS(col10), gpios),
-// };
-
+char volatile c = 0;
 void main(void)
 {
+    printk("----------\nUHK 80 right half started\n");
+
+    gpio_pin_configure_dt(&ledsSdb, GPIO_OUTPUT);
+    gpio_pin_set_dt(&ledsSdb, true);
+
     gpio_pin_configure_dt(&oledEn, GPIO_OUTPUT);
     gpio_pin_set_dt(&oledEn, true);
+
+    gpio_pin_configure_dt(&oledResetDt, GPIO_OUTPUT);
+    gpio_pin_set_dt(&oledResetDt, false);
+    k_msleep(1);
+    gpio_pin_set_dt(&oledResetDt, true);
 
 //  struct device *uart_dev = DEVICE_DT_GET(DT_NODELABEL(uart1));
     gpio_pin_configure_dt(&oledCsDt, GPIO_OUTPUT);
     gpio_pin_configure_dt(&ledsCsDt, GPIO_OUTPUT);
     gpio_pin_configure_dt(&oledA0Dt, GPIO_OUTPUT);
 
-//     for (uint8_t rowId=0; rowId<6; rowId++) {
-//         gpio_pin_configure_dt(&rows[rowId], GPIO_OUTPUT);
-//     }
-//     for (uint8_t colId=0; colId<10; colId++) {
-//         gpio_pin_configure_dt(&cols[colId], GPIO_INPUT);
-//     }
+    for (uint8_t rowId=0; rowId<6; rowId++) {
+        gpio_pin_configure_dt(&rows[rowId], GPIO_OUTPUT);
+    }
+    for (uint8_t colId=0; colId<10; colId++) {
+        gpio_pin_configure_dt(&cols[colId], GPIO_INPUT);
+    }
 
     uint32_t counter = 0;
     bool pixel = 1;
     while (true) {
-//         printk(".");
-//         for (uint8_t rowId=0; rowId<6; rowId++) {
-//             gpio_pin_set_dt(&rows[rowId], 1);
-//             for (uint8_t colId=0; colId<10; colId++) {
-//                 if (gpio_pin_get_dt(&cols[colId])) {
-//                     printk("SW%c%c ", rowId+'1', colId+'1');
-//                 }
-//             }
-//             gpio_pin_set_dt(&rows[rowId], 0);
-//         }
+        c = 0;
+        for (uint8_t rowId=0; rowId<6; rowId++) {
+            gpio_pin_set_dt(&rows[rowId], 1);
+            for (uint8_t colId=0; colId<10; colId++) {
+                if (gpio_pin_get_dt(&cols[colId])) {
+                    c = 1;
+                    printk("SW%c%c ", rowId+'1', colId+'1');
+                }
+            }
+            gpio_pin_set_dt(&rows[rowId], 0);
+        }
 
-// //      uart_poll_out(uart_dev, 'a');
+//      uart_poll_out(uart_dev, 'a');
 
-//      printk("spi send: a\n");
         setA0(false);
         setOledCs(false);
         writeSpi(0xaf);
@@ -157,7 +153,7 @@ void main(void)
         writeSpi(LedPagePrefix | 0);
         writeSpi(0x00);
         for (int i=0; i<255; i++) {
-            writeSpi(0xff);
+            writeSpi(c?0xff:0);
         }
         setLedsCs(true);
 
@@ -165,7 +161,7 @@ void main(void)
         writeSpi(LedPagePrefix | 1);
         writeSpi(0x00);
         for (int i=0; i<255; i++) {
-            writeSpi(0xff);
+            writeSpi(c?0xff:0);
         }
         setLedsCs(true);
 
