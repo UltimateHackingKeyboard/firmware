@@ -41,6 +41,7 @@ const struct spi_buf_set spiBufSet = {
 
 const struct device *spi0_dev = DEVICE_DT_GET(DT_NODELABEL(spi1));
 static const struct gpio_dt_spec ledsCsDt = GPIO_DT_SPEC_GET(DT_ALIAS(leds_cs), gpios);
+static const struct gpio_dt_spec ledsSdbDt = GPIO_DT_SPEC_GET(DT_ALIAS(leds_sdb), gpios);
 
 void setLedsCs(bool state)
 {
@@ -88,7 +89,11 @@ static struct gpio_dt_spec cols[] = {
 };
 
 void main(void) {
+printk("----------\nUHK 80 left half started\n");
     gpio_pin_configure_dt(&ledsCsDt, GPIO_OUTPUT);
+
+    gpio_pin_configure_dt(&ledsSdbDt, GPIO_OUTPUT);
+    gpio_pin_set_dt(&ledsSdbDt, true);
 
     for (uint8_t rowId=0; rowId<6; rowId++) {
         gpio_pin_configure_dt(&rows[rowId], GPIO_OUTPUT);
@@ -105,22 +110,20 @@ void main(void) {
     // dk_buttons_init(button_changed);
     // dk_leds_init();
 
-    usb_init();
-    bluetooth_init();
+    // usb_init();
+    // bluetooth_init();
 
     // uart_irq_callback_user_data_set(uart_dev, serial_cb, NULL);
     // uart_irq_rx_enable(uart_dev);
 //  int blink_status = 0;
     for (;;) {
         c = 0;
-        // c = !c;
-        // printk(".");
         for (uint8_t rowId=0; rowId<6; rowId++) {
             gpio_pin_set_dt(&rows[rowId], 1);
             for (uint8_t colId=0; colId<7; colId++) {
                 if (gpio_pin_get_dt(&cols[colId])) {
                     c = HID_KEY_A;
-                    // printk("SW%c%c ", rowId+'1', colId+'1');
+                    printk("SW%c%c\n", rowId+'1', colId+'1');
                 }
             }
             gpio_pin_set_dt(&rows[rowId], 0);
