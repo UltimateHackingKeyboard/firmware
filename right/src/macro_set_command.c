@@ -17,6 +17,7 @@
 #include "utils.h"
 #include "layer_switcher.h"
 #include "mouse_controller.h"
+#include "mouse_keys.h"
 #include "debug.h"
 #include "caret_config.h"
 #include "config_parser/parse_macro.h"
