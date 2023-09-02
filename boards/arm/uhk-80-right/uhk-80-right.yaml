@@ -5,8 +5,8 @@ identifier: uhk-80-right
 name: UHK 80 right
 type: mcu
 arch: arm
-ram: 24
-flash: 192
+ram: 256
+flash: 1024
 toolchain:
   - zephyr
   - gnuarmemb

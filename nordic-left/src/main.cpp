@@ -1,8 +1,10 @@
 extern "C"
 {
+#include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/gpio.h>
 // #include <zephyr/drivers/uart.h>
+#include <zephyr/usb/class/usb_hid.h>
 #include <zephyr/drivers/spi.h>
 
 #include <zephyr/types.h>
@@ -11,7 +13,6 @@ extern "C"
 #include <errno.h>
 #include <zephyr/sys/printk.h>
 #include <zephyr/sys/byteorder.h>
-#include <zephyr/kernel.h>
 #include <soc.h>
 #include <assert.h>
 
@@ -43,6 +44,7 @@ const struct spi_buf_set spiBufSet = {
 
 const struct device *spi0_dev = DEVICE_DT_GET(DT_NODELABEL(spi1));
 static const struct gpio_dt_spec ledsCsDt = GPIO_DT_SPEC_GET(DT_ALIAS(leds_cs), gpios);
+static const struct gpio_dt_spec ledsSdbDt = GPIO_DT_SPEC_GET(DT_ALIAS(leds_sdb), gpios);
 
 void setLedsCs(bool state)
 {
@@ -89,10 +91,14 @@ static struct gpio_dt_spec cols[] = {
     GPIO_DT_SPEC_GET(DT_ALIAS(col7), gpios),
 };
 
-volatile char c {};
+extern volatile char c;
 
 int main(void) {
+    printk("left half starts\n");
     gpio_pin_configure_dt(&ledsCsDt, GPIO_OUTPUT);
+
+    gpio_pin_configure_dt(&ledsSdbDt, GPIO_OUTPUT);
+    gpio_pin_set_dt(&ledsSdbDt, true);
 
     for (uint8_t rowId=0; rowId<6; rowId++) {
         gpio_pin_configure_dt(&rows[rowId], GPIO_OUTPUT);
@@ -117,14 +123,12 @@ int main(void) {
 //  int blink_status = 0;
     for (;;) {
         c = 0;
-        // c = !c;
-        // printk(".");
         for (uint8_t rowId=0; rowId<6; rowId++) {
             gpio_pin_set_dt(&rows[rowId], 1);
             for (uint8_t colId=0; colId<7; colId++) {
                 if (gpio_pin_get_dt(&cols[colId])) {
-                    c = 1;
-                    // printk("SW%c%c ", rowId+'1', colId+'1');
+                    c = HID_KEY_A;
+                    printk("SW%c%c\n", rowId+'1', colId+'1');
                 }
             }
             gpio_pin_set_dt(&rows[rowId], 0);

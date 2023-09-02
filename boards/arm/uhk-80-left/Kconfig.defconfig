@@ -4,7 +4,7 @@
 if BOARD_UHK_80_LEFT
 
 config BOARD
-	default "uhk-80-left"
+    default "uhk-80-left"
 
 config BT_CTLR
    default BT
