@@ -45,7 +45,7 @@ const moduleMd5Sums = packageJson.modules.map(module => {
 }).join('\n');
 
 function calculateMd5ChecksumOfFile(filePath) {
-    return md5Hasher(fs.readSync(filePath, {encoding: 'binary'}));
+    return md5Hasher(fs.readFileSync(filePath, {encoding: 'binary'}));
 }
 
 fs.writeFileSync(path.join(__dirname, '..', 'shared', 'versions.h'),
