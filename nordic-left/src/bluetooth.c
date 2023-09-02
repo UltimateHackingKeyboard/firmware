@@ -650,9 +650,9 @@ void bluetooth_init() {
 
     printk("Bluetooth initialized\n");
 
+    settings_load();
     hid_keyboard_init();
     hid_mouse_init();
 
-    settings_load();
     advertising_start();
 }
