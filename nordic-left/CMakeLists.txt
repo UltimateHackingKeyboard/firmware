@@ -2,7 +2,34 @@ cmake_minimum_required(VERSION 3.20.0)
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(uhk_nordic_left)
 
-zephyr_include_directories(.)
+target_include_directories(app PUBLIC
+    src
+)
 
 FILE(GLOB app_sources src/*.c)
-target_sources(app PRIVATE ${app_sources})
+FILE(GLOB app_cpp_sources src/*.cpp)
+target_sources(app PRIVATE ${app_sources} ${app_cpp_sources})
+
+# C headers compiled with C++ give pointer conversion errors, turn them to warnings
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive")
+
+# missing python debugging
+find_package(Python 3 REQUIRED)
+execute_process(
+    COMMAND python --version
+)
+find_package(Python3 REQUIRED)
+execute_process(
+    COMMAND python3 --version
+)
+
+set(C2USB_PATH "c2usb")
+
+add_subdirectory(${C2USB_PATH})
+# link c2usb to the abstract Zephyr interface to inherit the build flags
+target_link_libraries(c2usb zephyr_interface)
+
+# Link app to c2usb
+target_link_libraries(app PRIVATE
+    c2usb
+)

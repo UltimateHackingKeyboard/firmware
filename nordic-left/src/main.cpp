@@ -1,3 +1,5 @@
+extern "C"
+{
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/gpio.h>
@@ -16,8 +18,9 @@
 
 #include <dk_buttons_and_leds.h>
 
-#include "usb.h"
 #include "bluetooth.h"
+}
+#include "usb.hpp"
 
 #define LedPagePrefix 0b01010000
 
@@ -88,8 +91,10 @@ static struct gpio_dt_spec cols[] = {
     GPIO_DT_SPEC_GET(DT_ALIAS(col7), gpios),
 };
 
-void main(void) {
-printk("----------\nUHK 80 left half started\n");
+extern volatile char c;
+
+int main(void) {
+    printk("left half starts\n");
     gpio_pin_configure_dt(&ledsCsDt, GPIO_OUTPUT);
 
     gpio_pin_configure_dt(&ledsSdbDt, GPIO_OUTPUT);
@@ -110,8 +115,8 @@ printk("----------\nUHK 80 left half started\n");
     // dk_buttons_init(button_changed);
     // dk_leds_init();
 
-    // usb_init();
-    // bluetooth_init();
+    usb_init(DEVICE_DT_GET(DT_NODELABEL(zephyr_udc0)));
+    bluetooth_init();
 
     // uart_irq_callback_user_data_set(uart_dev, serial_cb, NULL);
     // uart_irq_rx_enable(uart_dev);
