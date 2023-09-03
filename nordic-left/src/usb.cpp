@@ -21,6 +21,7 @@ extern "C"
 #include "usb.hpp"
 #include "keyboard_app.hpp"
 #include "mouse_app.hpp"
+#include "command_app.hpp"
 #include "usb/df/device.hpp"
 #include "usb/df/port/zephyr/udc_mac.hpp"
 #include "usb/df/class/hid.hpp"
@@ -36,11 +37,14 @@ void usb_init(const device* dev) {
     static usb::df::zephyr::udc_mac mac {dev};
 
     static usb::df::hid::function usb_kb { keyboard_app::handle(), usb::hid::boot_protocol_mode::KEYBOARD };
-    static usb::df::hid::function usb_mouse { mouse_app::handle(), usb::hid::boot_protocol_mode::MOUSE };
+    static usb::df::hid::function usb_mouse { mouse_app::handle() };
+    static usb::df::hid::function usb_command { command_app::handle() };
 
     static const auto single_config = usb::df::config::make_config(usb::df::config::header(usb::df::config::power::bus(500, true)),
             usb::df::hid::config(usb_kb, speed, usb::endpoint::address(0x81), 1),
-            usb::df::hid::config(usb_mouse, speed, usb::endpoint::address(0x82), 1)
+            usb::df::hid::config(usb_mouse, speed, usb::endpoint::address(0x82), 1),
+            usb::df::hid::config(usb_command, speed, usb::endpoint::address(0x83), 20,
+            usb::endpoint::address(0x03), 20)
     );
 
     static usb::df::device_instance<usb::speeds(usb::speed::FULL)> device {mac, prinfo};
