@@ -4,13 +4,17 @@ const path = require('path');
 const common = require('./common.js');
 require('shelljs/global');
 
+const generateVersionsH = require('./generate-versions-h-util.js');
+const readPackageJson = require('./read-package-json.js');
+
 config.fatal = true;
 config.verbose = true;
 
-exec(`${__dirname}/generate-versions-h.js`);
-
 const gitInfo = common.getGitInfo();
-const package = JSON.parse(fs.readFileSync(`${__dirname}/package.json`));
+const package = readPackageJson();
+
+generateVersionsH({ packageJson: package, gitInfo, useRealData: false });
+
 const version = package.firmwareVersion;
 const releaseName = `uhk-firmware-${version}`;
 const releaseDir = `${__dirname}/${releaseName}`;
@@ -18,12 +22,12 @@ const agentDir = `${__dirname}/../lib/agent`;
 var releaseFile = `${__dirname}/${releaseName}.tar.gz`;
 var mkArgs = '';
 
-if (gitInfo.tag != `v${version}` && !process.argv.includes('--allowSha')) {
+if (gitInfo.tag !== `v${version}` && !process.argv.includes('--allowSha')) {
     console.error(`Git tag '${gitInfo.tag}' !~ 'v{version}'. Please run with '--allowSha' if this is intentional.`);
     process.exit(1);
 }
 
-if (gitInfo.tag != `v${version}`) {
+if (gitInfo.tag !== `v${version}`) {
     releaseFile = `${__dirname}/${releaseName}-${gitInfo.tag}.tar.gz`;
 }
 
@@ -41,7 +45,9 @@ for (const sourcePath of sourcePaths) {
     exec(`cd ${buildDir}/..; make clean; make -j8 ${mkArgs}`);
 }
 
-exec(`${__dirname}/generate-versions-h.js --withMd5Sums`);
+const { devices, modules } = generateVersionsH({ packageJson: package, gitInfo, useRealData: true });
+package.devices = devices;
+package.modules = modules;
 
 for (const sourcePath of sourcePaths) {
     const buildDir = path.dirname(`${__dirname}/../${sourcePath}`);
