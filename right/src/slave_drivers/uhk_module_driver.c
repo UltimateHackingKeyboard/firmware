@@ -328,7 +328,7 @@ slave_result_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
         case UhkModulePhase_ProcessFirmwareChecksum: {
             bool isMessageValid = CRC16_IsMessageValid(rxMessage);
             if (isMessageValid) {
-                Utils_SafeStrCopy(uhkModuleState->firmwareChecksum, (const char*)rxMessage->data, MD5_CHECKSUM_LENGTH);
+                Utils_SafeStrCopy(uhkModuleState->firmwareChecksum, (const char*)rxMessage->data, MD5_CHECKSUM_LENGTH+1);
             }
             res.status = kStatus_Uhk_IdleCycle;
             *uhkModulePhase = isMessageValid ? UhkModulePhase_RequestKeyStates : UhkModulePhase_RequestFirmwareChecksum;
