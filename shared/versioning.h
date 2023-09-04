@@ -7,7 +7,7 @@
 
 // Macros:
 
-#define MD5_CHECKSUM_LENGTH 33
+#define MD5_CHECKSUM_LENGTH 32
 
 #define VERSION_AT_LEAST(v, MAJ, MIN, PATCH) \
     (\
