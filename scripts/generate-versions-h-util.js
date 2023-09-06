@@ -83,12 +83,9 @@ ${deviceMd5Sums}
 };
 #endif
 
-
-#ifdef MODULE_ID
 char const * const ModuleMD5Checksums[ModuleId_AllCount] = {
 ${moduleMd5Sums}
 };
-#endif
 
 #endif
 `);

@@ -40,7 +40,7 @@ void UsbCommand_GetModuleProperty()
         case ModulePropertyId_FirmwareChecksum: {
             uint8_t moduleDriverId = UhkModuleSlaveDriver_SlotIdToDriverId(slotId);
             uhk_module_state_t *moduleState = UhkModuleStates + moduleDriverId;
-            Utils_SafeStrCopy(((char*)GenericHidInBuffer) + 1, moduleState->firmwareChecksum, MD5_CHECKSUM_LENGTH);
+            Utils_SafeStrCopy(((char*)GenericHidInBuffer) + 1, moduleState->firmwareChecksum, MD5_CHECKSUM_LENGTH + 1);
             break;
         }
     }
