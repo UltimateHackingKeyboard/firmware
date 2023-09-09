@@ -23,6 +23,7 @@
 #include "layer_switcher.h"
 #include "layer_stack.h"
 #include "mouse_controller.h"
+#include "mouse_keys.h"
 #include "utils.h"
 #include "debug.h"
 
@@ -272,7 +273,7 @@ void ApplyKeyAction(key_state_t *keyState, key_action_cached_t *cachedAction, ke
             if (KeyState_ActivatedNow(keyState)) {
                 stickyModifiers = 0;
                 stickyModifiersNegative = cachedAction->modifierLayerMask;
-                MouseController_ActivateDirectionSigns(action->mouseAction);
+                MouseKeys_ActivateDirectionSigns(action->mouseAction);
             }
             ActiveMouseStates[action->mouseAction]++;
             break;
@@ -484,6 +485,7 @@ static void updateActiveUsbReports(void)
         }
     }
 
+    MouseKeys_ProcessMouseActions();
     MouseController_ProcessMouseActions();
 
     PostponerCore_FinishCycle();
