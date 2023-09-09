@@ -45,9 +45,7 @@ for (const sourcePath of sourcePaths) {
     exec(`cd ${buildDir}/..; make clean; make -j8 ${mkArgs}`);
 }
 
-const { devices, modules } = generateVersionsH({ packageJson, gitInfo, useRealData: true });
-packageJson.devices = devices;
-packageJson.modules = modules;
+generateVersionsH({ packageJson, gitInfo, useRealData: true });
 
 for (const sourcePath of sourcePaths) {
     const buildDir = path.dirname(`${__dirname}/../${sourcePath}`);

@@ -19,8 +19,6 @@ const patchVersions = ['Major', 'Minor', 'Patch'];
  * @param {boolean} useRealData - If true, use real data. If false, use "0" data.
  */
 module.exports = function generateVersionsH({ packageJson, gitInfo, useRealData}) {
-  packageJson = structuredClone(packageJson)
-
   gitInfo = useRealData
     ? gitInfo
     : {
@@ -43,8 +41,6 @@ module.exports = function generateVersionsH({ packageJson, gitInfo, useRealData}
       ? calculateMd5ChecksumOfFile(path.join(__dirname, '..', device.source))
       : ZERO_MD5;
 
-    device.md5 = md5;
-
     return `    [${device.deviceId}] = "${md5}",`;
   }).join('\n');
 
@@ -52,8 +48,6 @@ module.exports = function generateVersionsH({ packageJson, gitInfo, useRealData}
     const md5 = useRealData
       ? calculateMd5ChecksumOfFile(path.join(__dirname, '..', module.source))
       : ZERO_MD5;
-
-    module.md5 = md5;
 
     return `    [${module.moduleId}] = "${md5}",`;
   }).join('\n');
@@ -89,11 +83,6 @@ ${moduleMd5Sums}
 
 #endif
 `);
-
-  return {
-    devices: packageJson.devices,
-    modules: packageJson.modules,
-  }
 }
 
 function calculateMd5ChecksumOfFile(filePath) {
