@@ -142,6 +142,12 @@ static macro_variable_t* consumeVarAndAllocate(parser_context_t* ctx)
         return NULL;
     }
 
+    uint16_t len = IdentifierEnd(ctx) - ctx->at;
+    if (len > 255) {
+        Macros_ReportError("Variable name too long:", ctx->at,  ctx->end);
+        return NULL;
+    }
+
     if (Macros_DryRun) {
         ConsumeAnyIdentifier(ctx);
         return NULL;
@@ -154,14 +160,13 @@ static macro_variable_t* consumeVarAndAllocate(parser_context_t* ctx)
     }
 
 
-    const char* tokEnd = IdentifierEnd(ctx);
     macro_variable_t* res = &macroVariables[macroVariableCount];
     macroVariables[macroVariableCount].name = (string_ref_t) {
         .offset = ctx->at - (const char*)ValidatedUserConfigBuffer.buffer,
-        .len = IdentifierEnd(ctx) - ctx->at
+        .len = len
     };
     macroVariableCount++;
-    ctx->at = tokEnd;
+    ctx->at += len;
 
     ConsumeWhite(ctx);
     return res;
