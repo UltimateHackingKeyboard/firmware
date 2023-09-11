@@ -792,8 +792,8 @@ static macro_result_t dispatchText(const char* text, uint16_t textLen, bool rawS
     if (rawString) {
         ++s->as.dispatchData.textIdx;
     } else {
-        if (textIndexCopy == s->as.dispatchData.textIdx && textSubIndexCopy == s->as.dispatchData.subIndex) {
-            Macros_ReportError("Dispatch data got stuck! Please report this.", text + textIndexCopy, text+textLen);
+        if (textIndexCopy == s->as.dispatchData.textIdx && textSubIndexCopy == s->as.dispatchData.subIndex && stringOffsetCopy == s->as.dispatchData.stringOffset) {
+            Macros_ReportError("Text dispatch got stuck! Please report this.", text + textIndexCopy, text+textLen);
             return MacroResult_Finished;
         }
         s->as.dispatchData.textIdx = textIndexCopy;
