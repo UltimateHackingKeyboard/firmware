@@ -8,6 +8,7 @@
 #include "slave_drivers/is31fl3xxx_driver.h"
 #include "slave_drivers/uhk_module_driver.h"
 #include "macros.h"
+#include "macros_status_buffer.h"
 #include "key_states.h"
 #include "right_key_matrix.h"
 #include "usb_report_updater.h"
@@ -16,7 +17,7 @@
 #include "usb_commands/usb_command_get_debug_buffer.h"
 #include "arduino_hid/ConsumerAPI.h"
 #include "macro_recorder.h"
-#include "macro_shortcut_parser.h"
+#include "macros_shortcut_parser.h"
 #include "postponer.h"
 #include "secondary_role_driver.h"
 #include "slave_drivers/touchpad_driver.h"
@@ -315,19 +316,19 @@ static void mergeReports(void)
         if(MacroState[j].ms.reportsUsed) {
             //if the macro ended right now, we still want to flush the last report
             MacroState[j].ms.reportsUsed &= MacroState[j].ms.macroPlaying;
-            macro_state_t *s = &MacroState[j];
+            macro_state_t *macroState = &MacroState[j];
 
-            UsbBasicKeyboard_MergeReports(&(s->ms.macroBasicKeyboardReport), ActiveUsbBasicKeyboardReport);
-            UsbMediaKeyboard_MergeReports(&(s->ms.macroMediaKeyboardReport), ActiveUsbMediaKeyboardReport);
-            UsbSystemKeyboard_MergeReports(&(s->ms.macroSystemKeyboardReport), ActiveUsbSystemKeyboardReport);
+            UsbBasicKeyboard_MergeReports(&(macroState->ms.macroBasicKeyboardReport), ActiveUsbBasicKeyboardReport);
+            UsbMediaKeyboard_MergeReports(&(macroState->ms.macroMediaKeyboardReport), ActiveUsbMediaKeyboardReport);
+            UsbSystemKeyboard_MergeReports(&(macroState->ms.macroSystemKeyboardReport), ActiveUsbSystemKeyboardReport);
 
-            InputModifiers |= s->ms.inputModifierMask;
+            InputModifiers |= macroState->ms.inputModifierMask;
 
-            ActiveUsbMouseReport->buttons |= s->ms.macroMouseReport.buttons;
-            ActiveUsbMouseReport->x += s->ms.macroMouseReport.x;
-            ActiveUsbMouseReport->y += s->ms.macroMouseReport.y;
-            ActiveUsbMouseReport->wheelX += s->ms.macroMouseReport.wheelX;
-            ActiveUsbMouseReport->wheelY += s->ms.macroMouseReport.wheelY;
+            ActiveUsbMouseReport->buttons |= macroState->ms.macroMouseReport.buttons;
+            ActiveUsbMouseReport->x += macroState->ms.macroMouseReport.x;
+            ActiveUsbMouseReport->y += macroState->ms.macroMouseReport.y;
+            ActiveUsbMouseReport->wheelX += macroState->ms.macroMouseReport.wheelX;
+            ActiveUsbMouseReport->wheelY += macroState->ms.macroMouseReport.wheelY;
         }
     }
 }

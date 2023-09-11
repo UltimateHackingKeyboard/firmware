@@ -17,11 +17,11 @@
 #include "usb_interfaces/usb_interface_basic_keyboard.h"
 #include "usb_report_updater.h"
 #include "macro_events.h"
-#include "macro_shortcut_parser.h"
+#include "macros_shortcut_parser.h"
+#include "macros_keyid_parser.h"
 #include "ledmap.h"
 #include "debug.h"
 #include "event_scheduler.h"
-#include "macro_keyid_parser.h"
 
 static bool IsEepromInitialized = false;
 static bool IsConfigInitialized = false;

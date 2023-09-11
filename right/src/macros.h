@@ -10,7 +10,7 @@
     #include "usb_device_config.h"
     #include "key_states.h"
     #include "str_utils.h"
-    #include "macros_core.h"
+    #include "macros_typedefs.h"
 
 // Macros:
     #define MACRO_CYCLES_TO_POSTPONE 4
@@ -40,13 +40,6 @@
         uint8_t macroActionsCount;
         uint8_t macroNameOffset; //negative w.r.t. firstMacroActionOffset
     } macro_reference_t;
-
-    typedef enum {
-        MacroSubAction_Tap,
-        MacroSubAction_Press,
-        MacroSubAction_Release,
-        MacroSubAction_Hold
-    } macro_sub_action_t;
 
     typedef enum {
         Scheduler_Preemptive,
@@ -219,8 +212,10 @@
     extern macro_reference_t AllMacros[MacroIndex_MaxCount];
     extern uint8_t AllMacrosCount;
     extern macro_state_t MacroState[MACRO_STATE_POOL_SIZE];
+    extern macro_state_t *s;
     extern bool MacroPlaying;
     extern macro_scheduler_t Macros_Scheduler;
+    extern scheduler_state_t Macros_SchedulerState;
     extern bool Macros_ExtendedCommands;
     extern uint8_t Macros_MaxBatchSize;
     extern uint32_t Macros_WakeMeOnTime;
@@ -230,43 +225,39 @@
     extern uint16_t DoubletapConditionTimeout;
     extern uint16_t AutoRepeatInitialDelay;
     extern uint16_t AutoRepeatDelayRate;
-    extern bool Macros_ConsumeStatusCharDirtyFlag;
     extern bool Macros_ParserError;
     extern bool RecordKeyTiming;
     extern bool Macros_DryRun;
 
 // Functions:
 
-    uint8_t Macros_StartMacro(uint8_t index, key_state_t *keyState, uint8_t parentMacroSlot, bool runFirstAction);
-    uint8_t Macros_QueueMacro(uint8_t index, key_state_t *keyState, uint8_t queueAfterSlot);
-    void Macros_ContinueMacro(void);
-    void Macros_SignalInterrupt(void);
     bool Macros_ClaimReports(void);
-    void Macros_ReportError(const char* err, const char* arg, const char *argEnd);
-    void Macros_ReportErrorPrintf(const char* pos, const char *fmt, ...);
-    void Macros_ReportErrorNum(const char* err, int32_t num, const char* pos);
-    void Macros_ReportErrorFloat(const char* err, float num, const char* pos);
-    void Macros_ReportWarn(const char* err, const char* arg, const char *argEnd);
-    void Macros_SetStatusString(const char* text, const char *textEnd);
-    void Macros_SetStatusStringInterpolated(const char* text, const char *textEnd);
-    void Macros_SetStatusBool(bool b);
-    void Macros_SetStatusFloat(float n);
-    void Macros_SetStatusNum(int32_t n);
-    void Macros_SetStatusNumSpaced(int32_t n, bool space);
-    void Macros_SetStatusChar(char n);
-    void Macros_Initialize();
-    void Macros_ClearStatus();
-    void Macros_ValidateAllMacros();
+    bool Macros_CurrentMacroKeyIsActive();
     bool Macros_IsLayerHeld();
     bool Macros_MacroHasActiveInstance(macro_index_t macroIdx);
-    uint8_t Macros_ParseLayerId(const char* arg1, const char* cmdEnd);
-    uint8_t Macros_ConsumeLayerId(parser_context_t* ctx);
-    int32_t Macros_ParseInt(const char *a, const char *aEnd, const char* *parsedTill);
-    int32_t Macros_LegacyConsumeInt(parser_context_t* ctx);
-    uint8_t Macros_TryConsumeKeyId(parser_context_t* ctx);
     bool Macros_ParseBoolean(const char *a, const char *aEnd);
-    void Macros_ResetBasicKeyboardReports();
     char Macros_ConsumeStatusChar();
+    int32_t Macros_LegacyConsumeInt(parser_context_t* ctx);
+    int32_t Macros_ParseInt(const char *a, const char *aEnd, const char* *parsedTill);
+    macro_result_t goTo(parser_context_t* ctx);
+    macro_result_t Macros_CallMacro(uint8_t macroIndex);
+    macro_result_t Macros_DispatchText(const char* text, uint16_t textLen, bool rawString);
+    macro_result_t Macros_ExecMacro(uint8_t macroIndex);
+    macro_result_t Macros_ForkMacro(uint8_t macroIndex);
+    macro_result_t Macros_GoToAddress(uint8_t address);
+    macro_result_t Macros_GoToLabel(parser_context_t* ctx);
+    macro_result_t Macros_SleepTillKeystateChange();
+    macro_result_t Macros_SleepTillTime(uint32_t time);
+    uint8_t Macros_ConsumeLayerId(parser_context_t* ctx);
+    uint8_t Macros_ParseLayerId(const char* arg1, const char* cmdEnd);
+    uint8_t Macros_QueueMacro(uint8_t index, key_state_t *keyState, uint8_t queueAfterSlot);
+    uint8_t Macros_StartMacro(uint8_t index, key_state_t *keyState, uint8_t parentMacroSlot, bool runFirstAction);
+    uint8_t Macros_TryConsumeKeyId(parser_context_t* ctx);
+    void Macros_ContinueMacro(void);
+    void Macros_Initialize();
+    void Macros_ResetBasicKeyboardReports();
+    void Macros_SignalInterrupt(void);
+    void Macros_ValidateAllMacros();
 
 #define WAKE_MACROS_ON_KEYSTATE_CHANGE()  if (Macros_WakeMeOnKeystateChange) { \
                                               Macros_WakedBecauseOfKeystateChange = true; \

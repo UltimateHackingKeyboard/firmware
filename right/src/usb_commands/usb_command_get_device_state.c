@@ -1,6 +1,7 @@
 #include "fsl_common.h"
 #include "keymap.h"
 #include "macros.h"
+#include "macros_status_buffer.h"
 #include "segment_display.h"
 #include "usb_commands/usb_command_get_device_state.h"
 #include "usb_protocol_handler.h"
