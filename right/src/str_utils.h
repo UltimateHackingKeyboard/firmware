@@ -33,6 +33,7 @@
     bool StrEqual(const char* a, const char* aEnd, const char* b, const char* bEnd);
     const char* FindChar(char c, const char* str, const char* strEnd);
     bool ConsumeToken(parser_context_t* ctx, const char *b);
+    void ConsumeCommentsAsWhite(bool consume);
     bool ConsumeTokenByRef(parser_context_t* ctx, string_ref_t ref);
     bool ConsumeIdentifierByRef(parser_context_t* ctx, string_ref_t ref);
     void ConsumeAnyIdentifier(parser_context_t* ctx);
