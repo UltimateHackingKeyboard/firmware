@@ -30,6 +30,8 @@
 bool TestUsbStack = false;
 static key_action_cached_t actionCache[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
 
+static uint32_t lastActivityTime;
+
 volatile uint8_t UsbReportUpdateSemaphore = 0;
 
 // Modifiers can be applied as one of the following classes
@@ -108,6 +110,8 @@ static void applyToggleLayerAction(key_state_t *keyState, key_action_t *action) 
 static void handleEventInterrupts(key_state_t *keyState) {
     if(KeyState_ActivatedNow(keyState)) {
         LayerSwitcher_DoubleTapInterrupt(keyState);
+        Macros_SignalInterrupt();
+        lastActivityTime = CurrentTime;
     }
 }
 
@@ -258,10 +262,6 @@ static void applyKeystroke(key_state_t *keyState, key_action_cached_t *cachedAct
 void ApplyKeyAction(key_state_t *keyState, key_action_cached_t *cachedAction, key_action_t *actionBase)
 {
     key_action_t* action = &cachedAction->action;
-
-    if (KeyState_ActivatedNow(keyState)) {
-        Macros_SignalInterrupt();
-    }
 
     switch (action->type) {
         case KeyActionType_Keystroke:
@@ -516,7 +516,7 @@ void justPreprocessInput(void) {
 
 uint32_t UsbReportUpdateCounter;
 
-static void updateLedSleepModeState(uint32_t lastActivityTime) {
+static void updateLedSleepModeState() {
     uint32_t elapsedTime = Timer_GetElapsedTime(&lastActivityTime);
 
     if (elapsedTime > LedsFadeTimeout && !LedSleepModeActive && LedsFadeTimeout) {
@@ -532,7 +532,6 @@ void UpdateUsbReports(void)
 {
     static uint32_t lastUpdateTime;
     static uint32_t lastReportTime;
-    static uint32_t lastActivityTime;
 
     for (uint8_t keyId = 0; keyId < RIGHT_KEY_MATRIX_KEY_COUNT; keyId++) {
         KeyStates[SlotId_RightKeyboardHalf][keyId].hardwareSwitchState = RightKeyMatrix.keyStates[keyId];
@@ -561,7 +560,7 @@ void UpdateUsbReports(void)
 
     updateActiveUsbReports();
 
-    updateLedSleepModeState(lastActivityTime);
+    updateLedSleepModeState();
 
     if (UsbBasicKeyboardCheckReportReady() == kStatus_USB_Success) {
         MacroRecorder_RecordBasicReport(ActiveUsbBasicKeyboardReport);
