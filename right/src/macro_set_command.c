@@ -33,13 +33,43 @@ typedef enum {
     SetCommandAction_Read,
 } set_command_action_t;
 
-#define ASSIGN_CUSTOM5(TPE, RET, RETPARAM, DST, SRC)           \
+#define DEFINE_INT_LIMITS(LOWER_BOUND, UPPER_BOUND)            \
+    bool useLimits = true;                                     \
+    int32_t lowerBound = LOWER_BOUND;                          \
+    int32_t upperBound = UPPER_BOUND;                          \
+
+#define DEFINE_FLOAT_LIMITS(LOWER_BOUND, UPPER_BOUND)          \
+    bool useLimits = true;                                     \
+    float lowerBound = LOWER_BOUND;                            \
+    float upperBound = UPPER_BOUND;                            \
+
+#define DEFINE_NONE_LIMITS()                                   \
+    bool useLimits = false;                                    \
+    int32_t lowerBound = 0;                                    \
+    int32_t upperBound = 0;                                    \
+
+
+#define ASSIGN_NO_LIMITS(TPE, RET, RETPARAM, DST, SRC)         \
     if (action == SetCommandAction_Read) {                     \
         return RET(RETPARAM);                                  \
     }                                                          \
     TPE res = SRC;                                             \
     if (Macros_ParserError || Macros_DryRun) {                 \
         return noneVar();                                      \
+    }                                                          \
+    DST = res;                                                 \
+
+
+#define ASSIGN_CUSTOM5(TPE, RET, RETPARAM, DST, SRC)     \
+    if (action == SetCommandAction_Read) {                     \
+        return RET(RETPARAM);                                  \
+    }                                                          \
+    TPE res = SRC;                                             \
+    if (Macros_ParserError || Macros_DryRun) {                 \
+        return noneVar();                                      \
+    }                                                          \
+    if (useLimits) {                                           \
+        res = coalesce_ ## TPE(lowerBound, res, upperBound);  \
     }                                                          \
     DST = res;                                                 \
 
@@ -51,23 +81,29 @@ typedef enum {
     if (Macros_ParserError || Macros_DryRun) {                 \
         return noneVar();                                      \
     }                                                          \
+    if (useLimits) {                                           \
+        res = coalesce_ ## int32_t(lowerBound, res, upperBound);   \
+    }                                                          \
     DST = res;                                                 \
 
 #define ASSIGN_INT2(DST, DST2)                                 \
     if (action == SetCommandAction_Read) {                     \
         return intVar(DST);                                    \
     }                                                          \
-    uint32_t res = Macros_LegacyConsumeInt(ctx);               \
+    int32_t res = Macros_LegacyConsumeInt(ctx);               \
     if (Macros_ParserError || Macros_DryRun) {                 \
         return noneVar();                                      \
+    }                                                          \
+    if (useLimits) {                                           \
+        res = coalesce_ ## int32_t(lowerBound, res, upperBound);   \
     }                                                          \
     DST = res;                                                 \
     DST2 = res;                                                \
 
 #define ASSIGN_CUSTOM(TPE, RET, DST, SRC) ASSIGN_CUSTOM5(TPE, RET, DST, DST, SRC)
-#define ASSIGN_ENUM(DST, SRC) ASSIGN_CUSTOM(uint8_t, intVar, DST, SRC)
+#define ASSIGN_ENUM(DST, SRC) ASSIGN_NO_LIMITS(uint8_t, intVar, DST, DST, SRC)
 #define ASSIGN_FLOAT(DST) ASSIGN_CUSTOM(float, floatVar, DST, Macros_ConsumeFloat(ctx))
-#define ASSIGN_BOOL(DST) ASSIGN_CUSTOM(bool, boolVar, DST, Macros_ConsumeBool(ctx))
+#define ASSIGN_BOOL(DST) ASSIGN_NO_LIMITS(bool, boolVar, DST, DST, Macros_ConsumeBool(ctx))
 #define ASSIGN_INT(DST) ASSIGN_CUSTOM(int32_t, intVar, DST, Macros_ConsumeInt(ctx))
 
 static macro_variable_t noneVar()
@@ -88,6 +124,26 @@ static macro_variable_t floatVar(float value)
 static macro_variable_t boolVar(bool value)
 {
     return (macro_variable_t) { .asBool = value, .type = MacroVariableType_Bool };
+}
+
+static int32_t coalesce_int32_t(int32_t lowerBound, int32_t val, int32_t upperBound) {
+    if (val < lowerBound) {
+        return lowerBound;
+    } else if (val > upperBound) {
+        return upperBound;
+    } else {
+        return val;
+    }
+}
+
+static float coalesce_float(float lowerBound, float val, float upperBound) {
+    if (val < lowerBound) {
+        return lowerBound;
+    } else if (val > upperBound) {
+        return upperBound;
+    } else {
+        return val;
+    }
 }
 
 static macro_variable_t moduleNavigationMode(parser_context_t* ctx, set_command_action_t action, module_configuration_t* module)
@@ -120,30 +176,39 @@ static macro_variable_t moduleNavigationMode(parser_context_t* ctx, set_command_
 static macro_variable_t moduleSpeed(parser_context_t* ctx, set_command_action_t action, module_configuration_t* module, uint8_t moduleId)
 {
     if (ConsumeToken(ctx, "baseSpeed")) {
+        DEFINE_FLOAT_LIMITS(0.0f, 1000.0f);
         ASSIGN_FLOAT(module->baseSpeed);
     }
     else if (ConsumeToken(ctx, "speed")) {
+        DEFINE_FLOAT_LIMITS(0.0f, 1000.0f);
         ASSIGN_FLOAT(module->speed);
     }
     else if (ConsumeToken(ctx, "xceleration")) {
+        DEFINE_FLOAT_LIMITS(0.0f, 1000.0f);
         ASSIGN_FLOAT(module->xceleration);
     }
     else if (ConsumeToken(ctx, "caretSpeedDivisor")) {
+        DEFINE_FLOAT_LIMITS(1.0f, 1000.0f);
         ASSIGN_FLOAT(module->caretSpeedDivisor);
     }
     else if (ConsumeToken(ctx, "scrollSpeedDivisor")) {
+        DEFINE_FLOAT_LIMITS(1.0f, 1000.0f);
         ASSIGN_FLOAT(module->scrollSpeedDivisor);
     }
     else if (ConsumeToken(ctx, "pinchZoomDivisor") && moduleId == ModuleId_TouchpadRight) {
+        DEFINE_FLOAT_LIMITS(1.0f, 1000.0f);
         ASSIGN_FLOAT(module->pinchZoomSpeedDivisor);
     }
     else if (ConsumeToken(ctx, "pinchZoomMode") && moduleId == ModuleId_TouchpadRight) {
+        DEFINE_NONE_LIMITS();
         ASSIGN_CUSTOM(int32_t, intVar, TouchpadPinchZoomMode, ConsumeNavigationModeId(ctx));
     }
     else if (ConsumeToken(ctx, "axisLockSkew")) {
+        DEFINE_FLOAT_LIMITS(0.0f, 1000.0f);
         ASSIGN_FLOAT(module->axisLockSkew);
     }
     else if (ConsumeToken(ctx, "axisLockFirstTickSkew")) {
+        DEFINE_FLOAT_LIMITS(0.0f, 1000.0f);
         ASSIGN_FLOAT(module->axisLockFirstTickSkew);
     }
     else if (ConsumeToken(ctx, "cursorAxisLock")) {
@@ -197,12 +262,15 @@ static macro_variable_t module(parser_context_t* ctx, set_command_action_t actio
 static macro_variable_t secondaryRoleAdvanced(parser_context_t* ctx, set_command_action_t action)
 {
     if (ConsumeToken(ctx, "timeout")) {
+        DEFINE_INT_LIMITS(0, 65535);
         ASSIGN_INT(SecondaryRoles_AdvancedStrategyTimeout);
     }
     else if (ConsumeToken(ctx, "timeoutAction")) {
+        DEFINE_NONE_LIMITS();
         ASSIGN_CUSTOM(int32_t, intVar, SecondaryRoles_AdvancedStrategyTimeoutAction, ConsumeSecondaryRoleTimeoutAction(ctx));
     }
     else if (ConsumeToken(ctx, "safetyMargin")) {
+        DEFINE_INT_LIMITS(-32768, 32767);
         ASSIGN_INT(SecondaryRoles_AdvancedStrategySafetyMargin);
     }
     else if (ConsumeToken(ctx, "triggerByRelease")) {
@@ -212,6 +280,7 @@ static macro_variable_t secondaryRoleAdvanced(parser_context_t* ctx, set_command
         ASSIGN_BOOL(SecondaryRoles_AdvancedStrategyDoubletapToPrimary);
     }
     else if (ConsumeToken(ctx, "doubletapTime")) {
+        DEFINE_INT_LIMITS(0, 65535);
         ASSIGN_INT(SecondaryRoles_AdvancedStrategyDoubletapTime);
     }
     else {
@@ -223,6 +292,7 @@ static macro_variable_t secondaryRoleAdvanced(parser_context_t* ctx, set_command
 static macro_variable_t secondaryRoles(parser_context_t* ctx, set_command_action_t action)
 {
     if (ConsumeToken(ctx, "defaultStrategy")) {
+        DEFINE_NONE_LIMITS();
         ASSIGN_CUSTOM(int32_t, intVar, SecondaryRoles_Strategy, ConsumeSecondaryRoleStrategy(ctx));
     }
     else if (ConsumeToken(ctx, "advanced")) {
@@ -251,21 +321,27 @@ static macro_variable_t mouseKeys(parser_context_t* ctx, set_command_action_t ac
     ConsumeUntilDot(ctx);
 
     if (ConsumeToken(ctx, "initialSpeed")) {
+        DEFINE_INT_LIMITS(0, 255);
         ASSIGN_INT_MUL(state->initialSpeed, 1.0f/state->intMultiplier);
     }
     else if (ConsumeToken(ctx, "baseSpeed")) {
+        DEFINE_INT_LIMITS(0, 255);
         ASSIGN_INT_MUL(state->baseSpeed, 1.0f/state->intMultiplier);
     }
     else if (ConsumeToken(ctx, "initialAcceleration")) {
+        DEFINE_INT_LIMITS(0, 255);
         ASSIGN_INT_MUL(state->acceleration, 1.0f/state->intMultiplier);
     }
     else if (ConsumeToken(ctx, "deceleratedSpeed")) {
+        DEFINE_INT_LIMITS(0, 255);
         ASSIGN_INT_MUL(state->deceleratedSpeed, 1.0f/state->intMultiplier);
     }
     else if (ConsumeToken(ctx, "acceleratedSpeed")) {
+        DEFINE_INT_LIMITS(0, 255);
         ASSIGN_INT_MUL(state->acceleratedSpeed, 1.0f/state->intMultiplier);
     }
     else if (ConsumeToken(ctx, "axisSkew")) {
+        DEFINE_FLOAT_LIMITS(0.001f, 1000.0f);
         ASSIGN_FLOAT(state->axisSkew);
     }
     else {
@@ -311,6 +387,7 @@ static macro_variable_t macroEngine(parser_context_t* ctx, set_command_action_t 
         return macroEngineScheduler(ctx, action);
     }
     else if (ConsumeToken(ctx, "batchSize")) {
+        DEFINE_INT_LIMITS(0, 255);
         ASSIGN_INT(Macros_MaxBatchSize);
     }
     else if (ConsumeToken(ctx, "extendedCommands")) {
@@ -427,8 +504,10 @@ static macro_variable_t constantRgb(parser_context_t* ctx, set_command_action_t 
 static macro_variable_t leds(parser_context_t* ctx, set_command_action_t action)
 {
     if (ConsumeToken(ctx, "fadeTimeout")) {
+        DEFINE_NONE_LIMITS();
         ASSIGN_INT_MUL(LedsFadeTimeout, 1000);
     } else if (ConsumeToken(ctx, "brightness")) {
+        DEFINE_FLOAT_LIMITS(1.0f/256.0f, 255.0f);
         ASSIGN_FLOAT(LedBrightnessMultiplier);
     } else if (ConsumeToken(ctx, "enabled")) {
         ASSIGN_BOOL(LedsEnabled);
@@ -688,27 +767,34 @@ static macro_variable_t root(parser_context_t* ctx, set_command_action_t action)
         return stickyModifiers(ctx, action);
     }
     else if (ConsumeToken(ctx, "debounceDelay")) {
+        DEFINE_INT_LIMITS(0, 255);
         ASSIGN_INT2(DebounceTimePress, DebounceTimeRelease);
     }
     else if (ConsumeToken(ctx, "keystrokeDelay")) {
+        DEFINE_INT_LIMITS(0, 65535);
         ASSIGN_INT(KeystrokeDelay);
     }
     else if (
             ConsumeToken(ctx, "doubletapTimeout")  // new name
             || (ConsumeToken(ctx, "doubletapDelay")) // deprecated alias - old name
             ) {
+        DEFINE_INT_LIMITS(0, 65535);
         ASSIGN_INT2(DoubleTapSwitchLayerTimeout, DoubletapConditionTimeout);
     }
     else if (ConsumeToken(ctx, "autoRepeatDelay")) {
+        DEFINE_INT_LIMITS(0, 65535);
         ASSIGN_INT(AutoRepeatInitialDelay);
     }
     else if (ConsumeToken(ctx, "autoRepeatRate")) {
+        DEFINE_INT_LIMITS(0, 65535);
         ASSIGN_INT(AutoRepeatDelayRate);
     }
     else if (ConsumeToken(ctx, "chordingDelay")) {
+        DEFINE_INT_LIMITS(0, 255);
         ASSIGN_INT(ChordingDelay);
     }
     else if (ConsumeToken(ctx, "autoShiftDelay")) {
+        DEFINE_INT_LIMITS(0, 65535);
         ASSIGN_INT(AutoShiftDelay);
     }
     else if (ConsumeToken(ctx, "i2cBaudRate")) {
@@ -723,7 +809,7 @@ static macro_variable_t root(parser_context_t* ctx, set_command_action_t action)
         ChangeI2cBaudRate(baudRate);
     }
     else if (ConsumeToken(ctx, "emergencyKey")) {
-        ASSIGN_CUSTOM5(key_state_t*, noneVar,, EmergencyKey, Utils_KeyIdToKeyState(Macros_LegacyConsumeInt(ctx)));
+        ASSIGN_NO_LIMITS(key_state_t*, noneVar,, EmergencyKey, Utils_KeyIdToKeyState(Macros_LegacyConsumeInt(ctx)));
     }
     else if (action == SetCommandAction_Write) {
         Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
