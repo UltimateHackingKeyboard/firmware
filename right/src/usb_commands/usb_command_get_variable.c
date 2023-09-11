@@ -27,7 +27,11 @@ void UsbCommand_GetVariable(void)
             break;
         case UsbVariable_StatusBuffer:
             for (uint8_t i = 1; i < sizeof(GenericHidInBuffer); i++) {
-                SetUsbTxBufferUint8(i, Macros_ConsumeStatusChar());
+                char c = Macros_ConsumeStatusChar();
+                SetUsbTxBufferUint8(i, c);
+                if (c == '\0') {
+                    break;
+                }
             }
             break;
     }

@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 function getGitInfo() {
     var result = {
         repo: '',

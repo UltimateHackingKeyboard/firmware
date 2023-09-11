@@ -10,6 +10,7 @@
 #include "slave_drivers/is31fl3xxx_driver.h"
 #include "config.h"
 #include "mouse_controller.h"
+#include "mouse_keys.h"
 
     uint16_t DataModelMajorVersion = 0;
     uint16_t DataModelMinorVersion = 0;

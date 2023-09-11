@@ -61,7 +61,8 @@ bool Macros_WakeMeOnKeystateChange = false;
 bool Macros_ParserError = false;
 bool Macros_DryRun = false;
 
-uint8_t consumeStatusCharReadingPos = 0;
+static uint16_t consumeStatusCharReadingPos = 0;
+bool Macros_ConsumeStatusCharDirtyFlag = false;
 
 macro_scheduler_t Macros_Scheduler = Scheduler_Blocking;
 uint8_t Macros_MaxBatchSize = 20;
@@ -456,6 +457,7 @@ static macro_result_t processClearStatusCommand()
 
     statusBufferLen = 0;
     consumeStatusCharReadingPos = 0;
+    Macros_ConsumeStatusCharDirtyFlag = false;
     SegmentDisplay_DeactivateSlot(SegmentDisplaySlot_Error);
     SegmentDisplay_DeactivateSlot(SegmentDisplaySlot_Warn);
     return MacroResult_Finished;
@@ -470,6 +472,8 @@ char Macros_ConsumeStatusChar()
         res = statusBuffer[consumeStatusCharReadingPos++];
     } else {
         res = '\0';
+        consumeStatusCharReadingPos = 0;
+        Macros_ConsumeStatusCharDirtyFlag = false;
     }
 
     return res;
@@ -490,6 +494,7 @@ static void setStatusStringInterpolated(parser_context_t* ctx)
           ) {
         statusBuffer[statusBufferLen] = c;
         statusBufferLen++;
+        Macros_ConsumeStatusCharDirtyFlag = true;
     }
 }
 
@@ -502,6 +507,7 @@ static void setStatusChar(char n)
     if (n && statusBufferLen < STATUS_BUFFER_MAX_LENGTH) {
         statusBuffer[statusBufferLen] = n;
         statusBufferLen++;
+        Macros_ConsumeStatusCharDirtyFlag = true;
     }
 }
 
