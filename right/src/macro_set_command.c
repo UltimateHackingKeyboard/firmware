@@ -391,6 +391,7 @@ static macro_variable_t macroEngine(parser_context_t* ctx, set_command_action_t 
         ASSIGN_INT(Macros_MaxBatchSize);
     }
     else if (ConsumeToken(ctx, "extendedCommands")) {
+        Macros_LegacyConsumeInt(ctx);
         /* this option was removed -> accept the command & do nothing */
     }
     else {

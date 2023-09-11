@@ -44,9 +44,8 @@ I.e., if you want to customize acceleration driver for your trackball module on 
 
 The following grammar is supported:
 
-    BODY = #<comment>
     BODY = //<comment>
-    BODY = [LABEL:] COMMAND [//<comment, excluding commands taking custom text arguments>]
+    BODY = [LABEL:] COMMAND [//<comment>]
     COMMAND = [CONDITION|MODIFIER]* COMMAND
     COMMAND = delayUntilRelease
     COMMAND = delayUntil <timeout (INT)>

@@ -321,7 +321,7 @@ const char* NextCmd(const char* cmd, const char *cmdEnd)
 
 const char* CmdEnd(const char* cmd, const char *cmdEnd)
 {
-    while(*cmd != '\n' && *cmd != '\r' && cmd < cmdEnd)    {
+    while(*cmd != '\n' && *cmd != '\r' && (cmd[0] != '/' || cmd[1] != '/') && cmd < cmdEnd)    {
         cmd++;
     }
     return cmd;
