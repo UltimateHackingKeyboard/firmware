@@ -704,7 +704,7 @@ static macro_variable_t consumeAndExpression(parser_context_t* ctx)
         } else {
             return accumulator;
         }
-        macro_variable_t var = consumeValue(ctx);
+        macro_variable_t var = consumeEqExpression(ctx);
         accumulator = computeBoolOperation(accumulator, op, &opCtx, var);
     }
 }
@@ -721,7 +721,7 @@ static macro_variable_t consumeOrExpression(parser_context_t* ctx)
         } else {
             return accumulator;
         }
-        macro_variable_t var = consumeValue(ctx);
+        macro_variable_t var = consumeAndExpression(ctx);
         accumulator = computeBoolOperation(accumulator, op, &opCtx, var);
     }
 }
