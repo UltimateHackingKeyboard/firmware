@@ -7,6 +7,7 @@
 #include "module.h"
 #include "slave_protocol.h"
 
+static bool consumeCommentsAsWhite = true;
 
 static bool isIdentifierChar(char c);
 
@@ -81,6 +82,17 @@ static void consumeWhite(parser_context_t* ctx)
     while (*ctx->at <= 32 && ctx->at < ctx->end) {
         ctx->at++;
     }
+    if (ctx->at[0] == '/' && ctx->at[1] == '/' && consumeCommentsAsWhite) {
+        while (*ctx->at != '\n' && *ctx->at != '\r' && ctx->at < ctx->end) {
+            ctx->at++;
+        }
+    }
+}
+
+
+void ConsumeCommentsAsWhite(bool consume)
+{
+    consumeCommentsAsWhite = consume;
 }
 
 void ConsumeWhite(parser_context_t* ctx)
@@ -321,7 +333,7 @@ const char* NextCmd(const char* cmd, const char *cmdEnd)
 
 const char* CmdEnd(const char* cmd, const char *cmdEnd)
 {
-    while(*cmd != '\n' && *cmd != '\r' && (cmd[0] != '/' || cmd[1] != '/') && cmd < cmdEnd)    {
+    while(*cmd != '\n' && *cmd != '\r' && cmd < cmdEnd)    {
         cmd++;
     }
     return cmd;

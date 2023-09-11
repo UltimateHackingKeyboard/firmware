@@ -216,7 +216,9 @@ char Macros_ConsumeCharOfString(parser_context_t* ctx, uint16_t* stringOffset, u
                 goto normalChar;
             } else {
                 parser_context_t ctx2 = { .macroState = ctx->macroState, .begin = ctx->begin, .at = a, .end = aEnd };
+                ConsumeCommentsAsWhite(false);
                 char res = consumeExpressionChar(&ctx2, subIndex);
+                ConsumeCommentsAsWhite(true);
                 if (*subIndex == 0) {
                     *index += ctx2.at - a;
                 }
