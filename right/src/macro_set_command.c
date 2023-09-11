@@ -1,5 +1,7 @@
 #include "macro_set_command.h"
 #include "config_parser/parse_config.h"
+#include "config_parser/parse_keymap.h"
+#include "key_states.h"
 #include "layer.h"
 #include "ledmap.h"
 #include "macros.h"
@@ -23,452 +25,363 @@
 #include "config_parser/parse_macro.h"
 #include "slave_drivers/is31fl3xxx_driver.h"
 #include "init_peripherals.h"
+#include "macros_vars.h"
 #include <stdint.h>
 
-static const char* proceedByDot(const char* cmd, const char *cmdEnd)
+typedef enum {
+    SetCommandAction_Write,
+    SetCommandAction_Read,
+} set_command_action_t;
+
+#define ASSIGN_CUSTOM5(TPE, RET, RETPARAM, DST, SRC)           \
+    if (action == SetCommandAction_Read) {                     \
+        return RET(RETPARAM);                                  \
+    }                                                          \
+    TPE res = SRC;                                             \
+    if (Macros_ParserError || Macros_DryRun) {                 \
+        return noneVar();                                      \
+    }                                                          \
+    DST = res;                                                 \
+
+#define ASSIGN_INT_MUL(DST, M)                                 \
+    if (action == SetCommandAction_Read) {                     \
+        return intVar(DST/(M));                                \
+    }                                                          \
+    uint32_t res = Macros_LegacyConsumeInt(ctx)*(M);           \
+    if (Macros_ParserError || Macros_DryRun) {                 \
+        return noneVar();                                      \
+    }                                                          \
+    DST = res;                                                 \
+
+#define ASSIGN_INT2(DST, DST2)                                 \
+    if (action == SetCommandAction_Read) {                     \
+        return intVar(DST);                                    \
+    }                                                          \
+    uint32_t res = Macros_LegacyConsumeInt(ctx);               \
+    if (Macros_ParserError || Macros_DryRun) {                 \
+        return noneVar();                                      \
+    }                                                          \
+    DST = res;                                                 \
+    DST2 = res;                                                \
+
+#define ASSIGN_CUSTOM(TPE, RET, DST, SRC) ASSIGN_CUSTOM5(TPE, RET, DST, DST, SRC)
+#define ASSIGN_ENUM(DST, SRC) ASSIGN_CUSTOM(uint8_t, intVar, DST, SRC)
+#define ASSIGN_FLOAT(DST) ASSIGN_CUSTOM(float, floatVar, DST, Macros_ConsumeFloat(ctx))
+#define ASSIGN_BOOL(DST) ASSIGN_CUSTOM(bool, boolVar, DST, Macros_ConsumeBool(ctx))
+#define ASSIGN_INT(DST) ASSIGN_CUSTOM(int32_t, intVar, DST, Macros_ConsumeInt(ctx))
+
+static macro_variable_t noneVar()
 {
-    while(*cmd > 32 && *cmd != '.' && cmd < cmdEnd)    {
-        cmd++;
-    }
-    if (*cmd != '.') {
-        Macros_ReportError("'.' expected", cmd, cmd);
-    }
-    return cmd+1;
+    return (macro_variable_t) { .asInt = 1, .type = MacroVariableType_None };
 }
 
-static void moduleNavigationMode(const char* arg1, const char *textEnd, module_configuration_t* module)
+static macro_variable_t intVar(int32_t value)
 {
-    layer_id_t layerId = Macros_ParseLayerId(arg1, textEnd);
-    navigation_mode_t modeId = ParseNavigationModeId(NextTok(arg1, textEnd), textEnd);
+    return (macro_variable_t) { .asInt = value, .type = MacroVariableType_Int };
+}
+
+static macro_variable_t floatVar(float value)
+{
+    return (macro_variable_t) { .asFloat = value, .type = MacroVariableType_Float };
+}
+
+static macro_variable_t boolVar(bool value)
+{
+    return (macro_variable_t) { .asBool = value, .type = MacroVariableType_Bool };
+}
+
+static macro_variable_t moduleNavigationMode(parser_context_t* ctx, set_command_action_t action, module_configuration_t* module)
+{
+    parser_context_t layerCtx = *ctx;
+    layer_id_t layerId = Macros_ConsumeLayerId(ctx);
+
+    if (action == SetCommandAction_Read) {
+        return intVar(module->navigationModes[layerId]);
+    }
+
+    navigation_mode_t modeId = ConsumeNavigationModeId(ctx);
 
     if (IS_MODIFIER_LAYER(layerId)) {
-        Macros_ReportError("Navigation mode cannot be changed for modifier layers!", arg1, arg1);
-        return;
+        Macros_ReportError("Navigation mode cannot be changed for modifier layers!", layerCtx.at, layerCtx.at);
+        return noneVar();
     }
 
     if (Macros_ParserError) {
-        return;
+        return noneVar();
     }
     if (Macros_DryRun) {
-        return ;
+        return noneVar();
     }
 
     module->navigationModes[layerId] = modeId;
+    return noneVar();
 }
 
-static void moduleSpeed(const char* arg1, const char *textEnd, module_configuration_t* module, uint8_t moduleId)
+static macro_variable_t moduleSpeed(parser_context_t* ctx, set_command_action_t action, module_configuration_t* module, uint8_t moduleId)
 {
-    const char* arg2 = NextTok(arg1, textEnd);
-
-    if (TokenMatches(arg1, textEnd, "baseSpeed")) {
-        float baseSpeed = ParseFloat(arg2, textEnd);
-        if (Macros_DryRun) {
-            return;
-        }
-        module->baseSpeed = baseSpeed;
+    if (ConsumeToken(ctx, "baseSpeed")) {
+        ASSIGN_FLOAT(module->baseSpeed);
     }
-    else if (TokenMatches(arg1, textEnd, "speed")) {
-        float speed = ParseFloat(arg2, textEnd);
-        if (Macros_DryRun) {
-            return;
-        }
-        module->speed = speed;
+    else if (ConsumeToken(ctx, "speed")) {
+        ASSIGN_FLOAT(module->speed);
     }
-    else if (TokenMatches(arg1, textEnd, "xceleration")) {
-        float xceleration = ParseFloat(arg2, textEnd);
-        if (Macros_DryRun) {
-            return;
-        }
-        module->xceleration = xceleration;
+    else if (ConsumeToken(ctx, "xceleration")) {
+        ASSIGN_FLOAT(module->xceleration);
     }
-    else if (TokenMatches(arg1, textEnd, "caretSpeedDivisor")) {
-        float caretSpeedDivisor = ParseFloat(arg2, textEnd);
-        if (Macros_DryRun) {
-            return;
-        }
-        module->caretSpeedDivisor = caretSpeedDivisor;
+    else if (ConsumeToken(ctx, "caretSpeedDivisor")) {
+        ASSIGN_FLOAT(module->caretSpeedDivisor);
     }
-    else if (TokenMatches(arg1, textEnd, "scrollSpeedDivisor")) {
-        float scrollSpeedDivisor = ParseFloat(arg2, textEnd);
-        if (Macros_DryRun) {
-            return;
-        }
-        module->scrollSpeedDivisor = scrollSpeedDivisor;
+    else if (ConsumeToken(ctx, "scrollSpeedDivisor")) {
+        ASSIGN_FLOAT(module->scrollSpeedDivisor);
     }
-    else if (TokenMatches(arg1, textEnd, "pinchZoomDivisor") && moduleId == ModuleId_TouchpadRight) {
-        float pinchZoomSpeedDivisor = ParseFloat(arg2, textEnd);
-        if (Macros_DryRun) {
-            return;
-        }
-        module->pinchZoomSpeedDivisor = pinchZoomSpeedDivisor;
+    else if (ConsumeToken(ctx, "pinchZoomDivisor") && moduleId == ModuleId_TouchpadRight) {
+        ASSIGN_FLOAT(module->pinchZoomSpeedDivisor);
     }
-    else if (TokenMatches(arg1, textEnd, "pinchZoomMode") && moduleId == ModuleId_TouchpadRight) {
-        navigation_mode_t touchpadPinchZoomMode = ParseNavigationModeId(arg2, textEnd);
-        if (Macros_DryRun) {
-            return;
-        }
-        touchpadPinchZoomMode = touchpadPinchZoomMode;
+    else if (ConsumeToken(ctx, "pinchZoomMode") && moduleId == ModuleId_TouchpadRight) {
+        ASSIGN_CUSTOM(int32_t, intVar, TouchpadPinchZoomMode, ConsumeNavigationModeId(ctx));
     }
-    else if (TokenMatches(arg1, textEnd, "axisLockSkew")) {
-        float axisLockSkew = ParseFloat(arg2, textEnd);
-        if (Macros_DryRun) {
-            return;
-        }
-        module->axisLockSkew = axisLockSkew;
+    else if (ConsumeToken(ctx, "axisLockSkew")) {
+        ASSIGN_FLOAT(module->axisLockSkew);
     }
-    else if (TokenMatches(arg1, textEnd, "axisLockFirstTickSkew")) {
-        float axisLockFirstTickSkew = ParseFloat(arg2, textEnd);
-        if (Macros_DryRun) {
-            return;
-        }
-        module->axisLockFirstTickSkew = axisLockFirstTickSkew;
+    else if (ConsumeToken(ctx, "axisLockFirstTickSkew")) {
+        ASSIGN_FLOAT(module->axisLockFirstTickSkew);
     }
-    else if (TokenMatches(arg1, textEnd, "cursorAxisLock")) {
-        bool cursorAxisLock = Macros_ParseBoolean(arg2, textEnd);
-        if (Macros_DryRun) {
-            return;
-        }
-        module->cursorAxisLock = cursorAxisLock;
+    else if (ConsumeToken(ctx, "cursorAxisLock")) {
+        ASSIGN_BOOL(module->cursorAxisLock);
     }
-    else if (TokenMatches(arg1, textEnd, "scrollAxisLock")) {
-        bool scrollAxisLock = Macros_ParseBoolean(arg2, textEnd);
-        if (Macros_DryRun) {
-            return;
-        }
-        module->scrollAxisLock = scrollAxisLock;
+    else if (ConsumeToken(ctx, "scrollAxisLock")) {
+        ASSIGN_BOOL(module->scrollAxisLock);
     }
-    else if (TokenMatches(arg1, textEnd, "caretAxisLock")) {
-        bool caretAxisLock = Macros_ParseBoolean(arg2, textEnd);
-        if (Macros_DryRun) {
-            return;
-        }
-        module->caretAxisLock = caretAxisLock;
+    else if (ConsumeToken(ctx, "caretAxisLock")) {
+        ASSIGN_BOOL(module->caretAxisLock);
     }
-    else if (TokenMatches(arg1, textEnd, "swapAxes")) {
-        bool swapAxes = Macros_ParseBoolean(arg2, textEnd);
-        if (Macros_DryRun) {
-            return;
-        }
-        module->swapAxes = swapAxes;
+    else if (ConsumeToken(ctx, "swapAxes")) {
+        ASSIGN_BOOL(module->swapAxes);
     }
-    else if (TokenMatches(arg1, textEnd, "invertScrollDirection")) {
-        bool invertScrollDirectionY = Macros_ParseBoolean(arg2, textEnd);
-        if (Macros_DryRun) {
-            Macros_ReportWarn("Command deprecated. Please, replace invertScrollDirection by invertScrollDirectionY.", arg1, arg1);
-            return;
-        }
-        module->invertScrollDirectionY = invertScrollDirectionY;
+    else if (ConsumeToken(ctx, "invertScrollDirection")) {
+        Macros_ReportWarn("Command deprecated. Please, replace invertScrollDirection by invertScrollDirectionY.", ConsumedToken(ctx), ConsumedToken(ctx));
+        ASSIGN_BOOL(module->invertScrollDirectionY);
     }
-    else if (TokenMatches(arg1, textEnd, "invertScrollDirectionY")) {
-        bool invertScrollDirectionY = Macros_ParseBoolean(arg2, textEnd);
-        if (Macros_DryRun) {
-            return;
-        }
-        module->invertScrollDirectionY = invertScrollDirectionY;
+    else if (ConsumeToken(ctx, "invertScrollDirectionY")) {
+        ASSIGN_BOOL(module->invertScrollDirectionY);
     }
-    else if (TokenMatches(arg1, textEnd, "invertScrollDirectionX")) {
-        bool invertScrollDirectionX = Macros_ParseBoolean(arg2, textEnd);
-        if (Macros_DryRun) {
-            return;
-        }
-        module->invertScrollDirectionX = invertScrollDirectionX;
+    else if (ConsumeToken(ctx, "invertScrollDirectionX")) {
+        ASSIGN_BOOL(module->invertScrollDirectionX);
     }
     else {
-        Macros_ReportError("Parameter not recognized:", arg1, textEnd);
+        Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
     }
+    return noneVar();
 }
 
-static void module(const char* arg1, const char *textEnd)
+static macro_variable_t module(parser_context_t* ctx, set_command_action_t action)
 {
-    module_id_t moduleId = ParseModuleId(arg1, textEnd);
+    module_id_t moduleId = ConsumeModuleId(ctx);
     module_configuration_t* module = GetModuleConfiguration(moduleId);
 
-    const char* arg2 = proceedByDot(arg1, textEnd);
+    ConsumeUntilDot(ctx);
 
     if (Macros_ParserError) {
-        return;
+        return noneVar();
     }
 
-    if (TokenMatches(arg2, textEnd, "navigationMode")) {
-        const char* arg3 = proceedByDot(arg2, textEnd);
-        moduleNavigationMode(arg3, textEnd, module);
+    if (ConsumeToken(ctx, "navigationMode")) {
+        ConsumeUntilDot(ctx);
+        return moduleNavigationMode(ctx, action, module);
     }
     else {
-        moduleSpeed(arg2, textEnd, module, moduleId);
+        return moduleSpeed(ctx, action, module, moduleId);
     }
 }
 
-static void secondaryRoleAdvanced(const char* arg1, const char *textEnd)
+static macro_variable_t secondaryRoleAdvanced(parser_context_t* ctx, set_command_action_t action)
 {
-    const char* arg2 = NextTok(arg1, textEnd);
-
-    if (TokenMatches(arg1, textEnd, "timeout")) {
-        uint32_t timeout = Macros_ParseInt(arg2, textEnd, NULL);
-        if (Macros_DryRun) {
-            return;
-        }
-        timeout = timeout;
+    if (ConsumeToken(ctx, "timeout")) {
+        ASSIGN_INT(SecondaryRoles_AdvancedStrategyTimeout);
     }
-    else if (TokenMatches(arg1, textEnd, "timeoutAction")) {
-        if (TokenMatches(arg2, textEnd, "primary")) {
-            if (Macros_DryRun) {
-                return;
-            }
-            SecondaryRoles_AdvancedStrategyTimeoutAction = SecondaryRoleState_Primary;
-        }
-        else if (TokenMatches(arg2, textEnd, "secondary")) {
-            if (Macros_DryRun) {
-                return;
-            }
-            SecondaryRoles_AdvancedStrategyTimeoutAction = SecondaryRoleState_Secondary;
-        }
-        else {
-            Macros_ReportError("Parameter not recognized:", arg2, textEnd);
-        }
+    else if (ConsumeToken(ctx, "timeoutAction")) {
+        ASSIGN_CUSTOM(int32_t, intVar, SecondaryRoles_AdvancedStrategyTimeoutAction, ConsumeSecondaryRoleTimeoutAction(ctx));
     }
-    else if (TokenMatches(arg1, textEnd, "safetyMargin")) {
-        uint32_t safetyMargin = Macros_ParseInt(arg2, textEnd, NULL);
-        if (Macros_DryRun) {
-            return;
-        }
-        safetyMargin = safetyMargin;
+    else if (ConsumeToken(ctx, "safetyMargin")) {
+        ASSIGN_INT(SecondaryRoles_AdvancedStrategySafetyMargin);
     }
-    else if (TokenMatches(arg1, textEnd, "triggerByRelease")) {
-        bool triggerByRelease = Macros_ParseBoolean(arg2, textEnd);
-        if (Macros_DryRun) {
-            return;
-        }
-        SecondaryRoles_AdvancedStrategyTriggerByRelease = triggerByRelease;
+    else if (ConsumeToken(ctx, "triggerByRelease")) {
+        ASSIGN_BOOL(SecondaryRoles_AdvancedStrategyTriggerByRelease);
     }
-    else if (TokenMatches(arg1, textEnd, "doubletapToPrimary")) {
-        bool doubletapToPrimary = Macros_ParseBoolean(arg2, textEnd);
-        if (Macros_DryRun) {
-            return;
-        }
-        SecondaryRoles_AdvancedStrategyDoubletapToPrimary = doubletapToPrimary;
+    else if (ConsumeToken(ctx, "doubletapToPrimary")) {
+        ASSIGN_BOOL(SecondaryRoles_AdvancedStrategyDoubletapToPrimary);
     }
-    else if (TokenMatches(arg1, textEnd, "doubletapTime")) {
-        int32_t doubletapTime = Macros_ParseInt(arg2, textEnd, NULL);
-        if (Macros_DryRun) {
-            return;
-        }
-        SecondaryRoles_AdvancedStrategyDoubletapTime = doubletapTime;
+    else if (ConsumeToken(ctx, "doubletapTime")) {
+        ASSIGN_INT(SecondaryRoles_AdvancedStrategyDoubletapTime);
     }
     else {
-        Macros_ReportError("Parameter not recognized:", arg1, textEnd);
+        Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
     }
+    return noneVar();
 }
 
-static void secondaryRoles(const char* arg1, const char *textEnd)
+static macro_variable_t secondaryRoles(parser_context_t* ctx, set_command_action_t action)
 {
-    if (TokenMatches(arg1, textEnd, "defaultStrategy")) {
-        const char* arg2 = NextTok(arg1, textEnd);
-        if (TokenMatches(arg2, textEnd, "simple")) {
-            if (Macros_DryRun) {
-                return;
-            }
-            SecondaryRoles_Strategy = SecondaryRoleStrategy_Simple;
-        }
-        else if (TokenMatches(arg2, textEnd, "advanced")) {
-            if (Macros_DryRun) {
-                return;
-            }
-            SecondaryRoles_Strategy = SecondaryRoleStrategy_Advanced;
-        }
-        else {
-            Macros_ReportError("Parameter not recognized:", arg2, textEnd);
-        }
+    if (ConsumeToken(ctx, "defaultStrategy")) {
+        ASSIGN_CUSTOM(int32_t, intVar, SecondaryRoles_Strategy, ConsumeSecondaryRoleStrategy(ctx));
     }
-    else if (TokenMatches(arg1, textEnd, "advanced")) {
-        secondaryRoleAdvanced(proceedByDot(arg1, textEnd), textEnd);
+    else if (ConsumeToken(ctx, "advanced")) {
+        ConsumeUntilDot(ctx);
+        return secondaryRoleAdvanced(ctx, action);
     }
     else {
-        Macros_ReportError("Parameter not recognized:", arg1, textEnd);
+        Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
     }
+    return noneVar();
 }
 
-static void mouseKeys(const char* arg1, const char *textEnd)
+static macro_variable_t mouseKeys(parser_context_t* ctx, set_command_action_t action)
 {
     mouse_kinetic_state_t* state = &MouseMoveState;
 
-    if (TokenMatches(arg1, textEnd, "move")) {
+    if (ConsumeToken(ctx, "move")) {
         state = &MouseMoveState;
-    } else if (TokenMatches(arg1, textEnd, "scroll")) {
+    } else if (ConsumeToken(ctx, "scroll")) {
         state = &MouseScrollState;
     } else {
-        Macros_ReportError("Scroll or move expected", arg1, arg1);
+        Macros_ReportError("Scroll or move expected!", ctx->at, ctx->at);
+        return noneVar();
     }
 
-    const char* arg2 = proceedByDot(arg1, textEnd);
-    const char* arg3 = NextTok(arg2, textEnd);
+    ConsumeUntilDot(ctx);
 
-    if (TokenMatches(arg2, textEnd, "initialSpeed")) {
-        int32_t initialSpeed = Macros_ParseInt(arg3, textEnd, NULL) / state->intMultiplier;
-        if (Macros_DryRun) {
-            return;
-        }
-        state->initialSpeed = initialSpeed;
+    if (ConsumeToken(ctx, "initialSpeed")) {
+        ASSIGN_INT_MUL(state->initialSpeed, 1.0f/state->intMultiplier);
     }
-    else if (TokenMatches(arg2, textEnd, "baseSpeed")) {
-        int32_t baseSpeed = Macros_ParseInt(arg3, textEnd, NULL) / state->intMultiplier;
-        if (Macros_DryRun) {
-            return;
-        }
-        state->baseSpeed = baseSpeed;
+    else if (ConsumeToken(ctx, "baseSpeed")) {
+        ASSIGN_INT_MUL(state->baseSpeed, 1.0f/state->intMultiplier);
     }
-    else if (TokenMatches(arg2, textEnd, "initialAcceleration")) {
-        int32_t acceleration = Macros_ParseInt(arg3, textEnd, NULL) / state->intMultiplier;
-        if (Macros_DryRun) {
-            return;
-        }
-        state->acceleration = acceleration;
+    else if (ConsumeToken(ctx, "initialAcceleration")) {
+        ASSIGN_INT_MUL(state->acceleration, 1.0f/state->intMultiplier);
     }
-    else if (TokenMatches(arg2, textEnd, "deceleratedSpeed")) {
-        int32_t deceleratedSpeed = Macros_ParseInt(arg3, textEnd, NULL) / state->intMultiplier;
-        if (Macros_DryRun) {
-            return;
-        }
-        state->deceleratedSpeed = deceleratedSpeed;
+    else if (ConsumeToken(ctx, "deceleratedSpeed")) {
+        ASSIGN_INT_MUL(state->deceleratedSpeed, 1.0f/state->intMultiplier);
     }
-    else if (TokenMatches(arg2, textEnd, "acceleratedSpeed")) {
-        int32_t acceleratedSpeed = Macros_ParseInt(arg3, textEnd, NULL) / state->intMultiplier;
-        if (Macros_DryRun) {
-            return;
-        }
-        state->acceleratedSpeed = acceleratedSpeed;
+    else if (ConsumeToken(ctx, "acceleratedSpeed")) {
+        ASSIGN_INT_MUL(state->acceleratedSpeed, 1.0f/state->intMultiplier);
     }
-    else if (TokenMatches(arg2, textEnd, "axisSkew")) {
-        float axisSkew = ParseFloat(arg3, textEnd);
-        if (Macros_DryRun) {
-            return;
-        }
-        state->axisSkew = axisSkew;
+    else if (ConsumeToken(ctx, "axisSkew")) {
+        ASSIGN_FLOAT(state->axisSkew);
     }
     else {
-        Macros_ReportError("Parameter not recognized:", arg1, textEnd);
+        Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
     }
+    return noneVar();
 }
 
-static void stickyModifiers(const char* arg1, const char *textEnd)
+static macro_variable_t stickyModifiers(parser_context_t* ctx, set_command_action_t action)
 {
-    if (TokenMatches(arg1, textEnd, "never")) {
-        sticky_strategy_t stickyStrategy = Stick_Never;
-        if (Macros_DryRun) {
-            return;
-        }
-        StickyModifierStrategy = stickyStrategy;
+    if (ConsumeToken(ctx, "never")) {
+        ASSIGN_ENUM(StickyModifierStrategy, Stick_Never);
     }
-    else if (TokenMatches(arg1, textEnd, "smart")) {
-        sticky_strategy_t stickyStrategy = Stick_Smart;
-        if (Macros_DryRun) {
-            return;
-        }
-        StickyModifierStrategy = stickyStrategy;
+    else if (ConsumeToken(ctx, "smart")) {
+        ASSIGN_ENUM(StickyModifierStrategy, Stick_Smart);
     }
-    else if (TokenMatches(arg1, textEnd, "always")) {
-        sticky_strategy_t stickyStrategy = Stick_Always;
-        if (Macros_DryRun) {
-            return;
-        }
-        StickyModifierStrategy = stickyStrategy;
+    else if (ConsumeToken(ctx, "always")) {
+        ASSIGN_ENUM(StickyModifierStrategy, Stick_Always);
     }
     else {
-        Macros_ReportError("Parameter not recognized:", arg1, textEnd);
+        Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
     }
+    return noneVar();
 }
 
-static void macroEngineScheduler(const char* arg1, const char *textEnd)
+static macro_variable_t macroEngineScheduler(parser_context_t* ctx, set_command_action_t action)
 {
-    if (TokenMatches(arg1, textEnd, "preemptive")) {
-        macro_scheduler_t scheduler = Scheduler_Preemptive;
-        if (Macros_DryRun) {
-            return;
-        }
-        Macros_Scheduler = scheduler;
+    if (ConsumeToken(ctx, "preemptive")) {
+        ASSIGN_ENUM(Macros_Scheduler, Scheduler_Preemptive);
     }
-    else if (TokenMatches(arg1, textEnd, "blocking")) {
-        macro_scheduler_t scheduler = Scheduler_Blocking;
-        if (Macros_DryRun) {
-            return;
-        }
-        Macros_Scheduler = scheduler;
+    else if (ConsumeToken(ctx, "blocking")) {
+        ASSIGN_ENUM(Macros_Scheduler, Scheduler_Blocking);
     }
     else {
-        Macros_ReportError("Parameter not recognized:", arg1, textEnd);
+        Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
     }
+    return noneVar();
 }
 
-static void macroEngine(const char* arg1, const char *textEnd)
+static macro_variable_t macroEngine(parser_context_t* ctx, set_command_action_t action)
 {
-    if (TokenMatches(arg1, textEnd, "scheduler")) {
-        macroEngineScheduler(NextTok(arg1,  textEnd), textEnd);
+    if (ConsumeToken(ctx, "scheduler")) {
+        return macroEngineScheduler(ctx, action);
     }
-    else if (TokenMatches(arg1, textEnd, "batchSize")) {
-        int32_t batchSize = Macros_ParseInt(NextTok(arg1,  textEnd), textEnd, NULL);
-        if (Macros_DryRun) {
-            return;
-        }
-        Macros_MaxBatchSize = batchSize;
+    else if (ConsumeToken(ctx, "batchSize")) {
+        ASSIGN_INT(Macros_MaxBatchSize);
     }
-    else if (TokenMatches(arg1, textEnd, "extendedCommands")) {
+    else if (ConsumeToken(ctx, "extendedCommands")) {
         /* this option was removed -> accept the command & do nothing */
     }
     else {
-        Macros_ReportError("Parameter not recognized:", arg1, textEnd);
+        Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
     }
+    return noneVar();
 }
 
-static void backlightStrategy(const char* arg1, const char *textEnd)
+static macro_variable_t backlightStrategy(parser_context_t* ctx, set_command_action_t action)
 {
-    if (TokenMatches(arg1, textEnd, "functional")) {
-        if (Macros_DryRun) {
-            return;
-        }
-        Ledmap_SetLedBacklightingMode(BacklightingMode_Functional);
-        Ledmap_UpdateBacklightLeds();
+    if (action == SetCommandAction_Read) {
+        return intVar(BacklightingMode);
     }
-    else if (TokenMatches(arg1, textEnd, "constantRgb")) {
-        if (Macros_DryRun) {
-            return;
-        }
-        Ledmap_SetLedBacklightingMode(BacklightingMode_ConstantRGB);
-        Ledmap_UpdateBacklightLeds();
+
+    backlighting_mode_t res = 0;
+
+    if (ConsumeToken(ctx, "functional")) {
+        res = BacklightingMode_Functional;
     }
-    else if (TokenMatches(arg1, textEnd, "perKeyRgb")) {
+    else if (ConsumeToken(ctx, "constantRgb")) {
+        res = BacklightingMode_ConstantRGB;
+    }
+    else if (ConsumeToken(ctx, "perKeyRgb")) {
         if (PerKeyRgbPresent) {
-            if (Macros_DryRun) {
-                return;
-            }
-            Ledmap_SetLedBacklightingMode(BacklightingMode_PerKeyRgb);
-            Ledmap_UpdateBacklightLeds();
+            res = BacklightingMode_PerKeyRgb;
         } else {
-            Macros_ReportError("Cannot set perKeyRgb mode when perKeyRgb maps are not available. Please, consult Agent's led section...", arg1, arg1);
+            Macros_ReportError("Cannot set perKeyRgb mode when perKeyRgb maps are not available. Please, consult Agent's led section...", ConsumedToken(ctx), ConsumedToken(ctx));
         }
     }
     else {
-        Macros_ReportError("Parameter not recognized:", arg1, textEnd);
+        Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
     }
-}
-
-static void keyRgb(const char* arg1, const char *textEnd)
-{
-    const char* arg2 = proceedByDot(arg1, textEnd);
-
-    layer_id_t layerId = Macros_ParseLayerId(arg1, textEnd);
-    uint8_t keyId = Macros_ParseInt(arg2, textEnd, NULL);
-    const char* r = NextTok(arg2,  textEnd);
-    const char* g = NextTok(r, textEnd);
-    const char* b = NextTok(g, textEnd);
-    rgb_t rgb;
-    rgb.red = Macros_ParseInt(r, textEnd, NULL);
-    rgb.green = Macros_ParseInt(g, textEnd, NULL);
-    rgb.blue = Macros_ParseInt(b, textEnd, NULL);
 
     if (Macros_ParserError) {
-        return;
+        return noneVar();
     }
     if (Macros_DryRun) {
-        return;
+        return noneVar();
+    }
+
+    Ledmap_SetLedBacklightingMode(res);
+    Ledmap_UpdateBacklightLeds();
+    return noneVar();
+}
+
+static macro_variable_t keyRgb(parser_context_t* ctx, set_command_action_t action)
+{
+    layer_id_t layerId = Macros_ConsumeLayerId(ctx);
+
+    ConsumeUntilDot(ctx);
+
+    uint8_t keyId = Macros_LegacyConsumeInt(ctx);
+
+    if (action == SetCommandAction_Read) {
+        Macros_ReportError("Reading RGB values not supported!", ConsumedToken(ctx), ConsumedToken(ctx));
+        return noneVar();
+    }
+
+    rgb_t rgb;
+    rgb.red = Macros_LegacyConsumeInt(ctx);
+    rgb.green = Macros_LegacyConsumeInt(ctx);
+    rgb.blue = Macros_LegacyConsumeInt(ctx);
+
+    if (Macros_ParserError) {
+        return noneVar();
+    }
+    if (Macros_DryRun) {
+        return noneVar();
     }
 
     uint8_t slotIdx = keyId/64;
@@ -478,186 +391,202 @@ static void keyRgb(const char* arg1, const char *textEnd)
     CurrentKeymap[layerId][slotIdx][inSlotIdx].color = rgb;
 
     Ledmap_UpdateBacklightLeds();
+    return noneVar();
 }
 
 
-static void constantRgb(const char* arg1, const char *textEnd)
+static macro_variable_t constantRgb(parser_context_t* ctx, set_command_action_t action)
 {
-    if (TokenMatches(arg1, textEnd, "rgb")) {
-        const char* r = NextTok(arg1,  textEnd);
-        const char* g = NextTok(r, textEnd);
-        const char* b = NextTok(g, textEnd);
+    if (ConsumeToken(ctx, "rgb")) {
+        if (action == SetCommandAction_Read) {
+            Macros_ReportError("Reading RGB values not supported!", ConsumedToken(ctx), ConsumedToken(ctx));
+            return noneVar();
+        }
+
         rgb_t rgb;
-        rgb.red = Macros_ParseInt(r, textEnd, NULL);
-        rgb.green = Macros_ParseInt(g, textEnd, NULL);
-        rgb.blue = Macros_ParseInt(b, textEnd, NULL);
+        rgb.red = Macros_LegacyConsumeInt(ctx);
+        rgb.green = Macros_LegacyConsumeInt(ctx);
+        rgb.blue = Macros_LegacyConsumeInt(ctx);
 
         if (Macros_DryRun) {
-            return;
+            return noneVar();
         }
 
         LedMap_ConstantRGB = rgb;
         Ledmap_SetLedBacklightingMode(BacklightingMode_ConstantRGB);
         Ledmap_UpdateBacklightLeds();
+
+        return noneVar();
     }
     else {
-        Macros_ReportError("Parameter not recognized:", arg1, textEnd);
+        Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
+        return noneVar();
     }
 }
 
-static void leds(const char* arg1, const char *textEnd)
+static macro_variable_t leds(parser_context_t* ctx, set_command_action_t action)
 {
-    const char* value = NextTok(arg1, textEnd);
-    if (TokenMatches(arg1, textEnd, "fadeTimeout")) {
-        int32_t fadeTimeout = 1000*Macros_ParseInt(value, textEnd, NULL);
-        if (Macros_DryRun) {
-            return;
-        }
-        LedsFadeTimeout = fadeTimeout;
-    } else if (TokenMatches(arg1, textEnd, "brightness")) {
-        float brightnessMultiplier = ParseFloat(value, textEnd);
-        if (Macros_DryRun) {
-            return;
-        }
-        LedBrightnessMultiplier = brightnessMultiplier;
-    } else if (TokenMatches(arg1, textEnd, "enabled")) {
-        bool ledsEnabled = Macros_ParseBoolean(value, textEnd);
-        if (Macros_DryRun) {
-            return;
-        }
-        LedsEnabled = ledsEnabled;
+    if (ConsumeToken(ctx, "fadeTimeout")) {
+        ASSIGN_INT_MUL(LedsFadeTimeout, 1000);
+    } else if (ConsumeToken(ctx, "brightness")) {
+        ASSIGN_FLOAT(LedBrightnessMultiplier);
+    } else if (ConsumeToken(ctx, "enabled")) {
+        ASSIGN_BOOL(LedsEnabled);
     } else {
-        Macros_ReportError("Parameter not recognized:", arg1, textEnd);
+        Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
     }
 
     LedSlaveDriver_UpdateLeds();
+    return noneVar();
 }
 
-static void backlight(const char* arg1, const char *textEnd)
+static macro_variable_t backlight(parser_context_t* ctx, set_command_action_t action)
 {
-    if (TokenMatches(arg1, textEnd, "strategy")) {
-        backlightStrategy(NextTok(arg1, textEnd), textEnd);
+    if (ConsumeToken(ctx, "strategy")) {
+        return backlightStrategy(ctx, action);
     }
-    else if (TokenMatches(arg1, textEnd, "constantRgb")) {
-        constantRgb(proceedByDot(arg1, textEnd), textEnd);
+    else if (ConsumeToken(ctx, "constantRgb")) {
+        ConsumeUntilDot(ctx);
+        return constantRgb(ctx, action);
     }
-    else if (TokenMatches(arg1, textEnd, "keyRgb")) {
-        keyRgb(proceedByDot(arg1, textEnd), textEnd);
+    else if (ConsumeToken(ctx, "keyRgb")) {
+        ConsumeUntilDot(ctx);
+        return keyRgb(ctx, action);
     }
     else {
-        Macros_ReportError("Parameter not recognized:", arg1, textEnd);
+        Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
     }
+    return noneVar();
 }
 
-static key_action_t parseKeyAction(const char* arg1, const char *textEnd) {
-    const char* arg2 = NextTok(arg1, textEnd);
-
+static key_action_t parseKeyAction(parser_context_t* ctx)
+{
     key_action_t action = { .type = KeyActionType_None };
 
-    if (TokenMatches(arg1, textEnd, "macro")) {
-        uint8_t macroIndex = FindMacroIndexByName(arg2, TokEnd(arg2, textEnd), true);
+    if (ConsumeToken(ctx, "macro")) {
+        const char* end = TokEnd(ctx->at, ctx->end);
+        uint8_t macroIndex = FindMacroIndexByName(ctx->at, end, true);
 
         action.type = KeyActionType_PlayMacro;
         action.playMacro.macroId = macroIndex;
+
+        ctx->at = end;
+        ConsumeWhite(ctx);
     }
-    else if (TokenMatches(arg1, textEnd, "keystroke")) {
-        MacroShortcutParser_Parse(arg2, TokEnd(arg2, textEnd), MacroSubAction_Press, NULL, &action);
+    else if (ConsumeToken(ctx, "keystroke")) {
+        const char* end = TokEnd(ctx->at, ctx->end);
+        MacroShortcutParser_Parse(ctx->at, end, MacroSubAction_Press, NULL, &action);
+
+        ctx->at = end;
+        ConsumeWhite(ctx);
     }
-    else if (TokenMatches(arg1, textEnd, "none")) {
+    else if (ConsumeToken(ctx, "none")) {
         action.type = KeyActionType_None;
     }
     else {
-        Macros_ReportError("Parameter not recognized:", arg1, textEnd);
+        Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
     }
 
     return action;
 }
 
 
-static void navigationModeAction(const char* arg1, const char *textEnd)
+static macro_variable_t navigationModeAction(parser_context_t* ctx, set_command_action_t action)
 {
     navigation_mode_t navigationMode = NavigationMode_Caret;
     bool positive = true;
     caret_axis_t axis = CaretAxis_Horizontal;
 
-    const char* arg2 = proceedByDot(arg1, textEnd);
-    const char* arg3 = NextTok(arg2, textEnd);
+    navigationMode = ConsumeNavigationModeId(ctx);
 
-    navigationMode = ParseNavigationModeId(arg1, textEnd);
+    ConsumeUntilDot(ctx);
+
+    if (action == SetCommandAction_Read) {
+        Macros_ReportError("Reading actions is not supported!", ctx->at, ctx->at);
+        return noneVar();
+    }
 
     if(navigationMode < NavigationMode_RemappableFirst || navigationMode > NavigationMode_RemappableLast) {
-        Macros_ReportError("Invalid or non-remapable navigation mode:", arg1, textEnd);
+        Macros_ReportError("Invalid or non-remapable navigation mode:", ConsumedToken(ctx), ConsumedToken(ctx));
     }
 
     if (Macros_ParserError) {
-        return;
+        return noneVar();
     }
 
-    if (TokenMatches(arg2, textEnd, "left")) {
+    if (ConsumeToken(ctx, "left")) {
         axis = CaretAxis_Horizontal;
         positive = false;
     }
-    else if (TokenMatches(arg2, textEnd, "up")) {
+    else if (ConsumeToken(ctx, "up")) {
         axis = CaretAxis_Vertical;
         positive = true;
     }
-    else if (TokenMatches(arg2, textEnd, "right")) {
+    else if (ConsumeToken(ctx, "right")) {
         axis = CaretAxis_Horizontal;
         positive = true;
     }
-    else if (TokenMatches(arg2, textEnd, "down")) {
+    else if (ConsumeToken(ctx, "down")) {
         axis = CaretAxis_Vertical;
         positive = false;
     }
     else {
-        Macros_ReportError("Parameter not recognized:", arg1, textEnd);
+        Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
+        return noneVar();
     }
 
-    key_action_t action = parseKeyAction(arg3, textEnd);
+    key_action_t keyAction = parseKeyAction(ctx);
 
     if (Macros_ParserError) {
-        return;
+        return noneVar();
     }
     if (Macros_DryRun) {
-        return;
+        return noneVar();
     }
 
-    SetModuleCaretConfiguration(navigationMode, axis, positive, action);
+    SetModuleCaretConfiguration(navigationMode, axis, positive, keyAction);
+    return noneVar();
 }
 
-static void keymapAction(const char* arg1, const char *textEnd)
+static macro_variable_t keymapAction(parser_context_t* ctx, set_command_action_t action)
 {
-    const char* arg2 = proceedByDot(arg1, textEnd);
-    const char* arg3 = NextTok(arg2, textEnd);
+    uint8_t layerId = Macros_ConsumeLayerId(ctx);
+    parser_context_t keyIdPos = *ctx;
 
-    uint8_t layerId = Macros_ParseLayerId(arg1, textEnd);
-    uint16_t keyId = Macros_ParseInt(arg2, textEnd, NULL);
+    ConsumeUntilDot(ctx);
 
-    key_action_t action = parseKeyAction(arg3, textEnd);
+    uint16_t keyId = Macros_LegacyConsumeInt(ctx);
+
+    if (action == SetCommandAction_Read) {
+        Macros_ReportError("Reading actions is not supported!", ctx->at, ctx->at);
+        return noneVar();
+    }
+
+    key_action_t keyAction = parseKeyAction(ctx);
 
     uint8_t slotIdx = keyId/64;
     uint8_t inSlotIdx = keyId%64;
 
     if(slotIdx > SLOT_COUNT || inSlotIdx > MAX_KEY_COUNT_PER_MODULE) {
-        Macros_ReportError("Invalid key id:", arg2, textEnd);
+        Macros_ReportErrorNum("Invalid key id:", keyId, keyIdPos.at);
     }
 
     if (Macros_ParserError) {
-        return;
+        return noneVar();
     }
     if (Macros_DryRun) {
-        return;
+        return noneVar();
     }
 
     key_action_t* actionSlot = &CurrentKeymap[layerId][slotIdx][inSlotIdx];
 
-    *actionSlot = action;
+    *actionSlot = keyAction;
+    return noneVar();
 }
 
-static void modLayerTriggers(const char* arg1, const char *textEnd)
+static macro_variable_t modLayerTriggers(parser_context_t* ctx, set_command_action_t action)
 {
-    const char* specifier = NextTok(arg1, textEnd);
-    uint8_t layerId = Macros_ParseLayerId(arg1, textEnd);
+    uint8_t layerId = Macros_ConsumeLayerId(ctx);
     uint8_t left = 0;
     uint8_t right = 0;
 
@@ -679,143 +608,137 @@ static void modLayerTriggers(const char* arg1, const char *textEnd)
         right = HID_KEYBOARD_MODIFIER_RIGHTGUI ;
         break;
     default:
-        Macros_ReportError("This layer does not allow modifier triggers:", arg1, specifier);
-        return;
+        Macros_ReportError("This layer does not allow modifier triggers:", ConsumedToken(ctx), ConsumedToken(ctx));
+        return noneVar();
+    }
+
+    if (action == SetCommandAction_Read) {
+        return intVar(LayerConfig[layerId].modifierLayerMask);
+    }
+
+    uint8_t mask = 0;
+
+    if (ConsumeToken(ctx, "left")) {
+        mask = left;
+    }
+    else if (ConsumeToken(ctx, "right")) {
+        mask = right;
+    }
+    else if (ConsumeToken(ctx, "both")) {
+        mask = left | right;
+    }
+    else {
+        Macros_ReportError("Specifier not recognized:", ctx->at, ctx->end);
     }
 
     if (Macros_ParserError) {
-        return;
+        return noneVar();
     }
     if (Macros_DryRun) {
-        return;
+        return noneVar();
     }
 
-    if (TokenMatches(specifier, textEnd, "left")) {
-        LayerConfig[layerId].modifierLayerMask = left;
-    }
-    else if (TokenMatches(specifier, textEnd, "right")) {
-        LayerConfig[layerId].modifierLayerMask = right;
-    }
-    else if (TokenMatches(specifier, textEnd, "both")) {
-        LayerConfig[layerId].modifierLayerMask = left | right;
-    }
-    else {
-        Macros_ReportError("Specifier not recognized:", specifier, textEnd);
-    }
+    LayerConfig[layerId].modifierLayerMask = mask;
+    return noneVar();
 }
 
 
-macro_result_t Macro_ProcessSetCommand(const char* arg1, const char *textEnd)
+static macro_variable_t root(parser_context_t* ctx, set_command_action_t action)
 {
-    const char* arg2 = NextTok(arg1, textEnd);
-
-    if (TokenMatches(arg1, textEnd, "module")) {
-        module(proceedByDot(arg1, textEnd), textEnd);
+    if (ConsumeToken(ctx, "module")) {
+        ConsumeUntilDot(ctx);
+        return module(ctx, action);
     }
-    else if (TokenMatches(arg1, textEnd, "secondaryRole")) {
-        secondaryRoles(proceedByDot(arg1, textEnd), textEnd);
+    else if (ConsumeToken(ctx, "secondaryRole")) {
+        ConsumeUntilDot(ctx);
+        return secondaryRoles(ctx, action);
     }
-    else if (TokenMatches(arg1, textEnd, "mouseKeys")) {
-        mouseKeys(proceedByDot(arg1, textEnd), textEnd);
+    else if (ConsumeToken(ctx, "mouseKeys")) {
+        ConsumeUntilDot(ctx);
+        return mouseKeys(ctx, action);
     }
-    else if (TokenMatches(arg1, textEnd, "keymapAction")) {
-        keymapAction(proceedByDot(arg1, textEnd), textEnd);
+    else if (ConsumeToken(ctx, "keymapAction")) {
+        ConsumeUntilDot(ctx);
+        return keymapAction(ctx, action);
     }
-    else if (TokenMatches(arg1, textEnd, "navigationModeAction")) {
-        navigationModeAction(proceedByDot(arg1, textEnd), textEnd);
+    else if (ConsumeToken(ctx, "navigationModeAction")) {
+        ConsumeUntilDot(ctx);
+        return navigationModeAction(ctx, action);
     }
-    else if (TokenMatches(arg1, textEnd, "macroEngine")) {
-        macroEngine(proceedByDot(arg1, textEnd), textEnd);
+    else if (ConsumeToken(ctx, "macroEngine")) {
+        ConsumeUntilDot(ctx);
+        return macroEngine(ctx, action);
     }
-    else if (TokenMatches(arg1, textEnd, "backlight")) {
-        backlight(proceedByDot(arg1, textEnd), textEnd);
+    else if (ConsumeToken(ctx, "backlight")) {
+        ConsumeUntilDot(ctx);
+        return backlight(ctx, action);
     }
-    else if (TokenMatches(arg1, textEnd, "leds")) {
-        leds(proceedByDot(arg1, textEnd), textEnd);
+    else if (ConsumeToken(ctx, "leds")) {
+        ConsumeUntilDot(ctx);
+        return leds(ctx, action);
     }
-    else if (TokenMatches(arg1, textEnd, "modifierLayerTriggers")) {
-        modLayerTriggers(proceedByDot(arg1, textEnd), textEnd);
+    else if (ConsumeToken(ctx, "modifierLayerTriggers")) {
+        ConsumeUntilDot(ctx);
+        return modLayerTriggers(ctx, action);
     }
-    else if (TokenMatches(arg1, textEnd, "diagonalSpeedCompensation")) {
-        bool diagonalSpeedCompensation = Macros_ParseBoolean(arg2, textEnd);
-        if (Macros_DryRun) {
-            return MacroResult_Finished;
-        }
-        DiagonalSpeedCompensation = diagonalSpeedCompensation;
+    else if (ConsumeToken(ctx, "diagonalSpeedCompensation")) {
+        ASSIGN_BOOL(DiagonalSpeedCompensation);
     }
-    else if (TokenMatches(arg1, textEnd, "stickyModifiers")) {
-        stickyModifiers(arg2, textEnd);
+    else if (ConsumeToken(ctx, "stickyModifiers")) {
+        return stickyModifiers(ctx, action);
     }
-    else if (TokenMatches(arg1, textEnd, "debounceDelay")) {
-        uint16_t time = Macros_ParseInt(arg2, textEnd, NULL);
-        if (Macros_DryRun) {
-            return MacroResult_Finished;
-        }
-        DebounceTimePress = time;
-        DebounceTimeRelease = time;
+    else if (ConsumeToken(ctx, "debounceDelay")) {
+        ASSIGN_INT2(DebounceTimePress, DebounceTimeRelease);
     }
-    else if (TokenMatches(arg1, textEnd, "keystrokeDelay")) {
-        uint32_t keystrokeDelay = Macros_ParseInt(arg2, textEnd, NULL);
-        if (Macros_DryRun) {
-            return MacroResult_Finished;
-        }
-        KeystrokeDelay = keystrokeDelay;
+    else if (ConsumeToken(ctx, "keystrokeDelay")) {
+        ASSIGN_INT(KeystrokeDelay);
     }
     else if (
-            TokenMatches(arg1, textEnd, "doubletapTimeout")  // new name
-            || (TokenMatches(arg1, textEnd, "doubletapDelay")) // deprecated alias - old name
+            ConsumeToken(ctx, "doubletapTimeout")  // new name
+            || (ConsumeToken(ctx, "doubletapDelay")) // deprecated alias - old name
             ) {
-        uint16_t delay = Macros_ParseInt(arg2, textEnd, NULL);
-        if (Macros_DryRun) {
-            return MacroResult_Finished;
-        }
-        DoubleTapSwitchLayerTimeout = delay;
-        DoubletapConditionTimeout = delay;
+        ASSIGN_INT2(DoubleTapSwitchLayerTimeout, DoubletapConditionTimeout);
     }
-    else if (TokenMatches(arg1, textEnd, "autoRepeatDelay")) {
-        uint16_t delay = Macros_ParseInt(arg2, textEnd, NULL);
-        if (Macros_DryRun) {
-            return MacroResult_Finished;
-        }
-        AutoRepeatInitialDelay = delay;
+    else if (ConsumeToken(ctx, "autoRepeatDelay")) {
+        ASSIGN_INT(AutoRepeatInitialDelay);
     }
-    else if (TokenMatches(arg1, textEnd, "autoRepeatRate")) {
-        uint16_t delay = Macros_ParseInt(arg2, textEnd, NULL);
-        if (Macros_DryRun) {
-            return MacroResult_Finished;
-        }
-        AutoRepeatDelayRate = delay;
+    else if (ConsumeToken(ctx, "autoRepeatRate")) {
+        ASSIGN_INT(AutoRepeatDelayRate);
     }
-    else if (TokenMatches(arg1, textEnd, "chordingDelay")) {
-        uint32_t chordingDelay = Macros_ParseInt(arg2, textEnd, NULL);
-        if (Macros_DryRun) {
-            return MacroResult_Finished;
-        }
-        ChordingDelay = chordingDelay;
+    else if (ConsumeToken(ctx, "chordingDelay")) {
+        ASSIGN_INT(ChordingDelay);
     }
-    else if (TokenMatches(arg1, textEnd, "autoShiftDelay")) {
-        uint32_t chordingDelay = Macros_ParseInt(arg2, textEnd, NULL);
-        if (Macros_DryRun) {
-            return MacroResult_Finished;
-        }
-        AutoShiftDelay = chordingDelay;
+    else if (ConsumeToken(ctx, "autoShiftDelay")) {
+        ASSIGN_INT(AutoShiftDelay);
     }
-    else if (TokenMatches(arg1, textEnd, "i2cBaudRate")) {
-        uint32_t baudRate = Macros_ParseInt(arg2, textEnd, NULL);
+    else if (ConsumeToken(ctx, "i2cBaudRate")) {
+        if (action == SetCommandAction_Read) {
+            return intVar(I2cMainBusRequestedBaudRateBps);
+        }
+
+        uint32_t baudRate = Macros_LegacyConsumeInt(ctx);
         if (Macros_DryRun) {
-            return MacroResult_Finished;
+            return noneVar();
         }
         ChangeI2cBaudRate(baudRate);
     }
-    else if (TokenMatches(arg1, textEnd, "emergencyKey")) {
-        uint16_t key = Macros_ParseInt(arg2, textEnd, NULL);
-        if (Macros_DryRun) {
-            return MacroResult_Finished;
-        }
-        EmergencyKey = Utils_KeyIdToKeyState(key);
+    else if (ConsumeToken(ctx, "emergencyKey")) {
+        ASSIGN_CUSTOM5(key_state_t*, noneVar,, EmergencyKey, Utils_KeyIdToKeyState(Macros_LegacyConsumeInt(ctx)));
     }
-    else {
-        Macros_ReportError("Parameter not recognized:", arg1, textEnd);
+    else if (action == SetCommandAction_Write) {
+        Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
     }
+    return noneVar();
+}
+
+macro_result_t Macro_ProcessSetCommand(parser_context_t* ctx)
+{
+    root(ctx, SetCommandAction_Write);
     return MacroResult_Finished;
+}
+
+macro_variable_t Macro_TryReadConfigVal(parser_context_t* ctx)
+{
+    macro_variable_t res = root(ctx, SetCommandAction_Read);
+    return res;
 }

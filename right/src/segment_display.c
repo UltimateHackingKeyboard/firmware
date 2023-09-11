@@ -2,6 +2,7 @@
 #include "event_scheduler.h"
 #include "led_display.h"
 #include "macros.h"
+#include "macros_vars.h"
 #include "timer.h"
 #include <string.h>
 #include "keymap.h"
@@ -93,29 +94,87 @@ void SegmentDisplay_UpdateKeymapText()
     SegmentDisplay_SetText(currentKeymap->abbreviationLen, currentKeymap->abbreviation, SegmentDisplaySlot_Keymap);
 }
 
+void SegmentDisplay_SerializeVar(char* buffer, macro_variable_t var)
+{
+    switch (var.type) {
+        case MacroVariableType_Float:
+            SegmentDisplay_SerializeFloat(buffer, var.asFloat);
+            break;
+        case MacroVariableType_Int:
+            SegmentDisplay_SerializeInt(buffer, var.asInt);
+            break;
+        case MacroVariableType_Bool:
+            SegmentDisplay_SerializeInt(buffer, var.asBool);
+            break;
+        default:
+            Macros_ReportErrorNum("Unexpected variable type:", var.type, NULL);
+            break;
+    }
+}
+
+void SegmentDisplay_SerializeFloat(char* buffer, float num)
+{
+    if (num <= -10.0f || 10.0f <= num ) {
+        SegmentDisplay_SerializeInt(buffer, num);
+    }
+
+    int mag = 0;
+    bool negative = false;
+
+    if (num < 0.0f) {
+        num = -num;
+        negative = true;
+    }
+
+    while (num < 10.0f) {
+        mag++;
+        num *= 10;
+    }
+    if (negative) {
+        buffer[0] = 'Z' - mag + 1;
+    } else {
+        buffer[0] = 'A' + mag - 1;
+    }
+    buffer[1] = '0' + (uint8_t)(num / 10.0f);
+    buffer[2] = '0' + (uint8_t)(num) % 10;
+}
+
+void SegmentDisplay_SerializeInt(char* buffer, int32_t a)
+{
+    int mag = 0;
+    int num = a;
+    bool negative = false;
+
+    if (num < 0) {
+        num = -num;
+        negative = true;
+    }
+
+    if (num < 1000 && !negative) {
+        buffer[0] = '0' + num / 100;
+        buffer[1] = '0' + num % 100 / 10;
+        buffer[2] = '0' + num % 10;
+    } else {
+        while (num >= 100) {
+            mag++;
+            num /= 10;
+        }
+        buffer[0] = '0' + num / 10;
+        buffer[1] = '0' + num % 10;
+
+        if (negative) {
+            buffer[2] = mag == 0 ? '-' : ('Z' + 1 - mag);
+        } else {
+            buffer[2] = mag == 0 ? '0' : ('A' - 1 + mag);
+        }
+    }
+}
+
 void SegmentDisplay_SetInt(int32_t a, segment_display_slot_t slot)
 {
     char b[3];
-    int mag = 0;
-    int num = a;
-    if (num < 0) {
-        SegmentDisplay_SetText(3, "NEG", slot);
-    } else {
-        if (num < 1000) {
-            b[0] = '0' + num / 100;
-            b[1] = '0' + num % 100 / 10;
-            b[2] = '0' + num % 10;
-        } else {
-            while (num >= 100) {
-                mag++;
-                num /= 10;
-            }
-            b[0] = '0' + num / 10;
-            b[1] = '0' + num % 10;
-            b[2] = mag == 0 ? '0' : ('A' - 2 + mag);
-        }
-        SegmentDisplay_SetText(3, b, slot);
-    }
+    SegmentDisplay_SerializeInt(b, a);
+    SegmentDisplay_SetText(3, b, slot);
 }
 
 bool SegmentDisplay_SlotIsActive(segment_display_slot_t slot)

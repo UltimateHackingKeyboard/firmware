@@ -5,15 +5,18 @@
 
     #include <stdint.h>
     #include <stdbool.h>
+    #include "attributes.h"
     #include "key_action.h"
     #include "usb_device_config.h"
     #include "key_states.h"
+    #include "str_utils.h"
+    #include "macros_core.h"
 
 // Macros:
     #define MACRO_CYCLES_TO_POSTPONE 4
 
     #define MAX_MACRO_NUM 255
-    #define STATUS_BUFFER_MAX_LENGTH 5000
+    #define STATUS_BUFFER_MAX_LENGTH 2000
     #define MACRO_STATE_POOL_SIZE 16
     #define MAX_REG_COUNT 32
 
@@ -60,20 +63,6 @@
         MacroActionType_Command,
     } macro_action_type_t;
 
-    typedef enum {
-        MacroResult_InProgressFlag = 1,
-        MacroResult_ActionFinishedFlag = 2,
-        MacroResult_DoneFlag = 4,
-        MacroResult_YieldFlag = 8,
-        MacroResult_BlockingFlag = 16,
-        MacroResult_Blocking = MacroResult_InProgressFlag | MacroResult_BlockingFlag,
-        MacroResult_Waiting = MacroResult_InProgressFlag | MacroResult_YieldFlag,
-        MacroResult_Sleeping = MacroResult_InProgressFlag | MacroResult_YieldFlag,
-        MacroResult_Finished = MacroResult_ActionFinishedFlag,
-        MacroResult_JumpedForward = MacroResult_DoneFlag,
-        MacroResult_JumpedBackward = MacroResult_DoneFlag | MacroResult_YieldFlag,
-    } macro_result_t;
-
     typedef struct {
         union {
             struct {
@@ -117,7 +106,10 @@
         AutoRepeatState_Waiting = 1
     } macro_autorepeat_state_t;
 
-    typedef struct {
+
+    typedef struct macro_state_t macro_state_t;
+
+    struct macro_state_t {
         // persistent scope data
         // these need to live in between macro calls
         struct {
@@ -165,6 +157,8 @@
             union {
                 struct {
                     uint16_t textIdx;
+                    uint16_t subIndex;
+                    uint16_t stringOffset;
                     enum {
                         REPORT_EMPTY = 0,
                         REPORT_PARTIAL,
@@ -199,7 +193,7 @@
             bool modifierSuppressMods : 1;
 
         } as;
-    }  macro_state_t;
+    };
 
     // Schedule is given by a single-linked circular list.
     typedef struct {
@@ -266,7 +260,10 @@
     bool Macros_IsLayerHeld();
     bool Macros_MacroHasActiveInstance(macro_index_t macroIdx);
     uint8_t Macros_ParseLayerId(const char* arg1, const char* cmdEnd);
+    uint8_t Macros_ConsumeLayerId(parser_context_t* ctx);
     int32_t Macros_ParseInt(const char *a, const char *aEnd, const char* *parsedTill);
+    int32_t Macros_LegacyConsumeInt(parser_context_t* ctx);
+    uint8_t Macros_TryConsumeKeyId(parser_context_t* ctx);
     bool Macros_ParseBoolean(const char *a, const char *aEnd);
     void Macros_ResetBasicKeyboardReports();
     char Macros_ConsumeStatusChar();

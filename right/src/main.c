@@ -21,6 +21,7 @@
 #include "ledmap.h"
 #include "debug.h"
 #include "event_scheduler.h"
+#include "macro_keyid_parser.h"
 
 static bool IsEepromInitialized = false;
 static bool IsConfigInitialized = false;
@@ -46,6 +47,7 @@ static void initConfig()
         if (IsEepromInitialized) {
             UsbCommand_ApplyConfig();
             ShortcutParser_initialize();
+            KeyIdParser_initialize();
             Macros_Initialize();
             IsConfigInitialized = true;
         } else {
