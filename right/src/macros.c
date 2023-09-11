@@ -1684,9 +1684,6 @@ static macro_result_t processSetStatusCommand(parser_context_t* ctx, bool addEnd
 static macro_result_t processSetLedTxtCommand(parser_context_t* ctx)
 {
     int16_t time = Macros_LegacyConsumeInt(ctx);
-    if (Macros_DryRun) {
-        return MacroResult_Finished;
-    }
     char text[3];
     uint8_t textLen = 0;
 
@@ -1694,7 +1691,7 @@ static macro_result_t processSetLedTxtCommand(parser_context_t* ctx)
         macro_variable_t value = Macros_ConsumeAnyValue(ctx);
         SegmentDisplay_SerializeVar(text, value);
         textLen = 3;
-    } else {
+    } else if (ctx->at != ctx->end) {
         uint16_t stringOffset = 0, textIndex = 0, textSubIndex = 0;
         for (uint8_t i = 0; i < 3; i++) {
             text[i] = Macros_ConsumeCharOfString(ctx, &stringOffset, &textIndex, &textSubIndex);
@@ -1705,6 +1702,13 @@ static macro_result_t processSetLedTxtCommand(parser_context_t* ctx)
         ctx->at += stringOffset;
         ctx->at += textIndex;
         ConsumeWhite(ctx);
+    } else {
+        Macros_ReportError("Text argument expected.", ctx->at, ctx->at);
+        return MacroResult_Finished;
+    }
+
+    if (Macros_DryRun || Macros_ParserError) {
+        return MacroResult_Finished;
     }
 
     macro_result_t res = MacroResult_Finished;
