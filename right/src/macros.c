@@ -57,7 +57,8 @@ bool Macros_WakeMeOnKeystateChange = false;
 bool Macros_ParserError = false;
 bool Macros_DryRun = false;
 
-uint16_t consumeStatusCharReadingPos = 0;
+static uint16_t consumeStatusCharReadingPos = 0;
+bool Macros_ConsumeStatusCharDirtyFlag = false;
 
 macro_scheduler_t Macros_Scheduler = Scheduler_Blocking;
 uint8_t Macros_MaxBatchSize = 20;
@@ -453,6 +454,7 @@ static macro_result_t processClearStatusCommand()
 
     statusBufferLen = 0;
     consumeStatusCharReadingPos = 0;
+    Macros_ConsumeStatusCharDirtyFlag = false;
     SegmentDisplay_DeactivateSlot(SegmentDisplaySlot_Error);
     SegmentDisplay_DeactivateSlot(SegmentDisplaySlot_Warn);
     return MacroResult_Finished;
@@ -468,6 +470,7 @@ char Macros_ConsumeStatusChar()
     } else {
         res = '\0';
         consumeStatusCharReadingPos = 0;
+        Macros_ConsumeStatusCharDirtyFlag = false;
     }
 
     return res;
@@ -488,6 +491,7 @@ static void setStatusStringInterpolated(const char* text, const char *textEnd, b
             statusBuffer[statusBufferLen] = *text;
             text++;
             statusBufferLen++;
+            Macros_ConsumeStatusCharDirtyFlag = true;
         }
     }
 }
