@@ -41,7 +41,6 @@
 
 // Functions:
 
-    char Macros_ConsumeCharOfString(parser_context_t* ctx, uint16_t* stringOffset, uint16_t* index, uint16_t* subIndex);
     macro_result_t Macros_ProcessSetVarCommand(parser_context_t* ctx);
     macro_variable_t* Macros_ConsumeExistingWritableVariable(parser_context_t* ctx);
     int32_t Macros_ConsumeInt(parser_context_t* ctx);

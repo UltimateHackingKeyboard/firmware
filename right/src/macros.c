@@ -27,6 +27,7 @@
 #include "ledmap.h"
 #include "macro_recorder.h"
 #include "macro_shortcut_parser.h"
+#include "macros_string_reader.h"
 #include "str_utils.h"
 #include "utils.h"
 #include "layer_switcher.h"
@@ -1850,17 +1851,22 @@ static macro_result_t goToLabel(parser_context_t* ctx)
 static macro_result_t goTo(parser_context_t* ctx)
 {
     if (isNUM(ctx)) {
+        if (Macros_DryRun) {
+            Macros_LegacyConsumeInt(ctx);
+            return MacroResult_Finished;
+        }
         return goToAddress(Macros_LegacyConsumeInt(ctx));
     } else {
+        if (Macros_DryRun) {
+            ConsumeAnyIdentifier(ctx);
+            return MacroResult_Finished;
+        }
         return goToLabel(ctx);
     }
 }
 
 static macro_result_t processGoToCommand(parser_context_t* ctx)
 {
-    if (Macros_DryRun) {
-        return MacroResult_Finished;
-    }
     return goTo(ctx);
 }
 
@@ -3462,6 +3468,7 @@ static macro_result_t processCommandAction(void)
     const char* cmdEnd = s->ms.currentMacroAction.cmd.text + s->ms.commandEnd;
 
     if (cmd[0] == '#') {
+        Macros_ReportWarn("# comments are deprecated, please switch to //", cmd, cmd);
         return MacroResult_Finished;
     }
     if (cmd[0] == '/' && cmd[1] == '/') {
@@ -3472,6 +3479,12 @@ static macro_result_t processCommandAction(void)
 
     parser_context_t ctx = { .macroState = s, .begin = cmd, .at = cmd, .end = cmdEnd };
     actionInProgress = processCommand(&ctx);
+
+    if (*ctx.at == '#') {
+        Macros_ReportWarn("# comments are deprecated, please switch to //", ctx.at, ctx.at);
+    } else if (ctx.at != ctx.end) {
+        Macros_ReportWarn("Unprocessed input encountered.", ctx.at, ctx.at);
+    }
 
     s->as.currentConditionPassed = actionInProgress & MacroResult_InProgressFlag;
     return actionInProgress;
@@ -3593,7 +3606,7 @@ static bool loadNextCommand()
     memset(&s->as, 0, sizeof s->as);
 
     const char* actionEnd = s->ms.currentMacroAction.cmd.text + s->ms.currentMacroAction.cmd.textLen;
-    const char* nextCommand = SkipWhite(s->ms.currentMacroAction.cmd.text + s->ms.commandEnd, actionEnd);
+    const char* nextCommand = NextCmd(s->ms.currentMacroAction.cmd.text + s->ms.commandEnd, actionEnd);
 
     if (nextCommand == actionEnd) {
         return false;

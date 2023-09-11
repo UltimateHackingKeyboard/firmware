@@ -56,7 +56,7 @@ Every nonempty line is considered as one command. Empty line, or commented line 
 Configuration of the keyboard can be modified globally or per-keymap by using [macro events](reference-manual.md). For instance, macro named `$onInit` is executed on power-cycling and on config reload. E.g., it may look like this:
 
 ```
-# accel driver
+// accel driver
 set module.trackball.baseSpeed 0.5
 set module.trackball.speed 1.0
 set module.trackball.xceleration 0.5
@@ -272,7 +272,7 @@ holdKey a
 - time-machine `ifGesture` condition. Doubletapping this will produce a slight delay and then output just `b`:
 
 ```
-ifGesture #key final tapKey b
+ifGesture $thisKeyId final tapKey b
 holdKey a
 ```
 
@@ -413,7 +413,7 @@ set module.keycluster.navigationMode.base media
 Similarly, you may rebind your touchpad's "right button" by using following `$onKeymapChange any` macro event:
 
 ```
-#this needs to go into a macro named `$onKeymapChange any`
+//this needs to go into a macro named `$onKeymapChange any`
 set keymapAction.base.192 macro TouchpadLeft
 set keymapAction.base.193 macro TouchpadRight
 ```
@@ -450,11 +450,9 @@ Following operators are accepted:
 
 ### Advanced commands:
 
-You can simplify writing macros by using `#` and `@` characters. The first resolves a number as an index of a register. The second interprets the number as a relative action index. For instance the following macro will write out five "a"s with 50 ms delays
+Example of using advanced features:
 
 ```
-#you can comment your code via a hash
-//you can comment your code via two slashes.
 // yes, this is a totally meaningless example
 ifCtrl goTo default    //goto can also go to labels, absolute adresses and relative adresses
 ifShift final tapKey a //final modifier ends the macro once the command has finished
@@ -487,7 +485,7 @@ On activation key:
 pressKey LS-
 setVar capsActive 1
 if ($capsActive) goTo $currentAddress
-#at the end of macro, the shift gets released automatically
+//at the end of macro, the shift gets released automatically
 ```
 
 on space:
@@ -499,9 +497,9 @@ setVar capsActive 0
 
 ### Macro recorder
 
-Runtime macro recorder allows capturing and replaying sequences of scancodes. Each such macro is identified by a number or a character (or `#key` which resolves to the `KEYID` of the current key, therefore allowing generic key-associated macros). (Runtime macrose are unrelated to the macros that can be created via Agent.)
+Runtime macro recorder allows capturing and replaying sequences of scancodes. Each such macro is identified by a number or a character (or `$thisKeyId` which resolves to the `KEYID` of the current key, therefore allowing generic key-associated macros). (Runtime macroes are unrelated to the macros that can be created via Agent.)
 
-In this setup, shift+key will start recording (indicated by the "adaptive mode" led), another shift+key will stop recording. Hiting the key alone will then replay the macro (e.g., a simple repetitive text edit). Alternatively, virtual register `#key` can be used as an argument in order to assign every key to different slot.
+In this setup, shift+key will start recording (indicated by the "adaptive mode" led), another shift+key will stop recording. Hiting the key alone will then replay the macro (e.g., a simple repetitive text edit). Alternatively, `$thisKeyId` can be used as an argument in order to assign every key to different slot.
 
 ```
 ifShift recordMacro A
@@ -511,14 +509,14 @@ ifNotShift playMacro A
 Above examples can be combined into more elaborate setups. Assume we bind following `perKeyMacro` on every key in your fn layer. Furthermore assume we bind following `recordKey` macro onto the `q` key (or `mod-q`). This gives us standard (although incomplete) vim behaviour. Tap `qa` (`mod-q + a`) to start recording a macro in slot "a". Tap `q` (`mod-q`) to end recording. Tap `fn-a` to replay the macro.
 
 ```
-# perKeyMacro
+// perKeyMacro
 ifShift final recordMacro $thisKeyId
 if ($qActive) final recordMacro $thisKeyId
 playMacro $thisKeyId
 ```
 
 ```
-# recordKey
+// recordKey
 ifRecording final stopRecording
 if $qActive final setVar qActive 0
 setVar qActive 1
@@ -564,7 +562,7 @@ goTo 0
 Above macro will not terminate, not even when ran multiple times. In order to fix this issue, we can use some register signalling:
 
 ```
-# prevent the macro from running multiple times via (randomly picked) register 22
+// prevent the macro from running multiple times via (randomly picked) register 22
 setVar hueStopper 1
 delayUntil 2000
 setVar hueStopper 0
@@ -578,9 +576,9 @@ goTo beginLoop
 You can also start this from `$onInit` by `fork rotateHues` (given you have the macro named `rotateHues`). Or add following lines to the colour picker:
 
 ```
-# put this at the beginning of the picker, to stop rotateHues when another choice is made.
+// put this at the beginning of the picker, to stop rotateHues when another choice is made.
 setReg 22 1
-# start the `rotateHues` macro on 'c' - as "changing"
+// start the `rotateHues` macro on 'c' - as "changing"
 ifGesture c final fork rotateHues
 ```
 

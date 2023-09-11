@@ -126,6 +126,7 @@ static char tryConsumeAnotherStringLiteral(parser_context_t* ctx, uint16_t* stri
     a += *index;
 
     if (a == aEnd) {
+        ctx->at = a;
         return '\0';
     }
 
@@ -172,6 +173,7 @@ char Macros_ConsumeCharOfString(parser_context_t* ctx, uint16_t* stringOffset, u
     a += *index;
 
     if (a == aEnd) {
+        ctx->at = ctx->end;
         return '\0';
     }
 
