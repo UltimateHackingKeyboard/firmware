@@ -109,7 +109,7 @@ void SecondaryRoles_FakeActivation(secondary_role_result_t res)
 
 uint16_t SecondaryRoles_AdvancedStrategyDoubletapTime = 200;
 uint16_t SecondaryRoles_AdvancedStrategyTimeout = 350;
-uint16_t SecondaryRoles_AdvancedStrategySafetyMargin = 50;
+int16_t SecondaryRoles_AdvancedStrategySafetyMargin = 50;
 bool SecondaryRoles_AdvancedStrategyTriggerByRelease = true;
 bool SecondaryRoles_AdvancedStrategyDoubletapToPrimary = true;
 secondary_role_state_t SecondaryRoles_AdvancedStrategyTimeoutAction = SecondaryRoleState_Secondary;
