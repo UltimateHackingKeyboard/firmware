@@ -57,7 +57,7 @@ bool Macros_WakeMeOnKeystateChange = false;
 bool Macros_ParserError = false;
 bool Macros_DryRun = false;
 
-uint8_t consumeStatusCharReadingPos = 0;
+uint16_t consumeStatusCharReadingPos = 0;
 
 macro_scheduler_t Macros_Scheduler = Scheduler_Blocking;
 uint8_t Macros_MaxBatchSize = 20;
@@ -467,6 +467,7 @@ char Macros_ConsumeStatusChar()
         res = statusBuffer[consumeStatusCharReadingPos++];
     } else {
         res = '\0';
+        consumeStatusCharReadingPos = 0;
     }
 
     return res;
