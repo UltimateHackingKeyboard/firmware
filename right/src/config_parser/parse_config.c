@@ -3,7 +3,7 @@
 #include "parse_macro.h"
 #include "keymap.h"
 #include "config_globals.h"
-#include "macros.h"
+#include "macros/core.h"
 #include "led_display.h"
 #include "ledmap.h"
 #include "slave_scheduler.h"

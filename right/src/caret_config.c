@@ -1,8 +1,8 @@
 #include "caret_config.h"
 #include "arduino_hid/ConsumerAPI.h"
 #include "arduino_hid/SystemAPI.h"
-#include "macros.h"
-#include "macros_status_buffer.h"
+#include "macros/core.h"
+#include "macros/status_buffer.h"
 #include "module.h"
 
 caret_configuration_t remappableModes[] = {

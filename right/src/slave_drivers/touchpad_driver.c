@@ -11,7 +11,7 @@
 #include "touchpad_driver.h"
 #include "debug.h"
 #include "timer.h"
-#include "macros.h"
+#include "macros/core.h"
 
 /*
 |  Actually produced sequences:

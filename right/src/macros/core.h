@@ -10,7 +10,7 @@
     #include "usb_device_config.h"
     #include "key_states.h"
     #include "str_utils.h"
-    #include "macros_typedefs.h"
+    #include "macros/typedefs.h"
 
 // Macros:
     #define MACRO_CYCLES_TO_POSTPONE 4
@@ -212,7 +212,7 @@
     extern macro_reference_t AllMacros[MacroIndex_MaxCount];
     extern uint8_t AllMacrosCount;
     extern macro_state_t MacroState[MACRO_STATE_POOL_SIZE];
-    extern macro_state_t *s;
+    extern macro_state_t *S;
     extern bool MacroPlaying;
     extern macro_scheduler_t Macros_Scheduler;
     extern scheduler_state_t Macros_SchedulerState;

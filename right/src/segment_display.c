@@ -1,9 +1,9 @@
 #include "segment_display.h"
 #include "event_scheduler.h"
 #include "led_display.h"
-#include "macros.h"
-#include "macros_status_buffer.h"
-#include "macros_vars.h"
+#include "macros/core.h"
+#include "macros/status_buffer.h"
+#include "macros/vars.h"
 #include "timer.h"
 #include <string.h>
 #include "keymap.h"

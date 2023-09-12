@@ -1,11 +1,11 @@
 #include "key_action.h"
-#include "macros.h"
-#include "macros_status_buffer.h"
+#include "macros/core.h"
+#include "macros/status_buffer.h"
 #include "arduino_hid/ConsumerAPI.h"
 #include "arduino_hid/SystemAPI.h"
 #include "config_parser/parse_keymap.h"
 #include "config_parser/config_globals.h"
-#include "macros_shortcut_parser.h"
+#include "macros/shortcut_parser.h"
 #include "str_utils.h"
 
 typedef enum {

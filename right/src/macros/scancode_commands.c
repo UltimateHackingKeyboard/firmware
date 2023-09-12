@@ -1,22 +1,22 @@
-#include "macros_scancode_commands.h"
+#include "macros/scancode_commands.h"
 #include "usb_interfaces/usb_interface_basic_keyboard.h"
 #include "usb_interfaces/usb_interface_media_keyboard.h"
 #include "usb_interfaces/usb_interface_mouse.h"
 #include "usb_interfaces/usb_interface_system_keyboard.h"
 #include "key_action.h"
-#include "macros.h"
-#include "macros_status_buffer.h"
+#include "macros/core.h"
+#include "macros/status_buffer.h"
 #include "usb_report_updater.h"
-#include "macros_shortcut_parser.h"
-#include "macros_string_reader.h"
+#include "macros/shortcut_parser.h"
+#include "macros/string_reader.h"
 
 static void addBasicScancode(uint8_t scancode)
 {
     if (!scancode) {
         return;
     }
-    if (!UsbBasicKeyboard_ContainsScancode(&s->ms.macroBasicKeyboardReport, scancode)) {
-        UsbBasicKeyboard_AddScancode(&s->ms.macroBasicKeyboardReport, scancode);
+    if (!UsbBasicKeyboard_ContainsScancode(&S->ms.macroBasicKeyboardReport, scancode)) {
+        UsbBasicKeyboard_AddScancode(&S->ms.macroBasicKeyboardReport, scancode);
     }
 }
 
@@ -25,19 +25,19 @@ static void deleteBasicScancode(uint8_t scancode)
     if (!scancode) {
         return;
     }
-    UsbBasicKeyboard_RemoveScancode(&s->ms.macroBasicKeyboardReport, scancode);
+    UsbBasicKeyboard_RemoveScancode(&S->ms.macroBasicKeyboardReport, scancode);
 }
 
 static void addModifiers(uint8_t inputModifiers, uint8_t outputModifiers)
 {
-    s->ms.inputModifierMask |= inputModifiers;
-    s->ms.macroBasicKeyboardReport.modifiers |= outputModifiers;
+    S->ms.inputModifierMask |= inputModifiers;
+    S->ms.macroBasicKeyboardReport.modifiers |= outputModifiers;
 }
 
 static void deleteModifiers(uint8_t inputModifiers, uint8_t outputModifiers)
 {
-    s->ms.inputModifierMask &= ~inputModifiers;
-    s->ms.macroBasicKeyboardReport.modifiers &= ~outputModifiers;
+    S->ms.inputModifierMask &= ~inputModifiers;
+    S->ms.macroBasicKeyboardReport.modifiers &= ~outputModifiers;
 }
 
 static void addMediaScancode(uint16_t scancode)
@@ -46,13 +46,13 @@ static void addMediaScancode(uint16_t scancode)
         return;
     }
     for (uint8_t i = 0; i < USB_MEDIA_KEYBOARD_MAX_KEYS; i++) {
-        if (s->ms.macroMediaKeyboardReport.scancodes[i] == scancode) {
+        if (S->ms.macroMediaKeyboardReport.scancodes[i] == scancode) {
             return;
         }
     }
     for (uint8_t i = 0; i < USB_MEDIA_KEYBOARD_MAX_KEYS; i++) {
-        if (!s->ms.macroMediaKeyboardReport.scancodes[i]) {
-            s->ms.macroMediaKeyboardReport.scancodes[i] = scancode;
+        if (!S->ms.macroMediaKeyboardReport.scancodes[i]) {
+            S->ms.macroMediaKeyboardReport.scancodes[i] = scancode;
             break;
         }
     }
@@ -64,8 +64,8 @@ static void deleteMediaScancode(uint16_t scancode)
         return;
     }
     for (uint8_t i = 0; i < USB_MEDIA_KEYBOARD_MAX_KEYS; i++) {
-        if (s->ms.macroMediaKeyboardReport.scancodes[i] == scancode) {
-            s->ms.macroMediaKeyboardReport.scancodes[i] = 0;
+        if (S->ms.macroMediaKeyboardReport.scancodes[i] == scancode) {
+            S->ms.macroMediaKeyboardReport.scancodes[i] = 0;
             return;
         }
     }
@@ -76,7 +76,7 @@ static void addSystemScancode(uint8_t scancode)
     if (!scancode) {
         return;
     }
-    UsbSystemKeyboard_AddScancode(&s->ms.macroSystemKeyboardReport, scancode);
+    UsbSystemKeyboard_AddScancode(&S->ms.macroSystemKeyboardReport, scancode);
 }
 
 static void deleteSystemScancode(uint8_t scancode)
@@ -84,7 +84,7 @@ static void deleteSystemScancode(uint8_t scancode)
     if (!scancode) {
         return;
     }
-    UsbSystemKeyboard_RemoveScancode(&s->ms.macroSystemKeyboardReport, scancode);
+    UsbSystemKeyboard_RemoveScancode(&S->ms.macroSystemKeyboardReport, scancode);
 }
 
 static void addScancode(uint16_t scancode, keystroke_type_t type)
@@ -119,7 +119,7 @@ static void deleteScancode(uint16_t scancode, keystroke_type_t type)
 
 static macro_result_t processKey(macro_action_t macro_action)
 {
-    s->ms.reportsUsed = true;
+    S->ms.reportsUsed = true;
     macro_sub_action_t action = macro_action.key.action;
     keystroke_type_t type = macro_action.key.type;
     uint8_t inputModMask = macro_action.key.inputModMask;
@@ -127,16 +127,16 @@ static macro_result_t processKey(macro_action_t macro_action)
     uint8_t stickyModMask = macro_action.key.stickyModMask;
     uint16_t scancode = macro_action.key.scancode;
 
-    s->as.actionPhase++;
+    S->as.actionPhase++;
 
     switch (action) {
         case MacroSubAction_Hold:
         case MacroSubAction_Tap:
-            switch(s->as.actionPhase) {
+            switch(S->as.actionPhase) {
                 case 1:
                     addModifiers(inputModMask, outputModMask);
                     if (stickyModMask) {
-                        ActivateStickyMods(s->ms.currentMacroKey, stickyModMask);
+                        ActivateStickyMods(S->ms.currentMacroKey, stickyModMask);
                     }
                     return MacroResult_Blocking;
                 case 2:
@@ -144,7 +144,7 @@ static macro_result_t processKey(macro_action_t macro_action)
                     return MacroResult_Blocking;
                 case 3:
                     if (Macros_CurrentMacroKeyIsActive() && action == MacroSubAction_Hold) {
-                        s->as.actionPhase--;
+                        S->as.actionPhase--;
                         return Macros_SleepTillKeystateChange();
                     }
                     deleteScancode(scancode, type);
@@ -153,12 +153,12 @@ static macro_result_t processKey(macro_action_t macro_action)
                     deleteModifiers(inputModMask, outputModMask);
                     return MacroResult_Blocking;
                 case 5:
-                    s->as.actionPhase = 0;
+                    S->as.actionPhase = 0;
                     return MacroResult_Finished;
             }
             break;
         case MacroSubAction_Release:
-            switch (s->as.actionPhase) {
+            switch (S->as.actionPhase) {
                 case 1:
                     deleteScancode(scancode, type);
                     return MacroResult_Blocking;
@@ -166,23 +166,23 @@ static macro_result_t processKey(macro_action_t macro_action)
                     deleteModifiers(inputModMask, outputModMask);
                     return MacroResult_Blocking;
                 case 3:
-                    s->as.actionPhase = 0;
+                    S->as.actionPhase = 0;
                     return MacroResult_Finished;
             }
             break;
         case MacroSubAction_Press:
-            switch (s->as.actionPhase) {
+            switch (S->as.actionPhase) {
                 case 1:
                     addModifiers(inputModMask, outputModMask);
                     if (stickyModMask) {
-                        ActivateStickyMods(s->ms.currentMacroKey, stickyModMask);
+                        ActivateStickyMods(S->ms.currentMacroKey, stickyModMask);
                     }
                     return MacroResult_Blocking;
                 case 2:
                     addScancode(scancode, type);
                     return MacroResult_Blocking;
                 case 3:
-                    s->as.actionPhase = 0;
+                    S->as.actionPhase = 0;
                     return MacroResult_Finished;
             }
             break;
@@ -192,54 +192,54 @@ static macro_result_t processKey(macro_action_t macro_action)
 
 macro_result_t Macros_ProcessKeyAction()
 {
-    return processKey(s->ms.currentMacroAction);
+    return processKey(S->ms.currentMacroAction);
 }
 
 static macro_result_t processMouseButton(macro_action_t macro_action)
 {
-    s->ms.reportsUsed = true;
+    S->ms.reportsUsed = true;
     uint8_t mouseButtonMask = macro_action.mouseButton.mouseButtonsMask;
     macro_sub_action_t action = macro_action.mouseButton.action;
 
-    s->as.actionPhase++;
+    S->as.actionPhase++;
 
     switch (macro_action.mouseButton.action) {
         case MacroSubAction_Hold:
         case MacroSubAction_Tap:
-            switch(s->as.actionPhase) {
+            switch(S->as.actionPhase) {
             case 1:
-                s->ms.macroMouseReport.buttons |= mouseButtonMask;
+                S->ms.macroMouseReport.buttons |= mouseButtonMask;
                 return MacroResult_Blocking;
             case 2:
                 if (Macros_CurrentMacroKeyIsActive() && action == MacroSubAction_Hold) {
-                    s->as.actionPhase--;
+                    S->as.actionPhase--;
                     return Macros_SleepTillKeystateChange();
                 }
-                s->ms.macroMouseReport.buttons &= ~mouseButtonMask;
+                S->ms.macroMouseReport.buttons &= ~mouseButtonMask;
                 return MacroResult_Blocking;
             case 3:
-                s->as.actionPhase = 0;
+                S->as.actionPhase = 0;
                 return MacroResult_Finished;
 
             }
             break;
         case MacroSubAction_Release:
-            switch(s->as.actionPhase) {
+            switch(S->as.actionPhase) {
             case 1:
-                s->ms.macroMouseReport.buttons &= ~mouseButtonMask;
+                S->ms.macroMouseReport.buttons &= ~mouseButtonMask;
                 return MacroResult_Blocking;
             case 2:
-                s->as.actionPhase = 0;
+                S->as.actionPhase = 0;
                 return MacroResult_Finished;
             }
             break;
         case MacroSubAction_Press:
-            switch(s->as.actionPhase) {
+            switch(S->as.actionPhase) {
                 case 1:
-                    s->ms.macroMouseReport.buttons |= mouseButtonMask;
+                    S->ms.macroMouseReport.buttons |= mouseButtonMask;
                     return MacroResult_Blocking;
                 case 2:
-                    s->as.actionPhase = 0;
+                    S->as.actionPhase = 0;
                     return MacroResult_Finished;
             }
             break;
@@ -249,82 +249,82 @@ static macro_result_t processMouseButton(macro_action_t macro_action)
 
 macro_result_t Macros_ProcessMouseButtonAction(void)
 {
-    return processMouseButton(s->ms.currentMacroAction);
+    return processMouseButton(S->ms.currentMacroAction);
 }
 
 macro_result_t Macros_ProcessMoveMouseAction(void)
 {
-    s->ms.reportsUsed = true;
-    if (s->as.actionActive) {
-        s->ms.macroMouseReport.x = 0;
-        s->ms.macroMouseReport.y = 0;
-        s->as.actionActive = false;
+    S->ms.reportsUsed = true;
+    if (S->as.actionActive) {
+        S->ms.macroMouseReport.x = 0;
+        S->ms.macroMouseReport.y = 0;
+        S->as.actionActive = false;
     } else {
-        s->ms.macroMouseReport.x = s->ms.currentMacroAction.moveMouse.x;
-        s->ms.macroMouseReport.y = s->ms.currentMacroAction.moveMouse.y;
-        s->as.actionActive = true;
+        S->ms.macroMouseReport.x = S->ms.currentMacroAction.moveMouse.x;
+        S->ms.macroMouseReport.y = S->ms.currentMacroAction.moveMouse.y;
+        S->as.actionActive = true;
     }
-    return s->as.actionActive ? MacroResult_Blocking : MacroResult_Finished;
+    return S->as.actionActive ? MacroResult_Blocking : MacroResult_Finished;
 }
 
 macro_result_t Macros_ProcessScrollMouseAction(void)
 {
-    s->ms.reportsUsed = true;
-    if (s->as.actionActive) {
-        s->ms.macroMouseReport.wheelX = 0;
-        s->ms.macroMouseReport.wheelY = 0;
-        s->as.actionActive = false;
+    S->ms.reportsUsed = true;
+    if (S->as.actionActive) {
+        S->ms.macroMouseReport.wheelX = 0;
+        S->ms.macroMouseReport.wheelY = 0;
+        S->as.actionActive = false;
     } else {
-        s->ms.macroMouseReport.wheelX = s->ms.currentMacroAction.scrollMouse.x;
-        s->ms.macroMouseReport.wheelY = s->ms.currentMacroAction.scrollMouse.y;
-        s->as.actionActive = true;
+        S->ms.macroMouseReport.wheelX = S->ms.currentMacroAction.scrollMouse.x;
+        S->ms.macroMouseReport.wheelY = S->ms.currentMacroAction.scrollMouse.y;
+        S->as.actionActive = true;
     }
-    return s->as.actionActive ? MacroResult_Blocking : MacroResult_Finished;
+    return S->as.actionActive ? MacroResult_Blocking : MacroResult_Finished;
 }
 
 
 static void clearScancodes()
 {
-    uint8_t oldMods = s->ms.macroBasicKeyboardReport.modifiers;
-    memset(&s->ms.macroBasicKeyboardReport, 0, sizeof s->ms.macroBasicKeyboardReport);
-    s->ms.macroBasicKeyboardReport.modifiers = oldMods;
+    uint8_t oldMods = S->ms.macroBasicKeyboardReport.modifiers;
+    memset(&S->ms.macroBasicKeyboardReport, 0, sizeof S->ms.macroBasicKeyboardReport);
+    S->ms.macroBasicKeyboardReport.modifiers = oldMods;
 }
 
 macro_result_t Macros_DispatchText(const char* text, uint16_t textLen, bool rawString)
 {
-    s->ms.reportsUsed = true;
+    S->ms.reportsUsed = true;
     static macro_state_t* dispatchMutex = NULL;
-    if (dispatchMutex != s && dispatchMutex != NULL) {
+    if (dispatchMutex != S && dispatchMutex != NULL) {
         return MacroResult_Waiting;
     } else {
-        dispatchMutex = s;
+        dispatchMutex = S;
     }
     char character = 0;
     uint8_t scancode = 0;
     uint8_t mods = 0;
 
-    uint16_t stringOffsetCopy = s->as.dispatchData.stringOffset;
-    uint16_t textIndexCopy = s->as.dispatchData.textIdx;
-    uint16_t textSubIndexCopy = s->as.dispatchData.subIndex;
+    uint16_t stringOffsetCopy = S->as.dispatchData.stringOffset;
+    uint16_t textIndexCopy = S->as.dispatchData.textIdx;
+    uint16_t textSubIndexCopy = S->as.dispatchData.subIndex;
 
     // Precompute modifiers and scancode.
-    if (s->as.dispatchData.textIdx != textLen) {
+    if (S->as.dispatchData.textIdx != textLen) {
         if (rawString) {
-            character = text[s->as.dispatchData.textIdx];
+            character = text[S->as.dispatchData.textIdx];
         } else {
-            parser_context_t ctx = { .macroState = s, .begin = text, .at = text, .end = text+textLen };
+            parser_context_t ctx = { .macroState = S, .begin = text, .at = text, .end = text+textLen };
             character = Macros_ConsumeCharOfString(&ctx, &stringOffsetCopy, &textIndexCopy, &textSubIndexCopy);
 
             //make sure we write error only once
             if (Macros_ParserError) {
-                s->as.dispatchData.textIdx = textIndexCopy;
-                s->as.dispatchData.subIndex = textSubIndexCopy;
-                s->as.dispatchData.stringOffset = stringOffsetCopy;
+                S->as.dispatchData.textIdx = textIndexCopy;
+                S->as.dispatchData.subIndex = textSubIndexCopy;
+                S->as.dispatchData.stringOffset = stringOffsetCopy;
                 return MacroResult_InProgressFlag;
             }
 
             if (character == '\0') {
-                s->as.dispatchData.textIdx = textLen;
+                S->as.dispatchData.textIdx = textLen;
             }
         }
         scancode = MacroShortcutParser_CharacterToScancode(character);
@@ -334,67 +334,67 @@ macro_result_t Macros_DispatchText(const char* text, uint16_t textLen, bool rawS
     // If required modifiers differ, first clear scancodes and send empty report
     // containing only old modifiers. Then set new modifiers and send that new report.
     // Just then continue.
-    if (mods != s->ms.macroBasicKeyboardReport.modifiers) {
-        if (s->as.dispatchData.reportState != REPORT_EMPTY) {
-            s->as.dispatchData.reportState = REPORT_EMPTY;
+    if (mods != S->ms.macroBasicKeyboardReport.modifiers) {
+        if (S->as.dispatchData.reportState != REPORT_EMPTY) {
+            S->as.dispatchData.reportState = REPORT_EMPTY;
             clearScancodes();
             return MacroResult_Blocking;
         } else {
-            s->ms.macroBasicKeyboardReport.modifiers = mods;
+            S->ms.macroBasicKeyboardReport.modifiers = mods;
             return MacroResult_Blocking;
         }
     }
 
     // If all characters have been sent, finish.
-    if (s->as.dispatchData.textIdx == textLen) {
-        if (s->as.dispatchData.reportState != REPORT_EMPTY) {
-            s->as.dispatchData.reportState = REPORT_EMPTY;
-            memset(&s->ms.macroBasicKeyboardReport, 0, sizeof s->ms.macroBasicKeyboardReport);
+    if (S->as.dispatchData.textIdx == textLen) {
+        if (S->as.dispatchData.reportState != REPORT_EMPTY) {
+            S->as.dispatchData.reportState = REPORT_EMPTY;
+            memset(&S->ms.macroBasicKeyboardReport, 0, sizeof S->ms.macroBasicKeyboardReport);
             return MacroResult_Blocking;
         } else {
-            s->as.dispatchData.textIdx = 0;
-            s->as.dispatchData.subIndex = 0;
+            S->as.dispatchData.textIdx = 0;
+            S->as.dispatchData.subIndex = 0;
             dispatchMutex = NULL;
             return MacroResult_Finished;
         }
     }
 
     // Whenever the report is full, we clear the report and send it empty before continuing.
-    if (s->as.dispatchData.reportState == REPORT_FULL) {
-        s->as.dispatchData.reportState = REPORT_EMPTY;
-        memset(&s->ms.macroBasicKeyboardReport, 0, sizeof s->ms.macroBasicKeyboardReport);
+    if (S->as.dispatchData.reportState == REPORT_FULL) {
+        S->as.dispatchData.reportState = REPORT_EMPTY;
+        memset(&S->ms.macroBasicKeyboardReport, 0, sizeof S->ms.macroBasicKeyboardReport);
         return MacroResult_Blocking;
     }
 
     // If current character is already contained in the report, we need to
     // release it first. We do so by artificially marking the report
     // full. Next call will do rest of the work for us.
-    if (UsbBasicKeyboard_ContainsScancode(&s->ms.macroBasicKeyboardReport, scancode)) {
-        s->as.dispatchData.reportState = REPORT_FULL;
+    if (UsbBasicKeyboard_ContainsScancode(&S->ms.macroBasicKeyboardReport, scancode)) {
+        S->as.dispatchData.reportState = REPORT_FULL;
         return MacroResult_Blocking;
     }
 
     // Send the scancode.
-    UsbBasicKeyboard_AddScancode(&s->ms.macroBasicKeyboardReport, scancode);
-    s->as.dispatchData.reportState = UsbBasicKeyboard_IsFullScancodes(&s->ms.macroBasicKeyboardReport) ?
+    UsbBasicKeyboard_AddScancode(&S->ms.macroBasicKeyboardReport, scancode);
+    S->as.dispatchData.reportState = UsbBasicKeyboard_IsFullScancodes(&S->ms.macroBasicKeyboardReport) ?
             REPORT_FULL : REPORT_PARTIAL;
     if (rawString) {
-        ++s->as.dispatchData.textIdx;
+        ++S->as.dispatchData.textIdx;
     } else {
-        if (textIndexCopy == s->as.dispatchData.textIdx && textSubIndexCopy == s->as.dispatchData.subIndex && stringOffsetCopy == s->as.dispatchData.stringOffset) {
+        if (textIndexCopy == S->as.dispatchData.textIdx && textSubIndexCopy == S->as.dispatchData.subIndex && stringOffsetCopy == S->as.dispatchData.stringOffset) {
             Macros_ReportError("Text dispatch got stuck! Please report this.", text + textIndexCopy, text+textLen);
             return MacroResult_Finished;
         }
-        s->as.dispatchData.textIdx = textIndexCopy;
-        s->as.dispatchData.subIndex = textSubIndexCopy;
-        s->as.dispatchData.stringOffset = stringOffsetCopy;
+        S->as.dispatchData.textIdx = textIndexCopy;
+        S->as.dispatchData.subIndex = textSubIndexCopy;
+        S->as.dispatchData.stringOffset = stringOffsetCopy;
     }
     return MacroResult_Blocking;
 }
 
 macro_result_t Macros_ProcessTextAction(void)
 {
-    return Macros_DispatchText(s->ms.currentMacroAction.text.text, s->ms.currentMacroAction.text.textLen, true);
+    return Macros_DispatchText(S->ms.currentMacroAction.text.text, S->ms.currentMacroAction.text.textLen, true);
 }
 
 static macro_action_t decodeKeyAndConsume(parser_context_t* ctx, macro_sub_action_t defaultSubAction)
@@ -435,11 +435,11 @@ macro_result_t Macros_ProcessTapKeySeqCommand(parser_context_t* ctx)
         return MacroResult_Finished;
     }
 
-    for(uint8_t i = 0; i < s->as.keySeqData.atKeyIdx; i++) {
+    for(uint8_t i = 0; i < S->as.keySeqData.atKeyIdx; i++) {
         ctx->at = NextTok(ctx->at, ctx->end);
 
         if(ctx->at == ctx->end) {
-            s->as.keySeqData.atKeyIdx = 0;
+            S->as.keySeqData.atKeyIdx = 0;
             return MacroResult_Finished;
         };
     }
@@ -447,7 +447,7 @@ macro_result_t Macros_ProcessTapKeySeqCommand(parser_context_t* ctx)
     macro_result_t res = Macros_ProcessKeyCommandAndConsume(ctx, MacroSubAction_Tap);
 
     if(res == MacroResult_Finished) {
-        s->as.keySeqData.atKeyIdx++;
+        S->as.keySeqData.atKeyIdx++;
     }
 
     return res == MacroResult_Waiting ? MacroResult_Waiting : MacroResult_Blocking;

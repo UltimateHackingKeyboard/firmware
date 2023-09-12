@@ -6,7 +6,7 @@
     #include <stdint.h>
     #include <stdbool.h>
     #include "timer.h"
-    #include "macros_vars.h"
+    #include "macros/vars.h"
 
 // Macros:
 

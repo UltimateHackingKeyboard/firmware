@@ -11,7 +11,7 @@
 #include "i2c_addresses.h"
 #include "config.h"
 #include "i2c_error_logger.h"
-#include "macros.h"
+#include "macros/core.h"
 #include "debug.h"
 
 uint32_t I2cSlaveScheduler_Counter;

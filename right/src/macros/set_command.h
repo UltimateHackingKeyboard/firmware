@@ -8,9 +8,9 @@
     #include "key_action.h"
     #include "usb_device_config.h"
     #include "key_states.h"
-    #include "macros_typedefs.h"
-    #include "macros_vars.h"
-    #include "macros.h"
+    #include "macros/typedefs.h"
+    #include "macros/vars.h"
+    #include "macros/core.h"
 
 // Macros:
 

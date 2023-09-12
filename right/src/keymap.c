@@ -7,7 +7,7 @@
 #include "ledmap.h"
 #include "config_parser/parse_keymap.h"
 #include "config_parser/config_globals.h"
-#include "macros.h"
+#include "macros/core.h"
 #include "macro_events.h"
 #include "segment_display.h"
 

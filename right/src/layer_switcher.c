@@ -5,7 +5,7 @@
 #include "ledmap.h"
 #include "macro_events.h"
 #include "timer.h"
-#include "macros.h"
+#include "macros/core.h"
 #include "debug.h"
 #include "led_display.h"
 #include "usb_report_updater.h"
