@@ -1,6 +1,6 @@
 #include "led_display.h"
 #include "lufa/HIDClassCommon.h"
-#include "macros.h"
+#include "macros/core.h"
 #include "macro_events.h"
 #include "usb_composite_device.h"
 #include "usb_report_updater.h"

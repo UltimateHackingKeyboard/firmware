@@ -1,5 +1,5 @@
 #include "fsl_common.h"
-#include "macros.h"
+#include "macros/core.h"
 #include "usb_commands/usb_command_exec_macro_command.h"
 #include "usb_interfaces/usb_interface_generic_hid.h"
 #include "usb_protocol_handler.h"

@@ -1,6 +1,6 @@
-#include "macros.h"
-#include "macros_status_buffer.h"
-#include "macros_debug_commands.h"
+#include "macros/core.h"
+#include "macros/status_buffer.h"
+#include "macros/debug_commands.h"
 #include "utils.h"
 #include "layer_stack.h"
 #include "postponer.h"
@@ -135,7 +135,7 @@ macro_result_t Macros_ProcessDiagnoseCommand()
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
             key_state_t *keyState = &KeyStates[slotId][keyId];
-            if (keyState != s->ms.currentMacroKey) {
+            if (keyState != S->ms.currentMacroKey) {
                 keyState->current = 0;
                 keyState->previous = 0;
             }
@@ -159,7 +159,7 @@ macro_result_t Macros_ProcessStatsRuntimeCommand()
     if (Macros_DryRun) {
         return MacroResult_Finished;
     }
-    int ms = Timer_GetElapsedTime(&s->ms.currentMacroStartTime);
+    int ms = Timer_GetElapsedTime(&S->ms.currentMacroStartTime);
     Macros_SetStatusString("macro runtime is: ", NULL);
     Macros_SetStatusNum(ms);
     Macros_SetStatusString(" ms\n", NULL);

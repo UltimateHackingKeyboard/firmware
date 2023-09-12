@@ -18,7 +18,7 @@
 #include "usb_report_updater.h"
 #include "caret_config.h"
 #include "keymap.h"
-#include "macros.h"
+#include "macros/core.h"
 #include "debug.h"
 #include "postponer.h"
 #include "layer.h"

@@ -3,7 +3,7 @@
 #include "str_utils.h"
 #include "macro_events.h"
 #include "config_parser/parse_macro.h"
-#include "macros.h"
+#include "macros/core.h"
 #include "keymap.h"
 #include "led_display.h"
 #include "debug.h"

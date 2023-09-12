@@ -1,15 +1,15 @@
-#include "macros_vars.h"
+#include "macros/vars.h"
 #include "postponer.h"
-#include "macros_keyid_parser.h"
+#include "macros/keyid_parser.h"
 #include "utils.h"
 #include "str_utils.h"
-#include "macros.h"
-#include "macros_status_buffer.h"
+#include "macros/core.h"
+#include "macros/status_buffer.h"
 #include <stdint.h>
 #include <stdio.h>
 #include "config_parser/config_globals.h"
 #include "debug.h"
-#include "macros_set_command.h"
+#include "macros/set_command.h"
 
 typedef enum {
     Operator_Add,

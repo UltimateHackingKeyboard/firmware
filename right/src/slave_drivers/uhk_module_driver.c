@@ -12,7 +12,7 @@
 #include "utils.h"
 #include "keymap.h"
 #include "debug.h"
-#include "macros.h"
+#include "macros/core.h"
 #include "versioning.h"
 
 uhk_module_state_t UhkModuleStates[UHK_MODULE_MAX_SLOT_COUNT];

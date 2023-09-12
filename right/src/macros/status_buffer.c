@@ -1,8 +1,8 @@
-#include "macros_status_buffer.h"
-#include "macros.h"
-#include "macros_status_buffer.h"
+#include "macros/status_buffer.h"
+#include "macros/core.h"
+#include "macros/status_buffer.h"
 #include "segment_display.h"
-#include "macros_string_reader.h"
+#include "macros/string_reader.h"
 #include "config_parser/parse_macro.h"
 #include "config_parser/config_globals.h"
 #include <math.h>
@@ -139,9 +139,9 @@ void Macros_SetStatusChar(char n)
 
 static uint16_t findCurrentCommandLine()
 {
-    if (s != NULL) {
+    if (S != NULL) {
         uint16_t lineCount = 1;
-        for (const char* c = s->ms.currentMacroAction.cmd.text; c < s->ms.currentMacroAction.cmd.text + s->ms.commandBegin; c++) {
+        for (const char* c = S->ms.currentMacroAction.cmd.text; c < S->ms.currentMacroAction.cmd.text + S->ms.commandBegin; c++) {
             if (*c == '\n') {
                 lineCount++;
             }
@@ -153,15 +153,15 @@ static uint16_t findCurrentCommandLine()
 
 static void reportErrorHeader(const char* status)
 {
-    if (s != NULL) {
+    if (S != NULL) {
         const char *name, *nameEnd;
         uint16_t lineCount = findCurrentCommandLine(status);
-        FindMacroName(&AllMacros[s->ms.currentMacroIndex], &name, &nameEnd);
+        FindMacroName(&AllMacros[S->ms.currentMacroIndex], &name, &nameEnd);
         Macros_SetStatusString(status, NULL);
         Macros_SetStatusString(" at ", NULL);
         Macros_SetStatusString(name, nameEnd);
         Macros_SetStatusString(" ", NULL);
-        Macros_SetStatusNumSpaced(s->ms.currentMacroActionIndex+1, false);
+        Macros_SetStatusNumSpaced(S->ms.currentMacroActionIndex+1, false);
         Macros_SetStatusString("/", NULL);
         Macros_SetStatusNumSpaced(lineCount, false);
         Macros_SetStatusString(": ", NULL);
@@ -198,15 +198,15 @@ static void reportError(
 ) {
     Macros_SetStatusString(err, NULL);
 
-    if (s != NULL) {
+    if (S != NULL) {
         bool argIsCommand = ValidatedUserConfigBuffer.buffer <= (uint8_t*)arg && (uint8_t*)arg < ValidatedUserConfigBuffer.buffer + USER_CONFIG_SIZE;
         if (arg != NULL && arg != argEnd) {
             Macros_SetStatusString(" ", NULL);
             Macros_SetStatusString(arg, TokEnd(arg, argEnd));
         }
         Macros_SetStatusString("\n", NULL);
-        const char* startOfLine = s->ms.currentMacroAction.cmd.text + s->ms.commandBegin;
-        const char* endOfLine = s->ms.currentMacroAction.cmd.text + s->ms.commandEnd;
+        const char* startOfLine = S->ms.currentMacroAction.cmd.text + S->ms.commandBegin;
+        const char* endOfLine = S->ms.currentMacroAction.cmd.text + S->ms.commandEnd;
         uint16_t line = findCurrentCommandLine();
         reportCommandLocation(line, arg-startOfLine, startOfLine, endOfLine, argIsCommand);
     } else {

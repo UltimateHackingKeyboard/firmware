@@ -3,7 +3,7 @@
 #include "key_matrix.h"
 #include "test_switches.h"
 #include "usb_report_updater.h"
-#include "macros.h"
+#include "macros/core.h"
 
 void UsbCommand_GetVariable(void)
 {

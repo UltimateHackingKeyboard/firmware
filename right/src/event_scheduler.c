@@ -1,7 +1,7 @@
 #include "event_scheduler.h"
 #include "segment_display.h"
 #include "timer.h"
-#include "macros.h"
+#include "macros/core.h"
 #include "utils.h"
 
 uint32_t times[EventSchedulerEvent_Count] = {};

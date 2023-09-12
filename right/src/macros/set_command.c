@@ -1,11 +1,11 @@
-#include "macros_set_command.h"
+#include "macros/set_command.h"
 #include "config_parser/parse_config.h"
 #include "config_parser/parse_keymap.h"
 #include "key_states.h"
 #include "layer.h"
 #include "ledmap.h"
-#include "macros.h"
-#include "macros_status_buffer.h"
+#include "macros/core.h"
+#include "macros/status_buffer.h"
 #include "module.h"
 #include "secondary_role_driver.h"
 #include "timer.h"
@@ -15,7 +15,7 @@
 #include "led_display.h"
 #include "postponer.h"
 #include "macro_recorder.h"
-#include "macros_shortcut_parser.h"
+#include "macros/shortcut_parser.h"
 #include "str_utils.h"
 #include "utils.h"
 #include "layer_switcher.h"
@@ -26,7 +26,7 @@
 #include "config_parser/parse_macro.h"
 #include "slave_drivers/is31fl3xxx_driver.h"
 #include "init_peripherals.h"
-#include "macros_vars.h"
+#include "macros/vars.h"
 #include <stdint.h>
 
 typedef enum {

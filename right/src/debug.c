@@ -8,7 +8,7 @@
 #include "key_states.h"
 #include <limits.h>
 #include "usb_interfaces/usb_interface_basic_keyboard.h"
-#include "macros.h"
+#include "macros/core.h"
 #include "keymap.h"
 
 uint8_t CurrentWatch = 0;

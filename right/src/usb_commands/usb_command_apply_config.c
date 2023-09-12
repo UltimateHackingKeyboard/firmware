@@ -5,8 +5,8 @@
 #include "usb_protocol_handler.h"
 #include "keymap.h"
 #include "macro_events.h"
-#include "macros.h"
-#include "macros_status_buffer.h"
+#include "macros/core.h"
+#include "macros/status_buffer.h"
 
 void updateUsbBuffer(uint8_t usbStatusCode, uint16_t parserOffset, parser_stage_t parserStage)
 {

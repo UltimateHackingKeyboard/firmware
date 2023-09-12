@@ -11,7 +11,7 @@
     #include "usb_device_config.h"
     #include "key_states.h"
     #include "str_utils.h"
-    #include "macros_typedefs.h"
+    #include "macros/typedefs.h"
 
 // Macros:
 

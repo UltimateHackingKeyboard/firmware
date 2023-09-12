@@ -1,7 +1,7 @@
 #include "macro_recorder.h"
 #include "led_display.h"
-#include "macros.h"
-#include "macros_status_buffer.h"
+#include "macros/core.h"
+#include "macros/status_buffer.h"
 #include "segment_display.h"
 #include "timer.h"
 
