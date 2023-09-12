@@ -2,6 +2,7 @@
 #include "event_scheduler.h"
 #include "led_display.h"
 #include "macros.h"
+#include "macros_status_buffer.h"
 #include "macros_vars.h"
 #include "timer.h"
 #include <string.h>

@@ -36,8 +36,8 @@ static uint8_t previousEventMacroSlot = 255;
 
 void MacroEvent_OnInit()
 {
-    const char* s = "$onInit";
-    uint8_t idx = FindMacroIndexByName(s, s + strlen(s), false);
+    const char* name = "$onInit";
+    uint8_t idx = FindMacroIndexByName(name, name + strlen(name), false);
     if (idx != 255) {
         previousEventMacroSlot = Macros_StartMacro(idx, NULL, 255, false);
     }

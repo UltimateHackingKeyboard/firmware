@@ -2,6 +2,7 @@
 #include "key_states.h"
 #include "usb_report_updater.h"
 #include "macros.h"
+#include "macros_status_buffer.h"
 #include "timer.h"
 #include "utils.h"
 #include "layer_switcher.h"

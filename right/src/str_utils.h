@@ -8,7 +8,7 @@
     #include "layer.h"
     #include "module.h"
     #include "secondary_role_driver.h"
-    #include "macros_core.h"
+    #include "macros_typedefs.h"
 
 // Typedefs:
 

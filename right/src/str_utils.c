@@ -3,6 +3,7 @@
 #include "config_parser/config_globals.h"
 #include "config_parser/parse_keymap.h"
 #include "macros.h"
+#include "macros_status_buffer.h"
 #include "macros_vars.h"
 #include "module.h"
 #include "slave_protocol.h"

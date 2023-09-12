@@ -7,6 +7,14 @@
 
 // Typedefs:
 
+
+    typedef enum {
+        MacroSubAction_Tap,
+        MacroSubAction_Press,
+        MacroSubAction_Release,
+        MacroSubAction_Hold
+    } macro_sub_action_t;
+
     typedef enum {
         MacroResult_InProgressFlag = 1,
         MacroResult_ActionFinishedFlag = 2,

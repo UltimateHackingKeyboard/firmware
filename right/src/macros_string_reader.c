@@ -1,5 +1,6 @@
 #include "macros_string_reader.h"
 #include "macros.h"
+#include "macros_status_buffer.h"
 #include <stdint.h>
 #include <stdio.h>
 #include "macros_vars.h"

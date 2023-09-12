@@ -223,7 +223,6 @@ The following grammar is supported:
     COMMAND = statsPostponerStack
     COMMAND = statsActiveKeys
     COMMAND = statsActiveMacros
-    COMMAND = statsRegs
     COMMAND = statsRecordKeyTiming
     COMMAND = diagnose
     COMMAND = {setStatus  | setStatusPart} <custom text>
@@ -251,6 +250,7 @@ The following grammar is supported:
     #########
     #REMOVED#
     #########
+    COMMAND = statsRegs
     COMMAND = setExpDriver <baseSpeed (FLOAT:0.0)> <speed (FLOAT:1.0)> <acceleration (FLOAT:0.5)> <midSpeed (FLOAT:3000)>
     COMMAND = setSplitCompositeKeystroke {0|1}
     COMMAND = setActivateOnRelease {0|1}
