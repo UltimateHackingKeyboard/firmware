@@ -7,7 +7,7 @@ and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
 ## [10.2.0] - 2023-09-13
 
-Device Protocol: 4.**10.0** | Module Protocol: 4.**3.0** | User Config: 6.0.0 | Hardware Config: 1.0.0 | Smart Macros: 1.**5.0**
+Device Protocol: 4.**10.0** | Module Protocol: 4.**3.0** | User Config: 6.0.0 | Hardware Config: 1.0.0 | Smart Macros: **2.0.0**
 
 - Introduce named, dynamically typed variables via the `setVar` command and `$` syntax. For example: `setVar myDelay 50` and `set doubletapDelay $myDelay`
 - Introduce expression parser that allows in-line arithmetics, including `+`, `-`, `*`, `/`, `%`, `min(...)`, `max(...)` and boolean conditions, including `<`, `<=`, `>`, `>=`, `==`, `!=`, `!`, `&&`, `||`. For example: `ifShift set leds.brightness ($leds.brightness * 1.5 + 0.01)` and `ifNotShift set leds.brightness ($leds.brightness / 1.5)`
@@ -31,6 +31,8 @@ Device Protocol: 4.**10.0** | Module Protocol: 4.**3.0** | User Config: 6.0.0 | 
 - Switch error logs to line numbers and fix trailing newlines. `SMARTMACROS:PATCH`
 - Validate all macros when the configuration is updated. `SMARTMACROS:PATCH`
 - Always update LEDs according to `leds.fadeTimeout`. `SMARTMACROS:PATCH`
+- Implement intelligent handling of segment display text.
+- Fix the behavior of the advanced secondary role strategy when rolling over multiple secondary role keys. Latter keys tended to produce false secondary role.
 
 ## [10.1.0] - 2023-07-26
 
