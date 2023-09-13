@@ -31,7 +31,7 @@ Device Protocol: 4.**10.0** | Module Protocol: 4.**3.0** | User Config: 6.0.0 | 
 - Switch error logs to line numbers and fix trailing newlines. `SMARTMACROS:PATCH`
 - Validate all macros when the configuration is updated. `SMARTMACROS:PATCH`
 - Always update LEDs according to `leds.fadeTimeout`. `SMARTMACROS:PATCH`
-- Implement intelligent handling of segment display text.
+- Alternate between segment display texts when there is more than one thing to show, such as ERR, WRN, or the name of the current keymap.
 - Fix the behavior of the advanced secondary role strategy when rolling over multiple secondary role keys. Latter keys tended to produce false secondary role.
 
 ## [10.1.0] - 2023-07-26
