@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [10.2.0] - 2023-09-13
+
+Device Protocol: 4.**10.0** | Module Protocol: 4.**3.0** | User Config: 6.0.0 | Hardware Config: 1.0.0 | Smart Macros: 1.**5.0**
+
+- Introduce named, dynamically typed variables via the `setVar` command and `$` syntax. For example: `setVar myDelay 50` and `set doubletapDelay $myDelay`
+- Introduce expression parser that allows in-line arithmetics, including `+`, `-`, `*`, `/`, `%`, `min(...)`, `max(...)` and boolean conditions, including `<`, `<=`, `>`, `>=`, `==`, `!=`, `!`, `&&`, `||`. For example: `ifShift set leds.brightness ($leds.brightness * 1.5 + 0.01)` and `ifNotShift set leds.brightness ($leds.brightness / 1.5)`
+- Introduce `if (EXPRESSION)` command. For example: `if ($a < 2 || $a > 4) tapKey a`
+- Introduce string parser. Strings must be enclosed in double or single quotes. Double-quote strings support variable expansion and `\` escapes. For example: `write "Current keystrokeDelay is $keystrokeDelay. One plus one is $(1 + 1).\n"` and `write 'This is literal "$" character. And here you have an apostrophe '"'"'.'`
+- Introduce key id parser. As a result, `ifGesture`, `ifShortcut`, and some other commands now accept key id abbreviations. For example: `ifShortcut a b holdLayer fn`
+- Make `setLedTxt` accept numeric expressions. For example: `setLedTxt 500 $keystrokeDelay`
+- Configuration values now can be retrieved using the `$<name>` syntax, just as variables. For example: `set leds.brightness ($leds.brightness * 1.5 + 0.01)`
+- Deprecated `#`, `%`, and `@` syntaxes.
+- Deprecated registers, including the `ifRegEq`, `ifNotRegEq`, `ifRegGt`, `ifRegLt`, `setReg`, `addReg`, `subReg`, `mulReg` commands.
+- Deprecate `#` comments in favor of the `//` comment syntax.
+- Deprecated `writeExpr` and `setStatusPart` commands.
+- Implement `set autoShiftDelay <time in ms (NUMBER)>`. If nonzero, the autoshift feature is turned on. This adds shift to a scancode when the key is held for at least `autoShiftDelay` ms. For example, tapping 'a' results in 'a', pressing 'a' for a little bit longer results in 'A'. `SMARTMACROS:MINOR`
+- Limit `set` command values, preventing invalid values. `SMARTMACROS:PATCH`
+- Expose the status buffer via the UsbCommand_GetVariable:UsbVariable_StatusBuffer USB command. `DEVICEPROTOCOL:MINOR`
+- Unify layer switching implementations, so macro commands behave like native layer switcher actions. `SMARTMACROS:PATCH`
+- Expose the current keymap via the GetDeviceState USB command.
+- Fix some initialization-related bugs. `DEVICEPROTOCOL:MINOR`
+- Implement firmware MD5 checksums to make firmware udpates faster and more reliable. `DEVICEPROTOCOL:MINOR` `MODULEPROTOCOL:MINOR`
+- Add `untoggleLayer` alias for the `unToggleLayer` macro command.
+- Switch error logs to line numbers and fix trailing newlines. `SMARTMACROS:PATCH`
+- Validate all macros when the configuration is updated. `SMARTMACROS:PATCH`
+- Always update LEDs according to `leds.fadeTimeout`. `SMARTMACROS:PATCH`
+
 ## [10.1.0] - 2023-07-26
 
 Device Protocol: 4.9.0 | Module Protocol: 4.2.0 | User Config: 6.0.0 | Hardware Config: 1.0.0 | Smart Macros: 1.**4.0**
