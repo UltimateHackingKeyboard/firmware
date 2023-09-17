@@ -2427,7 +2427,7 @@ macro_result_t Macros_ProcessCommandAction(void)
 
     if (*ctx.at == '#') {
         Macros_ReportWarn("# comments are deprecated, please switch to //", ctx.at, ctx.at);
-    } else if (ctx.at != ctx.end) {
+    } else if (ctx.at != ctx.end && !Macros_ParserError) {
         Macros_ReportWarn("Unprocessed input encountered.", ctx.at, ctx.at);
     }
 
