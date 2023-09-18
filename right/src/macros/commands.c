@@ -24,6 +24,7 @@
 #include "timer.h"
 #include "usb_report_updater.h"
 #include "utils.h"
+#include "debug.h"
 
 static uint8_t lastLayerIdx;
 static uint8_t lastLayerKeymapIdx;
@@ -2412,17 +2413,21 @@ macro_result_t Macros_ProcessCommandAction(void)
     const char* cmd = S->ms.currentMacroAction.cmd.text + S->ms.commandBegin;
     const char* cmdEnd = S->ms.currentMacroAction.cmd.text + S->ms.commandEnd;
 
-    if (cmd[0] == '#') {
-        Macros_ReportWarn("# comments are deprecated, please switch to //", cmd, cmd);
+
+    parser_context_t ctx = { .macroState = S, .begin = cmd, .at = cmd, .end = cmdEnd };
+
+    ConsumeWhite(&ctx);
+
+    if (ctx.at[0] == '#') {
+        Macros_ReportWarn("# comments are deprecated, please switch to //", ctx.at, ctx.at);
         return MacroResult_Finished;
     }
-    if (cmd[0] == '/' && cmd[1] == '/') {
+    if (ctx.at[0] == '/' && ctx.at[1] == '/') {
         return MacroResult_Finished;
     }
 
     macro_result_t actionInProgress;
 
-    parser_context_t ctx = { .macroState = S, .begin = cmd, .at = cmd, .end = cmdEnd };
     actionInProgress = processCommand(&ctx);
 
     if (*ctx.at == '#') {
@@ -2430,6 +2435,7 @@ macro_result_t Macros_ProcessCommandAction(void)
     } else if (ctx.at != ctx.end && !Macros_ParserError) {
         Macros_ReportWarn("Unprocessed input encountered.", ctx.at, ctx.at);
     }
+
 
     S->as.currentConditionPassed = actionInProgress & MacroResult_InProgressFlag;
     return actionInProgress;
