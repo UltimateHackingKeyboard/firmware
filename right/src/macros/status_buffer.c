@@ -151,7 +151,19 @@ static uint16_t findCurrentCommandLine()
     return 0;
 }
 
-static void reportErrorHeader(const char* status)
+static uint16_t findPosition(const char* arg)
+{
+    const char* startOfLine = S->ms.currentMacroAction.cmd.text + S->ms.commandBegin;
+    uint16_t pos;
+    if (arg == NULL) {
+        pos = 1;
+    } else {
+        pos = arg - startOfLine + 1;
+    }
+    return pos;
+}
+
+static void reportErrorHeader(const char* status, uint16_t pos)
 {
     if (S != NULL) {
         const char *name, *nameEnd;
@@ -164,6 +176,8 @@ static void reportErrorHeader(const char* status)
         Macros_SetStatusNumSpaced(S->ms.currentMacroActionIndex+1, false);
         Macros_SetStatusString("/", NULL);
         Macros_SetStatusNumSpaced(lineCount, false);
+        Macros_SetStatusString("/", NULL);
+        Macros_SetStatusNumSpaced(pos, false);
         Macros_SetStatusString(": ", NULL);
     }
 }
@@ -223,7 +237,7 @@ void Macros_ReportError(const char* err, const char* arg, const char *argEnd)
     //if this line of code already caused an error, don't throw another one
     Macros_ParserError = true;
     SegmentDisplay_SetText(3, "ERR", SegmentDisplaySlot_Error);
-    reportErrorHeader("Error");
+    reportErrorHeader("Error", findPosition(arg));
     reportError(err, arg, argEnd);
 }
 
@@ -233,7 +247,7 @@ void Macros_ReportWarn(const char* err, const char* arg, const char *argEnd)
         return;
     }
     SegmentDisplay_SetText(3, "WRN", SegmentDisplaySlot_Warn);
-    reportErrorHeader("Warning");
+    reportErrorHeader("Warning", findPosition(arg));
     reportError(err, arg, argEnd);
 }
 
@@ -251,7 +265,7 @@ void Macros_ReportErrorFloat(const char* err, float num, const char* pos)
 {
     Macros_ParserError = true;
     SegmentDisplay_SetText(3, "ERR", SegmentDisplaySlot_Error);
-    reportErrorHeader("Error");
+    reportErrorHeader("Error", findPosition(pos));
     Macros_SetStatusString(err, NULL);
     Macros_SetStatusFloat(num);
     reportError("", pos, pos);
@@ -261,7 +275,7 @@ void Macros_ReportErrorNum(const char* err, int32_t num, const char* pos)
 {
     Macros_ParserError = true;
     SegmentDisplay_SetText(3, "ERR", SegmentDisplaySlot_Error);
-    reportErrorHeader("Error");
+    reportErrorHeader("Error", findPosition(pos));
     Macros_SetStatusString(err, NULL);
     Macros_SetStatusNum(num);
     reportError("", pos, pos);
