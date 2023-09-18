@@ -325,10 +325,18 @@ const char* NextCmd(const char* cmd, const char *cmdEnd)
     while(*cmd != '\n' && *cmd != '\r' && cmd < cmdEnd)    {
         cmd++;
     }
+    const char* lastNewline = cmd;
     while(*cmd <= 32 && cmd < cmdEnd) {
+        if (*cmd == '\n' || *cmd == '\r') {
+            lastNewline = cmd;
+        }
         cmd++;
     }
-    return cmd;
+    if (lastNewline < cmdEnd) {
+        return lastNewline+1;
+    } else {
+        return lastNewline;
+    }
 }
 
 
@@ -449,6 +457,7 @@ uint8_t CountCommands(const char* text, uint16_t textLen)
 
     while (true) {
         text = NextCmd(text, textEnd);
+        text = SkipWhite(text, textEnd);
         if (text == textEnd) {
             return count;
         }

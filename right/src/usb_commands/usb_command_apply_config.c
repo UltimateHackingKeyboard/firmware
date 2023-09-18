@@ -7,6 +7,7 @@
 #include "macro_events.h"
 #include "macros/core.h"
 #include "macros/status_buffer.h"
+#include "debug.h"
 
 void updateUsbBuffer(uint8_t usbStatusCode, uint16_t parserOffset, parser_stage_t parserStage)
 {
