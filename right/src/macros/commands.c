@@ -769,7 +769,13 @@ static bool processIfLayerCommand(parser_context_t* ctx, bool negate)
 
 static bool processIfCommand(parser_context_t* ctx)
 {
-    return Macros_ConsumeBool(ctx);
+    bool res = Macros_ConsumeBool(ctx);
+
+    if (Macros_DryRun) {
+        return true;
+    }
+
+    return res;
 }
 
 static macro_result_t processBreakCommand()
