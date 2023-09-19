@@ -135,6 +135,7 @@ The following grammar is supported:
     COMMAND = set leds.fadeTimeout <seconds to fade after (INT)>
     COMMAND = set modifierLayerTriggers.{shift|alt|super|ctrl} {left|right|both}
     CONDITION = if (EXPRESSION)
+    CONDITION = else
     CONDITION = {ifShortcut | ifNotShortcut} [IFSHORTCUT_OPTIONS]* [KEYID]+
     CONDITION = {ifGesture | ifNotGesture} [IFSHORTCUT_OPTIONS]* [KEYID]+
     CONDITION = {ifPrimary | ifSecondary} [ simpleStrategy | advancedStrategy ]
@@ -406,6 +407,7 @@ We allow postponing key activations in order to allow deciding between some scen
 Conditions are checked before processing the rest of the command. If the condition does not hold, the rest of the command is skipped entirelly. If the command is evaluated multiple times (i.e., if it internally consists of multiple steps, such as the delay, which is evaluated repeatedly until the desired time has passed), the condition is evaluated only in the first iteration.
 
 - `if BOOL` allows switching based on custom expression. E.g., `if ($keystrokeDelay > 10) ...`
+- `else` condition is true if previous command ended due to a failed condition.
 - `ifDoubletap/ifNotDoubletap` is true if the macro was started at most 300ms after start of another instance of the same macro.
 - `ifInterrupted/ifNotInterrupted` is true if a keystroke action or mouse action was triggered during macro runtime. Allows fake implementation of secondary roles. Also allows interruption of cycles.
 - `ifReleased/ifNotReleased` is true if the key which activated current macro has been released. If the key has been physically released but the release has been postponed by another key, the conditien yields false. If the key has been physically released and the postponing mode was initiated by this macro (e.g., `postponeKeys ifReleased goTo ($currentAddress+2)`), it returns non-postponed release state (i.e., true if there's a matching release event in the postponing queue).
