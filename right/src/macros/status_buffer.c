@@ -251,6 +251,23 @@ void Macros_ReportWarn(const char* err, const char* arg, const char *argEnd)
     reportError(err, arg, argEnd);
 }
 
+void Macros_ReportPrintf(const char* pos, const char *fmt, ...)
+{
+    va_list myargs;
+    va_start(myargs, fmt);
+    char buffer[256];
+    vsprintf(buffer, fmt, myargs);
+
+    SegmentDisplay_SetText(3, "OUT", SegmentDisplaySlot_Error);
+    if (pos != NULL) {
+        reportErrorHeader("Out", findPosition(pos));
+        reportError(buffer, pos, pos);
+    } else {
+        Macros_SetStatusString(buffer, NULL);
+        Macros_SetStatusString("\n", NULL);
+    }
+}
+
 void Macros_ReportErrorPrintf(const char* pos, const char *fmt, ...)
 {
     va_list myargs;
