@@ -126,6 +126,7 @@
             uint8_t commandAddress;
             uint8_t nextSlot;
             uint8_t oneShotState : 2;
+            bool lastIfSucceeded : 1;
             bool macroInterrupted : 1;
             bool macroSleeping : 1;
             bool macroBroken : 1;

@@ -26,6 +26,7 @@
     void Macros_ReportErrorNum(const char* err, int32_t num, const char* pos);
     void Macros_ReportErrorFloat(const char* err, float num, const char* pos);
     void Macros_ReportWarn(const char* err, const char* arg, const char *argEnd);
+    void Macros_ReportPrintf(const char* pos, const char *fmt, ...);
 
     void Macros_SetStatusString(const char* text, const char *textEnd);
     void Macros_SetStatusStringInterpolated(const char* text, const char *textEnd);

@@ -1183,11 +1183,11 @@ static macro_result_t processIfSecondaryCommand(parser_context_t* ctx, bool nega
             goto conditionPassed;
         } else {
             postponeNextN(0);
-            return MacroResult_Finished;
+            return MacroResult_Finished | MacroResult_ConditionFailedFlag;
         }
     case SecondaryRoleState_Secondary:
         if (negate) {
-            return MacroResult_Finished;
+            return MacroResult_Finished | MacroResult_ConditionFailedFlag;
         } else {
             goto conditionPassed;
         }
@@ -1341,13 +1341,13 @@ static macro_result_t processIfShortcutCommand(parser_context_t* ctx, bool negat
             else if (cancelInTimedOut) {
                 PostponerExtended_ConsumePendingKeypresses(numArgs, true);
                 S->ms.macroBroken = true;
-                return MacroResult_Finished;
+                goto conditionFailed;
             }
             else {
                 if (negate) {
                     goto conditionPassed;
                 } else {
-                    return MacroResult_Finished;
+                    goto conditionFailed;
                 }
             }
         }
@@ -1357,7 +1357,7 @@ static macro_result_t processIfShortcutCommand(parser_context_t* ctx, bool negat
                 // first keyid had already been processed.
                 if (PostponerQuery_ContainsKeyId(argKeyId)) {
                     if (negate) {
-                        return MacroResult_Finished;
+                        goto conditionFailed;
                     } else {
                         goto conditionPassed;
                     }
@@ -1370,21 +1370,21 @@ static macro_result_t processIfShortcutCommand(parser_context_t* ctx, bool negat
             if (negate) {
                 goto conditionPassed;
             } else {
-                return MacroResult_Finished;
+                goto conditionFailed;
             }
         }
         else if (fixedOrder && PostponerExtended_PendingId(numArgs - 1) != argKeyId) {
             if (negate) {
                 goto conditionPassed;
             } else {
-                return MacroResult_Finished;
+                goto conditionFailed;
             }
         }
         else if (!fixedOrder && !PostponerQuery_ContainsKeyId(argKeyId)) {
             if (negate) {
                 goto conditionPassed;
             } else {
-                return MacroResult_Finished;
+                goto conditionFailed;
             }
         }
         else {
@@ -1396,10 +1396,12 @@ static macro_result_t processIfShortcutCommand(parser_context_t* ctx, bool negat
         PostponerExtended_ConsumePendingKeypresses(numArgs, true);
     }
     if (negate) {
-        return MacroResult_Finished;
+        goto conditionFailed;
     } else {
         goto conditionPassed;
     }
+conditionFailed:
+    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
 conditionPassed:
     while(Macros_TryConsumeKeyId(ctx) != 255) { };
     S->as.currentIfShortcutConditionPassed = true;
@@ -1882,6 +1884,11 @@ static macro_result_t processCommand(parser_context_t* ctx)
             if (ConsumeToken(ctx, "exec")) {
                 return processExecCommand(ctx);
             }
+            else if (ConsumeToken(ctx, "else")) {
+                if (S->ms.lastIfSucceeded) {
+                    return MacroResult_Finished;
+                }
+            }
             else {
                 goto failed;
             }
@@ -1928,237 +1935,237 @@ static macro_result_t processCommand(parser_context_t* ctx)
         case 'i':
             if (ConsumeToken(ctx, "if")) {
                 if (!processIfCommand(ctx) && !S->as.currentConditionPassed) {
-                    return MacroResult_Finished;
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifDoubletap")) {
                 if (!processIfDoubletapCommand(false) && !S->as.currentConditionPassed) {
-                    return MacroResult_Finished;
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotDoubletap")) {
                 if (!processIfDoubletapCommand(true) && !S->as.currentConditionPassed) {
-                    return MacroResult_Finished;
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifInterrupted")) {
                 if (!processIfInterruptedCommand(false) && !S->as.currentConditionPassed) {
-                    return MacroResult_Finished;
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotInterrupted")) {
                 if (!processIfInterruptedCommand(true) && !S->as.currentConditionPassed) {
-                    return MacroResult_Finished;
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifReleased")) {
                 if (!processIfReleasedCommand(false) && !S->as.currentConditionPassed) {
-                    return MacroResult_Finished;
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotReleased")) {
                 if (!processIfReleasedCommand(true) && !S->as.currentConditionPassed) {
-                    return MacroResult_Finished;
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifRegEq")) {
                 if (!processIfRegEqCommand(ctx, false) && !S->as.currentConditionPassed) {
-                    return MacroResult_Finished;
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotRegEq")) {
                 if (!processIfRegEqCommand(ctx, true) && !S->as.currentConditionPassed) {
-                    return MacroResult_Finished;
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifRegGt")) {
                 if (!processIfRegInequalityCommand(ctx, true) && !S->as.currentConditionPassed) {
-                    return MacroResult_Finished;
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifRegLt")) {
                 if (!processIfRegInequalityCommand(ctx, false) && !S->as.currentConditionPassed) {
-                    return MacroResult_Finished;
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifKeymap")) {
                 if (!processIfKeymapCommand(ctx, false) && !S->as.currentConditionPassed) {
-                    return MacroResult_Finished;
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotKeymap")) {
                 if (!processIfKeymapCommand(ctx, true) && !S->as.currentConditionPassed) {
-                    return MacroResult_Finished;
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifLayer")) {
                 if (!processIfLayerCommand(ctx, false) && !S->as.currentConditionPassed) {
-                    return MacroResult_Finished;
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotLayer")) {
                 if (!processIfLayerCommand(ctx, true) && !S->as.currentConditionPassed) {
-                    return MacroResult_Finished;
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifPlaytime")) {
                 if (!processIfPlaytimeCommand(ctx, false) && !S->as.currentConditionPassed) {
-                    return MacroResult_Finished;
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotPlaytime")) {
                 if (!processIfPlaytimeCommand(ctx, true) && !S->as.currentConditionPassed) {
-                    return MacroResult_Finished;
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifAnyMod")) {
                 if (!processIfModifierCommand(false, 0xFF)  && !S->as.currentConditionPassed) {
-                    return MacroResult_Finished;
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotAnyMod")) {
                 if (!processIfModifierCommand(true, 0xFF)  && !S->as.currentConditionPassed) {
-                    return MacroResult_Finished;
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifShift")) {
                 if (!processIfModifierCommand(false, SHIFTMASK)  && !S->as.currentConditionPassed) {
-                    return MacroResult_Finished;
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotShift")) {
                 if (!processIfModifierCommand(true, SHIFTMASK) && !S->as.currentConditionPassed) {
-                    return MacroResult_Finished;
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifCtrl")) {
                 if (!processIfModifierCommand(false, CTRLMASK) && !S->as.currentConditionPassed) {
-                    return MacroResult_Finished;
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotCtrl")) {
                 if (!processIfModifierCommand(true, CTRLMASK) && !S->as.currentConditionPassed) {
-                    return MacroResult_Finished;
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifAlt")) {
                 if (!processIfModifierCommand(false, ALTMASK) && !S->as.currentConditionPassed) {
-                    return MacroResult_Finished;
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotAlt")) {
                 if (!processIfModifierCommand(true, ALTMASK) && !S->as.currentConditionPassed) {
-                    return MacroResult_Finished;
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifGui")) {
                 if (!processIfModifierCommand(false, GUIMASK)  && !S->as.currentConditionPassed) {
-                    return MacroResult_Finished;
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotGui")) {
                 if (!processIfModifierCommand(true, GUIMASK) && !S->as.currentConditionPassed) {
-                    return MacroResult_Finished;
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifCapsLockOn")) {
                 if (!processIfStateKeyCommand(false, &UsbBasicKeyboard_CapsLockOn) && !S->as.currentConditionPassed) {
-                    return MacroResult_Finished;
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotCapsLockOn")) {
                 if (!processIfStateKeyCommand(true, &UsbBasicKeyboard_CapsLockOn) && !S->as.currentConditionPassed) {
-                    return MacroResult_Finished;
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNumLockOn")) {
                 if (!processIfStateKeyCommand(false, &UsbBasicKeyboard_NumLockOn) && !S->as.currentConditionPassed) {
-                    return MacroResult_Finished;
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotNumLockOn")) {
                 if (!processIfStateKeyCommand(true, &UsbBasicKeyboard_NumLockOn) && !S->as.currentConditionPassed) {
-                    return MacroResult_Finished;
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifScrollLockOn")) {
                 if (!processIfStateKeyCommand(false, &UsbBasicKeyboard_ScrollLockOn) && !S->as.currentConditionPassed) {
-                    return MacroResult_Finished;
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotScrollLockOn")) {
                 if (!processIfStateKeyCommand(true, &UsbBasicKeyboard_ScrollLockOn) && !S->as.currentConditionPassed) {
-                    return MacroResult_Finished;
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifRecording")) {
                 if (!processIfRecordingCommand(false) && !S->as.currentConditionPassed) {
-                    return MacroResult_Finished;
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotRecording")) {
                 if (!processIfRecordingCommand(true) && !S->as.currentConditionPassed) {
-                    return MacroResult_Finished;
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifRecordingId")) {
                 if (!processIfRecordingIdCommand(ctx, false) && !S->as.currentConditionPassed) {
-                    return MacroResult_Finished;
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotRecordingId")) {
                 if (!processIfRecordingIdCommand(ctx, true) && !S->as.currentConditionPassed) {
-                    return MacroResult_Finished;
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotPending")) {
                 if (!processIfPendingCommand(ctx, true) && !S->as.currentConditionPassed) {
-                    return MacroResult_Finished;
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifPending")) {
                 if (!processIfPendingCommand(ctx, false) && !S->as.currentConditionPassed) {
-                    return MacroResult_Finished;
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifKeyPendingAt")) {
                 if (!processIfKeyPendingAtCommand(ctx, false) && !S->as.currentConditionPassed) {
-                    return MacroResult_Finished;
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotKeyPendingAt")) {
                 if (!processIfKeyPendingAtCommand(ctx, true) && !S->as.currentConditionPassed) {
-                    return MacroResult_Finished;
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifKeyActive")) {
                 if (!processIfKeyActiveCommand(ctx, false) && !S->as.currentConditionPassed) {
-                    return MacroResult_Finished;
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotKeyActive")) {
                 if (!processIfKeyActiveCommand(ctx, true) && !S->as.currentConditionPassed) {
-                    return MacroResult_Finished;
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifPendingKeyReleased")) {
                 if (!processIfPendingKeyReleasedCommand(ctx, false) && !S->as.currentConditionPassed) {
-                    return MacroResult_Finished;
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotPendingKeyReleased")) {
                 if (!processIfPendingKeyReleasedCommand(ctx, true) && !S->as.currentConditionPassed) {
-                    return MacroResult_Finished;
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifKeyDefined")) {
                 if (!processIfKeyDefinedCommand(ctx, false) && !S->as.currentConditionPassed) {
-                    return MacroResult_Finished;
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotKeyDefined")) {
                 if (!processIfKeyDefinedCommand(ctx, true) && !S->as.currentConditionPassed) {
-                    return MacroResult_Finished;
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifSecondary")) {
@@ -2432,9 +2439,9 @@ macro_result_t Macros_ProcessCommandAction(void)
         return MacroResult_Finished;
     }
 
-    macro_result_t actionInProgress;
+    macro_result_t macroResult;
 
-    actionInProgress = processCommand(&ctx);
+    macroResult = processCommand(&ctx);
 
     if (*ctx.at == '#') {
         Macros_ReportWarn("# comments are deprecated, please switch to //", ctx.at, ctx.at);
@@ -2442,7 +2449,9 @@ macro_result_t Macros_ProcessCommandAction(void)
         Macros_ReportWarn("Unprocessed input encountered.", ctx.at, ctx.at);
     }
 
-
-    S->as.currentConditionPassed = actionInProgress & MacroResult_InProgressFlag;
-    return actionInProgress;
+    S->as.currentConditionPassed = macroResult & MacroResult_InProgressFlag;
+    if (macroResult & (MacroResult_ActionFinishedFlag | MacroResult_DoneFlag)) {
+        S->ms.lastIfSucceeded = !(macroResult & MacroResult_ConditionFailedFlag);
+    }
+    return macroResult;
 }

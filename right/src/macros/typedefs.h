@@ -21,6 +21,7 @@
         MacroResult_DoneFlag = 4,
         MacroResult_YieldFlag = 8,
         MacroResult_BlockingFlag = 16,
+        MacroResult_ConditionFailedFlag = 32,
         MacroResult_Blocking = MacroResult_InProgressFlag | MacroResult_BlockingFlag,
         MacroResult_Waiting = MacroResult_InProgressFlag | MacroResult_YieldFlag,
         MacroResult_Sleeping = MacroResult_InProgressFlag | MacroResult_YieldFlag,
