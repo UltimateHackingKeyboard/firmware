@@ -1,0 +1,21 @@
+{
+    "version": 2,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 20
+    },
+    "configurePresets": [
+        {
+            "name": "build",
+            "displayName": "Build for UHK 80 right",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build",
+            "cacheVariables": {
+                "NCS_TOOLCHAIN_VERSION": "NONE",
+                "BOARD": "uhk-80-right",
+                "BOARD_ROOT": "${sourceParentDir}/",
+                "CONF_FILE": "${sourceDir}/prj.conf"
+            }
+        }
+    ]
+}
