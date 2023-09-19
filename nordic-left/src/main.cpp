@@ -1,3 +1,4 @@
+#include <zephyr/shell/shell.h>
 extern "C"
 {
 #include <zephyr/kernel.h>

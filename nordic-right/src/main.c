@@ -4,6 +4,7 @@
 #include <zephyr/drivers/uart.h>
 #include <string.h>
 #include <zephyr/drivers/spi.h>
+#include <zephyr/shell/shell.h>
 
 #define LedPagePrefix 0b01010000
 
