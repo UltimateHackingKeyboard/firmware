@@ -779,6 +779,38 @@ static bool processIfCommand(parser_context_t* ctx)
     return res;
 }
 
+static macro_result_t processWhileCommand(parser_context_t* ctx)
+{
+    bool condition = Macros_ConsumeBool(ctx);
+
+    if (Macros_DryRun) {
+        return processCommand(ctx);
+    }
+
+    if (!S->as.whileExecuting) {
+        if (!condition) {
+            return MacroResult_Finished;
+        }
+
+        S->as.whileExecuting = true;
+        S->as.currentConditionPassed = false;
+    }
+
+    macro_result_t res = processCommand(ctx);
+
+    if (res & (MacroResult_ActionFinishedFlag | MacroResult_DoneFlag)) {
+        S->as.whileExecuting = false;
+
+        if (res & MacroResult_ActionFinishedFlag) {
+            return (res & ~MacroResult_ActionFinishedFlag) | MacroResult_InProgressFlag;
+        } else {
+            return res;
+        }
+    } else {
+        return res;
+    }
+}
+
 static macro_result_t processBreakCommand()
 {
     if (Macros_DryRun) {
@@ -2397,6 +2429,9 @@ static macro_result_t processCommand(parser_context_t* ctx)
             }
             else if (ConsumeToken(ctx, "writeExpr")) {
                 return processWriteExprCommand(ctx);
+            }
+            else if (ConsumeToken(ctx, "while")) {
+                return processWhileCommand(ctx);
             }
             else {
                 goto failed;
