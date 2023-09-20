@@ -185,6 +185,7 @@
             bool currentIfSecondaryConditionPassed : 1;
             bool modifierPostpone : 1;
             bool modifierSuppressMods : 1;
+            bool whileExecuting : 1;
 
         } as;
     };
