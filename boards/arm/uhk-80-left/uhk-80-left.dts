@@ -205,6 +205,10 @@
         };
     };
 
+    zephyr,user {
+		io-channels = <&adc 0>, <&adc 1>;
+	};
+
     aliases {
         merge-sense = &merge_sense;
 
