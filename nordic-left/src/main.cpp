@@ -10,6 +10,7 @@ extern "C"
 
 #include <zephyr/types.h>
 #include <stddef.h>
+#include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include <zephyr/sys/printk.h>
@@ -102,8 +103,26 @@ static struct gpio_dt_spec cols[] = {
 
 extern volatile char c;
 
+// Shell functions
+
+uint8_t sdbState = 1;
+
+static int cmd_uhk_sdb_get_set(const struct shell *shell, size_t argc, char *argv[])
+{
+    if (argc == 1) {
+        shell_fprintf(shell, SHELL_NORMAL, "%i\n", sdbState ? 1 : 0);
+    } else {
+        sdbState = argv[1][0] == '1';
+        gpio_pin_set_dt(&ledsSdbDt, sdbState);
+    }
+
+    return 0;
+}
 int main(void) {
     printk("left half starts\n");
+
+    // Configure GPIOs
+
     gpio_pin_configure_dt(&ledsCsDt, GPIO_OUTPUT);
 
     gpio_pin_configure_dt(&ledsSdbDt, GPIO_OUTPUT);
@@ -115,6 +134,18 @@ int main(void) {
     for (uint8_t colId=0; colId<7; colId++) {
         gpio_pin_configure_dt(&cols[colId], GPIO_INPUT);
     }
+
+    // Create shell commands
+
+    SHELL_STATIC_SUBCMD_SET_CREATE(
+        uhk_cmds,
+        SHELL_CMD_ARG(sdb, NULL,
+            "get/set LED driver SDB pin",
+            cmd_uhk_sdb_get_set, 1, 1),
+        SHELL_SUBCMD_SET_END
+        );
+
+    SHELL_CMD_REGISTER(uhk, &uhk_cmds, "UHK commands", NULL);
 
     // Init ADC channels
 
