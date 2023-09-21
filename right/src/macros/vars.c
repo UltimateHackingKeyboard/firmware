@@ -254,7 +254,7 @@ static macro_variable_t consumeDollarExpression(parser_context_t* ctx)
         return intVar(Utils_KeyStateToKeyId(ctx->macroState->ms.currentMacroKey));
     }
     else if (ConsumeToken(ctx, "currentAddress")) {
-        return intVar(ctx->macroState->ms.commandAddress);
+        return intVar(ctx->macroState->ls->ms.commandAddress);
     }
     else if (ConsumeToken(ctx, "queuedKeyId")) {
         ConsumeUntilDot(ctx);

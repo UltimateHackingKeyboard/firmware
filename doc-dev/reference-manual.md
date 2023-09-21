@@ -47,6 +47,11 @@ The following grammar is supported:
     BODY = //<comment>
     BODY = [LABEL:] COMMAND [//<comment>]
     COMMAND = [CONDITION|MODIFIER]* COMMAND
+    COMMAND = {
+        COMMAND
+        COMMAND
+        ...
+    }
     COMMAND = delayUntilRelease
     COMMAND = delayUntil <timeout (INT)>
     COMMAND = delayUntilReleaseMax <timeout (INT)>
@@ -66,6 +71,7 @@ The following grammar is supported:
     COMMAND = consumePending <number of keys (INT)>
     COMMAND = postponeNext <number of commands (NUMER)>
     COMMAND = break
+    COMMAND = exit
     COMMAND = noOp
     COMMAND = yield
     COMMAND = {exec|call|fork} MACRONAME
@@ -272,6 +278,7 @@ The following grammar is supported:
 - `progressHue` or better `autoRepeat progressHue` will slowly adjust constantRGB value in order to rotate the per-key-RGB backlight through all hues.
 - `resetTrackpoint` resets the internal trackpoint board. Can be used to recover the trackpoint from drift conditions. Drifts usually happen if you keep the cursor moving at slow constant speeds, because of the boards's internal adaptive calibration. Since the board's parameters cannot be altered, the only way around is or you to learn not to do the type of movement which triggers them.
 - `i2cBaudRate <baud rate, default 100000(INT)>` sets i2c baud rate. Lowering this value may improve module reliability, while increasing latency.
+- `{|}` Braces allow grouping multiple commands as if they were a single command. Please note that from the point of view of the engine, braces are (almost) regular commands, and have to be followed by newlines like any other command. Therefore idioms like `} else {` are not possible at the moment.
 
 ### Triggering keyboard actions (pressing keys, clicking, etc.):
 
@@ -304,7 +311,8 @@ The following grammar is supported:
 
 - `goTo ADDRESS` will go to action index int. Actions are indexed from zero. See `ADDRESS`
 - `repeatFor <variable name> ADDRESS` - abbreviation to simplify cycles. Will decrement the supplemented register and perform `goTo` to `adr` if the value is still greater than zero. Intended usecase - place after command which is to be repeated with the register containing number of repeats and adr `($currentAddress-1)` (or similar).
-- `break` will end playback of the current macro
+- `break` will terminate innermost while loop. If there is no enclosing while loop, then this will terminate current macro.
+- `exit` will terminate current macro
 - `noOp` does nothing - i.e., stops macro for exactly one update cycle and then continues.
 - `yield` forces macro to yield, if blocking scheduler is used. With preemptive scheduler acts just as `noOp`.
 - `exec MACRONAME` will execute different macro in current state slot. I.e., the macro will be executed in current context and will *not* return. First action of the called macro is executed within the same eventloop cycle.

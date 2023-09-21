@@ -100,10 +100,10 @@ macro_result_t Macros_ProcessStatsActiveMacrosCommand()
             Macros_SetStatusString("/", NULL);
             Macros_SetStatusNum(MacroState[i].ms.currentMacroActionIndex);
             Macros_SetStatusString("/", NULL);
-            if (MacroState[i].as.modifierPostpone) {
+            if (MacroState[i].ls->as.modifierPostpone) {
                 Macros_SetStatusString("mp ", NULL);
             }
-            if (MacroState[i].as.modifierSuppressMods) {
+            if (MacroState[i].ls->as.modifierSuppressMods) {
                 Macros_SetStatusString("ms ", NULL);
             }
             if (MacroState[i].ms.macroSleeping) {
