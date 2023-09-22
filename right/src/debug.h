@@ -1,4 +1,6 @@
-//#define WATCHES
+#if DEBUG == 1
+#define WATCHES
+#endif
 
 #ifdef WATCHES
 #ifndef SRC_UTILS_DBG_H_
@@ -48,6 +50,14 @@
     // Always show string (no timing logic is applied), but respect slot logic.
     #define SHOW_STRING(V, N) if(CurrentWatch == N) { ShowString(V, N); }
 
+    #define ERR(E) Macros_ReportError(E, NULL, NULL);
+
+    #define ERRN(E, N) if(CurrentWatch == N) { Macros_ReportError(E, NULL, NULL); }
+
+    #define ASSERT(C) if (!(C)) { Macros_ReportError("Assertion failed: "#C, NULL, NULL); }
+
+    #define IF_DEBUG(CMD) CMD
+
 // Variables:
 
     extern uint8_t CurrentWatch;
@@ -64,7 +74,6 @@
     void WatchString(char const * v, uint8_t n);
     void ShowValue(int v, uint8_t n);
     void ShowString(char const * v, uint8_t n);
-    void ShowNumberExp(int32_t a);
     void AddReportToStatusBuffer(char* dbgTag, usb_basic_keyboard_report_t *report);
 
 
@@ -83,5 +92,9 @@
     #define WATCH_STRING(V, N)
     #define SHOW_STRING(V, N)
     #define SHOW_VALUE(V, N)
+    #define ERR(E)
+    #define ERRN(E, N)
+    #define ASSERT(C)
+    #define IF_DEBUG(CMD)
 
 #endif

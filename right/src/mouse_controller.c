@@ -13,58 +13,31 @@
 #include "secondary_role_driver.h"
 #include "slave_drivers/touchpad_driver.h"
 #include "mouse_controller.h"
+#include "mouse_keys.h"
 #include "slave_scheduler.h"
 #include "layer_switcher.h"
 #include "usb_report_updater.h"
 #include "caret_config.h"
 #include "keymap.h"
-#include "macros.h"
+#include "macros/core.h"
 #include "debug.h"
 #include "postponer.h"
 #include "layer.h"
 #include "secondary_role_driver.h"
 
-static uint32_t mouseUsbReportUpdateTime = 0;
-static uint32_t mouseElapsedTime;
-
-uint8_t ActiveMouseStates[ACTIVE_MOUSE_STATES_COUNT];
-uint8_t ToggledMouseStates[ACTIVE_MOUSE_STATES_COUNT];
-
-bool DiagonalSpeedCompensation = false;
-
-mouse_kinetic_state_t MouseMoveState = {
-    .isScroll = false,
-    .upState = SerializedMouseAction_MoveUp,
-    .downState = SerializedMouseAction_MoveDown,
-    .leftState = SerializedMouseAction_MoveLeft,
-    .rightState = SerializedMouseAction_MoveRight,
-    .verticalStateSign = 0,
-    .horizontalStateSign = 0,
-    .intMultiplier = 25,
-    .initialSpeed = 5,
-    .acceleration = 35,
-    .deceleratedSpeed = 10,
-    .baseSpeed = 40,
-    .acceleratedSpeed = 80,
-    .axisSkew = 1.0f,
-};
-
-mouse_kinetic_state_t MouseScrollState = {
-    .isScroll = true,
-    .upState = SerializedMouseAction_ScrollDown,
-    .downState = SerializedMouseAction_ScrollUp,
-    .leftState = SerializedMouseAction_ScrollLeft,
-    .rightState = SerializedMouseAction_ScrollRight,
-    .verticalStateSign = 0,
-    .horizontalStateSign = 0,
-    .intMultiplier = 1,
-    .initialSpeed = 20,
-    .acceleration = 20,
-    .deceleratedSpeed = 10,
-    .baseSpeed = 20,
-    .acceleratedSpeed = 50,
-    .axisSkew = 1.0f,
-};
+typedef struct {
+    float x;
+    float y;
+    float speed;
+    int16_t yInversion;
+    int16_t xInversion;
+    float speedDivisor;
+    bool axisLockEnabled;
+    float axisLockSkew;
+    float axisLockFirstTickSkew;
+    module_kinetic_state_t* ks;
+    bool continuous;
+} axis_locking_args_t;
 
 module_kinetic_state_t leftModuleKineticState = {
     .currentModuleId = 0,
@@ -90,161 +63,9 @@ module_kinetic_state_t rightModuleKineticState = {
     .lastUpdate = 0,
 };
 
-static void processAxisLocking( float x, float y, float speed, int16_t yInversion, float speedDivisor, bool axisLockEnabled, float axisLockSkew, float axisLockSkewFirstTick, module_kinetic_state_t* ks, bool continuous);
+static void processAxisLocking(axis_locking_args_t args);
 static void handleRunningCaretModeAction(module_kinetic_state_t* ks);
 static void handleSimpleRunningAction(module_kinetic_state_t* ks);
-
-static void updateOneDirectionSign(int8_t* sign, int8_t expectedSign, uint8_t expectedState, uint8_t otherState) {
-    if (*sign == expectedSign && !ActiveMouseStates[expectedState]) {
-        *sign = ActiveMouseStates[otherState] ? -expectedSign : 0;
-    }
-}
-
-// Assume that mouse movement key has been just released. In that case check if there is another key which keeps the state active.
-// If not, check whether the other direction state is active and either flip movement direction or zero the state.
-static void updateDirectionSigns(mouse_kinetic_state_t *kineticState) {
-    updateOneDirectionSign(&kineticState->horizontalStateSign, -1, kineticState->leftState, kineticState->rightState);
-    updateOneDirectionSign(&kineticState->horizontalStateSign,  1, kineticState->rightState, kineticState->leftState);
-    updateOneDirectionSign(&kineticState->verticalStateSign, -1, kineticState->upState, kineticState->downState);
-    updateOneDirectionSign(&kineticState->verticalStateSign,  1, kineticState->downState, kineticState->upState);
-}
-
-// Called on keydown of mouse action. Direction signs ensure that the last pressed action always takes precedence, and therefore
-// have to be updated statefully.
-void MouseController_ActivateDirectionSigns(uint8_t state) {
-    switch (state) {
-    case SerializedMouseAction_MoveUp:
-        MouseMoveState.verticalStateSign = -1;
-        break;
-    case SerializedMouseAction_MoveDown:
-        MouseMoveState.verticalStateSign = 1;
-        break;
-    case SerializedMouseAction_MoveLeft:
-        MouseMoveState.horizontalStateSign = -1;
-        break;
-    case SerializedMouseAction_MoveRight:
-        MouseMoveState.horizontalStateSign = 1;
-        break;
-    case SerializedMouseAction_ScrollUp:
-        MouseScrollState.verticalStateSign = 1;
-        break;
-    case SerializedMouseAction_ScrollDown:
-        MouseScrollState.verticalStateSign = -1;
-        break;
-    case SerializedMouseAction_ScrollLeft:
-        MouseScrollState.horizontalStateSign = -1;
-        break;
-    case SerializedMouseAction_ScrollRight:
-        MouseScrollState.horizontalStateSign = 1;
-        break;
-    }
-}
-
-static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
-{
-    float initialSpeed = kineticState->intMultiplier * kineticState->initialSpeed;
-    float acceleration = kineticState->intMultiplier * kineticState->acceleration;
-    float deceleratedSpeed = kineticState->intMultiplier * kineticState->deceleratedSpeed;
-    float baseSpeed = kineticState->intMultiplier * kineticState->baseSpeed;
-    float acceleratedSpeed = kineticState->intMultiplier * kineticState->acceleratedSpeed;
-
-    if (!kineticState->wasMoveAction && !ActiveMouseStates[SerializedMouseAction_Decelerate]) {
-        kineticState->currentSpeed = initialSpeed;
-    }
-
-    bool doublePressedStateExists = ActiveMouseStates[kineticState->upState] > 1 ||
-            ActiveMouseStates[kineticState->downState] > 1 ||
-            ActiveMouseStates[kineticState->leftState] > 1 ||
-            ActiveMouseStates[kineticState->rightState] > 1;
-
-    bool isMoveAction = ActiveMouseStates[kineticState->upState] ||
-                        ActiveMouseStates[kineticState->downState] ||
-                        ActiveMouseStates[kineticState->leftState] ||
-                        ActiveMouseStates[kineticState->rightState];
-
-    mouse_speed_t mouseSpeed = MouseSpeed_Normal;
-    if (ActiveMouseStates[SerializedMouseAction_Accelerate] || doublePressedStateExists) {
-        kineticState->targetSpeed = acceleratedSpeed;
-        mouseSpeed = MouseSpeed_Accelerated;
-    } else if (ActiveMouseStates[SerializedMouseAction_Decelerate]) {
-        kineticState->targetSpeed = deceleratedSpeed;
-        mouseSpeed = MouseSpeed_Decelerated;
-    } else if (isMoveAction) {
-        kineticState->targetSpeed = baseSpeed;
-    }
-
-    if (mouseSpeed == MouseSpeed_Accelerated || (kineticState->wasMoveAction && isMoveAction && (kineticState->prevMouseSpeed != mouseSpeed))) {
-        kineticState->currentSpeed = kineticState->targetSpeed;
-    }
-
-    if (isMoveAction) {
-        if (kineticState->currentSpeed < kineticState->targetSpeed) {
-            kineticState->currentSpeed += acceleration * (float)mouseElapsedTime / 1000.0f;
-            if (kineticState->currentSpeed > kineticState->targetSpeed) {
-                kineticState->currentSpeed = kineticState->targetSpeed;
-            }
-        } else {
-            kineticState->currentSpeed -= acceleration * (float)mouseElapsedTime / 1000.0f;
-            if (kineticState->currentSpeed < kineticState->targetSpeed) {
-                kineticState->currentSpeed = kineticState->targetSpeed;
-            }
-        }
-
-        float distance = kineticState->currentSpeed * (float)mouseElapsedTime / 1000.0f;
-
-
-        if (kineticState->isScroll && !kineticState->wasMoveAction) {
-            kineticState->xSum = 0;
-            kineticState->ySum = 0;
-        }
-
-        // Update travelled distances
-
-        updateDirectionSigns(kineticState);
-
-        if ( kineticState->horizontalStateSign != 0 && kineticState->verticalStateSign != 0 && DiagonalSpeedCompensation ) {
-            distance /= 1.41f;
-        }
-
-        kineticState->xSum += distance * kineticState->horizontalStateSign * kineticState->axisSkew;
-        kineticState->ySum += distance * kineticState->verticalStateSign / kineticState->axisSkew;
-
-        // Update horizontal state
-
-        bool horizontalMovement = kineticState->horizontalStateSign != 0;
-
-        float xSumInt;
-        float xSumFrac = modff(kineticState->xSum, &xSumInt);
-        kineticState->xSum = xSumFrac;
-        kineticState->xOut = xSumInt;
-
-        // Handle the first scroll tick.
-        if (kineticState->isScroll && !kineticState->wasMoveAction && kineticState->xOut == 0 && horizontalMovement) {
-            kineticState->xOut = ActiveMouseStates[kineticState->leftState] ? -1 : 1;
-            kineticState->xSum = 0;
-        }
-
-        // Update vertical state
-
-        bool verticalMovement = kineticState->verticalStateSign != 0;
-
-        float ySumInt;
-        float ySumFrac = modff(kineticState->ySum, &ySumInt);
-        kineticState->ySum = ySumFrac;
-        kineticState->yOut = ySumInt;
-
-        // Handle the first scroll tick.
-        if (kineticState->isScroll && !kineticState->wasMoveAction && kineticState->yOut == 0 && verticalMovement) {
-            kineticState->yOut = ActiveMouseStates[kineticState->upState] ? -1 : 1;
-            kineticState->ySum = 0;
-        }
-    } else {
-        kineticState->currentSpeed = 0;
-    }
-
-    kineticState->prevMouseSpeed = mouseSpeed;
-    kineticState->wasMoveAction = isMoveAction;
-}
 
 static float fastPow (float a, float b)
 {
@@ -302,7 +123,8 @@ typedef enum {
 typedef enum {
     Action_ResetTimer = 1,
     Action_Press = 2,
-    Action_Release = 4
+    Action_Release = 4,
+    Action_Doubletap = 8,
 } tap_hold_action_t;
 
 static tap_hold_state_t tapHoldAutomatonState = State_Zero;
@@ -327,7 +149,7 @@ static tap_hold_action_t tapHoldStateMachine(tap_hold_event_t event)
         switch (event) {
         case Event_NewTap:
             tapHoldAutomatonState = State_Tap;
-            return Action_ResetTimer | Action_Release | Action_Press;
+            return Action_ResetTimer | Action_Doubletap;
         case Event_Timeout:
             tapHoldAutomatonState = State_Zero;
             return Action_Release;
@@ -344,7 +166,7 @@ static tap_hold_action_t tapHoldStateMachine(tap_hold_event_t event)
         switch (event) {
         case Event_NewTap:
             tapHoldAutomatonState = State_Tap;
-            return Action_ResetTimer | Action_Release | Action_Press;
+            return Action_ResetTimer | Action_Doubletap;
         case Event_FingerOut:
             tapHoldAutomatonState = State_Zero;
             return Action_Release;
@@ -355,7 +177,7 @@ static tap_hold_action_t tapHoldStateMachine(tap_hold_event_t event)
     return 0;
 }
 
-static void feedTapHoldStateMachine()
+static void feedTapHoldStateMachine(touchpad_events_t events)
 {
     key_state_t* singleTap = &KeyStates[SlotId_RightModule][0];
     //todo: finetune this value. Low value will yield natural doubletaps, but requires fast doubletap to trigger tapAndHold.
@@ -368,13 +190,14 @@ static void feedTapHoldStateMachine()
     tap_hold_action_t action = 0;
     tap_hold_event_t event = 0;
 
-    if(!lastSingleTapValue && TouchpadEvents.singleTap) {
+    if(!lastSingleTapValue && events.singleTap) {
         event = Event_NewTap;
         lastSingleTapValue = true;
-    } else if (!lastTapAndHoldValue && TouchpadEvents.tapAndHold) {
+    } else if (!lastTapAndHoldValue && events.tapAndHold) {
         event = Event_TapAndHold;
+
         lastTapAndHoldValue = true;
-    } else if (lastFinger != (TouchpadEvents.noFingers == 1)) {
+    } else if (lastFinger != (events.noFingers == 1)) {
         event = lastFinger ? Event_FingerOut : Event_FingerIn ;
         lastFinger = !lastFinger;
     } else if(lastSingleTapTime + tapTimeout < CurrentTime) {
@@ -388,23 +211,28 @@ static void feedTapHoldStateMachine()
     }
     if (action & Action_Release) {
         PostponerCore_TrackKeyEvent(singleTap, false, 0xff);
-        /** TODO: consider adding an explicit delay here - at least my linux machine does not like the idea of releases shorther than 25 ms */
     }
     if (action & Action_Press) {
         PostponerCore_TrackKeyEvent(singleTap, true, 0xff);
     }
-
-    lastSingleTapValue &= TouchpadEvents.singleTap;
-    lastTapAndHoldValue &= TouchpadEvents.tapAndHold;
-}
-
-static void processTouchpadActions() {
-
-    if (TouchpadEvents.singleTap || TouchpadEvents.tapAndHold || tapHoldAutomatonState != State_Zero) {
-        feedTapHoldStateMachine();
+    if (action & Action_Doubletap) {
+        PostponerCore_TrackKeyEvent(singleTap, false, 0xff);
+        PostponerCore_TrackDelay(20);
+        PostponerCore_TrackKeyEvent(singleTap, true, 0xff);
     }
 
-    KeyStates[SlotId_RightModule][1].hardwareSwitchState = TouchpadEvents.twoFingerTap;
+
+    lastSingleTapValue &= events.singleTap;
+    lastTapAndHoldValue &= events.tapAndHold;
+}
+
+static void processTouchpadActions(touchpad_events_t events) {
+
+    if (events.singleTap || events.tapAndHold || tapHoldAutomatonState != State_Zero) {
+        feedTapHoldStateMachine(events);
+    }
+
+    KeyStates[SlotId_RightModule][1].hardwareSwitchState = events.twoFingerTap;
 }
 
 static void progressZoomAction(module_kinetic_state_t* ks) {
@@ -428,7 +256,7 @@ static void progressZoomAction(module_kinetic_state_t* ks) {
             return;
         }
 
-        caret_configuration_t* currentCaretConfig = GetModuleCaretConfiguration(ks->currentModuleId, mode);
+        caret_configuration_t* currentCaretConfig = GetNavigationModeConfiguration(mode);
         caret_dir_action_t* dirActions = &currentCaretConfig->axisActions[CaretAxis_Vertical];
         ks->caretAction.action = ks->zoomSign > 0 ? dirActions->positiveAction : dirActions->negativeAction;
     }
@@ -453,7 +281,7 @@ static void handleNewCaretModeAction(caret_axis_t axis, uint8_t resultSign, int1
         case NavigationMode_ZoomPc:
         case NavigationMode_Media:
         case NavigationMode_Caret: {
-            caret_configuration_t* currentCaretConfig = GetModuleCaretConfiguration(ks->currentModuleId, ks->currentNavigationMode);
+            caret_configuration_t* currentCaretConfig = GetNavigationModeConfiguration(ks->currentNavigationMode);
             caret_dir_action_t* dirActions = &currentCaretConfig->axisActions[ks->caretAxis];
             ks->caretAction.action = resultSign > 0 ? dirActions->positiveAction : dirActions->negativeAction;
             ks->caretFakeKeystate.current = true;
@@ -494,21 +322,25 @@ static bool caretModeActionIsRunning(module_kinetic_state_t* ks) {
 }
 
 static void processAxisLocking(
-        float x,
-        float y,
-        float speed,
-        int16_t yInversion,
-        float speedDivisor,
-        bool axisLockEnabled,
-        float axisLockSkew,
-        float axisLockSkewFirstTick,
-        module_kinetic_state_t* ks,
-        bool continuous
+    axis_locking_args_t args
 ) {
     //optimize this out if nothing is going on
-    if (x == 0 && y == 0 && ks->caretAxis == CaretAxis_None) {
+    if (args.x == 0 && args.y == 0 && args.ks->caretAxis == CaretAxis_None) {
         return;
     }
+
+    //unpack args for better readability
+    float x = args.x;
+    float y = args.y;
+    float speed = args.speed;
+    int16_t yInversion = args.yInversion;
+    int16_t xInversion = args.xInversion;
+    float speedDivisor = args.speedDivisor;
+    bool axisLockEnabled = args.axisLockEnabled;
+    float axisLockSkew = args.axisLockSkew;
+    float axisLockSkewFirstTick = args.axisLockFirstTickSkew;
+    module_kinetic_state_t *ks = args.ks;
+    bool continuous  = args.continuous;
 
     //unlock axis if inactive for some time and re-activate tick trashold`
     if (x != 0 || y != 0) {
@@ -581,11 +413,14 @@ static void processAxisLocking(
         // handle the action
         if ( axisCandidate < CaretAxis_Count ) {
             float sgn = axisIntegerParts[axisCandidate] > 0 ? 1 : -1;
-            int8_t currentAxisInversion = axisCandidate == CaretAxis_Vertical ? yInversion : 1;
+            int8_t currentAxisInversion = axisCandidate == CaretAxis_Vertical ? yInversion : xInversion;
             float consumedAmount = continuous ? axisIntegerParts[axisCandidate] : sgn;
             *axisFractionRemainders[axisCandidate] -= consumedAmount;
 
             //always zero primary axis - experimental
+            // TODO: this slows down maximum rate, as right half processing is much faster than module refresh rate.
+            //       We should solve this by zeroing remainder before next event, rather than at the end of previous one.
+            //       In order for this to work, we will have to acknowledge received zeroes.
             *axisFractionRemainders[axisCandidate] = 0.0f;
 
             if (axisLockEnabled) {
@@ -615,8 +450,11 @@ static void processModuleKineticState(
     float speed;
 
     bool moduleYInversion = ks->currentModuleId == ModuleId_KeyClusterLeft || ks->currentModuleId == ModuleId_TouchpadRight;
-    bool scrollYInversion = moduleConfiguration->invertScrollDirection && ks->currentNavigationMode == NavigationMode_Scroll;
+    bool scrollYInversion = moduleConfiguration->invertScrollDirectionY && ks->currentNavigationMode == NavigationMode_Scroll;
+    bool scrollXInversion = moduleConfiguration->invertScrollDirectionX && ks->currentNavigationMode == NavigationMode_Scroll;
     int16_t yInversion = moduleYInversion != scrollYInversion ? -1 : 1;
+    int16_t xInversion = scrollXInversion ? -1 : 1;
+
 
     speed = computeModuleSpeed(x, y, ks->currentModuleId);
 
@@ -636,10 +474,22 @@ static void processModuleKineticState(
                 ks->xFractionRemainder = modff(ks->xFractionRemainder + x * speed, &xIntegerPart);
                 ks->yFractionRemainder = modff(ks->yFractionRemainder + y * speed, &yIntegerPart);
 
-                ActiveUsbMouseReport->x += xIntegerPart;
+                ActiveUsbMouseReport->x += xInversion*xIntegerPart;
                 ActiveUsbMouseReport->y -= yInversion*yIntegerPart;
             } else {
-                processAxisLocking(x, y, speed, yInversion, 1.0f, true, moduleConfiguration->axisLockSkew, moduleConfiguration->axisLockFirstTickSkew, ks, true);
+                processAxisLocking((axis_locking_args_t) {
+                    .x = x,
+                    .y = y,
+                    .speed = speed,
+                    .yInversion = yInversion,
+                    .xInversion = xInversion,
+                    .speedDivisor = 1.0,
+                    .axisLockEnabled = true,
+                    .axisLockSkew = moduleConfiguration->axisLockSkew,
+                    .axisLockFirstTickSkew = moduleConfiguration->axisLockFirstTickSkew,
+                    .ks = ks,
+                    .continuous = true,
+                });
             }
             break;
         }
@@ -651,10 +501,23 @@ static void processModuleKineticState(
                 ks->xFractionRemainder = modff(ks->xFractionRemainder + x * speed / moduleConfiguration->scrollSpeedDivisor, &xIntegerPart);
                 ks->yFractionRemainder = modff(ks->yFractionRemainder + y * speed / moduleConfiguration->scrollSpeedDivisor, &yIntegerPart);
 
-                ActiveUsbMouseReport->wheelX += xIntegerPart;
+                ActiveUsbMouseReport->wheelX += xInversion*xIntegerPart;
                 ActiveUsbMouseReport->wheelY += yInversion*yIntegerPart;
             } else {
-                processAxisLocking(x, y, speed, yInversion, moduleConfiguration->scrollSpeedDivisor, true, moduleConfiguration->axisLockSkew, moduleConfiguration->axisLockFirstTickSkew, ks, true);
+
+                processAxisLocking((axis_locking_args_t) {
+                    .x = x,
+                    .y = y,
+                    .speed = speed,
+                    .yInversion = yInversion,
+                    .xInversion = xInversion,
+                    .speedDivisor = moduleConfiguration->scrollSpeedDivisor,
+                    .axisLockEnabled = true,
+                    .axisLockSkew = moduleConfiguration->axisLockSkew,
+                    .axisLockFirstTickSkew = moduleConfiguration->axisLockFirstTickSkew,
+                    .ks = ks,
+                    .continuous = true,
+                });
             }
             break;
         }
@@ -667,7 +530,19 @@ static void processModuleKineticState(
             // forced scroll = touchpad scroll;
             bool isPinchGesture = forcedNavigationMode == NavigationMode_Zoom;
             float speedDivisor = isPinchGesture ? moduleConfiguration->pinchZoomSpeedDivisor : moduleConfiguration->caretSpeedDivisor;
-            processAxisLocking(x, y, speed, yInversion, speedDivisor, moduleConfiguration->caretAxisLock, moduleConfiguration->axisLockSkew, moduleConfiguration->axisLockFirstTickSkew, ks, false);
+            processAxisLocking((axis_locking_args_t) {
+                .x = x,
+                .y = y,
+                .speed = speed,
+                .yInversion = yInversion,
+                .xInversion = xInversion,
+                .speedDivisor = speedDivisor,
+                .axisLockEnabled = moduleConfiguration->caretAxisLock,
+                .axisLockSkew = moduleConfiguration->axisLockSkew,
+                .axisLockFirstTickSkew = moduleConfiguration->axisLockFirstTickSkew,
+                .ks = ks,
+                .continuous = false,
+            });
             break;
         case NavigationMode_None:
             break;
@@ -688,9 +563,11 @@ static void resetKineticModuleState(module_kinetic_state_t* kineticState)
 }
 
 static layer_id_t determineEffectiveLayer() {
-    bool secondaryRoleResolutionInProgress = ActiveLayer == LayerId_Base && IS_SECONDARY_ROLE_LAYER_SWITCHER(SecondaryRolePreview);
-
-    return secondaryRoleResolutionInProgress ? SECONDARY_ROLE_LAYER_TO_LAYER_ID(SecondaryRolePreview) : ActiveLayer;
+    if (IS_MODIFIER_LAYER(ActiveLayer)) {
+        return LayerId_Base;
+    } else {
+        return ActiveLayer;
+    }
 }
 
 static module_kinetic_state_t* getKineticState(uint8_t moduleId)
@@ -749,26 +626,19 @@ static void processModuleActions(
     processModuleKineticState(x, y, moduleConfiguration, ks, forcedNavigationMode);
 }
 
+bool canWeRun()
+{
+    if (Postponer_MouseBlocked) {
+        PostponerExtended_RequestUnblockMouse();
+        return false;
+    } else {
+        return true;
+    }
+}
+
 void MouseController_ProcessMouseActions()
 {
-    mouseElapsedTime = Timer_GetElapsedTimeAndSetCurrent(&mouseUsbReportUpdateTime);
-
-    processMouseKineticState(&MouseMoveState);
-    ActiveUsbMouseReport->x = MouseMoveState.xOut;
-    ActiveUsbMouseReport->y = MouseMoveState.yOut;
-    MouseMoveState.xOut = 0;
-    MouseMoveState.yOut = 0;
-
-    processMouseKineticState(&MouseScrollState);
-    ActiveUsbMouseReport->wheelX = MouseScrollState.xOut;
-    ActiveUsbMouseReport->wheelY = MouseScrollState.yOut;
-    MouseScrollState.xOut = 0;
-    MouseScrollState.yOut = 0;
-
-
     if (Slaves[SlaveId_RightTouchpad].isConnected) {
-        // TODO: this is still unsafe w.r.t interrupts
-        processTouchpadActions();
 
         module_kinetic_state_t *ks = getKineticState(ModuleId_TouchpadRight);
 
@@ -776,14 +646,25 @@ void MouseController_ProcessMouseActions()
             handleRunningCaretModeAction(ks);
         }
 
-        processModuleActions(ks, ModuleId_TouchpadRight, (int16_t)TouchpadEvents.x, (int16_t)TouchpadEvents.y, 0xFF);
-        processModuleActions(ks, ModuleId_TouchpadRight, (int16_t)TouchpadEvents.wheelX, (int16_t)TouchpadEvents.wheelY, NavigationMode_Scroll);
-        processModuleActions(ks, ModuleId_TouchpadRight, 0, (int16_t)TouchpadEvents.zoomLevel, NavigationMode_Zoom);
-        TouchpadEvents.zoomLevel = 0;
-        TouchpadEvents.wheelX = 0;
-        TouchpadEvents.wheelY = 0;
-        TouchpadEvents.x = 0;
-        TouchpadEvents.y = 0;
+        bool eventsIsNonzero = memcmp(&TouchpadEvents, &ZeroTouchpadEvents, sizeof TouchpadEvents) != 0;
+        if (!eventsIsNonzero || (eventsIsNonzero && canWeRun())) {
+            //eventsIsNonzero is needed for touchpad action state automaton timer
+            __disable_irq();
+            touchpad_events_t events = TouchpadEvents;
+            TouchpadEvents.zoomLevel = 0;
+            TouchpadEvents.wheelX = 0;
+            TouchpadEvents.wheelY = 0;
+            TouchpadEvents.x = 0;
+            TouchpadEvents.y = 0;
+            // note that not all fields are resetted and that's correct
+            __enable_irq();
+
+            processTouchpadActions(events);
+
+            processModuleActions(ks, ModuleId_TouchpadRight, (int16_t)events.x, (int16_t)events.y, 0xFF);
+            processModuleActions(ks, ModuleId_TouchpadRight, (int16_t)events.wheelX, (int16_t)events.wheelY, NavigationMode_Scroll);
+            processModuleActions(ks, ModuleId_TouchpadRight, 0, (int16_t)events.zoomLevel, NavigationMode_Zoom);
+        }
     }
 
     for (uint8_t moduleSlotId=0; moduleSlotId<UHK_MODULE_MAX_SLOT_COUNT; moduleSlotId++) {
@@ -792,61 +673,27 @@ void MouseController_ProcessMouseActions()
             continue;
         }
 
-        __disable_irq();
-        // Gcc compiles those int16_t assignments as sequences of
-        // single-byte instructions, therefore we need to make the
-        // sequence atomic.
-        int16_t x = moduleState->pointerDelta.x;
-        int16_t y = moduleState->pointerDelta.y;
-        moduleState->pointerDelta.x = 0;
-        moduleState->pointerDelta.y = 0;
-        __enable_irq();
-
         module_kinetic_state_t *ks = getKineticState(moduleState->moduleId);
 
         if (caretModeActionIsRunning(ks)) {
             handleRunningCaretModeAction(ks);
         }
 
-        processModuleActions(ks, moduleState->moduleId, x, y, 0xFF);
-    }
 
-    if (ActiveMouseStates[SerializedMouseAction_LeftClick]) {
-        ActiveUsbMouseReport->buttons |= MouseButton_Left;
-    }
-    if (ActiveMouseStates[SerializedMouseAction_MiddleClick]) {
-        ActiveUsbMouseReport->buttons |= MouseButton_Middle;
-    }
-    if (ActiveMouseStates[SerializedMouseAction_RightClick]) {
-        ActiveUsbMouseReport->buttons |= MouseButton_Right;
-    }
-    if (ActiveMouseStates[SerializedMouseAction_Button_4]) {
-        ActiveUsbMouseReport->buttons |= MouseButton_4;
-    }
-    if (ActiveMouseStates[SerializedMouseAction_Button_5]) {
-        ActiveUsbMouseReport->buttons |= MouseButton_5;
-    }
-    if (ActiveMouseStates[SerializedMouseAction_Button_6]) {
-        ActiveUsbMouseReport->buttons |= MouseButton_6;
-    }
-    if (ActiveMouseStates[SerializedMouseAction_Button_7]) {
-        ActiveUsbMouseReport->buttons |= MouseButton_7;
-    }
-    if (ActiveMouseStates[SerializedMouseAction_Button_8]) {
-        ActiveUsbMouseReport->buttons |= MouseButton_8;
+        bool eventsIsNonzero = moduleState->pointerDelta.x || moduleState->pointerDelta.y;
+        if (eventsIsNonzero && canWeRun()) {
+            __disable_irq();
+            // Gcc compiles those int16_t assignments as sequences of
+            // single-byte instructions, therefore we need to make the
+            // sequence atomic.
+            int16_t x = moduleState->pointerDelta.x;
+            int16_t y = moduleState->pointerDelta.y;
+            moduleState->pointerDelta.x = 0;
+            moduleState->pointerDelta.y = 0;
+            __enable_irq();
+
+            processModuleActions(ks, moduleState->moduleId, x, y, 0xFF);
+        }
     }
 }
 
-void ToggleMouseState(serialized_mouse_action_t action, bool activate)
-{
-    if (activate) {
-        ToggledMouseStates[action]++;
-        // First macro action is ran during key update cycle, i.e., after ActiveMouseStates is copied from ToggledMouseStates.
-        // Otherwise, direction sign will be resetted at the end of this cycle
-        ActiveMouseStates[action]++;
-        MouseController_ActivateDirectionSigns(action);
-    }
-    else{
-        ToggledMouseStates[action] -= ToggledMouseStates[action] > 0 ? 1 : 0;
-    }
-}

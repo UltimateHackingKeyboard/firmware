@@ -7,13 +7,16 @@
 #include "bool_array_converter.h"
 #include "crc16.h"
 #include "key_states.h"
+#include "timer.h"
 #include "usb_report_updater.h"
 #include "utils.h"
 #include "keymap.h"
 #include "debug.h"
-#include "macros.h"
+#include "macros/core.h"
+#include "versioning.h"
 
 uhk_module_state_t UhkModuleStates[UHK_MODULE_MAX_SLOT_COUNT];
+module_connection_state_t ModuleConnectionStates[UHK_MODULE_MAX_SLOT_COUNT];
 
 static bool shouldResetTrackpoint = false;
 
@@ -106,6 +109,7 @@ slave_result_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
 {
     slave_result_t res = { .status = kStatus_Uhk_IdleSlave, .hold = false };
 
+    module_connection_state_t *moduleConnectionState = ModuleConnectionStates + uhkModuleDriverId;
     uhk_module_state_t *uhkModuleState = UhkModuleStates + uhkModuleDriverId;
     uhk_module_vars_t *uhkModuleSourceVars = &uhkModuleState->sourceVars;
     uhk_module_vars_t *uhkModuleTargetVars = &uhkModuleState->targetVars;
@@ -204,6 +208,7 @@ slave_result_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
             bool isMessageValid = CRC16_IsMessageValid(rxMessage);
             if (isMessageValid) {
                 uhkModuleState->moduleId = rxMessage->data[0];
+                moduleConnectionState->moduleId = rxMessage->data[0];
                 reloadKeymapIfNeeded();
             }
             res.status = kStatus_Uhk_IdleCycle;
@@ -304,7 +309,29 @@ slave_result_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
                 Utils_SafeStrCopy(uhkModuleState->gitRepo, (const char*)rxMessage->data, sizeof(uhkModuleState->gitRepo));
             }
             res.status = kStatus_Uhk_IdleCycle;
-            *uhkModulePhase = isMessageValid ? UhkModulePhase_RequestKeyStates : UhkModulePhase_RequestGitRepo;
+            *uhkModulePhase = isMessageValid ? UhkModulePhase_RequestFirmwareChecksum : UhkModulePhase_RequestGitRepo;
+            break;
+        }
+
+        // Get firmware checksum
+        case UhkModulePhase_RequestFirmwareChecksum:
+            txMessage.data[0] = SlaveCommand_RequestProperty;
+            txMessage.data[1] = SlaveProperty_FirmwareChecksum;
+            txMessage.length = 2;
+            res.status = tx(i2cAddress);
+            *uhkModulePhase = UhkModulePhase_ReceiveFirmwareChecksum;
+            break;
+        case UhkModulePhase_ReceiveFirmwareChecksum:
+            res.status = rx(rxMessage, i2cAddress);
+            *uhkModulePhase = UhkModulePhase_ProcessFirmwareChecksum;
+            break;
+        case UhkModulePhase_ProcessFirmwareChecksum: {
+            bool isMessageValid = CRC16_IsMessageValid(rxMessage);
+            if (isMessageValid) {
+                Utils_SafeStrCopy(uhkModuleState->firmwareChecksum, (const char*)rxMessage->data, MD5_CHECKSUM_LENGTH+1);
+            }
+            res.status = kStatus_Uhk_IdleCycle;
+            *uhkModulePhase = isMessageValid ? UhkModulePhase_RequestKeyStates : UhkModulePhase_RequestFirmwareChecksum;
             break;
         }
 
@@ -315,6 +342,7 @@ slave_result_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
             txMessage.length = 1;
             res.status = tx(i2cAddress);
             res.hold = true;
+            moduleConnectionState->lastTimeConnected = CurrentTime;
             *uhkModulePhase = UhkModulePhase_ReceiveKeystates;
             break;
         case UhkModulePhase_ReceiveKeystates:

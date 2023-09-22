@@ -11,7 +11,7 @@
 #include "touchpad_driver.h"
 #include "debug.h"
 #include "timer.h"
-#include "macros.h"
+#include "macros/core.h"
 
 /*
 |  Actually produced sequences:
@@ -73,6 +73,7 @@ static gesture_events_t gestureEvents;
 
 uint8_t address = I2C_ADDRESS_RIGHT_IQS5XX_FIRMWARE;
 touchpad_events_t TouchpadEvents;
+const touchpad_events_t ZeroTouchpadEvents;
 uint8_t phase = 0;
 static uint8_t enableEventMode[] = {0x05, 0x8f, 0x07};
 
@@ -99,6 +100,7 @@ int16_t deltaY;
 
 void TouchpadDriver_Init(uint8_t uhkModuleDriverId)
 {
+    phase = 0;
 }
 
 slave_result_t TouchpadDriver_Update(uint8_t uhkModuleDriverId)
@@ -113,6 +115,7 @@ slave_result_t TouchpadDriver_Update(uint8_t uhkModuleDriverId)
         }
         case 1: {
             res.status = I2cAsyncWrite(address, enableManualMode, sizeof(enableManualMode));
+            ModuleConnectionStates[UhkModuleDriverId_RightModule].moduleId = ModuleId_TouchpadRight;
             phase = 2;
             break;
         }
@@ -155,6 +158,7 @@ slave_result_t TouchpadDriver_Update(uint8_t uhkModuleDriverId)
             deltaY = (int16_t)(buffer[1] | buffer[0]<<8);
             deltaX = (int16_t)(buffer[3] | buffer[2]<<8);
 
+            ModuleConnectionStates[UhkModuleDriverId_RightModule].lastTimeConnected = CurrentTime;
 
             TouchpadEvents.singleTap = gestureEvents.events0.singleTap;
             TouchpadEvents.twoFingerTap = gestureEvents.events1.twoFingerTap;

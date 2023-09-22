@@ -27,6 +27,7 @@
         bool current : 1;
         bool previous : 1;
         bool debouncing : 1;
+        bool secondary : 1;
     } key_state_t;
 
 // Variables:

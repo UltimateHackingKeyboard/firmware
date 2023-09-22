@@ -5,6 +5,7 @@
 
     #include <stdint.h>
     #include <stdbool.h>
+    #include "layer.h"
     #include "parse_config.h"
 
 // Macros:
@@ -71,9 +72,28 @@
         SerializedLayerName_base = 255
     } serialized_layer_id;
 
+    typedef enum {
+        ParseMode_DryRun,
+        ParseMode_FullRun,
+        ParseMode_Overlay,
+    } parse_mode_t;
+
+    typedef enum {
+        ParseKeymapMode_DryRun,
+        ParseKeymapMode_FullRun,
+        ParseKeymapMode_OverlayKeymap,
+        ParseKeymapMode_OverlayLayer,
+        ParseKeymapMode_ReplaceLayer,
+    } parse_keymap_mode_t;
+
+    typedef struct {
+        parse_keymap_mode_t mode;
+        layer_id_t srcLayer;
+        layer_id_t dstLayer;
+    } ATTR_PACKED parse_config_t;
 
 // Functions:
 
-    parser_error_t ParseKeymap(config_buffer_t *buffer, uint8_t keymapIdx, uint8_t keymapCount, uint8_t macroCount);
+    parser_error_t ParseKeymap(config_buffer_t *buffer, uint8_t keymapIdx, uint8_t keymapCount, uint8_t macroCount, parse_config_t parseConfig);
 
 #endif

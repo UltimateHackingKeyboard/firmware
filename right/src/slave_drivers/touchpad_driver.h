@@ -29,6 +29,7 @@
 
 // Variables:
 
+    extern const touchpad_events_t ZeroTouchpadEvents;
     extern touchpad_events_t TouchpadEvents;
 
 // Functions:

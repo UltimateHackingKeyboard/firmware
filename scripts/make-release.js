@@ -4,31 +4,40 @@ const path = require('path');
 const common = require('./common.js');
 require('shelljs/global');
 
+const generateVersionsH = require('./generate-versions-h-util.js');
+const readPackageJson = require('./read-package-json.js');
+
 config.fatal = true;
 config.verbose = true;
 
-exec(`${__dirname}/generate-versions-h.js`);
+const gitInfo = common.getGitInfo();
+const packageJson = readPackageJson();
 
-const package = JSON.parse(fs.readFileSync(`${__dirname}/package.json`));
-const version = package.firmwareVersion;
+generateVersionsH({ packageJson, gitInfo, useRealData: false });
+
+const version = packageJson.firmwareVersion;
 const releaseName = `uhk-firmware-${version}`;
 const releaseDir = `${__dirname}/${releaseName}`;
 const agentDir = `${__dirname}/../lib/agent`;
 var releaseFile = `${__dirname}/${releaseName}.tar.gz`;
 var mkArgs = '';
 
-if (process.argv.includes('--extendedMacros')) {
-    mkArgs = mkArgs + 'CUSTOM_CFLAGS=-DEXTENDED_MACROS'
-    releaseFile = `${__dirname}/${releaseName}-extendedMacros.tar.gz`;
+if (gitInfo.tag !== `v${version}` && !process.argv.includes('--allowSha')) {
+    console.error(`Git tag '${gitInfo.tag}' !~ 'v{version}'. Please run with '--allowSha' if this is intentional.`);
+    process.exit(1);
 }
 
-const deviceSourceFirmwares = package.devices.map(device => `${__dirname}/../${device.source}`);
-const moduleSourceFirmwares = package.modules.map(module => `${__dirname}/../${module.source}`);
+if (gitInfo.tag !== `v${version}`) {
+    releaseFile = `${__dirname}/${releaseName}-${gitInfo.tag}.tar.gz`;
+}
+
+const deviceSourceFirmwares = packageJson.devices.map(device => `${__dirname}/../${device.source}`);
+const moduleSourceFirmwares = packageJson.modules.map(module => `${__dirname}/../${module.source}`);
 rm('-rf', releaseDir, releaseFile, deviceSourceFirmwares, moduleSourceFirmwares);
 
 const sourcePaths = [
-    ...package.devices.map(device => device.source),
-    ...package.modules.map(module => module.source),
+    ...packageJson.devices.map(device => device.source),
+    ...packageJson.modules.map(module => module.source),
 ];
 for (const sourcePath of sourcePaths) {
     const buildDir = path.dirname(`${__dirname}/../${sourcePath}`);
@@ -36,9 +45,19 @@ for (const sourcePath of sourcePaths) {
     exec(`cd ${buildDir}/..; make clean; make -j8 ${mkArgs}`);
 }
 
+const { devices, modules } = generateVersionsH({ packageJson, gitInfo, useRealData: true });
+packageJson.devices = devices;
+packageJson.modules = modules;
+
+for (const sourcePath of sourcePaths) {
+    const buildDir = path.dirname(`${__dirname}/../${sourcePath}`);
+    exec(`cd ${buildDir}/..; make -j8 ${mkArgs}`);
+}
+
+
 exec(`npm ci; npm run build`, { cwd: agentDir });
 
-for (const device of package.devices) {
+for (const device of packageJson.devices) {
     const deviceDir = `${releaseDir}/devices/${device.name}`;
     const deviceSource = `${__dirname}/../${device.source}`;
     const deviceMMap = `${__dirname}/../${device.mmap}`;
@@ -49,7 +68,7 @@ for (const device of package.devices) {
     exec(`npm run convert-user-config-to-bin -- ${deviceDir}/config.bin`, { cwd: agentDir });
 }
 
-for (const module of package.modules) {
+for (const module of packageJson.modules) {
     const moduleDir = `${releaseDir}/modules`;
     const moduleSource = `${__dirname}/../${module.source}`;
     const moduleMMap = `${__dirname}/../${module.mmap}`;
@@ -59,8 +78,7 @@ for (const module of package.modules) {
     cp(moduleMMap, `${moduleDir}/${module.name}.map`);
 }
 
-const gitInfo = common.getGitInfo();
-const updatedPackage = Object.assign({}, package, { gitInfo: gitInfo });
+const updatedPackage = Object.assign({}, packageJson, { gitInfo: gitInfo });
 fs.writeFileSync(`${releaseDir}/package.json`, JSON.stringify(updatedPackage, null, 2));
 
 cp('-RL', `${__dirname}/../doc/dist`, `${releaseDir}/doc`);

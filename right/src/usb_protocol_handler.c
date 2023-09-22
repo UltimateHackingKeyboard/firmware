@@ -19,6 +19,7 @@
 #include "usb_commands/usb_command_switch_keymap.h"
 #include "usb_commands/usb_command_get_variable.h"
 #include "usb_commands/usb_command_set_variable.h"
+#include "usb_commands/usb_command_exec_macro_command.h"
 
 void UsbProtocolHandler(void)
 {
@@ -84,6 +85,9 @@ void UsbProtocolHandler(void)
             break;
         case UsbCommandId_SetVariable:
             UsbCommand_SetVariable();
+            break;
+        case UsbCommandId_ExecMacroCommand:
+            UsbCommand_ExecMacroCommand();
             break;
         default:
             SetUsbTxBufferUint8(0, UsbStatusCode_InvalidCommand);

@@ -69,6 +69,11 @@ SIZE = $(PREFIX)-size$(SUFFIX)
 # Auto-dependency generation flags.
 DEPS = -MMD -MP
 
+
+ifneq ($(DEVICE_ID),)
+DEVICE_ID_DEFINITION = -DDEVICE_ID=$(DEVICE_ID)
+endif
+
 # The flags passed to the assembler.
 AFLAGS = -mthumb                    \
          $(CPU)                     \
@@ -82,7 +87,7 @@ CFLAGS = -mthumb                    \
          $(CPU)                     \
          $(FPU)                     \
          $(DEPS)                    \
-         -DDEVICE_ID=$(DEVICE_ID)   \
+         $(DEVICE_ID_DEFINITION)   \
          -fno-builtin               \
          -ffunction-sections        \
          -fdata-sections            \
@@ -97,8 +102,7 @@ CFLAGS = -mthumb                    \
          -Wrestrict                 \
          -Wnull-dereference         \
          -Wshadow                   \
-         $(BUILD_FLAGS)             \
-         $(CUSTOM_CFLAGS)
+         $(BUILD_FLAGS)             
 
 # Compiler options for C++ only.
 CXXFLAGS = -felide-constructors -fno-exceptions -fno-rtti

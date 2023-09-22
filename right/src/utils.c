@@ -1,7 +1,8 @@
 #include "utils.h"
 #include "key_states.h"
-#include "macros.h"
-#include "macro_shortcut_parser.h"
+#include "macros/core.h"
+#include "macros/status_buffer.h"
+#include "macros/shortcut_parser.h"
 #include "led_display.h"
 #include <string.h>
 

@@ -1,7 +1,9 @@
 #include "fsl_common.h"
+#include "slave_protocol.h"
 #include "usb_commands/usb_command_get_device_property.h"
 #include "usb_protocol_handler.h"
 #include "eeprom.h"
+#include "versioning.h"
 #include "versions.h"
 #include "slave_drivers/kboot_driver.h"
 #include "i2c.h"
@@ -82,6 +84,15 @@ void UsbCommand_GetDeviceProperty(void)
             break;
         case DevicePropertyId_GitRepo:
             Utils_SafeStrCopy(((char*)GenericHidInBuffer) + 1, GIT_REPO, sizeof(GenericHidInBuffer)-1);
+            break;
+        case DevicePropertyId_FirmwareChecksum: {
+                uint8_t moduleId = GetUsbRxBufferUint8(2);
+                if (moduleId == ModuleId_RightKeyboardHalf) {
+                    Utils_SafeStrCopy(((char*)GenericHidInBuffer) + 1, DeviceMD5Checksums[DEVICE_ID] , MD5_CHECKSUM_LENGTH + 1);
+                } else {
+                    Utils_SafeStrCopy(((char*)GenericHidInBuffer) + 1, ModuleMD5Checksums[moduleId] , MD5_CHECKSUM_LENGTH + 1);
+                }
+            }
             break;
         default:
             SetUsbTxBufferUint8(0, UsbStatusCode_GetDeviceProperty_InvalidProperty);

@@ -14,14 +14,15 @@
   },
   "dependencies": {
     "commander": "^2.11.0",
+    "md5": "2.3.0",
     "shelljs": "^0.8.4"
   },
-  "firmwareVersion": "9.1.1",
-  "deviceProtocolVersion": "4.8.0",
-  "moduleProtocolVersion": "4.2.0",
-  "userConfigVersion": "5.1.0",
+  "firmwareVersion": "10.2.0",
+  "deviceProtocolVersion": "4.10.0",
+  "moduleProtocolVersion": "4.3.0",
+  "userConfigVersion": "6.0.0",
   "hardwareConfigVersion": "1.0.0",
-  "smartMacrosVersion": "1.0.0",
+  "smartMacrosVersion": "1.4.0",
   "devices": [
     {
       "deviceId": 1,

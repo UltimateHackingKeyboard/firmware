@@ -33,5 +33,6 @@
 
     void InitPeripherals(void);
     void ReinitI2cMainBus(void);
+    void ChangeI2cBaudRate(uint32_t i2cBaudRate);
 
 #endif

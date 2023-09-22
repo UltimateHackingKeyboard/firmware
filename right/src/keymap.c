@@ -1,12 +1,15 @@
 #include "arduino_hid/ConsumerAPI.h"
 #include "arduino_hid/SystemAPI.h"
 #include "keymap.h"
+#include "layer.h"
+#include "layer_switcher.h"
 #include "led_display.h"
 #include "ledmap.h"
 #include "config_parser/parse_keymap.h"
 #include "config_parser/config_globals.h"
-#include "macros.h"
+#include "macros/core.h"
 #include "macro_events.h"
+#include "segment_display.h"
 
 keymap_reference_t AllKeymaps[MAX_KEYMAP_NUM] = {
     {
@@ -22,12 +25,17 @@ uint8_t CurrentKeymapIndex = 0;
 
 void SwitchKeymapById(uint8_t index)
 {
+    parse_config_t parseConfig = (parse_config_t) {
+        .mode = ParserRunDry ? ParseKeymapMode_DryRun : ParseKeymapMode_FullRun
+    };
     CurrentKeymapIndex = index;
     ValidatedUserConfigBuffer.offset = AllKeymaps[index].offset;
-    ParseKeymap(&ValidatedUserConfigBuffer, index, AllKeymapsCount, AllMacrosCount);
-    LedDisplay_UpdateText();
-    UpdateLayerLeds();
+    ParseKeymap(&ValidatedUserConfigBuffer, index, AllKeymapsCount, AllMacrosCount, parseConfig);
+    SegmentDisplay_UpdateKeymapText();
+    Ledmap_UpdateBacklightLeds();
+    MacroEvent_RegisterLayerMacros();
     MacroEvent_OnKeymapChange(index);
+    MacroEvent_OnLayerChange(ActiveLayer);
 }
 
 uint8_t FindKeymapByAbbreviation(uint8_t length, const char *abbrev) {
@@ -52,8 +60,40 @@ bool SwitchKeymapByAbbreviation(uint8_t length, const char *abbrev)
     }
 }
 
+void OverlayKeymap(uint8_t srcKeymap)
+{
+    parse_config_t parseConfig = (parse_config_t) {
+        .mode = ParseKeymapMode_OverlayKeymap,
+    };
+    ValidatedUserConfigBuffer.offset = AllKeymaps[srcKeymap].offset;
+    ParseKeymap(&ValidatedUserConfigBuffer, srcKeymap, AllKeymapsCount, AllMacrosCount, parseConfig);
+}
+
+void OverlayLayer(layer_id_t dstLayer, uint8_t srcKeymap, layer_id_t srcLayer)
+{
+    parse_config_t parseConfig = (parse_config_t) {
+        .mode = ParseKeymapMode_OverlayLayer,
+        .srcLayer = srcLayer,
+        .dstLayer = dstLayer,
+    };
+    ValidatedUserConfigBuffer.offset = AllKeymaps[srcKeymap].offset;
+    ParseKeymap(&ValidatedUserConfigBuffer, srcKeymap, AllKeymapsCount, AllMacrosCount, parseConfig);
+}
+
+void ReplaceLayer(layer_id_t dstLayer, uint8_t srcKeymap, layer_id_t srcLayer)
+{
+    parse_config_t parseConfig = (parse_config_t) {
+        .mode = ParseKeymapMode_ReplaceLayer,
+        .srcLayer = srcLayer,
+        .dstLayer = dstLayer,
+    };
+    ValidatedUserConfigBuffer.offset = AllKeymaps[srcKeymap].offset;
+    ParseKeymap(&ValidatedUserConfigBuffer, srcKeymap, AllKeymapsCount, AllMacrosCount, parseConfig);
+}
+
+
 // The factory keymap is initialized before it gets overwritten by the default keymap of the EEPROM.
-key_action_t CurrentKeymap[LayerId_Count][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
+ATTR_DATA2 key_action_t CurrentKeymap[LayerId_Count][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
     // Base layer
     {
         // Right keyboard half

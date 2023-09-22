@@ -39,6 +39,7 @@
         SlaveProperty_PointerCount,
         SlaveProperty_GitTag,
         SlaveProperty_GitRepo,
+        SlaveProperty_FirmwareChecksum,
     } slave_property_t;
 
     typedef enum {

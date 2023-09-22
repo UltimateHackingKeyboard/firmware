@@ -3,16 +3,20 @@
 #include "parse_macro.h"
 #include "keymap.h"
 #include "config_globals.h"
-#include "macros.h"
+#include "macros/core.h"
 #include "led_display.h"
+#include "ledmap.h"
 #include "slave_scheduler.h"
 #include "slave_drivers/is31fl3xxx_driver.h"
 #include "config.h"
 #include "mouse_controller.h"
+#include "mouse_keys.h"
 
     uint16_t DataModelMajorVersion = 0;
     uint16_t DataModelMinorVersion = 0;
     uint16_t DataModelPatchVersion = 0;
+
+    bool PerKeyRgbPresent = false;
 
 static parser_error_t parseModuleConfiguration(config_buffer_t *buffer)
 {
@@ -39,6 +43,14 @@ static parser_error_t parseModuleConfiguration(config_buffer_t *buffer)
     return ParserError_Success;
 }
 
+void readRgbColor(config_buffer_t *buffer, key_action_color_t keyActionColor)
+{
+    rgb_t *color = &KeyActionColors[keyActionColor];
+    color->red = ReadUInt8(buffer);
+    color->green = ReadUInt8(buffer);
+    color->blue = ReadUInt8(buffer);
+}
+
 parser_error_t ParseConfig(config_buffer_t *buffer)
 {
     // Miscellaneous properties
@@ -51,7 +63,7 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
     DataModelMajorVersion = ReadUInt16(buffer);
     DataModelMinorVersion = ReadUInt16(buffer);
     DataModelPatchVersion = ReadUInt16(buffer);
-    uint16_t userConfigLength = ReadUInt16(buffer);
+    uint32_t userConfigLength = DataModelMajorVersion < 6 ? ReadUInt16(buffer) : ReadUInt32(buffer);
     const char *deviceName = ReadString(buffer, &len);
     uint16_t doubleTapSwitchLayerTimeout = ReadUInt16(buffer);
 
@@ -63,6 +75,21 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
     uint8_t iconsAndLayerTextsBrightness = ReadUInt8(buffer);
     uint8_t alphanumericSegmentsBrightness = ReadUInt8(buffer);
     uint8_t keyBacklightBrightness = ReadUInt8(buffer);
+
+    if (DataModelMajorVersion >= 6) {
+        LedsFadeTimeout = 1000 * ReadUInt16(buffer);
+        PerKeyRgbPresent = ReadBool(buffer);
+        BacklightingMode = ReadUInt8(buffer);
+
+        readRgbColor(buffer, KeyActionColor_None);
+        readRgbColor(buffer, KeyActionColor_Scancode);
+        readRgbColor(buffer, KeyActionColor_Modifier);
+        readRgbColor(buffer, KeyActionColor_Shortcut);
+        readRgbColor(buffer, KeyActionColor_SwitchLayer);
+        readRgbColor(buffer, KeyActionColor_SwitchKeymap);
+        readRgbColor(buffer, KeyActionColor_Mouse);
+        readRgbColor(buffer, KeyActionColor_Macro);
+    }
 
     // Mouse kinetic properties
 
@@ -109,7 +136,7 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
     // Macros
 
     macroCount = ReadCompactLength(buffer);
-    if (macroCount > MAX_MACRO_NUM) {
+    if (macroCount > MacroIndex_MaxUserDefinableCount) {
         return ParserError_InvalidMacroCount;
     }
 
@@ -127,8 +154,12 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
         return ParserError_InvalidKeymapCount;
     }
 
+    parse_config_t parseConfig = (parse_config_t) {
+        .mode = ParserRunDry ? ParseKeymapMode_DryRun : ParseKeymapMode_FullRun
+    };
+
     for (uint8_t keymapIdx = 0; keymapIdx < keymapCount; keymapIdx++) {
-        errorCode = ParseKeymap(buffer, keymapIdx, keymapCount, macroCount);
+        errorCode = ParseKeymap(buffer, keymapIdx, keymapCount, macroCount, parseConfig);
         if (errorCode != ParserError_Success) {
             return errorCode;
         }

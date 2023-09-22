@@ -7,7 +7,8 @@
 #include "peripherals/test_led.h"
 #include "slave_drivers/is31fl3xxx_driver.h"
 #include "slave_drivers/uhk_module_driver.h"
-#include "macros.h"
+#include "macros/core.h"
+#include "macros/status_buffer.h"
 #include "key_states.h"
 #include "right_key_matrix.h"
 #include "usb_report_updater.h"
@@ -16,16 +17,21 @@
 #include "usb_commands/usb_command_get_debug_buffer.h"
 #include "arduino_hid/ConsumerAPI.h"
 #include "macro_recorder.h"
-#include "macro_shortcut_parser.h"
+#include "macros/shortcut_parser.h"
 #include "postponer.h"
 #include "secondary_role_driver.h"
 #include "slave_drivers/touchpad_driver.h"
 #include "layer_switcher.h"
+#include "layer_stack.h"
 #include "mouse_controller.h"
+#include "mouse_keys.h"
+#include "utils.h"
 #include "debug.h"
 
 bool TestUsbStack = false;
 static key_action_cached_t actionCache[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
+
+static uint32_t lastActivityTime;
 
 volatile uint8_t UsbReportUpdateSemaphore = 0;
 
@@ -105,6 +111,8 @@ static void applyToggleLayerAction(key_state_t *keyState, key_action_t *action) 
 static void handleEventInterrupts(key_state_t *keyState) {
     if(KeyState_ActivatedNow(keyState)) {
         LayerSwitcher_DoubleTapInterrupt(keyState);
+        Macros_SignalInterrupt();
+        lastActivityTime = CurrentTime;
     }
 }
 
@@ -168,7 +176,7 @@ static void activateStickyMods(key_state_t *keyState, key_action_cached_t *actio
 
 void ActivateStickyMods(key_state_t *keyState, uint8_t mods)
 {
-    stickyModifiersNegative = 0;
+    //do nothing to stickyModifiersNegative
     stickyModifiers = mods;
     stickyModifierKey = keyState;
     stickyModifierShouldStick = true;
@@ -231,7 +239,11 @@ static void applyKeystroke(key_state_t *keyState, key_action_cached_t *cachedAct
 {
     key_action_t* action = &cachedAction->action;
     if (action->keystroke.secondaryRole) {
-        switch (SecondaryRoles_ResolveState(keyState, action->keystroke.secondaryRole)) {
+        secondary_role_result_t res = SecondaryRoles_ResolveState(keyState, action->keystroke.secondaryRole, SecondaryRoles_Strategy, KeyState_ActivatedNow(keyState));
+        if (res.activatedNow) {
+            SecondaryRoles_FakeActivation(res);
+        }
+        switch (res.state) {
             case SecondaryRoleState_Primary:
                 applyKeystrokePrimary(keyState, cachedAction);
                 return;
@@ -252,10 +264,6 @@ void ApplyKeyAction(key_state_t *keyState, key_action_cached_t *cachedAction, ke
 {
     key_action_t* action = &cachedAction->action;
 
-    if (KeyState_ActivatedNow(keyState)) {
-        Macros_SignalInterrupt();
-    }
-
     switch (action->type) {
         case KeyActionType_Keystroke:
             if (KeyState_NonZero(keyState)) {
@@ -265,8 +273,8 @@ void ApplyKeyAction(key_state_t *keyState, key_action_cached_t *cachedAction, ke
         case KeyActionType_Mouse:
             if (KeyState_ActivatedNow(keyState)) {
                 stickyModifiers = 0;
-                stickyModifiersNegative = 0;
-                MouseController_ActivateDirectionSigns(action->mouseAction);
+                stickyModifiersNegative = cachedAction->modifierLayerMask;
+                MouseKeys_ActivateDirectionSigns(action->mouseAction);
             }
             ActiveMouseStates[action->mouseAction]++;
             break;
@@ -278,15 +286,15 @@ void ApplyKeyAction(key_state_t *keyState, key_action_cached_t *cachedAction, ke
         case KeyActionType_SwitchKeymap:
             if (KeyState_ActivatedNow(keyState)) {
                 stickyModifiers = 0;
-                stickyModifiersNegative = 0;
+                stickyModifiersNegative = cachedAction->modifierLayerMask;
                 SwitchKeymapById(action->switchKeymap.keymapId);
-                Macros_ResetLayerStack();
+                LayerStack_Reset();
             }
             break;
         case KeyActionType_PlayMacro:
             if (KeyState_ActivatedNow(keyState)) {
                 stickyModifiers = 0;
-                stickyModifiersNegative = 0;
+                stickyModifiersNegative = cachedAction->modifierLayerMask;
                 Macros_StartMacro(action->playMacro.macroId, keyState, 255, true);
             }
             break;
@@ -308,19 +316,19 @@ static void mergeReports(void)
         if(MacroState[j].ms.reportsUsed) {
             //if the macro ended right now, we still want to flush the last report
             MacroState[j].ms.reportsUsed &= MacroState[j].ms.macroPlaying;
-            macro_state_t *s = &MacroState[j];
+            macro_state_t *macroState = &MacroState[j];
 
-            UsbBasicKeyboard_MergeReports(&(s->ms.macroBasicKeyboardReport), ActiveUsbBasicKeyboardReport);
-            UsbMediaKeyboard_MergeReports(&(s->ms.macroMediaKeyboardReport), ActiveUsbMediaKeyboardReport);
-            UsbSystemKeyboard_MergeReports(&(s->ms.macroSystemKeyboardReport), ActiveUsbSystemKeyboardReport);
+            UsbBasicKeyboard_MergeReports(&(macroState->ms.macroBasicKeyboardReport), ActiveUsbBasicKeyboardReport);
+            UsbMediaKeyboard_MergeReports(&(macroState->ms.macroMediaKeyboardReport), ActiveUsbMediaKeyboardReport);
+            UsbSystemKeyboard_MergeReports(&(macroState->ms.macroSystemKeyboardReport), ActiveUsbSystemKeyboardReport);
 
-            InputModifiers |= s->ms.inputModifierMask;
+            InputModifiers |= macroState->ms.inputModifierMask;
 
-            ActiveUsbMouseReport->buttons |= s->ms.macroMouseReport.buttons;
-            ActiveUsbMouseReport->x += s->ms.macroMouseReport.x;
-            ActiveUsbMouseReport->y += s->ms.macroMouseReport.y;
-            ActiveUsbMouseReport->wheelX += s->ms.macroMouseReport.wheelX;
-            ActiveUsbMouseReport->wheelY += s->ms.macroMouseReport.wheelY;
+            ActiveUsbMouseReport->buttons |= macroState->ms.macroMouseReport.buttons;
+            ActiveUsbMouseReport->x += macroState->ms.macroMouseReport.x;
+            ActiveUsbMouseReport->y += macroState->ms.macroMouseReport.y;
+            ActiveUsbMouseReport->wheelX += macroState->ms.macroMouseReport.wheelX;
+            ActiveUsbMouseReport->wheelY += macroState->ms.macroMouseReport.wheelY;
         }
     }
 }
@@ -328,6 +336,14 @@ static void mergeReports(void)
 static void commitKeyState(key_state_t *keyState, bool active)
 {
     WATCH_TRIGGER(keyState);
+    if (RecordKeyTiming) {
+        Macros_SetStatusString( active ? "DOWN" : "UP", NULL);
+        Macros_SetStatusNum(Utils_KeyStateToKeyId(keyState));
+        Macros_SetStatusNum(CurrentTime);
+        Macros_SetStatusNum(CurrentPostponedTime);
+        Macros_SetStatusChar('\n');
+    }
+
     if (PostponerCore_IsActive()) {
         PostponerCore_TrackKeyEvent(keyState, active, 255);
     } else {
@@ -399,10 +415,6 @@ static void updateActiveUsbReports(void)
     SuppressMods = false;
 
     if (MacroPlaying) {
-        if (Macros_WakeMeOnTime < CurrentTime) {
-            Macros_WakedBecauseOfTime = true;
-            MacroPlaying = true;
-        }
         Macros_ContinueMacro();
     }
 
@@ -453,6 +465,10 @@ static void updateActiveUsbReports(void)
                     } else {
                         actionCache[slotId][keyId].action = CurrentKeymap[ActiveLayer][slotId][keyId];
                     }
+                    if (Postponer_LastKeyMods != 0) {
+                        actionCache[slotId][keyId].action.keystroke.modifiers = Postponer_LastKeyMods;
+                        Postponer_LastKeyMods = 0;
+                    }
                     handleEventInterrupts(keyState);
                 }
 
@@ -470,6 +486,7 @@ static void updateActiveUsbReports(void)
         }
     }
 
+    MouseKeys_ProcessMouseActions();
     MouseController_ProcessMouseActions();
 
     PostponerCore_FinishCycle();
@@ -500,13 +517,13 @@ void justPreprocessInput(void) {
 
 uint32_t UsbReportUpdateCounter;
 
-static void updateLedSleepModeState(uint32_t lastActivityTime) {
+static void updateLedSleepModeState() {
     uint32_t elapsedTime = Timer_GetElapsedTime(&lastActivityTime);
 
-    if (elapsedTime > LedSleepTimeout && !LedSleepModeActive && LedSleepTimeout) {
+    if (elapsedTime > LedsFadeTimeout && !LedSleepModeActive && LedsFadeTimeout) {
         LedSleepModeActive = true;
         LedSlaveDriver_UpdateLeds();
-    } else if (elapsedTime < LedSleepTimeout && LedSleepModeActive) {
+    } else if (elapsedTime < LedsFadeTimeout && LedSleepModeActive) {
         LedSleepModeActive = false;
         LedSlaveDriver_UpdateLeds();
     }
@@ -516,7 +533,6 @@ void UpdateUsbReports(void)
 {
     static uint32_t lastUpdateTime;
     static uint32_t lastReportTime;
-    static uint32_t lastActivityTime;
 
     for (uint8_t keyId = 0; keyId < RIGHT_KEY_MATRIX_KEY_COUNT; keyId++) {
         KeyStates[SlotId_RightKeyboardHalf][keyId].hardwareSwitchState = RightKeyMatrix.keyStates[keyId];
@@ -542,11 +558,10 @@ void UpdateUsbReports(void)
     UsbMediaKeyboardResetActiveReport();
     UsbSystemKeyboardResetActiveReport();
     UsbMouseResetActiveReport();
-    UsbGamepadResetActiveReport();
 
     updateActiveUsbReports();
 
-    updateLedSleepModeState(lastActivityTime);
+    updateLedSleepModeState();
 
     if (UsbBasicKeyboardCheckReportReady() == kStatus_USB_Success) {
         MacroRecorder_RecordBasicReport(ActiveUsbBasicKeyboardReport);

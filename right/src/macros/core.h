@@ -5,16 +5,18 @@
 
     #include <stdint.h>
     #include <stdbool.h>
+    #include "attributes.h"
     #include "key_action.h"
     #include "usb_device_config.h"
     #include "key_states.h"
+    #include "str_utils.h"
+    #include "macros/typedefs.h"
 
 // Macros:
     #define MACRO_CYCLES_TO_POSTPONE 4
 
     #define MAX_MACRO_NUM 255
-    #define STATUS_BUFFER_MAX_LENGTH 1024
-    #define LAYER_STACK_SIZE 10
+    #define STATUS_BUFFER_MAX_LENGTH 2000
     #define MACRO_STATE_POOL_SIZE 16
     #define MAX_REG_COUNT 32
 
@@ -23,27 +25,21 @@
     #define SHIFTMASK (HID_KEYBOARD_MODIFIER_LEFTSHIFT | HID_KEYBOARD_MODIFIER_RIGHTSHIFT)
     #define GUIMASK (HID_KEYBOARD_MODIFIER_LEFTGUI | HID_KEYBOARD_MODIFIER_RIGHTGUI)
 
+    typedef enum {
+        MacroIndex_UsbCmdReserved = 254,
+        MacroIndex_None = 255,
+
+        MacroIndex_MaxUserDefinableCount = 254,
+        MacroIndex_MaxCount = 255,
+    } macro_index_t;
+
 // Typedefs:
 
     typedef struct {
         uint16_t firstMacroActionOffset;
-        uint8_t macroActionsCount; //official uses uint16_t, we think that 256 actions per macro should suffice
-        uint8_t macroNameOffset; //negative w.r.t. firstMacroActionOffset, we think that 256 chars per name should suffice
+        uint8_t macroActionsCount;
+        uint8_t macroNameOffset; //negative w.r.t. firstMacroActionOffset
     } macro_reference_t;
-
-    typedef struct {
-        uint8_t layer;
-        uint8_t keymap;
-        bool held;
-        bool removed;
-    } layerStackRecord;
-
-    typedef enum {
-        MacroSubAction_Tap,
-        MacroSubAction_Press,
-        MacroSubAction_Release,
-        MacroSubAction_Hold
-    } macro_sub_action_t;
 
     typedef enum {
         Scheduler_Preemptive,
@@ -60,29 +56,15 @@
         MacroActionType_Command,
     } macro_action_type_t;
 
-    typedef enum {
-        MacroResult_InProgressFlag = 1,
-        MacroResult_ActionFinishedFlag = 2,
-        MacroResult_DoneFlag = 4,
-        MacroResult_YieldFlag = 8,
-        MacroResult_BlockingFlag = 16,
-        MacroResult_Blocking = MacroResult_InProgressFlag | MacroResult_BlockingFlag,
-        MacroResult_Waiting = MacroResult_InProgressFlag | MacroResult_YieldFlag,
-        MacroResult_Sleeping = MacroResult_InProgressFlag | MacroResult_YieldFlag,
-        MacroResult_Finished = MacroResult_ActionFinishedFlag,
-        MacroResult_JumpedForward = MacroResult_DoneFlag,
-        MacroResult_JumpedBackward = MacroResult_DoneFlag | MacroResult_YieldFlag,
-    } macro_result_t;
-
     typedef struct {
         union {
             struct {
                 macro_sub_action_t action;
                 keystroke_type_t type;
                 uint16_t scancode;
+                uint8_t inputModMask;
                 uint8_t outputModMask;
                 uint8_t stickyModMask;
-                uint8_t inputModMask;
             } ATTR_PACKED key;
             struct {
                 macro_sub_action_t action;
@@ -117,7 +99,10 @@
         AutoRepeatState_Waiting = 1
     } macro_autorepeat_state_t;
 
-    typedef struct {
+
+    typedef struct macro_state_t macro_state_t;
+
+    struct macro_state_t {
         // persistent scope data
         // these need to live in between macro calls
         struct {
@@ -140,10 +125,13 @@
             uint8_t postponeNextNCommands;
             uint8_t commandAddress;
             uint8_t nextSlot;
+            uint8_t oneShotState : 2;
+            bool lastIfSucceeded : 1;
             bool macroInterrupted : 1;
             bool macroSleeping : 1;
             bool macroBroken : 1;
             bool macroPlaying : 1;
+            bool macroScheduled : 1;
             bool reportsUsed : 1;
             bool wakeMeOnTime : 1;
             bool wakeMeOnKeystateChange: 1;
@@ -163,6 +151,8 @@
             union {
                 struct {
                     uint16_t textIdx;
+                    uint16_t subIndex;
+                    uint16_t stringOffset;
                     enum {
                         REPORT_EMPTY = 0,
                         REPORT_PARTIAL,
@@ -179,7 +169,7 @@
                 } secondaryRoleData;
 
                 struct {
-                    uint8_t layerIdx;
+                    uint8_t layerStackIdx;
 
                 } holdLayerData;
                 struct {
@@ -195,9 +185,10 @@
             bool currentIfSecondaryConditionPassed : 1;
             bool modifierPostpone : 1;
             bool modifierSuppressMods : 1;
+            bool whileExecuting : 1;
 
         } as;
-    }  macro_state_t;
+    };
 
     // Schedule is given by a single-linked circular list.
     typedef struct {
@@ -220,13 +211,13 @@
 
 // Variables:
 
-    extern macro_reference_t AllMacros[MAX_MACRO_NUM];
+    extern macro_reference_t AllMacros[MacroIndex_MaxCount];
     extern uint8_t AllMacrosCount;
     extern macro_state_t MacroState[MACRO_STATE_POOL_SIZE];
+    extern macro_state_t *S;
     extern bool MacroPlaying;
-    extern layer_id_t Macros_ActiveLayer;
-    extern bool Macros_ActiveLayerHeld;
     extern macro_scheduler_t Macros_Scheduler;
+    extern scheduler_state_t Macros_SchedulerState;
     extern bool Macros_ExtendedCommands;
     extern uint8_t Macros_MaxBatchSize;
     extern uint32_t Macros_WakeMeOnTime;
@@ -237,31 +228,38 @@
     extern uint16_t AutoRepeatInitialDelay;
     extern uint16_t AutoRepeatDelayRate;
     extern bool Macros_ParserError;
+    extern bool RecordKeyTiming;
+    extern bool Macros_DryRun;
 
 // Functions:
 
-    uint8_t Macros_StartMacro(uint8_t index, key_state_t *keyState, uint8_t parentMacroSlot, bool runFirstAction);
-    uint8_t Macros_QueueMacro(uint8_t index, key_state_t *keyState, uint8_t queueAfterSlot);
-    void Macros_ContinueMacro(void);
-    void Macros_SignalInterrupt(void);
     bool Macros_ClaimReports(void);
-    void Macros_ReportError(const char* err, const char* arg, const char *argEnd);
-    void Macros_ReportErrorNum(const char* err, int32_t num);
-    void Macros_ReportErrorFloat(const char* err, float num);
-    void Macros_SetStatusString(const char* text, const char *textEnd);
-    void Macros_SetStatusStringInterpolated(const char* text, const char *textEnd);
-    void Macros_SetStatusBool(bool b);
-    void Macros_SetStatusFloat(float n);
-    void Macros_SetStatusNum(int32_t n);
-    void Macros_SetStatusNumSpaced(int32_t n, bool space);
-    void Macros_SetStatusChar(char n);
-    void Macros_ResetLayerStack();
-    void Macros_Initialize();
-    void Macros_ClearStatus();
+    bool Macros_CurrentMacroKeyIsActive();
     bool Macros_IsLayerHeld();
-    uint8_t Macros_ParseLayerId(const char* arg1, const char* cmdEnd);
-    int32_t Macros_ParseInt(const char *a, const char *aEnd, const char* *parsedTill);
+    bool Macros_MacroHasActiveInstance(macro_index_t macroIdx);
     bool Macros_ParseBoolean(const char *a, const char *aEnd);
+    char Macros_ConsumeStatusChar();
+    int32_t Macros_LegacyConsumeInt(parser_context_t* ctx);
+    int32_t Macros_ParseInt(const char *a, const char *aEnd, const char* *parsedTill);
+    macro_result_t goTo(parser_context_t* ctx);
+    macro_result_t Macros_CallMacro(uint8_t macroIndex);
+    macro_result_t Macros_DispatchText(const char* text, uint16_t textLen, bool rawString);
+    macro_result_t Macros_ExecMacro(uint8_t macroIndex);
+    macro_result_t Macros_ForkMacro(uint8_t macroIndex);
+    macro_result_t Macros_GoToAddress(uint8_t address);
+    macro_result_t Macros_GoToLabel(parser_context_t* ctx);
+    macro_result_t Macros_SleepTillKeystateChange();
+    macro_result_t Macros_SleepTillTime(uint32_t time);
+    uint8_t Macros_ConsumeLayerId(parser_context_t* ctx);
+    uint8_t Macros_ParseLayerId(const char* arg1, const char* cmdEnd);
+    uint8_t Macros_QueueMacro(uint8_t index, key_state_t *keyState, uint8_t queueAfterSlot);
+    uint8_t Macros_StartMacro(uint8_t index, key_state_t *keyState, uint8_t parentMacroSlot, bool runFirstAction);
+    uint8_t Macros_TryConsumeKeyId(parser_context_t* ctx);
+    void Macros_ContinueMacro(void);
+    void Macros_Initialize();
+    void Macros_ResetBasicKeyboardReports();
+    void Macros_SignalInterrupt(void);
+    void Macros_ValidateAllMacros();
 
 #define WAKE_MACROS_ON_KEYSTATE_CHANGE()  if (Macros_WakeMeOnKeystateChange) { \
                                               Macros_WakedBecauseOfKeystateChange = true; \

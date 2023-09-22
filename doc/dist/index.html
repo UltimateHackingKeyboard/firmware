@@ -28,7 +28,7 @@
 
 <p><code>set module.trackball.baseSpeed 1</code> is a <b>macro command</b> that sets the base speed of the trackball module to <code>1</code>.</p>
 
-<p>Comments are allowed after the <code>#</code> character per line. You can comment out commands or add helpful comments.</p>
+<p>Comments are allowed after the <code>//</code> characters per line. You can comment out commands or add helpful comments.</p>
 
 <p>Macro commands work in any macros, not only in macro events, and you can bind them to any key. This way, you can make <kbd>Fn</kbd> + <kbd>1</kbd> set your trackball base speed to <code>1</code> and make <kbd>Fn</kbd> + <kbd>2</kbd> set it to <code>2</code>, for example.</p>
 
@@ -327,7 +327,7 @@ Syntax is <code>set module.{moduleId}.navigationMode.{layerId} {navigationMode}<
 
 <ul>
 <li><code>{moduleId}</code> is of <code>keycluster</code>, <code>trackball</code>, <code>trackpoint</code>, <code>touchpad</code></li>
-<li><code>{layerId}</code> is of <code>base</code>, <code>mod</code>, <code>mouse</code>, <code>fn</code>, <code>fn2</code>, <code>fn3</code>, <code>fn4</code>, <code>fn5</code>, <code>shift</code>, <code>ctrl</code>, <code>alt</code>, <code>super</code></li>
+<li><code>{layerId}</code> is of <code>base</code>, <code>mod</code>, <code>mouse</code>, <code>fn</code>, <code>fn2</code>, <code>fn3</code>, <code>fn4</code>, <code>fn5</code></li>
 <li><code>{navigationMode}</code> is of <code>cursor</code>, <code>scroll</code>, <code>caret</code>, <code>media</code>, <code>zoom</code>, <code>zoomPc</code>, <code>zoomMac</code>, <code>none</code></li>
 </ul>
 
@@ -339,7 +339,7 @@ Syntax is <code>set module.{moduleId}.navigationMode.{layerId} {navigationMode}<
         </tr>
     </thead>
     <tbody>
-        <tr v-for="layer in layers">
+        <tr v-for="layer in nonModifierlayers">
             <th scope="row">{{layer}}</th>
             <td v-for="module in modules">
                 <dropdown :name="`module.${moduleStrings[module]}.navigationMode.${layer.toLowerCase()}`" options="navigationModes" :default="getNavigationMode(module, layer)"/>
@@ -416,7 +416,7 @@ Syntax is <code>set navigationModeAction.{mode}.{direction} {action}</code><br>
 Syntax is <code>set modifierLayerTriggers.{layer} {modifiers}</code><br>
 
 <ul>
-<li><code>{layer}</code> is of <code>shift</code>, <code>alt</code>, <code>super</code>, <code>control</code></li>
+<li><code>{layer}</code> is of <code>shift</code>, <code>alt</code>, <code>super</code>, <code>ctrl</code></li>
 <li><code>{modifiers}</code> is of <code>left</code>, <code>right</code>, <code>both (default)</code></li>
 </ul>
 
@@ -576,7 +576,7 @@ Syntax is <code>set leds.brightness {brightness}</code><br>
 Syntax is <code>set leds.fadeTimeout {timeout}</code><br>
 
 <ul>
-    <li><code>{timeout} integer of 0 to 100, defaults to 0</code>: <code>0</code> means disabled fade timeout. Otherwise, the timeout value is specified in minutes.</li>
+    <li><code>{timeout} integer, defaults to 0</code>: <code>0</code> means disabled fade timeout. Otherwise, the timeout value is specified in seconds.</li>
 </ul>
 
 <table class="table table-borderless w-auto">
@@ -584,25 +584,17 @@ Syntax is <code>set leds.fadeTimeout {timeout}</code><br>
         <tr>
             <td style="padding-left:0">LED fade timeout</td>
             <td class="no-wrap">
-                <slider name="leds.fadeTimeout" min="0" default="0" max="100" step="1"/>
+                <slider name="leds.fadeTimeout" min="0" default="0" max="3600" step="1"/>
             </td>
         </tr>
     </tbody>
 </table>
 
-<h3>set &raquo; enable/disable extended macro commands</h3>
+<h2>Extended macro commands</h2>
 
-<p>Enable/disable the extended commands of the macro engine.</p>
+<p>There are <a :href="'https://github.com/' + firmwareRepoInfo.firmwareGitRepo + '/blob/' + firmwareRepoInfo.firmwareGitTag + '/doc-dev/user-guide.md'" target="_blank">extended macro commands</a> available besides the commands mentioned here, enabling numerous advanced features.</p>
 
-<p>There are <a :href="'https://github.com/' + firmwareRepoInfo.firmwareGitRepo + '/blob/' + firmwareRepoInfo.firmwareGitTag + '/doc-dev/user-guide.md'" target="_blank">extended macro commands</a> available besides the ones mentioned here, but they're disabled by default because most of them are quite niche. These commands can be explicitly enabled via this variable, after which they can be used just like the commands featured here.</p>
-
-<p>We plan to make most or possibly all of the extended commands directly accessible and include them in this documentation step by step after careful consideration.</p>
-
-Syntax is <code>set macroEngine.extendedCommands {extendedCommandsEnabled}</code><br>
-
-<ul>
-    <li><code>{extendedCommandsEnabled} boolean</code>: <code>0</code> disables extended commands (default), <code>1</code> enables extended commands.</li>
-</ul>
+<p>We plan to add the extended commands to this documentation.</p>
 
 </div>
 <script src="jquery.min.js"></script>

@@ -18,7 +18,7 @@ Then, depending whether you want a full IDE experience or just minimal tools for
 
 ### IDE setup
 
-2. Download and install MCUXpresso IDE for [Linux](https://storage.googleapis.com/ugl-static/mcuxpresso-ide/mcuxpressoide-11.2.0_4120.x86_64.deb.bin), [Mac](https://storage.googleapis.com/ugl-static/mcuxpresso-ide/MCUXpressoIDE_11.2.0_4120.pkg), or [Windows](https://storage.googleapis.com/ugl-static/mcuxpresso-ide/MCUXpressoIDE_11.2.0_4120.exe).
+2. Download and install MCUXpresso IDE for [Linux](https://ultimatehackingkeyboard.com/mcuxpressoide/mcuxpressoide-11.2.0_4120.x86_64.deb.bin), [Mac](https://ultimatehackingkeyboard.com/mcuxpressoide/MCUXpressoIDE_11.2.0_4120.pkg), or [Windows](https://ultimatehackingkeyboard.com/mcuxpressoide/MCUXpressoIDE_11.2.0_4120.exe).
 
 3. Install the GNU ARM Eclipse Plugins for in McuXpresso IDE. This is needed to make indexing work, and to avoid the "Orphaned configuration" error message in project properties. 
     1. In MCUXpresso IDE, go to Help > "Install New Software...", then a new dialog will appear.
@@ -37,7 +37,7 @@ Going forward, it's easier to flash the firmware of your choice by using the dow
 
 1. Install the ARM cross-compiler, cross-assembler and stdlib implementation. Eg. on Arch Linux the packages `arm-none-eabi-binutils`, `arm-none-eabi-gcc`, `arm-none-eabi-newlib`.
 
-2. Install Node.js v12. If you have a later version, editing the version requirement in `lib/agent/package.json` *might* work.
+2. Install Node.js. You find the expected Node.js version in `lib/agent/.nvmrc` file. Use your OS package manager to install it. [Check the NodeJS site for more info.](https://nodejs.org/en/download/package-manager/ "Installing Node.js via package manager") Mac OS users can simply `brew install node` to get both. Should you need multiple Node.js versions on the same computer, use Node Version Manager for [Mac/Linux](https://github.com/creationix/nvm) or for [Windows](https://github.com/coreybutler/nvm-windows)
 
 3. Build UHK Agent. `cd lib/agent && npm ci && npm run build`.
 
@@ -52,16 +52,12 @@ Going forward, it's easier to flash the firmware of your choice by using the dow
 
 6. To build a full firmware tarball:
     1. Run `npm install` in `scripts`.
-    2. Run `scripts/make-release.js`.
+    2. Run `scripts/make-release.js`. (Or `scripts/make-release.js --allowSha` for development purposes.)
     3. Now, the created tarball `scripts/uhk-firmware-VERSION.tar.gz` can be flashed with UHK Agent.
 
 ## Contributing
 
 Want to contribute? Let us show you [how](/CONTRIBUTING.md).
-
-## Extended macros
-
-In order to build with extended macro support, either specify `--extendedMacros` as parameter to `make-release.js`, or specify `CUSTOM_CFLAGS=-DEXTENDED_MACROS` as parameter to `make`. Further documentation is available in [doc-dev](doc-dev).
 
 ## Custom Firmwares
 

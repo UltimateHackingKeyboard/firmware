@@ -5,6 +5,129 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [10.2.0] - 2023-09-16
+
+Device Protocol: 4.**10.0** | Module Protocol: 4.**3.0** | User Config: 6.0.0 | Hardware Config: 1.0.0 | Smart Macros: **2.0.0**
+
+- Introduce named, dynamically typed variables via the `setVar` command and `$` syntax. For example: `setVar myDelay 50` and `set doubletapDelay $myDelay`
+- Introduce expression parser that allows in-line arithmetics, including `+`, `-`, `*`, `/`, `%`, `min(...)`, `max(...)` and boolean conditions, including `<`, `<=`, `>`, `>=`, `==`, `!=`, `!`, `&&`, `||`. For example: `ifShift set leds.brightness ($leds.brightness * 1.5 + 0.01)` and `ifNotShift set leds.brightness ($leds.brightness / 1.5)`
+- Introduce `if (EXPRESSION)` command. For example: `if ($a < 2 || $a > 4) tapKey a`
+- Introduce string parser. Strings must be enclosed in double or single quotes. Double-quote strings support variable expansion and `\` escapes. For example: `write "Current keystrokeDelay is $keystrokeDelay. One plus one is $(1 + 1).\n"` and `write 'This is literal "$" character. And here you have an apostrophe '"'"'.'`
+- Introduce key id parser. As a result, `ifGesture`, `ifShortcut`, and some other commands now accept key id abbreviations. For example: `ifShortcut a b holdLayer fn`
+- Make `setLedTxt` accept numeric expressions. For example: `setLedTxt 500 $keystrokeDelay`
+- Configuration values now can be retrieved using the `$<name>` syntax, just as variables. For example: `set leds.brightness ($leds.brightness * 1.5 + 0.01)`
+- Deprecated `#`, `%`, and `@` syntaxes.
+- Deprecated registers, including the `ifRegEq`, `ifNotRegEq`, `ifRegGt`, `ifRegLt`, `setReg`, `addReg`, `subReg`, `mulReg` commands.
+- Deprecate `#` comments in favor of the `//` comment syntax.
+- Deprecated `writeExpr` and `setStatusPart` commands.
+- Implement `set autoShiftDelay <time in ms (NUMBER)>`. If nonzero, the autoshift feature is turned on. This adds shift to a scancode when the key is held for at least `autoShiftDelay` ms. For example, tapping 'a' results in 'a', pressing 'a' for a little bit longer results in 'A'. `SMARTMACROS:MINOR`
+- Limit `set` command values, preventing invalid values. `SMARTMACROS:PATCH`
+- Expose the status buffer via the UsbCommand_GetVariable:UsbVariable_StatusBuffer USB command. `DEVICEPROTOCOL:MINOR`
+- Unify layer switching implementations, so macro commands behave like native layer switcher actions. `SMARTMACROS:PATCH`
+- Expose the current keymap via the GetDeviceState USB command.
+- Fix some initialization-related bugs. `DEVICEPROTOCOL:MINOR`
+- Implement firmware MD5 checksums to make firmware udpates faster and more reliable. `DEVICEPROTOCOL:MINOR` `MODULEPROTOCOL:MINOR`
+- Add `untoggleLayer` alias for the `unToggleLayer` macro command.
+- Switch error logs to line numbers and fix trailing newlines. `SMARTMACROS:PATCH`
+- Validate all macros when the configuration is updated. `SMARTMACROS:PATCH`
+- Always update LEDs according to `leds.fadeTimeout`. `SMARTMACROS:PATCH`
+- Alternate between segment display texts when there is more than one thing to show, such as ERR, WRN, or the name of the current keymap.
+- Fix the behavior of the advanced secondary role strategy when rolling over multiple secondary role keys. Latter keys tended to produce false secondary role.
+
+## [10.1.0] - 2023-07-26
+
+Device Protocol: 4.9.0 | Module Protocol: 4.2.0 | User Config: 6.0.0 | Hardware Config: 1.0.0 | Smart Macros: 1.**4.0**
+
+- Fix `oneShot` macro command for the proper composition of modifiers. `SMARTMACROS:PATCH`
+- Fix `ifPrimary` and `ifSecondary` macro commands, which were not functional after reconnection onto the default secondary role mechanism. `SMARTMACROS:PATCH`
+- Fix the navigation mode of modifier layers to always correspond to the base layer.
+- Make non-keypress actions in modifier layers not receive the relevant modifier.
+- Add `overlayKeymap`, `overlayLayer`, and `replaceLayer` macro commands. `SMARTMACROS:MINOR`
+- Add `module.MODULEID.{invertScrollDirectionX,invertScrollDirectionY}` macro variables. Use `module.MODULEID.invertScrollDirectionY` instead of the now deprecated `module.MODULEID.invertScrollDirection`. `SMARTMACROS:MINOR`
+- Add `$onCapsLockStateChange`, `$onNumLockStateChange`, and `$onScrollLockStateChange` macro events. Scroll Lock only works as expected on Windows. `SMARTMACROS:MINOR`
+- Add `ifCapsLockOn`, `ifNotCapsLockOn`, `ifScrollLockOn`, `ifNotScrollLockOn`, `ifNumLockOn`, `ifNotNumLockOn` conditional macro commands. Scroll Lock only works as expected on Windows. `SMARTMACROS:MINOR`
+- Add `set backlight.keyRgb.LAYERID.KEYID` macro command. `SMARTMACROS:MINOR`
+- Add Artificial delay between touchpad presses and releases, fixing doubletap-to-select-word for systems that ignore sub-20ms mouse button releases.
+- Any module pointer action now triggers secondary roles.
+- Make module states not oscillate temporarily upon module attachment/detachment.
+
+## [10.0.0] - 2023-07-10
+
+Device Protocol: 4.9.0 | Module Protocol: 4.2.0 | User Config: **6.0.0** | Hardware Config: 1.0.0 | Smart Macros: 1.**3.0**
+
+- Add backlighting mode, per-key RGB values, functional backlighting color values, and LED fade timeout to the user configuration. `USERCONFIG:MAJOR`
+- Add `oneShot` smart macro command. `SMARTMACROS:MINOR`
+- Add advanced, alphanumeric-friendly secondary role resolution strategy via `secondaryRole.*` smart macro variables. `SMARTMACROS:MINOR`
+- Fix simple secondary role resolution when chording swaps releases.
+- Fix macro-activated sticky modifiers.
+
+Smart macro migration guide:
+- `ifPrimary` and `ifSecondary` commands have been connected to the `simple` secondary role resolution strategy. Please migrate `ifPrimary` to `ifPrimary advancedStrategy` and `ifSecondary` to `ifSecondary advancedStrategy` in your macro commands.
+- `resolveSecondary` is kept for backward compatibility without changes. We strongly advise to avoid it.
+
+## [9.3.0] - 2023-06-25
+
+Device Protocol: 4.9.0 | Module Protocol: 4.2.0 | User Config: 5.1.0 | Hardware Config: 1.0.0 | Smart Macros: 1.**2.0**
+
+- Send empty report after every USB write command, fixing the bug that resulted in 'onewo' when encountering consecutive 'one', 'two' write commands. `SMARTMACROS:PATCH`
+- Disallow navigation modes in modifier layers. `SMARTMACROS:MINOR`
+- Switch the `leds.fadeTimeout` smart macro variable from minutes to seconds. `SMARTMACROS:MINOR`
+- Add `onLayerChange` and `onKeymapLayerChange` macro events. `SMARTMACROS:MINOR`
+- Add `prepend` option for the `activateKeyPostponed` command. `SMARTMACROS:MINOR`
+
+## [9.2.3] - 2023-04-09
+
+Device Protocol: 4.9.0 | Module Protocol: 4.2.0 | User Config: 5.1.0 | Hardware Config: 1.0.0 | Smart Macros: 1.1.2
+
+- Fix the initialization of non-base layers, resolving the fallback of unmapped modifier layer actions.
+
+## [9.2.2] - 2023-04-03
+
+Device Protocol: 4.9.0 | Module Protocol: 4.2.0 | User Config: 5.1.0 | Hardware Config: 1.0.0 | Smart Macros: 1.1.2
+
+- Make extended smart macro commands always available and ignore `set macroEngine.extendedCommands {0|1}`
+- Fix `fork`, `call`, and `exec` smart macro commands on non-existent macro names. `SMARTMACROS:PATCH`
+- Fix the logic of the `resolveSecondary` smart macro command. `SMARTMACROS:PATCH`
+
+## [9.2.1] - 2023-01-16
+
+Device Protocol: 4.9.0 | Module Protocol: 4.2.0 | User Config: 5.1.0 | Hardware Config: 1.0.0 | Smart Macros: 1.1.**1**
+
+- Fix shortcut parser to parse `-` correctly. `SMARTMACROS:PATCH`
+
+## [9.2.0] - 2023-01-10
+
+Device Protocol: 4.**9**.0 | Module Protocol: 4.2.0 | User Config: 5.1.0 | Hardware Config: 1.0.0 | Smart Macros: 1.**1.0**
+
+- Allow executing macro commands via USB. `DEVICEPROTOCOL:MINOR`
+- Add set `i2cBaudRate` macro command. `SMARTMACROS:MINOR`
+- Rename super to gui and control to ctrl for the sake of consistency for smart macros. The old naming remains to be supported. `SMARTMACROS:MINOR`
+- Fix bug that altered media navigation mode when the zoom mode was altered. `SMARTMACROS:PATCH`
+- Make `ifRegEq`, `ifNotRegEq`, `ifRegGt`, and `ifRegLt` macro commands treat registers as 32-bit values as they are instead of 8-bit values. `SMARTMACROS:PATCH`
+- Fix a macro unscheduling bug that made some macros stuck during or after using the `call` smart macro command. `SMARTMACROS:PATCH`
+- Fix maxiumum macro count.
+
+## [9.1.4] - 2022-11-14
+
+Device Protocol: 4.8.0 | Module Protocol: 4.2.0 | User Config: 5.1.0 | Hardware Config: 1.0.0 | Smart Macros: 1.0.**3**
+
+- Fix `goTo` and related smart macro command bug. `SMARTMACROS:PATCH`
+- Fix scheduling error in `call` smart macro command. `SMARTMACROS:PATCH`
+- Disable USB gamepad interface as it interferes with gamepads. Will re-enable it later after exposing its feature set via Agent.
+
+## [9.1.3] - 2022-11-10
+
+Device Protocol: 4.8.0 | Module Protocol: 4.2.0 | User Config: 5.1.0 | Hardware Config: 1.0.0 | Smart Macros: 1.0.**2**
+
+- Fix memory corruption in macro engine core which occasionally caused undefined behavior. `SMARTMACROS:PATCH`
+
+## [9.1.2] - 2022-10-30
+
+Device Protocol: 4.8.0 | Module Protocol: 4.2.0 | User Config: 5.1.0 | Hardware Config: 1.0.0 | Smart Macros: 1.0.**1**
+
+- Fix interactive smart macro documentation to properly generate mouseKeys.{move,scroll}.initialAcceleration `SMARTMACROS:PATCH`
+- Add USB gamepad interface, which cannot be used yet from Agent.
+
 ## [9.1.1] - 2022-10-21
 
 Device Protocol: 4.8.0 | Module Protocol: 4.2.0 | User Config: 5.1.0 | Hardware Config: 1.0.0 | Smart Macros: 1.0.0

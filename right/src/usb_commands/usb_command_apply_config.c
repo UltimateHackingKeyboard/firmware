@@ -5,7 +5,9 @@
 #include "usb_protocol_handler.h"
 #include "keymap.h"
 #include "macro_events.h"
-#include "macros.h"
+#include "macros/core.h"
+#include "macros/status_buffer.h"
+#include "debug.h"
 
 void updateUsbBuffer(uint8_t usbStatusCode, uint16_t parserOffset, parser_stage_t parserStage)
 {
@@ -16,8 +18,9 @@ void updateUsbBuffer(uint8_t usbStatusCode, uint16_t parserOffset, parser_stage_
 
 void UsbCommand_ApplyConfig(void)
 {
-    // Validate the staging configuration.
+    static bool isBoot = true;
 
+    // Validate the staging configuration.
     ParserRunDry = true;
     StagingUserConfigBuffer.offset = 0;
     uint8_t parseConfigStatus = ParseConfig(&StagingUserConfigBuffer);
@@ -53,6 +56,10 @@ void UsbCommand_ApplyConfig(void)
 
     Macros_ClearStatus();
 
+    if (!isBoot) {
+        Macros_ValidateAllMacros();
+    }
+
     MacroEvent_OnInit();
 
     // Switch to the keymap of the updated configuration of the same name or the default keymap.
@@ -61,4 +68,5 @@ void UsbCommand_ApplyConfig(void)
     }
 
     SwitchKeymapById(DefaultKeymapIndex);
+    isBoot = false;
 }

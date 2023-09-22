@@ -2,21 +2,16 @@
 #include "layer_switcher.h"
 #include "ledmap.h"
 #include "slave_drivers/is31fl3xxx_driver.h"
-#include "device.h"
+#include "device/device.h"
 #include "config_parser/config_globals.h"
 #include "debug.h"
 
 #define RGB(R, G, B) { .red = (R), .green = (G), .blue = (B)}
 
 rgb_t LedMap_ConstantRGB = RGB(0xFF, 0xFF, 0xFF);
+backlighting_mode_t BacklightingMode = BacklightingMode_Functional;
 
-#if DEVICE_ID == DEVICE_ID_UHK60V2
-
-static backlight_strategy_t LedMap_BacklightStrategy = BacklightStrategy_Functional;
-
-static const rgb_t black = RGB(0x00, 0x00, 0x00);
-
-static const rgb_t KeyActionColors[] = {
+rgb_t KeyActionColors[keyActionColor_Length] = {
     RGB(0x00, 0x00, 0x00), // KeyActionColor_None
     RGB(0xFF, 0xFF, 0xFF), // KeyActionColor_Scancode
     RGB(0x00, 0xFF, 0xFF), // KeyActionColor_Modifier
@@ -26,6 +21,10 @@ static const rgb_t KeyActionColors[] = {
     RGB(0x00, 0xFF, 0x00), // KeyActionColor_Mouse
     RGB(0xFF, 0x00, 0xFF), // KeyActionColor_Macro
 };
+
+#if DEVICE_ID == DEVICE_ID_UHK60V2
+
+static const rgb_t black = RGB(0x00, 0x00, 0x00);
 
 static rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
     // All three values must be set to 0 for unused
@@ -161,7 +160,12 @@ static void setPerKeyRGB(const rgb_t* color, uint8_t slotId, uint8_t keyId)
 static void updateLedsByConstantRgbStrategy() {
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
-            setPerKeyRGB(&LedMap_ConstantRGB, slotId, keyId);
+            key_action_t *keyAction = &CurrentKeymap[ActiveLayer][slotId][keyId];
+            if (keyAction->colorOverridden) {
+                setPerKeyRGB(&keyAction->color, slotId, keyId);
+            } else {
+                setPerKeyRGB(&LedMap_ConstantRGB, slotId, keyId);
+            }
         }
     }
 }
@@ -203,23 +207,39 @@ static void updateLedsByFunctionalStrategy() {
                     break;
             }
 
-            setPerKeyRGB(&KeyActionColors[keyActionColor], slotId, keyId);
+            if (keyAction->colorOverridden) {
+                setPerKeyRGB(&keyAction->color, slotId, keyId);
+            } else {
+                setPerKeyRGB(&KeyActionColors[keyActionColor], slotId, keyId);
+            }
         }
     }
 }
 
-void UpdateLayerLeds(void) {
-    switch (LedMap_BacklightStrategy) {
-        case BacklightStrategy_Functional:
+static void updateLedsByPerKeyKeyStragegy() {
+    for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
+        for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
+            key_action_t *keyAction = &CurrentKeymap[ActiveLayer][slotId][keyId];
+            setPerKeyRGB(&keyAction->color, slotId, keyId);
+        }
+    }
+}
+
+void Ledmap_UpdateBacklightLeds(void) {
+    switch (BacklightingMode) {
+        case BacklightingMode_PerKeyRgb:
+            updateLedsByPerKeyKeyStragegy();
+            break;
+        case BacklightingMode_Functional:
             updateLedsByFunctionalStrategy();
             break;
-        case BacklightStrategy_ConstantRGB:
+        case BacklightingMode_ConstantRGB:
             updateLedsByConstantRgbStrategy();
             break;
     }
 }
 
-void InitLedLayout(void) {
+void Ledmap_InitLedLayout(void) {
     // clear the RGB first, since the default mapping will no longer be reachable
     setPerKeyRGB(&black, SlotId_LeftKeyboardHalf, LedMapIndex_LeftSlot_IsoKey);
 
@@ -234,24 +254,24 @@ void InitLedLayout(void) {
     }
 }
 
-void SetLedBacklightStrategy(backlight_strategy_t newStrategy)
+void Ledmap_SetLedBacklightingMode(backlighting_mode_t newMode)
 {
-    LedMap_BacklightStrategy = newStrategy;
+    BacklightingMode = newMode;
 }
 
-#else /* DEVICE_ID == DEVICE_ID_UHK60V2 */
+#elif DEVICE_ID == DEVICE_ID_UHK60V1
 
-void UpdateLayerLeds(void)
-{
-}
-
-void InitLedLayout(void)
+void Ledmap_UpdateBacklightLeds(void)
 {
 }
 
-void SetLedBacklightStrategy(backlight_strategy_t newStrategy)
+void Ledmap_InitLedLayout(void)
 {
-    (void)(sizeof(newStrategy));
+}
+
+void Ledmap_SetLedBacklightingMode(backlighting_mode_t newMode)
+{
+    BacklightingMode = newMode;
 }
 
 #endif

@@ -1,11 +1,25 @@
 #include "key_action.h"
-#include "macros.h"
+#include "macros/core.h"
+#include "macros/status_buffer.h"
 #include "arduino_hid/ConsumerAPI.h"
 #include "arduino_hid/SystemAPI.h"
 #include "config_parser/parse_keymap.h"
 #include "config_parser/config_globals.h"
-#include "macro_shortcut_parser.h"
+#include "macros/shortcut_parser.h"
 #include "str_utils.h"
+
+typedef enum {
+    scType_basic,
+    scType_system,
+    scType_media,
+    scType_mouseBtn
+} shortcut_type_t;
+
+typedef struct {
+    const char* id;
+    uint8_t scancode;
+    shortcut_type_t type;
+} lookup_record_t;
 
 static const lookup_record_t* lookup(uint8_t begin, uint8_t end, const char* str, const char* strEnd);
 
@@ -119,7 +133,7 @@ bool MacroShortcutParser_CharacterToShift(char character)
     return false;
 }
 
-const lookup_record_t lookup_table[] = {
+static const lookup_record_t lookup_table[] = {
         // ALWAYS keep the array sorted by `LC_ALL=C sort`
         {"", 0, scType_basic},
         {"again", HID_KEYBOARD_SC_AGAIN, scType_basic},
@@ -343,9 +357,9 @@ const lookup_record_t lookup_table[] = {
         {"volumeUp", HID_KEYBOARD_SC_VOLUME_UP, scType_basic},
 };
 
-size_t lookup_size = sizeof(lookup_table)/sizeof(lookup_table[0]);
+static size_t lookup_size = sizeof(lookup_table)/sizeof(lookup_table[0]);
 
-void testLookup()
+static void testLookup()
 {
     for (uint8_t i = 0; i < lookup_size - 1; i++) {
         if (!StrLessOrEqual(lookup_table[i].id, NULL, lookup_table[i+1].id, NULL)) {
@@ -499,7 +513,7 @@ static serialized_mouse_action_t mouseBtnToSerializedMouseAction(mouse_button_t 
         case MouseButton_8:
             return SerializedMouseAction_Button_8;
         default:
-            Macros_ReportErrorNum("Unknown button encountered:", btn);
+            Macros_ReportErrorNum("Unknown button encountered:", btn, NULL);
             return 0;
     }
 }
@@ -594,7 +608,7 @@ bool MacroShortcutParser_Parse(const char* str, const char* strEnd, macro_sub_ac
 
     bool success = false;
 
-    if (FindChar('-', str, strEnd) == strEnd) {
+    if (FindChar('-', str, strEnd) == strEnd || str+1 == strEnd) {
         //"-" notation not used
         success = success || parseAbbrev(str, strEnd, outMacroAction, outKeyAction);
         success = success || parseMods(str, strEnd, outMacroAction, outKeyAction);

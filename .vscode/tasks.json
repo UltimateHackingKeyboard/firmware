@@ -1,0 +1,19 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Build UHK 60 v2 firmware",
+			"type": "shell",
+			"command": "make",
+			"args": ["${command:cpptools.activeConfigName}"],
+			"options": {
+				"cwd": "${workspaceFolder}/right/uhk60v2"
+			},
+			"problemMatcher": ["$gcc"],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
+		},
+	]
+}
