@@ -55,6 +55,7 @@ const struct spi_buf_set spiBufSet = {
 const struct device *spi0_dev = DEVICE_DT_GET(DT_NODELABEL(spi1));
 static const struct gpio_dt_spec ledsCsDt = GPIO_DT_SPEC_GET(DT_ALIAS(leds_cs), gpios);
 static const struct gpio_dt_spec ledsSdbDt = GPIO_DT_SPEC_GET(DT_ALIAS(leds_sdb), gpios);
+static const struct gpio_dt_spec mergeSenseDt = GPIO_DT_SPEC_GET(DT_ALIAS(merge_sense), gpios);
 
 void setLedsCs(bool state)
 {
@@ -107,7 +108,7 @@ extern volatile char c;
 
 uint8_t sdbState = 1;
 
-static int cmd_uhk_sdb_get_set(const struct shell *shell, size_t argc, char *argv[])
+static int cmd_uhk_sdb(const struct shell *shell, size_t argc, char *argv[])
 {
     if (argc == 1) {
         shell_fprintf(shell, SHELL_NORMAL, "%i\n", sdbState ? 1 : 0);
@@ -115,9 +116,15 @@ static int cmd_uhk_sdb_get_set(const struct shell *shell, size_t argc, char *arg
         sdbState = argv[1][0] == '1';
         gpio_pin_set_dt(&ledsSdbDt, sdbState);
     }
-
     return 0;
 }
+
+static int cmd_uhk_merge(const struct shell *shell, size_t argc, char *argv[])
+{
+    shell_fprintf(shell, SHELL_NORMAL, "%i\n", gpio_pin_get_dt(&mergeSenseDt) ? 1 : 0);
+    return 0;
+}
+
 int main(void) {
     printk("left half starts\n");
 
@@ -135,13 +142,18 @@ int main(void) {
         gpio_pin_configure_dt(&cols[colId], GPIO_INPUT);
     }
 
+    gpio_pin_configure_dt(&mergeSenseDt, GPIO_INPUT);
+
     // Create shell commands
 
     SHELL_STATIC_SUBCMD_SET_CREATE(
         uhk_cmds,
         SHELL_CMD_ARG(sdb, NULL,
             "get/set LED driver SDB pin",
-            cmd_uhk_sdb_get_set, 1, 1),
+            cmd_uhk_sdb, 1, 1),
+        SHELL_CMD_ARG(merge, NULL,
+            "get the merged state of UHK halves",
+            cmd_uhk_merge, 1, 0),
         SHELL_SUBCMD_SET_END
         );
 
