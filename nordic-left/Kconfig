@@ -1,0 +1,7 @@
+source "Kconfig.zephyr"
+
+config DEVICE_ID
+    int "UHK device id"
+    default 0
+    help
+        The device id that identifies the specific UHK half.
