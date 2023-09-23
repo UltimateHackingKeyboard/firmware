@@ -133,7 +133,7 @@
         };
 
         charger_en: charger_en {
-            gpios = <&gpio1 10 GPIO_ACTIVE_HIGH>;
+            gpios = <&gpio1 10 GPIO_ACTIVE_LOW>;
             label = "charger_en";
         };
         charger_stat: charger_stat {

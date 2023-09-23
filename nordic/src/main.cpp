@@ -72,6 +72,7 @@ const struct spi_buf_set spiBufSet = {
 const struct device *spi0_dev = DEVICE_DT_GET(DT_NODELABEL(spi1));
 static const struct gpio_dt_spec ledsCsDt = GPIO_DT_SPEC_GET(DT_ALIAS(leds_cs), gpios);
 static const struct gpio_dt_spec ledsSdbDt = GPIO_DT_SPEC_GET(DT_ALIAS(leds_sdb), gpios);
+static const struct gpio_dt_spec chargerEnDt = GPIO_DT_SPEC_GET(DT_ALIAS(charger_en), gpios);
 
 #ifdef HAS_OLED
 static const struct gpio_dt_spec oledEn = GPIO_DT_SPEC_GET(DT_ALIAS(oled_en), gpios);
@@ -159,6 +160,18 @@ static int cmd_uhk_sdb(const struct shell *shell, size_t argc, char *argv[])
     return 0;
 }
 
+uint8_t chargerState = 1;
+static int cmd_uhk_charger(const struct shell *shell, size_t argc, char *argv[])
+{
+    if (argc == 1) {
+        shell_fprintf(shell, SHELL_NORMAL, "%i\n", chargerState ? 1 : 0);
+    } else {
+        chargerState = argv[1][0] == '1';
+        gpio_pin_set_dt(&chargerEnDt, chargerState);
+    }
+    return 0;
+}
+
 #ifdef HAS_OLED
 uint8_t oledState = 1;
 static int cmd_uhk_oled(const struct shell *shell, size_t argc, char *argv[])
@@ -193,6 +206,9 @@ int main(void) {
     gpio_pin_configure_dt(&ledsSdbDt, GPIO_OUTPUT);
     gpio_pin_set_dt(&ledsSdbDt, true);
 
+    gpio_pin_configure_dt(&chargerEnDt, GPIO_OUTPUT);
+    gpio_pin_set_dt(&chargerEnDt, true);
+
 #ifdef HAS_OLED
     gpio_pin_configure_dt(&oledEn, GPIO_OUTPUT);
     gpio_pin_set_dt(&oledEn, true);
@@ -226,6 +242,9 @@ int main(void) {
         SHELL_CMD_ARG(sdb, NULL,
             "get/set LED driver SDB pin",
             cmd_uhk_sdb, 1, 1),
+        SHELL_CMD_ARG(charger, NULL,
+            "get/set CHARGER_EN pin",
+            cmd_uhk_charger, 1, 1),
 #ifdef HAS_OLED
         SHELL_CMD_ARG(oled, NULL,
             "get/set OLED_EN pin",
