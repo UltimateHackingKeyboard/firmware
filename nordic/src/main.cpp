@@ -73,10 +73,6 @@ const struct device *spi0_dev = DEVICE_DT_GET(DT_NODELABEL(spi1));
 static const struct gpio_dt_spec ledsCsDt = GPIO_DT_SPEC_GET(DT_ALIAS(leds_cs), gpios);
 static const struct gpio_dt_spec ledsSdbDt = GPIO_DT_SPEC_GET(DT_ALIAS(leds_sdb), gpios);
 
-#ifdef HAS_MERGE_SENSE
-static const struct gpio_dt_spec mergeSenseDt = GPIO_DT_SPEC_GET(DT_ALIAS(merge_sense), gpios);
-#endif
-
 #ifdef HAS_OLED
 static const struct gpio_dt_spec oledEn = GPIO_DT_SPEC_GET(DT_ALIAS(oled_en), gpios);
 static const struct gpio_dt_spec oledResetDt = GPIO_DT_SPEC_GET(DT_ALIAS(oled_reset), gpios);
@@ -165,6 +161,8 @@ static int cmd_uhk_sdb(const struct shell *shell, size_t argc, char *argv[])
 }
 
 #ifdef HAS_MERGE_SENSE
+static const struct gpio_dt_spec mergeSenseDt = GPIO_DT_SPEC_GET(DT_ALIAS(merge_sense), gpios);
+
 static int cmd_uhk_merge(const struct shell *shell, size_t argc, char *argv[])
 {
     shell_fprintf(shell, SHELL_NORMAL, "%i\n", gpio_pin_get_dt(&mergeSenseDt) ? 1 : 0);
