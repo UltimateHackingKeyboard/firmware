@@ -148,7 +148,6 @@ extern volatile char c;
 // Shell functions
 
 uint8_t sdbState = 1;
-
 static int cmd_uhk_sdb(const struct shell *shell, size_t argc, char *argv[])
 {
     if (argc == 1) {
@@ -159,6 +158,20 @@ static int cmd_uhk_sdb(const struct shell *shell, size_t argc, char *argv[])
     }
     return 0;
 }
+
+#ifdef HAS_OLED
+uint8_t oledState = 1;
+static int cmd_uhk_oled(const struct shell *shell, size_t argc, char *argv[])
+{
+    if (argc == 1) {
+        shell_fprintf(shell, SHELL_NORMAL, "%i\n", oledState ? 1 : 0);
+    } else {
+        oledState = argv[1][0] == '1';
+        gpio_pin_set_dt(&oledEn, oledState);
+    }
+    return 0;
+}
+#endif
 
 #ifdef HAS_MERGE_SENSE
 static const struct gpio_dt_spec mergeSenseDt = GPIO_DT_SPEC_GET(DT_ALIAS(merge_sense), gpios);
@@ -213,6 +226,11 @@ int main(void) {
         SHELL_CMD_ARG(sdb, NULL,
             "get/set LED driver SDB pin",
             cmd_uhk_sdb, 1, 1),
+#ifdef HAS_OLED
+        SHELL_CMD_ARG(oled, NULL,
+            "get/set OLED_EN pin",
+            cmd_uhk_oled, 1, 1),
+#endif
 #ifdef HAS_MERGE_SENSE
         SHELL_CMD_ARG(merge, NULL,
             "get the merged state of UHK halves",
