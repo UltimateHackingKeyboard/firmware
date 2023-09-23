@@ -7,14 +7,15 @@
     "configurePresets": [
         {
             "name": "build",
-            "displayName": "Build for UHK 80 left",
+            "displayName": "UHK 80 left",
             "generator": "Ninja",
             "binaryDir": "${sourceDir}/build",
             "cacheVariables": {
                 "NCS_TOOLCHAIN_VERSION": "NONE",
                 "BOARD": "uhk-80-left",
                 "BOARD_ROOT": "${sourceParentDir}/",
-                "CONF_FILE": "${sourceDir}/prj.conf"
+                "CONF_FILE": "${sourceDir}/prj.conf",
+                "OVERLAY_CONFIG": "${sourceDir}/prj.conf.overlays/uhk-80-left.prj.conf"
             }
         }
     ]
