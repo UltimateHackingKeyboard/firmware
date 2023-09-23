@@ -4,7 +4,7 @@ extern "C"
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/gpio.h>
-// #include <zephyr/drivers/uart.h>
+#include <zephyr/drivers/uart.h>
 #include <zephyr/usb/class/usb_hid.h>
 #include <zephyr/drivers/spi.h>
 
@@ -28,8 +28,18 @@ extern "C"
 #define DEVICE_ID_UHK80_LEFT 3
 #define DEVICE_ID_UHK80_RIGHT 4
 
-#if DEVICE_ID == DEVICE_ID_UHK80_LEFT
+#if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_LEFT
+    #define DEVICE_NAME "UHK 80 left half"
+#elif CONFIG_DEVICE_ID == DEVICE_ID_UHK80_RIGHT
+    #define DEVICE_NAME "UHK 80 right half"
+#endif
+
+#if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_LEFT
     #define HAS_MERGE_SENSE
+#endif
+
+#if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_RIGHT
+    #define HAS_OLED
 #endif
 
 #define DT_SPEC_AND_COMMA(node_id, prop, idx) \
@@ -62,8 +72,27 @@ const struct spi_buf_set spiBufSet = {
 const struct device *spi0_dev = DEVICE_DT_GET(DT_NODELABEL(spi1));
 static const struct gpio_dt_spec ledsCsDt = GPIO_DT_SPEC_GET(DT_ALIAS(leds_cs), gpios);
 static const struct gpio_dt_spec ledsSdbDt = GPIO_DT_SPEC_GET(DT_ALIAS(leds_sdb), gpios);
+
 #ifdef HAS_MERGE_SENSE
 static const struct gpio_dt_spec mergeSenseDt = GPIO_DT_SPEC_GET(DT_ALIAS(merge_sense), gpios);
+#endif
+
+#ifdef HAS_OLED
+static const struct gpio_dt_spec oledEn = GPIO_DT_SPEC_GET(DT_ALIAS(oled_en), gpios);
+static const struct gpio_dt_spec oledResetDt = GPIO_DT_SPEC_GET(DT_ALIAS(oled_reset), gpios);
+static const struct gpio_dt_spec oledCsDt = GPIO_DT_SPEC_GET(DT_ALIAS(oled_cs), gpios);
+static const struct gpio_dt_spec oledA0Dt = GPIO_DT_SPEC_GET(DT_ALIAS(oled_a0), gpios);
+
+void setOledCs(bool state)
+{
+    gpio_pin_set_dt(&oledCsDt, state);
+}
+
+void setA0(bool state)
+{
+    gpio_pin_set_dt(&oledA0Dt, state);
+}
+
 #endif
 
 void setLedsCs(bool state)
@@ -109,7 +138,14 @@ static struct gpio_dt_spec cols[] = {
     GPIO_DT_SPEC_GET(DT_ALIAS(col5), gpios),
     GPIO_DT_SPEC_GET(DT_ALIAS(col6), gpios),
     GPIO_DT_SPEC_GET(DT_ALIAS(col7), gpios),
+#if DEVICE_ID == DEVICE_ID_UHK80_RIGHT
+    GPIO_DT_SPEC_GET(DT_ALIAS(col8), gpios),
+    GPIO_DT_SPEC_GET(DT_ALIAS(col9), gpios),
+    GPIO_DT_SPEC_GET(DT_ALIAS(col10), gpios),
+#endif
 };
+
+#define COLS_COUNT (sizeof(cols) / sizeof(cols[0]))
 
 extern volatile char c;
 
@@ -137,7 +173,7 @@ static int cmd_uhk_merge(const struct shell *shell, size_t argc, char *argv[])
 #endif
 
 int main(void) {
-    printk("left half starts\n");
+    printk("----------\n" DEVICE_NAME " started\n");
 
     // Configure GPIOs
 
@@ -146,10 +182,25 @@ int main(void) {
     gpio_pin_configure_dt(&ledsSdbDt, GPIO_OUTPUT);
     gpio_pin_set_dt(&ledsSdbDt, true);
 
+#ifdef HAS_OLED
+    gpio_pin_configure_dt(&oledEn, GPIO_OUTPUT);
+    gpio_pin_set_dt(&oledEn, true);
+
+    gpio_pin_configure_dt(&oledResetDt, GPIO_OUTPUT);
+    gpio_pin_set_dt(&oledResetDt, false);
+    k_msleep(1);
+    gpio_pin_set_dt(&oledResetDt, true);
+
+    gpio_pin_configure_dt(&oledCsDt, GPIO_OUTPUT);
+    gpio_pin_configure_dt(&oledA0Dt, GPIO_OUTPUT);
+#endif
+
+//  struct device *uart_dev = DEVICE_DT_GET(DT_NODELABEL(uart1));
+
     for (uint8_t rowId=0; rowId<6; rowId++) {
         gpio_pin_configure_dt(&rows[rowId], GPIO_OUTPUT);
     }
-    for (uint8_t colId=0; colId<7; colId++) {
+    for (uint8_t colId=0; colId<COLS_COUNT; colId++) {
         gpio_pin_configure_dt(&cols[colId], GPIO_INPUT);
     }
 
@@ -211,11 +262,14 @@ int main(void) {
     // uart_irq_callback_user_data_set(uart_dev, serial_cb, NULL);
     // uart_irq_rx_enable(uart_dev);
 //  int blink_status = 0;
+    uint32_t counter = 0;
+    bool pixel = 1;
+
     for (;;) {
         c = 0;
         for (uint8_t rowId=0; rowId<6; rowId++) {
             gpio_pin_set_dt(&rows[rowId], 1);
-            for (uint8_t colId=0; colId<7; colId++) {
+            for (uint8_t colId=0; colId<COLS_COUNT; colId++) {
                 if (gpio_pin_get_dt(&cols[colId])) {
 
 
@@ -264,6 +318,24 @@ int main(void) {
             gpio_pin_set_dt(&rows[rowId], 0);
         }
 
+        #ifdef HAS_OLED
+        setA0(false);
+        setOledCs(false);
+        writeSpi(0xaf);
+        setOledCs(true);
+
+        setA0(false);
+        setOledCs(false);
+        writeSpi(0x81);
+        writeSpi(0xff);
+        setOledCs(true);
+
+        setA0(true);
+        setOledCs(false);
+        writeSpi(pixel ? 0xff : 0x00);
+        setOledCs(true);
+        #endif
+
         setLedsCs(false);
         writeSpi(LedPagePrefix | 2);
         writeSpi(0x00);
@@ -296,5 +368,10 @@ int main(void) {
 //      k_sleep(K_MSEC(ADV_LED_BLINK_INTERVAL));
         // Battery level simulation
         bas_notify();
+
+        if (counter++ > 19) {
+            pixel = !pixel;
+            counter = 0;
+        }
     }
 }
