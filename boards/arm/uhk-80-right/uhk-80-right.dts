@@ -283,19 +283,19 @@ zephyr_udc0: &usbd {
         };
         slot0_partition: partition@c000 {
             label = "image-0";
-            reg = <0xc000 0xa000>;
+            reg = <0xc000 0x72000>;
         };
-        slot1_partition: partition@16000 {
+        slot1_partition: partition@7e000 {
             label = "image-1";
-            reg = <0x16000 0xa000>;
+            reg = <0x7e000 0x72000>;
         };
-        scratch_partition: partition@20000 {
+        scratch_partition: partition@f0000 {
             label = "image-scratch";
-            reg = <0x20000 0xa000>;
+            reg = <0xf0000 0xa000>;
         };
-        storage_partition: partition@2a000 {
+        storage_partition: partition@fa000 {
             label = "storage";
-            reg = <0x2a000 0x6000>;
+            reg = <0xfa000 0x6000>;
         };
     };
 };
