@@ -25,6 +25,13 @@ extern "C"
 #include "usb.hpp"
 #include <zephyr/drivers/adc.h>
 
+#define DEVICE_ID_UHK80_LEFT 3
+#define DEVICE_ID_UHK80_RIGHT 4
+
+#if DEVICE_ID == DEVICE_ID_UHK80_LEFT
+    #define HAS_MERGE_SENSE
+#endif
+
 #define DT_SPEC_AND_COMMA(node_id, prop, idx) \
     ADC_DT_SPEC_GET_BY_IDX(node_id, idx),
 
@@ -55,7 +62,9 @@ const struct spi_buf_set spiBufSet = {
 const struct device *spi0_dev = DEVICE_DT_GET(DT_NODELABEL(spi1));
 static const struct gpio_dt_spec ledsCsDt = GPIO_DT_SPEC_GET(DT_ALIAS(leds_cs), gpios);
 static const struct gpio_dt_spec ledsSdbDt = GPIO_DT_SPEC_GET(DT_ALIAS(leds_sdb), gpios);
+#ifdef HAS_MERGE_SENSE
 static const struct gpio_dt_spec mergeSenseDt = GPIO_DT_SPEC_GET(DT_ALIAS(merge_sense), gpios);
+#endif
 
 void setLedsCs(bool state)
 {
@@ -119,11 +128,13 @@ static int cmd_uhk_sdb(const struct shell *shell, size_t argc, char *argv[])
     return 0;
 }
 
+#ifdef HAS_MERGE_SENSE
 static int cmd_uhk_merge(const struct shell *shell, size_t argc, char *argv[])
 {
     shell_fprintf(shell, SHELL_NORMAL, "%i\n", gpio_pin_get_dt(&mergeSenseDt) ? 1 : 0);
     return 0;
 }
+#endif
 
 int main(void) {
     printk("left half starts\n");
@@ -142,7 +153,9 @@ int main(void) {
         gpio_pin_configure_dt(&cols[colId], GPIO_INPUT);
     }
 
+#ifdef HAS_MERGE_SENSE
     gpio_pin_configure_dt(&mergeSenseDt, GPIO_INPUT);
+#endif
 
     // Create shell commands
 
@@ -151,9 +164,11 @@ int main(void) {
         SHELL_CMD_ARG(sdb, NULL,
             "get/set LED driver SDB pin",
             cmd_uhk_sdb, 1, 1),
+#ifdef HAS_MERGE_SENSE
         SHELL_CMD_ARG(merge, NULL,
             "get the merged state of UHK halves",
             cmd_uhk_merge, 1, 0),
+#endif
         SHELL_SUBCMD_SET_END
         );
 
