@@ -299,14 +299,13 @@ int main(void) {
                         } else {
                             val_mv = (int32_t)buf;
                         }
-                        printk("%"PRId32, val_mv);
-                        err = adc_raw_to_millivolts_dt(&adc_channels[i],
-                                        &val_mv);
+                        printk("%d", val_mv);
+                        err = adc_raw_to_millivolts_dt(&adc_channels[i], &val_mv);
                         /* conversion to mV may not be supported, skip if not */
                         if (err < 0) {
                             printk(" (value in mV not available)\n");
                         } else {
-                            printk(" = %"PRId32" mV\n", val_mv);
+                            printk(" = %d mV\n", val_mv);
                         }
                     }
 
