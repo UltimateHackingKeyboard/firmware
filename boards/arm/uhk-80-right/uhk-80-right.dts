@@ -229,6 +229,10 @@
         };
     };
 
+    zephyr,user {
+		io-channels = <&adc 0>, <&adc 1>;
+	};
+
     aliases {
         charger-en = &charger_en;
         charger-stat = &charger_stat;
