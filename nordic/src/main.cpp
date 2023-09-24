@@ -165,7 +165,47 @@ uint8_t chargerState = 1;
 static int cmd_uhk_charger(const struct shell *shell, size_t argc, char *argv[])
 {
     if (argc == 1) {
-        shell_fprintf(shell, SHELL_NORMAL, "%i\n", chargerState ? 1 : 0);
+        shell_fprintf(shell, SHELL_NORMAL, "CHARGER_EN: %i", chargerState ? 1 : 0);
+
+        int err;
+        uint16_t buf;
+        struct adc_sequence sequence = {
+            .buffer = &buf,
+            .buffer_size = sizeof(buf),
+        };
+
+        for (size_t i = 0U; i < ARRAY_SIZE(adc_channels); i++) {
+            int32_t val_mv;
+
+            printk(" | ");
+            printk(i ? "VBAT" : "TS");
+
+            (void)adc_sequence_init_dt(&adc_channels[i], &sequence);
+
+            err = adc_read(adc_channels[i].dev, &sequence);
+            if (err < 0) {
+                printk("Could not read (%d)\n", err);
+                continue;
+            }
+
+            // If using differential mode, the 16 bit value
+            // in the ADC sample buffer should be a signed 2's
+            // complement value.
+            if (adc_channels[i].channel_cfg.differential) {
+                val_mv = (int32_t)((int16_t)buf);
+            } else {
+                val_mv = (int32_t)buf;
+            }
+            printk(": %d", val_mv);
+            err = adc_raw_to_millivolts_dt(&adc_channels[i], &val_mv);
+            // conversion to mV may not be supported, skip if not
+            if (err < 0) {
+                printk(" (value in mV not available)");
+            } else {
+                printk(" = %d mV", val_mv);
+            }
+        }
+        printk("\n");
     } else {
         chargerState = argv[1][0] == '1';
         gpio_pin_set_dt(&chargerEnDt, chargerState);
@@ -273,21 +313,12 @@ int main(void) {
     SHELL_CMD_REGISTER(uhk, &uhk_cmds, "UHK commands", NULL);
 
     // Init ADC channels
-
-    int err;
-    uint32_t count = 0;
-    uint16_t buf;
-    struct adc_sequence sequence = {
-        .buffer = &buf,
-        .buffer_size = sizeof(buf),
-    };
-
     for (size_t i = 0U; i < ARRAY_SIZE(adc_channels); i++) {
         if (!device_is_ready(adc_channels[i].dev)) {
             printk("ADC controller device %s not ready\n", adc_channels[i].dev->name);
             return 0;
         }
-
+        int err;
         err = adc_channel_setup_dt(&adc_channels[i]);
         if (err < 0) {
             printk("Could not setup channel #%d (%d)\n", i, err);
@@ -318,45 +349,6 @@ int main(void) {
             gpio_pin_set_dt(&rows[rowId], 1);
             for (uint8_t colId=0; colId<COLS_COUNT; colId++) {
                 if (gpio_pin_get_dt(&cols[colId])) {
-
-
-                    printk("ADC reading[%u]:\n", count++);
-                    for (size_t i = 0U; i < ARRAY_SIZE(adc_channels); i++) {
-                        int32_t val_mv;
-
-                        printk("- %s, channel %d: ",
-                            adc_channels[i].dev->name,
-                            adc_channels[i].channel_id);
-
-                        (void)adc_sequence_init_dt(&adc_channels[i], &sequence);
-
-                        err = adc_read(adc_channels[i].dev, &sequence);
-                        if (err < 0) {
-                            printk("Could not read (%d)\n", err);
-                            continue;
-                        }
-
-                        /*
-                        * If using differential mode, the 16 bit value
-                        * in the ADC sample buffer should be a signed 2's
-                        * complement value.
-                        */
-                        if (adc_channels[i].channel_cfg.differential) {
-                            val_mv = (int32_t)((int16_t)buf);
-                        } else {
-                            val_mv = (int32_t)buf;
-                        }
-                        printk("%d", val_mv);
-                        err = adc_raw_to_millivolts_dt(&adc_channels[i], &val_mv);
-                        /* conversion to mV may not be supported, skip if not */
-                        if (err < 0) {
-                            printk(" (value in mV not available)\n");
-                        } else {
-                            printk(" = %d mV\n", val_mv);
-                        }
-                    }
-
-
                     c = HID_KEY_A;
                     printk("SW%c%c\n", rowId+'1', colId+'1');
                 }
