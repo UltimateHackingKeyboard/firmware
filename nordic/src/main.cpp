@@ -165,7 +165,8 @@ uint8_t chargerState = 1;
 static int cmd_uhk_charger(const struct shell *shell, size_t argc, char *argv[])
 {
     if (argc == 1) {
-        shell_fprintf(shell, SHELL_NORMAL, "CHARGER_EN: %i", chargerState ? 1 : 0);
+        shell_fprintf(shell, SHELL_NORMAL, "CHARGER_EN: %i | ", chargerState ? 1 : 0);
+        shell_fprintf(shell, SHELL_NORMAL, "STAT: %i", gpio_pin_get_dt(&chargerStatDt) ? 1 : 0);
 
         int err;
         uint16_t buf;
@@ -238,7 +239,7 @@ static int cmd_uhk_merge(const struct shell *shell, size_t argc, char *argv[])
 #endif
 
 void chargerStatCallback(const struct device *port, struct gpio_callback *cb, gpio_port_pins_t pins) {
-    printk("Charger stat changed\n");
+    printk("STAT changed to %i\n", gpio_pin_get_dt(&chargerStatDt) ? 1 : 0);
 }
 
 struct gpio_callback callbackStruct;
@@ -256,8 +257,8 @@ int main(void) {
     gpio_pin_configure_dt(&chargerEnDt, GPIO_OUTPUT);
     gpio_pin_set_dt(&chargerEnDt, true);
 
+    gpio_pin_configure_dt(&chargerStatDt, GPIO_INPUT);
     gpio_pin_interrupt_configure_dt(&chargerStatDt, GPIO_INT_EDGE_BOTH);
-    gpio_pin_configure_dt(&chargerEnDt, GPIO_INPUT);
     gpio_init_callback(&callbackStruct, chargerStatCallback, BIT(chargerStatDt.pin));
     gpio_add_callback(chargerStatDt.port, &callbackStruct);
 
