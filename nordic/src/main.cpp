@@ -303,7 +303,7 @@ int main(void) {
     // dk_buttons_init(button_changed);
     // dk_leds_init();
 
-    usb_init(DEVICE_DT_GET(DT_NODELABEL(zephyr_udc0)));
+    usb_init(true);
     bluetooth_init();
 
     // uart_irq_callback_user_data_set(uart_dev, serial_cb, NULL);
