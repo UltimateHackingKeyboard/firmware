@@ -73,6 +73,7 @@ const struct device *spi0_dev = DEVICE_DT_GET(DT_NODELABEL(spi1));
 static const struct gpio_dt_spec ledsCsDt = GPIO_DT_SPEC_GET(DT_ALIAS(leds_cs), gpios);
 static const struct gpio_dt_spec ledsSdbDt = GPIO_DT_SPEC_GET(DT_ALIAS(leds_sdb), gpios);
 static const struct gpio_dt_spec chargerEnDt = GPIO_DT_SPEC_GET(DT_ALIAS(charger_en), gpios);
+static const struct gpio_dt_spec chargerStatDt = GPIO_DT_SPEC_GET(DT_ALIAS(charger_stat), gpios);
 
 #ifdef HAS_OLED
 static const struct gpio_dt_spec oledEn = GPIO_DT_SPEC_GET(DT_ALIAS(oled_en), gpios);
@@ -196,6 +197,12 @@ static int cmd_uhk_merge(const struct shell *shell, size_t argc, char *argv[])
 }
 #endif
 
+void chargerStatCallback(const struct device *port, struct gpio_callback *cb, gpio_port_pins_t pins) {
+    printk("Charger stat changed\n");
+}
+
+struct gpio_callback callbackStruct;
+
 int main(void) {
     printk("----------\n" DEVICE_NAME " started\n");
 
@@ -208,6 +215,11 @@ int main(void) {
 
     gpio_pin_configure_dt(&chargerEnDt, GPIO_OUTPUT);
     gpio_pin_set_dt(&chargerEnDt, true);
+
+    gpio_pin_interrupt_configure_dt(&chargerStatDt, GPIO_INT_EDGE_BOTH);
+    gpio_pin_configure_dt(&chargerEnDt, GPIO_INPUT);
+    gpio_init_callback(&callbackStruct, chargerStatCallback, BIT(chargerStatDt.pin));
+    gpio_add_callback(chargerStatDt.port, &callbackStruct);
 
 #ifdef HAS_OLED
     gpio_pin_configure_dt(&oledEn, GPIO_OUTPUT);
