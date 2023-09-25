@@ -158,6 +158,17 @@ static int cmd_uhk_keylog(const struct shell *shell, size_t argc, char *argv[])
     return 0;
 }
 
+uint8_t ledsAlwaysOn = 0;
+static int cmd_uhk_leds(const struct shell *shell, size_t argc, char *argv[])
+{
+    if (argc == 1) {
+        shell_fprintf(shell, SHELL_NORMAL, "%i\n", ledsAlwaysOn);
+    } else {
+        ledsAlwaysOn = argv[1][0] == '1';
+    }
+    return 0;
+}
+
 uint8_t sdbState = 1;
 static int cmd_uhk_sdb(const struct shell *shell, size_t argc, char *argv[])
 {
@@ -306,6 +317,9 @@ int main(void) {
         SHELL_CMD_ARG(keylog, NULL,
             "get/set key logging",
             cmd_uhk_keylog, 1, 1),
+        SHELL_CMD_ARG(leds, NULL,
+            "get/set LEDs always on state",
+            cmd_uhk_leds, 1, 1),
         SHELL_CMD_ARG(sdb, NULL,
             "get/set LED driver SDB pin",
             cmd_uhk_sdb, 1, 1),
@@ -407,7 +421,7 @@ int main(void) {
         writeSpi(LedPagePrefix | 0);
         writeSpi(0x00);
         for (int i=0; i<255; i++) {
-            writeSpi(keyPressed ? 0xff : 0);
+            writeSpi(keyPressed || ledsAlwaysOn ? 0xff : 0);
         }
         setLedsCs(true);
 
@@ -415,7 +429,7 @@ int main(void) {
         writeSpi(LedPagePrefix | 1);
         writeSpi(0x00);
         for (int i=0; i<255; i++) {
-            writeSpi(keyPressed ? 0xff : 0);
+            writeSpi(keyPressed || ledsAlwaysOn ? 0xff : 0);
         }
         setLedsCs(true);
 
