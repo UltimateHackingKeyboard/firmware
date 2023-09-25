@@ -145,9 +145,18 @@ static struct gpio_dt_spec cols[] = {
 
 #define COLS_COUNT (sizeof(cols) / sizeof(cols[0]))
 
-extern volatile char c;
-
 // Shell functions
+
+uint8_t keyLog = 1;
+static int cmd_uhk_keylog(const struct shell *shell, size_t argc, char *argv[])
+{
+    if (argc == 1) {
+        shell_fprintf(shell, SHELL_NORMAL, "%i\n", keyLog);
+    } else {
+        keyLog = argv[1][0] == '1';
+    }
+    return 0;
+}
 
 uint8_t sdbState = 1;
 static int cmd_uhk_sdb(const struct shell *shell, size_t argc, char *argv[])
@@ -244,6 +253,8 @@ void chargerStatCallback(const struct device *port, struct gpio_callback *cb, gp
 
 struct gpio_callback callbackStruct;
 
+volatile char keyPressed;
+
 int main(void) {
     printk("----------\n" DEVICE_NAME " started\n");
 
@@ -292,6 +303,9 @@ int main(void) {
 
     SHELL_STATIC_SUBCMD_SET_CREATE(
         uhk_cmds,
+        SHELL_CMD_ARG(keylog, NULL,
+            "get/set key logging",
+            cmd_uhk_keylog, 1, 1),
         SHELL_CMD_ARG(sdb, NULL,
             "get/set LED driver SDB pin",
             cmd_uhk_sdb, 1, 1),
@@ -309,7 +323,7 @@ int main(void) {
             cmd_uhk_merge, 1, 0),
 #endif
         SHELL_SUBCMD_SET_END
-        );
+    );
 
     SHELL_CMD_REGISTER(uhk, &uhk_cmds, "UHK commands", NULL);
 
@@ -345,13 +359,15 @@ int main(void) {
     bool pixel = 1;
 
     for (;;) {
-        c = 0;
+        keyPressed = false;
         for (uint8_t rowId=0; rowId<6; rowId++) {
             gpio_pin_set_dt(&rows[rowId], 1);
             for (uint8_t colId=0; colId<COLS_COUNT; colId++) {
                 if (gpio_pin_get_dt(&cols[colId])) {
-                    c = HID_KEY_A;
-                    printk("SW%c%c\n", rowId+'1', colId+'1');
+                    keyPressed = true;
+                    if (keyLog) {
+                        printk("SW%c%c\n", rowId+'1', colId+'1');
+                    }
                 }
             }
             gpio_pin_set_dt(&rows[rowId], 0);
@@ -391,7 +407,7 @@ int main(void) {
         writeSpi(LedPagePrefix | 0);
         writeSpi(0x00);
         for (int i=0; i<255; i++) {
-            writeSpi(c?0xff:0);
+            writeSpi(keyPressed ? 0xff : 0);
         }
         setLedsCs(true);
 
@@ -399,7 +415,7 @@ int main(void) {
         writeSpi(LedPagePrefix | 1);
         writeSpi(0x00);
         for (int i=0; i<255; i++) {
-            writeSpi(c?0xff:0);
+            writeSpi(keyPressed ? 0xff : 0);
         }
         setLedsCs(true);
 
