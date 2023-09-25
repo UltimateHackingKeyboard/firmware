@@ -158,6 +158,17 @@ static int cmd_uhk_keylog(const struct shell *shell, size_t argc, char *argv[])
     return 0;
 }
 
+uint8_t statLog = 1;
+static int cmd_uhk_statlog(const struct shell *shell, size_t argc, char *argv[])
+{
+    if (argc == 1) {
+        shell_fprintf(shell, SHELL_NORMAL, "%i\n", statLog);
+    } else {
+        statLog = argv[1][0] == '1';
+    }
+    return 0;
+}
+
 uint8_t ledsAlwaysOn = 0;
 static int cmd_uhk_leds(const struct shell *shell, size_t argc, char *argv[])
 {
@@ -259,7 +270,9 @@ static int cmd_uhk_merge(const struct shell *shell, size_t argc, char *argv[])
 #endif
 
 void chargerStatCallback(const struct device *port, struct gpio_callback *cb, gpio_port_pins_t pins) {
-    printk("STAT changed to %i\n", gpio_pin_get_dt(&chargerStatDt) ? 1 : 0);
+    if (statLog) {
+        printk("STAT changed to %i\n", gpio_pin_get_dt(&chargerStatDt) ? 1 : 0);
+    }
 }
 
 struct gpio_callback callbackStruct;
@@ -317,6 +330,9 @@ int main(void) {
         SHELL_CMD_ARG(keylog, NULL,
             "get/set key logging",
             cmd_uhk_keylog, 1, 1),
+        SHELL_CMD_ARG(statlog, NULL,
+            "get/set stat logging",
+            cmd_uhk_statlog, 1, 1),
         SHELL_CMD_ARG(leds, NULL,
             "get/set LEDs always on state",
             cmd_uhk_leds, 1, 1),
