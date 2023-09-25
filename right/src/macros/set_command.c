@@ -6,6 +6,9 @@
 #include "ledmap.h"
 #include "macros/core.h"
 #include "macros/status_buffer.h"
+#include "macros/shortcut_parser.h"
+#include "macros/vars.h"
+#include "macros/commands.h"
 #include "module.h"
 #include "secondary_role_driver.h"
 #include "timer.h"
@@ -15,7 +18,6 @@
 #include "led_display.h"
 #include "postponer.h"
 #include "macro_recorder.h"
-#include "macros/shortcut_parser.h"
 #include "str_utils.h"
 #include "utils.h"
 #include "layer_switcher.h"
@@ -26,7 +28,6 @@
 #include "config_parser/parse_macro.h"
 #include "slave_drivers/is31fl3xxx_driver.h"
 #include "init_peripherals.h"
-#include "macros/vars.h"
 #include <stdint.h>
 
 typedef enum {
@@ -790,6 +791,10 @@ static macro_variable_t root(parser_context_t* ctx, set_command_action_t action)
     else if (ConsumeToken(ctx, "autoRepeatRate")) {
         DEFINE_INT_LIMITS(0, 65535);
         ASSIGN_INT(AutoRepeatDelayRate);
+    }
+    else if (ConsumeToken(ctx, "oneShotTimeout")) {
+        DEFINE_INT_LIMITS(0, 65535);
+        ASSIGN_INT(Macros_OneShotTimeout);
     }
     else if (ConsumeToken(ctx, "chordingDelay")) {
         DEFINE_INT_LIMITS(0, 255);
