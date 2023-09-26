@@ -474,9 +474,12 @@ macro_result_t continueMacro(void)
 
 macro_result_t Macros_SleepTillKeystateChange()
 {
-    if(S->ms.oneShotState > 1) {
-        // TODO: review this
-        return MacroResult_Blocking;
+    if(S->ms.oneShotState > 0) {
+        if(S->ms.oneShotState > 1) {
+            return MacroResult_Blocking;
+        } else if (Macros_OneShotTimeout != 0) {
+            Macros_SleepTillTime(S->ms.currentMacroStartTime + Macros_OneShotTimeout);
+        }
     }
     if (!S->ms.macroSleeping) {
         unscheduleCurrentSlot();
