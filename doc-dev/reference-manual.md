@@ -124,6 +124,7 @@ The following grammar is supported:
     COMMAND = set keystrokeDelay <time in ms, at most 65535 (INT)>
     COMMAND = set autoRepeatDelay <time in ms, at most 65535 (INT)>
     COMMAND = set autoRepeatRate <time in ms, at most 65535 (INT)>
+    COMMAND = set oneShotTimeout <time in ms, at most 65535 (INT)>
     COMMAND = set macroEngine.batchSize <number of commands to execute per one update cycle INT>
     COMMAND = set navigationModeAction.NAVIGATION_MODE_CUSTOM.DIRECTION ACTION
     COMMAND = set keymapAction.LAYERID.KEYID ACTION
@@ -438,7 +439,7 @@ Modifiers modify behaviour of the rest of the keyboard while the rest of the com
 - `postponeKeys` will postpone all new key activations for as long as any instance of this modifier is active. See postponing mechanisms section.
 - `final` will end macro playback after the "modified" action is properly finished. Simplifies control flow. "Implicit break."
 - `autoRepeat` will continuously repeats the following command while holding the macro key, with some configurable delay. See `set autoRepeatDelay <time>` and `set autoRepeatRate <time>` for more details. This enables you to use keyrepeat feature (which is typically implemented in the OS level) with any macro action. For example, you can use something like `autoRepeat tapKey down` or `ifShift autoRepeat tapKeySeq C-right right`.
-- `oneShot` prolongs this key's press until another action takes place. E.g., `oneShot holdLayer mod`.
+- `oneShot` prolongs this key's press until another action takes place or oneShot times out. E.g., `oneShot holdLayer mod`. Set timeout by `set oneShotTimeout 500`.
 
 ### Runtime macros:
 
@@ -480,6 +481,7 @@ Internally, values are saved in one of the following types, and types are automa
 - `set doubletapTimeout <time in ms, at most 65535>` controls doubletap timeouts for both layer switchers and for the `ifDoubletap` condition.
 - `set keystrokeDelay <time in ms, at most 65535>` allows slowing down keyboard output. This is handy for lousily written RDP clients and other software which just scans keys once a while and processes them in wrong order if multiple keys have been pressed inbetween. In more detail, this setting adds a delay whenever a basic usb report is sent. During this delay, key matrix is still scanned and keys are debounced, but instead of activating, the keys are added into a queue to be replayed later. Recommended value is 10 if you have issues with RDP missing modifier keys, 0 otherwise.
 - `set autoRepeatDelay <time in ms, at most 65535>` and `set autoRepeatRate <time in ms, at most 65535>` allows you to set the initial delay (default: 500 ms) and the repeat delay (default: 50 ms) when using `autoRepeat`. When you run the command `autoRepeat <command>`, the `<command>` is first run without delay. Then, it will waits `autoRepeatDelay` amount of time before running `<command>` again. Then and thereafter, it will waits `autoRepeatRate` amount of time before repeating `<command>` again. This is consistent with typical OS keyrepeat feature.
+- `set oneShotTimeout <time in ms, at most 65535>` sets timeout for `oneShot` modifier. Zero means infinite.
 - `set mouseKeys.{move|scroll}.{...} INT` please refer to Agent for more details
   - `initialSpeed` - the speed that is active when key is pressed
   - `initialAcceleration,baseSpeed` - when mouse key is held, speed increases until it reaches baseSpeed

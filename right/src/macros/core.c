@@ -474,8 +474,12 @@ macro_result_t continueMacro(void)
 
 macro_result_t Macros_SleepTillKeystateChange()
 {
-    if(S->ms.oneShotState > 1) {
-        return MacroResult_Blocking;
+    if(S->ms.oneShotState > 0) {
+        if(S->ms.oneShotState > 1) {
+            return MacroResult_Blocking;
+        } else if (Macros_OneShotTimeout != 0) {
+            Macros_SleepTillTime(S->ms.currentMacroStartTime + Macros_OneShotTimeout);
+        }
     }
     if (!S->ms.macroSleeping) {
         unscheduleCurrentSlot();
@@ -488,8 +492,12 @@ macro_result_t Macros_SleepTillKeystateChange()
 
 macro_result_t Macros_SleepTillTime(uint32_t time)
 {
-    if(S->ms.oneShotState > 1) {
-        return MacroResult_Blocking;
+    if(S->ms.oneShotState > 0) {
+        if(S->ms.oneShotState > 1) {
+            return MacroResult_Blocking;
+        } else if (Macros_OneShotTimeout != 0) {
+            EventScheduler_Schedule(S->ms.currentMacroStartTime + Macros_OneShotTimeout, EventSchedulerEvent_MacroWakeOnTime);
+        }
     }
     if (!S->ms.macroSleeping) {
         unscheduleCurrentSlot();

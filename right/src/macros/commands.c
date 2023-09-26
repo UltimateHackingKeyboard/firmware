@@ -32,6 +32,8 @@ static uint8_t lastKeymapIdx;
 
 static int32_t regs[MAX_REG_COUNT];
 
+uint16_t Macros_OneShotTimeout = 500;
+
 static macro_result_t processCommand(parser_context_t* ctx);
 
 static macro_result_t processDelay(uint32_t time)
@@ -1509,6 +1511,11 @@ run_command:;
 
 static macro_result_t processOneShotCommand(parser_context_t* ctx) {
     if (Macros_DryRun) {
+        return processCommand(ctx);
+    }
+
+    if (Macros_OneShotTimeout != 0 && CurrentTime >= S->ms.currentMacroStartTime + Macros_OneShotTimeout) {
+        S->ms.oneShotState = 0;
         return processCommand(ctx);
     }
 
