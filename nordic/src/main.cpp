@@ -192,6 +192,10 @@ static int cmd_uhk_sdb(const struct shell *shell, size_t argc, char *argv[])
     return 0;
 }
 
+// Charger behavior:
+// - If CHARGER_EN=0 or USB is disconnected, then TS reads 6552[0-9] raw value and sometimes drops to 0.
+// - If CHARGER_EN=1, USB is connected, and the battery is disconnected, then STAT alternates between 0 and 1 per second
+
 uint8_t chargerState = 1;
 static int cmd_uhk_charger(const struct shell *shell, size_t argc, char *argv[])
 {
