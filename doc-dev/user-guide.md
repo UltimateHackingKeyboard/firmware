@@ -630,7 +630,7 @@ You can also start this from `$onInit` by `fork rotateHues` (given you have the 
 
 ```
 // put this at the beginning of the picker, to stop rotateHues when another choice is made.
-setReg 22 1
+setVar hueStopper 1
 // start the `rotateHues` macro on 'c' - as "changing"
 ifGesture c final fork rotateHues
 ```
