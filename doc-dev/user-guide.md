@@ -289,7 +289,7 @@ For instance, if you rebind your UHK to Dvorak, then the key identified by hardw
 
 ### Secondary roles
 
-Secondary role is a role which becomes active if another key is pressed with this key. It can be implemented in following variants: 
+Secondary role is a role which becomes active if another key is pressed with this key. It can be implemented in following variants:
 
 - Using `ifInterrupted` command.
 - Using native secondary role driver (via `ifPrimary`/`ifSecondary` or GUI-mapping) with one of following resolution strategies:
@@ -470,16 +470,21 @@ We implement following standard(ish) control flow constructs:
     ```
     if ($i > 5) {
         ...
-    } else if ($i > 1) {
+    }
+    else if ($i > 1) {
         ...
-    } else {
+    }
+    else {
         ...
     }
     ```
 - `while`, including `break` notation:
     ```
     setVar i 0
-    while ($i < 5) {
+    while (true) {
+        if ($i > 5) {
+            break
+        }
         ...
         setVar i ($i+1)
     }
@@ -509,7 +514,7 @@ setVar bar 5
 tapKey a
 delayUntil $foo
 repeatFor bar $currentAddress-2        //decrement $bar; if it is non-zero, return by two commands to the tapKey command
-noOp                   
+noOp
 default: tapKey b      //<string>: denotes a label, which can be used as jump target
 ```
 
