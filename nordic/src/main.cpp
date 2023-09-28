@@ -104,20 +104,20 @@ void writeSpi(uint8_t data)
     spi_write(spi0_dev, &spiConf, &spiBufSet);
 }
 
-// static const struct device *uart_dev = DEVICE_DT_GET(DT_NODELABEL(uart1));
+static const struct device *uart_dev = DEVICE_DT_GET(DT_NODELABEL(uart1));
 
-// void serial_cb(const struct device *dev, void *user_data)
-// {
-//     if (!uart_irq_update(uart_dev)) {
-//         return;
-//     }
+void serial_cb(const struct device *dev, void *user_data)
+{
+    if (!uart_irq_update(uart_dev)) {
+        return;
+    }
 
-//     uint8_t c;
-//     while (uart_irq_rx_ready(uart_dev)) {
-//         uart_fifo_read(uart_dev, &c, 1);
-//         printk("uart1 receive: %c\n", c);
-//     }
-// }
+    uint8_t c;
+    while (uart_irq_rx_ready(uart_dev)) {
+        uart_fifo_read(uart_dev, &c, 1);
+        printk("uart1 receive: %c\n", c);
+    }
+}
 
 static struct gpio_dt_spec rows[] = {
     GPIO_DT_SPEC_GET(DT_ALIAS(row1), gpios),
@@ -314,7 +314,7 @@ int main(void) {
     gpio_pin_configure_dt(&oledA0Dt, GPIO_OUTPUT);
 #endif
 
-//  struct device *uart_dev = DEVICE_DT_GET(DT_NODELABEL(uart1));
+    struct device *uart_dev = DEVICE_DT_GET(DT_NODELABEL(uart1));
 
     for (uint8_t rowId=0; rowId<6; rowId++) {
         gpio_pin_configure_dt(&rows[rowId], GPIO_OUTPUT);
@@ -375,10 +375,10 @@ int main(void) {
         }
     }
 
-    // if (!device_is_ready(uart_dev)) {
-    //     printk("UART device not found!");
-    //     return;
-    // }
+    if (!device_is_ready(uart_dev)) {
+        printk("UART device not found!");
+        return;
+    }
 
     // dk_buttons_init(button_changed);
     // dk_leds_init();
@@ -386,8 +386,8 @@ int main(void) {
     usb_init(true);
     bluetooth_init();
 
-    // uart_irq_callback_user_data_set(uart_dev, serial_cb, NULL);
-    // uart_irq_rx_enable(uart_dev);
+    uart_irq_callback_user_data_set(uart_dev, serial_cb, NULL);
+    uart_irq_rx_enable(uart_dev);
 //  int blink_status = 0;
     uint32_t counter = 0;
     bool pixel = 1;
@@ -401,6 +401,7 @@ int main(void) {
                     keyPressed = true;
                     if (keyLog) {
                         printk("SW%c%c\n", rowId+'1', colId+'1');
+                        uart_poll_out(uart_dev, 'a');
                     }
                 }
             }
