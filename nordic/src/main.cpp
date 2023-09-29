@@ -1,6 +1,7 @@
 #include <zephyr/shell/shell.h>
 extern "C"
 {
+#include <stdio.h>
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/gpio.h>
@@ -106,16 +107,23 @@ void writeSpi(uint8_t data)
 
 static const struct device *uart_dev = DEVICE_DT_GET(DT_NODELABEL(uart1));
 
+char bufferIn[20];
+char *ch = bufferIn;
 void serial_cb(const struct device *dev, void *user_data)
 {
     if (!uart_irq_update(uart_dev)) {
         return;
     }
 
-    uint8_t c;
     while (uart_irq_rx_ready(uart_dev)) {
-        uart_fifo_read(uart_dev, &c, 1);
-        printk("uart1 receive: %c\n", c);
+        // put characters into bufferI until newline, at which point printk() the buffer and clear it
+        uart_fifo_read(uart_dev, (uint8_t*)ch, 1);
+        if (*ch == '\n') {
+            printk("got %s", bufferIn);
+            ch = bufferIn;
+        } else {
+            ch++;
+        }
     }
 }
 
@@ -377,7 +385,7 @@ int main(void) {
 
     if (!device_is_ready(uart_dev)) {
         printk("UART device not found!");
-        return;
+        return 1;
     }
 
     // dk_buttons_init(button_changed);
@@ -400,8 +408,12 @@ int main(void) {
                 if (gpio_pin_get_dt(&cols[colId])) {
                     keyPressed = true;
                     if (keyLog) {
-                        printk("SW%c%c\n", rowId+'1', colId+'1');
-                        uart_poll_out(uart_dev, 'a');
+                        char buffer[20];
+                        sprintf(buffer, "SW%c%c\n", rowId+'1', colId+'1');
+                        printk("%s", buffer);
+                        for (uint8_t i=0; i<strlen(buffer); i++) {
+                            uart_poll_out(uart_dev, buffer[i]);
+                        }
                     }
                 }
             }
