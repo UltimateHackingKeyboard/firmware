@@ -43,6 +43,7 @@ bool Macros_WakeMeOnKeystateChange = false;
 
 bool Macros_ParserError = false;
 bool Macros_DryRun = false;
+bool Macros_ValidationInProgress = false;
 
 macro_scheduler_t Macros_Scheduler = Scheduler_Blocking;
 uint8_t Macros_MaxBatchSize = 20;
@@ -54,6 +55,7 @@ scheduler_state_t Macros_SchedulerState = {
     .remainingCount = 0,
 };
 
+macro_scope_state_t MacroScopeState[MACRO_SCOPE_STATE_POOL_SIZE];
 macro_state_t MacroState[MACRO_STATE_POOL_SIZE];
 macro_state_t *S = NULL;
 
@@ -85,53 +87,53 @@ void Macros_SignalInterrupt()
 
 macro_result_t Macros_GoToAddress(uint8_t address)
 {
-    if(address == S->ms.commandAddress) {
+    if(address == S->ls->ms.commandAddress) {
         memset(&S->as, 0, sizeof S->as);
 
         return MacroResult_JumpedBackward;
     }
 
-    uint8_t oldAddress = S->ms.commandAddress;
+    uint8_t oldAddress = S->ls->ms.commandAddress;
 
     //if we jump back, we have to reset and go from beginning
-    if (address < S->ms.commandAddress) {
+    if (address < S->ls->ms.commandAddress) {
         resetToAddressZero(S->ms.currentMacroIndex);
     }
 
     //if we are in the middle of multicommand action, parse till the end
-    if(S->ms.commandAddress < address && S->ms.commandAddress != 0) {
-        while (S->ms.commandAddress < address && loadNextCommand());
+    if(S->ls->ms.commandAddress < address && S->ls->ms.commandAddress != 0) {
+        while (S->ls->ms.commandAddress < address && loadNextCommand());
     }
 
     //skip across actions without having to read entire action
     uint8_t cmdCount = currentActionCmdCount();
-    while (S->ms.commandAddress + cmdCount <= address) {
+    while (S->ls->ms.commandAddress + cmdCount <= address) {
         loadNextAction();
-        S->ms.commandAddress += cmdCount - 1; //loadNextAction already added one
+        S->ls->ms.commandAddress += cmdCount - 1; //loadNextAction already added one
         cmdCount = currentActionCmdCount();
     }
 
     //now go command by command
-    while (S->ms.commandAddress < address && loadNextCommand()) ;
+    while (S->ls->ms.commandAddress < address && loadNextCommand()) ;
 
     return address > oldAddress ? MacroResult_JumpedForward: MacroResult_JumpedBackward;
 }
 
 macro_result_t Macros_GoToLabel(parser_context_t* ctx)
 {
-    uint8_t startedAtAdr = S->ms.commandAddress;
+    uint8_t startedAtAdr = S->ls->ms.commandAddress;
     bool secondPass = false;
     bool reachedEnd = false;
 
-    while ( !secondPass || S->ms.commandAddress < startedAtAdr ) {
-        while ( !reachedEnd && (!secondPass || S->ms.commandAddress < startedAtAdr) ) {
+    while ( !secondPass || S->ls->ms.commandAddress < startedAtAdr ) {
+        while ( !reachedEnd && (!secondPass || S->ls->ms.commandAddress < startedAtAdr) ) {
             if(S->ms.currentMacroAction.type == MacroActionType_Command) {
-                const char* cmd = S->ms.currentMacroAction.cmd.text + S->ms.commandBegin;
-                const char* cmdEnd = S->ms.currentMacroAction.cmd.text + S->ms.commandEnd;
+                const char* cmd = S->ms.currentMacroAction.cmd.text + S->ls->ms.commandBegin;
+                const char* cmdEnd = S->ms.currentMacroAction.cmd.text + S->ls->ms.commandEnd;
                 const char* cmdTokEnd = TokEnd(cmd, cmdEnd);
 
                 if(cmdTokEnd[-1] == ':' && TokenMatches2(cmd, cmdTokEnd-1, ctx->at, ctx->end)) {
-                    return S->ms.commandAddress > startedAtAdr ? MacroResult_JumpedForward : MacroResult_JumpedBackward;
+                    return S->ls->ms.commandAddress > startedAtAdr ? MacroResult_JumpedForward : MacroResult_JumpedBackward;
                 }
             }
 
@@ -173,6 +175,54 @@ static macro_result_t processCurrentMacroAction(void)
     return MacroResult_Finished;
 }
 
+bool Macros_PushScope(parser_context_t* ctx)
+{
+    for (uint8_t i = 0; i < MACRO_STATE_POOL_SIZE; i++) {
+        if (!MacroScopeState[i].slotUsed) {
+            macro_scope_state_t* oldLS = S->ls;
+            macro_scope_state_t* newLS = &MacroScopeState[i];
+            memcpy(newLS, oldLS, sizeof *newLS);
+            S->ls = newLS;
+            newLS->parentScopeIndex = oldLS - MacroScopeState;
+            newLS->ms.lastIfSucceeded = false;
+            return true;
+        }
+    }
+    S->ms.macroBroken = true;
+    Macros_ReportError("Out of scope states. This means too many too deeply nested macros are running.", ctx->at, ctx->at);
+    return false;
+}
+
+bool Macros_PopScope(parser_context_t* ctx)
+{
+    if (S->ls->parentScopeIndex != 255) {
+        S->ls->slotUsed = false;
+        S->ls = &MacroScopeState[S->ls->parentScopeIndex];
+        S->ls->as.whileExecuting = false;
+        return true;
+    } else {
+        Macros_ReportError("Encountered unmatched brace", ctx->at, ctx->at);
+        S->ms.macroBroken = true;
+        return false;
+    }
+}
+
+static bool findFreeScopeStateSlot()
+{
+    for (uint8_t i = 0; i < MACRO_STATE_POOL_SIZE; i++) {
+        if (!MacroScopeState[i].slotUsed) {
+            S->ls = &MacroScopeState[i];
+            memset(S->ls, 0, sizeof *(S->ls));
+            S->ls->slotUsed = true;
+            S->ls->parentScopeIndex = 255;
+            return true;
+        }
+    }
+    S->ms.macroBroken = true;
+    Macros_ReportError("Out of scope states. This means too many too deeply nested macros are running.", NULL, NULL);
+    return false;
+}
+
 
 static bool findFreeStateSlot()
 {
@@ -199,8 +249,22 @@ static uint8_t currentActionCmdCount() {
     }
 }
 
+static void freeLocalScopes()
+{
+    macro_scope_state_t* ls = S->ls;
+    while(true) {
+        ls->slotUsed = false;
+        if (ls->parentScopeIndex == 255) {
+            break;
+        }
+        ls = &MacroScopeState[ls->parentScopeIndex];
+    }
+}
+
 static macro_result_t endMacro(void)
 {
+    freeLocalScopes();
+
     S->ms.macroSleeping = false;
     S->ms.macroPlaying = false;
     S->ms.macroBroken = false;
@@ -242,8 +306,8 @@ static void loadAction()
         while ( *cmd <= 32 && cmd < actionEnd) {
             cmd++;
         }
-        S->ms.commandBegin = cmd - S->ms.currentMacroAction.cmd.text;
-        S->ms.commandEnd = CmdEnd(cmd, actionEnd) - S->ms.currentMacroAction.cmd.text;
+        S->ls->ms.commandBegin = cmd - S->ms.currentMacroAction.cmd.text;
+        S->ls->ms.commandEnd = CmdEnd(cmd, actionEnd) - S->ms.currentMacroAction.cmd.text;
     }
 }
 
@@ -254,7 +318,7 @@ static bool loadNextAction()
     } else {
         loadAction();
         S->ms.currentMacroActionIndex++;
-        S->ms.commandAddress++;
+        S->ls->ms.commandAddress++;
         return true;
     }
 }
@@ -265,26 +329,39 @@ static bool loadNextCommand()
         return false;
     }
 
-    memset(&S->as, 0, sizeof S->as);
+    if (!Macros_DryRun) {
+        memset(&S->as, 0, sizeof S->as);
+        memset(&S->ls->as, 0, sizeof S->ls->as);
+    }
 
     const char* actionEnd = S->ms.currentMacroAction.cmd.text + S->ms.currentMacroAction.cmd.textLen;
-    const char* nextCommand = NextCmd(S->ms.currentMacroAction.cmd.text + S->ms.commandEnd, actionEnd);
+    const char* nextCommand = NextCmd(S->ms.currentMacroAction.cmd.text + S->ls->ms.commandEnd, actionEnd);
 
     if (nextCommand == actionEnd) {
         return false;
     } else {
-        S->ms.commandAddress++;
-        S->ms.commandBegin = nextCommand - S->ms.currentMacroAction.cmd.text;
-        S->ms.commandEnd = CmdEnd(nextCommand, actionEnd) - S->ms.currentMacroAction.cmd.text;
+        S->ls->ms.commandAddress++;
+        S->ls->ms.commandBegin = nextCommand - S->ms.currentMacroAction.cmd.text;
+        S->ls->ms.commandEnd = CmdEnd(nextCommand, actionEnd) - S->ms.currentMacroAction.cmd.text;
         return true;
     }
+}
+
+bool Macros_LoadNextCommand()
+{
+    return loadNextCommand();
+}
+
+bool Macros_LoadNextAction()
+{
+    return loadNextAction();
 }
 
 static void resetToAddressZero(uint8_t macroIndex)
 {
     S->ms.currentMacroIndex = macroIndex;
     S->ms.currentMacroActionIndex = 0;
-    S->ms.commandAddress = 0;
+    S->ls->ms.commandAddress = 0;
     S->ms.bufferOffset = AllMacros[macroIndex].firstMacroActionOffset; //set offset to first action
     loadAction();  //loads first action, sets offset to second action
 }
@@ -336,7 +413,7 @@ macro_result_t Macros_ForkMacro(uint8_t macroIndex)
 
 uint8_t initMacro(uint8_t index, key_state_t *keyState, uint8_t parentMacroSlot)
 {
-    if (!macroIsValid(index) || !findFreeStateSlot())  {
+    if (!macroIsValid(index) || !findFreeStateSlot() || !findFreeScopeStateSlot())  {
        return 255;
     }
 
@@ -391,6 +468,7 @@ void Macros_ValidateAllMacros()
     scheduler_state_t schedulerState = Macros_SchedulerState;
     memset(&Macros_SchedulerState, 0, sizeof Macros_SchedulerState);
     Macros_DryRun = true;
+    Macros_ValidationInProgress = true;
     for (uint8_t macroIndex = 0; macroIndex < AllMacrosCount; macroIndex++) {
         uint8_t slotIndex = initMacro(macroIndex, NULL, 255);
 
@@ -413,6 +491,7 @@ void Macros_ValidateAllMacros()
         endMacro();
         S = NULL;
     }
+    Macros_ValidationInProgress = false;
     Macros_DryRun = false;
     Macros_SchedulerState = schedulerState;
     S = oldS;
@@ -444,11 +523,11 @@ uint8_t Macros_QueueMacro(uint8_t index, key_state_t *keyState, uint8_t queueAft
 macro_result_t continueMacro(void)
 {
     Macros_ParserError = false;
-    S->as.modifierPostpone = false;
-    S->as.modifierSuppressMods = false;
+    S->ls->as.modifierPostpone = false;
+    S->ls->as.modifierSuppressMods = false;
 
     if (S->ms.postponeNextNCommands > 0) {
-        S->as.modifierPostpone = true;
+        S->ls->as.modifierPostpone = true;
         PostponerCore_PostponeNCycles(1);
     }
 
@@ -595,7 +674,7 @@ static void __attribute__((__unused__)) checkSchedulerHealth(const char* tag) {
 
     // retrieve currently running command if possible
     if (S != NULL && S->ms.currentMacroAction.type == MacroActionType_Command) {
-        thisCmd = S->ms.currentMacroAction.cmd.text + S->ms.commandBegin;
+        thisCmd = S->ms.currentMacroAction.cmd.text + S->ls->ms.commandBegin;
     }
 
     // check the results
@@ -709,12 +788,17 @@ static void applySleepingMods()
     bool someoneAlive = false;
     for (uint8_t i = 0; i < MACRO_STATE_POOL_SIZE; i++) {
         if (MacroState[i].ms.macroPlaying) {
-            S = &MacroState[i];
             someoneAlive = true;
-            if ( S->as.modifierPostpone ) {
+            break;
+        }
+    }
+    for (uint8_t i = 0; i < MACRO_SCOPE_STATE_POOL_SIZE; i++) {
+        if (MacroScopeState[i].slotUsed) {
+            macro_scope_state_t* ls = &MacroScopeState[i];
+            if ( ls->as.modifierPostpone ) {
                 PostponerCore_PostponeNCycles(0);
             }
-            if ( S->as.modifierSuppressMods ) {
+            if ( ls->as.modifierSuppressMods ) {
                 SuppressMods = true;
             }
         }

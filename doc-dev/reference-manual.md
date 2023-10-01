@@ -47,6 +47,11 @@ The following grammar is supported:
     BODY = //<comment>
     BODY = [LABEL:] COMMAND [//<comment>]
     COMMAND = [CONDITION|MODIFIER]* COMMAND
+    COMMAND = {
+        COMMAND
+        COMMAND
+        ...
+    }
     COMMAND = delayUntilRelease
     COMMAND = delayUntil <timeout (INT)>
     COMMAND = delayUntilReleaseMax <timeout (INT)>
@@ -66,6 +71,7 @@ The following grammar is supported:
     COMMAND = consumePending <number of keys (INT)>
     COMMAND = postponeNext <number of commands (NUMER)>
     COMMAND = break
+    COMMAND = exit
     COMMAND = noOp
     COMMAND = yield
     COMMAND = {exec|call|fork} MACRONAME
@@ -166,12 +172,12 @@ The following grammar is supported:
     LAYERID_BASIC = {fn|mouse|mod|base|fn2|fn3|fn4|fn5}
     KEYMAPID = <abbrev>|last
     MACROID = last|CHAR|INT
-    OPERATOR = + | - | * | / | % | < | > | <= | >= | == | != 
+    OPERATOR = + | - | * | / | % | < | > | <= | >= | == | !=
     VARIABLE_EXPANSION = $<variable name> | $<config value name> | $currentAddress | $thisKeyId | $queuedKeyId.<queue index (INT)> | $keyId.KEYID_ABBREV
     EXPRESSION = (EXPRESSION) | INT | BOOL | FLOAT | VARIABLE_EXPANSION | EXPRESSION OPERATOR EXPRESSION | !EXPRESSION | min(EXPRESSION [, EXPRESSION]+) | max(EXPRESSION [, EXPRESSION]+)
     PARENTHESSED_EXPRESSION = (EXPRESSION)
     INT = PARENTHESSED_EXPRESSION | VARIABLE_EXPANSION | [0-9]+ | -[0-9]+
-    BOOL = PARENTHESSED_EXPRESSION | VARIABLE_EXPANSION | 0 | 1 
+    BOOL = PARENTHESSED_EXPRESSION | VARIABLE_EXPANSION | 0 | 1
     FLOAT = PARENTHESSED_EXPRESSION | VARIABLE_EXPANSION | [0-9]*.[0-9]+ | -FLOAT
     VALUE = INT | BOOL | FLOAT
     STRING = "<interpolated string>" | '<literal string>'
@@ -208,13 +214,13 @@ The following grammar is supported:
     SCANCODE_ABBREV = systemPowerDown | systemSleep | systemWakeUp
     SCANCODE_ABBREV = mouseBtnLeft | mouseBtnRight | mouseBtnMiddle | mouseBtn4 | mouseBtn5 | mouseBtn6 | mouseBtn7 | mouseBtn8
     KEYID = INT | KEYID_ABBREV
-    KEYID_ABBREV = ' | , | - | . | / | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | ; | = | [ | ] | ` 
-    KEYID_ABBREV = a | q | w | e | r | t | y | u | i | o | p | a | s | d | f | g | h | j | k | l | z | x | c | v | b | n | m 
-    KEYID_ABBREV = apostropheAndQuote | backspace | capsLock | closingBracketAndClosingBrace | commaAndLessThanSign | dotAndGreaterThanSign | enter 
-    KEYID_ABBREV = equalAndPlus | graveAccentAndTilde | isoKey | semicolonAndColon | slashAndQuestionMark | tab | minusAndUnderscore | openingBracketAndOpeningBrace 
-    KEYID_ABBREV = leftAlt | leftCtrl | leftFn | leftMod | leftMouse | leftShift | leftSpace | leftSuper 
-    KEYID_ABBREV = leftModule.key1 | leftModule.key2 | leftModule.key3 | leftModule.leftButton | leftModule.middleButton | leftModule.rightButton 
-    KEYID_ABBREV = rightAlt | rightCtrl | rightFn | rightMod | rightShift | rightSpace | rightSuper | rightModule.leftButton | rightModule.rightButton 
+    KEYID_ABBREV = ' | , | - | . | / | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | ; | = | [ | ] | `
+    KEYID_ABBREV = a | q | w | e | r | t | y | u | i | o | p | a | s | d | f | g | h | j | k | l | z | x | c | v | b | n | m
+    KEYID_ABBREV = apostropheAndQuote | backspace | capsLock | closingBracketAndClosingBrace | commaAndLessThanSign | dotAndGreaterThanSign | enter
+    KEYID_ABBREV = equalAndPlus | graveAccentAndTilde | isoKey | semicolonAndColon | slashAndQuestionMark | tab | minusAndUnderscore | openingBracketAndOpeningBrace
+    KEYID_ABBREV = leftAlt | leftCtrl | leftFn | leftMod | leftMouse | leftShift | leftSpace | leftSuper
+    KEYID_ABBREV = leftModule.key1 | leftModule.key2 | leftModule.key3 | leftModule.leftButton | leftModule.middleButton | leftModule.rightButton
+    KEYID_ABBREV = rightAlt | rightCtrl | rightFn | rightMod | rightShift | rightSpace | rightSuper | rightModule.leftButton | rightModule.rightButton
     MACRONAME = <Case sensitive macro identifier as named in Agent. Identifier shall not contain spaces.>
     ###################
     #DEVELOPMENT TOOLS#
@@ -272,10 +278,11 @@ The following grammar is supported:
 - `progressHue` or better `autoRepeat progressHue` will slowly adjust constantRGB value in order to rotate the per-key-RGB backlight through all hues.
 - `resetTrackpoint` resets the internal trackpoint board. Can be used to recover the trackpoint from drift conditions. Drifts usually happen if you keep the cursor moving at slow constant speeds, because of the boards's internal adaptive calibration. Since the board's parameters cannot be altered, the only way around is or you to learn not to do the type of movement which triggers them.
 - `i2cBaudRate <baud rate, default 100000(INT)>` sets i2c baud rate. Lowering this value may improve module reliability, while increasing latency.
+- `{|}` Braces allow grouping multiple commands as if they were a single command. Please note that from the point of view of the engine, braces are (almost) regular commands, and have to be followed by newlines like any other command. Therefore idioms like `} else {` are not possible at the moment.
 
 ### Triggering keyboard actions (pressing keys, clicking, etc.):
 
-- `write <custom text>` will type rest of the string. Same as the plain text command. Strings are single quote (for literal strings) or double quote (for interpolated strings) enclosed. E.g., `write "keystrokeDelay is $keystrokeDelay, 1+1=$(1+1)\n"`, or `'$ will show as literal dollar sign.'`. 
+- `write <custom text>` will type rest of the string. Same as the plain text command. Strings are single quote (for literal strings) or double quote (for interpolated strings) enclosed. E.g., `write "keystrokeDelay is $keystrokeDelay, 1+1=$(1+1)\n"`, or `'$ will show as literal dollar sign.'`.
 - `startMouse/stopMouse` start/stop corresponding mouse action. E.g., `startMouse move left`
 - `pressKey|holdKey|tapKey|releaseKey` Presses/holds/taps/releases the provided scancode. E.g., `pressKey mouseBtnLeft`, `tapKey LC-v` (Left Control + (lowercase) v), `tapKey CS-f5` (Ctrl + Shift + F5), `LS-` (just tap left Shift).
   - **press** means adding the scancode into a list of "active keys" and continuing the macro. The key is released once the macro ends. I.e., if the command is not followed by any sort of delay, the key will be released again almost immediately.
@@ -292,7 +299,7 @@ The following grammar is supported:
         - **sticky modifiers** are modifiers of composite shortcuts. These are applied only until next key press. In certain contexts, they will take effect even after their activation key was released (e.g., to support alt + tab on non-base layers, you can do `holdKey sLA-tab`).
         - **input modifiers** are queried by `ifMod` conditions, and can be suppressed by `suppressMods`. E.g. `holdKey iLS`.
         - **output modifiers** are ignored by `ifMod` conditions, and are not suppressed by `suppressMods`.
-      
+
       By default:
         - modifiers of normal non-macro scancode actions are treated as **sticky** when accompanied by a scancode.
         - normal non-macro modifiers (not accompanied by a scancode) are treated as **input** by default.
@@ -304,7 +311,8 @@ The following grammar is supported:
 
 - `goTo ADDRESS` will go to action index int. Actions are indexed from zero. See `ADDRESS`
 - `repeatFor <variable name> ADDRESS` - abbreviation to simplify cycles. Will decrement the supplemented register and perform `goTo` to `adr` if the value is still greater than zero. Intended usecase - place after command which is to be repeated with the register containing number of repeats and adr `($currentAddress-1)` (or similar).
-- `break` will end playback of the current macro
+- `break` will terminate innermost while loop. If there is no enclosing while loop, then this will terminate current macro.
+- `exit` will terminate current macro
 - `noOp` does nothing - i.e., stops macro for exactly one update cycle and then continues.
 - `yield` forces macro to yield, if blocking scheduler is used. With preemptive scheduler acts just as `noOp`.
 - `exec MACRONAME` will execute different macro in current state slot. I.e., the macro will be executed in current context and will *not* return. First action of the called macro is executed within the same eventloop cycle.
@@ -465,7 +473,7 @@ Macro slots are identified by a single character or a number or `$thisKeyId` (me
 Internally, values are saved in one of the following types, and types are automatically converted as needed in expressions:
 - `INT` - as a int32_t. E.g., `(7/3)` yields 2
 - `FLOA`T - as 32-bit floating point value. E.g., `(7/3.0)` yields 2.333...
-- `BOOL` - 1 or 0 value 
+- `BOOL` - 1 or 0 value
 
 ### Configuration options:
 
@@ -609,7 +617,7 @@ Internally, values are saved in one of the following types, and types are automa
 
 ### Argument parsing rules:
 
-- `INT` is parsed as a 32 bit signed integer and then assigned into the target variable. However, the target variable is often only 8 or 16 bit unsigned. 
+- `INT` is parsed as a 32 bit signed integer and then assigned into the target variable. However, the target variable is often only 8 or 16 bit unsigned.
 - `EXPRESSION` / variables - all numeric/boolean arguments also accept arbitrary expressions. These have to be enclosed in parentheses.
   - Following operators are accepted:
     - `+,-,*,/,%` - addition, subtraction, multiplication, division and modulo

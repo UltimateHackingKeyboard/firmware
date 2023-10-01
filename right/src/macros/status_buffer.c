@@ -1,12 +1,13 @@
-#include "macros/status_buffer.h"
 #include "macros/core.h"
+#include "macros/scancode_commands.h"
 #include "macros/status_buffer.h"
-#include "segment_display.h"
+#include "macros/status_buffer.h"
 #include "macros/string_reader.h"
+#include "segment_display.h"
 #include "config_parser/parse_macro.h"
 #include "config_parser/config_globals.h"
-#include <math.h>
 #include "eeprom.h"
+#include <math.h>
 #include <stdarg.h>
 
 static uint16_t consumeStatusCharReadingPos = 0;
@@ -141,7 +142,7 @@ static uint16_t findCurrentCommandLine()
 {
     if (S != NULL) {
         uint16_t lineCount = 1;
-        for (const char* c = S->ms.currentMacroAction.cmd.text; c < S->ms.currentMacroAction.cmd.text + S->ms.commandBegin; c++) {
+        for (const char* c = S->ms.currentMacroAction.cmd.text; c < S->ms.currentMacroAction.cmd.text + S->ls->ms.commandBegin; c++) {
             if (*c == '\n') {
                 lineCount++;
             }
@@ -153,7 +154,7 @@ static uint16_t findCurrentCommandLine()
 
 static uint16_t findPosition(const char* arg)
 {
-    const char* startOfLine = S->ms.currentMacroAction.cmd.text + S->ms.commandBegin;
+    const char* startOfLine = S->ms.currentMacroAction.cmd.text + S->ls->ms.commandBegin;
     uint16_t pos;
     if (arg == NULL) {
         pos = 1;
@@ -219,8 +220,8 @@ static void reportError(
             Macros_SetStatusString(arg, TokEnd(arg, argEnd));
         }
         Macros_SetStatusString("\n", NULL);
-        const char* startOfLine = S->ms.currentMacroAction.cmd.text + S->ms.commandBegin;
-        const char* endOfLine = S->ms.currentMacroAction.cmd.text + S->ms.commandEnd;
+        const char* startOfLine = S->ms.currentMacroAction.cmd.text + S->ls->ms.commandBegin;
+        const char* endOfLine = S->ms.currentMacroAction.cmd.text + S->ls->ms.commandEnd;
         uint16_t line = findCurrentCommandLine();
         reportCommandLocation(line, arg-startOfLine, startOfLine, endOfLine, argIsCommand);
     } else {
@@ -243,7 +244,7 @@ void Macros_ReportError(const char* err, const char* arg, const char *argEnd)
 
 void Macros_ReportWarn(const char* err, const char* arg, const char *argEnd)
 {
-    if (!Macros_DryRun) {
+    if (!Macros_ValidationInProgress) {
         return;
     }
     SegmentDisplay_SetText(3, "WRN", SegmentDisplaySlot_Warn);

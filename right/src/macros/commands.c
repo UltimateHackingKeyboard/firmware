@@ -6,6 +6,7 @@
 #include "layer_switcher.h"
 #include "ledmap.h"
 #include "macro_recorder.h"
+#include "macros/commands.h"
 #include "macros/debug_commands.h"
 #include "macros/core.h"
 #include "macros/keyid_parser.h"
@@ -34,6 +35,7 @@ static int32_t regs[MAX_REG_COUNT];
 
 uint16_t Macros_OneShotTimeout = 500;
 
+static void jumpToMatchingBrace();
 static macro_result_t processCommand(parser_context_t* ctx);
 
 static macro_result_t processDelay(uint32_t time)
@@ -61,14 +63,14 @@ macro_result_t Macros_ProcessDelayAction()
 static void postponeNextN(uint8_t count)
 {
     S->ms.postponeNextNCommands = count + 1;
-    S->as.modifierPostpone = true;
+    S->ls->as.modifierPostpone = true;
     PostponerCore_PostponeNCycles(MACRO_CYCLES_TO_POSTPONE);
 }
 
 static void postponeCurrentCycle()
 {
     PostponerCore_PostponeNCycles(MACRO_CYCLES_TO_POSTPONE);
-    S->as.modifierPostpone = true;
+    S->ls->as.modifierPostpone = true;
 }
 
 /**
@@ -82,7 +84,7 @@ bool Macros_CurrentMacroKeyIsActive()
     if (S->ms.currentMacroKey == NULL) {
         return S->ms.oneShotState;
     }
-    if (S->ms.postponeNextNCommands > 0 || S->as.modifierPostpone) {
+    if (S->ms.postponeNextNCommands > 0 || S->ls->as.modifierPostpone) {
         bool keyIsActive = (KeyState_Active(S->ms.currentMacroKey) && !PostponerQuery_IsKeyReleased(S->ms.currentMacroKey));
         return  keyIsActive || S->ms.oneShotState;
     } else {
@@ -174,7 +176,7 @@ int32_t Macros_ParseInt(const char *a, const char *aEnd, const char* *parsedTill
     else if (*a == '@') {
         Macros_ReportWarn("`@` notation is now deprecated. Please, replace it with $currentAddress. E.g., `@3` with `$($currentAddress + 3)`.", a, a);
         a++;
-        return S->ms.commandAddress + Macros_ParseInt(a, aEnd, parsedTill);
+        return S->ls->ms.commandAddress + Macros_ParseInt(a, aEnd, parsedTill);
     }
     else
     {
@@ -789,19 +791,20 @@ static macro_result_t processWhileCommand(parser_context_t* ctx)
         return processCommand(ctx);
     }
 
-    if (!S->as.whileExecuting) {
+    if (!S->ls->as.whileExecuting) {
         if (!condition) {
             return MacroResult_Finished;
         }
 
-        S->as.whileExecuting = true;
-        S->as.currentConditionPassed = false;
+        S->ls->as.isWhileScope = true;
+        S->ls->as.whileExecuting = true;
+        S->ls->as.currentConditionPassed = false;
     }
 
     macro_result_t res = processCommand(ctx);
 
     if (res & (MacroResult_ActionFinishedFlag | MacroResult_DoneFlag)) {
-        S->as.whileExecuting = false;
+        S->ls->as.whileExecuting = false;
 
         if (res & MacroResult_ActionFinishedFlag) {
             return (res & ~MacroResult_ActionFinishedFlag) | MacroResult_InProgressFlag;
@@ -813,11 +816,48 @@ static macro_result_t processWhileCommand(parser_context_t* ctx)
     }
 }
 
-static macro_result_t processBreakCommand()
+static macro_result_t processExitCommand(parser_context_t *ctx)
 {
     if (Macros_DryRun) {
         return MacroResult_Finished;
     }
+
+    S->ms.macroBroken = true;
+    return MacroResult_Finished;
+}
+
+static macro_result_t processBreakCommand(parser_context_t *ctx)
+{
+    if (Macros_DryRun) {
+        return MacroResult_Finished;
+    }
+
+    // Take care of:
+    // while (true) break
+    if (S->ls->as.isWhileScope) {
+        Macros_LoadNextCommand() || Macros_LoadNextAction() || (S->ms.macroBroken = true);
+        return MacroResult_DoneFlag;
+    }
+
+
+    // Take care of:
+    // while (true) {
+    //   break
+    // }
+    // pop scopes until you reach parent while
+    bool popped = false;
+    while (S->ls->parentScopeIndex != 255 && !S->ls->as.isWhileScope) {
+        popped = true;
+        Macros_PopScope(ctx);
+    }
+
+    // now skip the scope, if we indeed reached parent while scope and not root scope
+    if (popped && S->ls->as.isWhileScope) {
+        jumpToMatchingBrace();
+        return MacroResult_DoneFlag;
+    }
+
+    // Takes care of break in root scope
     S->ms.macroBroken = true;
     return MacroResult_Finished;
 }
@@ -930,7 +970,6 @@ macro_result_t goTo(parser_context_t* ctx)
     }
 }
 
-
 static macro_result_t processGoToCommand(parser_context_t* ctx)
 {
     return goTo(ctx);
@@ -942,6 +981,51 @@ static macro_result_t processYieldCommand(parser_context_t* ctx)
         return MacroResult_Finished;
     }
     return MacroResult_ActionFinishedFlag | MacroResult_YieldFlag;
+}
+
+static macro_result_t processOpeningBraceCommand(parser_context_t* ctx)
+{
+    if (Macros_DryRun) {
+        return MacroResult_Finished | MacroResult_OpeningBraceFlag;
+    }
+
+    if (!S->ls->as.braceExecuting) {
+        // When opening a fresh scope, just insolently push scope and load next command.
+        S->ls->as.braceExecuting = true;
+        Macros_PushScope(ctx);
+        S->ls->as.braceExecuting = false;
+
+        Macros_LoadNextCommand() || Macros_LoadNextAction() || (S->ms.macroBroken = true);
+        return MacroResult_DoneFlag;
+    } else {
+        // When closing brace is reached, scope is popped and the command that
+        // opened the scope is ran again (still as if in progress). (This is
+        // where we are now.)
+        //
+        // Now we return MacroResult_Finished. This MacroResult_Finished can be
+        // intercepted by all modifiers that prefix the scope and e.g., choose
+        // to rerun the command (as a while or autoRepeat do).
+
+        S->ls->as.braceExecuting = false;
+        while (*ctx->at != '{') {
+            ctx->at--;
+        }
+        return MacroResult_Finished;
+    }
+}
+
+static macro_result_t processClosingBraceCommand(parser_context_t* ctx)
+{
+    if (Macros_DryRun) {
+        return MacroResult_Finished | MacroResult_ClosingBraceFlag;
+    }
+
+    Macros_PopScope(ctx);
+
+    // After this, the command that opened the scope will be rerun, and opening
+    // brace will take care of scope epilogue.
+
+    return MacroResult_InProgressFlag | MacroResult_ClosingBraceFlag;
 }
 
 static macro_result_t processStopRecordingCommand()
@@ -1047,7 +1131,14 @@ static macro_result_t processWriteCommand(parser_context_t* ctx)
 
         return MacroResult_Finished;
     }
-    return Macros_DispatchText(ctx->at, ctx->end - ctx->at, false);
+
+    macro_result_t res = Macros_DispatchText(ctx->at, ctx->end - ctx->at, false);
+
+    if (res & MacroResult_ActionFinishedFlag) {
+        ctx->at = ctx->end;
+    }
+
+    return res;
 }
 
 static macro_result_t processWriteExprCommand(parser_context_t* ctx)
@@ -1066,7 +1157,7 @@ static void processSuppressModsCommand()
         return;
     }
     SuppressMods = true;
-    S->as.modifierSuppressMods = true;
+    S->ls->as.modifierSuppressMods = true;
 }
 
 static void processPostponeKeysCommand()
@@ -1075,7 +1166,7 @@ static void processPostponeKeysCommand()
         return;
     }
     postponeCurrentCycle();
-    S->as.modifierSuppressMods = true;
+    S->ls->as.modifierSuppressMods = true;
 }
 
 static macro_result_t processNoOpCommand()
@@ -1196,11 +1287,11 @@ static macro_result_t processIfSecondaryCommand(parser_context_t* ctx, bool nega
         goto conditionPassed;
     }
 
-    if (S->as.currentIfSecondaryConditionPassed) {
-        if (S->as.currentConditionPassed) {
+    if (S->ls->as.currentIfSecondaryConditionPassed) {
+        if (S->ls->as.currentConditionPassed) {
             goto conditionPassed;
         } else {
-            S->as.currentIfSecondaryConditionPassed = false;
+            S->ls->as.currentIfSecondaryConditionPassed = false;
         }
     }
 
@@ -1227,8 +1318,8 @@ static macro_result_t processIfSecondaryCommand(parser_context_t* ctx, bool nega
         }
     }
 conditionPassed:
-    S->as.currentIfSecondaryConditionPassed = true;
-    S->as.currentConditionPassed = false; //otherwise following conditions would be skipped
+    S->ls->as.currentIfSecondaryConditionPassed = true;
+    S->ls->as.currentConditionPassed = false; //otherwise following conditions would be skipped
     return processCommand(ctx);
 }
 
@@ -1335,11 +1426,11 @@ static macro_result_t processIfShortcutCommand(parser_context_t* ctx, bool negat
         goto conditionPassed;
     }
 
-    if (S->as.currentIfShortcutConditionPassed) {
-        if (S->as.currentConditionPassed) {
+    if (S->ls->as.currentIfShortcutConditionPassed) {
+        if (S->ls->as.currentConditionPassed) {
             goto conditionPassed;
         } else {
-            S->as.currentIfShortcutConditionPassed = false;
+            S->ls->as.currentIfShortcutConditionPassed = false;
         }
     }
 
@@ -1435,11 +1526,12 @@ static macro_result_t processIfShortcutCommand(parser_context_t* ctx, bool negat
         goto conditionPassed;
     }
 conditionFailed:
+    while(Macros_TryConsumeKeyId(ctx) != 255) { };
     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
 conditionPassed:
     while(Macros_TryConsumeKeyId(ctx) != 255) { };
-    S->as.currentIfShortcutConditionPassed = true;
-    S->as.currentConditionPassed = false; //otherwise following conditions would be skipped
+    S->ls->as.currentIfShortcutConditionPassed = true;
+    S->ls->as.currentConditionPassed = false; //otherwise following conditions would be skipped
     return processCommand(ctx);
 }
 
@@ -1456,7 +1548,7 @@ uint8_t Macros_TryConsumeKeyId(parser_context_t* ctx)
 
 static macro_result_t processAutoRepeatCommand(parser_context_t* ctx) {
     if (Macros_DryRun) {
-        return processCommand(ctx);;
+        return processCommand(ctx);
     }
 
     switch (S->ms.autoRepeatPhase) {
@@ -1882,7 +1974,7 @@ static macro_result_t processCommand(parser_context_t* ctx)
             break;
         case 'b':
             if (ConsumeToken(ctx, "break")) {
-                return processBreakCommand();
+                return processBreakCommand(ctx);
             }
             else {
                 goto failed;
@@ -1924,9 +2016,12 @@ static macro_result_t processCommand(parser_context_t* ctx)
                 return processExecCommand(ctx);
             }
             else if (ConsumeToken(ctx, "else")) {
-                if (S->ms.lastIfSucceeded) {
+                if (!Macros_DryRun && S->ls->ms.lastIfSucceeded) {
                     return MacroResult_Finished;
                 }
+            }
+            else if (ConsumeToken(ctx, "exit")) {
+                return processExitCommand(ctx);
             }
             else {
                 goto failed;
@@ -1973,237 +2068,237 @@ static macro_result_t processCommand(parser_context_t* ctx)
             break;
         case 'i':
             if (ConsumeToken(ctx, "if")) {
-                if (!processIfCommand(ctx) && !S->as.currentConditionPassed) {
+                if (!processIfCommand(ctx) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifDoubletap")) {
-                if (!processIfDoubletapCommand(false) && !S->as.currentConditionPassed) {
+                if (!processIfDoubletapCommand(false) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotDoubletap")) {
-                if (!processIfDoubletapCommand(true) && !S->as.currentConditionPassed) {
+                if (!processIfDoubletapCommand(true) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifInterrupted")) {
-                if (!processIfInterruptedCommand(false) && !S->as.currentConditionPassed) {
+                if (!processIfInterruptedCommand(false) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotInterrupted")) {
-                if (!processIfInterruptedCommand(true) && !S->as.currentConditionPassed) {
+                if (!processIfInterruptedCommand(true) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifReleased")) {
-                if (!processIfReleasedCommand(false) && !S->as.currentConditionPassed) {
+                if (!processIfReleasedCommand(false) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotReleased")) {
-                if (!processIfReleasedCommand(true) && !S->as.currentConditionPassed) {
+                if (!processIfReleasedCommand(true) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifRegEq")) {
-                if (!processIfRegEqCommand(ctx, false) && !S->as.currentConditionPassed) {
+                if (!processIfRegEqCommand(ctx, false) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotRegEq")) {
-                if (!processIfRegEqCommand(ctx, true) && !S->as.currentConditionPassed) {
+                if (!processIfRegEqCommand(ctx, true) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifRegGt")) {
-                if (!processIfRegInequalityCommand(ctx, true) && !S->as.currentConditionPassed) {
+                if (!processIfRegInequalityCommand(ctx, true) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifRegLt")) {
-                if (!processIfRegInequalityCommand(ctx, false) && !S->as.currentConditionPassed) {
+                if (!processIfRegInequalityCommand(ctx, false) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifKeymap")) {
-                if (!processIfKeymapCommand(ctx, false) && !S->as.currentConditionPassed) {
+                if (!processIfKeymapCommand(ctx, false) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotKeymap")) {
-                if (!processIfKeymapCommand(ctx, true) && !S->as.currentConditionPassed) {
+                if (!processIfKeymapCommand(ctx, true) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifLayer")) {
-                if (!processIfLayerCommand(ctx, false) && !S->as.currentConditionPassed) {
+                if (!processIfLayerCommand(ctx, false) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotLayer")) {
-                if (!processIfLayerCommand(ctx, true) && !S->as.currentConditionPassed) {
+                if (!processIfLayerCommand(ctx, true) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifPlaytime")) {
-                if (!processIfPlaytimeCommand(ctx, false) && !S->as.currentConditionPassed) {
+                if (!processIfPlaytimeCommand(ctx, false) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotPlaytime")) {
-                if (!processIfPlaytimeCommand(ctx, true) && !S->as.currentConditionPassed) {
+                if (!processIfPlaytimeCommand(ctx, true) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifAnyMod")) {
-                if (!processIfModifierCommand(false, 0xFF)  && !S->as.currentConditionPassed) {
+                if (!processIfModifierCommand(false, 0xFF)  && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotAnyMod")) {
-                if (!processIfModifierCommand(true, 0xFF)  && !S->as.currentConditionPassed) {
+                if (!processIfModifierCommand(true, 0xFF)  && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifShift")) {
-                if (!processIfModifierCommand(false, SHIFTMASK)  && !S->as.currentConditionPassed) {
+                if (!processIfModifierCommand(false, SHIFTMASK)  && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotShift")) {
-                if (!processIfModifierCommand(true, SHIFTMASK) && !S->as.currentConditionPassed) {
+                if (!processIfModifierCommand(true, SHIFTMASK) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifCtrl")) {
-                if (!processIfModifierCommand(false, CTRLMASK) && !S->as.currentConditionPassed) {
+                if (!processIfModifierCommand(false, CTRLMASK) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotCtrl")) {
-                if (!processIfModifierCommand(true, CTRLMASK) && !S->as.currentConditionPassed) {
+                if (!processIfModifierCommand(true, CTRLMASK) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifAlt")) {
-                if (!processIfModifierCommand(false, ALTMASK) && !S->as.currentConditionPassed) {
+                if (!processIfModifierCommand(false, ALTMASK) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotAlt")) {
-                if (!processIfModifierCommand(true, ALTMASK) && !S->as.currentConditionPassed) {
+                if (!processIfModifierCommand(true, ALTMASK) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifGui")) {
-                if (!processIfModifierCommand(false, GUIMASK)  && !S->as.currentConditionPassed) {
+                if (!processIfModifierCommand(false, GUIMASK)  && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotGui")) {
-                if (!processIfModifierCommand(true, GUIMASK) && !S->as.currentConditionPassed) {
+                if (!processIfModifierCommand(true, GUIMASK) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifCapsLockOn")) {
-                if (!processIfStateKeyCommand(false, &UsbBasicKeyboard_CapsLockOn) && !S->as.currentConditionPassed) {
+                if (!processIfStateKeyCommand(false, &UsbBasicKeyboard_CapsLockOn) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotCapsLockOn")) {
-                if (!processIfStateKeyCommand(true, &UsbBasicKeyboard_CapsLockOn) && !S->as.currentConditionPassed) {
+                if (!processIfStateKeyCommand(true, &UsbBasicKeyboard_CapsLockOn) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNumLockOn")) {
-                if (!processIfStateKeyCommand(false, &UsbBasicKeyboard_NumLockOn) && !S->as.currentConditionPassed) {
+                if (!processIfStateKeyCommand(false, &UsbBasicKeyboard_NumLockOn) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotNumLockOn")) {
-                if (!processIfStateKeyCommand(true, &UsbBasicKeyboard_NumLockOn) && !S->as.currentConditionPassed) {
+                if (!processIfStateKeyCommand(true, &UsbBasicKeyboard_NumLockOn) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifScrollLockOn")) {
-                if (!processIfStateKeyCommand(false, &UsbBasicKeyboard_ScrollLockOn) && !S->as.currentConditionPassed) {
+                if (!processIfStateKeyCommand(false, &UsbBasicKeyboard_ScrollLockOn) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotScrollLockOn")) {
-                if (!processIfStateKeyCommand(true, &UsbBasicKeyboard_ScrollLockOn) && !S->as.currentConditionPassed) {
+                if (!processIfStateKeyCommand(true, &UsbBasicKeyboard_ScrollLockOn) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifRecording")) {
-                if (!processIfRecordingCommand(false) && !S->as.currentConditionPassed) {
+                if (!processIfRecordingCommand(false) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotRecording")) {
-                if (!processIfRecordingCommand(true) && !S->as.currentConditionPassed) {
+                if (!processIfRecordingCommand(true) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifRecordingId")) {
-                if (!processIfRecordingIdCommand(ctx, false) && !S->as.currentConditionPassed) {
+                if (!processIfRecordingIdCommand(ctx, false) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotRecordingId")) {
-                if (!processIfRecordingIdCommand(ctx, true) && !S->as.currentConditionPassed) {
+                if (!processIfRecordingIdCommand(ctx, true) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotPending")) {
-                if (!processIfPendingCommand(ctx, true) && !S->as.currentConditionPassed) {
+                if (!processIfPendingCommand(ctx, true) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifPending")) {
-                if (!processIfPendingCommand(ctx, false) && !S->as.currentConditionPassed) {
+                if (!processIfPendingCommand(ctx, false) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifKeyPendingAt")) {
-                if (!processIfKeyPendingAtCommand(ctx, false) && !S->as.currentConditionPassed) {
+                if (!processIfKeyPendingAtCommand(ctx, false) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotKeyPendingAt")) {
-                if (!processIfKeyPendingAtCommand(ctx, true) && !S->as.currentConditionPassed) {
+                if (!processIfKeyPendingAtCommand(ctx, true) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifKeyActive")) {
-                if (!processIfKeyActiveCommand(ctx, false) && !S->as.currentConditionPassed) {
+                if (!processIfKeyActiveCommand(ctx, false) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotKeyActive")) {
-                if (!processIfKeyActiveCommand(ctx, true) && !S->as.currentConditionPassed) {
+                if (!processIfKeyActiveCommand(ctx, true) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifPendingKeyReleased")) {
-                if (!processIfPendingKeyReleasedCommand(ctx, false) && !S->as.currentConditionPassed) {
+                if (!processIfPendingKeyReleasedCommand(ctx, false) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotPendingKeyReleased")) {
-                if (!processIfPendingKeyReleasedCommand(ctx, true) && !S->as.currentConditionPassed) {
+                if (!processIfPendingKeyReleasedCommand(ctx, true) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifKeyDefined")) {
-                if (!processIfKeyDefinedCommand(ctx, false) && !S->as.currentConditionPassed) {
+                if (!processIfKeyDefinedCommand(ctx, false) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotKeyDefined")) {
-                if (!processIfKeyDefinedCommand(ctx, true) && !S->as.currentConditionPassed) {
+                if (!processIfKeyDefinedCommand(ctx, true) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
@@ -2452,6 +2547,22 @@ static macro_result_t processCommand(parser_context_t* ctx)
                 goto failed;
             }
             break;
+        case '{':
+            if (ConsumeToken(ctx, "{")) {
+                return processOpeningBraceCommand(ctx);
+            }
+            else {
+                goto failed;
+            }
+            break;
+        case '}':
+            if (ConsumeToken(ctx, "}")) {
+                return processClosingBraceCommand(ctx);
+            }
+            else {
+                goto failed;
+            }
+            break;
         default:
         failed:
             Macros_ReportError("Unrecognized command:", ctx->at, ctx->end);
@@ -2463,11 +2574,46 @@ static macro_result_t processCommand(parser_context_t* ctx)
     return MacroResult_Finished;
 }
 
+static bool isOpeningBrace(parser_context_t* ctx)
+{
+    Macros_DryRun = true;
+
+    macro_result_t macroResult = processCommand(ctx);
+
+    bool res = macroResult & MacroResult_OpeningBraceFlag;
+
+    Macros_DryRun = false;
+
+    return res;
+}
+
+static void jumpToMatchingBrace()
+{
+    uint8_t nesting = 1;
+    Macros_DryRun = true;
+
+    bool reachedEnd = false;
+    while (!reachedEnd && nesting != 0) {
+        reachedEnd = !Macros_LoadNextCommand();
+        macro_result_t macroResult = Macros_ProcessCommandAction();
+
+        if (macroResult & MacroResult_OpeningBraceFlag) {
+            nesting++;
+        }
+        if (macroResult & MacroResult_ClosingBraceFlag) {
+            nesting--;
+        }
+    }
+
+    Macros_LoadNextCommand() || Macros_LoadNextAction() || (S->ms.macroBroken = true);
+
+    Macros_DryRun = false;
+}
+
 macro_result_t Macros_ProcessCommandAction(void)
 {
-    const char* cmd = S->ms.currentMacroAction.cmd.text + S->ms.commandBegin;
-    const char* cmdEnd = S->ms.currentMacroAction.cmd.text + S->ms.commandEnd;
-
+    const char* cmd = S->ms.currentMacroAction.cmd.text + S->ls->ms.commandBegin;
+    const char* cmdEnd = S->ms.currentMacroAction.cmd.text + S->ls->ms.commandEnd;
 
     parser_context_t ctx = { .macroState = S, .begin = cmd, .at = cmd, .end = cmdEnd };
 
@@ -2487,13 +2633,28 @@ macro_result_t Macros_ProcessCommandAction(void)
 
     if (*ctx.at == '#') {
         Macros_ReportWarn("# comments are deprecated, please switch to //", ctx.at, ctx.at);
-    } else if (ctx.at != ctx.end && !Macros_ParserError) {
+    } else if (ctx.at != ctx.end && !Macros_ParserError && Macros_DryRun) {
         Macros_ReportWarn("Unprocessed input encountered.", ctx.at, ctx.at);
     }
 
-    S->as.currentConditionPassed = macroResult & MacroResult_InProgressFlag;
-    if (macroResult & (MacroResult_ActionFinishedFlag | MacroResult_DoneFlag)) {
-        S->ms.lastIfSucceeded = !(macroResult & MacroResult_ConditionFailedFlag);
+    S->ls->as.currentConditionPassed = macroResult & MacroResult_InProgressFlag;
+    if (!Macros_DryRun && (macroResult & (MacroResult_ActionFinishedFlag | MacroResult_DoneFlag))) {
+        S->ls->ms.lastIfSucceeded = !(macroResult & MacroResult_ConditionFailedFlag);
     }
+
+    // This triggers when an unconsumed '{' is left at the end of line.
+    //
+    // If '{...}' has been completed, '{' command intentionally leaves itself
+    // in unconsumed state and returns MacroResult_Finished, so that any
+    // commands along the way can choose to repeat the command or not.
+    //
+    // Finally, if the finished flag reaches us (contrary to some modifier
+    // deciding that it wants to rerun the command), we now skip the entire
+    // scope
+    if (!Macros_DryRun && (macroResult & MacroResult_ActionFinishedFlag) && isOpeningBrace(&ctx)) {
+        jumpToMatchingBrace();
+        return MacroResult_DoneFlag;
+    }
+
     return macroResult;
 }

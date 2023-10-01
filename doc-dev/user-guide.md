@@ -289,7 +289,7 @@ For instance, if you rebind your UHK to Dvorak, then the key identified by hardw
 
 ### Secondary roles
 
-Secondary role is a role which becomes active if another key is pressed with this key. It can be implemented in following variants: 
+Secondary role is a role which becomes active if another key is pressed with this key. It can be implemented in following variants:
 
 - Using `ifInterrupted` command.
 - Using native secondary role driver (via `ifPrimary`/`ifSecondary` or GUI-mapping) with one of following resolution strategies:
@@ -448,6 +448,59 @@ Following operators are accepted:
 - `==,!=` - equals, not equals
 - `!` - unary boolean negation
 
+### Control flow
+
+We implement following standard(ish) control flow constructs:
+- `{`, `}` enclosed command blocks. Please note that these are treated like regular commands, so the *have to* be followed by newlines! E.g.:
+    ```
+    postponeKeys {
+        ...
+    }
+    autoRepeat {
+        ...
+    }
+    ```
+- `goTo`, jumping to a c-style label, e.g.:
+    ```
+    begin:
+    ...
+    goTo begin
+    ```
+- `if` / `else`:
+    ```
+    if ($i > 5) {
+        ...
+    }
+    else if ($i > 1) {
+        ...
+    }
+    else {
+        ...
+    }
+    ```
+- `while`, including `break` notation:
+    ```
+    setVar i 0
+    while (true) {
+        if ($i > 5) {
+            break
+        }
+        ...
+        setVar i ($i+1)
+    }
+    ```
+
+These constructs can be combined just as all other conditions and modifiers, so neither braces nor parentheses are obligatory. For instance following code is valid (although not very aesthetic and not recommended):
+```
+ifCtrl if $foo ifShift write "a"
+ifCtrl else write "b"
+else write "c"
+```
+or
+```
+while (true) ifShift write "this *is* valid, but *please* do not do this."
+```
+
 ### Advanced commands:
 
 Example of using advanced features:
@@ -461,11 +514,11 @@ setVar bar 5
 tapKey a
 delayUntil $foo
 repeatFor bar $currentAddress-2        //decrement $bar; if it is non-zero, return by two commands to the tapKey command
-noOp                   
+noOp
 default: tapKey b      //<string>: denotes a label, which can be used as jump target
 ```
 
-You can use `goTo $currentAddress` as an active wait loop. Consider following example. If briefly tapped, it produces `@@` (play last vim macro). If held, it prepends any other key tap with a `@` key. E.g., `thisMacro + p + p + p` produces `@p@p@p` (play vim macro in register p, twice).
+You can use `goTo $currentAddress` as an active wait loop. Consider following example. If briefly tapped, it produces `@@` (play last vim macro). If held, it prepends any other key tap with a `@` key. E.g., `thisMacro + p + p + p` produces `@p@p@p` (play vim macro in register p, thrice).
 
 ```
 begin: postponeKeys ifNotPending 1 ifNotReleased goTo $currentAddress
@@ -577,7 +630,7 @@ You can also start this from `$onInit` by `fork rotateHues` (given you have the 
 
 ```
 // put this at the beginning of the picker, to stop rotateHues when another choice is made.
-setReg 22 1
+setVar hueStopper 1
 // start the `rotateHues` macro on 'c' - as "changing"
 ifGesture c final fork rotateHues
 ```
