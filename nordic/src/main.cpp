@@ -8,6 +8,7 @@ extern "C"
 #include <zephyr/drivers/uart.h>
 #include <zephyr/usb/class/usb_hid.h>
 #include <zephyr/drivers/spi.h>
+#include <zephyr/drivers/i2c.h>
 
 #include <zephyr/types.h>
 #include <stddef.h>
@@ -368,6 +369,23 @@ int main(void) {
     );
 
     SHELL_CMD_REGISTER(uhk, &uhk_cmds, "UHK commands", NULL);
+
+    // Init I2C
+    #define	device_addr 0x18 // left module i2c address
+    uint8_t tx_buf[] = {0x00,0x00};
+    uint8_t rx_buf[10] = {0};
+
+    int ret;
+	static const struct device *i2c0_dev = DEVICE_DT_GET(DT_NODELABEL(i2c0));
+	k_msleep(50);
+	if (!device_is_ready(i2c0_dev)) {
+		printk("I2C bus %s is not ready!\n",i2c0_dev->name);
+	}
+
+	ret = i2c_write_read(i2c0_dev, device_addr, tx_buf, 2, rx_buf, 7);
+	if (ret != 0) {
+		printk("write-read fail\n");
+	}
 
     // Init ADC channels
     for (size_t i = 0U; i < ARRAY_SIZE(adc_channels); i++) {

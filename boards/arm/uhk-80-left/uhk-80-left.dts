@@ -51,6 +51,15 @@
 	pinctrl-names = "default", "sleep";
 };
 
+&i2c0 {
+    compatible = "nordic,nrf-twim";
+    status = "okay";
+    pinctrl-0 = <&i2c2_default>;
+    pinctrl-1 = <&i2c2_sleep>;
+    pinctrl-names = "default", "sleep";
+    clock-frequency = <100000>;
+};
+
 &pinctrl {
 	uart0_default: uart0_default {
 		group1 {
@@ -102,6 +111,22 @@
             low-power-enable;
         };
     };
+
+    i2c2_default: i2c2_default {
+        group1 {
+           psels = <NRF_PSEL(TWIM_SDA, 0, 26)>,
+              <NRF_PSEL(TWIM_SCL, 0, 27)>;
+              bias-pull-up;
+        };
+     };
+     i2c2_sleep: i2c2_sleep {
+        group1 {
+           psels = <NRF_PSEL(TWIM_SDA, 0, 26)>,
+              <NRF_PSEL(TWIM_SCL, 0, 27)>;
+                   low-power-enable;
+        };
+     };
+
 };
 
 &spi1 {
