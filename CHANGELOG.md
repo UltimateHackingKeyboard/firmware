@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [10.3.0] - 2023-10-01
+
+Device Protocol: 4.10.0 | Module Protocol: 4.3.0 | User Config: 6.0.0 | Hardware Config: 1.0.0 | Smart Macros: 2.**1.0**
+
+- Implement macro scopes via curly brackets. `SMARTMACROS:MINOR`
+- Implement `while` macro command. `SMARTMACROS:MINOR`
+- Implement `else` macro condition. `SMARTMACROS:MINOR`
+- Implement `exit` macro command. `SMARTMACROS:MINOR`
+- Implement `oneShot` macro command timeout. `SMARTMACROS:MINOR`
+- Report macro line position in errors. `SMARTMACROS:MINOR`
+- Don't throw "unprocessed input" macro error as consequence of another error. `SMARTMACROS:PATCH`
+- Fix redundant "unprocessed input" warning after `if BOOLEAN` condition. `SMARTMACROS:PATCH`
+- Fix `oneShot` macro command timeout in combination with commands that sleep until release. `SMARTMACROS:PATCH`
+
 ## [10.2.0] - 2023-09-16
 
 Device Protocol: 4.**10.0** | Module Protocol: 4.**3.0** | User Config: 6.0.0 | Hardware Config: 1.0.0 | Smart Macros: **2.0.0**
