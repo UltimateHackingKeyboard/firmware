@@ -94,6 +94,12 @@ ifShift set diagonalSpeedCompensation 1
 ifNotShift set diagonalSpeedCompensation 0
 ```
 
+Another common configuration is `keystrokeDelay`. By default, UHK just churns out scancodes as fast as it can, which is a problem for various features such as the write text action or write command, because some programs out there are not prepared to receive input that fast. Following setting will slow down UHK's output so that at most one usb report is sent every 10 milliseconds.
+
+```
+set keystrokeDelay 10
+```
+
 ### Binding keys and basic principles
 
 
