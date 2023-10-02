@@ -10,45 +10,45 @@
 };
 
 &adc {
-	status = "okay";
-	#address-cells = <1>;
-	#size-cells = <0>;
+    status = "okay";
+    #address-cells = <1>;
+    #size-cells = <0>;
 
-	channel@0 {
-		reg = <0>;
-		zephyr,gain = "ADC_GAIN_1_6";
-		zephyr,reference = "ADC_REF_INTERNAL";
-		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
-		zephyr,input-positive = <NRF_SAADC_AIN2>; // TS_ADC
-		zephyr,resolution = <12>;
-	};
+    channel@0 {
+        reg = <0>;
+        zephyr,gain = "ADC_GAIN_1_6";
+        zephyr,reference = "ADC_REF_INTERNAL";
+        zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+        zephyr,input-positive = <NRF_SAADC_AIN2>; // TS_ADC
+        zephyr,resolution = <12>;
+    };
 
-	channel@1 {
-		reg = <1>;
-		zephyr,gain = "ADC_GAIN_1_6";
-		zephyr,reference = "ADC_REF_INTERNAL";
-		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
-		zephyr,input-positive = <NRF_SAADC_AIN3>; // VBAT_ADC
-		zephyr,resolution = <12>;
-	};
+    channel@1 {
+        reg = <1>;
+        zephyr,gain = "ADC_GAIN_1_6";
+        zephyr,reference = "ADC_REF_INTERNAL";
+        zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+        zephyr,input-positive = <NRF_SAADC_AIN3>; // VBAT_ADC
+        zephyr,resolution = <12>;
+    };
 };
 
 &uart0 {
-	compatible = "nordic,nrf-uarte";
-	status = "okay";
-	current-speed = <115200>;
-	pinctrl-0 = <&uart0_default>;
-	pinctrl-1 = <&uart0_sleep>;
-	pinctrl-names = "default", "sleep";
+    compatible = "nordic,nrf-uarte";
+    status = "okay";
+    current-speed = <115200>;
+    pinctrl-0 = <&uart0_default>;
+    pinctrl-1 = <&uart0_sleep>;
+    pinctrl-names = "default", "sleep";
 };
 
 &uart1 {
-	compatible = "nordic,nrf-uarte";
-	status = "okay";
-	current-speed = <115200>;
-	pinctrl-0 = <&uart1_default>;
-	pinctrl-1 = <&uart1_sleep>;
-	pinctrl-names = "default", "sleep";
+    compatible = "nordic,nrf-uarte";
+    status = "okay";
+    current-speed = <115200>;
+    pinctrl-0 = <&uart1_default>;
+    pinctrl-1 = <&uart1_sleep>;
+    pinctrl-names = "default", "sleep";
 };
 
 &i2c0 {
@@ -61,41 +61,41 @@
 };
 
 &pinctrl {
-	uart0_default: uart0_default {
-		group1 {
-			psels = <NRF_PSEL(UART_RX, 0, 23)>;
-			bias-pull-up;
-		};
-		group2 {
-			psels = <NRF_PSEL(UART_TX, 0, 21)>;
-		};
-	};
+    uart0_default: uart0_default {
+        group1 {
+            psels = <NRF_PSEL(UART_RX, 0, 23)>;
+            bias-pull-up;
+        };
+        group2 {
+            psels = <NRF_PSEL(UART_TX, 0, 21)>;
+        };
+    };
 
-	uart0_sleep: uart0_sleep {
-		group1 {
-			psels = <NRF_PSEL(UART_RX, 0, 23)>,
-				<NRF_PSEL(UART_TX, 0, 21)>;
-			low-power-enable;
-		};
-	};
+    uart0_sleep: uart0_sleep {
+        group1 {
+            psels = <NRF_PSEL(UART_RX, 0, 23)>,
+                <NRF_PSEL(UART_TX, 0, 21)>;
+            low-power-enable;
+        };
+    };
 
-	uart1_default: uart1_default {
-		group1 {
-			psels = <NRF_PSEL(UART_RX, 0, 11)>;
-			bias-pull-up;
-		};
-		group2 {
-			psels = <NRF_PSEL(UART_TX, 0, 12)>;
-		};
-	};
+    uart1_default: uart1_default {
+        group1 {
+            psels = <NRF_PSEL(UART_RX, 0, 11)>;
+            bias-pull-up;
+        };
+        group2 {
+            psels = <NRF_PSEL(UART_TX, 0, 12)>;
+        };
+    };
 
-	uart1_sleep: uart1_sleep {
-		group1 {
-			psels = <NRF_PSEL(UART_RX, 0, 11)>,
-				<NRF_PSEL(UART_TX, 0, 12)>;
-			low-power-enable;
-		};
-	};
+    uart1_sleep: uart1_sleep {
+        group1 {
+            psels = <NRF_PSEL(UART_RX, 0, 11)>,
+                <NRF_PSEL(UART_TX, 0, 12)>;
+            low-power-enable;
+        };
+    };
 
     spi1_default: spi1_default {
         group1 {
@@ -140,8 +140,8 @@
     compatible = "uhk-80-right";
 
     chosen {
-		zephyr,console = &uart0;
-		zephyr,shell-uart = &uart0;
+        zephyr,console = &uart0;
+        zephyr,shell-uart = &uart0;
         zephyr,sram = &sram0;
         zephyr,flash = &flash0;
         zephyr,code-partition = &slot0_partition;
@@ -253,8 +253,8 @@
     };
 
     zephyr,user {
-		io-channels = <&adc 0>, <&adc 1>;
-	};
+        io-channels = <&adc 0>, <&adc 1>;
+    };
 
     aliases {
         charger-en = &charger_en;
