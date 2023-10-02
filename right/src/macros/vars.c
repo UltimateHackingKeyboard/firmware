@@ -701,7 +701,7 @@ static macro_variable_t consumeAndExpression(parser_context_t* ctx)
     while (true) {
         parser_context_t opCtx = *ctx;
         if (ConsumeToken(ctx, "&&")) {
-            op = Operator_Or;
+            op = Operator_And;
         } else {
             return accumulator;
         }
