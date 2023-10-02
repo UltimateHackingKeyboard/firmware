@@ -371,7 +371,12 @@ int main(void) {
     SHELL_CMD_REGISTER(uhk, &uhk_cmds, "UHK commands", NULL);
 
     // Init I2C
+#if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_LEFT
     #define	device_addr 0x18 // left module i2c address
+#elif CONFIG_DEVICE_ID == DEVICE_ID_UHK80_RIGHT
+    #define	device_addr 0x28 // right module i2c address
+#endif
+
     uint8_t tx_buf[] = {0x00,0x00};
     uint8_t rx_buf[10] = {0};
 
@@ -386,6 +391,7 @@ int main(void) {
 	if (ret != 0) {
 		printk("write-read fail\n");
 	}
+    printk("sync: %.7s\n", rx_buf);
 
     // Init ADC channels
     for (size_t i = 0U; i < ARRAY_SIZE(adc_channels); i++) {
