@@ -453,6 +453,7 @@ Following operators are accepted:
 - `<,<=,>,>=` - less than, less or equal, greater than, greater or equal
 - `==,!=` - equals, not equals
 - `!` - unary boolean negation
+- `&&`, `||` - boolean "and" and "or"
 
 ### Control flow
 

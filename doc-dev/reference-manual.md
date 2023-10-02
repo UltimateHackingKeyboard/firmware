@@ -172,7 +172,7 @@ The following grammar is supported:
     LAYERID_BASIC = {fn|mouse|mod|base|fn2|fn3|fn4|fn5}
     KEYMAPID = <abbrev>|last
     MACROID = last|CHAR|INT
-    OPERATOR = + | - | * | / | % | < | > | <= | >= | == | !=
+    OPERATOR = + | - | * | / | % | < | > | <= | >= | == | != | && | ||
     VARIABLE_EXPANSION = $<variable name> | $<config value name> | $currentAddress | $thisKeyId | $queuedKeyId.<queue index (INT)> | $keyId.KEYID_ABBREV
     EXPRESSION = (EXPRESSION) | INT | BOOL | FLOAT | VARIABLE_EXPANSION | EXPRESSION OPERATOR EXPRESSION | !EXPRESSION | min(EXPRESSION [, EXPRESSION]+) | max(EXPRESSION [, EXPRESSION]+)
     PARENTHESSED_EXPRESSION = (EXPRESSION)
@@ -625,6 +625,7 @@ Internally, values are saved in one of the following types, and types are automa
     - `<,<=,>,>=` - less than, less or equal, greater than, greater or equal
     - `==,!=` - equals, not equals
     - `!` - unary boolean negation
+    - `&&`, `||` - and, or
   - Following special identifiers are supported:
     - `$thisKeyId` which stands for keyid of the key which activated the macro.
     - `$keyId.<keyId abbreviation>` which stands for keyid of the key which activated the macro.
