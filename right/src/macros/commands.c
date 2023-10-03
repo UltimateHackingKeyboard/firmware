@@ -874,14 +874,16 @@ static macro_result_t processSetLedTxtCommand(parser_context_t* ctx)
         textLen = 3;
     } else if (ctx->at != ctx->end) {
         uint16_t stringOffset = 0, textIndex = 0, textSubIndex = 0;
-        for (uint8_t i = 0; i < 3; i++) {
-            text[i] = Macros_ConsumeCharOfString(ctx, &stringOffset, &textIndex, &textSubIndex);
-            if (text[i] != '\0') {
+        for (uint8_t i = 0; true; i++) {
+            char c = Macros_ConsumeCharOfString(ctx, &stringOffset, &textIndex, &textSubIndex);
+            if (c == '\0') {
+                break;
+            }
+            if (i < 3) {
+                text[i] = c;
                 textLen++;
             }
         }
-        ctx->at += stringOffset;
-        ctx->at += textIndex;
         ConsumeWhite(ctx);
     } else {
         Macros_ReportError("Text argument expected.", ctx->at, ctx->at);
