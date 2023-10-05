@@ -145,7 +145,7 @@ static struct gpio_dt_spec cols[] = {
     GPIO_DT_SPEC_GET(DT_ALIAS(col5), gpios),
     GPIO_DT_SPEC_GET(DT_ALIAS(col6), gpios),
     GPIO_DT_SPEC_GET(DT_ALIAS(col7), gpios),
-#if DEVICE_ID == DEVICE_ID_UHK80_RIGHT
+#if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_RIGHT
     GPIO_DT_SPEC_GET(DT_ALIAS(col8), gpios),
     GPIO_DT_SPEC_GET(DT_ALIAS(col9), gpios),
     GPIO_DT_SPEC_GET(DT_ALIAS(col10), gpios),
