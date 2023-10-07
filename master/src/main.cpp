@@ -23,6 +23,7 @@ extern "C"
 #include "bluetooth.h"
 }
 #include "usb/usb.hpp"
+#include "usb/keyboard_app.hpp"
 #include <zephyr/drivers/adc.h>
 
 #define DEVICE_ID_UHK60V1_RIGHT 1
@@ -286,6 +287,28 @@ static int cmd_uhk_merge(const struct shell *shell, size_t argc, char *argv[])
 }
 #endif
 
+static int cmd_uhk_rollover(const struct shell *shell, size_t argc, char *argv[])
+{
+    if (argc == 1) {
+        shell_fprintf(shell, SHELL_NORMAL, "%c\n",
+                (keyboard_app::handle().get_rollover() == keyboard_app::rollover::N_KEY) ? 'n' : '6');
+    } else {
+        keyboard_app::handle().set_rollover((argv[1][0] == '6') ?
+                keyboard_app::rollover::SIX_KEY : keyboard_app::rollover::N_KEY);
+    }
+    return 0;
+}
+
+static int cmd_uhk_gamepad(const struct shell *shell, size_t argc, char *argv[])
+{
+    if (argc == 1) {
+        // TODO
+    } else {
+        usb_init(argv[1][0] == '1');
+    }
+    return 0;
+}
+
 void chargerStatCallback(const struct device *port, struct gpio_callback *cb, gpio_port_pins_t pins) {
     if (statLog) {
         printk("STAT changed to %i\n", gpio_pin_get_dt(&chargerStatDt) ? 1 : 0);
@@ -369,6 +392,12 @@ int main(void) {
             "get the merged state of UHK halves",
             cmd_uhk_merge, 1, 0),
 #endif
+        SHELL_CMD_ARG(rollover, NULL,
+            "get/set keyboard rollover mode (n/6)",
+            cmd_uhk_rollover, 1, 1),
+        SHELL_CMD_ARG(gamepad, NULL,
+            "switch gamepad on/off",
+            cmd_uhk_gamepad, 1, 1),
         SHELL_SUBCMD_SET_END
     );
 
