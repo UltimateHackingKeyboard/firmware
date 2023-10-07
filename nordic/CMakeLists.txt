@@ -1,13 +1,13 @@
 cmake_minimum_required(VERSION 3.20.0)
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
-project(uhk_nordic_left)
+project(uhk)
 
 target_include_directories(app PUBLIC
     src
 )
 
-FILE(GLOB app_sources src/*.c)
-FILE(GLOB app_cpp_sources src/*.cpp)
+file(GLOB app_sources src/*.c)
+file(GLOB app_cpp_sources src/*.cpp)
 target_sources(app PRIVATE ${app_sources} ${app_cpp_sources})
 
 # C headers compiled with C++ give pointer conversion errors, turn them to warnings
