@@ -4,7 +4,8 @@
             "name": "UHK 60 v1",
             "defines": [
                 "DEVICE_ID=DEVICE_ID_UHK60V1"
-            ]
+            ],
+            "configurationProvider": "nordic-semiconductor.nrf-connect"
         },
         {
             "name": "UHK 60 v2",
@@ -20,7 +21,7 @@
             "defines": [],
             "compilerPath": "/usr/bin/gcc",
             "cStandard": "c17",
-            "cppStandard": "gnu++17",
+            "cppStandard": "gnu++20",
             "intelliSenseMode": "linux-gcc-x64",
             "configurationProvider": "nordic-semiconductor.nrf-connect"
         }

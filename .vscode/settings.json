@@ -9,6 +9,9 @@
     ],
     "files.associations": {
         "*.h": "c",
-        "*.c": "c"
+        "*.c": "c",
+        "bitset": "cpp",
+        "span": "cpp",
+        "array": "cpp"
     }
 }
