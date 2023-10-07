@@ -6,6 +6,32 @@
     },
     "configurePresets": [
         {
+            "name": "build-uhk-60-v1-right",
+            "displayName": "UHK 60 v1 right",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build-uhk-60-right-v1",
+            "cacheVariables": {
+                "NCS_TOOLCHAIN_VERSION": "NONE",
+                "BOARD": "frdm_k22f",
+                "BOARD_ROOT": "${sourceParentDir}/",
+                "CONF_FILE": "${sourceDir}/prj.conf",
+                "OVERLAY_CONFIG": "${sourceDir}/prj.conf.overlays/uhk-60-v1-right.prj.conf"
+            }
+        },
+        {
+            "name": "build-uhk-60-v2-right",
+            "displayName": "UHK 60 v2 right",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build-uhk-60-right-v2",
+            "cacheVariables": {
+                "NCS_TOOLCHAIN_VERSION": "NONE",
+                "BOARD": "frdm_k22f",
+                "BOARD_ROOT": "${sourceParentDir}/",
+                "CONF_FILE": "${sourceDir}/prj.conf",
+                "OVERLAY_CONFIG": "${sourceDir}/prj.conf.overlays/uhk-60-v2-right.prj.conf"
+            }
+        },
+        {
             "name": "build-uhk-80-left",
             "displayName": "UHK 80 left",
             "generator": "Ninja",
