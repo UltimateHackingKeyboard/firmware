@@ -40,6 +40,8 @@ I.e., if you want to customize acceleration driver for your trackball module on 
     set module.trackball.speed 1.0
     set module.trackball.xceleration 1.0
 
+(Also note, that the above will *not* restore original settings when you leave the keymap. You will need another macro event for that.)
+
 ## Macro commands
 
 The following grammar is supported:
