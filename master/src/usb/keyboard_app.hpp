@@ -76,7 +76,9 @@ public:
             }
         }
 
-        uint8_t modifiers;
+        bool operator==(const keys_nkro_report_base& other) const = default;
+
+        uint8_t modifiers {};
         std::array<uint8_t, (NKRO_USAGE_COUNT + 7) / 8> scancode_flags {};
     };
 
@@ -114,6 +116,6 @@ private:
     C2USB_USB_TRANSFER_ALIGN(keys_nkro_report, keys_nkro_) {};
 };
 
-using keys_buffer = keyboard_app::keys_nkro_report_base<0>;
+using scancode_buffer = keyboard_app::keys_nkro_report_base<0>;
 
 #endif // __KEYBOARD_APP_HEADER__

@@ -456,6 +456,7 @@ int main(void) {
 //  int blink_status = 0;
     uint32_t counter = 0;
     bool pixel = 1;
+    scancode_buffer prevKeys, keys;
 
     for (;;) {
         keyPressed = false;
@@ -477,6 +478,14 @@ int main(void) {
             gpio_pin_set_dt(&rows[rowId], 0);
         }
 
+        keys.set_code(scancode::A, keyPressed);
+        if (keys != prevKeys) {
+            auto result = keyboard_app::handle().send(keys);
+            if (result == hid::result::OK) {
+                // buffer accepted for transmit
+                prevKeys = keys;
+            }
+        }
         #ifdef HAS_OLED
         setA0(false);
         setOledCs(false);

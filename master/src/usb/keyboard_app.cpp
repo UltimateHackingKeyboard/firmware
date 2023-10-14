@@ -88,7 +88,7 @@ void keyboard_app::stop()
     // TODO stop handling keyboard events
 }
 
-hid::result keyboard_app::send(const keys_buffer& data)
+hid::result keyboard_app::send(const keys_nkro_report_base<0>& data)
 {
     // TODO: report data accessing mutex?
 
