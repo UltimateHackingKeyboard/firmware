@@ -81,6 +81,7 @@ void keyboard_app::start(hid::protocol prot)
     // TODO start handling keyboard events
     keys_nkro_ = {};
     keys_6kro_ = {};
+    tx_busy_ = false;
 }
 
 void keyboard_app::stop()
@@ -88,11 +89,11 @@ void keyboard_app::stop()
     // TODO stop handling keyboard events
 }
 
-hid::result keyboard_app::send(const keys_nkro_report_base<0>& data)
+hid::result keyboard_app::send(const keys_nkro_report_base<>& data)
 {
     // TODO: report data accessing mutex?
 
-    hid::result result = hid::result::BUSY;
+    auto result = hid::result::BUSY;
     if (tx_busy_) {
         // protect data in transit
         return result;

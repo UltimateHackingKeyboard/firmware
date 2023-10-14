@@ -36,7 +36,7 @@ public:
     void set_rollover(rollover mode);
     rollover get_rollover() const { return rollover_; }
 
-    template<uint8_t REPORT_ID>
+    template<uint8_t REPORT_ID = 0>
     struct keys_nkro_report_base : public hid::report::base<hid::report::type::INPUT, REPORT_ID>
     {
         void set_code(scancode code, bool value = true)
@@ -82,7 +82,7 @@ public:
         std::array<uint8_t, (NKRO_USAGE_COUNT + 7) / 8> scancode_flags {};
     };
 
-    hid::result send(const keys_nkro_report_base<0>& data);
+    hid::result send(const keys_nkro_report_base<>& data);
 
 private:
     static const hid::report_protocol& report_protocol();
@@ -116,6 +116,6 @@ private:
     C2USB_USB_TRANSFER_ALIGN(keys_nkro_report, keys_nkro_) {};
 };
 
-using scancode_buffer = keyboard_app::keys_nkro_report_base<0>;
+using scancode_buffer = keyboard_app::keys_nkro_report_base<>;
 
 #endif // __KEYBOARD_APP_HEADER__

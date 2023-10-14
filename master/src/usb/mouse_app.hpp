@@ -4,6 +4,18 @@
 #include "hid/app/mouse.hpp"
 #include "hid/application.hpp"
 
+enum class mouse_button
+{
+    LEFT = 0,
+    RIGHT,
+    MIDDLE,
+    _4,
+    _5,
+    _6,
+    _7,
+    _8
+};
+
 class mouse_app : public hid::application
 {
     static const hid::report_protocol& report_protocol();
@@ -17,7 +29,7 @@ class mouse_app : public hid::application
     {}
 
 public:
-    template<uint8_t REPORT_ID>
+    template<uint8_t REPORT_ID = 0>
     struct mouse_report_base : public hid::report::base<hid::report::type::INPUT, REPORT_ID>
     {
         uint8_t buttons {};
@@ -29,14 +41,40 @@ public:
 
         constexpr mouse_report_base() = default;
 
-        // TODO: add helpers
+        bool operator==(const mouse_report_base& other) const = default;
+
+        void set_button(mouse_button b, bool value = true)
+        {
+            if (value) {
+                buttons |= 1 << static_cast<uint8_t>(b);
+            } else {
+                buttons &= ~(1 << static_cast<uint8_t>(b));
+            }
+        }
+        bool test_button(mouse_button b) const
+        {
+            return buttons & (1 << static_cast<uint8_t>(b));
+        }
+        void set_button(uint8_t number, bool value = true)
+        {
+            assert((number > 0) and (number <= 8));
+            if (value) {
+                buttons |= 1 << (number - 1);
+            } else {
+                buttons &= ~(1 << (number - 1));
+            }
+        }
+        bool test_button(uint8_t number) const
+        {
+            return buttons & (1 << (number - 1));
+        }
     };
-    using mouse_report = mouse_report_base<0>;
 
     static mouse_app& handle();
 
-    using hid::application::send_report;
+    hid::result send(const mouse_report_base<>& data);
 
+private:
     void start(hid::protocol prot) override;
     void stop() override;
     void set_report(hid::report::type type, const std::span<const uint8_t>& data) override
@@ -46,7 +84,10 @@ public:
     void in_report_sent(const std::span<const uint8_t>& data) override;
     void get_report(hid::report::selector select, const std::span<uint8_t>& buffer) override;
 
-private:
+    C2USB_USB_TRANSFER_ALIGN(mouse_report_base<>, report_data_) {};
+    bool tx_busy_ {};
 };
+
+using mouse_buffer = mouse_app::mouse_report_base<>;
 
 #endif // __KEYBOARD_APP_HEADER__

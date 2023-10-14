@@ -24,6 +24,7 @@ extern "C"
 }
 #include "usb/usb.hpp"
 #include "usb/keyboard_app.hpp"
+#include "usb/mouse_app.hpp"
 #include <zephyr/drivers/adc.h>
 
 #define DEVICE_ID_UHK60V1_RIGHT 1
@@ -457,6 +458,7 @@ int main(void) {
     uint32_t counter = 0;
     bool pixel = 1;
     scancode_buffer prevKeys, keys;
+    mouse_buffer prevMouseState, mouseState;
 
     for (;;) {
         keyPressed = false;
@@ -486,6 +488,20 @@ int main(void) {
                 prevKeys = keys;
             }
         }
+
+        mouseState.set_button(mouse_button::RIGHT, keyPressed);
+        // mouseState.x = -50;
+        // mouseState.y = -50;
+        // mouseState.wheel_y = -50;
+        // mouseState.wheel_x = -50;
+        if (mouseState != prevMouseState) {
+            auto result = mouse_app::handle().send(mouseState);
+            if (result == hid::result::OK) {
+                // buffer accepted for transmit
+                prevMouseState = mouseState;
+            }
+        }
+
         #ifdef HAS_OLED
         setA0(false);
         setOledCs(false);
