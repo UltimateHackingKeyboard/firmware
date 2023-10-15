@@ -1,0 +1,14 @@
+manifest:
+  self:
+    path: application
+  remotes:
+    - name: sdk
+      url-base: https://github.com/nrfconnect
+  projects:
+    - name: sdk-nrf
+      remote: sdk
+      path: nrf
+      revision: v2.4.99-dev2
+      import:
+        path-prefix: external
+      clone-depth: 1
