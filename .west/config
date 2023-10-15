@@ -1,6 +1,0 @@
-[manifest]
-path = nordic
-file = west.yml
-
-[zephyr]
-base = external/zephyr
