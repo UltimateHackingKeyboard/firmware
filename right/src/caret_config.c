@@ -1,6 +1,8 @@
 #include "caret_config.h"
 #include "arduino_hid/ConsumerAPI.h"
 #include "arduino_hid/SystemAPI.h"
+#include "key_action.h"
+#include "lufa/HIDClassCommon.h"
 #include "macros/core.h"
 #include "macros/status_buffer.h"
 #include "module.h"
@@ -29,6 +31,19 @@ caret_configuration_t remappableModes[] = {
             { // vertical axis
                 .positiveAction = { .type = KeyActionType_Keystroke, .keystroke = { .keystrokeType = KeystrokeType_Media, .scancode = MEDIA_VOLUME_UP }},
                 .negativeAction = { .type = KeyActionType_Keystroke, .keystroke = { .keystrokeType = KeystrokeType_Media, .scancode = MEDIA_VOLUME_DOWN }},
+            }
+        }
+    },
+    {
+        // delete mode
+        .axisActions = { //axis array
+            { // horizontal axis
+                .positiveAction = { .type = KeyActionType_Keystroke, .keystroke = { .keystrokeType = KeystrokeType_Basic, .scancode = HID_KEYBOARD_SC_DELETE }},
+                .negativeAction = { .type = KeyActionType_Keystroke, .keystroke = { .keystrokeType = KeystrokeType_Basic, .scancode = HID_KEYBOARD_SC_BACKSPACE }},
+            },
+            { // vertical axis
+                .negativeAction = { .type = KeyActionType_Keystroke, .keystroke = { .keystrokeType = KeystrokeType_Basic, .scancode = HID_KEYBOARD_SC_DELETE, .modifiers = HID_KEYBOARD_MODIFIER_LEFTCTRL | HID_KEYBOARD_MODIFIER_LEFTSHIFT }},
+                .positiveAction = { .type = KeyActionType_Keystroke, .keystroke = { .keystrokeType = KeystrokeType_Basic, .scancode = HID_KEYBOARD_SC_BACKSPACE, .modifiers = HID_KEYBOARD_MODIFIER_LEFTCTRL | HID_KEYBOARD_MODIFIER_LEFTSHIFT }},
             }
         }
     },

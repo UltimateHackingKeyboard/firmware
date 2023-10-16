@@ -394,6 +394,9 @@ navigation_mode_t ConsumeNavigationModeId(parser_context_t* ctx)
     else if (ConsumeToken(ctx, "media")) {
         return NavigationMode_Media;
     }
+    else if (ConsumeToken(ctx, "delete")) {
+        return NavigationMode_Delete;
+    }
     else if (ConsumeToken(ctx, "zoom")) {
         return NavigationMode_Zoom;
     }

@@ -188,7 +188,7 @@ The following grammar is supported:
     LABEL = <string identifier>
     MODMASK = [MODMASK]+ | [L|R]{S|C|A|G} | {p|r|h|t} | {s|i|o}
     NAVIGATION_MODE = cursor | scroll | caret | media | zoom | zoomPc | zoomMac | none
-    NAVIGATION_MODE_CUSTOM = caret | media | zoomPc | zoomMac
+    NAVIGATION_MODE_CUSTOM = caret | media | delete | zoomPc | zoomMac
     MODULEID = trackball | touchpad | trackpoint | keycluster
     ADDRESS = LABEL | INT
     ACTION = { macro MACROID | keystroke SHORTCUT | none }
@@ -658,6 +658,7 @@ UHK modules feature four navigation modes, which are mapped by layer and module.
 - **Scroll mode** - in this mode, module can be used to scroll. Default mode for mod layer. This means that apart from switching layer, your mod layer switches also make your right hand modules act as very comfortable scroll wheels. Sensitivity is controlled by the `scrollSpeedDivisor` value.
 - **Caret mode** - in this mode, module produces arrow key taps. This can be used to move comfortably in text editor, since in this mode, cursor is also locked to one of the two directions, preventing unwanted line changes. Sensitivity is controlled by the `caretSpeedDivisor`, `axisLockStrengthFirstTick` and `axisLockStrength`.
 - **Media mode** - in this mode, up/down directions control volume (via media key scancodes), while horizontal play/pause and switch to next track. At the moment, this mode is not enabled by default on any layer. Sensitivity is shared with the caret mode.
+- **Delete mode** - in this mode, horizontal movement deletes by characters, vertical by lines. Sensitivity is shared with the caret mode.
 - **Zoom mode pc / mac** - in this mode, `Ctrl +`/`Ctrl -` or `Gui +`/`Gui -` shortcuts are produced.
 - **Zoom mode** - This mode serves specifically to implement touchpad's gesture. It alternates actions of zoomPc and zoomMac modes. Can be customized via `set module.touchpad.pinchZoomMode NAVIGATION_MODE`.
 

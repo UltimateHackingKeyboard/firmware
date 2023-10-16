@@ -23,6 +23,7 @@
         /* action_t mapped behaviour */
         NavigationMode_Caret,
         NavigationMode_Media,
+        NavigationMode_Delete,
         NavigationMode_ZoomPc,
         NavigationMode_ZoomMac,
 

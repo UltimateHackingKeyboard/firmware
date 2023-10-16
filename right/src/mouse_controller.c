@@ -1,16 +1,11 @@
 #include <math.h>
 #include "key_action.h"
-#include "led_display.h"
 #include "layer.h"
+#include "module.h"
 #include "usb_interfaces/usb_interface_mouse.h"
-#include "peripherals/test_led.h"
-#include "slave_drivers/is31fl3xxx_driver.h"
 #include "slave_drivers/uhk_module_driver.h"
 #include "timer.h"
 #include "config_parser/parse_keymap.h"
-#include "usb_commands/usb_command_get_debug_buffer.h"
-#include "arduino_hid/ConsumerAPI.h"
-#include "secondary_role_driver.h"
 #include "slave_drivers/touchpad_driver.h"
 #include "mouse_controller.h"
 #include "mouse_keys.h"
@@ -18,12 +13,9 @@
 #include "layer_switcher.h"
 #include "usb_report_updater.h"
 #include "caret_config.h"
-#include "keymap.h"
-#include "macros/core.h"
 #include "debug.h"
 #include "postponer.h"
 #include "layer.h"
-#include "secondary_role_driver.h"
 
 typedef struct {
     float x;
@@ -277,10 +269,7 @@ static void handleNewCaretModeAction(caret_axis_t axis, uint8_t resultSign, int1
             ActiveUsbMouseReport->wheelY += axis == CaretAxis_Vertical ? value : 0;
             break;
         }
-        case NavigationMode_ZoomMac:
-        case NavigationMode_ZoomPc:
-        case NavigationMode_Media:
-        case NavigationMode_Caret: {
+        case NavigationMode_RemappableFirst ... NavigationMode_RemappableLast: {
             caret_configuration_t* currentCaretConfig = GetNavigationModeConfiguration(ks->currentNavigationMode);
             caret_dir_action_t* dirActions = &currentCaretConfig->axisActions[ks->caretAxis];
             ks->caretAction.action = resultSign > 0 ? dirActions->positiveAction : dirActions->negativeAction;
@@ -522,10 +511,7 @@ static void processModuleKineticState(
             break;
         }
         case NavigationMode_Zoom:
-        case NavigationMode_ZoomPc:
-        case NavigationMode_ZoomMac:
-        case NavigationMode_Media:
-        case NavigationMode_Caret:;
+        case NavigationMode_RemappableFirst ... NavigationMode_RemappableLast:;
             // forced zoom = touchpad pinch zoom; it needs special coefficient
             // forced scroll = touchpad scroll;
             bool isPinchGesture = forcedNavigationMode == NavigationMode_Zoom;
