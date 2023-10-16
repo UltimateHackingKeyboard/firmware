@@ -47,25 +47,25 @@ ifDoubletap tapKey capsLock
 
 4) If you encounter a bug, let me know. There are lots of features and quite few users around this codebase - if you do not report problems you find, chances are that no one else will (since most likely no one else has noticed).
 
-## Known software oddities
+## Known software limitations and oddities
 
 - Karabiner Elements does weird things in combination with UHK.
 
   Fix: disable Karabiner elements.
 
-- Some software receives input in wrong order when the input is too fast. E.g., shift+9 sometimes produces `(`, sometimes `9`.
-
-  Fix: `set keystrokeDelay 10`.
-
 - Mac ignores short caps-lock taps.
 
   Fix: add manual delay of 400 ms or so.
 
-- Games sample input instead of processing press and release events in order. As a result, primary actions of secondary role keys (e.g., secondary role escape on the UHK mouse key), or any macro taps get ignored.
+- Games sample input instead of processing press and release events in order. As a result, actions of secondary role keys (e.g., esc on UHK mouse key), or any macro taps get ignored.
 
   Fix: add manual ~50 ms delays; program secondary roles via macros.
 
-- Shift in shift+click often gets ignored. (Encountered under Windows.) This is because mouse click and shift are communicated over different usb interfaces, and therefore tend to arrive in wrong order.
+- Some software receives input in wrong order when the input is too fast. E.g., shift+9 sometimes produces `(`, sometimes `9`.
+
+  Fix: `set keystrokeDelay 10`.
+
+- Shift in shift+click macro often gets ignored. (Encountered under Windows.) This is because mouse click and shift are communicated over different usb interfaces, and therefore tend to arrive in wrong order.
 
   Fix: `set keystrokeDelay 10`. 
 
@@ -81,13 +81,34 @@ ifDoubletap tapKey capsLock
 
   Fix: make sure your scrollAxisLock is enabled (`set module.MODULEID.scrollAxisLock 1`), maybe fine tune its settings, and make sure you scroll along vertical axis of the module in question.
 
+## Macro events
+
+Macro events are specially named macros that get executed on specific occasions. For instance macro named `$onInit` will be run when UHK starts. Macro named `$onKeymapChange any` will be run whenever keymap is switched.
+
+Some macro events are:
+- `$onInit`
+- `$onKeymapChange {KEYMAPID|any}`
+- `$onLayerChange {LAYERID|any}`
+- `$onKeymapLayerChange KEYMAPID LAYERID`
+
+
+### Sharing layers across Keymaps
+
+This can be also used to share layers across keymaps. For instance, assume I want to construct a colemak keymap (COL) that shares non-base layers with my querty (QTY) keymap. Then I will put following into a macro named `$onKeymapChange COL`:
+
+```
+replaceLayer fn QTY fn
+replaceLayer mod QTY mod
+replaceLayer mouse QTY mouse
+```
+
 ## Examples
 
-Every nonempty line is considered as one command. Empty line, or commented line too. Empty lines are skipped. Exception is empty command action, which counts for one command.
+Every nonempty line is considered as one command. Empty line, or commented line too. Empty lines are skipped. Exception is empty command action, which counts for one command. Even `{` and `}` are treated as commands, and have to be on separate lines.
 
 ### Configuration
 
-Configuration of the keyboard can be modified globally or per-keymap by using [macro events](reference-manual.md). For instance, macro named `$onInit` is executed on startup and on config reloads. E.g., it may look like this:
+Configuration of the keyboard can be modified globally or per-keymap by using [macro events](reference-manual.md). For instance, following may be placed into a macro named `$onInit` in order to make it applied on UHK startup:
 
 ```
 // accel driver
@@ -324,7 +345,7 @@ Another concept which may or may not use our time machine is secondary roles, na
 
 Please note the difference between key ids and scancodes. Both notation use human-readable abbreviations and are therefore easy to mix up.
 
-- _key ids_ identify specific hardware key. Human readable key id abbreviations are assigned to match the printed key labels according to the default en-US layout. If you wish to use numeric key ids, then be sure that the numbers have always at least two digits (e.g., `ifGesture 03 ...`).
+- _key ids_ identify specific hardware keys. Human readable key id abbreviations are assigned to match the printed key labels according to the default en-US layout. If you wish to use numeric key ids, then be sure that the numbers have always at least two digits (e.g., `ifGesture 03 ...`).
 - _scancode_ abbreviations describe scancodes as communicated to the PC, mapped according to en-US scancode mapping.
 
 For instance, if you rebind your UHK to Dvorak, then the key identified by hardware id `s` will be mapped to the `o` scancode (i.e., will read `o` in Agent, or contain `holdKey o` macro command). That is, issuing `activateKeyPostponed s` will produce the same thing as `holdKey o`. (Of course, if you furthermore choose some non-standard language mapping in your OS, you may end up with yet another character produced on screen.)
@@ -625,13 +646,11 @@ on fn.q (and possibly on all other fn layer characters?):
 
 ```
 ifShift final recordMacro $thisKeyId          // start or end macro recording by fn+shift+q
-setVar i 0                                    // declare auxiliary variable to use as an iterator
 if ($macroRepeat == 0) setVar macroRepeat 1   // if number of repetitions was not specified, specify that we should repeat once
-while ($i < $macroRepeat) {
+while ($macroRepeat > 0) {
     playMacro $thisKeyId
-    setVar i ($i+1)
+    setVar macroRepeat ($macroRepeat-1)
 }
-setVar macroRepeat 0
 ```
 
 #### Vim @ prefix key
