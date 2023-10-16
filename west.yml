@@ -4,6 +4,9 @@ manifest:
   remotes:
     - name: sdk
       url-base: https://github.com/nrfconnect
+    - name: zephyr
+      url-base: https://github.com/zephyrproject-rtos
+
   projects:
     - name: sdk-nrf
       remote: sdk
@@ -11,4 +14,8 @@ manifest:
       revision: v2.4.2
       import:
         path-prefix: external
+      clone-depth: 1
+    - name: hal_nxp
+      remote: zephyr
+      path: modules/hal/nxp
       clone-depth: 1
