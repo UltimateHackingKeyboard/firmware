@@ -7,6 +7,6 @@ config BOARD
     default "uhk-80-left"
 
 config BT_CTLR
-   default BT
+    default BT
 
 endif
