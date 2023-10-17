@@ -6,9 +6,22 @@ target_include_directories(app PUBLIC
     src
 )
 
-file(GLOB app_sources src/*.c)
-file(GLOB app_cpp_sources src/*.cpp)
-target_sources(app PRIVATE ${app_sources} ${app_cpp_sources})
+if(BOARD STREQUAL "uhk-60-right")
+    set(HAS_BLUETOOTH FALSE)
+else()
+    set(HAS_BLUETOOTH TRUE)
+endif()
+
+message(STATUS "HAS_BLUETOOTH: ${HAS_BLUETOOTH}")
+
+if(HAS_BLUETOOTH)
+    file(GLOB app_sources src/*.c)
+    file(GLOB app_cpp_sources src/*.cpp)
+    target_sources(app PRIVATE ${app_sources} ${app_cpp_sources})
+else()
+    file(GLOB app_cpp_sources src/main.cpp)
+    target_sources(app PRIVATE ${app_cpp_sources})
+endif()
 
 # C headers compiled with C++ give pointer conversion errors, turn them to warnings
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive")
