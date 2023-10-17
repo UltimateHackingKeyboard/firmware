@@ -14,13 +14,16 @@ endif()
 
 message(STATUS "HAS_BLUETOOTH: ${HAS_BLUETOOTH}")
 
+file(GLOB usb_sources src/usb/*.c)
+file(GLOB usb_cpp_sources src/usb/*.cpp)
+
 if(HAS_BLUETOOTH)
     file(GLOB app_sources src/*.c)
     file(GLOB app_cpp_sources src/*.cpp)
-    target_sources(app PRIVATE ${app_sources} ${app_cpp_sources})
+    target_sources(app PRIVATE ${app_sources} ${app_cpp_sources} ${usb_sources} ${usb_cpp_sources})
 else()
     file(GLOB app_cpp_sources src/main.cpp)
-    target_sources(app PRIVATE ${app_cpp_sources})
+    target_sources(app PRIVATE ${app_cpp_sources} ${usb_sources} ${usb_cpp_sources})
 endif()
 
 # C headers compiled with C++ give pointer conversion errors, turn them to warnings

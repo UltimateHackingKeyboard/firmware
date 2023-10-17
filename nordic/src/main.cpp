@@ -22,7 +22,7 @@ extern "C"
 
 #include "bluetooth.h"
 }
-#include "usb.hpp"
+#include "usb/usb.hpp"
 #include <zephyr/drivers/adc.h>
 
 #define DEVICE_ID_UHK60V1_RIGHT 1
