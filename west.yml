@@ -1,6 +1,6 @@
 manifest:
   self:
-    path: application
+    path: uhk
   remotes:
     - name: sdk
       url-base: https://github.com/nrfconnect
@@ -13,9 +13,9 @@ manifest:
       path: nrf
       revision: v2.4.2
       import:
-        path-prefix: external
+        path-prefix: nrfconnect
       clone-depth: 1
     - name: hal_nxp
       remote: zephyr
-      path: modules/hal/nxp
+      path: zephyr-hal-nxp
       clone-depth: 1
