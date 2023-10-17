@@ -110,7 +110,7 @@ static void pairing_process() {
 
 static void caps_lock_handler(const struct bt_hids_rep *rep) {
     uint8_t report_val = ((*rep->data) & OUTPUT_REPORT_BIT_MASK_CAPS_LOCK) ? 1 : 0;
-    dk_set_led(LED_CAPS_LOCK, report_val);
+    // dk_set_led(LED_CAPS_LOCK, report_val);
 }
 
 static void hids_outp_rep_handler(struct bt_hids_rep *rep, struct bt_conn *conn, bool write) {
@@ -428,7 +428,7 @@ static void connected(struct bt_conn *conn, uint8_t err) {
     }
 
     printk("Connected %s\n", addr);
-    dk_set_led_on(CON_STATUS_LED);
+    // dk_set_led_on(CON_STATUS_LED);
 
     err = bt_hids_connected(&hids_keyboard_obj, conn);
     if (err) {
@@ -468,7 +468,7 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
     }
 
     conn_mode.conn = NULL;
-    dk_set_led_off(CON_STATUS_LED);
+    // dk_set_led_off(CON_STATUS_LED);
     advertising_start();
 }
 
@@ -635,9 +635,9 @@ void bas_notify(void) {
 
 void bluetooth_set_adv_led(int *blink_status) {
     if (is_adv) {
-        dk_set_led(ADV_STATUS_LED, (++*blink_status) % 2);
+        // dk_set_led(ADV_STATUS_LED, (++*blink_status) % 2);
     } else {
-        dk_set_led_off(ADV_STATUS_LED);
+        // dk_set_led_off(ADV_STATUS_LED);
     }
 }
 
