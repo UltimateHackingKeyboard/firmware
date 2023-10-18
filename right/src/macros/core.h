@@ -262,10 +262,8 @@
     bool Macros_CurrentMacroKeyIsActive();
     bool Macros_IsLayerHeld();
     bool Macros_MacroHasActiveInstance(macro_index_t macroIdx);
-    bool Macros_ParseBoolean(const char *a, const char *aEnd);
     char Macros_ConsumeStatusChar();
-    int32_t Macros_LegacyConsumeInt(parser_context_t* ctx);
-    int32_t Macros_ParseInt(const char *a, const char *aEnd, const char* *parsedTill);
+    int32_t Macros_ConsumeInt(parser_context_t* ctx);
     macro_result_t goTo(parser_context_t* ctx);
     macro_result_t Macros_CallMacro(uint8_t macroIndex);
     macro_result_t Macros_ExecMacro(uint8_t macroIndex);
@@ -275,7 +273,6 @@
     macro_result_t Macros_SleepTillKeystateChange();
     macro_result_t Macros_SleepTillTime(uint32_t time);
     uint8_t Macros_ConsumeLayerId(parser_context_t* ctx);
-    uint8_t Macros_ParseLayerId(const char* arg1, const char* cmdEnd);
     uint8_t Macros_QueueMacro(uint8_t index, key_state_t *keyState, uint8_t queueAfterSlot);
     uint8_t Macros_StartMacro(uint8_t index, key_state_t *keyState, uint8_t parentMacroSlot, bool runFirstAction);
     uint8_t Macros_TryConsumeKeyId(parser_context_t* ctx);

@@ -315,7 +315,6 @@ macro_result_t Macros_ProcessPrintStatusCommand()
 
 macro_result_t Macros_ProcessSetStatusCommand(parser_context_t* ctx, bool addEndline)
 {
-    Macros_ReportWarn("Command is deprecated, please use string interpolated setStatus.", ctx->at, ctx->at);
     if (Macros_DryRun) {
         return MacroResult_Finished;
     }

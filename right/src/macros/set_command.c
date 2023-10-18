@@ -79,7 +79,7 @@ typedef enum {
     if (action == SetCommandAction_Read) {                     \
         return intVar(DST/(M));                                \
     }                                                          \
-    uint32_t res = Macros_LegacyConsumeInt(ctx)*(M);           \
+    uint32_t res = Macros_ConsumeInt(ctx)*(M);           \
     if (Macros_ParserError || Macros_DryRun) {                 \
         return noneVar();                                      \
     }                                                          \
@@ -92,7 +92,7 @@ typedef enum {
     if (action == SetCommandAction_Read) {                     \
         return intVar(DST);                                    \
     }                                                          \
-    int32_t res = Macros_LegacyConsumeInt(ctx);               \
+    int32_t res = Macros_ConsumeInt(ctx);               \
     if (Macros_ParserError || Macros_DryRun) {                 \
         return noneVar();                                      \
     }                                                          \
@@ -224,10 +224,6 @@ static macro_variable_t moduleSpeed(parser_context_t* ctx, set_command_action_t 
     }
     else if (ConsumeToken(ctx, "swapAxes")) {
         ASSIGN_BOOL(module->swapAxes);
-    }
-    else if (ConsumeToken(ctx, "invertScrollDirection")) {
-        Macros_ReportWarn("Command deprecated. Please, replace invertScrollDirection by invertScrollDirectionY.", ConsumedToken(ctx), ConsumedToken(ctx));
-        ASSIGN_BOOL(module->invertScrollDirectionY);
     }
     else if (ConsumeToken(ctx, "invertScrollDirectionY")) {
         ASSIGN_BOOL(module->invertScrollDirectionY);
@@ -393,7 +389,7 @@ static macro_variable_t macroEngine(parser_context_t* ctx, set_command_action_t 
         ASSIGN_INT(Macros_MaxBatchSize);
     }
     else if (ConsumeToken(ctx, "extendedCommands")) {
-        Macros_LegacyConsumeInt(ctx);
+        Macros_ConsumeInt(ctx);
         /* this option was removed -> accept the command & do nothing */
     }
     else {
@@ -445,7 +441,7 @@ static macro_variable_t keyRgb(parser_context_t* ctx, set_command_action_t actio
 
     ConsumeUntilDot(ctx);
 
-    uint8_t keyId = Macros_LegacyConsumeInt(ctx);
+    uint8_t keyId = Macros_ConsumeInt(ctx);
 
     if (action == SetCommandAction_Read) {
         Macros_ReportError("Reading RGB values not supported!", ConsumedToken(ctx), ConsumedToken(ctx));
@@ -453,9 +449,9 @@ static macro_variable_t keyRgb(parser_context_t* ctx, set_command_action_t actio
     }
 
     rgb_t rgb;
-    rgb.red = Macros_LegacyConsumeInt(ctx);
-    rgb.green = Macros_LegacyConsumeInt(ctx);
-    rgb.blue = Macros_LegacyConsumeInt(ctx);
+    rgb.red = Macros_ConsumeInt(ctx);
+    rgb.green = Macros_ConsumeInt(ctx);
+    rgb.blue = Macros_ConsumeInt(ctx);
 
     if (Macros_ParserError) {
         return noneVar();
@@ -484,9 +480,9 @@ static macro_variable_t constantRgb(parser_context_t* ctx, set_command_action_t 
         }
 
         rgb_t rgb;
-        rgb.red = Macros_LegacyConsumeInt(ctx);
-        rgb.green = Macros_LegacyConsumeInt(ctx);
-        rgb.blue = Macros_LegacyConsumeInt(ctx);
+        rgb.red = Macros_ConsumeInt(ctx);
+        rgb.green = Macros_ConsumeInt(ctx);
+        rgb.blue = Macros_ConsumeInt(ctx);
 
         if (Macros_DryRun) {
             return noneVar();
@@ -637,7 +633,7 @@ static macro_variable_t keymapAction(parser_context_t* ctx, set_command_action_t
 
     ConsumeUntilDot(ctx);
 
-    uint16_t keyId = Macros_LegacyConsumeInt(ctx);
+    uint16_t keyId = Macros_ConsumeInt(ctx);
 
     if (action == SetCommandAction_Read) {
         Macros_ReportError("Reading actions is not supported!", ctx->at, ctx->at);
@@ -809,14 +805,14 @@ static macro_variable_t root(parser_context_t* ctx, set_command_action_t action)
             return intVar(I2cMainBusRequestedBaudRateBps);
         }
 
-        uint32_t baudRate = Macros_LegacyConsumeInt(ctx);
+        uint32_t baudRate = Macros_ConsumeInt(ctx);
         if (Macros_DryRun) {
             return noneVar();
         }
         ChangeI2cBaudRate(baudRate);
     }
     else if (ConsumeToken(ctx, "emergencyKey")) {
-        ASSIGN_NO_LIMITS(key_state_t*, noneVar,, EmergencyKey, Utils_KeyIdToKeyState(Macros_LegacyConsumeInt(ctx)));
+        ASSIGN_NO_LIMITS(key_state_t*, noneVar,, EmergencyKey, Utils_KeyIdToKeyState(Macros_ConsumeInt(ctx)));
     }
     else if (action == SetCommandAction_Write) {
         Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
