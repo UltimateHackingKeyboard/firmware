@@ -1,22 +1,13 @@
 #include "str_utils.h"
 #include "debug.h"
 #include "config_parser/config_globals.h"
-#include "config_parser/parse_keymap.h"
-#include "macros/core.h"
 #include "macros/status_buffer.h"
-#include "macros/vars.h"
 #include "module.h"
 #include "slave_protocol.h"
 
 static bool consumeCommentsAsWhite = true;
 
 static bool isIdentifierChar(char c);
-
-float ParseFloat(const char *a, const char *aEnd)
-{
-    parser_context_t ctx = { .at = a, .end = aEnd };
-    return Macros_ConsumeFloat(&ctx);
-}
 
 bool StrLessOrEqual(const char* a, const char* aEnd, const char* b, const char* bEnd)
 {
@@ -374,12 +365,6 @@ module_id_t ConsumeModuleId(parser_context_t* ctx)
     return 0;
 }
 
-module_id_t ParseModuleId(const char* arg1, const char* cmdEnd)
-{
-    parser_context_t ctx = { .at = arg1, .end = cmdEnd };
-    return ConsumeModuleId(&ctx);
-}
-
 navigation_mode_t ConsumeNavigationModeId(parser_context_t* ctx)
 {
     if (ConsumeToken(ctx, "cursor")) {
@@ -410,12 +395,6 @@ navigation_mode_t ConsumeNavigationModeId(parser_context_t* ctx)
     return 0;
 }
 
-
-navigation_mode_t ParseNavigationModeId(const char* arg1, const char* cmdEnd)
-{
-    parser_context_t ctx = { .at = arg1, .end = cmdEnd };
-    return ConsumeNavigationModeId(&ctx);
-}
 
 secondary_role_state_t ConsumeSecondaryRoleTimeoutAction(parser_context_t* ctx)
 {

@@ -28,7 +28,6 @@
 
 // Functions:
 
-    float ParseFloat(const char *a, const char *aEnd);
     bool StrLessOrEqual(const char* a, const char* aEnd, const char* b, const char* bEnd);
     bool StrEqual(const char* a, const char* aEnd, const char* b, const char* bEnd);
     const char* FindChar(char c, const char* str, const char* strEnd);
@@ -54,8 +53,6 @@
     const char* SkipWhite(const char* cmd, const char *cmdEnd);
     uint8_t CountCommands(const char* text, uint16_t textLen);
     const char* TokEnd(const char* cmd, const char *cmdEnd);
-    module_id_t ParseModuleId(const char* arg1, const char* cmdEnd);
-    navigation_mode_t ParseNavigationModeId(const char* arg1, const char* cmdEnd);
     module_id_t ConsumeModuleId(parser_context_t* ctx);
     secondary_role_state_t ConsumeSecondaryRoleTimeoutAction(parser_context_t* ctx);
     secondary_role_strategy_t ConsumeSecondaryRoleStrategy(parser_context_t* ctx);

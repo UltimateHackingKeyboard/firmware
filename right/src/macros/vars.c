@@ -258,7 +258,7 @@ static macro_variable_t consumeDollarExpression(parser_context_t* ctx)
     }
     else if (ConsumeToken(ctx, "queuedKeyId")) {
         ConsumeUntilDot(ctx);
-        int8_t queueIdx = Macros_LegacyConsumeInt(ctx);
+        int8_t queueIdx = Macros_ConsumeInt(ctx);
         if (queueIdx >= PostponerQuery_PendingKeypressCount()) {
             if (!Macros_DryRun) {
                 Macros_ReportError("Not enough pending keys! Note that this is zero-indexed!",  ConsumedToken(ctx), ConsumedToken(ctx));
