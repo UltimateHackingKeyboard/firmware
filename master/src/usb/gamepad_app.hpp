@@ -36,6 +36,7 @@ public:
         hid::le_int16_t X {};
         hid::le_int16_t Y {};
         constexpr joystick() = default;
+        bool operator==(const joystick& other) const = default;
     };
     struct gamepad_report : public hid::report::base<hid::report::type::INPUT, 0>
     {
@@ -50,6 +51,8 @@ public:
         joystick right;
 
         constexpr gamepad_report() = default;
+
+        bool operator==(const gamepad_report& other) const = default;
 
         void set_button(gamepad_button b, bool value = true)
         {

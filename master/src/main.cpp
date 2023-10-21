@@ -506,7 +506,10 @@ int main(void) {
             }
         }
 
-       gamepad.set_button(gamepad_button::X, keyStates[0][3]);
+        gamepad.set_button(gamepad_button::X, keyStates[0][3]);
+        // gamepad.left.X = 50;
+        // gamepad.right.Y = 50;
+        // gamepad.right_trigger = 50;
         if (gamepad != prevGamepad) {
             auto result = gamepad_app::handle().send(gamepad);
             if (result == hid::result::OK) {
