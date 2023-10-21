@@ -25,6 +25,7 @@ extern "C"
 #include "usb/usb.hpp"
 #include "usb/keyboard_app.hpp"
 #include "usb/mouse_app.hpp"
+#include "usb/controls_app.hpp"
 #include <zephyr/drivers/adc.h>
 
 #define DEVICE_ID_UHK60V1_RIGHT 1
@@ -37,7 +38,7 @@ extern "C"
 #elif CONFIG_DEVICE_ID == DEVICE_ID_UHK60V2_RIGHT
     #define DEVICE_NAME "UHK 60 v2 right half"
 #elif CONFIG_DEVICE_ID == DEVICE_ID_UHK80_LEFT
-    #define DEVICE_NAME "UHK 80 right half"
+    #define DEVICE_NAME "UHK 80 left half"
 #elif CONFIG_DEVICE_ID == DEVICE_ID_UHK80_RIGHT
     #define DEVICE_NAME "UHK 80 right half"
 #endif
@@ -459,6 +460,7 @@ int main(void) {
     bool pixel = 1;
     scancode_buffer prevKeys, keys;
     mouse_buffer prevMouseState, mouseState;
+    controls_buffer prevControls, controls;
 
     for (;;) {
         keyPressed = false;
@@ -499,6 +501,15 @@ int main(void) {
             if (result == hid::result::OK) {
                 // buffer accepted for transmit
                 prevMouseState = mouseState;
+            }
+        }
+
+        controls.set_code(consumer_code::VOLUME_INCREMENT, keyPressed);
+        if (controls != prevControls) {
+            auto result = controls_app::handle().send(controls);
+            if (result == hid::result::OK) {
+                // buffer accepted for transmit
+                prevControls = controls;
             }
         }
 
