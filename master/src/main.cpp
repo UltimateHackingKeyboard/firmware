@@ -26,6 +26,7 @@ extern "C"
 #include "usb/keyboard_app.hpp"
 #include "usb/mouse_app.hpp"
 #include "usb/controls_app.hpp"
+#include "usb/gamepad_app.hpp"
 #include <zephyr/drivers/adc.h>
 
 #define DEVICE_ID_UHK60V1_RIGHT 1
@@ -461,6 +462,7 @@ int main(void) {
     scancode_buffer prevKeys, keys;
     mouse_buffer prevMouseState, mouseState;
     controls_buffer prevControls, controls;
+    gamepad_buffer prevGamepad, gamepad;
 
     for (;;) {
         keyPressed = false;
@@ -510,6 +512,15 @@ int main(void) {
             if (result == hid::result::OK) {
                 // buffer accepted for transmit
                 prevControls = controls;
+            }
+        }
+
+       gamepad.set_button(gamepad_button::X, keyPressed);
+        if (gamepad != prevGamepad) {
+            auto result = gamepad_app::handle().send(gamepad);
+            if (result == hid::result::OK) {
+                // buffer accepted for transmit
+                prevGamepad = gamepad;
             }
         }
 
