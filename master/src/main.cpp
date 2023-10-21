@@ -136,7 +136,9 @@ void serial_cb(const struct device *dev, void *user_data)
     }
 }
 
-static struct gpio_dt_spec rows[] = {
+#define ROWS_COUNT 6
+
+static struct gpio_dt_spec rows[ROWS_COUNT] = {
     GPIO_DT_SPEC_GET(DT_ALIAS(row1), gpios),
     GPIO_DT_SPEC_GET(DT_ALIAS(row2), gpios),
     GPIO_DT_SPEC_GET(DT_ALIAS(row3), gpios),
@@ -161,6 +163,7 @@ static struct gpio_dt_spec cols[] = {
 };
 
 #define COLS_COUNT (sizeof(cols) / sizeof(cols[0]))
+bool keyStates[ROWS_COUNT][COLS_COUNT];
 
 // Shell functions
 
@@ -469,7 +472,9 @@ int main(void) {
         for (uint8_t rowId=0; rowId<6; rowId++) {
             gpio_pin_set_dt(&rows[rowId], 1);
             for (uint8_t colId=0; colId<COLS_COUNT; colId++) {
-                if (gpio_pin_get_dt(&cols[colId])) {
+                bool keyState = gpio_pin_get_dt(&cols[colId]);
+                keyStates[rowId][colId] = keyState;
+                if (keyState) {
                     keyPressed = true;
                     if (keyLog) {
                         char buffer[20];
@@ -484,7 +489,7 @@ int main(void) {
             gpio_pin_set_dt(&rows[rowId], 0);
         }
 
-        keys.set_code(scancode::A, keyPressed);
+        keys.set_code(scancode::A, keyStates[0][0]);
         if (keys != prevKeys) {
             auto result = keyboard_app::handle().send(keys);
             if (result == hid::result::OK) {
@@ -493,8 +498,8 @@ int main(void) {
             }
         }
 
-        mouseState.set_button(mouse_button::RIGHT, keyPressed);
-        // mouseState.x = -50;
+        mouseState.set_button(mouse_button::RIGHT, keyStates[0][1]);
+        mouseState.x = -50;
         // mouseState.y = -50;
         // mouseState.wheel_y = -50;
         // mouseState.wheel_x = -50;
@@ -506,7 +511,7 @@ int main(void) {
             }
         }
 
-        controls.set_code(consumer_code::VOLUME_INCREMENT, keyPressed);
+        controls.set_code(consumer_code::VOLUME_INCREMENT, keyStates[0][2]);
         if (controls != prevControls) {
             auto result = controls_app::handle().send(controls);
             if (result == hid::result::OK) {
@@ -515,7 +520,7 @@ int main(void) {
             }
         }
 
-       gamepad.set_button(gamepad_button::X, keyPressed);
+       gamepad.set_button(gamepad_button::X, keyStates[0][4]);
         if (gamepad != prevGamepad) {
             auto result = gamepad_app::handle().send(gamepad);
             if (result == hid::result::OK) {
