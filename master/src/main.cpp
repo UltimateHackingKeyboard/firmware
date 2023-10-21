@@ -28,21 +28,7 @@ extern "C"
 #include "usb/controls_app.hpp"
 #include "usb/gamepad_app.hpp"
 #include <zephyr/drivers/adc.h>
-
-#define DEVICE_ID_UHK60V1_RIGHT 1
-#define DEVICE_ID_UHK60V2_RIGHT 2
-#define DEVICE_ID_UHK80_LEFT 3
-#define DEVICE_ID_UHK80_RIGHT 4
-
-#if CONFIG_DEVICE_ID == DEVICE_ID_UHK60V1_RIGHT
-    #define DEVICE_NAME "UHK 60 v1 right half"
-#elif CONFIG_DEVICE_ID == DEVICE_ID_UHK60V2_RIGHT
-    #define DEVICE_NAME "UHK 60 v2 right half"
-#elif CONFIG_DEVICE_ID == DEVICE_ID_UHK80_LEFT
-    #define DEVICE_NAME "UHK 80 left half"
-#elif CONFIG_DEVICE_ID == DEVICE_ID_UHK80_RIGHT
-    #define DEVICE_NAME "UHK 80 right half"
-#endif
+#include "device_ids.h"
 
 #if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_LEFT
     #define HAS_MERGE_SENSE
