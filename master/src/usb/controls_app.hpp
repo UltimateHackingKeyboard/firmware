@@ -30,8 +30,8 @@ public:
         {
             bool set(hid::usage_index_type usage, bool value = true)
             {
-                auto it = std::find(begin(), end(), value ? 0 : usage);
-                if (it != end())
+                auto it = std::find(this->begin(), this->end(), value ? 0 : usage);
+                if (it != this->end())
                 {
                     *it = value ? usage : 0;
                     return true;
@@ -40,7 +40,7 @@ public:
             }
             bool test(hid::usage_index_type usage) const
             {
-                return std::find(begin(), end(), usage) != end();
+                return std::find(this->begin(), this->end(), usage) != this->end();
             }
             constexpr report_array() = default;
         };
