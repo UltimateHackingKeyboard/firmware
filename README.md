@@ -12,7 +12,13 @@ If you're one of the brave few who wants to hack the firmware then read on.
 
 1. Make sure to clone this repo with:
 
-`git clone --recursive git@github.com:UltimateHackingKeyboard/firmware.git`
+```bash
+west init -m git@github.com:UltimateHackingKeyboard/firmware-uhk80.git firmware-uhk80
+cd firmware-uhk80
+west update
+cd uhk/lib
+git submodule update --init
+```
 
 Then, depending whether you want a full IDE experience or just minimal tools for building and flashing firmware, read *IDE setup* or *Minimal development setup* (if you prefer a text editor + command line).
 
