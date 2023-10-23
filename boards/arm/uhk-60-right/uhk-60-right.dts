@@ -65,18 +65,37 @@
     model = "NXP Freedom MK22F board";
     compatible = "nxp,mk22f12", "nxp,k22f", "nxp,k2x";
 
+    gpios {
+        compatible = "gpio-keys";
+
+        row1: row1 {
+            gpios = <&gpioa 12 (GPIO_ACTIVE_HIGH)>;
+            label = "row1";
+        };
+        row2: row2 {
+            gpios = <&gpioa 13 (GPIO_ACTIVE_HIGH)>;
+            label = "row2";
+        };
+        row3: row3 {
+            gpios = <&gpioc 1 (GPIO_ACTIVE_HIGH)>;
+            label = "row3";
+        };
+        row4: row4 {
+            gpios = <&gpioc 0 (GPIO_ACTIVE_HIGH)>;
+            label = "row4";
+        };
+        row5: row5 {
+            gpios = <&gpiod 5 (GPIO_ACTIVE_HIGH)>;
+            label = "row5";
+        };
+    };
+
     aliases {
-        led0 = &green_led;
-        led1 = &blue_led;
-        led2 = &red_led;
-        sw0 = &user_button_3;
-        sw1 = &user_button_2;
-        pwm-led0 = &green_pwm_led;
-        green-pwm-led = &green_pwm_led;
-        blue-pwm-led = &blue_pwm_led;
-        red-pwm-led = &red_pwm_led;
-        magn0 = &fxos8700;
-        accel0 = &fxos8700;
+        row1 = &row1;
+        row2 = &row2;
+        row3 = &row3;
+        row4 = &row4;
+        row5 = &row5;
     };
 
     chosen {
@@ -86,80 +105,6 @@
         zephyr,console = &uart1;
         zephyr,shell-uart = &uart1;
         zephyr,uart-pipe = &uart1;
-    };
-
-    leds {
-        compatible = "gpio-leds";
-        red_led: led_0 {
-            gpios = <&gpioa 1 0>;
-            label = "User LD1";
-        };
-        green_led: led_1 {
-            gpios = <&gpioa 2 0>;
-            label = "User LD2";
-        };
-        blue_led: led_2 {
-            gpios = <&gpiod 5 0>;
-            label = "User LD3";
-        };
-    };
-
-    pwmleds {
-        compatible = "pwm-leds";
-
-        red_pwm_led: red_pwm_led {
-            label = "red_led";
-            pwms = <&ftm0 6 15625000 PWM_POLARITY_INVERTED>;
-        };
-        green_pwm_led: green_pwm_led {
-            label = "green_led";
-            pwms = <&ftm0 7 15625000 PWM_POLARITY_INVERTED>;
-        };
-        blue_pwm_led: blue_pwm_led {
-            label = "blue_led";
-            pwms = <&ftm0 5 15625000 PWM_POLARITY_INVERTED>;
-        };
-    };
-
-    gpio_keys {
-        compatible = "gpio-keys";
-        user_button_2: button_0 {
-            label = "User SW2";
-            gpios = <&gpioc 1 GPIO_ACTIVE_LOW>;
-        };
-        user_button_3: button_1 {
-            label = "User SW3";
-            gpios = <&gpiob 17 GPIO_ACTIVE_LOW>;
-        };
-    };
-
-    arduino_header: connector {
-        compatible = "arduino-header-r3";
-        #gpio-cells = <2>;
-        gpio-map-mask = <0xffffffff 0xffffffc0>;
-        gpio-map-pass-thru = <0 0x3f>;
-        gpio-map = <0 0 &gpiob 0 0>,    /* A0 */
-               <1 0 &gpiob 1 0>,    /* A1 */
-               <2 0 &gpioc 1 0>,    /* A2 */
-               <3 0 &gpioc 2 0>,    /* A3 */
-               <4 0 &gpiob 3 0>,    /* A4 */
-               <5 0 &gpiob 2 0>,    /* A5 */
-               <6 0 &gpiod 2 0>,    /* D0 */
-               <7 0 &gpiod 3 0>,    /* D1 */
-               <8 0 &gpiob 16 0>,   /* D2 */
-               <9 0 &gpioa 2 0>,    /* D3 */
-               <10 0 &gpioa 4 0>,   /* D4 */
-               <11 0 &gpiob 18 0>,  /* D5 */
-               <12 0 &gpioc 3 0>,   /* D6 */
-               <13 0 &gpioc 6 0>,   /* D7 */
-               <14 0 &gpiob 19 0>,  /* D8 */
-               <15 0 &gpioa 1 0>,   /* D9 */
-               <16 0 &gpiod 4 0>,   /* D10 */
-               <17 0 &gpiod 6 0>,   /* D11 */
-               <18 0 &gpiod 7 0>,   /* D12 */
-               <19 0 &gpiod 5 0>,   /* D13 */
-               <20 0 &gpioe 0 0>,   /* D14 */
-               <21 0 &gpioe 1 0>;   /* D15 */
     };
 };
 
@@ -180,13 +125,6 @@ arduino_i2c: &i2c0 {
     status = "okay";
     pinctrl-0 = <&i2c0_default>;
     pinctrl-names = "default";
-
-    fxos8700: fxos8700@1c {
-        compatible = "nxp,fxos8700";
-        reg = <0x1c>;
-        int1-gpios = <&gpiod 0 GPIO_ACTIVE_LOW>;
-        int2-gpios = <&gpiod 1 GPIO_ACTIVE_LOW>;
-    };
 };
 
 

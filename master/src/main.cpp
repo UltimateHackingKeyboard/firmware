@@ -48,12 +48,18 @@ extern "C"
     #define HAS_OLED
 #endif
 
+#if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_LEFT || CONFIG_DEVICE_ID == DEVICE_ID_UHK80_RIGHT
+    #define IS_NRF
+    #define HAS_BATTERY
+#endif
+
+#ifdef HAS_BATTERY
 #define DT_SPEC_AND_COMMA(node_id, prop, idx) \
     ADC_DT_SPEC_GET_BY_IDX(node_id, idx),
-
 static const struct adc_dt_spec adc_channels[] = {
     DT_FOREACH_PROP_ELEM(DT_PATH(zephyr_user), io_channels, DT_SPEC_AND_COMMA)
 };
+#endif
 
 #define LedPagePrefix 0b01010000
 
@@ -75,11 +81,16 @@ const struct spi_buf_set spiBufSet = {
     .count = 1,
 };
 
+#ifdef IS_NRF
 const struct device *spi0_dev = DEVICE_DT_GET(DT_NODELABEL(spi1));
 static const struct gpio_dt_spec ledsCsDt = GPIO_DT_SPEC_GET(DT_ALIAS(leds_cs), gpios);
 static const struct gpio_dt_spec ledsSdbDt = GPIO_DT_SPEC_GET(DT_ALIAS(leds_sdb), gpios);
+#endif
+
+#ifdef HAS_BATTERY
 static const struct gpio_dt_spec chargerEnDt = GPIO_DT_SPEC_GET(DT_ALIAS(charger_en), gpios);
 static const struct gpio_dt_spec chargerStatDt = GPIO_DT_SPEC_GET(DT_ALIAS(charger_stat), gpios);
+#endif
 
 #ifdef HAS_OLED
 static const struct gpio_dt_spec oledEn = GPIO_DT_SPEC_GET(DT_ALIAS(oled_en), gpios);
@@ -99,6 +110,7 @@ void setA0(bool state)
 
 #endif
 
+#ifdef IS_NRF
 void setLedsCs(bool state)
 {
     gpio_pin_set_dt(&ledsCsDt, state);
@@ -131,6 +143,7 @@ void serial_cb(const struct device *dev, void *user_data)
         }
     }
 }
+#endif
 
 static struct gpio_dt_spec rows[] = {
     GPIO_DT_SPEC_GET(DT_ALIAS(row1), gpios),
@@ -377,7 +390,7 @@ int main(void) {
     // Init I2C
 #if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_LEFT
     #define device_addr 0x18 // left module i2c address
-#elif CONFIG_DEVICE_ID == DEVICE_ID_UHK80_RIGHT
+#elif CONFIG_DEVICE_ID == DEVICE_ID_UHK80_RIGHT || CONFIG_DEVICE_ID == DEVICE_ID_UHK60V1_RIGHT || CONFIG_DEVICE_ID == DEVICE_ID_UHK60V2_RIGHT
     #define device_addr 0x28 // right module i2c address
 #endif
 
