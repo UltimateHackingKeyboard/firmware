@@ -235,41 +235,40 @@ The following grammar is supported:
     COMMAND = statsActiveMacros
     COMMAND = statsRecordKeyTiming
     COMMAND = diagnose
-    COMMAND = {setStatus  | setStatusPart} <custom text>
+    COMMAND = setStatus <custom text>
     COMMAND = clearStatus
     COMMAND = set setEmergencyKey KEYID
     COMMAND = validateUserConfig
     ############
     #DEPRECATED#
     ############
-    INT = #<register idx (INT)> | #key | @<relative macro action index(INT)> | %<key idx in postponer queue (INT)>
-    COMMAND = writeExpr INT
-    CONDITION = {ifRegEq | ifNotRegEq | ifRegGt | ifRegLt} <register index (INT)> <value (INT)>
-    COMMAND = setStatusPart <custom text>
-    COMMAND = {setReg|addReg|subReg|mulReg} <register index (INT)> <value (INT)>
-    COMMAND = set module.MODULEID.invertScrollDirection BOOL
     COMMAND = set macroEngine.scheduler {blocking|preemptive}
     COMMAND = set doubletapDelay <time in ms, at most 65535, alias to doubletapTimeout (INT)>
-    COMMAND = switchLayer LAYERID
-    COMMAND = switchKeymapLayer KEYMAPID LAYERID
-    COMMAND = resolveNextKeyEq <queue position (INT)> KEYID {<time in ms>|untilRelease} <action adr (ADDRESS)> <action adr (ADDRESS)>
     COMMAND = set modifierLayerTriggers.{control} {left|right|both}
-    COMMAND = resolveSecondary <time in ms (INT)> [<time in ms (INT)>] <primary action macro action index (ADDRESS)> <secondary action macro action index (ADDRESS)>
     COMMAND = untoggleLayer
     LAYERID = control
     #########
     #REMOVED#
     #########
+    INT = #<register idx (INT)> | #key | @<relative macro action index(INT)> | %<key idx in postponer queue (INT)>
+    CONDITION = {ifRegEq | ifNotRegEq | ifRegGt | ifRegLt} <register index (INT)> <value (INT)>
+    COMMAND = resolveNextKeyEq <queue position (INT)> KEYID {<time in ms>|untilRelease} <action adr (ADDRESS)> <action adr (ADDRESS)>
+    COMMAND = setStatusPart <custom text>
+    COMMAND = resolveSecondary <time in ms (INT)> [<time in ms (INT)>] <primary action macro action index (ADDRESS)> <secondary action macro action index (ADDRESS)>
+    COMMAND = {setReg|addReg|subReg|mulReg} <register index (INT)> <value (INT)>
+    COMMAND = set module.MODULEID.invertScrollDirection BOOL
+    COMMAND = writeExpr INT
     COMMAND = statsRegs
     COMMAND = setExpDriver <baseSpeed (FLOAT:0.0)> <speed (FLOAT:1.0)> <acceleration (FLOAT:0.5)> <midSpeed (FLOAT:3000)>
     COMMAND = setSplitCompositeKeystroke {0|1}
     COMMAND = setActivateOnRelease {0|1}
+    COMMAND = switchLayer LAYERID
+    COMMAND = switchKeymapLayer KEYMAPID LAYERID
     MODIFIER = suppressKeys
     COMMAND = setStickyModsEnabled {0|never|smart|always|1}
     COMMAND = setCompensateDiagonalSpeed {0|1}
     COMMAND = setDebounceDelay <time in ms, at most 250 (INT)>
     COMMAND = setKeystrokeDelay <time in ms, at most 65535 (INT)>
-    COMMAND = setReg <register index (INT)> <value (INT)>
     COMMAND = setEmergencyKey KEYID
 
 ### Uncategorized commands:
@@ -312,7 +311,7 @@ The following grammar is supported:
 ### Control flow, macro execution (aka "functions"):
 
 - `goTo ADDRESS` will go to action index int. Actions are indexed from zero. See `ADDRESS`
-- `repeatFor <variable name> ADDRESS` - abbreviation to simplify cycles. Will decrement the supplemented register and perform `goTo` to `adr` if the value is still greater than zero. Intended use case - place after command which is to be repeated with the register containing the number of repeats and address `($currentAddress-1)` (or similar).
+- `repeatFor <variable name> ADDRESS` - abbreviation to simplify cycles. Will decrement the supplemented variable and perform `goTo` to `adr` if the value is still greater than zero. Intended use case - place after command which is to be repeated with the variable containing the number of repeats and address `($currentAddress-1)` (or similar).
 - `break` will terminate innermost while loop. If there is no enclosing while loop, then this will terminate the current macro.
 - `exit` will terminate the current macro
 - `noOp` does nothing - i.e., stops macro for exactly one update cycle and then continues.
@@ -332,7 +331,6 @@ The following grammar is supported:
 - `statsPostponerStack` will output information about postponer queue (into the buffer).
 - `statsActiveKeys` will output all active keys and their states (into the buffer).
 - `statsActiveMacros` will output all active macros (into the buffer).
-- `statsRegs` will output content of all registers (into the buffer).
 - `statsRecordKeyTiming` will write timing information of pressed and released keys into status buffer until invoked again.
 - `diagnose` will deactivate all keys and macros and print diagnostic information into the status buffer.
 - `set emergencyKey KEYID` will make the one key be ignored by postponing mechanisms. `diagnose` command on such key can be used to recover keyboard from conditions like infinite postponing loop...
@@ -362,7 +360,6 @@ implementation details:
 
 Commands:
 - `switchKeymap` will load the keymap by its abbreviation and reset the stack.
-- `switchLayer/switchKeymapLayer` are deprecated. They simply push the layer onto stack (or pop in case of `previous`) without any further handling. Should be replaced by toggle/untoggle/hold layer commands.
 - `toggleLayer` toggles the layer.
 - `untoggleLayer` pops topmost non-held layer from the stack. (I.e., untoggles layer which was toggled via "toggle" or "switch" feature.)
 - `toggleKeymapLayer` toggles layer from different keymap.
@@ -393,7 +390,6 @@ We allow postponing key activations in order to allow deciding between some scen
 - `consumePending <n>` will remove n records from the queue.
 - `activateKeyPostponed KEYID` will add tap of KEYID at the end of queue. If `atLayer LAYERID` is specified, action will be taken from that layer rather than current one. If `prepend` option is specified, event will be place at the beginning of the queue.
 - `ifPrimary/ifSecondary [ simpleStrategy | advancedStrategy ] ... COMMAND` will wait until the firmware can distinguish whether primary or secondary action should be activated and then either execute `COMMAND` or skip it.
-- `resolveSecondary` please, get rid of this by migrating to `ifSecondary advancedStrategy goTo ...`. It is kept for backward compatibility only.
 - `ifShortcut/ifNotShortcut/ifGesture/ifNotGesture [IFSHORTCUT_OPTIONS]* [KEYID]*` will wait for next keypresses until sufficient number of keys has been pressed. If the next keypresses correspond to the provided arguments (hardware ids), the keypresses are consumed and the condition is performed. Consuming takes place in both `if` and `ifNot` versions if the full list is matched. E.g., `ifShortcut 090 089 final tapKey C-V; holdKey v`.
   - `Shortcut` requires continual press of keys (e.g., Ctrl+c). By default, it timeouts with the activation key release.
   - `Gesture` allows a noncontinual sequence of keys (e.g., vim's gg). By default, timeouts in 1000 ms since activation.
@@ -404,7 +400,6 @@ We allow postponing key activations in order to allow deciding between some scen
     - `orGate` will treat the given list of keys as *or-conditions* (rather than as *and-conditions*). Check any presence of mentioned keyIds in postponer queue for the next key press. Implies `anyOrder`.
     - `timeoutIn <time (INT)>` adds a timeout timer to both `Shortcut` and `Gesture` commands. If the timer times out (i.e., the condition does not suceed or fail earlier), the command continues as if matching KEYIDs failed. Can be used to shorten life of `Shortcut` resolution.
     - `cancelIn <time (INT)>` adds a timer to both commands. If this timer times out, all related keys are consumed and macro is broken. *"This action has never happened, lets not talk about it anymore."* (Note that this is an only condition which behaves same in both `if` and `ifNot` cases.)
-- DEPRECATED (use `ifShortcut/ifGesture` instead) `resolveNextKeyEq <queue idx> <key id> <timeout> <adr1> <adr2>` will wait for next (n) key press(es). When the key press happens, it will compare its id with the `<key id>` argument. If the id equals, it issues goto to adr1. Otherwise, to adr2. See examples. Implicitly applies `postponeKeys` modifier.
   - `arg1 - queue idx` idx of key to compare, indexed from 0. Typically 0, if we want to resolve the key after next key then 1, etc.
   - `arg2 - key id` key id obtained by `resolveNextKeyId`. This is static identifier of the hardware key.
   - `arg3 - timeout` timeout. If not enough keys is pressed within the time, goto to `arg5` is issued. Either number in ms, or `untilRelease`.
@@ -433,9 +428,7 @@ Conditions are checked before processing the rest of the command. If the conditi
   - Please note that:
       - under Linux, scroll lock is disabled by default. As a consequence, the macro event does not trigger.
       - under MacOS, scroll lock dims the screen but does not toggle the scroll lock state. As a consequence, the macro event does not trigger.
-- `{ifRegEq|ifNotRegEq} <register inex> <value>` will test if the value in the register identified by the first argument equals the second argument.
-- `{ifRegGt|ifRegLt} <register inex> <value>` will test if the value in the register identified by the first argument is greater than/less than the second argument.
-- `{ifKeymap|ifNotKeymap|ifLayer|ifNotLayer} <value>` will test if the current Keymap/Layer equals the first argument (uses the same parsing rule as `switchKeymap` and `switchLayer`.
+- `{ifKeymap|ifNotKeymap|ifLayer|ifNotLayer} <value>` will test if the current Keymap/Layer equals the first argument.
 - `ifRecording/ifNotRecording` and `ifRecordingId/ifNotRecordingId MACROID` test if the runtime macro recorder is in the recording state.
 - `ifShortcut/ifNotShortcut [IFSHORTCUT_OPTIONS]* [KEYID]*` will wait for future keypresses and compare them to the argument. See the postponer mechanism section.
 - `ifGesture/ifNotGesture [IFSHORTCUT_OPTIONS]* [KEYID]*` just as `ifShortcut`, but breaks after 1000ms instead of when the key is released. See the postponer mechanism section.
@@ -636,7 +629,6 @@ Internally, values are saved in one of the following types, and types are automa
     - `$queuedKeyId.<index (NUMBER)>` which stands for a zero-indexed position in the postponer queue.
 - `KEYMAPID` - is assumed to be 3 characters long abbreviation of a keymap.
 - `MACROID` - macro slot identifier is either a number or a single ascii character (interpreted as a one-byte value). `$thisKeyId` can be used so that the same macro refers to different slots when assigned to different keys.
-- `register index` is an integer in the appropriate range, used as an index to the register array.
 - `custom text` is an arbitrary text starting on the next non-space character and ending at the end of the text action. (Yes, this should be refactored in the future.)
 - `KEYID` is a numeric id obtained by `resolveNextKeyId` macro. It can also be constructed manually, as an index (starting at zero) added to an offset of `64*slotid`.  This means that starting offsets are:
 
