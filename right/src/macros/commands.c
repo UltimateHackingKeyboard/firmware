@@ -31,8 +31,6 @@ static uint8_t lastLayerIdx;
 static uint8_t lastLayerKeymapIdx;
 static uint8_t lastKeymapIdx;
 
-static int32_t regs[MAX_REG_COUNT];
-
 uint16_t Macros_OneShotTimeout = 500;
 
 static void jumpToMatchingBrace();
@@ -91,15 +89,6 @@ bool Macros_CurrentMacroKeyIsActive()
         bool keyIsActive = KeyState_Active(S->ms.currentMacroKey);
         return keyIsActive || S->ms.oneShotState;
     }
-}
-
-static bool validReg(uint8_t idx, const char* pos)
-{
-    if (idx >= MAX_REG_COUNT) {
-        Macros_ReportErrorNum("Invalid register index:", idx, pos);
-        return false;
-    }
-    return true;
 }
 
 static macro_result_t writeNum(uint32_t a)
