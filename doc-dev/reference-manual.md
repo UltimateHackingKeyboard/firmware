@@ -631,7 +631,7 @@ Internally, values are saved in one of the following types, and types are automa
     - `&&`, `||` - and, or
   - The following special identifiers are supported:
     - `$thisKeyId` which stands for the keyid of the key that activated the macro.
-    - `$keyId.<keyId abbreviation>` which stands for the keyid of the key that activated the macro.
+    - `$keyId.<keyId abbreviation>` which stands for numeric keyid of the provided abbreviation.
     - `$currentAddress` which stands for the address of the command in which it is found.
     - `$queuedKeyId.<index (NUMBER)>` which stands for a zero-indexed position in the postponer queue.
 - `KEYMAPID` - is assumed to be 3 characters long abbreviation of a keymap.
