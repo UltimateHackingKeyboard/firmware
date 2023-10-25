@@ -37,6 +37,7 @@ uint16_t Macros_OneShotTimeout = 500;
 
 static void jumpToMatchingBrace();
 static macro_result_t processCommand(parser_context_t* ctx);
+static void consumeAnyJumpTarget(parser_context_t* ctx);
 
 static macro_result_t processDelay(uint32_t time)
 {
@@ -746,17 +747,14 @@ static macro_result_t processSetLedTxtCommand(parser_context_t* ctx)
 
 macro_result_t goTo(parser_context_t* ctx)
 {
+    if (Macros_DryRun) {
+        consumeAnyJumpTarget(ctx);
+        return MacroResult_Finished;
+    }
+
     if (isNUM(ctx)) {
-        if (Macros_DryRun) {
-            Macros_ConsumeInt(ctx);
-            return MacroResult_Finished;
-        }
         return Macros_GoToAddress(Macros_ConsumeInt(ctx));
     } else {
-        if (Macros_DryRun) {
-            ConsumeAnyIdentifier(ctx);
-            return MacroResult_Finished;
-        }
         return Macros_GoToLabel(ctx);
     }
 }
@@ -1442,34 +1440,36 @@ static macro_result_t processPostponeNextNCommand(parser_context_t* ctx)
     return MacroResult_Finished;
 }
 
+static void consumeAnyJumpTarget(parser_context_t* ctx)
+{
+    if (isNUM(ctx)) {
+        Macros_ConsumeInt(ctx);
+    } else {
+        ConsumeAnyIdentifier(ctx);
+    }
+}
 
 static macro_result_t processRepeatForCommand(parser_context_t* ctx)
 {
-    if (isNUM(ctx)) {
-        uint8_t idx = Macros_ConsumeInt(ctx);
-        bool regIsValid = validReg(idx, ctx->at);
-        if (Macros_DryRun) {
-            return MacroResult_Finished;
-        }
-        if (regIsValid) {
-            if (regs[idx] > 0) {
-                regs[idx]--;
-                if (regs[idx] > 0) {
-                    return goTo(ctx);
-                }
-            }
-        }
-    } else {
-        macro_variable_t* v = Macros_ConsumeExistingWritableVariable(ctx);
-        if (v != NULL) {
+    macro_variable_t* v = Macros_ConsumeExistingWritableVariable(ctx);
+
+    if (Macros_DryRun) {
+        consumeAnyJumpTarget(ctx);
+    }
+
+    if (v != NULL) {
+        if (v->asInt > 0) {
+            v->asInt--;
             if (v->asInt > 0) {
-                v->asInt--;
-                if (v->asInt > 0) {
-                    return goTo(ctx);
-                }
+                return goTo(ctx);
+            } else {
+                consumeAnyJumpTarget(ctx);
             }
+        } else {
+            consumeAnyJumpTarget(ctx);
         }
     }
+
     return MacroResult_Finished;
 }
 
