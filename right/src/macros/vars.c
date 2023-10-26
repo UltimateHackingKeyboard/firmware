@@ -89,6 +89,15 @@ static macro_variable_t consumeNumericValue(parser_context_t* ctx)
 
 macro_variable_t* Macros_ConsumeExistingWritableVariable(parser_context_t* ctx)
 {
+    if (Macros_DryRun) {
+        if (!IsIdentifierChar(*ctx->at)) {
+            Macros_ReportError("Identifier expected here:", ctx->at, ctx->at);
+            return NULL;
+        }
+        ConsumeAnyIdentifier(ctx);
+        return NULL;
+    }
+
     //TODO: optimize this!
     for (uint8_t i = 0; i < macroVariableCount; i++) {
         if (ConsumeIdentifierByRef(ctx, macroVariables[i].name)) {
