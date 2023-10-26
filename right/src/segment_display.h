@@ -15,7 +15,6 @@
     typedef enum {
         SegmentDisplaySlot_Keymap,
         SegmentDisplaySlot_Macro,
-        SegmentDisplaySlot_Recording,
         SegmentDisplaySlot_Error,
         SegmentDisplaySlot_Warn,
         SegmentDisplaySlot_Debug,

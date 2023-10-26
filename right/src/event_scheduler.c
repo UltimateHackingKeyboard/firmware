@@ -2,6 +2,7 @@
 #include "segment_display.h"
 #include "timer.h"
 #include "macros/core.h"
+#include "macro_recorder.h"
 #include "utils.h"
 
 uint32_t times[EventSchedulerEvent_Count] = {};
@@ -31,6 +32,9 @@ static void processEvt(event_scheduler_event_t evt)
         case EventSchedulerEvent_MacroWakeOnTime:
             Macros_WakedBecauseOfTime = true;
             MacroPlaying = true;
+            break;
+        case EventSchedulerEvent_MacroRecorderFlashing:
+            MacroRecorder_UpdateRecordingLed();
             break;
         default:
             return;
@@ -63,6 +67,14 @@ void EventScheduler_Schedule(uint32_t at, event_scheduler_event_t evt)
     }
 }
 
+void EventScheduler_Unschedule(event_scheduler_event_t evt)
+{
+    times[evt] = 0;
+
+    if (nextEvent == evt) {
+        scheduleNext();
+    }
+}
 
 void EventScheduler_Process()
 {

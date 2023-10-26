@@ -43,6 +43,7 @@
     void MacroRecorder_RecordBasicReport(usb_basic_keyboard_report_t *report);
     void MacroRecorder_RecordDelay(uint16_t delay);
 
+    void MacroRecorder_UpdateRecordingLed();
     bool MacroRecorder_PlayRuntimeMacroSmart(uint16_t id, usb_basic_keyboard_report_t *report);
     void MacroRecorder_RecordRuntimeMacroSmart(uint16_t id, bool blind);
     void MacroRecorder_StartRecording(uint16_t id, bool blind);
