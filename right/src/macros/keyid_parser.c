@@ -137,7 +137,7 @@ static const lookup_record_t* lookup(uint8_t begin, uint8_t end, const char* str
 
 uint8_t MacroKeyIdParser_TryConsumeKeyId(parser_context_t* ctx)
 {
-    const lookup_record_t* record = lookup(0, lookup_size-1, ctx->at, TokEnd(ctx->at, ctx->end));
+    const lookup_record_t* record = lookup(0, lookup_size-1, ctx->at, IdentifierEnd(ctx));
 
     if (record == NULL) {
         return 255;
