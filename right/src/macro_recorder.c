@@ -39,7 +39,7 @@ static uint16_t playbackPosition;
 static bool delayActive;
 static uint32_t delayStart;
 
-static uint32_t ledFlashingPeriod = 600;
+static uint32_t ledFlashingPeriod = 500;
 
 static void initHeaderSlot(uint16_t id)
 {
