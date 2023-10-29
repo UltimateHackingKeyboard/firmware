@@ -31,6 +31,7 @@
     extern bool ActivateOnRelease;
     extern key_state_t* EmergencyKey;
     extern uint8_t basicScancodeIndex;
+    extern uint8_t StickyModifiers;
 
 // Functions:
 
