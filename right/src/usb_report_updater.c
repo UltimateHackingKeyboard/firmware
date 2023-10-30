@@ -124,10 +124,10 @@ static void handleEventInterrupts(key_state_t *keyState) {
 // Depending on configuration, they may "stick" - i.e., live longer than their
 // activation key, either until next action, or until release of held layer.
 // (This serves for Alt+Tab style shortcuts.)
-static uint8_t stickyModifiersNegative;
-static uint8_t stickyModifiers;
+uint8_t StickyModifiers;
+uint8_t StickyModifiersNegative;
 static key_state_t* stickyModifierKey;
-static bool    stickyModifierShouldStick;
+static bool stickyModifierShouldStick;
 
 
 static bool isStickyShortcut(key_action_t * action)
@@ -168,8 +168,8 @@ static bool shouldStickAction(key_action_t * action)
 
 static void activateStickyMods(key_state_t *keyState, key_action_cached_t *action)
 {
-    stickyModifiersNegative = action->modifierLayerMask;
-    stickyModifiers = action->action.keystroke.modifiers;
+    StickyModifiersNegative = action->modifierLayerMask;
+    StickyModifiers = action->action.keystroke.modifiers;
     stickyModifierKey = keyState;
     stickyModifierShouldStick = shouldStickAction(&action->action);
 }
@@ -177,7 +177,7 @@ static void activateStickyMods(key_state_t *keyState, key_action_cached_t *actio
 void ActivateStickyMods(key_state_t *keyState, uint8_t mods)
 {
     //do nothing to stickyModifiersNegative
-    stickyModifiers = mods;
+    StickyModifiers = mods;
     stickyModifierKey = keyState;
     stickyModifierShouldStick = true;
 }
@@ -190,8 +190,8 @@ static void applyKeystrokePrimary(key_state_t *keyState, key_action_cached_t *ca
         if (action->keystroke.scancode) {
             // On keydown, reset old sticky modifiers and set new ones
             if (KeyState_ActivatedNow(keyState)) {
-                stickyModifiersChanged |= action->keystroke.modifiers != stickyModifiers;
-                stickyModifiersChanged |= cachedAction->modifierLayerMask != stickyModifiersNegative;
+                stickyModifiersChanged |= action->keystroke.modifiers != StickyModifiers;
+                stickyModifiersChanged |= cachedAction->modifierLayerMask != StickyModifiersNegative;
                 activateStickyMods(keyState, cachedAction);
             }
         } else {
@@ -214,9 +214,9 @@ static void applyKeystrokePrimary(key_state_t *keyState, key_action_cached_t *ca
     } else if (KeyState_DeactivatedNow(keyState)) {
         if (stickyModifierKey == keyState && !stickyModifierShouldStick) {
             //disable the modifiers, but send one last report of modifiers without scancode
-            OutputModifiers |= stickyModifiers;
-            stickyModifiers = 0;
-            stickyModifiersNegative = 0;
+            OutputModifiers |= StickyModifiers;
+            StickyModifiers = 0;
+            StickyModifiersNegative = 0;
         }
     }
 }
@@ -272,8 +272,8 @@ void ApplyKeyAction(key_state_t *keyState, key_action_cached_t *cachedAction, ke
             break;
         case KeyActionType_Mouse:
             if (KeyState_ActivatedNow(keyState)) {
-                stickyModifiers = 0;
-                stickyModifiersNegative = cachedAction->modifierLayerMask;
+                StickyModifiers = 0;
+                StickyModifiersNegative = cachedAction->modifierLayerMask;
                 MouseKeys_ActivateDirectionSigns(action->mouseAction);
             }
             ActiveMouseStates[action->mouseAction]++;
@@ -285,16 +285,16 @@ void ApplyKeyAction(key_state_t *keyState, key_action_cached_t *cachedAction, ke
             break;
         case KeyActionType_SwitchKeymap:
             if (KeyState_ActivatedNow(keyState)) {
-                stickyModifiers = 0;
-                stickyModifiersNegative = cachedAction->modifierLayerMask;
+                StickyModifiers = 0;
+                StickyModifiersNegative = cachedAction->modifierLayerMask;
                 SwitchKeymapById(action->switchKeymap.keymapId);
                 LayerStack_Reset();
             }
             break;
         case KeyActionType_PlayMacro:
             if (KeyState_ActivatedNow(keyState)) {
-                stickyModifiers = 0;
-                stickyModifiersNegative = cachedAction->modifierLayerMask;
+                StickyModifiers = 0;
+                StickyModifiersNegative = cachedAction->modifierLayerMask;
                 Macros_StartMacro(action->playMacro.macroId, keyState, 255, true);
             }
             break;
@@ -401,8 +401,8 @@ static void handleLayerChanges() {
 
     if(ActiveLayer != previousLayer) {
         previousLayer = ActiveLayer;
-        stickyModifiers = 0;
-        stickyModifiersNegative = 0;
+        StickyModifiers = 0;
+        StickyModifiersNegative = 0;
     }
 }
 
@@ -497,9 +497,9 @@ static void updateActiveUsbReports(void)
     // and the accomanying key gets released then keep the related modifiers active a long as the
     // layer switcher key stays pressed.  Useful for Alt+Tab keymappings and the like.
 
-    uint8_t maskedInputMods = (~stickyModifiersNegative) & InputModifiers;
+    uint8_t maskedInputMods = (~StickyModifiersNegative) & InputModifiers;
     ActiveUsbBasicKeyboardReport->modifiers |= SuppressMods ? 0 : maskedInputMods;
-    ActiveUsbBasicKeyboardReport->modifiers |= OutputModifiers | stickyModifiers;
+    ActiveUsbBasicKeyboardReport->modifiers |= OutputModifiers | StickyModifiers;
 }
 
 void justPreprocessInput(void) {

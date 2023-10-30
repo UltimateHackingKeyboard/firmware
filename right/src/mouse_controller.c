@@ -628,12 +628,16 @@ static void processModuleActions(
 
 bool canWeRun()
 {
+    if (StickyModifiers) {
+        StickyModifiers = 0;
+        StickyModifiersNegative = 0;
+        return false;
+    }
     if (Postponer_MouseBlocked) {
         PostponerExtended_RequestUnblockMouse();
         return false;
-    } else {
-        return true;
     }
+    return true;
 }
 
 void MouseController_ProcessMouseActions()
