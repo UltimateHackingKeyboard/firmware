@@ -630,6 +630,7 @@ bool canWeRun()
 {
     if (StickyModifiers) {
         StickyModifiers = 0;
+        StickyModifiersNegative = 0;
         return false;
     }
     if (Postponer_MouseBlocked) {

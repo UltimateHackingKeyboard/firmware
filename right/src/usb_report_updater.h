@@ -32,6 +32,7 @@
     extern key_state_t* EmergencyKey;
     extern uint8_t basicScancodeIndex;
     extern uint8_t StickyModifiers;
+    extern uint8_t StickyModifiersNegative;
 
 // Functions:
 

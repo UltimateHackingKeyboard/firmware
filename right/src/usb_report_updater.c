@@ -125,7 +125,7 @@ static void handleEventInterrupts(key_state_t *keyState) {
 // activation key, either until next action, or until release of held layer.
 // (This serves for Alt+Tab style shortcuts.)
 uint8_t StickyModifiers;
-static uint8_t stickyModifiersNegative;
+uint8_t StickyModifiersNegative;
 static key_state_t* stickyModifierKey;
 static bool stickyModifierShouldStick;
 
@@ -168,7 +168,7 @@ static bool shouldStickAction(key_action_t * action)
 
 static void activateStickyMods(key_state_t *keyState, key_action_cached_t *action)
 {
-    stickyModifiersNegative = action->modifierLayerMask;
+    StickyModifiersNegative = action->modifierLayerMask;
     StickyModifiers = action->action.keystroke.modifiers;
     stickyModifierKey = keyState;
     stickyModifierShouldStick = shouldStickAction(&action->action);
@@ -191,7 +191,7 @@ static void applyKeystrokePrimary(key_state_t *keyState, key_action_cached_t *ca
             // On keydown, reset old sticky modifiers and set new ones
             if (KeyState_ActivatedNow(keyState)) {
                 stickyModifiersChanged |= action->keystroke.modifiers != StickyModifiers;
-                stickyModifiersChanged |= cachedAction->modifierLayerMask != stickyModifiersNegative;
+                stickyModifiersChanged |= cachedAction->modifierLayerMask != StickyModifiersNegative;
                 activateStickyMods(keyState, cachedAction);
             }
         } else {
@@ -216,7 +216,7 @@ static void applyKeystrokePrimary(key_state_t *keyState, key_action_cached_t *ca
             //disable the modifiers, but send one last report of modifiers without scancode
             OutputModifiers |= StickyModifiers;
             StickyModifiers = 0;
-            stickyModifiersNegative = 0;
+            StickyModifiersNegative = 0;
         }
     }
 }
@@ -273,7 +273,7 @@ void ApplyKeyAction(key_state_t *keyState, key_action_cached_t *cachedAction, ke
         case KeyActionType_Mouse:
             if (KeyState_ActivatedNow(keyState)) {
                 StickyModifiers = 0;
-                stickyModifiersNegative = cachedAction->modifierLayerMask;
+                StickyModifiersNegative = cachedAction->modifierLayerMask;
                 MouseKeys_ActivateDirectionSigns(action->mouseAction);
             }
             ActiveMouseStates[action->mouseAction]++;
@@ -286,7 +286,7 @@ void ApplyKeyAction(key_state_t *keyState, key_action_cached_t *cachedAction, ke
         case KeyActionType_SwitchKeymap:
             if (KeyState_ActivatedNow(keyState)) {
                 StickyModifiers = 0;
-                stickyModifiersNegative = cachedAction->modifierLayerMask;
+                StickyModifiersNegative = cachedAction->modifierLayerMask;
                 SwitchKeymapById(action->switchKeymap.keymapId);
                 LayerStack_Reset();
             }
@@ -294,7 +294,7 @@ void ApplyKeyAction(key_state_t *keyState, key_action_cached_t *cachedAction, ke
         case KeyActionType_PlayMacro:
             if (KeyState_ActivatedNow(keyState)) {
                 StickyModifiers = 0;
-                stickyModifiersNegative = cachedAction->modifierLayerMask;
+                StickyModifiersNegative = cachedAction->modifierLayerMask;
                 Macros_StartMacro(action->playMacro.macroId, keyState, 255, true);
             }
             break;
@@ -402,7 +402,7 @@ static void handleLayerChanges() {
     if(ActiveLayer != previousLayer) {
         previousLayer = ActiveLayer;
         StickyModifiers = 0;
-        stickyModifiersNegative = 0;
+        StickyModifiersNegative = 0;
     }
 }
 
@@ -497,7 +497,7 @@ static void updateActiveUsbReports(void)
     // and the accomanying key gets released then keep the related modifiers active a long as the
     // layer switcher key stays pressed.  Useful for Alt+Tab keymappings and the like.
 
-    uint8_t maskedInputMods = (~stickyModifiersNegative) & InputModifiers;
+    uint8_t maskedInputMods = (~StickyModifiersNegative) & InputModifiers;
     ActiveUsbBasicKeyboardReport->modifiers |= SuppressMods ? 0 : maskedInputMods;
     ActiveUsbBasicKeyboardReport->modifiers |= OutputModifiers | StickyModifiers;
 }
