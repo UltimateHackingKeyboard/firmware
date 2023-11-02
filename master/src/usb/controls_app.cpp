@@ -44,6 +44,8 @@ controls_app& controls_app::handle()
 void controls_app::start(hid::protocol prot)
 {
     // TODO start handling controls events
+    report_data_ = {};
+    tx_busy_ = false;
 }
 
 void controls_app::stop()
@@ -51,12 +53,31 @@ void controls_app::stop()
     // TODO stop handling controls events
 }
 
+hid::result controls_app::send(const controls_report& data)
+{
+    auto result = hid::result::BUSY;
+    if (tx_busy_) {
+        // protect data in transit
+        return result;
+    }
+    report_data_ = data;
+    result = send_report(&report_data_);
+    if (result == hid::result::OK) {
+        tx_busy_ = true;
+    }
+    return result;
+}
+
 void controls_app::in_report_sent(const std::span<const uint8_t>& data)
 {
+    tx_busy_ = false;
     // the next IN report can be sent if any are queued
 }
 
 void controls_app::get_report(hid::report::selector select, const std::span<uint8_t>& buffer)
 {
-    // TODO fetch the controls report data in the protocol specific format
+    // copy to buffer to avoid overwriting data in transit
+    assert(buffer.size() >= sizeof(report_data_));
+    memcpy(buffer.data(), report_data_.data(), sizeof(report_data_));
+    send_report(buffer.subspan(0, sizeof(report_data_)));
 }

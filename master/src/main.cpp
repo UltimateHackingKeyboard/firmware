@@ -23,22 +23,12 @@ extern "C"
 #include "bluetooth.h"
 }
 #include "usb/usb.hpp"
+#include "usb/keyboard_app.hpp"
+#include "usb/mouse_app.hpp"
+#include "usb/controls_app.hpp"
+#include "usb/gamepad_app.hpp"
 #include <zephyr/drivers/adc.h>
-
-#define DEVICE_ID_UHK60V1_RIGHT 1
-#define DEVICE_ID_UHK60V2_RIGHT 2
-#define DEVICE_ID_UHK80_LEFT 3
-#define DEVICE_ID_UHK80_RIGHT 4
-
-#if CONFIG_DEVICE_ID == DEVICE_ID_UHK60V1_RIGHT
-    #define DEVICE_NAME "UHK 60 v1 right half"
-#elif CONFIG_DEVICE_ID == DEVICE_ID_UHK60V2_RIGHT
-    #define DEVICE_NAME "UHK 60 v2 right half"
-#elif CONFIG_DEVICE_ID == DEVICE_ID_UHK80_LEFT
-    #define DEVICE_NAME "UHK 80 right half"
-#elif CONFIG_DEVICE_ID == DEVICE_ID_UHK80_RIGHT
-    #define DEVICE_NAME "UHK 80 right half"
-#endif
+#include "device_ids.h"
 
 #if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_LEFT
     #define HAS_MERGE_SENSE
@@ -145,7 +135,9 @@ void serial_cb(const struct device *dev, void *user_data)
 }
 #endif
 
-static struct gpio_dt_spec rows[] = {
+#define ROWS_COUNT 6
+
+static struct gpio_dt_spec rows[ROWS_COUNT] = {
     GPIO_DT_SPEC_GET(DT_ALIAS(row1), gpios),
     GPIO_DT_SPEC_GET(DT_ALIAS(row2), gpios),
     GPIO_DT_SPEC_GET(DT_ALIAS(row3), gpios),
@@ -170,6 +162,7 @@ static struct gpio_dt_spec cols[] = {
 };
 
 #define COLS_COUNT (sizeof(cols) / sizeof(cols[0]))
+bool keyStates[ROWS_COUNT][COLS_COUNT];
 
 // Shell functions
 
@@ -299,6 +292,28 @@ static int cmd_uhk_merge(const struct shell *shell, size_t argc, char *argv[])
 }
 #endif
 
+static int cmd_uhk_rollover(const struct shell *shell, size_t argc, char *argv[])
+{
+    if (argc == 1) {
+        shell_fprintf(shell, SHELL_NORMAL, "%c\n",
+                (keyboard_app::handle().get_rollover() == keyboard_app::rollover::N_KEY) ? 'n' : '6');
+    } else {
+        keyboard_app::handle().set_rollover((argv[1][0] == '6') ?
+                keyboard_app::rollover::SIX_KEY : keyboard_app::rollover::N_KEY);
+    }
+    return 0;
+}
+
+static int cmd_uhk_gamepad(const struct shell *shell, size_t argc, char *argv[])
+{
+    if (argc == 1) {
+        // TODO
+    } else {
+        usb_init(argv[1][0] == '1');
+    }
+    return 0;
+}
+
 void chargerStatCallback(const struct device *port, struct gpio_callback *cb, gpio_port_pins_t pins) {
     if (statLog) {
         printk("STAT changed to %i\n", gpio_pin_get_dt(&chargerStatDt) ? 1 : 0);
@@ -382,6 +397,12 @@ int main(void) {
             "get the merged state of UHK halves",
             cmd_uhk_merge, 1, 0),
 #endif
+        SHELL_CMD_ARG(rollover, NULL,
+            "get/set keyboard rollover mode (n/6)",
+            cmd_uhk_rollover, 1, 1),
+        SHELL_CMD_ARG(gamepad, NULL,
+            "switch gamepad on/off",
+            cmd_uhk_gamepad, 1, 1),
         SHELL_SUBCMD_SET_END
     );
 
@@ -440,13 +461,19 @@ int main(void) {
 //  int blink_status = 0;
     uint32_t counter = 0;
     bool pixel = 1;
+    scancode_buffer prevKeys, keys;
+    mouse_buffer prevMouseState, mouseState;
+    controls_buffer prevControls, controls;
+    gamepad_buffer prevGamepad, gamepad;
 
     for (;;) {
         keyPressed = false;
         for (uint8_t rowId=0; rowId<6; rowId++) {
             gpio_pin_set_dt(&rows[rowId], 1);
             for (uint8_t colId=0; colId<COLS_COUNT; colId++) {
-                if (gpio_pin_get_dt(&cols[colId])) {
+                bool keyState = gpio_pin_get_dt(&cols[colId]);
+                keyStates[rowId][colId] = keyState;
+                if (keyState) {
                     keyPressed = true;
                     if (keyLog) {
                         char buffer[20];
@@ -459,6 +486,49 @@ int main(void) {
                 }
             }
             gpio_pin_set_dt(&rows[rowId], 0);
+        }
+
+        keys.set_code(scancode::A, keyStates[0][0]);
+        if (keys != prevKeys) {
+            auto result = keyboard_app::handle().send(keys);
+            if (result == hid::result::OK) {
+                // buffer accepted for transmit
+                prevKeys = keys;
+            }
+        }
+
+        mouseState.set_button(mouse_button::RIGHT, keyStates[0][1]);
+        mouseState.x = -50;
+        // mouseState.y = -50;
+        // mouseState.wheel_y = -50;
+        // mouseState.wheel_x = -50;
+        if (mouseState != prevMouseState) {
+            auto result = mouse_app::handle().send(mouseState);
+            if (result == hid::result::OK) {
+                // buffer accepted for transmit
+                prevMouseState = mouseState;
+            }
+        }
+
+        controls.set_code(consumer_code::VOLUME_INCREMENT, keyStates[0][2]);
+        if (controls != prevControls) {
+            auto result = controls_app::handle().send(controls);
+            if (result == hid::result::OK) {
+                // buffer accepted for transmit
+                prevControls = controls;
+            }
+        }
+
+        gamepad.set_button(gamepad_button::X, keyStates[0][3]);
+        // gamepad.left.X = 50;
+        // gamepad.right.Y = 50;
+        // gamepad.right_trigger = 50;
+        if (gamepad != prevGamepad) {
+            auto result = gamepad_app::handle().send(gamepad);
+            if (result == hid::result::OK) {
+                // buffer accepted for transmit
+                prevGamepad = gamepad;
+            }
         }
 
         #ifdef HAS_OLED

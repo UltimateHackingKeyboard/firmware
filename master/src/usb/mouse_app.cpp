@@ -61,6 +61,8 @@ mouse_app& mouse_app::handle()
 void mouse_app::start(hid::protocol prot)
 {
     // TODO start handling mouse events
+    report_data_ = {};
+    tx_busy_ = false;
 }
 
 void mouse_app::stop()
@@ -68,12 +70,31 @@ void mouse_app::stop()
     // TODO stop handling mouse events
 }
 
+hid::result mouse_app::send(const mouse_report_base<>& data)
+{
+    auto result = hid::result::BUSY;
+    if (tx_busy_) {
+        // protect data in transit
+        return result;
+    }
+    report_data_ = data;
+    result = send_report(&report_data_);
+    if (result == hid::result::OK) {
+        tx_busy_ = true;
+    }
+    return result;
+}
+
 void mouse_app::in_report_sent(const std::span<const uint8_t>& data)
 {
+    tx_busy_ = false;
     // the next IN report can be sent if any are queued
 }
 
 void mouse_app::get_report(hid::report::selector select, const std::span<uint8_t>& buffer)
 {
-    // TODO fetch the mouse report data in the protocol specific format
+    // copy to buffer to avoid overwriting data in transit
+    assert(buffer.size() >= sizeof(report_data_));
+    memcpy(buffer.data(), report_data_.data(), sizeof(report_data_));
+    send_report(buffer.subspan(0, sizeof(report_data_)));
 }

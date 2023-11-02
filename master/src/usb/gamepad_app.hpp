@@ -3,6 +3,25 @@
 
 #include "hid/application.hpp"
 
+enum class gamepad_button
+{
+    UP = 0,
+    DOWN = 1,
+    LEFT = 2,
+    RIGHT = 3,
+    START = 4,
+    BACK = 5,
+    LS = 6,
+    RS = 7,
+    LB = 8,
+    RB = 9,
+    HOME = 10,
+    A = 12,
+    B = 13,
+    X = 14,
+    Y = 15
+};
+
 class gamepad_app : public hid::application
 {
     static const hid::report_protocol& report_protocol();
@@ -16,36 +35,16 @@ public:
     {
         hid::le_int16_t X {};
         hid::le_int16_t Y {};
+        constexpr joystick() = default;
+        bool operator==(const joystick& other) const = default;
     };
     struct gamepad_report : public hid::report::base<hid::report::type::INPUT, 0>
     {
     private:
-        const uint8_t report_id {};
-        const uint8_t report_size { sizeof(gamepad_report) };
+        uint8_t report_id {0};
+        uint8_t report_size { sizeof(gamepad_report) };
     public:
-        union
-        {
-            hid::le_uint16_t buttons {};
-            struct
-            {
-                uint16_t UP : 1;
-                uint16_t DOWN : 1;
-                uint16_t LEFT : 1;
-                uint16_t RIGHT : 1;
-                uint16_t START : 1;
-                uint16_t BACK : 1;
-                uint16_t LS : 1;
-                uint16_t RS : 1;
-                uint16_t LB : 1;
-                uint16_t RB : 1;
-                uint16_t HOME : 1;
-                uint16_t : 1;
-                uint16_t A : 1;
-                uint16_t B : 1;
-                uint16_t X : 1;
-                uint16_t Y : 1;
-            };
-        };
+        hid::le_uint16_t buttons {};
         uint8_t left_trigger {};
         uint8_t right_trigger {};
         joystick left;
@@ -53,13 +52,27 @@ public:
 
         constexpr gamepad_report() = default;
 
-        // TODO: add helpers
+        bool operator==(const gamepad_report& other) const = default;
+
+        void set_button(gamepad_button b, bool value = true)
+        {
+            if (value) {
+                buttons = buttons | (1 << static_cast<uint16_t>(b));
+            } else {
+                buttons = buttons & ~(1 << static_cast<uint16_t>(b));
+            }
+        }
+        bool test_button(gamepad_button b) const
+        {
+            return buttons & (1 << static_cast<uint16_t>(b));
+        }
     };
 
     static gamepad_app& handle();
 
-    using hid::application::send_report;
+    hid::result send(const gamepad_report& data);
 
+private:
     void start(hid::protocol prot) override;
     void stop() override;
     void set_report(hid::report::type type, const std::span<const uint8_t>& data) override
@@ -69,7 +82,10 @@ public:
     void in_report_sent(const std::span<const uint8_t>& data) override;
     void get_report(hid::report::selector select, const std::span<uint8_t>& buffer) override;
 
-private:
+    C2USB_USB_TRANSFER_ALIGN(gamepad_report, report_data_) {};
+    bool tx_busy_ {};
 };
+
+using gamepad_buffer = gamepad_app::gamepad_report;
 
 #endif // __GAMEPAD_APP_HEADER__

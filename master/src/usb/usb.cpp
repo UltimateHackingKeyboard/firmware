@@ -18,6 +18,7 @@ extern "C"
 
 #include "bluetooth.h"
 }
+#include "device_ids.h"
 #include "usb.hpp"
 #include "keyboard_app.hpp"
 #include "mouse_app.hpp"
@@ -30,10 +31,9 @@ extern "C"
 #include "usb/df/vendor/microsoft_os_extension.hpp"
 #include "usb/df/vendor/microsoft_xinput.hpp"
 
-// TODO fill valid product info
 constexpr usb::product_info prinfo {
-    0xfff0, "UGL",
-    0xffff, "UHK", usb::version("1.0")
+    0x1D50, "Ultimage Gadget Laboratories",
+    USB_DEVICE_PRODUCT_ID, DEVICE_NAME, usb::version("1.0")
 };
 
 void usb_init(bool gamepad_enable) {
