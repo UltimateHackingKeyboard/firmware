@@ -117,6 +117,11 @@
             gpios = <&gpiob 1 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
             label = "col7";
         };
+
+        test_led: test_led {
+            gpios = <&gpiod 7 GPIO_ACTIVE_HIGH>;
+            label = "test_led";
+        };
     };
 
     aliases {
@@ -133,6 +138,8 @@
         col5 = &col5;
         col6 = &col6;
         col7 = &col7;
+
+        test-led = &test_led;
     };
 
     chosen {
