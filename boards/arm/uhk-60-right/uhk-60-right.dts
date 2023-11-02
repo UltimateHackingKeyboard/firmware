@@ -88,6 +88,35 @@
             gpios = <&gpiod 5 (GPIO_ACTIVE_HIGH)>;
             label = "row5";
         };
+
+        col1: col1 {
+            gpios = <&gpioa 5 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+            label = "col1";
+        };
+        col2: col2 {
+            gpios = <&gpiob 16 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+            label = "col2";
+        };
+        col3: col3 {
+            gpios = <&gpiob 17 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+            label = "col3";
+        };
+        col4: col4 {
+            gpios = <&gpiob 18 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+            label = "col4";
+        };
+        col5: col5 {
+            gpios = <&gpiob 19 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+            label = "col5";
+        };
+        col6: col6 {
+            gpios = <&gpioa 1 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+            label = "col6";
+        };
+        col7: col7 {
+            gpios = <&gpiob 1 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+            label = "col7";
+        };
     };
 
     aliases {
@@ -96,6 +125,14 @@
         row3 = &row3;
         row4 = &row4;
         row5 = &row5;
+
+        col1 = &col1;
+        col2 = &col2;
+        col3 = &col3;
+        col4 = &col4;
+        col5 = &col5;
+        col6 = &col6;
+        col7 = &col7;
     };
 
     chosen {
