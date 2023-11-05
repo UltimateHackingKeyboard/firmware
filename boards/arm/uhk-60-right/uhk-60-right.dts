@@ -154,7 +154,8 @@
 
 &sim {
     pllfll-select = <KINETIS_SIM_PLLFLLSEL_MCGPLLCLK>;
-    er32k-select = <KINETIS_SIM_ER32KSEL_RTC>;
+    er32k-select = <KINETIS_SIM_ER32KSEL_OSC32KCLK>;
+    clkout-source = <KINETIS_SIM_CORESYS_CLK>;
 };
 
 &adc0 {

@@ -23,19 +23,20 @@ if(HAS_BLUETOOTH)
     target_sources(app PRIVATE ${app_sources} ${app_cpp_sources} ${usb_sources} ${usb_cpp_sources})
 else()
     file(GLOB app_cpp_sources src/main.cpp)
-    target_sources(app PRIVATE ${app_cpp_sources} ${usb_sources} ${usb_cpp_sources})
+    # target_sources(app PRIVATE ${app_cpp_sources} ${usb_sources} ${usb_cpp_sources})
+    target_sources(app PRIVATE ${app_cpp_sources})
 endif()
 
 # C headers compiled with C++ give pointer conversion errors, turn them to warnings
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive")
 
-set(C2USB_PATH "c2usb")
+# set(C2USB_PATH "c2usb")
 
-add_subdirectory(${C2USB_PATH})
-# link c2usb to the abstract Zephyr interface to inherit the build flags
-target_link_libraries(c2usb zephyr_interface)
+# add_subdirectory(${C2USB_PATH})
+# # link c2usb to the abstract Zephyr interface to inherit the build flags
+# target_link_libraries(c2usb zephyr_interface)
 
-# Link app to c2usb
-target_link_libraries(app PRIVATE
-    c2usb
-)
+# # Link app to c2usb
+# target_link_libraries(app PRIVATE
+#     c2usb
+# )
