@@ -28,6 +28,6 @@
 #endif
 
 #if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_LEFT || CONFIG_DEVICE_ID == DEVICE_ID_UHK80_RIGHT
-    #define IS_NRF
+    #define DEVICE_HAS_NRF
     #define HAS_BATTERY
 #endif

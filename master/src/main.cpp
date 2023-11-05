@@ -59,7 +59,7 @@ const struct spi_buf_set spiBufSet = {
     .count = 1,
 };
 
-#ifdef IS_NRF
+#ifdef DEVICE_HAS_NRF
 const struct device *spi0_dev = DEVICE_DT_GET(DT_NODELABEL(spi1));
 static const struct gpio_dt_spec ledsCsDt = GPIO_DT_SPEC_GET(DT_ALIAS(leds_cs), gpios);
 static const struct gpio_dt_spec ledsSdbDt = GPIO_DT_SPEC_GET(DT_ALIAS(leds_sdb), gpios);
@@ -88,7 +88,7 @@ void setA0(bool state)
 
 #endif
 
-#ifdef IS_NRF
+#ifdef DEVICE_HAS_NRF
 void setLedsCs(bool state)
 {
     gpio_pin_set_dt(&ledsCsDt, state);
