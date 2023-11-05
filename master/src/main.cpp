@@ -29,7 +29,7 @@ extern "C"
 #include "usb/controls_app.hpp"
 #include "usb/gamepad_app.hpp"
 #include <zephyr/drivers/adc.h>
-#include "device_ids.h"
+#include "device.h"
 
 #ifdef HAS_BATTERY
 #define DT_SPEC_AND_COMMA(node_id, prop, idx) \

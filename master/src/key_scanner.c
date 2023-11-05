@@ -1,6 +1,6 @@
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/gpio.h>
-#include "device_ids.h"
+#include "device.h"
 #include "key_scanner.h"
 
 // Thread definitions

@@ -18,7 +18,7 @@ extern "C"
 
 #include "bluetooth.h"
 }
-#include "device_ids.h"
+#include "device.h"
 #include "usb.hpp"
 #include "keyboard_app.hpp"
 #include "mouse_app.hpp"
