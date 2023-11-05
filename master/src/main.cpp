@@ -23,10 +23,10 @@ extern "C"
 #include "bluetooth.h"
 }
 #include "usb/usb.hpp"
-// #include "usb/keyboard_app.hpp"
-// #include "usb/mouse_app.hpp"
-// #include "usb/controls_app.hpp"
-// #include "usb/gamepad_app.hpp"
+#include "usb/keyboard_app.hpp"
+#include "usb/mouse_app.hpp"
+#include "usb/controls_app.hpp"
+#include "usb/gamepad_app.hpp"
 #include <zephyr/drivers/adc.h>
 #include "device_ids.h"
 
@@ -50,7 +50,7 @@ static const struct adc_dt_spec adc_channels[] = {
     DT_FOREACH_PROP_ELEM(DT_PATH(zephyr_user), io_channels, DT_SPEC_AND_COMMA)
 };
 #endif
-/*
+
 #define LedPagePrefix 0b01010000
 
 static struct spi_config spiConf = {
@@ -323,19 +323,10 @@ void chargerStatCallback(const struct device *port, struct gpio_callback *cb, gp
 struct gpio_callback callbackStruct;
 
 volatile char keyPressed;
-*/
-static const struct gpio_dt_spec testLedDt = GPIO_DT_SPEC_GET(DT_ALIAS(test_led), gpios);
 
 int main(void) {
     printk("----------\n" DEVICE_NAME " started\n");
 
-    gpio_pin_configure_dt(&testLedDt, GPIO_OUTPUT);
-
-    while (true) {
-        k_msleep(1000);
-        gpio_pin_toggle_dt(&testLedDt);
-    }
-/*
     // Configure GPIOs
 
     gpio_pin_configure_dt(&ledsCsDt, GPIO_OUTPUT);
@@ -596,5 +587,4 @@ int main(void) {
             counter = 0;
         }
     }
-    */
 }
