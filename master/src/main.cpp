@@ -136,35 +136,6 @@ void serial_cb(const struct device *dev, void *user_data)
 }
 #endif
 
-#define ROWS_COUNT 6
-
-static struct gpio_dt_spec rows[ROWS_COUNT] = {
-    GPIO_DT_SPEC_GET(DT_ALIAS(row1), gpios),
-    GPIO_DT_SPEC_GET(DT_ALIAS(row2), gpios),
-    GPIO_DT_SPEC_GET(DT_ALIAS(row3), gpios),
-    GPIO_DT_SPEC_GET(DT_ALIAS(row4), gpios),
-    GPIO_DT_SPEC_GET(DT_ALIAS(row5), gpios),
-    GPIO_DT_SPEC_GET(DT_ALIAS(row6), gpios),
-};
-
-static struct gpio_dt_spec cols[] = {
-    GPIO_DT_SPEC_GET(DT_ALIAS(col1), gpios),
-    GPIO_DT_SPEC_GET(DT_ALIAS(col2), gpios),
-    GPIO_DT_SPEC_GET(DT_ALIAS(col3), gpios),
-    GPIO_DT_SPEC_GET(DT_ALIAS(col4), gpios),
-    GPIO_DT_SPEC_GET(DT_ALIAS(col5), gpios),
-    GPIO_DT_SPEC_GET(DT_ALIAS(col6), gpios),
-    GPIO_DT_SPEC_GET(DT_ALIAS(col7), gpios),
-#if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_RIGHT
-    GPIO_DT_SPEC_GET(DT_ALIAS(col8), gpios),
-    GPIO_DT_SPEC_GET(DT_ALIAS(col9), gpios),
-    GPIO_DT_SPEC_GET(DT_ALIAS(col10), gpios),
-#endif
-};
-
-#define COLS_COUNT (sizeof(cols) / sizeof(cols[0]))
-bool keyStates[ROWS_COUNT][COLS_COUNT];
-
 // Shell functions
 
 uint8_t keyLog = 1;
@@ -323,8 +294,6 @@ void chargerStatCallback(const struct device *port, struct gpio_callback *cb, gp
 
 struct gpio_callback callbackStruct;
 
-volatile char keyPressed;
-
 int main(void) {
     printk("----------\n" DEVICE_NAME " started\n");
 
@@ -357,13 +326,6 @@ int main(void) {
 #endif
 
     struct device *uart_dev = DEVICE_DT_GET(DT_NODELABEL(uart1));
-
-    for (uint8_t rowId=0; rowId<6; rowId++) {
-        gpio_pin_configure_dt(&rows[rowId], GPIO_OUTPUT);
-    }
-    for (uint8_t colId=0; colId<COLS_COUNT; colId++) {
-        gpio_pin_configure_dt(&cols[colId], GPIO_INPUT);
-    }
 
 #ifdef HAS_MERGE_SENSE
     gpio_pin_configure_dt(&mergeSenseDt, GPIO_INPUT);
@@ -470,28 +432,7 @@ int main(void) {
     InitKeyScanner();
 
     for (;;) {
-        keyPressed = false;
-        for (uint8_t rowId=0; rowId<6; rowId++) {
-            gpio_pin_set_dt(&rows[rowId], 1);
-            for (uint8_t colId=0; colId<COLS_COUNT; colId++) {
-                bool keyState = gpio_pin_get_dt(&cols[colId]);
-                keyStates[rowId][colId] = keyState;
-                if (keyState) {
-                    keyPressed = true;
-                    if (keyLog) {
-                        char buffer[20];
-                        sprintf(buffer, "SW%c%c\n", rowId+'1', colId+'1');
-                        printk("%s", buffer);
-                        for (uint8_t i=0; i<strlen(buffer); i++) {
-                            uart_poll_out(uart_dev, buffer[i]);
-                        }
-                    }
-                }
-            }
-            gpio_pin_set_dt(&rows[rowId], 0);
-        }
-
-        keys.set_code(scancode::A, keyStates[0][0]);
+        keys.set_code(scancode::A, KeyStates[0][0]);
         if (keys != prevKeys) {
             auto result = keyboard_app::handle().send(keys);
             if (result == hid::result::OK) {
@@ -500,7 +441,7 @@ int main(void) {
             }
         }
 
-        mouseState.set_button(mouse_button::RIGHT, keyStates[0][1]);
+        mouseState.set_button(mouse_button::RIGHT, KeyStates[0][1]);
         mouseState.x = -50;
         // mouseState.y = -50;
         // mouseState.wheel_y = -50;
@@ -513,7 +454,7 @@ int main(void) {
             }
         }
 
-        controls.set_code(consumer_code::VOLUME_INCREMENT, keyStates[0][2]);
+        controls.set_code(consumer_code::VOLUME_INCREMENT, KeyStates[0][2]);
         if (controls != prevControls) {
             auto result = controls_app::handle().send(controls);
             if (result == hid::result::OK) {
@@ -522,7 +463,7 @@ int main(void) {
             }
         }
 
-        gamepad.set_button(gamepad_button::X, keyStates[0][3]);
+        gamepad.set_button(gamepad_button::X, KeyStates[0][3]);
         // gamepad.left.X = 50;
         // gamepad.right.Y = 50;
         // gamepad.right_trigger = 50;
@@ -568,7 +509,7 @@ int main(void) {
         writeSpi(LedPagePrefix | 0);
         writeSpi(0x00);
         for (int i=0; i<255; i++) {
-            writeSpi(keyPressed || ledsAlwaysOn ? 0xff : 0);
+            writeSpi(KeyPressed || ledsAlwaysOn ? 0xff : 0);
         }
         setLedsCs(true);
 
@@ -576,7 +517,7 @@ int main(void) {
         writeSpi(LedPagePrefix | 1);
         writeSpi(0x00);
         for (int i=0; i<255; i++) {
-            writeSpi(keyPressed || ledsAlwaysOn ? 0xff : 0);
+            writeSpi(KeyPressed || ledsAlwaysOn ? 0xff : 0);
         }
         setLedsCs(true);
 
