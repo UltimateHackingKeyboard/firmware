@@ -70,7 +70,7 @@ static const struct gpio_dt_spec chargerEnDt = GPIO_DT_SPEC_GET(DT_ALIAS(charger
 static const struct gpio_dt_spec chargerStatDt = GPIO_DT_SPEC_GET(DT_ALIAS(charger_stat), gpios);
 #endif
 
-#ifdef HAS_OLED
+#ifdef DEVICE_HAS_OLED
 static const struct gpio_dt_spec oledEn = GPIO_DT_SPEC_GET(DT_ALIAS(oled_en), gpios);
 static const struct gpio_dt_spec oledResetDt = GPIO_DT_SPEC_GET(DT_ALIAS(oled_reset), gpios);
 static const struct gpio_dt_spec oledCsDt = GPIO_DT_SPEC_GET(DT_ALIAS(oled_cs), gpios);
@@ -227,7 +227,7 @@ static int cmd_uhk_charger(const struct shell *shell, size_t argc, char *argv[])
     return 0;
 }
 
-#ifdef HAS_OLED
+#ifdef DEVICE_HAS_OLED
 uint8_t oledState = 1;
 static int cmd_uhk_oled(const struct shell *shell, size_t argc, char *argv[])
 {
@@ -299,7 +299,7 @@ int main(void) {
     gpio_init_callback(&callbackStruct, chargerStatCallback, BIT(chargerStatDt.pin));
     gpio_add_callback(chargerStatDt.port, &callbackStruct);
 
-#ifdef HAS_OLED
+#ifdef DEVICE_HAS_OLED
     gpio_pin_configure_dt(&oledEn, GPIO_OUTPUT);
     gpio_pin_set_dt(&oledEn, true);
 
@@ -337,7 +337,7 @@ int main(void) {
         SHELL_CMD_ARG(charger, NULL,
             "get/set CHARGER_EN pin",
             cmd_uhk_charger, 1, 1),
-#ifdef HAS_OLED
+#ifdef DEVICE_HAS_OLED
         SHELL_CMD_ARG(oled, NULL,
             "get/set OLED_EN pin",
             cmd_uhk_oled, 1, 1),
@@ -462,7 +462,7 @@ int main(void) {
             }
         }
 
-        #ifdef HAS_OLED
+        #ifdef DEVICE_HAS_OLED
         setA0(false);
         setOledCs(false);
         writeSpi(0xaf);
