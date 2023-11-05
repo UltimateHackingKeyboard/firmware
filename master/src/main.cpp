@@ -241,7 +241,7 @@ static int cmd_uhk_oled(const struct shell *shell, size_t argc, char *argv[])
 }
 #endif
 
-#ifdef HAS_MERGE_SENSE
+#ifdef DEVICE_HAS_MERGE_SENSE
 static const struct gpio_dt_spec mergeSenseDt = GPIO_DT_SPEC_GET(DT_ALIAS(merge_sense), gpios);
 
 static int cmd_uhk_merge(const struct shell *shell, size_t argc, char *argv[])
@@ -314,7 +314,7 @@ int main(void) {
 
     struct device *uart_dev = DEVICE_DT_GET(DT_NODELABEL(uart1));
 
-#ifdef HAS_MERGE_SENSE
+#ifdef DEVICE_HAS_MERGE_SENSE
     gpio_pin_configure_dt(&mergeSenseDt, GPIO_INPUT);
 #endif
 
@@ -342,7 +342,7 @@ int main(void) {
             "get/set OLED_EN pin",
             cmd_uhk_oled, 1, 1),
 #endif
-#ifdef HAS_MERGE_SENSE
+#ifdef DEVICE_HAS_MERGE_SENSE
         SHELL_CMD_ARG(merge, NULL,
             "get the merged state of UHK halves",
             cmd_uhk_merge, 1, 0),
