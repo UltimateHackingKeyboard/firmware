@@ -18,3 +18,16 @@
     #define DEVICE_NAME "UHK 80 right half"
     #define USB_DEVICE_PRODUCT_ID 0xffff // TODO
 #endif
+
+#if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_LEFT
+    #define HAS_MERGE_SENSE
+#endif
+
+#if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_RIGHT
+    #define HAS_OLED
+#endif
+
+#if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_LEFT || CONFIG_DEVICE_ID == DEVICE_ID_UHK80_RIGHT
+    #define IS_NRF
+    #define HAS_BATTERY
+#endif

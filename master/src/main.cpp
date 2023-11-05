@@ -31,19 +31,6 @@ extern "C"
 #include <zephyr/drivers/adc.h>
 #include "device_ids.h"
 
-#if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_LEFT
-    #define HAS_MERGE_SENSE
-#endif
-
-#if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_RIGHT
-    #define HAS_OLED
-#endif
-
-#if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_LEFT || CONFIG_DEVICE_ID == DEVICE_ID_UHK80_RIGHT
-    #define IS_NRF
-    #define HAS_BATTERY
-#endif
-
 #ifdef HAS_BATTERY
 #define DT_SPEC_AND_COMMA(node_id, prop, idx) \
     ADC_DT_SPEC_GET_BY_IDX(node_id, idx),
