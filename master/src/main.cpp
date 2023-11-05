@@ -21,6 +21,7 @@ extern "C"
 #include <assert.h>
 
 #include "bluetooth.h"
+#include "key_scanner.h"
 }
 #include "usb/usb.hpp"
 #include "usb/keyboard_app.hpp"
@@ -465,6 +466,8 @@ int main(void) {
     mouse_buffer prevMouseState, mouseState;
     controls_buffer prevControls, controls;
     gamepad_buffer prevGamepad, gamepad;
+
+    InitKeyScanner();
 
     for (;;) {
         keyPressed = false;
