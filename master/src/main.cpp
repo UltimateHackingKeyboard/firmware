@@ -31,7 +31,7 @@ extern "C"
 #include <zephyr/drivers/adc.h>
 #include "device.h"
 
-#ifdef HAS_BATTERY
+#ifdef DEVICE_HAS_BATTERY
 #define DT_SPEC_AND_COMMA(node_id, prop, idx) \
     ADC_DT_SPEC_GET_BY_IDX(node_id, idx),
 static const struct adc_dt_spec adc_channels[] = {
@@ -65,7 +65,7 @@ static const struct gpio_dt_spec ledsCsDt = GPIO_DT_SPEC_GET(DT_ALIAS(leds_cs), 
 static const struct gpio_dt_spec ledsSdbDt = GPIO_DT_SPEC_GET(DT_ALIAS(leds_sdb), gpios);
 #endif
 
-#ifdef HAS_BATTERY
+#ifdef DEVICE_HAS_BATTERY
 static const struct gpio_dt_spec chargerEnDt = GPIO_DT_SPEC_GET(DT_ALIAS(charger_en), gpios);
 static const struct gpio_dt_spec chargerStatDt = GPIO_DT_SPEC_GET(DT_ALIAS(charger_stat), gpios);
 #endif
