@@ -22,7 +22,9 @@ extern "C"
 
 #include "bluetooth.h"
 #include "key_scanner.h"
+#include "leds.h"
 }
+
 #include "usb/usb.hpp"
 #include "usb/keyboard_app.hpp"
 #include "usb/mouse_app.hpp"
@@ -61,8 +63,6 @@ const struct spi_buf_set spiBufSet = {
 
 #ifdef DEVICE_HAS_NRF
 const struct device *spi0_dev = DEVICE_DT_GET(DT_NODELABEL(spi1));
-static const struct gpio_dt_spec ledsCsDt = GPIO_DT_SPEC_GET(DT_ALIAS(leds_cs), gpios);
-static const struct gpio_dt_spec ledsSdbDt = GPIO_DT_SPEC_GET(DT_ALIAS(leds_sdb), gpios);
 #endif
 
 #ifdef DEVICE_HAS_BATTERY
@@ -286,10 +286,7 @@ int main(void) {
 
     // Configure GPIOs
 
-    gpio_pin_configure_dt(&ledsCsDt, GPIO_OUTPUT);
-
-    gpio_pin_configure_dt(&ledsSdbDt, GPIO_OUTPUT);
-    gpio_pin_set_dt(&ledsSdbDt, true);
+    InitLeds();
 
     gpio_pin_configure_dt(&chargerEnDt, GPIO_OUTPUT);
     gpio_pin_set_dt(&chargerEnDt, true);
