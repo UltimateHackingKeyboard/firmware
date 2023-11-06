@@ -7,7 +7,6 @@ extern "C"
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/uart.h>
 #include <zephyr/usb/class/usb_hid.h>
-#include <zephyr/drivers/spi.h>
 #include <zephyr/drivers/i2c.h>
 
 #include <zephyr/types.h>
@@ -24,6 +23,7 @@ extern "C"
 #include "key_scanner.h"
 #include "leds.h"
 #include "charger.h"
+#include "spi.h"
 }
 
 #include "usb/usb.hpp"
@@ -35,28 +35,6 @@ extern "C"
 #include "device.h"
 
 #define LedPagePrefix 0b01010000
-
-static struct spi_config spiConf = {
-    .frequency = 400000U,
-    .operation = (SPI_OP_MODE_MASTER | SPI_WORD_SET(8) | SPI_TRANSFER_MSB)
-};
-
-uint8_t buf[] = {1};
-const struct spi_buf spiBuf[] = {
-    {
-        .buf = &buf,
-        .len = 1,
-    }
-};
-
-const struct spi_buf_set spiBufSet = {
-    .buffers = spiBuf,
-    .count = 1,
-};
-
-#ifdef DEVICE_HAS_NRF
-const struct device *spi0_dev = DEVICE_DT_GET(DT_NODELABEL(spi1));
-#endif
 
 #ifdef DEVICE_HAS_OLED
 static const struct gpio_dt_spec oledEn = GPIO_DT_SPEC_GET(DT_ALIAS(oled_en), gpios);
@@ -80,12 +58,6 @@ void setA0(bool state)
 void setLedsCs(bool state)
 {
     gpio_pin_set_dt(&ledsCsDt, state);
-}
-
-void writeSpi(uint8_t data)
-{
-    buf[0] = data;
-    spi_write(spi0_dev, &spiConf, &spiBufSet);
 }
 
 static const struct device *uart_dev = DEVICE_DT_GET(DT_NODELABEL(uart1));

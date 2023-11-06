@@ -8,8 +8,8 @@
 #define THREAD_STACK_SIZE 1000
 #define THREAD_PRIORITY 5
 
-K_THREAD_STACK_DEFINE(stack_area, THREAD_STACK_SIZE);
-struct k_thread thread_data;
+static K_THREAD_STACK_DEFINE(stack_area, THREAD_STACK_SIZE);
+static struct k_thread thread_data;
 
 // Keyboard matrix definitions
 
