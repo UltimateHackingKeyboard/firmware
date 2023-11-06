@@ -403,7 +403,7 @@ int main(void) {
                 prevGamepad = gamepad;
             }
         }
-
+/*
         #ifdef DEVICE_HAS_OLED
         setA0(false);
         setOledCs(false);
@@ -421,35 +421,7 @@ int main(void) {
         writeSpi(pixel ? 0xff : 0x00);
         setOledCs(true);
         #endif
-
-        setLedsCs(false);
-        writeSpi(LedPagePrefix | 2);
-        writeSpi(0x00);
-        writeSpi(0b00001001);
-        setLedsCs(true);
-
-        setLedsCs(false);
-        writeSpi(LedPagePrefix | 2);
-        writeSpi(0x01);
-        writeSpi(0xff);
-        setLedsCs(true);
-
-        setLedsCs(false);
-        writeSpi(LedPagePrefix | 0);
-        writeSpi(0x00);
-        for (int i=0; i<255; i++) {
-            writeSpi(KeyPressed || ledsAlwaysOn ? 0xff : 0);
-        }
-        setLedsCs(true);
-
-        setLedsCs(false);
-        writeSpi(LedPagePrefix | 1);
-        writeSpi(0x00);
-        for (int i=0; i<255; i++) {
-            writeSpi(KeyPressed || ledsAlwaysOn ? 0xff : 0);
-        }
-        setLedsCs(true);
-
+*/
 //      bluetooth_set_adv_led(&blink_status);
 //      k_sleep(K_MSEC(ADV_LED_BLINK_INTERVAL));
         // Battery level simulation
@@ -459,5 +431,7 @@ int main(void) {
             pixel = !pixel;
             counter = 0;
         }
+
+        k_msleep(1);
     }
 }
