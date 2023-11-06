@@ -108,7 +108,8 @@ static float computeModuleSpeed(float x, float y, uint8_t moduleId)
 typedef enum {
     State_Zero,
     State_Tap,
-    State_TapAndHold
+    State_TapAndHold,
+    State_HoldContinuationDelay,
 } tap_hold_state_t;
 
 typedef enum {
@@ -118,6 +119,7 @@ typedef enum {
     Event_FingerIn,
     Event_FingerOut,
     Event_TapAndHold,
+    Event_HoldContinuationTimeout,
 } tap_hold_event_t;
 
 typedef enum {
@@ -125,9 +127,12 @@ typedef enum {
     Action_Press = 2,
     Action_Release = 4,
     Action_Doubletap = 8,
+    Action_ResetHoldContinuationTimeout = 16,
 } tap_hold_action_t;
 
 static tap_hold_state_t tapHoldAutomatonState = State_Zero;
+
+uint16_t HoldContinuationTimeout = 0;
 
 static tap_hold_action_t tapHoldStateMachine(tap_hold_event_t event)
 {
@@ -168,6 +173,26 @@ static tap_hold_action_t tapHoldStateMachine(tap_hold_event_t event)
             tapHoldAutomatonState = State_Tap;
             return Action_ResetTimer | Action_Doubletap;
         case Event_FingerOut:
+            if (HoldContinuationTimeout == 0) {
+                tapHoldAutomatonState = State_Zero;
+                return Action_Release;
+            } else {
+                tapHoldAutomatonState = State_HoldContinuationDelay;
+                return Action_ResetHoldContinuationTimeout;
+            }
+        default:
+            return 0;
+        }
+    case State_HoldContinuationDelay:
+        switch (event) {
+        case Event_NewTap:
+            tapHoldAutomatonState = State_Tap;
+            return Action_ResetTimer | Action_Doubletap;
+        case Event_TapAndHold:
+        case Event_FingerIn:
+            tapHoldAutomatonState = State_TapAndHold;
+            return 0;
+        case Event_HoldContinuationTimeout:
             tapHoldAutomatonState = State_Zero;
             return Action_Release;
         default:
@@ -184,9 +209,12 @@ static void feedTapHoldStateMachine(touchpad_events_t events)
     //      Or add artificial delay bellow.
     const uint16_t tapTimeout = 200;
     static uint32_t lastSingleTapTime = 0;
+    static uint32_t continuationDelayStart = 0;
     static bool lastFinger = false;
     static bool lastSingleTapValue = false;
     static bool lastTapAndHoldValue = false;
+    static bool lastSingleTapTimerActive = false;
+    static bool holdContinuationTimerActive = false;
     tap_hold_action_t action = 0;
     tap_hold_event_t event = 0;
 
@@ -200,14 +228,19 @@ static void feedTapHoldStateMachine(touchpad_events_t events)
     } else if (lastFinger != (events.noFingers == 1)) {
         event = lastFinger ? Event_FingerOut : Event_FingerIn ;
         lastFinger = !lastFinger;
-    } else if(lastSingleTapTime + tapTimeout < CurrentTime) {
+    } else if (lastSingleTapTimerActive && lastSingleTapTime + tapTimeout < CurrentTime) {
         event = Event_Timeout;
+        lastSingleTapTimerActive = false;
+    } else if (holdContinuationTimerActive && continuationDelayStart + HoldContinuationTimeout < CurrentTime) {
+        event = Event_HoldContinuationTimeout;
+        holdContinuationTimerActive = false;
     }
 
     action = tapHoldStateMachine(event);
 
     if (action & Action_ResetTimer) {
         lastSingleTapTime = CurrentTime;
+        lastSingleTapTimerActive = true;
     }
     if (action & Action_Release) {
         PostponerCore_TrackKeyEvent(singleTap, false, 0xff);
@@ -220,7 +253,10 @@ static void feedTapHoldStateMachine(touchpad_events_t events)
         PostponerCore_TrackDelay(20);
         PostponerCore_TrackKeyEvent(singleTap, true, 0xff);
     }
-
+    if (action & Action_ResetHoldContinuationTimeout) {
+        continuationDelayStart = CurrentTime;
+        holdContinuationTimerActive = true;
+    }
 
     lastSingleTapValue &= events.singleTap;
     lastTapAndHoldValue &= events.tapAndHold;

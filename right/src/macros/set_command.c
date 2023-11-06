@@ -252,9 +252,14 @@ static macro_variable_t module(parser_context_t* ctx, set_command_action_t actio
         ConsumeUntilDot(ctx);
         return moduleNavigationMode(ctx, action, module);
     }
+    else if (ConsumeToken(ctx, "holdContinuationTimeout") && moduleId == ModuleId_TouchpadRight) {
+        DEFINE_INT_LIMITS(0, 65535);
+        ASSIGN_INT(HoldContinuationTimeout);
+    }
     else {
         return moduleSpeed(ctx, action, module, moduleId);
     }
+    return noneVar();
 }
 
 static macro_variable_t secondaryRoleAdvanced(parser_context_t* ctx, set_command_action_t action)
