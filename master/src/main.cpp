@@ -23,6 +23,7 @@ extern "C"
 #include "bluetooth.h"
 #include "key_scanner.h"
 #include "leds.h"
+#include "charger.h"
 }
 
 #include "usb/usb.hpp"
@@ -32,14 +33,6 @@ extern "C"
 #include "usb/gamepad_app.hpp"
 #include <zephyr/drivers/adc.h>
 #include "device.h"
-
-#ifdef DEVICE_HAS_BATTERY
-#define DT_SPEC_AND_COMMA(node_id, prop, idx) \
-    ADC_DT_SPEC_GET_BY_IDX(node_id, idx),
-static const struct adc_dt_spec adc_channels[] = {
-    DT_FOREACH_PROP_ELEM(DT_PATH(zephyr_user), io_channels, DT_SPEC_AND_COMMA)
-};
-#endif
 
 #define LedPagePrefix 0b01010000
 
@@ -63,11 +56,6 @@ const struct spi_buf_set spiBufSet = {
 
 #ifdef DEVICE_HAS_NRF
 const struct device *spi0_dev = DEVICE_DT_GET(DT_NODELABEL(spi1));
-#endif
-
-#ifdef DEVICE_HAS_BATTERY
-static const struct gpio_dt_spec chargerEnDt = GPIO_DT_SPEC_GET(DT_ALIAS(charger_en), gpios);
-static const struct gpio_dt_spec chargerStatDt = GPIO_DT_SPEC_GET(DT_ALIAS(charger_stat), gpios);
 #endif
 
 #ifdef DEVICE_HAS_OLED
@@ -273,28 +261,13 @@ static int cmd_uhk_gamepad(const struct shell *shell, size_t argc, char *argv[])
     return 0;
 }
 
-void chargerStatCallback(const struct device *port, struct gpio_callback *cb, gpio_port_pins_t pins) {
-    if (statLog) {
-        printk("STAT changed to %i\n", gpio_pin_get_dt(&chargerStatDt) ? 1 : 0);
-    }
-}
-
-struct gpio_callback callbackStruct;
-
 int main(void) {
     printk("----------\n" DEVICE_NAME " started\n");
 
     // Configure GPIOs
 
     InitLeds();
-
-    gpio_pin_configure_dt(&chargerEnDt, GPIO_OUTPUT);
-    gpio_pin_set_dt(&chargerEnDt, true);
-
-    gpio_pin_configure_dt(&chargerStatDt, GPIO_INPUT);
-    gpio_pin_interrupt_configure_dt(&chargerStatDt, GPIO_INT_EDGE_BOTH);
-    gpio_init_callback(&callbackStruct, chargerStatCallback, BIT(chargerStatDt.pin));
-    gpio_add_callback(chargerStatDt.port, &callbackStruct);
+    InitCharger();
 
 #ifdef DEVICE_HAS_OLED
     gpio_pin_configure_dt(&oledEn, GPIO_OUTPUT);
