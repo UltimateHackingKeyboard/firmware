@@ -25,6 +25,8 @@ void setLedsCs(bool state)
 
 void ledUpdater() {
     while (true) {
+        k_mutex_lock(&SpiMutex, K_FOREVER);
+
         gpio_pin_set_dt(&ledsCsDt, false);
 
         writeSpi(LedPagePrefix | 2);
@@ -54,6 +56,8 @@ void ledUpdater() {
         }
 
         gpio_pin_set_dt(&ledsCsDt, true);
+
+        k_mutex_unlock(&SpiMutex);
 
         k_sleep(K_MSEC(100));
     }
