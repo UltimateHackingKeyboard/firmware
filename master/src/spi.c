@@ -1,6 +1,8 @@
 #include <zephyr/drivers/spi.h>
 #include "spi.h"
 
+struct k_mutex SpiMutex;
+
 const struct device *spi0_dev = DEVICE_DT_GET(DT_NODELABEL(spi1));
 
 static struct spi_config spiConf = {
