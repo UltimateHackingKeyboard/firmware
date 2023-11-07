@@ -22,6 +22,7 @@ extern "C"
 #include "bluetooth.h"
 #include "key_scanner.h"
 #include "leds.h"
+#include "oled.h"
 #include "charger.h"
 #include "spi.h"
 }
@@ -34,31 +35,7 @@ extern "C"
 #include <zephyr/drivers/adc.h>
 #include "device.h"
 
-#define LedPagePrefix 0b01010000
-
-#ifdef DEVICE_HAS_OLED
-static const struct gpio_dt_spec oledEn = GPIO_DT_SPEC_GET(DT_ALIAS(oled_en), gpios);
-static const struct gpio_dt_spec oledResetDt = GPIO_DT_SPEC_GET(DT_ALIAS(oled_reset), gpios);
-static const struct gpio_dt_spec oledCsDt = GPIO_DT_SPEC_GET(DT_ALIAS(oled_cs), gpios);
-static const struct gpio_dt_spec oledA0Dt = GPIO_DT_SPEC_GET(DT_ALIAS(oled_a0), gpios);
-
-void setOledCs(bool state)
-{
-    gpio_pin_set_dt(&oledCsDt, state);
-}
-
-void setA0(bool state)
-{
-    gpio_pin_set_dt(&oledA0Dt, state);
-}
-
-#endif
-
 #ifdef DEVICE_HAS_NRF
-void setLedsCs(bool state)
-{
-    gpio_pin_set_dt(&ledsCsDt, state);
-}
 
 static const struct device *uart_dev = DEVICE_DT_GET(DT_NODELABEL(uart1));
 
@@ -238,21 +215,10 @@ int main(void) {
 
     // Configure GPIOs
 
+    k_mutex_init(&SpiMutex);
+    InitOled();
     InitLeds();
     InitCharger();
-
-#ifdef DEVICE_HAS_OLED
-    gpio_pin_configure_dt(&oledEn, GPIO_OUTPUT);
-    gpio_pin_set_dt(&oledEn, true);
-
-    gpio_pin_configure_dt(&oledResetDt, GPIO_OUTPUT);
-    gpio_pin_set_dt(&oledResetDt, false);
-    k_msleep(1);
-    gpio_pin_set_dt(&oledResetDt, true);
-
-    gpio_pin_configure_dt(&oledCsDt, GPIO_OUTPUT);
-    gpio_pin_configure_dt(&oledA0Dt, GPIO_OUTPUT);
-#endif
 
     struct device *uart_dev = DEVICE_DT_GET(DT_NODELABEL(uart1));
 
@@ -351,8 +317,6 @@ int main(void) {
     uart_irq_callback_user_data_set(uart_dev, serial_cb, NULL);
     uart_irq_rx_enable(uart_dev);
 //  int blink_status = 0;
-    uint32_t counter = 0;
-    bool pixel = 1;
     scancode_buffer prevKeys, keys;
     mouse_buffer prevMouseState, mouseState;
     controls_buffer prevControls, controls;
@@ -403,34 +367,10 @@ int main(void) {
                 prevGamepad = gamepad;
             }
         }
-/*
-        #ifdef DEVICE_HAS_OLED
-        setA0(false);
-        setOledCs(false);
-        writeSpi(0xaf);
-        setOledCs(true);
-
-        setA0(false);
-        setOledCs(false);
-        writeSpi(0x81);
-        writeSpi(0xff);
-        setOledCs(true);
-
-        setA0(true);
-        setOledCs(false);
-        writeSpi(pixel ? 0xff : 0x00);
-        setOledCs(true);
-        #endif
-*/
 //      bluetooth_set_adv_led(&blink_status);
 //      k_sleep(K_MSEC(ADV_LED_BLINK_INTERVAL));
         // Battery level simulation
         bas_notify();
-
-        if (counter++ > 19) {
-            pixel = !pixel;
-            counter = 0;
-        }
 
         k_msleep(1);
     }
