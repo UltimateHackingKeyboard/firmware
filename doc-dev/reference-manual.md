@@ -109,6 +109,7 @@ The following grammar is supported:
     COMMAND = set module.MODULEID.invertScrollDirectionY BOOL
     COMMAND = set module.touchpad.pinchZoomDivisor <1-100 (FLOAT)>
     COMMAND = set module.touchpad.pinchZoomMode NAVIGATION_MODE
+    COMMAND = set module.touchpad.holdContinuationTimeout <0-65535 (INT)>
     COMMAND = set secondaryRole.defaultStrategy { simple | advanced }
     COMMAND = set secondaryRole.advanced.timeout <ms, 0-500 (INT)>
     COMMAND = set secondaryRole.advanced.timeoutAction { primary | secondary }
@@ -564,6 +565,8 @@ Internally, values are saved in one of the following types, and types are automa
   - `cursorAxisLock BOOL` - turns axis locking on for cursor mode. Not recommended, but possible.
   - `scrollAxisLock BOOL` - turns axis locking on for scroll mode. Default for keycluster trackball.
   - `caretAxisLock BOOL` - turns axis locking on for all discrete modes.
+
+- `set module.touchpad.holdContinuationTimeout <0-65535 (INT)>` If non-zero, touchpad allows you to release your finger for the specified amount of time during drag-and-drop (without the left click getting released).
 
 - Remapping keys:
   - `set navigationModeAction.{caret|media}.{DIRECTION|none} ACTION` can be used to customize the caret or media mode behaviour by binding directions to macros. This action is global and reversible only by powercycling.
