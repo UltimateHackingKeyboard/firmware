@@ -237,20 +237,6 @@ int main(void) {
 
     SHELL_CMD_REGISTER(uhk, &uhk_cmds, "UHK commands", NULL);
 
-    // Init ADC channels
-    for (size_t i = 0U; i < ARRAY_SIZE(adc_channels); i++) {
-        if (!device_is_ready(adc_channels[i].dev)) {
-            printk("ADC controller device %s not ready\n", adc_channels[i].dev->name);
-            return 0;
-        }
-        int err;
-        err = adc_channel_setup_dt(&adc_channels[i]);
-        if (err < 0) {
-            printk("Could not setup channel #%d (%d)\n", i, err);
-            return 0;
-        }
-    }
-
     usb_init(true);
     bluetooth_init();
 
