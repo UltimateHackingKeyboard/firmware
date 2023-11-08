@@ -40,7 +40,7 @@ static struct gpio_dt_spec cols[] = {
 };
 
 #define COLS_COUNT (sizeof(cols) / sizeof(cols[0]))
-bool KeyStates[ROWS_COUNT][COLS_COUNT];
+uint8_t KeyStates[ROWS_COUNT][COLS_COUNT];
 volatile char KeyPressed;
 
 void keyScanner() {

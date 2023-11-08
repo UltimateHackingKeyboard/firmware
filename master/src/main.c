@@ -1,5 +1,3 @@
-extern "C"
-{
 #include "bluetooth.h"
 #include "key_scanner.h"
 #include "leds.h"
@@ -11,8 +9,6 @@ extern "C"
 #include "merge_sensor.h"
 #include "shell.h"
 #include "device.h"
-}
-
 #include "usb/usb.hpp"
 
 int main(void) {

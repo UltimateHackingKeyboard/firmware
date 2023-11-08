@@ -3,7 +3,7 @@
 
 // Variables:
 
-    extern bool KeyStates[6][10];
+    extern uint8_t KeyStates[6][10];
     extern volatile char KeyPressed;
 
 // Functions:

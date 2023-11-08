@@ -99,6 +99,7 @@ void sendUsbReports(void) {
     }
 }
 
+extern "C" {
 void usb_init(bool gamepad_enable) {
     static constexpr auto speed = usb::speed::FULL;
     static usb::df::zephyr::udc_mac mac {DEVICE_DT_GET(DT_NODELABEL(zephyr_udc0))};
@@ -154,4 +155,5 @@ void usb_init(bool gamepad_enable) {
         NULL, NULL, NULL,
         THREAD_PRIORITY, 0, K_NO_WAIT
     );
+}
 }

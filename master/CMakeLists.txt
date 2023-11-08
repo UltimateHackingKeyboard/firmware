@@ -22,7 +22,7 @@ if(HAS_BLUETOOTH)
     file(GLOB app_cpp_sources src/*.cpp)
     target_sources(app PRIVATE ${app_sources} ${app_cpp_sources} ${usb_sources} ${usb_cpp_sources})
 else()
-    file(GLOB app_cpp_sources src/main.cpp)
+    file(GLOB app_cpp_sources src/main.c)
     target_sources(app PRIVATE ${app_cpp_sources} ${usb_sources} ${usb_cpp_sources})
 endif()
 
