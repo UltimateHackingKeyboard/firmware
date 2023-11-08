@@ -1,3 +1,4 @@
+#include <zephyr/kernel.h>
 #include <zephyr/drivers/uart.h>
 
 const struct device *uart_dev = DEVICE_DT_GET(DT_NODELABEL(uart1));
@@ -23,11 +24,6 @@ void serial_cb(const struct device *dev, void *user_data)
 }
 
 void InitUart(void) {
-    if (!device_is_ready(uart_dev)) {
-        printk("UART device not found!");
-        return 1;
-    }
-
     uart_irq_callback_user_data_set(uart_dev, serial_cb, NULL);
     uart_irq_rx_enable(uart_dev);
 }

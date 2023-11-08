@@ -50,7 +50,7 @@ mouse_buffer prevMouseState, mouseState;
 controls_buffer prevControls, controls;
 gamepad_buffer prevGamepad, gamepad;
 
-void sendUsbReports(void) {
+void sendUsbReports(void*, void*, void*) {
     while (true) {
         keys.set_code(scancode::A, KeyStates[0][0]);
         if (keys != prevKeys) {
