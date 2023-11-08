@@ -239,58 +239,13 @@ int main(void) {
 
     usb_init(true);
     bluetooth_init();
-
-//  int blink_status = 0;
-    scancode_buffer prevKeys, keys;
-    mouse_buffer prevMouseState, mouseState;
-    controls_buffer prevControls, controls;
-    gamepad_buffer prevGamepad, gamepad;
-
     InitKeyScanner();
 
+//  int blink_status = 0;
+
     for (;;) {
-        keys.set_code(scancode::A, KeyStates[0][0]);
-        if (keys != prevKeys) {
-            auto result = keyboard_app::handle().send(keys);
-            if (result == hid::result::OK) {
-                // buffer accepted for transmit
-                prevKeys = keys;
-            }
-        }
+        sendUsbReports();
 
-        mouseState.set_button(mouse_button::RIGHT, KeyStates[0][1]);
-        mouseState.x = -50;
-        // mouseState.y = -50;
-        // mouseState.wheel_y = -50;
-        // mouseState.wheel_x = -50;
-        if (mouseState != prevMouseState) {
-            auto result = mouse_app::handle().send(mouseState);
-            if (result == hid::result::OK) {
-                // buffer accepted for transmit
-                prevMouseState = mouseState;
-            }
-        }
-
-        controls.set_code(consumer_code::VOLUME_INCREMENT, KeyStates[0][2]);
-        if (controls != prevControls) {
-            auto result = controls_app::handle().send(controls);
-            if (result == hid::result::OK) {
-                // buffer accepted for transmit
-                prevControls = controls;
-            }
-        }
-
-        gamepad.set_button(gamepad_button::X, KeyStates[0][3]);
-        // gamepad.left.X = 50;
-        // gamepad.right.Y = 50;
-        // gamepad.right_trigger = 50;
-        if (gamepad != prevGamepad) {
-            auto result = gamepad_app::handle().send(gamepad);
-            if (result == hid::result::OK) {
-                // buffer accepted for transmit
-                prevGamepad = gamepad;
-            }
-        }
 //      bluetooth_set_adv_led(&blink_status);
 //      k_sleep(K_MSEC(ADV_LED_BLINK_INTERVAL));
         // Battery level simulation

@@ -4,6 +4,7 @@
 #include <zephyr/device.h>
 
 // TODO: add parameter to select initial mode (gamepad yes/no, keyboard 6/N KRO)
-void usb_init(bool gamepad_enable);
+extern void usb_init(bool gamepad_enable);
+extern void sendUsbReports(void);
 
 #endif // __USB_HEADER__

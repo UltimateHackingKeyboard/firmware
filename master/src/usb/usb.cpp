@@ -17,6 +17,7 @@ extern "C"
 #include <zephyr/settings/settings.h>
 
 #include "bluetooth.h"
+#include "key_scanner.h"
 }
 #include "device.h"
 #include "usb.hpp"
@@ -35,6 +36,56 @@ constexpr usb::product_info prinfo {
     0x1D50, "Ultimage Gadget Laboratories",
     USB_DEVICE_PRODUCT_ID, DEVICE_NAME, usb::version("1.0")
 };
+
+scancode_buffer prevKeys, keys;
+mouse_buffer prevMouseState, mouseState;
+controls_buffer prevControls, controls;
+gamepad_buffer prevGamepad, gamepad;
+
+void sendUsbReports(void) {
+    keys.set_code(scancode::A, KeyStates[0][0]);
+    if (keys != prevKeys) {
+        auto result = keyboard_app::handle().send(keys);
+        if (result == hid::result::OK) {
+            // buffer accepted for transmit
+            prevKeys = keys;
+        }
+    }
+
+    mouseState.set_button(mouse_button::RIGHT, KeyStates[0][1]);
+    mouseState.x = -50;
+    // mouseState.y = -50;
+    // mouseState.wheel_y = -50;
+    // mouseState.wheel_x = -50;
+    if (mouseState != prevMouseState) {
+        auto result = mouse_app::handle().send(mouseState);
+        if (result == hid::result::OK) {
+            // buffer accepted for transmit
+            prevMouseState = mouseState;
+        }
+    }
+
+    controls.set_code(consumer_code::VOLUME_INCREMENT, KeyStates[0][2]);
+    if (controls != prevControls) {
+        auto result = controls_app::handle().send(controls);
+        if (result == hid::result::OK) {
+            // buffer accepted for transmit
+            prevControls = controls;
+        }
+    }
+
+    gamepad.set_button(gamepad_button::X, KeyStates[0][3]);
+    // gamepad.left.X = 50;
+    // gamepad.right.Y = 50;
+    // gamepad.right_trigger = 50;
+    if (gamepad != prevGamepad) {
+        auto result = gamepad_app::handle().send(gamepad);
+        if (result == hid::result::OK) {
+            // buffer accepted for transmit
+            prevGamepad = gamepad;
+        }
+    }
+}
 
 void usb_init(bool gamepad_enable) {
     static constexpr auto speed = usb::speed::FULL;
