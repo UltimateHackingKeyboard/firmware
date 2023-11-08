@@ -5,7 +5,6 @@ extern "C"
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/gpio.h>
-#include <zephyr/drivers/uart.h>
 #include <zephyr/usb/class/usb_hid.h>
 #include <zephyr/drivers/i2c.h>
 
@@ -25,6 +24,7 @@ extern "C"
 #include "oled.h"
 #include "charger.h"
 #include "spi.h"
+#include "uart.h"
 }
 
 #include "usb/usb.hpp"
@@ -34,31 +34,6 @@ extern "C"
 #include "usb/gamepad_app.hpp"
 #include <zephyr/drivers/adc.h>
 #include "device.h"
-
-#ifdef DEVICE_HAS_NRF
-
-static const struct device *uart_dev = DEVICE_DT_GET(DT_NODELABEL(uart1));
-
-char bufferIn[20];
-char *ch = bufferIn;
-void serial_cb(const struct device *dev, void *user_data)
-{
-    if (!uart_irq_update(uart_dev)) {
-        return;
-    }
-
-    while (uart_irq_rx_ready(uart_dev)) {
-        // put characters into bufferI until newline, at which point printk() the buffer and clear it
-        uart_fifo_read(uart_dev, (uint8_t*)ch, 1);
-        if (*ch == '\n') {
-            printk("got %s", bufferIn);
-            ch = bufferIn;
-        } else {
-            ch++;
-        }
-    }
-}
-#endif
 
 // Shell functions
 
@@ -215,12 +190,11 @@ int main(void) {
 
     // Configure GPIOs
 
+    InitUart();
     k_mutex_init(&SpiMutex);
     InitOled();
     InitLeds();
     InitCharger();
-
-    struct device *uart_dev = DEVICE_DT_GET(DT_NODELABEL(uart1));
 
 #ifdef DEVICE_HAS_MERGE_SENSE
     gpio_pin_configure_dt(&mergeSenseDt, GPIO_INPUT);
@@ -303,10 +277,6 @@ int main(void) {
         }
     }
 
-    if (!device_is_ready(uart_dev)) {
-        printk("UART device not found!");
-        return 1;
-    }
 
     // dk_buttons_init(button_changed);
     // dk_leds_init();
@@ -314,8 +284,6 @@ int main(void) {
     usb_init(true);
     bluetooth_init();
 
-    uart_irq_callback_user_data_set(uart_dev, serial_cb, NULL);
-    uart_irq_rx_enable(uart_dev);
 //  int blink_status = 0;
     scancode_buffer prevKeys, keys;
     mouse_buffer prevMouseState, mouseState;
