@@ -25,6 +25,7 @@ extern "C"
 #include "spi.h"
 #include "uart.h"
 #include "i2c.h"
+#include "merge_sensor.h"
 }
 
 #include "usb/usb.hpp"
@@ -154,8 +155,6 @@ static int cmd_uhk_oled(const struct shell *shell, size_t argc, char *argv[])
 #endif
 
 #ifdef DEVICE_HAS_MERGE_SENSE
-static const struct gpio_dt_spec mergeSenseDt = GPIO_DT_SPEC_GET(DT_ALIAS(merge_sense), gpios);
-
 static int cmd_uhk_merge(const struct shell *shell, size_t argc, char *argv[])
 {
     shell_fprintf(shell, SHELL_NORMAL, "%i\n", gpio_pin_get_dt(&mergeSenseDt) ? 1 : 0);
@@ -196,10 +195,7 @@ int main(void) {
     InitOled();
     InitLeds();
     InitCharger();
-
-#ifdef DEVICE_HAS_MERGE_SENSE
-    gpio_pin_configure_dt(&mergeSenseDt, GPIO_INPUT);
-#endif
+    InitMergeSensor();
 
     // Create shell commands
 
@@ -241,8 +237,6 @@ int main(void) {
 
     SHELL_CMD_REGISTER(uhk, &uhk_cmds, "UHK commands", NULL);
 
-
-
     // Init ADC channels
     for (size_t i = 0U; i < ARRAY_SIZE(adc_channels); i++) {
         if (!device_is_ready(adc_channels[i].dev)) {
@@ -256,10 +250,6 @@ int main(void) {
             return 0;
         }
     }
-
-
-    // dk_buttons_init(button_changed);
-    // dk_leds_init();
 
     usb_init(true);
     bluetooth_init();
