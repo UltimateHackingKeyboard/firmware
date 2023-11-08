@@ -1,22 +1,5 @@
-#include <zephyr/shell/shell.h>
 extern "C"
 {
-#include <stdio.h>
-#include <zephyr/kernel.h>
-#include <zephyr/device.h>
-#include <zephyr/drivers/gpio.h>
-#include <zephyr/usb/class/usb_hid.h>
-
-#include <zephyr/types.h>
-#include <stddef.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <zephyr/sys/printk.h>
-#include <zephyr/sys/byteorder.h>
-#include <soc.h>
-#include <assert.h>
-
 #include "bluetooth.h"
 #include "key_scanner.h"
 #include "leds.h"
@@ -27,15 +10,10 @@ extern "C"
 #include "i2c.h"
 #include "merge_sensor.h"
 #include "shell.h"
+#include "device.h"
 }
 
 #include "usb/usb.hpp"
-#include "usb/keyboard_app.hpp"
-#include "usb/mouse_app.hpp"
-#include "usb/controls_app.hpp"
-#include "usb/gamepad_app.hpp"
-#include <zephyr/drivers/adc.h>
-#include "device.h"
 
 int main(void) {
     printk("----------\n" DEVICE_NAME " started\n");
