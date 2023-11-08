@@ -28,3 +28,7 @@ void writeSpi(uint8_t data)
     buf[0] = data;
     spi_write(spi0_dev, &spiConf, &spiBufSet);
 }
+
+void InitSpi(void) {
+    k_mutex_init(&SpiMutex);
+}

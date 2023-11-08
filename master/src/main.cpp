@@ -42,7 +42,7 @@ int main(void) {
 
     InitUart();
     InitI2c();
-    k_mutex_init(&SpiMutex);
+    InitSpi();
     InitOled();
     InitLeds();
     InitCharger();
