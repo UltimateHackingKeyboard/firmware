@@ -6,6 +6,7 @@
 #include "leds.h"
 #include "oled.h"
 #include "shell.h"
+#include "usb/usb.hpp"
 
 shell_t Shell;
 
@@ -132,14 +133,12 @@ static int cmd_uhk_merge(const struct shell *shell, size_t argc, char *argv[])
 
 static int cmd_uhk_rollover(const struct shell *shell, size_t argc, char *argv[])
 {
-    // if (argc == 1) {
-    //     shell_fprintf(shell, SHELL_NORMAL, "%c\n",
-    //             (keyboard_app::handle().get_rollover() == keyboard_app::rollover::N_KEY) ? 'n' : '6');
-    // } else {
-    //     keyboard_app::handle().set_rollover((argv[1][0] == '6') ?
-    //             keyboard_app::rollover::SIX_KEY : keyboard_app::rollover::N_KEY);
-    // }
-    // return 0;
+    if (argc == 1) {
+        shell_fprintf(shell, SHELL_NORMAL, "%c\n", (USB_GetKeyboardRollover == Rollover_NKey) ? 'n' : '6');
+    } else {
+        USB_SetKeyboardRollover((argv[1][0] == '6') ? Rollover_6Key : Rollover_NKey);
+    }
+    return 0;
 }
 
 static int cmd_uhk_gamepad(const struct shell *shell, size_t argc, char *argv[])

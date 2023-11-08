@@ -100,6 +100,7 @@ void sendUsbReports(void) {
 }
 
 extern "C" {
+
 void usb_init(bool gamepad_enable) {
     static constexpr auto speed = usb::speed::FULL;
     static usb::df::zephyr::udc_mac mac {DEVICE_DT_GET(DT_NODELABEL(zephyr_udc0))};
@@ -156,4 +157,15 @@ void usb_init(bool gamepad_enable) {
         THREAD_PRIORITY, 0, K_NO_WAIT
     );
 }
+
+uint8_t USB_GetKeyboardRollover(void)
+{
+    return (uint8_t)keyboard_app::handle().get_rollover();
 }
+
+void USB_SetKeyboardRollover(uint8_t mode)
+{
+    keyboard_app::handle().set_rollover((keyboard_app::rollover)mode);
+}
+
+} // extern "C"
