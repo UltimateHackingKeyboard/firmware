@@ -6,7 +6,6 @@ extern "C"
 #include <zephyr/device.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/usb/class/usb_hid.h>
-#include <zephyr/drivers/i2c.h>
 
 #include <zephyr/types.h>
 #include <stddef.h>
@@ -25,6 +24,7 @@ extern "C"
 #include "charger.h"
 #include "spi.h"
 #include "uart.h"
+#include "i2c.h"
 }
 
 #include "usb/usb.hpp"
@@ -191,6 +191,7 @@ int main(void) {
     // Configure GPIOs
 
     InitUart();
+    InitI2c();
     k_mutex_init(&SpiMutex);
     InitOled();
     InitLeds();
@@ -240,28 +241,7 @@ int main(void) {
 
     SHELL_CMD_REGISTER(uhk, &uhk_cmds, "UHK commands", NULL);
 
-    // Init I2C
-#if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_LEFT
-    #define device_addr 0x18 // left module i2c address
-#elif CONFIG_DEVICE_ID == DEVICE_ID_UHK80_RIGHT || CONFIG_DEVICE_ID == DEVICE_ID_UHK60V1_RIGHT || CONFIG_DEVICE_ID == DEVICE_ID_UHK60V2_RIGHT
-    #define device_addr 0x28 // right module i2c address
-#endif
 
-    uint8_t tx_buf[] = {0x00,0x00};
-    uint8_t rx_buf[10] = {0};
-
-    int ret;
-    static const struct device *i2c0_dev = DEVICE_DT_GET(DT_NODELABEL(i2c0));
-    k_msleep(50);
-    if (!device_is_ready(i2c0_dev)) {
-        printk("I2C bus %s is not ready!\n",i2c0_dev->name);
-    }
-
-    ret = i2c_write_read(i2c0_dev, device_addr, tx_buf, 2, rx_buf, 7);
-    if (ret != 0) {
-        printk("write-read fail\n");
-    }
-    printk("sync: %.7s\n", rx_buf);
 
     // Init ADC channels
     for (size_t i = 0U; i < ARRAY_SIZE(adc_channels); i++) {
