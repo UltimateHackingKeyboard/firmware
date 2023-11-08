@@ -144,12 +144,12 @@ static int cmd_uhk_rollover(const struct shell *shell, size_t argc, char *argv[]
 
 static int cmd_uhk_gamepad(const struct shell *shell, size_t argc, char *argv[])
 {
-    // if (argc == 1) {
-    //     // TODO
-    // } else {
-    //     usb_init(argv[1][0] == '1');
-    // }
-    // return 0;
+    if (argc == 1) {
+        // TODO
+    } else {
+        usb_init(argv[1][0] == '1');
+    }
+    return 0;
 }
 
 void InitShell(void)
