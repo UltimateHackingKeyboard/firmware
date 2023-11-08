@@ -25,21 +25,16 @@ int main(void) {
     InitLeds();
     InitCharger();
     InitMergeSensor();
-
     usb_init(true);
     bluetooth_init();
     InitKeyScanner();
 
 //  int blink_status = 0;
-
     for (;;) {
-        sendUsbReports();
-
 //      bluetooth_set_adv_led(&blink_status);
 //      k_sleep(K_MSEC(ADV_LED_BLINK_INTERVAL));
         // Battery level simulation
         bas_notify();
-
         k_msleep(1);
     }
 }

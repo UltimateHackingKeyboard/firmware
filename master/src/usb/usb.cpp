@@ -32,6 +32,14 @@ extern "C"
 #include "usb/df/vendor/microsoft_os_extension.hpp"
 #include "usb/df/vendor/microsoft_xinput.hpp"
 
+// Thread definitions
+
+#define THREAD_STACK_SIZE 1000
+#define THREAD_PRIORITY 5
+
+static K_THREAD_STACK_DEFINE(stack_area, THREAD_STACK_SIZE);
+static struct k_thread thread_data;
+
 constexpr usb::product_info prinfo {
     0x1D50, "Ultimage Gadget Laboratories",
     USB_DEVICE_PRODUCT_ID, DEVICE_NAME, usb::version("1.0")
@@ -43,47 +51,51 @@ controls_buffer prevControls, controls;
 gamepad_buffer prevGamepad, gamepad;
 
 void sendUsbReports(void) {
-    keys.set_code(scancode::A, KeyStates[0][0]);
-    if (keys != prevKeys) {
-        auto result = keyboard_app::handle().send(keys);
-        if (result == hid::result::OK) {
-            // buffer accepted for transmit
-            prevKeys = keys;
+    while (true) {
+        keys.set_code(scancode::A, KeyStates[0][0]);
+        if (keys != prevKeys) {
+            auto result = keyboard_app::handle().send(keys);
+            if (result == hid::result::OK) {
+                // buffer accepted for transmit
+                prevKeys = keys;
+            }
         }
-    }
 
-    mouseState.set_button(mouse_button::RIGHT, KeyStates[0][1]);
-    mouseState.x = -50;
-    // mouseState.y = -50;
-    // mouseState.wheel_y = -50;
-    // mouseState.wheel_x = -50;
-    if (mouseState != prevMouseState) {
-        auto result = mouse_app::handle().send(mouseState);
-        if (result == hid::result::OK) {
-            // buffer accepted for transmit
-            prevMouseState = mouseState;
+        mouseState.set_button(mouse_button::RIGHT, KeyStates[0][1]);
+        mouseState.x = -50;
+        // mouseState.y = -50;
+        // mouseState.wheel_y = -50;
+        // mouseState.wheel_x = -50;
+        if (mouseState != prevMouseState) {
+            auto result = mouse_app::handle().send(mouseState);
+            if (result == hid::result::OK) {
+                // buffer accepted for transmit
+                prevMouseState = mouseState;
+            }
         }
-    }
 
-    controls.set_code(consumer_code::VOLUME_INCREMENT, KeyStates[0][2]);
-    if (controls != prevControls) {
-        auto result = controls_app::handle().send(controls);
-        if (result == hid::result::OK) {
-            // buffer accepted for transmit
-            prevControls = controls;
+        controls.set_code(consumer_code::VOLUME_INCREMENT, KeyStates[0][2]);
+        if (controls != prevControls) {
+            auto result = controls_app::handle().send(controls);
+            if (result == hid::result::OK) {
+                // buffer accepted for transmit
+                prevControls = controls;
+            }
         }
-    }
 
-    gamepad.set_button(gamepad_button::X, KeyStates[0][3]);
-    // gamepad.left.X = 50;
-    // gamepad.right.Y = 50;
-    // gamepad.right_trigger = 50;
-    if (gamepad != prevGamepad) {
-        auto result = gamepad_app::handle().send(gamepad);
-        if (result == hid::result::OK) {
-            // buffer accepted for transmit
-            prevGamepad = gamepad;
+        gamepad.set_button(gamepad_button::X, KeyStates[0][3]);
+        // gamepad.left.X = 50;
+        // gamepad.right.Y = 50;
+        // gamepad.right_trigger = 50;
+        if (gamepad != prevGamepad) {
+            auto result = gamepad_app::handle().send(gamepad);
+            if (result == hid::result::OK) {
+                // buffer accepted for transmit
+                prevGamepad = gamepad;
+            }
         }
+
+        k_msleep(1);
     }
 }
 
@@ -134,4 +146,12 @@ void usb_init(bool gamepad_enable) {
         device.set_config(base_config);
     }
     device.open();
+
+    k_thread_create(
+        &thread_data, stack_area,
+        K_THREAD_STACK_SIZEOF(stack_area),
+        sendUsbReports,
+        NULL, NULL, NULL,
+        THREAD_PRIORITY, 0, K_NO_WAIT
+    );
 }
