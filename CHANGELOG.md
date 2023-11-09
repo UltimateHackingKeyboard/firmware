@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [10.4.0] - 2023-11-10
+
+Device Protocol: 4.10.0 | Module Protocol: 4.3.0 | User Config: 6.0.0 | Hardware Config: 1.0.0 | Smart Macros: 2.**2.0**
+
+- Implement touchpad hold continuation timeout via `set module.touchpad.holdContinuationTimeout <0-65535>` (milliseconds). If non-zero, the touchpad module allows the release of finger for the specified amount of time during drag-and-drop without the left click getting released. `SMARTMACROS:MINOR`
+- Blink adaptive mode (triangle) LED display icon when recording runtime macros. `SMARTMACROS:PATCH`
+- Fix `repeatFor`-related macro validation error. `SMARTMACROS:PATCH`
+- Fix `"$($keyId.*)"` parsing. `SMARTMACROS:PATCH`
+- Clear sticky modifiers when navigation mode is active.
+- Improve macro guide documentation and add examples.
+
 ## [10.3.1] - 2023-10-13
 
 Device Protocol: 4.10.0 | Module Protocol: 4.3.0 | User Config: 6.0.0 | Hardware Config: 1.0.0 | Smart Macros: 2.1.**1**
