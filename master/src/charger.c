@@ -1,6 +1,7 @@
-#include "charger.h"
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/sys/util.h>
+#include "charger.h"
+#include "shell.h"
 
 const struct gpio_dt_spec chargerEnDt = GPIO_DT_SPEC_GET(DT_ALIAS(charger_en), gpios);
 const struct gpio_dt_spec chargerStatDt = GPIO_DT_SPEC_GET(DT_ALIAS(charger_stat), gpios);
@@ -14,7 +15,7 @@ const struct adc_dt_spec adc_channels[] = {
 };
 
 void chargerStatCallback(const struct device *port, struct gpio_callback *cb, gpio_port_pins_t pins) {
-    if (true/*Shell.statLog*/) {
+    if (Shell.statLog) {
         printk("STAT changed to %i\n", gpio_pin_get_dt(&chargerStatDt) ? 1 : 0);
     }
 }
