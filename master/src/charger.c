@@ -42,4 +42,6 @@ void InitCharger(void) {
             return;
         }
     }
+
+    // TODO: Update battery level. See bas_notify()
 }

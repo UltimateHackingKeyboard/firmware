@@ -635,9 +635,7 @@ void bas_notify(void) {
 
 void bluetooth_set_adv_led(int *blink_status) {
     if (is_adv) {
-        // dk_set_led(ADV_STATUS_LED, (++*blink_status) % 2);
-    } else {
-        // dk_set_led_off(ADV_STATUS_LED);
+        // TODO: Display advertising status.
     }
 }
 
