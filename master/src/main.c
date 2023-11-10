@@ -12,7 +12,7 @@
 #include "usb/usb.hpp"
 #include <zephyr/drivers/gpio.h>
 
-const struct gpio_dt_spec testLed = GPIO_DT_SPEC_GET(DT_ALIAS(test_led), gpios);
+//const struct gpio_dt_spec testLed = GPIO_DT_SPEC_GET(DT_ALIAS(test_led), gpios);
 
 int main(void) {
     printk("----------\n" DEVICE_NAME " started\n");
