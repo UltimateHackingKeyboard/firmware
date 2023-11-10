@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/gpio.h>
-#include "device.h"
 #include "key_scanner.h"
 
 // Thread definitions
@@ -14,9 +13,7 @@ static struct k_thread thread_data;
 
 // Keyboard matrix definitions
 
-#define ROWS_COUNT 6
-
-static struct gpio_dt_spec rows[ROWS_COUNT] = {
+static struct gpio_dt_spec rows[KEY_MATRIX_ROWS] = {
     GPIO_DT_SPEC_GET(DT_ALIAS(row1), gpios),
     GPIO_DT_SPEC_GET(DT_ALIAS(row2), gpios),
     GPIO_DT_SPEC_GET(DT_ALIAS(row3), gpios),
@@ -25,7 +22,7 @@ static struct gpio_dt_spec rows[ROWS_COUNT] = {
     GPIO_DT_SPEC_GET(DT_ALIAS(row6), gpios),
 };
 
-static struct gpio_dt_spec cols[] = {
+static struct gpio_dt_spec cols[KEY_MATRIX_COLS] = {
     GPIO_DT_SPEC_GET(DT_ALIAS(col1), gpios),
     GPIO_DT_SPEC_GET(DT_ALIAS(col2), gpios),
     GPIO_DT_SPEC_GET(DT_ALIAS(col3), gpios),
@@ -41,15 +38,15 @@ static struct gpio_dt_spec cols[] = {
 };
 
 #define COLS_COUNT (sizeof(cols) / sizeof(cols[0]))
-uint8_t KeyStates[ROWS_COUNT][COLS_COUNT];
+uint8_t KeyStates[KEY_MATRIX_ROWS][KEY_MATRIX_COLS];
 volatile char KeyPressed;
 
 void keyScanner() {
     while (true) {
         KeyPressed = false;
-        for (uint8_t rowId=0; rowId<6; rowId++) {
+        for (uint8_t rowId=0; rowId<KEY_MATRIX_ROWS; rowId++) {
             gpio_pin_set_dt(&rows[rowId], 1);
-            for (uint8_t colId=0; colId<COLS_COUNT; colId++) {
+            for (uint8_t colId=0; colId<KEY_MATRIX_COLS; colId++) {
                 bool keyState = gpio_pin_get_dt(&cols[colId]);
                 KeyStates[rowId][colId] = keyState;
                 if (keyState) {
