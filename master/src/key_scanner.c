@@ -4,6 +4,7 @@
 #include "key_scanner.h"
 #include "shell.h"
 #include "uart.h"
+#include "bluetooth.h"
 #include <zephyr/drivers/uart.h>
 
 // Thread definitions
@@ -66,6 +67,8 @@ void keyScanner() {
             }
             gpio_pin_set_dt(&rows[rowId], 0);
         }
+
+        key_report_send(KeyStates[0][0]);
 
         k_msleep(1);
     }

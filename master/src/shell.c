@@ -7,6 +7,7 @@
 #include "oled.h"
 #include "shell.h"
 #include "usb/usb.hpp"
+#include "bluetooth.h"
 
 shell_t Shell = {
     .keyLog = 1,
@@ -157,6 +158,12 @@ static int cmd_uhk_gamepad(const struct shell *shell, size_t argc, char *argv[])
     return 0;
 }
 
+static int cmd_uhk_btacc(const struct shell *shell, size_t argc, char *argv[])
+{
+    num_comp_reply(argv[1][0]);
+    return 0;
+}
+
 void InitShell(void)
 {
     SHELL_STATIC_SUBCMD_SET_CREATE(
@@ -192,6 +199,9 @@ void InitShell(void)
         SHELL_CMD_ARG(gamepad, NULL,
             "switch gamepad on/off",
             cmd_uhk_gamepad, 1, 1),
+        SHELL_CMD_ARG(btacc, NULL,
+            "accept bluetooth pairing",
+            cmd_uhk_btacc, 1, 1),
         SHELL_SUBCMD_SET_END
     );
 

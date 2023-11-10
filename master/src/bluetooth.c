@@ -39,15 +39,6 @@
 #define SCAN_CODE_POS                    2
 #define KEYS_MAX_LEN                    (INPUT_REPORT_KEYS_MAX_LEN - SCAN_CODE_POS)
 
-#define ADV_STATUS_LED DK_LED1
-#define CON_STATUS_LED DK_LED2
-#define LED_CAPS_LOCK  DK_LED3
-#define KEY_TEXT_MASK  DK_BTN1_MSK
-
-// Key used to accept or reject passkey value
-#define KEY_PAIRING_ACCEPT DK_BTN1_MSK
-#define KEY_PAIRING_REJECT DK_BTN2_MSK
-
 static const struct bt_data ad[] = {
     BT_DATA_BYTES(BT_DATA_GAP_APPEARANCE,
               (CONFIG_BT_DEVICE_APPEARANCE >> 0) & 0xff,
@@ -100,7 +91,7 @@ static void pairing_process() {
     char addr[BT_ADDR_LE_STR_LEN];
     bt_addr_le_to_str(bt_conn_get_dst(pairing_data.conn), addr, sizeof(addr));
     printk("Passkey for %s: %06u\n", addr, pairing_data.passkey);
-    printk("Press Button 1 to confirm, Button 2 to reject.\n");
+    printk("type `uhk btacc 1/0` to accept/reject.\n");
 }
 
 // HID init
@@ -540,7 +531,7 @@ static struct bt_conn_auth_info_cb conn_auth_info_callbacks = {
     .pairing_failed = pairing_failed
 };
 
-void key_report_send(bool down) {
+void key_report_send(uint8_t down) {
     if (!conn_mode.conn) {
         return;
     }
@@ -552,22 +543,22 @@ void key_report_send(bool down) {
     int mouse_err = 0;
     if (conn_mode.in_boot_mode) {
         keyboard_err = bt_hids_boot_kb_inp_rep_send(&hids_keyboard_obj, conn_mode.conn, data, sizeof(data), NULL);
-        mouse_err = bt_hids_boot_mouse_inp_rep_send(&hids_mouse_obj, conn_mode.conn, NULL, 5, 0, NULL);
+        // mouse_err = bt_hids_boot_mouse_inp_rep_send(&hids_mouse_obj, conn_mode.conn, NULL, 5, 0, NULL);
     } else {
         uint8_t buffer[INPUT_REP_MOVEMENT_LEN] = {0, 0, 5};
         keyboard_err = bt_hids_inp_rep_send(&hids_keyboard_obj, conn_mode.conn, INPUT_REP_KEYS_IDX, data, sizeof(data), NULL);
-        mouse_err = bt_hids_inp_rep_send(&hids_mouse_obj, conn_mode.conn, INPUT_REP_MOVEMENT_INDEX, buffer, sizeof(buffer), NULL);
+        // mouse_err = bt_hids_inp_rep_send(&hids_mouse_obj, conn_mode.conn, INPUT_REP_MOVEMENT_INDEX, buffer, sizeof(buffer), NULL);
     }
 
     if (keyboard_err) {
         printk("Key report send error: %d\n", keyboard_err);
     }
-    if (mouse_err) {
-        printk("Mouse report send error: %d\n", mouse_err);
-    }
+    // if (mouse_err) {
+    //     printk("Mouse report send error: %d\n", mouse_err);
+    // }
 }
 
-static void num_comp_reply(bool accept) {
+void num_comp_reply(uint8_t accept) {
     struct bt_conn *conn;
 
     if (!pairing_data.conn) {
@@ -586,36 +577,6 @@ static void num_comp_reply(bool accept) {
 
     bt_conn_unref(pairing_data.conn);
     pairing_data.conn = NULL;
-}
-
-void button_changed(uint32_t button_state, uint32_t has_changed) {
-    static bool pairing_button_pressed;
-
-    uint32_t buttons = button_state & has_changed;
-
-    if (pairing_data.conn) {
-        if (buttons & KEY_PAIRING_ACCEPT) {
-            pairing_button_pressed = true;
-            num_comp_reply(true);
-            return;
-        }
-
-        if (buttons & KEY_PAIRING_REJECT) {
-            pairing_button_pressed = true;
-            num_comp_reply(false);
-            return;
-        }
-    }
-
-    // Do not take any action if the pairing button is released.
-    if (pairing_button_pressed && (has_changed & (KEY_PAIRING_ACCEPT | KEY_PAIRING_REJECT))) {
-        pairing_button_pressed = false;
-        return;
-    }
-
-    if (has_changed & KEY_TEXT_MASK) {
-        key_report_send((button_state & KEY_TEXT_MASK) != 0);
-    }
 }
 
 void bas_notify(void) {

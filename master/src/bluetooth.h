@@ -1,7 +1,6 @@
 #include <zephyr/types.h>
 
-#define ADV_LED_BLINK_INTERVAL  1000
-
-void bas_notify(void);
-void button_changed(uint32_t button_state, uint32_t has_changed);
-void bluetooth_init(void);
+extern void bas_notify(void);
+extern void bluetooth_init(void);
+extern void num_comp_reply(uint8_t accept);
+extern void key_report_send(uint8_t down);
