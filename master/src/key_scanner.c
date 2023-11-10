@@ -4,6 +4,7 @@
 #include "key_scanner.h"
 #include "shell.h"
 #include "uart.h"
+#include <zephyr/drivers/uart.h>
 
 // Thread definitions
 
