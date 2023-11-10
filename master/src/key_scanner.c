@@ -3,6 +3,7 @@
 #include <zephyr/drivers/gpio.h>
 #include "key_scanner.h"
 #include "shell.h"
+#include "uart.h"
 
 // Thread definitions
 
@@ -56,9 +57,9 @@ void keyScanner() {
                         char buffer[20];
                         sprintf(buffer, "SW%c%c\n", rowId+'1', colId+'1');
                         printk("%s", buffer);
-                        // for (uint8_t i=0; i<strlen(buffer); i++) {
-                        //     uart_poll_out(uart_dev, buffer[i]);
-                        // }
+                        for (uint8_t i=0; i<strlen(buffer); i++) {
+                            uart_poll_out(uart_dev, buffer[i]);
+                        }
                     }
                 }
             }
