@@ -107,7 +107,7 @@ static void pairing_process() {
 
 static void caps_lock_handler(const struct bt_hids_rep *rep) {
     uint8_t report_val = ((*rep->data) & OUTPUT_REPORT_BIT_MASK_CAPS_LOCK) ? 1 : 0;
-    // dk_set_led(LED_CAPS_LOCK, report_val);
+    printk("Bluetooth Caps lock set to %u\n", report_val);
 }
 
 static void hids_outp_rep_handler(struct bt_hids_rep *rep, struct bt_conn *conn, bool write) {
