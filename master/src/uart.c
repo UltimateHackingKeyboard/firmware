@@ -12,7 +12,6 @@ void serial_cb(const struct device *dev, void *user_data)
     }
 
     while (uart_irq_rx_ready(uart_dev)) {
-        // put characters into bufferI until newline, at which point printk() the buffer and clear it
         uart_fifo_read(uart_dev, (uint8_t*)ch, 1);
         if (*ch == '\n') {
             printk("got %s", bufferIn);
