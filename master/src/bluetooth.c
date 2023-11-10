@@ -48,8 +48,6 @@
 #define KEY_PAIRING_ACCEPT DK_BTN1_MSK
 #define KEY_PAIRING_REJECT DK_BTN2_MSK
 
-static volatile bool is_adv;
-
 static const struct bt_data ad[] = {
     BT_DATA_BYTES(BT_DATA_GAP_APPEARANCE,
               (CONFIG_BT_DEVICE_APPEARANCE >> 0) & 0xff,
@@ -91,7 +89,6 @@ static void advertising_start(void) {
         return;
     }
 
-    is_adv = true;
     printk("Advertising successfully started\n");
 }
 
@@ -449,7 +446,7 @@ static void connected(struct bt_conn *conn, uint8_t err) {
         advertising_start();
     }
 
-    is_adv = false;
+    printk("Advertising stopped\n");
 }
 
 static void disconnected(struct bt_conn *conn, uint8_t reason) {
