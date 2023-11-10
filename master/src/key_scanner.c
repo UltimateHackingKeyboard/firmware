@@ -2,6 +2,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/gpio.h>
 #include "key_scanner.h"
+#include "shell.h"
 
 // Thread definitions
 
@@ -51,7 +52,7 @@ void keyScanner() {
                 KeyStates[rowId][colId] = keyState;
                 if (keyState) {
                     KeyPressed = true;
-                    if (true/*keyLog*/) {
+                    if (Shell.keyLog) {
                         char buffer[20];
                         sprintf(buffer, "SW%c%c\n", rowId+'1', colId+'1');
                         printk("%s", buffer);
