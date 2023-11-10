@@ -633,12 +633,6 @@ void bas_notify(void) {
     bt_bas_set_battery_level(battery_level);
 }
 
-void bluetooth_set_adv_led(int *blink_status) {
-    if (is_adv) {
-        // TODO: Display advertising status.
-    }
-}
-
 void bluetooth_init() {
     printk("Starting Bluetooth Peripheral HIDS keyboard\n");
 
