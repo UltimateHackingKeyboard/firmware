@@ -8,7 +8,14 @@
 #include "shell.h"
 #include "usb/usb.hpp"
 
-shell_t Shell;
+shell_t Shell = {
+    .keyLog = 1,
+    .statLog = 1,
+    .ledsAlwaysOn = 0,
+    .oledEn = 1,
+    .sdbState = 1,
+    .chargerState = 1,
+};
 
 static int cmd_uhk_keylog(const struct shell *shell, size_t argc, char *argv[])
 {
@@ -108,14 +115,13 @@ static int cmd_uhk_charger(const struct shell *shell, size_t argc, char *argv[])
 }
 
 #ifdef DEVICE_HAS_OLED
-uint8_t oledState = 1;
 static int cmd_uhk_oled(const struct shell *shell, size_t argc, char *argv[])
 {
     if (argc == 1) {
-        shell_fprintf(shell, SHELL_NORMAL, "%i\n", oledState ? 1 : 0);
+        shell_fprintf(shell, SHELL_NORMAL, "%i\n", Shell.oledEn ? 1 : 0);
     } else {
-        oledState = argv[1][0] == '1';
-        gpio_pin_set_dt(&oledEn, oledState);
+        Shell.oledEn = argv[1][0] == '1';
+        gpio_pin_set_dt(&oledEn, Shell.oledEn);
     }
     return 0;
 }
@@ -153,13 +159,6 @@ static int cmd_uhk_gamepad(const struct shell *shell, size_t argc, char *argv[])
 
 void InitShell(void)
 {
-    Shell.keyLog = 1;
-    Shell.statLog = 1;
-    Shell.ledsAlwaysOn = 0;
-    Shell.sdbState = 1;
-    Shell.chargerState = 1;
-    oledState = 1;
-
     SHELL_STATIC_SUBCMD_SET_CREATE(
         uhk_cmds,
         SHELL_CMD_ARG(keylog, NULL,
