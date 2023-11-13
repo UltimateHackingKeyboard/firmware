@@ -5,6 +5,7 @@
 #include "charger.h"
 #include "spi.h"
 #include "uart.h"
+#include "central_uart.h"
 #include "i2c.h"
 #include "merge_sensor.h"
 #include "shell.h"
@@ -37,4 +38,5 @@ int main(void) {
     InitKeyScanner();
     usb_init(true);
     bluetooth_init();
+    InitCentralUart();
 }
