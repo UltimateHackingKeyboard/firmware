@@ -1,6 +1,6 @@
 #include "device.h"
 
-#if DEVICE_HAS_OLED
+#ifdef DEVICE_HAS_OLED
 
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/gpio.h>

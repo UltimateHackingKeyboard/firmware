@@ -27,7 +27,7 @@ int main(void) {
     InitI2c();
     InitSpi();
 
-    #if DEVICE_HAS_OLED
+    #ifdef DEVICE_HAS_OLED
     InitOled();
     #endif // DEVICE_HAS_OLED
 
