@@ -1,3 +1,7 @@
+#include "device.h"
+
+#if DEVICE_HAS_OLED
+
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/gpio.h>
 #include "oled.h"
@@ -81,3 +85,5 @@ void InitOled(void) {
         THREAD_PRIORITY, 0, K_NO_WAIT
     );
 }
+
+#endif // DEVICE_HAS_OLED

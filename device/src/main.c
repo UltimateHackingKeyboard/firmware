@@ -26,7 +26,11 @@ int main(void) {
     InitUart();
     InitI2c();
     InitSpi();
+
+    #if DEVICE_HAS_OLED
     InitOled();
+    #endif // DEVICE_HAS_OLED
+
     InitLeds();
     InitCharger();
     InitMergeSensor();
