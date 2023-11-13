@@ -2,7 +2,7 @@
     "nrf-connect.toolchain.path": "${nrf-connect.zephyrsdk:0.16.1}",
     "nrf-connect.topdir": "${nrf-connect.sdk:2.4.1}",
     "nrf-connect.applications": [
-        "${workspaceFolder}/master"
+        "${workspaceFolder}/device"
     ],
     "nrf-connect.boardRoots": [
         "${workspaceFolder}/"
