@@ -24,10 +24,8 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 #define STACKSIZE CONFIG_BT_NUS_THREAD_STACK_SIZE
 #define PRIORITY 7
 
-#define DEVICE_NAME CONFIG_BT_DEVICE_NAME
+#define DEVICE_NAME "UHK 80 Peripheral"
 #define DEVICE_NAME_LEN (sizeof(DEVICE_NAME) - 1)
-
-static K_SEM_DEFINE(ble_init_ok, 0, 1);
 
 static struct bt_conn *current_conn;
 static struct bt_conn *auth_conn;
@@ -160,19 +158,17 @@ int InitPeripheralUart(void)
     printk("InitPeripheralUart\n");
     int err = 0;
 
-    err = bt_conn_auth_cb_register(&conn_auth_callbacks);
-    if (err) {
-        printk("Failed to register authorization callbacks.\n");
-        return 0;
-    }
+    // err = bt_conn_auth_cb_register(&conn_auth_callbacks);
+    // if (err) {
+    //     printk("Failed to register authorization callbacks.\n");
+    //     return 0;
+    // }
 
-    err = bt_conn_auth_info_cb_register(&conn_auth_info_callbacks);
-    if (err) {
-        printk("Failed to register authorization info callbacks.\n");
-        return 0;
-    }
-
-    k_sem_give(&ble_init_ok);
+    // err = bt_conn_auth_info_cb_register(&conn_auth_info_callbacks);
+    // if (err) {
+    //     printk("Failed to register authorization info callbacks.\n");
+    //     return 0;
+    // }
 
     err = bt_nus_init(&nus_cb);
     if (err) {
@@ -182,8 +178,10 @@ int InitPeripheralUart(void)
 
     err = bt_le_adv_start(BT_LE_ADV_CONN, ad, ARRAY_SIZE(ad), sd, ARRAY_SIZE(sd));
     if (err) {
-        LOG_ERR("Advertising failed to start (err %d)", err);
+        LOG_ERR("Peripheral advertising failed to start (err %d)", err);
         return 0;
+    } else {
+        LOG_INF("Peripheral advertising successfully started");
     }
 }
 
