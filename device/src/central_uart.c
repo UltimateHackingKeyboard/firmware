@@ -112,8 +112,7 @@ static void connected(struct bt_conn *conn, uint8_t conn_err)
 
             err = bt_scan_start(BT_SCAN_TYPE_SCAN_ACTIVE);
             if (err) {
-                LOG_ERR("Scanning failed to start (err %d)",
-                    err);
+                LOG_ERR("Scanning failed to start (err %d)", err);
             }
         }
 
@@ -257,6 +256,7 @@ static int scan_init(void)
 
 int InitCentralUart(void)
 {
+    printk("InitCentralUart\n");
     int err;
 
     err = scan_init();

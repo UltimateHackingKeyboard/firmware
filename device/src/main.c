@@ -6,6 +6,7 @@
 #include "spi.h"
 #include "uart.h"
 #include "central_uart.h"
+#include "peripheral_uart.h"
 #include "i2c.h"
 #include "merge_sensor.h"
 #include "shell.h"
@@ -38,5 +39,11 @@ int main(void) {
     InitKeyScanner();
     usb_init(true);
     bluetooth_init();
+
+#if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_LEFT
+    InitPeripheralUart();
+#elif CONFIG_DEVICE_ID == DEVICE_ID_UHK80_RIGHT
     InitCentralUart();
+#endif
+
 }
