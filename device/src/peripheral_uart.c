@@ -160,17 +160,17 @@ int InitPeripheralUart(void)
     printk("InitPeripheralUart\n");
     int err = 0;
 
-	err = bt_conn_auth_cb_register(&conn_auth_callbacks);
-	if (err) {
-		printk("Failed to register authorization callbacks.\n");
-		return 0;
-	}
+    err = bt_conn_auth_cb_register(&conn_auth_callbacks);
+    if (err) {
+        printk("Failed to register authorization callbacks.\n");
+        return 0;
+    }
 
-	err = bt_conn_auth_info_cb_register(&conn_auth_info_callbacks);
-	if (err) {
-		printk("Failed to register authorization info callbacks.\n");
-		return 0;
-	}
+    err = bt_conn_auth_info_cb_register(&conn_auth_info_callbacks);
+    if (err) {
+        printk("Failed to register authorization info callbacks.\n");
+        return 0;
+    }
 
     k_sem_give(&ble_init_ok);
 
