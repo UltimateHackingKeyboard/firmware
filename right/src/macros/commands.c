@@ -493,10 +493,13 @@ static bool processIfDoubletapCommand(bool negate)
     }
     bool doubletapFound = false;
 
-    for (uint8_t i = 0; i < MACRO_STATE_POOL_SIZE; i++) {
-        if (S->ms.currentMacroStartTime - MacroState[i].ps.previousMacroStartTime <= DoubletapConditionTimeout && S->ms.currentMacroIndex == MacroState[i].ps.previousMacroIndex) {
+    for (uint8_t i = 0; i < MACRO_HISTORY_POOL_SIZE; i++) {
+        if (S->ms.currentMacroStartTime - MacroHistory[i].macroStartTime <= DoubletapConditionTimeout && S->ms.currentMacroIndex == MacroHistory[i].macroIndex) {
             doubletapFound = true;
         }
+    }
+
+    for (uint8_t i = 0; i < MACRO_STATE_POOL_SIZE; i++) {
         if (
             MacroState[i].ms.macroPlaying &&
             MacroState[i].ms.currentMacroStartTime < S->ms.currentMacroStartTime &&
