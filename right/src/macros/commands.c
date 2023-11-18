@@ -1512,10 +1512,10 @@ static macro_result_t processFinalCommand(parser_context_t* ctx)
     macro_result_t res = processCommand(ctx);
 
     if (Macros_DryRun) {
-        return MacroResult_Finished;
+        return res;
     }
 
-    if (res & MacroResult_InProgressFlag) {
+    if (res & MacroResult_InProgressFlag || res & MacroResult_DoneFlag) {
         return res;
     } else {
         S->ms.macroBroken = true;
