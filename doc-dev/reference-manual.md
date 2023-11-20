@@ -164,6 +164,7 @@ The following grammar is supported:
     CONDITION = {ifLayer | ifNotLayer} LAYERID
     CONDITION = {ifRecording | ifNotRecording}
     CONDITION = {ifRecordingId | ifNotRecordingId} MACROID
+    CONDITION = {ifModuleConnected | ifNotModuleConnected} MODULEID
     MODIFIER = suppressMods
     MODIFIER = postponeKeys
     MODIFIER = final

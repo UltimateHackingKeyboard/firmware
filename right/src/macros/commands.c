@@ -1355,6 +1355,23 @@ static bool processIfKeyDefinedCommand(parser_context_t* ctx, bool negate)
     return (action->type != KeyActionType_None) != negate;
 }
 
+static bool processIfModuleConnected(parser_context_t* ctx, bool negate)
+{
+    uint8_t moduleId = ConsumeModuleId(ctx);
+    if (Macros_DryRun) {
+        return true;
+    }
+
+    bool moduleConnected = false;
+
+    for (uint8_t moduleSlotId=0; moduleSlotId<UHK_MODULE_MAX_SLOT_COUNT; moduleSlotId++) {
+        uhk_module_state_t *moduleState = UhkModuleStates + moduleSlotId;
+        moduleConnected |= moduleState->moduleId == moduleId;
+    }
+
+    return moduleConnected != negate;
+}
+
 static macro_result_t processActivateKeyPostponedCommand(parser_context_t* ctx)
 {
     uint8_t layer = 255;
@@ -1905,6 +1922,16 @@ static macro_result_t processCommand(parser_context_t* ctx)
             }
             else if (ConsumeToken(ctx, "ifNotKeyDefined")) {
                 if (!processIfKeyDefinedCommand(ctx, true) && !S->ls->as.currentConditionPassed) {
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
+                }
+            }
+            else if (ConsumeToken(ctx, "ifModuleConnected")) {
+                if (!processIfModuleConnected(ctx, false) && !S->ls->as.currentConditionPassed) {
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
+                }
+            }
+            else if (ConsumeToken(ctx, "ifNotModuleConnected")) {
+                if (!processIfModuleConnected(ctx, true) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
