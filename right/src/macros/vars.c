@@ -339,6 +339,15 @@ static macro_variable_t consumeValue(parser_context_t* ctx)
             return consumeDollarExpression(ctx);
         case '(':
             return consumeParenthessExpression(ctx);
+        case '#':
+            Macros_ReportError("Registers were removed. Please, replace them with named variables. E.g., `setVar foo 1` and `$foo`.", ctx->at, ctx->at);
+            return noneVar();
+        case '%':
+            Macros_ReportError("`%` notation was removed. Please, replace it with $queuedKeyId.<index> notation. E.g., `$queuedKeyId.1`.", ctx->at, ctx->at);
+            return noneVar();
+        case '@':
+            Macros_ReportError("`@` notation was removed. Please, replace it with $currentAddress. E.g., `@3` with `$($currentAddress + 3)`.", ctx->at, ctx->at);
+            return noneVar();
         default:
             goto failed;
     }

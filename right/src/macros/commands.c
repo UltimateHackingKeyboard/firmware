@@ -1614,6 +1614,10 @@ static macro_result_t processCommand(parser_context_t* ctx)
             else if (ConsumeToken(ctx, "autoRepeat")) {
                 return processAutoRepeatCommand(ctx);
             }
+            else if (ConsumeToken(ctx, "addReg")) {
+                Macros_ReportError("Command was removed, please use command similar to `setVar varName ($varName+1)`.", ctx->at, ctx->at);
+                return MacroResult_Finished;
+            }
             else {
                 goto failed;
             }
@@ -1956,6 +1960,31 @@ static macro_result_t processCommand(parser_context_t* ctx)
             else if (ConsumeToken(ctx, "ifNotGesture")) {
                 return processIfShortcutCommand(ctx, true, false);
             }
+            else if (ConsumeToken(ctx, "ifRegEq")) {
+                Macros_ReportError("Command was removed, please use command similar to `if ($varName == 1)`.", ctx->at, ctx->at);
+                return MacroResult_Finished;
+            }
+            else if (ConsumeToken(ctx, "ifNotRegEq")) {
+                Macros_ReportError("Command was removed, please use command similar to `if ($varName == 1)`.", ctx->at, ctx->at);
+                return MacroResult_Finished;
+            }
+            else if (ConsumeToken(ctx, "ifRegGt")) {
+                Macros_ReportError("Command was removed, please use command similar to `if ($varName >= 1)`.", ctx->at, ctx->at);
+                return MacroResult_Finished;
+            }
+            else if (ConsumeToken(ctx, "ifRegLt")) {
+                Macros_ReportError("Command was removed, please use command similar to `if ($varName >= 1)`.", ctx->at, ctx->at);
+                return MacroResult_Finished;
+            }
+            else {
+                goto failed;
+            }
+            break;
+        case 'm':
+            if (ConsumeToken(ctx, "mulReg")) {
+                Macros_ReportError("Command was removed, please use command similar to `setVar varName ($varName*2)`.", ctx->at, ctx->at);
+                return MacroResult_Finished;
+            }
             else {
                 goto failed;
             }
@@ -2030,6 +2059,14 @@ static macro_result_t processCommand(parser_context_t* ctx)
             else if (ConsumeToken(ctx, "replaceLayer")) {
                 return processReplaceLayerCommand(ctx);
             }
+            else if (ConsumeToken(ctx, "resolveNextKeyEq")) {
+                Macros_ReportError("Command deprecated. Please, replace resolveNextKeyEq by ifShortcut or ifGesture, or complain at github that you actually need this.", NULL, NULL);
+                return MacroResult_Finished;
+            }
+            else if (ConsumeToken(ctx, "resolveSecondary")) {
+                Macros_ReportError("Command deprecated. Please, replace resolveSecondary by `ifPrimary advancedStrategy goTo ...` or `ifSecondary advancedStrategy goTo ...`.", NULL, NULL);
+                return MacroResult_Finished;
+            }
             else {
                 goto failed;
             }
@@ -2092,6 +2129,26 @@ static macro_result_t processCommand(parser_context_t* ctx)
             else if (ConsumeToken(ctx, "suppressMods")) {
                 processSuppressModsCommand();
             }
+            else if (ConsumeToken(ctx, "setReg")) {
+                Macros_ReportError("Command was removed, please use named variables. E.g., `setVar myVar 1` and `write \"$myVar\"`", ctx->at, ctx->at);
+                return MacroResult_Finished;
+            }
+            else if (ConsumeToken(ctx, "subReg")) {
+                Macros_ReportError("Command was removed, please use command similar to `setVar varName ($varName+1)`.", ctx->at, ctx->at);
+                return MacroResult_Finished;
+            }
+            else if (ConsumeToken(ctx, "setStatusPart")) {
+                Macros_ReportError("Command was removed, please use string interpolated setStatus.", ctx->at, ctx->at);
+                return MacroResult_Finished;
+            }
+            else if (ConsumeToken(ctx, "switchKeymapLayer")) {
+    Macros_ReportError("Command deprecated. Please, replace switchKeymapLayer by toggleKeymapLayer or holdKeymapLayer. Or complain on github that you actually need this command.", ctx->at, ctx->at);
+                return MacroResult_Finished;
+            }
+            else if (ConsumeToken(ctx, "switchLayer")) {
+    Macros_ReportError("Command deprecated. Please, replace switchKeymapLayer by toggleKeymapLayer or holdKeymapLayer. Or complain on github that you actually need this command.", ctx->at, ctx->at);
+                return MacroResult_Finished;
+            }
             else {
                 goto failed;
             }
@@ -2138,6 +2195,10 @@ static macro_result_t processCommand(parser_context_t* ctx)
             }
             else if (ConsumeToken(ctx, "while")) {
                 return processWhileCommand(ctx);
+            }
+            else if (ConsumeToken(ctx, "writeExpr")) {
+                Macros_ReportError("writeExpr is now deprecated, please migrate to interpolated strings", ctx->at, ctx->at);
+                return MacroResult_Finished;
             }
             else {
                 goto failed;
@@ -2223,6 +2284,10 @@ macro_result_t Macros_ProcessCommandAction(void)
 
     ConsumeWhite(&ctx);
 
+    if (ctx.at[0] == '#') {
+        Macros_ReportWarn("# comments are deprecated, please switch to //", ctx.at, ctx.at);
+        return MacroResult_Finished;
+    }
     if (ctx.at[0] == '/' && ctx.at[1] == '/') {
         return MacroResult_Finished;
     }
