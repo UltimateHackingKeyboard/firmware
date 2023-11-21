@@ -2131,7 +2131,7 @@ static macro_result_t processCommand(parser_context_t* ctx)
             }
             else if (ConsumeToken(ctx, "setReg")) {
                 Macros_ReportError("Command was removed, please use named variables. E.g., `setVar myVar 1` and `write \"$myVar\"`", ctx->at, ctx->at);
-                return processSetRegCommand(ctx);
+                return MacroResult_Finished;
             }
             else if (ConsumeToken(ctx, "subReg")) {
                 Macros_ReportError("Command was removed, please use command similar to `setVar varName ($varName+1)`.", ctx->at, ctx->at);
