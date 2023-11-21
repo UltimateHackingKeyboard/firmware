@@ -225,6 +225,10 @@ static macro_variable_t moduleSpeed(parser_context_t* ctx, set_command_action_t 
     else if (ConsumeToken(ctx, "swapAxes")) {
         ASSIGN_BOOL(module->swapAxes);
     }
+    else if (ConsumeToken(ctx, "invertScrollDirection")) {
+        Macros_ReportWarn("Command deprecated. Please, replace invertScrollDirection by invertScrollDirectionY.", ConsumedToken(ctx), ConsumedToken(ctx));
+        ASSIGN_BOOL(module->invertScrollDirectionY);
+    }
     else if (ConsumeToken(ctx, "invertScrollDirectionY")) {
         ASSIGN_BOOL(module->invertScrollDirectionY);
     }
