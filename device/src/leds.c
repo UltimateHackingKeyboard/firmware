@@ -76,4 +76,5 @@ void InitLeds(void) {
         NULL, NULL, NULL,
         THREAD_PRIORITY, 0, K_NO_WAIT
     );
+    k_thread_name_set(&thread_data, "led_updater");
 }
