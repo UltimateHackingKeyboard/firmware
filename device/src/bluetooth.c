@@ -601,6 +601,14 @@ void bluetooth_init() {
     printk("Bluetooth initialized\n");
 
     settings_load();
+    // list the currently available bluetooth identities
+    // bt_addr_le_t addr;
+    // int res;
+    // res = bt_addr_le_from_str("DE:AD:BE:AF:BA:11", "public", &addr); // why not public?
+    // printk("bt_addr_le_from_str: %d\n", res);
+    // res = bt_id_create(&addr, NULL);
+    // printk("bt_id_create: %d\n", res);
+
     hid_keyboard_init();
     // hid_mouse_init();
 
