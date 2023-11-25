@@ -5,7 +5,7 @@
 #include "charger.h"
 #include "spi.h"
 #include "uart.h"
-#include "central_uart.h"
+#include "bt_central_uart.h"
 #include "peripheral_uart.h"
 #include "i2c.h"
 #include "merge_sensor.h"
