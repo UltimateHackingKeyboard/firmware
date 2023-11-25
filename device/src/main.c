@@ -1,4 +1,4 @@
-#include "bluetooth.h"
+#include "bt_hid.h"
 #include "key_scanner.h"
 #include "leds.h"
 #include "oled.h"
