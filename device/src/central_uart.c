@@ -237,13 +237,15 @@ static int scan_init(void)
     bt_scan_init(&scan_init);
     bt_scan_cb_register(&scan_cb);
 
-    err = bt_scan_filter_add(BT_SCAN_FILTER_TYPE_UUID, BT_UUID_NUS_SERVICE);
+    bt_addr_le_t addr;
+    bt_addr_le_from_str("E7:60:F0:D9:98:51", "random", &addr);
+    err = bt_scan_filter_add(BT_SCAN_FILTER_TYPE_ADDR, BT_UUID_NUS_SERVICE);
     if (err) {
         LOG_ERR("Scanning filters cannot be set (err %d)", err);
         return err;
     }
 
-    err = bt_scan_filter_enable(BT_SCAN_UUID_FILTER, false);
+    err = bt_scan_filter_enable(BT_SCAN_ADDR_FILTER, false);
     if (err) {
         LOG_ERR("Filters cannot be turned on (err %d)", err);
         return err;
