@@ -20,4 +20,4 @@
 
     extern void InitShell(void);
 
-#endif
+#endif // SHELL_H__

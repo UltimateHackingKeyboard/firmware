@@ -47,4 +47,4 @@
         #define DEVICE_HAS_BATTERY
     #endif
 
-#endif
+#endif // __DEVICE_H__

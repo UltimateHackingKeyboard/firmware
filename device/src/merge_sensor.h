@@ -5,4 +5,4 @@
 
     extern void InitMergeSensor(void);
 
-#endif
+#endif // __MERGE_SENSOR_H__

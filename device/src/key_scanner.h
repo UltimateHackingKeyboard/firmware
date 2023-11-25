@@ -14,4 +14,4 @@
 
     extern void InitKeyScanner(void);
 
-#endif
+#endif // KEY_SCANNER_H__

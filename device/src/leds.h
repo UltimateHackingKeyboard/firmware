@@ -10,4 +10,4 @@
 
     extern void InitLeds(void);
 
-#endif
+#endif __LEDS_H__

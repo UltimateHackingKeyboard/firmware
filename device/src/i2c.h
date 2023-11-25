@@ -5,4 +5,4 @@
 
     extern void InitI2c(void);
 
-#endif
+#endif // __I2C_H__

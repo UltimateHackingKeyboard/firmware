@@ -14,4 +14,4 @@
     extern void writeSpi(uint8_t data);
     extern void InitSpi(void);
 
-#endif
+#endif // __SPI_H__
