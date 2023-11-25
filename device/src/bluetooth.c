@@ -602,7 +602,7 @@ void bluetooth_init() {
 
     settings_load();
     hid_keyboard_init();
-    hid_mouse_init();
+    // hid_mouse_init();
 
     advertising_start();
 }
