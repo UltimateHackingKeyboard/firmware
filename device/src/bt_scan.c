@@ -56,7 +56,7 @@ int scan_init(void)
 
     bt_addr_le_t addr;
     bt_addr_le_from_str("E7:60:F0:D9:98:51", "random", &addr);
-    err = bt_scan_filter_add(BT_SCAN_FILTER_TYPE_ADDR, BT_UUID_NUS_SERVICE);
+    err = bt_scan_filter_add(BT_SCAN_FILTER_TYPE_ADDR, &addr);
     if (err) {
         printk("Scanning filters cannot be set (err %d)", err);
         return err;
