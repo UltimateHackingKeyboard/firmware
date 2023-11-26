@@ -175,7 +175,7 @@ void recognizeDrifts(int16_t x, int16_t y) {
 
     // check whether current speed matches remembered "drift" speed
     static float supposedDrift[AXIS_COUNT] = {0.0f, 0.0f};
-    static uint8_t driftLength = 0;
+    static uint16_t driftLength = 0;
     bool drifting = true;
     for (uint8_t axis=0; axis<AXIS_COUNT; axis++) {
         if (ABS(avgSpeed[axis] - supposedDrift[axis]) > DITHERING_THRESHOLD) {
