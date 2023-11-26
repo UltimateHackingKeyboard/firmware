@@ -609,8 +609,8 @@ void bluetooth_init() {
     // res = bt_id_create(&addr, NULL);
     // printk("bt_id_create: %d\n", res);
 
-    hid_keyboard_init();
+    // hid_keyboard_init();
     // hid_mouse_init();
 
-    advertising_start();
+//    advertising_start();
 }
