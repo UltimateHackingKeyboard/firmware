@@ -193,7 +193,6 @@ void recognizeDrifts(int16_t x, int16_t y) {
         if (driftLength > DRIFT_RESET_PERIOD / TRACKPOINT_UPDATE_PERIOD) {
             driftLength = 0;
             shouldReset = true;
-            PointerDelta.debugInfo.resetted = true;
         }
     } else {
         driftLength = 0;
@@ -201,8 +200,6 @@ void recognizeDrifts(int16_t x, int16_t y) {
             supposedDrift[axis] = avgSpeed[axis];
         }
     }
-
-    PointerDelta.debugInfo.avgDrift = (float)avgSpeed[0];
 }
 
 

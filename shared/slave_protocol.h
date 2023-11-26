@@ -65,8 +65,6 @@
     } ATTR_PACKED i2c_message_t;
 
     typedef struct {
-        float avgDrift;
-        bool resetted;
     } ATTR_PACKED pointer_debug_info_t;
 
     typedef struct {
