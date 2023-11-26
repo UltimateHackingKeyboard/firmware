@@ -134,6 +134,8 @@ void SlaveTxHandler(void)
                 // (This handler can be interrupted by sensor interrupts.)
                 pointerDelta->x = PointerDelta.x;
                 pointerDelta->y = PointerDelta.y;
+                pointerDelta->debugInfo = PointerDelta.debugInfo;
+                PointerDelta.debugInfo.resetted = false;
                 PointerDelta.x = 0;
                 PointerDelta.y = 0;
                 __enable_irq();

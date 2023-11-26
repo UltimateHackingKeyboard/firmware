@@ -2,6 +2,8 @@
 #include "key_action.h"
 #include "led_display.h"
 #include "layer.h"
+#include "macros/status_buffer.h"
+#include "slave_protocol.h"
 #include "usb_interfaces/usb_interface_mouse.h"
 #include "peripherals/test_led.h"
 #include "slave_drivers/is31fl3xxx_driver.h"
@@ -709,6 +711,12 @@ void MouseController_ProcessMouseActions()
 
     for (uint8_t moduleSlotId=0; moduleSlotId<UHK_MODULE_MAX_SLOT_COUNT; moduleSlotId++) {
         uhk_module_state_t *moduleState = UhkModuleStates + moduleSlotId;
+
+        if (moduleState->pointerDelta.debugInfo.resetted && moduleState->moduleId == ModuleId_TrackpointRight) {
+            SHOW_STRING("RST", 0);
+            moduleState->pointerDelta.debugInfo.resetted = false;
+        }
+
         if (moduleState->moduleId == ModuleId_Unavailable || moduleState->pointerCount == 0) {
             continue;
         }
@@ -731,6 +739,12 @@ void MouseController_ProcessMouseActions()
             moduleState->pointerDelta.x = 0;
             moduleState->pointerDelta.y = 0;
             __enable_irq();
+
+            if (moduleState->moduleId == ModuleId_TrackpointRight && x != 0) {
+                // WATCH_FLOAT_VALUE(moduleState->pointerDelta.debugInfo.avgDrift, 0);
+                // WATCH_FLOAT_VALUE_MIN(moduleState->pointerDelta.debugInfo.avgDrift, 1);
+                // WATCH_FLOAT_VALUE_MAX(moduleState->pointerDelta.debugInfo.avgDrift, 2);
+            }
 
             processModuleActions(ks, moduleState->moduleId, x, y, 0xFF);
         }

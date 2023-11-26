@@ -1,6 +1,4 @@
-#if DEBUG == 1
 #define WATCHES
-#endif
 
 #ifdef WATCHES
 #ifndef SRC_UTILS_DBG_H_
@@ -41,6 +39,15 @@
     // Watches value V in slot N.
     #define WATCH_VALUE_MAX(V, N) if(CurrentWatch == N) { WatchValueMax(V, N); }
 
+    // Watches value V in slot N.
+    #define WATCH_FLOAT_VALUE(V, N) if(CurrentWatch == N) { WatchFloatValue(V, N); }
+
+    // Watches value V in slot N.
+    #define WATCH_FLOAT_VALUE_MIN(V, N) if(CurrentWatch == N) { WatchFloatValueMin(V, N); }
+
+    // Watches value V in slot N.
+    #define WATCH_FLOAT_VALUE_MAX(V, N) if(CurrentWatch == N) { WatchFloatValueMax(V, N); }
+
     // Watches string V in slot N.
     #define WATCH_STRING(V, N) if(CurrentWatch == N) { WatchString(V, N); }
 
@@ -71,6 +78,9 @@
     void WatchValue(int v, uint8_t n);
     void WatchValueMin(int v, uint8_t n);
     void WatchValueMax(int v, uint8_t n);
+    void WatchFloatValue(float v, uint8_t n);
+    void WatchFloatValueMin(float, uint8_t n);
+    void WatchFloatValueMax(float, uint8_t n);
     void WatchString(char const * v, uint8_t n);
     void ShowValue(int v, uint8_t n);
     void ShowString(char const * v, uint8_t n);
@@ -89,6 +99,9 @@
     #define WATCH_VALUE(V, N)
     #define WATCH_VALUE_MIN(V, N)
     #define WATCH_VALUE_MAX(V, N)
+    #define WATCH_FLOAT_VALUE(V, N)
+    #define WATCH_FLOAT_VALUE_MIN(V, N)
+    #define WATCH_FLOAT_VALUE_MAX(V, N)
     #define WATCH_STRING(V, N)
     #define SHOW_STRING(V, N)
     #define SHOW_VALUE(V, N)

@@ -3,14 +3,12 @@
 
 #ifdef WATCHES
 
-#include "led_display.h"
 #include "timer.h"
 #include "key_states.h"
 #include <limits.h>
 #include "usb_interfaces/usb_interface_basic_keyboard.h"
-#include "macros/core.h"
 #include "macros/status_buffer.h"
-#include "keymap.h"
+#include "segment_display.h"
 
 uint8_t CurrentWatch = 0;
 
@@ -136,6 +134,45 @@ void WatchValueMax(int v, uint8_t n)
         SegmentDisplay_SetInt(m, SegmentDisplaySlot_Debug);
         lastWatch = CurrentTime;
         m = INT_MIN;
+    }
+}
+
+
+void WatchFloatValue(float v, uint8_t n)
+{
+    if (CurrentTime - lastWatch > watchInterval) {
+        SegmentDisplay_SetFloat(v, SegmentDisplaySlot_Debug);
+        lastWatch = CurrentTime;
+    }
+}
+
+void WatchFloatValueMin(float v, uint8_t n)
+{
+    static float m = 0;
+
+    if (v < m) {
+        m = v;
+    }
+
+    if (CurrentTime - lastWatch > watchInterval) {
+        SegmentDisplay_SetFloat(m, SegmentDisplaySlot_Debug);
+        lastWatch = CurrentTime;
+        m = (float)INT_MAX;
+    }
+}
+
+void WatchFloatValueMax(float v, uint8_t n)
+{
+    static float m = 0;
+
+    if (v > m) {
+        m = v;
+    }
+
+    if (CurrentTime - lastWatch > watchInterval) {
+        SegmentDisplay_SetFloat(m, SegmentDisplaySlot_Debug);
+        lastWatch = CurrentTime;
+        m = (float)INT_MIN;
     }
 }
 
