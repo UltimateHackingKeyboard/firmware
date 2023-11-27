@@ -153,12 +153,10 @@ static bool readByte()
 #define ABS(x) ((x) < 0 ? -(x) : (x))
 #define DRIFT_RESET_PERIOD 2000
 #define TRACKPOINT_UPDATE_PERIOD 10
-#define DITHERING_THRESHOLD (1.1f/WINDOW_LENGTH)
 
 static uint16_t window[AXIS_COUNT][WINDOW_LENGTH];
 static uint8_t windowIndex = 0;
 static uint16_t windowSum[AXIS_COUNT];
-static float avgSpeed[AXIS_COUNT];
 
 void recognizeDrifts(int16_t x, int16_t y) {
     uint16_t deltas[AXIS_COUNT] = {ABS(x), ABS(y)};
@@ -168,22 +166,21 @@ void recognizeDrifts(int16_t x, int16_t y) {
         windowSum[axis] -= window[axis][windowIndex];
         window[axis][windowIndex] = deltas[axis];
         windowSum[axis] += window[axis][windowIndex];
-        avgSpeed[axis] = (float)windowSum[axis] / (float)WINDOW_LENGTH;
     }
 
     windowIndex = (windowIndex + 1) % WINDOW_LENGTH;
 
     // check whether current speed matches remembered "drift" speed
-    static float supposedDrift[AXIS_COUNT] = {0.0f, 0.0f};
+    static uint16_t supposedDrift[AXIS_COUNT] = {0, 0};
     static uint16_t driftLength = 0;
     bool drifting = true;
     for (uint8_t axis=0; axis<AXIS_COUNT; axis++) {
-        if (ABS(avgSpeed[axis] - supposedDrift[axis]) > DITHERING_THRESHOLD) {
+        if (ABS(windowSum[axis] - supposedDrift[axis]) > 1) {
             drifting = false;
         }
     }
 
-    if (avgSpeed[0] < DITHERING_THRESHOLD && avgSpeed[1] < DITHERING_THRESHOLD) {
+    if (windowSum[0] < 1 && windowSum[1] < 1) {
         drifting = false;
     }
 
@@ -197,7 +194,7 @@ void recognizeDrifts(int16_t x, int16_t y) {
     } else {
         driftLength = 0;
         for (uint8_t axis=0; axis<AXIS_COUNT; axis++) {
-            supposedDrift[axis] = avgSpeed[axis];
+            supposedDrift[axis] = windowSum[axis];
         }
     }
 }
