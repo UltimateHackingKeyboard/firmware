@@ -43,7 +43,7 @@ int main(void) {
 #if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_LEFT
     InitPeripheralUart();
 #elif CONFIG_DEVICE_ID == DEVICE_ID_UHK80_RIGHT
-    InitCentralUart();
+    // InitCentralUart();
 #endif
 
 }
