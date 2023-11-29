@@ -398,7 +398,7 @@ static void connected(struct bt_conn *conn, uint8_t err) {
     if (!conn_mode.conn) {
         conn_mode.conn = conn;
         conn_mode.in_boot_mode = false;
-        advertising_start();
+        advertise_hid();
     }
 
     printk("Advertising stopped\n");
@@ -421,7 +421,7 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
 
     conn_mode.conn = NULL;
     // dk_set_led_off(CON_STATUS_LED);
-    advertising_start();
+    advertise_hid();
 }
 
 static void security_changed(struct bt_conn *conn, bt_security_t level, enum bt_security_err err) {
@@ -576,5 +576,5 @@ void bluetooth_init() {
     hid_keyboard_init();
     // hid_mouse_init();
 
-    advertising_start();
+    advertise_hid();
 }

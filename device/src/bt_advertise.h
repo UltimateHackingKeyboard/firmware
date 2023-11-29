@@ -3,6 +3,6 @@
 
 // Functions:
 
-    extern void advertising_start(void);
+    extern void advertise_hid(void);
 
 #endif // __BT_ADVERTISE_H__
