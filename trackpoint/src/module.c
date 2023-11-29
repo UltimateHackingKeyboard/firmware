@@ -1,5 +1,6 @@
 #include "fsl_gpio.h"
 #include "module.h"
+#include <stdint.h>
 
 pointer_delta_t PointerDelta;
 
@@ -147,6 +148,58 @@ static bool readByte()
     return false;
 }
 
+#define AXIS_COUNT 2
+#define WINDOW_LENGTH 16
+#define ABS(x) ((x) < 0 ? -(x) : (x))
+#define DRIFT_RESET_PERIOD 2000
+#define TRACKPOINT_UPDATE_PERIOD 10
+
+static uint16_t window[AXIS_COUNT][WINDOW_LENGTH];
+static uint8_t windowIndex = 0;
+static uint16_t windowSum[AXIS_COUNT];
+
+void recognizeDrifts(int16_t x, int16_t y) {
+    uint16_t deltas[AXIS_COUNT] = {ABS(x), ABS(y)};
+
+    // compute average speed across the window
+    for (uint8_t axis=0; axis<AXIS_COUNT; axis++) {
+        windowSum[axis] -= window[axis][windowIndex];
+        window[axis][windowIndex] = deltas[axis];
+        windowSum[axis] += window[axis][windowIndex];
+    }
+
+    windowIndex = (windowIndex + 1) % WINDOW_LENGTH;
+
+    // check whether current speed matches remembered "drift" speed
+    static uint16_t supposedDrift[AXIS_COUNT] = {0, 0};
+    static uint16_t driftLength = 0;
+    bool drifting = true;
+    for (uint8_t axis=0; axis<AXIS_COUNT; axis++) {
+        if (ABS(windowSum[axis] - supposedDrift[axis]) > 1) {
+            drifting = false;
+        }
+    }
+
+    if (windowSum[0] < 1 && windowSum[1] < 1) {
+        drifting = false;
+    }
+
+    // handle drift detection logic
+    if (drifting) {
+        driftLength++;
+        if (driftLength > DRIFT_RESET_PERIOD / TRACKPOINT_UPDATE_PERIOD) {
+            driftLength = 0;
+            shouldReset = true;
+        }
+    } else {
+        driftLength = 0;
+        for (uint8_t axis=0; axis<AXIS_COUNT; axis++) {
+            supposedDrift[axis] = windowSum[axis];
+        }
+    }
+}
+
+
 void PS2_CLOCK_IRQ_HANDLER(void) {
     static uint8_t byte1 = 0;
     static uint16_t deltaX = 0;
@@ -260,7 +313,11 @@ void PS2_CLOCK_IRQ_HANDLER(void) {
                     PointerDelta.y -= deltaY;
                     lastX = deltaX;
                     lastY = deltaY;
+
+                    recognizeDrifts(deltaX, deltaY);
                 } else {
+                    // If there was error then current data is not relevant.
+                    // We use the last delta as an approximation.
                     PointerDelta.x -= lastX;
                     PointerDelta.y -= lastY;
                 }

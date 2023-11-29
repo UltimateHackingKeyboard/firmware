@@ -117,6 +117,7 @@ void SegmentDisplay_SerializeFloat(char* buffer, float num)
 {
     if (num <= -10.0f || 10.0f <= num ) {
         SegmentDisplay_SerializeInt(buffer, num);
+        return;
     }
 
     int mag = 0;
@@ -127,7 +128,7 @@ void SegmentDisplay_SerializeFloat(char* buffer, float num)
         negative = true;
     }
 
-    while (num < 10.0f) {
+    while (num < 10.0f && mag < 10) {
         mag++;
         num *= 10;
     }
@@ -175,6 +176,13 @@ void SegmentDisplay_SetInt(int32_t a, segment_display_slot_t slot)
 {
     char b[3];
     SegmentDisplay_SerializeInt(b, a);
+    SegmentDisplay_SetText(3, b, slot);
+}
+
+void SegmentDisplay_SetFloat(float a, segment_display_slot_t slot)
+{
+    char b[3];
+    SegmentDisplay_SerializeFloat(b, a);
     SegmentDisplay_SetText(3, b, slot);
 }
 
