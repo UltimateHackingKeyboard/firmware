@@ -119,7 +119,7 @@ static void connected(struct bt_conn *conn, uint8_t conn_err)
         return;
     }
 
-    LOG_INF("Connected: %s", addr);
+    printk("Connected (bt_central_uart): %s", addr);
 
     static struct bt_gatt_exchange_params exchange_params;
 
@@ -160,8 +160,7 @@ static void disconnected(struct bt_conn *conn, uint8_t reason)
 
     err = bt_scan_start(BT_SCAN_TYPE_SCAN_ACTIVE);
     if (err) {
-        LOG_ERR("Scanning failed to start (err %d)",
-            err);
+        LOG_ERR("Scanning failed to start (err %d)", err);
     }
 }
 
@@ -174,8 +173,7 @@ static void security_changed(struct bt_conn *conn, bt_security_t level, enum bt_
     if (!err) {
         LOG_INF("Security changed: %s level %u", addr, level);
     } else {
-        LOG_WRN("Security failed: %s level %u err %d", addr,
-            level, err);
+        LOG_WRN("Security failed: %s level %u err %d", addr, level, err);
     }
 
     gatt_discover(conn);
