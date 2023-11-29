@@ -41,6 +41,7 @@ static const struct bt_data sd[] = {
 
 static void connected(struct bt_conn *conn, uint8_t err)
 {
+    printk("Connected (bt_peripheral_uart)");
     char addr[BT_ADDR_LE_STR_LEN];
 
     if (err) {
