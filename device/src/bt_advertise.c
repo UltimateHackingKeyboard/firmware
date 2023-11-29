@@ -3,7 +3,7 @@
 #define DEVICE_NAME     CONFIG_BT_DEVICE_NAME
 #define DEVICE_NAME_LEN (sizeof(DEVICE_NAME) - 1)
 
-static const struct bt_data ad[] = {
+static const struct bt_data ad_hid[] = {
     BT_DATA_BYTES(BT_DATA_GAP_APPEARANCE,
               (CONFIG_BT_DEVICE_APPEARANCE >> 0) & 0xff,
               (CONFIG_BT_DEVICE_APPEARANCE >> 8) & 0xff),
@@ -12,7 +12,7 @@ static const struct bt_data ad[] = {
                       BT_UUID_16_ENCODE(BT_UUID_BAS_VAL)),
 };
 
-static const struct bt_data sd[] = {
+static const struct bt_data sd_hid[] = {
     BT_DATA(BT_DATA_NAME_COMPLETE, DEVICE_NAME, DEVICE_NAME_LEN),
 };
 
@@ -23,7 +23,7 @@ void advertise_hid(void) {
                         BT_GAP_ADV_FAST_INT_MAX_2,
                         NULL);
 
-    int err = bt_le_adv_start(adv_param, ad, ARRAY_SIZE(ad), sd, ARRAY_SIZE(sd));
+    int err = bt_le_adv_start(adv_param, ad_hid, ARRAY_SIZE(ad_hid), sd_hid, ARRAY_SIZE(sd_hid));
     if (err) {
         if (err == -EALREADY) {
             printk("Advertising continued\n");
