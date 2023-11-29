@@ -17,6 +17,7 @@
 #include <stdio.h>
 
 #include <zephyr/logging/log.h>
+#include "bt_advertise.h"
 
 #define LOG_MODULE_NAME peripheral_uart
 LOG_MODULE_REGISTER(LOG_MODULE_NAME);
@@ -29,15 +30,6 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 
 static struct bt_conn *current_conn;
 static struct bt_conn *auth_conn;
-
-static const struct bt_data ad[] = {
-    BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),
-    BT_DATA(BT_DATA_NAME_COMPLETE, DEVICE_NAME, DEVICE_NAME_LEN),
-};
-
-static const struct bt_data sd[] = {
-    BT_DATA_BYTES(BT_DATA_UUID128_ALL, BT_UUID_NUS_VAL),
-};
 
 static void connected(struct bt_conn *conn, uint8_t err)
 {
@@ -177,13 +169,7 @@ int InitPeripheralUart(void)
         return 0;
     }
 
-    err = bt_le_adv_start(BT_LE_ADV_CONN, ad, ARRAY_SIZE(ad), sd, ARRAY_SIZE(sd));
-    if (err) {
-        LOG_ERR("Peripheral advertising failed to start (err %d)", err);
-        return 0;
-    } else {
-        LOG_INF("Peripheral advertising successfully started");
-    }
+    advertise_peer();
 }
 
 // if (bt_nus_send(NULL, buf->data, buf->len)) {
