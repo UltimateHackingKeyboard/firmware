@@ -370,6 +370,24 @@ static void hid_mouse_init(void)
 
 // Connection callbacks
 
+int HidsConnected(struct bt_conn *conn) {
+    int err = 0;
+
+    err = bt_hids_connected(&hids_keyboard_obj, conn);
+    if (err) {
+        printk("Failed to notify keyboard HID service about connection\n");
+        return err;
+    }
+
+    err = bt_hids_connected(&hids_mouse_obj, conn);
+    if (err) {
+        printk("Failed to notify mouse HID service about connection\n");
+        return err;
+    }
+
+    return 0;
+}
+
 static void connected(struct bt_conn *conn, uint8_t err) {
     char addr[BT_ADDR_LE_STR_LEN];
     bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
@@ -380,20 +398,7 @@ static void connected(struct bt_conn *conn, uint8_t err) {
     }
 
     printk("Connected %s\n", addr);
-    // dk_set_led_on(CON_STATUS_LED);
-
-    err = bt_hids_connected(&hids_keyboard_obj, conn);
-    if (err) {
-        printk("Failed to notify keyboard HID service about connection\n");
-        return;
-    }
-
-    err = bt_hids_connected(&hids_mouse_obj, conn);
-    if (err) {
-        printk("Failed to notify mouse HID service about connection\n");
-        return;
-    }
-
+    err = HidsConnected(conn);
 
     if (!conn_mode.conn) {
         conn_mode.conn = conn;
@@ -404,11 +409,7 @@ static void connected(struct bt_conn *conn, uint8_t err) {
     printk("Advertising stopped\n");
 }
 
-static void disconnected(struct bt_conn *conn, uint8_t reason) {
-    char addr[BT_ADDR_LE_STR_LEN];
-    bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
-    printk("Disconnected from %s (reason %u)\n", addr, reason);
-
+int HidsDisconnected(struct bt_conn *conn) {
     int err = bt_hids_disconnected(&hids_keyboard_obj, conn);
     if (err) {
         printk("Failed to notify keyboard HID service about disconnection\n");
@@ -419,6 +420,14 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
         printk("Failed to notify mouse HID service about disconnection\n");
     }
 
+    return 0;
+}
+
+static void disconnected(struct bt_conn *conn, uint8_t reason) {
+    char addr[BT_ADDR_LE_STR_LEN];
+    bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
+    printk("Disconnected from %s (reason %u)\n", addr, reason);
+    HidsDisconnected(conn);
     conn_mode.conn = NULL;
     // dk_set_led_off(CON_STATUS_LED);
     advertise_hid();
