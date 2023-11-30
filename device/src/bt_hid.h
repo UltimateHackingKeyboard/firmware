@@ -10,12 +10,12 @@
 
     typedef struct {
         struct bt_conn *conn;
-        bool in_boot_mode;
     } conn_mode_t;
 
 // Variables:
 
     extern conn_mode_t conn_mode;
+    extern bool HidInBootMode;
 
 // Functions:
 

@@ -39,6 +39,7 @@
 #define KEYS_MAX_LEN                    (INPUT_REPORT_KEYS_MAX_LEN - SCAN_CODE_POS)
 
 conn_mode_t conn_mode;
+bool HidInBootMode = false;
 
 struct {
     struct bt_conn *conn;
@@ -102,11 +103,11 @@ static void hids_pm_evt_handler(enum bt_hids_pm_evt evt, struct bt_conn *conn) {
     switch (evt) {
     case BT_HIDS_PM_EVT_BOOT_MODE_ENTERED:
         printk("Boot mode entered %s\n", addr);
-        conn_mode.in_boot_mode = true;
+        HidInBootMode = true;
         break;
     case BT_HIDS_PM_EVT_REPORT_MODE_ENTERED:
         printk("Report mode entered %s\n", addr);
-        conn_mode.in_boot_mode = false;
+        HidInBootMode = false;
         break;
     default:
         break;
@@ -464,7 +465,7 @@ void key_report_send(uint8_t down) {
 
     int keyboard_err = 0;
     int mouse_err = 0;
-    if (conn_mode.in_boot_mode) {
+    if (HidInBootMode) {
         keyboard_err = bt_hids_boot_kb_inp_rep_send(&hids_keyboard_obj, conn_mode.conn, data, sizeof(data), NULL);
         // mouse_err = bt_hids_boot_mouse_inp_rep_send(&hids_mouse_obj, conn_mode.conn, NULL, 5, 0, NULL);
     } else {

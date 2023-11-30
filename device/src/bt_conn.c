@@ -15,7 +15,7 @@ static void connected(struct bt_conn *conn, uint8_t err) {
 
     if (!conn_mode.conn) {
         conn_mode.conn = conn;
-        conn_mode.in_boot_mode = false;
+        HidInBootMode = false;
         advertise_hid();
     }
 
