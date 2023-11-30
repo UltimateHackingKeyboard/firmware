@@ -38,7 +38,7 @@
 #define SCAN_CODE_POS                    2
 #define KEYS_MAX_LEN                    (INPUT_REPORT_KEYS_MAX_LEN - SCAN_CODE_POS)
 
-conn_mode_t conn_mode;
+struct bt_conn *HidConnection;
 bool HidInBootMode = false;
 
 struct {
@@ -93,7 +93,7 @@ static void hids_boot_kb_outp_rep_handler(struct bt_hids_rep *rep, struct bt_con
 static void hids_pm_evt_handler(enum bt_hids_pm_evt evt, struct bt_conn *conn) {
     char addr[BT_ADDR_LE_STR_LEN];
 
-    if (conn_mode.conn != conn) {
+    if (HidConnection != conn) {
         printk("Cannot find connection handle when processing PM");
         return;
     }
@@ -456,7 +456,7 @@ static struct bt_conn_auth_info_cb conn_auth_info_callbacks = {
 };
 
 void key_report_send(uint8_t down) {
-    if (!conn_mode.conn) {
+    if (!HidConnection) {
         return;
     }
 
@@ -466,12 +466,12 @@ void key_report_send(uint8_t down) {
     int keyboard_err = 0;
     int mouse_err = 0;
     if (HidInBootMode) {
-        keyboard_err = bt_hids_boot_kb_inp_rep_send(&hids_keyboard_obj, conn_mode.conn, data, sizeof(data), NULL);
-        // mouse_err = bt_hids_boot_mouse_inp_rep_send(&hids_mouse_obj, conn_mode.conn, NULL, 5, 0, NULL);
+        keyboard_err = bt_hids_boot_kb_inp_rep_send(&hids_keyboard_obj, HidConnection, data, sizeof(data), NULL);
+        // mouse_err = bt_hids_boot_mouse_inp_rep_send(&hids_mouse_obj, HidConnection, NULL, 5, 0, NULL);
     } else {
         uint8_t buffer[INPUT_REP_MOVEMENT_LEN] = {0, 0, 5};
-        keyboard_err = bt_hids_inp_rep_send(&hids_keyboard_obj, conn_mode.conn, INPUT_REP_KEYS_IDX, data, sizeof(data), NULL);
-        // mouse_err = bt_hids_inp_rep_send(&hids_mouse_obj, conn_mode.conn, INPUT_REP_MOVEMENT_INDEX, buffer, sizeof(buffer), NULL);
+        keyboard_err = bt_hids_inp_rep_send(&hids_keyboard_obj, HidConnection, INPUT_REP_KEYS_IDX, data, sizeof(data), NULL);
+        // mouse_err = bt_hids_inp_rep_send(&hids_mouse_obj, HidConnection, INPUT_REP_MOVEMENT_INDEX, buffer, sizeof(buffer), NULL);
     }
 
     if (keyboard_err) {

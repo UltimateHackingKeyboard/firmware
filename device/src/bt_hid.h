@@ -6,15 +6,9 @@
     #include <zephyr/types.h>
     #include <zephyr/bluetooth/conn.h>
 
-// Typedefs:
-
-    typedef struct {
-        struct bt_conn *conn;
-    } conn_mode_t;
-
 // Variables:
 
-    extern conn_mode_t conn_mode;
+    extern struct bt_conn *HidConnection;
     extern bool HidInBootMode;
 
 // Functions:

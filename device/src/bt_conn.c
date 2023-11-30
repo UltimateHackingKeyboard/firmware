@@ -13,8 +13,8 @@ static void connected(struct bt_conn *conn, uint8_t err) {
     printk("Connected %s\n", addr);
     err = HidsConnected(conn);
 
-    if (!conn_mode.conn) {
-        conn_mode.conn = conn;
+    if (!HidConnection) {
+        HidConnection = conn;
         HidInBootMode = false;
         advertise_hid();
     }
@@ -27,7 +27,7 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
     bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
     printk("Disconnected from %s (reason %u)\n", addr, reason);
     HidsDisconnected(conn);
-    conn_mode.conn = NULL;
+    HidConnection = NULL;
     advertise_hid();
 }
 
