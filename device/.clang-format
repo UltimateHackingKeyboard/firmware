@@ -1,0 +1,39 @@
+BasedOnStyle: LLVM
+ColumnLimit: 100
+---
+Language: Cpp
+Standard: c++20
+IndentWidth: 4
+PPIndentWidth: 4
+ConstructorInitializerIndentWidth: 4
+ContinuationIndentWidth: 4
+IndentRequiresClause: true
+DerivePointerAlignment: false
+PointerAlignment: Left
+BreakBeforeBraces: Custom
+BraceWrapping:
+    AfterClass: true
+    AfterStruct: true
+    AfterUnion: true
+    AfterEnum: true
+    AfterFunction: true
+    AfterNamespace: true
+    AfterExternBlock: true
+    AfterCaseLabel: true
+    AfterControlStatement: Always
+    BeforeElse: true
+    BeforeCatch: true
+    BeforeLambdaBody: true
+    SplitEmptyFunction: false
+    SplitEmptyRecord: false
+    SplitEmptyNamespace: false
+PackConstructorInitializers: NextLineOnly
+AlwaysBreakTemplateDeclarations: Yes
+IncludeCategories:
+  - Regex:           '^<([a-z]+)>'
+    Priority:        0
+FixNamespaceComments: true
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortLambdasOnASingleLine: Inline
+ShortNamespaceLines: 1
+IndentExternBlock: NoIndent
