@@ -13,6 +13,7 @@
 #include "device.h"
 #include "usb/usb.hpp"
 #include <zephyr/drivers/gpio.h>
+#include "bt_conn.h"
 
 //const struct gpio_dt_spec testLed = GPIO_DT_SPEC_GET(DT_ALIAS(test_led), gpios);
 
@@ -38,6 +39,7 @@ int main(void) {
     InitMergeSensor();
     InitKeyScanner();
     usb_init(true);
+    InitAddresses();
     bluetooth_init();
 
 #if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_LEFT

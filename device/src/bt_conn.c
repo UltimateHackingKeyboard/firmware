@@ -1,13 +1,24 @@
 #include "bt_advertise.h"
 #include "bt_hid.h"
 
-bt_addr_le_t leftAddr = { .a={ 0xe7, 0xf5, 0x5d, 0x7c, 0x82, 0x35 }, .type=BT_ADDR_LE_RANDOM };
-bt_addr_le_t rightAddr = { .a={ 0xf0, 0x98, 0x11, 0xce, 0xa4, 0x92 }, .type=BT_ADDR_LE_RANDOM };
-bt_addr_le_t dongleAddr = { .a={ 0x01, 0x23, 0x45, 0x67, 0x89, 0xab }, .type=BT_ADDR_LE_RANDOM };
+char leftAddrStr[] = "e7:f5:5d:7c:82:35";
+char rightAddrStr[] = "f0:98:11:ce:a4:92";
+char dongleAddrStr[] = "ac:d6:18:1b:3d:b5";
+
+bt_addr_le_t leftAddr;
+bt_addr_le_t rightAddr;
+bt_addr_le_t dongleAddr;
+
+void InitAddresses(void) {
+    bt_addr_le_from_str(leftAddrStr, "random", &leftAddr);
+    bt_addr_le_from_str(rightAddrStr, "random", &rightAddr);
+    bt_addr_le_from_str(dongleAddrStr, "public", &dongleAddr);
+}
 
 static void connected(struct bt_conn *conn, uint8_t err) {
     char addr[BT_ADDR_LE_STR_LEN];
     bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
+    printk("%i", bt_addr_le_eq(bt_conn_get_dst(conn), &dongleAddr));
 
     if (err) {
         printk("Failed to connect to %s (%u)\n", addr, err);
@@ -18,12 +29,10 @@ static void connected(struct bt_conn *conn, uint8_t err) {
     err = HidsConnected(conn);
 
     if (!HidConnection) {
-        HidConnection = conn;
+        HidConnection = bt_conn_ref(conn);
         HidInBootMode = false;
-        advertise_hid();
+        // advertise_hid();
     }
-
-    printk("Advertising stopped\n");
 }
 
 static void disconnected(struct bt_conn *conn, uint8_t reason) {
