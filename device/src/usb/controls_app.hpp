@@ -1,6 +1,7 @@
 #ifndef __CONTROLS_APP_HEADER__
 #define __CONTROLS_APP_HEADER__
 
+#include "double_buffer.hpp"
 #include "hid/application.hpp"
 #include "hid/page/consumer.hpp"
 #include "hid/page/generic_desktop.hpp"
@@ -22,10 +23,10 @@ class controls_app : public hid::application
         : application(report_protocol())
     {}
 
-public:
+  public:
     struct controls_report : public hid::report::base<hid::report::type::INPUT, 0>
     {
-        template<typename T, size_t SIZE>
+        template <typename T, size_t SIZE>
         struct report_array : public std::array<T, SIZE>
         {
             bool set(hid::usage_index_type usage, bool value = true)
@@ -44,13 +45,14 @@ public:
             }
             constexpr report_array() = default;
         };
-        report_array<hid::le_uint16_t, CONSUMER_CODE_COUNT> consumer_codes {};
-        report_array<hid::le_uint16_t, SYSTEM_CODE_COUNT> system_codes {};
-        report_array<hid::le_uint16_t, TELEPHONY_CODE_COUNT> telephony_codes {};
+        report_array<hid::le_uint16_t, CONSUMER_CODE_COUNT> consumer_codes{};
+        report_array<hid::le_uint16_t, SYSTEM_CODE_COUNT> system_codes{};
+        report_array<hid::le_uint16_t, TELEPHONY_CODE_COUNT> telephony_codes{};
 
         constexpr controls_report() = default;
 
         bool operator==(const controls_report& other) const = default;
+        bool operator!=(const controls_report& other) const = default;
 
         bool set_code(system_code c, bool value = true)
         {
@@ -80,9 +82,9 @@ public:
 
     static controls_app& handle();
 
-    hid::result send(const controls_report& data);
+    void set_report_state(const controls_report& data);
 
-private:
+  private:
     void start(hid::protocol prot) override;
     void stop() override;
     void set_report(hid::report::type type, const std::span<const uint8_t>& data) override
@@ -91,9 +93,9 @@ private:
     }
     void in_report_sent(const std::span<const uint8_t>& data) override;
     void get_report(hid::report::selector select, const std::span<uint8_t>& buffer) override;
+    void send_buffer(const controls_report& report);
 
-    C2USB_USB_TRANSFER_ALIGN(controls_report, report_data_) {};
-    bool tx_busy_ {};
+    double_buffer<controls_report> report_buffer_{};
 };
 
 using controls_buffer = controls_app::controls_report;

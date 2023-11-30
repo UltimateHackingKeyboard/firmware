@@ -4,6 +4,7 @@
 // Includes:
 
     #include "device.h"
+    #include "stdint.h"
 
 // Variables:
 

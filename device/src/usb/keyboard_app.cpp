@@ -7,6 +7,7 @@ const hid::report_protocol& keyboard_app::report_protocol()
     using namespace hid::rdf;
     using namespace hid::app::keyboard;
 
+    // clang-format off
     static constexpr auto rd = descriptor(
         // 6KRO keyboard with report ID
         usage_extended(generic_desktop::KEYBOARD),
@@ -39,7 +40,8 @@ const hid::report_protocol& keyboard_app::report_protocol()
             input::byte_padding<NKRO_USAGE_COUNT>()
         )
     );
-    static constexpr hid::report_protocol rp {rd};
+    // clang-format on
+    static constexpr hid::report_protocol rp{rd};
     return rp;
 }
 
@@ -51,23 +53,28 @@ keyboard_app& keyboard_app::handle()
 
 void keyboard_app::set_rollover(rollover mode)
 {
-    if (rollover_ == mode) {
+    if (rollover_ == mode)
+    {
         return;
     }
 
     rollover_ = mode;
-    if (prot_ == hid::protocol::BOOT) {
+    if (prot_ == hid::protocol::BOOT)
+    {
         return;
     }
 
     // TODO: make sure that no keys are pressed when this happens
     // or send an empty report on the virtual keyboard that is deactivated by this switch?
-    if (rollover_ == rollover::N_KEY) {
-        keys_nkro_ = {};
-        keys_6kro_ = {};
-    } else {
-        keys_nkro_ = {};
-        keys_6kro_ = {};
+    if (rollover_ == rollover::N_KEY)
+    {
+        keys_nkro_.reset();
+        keys_6kro_.reset();
+    }
+    else
+    {
+        keys_nkro_.reset();
+        keys_6kro_.reset();
     }
 }
 
@@ -79,9 +86,8 @@ void keyboard_app::start(hid::protocol prot)
     receive_report(&leds_buffer_);
 
     // TODO start handling keyboard events
-    keys_nkro_ = {};
-    keys_6kro_ = {};
-    tx_busy_ = false;
+    keys_nkro_.reset();
+    keys_6kro_.reset();
 }
 
 void keyboard_app::stop()
@@ -89,28 +95,31 @@ void keyboard_app::stop()
     // TODO stop handling keyboard events
 }
 
-hid::result keyboard_app::send(const keys_nkro_report_base<>& data)
+void keyboard_app::set_report_state(const keys_nkro_report_base<>& data)
 {
     // TODO: report data accessing mutex?
 
-    auto result = hid::result::BUSY;
-    if (tx_busy_) {
-        // protect data in transit
-        return result;
-    }
-    if ((prot_ == hid::protocol::BOOT) || (rollover_ == rollover::SIX_KEY)) {
+    if ((prot_ == hid::protocol::BOOT) || (rollover_ == rollover::SIX_KEY))
+    {
+        auto& keys_6kro = keys_6kro_.left();
         // fill up the report
-        keys_6kro_.modifiers = data.modifiers;
-        keys_6kro_.scancodes.fill(0);
+        keys_6kro.modifiers = data.modifiers;
+        keys_6kro.scancodes.fill(0);
         size_t i = 0;
-        for (size_t code = 0; code < NKRO_USAGE_COUNT; code++) {
-            if (data.scancode_flags[code / 8] & (1 << (code % 8))) {
-                if (i < 6) {
-                    keys_6kro_.scancodes[i] = code + LOWEST_SCANCODE;
+        for (size_t code = 0; code < NKRO_USAGE_COUNT; code++)
+        {
+            if (data.scancode_flags[code / 8] & (1 << (code % 8)))
+            {
+                if (i < 6)
+                {
+                    keys_6kro.scancodes[i] = code + LOWEST_SCANCODE;
                     i++;
-                } else {
+                }
+                else
+                {
                     // raise rollover error
-                    for (auto &b : keys_6kro_.scancodes) {
+                    for (auto& b : keys_6kro.scancodes)
+                    {
                         b = static_cast<uint8_t>(scancode::ERRORROLLOVER);
                     }
                     break;
@@ -118,35 +127,68 @@ hid::result keyboard_app::send(const keys_nkro_report_base<>& data)
             }
         }
 
-        if (prot_ == hid::protocol::BOOT) {
-            // sending 6KRO without report ID
-            result = send_report(std::span<const uint8_t>(keys_6kro_.data() + sizeof(keys_6kro_.id),
-                    sizeof(keys_6kro_) - sizeof(keys_6kro_.id)));
-        } else {
-            // sending 6KRO with report ID
-            result = send_report(&keys_6kro_);
-        }
-    } else {
+        send_6kro_report(keys_6kro);
+    }
+    else
+    {
+        auto& keys_nkro = keys_nkro_.left();
         // fill up the report
-        keys_nkro_.modifiers = data.modifiers;
-        keys_nkro_.scancode_flags = data.scancode_flags;
+        keys_nkro.modifiers = data.modifiers;
+        keys_nkro.scancode_flags = data.scancode_flags;
 
         // sending NKRO with report ID
-        result = send_report(&keys_nkro_);
+        send_nkro_report(keys_nkro);
+    }
+}
+
+void keyboard_app::send_6kro_report(const keys_6kro_report& report)
+{
+    if (!keys_6kro_.differs())
+    {
+        return;
+    }
+    auto result = hid::result::INVALID;
+    if (prot_ == hid::protocol::BOOT)
+    {
+        // sending 6KRO without report ID
+        result = send_report(std::span<const uint8_t>(report.data() + sizeof(report.id),
+                                                      sizeof(report) - sizeof(report.id)));
+    }
+    else
+    {
+        // sending 6KRO with report ID
+        result = send_report(&report);
     }
 
-    if (result == hid::result::OK) {
-        tx_busy_ = true;
+    // swap sides only if the callback hasn't done yet
+    if ((result == hid::result::OK) && (&report == &keys_6kro_.left()))
+    {
+        keys_6kro_.right() = report;
+        keys_6kro_.swap_sides();
     }
+}
 
-    return result;
+void keyboard_app::send_nkro_report(const keys_nkro_report& report)
+{
+    if (!keys_nkro_.differs())
+    {
+        return;
+    }
+    auto result = send_report(&report);
+    // swap sides only if the callback hasn't done yet
+    if ((result == hid::result::OK) && (&report == &keys_nkro_.left()))
+    {
+        keys_nkro_.right() = report;
+        keys_nkro_.swap_sides();
+    }
 }
 
 void keyboard_app::set_report(hid::report::type type, const std::span<const uint8_t>& data)
 {
     // only one report is receivable, the LEDs
     // offset it if report ID is not present due to BOOT protocol
-    auto &leds = *reinterpret_cast<const decltype(leds_buffer_.leds)*>(data.data() - (1 - static_cast<size_t>(prot_)));
+    auto& leds = *reinterpret_cast<const decltype(leds_buffer_.leds)*>(
+        data.data() - (1 - static_cast<size_t>(prot_)));
 
     // TODO use LEDs bitfields
 
@@ -157,8 +199,37 @@ void keyboard_app::set_report(hid::report::type type, const std::span<const uint
 
 void keyboard_app::in_report_sent(const std::span<const uint8_t>& data)
 {
-    tx_busy_ = false;
-    // the next IN report can be sent if any are queued
+    auto dataptr = reinterpret_cast<std::uintptr_t>(data.data());
+    if ((prot_ == hid::protocol::BOOT) || (rollover_ == rollover::SIX_KEY))
+    {
+        auto& keys_6kro = keys_6kro_.left();
+        auto leftptr = reinterpret_cast<std::uintptr_t>(&keys_6kro);
+        // if the sent was still on the left side, swap now
+        if ((dataptr >= leftptr) && (dataptr <= (leftptr + sizeof(keys_6kro))))
+        {
+            keys_6kro_.right() = keys_6kro;
+            keys_6kro_.swap_sides();
+        }
+        else
+        {
+            send_6kro_report(keys_6kro);
+        }
+    }
+    else
+    {
+        auto& keys_nkro = keys_nkro_.left();
+        auto leftptr = reinterpret_cast<std::uintptr_t>(&keys_nkro);
+        // if the sent was still on the left side, swap now
+        if ((dataptr >= leftptr) && (dataptr <= (leftptr + sizeof(keys_nkro))))
+        {
+            keys_nkro_.right() = keys_nkro;
+            keys_nkro_.swap_sides();
+        }
+        else
+        {
+            send_nkro_report(keys_nkro);
+        }
+    }
 }
 
 void keyboard_app::get_report(hid::report::selector select, const std::span<uint8_t>& buffer)
@@ -168,27 +239,27 @@ void keyboard_app::get_report(hid::report::selector select, const std::span<uint
     // copy to buffer to avoid overwriting data in transit
     switch (select.id())
     {
-        case KEYS_6KRO_REPORT_ID:
-        {
-            assert(buffer.size() >= sizeof(keys_6kro_));
-            memcpy(buffer.data(), keys_6kro_.data(), sizeof(keys_6kro_));
-            send_report(buffer.subspan(0, sizeof(keys_6kro_)));
-            break;
-        }
-        case KEYS_NKRO_REPORT_ID:
-        {
-            assert(buffer.size() >= sizeof(keys_nkro_));
-            memcpy(buffer.data(), keys_nkro_.data(), sizeof(keys_nkro_));
-            send_report(buffer.subspan(0, sizeof(keys_nkro_)));
-            break;
-        }
-        default:
-        {
-            assert(buffer.size() >= sizeof(keys_6kro_));
-            memcpy(buffer.data(), keys_6kro_.data() + sizeof(keys_6kro_.id),
-                    sizeof(keys_6kro_) - sizeof(keys_6kro_.id));
-            send_report(buffer.subspan(0, sizeof(keys_6kro_) - sizeof(keys_6kro_.id)));
-            break;
-        }
+    case KEYS_6KRO_REPORT_ID:
+    {
+        assert(buffer.size() >= sizeof(keys_6kro_));
+        memcpy(buffer.data(), keys_6kro_.right().data(), sizeof(keys_6kro_));
+        send_report(buffer.subspan(0, sizeof(keys_6kro_.right())));
+        break;
+    }
+    case KEYS_NKRO_REPORT_ID:
+    {
+        assert(buffer.size() >= sizeof(keys_nkro_));
+        memcpy(buffer.data(), keys_nkro_.right().data(), sizeof(keys_nkro_));
+        send_report(buffer.subspan(0, sizeof(keys_nkro_.right())));
+        break;
+    }
+    default:
+    {
+        assert(buffer.size() >= sizeof(keys_6kro_));
+        memcpy(buffer.data(), keys_6kro_.right().data() + sizeof(keys_6kro_.right().id),
+               sizeof(keys_6kro_.right()) - sizeof(keys_6kro_.right().id));
+        send_report(buffer.subspan(0, sizeof(keys_6kro_.right()) - sizeof(keys_6kro_.right().id)));
+        break;
+    }
     }
 }
