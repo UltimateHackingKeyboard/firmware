@@ -38,6 +38,8 @@
 #define SCAN_CODE_POS                    2
 #define KEYS_MAX_LEN                    (INPUT_REPORT_KEYS_MAX_LEN - SCAN_CODE_POS)
 
+conn_mode_t conn_mode;
+
 struct {
     struct bt_conn *conn;
     unsigned int passkey;
@@ -364,7 +366,7 @@ static void hid_mouse_init(void)
     __ASSERT(err == 0, "HIDS mouse initialization failed\n");
 }
 
-// Connection callbacks
+// HID connection functions
 
 int HidsConnected(struct bt_conn *conn) {
     int err = 0;
@@ -384,27 +386,6 @@ int HidsConnected(struct bt_conn *conn) {
     return 0;
 }
 
-static void connected(struct bt_conn *conn, uint8_t err) {
-    char addr[BT_ADDR_LE_STR_LEN];
-    bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
-
-    if (err) {
-        printk("Failed to connect to %s (%u)\n", addr, err);
-        return;
-    }
-
-    printk("Connected %s\n", addr);
-    err = HidsConnected(conn);
-
-    if (!conn_mode.conn) {
-        conn_mode.conn = conn;
-        conn_mode.in_boot_mode = false;
-        advertise_hid();
-    }
-
-    printk("Advertising stopped\n");
-}
-
 int HidsDisconnected(struct bt_conn *conn) {
     int err = bt_hids_disconnected(&hids_keyboard_obj, conn);
     if (err) {
@@ -418,33 +399,6 @@ int HidsDisconnected(struct bt_conn *conn) {
 
     return 0;
 }
-
-static void disconnected(struct bt_conn *conn, uint8_t reason) {
-    char addr[BT_ADDR_LE_STR_LEN];
-    bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
-    printk("Disconnected from %s (reason %u)\n", addr, reason);
-    HidsDisconnected(conn);
-    conn_mode.conn = NULL;
-    // dk_set_led_off(CON_STATUS_LED);
-    advertise_hid();
-}
-
-static void security_changed(struct bt_conn *conn, bt_security_t level, enum bt_security_err err) {
-    char addr[BT_ADDR_LE_STR_LEN];
-    bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
-
-    if (!err) {
-        printk("Security changed: %s level %u\n", addr, level);
-    } else {
-        printk("Security failed: %s level %u err %d\n", addr, level, err);
-    }
-}
-
-BT_CONN_CB_DEFINE(conn_callbacks) = {
-    .connected = connected,
-    .disconnected = disconnected,
-    .security_changed = security_changed,
-};
 
 // Auth callbacks
 
