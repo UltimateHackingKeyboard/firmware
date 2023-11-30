@@ -16,16 +16,17 @@ void InitAddresses(void) {
 }
 
 static void connected(struct bt_conn *conn, uint8_t err) {
-    char addr[BT_ADDR_LE_STR_LEN];
-    bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
-    printk("%i", bt_addr_le_eq(bt_conn_get_dst(conn), &dongleAddr));
+    char addrStr[BT_ADDR_LE_STR_LEN];
+    bt_addr_le_to_str(bt_conn_get_dst(conn), addrStr, sizeof(addrStr));
+    bt_addr_le_t *addr = bt_conn_get_dst(conn);
+    printk("%i", bt_addr_le_eq(addr, &dongleAddr));
 
     if (err) {
-        printk("Failed to connect to %s (%u)\n", addr, err);
+        printk("Failed to connect to %s (%u)\n", addrStr, err);
         return;
     }
 
-    printk("Connected %s\n", addr);
+    printk("Connected %s\n", addrStr);
     err = HidsConnected(conn);
 
     if (!HidConnection) {
