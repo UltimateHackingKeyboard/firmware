@@ -27,6 +27,7 @@
 #include <zephyr/bluetooth/services/dis.h>
 #include <dk_buttons_and_leds.h>
 #include "bt_advertise.h"
+#include "bt_hid.h"
 
 #define BASE_USB_HID_SPEC_VERSION   0x0101
 
@@ -36,11 +37,6 @@
 #define OUTPUT_REP_KEYS_REF_ID           1
 #define SCAN_CODE_POS                    2
 #define KEYS_MAX_LEN                    (INPUT_REPORT_KEYS_MAX_LEN - SCAN_CODE_POS)
-
-static struct {
-    struct bt_conn *conn;
-    bool in_boot_mode;
-} conn_mode;
 
 struct {
     struct bt_conn *conn;

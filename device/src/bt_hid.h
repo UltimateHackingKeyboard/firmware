@@ -4,6 +4,14 @@
 // Includes:
 
     #include <zephyr/types.h>
+    #include <zephyr/bluetooth/conn.h>
+
+//Typedefs:
+
+    static struct {
+        struct bt_conn *conn;
+        bool in_boot_mode;
+    } conn_mode;
 
 // Functions:
 
