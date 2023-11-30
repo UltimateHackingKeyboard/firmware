@@ -118,6 +118,7 @@ void usb_init(bool gamepad_enable)
 
     k_thread_create(&thread_data, stack_area, K_THREAD_STACK_SIZEOF(stack_area), sendUsbReports,
                     NULL, NULL, NULL, THREAD_PRIORITY, 0, K_NO_WAIT);
+    k_thread_name_set(&thread_data, "send_usb_reports");
 }
 
 uint8_t USB_GetKeyboardRollover(void)

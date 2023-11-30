@@ -26,9 +26,8 @@
 #include <bluetooth/services/hids.h>
 #include <zephyr/bluetooth/services/dis.h>
 #include <dk_buttons_and_leds.h>
-
-#define DEVICE_NAME     CONFIG_BT_DEVICE_NAME
-#define DEVICE_NAME_LEN (sizeof(DEVICE_NAME) - 1)
+#include "bt_advertise.h"
+#include "bt_hid.h"
 
 #define BASE_USB_HID_SPEC_VERSION   0x0101
 
@@ -39,49 +38,13 @@
 #define SCAN_CODE_POS                    2
 #define KEYS_MAX_LEN                    (INPUT_REPORT_KEYS_MAX_LEN - SCAN_CODE_POS)
 
-static const struct bt_data ad[] = {
-    BT_DATA_BYTES(BT_DATA_GAP_APPEARANCE,
-              (CONFIG_BT_DEVICE_APPEARANCE >> 0) & 0xff,
-              (CONFIG_BT_DEVICE_APPEARANCE >> 8) & 0xff),
-    BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),
-    BT_DATA_BYTES(BT_DATA_UUID16_ALL, BT_UUID_16_ENCODE(BT_UUID_HIDS_VAL),
-                      BT_UUID_16_ENCODE(BT_UUID_BAS_VAL)),
-};
-
-static const struct bt_data sd[] = {
-    BT_DATA(BT_DATA_NAME_COMPLETE, DEVICE_NAME, DEVICE_NAME_LEN),
-};
-
-static struct {
-    struct bt_conn *conn;
-    bool in_boot_mode;
-} conn_mode;
+struct bt_conn *HidConnection;
+bool HidInBootMode = false;
 
 struct {
     struct bt_conn *conn;
     unsigned int passkey;
 } pairing_data;
-
-static void advertising_start(void) {
-    struct bt_le_adv_param *adv_param = BT_LE_ADV_PARAM(
-                        BT_LE_ADV_OPT_CONNECTABLE | BT_LE_ADV_OPT_ONE_TIME,
-                        BT_GAP_ADV_FAST_INT_MIN_2,
-                        BT_GAP_ADV_FAST_INT_MAX_2,
-                        NULL);
-
-    int err = bt_le_adv_start(adv_param, ad, ARRAY_SIZE(ad), sd, ARRAY_SIZE(sd));
-    if (err) {
-        if (err == -EALREADY) {
-            printk("Advertising continued\n");
-        } else {
-            printk("Advertising failed to start (err %d)\n", err);
-        }
-
-        return;
-    }
-
-    printk("Advertising successfully started\n");
-}
 
 static void pairing_process() {
     if (!pairing_data.conn) {
@@ -130,7 +93,7 @@ static void hids_boot_kb_outp_rep_handler(struct bt_hids_rep *rep, struct bt_con
 static void hids_pm_evt_handler(enum bt_hids_pm_evt evt, struct bt_conn *conn) {
     char addr[BT_ADDR_LE_STR_LEN];
 
-    if (conn_mode.conn != conn) {
+    if (HidConnection != conn) {
         printk("Cannot find connection handle when processing PM");
         return;
     }
@@ -140,11 +103,11 @@ static void hids_pm_evt_handler(enum bt_hids_pm_evt evt, struct bt_conn *conn) {
     switch (evt) {
     case BT_HIDS_PM_EVT_BOOT_MODE_ENTERED:
         printk("Boot mode entered %s\n", addr);
-        conn_mode.in_boot_mode = true;
+        HidInBootMode = true;
         break;
     case BT_HIDS_PM_EVT_REPORT_MODE_ENTERED:
         printk("Report mode entered %s\n", addr);
-        conn_mode.in_boot_mode = false;
+        HidInBootMode = false;
         break;
     default:
         break;
@@ -404,47 +367,27 @@ static void hid_mouse_init(void)
     __ASSERT(err == 0, "HIDS mouse initialization failed\n");
 }
 
-// Connection callbacks
+// HID connection functions
 
-static void connected(struct bt_conn *conn, uint8_t err) {
-    char addr[BT_ADDR_LE_STR_LEN];
-    bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
-
-    if (err) {
-        printk("Failed to connect to %s (%u)\n", addr, err);
-        return;
-    }
-
-    printk("Connected %s\n", addr);
-    // dk_set_led_on(CON_STATUS_LED);
+int HidsConnected(struct bt_conn *conn) {
+    int err = 0;
 
     err = bt_hids_connected(&hids_keyboard_obj, conn);
     if (err) {
         printk("Failed to notify keyboard HID service about connection\n");
-        return;
+        return err;
     }
 
     err = bt_hids_connected(&hids_mouse_obj, conn);
     if (err) {
         printk("Failed to notify mouse HID service about connection\n");
-        return;
+        return err;
     }
 
-
-    if (!conn_mode.conn) {
-        conn_mode.conn = conn;
-        conn_mode.in_boot_mode = false;
-        advertising_start();
-    }
-
-    printk("Advertising stopped\n");
+    return 0;
 }
 
-static void disconnected(struct bt_conn *conn, uint8_t reason) {
-    char addr[BT_ADDR_LE_STR_LEN];
-    bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
-    printk("Disconnected from %s (reason %u)\n", addr, reason);
-
+int HidsDisconnected(struct bt_conn *conn) {
     int err = bt_hids_disconnected(&hids_keyboard_obj, conn);
     if (err) {
         printk("Failed to notify keyboard HID service about disconnection\n");
@@ -455,27 +398,8 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
         printk("Failed to notify mouse HID service about disconnection\n");
     }
 
-    conn_mode.conn = NULL;
-    // dk_set_led_off(CON_STATUS_LED);
-    advertising_start();
+    return 0;
 }
-
-static void security_changed(struct bt_conn *conn, bt_security_t level, enum bt_security_err err) {
-    char addr[BT_ADDR_LE_STR_LEN];
-    bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
-
-    if (!err) {
-        printk("Security changed: %s level %u\n", addr, level);
-    } else {
-        printk("Security failed: %s level %u err %d\n", addr, level, err);
-    }
-}
-
-BT_CONN_CB_DEFINE(conn_callbacks) = {
-    .connected = connected,
-    .disconnected = disconnected,
-    .security_changed = security_changed,
-};
 
 // Auth callbacks
 
@@ -532,7 +456,7 @@ static struct bt_conn_auth_info_cb conn_auth_info_callbacks = {
 };
 
 void key_report_send(uint8_t down) {
-    if (!conn_mode.conn) {
+    if (!HidConnection) {
         return;
     }
 
@@ -541,13 +465,13 @@ void key_report_send(uint8_t down) {
 
     int keyboard_err = 0;
     int mouse_err = 0;
-    if (conn_mode.in_boot_mode) {
-        keyboard_err = bt_hids_boot_kb_inp_rep_send(&hids_keyboard_obj, conn_mode.conn, data, sizeof(data), NULL);
-        // mouse_err = bt_hids_boot_mouse_inp_rep_send(&hids_mouse_obj, conn_mode.conn, NULL, 5, 0, NULL);
+    if (HidInBootMode) {
+        keyboard_err = bt_hids_boot_kb_inp_rep_send(&hids_keyboard_obj, HidConnection, data, sizeof(data), NULL);
+        // mouse_err = bt_hids_boot_mouse_inp_rep_send(&hids_mouse_obj, HidConnection, NULL, 5, 0, NULL);
     } else {
         uint8_t buffer[INPUT_REP_MOVEMENT_LEN] = {0, 0, 5};
-        keyboard_err = bt_hids_inp_rep_send(&hids_keyboard_obj, conn_mode.conn, INPUT_REP_KEYS_IDX, data, sizeof(data), NULL);
-        // mouse_err = bt_hids_inp_rep_send(&hids_mouse_obj, conn_mode.conn, INPUT_REP_MOVEMENT_INDEX, buffer, sizeof(buffer), NULL);
+        keyboard_err = bt_hids_inp_rep_send(&hids_keyboard_obj, HidConnection, INPUT_REP_KEYS_IDX, data, sizeof(data), NULL);
+        // mouse_err = bt_hids_inp_rep_send(&hids_mouse_obj, HidConnection, INPUT_REP_MOVEMENT_INDEX, buffer, sizeof(buffer), NULL);
     }
 
     if (keyboard_err) {
@@ -601,8 +525,16 @@ void bluetooth_init() {
     printk("Bluetooth initialized\n");
 
     settings_load();
-    hid_keyboard_init();
-    hid_mouse_init();
+    // list the currently available bluetooth identities
+    // bt_addr_le_t addr;
+    // int res;
+    // res = bt_addr_le_from_str("DE:AD:BE:AF:BA:11", "public", &addr); // why not public?
+    // printk("bt_addr_le_from_str: %d\n", res);
+    // res = bt_id_create(&addr, NULL);
+    // printk("bt_id_create: %d\n", res);
 
-    advertising_start();
+    hid_keyboard_init();
+    // hid_mouse_init();
+
+    advertise_hid();
 }

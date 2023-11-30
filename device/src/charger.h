@@ -17,4 +17,4 @@
 
     extern void InitCharger(void);
 
-#endif
+#endif // __CHARGER_H__

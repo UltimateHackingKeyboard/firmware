@@ -12,4 +12,4 @@
 
     extern void InitOled(void);
 
-#endif
+#endif // __OLED_H__

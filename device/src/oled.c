@@ -84,6 +84,8 @@ void InitOled(void) {
         NULL, NULL, NULL,
         THREAD_PRIORITY, 0, K_NO_WAIT
     );
+    k_thread_name_set(&thread_data, "oled_updater");
+
 }
 
 #endif // DEVICE_HAS_OLED

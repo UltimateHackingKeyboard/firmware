@@ -9,4 +9,4 @@
 
     extern void InitUart(void);
 
-#endif
+#endif // __UART_H__

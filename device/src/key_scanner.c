@@ -4,7 +4,7 @@
 #include "key_scanner.h"
 #include "shell.h"
 #include "uart.h"
-#include "bluetooth.h"
+#include "bt_hid.h"
 #include <zephyr/drivers/uart.h>
 
 // Thread definitions
@@ -90,4 +90,5 @@ void InitKeyScanner(void)
         NULL, NULL, NULL,
         THREAD_PRIORITY, 0, K_NO_WAIT
     );
+    k_thread_name_set(&thread_data, "key_scanner");
 }

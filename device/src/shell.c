@@ -7,7 +7,7 @@
 #include "oled.h"
 #include "shell.h"
 #include "usb/usb.hpp"
-#include "bluetooth.h"
+#include "bt_hid.h"
 
 shell_t Shell = {
     .keyLog = 1,
