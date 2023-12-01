@@ -2,6 +2,8 @@
 #include <zephyr/drivers/gpio.h>
 #include "leds.h"
 #include "spi.h"
+#include "shell.h"
+#include "key_scanner.h"
 
 // Thread definitions
 
@@ -44,7 +46,7 @@ void ledUpdater() {
         writeSpi(LedPagePrefix | 0);
         writeSpi(0x00);
         for (int i=0; i<255; i++) {
-            writeSpi(1/*KeyPressed || ledsAlwaysOn*/ ? 0xff : 0);
+            writeSpi(KeyPressed || Shell.ledsAlwaysOn ? 0xff : 0);
         }
         setLedsCs(true);
 
@@ -52,7 +54,7 @@ void ledUpdater() {
         writeSpi(LedPagePrefix | 1);
         writeSpi(0x00);
         for (int i=0; i<255; i++) {
-            writeSpi(1/*KeyPressed || ledsAlwaysOn*/ ? 0xff : 0);
+            writeSpi(KeyPressed || Shell.ledsAlwaysOn ? 0xff : 0);
         }
 
         gpio_pin_set_dt(&ledsCsDt, true);
