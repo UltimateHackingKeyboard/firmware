@@ -1,6 +1,7 @@
 #ifndef __MOUSE_APP_HEADER__
 #define __MOUSE_APP_HEADER__
 
+#include "double_buffer.hpp"
 #include "hid/app/mouse.hpp"
 #include "hid/application.hpp"
 
@@ -28,53 +29,54 @@ class mouse_app : public hid::application
         : application(report_protocol())
     {}
 
-public:
-    template<uint8_t REPORT_ID = 0>
+  public:
+    template <uint8_t REPORT_ID = 0>
     struct mouse_report_base : public hid::report::base<hid::report::type::INPUT, REPORT_ID>
     {
-        uint8_t buttons {};
+        uint8_t buttons{};
         static_assert(static_cast<uint8_t>(mouse_app::LAST_BUTTON) <= 8);
-        hid::le_int16_t x {};
-        hid::le_int16_t y {};
-        int8_t wheel_y {};
-        int8_t wheel_x {};
+        hid::le_int16_t x{};
+        hid::le_int16_t y{};
+        int8_t wheel_y{};
+        int8_t wheel_x{};
 
         constexpr mouse_report_base() = default;
 
         bool operator==(const mouse_report_base& other) const = default;
+        bool operator!=(const mouse_report_base& other) const = default;
 
         void set_button(mouse_button b, bool value = true)
         {
-            if (value) {
+            if (value)
+            {
                 buttons |= 1 << static_cast<uint8_t>(b);
-            } else {
+            }
+            else
+            {
                 buttons &= ~(1 << static_cast<uint8_t>(b));
             }
         }
-        bool test_button(mouse_button b) const
-        {
-            return buttons & (1 << static_cast<uint8_t>(b));
-        }
+        bool test_button(mouse_button b) const { return buttons & (1 << static_cast<uint8_t>(b)); }
         void set_button(uint8_t number, bool value = true)
         {
             assert((number > 0) and (number <= 8));
-            if (value) {
+            if (value)
+            {
                 buttons |= 1 << (number - 1);
-            } else {
+            }
+            else
+            {
                 buttons &= ~(1 << (number - 1));
             }
         }
-        bool test_button(uint8_t number) const
-        {
-            return buttons & (1 << (number - 1));
-        }
+        bool test_button(uint8_t number) const { return buttons & (1 << (number - 1)); }
     };
 
     static mouse_app& handle();
 
-    hid::result send(const mouse_report_base<>& data);
+    void set_report_state(const mouse_report_base<>& data);
 
-private:
+  private:
     void start(hid::protocol prot) override;
     void stop() override;
     void set_report(hid::report::type type, const std::span<const uint8_t>& data) override
@@ -83,9 +85,9 @@ private:
     }
     void in_report_sent(const std::span<const uint8_t>& data) override;
     void get_report(hid::report::selector select, const std::span<uint8_t>& buffer) override;
+    void send_buffer(const mouse_report_base<>& report);
 
-    C2USB_USB_TRANSFER_ALIGN(mouse_report_base<>, report_data_) {};
-    bool tx_busy_ {};
+    double_buffer<mouse_report_base<>> report_buffer_{};
 };
 
 using mouse_buffer = mouse_app::mouse_report_base<>;

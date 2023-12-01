@@ -1,5 +1,5 @@
 {
-    "nrf-connect.toolchain.path": "${nrf-connect.zephyrsdk:0.16.1}",
+    "nrf-connect.toolchain.path": "${nrf-connect.toolchain:2.4.1}",
     "nrf-connect.topdir": "${nrf-connect.sdk:2.4.1}",
     "nrf-connect.applications": [
         "${workspaceFolder}/device"
@@ -12,6 +12,8 @@
         "*.c": "c",
         "bitset": "cpp",
         "span": "cpp",
-        "array": "cpp"
+        "array": "cpp",
+        "string": "cpp",
+        "string_view": "cpp"
     }
 }

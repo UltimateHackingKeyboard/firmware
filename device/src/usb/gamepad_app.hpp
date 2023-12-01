@@ -1,6 +1,7 @@
 #ifndef __GAMEPAD_APP_HEADER__
 #define __GAMEPAD_APP_HEADER__
 
+#include "double_buffer.hpp"
 #include "hid/application.hpp"
 
 enum class gamepad_button
@@ -30,35 +31,40 @@ class gamepad_app : public hid::application
         : application(report_protocol())
     {}
 
-public:
+  public:
     struct joystick
     {
-        hid::le_int16_t X {};
-        hid::le_int16_t Y {};
+        hid::le_int16_t X{};
+        hid::le_int16_t Y{};
         constexpr joystick() = default;
         bool operator==(const joystick& other) const = default;
     };
     struct gamepad_report : public hid::report::base<hid::report::type::INPUT, 0>
     {
-    private:
-        uint8_t report_id {0};
-        uint8_t report_size { sizeof(gamepad_report) };
-    public:
-        hid::le_uint16_t buttons {};
-        uint8_t left_trigger {};
-        uint8_t right_trigger {};
+      private:
+        uint8_t report_id{0};
+        uint8_t report_size{sizeof(gamepad_report)};
+
+      public:
+        hid::le_uint16_t buttons{};
+        uint8_t left_trigger{};
+        uint8_t right_trigger{};
         joystick left;
         joystick right;
 
         constexpr gamepad_report() = default;
 
         bool operator==(const gamepad_report& other) const = default;
+        bool operator!=(const gamepad_report& other) const = default;
 
         void set_button(gamepad_button b, bool value = true)
         {
-            if (value) {
+            if (value)
+            {
                 buttons = buttons | (1 << static_cast<uint16_t>(b));
-            } else {
+            }
+            else
+            {
                 buttons = buttons & ~(1 << static_cast<uint16_t>(b));
             }
         }
@@ -70,9 +76,9 @@ public:
 
     static gamepad_app& handle();
 
-    hid::result send(const gamepad_report& data);
+    void set_report_state(const gamepad_report& data);
 
-private:
+  private:
     void start(hid::protocol prot) override;
     void stop() override;
     void set_report(hid::report::type type, const std::span<const uint8_t>& data) override
@@ -81,9 +87,9 @@ private:
     }
     void in_report_sent(const std::span<const uint8_t>& data) override;
     void get_report(hid::report::selector select, const std::span<uint8_t>& buffer) override;
+    void send_buffer(const gamepad_report& report);
 
-    C2USB_USB_TRANSFER_ALIGN(gamepad_report, report_data_) {};
-    bool tx_busy_ {};
+    double_buffer<gamepad_report> report_buffer_{};
 };
 
 using gamepad_buffer = gamepad_app::gamepad_report;

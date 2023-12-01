@@ -8,6 +8,7 @@ const hid::report_protocol& controls_app::report_protocol()
     using namespace hid::page;
     using namespace hid::rdf;
 
+    // clang-format off
     static constexpr auto rd = descriptor(
         usage_page<consumer>(),
         usage(consumer::CONSUMER_CONTROL),
@@ -31,7 +32,8 @@ const hid::report_protocol& controls_app::report_protocol()
             input::array()
         )
     );
-    static constexpr hid::report_protocol rp {rd};
+    // clang-format on
+    static constexpr hid::report_protocol rp{rd};
     return rp;
 }
 
@@ -44,8 +46,7 @@ controls_app& controls_app::handle()
 void controls_app::start(hid::protocol prot)
 {
     // TODO start handling controls events
-    report_data_ = {};
-    tx_busy_ = false;
+    report_buffer_.reset();
 }
 
 void controls_app::stop()
@@ -53,31 +54,49 @@ void controls_app::stop()
     // TODO stop handling controls events
 }
 
-hid::result controls_app::send(const controls_report& data)
+void controls_app::set_report_state(const controls_report& data)
 {
-    auto result = hid::result::BUSY;
-    if (tx_busy_) {
-        // protect data in transit
-        return result;
+    auto& report = report_buffer_.left();
+    report = data;
+    send_buffer(report);
+}
+
+void controls_app::send_buffer(const controls_report& report)
+{
+    if (!report_buffer_.differs())
+    {
+        return;
     }
-    report_data_ = data;
-    result = send_report(&report_data_);
-    if (result == hid::result::OK) {
-        tx_busy_ = true;
+    auto result = send_report(&report);
+    // swap sides only if the callback hasn't done yet
+    if ((result == hid::result::OK) && (&report == &report_buffer_.left()))
+    {
+        report_buffer_.right() = report;
+        report_buffer_.swap_sides();
     }
-    return result;
 }
 
 void controls_app::in_report_sent(const std::span<const uint8_t>& data)
 {
-    tx_busy_ = false;
-    // the next IN report can be sent if any are queued
+    auto dataptr = reinterpret_cast<std::uintptr_t>(data.data());
+    auto& report = report_buffer_.left();
+    auto leftptr = reinterpret_cast<std::uintptr_t>(&report);
+    // if the sent was still on the left side, swap now
+    if ((dataptr >= leftptr) && (dataptr <= (leftptr + sizeof(report))))
+    {
+        report_buffer_.right() = report;
+        report_buffer_.swap_sides();
+    }
+    else
+    {
+        send_buffer(report);
+    }
 }
 
 void controls_app::get_report(hid::report::selector select, const std::span<uint8_t>& buffer)
 {
     // copy to buffer to avoid overwriting data in transit
-    assert(buffer.size() >= sizeof(report_data_));
-    memcpy(buffer.data(), report_data_.data(), sizeof(report_data_));
-    send_report(buffer.subspan(0, sizeof(report_data_)));
+    assert(buffer.size() >= sizeof(report_buffer_.right()));
+    memcpy(buffer.data(), report_buffer_.right().data(), sizeof(report_buffer_.right()));
+    send_report(buffer.subspan(0, sizeof(report_buffer_.right())));
 }
