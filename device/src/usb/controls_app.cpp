@@ -56,47 +56,38 @@ void controls_app::stop()
 
 void controls_app::set_report_state(const controls_report& data)
 {
-    auto& report = report_buffer_.left();
+    auto buf_idx = report_buffer_.active_side();
+    auto& report = report_buffer_[buf_idx];
     report = data;
-    send_buffer(report);
+    send_buffer(buf_idx);
 }
 
-void controls_app::send_buffer(const controls_report& report)
+void controls_app::send_buffer(uint8_t buf_idx)
 {
     if (!report_buffer_.differs())
     {
         return;
     }
-    auto result = send_report(&report);
-    // swap sides only if the callback hasn't done yet
-    if ((result == hid::result::OK) && (&report == &report_buffer_.left()))
+    if (send_report(&report_buffer_[buf_idx]) == hid::result::OK)
     {
-        report_buffer_.right() = report;
-        report_buffer_.swap_sides();
+        report_buffer_.compare_swap_copy(buf_idx);
     }
 }
 
 void controls_app::in_report_sent(const std::span<const uint8_t>& data)
 {
-    auto dataptr = reinterpret_cast<std::uintptr_t>(data.data());
-    auto& report = report_buffer_.left();
-    auto leftptr = reinterpret_cast<std::uintptr_t>(&report);
-    // if the sent was still on the left side, swap now
-    if ((dataptr >= leftptr) && (dataptr <= (leftptr + sizeof(report))))
+    auto buf_idx = report_buffer_.indexof(data.data());
+    if (!report_buffer_.compare_swap_copy(buf_idx))
     {
-        report_buffer_.right() = report;
-        report_buffer_.swap_sides();
-    }
-    else
-    {
-        send_buffer(report);
+        send_buffer(1 - buf_idx);
     }
 }
 
 void controls_app::get_report(hid::report::selector select, const std::span<uint8_t>& buffer)
 {
     // copy to buffer to avoid overwriting data in transit
-    assert(buffer.size() >= sizeof(report_buffer_.right()));
-    memcpy(buffer.data(), report_buffer_.right().data(), sizeof(report_buffer_.right()));
-    send_report(buffer.subspan(0, sizeof(report_buffer_.right())));
+    auto& report = report_buffer_[report_buffer_.inactive_side()];
+    assert(buffer.size() >= sizeof(report));
+    memcpy(buffer.data(), report.data(), sizeof(report));
+    send_report(buffer.subspan(0, sizeof(report)));
 }

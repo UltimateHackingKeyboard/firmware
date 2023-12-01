@@ -121,8 +121,8 @@ class keyboard_app : public hid::application
     void get_report(hid::report::selector select, const std::span<uint8_t>& buffer) override;
     hid::protocol get_protocol() const override { return prot_; }
 
-    void send_6kro_report(const keys_6kro_report& report);
-    void send_nkro_report(const keys_nkro_report& report);
+    void send_6kro_buffer(uint8_t buf_idx);
+    void send_nkro_buffer(uint8_t buf_idx);
 
     C2USB_USB_TRANSFER_ALIGN(leds_report, leds_buffer_){};
     hid::protocol prot_{};
