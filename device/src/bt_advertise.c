@@ -54,9 +54,9 @@ static const struct bt_data sd_peer[] = {
 void advertise_peer(void) {
     int err = bt_le_adv_start(BT_LE_ADV_CONN, ad_peer, ARRAY_SIZE(ad_peer), sd_peer, ARRAY_SIZE(sd_peer));
     if (err) {
-        LOG_ERR("Peripheral advertising failed to start (err %d)", err);
+        printk("Peripheral advertising failed to start (err %d)", err);
         return 0;
     } else {
-        LOG_INF("Peripheral advertising successfully started");
+        printk("Peripheral advertising successfully started");
     }
 }
