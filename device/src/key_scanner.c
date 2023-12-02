@@ -43,18 +43,18 @@ static struct gpio_dt_spec cols[KEY_MATRIX_COLS] = {
 
 #define COLS_COUNT (sizeof(cols) / sizeof(cols[0]))
 uint8_t KeyStates[KEY_MATRIX_ROWS][KEY_MATRIX_COLS];
-volatile char KeyPressed;
+volatile bool KeyPressed;
 
 void keyScanner() {
     while (true) {
-        KeyPressed = false;
+        bool keyPressed = false;
         for (uint8_t rowId=0; rowId<KEY_MATRIX_ROWS; rowId++) {
             gpio_pin_set_dt(&rows[rowId], 1);
             for (uint8_t colId=0; colId<KEY_MATRIX_COLS; colId++) {
                 bool keyState = gpio_pin_get_dt(&cols[colId]);
                 KeyStates[rowId][colId] = keyState;
                 if (keyState) {
-                    KeyPressed = true;
+                    keyPressed = true;
                     if (Shell.keyLog) {
                         char buffer[20];
                         sprintf(buffer, "SW%c%c\n", rowId+'1', colId+'1');
@@ -68,8 +68,8 @@ void keyScanner() {
             gpio_pin_set_dt(&rows[rowId], 0);
         }
 
+        KeyPressed = keyPressed;
         key_report_send(KeyStates[0][0]);
-
         k_msleep(1);
     }
 }
