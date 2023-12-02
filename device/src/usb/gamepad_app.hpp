@@ -87,7 +87,7 @@ class gamepad_app : public hid::application
     }
     void in_report_sent(const std::span<const uint8_t>& data) override;
     void get_report(hid::report::selector select, const std::span<uint8_t>& buffer) override;
-    void send_buffer(const gamepad_report& report);
+    void send_buffer(uint8_t buf_idx);
 
     double_buffer<gamepad_report> report_buffer_{};
 };
