@@ -36,7 +36,7 @@ void sendUsbReports(void*, void*, void*)
 {
     while (true)
     {
-        keys.set_code(scancode::A, KeyStates[0][0]);
+        keys.set_code(scancode::A, KeyPressed);
         keyboard_app::handle().set_report_state(keys);
 
         mouseState.set_button(mouse_button::RIGHT, KeyStates[0][1]);
