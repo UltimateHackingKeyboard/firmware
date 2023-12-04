@@ -153,12 +153,14 @@ static bool readByte()
 #define ABS(x) ((x) < 0 ? -(x) : (x))
 #define DRIFT_RESET_PERIOD 2000
 #define TRACKPOINT_UPDATE_PERIOD 10
+#define DRIFT_TOLERANCE 1
 
 static uint16_t window[AXIS_COUNT][WINDOW_LENGTH];
 static uint8_t windowIndex = 0;
 static uint16_t windowSum[AXIS_COUNT];
 
-void recognizeDrifts(int16_t x, int16_t y) {
+void recognizeDrifts(int16_t x, int16_t y)
+{
     uint16_t deltas[AXIS_COUNT] = {ABS(x), ABS(y)};
 
     // compute average speed across the window
@@ -175,7 +177,7 @@ void recognizeDrifts(int16_t x, int16_t y) {
     static uint16_t driftLength = 0;
     bool drifting = true;
     for (uint8_t axis=0; axis<AXIS_COUNT; axis++) {
-        if (ABS(windowSum[axis] - supposedDrift[axis]) > 1) {
+        if (ABS(windowSum[axis] - supposedDrift[axis]) > DRIFT_TOLERANCE + 1) {
             drifting = false;
         }
     }
@@ -200,7 +202,8 @@ void recognizeDrifts(int16_t x, int16_t y) {
 }
 
 
-void PS2_CLOCK_IRQ_HANDLER(void) {
+void PS2_CLOCK_IRQ_HANDLER(void)
+{
     static uint8_t byte1 = 0;
     static uint16_t deltaX = 0;
     static uint16_t deltaY = 0;
