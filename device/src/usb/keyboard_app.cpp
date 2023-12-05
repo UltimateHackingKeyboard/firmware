@@ -101,7 +101,8 @@ void keyboard_app::set_report_state(const keys_nkro_report_base<>& data)
 
     if ((prot_ == hid::protocol::BOOT) || (rollover_ == rollover::SIX_KEY))
     {
-        auto& keys_6kro = keys_6kro_.left();
+        auto buf_idx = keys_6kro_.active_side();
+        auto& keys_6kro = keys_6kro_[buf_idx];
         // fill up the report
         keys_6kro.modifiers = data.modifiers;
         keys_6kro.scancodes.fill(0);
@@ -127,27 +128,28 @@ void keyboard_app::set_report_state(const keys_nkro_report_base<>& data)
             }
         }
 
-        send_6kro_report(keys_6kro);
+        send_6kro_buffer(buf_idx);
     }
     else
     {
-        auto& keys_nkro = keys_nkro_.left();
+        auto buf_idx = keys_nkro_.active_side();
+        auto& keys_nkro = keys_nkro_[buf_idx];
         // fill up the report
         keys_nkro.modifiers = data.modifiers;
         keys_nkro.scancode_flags = data.scancode_flags;
 
-        // sending NKRO with report ID
-        send_nkro_report(keys_nkro);
+        send_nkro_buffer(buf_idx);
     }
 }
 
-void keyboard_app::send_6kro_report(const keys_6kro_report& report)
+void keyboard_app::send_6kro_buffer(uint8_t buf_idx)
 {
     if (!keys_6kro_.differs())
     {
         return;
     }
     auto result = hid::result::INVALID;
+    auto& report = keys_6kro_[buf_idx];
     if (prot_ == hid::protocol::BOOT)
     {
         // sending 6KRO without report ID
@@ -161,25 +163,21 @@ void keyboard_app::send_6kro_report(const keys_6kro_report& report)
     }
 
     // swap sides only if the callback hasn't done yet
-    if ((result == hid::result::OK) && (&report == &keys_6kro_.left()))
+    if (result == hid::result::OK)
     {
-        keys_6kro_.right() = report;
-        keys_6kro_.swap_sides();
+        keys_6kro_.compare_swap_copy(buf_idx);
     }
 }
 
-void keyboard_app::send_nkro_report(const keys_nkro_report& report)
+void keyboard_app::send_nkro_buffer(uint8_t buf_idx)
 {
     if (!keys_nkro_.differs())
     {
         return;
     }
-    auto result = send_report(&report);
-    // swap sides only if the callback hasn't done yet
-    if ((result == hid::result::OK) && (&report == &keys_nkro_.left()))
+    if (send_report(&keys_nkro_[buf_idx]) == hid::result::OK)
     {
-        keys_nkro_.right() = report;
-        keys_nkro_.swap_sides();
+        keys_nkro_.compare_swap_copy(buf_idx);
     }
 }
 
@@ -199,35 +197,20 @@ void keyboard_app::set_report(hid::report::type type, const std::span<const uint
 
 void keyboard_app::in_report_sent(const std::span<const uint8_t>& data)
 {
-    auto dataptr = reinterpret_cast<std::uintptr_t>(data.data());
     if ((prot_ == hid::protocol::BOOT) || (rollover_ == rollover::SIX_KEY))
     {
-        auto& keys_6kro = keys_6kro_.left();
-        auto leftptr = reinterpret_cast<std::uintptr_t>(&keys_6kro);
-        // if the sent was still on the left side, swap now
-        if ((dataptr >= leftptr) && (dataptr <= (leftptr + sizeof(keys_6kro))))
+        auto buf_idx = keys_6kro_.indexof(data.data());
+        if (!keys_6kro_.compare_swap_copy(buf_idx))
         {
-            keys_6kro_.right() = keys_6kro;
-            keys_6kro_.swap_sides();
-        }
-        else
-        {
-            send_6kro_report(keys_6kro);
+            send_6kro_buffer(1 - buf_idx);
         }
     }
     else
     {
-        auto& keys_nkro = keys_nkro_.left();
-        auto leftptr = reinterpret_cast<std::uintptr_t>(&keys_nkro);
-        // if the sent was still on the left side, swap now
-        if ((dataptr >= leftptr) && (dataptr <= (leftptr + sizeof(keys_nkro))))
+        auto buf_idx = keys_nkro_.indexof(data.data());
+        if (!keys_nkro_.compare_swap_copy(buf_idx))
         {
-            keys_nkro_.right() = keys_nkro;
-            keys_nkro_.swap_sides();
-        }
-        else
-        {
-            send_nkro_report(keys_nkro);
+            send_nkro_buffer(1 - buf_idx);
         }
     }
 }
@@ -241,24 +224,27 @@ void keyboard_app::get_report(hid::report::selector select, const std::span<uint
     {
     case KEYS_6KRO_REPORT_ID:
     {
-        assert(buffer.size() >= sizeof(keys_6kro_));
-        memcpy(buffer.data(), keys_6kro_.right().data(), sizeof(keys_6kro_));
-        send_report(buffer.subspan(0, sizeof(keys_6kro_.right())));
+        auto& report = keys_6kro_[keys_6kro_.inactive_side()];
+        assert(buffer.size() >= sizeof(report));
+        memcpy(buffer.data(), report.data(), sizeof(report));
+        send_report(buffer.subspan(0, sizeof(report)));
         break;
     }
     case KEYS_NKRO_REPORT_ID:
     {
-        assert(buffer.size() >= sizeof(keys_nkro_));
-        memcpy(buffer.data(), keys_nkro_.right().data(), sizeof(keys_nkro_));
-        send_report(buffer.subspan(0, sizeof(keys_nkro_.right())));
+        auto& report = keys_nkro_[keys_nkro_.inactive_side()];
+        assert(buffer.size() >= sizeof(report));
+        memcpy(buffer.data(), report.data(), sizeof(report));
+        send_report(buffer.subspan(0, sizeof(report)));
         break;
     }
     default:
     {
-        assert(buffer.size() >= sizeof(keys_6kro_));
-        memcpy(buffer.data(), keys_6kro_.right().data() + sizeof(keys_6kro_.right().id),
-               sizeof(keys_6kro_.right()) - sizeof(keys_6kro_.right().id));
-        send_report(buffer.subspan(0, sizeof(keys_6kro_.right()) - sizeof(keys_6kro_.right().id)));
+        auto& report = keys_6kro_[keys_6kro_.inactive_side()];
+        assert(buffer.size() >= (sizeof(report) - sizeof(report.id)));
+        memcpy(buffer.data(), report.data() + sizeof(report.id),
+               sizeof(report) - sizeof(report.id));
+        send_report(buffer.subspan(0, sizeof(report) - sizeof(report.id)));
         break;
     }
     }
