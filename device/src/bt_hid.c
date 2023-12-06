@@ -424,7 +424,7 @@ void bas_notify(void) {
     bt_bas_set_battery_level(battery_level);
 }
 
-void bluetooth_init() {
+void bt_hid_init() {
     printk("Starting Bluetooth Peripheral HIDS keyboard\n");
 
     settings_load();

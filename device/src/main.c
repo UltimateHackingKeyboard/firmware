@@ -41,7 +41,7 @@ int main(void) {
     usb_init(true);
     InitAddresses();
     bt_init();
-    bluetooth_init();
+    bt_hid_init();
 
 #if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_LEFT
     InitPeripheralUart();
