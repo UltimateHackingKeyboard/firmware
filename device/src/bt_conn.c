@@ -142,6 +142,7 @@ void bt_init(void)
     }
 
     bt_enable(NULL);
+    settings_load();
 }
 
 void num_comp_reply(uint8_t accept) {
