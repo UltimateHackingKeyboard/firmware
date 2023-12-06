@@ -43,7 +43,6 @@ bool HidInBootMode = false;
 
 struct {
     struct bt_conn *conn;
-    unsigned int passkey;
 } pairing_data;
 
 // HID init
@@ -400,14 +399,13 @@ static void auth_passkey_display(struct bt_conn *conn, unsigned int passkey) {
 
 static void auth_passkey_confirm(struct bt_conn *conn, unsigned int passkey) {
     pairing_data.conn    = bt_conn_ref(conn);
-    pairing_data.passkey = passkey;
     if (!pairing_data.conn) {
         return;
     }
 
     char addr[BT_ADDR_LE_STR_LEN];
     bt_addr_le_to_str(bt_conn_get_dst(pairing_data.conn), addr, sizeof(addr));
-    printk("Passkey for %s: %06u\n", addr, pairing_data.passkey);
+    printk("Passkey for %s: %06u\n", addr, passkey);
     printk("type `uhk btacc 1/0` to accept/reject.\n");
 }
 
