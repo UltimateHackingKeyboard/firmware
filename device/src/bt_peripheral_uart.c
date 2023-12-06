@@ -68,13 +68,6 @@ BT_CONN_CB_DEFINE(conn_callbacks) = {
     .disconnected = disconnected,
 };
 
-static void pairing_failed(struct bt_conn *conn, enum bt_security_err reason)
-{
-    char addr[BT_ADDR_LE_STR_LEN];
-    bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
-    LOG_INF("Pairing failed conn: %s, reason %d", addr, reason);
-}
-
 static void bt_receive_cb(struct bt_conn *conn, const uint8_t *const data, uint16_t len)
 {
     char addr[BT_ADDR_LE_STR_LEN] = {0};
