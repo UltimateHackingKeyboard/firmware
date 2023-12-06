@@ -22,9 +22,6 @@
 #define LOG_MODULE_NAME peripheral_uart
 LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 
-#define STACKSIZE CONFIG_BT_NUS_THREAD_STACK_SIZE
-#define PRIORITY 7
-
 #define DEVICE_NAME "UHK 80 Peripheral"
 #define DEVICE_NAME_LEN (sizeof(DEVICE_NAME) - 1)
 
