@@ -40,6 +40,7 @@ int main(void) {
     InitKeyScanner();
     usb_init(true);
     InitAddresses();
+    bt_init();
     bluetooth_init();
 
 #if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_LEFT
