@@ -41,9 +41,7 @@
 struct bt_conn *HidConnection;
 bool HidInBootMode = false;
 
-struct {
-    struct bt_conn *conn;
-} pairing_data;
+struct bt_conn *auth_conn;
 
 // HID init
 
@@ -398,13 +396,13 @@ static void auth_passkey_display(struct bt_conn *conn, unsigned int passkey) {
 }
 
 static void auth_passkey_confirm(struct bt_conn *conn, unsigned int passkey) {
-    pairing_data.conn    = bt_conn_ref(conn);
-    if (!pairing_data.conn) {
+    auth_conn    = bt_conn_ref(conn);
+    if (!auth_conn) {
         return;
     }
 
     char addr[BT_ADDR_LE_STR_LEN];
-    bt_addr_le_to_str(bt_conn_get_dst(pairing_data.conn), addr, sizeof(addr));
+    bt_addr_le_to_str(bt_conn_get_dst(auth_conn), addr, sizeof(addr));
     printk("Passkey for %s: %06u\n", addr, passkey);
     printk("type `uhk btacc 1/0` to accept/reject.\n");
 }
@@ -430,13 +428,13 @@ static void pairing_complete(struct bt_conn *conn, bool bonded) {
 }
 
 static void pairing_failed(struct bt_conn *conn, enum bt_security_err reason) {
-    if (!pairing_data.conn) {
+    if (!auth_conn) {
         return;
     }
 
-    if (pairing_data.conn == conn) {
-        bt_conn_unref(pairing_data.conn);
-        pairing_data.conn = NULL;
+    if (auth_conn == conn) {
+        bt_conn_unref(auth_conn);
+        auth_conn = NULL;
     }
 
     char addr[BT_ADDR_LE_STR_LEN];
@@ -479,11 +477,11 @@ void key_report_send(uint8_t down) {
 void num_comp_reply(uint8_t accept) {
     struct bt_conn *conn;
 
-    if (!pairing_data.conn) {
+    if (!auth_conn) {
         return;
     }
 
-    conn = pairing_data.conn;
+    conn = auth_conn;
 
     if (accept) {
         bt_conn_auth_passkey_confirm(conn);
@@ -493,8 +491,8 @@ void num_comp_reply(uint8_t accept) {
         printk("Numeric Reject, conn %p\n", conn);
     }
 
-    bt_conn_unref(pairing_data.conn);
-    pairing_data.conn = NULL;
+    bt_conn_unref(auth_conn);
+    auth_conn = NULL;
 }
 
 void bas_notify(void) {
