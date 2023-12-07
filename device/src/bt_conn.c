@@ -44,14 +44,26 @@ peer_t *getPeerByAddr(const bt_addr_le_t *addr) {
     return NULL;
 }
 
+void getPeerIdAndNameByAddr(const bt_addr_le_t *addr, int8_t *peerId, char *peerName) {
+    peer_t *peer = getPeerByAddr(addr);
+
+    if (peer) {
+        *peerId = peer->id;
+        peerName = peer->name;
+    } else {
+        *peerId = PeerIdUnknown;
+        strcpy(peerName, "unknown");
+    }
+}
+
 static void connected(struct bt_conn *conn, uint8_t err) {
     char addrStr[BT_ADDR_LE_STR_LEN];
     const bt_addr_le_t *addr = bt_conn_get_dst(conn);
     bt_addr_le_to_str(addr, addrStr, sizeof(addrStr));
 
-    peer_t *peer = getPeerByAddr(addr);
-    int8_t peerId = peer ? peer->id : -1;
-    char *peerName = peer ? peer->name : "unknown";
+    int8_t peerId;
+    char peerName[PeerNameMaxLength];
+    getPeerIdAndNameByAddr(addr, &peerId, peerName);
 
     if (err) {
         printk("Failed to connect to %s, peer, %s err %u\n", addrStr, peerName, err);
@@ -76,9 +88,9 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
     const bt_addr_le_t *addr = bt_conn_get_dst(conn);
     bt_addr_le_to_str(addr, addrStr, sizeof(addrStr));
 
-    peer_t *peer = getPeerByAddr(addr);
-    int8_t peerId = peer ? peer->id : -1;
-    char *peerName = peer ? peer->name : "unknown";
+    int8_t peerId;
+    char peerName[PeerNameMaxLength];
+    getPeerIdAndNameByAddr(addr, &peerId, peerName);
 
     printk("Disconnected from %s, peer %s, reason %u\n", addrStr, peerName, reason);
 
@@ -94,8 +106,9 @@ static void security_changed(struct bt_conn *conn, bt_security_t level, enum bt_
     const bt_addr_le_t *addr = bt_conn_get_dst(conn);
     bt_addr_le_to_str(addr, addrStr, sizeof(addrStr));
 
-    peer_t *peer = getPeerByAddr(addr);
-    char *peerName = peer ? peer->name : "unknown";
+    int8_t peerId;
+    char peerName[PeerNameMaxLength];
+    getPeerIdAndNameByAddr(addr, &peerId, peerName);
 
     if (!err) {
         printk("Security changed: %s, peer %s, level %u\n", addrStr, peerName, level);
