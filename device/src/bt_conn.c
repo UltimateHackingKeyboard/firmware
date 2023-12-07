@@ -50,9 +50,10 @@ peer_t *getPeerByAddr(const bt_addr_le_t *addr) {
 static void connected(struct bt_conn *conn, uint8_t err) {
     char addrStr[BT_ADDR_LE_STR_LEN];
     const bt_addr_le_t *addr = bt_conn_get_dst(conn);
+    bt_addr_le_to_str(addr, addrStr, sizeof(addrStr));
+
     peer_t *peer = getPeerByAddr(addr);
     char *peerName = peer ? peer->name : "unknown";
-    bt_addr_le_to_str(addr, addrStr, sizeof(addrStr));
 
     if (err) {
         printk("Failed to connect to %s (%s) err %u\n", addrStr, peerName, err);
@@ -72,9 +73,11 @@ static void connected(struct bt_conn *conn, uint8_t err) {
 static void disconnected(struct bt_conn *conn, uint8_t reason) {
     char addrStr[BT_ADDR_LE_STR_LEN];
     const bt_addr_le_t *addr = bt_conn_get_dst(conn);
+    bt_addr_le_to_str(addr, addrStr, sizeof(addrStr));
+
     peer_t *peer = getPeerByAddr(addr);
     char *peerName = peer ? peer->name : "unknown";
-    bt_addr_le_to_str(addr, addrStr, sizeof(addrStr));
+
     printk("Disconnected from %s (%s) reason %u\n", addrStr, peerName, reason);
     HidsDisconnected(conn);
     HidConnection = NULL;
@@ -84,9 +87,10 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
 static void security_changed(struct bt_conn *conn, bt_security_t level, enum bt_security_err err) {
     char addrStr[BT_ADDR_LE_STR_LEN];
     const bt_addr_le_t *addr = bt_conn_get_dst(conn);
+    bt_addr_le_to_str(addr, addrStr, sizeof(addrStr));
+
     peer_t *peer = getPeerByAddr(addr);
     char *peerName = peer ? peer->name : "unknown";
-    bt_addr_le_to_str(addr, addrStr, sizeof(addrStr));
 
     if (!err) {
         printk("Security changed: %s (%s) level %u\n", addrStr, peerName, level);
