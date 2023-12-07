@@ -31,10 +31,10 @@ bt_addr_le_t leftAddr;
 bt_addr_le_t rightAddr;
 bt_addr_le_t dongleAddr;
 
-void InitAddresses(void) {
-    // bt_addr_le_from_str(leftAddrStr, "random", &leftAddr);
-    // bt_addr_le_from_str(rightAddrStr, "random", &rightAddr);
-    // bt_addr_le_from_str(dongleAddrStr, "public", &dongleAddr);
+void InitPeerAddresses(void) {
+    for (uint8_t i = 0; i < PeerCount; i++) {
+        bt_addr_le_from_str(peers[i].addrStr, "random", &peers[i].addr);
+    }
 }
 
 static void connected(struct bt_conn *conn, uint8_t err) {
