@@ -1,24 +1,46 @@
+#include <zephyr/settings/settings.h>
 #include "bt_advertise.h"
 #include "bt_hid.h"
+#include "bt_conn.h"
 
-char leftAddrStr[] = "e7:f5:5d:7c:82:35";
-char rightAddrStr[] = "f0:98:11:ce:a4:92";
-char dongleAddrStr[] = "ac:d6:18:1b:3d:b5";
+#define PeerCount 3
+
+#define PeerIdLeft 0
+#define PeerIdRight 1
+#define PeerIdDongle 2
+
+peer_t peers[PeerCount] = {
+    {
+        .id = PeerIdLeft,
+        .addrStr = "e7:f5:5d:7c:82:35",
+        .name = "left",
+    },
+    {
+        .id = PeerIdRight,
+        .addrStr = "f0:98:11:ce:a4:92",
+        .name = "right",
+    },
+    {
+        .id = PeerIdDongle,
+        .addrStr = "ac:d6:18:1b:3d:b5",
+        .name = "dongle",
+    },
+};
 
 bt_addr_le_t leftAddr;
 bt_addr_le_t rightAddr;
 bt_addr_le_t dongleAddr;
 
 void InitAddresses(void) {
-    bt_addr_le_from_str(leftAddrStr, "random", &leftAddr);
-    bt_addr_le_from_str(rightAddrStr, "random", &rightAddr);
-    bt_addr_le_from_str(dongleAddrStr, "public", &dongleAddr);
+    // bt_addr_le_from_str(leftAddrStr, "random", &leftAddr);
+    // bt_addr_le_from_str(rightAddrStr, "random", &rightAddr);
+    // bt_addr_le_from_str(dongleAddrStr, "public", &dongleAddr);
 }
 
 static void connected(struct bt_conn *conn, uint8_t err) {
     char addrStr[BT_ADDR_LE_STR_LEN];
-    bt_addr_le_to_str(bt_conn_get_dst(conn), addrStr, sizeof(addrStr));
-    bt_addr_le_t *addr = bt_conn_get_dst(conn);
+    const bt_addr_le_t *addr = bt_conn_get_dst(conn);
+    bt_addr_le_to_str(addr, addrStr, sizeof(addrStr));
     printk("%i", bt_addr_le_eq(addr, &dongleAddr));
 
     if (err) {
@@ -132,13 +154,11 @@ void bt_init(void)
     err = bt_conn_auth_cb_register(&conn_auth_callbacks);
     if (err) {
         printk("Failed to register authorization callbacks.\n");
-        return 0;
     }
 
     err = bt_conn_auth_info_cb_register(&conn_auth_info_callbacks);
     if (err) {
         printk("Failed to register authorization info callbacks.\n");
-        return 0;
     }
 
     bt_enable(NULL);
