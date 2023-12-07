@@ -50,15 +50,16 @@ peer_t *getPeerByAddr(const bt_addr_le_t *addr) {
 static void connected(struct bt_conn *conn, uint8_t err) {
     char addrStr[BT_ADDR_LE_STR_LEN];
     const bt_addr_le_t *addr = bt_conn_get_dst(conn);
+    peer_t *peer = getPeerByAddr(addr);
+    char *peerName = peer ? peer->name : "unknown";
     bt_addr_le_to_str(addr, addrStr, sizeof(addrStr));
-    printk("%i", bt_addr_le_eq(addr, &dongleAddr));
 
     if (err) {
-        printk("Failed to connect to %s (%u)\n", addrStr, err);
+        printk("Failed to connect to %s (%s) err %u\n", addrStr, peerName, err);
         return;
     }
 
-    printk("Connected %s\n", addrStr);
+    printk("Connected %s (%s)\n", addrStr, peerName);
     err = HidsConnected(conn);
 
     if (!HidConnection) {
@@ -69,22 +70,28 @@ static void connected(struct bt_conn *conn, uint8_t err) {
 }
 
 static void disconnected(struct bt_conn *conn, uint8_t reason) {
-    char addr[BT_ADDR_LE_STR_LEN];
-    bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
-    printk("Disconnected from %s (reason %u)\n", addr, reason);
+    char addrStr[BT_ADDR_LE_STR_LEN];
+    const bt_addr_le_t *addr = bt_conn_get_dst(conn);
+    peer_t *peer = getPeerByAddr(addr);
+    char *peerName = peer ? peer->name : "unknown";
+    bt_addr_le_to_str(addr, addrStr, sizeof(addrStr));
+    printk("Disconnected from %s (%s) reason %u\n", addrStr, peerName, reason);
     HidsDisconnected(conn);
     HidConnection = NULL;
     advertise_hid();
 }
 
 static void security_changed(struct bt_conn *conn, bt_security_t level, enum bt_security_err err) {
-    char addr[BT_ADDR_LE_STR_LEN];
-    bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
+    char addrStr[BT_ADDR_LE_STR_LEN];
+    const bt_addr_le_t *addr = bt_conn_get_dst(conn);
+    peer_t *peer = getPeerByAddr(addr);
+    char *peerName = peer ? peer->name : "unknown";
+    bt_addr_le_to_str(addr, addrStr, sizeof(addrStr));
 
     if (!err) {
-        printk("Security changed: %s level %u\n", addr, level);
+        printk("Security changed: %s (%s) level %u\n", addrStr, peerName, level);
     } else {
-        printk("Security failed: %s level %u err %d\n", addr, level, err);
+        printk("Security failed: %s (%s) level %u err %d\n", addrStr, peerName, level, err);
     }
 }
 
