@@ -5,6 +5,7 @@
 
 #define PeerCount 3
 
+#define PeerIdUnknown -1
 #define PeerIdLeft 0
 #define PeerIdRight 1
 #define PeerIdDongle 2
@@ -53,6 +54,7 @@ static void connected(struct bt_conn *conn, uint8_t err) {
     bt_addr_le_to_str(addr, addrStr, sizeof(addrStr));
 
     peer_t *peer = getPeerByAddr(addr);
+    int8_t peerId = peer ? peer->id : -1;
     char *peerName = peer ? peer->name : "unknown";
 
     if (err) {
@@ -61,12 +63,15 @@ static void connected(struct bt_conn *conn, uint8_t err) {
     }
 
     printk("Connected %s (%s)\n", addrStr, peerName);
-    err = HidsConnected(conn);
 
-    if (!HidConnection) {
-        HidConnection = bt_conn_ref(conn);
-        HidInBootMode = false;
-        // advertise_hid();
+    if (peerId == PeerIdUnknown) {
+        err = HidsConnected(conn);
+
+        if (!HidConnection) {
+            HidConnection = bt_conn_ref(conn);
+            HidInBootMode = false;
+            // advertise_hid();
+        }
     }
 }
 
@@ -76,12 +81,16 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
     bt_addr_le_to_str(addr, addrStr, sizeof(addrStr));
 
     peer_t *peer = getPeerByAddr(addr);
+    int8_t peerId = peer ? peer->id : -1;
     char *peerName = peer ? peer->name : "unknown";
 
     printk("Disconnected from %s (%s) reason %u\n", addrStr, peerName, reason);
-    HidsDisconnected(conn);
-    HidConnection = NULL;
-    advertise_hid();
+
+    if (peerId == PeerIdUnknown) {
+        HidsDisconnected(conn);
+        HidConnection = NULL;
+        advertise_hid();
+    }
 }
 
 static void security_changed(struct bt_conn *conn, bt_security_t level, enum bt_security_err err) {
