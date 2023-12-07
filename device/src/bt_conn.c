@@ -28,10 +28,6 @@ peer_t peers[PeerCount] = {
     },
 };
 
-bt_addr_le_t leftAddr;
-bt_addr_le_t rightAddr;
-bt_addr_le_t dongleAddr;
-
 void InitPeerAddresses(void) {
     for (uint8_t i = 0; i < PeerCount; i++) {
         bt_addr_le_from_str(peers[i].addrStr, "random", &peers[i].addr);
