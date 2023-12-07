@@ -54,11 +54,11 @@ static void connected(struct bt_conn *conn, uint8_t err) {
     char *peerName = peer ? peer->name : "unknown";
 
     if (err) {
-        printk("Failed to connect to %s (%s) err %u\n", addrStr, peerName, err);
+        printk("Failed to connect to %s, peer, %s err %u\n", addrStr, peerName, err);
         return;
     }
 
-    printk("Connected %s (%s)\n", addrStr, peerName);
+    printk("Connected %s, peer %s\n", addrStr, peerName);
 
     if (peerId == PeerIdUnknown) {
         err = HidsConnected(conn);
@@ -80,7 +80,7 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
     int8_t peerId = peer ? peer->id : -1;
     char *peerName = peer ? peer->name : "unknown";
 
-    printk("Disconnected from %s (%s) reason %u\n", addrStr, peerName, reason);
+    printk("Disconnected from %s, peer %s, reason %u\n", addrStr, peerName, reason);
 
     if (peerId == PeerIdUnknown) {
         HidsDisconnected(conn);
@@ -98,9 +98,9 @@ static void security_changed(struct bt_conn *conn, bt_security_t level, enum bt_
     char *peerName = peer ? peer->name : "unknown";
 
     if (!err) {
-        printk("Security changed: %s (%s) level %u\n", addrStr, peerName, level);
+        printk("Security changed: %s, peer %s, level %u\n", addrStr, peerName, level);
     } else {
-        printk("Security failed: %s (%s) level %u err %d\n", addrStr, peerName, level, err);
+        printk("Security failed: %s, peer %s, level %u, err %d\n", addrStr, peerName, level, err);
     }
 }
 
