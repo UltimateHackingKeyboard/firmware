@@ -37,6 +37,16 @@ void InitPeerAddresses(void) {
     }
 }
 
+peer_t *getPeerByAddr(const bt_addr_le_t *addr) {
+    for (uint8_t i = 0; i < PeerCount; i++) {
+        if (bt_addr_le_eq(addr, &peers[i].addr)) {
+            return &peers[i];
+        }
+    }
+
+    return NULL;
+}
+
 static void connected(struct bt_conn *conn, uint8_t err) {
     char addrStr[BT_ADDR_LE_STR_LEN];
     const bt_addr_le_t *addr = bt_conn_get_dst(conn);
