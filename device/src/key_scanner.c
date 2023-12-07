@@ -52,12 +52,15 @@ void keyScanner() {
             gpio_pin_set_dt(&rows[rowId], 1);
             for (uint8_t colId=0; colId<KEY_MATRIX_COLS; colId++) {
                 bool keyState = gpio_pin_get_dt(&cols[colId]);
-                if (Shell.keyLog && keyState != KeyStates[rowId][colId]) {
-                    char buffer[20];
-                    sprintf(buffer, "SW%c%c %s\n", rowId+'1', colId+'1', keyState ? "down" : "up");
-                    printk("%s", buffer);
-                    for (uint8_t i=0; i<strlen(buffer); i++) {
-                        uart_poll_out(uart_dev, buffer[i]);
+                if (keyState != KeyStates[rowId][colId]) {
+                    key_report_send(keyState);
+                    if (Shell.keyLog) {
+                        char buffer[20];
+                        sprintf(buffer, "SW%c%c %s\n", rowId+'1', colId+'1', keyState ? "down" : "up");
+                        printk("%s", buffer);
+                        for (uint8_t i=0; i<strlen(buffer); i++) {
+                            uart_poll_out(uart_dev, buffer[i]);
+                        }
                     }
                 }
                 KeyStates[rowId][colId] = keyState;
@@ -69,7 +72,6 @@ void keyScanner() {
         }
 
         KeyPressed = keyPressed;
-        key_report_send(KeyStates[0][0]);
         k_msleep(1);
     }
 }
