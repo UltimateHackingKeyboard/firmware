@@ -66,7 +66,7 @@ static void connected(struct bt_conn *conn, uint8_t err) {
     getPeerIdAndNameByAddr(addr, &peerId, peerName);
 
     if (err) {
-        printk("Failed to connect to %s, peer, %s err %u\n", addrStr, peerName, err);
+        printk("Failed to connect to conn %p, addr %s, peer, %s err %u\n", conn, addrStr, peerName, err);
         return;
     }
 
@@ -92,7 +92,7 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
     char peerName[PeerNameMaxLength];
     getPeerIdAndNameByAddr(addr, &peerId, peerName);
 
-    printk("Disconnected from %s, peer %s, reason %u\n", addrStr, peerName, reason);
+    printk("Disconnected from conn %p, addr %s, peer %s, reason %u\n", conn, addrStr, peerName, reason);
 
     if (peerId == PeerIdUnknown) {
         HidsDisconnected(conn);
@@ -111,9 +111,9 @@ static void security_changed(struct bt_conn *conn, bt_security_t level, enum bt_
     getPeerIdAndNameByAddr(addr, &peerId, peerName);
 
     if (!err) {
-        printk("Security changed: %s, peer %s, level %u\n", addrStr, peerName, level);
+        printk("Security changed: conn %p, addr %s, peer %s, level %u\n", conn, addrStr, peerName, level);
     } else {
-        printk("Security failed: %s, peer %s, level %u, err %d\n", addrStr, peerName, level, err);
+        printk("Security failed: conn %p, addr %s, peer %s, level %u, err %d\n", conn, addrStr, peerName, level, err);
     }
 }
 
@@ -137,7 +137,7 @@ static void auth_passkey_display(struct bt_conn *conn, unsigned int passkey)
     char peerName[PeerNameMaxLength];
     getPeerIdAndNameByAddr(addr, &peerId, peerName);
 
-    printk("Passkey for %s, peer %s: %06u\n", addrStr, peerName, passkey);
+    printk("Passkey for conn %p, addr %s, peer %s: %06u\n", conn, addrStr, peerName, passkey);
 }
 
 static void auth_passkey_confirm(struct bt_conn *conn, unsigned int passkey) {
@@ -154,8 +154,8 @@ static void auth_passkey_confirm(struct bt_conn *conn, unsigned int passkey) {
     char peerName[PeerNameMaxLength];
     getPeerIdAndNameByAddr(addr, &peerId, peerName);
 
-    printk("Passkey for %s, peer %s: %06u\n", addrStr, peerName, passkey);
-    printk("type `uhk btacc 1/0` to accept/reject.\n");
+    printk("Passkey for conn %p, addr %s, peer %s: %06u\n", conn, addrStr, peerName, passkey);
+    printk("Type `uhk btacc 1/0` to accept/reject\n");
 }
 
 static void auth_cancel(struct bt_conn *conn) {
@@ -167,7 +167,7 @@ static void auth_cancel(struct bt_conn *conn) {
     char peerName[PeerNameMaxLength];
     getPeerIdAndNameByAddr(addr, &peerId, peerName);
 
-    printk("Pairing cancelled: %s, peer %s\n", addrStr, peerName);
+    printk("Pairing cancelled: conn %p, addr %s, peer %s\n", conn, addrStr, peerName);
 }
 
 static struct bt_conn_auth_cb conn_auth_callbacks = {
@@ -187,7 +187,7 @@ static void pairing_complete(struct bt_conn *conn, bool bonded) {
     char peerName[PeerNameMaxLength];
     getPeerIdAndNameByAddr(addr, &peerId, peerName);
 
-    printk("Pairing completed: %s, peer %s, bonded: %d\n", addrStr, peerName, bonded);
+    printk("Pairing completed: conn %p, addr %s, peer %s, bonded %d\n", conn, addrStr, peerName, bonded);
 }
 
 static void pairing_failed(struct bt_conn *conn, enum bt_security_err reason) {
@@ -208,7 +208,7 @@ static void pairing_failed(struct bt_conn *conn, enum bt_security_err reason) {
     char peerName[PeerNameMaxLength];
     getPeerIdAndNameByAddr(addr, &peerId, peerName);
 
-    printk("Pairing failed conn: %s, peer %s, reason %d\n", addrStr, peerName, reason);
+    printk("Pairing failed: conn %p, addr %s, peer %s, reason %d\n", conn, addrStr, peerName, reason);
 }
 
 static struct bt_conn_auth_info_cb conn_auth_info_callbacks = {
