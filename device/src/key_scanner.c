@@ -6,6 +6,7 @@
 #include "uart.h"
 #include "bt_hid.h"
 #include <zephyr/drivers/uart.h>
+#include "bt_central_uart.h"
 
 // Thread definitions
 
@@ -57,6 +58,7 @@ void keyScanner() {
                     if (Shell.keyLog) {
                         char buffer[20];
                         sprintf(buffer, "SW%c%c %s\n", rowId+'1', colId+'1', keyState ? "down" : "up");
+                        SendCentralUart(buffer, sizeof buffer);
                         printk("%s", buffer);
                         for (uint8_t i=0; i<strlen(buffer); i++) {
                             uart_poll_out(uart_dev, buffer[i]);

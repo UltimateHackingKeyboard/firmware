@@ -34,7 +34,9 @@ static void scan_filter_match(struct bt_scan_device_info *device_info,
 
 static void scan_connecting_error(struct bt_scan_device_info *device_info)
 {
-    printk("Connecting failed\n");
+    char addr[BT_ADDR_LE_STR_LEN];
+    bt_addr_le_to_str(device_info->recv_info->addr, addr, sizeof(addr));
+    printk("Connecting failed: %s\n", addr);
 }
 
 static void scan_connecting(struct bt_scan_device_info *device_info, struct bt_conn *conn)

@@ -146,10 +146,12 @@ void InitCentralUart(void)
     }
 
     LOG_INF("Scanning successfully started\n");
+}
 
-    // err = bt_nus_client_send(&nus_client, buf->data, buf->len);
-    // if (err) {
-    //  LOG_WRN("Failed to send data over BLE connection"
-    //      "(err %d)", err);
-    // }
+void SendCentralUart(const uint8_t *data, uint16_t len)
+{
+    int err = bt_nus_client_send(&nus_client, data, len);
+    if (err) {
+        LOG_WRN("Failed to send data over BLE connection (err %d)", err);
+    }
 }
