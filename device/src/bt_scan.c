@@ -29,12 +29,12 @@ static void scan_filter_match(struct bt_scan_device_info *device_info,
 {
     char addr[BT_ADDR_LE_STR_LEN];
     bt_addr_le_to_str(device_info->recv_info->addr, addr, sizeof(addr));
-    printk("Filters matched. Address: %s connectable: %d", addr, connectable);
+    printk("Filters matched. Address: %s connectable: %d\n", addr, connectable);
 }
 
 static void scan_connecting_error(struct bt_scan_device_info *device_info)
 {
-    printk("Connecting failed");
+    printk("Connecting failed\n");
 }
 
 static void scan_connecting(struct bt_scan_device_info *device_info, struct bt_conn *conn)
@@ -58,13 +58,13 @@ int scan_init(void)
     bt_addr_le_from_str("E7:F5:5D:7C:82:35", "random", &addr);
     err = bt_scan_filter_add(BT_SCAN_FILTER_TYPE_ADDR, &addr);
     if (err) {
-        printk("Scanning filters cannot be set (err %d)", err);
+        printk("Scanning filters cannot be set (err %d)\n", err);
         return err;
     }
 
     err = bt_scan_filter_enable(BT_SCAN_ADDR_FILTER, false);
     if (err) {
-        printk("Filters cannot be turned on (err %d)", err);
+        printk("Filters cannot be turned on (err %d)\n", err);
         return err;
     }
 
