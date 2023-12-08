@@ -77,6 +77,29 @@ static void exchange_func(struct bt_conn *conn, uint8_t err, struct bt_gatt_exch
     }
 }
 
+void SetupCentralConnection(struct bt_conn *conn)
+{
+    static struct bt_gatt_exchange_params exchange_params;
+
+    exchange_params.func = exchange_func;
+    int err = bt_gatt_exchange_mtu(conn, &exchange_params);
+    if (err) {
+        LOG_WRN("MTU exchange failed (err %d)", err);
+    }
+
+    err = bt_conn_set_security(conn, BT_SECURITY_L2);
+    if (err) {
+        LOG_WRN("Failed to set security: %d", err);
+
+        gatt_discover(conn);
+    }
+
+    err = bt_scan_stop();
+    if ((!err) && (err != -EALREADY)) {
+        LOG_ERR("Stop LE scan failed (err %d)", err);
+    }
+}
+
 static void connected(struct bt_conn *conn, uint8_t conn_err)
 {
     char addr[BT_ADDR_LE_STR_LEN];
@@ -101,26 +124,7 @@ static void connected(struct bt_conn *conn, uint8_t conn_err)
     }
 
     printk("Connected (bt_central_uart): %s", addr);
-
-    static struct bt_gatt_exchange_params exchange_params;
-
-    exchange_params.func = exchange_func;
-    err = bt_gatt_exchange_mtu(conn, &exchange_params);
-    if (err) {
-        LOG_WRN("MTU exchange failed (err %d)", err);
-    }
-
-    err = bt_conn_set_security(conn, BT_SECURITY_L2);
-    if (err) {
-        LOG_WRN("Failed to set security: %d", err);
-
-        gatt_discover(conn);
-    }
-
-    err = bt_scan_stop();
-    if ((!err) && (err != -EALREADY)) {
-        LOG_ERR("Stop LE scan failed (err %d)", err);
-    }
+    SetupCentralConnection(conn);
 }
 
 BT_CONN_CB_DEFINE(conn_callbacks) = {
