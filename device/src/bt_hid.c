@@ -362,11 +362,11 @@ int HidsConnected(struct bt_conn *conn) {
         return err;
     }
 
-    err = bt_hids_connected(&hids_mouse_obj, conn);
-    if (err) {
-        printk("Failed to notify mouse HID service about connection\n");
-        return err;
-    }
+    // err = bt_hids_connected(&hids_mouse_obj, conn);
+    // if (err) {
+    //     printk("Failed to notify mouse HID service about connection\n");
+    //     return err;
+    // }
 
     return 0;
 }
@@ -377,10 +377,10 @@ int HidsDisconnected(struct bt_conn *conn) {
         printk("Failed to notify keyboard HID service about disconnection\n");
     }
 
-    err = bt_hids_disconnected(&hids_mouse_obj, conn);
-    if (err) {
-        printk("Failed to notify mouse HID service about disconnection\n");
-    }
+    // err = bt_hids_disconnected(&hids_mouse_obj, conn);
+    // if (err) {
+    //     printk("Failed to notify mouse HID service about disconnection\n");
+    // }
 
     return 0;
 }
