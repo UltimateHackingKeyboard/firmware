@@ -100,34 +100,6 @@ void SetupCentralConnection(struct bt_conn *conn)
     }
 }
 
-static void connected(struct bt_conn *conn, uint8_t conn_err)
-{
-    char addr[BT_ADDR_LE_STR_LEN];
-    int err;
-
-    bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
-
-    if (conn_err) {
-        LOG_INF("Failed to connect to %s (%d)", addr, conn_err);
-
-        if (bt_uart_conn == conn) {
-            bt_conn_unref(bt_uart_conn);
-            bt_uart_conn = NULL;
-
-            err = bt_scan_start(BT_SCAN_TYPE_SCAN_ACTIVE);
-            if (err) {
-                LOG_ERR("Scanning failed to start (err %d)", err);
-            }
-        }
-
-        return;
-    }
-}
-
-BT_CONN_CB_DEFINE(conn_callbacks) = {
-    .connected = connected,
-};
-
 static int nus_client_init(void)
 {
     int err;

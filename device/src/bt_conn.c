@@ -72,6 +72,19 @@ static void connected(struct bt_conn *conn, uint8_t err) {
 
     if (err) {
         printk("Failed to connect to conn %p, addr %s, peer, %s err %u\n", conn, addrStr, peerName, err);
+
+        if (current_conn == conn) {
+            bt_conn_unref(current_conn);
+            current_conn = NULL;
+
+#if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_RIGHT
+            err = bt_scan_start(BT_SCAN_TYPE_SCAN_ACTIVE);
+            if (err) {
+                printk("Scanning failed to start (err %d)", err);
+            }
+#endif
+        }
+
         return;
     }
 
