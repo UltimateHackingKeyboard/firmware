@@ -57,6 +57,6 @@ void advertise_peer(void) {
         printk("Peripheral advertising failed to start (err %d)", err);
         return 0;
     } else {
-        printk("Peripheral advertising successfully started");
+        printk("Peripheral advertising successfully started\n");
     }
 }

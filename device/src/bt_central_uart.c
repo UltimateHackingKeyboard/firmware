@@ -229,7 +229,7 @@ int InitCentralUart(void)
         return 0;
     }
 
-    LOG_INF("Scanning successfully started");
+    LOG_INF("Scanning successfully started\n");
 
     // err = bt_nus_client_send(&nus_client, buf->data, buf->len);
     // if (err) {

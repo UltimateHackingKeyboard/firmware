@@ -18,7 +18,7 @@ peer_t peers[PeerCount] = {
     },
     {
         .id = PeerIdRight,
-        .addrStr = "f0:98:11:ce:a4:92",
+        .addrStr = "e6:40:d8:c5:68:8a",
         .name = "right",
     },
     {

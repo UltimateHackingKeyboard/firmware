@@ -41,12 +41,12 @@ int main(void) {
     usb_init(true);
     InitPeerAddresses();
     bt_init();
-    bt_hid_init();
 
 #if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_LEFT
     InitPeripheralUart();
 #elif CONFIG_DEVICE_ID == DEVICE_ID_UHK80_RIGHT
-    // InitCentralUart();
+    // bt_hid_init();
+    InitCentralUart();
 #endif
 
 }
