@@ -123,31 +123,8 @@ static void connected(struct bt_conn *conn, uint8_t conn_err)
     }
 }
 
-static void disconnected(struct bt_conn *conn, uint8_t reason)
-{
-    char addr[BT_ADDR_LE_STR_LEN];
-    int err;
-
-    bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
-
-    LOG_INF("Disconnected: %s (reason %u)", addr, reason);
-
-    if (bt_uart_conn != conn) {
-        return;
-    }
-
-    bt_conn_unref(bt_uart_conn);
-    bt_uart_conn = NULL;
-
-    err = bt_scan_start(BT_SCAN_TYPE_SCAN_ACTIVE);
-    if (err) {
-        LOG_ERR("Scanning failed to start (err %d)", err);
-    }
-}
-
 BT_CONN_CB_DEFINE(conn_callbacks) = {
     .connected = connected,
-    .disconnected = disconnected,
 };
 
 static int nus_client_init(void)

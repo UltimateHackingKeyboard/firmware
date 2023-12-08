@@ -1,4 +1,5 @@
 #include <zephyr/settings/settings.h>
+#include <bluetooth/scan.h>
 #include "bt_advertise.h"
 #include "bt_hid.h"
 #include "bt_conn.h"
@@ -100,6 +101,7 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
 
     printk("Disconnected from conn %p, addr %s, peer %s, reason %u\n", conn, addrStr, peerName, reason);
 
+#if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_RIGHT
     if (peerId == PeerIdUnknown) {
         HidsDisconnected(conn);
         HidConnection = NULL;
@@ -115,6 +117,19 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
             current_conn = NULL;
         }
     }
+#elif CONFIG_DEVICE_ID == DEVICE_ID_UHK80_LEFT
+    if (current_conn != conn) {
+        return;
+    }
+
+    bt_conn_unref(current_conn);
+    current_conn = NULL;
+
+    int err = bt_scan_start(BT_SCAN_TYPE_SCAN_ACTIVE);
+    if (err) {
+        printk("Scanning failed to start (err %d)", err);
+    }
+#endif
 }
 
 static void security_changed(struct bt_conn *conn, bt_security_t level, enum bt_security_err err) {
