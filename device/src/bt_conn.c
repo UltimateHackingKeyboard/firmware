@@ -49,7 +49,7 @@ void getPeerIdAndNameByAddr(const bt_addr_le_t *addr, int8_t *peerId, char *peer
 
     if (peer) {
         *peerId = peer->id;
-        peerName = peer->name;
+        strcpy(peerName, peer->name);
     } else {
         *peerId = PeerIdUnknown;
         strcpy(peerName, "unknown");
