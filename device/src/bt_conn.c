@@ -2,6 +2,8 @@
 #include "bt_advertise.h"
 #include "bt_hid.h"
 #include "bt_conn.h"
+#include "bt_central_uart.h"
+#include "device.h"
 
 #define PeerCount 3
 
@@ -115,6 +117,10 @@ static void security_changed(struct bt_conn *conn, bt_security_t level, enum bt_
     } else {
         printk("Security failed: conn %p, addr %s, peer %s, level %u, err %d\n", conn, addrStr, peerName, level, err);
     }
+
+#if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_LEFT
+    gatt_discover(conn); // Taken from bt_central_uart.c
+#endif
 }
 
 BT_CONN_CB_DEFINE(conn_callbacks) = {

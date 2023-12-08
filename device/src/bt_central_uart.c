@@ -73,7 +73,7 @@ struct bt_gatt_dm_cb discovery_cb = {
     .error_found       = discovery_error,
 };
 
-static void gatt_discover(struct bt_conn *conn)
+void gatt_discover(struct bt_conn *conn)
 {
     int err;
 
@@ -164,24 +164,9 @@ static void disconnected(struct bt_conn *conn, uint8_t reason)
     }
 }
 
-static void security_changed(struct bt_conn *conn, bt_security_t level, enum bt_security_err err)
-{
-    char addr[BT_ADDR_LE_STR_LEN];
-    bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
-
-    if (!err) {
-        LOG_INF("Security changed: %s level %u", addr, level);
-    } else {
-        LOG_WRN("Security failed: %s level %u err %d", addr, level, err);
-    }
-
-    gatt_discover(conn);
-}
-
 BT_CONN_CB_DEFINE(conn_callbacks) = {
     .connected = connected,
     .disconnected = disconnected,
-    .security_changed = security_changed
 };
 
 static int nus_client_init(void)
@@ -204,7 +189,7 @@ static int nus_client_init(void)
     return err;
 }
 
-int InitCentralUart(void)
+void InitCentralUart(void)
 {
     printk("InitCentralUart\n");
     int err;
@@ -212,13 +197,13 @@ int InitCentralUart(void)
     err = scan_init();
     if (err != 0) {
         LOG_ERR("scan_init failed (err %d)", err);
-        return 0;
+        return;
     }
 
     err = nus_client_init();
     if (err != 0) {
         LOG_ERR("nus_client_init failed (err %d)", err);
-        return 0;
+        return;
     }
 
     printk("Starting Bluetooth Central UART example\n");
@@ -226,7 +211,7 @@ int InitCentralUart(void)
     err = bt_scan_start(BT_SCAN_TYPE_SCAN_ACTIVE);
     if (err) {
         LOG_ERR("Scanning failed to start (err %d)", err);
-        return 0;
+        return;
     }
 
     LOG_INF("Scanning successfully started\n");
