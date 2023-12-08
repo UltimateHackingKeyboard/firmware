@@ -129,9 +129,15 @@ struct bt_conn *auth_conn;
 
 static void auth_passkey_display(struct bt_conn *conn, unsigned int passkey)
 {
-    char addr[BT_ADDR_LE_STR_LEN];
-    bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
-    printk("Passkey for %s: %06u\n", addr, passkey);
+    char addrStr[BT_ADDR_LE_STR_LEN];
+    const bt_addr_le_t *addr = bt_conn_get_dst(conn);
+    bt_addr_le_to_str(addr, addrStr, sizeof(addrStr));
+
+    int8_t peerId;
+    char peerName[PeerNameMaxLength];
+    getPeerIdAndNameByAddr(addr, &peerId, peerName);
+
+    printk("Passkey for %s, peer %s: %06u\n", addrStr, peerName, passkey);
 }
 
 static void auth_passkey_confirm(struct bt_conn *conn, unsigned int passkey) {
@@ -140,16 +146,28 @@ static void auth_passkey_confirm(struct bt_conn *conn, unsigned int passkey) {
         return;
     }
 
-    char addr[BT_ADDR_LE_STR_LEN];
-    bt_addr_le_to_str(bt_conn_get_dst(auth_conn), addr, sizeof(addr));
-    printk("Passkey for %s: %06u\n", addr, passkey);
+    char addrStr[BT_ADDR_LE_STR_LEN];
+    const bt_addr_le_t *addr = bt_conn_get_dst(conn);
+    bt_addr_le_to_str(addr, addrStr, sizeof(addrStr));
+
+    int8_t peerId;
+    char peerName[PeerNameMaxLength];
+    getPeerIdAndNameByAddr(addr, &peerId, peerName);
+
+    printk("Passkey for %s, peer %s: %06u\n", addrStr, peerName, passkey);
     printk("type `uhk btacc 1/0` to accept/reject.\n");
 }
 
 static void auth_cancel(struct bt_conn *conn) {
-    char addr[BT_ADDR_LE_STR_LEN];
-    bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
-    printk("Pairing cancelled: %s\n", addr);
+    char addrStr[BT_ADDR_LE_STR_LEN];
+    const bt_addr_le_t *addr = bt_conn_get_dst(conn);
+    bt_addr_le_to_str(addr, addrStr, sizeof(addrStr));
+
+    int8_t peerId;
+    char peerName[PeerNameMaxLength];
+    getPeerIdAndNameByAddr(addr, &peerId, peerName);
+
+    printk("Pairing cancelled: %s, peer %s\n", addrStr, peerName);
 }
 
 static struct bt_conn_auth_cb conn_auth_callbacks = {
@@ -161,9 +179,15 @@ static struct bt_conn_auth_cb conn_auth_callbacks = {
 // Auth info callbacks
 
 static void pairing_complete(struct bt_conn *conn, bool bonded) {
-    char addr[BT_ADDR_LE_STR_LEN];
-    bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
-    printk("Pairing completed: %s, bonded: %d\n", addr, bonded);
+    char addrStr[BT_ADDR_LE_STR_LEN];
+    const bt_addr_le_t *addr = bt_conn_get_dst(conn);
+    bt_addr_le_to_str(addr, addrStr, sizeof(addrStr));
+
+    int8_t peerId;
+    char peerName[PeerNameMaxLength];
+    getPeerIdAndNameByAddr(addr, &peerId, peerName);
+
+    printk("Pairing completed: %s, peer %s, bonded: %d\n", addrStr, peerName, bonded);
 }
 
 static void pairing_failed(struct bt_conn *conn, enum bt_security_err reason) {
@@ -176,9 +200,15 @@ static void pairing_failed(struct bt_conn *conn, enum bt_security_err reason) {
         auth_conn = NULL;
     }
 
-    char addr[BT_ADDR_LE_STR_LEN];
-    bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
-    printk("Pairing failed conn: %s, reason %d\n", addr, reason);
+    char addrStr[BT_ADDR_LE_STR_LEN];
+    const bt_addr_le_t *addr = bt_conn_get_dst(conn);
+    bt_addr_le_to_str(addr, addrStr, sizeof(addrStr));
+
+    int8_t peerId;
+    char peerName[PeerNameMaxLength];
+    getPeerIdAndNameByAddr(addr, &peerId, peerName);
+
+    printk("Pairing failed conn: %s, peer %s, reason %d\n", addrStr, peerName, reason);
 }
 
 static struct bt_conn_auth_info_cb conn_auth_info_callbacks = {
