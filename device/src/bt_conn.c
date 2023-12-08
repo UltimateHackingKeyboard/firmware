@@ -58,6 +58,8 @@ void getPeerIdAndNameByAddr(const bt_addr_le_t *addr, int8_t *peerId, char *peer
     }
 }
 
+static struct bt_conn *current_conn;
+
 static void connected(struct bt_conn *conn, uint8_t err) {
     char addrStr[BT_ADDR_LE_STR_LEN];
     const bt_addr_le_t *addr = bt_conn_get_dst(conn);
@@ -82,6 +84,8 @@ static void connected(struct bt_conn *conn, uint8_t err) {
             HidInBootMode = false;
             // advertise_hid();
         }
+    } else {
+        current_conn = bt_conn_ref(conn);
     }
 }
 
@@ -100,6 +104,16 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
         HidsDisconnected(conn);
         HidConnection = NULL;
         advertise_hid();
+    } else {
+        // if (auth_conn) {
+        //     bt_conn_unref(auth_conn);
+        //     auth_conn = NULL;
+        // }
+
+        if (current_conn) {
+            bt_conn_unref(current_conn);
+            current_conn = NULL;
+        }
     }
 }
 

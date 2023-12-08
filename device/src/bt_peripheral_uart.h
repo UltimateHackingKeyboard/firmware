@@ -3,6 +3,6 @@
 
 // Functions:
 
-    extern int InitPeripheralUart(void);
+    extern void InitPeripheralUart(void);
 
 #endif // __BT_PERIPHERAL_UART_H__
