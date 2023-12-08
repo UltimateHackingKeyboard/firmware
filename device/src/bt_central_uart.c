@@ -102,7 +102,6 @@ void SetupCentralConnection(struct bt_conn *conn)
 
 static int nus_client_init(void)
 {
-    int err;
     struct bt_nus_client_init_param init = {
         .cb = {
             .received = ble_data_received,
@@ -110,7 +109,7 @@ static int nus_client_init(void)
         }
     };
 
-    err = bt_nus_client_init(&nus_client, &init);
+    int err = bt_nus_client_init(&nus_client, &init);
     if (err) {
         LOG_ERR("NUS Client initialization failed (err %d)", err);
         return err;
@@ -122,10 +121,7 @@ static int nus_client_init(void)
 
 void InitCentralUart(void)
 {
-    printk("InitCentralUart\n");
-    int err;
-
-    err = scan_init();
+    int err = scan_init();
     if (err != 0) {
         LOG_ERR("scan_init failed (err %d)", err);
         return;
