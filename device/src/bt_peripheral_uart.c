@@ -1,21 +1,4 @@
-#include <zephyr/types.h>
-#include <zephyr/kernel.h>
-
-#include <zephyr/device.h>
-#include <zephyr/devicetree.h>
-#include <soc.h>
-
-#include <zephyr/bluetooth/bluetooth.h>
-#include <zephyr/bluetooth/uuid.h>
-#include <zephyr/bluetooth/gatt.h>
-#include <zephyr/bluetooth/hci.h>
-
 #include <bluetooth/services/nus.h>
-
-#include <zephyr/settings/settings.h>
-
-#include <stdio.h>
-
 #include <zephyr/logging/log.h>
 #include "bt_advertise.h"
 
