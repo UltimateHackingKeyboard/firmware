@@ -122,9 +122,6 @@ static void connected(struct bt_conn *conn, uint8_t conn_err)
 
         return;
     }
-
-    printk("Connected (bt_central_uart): %s", addr);
-    SetupCentralConnection(conn);
 }
 
 BT_CONN_CB_DEFINE(conn_callbacks) = {

@@ -5,5 +5,6 @@
 
     extern void InitCentralUart(void);
     extern void gatt_discover(struct bt_conn *conn);
+    extern void SetupCentralConnection(struct bt_conn *conn);
 
 #endif // __BT_CENTRAL_UART_H__

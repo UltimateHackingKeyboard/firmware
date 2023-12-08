@@ -87,6 +87,9 @@ static void connected(struct bt_conn *conn, uint8_t err) {
         }
     } else {
         current_conn = bt_conn_ref(conn);
+#if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_RIGHT
+    SetupCentralConnection(conn);
+#endif
     }
 }
 
