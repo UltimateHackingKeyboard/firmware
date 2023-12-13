@@ -132,6 +132,12 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
             bt_conn_unref(current_conn);
             current_conn = NULL;
         }
+
+        int err = bt_scan_start(BT_SCAN_TYPE_SCAN_ACTIVE);
+        printk("Start scan\n");
+        if (err) {
+            printk("Scanning failed to start (err %d)", err);
+        }
     }
 #elif CONFIG_DEVICE_ID == DEVICE_ID_UHK80_LEFT
     if (current_conn != conn) {
@@ -140,11 +146,6 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
 
     bt_conn_unref(current_conn);
     current_conn = NULL;
-
-    int err = bt_scan_start(BT_SCAN_TYPE_SCAN_ACTIVE);
-    if (err) {
-        printk("Scanning failed to start (err %d)", err);
-    }
 #endif
 }
 
