@@ -7,6 +7,8 @@
 #include "bt_hid.h"
 #include <zephyr/drivers/uart.h>
 #include "bt_central_uart.h"
+#include "bt_peripheral_uart.h"
+#include "device.h"
 
 // Thread definitions
 
@@ -58,7 +60,11 @@ void keyScanner() {
                     if (Shell.keyLog) {
                         char buffer[20];
                         sprintf(buffer, "SW%c%c %s\n", rowId+'1', colId+'1', keyState ? "down" : "up");
+#if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_LEFT
+                        SendPeripheralUart(buffer, sizeof buffer);
+#elif CONFIG_DEVICE_ID == DEVICE_ID_UHK80_RIGHT
                         SendCentralUart(buffer, sizeof buffer);
+#endif
                         printk("%s", buffer);
                         for (uint8_t i=0; i<strlen(buffer); i++) {
                             uart_poll_out(uart_dev, buffer[i]);

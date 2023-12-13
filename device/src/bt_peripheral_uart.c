@@ -15,8 +15,16 @@ static void bt_receive_cb(struct bt_conn *conn, const uint8_t *const data, uint1
     LOG_INF("Received data from: %s", addr);
 }
 
+static void bt_send_cb(struct bt_conn *conn)
+{
+    char addr[BT_ADDR_LE_STR_LEN] = {0};
+    bt_addr_le_to_str(bt_conn_get_dst(conn), addr, ARRAY_SIZE(addr));
+    LOG_INF("Sent data to: %s", addr);
+}
+
 static struct bt_nus_cb nus_cb = {
     .received = bt_receive_cb,
+    .sent = bt_send_cb,
 };
 
 void InitPeripheralUart(void)
@@ -30,6 +38,9 @@ void InitPeripheralUart(void)
     advertise_peer();
 }
 
-// if (bt_nus_send(NULL, buf->data, buf->len)) {
-//     LOG_WRN("Failed to send data over BLE connection");
-// }
+void SendPeripheralUart(const uint8_t *data, uint16_t len)
+{
+    if (bt_nus_send(NULL, data, len)) {
+        LOG_WRN("Failed to send data over BLE connection");
+    }
+}
