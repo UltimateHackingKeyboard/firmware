@@ -21,8 +21,6 @@ static struct bt_nus_cb nus_cb = {
 
 void InitPeripheralUart(void)
 {
-    printk("InitPeripheralUart\n");
-
     int err = bt_nus_init(&nus_cb);
     if (err) {
         LOG_ERR("Failed to initialize UART service (err: %d)", err);
