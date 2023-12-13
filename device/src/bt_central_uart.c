@@ -86,9 +86,9 @@ void SetupCentralConnection(struct bt_conn *conn)
     err = bt_conn_set_security(conn, BT_SECURITY_L2);
     if (err) {
         LOG_WRN("Failed to set security: %d", err);
-
-        gatt_discover(conn);
     }
+
+    gatt_discover(conn);
 
     err = bt_scan_stop();
     if ((!err) && (err != -EALREADY)) {
