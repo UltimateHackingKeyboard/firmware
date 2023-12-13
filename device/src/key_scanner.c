@@ -59,13 +59,13 @@ void keyScanner() {
                     key_report_send(keyState);
                     if (Shell.keyLog) {
                         char buffer[20];
-                        sprintf(buffer, "SW%c%c %s\n", rowId+'1', colId+'1', keyState ? "down" : "up");
+                        sprintf(buffer, "SW%c%c %s", rowId+'1', colId+'1', keyState ? "down" : "up");
 #if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_LEFT
-                        SendPeripheralUart(buffer, sizeof buffer);
+                        SendPeripheralUart(buffer, strlen(buffer)+1);
 #elif CONFIG_DEVICE_ID == DEVICE_ID_UHK80_RIGHT
-                        SendCentralUart(buffer, sizeof buffer);
+                        SendCentralUart(buffer, strlen(buffer)+1);
 #endif
-                        printk("%s", buffer);
+                        printk("%s\n", buffer);
                         for (uint8_t i=0; i<strlen(buffer); i++) {
                             uart_poll_out(uart_dev, buffer[i]);
                         }

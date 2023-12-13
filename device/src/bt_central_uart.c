@@ -21,7 +21,7 @@ static void ble_data_sent(struct bt_nus_client *nus, uint8_t err, const uint8_t 
 static uint8_t ble_data_received(struct bt_nus_client *nus, const uint8_t *data, uint16_t len)
 {
     ARG_UNUSED(nus);
-    LOG_INF("BLE Received data: %s", data);
+    printk("BLE Received data: %s\n", data);
     return BT_GATT_ITER_CONTINUE;
 }
 

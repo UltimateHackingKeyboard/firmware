@@ -12,7 +12,7 @@ static void bt_receive_cb(struct bt_conn *conn, const uint8_t *const data, uint1
 {
     char addr[BT_ADDR_LE_STR_LEN] = {0};
     bt_addr_le_to_str(bt_conn_get_dst(conn), addr, ARRAY_SIZE(addr));
-    LOG_INF("Received data from: %s", addr);
+    LOG_INF("Received data `%s` from: %s", data, addr);
 }
 
 static void bt_send_cb(struct bt_conn *conn)
