@@ -41,7 +41,9 @@ static void scan_connecting_error(struct bt_scan_device_info *device_info)
 
 static void scan_connecting(struct bt_scan_device_info *device_info, struct bt_conn *conn)
 {
-    bt_uart_conn = bt_conn_ref(conn);
+    char addr[BT_ADDR_LE_STR_LEN];
+    bt_addr_le_to_str(device_info->recv_info->addr, addr, sizeof(addr));
+    printk("Scan connecting: %s\n", addr);
 }
 
 BT_SCAN_CB_INIT(scan_cb, scan_filter_match, NULL, scan_connecting_error, scan_connecting);
