@@ -1,7 +1,5 @@
 #include <bluetooth/scan.h>
 
-struct bt_conn *bt_uart_conn;
-
 static void scan_filter_match(struct bt_scan_device_info *device_info,
     struct bt_scan_filter_match *filter_match, bool connectable)
 {

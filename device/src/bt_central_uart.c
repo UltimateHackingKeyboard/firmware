@@ -58,10 +58,6 @@ void gatt_discover(struct bt_conn *conn)
 {
     int err;
 
-    if (conn != bt_uart_conn) {
-        return;
-    }
-
     err = bt_gatt_dm_start(conn, BT_UUID_NUS_SERVICE, &discovery_cb, &nus_client);
     if (err) {
         LOG_ERR("could not start the discovery procedure, error code: %d", err);
@@ -132,8 +128,6 @@ void InitCentralUart(void)
         LOG_ERR("nus_client_init failed (err %d)", err);
         return;
     }
-
-    printk("Starting Bluetooth Central UART example\n");
 
     err = bt_scan_start(BT_SCAN_TYPE_SCAN_ACTIVE);
     if (err) {
