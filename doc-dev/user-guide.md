@@ -714,7 +714,7 @@ setVar qActive 1
 
 // toggle fn layer and keep it active for 5 seconds or until some recordKey instance starts recording a macro
 toggleLayer fn                                                   
-ifNotRecording ifNotPlaytime 5000 if ($qActive) goTo @0          
+ifNotRecording ifNotPlaytime 5000 if ($qActive) goTo $currentAddress
 untoggleLayer
 setVar qActive 0
 ```

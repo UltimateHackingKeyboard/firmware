@@ -1,16 +1,11 @@
 #include <math.h>
 #include "key_action.h"
-#include "led_display.h"
 #include "layer.h"
+#include "slave_protocol.h"
 #include "usb_interfaces/usb_interface_mouse.h"
-#include "peripherals/test_led.h"
-#include "slave_drivers/is31fl3xxx_driver.h"
 #include "slave_drivers/uhk_module_driver.h"
 #include "timer.h"
 #include "config_parser/parse_keymap.h"
-#include "usb_commands/usb_command_get_debug_buffer.h"
-#include "arduino_hid/ConsumerAPI.h"
-#include "secondary_role_driver.h"
 #include "slave_drivers/touchpad_driver.h"
 #include "mouse_controller.h"
 #include "mouse_keys.h"
@@ -18,12 +13,9 @@
 #include "layer_switcher.h"
 #include "usb_report_updater.h"
 #include "caret_config.h"
-#include "keymap.h"
-#include "macros/core.h"
 #include "debug.h"
 #include "postponer.h"
 #include "layer.h"
-#include "secondary_role_driver.h"
 
 typedef struct {
     float x;
@@ -709,6 +701,7 @@ void MouseController_ProcessMouseActions()
 
     for (uint8_t moduleSlotId=0; moduleSlotId<UHK_MODULE_MAX_SLOT_COUNT; moduleSlotId++) {
         uhk_module_state_t *moduleState = UhkModuleStates + moduleSlotId;
+
         if (moduleState->moduleId == ModuleId_Unavailable || moduleState->pointerCount == 0) {
             continue;
         }
