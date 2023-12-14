@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [10.5.0] - 2023-12-14
+
+Device Protocol: 4.10.0 | Module Protocol: 4.3.0 | User Config: 6.0.0 | Hardware Config: 1.0.0 | Smart Macros: 2.**3.0**
+
+- Automatically recover from trackpoint drifts after a couple of seconds. This initial implementation may use some fine-tuning, so we welcome feedback.
+- Fix `final {` command. `SMARTMACROS:PATCH`
+- Fix `ifDoubletap` command to not miss doubletap if another macro fit in between the two activations. `SMARTMACROS:PATCH`
+- Add `ifModuleConnected` condition. `SMARTMACROS:MINOR`
+- Return deprecation errors for removed functionality. `SMARTMACROS:PATCH`
+- Make the smart macro documentation insert `invertScrollDirectionY` instead of `invertScrollDirection`.
+
 ## [10.4.0] - 2023-11-12
 
 Device Protocol: 4.10.0 | Module Protocol: 4.3.0 | User Config: 6.0.0 | Hardware Config: 1.0.0 | Smart Macros: 2.**2.0**
