@@ -40,7 +40,6 @@ int main(void) {
     InitMergeSensor();
     InitKeyScanner();
     usb_init(true);
-    InitPeerAddresses();
     bt_init();
     InitSettings();
 

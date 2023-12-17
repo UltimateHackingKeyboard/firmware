@@ -7,6 +7,7 @@
 
 // Macros:
 
+    #define PeerCount 3
     #define PeerNameMaxLength 8
 
 // Typedefs:
@@ -14,7 +15,6 @@
     typedef struct {
         uint8_t id;
         char name[PeerNameMaxLength + 1];
-        char addrStr[BT_ADDR_LE_STR_LEN];
         bt_addr_le_t addr;
     } peer_t;
 
@@ -23,5 +23,9 @@
     void InitPeerAddresses(void);
     extern void bt_init(void);
     extern void num_comp_reply(uint8_t accept);
+
+// Variables:
+
+    extern peer_t Peers[];
 
 #endif // __BT_CONN_H__

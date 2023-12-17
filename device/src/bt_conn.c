@@ -13,34 +13,25 @@
 #define PeerIdRight 1
 #define PeerIdDongle 2
 
-peer_t peers[PeerCount] = {
+peer_t Peers[PeerCount] = {
     {
         .id = PeerIdLeft,
-        .addrStr = "e7:f5:5d:7c:82:35",
         .name = "left",
     },
     {
         .id = PeerIdRight,
-        .addrStr = "e6:40:d8:c5:68:8a",
         .name = "right",
     },
     {
         .id = PeerIdDongle,
-        .addrStr = "ac:d6:18:1b:3d:b5",
         .name = "dongle",
     },
 };
 
-void InitPeerAddresses(void) {
-    for (uint8_t i = 0; i < PeerCount; i++) {
-        bt_addr_le_from_str(peers[i].addrStr, "random", &peers[i].addr);
-    }
-}
-
 peer_t *getPeerByAddr(const bt_addr_le_t *addr) {
     for (uint8_t i = 0; i < PeerCount; i++) {
-        if (bt_addr_le_eq(addr, &peers[i].addr)) {
-            return &peers[i];
+        if (bt_addr_le_eq(addr, &Peers[i].addr)) {
+            return &Peers[i];
         }
     }
 
