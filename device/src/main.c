@@ -14,6 +14,7 @@
 #include "usb/usb.hpp"
 #include <zephyr/drivers/gpio.h>
 #include "bt_conn.h"
+#include "settings.h"
 
 //const struct gpio_dt_spec testLed = GPIO_DT_SPEC_GET(DT_ALIAS(test_led), gpios);
 
@@ -41,6 +42,7 @@ int main(void) {
     usb_init(true);
     InitPeerAddresses();
     bt_init();
+    InitSettings();
 
 #if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_LEFT
     InitPeripheralUart();
