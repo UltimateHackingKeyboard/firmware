@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <zephyr/settings/settings.h>
 #include <bluetooth/scan.h>
 #include "bt_advertise.h"
@@ -50,6 +51,21 @@ void getPeerIdAndNameByAddr(const bt_addr_le_t *addr, int8_t *peerId, char *peer
     }
 }
 
+char *getPeerStringByConn(const struct bt_conn *conn) {
+    char addrStr[BT_ADDR_LE_STR_LEN];
+    const bt_addr_le_t *addr = bt_conn_get_dst(conn);
+    bt_addr_le_to_str(addr, addrStr, sizeof(addrStr));
+
+    int8_t peerId;
+    char peerName[PeerNameMaxLength];
+    getPeerIdAndNameByAddr(addr, &peerId, peerName);
+
+    static char peerString[PeerNameMaxLength + BT_ADDR_LE_STR_LEN + 3];
+    sprintf(peerString, "%s (%s)", peerName, addrStr);
+
+    return peerString;
+}
+
 static struct bt_conn *current_conn;
 
 static void connected(struct bt_conn *conn, uint8_t err) {
@@ -62,7 +78,7 @@ static void connected(struct bt_conn *conn, uint8_t err) {
     getPeerIdAndNameByAddr(addr, &peerId, peerName);
 
     if (err) {
-        printk("Failed to connect to conn %p, addr %s, peer, %s err %u\n", conn, addrStr, peerName, err);
+        printk("Failed to connect to %s, err %u\n", getPeerStringByConn(conn), err);
 
         if (current_conn == conn) {
             bt_conn_unref(current_conn);
@@ -79,7 +95,7 @@ static void connected(struct bt_conn *conn, uint8_t err) {
         return;
     }
 
-    printk("Connected %s, peer %s\n", addrStr, peerName);
+    printk("Connected to %s\n", getPeerStringByConn(conn));
 
     if (peerId == PeerIdUnknown) {
         err = HidsConnected(conn);
@@ -106,7 +122,7 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
     char peerName[PeerNameMaxLength];
     getPeerIdAndNameByAddr(addr, &peerId, peerName);
 
-    printk("Disconnected from conn %p, addr %s, peer %s, reason %u\n", conn, addrStr, peerName, reason);
+    printk("Disconnected from %s, reason %u\n", getPeerStringByConn(conn), reason);
 
 #if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_RIGHT
     if (peerId == PeerIdUnknown) {
@@ -141,18 +157,10 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
 }
 
 static void security_changed(struct bt_conn *conn, bt_security_t level, enum bt_security_err err) {
-    char addrStr[BT_ADDR_LE_STR_LEN];
-    const bt_addr_le_t *addr = bt_conn_get_dst(conn);
-    bt_addr_le_to_str(addr, addrStr, sizeof(addrStr));
-
-    int8_t peerId;
-    char peerName[PeerNameMaxLength];
-    getPeerIdAndNameByAddr(addr, &peerId, peerName);
-
     if (!err) {
-        printk("Security changed: conn %p, addr %s, peer %s, level %u\n", conn, addrStr, peerName, level);
+        printk("Security changed: %s, level %u\n", getPeerStringByConn(conn), level);
     } else {
-        printk("Security failed: conn %p, addr %s, peer %s, level %u, err %d\n", conn, addrStr, peerName, level, err);
+        printk("Security failed: %s, level %u, err %d\n", getPeerStringByConn(conn), level, err);
     }
 
 #if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_LEFT
@@ -172,15 +180,7 @@ struct bt_conn *auth_conn;
 
 static void auth_passkey_display(struct bt_conn *conn, unsigned int passkey)
 {
-    char addrStr[BT_ADDR_LE_STR_LEN];
-    const bt_addr_le_t *addr = bt_conn_get_dst(conn);
-    bt_addr_le_to_str(addr, addrStr, sizeof(addrStr));
-
-    int8_t peerId;
-    char peerName[PeerNameMaxLength];
-    getPeerIdAndNameByAddr(addr, &peerId, peerName);
-
-    printk("Passkey for conn %p, addr %s, peer %s: %06u\n", conn, addrStr, peerName, passkey);
+    printk("Passkey for %s: %06u\n", getPeerStringByConn(conn), passkey);
 }
 
 static void auth_passkey_confirm(struct bt_conn *conn, unsigned int passkey) {
@@ -189,28 +189,12 @@ static void auth_passkey_confirm(struct bt_conn *conn, unsigned int passkey) {
         return;
     }
 
-    char addrStr[BT_ADDR_LE_STR_LEN];
-    const bt_addr_le_t *addr = bt_conn_get_dst(conn);
-    bt_addr_le_to_str(addr, addrStr, sizeof(addrStr));
-
-    int8_t peerId;
-    char peerName[PeerNameMaxLength];
-    getPeerIdAndNameByAddr(addr, &peerId, peerName);
-
-    printk("Passkey for conn %p, addr %s, peer %s: %06u\n", conn, addrStr, peerName, passkey);
+    printk("Passkey for %s: %06u\n", getPeerStringByConn(conn), passkey);
     printk("Type `uhk btacc 1/0` to accept/reject\n");
 }
 
 static void auth_cancel(struct bt_conn *conn) {
-    char addrStr[BT_ADDR_LE_STR_LEN];
-    const bt_addr_le_t *addr = bt_conn_get_dst(conn);
-    bt_addr_le_to_str(addr, addrStr, sizeof(addrStr));
-
-    int8_t peerId;
-    char peerName[PeerNameMaxLength];
-    getPeerIdAndNameByAddr(addr, &peerId, peerName);
-
-    printk("Pairing cancelled: conn %p, addr %s, peer %s\n", conn, addrStr, peerName);
+    printk("Pairing cancelled: peer %s\n", getPeerStringByConn(conn));
 }
 
 static struct bt_conn_auth_cb conn_auth_callbacks = {
@@ -222,15 +206,7 @@ static struct bt_conn_auth_cb conn_auth_callbacks = {
 // Auth info callbacks
 
 static void pairing_complete(struct bt_conn *conn, bool bonded) {
-    char addrStr[BT_ADDR_LE_STR_LEN];
-    const bt_addr_le_t *addr = bt_conn_get_dst(conn);
-    bt_addr_le_to_str(addr, addrStr, sizeof(addrStr));
-
-    int8_t peerId;
-    char peerName[PeerNameMaxLength];
-    getPeerIdAndNameByAddr(addr, &peerId, peerName);
-
-    printk("Pairing completed: conn %p, addr %s, peer %s, bonded %d\n", conn, addrStr, peerName, bonded);
+    printk("Pairing completed: %s, bonded %d\n", getPeerStringByConn(conn), bonded);
 }
 
 static void pairing_failed(struct bt_conn *conn, enum bt_security_err reason) {
@@ -243,15 +219,7 @@ static void pairing_failed(struct bt_conn *conn, enum bt_security_err reason) {
         auth_conn = NULL;
     }
 
-    char addrStr[BT_ADDR_LE_STR_LEN];
-    const bt_addr_le_t *addr = bt_conn_get_dst(conn);
-    bt_addr_le_to_str(addr, addrStr, sizeof(addrStr));
-
-    int8_t peerId;
-    char peerName[PeerNameMaxLength];
-    getPeerIdAndNameByAddr(addr, &peerId, peerName);
-
-    printk("Pairing failed: conn %p, addr %s, peer %s, reason %d\n", conn, addrStr, peerName, reason);
+    printk("Pairing failed: %s, reason %d\n", getPeerStringByConn(conn), reason);
 }
 
 static struct bt_conn_auth_info_cb conn_auth_info_callbacks = {
