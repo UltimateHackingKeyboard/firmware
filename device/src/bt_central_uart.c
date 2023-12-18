@@ -3,6 +3,7 @@
 #include <bluetooth/scan.h>
 #include <zephyr/logging/log.h>
 #include "bt_scan.h"
+#include "bt_conn.h"
 
 #define LOG_MODULE_NAME central_uart
 LOG_MODULE_REGISTER(LOG_MODULE_NAME);
@@ -12,7 +13,7 @@ static struct bt_nus_client nus_client;
 static void ble_data_sent(struct bt_nus_client *nus, uint8_t err, const uint8_t *const data, uint16_t len)
 {
     ARG_UNUSED(nus);
-    printk("BLE Data sent: %s\n", data);
+    printk("NUS data sent to %s: %s\n", GetPeerStringByConn(nus->conn), data);
     if (err) {
         LOG_WRN("ATT error code: 0x%02X", err);
     }
@@ -21,7 +22,7 @@ static void ble_data_sent(struct bt_nus_client *nus, uint8_t err, const uint8_t 
 static uint8_t ble_data_received(struct bt_nus_client *nus, const uint8_t *data, uint16_t len)
 {
     ARG_UNUSED(nus);
-    printk("BLE Received data: %s\n", data);
+    printk("NUS data received from %s: %s\n", GetPeerStringByConn(nus->conn), data);
     return BT_GATT_ITER_CONTINUE;
 }
 
@@ -56,9 +57,7 @@ struct bt_gatt_dm_cb discovery_cb = {
 
 void gatt_discover(struct bt_conn *conn)
 {
-    int err;
-
-    err = bt_gatt_dm_start(conn, BT_UUID_NUS_SERVICE, &discovery_cb, &nus_client);
+    int err = bt_gatt_dm_start(conn, BT_UUID_NUS_SERVICE, &discovery_cb, &nus_client);
     if (err) {
         LOG_ERR("could not start the discovery procedure, error code: %d", err);
     }
@@ -67,9 +66,9 @@ void gatt_discover(struct bt_conn *conn)
 static void exchange_func(struct bt_conn *conn, uint8_t err, struct bt_gatt_exchange_params *params)
 {
     if (!err) {
-        LOG_INF("MTU exchange done");
+        LOG_INF("MTU exchange done with %s", GetPeerStringByConn(conn));
     } else {
-        LOG_WRN("MTU exchange failed (err %" PRIu8 ")", err);
+        LOG_WRN("MTU exchange failed with %s (err %u)", GetPeerStringByConn(conn), err);
     }
 }
 
@@ -80,12 +79,12 @@ void SetupCentralConnection(struct bt_conn *conn)
     exchange_params.func = exchange_func;
     int err = bt_gatt_exchange_mtu(conn, &exchange_params);
     if (err) {
-        LOG_WRN("MTU exchange failed (err %d)", err);
+        LOG_WRN("MTU exchange failed with %s, err %d", GetPeerStringByConn(conn), err);
     }
 
     err = bt_conn_set_security(conn, BT_SECURITY_L2);
     if (err) {
-        LOG_WRN("Failed to set security: %d", err);
+        LOG_WRN("Failed to set security for %s: %d", GetPeerStringByConn(conn), err);
     }
 
     gatt_discover(conn);

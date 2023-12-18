@@ -59,7 +59,7 @@ uint8_t getPeerIdByConn(const struct bt_conn *conn) {
     return peerId;
 }
 
-char *getPeerStringByConn(const struct bt_conn *conn) {
+char *GetPeerStringByConn(const struct bt_conn *conn) {
     char addrStr[BT_ADDR_LE_STR_LEN];
     const bt_addr_le_t *addr = bt_conn_get_dst(conn);
     bt_addr_le_to_str(addr, addrStr, sizeof(addrStr));
@@ -80,7 +80,7 @@ static void connected(struct bt_conn *conn, uint8_t err) {
     int8_t peerId = getPeerIdByConn(conn);
 
     if (err) {
-        printk("Failed to connect to %s, err %u\n", getPeerStringByConn(conn), err);
+        printk("Failed to connect to %s, err %u\n", GetPeerStringByConn(conn), err);
 
         if (current_conn == conn) {
             bt_conn_unref(current_conn);
@@ -97,7 +97,7 @@ static void connected(struct bt_conn *conn, uint8_t err) {
         return;
     }
 
-    printk("Connected to %s\n", getPeerStringByConn(conn));
+    printk("Connected to %s\n", GetPeerStringByConn(conn));
 
     if (peerId == PeerIdUnknown) {
         err = HidsConnected(conn);
@@ -118,7 +118,7 @@ static void connected(struct bt_conn *conn, uint8_t err) {
 static void disconnected(struct bt_conn *conn, uint8_t reason) {
     int8_t peerId = getPeerIdByConn(conn);
 
-    printk("Disconnected from %s, reason %u\n", getPeerStringByConn(conn), reason);
+    printk("Disconnected from %s, reason %u\n", GetPeerStringByConn(conn), reason);
 
 #if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_RIGHT
     if (peerId == PeerIdUnknown) {
@@ -154,9 +154,9 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
 
 static void security_changed(struct bt_conn *conn, bt_security_t level, enum bt_security_err err) {
     if (!err) {
-        printk("Security changed: %s, level %u\n", getPeerStringByConn(conn), level);
+        printk("Security changed: %s, level %u\n", GetPeerStringByConn(conn), level);
     } else {
-        printk("Security failed: %s, level %u, err %d\n", getPeerStringByConn(conn), level, err);
+        printk("Security failed: %s, level %u, err %d\n", GetPeerStringByConn(conn), level, err);
     }
 
 #if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_LEFT
@@ -176,7 +176,7 @@ struct bt_conn *auth_conn;
 
 static void auth_passkey_display(struct bt_conn *conn, unsigned int passkey)
 {
-    printk("Passkey for %s: %06u\n", getPeerStringByConn(conn), passkey);
+    printk("Passkey for %s: %06u\n", GetPeerStringByConn(conn), passkey);
 }
 
 static void auth_passkey_confirm(struct bt_conn *conn, unsigned int passkey) {
@@ -185,12 +185,12 @@ static void auth_passkey_confirm(struct bt_conn *conn, unsigned int passkey) {
         return;
     }
 
-    printk("Passkey for %s: %06u\n", getPeerStringByConn(conn), passkey);
+    printk("Passkey for %s: %06u\n", GetPeerStringByConn(conn), passkey);
     printk("Type `uhk btacc 1/0` to accept/reject\n");
 }
 
 static void auth_cancel(struct bt_conn *conn) {
-    printk("Pairing cancelled: peer %s\n", getPeerStringByConn(conn));
+    printk("Pairing cancelled: peer %s\n", GetPeerStringByConn(conn));
 }
 
 static struct bt_conn_auth_cb conn_auth_callbacks = {
@@ -202,7 +202,7 @@ static struct bt_conn_auth_cb conn_auth_callbacks = {
 // Auth info callbacks
 
 static void pairing_complete(struct bt_conn *conn, bool bonded) {
-    printk("Pairing completed: %s, bonded %d\n", getPeerStringByConn(conn), bonded);
+    printk("Pairing completed: %s, bonded %d\n", GetPeerStringByConn(conn), bonded);
 }
 
 static void pairing_failed(struct bt_conn *conn, enum bt_security_err reason) {
@@ -215,7 +215,7 @@ static void pairing_failed(struct bt_conn *conn, enum bt_security_err reason) {
         auth_conn = NULL;
     }
 
-    printk("Pairing failed: %s, reason %d\n", getPeerStringByConn(conn), reason);
+    printk("Pairing failed: %s, reason %d\n", GetPeerStringByConn(conn), reason);
 }
 
 static struct bt_conn_auth_info_cb conn_auth_info_callbacks = {
