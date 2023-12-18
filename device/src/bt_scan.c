@@ -1,25 +1,19 @@
 #include <bluetooth/scan.h>
+#include "bt_conn.h"
 
 static void scan_filter_match(struct bt_scan_device_info *device_info,
     struct bt_scan_filter_match *filter_match, bool connectable)
 {
-    char addr[BT_ADDR_LE_STR_LEN];
-    bt_addr_le_to_str(device_info->recv_info->addr, addr, sizeof(addr));
-    printk("Filters matched. Address: %s connectable: %d\n", addr, connectable);
+    printk("Filters matched: %s, connectable:%d\n",
+        GetPeerStringByAddr(device_info->recv_info->addr), connectable);
 }
 
-static void scan_connecting_error(struct bt_scan_device_info *device_info)
-{
-    char addr[BT_ADDR_LE_STR_LEN];
-    bt_addr_le_to_str(device_info->recv_info->addr, addr, sizeof(addr));
-    printk("Connecting failed: %s\n", addr);
+static void scan_connecting_error(struct bt_scan_device_info *device_info) {
+    printk("Connecting failed: %s\n", GetPeerStringByAddr(device_info->recv_info->addr));
 }
 
-static void scan_connecting(struct bt_scan_device_info *device_info, struct bt_conn *conn)
-{
-    char addr[BT_ADDR_LE_STR_LEN];
-    bt_addr_le_to_str(device_info->recv_info->addr, addr, sizeof(addr));
-    printk("Scan connecting: %s\n", addr);
+static void scan_connecting(struct bt_scan_device_info *device_info, struct bt_conn *conn) {
+    printk("Scan connecting: %s\n", GetPeerStringByAddr(device_info->recv_info->addr));
 }
 
 BT_SCAN_CB_INIT(scan_cb, scan_filter_match, NULL, scan_connecting_error, scan_connecting);

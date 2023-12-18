@@ -20,6 +20,7 @@
 
 // Functions:
 
+    char *GetPeerStringByAddr(const bt_addr_le_t *addr);
     char *GetPeerStringByConn(const struct bt_conn *conn);
     extern void bt_init(void);
     extern void num_comp_reply(uint8_t accept);

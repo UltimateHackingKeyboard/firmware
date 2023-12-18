@@ -134,7 +134,7 @@ void InitCentralUart(void)
         return;
     }
 
-    LOG_INF("Scanning successfully started\n");
+    LOG_INF("Scanning successfully started");
 }
 
 void SendCentralUart(const uint8_t *data, uint16_t len)

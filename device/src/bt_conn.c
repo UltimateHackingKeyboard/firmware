@@ -59,9 +59,8 @@ uint8_t getPeerIdByConn(const struct bt_conn *conn) {
     return peerId;
 }
 
-char *GetPeerStringByConn(const struct bt_conn *conn) {
+char *GetPeerStringByAddr(const bt_addr_le_t *addr) {
     char addrStr[BT_ADDR_LE_STR_LEN];
-    const bt_addr_le_t *addr = bt_conn_get_dst(conn);
     bt_addr_le_to_str(addr, addrStr, sizeof(addrStr));
 
     int8_t peerId;
@@ -72,6 +71,11 @@ char *GetPeerStringByConn(const struct bt_conn *conn) {
     sprintf(peerString, "%s (%s)", peerName, addrStr);
 
     return peerString;
+}
+
+char *GetPeerStringByConn(const struct bt_conn *conn) {
+    const bt_addr_le_t *addr = bt_conn_get_dst(conn);
+    return GetPeerStringByAddr(addr);
 }
 
 static struct bt_conn *current_conn;
