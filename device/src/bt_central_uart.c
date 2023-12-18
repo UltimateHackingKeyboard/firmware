@@ -12,7 +12,6 @@ static struct bt_nus_client nus_client;
 
 static void ble_data_sent(struct bt_nus_client *nus, uint8_t err, const uint8_t *const data, uint16_t len)
 {
-    ARG_UNUSED(nus);
     printk("NUS data sent to %s: %s\n", GetPeerStringByConn(nus->conn), data);
     if (err) {
         LOG_WRN("ATT error code: 0x%02X", err);
@@ -21,7 +20,6 @@ static void ble_data_sent(struct bt_nus_client *nus, uint8_t err, const uint8_t 
 
 static uint8_t ble_data_received(struct bt_nus_client *nus, const uint8_t *data, uint16_t len)
 {
-    ARG_UNUSED(nus);
     printk("NUS data received from %s: %s\n", GetPeerStringByConn(nus->conn), data);
     return BT_GATT_ITER_CONTINUE;
 }
