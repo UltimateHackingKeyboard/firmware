@@ -1,25 +1,14 @@
 #include <bluetooth/services/nus.h>
-#include <zephyr/logging/log.h>
 #include "bt_advertise.h"
 
-#define LOG_MODULE_NAME peripheral_uart
-LOG_MODULE_REGISTER(LOG_MODULE_NAME);
-
-#define DEVICE_NAME "UHK 80 Peripheral"
-#define DEVICE_NAME_LEN (sizeof(DEVICE_NAME) - 1)
-
-static void bt_receive_cb(struct bt_conn *conn, const uint8_t *const data, uint16_t len)
-{
-    char addr[BT_ADDR_LE_STR_LEN] = {0};
-    bt_addr_le_to_str(bt_conn_get_dst(conn), addr, ARRAY_SIZE(addr));
-    LOG_INF("Received data `%s` from: %s", data, addr);
+static void bt_receive_cb(struct bt_conn *conn, const uint8_t *const data, uint16_t len) {
+    printk("NUS data received from %s: %s\n", GetPeerStringByConn(conn), data);
 }
 
-static void bt_send_cb(struct bt_conn *conn)
-{
+static void bt_send_cb(struct bt_conn *conn) {
     char addr[BT_ADDR_LE_STR_LEN] = {0};
     bt_addr_le_to_str(bt_conn_get_dst(conn), addr, ARRAY_SIZE(addr));
-    LOG_INF("Sent data to: %s", addr);
+    printk("NUS data sent to %s\n", GetPeerStringByConn(conn));
 }
 
 static struct bt_nus_cb nus_cb = {
@@ -27,20 +16,18 @@ static struct bt_nus_cb nus_cb = {
     .sent = bt_send_cb,
 };
 
-void InitPeripheralUart(void)
-{
+void InitPeripheralUart(void) {
     int err = bt_nus_init(&nus_cb);
     if (err) {
-        LOG_ERR("Failed to initialize UART service (err: %d)", err);
+        printk("Failed to initialize UART service (err: %d)\n", err);
         return;
     }
 
     advertise_peer();
 }
 
-void SendPeripheralUart(const uint8_t *data, uint16_t len)
-{
+void SendPeripheralUart(const uint8_t *data, uint16_t len) {
     if (bt_nus_send(NULL, data, len)) {
-        LOG_WRN("Failed to send data over BLE connection");
+        printk("Failed to send data over BLE connection\n");
     }
 }
