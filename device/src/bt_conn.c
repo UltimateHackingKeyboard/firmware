@@ -60,8 +60,11 @@ uint8_t getPeerIdByConn(const struct bt_conn *conn) {
 }
 
 char *GetPeerStringByAddr(const bt_addr_le_t *addr) {
-    char addrStr[BT_ADDR_LE_STR_LEN];
-    bt_addr_le_to_str(addr, addrStr, sizeof(addrStr));
+    char addrStr[BT_ADDR_STR_LEN];
+    for (uint8_t i=0; i<BT_ADDR_SIZE; i++) {
+        sprintf(&addrStr[i*3], "%02x:", addr->a.val[BT_ADDR_SIZE-1-i]);
+    }
+    addrStr[BT_ADDR_STR_LEN-1] = '\0';
 
     int8_t peerId;
     char peerName[PeerNameMaxLength];
