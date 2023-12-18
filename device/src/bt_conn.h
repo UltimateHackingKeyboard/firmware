@@ -20,7 +20,6 @@
 
 // Functions:
 
-    void InitPeerAddresses(void);
     extern void bt_init(void);
     extern void num_comp_reply(uint8_t accept);
 
