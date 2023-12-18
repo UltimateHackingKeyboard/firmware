@@ -27,8 +27,6 @@ int scan_init(void) {
     bt_scan_init(&scan_init);
     bt_scan_cb_register(&scan_cb);
 
-    bt_addr_le_t addr;
-    bt_addr_le_from_str("E7:F5:5D:7C:82:35", "random", &addr);
     err = bt_scan_filter_add(BT_SCAN_FILTER_TYPE_ADDR, &Peers[PeerIdLeft].addr);
     if (err) {
         printk("Scanning filters cannot be set (err %d)\n", err);
