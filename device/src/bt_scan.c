@@ -18,8 +18,7 @@ static void scan_connecting(struct bt_scan_device_info *device_info, struct bt_c
 
 BT_SCAN_CB_INIT(scan_cb, scan_filter_match, NULL, scan_connecting_error, scan_connecting);
 
-int scan_init(void)
-{
+int scan_init(void) {
     int err;
     struct bt_scan_init_param scan_init = {
         .connect_if_match = 1,
@@ -30,7 +29,7 @@ int scan_init(void)
 
     bt_addr_le_t addr;
     bt_addr_le_from_str("E7:F5:5D:7C:82:35", "random", &addr);
-    err = bt_scan_filter_add(BT_SCAN_FILTER_TYPE_ADDR, &addr);
+    err = bt_scan_filter_add(BT_SCAN_FILTER_TYPE_ADDR, &Peers[PeerIdLeft].addr);
     if (err) {
         printk("Scanning filters cannot be set (err %d)\n", err);
         return err;

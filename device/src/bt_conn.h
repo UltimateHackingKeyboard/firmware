@@ -10,6 +10,11 @@
     #define PeerCount 3
     #define PeerNameMaxLength 8
 
+    #define PeerIdUnknown -1
+    #define PeerIdLeft 0
+    #define PeerIdRight 1
+    #define PeerIdDongle 2
+
 // Typedefs:
 
     typedef struct {
