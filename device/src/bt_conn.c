@@ -51,6 +51,14 @@ void getPeerIdAndNameByAddr(const bt_addr_le_t *addr, int8_t *peerId, char *peer
     }
 }
 
+uint8_t getPeerIdByConn(const struct bt_conn *conn) {
+    const bt_addr_le_t *addr = bt_conn_get_dst(conn);
+    int8_t peerId;
+    char peerName[PeerNameMaxLength];
+    getPeerIdAndNameByAddr(addr, &peerId, peerName);
+    return peerId;
+}
+
 char *getPeerStringByConn(const struct bt_conn *conn) {
     char addrStr[BT_ADDR_LE_STR_LEN];
     const bt_addr_le_t *addr = bt_conn_get_dst(conn);
@@ -69,13 +77,7 @@ char *getPeerStringByConn(const struct bt_conn *conn) {
 static struct bt_conn *current_conn;
 
 static void connected(struct bt_conn *conn, uint8_t err) {
-    char addrStr[BT_ADDR_LE_STR_LEN];
-    const bt_addr_le_t *addr = bt_conn_get_dst(conn);
-    bt_addr_le_to_str(addr, addrStr, sizeof(addrStr));
-
-    int8_t peerId;
-    char peerName[PeerNameMaxLength];
-    getPeerIdAndNameByAddr(addr, &peerId, peerName);
+    int8_t peerId = getPeerIdByConn(conn);
 
     if (err) {
         printk("Failed to connect to %s, err %u\n", getPeerStringByConn(conn), err);
@@ -114,13 +116,7 @@ static void connected(struct bt_conn *conn, uint8_t err) {
 }
 
 static void disconnected(struct bt_conn *conn, uint8_t reason) {
-    char addrStr[BT_ADDR_LE_STR_LEN];
-    const bt_addr_le_t *addr = bt_conn_get_dst(conn);
-    bt_addr_le_to_str(addr, addrStr, sizeof(addrStr));
-
-    int8_t peerId;
-    char peerName[PeerNameMaxLength];
-    getPeerIdAndNameByAddr(addr, &peerId, peerName);
+    int8_t peerId = getPeerIdByConn(conn);
 
     printk("Disconnected from %s, reason %u\n", getPeerStringByConn(conn), reason);
 
