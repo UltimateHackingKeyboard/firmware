@@ -24,6 +24,11 @@ extern "C"
 static K_THREAD_STACK_DEFINE(stack_area, THREAD_STACK_SIZE);
 static struct k_thread thread_data;
 
+void CommandProtocolRxHandler(const uint8_t* data, size_t size) {
+    printk("CommandProtocolRxHandler: data[0]:%u size:%d\n", data[0], size);
+//    CommandProtocolTx(data, size);
+}
+
 constexpr usb::product_info prinfo{0x1D50, "Ultimage Gadget Laboratories", USB_DEVICE_PRODUCT_ID,
                                    DEVICE_NAME, usb::version("1.0")};
 
