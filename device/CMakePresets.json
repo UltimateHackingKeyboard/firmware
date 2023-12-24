@@ -56,6 +56,19 @@
                 "CONF_FILE": "${sourceDir}/prj.conf",
                 "OVERLAY_CONFIG": "${sourceDir}/prj.conf.overlays/uhk-80-right.prj.conf"
             }
+        },
+        {
+            "name": "build-uhk-dongle",
+            "displayName": "UHK dongle",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/uhk-dongle",
+            "cacheVariables": {
+                "NCS_TOOLCHAIN_VERSION": "NONE",
+                "BOARD": "uhk-dongle",
+                "BOARD_ROOT": "${sourceParentDir}/",
+                "CONF_FILE": "${sourceDir}/prj.conf",
+                "OVERLAY_CONFIG": "${sourceDir}/prj.conf.overlays/uhk-dongle.prj.conf"
+            }
         }
     ]
 }
