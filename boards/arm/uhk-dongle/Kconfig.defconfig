@@ -1,0 +1,12 @@
+# Copyright (c) 2023 Nordic Semiconductor ASA
+# SPDX-License-Identifier: Apache-2.0
+
+if BOARD_UHK_DONGLE
+
+config BOARD
+    default "uhk-dongle"
+
+config BT_CTLR
+    default BT
+
+endif
