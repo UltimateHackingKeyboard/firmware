@@ -1,4 +1,5 @@
 #include "basic_types.h"
+#include <string.h>
 
 uint8_t ReadUInt8(config_buffer_t *buffer)
 {
@@ -24,6 +25,16 @@ uint32_t ReadUInt32(config_buffer_t *buffer)
     uInt32 |= ReadUInt8(buffer) << 8;
     uInt32 |= ReadUInt8(buffer) << 8;
     return uInt32;
+}
+
+float ReadFloat(config_buffer_t *buffer)
+{
+    uint32_t uInt32 = ReadUInt32(buffer);
+    float res;
+
+    memcpy(&res, &uInt32, sizeof(float));
+
+    return res;
 }
 
 bool ReadBool(config_buffer_t *buffer)
