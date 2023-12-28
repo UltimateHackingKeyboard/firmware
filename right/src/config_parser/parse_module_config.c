@@ -37,13 +37,10 @@ static parser_error_t parseProperty(config_buffer_t* buffer, module_configuratio
             moduleConfiguration->xceleration = ReadFloat(buffer);
             break;
         case SerializedModuleProperty_ScrollSpeedDivisor:
-            moduleConfiguration->scrollSpeedDivisor = ReadFloat(buffer);
+            moduleConfiguration->scrollSpeedDivisor = ReadUInt16(buffer);
             break;
         case SerializedModuleProperty_CaretSpeedDivisor:
-            moduleConfiguration->caretSpeedDivisor = ReadFloat(buffer);
-            break;
-        case SerializedModuleProperty_PinchZoomSpeedDivisor:
-            moduleConfiguration->pinchZoomSpeedDivisor = ReadFloat(buffer);
+            moduleConfiguration->caretSpeedDivisor = ReadUInt16(buffer);
             break;
         case SerializedModuleProperty_AxisLockSkew:
             moduleConfiguration->axisLockSkew = ReadFloat(buffer);
@@ -73,7 +70,7 @@ static parser_error_t parseProperty(config_buffer_t* buffer, module_configuratio
             if (moduleId == ModuleId_TouchpadRight) {
                 switch (propertyId) {
                     case SerializedModuleProperty_PinchZoomSpeedDivisor:
-                        moduleConfiguration->pinchZoomSpeedDivisor = ReadFloat(buffer);
+                        moduleConfiguration->pinchZoomSpeedDivisor = ReadUInt16(buffer);
                         break;
                     case SerializedModuleProperty_PinchZoomMode:
                         TouchpadPinchZoomMode = ReadUInt8(buffer);
@@ -92,9 +89,16 @@ static parser_error_t parseProperty(config_buffer_t* buffer, module_configuratio
 parser_error_t ParseModuleConfiguration(config_buffer_t *buffer)
 {
     parser_error_t errorCode;
+    module_configuration_t* moduleConfiguration;
+    module_configuration_t dummyConfiguration;
 
     uint8_t moduleId = ReadUInt8(buffer);
-    module_configuration_t* moduleConfiguration = GetModuleConfiguration(moduleId);
+
+    if (ParserRunDry) {
+        moduleConfiguration = GetModuleConfiguration(moduleId);
+    } else {
+        moduleConfiguration = &dummyConfiguration;
+    }
 
     RETURN_ON_ERROR(
         parseNavigationModes(buffer, moduleConfiguration);
