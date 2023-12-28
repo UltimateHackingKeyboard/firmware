@@ -19,6 +19,7 @@
 int main(void) {
     printk("----------\n" DEVICE_NAME " started\n");
 
+#if CONFIG_DEVICE_ID != DEVICE_ID_UHK_DONGLE
     InitUart();
     InitI2c();
     InitSpi();
@@ -31,6 +32,7 @@ int main(void) {
     InitCharger();
     InitMergeSensor();
     InitKeyScanner();
+#endif // CONFIG_DEVICE_ID != DEVICE_ID_UHK_DONGLE
     usb_init(true);
     bt_init();
     InitSettings();
