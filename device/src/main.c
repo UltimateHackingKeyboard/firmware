@@ -4,7 +4,7 @@
 #include "keyboard/oled.h"
 #include "keyboard/charger.h"
 #include "keyboard/spi.h"
-#include "uart.h"
+#include "keyboard/uart.h"
 #include "bt_central_uart.h"
 #include "bt_peripheral_uart.h"
 #include "keyboard/i2c.h"

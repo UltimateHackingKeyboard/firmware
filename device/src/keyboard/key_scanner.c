@@ -3,7 +3,7 @@
 #include <zephyr/drivers/gpio.h>
 #include "keyboard/key_scanner.h"
 #include "shell.h"
-#include "uart.h"
+#include "keyboard/uart.h"
 #include "bt_hid.h"
 #include <zephyr/drivers/uart.h>
 #include "bt_central_uart.h"
