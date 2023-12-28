@@ -1,5 +1,6 @@
 extern "C"
 {
+#include <device.h>
 #include "keyboard/key_scanner.h"
 #include <zephyr/kernel.h>
 }
@@ -41,6 +42,7 @@ void sendUsbReports(void*, void*, void*)
 {
     while (true)
     {
+#if CONFIG_DEVICE_ID != DEVICE_ID_UHK_DONGLE
         keys.set_code(scancode::A, KeyPressed);
         keyboard_app::handle().set_report_state(keys);
 
@@ -61,6 +63,7 @@ void sendUsbReports(void*, void*, void*)
         gamepad_app::handle().set_report_state(gamepad);
 
         k_msleep(1);
+#endif
     }
 }
 
