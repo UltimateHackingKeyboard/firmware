@@ -1,6 +1,6 @@
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/sys/util.h>
-#include "charger.h"
+#include "keyboard/charger.h"
 #include "shell.h"
 
 const struct gpio_dt_spec chargerEnDt = GPIO_DT_SPEC_GET(DT_ALIAS(charger_en), gpios);

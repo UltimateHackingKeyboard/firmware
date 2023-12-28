@@ -2,7 +2,7 @@
 #include "key_scanner.h"
 #include "leds.h"
 #include "oled.h"
-#include "charger.h"
+#include "keyboard/charger.h"
 #include "spi.h"
 #include "uart.h"
 #include "bt_central_uart.h"

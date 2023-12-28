@@ -2,7 +2,7 @@
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/shell/shell.h>
 #include "device.h"
-#include "charger.h"
+#include "keyboard/charger.h"
 #include "leds.h"
 #include "oled.h"
 #include "shell.h"
