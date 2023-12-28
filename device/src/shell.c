@@ -3,7 +3,7 @@
 #include <zephyr/shell/shell.h>
 #include "device.h"
 #include "keyboard/charger.h"
-#include "leds.h"
+#include "keyboard/leds.h"
 #include "oled.h"
 #include "shell.h"
 #include "usb/usb.hpp"
