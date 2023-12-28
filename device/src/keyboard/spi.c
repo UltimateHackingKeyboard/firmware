@@ -1,5 +1,5 @@
 #include <zephyr/drivers/spi.h>
-#include "spi.h"
+#include "keyboard/spi.h"
 
 struct k_mutex SpiMutex;
 

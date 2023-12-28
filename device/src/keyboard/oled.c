@@ -5,7 +5,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/gpio.h>
 #include "keyboard/oled.h"
-#include "spi.h"
+#include "keyboard/spi.h"
 
 // Thread definitions
 

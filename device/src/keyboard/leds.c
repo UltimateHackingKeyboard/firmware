@@ -1,7 +1,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/gpio.h>
 #include "keyboard/leds.h"
-#include "spi.h"
+#include "keyboard/spi.h"
 #include "shell.h"
 #include "keyboard/key_scanner.h"
 

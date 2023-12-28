@@ -3,7 +3,7 @@
 #include "keyboard/leds.h"
 #include "keyboard/oled.h"
 #include "keyboard/charger.h"
-#include "spi.h"
+#include "keyboard/spi.h"
 #include "uart.h"
 #include "bt_central_uart.h"
 #include "bt_peripheral_uart.h"
