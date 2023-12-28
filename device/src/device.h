@@ -33,11 +33,11 @@
         #define USB_DEVICE_PRODUCT_ID 0xffff // TODO
         #define KEY_MATRIX_ROWS 6
         #define KEY_MATRIX_COLS 10
-    #elif CONFIG_DEVICE_ID == DEVICE_ID_DONGLE
+    #elif CONFIG_DEVICE_ID == DEVICE_ID_UHK_DONGLE
         #define DEVICE_NAME "UHK dongle"
         #define USB_DEVICE_PRODUCT_ID 0xffff // TODO
-        #define KEY_MATRIX_ROWS 0
-        #define KEY_MATRIX_COLS 0
+        #define KEY_MATRIX_ROWS 6
+        #define KEY_MATRIX_COLS 10
     #endif
 
     #if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_LEFT
