@@ -1,6 +1,6 @@
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/gpio.h>
-#include "merge_sensor.h"
+#include "keyboard/merge_sensor.h"
 #include "device.h"
 
 #ifdef DEVICE_HAS_MERGE_SENSE
