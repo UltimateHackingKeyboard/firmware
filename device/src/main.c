@@ -1,7 +1,7 @@
 #include "bt_hid.h"
 #include "keyboard/key_scanner.h"
 #include "keyboard/leds.h"
-#include "oled.h"
+#include "keyboard/oled.h"
 #include "keyboard/charger.h"
 #include "spi.h"
 #include "uart.h"
