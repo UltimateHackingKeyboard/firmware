@@ -1,6 +1,6 @@
 extern "C"
 {
-#include "key_scanner.h"
+#include "keyboard/key_scanner.h"
 #include <zephyr/kernel.h>
 }
 #include "command_app.hpp"

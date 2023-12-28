@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/gpio.h>
-#include "key_scanner.h"
+#include "keyboard/key_scanner.h"
 #include "shell.h"
 #include "uart.h"
 #include "bt_hid.h"

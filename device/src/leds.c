@@ -3,7 +3,7 @@
 #include "leds.h"
 #include "spi.h"
 #include "shell.h"
-#include "key_scanner.h"
+#include "keyboard/key_scanner.h"
 
 // Thread definitions
 

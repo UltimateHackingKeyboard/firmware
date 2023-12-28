@@ -1,5 +1,5 @@
 #include "bt_hid.h"
-#include "key_scanner.h"
+#include "keyboard/key_scanner.h"
 #include "leds.h"
 #include "oled.h"
 #include "keyboard/charger.h"
