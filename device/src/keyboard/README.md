@@ -1,0 +1,1 @@
+This directory contains code that the only the keyboard halves use, not the dongle.
