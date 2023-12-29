@@ -48,39 +48,46 @@ static parser_error_t parseProperty(config_buffer_t* buffer, module_configuratio
         case SerializedModuleProperty_AxisLockFirstTickSkew:
             moduleConfiguration->axisLockFirstTickSkew = ReadFloat(buffer);
             break;
-        case SerializedModuleProperty_CursorAxisLock:
-            moduleConfiguration->cursorAxisLock = ReadBool(buffer);
-            break;
         case SerializedModuleProperty_ScrollAxisLock:
             moduleConfiguration->scrollAxisLock = ReadBool(buffer);
             break;
         case SerializedModuleProperty_CaretAxisLock:
             moduleConfiguration->caretAxisLock = ReadBool(buffer);
             break;
-        case SerializedModuleProperty_SwapAxes:
-            moduleConfiguration->swapAxes = ReadBool(buffer);
-            break;
-        case SerializedModuleProperty_InvertScrollDirectionX:
-            moduleConfiguration->invertScrollDirectionX = ReadBool(buffer);
-            break;
         case SerializedModuleProperty_InvertScrollDirectionY:
             moduleConfiguration->invertScrollDirectionY = ReadBool(buffer);
             break;
         default:
-            if (moduleId == ModuleId_TouchpadRight) {
-                switch (propertyId) {
-                    case SerializedModuleProperty_PinchZoomSpeedDivisor:
-                        moduleConfiguration->pinchZoomSpeedDivisor = ReadUInt16(buffer);
-                        break;
-                    case SerializedModuleProperty_PinchZoomMode:
-                        TouchpadPinchZoomMode = ReadUInt8(buffer);
-                        break;
-                    case SerializedModuleProperty_HoldContinuationTimeout:
-                        HoldContinuationTimeout = ReadUInt16(buffer);
-                        break;
-                    default:
-                        return ParserError_InvalidModuleProperty;
-                }
+            switch (moduleId) {
+                case ModuleId_TouchpadRight:
+                    switch (propertyId) {
+                        case SerializedModuleProperty_Touchpad_PinchZoomSpeedDivisor:
+                            moduleConfiguration->pinchZoomSpeedDivisor = ReadUInt16(buffer);
+                            break;
+                        case SerializedModuleProperty_Touchpad_PinchZoomMode:
+                            TouchpadPinchZoomMode = ReadUInt8(buffer);
+                            break;
+                        case SerializedModuleProperty_Touchpad_HoldContinuationTimeout:
+                            HoldContinuationTimeout = ReadUInt16(buffer);
+                            break;
+                        default:
+                            return ParserError_InvalidModuleProperty;
+                    }
+                    break;
+                case ModuleId_KeyClusterLeft:
+                    switch (propertyId) {
+                        case SerializedModuleProperty_Keycluster_SwapAxes:
+                            moduleConfiguration->swapAxes = ReadBool(buffer);
+                            break;
+                        case SerializedModuleProperty_Keycluster_InvertScrollDirectionX:
+                            moduleConfiguration->invertScrollDirectionX = ReadBool(buffer);
+                            break;
+                        default:
+                            return ParserError_InvalidModuleProperty;
+                    }
+                    break;
+                default:
+                    return ParserError_InvalidModuleProperty;
             }
     }
     return ParserError_Success;

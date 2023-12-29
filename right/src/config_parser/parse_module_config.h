@@ -17,22 +17,20 @@
         SerializedModuleProperty_CaretSpeedDivisor,
         SerializedModuleProperty_AxisLockSkew,
         SerializedModuleProperty_AxisLockFirstTickSkew,
-        SerializedModuleProperty_CursorAxisLock,
         SerializedModuleProperty_ScrollAxisLock,
         SerializedModuleProperty_CaretAxisLock,
-        SerializedModuleProperty_SwapAxes,
-        SerializedModuleProperty_InvertScrollDirectionX,
         SerializedModuleProperty_InvertScrollDirectionY,
 
         // module specific
 
-        // Touchpad
-        SerializedModuleProperty_PinchZoomSpeedDivisor = 252,
-        SerializedModuleProperty_PinchZoomMode = 253,
-        SerializedModuleProperty_HoldContinuationTimeout = 254,
+        // Keycluster
+        SerializedModuleProperty_Keycluster_SwapAxes = 254,
+        SerializedModuleProperty_Keycluster_InvertScrollDirectionX = 255,
 
-        // Other
-        SerializedModuleProperty_InvalidStatePlaceholder = 255,
+        // Touchpad
+        SerializedModuleProperty_Touchpad_PinchZoomSpeedDivisor = 253,
+        SerializedModuleProperty_Touchpad_PinchZoomMode = 254,
+        SerializedModuleProperty_Touchpad_HoldContinuationTimeout = 255,
     } serialized_module_property_t;
 
 // Functions:
