@@ -44,26 +44,32 @@ void sendUsbReports(void*, void*, void*)
     {
 #if CONFIG_DEVICE_ID != DEVICE_ID_UHK_DONGLE
         keys.set_code(scancode::A, KeyPressed);
+#endif
         keyboard_app::handle().set_report_state(keys);
 
+#if CONFIG_DEVICE_ID != DEVICE_ID_UHK_DONGLE
         mouseState.set_button(mouse_button::RIGHT, KeyStates[0][1]);
+#endif
         mouseState.x = -50;
         // mouseState.y = -50;
         // mouseState.wheel_y = -50;
         // mouseState.wheel_x = -50;
         mouse_app::handle().set_report_state(mouseState);
 
+#if CONFIG_DEVICE_ID != DEVICE_ID_UHK_DONGLE
         controls.set_code(consumer_code::VOLUME_INCREMENT, KeyStates[0][2]);
+#endif
         controls_app::handle().set_report_state(controls);
 
+#if CONFIG_DEVICE_ID != DEVICE_ID_UHK_DONGLE
         gamepad.set_button(gamepad_button::X, KeyStates[0][3]);
+#endif
         // gamepad.left.X = 50;
         // gamepad.right.Y = 50;
         // gamepad.right_trigger = 50;
         gamepad_app::handle().set_report_state(gamepad);
 
         k_msleep(1);
-#endif
     }
 }
 
