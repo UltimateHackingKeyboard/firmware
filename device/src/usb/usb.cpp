@@ -25,9 +25,12 @@ extern "C"
 static K_THREAD_STACK_DEFINE(stack_area, THREAD_STACK_SIZE);
 static struct k_thread thread_data;
 
-constexpr usb::product_info prinfo{0x1D50, "Ultimage Gadget Laboratories", USB_DEVICE_PRODUCT_ID,
-                                   DEVICE_NAME, usb::version("1.0")};
+// make sure that the USB IDs are used in BT
+static_assert(CONFIG_BT_DIS_PNP_VID_SRC == 2);
 
+constexpr usb::product_info prinfo{CONFIG_BT_DIS_PNP_VID, CONFIG_BT_DIS_MANUF,
+                                   CONFIG_BT_DIS_PNP_PID, CONFIG_BT_DIS_MODEL,
+                                   usb::version(CONFIG_BT_DIS_PNP_VER >> 8, CONFIG_BT_DIS_PNP_VER)};
 scancode_buffer keys;
 mouse_buffer mouseState;
 controls_buffer controls;
