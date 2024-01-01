@@ -40,20 +40,20 @@ void oledUpdater() {
         k_mutex_lock(&SpiMutex, K_FOREVER);
 
         setA0(false);
-        setOledCs(false);
-        writeSpi(0xaf);
         setOledCs(true);
+        writeSpi(0xaf);
+        setOledCs(false);
 
         setA0(false);
-        setOledCs(false);
+        setOledCs(true);
         writeSpi(0x81);
         writeSpi(0xff);
-        setOledCs(true);
+        setOledCs(false);
 
         setA0(true);
-        setOledCs(false);
-        writeSpi(pixel ? 0xff : 0x00);
         setOledCs(true);
+        writeSpi(pixel ? 0xff : 0x00);
+        setOledCs(false);
 
         k_mutex_unlock(&SpiMutex);
 
