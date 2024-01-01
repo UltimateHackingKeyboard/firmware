@@ -36,6 +36,12 @@ void ledUpdater() {
         setLedsCs(false);
 
         setLedsCs(true);
+        writeSpi(LedPagePrefix | 2); // Set the 180 degree phase delay of the Pull Down/Up Resistor Selection Register
+        writeSpi(0x02);
+        writeSpi(0b10110011);
+        setLedsCs(false);
+
+        setLedsCs(true);
         writeSpi(LedPagePrefix | 2);
         writeSpi(0x01);
         writeSpi(0xff);
