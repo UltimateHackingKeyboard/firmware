@@ -170,7 +170,7 @@
             label = "leds_sdb";
         };
         leds_cs: leds_cs {
-            gpios = <&gpio1 9 GPIO_ACTIVE_HIGH>;
+            gpios = <&gpio1 9 GPIO_ACTIVE_LOW>;
             label = "leds_cs";
         };
 

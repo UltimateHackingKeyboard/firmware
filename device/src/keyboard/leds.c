@@ -29,35 +29,33 @@ void ledUpdater() {
     while (true) {
         k_mutex_lock(&SpiMutex, K_FOREVER);
 
-        gpio_pin_set_dt(&ledsCsDt, false);
-
+        setLedsCs(true);
         writeSpi(LedPagePrefix | 2);
         writeSpi(0x00);
         writeSpi(0b00001001); // Set software shutdown control (SSD) register to normal mode
-        setLedsCs(true);
-
         setLedsCs(false);
+
+        setLedsCs(true);
         writeSpi(LedPagePrefix | 2);
         writeSpi(0x01);
         writeSpi(0xff);
-        setLedsCs(true);
-
         setLedsCs(false);
+
+        setLedsCs(true);
         writeSpi(LedPagePrefix | 0);
         writeSpi(0x00);
         for (int i=0; i<255; i++) {
             writeSpi(KeyPressed || Shell.ledsAlwaysOn ? 0xff : 0);
         }
-        setLedsCs(true);
-
         setLedsCs(false);
+
+        setLedsCs(true);
         writeSpi(LedPagePrefix | 1);
         writeSpi(0x00);
         for (int i=0; i<255; i++) {
             writeSpi(KeyPressed || Shell.ledsAlwaysOn ? 0xff : 0);
         }
-
-        gpio_pin_set_dt(&ledsCsDt, true);
+        setLedsCs(false);
 
         k_mutex_unlock(&SpiMutex);
 

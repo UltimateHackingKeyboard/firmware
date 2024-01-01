@@ -181,7 +181,7 @@
             label = "oled_cs";
         };
         leds_cs: leds_cs {
-            gpios = <&gpio0 7 GPIO_ACTIVE_HIGH>;
+            gpios = <&gpio0 7 GPIO_ACTIVE_LOW>;
             label = "leds_cs";
         };
 
