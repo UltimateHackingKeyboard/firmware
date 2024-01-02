@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [10.6.0] - 2024-01-02
+
+Device Protocol: 4.10.0 | Module Protocol: 4.3.0 | User Config: 6.0.0 | Hardware Config: 1.0.0 | Smart Macros: 2.3.0
+
+- Set trackpoint drift reset period to 1s, resulting in quicker auto-recovery.
+- Don't change the test keymap when it's active upon module reconnection.
+
 ## [10.5.0] - 2023-12-14
 
 Device Protocol: 4.10.0 | Module Protocol: 4.3.0 | User Config: 6.0.0 | Hardware Config: 1.0.0 | Smart Macros: 2.**3.0**
