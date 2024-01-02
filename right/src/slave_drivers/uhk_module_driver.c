@@ -7,6 +7,7 @@
 #include "bool_array_converter.h"
 #include "crc16.h"
 #include "key_states.h"
+#include "test_switches.h"
 #include "timer.h"
 #include "usb_report_updater.h"
 #include "utils.h"
@@ -100,7 +101,7 @@ static void reloadKeymapIfNeeded()
         someoneElseWillDoTheJob |= uhkModuleState->moduleId == 0 && slave->isConnected;
     }
 
-    if (!someoneElseWillDoTheJob) {
+    if (!someoneElseWillDoTheJob && !TestSwitches) {
         SwitchKeymapById(CurrentKeymapIndex);
     }
 }
