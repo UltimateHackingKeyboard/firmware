@@ -29,16 +29,25 @@ void ledUpdater() {
     while (true) {
         k_mutex_lock(&SpiMutex, K_FOREVER);
 
+        // Set software shutdown control (SSD) register to normal mode
         setLedsCs(true);
         writeSpi(LedPagePrefix | 2);
         writeSpi(0x00);
-        writeSpi(0b00001001); // Set software shutdown control (SSD) register to normal mode
+        writeSpi(0b00001001);
         setLedsCs(false);
 
+        // Set 180 degree phase delay to reduce audible noise, although it doesn't seem to make a difference
         setLedsCs(true);
-        writeSpi(LedPagePrefix | 2); // Set the 180 degree phase delay of the Pull Down/Up Resistor Selection Register
+        writeSpi(LedPagePrefix | 2);
         writeSpi(0x02);
         writeSpi(0b10110011);
+        setLedsCs(false);
+
+        // Enable spread spectrum with 15% range and 1980us cycle time, which substantially reduces audible noise
+        setLedsCs(true);
+        writeSpi(LedPagePrefix | 2);
+        writeSpi(0x25);
+        writeSpi(0x14);
         setLedsCs(false);
 
         setLedsCs(true);
