@@ -31,6 +31,11 @@
         LedMapIndex_LeftSlot_IsoKey = 22,
     } led_map_index_t;
 
+    typedef enum {
+        ColorMode_Rgb,
+        ColorMode_Monochromatic,
+    } color_mode_t;
+
 // Variables:
 
     extern backlighting_mode_t BacklightingMode;
