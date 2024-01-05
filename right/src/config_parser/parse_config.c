@@ -134,7 +134,7 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
 
     // Misc
 
-    uint16_t doubletapTimeout = DoubletapConditionTimeout;
+    uint16_t doubletapTimeout = DoubletapTimeout;
     uint16_t keystrokeDelay = KeystrokeDelay;
 
     if (DataModelMajorVersion >= 7) {
@@ -243,8 +243,7 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
         // Update misc
 
         if (DataModelMajorVersion >= 7) {
-            DoubleTapSwitchLayerTimeout = doubletapTimeout;
-            DoubletapConditionTimeout = doubletapTimeout;
+            DoubletapTimeout = doubletapTimeout;
             KeystrokeDelay = keystrokeDelay;
         }
 

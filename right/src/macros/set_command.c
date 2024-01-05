@@ -787,7 +787,7 @@ static macro_variable_t root(parser_context_t* ctx, set_command_action_t action)
             || (ConsumeToken(ctx, "doubletapDelay")) // deprecated alias - old name
             ) {
         DEFINE_INT_LIMITS(0, 65535);
-        ASSIGN_INT2(DoubleTapSwitchLayerTimeout, DoubletapConditionTimeout);
+        ASSIGN_INT(DoubletapTimeout);
     }
     else if (ConsumeToken(ctx, "autoRepeatDelay")) {
         DEFINE_INT_LIMITS(0, 65535);

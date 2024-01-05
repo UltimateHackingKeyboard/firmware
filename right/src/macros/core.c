@@ -53,7 +53,6 @@ macro_state_t *S = NULL;
 macro_history_t MacroHistory[MACRO_HISTORY_POOL_SIZE];
 uint8_t MacroHistoryPosition = 0;
 
-uint16_t DoubletapConditionTimeout = 400;
 uint16_t AutoRepeatInitialDelay = 500;
 uint16_t AutoRepeatDelayRate = 50;
 
