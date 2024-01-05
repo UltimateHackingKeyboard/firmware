@@ -24,9 +24,9 @@
 
     bool PerKeyRgbPresent = false;
 
-void readRgbColor(config_buffer_t *buffer, key_action_color_t keyActionColor)
+void readRgbColor(config_buffer_t *buffer, rgb_t* keyActionColors, key_action_color_t keyActionColor)
 {
-    rgb_t *color = &KeyActionColors[keyActionColor];
+    rgb_t *color = &keyActionColors[keyActionColor];
     color->red = ReadUInt8(buffer);
     color->green = ReadUInt8(buffer);
     color->blue = ReadUInt8(buffer);
@@ -57,19 +57,24 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
     uint8_t alphanumericSegmentsBrightness = ReadUInt8(buffer);
     uint8_t keyBacklightBrightness = ReadUInt8(buffer);
 
-    if (DataModelMajorVersion >= 6) {
-        LedsFadeTimeout = 1000 * ReadUInt16(buffer);
-        PerKeyRgbPresent = ReadBool(buffer);
-        BacklightingMode = ReadUInt8(buffer);
+    uint32_t ledsFadeTimeout = LedsFadeTimeout;
+    bool perKeyRgbPresent = PerKeyRgbPresent;
+    backlighting_mode_t backlightingMode = BacklightingMode;
+    rgb_t keyActionColors[keyActionColor_Length];
 
-        readRgbColor(buffer, KeyActionColor_None);
-        readRgbColor(buffer, KeyActionColor_Scancode);
-        readRgbColor(buffer, KeyActionColor_Modifier);
-        readRgbColor(buffer, KeyActionColor_Shortcut);
-        readRgbColor(buffer, KeyActionColor_SwitchLayer);
-        readRgbColor(buffer, KeyActionColor_SwitchKeymap);
-        readRgbColor(buffer, KeyActionColor_Mouse);
-        readRgbColor(buffer, KeyActionColor_Macro);
+    if (DataModelMajorVersion >= 6) {
+        ledsFadeTimeout = 1000 * ReadUInt16(buffer);
+        perKeyRgbPresent = ReadBool(buffer);
+        backlightingMode = ReadUInt8(buffer);
+
+        readRgbColor(buffer, keyActionColors, KeyActionColor_None);
+        readRgbColor(buffer, keyActionColors, KeyActionColor_Scancode);
+        readRgbColor(buffer, keyActionColors, KeyActionColor_Modifier);
+        readRgbColor(buffer, keyActionColors, KeyActionColor_Shortcut);
+        readRgbColor(buffer, keyActionColors, KeyActionColor_SwitchLayer);
+        readRgbColor(buffer, keyActionColors, KeyActionColor_SwitchKeymap);
+        readRgbColor(buffer, keyActionColors, KeyActionColor_Mouse);
+        readRgbColor(buffer, keyActionColors, KeyActionColor_Macro);
     }
 
     // Mouse kinetic properties
@@ -204,6 +209,16 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
         MouseScrollState.deceleratedSpeed = mouseScrollDeceleratedSpeed;
         MouseScrollState.baseSpeed = mouseScrollBaseSpeed;
         MouseScrollState.acceleratedSpeed = mouseScrollAcceleratedSpeed;
+
+        // Version 6
+
+        if (DataModelMajorVersion >= 6) {
+            LedsFadeTimeout = ledsFadeTimeout;
+            PerKeyRgbPresent = perKeyRgbPresent;
+            BacklightingMode = backlightingMode;
+
+            memcpy(KeyActionColors, keyActionColors, sizeof(keyActionColors));
+        }
 
         // Version 7
 
