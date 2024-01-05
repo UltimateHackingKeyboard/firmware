@@ -79,24 +79,11 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
     uint8_t mouseMoveDeceleratedSpeed = ReadUInt8(buffer);
     uint8_t mouseMoveBaseSpeed = ReadUInt8(buffer);
     uint8_t mouseMoveAcceleratedSpeed = ReadUInt8(buffer);
-    float mouseMoveAxisSkew = 1.0f;
-    if (DataModelMajorVersion >= 7) {
-        mouseMoveAxisSkew = ReadFloat(buffer);
-    }
     uint8_t mouseScrollInitialSpeed = ReadUInt8(buffer);
     uint8_t mouseScrollAcceleration = ReadUInt8(buffer);
     uint8_t mouseScrollDeceleratedSpeed = ReadUInt8(buffer);
     uint8_t mouseScrollBaseSpeed = ReadUInt8(buffer);
     uint8_t mouseScrollAcceleratedSpeed = ReadUInt8(buffer);
-    float mouseScrollAxisSkew = 1.0f;
-    if (DataModelMajorVersion >= 7) {
-        mouseScrollAxisSkew = ReadFloat(buffer);
-    }
-
-    bool diagonalSpeedCompensation = false;
-    if (DataModelMajorVersion >= 7) {
-        diagonalSpeedCompensation = ReadBool(buffer);
-    }
 
     if (mouseMoveInitialSpeed == 0 ||
         mouseMoveAcceleration == 0 ||
@@ -112,7 +99,14 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
         return ParserError_InvalidMouseKineticProperty;
     }
 
-    // Secondary roles
+    // Version 7:
+
+    float mouseMoveAxisSkew = 1.0f;
+    float mouseScrollAxisSkew = 1.0f;
+    bool diagonalSpeedCompensation = false;
+
+    uint16_t doubletapTimeout = DoubletapTimeout;
+    uint16_t keystrokeDelay = KeystrokeDelay;
 
     secondary_role_strategy_t secondaryRoles_Strategy = SecondaryRoleStrategy_Simple;
     uint16_t secondaryRoles_AdvancedStrategyDoubletapTime = SecondaryRoles_AdvancedStrategyDoubletapTime;
@@ -130,14 +124,11 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
         secondaryRoles_AdvancedStrategyTriggerByRelease = ReadBool(buffer);
         secondaryRoles_AdvancedStrategyDoubletapToPrimary = ReadBool(buffer);
         secondaryRoles_AdvancedStrategyTimeoutAction = ReadUInt8(buffer);
-    }
 
-    // Misc
+        mouseScrollAxisSkew = ReadFloat(buffer);
+        mouseMoveAxisSkew = ReadFloat(buffer);
+        diagonalSpeedCompensation = ReadBool(buffer);
 
-    uint16_t doubletapTimeout = DoubletapTimeout;
-    uint16_t keystrokeDelay = KeystrokeDelay;
-
-    if (DataModelMajorVersion >= 7) {
         doubletapTimeout = ReadUInt16(buffer);
         keystrokeDelay = ReadUInt16(buffer);
     }
@@ -170,6 +161,7 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
     }
 
     // Keymaps
+    //
     keymapCount = ReadCompactLength(buffer);
     if (keymapCount == 0 || keymapCount > MAX_KEYMAP_NUM) {
         return ParserError_InvalidKeymapCount;
@@ -213,13 +205,7 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
         MouseScrollState.baseSpeed = mouseScrollBaseSpeed;
         MouseScrollState.acceleratedSpeed = mouseScrollAcceleratedSpeed;
 
-        if (DataModelMajorVersion >= 7) {
-            MouseMoveState.axisSkew = mouseMoveAxisSkew;
-            MouseScrollState.axisSkew = mouseScrollAxisSkew;
-            DiagonalSpeedCompensation = diagonalSpeedCompensation;
-        }
-
-        // Update secondary roles
+        // Version 7
 
         if (DataModelMajorVersion >= 7) {
             SecondaryRoles_Strategy = secondaryRoles_Strategy;
@@ -238,11 +224,11 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
                 default:
                     return ParserError_InvalidSecondaryRoleActionType;
             }
-        }
 
-        // Update misc
+            MouseMoveState.axisSkew = mouseMoveAxisSkew;
+            MouseScrollState.axisSkew = mouseScrollAxisSkew;
+            DiagonalSpeedCompensation = diagonalSpeedCompensation;
 
-        if (DataModelMajorVersion >= 7) {
             DoubletapTimeout = doubletapTimeout;
             KeystrokeDelay = keystrokeDelay;
         }
