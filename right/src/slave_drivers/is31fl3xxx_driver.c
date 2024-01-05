@@ -203,15 +203,7 @@ void LedSlaveDriver_DisableLeds(void)
 void LedSlaveDriver_UpdateLeds(void)
 {
     recalculateLedBrightness();
-
-#if DEVICE_ID == DEVICE_ID_UHK60V1
-    for (uint8_t ledDriverId=0; ledDriverId<=LedDriverId_Last; ledDriverId++) {
-        memset(LedDriverValues[ledDriverId], KeyBacklightBrightness, ledDriverStates[ledDriverId].ledCount);
-    }
-#else
     Ledmap_UpdateBacklightLeds();
-#endif
-
     LedDisplay_UpdateAll();
 }
 
