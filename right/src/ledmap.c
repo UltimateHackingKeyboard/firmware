@@ -291,7 +291,7 @@ static void setPerKeyMonochromatic(const rgb_t* color, uint8_t slotId, uint8_t k
     if (ledMapItem->red == 0 && keyId != 0) {
         return;
     }
-    uint8_t value = ((uint16_t)color->red + color->green + 2*color->blue) / 4;
+    uint8_t value = ((uint16_t)color->red + color->green + color->blue) / 3;
     LedDriverValues[slotId][ledMapItem->red] = value * KeyBacklightBrightness / 255;
 }
 
