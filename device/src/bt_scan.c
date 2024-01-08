@@ -1,5 +1,6 @@
 #include <bluetooth/scan.h>
 #include "bt_conn.h"
+#include "device.h"
 
 static void scan_filter_match(struct bt_scan_device_info *device_info,
     struct bt_scan_filter_match *filter_match, bool connectable)
@@ -27,11 +28,21 @@ int scan_init(void) {
     bt_scan_init(&scan_init);
     bt_scan_cb_register(&scan_cb);
 
+#if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_LEFT || CONFIG_DEVICE_ID == DEVICE_ID_UHK_DONGLE
     err = bt_scan_filter_add(BT_SCAN_FILTER_TYPE_ADDR, &Peers[PeerIdLeft].addr);
     if (err) {
         printk("Scanning filters cannot be set (err %d)\n", err);
         return err;
     }
+#endif
+
+#if CONFIG_DEVICE_ID == DEVICE_ID_UHK_DONGLE
+    err = bt_scan_filter_add(BT_SCAN_FILTER_TYPE_ADDR, &Peers[PeerIdRight].addr);
+    if (err) {
+        printk("Scanning filters cannot be set (err %d)\n", err);
+        return err;
+    }
+#endif
 
     err = bt_scan_filter_enable(BT_SCAN_ADDR_FILTER, false);
     if (err) {
