@@ -654,8 +654,11 @@ static void processModuleActions(
     processModuleKineticState(x, y, moduleConfiguration, ks, forcedNavigationMode);
 }
 
-bool canWeRun()
+bool canWeRun(module_kinetic_state_t* ks)
 {
+    if (caretModeActionIsRunning(ks)) {
+        return false;
+    }
     if (StickyModifiers) {
         StickyModifiers = 0;
         StickyModifiersNegative = 0;
@@ -679,7 +682,7 @@ void MouseController_ProcessMouseActions()
         }
 
         bool eventsIsNonzero = memcmp(&TouchpadEvents, &ZeroTouchpadEvents, sizeof TouchpadEvents) != 0;
-        if (!eventsIsNonzero || (eventsIsNonzero && canWeRun())) {
+        if (!eventsIsNonzero || (eventsIsNonzero && canWeRun(ks))) {
             //eventsIsNonzero is needed for touchpad action state automaton timer
             __disable_irq();
             touchpad_events_t events = TouchpadEvents;
@@ -714,7 +717,7 @@ void MouseController_ProcessMouseActions()
 
 
         bool eventsIsNonzero = moduleState->pointerDelta.x || moduleState->pointerDelta.y;
-        if (eventsIsNonzero && canWeRun()) {
+        if (eventsIsNonzero && canWeRun(ks)) {
             __disable_irq();
             // Gcc compiles those int16_t assignments as sequences of
             // single-byte instructions, therefore we need to make the
