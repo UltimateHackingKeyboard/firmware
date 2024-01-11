@@ -43,9 +43,55 @@ static void Utils_SetStatusScancodeCharacter(uint8_t scancode)
     Macros_SetStatusChar(MacroShortcutParser_ScancodeToCharacter(scancode));
 }
 
-void Utils_reportReport(usb_basic_keyboard_report_t* report)
+static bool reportModifiers(uint8_t modifiers)
 {
-    Macros_SetStatusString("Reporting ", NULL);
+    bool modifierFound = false;
+    for (uint8_t i = 0; i < 8; i++) {
+        uint8_t modifier = 1 << i;
+        if (modifiers & modifier) {
+            modifierFound = true;
+            switch (modifier) {
+                case HID_KEYBOARD_MODIFIER_LEFTCTRL:
+                    Macros_SetStatusString("LC", NULL);
+                    break;
+                case HID_KEYBOARD_MODIFIER_LEFTSHIFT:
+                    Macros_SetStatusString("LS", NULL);
+                    break;
+                case HID_KEYBOARD_MODIFIER_LEFTALT:
+                    Macros_SetStatusString("LA", NULL);
+                    break;
+                case HID_KEYBOARD_MODIFIER_LEFTGUI:
+                    Macros_SetStatusString("LG", NULL);
+                    break;
+                case HID_KEYBOARD_MODIFIER_RIGHTCTRL:
+                    Macros_SetStatusString("RC", NULL);
+                    break;
+                case HID_KEYBOARD_MODIFIER_RIGHTSHIFT:
+                    Macros_SetStatusString("RS", NULL);
+                    break;
+                case HID_KEYBOARD_MODIFIER_RIGHTALT:
+                    Macros_SetStatusString("RA", NULL);
+                    break;
+                case HID_KEYBOARD_MODIFIER_RIGHTGUI:
+                    Macros_SetStatusString("RG", NULL);
+      break;
+            }
+        }
+    }
+    return modifierFound;
+}
+
+void Utils_PrintReport(const char* prefix, usb_basic_keyboard_report_t* report)
+{
+    Macros_SetStatusString(prefix, NULL);
+
+    Macros_SetStatusString(" ", NULL);
+
+    bool modifierFound = reportModifiers(report->modifiers);
+
+    if (modifierFound) {
+        Macros_SetStatusString(" ", NULL);
+    }
 
     UsbBasicKeyboard_ForeachScancode(report, &Utils_SetStatusScancodeCharacter);
 
