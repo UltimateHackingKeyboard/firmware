@@ -1,6 +1,8 @@
 #ifndef SRC_UTILS_H_
 #define SRC_UTILS_H_
 
+#include "usb_interfaces/usb_interface_basic_keyboard.h"
+
 // Macros:
 
 #define REENTRANCY_GUARD_BEGIN                   \
@@ -24,6 +26,7 @@ if (reentrancyGuard_active) {                    \
     key_state_t* Utils_KeyIdToKeyState(uint16_t keyid);
     uint16_t Utils_KeyStateToKeyId(key_state_t* key);
     void Utils_DecodeId(uint16_t keyid, uint8_t* outSlotId, uint8_t* outSlotIdx);
+    void Utils_PrintReport(const char* prefix, usb_basic_keyboard_report_t* report);
 
 
 #endif /* SRC_UTILS_H_ */

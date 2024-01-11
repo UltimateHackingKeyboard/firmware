@@ -2,6 +2,7 @@
 #include "key_action.h"
 #include "led_display.h"
 #include "layer.h"
+#include "usb_interfaces/usb_interface_basic_keyboard.h"
 #include "usb_interfaces/usb_interface_mouse.h"
 #include "keymap.h"
 #include "peripherals/test_led.h"
@@ -565,6 +566,10 @@ void UpdateUsbReports(void)
 
     if (UsbBasicKeyboardCheckReportReady() == kStatus_USB_Success) {
         MacroRecorder_RecordBasicReport(ActiveUsbBasicKeyboardReport);
+
+        if (RecordKeyTiming) {
+            Utils_PrintReport("OUT", ActiveUsbBasicKeyboardReport);
+        }
 
         if(RuntimeMacroRecordingBlind) {
             //just switch reports without sending the report
