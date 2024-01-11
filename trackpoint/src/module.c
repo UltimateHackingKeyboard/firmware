@@ -151,7 +151,7 @@ static bool readByte()
 #define AXIS_COUNT 2
 #define WINDOW_LENGTH 16
 #define ABS(x) ((x) < 0 ? -(x) : (x))
-#define DRIFT_RESET_PERIOD 2000
+#define DRIFT_RESET_PERIOD 1000
 #define TRACKPOINT_UPDATE_PERIOD 10
 #define DRIFT_TOLERANCE 1
 
