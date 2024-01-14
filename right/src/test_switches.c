@@ -2,6 +2,7 @@
 #include "led_display.h"
 #include "key_action.h"
 #include "keymap.h"
+#include "slave_drivers/is31fl3xxx_driver.h"
 
 bool TestSwitches = false;
 
@@ -110,4 +111,5 @@ void TestSwitches_Activate(void)
 {
     memcpy(&CurrentKeymap, &TestKeymap, sizeof TestKeymap);
     LedDisplay_SetText(3, "TES");
+    LedSlaveDriver_EnableAllLeds();
 }

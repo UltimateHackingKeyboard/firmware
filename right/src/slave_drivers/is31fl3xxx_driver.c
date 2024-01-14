@@ -207,6 +207,13 @@ void LedSlaveDriver_UpdateLeds(void)
     LedDisplay_UpdateAll();
 }
 
+void LedSlaveDriver_EnableAllLeds()
+{
+    for (uint8_t ledDriverId=0; ledDriverId<=LedDriverId_Last; ledDriverId++) {
+        memset(LedDriverValues[ledDriverId], KeyBacklightBrightness, ledDriverStates[ledDriverId].ledCount);
+    }
+}
+
 void LedSlaveDriver_Init(uint8_t ledDriverId)
 {
     if (ledDriverId == ISO_KEY_LED_DRIVER_ID && IS_ISO) {

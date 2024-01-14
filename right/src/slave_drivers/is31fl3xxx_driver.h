@@ -81,7 +81,9 @@
 
     void LedSlaveDriver_DisableLeds(void);
     void LedSlaveDriver_UpdateLeds(void);
+    void LedSlaveDriver_EnableAllLeds();
     void LedSlaveDriver_Init(uint8_t ledDriverId);
+
     slave_result_t LedSlaveDriver_Update(uint8_t ledDriverId);
 
 #endif
