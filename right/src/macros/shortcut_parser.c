@@ -23,13 +23,14 @@ typedef struct {
 
 static const lookup_record_t* lookup(uint8_t begin, uint8_t end, const char* str, const char* strEnd);
 
+
 char MacroShortcutParser_ScancodeToCharacter(uint16_t scancode)
 {
     switch (scancode) {
         case HID_KEYBOARD_SC_A ... HID_KEYBOARD_SC_Z:
             return scancode - HID_KEYBOARD_SC_A + 'a';
         default:
-            return ' ';
+            return DEFAULT_SCANCODE_ABBREVIATION;
     }
 }
 

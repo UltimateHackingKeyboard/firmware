@@ -3,6 +3,7 @@
 #include "led_display.h"
 #include "layer.h"
 #include "test_switches.h"
+#include "slot.h"
 #include "usb_interfaces/usb_interface_basic_keyboard.h"
 #include "usb_interfaces/usb_interface_mouse.h"
 #include "keymap.h"
@@ -29,6 +30,7 @@
 #include "mouse_keys.h"
 #include "utils.h"
 #include "debug.h"
+#include "macros/key_timing.h"
 
 bool TestUsbStack = false;
 static key_action_cached_t actionCache[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
@@ -338,17 +340,11 @@ static void mergeReports(void)
 static void commitKeyState(key_state_t *keyState, bool active)
 {
     WATCH_TRIGGER(keyState);
-    if (RecordKeyTiming) {
-        Macros_SetStatusString( active ? "DOWN" : "UP", NULL);
-        Macros_SetStatusNum(Utils_KeyStateToKeyId(keyState));
-        Macros_SetStatusNum(CurrentTime);
-        Macros_SetStatusNum(CurrentPostponedTime);
-        Macros_SetStatusChar('\n');
-    }
 
     if (PostponerCore_IsActive()) {
         PostponerCore_TrackKeyEvent(keyState, active, 255);
     } else {
+        KEY_TIMING(KeyTiming_RecordKeystroke(keyState, active, CurrentTime, CurrentTime));
         keyState->current = active;
     }
     WAKE_MACROS_ON_KEYSTATE_CHANGE();
@@ -536,6 +532,7 @@ void UpdateUsbReports(void)
     static uint32_t lastUpdateTime;
     static uint32_t lastReportTime;
 
+
     for (uint8_t keyId = 0; keyId < RIGHT_KEY_MATRIX_KEY_COUNT; keyId++) {
         KeyStates[SlotId_RightKeyboardHalf][keyId].hardwareSwitchState = RightKeyMatrix.keyStates[keyId];
     }
@@ -568,9 +565,7 @@ void UpdateUsbReports(void)
     if (UsbBasicKeyboardCheckReportReady() == kStatus_USB_Success) {
         MacroRecorder_RecordBasicReport(ActiveUsbBasicKeyboardReport);
 
-        if (RecordKeyTiming) {
-            Utils_PrintReport("OUT", ActiveUsbBasicKeyboardReport);
-        }
+        KEY_TIMING(KeyTiming_RecordReport(ActiveUsbBasicKeyboardReport));
 
         if(RuntimeMacroRecordingBlind) {
             //just switch reports without sending the report

@@ -8,9 +8,14 @@
     #include <stdbool.h>
     #include "macros/core.h"
 
+
+// Macros:
+
+    #define DEFAULT_SCANCODE_ABBREVIATION '?'
+
 // Typedefs:
 
-    // Functions:
+// Functions:
 
     void ShortcutParser_initialize();
 
