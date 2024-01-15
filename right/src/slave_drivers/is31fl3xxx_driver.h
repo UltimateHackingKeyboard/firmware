@@ -83,6 +83,7 @@
 
     void LedSlaveDriver_DisableLeds(void);
     void LedSlaveDriver_UpdateLeds(void);
+    void LedSlaveDriver_EnableAllLeds();
     void LedSlaveDriver_Init(uint8_t ledDriverId);
     void LedSlaveDriver_RecalculateLedBrightness();
 
