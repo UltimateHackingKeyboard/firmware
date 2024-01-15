@@ -2,6 +2,7 @@
 #include "led_display.h"
 #include "key_action.h"
 #include "keymap.h"
+#include "segment_display.h"
 #include "slave_drivers/is31fl3xxx_driver.h"
 
 bool TestSwitches = false;
@@ -110,6 +111,6 @@ static const key_action_t TestKeymap[1][2][MAX_KEY_COUNT_PER_MODULE] = {
 void TestSwitches_Activate(void)
 {
     memcpy(&CurrentKeymap, &TestKeymap, sizeof TestKeymap);
-    LedDisplay_SetText(3, "TES");
+    SegmentDisplay_SetText(3, "TES", SegmentDisplaySlot_Keymap);
     LedSlaveDriver_EnableAllLeds();
 }
