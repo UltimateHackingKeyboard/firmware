@@ -2,6 +2,7 @@
 #include "key_action.h"
 #include "led_display.h"
 #include "layer.h"
+#include "test_switches.h"
 #include "usb_interfaces/usb_interface_basic_keyboard.h"
 #include "usb_interfaces/usb_interface_mouse.h"
 #include "keymap.h"
@@ -423,7 +424,7 @@ static void updateActiveUsbReports(void)
 
     handleLayerChanges();
 
-    if ( CurrentTime - LastUsbGetKeyboardStateRequestTimestamp < 2000) {
+    if ( CurrentTime - LastUsbGetKeyboardStateRequestTimestamp < 2000 && !TestSwitches) {
        LedDisplay_SetIcon(LedDisplayIcon_Agent, CurrentTime - LastUsbGetKeyboardStateRequestTimestamp < 1000);
     }
 
