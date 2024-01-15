@@ -178,7 +178,7 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
         AlphanumericSegmentsBrightnessDefault = alphanumericSegmentsBrightness;
         KeyBacklightBrightnessDefault = keyBacklightBrightness;
 
-        LedSlaveDriver_UpdateLeds();
+        LedSlaveDriver_RecalculateLedBrightness();
 
         // Update mouse key speeds
 

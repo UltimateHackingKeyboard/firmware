@@ -77,12 +77,15 @@
     extern uint8_t KeyBacklightBrightnessDefault;
     extern uint8_t LedDriverValues[LED_DRIVER_MAX_COUNT][LED_DRIVER_LED_COUNT_MAX];
 
+    extern bool LedSlaveDriver_FullUpdateNeeded;
+
 // Functions:
 
     void LedSlaveDriver_DisableLeds(void);
     void LedSlaveDriver_UpdateLeds(void);
     void LedSlaveDriver_EnableAllLeds();
     void LedSlaveDriver_Init(uint8_t ledDriverId);
+    void LedSlaveDriver_RecalculateLedBrightness();
 
     slave_result_t LedSlaveDriver_Update(uint8_t ledDriverId);
 

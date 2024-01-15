@@ -10,6 +10,8 @@
 #include "macros/core.h"
 #include "macro_events.h"
 #include "segment_display.h"
+#include "debug.h"
+#include "slave_drivers/uhk_module_driver.h"
 
 keymap_reference_t AllKeymaps[MAX_KEYMAP_NUM] = {
     {
@@ -36,6 +38,7 @@ void SwitchKeymapById(uint8_t index)
     MacroEvent_RegisterLayerMacros();
     MacroEvent_OnKeymapChange(index);
     MacroEvent_OnLayerChange(ActiveLayer);
+    KeymapReloadNeeded = false;
 }
 
 uint8_t FindKeymapByAbbreviation(uint8_t length, const char *abbrev) {
