@@ -115,7 +115,7 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
 
     printk("Disconnected from %s, reason %u\n", GetPeerStringByConn(conn), reason);
 
-#if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_RIGHT
+#if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_RIGHT || CONFIG_DEVICE_ID == DEVICE_ID_UHK_DONGLE
     if (peerId == PeerIdUnknown) {
         HidsDisconnected(conn);
         HidConnection = NULL;
