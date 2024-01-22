@@ -17,12 +17,39 @@ west init -m git@github.com:UltimateHackingKeyboard/firmware-uhk80.git firmware-
 cd firmware-uhk80
 west update
 cd uhk/lib
-git submodule update --init
+git submodule update --init --recursive
 ```
 
-Then, depending whether you want a full IDE experience or just minimal tools for building and flashing firmware, read *IDE setup* or *Minimal development setup* (if you prefer a text editor + command line).
+Then, depending whether you want a full IDE experience or just minimal tools for building and flashing firmware, read *VS Code setup* or *Minimal development setup* (if you prefer a text editor + command line).
 
-### IDE setup
+### VS Code setup
+
+- Install [nRF Connect SDK](https://developer.nordicsemi.com/nRF_Connect_SDK/doc/latest/nrf/installation/install_ncs.html) including VS Code extensions.
+- In VS Code, click nRF connect icon in the left pane, then `Applications -> Create new build configuration` and select the relevant CMake preset. Now hit Build. This executes cmake steps.
+- Now you can rebuild or flash using the Build and Flash actions.
+
+### Minimal development setup
+
+- Install commandline stuff from [nRF Connect SDK](https://developer.nordicsemi.com/nRF_Connect_SDK/doc/latest/nrf/installation/install_ncs.html)
+- Launch nrfutil shell:
+    ```
+    nrfutil toolchain-manager launch --shell --ncs-version v2.5.0 
+    ```
+- In the shell, you can build (e.g.) uhk-80-left as follows:
+  - full build including cmake steps, as extracted from VS Code:
+    ```
+    west build --build-dir device/build/uhk-80-left device --pristine --board uhk-80-left --no-sysbuild -- -DNCS_TOOLCHAIN_VERSION=NONE -DBOARD_ROOT=uhk -DCONF_FILE=device/prj.conf -DOVERLAY_CONFIG=device/prj.conf.overlays/uhk-80-left.prj.conf
+    ```
+  - quick rebuild:
+    ```
+    west build --build-dir device/build/uhk-80-left device
+    ```
+  - flash:
+    ```
+    west flash -d device/build/uhk-80-left
+    ```
+
+### Old IDE setup
 
 2. Download and install MCUXpresso IDE for [Linux](https://ultimatehackingkeyboard.com/mcuxpressoide/mcuxpressoide-11.2.0_4120.x86_64.deb.bin), [Mac](https://ultimatehackingkeyboard.com/mcuxpressoide/MCUXpressoIDE_11.2.0_4120.pkg), or [Windows](https://ultimatehackingkeyboard.com/mcuxpressoide/MCUXpressoIDE_11.2.0_4120.exe).
 
@@ -39,7 +66,7 @@ Then, depending whether you want a full IDE experience or just minimal tools for
 
 Going forward, it's easier to flash the firmware of your choice by using the downwards toolbar icon which is located rightwards of the *green play + toolbox icon*.
 
-### Minimal development setup
+### Old Minimal development setup
 
 1. Install the ARM cross-compiler, cross-assembler and stdlib implementation. Eg. on Arch Linux the packages `arm-none-eabi-binutils`, `arm-none-eabi-gcc`, `arm-none-eabi-newlib`.
 
