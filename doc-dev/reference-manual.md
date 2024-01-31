@@ -114,7 +114,9 @@ The following grammar is supported:
     COMMAND = set secondaryRole.advanced.timeout <ms, 0-500 (INT)>
     COMMAND = set secondaryRole.advanced.timeoutAction { primary | secondary }
     COMMAND = set secondaryRole.advanced.safetyMargin <ms, -50 - 50 (INT)>
+    COMMAND = set secondaryRole.advanced.triggerByPress BOOL
     COMMAND = set secondaryRole.advanced.triggerByRelease BOOL
+    COMMAND = set secondaryRole.advanced.triggerByMouse BOOL
     COMMAND = set secondaryRole.advanced.doubletapToPrimary BOOL
     COMMAND = set secondaryRole.advanced.doubletapTime <ms, 0 - 500 (INT)>
     COMMAND = set mouseKeys.{move|scroll}.initialSpeed <px/s, -100/20 (INT)>
@@ -580,8 +582,10 @@ Internally, values are saved in one of the following types, and types are automa
     - advanced strategy may trigger secondary role depending on timeout, or depending on key release order.
       - `set secondaryRole.advanced.timeout <timeout in ms, 350 (INT)>` if this timeout is reached, `timeoutAction` (secondary by default) role is activated.
       - `set secondaryRole.advanced.timeoutAction { primary | secondary }` defines whether the primary action or the secondary role should be activated when timeout is reached
-      - `set secondaryRole.advanced.triggerByRelease BOOL` if enabled, secondary role is chosen depending on the release order of the keys (`press-A, press-B, release-B, release-A` leads to secondary action; `press-A, press-B, release-A, release-B` leads to primary action).
-      - `set secondaryRole.advanced.safetyMargin <ms, -50 - 50 (INT)>` finetunes sensitivity of the trigger-by-release behaviour by adding the value to the dual-role-key release time. I.e., if both keys are released simultaneously (i.e., at most `safetyMargin` ms from each other), then positive values favor the primary action, and negative values the secondary role.
+      - `set secondaryRole.advanced.triggerByRelease BOOL` if enabled, secondary role is chosen depending on the release order of the keys (`press-A, press-B, release-B, release-A` leads to secondary action; `press-A, press-B, release-A, release-B` leads to primary action). This is further modified by safetyMargin.
+      - `set secondaryRole.advanced.triggerByPress BOOL` if enabled, secondary role is triggered when there is another press, simiarly to the simple strategy. Unlike simple strategy, this allows setting timeout behaviors, and also is modified by safetyMargin.
+      - `set secondaryRole.advanced.triggerByMouse BOOL` if enabled, any mouse (module) activity triggers secondary role immediately.
+      - `set secondaryRole.advanced.safetyMargin <ms, -50 - 50 (INT)>` finetunes sensitivity of the trigger-by-release and trigger-by-press behaviours, so that positive values favor primary role, while negative values favor secondary role. This works by adding the value to the action key (or subtracting from the dual role key). E.g., suppose trigger by release is active, and safetyMargin equal 50. Furthermore assume that dual-role key is released 30ms after the action key. Due to safety margin 50 being greater than 30, the dual-role key is still considered to be released first, and so primary role is activated.
       - `set secondaryRole.advanced.doubletapToPrimary BOOL` allows initiating hold of primary action by doubletap. (Useful if you want a dual key on space.)
       - `set secondaryRole.advanced.doubletapTime <ms, 200 (INT)>` configures the above timeout (measured press-to-press).
 

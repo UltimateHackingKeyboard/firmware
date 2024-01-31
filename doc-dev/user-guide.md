@@ -444,6 +444,33 @@ set secondaryRole.advanced.doubletapToPrimary 1
 set secondaryRole.advanced.doubletapTime 200
 ```
 
+Simple strategy behavior, but via advanced strategy and with timeout on 500ms:
+
+```
+set secondaryRole.defaultStrategy advanced
+set secondaryRole.advanced.timeout 500
+set secondaryRole.advanced.timeoutAction secondary
+set secondaryRole.advanced.safetyMargin 0
+set secondaryRole.advanced.triggerByRelease 0
+set secondaryRole.advanced.triggerByPress 1
+set secondaryRole.advanced.doubletapToPrimary 1
+set secondaryRole.advanced.doubletapTime 200
+```
+
+Full set of advanced strategy config values follows (for copy-paste convenience):
+
+```
+set secondaryRole.defaultStrategy advanced
+set secondaryRole.advanced.timeout 500
+set secondaryRole.advanced.timeoutAction secondary
+set secondaryRole.advanced.safetyMargin 0
+set secondaryRole.advanced.triggerByRelease 0
+set secondaryRole.advanced.triggerByPress 0
+set secondaryRole.advanced.triggerByMouse 0
+set secondaryRole.advanced.doubletapToPrimary 1
+set secondaryRole.advanced.doubletapTime 200
+```
+
 The above configuration will trigger the secondary role whenever the dual-role key is pressed for more than 200ms, i.e., just a very slightly prolonged activation will trigger the secondary role.
 
 Furthermore, this configuration allows you to activate the primary role by double-tap-and-hold. You may want this on your space key, or other primary key that is often used to produce a row of characters.

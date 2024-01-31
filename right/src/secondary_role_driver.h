@@ -79,6 +79,8 @@
     extern uint16_t SecondaryRoles_AdvancedStrategyTimeout;
     extern int16_t SecondaryRoles_AdvancedStrategySafetyMargin;
     extern bool SecondaryRoles_AdvancedStrategyTriggerByRelease;
+    extern bool SecondaryRoles_AdvancedStrategyTriggerByPress;
+    extern bool SecondaryRoles_AdvancedStrategyTriggerByMouse;
     extern bool SecondaryRoles_AdvancedStrategyDoubletapToPrimary;
     extern secondary_role_state_t SecondaryRoles_AdvancedStrategyTimeoutAction;
 
