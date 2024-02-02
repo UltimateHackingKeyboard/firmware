@@ -1,7 +1,7 @@
 extern "C"
 {
-#include <device.h>
 #include "keyboard/key_scanner.h"
+#include <device.h>
 #include <zephyr/kernel.h>
 }
 #include "command_app.hpp"
@@ -10,10 +10,10 @@ extern "C"
 #include "gamepad_app.hpp"
 #include "keyboard_app.hpp"
 #include "mouse_app.hpp"
+#include "port/zephyr/udc_mac.hpp"
 #include "usb.hpp"
 #include "usb/df/class/hid.hpp"
 #include "usb/df/device.hpp"
-#include "usb/df/port/zephyr/udc_mac.hpp"
 #include "usb/df/vendor/microsoft_os_extension.hpp"
 #include "usb/df/vendor/microsoft_xinput.hpp"
 
@@ -24,11 +24,6 @@ extern "C"
 
 static K_THREAD_STACK_DEFINE(stack_area, THREAD_STACK_SIZE);
 static struct k_thread thread_data;
-
-void CommandProtocolRxHandler(const uint8_t* data, size_t size) {
-    printk("CommandProtocolRxHandler: data[0]:%u size:%d\n", data[0], size);
-//    CommandProtocolTx(data, size);
-}
 
 constexpr usb::product_info prinfo{0x1D50, "Ultimage Gadget Laboratories", USB_DEVICE_PRODUCT_ID,
                                    DEVICE_NAME, usb::version("1.0")};

@@ -1,5 +1,6 @@
 #include "keyboard_app.hpp"
 #include "hid/report_protocol.hpp"
+#include <zephyr/sys/printk.h>
 
 const hid::report_protocol& keyboard_app::report_protocol()
 {
@@ -186,9 +187,10 @@ void keyboard_app::set_report(hid::report::type type, const std::span<const uint
     // only one report is receivable, the LEDs
     // offset it if report ID is not present due to BOOT protocol
     auto& leds = *reinterpret_cast<const decltype(leds_buffer_.leds)*>(
-        data.data() - (1 - static_cast<size_t>(prot_)));
+        data.data() + static_cast<size_t>(prot_));
 
     // TODO use LEDs bitfields
+    printk("keyboard LED status: %x\n", leds);
 
     // always keep receiving new reports
     // if the report data is processed immediately, the same buffer can be used

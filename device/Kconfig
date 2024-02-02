@@ -1,5 +1,7 @@
 source "Kconfig.zephyr"
 
+rsource "c2usb/c2usb/port/zephyr/Kconfig"
+
 config DEVICE_ID
     int "UHK device id"
     default 0
