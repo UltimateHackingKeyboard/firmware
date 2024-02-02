@@ -79,6 +79,15 @@ void Macros_SignalInterrupt()
     }
 }
 
+void Macros_SignalUsbReportsChange()
+{
+    for (uint8_t i = 0; i < MACRO_STATE_POOL_SIZE; i++) {
+        if (MacroState[i].ms.macroPlaying && MacroState[i].ms.macroInterrupted) {
+            MacroState[i].ms.oneShotUsbChangeDetected = true;
+        }
+    }
+}
+
 macro_result_t Macros_GoToAddress(uint8_t address)
 {
     if(address == S->ls->ms.commandAddress) {

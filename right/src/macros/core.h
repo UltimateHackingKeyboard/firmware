@@ -151,6 +151,7 @@
             uint8_t postponeNextNCommands;
             uint8_t nextSlot;
             uint8_t oneShotState : 2;
+            bool oneShotUsbChangeDetected : 1;
             bool macroInterrupted : 1;
             bool macroSleeping : 1;
             bool macroBroken : 1;
@@ -280,6 +281,7 @@
     void Macros_Initialize();
     void Macros_ResetBasicKeyboardReports();
     void Macros_SignalInterrupt(void);
+    void Macros_SignalUsbReportsChange();
     void Macros_ValidateAllMacros();
 
 #define WAKE_MACROS_ON_KEYSTATE_CHANGE()  if (Macros_WakeMeOnKeystateChange) { \

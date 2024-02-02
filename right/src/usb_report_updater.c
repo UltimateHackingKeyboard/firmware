@@ -565,6 +565,9 @@ void UpdateUsbReports(void)
 
     updateLedSleepModeState();
 
+    bool usbReportsChanged = false;
+    bool usbMouseButtonsChanged = false;
+
     if (UsbBasicKeyboardCheckReportReady() == kStatus_USB_Success) {
         MacroRecorder_RecordBasicReport(ActiveUsbBasicKeyboardReport);
 
@@ -585,6 +588,7 @@ void UpdateUsbReports(void)
                 UsbReportUpdateSemaphore &= ~(1 << USB_BASIC_KEYBOARD_INTERFACE_INDEX);
             }
         }
+        usbReportsChanged = true;
         lastReportTime = CurrentTime;
         lastActivityTime = CurrentTime;
     }
@@ -596,6 +600,7 @@ void UpdateUsbReports(void)
             UsbReportUpdateSemaphore &= ~(1 << USB_MEDIA_KEYBOARD_INTERFACE_INDEX);
         }
         lastActivityTime = CurrentTime;
+        usbReportsChanged = true;
     }
 
     if (UsbSystemKeyboardCheckReportReady() == kStatus_USB_Success) {
@@ -605,14 +610,20 @@ void UpdateUsbReports(void)
             UsbReportUpdateSemaphore &= ~(1 << USB_SYSTEM_KEYBOARD_INTERFACE_INDEX);
         }
         lastActivityTime = CurrentTime;
+        usbReportsChanged = true;
     }
 
-    if (UsbMouseCheckReportReady() == kStatus_USB_Success) {
+    if (UsbMouseCheckReportReady(&usbMouseButtonsChanged) == kStatus_USB_Success) {
         UsbReportUpdateSemaphore |= 1 << USB_MOUSE_INTERFACE_INDEX;
         usb_status_t status = UsbMouseAction();
         if (status != kStatus_USB_Success) {
             UsbReportUpdateSemaphore &= ~(1 << USB_MOUSE_INTERFACE_INDEX);
         }
         lastActivityTime = CurrentTime;
+        usbReportsChanged |= usbMouseButtonsChanged;
+    }
+
+    if (usbReportsChanged) {
+        Macros_SignalUsbReportsChange();
     }
 }
