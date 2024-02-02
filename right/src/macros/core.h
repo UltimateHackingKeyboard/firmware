@@ -70,7 +70,7 @@
             } ATTR_PACKED key;
             struct {
                 macro_sub_action_t action;
-                uint8_t mouseButtonsMask;
+                uint32_t mouseButtonsMask : 24;
             } ATTR_PACKED mouseButton;
             struct {
                 int16_t x;

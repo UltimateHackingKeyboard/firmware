@@ -42,6 +42,18 @@
         MouseButton_6      = 1 << 5,
         MouseButton_7      = 1 << 6,
         MouseButton_8      = 1 << 7,
+        MouseButton_9      = 1 << 8,
+        MouseButton_10      = 1 << 9,
+        MouseButton_11      = 1 << 10,
+        MouseButton_12      = 1 << 11,
+        MouseButton_13      = 1 << 12,
+        MouseButton_14      = 1 << 13,
+        MouseButton_15      = 1 << 14,
+        MouseButton_16      = 1 << 15,
+        MouseButton_17      = 1 << 16,
+        MouseButton_18      = 1 << 17,
+        MouseButton_19      = 1 << 18,
+        MouseButton_20      = 1 << 19,
     } mouse_button_t;
 
     typedef struct {

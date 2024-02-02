@@ -28,7 +28,7 @@
     // reports to the boot protocol format when the host has set boot protocol
     // mode.
     typedef struct {
-        uint8_t buttons;
+        uint32_t buttons : 24;
         int16_t x;
         int16_t y;
         int8_t wheelY;
