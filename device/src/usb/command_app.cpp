@@ -1,14 +1,19 @@
 #include "command_app.hpp"
 #include "hid/rdf/descriptor.hpp"
 #include "hid/report_protocol.hpp"
-
-extern "C" void CommandProtocolRxHandler(const uint8_t* data, size_t size);
-
-void __attribute__((weak)) CommandProtocolRxHandler(const uint8_t* data, size_t size) {}
+#include "zephyr/sys/printk.h"
 
 extern "C" bool CommandProtocolTx(const uint8_t* data, size_t size)
 {
     return command_app::handle().send(std::span<const uint8_t>(data, size));
+}
+
+extern "C" void CommandProtocolRxHandler(const uint8_t* data, size_t size);
+
+void __attribute__((weak)) CommandProtocolRxHandler(const uint8_t* data, size_t size)
+{
+    printk("CommandProtocolRxHandler: data[0]:%u size:%d\n", data[0], size);
+    CommandProtocolTx(data, size);
 }
 
 namespace hid::page

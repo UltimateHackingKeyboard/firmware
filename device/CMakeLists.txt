@@ -28,8 +28,6 @@ if(NOT BOARD STREQUAL "uhk-60-right")
     set(C2USB_PATH "c2usb")
 
     add_subdirectory(${C2USB_PATH})
-    # link c2usb to the abstract Zephyr interface to inherit the build flags
-    target_link_libraries(c2usb zephyr_interface)
 
     # Link app to c2usb
     target_link_libraries(app PRIVATE
