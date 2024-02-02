@@ -1247,7 +1247,7 @@ static macro_result_t processOneShotCommand(parser_context_t* ctx) {
      * Also, we need to prevent the command to go sleeping after this because
      * we would not be woken up.
      * */
-    if (!S->ms.macroInterrupted) {
+    if (!S->ms.macroInterrupted || !S->ms.oneShotUsbChangeDetected) {
         S->ms.oneShotState = 1;
     } else if (S->ms.oneShotState < 3) {
         S->ms.oneShotState++;
