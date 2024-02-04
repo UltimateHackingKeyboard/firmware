@@ -4,6 +4,7 @@
 #include "timer.h"
 #include "math.h"
 #include "debug.h"
+#include "macros/key_timing.h"
 
 /*
  * ## Strategies:
@@ -111,6 +112,8 @@ uint16_t SecondaryRoles_AdvancedStrategyDoubletapTime = 200;
 uint16_t SecondaryRoles_AdvancedStrategyTimeout = 350;
 int16_t SecondaryRoles_AdvancedStrategySafetyMargin = 50;
 bool SecondaryRoles_AdvancedStrategyTriggerByRelease = true;
+bool SecondaryRoles_AdvancedStrategyTriggerByPress = false;
+bool SecondaryRoles_AdvancedStrategyTriggerByMouse = false;
 bool SecondaryRoles_AdvancedStrategyDoubletapToPrimary = true;
 secondary_role_state_t SecondaryRoles_AdvancedStrategyTimeoutAction = SecondaryRoleState_Secondary;
 
@@ -132,18 +135,26 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
         && resolutionKey == previousResolutionKey
         && resolutionStartTime - previousResolutionTime < SecondaryRoles_AdvancedStrategyDoubletapTime
         ) {
+        KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "PA"));
         return SecondaryRoleState_Primary;
     }
 
-    //action key has not been pressed yet -> timeout scenarios
+    int32_t activeTime = (dualRoleRelease == NULL ? CurrentTime : dualRoleRelease->time) - dualRolePressTime;
+
+    // handle timeout when action key is not pressed
     if (actionPress == NULL) {
-        if (dualRoleRelease != NULL) {
+        if (dualRoleRelease != NULL && activeTime < SecondaryRoles_AdvancedStrategyTimeout) {
+            //activate primary
+            KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "PB"));
             return SecondaryRoleState_Primary;
-        } else if (CurrentTime - dualRolePressTime > SecondaryRoles_AdvancedStrategyTimeout) {
+        } else if (activeTime >= SecondaryRoles_AdvancedStrategyTimeout) {
+            //activate secondary
             switch (SecondaryRoles_AdvancedStrategyTimeoutAction) {
             case SecondaryRoleState_Primary:
+                KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "PC"));
                 return SecondaryRoleState_Primary;
             case SecondaryRoleState_Secondary:
+                KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "SC"));
                 return SecondaryRoleState_Secondary;
             default:
                 return SecondaryRoleState_DontKnowYet;
@@ -153,34 +164,69 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
         }
     }
 
+    //handle trigger by press
+    if (SecondaryRoles_AdvancedStrategyTriggerByPress) {
+        bool actionKeyWasPressedButDualkeyNot = actionPress != NULL && dualRoleRelease == NULL && (int32_t)(CurrentTime - actionPress->time) > SecondaryRoles_AdvancedStrategySafetyMargin;
+        bool actionKeyWasPressedFirst = actionPress != NULL && dualRoleRelease != NULL && actionPress->time <= dualRoleRelease->time - SecondaryRoles_AdvancedStrategySafetyMargin;
+        if (actionKeyWasPressedButDualkeyNot || actionKeyWasPressedFirst) {
+            KEY_TIMING2(actionKeyWasPressedButDualkeyNot, KeyTiming_RecordComment(resolutionKey, "SE"));
+            KEY_TIMING2(actionKeyWasPressedFirst, KeyTiming_RecordComment(resolutionKey, "SF"));
+            return SecondaryRoleState_Secondary;
+        }
+
+        bool dualKeyWasPressedButActionKeyNot = dualRoleRelease != NULL && (actionPress == NULL && (int32_t)(CurrentTime - dualRoleRelease->time) > -SecondaryRoles_AdvancedStrategySafetyMargin);
+        bool dualKeyWasPressedFirst = actionPress != NULL && dualRoleRelease != NULL && actionPress->time >= dualRoleRelease->time - SecondaryRoles_AdvancedStrategySafetyMargin;
+        if (dualKeyWasPressedFirst || dualKeyWasPressedButActionKeyNot) {
+            KEY_TIMING2(dualKeyWasPressedButActionKeyNot, KeyTiming_RecordComment(resolutionKey, "PE"));
+            KEY_TIMING2(dualKeyWasPressedFirst, KeyTiming_RecordComment(resolutionKey, "PF"));
+            return SecondaryRoleState_Primary;
+        }
+    }
+
     //handle trigger by release
     if (SecondaryRoles_AdvancedStrategyTriggerByRelease) {
         bool actionKeyWasReleasedButDualkeyNot = actionRelease != NULL && (dualRoleRelease == NULL && (int32_t)(CurrentTime - actionRelease->time) > SecondaryRoles_AdvancedStrategySafetyMargin);
-        bool actionKeyWasReleasedFirst = actionRelease != NULL && dualRoleRelease != NULL && (actionRelease->time < dualRoleRelease->time - SecondaryRoles_AdvancedStrategySafetyMargin);
+        bool actionKeyWasReleasedFirst = actionRelease != NULL && dualRoleRelease != NULL && actionRelease->time <= dualRoleRelease->time - SecondaryRoles_AdvancedStrategySafetyMargin;
 
         if (actionKeyWasReleasedFirst || actionKeyWasReleasedButDualkeyNot) {
+            KEY_TIMING2(actionKeyWasReleasedButDualkeyNot, KeyTiming_RecordComment(resolutionKey, "SG"));
+            KEY_TIMING2(actionKeyWasReleasedFirst, KeyTiming_RecordComment(resolutionKey, "SH"));
             return SecondaryRoleState_Secondary;
         }
-    }
 
-    int32_t activeTime = (dualRoleRelease == NULL ? CurrentTime : dualRoleRelease->time) - dualRolePressTime;
-
-    if (activeTime > SecondaryRoles_AdvancedStrategyTimeout + SecondaryRoles_AdvancedStrategySafetyMargin) {
-        return SecondaryRoleState_Secondary;
-    } else {
-        if (dualRoleRelease != NULL) {
+        bool dualKeyWasReleasedButActionKeyNot = dualRoleRelease != NULL && (actionRelease == NULL && (int32_t)(CurrentTime - dualRoleRelease->time) > -SecondaryRoles_AdvancedStrategySafetyMargin);
+        bool dualKeyWasReleasedFirst = actionRelease != NULL && dualRoleRelease != NULL && actionRelease->time >= dualRoleRelease->time - SecondaryRoles_AdvancedStrategySafetyMargin;
+        if (dualKeyWasReleasedFirst | dualKeyWasReleasedButActionKeyNot) {
+            KEY_TIMING2(dualKeyWasReleasedButActionKeyNot, KeyTiming_RecordComment(resolutionKey, "PG"));
+            KEY_TIMING2(dualKeyWasReleasedFirst, KeyTiming_RecordComment(resolutionKey, "PH"));
             return SecondaryRoleState_Primary;
-        } else {
-            return SecondaryRoleState_DontKnowYet;
         }
     }
+
+    bool triggerBehaviorsActive = SecondaryRoles_AdvancedStrategyTriggerByRelease || SecondaryRoles_AdvancedStrategyTriggerByPress;
+
+    // handle timeout when action key is pressed
+    if (activeTime >= SecondaryRoles_AdvancedStrategyTimeout) {
+        KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "SJ"));
+        return SecondaryRoleState_Secondary;
+    }
+
+    // handle primary press when action key is pressed and trigger behaviors are off
+    if (dualRoleRelease != NULL && !triggerBehaviorsActive && activeTime < SecondaryRoles_AdvancedStrategyTimeout) {
+        KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "PJ"));
+        return SecondaryRoleState_Primary;
+    }
+
+    return SecondaryRoleState_DontKnowYet;
 }
 
 static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowSimple()
 {
     if (PostponerQuery_PendingKeypressCount() > 0 && !PostponerQuery_IsKeyReleased(resolutionKey)) {
+        KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "SK"));
         return SecondaryRoleState_Secondary;
     } else if (PostponerQuery_IsKeyReleased(resolutionKey) /*assume PostponerQuery_PendingKeypressCount() == 0, but gather race conditions too*/) {
+        KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "PK"));
         return SecondaryRoleState_Primary;
     } else {
         return SecondaryRoleState_DontKnowYet;
@@ -196,6 +242,7 @@ static secondary_role_state_t resolveCurrentKey(secondary_role_strategy_t strate
     case SecondaryRoleState_DontKnowYet:
         if (activateSecondaryImmediately) {
             activateSecondaryImmediately = false;
+            KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "SM"));
             return SecondaryRoleState_Secondary;
         }
         switch (strategy) {
@@ -210,13 +257,25 @@ static secondary_role_state_t resolveCurrentKey(secondary_role_strategy_t strate
     }
 }
 
-static secondary_role_state_t startResolution(key_state_t *keyState)
+static secondary_role_state_t startResolution(key_state_t *keyState, secondary_role_strategy_t strategy)
 {
     previousResolutionKey = resolutionKey;
     previousResolutionTime = resolutionStartTime;
     resolutionKey = keyState;
     resolutionStartTime = CurrentPostponedTime;
-    PostponerExtended_BlockMouse();
+
+    switch (strategy) {
+        case SecondaryRoleStrategy_Simple:
+            PostponerExtended_BlockMouse();
+            break;
+        default:
+        case SecondaryRoleStrategy_Advanced:
+            if (SecondaryRoles_AdvancedStrategyTriggerByMouse) {
+                PostponerExtended_BlockMouse();
+            }
+            break;
+    }
+
     return SecondaryRoleState_DontKnowYet;
 }
 
@@ -224,7 +283,6 @@ void SecondaryRoles_ActivateSecondaryImmediately() {
     if (resolutionState == SecondaryRoleState_DontKnowYet) {
         activateSecondaryImmediately = true;
     }
-
 }
 
 secondary_role_result_t SecondaryRoles_ResolveState(key_state_t* keyState, secondary_role_t rolePreview, secondary_role_strategy_t strategy, bool isNewResolution)
@@ -236,7 +294,7 @@ secondary_role_result_t SecondaryRoles_ResolveState(key_state_t* keyState, secon
 
     if (isNewResolution) {
         //start new resolution
-        resolutionState = startResolution(keyState);
+        resolutionState = startResolution(keyState, strategy);
         resolutionState = resolveCurrentKey(strategy);
         return (secondary_role_result_t){
             .state = resolutionState,

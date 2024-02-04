@@ -147,3 +147,13 @@ uint8_t MacroKeyIdParser_TryConsumeKeyId(parser_context_t* ctx)
 
     return record->keyId;
 }
+
+const char* MacroKeyIdParser_KeyIdToAbbreviation(uint8_t keyId)
+{
+    for (uint8_t i = 0; i < lookup_size - 1; i++) {
+        if (lookup_table[i].keyId == keyId) {
+            return lookup_table[i].id;
+        }
+    }
+    return "?";
+}

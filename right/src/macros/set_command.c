@@ -283,6 +283,12 @@ static macro_variable_t secondaryRoleAdvanced(parser_context_t* ctx, set_command
     else if (ConsumeToken(ctx, "triggerByRelease")) {
         ASSIGN_BOOL(SecondaryRoles_AdvancedStrategyTriggerByRelease);
     }
+    else if (ConsumeToken(ctx, "triggerByPress")) {
+        ASSIGN_BOOL(SecondaryRoles_AdvancedStrategyTriggerByPress);
+    }
+    else if (ConsumeToken(ctx, "triggerByMouse")) {
+        ASSIGN_BOOL(SecondaryRoles_AdvancedStrategyTriggerByMouse);
+    }
     else if (ConsumeToken(ctx, "doubletapToPrimary")) {
         ASSIGN_BOOL(SecondaryRoles_AdvancedStrategyDoubletapToPrimary);
     }

@@ -72,6 +72,11 @@ static void setStatusChar(char n)
         return;
     }
 
+    if (n && statusBufferLen == STATUS_BUFFER_MAX_LENGTH) {
+        memcpy(statusBuffer, &statusBuffer[STATUS_BUFFER_MAX_LENGTH/2], STATUS_BUFFER_MAX_LENGTH/2);
+        statusBufferLen = STATUS_BUFFER_MAX_LENGTH/2;
+    }
+
     if (n && statusBufferLen < STATUS_BUFFER_MAX_LENGTH) {
         statusBuffer[statusBufferLen] = n;
         statusBufferLen++;
@@ -274,7 +279,7 @@ void Macros_ReportErrorPrintf(const char* pos, const char *fmt, ...)
     va_list myargs;
     va_start(myargs, fmt);
     char buffer[256];
-    vsprintf(buffer, fmt, myargs);
+    sprintf(buffer, fmt, myargs);
     Macros_ReportError(buffer, pos, pos);
 
 }
