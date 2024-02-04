@@ -45,7 +45,10 @@ I.e., if you want to customize the acceleration driver for your trackball module
 ## Macro commands
 
 The following grammar is supported:
-
+    
+    #########################
+    # GENERAL FUNCTIONALITY #
+    #########################
     BODY = //<comment>
     BODY = [LABEL:] COMMAND [//<comment>]
     COMMAND = [CONDITION|MODIFIER]* COMMAND
@@ -217,8 +220,9 @@ The following grammar is supported:
     SCANCODE_ABBREV = mediaVolumeMute | mediaVolumeUp | mediaVolumeDown | mediaRecord | mediaFastForward | mediaRewind | mediaNext | mediaPrevious | mediaStop | mediaPlayPause | mediaPause
     SCANCODE_ABBREV = systemPowerDown | systemSleep | systemWakeUp
     SCANCODE_ABBREV = mouseBtnLeft | mouseBtnRight | mouseBtnMiddle | mouseBtn4 | mouseBtn5 | mouseBtn6 | mouseBtn7 | mouseBtn8
-    KEYID = INT | KEYID_ABBREV
-    KEYID_ABBREV = ' | , | - | . | / | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | ; | = | [ | ] | `
+    KEYID = INT | KEYID_ABBREV | KEYID_ABBREV_BRACKETS
+    KEYID_ABBREV_BRACKETS = [ | ]
+    KEYID_ABBREV = ' | , | - | . | / | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | ; | = | `
     KEYID_ABBREV = a | q | w | e | r | t | y | u | i | o | p | a | s | d | f | g | h | j | k | l | z | x | c | v | b | n | m
     KEYID_ABBREV = apostropheAndQuote | backspace | capsLock | closingBracketAndClosingBrace | commaAndLessThanSign | dotAndGreaterThanSign | enter
     KEYID_ABBREV = equalAndPlus | graveAccentAndTilde | isoKey | semicolonAndColon | slashAndQuestionMark | tab | minusAndUnderscore | openingBracketAndOpeningBrace
@@ -226,9 +230,9 @@ The following grammar is supported:
     KEYID_ABBREV = leftModule.key1 | leftModule.key2 | leftModule.key3 | leftModule.leftButton | leftModule.middleButton | leftModule.rightButton
     KEYID_ABBREV = rightAlt | rightCtrl | rightFn | rightMod | rightShift | rightSpace | rightSuper | rightModule.leftButton | rightModule.rightButton
     MACRONAME = <Case sensitive macro identifier as named in Agent. Identifier shall not contain spaces.>
-    ###################
-    #DEVELOPMENT TOOLS#
-    ###################
+    #####################
+    # DEVELOPMENT TOOLS #
+    #####################
     COMMAND = stopAllMacros
     COMMAND = statsRuntime
     COMMAND = statsLayerStack
@@ -241,17 +245,17 @@ The following grammar is supported:
     COMMAND = clearStatus
     COMMAND = set setEmergencyKey KEYID
     COMMAND = validateUserConfig
-    ############
-    #DEPRECATED#
-    ############
+    ##############
+    # DEPRECATED #
+    ##############
     COMMAND = set macroEngine.scheduler {blocking|preemptive}
     COMMAND = set doubletapDelay <time in ms, at most 65535, alias to doubletapTimeout (INT)>
     COMMAND = set modifierLayerTriggers.{control} {left|right|both}
     COMMAND = untoggleLayer
     LAYERID = control
-    #########
-    #REMOVED#
-    #########
+    ###########
+    # REMOVED #
+    ###########
     INT = #<register idx (INT)> | #key | @<relative macro action index(INT)> | %<key idx in postponer queue (INT)>
     CONDITION = {ifRegEq | ifNotRegEq | ifRegGt | ifRegLt} <register index (INT)> <value (INT)>
     COMMAND = resolveNextKeyEq <queue position (INT)> KEYID {<time in ms>|untilRelease} <action adr (ADDRESS)> <action adr (ADDRESS)>
