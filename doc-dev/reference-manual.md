@@ -85,7 +85,7 @@ The following grammar is supported:
     COMMAND = {exec|call|fork} MACRONAME
     COMMAND = resetTrackpoint
     COMMAND = printStatus
-    COMMAND = setLedTxt <timeout (INT)> { STRING | EXPRESSION }
+    COMMAND = setLedTxt <timeout (INT)> { STRING | VALUE }
     COMMAND = write STRING
     COMMAND = goTo <index (ADDRESS)>
     COMMAND = repeatFor <var name (IDENTIFIER)> <action adr (ADDRESS)>
@@ -120,12 +120,12 @@ The following grammar is supported:
     COMMAND = set secondaryRole.defaultStrategy { simple | advanced }
     COMMAND = set secondaryRole.advanced.timeout <ms, 0-500 (INT)>
     COMMAND = set secondaryRole.advanced.timeoutAction { primary | secondary }
-    COMMAND = set secondaryRole.advanced.safetyMargin <ms, -50 - 50 (INT)>
+    COMMAND = set secondaryRole.advanced.safetyMargin <ms, -50-50 (INT)>
     COMMAND = set secondaryRole.advanced.triggerByPress BOOL
     COMMAND = set secondaryRole.advanced.triggerByRelease BOOL
     COMMAND = set secondaryRole.advanced.triggerByMouse BOOL
     COMMAND = set secondaryRole.advanced.doubletapToPrimary BOOL
-    COMMAND = set secondaryRole.advanced.doubletapTime <ms, 0 - 500 (INT)>
+    COMMAND = set secondaryRole.advanced.doubletapTime <ms, 0-500 (INT)>
     COMMAND = set mouseKeys.{move|scroll}.initialSpeed <px/s, -100/20 (INT)>
     COMMAND = set mouseKeys.{move|scroll}.baseSpeed <px/s, -800/20 (INT)>
     COMMAND = set mouseKeys.{move|scroll}.initialAcceleration <px/s, ~1700/20 (INT)>
@@ -196,7 +196,7 @@ The following grammar is supported:
     STRING = "<interpolated string>" | '<literal string>'
     IDENTIFIER = [a-zA-Z0-9_]+
     CHAR = <any nonwhite ascii char>
-    LABEL = <string identifier>
+    LABEL = <label (IDENTIFIER)>
     MODMASK = [MODMASK]+ | [L|R]{S|C|A|G} | {p|r|h|t} | {s|i|o}
     NAVIGATION_MODE = cursor | scroll | caret | media | zoom | zoomPc | zoomMac | none
     NAVIGATION_MODE_CUSTOM = caret | media | zoomPc | zoomMac
@@ -234,7 +234,7 @@ The following grammar is supported:
     KEYID_ABBREV = leftAlt | leftCtrl | leftFn | leftMod | leftMouse | leftShift | leftSpace | leftSuper
     KEYID_ABBREV = leftModule.key1 | leftModule.key2 | leftModule.key3 | leftModule.leftButton | leftModule.middleButton | leftModule.rightButton
     KEYID_ABBREV = rightAlt | rightCtrl | rightFn | rightMod | rightShift | rightSpace | rightSuper | rightModule.leftButton | rightModule.rightButton
-    MACRONAME = <Case sensitive macro identifier as named in Agent. Identifier shall not contain spaces.>
+    MACRONAME = <macro name (IDENTIFIER)>
     #####################
     # DEVELOPMENT TOOLS #
     #####################
