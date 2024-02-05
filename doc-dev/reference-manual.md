@@ -46,6 +46,7 @@ I.e., if you want to customize the acceleration driver for your trackball module
 
 The following grammar is supported:
     
+```
     #########################
     # GENERAL FUNCTIONALITY #
     #########################
@@ -86,6 +87,7 @@ The following grammar is supported:
     COMMAND = write STRING
     COMMAND = goTo <index (ADDRESS)>
     COMMAND = repeatFor <var name (IDENTIFIER)> <action adr (ADDRESS)>
+    COMMAND = while (EXPRESSION) COMMAND
     COMMAND = progressHue
     COMMAND = recordMacroDelay
     COMMAND = {startRecording | startRecordingBlind} [<slot identifier (MACROID)>]
@@ -278,6 +280,7 @@ The following grammar is supported:
     COMMAND = setDebounceDelay <time in ms, at most 250 (INT)>
     COMMAND = setKeystrokeDelay <time in ms, at most 65535 (INT)>
     COMMAND = setEmergencyKey KEYID
+```
 
 ### Uncategorized commands:
 
