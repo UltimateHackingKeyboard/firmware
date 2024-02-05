@@ -50,8 +50,9 @@ The following grammar is supported:
     #########################
     # GENERAL FUNCTIONALITY #
     #########################
-    BODY = //<comment>
-    BODY = [LABEL:] COMMAND [//<comment>]
+    BODY = [LABEL:] COMMAND [COMMENT]
+    BODY = COMMENT
+    COMMENT = //<comment>
     COMMAND = [CONDITION|MODIFIER]* COMMAND
     COMMAND = {
         COMMAND
