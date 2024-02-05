@@ -50,15 +50,16 @@ The following grammar is supported:
     #########################
     # GENERAL FUNCTIONALITY #
     #########################
-    BODY = [LABEL:] COMMAND [COMMENT]
     BODY = COMMENT
+    BODY = [LABEL:] COMMAND [COMMENT]
+    BODY = CODE_BLOCK
     COMMENT = //<comment>
-    COMMAND = [CONDITION|MODIFIER]* COMMAND
-    COMMAND = {
+    CODE_BLOCK = {
         COMMAND
         COMMAND
         ...
     }
+    COMMAND = [CONDITION|MODIFIER]* COMMAND
     COMMAND = delayUntilRelease
     COMMAND = delayUntil <timeout (INT)>
     COMMAND = delayUntilReleaseMax <timeout (INT)>
