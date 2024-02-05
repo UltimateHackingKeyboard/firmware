@@ -25,7 +25,6 @@
 #include <zephyr/bluetooth/services/bas.h>
 #include <bluetooth/services/hids.h>
 #include <zephyr/bluetooth/services/dis.h>
-#include <dk_buttons_and_leds.h>
 #include "bt_advertise.h"
 #include "bt_hid.h"
 
