@@ -52,13 +52,13 @@ The following grammar is supported:
     #########################
     BODY = COMMENT
     BODY = [LABEL:] COMMAND [COMMENT]
-    BODY = CODE_BLOCK
     COMMENT = //<comment>
     CODE_BLOCK = {
         COMMAND
         COMMAND
         ...
     }
+    COMMAND = CODE_BLOCK
     COMMAND = [CONDITION|MODIFIER]* COMMAND
     COMMAND = delayUntilRelease
     COMMAND = delayUntil <timeout (INT)>
