@@ -45,6 +45,18 @@ I.e., if you want to customize the acceleration driver for your trackball module
 ## Macro commands
 
 The following grammar is supported:
+
+Operator | syntax
+ --- | ---
+rules - need to be expanded | `UPPERCASE_IDENTIFIERS`
+obligatory group | `{ ... }`
+optional group | `[ ... ]`
+one or more | `[ ... ]+`
+any number | `[ ... ]*`
+choice | `A \| B`
+resolved text | `text`
+human-readable description | `<hint>`
+human-readable description, backed by a specific rule | `<hint (RULE)>`
     
 ```
 #########################
@@ -194,7 +206,7 @@ BOOL = PARENTHESSED_EXPRESSION | VARIABLE_EXPANSION | 0 | 1
 FLOAT = PARENTHESSED_EXPRESSION | VARIABLE_EXPANSION | [0-9]*.[0-9]+ | -FLOAT
 VALUE = INT | BOOL | FLOAT
 STRING = "<interpolated string>" | '<literal string>'
-IDENTIFIER = [a-zA-Z0-9_]+
+IDENTIFIER = [a-zA-Z_][a-zA-Z0-9_]*
 CHAR = <any nonwhite ascii char>
 LABEL = <label (IDENTIFIER)>
 MODMASK = [MODMASK]+ | [L|R]{S|C|A|G} | {p|r|h|t} | {s|i|o}
