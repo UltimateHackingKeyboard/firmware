@@ -57,7 +57,7 @@ choice | `A \| B`
 resolved text | `text`
 human-readable description | `<hint>`
 human-readable description, backed by a specific rule | `<hint (RULE)>`
-    
+
 ```
 #########################
 # GENERAL FUNCTIONALITY #
@@ -198,7 +198,7 @@ IFSHORTCUT_OPTIONS = noConsume | transitive | anyOrder | orGate | timeoutIn <tim
 DIRECTION = {left|right|up|down}
 LAYERID = {fn|mouse|mod|base|fn2|fn3|fn4|fn5|alt|shift|super|ctrl}|last|previous
 LAYERID_BASIC = {fn|mouse|mod|base|fn2|fn3|fn4|fn5}
-KEYMAPID = <short keymap abbreviation>|last
+KEYMAPID = <short keymap abbreviation(IDENTIFIER)>|last
 MACROID = last | <single char slot identifier(CHAR)> | <single number slot identifier(INT)>
 OPERATOR = + | - | * | / | % | < | > | <= | >= | == | != | && | ||
 VARIABLE_EXPANSION = $<variable name(IDENTIFIER)> | $<config value name> | $currentAddress | $thisKeyId | $queuedKeyId.<queue index (INT)> | $keyId.KEYID_ABBREV
@@ -218,7 +218,7 @@ NAVIGATION_MODE_CUSTOM = caret | media | zoomPc | zoomMac
 MODULEID = trackball | touchpad | trackpoint | keycluster
 ADDRESS = LABEL | INT
 ACTION = { macro MACRONAME | keystroke SHORTCUT | none }
-SCANCODE = <en-US character> | SCANCODE_ABBREV
+SCANCODE = <en-US character (CHAR)> | SCANCODE_ABBREV
 SHORTCUT = <MODMASK-SCANCODE, e.g. LC-c (COMPOSITE_SHORTCUT)>
 SHORTCUT = <SCANCODE long abbreviation (SCANCODE)> 
 SHORTCUT = <MODMASK, e.g. LS for left shift(MODMASK)> 
@@ -589,7 +589,7 @@ Internally, values are saved in one of the following types, and types are automa
   By default, axis locking is enabled in scroll and discreet modes for right hand modules, and for scroll, caret and media modes for keycluster.
 
   - `axisLockSkew` controls caret axis locking. Defaults to 0.5, valid/reasonable values are 0-100, centered around 1.
-  - `axisLockFirstTickSkew` - same meaning as `axisLockSkew`, but controls how axis locking applies on the first tick. 
+  - `axisLockFirstTickSkew` - same meaning as `axisLockSkew`, but controls how axis locking applies on the first tick.
  non-zero value means that the first tick will require a "push" before the cursor starts moving. Or will require less "force" if the value is greater than 1.
   - `cursorAxisLock BOOL` - turns axis locking on for cursor mode. Not recommended, but possible.
   - `scrollAxisLock BOOL` - turns axis locking on for scroll mode. Default for keycluster trackball.
