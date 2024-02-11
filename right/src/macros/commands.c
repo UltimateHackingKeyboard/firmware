@@ -602,6 +602,16 @@ static bool processIfLayerCommand(parser_context_t* ctx, bool negate)
     return (queryLayerIdx == LayerStack_ActiveLayer) != negate;
 }
 
+
+static bool processIfLayerToggledCommand(parser_context_t* ctx, bool negate)
+{
+    if (Macros_DryRun) {
+        return true;
+    }
+    return (LayerStack_IsLayerToggled()) != negate;
+}
+
+
 static bool processIfCommand(parser_context_t* ctx)
 {
     bool res = Macros_ConsumeBool(ctx);
@@ -1769,6 +1779,16 @@ static macro_result_t processCommand(parser_context_t* ctx)
             }
             else if (ConsumeToken(ctx, "ifNotLayer")) {
                 if (!processIfLayerCommand(ctx, true) && !S->ls->as.currentConditionPassed) {
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
+                }
+            }
+            else if (ConsumeToken(ctx, "ifLayerToggled")) {
+                if (!processIfLayerToggledCommand(ctx, false) && !S->ls->as.currentConditionPassed) {
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
+                }
+            }
+            else if (ConsumeToken(ctx, "ifNotLayerToggled")) {
+                if (!processIfLayerToggledCommand(ctx, true) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }

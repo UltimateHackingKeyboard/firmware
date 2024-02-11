@@ -185,6 +185,7 @@ CONDITION = {ifShift | ifAlt | ifCtrl | ifGui | ifAnyMod | ifNotShift | ifNotAlt
 CONDITION = {ifCapsLockOn | ifNotCapsLockOn | ifScrollLockOn | ifNotScrollLockOn | ifNumLockOn | ifNotNumLockOn}
 CONDITION = {ifKeymap | ifNotKeymap} KEYMAPID
 CONDITION = {ifLayer | ifNotLayer} LAYERID
+CONDITION = {ifLayerToggled | ifNotLayerToggled}
 CONDITION = {ifRecording | ifNotRecording}
 CONDITION = {ifRecordingId | ifNotRecordingId} MACROID
 CONDITION = {ifModuleConnected | ifNotModuleConnected} MODULEID
