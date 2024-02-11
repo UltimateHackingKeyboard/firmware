@@ -460,6 +460,7 @@ Conditions are checked before processing the rest of the command. If the conditi
       - under Linux, scroll lock is disabled by default. As a consequence, the macro event does not trigger.
       - under MacOS, scroll lock dims the screen but does not toggle the scroll lock state. As a consequence, the macro event does not trigger.
 - `{ifKeymap|ifNotKeymap|ifLayer|ifNotLayer} <value>` will test if the current Keymap/Layer equals the first argument.
+- `{ifLayerToggled|ifNotLayerToggled}` will return true if current layer is toggled. It will return true if the toggled layer is on top of the stack, or anywhere else as long as only the same (currently active) layers are above it in the layer stack.
 - `ifRecording/ifNotRecording` and `ifRecordingId/ifNotRecordingId MACROID` test if the runtime macro recorder is in the recording state.
 - `ifShortcut/ifNotShortcut [IFSHORTCUT_OPTIONS]* [KEYID]*` will wait for future keypresses and compare them to the argument. See the postponer mechanism section.
 - `ifGesture/ifNotGesture [IFSHORTCUT_OPTIONS]* [KEYID]*` just as `ifShortcut`, but breaks after 1000ms instead of when the key is released. See the postponer mechanism section.
