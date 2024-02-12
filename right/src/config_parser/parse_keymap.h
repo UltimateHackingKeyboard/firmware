@@ -70,6 +70,7 @@
         SerializedMouseAction_Last = SerializedMouseAction_Button_20,
     } serialized_mouse_action_t;
 
+    // This applies fir < 7.x data model; 7 and above uses base = 0;
     typedef enum {
         SerializedLayerName_mod,
         SerializedLayerName_fn,

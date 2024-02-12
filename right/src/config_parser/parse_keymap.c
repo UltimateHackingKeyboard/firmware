@@ -179,7 +179,9 @@ static parser_error_t parseModule(config_buffer_t *buffer, uint8_t layer, parse_
 
 static parser_error_t parseLayerId(config_buffer_t *buffer, uint8_t layer, layer_id_t* parsedLayerId)
 {
-    if(DataModelMajorVersion >= 5) {
+    if(DataModelMajorVersion >= 7) {
+        *parsedLayerId = ReadUInt8(buffer);
+    } else if(DataModelMajorVersion >= 5) {
         uint8_t layerId = ReadUInt8(buffer);
         switch(layerId) {
         case SerializedLayerName_base:
