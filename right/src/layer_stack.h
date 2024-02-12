@@ -35,5 +35,6 @@
     void LayerStack_LegacyPush(layer_id_t layer);
     void LayerStack_LegacyPop(layer_id_t layer);
     uint8_t LayerStack_FindPreviousLayerRecordIdx();
+    bool LayerStack_IsLayerToggled();
 
 #endif /* SRC_LAYER_SWITCHER_H_ */

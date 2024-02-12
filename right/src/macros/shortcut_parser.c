@@ -7,6 +7,7 @@
 #include "config_parser/config_globals.h"
 #include "macros/shortcut_parser.h"
 #include "str_utils.h"
+#include "debug.h"
 
 typedef enum {
     scType_basic,
@@ -17,11 +18,12 @@ typedef enum {
 
 typedef struct {
     const char* id;
-    uint8_t scancode;
+    uint32_t scancode;
     shortcut_type_t type;
 } lookup_record_t;
 
 static const lookup_record_t* lookup(uint8_t begin, uint8_t end, const char* str, const char* strEnd);
+
 
 char MacroShortcutParser_ScancodeToCharacter(uint16_t scancode)
 {
@@ -29,7 +31,7 @@ char MacroShortcutParser_ScancodeToCharacter(uint16_t scancode)
         case HID_KEYBOARD_SC_A ... HID_KEYBOARD_SC_Z:
             return scancode - HID_KEYBOARD_SC_A + 'a';
         default:
-            return ' ';
+            return DEFAULT_SCANCODE_ABBREVIATION;
     }
 }
 
@@ -296,13 +298,25 @@ static const lookup_record_t lookup_table[] = {
         {"menu", HID_KEYBOARD_SC_MENU, scType_basic},
         {"minusAndUnderscore", HID_KEYBOARD_SC_MINUS_AND_UNDERSCORE, scType_basic},
         {"mouseBtn1", MouseButton_Left, scType_mouseBtn},
+        {"mouseBtn10", MouseButton_10, scType_mouseBtn},
+        {"mouseBtn11", MouseButton_11, scType_mouseBtn},
+        {"mouseBtn12", MouseButton_12, scType_mouseBtn},
+        {"mouseBtn13", MouseButton_13, scType_mouseBtn},
+        {"mouseBtn14", MouseButton_14, scType_mouseBtn},
+        {"mouseBtn15", MouseButton_15, scType_mouseBtn},
+        {"mouseBtn16", MouseButton_16, scType_mouseBtn},
+        {"mouseBtn17", MouseButton_17, scType_mouseBtn},
+        {"mouseBtn18", MouseButton_18, scType_mouseBtn},
+        {"mouseBtn19", MouseButton_19, scType_mouseBtn},
         {"mouseBtn2", MouseButton_Right, scType_mouseBtn},
+        {"mouseBtn20", MouseButton_20, scType_mouseBtn},
         {"mouseBtn3", MouseButton_Middle, scType_mouseBtn},
         {"mouseBtn4", MouseButton_4, scType_mouseBtn},
         {"mouseBtn5", MouseButton_5, scType_mouseBtn},
         {"mouseBtn6", MouseButton_6, scType_mouseBtn},
         {"mouseBtn7", MouseButton_7, scType_mouseBtn},
         {"mouseBtn8", MouseButton_8, scType_mouseBtn},
+        {"mouseBtn9", MouseButton_9, scType_mouseBtn},
         {"mouseBtnLeft", MouseButton_Left, scType_mouseBtn},
         {"mouseBtnMiddle", MouseButton_Middle, scType_mouseBtn},
         {"mouseBtnRight", MouseButton_Right, scType_mouseBtn},
@@ -512,6 +526,30 @@ static serialized_mouse_action_t mouseBtnToSerializedMouseAction(mouse_button_t 
             return SerializedMouseAction_Button_7;
         case MouseButton_8:
             return SerializedMouseAction_Button_8;
+        case MouseButton_9:
+            return SerializedMouseAction_Button_9;
+        case MouseButton_10:
+            return SerializedMouseAction_Button_10;
+        case MouseButton_11:
+            return SerializedMouseAction_Button_11;
+        case MouseButton_12:
+            return SerializedMouseAction_Button_12;
+        case MouseButton_13:
+            return SerializedMouseAction_Button_13;
+        case MouseButton_14:
+            return SerializedMouseAction_Button_14;
+        case MouseButton_15:
+            return SerializedMouseAction_Button_15;
+        case MouseButton_16:
+            return SerializedMouseAction_Button_16;
+        case MouseButton_17:
+            return SerializedMouseAction_Button_17;
+        case MouseButton_18:
+            return SerializedMouseAction_Button_18;
+        case MouseButton_19:
+            return SerializedMouseAction_Button_19;
+        case MouseButton_20:
+            return SerializedMouseAction_Button_20;
         default:
             Macros_ReportErrorNum("Unknown button encountered:", btn, NULL);
             return 0;

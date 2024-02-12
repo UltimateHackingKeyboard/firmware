@@ -54,7 +54,20 @@
         SerializedMouseAction_Button_6,
         SerializedMouseAction_Button_7,
         SerializedMouseAction_Button_8,
-        SerializedMouseAction_Last = SerializedMouseAction_Button_8,
+        SerializedMouseAction_Button_9,
+        SerializedMouseAction_Button_10,
+        SerializedMouseAction_Button_11,
+        SerializedMouseAction_Button_12,
+        SerializedMouseAction_Button_13,
+        SerializedMouseAction_Button_14,
+        SerializedMouseAction_Button_15,
+        SerializedMouseAction_Button_16,
+        SerializedMouseAction_Button_17,
+        SerializedMouseAction_Button_18,
+        SerializedMouseAction_Button_19,
+        SerializedMouseAction_Button_20,
+        SerializedMouseAction_Button_Last = SerializedMouseAction_Button_20,
+        SerializedMouseAction_Last = SerializedMouseAction_Button_20,
     } serialized_mouse_action_t;
 
     typedef enum {

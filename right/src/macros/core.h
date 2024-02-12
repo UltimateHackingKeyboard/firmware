@@ -70,7 +70,7 @@
             } ATTR_PACKED key;
             struct {
                 macro_sub_action_t action;
-                uint8_t mouseButtonsMask;
+                uint32_t mouseButtonsMask : 24;
             } ATTR_PACKED mouseButton;
             struct {
                 int16_t x;
@@ -151,6 +151,7 @@
             uint8_t postponeNextNCommands;
             uint8_t nextSlot;
             uint8_t oneShotState : 2;
+            bool oneShotUsbChangeDetected : 1;
             bool macroInterrupted : 1;
             bool macroSleeping : 1;
             bool macroBroken : 1;
@@ -247,7 +248,6 @@
     extern uint16_t AutoRepeatInitialDelay;
     extern uint16_t AutoRepeatDelayRate;
     extern bool Macros_ParserError;
-    extern bool RecordKeyTiming;
     extern bool Macros_DryRun;
     extern bool Macros_ValidationInProgress;
 
@@ -279,6 +279,7 @@
     void Macros_Initialize();
     void Macros_ResetBasicKeyboardReports();
     void Macros_SignalInterrupt(void);
+    void Macros_SignalUsbReportsChange();
     void Macros_ValidateAllMacros();
 
 #define WAKE_MACROS_ON_KEYSTATE_CHANGE()  if (Macros_WakeMeOnKeystateChange) { \

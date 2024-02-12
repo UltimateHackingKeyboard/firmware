@@ -1,6 +1,7 @@
 #include "macros/core.h"
 #include "macros/status_buffer.h"
 #include "macros/debug_commands.h"
+#include "macros/key_timing.h"
 #include "utils.h"
 #include "layer_stack.h"
 #include "postponer.h"

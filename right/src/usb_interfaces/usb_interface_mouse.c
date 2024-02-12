@@ -51,13 +51,17 @@ usb_status_t UsbMouseCheckIdleElapsed()
     return kStatus_USB_Busy;
 }
 
-usb_status_t UsbMouseCheckReportReady()
+usb_status_t UsbMouseCheckReportReady(bool* buttonsChanged)
 {
     // Send out the mouse position and wheel values continuously if the report is not zeros, but only send the mouse button states when they change.
     if ((memcmp(ActiveUsbMouseReport, GetInactiveUsbMouseReport(), sizeof(usb_mouse_report_t)) != 0) ||
             ActiveUsbMouseReport->x || ActiveUsbMouseReport->y ||
-            ActiveUsbMouseReport->wheelX || ActiveUsbMouseReport->wheelY)
+            ActiveUsbMouseReport->wheelX || ActiveUsbMouseReport->wheelY) {
+        if (buttonsChanged != NULL) {
+            *buttonsChanged = ActiveUsbMouseReport->buttons != GetInactiveUsbMouseReport()->buttons;
+        }
         return kStatus_USB_Success;
+    }
 
     return UsbMouseCheckIdleElapsed();
 }
