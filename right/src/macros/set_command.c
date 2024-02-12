@@ -294,7 +294,7 @@ static macro_variable_t secondaryRoleAdvanced(parser_context_t* ctx, set_command
     }
     else if (ConsumeToken(ctx, "doubletapTime")) {
         DEFINE_INT_LIMITS(0, 65535);
-        ASSIGN_INT(SecondaryRoles_AdvancedStrategyDoubletapTime);
+        ASSIGN_INT(SecondaryRoles_AdvancedStrategyDoubletapTimeout);
     }
     else {
         Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);

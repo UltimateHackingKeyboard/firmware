@@ -108,7 +108,7 @@ void SecondaryRoles_FakeActivation(secondary_role_result_t res)
  * TriggerByRelease = false
  */
 
-uint16_t SecondaryRoles_AdvancedStrategyDoubletapTime = 200;
+uint16_t SecondaryRoles_AdvancedStrategyDoubletapTimeout = 200;
 uint16_t SecondaryRoles_AdvancedStrategyTimeout = 350;
 int16_t SecondaryRoles_AdvancedStrategySafetyMargin = 50;
 bool SecondaryRoles_AdvancedStrategyTriggerByRelease = true;
@@ -133,7 +133,7 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
     if (
         SecondaryRoles_AdvancedStrategyDoubletapToPrimary
         && resolutionKey == previousResolutionKey
-        && resolutionStartTime - previousResolutionTime < SecondaryRoles_AdvancedStrategyDoubletapTime
+        && resolutionStartTime - previousResolutionTime < SecondaryRoles_AdvancedStrategyDoubletapTimeout
         ) {
         KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "PA"));
         return SecondaryRoleState_Primary;
