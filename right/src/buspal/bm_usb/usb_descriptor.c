@@ -57,7 +57,7 @@ usb_device_interfaces_struct_t g_hid_generic_interfaces[USB_HID_GENERIC_INTERFAC
     USB_HID_GENERIC_PROTOCOL,        /* HID generic protocol code */
     USB_HID_GENERIC_INTERFACE_INDEX, /* The interface number of the HID generic */
     g_hid_generic_interface,         /* Interfaces handle */
-    sizeof(g_hid_generic_interface) / sizeof(usb_device_interfaces_struct_t),
+    sizeof(g_hid_generic_interface) / sizeof(usb_device_interface_struct_t)
 } };
 
 usb_device_interface_list_t g_hid_generic_interface_list[USB_CONFIGURE_COUNT] = {
