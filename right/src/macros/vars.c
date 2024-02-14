@@ -165,7 +165,7 @@ static macro_variable_t* consumeVarAndAllocate(parser_context_t* ctx)
     }
 
     if (macroVariableCount == MACRO_VARIABLE_COUNT_MAX) {
-        Macros_ReportErrorPrintf(ctx->at, "Too many variables. Can't allocate more than %d macros:", MACRO_VARIABLE_COUNT_MAX);
+        Macros_ReportErrorPrintf(ctx->at, "Too many variables. Can't allocate more than %d variables:", MACRO_VARIABLE_COUNT_MAX);
         ConsumeAnyIdentifier(ctx);
         return NULL;
     }
