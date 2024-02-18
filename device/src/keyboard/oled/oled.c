@@ -60,6 +60,8 @@ void oledUpdater() {
     while (true) {
         k_mutex_lock(&SpiMutex, K_FOREVER);
 
+        setA0(true);
+        setOledCs(true);
         for (uint16_t atPixel = 0; atPixel < DISPLAY_HEIGHT*DISPLAY_WIDTH; atPixel += 2) {
             #define PIXEL(AT) (OledBuffer[DISPLAY_HEIGHT-1-(AT)/DISPLAY_WIDTH][DISPLAY_WIDTH-1-(AT)%DISPLAY_WIDTH]);
 
@@ -68,8 +70,9 @@ void oledUpdater() {
             uint8_t upper = firstPixel & 0xf0;
             uint8_t lower = secondPixel >> 4;
 
-            oledCommand1(1, upper | lower); //write pixel data
+            writeSpi(upper | lower); //write pixel data
         }
+        setOledCs(false);
 
         k_mutex_unlock(&SpiMutex);
 
