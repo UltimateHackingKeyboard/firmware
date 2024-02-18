@@ -10,11 +10,11 @@
 #include "lvgl/lvgl.h"
 #endif
 
-#ifndef JETBRAINSMONO
-#define JETBRAINSMONO 1
+#ifndef JETBRAINSMONO12
+#define JETBRAINSMONO12 1
 #endif
 
-#if JETBRAINSMONO
+#if JETBRAINSMONO12
 
 /*-----------------
  *    BITMAPS
@@ -710,9 +710,9 @@ static lv_font_fmt_txt_dsc_t font_dsc = {
 
 /*Initialize a public general font descriptor*/
 #if LVGL_VERSION_MAJOR >= 8
-const lv_font_t JetBrainsMono = {
+const lv_font_t JetBrainsMono12 = {
 #else
-lv_font_t JetBrainsMono = {
+lv_font_t JetBrainsMono12 = {
 #endif
     .get_glyph_dsc = lv_font_get_glyph_dsc_fmt_txt,    /*Function pointer to get glyph's data*/
     .get_glyph_bitmap = lv_font_get_bitmap_fmt_txt,    /*Function pointer to get glyph's bitmap*/
@@ -732,5 +732,5 @@ lv_font_t JetBrainsMono = {
 
 
 
-#endif /*#if JETBRAINSMONO*/
+#endif /*#if JETBRAINSMONO12*/
 

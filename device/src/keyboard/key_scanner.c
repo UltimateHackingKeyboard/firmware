@@ -9,6 +9,7 @@
 #include "bt_central_uart.h"
 #include "bt_peripheral_uart.h"
 #include "device.h"
+#include "oled/oled_text_renderer.h"
 
 // Thread definitions
 
@@ -70,6 +71,7 @@ void keyScanner() {
                             uart_poll_out(uart_dev, buffer[i]);
                         }
                     }
+                    Oled_Log("SW%c%c %s", rowId+'1', colId+'1', keyState ? "down" : "up");
                 }
                 KeyStates[rowId][colId] = keyState;
                 if (keyState) {

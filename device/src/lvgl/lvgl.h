@@ -162,30 +162,6 @@ typedef struct lv_draw_buf_t lv_draw_buf_t;
 
 typedef uint8_t lv_font_fmt_txt_glyph_cache_t;
 
-struct _lv_font_t {
-    /** Get a glyph's descriptor from a font*/
-    bool (*get_glyph_dsc)(const lv_font_t *, lv_font_glyph_dsc_t *, uint32_t letter, uint32_t letter_next);
-
-    /** Get a glyph's bitmap from a font*/
-    const void * (*get_glyph_bitmap)(lv_font_glyph_dsc_t *, uint32_t, lv_draw_buf_t *);
-
-    /** Release a glyph*/
-    void (*release_glyph)(const lv_font_t *, lv_font_glyph_dsc_t *);
-
-    /*Pointer to the font in a font pack (must have the same line height)*/
-    int32_t line_height;         /**< The real line height where any text fits*/
-    int32_t base_line;           /**< Base line measured from the top of the line_height*/
-    uint8_t subpx   : 2;            /**< An element of `lv_font_subpx_t`*/
-    uint8_t kerning : 1;            /**< An element of `lv_font_kerning_t`*/
-
-    int8_t underline_position;      /**< Distance between the top of the underline and base line (< 0 means below the base line)*/
-    int8_t underline_thickness;     /**< Thickness of the underline*/
-
-    const void * dsc;               /**< Store implementation specific or run_time data or caching here*/
-    const lv_font_t * fallback;   /**< Fallback font for missing glyph. Resolved recursively */
-    void * user_data;               /**< Custom user data for font.*/
-};
-
 /*Describe store additional data for fonts*/
 typedef struct {
     /*The bitmaps of all glyphs*/
@@ -224,6 +200,30 @@ typedef struct {
     uint16_t bitmap_format  : 2;
     void* cache;
 } lv_font_fmt_txt_dsc_t;
+
+struct _lv_font_t {
+    /** Get a glyph's descriptor from a font*/
+    bool (*get_glyph_dsc)(const lv_font_t *, lv_font_glyph_dsc_t *, uint32_t letter, uint32_t letter_next);
+
+    /** Get a glyph's bitmap from a font*/
+    const void * (*get_glyph_bitmap)(lv_font_glyph_dsc_t *, uint32_t, lv_draw_buf_t *);
+
+    /** Release a glyph*/
+    void (*release_glyph)(const lv_font_t *, lv_font_glyph_dsc_t *);
+
+    /*Pointer to the font in a font pack (must have the same line height)*/
+    int32_t line_height;         /**< The real line height where any text fits*/
+    int32_t base_line;           /**< Base line measured from the top of the line_height*/
+    uint8_t subpx   : 2;            /**< An element of `lv_font_subpx_t`*/
+    uint8_t kerning : 1;            /**< An element of `lv_font_kerning_t`*/
+
+    int8_t underline_position;      /**< Distance between the top of the underline and base line (< 0 means below the base line)*/
+    int8_t underline_thickness;     /**< Thickness of the underline*/
+
+    const lv_font_fmt_txt_dsc_t* dsc;               /**< Store implementation specific or run_time data or caching here*/
+    const lv_font_t * fallback;   /**< Fallback font for missing glyph. Resolved recursively */
+    void * user_data;               /**< Custom user data for font.*/
+};
 
 // Functions:
 

@@ -35,9 +35,6 @@ void setA0(bool state)
     gpio_pin_set_dt(&oledA0Dt, state);
 }
 
-static uint32_t counter = 0;
-static uint8_t pixel = 1;
-
 void oledCommand1(bool A0, uint8_t b1) {
     setA0(A0);
     setOledCs(true);
@@ -60,27 +57,26 @@ void oledUpdater() {
     oledCommand2(0, 0x81, 0xff); //set maximum contrast
     k_mutex_unlock(&SpiMutex);
 
-    static uint16_t atPixel = 0;
-
     while (true) {
         k_mutex_lock(&SpiMutex, K_FOREVER);
 
-        #define PIXEL(AT) (OledBuffer[DISPLAY_HEIGHT-(AT)/DISPLAY_WIDTH][DISPLAY_WIDTH-(AT)%DISPLAY_WIDTH]);
+        for (uint16_t atPixel = 0; atPixel < DISPLAY_HEIGHT*DISPLAY_WIDTH; atPixel += 2) {
+            #define PIXEL(AT) (OledBuffer[DISPLAY_HEIGHT-(AT)/DISPLAY_WIDTH][DISPLAY_WIDTH-(AT)%DISPLAY_WIDTH]);
 
-        uint8_t firstPixel = PIXEL(atPixel);
-        uint8_t secondPixel = PIXEL(atPixel+1);
-        uint8_t upper = firstPixel & 0xf0;
-        uint8_t lower = secondPixel >> 4;
-        oledCommand1(1, upper | lower); //write pixel data
+            uint8_t firstPixel = PIXEL(atPixel);
+            uint8_t secondPixel = PIXEL(atPixel+1);
+            uint8_t upper = firstPixel & 0xf0;
+            uint8_t lower = secondPixel >> 4;
+
+            oledCommand1(1, upper | lower); //write pixel data
+        }
 
         k_mutex_unlock(&SpiMutex);
 
-        if (counter++ > 19) {
-            pixel = !pixel;
-            counter = 0;
+        while (!OledBuffer_NeedsRedraw) {
+            k_msleep(10);
         }
-        atPixel = (atPixel+2) % (DISPLAY_WIDTH*DISPLAY_HEIGHT);
-        k_msleep(1);
+        OledBuffer_NeedsRedraw = false;
     }
 }
 
