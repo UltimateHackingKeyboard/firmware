@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-uint8_t drawGlyph(uint8_t x, uint8_t y, const lv_font_t* font, uint8_t glyphIdx)
+static uint8_t drawGlyph(uint8_t x, uint8_t y, const lv_font_t* font, uint8_t glyphIdx)
 {
    const uint8_t* bitmap = font->dsc->glyph_bitmap;
    const lv_font_fmt_txt_glyph_dsc_t* glyph = &font->dsc->glyph_dsc[glyphIdx];
@@ -15,7 +15,9 @@ uint8_t drawGlyph(uint8_t x, uint8_t y, const lv_font_t* font, uint8_t glyphIdx)
    uint8_t rh = font->line_height;
 
    for (uint8_t i = 0; i < rh; i++) {
-       memset(&OledBuffer[y+i][x], 0, rw);
+       for (uint8_t j = 0; j < rw; j++) {
+           OledBuffer_SetPixel(x+j, y+i, 0);
+       }
    }
 
    uint8_t w = glyph->box_w;
@@ -34,9 +36,7 @@ uint8_t drawGlyph(uint8_t x, uint8_t y, const lv_font_t* font, uint8_t glyphIdx)
            }
            uint8_t dstX = glyph->ofs_x+x+ix;
            uint8_t dstY = top+y+iy;
-           if (dstX < DISPLAY_WIDTH && dstY < DISPLAY_HEIGHT) {
-               OledBuffer[dstY][dstX] = pixelValue;
-           }
+           OledBuffer_SetPixel(dstX, dstY, pixelValue);
        }
    }
 
@@ -69,5 +69,6 @@ void Oled_Log(const char *fmt, ...)
     char buffer[256];
     vsprintf(buffer, fmt, myargs);
     Oled_LogConstant(buffer);
+    OledBuffer_NeedsRedraw = true;
 }
 
