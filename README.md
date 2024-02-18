@@ -38,15 +38,22 @@ Then, depending whether you want a full IDE experience or just minimal tools for
 - In the shell, you can build (e.g.) uhk-80-left as follows:
   - full build including cmake steps, as extracted from VS Code:
     ```
-    west build --build-dir device/build/uhk-80-left device --pristine --board uhk-80-left --no-sysbuild -- -DNCS_TOOLCHAIN_VERSION=NONE -DBOARD_ROOT=uhk -DCONF_FILE=device/prj.conf -DOVERLAY_CONFIG=device/prj.conf.overlays/uhk-80-left.prj.conf
+    export DEVICE=uhk-80-left
+    export PWD=`pwd`
+    west build --build-dir $PWD/device/build/$DEVICE $PWD/device --pristine --board $DEVICE --no-sysbuild -- -DNCS_TOOLCHAIN_VERSION=NONE -DCONF_FILE=$PWD/device/prj.conf -DOVERLAY_CONFIG=$PWD/device/prj.conf.overlays/$DEVICE.prj.conf -DBOARD_ROOT=$PWD
     ```
+
   - quick rebuild:
     ```
-    west build --build-dir device/build/uhk-80-left device
+    export DEVICE=uhk-80-left
+    export PWD=`pwd`
+    west build --build-dir $PWD/device/build/$DEVICE $PWD/device
     ```
   - flash:
     ```
-    west flash -d device/build/uhk-80-left
+    export DEVICE=uhk-80-left
+    export PWD=`pwd`
+    west flash -d $PWD/device/build/$DEVICE
     ```
 
 ### Old IDE setup

@@ -4,7 +4,7 @@
 #include "device.h"
 #include "keyboard/charger.h"
 #include "keyboard/leds.h"
-#include "keyboard/oled.h"
+#include "keyboard/oled/oled.h"
 #include "shell.h"
 #include "usb/usb.hpp"
 #include "bt_conn.h"
