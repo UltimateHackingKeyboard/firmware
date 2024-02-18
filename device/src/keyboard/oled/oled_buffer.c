@@ -20,6 +20,7 @@ void OledBuffer_Init()
 {
     testingPattern();
     Oled_DrawText(16, 16, &JetBrainsMono32, "Hello world!");
+
 }
 
 void OledBuffer_Shift(uint16_t shiftBy)

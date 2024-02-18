@@ -6,26 +6,26 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-static uint8_t drawGlyph(uint8_t x, uint8_t y, const lv_font_t* font, uint8_t glyphIdx)
+static uint8_t drawGlyph(uint16_t x, uint16_t y, const lv_font_t* font, uint8_t glyphIdx)
 {
    const uint8_t* bitmap = font->dsc->glyph_bitmap;
    const lv_font_fmt_txt_glyph_dsc_t* glyph = &font->dsc->glyph_dsc[glyphIdx];
 
-   uint8_t rw = glyph->adv_w/16;
-   uint8_t rh = font->line_height;
+   uint16_t rw = glyph->adv_w/16;
+   uint16_t rh = font->line_height;
 
-   for (uint8_t i = 0; i < rh; i++) {
-       for (uint8_t j = 0; j < rw; j++) {
+   for (uint16_t i = 0; i < rh; i++) {
+       for (uint16_t j = 0; j < rw; j++) {
            OledBuffer_SetPixel(x+j, y+i, 0);
        }
    }
 
-   uint8_t w = glyph->box_w;
-   uint8_t h = glyph->box_h;
-   uint8_t top = font->line_height - font->base_line - h - glyph->ofs_y;
+   uint16_t w = glyph->box_w;
+   uint16_t h = glyph->box_h;
+   uint16_t top = font->line_height - font->base_line - h - glyph->ofs_y;
 
-   for (uint8_t iy = 0; iy < h; iy++) {
-       for (uint8_t ix = 0; ix < w; ix++) {
+   for (uint16_t iy = 0; iy < h; iy++) {
+       for (uint16_t ix = 0; ix < w; ix++) {
            uint16_t pixelIndex = iy * w + ix;
            uint8_t byte = bitmap[glyph->bitmap_index + pixelIndex/2];
            uint8_t pixelValue;
@@ -34,8 +34,8 @@ static uint8_t drawGlyph(uint8_t x, uint8_t y, const lv_font_t* font, uint8_t gl
            } else {
                pixelValue = byte << 4;
            }
-           uint8_t dstX = glyph->ofs_x+x+ix;
-           uint8_t dstY = top+y+iy;
+           uint16_t dstX = glyph->ofs_x+x+ix;
+           uint16_t dstY = top+y+iy;
            OledBuffer_SetPixel(dstX, dstY, pixelValue);
        }
    }
@@ -43,9 +43,9 @@ static uint8_t drawGlyph(uint8_t x, uint8_t y, const lv_font_t* font, uint8_t gl
    return rw;
 }
 
-void Oled_DrawText(uint8_t x, uint8_t y, const lv_font_t* font, const char* text)
+void Oled_DrawText(uint16_t x, uint16_t y, const lv_font_t* font, const char* text)
 {
-    uint8_t consumed = 0;
+    uint16_t consumed = 0;
     while (*text != '\0') {
         consumed += drawGlyph(x+consumed, y, font, (*text)-31);
         text++;
@@ -55,7 +55,7 @@ void Oled_DrawText(uint8_t x, uint8_t y, const lv_font_t* font, const char* text
 
 void Oled_LogConstant(const char* text)
 {
-    const lv_font_t* logFont = &JetBrainsMono8;
+    const lv_font_t* logFont = &CustomMono8;
     uint8_t line_height = logFont->line_height;
     OledBuffer_Shift(line_height);
     Oled_DrawText(0, DISPLAY_HEIGHT-line_height, logFont, text);

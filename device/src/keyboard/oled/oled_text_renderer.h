@@ -12,7 +12,7 @@
 
 // Functions:
 
-void Oled_DrawText(uint8_t x, uint8_t y, const lv_font_t* font, const char* text);
+void Oled_DrawText(uint16_t x, uint16_t y, const lv_font_t* font, const char* text);
 void Oled_LogConstant(const char* text);
 void Oled_Log(const char *fmt, ...);
 
