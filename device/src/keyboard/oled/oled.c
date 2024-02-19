@@ -112,7 +112,6 @@ static bool isInActiveArea(uint16_t x, uint16_t y) {
 static void fullUpdate()
 {
     k_mutex_lock(&SpiMutex, K_FOREVER);
-    OledBuffer->dirty = false;
     OledNeedsRedraw = false;
 
     setA0(true);
@@ -143,7 +142,6 @@ static void fullUpdate()
 static void diffUpdate()
 {
     k_mutex_lock(&SpiMutex, K_FOREVER);
-    OledBuffer->dirty = false;
     OledNeedsRedraw = false;
 
     setA0(true);
@@ -151,7 +149,7 @@ static void diffUpdate()
 
     for (uint16_t y = 0; y < OledBuffer->height; y++) {
         for (uint16_t x = OledBuffer->width-2; x < OledBuffer->width; x -= 2) {
-            if (OledBuffer->dirty) {
+            if (OledNeedsRedraw) {
                 return;
             }
 
@@ -202,7 +200,7 @@ void oledUpdater() {
             diffUpdate();
         }
 
-        while (!OledBuffer->dirty && !OledNeedsRedraw) {
+        while (!OledNeedsRedraw) {
             k_msleep(10);
         }
     }

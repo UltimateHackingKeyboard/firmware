@@ -20,5 +20,6 @@ widget_t CustomWidget_Build(void (*draw)(widget_t* self, framebuffer_t* buffer))
         .type = WidgetType_Custom,
         .layOut = &CustomWidget_LayOut,
         .draw = draw == NULL ? &CustomWidget_Draw : draw,
+        .dirty = true,
     };
 }

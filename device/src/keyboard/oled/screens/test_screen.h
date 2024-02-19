@@ -17,6 +17,6 @@ extern widget_t* TestScreen;
 
 // Functions:
 
-void TestScreen_Init();
+void TestScreen_Init(framebuffer_t* buffer);
 
 #endif

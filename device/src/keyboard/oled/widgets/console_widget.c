@@ -11,14 +11,14 @@
 #include "../oled_text_renderer.h"
 #include "../oled.h"
 
-static struct {
-    uint16_t width;
-    uint16_t height;
-    bool dirty;
-    uint8_t buffer[DISPLAY_USABLE_WIDTH*DISPLAY_USABLE_HEIGHT];
-} consoleBuffer = { .width = DISPLAY_USABLE_WIDTH, .height = DISPLAY_USABLE_HEIGHT, .dirty = true };
+#define MIN_CHAR_WIDTH 5
+#define MIN_CHAR_HEIGHT 7
+#define CONSOLE_BUFFER_LINE_COUNT (DISPLAY_HEIGHT/MIN_CHAR_HEIGHT+1)
+#define CONSOLE_BUFFER_LINE_LENGTH (DISPLAY_WIDTH/MIN_CHAR_WIDTH+2)
 
-framebuffer_t* ConsoleBuffer = (framebuffer_t*)&consoleBuffer;
+static char consoleBuffer[CONSOLE_BUFFER_LINE_COUNT][CONSOLE_BUFFER_LINE_LENGTH] = {};
+static uint8_t consoleBufferStart = 0;
+static bool consoleBufferIsDirty = true;
 
 void ConsoleWidget_LayOut(widget_t* self, uint8_t x, uint8_t y, uint8_t w, uint8_t h)
 {
@@ -30,7 +30,21 @@ void ConsoleWidget_LayOut(widget_t* self, uint8_t x, uint8_t y, uint8_t w, uint8
 
 void ConsoleWidget_Draw(widget_t* self, framebuffer_t* buffer)
 {
-    Framebuffer_Copy(self, buffer, NULL, ConsoleBuffer, AnchorType_Begin, AnchorType_End);
+    if (self->dirty || consoleBufferIsDirty) {
+        self->dirty = false;
+        consoleBufferIsDirty = false;
+
+        const lv_font_t* logFont = &CustomMono8;
+        uint8_t line_height = logFont->line_height;
+
+        Framebuffer_Clear(self, buffer);
+
+        for (uint8_t line = 0; line < CONSOLE_BUFFER_LINE_COUNT; line++) {
+            const char* text = &consoleBuffer[(consoleBufferStart + CONSOLE_BUFFER_LINE_COUNT - line)%CONSOLE_BUFFER_LINE_COUNT][0];
+
+            Framebuffer_DrawText(self, buffer, 0, self->h - line_height*(line+1), logFont, text);
+        }
+    }
 }
 
 widget_t ConsoleWidget_Build()
@@ -39,16 +53,18 @@ widget_t ConsoleWidget_Build()
         .type = WidgetType_Console,
         .layOut = &ConsoleWidget_LayOut,
         .draw = &ConsoleWidget_Draw,
+        .dirty = true,
     };
 }
 
 void Oled_LogConstant(const char* text)
 {
-    const lv_font_t* logFont = &CustomMono8;
-    uint8_t line_height = logFont->line_height;
-    Framebuffer_Shift(NULL, ConsoleBuffer, line_height);
-    Framebuffer_DrawText(NULL, ConsoleBuffer, 0, ConsoleBuffer->height-line_height+2, logFont, text);
-    OledNeedsRedraw = true;
+    consoleBufferStart = (consoleBufferStart+1) % CONSOLE_BUFFER_LINE_COUNT;
+    strncpy(&consoleBuffer[consoleBufferStart][0], text, CONSOLE_BUFFER_LINE_LENGTH);
+    consoleBuffer[consoleBufferStart][CONSOLE_BUFFER_LINE_LENGTH-1] = '\0';
+
+    consoleBufferIsDirty = true;
+    Widget_RequestRedraw(NULL);
 }
 
 void Oled_Log(const char *fmt, ...)
@@ -58,7 +74,6 @@ void Oled_Log(const char *fmt, ...)
     char buffer[256];
     vsprintf(buffer, fmt, myargs);
     Oled_LogConstant(buffer);
-    OledNeedsRedraw = true;
 }
 
 

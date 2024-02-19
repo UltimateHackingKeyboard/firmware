@@ -31,6 +31,7 @@ struct widget_t {
     void (*draw)(widget_t* self, framebuffer_t* buffer);
 
     widget_type_t type;
+    bool dirty;
 
     union {
         struct {
@@ -49,5 +50,6 @@ struct widget_t {
 
 // Functions:
 
+void Widget_RequestRedraw(widget_t* widget);
 
 #endif

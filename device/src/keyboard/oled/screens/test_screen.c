@@ -18,16 +18,20 @@ widget_t* TestScreen;
 
 static void drawHello(widget_t* self, framebuffer_t* buffer)
 {
-    Framebuffer_DrawText(self, buffer, 0, 0, &JetBrainsMono16, "Hello world!");
+    if (self->dirty) {
+        self->dirty = false;
+        Framebuffer_Clear(self, buffer);
+        Framebuffer_DrawText(self, buffer, 0, 0, &JetBrainsMono32, "Hello!");
+    }
 }
 
 void TestScreen_Init(framebuffer_t* buffer)
 {
     helloWidget = CustomWidget_Build(&drawHello);
     consoleWidget = ConsoleWidget_Build();
-    splitterWidget = SplitterWidget_BuildHorizontal(&helloWidget, &consoleWidget, 17, true);
+    splitterWidget = SplitterWidget_BuildVertical(&consoleWidget, &helloWidget, 128, true);
     frameWidget = FrameWidget_Build(&splitterWidget);
-    TestScreen = &frameWidget;
+    TestScreen = &consoleWidget;
 
     TestScreen->layOut(TestScreen, 0, 0, buffer->width, buffer->height);
 }

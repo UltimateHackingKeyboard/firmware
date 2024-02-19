@@ -11,7 +11,7 @@
 #include "device.h"
 #include "oled/widgets/console_widget.h"
 
-void LogConstant(const char* buffer)
+void Uart_LogConstant(const char* buffer)
 {
 #if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_LEFT
     SendPeripheralUart(buffer, strlen(buffer)+1);
@@ -24,7 +24,7 @@ void LogConstant(const char* buffer)
     }
 }
 
-void Log(const char *fmt, ...)
+void Uart_Log(const char *fmt, ...)
 {
     if (Shell.keyLog) {
         va_list myargs;
@@ -32,7 +32,17 @@ void Log(const char *fmt, ...)
         char buffer[256];
         vsprintf(buffer, fmt, myargs);
 
-        LogConstant(buffer);
-        Oled_LogConstant(buffer);
+        Uart_LogConstant(buffer);
     }
+}
+
+void Log(const char *fmt, ...)
+{
+    va_list myargs;
+    va_start(myargs, fmt);
+    char buffer[256];
+    vsprintf(buffer, fmt, myargs);
+
+    Uart_LogConstant(buffer);
+    Oled_LogConstant(buffer);
 }

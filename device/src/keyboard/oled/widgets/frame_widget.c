@@ -13,10 +13,13 @@ void FrameWidget_LayOut(widget_t* self, uint8_t x, uint8_t y, uint8_t w, uint8_t
 
 void FrameWidget_Draw(widget_t* self, framebuffer_t* buffer)
 {
-    Framebuffer_DrawHLine(self, buffer, 0, self->w, 0);
-    Framebuffer_DrawHLine(self, buffer, 0, self->w, self->h-1);
-    Framebuffer_DrawVLine(self, buffer, 0, 0, self->h);
-    Framebuffer_DrawVLine(self, buffer, self->w-1, 0, self->h-1);
+    if (self->dirty) {
+        self->dirty = false;
+        Framebuffer_DrawHLine(self, buffer, 0, self->w, 0);
+        Framebuffer_DrawHLine(self, buffer, 0, self->w, self->h-1);
+        Framebuffer_DrawVLine(self, buffer, 0, 0, self->h);
+        Framebuffer_DrawVLine(self, buffer, self->w-1, 0, self->h-1);
+    }
     self->simpleContentData.content->draw(self->simpleContentData.content, buffer);
 }
 
@@ -27,5 +30,6 @@ widget_t FrameWidget_Build(widget_t* content)
         .simpleContentData.content = content,
         .layOut = &FrameWidget_LayOut,
         .draw = &FrameWidget_Draw,
+        .dirty = true,
     };
 }
