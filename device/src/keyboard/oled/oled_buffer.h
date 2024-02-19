@@ -5,27 +5,28 @@
 
 #include <inttypes.h>
 #include <stdbool.h>
+#include "framebuffer.h"
 
 // Macros:
 
 #define DISPLAY_WIDTH 256
 #define DISPLAY_HEIGHT 64
 
+#define DISPLAY_SHIFTING_MARGIN 8
+
+#define DISPLAY_USABLE_WIDTH (DISPLAY_WIDTH-DISPLAY_SHIFTING_MARGIN)
+#define DISPLAY_USABLE_HEIGHT (DISPLAY_HEIGHT-DISPLAY_SHIFTING_MARGIN)
+
+// Typedefs:
+
 // Variables:
 
-extern volatile bool OledBuffer_NeedsRedraw;
-extern uint8_t OledBuffer[DISPLAY_HEIGHT][DISPLAY_WIDTH];
+extern framebuffer_t* OledBuffer;
 
 // Functions:
 
 void OledBuffer_Init();
-void OledBuffer_Shift(uint16_t shiftBy);
-
-static inline void OledBuffer_SetPixel(uint16_t x, uint16_t y, uint8_t value)
-{
-    if ((OledBuffer[y][x] & 0xf0) != (value & 0xf0) && x < DISPLAY_WIDTH && y < DISPLAY_HEIGHT) {
-        OledBuffer[y][x] = (value & 0xf0) | 0x01;
-    }
-};
+void Oled_LogConstant(const char* text);
+void Oled_Log(const char *fmt, ...);
 
 #endif

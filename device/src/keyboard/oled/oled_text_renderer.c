@@ -1,4 +1,5 @@
 #include "oled_text_renderer.h"
+#include "framebuffer.h"
 #include "lvgl/lvgl.h"
 #include "fonts/fonts.h"
 #include "oled_buffer.h"
@@ -6,7 +7,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-static uint8_t drawGlyph(uint16_t x, uint16_t y, const lv_font_t* font, uint8_t glyphIdx)
+static uint8_t drawGlyph(framebuffer_t* buffer, uint16_t x, uint16_t y, const lv_font_t* font, uint8_t glyphIdx)
 {
    const uint8_t* bitmap = font->dsc->glyph_bitmap;
    const lv_font_fmt_txt_glyph_dsc_t* glyph = &font->dsc->glyph_dsc[glyphIdx];
@@ -16,7 +17,7 @@ static uint8_t drawGlyph(uint16_t x, uint16_t y, const lv_font_t* font, uint8_t 
 
    for (uint16_t i = 0; i < rh; i++) {
        for (uint16_t j = 0; j < rw; j++) {
-           OledBuffer_SetPixel(x+j, y+i, 0);
+           Framebuffer_SetPixel(buffer, x+j, y+i, 0);
        }
    }
 
@@ -36,39 +37,20 @@ static uint8_t drawGlyph(uint16_t x, uint16_t y, const lv_font_t* font, uint8_t 
            }
            uint16_t dstX = glyph->ofs_x+x+ix;
            uint16_t dstY = top+y+iy;
-           OledBuffer_SetPixel(dstX, dstY, pixelValue);
+           Framebuffer_SetPixel(buffer, dstX, dstY, pixelValue);
        }
    }
 
    return rw;
 }
 
-void Oled_DrawText(uint16_t x, uint16_t y, const lv_font_t* font, const char* text)
+void Framebuffer_DrawText(framebuffer_t* buffer, uint16_t x, uint16_t y, const lv_font_t* font, const char* text)
 {
     uint16_t consumed = 0;
     while (*text != '\0') {
-        consumed += drawGlyph(x+consumed, y, font, (*text)-31);
+        consumed += drawGlyph(buffer, x+consumed, y, font, (*text)-31);
         text++;
     }
-    OledBuffer_NeedsRedraw = true;
-}
-
-void Oled_LogConstant(const char* text)
-{
-    const lv_font_t* logFont = &CustomMono8;
-    uint8_t line_height = logFont->line_height;
-    OledBuffer_Shift(line_height);
-    Oled_DrawText(0, DISPLAY_HEIGHT-line_height, logFont, text);
-    OledBuffer_NeedsRedraw = true;
-}
-
-void Oled_Log(const char *fmt, ...)
-{
-    va_list myargs;
-    va_start(myargs, fmt);
-    char buffer[256];
-    vsprintf(buffer, fmt, myargs);
-    Oled_LogConstant(buffer);
-    OledBuffer_NeedsRedraw = true;
+    buffer->dirty = true;
 }
 

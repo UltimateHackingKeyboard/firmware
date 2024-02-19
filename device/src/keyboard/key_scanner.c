@@ -9,7 +9,7 @@
 #include "bt_central_uart.h"
 #include "bt_peripheral_uart.h"
 #include "device.h"
-#include "oled/oled_text_renderer.h"
+#include "oled/oled_buffer.h"
 
 // Thread definitions
 
