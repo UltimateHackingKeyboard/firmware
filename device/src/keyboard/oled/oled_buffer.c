@@ -6,6 +6,7 @@
 #include "fonts/fonts.h"
 #include "framebuffer.h"
 #include "oled_text_renderer.h"
+#include "oled.h"
 
 static struct {
     uint16_t width;
@@ -28,25 +29,7 @@ static void testingPattern()
 
 void OledBuffer_Init()
 {
-    testingPattern();
-    Framebuffer_DrawText(OledBuffer, 16, 16, &JetBrainsMono32, "Hello world!");
+    // testingPattern();
+    //Framebuffer_DrawText(NULL, OledBuffer, 16, 16, &JetBrainsMono32, "Hello world!");
 }
-
-void Oled_LogConstant(const char* text)
-{
-    const lv_font_t* logFont = &CustomMono8;
-    uint8_t line_height = logFont->line_height;
-    Framebuffer_Shift(OledBuffer, line_height);
-    Framebuffer_DrawText(OledBuffer, 0, OledBuffer->height-line_height, logFont, text);
-}
-
-void Oled_Log(const char *fmt, ...)
-{
-    va_list myargs;
-    va_start(myargs, fmt);
-    char buffer[256];
-    vsprintf(buffer, fmt, myargs);
-    Oled_LogConstant(buffer);
-}
-
 

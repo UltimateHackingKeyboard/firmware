@@ -1,14 +1,21 @@
 #include "oled_text_renderer.h"
 #include "framebuffer.h"
 #include "lvgl/lvgl.h"
+#include "keyboard/logger.h"
 #include "fonts/fonts.h"
 #include "oled_buffer.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include "widgets/widget.h"
 
-static uint8_t drawGlyph(framebuffer_t* buffer, uint16_t x, uint16_t y, const lv_font_t* font, uint8_t glyphIdx)
+static uint8_t drawGlyph(widget_t* canvas, framebuffer_t* buffer, uint16_t x, uint16_t y, const lv_font_t* font, uint8_t glyphIdx)
 {
+    uint16_t canvasOffsetX = canvas == NULL ? 0 : canvas->x;
+    uint16_t canvasOffsetY = canvas == NULL ? 0 : canvas->y;
+    uint16_t canvasWidth = canvas == NULL ? buffer->width : canvas->w;
+    uint16_t canvasHeight = canvas == NULL ? buffer->height : canvas->h;
+
    const uint8_t* bitmap = font->dsc->glyph_bitmap;
    const lv_font_fmt_txt_glyph_dsc_t* glyph = &font->dsc->glyph_dsc[glyphIdx];
 
@@ -17,7 +24,9 @@ static uint8_t drawGlyph(framebuffer_t* buffer, uint16_t x, uint16_t y, const lv
 
    for (uint16_t i = 0; i < rh; i++) {
        for (uint16_t j = 0; j < rw; j++) {
-           Framebuffer_SetPixel(buffer, x+j, y+i, 0);
+           if (x+j < canvasWidth && y+i < canvasHeight) {
+               Framebuffer_SetPixel(buffer, canvasOffsetX+x+j, canvasOffsetY+y+i, 0);
+           }
        }
    }
 
@@ -37,18 +46,20 @@ static uint8_t drawGlyph(framebuffer_t* buffer, uint16_t x, uint16_t y, const lv
            }
            uint16_t dstX = glyph->ofs_x+x+ix;
            uint16_t dstY = top+y+iy;
-           Framebuffer_SetPixel(buffer, dstX, dstY, pixelValue);
+           if (dstX < canvasWidth && dstY < canvasHeight) {
+               Framebuffer_SetPixel(buffer, canvasOffsetX + dstX, canvasOffsetY + dstY, pixelValue);
+           }
        }
    }
 
    return rw;
 }
 
-void Framebuffer_DrawText(framebuffer_t* buffer, uint16_t x, uint16_t y, const lv_font_t* font, const char* text)
+void Framebuffer_DrawText(widget_t* canvas, framebuffer_t* buffer, uint16_t x, uint16_t y, const lv_font_t* font, const char* text)
 {
     uint16_t consumed = 0;
     while (*text != '\0') {
-        consumed += drawGlyph(buffer, x+consumed, y, font, (*text)-31);
+        consumed += drawGlyph(canvas, buffer, x+consumed, y, font, (*text)-31);
         text++;
     }
     buffer->dirty = true;

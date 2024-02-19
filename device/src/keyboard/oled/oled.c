@@ -1,6 +1,9 @@
 #include "device.h"
+#include "framebuffer.h"
 #include "oled.h"
 #include "oled_buffer.h"
+#include "screens/test_screen.h"
+#include "widgets/widget.h"
 
 #ifdef DEVICE_HAS_OLED
 
@@ -50,8 +53,6 @@ static void oledCommand2(bool A0, uint8_t b1, uint8_t b2) {
     setOledCs(false);
 }
 
-//#define PIXEL(AT) OledBuffer->buffer[(AT)-((AT)%(OledBuffer->width)) + (OledBuffer->width - 1 - ((AT)%(OledBuffer->width)))];
-
 #define UNSHIFTED_PIXEL(X, Y) OledBuffer->buffer[(Y)*OledBuffer->width+(X)]
 #define PIXEL(X, Y) UNSHIFTED_PIXEL(((X)-currentXShift),((Y)-currentYShift))
 
@@ -72,6 +73,8 @@ static void setPositionTo(uint16_t x, uint16_t y, uint16_t lastWrittenPixelX, ui
     setA0(1);
 }
 
+bool OledNeedsRedraw = false;
+static widget_t* currentScreen = NULL;
 static uint16_t currentXShift = 0;
 static uint16_t currentYShift = 0;
 
@@ -79,7 +82,7 @@ static bool updateScreenShift() {
     static uint16_t counter1 = 0;
     static uint16_t counter2 = 0;
 
-    if (counter1++ < 10) {
+    if (counter1++ < 100) {
         return false;
     }
 
@@ -110,6 +113,7 @@ static void fullUpdate()
 {
     k_mutex_lock(&SpiMutex, K_FOREVER);
     OledBuffer->dirty = false;
+    OledNeedsRedraw = false;
 
     setA0(true);
     setOledCs(true);
@@ -140,6 +144,7 @@ static void diffUpdate()
 {
     k_mutex_lock(&SpiMutex, K_FOREVER);
     OledBuffer->dirty = false;
+    OledNeedsRedraw = false;
 
     setA0(true);
     setOledCs(true);
@@ -189,6 +194,7 @@ void oledUpdater() {
     fullUpdate();
 
     while (true) {
+        currentScreen->draw(currentScreen, OledBuffer);
 
         if (updateScreenShift()) {
             fullUpdate();
@@ -196,7 +202,7 @@ void oledUpdater() {
             diffUpdate();
         }
 
-        while (!OledBuffer->dirty) {
+        while (!OledBuffer->dirty && !OledNeedsRedraw) {
             k_msleep(10);
         }
     }
@@ -214,6 +220,10 @@ void InitOled(void) {
     gpio_pin_configure_dt(&oledCsDt, GPIO_OUTPUT);
     gpio_pin_configure_dt(&oledA0Dt, GPIO_OUTPUT);
 
+    OledBuffer_Init();
+    TestScreen_Init(OledBuffer);
+    currentScreen = TestScreen;
+
     k_thread_create(
             &thread_data, stack_area,
             K_THREAD_STACK_SIZEOF(stack_area),
@@ -222,8 +232,6 @@ void InitOled(void) {
             THREAD_PRIORITY, 0, K_NO_WAIT
             );
     k_thread_name_set(&thread_data, "oled_updater");
-
-    OledBuffer_Init();
 }
 
 #endif // DEVICE_HAS_OLED

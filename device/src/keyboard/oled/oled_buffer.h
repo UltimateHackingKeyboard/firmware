@@ -26,7 +26,5 @@ extern framebuffer_t* OledBuffer;
 // Functions:
 
 void OledBuffer_Init();
-void Oled_LogConstant(const char* text);
-void Oled_Log(const char *fmt, ...);
 
 #endif
