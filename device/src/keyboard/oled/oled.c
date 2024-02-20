@@ -61,16 +61,18 @@ static void setPositionTo(uint16_t x, uint16_t y, uint16_t lastWrittenPixelX, ui
     uint8_t columnAddress = (DISPLAY_WIDTH-1-x)/2;
     uint8_t rowAddress = y;
 
-    setA0(0);
-    if (lastWrittenPixelY != y || true) {
-        writeSpi(0xb0); //set row address
-        writeSpi(rowAddress); //set row address
+    if (lastWrittenPixelX != x+2 || lastWrittenPixelY != y) {
+        setA0(0);
+        if (lastWrittenPixelY != y) {
+            writeSpi(0xb0); //set row address
+            writeSpi(rowAddress); //set row address
+        }
+        if (lastWrittenPixelX != x+2) {
+            writeSpi(0x00 | (columnAddress & 0x0f)); //set low address
+            writeSpi(0x10 | (columnAddress >> 4)); //set high address
+        }
+        setA0(1);
     }
-    if (lastWrittenPixelX != x+2 || true) {
-        writeSpi(0x00 | (columnAddress & 0x0f)); //set low address
-        writeSpi(0x10 | (columnAddress >> 4)); //set high address
-    }
-    setA0(1);
 }
 
 bool OledNeedsRedraw = false;
