@@ -4,6 +4,7 @@
 #include "keyboard/logger.h"
 #include "fonts/fonts.h"
 #include "oled_buffer.h"
+#include <stdint.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -74,3 +75,46 @@ void Framebuffer_DrawText(widget_t* canvas, framebuffer_t* buffer, int16_t x, in
     }
 }
 
+static uint16_t approximateTextLength(const lv_font_t* font, const char* text)
+{
+    //assume monospace font!
+    const lv_font_fmt_txt_glyph_dsc_t* someGlyph = &font->dsc->glyph_dsc[1];
+    uint8_t charWidth = someGlyph->adv_w/16;
+    return strlen(text) * charWidth;
+}
+
+void Framebuffer_DrawTextAnchored(widget_t* canvas, framebuffer_t* buffer, anchor_type_t horizontalAnchor, anchor_type_t verticalAnchor, const lv_font_t* font, const char* text)
+{
+    int16_t canvasWidth = canvas == NULL ? buffer->width : canvas->w;
+    int16_t canvasHeight = canvas == NULL ? buffer->height : canvas->h;
+
+    int16_t x, y;
+
+    switch (horizontalAnchor) {
+        default:
+        case AnchorType_Begin:
+            x = 0;
+            break;
+        case AnchorType_Center:
+            x = canvasWidth/2 - approximateTextLength(font, text)/2;
+            break;
+        case AnchorType_End:
+            x = canvasWidth - approximateTextLength(font, text);
+            break;
+    }
+
+    switch (verticalAnchor) {
+        default:
+        case AnchorType_Begin:
+            y = 0;
+            break;
+        case AnchorType_Center:
+            y = canvasHeight/2 - font->line_height/2;
+            break;
+        case AnchorType_End:
+            y = canvasHeight - font->line_height;
+            break;
+    }
+
+    Framebuffer_DrawText(canvas, buffer, x, y, font, text);
+}

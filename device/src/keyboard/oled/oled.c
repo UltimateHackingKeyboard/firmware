@@ -150,6 +150,8 @@ static void diffUpdate()
     for (uint16_t y = 0; y < OledBuffer->height; y++) {
         for (uint16_t x = OledBuffer->width-2; x < OledBuffer->width; x -= 2) {
             if (OledNeedsRedraw) {
+                setOledCs(false);
+                k_mutex_unlock(&SpiMutex);
                 return;
             }
 
@@ -189,11 +191,11 @@ void oledUpdater() {
     oledCommand1(0, 0xc8); //set writing direction
     k_mutex_unlock(&SpiMutex);
 
+    currentScreen->draw(currentScreen, OledBuffer);
+
     fullUpdate();
 
     while (true) {
-        currentScreen->draw(currentScreen, OledBuffer);
-
         if (updateScreenShift()) {
             fullUpdate();
         } else {
@@ -203,6 +205,8 @@ void oledUpdater() {
         while (!OledNeedsRedraw) {
             k_msleep(10);
         }
+
+        currentScreen->draw(currentScreen, OledBuffer);
     }
 }
 
