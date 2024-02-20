@@ -26,14 +26,12 @@ void Uart_LogConstant(const char* buffer)
 
 void Uart_Log(const char *fmt, ...)
 {
-    if (Shell.keyLog) {
-        va_list myargs;
-        va_start(myargs, fmt);
-        char buffer[256];
-        vsprintf(buffer, fmt, myargs);
+    va_list myargs;
+    va_start(myargs, fmt);
+    char buffer[256];
+    vsprintf(buffer, fmt, myargs);
 
-        Uart_LogConstant(buffer);
-    }
+    Uart_LogConstant(buffer);
 }
 
 void Log(const char *fmt, ...)

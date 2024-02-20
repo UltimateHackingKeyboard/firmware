@@ -59,7 +59,9 @@ void keyScanner() {
                 bool keyState = gpio_pin_get_dt(&cols[colId]);
                 if (keyState != KeyStates[rowId][colId]) {
                     key_report_send(keyState);
-                    Log("SW%c%c %s", rowId+'1', colId+'1', keyState ? "down" : "up");
+                    if (Shell.keyLog) {
+                        Log("SW%c%c %s", rowId+'1', colId+'1', keyState ? "down" : "up");
+                    }
                 }
                 KeyStates[rowId][colId] = keyState;
                 if (keyState) {
