@@ -10,8 +10,8 @@
 
 // Functions:
 
-void Uart_LogConstant(const char* buffer);
-void Uart_Log(const char *fmt, ...);
-void Log(const char *fmt, ...);
+    void Uart_LogConstant(const char* buffer);
+    void Uart_Log(const char *fmt, ...);
+    void Log(const char *fmt, ...);
 
 #endif // __LOGGER_H__

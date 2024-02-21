@@ -3,9 +3,9 @@
 
 // Includes:
 
-#include <inttypes.h>
-#include <stdbool.h>
-#include "widget.h"
+    #include <inttypes.h>
+    #include <stdbool.h>
+    #include "widget.h"
 
 // Macros:
 
@@ -15,6 +15,6 @@
 
 // Functions:
 
-widget_t CustomWidget_Build(void (*draw)(widget_t* self, framebuffer_t* buffer));
+    widget_t CustomWidget_Build(void (*draw)(widget_t* self, framebuffer_t* buffer));
 
 #endif

@@ -9,9 +9,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include "widgets/widget.h"
-
-#define MIN(A,B) ((A) < (B) ? (A) : (B))
-#define MAX(A,B) ((A) > (B) ? (A) : (B))
+#include <zephyr/sys/util.h>
 
 static uint8_t drawGlyph(widget_t* canvas, framebuffer_t* buffer, int16_t x, int16_t y, const lv_font_t* font, uint8_t glyphIdx)
 {

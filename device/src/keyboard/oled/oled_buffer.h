@@ -3,28 +3,28 @@
 
 // Includes:
 
-#include <inttypes.h>
-#include <stdbool.h>
-#include "framebuffer.h"
+    #include <inttypes.h>
+    #include <stdbool.h>
+    #include "framebuffer.h"
 
 // Macros:
 
-#define DISPLAY_WIDTH 256
-#define DISPLAY_HEIGHT 64
+    #define DISPLAY_WIDTH 256
+    #define DISPLAY_HEIGHT 64
 
-#define DISPLAY_SHIFTING_MARGIN 8
+    #define DISPLAY_SHIFTING_MARGIN 8
 
-#define DISPLAY_USABLE_WIDTH (DISPLAY_WIDTH-DISPLAY_SHIFTING_MARGIN)
-#define DISPLAY_USABLE_HEIGHT (DISPLAY_HEIGHT-DISPLAY_SHIFTING_MARGIN)
+    #define DISPLAY_USABLE_WIDTH (DISPLAY_WIDTH-DISPLAY_SHIFTING_MARGIN)
+    #define DISPLAY_USABLE_HEIGHT (DISPLAY_HEIGHT-DISPLAY_SHIFTING_MARGIN)
 
 // Typedefs:
 
 // Variables:
 
-extern framebuffer_t* OledBuffer;
+    extern framebuffer_t* OledBuffer;
 
 // Functions:
 
-void OledBuffer_Init();
+    void OledBuffer_Init();
 
 #endif

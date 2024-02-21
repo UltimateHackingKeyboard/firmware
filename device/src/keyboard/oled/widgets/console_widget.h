@@ -3,9 +3,9 @@
 
 // Includes:
 
-#include <inttypes.h>
-#include <stdbool.h>
-#include "widget.h"
+    #include <inttypes.h>
+    #include <stdbool.h>
+    #include "widget.h"
 
 // Macros:
 
@@ -15,9 +15,9 @@
 
 // Functions:
 
-widget_t ConsoleWidget_Build();
+    widget_t ConsoleWidget_Build();
 
-void Oled_LogConstant(const char* text);
-void Oled_Log(const char *fmt, ...);
+    void Oled_LogConstant(const char* text);
+    void Oled_Log(const char *fmt, ...);
 
 #endif

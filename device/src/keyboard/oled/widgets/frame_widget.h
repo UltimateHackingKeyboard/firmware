@@ -3,9 +3,9 @@
 
 // Includes:
 
-#include <inttypes.h>
-#include <stdbool.h>
-#include "widget.h"
+    #include <inttypes.h>
+    #include <stdbool.h>
+    #include "widget.h"
 
 // Macros:
 
@@ -15,6 +15,6 @@
 
 // Functions:
 
-widget_t FrameWidget_Build(widget_t* content);
+    widget_t FrameWidget_Build(widget_t* content);
 
 #endif

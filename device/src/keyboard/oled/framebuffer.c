@@ -3,33 +3,7 @@
 #include "widgets/widget.h"
 #include <stdint.h>
 #include <stdlib.h>
-
-#define MAX(A, B) ((A) > (B) ? (A) : (B))
-#define MIN(A, B) ((A) < (B) ? (A) : (B))
-
-void Framebuffer_Shift(widget_t* canvas, framebuffer_t* buffer, uint16_t shiftBy)
-{
-    uint16_t canvasOffsetX = canvas == NULL ? 0 : canvas->x;
-    uint16_t canvasOffsetY = canvas == NULL ? 0 : canvas->y;
-    uint16_t canvasWidth = canvas == NULL ? buffer->width : canvas->w;
-    uint16_t canvasHeight = canvas == NULL ? buffer->height : canvas->h;
-
-    if (shiftBy > canvasHeight) {
-        shiftBy = canvasHeight;
-    }
-
-    for (uint16_t y = 0; y < canvasHeight-shiftBy; y++) {
-        for (uint16_t x = 0; x < canvasWidth; x++) {
-            uint16_t srcIndex = (y+canvasOffsetY)*buffer->width+shiftBy*buffer->width+(x+canvasOffsetX);
-            Framebuffer_SetPixel(buffer, canvasOffsetX+x, canvasOffsetY+y, buffer->buffer[srcIndex]);
-        }
-    }
-    for (uint16_t y = canvasHeight - shiftBy; y < canvasHeight; y++) {
-        for (uint16_t x = 0; x < canvasWidth; x++) {
-            Framebuffer_SetPixel(buffer, canvasOffsetX+x, canvasOffsetY+y, 0);
-        }
-    }
-}
+#include <zephyr/sys/util.h>
 
 void Framebuffer_Clear(widget_t* canvas, framebuffer_t* buffer)
 {
@@ -85,55 +59,3 @@ void Framebuffer_DrawVLine(widget_t* canvas, framebuffer_t* buffer, uint8_t x, u
     }
 }
 
-void Framebuffer_Copy(widget_t* dstCanvas, framebuffer_t* dstBuffer, widget_t* srcCanvas, framebuffer_t* srcBuffer, anchor_type_t horizontalAnchor, anchor_type_t verticalAnchor)
-{
-    int16_t srcCanvasOffsetX = srcCanvas == NULL ? 0 : srcCanvas->x;
-    int16_t srcCanvasOffsetY = srcCanvas == NULL ? 0 : srcCanvas->y;
-    int16_t srcCanvasWidth = srcCanvas == NULL ? srcBuffer->width : srcCanvas->w;
-    int16_t srcCanvasHeight = srcCanvas == NULL ? srcBuffer->height : srcCanvas->h;
-
-    int16_t dstCanvasOffsetX = dstCanvas == NULL ? 0 : dstCanvas->x;
-    int16_t dstCanvasOffsetY = dstCanvas == NULL ? 0 : dstCanvas->y;
-    int16_t dstCanvasWidth = dstCanvas == NULL ? dstBuffer->width : dstCanvas->w;
-    int16_t dstCanvasHeight = dstCanvas == NULL ? dstBuffer->height : dstCanvas->h;
-
-    int16_t startYOffset;
-    switch(verticalAnchor) {
-        default:
-        case AnchorType_Begin:
-            startYOffset = 0;
-            break;
-        case AnchorType_Center:
-            startYOffset = (dstCanvasHeight - srcCanvasHeight)/2;
-            break;
-        case AnchorType_End:
-            startYOffset = dstCanvasHeight - srcCanvasHeight;
-            break;
-    }
-
-    int16_t startXOffset;
-    switch(horizontalAnchor) {
-        default:
-        case AnchorType_Begin:
-            startXOffset = 0;
-            break;
-        case AnchorType_Center:
-            startXOffset = (dstCanvasWidth - srcCanvasWidth)/2;
-            break;
-        case AnchorType_End:
-            startXOffset = dstCanvasWidth - srcCanvasWidth;
-            break;
-    }
-
-    for (uint16_t y = MAX(-startYOffset, dstCanvasHeight-srcCanvasHeight); y < MIN(srcCanvasHeight, dstCanvasHeight-startYOffset); y++) {
-        for (uint16_t x = MAX(-startXOffset, dstCanvasWidth-srcCanvasWidth); x < MIN(srcCanvasWidth, dstCanvasWidth-startXOffset); x++) {
-            uint16_t dstY = dstCanvasOffsetY + startYOffset + y;
-            uint16_t dstX = dstCanvasOffsetX + startXOffset + x;
-
-            uint16_t srcY = srcCanvasOffsetY + y;
-            uint16_t srcX = srcCanvasOffsetX + x;
-
-            Framebuffer_SetPixel(dstBuffer, dstX, dstY, srcBuffer->buffer[srcY*srcBuffer->width + srcX]);
-        }
-    }
-}
