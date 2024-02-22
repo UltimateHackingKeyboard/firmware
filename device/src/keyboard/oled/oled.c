@@ -27,6 +27,15 @@ const struct gpio_dt_spec oledResetDt = GPIO_DT_SPEC_GET(DT_ALIAS(oled_reset), g
 const struct gpio_dt_spec oledCsDt = GPIO_DT_SPEC_GET(DT_ALIAS(oled_cs), gpios);
 const struct gpio_dt_spec oledA0Dt = GPIO_DT_SPEC_GET(DT_ALIAS(oled_a0), gpios);
 
+typedef enum {
+    OledCommand_SetDisplayOn = 0xaf,
+    OledCommand_SetContrast = 0x81,
+    OledCommand_SetRowAddress = 0xb0,
+    OledCommand_SetColumnLow = 0x00,
+    OledCommand_SetColumnHigh = 0x10,
+    OledCommand_SetScanDirectionDown = 0xc8,
+} oled_commands_t;
+
 
 static void setOledCs(bool state)
 {
@@ -64,12 +73,12 @@ static void setPositionTo(uint16_t x, uint16_t y, uint16_t lastWrittenPixelX, ui
     if (lastWrittenPixelX != x+2 || lastWrittenPixelY != y) {
         setA0(0);
         if (lastWrittenPixelY != y) {
-            writeSpi(0xb0); //set row address
-            writeSpi(rowAddress); //set row address
+            writeSpi(OledCommand_SetRowAddress);
+            writeSpi(rowAddress);
         }
         if (lastWrittenPixelX != x+2) {
-            writeSpi(0x00 | (columnAddress & 0x0f)); //set low address
-            writeSpi(0x10 | (columnAddress >> 4)); //set high address
+            writeSpi(OledCommand_SetColumnLow | (columnAddress & 0x0f));
+            writeSpi(OledCommand_SetColumnHigh | (columnAddress >> 4));
         }
         setA0(1);
     }
@@ -166,7 +175,7 @@ static void diffUpdate()
             uint8_t* firstPixel = &UNSHIFTED_PIXEL(x, y);
             uint8_t *secondPixel = &UNSHIFTED_PIXEL(x+1, y);
 
-            if (*firstPixel & 0x01 || *secondPixel & 0x01) {
+            if (*firstPixel & Framebuffer_PixelIsDirty || *secondPixel & Framebuffer_PixelIsDirty) {
                 *firstPixel = *firstPixel & 0xf0;
                 *secondPixel = *secondPixel & 0xf0;
 
@@ -188,9 +197,9 @@ static void diffUpdate()
 
 void oledUpdater() {
     k_mutex_lock(&SpiMutex, K_FOREVER);
-    oledCommand1(0, 0xaf); // turn the panel on
-    oledCommand2(0, 0x81, 0xff); //set maximum contrast
-    oledCommand1(0, 0xc8); //set writing direction
+    oledCommand1(0, OledCommand_SetDisplayOn);
+    oledCommand2(0, OledCommand_SetContrast, 0xff);
+    oledCommand1(0, OledCommand_SetScanDirectionDown);
     k_mutex_unlock(&SpiMutex);
 
     currentScreen->draw(currentScreen, OledBuffer);

@@ -26,6 +26,8 @@
 
 // Variables:
 
+    static const uint8_t Framebuffer_PixelIsDirty = 0x01;
+
 // Functions:
 
     void Framebuffer_Clear(widget_t* canvas, framebuffer_t* buffer);
@@ -36,7 +38,7 @@
     {
         uint16_t index = y*buffer->width+x;
         if ((buffer->buffer[index] & 0xf0) != (value & 0xf0)) {
-            buffer->buffer[index] = (value & 0xf0) | 0x01;
+            buffer->buffer[index] = (value & 0xf0) | Framebuffer_PixelIsDirty;
         }
     };
 
