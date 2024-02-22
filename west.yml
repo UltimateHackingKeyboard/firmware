@@ -21,7 +21,7 @@ manifest:
       remote: uhk
       repo-path: sdk-mcuboot
       revision: v1.10.0-ncs1
-      path: bootloader/mcuboot
+      path: nrfconnect/bootloader/mcuboot
     - name: hal_nxp
       remote: zephyr
       path: zephyr-hal-nxp
