@@ -14,6 +14,7 @@
     typedef enum {
         EventSchedulerEvent_SegmentDisplayUpdate,
         EventSchedulerEvent_MacroWakeOnTime,
+        EventSchedulerEvent_MacroRecorderFlashing,
         EventSchedulerEvent_Count
     } event_scheduler_event_t;
 
@@ -25,6 +26,7 @@
 
     void EventScheduler_Schedule(uint32_t at, event_scheduler_event_t evt);
     void EventScheduler_Reschedule(uint32_t at, event_scheduler_event_t evt);
+    void EventScheduler_Unschedule(event_scheduler_event_t evt);
     void EventScheduler_Process();
 
 #endif

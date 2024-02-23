@@ -29,6 +29,7 @@
 
 // Variables:
 
+    extern uint16_t HoldContinuationTimeout;
 
 // Functions:
     void MouseController_ProcessMouseActions();

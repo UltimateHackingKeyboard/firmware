@@ -7,6 +7,7 @@
 #include "bool_array_converter.h"
 #include "crc16.h"
 #include "key_states.h"
+#include "test_switches.h"
 #include "timer.h"
 #include "usb_report_updater.h"
 #include "utils.h"
@@ -14,6 +15,8 @@
 #include "debug.h"
 #include "macros/core.h"
 #include "versioning.h"
+
+bool KeymapReloadNeeded = false;
 
 uhk_module_state_t UhkModuleStates[UHK_MODULE_MAX_SLOT_COUNT];
 module_connection_state_t ModuleConnectionStates[UHK_MODULE_MAX_SLOT_COUNT];
@@ -100,8 +103,8 @@ static void reloadKeymapIfNeeded()
         someoneElseWillDoTheJob |= uhkModuleState->moduleId == 0 && slave->isConnected;
     }
 
-    if (!someoneElseWillDoTheJob) {
-        SwitchKeymapById(CurrentKeymapIndex);
+    if (!someoneElseWillDoTheJob && !TestSwitches) {
+        KeymapReloadNeeded = true;
     }
 }
 
@@ -362,6 +365,7 @@ slave_result_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
                     pointer_delta_t *pointerDelta = (pointer_delta_t*)(rxMessage->data + keyStatesLength);
                     uhkModuleState->pointerDelta.x += pointerDelta->x;
                     uhkModuleState->pointerDelta.y += pointerDelta->y;
+                    uhkModuleState->pointerDelta.debugInfo = pointerDelta->debugInfo;
                 }
             }
             res.status = kStatus_Uhk_IdleCycle;

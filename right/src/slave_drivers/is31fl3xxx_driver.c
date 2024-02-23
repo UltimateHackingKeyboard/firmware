@@ -4,11 +4,14 @@
 #include "led_display.h"
 #include "device/device.h"
 #include "ledmap.h"
+#include "debug.h"
 
 
 bool LedsEnabled = true;
 bool LedSleepModeActive = false;
 float LedBrightnessMultiplier = 1.0f;
+
+bool LedSlaveDriver_FullUpdateNeeded = false;
 
 uint8_t KeyBacklightBrightness = 0xff;
 uint8_t KeyBacklightBrightnessDefault = 0xff;
@@ -180,7 +183,8 @@ static uint8_t updateDataBuffer[] = {0x10, 0x00};
 static uint8_t setLedBrightness[] = {0x04, 0b00110000};
 static uint8_t updatePwmRegistersBuffer[PWM_REGISTER_BUFFER_LENGTH];
 
-static void recalculateLedBrightness() {
+static void recalculateLedBrightness()
+{
     if (!LedsEnabled || LedSleepModeActive || SleepModeActive || LedBrightnessMultiplier == 0.0f) {
         KeyBacklightBrightness = 0;
         IconsAndLayerTextsBrightness = 0;
@@ -200,19 +204,26 @@ void LedSlaveDriver_DisableLeds(void)
     }
 }
 
+
 void LedSlaveDriver_UpdateLeds(void)
 {
     recalculateLedBrightness();
+    Ledmap_UpdateBacklightLeds();
+    LedDisplay_UpdateAll();
 
-#if DEVICE_ID == DEVICE_ID_UHK60V1
+    LedSlaveDriver_FullUpdateNeeded = false;
+}
+
+void LedSlaveDriver_RecalculateLedBrightness()
+{
+    recalculateLedBrightness();
+}
+
+void LedSlaveDriver_EnableAllLeds()
+{
     for (uint8_t ledDriverId=0; ledDriverId<=LedDriverId_Last; ledDriverId++) {
         memset(LedDriverValues[ledDriverId], KeyBacklightBrightness, ledDriverStates[ledDriverId].ledCount);
     }
-#else
-    Ledmap_UpdateBacklightLeds();
-#endif
-
-    LedDisplay_UpdateAll();
 }
 
 void LedSlaveDriver_Init(uint8_t ledDriverId)

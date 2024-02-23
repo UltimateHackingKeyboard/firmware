@@ -6,6 +6,7 @@
 #include "layer_switcher.h"
 #include "ledmap.h"
 #include "macro_recorder.h"
+#include "macros/commands.h"
 #include "macros/debug_commands.h"
 #include "macros/core.h"
 #include "macros/keyid_parser.h"
@@ -30,9 +31,11 @@ static uint8_t lastLayerIdx;
 static uint8_t lastLayerKeymapIdx;
 static uint8_t lastKeymapIdx;
 
-static int32_t regs[MAX_REG_COUNT];
+uint16_t Macros_OneShotTimeout = 500;
 
+static void jumpToMatchingBrace();
 static macro_result_t processCommand(parser_context_t* ctx);
+static void consumeAnyJumpTarget(parser_context_t* ctx);
 
 static macro_result_t processDelay(uint32_t time)
 {
@@ -59,14 +62,14 @@ macro_result_t Macros_ProcessDelayAction()
 static void postponeNextN(uint8_t count)
 {
     S->ms.postponeNextNCommands = count + 1;
-    S->as.modifierPostpone = true;
+    S->ls->as.modifierPostpone = true;
     PostponerCore_PostponeNCycles(MACRO_CYCLES_TO_POSTPONE);
 }
 
 static void postponeCurrentCycle()
 {
     PostponerCore_PostponeNCycles(MACRO_CYCLES_TO_POSTPONE);
-    S->as.modifierPostpone = true;
+    S->ls->as.modifierPostpone = true;
 }
 
 /**
@@ -80,22 +83,13 @@ bool Macros_CurrentMacroKeyIsActive()
     if (S->ms.currentMacroKey == NULL) {
         return S->ms.oneShotState;
     }
-    if (S->ms.postponeNextNCommands > 0 || S->as.modifierPostpone) {
+    if (S->ms.postponeNextNCommands > 0 || S->ls->as.modifierPostpone) {
         bool keyIsActive = (KeyState_Active(S->ms.currentMacroKey) && !PostponerQuery_IsKeyReleased(S->ms.currentMacroKey));
         return  keyIsActive || S->ms.oneShotState;
     } else {
         bool keyIsActive = KeyState_Active(S->ms.currentMacroKey);
         return keyIsActive || S->ms.oneShotState;
     }
-}
-
-static bool validReg(uint8_t idx, const char* pos)
-{
-    if (idx >= MAX_REG_COUNT) {
-        Macros_ReportErrorNum("Invalid register index:", idx, pos);
-        return false;
-    }
-    return true;
 }
 
 static macro_result_t writeNum(uint32_t a)
@@ -136,71 +130,6 @@ static bool isNUM(parser_context_t* ctx)
     }
 }
 
-int32_t Macros_ParseInt(const char *a, const char *aEnd, const char* *parsedTill)
-{
-    if (*a == '#') {
-        if (Macros_DryRun) {
-            Macros_ReportWarn("Registers are now deprecated. Please, replace them with named variables. E.g., `setVar foo 1` and `$foo`.", a, a);
-        }
-        a++;
-        if (TokenMatches(a, aEnd, "key")) {
-            Macros_ReportWarn("Registers are now deprecated. Please, replace #key with $thisKeyId.", a, a);
-            if (parsedTill != NULL) {
-                *parsedTill = a+3;
-            }
-            return Utils_KeyStateToKeyId(S->ms.currentMacroKey);
-        }
-        uint8_t adr = Macros_ParseInt(a, aEnd, parsedTill);
-        if (validReg(adr, a)) {
-            return regs[adr];
-        } else {
-            return 0;
-        }
-    }
-    else if (*a == '%') {
-        Macros_ReportWarn("`%` notation is now deprecated. Please, replace it with $queuedKeyId.<index> notation. E.g., `$queuedKeyId.1`.", a, a);
-        a++;
-        uint8_t idx = Macros_ParseInt(a, aEnd, parsedTill);
-        if (idx >= PostponerQuery_PendingKeypressCount()) {
-            if (!Macros_DryRun) {
-                Macros_ReportError("Not enough pending keys! Note that this is zero-indexed!",  a, a);
-            }
-            return 0;
-        }
-        return PostponerExtended_PendingId(idx);
-    }
-    else if (*a == '@') {
-        Macros_ReportWarn("`@` notation is now deprecated. Please, replace it with $currentAddress. E.g., `@3` with `$($currentAddress + 3)`.", a, a);
-        a++;
-        return S->ms.commandAddress + Macros_ParseInt(a, aEnd, parsedTill);
-    }
-    else
-    {
-        parser_context_t ctx = { .macroState = S, .begin = a, .at = a, .end = aEnd };
-        int32_t res = Macros_ConsumeInt(&ctx);
-        if (parsedTill != NULL) {
-            *parsedTill = ctx.at;
-        }
-        return res;
-    }
-}
-
-int32_t Macros_LegacyConsumeInt(parser_context_t* ctx)
-{
-    const char* parsedTill;
-    int32_t res = Macros_ParseInt(ctx->at, ctx->end, &parsedTill);
-    ctx->at = parsedTill;
-    ConsumeWhite(ctx);
-    return res;
-}
-
-bool Macros_ParseBoolean(const char *a, const char *aEnd)
-{
-    parser_context_t ctx = { .macroState = S, .begin = a, .at = a, .end = aEnd };
-    return Macros_ConsumeBool(&ctx);
-}
-
-
 static int32_t consumeRuntimeMacroSlotId(parser_context_t* ctx)
 {
     const char* end = TokEnd(ctx->at, ctx->end);
@@ -216,7 +145,7 @@ static int32_t consumeRuntimeMacroSlotId(parser_context_t* ctx)
         ctx->at++;
     }
     else {
-        lastMacroId = 128 + Macros_LegacyConsumeInt(ctx);
+        lastMacroId = 128 + Macros_ConsumeInt(ctx);
     }
     return lastMacroId;
 }
@@ -324,15 +253,7 @@ uint8_t Macros_ConsumeLayerId(parser_context_t* ctx)
 }
 
 
-uint8_t Macros_ParseLayerId(const char* arg1, const char* cmdEnd)
-{
-    parser_context_t ctx = { .macroState = S, .begin = arg1, .at = arg1, .end = cmdEnd };
-    return Macros_ConsumeLayerId(&ctx);
-}
-
-
-
-static uint8_t parseLayerKeymapId(parser_context_t* ctx)
+static uint8_t consumeLayerKeymapId(parser_context_t* ctx)
 {
     parser_context_t bakCtx = *ctx;
     if (ConsumeToken(&bakCtx, "last")) {
@@ -366,59 +287,6 @@ static macro_result_t processSwitchKeymapCommand(parser_context_t* ctx)
     return MacroResult_Finished;
 }
 
-/**DEPRECATED**/
-static macro_result_t processSwitchKeymapLayerCommand(parser_context_t* ctx)
-{
-    Macros_ReportWarn("Command deprecated. Please, replace switchKeymapLayer by toggleKeymapLayer or holdKeymapLayer. Or complain on github that you actually need this command.", ctx->at, ctx->at);
-    uint8_t tmpLayerIdx = LayerStack_ActiveLayer;
-    uint8_t tmpLayerKeymapIdx = CurrentKeymapIndex;
-    uint8_t keymap = consumeKeymapId(ctx);
-    uint8_t layer = Macros_ConsumeLayerId(ctx);
-
-    if (Macros_ParserError) {
-        return MacroResult_Finished;
-    }
-    if (Macros_DryRun) {
-        return MacroResult_Finished;
-    }
-
-    LayerStack_Push(layer, keymap, false);
-    lastLayerIdx = tmpLayerIdx;
-    lastLayerKeymapIdx = tmpLayerKeymapIdx;
-    return MacroResult_Finished;
-}
-
-/**DEPRECATED**/
-static macro_result_t processSwitchLayerCommand(parser_context_t* ctx)
-{
-    Macros_ReportWarn("Command deprecated. Please, replace switchLayer by toggleLayer or holdLayer. Or complain on github that you actually need this command.", ctx->at, ctx->at);
-    uint8_t tmpLayerIdx = LayerStack_ActiveLayer;
-    uint8_t tmpLayerKeymapIdx = CurrentKeymapIndex;
-    if (ConsumeToken(ctx, "previous")) {
-        if (Macros_DryRun) {
-            return MacroResult_Finished;
-        }
-        LayerStack_Pop(true, false);
-    }
-    else {
-        uint8_t keymap = parseLayerKeymapId(ctx);
-        uint8_t layer = Macros_ConsumeLayerId(ctx);
-
-        if (Macros_ParserError) {
-            return MacroResult_Finished;
-        }
-        if (Macros_DryRun) {
-            return MacroResult_Finished;
-        }
-
-        LayerStack_Push(layer, keymap, false);
-    }
-    lastLayerIdx = tmpLayerIdx;
-    lastLayerKeymapIdx = tmpLayerKeymapIdx;
-    return MacroResult_Finished;
-}
-
-
 static macro_result_t processToggleKeymapLayerCommand(parser_context_t* ctx)
 {
     uint8_t tmpLayerIdx = LayerStack_ActiveLayer;
@@ -443,7 +311,7 @@ static macro_result_t processToggleLayerCommand(parser_context_t* ctx)
 {
     uint8_t tmpLayerIdx = LayerStack_ActiveLayer;
     uint8_t tmpLayerKeymapIdx = CurrentKeymapIndex;
-    uint8_t keymap = parseLayerKeymapId(ctx);
+    uint8_t keymap = consumeLayerKeymapId(ctx);
     uint8_t layer = Macros_ConsumeLayerId(ctx);
 
     if (Macros_ParserError) {
@@ -502,7 +370,7 @@ static macro_result_t processHoldLayer(uint8_t layer, uint8_t keymap, uint16_t t
 static macro_result_t processHoldLayerCommand(parser_context_t* ctx)
 {
     uint8_t layer = Macros_ConsumeLayerId(ctx);
-    uint8_t keymap = parseLayerKeymapId(ctx);
+    uint8_t keymap = consumeLayerKeymapId(ctx);
 
     if (Macros_ParserError) {
         return MacroResult_Finished;
@@ -516,9 +384,9 @@ static macro_result_t processHoldLayerCommand(parser_context_t* ctx)
 
 static macro_result_t processHoldLayerMaxCommand(parser_context_t* ctx)
 {
-    uint8_t keymap = parseLayerKeymapId(ctx);
+    uint8_t keymap = consumeLayerKeymapId(ctx);
     uint8_t layer = Macros_ConsumeLayerId(ctx);
-    uint16_t timeout = Macros_LegacyConsumeInt(ctx);
+    uint16_t timeout = Macros_ConsumeInt(ctx);
 
     if (Macros_ParserError) {
         return MacroResult_Finished;
@@ -549,7 +417,7 @@ static macro_result_t processHoldKeymapLayerMaxCommand(parser_context_t* ctx)
 {
     uint8_t keymap = consumeKeymapId(ctx);
     uint8_t layer = Macros_ConsumeLayerId(ctx);
-    uint16_t timeout = Macros_LegacyConsumeInt(ctx);
+    uint16_t timeout = Macros_ConsumeInt(ctx);
 
     if (Macros_ParserError) {
         return MacroResult_Finished;
@@ -563,7 +431,7 @@ static macro_result_t processHoldKeymapLayerMaxCommand(parser_context_t* ctx)
 
 static macro_result_t processDelayUntilReleaseMaxCommand(parser_context_t* ctx)
 {
-    uint32_t timeout = Macros_LegacyConsumeInt(ctx);
+    uint32_t timeout = Macros_ConsumeInt(ctx);
 
     if (Macros_ParserError) {
         return MacroResult_Finished;
@@ -593,7 +461,7 @@ static macro_result_t processDelayUntilReleaseCommand()
 
 static macro_result_t processDelayUntilCommand(parser_context_t* ctx)
 {
-    uint32_t time = Macros_LegacyConsumeInt(ctx);
+    uint32_t time = Macros_ConsumeInt(ctx);
 
     if (Macros_ParserError) {
         return MacroResult_Finished;
@@ -625,10 +493,13 @@ static bool processIfDoubletapCommand(bool negate)
     }
     bool doubletapFound = false;
 
-    for (uint8_t i = 0; i < MACRO_STATE_POOL_SIZE; i++) {
-        if (S->ms.currentMacroStartTime - MacroState[i].ps.previousMacroStartTime <= DoubletapConditionTimeout && S->ms.currentMacroIndex == MacroState[i].ps.previousMacroIndex) {
+    for (uint8_t i = 0; i < MACRO_HISTORY_POOL_SIZE; i++) {
+        if (S->ms.currentMacroStartTime - MacroHistory[i].macroStartTime <= DoubletapConditionTimeout && S->ms.currentMacroIndex == MacroHistory[i].macroIndex) {
             doubletapFound = true;
         }
+    }
+
+    for (uint8_t i = 0; i < MACRO_STATE_POOL_SIZE; i++) {
         if (
             MacroState[i].ms.macroPlaying &&
             MacroState[i].ms.currentMacroStartTime < S->ms.currentMacroStartTime &&
@@ -679,7 +550,7 @@ static bool processIfRecordingIdCommand(parser_context_t* ctx, bool negate)
 
 static bool processIfPendingCommand(parser_context_t* ctx, bool negate)
 {
-    uint32_t cnt = Macros_LegacyConsumeInt(ctx);
+    uint32_t cnt = Macros_ConsumeInt(ctx);
     if (Macros_DryRun) {
         return true;
     }
@@ -689,7 +560,7 @@ static bool processIfPendingCommand(parser_context_t* ctx, bool negate)
 
 static bool processIfPlaytimeCommand(parser_context_t* ctx, bool negate)
 {
-    uint32_t timeout = Macros_LegacyConsumeInt(ctx);
+    uint32_t timeout = Macros_ConsumeInt(ctx);
     if (Macros_DryRun) {
         return true;
     }
@@ -713,43 +584,6 @@ static bool processIfReleasedCommand(bool negate)
    return (!Macros_CurrentMacroKeyIsActive()) != negate;
 }
 
-static bool processIfRegEqCommand(parser_context_t* ctx, bool negate)
-{
-    Macros_ReportWarn("Command is deprecated, please use command similar to `if ($varName == 1)`.", ctx->at, ctx->at);
-    uint8_t address = Macros_LegacyConsumeInt(ctx);
-    int32_t param = Macros_LegacyConsumeInt(ctx);
-    bool regIsValid = validReg(address, ctx->at);
-    if (Macros_DryRun) {
-        return true;
-    }
-    if (regIsValid) {
-        bool res = regs[address] == param;
-        return res != negate;
-    } else {
-        return false;
-    }
-}
-
-static bool processIfRegInequalityCommand(parser_context_t* ctx, bool greaterThan)
-{
-    Macros_ReportWarn("Command is deprecated, please use command similar to `if ($varName >= 1)`.", ctx->at, ctx->at);
-    uint8_t address = Macros_LegacyConsumeInt(ctx);
-    int32_t param = Macros_LegacyConsumeInt(ctx);
-    bool regIsValid = validReg(address, ctx->at);
-    if (Macros_DryRun) {
-        return true;
-    }
-    if (regIsValid) {
-        if (greaterThan) {
-            return regs[address] > param;
-        } else {
-            return regs[address] < param;
-        }
-    } else {
-        return false;
-    }
-}
-
 static bool processIfKeymapCommand(parser_context_t* ctx, bool negate)
 {
     uint8_t queryKeymapIdx = consumeKeymapId(ctx);
@@ -767,6 +601,16 @@ static bool processIfLayerCommand(parser_context_t* ctx, bool negate)
     }
     return (queryLayerIdx == LayerStack_ActiveLayer) != negate;
 }
+
+
+static bool processIfLayerToggledCommand(parser_context_t* ctx, bool negate)
+{
+    if (Macros_DryRun) {
+        return true;
+    }
+    return (LayerStack_IsLayerToggled()) != negate;
+}
+
 
 static bool processIfCommand(parser_context_t* ctx)
 {
@@ -787,19 +631,20 @@ static macro_result_t processWhileCommand(parser_context_t* ctx)
         return processCommand(ctx);
     }
 
-    if (!S->as.whileExecuting) {
+    if (!S->ls->as.whileExecuting) {
         if (!condition) {
             return MacroResult_Finished;
         }
 
-        S->as.whileExecuting = true;
-        S->as.currentConditionPassed = false;
+        S->ls->as.isWhileScope = true;
+        S->ls->as.whileExecuting = true;
+        S->ls->as.currentConditionPassed = false;
     }
 
     macro_result_t res = processCommand(ctx);
 
     if (res & (MacroResult_ActionFinishedFlag | MacroResult_DoneFlag)) {
-        S->as.whileExecuting = false;
+        S->ls->as.whileExecuting = false;
 
         if (res & MacroResult_ActionFinishedFlag) {
             return (res & ~MacroResult_ActionFinishedFlag) | MacroResult_InProgressFlag;
@@ -811,18 +656,55 @@ static macro_result_t processWhileCommand(parser_context_t* ctx)
     }
 }
 
-static macro_result_t processBreakCommand()
+static macro_result_t processExitCommand(parser_context_t *ctx)
 {
     if (Macros_DryRun) {
         return MacroResult_Finished;
     }
+
+    S->ms.macroBroken = true;
+    return MacroResult_Finished;
+}
+
+static macro_result_t processBreakCommand(parser_context_t *ctx)
+{
+    if (Macros_DryRun) {
+        return MacroResult_Finished;
+    }
+
+    // Take care of:
+    // while (true) break
+    if (S->ls->as.isWhileScope) {
+        Macros_LoadNextCommand() || Macros_LoadNextAction() || (S->ms.macroBroken = true);
+        return MacroResult_DoneFlag;
+    }
+
+
+    // Take care of:
+    // while (true) {
+    //   break
+    // }
+    // pop scopes until you reach parent while
+    bool popped = false;
+    while (S->ls->parentScopeIndex != 255 && !S->ls->as.isWhileScope) {
+        popped = true;
+        Macros_PopScope(ctx);
+    }
+
+    // now skip the scope, if we indeed reached parent while scope and not root scope
+    if (popped && S->ls->as.isWhileScope) {
+        jumpToMatchingBrace();
+        return MacroResult_DoneFlag;
+    }
+
+    // Takes care of break in root scope
     S->ms.macroBroken = true;
     return MacroResult_Finished;
 }
 
 static macro_result_t processSetLedTxtCommand(parser_context_t* ctx)
 {
-    int16_t time = Macros_LegacyConsumeInt(ctx);
+    int16_t time = Macros_ConsumeInt(ctx);
     char text[3];
     uint8_t textLen = 0;
 
@@ -832,14 +714,16 @@ static macro_result_t processSetLedTxtCommand(parser_context_t* ctx)
         textLen = 3;
     } else if (ctx->at != ctx->end) {
         uint16_t stringOffset = 0, textIndex = 0, textSubIndex = 0;
-        for (uint8_t i = 0; i < 3; i++) {
-            text[i] = Macros_ConsumeCharOfString(ctx, &stringOffset, &textIndex, &textSubIndex);
-            if (text[i] != '\0') {
+        for (uint8_t i = 0; true; i++) {
+            char c = Macros_ConsumeCharOfString(ctx, &stringOffset, &textIndex, &textSubIndex);
+            if (c == '\0') {
+                break;
+            }
+            if (i < 3) {
+                text[i] = c;
                 textLen++;
             }
         }
-        ctx->at += stringOffset;
-        ctx->at += textIndex;
         ConsumeWhite(ctx);
     } else {
         Macros_ReportError("Text argument expected.", ctx->at, ctx->at);
@@ -863,71 +747,19 @@ static macro_result_t processSetLedTxtCommand(parser_context_t* ctx)
     }
 }
 
-static macro_result_t processSetRegCommand(parser_context_t* ctx)
-{
-    uint8_t address = Macros_LegacyConsumeInt(ctx);
-    int32_t param = Macros_LegacyConsumeInt(ctx);
-    bool regIsValid = validReg(address, ctx->at);
-    if (Macros_DryRun) {
-        return MacroResult_Finished;
-    }
-    if (regIsValid) {
-        regs[address] = param;
-    }
-    return MacroResult_Finished;
-}
-
-static macro_result_t processRegAddCommand(parser_context_t* ctx, bool invert)
-{
-    Macros_ReportWarn("Command is deprecated, please use command similar to `setVar varName ($varName+1)`.", ctx->at, ctx->at);
-    uint8_t address = Macros_LegacyConsumeInt(ctx);
-    int32_t param = Macros_LegacyConsumeInt(ctx);
-    bool regIsValid = validReg(address, ctx->at);
-    if (Macros_DryRun) {
-        return MacroResult_Finished;
-    }
-    if (regIsValid) {
-        if (invert) {
-            regs[address] = regs[address] - param;
-        } else {
-            regs[address] = regs[address] + param;
-        }
-    }
-    return MacroResult_Finished;
-}
-
-static macro_result_t processRegMulCommand(parser_context_t* ctx)
-{
-    Macros_ReportWarn("Command is deprecated, please use command similar to `setVar varName ($varName*2)`.", ctx->at, ctx->at);
-    uint8_t address = Macros_LegacyConsumeInt(ctx);
-    int32_t param = Macros_LegacyConsumeInt(ctx);
-    bool regIsValid = validReg(address, ctx->at);
-    if (Macros_DryRun) {
-        return MacroResult_Finished;
-    }
-    if (regIsValid) {
-        regs[address] = regs[address]*param;
-    }
-    return MacroResult_Finished;
-}
-
 macro_result_t goTo(parser_context_t* ctx)
 {
+    if (Macros_DryRun) {
+        consumeAnyJumpTarget(ctx);
+        return MacroResult_Finished;
+    }
+
     if (isNUM(ctx)) {
-        if (Macros_DryRun) {
-            Macros_LegacyConsumeInt(ctx);
-            return MacroResult_Finished;
-        }
-        return Macros_GoToAddress(Macros_LegacyConsumeInt(ctx));
+        return Macros_GoToAddress(Macros_ConsumeInt(ctx));
     } else {
-        if (Macros_DryRun) {
-            ConsumeAnyIdentifier(ctx);
-            return MacroResult_Finished;
-        }
         return Macros_GoToLabel(ctx);
     }
 }
-
 
 static macro_result_t processGoToCommand(parser_context_t* ctx)
 {
@@ -940,6 +772,51 @@ static macro_result_t processYieldCommand(parser_context_t* ctx)
         return MacroResult_Finished;
     }
     return MacroResult_ActionFinishedFlag | MacroResult_YieldFlag;
+}
+
+static macro_result_t processOpeningBraceCommand(parser_context_t* ctx)
+{
+    if (Macros_DryRun) {
+        return MacroResult_Finished | MacroResult_OpeningBraceFlag;
+    }
+
+    if (!S->ls->as.braceExecuting) {
+        // When opening a fresh scope, just insolently push scope and load next command.
+        S->ls->as.braceExecuting = true;
+        Macros_PushScope(ctx);
+        S->ls->as.braceExecuting = false;
+
+        Macros_LoadNextCommand() || Macros_LoadNextAction() || (S->ms.macroBroken = true);
+        return MacroResult_DoneFlag;
+    } else {
+        // When closing brace is reached, scope is popped and the command that
+        // opened the scope is ran again (still as if in progress). (This is
+        // where we are now.)
+        //
+        // Now we return MacroResult_Finished. This MacroResult_Finished can be
+        // intercepted by all modifiers that prefix the scope and e.g., choose
+        // to rerun the command (as a while or autoRepeat do).
+
+        S->ls->as.braceExecuting = false;
+        while (*ctx->at != '{') {
+            ctx->at--;
+        }
+        return MacroResult_Finished;
+    }
+}
+
+static macro_result_t processClosingBraceCommand(parser_context_t* ctx)
+{
+    if (Macros_DryRun) {
+        return MacroResult_Finished | MacroResult_ClosingBraceFlag;
+    }
+
+    Macros_PopScope(ctx);
+
+    // After this, the command that opened the scope will be rerun, and opening
+    // brace will take care of scope epilogue.
+
+    return MacroResult_InProgressFlag | MacroResult_ClosingBraceFlag;
 }
 
 static macro_result_t processStopRecordingCommand()
@@ -1045,17 +922,14 @@ static macro_result_t processWriteCommand(parser_context_t* ctx)
 
         return MacroResult_Finished;
     }
-    return Macros_DispatchText(ctx->at, ctx->end - ctx->at, false);
-}
 
-static macro_result_t processWriteExprCommand(parser_context_t* ctx)
-{
-    Macros_ReportWarn("writeExpr is now deprecated, please migrate to interpolated strings", ctx->at, ctx->at);
-    uint32_t num = Macros_LegacyConsumeInt(ctx);
-    if (Macros_DryRun) {
-        return MacroResult_Finished;
+    macro_result_t res = Macros_DispatchText(ctx->at, ctx->end - ctx->at, false);
+
+    if (res & MacroResult_ActionFinishedFlag) {
+        ctx->at = ctx->end;
     }
-    return writeNum(num);
+
+    return res;
 }
 
 static void processSuppressModsCommand()
@@ -1064,7 +938,7 @@ static void processSuppressModsCommand()
         return;
     }
     SuppressMods = true;
-    S->as.modifierSuppressMods = true;
+    S->ls->as.modifierSuppressMods = true;
 }
 
 static void processPostponeKeysCommand()
@@ -1073,7 +947,7 @@ static void processPostponeKeysCommand()
         return;
     }
     postponeCurrentCycle();
-    S->as.modifierSuppressMods = true;
+    S->ls->as.modifierSuppressMods = true;
 }
 
 static macro_result_t processNoOpCommand()
@@ -1090,95 +964,6 @@ static macro_result_t processNoOpCommand()
     }
 }
 
-#define RESOLVESEC_RESULT_DONTKNOWYET 0
-#define RESOLVESEC_RESULT_PRIMARY 1
-#define RESOLVESEC_RESULT_SECONDARY 2
-
-
-static uint8_t processResolveSecondary(uint16_t timeout1, uint16_t timeout2)
-{
-    postponeCurrentCycle();
-    bool pendingReleased = PostponerExtended_IsPendingKeyReleased(0);
-    bool currentKeyIsActive = Macros_CurrentMacroKeyIsActive();
-
-    //phase 1 - wait until some other key is released, then write down its release time
-    bool timer1Exceeded = Timer_GetElapsedTime(&S->ms.currentMacroStartTime) >= timeout1;
-    if (!timer1Exceeded && currentKeyIsActive && !pendingReleased) {
-        S->as.secondaryRoleData.phase2Start = 0;
-        return RESOLVESEC_RESULT_DONTKNOWYET;
-    }
-    if (S->as.secondaryRoleData.phase2Start == 0) {
-        S->as.secondaryRoleData.phase2Start = CurrentTime;
-    }
-    //phase 2 - "safety margin" - wait another `timeout2` ms, and if the switcher is released during this time, still interpret it as a primary action
-    bool timer2Exceeded = Timer_GetElapsedTime(&S->as.secondaryRoleData.phase2Start) >= timeout2;
-    if (!timer1Exceeded && !timer2Exceeded &&  currentKeyIsActive && pendingReleased && PostponerQuery_PendingKeypressCount() < 3) {
-        return RESOLVESEC_RESULT_DONTKNOWYET;
-    }
-    //phase 3 - resolve the situation - if the switcher is released first or within the "safety margin", interpret it as primary action, otherwise secondary
-    if (timer1Exceeded || (pendingReleased && timer2Exceeded)) {
-        return RESOLVESEC_RESULT_SECONDARY;
-    }
-    else {
-        return RESOLVESEC_RESULT_PRIMARY;
-    }
-
-}
-
-static macro_result_t processResolveSecondaryCommand(parser_context_t* ctx)
-{
-    const char* argEnd = ctx->end;
-    const char* arg1 = ctx->at;
-    const char* arg2 = NextTok(arg1, argEnd);
-    const char* arg3 = NextTok(arg2, argEnd);
-    const char* arg4 = NextTok(arg3, argEnd);
-
-    const char* primaryAdr;
-    const char* secondaryAdr;
-    uint16_t timeout1;
-    uint16_t timeout2;
-
-    if (arg4 == argEnd) {
-        timeout1 = Macros_ParseInt(arg1, argEnd, NULL);
-        timeout2 = timeout1;
-        primaryAdr = arg2;
-        secondaryAdr = arg3;
-    } else {
-        timeout1 = Macros_ParseInt(arg1, argEnd, NULL);
-        timeout2 = Macros_ParseInt(arg2, argEnd, NULL);
-        primaryAdr = arg3;
-        secondaryAdr = arg4;
-    }
-
-    if (Macros_ParserError) {
-        return MacroResult_Finished;
-    }
-    if (Macros_DryRun) {
-        Macros_ReportWarn("Command deprecated. Please, replace resolveSecondary by `ifPrimary advancedStrategy goTo ...` or `ifSecondary advancedStrategy goTo ...`.", NULL, NULL);
-        return MacroResult_Finished;
-    }
-
-    uint8_t res = processResolveSecondary(timeout1, timeout2);
-
-    switch(res) {
-    case RESOLVESEC_RESULT_DONTKNOWYET:
-        return MacroResult_Waiting;
-    case RESOLVESEC_RESULT_PRIMARY: {
-            postponeNextN(1);
-            parser_context_t ctx2 = { .macroState = S, .begin = arg1, .at = primaryAdr, .end = argEnd};
-            return goTo(&ctx2);
-        }
-    case RESOLVESEC_RESULT_SECONDARY: {
-            parser_context_t ctx2 = { .macroState = S, .begin = arg1, .at = secondaryAdr, .end = argEnd};
-            return goTo(&ctx2);
-        }
-    }
-    //this is unreachable, prevents warning
-    return MacroResult_Finished;
-}
-
-
-
 static macro_result_t processIfSecondaryCommand(parser_context_t* ctx, bool negate)
 {
     secondary_role_strategy_t strategy = SecondaryRoles_Strategy;
@@ -1194,11 +979,11 @@ static macro_result_t processIfSecondaryCommand(parser_context_t* ctx, bool nega
         goto conditionPassed;
     }
 
-    if (S->as.currentIfSecondaryConditionPassed) {
-        if (S->as.currentConditionPassed) {
+    if (S->ls->as.currentIfSecondaryConditionPassed) {
+        if (S->ls->as.currentConditionPassed) {
             goto conditionPassed;
         } else {
-            S->as.currentIfSecondaryConditionPassed = false;
+            S->ls->as.currentIfSecondaryConditionPassed = false;
         }
     }
 
@@ -1225,8 +1010,8 @@ static macro_result_t processIfSecondaryCommand(parser_context_t* ctx, bool nega
         }
     }
 conditionPassed:
-    S->as.currentIfSecondaryConditionPassed = true;
-    S->as.currentConditionPassed = false; //otherwise following conditions would be skipped
+    S->ls->as.currentIfSecondaryConditionPassed = true;
+    S->ls->as.currentConditionPassed = false; //otherwise following conditions would be skipped
     return processCommand(ctx);
 }
 
@@ -1248,58 +1033,6 @@ static macro_result_t processResolveNextKeyIdCommand()
     return res;
 }
 
-static macro_result_t processResolveNextKeyEqCommand(parser_context_t* ctx)
-{
-    Macros_ReportWarn("Command deprecated. Please, replace resolveNextKeyEq by ifShortcut or ifGesture, or complain at github that you actually need this.", NULL, NULL);
-    const char* argEnd = ctx->end;
-    const char* arg1 = ctx->at;
-    const char* arg2 = NextTok(arg1, argEnd);
-    const char* arg3 = NextTok(arg2, argEnd);
-    const char* arg4 = NextTok(arg3, argEnd);
-    const char* arg5 = NextTok(arg4, argEnd);
-    uint16_t idx = Macros_ParseInt(arg1, argEnd, NULL);
-    uint16_t key = Macros_ParseInt(arg2, argEnd, NULL);
-    uint16_t timeout = 0;
-    bool untilRelease = false;
-    if (TokenMatches(arg3, argEnd, "untilRelease")) {
-       untilRelease = true;
-    } else {
-       timeout = Macros_ParseInt(arg3, argEnd, NULL);
-    }
-    const char* adr1 = arg4;
-    const char* adr2 = arg5;
-
-
-    if (idx > POSTPONER_BUFFER_MAX_FILL) {
-        Macros_ReportErrorNum("Invalid argument 1, allowed at most:", idx, arg1);
-    }
-
-    if (Macros_ParserError) {
-        return MacroResult_Finished;
-    }
-    if (Macros_DryRun) {
-        return MacroResult_Finished;
-    }
-
-    postponeCurrentCycle();
-
-    if (untilRelease ? !Macros_CurrentMacroKeyIsActive() : Timer_GetElapsedTime(&S->ms.currentMacroStartTime) >= timeout) {
-        ctx->at = adr2;
-        return goTo(ctx);
-    }
-    if (PostponerQuery_PendingKeypressCount() < idx + 1) {
-        return MacroResult_Waiting;
-    }
-
-    if (PostponerExtended_PendingId(idx) == key) {
-        ctx->at = adr1;
-        return goTo(ctx);
-    } else {
-        ctx->at = adr2;
-        return goTo(ctx);
-    }
-}
-
 static macro_result_t processIfShortcutCommand(parser_context_t* ctx, bool negate, bool untilRelease)
 {
     //parse optional flags
@@ -1317,9 +1050,9 @@ static macro_result_t processIfShortcutCommand(parser_context_t* ctx, bool negat
         } else if (ConsumeToken(ctx, "transitive")) {
             transitive = true;
         } else if (ConsumeToken(ctx, "timeoutIn")) {
-            timeoutIn = Macros_LegacyConsumeInt(ctx);
+            timeoutIn = Macros_ConsumeInt(ctx);
         } else if (ConsumeToken(ctx, "cancelIn")) {
-            cancelIn = Macros_LegacyConsumeInt(ctx);
+            cancelIn = Macros_ConsumeInt(ctx);
         } else if (ConsumeToken(ctx, "anyOrder")) {
             fixedOrder = false;
         } else if (ConsumeToken(ctx, "orGate")) {
@@ -1333,11 +1066,11 @@ static macro_result_t processIfShortcutCommand(parser_context_t* ctx, bool negat
         goto conditionPassed;
     }
 
-    if (S->as.currentIfShortcutConditionPassed) {
-        if (S->as.currentConditionPassed) {
+    if (S->ls->as.currentIfShortcutConditionPassed) {
+        if (S->ls->as.currentConditionPassed) {
             goto conditionPassed;
         } else {
-            S->as.currentIfShortcutConditionPassed = false;
+            S->ls->as.currentIfShortcutConditionPassed = false;
         }
     }
 
@@ -1433,11 +1166,12 @@ static macro_result_t processIfShortcutCommand(parser_context_t* ctx, bool negat
         goto conditionPassed;
     }
 conditionFailed:
+    while(Macros_TryConsumeKeyId(ctx) != 255) { };
     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
 conditionPassed:
     while(Macros_TryConsumeKeyId(ctx) != 255) { };
-    S->as.currentIfShortcutConditionPassed = true;
-    S->as.currentConditionPassed = false; //otherwise following conditions would be skipped
+    S->ls->as.currentIfShortcutConditionPassed = true;
+    S->ls->as.currentConditionPassed = false; //otherwise following conditions would be skipped
     return processCommand(ctx);
 }
 
@@ -1446,7 +1180,7 @@ uint8_t Macros_TryConsumeKeyId(parser_context_t* ctx)
     uint8_t keyId = MacroKeyIdParser_TryConsumeKeyId(ctx);
 
     if (keyId == 255 && isNUM(ctx)) {
-        return Macros_LegacyConsumeInt(ctx);
+        return Macros_ConsumeInt(ctx);
     } else {
         return keyId;
     }
@@ -1454,7 +1188,7 @@ uint8_t Macros_TryConsumeKeyId(parser_context_t* ctx)
 
 static macro_result_t processAutoRepeatCommand(parser_context_t* ctx) {
     if (Macros_DryRun) {
-        return processCommand(ctx);;
+        return processCommand(ctx);
     }
 
     switch (S->ms.autoRepeatPhase) {
@@ -1512,13 +1246,18 @@ static macro_result_t processOneShotCommand(parser_context_t* ctx) {
         return processCommand(ctx);
     }
 
+    if (Macros_OneShotTimeout != 0 && CurrentTime >= S->ms.currentMacroStartTime + Macros_OneShotTimeout) {
+        S->ms.oneShotState = 0;
+        return processCommand(ctx);
+    }
+
     /* In order for modifiers of a scancode action to be applied properly, we need to
      * make the action live at least one cycle after macroInterrupted becomes true.
      *
      * Also, we need to prevent the command to go sleeping after this because
      * we would not be woken up.
      * */
-    if (!S->ms.macroInterrupted) {
+    if (!S->ms.macroInterrupted || !S->ms.oneShotUsbChangeDetected) {
         S->ms.oneShotState = 1;
     } else if (S->ms.oneShotState < 3) {
         S->ms.oneShotState++;
@@ -1587,8 +1326,8 @@ static macro_result_t processOverlayLayerCommand(parser_context_t* ctx)
 
 static bool processIfKeyPendingAtCommand(parser_context_t* ctx, bool negate)
 {
-    uint16_t idx = Macros_LegacyConsumeInt(ctx);
-    uint16_t key = Macros_LegacyConsumeInt(ctx);
+    uint16_t idx = Macros_ConsumeInt(ctx);
+    uint16_t key = Macros_ConsumeInt(ctx);
 
     if (Macros_DryRun) {
         return true;
@@ -1599,7 +1338,7 @@ static bool processIfKeyPendingAtCommand(parser_context_t* ctx, bool negate)
 
 static bool processIfKeyActiveCommand(parser_context_t* ctx, bool negate)
 {
-    uint16_t keyid = Macros_LegacyConsumeInt(ctx);
+    uint16_t keyid = Macros_ConsumeInt(ctx);
     key_state_t* key = Utils_KeyIdToKeyState(keyid);
     if (Macros_DryRun) {
         return true;
@@ -1609,7 +1348,7 @@ static bool processIfKeyActiveCommand(parser_context_t* ctx, bool negate)
 
 static bool processIfPendingKeyReleasedCommand(parser_context_t* ctx, bool negate)
 {
-    uint16_t idx = Macros_LegacyConsumeInt(ctx);
+    uint16_t idx = Macros_ConsumeInt(ctx);
     if (Macros_DryRun) {
         return true;
     }
@@ -1618,7 +1357,7 @@ static bool processIfPendingKeyReleasedCommand(parser_context_t* ctx, bool negat
 
 static bool processIfKeyDefinedCommand(parser_context_t* ctx, bool negate)
 {
-    uint16_t keyid = Macros_LegacyConsumeInt(ctx);
+    uint16_t keyid = Macros_ConsumeInt(ctx);
     if (Macros_DryRun) {
         return true;
     }
@@ -1627,6 +1366,23 @@ static bool processIfKeyDefinedCommand(parser_context_t* ctx, bool negate)
     Utils_DecodeId(keyid, &slot, &slotIdx);
     key_action_t* action = &CurrentKeymap[ActiveLayer][slot][slotIdx];
     return (action->type != KeyActionType_None) != negate;
+}
+
+static bool processIfModuleConnected(parser_context_t* ctx, bool negate)
+{
+    uint8_t moduleId = ConsumeModuleId(ctx);
+    if (Macros_DryRun) {
+        return true;
+    }
+
+    bool moduleConnected = false;
+
+    for (uint8_t moduleSlotId=0; moduleSlotId<UHK_MODULE_MAX_SLOT_COUNT; moduleSlotId++) {
+        uhk_module_state_t *moduleState = UhkModuleStates + moduleSlotId;
+        moduleConnected |= moduleState->moduleId == moduleId;
+    }
+
+    return moduleConnected != negate;
 }
 
 static macro_result_t processActivateKeyPostponedCommand(parser_context_t* ctx)
@@ -1651,7 +1407,7 @@ static macro_result_t processActivateKeyPostponedCommand(parser_context_t* ctx)
         }
     }
 
-    uint16_t keyid = Macros_LegacyConsumeInt(ctx);
+    uint16_t keyid = Macros_ConsumeInt(ctx);
     key_state_t* key = Utils_KeyIdToKeyState(keyid);
 
     if (Macros_ParserError) {
@@ -1684,7 +1440,7 @@ static macro_result_t processActivateKeyPostponedCommand(parser_context_t* ctx)
 
 static macro_result_t processConsumePendingCommand(parser_context_t* ctx)
 {
-    uint16_t cnt = Macros_LegacyConsumeInt(ctx);
+    uint16_t cnt = Macros_ConsumeInt(ctx);
     if (Macros_DryRun) {
         return MacroResult_Finished;
     }
@@ -1694,7 +1450,7 @@ static macro_result_t processConsumePendingCommand(parser_context_t* ctx)
 
 static macro_result_t processPostponeNextNCommand(parser_context_t* ctx)
 {
-    uint16_t cnt = Macros_LegacyConsumeInt(ctx);
+    uint16_t cnt = Macros_ConsumeInt(ctx);
     if (Macros_DryRun) {
         return MacroResult_Finished;
     }
@@ -1703,34 +1459,36 @@ static macro_result_t processPostponeNextNCommand(parser_context_t* ctx)
     return MacroResult_Finished;
 }
 
+static void consumeAnyJumpTarget(parser_context_t* ctx)
+{
+    if (isNUM(ctx)) {
+        Macros_ConsumeInt(ctx);
+    } else {
+        ConsumeAnyIdentifier(ctx);
+    }
+}
 
 static macro_result_t processRepeatForCommand(parser_context_t* ctx)
 {
-    if (isNUM(ctx)) {
-        uint8_t idx = Macros_LegacyConsumeInt(ctx);
-        bool regIsValid = validReg(idx, ctx->at);
-        if (Macros_DryRun) {
-            return MacroResult_Finished;
-        }
-        if (regIsValid) {
-            if (regs[idx] > 0) {
-                regs[idx]--;
-                if (regs[idx] > 0) {
-                    return goTo(ctx);
-                }
-            }
-        }
-    } else {
-        macro_variable_t* v = Macros_ConsumeExistingWritableVariable(ctx);
-        if (v != NULL) {
+    macro_variable_t* v = Macros_ConsumeExistingWritableVariable(ctx);
+
+    if (Macros_DryRun) {
+        consumeAnyJumpTarget(ctx);
+    }
+
+    if (v != NULL) {
+        if (v->asInt > 0) {
+            v->asInt--;
             if (v->asInt > 0) {
-                v->asInt--;
-                if (v->asInt > 0) {
-                    return goTo(ctx);
-                }
+                return goTo(ctx);
+            } else {
+                consumeAnyJumpTarget(ctx);
             }
+        } else {
+            consumeAnyJumpTarget(ctx);
         }
     }
+
     return MacroResult_Finished;
 }
 
@@ -1784,10 +1542,10 @@ static macro_result_t processFinalCommand(parser_context_t* ctx)
     macro_result_t res = processCommand(ctx);
 
     if (Macros_DryRun) {
-        return MacroResult_Finished;
+        return res;
     }
 
-    if (res & MacroResult_InProgressFlag) {
+    if (res & MacroResult_InProgressFlag || res & MacroResult_DoneFlag) {
         return res;
     } else {
         S->ms.macroBroken = true;
@@ -1860,14 +1618,15 @@ static macro_result_t processCommand(parser_context_t* ctx)
     while(ctx->at < ctx->end) {
         switch(*ctx->at) {
         case 'a':
-            if (ConsumeToken(ctx, "addReg")) {
-                return processRegAddCommand(ctx, false);
-            }
-            else if (ConsumeToken(ctx, "activateKeyPostponed")) {
+            if (ConsumeToken(ctx, "activateKeyPostponed")) {
                 return processActivateKeyPostponedCommand(ctx);
             }
             else if (ConsumeToken(ctx, "autoRepeat")) {
                 return processAutoRepeatCommand(ctx);
+            }
+            else if (ConsumeToken(ctx, "addReg")) {
+                Macros_ReportError("Command was removed, please use command similar to `setVar varName ($varName+1)`.", ctx->at, ctx->at);
+                return MacroResult_Finished;
             }
             else {
                 goto failed;
@@ -1875,7 +1634,7 @@ static macro_result_t processCommand(parser_context_t* ctx)
             break;
         case 'b':
             if (ConsumeToken(ctx, "break")) {
-                return processBreakCommand();
+                return processBreakCommand(ctx);
             }
             else {
                 goto failed;
@@ -1917,9 +1676,12 @@ static macro_result_t processCommand(parser_context_t* ctx)
                 return processExecCommand(ctx);
             }
             else if (ConsumeToken(ctx, "else")) {
-                if (S->ms.lastIfSucceeded) {
+                if (!Macros_DryRun && S->ls->ms.lastIfSucceeded) {
                     return MacroResult_Finished;
                 }
+            }
+            else if (ConsumeToken(ctx, "exit")) {
+                return processExitCommand(ctx);
             }
             else {
                 goto failed;
@@ -1966,237 +1728,237 @@ static macro_result_t processCommand(parser_context_t* ctx)
             break;
         case 'i':
             if (ConsumeToken(ctx, "if")) {
-                if (!processIfCommand(ctx) && !S->as.currentConditionPassed) {
+                if (!processIfCommand(ctx) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifDoubletap")) {
-                if (!processIfDoubletapCommand(false) && !S->as.currentConditionPassed) {
+                if (!processIfDoubletapCommand(false) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotDoubletap")) {
-                if (!processIfDoubletapCommand(true) && !S->as.currentConditionPassed) {
+                if (!processIfDoubletapCommand(true) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifInterrupted")) {
-                if (!processIfInterruptedCommand(false) && !S->as.currentConditionPassed) {
+                if (!processIfInterruptedCommand(false) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotInterrupted")) {
-                if (!processIfInterruptedCommand(true) && !S->as.currentConditionPassed) {
+                if (!processIfInterruptedCommand(true) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifReleased")) {
-                if (!processIfReleasedCommand(false) && !S->as.currentConditionPassed) {
+                if (!processIfReleasedCommand(false) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotReleased")) {
-                if (!processIfReleasedCommand(true) && !S->as.currentConditionPassed) {
-                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
-                }
-            }
-            else if (ConsumeToken(ctx, "ifRegEq")) {
-                if (!processIfRegEqCommand(ctx, false) && !S->as.currentConditionPassed) {
-                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
-                }
-            }
-            else if (ConsumeToken(ctx, "ifNotRegEq")) {
-                if (!processIfRegEqCommand(ctx, true) && !S->as.currentConditionPassed) {
-                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
-                }
-            }
-            else if (ConsumeToken(ctx, "ifRegGt")) {
-                if (!processIfRegInequalityCommand(ctx, true) && !S->as.currentConditionPassed) {
-                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
-                }
-            }
-            else if (ConsumeToken(ctx, "ifRegLt")) {
-                if (!processIfRegInequalityCommand(ctx, false) && !S->as.currentConditionPassed) {
+                if (!processIfReleasedCommand(true) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifKeymap")) {
-                if (!processIfKeymapCommand(ctx, false) && !S->as.currentConditionPassed) {
+                if (!processIfKeymapCommand(ctx, false) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotKeymap")) {
-                if (!processIfKeymapCommand(ctx, true) && !S->as.currentConditionPassed) {
+                if (!processIfKeymapCommand(ctx, true) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifLayer")) {
-                if (!processIfLayerCommand(ctx, false) && !S->as.currentConditionPassed) {
+                if (!processIfLayerCommand(ctx, false) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotLayer")) {
-                if (!processIfLayerCommand(ctx, true) && !S->as.currentConditionPassed) {
+                if (!processIfLayerCommand(ctx, true) && !S->ls->as.currentConditionPassed) {
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
+                }
+            }
+            else if (ConsumeToken(ctx, "ifLayerToggled")) {
+                if (!processIfLayerToggledCommand(ctx, false) && !S->ls->as.currentConditionPassed) {
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
+                }
+            }
+            else if (ConsumeToken(ctx, "ifNotLayerToggled")) {
+                if (!processIfLayerToggledCommand(ctx, true) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifPlaytime")) {
-                if (!processIfPlaytimeCommand(ctx, false) && !S->as.currentConditionPassed) {
+                if (!processIfPlaytimeCommand(ctx, false) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotPlaytime")) {
-                if (!processIfPlaytimeCommand(ctx, true) && !S->as.currentConditionPassed) {
+                if (!processIfPlaytimeCommand(ctx, true) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifAnyMod")) {
-                if (!processIfModifierCommand(false, 0xFF)  && !S->as.currentConditionPassed) {
+                if (!processIfModifierCommand(false, 0xFF)  && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotAnyMod")) {
-                if (!processIfModifierCommand(true, 0xFF)  && !S->as.currentConditionPassed) {
+                if (!processIfModifierCommand(true, 0xFF)  && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifShift")) {
-                if (!processIfModifierCommand(false, SHIFTMASK)  && !S->as.currentConditionPassed) {
+                if (!processIfModifierCommand(false, SHIFTMASK)  && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotShift")) {
-                if (!processIfModifierCommand(true, SHIFTMASK) && !S->as.currentConditionPassed) {
+                if (!processIfModifierCommand(true, SHIFTMASK) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifCtrl")) {
-                if (!processIfModifierCommand(false, CTRLMASK) && !S->as.currentConditionPassed) {
+                if (!processIfModifierCommand(false, CTRLMASK) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotCtrl")) {
-                if (!processIfModifierCommand(true, CTRLMASK) && !S->as.currentConditionPassed) {
+                if (!processIfModifierCommand(true, CTRLMASK) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifAlt")) {
-                if (!processIfModifierCommand(false, ALTMASK) && !S->as.currentConditionPassed) {
+                if (!processIfModifierCommand(false, ALTMASK) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotAlt")) {
-                if (!processIfModifierCommand(true, ALTMASK) && !S->as.currentConditionPassed) {
+                if (!processIfModifierCommand(true, ALTMASK) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifGui")) {
-                if (!processIfModifierCommand(false, GUIMASK)  && !S->as.currentConditionPassed) {
+                if (!processIfModifierCommand(false, GUIMASK)  && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotGui")) {
-                if (!processIfModifierCommand(true, GUIMASK) && !S->as.currentConditionPassed) {
+                if (!processIfModifierCommand(true, GUIMASK) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifCapsLockOn")) {
-                if (!processIfStateKeyCommand(false, &UsbBasicKeyboard_CapsLockOn) && !S->as.currentConditionPassed) {
+                if (!processIfStateKeyCommand(false, &UsbBasicKeyboard_CapsLockOn) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotCapsLockOn")) {
-                if (!processIfStateKeyCommand(true, &UsbBasicKeyboard_CapsLockOn) && !S->as.currentConditionPassed) {
+                if (!processIfStateKeyCommand(true, &UsbBasicKeyboard_CapsLockOn) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNumLockOn")) {
-                if (!processIfStateKeyCommand(false, &UsbBasicKeyboard_NumLockOn) && !S->as.currentConditionPassed) {
+                if (!processIfStateKeyCommand(false, &UsbBasicKeyboard_NumLockOn) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotNumLockOn")) {
-                if (!processIfStateKeyCommand(true, &UsbBasicKeyboard_NumLockOn) && !S->as.currentConditionPassed) {
+                if (!processIfStateKeyCommand(true, &UsbBasicKeyboard_NumLockOn) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifScrollLockOn")) {
-                if (!processIfStateKeyCommand(false, &UsbBasicKeyboard_ScrollLockOn) && !S->as.currentConditionPassed) {
+                if (!processIfStateKeyCommand(false, &UsbBasicKeyboard_ScrollLockOn) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotScrollLockOn")) {
-                if (!processIfStateKeyCommand(true, &UsbBasicKeyboard_ScrollLockOn) && !S->as.currentConditionPassed) {
+                if (!processIfStateKeyCommand(true, &UsbBasicKeyboard_ScrollLockOn) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifRecording")) {
-                if (!processIfRecordingCommand(false) && !S->as.currentConditionPassed) {
+                if (!processIfRecordingCommand(false) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotRecording")) {
-                if (!processIfRecordingCommand(true) && !S->as.currentConditionPassed) {
+                if (!processIfRecordingCommand(true) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifRecordingId")) {
-                if (!processIfRecordingIdCommand(ctx, false) && !S->as.currentConditionPassed) {
+                if (!processIfRecordingIdCommand(ctx, false) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotRecordingId")) {
-                if (!processIfRecordingIdCommand(ctx, true) && !S->as.currentConditionPassed) {
+                if (!processIfRecordingIdCommand(ctx, true) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotPending")) {
-                if (!processIfPendingCommand(ctx, true) && !S->as.currentConditionPassed) {
+                if (!processIfPendingCommand(ctx, true) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifPending")) {
-                if (!processIfPendingCommand(ctx, false) && !S->as.currentConditionPassed) {
+                if (!processIfPendingCommand(ctx, false) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifKeyPendingAt")) {
-                if (!processIfKeyPendingAtCommand(ctx, false) && !S->as.currentConditionPassed) {
+                if (!processIfKeyPendingAtCommand(ctx, false) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotKeyPendingAt")) {
-                if (!processIfKeyPendingAtCommand(ctx, true) && !S->as.currentConditionPassed) {
+                if (!processIfKeyPendingAtCommand(ctx, true) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifKeyActive")) {
-                if (!processIfKeyActiveCommand(ctx, false) && !S->as.currentConditionPassed) {
+                if (!processIfKeyActiveCommand(ctx, false) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotKeyActive")) {
-                if (!processIfKeyActiveCommand(ctx, true) && !S->as.currentConditionPassed) {
+                if (!processIfKeyActiveCommand(ctx, true) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifPendingKeyReleased")) {
-                if (!processIfPendingKeyReleasedCommand(ctx, false) && !S->as.currentConditionPassed) {
+                if (!processIfPendingKeyReleasedCommand(ctx, false) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotPendingKeyReleased")) {
-                if (!processIfPendingKeyReleasedCommand(ctx, true) && !S->as.currentConditionPassed) {
+                if (!processIfPendingKeyReleasedCommand(ctx, true) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifKeyDefined")) {
-                if (!processIfKeyDefinedCommand(ctx, false) && !S->as.currentConditionPassed) {
+                if (!processIfKeyDefinedCommand(ctx, false) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
             else if (ConsumeToken(ctx, "ifNotKeyDefined")) {
-                if (!processIfKeyDefinedCommand(ctx, true) && !S->as.currentConditionPassed) {
+                if (!processIfKeyDefinedCommand(ctx, true) && !S->ls->as.currentConditionPassed) {
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
+                }
+            }
+            else if (ConsumeToken(ctx, "ifModuleConnected")) {
+                if (!processIfModuleConnected(ctx, false) && !S->ls->as.currentConditionPassed) {
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
+                }
+            }
+            else if (ConsumeToken(ctx, "ifNotModuleConnected")) {
+                if (!processIfModuleConnected(ctx, true) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
@@ -2218,13 +1980,30 @@ static macro_result_t processCommand(parser_context_t* ctx)
             else if (ConsumeToken(ctx, "ifNotGesture")) {
                 return processIfShortcutCommand(ctx, true, false);
             }
+            else if (ConsumeToken(ctx, "ifRegEq")) {
+                Macros_ReportError("Command was removed, please use command similar to `if ($varName == 1)`.", ctx->at, ctx->at);
+                return MacroResult_Finished;
+            }
+            else if (ConsumeToken(ctx, "ifNotRegEq")) {
+                Macros_ReportError("Command was removed, please use command similar to `if ($varName == 1)`.", ctx->at, ctx->at);
+                return MacroResult_Finished;
+            }
+            else if (ConsumeToken(ctx, "ifRegGt")) {
+                Macros_ReportError("Command was removed, please use command similar to `if ($varName >= 1)`.", ctx->at, ctx->at);
+                return MacroResult_Finished;
+            }
+            else if (ConsumeToken(ctx, "ifRegLt")) {
+                Macros_ReportError("Command was removed, please use command similar to `if ($varName >= 1)`.", ctx->at, ctx->at);
+                return MacroResult_Finished;
+            }
             else {
                 goto failed;
             }
             break;
         case 'm':
             if (ConsumeToken(ctx, "mulReg")) {
-                return processRegMulCommand(ctx);
+                Macros_ReportError("Command was removed, please use command similar to `setVar varName ($varName*2)`.", ctx->at, ctx->at);
+                return MacroResult_Finished;
             }
             else {
                 goto failed;
@@ -2285,14 +2064,8 @@ static macro_result_t processCommand(parser_context_t* ctx)
             else if (ConsumeToken(ctx, "recordMacroDelay")) {
                 return processRecordMacroDelayCommand();
             }
-            else if (ConsumeToken(ctx, "resolveSecondary")) {
-                return processResolveSecondaryCommand(ctx);
-            }
             else if (ConsumeToken(ctx, "resolveNextKeyId")) {
                 return processResolveNextKeyIdCommand();
-            }
-            else if (ConsumeToken(ctx, "resolveNextKeyEq")) {
-                return processResolveNextKeyEqCommand(ctx);
             }
             else if (ConsumeToken(ctx, "releaseKey")) {
                 return Macros_ProcessKeyCommandAndConsume(ctx, MacroSubAction_Release);
@@ -2306,15 +2079,20 @@ static macro_result_t processCommand(parser_context_t* ctx)
             else if (ConsumeToken(ctx, "replaceLayer")) {
                 return processReplaceLayerCommand(ctx);
             }
+            else if (ConsumeToken(ctx, "resolveNextKeyEq")) {
+                Macros_ReportError("Command deprecated. Please, replace resolveNextKeyEq by ifShortcut or ifGesture, or complain at github that you actually need this.", NULL, NULL);
+                return MacroResult_Finished;
+            }
+            else if (ConsumeToken(ctx, "resolveSecondary")) {
+                Macros_ReportError("Command deprecated. Please, replace resolveSecondary by `ifPrimary advancedStrategy goTo ...` or `ifSecondary advancedStrategy goTo ...`.", NULL, NULL);
+                return MacroResult_Finished;
+            }
             else {
                 goto failed;
             }
             break;
         case 's':
-            if (ConsumeToken(ctx, "setStatusPart")) {
-                return Macros_ProcessSetStatusCommand(ctx, false);
-            }
-            else if (ConsumeToken(ctx, "set")) {
+            if (ConsumeToken(ctx, "set")) {
                 return Macro_ProcessSetCommand(ctx);
             }
             else if (ConsumeToken(ctx, "setVar")) {
@@ -2331,9 +2109,6 @@ static macro_result_t processCommand(parser_context_t* ctx)
             }
             else if (ConsumeToken(ctx, "setLedTxt")) {
                 return processSetLedTxtCommand(ctx);
-            }
-            else if (ConsumeToken(ctx, "setReg")) {
-                return processSetRegCommand(ctx);
             }
             else if (ConsumeToken(ctx, "statsRuntime")) {
                 return Macros_ProcessStatsRuntimeCommand();
@@ -2353,17 +2128,8 @@ static macro_result_t processCommand(parser_context_t* ctx)
             else if (ConsumeToken(ctx, "statsPostponerStack")) {
                 return Macros_ProcessStatsPostponerStackCommand();
             }
-            else if (ConsumeToken(ctx, "subReg")) {
-                return processRegAddCommand(ctx, true);
-            }
             else if (ConsumeToken(ctx, "switchKeymap")) {
                 return processSwitchKeymapCommand(ctx);
-            }
-            else if (ConsumeToken(ctx, "switchKeymapLayer")) {
-                return processSwitchKeymapLayerCommand(ctx);
-            }
-            else if (ConsumeToken(ctx, "switchLayer")) {
-                return processSwitchLayerCommand(ctx);
             }
             else if (ConsumeToken(ctx, "startMouse")) {
                 return processMouseCommand(ctx, true);
@@ -2382,6 +2148,26 @@ static macro_result_t processCommand(parser_context_t* ctx)
             }
             else if (ConsumeToken(ctx, "suppressMods")) {
                 processSuppressModsCommand();
+            }
+            else if (ConsumeToken(ctx, "setReg")) {
+                Macros_ReportError("Command was removed, please use named variables. E.g., `setVar myVar 1` and `write \"$myVar\"`", ctx->at, ctx->at);
+                return MacroResult_Finished;
+            }
+            else if (ConsumeToken(ctx, "subReg")) {
+                Macros_ReportError("Command was removed, please use command similar to `setVar varName ($varName+1)`.", ctx->at, ctx->at);
+                return MacroResult_Finished;
+            }
+            else if (ConsumeToken(ctx, "setStatusPart")) {
+                Macros_ReportError("Command was removed, please use string interpolated setStatus.", ctx->at, ctx->at);
+                return MacroResult_Finished;
+            }
+            else if (ConsumeToken(ctx, "switchKeymapLayer")) {
+    Macros_ReportError("Command deprecated. Please, replace switchKeymapLayer by toggleKeymapLayer or holdKeymapLayer. Or complain on github that you actually need this command.", ctx->at, ctx->at);
+                return MacroResult_Finished;
+            }
+            else if (ConsumeToken(ctx, "switchLayer")) {
+    Macros_ReportError("Command deprecated. Please, replace switchKeymapLayer by toggleKeymapLayer or holdKeymapLayer. Or complain on github that you actually need this command.", ctx->at, ctx->at);
+                return MacroResult_Finished;
             }
             else {
                 goto failed;
@@ -2427,11 +2213,12 @@ static macro_result_t processCommand(parser_context_t* ctx)
             if (ConsumeToken(ctx, "write")) {
                 return processWriteCommand(ctx);
             }
-            else if (ConsumeToken(ctx, "writeExpr")) {
-                return processWriteExprCommand(ctx);
-            }
             else if (ConsumeToken(ctx, "while")) {
                 return processWhileCommand(ctx);
+            }
+            else if (ConsumeToken(ctx, "writeExpr")) {
+                Macros_ReportError("writeExpr is now deprecated, please migrate to interpolated strings", ctx->at, ctx->at);
+                return MacroResult_Finished;
             }
             else {
                 goto failed;
@@ -2440,6 +2227,22 @@ static macro_result_t processCommand(parser_context_t* ctx)
         case 'y':
             if (ConsumeToken(ctx, "yield")) {
                 return processYieldCommand(ctx);
+            }
+            else {
+                goto failed;
+            }
+            break;
+        case '{':
+            if (ConsumeToken(ctx, "{")) {
+                return processOpeningBraceCommand(ctx);
+            }
+            else {
+                goto failed;
+            }
+            break;
+        case '}':
+            if (ConsumeToken(ctx, "}")) {
+                return processClosingBraceCommand(ctx);
             }
             else {
                 goto failed;
@@ -2456,11 +2259,46 @@ static macro_result_t processCommand(parser_context_t* ctx)
     return MacroResult_Finished;
 }
 
+static bool isOpeningBrace(parser_context_t* ctx)
+{
+    Macros_DryRun = true;
+
+    macro_result_t macroResult = processCommand(ctx);
+
+    bool res = macroResult & MacroResult_OpeningBraceFlag;
+
+    Macros_DryRun = false;
+
+    return res;
+}
+
+static void jumpToMatchingBrace()
+{
+    uint8_t nesting = 1;
+    Macros_DryRun = true;
+
+    bool reachedEnd = false;
+    while (!reachedEnd && nesting != 0) {
+        reachedEnd = !Macros_LoadNextCommand();
+        macro_result_t macroResult = Macros_ProcessCommandAction();
+
+        if (macroResult & MacroResult_OpeningBraceFlag) {
+            nesting++;
+        }
+        if (macroResult & MacroResult_ClosingBraceFlag) {
+            nesting--;
+        }
+    }
+
+    Macros_LoadNextCommand() || Macros_LoadNextAction() || (S->ms.macroBroken = true);
+
+    Macros_DryRun = false;
+}
+
 macro_result_t Macros_ProcessCommandAction(void)
 {
-    const char* cmd = S->ms.currentMacroAction.cmd.text + S->ms.commandBegin;
-    const char* cmdEnd = S->ms.currentMacroAction.cmd.text + S->ms.commandEnd;
-
+    const char* cmd = S->ms.currentMacroAction.cmd.text + S->ls->ms.commandBegin;
+    const char* cmdEnd = S->ms.currentMacroAction.cmd.text + S->ls->ms.commandEnd;
 
     parser_context_t ctx = { .macroState = S, .begin = cmd, .at = cmd, .end = cmdEnd };
 
@@ -2478,15 +2316,28 @@ macro_result_t Macros_ProcessCommandAction(void)
 
     macroResult = processCommand(&ctx);
 
-    if (*ctx.at == '#') {
-        Macros_ReportWarn("# comments are deprecated, please switch to //", ctx.at, ctx.at);
-    } else if (ctx.at != ctx.end && !Macros_ParserError) {
+    if (ctx.at != ctx.end && !Macros_ParserError && Macros_DryRun) {
         Macros_ReportWarn("Unprocessed input encountered.", ctx.at, ctx.at);
     }
 
-    S->as.currentConditionPassed = macroResult & MacroResult_InProgressFlag;
-    if (macroResult & (MacroResult_ActionFinishedFlag | MacroResult_DoneFlag)) {
-        S->ms.lastIfSucceeded = !(macroResult & MacroResult_ConditionFailedFlag);
+    S->ls->as.currentConditionPassed = macroResult & MacroResult_InProgressFlag;
+    if (!Macros_DryRun && (macroResult & (MacroResult_ActionFinishedFlag | MacroResult_DoneFlag))) {
+        S->ls->ms.lastIfSucceeded = !(macroResult & MacroResult_ConditionFailedFlag);
     }
+
+    // This triggers when an unconsumed '{' is left at the end of line.
+    //
+    // If '{...}' has been completed, '{' command intentionally leaves itself
+    // in unconsumed state and returns MacroResult_Finished, so that any
+    // commands along the way can choose to repeat the command or not.
+    //
+    // Finally, if the finished flag reaches us (contrary to some modifier
+    // deciding that it wants to rerun the command), we now skip the entire
+    // scope
+    if (!Macros_DryRun && (macroResult & MacroResult_ActionFinishedFlag) && isOpeningBrace(&ctx)) {
+        jumpToMatchingBrace();
+        return MacroResult_DoneFlag;
+    }
+
     return macroResult;
 }

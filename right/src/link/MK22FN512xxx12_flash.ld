@@ -224,11 +224,15 @@ SECTIONS
     __END_BSS = .;
   } > m_data
 
-  .m_data_2 :
+  data2_at = __DATA_END;
+
+  .m_data_2 : AT(data2_at)
   {
      . = ALIGN(4);
+     data2_start = .;
      *(.m_data_2) /* This is an User defined section */
      . = ALIGN(4);
+     data2_end = .;
   } > m_data_2
 
   .heap :

@@ -31,6 +31,8 @@
     extern bool ActivateOnRelease;
     extern key_state_t* EmergencyKey;
     extern uint8_t basicScancodeIndex;
+    extern uint8_t StickyModifiers;
+    extern uint8_t StickyModifiersNegative;
 
 // Functions:
 
@@ -39,5 +41,7 @@
     void ActivateKey(key_state_t *keyState, bool debounce);
     void ActivateStickyMods(key_state_t *keyState, uint8_t mods);
     void ApplyKeyAction(key_state_t *keyState, key_action_cached_t *cachedAction, key_action_t *actionBase);
+
+    void RecordKeyTiming_ReportKeystroke(key_state_t *keyState, bool active, uint32_t pressTime, uint32_t activationTime);
 
 #endif

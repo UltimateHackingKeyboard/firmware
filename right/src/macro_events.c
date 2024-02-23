@@ -104,7 +104,7 @@ void MacroEvent_RegisterLayerMacros()
         if (TokenMatches(thisName, thisNameEnd, "$onKeymapLayerChange")) {
             const char* macroArg = NextTok(thisName,thisNameEnd);
             const char* macroArg2 = NextTok(macroArg,thisNameEnd);
-            const layer_id_t layerId = Macros_ParseLayerId(macroArg2, thisNameEnd);
+            const layer_id_t layerId = Macros_ConsumeLayerId(&(parser_context_t){.at = macroArg2, .end = thisNameEnd});
 
             if (TokenMatches2(macroArg, thisNameEnd, curAbbrev, curAbbrevEnd) && !Macros_ParserError) {
                 keymapLayerChangeMacro[layerId] = i;
@@ -116,7 +116,7 @@ void MacroEvent_RegisterLayerMacros()
             if (TokenMatches(macroArg, thisNameEnd, "any") && !Macros_ParserError) {
                 anyLayerChangeMacro = i;
             } else {
-                const layer_id_t layerId = Macros_ParseLayerId(macroArg, thisNameEnd);
+                const layer_id_t layerId = Macros_ConsumeLayerId(&(parser_context_t){.at = macroArg, .end = thisNameEnd});
                 if (!Macros_ParserError) {
                     layerChangeMacro[layerId] = i;
                 }

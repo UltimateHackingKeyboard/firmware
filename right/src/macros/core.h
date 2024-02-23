@@ -18,6 +18,8 @@
     #define MAX_MACRO_NUM 255
     #define STATUS_BUFFER_MAX_LENGTH 2000
     #define MACRO_STATE_POOL_SIZE 16
+    #define MACRO_HISTORY_POOL_SIZE 16
+    #define MACRO_SCOPE_STATE_POOL_SIZE (MACRO_STATE_POOL_SIZE*2)
     #define MAX_REG_COUNT 32
 
     #define ALTMASK (HID_KEYBOARD_MODIFIER_LEFTALT | HID_KEYBOARD_MODIFIER_RIGHTALT)
@@ -68,7 +70,7 @@
             } ATTR_PACKED key;
             struct {
                 macro_sub_action_t action;
-                uint8_t mouseButtonsMask;
+                uint32_t mouseButtonsMask : 24;
             } ATTR_PACKED mouseButton;
             struct {
                 int16_t x;
@@ -99,16 +101,42 @@
         AutoRepeatState_Waiting = 1
     } macro_autorepeat_state_t;
 
+    // data that are needed for local scopes
+    typedef struct {
+        bool slotUsed;
+        uint8_t parentScopeIndex;
+
+        // local macro scope data
+        struct {
+            uint16_t commandBegin;
+            uint16_t commandEnd;
+            uint16_t commandAddress;
+            bool lastIfSucceeded : 1;
+        } ATTR_PACKED ms;
+
+        // local action scope data
+        struct {
+            bool braceExecuting : 1;
+            bool isWhileScope : 1;
+            bool whileExecuting : 1;
+            bool modifierPostpone : 1;
+            bool modifierSuppressMods : 1;
+            bool currentConditionPassed : 1;
+            bool currentIfShortcutConditionPassed : 1;
+            bool currentIfSecondaryConditionPassed : 1;
+        } ATTR_PACKED as;
+    } ATTR_PACKED macro_scope_state_t;
 
     typedef struct macro_state_t macro_state_t;
 
+    typedef struct {
+        uint32_t macroStartTime;
+        uint8_t macroIndex;
+    } macro_history_t;
+
     struct macro_state_t {
-        // persistent scope data
-        // these need to live in between macro calls
-        struct {
-            uint32_t previousMacroStartTime;
-            uint8_t previousMacroIndex;
-        } ps;
+        // local scope data
+        macro_scope_state_t *ls;
 
         // macro scope data
         // these can be destroyed at the end of macro runtime, and probably should be re-initialized with each macro start
@@ -118,15 +146,12 @@
             uint32_t currentMacroStartTime;
             uint16_t currentMacroActionIndex;
             uint16_t bufferOffset;
-            uint16_t commandBegin;
-            uint16_t commandEnd;
             uint8_t parentMacroSlot;
             uint8_t currentMacroIndex;
             uint8_t postponeNextNCommands;
-            uint8_t commandAddress;
             uint8_t nextSlot;
             uint8_t oneShotState : 2;
-            bool lastIfSucceeded : 1;
+            bool oneShotUsbChangeDetected : 1;
             bool macroInterrupted : 1;
             bool macroSleeping : 1;
             bool macroBroken : 1;
@@ -180,15 +205,9 @@
             //shared data
             uint8_t actionPhase;
             bool actionActive : 1;
-            bool currentConditionPassed : 1;
-            bool currentIfShortcutConditionPassed : 1;
-            bool currentIfSecondaryConditionPassed : 1;
-            bool modifierPostpone : 1;
-            bool modifierSuppressMods : 1;
-            bool whileExecuting : 1;
-
         } as;
     };
+
 
     // Schedule is given by a single-linked circular list.
     typedef struct {
@@ -214,6 +233,8 @@
     extern macro_reference_t AllMacros[MacroIndex_MaxCount];
     extern uint8_t AllMacrosCount;
     extern macro_state_t MacroState[MACRO_STATE_POOL_SIZE];
+    extern macro_history_t MacroHistory[MACRO_HISTORY_POOL_SIZE];
+    extern macro_scope_state_t MacroScopeState[MACRO_SCOPE_STATE_POOL_SIZE];
     extern macro_state_t *S;
     extern bool MacroPlaying;
     extern macro_scheduler_t Macros_Scheduler;
@@ -228,22 +249,23 @@
     extern uint16_t AutoRepeatInitialDelay;
     extern uint16_t AutoRepeatDelayRate;
     extern bool Macros_ParserError;
-    extern bool RecordKeyTiming;
     extern bool Macros_DryRun;
+    extern bool Macros_ValidationInProgress;
 
 // Functions:
 
+    bool Macros_PushScope(parser_context_t* ctx);
+    bool Macros_PopScope(parser_context_t* ctx);
+    bool Macros_LoadNextCommand();
+    bool Macros_LoadNextAction();
     bool Macros_ClaimReports(void);
     bool Macros_CurrentMacroKeyIsActive();
     bool Macros_IsLayerHeld();
     bool Macros_MacroHasActiveInstance(macro_index_t macroIdx);
-    bool Macros_ParseBoolean(const char *a, const char *aEnd);
     char Macros_ConsumeStatusChar();
-    int32_t Macros_LegacyConsumeInt(parser_context_t* ctx);
-    int32_t Macros_ParseInt(const char *a, const char *aEnd, const char* *parsedTill);
+    int32_t Macros_ConsumeInt(parser_context_t* ctx);
     macro_result_t goTo(parser_context_t* ctx);
     macro_result_t Macros_CallMacro(uint8_t macroIndex);
-    macro_result_t Macros_DispatchText(const char* text, uint16_t textLen, bool rawString);
     macro_result_t Macros_ExecMacro(uint8_t macroIndex);
     macro_result_t Macros_ForkMacro(uint8_t macroIndex);
     macro_result_t Macros_GoToAddress(uint8_t address);
@@ -251,7 +273,6 @@
     macro_result_t Macros_SleepTillKeystateChange();
     macro_result_t Macros_SleepTillTime(uint32_t time);
     uint8_t Macros_ConsumeLayerId(parser_context_t* ctx);
-    uint8_t Macros_ParseLayerId(const char* arg1, const char* cmdEnd);
     uint8_t Macros_QueueMacro(uint8_t index, key_state_t *keyState, uint8_t queueAfterSlot);
     uint8_t Macros_StartMacro(uint8_t index, key_state_t *keyState, uint8_t parentMacroSlot, bool runFirstAction);
     uint8_t Macros_TryConsumeKeyId(parser_context_t* ctx);
@@ -259,6 +280,7 @@
     void Macros_Initialize();
     void Macros_ResetBasicKeyboardReports();
     void Macros_SignalInterrupt(void);
+    void Macros_SignalUsbReportsChange();
     void Macros_ValidateAllMacros();
 
 #define WAKE_MACROS_ON_KEYSTATE_CHANGE()  if (Macros_WakeMeOnKeystateChange) { \
