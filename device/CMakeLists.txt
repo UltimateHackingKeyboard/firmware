@@ -4,6 +4,9 @@ project(uhk)
 
 target_include_directories(app PUBLIC
     src
+    src/legacy
+    src/legacy/config_parser
+    src/shared
 )
 
 file(GLOB usb_sources src/usb/*.c)
@@ -11,14 +14,16 @@ file(GLOB usb_cpp_sources src/usb/*.cpp)
 file(GLOB keyboard_sources src/keyboard/*.c)
 file(GLOB app_sources src/*.c)
 file(GLOB app_cpp_sources src/*.cpp)
+file(GLOB_RECURSE legacy_sources src/legacy/*.c)
+file(GLOB_RECURSE shared_sources src/shared/*.c)
 
 if(BOARD STREQUAL "uhk-60-right")
     file(GLOB main src/uhk60/main.c)
     target_sources(app PRIVATE ${main})
 elseif ((BOARD STREQUAL "uhk-dongle"))
-    target_sources(app PRIVATE ${app_sources} ${app_cpp_sources} ${usb_sources} ${usb_cpp_sources})
+    target_sources(app PRIVATE ${app_sources} ${app_cpp_sources} ${usb_sources} ${usb_cpp_sources} ${legacy_sources} ${shared_sources})
 else()
-    target_sources(app PRIVATE ${app_sources} ${app_cpp_sources} ${usb_sources} ${usb_cpp_sources} ${keyboard_sources})
+    target_sources(app PRIVATE ${app_sources} ${app_cpp_sources} ${usb_sources} ${usb_cpp_sources} ${legacy_sources} ${shared_sources} ${keyboard_sources})
 endif()
 
 if(NOT BOARD STREQUAL "uhk-60-right")

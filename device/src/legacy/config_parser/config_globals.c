@@ -1,0 +1,1 @@
+../../../../right/src/config_parser/config_globals.c

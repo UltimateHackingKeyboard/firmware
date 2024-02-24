@@ -3,7 +3,11 @@
 
 // Includes:
 
+    #include <stdint.h>
+    #include <stdbool.h>
+#ifndef __ZEPHYR__
     #include "fsl_common.h"
+#endif
 
 // Typedefs:
 
