@@ -58,13 +58,13 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
     uint8_t keyBacklightBrightness = ReadUInt8(buffer);
 
     uint32_t ledsFadeTimeout = LedsFadeTimeout;
-    bool perKeyRgbPresent = PerKeyRgbPresent;
+    bool previousPerKeyRgbPresent = PerKeyRgbPresent;
     backlighting_mode_t backlightingMode = BacklightingMode;
     rgb_t keyActionColors[keyActionColor_Length];
 
     if (DataModelMajorVersion >= 6) {
         ledsFadeTimeout = 1000 * ReadUInt16(buffer);
-        perKeyRgbPresent = ReadBool(buffer);
+        PerKeyRgbPresent = ReadBool(buffer);
         backlightingMode = ReadUInt8(buffer);
 
         readRgbColor(buffer, keyActionColors, KeyActionColor_None);
@@ -214,7 +214,6 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
 
         if (DataModelMajorVersion >= 6) {
             LedsFadeTimeout = ledsFadeTimeout;
-            PerKeyRgbPresent = perKeyRgbPresent;
             BacklightingMode = backlightingMode;
 
             memcpy(KeyActionColors, keyActionColors, sizeof(keyActionColors));
@@ -252,6 +251,8 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
 
         AllKeymapsCount = keymapCount;
         AllMacrosCount = macroCount;
+    } else {
+        PerKeyRgbPresent = previousPerKeyRgbPresent;
     }
 
     return ParserError_Success;
