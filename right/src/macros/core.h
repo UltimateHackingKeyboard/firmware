@@ -245,7 +245,6 @@
     extern bool Macros_WakeMeOnKeystateChange;
     extern bool Macros_WakedBecauseOfTime;
     extern bool Macros_WakedBecauseOfKeystateChange;
-    extern uint16_t DoubletapConditionTimeout;
     extern uint16_t AutoRepeatInitialDelay;
     extern uint16_t AutoRepeatDelayRate;
     extern bool Macros_ParserError;

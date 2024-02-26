@@ -294,7 +294,7 @@ static macro_variable_t secondaryRoleAdvanced(parser_context_t* ctx, set_command
     }
     else if (ConsumeToken(ctx, "doubletapTime")) {
         DEFINE_INT_LIMITS(0, 65535);
-        ASSIGN_INT(SecondaryRoles_AdvancedStrategyDoubletapTime);
+        ASSIGN_INT(SecondaryRoles_AdvancedStrategyDoubletapTimeout);
     }
     else {
         Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
@@ -793,7 +793,7 @@ static macro_variable_t root(parser_context_t* ctx, set_command_action_t action)
             || (ConsumeToken(ctx, "doubletapDelay")) // deprecated alias - old name
             ) {
         DEFINE_INT_LIMITS(0, 65535);
-        ASSIGN_INT2(DoubleTapSwitchLayerTimeout, DoubletapConditionTimeout);
+        ASSIGN_INT(DoubletapTimeout);
     }
     else if (ConsumeToken(ctx, "autoRepeatDelay")) {
         DEFINE_INT_LIMITS(0, 65535);
