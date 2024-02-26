@@ -1,5 +1,8 @@
+#include <strings.h>
 #include "usb_protocol_handler.h"
 #include "buffer.h"
+
+#ifndef __ZEPHYR__
 #include "usb_commands/usb_command_get_device_property.h"
 #include "usb_commands/usb_command_get_module_property.h"
 #include "usb_commands/usb_command_reenumerate.h"
@@ -20,12 +23,14 @@
 #include "usb_commands/usb_command_get_variable.h"
 #include "usb_commands/usb_command_set_variable.h"
 #include "usb_commands/usb_command_exec_macro_command.h"
+#endif
 
 void UsbProtocolHandler(void)
 {
     bzero(GenericHidInBuffer, USB_GENERIC_HID_IN_BUFFER_LENGTH);
     uint8_t command = GetUsbRxBufferUint8(0);
     switch (command) {
+#ifndef __ZEPHYR__
         case UsbCommandId_GetDeviceProperty:
             UsbCommand_GetDeviceProperty();
             break;
@@ -92,6 +97,7 @@ void UsbProtocolHandler(void)
         default:
             SetUsbTxBufferUint8(0, UsbStatusCode_InvalidCommand);
             break;
+#endif
     }
 }
 
