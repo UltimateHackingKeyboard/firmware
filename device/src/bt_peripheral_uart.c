@@ -1,4 +1,5 @@
 #include <bluetooth/services/nus.h>
+#include "bt_conn.h"
 #include "bt_advertise.h"
 
 static void bt_receive_cb(struct bt_conn *conn, const uint8_t *const data, uint16_t len) {
