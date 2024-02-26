@@ -243,20 +243,11 @@ void MouseKeys_ProcessMouseActions()
     if (ActiveMouseStates[SerializedMouseAction_RightClick]) {
         ActiveUsbMouseReport->buttons |= MouseButton_Right;
     }
-    if (ActiveMouseStates[SerializedMouseAction_Button_4]) {
-        ActiveUsbMouseReport->buttons |= MouseButton_4;
-    }
-    if (ActiveMouseStates[SerializedMouseAction_Button_5]) {
-        ActiveUsbMouseReport->buttons |= MouseButton_5;
-    }
-    if (ActiveMouseStates[SerializedMouseAction_Button_6]) {
-        ActiveUsbMouseReport->buttons |= MouseButton_6;
-    }
-    if (ActiveMouseStates[SerializedMouseAction_Button_7]) {
-        ActiveUsbMouseReport->buttons |= MouseButton_7;
-    }
-    if (ActiveMouseStates[SerializedMouseAction_Button_8]) {
-        ActiveUsbMouseReport->buttons |= MouseButton_8;
+    for (uint8_t serializedButton = SerializedMouseAction_Button_4; serializedButton < SerializedMouseAction_Button_Last; serializedButton++)
+    {
+        if (ActiveMouseStates[serializedButton]) {
+            ActiveUsbMouseReport->buttons |= 1 << ((serializedButton - SerializedMouseAction_Button_4) + 3);
+        }
     }
 }
 

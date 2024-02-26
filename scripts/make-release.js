@@ -82,4 +82,6 @@ const updatedPackage = Object.assign({}, packageJson, { gitInfo: gitInfo });
 fs.writeFileSync(`${releaseDir}/package.json`, JSON.stringify(updatedPackage, null, 2));
 
 cp('-RL', `${__dirname}/../doc/dist`, `${releaseDir}/doc`);
+mkdir('-p', `${releaseDir}/doc-dev`);
+cp('-RL', `${__dirname}/../doc-dev/reference-manual.md`, `${releaseDir}/doc-dev/reference-manual.md`);
 exec(`tar -czvf ${releaseFile} -C ${releaseDir} .`);

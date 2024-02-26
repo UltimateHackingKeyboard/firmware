@@ -1,4 +1,7 @@
 #include "config.h"
+#include "keymap.h"
+#include "slave_drivers/is31fl3xxx_driver.h"
+#include "slave_drivers/uhk_module_driver.h"
 #include "timer.h"
 #include "init_clock.h"
 #include "init_peripherals.h"
@@ -45,6 +48,7 @@ static void initConfig()
 {
     while (!IsConfigInitialized) {
         if (IsEepromInitialized) {
+
             UsbCommand_ApplyConfig();
             ShortcutParser_initialize();
             KeyIdParser_initialize();
@@ -88,12 +92,21 @@ int main(void)
         handleUsbBusPalCommand();
     } else {
         InitSlaveScheduler();
+
         KeyMatrix_Init(&RightKeyMatrix);
         InitUsb();
+
         initConfig();
+
         sendFirstReport();
 
         while (1) {
+            if (KeymapReloadNeeded) {
+                SwitchKeymapById(CurrentKeymapIndex);
+            }
+            if (LedSlaveDriver_FullUpdateNeeded) {
+                LedSlaveDriver_UpdateLeds();
+            }
             if (UsbBasicKeyboard_ProtocolChanged) {
                 UsbBasicKeyboard_HandleProtocolChange();
             }

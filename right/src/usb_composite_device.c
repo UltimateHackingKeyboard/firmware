@@ -9,6 +9,7 @@
 #include "usb_microsoft_os.h"
 #include "bus_pal_hardware.h"
 #include "bootloader/wormhole.h"
+#include "debug.h"
 
 static uint8_t MsAltEnumMode = 0;
 usb_composite_device_t UsbCompositeDevice;
@@ -177,7 +178,7 @@ static void suspendUhk(void) {
 
 static void wakeUpUhk(void) {
     SleepModeActive = false;
-    LedSlaveDriver_UpdateLeds();
+    LedSlaveDriver_FullUpdateNeeded = true;
 }
 
 void WakeUpHost(void) {

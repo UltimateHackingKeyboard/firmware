@@ -28,6 +28,19 @@ static void activateLayer(layer_id_t layer)
     }
 }
 
+bool LayerStack_IsLayerToggled() {
+    for (int i = 0; i < LayerStack_Size; i++) {
+        uint8_t pos = POS(-i);
+        if (!LayerStack[pos].removed && (LayerStack[pos].layer != ActiveLayer || LayerStack[pos].keymap != CurrentKeymapIndex)) {
+            return false;
+        }
+        if (!LayerStack[pos].held) {
+            return true;
+        }
+    }
+    return false;
+}
+
 uint8_t LayerStack_FindPreviousLayerRecordIdx()
 {
     for (int i = 1; i < LayerStack_Size; i++) {

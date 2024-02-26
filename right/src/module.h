@@ -27,6 +27,7 @@
         NavigationMode_ZoomMac,
 
         /* helpers */
+        NavigationMode_Count,
         NavigationMode_RemappableFirst = NavigationMode_Caret,
         NavigationMode_RemappableLast = NavigationMode_ZoomMac,
     } navigation_mode_t;

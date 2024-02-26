@@ -494,7 +494,7 @@ static bool processIfDoubletapCommand(bool negate)
     bool doubletapFound = false;
 
     for (uint8_t i = 0; i < MACRO_HISTORY_POOL_SIZE; i++) {
-        if (S->ms.currentMacroStartTime - MacroHistory[i].macroStartTime <= DoubletapConditionTimeout && S->ms.currentMacroIndex == MacroHistory[i].macroIndex) {
+        if (S->ms.currentMacroStartTime - MacroHistory[i].macroStartTime <= DoubletapTimeout && S->ms.currentMacroIndex == MacroHistory[i].macroIndex) {
             doubletapFound = true;
         }
     }
@@ -503,7 +503,7 @@ static bool processIfDoubletapCommand(bool negate)
         if (
             MacroState[i].ms.macroPlaying &&
             MacroState[i].ms.currentMacroStartTime < S->ms.currentMacroStartTime &&
-            S->ms.currentMacroStartTime - MacroState[i].ms.currentMacroStartTime <= DoubletapConditionTimeout &&
+            S->ms.currentMacroStartTime - MacroState[i].ms.currentMacroStartTime <= DoubletapTimeout &&
             S->ms.currentMacroIndex == MacroState[i].ms.currentMacroIndex &&
             &MacroState[i] != S
         ) {
@@ -601,6 +601,16 @@ static bool processIfLayerCommand(parser_context_t* ctx, bool negate)
     }
     return (queryLayerIdx == LayerStack_ActiveLayer) != negate;
 }
+
+
+static bool processIfLayerToggledCommand(parser_context_t* ctx, bool negate)
+{
+    if (Macros_DryRun) {
+        return true;
+    }
+    return (LayerStack_IsLayerToggled()) != negate;
+}
+
 
 static bool processIfCommand(parser_context_t* ctx)
 {
@@ -1247,7 +1257,7 @@ static macro_result_t processOneShotCommand(parser_context_t* ctx) {
      * Also, we need to prevent the command to go sleeping after this because
      * we would not be woken up.
      * */
-    if (!S->ms.macroInterrupted) {
+    if (!S->ms.macroInterrupted || !S->ms.oneShotUsbChangeDetected) {
         S->ms.oneShotState = 1;
     } else if (S->ms.oneShotState < 3) {
         S->ms.oneShotState++;
@@ -1769,6 +1779,16 @@ static macro_result_t processCommand(parser_context_t* ctx)
             }
             else if (ConsumeToken(ctx, "ifNotLayer")) {
                 if (!processIfLayerCommand(ctx, true) && !S->ls->as.currentConditionPassed) {
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
+                }
+            }
+            else if (ConsumeToken(ctx, "ifLayerToggled")) {
+                if (!processIfLayerToggledCommand(ctx, false) && !S->ls->as.currentConditionPassed) {
+                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
+                }
+            }
+            else if (ConsumeToken(ctx, "ifNotLayerToggled")) {
+                if (!processIfLayerToggledCommand(ctx, true) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }

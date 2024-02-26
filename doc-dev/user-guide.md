@@ -38,8 +38,20 @@ ifDoubletap tapKey capsLock
     - Go through the sections of the reference manual - just reading the top section lines will give you some idea about available types of commands.
     - Read through examples in order to understand how the constructs can be combined.
     - Understand how to read the stated ebnf grammar. The grammar gives you precise instructions about available features and their parameters, as well as correct syntax. Note that some commands and parameters are only mentioned in the grammar! In case you don't know anything about grammars:
-        - The grammar describes a valid expression via a set of rules. In the beginning, the expression equals "BODY". Every capital word of the expression is to be "rewritten" by a corresponding rule - i.e., the identifier is to be replaced by an expression that matches the right side of the rule.
+        - The grammar describes a valid expression via a set of rules. In the beginning, the expression equals "BODY". Every capital word of the expression is to be "rewritten" by (some instance of) a corresponding rule.
         - Notation: `<>` mark informal (human-understandable) explanation of what is to be entered. The `|` operator indicates a choice between left and right operands. It is typically enclosed in `{}`, in order to separate the group from the rest of the rule. `[]` denotes optional arguments. Especially `[]+` marks "one or more" and `[]*` arbitrary number.
+            Operator | syntax
+             --- | ---
+            rules - need to be expanded | `UPPERCASE_IDENTIFIERS`
+            obligatory group | `{ ... }`
+            optional group | `[ ... ]`
+            one or more | `[ ... ]+`
+            any number | `[ ... ]*`
+            choice | `A \| B`
+            resolved text | `text`
+            human-readable description | `<hint>`
+            human-readable description, backed by a specific rule | `<hint (RULE)>`
+
         - Provided value bounds are informational only - they denote values that seem to make sense. Sometimes default values are marked.
     - If you are still not sure about some feature or syntax, do not hesitate to ask.
 
@@ -440,6 +452,33 @@ set secondaryRole.advanced.timeout 200
 set secondaryRole.advanced.timeoutAction secondary
 set secondaryRole.advanced.safetyMargin 0
 set secondaryRole.advanced.triggerByRelease 0
+set secondaryRole.advanced.doubletapToPrimary 1
+set secondaryRole.advanced.doubletapTime 200
+```
+
+Simple strategy behavior, but via advanced strategy and with timeout on 500ms:
+
+```
+set secondaryRole.defaultStrategy advanced
+set secondaryRole.advanced.timeout 500
+set secondaryRole.advanced.timeoutAction secondary
+set secondaryRole.advanced.safetyMargin 0
+set secondaryRole.advanced.triggerByRelease 0
+set secondaryRole.advanced.triggerByPress 1
+set secondaryRole.advanced.doubletapToPrimary 1
+set secondaryRole.advanced.doubletapTime 200
+```
+
+Full set of advanced strategy config values follows (for copy-paste convenience):
+
+```
+set secondaryRole.defaultStrategy advanced
+set secondaryRole.advanced.timeout 500
+set secondaryRole.advanced.timeoutAction secondary
+set secondaryRole.advanced.safetyMargin 0
+set secondaryRole.advanced.triggerByRelease 0
+set secondaryRole.advanced.triggerByPress 0
+set secondaryRole.advanced.triggerByMouse 0
 set secondaryRole.advanced.doubletapToPrimary 1
 set secondaryRole.advanced.doubletapTime 200
 ```

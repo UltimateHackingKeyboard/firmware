@@ -75,10 +75,12 @@
 // Variables:
 
     extern secondary_role_strategy_t SecondaryRoles_Strategy;
-    extern uint16_t SecondaryRoles_AdvancedStrategyDoubletapTime;
+    extern uint16_t SecondaryRoles_AdvancedStrategyDoubletapTimeout;
     extern uint16_t SecondaryRoles_AdvancedStrategyTimeout;
     extern int16_t SecondaryRoles_AdvancedStrategySafetyMargin;
     extern bool SecondaryRoles_AdvancedStrategyTriggerByRelease;
+    extern bool SecondaryRoles_AdvancedStrategyTriggerByPress;
+    extern bool SecondaryRoles_AdvancedStrategyTriggerByMouse;
     extern bool SecondaryRoles_AdvancedStrategyDoubletapToPrimary;
     extern secondary_role_state_t SecondaryRoles_AdvancedStrategyTimeoutAction;
 

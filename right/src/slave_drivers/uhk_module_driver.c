@@ -16,6 +16,8 @@
 #include "macros/core.h"
 #include "versioning.h"
 
+bool KeymapReloadNeeded = false;
+
 uhk_module_state_t UhkModuleStates[UHK_MODULE_MAX_SLOT_COUNT];
 module_connection_state_t ModuleConnectionStates[UHK_MODULE_MAX_SLOT_COUNT];
 
@@ -102,7 +104,7 @@ static void reloadKeymapIfNeeded()
     }
 
     if (!someoneElseWillDoTheJob && !TestSwitches) {
-        SwitchKeymapById(CurrentKeymapIndex);
+        KeymapReloadNeeded = true;
     }
 }
 

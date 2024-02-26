@@ -1,4 +1,5 @@
 #include "macros/vars.h"
+#include "macros/string_reader.h"
 #include "postponer.h"
 #include "macros/keyid_parser.h"
 #include "utils.h"
@@ -164,7 +165,7 @@ static macro_variable_t* consumeVarAndAllocate(parser_context_t* ctx)
     }
 
     if (macroVariableCount == MACRO_VARIABLE_COUNT_MAX) {
-        Macros_ReportError("Too many variables. Can't allocate:", ctx->at, ctx->end);
+        Macros_ReportErrorPrintf(ctx->at, "Too many variables. Can't allocate more than %d variables:", MACRO_VARIABLE_COUNT_MAX);
         ConsumeAnyIdentifier(ctx);
         return NULL;
     }

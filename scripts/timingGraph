@@ -1,0 +1,233 @@
+#!/bin/bash
+
+VIEWER=eog
+OUTFILE=
+TEMPFILE=`mktemp`
+IMG=$TEMPFILE
+
+function help() {
+    echo "usage: timingGraph [ -o <output file> ] <input file>"
+}
+
+while getopts "o:h" opt
+do
+  case "$opt" in
+    o)
+        OUTFILE=$OPTARG
+        IMG=$OPTARG
+      ;;
+    *)
+        help
+      ;;
+  esac
+done
+
+shift $((OPTIND - 1))
+
+INFILE=$1
+
+cat $INFILE | sed 's/OUT//g' | sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g' -e 's/"/\&quot;/g' -e "s/'/\&apos;/g" | awk '
+BEGIN {
+    print("<svg width=\"WIDTH\" height=\"HEIGHT\" xmlns=\"http://www.w3.org/2000/svg\">");
+    print(" \
+      <defs \
+         id=\"defs2\"> \
+        <marker \
+           style=\"overflow:visible\" \
+           id=\"Stop\" \
+           refX=\"0\" \
+           refY=\"0\" \
+           orient=\"auto\" \
+           stockid=\"Stop\" \
+           markerWidth=\"2\" \
+           markerHeight=\"2\" \
+           viewBox=\"0 0 1 2\" \
+           isstock=\"true\" \
+           collect=\"always\" \
+           preserveAspectRatio=\"xMidYMid\"> \
+          <path \
+             style=\"fill:none;stroke:context-stroke;stroke-width:1\" \
+             d=\"M 0,2 V -2\" \
+             id=\"path171\" /> \
+        </marker> \
+      </defs> \
+      ");
+    print("<rect width=\"100%\" height=\"100%\" fill=\"white\"/>");
+
+    textOffset = 5;
+    fontSize = 12;
+    lineHeight = 16;
+    leftMargin = 100;
+    topMargin = 30;
+    lastY = topMargin + lineHeight;
+}
+
+
+func initTime(time) {
+    if (zeroTime == "") {
+        zeroTime = time - leftMargin; 
+        endTime = zeroTime;
+    }
+    if (time + 2*leftMargin > endTime) {
+        endTime = time + 2*leftMargin;
+    }
+}
+
+func getY() {
+    lastY += lineHeight;
+    return lastY;
+}
+
+func timeToCoordinates(time) {
+    if(time == "") {
+        return 0;
+    } else {
+        return (time-zeroTime);
+    }
+}
+
+func sanitize(coordinates) {
+    if (coordinates == "") {
+        return getY();
+    } else {
+        return coordinates;
+    }
+}
+
+func drawTextLeft(x, y, text) {
+    print "<text x=\"" x - textOffset "\" y=\"" y + 3 "\" dominant-baseline=\"middle\" text-anchor=\"end\" fill=\"black\" font-size=\"" fontSize "\">" text "</text>"
+}
+
+func drawTextRight(x, y, text) {
+    print "<text x=\"" x + textOffset "\" y=\"" y + 3 "\" dominant-baseline=\"middle\" text-anchor=\"start\" fill=\"black\" font-size=\"" fontSize "\">" text "</text>"
+}
+
+func drawTextAbove(x, y, text) {
+    print "<text x=\"" x "\" y=\"" y - 4 "\" dominant-baseline=\"middle\" text-anchor=\"middle\" fill=\"black\" font-size=\"" fontSize "\">" text "</text>"
+}
+
+func drawTextBelow(x, y, text) {
+    print "<text x=\"" x "\" y=\"" y -4 + lineHeight "\" dominant-baseline=\"middle\" text-anchor=\"middle\" fill=\"black\" font-size=\"" fontSize "\">" text "</text>"
+}
+
+func drawLine(x1, y1, x2, y2) {
+    lineConstants="stroke-width=\"2\" marker-start=\"url(#Stop)\" marker-end=\"url(#Stop)\"";
+    print(" <line x1=\"" x1 "\" y1=\"" y1 "\" x2=\"" x2 "\" y2=\"" y2 "\" stroke=\"black\" " lineConstants " />");
+}
+
+func drawPoint(x, y) {
+    print("<circle cx=\"" x "\" cy=\"" y "\" r=\"2\" fill=\"black\" />");
+}
+
+func drawTimeLine(x) {
+    lineConstants="stroke-width=\"0.5\"";
+    print(" <line x1=\"" x "\" y1=\"" lineHeight "\" x2=\"" x "\" y2=\"100%\" stroke=\"gray\" " lineConstants " />");
+}
+
+func drawKeystroke(label, y, start, postponedStart, end, postponedEnd) {
+    drawLine(start, y-1.5, end, y-1.5);
+    drawLine(postponedStart, y+1.5, postponedEnd, y+1.5);
+    drawTextLeft(start, y, label);
+}
+
+func drawComment(label, x, y) {
+    drawPoint(x, y);
+    drawTextRight(x, y, label);
+}
+
+func recordTimePoint(time) {
+    if (timePointCount == "") {
+        timePointCount = 0;
+    }
+    timePoints[timePointCount] = time;
+    timePointCount++;
+}
+
+func drawTimePoint(lastTimePoint, time) {
+    if (lastTimePoint != time) {
+        if (lastTimePoint != "") {
+            diff = time - lastTimePoint;
+            drawTextBelow(timeToCoordinates((time+lastTimePoint)/2), lineHeight, time-lastTimePoint);
+        }
+        drawTextAbove(timeToCoordinates(time), lineHeight, time-zeroTime);
+
+        drawTimeLine(timeToCoordinates(time));
+    }
+}
+
+func drawTimePoints() {
+    n = asort(timePoints, sortedTimePoints);
+    drawTimePoint("", sortedTimePoints[1]);
+    for (i = 1; i <= n; i++) {
+        drawTimePoint(sortedTimePoints[i-1], sortedTimePoints[i]);
+    }
+}
+
+function abs(v) {return v < 0 ? -v : v}
+
+/DOWN/ {
+    id = $2;
+    initTime($3);
+    keyY[id] = getY();
+    keyStart[id] = $3;
+    keyPostponedStart[id] = $4;
+}
+/UP/ {
+    id = $2;
+    initTime($3);
+    keyEnd[id] = $3;
+    keyPostponedEnd[id] = $4;
+    drawKeystroke( id, sanitize(keyY[id]), timeToCoordinates(keyStart[id]), timeToCoordinates(keyPostponedStart[id]), timeToCoordinates(keyEnd[id]), timeToCoordinates(keyPostponedEnd[id]) );
+
+    end = keyEnd[id];
+    start = keyStart[id];
+    postponedEnd = keyPostponedEnd[id];
+    postponedStart = keyPostponedStart[id];
+
+    realTime = end - start;
+    postponedTime = postponedEnd - postponedStart;
+    startDiff = postponedStart - start;
+    endDiff = postponedEnd - end;
+
+    if (abs(postponedTime-realTime) < 5 && startDiff < 5 && endDiff < 5) {
+        timeLabel = realTime;
+    } else if (postponedStart < end) {
+        timeLabel = realTime " (" startDiff ":" (end - postponedStart) ":" endDiff ")";
+    } else {
+        timeLabel = realTime " (" realTime " " (postponedStart - end) " " postponedTime ")";
+    }
+
+    recordTimePoint(start);
+    recordTimePoint(end);
+    recordTimePoint(postponedStart);
+    recordTimePoint(postponedEnd);
+    drawTextAbove(timeToCoordinates((start + postponedEnd)/2), keyY[id], timeLabel);
+}
+/^[0-9].*/ {
+    initTime($1);
+    time = $1;
+    $1 = "";
+    text = $0;
+    /*y = lastY + lineHeight;*/
+    y = getY();
+    recordTimePoint(time);
+    drawComment(text, timeToCoordinates(time), y);
+}
+
+END {
+drawTimePoints();
+print("</svg>");
+print("DIMENSIONS " timeToCoordinates(endTime) " " lastY + topMargin);
+}
+' > $IMG
+
+DIMENSIONS=`grep DIMENSIONS $IMG`
+WIDTH=`echo "$DIMENSIONS" | awk '// { print($2)}'`
+HEIGHT=`echo "$DIMENSIONS" | awk '// { print($3)}'`
+sed 's/DIMENSIONS.*//g;s/WIDTH/'"$WIDTH"'/g;s/HEIGHT/'"$HEIGHT"'/g' -i $IMG
+
+
+$VIEWER $IMG
+rm $TEMPFILE
+
+

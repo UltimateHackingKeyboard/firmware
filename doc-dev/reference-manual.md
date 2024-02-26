@@ -46,232 +46,261 @@ I.e., if you want to customize the acceleration driver for your trackball module
 
 The following grammar is supported:
 
-    BODY = //<comment>
-    BODY = [LABEL:] COMMAND [//<comment>]
-    COMMAND = [CONDITION|MODIFIER]* COMMAND
-    COMMAND = {
-        COMMAND
-        COMMAND
-        ...
-    }
-    COMMAND = delayUntilRelease
-    COMMAND = delayUntil <timeout (INT)>
-    COMMAND = delayUntilReleaseMax <timeout (INT)>
-    COMMAND = switchKeymap KEYMAPID
-    COMMAND = toggleLayer LAYERID
-    COMMAND = toggleKeymapLayer KEYMAPID LAYERID
-    COMMAND = untoggleLayer
-    COMMAND = holdLayer LAYERID
-    COMMAND = holdLayerMax LAYERID <time in ms (INT)>
-    COMMAND = holdKeymapLayer KEYMAPID LAYERID
-    COMMAND = holdKeymapLayerMax KEYMAPID LAYERID <time in ms (INT)>
-    COMMAND = overlayKeymap KEYMAPID
-    COMMAND = overlayLayer <target layer (LAYERID)> <source keymap (KEYMAPID)> <source layer (LAYERID)>
-    COMMAND = replaceLayer <target layer (LAYERID)> <source keymap (KEYMAPID)> <source layer (LAYERID)>
-    COMMAND = resolveNextKeyId
-    COMMAND = activateKeyPostponed [atLayer LAYERID] [append | prepend]  KEYID
-    COMMAND = consumePending <number of keys (INT)>
-    COMMAND = postponeNext <number of commands (NUMER)>
-    COMMAND = break
-    COMMAND = exit
-    COMMAND = noOp
-    COMMAND = yield
-    COMMAND = {exec|call|fork} MACRONAME
-    COMMAND = resetTrackpoint
-    COMMAND = printStatus
-    COMMAND = setLedTxt <timeout (INT)> { STRING | EXPRESSION }
-    COMMAND = write STRING
-    COMMAND = goTo <index (ADDRESS)>
-    COMMAND = repeatFor <var name (IDENTIFIER)> <action adr (ADDRESS)>
-    COMMAND = progressHue
-    COMMAND = recordMacroDelay
-    COMMAND = {startRecording | startRecordingBlind} [<slot identifier (MACROID)>]
-    COMMAND = {recordMacro | recordMacroBlind} [<slot identifier (MACROID)>]
-    COMMAND = {stopRecording | stopRecordingBlind}
-    COMMAND = playMacro [<slot identifier (MACROID)>]
-    COMMAND = {startMouse|stopMouse} {move DIRECTION|scroll DIRECTION|accelerate|decelerate}
-    COMMAND = setVar <var name (IDENTIFIER)> <value (PARENTHESSED_EXPRESSION)>
-    COMMAND = {pressKey|holdKey|tapKey|releaseKey} SHORTCUT
-    COMMAND = tapKeySeq [SHORTCUT]+
-    COMMAND = set module.MODULEID.navigationMode.LAYERID_BASIC NAVIGATION_MODE
-    COMMAND = set module.MODULEID.baseSpeed <speed multiplier part that always applies, 0-10.0 (FLOAT)>
-    COMMAND = set module.MODULEID.speed <speed multiplier part that is affected by xceleration, 0-10.0 (FLOAT)>
-    COMMAND = set module.MODULEID.xceleration <exponent 0-1.0 (FLOAT)>
-    COMMAND = set module.MODULEID.caretSpeedDivisor <1-100 (FLOAT)>
-    COMMAND = set module.MODULEID.scrollSpeedDivisor <1-100 (FLOAT)>
-    COMMAND = set module.MODULEID.axisLockSkew <0-2.0 (FLOAT)>
-    COMMAND = set module.MODULEID.axisLockFirstTickSkew <0-2.0 (FLOAT)>
-    COMMAND = set module.MODULEID.scrollAxisLock BOOL
-    COMMAND = set module.MODULEID.cursorAxisLock BOOL
-    COMMAND = set module.MODULEID.caretAxisLock BOOL
-    COMMAND = set module.MODULEID.swapAxes BOOL
-    COMMAND = set module.MODULEID.invertScrollDirectionX BOOL
-    COMMAND = set module.MODULEID.invertScrollDirectionY BOOL
-    COMMAND = set module.touchpad.pinchZoomDivisor <1-100 (FLOAT)>
-    COMMAND = set module.touchpad.pinchZoomMode NAVIGATION_MODE
-    COMMAND = set module.touchpad.holdContinuationTimeout <0-65535 (INT)>
-    COMMAND = set secondaryRole.defaultStrategy { simple | advanced }
-    COMMAND = set secondaryRole.advanced.timeout <ms, 0-500 (INT)>
-    COMMAND = set secondaryRole.advanced.timeoutAction { primary | secondary }
-    COMMAND = set secondaryRole.advanced.safetyMargin <ms, -50 - 50 (INT)>
-    COMMAND = set secondaryRole.advanced.triggerByRelease BOOL
-    COMMAND = set secondaryRole.advanced.doubletapToPrimary BOOL
-    COMMAND = set secondaryRole.advanced.doubletapTime <ms, 0 - 500 (INT)>
-    COMMAND = set mouseKeys.{move|scroll}.initialSpeed <px/s, -100/20 (INT)>
-    COMMAND = set mouseKeys.{move|scroll}.baseSpeed <px/s, -800/20 (INT)>
-    COMMAND = set mouseKeys.{move|scroll}.initialAcceleration <px/s, ~1700/20 (INT)>
-    COMMAND = set mouseKeys.{move|scroll}.deceleratedSpeed <px/s, ~200/10 (INT)>
-    COMMAND = set mouseKeys.{move|scroll}.acceleratedSpeed <px/s, ~1600/50 (INT)>
-    COMMAND = set mouseKeys.{move|scroll}.axisSkew <multiplier, 0.5-2.0 (FLOAT)>
-    COMMAND = set i2cBaudRate <baud rate, default 100000(INT)>
-    COMMAND = set diagonalSpeedCompensation BOOL
-    COMMAND = set chordingDelay <time in ms (INT)>
-    COMMAND = set autoShiftDelay <time in ms (INT)>
-    COMMAND = set stickyModifiers {never|smart|always}
-    COMMAND = set debounceDelay <time in ms, at most 250 (INT)>
-    COMMAND = set doubletapTimeout <time in ms, at most 65535 (INT)>
-    COMMAND = set keystrokeDelay <time in ms, at most 65535 (INT)>
-    COMMAND = set autoRepeatDelay <time in ms, at most 65535 (INT)>
-    COMMAND = set autoRepeatRate <time in ms, at most 65535 (INT)>
-    COMMAND = set oneShotTimeout <time in ms, at most 65535 (INT)>
-    COMMAND = set macroEngine.batchSize <number of commands to execute per one update cycle INT>
-    COMMAND = set navigationModeAction.NAVIGATION_MODE_CUSTOM.DIRECTION ACTION
-    COMMAND = set keymapAction.LAYERID.KEYID ACTION
-    COMMAND = set backlight.strategy { functional | constantRgb | perKeyRgb }
-    COMMAND = set backlight.constantRgb.rgb <number 0-255 (INT)> <number 0-255 (INT)> <number 0-255 (INT)><number 0-255 (INT)>
-    COMMAND = set backlight.keyRgb.LAYERID.KEYID <number 0-255 (INT)> <number 0-255 (INT)> <number 0-255 (INT)>
-    COMMAND = set leds.enabled BOOL
-    COMMAND = set leds.brightness <0-1 multiple of default (FLOAT)>
-    COMMAND = set leds.fadeTimeout <seconds to fade after (INT)>
-    COMMAND = set modifierLayerTriggers.{shift|alt|super|ctrl} {left|right|both}
-    CONDITION = if (EXPRESSION)
-    CONDITION = else
-    CONDITION = {ifShortcut | ifNotShortcut} [IFSHORTCUT_OPTIONS]* [KEYID]+
-    CONDITION = {ifGesture | ifNotGesture} [IFSHORTCUT_OPTIONS]* [KEYID]+
-    CONDITION = {ifPrimary | ifSecondary} [ simpleStrategy | advancedStrategy ]
-    CONDITION = {ifDoubletap | ifNotDoubletap}
-    CONDITION = {ifInterrupted | ifNotInterrupted}
-    CONDITION = {ifReleased | ifNotReleased}
-    CONDITION = {ifKeyActive | ifNotKeyActive} KEYID
-    CONDITION = {ifKeyDefined | ifNotKeyDefined} KEYID
-    CONDITION = {ifKeyPendingAt | ifNotKeyPendingAt} <idx in buffer (INT)> KEYID
-    CONDITION = {ifPending | ifNotPending} <n (INT)>
-    CONDITION = {ifPendingKeyReleased | ifNotPendingKeyReleased} <queue idx (INT)>
-    CONDITION = {ifPlaytime | ifNotPlaytime} <timeout in ms (INT)>
-    CONDITION = {ifShift | ifAlt | ifCtrl | ifGui | ifAnyMod | ifNotShift | ifNotAlt | ifNotCtrl | ifNotGui | ifNotAnyMod}
-    CONDITION = {ifCapsLockOn | ifNotCapsLockOn | ifScrollLockOn | ifNotScrollLockOn | ifNumLockOn | ifNotNumLockOn}
-    CONDITION = {ifKeymap | ifNotKeymap} KEYMAPID
-    CONDITION = {ifLayer | ifNotLayer} LAYERID
-    CONDITION = {ifRecording | ifNotRecording}
-    CONDITION = {ifRecordingId | ifNotRecordingId} MACROID
-    CONDITION = {ifModuleConnected | ifNotModuleConnected} MODULEID
-    MODIFIER = suppressMods
-    MODIFIER = postponeKeys
-    MODIFIER = final
-    MODIFIER = autoRepeat
-    MODIFIER = oneShot
-    IFSHORTCUT_OPTIONS = noConsume | transitive | anyOrder | orGate | timeoutIn <time in ms (INT)> | cancelIn <time in ms(INT)>
-    DIRECTION = {left|right|up|down}
-    LAYERID = {fn|mouse|mod|base|fn2|fn3|fn4|fn5|alt|shift|super|ctrl}|last|previous
-    LAYERID_BASIC = {fn|mouse|mod|base|fn2|fn3|fn4|fn5}
-    KEYMAPID = <abbrev>|last
-    MACROID = last|CHAR|INT
-    OPERATOR = + | - | * | / | % | < | > | <= | >= | == | != | && | ||
-    VARIABLE_EXPANSION = $<variable name> | $<config value name> | $currentAddress | $thisKeyId | $queuedKeyId.<queue index (INT)> | $keyId.KEYID_ABBREV
-    EXPRESSION = (EXPRESSION) | INT | BOOL | FLOAT | VARIABLE_EXPANSION | EXPRESSION OPERATOR EXPRESSION | !EXPRESSION | min(EXPRESSION [, EXPRESSION]+) | max(EXPRESSION [, EXPRESSION]+)
-    PARENTHESSED_EXPRESSION = (EXPRESSION)
-    INT = PARENTHESSED_EXPRESSION | VARIABLE_EXPANSION | [0-9]+ | -[0-9]+
-    BOOL = PARENTHESSED_EXPRESSION | VARIABLE_EXPANSION | 0 | 1
-    FLOAT = PARENTHESSED_EXPRESSION | VARIABLE_EXPANSION | [0-9]*.[0-9]+ | -FLOAT
-    VALUE = INT | BOOL | FLOAT
-    STRING = "<interpolated string>" | '<literal string>'
-    IDENTIFIER = [a-zA-Z0-9_]+
-    CHAR = <any nonwhite ascii char>
-    LABEL = <string identifier>
-    MODMASK = [MODMASK]+ | [L|R]{S|C|A|G} | {p|r|h|t} | {s|i|o}
-    NAVIGATION_MODE = cursor | scroll | caret | media | zoom | zoomPc | zoomMac | none
-    NAVIGATION_MODE_CUSTOM = caret | media | zoomPc | zoomMac
-    MODULEID = trackball | touchpad | trackpoint | keycluster
-    ADDRESS = LABEL | INT
-    ACTION = { macro MACROID | keystroke SHORTCUT | none }
-    SCANCODE = CHAR | SCANCODE_ABBREV
-    SHORTCUT = MODMASK- | MODMASK-SCANCODE | SCANCODE | MODMASK
-    SCANCODE_ABBREV = enter | escape | backspace | tab | space | minusAndUnderscore | equalAndPlus | openingBracketAndOpeningBrace | closingBracketAndClosingBrace
-    SCANCODE_ABBREV = backslashAndPipeIso | backslashAndPipe | nonUsHashmarkAndTilde | semicolonAndColon | apostropheAndQuote | graveAccentAndTilde | commaAndLessThanSign
-    SCANCODE_ABBREV = dotAndGreaterThanSign | slashAndQuestionMark | capsLock | printScreen | scrollLock | pause | insert | home | pageUp | delete | end | pageDown | numLock
-    SCANCODE_ABBREV = nonUsBackslashAndPipe | application | power | keypadEqualSign |  execute | help | menu | select | stop | again | undo | cut | copy | paste | find | mute
-    SCANCODE_ABBREV = volumeUp | volumeDown | lockingCapsLock | lockingNumLock | lockingScrollLock | keypadComma | keypadEqualSignAs400 | international1 | international2
-    SCANCODE_ABBREV = international3 | international4 | international5 | international6 | international7 | international8 | international9 | lang1 | lang2 | lang3 | lang4 | lang5
-    SCANCODE_ABBREV = lang6 | lang7 | lang8 | lang9 | alternateErase | sysreq | cancel | clear | prior | return | separator | out | oper | clearAndAgain | crselAndProps | exsel
-    SCANCODE_ABBREV = keypad00 | keypad000 | thousandsSeparator | decimalSeparator | currencyUnit | currencySubUnit | keypadOpeningParenthesis | keypadClosingParenthesis
-    SCANCODE_ABBREV = keypadOpeningBrace | keypadClosingBrace | keypadTab | keypadBackspace | keypadA | keypadB | keypadC | keypadD | keypadE | keypadF | keypadXor | keypadCaret
-    SCANCODE_ABBREV = keypadPercentage | keypadLessThanSign | keypadGreaterThanSign | keypadAmp | keypadAmpAmp | keypadPipe | keypadPipePipe | keypadColon | keypadHashmark
-    SCANCODE_ABBREV = keypadSpace | keypadAt | keypadExclamationSign | keypadMemoryStore | keypadMemoryRecall | keypadMemoryClear | keypadMemoryAdd | keypadMemorySubtract
-    SCANCODE_ABBREV = keypadMemoryMultiply | keypadMemoryDivide | keypadPlusAndMinus | keypadClear | keypadClearEntry | keypadBinary | keypadOctal | keypadDecimal
-    SCANCODE_ABBREV = keypadHexadecimal | keypadSlash | keypadAsterisk | keypadMinus | keypadPlus | keypadEnter | keypad1AndEnd | keypad2AndDownArrow | keypad3AndPageDown
-    SCANCODE_ABBREV = keypad4AndLeftArrow | keypad5 | keypad6AndRightArrow | keypad7AndHome | keypad8AndUpArrow | keypad9AndPageUp | keypad0AndInsert | keypadDotAndDelete
-    SCANCODE_ABBREV = leftControl | leftShift | leftAlt | leftGui | rightControl | rightShift | rightAlt | rightGui
-    SCANCODE_ABBREV = up | down | left | right | upArrow | downArrow | leftArrow | rightArrow
-    SCANCODE_ABBREV = np0 | np1 | np2 | np3 | np4 | np5 | np6 | np7 | np8 | np9
-    SCANCODE_ABBREV = f1 | f2 | f3 | f4 | f5 | f6 | f7 | f8 | f9 | f10 | f11 | f12 | f13 | f14 | f15 | f16 | f17 | f18 | f19 | f20 | f21 | f22 | f23 | f24
-    SCANCODE_ABBREV = mediaVolumeMute | mediaVolumeUp | mediaVolumeDown | mediaRecord | mediaFastForward | mediaRewind | mediaNext | mediaPrevious | mediaStop | mediaPlayPause | mediaPause
-    SCANCODE_ABBREV = systemPowerDown | systemSleep | systemWakeUp
-    SCANCODE_ABBREV = mouseBtnLeft | mouseBtnRight | mouseBtnMiddle | mouseBtn4 | mouseBtn5 | mouseBtn6 | mouseBtn7 | mouseBtn8
-    KEYID = INT | KEYID_ABBREV
-    KEYID_ABBREV = ' | , | - | . | / | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | ; | = | [ | ] | `
-    KEYID_ABBREV = a | q | w | e | r | t | y | u | i | o | p | a | s | d | f | g | h | j | k | l | z | x | c | v | b | n | m
-    KEYID_ABBREV = apostropheAndQuote | backspace | capsLock | closingBracketAndClosingBrace | commaAndLessThanSign | dotAndGreaterThanSign | enter
-    KEYID_ABBREV = equalAndPlus | graveAccentAndTilde | isoKey | semicolonAndColon | slashAndQuestionMark | tab | minusAndUnderscore | openingBracketAndOpeningBrace
-    KEYID_ABBREV = leftAlt | leftCtrl | leftFn | leftMod | leftMouse | leftShift | leftSpace | leftSuper
-    KEYID_ABBREV = leftModule.key1 | leftModule.key2 | leftModule.key3 | leftModule.leftButton | leftModule.middleButton | leftModule.rightButton
-    KEYID_ABBREV = rightAlt | rightCtrl | rightFn | rightMod | rightShift | rightSpace | rightSuper | rightModule.leftButton | rightModule.rightButton
-    MACRONAME = <Case sensitive macro identifier as named in Agent. Identifier shall not contain spaces.>
-    ###################
-    #DEVELOPMENT TOOLS#
-    ###################
-    COMMAND = stopAllMacros
-    COMMAND = statsRuntime
-    COMMAND = statsLayerStack
-    COMMAND = statsPostponerStack
-    COMMAND = statsActiveKeys
-    COMMAND = statsActiveMacros
-    COMMAND = statsRecordKeyTiming
-    COMMAND = diagnose
-    COMMAND = setStatus <custom text>
-    COMMAND = clearStatus
-    COMMAND = set setEmergencyKey KEYID
-    COMMAND = validateUserConfig
-    ############
-    #DEPRECATED#
-    ############
-    COMMAND = set macroEngine.scheduler {blocking|preemptive}
-    COMMAND = set doubletapDelay <time in ms, at most 65535, alias to doubletapTimeout (INT)>
-    COMMAND = set modifierLayerTriggers.{control} {left|right|both}
-    COMMAND = untoggleLayer
-    LAYERID = control
-    #########
-    #REMOVED#
-    #########
-    INT = #<register idx (INT)> | #key | @<relative macro action index(INT)> | %<key idx in postponer queue (INT)>
-    CONDITION = {ifRegEq | ifNotRegEq | ifRegGt | ifRegLt} <register index (INT)> <value (INT)>
-    COMMAND = resolveNextKeyEq <queue position (INT)> KEYID {<time in ms>|untilRelease} <action adr (ADDRESS)> <action adr (ADDRESS)>
-    COMMAND = setStatusPart <custom text>
-    COMMAND = resolveSecondary <time in ms (INT)> [<time in ms (INT)>] <primary action macro action index (ADDRESS)> <secondary action macro action index (ADDRESS)>
-    COMMAND = {setReg|addReg|subReg|mulReg} <register index (INT)> <value (INT)>
-    COMMAND = set module.MODULEID.invertScrollDirection BOOL
-    COMMAND = writeExpr INT
-    COMMAND = statsRegs
-    COMMAND = setExpDriver <baseSpeed (FLOAT:0.0)> <speed (FLOAT:1.0)> <acceleration (FLOAT:0.5)> <midSpeed (FLOAT:3000)>
-    COMMAND = setSplitCompositeKeystroke {0|1}
-    COMMAND = setActivateOnRelease {0|1}
-    COMMAND = switchLayer LAYERID
-    COMMAND = switchKeymapLayer KEYMAPID LAYERID
-    MODIFIER = suppressKeys
-    COMMAND = setStickyModsEnabled {0|never|smart|always|1}
-    COMMAND = setCompensateDiagonalSpeed {0|1}
-    COMMAND = setDebounceDelay <time in ms, at most 250 (INT)>
-    COMMAND = setKeystrokeDelay <time in ms, at most 65535 (INT)>
-    COMMAND = setEmergencyKey KEYID
+Operator | syntax
+ --- | ---
+rules - need to be expanded | `UPPERCASE_IDENTIFIERS`
+obligatory group | `{ ... }`
+optional group | `[ ... ]`
+one or more | `[ ... ]+`
+any number | `[ ... ]*`
+choice | `A \| B`
+resolved text | `text`
+human-readable description | `<hint>`
+human-readable description, backed by a specific rule | `<hint (RULE)>`
+
+```
+#########################
+# GENERAL FUNCTIONALITY #
+#########################
+BODY = COMMENT
+BODY = [LABEL:] COMMAND [COMMENT]
+COMMENT = //<comment>
+CODE_BLOCK = {
+    COMMAND
+    COMMAND
+    ...
+}
+COMMAND = <command>
+COMMAND = CODE_BLOCK
+COMMAND = [CONDITION|MODIFIER]* COMMAND
+COMMAND = delayUntilRelease
+COMMAND = delayUntil <timeout in ms (INT)>
+COMMAND = delayUntilReleaseMax <timeout (INT)>
+COMMAND = switchKeymap KEYMAPID
+COMMAND = toggleLayer LAYERID
+COMMAND = toggleKeymapLayer KEYMAPID LAYERID
+COMMAND = untoggleLayer
+COMMAND = holdLayer LAYERID
+COMMAND = holdLayerMax LAYERID <time in ms (INT)>
+COMMAND = holdKeymapLayer KEYMAPID LAYERID
+COMMAND = holdKeymapLayerMax KEYMAPID LAYERID <time in ms (INT)>
+COMMAND = overlayKeymap KEYMAPID
+COMMAND = overlayLayer <target layer (LAYERID)> <source keymap (KEYMAPID)> <source layer (LAYERID)>
+COMMAND = replaceLayer <target layer (LAYERID)> <source keymap (KEYMAPID)> <source layer (LAYERID)>
+COMMAND = resolveNextKeyId
+COMMAND = activateKeyPostponed [atLayer LAYERID] [append | prepend]  KEYID
+COMMAND = consumePending <number of keys (INT)>
+COMMAND = postponeNext <number of commands (NUMER)>
+COMMAND = break
+COMMAND = exit
+COMMAND = noOp
+COMMAND = yield
+COMMAND = {exec|call|fork} MACRONAME
+COMMAND = resetTrackpoint
+COMMAND = printStatus
+COMMAND = setLedTxt <timeout, or 0 forever (INT)> { STRING | VALUE }
+COMMAND = write STRING
+COMMAND = goTo <index (ADDRESS)>
+COMMAND = repeatFor <var name (IDENTIFIER)> <action adr (ADDRESS)>
+COMMAND = while (EXPRESSION) COMMAND
+COMMAND = progressHue
+COMMAND = recordMacroDelay
+COMMAND = {startRecording | startRecordingBlind} [<slot identifier (MACROID)>]
+COMMAND = {recordMacro | recordMacroBlind} [<slot identifier (MACROID)>]
+COMMAND = {stopRecording | stopRecordingBlind}
+COMMAND = playMacro [<slot identifier (MACROID)>]
+COMMAND = {startMouse|stopMouse} {move DIRECTION|scroll DIRECTION|accelerate|decelerate}
+COMMAND = setVar <variable name (IDENTIFIER)> <value (PARENTHESSED_EXPRESSION)>
+COMMAND = {pressKey|holdKey|tapKey|releaseKey} SHORTCUT
+COMMAND = tapKeySeq [SHORTCUT]+
+COMMAND = set module.MODULEID.navigationMode.LAYERID_BASIC NAVIGATION_MODE
+COMMAND = set module.MODULEID.baseSpeed <non-xcelerated speed, 0-10.0 (FLOAT)>
+COMMAND = set module.MODULEID.speed <xcelerated speed, 0-10.0 (FLOAT)>
+COMMAND = set module.MODULEID.xceleration <increases sensitivity at high speeds, descreases at low speeds, exponent 0-2.0 (FLOAT)>
+COMMAND = set module.MODULEID.caretSpeedDivisor <pixels per one caret event, 1-100 (FLOAT)>
+COMMAND = set module.MODULEID.scrollSpeedDivisor <pixels per one scroll event, 1-100 (FLOAT)>
+COMMAND = set module.MODULEID.axisLockSkew <0-2.0, controls strength of axis locking behavior (FLOAT)>
+COMMAND = set module.MODULEID.axisLockFirstTickSkew <0-2.0, controls sensitivity of the start of mouse movement (FLOAT)>
+COMMAND = set module.MODULEID.scrollAxisLock BOOL
+COMMAND = set module.MODULEID.cursorAxisLock BOOL
+COMMAND = set module.MODULEID.caretAxisLock BOOL
+COMMAND = set module.MODULEID.swapAxes BOOL
+COMMAND = set module.MODULEID.invertScrollDirectionX BOOL
+COMMAND = set module.MODULEID.invertScrollDirectionY BOOL
+COMMAND = set module.touchpad.pinchZoomDivisor <1-100 (FLOAT)>
+COMMAND = set module.touchpad.pinchZoomMode NAVIGATION_MODE
+COMMAND = set module.touchpad.holdContinuationTimeout <0-65535 (INT)>
+COMMAND = set secondaryRole.defaultStrategy { simple | advanced }
+COMMAND = set secondaryRole.advanced.timeout <ms, 0-500 (INT)>
+COMMAND = set secondaryRole.advanced.timeoutAction { primary | secondary }
+COMMAND = set secondaryRole.advanced.safetyMargin <ms, higher value adjusts sensitivity towards primary role -50-50 (INT)>
+COMMAND = set secondaryRole.advanced.triggerByPress <trigger immediately on action key press (BOOL)>
+COMMAND = set secondaryRole.advanced.triggerByRelease <trigger secondary role if action key is released before dual role (BOOL)
+COMMAND = set secondaryRole.advanced.triggerByMouse <trigger secondary role immediately on mouse move (BOOL)
+COMMAND = set secondaryRole.advanced.doubletapToPrimary <hold primary on doubletap (BOOL)>
+COMMAND = set secondaryRole.advanced.doubletapTime <ms, 0-500 (INT)>
+COMMAND = set mouseKeys.{move|scroll}.initialSpeed <px/s, ~100/20 (INT)>
+COMMAND = set mouseKeys.{move|scroll}.baseSpeed <px/s, ~800/20 (INT)>
+COMMAND = set mouseKeys.{move|scroll}.initialAcceleration <px/s, ~1700/20 (INT)>
+COMMAND = set mouseKeys.{move|scroll}.deceleratedSpeed <px/s, ~200/10 (INT)>
+COMMAND = set mouseKeys.{move|scroll}.acceleratedSpeed <px/s, ~1600/50 (INT)>
+COMMAND = set mouseKeys.{move|scroll}.axisSkew <multiplier, 0.5-2.0 (FLOAT)>
+COMMAND = set i2cBaudRate <baud rate, default 100000(INT)>
+COMMAND = set diagonalSpeedCompensation BOOL
+COMMAND = set chordingDelay <time in ms (INT)>
+COMMAND = set autoShiftDelay <time in ms (INT)>
+COMMAND = set stickyModifiers {never|smart|always}
+COMMAND = set debounceDelay <time in ms, at most 250 (INT)>
+COMMAND = set doubletapTimeout <time in ms (INT)>
+COMMAND = set keystrokeDelay <time in ms (INT)>
+COMMAND = set autoRepeatDelay <time in ms (INT)>
+COMMAND = set autoRepeatRate <time in ms (INT)>
+COMMAND = set oneShotTimeout <time in ms (INT)>
+COMMAND = set macroEngine.batchSize <number of commands to execute per one update cycle INT>
+COMMAND = set navigationModeAction.NAVIGATION_MODE_CUSTOM.DIRECTION ACTION
+COMMAND = set keymapAction.LAYERID.KEYID ACTION
+COMMAND = set backlight.strategy { functional | constantRgb | perKeyRgb }
+COMMAND = set backlight.constantRgb.rgb <number 0-255 (INT)> <number 0-255 (INT)> <number 0-255 (INT)><number 0-255 (INT)>
+COMMAND = set backlight.keyRgb.LAYERID.KEYID <number 0-255 (INT)> <number 0-255 (INT)> <number 0-255 (INT)>
+COMMAND = set leds.enabled BOOL
+COMMAND = set leds.brightness <0-1 multiple of default (FLOAT)>
+COMMAND = set leds.fadeTimeout <seconds to fade after (INT)>
+COMMAND = set modifierLayerTriggers.{shift|alt|super|ctrl} {left|right|both}
+CONDITION = <condition>
+CONDITION = if (EXPRESSION)
+CONDITION = else
+CONDITION = {ifShortcut | ifNotShortcut} [IFSHORTCUT_OPTIONS]* [KEYID]+
+CONDITION = {ifGesture | ifNotGesture} [IFSHORTCUT_OPTIONS]* [KEYID]+
+CONDITION = {ifPrimary | ifSecondary} [ simpleStrategy | advancedStrategy ]
+CONDITION = {ifDoubletap | ifNotDoubletap}
+CONDITION = {ifInterrupted | ifNotInterrupted}
+CONDITION = {ifReleased | ifNotReleased}
+CONDITION = {ifKeyActive | ifNotKeyActive} KEYID
+CONDITION = {ifKeyDefined | ifNotKeyDefined} KEYID
+CONDITION = {ifKeyPendingAt | ifNotKeyPendingAt} <idx in queue (INT)> KEYID
+CONDITION = {ifPending | ifNotPending} <n (INT)>
+CONDITION = {ifPendingKeyReleased | ifNotPendingKeyReleased} <queue idx (INT)>
+CONDITION = {ifPlaytime | ifNotPlaytime} <timeout in ms (INT)>
+CONDITION = {ifShift | ifAlt | ifCtrl | ifGui | ifAnyMod | ifNotShift | ifNotAlt | ifNotCtrl | ifNotGui | ifNotAnyMod}
+CONDITION = {ifCapsLockOn | ifNotCapsLockOn | ifScrollLockOn | ifNotScrollLockOn | ifNumLockOn | ifNotNumLockOn}
+CONDITION = {ifKeymap | ifNotKeymap} KEYMAPID
+CONDITION = {ifLayer | ifNotLayer} LAYERID
+CONDITION = {ifLayerToggled | ifNotLayerToggled}
+CONDITION = {ifRecording | ifNotRecording}
+CONDITION = {ifRecordingId | ifNotRecordingId} MACROID
+CONDITION = {ifModuleConnected | ifNotModuleConnected} MODULEID
+MODIFIER = <modifier>
+MODIFIER = suppressMods
+MODIFIER = postponeKeys
+MODIFIER = final
+MODIFIER = autoRepeat
+MODIFIER = oneShot
+IFSHORTCUT_OPTIONS = noConsume | transitive | anyOrder | orGate | timeoutIn <time in ms (INT)> | cancelIn <time in ms(INT)>
+DIRECTION = {left|right|up|down}
+LAYERID = {fn|mouse|mod|base|fn2|fn3|fn4|fn5|alt|shift|super|ctrl}|last|previous
+LAYERID_BASIC = {fn|mouse|mod|base|fn2|fn3|fn4|fn5}
+KEYMAPID = <short keymap abbreviation(IDENTIFIER)>|last
+MACROID = last | <single char slot identifier(CHAR)> | <single number slot identifier(INT)>
+OPERATOR = + | - | * | / | % | < | > | <= | >= | == | != | && | ||
+VARIABLE_EXPANSION = $<variable name(IDENTIFIER)> | $<config value name> | $currentAddress | $thisKeyId | $queuedKeyId.<queue index (INT)> | $keyId.KEYID_ABBREV
+EXPRESSION = <expression> | (EXPRESSION) | INT | BOOL | FLOAT | VARIABLE_EXPANSION | EXPRESSION OPERATOR EXPRESSION | !EXPRESSION | min(EXPRESSION [, EXPRESSION]+) | max(EXPRESSION [, EXPRESSION]+)
+PARENTHESSED_EXPRESSION = (EXPRESSION)
+INT = PARENTHESSED_EXPRESSION | VARIABLE_EXPANSION | [0-9]+ | -[0-9]+
+BOOL = PARENTHESSED_EXPRESSION | VARIABLE_EXPANSION | 0 | 1
+FLOAT = PARENTHESSED_EXPRESSION | VARIABLE_EXPANSION | [0-9]*.[0-9]+ | -FLOAT
+VALUE = INT | BOOL | FLOAT
+STRING = "<interpolated string>" | '<literal string>'
+IDENTIFIER = [a-zA-Z_][a-zA-Z0-9_]*
+CHAR = <any nonwhite ascii char>
+LABEL = <label (IDENTIFIER)>
+MODMASK = [MODMASK]+ | [L|R]{S|C|A|G} | {p|r|h|t} | {s|i|o}
+NAVIGATION_MODE = cursor | scroll | caret | media | zoom | zoomPc | zoomMac | none
+NAVIGATION_MODE_CUSTOM = caret | media | zoomPc | zoomMac
+MODULEID = trackball | touchpad | trackpoint | keycluster
+ADDRESS = LABEL | INT
+ACTION = { macro MACRONAME | keystroke SHORTCUT | none }
+SCANCODE = <en-US character (CHAR)> | SCANCODE_ABBREV
+SHORTCUT = <MODMASK-SCANCODE, e.g. LC-c (COMPOSITE_SHORTCUT)>
+SHORTCUT = <SCANCODE long abbreviation (SCANCODE)> 
+SHORTCUT = <MODMASK, e.g. LS for left shift(MODMASK)> 
+COMPOSITE_SHORTCUT = MODMASK-SCANCODE
+SCANCODE_ABBREV = enter | escape | backspace | tab | space | minusAndUnderscore | equalAndPlus | openingBracketAndOpeningBrace | closingBracketAndClosingBrace
+SCANCODE_ABBREV = backslashAndPipeIso | backslashAndPipe | nonUsHashmarkAndTilde | semicolonAndColon | apostropheAndQuote | graveAccentAndTilde | commaAndLessThanSign
+SCANCODE_ABBREV = dotAndGreaterThanSign | slashAndQuestionMark | capsLock | printScreen | scrollLock | pause | insert | home | pageUp | delete | end | pageDown | numLock
+SCANCODE_ABBREV = nonUsBackslashAndPipe | application | power | keypadEqualSign |  execute | help | menu | select | stop | again | undo | cut | copy | paste | find | mute
+SCANCODE_ABBREV = volumeUp | volumeDown | lockingCapsLock | lockingNumLock | lockingScrollLock | keypadComma | keypadEqualSignAs400 | international1 | international2
+SCANCODE_ABBREV = international3 | international4 | international5 | international6 | international7 | international8 | international9 | lang1 | lang2 | lang3 | lang4 | lang5
+SCANCODE_ABBREV = lang6 | lang7 | lang8 | lang9 | alternateErase | sysreq | cancel | clear | prior | return | separator | out | oper | clearAndAgain | crselAndProps | exsel
+SCANCODE_ABBREV = keypad00 | keypad000 | thousandsSeparator | decimalSeparator | currencyUnit | currencySubUnit | keypadOpeningParenthesis | keypadClosingParenthesis
+SCANCODE_ABBREV = keypadOpeningBrace | keypadClosingBrace | keypadTab | keypadBackspace | keypadA | keypadB | keypadC | keypadD | keypadE | keypadF | keypadXor | keypadCaret
+SCANCODE_ABBREV = keypadPercentage | keypadLessThanSign | keypadGreaterThanSign | keypadAmp | keypadAmpAmp | keypadPipe | keypadPipePipe | keypadColon | keypadHashmark
+SCANCODE_ABBREV = keypadSpace | keypadAt | keypadExclamationSign | keypadMemoryStore | keypadMemoryRecall | keypadMemoryClear | keypadMemoryAdd | keypadMemorySubtract
+SCANCODE_ABBREV = keypadMemoryMultiply | keypadMemoryDivide | keypadPlusAndMinus | keypadClear | keypadClearEntry | keypadBinary | keypadOctal | keypadDecimal
+SCANCODE_ABBREV = keypadHexadecimal | keypadSlash | keypadAsterisk | keypadMinus | keypadPlus | keypadEnter | keypad1AndEnd | keypad2AndDownArrow | keypad3AndPageDown
+SCANCODE_ABBREV = keypad4AndLeftArrow | keypad5 | keypad6AndRightArrow | keypad7AndHome | keypad8AndUpArrow | keypad9AndPageUp | keypad0AndInsert | keypadDotAndDelete
+SCANCODE_ABBREV = leftControl | leftShift | leftAlt | leftGui | rightControl | rightShift | rightAlt | rightGui
+SCANCODE_ABBREV = up | down | left | right | upArrow | downArrow | leftArrow | rightArrow
+SCANCODE_ABBREV = np0 | np1 | np2 | np3 | np4 | np5 | np6 | np7 | np8 | np9
+SCANCODE_ABBREV = f1 | f2 | f3 | f4 | f5 | f6 | f7 | f8 | f9 | f10 | f11 | f12 | f13 | f14 | f15 | f16 | f17 | f18 | f19 | f20 | f21 | f22 | f23 | f24
+SCANCODE_ABBREV = mediaVolumeMute | mediaVolumeUp | mediaVolumeDown | mediaRecord | mediaFastForward | mediaRewind | mediaNext | mediaPrevious | mediaStop | mediaPlayPause | mediaPause
+SCANCODE_ABBREV = systemPowerDown | systemSleep | systemWakeUp
+SCANCODE_ABBREV = mouseBtnLeft | mouseBtnRight | mouseBtnMiddle | mouseBtn4 | mouseBtn5 | mouseBtn6 | mouseBtn7 | mouseBtn8
+KEYID = <keyid (INT)> | <keyid abbreviation(KEYID_ABBREV)>
+KEYID_ABBREV = ' | , | - | . | / | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | ; | = | ` | [ | ]
+KEYID_ABBREV = a | q | w | e | r | t | y | u | i | o | p | a | s | d | f | g | h | j | k | l | z | x | c | v | b | n | m
+KEYID_ABBREV = apostropheAndQuote | backspace | capsLock | closingBracketAndClosingBrace | commaAndLessThanSign | dotAndGreaterThanSign | enter
+KEYID_ABBREV = equalAndPlus | graveAccentAndTilde | isoKey | semicolonAndColon | slashAndQuestionMark | tab | minusAndUnderscore | openingBracketAndOpeningBrace
+KEYID_ABBREV = leftAlt | leftCtrl | leftFn | leftMod | leftMouse | leftShift | leftSpace | leftSuper
+KEYID_ABBREV = leftModule.key1 | leftModule.key2 | leftModule.key3 | leftModule.leftButton | leftModule.middleButton | leftModule.rightButton
+KEYID_ABBREV = rightAlt | rightCtrl | rightFn | rightMod | rightShift | rightSpace | rightSuper | rightModule.leftButton | rightModule.rightButton
+MACRONAME = <macro name (IDENTIFIER)>
+#####################
+# DEVELOPMENT TOOLS #
+#####################
+COMMAND = stopAllMacros
+COMMAND = statsRuntime
+COMMAND = statsLayerStack
+COMMAND = statsPostponerStack
+COMMAND = statsActiveKeys
+COMMAND = statsActiveMacros
+COMMAND = statsRecordKeyTiming
+COMMAND = diagnose
+COMMAND = setStatus STRING
+COMMAND = clearStatus
+COMMAND = set setEmergencyKey KEYID
+COMMAND = validateUserConfig
+##############
+# DEPRECATED #
+##############
+COMMAND = set macroEngine.scheduler {blocking|preemptive}
+COMMAND = set doubletapDelay <time in ms, at most 65535, alias to doubletapTimeout (INT)>
+COMMAND = set modifierLayerTriggers.{control} {left|right|both}
+COMMAND = untoggleLayer
+LAYERID = control
+###########
+# REMOVED #
+###########
+INT = #<register idx (INT)> | #key | @<relative macro action index(INT)> | %<key idx in postponer queue (INT)>
+CONDITION = {ifRegEq | ifNotRegEq | ifRegGt | ifRegLt} <register index (INT)> <value (INT)>
+COMMAND = resolveNextKeyEq <queue position (INT)> KEYID {<time in ms>|untilRelease} <action adr (ADDRESS)> <action adr (ADDRESS)>
+COMMAND = setStatusPart <custom text>
+COMMAND = resolveSecondary <time in ms (INT)> [<time in ms (INT)>] <primary action macro action index (ADDRESS)> <secondary action macro action index (ADDRESS)>
+COMMAND = {setReg|addReg|subReg|mulReg} <register index (INT)> <value (INT)>
+COMMAND = set module.MODULEID.invertScrollDirection BOOL
+COMMAND = writeExpr INT
+COMMAND = statsRegs
+COMMAND = setExpDriver <baseSpeed (FLOAT:0.0)> <speed (FLOAT:1.0)> <acceleration (FLOAT:0.5)> <midSpeed (FLOAT:3000)>
+COMMAND = setSplitCompositeKeystroke {0|1}
+COMMAND = setActivateOnRelease {0|1}
+COMMAND = switchLayer LAYERID
+COMMAND = switchKeymapLayer KEYMAPID LAYERID
+MODIFIER = suppressKeys
+COMMAND = setStickyModsEnabled {0|never|smart|always|1}
+COMMAND = setCompensateDiagonalSpeed {0|1}
+COMMAND = setDebounceDelay <time in ms, at most 250 (INT)>
+COMMAND = setKeystrokeDelay <time in ms, at most 65535 (INT)>
+COMMAND = setEmergencyKey KEYID
+```
 
 ### Uncategorized commands:
 
@@ -431,6 +460,7 @@ Conditions are checked before processing the rest of the command. If the conditi
       - under Linux, scroll lock is disabled by default. As a consequence, the macro event does not trigger.
       - under MacOS, scroll lock dims the screen but does not toggle the scroll lock state. As a consequence, the macro event does not trigger.
 - `{ifKeymap|ifNotKeymap|ifLayer|ifNotLayer} <value>` will test if the current Keymap/Layer equals the first argument.
+- `{ifLayerToggled|ifNotLayerToggled}` will return true if current layer is toggled. It will return true if the toggled layer is on top of the stack, or anywhere else as long as only the same (currently active) layers are above it in the layer stack.
 - `ifRecording/ifNotRecording` and `ifRecordingId/ifNotRecordingId MACROID` test if the runtime macro recorder is in the recording state.
 - `ifShortcut/ifNotShortcut [IFSHORTCUT_OPTIONS]* [KEYID]*` will wait for future keypresses and compare them to the argument. See the postponer mechanism section.
 - `ifGesture/ifNotGesture [IFSHORTCUT_OPTIONS]* [KEYID]*` just as `ifShortcut`, but breaks after 1000ms instead of when the key is released. See the postponer mechanism section.
@@ -561,7 +591,7 @@ Internally, values are saved in one of the following types, and types are automa
   By default, axis locking is enabled in scroll and discreet modes for right hand modules, and for scroll, caret and media modes for keycluster.
 
   - `axisLockSkew` controls caret axis locking. Defaults to 0.5, valid/reasonable values are 0-100, centered around 1.
-  - `axisLockFirstTickSkew` - same meaning as `axisLockSkew`, but controls how axis locking applies on the first tick. 
+  - `axisLockFirstTickSkew` - same meaning as `axisLockSkew`, but controls how axis locking applies on the first tick.
  non-zero value means that the first tick will require a "push" before the cursor starts moving. Or will require less "force" if the value is greater than 1.
   - `cursorAxisLock BOOL` - turns axis locking on for cursor mode. Not recommended, but possible.
   - `scrollAxisLock BOOL` - turns axis locking on for scroll mode. Default for keycluster trackball.
@@ -580,8 +610,10 @@ Internally, values are saved in one of the following types, and types are automa
     - advanced strategy may trigger secondary role depending on timeout, or depending on key release order.
       - `set secondaryRole.advanced.timeout <timeout in ms, 350 (INT)>` if this timeout is reached, `timeoutAction` (secondary by default) role is activated.
       - `set secondaryRole.advanced.timeoutAction { primary | secondary }` defines whether the primary action or the secondary role should be activated when timeout is reached
-      - `set secondaryRole.advanced.triggerByRelease BOOL` if enabled, secondary role is chosen depending on the release order of the keys (`press-A, press-B, release-B, release-A` leads to secondary action; `press-A, press-B, release-A, release-B` leads to primary action).
-      - `set secondaryRole.advanced.safetyMargin <ms, -50 - 50 (INT)>` finetunes sensitivity of the trigger-by-release behaviour by adding the value to the dual-role-key release time. I.e., if both keys are released simultaneously (i.e., at most `safetyMargin` ms from each other), then positive values favor the primary action, and negative values the secondary role.
+      - `set secondaryRole.advanced.triggerByRelease BOOL` if enabled, secondary role is chosen depending on the release order of the keys (`press-A, press-B, release-B, release-A` leads to secondary action; `press-A, press-B, release-A, release-B` leads to primary action). This is further modified by safetyMargin.
+      - `set secondaryRole.advanced.triggerByPress BOOL` if enabled, secondary role is triggered when there is another press, simiarly to the simple strategy. Unlike simple strategy, this allows setting timeout behaviors, and also is modified by safetyMargin.
+      - `set secondaryRole.advanced.triggerByMouse BOOL` if enabled, any mouse (module) activity triggers secondary role immediately.
+      - `set secondaryRole.advanced.safetyMargin <ms, -50 - 50 (INT)>` finetunes sensitivity of the trigger-by-release and trigger-by-press behaviours, so that positive values favor primary role, while negative values favor secondary role. This works by adding the value to the action key (or subtracting from the dual role key). E.g., suppose trigger by release is active, and safetyMargin equal 50. Furthermore assume that dual-role key is released 30ms after the action key. Due to safety margin 50 being greater than 30, the dual-role key is still considered to be released first, and so primary role is activated.
       - `set secondaryRole.advanced.doubletapToPrimary BOOL` allows initiating hold of primary action by doubletap. (Useful if you want a dual key on space.)
       - `set secondaryRole.advanced.doubletapTime <ms, 200 (INT)>` configures the above timeout (measured press-to-press).
 

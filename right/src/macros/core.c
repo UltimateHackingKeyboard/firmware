@@ -53,11 +53,8 @@ macro_state_t *S = NULL;
 macro_history_t MacroHistory[MACRO_HISTORY_POOL_SIZE];
 uint8_t MacroHistoryPosition = 0;
 
-uint16_t DoubletapConditionTimeout = 400;
 uint16_t AutoRepeatInitialDelay = 500;
 uint16_t AutoRepeatDelayRate = 50;
-
-bool RecordKeyTiming = false;
 
 static void checkSchedulerHealth(const char* tag);
 static void wakeMacroInSlot(uint8_t slotIdx);
@@ -75,6 +72,15 @@ void Macros_SignalInterrupt()
     for (uint8_t i = 0; i < MACRO_STATE_POOL_SIZE; i++) {
         if (MacroState[i].ms.macroPlaying) {
             MacroState[i].ms.macroInterrupted = true;
+        }
+    }
+}
+
+void Macros_SignalUsbReportsChange()
+{
+    for (uint8_t i = 0; i < MACRO_STATE_POOL_SIZE; i++) {
+        if (MacroState[i].ms.macroPlaying && MacroState[i].ms.macroInterrupted) {
+            MacroState[i].ms.oneShotUsbChangeDetected = true;
         }
     }
 }

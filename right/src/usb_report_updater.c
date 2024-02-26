@@ -2,6 +2,9 @@
 #include "key_action.h"
 #include "led_display.h"
 #include "layer.h"
+#include "test_switches.h"
+#include "slot.h"
+#include "usb_interfaces/usb_interface_basic_keyboard.h"
 #include "usb_interfaces/usb_interface_mouse.h"
 #include "keymap.h"
 #include "peripherals/test_led.h"
@@ -27,6 +30,7 @@
 #include "mouse_keys.h"
 #include "utils.h"
 #include "debug.h"
+#include "macros/key_timing.h"
 
 bool TestUsbStack = false;
 static key_action_cached_t actionCache[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
@@ -336,17 +340,11 @@ static void mergeReports(void)
 static void commitKeyState(key_state_t *keyState, bool active)
 {
     WATCH_TRIGGER(keyState);
-    if (RecordKeyTiming) {
-        Macros_SetStatusString( active ? "DOWN" : "UP", NULL);
-        Macros_SetStatusNum(Utils_KeyStateToKeyId(keyState));
-        Macros_SetStatusNum(CurrentTime);
-        Macros_SetStatusNum(CurrentPostponedTime);
-        Macros_SetStatusChar('\n');
-    }
 
     if (PostponerCore_IsActive()) {
         PostponerCore_TrackKeyEvent(keyState, active, 255);
     } else {
+        KEY_TIMING(KeyTiming_RecordKeystroke(keyState, active, CurrentTime, CurrentTime));
         keyState->current = active;
     }
     WAKE_MACROS_ON_KEYSTATE_CHANGE();
@@ -422,7 +420,7 @@ static void updateActiveUsbReports(void)
 
     handleLayerChanges();
 
-    if ( CurrentTime - LastUsbGetKeyboardStateRequestTimestamp < 2000) {
+    if ( CurrentTime - LastUsbGetKeyboardStateRequestTimestamp < 2000 && !TestSwitches) {
        LedDisplay_SetIcon(LedDisplayIcon_Agent, CurrentTime - LastUsbGetKeyboardStateRequestTimestamp < 1000);
     }
 
@@ -534,6 +532,7 @@ void UpdateUsbReports(void)
     static uint32_t lastUpdateTime;
     static uint32_t lastReportTime;
 
+
     for (uint8_t keyId = 0; keyId < RIGHT_KEY_MATRIX_KEY_COUNT; keyId++) {
         KeyStates[SlotId_RightKeyboardHalf][keyId].hardwareSwitchState = RightKeyMatrix.keyStates[keyId];
     }
@@ -563,8 +562,13 @@ void UpdateUsbReports(void)
 
     updateLedSleepModeState();
 
+    bool usbReportsChanged = false;
+    bool usbMouseButtonsChanged = false;
+
     if (UsbBasicKeyboardCheckReportReady() == kStatus_USB_Success) {
         MacroRecorder_RecordBasicReport(ActiveUsbBasicKeyboardReport);
+
+        KEY_TIMING(KeyTiming_RecordReport(ActiveUsbBasicKeyboardReport));
 
         if(RuntimeMacroRecordingBlind) {
             //just switch reports without sending the report
@@ -579,6 +583,7 @@ void UpdateUsbReports(void)
                 UsbReportUpdateSemaphore &= ~(1 << USB_BASIC_KEYBOARD_INTERFACE_INDEX);
             }
         }
+        usbReportsChanged = true;
         lastReportTime = CurrentTime;
         lastActivityTime = CurrentTime;
     }
@@ -590,6 +595,7 @@ void UpdateUsbReports(void)
             UsbReportUpdateSemaphore &= ~(1 << USB_MEDIA_KEYBOARD_INTERFACE_INDEX);
         }
         lastActivityTime = CurrentTime;
+        usbReportsChanged = true;
     }
 
     if (UsbSystemKeyboardCheckReportReady() == kStatus_USB_Success) {
@@ -599,14 +605,20 @@ void UpdateUsbReports(void)
             UsbReportUpdateSemaphore &= ~(1 << USB_SYSTEM_KEYBOARD_INTERFACE_INDEX);
         }
         lastActivityTime = CurrentTime;
+        usbReportsChanged = true;
     }
 
-    if (UsbMouseCheckReportReady() == kStatus_USB_Success) {
+    if (UsbMouseCheckReportReady(&usbMouseButtonsChanged) == kStatus_USB_Success) {
         UsbReportUpdateSemaphore |= 1 << USB_MOUSE_INTERFACE_INDEX;
         usb_status_t status = UsbMouseAction();
         if (status != kStatus_USB_Success) {
             UsbReportUpdateSemaphore &= ~(1 << USB_MOUSE_INTERFACE_INDEX);
         }
         lastActivityTime = CurrentTime;
+        usbReportsChanged |= usbMouseButtonsChanged;
+    }
+
+    if (usbReportsChanged) {
+        Macros_SignalUsbReportsChange();
     }
 }
