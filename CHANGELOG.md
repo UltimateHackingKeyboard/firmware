@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [11.0.0] - 2024-02-28
+
+Device Protocol: 4.10.0 | Module Protocol: 4.3.0 | User Config: **7.0.0** | Hardware Config: 1.0.0 | Smart Macros: 2.**4.0**
+
+- Add user configuration entries for the new module pages, the "Typing behavior" page, and the new settings of the "Mouse key speed" page. `USERCONFIG:MAJOR`
+- Reorder USB interfaces to achieve better compatibility with KVM switches and docking stations.
+- Make per-key (monochrome) backlight work on the UHK 60 v1 (with the LEDs installed).
+- Make key cluster RGB backlight work with the UHK 60 v1.
+- Make the `oneShot` command wait for actual USB report change.
+- Fix composite shortcuts in caret mode. `SMARTMACROS:PATCH`
+- Revise advanced secondary role resolution strategy: safety-margin-related behavior might have changed.
+- Add `ifLayerToggled` command. `SMARTMACROS:MINOR`
+- Add `secondaryRole.advanced.triggerByMouse` config value. Advanced secondary roles are now not triggered by mouse movement by default. `SMARTMACROS:MINOR`
+- Add `secondaryRole.advanced.triggerByPress` config value. `SMARTMACROS:MINOR`
+- Extend UHK to 20 mouse buttons. `USERCONFIG:MINOR`
+- Enable all LEDs in factory test mode.
+- Make LEDs not blink momentarily upon startup.
+
 ## [10.6.0] - 2024-01-02
 
 Device Protocol: 4.10.0 | Module Protocol: 4.3.0 | User Config: 6.0.0 | Hardware Config: 1.0.0 | Smart Macros: 2.3.0
