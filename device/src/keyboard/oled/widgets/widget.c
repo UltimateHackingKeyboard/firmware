@@ -7,5 +7,5 @@ void Widget_RequestRedraw(widget_t* widget)
     if (widget != NULL) {
         widget->dirty = true;
     }
-    OledNeedsRedraw = true;
+    Oled_RequestRedraw();
 }

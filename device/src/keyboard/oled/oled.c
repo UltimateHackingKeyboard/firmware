@@ -84,7 +84,9 @@ static void setPositionTo(uint16_t x, uint16_t y, uint16_t lastWrittenPixelX, ui
     }
 }
 
-bool OledNeedsRedraw = false;
+static bool oledNeedsRedraw = false;
+static k_tid_t oledThreadId = 0;
+
 static widget_t* currentScreen = NULL;
 static uint16_t currentXShift = 0;
 static uint16_t currentYShift = 0;
@@ -123,7 +125,7 @@ static bool isInActiveArea(uint16_t x, uint16_t y) {
 static void fullUpdate()
 {
     k_mutex_lock(&SpiMutex, K_FOREVER);
-    OledNeedsRedraw = false;
+    oledNeedsRedraw = false;
 
     setA0(true);
     setOledCs(true);
@@ -153,14 +155,14 @@ static void fullUpdate()
 static void diffUpdate()
 {
     k_mutex_lock(&SpiMutex, K_FOREVER);
-    OledNeedsRedraw = false;
+    oledNeedsRedraw = false;
 
     setA0(true);
     setOledCs(true);
 
     for (uint16_t y = 0; y < OledBuffer->height; y++) {
         for (uint16_t x = OledBuffer->width-2; x < OledBuffer->width; x -= 2) {
-            if (OledNeedsRedraw) {
+            if (oledNeedsRedraw) {
                 setOledCs(false);
                 k_mutex_unlock(&SpiMutex);
                 return;
@@ -213,12 +215,17 @@ void oledUpdater() {
             diffUpdate();
         }
 
-        while (!OledNeedsRedraw) {
-            k_msleep(10);
+        if (!oledNeedsRedraw) {
+            k_sleep(K_FOREVER);
         }
 
         currentScreen->draw(currentScreen, OledBuffer);
     }
+}
+
+void Oled_RequestRedraw() {
+    oledNeedsRedraw = true;
+    k_wakeup(oledThreadId);
 }
 
 void InitOled(void) {
@@ -237,7 +244,7 @@ void InitOled(void) {
     TestScreen_Init(OledBuffer);
     currentScreen = TestScreen;
 
-    k_thread_create(
+    oledThreadId = k_thread_create(
             &thread_data, stack_area,
             K_THREAD_STACK_SIZEOF(stack_area),
             oledUpdater,
