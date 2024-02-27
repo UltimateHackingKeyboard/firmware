@@ -5,7 +5,6 @@
 
     #include <stdint.h>
     #include <stdbool.h>
-    #include "timer.h"
     #include "macros/vars.h"
 
 // Macros:
@@ -15,7 +14,6 @@
     typedef enum {
         SegmentDisplaySlot_Keymap,
         SegmentDisplaySlot_Macro,
-        SegmentDisplaySlot_Recording,
         SegmentDisplaySlot_Error,
         SegmentDisplaySlot_Warn,
         SegmentDisplaySlot_Debug,
@@ -37,6 +35,7 @@
     void SegmentDisplay_Update();
     void SegmentDisplay_SetText(uint8_t len, const char* text, segment_display_slot_t slot);
     void SegmentDisplay_SetInt(int32_t a, segment_display_slot_t slot);
+    void SegmentDisplay_SetFloat(float a, segment_display_slot_t slot);
     void SegmentDisplay_SerializeInt(char* buffer, int32_t a);
     void SegmentDisplay_SerializeFloat(char* buffer, float f);
     void SegmentDisplay_SerializeVar(char* buffer, macro_variable_t var);

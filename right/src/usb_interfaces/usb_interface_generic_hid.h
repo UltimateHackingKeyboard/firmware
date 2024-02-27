@@ -3,8 +3,10 @@
 
 // Includes:
 
+#ifndef __ZEPHYR__
     #include "usb_api.h"
     #include "usb_descriptors/usb_descriptor_device.h"
+#endif
 
 // Macros:
 
@@ -31,8 +33,10 @@
 
 // Functions:
 
+#ifndef __ZEPHYR__
     usb_status_t UsbGenericHidCallback(class_handle_t handle, uint32_t event, void *param);
     usb_status_t UsbGenericHidCheckIdleElapsed();
     usb_status_t UsbGenericHidCheckReportReady();
+#endif
 
 #endif

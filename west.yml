@@ -6,6 +6,8 @@ manifest:
       url-base: https://github.com/nrfconnect
     - name: zephyr
       url-base: https://github.com/zephyrproject-rtos
+    - name: uhk
+      url-base: https://github.com/UltimateHackingKeyboard
 
   projects:
     - name: sdk-nrf
@@ -15,6 +17,11 @@ manifest:
       import:
         path-prefix: nrfconnect
       clone-depth: 1
+    - name: mcuboot
+      remote: uhk
+      repo-path: sdk-mcuboot
+      revision: v1.10.0-ncs1
+      path: nrfconnect/bootloader/mcuboot
     - name: hal_nxp
       remote: zephyr
       path: zephyr-hal-nxp

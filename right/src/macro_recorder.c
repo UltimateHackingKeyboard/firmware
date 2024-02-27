@@ -1,4 +1,5 @@
 #include "macro_recorder.h"
+#include "event_scheduler.h"
 #include "led_display.h"
 #include "macros/core.h"
 #include "macros/status_buffer.h"
@@ -37,6 +38,8 @@ static uint16_t playbackPosition;
 
 static bool delayActive;
 static uint32_t delayStart;
+
+static uint32_t ledFlashingPeriod = 500;
 
 static void initHeaderSlot(uint16_t id)
 {
@@ -110,7 +113,7 @@ static void recordRuntimeMacroStart(uint16_t id, bool blind)
     resolveRecordingHeader(id);
     RuntimeMacroRecording = true;
     RuntimeMacroRecordingBlind = blind;
-    SegmentDisplay_SetText(3, "REC", SegmentDisplaySlot_Recording);
+    MacroRecorder_UpdateRecordingLed();
 }
 
 static void writeByte(uint8_t b)
@@ -131,7 +134,7 @@ static void recordRuntimeMacroEnd()
 {
     RuntimeMacroRecording = false;
     RuntimeMacroRecordingBlind = false;
-    SegmentDisplay_DeactivateSlot(SegmentDisplaySlot_Recording);
+    MacroRecorder_UpdateRecordingLed();
 }
 
 static uint8_t readByte()
@@ -277,6 +280,22 @@ void MacroRecorder_RecordRuntimeMacroSmart(uint16_t id, bool blind)
     else {
         recordRuntimeMacroEnd();
     }
+}
+
+void MacroRecorder_UpdateRecordingLed()
+{
+    static bool ledOn = false;
+
+    if (!RuntimeMacroRecording) {
+        ledOn = false;
+        LedDisplay_SetIcon(LedDisplayIcon_Adaptive, false);
+        EventScheduler_Unschedule(EventSchedulerEvent_MacroRecorderFlashing);
+        return;
+    }
+
+    ledOn = !ledOn;
+    LedDisplay_SetIcon(LedDisplayIcon_Adaptive, ledOn);
+    EventScheduler_Schedule(CurrentTime + ledFlashingPeriod, EventSchedulerEvent_MacroRecorderFlashing);
 }
 
 void MacroRecorder_StartRecording(uint16_t id, bool blind)

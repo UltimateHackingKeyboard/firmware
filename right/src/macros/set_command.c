@@ -6,6 +6,9 @@
 #include "ledmap.h"
 #include "macros/core.h"
 #include "macros/status_buffer.h"
+#include "macros/shortcut_parser.h"
+#include "macros/vars.h"
+#include "macros/commands.h"
 #include "module.h"
 #include "secondary_role_driver.h"
 #include "timer.h"
@@ -15,7 +18,6 @@
 #include "led_display.h"
 #include "postponer.h"
 #include "macro_recorder.h"
-#include "macros/shortcut_parser.h"
 #include "str_utils.h"
 #include "utils.h"
 #include "layer_switcher.h"
@@ -26,7 +28,6 @@
 #include "config_parser/parse_macro.h"
 #include "slave_drivers/is31fl3xxx_driver.h"
 #include "init_peripherals.h"
-#include "macros/vars.h"
 #include <stdint.h>
 
 typedef enum {
@@ -78,7 +79,7 @@ typedef enum {
     if (action == SetCommandAction_Read) {                     \
         return intVar(DST/(M));                                \
     }                                                          \
-    uint32_t res = Macros_LegacyConsumeInt(ctx)*(M);           \
+    uint32_t res = Macros_ConsumeInt(ctx)*(M);           \
     if (Macros_ParserError || Macros_DryRun) {                 \
         return noneVar();                                      \
     }                                                          \
@@ -91,7 +92,7 @@ typedef enum {
     if (action == SetCommandAction_Read) {                     \
         return intVar(DST);                                    \
     }                                                          \
-    int32_t res = Macros_LegacyConsumeInt(ctx);               \
+    int32_t res = Macros_ConsumeInt(ctx);               \
     if (Macros_ParserError || Macros_DryRun) {                 \
         return noneVar();                                      \
     }                                                          \
@@ -255,9 +256,14 @@ static macro_variable_t module(parser_context_t* ctx, set_command_action_t actio
         ConsumeUntilDot(ctx);
         return moduleNavigationMode(ctx, action, module);
     }
+    else if (ConsumeToken(ctx, "holdContinuationTimeout") && moduleId == ModuleId_TouchpadRight) {
+        DEFINE_INT_LIMITS(0, 65535);
+        ASSIGN_INT(HoldContinuationTimeout);
+    }
     else {
         return moduleSpeed(ctx, action, module, moduleId);
     }
+    return noneVar();
 }
 
 static macro_variable_t secondaryRoleAdvanced(parser_context_t* ctx, set_command_action_t action)
@@ -276,6 +282,12 @@ static macro_variable_t secondaryRoleAdvanced(parser_context_t* ctx, set_command
     }
     else if (ConsumeToken(ctx, "triggerByRelease")) {
         ASSIGN_BOOL(SecondaryRoles_AdvancedStrategyTriggerByRelease);
+    }
+    else if (ConsumeToken(ctx, "triggerByPress")) {
+        ASSIGN_BOOL(SecondaryRoles_AdvancedStrategyTriggerByPress);
+    }
+    else if (ConsumeToken(ctx, "triggerByMouse")) {
+        ASSIGN_BOOL(SecondaryRoles_AdvancedStrategyTriggerByMouse);
     }
     else if (ConsumeToken(ctx, "doubletapToPrimary")) {
         ASSIGN_BOOL(SecondaryRoles_AdvancedStrategyDoubletapToPrimary);
@@ -392,7 +404,7 @@ static macro_variable_t macroEngine(parser_context_t* ctx, set_command_action_t 
         ASSIGN_INT(Macros_MaxBatchSize);
     }
     else if (ConsumeToken(ctx, "extendedCommands")) {
-        Macros_LegacyConsumeInt(ctx);
+        Macros_ConsumeInt(ctx);
         /* this option was removed -> accept the command & do nothing */
     }
     else {
@@ -444,7 +456,7 @@ static macro_variable_t keyRgb(parser_context_t* ctx, set_command_action_t actio
 
     ConsumeUntilDot(ctx);
 
-    uint8_t keyId = Macros_LegacyConsumeInt(ctx);
+    uint8_t keyId = Macros_ConsumeInt(ctx);
 
     if (action == SetCommandAction_Read) {
         Macros_ReportError("Reading RGB values not supported!", ConsumedToken(ctx), ConsumedToken(ctx));
@@ -452,9 +464,9 @@ static macro_variable_t keyRgb(parser_context_t* ctx, set_command_action_t actio
     }
 
     rgb_t rgb;
-    rgb.red = Macros_LegacyConsumeInt(ctx);
-    rgb.green = Macros_LegacyConsumeInt(ctx);
-    rgb.blue = Macros_LegacyConsumeInt(ctx);
+    rgb.red = Macros_ConsumeInt(ctx);
+    rgb.green = Macros_ConsumeInt(ctx);
+    rgb.blue = Macros_ConsumeInt(ctx);
 
     if (Macros_ParserError) {
         return noneVar();
@@ -483,9 +495,9 @@ static macro_variable_t constantRgb(parser_context_t* ctx, set_command_action_t 
         }
 
         rgb_t rgb;
-        rgb.red = Macros_LegacyConsumeInt(ctx);
-        rgb.green = Macros_LegacyConsumeInt(ctx);
-        rgb.blue = Macros_LegacyConsumeInt(ctx);
+        rgb.red = Macros_ConsumeInt(ctx);
+        rgb.green = Macros_ConsumeInt(ctx);
+        rgb.blue = Macros_ConsumeInt(ctx);
 
         if (Macros_DryRun) {
             return noneVar();
@@ -636,7 +648,7 @@ static macro_variable_t keymapAction(parser_context_t* ctx, set_command_action_t
 
     ConsumeUntilDot(ctx);
 
-    uint16_t keyId = Macros_LegacyConsumeInt(ctx);
+    uint16_t keyId = Macros_ConsumeInt(ctx);
 
     if (action == SetCommandAction_Read) {
         Macros_ReportError("Reading actions is not supported!", ctx->at, ctx->at);
@@ -791,6 +803,10 @@ static macro_variable_t root(parser_context_t* ctx, set_command_action_t action)
         DEFINE_INT_LIMITS(0, 65535);
         ASSIGN_INT(AutoRepeatDelayRate);
     }
+    else if (ConsumeToken(ctx, "oneShotTimeout")) {
+        DEFINE_INT_LIMITS(0, 65535);
+        ASSIGN_INT(Macros_OneShotTimeout);
+    }
     else if (ConsumeToken(ctx, "chordingDelay")) {
         DEFINE_INT_LIMITS(0, 255);
         ASSIGN_INT(ChordingDelay);
@@ -804,14 +820,14 @@ static macro_variable_t root(parser_context_t* ctx, set_command_action_t action)
             return intVar(I2cMainBusRequestedBaudRateBps);
         }
 
-        uint32_t baudRate = Macros_LegacyConsumeInt(ctx);
+        uint32_t baudRate = Macros_ConsumeInt(ctx);
         if (Macros_DryRun) {
             return noneVar();
         }
         ChangeI2cBaudRate(baudRate);
     }
     else if (ConsumeToken(ctx, "emergencyKey")) {
-        ASSIGN_NO_LIMITS(key_state_t*, noneVar,, EmergencyKey, Utils_KeyIdToKeyState(Macros_LegacyConsumeInt(ctx)));
+        ASSIGN_NO_LIMITS(key_state_t*, noneVar,, EmergencyKey, Utils_KeyIdToKeyState(Macros_ConsumeInt(ctx)));
     }
     else if (action == SetCommandAction_Write) {
         Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);

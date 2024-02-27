@@ -1,4 +1,5 @@
 #include "macros/vars.h"
+#include "macros/string_reader.h"
 #include "postponer.h"
 #include "macros/keyid_parser.h"
 #include "utils.h"
@@ -89,6 +90,15 @@ static macro_variable_t consumeNumericValue(parser_context_t* ctx)
 
 macro_variable_t* Macros_ConsumeExistingWritableVariable(parser_context_t* ctx)
 {
+    if (Macros_DryRun) {
+        if (!IsIdentifierChar(*ctx->at)) {
+            Macros_ReportError("Identifier expected here:", ctx->at, ctx->at);
+            return NULL;
+        }
+        ConsumeAnyIdentifier(ctx);
+        return NULL;
+    }
+
     //TODO: optimize this!
     for (uint8_t i = 0; i < macroVariableCount; i++) {
         if (ConsumeIdentifierByRef(ctx, macroVariables[i].name)) {
@@ -155,7 +165,7 @@ static macro_variable_t* consumeVarAndAllocate(parser_context_t* ctx)
     }
 
     if (macroVariableCount == MACRO_VARIABLE_COUNT_MAX) {
-        Macros_ReportError("Too many variables. Can't allocate:", ctx->at, ctx->end);
+        Macros_ReportErrorPrintf(ctx->at, "Too many variables. Can't allocate more than %d variables:", MACRO_VARIABLE_COUNT_MAX);
         ConsumeAnyIdentifier(ctx);
         return NULL;
     }
@@ -254,11 +264,11 @@ static macro_variable_t consumeDollarExpression(parser_context_t* ctx)
         return intVar(Utils_KeyStateToKeyId(ctx->macroState->ms.currentMacroKey));
     }
     else if (ConsumeToken(ctx, "currentAddress")) {
-        return intVar(ctx->macroState->ms.commandAddress);
+        return intVar(ctx->macroState->ls->ms.commandAddress);
     }
     else if (ConsumeToken(ctx, "queuedKeyId")) {
         ConsumeUntilDot(ctx);
-        int8_t queueIdx = Macros_LegacyConsumeInt(ctx);
+        int8_t queueIdx = Macros_ConsumeInt(ctx);
         if (queueIdx >= PostponerQuery_PendingKeypressCount()) {
             if (!Macros_DryRun) {
                 Macros_ReportError("Not enough pending keys! Note that this is zero-indexed!",  ConsumedToken(ctx), ConsumedToken(ctx));
@@ -330,6 +340,15 @@ static macro_variable_t consumeValue(parser_context_t* ctx)
             return consumeDollarExpression(ctx);
         case '(':
             return consumeParenthessExpression(ctx);
+        case '#':
+            Macros_ReportError("Registers were removed. Please, replace them with named variables. E.g., `setVar foo 1` and `$foo`.", ctx->at, ctx->at);
+            return noneVar();
+        case '%':
+            Macros_ReportError("`%` notation was removed. Please, replace it with $queuedKeyId.<index> notation. E.g., `$queuedKeyId.1`.", ctx->at, ctx->at);
+            return noneVar();
+        case '@':
+            Macros_ReportError("`@` notation was removed. Please, replace it with $currentAddress. E.g., `@3` with `$($currentAddress + 3)`.", ctx->at, ctx->at);
+            return noneVar();
         default:
             goto failed;
     }
@@ -701,7 +720,7 @@ static macro_variable_t consumeAndExpression(parser_context_t* ctx)
     while (true) {
         parser_context_t opCtx = *ctx;
         if (ConsumeToken(ctx, "&&")) {
-            op = Operator_Or;
+            op = Operator_And;
         } else {
             return accumulator;
         }

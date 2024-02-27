@@ -1,5 +1,6 @@
 #include "postponer.h"
 #include "key_states.h"
+#include "macros/key_timing.h"
 #include "usb_report_updater.h"
 #include "macros/core.h"
 #include "macros/status_buffer.h"
@@ -71,6 +72,7 @@ static void applyEventAndConsume(postponer_buffer_record_type_t* rec) {
     switch (rec->event.type) {
         case PostponerEventType_PressKey:
         case PostponerEventType_ReleaseKey:
+            KEY_TIMING(KeyTiming_RecordKeystroke(rec->event.key.keyState, rec->event.key.active, rec->time, CurrentTime));
             rec->event.key.keyState->current = rec->event.key.active;
             Postponer_LastKeyLayer = rec->event.key.layer;
             Postponer_LastKeyMods = rec->event.key.modifiers;

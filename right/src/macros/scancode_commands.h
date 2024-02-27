@@ -18,6 +18,7 @@
 
 // Functions:
 
+    macro_result_t Macros_DispatchText(const char* text, uint16_t textLen, bool rawString);
     macro_result_t Macros_ProcessKeyCommandAndConsume(parser_context_t* ctx, macro_sub_action_t type);
     macro_result_t Macros_ProcessTapKeySeqCommand(parser_context_t* ctx);
     macro_result_t Macros_ProcessMouseButtonAction(void);

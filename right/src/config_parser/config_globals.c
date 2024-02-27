@@ -1,3 +1,5 @@
+#include <stdint.h>
+#include <stddef.h>
 #include "config_globals.h"
 #include "attributes.h"
 #include "eeprom.h"

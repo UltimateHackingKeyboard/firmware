@@ -137,7 +137,7 @@ static const lookup_record_t* lookup(uint8_t begin, uint8_t end, const char* str
 
 uint8_t MacroKeyIdParser_TryConsumeKeyId(parser_context_t* ctx)
 {
-    const lookup_record_t* record = lookup(0, lookup_size-1, ctx->at, TokEnd(ctx->at, ctx->end));
+    const lookup_record_t* record = lookup(0, lookup_size-1, ctx->at, IdentifierEnd(ctx));
 
     if (record == NULL) {
         return 255;
@@ -146,4 +146,14 @@ uint8_t MacroKeyIdParser_TryConsumeKeyId(parser_context_t* ctx)
     ConsumeToken(ctx, record->id);
 
     return record->keyId;
+}
+
+const char* MacroKeyIdParser_KeyIdToAbbreviation(uint8_t keyId)
+{
+    for (uint8_t i = 0; i < lookup_size - 1; i++) {
+        if (lookup_table[i].keyId == keyId) {
+            return lookup_table[i].id;
+        }
+    }
+    return "?";
 }

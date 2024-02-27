@@ -5,6 +5,56 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [10.6.0] - 2024-01-02
+
+Device Protocol: 4.10.0 | Module Protocol: 4.3.0 | User Config: 6.0.0 | Hardware Config: 1.0.0 | Smart Macros: 2.3.0
+
+- Set trackpoint drift reset period to 1s, resulting in quicker auto-recovery.
+- Don't change the test keymap when it's active upon module reconnection.
+
+## [10.5.0] - 2023-12-14
+
+Device Protocol: 4.10.0 | Module Protocol: 4.3.0 | User Config: 6.0.0 | Hardware Config: 1.0.0 | Smart Macros: 2.**3.0**
+
+- Automatically recover from trackpoint drifts after a couple of seconds. This initial implementation may use some fine-tuning, so we welcome feedback.
+- Fix `final {` command. `SMARTMACROS:PATCH`
+- Fix `ifDoubletap` command to not miss doubletap if another macro fit in between the two activations. `SMARTMACROS:PATCH`
+- Add `ifModuleConnected` condition. `SMARTMACROS:MINOR`
+- Return deprecation errors for removed functionality. `SMARTMACROS:PATCH`
+- Make the smart macro documentation insert `invertScrollDirectionY` instead of `invertScrollDirection`.
+
+## [10.4.0] - 2023-11-12
+
+Device Protocol: 4.10.0 | Module Protocol: 4.3.0 | User Config: 6.0.0 | Hardware Config: 1.0.0 | Smart Macros: 2.**2.0**
+
+- Implement touchpad hold continuation timeout via `set module.touchpad.holdContinuationTimeout <0-65535>` (milliseconds). If non-zero, the touchpad module allows the release of finger for the specified amount of time during drag-and-drop without the left click getting released. `SMARTMACROS:MINOR`
+- Blink adaptive mode (triangle) LED display icon when recording runtime macros. `SMARTMACROS:PATCH`
+- Fix `repeatFor`-related macro validation error. `SMARTMACROS:PATCH`
+- Fix `"$($keyId.*)"` parsing. `SMARTMACROS:PATCH`
+- Clear sticky modifiers when navigation mode is active.
+- Improve macro guide documentation and add examples.
+
+## [10.3.1] - 2023-10-13
+
+Device Protocol: 4.10.0 | Module Protocol: 4.3.0 | User Config: 6.0.0 | Hardware Config: 1.0.0 | Smart Macros: 2.1.**1**
+
+- Fix the `&&` macro command. `SMARTMACROS:PATCH`
+- Fix the `setLedTxt` macro command to consume parameters correctly. `SMARTMACROS:PATCH`
+
+## [10.3.0] - 2023-10-01
+
+Device Protocol: 4.10.0 | Module Protocol: 4.3.0 | User Config: 6.0.0 | Hardware Config: 1.0.0 | Smart Macros: 2.**1.0**
+
+- Implement macro scopes via curly brackets. `SMARTMACROS:MINOR`
+- Implement `while` macro command. `SMARTMACROS:MINOR`
+- Implement `else` macro condition. `SMARTMACROS:MINOR`
+- Implement `exit` macro command. `SMARTMACROS:MINOR`
+- Implement `oneShot` macro command timeout. `SMARTMACROS:MINOR`
+- Report macro line position in errors. `SMARTMACROS:MINOR`
+- Don't throw "unprocessed input" macro error as consequence of another error. `SMARTMACROS:PATCH`
+- Fix redundant "unprocessed input" warning after `if BOOLEAN` condition. `SMARTMACROS:PATCH`
+- Fix `oneShot` macro command timeout in combination with commands that sleep until release. `SMARTMACROS:PATCH`
+
 ## [10.2.0] - 2023-09-16
 
 Device Protocol: 4.**10.0** | Module Protocol: 4.**3.0** | User Config: 6.0.0 | Hardware Config: 1.0.0 | Smart Macros: **2.0.0**

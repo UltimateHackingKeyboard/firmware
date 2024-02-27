@@ -198,7 +198,7 @@ macro_result_t Macros_ProcessKeyAction()
 static macro_result_t processMouseButton(macro_action_t macro_action)
 {
     S->ms.reportsUsed = true;
-    uint8_t mouseButtonMask = macro_action.mouseButton.mouseButtonsMask;
+    uint32_t mouseButtonMask = macro_action.mouseButton.mouseButtonsMask;
     macro_sub_action_t action = macro_action.mouseButton.action;
 
     S->as.actionPhase++;

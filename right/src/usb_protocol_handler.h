@@ -3,8 +3,11 @@
 
 // Includes:
 
-    #include "fsl_common.h"
+    #include <stdint.h>
     #include "usb_interfaces/usb_interface_generic_hid.h"
+#ifndef __ZEPHYR__
+    #include "fsl_common.h"
+#endif
 
 // Macros:
 
