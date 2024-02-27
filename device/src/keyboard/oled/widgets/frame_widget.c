@@ -8,6 +8,7 @@ void FrameWidget_LayOut(widget_t* self, uint8_t x, uint8_t y, uint8_t w, uint8_t
     self->y = y;
     self->w = w;
     self->h = h;
+    self->dirty = true;
     self->simpleContentData.content->layOut(self->simpleContentData.content, x+1, y+1, w-2, h-2);
 }
 

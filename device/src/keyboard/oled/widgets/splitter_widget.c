@@ -8,6 +8,7 @@ void SplitterWidget_LayOut(widget_t* self, uint8_t x, uint8_t y, uint8_t w, uint
     self->y = y;
     self->w = w;
     self->h = h;
+    self->dirty = true;
     uint8_t splitWidth = self->splitterData.splitLine ? 1 : 0;
     if (self->type == WidgetType_HSplitter) {
         self->splitterData.child1->layOut(self->splitterData.child1, x, y, w, self->splitterData.splitAt);
