@@ -11,9 +11,10 @@ target_include_directories(app PUBLIC
 
 file(GLOB usb_sources src/usb/*.c)
 file(GLOB usb_cpp_sources src/usb/*.cpp)
-file(GLOB keyboard_sources src/keyboard/*.c)
+file(GLOB_RECURSE keyboard_sources src/keyboard/*.c)
 file(GLOB app_sources src/*.c)
 file(GLOB app_cpp_sources src/*.cpp)
+file(GLOB lvgl_dummy src/lvgl/*.c)
 file(GLOB_RECURSE legacy_sources src/legacy/*.c)
 file(GLOB_RECURSE shared_sources src/shared/*.c)
 
@@ -23,7 +24,7 @@ if(BOARD STREQUAL "uhk-60-right")
 elseif ((BOARD STREQUAL "uhk-dongle"))
     target_sources(app PRIVATE ${app_sources} ${app_cpp_sources} ${usb_sources} ${usb_cpp_sources} ${legacy_sources} ${shared_sources})
 else()
-    target_sources(app PRIVATE ${app_sources} ${app_cpp_sources} ${usb_sources} ${usb_cpp_sources} ${legacy_sources} ${shared_sources} ${keyboard_sources})
+    target_sources(app PRIVATE ${app_sources} ${app_cpp_sources} ${usb_sources} ${usb_cpp_sources} ${legacy_sources} ${shared_sources} ${keyboard_sources} ${lvgl_dummy})
 endif()
 
 if(NOT BOARD STREQUAL "uhk-60-right")

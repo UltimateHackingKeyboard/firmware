@@ -9,6 +9,8 @@
 #include "bt_central_uart.h"
 #include "bt_peripheral_uart.h"
 #include "device.h"
+#include "oled/oled_buffer.h"
+#include "logger.h"
 
 // Thread definitions
 
@@ -58,17 +60,7 @@ void keyScanner() {
                 if (keyState != KeyStates[rowId][colId]) {
                     key_report_send(keyState);
                     if (Shell.keyLog) {
-                        char buffer[20];
-                        sprintf(buffer, "SW%c%c %s", rowId+'1', colId+'1', keyState ? "down" : "up");
-#if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_LEFT
-                        SendPeripheralUart(buffer, strlen(buffer)+1);
-#elif CONFIG_DEVICE_ID == DEVICE_ID_UHK80_RIGHT
-                        SendCentralUart(buffer, strlen(buffer)+1);
-#endif
-                        printk("%s\n", buffer);
-                        for (uint8_t i=0; i<strlen(buffer); i++) {
-                            uart_poll_out(uart_dev, buffer[i]);
-                        }
+                        Log("SW%c%c %s", rowId+'1', colId+'1', keyState ? "down" : "up");
                     }
                 }
                 KeyStates[rowId][colId] = keyState;

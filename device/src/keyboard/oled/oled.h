@@ -11,5 +11,6 @@
 // Functions:
 
     extern void InitOled(void);
+    extern void Oled_RequestRedraw(void);
 
 #endif // __OLED_H__
