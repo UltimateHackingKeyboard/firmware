@@ -17,6 +17,7 @@ west init -m git@github.com:UltimateHackingKeyboard/firmware-uhk80.git firmware-
 cd firmware-uhk80
 west update
 cd uhk/lib
+git submodule init --recursive
 git submodule update --init --recursive
 ```
 
