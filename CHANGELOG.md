@@ -9,8 +9,8 @@ and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
 Device Protocol: 4.10.0 | Module Protocol: 4.3.0 | User Config: **7.0.0** | Hardware Config: 1.0.0 | Smart Macros: 2.**4.0**
 
-- Add user configuration entries for the new module pages, the "Typing behavior" page, and the new settings of the "Mouse key speed" page. `USERCONFIG:MAJOR`
-- Reorder USB interfaces to achieve better compatibility with KVM switches and docking stations.
+- Add user configuration entries for the new module pages, the "Typing behavior" page, and the new settings of the "Mouse key speed" page. Agent 4.0.0+ reveals the new settings. `USERCONFIG:MAJOR`
+- Reorder USB interfaces to achieve better compatibility with KVM switches and docking stations. Only Agent 4.0.0+ is guaranteed to be able to save the configuration with the changed USB interfaces.
 - Make per-key (monochrome) backlight work on the UHK 60 v1 (with the LEDs installed).
 - Make key cluster RGB backlight work with the UHK 60 v1.
 - Make the `oneShot` command wait for actual USB report change.
