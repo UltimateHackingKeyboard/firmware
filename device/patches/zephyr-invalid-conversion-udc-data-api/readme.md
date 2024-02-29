@@ -1,4 +1,4 @@
-Resolves the following warnings:
+Resolves warnings like:
 
 ```
 nrfconnect/zephyr/include/zephyr/drivers/usb/udc.h:403:38: warning: invalid conversion from 'void*' to 'udc_data*' [-fpermissive]
