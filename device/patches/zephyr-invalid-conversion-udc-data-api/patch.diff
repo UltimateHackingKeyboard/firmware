@@ -1,0 +1,58 @@
+diff --git a/include/zephyr/drivers/usb/udc.h b/include/zephyr/drivers/usb/udc.h
+index f5f74ec127..eba4e78b07 100644
+--- a/include/zephyr/drivers/usb/udc.h
++++ b/include/zephyr/drivers/usb/udc.h
+@@ -299,7 +299,7 @@ struct udc_data {
+  */
+ static inline bool udc_is_initialized(const struct device *dev)
+ {
+-	struct udc_data *data = dev->data;
++	struct udc_data *data = (struct udc_data *)dev->data;
+ 
+ 	return atomic_test_bit(&data->status, UDC_STATUS_INITIALIZED);
+ }
+@@ -313,7 +313,7 @@ static inline bool udc_is_initialized(const struct device *dev)
+  */
+ static inline bool udc_is_enabled(const struct device *dev)
+ {
+-	struct udc_data *data = dev->data;
++	struct udc_data *data = (struct udc_data *)dev->data;
+ 
+ 	return atomic_test_bit(&data->status, UDC_STATUS_ENABLED);
+ }
+@@ -327,7 +327,7 @@ static inline bool udc_is_enabled(const struct device *dev)
+  */
+ static inline bool udc_is_suspended(const struct device *dev)
+ {
+-	struct udc_data *data = dev->data;
++	struct udc_data *data = (struct udc_data *)dev->data;
+ 
+ 	return atomic_test_bit(&data->status, UDC_STATUS_SUSPENDED);
+ }
+@@ -400,7 +400,7 @@ int udc_shutdown(const struct device *dev);
+  */
+ static inline struct udc_device_caps udc_caps(const struct device *dev)
+ {
+-	struct udc_data *data = dev->data;
++	struct udc_data *data = (struct udc_data *)dev->data;
+ 
+ 	return data->caps;
+ }
+@@ -430,7 +430,7 @@ enum udc_bus_speed udc_device_speed(const struct device *dev);
+  */
+ static inline int udc_set_address(const struct device *dev, const uint8_t addr)
+ {
+-	const struct udc_api *api = dev->api;
++	const struct udc_api *api = (struct udc_api *)dev->api;
+ 	int ret;
+ 
+ 	if (!udc_is_enabled(dev)) {
+@@ -456,7 +456,7 @@ static inline int udc_set_address(const struct device *dev, const uint8_t addr)
+  */
+ static inline int udc_host_wakeup(const struct device *dev)
+ {
+-	const struct udc_api *api = dev->api;
++	const struct udc_api *api = (struct udc_api *)dev->api;
+ 	int ret;
+ 
+ 	if (!udc_is_enabled(dev)) {

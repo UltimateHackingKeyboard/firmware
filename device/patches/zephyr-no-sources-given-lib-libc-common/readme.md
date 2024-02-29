@@ -7,5 +7,5 @@ CMake Warning at /home/laci/projects/firmware-uhk80/nrfconnect/zephyr/CMakeLists
   Excluding target from build.
 ```
 
-pull request:
+Original fix:
 https://github.com/zephyrproject-rtos/zephyr/pull/56309/commits/2094e19a3c58297125c1289ea0ddec89db317f96
