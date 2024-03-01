@@ -6,7 +6,7 @@
 #include "keyboard/leds.h"
 #include "keyboard/oled/oled.h"
 #include "shell.h"
-#include "usb/usb.hpp"
+#include "usb/usb.h"
 #include "bt_conn.h"
 
 shell_t Shell = {
@@ -142,9 +142,9 @@ static int cmd_uhk_merge(const struct shell *shell, size_t argc, char *argv[])
 static int cmd_uhk_rollover(const struct shell *shell, size_t argc, char *argv[])
 {
     if (argc == 1) {
-        shell_fprintf(shell, SHELL_NORMAL, "%c\n", (USB_GetKeyboardRollover() == Rollover_NKey) ? 'n' : '6');
+        shell_fprintf(shell, SHELL_NORMAL, "%c\n", (HID_GetKeyboardRollover() == Rollover_NKey) ? 'n' : '6');
     } else {
-        USB_SetKeyboardRollover((argv[1][0] == '6') ? Rollover_6Key : Rollover_NKey);
+        HID_SetKeyboardRollover((argv[1][0] == '6') ? Rollover_6Key : Rollover_NKey);
     }
     return 0;
 }
@@ -152,9 +152,9 @@ static int cmd_uhk_rollover(const struct shell *shell, size_t argc, char *argv[]
 static int cmd_uhk_gamepad(const struct shell *shell, size_t argc, char *argv[])
 {
     if (argc == 1) {
-        // TODO
+        shell_fprintf(shell, SHELL_NORMAL, "%c\n", HID_GetGamepadActive() ? 'y' : 'n');
     } else {
-        usb_init(argv[1][0] == '1');
+        HID_SetGamepadActive(argv[1][0] != '0');
     }
     return 0;
 }

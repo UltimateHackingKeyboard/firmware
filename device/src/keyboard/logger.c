@@ -4,7 +4,6 @@
 #include "keyboard/logger.h"
 #include "shell.h"
 #include "keyboard/uart.h"
-#include "bt_hid.h"
 #include <zephyr/drivers/uart.h>
 #include "bt_central_uart.h"
 #include "bt_peripheral_uart.h"

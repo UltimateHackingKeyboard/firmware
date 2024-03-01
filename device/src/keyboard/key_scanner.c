@@ -4,7 +4,6 @@
 #include "keyboard/key_scanner.h"
 #include "shell.h"
 #include "keyboard/uart.h"
-#include "bt_hid.h"
 #include <zephyr/drivers/uart.h>
 #include "bt_central_uart.h"
 #include "bt_peripheral_uart.h"
@@ -58,7 +57,6 @@ void keyScanner() {
             for (uint8_t colId=0; colId<KEY_MATRIX_COLS; colId++) {
                 bool keyState = gpio_pin_get_dt(&cols[colId]);
                 if (keyState != KeyStates[rowId][colId]) {
-                    key_report_send(keyState);
                     if (Shell.keyLog) {
                         Log("SW%c%c %s", rowId+'1', colId+'1', keyState ? "down" : "up");
                     }
