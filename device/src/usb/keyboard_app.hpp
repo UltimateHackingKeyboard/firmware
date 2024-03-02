@@ -4,6 +4,7 @@
 #include "double_buffer.hpp"
 #include "hid/app/keyboard.hpp"
 #include "hid/application.hpp"
+#include "hid/report_protocol.hpp"
 
 using scancode = hid::page::keyboard_keypad;
 
@@ -13,18 +14,59 @@ class keyboard_app : public hid::application
     static constexpr uint8_t KEYS_NKRO_REPORT_ID = 2;
     static constexpr uint8_t LEDS_REPORT_ID = 1;
 
-    static constexpr auto LOWEST_MODIFIER = static_cast<hid::usage_index_type>(scancode::LEFTCTRL);
-    static constexpr auto HIGHEST_MODIFIER = static_cast<hid::usage_index_type>(scancode::RIGHTGUI);
-
-    static constexpr auto NKRO_FIRST_USAGE = scancode::A; // the first 4 codes are error codes
+    static constexpr auto NKRO_FIRST_USAGE =
+        scancode::KEYBOARD_A; // the first 4 codes are error codes
     static constexpr auto NKRO_LAST_USAGE =
         scancode::KEYPAD_HEXADECIMAL; // TODO: reduce this to a sensible minimum
-    static constexpr auto LOWEST_SCANCODE = static_cast<hid::usage_index_type>(NKRO_FIRST_USAGE);
-    static constexpr auto HIGHEST_SCANCODE = static_cast<hid::usage_index_type>(NKRO_LAST_USAGE);
+    static constexpr auto LOWEST_SCANCODE = NKRO_FIRST_USAGE;
+    static constexpr auto HIGHEST_SCANCODE = NKRO_LAST_USAGE;
 
-    static constexpr auto NKRO_USAGE_COUNT = 1 + HIGHEST_SCANCODE - LOWEST_SCANCODE;
+    static constexpr auto NKRO_USAGE_COUNT =
+        1 + static_cast<size_t>(HIGHEST_SCANCODE) - static_cast<size_t>(LOWEST_SCANCODE);
 
   public:
+    static constexpr auto report_desc()
+    {
+        using namespace hid::page;
+        using namespace hid::rdf;
+        using namespace hid::app::keyboard;
+
+        // clang-format off
+        return descriptor(
+            // 6KRO keyboard with report ID
+            usage_extended(generic_desktop::KEYBOARD),
+            collection::application(
+                // input keys report
+                keys_input_report_descriptor<KEYS_6KRO_REPORT_ID>(),
+
+                // LED report
+                leds_output_report_descriptor<LEDS_REPORT_ID>()
+            ),
+            // NKRO keyboard with report ID, no LEDs
+            usage_extended(generic_desktop::KEYBOARD),
+            collection::application(
+
+                conditional_report_id<KEYS_NKRO_REPORT_ID>(),
+                // modifier byte can stay in position
+                report_size(1),
+                report_count(8),
+                logical_limits<1, 1>(0, 1),
+                usage_page<keyboard_keypad>(),
+                usage_limits(keyboard_keypad::KEYBOARD_LEFT_CONTROL, keyboard_keypad::KEYBOARD_RIGHT_GUI),
+                input::absolute_variable(),
+
+                // scancode bitfield
+                usage_limits(NKRO_FIRST_USAGE, NKRO_LAST_USAGE),
+                // report_size(1),
+                // logical_limits<1, 1>(0, 1),
+                report_count(NKRO_USAGE_COUNT),
+                input::absolute_variable(),
+                input::byte_padding<NKRO_USAGE_COUNT>()
+            )
+        );
+        // clang-format on
+    }
+
     enum class rollover
     {
         N_KEY = 0,
@@ -38,70 +80,51 @@ class keyboard_app : public hid::application
     template <uint8_t REPORT_ID = 0>
     struct keys_nkro_report_base : public hid::report::base<hid::report::type::INPUT, REPORT_ID>
     {
+        hid::report_bitset<hid::page::keyboard_keypad,
+                           hid::page::keyboard_keypad::KEYBOARD_LEFT_CONTROL,
+                           hid::page::keyboard_keypad::KEYBOARD_RIGHT_GUI>
+            modifiers;
+        hid::report_bitset<hid::page::keyboard_keypad, NKRO_FIRST_USAGE, NKRO_LAST_USAGE> scancodes;
         void set_code(scancode code, bool value = true)
         {
-            auto codeval = static_cast<hid::usage_index_type>(code);
-            if ((codeval >= LOWEST_SCANCODE) and (codeval <= HIGHEST_SCANCODE))
+            if (modifiers.set(code, value))
             {
-                codeval -= LOWEST_SCANCODE;
-                if (value)
-                {
-                    scancode_flags[codeval / 8] |= 1 << (codeval % 8);
-                }
-                else
-                {
-                    scancode_flags[codeval / 8] &= ~(1 << (codeval % 8));
-                }
+                return;
             }
-            else if ((codeval >= LOWEST_MODIFIER) and (codeval <= HIGHEST_MODIFIER))
+            if (scancodes.set(code, value))
             {
-                codeval -= LOWEST_MODIFIER;
-                if (value)
-                {
-                    modifiers |= 1 << codeval;
-                }
-                else
-                {
-                    modifiers &= ~(1 << codeval);
-                }
+                return;
             }
-            else
-            {
-                assert(false);
-            }
+            assert(false);
         }
 
         bool test(scancode code) const
         {
-            auto codeval = static_cast<hid::usage_index_type>(code);
-            if ((codeval >= LOWEST_SCANCODE) and (codeval <= HIGHEST_SCANCODE))
+            if (modifiers.in_range(code))
             {
-                codeval -= LOWEST_SCANCODE;
-                return scancode_flags[codeval / 8] & (1 << (codeval % 8));
+                return modifiers.test(code);
             }
-            else if ((codeval >= LOWEST_MODIFIER) and (codeval <= HIGHEST_MODIFIER))
+            if (scancodes.in_range(code))
             {
-                codeval -= LOWEST_MODIFIER;
-                return modifiers & (1 << codeval);
+                return scancodes.test(code);
             }
-            else
-            {
-                assert(false);
-                return false;
-            }
+            assert(false);
+            return false;
         }
 
         bool operator==(const keys_nkro_report_base& other) const = default;
         bool operator!=(const keys_nkro_report_base& other) const = default;
-
-        uint8_t modifiers{};
-        std::array<uint8_t, (NKRO_USAGE_COUNT + 7) / 8> scancode_flags{};
     };
 
     void set_report_state(const keys_nkro_report_base<>& data);
 
   private:
-    static const hid::report_protocol& report_protocol();
+    static const hid::report_protocol& report_protocol()
+    {
+        static constexpr const auto rd{report_desc()};
+        static constexpr const hid::report_protocol rp{rd};
+        return rp;
+    }
 
     keyboard_app()
         : application(report_protocol())
@@ -127,6 +150,7 @@ class keyboard_app : public hid::application
     C2USB_USB_TRANSFER_ALIGN(leds_report, leds_buffer_){};
     hid::protocol prot_{};
     rollover rollover_{};
+    rollover rollover_override_{};
     double_buffer<keys_6kro_report> keys_6kro_{};
     double_buffer<keys_nkro_report> keys_nkro_{};
 };

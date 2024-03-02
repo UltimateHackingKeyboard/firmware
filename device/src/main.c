@@ -1,4 +1,3 @@
-#include "bt_hid.h"
 #include "keyboard/key_scanner.h"
 #include "keyboard/leds.h"
 #include "keyboard/oled/oled.h"
@@ -11,7 +10,7 @@
 #include "keyboard/merge_sensor.h"
 #include "shell.h"
 #include "device.h"
-#include "usb/usb.hpp"
+#include "usb/usb.h"
 #include <zephyr/drivers/gpio.h>
 #include "bt_conn.h"
 #include "settings.h"
@@ -32,8 +31,9 @@ int main(void) {
     InitCharger();
     InitMergeSensor();
     InitKeyScanner();
+
+    USB_EnableHid();
 #endif // CONFIG_DEVICE_ID != DEVICE_ID_UHK_DONGLE
-    usb_init(true);
     bt_init();
     InitSettings();
 
@@ -42,11 +42,13 @@ int main(void) {
 #endif
 
 #if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_RIGHT
-    bt_hid_init();
+    HOGP_Enable();
+    advertise_hid();
 #endif
 
 #if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_RIGHT || CONFIG_DEVICE_ID == DEVICE_ID_UHK_DONGLE
     InitCentralUart();
 #endif
 
+    HID_SendReportsThread();
 }

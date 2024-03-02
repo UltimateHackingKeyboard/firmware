@@ -2,10 +2,10 @@
 #include <zephyr/settings/settings.h>
 #include <bluetooth/scan.h>
 #include "bt_advertise.h"
-#include "bt_hid.h"
 #include "bt_conn.h"
 #include "bt_central_uart.h"
 #include "device.h"
+#include "usb/usb.h"
 
 #define PeerCount 3
 
@@ -94,17 +94,13 @@ static void connected(struct bt_conn *conn, uint8_t err) {
     printk("Connected to %s\n", GetPeerStringByConn(conn));
 
     if (peerId == PeerIdUnknown) {
-        err = HidsConnected(conn);
-
-        if (!HidConnection) {
-            HidConnection = bt_conn_ref(conn);
-            HidInBootMode = false;
-            // advertise_hid();
-        }
+#if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_RIGHT
+        USB_DisableHid();
+#endif
     } else {
         current_conn = bt_conn_ref(conn);
 #if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_RIGHT
-    SetupCentralConnection(conn);
+        SetupCentralConnection(conn);
 #endif
     }
 }
@@ -117,9 +113,10 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
 
 #if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_RIGHT || CONFIG_DEVICE_ID == DEVICE_ID_UHK_DONGLE
     if (peerId == PeerIdUnknown) {
-        HidsDisconnected(conn);
-        HidConnection = NULL;
         advertise_hid();
+#if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_RIGHT
+        USB_EnableHid();
+#endif
     } else {
         // if (auth_conn) {
         //     bt_conn_unref(auth_conn);

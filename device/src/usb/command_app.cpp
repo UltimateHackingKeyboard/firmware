@@ -16,48 +16,6 @@ void __attribute__((weak)) CommandProtocolRxHandler(const uint8_t* data, size_t 
     CommandProtocolTx(data, size);
 }
 
-namespace hid::page
-{
-enum class ugl : usage_id_type;
-template <>
-struct info<ugl>
-{
-    constexpr static usage_id_type base_id = 0xFF000000;
-    constexpr static usage_id_type max_usage = 0x0003 | base_id;
-    constexpr static const char* name = "UGL";
-};
-enum class ugl : usage_id_type
-{
-    COMMAND_APP = 0x0001 | info<ugl>::base_id,
-    COMMAND_DATA_IN = 0x0002 | info<ugl>::base_id,
-    COMMAND_DATA_OUT = 0x0003 | info<ugl>::base_id,
-};
-
-} // namespace hid::page
-const hid::report_protocol& command_app::report_protocol()
-{
-    using namespace hid::page;
-    using namespace hid::rdf;
-
-    // clang-format off
-    static constexpr auto rd = descriptor(
-        usage_page<ugl>(), usage(ugl::COMMAND_APP),
-        collection::application(
-            conditional_report_id<REPORT_ID>(),
-            report_size(8),
-            report_count(MESSAGE_SIZE),
-            logical_limits<1, 1>(0, 0xff),
-            usage(ugl::COMMAND_DATA_IN),
-            input::buffered_variable(),
-            usage(ugl::COMMAND_DATA_OUT),
-            output::buffered_variable()
-        )
-    );
-    // clang-format off
-    static constexpr hid::report_protocol rp{rd};
-    return rp;
-}
-
 command_app& command_app::handle()
 {
     static command_app app{};
@@ -82,8 +40,11 @@ void command_app::set_report(hid::report::type type, const std::span<const uint8
 
 void command_app::get_report(hid::report::selector select, const std::span<uint8_t>& buffer)
 {
-    // fetching the IN report this way doesn't make sense
-    send_report(std::span<const uint8_t>());
+    // copy to buffer to avoid overwriting data in transit
+    auto& report = in_buffer_[in_buffer_.inactive_side()];
+    assert(buffer.size() >= sizeof(report));
+    memcpy(buffer.data(), report.data(), sizeof(report));
+    send_report(buffer.subspan(0, sizeof(report)));
 }
 
 bool command_app::send(std::span<const uint8_t> buffer)

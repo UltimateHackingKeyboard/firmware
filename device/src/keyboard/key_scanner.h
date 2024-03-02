@@ -5,6 +5,7 @@
 
     #include "device.h"
     #include "stdint.h"
+    #include "stdbool.h"
 
 // Variables:
 

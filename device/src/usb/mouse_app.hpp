@@ -4,6 +4,8 @@
 #include "double_buffer.hpp"
 #include "hid/app/mouse.hpp"
 #include "hid/application.hpp"
+#include "hid/page/consumer.hpp"
+#include "hid/report_protocol.hpp"
 
 enum class mouse_button
 {
@@ -19,9 +21,7 @@ enum class mouse_button
 
 class mouse_app : public hid::application
 {
-    static const hid::report_protocol& report_protocol();
-
-    static constexpr auto LAST_BUTTON = hid::page::button(8);
+    static constexpr auto LAST_BUTTON = hid::page::button(20);
     static constexpr int16_t AXIS_LIMIT = 4096;
     static constexpr int8_t WHEEL_LIMIT = 127;
 
@@ -30,11 +30,61 @@ class mouse_app : public hid::application
     {}
 
   public:
+    static constexpr auto report_desc()
+    {
+        using namespace hid::page;
+        using namespace hid::rdf;
+
+        // clang-format off
+        return descriptor(
+            usage_page<generic_desktop>(),
+            usage(generic_desktop::MOUSE),
+            collection::application(
+                usage(generic_desktop::POINTER),
+                collection::physical(
+                    // buttons
+                    usage_extended_limits(button(1), LAST_BUTTON),
+                    logical_limits<1, 1>(0, 1),
+                    report_count(static_cast<uint8_t>(LAST_BUTTON)),
+                    report_size(1),
+                    input::absolute_variable(),
+                    input::byte_padding<static_cast<uint8_t>(LAST_BUTTON)>(),
+
+                    // relative X,Y directions
+                    usage(generic_desktop::X),
+                    usage(generic_desktop::Y),
+                    logical_limits<2, 2>(-AXIS_LIMIT, AXIS_LIMIT),
+                    report_count(2),
+                    report_size(16),
+                    input::relative_variable(),
+
+                    // vertical wheel
+                    collection::logical(
+                        usage(generic_desktop::WHEEL),
+                        logical_limits<1, 1>(-WHEEL_LIMIT, WHEEL_LIMIT),
+                        report_count(1),
+                        report_size(8),
+                        input::relative_variable()
+                    ),
+                    // horizontal wheel
+                    collection::logical(
+                        usage_extended(consumer::AC_PAN),
+                        logical_limits<1, 1>(-WHEEL_LIMIT, WHEEL_LIMIT),
+                        report_count(1),
+                        report_size(8),
+                        input::relative_variable()
+                    )
+                )
+            )
+        );
+        // clang-format on
+    }
+
     template <uint8_t REPORT_ID = 0>
     struct mouse_report_base : public hid::report::base<hid::report::type::INPUT, REPORT_ID>
     {
-        uint8_t buttons{};
-        static_assert(static_cast<uint8_t>(mouse_app::LAST_BUTTON) <= 8);
+        hid::report_bitset<hid::page::button, hid::page::button(1), mouse_app::LAST_BUTTON>
+            buttons{};
         hid::le_int16_t x{};
         hid::le_int16_t y{};
         int8_t wheel_y{};
@@ -44,32 +94,6 @@ class mouse_app : public hid::application
 
         bool operator==(const mouse_report_base& other) const = default;
         bool operator!=(const mouse_report_base& other) const = default;
-
-        void set_button(mouse_button b, bool value = true)
-        {
-            if (value)
-            {
-                buttons |= 1 << static_cast<uint8_t>(b);
-            }
-            else
-            {
-                buttons &= ~(1 << static_cast<uint8_t>(b));
-            }
-        }
-        bool test_button(mouse_button b) const { return buttons & (1 << static_cast<uint8_t>(b)); }
-        void set_button(uint8_t number, bool value = true)
-        {
-            assert((number > 0) and (number <= 8));
-            if (value)
-            {
-                buttons |= 1 << (number - 1);
-            }
-            else
-            {
-                buttons &= ~(1 << (number - 1));
-            }
-        }
-        bool test_button(uint8_t number) const { return buttons & (1 << (number - 1)); }
     };
 
     static mouse_app& handle();
@@ -77,6 +101,13 @@ class mouse_app : public hid::application
     void set_report_state(const mouse_report_base<>& data);
 
   private:
+    static const hid::report_protocol& report_protocol()
+    {
+        static constexpr const auto rd{report_desc()};
+        static constexpr const hid::report_protocol rp{rd};
+        return rp;
+    }
+
     void start(hid::protocol prot) override;
     void stop() override;
     void set_report(hid::report::type type, const std::span<const uint8_t>& data) override
