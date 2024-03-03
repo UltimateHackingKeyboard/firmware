@@ -4,9 +4,9 @@
 
 void InitI2c(void) {
     // Init I2C
-#if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_LEFT
+#if DEVICE_IS_UHK80_LEFT
     #define device_addr 0x18 // left module i2c address
-#elif CONFIG_DEVICE_ID == DEVICE_ID_UHK80_RIGHT || CONFIG_DEVICE_ID == DEVICE_ID_UHK60V1_RIGHT || CONFIG_DEVICE_ID == DEVICE_ID_UHK60V2_RIGHT
+#elif DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK60V1_RIGHT || DEVICE_IS_UHK60V2_RIGHT
     #define device_addr 0x28 // right module i2c address
 #endif
 

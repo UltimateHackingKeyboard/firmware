@@ -37,16 +37,16 @@ int main(void) {
     bt_init();
     InitSettings();
 
-#if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_LEFT
+#if DEVICE_IS_UHK80_LEFT
     InitPeripheralUart();
 #endif
 
-#if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_RIGHT
+#if DEVICE_IS_UHK80_RIGHT
     HOGP_Enable();
     advertise_hid();
 #endif
 
-#if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_RIGHT || CONFIG_DEVICE_ID == DEVICE_ID_UHK_DONGLE
+#if DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK_DONGLE
     InitCentralUart();
 #endif
 

@@ -16,7 +16,7 @@ extern "C"
 #include "usb/df/device.hpp"
 #include "usb/df/vendor/microsoft_os_extension.hpp"
 #include "usb/df/vendor/microsoft_xinput.hpp"
-#if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_RIGHT
+#if DEVICE_IS_UHK80_RIGHT
 #include "port/zephyr/bluetooth/hid.hpp"
 #endif
 
@@ -116,7 +116,7 @@ extern "C" void USB_DisableHid()
     usb_manager::instance().select_config(Hid_Empty);
 }
 
-#if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_RIGHT
+#if DEVICE_IS_UHK80_RIGHT
 struct hogp_manager
 {
     static hogp_manager& instance()
@@ -211,7 +211,7 @@ extern "C" void HID_SetGamepadActive(bool active)
     {
         USB_EnableHid();
     }
-#if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_RIGHT
+#if DEVICE_IS_UHK80_RIGHT
     if (hogp_manager::active())
     {
         HOGP_Enable();

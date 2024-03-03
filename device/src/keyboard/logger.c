@@ -12,9 +12,9 @@
 
 void Uart_LogConstant(const char* buffer)
 {
-#if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_LEFT
+#if DEVICE_IS_UHK80_LEFT
     SendPeripheralUart(buffer, strlen(buffer)+1);
-#elif CONFIG_DEVICE_ID == DEVICE_ID_UHK80_RIGHT
+#elif DEVICE_IS_UHK80_RIGHT
     SendCentralUart(buffer, strlen(buffer)+1);
 #endif
     printk("%s\n", buffer);

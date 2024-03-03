@@ -80,7 +80,7 @@ static void connected(struct bt_conn *conn, uint8_t err) {
             bt_conn_unref(current_conn);
             current_conn = NULL;
 
-#if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_RIGHT
+#if DEVICE_IS_UHK80_RIGHT
             err = bt_scan_start(BT_SCAN_TYPE_SCAN_ACTIVE);
             if (err) {
                 printk("Scanning failed to start (err %d)", err);
@@ -94,12 +94,12 @@ static void connected(struct bt_conn *conn, uint8_t err) {
     printk("Connected to %s\n", GetPeerStringByConn(conn));
 
     if (peerId == PeerIdUnknown) {
-#if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_RIGHT
+#if DEVICE_IS_UHK80_RIGHT
         USB_DisableHid();
 #endif
     } else {
         current_conn = bt_conn_ref(conn);
-#if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_RIGHT
+#if DEVICE_IS_UHK80_RIGHT
         SetupCentralConnection(conn);
 #endif
     }
@@ -111,10 +111,10 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
 
     printk("Disconnected from %s, reason %u\n", GetPeerStringByConn(conn), reason);
 
-#if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_RIGHT || CONFIG_DEVICE_ID == DEVICE_ID_UHK_DONGLE
+#if DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK_DONGLE
     if (peerId == PeerIdUnknown) {
         advertise_hid();
-#if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_RIGHT
+#if DEVICE_IS_UHK80_RIGHT
         USB_EnableHid();
 #endif
     } else {
@@ -134,7 +134,7 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
             printk("Scanning failed to start (err %d)", err);
         }
     }
-#elif CONFIG_DEVICE_ID == DEVICE_ID_UHK80_LEFT
+#elif DEVICE_IS_UHK80_LEFT
     if (current_conn != conn) {
         return;
     }
@@ -151,7 +151,7 @@ static void security_changed(struct bt_conn *conn, bt_security_t level, enum bt_
         printk("Security failed: %s, level %u, err %d\n", GetPeerStringByConn(conn), level, err);
     }
 
-#if CONFIG_DEVICE_ID == DEVICE_ID_UHK80_LEFT
+#if DEVICE_IS_UHK80_LEFT
     gatt_discover(conn); // Taken from bt_central_uart.c
 #endif
 }
