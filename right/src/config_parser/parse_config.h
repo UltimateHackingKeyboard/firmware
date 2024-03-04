@@ -5,6 +5,14 @@
 
     #include "basic_types.h"
 
+// Macros:
+
+#define RETURN_ON_ERROR(code) \
+        errorCode = code; \
+        if (errorCode != ParserError_Success) { \
+            return errorCode; \
+        } \
+
 // Typedefs:
 
     typedef enum {
@@ -24,7 +32,15 @@
         ParserError_InvalidSerializedPlayMacroAction    = 13,
         ParserError_InvalidMouseKineticProperty         = 14,
         ParserError_InvalidLayerId                      = 15,
+        ParserError_InvalidNavigationMode               = 16,
+        ParserError_InvalidModuleProperty               = 17,
+        ParserError_InvalidSecondaryRoleActionType       = 18,
     } parser_error_t;
+
+    typedef enum {
+        SerializedSecondaryRoleActionType_Primary,
+        SerializedSecondaryRoleActionType_Secondary,
+    } serialized_secondary_role_action_type_t;
 
     extern uint16_t DataModelMajorVersion;
     extern uint16_t DataModelMinorVersion;

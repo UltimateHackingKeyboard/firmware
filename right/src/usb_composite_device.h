@@ -16,12 +16,12 @@
 
     typedef struct {
         usb_device_handle deviceHandle;
-        class_handle_t mouseHandle;
         class_handle_t basicKeyboardHandle;
-        class_handle_t genericHidHandle;
+        class_handle_t mouseHandle;
         class_handle_t mediaKeyboardHandle;
         class_handle_t systemKeyboardHandle;
         class_handle_t gamepadHandle;
+        class_handle_t genericHidHandle;
         uint8_t attach;
         uint8_t currentConfiguration;
         uint8_t currentInterfaceAlternateSetting[USB_DEVICE_CONFIG_HID];

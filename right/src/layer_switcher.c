@@ -10,8 +10,8 @@
 #include "led_display.h"
 #include "usb_report_updater.h"
 
-uint16_t DoubleTapSwitchLayerTimeout = 400;
-uint16_t DoubleTapSwitchLayerReleaseTimeout = 200;
+uint16_t DoubletapTimeout = 400;
+uint16_t DoubletapSwitchLayerReleaseTimeout = 200;
 
 layer_id_t ActiveLayer = LayerId_Base;
 bool ActiveLayerHeld = false;
@@ -104,7 +104,7 @@ void LayerSwitcher_DoubleTapToggle(layer_id_t layer, key_state_t* keyState) {
 
     if(KeyState_ActivatedNow(keyState)) {
         LayerStack_LegacyPop(layer);
-        if (doubleTapSwitchLayerKey == keyState && Timer_GetElapsedTimeAndSetCurrent(&doubleTapSwitchLayerStartTime) < DoubleTapSwitchLayerTimeout) {
+        if (doubleTapSwitchLayerKey == keyState && Timer_GetElapsedTimeAndSetCurrent(&doubleTapSwitchLayerStartTime) < DoubletapTimeout) {
             LayerStack_LegacyPush(layer);
             doubleTapSwitchLayerTriggerTime = CurrentTime;
             doubleTapSwitchLayerStartTime = CurrentTime;
@@ -116,7 +116,7 @@ void LayerSwitcher_DoubleTapToggle(layer_id_t layer, key_state_t* keyState) {
 
     if(KeyState_DeactivatedNow(keyState)) {
         //If current press is too long, cancel current toggle
-        if ( doubleTapSwitchLayerKey == keyState && Timer_GetElapsedTime(&doubleTapSwitchLayerTriggerTime) > DoubleTapSwitchLayerReleaseTimeout)
+        if ( doubleTapSwitchLayerKey == keyState && Timer_GetElapsedTime(&doubleTapSwitchLayerTriggerTime) > DoubletapSwitchLayerReleaseTimeout)
         {
             LayerStack_LegacyPop(layer);
         }

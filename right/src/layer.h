@@ -26,6 +26,8 @@
         LayerId_Gui,
         LayerId_Last = LayerId_Gui,
         LayerId_Count = LayerId_Last + 1,
+        LayerId_RegularLast = LayerId_Fn5,
+        LayerId_RegularCount = LayerId_RegularLast + 1,
         LayerId_None = 255,
     } layer_id_t;
 
