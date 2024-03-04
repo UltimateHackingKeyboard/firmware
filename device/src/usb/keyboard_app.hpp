@@ -33,19 +33,15 @@ class keyboard_app : public hid::application
 
         // clang-format off
         return descriptor(
-            // 6KRO keyboard with report ID
             usage_extended(generic_desktop::KEYBOARD),
             collection::application(
-                // input keys report
+                // 6KRO input keys report
                 keys_input_report_descriptor<KEYS_6KRO_REPORT_ID>(),
 
                 // LED report
-                leds_output_report_descriptor<LEDS_REPORT_ID>()
-            ),
-            // NKRO keyboard with report ID, no LEDs
-            usage_extended(generic_desktop::KEYBOARD),
-            collection::application(
+                leds_output_report_descriptor<LEDS_REPORT_ID>(),
 
+                // NKRO keys report with report ID
                 conditional_report_id<KEYS_NKRO_REPORT_ID>(),
                 // modifier byte can stay in position
                 report_size(1),
