@@ -16,11 +16,13 @@ extern "C"
 #include "usb/df/device.hpp"
 #include "usb/df/vendor/microsoft_os_extension.hpp"
 #include "usb/df/vendor/microsoft_xinput.hpp"
+#include <magic_enum.hpp>
+
 #if DEVICE_IS_UHK80_RIGHT
 #include "port/zephyr/bluetooth/hid.hpp"
-#endif
 
 using namespace magic_enum::bitwise_operators;
+#endif
 
 // make sure that the USB IDs are used in BT
 static_assert(CONFIG_BT_DIS_PNP_VID_SRC == 2);
@@ -233,6 +235,7 @@ extern "C" void HID_SetKeyboardRollover(rollover_t mode)
 
 extern "C" void HID_SendReportsThread()
 {
+#if !DEVICE_IS_UHK_DONGLE
     scancode_buffer keys;
     mouse_buffer mouseState;
     controls_buffer controls;
@@ -261,4 +264,5 @@ extern "C" void HID_SendReportsThread()
 
         k_msleep(1);
     }
+#endif
 }
