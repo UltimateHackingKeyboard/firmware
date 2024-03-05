@@ -27,7 +27,7 @@ static int cmd_uhk_keylog(const struct shell *shell, size_t argc, char *argv[])
     }
     return 0;
 }
-#if CONFIG_DEVICE_ID != DEVICE_ID_UHK_DONGLE
+#if !DEVICE_IS_UHK_DONGLE
 static int cmd_uhk_statlog(const struct shell *shell, size_t argc, char *argv[])
 {
     if (argc == 1) {
@@ -114,7 +114,7 @@ static int cmd_uhk_charger(const struct shell *shell, size_t argc, char *argv[])
     }
     return 0;
 }
-#endif // CONFIG_DEVICE_ID != DEVICE_ID_UHK_DONGLE
+#endif // !DEVICE_IS_UHK_DONGLE
 
 #ifdef DEVICE_HAS_OLED
 static int cmd_uhk_oled(const struct shell *shell, size_t argc, char *argv[])
@@ -172,7 +172,7 @@ void InitShell(void)
         SHELL_CMD_ARG(keylog, NULL,
             "get/set key logging",
             cmd_uhk_keylog, 1, 1),
-#if CONFIG_DEVICE_ID != DEVICE_ID_UHK_DONGLE
+#if !DEVICE_IS_UHK_DONGLE
         SHELL_CMD_ARG(statlog, NULL,
             "get/set stat logging",
             cmd_uhk_statlog, 1, 1),
@@ -185,7 +185,7 @@ void InitShell(void)
         SHELL_CMD_ARG(charger, NULL,
             "get/set CHARGER_EN pin",
             cmd_uhk_charger, 1, 1),
-#endif // CONFIG_DEVICE_ID != DEVICE_ID_UHK_DONGLE
+#endif // !DEVICE_IS_UHK_DONGLE
 #ifdef DEVICE_HAS_OLED
         SHELL_CMD_ARG(oled, NULL,
             "get/set OLED_EN pin",
