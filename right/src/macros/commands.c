@@ -599,7 +599,7 @@ static bool processIfLayerCommand(parser_context_t* ctx, bool negate)
     if (Macros_DryRun) {
         return true;
     }
-    return (queryLayerIdx == LayerStack_ActiveLayer) != negate;
+    return (queryLayerIdx == ActiveLayer) != negate;
 }
 
 
