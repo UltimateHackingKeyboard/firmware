@@ -6,8 +6,6 @@ manifest:
       url-base: https://github.com/nrfconnect
     - name: zephyr
       url-base: https://github.com/zephyrproject-rtos
-    - name: uhk
-      url-base: https://github.com/UltimateHackingKeyboard
 
   projects:
     - name: sdk-nrf
