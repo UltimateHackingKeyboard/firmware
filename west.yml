@@ -17,11 +17,6 @@ manifest:
       import:
         path-prefix: nrfconnect
       clone-depth: 1
-    - name: mcuboot
-      remote: uhk
-      repo-path: sdk-mcuboot
-      revision: v1.10.0-ncs1
-      path: nrfconnect/bootloader/mcuboot
     - name: hal_nxp
       remote: zephyr
       path: zephyr-hal-nxp
