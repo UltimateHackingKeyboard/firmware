@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [11.0.1] - 2024-03-10
+
+Device Protocol: 4.10.0 | Module Protocol: 4.3.0 | User Config: 7.0.0 | Hardware Config: 1.0.0 | Smart Macros: 2.4.**1**
+
+- Fix the `ifLayer` macro command to work with native layer switching. `SMARTMACROS:PATCH`
+- Fix H key backlight on UHK 60 v1 keyboards.
+
 ## [11.0.0] - 2024-02-28
 
 Device Protocol: 4.10.0 | Module Protocol: 4.3.0 | User Config: **7.0.0** | Hardware Config: 1.0.0 | Smart Macros: 2.**4.0**
