@@ -1,6 +1,10 @@
 /dts-v1/;
 #include <nordic/nrf52840_qiaa.dtsi>
 
+&gpiote {
+    status = "okay";
+};
+
 &gpio0 {
     status = "okay";
 };
