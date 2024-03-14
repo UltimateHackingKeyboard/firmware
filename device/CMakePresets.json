@@ -40,9 +40,7 @@
                 "NCS_TOOLCHAIN_VERSION": "NONE",
                 "BOARD": "uhk-80-right",
                 "BOARD_ROOT": "${sourceParentDir}/",
-                "mcuboot_OVERLAY_CONFIG": "$env{ZEPHYR_BASE}/../nrf/subsys/partition_manager/partition_manager_enabled.conf;${sourceDir}/child_image/mcuboot.conf;${sourceDir}/child_image/uhk-80-right.mcuboot.conf",
-                "mcuboot_DTC_OVERLAY_FILE": "$env{ZEPHYR_BASE}/../nrf/modules/mcuboot/usb.overlay",
-                "CACHED_CONF_FILE": "${sourceDir}/prj.conf",
+                "mcuboot_OVERLAY_CONFIG": "${sourceDir}/child_image/mcuboot.conf;${sourceDir}/child_image/uhk-80-right.mcuboot.conf",
                 "EXTRA_CONF_FILE": "${sourceDir}/prj.conf.overlays/uhk-80-right.prj.conf"
             }
         },
@@ -55,9 +53,7 @@
                 "NCS_TOOLCHAIN_VERSION": "NONE",
                 "BOARD": "uhk-80-left",
                 "BOARD_ROOT": "${sourceParentDir}/",
-                "mcuboot_OVERLAY_CONFIG": "$env{ZEPHYR_BASE}/../nrf/subsys/partition_manager/partition_manager_enabled.conf;${sourceDir}/child_image/mcuboot.conf;${sourceDir}/child_image/uhk-80-left.mcuboot.conf",
-                "mcuboot_DTC_OVERLAY_FILE": "$env{ZEPHYR_BASE}/../nrf/modules/mcuboot/usb.overlay",
-                "CACHED_CONF_FILE": "${sourceDir}/prj.conf",
+                "mcuboot_OVERLAY_CONFIG": "${sourceDir}/child_image/mcuboot.conf;${sourceDir}/child_image/uhk-80-left.mcuboot.conf",
                 "EXTRA_CONF_FILE": "${sourceDir}/prj.conf.overlays/uhk-80-left.prj.conf"
             }
         },
@@ -70,9 +66,7 @@
                 "NCS_TOOLCHAIN_VERSION": "NONE",
                 "BOARD": "uhk-dongle",
                 "BOARD_ROOT": "${sourceParentDir}/",
-                "mcuboot_OVERLAY_CONFIG": "$env{ZEPHYR_BASE}/../nrf/subsys/partition_manager/partition_manager_enabled.conf;${sourceDir}/child_image/mcuboot.conf;${sourceDir}/child_image/uhk-dongle.mcuboot.conf",
-                "mcuboot_DTC_OVERLAY_FILE": "$env{ZEPHYR_BASE}/../nrf/modules/mcuboot/usb.overlay",
-                "CACHED_CONF_FILE": "${sourceDir}/prj.conf",
+                "mcuboot_OVERLAY_CONFIG": "${sourceDir}/child_image/mcuboot.conf;${sourceDir}/child_image/uhk-dongle.mcuboot.conf",
                 "EXTRA_CONF_FILE": "${sourceDir}/prj.conf.overlays/uhk-dongle.prj.conf"
             }
         }
