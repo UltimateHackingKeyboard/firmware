@@ -1,13 +1,6 @@
 /dts-v1/;
 #include <nordic/nrf52840_qiaa.dtsi>
-
-&gpiote {
-    status = "okay";
-};
-
-&gpio0 {
-    status = "okay";
-};
+#include "../shared.dtsi"
 
 &gpio1 {
     status = "okay";
@@ -35,15 +28,6 @@
         zephyr,input-positive = <NRF_SAADC_AIN3>; // VBAT_ADC
         zephyr,resolution = <12>;
     };
-};
-
-&uart0 {
-    compatible = "nordic,nrf-uarte";
-    status = "okay";
-    current-speed = <115200>;
-    pinctrl-0 = <&uart0_default>;
-    pinctrl-1 = <&uart0_sleep>;
-    pinctrl-names = "default", "sleep";
 };
 
 &uart1 {
@@ -142,14 +126,6 @@
 / {
     model = "UHK 80 right";
     compatible = "uhk-80-right";
-
-    chosen {
-        zephyr,console = &uart0;
-        zephyr,shell-uart = &uart0;
-        zephyr,sram = &sram0;
-        zephyr,flash = &flash0;
-        zephyr,code-partition = &slot0_partition;
-    };
 
     gpios {
         compatible = "gpio-keys";
@@ -290,39 +266,5 @@
         col8 = &col8;
         col9 = &col9;
         col10 = &col10;
-    };
-};
-
-zephyr_udc0: &usbd {
-    compatible = "nordic,nrf-usbd";
-    status = "okay";
-};
-
-&flash0 {
-    partitions {
-        compatible = "fixed-partitions";
-        #address-cells = <1>;
-        #size-cells = <1>;
-
-        boot_partition: partition@0 {
-            label = "mcuboot";
-            reg = <0x0 0xc000>;
-        };
-        slot0_partition: partition@c000 {
-            label = "image-0";
-            reg = <0xc000 0x72000>;
-        };
-        slot1_partition: partition@7e000 {
-            label = "image-1";
-            reg = <0x7e000 0x72000>;
-        };
-        scratch_partition: partition@f0000 {
-            label = "image-scratch";
-            reg = <0xf0000 0xa000>;
-        };
-        storage_partition: partition@fa000 {
-            label = "storage";
-            reg = <0xfa000 0x6000>;
-        };
     };
 };
