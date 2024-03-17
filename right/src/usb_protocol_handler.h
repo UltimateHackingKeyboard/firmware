@@ -3,6 +3,8 @@
 
 // Includes:
 
+    #include <stdbool.h>
+    #include <stddef.h>
     #include <stdint.h>
     #include "usb_interfaces/usb_interface_generic_hid.h"
 #ifndef __ZEPHYR__
@@ -62,6 +64,9 @@
 
 // Functions:
 
+#ifdef __ZEPHYR__
+    extern bool CommandProtocolTx(const uint8_t* data, size_t size);
+#endif
     void UsbProtocolHandler(void);
 
     uint8_t GetUsbRxBufferUint8(uint32_t offset);

@@ -1,6 +1,5 @@
 #ifndef __ZEPHYR__
 #include "usb_composite_device.h"
-#include "command_app.hpp"
 #endif
 
 #include "usb_protocol_handler.h"
