@@ -599,9 +599,8 @@ static bool processIfLayerCommand(parser_context_t* ctx, bool negate)
     if (Macros_DryRun) {
         return true;
     }
-    return (queryLayerIdx == LayerStack_ActiveLayer) != negate;
+    return (queryLayerIdx == ActiveLayer) != negate;
 }
-
 
 static bool processIfLayerToggledCommand(parser_context_t* ctx, bool negate)
 {
@@ -610,7 +609,6 @@ static bool processIfLayerToggledCommand(parser_context_t* ctx, bool negate)
     }
     return (LayerStack_IsLayerToggled()) != negate;
 }
-
 
 static bool processIfCommand(parser_context_t* ctx)
 {
@@ -1180,7 +1178,12 @@ uint8_t Macros_TryConsumeKeyId(parser_context_t* ctx)
     uint8_t keyId = MacroKeyIdParser_TryConsumeKeyId(ctx);
 
     if (keyId == 255 && isNUM(ctx)) {
-        return Macros_ConsumeInt(ctx);
+        uint8_t num = Macros_ConsumeInt(ctx);
+        if (Macros_ParserError) {
+            return 255;
+        } else {
+            return num;
+        }
     } else {
         return keyId;
     }

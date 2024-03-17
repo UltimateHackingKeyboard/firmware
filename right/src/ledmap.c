@@ -65,7 +65,7 @@ static rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
         MONO(36), // ;
         MONO(37), // '
         MONO(38), // Enter
-        MONO(42), // H
+        MONO(48), // H
 
         // Row 4
         MONO(49), // N
