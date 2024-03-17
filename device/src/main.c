@@ -13,6 +13,7 @@
 #include "usb/usb.h"
 #include <zephyr/drivers/gpio.h>
 #include "bt_conn.h"
+#include "bt_advertise.h"
 #include "settings.h"
 
 int main(void) {
