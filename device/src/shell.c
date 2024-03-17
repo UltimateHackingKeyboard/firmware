@@ -11,7 +11,7 @@
 
 shell_t Shell = {
     .keyLog = 1,
-    .statLog = 1,
+    .statLog = 0,
     .ledsAlwaysOn = 0,
     .oledEn = 1,
     .sdbState = 1,
