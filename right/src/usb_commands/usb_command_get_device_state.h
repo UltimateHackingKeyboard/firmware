@@ -3,11 +3,11 @@
 
 // Typedefs:
 
-typedef enum {
-    UhkErrorState_Fine = 0,
-    UhkErrorState_Warn = 1,
-    UhkErrorState_Error = 2,
-} uhk_error_state_t;
+    typedef enum {
+        UhkErrorState_Fine = 0,
+        UhkErrorState_Warn = 1,
+        UhkErrorState_Error = 2,
+    } uhk_error_state_t;
 
 // Functions:
 
