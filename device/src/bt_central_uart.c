@@ -4,6 +4,7 @@
 #include <zephyr/logging/log.h>
 #include "bt_scan.h"
 #include "bt_conn.h"
+#include "bt_central_uart.h"
 
 #define LOG_MODULE_NAME central_uart
 LOG_MODULE_REGISTER(LOG_MODULE_NAME);

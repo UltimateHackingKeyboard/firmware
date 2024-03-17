@@ -1,6 +1,10 @@
 #ifndef __BT_CENTRAL_UART_H__
 #define __BT_CENTRAL_UART_H__
 
+// Includes
+
+    #include <zephyr/bluetooth/conn.h>
+
 // Functions:
 
     extern void InitCentralUart(void);
