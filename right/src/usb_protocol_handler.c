@@ -13,7 +13,9 @@
 #include "usb_commands/usb_command_get_adc_value.h"
 #include "usb_commands/usb_command_launch_eeprom_transfer.h"
 #include "usb_commands/usb_command_read_config.h"
+#endif
 #include "usb_commands/usb_command_get_device_state.h"
+#ifndef __ZEPHYR__
 #include "usb_commands/usb_command_get_debug_buffer.h"
 #include "usb_commands/usb_command_jump_to_module_bootloader.h"
 #include "usb_commands/usb_command_send_kboot_command_to_module.h"
@@ -23,6 +25,16 @@
 #include "usb_commands/usb_command_get_variable.h"
 #include "usb_commands/usb_command_set_variable.h"
 #include "usb_commands/usb_command_exec_macro_command.h"
+#endif
+
+#ifdef __ZEPHYR__
+void CommandProtocolRxHandler(const uint8_t* data, size_t size)
+{
+    GenericHidOutBuffer = data;
+    // printk("CommandProtocolRxHandler: data[0]:%u size:%d\n", data[0], size);
+    UsbProtocolHandler();
+    CommandProtocolTx(GenericHidInBuffer, size);
+}
 #endif
 
 void UsbProtocolHandler(void)
@@ -58,9 +70,11 @@ void UsbProtocolHandler(void)
         case UsbCommandId_LaunchEepromTransfer:
             UsbCommand_LaunchEepromTransfer();
             break;
+#endif
         case UsbCommandId_GetDeviceState:
             UsbCommand_GetKeyboardState();
             break;
+#ifndef __ZEPHYR__
         case UsbCommandId_SetTestLed:
             UsbCommand_SetTestLed();
             break;

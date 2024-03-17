@@ -1,5 +1,6 @@
 #ifndef __ZEPHYR__
 #include "usb_composite_device.h"
+#include "command_app.hpp"
 #endif
 
 #include "usb_protocol_handler.h"
@@ -8,8 +9,13 @@
 uint32_t UsbGenericHidActionCounter;
 #endif
 
-uint8_t GenericHidOutBuffer[USB_GENERIC_HID_OUT_BUFFER_LENGTH];
 uint8_t GenericHidInBuffer[USB_GENERIC_HID_IN_BUFFER_LENGTH];
+
+#ifdef __ZEPHYR__
+const uint8_t *GenericHidOutBuffer;
+#else
+uint8_t GenericHidOutBuffer[USB_GENERIC_HID_OUT_BUFFER_LENGTH];
+#endif
 
 #ifndef __ZEPHYR__
 static usb_status_t UsbReceiveData(void)
