@@ -1,4 +1,3 @@
-#include "config.h"
 #include "keymap.h"
 #include "slave_drivers/is31fl3xxx_driver.h"
 #include "slave_drivers/uhk_module_driver.h"

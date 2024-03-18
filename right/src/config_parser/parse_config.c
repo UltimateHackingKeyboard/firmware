@@ -8,7 +8,6 @@
 #include "ledmap.h"
 #include "slave_scheduler.h"
 #include "slave_drivers/is31fl3xxx_driver.h"
-#include "config.h"
 #include "mouse_controller.h"
 #include "mouse_keys.h"
 #include "layer.h"

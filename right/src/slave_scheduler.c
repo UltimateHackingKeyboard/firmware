@@ -9,7 +9,6 @@
 #include "slave_drivers/kboot_driver.h"
 #include "i2c.h"
 #include "i2c_addresses.h"
-#include "config.h"
 #include "i2c_error_logger.h"
 #include "macros/core.h"
 #include "debug.h"

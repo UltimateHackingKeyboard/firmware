@@ -2,7 +2,6 @@
 #include "basic_types.h"
 #include "config_globals.h"
 #include <stdint.h>
-#include "config.h"
 #include "parse_config.h"
 #include "layer.h"
 #include "module.h"
@@ -122,4 +121,3 @@ parser_error_t ParseModuleConfiguration(config_buffer_t *buffer)
 
     return ParserError_Success;
 }
-
