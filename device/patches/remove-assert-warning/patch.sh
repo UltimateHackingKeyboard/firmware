@@ -1,2 +1,2 @@
 #!/bin/sh
-patch -p1 -d ../../../../nrfconnect/zephyr < patch.diff
+patch -N -p1 -d ../../../../nrfconnect/zephyr < patch.diff
