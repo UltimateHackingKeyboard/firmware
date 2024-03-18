@@ -2,13 +2,13 @@
 #include "usb_protocol_handler.h"
 #include "buffer.h"
 #include "usb_commands/usb_command_get_device_state.h"
+#include "usb_commands/usb_command_write_config.h"
 
 #ifndef __ZEPHYR__
 #include "usb_commands/usb_command_get_device_property.h"
 #include "usb_commands/usb_command_get_module_property.h"
 #include "usb_commands/usb_command_reenumerate.h"
 #include "usb_commands/usb_command_set_test_led.h"
-#include "usb_commands/usb_command_write_config.h"
 #include "usb_commands/usb_command_apply_config.h"
 #include "usb_commands/usb_command_set_led_pwm_brightness.h"
 #include "usb_commands/usb_command_get_adc_value.h"
@@ -56,12 +56,14 @@ void UsbProtocolHandler(void)
         case UsbCommandId_ReadConfig:
             UsbCommand_ReadConfig();
             break;
+#endif
         case UsbCommandId_WriteHardwareConfig:
             UsbCommand_WriteConfig(ConfigBufferId_HardwareConfig);
             break;
         case UsbCommandId_WriteStagingUserConfig:
             UsbCommand_WriteConfig(ConfigBufferId_StagingUserConfig);
             break;
+#ifndef __ZEPHYR__
         case UsbCommandId_ApplyConfig:
             UsbCommand_ApplyConfig();
             break;

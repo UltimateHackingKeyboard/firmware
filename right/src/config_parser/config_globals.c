@@ -5,7 +5,13 @@
 #include "eeprom.h"
 
 static uint8_t hardwareConfig[HARDWARE_CONFIG_SIZE];
-static uint8_t ATTR_DATA2 stagingUserConfig[USER_CONFIG_SIZE];
+
+static uint8_t
+#ifndef __ZEPHYR__
+ATTR_DATA2
+#endif
+stagingUserConfig[USER_CONFIG_SIZE];
+
 static uint8_t validatedUserConfig[USER_CONFIG_SIZE];
 
 uint16_t ValidatedUserConfigLength;
