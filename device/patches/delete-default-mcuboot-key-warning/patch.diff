@@ -1,0 +1,18 @@
+diff --git a/modules/mcuboot/CMakeLists.txt b/modules/mcuboot/CMakeLists.txt
+index 5ec2643d..70c706d5 100644
+--- a/modules/mcuboot/CMakeLists.txt
++++ b/modules/mcuboot/CMakeLists.txt
+@@ -379,13 +379,6 @@ if(CONFIG_BOOTLOADER_MCUBOOT)
+   if(CONFIG_SIGN_IMAGES)
+     # Set default key
+     if (NOT DEFINED mcuboot_key_file)
+-      message(WARNING "
+-        ---------------------------------------------------------
+-        --- WARNING: Using default MCUBoot key, it should not ---
+-        --- be used for production.                           ---
+-        ---------------------------------------------------------
+-        \n"
+-      )
+       set(mcuboot_key_file ${ZEPHYR_MCUBOOT_MODULE_DIR}/${CONFIG_BOOT_SIGNATURE_KEY_FILE})
+     endif()
+ 
