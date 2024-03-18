@@ -1,4 +1,3 @@
-#include "config.h"
 #include "command.h"
 #include "crc16.h"
 #include "bus_pal_hardware.h"

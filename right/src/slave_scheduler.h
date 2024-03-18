@@ -4,7 +4,6 @@
 // Includes:
 
     #include "fsl_common.h"
-    #include "config.h"
 
 // Macros:
 

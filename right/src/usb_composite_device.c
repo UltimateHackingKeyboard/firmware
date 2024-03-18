@@ -1,4 +1,3 @@
-#include "config.h"
 #include "led_display.h"
 #include "slave_drivers/is31fl3xxx_driver.h"
 #include "usb_device_config.h"
@@ -332,4 +331,3 @@ void InitUsb(void)
     FMC->PFAPR |= (1 << FMC_PFAPR_M3AP_SHIFT) | (1 << FMC_PFAPR_M4AP_SHIFT); // allow USB controller to read from Flash
     USB_DeviceRun(UsbCompositeDevice.deviceHandle);
 }
-
