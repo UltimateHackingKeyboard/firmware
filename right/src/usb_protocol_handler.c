@@ -2,6 +2,7 @@
 #include "usb_protocol_handler.h"
 #include "buffer.h"
 #include "usb_commands/usb_command_get_device_state.h"
+#include "usb_commands/usb_command_read_config.h"
 #include "usb_commands/usb_command_write_config.h"
 
 #ifndef __ZEPHYR__
@@ -13,7 +14,6 @@
 #include "usb_commands/usb_command_set_led_pwm_brightness.h"
 #include "usb_commands/usb_command_get_adc_value.h"
 #include "usb_commands/usb_command_launch_eeprom_transfer.h"
-#include "usb_commands/usb_command_read_config.h"
 #include "usb_commands/usb_command_get_debug_buffer.h"
 #include "usb_commands/usb_command_jump_to_module_bootloader.h"
 #include "usb_commands/usb_command_send_kboot_command_to_module.h"
@@ -53,10 +53,10 @@ void UsbProtocolHandler(void)
         case UsbCommandId_SendKbootCommandToModule:
             UsbCommand_SendKbootCommandToModule();
             break;
+#endif
         case UsbCommandId_ReadConfig:
             UsbCommand_ReadConfig();
             break;
-#endif
         case UsbCommandId_WriteHardwareConfig:
             UsbCommand_WriteConfig(ConfigBufferId_HardwareConfig);
             break;
