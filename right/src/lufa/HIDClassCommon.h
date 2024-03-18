@@ -50,7 +50,9 @@
 #ifndef _HID_CLASS_COMMON_H_
 #define _HID_CLASS_COMMON_H_
     /* Includes: */
+#ifndef __ZEPHYR__
         #include "HIDReportData.h"
+#endif
 
     /* Macros: */
         /** \name Keyboard Standard Report Modifier Masks */

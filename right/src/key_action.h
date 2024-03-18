@@ -6,7 +6,9 @@
     #include <stdint.h>
     #include "attributes.h"
     #include "lufa/HIDClassCommon.h"
+#ifndef __ZEPHYR__
     #include "usb_composite_device.h"
+#endif
     #include "module.h"
     #include "config_parser/parse_keymap.h"
 

@@ -3,7 +3,12 @@
 
 // Includes:
 
+#ifdef __ZEPHYR__
+    typedef int32_t status_t;
+    #define MAKE_STATUS(group, code) ((((group)*100) + (code)))
+#else
     #include "fsl_common.h"
+#endif
 
 // Macros:
 

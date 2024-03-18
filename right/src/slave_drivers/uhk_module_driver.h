@@ -3,12 +3,13 @@
 
 // Includes:
 
+#ifndef __ZEPHYR__
     #include "fsl_common.h"
+#endif
     #include "crc16.h"
-#include "slave_scheduler.h"
+    #include "slave_scheduler.h"
     #include "versioning.h"
     #include "slot.h"
-    #include "usb_interfaces/usb_interface_mouse.h"
 
 // Macros:
 
