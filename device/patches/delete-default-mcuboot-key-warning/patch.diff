@@ -1,3 +1,26 @@
+diff --git a/cmake/partition_manager.cmake b/cmake/partition_manager.cmake
+index a45650a2..292dd9c3 100644
+--- a/cmake/partition_manager.cmake
++++ b/cmake/partition_manager.cmake
+@@ -76,18 +76,6 @@ endif()
+ 
+ if (NOT static_configuration AND
+   (CONFIG_BOOTLOADER_MCUBOOT OR CONFIG_SECURE_BOOT))
+-      message(WARNING "
+-        ---------------------------------------------------------------------
+-        --- WARNING: Using a bootloader without pm_static.yml.            ---
+-        --- There are cases where a deployed product can consist of       ---
+-        --- multiple images, and only a subset of these images can be     ---
+-        --- upgraded through a firmware update mechanism. In such cases,  ---
+-        --- the upgradable images must have partitions that are static    ---
+-        --- and are matching the partition map used by the bootloader     ---
+-        --- programmed onto the device.                                   ---
+-        ---------------------------------------------------------------------
+-        \n"
+-      )
+ endif()
+ 
+ 
 diff --git a/modules/mcuboot/CMakeLists.txt b/modules/mcuboot/CMakeLists.txt
 index 5ec2643d..70c706d5 100644
 --- a/modules/mcuboot/CMakeLists.txt
