@@ -1,3 +1,4 @@
+#include <string.h>
 #include "config_parser/config_globals.h"
 #include "config_parser/parse_config.h"
 #include "config_parser/parse_keymap.h"
@@ -5,7 +6,6 @@
 #include "keymap.h"
 #include "layer.h"
 #include "ledmap.h"
-#include "led_display.h"
 
 static uint8_t tempKeymapCount;
 static uint8_t tempMacroCount;
