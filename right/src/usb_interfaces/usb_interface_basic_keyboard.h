@@ -3,7 +3,10 @@
 
 // Includes:
 
+#ifndef __ZEPHYR__
     #include "fsl_common.h"
+#endif
+    #include <stddef.h>
     #include "attributes.h"
     #include "usb_api.h"
     #include "usb_descriptors/usb_descriptor_basic_keyboard_report.h"
@@ -52,6 +55,7 @@
 
 // Functions:
 
+#ifndef __ZEPHYR__
     usb_status_t UsbBasicKeyboardCallback(class_handle_t handle, uint32_t event, void *param);
 
     usb_hid_protocol_t UsbBasicKeyboardGetProtocol(void);
@@ -59,6 +63,7 @@
     usb_status_t UsbBasicKeyboardAction(void);
     usb_status_t UsbBasicKeyboardCheckIdleElapsed();
     usb_status_t UsbBasicKeyboardCheckReportReady();
+#endif
 
     static inline bool UsbBasicKeyboard_IsModifier(uint8_t scancode)
     {

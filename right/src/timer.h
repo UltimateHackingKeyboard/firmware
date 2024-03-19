@@ -3,7 +3,9 @@
 
 // Includes:
 
+#ifndef __ZEPHYR__
     #include "peripherals/pit.h"
+#endif
     #include <stdint.h>
 
 // Macros:

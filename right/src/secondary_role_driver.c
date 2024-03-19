@@ -1,7 +1,9 @@
 #include "secondary_role_driver.h"
 #include "postponer.h"
-#include "led_display.h"
 #include "timer.h"
+#ifndef __ZEPHYR__
+#include "led_display.h"
+#endif
 #include "math.h"
 #include "debug.h"
 #include "macros/key_timing.h"
@@ -320,5 +322,3 @@ secondary_role_result_t SecondaryRoles_ResolveState(key_state_t* keyState, secon
         }
     }
 }
-
-

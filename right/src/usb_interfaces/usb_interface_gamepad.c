@@ -1,6 +1,11 @@
 #include "usb_composite_device.h"
 #include "usb_report_updater.h"
 
+static usb_gamepad_report_t usbGamepadReports[2];
+uint32_t UsbGamepadActionCounter;
+usb_gamepad_report_t* ActiveUsbGamepadReport = usbGamepadReports;
+
+#ifndef __ZEPHYR__
 /* key: usb_gamepad_property_t, value: shift for button in X360 buttons field */
 static const uint8_t x360padButtonMap[] = {
     12, 13, 14, 15, // ABXY
@@ -10,10 +15,6 @@ static const uint8_t x360padButtonMap[] = {
     6, 7,           // sticks
     0, 1, 2, 3,     // D-pad
 };
-
-static usb_gamepad_report_t usbGamepadReports[2];
-uint32_t UsbGamepadActionCounter;
-usb_gamepad_report_t* ActiveUsbGamepadReport = usbGamepadReports;
 
 static usb_gamepad_report_t* GetInactiveUsbGamepadReport(void)
 {
@@ -119,3 +120,4 @@ usb_status_t UsbGamepadCallback(class_handle_t handle, uint32_t event, void *par
 
     return error;
 }
+#endif

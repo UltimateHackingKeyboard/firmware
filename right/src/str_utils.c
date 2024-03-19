@@ -1,9 +1,14 @@
+#include <string.h>
 #include "str_utils.h"
 #include "debug.h"
 #include "config_parser/config_globals.h"
 #include "macros/status_buffer.h"
 #include "module.h"
 #include "slave_protocol.h"
+
+#if !defined(MIN)
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#endif
 
 static bool consumeCommentsAsWhite = true;
 
@@ -445,5 +450,3 @@ uint8_t CountCommands(const char* text, uint16_t textLen)
         }
     }
 }
-
-

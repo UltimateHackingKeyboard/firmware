@@ -13,6 +13,7 @@
 
 // Variables:
 
+#ifndef __ZEPHYR__
     static USB_DESC_STORAGE_TYPE(uint8_t) UsbMediaKeyboardReportDescriptor[] = {
         HID_RI_USAGE_PAGE(8, HID_RI_USAGE_PAGE_CONSUMER),
         HID_RI_USAGE(8, HID_RI_USAGE_CONSUMER_CONTROL),
@@ -27,5 +28,6 @@
             HID_RI_INPUT(8, HID_IOF_DATA | HID_IOF_ARRAY | HID_IOF_ABSOLUTE),
         HID_RI_END_COLLECTION(0),
     };
+#endif
 
 #endif

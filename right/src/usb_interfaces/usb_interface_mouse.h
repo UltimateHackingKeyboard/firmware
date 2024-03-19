@@ -4,7 +4,7 @@
 // Includes:
 
     #include "usb_api.h"
-    #include "usb_descriptors/usb_descriptor_device.h"
+    // #include "usb_descriptors/usb_descriptor_device.h"
 
 // Macros:
 
@@ -42,6 +42,7 @@
 
 // Functions:
 
+#ifndef __ZEPHYR__
     usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param);
 
     usb_hid_protocol_t UsbMouseGetProtocol(void);
@@ -49,5 +50,6 @@
     usb_status_t UsbMouseAction(void);
     usb_status_t UsbMouseCheckIdleElapsed();
     usb_status_t UsbMouseCheckReportReady(bool* buttonsChanged);
+#endif
 
 #endif

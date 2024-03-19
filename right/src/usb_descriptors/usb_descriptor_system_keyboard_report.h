@@ -20,6 +20,7 @@
 
 // Variables:
 
+#ifndef __ZEPHYR__
     static USB_DESC_STORAGE_TYPE(uint8_t) UsbSystemKeyboardReportDescriptor[] = {
         HID_RI_USAGE_PAGE(8, HID_RI_USAGE_PAGE_GENERIC_DESKTOP),
         HID_RI_USAGE(8, HID_RI_USAGE_GENERIC_DESKTOP_SYSTEM_CONTROL),
@@ -39,5 +40,6 @@
             HID_RI_INPUT(8, HID_IOF_CONSTANT),
         HID_RI_END_COLLECTION(0),
     };
+#endif
 
 #endif

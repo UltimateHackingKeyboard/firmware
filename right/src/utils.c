@@ -1,14 +1,20 @@
 #include "utils.h"
 #include "key_action.h"
 #include "key_states.h"
+#ifndef __ZEPHYR__
 #include "keymap.h"
+#endif
 #include "layer.h"
 #include "macros/core.h"
 #include "macros/keyid_parser.h"
 #include "macros/status_buffer.h"
 #include "macros/shortcut_parser.h"
-#include "led_display.h"
+// #include "led_display.h"
 #include <string.h>
+
+#if !defined(MIN)
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#endif
 
 //this is noop at the moment, prepared for time when MAX_KEY_COUNT_PER_MODULE changes
 //the purpose is to preserve current keyids

@@ -1,5 +1,7 @@
 #include "debug.h"
+#ifndef __ZEPHYR__
 #include "segment_display.h"
+#endif
 
 #ifdef WATCHES
 
