@@ -2,9 +2,11 @@
 #include "usb_report_updater.h"
 
 static usb_mouse_report_t usbMouseReports[2];
-usb_hid_protocol_t usbMouseProtocol;
 uint32_t UsbMouseActionCounter;
 usb_mouse_report_t* ActiveUsbMouseReport = usbMouseReports;
+
+#ifndef __ZEPHYR__
+usb_hid_protocol_t usbMouseProtocol;
 
 static usb_mouse_report_t* GetInactiveUsbMouseReport(void)
 {
@@ -119,3 +121,4 @@ usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param
 
     return error;
 }
+#endif

@@ -1,3 +1,5 @@
+#include <stdio.h>
+#include <string.h>
 #include "macros/core.h"
 #include "macros/scancode_commands.h"
 #include "macros/status_buffer.h"
@@ -335,4 +337,3 @@ void Macros_ClearStatus(void)
     SegmentDisplay_DeactivateSlot(SegmentDisplaySlot_Error);
     Macros_ProcessClearStatusCommand();
 }
-

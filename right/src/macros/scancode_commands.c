@@ -1,3 +1,4 @@
+#include <string.h>
 #include "macros/scancode_commands.h"
 #include "usb_interfaces/usb_interface_basic_keyboard.h"
 #include "usb_interfaces/usb_interface_media_keyboard.h"

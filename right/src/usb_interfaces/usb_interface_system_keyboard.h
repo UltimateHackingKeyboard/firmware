@@ -36,6 +36,12 @@
 
 // Functions:
 
+    bool UsbSystemKeyboard_AddScancode(usb_system_keyboard_report_t* report, uint8_t scancode);
+    static inline bool UsbSystemKeyboard_UsedScancode(uint8_t scancode)
+    {
+        return (scancode >= USB_SYSTEM_KEYBOARD_MIN_BITFIELD_SCANCODE) &&
+               (scancode <= USB_SYSTEM_KEYBOARD_MAX_BITFIELD_SCANCODE);
+    }
 #ifndef __ZEPHYR__
     usb_status_t UsbSystemKeyboardCallback(class_handle_t handle, uint32_t event, void *param);
 
@@ -44,14 +50,8 @@
     usb_status_t UsbSystemKeyboardCheckIdleElapsed();
     usb_status_t UsbSystemKeyboardCheckReportReady();
 
-    static inline bool UsbSystemKeyboard_UsedScancode(uint8_t scancode)
-    {
-        return (scancode >= USB_SYSTEM_KEYBOARD_MIN_BITFIELD_SCANCODE) &&
-               (scancode <= USB_SYSTEM_KEYBOARD_MAX_BITFIELD_SCANCODE);
-    }
-    bool UsbSystemKeyboard_AddScancode(usb_system_keyboard_report_t* report, uint8_t scancode);
-    void UsbSystemKeyboard_RemoveScancode(usb_system_keyboard_report_t* report, uint8_t scancode);
     void UsbSystemKeyboard_MergeReports(const usb_system_keyboard_report_t* sourceReport, usb_system_keyboard_report_t* targetReport);
 #endif
+    void UsbSystemKeyboard_RemoveScancode(usb_system_keyboard_report_t* report, uint8_t scancode);
 
 #endif

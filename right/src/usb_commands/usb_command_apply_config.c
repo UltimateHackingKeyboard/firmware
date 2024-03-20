@@ -1,3 +1,4 @@
+#include <string.h>
 #include "usb_commands/usb_command_apply_config.h"
 #include "config_parser/config_globals.h"
 #include "config_parser/parse_config.h"

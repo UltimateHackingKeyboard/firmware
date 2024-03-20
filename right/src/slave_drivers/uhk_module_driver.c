@@ -1,13 +1,16 @@
+#include <string.h>
 #include "i2c_addresses.h"
+#ifndef __ZEPHYR__
 #include "i2c.h"
+#include "peripherals/test_led.h"
+#include "test_switches.h"
+#endif
 #include "slave_scheduler.h"
 #include "slave_drivers/uhk_module_driver.h"
 #include "slave_protocol.h"
-#include "peripherals/test_led.h"
 #include "bool_array_converter.h"
 #include "crc16.h"
 #include "key_states.h"
-#include "test_switches.h"
 #include "timer.h"
 #include "usb_report_updater.h"
 #include "utils.h"
@@ -38,6 +41,7 @@ void UhkModuleSlaveDriver_ResetTrackpoint()
     shouldResetTrackpoint = true;
 }
 
+#ifndef __ZEPHYR__
 static uint8_t keyStatesBuffer[MAX_KEY_COUNT_PER_MODULE];
 static i2c_message_t txMessage;
 
@@ -102,10 +106,11 @@ static void reloadKeymapIfNeeded()
 
         someoneElseWillDoTheJob |= uhkModuleState->moduleId == 0 && slave->isConnected;
     }
-
+#ifndef __ZEPHYR__
     if (!someoneElseWillDoTheJob && !TestSwitches) {
         KeymapReloadNeeded = true;
     }
+#endif
 }
 
 slave_result_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
@@ -438,3 +443,4 @@ void UhkModuleSlaveDriver_Disconnect(uint8_t uhkModuleDriverId)
         memset(KeyStates[slotId], 0, MAX_KEY_COUNT_PER_MODULE * sizeof(key_state_t));
     }
 }
+#endif

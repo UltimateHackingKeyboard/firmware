@@ -1,6 +1,7 @@
 #ifndef _RESET_BUTTON_H_
 #define _RESET_BUTTON_H_
 
+#ifndef __ZEPHYR__
 // Includes:
 
     #include "fsl_gpio.h"
@@ -15,6 +16,7 @@
     #define RESET_BUTTON_IRQ_HANDLER PORTB_IRQHandler
 
     #define RESET_BUTTON_IS_PRESSED !GPIO_ReadPinInput(RESET_BUTTON_GPIO, RESET_BUTTON_PIN)
+#endif
 
 // Variables:
 

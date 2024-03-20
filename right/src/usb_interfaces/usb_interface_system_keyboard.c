@@ -1,3 +1,4 @@
+#include <string.h>
 #include "usb_composite_device.h"
 #include "usb_report_updater.h"
 
@@ -5,6 +6,7 @@ uint32_t UsbSystemKeyboardActionCounter;
 static usb_system_keyboard_report_t usbSystemKeyboardReports[2];
 usb_system_keyboard_report_t* ActiveUsbSystemKeyboardReport = usbSystemKeyboardReports;
 
+#ifndef __ZEPHYR__
 static usb_system_keyboard_report_t* GetInactiveUsbSystemKeyboardReport()
 {
     return ActiveUsbSystemKeyboardReport == usbSystemKeyboardReports ? usbSystemKeyboardReports+1 : usbSystemKeyboardReports;
@@ -88,6 +90,7 @@ usb_status_t UsbSystemKeyboardCallback(class_handle_t handle, uint32_t event, vo
 
     return error;
 }
+#endif
 
 bool UsbSystemKeyboard_AddScancode(usb_system_keyboard_report_t* report, uint8_t scancode)
 {
@@ -106,9 +109,11 @@ void UsbSystemKeyboard_RemoveScancode(usb_system_keyboard_report_t* report, uint
     clear_bit(scancode - USB_SYSTEM_KEYBOARD_MIN_BITFIELD_SCANCODE, report->bitfield);
 }
 
+#ifndef __ZEPHYR__
 void UsbSystemKeyboard_MergeReports(const usb_system_keyboard_report_t* sourceReport, usb_system_keyboard_report_t* targetReport)
 {
     for (uint8_t i = 0; i < ARRAY_SIZE(targetReport->bitfield); i++) {
         targetReport->bitfield[i] |= sourceReport->bitfield[i];
     }
 }
+#endif

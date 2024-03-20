@@ -1,9 +1,12 @@
+#include <string.h>
 #include "macro_recorder.h"
 #include "event_scheduler.h"
 #include "led_display.h"
 #include "macros/core.h"
 #include "macros/status_buffer.h"
+#ifndef __ZEPHYR__
 #include "segment_display.h"
+#endif
 #include "timer.h"
 
 /**

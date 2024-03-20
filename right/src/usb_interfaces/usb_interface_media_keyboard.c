@@ -5,6 +5,7 @@ uint32_t UsbMediaKeyboardActionCounter;
 static usb_media_keyboard_report_t usbMediaKeyboardReports[2];
 usb_media_keyboard_report_t* ActiveUsbMediaKeyboardReport = usbMediaKeyboardReports;
 
+#ifndef __ZEPHYR__
 static usb_media_keyboard_report_t* GetInactiveUsbMediaKeyboardReport(void)
 {
     return ActiveUsbMediaKeyboardReport == usbMediaKeyboardReports ? usbMediaKeyboardReports+1 : usbMediaKeyboardReports;
@@ -90,21 +91,6 @@ usb_status_t UsbMediaKeyboardCallback(class_handle_t handle, uint32_t event, voi
     return error;
 }
 
-bool UsbMediaKeyboard_AddScancode(usb_media_keyboard_report_t* report, uint16_t scancode)
-{
-    if (scancode == 0)
-        return true;
-
-    for (uint8_t i = 0; i < ARRAY_SIZE(report->scancodes); i++) {
-        if (report->scancodes[i] == 0) {
-            report->scancodes[i] = scancode;
-            return true;
-        }
-    }
-
-    return false;
-}
-
 void UsbMediaKeyboard_MergeReports(const usb_media_keyboard_report_t* sourceReport, usb_media_keyboard_report_t* targetReport)
 {
     uint8_t idx, i = 0;
@@ -118,4 +104,20 @@ void UsbMediaKeyboard_MergeReports(const usb_media_keyboard_report_t* sourceRepo
     while ((i < ARRAY_SIZE(sourceReport->scancodes)) && (sourceReport->scancodes[i] != 0) && (idx < ARRAY_SIZE(targetReport->scancodes))) {
         targetReport->scancodes[idx++] = sourceReport->scancodes[i++];
     }
+}
+#endif
+
+bool UsbMediaKeyboard_AddScancode(usb_media_keyboard_report_t* report, uint16_t scancode)
+{
+    if (scancode == 0)
+        return true;
+
+    for (uint8_t i = 0; i < ARRAY_SIZE(report->scancodes); i++) {
+        if (report->scancodes[i] == 0) {
+            report->scancodes[i] = scancode;
+            return true;
+        }
+    }
+
+    return false;
 }

@@ -1,3 +1,4 @@
+#include <string.h>
 #include "arduino_hid/ConsumerAPI.h"
 #include "arduino_hid/SystemAPI.h"
 #include "keymap.h"
@@ -96,7 +97,10 @@ void ReplaceLayer(layer_id_t dstLayer, uint8_t srcKeymap, layer_id_t srcLayer)
 
 
 // The factory keymap is initialized before it gets overwritten by the default keymap of the EEPROM.
-ATTR_DATA2 key_action_t CurrentKeymap[LayerId_Count][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
+#ifndef __ZEPHYR__
+ATTR_DATA2
+#endif
+key_action_t CurrentKeymap[LayerId_Count][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
     // Base layer
     {
         // Right keyboard half

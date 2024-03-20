@@ -3,6 +3,9 @@
 
 // Includes:
 
+    #include <stdbool.h>
+    #include <stdint.h>
+
 #ifdef __ZEPHYR__
     typedef int32_t status_t;
     #define MAKE_STATUS(group, code) ((((group)*100) + (code)))

@@ -1,5 +1,7 @@
 #include "event_scheduler.h"
+#ifndef __ZEPHYR__
 #include "segment_display.h"
+#endif
 #include "timer.h"
 #include "macros/core.h"
 #include "macro_recorder.h"
@@ -27,7 +29,9 @@ static void processEvt(event_scheduler_event_t evt)
 {
     switch (evt) {
         case EventSchedulerEvent_SegmentDisplayUpdate:
+#ifndef __ZEPHYR__
             SegmentDisplay_NeedsUpdate = true;
+#endif
             break;
         case EventSchedulerEvent_MacroWakeOnTime:
             Macros_WakedBecauseOfTime = true;

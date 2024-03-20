@@ -3,7 +3,9 @@
 #include "layer_switcher.h"
 #include "ledmap.h"
 #include "slave_drivers/is31fl3xxx_driver.h"
+#ifndef __ZEPHYR__
 #include "device/device.h"
+#endif
 #include "config_parser/config_globals.h"
 #include "debug.h"
 #include "slot.h"
@@ -279,10 +281,12 @@ static void setPerKeyRgb(const rgb_t* color, uint8_t slotId, uint8_t keyId)
     if (ledMapItem->red == 0 && ledMapItem->green == 0 && ledMapItem->blue == 0) {
         return;
     }
+#ifndef __ZEPHYR__
     LedDriverValues[slotId][ledMapItem->red] = color->red * KeyBacklightBrightness / 255;
     float brightnessDivisor = slotId == SlotId_LeftModule ? 2 : 1;
     LedDriverValues[slotId][ledMapItem->green] = color->green * KeyBacklightBrightness / brightnessDivisor / 255;
     LedDriverValues[slotId][ledMapItem->blue] = color->blue * KeyBacklightBrightness / 255;
+#endif
 }
 
 static void setPerKeyMonochromatic(const rgb_t* color, uint8_t slotId, uint8_t keyId)
@@ -291,8 +295,10 @@ static void setPerKeyMonochromatic(const rgb_t* color, uint8_t slotId, uint8_t k
     if (ledMapItem->red == 0 && keyId != 0) {
         return;
     }
+#ifndef __ZEPHYR__
     uint8_t value = ((uint16_t)color->red + color->green + color->blue) / 3;
     LedDriverValues[slotId][ledMapItem->red] = value * KeyBacklightBrightness / 255;
+#endif
 }
 
 static void setPerKeyColor(const rgb_t* color, color_mode_t mode, uint8_t slotId, uint8_t keyId)
@@ -451,4 +457,3 @@ void Ledmap_SetLedBacklightingMode(backlighting_mode_t newMode)
 {
     BacklightingMode = newMode;
 }
-

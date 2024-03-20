@@ -1,3 +1,4 @@
+#include <string.h>
 #include "led_display.h"
 #include "lufa/HIDClassCommon.h"
 #include "macros/core.h"
@@ -5,16 +6,33 @@
 #include "usb_composite_device.h"
 #include "usb_report_updater.h"
 
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+#endif
+
+#ifndef USB_HID_BOOT_PROTOCOL
+#define USB_HID_BOOT_PROTOCOL   0U
+#endif
+
 bool UsbBasicKeyboard_ProtocolChanged = false;
 static usb_basic_keyboard_report_t usbBasicKeyboardReports[2];
-static uint8_t usbBasicKeyboardOutBuffer[USB_BASIC_KEYBOARD_OUT_REPORT_LENGTH];
-usb_hid_protocol_t usbBasicKeyboardProtocol;
 uint32_t UsbBasicKeyboardActionCounter;
 usb_basic_keyboard_report_t* ActiveUsbBasicKeyboardReport = usbBasicKeyboardReports;
 
 bool UsbBasicKeyboard_CapsLockOn = false;
 bool UsbBasicKeyboard_NumLockOn = false;
 bool UsbBasicKeyboard_ScrollLockOn = false;
+
+usb_hid_protocol_t usbBasicKeyboardProtocol;
+
+usb_hid_protocol_t UsbBasicKeyboardGetProtocol(void)
+{
+    return usbBasicKeyboardProtocol;
+}
+
+#ifndef __ZEPHYR__
+
+static uint8_t usbBasicKeyboardOutBuffer[USB_BASIC_KEYBOARD_OUT_REPORT_LENGTH];
 
 static usb_basic_keyboard_report_t* GetInactiveUsbBasicKeyboardReport(void)
 {
@@ -29,11 +47,6 @@ static void SwitchActiveUsbBasicKeyboardReport(void)
 void UsbBasicKeyboardResetActiveReport(void)
 {
     bzero(ActiveUsbBasicKeyboardReport, USB_BASIC_KEYBOARD_REPORT_LENGTH);
-}
-
-usb_hid_protocol_t UsbBasicKeyboardGetProtocol(void)
-{
-    return usbBasicKeyboardProtocol;
 }
 
 void UsbBasicKeyboard_HandleProtocolChange()
@@ -177,6 +190,7 @@ usb_status_t UsbBasicKeyboardCallback(class_handle_t handle, uint32_t event, voi
 
     return error;
 }
+#endif
 
 static void setRolloverError(usb_basic_keyboard_report_t* report)
 {
@@ -256,6 +270,7 @@ bool UsbBasicKeyboard_ContainsScancode(const usb_basic_keyboard_report_t* report
         return false;
     }
 }
+#ifndef __ZEPHYR__
 
 size_t UsbBasicKeyboard_ScancodeCount(const usb_basic_keyboard_report_t* report)
 {
@@ -320,3 +335,4 @@ void UsbBasicKeyboard_ForeachScancode(const usb_basic_keyboard_report_t* report,
         }
     }
 }
+#endif

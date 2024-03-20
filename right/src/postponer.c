@@ -11,6 +11,10 @@
 #include "key_action.h"
 #include "debug.h"
 
+#if !defined(MAX)
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#endif
+
 postponer_buffer_record_type_t buffer[POSTPONER_BUFFER_SIZE];
 static uint8_t bufferSize = 0;
 static uint8_t bufferPosition = 0;

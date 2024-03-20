@@ -1,7 +1,9 @@
 #include "slave_drivers/is31fl3xxx_driver.h"
 #include "slave_scheduler.h"
 #include "led_display.h"
+#ifndef __ZEPHYR__
 #include "device/device.h"
+#endif
 #include "ledmap.h"
 #include "debug.h"
 
@@ -14,6 +16,7 @@ bool LedSlaveDriver_FullUpdateNeeded = false;
 
 uint8_t KeyBacklightBrightness = 0xff;
 uint8_t KeyBacklightBrightnessDefault = 0xff;
+#ifndef __ZEPHYR__
 uint8_t LedDriverValues[LED_DRIVER_MAX_COUNT][LED_DRIVER_LED_COUNT_MAX];
 
 #if DEVICE_ID == DEVICE_ID_UHK60V1
@@ -202,17 +205,20 @@ void LedSlaveDriver_DisableLeds(void)
         memset(LedDriverValues[ledDriverId], 0, ledDriverStates[ledDriverId].ledCount);
     }
 }
-
+#endif
 
 void LedSlaveDriver_UpdateLeds(void)
 {
+#ifndef __ZEPHYR__
     recalculateLedBrightness();
     Ledmap_UpdateBacklightLeds();
     LedDisplay_UpdateAll();
 
     LedSlaveDriver_FullUpdateNeeded = false;
+#endif
 }
 
+#ifndef __ZEPHYR__
 void LedSlaveDriver_RecalculateLedBrightness()
 {
     recalculateLedBrightness();
@@ -386,3 +392,4 @@ slave_result_t LedSlaveDriver_Update(uint8_t ledDriverId)
 
     return res;
 }
+#endif

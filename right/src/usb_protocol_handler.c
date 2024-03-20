@@ -5,16 +5,17 @@
 #include "usb_commands/usb_command_read_config.h"
 #include "usb_commands/usb_command_reenumerate.h"
 #include "usb_commands/usb_command_write_config.h"
+#include "usb_commands/usb_command_apply_config.h"
+#include "usb_commands/usb_command_get_debug_buffer.h"
+#include "usb_commands/usb_command_exec_macro_command.h"
 
 #ifndef __ZEPHYR__
 #include "usb_commands/usb_command_get_device_property.h"
 #include "usb_commands/usb_command_get_module_property.h"
 #include "usb_commands/usb_command_set_test_led.h"
-#include "usb_commands/usb_command_apply_config.h"
 #include "usb_commands/usb_command_set_led_pwm_brightness.h"
 #include "usb_commands/usb_command_get_adc_value.h"
 #include "usb_commands/usb_command_launch_eeprom_transfer.h"
-#include "usb_commands/usb_command_get_debug_buffer.h"
 #include "usb_commands/usb_command_jump_to_module_bootloader.h"
 #include "usb_commands/usb_command_send_kboot_command_to_module.h"
 #include "usb_commands/usb_command_get_slave_i2c_errors.h"
@@ -22,7 +23,6 @@
 #include "usb_commands/usb_command_switch_keymap.h"
 #include "usb_commands/usb_command_get_variable.h"
 #include "usb_commands/usb_command_set_variable.h"
-#include "usb_commands/usb_command_exec_macro_command.h"
 #endif
 
 #ifdef __ZEPHYR__
@@ -65,10 +65,10 @@ void UsbProtocolHandler(void)
         case UsbCommandId_WriteStagingUserConfig:
             UsbCommand_WriteConfig(ConfigBufferId_StagingUserConfig);
             break;
-#ifndef __ZEPHYR__
         case UsbCommandId_ApplyConfig:
             UsbCommand_ApplyConfig();
             break;
+#ifndef __ZEPHYR__
         case UsbCommandId_LaunchEepromTransfer:
             UsbCommand_LaunchEepromTransfer();
             break;
@@ -80,9 +80,11 @@ void UsbProtocolHandler(void)
         case UsbCommandId_SetTestLed:
             UsbCommand_SetTestLed();
             break;
+#endif
         case UsbCommandId_GetDebugBuffer:
             UsbCommand_GetDebugBuffer();
             break;
+#ifndef __ZEPHYR__
         case UsbCommandId_GetAdcValue:
             UsbCommand_GetAdcValue();
             break;
@@ -107,9 +109,11 @@ void UsbProtocolHandler(void)
         case UsbCommandId_SetVariable:
             UsbCommand_SetVariable();
             break;
+#endif
         case UsbCommandId_ExecMacroCommand:
             UsbCommand_ExecMacroCommand();
             break;
+#ifndef __ZEPHYR__
         default:
             SetUsbTxBufferUint8(0, UsbStatusCode_InvalidCommand);
             break;

@@ -27,7 +27,9 @@
 #include "caret_config.h"
 #include "config_parser/parse_macro.h"
 #include "slave_drivers/is31fl3xxx_driver.h"
+#ifndef __ZEPHYR__
 #include "init_peripherals.h"
+#endif
 #include <stdint.h>
 
 typedef enum {
@@ -815,6 +817,7 @@ static macro_variable_t root(parser_context_t* ctx, set_command_action_t action)
         DEFINE_INT_LIMITS(0, 65535);
         ASSIGN_INT(AutoShiftDelay);
     }
+#ifndef __ZEPHYR__
     else if (ConsumeToken(ctx, "i2cBaudRate")) {
         if (action == SetCommandAction_Read) {
             return intVar(I2cMainBusRequestedBaudRateBps);
@@ -826,6 +829,7 @@ static macro_variable_t root(parser_context_t* ctx, set_command_action_t action)
         }
         ChangeI2cBaudRate(baudRate);
     }
+#endif
     else if (ConsumeToken(ctx, "emergencyKey")) {
         ASSIGN_NO_LIMITS(key_state_t*, noneVar,, EmergencyKey, Utils_KeyIdToKeyState(Macros_ConsumeInt(ctx)));
     }

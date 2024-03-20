@@ -23,7 +23,9 @@ bool SegmentDisplay_NeedsUpdate = false;
 
 static void writeLedDisplay()
 {
+#ifndef __ZEPHYR__
     LedDisplay_SetText(slots[currentSlot].len, slots[currentSlot].text);
+#endif
 }
 
 static bool handleOverrides()

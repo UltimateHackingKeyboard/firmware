@@ -1,3 +1,4 @@
+#include <string.h>
 #include "config_parser/config_globals.h"
 #include "config_parser/parse_macro.h"
 #include "keymap.h"
@@ -19,13 +20,19 @@
 #include "macros/vars.h"
 #include "postponer.h"
 #include "secondary_role_driver.h"
+#ifndef __ZEPHYR__
 #include "segment_display.h"
+#endif
 #include "slave_drivers/uhk_module_driver.h"
 #include "str_utils.h"
 #include "timer.h"
 #include "usb_report_updater.h"
 #include "utils.h"
 #include "debug.h"
+
+#if !defined(MAX)
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#endif
 
 static uint8_t lastLayerIdx;
 static uint8_t lastLayerKeymapIdx;
@@ -702,6 +709,7 @@ static macro_result_t processBreakCommand(parser_context_t *ctx)
 
 static macro_result_t processSetLedTxtCommand(parser_context_t* ctx)
 {
+#ifndef __ZEPHYR__
     int16_t time = Macros_ConsumeInt(ctx);
     char text[3];
     uint8_t textLen = 0;
@@ -743,6 +751,9 @@ static macro_result_t processSetLedTxtCommand(parser_context_t* ctx)
         SegmentDisplay_SetText(textLen, text, SegmentDisplaySlot_Macro);
         return res;
     }
+#else
+    return MacroResult_Finished;
+#endif
 }
 
 macro_result_t goTo(parser_context_t* ctx)

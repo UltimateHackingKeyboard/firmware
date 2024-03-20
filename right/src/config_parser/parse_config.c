@@ -1,3 +1,4 @@
+#include <string.h>
 #include "parse_config.h"
 #include "parse_keymap.h"
 #include "parse_macro.h"
@@ -193,7 +194,9 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
         AlphanumericSegmentsBrightnessDefault = alphanumericSegmentsBrightness;
         KeyBacklightBrightnessDefault = keyBacklightBrightness;
 
+#ifndef __ZEPHYR__
         LedSlaveDriver_RecalculateLedBrightness();
+#endif
 
         // Update mouse key speeds
 

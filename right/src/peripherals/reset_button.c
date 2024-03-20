@@ -1,9 +1,13 @@
+#include <stdbool.h>
 #include "reset_button.h"
+#ifndef __ZEPHYR__
 #include "fsl_port.h"
 #include "bootloader/wormhole.h"
+#endif
 
 bool IsFactoryResetModeEnabled = false;
 
+#ifndef __ZEPHYR__
 void RESET_BUTTON_IRQ_HANDLER(void)
 {
     Wormhole.magicNumber = WORMHOLE_MAGIC_NUMBER;
@@ -19,3 +23,4 @@ void InitResetButton(void)
     PORT_SetPinConfig(RESET_BUTTON_PORT, RESET_BUTTON_PIN,
                       &(port_pin_config_t){.pullSelect=kPORT_PullUp, .mux=kPORT_MuxAsGpio});
 }
+#endif

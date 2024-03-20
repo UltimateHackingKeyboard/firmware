@@ -1,9 +1,11 @@
 #include "i2c_addresses.h"
+#ifndef __ZEPHYR__
 #include "i2c.h"
+#include "peripherals/test_led.h"
+#endif
 #include "slave_scheduler.h"
 #include "slave_drivers/uhk_module_driver.h"
 #include "slave_protocol.h"
-#include "peripherals/test_led.h"
 #include "bool_array_converter.h"
 #include "crc16.h"
 #include "key_states.h"
@@ -67,7 +69,6 @@ typedef struct {
     } events1;
 } gesture_events_t;
 
-static gesture_events_t gestureEvents;
 
 
 
@@ -75,6 +76,8 @@ uint8_t address = I2C_ADDRESS_RIGHT_IQS5XX_FIRMWARE;
 touchpad_events_t TouchpadEvents;
 const touchpad_events_t ZeroTouchpadEvents;
 uint8_t phase = 0;
+#ifndef __ZEPHYR__
+static gesture_events_t gestureEvents;
 static uint8_t enableEventMode[] = {0x05, 0x8f, 0x07};
 
 // Disable touchpad's default state transitions, in order to make it always
@@ -191,3 +194,4 @@ void TouchpadDriver_Disconnect(uint8_t uhkModuleDriverId)
     TouchpadEvents.y = 0;
     phase = 0;
 }
+#endif

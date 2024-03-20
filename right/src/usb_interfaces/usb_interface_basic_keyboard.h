@@ -3,15 +3,21 @@
 
 // Includes:
 
+    #include <stddef.h>
+    #include <stdint.h>
+
 #ifndef __ZEPHYR__
     #include "fsl_common.h"
+#else
+    typedef uint8_t usb_hid_protocol_t;
 #endif
-    #include <stddef.h>
+
     #include "attributes.h"
     #include "usb_api.h"
     #include "usb_descriptors/usb_descriptor_basic_keyboard_report.h"
 
 // Macros:
+
 
     #define USB_BASIC_KEYBOARD_INTERFACE_INDEX 0
     #define USB_BASIC_KEYBOARD_INTERFACE_COUNT 1
@@ -58,7 +64,6 @@
 #ifndef __ZEPHYR__
     usb_status_t UsbBasicKeyboardCallback(class_handle_t handle, uint32_t event, void *param);
 
-    usb_hid_protocol_t UsbBasicKeyboardGetProtocol(void);
     void UsbBasicKeyboardResetActiveReport(void);
     usb_status_t UsbBasicKeyboardAction(void);
     usb_status_t UsbBasicKeyboardCheckIdleElapsed();
@@ -76,6 +81,7 @@
                (scancode <= USB_BASIC_KEYBOARD_MAX_BITFIELD_SCANCODE);
     }
     bool UsbBasicKeyboard_IsFullScancodes(const usb_basic_keyboard_report_t* report);
+    usb_hid_protocol_t UsbBasicKeyboardGetProtocol(void);
     bool UsbBasicKeyboard_AddScancode(usb_basic_keyboard_report_t* report, uint8_t scancode);
     void UsbBasicKeyboard_RemoveScancode(usb_basic_keyboard_report_t* report, uint8_t scancode);
     bool UsbBasicKeyboard_ContainsScancode(const usb_basic_keyboard_report_t* report, uint8_t scancode);

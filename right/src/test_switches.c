@@ -1,3 +1,4 @@
+#include <string.h>
 #include "test_switches.h"
 #include "led_display.h"
 #include "key_action.h"
@@ -112,5 +113,7 @@ void TestSwitches_Activate(void)
 {
     memcpy(&CurrentKeymap, &TestKeymap, sizeof TestKeymap);
     SegmentDisplay_SetText(3, "TES", SegmentDisplaySlot_Keymap);
+#ifndef __ZEPHYR__
     LedSlaveDriver_EnableAllLeds();
+#endif
 }

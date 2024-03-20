@@ -5,15 +5,21 @@
 #include "test_switches.h"
 #include "slot.h"
 #include "usb_interfaces/usb_interface_basic_keyboard.h"
+#include "usb_interfaces/usb_interface_media_keyboard.h"
+#include "usb_interfaces/usb_interface_system_keyboard.h"
 #include "usb_interfaces/usb_interface_mouse.h"
 #include "keymap.h"
+#include "key_matrix.h"
+#ifndef __ZEPHYR__
 #include "peripherals/test_led.h"
+#include "right_key_matrix.h"
+#include "slave_drivers/touchpad_driver.h"
+#endif
 #include "slave_drivers/is31fl3xxx_driver.h"
 #include "slave_drivers/uhk_module_driver.h"
 #include "macros/core.h"
 #include "macros/status_buffer.h"
 #include "key_states.h"
-#include "right_key_matrix.h"
 #include "usb_report_updater.h"
 #include "timer.h"
 #include "config_parser/parse_keymap.h"
@@ -23,7 +29,6 @@
 #include "macros/shortcut_parser.h"
 #include "postponer.h"
 #include "secondary_role_driver.h"
-#include "slave_drivers/touchpad_driver.h"
 #include "layer_switcher.h"
 #include "layer_stack.h"
 #include "mouse_controller.h"
@@ -33,9 +38,11 @@
 #include "macros/key_timing.h"
 
 bool TestUsbStack = false;
+#ifndef __ZEPHYR__
 static key_action_cached_t actionCache[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
 
 static uint32_t lastActivityTime;
+#endif
 
 volatile uint8_t UsbReportUpdateSemaphore = 0;
 
@@ -62,6 +69,7 @@ uint16_t KeystrokeDelay = 0;
 
 key_state_t* EmergencyKey = NULL;
 
+#ifndef __ZEPHYR__
 // Holds are applied on current base layer.
 static void applyLayerHolds(key_state_t *keyState, key_action_t *action) {
     if (action->type == KeyActionType_SwitchLayer && KeyState_Active(keyState)) {
@@ -90,6 +98,7 @@ static void applyLayerHolds(key_state_t *keyState, key_action_t *action) {
         LayerSwitcher_HoldLayer(SECONDARY_ROLE_LAYER_TO_LAYER_ID(action->keystroke.secondaryRole), false);
     }
 }
+#endif
 
 // Toggle actions are applied on active/cached layer.
 static void applyToggleLayerAction(key_state_t *keyState, key_action_t *action) {
@@ -112,6 +121,7 @@ static void applyToggleLayerAction(key_state_t *keyState, key_action_t *action) 
     }
 }
 
+#ifndef __ZEPHYR__
 static void handleEventInterrupts(key_state_t *keyState) {
     if(KeyState_ActivatedNow(keyState)) {
         LayerSwitcher_DoubleTapInterrupt(keyState);
@@ -119,6 +129,7 @@ static void handleEventInterrupts(key_state_t *keyState) {
         lastActivityTime = CurrentTime;
     }
 }
+#endif
 
 // Sticky modifiers are all "action modifiers" - i.e., modifiers of composed
 // keystrokes whose purpose is to activate specific shortcut. They are
@@ -305,6 +316,7 @@ void ApplyKeyAction(key_state_t *keyState, key_action_cached_t *cachedAction, ke
     }
 }
 
+#ifndef __ZEPHYR__
 static void clearActiveReports(void)
 {
     memset(ActiveUsbMouseReport, 0, sizeof *ActiveUsbMouseReport);
@@ -312,7 +324,6 @@ static void clearActiveReports(void)
     memset(ActiveUsbMediaKeyboardReport, 0, sizeof *ActiveUsbMediaKeyboardReport);
     memset(ActiveUsbSystemKeyboardReport, 0, sizeof *ActiveUsbSystemKeyboardReport);
 }
-
 
 static void mergeReports(void)
 {
@@ -336,6 +347,7 @@ static void mergeReports(void)
         }
     }
 }
+#endif
 
 static void commitKeyState(key_state_t *keyState, bool active)
 {
@@ -368,6 +380,7 @@ static inline void preprocessKeyState(key_state_t *keyState)
 
 uint32_t LastUsbGetKeyboardStateRequestTimestamp;
 
+#ifndef __ZEPHYR__
 static void handleUsbStackTestMode() {
     if (TestUsbStack) {
         static bool simulateKeypresses, isEven, isEvenMedia;
@@ -499,6 +512,7 @@ static void updateActiveUsbReports(void)
     ActiveUsbBasicKeyboardReport->modifiers |= SuppressMods ? 0 : maskedInputMods;
     ActiveUsbBasicKeyboardReport->modifiers |= OutputModifiers | StickyModifiers;
 }
+#endif
 
 void justPreprocessInput(void) {
     // Make preprocessKeyState push new events into postponer queue.
@@ -515,6 +529,7 @@ void justPreprocessInput(void) {
 
 uint32_t UsbReportUpdateCounter;
 
+#ifndef __ZEPHYR__
 static void updateLedSleepModeState() {
     uint32_t elapsedTime = Timer_GetElapsedTime(&lastActivityTime);
 
@@ -622,3 +637,4 @@ void UpdateUsbReports(void)
         Macros_SignalUsbReportsChange();
     }
 }
+#endif

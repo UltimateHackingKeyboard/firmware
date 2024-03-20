@@ -1,8 +1,12 @@
+#ifndef __ZEPHYR__
 #include "fsl_gpio.h"
+#endif
+
 #include "key_matrix.h"
 
 uint8_t DebounceTimePress = 50, DebounceTimeRelease = 50;
 
+#ifndef __ZEPHYR__
 void KeyMatrix_Init(key_matrix_t *keyMatrix)
 {
     for (key_matrix_pin_t *row = keyMatrix->rows; row < keyMatrix->rows + keyMatrix->rowNum; row++) {
@@ -40,3 +44,4 @@ void KeyMatrix_ScanRow(key_matrix_t *keyMatrix)
     row = keyMatrix->rows + keyMatrix->currentRowNum;
     GPIO_WritePinOutput(row->gpio, row->pin, 1);
 }
+#endif
