@@ -45,7 +45,9 @@ const sourcePaths = [
 for (const sourcePath of sourcePaths) {
     const buildDir = path.dirname(`${__dirname}/../${sourcePath}`);
     shell.mkdir('-p', buildDir);
-    shell.exec(`cd ${buildDir}/..; make clean; make -j8 ${mkArgs}`);
+    if (!buildDir.includes('zephyr')) {
+        shell.exec(`cd ${buildDir}/..; make clean; make -j8 ${mkArgs}`);
+    }
 }
 
 const { devices, modules } = generateVersionsH({ packageJson, gitInfo, useRealData: true });
@@ -54,7 +56,9 @@ packageJson.modules = modules;
 
 for (const sourcePath of sourcePaths) {
     const buildDir = path.dirname(`${__dirname}/../${sourcePath}`);
-    shell.exec(`cd ${buildDir}/..; make -j8 ${mkArgs}`);
+    if (!buildDir.includes('zephyr')) {
+        shell.exec(`cd ${buildDir}/..; make -j8 ${mkArgs}`);
+    }
 }
 
 
