@@ -8,9 +8,9 @@
 #include "usb_commands/usb_command_apply_config.h"
 #include "usb_commands/usb_command_get_debug_buffer.h"
 #include "usb_commands/usb_command_exec_macro_command.h"
+#include "usb_commands/usb_command_get_device_property.h"
 
 #ifndef __ZEPHYR__
-#include "usb_commands/usb_command_get_device_property.h"
 #include "usb_commands/usb_command_get_module_property.h"
 #include "usb_commands/usb_command_set_test_led.h"
 #include "usb_commands/usb_command_set_led_pwm_brightness.h"
@@ -40,11 +40,9 @@ void UsbProtocolHandler(void)
     bzero(GenericHidInBuffer, USB_GENERIC_HID_IN_BUFFER_LENGTH);
     uint8_t command = GetUsbRxBufferUint8(0);
     switch (command) {
-#ifndef __ZEPHYR__
         case UsbCommandId_GetDeviceProperty:
             UsbCommand_GetDeviceProperty();
             break;
-#endif
         case UsbCommandId_Reenumerate:
             UsbCommand_Reenumerate();
             break;
