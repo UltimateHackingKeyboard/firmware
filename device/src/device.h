@@ -7,6 +7,9 @@
 
 // Macros:
 
+    #define DEVICE_ID CONFIG_DEVICE_ID
+    #define DEVICE_COUNT 5
+
     #define DEVICE_ID_UHK60V1_RIGHT 1
     #define DEVICE_ID_UHK60V2_RIGHT 2
     #define DEVICE_ID_UHK80_LEFT 3
