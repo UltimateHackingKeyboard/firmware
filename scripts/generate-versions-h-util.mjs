@@ -1,6 +1,10 @@
-const md5Hasher = require('md5');
-const path = require('path')
-const fs = require('fs')
+import md5Hasher from 'md5';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const ZERO_MD5 = '000000000000000000000000000000000'
 
@@ -18,7 +22,7 @@ const patchVersions = ['Major', 'Minor', 'Patch'];
  * @param {GitInfo} gitInfo
  * @param {boolean} useRealData - If true, use real data. If false, use "0" data.
  */
-module.exports = function generateVersionsH({ packageJson, gitInfo, useRealData}) {
+export function generateVersionsH({packageJson, gitInfo, useRealData}) {
   packageJson = structuredClone(packageJson)
 
   gitInfo = useRealData

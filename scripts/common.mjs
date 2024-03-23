@@ -1,10 +1,10 @@
-function getGitInfo() {
-    var result = {
+import {execSync} from 'child_process';
+
+export function getGitInfo() {
+    const result = {
         repo: '',
         tag: '',
     };
-
-    const execSync = require('child_process').execSync
 
     result.repo = execSync('git remote get-url origin').toString().trim()
         .replace(/.*github.com./g, '')
@@ -18,6 +18,3 @@ function getGitInfo() {
 
     return result;
 }
-
-exports.getGitInfo = getGitInfo;
-
