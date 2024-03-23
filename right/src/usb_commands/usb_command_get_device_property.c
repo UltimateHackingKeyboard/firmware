@@ -1,14 +1,21 @@
+#include <string.h>
+
+#ifdef __ZEPHYR__
+#include "device.h"
+#else
 #include "fsl_common.h"
+#include "slave_drivers/kboot_driver.h"
+#include "i2c.h"
+#include "init_peripherals.h"
+#include "fsl_i2c.h"
+#endif
+
 #include "slave_protocol.h"
 #include "usb_commands/usb_command_get_device_property.h"
 #include "usb_protocol_handler.h"
 #include "eeprom.h"
 #include "versioning.h"
 #include "versions.h"
-#include "slave_drivers/kboot_driver.h"
-#include "i2c.h"
-#include "init_peripherals.h"
-#include "fsl_i2c.h"
 #include "timer.h"
 #include "utils.h"
 
@@ -68,6 +75,7 @@ void UsbCommand_GetDeviceProperty(void)
         case DevicePropertyId_ConfigSizes:
             memcpy(GenericHidInBuffer+1, (uint8_t*)&configSizes, sizeof(configSizes));
             break;
+#ifndef __ZEPHYR__
         case DevicePropertyId_CurrentKbootCommand:
             GenericHidInBuffer[1] = KbootDriverState.command;
             break;
@@ -76,6 +84,7 @@ void UsbCommand_GetDeviceProperty(void)
             SetUsbTxBufferUint32(2, I2cMainBusRequestedBaudRateBps);
             SetUsbTxBufferUint32(6, I2cMainBusActualBaudRateBps);
             break;
+#endif
         case DevicePropertyId_Uptime:
             SetUsbTxBufferUint32(1, CurrentTime);
             break;
