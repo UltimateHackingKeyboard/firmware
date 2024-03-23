@@ -35,6 +35,24 @@
       "name": "uhk60v2-right",
       "source": "right/uhk60v2/build_make/uhk60v2.hex",
       "mmap": "right/uhk60v2/build_make/uhk60v2.map"
+    },
+    {
+      "deviceId": 3,
+      "name": "uhk80-left",
+      "source": "device/build/uhk-80-left/zephyr/app_update.bin",
+      "mmap": "device/build/uhk-80-left/zephyr/zephyr.map"
+    },
+    {
+      "deviceId": 4,
+      "name": "uhk80-right",
+      "source": "device/build/uhk-80-right/zephyr/app_update.bin",
+      "mmap": "device/build/uhk-80-right/zephyr/zephyr.map"
+    },
+    {
+      "deviceId": 5,
+      "name": "uhk-dongle",
+      "source": "device/build/uhk-dongle/zephyr/app_update.bin",
+      "mmap": "device/build/uhk-dongle/zephyr/zephyr.map"
     }
   ],
   "modules": [
