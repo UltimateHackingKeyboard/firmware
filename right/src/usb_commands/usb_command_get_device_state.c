@@ -1,6 +1,7 @@
 #ifndef __ZEPHYR__
 #include "fsl_common.h"
 #endif
+
 #include "keymap.h"
 #include "macros/core.h"
 #include "macros/status_buffer.h"
@@ -10,8 +11,9 @@
 #include "eeprom.h"
 #include "timer.h"
 #include "layer_switcher.h"
-#ifndef __ZEPHYR__
 #include "peripherals/merge_sensor.h"
+
+#ifndef __ZEPHYR__
 #include "slave_drivers/uhk_module_driver.h"
 #include "usb_report_updater.h"
 #include "slave_scheduler.h"
@@ -26,7 +28,9 @@ void UsbCommand_GetKeyboardState(void)
 {
 #ifndef __ZEPHYR__
     SetUsbTxBufferUint8(1, IsEepromBusy);
-    SetUsbTxBufferUint8(2, MERGE_SENSOR_IS_MERGED);
+#endif
+    SetUsbTxBufferUint8(2, MergeSensor_IsMerged());
+#ifndef __ZEPHYR__
     SetUsbTxBufferUint8(3, MODULE_CONNECTION_STATE(UhkModuleDriverId_LeftKeyboardHalf));
     SetUsbTxBufferUint8(4, MODULE_CONNECTION_STATE(UhkModuleDriverId_LeftModule));
     SetUsbTxBufferUint8(5, MODULE_CONNECTION_STATE(UhkModuleDriverId_RightModule));

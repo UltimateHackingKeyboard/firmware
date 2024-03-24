@@ -7,11 +7,10 @@
 #include "bt_central_uart.h"
 #include "bt_peripheral_uart.h"
 #include "keyboard/i2c.h"
-#include "keyboard/merge_sensor.h"
+#include "peripherals/merge_sensor.h"
 #include "shell.h"
 #include "device.h"
 #include "usb/usb.h"
-#include <zephyr/drivers/gpio.h>
 #include "bt_conn.h"
 #include "bt_advertise.h"
 #include "settings.h"
@@ -30,7 +29,9 @@ int main(void) {
 
     InitLeds();
     InitCharger();
-    InitMergeSensor();
+#ifdef DEVICE_HAS_MERGE_SENSOR
+    MergeSensor_Init();
+#endif // DEVICE_HAS_MERGE_SENSOR
     InitKeyScanner();
 
     USB_EnableHid();
