@@ -8,6 +8,10 @@
 #include "config_parser/parse_macro.h"
 #include "timer.h"
 
+#ifdef __ZEPHYR__
+#include "device.h"
+#endif
+
 macro_result_t Macros_ProcessStatsLayerStackCommand()
 {
     if (Macros_DryRun) {
@@ -32,6 +36,9 @@ macro_result_t Macros_ProcessStatsLayerStackCommand()
 
 macro_result_t Macros_ProcessStatsActiveKeysCommand()
 {
+#if DEVICE_IS_UHK_DONGLE
+    return 0;
+#else
     if (Macros_DryRun) {
         return MacroResult_Finished;
     }
@@ -52,6 +59,7 @@ macro_result_t Macros_ProcessStatsActiveKeysCommand()
         }
     }
     return MacroResult_Finished;
+#endif
 }
 
 macro_result_t Macros_ProcessStatsPostponerStackCommand()
@@ -126,6 +134,9 @@ macro_result_t Macros_ProcessStatsActiveMacrosCommand()
 
 macro_result_t Macros_ProcessDiagnoseCommand()
 {
+#if DEVICE_IS_UHK_DONGLE
+    return 0;
+#else
     if (Macros_DryRun) {
         return MacroResult_Finished;
     }
@@ -144,6 +155,7 @@ macro_result_t Macros_ProcessDiagnoseCommand()
     }
     PostponerExtended_ResetPostponer();
     return MacroResult_Finished;
+#endif
 }
 
 macro_result_t Macros_ProcessStatsRecordKeyTimingCommand()
@@ -166,5 +178,3 @@ macro_result_t Macros_ProcessStatsRuntimeCommand()
     Macros_SetStatusString(" ms\n", NULL);
     return MacroResult_Finished;
 }
-
-

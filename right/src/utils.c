@@ -1,30 +1,39 @@
+#include <string.h>
 #include "utils.h"
 #include "key_action.h"
 #include "key_states.h"
-#ifndef __ZEPHYR__
+
+#ifdef __ZEPHYR__
+#include "device.h"
+#else
 #include "keymap.h"
 #endif
+
 #include "layer.h"
 #include "macros/core.h"
 #include "macros/keyid_parser.h"
 #include "macros/status_buffer.h"
 #include "macros/shortcut_parser.h"
-// #include "led_display.h"
-#include <string.h>
+#include "led_display.h"
 
 #if !defined(MIN)
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #endif
 
+#if !DEVICE_IS_UHK_DONGLE
 //this is noop at the moment, prepared for time when MAX_KEY_COUNT_PER_MODULE changes
 //the purpose is to preserve current keyids
 static uint16_t recodeId(uint16_t newFormat, uint16_t fromBase, uint16_t toBase)
 {
     return toBase * (newFormat / fromBase) + (newFormat % fromBase);
 }
+#endif
 
 uint16_t Utils_KeyStateToKeyId(key_state_t* key)
 {
+#if DEVICE_IS_UHK_DONGLE
+    return 0;
+#else
     if (key == NULL) {
         return 0;
     }
@@ -32,11 +41,16 @@ uint16_t Utils_KeyStateToKeyId(key_state_t* key)
     uint32_t ptr2 = (uint32_t)(key_state_t*)&(KeyStates[0][0]);
     uint32_t res = (ptr1 - ptr2) / sizeof(key_state_t);
     return recodeId(res, MAX_KEY_COUNT_PER_MODULE, 64);
+#endif
 }
 
 key_state_t* Utils_KeyIdToKeyState(uint16_t keyid)
 {
+#if DEVICE_IS_UHK_DONGLE
+    return NULL;
+#else
     return &(((key_state_t*)KeyStates)[recodeId(keyid, 64, MAX_KEY_COUNT_PER_MODULE)]);
+#endif
 }
 
 key_coordinates_t Utils_KeyIdToKeyCoordinates(uint16_t keyId)
