@@ -26,15 +26,21 @@
 
 void UsbCommand_GetKeyboardState(void)
 {
+
 #ifndef __ZEPHYR__
     SetUsbTxBufferUint8(1, IsEepromBusy);
 #endif
+
+#ifdef HAS_MERGE_SENSOR
     SetUsbTxBufferUint8(2, MergeSensor_IsMerged());
+#endif
+
 #ifndef __ZEPHYR__
     SetUsbTxBufferUint8(3, MODULE_CONNECTION_STATE(UhkModuleDriverId_LeftKeyboardHalf));
     SetUsbTxBufferUint8(4, MODULE_CONNECTION_STATE(UhkModuleDriverId_LeftModule));
     SetUsbTxBufferUint8(5, MODULE_CONNECTION_STATE(UhkModuleDriverId_RightModule));
 #endif
+
     SetUsbTxBufferUint8(6, ActiveLayer | (ActiveLayer != LayerId_Base && !ActiveLayerHeld ? (1 << 7) : 0) ); // Active layer + most significant bit if layer is toggled
     SetUsbTxBufferUint8(7, Macros_ConsumeStatusCharDirtyFlag);
     SetUsbTxBufferUint8(8, CurrentKeymapIndex);
