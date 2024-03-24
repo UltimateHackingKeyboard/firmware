@@ -46,14 +46,6 @@ void UsbProtocolHandler(void)
         case UsbCommandId_Reenumerate:
             UsbCommand_Reenumerate();
             break;
-#ifndef __ZEPHYR__
-        case UsbCommandId_JumpToModuleBootloader:
-            UsbCommand_JumpToModuleBootloader();
-            break;
-        case UsbCommandId_SendKbootCommandToModule:
-            UsbCommand_SendKbootCommandToModule();
-            break;
-#endif
         case UsbCommandId_ReadConfig:
             UsbCommand_ReadConfig();
             break;
@@ -66,23 +58,37 @@ void UsbProtocolHandler(void)
         case UsbCommandId_ApplyConfig:
             UsbCommand_ApplyConfig();
             break;
-#ifndef __ZEPHYR__
-        case UsbCommandId_LaunchEepromTransfer:
-            UsbCommand_LaunchEepromTransfer();
-            break;
-#endif
         case UsbCommandId_GetDeviceState:
             UsbCommand_GetKeyboardState();
             break;
-#ifndef __ZEPHYR__
-        case UsbCommandId_SetTestLed:
-            UsbCommand_SetTestLed();
-            break;
-#endif
         case UsbCommandId_GetDebugBuffer:
             UsbCommand_GetDebugBuffer();
             break;
+        case UsbCommandId_SwitchKeymap:
+            UsbCommand_SwitchKeymap();
+            break;
+        case UsbCommandId_GetVariable:
+            UsbCommand_GetVariable();
+            break;
+        case UsbCommandId_SetVariable:
+            UsbCommand_SetVariable();
+            break;
+        case UsbCommandId_ExecMacroCommand:
+            UsbCommand_ExecMacroCommand();
+            break;
 #ifndef __ZEPHYR__
+        case UsbCommandId_JumpToModuleBootloader:
+            UsbCommand_JumpToModuleBootloader();
+            break;
+        case UsbCommandId_SendKbootCommandToModule:
+            UsbCommand_SendKbootCommandToModule();
+            break;
+        case UsbCommandId_LaunchEepromTransfer:
+            UsbCommand_LaunchEepromTransfer();
+            break;
+        case UsbCommandId_SetTestLed:
+            UsbCommand_SetTestLed();
+            break;
         case UsbCommandId_GetAdcValue:
             UsbCommand_GetAdcValue();
             break;
@@ -99,18 +105,6 @@ void UsbProtocolHandler(void)
             UsbCommand_SetI2cBaudRate();
             break;
 #endif
-        case UsbCommandId_SwitchKeymap:
-            UsbCommand_SwitchKeymap();
-            break;
-        case UsbCommandId_GetVariable:
-            UsbCommand_GetVariable();
-            break;
-        case UsbCommandId_SetVariable:
-            UsbCommand_SetVariable();
-            break;
-        case UsbCommandId_ExecMacroCommand:
-            UsbCommand_ExecMacroCommand();
-            break;
         default:
             SetUsbTxBufferUint8(0, UsbStatusCode_InvalidCommand);
             break;
