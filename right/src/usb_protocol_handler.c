@@ -11,6 +11,7 @@
 #include "usb_commands/usb_command_get_device_property.h"
 #include "usb_commands/usb_command_get_variable.h"
 #include "usb_commands/usb_command_set_variable.h"
+#include "usb_commands/usb_command_switch_keymap.h"
 
 #ifndef __ZEPHYR__
 #include "usb_commands/usb_command_get_module_property.h"
@@ -22,7 +23,6 @@
 #include "usb_commands/usb_command_send_kboot_command_to_module.h"
 #include "usb_commands/usb_command_get_slave_i2c_errors.h"
 #include "usb_commands/usb_command_set_i2c_baud_rate.h"
-#include "usb_commands/usb_command_switch_keymap.h"
 #endif
 
 #ifdef __ZEPHYR__
@@ -98,10 +98,10 @@ void UsbProtocolHandler(void)
         case UsbCommandId_SetI2cBaudRate:
             UsbCommand_SetI2cBaudRate();
             break;
+#endif
         case UsbCommandId_SwitchKeymap:
             UsbCommand_SwitchKeymap();
             break;
-#endif
         case UsbCommandId_GetVariable:
             UsbCommand_GetVariable();
             break;
