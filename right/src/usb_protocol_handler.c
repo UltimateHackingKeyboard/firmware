@@ -111,11 +111,9 @@ void UsbProtocolHandler(void)
         case UsbCommandId_ExecMacroCommand:
             UsbCommand_ExecMacroCommand();
             break;
-#ifndef __ZEPHYR__
         default:
             SetUsbTxBufferUint8(0, UsbStatusCode_InvalidCommand);
             break;
-#endif
     }
 }
 
