@@ -13,17 +13,33 @@ const __dirname = path.dirname(__filename);
 shell.config.fatal = true;
 shell.config.verbose = true;
 
+function build(buildTarget, step) {
+    const buildDir = path.dirname(`${__dirname}/../${buildTarget.source}`);
+    if (step === 1) {
+        shell.rm('-rf', buildDir);
+        shell.mkdir('-p', buildDir);
+    }
+
+    if (buildTarget.platform === 'kinetis') {
+        if (step === 1) {
+            shell.exec(`cd ${buildDir}/..; make clean; make -j8`);
+        } else if (step === 2) {
+            shell.exec(`cd ${buildDir}/..; make -j8`);
+        }
+    } else if (buildTarget.platform === 'nordic') {
+    }
+}
+
 const gitInfo = getGitInfo();
 const packageJson = readPackageJson();
 
-generateVersionsH({ packageJson, gitInfo, useRealData: false });
+generateVersionsH({packageJson, gitInfo, useRealData:false});
 
 const version = packageJson.firmwareVersion;
 const releaseName = `uhk-firmware-${version}`;
 const releaseDir = `${__dirname}/${releaseName}`;
 const agentDir = `${__dirname}/../lib/agent`;
-var releaseFile = `${__dirname}/${releaseName}.tar.gz`;
-var mkArgs = '';
+let releaseFile = `${__dirname}/${releaseName}.tar.gz`;
 
 if (gitInfo.tag !== `v${version}` && !process.argv.includes('--allowSha')) {
     console.error(`Git tag '${gitInfo.tag}' !~ 'v{version}'. Please run with '--allowSha' if this is intentional.`);
@@ -34,35 +50,21 @@ if (gitInfo.tag !== `v${version}`) {
     releaseFile = `${__dirname}/${releaseName}-${gitInfo.tag}.tar.gz`;
 }
 
-const deviceSourceFirmwares = packageJson.devices.map(device => `${__dirname}/../${device.source}`);
-const moduleSourceFirmwares = packageJson.modules.map(module => `${__dirname}/../${module.source}`);
-shell.rm('-rf', releaseDir, releaseFile, deviceSourceFirmwares, moduleSourceFirmwares);
+shell.rm('-rf', releaseDir, releaseFile);
 
-const sourcePaths = [
-    ...packageJson.devices.map(device => device.source),
-    ...packageJson.modules.map(module => module.source),
-];
-for (const sourcePath of sourcePaths) {
-    const buildDir = path.dirname(`${__dirname}/../${sourcePath}`);
-    shell.mkdir('-p', buildDir);
-    if (!buildDir.includes('zephyr')) {
-        shell.exec(`cd ${buildDir}/..; make clean; make -j8 ${mkArgs}`);
-    }
+const buildTargets = [...packageJson.devices, ...packageJson.modules];
+for (const buildTarget of buildTargets) {
+    build(buildTarget, 1);
 }
 
-const { devices, modules } = generateVersionsH({ packageJson, gitInfo, useRealData: true });
+const {devices, modules} = generateVersionsH({packageJson, gitInfo, useRealData:true});
 packageJson.devices = devices;
 packageJson.modules = modules;
-
-for (const sourcePath of sourcePaths) {
-    const buildDir = path.dirname(`${__dirname}/../${sourcePath}`);
-    if (!buildDir.includes('zephyr')) {
-        shell.exec(`cd ${buildDir}/..; make -j8 ${mkArgs}`);
-    }
+for (const buildTarget of buildTargets) {
+    build(buildTarget, 2);
 }
 
-
-shell.exec(`npm ci; npm run build`, { cwd: agentDir });
+shell.exec(`npm ci; npm run build`, {cwd: agentDir});
 
 for (const device of packageJson.devices) {
     const deviceDir = `${releaseDir}/devices/${device.name}`;
