@@ -3,6 +3,7 @@
 #include "macros/status_buffer.h"
 #include <stdint.h>
 #include <stdio.h>
+#include <inttypes.h>
 #include "macros/vars.h"
 
 #if !defined(MAX)
@@ -19,7 +20,7 @@ typedef enum {
 static char consumeExpressionCharOfInt(const macro_variable_t* variable, uint16_t* idx)
 {
     char buffer[20];
-    sprintf(buffer, "%ld", variable->asInt);
+    sprintf(buffer, "%" PRId32, variable->asInt);
     char res = buffer[*idx];
     if (buffer[*idx+1] == '\0') {
         *idx = 0;
