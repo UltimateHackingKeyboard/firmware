@@ -17,7 +17,12 @@ void UsbCommand_LaunchEepromTransfer(void)
         SetUsbTxBufferUint8(0, UsbStatusCode_LaunchEepromTransfer_InvalidConfigBufferId);
     }
 
+#ifdef __ZEPHYR__
+    status_t status = Storage_LaunchTransfer(eepromOperation, configBufferId, NULL);
+#else
     status_t status = EEPROM_LaunchTransfer(eepromOperation, configBufferId, NULL);
+#endif
+
     if (status != kStatus_Success) {
         SetUsbTxBufferUint8(0, UsbStatusCode_LaunchEepromTransfer_TransferError);
         SetUsbTxBufferUint32(1, status);
