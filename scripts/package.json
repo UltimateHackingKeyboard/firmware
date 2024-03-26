@@ -40,14 +40,14 @@
     },
     {
       "deviceId": 3,
-      "name": "uhk80-left",
+      "name": "uhk-80-left",
       "source": "device/build/uhk-80-left/zephyr/app_update.bin",
       "mmap": "device/build/uhk-80-left/zephyr/zephyr.map",
       "platform": "nordic"
     },
     {
       "deviceId": 4,
-      "name": "uhk80-right",
+      "name": "uhk-80-right",
       "source": "device/build/uhk-80-right/zephyr/app_update.bin",
       "mmap": "device/build/uhk-80-right/zephyr/zephyr.map",
       "platform": "nordic"

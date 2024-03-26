@@ -13,6 +13,9 @@ const __dirname = path.dirname(__filename);
 shell.config.fatal = true;
 shell.config.verbose = true;
 
+const gitInfo = getGitInfo();
+const packageJson = readPackageJson();
+
 function build(buildTarget, step) {
     const buildDir = path.dirname(`${__dirname}/../${buildTarget.source}`);
     if (step === 1) {
@@ -27,11 +30,20 @@ function build(buildTarget, step) {
             shell.exec(`cd ${buildDir}/..; make -j8`);
         }
     } else if (buildTarget.platform === 'nordic') {
+        shell.exec(`ZEPHYR_TOOLCHAIN_VARIANT=zephyr west build \
+            --build-dir ${gitInfo.root}/device/build/${buildTarget.name} \
+            ${gitInfo.root}/device \
+            --pristine \
+            --board ${buildTarget.name} \
+            --no-sysbuild \
+            -- \
+            -DNCS_TOOLCHAIN_VERSION=NONE \
+            -DEXTRA_CONF_FILE=prj.conf.overlays/${buildTarget.name}.prj.conf \
+            -DBOARD_ROOT=${gitInfo.root} \
+            -Dmcuboot_OVERLAY_CONFIG="${gitInfo.root}/device/child_image/mcuboot.conf;${gitInfo.root}/device/child_image/${buildTarget.name}.mcuboot.conf"`
+        );
     }
 }
-
-const gitInfo = getGitInfo();
-const packageJson = readPackageJson();
 
 generateVersionsH({packageJson, gitInfo, useRealData:false});
 
