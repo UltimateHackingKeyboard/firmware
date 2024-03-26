@@ -52,7 +52,7 @@ const releaseDir = `${__dirname}/${releaseName}`;
 const agentDir = `${__dirname}/../lib/agent`;
 let releaseFile = `${__dirname}/${releaseName}.tar.gz`;
 
-if (gitInfo.tag !== `v${version}` && !process.argv.includes('--allowSha')) {
+if (gitInfo.tag !== `v${version}` && !process.argv.includes('--allowSha') && !process.argv.includes('--buildTest')) {
     console.error(`Git tag '${gitInfo.tag}' !~ 'v{version}'. Please run with '--allowSha' if this is intentional.`);
     process.exit(1);
 }
@@ -66,6 +66,10 @@ shell.rm('-rf', releaseDir, releaseFile);
 const buildTargets = [...packageJson.devices, ...packageJson.modules];
 for (const buildTarget of buildTargets) {
     build(buildTarget, 1);
+}
+
+if (process.argv.includes('--buildTest')) {
+    process.exit(0);
 }
 
 const {devices, modules} = generateVersionsH({packageJson, gitInfo, useRealData:true});
