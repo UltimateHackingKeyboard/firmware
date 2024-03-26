@@ -1,11 +1,10 @@
 #!/usr/bin/env node
 import fs from 'fs';
 import path from 'path';
-import {getGitInfo} from './common.mjs';
 import shell from 'shelljs';
+import {getGitInfo, readPackageJson} from './common.mjs';
 import {generateVersionsH} from './generate-versions-h-util.mjs';
-import {readPackageJson} from './read-package-json.mjs';
-import { fileURLToPath } from 'url';
+import {fileURLToPath} from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

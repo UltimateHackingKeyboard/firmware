@@ -1,7 +1,6 @@
 #!/usr/bin/env node
-import { getGitInfo } from './common.mjs';
-import { generateVersionsH } from './generate-versions-h-util.mjs';
-import { readPackageJson } from './read-package-json.mjs';
+import {getGitInfo, readPackageJson} from './common.mjs';
+import {generateVersionsH} from './generate-versions-h-util.mjs';
 
 const useRealData = process.argv.includes('--withMd5Sums')
 const packageJson = readPackageJson()
