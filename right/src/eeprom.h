@@ -4,12 +4,21 @@
 // Includes:
 
     #include "config_parser/config_globals.h"
+#ifdef __ZEPHYR__
+    #include "zephyr/storage/flash_map.h"
+#endif
 
 // Macros:
 
     #define EEPROM_SIZE (32*1024)
     #define HARDWARE_CONFIG_SIZE 64
+
+#ifdef __ZEPHYR__
+    #define USER_CONFIG_SIZE EEPROM_SIZE
+    // #define USER_CONFIG_SIZE FIXED_PARTITION_SIZE(user_config_partition) // TODO: Bump related uint16_t variables to uint32_t to avoid overflow
+#else
     #define USER_CONFIG_SIZE (EEPROM_SIZE - HARDWARE_CONFIG_SIZE)
+#endif
 
     #define EEPROM_ADDRESS_SIZE 2
     #define EEPROM_PAGE_SIZE 64
