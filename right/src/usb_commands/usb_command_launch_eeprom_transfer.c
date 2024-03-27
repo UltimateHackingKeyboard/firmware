@@ -4,7 +4,7 @@
 #include "config_parser/config_globals.h"
 
 #ifdef __ZEPHYR__
-#include "storage.h"
+#include "flash.h"
 typedef int32_t status_t;
 #define MAKE_STATUS(group, code) ((((group)*100) + (code)))
 enum _status_groups
@@ -34,7 +34,7 @@ void UsbCommand_LaunchEepromTransfer(void)
     }
 
 #ifdef __ZEPHYR__
-    status_t status = Storage_LaunchTransfer(eepromOperation, configBufferId, NULL);
+    status_t status = Flash_LaunchTransfer(eepromOperation, configBufferId, NULL);
 #else
     status_t status = EEPROM_LaunchTransfer(eepromOperation, configBufferId, NULL);
 #endif
