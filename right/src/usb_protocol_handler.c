@@ -31,7 +31,7 @@ void CommandProtocolRxHandler(const uint8_t* data, size_t size)
     GenericHidOutBuffer = data;
     // printk("CommandProtocolRxHandler: data[0]:%u size:%d\n", data[0], size);
     UsbProtocolHandler();
-    CommandProtocolTx(GenericHidInBuffer, size);
+    CommandProtocolTx(GenericHidInBuffer, USB_GENERIC_HID_OUT_BUFFER_LENGTH);
 }
 #endif
 
