@@ -28,7 +28,7 @@ void UsbCommand_GetKeyboardState(void)
 {
 
 #ifndef __ZEPHYR__
-    SetUsbTxBufferUint8(1, IsEepromBusy);
+    SetUsbTxBufferUint8(1, IsStorageBusy);
 #endif
 
 #ifdef HAS_MERGE_SENSOR

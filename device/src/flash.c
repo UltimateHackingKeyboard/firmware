@@ -1,7 +1,7 @@
 #include "flash.h"
 #include "zephyr/storage/flash_map.h"
 
-uint8_t Flash_LaunchTransfer(eeprom_operation_t operation, config_buffer_id_t configBufferId, void (*successCallback))
+uint8_t Flash_LaunchTransfer(storage_operation_t operation, config_buffer_id_t configBufferId, void (*successCallback))
 {
     uint8_t configAreaId = configBufferId == ConfigBufferId_HardwareConfig
         ? FLASH_AREA_ID(hardware_config_partition)

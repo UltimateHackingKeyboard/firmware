@@ -12,7 +12,7 @@
 #include "usb_commands/usb_command_get_variable.h"
 #include "usb_commands/usb_command_set_variable.h"
 #include "usb_commands/usb_command_switch_keymap.h"
-#include "usb_commands/usb_command_launch_eeprom_transfer.h"
+#include "usb_commands/usb_command_launch_storage_transfer.h"
 
 #ifndef __ZEPHYR__
 #include "usb_commands/usb_command_get_module_property.h"
@@ -76,8 +76,8 @@ void UsbProtocolHandler(void)
         case UsbCommandId_ExecMacroCommand:
             UsbCommand_ExecMacroCommand();
             break;
-        case UsbCommandId_LaunchEepromTransfer:
-            UsbCommand_LaunchEepromTransfer();
+        case UsbCommandId_LaunchStorageTransfer:
+            UsbCommand_LaunchStorageTransfer();
             break;
 #ifndef __ZEPHYR__
         case UsbCommandId_JumpToModuleBootloader:

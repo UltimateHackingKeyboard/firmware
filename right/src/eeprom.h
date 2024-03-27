@@ -29,18 +29,18 @@
     typedef enum {
         EepromOperation_Read,
         EepromOperation_Write,
-    } eeprom_operation_t;
+    } storage_operation_t;
 
 // Variables:
 
-    extern volatile bool IsEepromBusy;
+    extern volatile bool IsStorageBusy;
 
 // Functions:
 
 #ifndef __ZEPHYR__
     void EEPROM_Init(void);
-    status_t EEPROM_LaunchTransfer(eeprom_operation_t operation, config_buffer_id_t config_buffer_id, void (*successCallback));
+    status_t EEPROM_LaunchTransfer(storage_operation_t operation, config_buffer_id_t config_buffer_id, void (*successCallback));
 #endif
-    bool IsEepromOperationValid(eeprom_operation_t operation);
+    bool IsEepromOperationValid(storage_operation_t operation);
 
 #endif

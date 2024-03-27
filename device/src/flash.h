@@ -8,6 +8,6 @@
 
 // Functions:
 
-uint8_t Flash_LaunchTransfer(eeprom_operation_t operation, config_buffer_id_t config_buffer_id, void (*successCallback));
+uint8_t Flash_LaunchTransfer(storage_operation_t operation, config_buffer_id_t config_buffer_id, void (*successCallback));
 
 #endif // __STORAGE_H__

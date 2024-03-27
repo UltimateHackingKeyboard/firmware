@@ -8,8 +8,8 @@
 #include "config_parser/config_globals.h"
 #include "buffer.h"
 
-volatile bool IsEepromBusy;
-static eeprom_operation_t CurrentEepromOperation;
+volatile bool IsStorageBusy;
+static storage_operation_t CurrentEepromOperation;
 static config_buffer_id_t CurrentConfigBufferId;
 static status_t LastEepromTransferStatus;
 void (*SuccessCallback)(void);
@@ -59,7 +59,7 @@ static void i2cCallback(I2C_Type *base, i2c_master_handle_t *handle, status_t st
     switch (CurrentEepromOperation) {
         case EepromOperation_Read:
             if (isReadSent) {
-                IsEepromBusy = false;
+                IsStorageBusy = false;
                 if (SuccessCallback) {
                     SuccessCallback();
                 }
@@ -69,15 +69,15 @@ static void i2cCallback(I2C_Type *base, i2c_master_handle_t *handle, status_t st
                 ConfigBufferIdToConfigBuffer(CurrentConfigBufferId)->buffer,
                 CurrentConfigBufferId == ConfigBufferId_HardwareConfig ? HARDWARE_CONFIG_SIZE : USER_CONFIG_SIZE
             );
-            IsEepromBusy = true;
+            IsStorageBusy = true;
             isReadSent = true;
             break;
         case EepromOperation_Write:
             if (status == kStatus_Success) {
                 sourceOffset += writeLength;
             }
-            IsEepromBusy = sourceOffset < sourceLength;
-            if (!IsEepromBusy) {
+            IsStorageBusy = sourceOffset < sourceLength;
+            if (!IsStorageBusy) {
                 if (SuccessCallback) {
                     SuccessCallback();
                 }
@@ -86,7 +86,7 @@ static void i2cCallback(I2C_Type *base, i2c_master_handle_t *handle, status_t st
             LastEepromTransferStatus = writePage();
             break;
         default:
-            IsEepromBusy = false;
+            IsStorageBusy = false;
             break;
     }
 }
@@ -96,9 +96,9 @@ void EEPROM_Init(void)
     I2C_MasterTransferCreateHandle(I2C_EEPROM_BUS_BASEADDR, &i2cHandle, i2cCallback, NULL);
 }
 
-status_t EEPROM_LaunchTransfer(eeprom_operation_t operation, config_buffer_id_t configBufferId, void (*successCallback))
+status_t EEPROM_LaunchTransfer(storage_operation_t operation, config_buffer_id_t configBufferId, void (*successCallback))
 {
-    if (IsEepromBusy) {
+    if (IsStorageBusy) {
         return kStatus_I2C_Busy;
     }
 
@@ -125,12 +125,12 @@ status_t EEPROM_LaunchTransfer(eeprom_operation_t operation, config_buffer_id_t 
             break;
     }
 
-    IsEepromBusy = LastEepromTransferStatus == kStatus_Success;
+    IsStorageBusy = LastEepromTransferStatus == kStatus_Success;
     return LastEepromTransferStatus;
 }
 #endif
 
-bool IsEepromOperationValid(eeprom_operation_t operation)
+bool IsEepromOperationValid(storage_operation_t operation)
 {
     return operation == EepromOperation_Read || operation == EepromOperation_Write;
 }
