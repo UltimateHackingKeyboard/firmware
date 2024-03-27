@@ -1,8 +1,24 @@
-#include "fsl_common.h"
 #include "usb_commands/usb_command_launch_eeprom_transfer.h"
 #include "usb_protocol_handler.h"
 #include "eeprom.h"
 #include "config_parser/config_globals.h"
+
+#ifdef __ZEPHYR__
+#include "storage.h"
+typedef int32_t status_t;
+#define MAKE_STATUS(group, code) ((((group)*100) + (code)))
+enum _status_groups
+{
+    kStatusGroup_Generic = 0,
+};
+enum _generic_status
+{
+    kStatus_Success = MAKE_STATUS(kStatusGroup_Generic, 0),
+    kStatus_Fail = MAKE_STATUS(kStatusGroup_Generic, 1),
+};
+#else
+#include "fsl_common.h"
+#endif
 
 void UsbCommand_LaunchEepromTransfer(void)
 {

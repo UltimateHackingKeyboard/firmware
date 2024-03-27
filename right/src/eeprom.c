@@ -1,8 +1,10 @@
+#include "eeprom.h"
+
+#ifndef __ZEPHYR__
 #include "fsl_common.h"
 #include "config_parser/config_globals.h"
 #include "i2c_addresses.h"
 #include "i2c.h"
-#include "eeprom.h"
 #include "config_parser/config_globals.h"
 #include "buffer.h"
 
@@ -126,6 +128,7 @@ status_t EEPROM_LaunchTransfer(eeprom_operation_t operation, config_buffer_id_t 
     IsEepromBusy = LastEepromTransferStatus == kStatus_Success;
     return LastEepromTransferStatus;
 }
+#endif
 
 bool IsEepromOperationValid(eeprom_operation_t operation)
 {

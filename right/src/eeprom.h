@@ -31,7 +31,7 @@
 #ifndef __ZEPHYR__
     void EEPROM_Init(void);
     status_t EEPROM_LaunchTransfer(eeprom_operation_t operation, config_buffer_id_t config_buffer_id, void (*successCallback));
-    bool IsEepromOperationValid(eeprom_operation_t operation);
 #endif
+    bool IsEepromOperationValid(eeprom_operation_t operation);
 
 #endif
