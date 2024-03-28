@@ -1,3 +1,4 @@
+#include "zephyr/storage/flash_map.h"
 #include "keyboard/key_scanner.h"
 #include "keyboard/leds.h"
 #include "keyboard/oled/oled.h"
@@ -14,9 +15,15 @@
 #include "bt_conn.h"
 #include "bt_advertise.h"
 #include "settings.h"
+#include "flash.h"
 
 int main(void) {
     printk("----------\n" DEVICE_NAME " started\n");
+
+#if DEVICE_IS_UHK80_RIGHT
+    flash_area_open(FLASH_AREA_ID(hardware_config_partition), &hardwareConfigArea);
+    flash_area_open(FLASH_AREA_ID(user_config_partition), &userConfigArea);
+#endif
 
 #if !DEVICE_IS_UHK_DONGLE
     InitUart();
@@ -29,13 +36,16 @@ int main(void) {
 
     InitLeds();
     InitCharger();
+
 #ifdef DEVICE_HAS_MERGE_SENSOR
     MergeSensor_Init();
 #endif // DEVICE_HAS_MERGE_SENSOR
+
     InitKeyScanner();
 
     USB_EnableHid();
 #endif // !DEVICE_IS_UHK_DONGLE
+
     bt_init();
     InitSettings();
 
@@ -53,4 +63,9 @@ int main(void) {
 #endif
 
     HID_SendReportsThread();
+
+#if DEVICE_IS_UHK80_RIGHT
+    flash_area_read(hardwareConfigArea, 0, HardwareConfigBuffer.buffer, HARDWARE_CONFIG_SIZE);
+    flash_area_read(userConfigArea, 0, StagingUserConfigBuffer.buffer, USER_CONFIG_SIZE);
+#endif
 }

@@ -24,6 +24,7 @@
 #include "ledmap.h"
 #include "debug.h"
 #include "event_scheduler.h"
+#include "config_parser/config_globals.h"
 
 static bool IsEepromInitialized = false;
 static bool IsConfigInitialized = false;
