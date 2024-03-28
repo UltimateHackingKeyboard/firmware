@@ -16,6 +16,10 @@
 #include "bt_advertise.h"
 #include "settings.h"
 #include "flash.h"
+#include "usb_commands/usb_command_apply_config.h"
+#include "macros/shortcut_parser.h"
+#include "macros/keyid_parser.h"
+#include "macros/core.h"
 
 int main(void) {
     printk("----------\n" DEVICE_NAME " started\n");
@@ -67,5 +71,10 @@ int main(void) {
 #if DEVICE_IS_UHK80_RIGHT
     flash_area_read(hardwareConfigArea, 0, HardwareConfigBuffer.buffer, HARDWARE_CONFIG_SIZE);
     flash_area_read(userConfigArea, 0, StagingUserConfigBuffer.buffer, USER_CONFIG_SIZE);
+
+    UsbCommand_ApplyConfig();
+    ShortcutParser_initialize();
+    KeyIdParser_initialize();
+    Macros_Initialize();
 #endif
 }

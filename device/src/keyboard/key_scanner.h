@@ -9,7 +9,6 @@
 
 // Variables:
 
-    extern uint8_t KeyStates[KEY_MATRIX_ROWS][KEY_MATRIX_COLS];
     extern volatile bool KeyPressed;
 
 // Functions:

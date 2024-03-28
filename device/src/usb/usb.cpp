@@ -5,6 +5,7 @@ extern "C"
 #include "keyboard/key_scanner.h"
 #include <device.h>
 #include <zephyr/kernel.h>
+#include "key_states.h"
 }
 #include "command_app.hpp"
 #include "controls_app.hpp"
@@ -246,17 +247,17 @@ extern "C" void HID_SendReportsThread()
         keys.set_code(scancode::KEYBOARD_A, KeyPressed);
         keyboard_app::handle().set_report_state(keys);
 
-        mouseState.buttons.set(hid::page::button(2), KeyStates[0][1]);
+        mouseState.buttons.set(hid::page::button(2), KeyStates[CURRENT_SLOT_ID][1].current);
         mouseState.x = -50;
         // mouseState.y = -50;
         // mouseState.wheel_y = -50;
         // mouseState.wheel_x = -50;
         mouse_app::handle().set_report_state(mouseState);
 
-        controls.set_code(consumer_code::VOLUME_INCREMENT, KeyStates[0][2]);
+        controls.set_code(consumer_code::VOLUME_INCREMENT, KeyStates[CURRENT_SLOT_ID][2].current);
         controls_app::handle().set_report_state(controls);
 
-        gamepad.set_button(gamepad_button::X, KeyStates[0][3]);
+        gamepad.set_button(gamepad_button::X, KeyStates[CURRENT_SLOT_ID][3].current);
         // gamepad.left.X = 50;
         // gamepad.right.Y = 50;
         // gamepad.right_trigger = 50;
