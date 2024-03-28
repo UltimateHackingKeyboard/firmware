@@ -66,15 +66,18 @@ int main(void) {
     InitCentralUart();
 #endif
 
-    HID_SendReportsThread();
-
 #if DEVICE_IS_UHK80_RIGHT
+    printk("Reading hardware config\n");
     flash_area_read(hardwareConfigArea, 0, HardwareConfigBuffer.buffer, HARDWARE_CONFIG_SIZE);
+    printk("Reading user config\n");
     flash_area_read(userConfigArea, 0, StagingUserConfigBuffer.buffer, USER_CONFIG_SIZE);
-
+    printk("Applying user config\n");
     UsbCommand_ApplyConfig();
+    printk("User config applied\n");
     ShortcutParser_initialize();
     KeyIdParser_initialize();
     Macros_Initialize();
 #endif
+
+    HID_SendReportsThread();
 }
