@@ -57,7 +57,7 @@ static void i2cCallback(I2C_Type *base, i2c_master_handle_t *handle, status_t st
     LastEepromTransferStatus = status;
 
     switch (CurrentEepromOperation) {
-        case EepromOperation_Read:
+        case StorageOperation_Read:
             if (isReadSent) {
                 IsStorageBusy = false;
                 if (SuccessCallback) {
@@ -72,7 +72,7 @@ static void i2cCallback(I2C_Type *base, i2c_master_handle_t *handle, status_t st
             IsStorageBusy = true;
             isReadSent = true;
             break;
-        case EepromOperation_Write:
+        case StorageOperation_Write:
             if (status == kStatus_Success) {
                 sourceOffset += writeLength;
             }
@@ -110,13 +110,13 @@ status_t EEPROM_LaunchTransfer(storage_operation_t operation, config_buffer_id_t
     eepromStartAddress = isHardwareConfig ? 0 : HARDWARE_CONFIG_SIZE;
 
     switch (CurrentEepromOperation) {
-        case EepromOperation_Read:
+        case StorageOperation_Read:
             isReadSent = false;
             static uint8_t addressBuffer[EEPROM_ADDRESS_SIZE];
             SetBufferUint16Be(addressBuffer, 0, eepromStartAddress);
             LastEepromTransferStatus = i2cAsyncWrite(addressBuffer, EEPROM_ADDRESS_SIZE);
             break;
-        case EepromOperation_Write:
+        case StorageOperation_Write:
             sourceBuffer = ConfigBufferIdToConfigBuffer(CurrentConfigBufferId)->buffer;
             sourceOffset = 0;
             uint16_t userConfigSize = ValidatedUserConfigLength && configBufferId == ConfigBufferId_ValidatedUserConfig ? ValidatedUserConfigLength : USER_CONFIG_SIZE;
@@ -132,5 +132,5 @@ status_t EEPROM_LaunchTransfer(storage_operation_t operation, config_buffer_id_t
 
 bool IsEepromOperationValid(storage_operation_t operation)
 {
-    return operation == EepromOperation_Read || operation == EepromOperation_Write;
+    return operation == StorageOperation_Read || operation == StorageOperation_Write;
 }

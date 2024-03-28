@@ -27,8 +27,8 @@
 // Typedefs:
 
     typedef enum {
-        EepromOperation_Read,
-        EepromOperation_Write,
+        StorageOperation_Read,
+        StorageOperation_Write,
     } storage_operation_t;
 
 // Variables:
