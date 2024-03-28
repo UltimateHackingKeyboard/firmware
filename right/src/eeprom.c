@@ -8,7 +8,6 @@
 #include "config_parser/config_globals.h"
 #include "buffer.h"
 
-volatile bool IsStorageBusy;
 static storage_operation_t CurrentEepromOperation;
 static config_buffer_id_t CurrentConfigBufferId;
 static status_t LastEepromTransferStatus;
@@ -129,8 +128,3 @@ status_t EEPROM_LaunchTransfer(storage_operation_t operation, config_buffer_id_t
     return LastEepromTransferStatus;
 }
 #endif
-
-bool IsEepromOperationValid(storage_operation_t operation)
-{
-    return operation == StorageOperation_Read || operation == StorageOperation_Write;
-}

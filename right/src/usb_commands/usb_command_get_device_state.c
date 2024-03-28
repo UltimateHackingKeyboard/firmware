@@ -8,7 +8,7 @@
 #include "segment_display.h"
 #include "usb_commands/usb_command_get_device_state.h"
 #include "usb_protocol_handler.h"
-#include "eeprom.h"
+#include "storage.h"
 #include "timer.h"
 #include "layer_switcher.h"
 #include "peripherals/merge_sensor.h"
