@@ -16,6 +16,7 @@ If you're one of the brave few who wants to hack the firmware then read on.
 west init -m git@github.com:UltimateHackingKeyboard/firmware-uhk80.git firmware-uhk80
 cd firmware-uhk80
 west update
+west config --local build.cmake-args -- "-Wno-dev"
 cd uhk/lib
 git submodule init --recursive
 git submodule update --init --recursive

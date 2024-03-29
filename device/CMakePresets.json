@@ -16,6 +16,9 @@
                 "BOARD_ROOT": "${sourceParentDir}/",
                 "CONF_FILE": "${sourceDir}/prj.conf",
                 "OVERLAY_CONFIG": "${sourceDir}/prj.conf.overlays/uhk-60-v1-right.prj.conf"
+            },
+            "warnings": {
+                "dev": false
             }
         },
         {
@@ -29,6 +32,9 @@
                 "BOARD_ROOT": "${sourceParentDir}/",
                 "CONF_FILE": "${sourceDir}/prj.conf",
                 "OVERLAY_CONFIG": "${sourceDir}/prj.conf.overlays/uhk-60-v2-right.prj.conf"
+            },
+            "warnings": {
+                "dev": false
             }
         },
         {
@@ -42,6 +48,9 @@
                 "BOARD_ROOT": "${sourceParentDir}/",
                 "mcuboot_OVERLAY_CONFIG": "${sourceDir}/child_image/mcuboot.conf;${sourceDir}/child_image/uhk-80-right.mcuboot.conf",
                 "EXTRA_CONF_FILE": "${sourceDir}/prj.conf.overlays/uhk-80-right.prj.conf"
+            },
+            "warnings": {
+                "dev": false
             }
         },
         {
@@ -55,6 +64,9 @@
                 "BOARD_ROOT": "${sourceParentDir}/",
                 "mcuboot_OVERLAY_CONFIG": "${sourceDir}/child_image/mcuboot.conf;${sourceDir}/child_image/uhk-80-left.mcuboot.conf",
                 "EXTRA_CONF_FILE": "${sourceDir}/prj.conf.overlays/uhk-80-left.prj.conf"
+            },
+            "warnings": {
+                "dev": false
             }
         },
         {
@@ -68,6 +80,9 @@
                 "BOARD_ROOT": "${sourceParentDir}/",
                 "mcuboot_OVERLAY_CONFIG": "${sourceDir}/child_image/mcuboot.conf;${sourceDir}/child_image/uhk-dongle.mcuboot.conf",
                 "EXTRA_CONF_FILE": "${sourceDir}/prj.conf.overlays/uhk-dongle.prj.conf"
+            },
+            "warnings": {
+                "dev": false
             }
         }
     ]
