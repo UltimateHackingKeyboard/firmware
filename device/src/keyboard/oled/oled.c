@@ -88,7 +88,7 @@ static widget_t* currentScreen = NULL;
 static uint16_t currentXShift = 0;
 static uint16_t currentYShift = 0;
 
-// Temporary code. If you see it in github, kick me hard.
+// Temporary code. Will be removed soon
 static void forceRedraw() {
     for (uint16_t x = 0; x < 256; x++) {
         for (uint16_t y = 0; y < 64; y++) {
