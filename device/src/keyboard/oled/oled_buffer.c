@@ -11,8 +11,8 @@
 static struct {
     uint16_t width;
     uint16_t height;
-    uint8_t buffer[DISPLAY_USABLE_WIDTH*DISPLAY_USABLE_HEIGHT];
-} oledBuffer = { .width = DISPLAY_USABLE_WIDTH, .height = DISPLAY_USABLE_HEIGHT };
+    uint8_t buffer[DISPLAY_WIDTH*DISPLAY_HEIGHT];
+} oledBuffer = { .width = DISPLAY_WIDTH, .height = DISPLAY_HEIGHT };
 
 framebuffer_t* OledBuffer = (framebuffer_t*)&oledBuffer;
 

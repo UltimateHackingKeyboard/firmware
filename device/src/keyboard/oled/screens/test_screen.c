@@ -32,6 +32,4 @@ void TestScreen_Init(framebuffer_t* buffer)
     splitterWidget = SplitterWidget_BuildVertical(&consoleWidget, &helloWidget, 120, true);
     frameWidget = FrameWidget_Build(&splitterWidget);
     TestScreen = &frameWidget;
-
-    TestScreen->layOut(TestScreen, 0, 0, buffer->width, buffer->height);
 }

@@ -62,9 +62,6 @@ static void oledCommand2(bool A0, uint8_t b1, uint8_t b2) {
     setOledCs(false);
 }
 
-#define UNSHIFTED_PIXEL(X, Y) OledBuffer->buffer[(Y)*OledBuffer->width+(X)]
-#define PIXEL(X, Y) UNSHIFTED_PIXEL(((X)-currentXShift),((Y)-currentYShift))
-
 static void setPositionTo(uint16_t x, uint16_t y, uint16_t lastWrittenPixelX, uint16_t lastWrittenPixelY)
 {
     uint8_t columnAddress = (DISPLAY_WIDTH-1-x)/2;
@@ -91,65 +88,49 @@ static widget_t* currentScreen = NULL;
 static uint16_t currentXShift = 0;
 static uint16_t currentYShift = 0;
 
+// Temporary code. Will be removed soon
+static void forceRedraw() {
+    for (uint16_t x = 0; x < 256; x++) {
+        for (uint16_t y = 0; y < 64; y++) {
+            OledBuffer->buffer[y*256+x] |= 1;
+        }
+    }
+}
+
+static void performScreenShift() {
+    static uint16_t shiftCounter = 0;
+    static bool initialized = false;
+
+    if (!initialized) {
+        shiftCounter = k_cycle_get_32() % (DISPLAY_SHIFTING_MARGIN*DISPLAY_SHIFTING_MARGIN);
+        initialized = true;
+    }
+
+    shiftCounter++;
+
+    if (shiftCounter > DISPLAY_SHIFTING_MARGIN*DISPLAY_SHIFTING_MARGIN) {
+        shiftCounter = 0;
+    }
+
+    currentXShift = shiftCounter / (DISPLAY_SHIFTING_MARGIN);
+    currentYShift = shiftCounter % (DISPLAY_SHIFTING_MARGIN);
+
+    Framebuffer_Clear(NULL, OledBuffer);
+    currentScreen->layOut(currentScreen, currentXShift, currentYShift, OledBuffer->width - DISPLAY_SHIFTING_MARGIN, OledBuffer->height - DISPLAY_SHIFTING_MARGIN);
+}
+
 static bool updateScreenShift() {
     static uint16_t counter1 = 0;
-    static uint16_t counter2 = 0;
 
     if (counter1++ < 100) {
         return false;
     }
 
     counter1 = 0;
-    counter2++;
 
-    if (counter2 > DISPLAY_SHIFTING_MARGIN*DISPLAY_SHIFTING_MARGIN/4) {
-        counter2 = 0;
-    }
-
-    currentXShift = (counter2 / (DISPLAY_SHIFTING_MARGIN/2))*2;
-    currentYShift = (counter2 % (DISPLAY_SHIFTING_MARGIN/2))*2;
+    performScreenShift();
 
     return true;
-}
-
-static bool isInActiveArea(uint16_t x, uint16_t y) {
-    if (y < currentYShift || y >= currentYShift + OledBuffer->height) {
-        return false;
-    }
-    if (x < currentXShift || x >= currentXShift + OledBuffer->width) {
-        return false;
-    }
-    return true;
-}
-
-static void fullUpdate()
-{
-    k_mutex_lock(&SpiMutex, K_FOREVER);
-    oledNeedsRedraw = false;
-
-    setA0(true);
-    setOledCs(true);
-
-    setPositionTo(DISPLAY_WIDTH-2, 0, 500, 500);
-
-    for (uint16_t y = 0; y < DISPLAY_HEIGHT; y++) {
-        for (uint16_t x = DISPLAY_WIDTH-2; x < DISPLAY_WIDTH; x -= 2) {
-            if (isInActiveArea(x, y)) {
-                uint8_t firstPixel = PIXEL(x, y);
-                uint8_t secondPixel = PIXEL(x+1, y);
-                uint8_t upper = firstPixel >> 4;
-                uint8_t lower = secondPixel & 0xf0;
-
-                writeSpi(upper | lower);
-            }
-            else {
-                writeSpi(0x00);
-            }
-        }
-    }
-    setOledCs(false);
-
-    k_mutex_unlock(&SpiMutex);
 }
 
 static void diffUpdate()
@@ -171,24 +152,18 @@ static void diffUpdate()
             static uint16_t lastWrittenPixelX = 0;
             static uint16_t lastWrittenPixelY = 0;
 
-            uint8_t screenX = x+currentXShift;
-            uint8_t screenY = y+currentYShift;
+            uint8_t firstPixel = Framebuffer_GetPixel(OledBuffer, x, y);
+            uint8_t secondPixel = Framebuffer_GetPixel(OledBuffer, x+1, y);
 
-            uint8_t* firstPixel = &UNSHIFTED_PIXEL(x, y);
-            uint8_t *secondPixel = &UNSHIFTED_PIXEL(x+1, y);
+            if (firstPixel & Framebuffer_PixelIsDirty || secondPixel & Framebuffer_PixelIsDirty) {
+                uint8_t upper = firstPixel >> 4;
+                uint8_t lower = secondPixel & 0xf0;
 
-            if (*firstPixel & Framebuffer_PixelIsDirty || *secondPixel & Framebuffer_PixelIsDirty) {
-                *firstPixel = *firstPixel & 0xf0;
-                *secondPixel = *secondPixel & 0xf0;
-
-                uint8_t upper = *firstPixel >> 4;
-                uint8_t lower = *secondPixel;
-
-                setPositionTo(screenX, screenY, lastWrittenPixelX, lastWrittenPixelY);
+                setPositionTo(x, y, lastWrittenPixelX, lastWrittenPixelY);
 
                 writeSpi(upper | lower); //write pixel data
-                lastWrittenPixelX = screenX;
-                lastWrittenPixelY = screenY;
+                lastWrittenPixelX = x;
+                lastWrittenPixelY = y;
             }
         }
     }
@@ -204,16 +179,13 @@ void oledUpdater() {
     oledCommand1(0, OledCommand_SetScanDirectionDown);
     k_mutex_unlock(&SpiMutex);
 
+    forceRedraw();
+    performScreenShift();
     currentScreen->draw(currentScreen, OledBuffer);
 
-    fullUpdate();
-
     while (true) {
-        if (updateScreenShift()) {
-            fullUpdate();
-        } else {
-            diffUpdate();
-        }
+        updateScreenShift();
+        diffUpdate();
 
         if (!oledNeedsRedraw) {
             k_sleep(K_FOREVER);

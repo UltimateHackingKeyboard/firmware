@@ -26,6 +26,7 @@ void ConsoleWidget_LayOut(widget_t* self, uint8_t x, uint8_t y, uint8_t w, uint8
     self->y = y;
     self->w = w;
     self->h = h;
+    self->dirty = true;
 }
 
 void ConsoleWidget_Draw(widget_t* self, framebuffer_t* buffer)

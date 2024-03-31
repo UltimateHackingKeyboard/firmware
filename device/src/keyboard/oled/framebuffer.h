@@ -42,5 +42,14 @@
         }
     };
 
+    static inline uint8_t Framebuffer_GetPixel(framebuffer_t* buffer, uint16_t x, uint16_t y)
+    {
+        uint16_t index = y*buffer->width+x;
+        uint8_t val = buffer->buffer[index];
+        buffer->buffer[index] &= 0xf0;
+        return val;
+    };
+
+
 
 #endif
