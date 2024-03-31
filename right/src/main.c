@@ -24,6 +24,7 @@
 #include "ledmap.h"
 #include "debug.h"
 #include "event_scheduler.h"
+#include "config_parser/config_globals.h"
 
 static bool IsEepromInitialized = false;
 static bool IsConfigInitialized = false;
@@ -40,7 +41,7 @@ static void hardwareConfigurationReadFinished(void)
         HardwareConfig->signatureLength = HARDWARE_CONFIG_SIGNATURE_LENGTH;
         strncpy(HardwareConfig->signature, "FTY", HARDWARE_CONFIG_SIGNATURE_LENGTH);
     }
-    EEPROM_LaunchTransfer(EepromOperation_Read, ConfigBufferId_StagingUserConfig, userConfigurationReadFinished);
+    EEPROM_LaunchTransfer(StorageOperation_Read, ConfigBufferId_StagingUserConfig, userConfigurationReadFinished);
 }
 
 static void initConfig()
@@ -84,7 +85,7 @@ int main(void)
 
     IsFactoryResetModeEnabled = RESET_BUTTON_IS_PRESSED;
 
-    EEPROM_LaunchTransfer(EepromOperation_Read, ConfigBufferId_HardwareConfig, hardwareConfigurationReadFinished);
+    EEPROM_LaunchTransfer(StorageOperation_Read, ConfigBufferId_HardwareConfig, hardwareConfigurationReadFinished);
 
     if (IsBusPalOn) {
         init_hardware();

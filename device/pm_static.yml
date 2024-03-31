@@ -1,0 +1,63 @@
+app:
+  address: 0x10200
+  end_address: 0xfe000
+  region: flash_primary
+  size: 0xede00
+mcuboot:
+  address: 0x0
+  end_address: 0x10000
+  placement:
+    before:
+    - mcuboot_primary
+  region: flash_primary
+  size: 0x10000
+mcuboot_pad:
+  address: 0x10000
+  end_address: 0x10200
+  placement:
+    align:
+      start: 0x1000
+    before:
+    - mcuboot_primary_app
+  region: flash_primary
+  size: 0x200
+mcuboot_primary:
+  address: 0x10000
+  end_address: 0xfe000
+  orig_span: &id001
+  - app
+  - mcuboot_pad
+  region: flash_primary
+  size: 0xee000
+  span: *id001
+mcuboot_primary_app:
+  address: 0x10200
+  end_address: 0xfe000
+  orig_span: &id002
+  - app
+  region: flash_primary
+  size: 0xede00
+  span: *id002
+hardware_config_partition:
+  address: 0xed000
+  end_address: 0xee000
+  size: 0x1000
+user_config_partition:
+  address: 0xee000
+  end_address: 0xfe000
+  size: 0x10000
+settings_storage:
+  address: 0xfe000
+  end_address: 0x100000
+  placement:
+    align:
+      start: 0x1000
+    before:
+    - end
+  region: flash_primary
+  size: 0x2000
+sram_primary:
+  address: 0x20000000
+  end_address: 0x20040000
+  region: sram_primary
+  size: 0x40000

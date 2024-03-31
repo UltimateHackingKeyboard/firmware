@@ -12,13 +12,13 @@
 #include "usb_commands/usb_command_get_variable.h"
 #include "usb_commands/usb_command_set_variable.h"
 #include "usb_commands/usb_command_switch_keymap.h"
+#include "usb_commands/usb_command_launch_storage_transfer.h"
 
 #ifndef __ZEPHYR__
 #include "usb_commands/usb_command_get_module_property.h"
 #include "usb_commands/usb_command_set_test_led.h"
 #include "usb_commands/usb_command_set_led_pwm_brightness.h"
 #include "usb_commands/usb_command_get_adc_value.h"
-#include "usb_commands/usb_command_launch_eeprom_transfer.h"
 #include "usb_commands/usb_command_jump_to_module_bootloader.h"
 #include "usb_commands/usb_command_send_kboot_command_to_module.h"
 #include "usb_commands/usb_command_get_slave_i2c_errors.h"
@@ -31,7 +31,7 @@ void CommandProtocolRxHandler(const uint8_t* data, size_t size)
     GenericHidOutBuffer = data;
     // printk("CommandProtocolRxHandler: data[0]:%u size:%d\n", data[0], size);
     UsbProtocolHandler();
-    CommandProtocolTx(GenericHidInBuffer, size);
+    CommandProtocolTx(GenericHidInBuffer, USB_GENERIC_HID_OUT_BUFFER_LENGTH);
 }
 #endif
 
@@ -76,15 +76,15 @@ void UsbProtocolHandler(void)
         case UsbCommandId_ExecMacroCommand:
             UsbCommand_ExecMacroCommand();
             break;
+        case UsbCommandId_LaunchStorageTransfer:
+            UsbCommand_LaunchStorageTransfer();
+            break;
 #ifndef __ZEPHYR__
         case UsbCommandId_JumpToModuleBootloader:
             UsbCommand_JumpToModuleBootloader();
             break;
         case UsbCommandId_SendKbootCommandToModule:
             UsbCommand_SendKbootCommandToModule();
-            break;
-        case UsbCommandId_LaunchEepromTransfer:
-            UsbCommand_LaunchEepromTransfer();
             break;
         case UsbCommandId_SetTestLed:
             UsbCommand_SetTestLed();

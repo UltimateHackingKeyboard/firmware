@@ -28,7 +28,7 @@
         UsbCommandId_WriteHardwareConfig      = 0x05,
         UsbCommandId_WriteStagingUserConfig   = 0x06,
         UsbCommandId_ApplyConfig              = 0x07,
-        UsbCommandId_LaunchEepromTransfer     = 0x08,
+        UsbCommandId_LaunchStorageTransfer    = 0x08,
 
         UsbCommandId_GetDeviceState           = 0x09,
         UsbCommandId_SetTestLed               = 0x0a,

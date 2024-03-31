@@ -10,6 +10,7 @@
 #include "device.h"
 #include "oled/oled_buffer.h"
 #include "logger.h"
+#include "key_states.h"
 
 // Thread definitions
 
@@ -46,7 +47,6 @@ static struct gpio_dt_spec cols[KEY_MATRIX_COLS] = {
 };
 
 #define COLS_COUNT (sizeof(cols) / sizeof(cols[0]))
-uint8_t KeyStates[KEY_MATRIX_ROWS][KEY_MATRIX_COLS];
 volatile bool KeyPressed;
 
 void keyScanner() {
@@ -56,12 +56,12 @@ void keyScanner() {
             gpio_pin_set_dt(&rows[rowId], 1);
             for (uint8_t colId=0; colId<KEY_MATRIX_COLS; colId++) {
                 bool keyState = gpio_pin_get_dt(&cols[colId]);
-                if (keyState != KeyStates[rowId][colId]) {
+                if (keyState != KeyStates[CURRENT_SLOT_ID][rowId*KEY_MATRIX_COLS + colId].current) {
                     if (Shell.keyLog) {
                         Log("SW%c%c %s", rowId+'1', colId+'1', keyState ? "down" : "up");
                     }
                 }
-                KeyStates[rowId][colId] = keyState;
+                KeyStates[CURRENT_SLOT_ID][rowId*KEY_MATRIX_COLS + colId].current = keyState;
                 if (keyState) {
                     keyPressed = true;
                 }

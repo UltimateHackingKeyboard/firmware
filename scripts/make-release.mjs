@@ -1,17 +1,19 @@
 #!/usr/bin/env node
 import fs from 'fs';
 import path from 'path';
-import {getGitInfo} from './common.mjs';
 import shell from 'shelljs';
+import {getGitInfo, readPackageJson} from './common.mjs';
 import {generateVersionsH} from './generate-versions-h-util.mjs';
-import {readPackageJson} from './read-package-json.mjs';
-import { fileURLToPath } from 'url';
+import {fileURLToPath} from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 shell.config.fatal = true;
 shell.config.verbose = true;
+
+const gitInfo = getGitInfo();
+const packageJson = readPackageJson();
 
 function build(buildTarget, step) {
     const buildDir = path.dirname(`${__dirname}/../${buildTarget.source}`);
@@ -27,11 +29,20 @@ function build(buildTarget, step) {
             shell.exec(`cd ${buildDir}/..; make -j8`);
         }
     } else if (buildTarget.platform === 'nordic') {
+        shell.exec(`ZEPHYR_TOOLCHAIN_VARIANT=zephyr west build \
+            --build-dir ${gitInfo.root}/device/build/${buildTarget.name} \
+            ${gitInfo.root}/device \
+            --pristine \
+            --board ${buildTarget.name} \
+            --no-sysbuild \
+            -- \
+            -DNCS_TOOLCHAIN_VERSION=NONE \
+            -DEXTRA_CONF_FILE=prj.conf.overlays/${buildTarget.name}.prj.conf \
+            -DBOARD_ROOT=${gitInfo.root} \
+            -Dmcuboot_OVERLAY_CONFIG="${gitInfo.root}/device/child_image/mcuboot.conf;${gitInfo.root}/device/child_image/${buildTarget.name}.mcuboot.conf"`
+        );
     }
 }
-
-const gitInfo = getGitInfo();
-const packageJson = readPackageJson();
 
 generateVersionsH({packageJson, gitInfo, useRealData:false});
 
@@ -41,7 +52,7 @@ const releaseDir = `${__dirname}/${releaseName}`;
 const agentDir = `${__dirname}/../lib/agent`;
 let releaseFile = `${__dirname}/${releaseName}.tar.gz`;
 
-if (gitInfo.tag !== `v${version}` && !process.argv.includes('--allowSha')) {
+if (gitInfo.tag !== `v${version}` && !process.argv.includes('--allowSha') && !process.argv.includes('--buildTest')) {
     console.error(`Git tag '${gitInfo.tag}' !~ 'v{version}'. Please run with '--allowSha' if this is intentional.`);
     process.exit(1);
 }
@@ -55,6 +66,10 @@ shell.rm('-rf', releaseDir, releaseFile);
 const buildTargets = [...packageJson.devices, ...packageJson.modules];
 for (const buildTarget of buildTargets) {
     build(buildTarget, 1);
+}
+
+if (process.argv.includes('--buildTest')) {
+    process.exit(0);
 }
 
 const {devices, modules} = generateVersionsH({packageJson, gitInfo, useRealData:true});

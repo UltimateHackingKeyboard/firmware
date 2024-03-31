@@ -28,7 +28,7 @@ int scan_init(void) {
     bt_scan_init(&scan_init);
     bt_scan_cb_register(&scan_cb);
 
-#if DEVICE_IS_UHK80_LEFT || DEVICE_IS_UHK_DONGLE
+#if DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK_DONGLE
     err = bt_scan_filter_add(BT_SCAN_FILTER_TYPE_ADDR, &Peers[PeerIdLeft].addr);
     if (err) {
         printk("Scanning filters cannot be set (err %d)\n", err);

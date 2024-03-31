@@ -1,20 +1,24 @@
 import {execSync} from 'child_process';
+import {readFileSync} from 'fs';
+
+import path from 'path';
+import {fileURLToPath} from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+function exec(cmd) {
+    return execSync(cmd).toString().trim();
+}
 
 export function getGitInfo() {
-    const result = {
-        repo: '',
-        tag: '',
+    return {
+        repo: exec('git remote get-url origin').replace(/.*github.com./g, '').replace(/.git$/, ''),
+        tag: exec('git tag --points-at HEAD') || exec('git rev-parse --short HEAD'),
+        root: exec('git rev-parse --show-toplevel'),
     };
+}
 
-    result.repo = execSync('git remote get-url origin').toString().trim()
-        .replace(/.*github.com./g, '')
-        .replace(/.git$/, '');
-
-    result.tag = execSync('git tag --points-at HEAD').toString().trim();
-
-    if (result.tag.length === 0) {
-        result.tag = execSync('git rev-parse --short HEAD').toString().trim();
-    }
-
-    return result;
+export function readPackageJson() {
+  return JSON.parse(readFileSync(path.join(__dirname, 'package.json'), 'utf8'));
 }

@@ -9,7 +9,11 @@
 
 // Macros:
 
-    #define MAX_KEY_COUNT_PER_MODULE     35
+#ifdef __ZEPHYR__
+    #define MAX_KEY_COUNT_PER_MODULE 60
+#else
+    #define MAX_KEY_COUNT_PER_MODULE 35
+#endif
 
 // Typedefs:
 

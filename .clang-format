@@ -1,25 +1,42 @@
----
-Language:        Cpp
-BasedOnStyle:  WebKit
-AllowShortFunctionsOnASingleLine: false
-BinPackArguments: false
-BinPackParameters: false
-BraceWrapping:   
-  AfterClass:      false
-  AfterControlStatement: false
-  AfterEnum:       false
-  AfterFunction:   true
-  AfterNamespace:  false
-  AfterObjCDeclaration: false
-  AfterStruct:     false
-  AfterUnion:      false
-  BeforeCatch:     false
-  BeforeElse:      false
-  IndentBraces:    false
-BreakBeforeBraces: Custom
-Cpp11BracedListStyle: true
+Language: Cpp
+BasedOnStyle: Microsoft
+ColumnLimit: 100
+IndentWidth: 4
+IndentPPDirectives: BeforeHash
+PPIndentWidth: 4
+ContinuationIndentWidth: 4
+
+ReflowComments: false
+
 PointerAlignment: Right
-ReflowComments:  false
-SortIncludes:    false
-TabWidth:        4
-...
+DerivePointerAlignment: false
+
+BreakBeforeBraces: Custom
+BraceWrapping:
+    AfterClass: false
+    AfterStruct: false
+    AfterUnion: false
+    AfterEnum: false
+    AfterFunction: true
+    AfterNamespace: false
+    AfterExternBlock: false
+    AfterCaseLabel: false
+    AfterControlStatement: Never
+    BeforeElse: false
+    BeforeCatch: false
+    BeforeLambdaBody: false
+    SplitEmptyFunction: false
+    SplitEmptyRecord: false
+    SplitEmptyNamespace: false
+AlignAfterOpenBracket: DontAlign
+
+# c++ specific
+ConstructorInitializerIndentWidth: 4
+IndentRequiresClause: true
+IndentExternBlock: NoIndent
+PackConstructorInitializers: NextLine
+AlwaysBreakTemplateDeclarations: Yes
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortLambdasOnASingleLine: Inline
+ShortNamespaceLines: 1
+FixNamespaceComments: true

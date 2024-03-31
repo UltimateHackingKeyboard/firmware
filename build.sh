@@ -1,6 +1,6 @@
 #!/bin/bash
 
-NCS_VERSION=v2.5.0
+NCS_VERSION=v2.6.0
 
 function help() {
     cat << END
@@ -44,8 +44,8 @@ case $ACTION in
         git submodule init
         git submodule update --init --recursive
         nrfutil install toolchain-manager 
+        nrfutil toolchain-manager install --ncs-version $NCS_VERSION
         nrfutil toolchain-manager launch --shell << END
-            #west init -m https://github.com/nrfconnect/sdk-nrf --mr main
             west init -m https://github.com/nrfconnect/sdk-nrf --mr $NCS_VERSION
             west update
             west zephyr-export

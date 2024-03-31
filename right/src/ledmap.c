@@ -272,6 +272,26 @@ static rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
     },
 };
 
+#else
+
+// UHK 80
+static rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
+    // Right keyboard half
+    {
+    },
+
+    // Left keyboard half
+    {
+    },
+
+    // Left module
+    {
+    },
+
+    // Right module
+    {
+    },
+};
 
 #endif
 
@@ -321,7 +341,7 @@ static color_mode_t determineMode(uint8_t slotId)
     } else {
         return ColorMode_Rgb;
     }
-#elif DEVICE_ID == DEVICE_ID_UHK60V2
+#else
     return ColorMode_Rgb;
 #endif
 }
