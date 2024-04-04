@@ -674,7 +674,11 @@ bool canWeRun(module_kinetic_state_t* ks)
 
 void MouseController_ProcessMouseActions()
 {
+#ifndef __ZEPHYR__
     if (Slaves[SlaveId_RightTouchpad].isConnected) {
+#else
+    if (false) {
+#endif
 
         module_kinetic_state_t *ks = getKineticState(ModuleId_TouchpadRight);
 

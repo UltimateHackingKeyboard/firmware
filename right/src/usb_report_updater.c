@@ -36,13 +36,13 @@
 #include "utils.h"
 #include "debug.h"
 #include "macros/key_timing.h"
+#include <string.h>
 
 bool TestUsbStack = false;
-#ifndef __ZEPHYR__
+
 static key_action_cached_t actionCache[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
 
 static uint32_t lastActivityTime;
-#endif
 
 volatile uint8_t UsbReportUpdateSemaphore = 0;
 
@@ -69,7 +69,6 @@ uint16_t KeystrokeDelay = 0;
 
 key_state_t* EmergencyKey = NULL;
 
-#ifndef __ZEPHYR__
 // Holds are applied on current base layer.
 static void applyLayerHolds(key_state_t *keyState, key_action_t *action) {
     if (action->type == KeyActionType_SwitchLayer && KeyState_Active(keyState)) {
@@ -98,7 +97,6 @@ static void applyLayerHolds(key_state_t *keyState, key_action_t *action) {
         LayerSwitcher_HoldLayer(SECONDARY_ROLE_LAYER_TO_LAYER_ID(action->keystroke.secondaryRole), false);
     }
 }
-#endif
 
 // Toggle actions are applied on active/cached layer.
 static void applyToggleLayerAction(key_state_t *keyState, key_action_t *action) {
@@ -121,7 +119,6 @@ static void applyToggleLayerAction(key_state_t *keyState, key_action_t *action) 
     }
 }
 
-#ifndef __ZEPHYR__
 static void handleEventInterrupts(key_state_t *keyState) {
     if(KeyState_ActivatedNow(keyState)) {
         LayerSwitcher_DoubleTapInterrupt(keyState);
@@ -129,7 +126,6 @@ static void handleEventInterrupts(key_state_t *keyState) {
         lastActivityTime = CurrentTime;
     }
 }
-#endif
 
 // Sticky modifiers are all "action modifiers" - i.e., modifiers of composed
 // keystrokes whose purpose is to activate specific shortcut. They are
@@ -316,7 +312,6 @@ void ApplyKeyAction(key_state_t *keyState, key_action_cached_t *cachedAction, ke
     }
 }
 
-#ifndef __ZEPHYR__
 static void clearActiveReports(void)
 {
     memset(ActiveUsbMouseReport, 0, sizeof *ActiveUsbMouseReport);
@@ -347,7 +342,6 @@ static void mergeReports(void)
         }
     }
 }
-#endif
 
 static void commitKeyState(key_state_t *keyState, bool active)
 {
@@ -380,7 +374,6 @@ static inline void preprocessKeyState(key_state_t *keyState)
 
 uint32_t LastUsbGetKeyboardStateRequestTimestamp;
 
-#ifndef __ZEPHYR__
 static void handleUsbStackTestMode() {
     if (TestUsbStack) {
         static bool simulateKeypresses, isEven, isEvenMedia;
@@ -460,9 +453,13 @@ static void updateActiveUsbReports(void)
                     // cache action so that key's meaning remains the same as long
                     // as it is pressed
                     actionCache[slotId][keyId].modifierLayerMask = 0;
+
+#ifndef __ZEPHYR__
                     if (SleepModeActive) {
                         WakeUpHost();
                     }
+#endif
+
                     if (Postponer_LastKeyLayer != 255 && PostponerCore_IsActive()) {
                         actionCache[slotId][keyId].action = CurrentKeymap[Postponer_LastKeyLayer][slotId][keyId];
                         Postponer_LastKeyLayer = 255;
@@ -512,7 +509,6 @@ static void updateActiveUsbReports(void)
     ActiveUsbBasicKeyboardReport->modifiers |= SuppressMods ? 0 : maskedInputMods;
     ActiveUsbBasicKeyboardReport->modifiers |= OutputModifiers | StickyModifiers;
 }
-#endif
 
 void justPreprocessInput(void) {
     // Make preprocessKeyState push new events into postponer queue.
@@ -529,7 +525,6 @@ void justPreprocessInput(void) {
 
 uint32_t UsbReportUpdateCounter;
 
-#ifndef __ZEPHYR__
 static void updateLedSleepModeState() {
     uint32_t elapsedTime = Timer_GetElapsedTime(&lastActivityTime);
 
@@ -542,30 +537,18 @@ static void updateLedSleepModeState() {
     }
 }
 
+uint32_t UpdateUsbReports_LastUpdateTime = 0;
+
 void UpdateUsbReports(void)
 {
-    static uint32_t lastUpdateTime;
     static uint32_t lastReportTime;
-
-
-    for (uint8_t keyId = 0; keyId < RIGHT_KEY_MATRIX_KEY_COUNT; keyId++) {
-        KeyStates[SlotId_RightKeyboardHalf][keyId].hardwareSwitchState = RightKeyMatrix.keyStates[keyId];
-    }
-
-    if (UsbReportUpdateSemaphore && !SleepModeActive) {
-        if (Timer_GetElapsedTime(&lastUpdateTime) < USB_SEMAPHORE_TIMEOUT) {
-            return;
-        } else {
-            UsbReportUpdateSemaphore = 0;
-        }
-    }
 
     if (Timer_GetElapsedTime(&lastReportTime) < KeystrokeDelay) {
         justPreprocessInput();
         return;
     }
 
-    lastUpdateTime = CurrentTime;
+    UpdateUsbReports_LastUpdateTime = CurrentTime;
     UsbReportUpdateCounter++;
 
     UsbBasicKeyboardResetActiveReport();
@@ -578,7 +561,6 @@ void UpdateUsbReports(void)
     updateLedSleepModeState();
 
     bool usbReportsChanged = false;
-    bool usbMouseButtonsChanged = false;
 
     if (UsbBasicKeyboardCheckReportReady() == kStatus_USB_Success) {
         MacroRecorder_RecordBasicReport(ActiveUsbBasicKeyboardReport);
@@ -589,20 +571,14 @@ void UpdateUsbReports(void)
             //just switch reports without sending the report
             UsbBasicKeyboardResetActiveReport();
 		} else {
-            UsbReportUpdateSemaphore |= 1 << USB_BASIC_KEYBOARD_INTERFACE_INDEX;
-            usb_status_t status = UsbBasicKeyboardAction();
-            //The semaphore has to be set before the call. Assume what happens if a bus reset happens asynchronously here. (Deadlock.)
-            if (status != kStatus_USB_Success) {
-                //This is *not* asynchronously safe as long as multiple reports of different type can be sent at the same time.
-                //TODO: consider either making it atomic, or lowering semaphore reset delay
-                UsbReportUpdateSemaphore &= ~(1 << USB_BASIC_KEYBOARD_INTERFACE_INDEX);
-            }
+            UsbBasicKeyboardSendActiveReport();
         }
         usbReportsChanged = true;
         lastReportTime = CurrentTime;
         lastActivityTime = CurrentTime;
     }
 
+#ifndef __ZEPHYR__
     if (UsbMediaKeyboardCheckReportReady() == kStatus_USB_Success) {
         UsbReportUpdateSemaphore |= 1 << USB_MEDIA_KEYBOARD_INTERFACE_INDEX;
         usb_status_t status = UsbMediaKeyboardAction();
@@ -623,6 +599,7 @@ void UpdateUsbReports(void)
         usbReportsChanged = true;
     }
 
+    bool usbMouseButtonsChanged = false;
     if (UsbMouseCheckReportReady(&usbMouseButtonsChanged) == kStatus_USB_Success) {
         UsbReportUpdateSemaphore |= 1 << USB_MOUSE_INTERFACE_INDEX;
         usb_status_t status = UsbMouseAction();
@@ -632,9 +609,9 @@ void UpdateUsbReports(void)
         lastActivityTime = CurrentTime;
         usbReportsChanged |= usbMouseButtonsChanged;
     }
+#endif
 
     if (usbReportsChanged) {
         Macros_SignalUsbReportsChange();
     }
 }
-#endif

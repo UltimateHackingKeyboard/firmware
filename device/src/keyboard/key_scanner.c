@@ -11,6 +11,7 @@
 #include "oled/oled_buffer.h"
 #include "logger.h"
 #include "key_states.h"
+#include "keyboard/key_layout.h"
 
 // Thread definitions
 
@@ -56,15 +57,25 @@ void keyScanner() {
             gpio_pin_set_dt(&rows[rowId], 1);
             for (uint8_t colId=0; colId<KEY_MATRIX_COLS; colId++) {
                 bool keyState = gpio_pin_get_dt(&cols[colId]);
-                if (keyState != KeyStates[CURRENT_SLOT_ID][rowId*KEY_MATRIX_COLS + colId].current) {
+
+                uint8_t sourceKeyId = rowId*KEY_MATRIX_COLS + colId;
+                uint8_t targetKeyId = 0;
+
+                if (CURRENT_SLOT_ID == SlotId_RightKeyboardHalf) {
+                    targetKeyId = KeyLayout_Uhk80_to_Uhk60[CURRENT_SLOT_ID][sourceKeyId];
+                }
+
+                if (keyState != KeyStates[CURRENT_SLOT_ID][targetKeyId].hardwareSwitchState) {
                     if (Shell.keyLog) {
                         Log("SW%c%c %s", rowId+'1', colId+'1', keyState ? "down" : "up");
                     }
                 }
-                KeyStates[CURRENT_SLOT_ID][rowId*KEY_MATRIX_COLS + colId].current = keyState;
+
                 if (keyState) {
                     keyPressed = true;
                 }
+
+                KeyStates[CURRENT_SLOT_ID][targetKeyId].hardwareSwitchState = keyState;
             }
             gpio_pin_set_dt(&rows[rowId], 0);
         }

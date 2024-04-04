@@ -22,7 +22,7 @@
     #define IS_VALID_MODULE_SLOT(slotId) (SlotId_LeftKeyboardHalf <= (slotId) && (slotId) <= SlotId_RightModule)
 
 #ifdef __ZEPHYR__
-    #define CURRENT_SLOT_ID (DEVICE_IS_UHK80_LEFT ? SlotId_LeftModule : SlotId_RightModule)
+    #define CURRENT_SLOT_ID (DEVICE_IS_UHK80_LEFT ? SlotId_LeftKeyboardHalf : SlotId_RightKeyboardHalf)
 #endif
 
 // Typedefs:

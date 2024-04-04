@@ -25,6 +25,7 @@
 #include "debug.h"
 #include "event_scheduler.h"
 #include "config_parser/config_globals.h"
+#include "user_logic.h"
 
 static bool IsEepromInitialized = false;
 static bool IsConfigInitialized = false;
@@ -78,6 +79,27 @@ static void sendFirstReport()
     }
 }
 
+void CopyRightKeystateMatrix(void)
+{
+    KeyMatrix_ScanRow(&RightKeyMatrix);
+    ++MatrixScanCounter;
+    for (uint8_t keyId = 0; keyId < RIGHT_KEY_MATRIX_KEY_COUNT; keyId++) {
+        KeyStates[SlotId_RightKeyboardHalf][keyId].hardwareSwitchState = RightKeyMatrix.keyStates[keyId];
+    }
+}
+
+bool UsbReadyForTransfers(void) {
+    if (UsbReportUpdateSemaphore && !SleepModeActive) {
+        if (Timer_GetElapsedTime(&UpdateUsbReports_LastUpdateTime) < USB_SEMAPHORE_TIMEOUT) {
+            return false;
+        } else {
+            UsbReportUpdateSemaphore = 0;
+        }
+    }
+    return true;
+}
+
+
 int main(void)
 {
     InitClock();
@@ -101,31 +123,9 @@ int main(void)
         sendFirstReport();
 
         while (1) {
-            if (KeymapReloadNeeded) {
-                SwitchKeymapById(CurrentKeymapIndex);
-            }
-            if (LedSlaveDriver_FullUpdateNeeded) {
-                LedSlaveDriver_UpdateLeds();
-            }
-            if (UsbBasicKeyboard_ProtocolChanged) {
-                UsbBasicKeyboard_HandleProtocolChange();
-            }
-            if (UsbMacroCommandWaitingForExecution) {
-                UsbMacroCommand_ExecuteSynchronously();
-            }
-            if (MacroEvent_ScrollLockStateChanged || MacroEvent_NumLockStateChanged || MacroEvent_CapsLockStateChanged) {
-                MacroEvent_ProcessStateKeyEvents();
-            }
-
-            KeyMatrix_ScanRow(&RightKeyMatrix);
-            ++MatrixScanCounter;
-            UpdateUsbReports();
-
-            if (EventScheduler_IsActive) {
-                EventScheduler_Process();
-            }
-            if (SegmentDisplay_NeedsUpdate) {
-                SegmentDisplay_Update();
+            CopyRightKeystateMatrix();
+            if ( UsbReadyForTransfers()) {
+                RunUserLogic();
             }
             __WFI();
         }

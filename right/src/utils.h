@@ -15,6 +15,10 @@ if (reentrancyGuard_active) {                    \
 #define REENTRANCY_GUARD_END                     \
     reentrancyGuard_active = false;
 
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+#endif
+
 // Includes:
 
 #include "key_states.h"

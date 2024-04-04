@@ -9,7 +9,7 @@
 #ifndef __ZEPHYR__
     #include "fsl_common.h"
 #else
-    typedef uint8_t usb_hid_protocol_t;
+    #include "keyboard/legacy_ports.h"
 #endif
 
     #include "attributes.h"
@@ -64,10 +64,8 @@
 #ifndef __ZEPHYR__
     usb_status_t UsbBasicKeyboardCallback(class_handle_t handle, uint32_t event, void *param);
 
-    void UsbBasicKeyboardResetActiveReport(void);
     usb_status_t UsbBasicKeyboardAction(void);
     usb_status_t UsbBasicKeyboardCheckIdleElapsed();
-    usb_status_t UsbBasicKeyboardCheckReportReady();
 #endif
 
     static inline bool UsbBasicKeyboard_IsModifier(uint8_t scancode)
@@ -89,5 +87,8 @@
     void UsbBasicKeyboard_MergeReports(const usb_basic_keyboard_report_t* sourceReport, usb_basic_keyboard_report_t* targetReport);
     void UsbBasicKeyboard_ForeachScancode(const usb_basic_keyboard_report_t* report, void(*action)(uint8_t));
     void UsbBasicKeyboard_HandleProtocolChange();
+    void UsbBasicKeyboardResetActiveReport(void);
+    usb_status_t UsbBasicKeyboardCheckReportReady();
+    void UsbBasicKeyboardSendActiveReport(void);
 
 #endif
