@@ -17,6 +17,7 @@ west init -m git@github.com:UltimateHackingKeyboard/firmware-uhk80.git firmware-
 cd firmware-uhk80
 west update
 west config --local build.cmake-args -- "-Wno-dev"
+./uhk/device/patches/patch-all.sh
 cd uhk/lib
 git submodule init --recursive
 git submodule update --init --recursive
