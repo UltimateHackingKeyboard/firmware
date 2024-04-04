@@ -18,8 +18,7 @@ cd firmware-uhk80
 west update
 west config --local build.cmake-args -- "-Wno-dev"
 ./uhk/device/patches/patch-all.sh
-cd uhk/lib
-git submodule init --recursive
+cd uhk
 git submodule update --init --recursive
 ```
 
