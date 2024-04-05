@@ -29,7 +29,8 @@ void InitPeripheralUart(void) {
 }
 
 void SendPeripheralUart(const uint8_t *data, uint16_t len) {
-    if (bt_nus_send(NULL, data, len)) {
-        printk("Failed to send data over BLE connection\n");
+    int err = bt_nus_send(NULL, data, len);
+    if (err) {
+        printk("Failed to send data over BLE connection (err: %d)\n", err);
     }
 }
