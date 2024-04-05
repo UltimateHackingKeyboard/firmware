@@ -40,5 +40,6 @@
 // Variables:
 
     extern layer_config_t LayerConfig[LayerId_Count];
+    extern const char* LayerNames[LayerId_Count];
 
 #endif

@@ -10,6 +10,10 @@
 #include "led_display.h"
 #include "usb_report_updater.h"
 
+#ifdef __ZEPHYR__
+#include "keyboard/oled/widgets/layer_widget.h"
+#endif
+
 uint16_t DoubletapTimeout = 400;
 uint16_t DoubletapSwitchLayerReleaseTimeout = 200;
 
@@ -79,6 +83,9 @@ void updateActiveLayer() {
     ActiveLayerHeld = activeLayerHeld;
 
     if (ActiveLayer != previousLayer) {
+#ifdef DEVICE_HAS_OLED
+        LayerWidget_Update();
+#endif
         LedDisplay_SetLayer(ActiveLayer);
         Ledmap_UpdateBacklightLeds();
         MacroEvent_OnLayerChange(activeLayer);

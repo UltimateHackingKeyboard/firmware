@@ -1,18 +1,23 @@
 #include "test_screen.h"
-#include "../framebuffer.h"
-#include "../oled_text_renderer.h"
-#include "../fonts/fonts.h"
-#include "../widgets/custom_widget.h"
-#include "../widgets/frame_widget.h"
-#include "../widgets/console_widget.h"
-#include "../widgets/splitter_widget.h"
-#include "../widgets/widget.h"
+#include "keyboard/oled/framebuffer.h"
+#include "keyboard/oled/oled_text_renderer.h"
+#include "keyboard/oled/fonts/fonts.h"
+#include "keyboard/oled/widgets/custom_widget.h"
+#include "keyboard/oled/widgets/frame_widget.h"
+#include "keyboard/oled/widgets/console_widget.h"
+#include "keyboard/oled/widgets/splitter_widget.h"
+#include "keyboard/oled/widgets/layer_widget.h"
+#include "keyboard/oled/widgets/keymap_widget.h"
+#include "keyboard/oled/widgets/widget.h"
 #include "keyboard/logger.h"
 
 static widget_t consoleWidget;
 static widget_t helloWidget;
 static widget_t frameWidget;
 static widget_t splitterWidget;
+static widget_t layerKeymapSplitter;
+static widget_t layerWidget;
+static widget_t keymapWidget;
 
 widget_t* TestScreen;
 
@@ -28,8 +33,11 @@ static void drawHello(widget_t* self, framebuffer_t* buffer)
 void TestScreen_Init(framebuffer_t* buffer)
 {
     helloWidget = CustomWidget_Build(&drawHello);
+    layerWidget = LayerWidget_Build();
+    keymapWidget = KeymapWidget_Build();
     consoleWidget = ConsoleWidget_Build();
-    splitterWidget = SplitterWidget_BuildVertical(&consoleWidget, &helloWidget, 120, true);
+    layerKeymapSplitter = SplitterWidget_BuildHorizontal(&keymapWidget, &layerWidget, 30, false);
+    splitterWidget = SplitterWidget_BuildVertical(&consoleWidget, &layerKeymapSplitter, 120, true);
     frameWidget = FrameWidget_Build(&splitterWidget);
     TestScreen = &frameWidget;
 }
