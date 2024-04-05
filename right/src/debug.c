@@ -1,3 +1,4 @@
+#include <string.h>
 #include "debug.h"
 #ifndef __ZEPHYR__
 #include "segment_display.h"
