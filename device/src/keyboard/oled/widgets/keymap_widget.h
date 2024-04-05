@@ -15,6 +15,7 @@
 
 // Functions:
 
+    void KeymapWidget_Update();
     widget_t KeymapWidget_Build();
 
 #endif

@@ -16,6 +16,7 @@
 // Functions:
 
     widget_t LayerWidget_Build();
+    void LayerWidget_Update();
 
 #endif
 
