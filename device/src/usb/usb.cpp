@@ -6,6 +6,8 @@ extern "C"
 #include <device.h>
 #include <zephyr/kernel.h>
 #include "key_states.h"
+#include "legacy/user_logic.h"
+#include "legacy/timer.h"
 }
 #include "command_app.hpp"
 #include "controls_app.hpp"
@@ -244,6 +246,10 @@ extern "C" void HID_SendReportsThread()
 
     while (true)
     {
+        CurrentTime = k_uptime_get();
+        RunUserLogic();
+
+        /*
         keys.set_code(scancode::KEYBOARD_A, KeyPressed);
         keyboard_app::handle().set_report_state(keys);
 
@@ -262,6 +268,7 @@ extern "C" void HID_SendReportsThread()
         // gamepad.right.Y = 50;
         // gamepad.right_trigger = 50;
         gamepad_app::handle().set_report_state(gamepad);
+        */
 
         k_msleep(1);
     }

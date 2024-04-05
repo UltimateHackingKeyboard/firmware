@@ -1,6 +1,4 @@
-#if DEBUG == 1
 #define WATCHES
-#endif
 
 
 #ifdef WATCHES
@@ -14,6 +12,10 @@
 // Letters are used for magnitude so that brain is not confused by seeing three digit numbers.
 
 // Includes:
+
+    #ifdef __ZEPHYR__
+    #include "keyboard/logger.h"
+    #endif
 
     #include <stdint.h>
     #include "key_states.h"

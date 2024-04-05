@@ -5,6 +5,8 @@
 
 #ifndef __ZEPHYR__
     #include "fsl_common.h"
+#else
+    #include "keyboard/legacy_ports.h"
 #endif
     #include "usb_descriptors/usb_descriptor_system_keyboard_report.h"
     #include "attributes.h"
@@ -45,13 +47,14 @@
 #ifndef __ZEPHYR__
     usb_status_t UsbSystemKeyboardCallback(class_handle_t handle, uint32_t event, void *param);
 
-    void UsbSystemKeyboardResetActiveReport(void);
     usb_status_t UsbSystemKeyboardAction(void);
+
+#endif
+
+    void UsbSystemKeyboardResetActiveReport(void);
     usb_status_t UsbSystemKeyboardCheckIdleElapsed();
     usb_status_t UsbSystemKeyboardCheckReportReady();
-
-    void UsbSystemKeyboard_MergeReports(const usb_system_keyboard_report_t* sourceReport, usb_system_keyboard_report_t* targetReport);
-#endif
     void UsbSystemKeyboard_RemoveScancode(usb_system_keyboard_report_t* report, uint8_t scancode);
+    void UsbSystemKeyboard_MergeReports(const usb_system_keyboard_report_t* sourceReport, usb_system_keyboard_report_t* targetReport);
 
 #endif

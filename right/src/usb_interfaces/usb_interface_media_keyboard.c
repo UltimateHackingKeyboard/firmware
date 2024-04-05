@@ -1,24 +1,27 @@
 #include "usb_composite_device.h"
 #include "usb_report_updater.h"
+#include <string.h>
+#include "utils.h"
+
 
 uint32_t UsbMediaKeyboardActionCounter;
 static usb_media_keyboard_report_t usbMediaKeyboardReports[2];
 usb_media_keyboard_report_t* ActiveUsbMediaKeyboardReport = usbMediaKeyboardReports;
 
-#ifndef __ZEPHYR__
 static usb_media_keyboard_report_t* GetInactiveUsbMediaKeyboardReport(void)
 {
     return ActiveUsbMediaKeyboardReport == usbMediaKeyboardReports ? usbMediaKeyboardReports+1 : usbMediaKeyboardReports;
 }
 
+void UsbMediaKeyboardResetActiveReport(void)
+{
+    memset(ActiveUsbMediaKeyboardReport, 0, USB_MEDIA_KEYBOARD_REPORT_LENGTH);
+}
+
+#ifndef __ZEPHYR__
 static void SwitchActiveUsbMediaKeyboardReport(void)
 {
     ActiveUsbMediaKeyboardReport = GetInactiveUsbMediaKeyboardReport();
-}
-
-void UsbMediaKeyboardResetActiveReport(void)
-{
-    bzero(ActiveUsbMediaKeyboardReport, USB_MEDIA_KEYBOARD_REPORT_LENGTH);
 }
 
 usb_status_t UsbMediaKeyboardAction(void)
@@ -35,19 +38,6 @@ usb_status_t UsbMediaKeyboardAction(void)
         SwitchActiveUsbMediaKeyboardReport();
     }
     return usb_status;
-}
-
-usb_status_t UsbMediaKeyboardCheckIdleElapsed()
-{
-    return kStatus_USB_Busy;
-}
-
-usb_status_t UsbMediaKeyboardCheckReportReady()
-{
-    if (memcmp(ActiveUsbMediaKeyboardReport, GetInactiveUsbMediaKeyboardReport(), sizeof(usb_media_keyboard_report_t)) != 0)
-        return kStatus_USB_Success;
-
-    return UsbMediaKeyboardCheckIdleElapsed();
 }
 
 usb_status_t UsbMediaKeyboardCallback(class_handle_t handle, uint32_t event, void *param)
@@ -90,6 +80,21 @@ usb_status_t UsbMediaKeyboardCallback(class_handle_t handle, uint32_t event, voi
 
     return error;
 }
+#endif
+
+usb_status_t UsbMediaKeyboardCheckIdleElapsed()
+{
+    return kStatus_USB_Busy;
+}
+
+usb_status_t UsbMediaKeyboardCheckReportReady()
+{
+    if (memcmp(ActiveUsbMediaKeyboardReport, GetInactiveUsbMediaKeyboardReport(), sizeof(usb_media_keyboard_report_t)) != 0)
+        return kStatus_USB_Success;
+
+    return UsbMediaKeyboardCheckIdleElapsed();
+}
+
 
 void UsbMediaKeyboard_MergeReports(const usb_media_keyboard_report_t* sourceReport, usb_media_keyboard_report_t* targetReport)
 {
@@ -105,7 +110,6 @@ void UsbMediaKeyboard_MergeReports(const usb_media_keyboard_report_t* sourceRepo
         targetReport->scancodes[idx++] = sourceReport->scancodes[i++];
     }
 }
-#endif
 
 bool UsbMediaKeyboard_AddScancode(usb_media_keyboard_report_t* report, uint16_t scancode)
 {

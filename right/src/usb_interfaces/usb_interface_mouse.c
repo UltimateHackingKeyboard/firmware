@@ -1,11 +1,11 @@
 #include "usb_composite_device.h"
 #include "usb_report_updater.h"
+#include <string.h>
 
 static usb_mouse_report_t usbMouseReports[2];
 uint32_t UsbMouseActionCounter;
 usb_mouse_report_t* ActiveUsbMouseReport = usbMouseReports;
 
-#ifndef __ZEPHYR__
 usb_hid_protocol_t usbMouseProtocol;
 
 static usb_mouse_report_t* GetInactiveUsbMouseReport(void)
@@ -13,14 +13,15 @@ static usb_mouse_report_t* GetInactiveUsbMouseReport(void)
     return ActiveUsbMouseReport == usbMouseReports ? usbMouseReports+1 : usbMouseReports;
 }
 
+void UsbMouseResetActiveReport(void)
+{
+    memset(ActiveUsbMouseReport, 0, USB_MOUSE_REPORT_LENGTH);
+}
+
+#ifndef __ZEPHYR__
 static void SwitchActiveUsbMouseReport(void)
 {
     ActiveUsbMouseReport = GetInactiveUsbMouseReport();
-}
-
-void UsbMouseResetActiveReport(void)
-{
-    bzero(ActiveUsbMouseReport, USB_MOUSE_REPORT_LENGTH);
 }
 
 usb_hid_protocol_t UsbMouseGetProtocol(void)
@@ -46,26 +47,6 @@ usb_status_t UsbMouseAction(void)
     usbMouseProtocol = ((usb_device_hid_struct_t*)UsbCompositeDevice.mouseHandle)->protocol;
 
     return usb_status;
-}
-
-usb_status_t UsbMouseCheckIdleElapsed()
-{
-    return kStatus_USB_Busy;
-}
-
-usb_status_t UsbMouseCheckReportReady(bool* buttonsChanged)
-{
-    // Send out the mouse position and wheel values continuously if the report is not zeros, but only send the mouse button states when they change.
-    if ((memcmp(ActiveUsbMouseReport, GetInactiveUsbMouseReport(), sizeof(usb_mouse_report_t)) != 0) ||
-            ActiveUsbMouseReport->x || ActiveUsbMouseReport->y ||
-            ActiveUsbMouseReport->wheelX || ActiveUsbMouseReport->wheelY) {
-        if (buttonsChanged != NULL) {
-            *buttonsChanged = ActiveUsbMouseReport->buttons != GetInactiveUsbMouseReport()->buttons;
-        }
-        return kStatus_USB_Success;
-    }
-
-    return UsbMouseCheckIdleElapsed();
 }
 
 usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param)
@@ -122,3 +103,24 @@ usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param
     return error;
 }
 #endif
+
+usb_status_t UsbMouseCheckIdleElapsed()
+{
+    return kStatus_USB_Busy;
+}
+
+usb_status_t UsbMouseCheckReportReady(bool* buttonsChanged)
+{
+    // Send out the mouse position and wheel values continuously if the report is not zeros, but only send the mouse button states when they change.
+    if ((memcmp(ActiveUsbMouseReport, GetInactiveUsbMouseReport(), sizeof(usb_mouse_report_t)) != 0) ||
+            ActiveUsbMouseReport->x || ActiveUsbMouseReport->y ||
+            ActiveUsbMouseReport->wheelX || ActiveUsbMouseReport->wheelY) {
+        if (buttonsChanged != NULL) {
+            *buttonsChanged = ActiveUsbMouseReport->buttons != GetInactiveUsbMouseReport()->buttons;
+        }
+        return kStatus_USB_Success;
+    }
+
+    return UsbMouseCheckIdleElapsed();
+}
+

@@ -6,9 +6,11 @@
 #include "usb_composite_device.h"
 #include "usb_report_updater.h"
 
-#ifndef ARRAY_SIZE
-#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+#ifdef __ZEPHYR__
+#include "usb/usb_compatibility.h"
 #endif
+
+#include "utils.h"
 
 #ifndef USB_HID_BOOT_PROTOCOL
 #define USB_HID_BOOT_PROTOCOL   0U
@@ -25,18 +27,22 @@ bool UsbBasicKeyboard_ScrollLockOn = false;
 
 usb_hid_protocol_t usbBasicKeyboardProtocol;
 
+static void setRolloverError(usb_basic_keyboard_report_t* report);
+
 usb_hid_protocol_t UsbBasicKeyboardGetProtocol(void)
 {
     return usbBasicKeyboardProtocol;
 }
 
-#ifndef __ZEPHYR__
-
-static uint8_t usbBasicKeyboardOutBuffer[USB_BASIC_KEYBOARD_OUT_REPORT_LENGTH];
 
 static usb_basic_keyboard_report_t* GetInactiveUsbBasicKeyboardReport(void)
 {
     return ActiveUsbBasicKeyboardReport == usbBasicKeyboardReports ? usbBasicKeyboardReports+1 : usbBasicKeyboardReports;
+}
+
+void UsbBasicKeyboardResetActiveReport(void)
+{
+    memset(ActiveUsbBasicKeyboardReport, 0, USB_BASIC_KEYBOARD_REPORT_LENGTH);
 }
 
 static void SwitchActiveUsbBasicKeyboardReport(void)
@@ -44,10 +50,17 @@ static void SwitchActiveUsbBasicKeyboardReport(void)
     ActiveUsbBasicKeyboardReport = GetInactiveUsbBasicKeyboardReport();
 }
 
-void UsbBasicKeyboardResetActiveReport(void)
+
+#ifndef __ZEPHYR__
+
+static void processStateChange(bool *targetVar, bool value, bool *onChange)
 {
-    bzero(ActiveUsbBasicKeyboardReport, USB_BASIC_KEYBOARD_REPORT_LENGTH);
+    if (value != *targetVar) {
+        *targetVar = value;
+        *onChange = true;
+    }
 }
+
 
 void UsbBasicKeyboard_HandleProtocolChange()
 {
@@ -62,6 +75,8 @@ void UsbBasicKeyboard_HandleProtocolChange()
         UsbBasicKeyboard_ProtocolChanged = false;
     }
 }
+
+static uint8_t usbBasicKeyboardOutBuffer[USB_BASIC_KEYBOARD_OUT_REPORT_LENGTH];
 
 usb_status_t UsbBasicKeyboardAction(void)
 {
@@ -86,27 +101,6 @@ usb_status_t UsbBasicKeyboardAction(void)
     }
 
     return usb_status;
-}
-
-usb_status_t UsbBasicKeyboardCheckIdleElapsed()
-{
-    return kStatus_USB_Busy;
-}
-
-usb_status_t UsbBasicKeyboardCheckReportReady()
-{
-    if (memcmp(ActiveUsbBasicKeyboardReport, GetInactiveUsbBasicKeyboardReport(), sizeof(usb_basic_keyboard_report_t)) != 0)
-        return kStatus_USB_Success;
-
-    return UsbBasicKeyboardCheckIdleElapsed();
-}
-
-static void processStateChange(bool *targetVar, bool value, bool *onChange)
-{
-    if (value != *targetVar) {
-        *targetVar = value;
-        *onChange = true;
-    }
 }
 
 usb_status_t UsbBasicKeyboardCallback(class_handle_t handle, uint32_t event, void *param)
@@ -192,6 +186,36 @@ usb_status_t UsbBasicKeyboardCallback(class_handle_t handle, uint32_t event, voi
 }
 #endif
 
+void UsbBasicKeyboardSendActiveReport(void)
+{
+#ifdef __ZEPHYR__
+    UsbCompatibility_SendKeyboardReport(ActiveUsbBasicKeyboardReport);
+    SwitchActiveUsbBasicKeyboardReport();
+#else
+    UsbReportUpdateSemaphore |= 1 << USB_BASIC_KEYBOARD_INTERFACE_INDEX;
+    usb_status_t status = UsbBasicKeyboardAction();
+    //The semaphore has to be set before the call. Assume what happens if a bus reset happens asynchronously here. (Deadlock.)
+    if (status != kStatus_USB_Success) {
+        //This is *not* asynchronously safe as long as multiple reports of different type can be sent at the same time.
+        //TODO: consider either making it atomic, or lowering semaphore reset delay
+        UsbReportUpdateSemaphore &= ~(1 << USB_BASIC_KEYBOARD_INTERFACE_INDEX);
+    }
+#endif
+}
+
+usb_status_t UsbBasicKeyboardCheckIdleElapsed()
+{
+    return kStatus_USB_Busy;
+}
+
+usb_status_t UsbBasicKeyboardCheckReportReady()
+{
+    if (memcmp(ActiveUsbBasicKeyboardReport, GetInactiveUsbBasicKeyboardReport(), sizeof(usb_basic_keyboard_report_t)) != 0)
+        return kStatus_USB_Success;
+
+    return UsbBasicKeyboardCheckIdleElapsed();
+}
+
 static void setRolloverError(usb_basic_keyboard_report_t* report)
 {
     if (report->boot.scancodes[0] != HID_KEYBOARD_SC_ERROR_ROLLOVER) {
@@ -270,7 +294,6 @@ bool UsbBasicKeyboard_ContainsScancode(const usb_basic_keyboard_report_t* report
         return false;
     }
 }
-#ifndef __ZEPHYR__
 
 size_t UsbBasicKeyboard_ScancodeCount(const usb_basic_keyboard_report_t* report)
 {
@@ -335,4 +358,3 @@ void UsbBasicKeyboard_ForeachScancode(const usb_basic_keyboard_report_t* report,
         }
     }
 }
-#endif
