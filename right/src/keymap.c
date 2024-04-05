@@ -14,6 +14,10 @@
 #include "debug.h"
 #include "slave_drivers/uhk_module_driver.h"
 
+#ifdef __ZEPHYR__
+#include "keyboard/oled/widgets/keymap_widget.h"
+#endif
+
 keymap_reference_t AllKeymaps[MAX_KEYMAP_NUM] = {
     {
         .abbreviation = "FTY",
@@ -34,6 +38,9 @@ void SwitchKeymapById(uint8_t index)
     CurrentKeymapIndex = index;
     ValidatedUserConfigBuffer.offset = AllKeymaps[index].offset;
     ParseKeymap(&ValidatedUserConfigBuffer, index, AllKeymapsCount, AllMacrosCount, parseConfig);
+#ifdef DEVICE_HAS_OLED
+    KeymapWidget_Update();
+#endif
     SegmentDisplay_UpdateKeymapText();
     Ledmap_UpdateBacklightLeds();
     MacroEvent_RegisterLayerMacros();
