@@ -95,6 +95,16 @@ static void connected(struct bt_conn *conn, uint8_t err) {
 
     if (peerId == PeerIdUnknown) {
 #if DEVICE_IS_UHK80_RIGHT
+        // https://developer.apple.com/library/archive/qa/qa1931/_index.html
+        // https://punchthrough.com/manage-ble-connection/
+        // https://devzone.nordicsemi.com/f/nordic-q-a/28058/what-is-connection-parameters
+        static const struct bt_le_conn_param conn_params = BT_LE_CONN_PARAM_INIT(
+            6, 9, // keep it low, lowest allowed is 6 (7.5ms), lowest supported widely is 9 (11.25ms)
+            10, // keeping it higher allows power saving on peripheral when there's nothing to send (keep it under 30 though)
+            100 // connection timeout (*10ms)
+        );
+        bt_conn_le_param_update(conn, &conn_params);
+
         USB_DisableHid();
 #endif
     } else {
@@ -156,10 +166,21 @@ static void security_changed(struct bt_conn *conn, bt_security_t level, enum bt_
 #endif
 }
 
+static void le_param_updated(struct bt_conn* conn, uint16_t interval, uint16_t latency, uint16_t timeout)
+{
+    if (getPeerIdByConn(conn) == PeerIdUnknown) {
+        printk("BLE HID conn params: interval=%u ms, latency=%u, timeout=%u ms\n",
+            interval * 5 / 4, latency, timeout * 10);
+    }
+}
+
 BT_CONN_CB_DEFINE(conn_callbacks) = {
     .connected = connected,
     .disconnected = disconnected,
     .security_changed = security_changed,
+#if DEVICE_IS_UHK80_RIGHT
+    .le_param_updated = le_param_updated,
+#endif
 };
 
 // Auth callbacks
