@@ -83,7 +83,7 @@ static void connected(struct bt_conn *conn, uint8_t err) {
 #if DEVICE_IS_UHK80_RIGHT
             err = bt_scan_start(BT_SCAN_TYPE_SCAN_ACTIVE);
             if (err) {
-                printk("Scanning failed to start (err %d)", err);
+                printk("Scanning failed to start (err %d)\n", err);
             }
 #endif
         }
@@ -131,7 +131,7 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
         int err = bt_scan_start(BT_SCAN_TYPE_SCAN_ACTIVE);
         printk("Start scan\n");
         if (err) {
-            printk("Scanning failed to start (err %d)", err);
+            printk("Scanning failed to start (err %d)\n", err);
         }
     }
 #elif DEVICE_IS_UHK80_LEFT
