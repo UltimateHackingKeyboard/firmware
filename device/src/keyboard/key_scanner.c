@@ -4,7 +4,6 @@
 #include "keyboard/key_scanner.h"
 #include "shell.h"
 #include "keyboard/uart.h"
-#include <zephyr/drivers/uart.h>
 #include "bt_central_uart.h"
 #include "bt_peripheral_uart.h"
 #include "device.h"
