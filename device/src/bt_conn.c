@@ -166,7 +166,7 @@ static void security_changed(struct bt_conn *conn, bt_security_t level, enum bt_
 #endif
 }
 
-static void le_param_updated(struct bt_conn* conn, uint16_t interval, uint16_t latency, uint16_t timeout)
+__attribute__((unused)) static void le_param_updated(struct bt_conn* conn, uint16_t interval, uint16_t latency, uint16_t timeout)
 {
     if (getPeerIdByConn(conn) == PeerIdUnknown) {
         printk("BLE HID conn params: interval=%u ms, latency=%u, timeout=%u ms\n",

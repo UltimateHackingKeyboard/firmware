@@ -155,7 +155,12 @@ static parser_error_t parseKeyActions(uint8_t targetLayer, config_buffer_t *buff
     if (actionCount > MAX_KEY_COUNT_PER_MODULE) {
         return ParserError_InvalidActionCount;
     }
-    parseMode = IsModuleAttached(moduleId) ? parseMode : ParseMode_DryRun;
+    if (DEVICE_IS_UHK80_RIGHT && moduleId == ModuleId_LeftKeyboardHalf) {
+        //assume that left half is connected
+        parseMode = parseMode;
+    } else {
+        parseMode = IsModuleAttached(moduleId) ? parseMode : ParseMode_DryRun;
+    }
     slot_t slotId = ModuleIdToSlotId(moduleId);
     for (uint8_t actionIdx = 0; actionIdx < actionCount; actionIdx++) {
         errorCode = parseKeyAction(&CurrentKeymap[targetLayer][slotId][actionIdx], buffer, parseMode);

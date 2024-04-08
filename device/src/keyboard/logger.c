@@ -11,11 +11,6 @@
 
 void Uart_LogConstant(const char* buffer)
 {
-#if DEVICE_IS_UHK80_LEFT
-    SendPeripheralUart(buffer, strlen(buffer)+1);
-#elif DEVICE_IS_UHK80_RIGHT
-    SendCentralUart(buffer, strlen(buffer)+1);
-#endif
     printk("%s\n", buffer);
 }
 
@@ -37,5 +32,7 @@ void Log(const char *fmt, ...)
     vsprintf(buffer, fmt, myargs);
 
     Uart_LogConstant(buffer);
+#ifdef DEVICE_HAS_OLED
     Oled_LogConstant(buffer);
+#endif
 }
