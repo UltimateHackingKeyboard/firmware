@@ -11,6 +11,9 @@
 #include "logger.h"
 #include "key_states.h"
 #include "keyboard/key_layout.h"
+#include "bool_array_converter.h"
+#include "legacy/module.h"
+#include "keyboard/logger.h"
 
 // Thread definitions
 
@@ -49,37 +52,71 @@ static struct gpio_dt_spec cols[KEY_MATRIX_COLS] = {
 #define COLS_COUNT (sizeof(cols) / sizeof(cols[0]))
 volatile bool KeyPressed;
 
+static void scanKeys() {
+    bool somethingChanged = false;
+    static bool keyStateBuffer[KEY_MATRIX_ROWS*KEY_MATRIX_COLS];
+    bool keyPressed = false;
+
+    for (uint8_t rowId=0; rowId<KEY_MATRIX_ROWS; rowId++) {
+        gpio_pin_set_dt(&rows[rowId], 1);
+        for (uint8_t colId=0; colId<KEY_MATRIX_COLS; colId++) {
+            bool keyState = gpio_pin_get_dt(&cols[colId]);
+
+            uint8_t targetIndex = rowId*KEY_MATRIX_COLS + colId;
+
+            keyPressed |= keyState;
+
+            if (keyStateBuffer[targetIndex] != keyState) {
+                somethingChanged = true;
+                if (Shell.keyLog) {
+                    Log("SW%c%c %i %s", rowId+'1', colId+'1', targetIndex, keyState ? "down" : "up");
+                }
+                keyStateBuffer[targetIndex] = keyState;
+            }
+        }
+        gpio_pin_set_dt(&rows[rowId], 0);
+    }
+
+    KeyPressed = keyPressed;
+
+    if (!somethingChanged) {
+        return;
+    }
+
+#if DEVICE_IS_UHK80_RIGHT
+    for (uint8_t rowId=0; rowId<KEY_MATRIX_ROWS; rowId++) {
+        for (uint8_t colId=0; colId<KEY_MATRIX_COLS; colId++) {
+            uint8_t sourceIndex = rowId*KEY_MATRIX_COLS + colId;
+            uint8_t targetKeyId = KeyLayout_Uhk80_to_Uhk60[SlotId_RightKeyboardHalf][sourceIndex];
+
+            if (targetKeyId < MAX_KEY_COUNT_PER_MODULE) {
+                KeyStates[CURRENT_SLOT_ID][targetKeyId].hardwareSwitchState = keyStateBuffer[sourceIndex];
+            }
+        }
+    }
+#endif
+#if DEVICE_IS_UHK80_LEFT
+    uint8_t compressedLength = MAX_KEY_COUNT_PER_MODULE/8+1;
+    uint8_t compressedBuffer[compressedLength];
+    memset(compressedBuffer, 0, compressedLength);
+
+    for (uint8_t rowId=0; rowId<KEY_MATRIX_ROWS; rowId++) {
+        for (uint8_t colId=0; colId<KEY_MATRIX_COLS; colId++) {
+            uint8_t sourceIndex = rowId*KEY_MATRIX_COLS + colId;
+            uint8_t targetKeyId = KeyLayout_Uhk80_to_Uhk60[SlotId_LeftKeyboardHalf][sourceIndex];
+
+            if (targetKeyId < MAX_KEY_COUNT_PER_MODULE) {
+                BoolBitToBytes(keyStateBuffer[sourceIndex], targetKeyId, compressedBuffer);
+            }
+        }
+    }
+    SendPeripheralUart(compressedBuffer, compressedLength);
+#endif
+}
+
 void keyScanner() {
     while (true) {
-        bool keyPressed = false;
-        for (uint8_t rowId=0; rowId<KEY_MATRIX_ROWS; rowId++) {
-            gpio_pin_set_dt(&rows[rowId], 1);
-            for (uint8_t colId=0; colId<KEY_MATRIX_COLS; colId++) {
-                bool keyState = gpio_pin_get_dt(&cols[colId]);
-
-                uint8_t sourceKeyId = rowId*KEY_MATRIX_COLS + colId;
-                uint8_t targetKeyId = 0;
-
-                if (CURRENT_SLOT_ID == SlotId_RightKeyboardHalf) {
-                    targetKeyId = KeyLayout_Uhk80_to_Uhk60[CURRENT_SLOT_ID][sourceKeyId];
-                }
-
-                if (keyState != KeyStates[CURRENT_SLOT_ID][targetKeyId].hardwareSwitchState) {
-                    if (Shell.keyLog) {
-                        Log("SW%c%c %s", rowId+'1', colId+'1', keyState ? "down" : "up");
-                    }
-                }
-
-                if (keyState) {
-                    keyPressed = true;
-                }
-
-                KeyStates[CURRENT_SLOT_ID][targetKeyId].hardwareSwitchState = keyState;
-            }
-            gpio_pin_set_dt(&rows[rowId], 0);
-        }
-
-        KeyPressed = keyPressed;
+        scanKeys();
         k_msleep(1);
     }
 }
@@ -94,11 +131,11 @@ void InitKeyScanner(void)
     }
 
     k_thread_create(
-        &thread_data, stack_area,
-        K_THREAD_STACK_SIZEOF(stack_area),
-        keyScanner,
-        NULL, NULL, NULL,
-        THREAD_PRIORITY, 0, K_NO_WAIT
-    );
+            &thread_data, stack_area,
+            K_THREAD_STACK_SIZEOF(stack_area),
+            keyScanner,
+            NULL, NULL, NULL,
+            THREAD_PRIORITY, 0, K_NO_WAIT
+            );
     k_thread_name_set(&thread_data, "key_scanner");
 }

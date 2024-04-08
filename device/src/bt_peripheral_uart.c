@@ -4,7 +4,7 @@
 #include "bt_conn.h"
 
 static void bt_receive_cb(struct bt_conn *conn, const uint8_t *const data, uint16_t len) {
-    printk("NUS data received from %s: %s\n", GetPeerStringByConn(conn), data);
+    printk("NUS data received from %s: %i\n", GetPeerStringByConn(conn), len);
 }
 
 static void bt_send_cb(struct bt_conn *conn) {

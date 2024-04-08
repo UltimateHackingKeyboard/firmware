@@ -5,6 +5,12 @@
 #include "bt_scan.h"
 #include "bt_conn.h"
 #include "bt_central_uart.h"
+#include "bool_array_converter.h"
+#include "legacy/slot.h"
+#include "shared/bool_array_converter.h"
+#include "legacy/module.h"
+#include "legacy/key_states.h"
+#include "keyboard/oled/widgets/console_widget.h"
 
 #define LOG_MODULE_NAME central_uart
 LOG_MODULE_REGISTER(LOG_MODULE_NAME);
@@ -13,7 +19,7 @@ static struct bt_nus_client nus_client;
 
 static void ble_data_sent(struct bt_nus_client *nus, uint8_t err, const uint8_t *const data, uint16_t len)
 {
-    printk("NUS data sent to %s: %s\n", GetPeerStringByConn(nus->conn), data);
+    printk("NUS data sent to %s: %i\n", GetPeerStringByConn(nus->conn), len);
     if (err) {
         LOG_WRN("ATT error code: 0x%02X", err);
     }
@@ -21,7 +27,11 @@ static void ble_data_sent(struct bt_nus_client *nus, uint8_t err, const uint8_t 
 
 static uint8_t ble_data_received(struct bt_nus_client *nus, const uint8_t *data, uint16_t len)
 {
-    printk("NUS data received from %s: %s\n", GetPeerStringByConn(nus->conn), data);
+#if DEVICE_IS_UHK80_RIGHT
+    for (uint8_t keyId = 0; keyId < MAX_KEY_COUNT_PER_MODULE; keyId++) {
+        KeyStates[SlotId_LeftKeyboardHalf][keyId].hardwareSwitchState = !!(data[keyId/8] & (1 << (keyId % 8)));
+    }
+#endif
     return BT_GATT_ITER_CONTINUE;
 }
 
