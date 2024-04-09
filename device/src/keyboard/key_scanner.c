@@ -68,9 +68,6 @@ static void scanKeys() {
 
             if (keyStateBuffer[targetIndex] != keyState) {
                 somethingChanged = true;
-                if (Shell.keyLog) {
-                    Log("SW%c%c %i %s", rowId+'1', colId+'1', targetIndex, keyState ? "down" : "up");
-                }
                 keyStateBuffer[targetIndex] = keyState;
             }
         }

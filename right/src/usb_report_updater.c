@@ -38,6 +38,10 @@
 #include "macros/key_timing.h"
 #include <string.h>
 
+#if __ZEPHYR__
+#include "shell.h"
+#endif
+
 bool TestUsbStack = false;
 
 static key_action_cached_t actionCache[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
@@ -346,6 +350,13 @@ static void mergeReports(void)
 static void commitKeyState(key_state_t *keyState, bool active)
 {
     WATCH_TRIGGER(keyState);
+
+
+#if __ZEPHYR__
+    if (Shell.keyLog) {
+        Log("Key %i %s", Utils_KeyStateToKeyId(keyState), active ? "down" : "up");
+    }
+#endif
 
     if (PostponerCore_IsActive()) {
         PostponerCore_TrackKeyEvent(keyState, active, 255);
