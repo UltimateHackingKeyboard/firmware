@@ -68,7 +68,7 @@ const uint8_t KeyLayout_Uhk80_to_Uhk60[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
         [48] = 51, // arrow up
         [49] = 52, // dbl arrow right
 
-        [57] = 53, // arrow right
+        [57] = 53, // arrow left
         [58] = 54, // arrow down
         [59] = 55, // arrow right
 
@@ -122,15 +122,15 @@ const uint8_t KeyLayout_Uhk80_to_Uhk60[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
 
         // new keys
 
-        [0] = 33, // esc
-        [1] = 34, // f1
-        [2] = 35, // f2
-        [3] = 36, // f3
-        [4] = 37, // f4
-        [5] = 38, // f5
-        [6] = 39, // f6
+        [0] = 34, // esc
+        [1] = 35, // f1
+        [2] = 36, // f2
+        [3] = 37, // f3
+        [4] = 38, // f4
+        [5] = 39, // f5
+        [6] = 40, // f6
 
-        [38] = 40, // left case button
+        [38] = 41, // left case button
 
         // unused
         [20] = 255,
