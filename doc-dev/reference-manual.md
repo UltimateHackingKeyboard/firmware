@@ -499,7 +499,7 @@ Macro slots are identified by a single character or a number or `$thisKeyId` (me
 
 Internally, values are saved in one of the following types, and types are automatically converted as needed in expressions:
 - `INT` - as a int32_t. E.g., `(7/3)` yields 2
-- `FLOA`T - as 32-bit floating point value. E.g., `(7/3.0)` yields 2.333...
+- `FLOAT` - as 32-bit floating point value. E.g., `(7/3.0)` yields 2.333...
 - `BOOL` - 1 or 0 value
 
 ### Configuration options:
