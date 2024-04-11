@@ -136,7 +136,6 @@ static bool updateScreenShift() {
 static void diffUpdate()
 {
     k_mutex_lock(&SpiMutex, K_FOREVER);
-    oledNeedsRedraw = false;
 
     setA0(true);
     setOledCs(true);
@@ -191,6 +190,7 @@ void oledUpdater() {
             k_sleep(K_FOREVER);
         }
 
+        oledNeedsRedraw = false;
         currentScreen->draw(currentScreen, OledBuffer);
     }
 }

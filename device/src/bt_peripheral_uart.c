@@ -4,7 +4,7 @@
 #include "bt_conn.h"
 
 static void bt_receive_cb(struct bt_conn *conn, const uint8_t *const data, uint16_t len) {
-    printk("NUS data received from %s: %s\n", GetPeerStringByConn(conn), data);
+    printk("NUS data received from %s: %i\n", GetPeerStringByConn(conn), len);
 }
 
 static void bt_send_cb(struct bt_conn *conn) {
@@ -29,7 +29,8 @@ void InitPeripheralUart(void) {
 }
 
 void SendPeripheralUart(const uint8_t *data, uint16_t len) {
-    if (bt_nus_send(NULL, data, len)) {
-        printk("Failed to send data over BLE connection\n");
+    int err = bt_nus_send(NULL, data, len);
+    if (err) {
+        printk("Failed to send data over BLE connection (err: %d)\n", err);
     }
 }

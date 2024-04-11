@@ -4,7 +4,6 @@
 #include "keyboard/logger.h"
 #include "shell.h"
 #include "keyboard/uart.h"
-#include <zephyr/drivers/uart.h>
 #include "bt_central_uart.h"
 #include "bt_peripheral_uart.h"
 #include "device.h"
@@ -12,15 +11,7 @@
 
 void Uart_LogConstant(const char* buffer)
 {
-#if DEVICE_IS_UHK80_LEFT
-    SendPeripheralUart(buffer, strlen(buffer)+1);
-#elif DEVICE_IS_UHK80_RIGHT
-    SendCentralUart(buffer, strlen(buffer)+1);
-#endif
     printk("%s\n", buffer);
-    for (uint8_t i=0; i<strlen(buffer); i++) {
-        uart_poll_out(uart_dev, buffer[i]);
-    }
 }
 
 void Uart_Log(const char *fmt, ...)
@@ -41,5 +32,7 @@ void Log(const char *fmt, ...)
     vsprintf(buffer, fmt, myargs);
 
     Uart_LogConstant(buffer);
+#ifdef DEVICE_HAS_OLED
     Oled_LogConstant(buffer);
+#endif
 }

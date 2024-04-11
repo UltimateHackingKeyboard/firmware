@@ -72,7 +72,11 @@ END
         nrfutil toolchain-manager launch --shell --ncs-version $NCS_VERSION
         ;;
     uart)
-        screen /dev/ttyUSB* 115200
+        tmux new-session -d -s mysession \; \
+            send-keys "screen /dev/ttyUSB0 115200" C-m \; \
+            split-window -v \; \
+            send-keys "screen /dev/ttyUSB1 115200" C-m
+        tmux attach-session -t mysession
         ;;
     *)
         help

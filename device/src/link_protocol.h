@@ -6,6 +6,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+// Macros:
+
+#define MAX_LINK_PACKET_LENGTH 251  // With the BLE data length extension enabled
+
 // Typedefs:
 
 typedef struct {

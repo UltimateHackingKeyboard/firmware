@@ -250,9 +250,11 @@ KEYID_ABBREV = ' | , | - | . | / | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | ; | =
 KEYID_ABBREV = a | q | w | e | r | t | y | u | i | o | p | a | s | d | f | g | h | j | k | l | z | x | c | v | b | n | m
 KEYID_ABBREV = apostropheAndQuote | backspace | capsLock | closingBracketAndClosingBrace | commaAndLessThanSign | dotAndGreaterThanSign | enter
 KEYID_ABBREV = equalAndPlus | graveAccentAndTilde | isoKey | semicolonAndColon | slashAndQuestionMark | tab | minusAndUnderscore | openingBracketAndOpeningBrace
-KEYID_ABBREV = leftAlt | leftCtrl | leftFn | leftMod | leftMouse | leftShift | leftSpace | leftSuper
+KEYID_ABBREV = leftAlt | leftCtrl | leftFn | leftMod | leftMouse | leftShift | leftSpace | leftSuper | leftFn2
 KEYID_ABBREV = leftModule.key1 | leftModule.key2 | leftModule.key3 | leftModule.leftButton | leftModule.middleButton | leftModule.rightButton
-KEYID_ABBREV = rightAlt | rightCtrl | rightFn | rightMod | rightShift | rightSpace | rightSuper | rightModule.leftButton | rightModule.rightButton
+KEYID_ABBREV = rightAlt | rightCtrl | rightFn | rightMod | rightShift | rightSpace | rightSuper | rightModule.leftButton | rightModule.rightButton | rightFn2
+KEYID_ABBREV = escape | f1 | f2 | f3 | f4 | f5 | f6 |  f7 | f8 | f9 | f10 | f11 | f12
+KEYID_ABBREV = print | delete | insert | scrollLock | pause | home | pageUp | end | pageDown | previous | upArrow | next | leftArrow | downArrow | rightArrow
 MACRONAME = <macro name (IDENTIFIER)>
 #####################
 # DEVELOPMENT TOOLS #
