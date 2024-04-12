@@ -9,5 +9,6 @@
 void UsbCompatibility_KeyboardAddScancode(uint8_t scancode);
 void UsbCompatibility_SendKeyboardReport(usb_basic_keyboard_report_t* report);
 void UsbCompatibility_SendMouseReport(usb_mouse_report_t* report) ;
+void UsbCompatibility_SendConsumerReport(usb_media_keyboard_report_t* mediaReport, usb_system_keyboard_report_t* systemReport);
 
 #endif // __USB_HEADER__

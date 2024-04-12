@@ -52,8 +52,10 @@
 #endif
 
     void UsbSystemKeyboardResetActiveReport(void);
+    void SwitchActiveUsbSystemKeyboardReport(void);
     usb_status_t UsbSystemKeyboardCheckIdleElapsed();
     usb_status_t UsbSystemKeyboardCheckReportReady();
+    void UsbSystemKeyboard_ForeachScancode(const usb_system_keyboard_report_t* report, void(*action)(uint8_t));
     void UsbSystemKeyboard_RemoveScancode(usb_system_keyboard_report_t* report, uint8_t scancode);
     void UsbSystemKeyboard_MergeReports(const usb_system_keyboard_report_t* sourceReport, usb_system_keyboard_report_t* targetReport);
 
