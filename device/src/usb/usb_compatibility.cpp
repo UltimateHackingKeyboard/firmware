@@ -13,8 +13,10 @@ extern "C"
 #include "gamepad_app.hpp"
 #include "keyboard_app.hpp"
 #include "mouse_app.hpp"
+#include "keyboard/logger.h"
 
 static scancode_buffer keys;
+static mouse_buffer mouseState;
 
 extern "C" void UsbCompatibility_KeyboardAddScancode(uint8_t scancode) 
 {
@@ -53,4 +55,9 @@ extern "C" void UsbCompatibility_SendKeyboardReport(usb_basic_keyboard_report_t*
     UsbBasicKeyboard_ForeachScancode(report, &UsbCompatibility_KeyboardAddScancode);
 
     keyboard_app::handle().set_report_state(keys);
+}
+
+extern "C" void UsbCompatibility_SendMouseReport(usb_mouse_report_t* report) 
+{
+    mouse_app::handle().set_report_state(*reinterpret_cast<mouse_buffer*>(report));
 }

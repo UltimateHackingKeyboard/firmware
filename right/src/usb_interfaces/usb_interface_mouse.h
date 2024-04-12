@@ -53,6 +53,7 @@
 #endif
 
     void UsbMouseResetActiveReport(void);
+    void UsbMouseSendActiveReport(void);
     usb_status_t UsbMouseCheckIdleElapsed();
     usb_status_t UsbMouseCheckReportReady(bool* buttonsChanged);
 
