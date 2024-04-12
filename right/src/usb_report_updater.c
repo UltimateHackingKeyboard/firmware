@@ -609,18 +609,14 @@ void UpdateUsbReports(void)
         lastActivityTime = CurrentTime;
         usbReportsChanged = true;
     }
+#endif
 
     bool usbMouseButtonsChanged = false;
     if (UsbMouseCheckReportReady(&usbMouseButtonsChanged) == kStatus_USB_Success) {
-        UsbReportUpdateSemaphore |= 1 << USB_MOUSE_INTERFACE_INDEX;
-        usb_status_t status = UsbMouseAction();
-        if (status != kStatus_USB_Success) {
-            UsbReportUpdateSemaphore &= ~(1 << USB_MOUSE_INTERFACE_INDEX);
-        }
+        UsbMouseSendActiveReport();
         lastActivityTime = CurrentTime;
         usbReportsChanged |= usbMouseButtonsChanged;
     }
-#endif
 
     if (usbReportsChanged) {
         Macros_SignalUsbReportsChange();
