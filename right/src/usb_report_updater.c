@@ -40,6 +40,7 @@
 
 #if __ZEPHYR__
 #include "shell.h"
+#include "usb/usb_compatibility.h"
 #endif
 
 bool TestUsbStack = false;
@@ -589,7 +590,15 @@ void UpdateUsbReports(void)
         lastActivityTime = CurrentTime;
     }
 
-#ifndef __ZEPHYR__
+#ifdef __ZEPHYR__
+    if (UsbMediaKeyboardCheckReportReady() == kStatus_USB_Success || UsbSystemKeyboardCheckReportReady() == kStatus_USB_Success) {
+        UsbCompatibility_SendConsumerReport(ActiveUsbMediaKeyboardReport, ActiveUsbSystemKeyboardReport);
+        SwitchActiveUsbMediaKeyboardReport();
+        SwitchActiveUsbSystemKeyboardReport();
+        lastActivityTime = CurrentTime;
+        usbReportsChanged = true;
+    }
+#else
     if (UsbMediaKeyboardCheckReportReady() == kStatus_USB_Success) {
         UsbReportUpdateSemaphore |= 1 << USB_MEDIA_KEYBOARD_INTERFACE_INDEX;
         usb_status_t status = UsbMediaKeyboardAction();
@@ -609,18 +618,14 @@ void UpdateUsbReports(void)
         lastActivityTime = CurrentTime;
         usbReportsChanged = true;
     }
+#endif
 
     bool usbMouseButtonsChanged = false;
     if (UsbMouseCheckReportReady(&usbMouseButtonsChanged) == kStatus_USB_Success) {
-        UsbReportUpdateSemaphore |= 1 << USB_MOUSE_INTERFACE_INDEX;
-        usb_status_t status = UsbMouseAction();
-        if (status != kStatus_USB_Success) {
-            UsbReportUpdateSemaphore &= ~(1 << USB_MOUSE_INTERFACE_INDEX);
-        }
+        UsbMouseSendActiveReport();
         lastActivityTime = CurrentTime;
         usbReportsChanged |= usbMouseButtonsChanged;
     }
-#endif
 
     if (usbReportsChanged) {
         Macros_SignalUsbReportsChange();

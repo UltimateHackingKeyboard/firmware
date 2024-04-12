@@ -18,12 +18,12 @@ void UsbMediaKeyboardResetActiveReport(void)
     memset(ActiveUsbMediaKeyboardReport, 0, USB_MEDIA_KEYBOARD_REPORT_LENGTH);
 }
 
-#ifndef __ZEPHYR__
-static void SwitchActiveUsbMediaKeyboardReport(void)
+void SwitchActiveUsbMediaKeyboardReport(void)
 {
     ActiveUsbMediaKeyboardReport = GetInactiveUsbMediaKeyboardReport();
 }
 
+#ifndef __ZEPHYR__
 usb_status_t UsbMediaKeyboardAction(void)
 {
     if (!UsbCompositeDevice.attach) {

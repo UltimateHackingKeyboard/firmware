@@ -2,6 +2,11 @@
 #include "usb_report_updater.h"
 #include <string.h>
 
+#ifdef __ZEPHYR__
+#include "usb/usb_compatibility.h"
+#endif
+
+
 static usb_mouse_report_t usbMouseReports[2];
 uint32_t UsbMouseActionCounter;
 usb_mouse_report_t* ActiveUsbMouseReport = usbMouseReports;
@@ -18,11 +23,12 @@ void UsbMouseResetActiveReport(void)
     memset(ActiveUsbMouseReport, 0, USB_MOUSE_REPORT_LENGTH);
 }
 
-#ifndef __ZEPHYR__
 static void SwitchActiveUsbMouseReport(void)
 {
     ActiveUsbMouseReport = GetInactiveUsbMouseReport();
 }
+
+#ifndef __ZEPHYR__
 
 usb_hid_protocol_t UsbMouseGetProtocol(void)
 {
@@ -103,6 +109,21 @@ usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param
     return error;
 }
 #endif
+
+
+void UsbMouseSendActiveReport(void)
+{
+#ifdef __ZEPHYR__
+    UsbCompatibility_SendMouseReport(ActiveUsbMouseReport);
+    SwitchActiveUsbMouseReport();
+#else
+    UsbReportUpdateSemaphore |= 1 << USB_MOUSE_INTERFACE_INDEX;
+    usb_status_t status = UsbMouseAction();
+    if (status != kStatus_USB_Success) {
+        UsbReportUpdateSemaphore &= ~(1 << USB_MOUSE_INTERFACE_INDEX);
+    }
+#endif
+}
 
 usb_status_t UsbMouseCheckIdleElapsed()
 {

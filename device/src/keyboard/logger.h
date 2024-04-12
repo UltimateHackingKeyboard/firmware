@@ -10,6 +10,8 @@
 
 // Functions:
 
+    void Oled_LogConstant(const char* text);
+    void Oled_Log(const char *fmt, ...);
     void Uart_LogConstant(const char* buffer);
     void Uart_Log(const char *fmt, ...);
     void Log(const char *fmt, ...);
