@@ -56,6 +56,9 @@ static parser_error_t parseProperty(config_buffer_t* buffer, module_configuratio
         case SerializedModuleProperty_InvertScrollDirectionY:
             moduleConfiguration->invertScrollDirectionY = ReadBool(buffer);
             break;
+        case SerializedModuleProperty_InvertScrollDirectionX:
+            moduleConfiguration->invertScrollDirectionX = ReadBool(buffer);
+            break;
         default:
             switch (moduleId) {
                 case ModuleId_TouchpadRight:
@@ -79,6 +82,7 @@ static parser_error_t parseProperty(config_buffer_t* buffer, module_configuratio
                             moduleConfiguration->swapAxes = ReadBool(buffer);
                             break;
                         case SerializedModuleProperty_Keycluster_InvertScrollDirectionX:
+                            // deprecated
                             moduleConfiguration->invertScrollDirectionX = ReadBool(buffer);
                             break;
                         default:
