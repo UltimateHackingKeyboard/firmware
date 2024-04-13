@@ -20,7 +20,7 @@
   "firmwareVersion": "11.0.2",
   "deviceProtocolVersion": "4.10.0",
   "moduleProtocolVersion": "4.3.0",
-  "userConfigVersion": "7.0.0",
+  "userConfigVersion": "7.1.0",
   "hardwareConfigVersion": "1.0.0",
   "smartMacrosVersion": "2.4.2",
   "devices": [
