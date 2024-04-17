@@ -18,6 +18,8 @@ shell_t Shell = {
     .chargerState = 1,
 };
 
+#define VOLTAGE_DIVIDER_MULTIPLIER 2
+
 static int cmd_uhk_keylog(const struct shell *shell, size_t argc, char *argv[])
 {
     if (argc == 1) {
@@ -91,7 +93,7 @@ static int cmd_uhk_charger(const struct shell *shell, size_t argc, char *argv[])
             int32_t val_mv = (int32_t)buf;
             printk(": %d", val_mv);
             adc_raw_to_millivolts_dt(&adc_channels[i], &val_mv);
-            printk(" = %d mV", val_mv);
+            printk(" = %d mV", VOLTAGE_DIVIDER_MULTIPLIER * val_mv);
         }
         printk("\n");
     } else {
