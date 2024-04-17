@@ -77,8 +77,6 @@ static int cmd_uhk_charger(const struct shell *shell, size_t argc, char *argv[])
         };
 
         for (size_t i = 0U; i < ARRAY_SIZE(adc_channels); i++) {
-            int32_t val_mv;
-
             printk(" | ");
             printk(i ? "VBAT" : "TS");
 
@@ -90,14 +88,7 @@ static int cmd_uhk_charger(const struct shell *shell, size_t argc, char *argv[])
                 continue;
             }
 
-            // If using differential mode, the 16 bit value
-            // in the ADC sample buffer should be a signed 2's
-            // complement value.
-            if (adc_channels[i].channel_cfg.differential) {
-                val_mv = (int32_t)((int16_t)buf);
-            } else {
-                val_mv = (int32_t)buf;
-            }
+            int32_t val_mv = (int32_t)buf;
             printk(": %d", val_mv);
             err = adc_raw_to_millivolts_dt(&adc_channels[i], &val_mv);
             // conversion to mV may not be supported, skip if not
