@@ -90,13 +90,8 @@ static int cmd_uhk_charger(const struct shell *shell, size_t argc, char *argv[])
 
             int32_t val_mv = (int32_t)buf;
             printk(": %d", val_mv);
-            err = adc_raw_to_millivolts_dt(&adc_channels[i], &val_mv);
-            // conversion to mV may not be supported, skip if not
-            if (err < 0) {
-                printk(" (value in mV not available)");
-            } else {
-                printk(" = %d mV", val_mv);
-            }
+            adc_raw_to_millivolts_dt(&adc_channels[i], &val_mv);
+            printk(" = %d mV", val_mv);
         }
         printk("\n");
     } else {
