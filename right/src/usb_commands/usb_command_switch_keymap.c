@@ -1,6 +1,7 @@
 #include "usb_protocol_handler.h"
 #include "usb_commands/usb_command_switch_keymap.h"
 #include "keymap.h"
+#include "layer_stack.h"
 
 void UsbCommand_SwitchKeymap(void)
 {
@@ -11,7 +12,10 @@ void UsbCommand_SwitchKeymap(void)
         SetUsbTxBufferUint8(0, UsbStatusCode_SwitchKeymap_InvalidAbbreviationLength);
     }
 
-    if (!SwitchKeymapByAbbreviation(keymapLength, keymapAbbrev)) {
+    uint8_t res = SwitchKeymapByAbbreviation(keymapLength, keymapAbbrev);
+    LayerStack_Reset();
+
+    if (!res) {
         SetUsbTxBufferUint8(0, UsbStatusCode_SwitchKeymap_InvalidAbbreviation);
     }
 }
