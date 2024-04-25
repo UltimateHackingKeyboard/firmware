@@ -14,6 +14,7 @@ extern "C"
 #include "gamepad_app.hpp"
 #include "keyboard_app.hpp"
 #include "mouse_app.hpp"
+#include "usb_report_updater.h"
 #include "port/zephyr/udc_mac.hpp"
 #include "usb/df/class/hid.hpp"
 #include "usb/df/device.hpp"
@@ -238,7 +239,6 @@ extern "C" void HID_SetKeyboardRollover(rollover_t mode)
 
 extern "C" void HID_SendReportsThread()
 {
-#if !DEVICE_IS_UHK_DONGLE
     scancode_buffer keys;
     mouse_buffer mouseState;
     controls_buffer controls;
@@ -247,7 +247,11 @@ extern "C" void HID_SendReportsThread()
     while (true)
     {
         CurrentTime = k_uptime_get();
+#if DEVICE_IS_UHK_DONGLE
+        UpdateUsbReports();
+#else
         RunUserLogic();
+#endif
 
         /*
         keys.set_code(scancode::KEYBOARD_A, KeyPressed);
@@ -272,5 +276,4 @@ extern "C" void HID_SendReportsThread()
 
         k_msleep(1);
     }
-#endif
 }
