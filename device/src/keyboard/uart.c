@@ -32,11 +32,16 @@ static void uart_callback(const struct device *dev, struct uart_event *evt, void
         break;
 
     case UART_RX_RDY:
-        printk("Received data %d bytes\n", evt->data.rx.len);
+        printk("UART_RX_RDY: ");
+        for (uint8_t i = 0; i < evt->data.rx.len; i++) {
+            printk("%02x ", evt->data.rx.buf[i]);
+        }
+        printk("\n");
         break;
 
     case UART_RX_BUF_REQUEST:
     {
+        printk("UART_RX_BUF_REQUEST\n");
         rxbuf = (rxbuf == rxbuf1) ? rxbuf2 : rxbuf1;
         err = uart_rx_buf_rsp(uart_dev, rxbuf, BUF_SIZE);
         __ASSERT(err == 0, "Failed to provide new buffer");
