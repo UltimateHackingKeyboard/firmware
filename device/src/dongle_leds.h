@@ -1,4 +1,5 @@
-#if defined __DONGLE_LEDS_H__ && DEVICE_IS_UHK_DONGLE
+#include "device.h"
+#if !defined __DONGLE_LEDS_H__ && DEVICE_IS_UHK_DONGLE
 #define __DONGLE_LEDS_H__
 
 // Includes:

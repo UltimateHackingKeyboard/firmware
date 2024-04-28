@@ -1,3 +1,4 @@
+#include "device.h"
 #if DEVICE_IS_UHK_DONGLE
 #include "dongle_leds.h"
 
