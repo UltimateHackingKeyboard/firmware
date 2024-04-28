@@ -51,6 +51,26 @@
     model = "UHK dongle";
     compatible = "uhk-dongle";
 
+    leds {
+        compatible = "gpio-leds";
+        led0_green: led_0 {
+            gpios = <&gpio0 6 GPIO_ACTIVE_LOW>;
+            label = "Green LED 0";
+        };
+        led1_red: led_1 {
+            gpios = <&gpio0 8 GPIO_ACTIVE_LOW>;
+            label = "Red LED 1";
+        };
+        led1_green: led_2 {
+            gpios = <&gpio1 9 GPIO_ACTIVE_LOW>;
+            label = "Green LED 1";
+        };
+        led1_blue: led_3 {
+            gpios = <&gpio0 12 GPIO_ACTIVE_LOW>;
+            label = "Blue LED 1";
+        };
+    };
+
     pwmleds {
         compatible = "pwm-leds";
         red_pwm_led: red_pwm_led {
@@ -65,6 +85,7 @@
     };
 
     aliases {
+        led0-green = &led0_green;
         red-pwm-led = &red_pwm_led;
         green-pwm-led = &green_pwm_led;
         blue-pwm-led = &blue_pwm_led;
