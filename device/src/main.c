@@ -20,9 +20,28 @@
 #include "macros/shortcut_parser.h"
 #include "macros/keyid_parser.h"
 #include "macros/core.h"
+// #include <zephyr/drivers/gpio.h>
+// #include "dongle_leds.h"
 
 int main(void) {
     printk("----------\n" DEVICE_NAME " started\n");
+
+    // const struct gpio_dt_spec led0 = GPIO_DT_SPEC_GET(DT_ALIAS(led0_green), gpios);
+    // gpio_pin_configure_dt(&led0, GPIO_OUTPUT);
+    // while (true) {
+    //     gpio_pin_set_dt(&led0, true);
+    //     k_sleep(K_MSEC(1000));
+    //     gpio_pin_set_dt(&led0, false);
+    //     set_dongle_led(&red_pwm_led, 100);
+    //     k_sleep(K_MSEC(1000));
+    //     set_dongle_led(&red_pwm_led, 0);
+    //     set_dongle_led(&green_pwm_led, 100);
+    //     k_sleep(K_MSEC(1000));
+    //     set_dongle_led(&green_pwm_led, 0);
+    //     set_dongle_led(&blue_pwm_led, 100);
+    //     k_sleep(K_MSEC(1000));
+    //     set_dongle_led(&blue_pwm_led, 0);
+    // }
 
 #if DEVICE_IS_UHK80_RIGHT
     flash_area_open(FLASH_AREA_ID(hardware_config_partition), &hardwareConfigArea);
