@@ -14,13 +14,16 @@ extern "C"
 #include "gamepad_app.hpp"
 #include "keyboard_app.hpp"
 #include "mouse_app.hpp"
-#include "usb_report_updater.h"
 #include "port/zephyr/udc_mac.hpp"
 #include "usb/df/class/hid.hpp"
 #include "usb/df/device.hpp"
 #include "usb/df/vendor/microsoft_os_extension.hpp"
 #include "usb/df/vendor/microsoft_xinput.hpp"
 #include <magic_enum.hpp>
+
+extern "C"{
+#include "usb_report_updater.h"
+}
 
 #if DEVICE_IS_UHK80_RIGHT
 #include "port/zephyr/bluetooth/hid.hpp"
