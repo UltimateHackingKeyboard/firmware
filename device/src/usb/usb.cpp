@@ -21,6 +21,10 @@ extern "C"
 #include "usb/df/vendor/microsoft_xinput.hpp"
 #include <magic_enum.hpp>
 
+extern "C"{
+#include "usb_report_updater.h"
+}
+
 #if DEVICE_IS_UHK80_RIGHT
 #include "port/zephyr/bluetooth/hid.hpp"
 
@@ -238,7 +242,6 @@ extern "C" void HID_SetKeyboardRollover(rollover_t mode)
 
 extern "C" void HID_SendReportsThread()
 {
-#if !DEVICE_IS_UHK_DONGLE
     scancode_buffer keys;
     mouse_buffer mouseState;
     controls_buffer controls;
@@ -247,7 +250,11 @@ extern "C" void HID_SendReportsThread()
     while (true)
     {
         CurrentTime = k_uptime_get();
+#if DEVICE_IS_UHK_DONGLE
+        UpdateUsbReports();
+#else
         RunUserLogic();
+#endif
 
         /*
         keys.set_code(scancode::KEYBOARD_A, KeyPressed);
@@ -272,5 +279,4 @@ extern "C" void HID_SendReportsThread()
 
         k_msleep(1);
     }
-#endif
 }

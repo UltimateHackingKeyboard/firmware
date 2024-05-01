@@ -66,8 +66,8 @@ int main(void) {
 
     InitKeyScanner();
 
-    USB_EnableHid();
 #endif // !DEVICE_IS_UHK_DONGLE
+    USB_EnableHid();
 
     bt_init();
     InitSettings();
