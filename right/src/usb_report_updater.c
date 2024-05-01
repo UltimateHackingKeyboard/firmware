@@ -353,7 +353,7 @@ static void commitKeyState(key_state_t *keyState, bool active)
     WATCH_TRIGGER(keyState);
 
 
-#if __ZEPHYR__
+#if __ZEPHYR__ && !DEVICE_IS_UHK_DONGLE
     if (Shell.keyLog) {
         Log("Key %i %s", Utils_KeyStateToKeyId(keyState), active ? "down" : "up");
     }
