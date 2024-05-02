@@ -648,7 +648,12 @@ static macro_variable_t keymapAction(parser_context_t* ctx, set_command_action_t
 
     ConsumeUntilDot(ctx);
 
-    uint16_t keyId = Macros_ConsumeInt(ctx);
+    uint16_t keyId = Macros_TryConsumeKeyId(ctx);
+
+    if (keyId == 255) {
+        Macros_ReportError("Failed to decode keyid!", ctx->at, ctx->at);
+        return noneVar();
+    }
 
     if (action == SetCommandAction_Read) {
         Macros_ReportError("Reading actions is not supported!", ctx->at, ctx->at);
