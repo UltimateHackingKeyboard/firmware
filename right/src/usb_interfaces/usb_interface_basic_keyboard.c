@@ -14,6 +14,7 @@
 
 #ifndef USB_HID_BOOT_PROTOCOL
 #define USB_HID_BOOT_PROTOCOL   0U
+#define USB_HID_REPORT_PROTOCOL   1U
 #endif
 
 bool UsbBasicKeyboard_ProtocolChanged = false;
@@ -31,7 +32,11 @@ static void setRolloverError(usb_basic_keyboard_report_t* report);
 
 usb_hid_protocol_t UsbBasicKeyboardGetProtocol(void)
 {
+#ifdef __ZEPHYR__
+    return USB_HID_REPORT_PROTOCOL;
+#else
     return usbBasicKeyboardProtocol;
+#endif
 }
 
 

@@ -17,7 +17,7 @@ class keyboard_app : public hid::application
     static constexpr auto NKRO_FIRST_USAGE =
         scancode::KEYBOARD_A; // the first 4 codes are error codes
     static constexpr auto NKRO_LAST_USAGE =
-        scancode::KEYPAD_HEXADECIMAL; // TODO: reduce this to a sensible minimum
+        scancode::KEYPAD_EQUAL_SIGN; // further increase will force Android BLE into 6KRO mode
     static constexpr auto LOWEST_SCANCODE = NKRO_FIRST_USAGE;
     static constexpr auto HIGHEST_SCANCODE = NKRO_LAST_USAGE;
 
