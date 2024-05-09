@@ -78,24 +78,13 @@ static int cmd_uhk_charger(const struct shell *shell, size_t argc, char *argv[])
             .buffer_size = sizeof(buf),
         };
 
-        for (size_t i = 0U; i < ARRAY_SIZE(adc_channels); i++) {
-            printk(" | ");
-            printk(i ? "VBAT" : "TS");
-
-            (void)adc_sequence_init_dt(&adc_channels[i], &sequence);
-
-            err = adc_read(adc_channels[i].dev, &sequence);
-            if (err < 0) {
-                printk("Could not read (%d)\n", err);
-                continue;
-            }
-
-            int32_t val_mv = (int32_t)buf;
-            printk(": %d", val_mv);
-            adc_raw_to_millivolts_dt(&adc_channels[i], &val_mv);
-            printk(" = %d mV", VOLTAGE_DIVIDER_MULTIPLIER * val_mv);
-        }
-        printk("\n");
+        printk(" | VBAT");
+        (void)adc_sequence_init_dt(&adc_channel, &sequence);
+        err = adc_read(adc_channel.dev, &sequence);
+        int32_t val_mv = (int32_t)buf;
+        printk(": %d", val_mv);
+        adc_raw_to_millivolts_dt(&adc_channel, &val_mv);
+        printk(" = %d mV\n", VOLTAGE_DIVIDER_MULTIPLIER * val_mv);
     } else {
         Shell.chargerState = argv[1][0] == '1';
         gpio_pin_set_dt(&chargerEnDt, Shell.chargerState);

@@ -10,8 +10,7 @@
 
     extern const struct gpio_dt_spec chargerEnDt;
     extern const struct gpio_dt_spec chargerStatDt;
-
-    extern const struct adc_dt_spec adc_channels[2];
+    extern const struct adc_dt_spec adc_channel;
 
 // Functions:
 
