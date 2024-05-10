@@ -34,7 +34,7 @@ peer_t *getPeerByAddr(const bt_addr_le_t *addr) {
     return NULL;
 }
 
-uint8_t getPeerIdByConn(const struct bt_conn *conn) {
+int8_t getPeerIdByConn(const struct bt_conn *conn) {
     const bt_addr_le_t *addr = bt_conn_get_dst(conn);
     peer_t *peer = getPeerByAddr(addr);
     int8_t peerId = peer ? peer->id : PeerIdUnknown;
