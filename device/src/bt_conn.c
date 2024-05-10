@@ -80,12 +80,12 @@ static void connected(struct bt_conn *conn, uint8_t err) {
             bt_conn_unref(current_conn);
             current_conn = NULL;
 
-#if DEVICE_IS_UHK80_RIGHT
-            err = bt_scan_start(BT_SCAN_TYPE_SCAN_ACTIVE);
-            if (err) {
-                printk("Scanning failed to start (err %d)\n", err);
+            if (DEVICE_IS_UHK80_RIGHT) {
+                err = bt_scan_start(BT_SCAN_TYPE_SCAN_ACTIVE);
+                if (err) {
+                    printk("Scanning failed to start (err %d)\n", err);
+                }
             }
-#endif
         }
 
         return;
@@ -94,24 +94,24 @@ static void connected(struct bt_conn *conn, uint8_t err) {
     printk("Connected to %s\n", GetPeerStringByConn(conn));
 
     if (peerId == PeerIdUnknown) {
-#if DEVICE_IS_UHK80_RIGHT
-        // https://developer.apple.com/library/archive/qa/qa1931/_index.html
-        // https://punchthrough.com/manage-ble-connection/
-        // https://devzone.nordicsemi.com/f/nordic-q-a/28058/what-is-connection-parameters
-        static const struct bt_le_conn_param conn_params = BT_LE_CONN_PARAM_INIT(
-            6, 9, // keep it low, lowest allowed is 6 (7.5ms), lowest supported widely is 9 (11.25ms)
-            10, // keeping it higher allows power saving on peripheral when there's nothing to send (keep it under 30 though)
-            100 // connection timeout (*10ms)
-        );
-        bt_conn_le_param_update(conn, &conn_params);
+        if (DEVICE_IS_UHK80_RIGHT) {
+            // https://developer.apple.com/library/archive/qa/qa1931/_index.html
+            // https://punchthrough.com/manage-ble-connection/
+            // https://devzone.nordicsemi.com/f/nordic-q-a/28058/what-is-connection-parameters
+            static const struct bt_le_conn_param conn_params = BT_LE_CONN_PARAM_INIT(
+                6, 9, // keep it low, lowest allowed is 6 (7.5ms), lowest supported widely is 9 (11.25ms)
+                10, // keeping it higher allows power saving on peripheral when there's nothing to send (keep it under 30 though)
+                100 // connection timeout (*10ms)
+            );
+            bt_conn_le_param_update(conn, &conn_params);
 
-        USB_DisableHid();
-#endif
+            USB_DisableHid();
+        }
     } else {
         current_conn = bt_conn_ref(conn);
-#if DEVICE_IS_UHK80_RIGHT
-        SetupCentralConnection(conn);
-#endif
+        if (DEVICE_IS_UHK80_RIGHT) {
+            SetupCentralConnection(conn);
+        }
     }
 }
 
@@ -121,37 +121,37 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
 
     printk("Disconnected from %s, reason %u\n", GetPeerStringByConn(conn), reason);
 
-#if DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK_DONGLE
-    if (peerId == PeerIdUnknown) {
-        advertise_hid();
-#if DEVICE_IS_UHK80_RIGHT
-        USB_EnableHid();
-#endif
-    } else {
-        // if (auth_conn) {
-        //     bt_conn_unref(auth_conn);
-        //     auth_conn = NULL;
-        // }
+    if (DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK_DONGLE) {
+        if (peerId == PeerIdUnknown) {
+            advertise_hid();
+            if (DEVICE_IS_UHK80_RIGHT) {
+                USB_EnableHid();
+            }
+        } else {
+            // if (auth_conn) {
+            //     bt_conn_unref(auth_conn);
+            //     auth_conn = NULL;
+            // }
 
-        if (current_conn) {
-            bt_conn_unref(current_conn);
-            current_conn = NULL;
+            if (current_conn) {
+                bt_conn_unref(current_conn);
+                current_conn = NULL;
+            }
+
+            int err = bt_scan_start(BT_SCAN_TYPE_SCAN_ACTIVE);
+            printk("Start scan\n");
+            if (err) {
+                printk("Scanning failed to start (err %d)\n", err);
+            }
+        }
+    } else if (DEVICE_IS_UHK80_LEFT) {
+        if (current_conn != conn) {
+            return;
         }
 
-        int err = bt_scan_start(BT_SCAN_TYPE_SCAN_ACTIVE);
-        printk("Start scan\n");
-        if (err) {
-            printk("Scanning failed to start (err %d)\n", err);
-        }
+        bt_conn_unref(current_conn);
+        current_conn = NULL;
     }
-#elif DEVICE_IS_UHK80_LEFT
-    if (current_conn != conn) {
-        return;
-    }
-
-    bt_conn_unref(current_conn);
-    current_conn = NULL;
-#endif
 }
 
 static void security_changed(struct bt_conn *conn, bt_security_t level, enum bt_security_err err) {
