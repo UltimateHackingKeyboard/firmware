@@ -64,10 +64,10 @@ void gatt_discover(struct bt_conn *conn) {
 }
 
 static void exchange_func(struct bt_conn *conn, uint8_t err, struct bt_gatt_exchange_params *params) {
-    if (!err) {
-        printk("MTU exchange done with %s\n", GetPeerStringByConn(conn));
-    } else {
+    if (err) {
         printk("MTU exchange failed with %s (err %u)\n", GetPeerStringByConn(conn), err);
+    } else {
+        printk("MTU exchange done with %s\n", GetPeerStringByConn(conn));
     }
 }
 
