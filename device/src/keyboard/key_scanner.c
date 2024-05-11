@@ -5,7 +5,7 @@
 #include "shell.h"
 #include "keyboard/uart.h"
 #include "nus_client.h"
-#include "bt_peripheral_uart.h"
+#include "nus_server.h"
 #include "device.h"
 #include "oled/oled_buffer.h"
 #include "logger.h"
@@ -107,7 +107,7 @@ static void scanKeys() {
             }
         }
     }
-    SendPeripheralUart(compressedBuffer, compressedLength);
+    NusServer_Send(compressedBuffer, compressedLength);
 #endif
 }
 

@@ -5,7 +5,7 @@
 #include "shell.h"
 #include "keyboard/uart.h"
 #include "nus_client.h"
-#include "bt_peripheral_uart.h"
+#include "nus_server.h"
 #include "device.h"
 #include "oled/widgets/console_widget.h"
 

@@ -6,7 +6,7 @@
 #include "keyboard/spi.h"
 #include "keyboard/uart.h"
 #include "nus_client.h"
-#include "bt_peripheral_uart.h"
+#include "nus_server.h"
 #include "keyboard/i2c.h"
 #include "peripherals/merge_sensor.h"
 #include "shell.h"
@@ -73,7 +73,7 @@ int main(void) {
     InitSettings();
 
 #if DEVICE_IS_UHK80_LEFT
-    InitPeripheralUart();
+    NusServer_Init();
 #endif
 
 #if DEVICE_IS_UHK80_RIGHT
