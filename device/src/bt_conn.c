@@ -162,7 +162,7 @@ static void security_changed(struct bt_conn *conn, bt_security_t level, enum bt_
     }
 
 #if DEVICE_IS_UHK80_LEFT
-    gatt_discover(conn); // Taken from bt_central_uart.c
+    // gatt_discover(conn); // Taken from bt_central_uart.c
 #endif
 }
 

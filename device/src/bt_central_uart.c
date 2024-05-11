@@ -93,24 +93,6 @@ void SetupCentralConnection(struct bt_conn *conn) {
     }
 }
 
-static int nus_client_init(void) {
-    struct bt_nus_client_init_param init = {
-        .cb = {
-            .received = ble_data_received,
-            .sent = ble_data_sent,
-        }
-    };
-
-    int err = bt_nus_client_init(&nus_client, &init);
-    if (err) {
-        printk("NUS Client initialization failed (err %d)\n", err);
-        return err;
-    }
-
-    printk("NUS Client module initialized\n");
-    return err;
-}
-
 void InitCentralUart(void) {
     int err = scan_init();
     if (err != 0) {
@@ -118,11 +100,20 @@ void InitCentralUart(void) {
         return;
     }
 
-    err = nus_client_init();
-    if (err != 0) {
-        printk("nus_client_init failed (err %d)\n", err);
+    struct bt_nus_client_init_param init = {
+        .cb = {
+            .received = ble_data_received,
+            .sent = ble_data_sent,
+        }
+    };
+
+    err = bt_nus_client_init(&nus_client, &init);
+    if (err) {
+        printk("NUS Client initialization failed (err %d)\n", err);
         return;
     }
+
+    printk("NUS Client module initialized\n");
 
     err = bt_scan_start(BT_SCAN_TYPE_SCAN_ACTIVE);
     if (err) {
