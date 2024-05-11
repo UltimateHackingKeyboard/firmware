@@ -43,60 +43,60 @@ int main(void) {
     //     set_dongle_led(&blue_pwm_led, 0);
     // }
 
-#if DEVICE_IS_UHK80_RIGHT
-    flash_area_open(FLASH_AREA_ID(hardware_config_partition), &hardwareConfigArea);
-    flash_area_open(FLASH_AREA_ID(user_config_partition), &userConfigArea);
-#endif
+    if (DEVICE_IS_UHK80_RIGHT) {
+        flash_area_open(FLASH_AREA_ID(hardware_config_partition), &hardwareConfigArea);
+        flash_area_open(FLASH_AREA_ID(user_config_partition), &userConfigArea);
+    }
 
-#if !DEVICE_IS_UHK_DONGLE
-    InitUart();
-    InitI2c();
-    InitSpi();
+    if (!DEVICE_IS_UHK_DONGLE) {
+        InitUart();
+        InitI2c();
+        InitSpi();
 
-    #ifdef DEVICE_HAS_OLED
-    InitOled();
-    #endif // DEVICE_HAS_OLED
+        #ifdef DEVICE_HAS_OLED
+        InitOled();
+        #endif // DEVICE_HAS_OLED
 
-    InitLeds();
-    InitCharger();
+        InitLeds();
+        InitCharger();
 
-#ifdef DEVICE_HAS_MERGE_SENSOR
-    MergeSensor_Init();
-#endif // DEVICE_HAS_MERGE_SENSOR
+    #ifdef DEVICE_HAS_MERGE_SENSOR
+        MergeSensor_Init();
+    #endif // DEVICE_HAS_MERGE_SENSOR
 
-    InitKeyScanner();
+        InitKeyScanner();
 
-#endif // !DEVICE_IS_UHK_DONGLE
+    }
     USB_EnableHid();
 
     bt_init();
     InitSettings();
 
-#if DEVICE_IS_UHK80_LEFT
-    NusServer_Init();
-#endif
+    if (DEVICE_IS_UHK80_LEFT) {
+        NusServer_Init();
+    }
 
-#if DEVICE_IS_UHK80_RIGHT
-    HOGP_Enable();
-    AdvertiseHid();
-#endif
+    if (DEVICE_IS_UHK80_RIGHT) {
+        HOGP_Enable();
+        AdvertiseHid();
+    }
 
-#if DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK_DONGLE
-    NusClient_Init();
-#endif
+    if (DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK_DONGLE) {
+        NusClient_Init();
+    }
 
-#if DEVICE_IS_UHK80_RIGHT
-    printk("Reading hardware config\n");
-    flash_area_read(hardwareConfigArea, 0, HardwareConfigBuffer.buffer, HARDWARE_CONFIG_SIZE);
-    printk("Reading user config\n");
-    flash_area_read(userConfigArea, 0, StagingUserConfigBuffer.buffer, USER_CONFIG_SIZE);
-    printk("Applying user config\n");
-    UsbCommand_ApplyConfig();
-    printk("User config applied\n");
-    ShortcutParser_initialize();
-    KeyIdParser_initialize();
-    Macros_Initialize();
-#endif
+    if (DEVICE_IS_UHK80_RIGHT) {
+        printk("Reading hardware config\n");
+        flash_area_read(hardwareConfigArea, 0, HardwareConfigBuffer.buffer, HARDWARE_CONFIG_SIZE);
+        printk("Reading user config\n");
+        flash_area_read(userConfigArea, 0, StagingUserConfigBuffer.buffer, USER_CONFIG_SIZE);
+        printk("Applying user config\n");
+        UsbCommand_ApplyConfig();
+        printk("User config applied\n");
+        ShortcutParser_initialize();
+        KeyIdParser_initialize();
+        Macros_Initialize();
+    }
 
     HID_SendReportsThread();
 }
