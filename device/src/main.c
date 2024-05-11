@@ -78,7 +78,7 @@ int main(void) {
 
 #if DEVICE_IS_UHK80_RIGHT
     HOGP_Enable();
-    advertise_hid();
+    AdvertiseHid();
 #endif
 
 #if DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK_DONGLE

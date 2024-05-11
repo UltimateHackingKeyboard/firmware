@@ -19,7 +19,7 @@ static const struct bt_data sd_hid[] = {
     BT_DATA(BT_DATA_NAME_COMPLETE, DEVICE_NAME, DEVICE_NAME_LEN),
 };
 
-void advertise_hid(void) {
+void AdvertiseHid(void) {
     struct bt_le_adv_param *adv_param = BT_LE_ADV_PARAM(
                         BT_LE_ADV_OPT_CONNECTABLE | BT_LE_ADV_OPT_ONE_TIME,
                         BT_GAP_ADV_FAST_INT_MIN_2,
@@ -29,15 +29,15 @@ void advertise_hid(void) {
     int err = bt_le_adv_start(adv_param, ad_hid, ARRAY_SIZE(ad_hid), sd_hid, ARRAY_SIZE(sd_hid));
     if (err) {
         if (err == -EALREADY) {
-            printk("Advertising continued\n");
+            printk("HID advertising continued\n");
         } else {
-            printk("Advertising failed to start (err %d)\n", err);
+            printk("HID advertising failed to start (err %d)\n", err);
         }
 
         return;
     }
 
-    printk("Advertising successfully started\n");
+    printk("HID advertising successfully started\n");
 }
 
 // Peer advertisement
@@ -51,11 +51,11 @@ static const struct bt_data sd_peer[] = {
     BT_DATA_BYTES(BT_DATA_UUID128_ALL, BT_UUID_NUS_VAL),
 };
 
-void advertise_peer(void) {
+void AdvertiseNus(void) {
     int err = bt_le_adv_start(BT_LE_ADV_CONN, ad_peer, ARRAY_SIZE(ad_peer), sd_peer, ARRAY_SIZE(sd_peer));
     if (err) {
-        printk("Peripheral advertising failed to start (err %d)", err);
+        printk("NUS advertising failed to start (err %d)", err);
     } else {
-        printk("Peripheral advertising successfully started\n");
+        printk("NUS advertising successfully started\n");
     }
 }

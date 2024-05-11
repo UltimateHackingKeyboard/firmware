@@ -25,7 +25,7 @@ void InitPeripheralUart(void) {
         return;
     }
 
-    advertise_peer();
+    AdvertiseNus();
 }
 
 void SendPeripheralUart(const uint8_t *data, uint16_t len) {

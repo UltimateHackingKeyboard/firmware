@@ -123,7 +123,7 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
 
     if (DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK_DONGLE) {
         if (peerId == PeerIdUnknown) {
-            advertise_hid();
+            AdvertiseHid();
             if (DEVICE_IS_UHK80_RIGHT) {
                 USB_EnableHid();
             }
