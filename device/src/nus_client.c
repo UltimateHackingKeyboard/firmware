@@ -21,7 +21,7 @@ static void ble_data_sent(struct bt_nus_client *nus, uint8_t err, const uint8_t 
 }
 
 static uint8_t ble_data_received(struct bt_nus_client *nus, const uint8_t *data, uint16_t len) {
-    if (DEVICE_IS_UHK80_RIGHT) {
+    if (DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK_DONGLE) {
         printk("Received data: %i %i %i %i %i %i %i %i\n", data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7]);
         for (uint8_t keyId = 0; keyId < MAX_KEY_COUNT_PER_MODULE; keyId++) {
             KeyStates[SlotId_LeftKeyboardHalf][keyId].hardwareSwitchState = !!(data[keyId/8] & (1 << (keyId % 8)));

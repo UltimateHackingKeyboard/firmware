@@ -80,35 +80,26 @@ static void scanKeys() {
         return;
     }
 
-#if DEVICE_IS_UHK80_RIGHT
-    for (uint8_t rowId=0; rowId<KEY_MATRIX_ROWS; rowId++) {
-        for (uint8_t colId=0; colId<KEY_MATRIX_COLS; colId++) {
-            uint8_t sourceIndex = rowId*KEY_MATRIX_COLS + colId;
-            uint8_t targetKeyId = KeyLayout_Uhk80_to_Uhk60[SlotId_RightKeyboardHalf][sourceIndex];
-
-            if (targetKeyId < MAX_KEY_COUNT_PER_MODULE) {
-                KeyStates[CURRENT_SLOT_ID][targetKeyId].hardwareSwitchState = keyStateBuffer[sourceIndex];
-            }
-        }
-    }
-#endif
-#if DEVICE_IS_UHK80_LEFT
     uint8_t compressedLength = MAX_KEY_COUNT_PER_MODULE/8+1;
     uint8_t compressedBuffer[compressedLength];
     memset(compressedBuffer, 0, compressedLength);
 
+    uint8_t slotId = DEVICE_IS_UHK80_LEFT ? SlotId_LeftKeyboardHalf : SlotId_RightKeyboardHalf;
     for (uint8_t rowId=0; rowId<KEY_MATRIX_ROWS; rowId++) {
         for (uint8_t colId=0; colId<KEY_MATRIX_COLS; colId++) {
             uint8_t sourceIndex = rowId*KEY_MATRIX_COLS + colId;
-            uint8_t targetKeyId = KeyLayout_Uhk80_to_Uhk60[SlotId_LeftKeyboardHalf][sourceIndex];
+            uint8_t targetKeyId = KeyLayout_Uhk80_to_Uhk60[slotId][sourceIndex];
 
             if (targetKeyId < MAX_KEY_COUNT_PER_MODULE) {
+                if (DEVICE_IS_UHK80_RIGHT) {
+                    KeyStates[CURRENT_SLOT_ID][targetKeyId].hardwareSwitchState = keyStateBuffer[sourceIndex];
+                }
+
                 BoolBitToBytes(keyStateBuffer[sourceIndex], targetKeyId, compressedBuffer);
             }
         }
     }
     NusServer_Send(compressedBuffer, compressedLength);
-#endif
 }
 
 void keyScanner() {

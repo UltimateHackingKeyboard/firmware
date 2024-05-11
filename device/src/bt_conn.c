@@ -101,7 +101,7 @@ static void connected(struct bt_conn *conn, uint8_t err) {
             USB_DisableHid();
         }
     } else {
-        if (DEVICE_IS_UHK80_RIGHT) {
+        if (DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK_DONGLE) {
             NusClient_Setup(conn);
         }
     }
