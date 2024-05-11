@@ -68,23 +68,16 @@ char *GetPeerStringByConn(const struct bt_conn *conn) {
     return GetPeerStringByAddr(addr);
 }
 
-static struct bt_conn *current_conn;
-
 static void connected(struct bt_conn *conn, uint8_t err) {
     int8_t peerId = getPeerIdByConn(conn);
 
     if (err) {
         printk("Failed to connect to %s, err %u\n", GetPeerStringByConn(conn), err);
 
-        if (current_conn == conn) {
-            bt_conn_unref(current_conn);
-            current_conn = NULL;
-
-            if (DEVICE_IS_UHK80_RIGHT) {
-                err = bt_scan_start(BT_SCAN_TYPE_SCAN_ACTIVE);
-                if (err) {
-                    printk("Scanning failed to start (err %d)\n", err);
-                }
+        if (DEVICE_IS_UHK80_RIGHT) {
+            err = bt_scan_start(BT_SCAN_TYPE_SCAN_ACTIVE);
+            if (err) {
+                printk("Scanning failed to start (err %d)\n", err);
             }
         }
 
@@ -108,7 +101,6 @@ static void connected(struct bt_conn *conn, uint8_t err) {
             USB_DisableHid();
         }
     } else {
-        current_conn = bt_conn_ref(conn);
         if (DEVICE_IS_UHK80_RIGHT) {
             NusClient_Setup(conn);
         }
@@ -133,24 +125,12 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
             //     auth_conn = NULL;
             // }
 
-            if (current_conn) {
-                bt_conn_unref(current_conn);
-                current_conn = NULL;
-            }
-
             int err = bt_scan_start(BT_SCAN_TYPE_SCAN_ACTIVE);
             printk("Start scan\n");
             if (err) {
                 printk("Scanning failed to start (err %d)\n", err);
             }
         }
-    } else if (DEVICE_IS_UHK80_LEFT) {
-        if (current_conn != conn) {
-            return;
-        }
-
-        bt_conn_unref(current_conn);
-        current_conn = NULL;
     }
 }
 
