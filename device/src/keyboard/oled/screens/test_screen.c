@@ -1,14 +1,5 @@
 #include "test_screen.h"
-#include "keyboard/oled/framebuffer.h"
-#include "keyboard/oled/oled_text_renderer.h"
-#include "keyboard/oled/fonts/fonts.h"
-#include "keyboard/oled/widgets/custom_widget.h"
-#include "keyboard/oled/widgets/frame_widget.h"
-#include "keyboard/oled/widgets/console_widget.h"
-#include "keyboard/oled/widgets/splitter_widget.h"
-#include "keyboard/oled/widgets/layer_widget.h"
-#include "keyboard/oled/widgets/keymap_widget.h"
-#include "keyboard/oled/widgets/widget.h"
+#include "keyboard/oled/widgets/widgets.h"
 #include "keyboard/logger.h"
 
 static widget_t consoleWidget;
@@ -30,7 +21,7 @@ static void drawHello(widget_t* self, framebuffer_t* buffer)
     }
 }
 
-void TestScreen_Init(framebuffer_t* buffer)
+void TestScreen_Init()
 {
     helloWidget = CustomWidget_Build(&drawHello);
     layerWidget = LayerWidget_Build();

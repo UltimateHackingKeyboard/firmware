@@ -17,6 +17,6 @@
 
 // Functions:
 
-    void TestScreen_Init(framebuffer_t* buffer);
+    void TestScreen_Init();
 
 #endif

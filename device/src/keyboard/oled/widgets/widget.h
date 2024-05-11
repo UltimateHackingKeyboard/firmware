@@ -6,6 +6,7 @@
     #include <inttypes.h>
     #include <stdbool.h>
     #include "../framebuffer.h"
+    #include "keyboard/oled/fonts/fonts.h"
 
 // Macros:
 
@@ -16,6 +17,7 @@
         WidgetType_HSplitter,
         WidgetType_Frame,
         WidgetType_Console,
+        WidgetType_Text,
         WidgetType_Custom,
     } widget_type_t;
 
@@ -43,6 +45,10 @@
             struct {
                 widget_t* content;
             } simpleContentData;
+            struct {
+                const char* text;
+                const lv_font_t* font;
+            } textData;
         };
     };
 

@@ -5,6 +5,7 @@
 #include "bt_conn.h"
 #include "bt_central_uart.h"
 #include "device.h"
+#include "keyboard/oled/screens/pairing_screen.h"
 #include "usb/usb.h"
 
 #define PeerCount 3
@@ -197,6 +198,8 @@ static void auth_passkey_confirm(struct bt_conn *conn, unsigned int passkey) {
     if (!auth_conn) {
         return;
     }
+
+    PairingScreen_AskForPassword(passkey);
 
     printk("Passkey for %s: %06u\n", GetPeerStringByConn(conn), passkey);
     printk("Type `uhk btacc 1/0` to accept/reject\n");

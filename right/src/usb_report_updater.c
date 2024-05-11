@@ -576,6 +576,7 @@ void UpdateUsbReports(void)
 
     if (UsbBasicKeyboardCheckReportReady() == kStatus_USB_Success) {
         MacroRecorder_RecordBasicReport(ActiveUsbBasicKeyboardReport);
+        InputInterceptor_RegisterReport(ActiveUsbBasicKeyboardReport);
 
         KEY_TIMING(KeyTiming_RecordReport(ActiveUsbBasicKeyboardReport));
 
