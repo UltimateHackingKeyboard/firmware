@@ -6,7 +6,7 @@
 
 // HID advertisement
 
-static const struct bt_data ad_hid[] = {
+static const struct bt_data adHid[] = {
     BT_DATA_BYTES(BT_DATA_GAP_APPEARANCE,
               (CONFIG_BT_DEVICE_APPEARANCE >> 0) & 0xff,
               (CONFIG_BT_DEVICE_APPEARANCE >> 8) & 0xff),
@@ -15,18 +15,18 @@ static const struct bt_data ad_hid[] = {
                       BT_UUID_16_ENCODE(BT_UUID_BAS_VAL)),
 };
 
-static const struct bt_data sd_hid[] = {
+static const struct bt_data sdHid[] = {
     BT_DATA(BT_DATA_NAME_COMPLETE, DEVICE_NAME, DEVICE_NAME_LEN),
 };
 
 void AdvertiseHid(void) {
-    struct bt_le_adv_param *adv_param = BT_LE_ADV_PARAM(
+    struct bt_le_adv_param *advParam = BT_LE_ADV_PARAM(
                         BT_LE_ADV_OPT_CONNECTABLE | BT_LE_ADV_OPT_ONE_TIME,
                         BT_GAP_ADV_FAST_INT_MIN_2,
                         BT_GAP_ADV_FAST_INT_MAX_2,
                         NULL);
 
-    int err = bt_le_adv_start(adv_param, ad_hid, ARRAY_SIZE(ad_hid), sd_hid, ARRAY_SIZE(sd_hid));
+    int err = bt_le_adv_start(advParam, adHid, ARRAY_SIZE(adHid), sdHid, ARRAY_SIZE(sdHid));
     if (err) {
         if (err == -EALREADY) {
             printk("HID advertising continued\n");
@@ -40,19 +40,19 @@ void AdvertiseHid(void) {
     printk("HID advertising successfully started\n");
 }
 
-// Peer advertisement
+// NUS advertisement
 
-static const struct bt_data ad_peer[] = {
+static const struct bt_data adNus[] = {
     BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),
     BT_DATA(BT_DATA_NAME_COMPLETE, DEVICE_NAME, DEVICE_NAME_LEN),
 };
 
-static const struct bt_data sd_peer[] = {
+static const struct bt_data sdNus[] = {
     BT_DATA_BYTES(BT_DATA_UUID128_ALL, BT_UUID_NUS_VAL),
 };
 
 void AdvertiseNus(void) {
-    int err = bt_le_adv_start(BT_LE_ADV_CONN, ad_peer, ARRAY_SIZE(ad_peer), sd_peer, ARRAY_SIZE(sd_peer));
+    int err = bt_le_adv_start(BT_LE_ADV_CONN, adNus, ARRAY_SIZE(adNus), sdNus, ARRAY_SIZE(sdNus));
     if (err) {
         printk("NUS advertising failed to start (err %d)", err);
     } else {
