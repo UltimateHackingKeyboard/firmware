@@ -3,7 +3,7 @@
 #include <bluetooth/scan.h>
 #include "bt_scan.h"
 #include "bt_conn.h"
-#include "bt_central_uart.h"
+#include "nus_client.h"
 #include "bool_array_converter.h"
 #include "legacy/slot.h"
 #include "shared/bool_array_converter.h"
@@ -71,7 +71,7 @@ static void exchange_func(struct bt_conn *conn, uint8_t err, struct bt_gatt_exch
     }
 }
 
-void SetupCentralConnection(struct bt_conn *conn) {
+void NusClient_Setup(struct bt_conn *conn) {
     static struct bt_gatt_exchange_params exchange_params;
 
     exchange_params.func = exchange_func;
@@ -93,7 +93,7 @@ void SetupCentralConnection(struct bt_conn *conn) {
     }
 }
 
-void InitCentralUart(void) {
+void NusClient_Init(void) {
     int err = scan_init();
     if (err != 0) {
         printk("scan_init failed (err %d)\n", err);
@@ -124,7 +124,7 @@ void InitCentralUart(void) {
     printk("Scanning successfully started\n");
 }
 
-void SendCentralUart(const uint8_t *data, uint16_t len) {
+void NusClient_Send(const uint8_t *data, uint16_t len) {
     int err = bt_nus_client_send(&nus_client, data, len);
     if (err) {
         printk("Failed to send data over BLE connection (err %d)\n", err);

@@ -3,7 +3,7 @@
 #include <bluetooth/scan.h>
 #include "bt_advertise.h"
 #include "bt_conn.h"
-#include "bt_central_uart.h"
+#include "nus_client.h"
 #include "device.h"
 #include "usb/usb.h"
 
@@ -110,7 +110,7 @@ static void connected(struct bt_conn *conn, uint8_t err) {
     } else {
         current_conn = bt_conn_ref(conn);
         if (DEVICE_IS_UHK80_RIGHT) {
-            SetupCentralConnection(conn);
+            NusClient_Setup(conn);
         }
     }
 }

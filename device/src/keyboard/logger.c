@@ -4,7 +4,7 @@
 #include "keyboard/logger.h"
 #include "shell.h"
 #include "keyboard/uart.h"
-#include "bt_central_uart.h"
+#include "nus_client.h"
 #include "bt_peripheral_uart.h"
 #include "device.h"
 #include "oled/widgets/console_widget.h"

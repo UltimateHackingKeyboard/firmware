@@ -5,7 +5,7 @@
 #include "keyboard/charger.h"
 #include "keyboard/spi.h"
 #include "keyboard/uart.h"
-#include "bt_central_uart.h"
+#include "nus_client.h"
 #include "bt_peripheral_uart.h"
 #include "keyboard/i2c.h"
 #include "peripherals/merge_sensor.h"
@@ -82,7 +82,7 @@ int main(void) {
 #endif
 
 #if DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK_DONGLE
-    InitCentralUart();
+    NusClient_Init();
 #endif
 
 #if DEVICE_IS_UHK80_RIGHT
