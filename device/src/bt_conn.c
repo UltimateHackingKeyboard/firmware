@@ -119,7 +119,9 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
             if (DEVICE_IS_UHK80_RIGHT) {
                 USB_EnableHid();
             }
-        } else {
+        } else if (peerId == PeerIdDongle) {
+            AdvertiseNus();
+        } else if (peerId == PeerIdLeft) {
             int err = bt_scan_start(BT_SCAN_TYPE_SCAN_ACTIVE);
             printk("Start scan\n");
             if (err) {
