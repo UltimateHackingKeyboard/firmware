@@ -120,11 +120,6 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
                 USB_EnableHid();
             }
         } else {
-            // if (auth_conn) {
-            //     bt_conn_unref(auth_conn);
-            //     auth_conn = NULL;
-            // }
-
             int err = bt_scan_start(BT_SCAN_TYPE_SCAN_ACTIVE);
             printk("Start scan\n");
             if (err) {
