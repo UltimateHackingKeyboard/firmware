@@ -13,14 +13,14 @@ static void registerScancode(uint8_t scancode)
     }
 }
 
-void InputInterceptor_RegisterReport(usb_basic_keyboard_report_t* activeReport)
+bool InputInterceptor_RegisterReport(usb_basic_keyboard_report_t* activeReport)
 {
     switch (ActiveScreen) {
         case ScreenId_Pairing:
             recipient = &PairingScreen_RegisterScancode;
             UsbBasicKeyboard_ForeachScancode(activeReport, &registerScancode);
-            break;
+            return true;
         default:
-            break;
+            return false;
     }
 }

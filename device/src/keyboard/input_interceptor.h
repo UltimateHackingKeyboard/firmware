@@ -16,6 +16,6 @@
 
 // Functions:
 
-    void InputInterceptor_RegisterReport(usb_basic_keyboard_report_t* activeReport);
+    bool InputInterceptor_RegisterReport(usb_basic_keyboard_report_t* activeReport);
 
 #endif

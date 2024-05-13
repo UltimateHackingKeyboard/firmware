@@ -91,5 +91,6 @@
     usb_status_t UsbBasicKeyboardCheckReportReady();
     void UsbBasicKeyboardSendActiveReport(void);
     usb_basic_keyboard_report_t* GetInactiveUsbBasicKeyboardReport(void);
+    void SwitchActiveUsbBasicKeyboardReport(void);
 
 #endif
