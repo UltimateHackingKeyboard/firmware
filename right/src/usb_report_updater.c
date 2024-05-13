@@ -41,6 +41,7 @@
 #if __ZEPHYR__
 #include "shell.h"
 #include "usb/usb_compatibility.h"
+#include "keyboard/input_interceptor.h"
 #endif
 
 bool TestUsbStack = false;
@@ -575,19 +576,27 @@ void UpdateUsbReports(void)
     bool usbReportsChanged = false;
 
     if (UsbBasicKeyboardCheckReportReady() == kStatus_USB_Success) {
-        MacroRecorder_RecordBasicReport(ActiveUsbBasicKeyboardReport);
+#ifdef __ZEPHYR__
+        if (InputInterceptor_RegisterReport(ActiveUsbBasicKeyboardReport)) {
+            SwitchActiveUsbBasicKeyboardReport();
+        } else
 
-        KEY_TIMING(KeyTiming_RecordReport(ActiveUsbBasicKeyboardReport));
+#endif
+        {
+            MacroRecorder_RecordBasicReport(ActiveUsbBasicKeyboardReport);
 
-        if(RuntimeMacroRecordingBlind) {
-            //just switch reports without sending the report
-            UsbBasicKeyboardResetActiveReport();
-		} else {
-            UsbBasicKeyboardSendActiveReport();
+            KEY_TIMING(KeyTiming_RecordReport(ActiveUsbBasicKeyboardReport));
+
+            if(RuntimeMacroRecordingBlind) {
+                //just switch reports without sending the report
+                SwitchActiveUsbBasicKeyboardReport();
+            } else {
+                UsbBasicKeyboardSendActiveReport();
+            }
+            usbReportsChanged = true;
+            lastReportTime = CurrentTime;
+            lastActivityTime = CurrentTime;
         }
-        usbReportsChanged = true;
-        lastReportTime = CurrentTime;
-        lastActivityTime = CurrentTime;
     }
 
 #ifdef __ZEPHYR__

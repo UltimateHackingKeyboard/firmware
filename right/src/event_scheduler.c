@@ -1,5 +1,7 @@
 #include "event_scheduler.h"
-#ifndef __ZEPHYR__
+#ifdef __ZEPHYR__
+#include "keyboard/oled/screens/screen_manager.h"
+#else
 #include "segment_display.h"
 #endif
 #include "timer.h"
@@ -28,6 +30,11 @@ static void scheduleNext()
 static void processEvt(event_scheduler_event_t evt)
 {
     switch (evt) {
+        case EventSchedulerEvent_SwitchScreen:
+#ifdef __ZEPHYR__
+            ScreenManager_SwitchScreenEvent();
+#endif
+            break;
         case EventSchedulerEvent_SegmentDisplayUpdate:
 #ifndef __ZEPHYR__
             SegmentDisplay_NeedsUpdate = true;

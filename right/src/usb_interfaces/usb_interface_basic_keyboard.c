@@ -40,7 +40,7 @@ usb_hid_protocol_t UsbBasicKeyboardGetProtocol(void)
 }
 
 
-static usb_basic_keyboard_report_t* GetInactiveUsbBasicKeyboardReport(void)
+usb_basic_keyboard_report_t* GetInactiveUsbBasicKeyboardReport(void)
 {
     return ActiveUsbBasicKeyboardReport == usbBasicKeyboardReports ? usbBasicKeyboardReports+1 : usbBasicKeyboardReports;
 }
@@ -50,7 +50,7 @@ void UsbBasicKeyboardResetActiveReport(void)
     memset(ActiveUsbBasicKeyboardReport, 0, USB_BASIC_KEYBOARD_REPORT_LENGTH);
 }
 
-static void SwitchActiveUsbBasicKeyboardReport(void)
+void SwitchActiveUsbBasicKeyboardReport(void)
 {
     ActiveUsbBasicKeyboardReport = GetInactiveUsbBasicKeyboardReport();
 }

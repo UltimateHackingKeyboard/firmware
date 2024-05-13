@@ -1,6 +1,10 @@
 #ifndef __OLED_H__
 #define __OLED_H__
 
+// Includes:
+
+    #include "widgets/widget.h"
+
 // Variables:
 
     extern const struct gpio_dt_spec oledEn;
@@ -10,7 +14,8 @@
 
 // Functions:
 
-    extern void InitOled(void);
-    extern void Oled_RequestRedraw(void);
+    void InitOled(void);
+    void Oled_ActivateScreen(widget_t* screen, bool forceRedraw);
+    void Oled_RequestRedraw(void);
 
 #endif // __OLED_H__

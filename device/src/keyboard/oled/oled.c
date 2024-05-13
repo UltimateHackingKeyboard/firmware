@@ -2,8 +2,8 @@
 #include "framebuffer.h"
 #include "oled.h"
 #include "oled_buffer.h"
+#include "screens/screen_manager.h"
 #include "screens/test_screen.h"
-#include "widgets/widget.h"
 
 #ifdef DEVICE_HAS_OLED
 
@@ -97,6 +97,15 @@ static void forceRedraw() {
     }
 }
 
+void Oled_ActivateScreen(widget_t* screen, bool forceRedraw)
+{
+    if (currentScreen != screen || forceRedraw) {
+        currentScreen = screen;
+        Framebuffer_Clear(NULL, OledBuffer);
+        currentScreen->layOut(currentScreen, currentXShift, currentYShift, OledBuffer->width - DISPLAY_SHIFTING_MARGIN, OledBuffer->height - DISPLAY_SHIFTING_MARGIN);
+    }
+}
+
 static void performScreenShift() {
     static uint16_t shiftCounter = 0;
     static bool initialized = false;
@@ -115,8 +124,7 @@ static void performScreenShift() {
     currentXShift = shiftCounter / (DISPLAY_SHIFTING_MARGIN);
     currentYShift = shiftCounter % (DISPLAY_SHIFTING_MARGIN);
 
-    Framebuffer_Clear(NULL, OledBuffer);
-    currentScreen->layOut(currentScreen, currentXShift, currentYShift, OledBuffer->width - DISPLAY_SHIFTING_MARGIN, OledBuffer->height - DISPLAY_SHIFTING_MARGIN);
+    Oled_ActivateScreen(currentScreen, true);
 }
 
 static bool updateScreenShift() {
@@ -183,7 +191,6 @@ void oledUpdater() {
     currentScreen->draw(currentScreen, OledBuffer);
 
     while (true) {
-        updateScreenShift();
         diffUpdate();
 
         if (!oledNeedsRedraw) {
@@ -191,6 +198,7 @@ void oledUpdater() {
         }
 
         oledNeedsRedraw = false;
+        updateScreenShift();
         currentScreen->draw(currentScreen, OledBuffer);
     }
 }
@@ -213,7 +221,7 @@ void InitOled(void) {
     gpio_pin_configure_dt(&oledA0Dt, GPIO_OUTPUT);
 
     OledBuffer_Init();
-    TestScreen_Init(OledBuffer);
+    ScreenManager_Init();
     currentScreen = TestScreen;
 
     oledThreadId = k_thread_create(

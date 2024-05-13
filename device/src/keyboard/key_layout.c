@@ -78,6 +78,7 @@ const uint8_t KeyLayout_Uhk80_to_Uhk60[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
         [7] = 255,
         [17] = 255,
         [27] = 255,
+        [37] = 255,
     },
     {
         // UHK60 keys
