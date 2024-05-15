@@ -24,6 +24,5 @@ void HOGP_Enable(void);
 void HOGP_Disable(void);
 void USB_DisableHid(void);
 void USB_EnableHid(void);
-void HID_SendReportsThread(void);
 
 #endif // __USB_HEADER__

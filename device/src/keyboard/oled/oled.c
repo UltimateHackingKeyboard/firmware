@@ -234,4 +234,9 @@ void InitOled(void) {
     k_thread_name_set(&thread_data, "oled_updater");
 }
 
+#else // DEVICE_HAS_OLED
+
+void Oled_ActivateScreen(widget_t* screen, bool forceRedraw){};
+void Oled_RequestRedraw(){};
+
 #endif // DEVICE_HAS_OLED

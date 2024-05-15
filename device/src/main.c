@@ -20,6 +20,8 @@
 #include "macros/shortcut_parser.h"
 #include "macros/keyid_parser.h"
 #include "macros/core.h"
+#include "legacy/timer.h"
+#include "legacy/user_logic.h"
 // #include <zephyr/drivers/gpio.h>
 // #include "dongle_leds.h"
 
@@ -98,5 +100,15 @@ int main(void) {
         Macros_Initialize();
     }
 
-    HID_SendReportsThread();
+#if DEVICE_IS_UHK80_RIGHT
+    while (true)
+    {
+        CurrentTime = k_uptime_get();
+        RunUserLogic();
+        k_msleep(1);
+    }
+#else
+    k_sleep(K_FOREVER);
+#endif
 }
+
