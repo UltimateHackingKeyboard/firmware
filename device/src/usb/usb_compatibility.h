@@ -6,9 +6,9 @@
 #include "usb_interfaces/usb_interface_system_keyboard.h"
 #include "usb_interfaces/usb_interface_mouse.h"
 
-void UsbCompatibility_KeyboardAddScancode(uint8_t scancode);
-void UsbCompatibility_SendKeyboardReport(usb_basic_keyboard_report_t* report);
-void UsbCompatibility_SendMouseReport(usb_mouse_report_t* report) ;
-void UsbCompatibility_SendConsumerReport(usb_media_keyboard_report_t* mediaReport, usb_system_keyboard_report_t* systemReport);
+void UsbCompatibility_SendKeyboardReport(const usb_basic_keyboard_report_t* report);
+void UsbCompatibility_SendMouseReport(const usb_mouse_report_t* report) ;
+void UsbCompatibility_SendConsumerReport(const usb_media_keyboard_report_t* mediaReport, const usb_system_keyboard_report_t* systemReport);
+void UsbCompatibility_SendConsumerReport2(const uint8_t* report);
 
 #endif // __USB_HEADER__

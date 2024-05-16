@@ -1,3 +1,4 @@
+#include "nus_server.h"
 #include <bluetooth/services/nus.h>
 #include "bt_conn.h"
 #include "bt_advertise.h"
@@ -33,4 +34,12 @@ void NusServer_Send(const uint8_t *data, uint16_t len) {
     if (err) {
         printk("Failed to send data over BLE connection (err: %d)\n", err);
     }
+}
+
+void NusServer_SendSyncableProperty(syncable_property_id_t property, const uint8_t *data, uint16_t len) {
+    uint8_t buffer[MAX_LINK_PACKET_LENGTH];
+    buffer[0] = property;
+    memcpy(&buffer[1], data, len);
+
+    NusServer_Send(buffer, len+1);
 }

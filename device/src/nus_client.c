@@ -3,6 +3,8 @@
 #include <bluetooth/scan.h>
 #include "bt_scan.h"
 #include "bt_conn.h"
+#include "legacy/usb_interfaces/usb_interface_basic_keyboard.h"
+#include "legacy/usb_interfaces/usb_interface_mouse.h"
 #include "nus_client.h"
 #include "bool_array_converter.h"
 #include "legacy/slot.h"
@@ -10,6 +12,8 @@
 #include "legacy/module.h"
 #include "legacy/key_states.h"
 #include "keyboard/oled/widgets/console_widget.h"
+#include "usb/usb_compatibility.h"
+#include "link_protocol.h"
 
 static struct bt_nus_client nus_client;
 
@@ -21,11 +25,41 @@ static void ble_data_sent(struct bt_nus_client *nus, uint8_t err, const uint8_t 
 }
 
 static uint8_t ble_data_received(struct bt_nus_client *nus, const uint8_t *data, uint16_t len) {
-    if (DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK_DONGLE) {
-        printk("Received data: %i %i %i %i %i %i %i %i\n", data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7]);
-        for (uint8_t keyId = 0; keyId < MAX_KEY_COUNT_PER_MODULE; keyId++) {
-            KeyStates[SlotId_LeftKeyboardHalf][keyId].hardwareSwitchState = !!(data[keyId/8] & (1 << (keyId % 8)));
-        }
+    const uint8_t* message = data+1;
+    switch (data[0]) {
+        case SyncablePropertyId_LeftHalfKeyStates:
+            if (!DEVICE_IS_UHK80_RIGHT) {
+                printk("Didn't expect to receive property %i\n", message[0]);
+            } else {
+                for (uint8_t keyId = 0; keyId < MAX_KEY_COUNT_PER_MODULE; keyId++) {
+                    KeyStates[SlotId_LeftKeyboardHalf][keyId].hardwareSwitchState = !!(message[keyId/8] & (1 << (keyId % 8)));
+                }
+            }
+            break;
+        case SyncablePropertyId_KeyboardReport:
+            if (!DEVICE_IS_UHK_DONGLE) {
+                printk("Didn't expect to receive property %i\n", data[0]);
+            } else {
+                UsbCompatibility_SendKeyboardReport((usb_basic_keyboard_report_t*)message);
+            }
+            break;
+        case SyncablePropertyId_MouseReport:
+            if (!DEVICE_IS_UHK_DONGLE) {
+                printk("Didn't expect to receive property %i\n", data[0]);
+            } else {
+                UsbCompatibility_SendMouseReport((usb_mouse_report_t*)message);
+            }
+            break;
+        case SyncablePropertyId_ControlsReport:
+            if (!DEVICE_IS_UHK_DONGLE) {
+                printk("Didn't expect to receive property %i\n", data[0]);
+            } else {
+                UsbCompatibility_SendConsumerReport2(message);
+            }
+            break;
+        default:
+            printk("Unrecognized property %i\n", data[0]);
+            break;
     }
     return BT_GATT_ITER_CONTINUE;
 }
@@ -130,3 +164,4 @@ void NusClient_Send(const uint8_t *data, uint16_t len) {
         printk("Failed to send data over BLE connection (err %d)\n", err);
     }
 }
+

@@ -82,7 +82,9 @@ static void scanKeys() {
 
     uint8_t compressedLength = MAX_KEY_COUNT_PER_MODULE/8+1;
     uint8_t compressedBuffer[compressedLength];
-    memset(compressedBuffer, 0, compressedLength);
+    if (DEVICE_IS_UHK80_LEFT) {
+        memset(compressedBuffer, 0, compressedLength);
+    }
 
     uint8_t slotId = DEVICE_IS_UHK80_LEFT ? SlotId_LeftKeyboardHalf : SlotId_RightKeyboardHalf;
     for (uint8_t rowId=0; rowId<KEY_MATRIX_ROWS; rowId++) {
@@ -95,11 +97,16 @@ static void scanKeys() {
                     KeyStates[CURRENT_SLOT_ID][targetKeyId].hardwareSwitchState = keyStateBuffer[sourceIndex];
                 }
 
-                BoolBitToBytes(keyStateBuffer[sourceIndex], targetKeyId, compressedBuffer);
+                if (DEVICE_IS_UHK80_LEFT) {
+                    BoolBitToBytes(keyStateBuffer[sourceIndex], targetKeyId, compressedBuffer);
+                }
             }
         }
     }
-    NusServer_Send(compressedBuffer, compressedLength);
+
+    if (DEVICE_IS_UHK80_LEFT) {
+        NusServer_SendSyncableProperty(SyncablePropertyId_LeftHalfKeyStates, compressedBuffer, compressedLength);
+    }
 }
 
 void keyScanner() {

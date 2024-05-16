@@ -176,7 +176,9 @@ static void auth_passkey_confirm(struct bt_conn *conn, unsigned int passkey) {
         return;
     }
 
+#ifdef DEVICE_HAS_OLED
     PairingScreen_AskForPassword(passkey);
+#endif
 
     printk("Passkey for %s: %06u\n", GetPeerStringByConn(conn), passkey);
     printk("Type `uhk btacc 1/0` to accept/reject\n");

@@ -12,11 +12,6 @@
 
 // Typedefs:
 
-typedef struct {
-    syncable_property_id_t id;
-    bool dirty;
-} syncable_property_t;
-
 typedef enum {
     SyncablePropertyId_UserConfiguration,
     SyncablePropertyId_CurrentKeymapId,
@@ -28,6 +23,13 @@ typedef enum {
     SyncablePropertyId_LeftModuleKeyStates,
     SyncablePropertyId_LeftBatteryPercentage,
     SyncablePropertyId_LeftBatteryChargingState,
+    SyncablePropertyId_ControlsReport,
 } syncable_property_id_t;
+
+typedef struct {
+    syncable_property_id_t id;
+    bool dirty;
+} syncable_property_t;
+
 
 #endif // __LINK_PROTOCOL_H__
