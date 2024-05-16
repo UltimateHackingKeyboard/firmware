@@ -90,9 +90,10 @@ static uint16_t currentYShift = 0;
 
 // Temporary code. Will be removed soon
 static void forceRedraw() {
-    for (uint16_t x = 0; x < 256; x++) {
+    for (uint16_t x = 0; x < 256; x+=2) {
         for (uint16_t y = 0; y < 64; y++) {
-            OledBuffer->buffer[y*256+x] |= 1;
+            pixel_t* p = Framebuffer_GetPixel(OledBuffer, x, y);
+            p->oldValue = p->value + 1;
         }
     }
 }
@@ -102,7 +103,7 @@ void Oled_ActivateScreen(widget_t* screen, bool forceRedraw)
     if (currentScreen != screen || forceRedraw) {
         currentScreen = screen;
         Framebuffer_Clear(NULL, OledBuffer);
-        currentScreen->layOut(currentScreen, currentXShift, currentYShift, OledBuffer->width - DISPLAY_SHIFTING_MARGIN, OledBuffer->height - DISPLAY_SHIFTING_MARGIN);
+        currentScreen->layOut(currentScreen, currentXShift, currentYShift, DISPLAY_WIDTH - DISPLAY_SHIFTING_MARGIN, DISPLAY_HEIGHT - DISPLAY_SHIFTING_MARGIN);
     }
 }
 
@@ -148,8 +149,8 @@ static void diffUpdate()
     setA0(true);
     setOledCs(true);
 
-    for (uint16_t y = 0; y < OledBuffer->height; y++) {
-        for (uint16_t x = OledBuffer->width-2; x < OledBuffer->width; x -= 2) {
+    for (uint16_t y = 0; y < DISPLAY_HEIGHT; y++) {
+        for (uint16_t x = DISPLAY_WIDTH-2; x < DISPLAY_WIDTH; x -= 2) {
             if (oledNeedsRedraw) {
                 setOledCs(false);
                 k_mutex_unlock(&SpiMutex);
@@ -159,18 +160,16 @@ static void diffUpdate()
             static uint16_t lastWrittenPixelX = 0;
             static uint16_t lastWrittenPixelY = 0;
 
-            uint8_t firstPixel = Framebuffer_GetPixel(OledBuffer, x, y);
-            uint8_t secondPixel = Framebuffer_GetPixel(OledBuffer, x+1, y);
+            pixel_t* pixel = Framebuffer_GetPixel(OledBuffer, x, y);
 
-            if (firstPixel & Framebuffer_PixelIsDirty || secondPixel & Framebuffer_PixelIsDirty) {
-                uint8_t upper = firstPixel >> 4;
-                uint8_t lower = secondPixel & 0xf0;
-
+            if (pixel->value != pixel->oldValue) {
                 setPositionTo(x, y, lastWrittenPixelX, lastWrittenPixelY);
 
-                writeSpi(upper | lower); //write pixel data
+                writeSpi(pixel->value); //write pixel data
+
                 lastWrittenPixelX = x;
                 lastWrittenPixelY = y;
+                pixel->oldValue = pixel->value;
             }
         }
     }
@@ -186,9 +185,9 @@ void oledUpdater() {
     oledCommand1(0, OledCommand_SetScanDirectionDown);
     k_mutex_unlock(&SpiMutex);
 
-    forceRedraw();
     performScreenShift();
     currentScreen->draw(currentScreen, OledBuffer);
+    forceRedraw();
 
     while (true) {
         diffUpdate();

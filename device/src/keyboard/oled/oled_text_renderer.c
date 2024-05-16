@@ -15,8 +15,8 @@ static uint8_t drawGlyph(widget_t* canvas, framebuffer_t* buffer, int16_t x, int
 {
     int16_t canvasOffsetX = canvas == NULL ? 0 : canvas->x;
     int16_t canvasOffsetY = canvas == NULL ? 0 : canvas->y;
-    int16_t canvasWidth = canvas == NULL ? buffer->width : canvas->w;
-    int16_t canvasHeight = canvas == NULL ? buffer->height : canvas->h;
+    int16_t canvasWidth = canvas == NULL ? DISPLAY_WIDTH : canvas->w;
+    int16_t canvasHeight = canvas == NULL ? DISPLAY_HEIGHT : canvas->h;
 
    const uint8_t* bitmap = font->dsc->glyph_bitmap;
    const lv_font_fmt_txt_glyph_dsc_t* glyph = &font->dsc->glyph_dsc[glyphIdx];
@@ -83,8 +83,8 @@ static uint16_t approximateTextLength(const lv_font_t* font, const char* text)
 
 void Framebuffer_DrawTextAnchored(widget_t* canvas, framebuffer_t* buffer, anchor_type_t horizontalAnchor, anchor_type_t verticalAnchor, const lv_font_t* font, const char* text)
 {
-    int16_t canvasWidth = canvas == NULL ? buffer->width : canvas->w;
-    int16_t canvasHeight = canvas == NULL ? buffer->height : canvas->h;
+    int16_t canvasWidth = canvas == NULL ? DISPLAY_WIDTH : canvas->w;
+    int16_t canvasHeight = canvas == NULL ? DISPLAY_HEIGHT : canvas->h;
 
     int16_t x, y;
 
