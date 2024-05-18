@@ -48,8 +48,7 @@ void LedDriver_SetAllLedsTo(uint8_t val);
 Function scoped variables and function parameters are written with lowerCamelCase.
 
 ```
-void MyFunction(uint8_t myArg1, uint8_t myArg2)
-{
+void MyFunction(uint8_t myArg1, uint8_t myArg2) {
     uint8_t myVariable;
     ....
 }
