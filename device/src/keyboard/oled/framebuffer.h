@@ -52,8 +52,6 @@
         } else {
             buffer->buffer[index].value = (buffer->buffer[index].value & 0xf0) | (value >> 4);
         }
-        buffer->dirtyRanges[y].min = MIN(buffer->dirtyRanges[y].min, x/2);
-        buffer->dirtyRanges[y].max = MAX(buffer->dirtyRanges[y].max, x/2);
     };
 
     static inline pixel_t* Framebuffer_GetPixel(framebuffer_t* buffer, uint16_t x, uint16_t y)

@@ -16,6 +16,7 @@
         EventSchedulerEvent_MacroWakeOnTime,
         EventSchedulerEvent_MacroRecorderFlashing,
         EventSchedulerEvent_SwitchScreen,
+        EventSchedulerEvent_ShiftScreen,
         EventSchedulerEvent_Count
     } event_scheduler_event_t;
 
