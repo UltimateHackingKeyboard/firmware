@@ -6,7 +6,7 @@ struct k_mutex SpiMutex;
 const struct device *spi0_dev = DEVICE_DT_GET(DT_NODELABEL(spi1));
 
 static struct spi_config spiConf = {
-    .frequency = 400000U,
+    .frequency = 32000000U,
     .operation = (SPI_OP_MODE_MASTER | SPI_WORD_SET(8) | SPI_TRANSFER_MSB)
 };
 
