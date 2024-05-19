@@ -158,7 +158,7 @@ static void diffUpdate() {
 
     // uint32_t time = k_uptime_get_32();
 
-    uint8_t buf[128];
+    uint8_t buf[DISPLAY_WIDTH / 2];
     uint8_t buf_pos = 0;
 
     for (uint16_t y = 0; y < DISPLAY_HEIGHT; y++) {
