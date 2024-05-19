@@ -8,11 +8,7 @@
 #include "oled_text_renderer.h"
 #include "oled.h"
 
-static struct {
-    uint16_t width;
-    uint16_t height;
-    uint8_t buffer[DISPLAY_WIDTH*DISPLAY_HEIGHT];
-} oledBuffer = { .width = DISPLAY_WIDTH, .height = DISPLAY_HEIGHT };
+framebuffer_t oledBuffer;
 
 framebuffer_t* OledBuffer = (framebuffer_t*)&oledBuffer;
 

@@ -1,6 +1,7 @@
 #include "event_scheduler.h"
 #ifdef __ZEPHYR__
 #include "keyboard/oled/screens/screen_manager.h"
+#include "keyboard/oled/oled.h"
 #else
 #include "segment_display.h"
 #endif
@@ -30,6 +31,11 @@ static void scheduleNext()
 static void processEvt(event_scheduler_event_t evt)
 {
     switch (evt) {
+        case EventSchedulerEvent_ShiftScreen:
+#ifdef __ZEPHYR__
+            Oled_ShiftScreen();
+#endif
+            break;
         case EventSchedulerEvent_SwitchScreen:
 #ifdef __ZEPHYR__
             ScreenManager_SwitchScreenEvent();
