@@ -35,7 +35,7 @@ const uint8_t KeyLayout_Uhk80_to_Uhk60[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
         [45] = 26, // /
         [46] = 27, // shift
 
-        [51] = 29, // mod
+        [51] = 29, // space
         [42] = 31, // fn
         [54] = 32, // alt
         [55] = 33, // super

@@ -3,7 +3,9 @@
 #include "layer_switcher.h"
 #include "ledmap.h"
 #include "slave_drivers/is31fl3xxx_driver.h"
-#ifndef __ZEPHYR__
+#ifdef __ZEPHYR__
+#include "keyboard/leds.h"
+#else
 #include "device/device.h"
 #endif
 #include "config_parser/config_globals.h"
@@ -273,15 +275,113 @@ static rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
 };
 
 #else
-
 // UHK 80
 static rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
     // Right keyboard half
     {
+        RGB(158,157,159), // 7
+        RGB(122,121,123), // 8
+        RGB(86,85,87),    // 9
+        RGB(50,49,51),    // 0
+        RGB(14,13,15),    // -
+        RGB(32,31,33),    // =
+        RGB(194,193,195), // backspace
+        RGB(160,161,162), // u
+        RGB(124,125,126), // i
+        RGB(88,89,90),    // o
+        RGB(52,53,54),    // p
+        RGB(16,17,18),    // [
+        RGB(34,35,36),    // ]
+        RGB(196,197,198), // |
+        RGB(145,146,153), // y
+        RGB(109,110,117), // j
+        RGB(73,74,81),    // k
+        RGB(37,38,45),    // l
+        RGB(1,2,9),       // ;
+        RGB(19,20,27),    // '
+        RGB(181,182,189), // enter
+        RGB(147,148,149), // h
+        RGB(151,150,152), // n
+        RGB(111,112,113), // m
+        RGB(3,4,5),       // ,
+        RGB(21,22,23),    // .
+        RGB(39,40,41),    // /
+        RGB(183,184,185), // shift
+        RGB(0,0,0),       // unused
+        RGB(115,114,116), // space
+        RGB(79,78,80),    // inner case button
+        RGB(75,76,77),    // fn
+        RGB(7,6,8),       // alt
+        RGB(25,24,26),    // super
+        RGB(187,186,188), // ctrl
+        RGB(155,154,156), // f7
+        RGB(119,118,120), // f8
+        RGB(83,82,84),    // f9
+        RGB(47,46,48),    // f10
+        RGB(11,10,12),    // f11
+        RGB(29,28,30),    // f12
+        RGB(191,190,192), // print
+        RGB(140,139,141), // del
+        RGB(176,175,177), // ins
+        RGB(173,172,174), // scrl lck
+        RGB(137,136,138), // pause
+        RGB(178,179,180), // home
+        RGB(142,143,144), // pg up
+        RGB(163,164,171), // end
+        RGB(127,128,135), // pg down
+        RGB(93,94,95),    // dbl arrow left
+        RGB(165,166,167), // arrow up
+        RGB(129,130,131), // dbl arrow right
+        RGB(97,96,98),    // arrow left
+        RGB(169,168,170), // arrow down
+        RGB(133,132,134), // arrow right
+        RGB(43,42,44),    // right case button
     },
 
     // Left keyboard half
     {
+        RGB(145,150,151), // tilde
+        RGB(55,60,61),    // 1
+        RGB(37,42,43),    // 2
+        RGB(73,78,79),    // 3
+        RGB(109,114,115), // 4
+        RGB(127,132,133), // 5
+        RGB(181,186,187), // 6
+        RGB(152,153,146), // tab
+        RGB(62,63,56),    // q
+        RGB(44,45,38),    // w
+        RGB(80,81,74),    // e
+        RGB(116,117,110), // r
+        RGB(0,0,0),       // unused
+        RGB(134,135,128), // t
+        RGB(154,155,156), // mouse
+        RGB(64,65,66),    // a
+        RGB(46,47,48),    // s
+        RGB(82,83,84),    // d
+        RGB(118,119,120), // f
+        RGB(0,0,0),       // 19
+        RGB(136,137,138), // g
+        RGB(157,158,160), // shift
+        RGB(0,0,0),       // unused
+        RGB(49,50,52),    // z
+        RGB(85,86,88),    // x
+        RGB(121,122,124), // c
+        RGB(139,140,142), // v
+        RGB(193,194,196), // b
+        RGB(159,162,161), // ctrl
+        RGB(69,72,71),    // super
+        RGB(51,54,53),    // alt
+        RGB(141,144,143), // fn
+        RGB(123,126,125), // inner case button
+        RGB(195,198,197), // mod
+        RGB(147,148,149), // esc
+        RGB(57,58,59),    // f1
+        RGB(39,40,41),    // f2
+        RGB(75,76,77),    // f3
+        RGB(111,112,113), // f4
+        RGB(129,130,131), // f5
+        RGB(183,184,185), // f6
+        RGB(87,90,89),    // left case button
     },
 
     // Left module
@@ -306,6 +406,14 @@ static void setPerKeyRgb(const rgb_t* color, uint8_t slotId, uint8_t keyId)
     float brightnessDivisor = slotId == SlotId_LeftModule ? 2 : 1;
     LedDriverValues[slotId][ledMapItem->green] = color->green * KeyBacklightBrightness / brightnessDivisor / 255;
     LedDriverValues[slotId][ledMapItem->blue] = color->blue * KeyBacklightBrightness / 255;
+#else
+    bool matchesRightHalf = DEVICE_IS_UHK80_RIGHT && slotId == SlotId_RightKeyboardHalf;
+    bool matchesLeftHalf = DEVICE_IS_UHK80_LEFT && slotId == SlotId_LeftKeyboardHalf;
+    if (matchesRightHalf || matchesLeftHalf) {
+        Uhk80LedDriverValues[ledMapItem->red] = color->red * KeyBacklightBrightness / 255;
+        Uhk80LedDriverValues[ledMapItem->green] = color->green * KeyBacklightBrightness / 255;
+        Uhk80LedDriverValues[ledMapItem->blue] = color->blue * KeyBacklightBrightness / 255;
+    }
 #endif
 }
 
@@ -454,6 +562,9 @@ void Ledmap_UpdateBacklightLeds(void) {
             updateLedsByConstantRgbStrategy();
             break;
     }
+#ifdef __ZEPHYR__
+    Uhk80_UpdateLeds();
+#endif
 }
 
 void Ledmap_InitLedLayout(void) {
