@@ -5,6 +5,7 @@
 #include "leds.h"
 #include "shell.h"
 #include "keyboard/key_scanner.h"
+#include "legacy/ledmap.h"
 
 // Thread definitions
 
@@ -65,6 +66,7 @@ void ledUpdater() {
         writeSpi(0x00);
         for (int i=0; i<255; i++) {
             writeSpi(Uhk80LedDriverValues[i]);
+             // writeSpi(0xff);
         }
         setLedsCs(false);
 
@@ -78,7 +80,12 @@ void ledUpdater() {
 
         k_mutex_unlock(&SpiMutex);
 
+#if DEVICE_IS_UHK80_RIGHT
         k_sleep(K_FOREVER);
+#else
+        k_sleep(K_MSEC(100));
+        Ledmap_UpdateBacklightLeds();
+#endif
     }
 }
 
