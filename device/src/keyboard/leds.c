@@ -2,8 +2,10 @@
 #include <zephyr/drivers/gpio.h>
 #include "keyboard/leds.h"
 #include "keyboard/spi.h"
+#include "leds.h"
 #include "shell.h"
 #include "keyboard/key_scanner.h"
+#include "legacy/ledmap.h"
 
 // Thread definitions
 
@@ -12,11 +14,14 @@
 
 static K_THREAD_STACK_DEFINE(stack_area, THREAD_STACK_SIZE);
 static struct k_thread thread_data;
+static k_tid_t ledUpdaterTid = 0;
 
 // LED GPIOs
 
 const struct gpio_dt_spec ledsCsDt = GPIO_DT_SPEC_GET(DT_ALIAS(leds_cs), gpios);
 const struct gpio_dt_spec ledsSdbDt = GPIO_DT_SPEC_GET(DT_ALIAS(leds_sdb), gpios);
+
+uint8_t Uhk80LedDriverValues[LED_DRIVER_LED_COUNT_MAX];
 
 void setLedsCs(bool state)
 {
@@ -26,6 +31,7 @@ void setLedsCs(bool state)
 #define LedPagePrefix 0b01010000
 
 void ledUpdater() {
+    k_sleep(K_MSEC(100));
     while (true) {
         k_mutex_lock(&SpiMutex, K_FOREVER);
 
@@ -60,7 +66,7 @@ void ledUpdater() {
         writeSpi(LedPagePrefix | 0);
         writeSpi(0x00);
         for (int i=0; i<255; i++) {
-            writeSpi(KeyPressed || Shell.ledsAlwaysOn ? 0xff : 0);
+            writeSpi(Uhk80LedDriverValues[i]);
         }
         setLedsCs(false);
 
@@ -68,14 +74,23 @@ void ledUpdater() {
         writeSpi(LedPagePrefix | 1);
         writeSpi(0x00);
         for (int i=0; i<255; i++) {
-            writeSpi(KeyPressed || Shell.ledsAlwaysOn ? 0xff : 0);
+            writeSpi(0xff);
         }
         setLedsCs(false);
 
         k_mutex_unlock(&SpiMutex);
 
+#if DEVICE_IS_UHK80_RIGHT
+        k_sleep(K_FOREVER);
+#else
         k_sleep(K_MSEC(100));
+        Ledmap_UpdateBacklightLeds();
+#endif
     }
+}
+
+void Uhk80_UpdateLeds() {
+    k_wakeup(ledUpdaterTid);
 }
 
 void InitLeds(void) {
@@ -84,7 +99,7 @@ void InitLeds(void) {
     gpio_pin_configure_dt(&ledsSdbDt, GPIO_OUTPUT);
     gpio_pin_set_dt(&ledsSdbDt, true);
 
-    k_thread_create(
+    ledUpdaterTid = k_thread_create(
         &thread_data, stack_area,
         K_THREAD_STACK_SIZEOF(stack_area),
         ledUpdater,

@@ -94,11 +94,11 @@
 // Functions:
 
     void LedSlaveDriver_UpdateLeds(void);
+    void LedSlaveDriver_RecalculateLedBrightness();
 #ifndef __ZEPHYR__
     void LedSlaveDriver_DisableLeds(void);
     void LedSlaveDriver_EnableAllLeds();
     void LedSlaveDriver_Init(uint8_t ledDriverId);
-    void LedSlaveDriver_RecalculateLedBrightness();
 
     slave_result_t LedSlaveDriver_Update(uint8_t ledDriverId);
 #endif

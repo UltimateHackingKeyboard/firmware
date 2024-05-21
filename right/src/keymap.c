@@ -16,6 +16,7 @@
 
 #ifdef __ZEPHYR__
 #include "keyboard/oled/widgets/keymap_widget.h"
+#include "device.h"
 #endif
 
 keymap_reference_t AllKeymaps[MAX_KEYMAP_NUM] = {
@@ -157,7 +158,7 @@ key_action_t CurrentKeymap[LayerId_Count][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] 
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_RIGHT_GUI }},
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_RIGHT_CONTROL }},
 
-#if DEVICE_IS_UHK80_RIGHT
+#if DEVICE_IS_UHK80
             // Row 0
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_F7 }},
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_F8 }},
@@ -232,7 +233,7 @@ key_action_t CurrentKeymap[LayerId_Count][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] 
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_SPACE }},
             { .type = KeyActionType_SwitchLayer, .switchLayer = { .layer = LayerId_Mod, .mode = SwitchLayerMode_Hold }},
 
-#if DEVICE_IS_UHK80_RIGHT
+#if DEVICE_IS_UHK80
             // Row 0
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_ESCAPE }},
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_F1 }},
