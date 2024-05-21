@@ -1,12 +1,15 @@
 #include "slave_drivers/is31fl3xxx_driver.h"
 #include "slave_scheduler.h"
 #include "led_display.h"
-#ifndef __ZEPHYR__
-#include "device/device.h"
-#endif
 #include "ledmap.h"
 #include "debug.h"
 
+#ifndef __ZEPHYR__
+#include "device/device.h"
+#else
+#include <zephyr/sys/util.h>
+#define SleepModeActive false
+#endif
 
 bool LedsEnabled = true;
 bool LedSleepModeActive = false;
@@ -185,6 +188,15 @@ static uint8_t updateDataBuffer[] = {0x10, 0x00};
 static uint8_t setLedBrightness[] = {0x04, 0b00110000};
 static uint8_t updatePwmRegistersBuffer[PWM_REGISTER_BUFFER_LENGTH];
 
+void LedSlaveDriver_DisableLeds(void)
+{
+    recalculateLedBrightness();
+    for (uint8_t ledDriverId=0; ledDriverId<=LedDriverId_Last; ledDriverId++) {
+        memset(LedDriverValues[ledDriverId], 0, ledDriverStates[ledDriverId].ledCount);
+    }
+}
+#endif
+
 static void recalculateLedBrightness()
 {
     if (!LedsEnabled || LedSleepModeActive || SleepModeActive || LedBrightnessMultiplier == 0.0f) {
@@ -198,20 +210,12 @@ static void recalculateLedBrightness()
     }
 }
 
-void LedSlaveDriver_DisableLeds(void)
-{
-    recalculateLedBrightness();
-    for (uint8_t ledDriverId=0; ledDriverId<=LedDriverId_Last; ledDriverId++) {
-        memset(LedDriverValues[ledDriverId], 0, ledDriverStates[ledDriverId].ledCount);
-    }
-}
-#endif
-
 void LedSlaveDriver_UpdateLeds(void)
 {
-#ifndef __ZEPHYR__
     recalculateLedBrightness();
     Ledmap_UpdateBacklightLeds();
+
+#ifndef __ZEPHYR__
     LedDisplay_UpdateAll();
 
     LedSlaveDriver_FullUpdateNeeded = false;

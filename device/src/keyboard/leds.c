@@ -31,6 +31,7 @@ void setLedsCs(bool state)
 #define LedPagePrefix 0b01010000
 
 void ledUpdater() {
+    k_sleep(K_MSEC(100));
     while (true) {
         k_mutex_lock(&SpiMutex, K_FOREVER);
 
@@ -66,7 +67,6 @@ void ledUpdater() {
         writeSpi(0x00);
         for (int i=0; i<255; i++) {
             writeSpi(Uhk80LedDriverValues[i]);
-             // writeSpi(0xff);
         }
         setLedsCs(false);
 
