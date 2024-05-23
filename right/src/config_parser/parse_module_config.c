@@ -106,9 +106,9 @@ parser_error_t ParseModuleConfiguration(config_buffer_t *buffer)
     uint8_t moduleId = ReadUInt8(buffer);
 
     if (ParserRunDry) {
-        moduleConfiguration = GetModuleConfiguration(moduleId);
-    } else {
         moduleConfiguration = &dummyConfiguration;
+    } else {
+        moduleConfiguration = GetModuleConfiguration(moduleId);
     }
 
     RETURN_ON_ERROR(
