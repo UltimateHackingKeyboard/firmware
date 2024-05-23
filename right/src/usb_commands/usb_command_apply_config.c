@@ -8,6 +8,7 @@
 #include "macros/core.h"
 #include "macros/status_buffer.h"
 #include "debug.h"
+#include "config_manager.h"
 
 void updateUsbBuffer(uint8_t usbStatusCode, uint16_t parserOffset, parser_stage_t parserStage)
 {
@@ -44,6 +45,8 @@ void UsbCommand_ApplyConfig(void)
     if (IsFactoryResetModeEnabled) {
         return;
     }
+
+    ConfigManager_ResetConfiguration(false);
 
     ParserRunDry = false;
     ValidatedUserConfigBuffer.offset = 0;

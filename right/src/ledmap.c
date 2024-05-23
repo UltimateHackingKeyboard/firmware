@@ -7,23 +7,10 @@
 #include "config_parser/config_globals.h"
 #include "debug.h"
 #include "slot.h"
+#include "config_manager.h"
 
 #define RGB(R, G, B) { .red = (R), .green = (G), .blue = (B)}
 #define MONO(M) { .red = (M) }
-
-rgb_t LedMap_ConstantRGB = RGB(0xFF, 0xFF, 0xFF);
-backlighting_mode_t BacklightingMode = BacklightingMode_Functional;
-
-rgb_t KeyActionColors[keyActionColor_Length] = {
-    RGB(0x00, 0x00, 0x00), // KeyActionColor_None
-    RGB(0xFF, 0xFF, 0xFF), // KeyActionColor_Scancode
-    RGB(0x00, 0xFF, 0xFF), // KeyActionColor_Modifier
-    RGB(0x00, 0x00, 0xFF), // KeyActionColor_Shortcut
-    RGB(0xFF, 0xFF, 0x00), // KeyActionColor_SwitchLayer
-    RGB(0xFF, 0x00, 0x00), // KeyActionColor_SwitchKeymap
-    RGB(0x00, 0xFF, 0x00), // KeyActionColor_Mouse
-    RGB(0xFF, 0x00, 0xFF), // KeyActionColor_Macro
-};
 
 static const rgb_t black = RGB(0x00, 0x00, 0x00);
 static const rgb_t white = RGB(0xff, 0xff, 0xff);
@@ -328,7 +315,7 @@ static void updateLedsByConstantRgbStrategy() {
             if (keyAction->colorOverridden) {
                 setPerKeyColor(&keyAction->color, colorMode, slotId, keyId);
             } else {
-                setPerKeyColor(&LedMap_ConstantRGB, colorMode, slotId, keyId);
+                setPerKeyColor(&Cfg.LedMap_ConstantRGB, colorMode, slotId, keyId);
             }
         }
     }
@@ -371,7 +358,7 @@ static rgb_t* determineFunctionalRgb(key_action_t* keyAction) {
             keyActionColor = KeyActionColor_None;
             break;
     }
-    return &KeyActionColors[keyActionColor];
+    return &Cfg.KeyActionColors[keyActionColor];
 }
 
 static const rgb_t* determineFunctionalColor(key_action_t* keyAction, color_mode_t mode)
@@ -417,7 +404,7 @@ static void updateLedsByPerKeyKeyStragegy() {
 }
 
 void Ledmap_UpdateBacklightLeds(void) {
-    switch (BacklightingMode) {
+    switch (Cfg.BacklightingMode) {
         case BacklightingMode_PerKeyRgb:
             updateLedsByPerKeyKeyStragegy();
             break;
@@ -449,6 +436,6 @@ void Ledmap_InitLedLayout(void) {
 
 void Ledmap_SetLedBacklightingMode(backlighting_mode_t newMode)
 {
-    BacklightingMode = newMode;
+    Cfg.BacklightingMode = newMode;
 }
 

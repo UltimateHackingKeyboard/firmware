@@ -269,6 +269,7 @@ COMMAND = setStatus STRING
 COMMAND = clearStatus
 COMMAND = set setEmergencyKey KEYID
 COMMAND = validateUserConfig
+COMMAND = resetConfiguration
 ##############
 # DEPRECATED #
 ##############

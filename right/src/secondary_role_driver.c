@@ -5,6 +5,7 @@
 #include "math.h"
 #include "debug.h"
 #include "macros/key_timing.h"
+#include "config_manager.h"
 
 /*
  * ## Strategies:
@@ -56,8 +57,6 @@ static key_state_t *resolutionKey;
 static secondary_role_state_t resolutionState;
 static uint32_t resolutionStartTime;
 
-secondary_role_strategy_t SecondaryRoles_Strategy = SecondaryRoleStrategy_Simple;
-
 static key_state_t *previousResolutionKey;
 static uint32_t previousResolutionTime;
 static bool activateSecondaryImmediately;
@@ -108,14 +107,6 @@ void SecondaryRoles_FakeActivation(secondary_role_result_t res)
  * TriggerByRelease = false
  */
 
-uint16_t SecondaryRoles_AdvancedStrategyDoubletapTimeout = 200;
-uint16_t SecondaryRoles_AdvancedStrategyTimeout = 350;
-int16_t SecondaryRoles_AdvancedStrategySafetyMargin = 50;
-bool SecondaryRoles_AdvancedStrategyTriggerByRelease = true;
-bool SecondaryRoles_AdvancedStrategyTriggerByPress = false;
-bool SecondaryRoles_AdvancedStrategyTriggerByMouse = false;
-bool SecondaryRoles_AdvancedStrategyDoubletapToPrimary = true;
-secondary_role_state_t SecondaryRoles_AdvancedStrategyTimeoutAction = SecondaryRoleState_Secondary;
 
 static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
 {
@@ -131,9 +122,9 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
 
     //handle doubletap logic
     if (
-        SecondaryRoles_AdvancedStrategyDoubletapToPrimary
+        Cfg.SecondaryRoles_AdvancedStrategyDoubletapToPrimary
         && resolutionKey == previousResolutionKey
-        && resolutionStartTime - previousResolutionTime < SecondaryRoles_AdvancedStrategyDoubletapTimeout
+        && resolutionStartTime - previousResolutionTime < Cfg.SecondaryRoles_AdvancedStrategyDoubletapTimeout
         ) {
         KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "PA"));
         return SecondaryRoleState_Primary;
@@ -143,13 +134,13 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
 
     // handle timeout when action key is not pressed
     if (actionPress == NULL) {
-        if (dualRoleRelease != NULL && activeTime < SecondaryRoles_AdvancedStrategyTimeout) {
+        if (dualRoleRelease != NULL && activeTime < Cfg.SecondaryRoles_AdvancedStrategyTimeout) {
             //activate primary
             KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "PB"));
             return SecondaryRoleState_Primary;
-        } else if (activeTime >= SecondaryRoles_AdvancedStrategyTimeout) {
+        } else if (activeTime >= Cfg.SecondaryRoles_AdvancedStrategyTimeout) {
             //activate secondary
-            switch (SecondaryRoles_AdvancedStrategyTimeoutAction) {
+            switch (Cfg.SecondaryRoles_AdvancedStrategyTimeoutAction) {
             case SecondaryRoleState_Primary:
                 KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "PC"));
                 return SecondaryRoleState_Primary;
@@ -165,17 +156,17 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
     }
 
     //handle trigger by press
-    if (SecondaryRoles_AdvancedStrategyTriggerByPress) {
-        bool actionKeyWasPressedButDualkeyNot = actionPress != NULL && dualRoleRelease == NULL && (int32_t)(CurrentTime - actionPress->time) > SecondaryRoles_AdvancedStrategySafetyMargin;
-        bool actionKeyWasPressedFirst = actionPress != NULL && dualRoleRelease != NULL && actionPress->time <= dualRoleRelease->time - SecondaryRoles_AdvancedStrategySafetyMargin;
+    if (Cfg.SecondaryRoles_AdvancedStrategyTriggerByPress) {
+        bool actionKeyWasPressedButDualkeyNot = actionPress != NULL && dualRoleRelease == NULL && (int32_t)(CurrentTime - actionPress->time) > Cfg.SecondaryRoles_AdvancedStrategySafetyMargin;
+        bool actionKeyWasPressedFirst = actionPress != NULL && dualRoleRelease != NULL && actionPress->time <= dualRoleRelease->time - Cfg.SecondaryRoles_AdvancedStrategySafetyMargin;
         if (actionKeyWasPressedButDualkeyNot || actionKeyWasPressedFirst) {
             KEY_TIMING2(actionKeyWasPressedButDualkeyNot, KeyTiming_RecordComment(resolutionKey, "SE"));
             KEY_TIMING2(actionKeyWasPressedFirst, KeyTiming_RecordComment(resolutionKey, "SF"));
             return SecondaryRoleState_Secondary;
         }
 
-        bool dualKeyWasPressedButActionKeyNot = dualRoleRelease != NULL && (actionPress == NULL && (int32_t)(CurrentTime - dualRoleRelease->time) > -SecondaryRoles_AdvancedStrategySafetyMargin);
-        bool dualKeyWasPressedFirst = actionPress != NULL && dualRoleRelease != NULL && actionPress->time >= dualRoleRelease->time - SecondaryRoles_AdvancedStrategySafetyMargin;
+        bool dualKeyWasPressedButActionKeyNot = dualRoleRelease != NULL && (actionPress == NULL && (int32_t)(CurrentTime - dualRoleRelease->time) > -Cfg.SecondaryRoles_AdvancedStrategySafetyMargin);
+        bool dualKeyWasPressedFirst = actionPress != NULL && dualRoleRelease != NULL && actionPress->time >= dualRoleRelease->time - Cfg.SecondaryRoles_AdvancedStrategySafetyMargin;
         if (dualKeyWasPressedFirst || dualKeyWasPressedButActionKeyNot) {
             KEY_TIMING2(dualKeyWasPressedButActionKeyNot, KeyTiming_RecordComment(resolutionKey, "PE"));
             KEY_TIMING2(dualKeyWasPressedFirst, KeyTiming_RecordComment(resolutionKey, "PF"));
@@ -184,9 +175,9 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
     }
 
     //handle trigger by release
-    if (SecondaryRoles_AdvancedStrategyTriggerByRelease) {
-        bool actionKeyWasReleasedButDualkeyNot = actionRelease != NULL && (dualRoleRelease == NULL && (int32_t)(CurrentTime - actionRelease->time) > SecondaryRoles_AdvancedStrategySafetyMargin);
-        bool actionKeyWasReleasedFirst = actionRelease != NULL && dualRoleRelease != NULL && actionRelease->time <= dualRoleRelease->time - SecondaryRoles_AdvancedStrategySafetyMargin;
+    if (Cfg.SecondaryRoles_AdvancedStrategyTriggerByRelease) {
+        bool actionKeyWasReleasedButDualkeyNot = actionRelease != NULL && (dualRoleRelease == NULL && (int32_t)(CurrentTime - actionRelease->time) > Cfg.SecondaryRoles_AdvancedStrategySafetyMargin);
+        bool actionKeyWasReleasedFirst = actionRelease != NULL && dualRoleRelease != NULL && actionRelease->time <= dualRoleRelease->time - Cfg.SecondaryRoles_AdvancedStrategySafetyMargin;
 
         if (actionKeyWasReleasedFirst || actionKeyWasReleasedButDualkeyNot) {
             KEY_TIMING2(actionKeyWasReleasedButDualkeyNot, KeyTiming_RecordComment(resolutionKey, "SG"));
@@ -194,8 +185,8 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
             return SecondaryRoleState_Secondary;
         }
 
-        bool dualKeyWasReleasedButActionKeyNot = dualRoleRelease != NULL && (actionRelease == NULL && (int32_t)(CurrentTime - dualRoleRelease->time) > -SecondaryRoles_AdvancedStrategySafetyMargin);
-        bool dualKeyWasReleasedFirst = actionRelease != NULL && dualRoleRelease != NULL && actionRelease->time >= dualRoleRelease->time - SecondaryRoles_AdvancedStrategySafetyMargin;
+        bool dualKeyWasReleasedButActionKeyNot = dualRoleRelease != NULL && (actionRelease == NULL && (int32_t)(CurrentTime - dualRoleRelease->time) > -Cfg.SecondaryRoles_AdvancedStrategySafetyMargin);
+        bool dualKeyWasReleasedFirst = actionRelease != NULL && dualRoleRelease != NULL && actionRelease->time >= dualRoleRelease->time - Cfg.SecondaryRoles_AdvancedStrategySafetyMargin;
         if (dualKeyWasReleasedFirst | dualKeyWasReleasedButActionKeyNot) {
             KEY_TIMING2(dualKeyWasReleasedButActionKeyNot, KeyTiming_RecordComment(resolutionKey, "PG"));
             KEY_TIMING2(dualKeyWasReleasedFirst, KeyTiming_RecordComment(resolutionKey, "PH"));
@@ -203,16 +194,16 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
         }
     }
 
-    bool triggerBehaviorsActive = SecondaryRoles_AdvancedStrategyTriggerByRelease || SecondaryRoles_AdvancedStrategyTriggerByPress;
+    bool triggerBehaviorsActive = Cfg.SecondaryRoles_AdvancedStrategyTriggerByRelease || Cfg.SecondaryRoles_AdvancedStrategyTriggerByPress;
 
     // handle timeout when action key is pressed
-    if (activeTime >= SecondaryRoles_AdvancedStrategyTimeout) {
+    if (activeTime >= Cfg.SecondaryRoles_AdvancedStrategyTimeout) {
         KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "SJ"));
         return SecondaryRoleState_Secondary;
     }
 
     // handle primary press when action key is pressed and trigger behaviors are off
-    if (dualRoleRelease != NULL && !triggerBehaviorsActive && activeTime < SecondaryRoles_AdvancedStrategyTimeout) {
+    if (dualRoleRelease != NULL && !triggerBehaviorsActive && activeTime < Cfg.SecondaryRoles_AdvancedStrategyTimeout) {
         KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "PJ"));
         return SecondaryRoleState_Primary;
     }
@@ -270,7 +261,7 @@ static secondary_role_state_t startResolution(key_state_t *keyState, secondary_r
             break;
         default:
         case SecondaryRoleStrategy_Advanced:
-            if (SecondaryRoles_AdvancedStrategyTriggerByMouse) {
+            if (Cfg.SecondaryRoles_AdvancedStrategyTriggerByMouse) {
                 PostponerExtended_BlockMouse();
             }
             break;

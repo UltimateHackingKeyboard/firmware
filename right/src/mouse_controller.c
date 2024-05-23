@@ -16,6 +16,8 @@
 #include "debug.h"
 #include "postponer.h"
 #include "layer.h"
+#include "config_manager.h"
+#include "config_manager.h"
 
 typedef struct {
     float x;
@@ -124,8 +126,6 @@ typedef enum {
 
 static tap_hold_state_t tapHoldAutomatonState = State_Zero;
 
-uint16_t HoldContinuationTimeout = 0;
-
 static tap_hold_action_t tapHoldStateMachine(tap_hold_event_t event)
 {
     switch (tapHoldAutomatonState) {
@@ -165,7 +165,7 @@ static tap_hold_action_t tapHoldStateMachine(tap_hold_event_t event)
             tapHoldAutomatonState = State_Tap;
             return Action_ResetTimer | Action_Doubletap;
         case Event_FingerOut:
-            if (HoldContinuationTimeout == 0) {
+            if (Cfg.HoldContinuationTimeout == 0) {
                 tapHoldAutomatonState = State_Zero;
                 return Action_Release;
             } else {
@@ -223,7 +223,7 @@ static void feedTapHoldStateMachine(touchpad_events_t events)
     } else if (lastSingleTapTimerActive && lastSingleTapTime + tapTimeout < CurrentTime) {
         event = Event_Timeout;
         lastSingleTapTimerActive = false;
-    } else if (holdContinuationTimerActive && continuationDelayStart + HoldContinuationTimeout < CurrentTime) {
+    } else if (holdContinuationTimerActive && continuationDelayStart + Cfg.HoldContinuationTimeout < CurrentTime) {
         event = Event_HoldContinuationTimeout;
         holdContinuationTimerActive = false;
     }
@@ -620,7 +620,7 @@ static void processModuleActions(
         // set kineticState navigation mode to the actual target mode, but forward
         // forcedNavigationMode == NavigationMode_Zoom to unambiguously signal that
         // the mode is actually touchpad pinch zoom gesture
-        navigationMode = TouchpadPinchZoomMode;
+        navigationMode = Cfg.TouchpadPinchZoomMode;
     } else {
         navigationMode = forcedNavigationMode;
     }

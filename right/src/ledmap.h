@@ -38,10 +38,6 @@
 
 // Variables:
 
-    extern backlighting_mode_t BacklightingMode;
-    extern rgb_t LedMap_ConstantRGB;
-    extern rgb_t KeyActionColors[keyActionColor_Length];
-
 // Functions:
 
     void Ledmap_UpdateBacklightLeds(void);

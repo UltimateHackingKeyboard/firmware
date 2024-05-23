@@ -30,8 +30,6 @@
 
 // Variables:
 
-    extern uint8_t DebounceTimePress, DebounceTimeRelease;
-
 // Functions:
 
     void KeyMatrix_Init(key_matrix_t *keyMatrix);
