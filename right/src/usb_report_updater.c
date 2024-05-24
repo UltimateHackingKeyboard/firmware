@@ -31,6 +31,7 @@
 #include "utils.h"
 #include "debug.h"
 #include "macros/key_timing.h"
+#include "config_manager.h"
 
 bool TestUsbStack = false;
 static key_action_cached_t actionCache[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
@@ -56,11 +57,6 @@ uint8_t InputModifiersPrevious;
 uint8_t OutputModifiers;
 bool SuppressMods = false;
 bool SuppressKeys = false;
-sticky_strategy_t StickyModifierStrategy = Stick_Smart;
-
-uint16_t KeystrokeDelay = 0;
-
-key_state_t* EmergencyKey = NULL;
 
 // Holds are applied on current base layer.
 static void applyLayerHolds(key_state_t *keyState, key_action_t *action) {
@@ -159,7 +155,7 @@ static bool isStickyShortcut(key_action_t * action)
 
 static bool shouldStickAction(key_action_t * action)
 {
-    switch(StickyModifierStrategy) {
+    switch(Cfg.StickyModifierStrategy) {
     case Stick_Always:
         return true;
     case Stick_Never:
@@ -243,7 +239,7 @@ static void applyKeystroke(key_state_t *keyState, key_action_cached_t *cachedAct
 {
     key_action_t* action = &cachedAction->action;
     if (action->keystroke.secondaryRole) {
-        secondary_role_result_t res = SecondaryRoles_ResolveState(keyState, action->keystroke.secondaryRole, SecondaryRoles_Strategy, KeyState_ActivatedNow(keyState));
+        secondary_role_result_t res = SecondaryRoles_ResolveState(keyState, action->keystroke.secondaryRole, Cfg.SecondaryRoles_Strategy, KeyState_ActivatedNow(keyState));
         if (res.activatedNow) {
             SecondaryRoles_FakeActivation(res);
         }
@@ -352,7 +348,7 @@ static void commitKeyState(key_state_t *keyState, bool active)
 
 static inline void preprocessKeyState(key_state_t *keyState)
 {
-    uint8_t debounceTime = keyState->previous ? DebounceTimePress : DebounceTimeRelease;
+    uint8_t debounceTime = keyState->previous ? Cfg.DebounceTimePress : Cfg.DebounceTimeRelease;
     if (keyState->debouncing && (uint8_t)(CurrentTime - keyState->timestamp) > debounceTime) {
         keyState->debouncing = false;
     }
@@ -386,7 +382,7 @@ static void handleUsbStackTestMode() {
                 UsbMediaKeyboard_AddScancode(ActiveUsbMediaKeyboardReport,
                         isEvenMedia ? MEDIA_VOLUME_DOWN : MEDIA_VOLUME_UP);
             }
-            MouseMoveState.xOut = isEven ? -5 : 5;
+            Cfg.MouseMoveState.xOut = isEven ? -5 : 5;
         }
     }
 }
@@ -453,7 +449,7 @@ static void updateActiveUsbReports(void)
                     if (Postponer_LastKeyLayer != 255 && PostponerCore_IsActive()) {
                         actionCache[slotId][keyId].action = CurrentKeymap[Postponer_LastKeyLayer][slotId][keyId];
                         Postponer_LastKeyLayer = 255;
-                    } else if (LayerConfig[ActiveLayer].modifierLayerMask != 0) {
+                    } else if (Cfg.LayerConfig[ActiveLayer].modifierLayerMask != 0) {
                         if (CurrentKeymap[ActiveLayer][slotId][keyId].type != KeyActionType_None) {
                             actionCache[slotId][keyId].action = CurrentKeymap[ActiveLayer][slotId][keyId];
                             actionCache[slotId][keyId].modifierLayerMask = ActiveLayerModifierMask;
@@ -518,11 +514,11 @@ uint32_t UsbReportUpdateCounter;
 static void updateLedSleepModeState() {
     uint32_t elapsedTime = Timer_GetElapsedTime(&lastActivityTime);
 
-    if (elapsedTime > LedsFadeTimeout && !LedSleepModeActive && LedsFadeTimeout) {
-        LedSleepModeActive = true;
+    if (elapsedTime > Cfg.LedsFadeTimeout && !Cfg.LedSleepModeActive && Cfg.LedsFadeTimeout) {
+        Cfg.LedSleepModeActive = true;
         LedSlaveDriver_UpdateLeds();
-    } else if (elapsedTime < LedsFadeTimeout && LedSleepModeActive) {
-        LedSleepModeActive = false;
+    } else if (elapsedTime < Cfg.LedsFadeTimeout && Cfg.LedSleepModeActive) {
+        Cfg.LedSleepModeActive = false;
         LedSlaveDriver_UpdateLeds();
     }
 }
@@ -545,7 +541,7 @@ void UpdateUsbReports(void)
         }
     }
 
-    if (Timer_GetElapsedTime(&lastReportTime) < KeystrokeDelay) {
+    if (Timer_GetElapsedTime(&lastReportTime) < Cfg.KeystrokeDelay) {
         justPreprocessInput();
         return;
     }

@@ -39,6 +39,4 @@
 
 // Variables:
 
-    extern layer_config_t LayerConfig[LayerId_Count];
-
 #endif

@@ -62,10 +62,8 @@
 
 // Variables:
 
-    extern uint8_t ChordingDelay;
     extern uint8_t Postponer_LastKeyLayer;
     extern uint8_t Postponer_LastKeyMods;
-    extern uint16_t AutoShiftDelay;
     extern uint32_t CurrentPostponedTime;
     extern bool Postponer_MouseBlocked;
 

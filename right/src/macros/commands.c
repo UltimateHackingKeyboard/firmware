@@ -26,12 +26,12 @@
 #include "usb_report_updater.h"
 #include "utils.h"
 #include "debug.h"
+#include "config_manager.h"
 
 static uint8_t lastLayerIdx;
 static uint8_t lastLayerKeymapIdx;
 static uint8_t lastKeymapIdx;
 
-uint16_t Macros_OneShotTimeout = 500;
 
 static void jumpToMatchingBrace();
 static macro_result_t processCommand(parser_context_t* ctx);
@@ -494,7 +494,7 @@ static bool processIfDoubletapCommand(bool negate)
     bool doubletapFound = false;
 
     for (uint8_t i = 0; i < MACRO_HISTORY_POOL_SIZE; i++) {
-        if (S->ms.currentMacroStartTime - MacroHistory[i].macroStartTime <= DoubletapTimeout && S->ms.currentMacroIndex == MacroHistory[i].macroIndex) {
+        if (S->ms.currentMacroStartTime - MacroHistory[i].macroStartTime <= Cfg.DoubletapTimeout && S->ms.currentMacroIndex == MacroHistory[i].macroIndex) {
             doubletapFound = true;
         }
     }
@@ -503,7 +503,7 @@ static bool processIfDoubletapCommand(bool negate)
         if (
             MacroState[i].ms.macroPlaying &&
             MacroState[i].ms.currentMacroStartTime < S->ms.currentMacroStartTime &&
-            S->ms.currentMacroStartTime - MacroState[i].ms.currentMacroStartTime <= DoubletapTimeout &&
+            S->ms.currentMacroStartTime - MacroState[i].ms.currentMacroStartTime <= Cfg.DoubletapTimeout &&
             S->ms.currentMacroIndex == MacroState[i].ms.currentMacroIndex &&
             &MacroState[i] != S
         ) {
@@ -964,7 +964,7 @@ static macro_result_t processNoOpCommand()
 
 static macro_result_t processIfSecondaryCommand(parser_context_t* ctx, bool negate)
 {
-    secondary_role_strategy_t strategy = SecondaryRoles_Strategy;
+    secondary_role_strategy_t strategy = Cfg.SecondaryRoles_Strategy;
 
     if (ConsumeToken(ctx, "simpleStrategy")) {
         strategy = SecondaryRoleStrategy_Simple;
@@ -1203,7 +1203,7 @@ static macro_result_t processAutoRepeatCommand(parser_context_t* ctx) {
     }
 
 process_delay:;
-    uint16_t delay = S->ms.autoRepeatInitialDelayPassed ? AutoRepeatDelayRate : AutoRepeatInitialDelay;
+    uint16_t delay = S->ms.autoRepeatInitialDelayPassed ? Cfg.AutoRepeatDelayRate : Cfg.AutoRepeatInitialDelay;
     bool pendingReleased = PostponerQuery_IsKeyReleased(S->ms.currentMacroKey);
     bool currentKeyIsActive = Macros_CurrentMacroKeyIsActive();
 
@@ -1249,7 +1249,7 @@ static macro_result_t processOneShotCommand(parser_context_t* ctx) {
         return processCommand(ctx);
     }
 
-    if (Macros_OneShotTimeout != 0 && CurrentTime >= S->ms.currentMacroStartTime + Macros_OneShotTimeout) {
+    if (Cfg.Macros_OneShotTimeout != 0 && CurrentTime >= S->ms.currentMacroStartTime + Cfg.Macros_OneShotTimeout) {
         S->ms.oneShotState = 0;
         return processCommand(ctx);
     }
@@ -1568,9 +1568,9 @@ static macro_result_t processProgressHueCommand()
     static uint8_t phase = 0;
 
     uint8_t* cols[] = {
-        &LedMap_ConstantRGB.red,
-        &LedMap_ConstantRGB.green,
-        &LedMap_ConstantRGB.blue
+        &Cfg.LedMap_ConstantRGB.red,
+        &Cfg.LedMap_ConstantRGB.green,
+        &Cfg.LedMap_ConstantRGB.blue
     };
 
     bool progressed = false;
@@ -1601,6 +1601,16 @@ static macro_result_t processValidateUserConfigCommand(parser_context_t* ctx)
     }
 
     Macros_ValidateAllMacros();
+    return MacroResult_Finished;
+}
+
+static macro_result_t processResetConfigurationCommand(parser_context_t* ctx)
+{
+    if (Macros_DryRun) {
+        return MacroResult_Finished;
+    }
+
+    ConfigManager_ResetConfiguration(true);
     return MacroResult_Finished;
 }
 
@@ -2089,6 +2099,9 @@ static macro_result_t processCommand(parser_context_t* ctx)
             else if (ConsumeToken(ctx, "resolveSecondary")) {
                 Macros_ReportError("Command deprecated. Please, replace resolveSecondary by `ifPrimary advancedStrategy goTo ...` or `ifSecondary advancedStrategy goTo ...`.", NULL, NULL);
                 return MacroResult_Finished;
+            }
+            else if (ConsumeToken(ctx, "resetConfiguration")) {
+                return processResetConfigurationCommand(ctx);
             }
             else {
                 goto failed;

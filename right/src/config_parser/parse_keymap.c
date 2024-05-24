@@ -6,6 +6,7 @@
 #include "layer.h"
 #include "ledmap.h"
 #include "led_display.h"
+#include "config_manager.h"
 
 static uint8_t tempKeymapCount;
 static uint8_t tempMacroCount;
@@ -201,7 +202,7 @@ static parser_error_t parseLayerId(config_buffer_t *buffer, uint8_t layer, layer
 static parser_error_t parseLayer(config_buffer_t *buffer, uint8_t layer, parse_mode_t parseMode)
 {
     if (parseMode != ParseMode_DryRun) {
-        LayerConfig[layer].layerIsDefined = true;
+        Cfg.LayerConfig[layer].layerIsDefined = true;
     }
 
     parser_error_t errorCode;
@@ -281,7 +282,7 @@ parser_error_t ParseKeymap(config_buffer_t *buffer, uint8_t keymapIdx, uint8_t k
         AllKeymaps[keymapIdx].abbreviationLen = abbreviationLen;
         AllKeymaps[keymapIdx].offset = offset;
         for (uint8_t layerIdx = 0; layerIdx < LayerId_Count; layerIdx++) {
-            LayerConfig[layerIdx].layerIsDefined = false;
+            Cfg.LayerConfig[layerIdx].layerIsDefined = false;
         }
         if (isDefault) {
             DefaultKeymapIndex = keymapIdx;

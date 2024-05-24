@@ -6,6 +6,7 @@
 #include "layer.h"
 #include "module.h"
 #include "mouse_controller.h"
+#include "config_manager.h"
 
 static parser_error_t parseNavigationModes(config_buffer_t *buffer, module_configuration_t* moduleConfiguration)
 {
@@ -67,10 +68,10 @@ static parser_error_t parseProperty(config_buffer_t* buffer, module_configuratio
                             moduleConfiguration->pinchZoomSpeedDivisor = ReadUInt16(buffer);
                             break;
                         case SerializedModuleProperty_Touchpad_PinchZoomMode:
-                            TouchpadPinchZoomMode = ReadUInt8(buffer);
+                            Cfg.TouchpadPinchZoomMode = ReadUInt8(buffer);
                             break;
                         case SerializedModuleProperty_Touchpad_HoldContinuationTimeout:
-                            HoldContinuationTimeout = ReadUInt16(buffer);
+                            Cfg.HoldContinuationTimeout = ReadUInt16(buffer);
                             break;
                         default:
                             return ParserError_InvalidModuleProperty;
@@ -105,9 +106,9 @@ parser_error_t ParseModuleConfiguration(config_buffer_t *buffer)
     uint8_t moduleId = ReadUInt8(buffer);
 
     if (ParserRunDry) {
-        moduleConfiguration = GetModuleConfiguration(moduleId);
-    } else {
         moduleConfiguration = &dummyConfiguration;
+    } else {
+        moduleConfiguration = GetModuleConfiguration(moduleId);
     }
 
     RETURN_ON_ERROR(

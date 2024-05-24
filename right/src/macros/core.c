@@ -15,6 +15,7 @@
 #include "timer.h"
 #include "usb_commands/usb_command_exec_macro_command.h"
 #include "usb_report_updater.h"
+#include "config_manager.h"
 
 macro_reference_t AllMacros[MacroIndex_MaxCount] = {
     // 254 is reserved for USB command execution
@@ -35,8 +36,6 @@ bool Macros_ParserError = false;
 bool Macros_DryRun = false;
 bool Macros_ValidationInProgress = false;
 
-macro_scheduler_t Macros_Scheduler = Scheduler_Blocking;
-uint8_t Macros_MaxBatchSize = 20;
 scheduler_state_t Macros_SchedulerState = {
     .previousSlotIdx = 0,
     .currentSlotIdx = 0,
@@ -49,12 +48,8 @@ macro_scope_state_t MacroScopeState[MACRO_SCOPE_STATE_POOL_SIZE];
 macro_state_t MacroState[MACRO_STATE_POOL_SIZE];
 macro_state_t *S = NULL;
 
-
 macro_history_t MacroHistory[MACRO_HISTORY_POOL_SIZE];
 uint8_t MacroHistoryPosition = 0;
-
-uint16_t AutoRepeatInitialDelay = 500;
-uint16_t AutoRepeatDelayRate = 50;
 
 static void checkSchedulerHealth(const char* tag);
 static void wakeMacroInSlot(uint8_t slotIdx);
@@ -65,7 +60,6 @@ static bool loadNextCommand();
 static bool loadNextAction();
 static void resetToAddressZero(uint8_t macroIndex);
 static uint8_t currentActionCmdCount();
-
 
 void Macros_SignalInterrupt()
 {
@@ -384,7 +378,7 @@ macro_result_t Macros_ExecMacro(uint8_t macroIndex)
     //reset to address zero and load first address
     resetToAddressZero(macroIndex);
 
-    if (Macros_Scheduler == Scheduler_Preemptive) {
+    if (Cfg.Macros_Scheduler == Scheduler_Preemptive) {
         continueMacro();
     }
 
@@ -447,14 +441,14 @@ uint8_t Macros_StartMacro(uint8_t index, key_state_t *keyState, uint8_t parentMa
         return slotIndex;
     }
 
-    if (Macros_Scheduler == Scheduler_Preemptive && runFirstAction && (parentMacroSlot == 255 || S < &MacroState[parentMacroSlot])) {
+    if (Cfg.Macros_Scheduler == Scheduler_Preemptive && runFirstAction && (parentMacroSlot == 255 || S < &MacroState[parentMacroSlot])) {
         //execute first action if macro has no caller Or is being called and its caller has higher slot index.
         //The condition ensures that a called macro executes exactly one action in the same eventloop cycle.
         continueMacro();
     }
 
     scheduleSlot(slotIndex);
-    if (Macros_Scheduler == Scheduler_Blocking) {
+    if (Cfg.Macros_Scheduler == Scheduler_Blocking) {
         // We don't care. Let it execute in regular macro execution loop, irrespectively whether this cycle or next.
         PostponerCore_PostponeNCycles(0);
     }
@@ -557,8 +551,8 @@ macro_result_t Macros_SleepTillKeystateChange()
     if(S->ms.oneShotState > 0) {
         if(S->ms.oneShotState > 1) {
             return MacroResult_Blocking;
-        } else if (Macros_OneShotTimeout != 0) {
-            Macros_SleepTillTime(S->ms.currentMacroStartTime + Macros_OneShotTimeout);
+        } else if (Cfg.Macros_OneShotTimeout != 0) {
+            Macros_SleepTillTime(S->ms.currentMacroStartTime + Cfg.Macros_OneShotTimeout);
         }
     }
     if (!S->ms.macroSleeping) {
@@ -575,8 +569,8 @@ macro_result_t Macros_SleepTillTime(uint32_t time)
     if(S->ms.oneShotState > 0) {
         if(S->ms.oneShotState > 1) {
             return MacroResult_Blocking;
-        } else if (Macros_OneShotTimeout != 0) {
-            EventScheduler_Schedule(S->ms.currentMacroStartTime + Macros_OneShotTimeout, EventSchedulerEvent_MacroWakeOnTime);
+        } else if (Cfg.Macros_OneShotTimeout != 0) {
+            EventScheduler_Schedule(S->ms.currentMacroStartTime + Cfg.Macros_OneShotTimeout, EventSchedulerEvent_MacroWakeOnTime);
         }
     }
     if (!S->ms.macroSleeping) {
@@ -617,7 +611,7 @@ static void executePreemptive(void)
             S = &MacroState[i];
 
             macro_result_t res = MacroResult_Finished;
-            uint8_t remainingExecution = Macros_MaxBatchSize;
+            uint8_t remainingExecution = Cfg.Macros_MaxBatchSize;
             while (MacroState[i].ms.macroPlaying && !MacroState[i].ms.macroSleeping && res == MacroResult_Finished && remainingExecution > 0) {
                 res = continueMacro();
                 remainingExecution --;
@@ -753,7 +747,7 @@ static void getNextScheduledSlot()
 static void executeBlocking(void)
 {
     bool someoneBlocking = false;
-    uint8_t remainingExecution = Macros_MaxBatchSize;
+    uint8_t remainingExecution = Cfg.Macros_MaxBatchSize;
     Macros_SchedulerState.remainingCount = Macros_SchedulerState.activeSlotCount;
 
     while (Macros_SchedulerState.remainingCount > 0 && remainingExecution > 0) {
@@ -812,7 +806,7 @@ void Macros_ContinueMacro(void)
 {
     wakeSleepers();
 
-    switch (Macros_Scheduler) {
+    switch (Cfg.Macros_Scheduler) {
     case Scheduler_Preemptive:
         executePreemptive();
         applySleepingMods();

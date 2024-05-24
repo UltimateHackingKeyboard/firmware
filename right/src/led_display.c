@@ -6,11 +6,8 @@
 #include "device/device.h"
 #include "segment_display.h"
 
-uint32_t LedsFadeTimeout = 0;
 uint8_t IconsAndLayerTextsBrightness = 0xff;
-uint8_t IconsAndLayerTextsBrightnessDefault = 0xff;
 uint8_t AlphanumericSegmentsBrightness = 0xff;
-uint8_t AlphanumericSegmentsBrightnessDefault = 0xff;
 bool ledIconStates[LedDisplayIcon_Count];
 
 static const uint16_t letterToSegmentMap[] = {
