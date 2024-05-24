@@ -23,6 +23,7 @@
 #include "postponer.h"
 #include "layer.h"
 #include "secondary_role_driver.h"
+#include "config_manager.h"
 
 static uint32_t mouseUsbReportUpdateTime = 0;
 static uint32_t mouseElapsedTime;
@@ -30,41 +31,6 @@ static uint32_t mouseElapsedTime;
 uint8_t ActiveMouseStates[ACTIVE_MOUSE_STATES_COUNT];
 uint8_t ToggledMouseStates[ACTIVE_MOUSE_STATES_COUNT];
 
-bool DiagonalSpeedCompensation = false;
-
-mouse_kinetic_state_t MouseMoveState = {
-    .isScroll = false,
-    .upState = SerializedMouseAction_MoveUp,
-    .downState = SerializedMouseAction_MoveDown,
-    .leftState = SerializedMouseAction_MoveLeft,
-    .rightState = SerializedMouseAction_MoveRight,
-    .verticalStateSign = 0,
-    .horizontalStateSign = 0,
-    .intMultiplier = 25,
-    .initialSpeed = 5,
-    .acceleration = 35,
-    .deceleratedSpeed = 10,
-    .baseSpeed = 40,
-    .acceleratedSpeed = 80,
-    .axisSkew = 1.0f,
-};
-
-mouse_kinetic_state_t MouseScrollState = {
-    .isScroll = true,
-    .upState = SerializedMouseAction_ScrollDown,
-    .downState = SerializedMouseAction_ScrollUp,
-    .leftState = SerializedMouseAction_ScrollLeft,
-    .rightState = SerializedMouseAction_ScrollRight,
-    .verticalStateSign = 0,
-    .horizontalStateSign = 0,
-    .intMultiplier = 1,
-    .initialSpeed = 20,
-    .acceleration = 20,
-    .deceleratedSpeed = 10,
-    .baseSpeed = 20,
-    .acceleratedSpeed = 50,
-    .axisSkew = 1.0f,
-};
 
 static void updateOneDirectionSign(int8_t* sign, int8_t expectedSign, uint8_t expectedState, uint8_t otherState) {
     if (*sign == expectedSign && !ActiveMouseStates[expectedState]) {
@@ -86,28 +52,28 @@ static void updateDirectionSigns(mouse_kinetic_state_t *kineticState) {
 void MouseKeys_ActivateDirectionSigns(uint8_t state) {
     switch (state) {
     case SerializedMouseAction_MoveUp:
-        MouseMoveState.verticalStateSign = -1;
+        Cfg.MouseMoveState.verticalStateSign = -1;
         break;
     case SerializedMouseAction_MoveDown:
-        MouseMoveState.verticalStateSign = 1;
+        Cfg.MouseMoveState.verticalStateSign = 1;
         break;
     case SerializedMouseAction_MoveLeft:
-        MouseMoveState.horizontalStateSign = -1;
+        Cfg.MouseMoveState.horizontalStateSign = -1;
         break;
     case SerializedMouseAction_MoveRight:
-        MouseMoveState.horizontalStateSign = 1;
+        Cfg.MouseMoveState.horizontalStateSign = 1;
         break;
     case SerializedMouseAction_ScrollUp:
-        MouseScrollState.verticalStateSign = 1;
+        Cfg.MouseScrollState.verticalStateSign = 1;
         break;
     case SerializedMouseAction_ScrollDown:
-        MouseScrollState.verticalStateSign = -1;
+        Cfg.MouseScrollState.verticalStateSign = -1;
         break;
     case SerializedMouseAction_ScrollLeft:
-        MouseScrollState.horizontalStateSign = -1;
+        Cfg.MouseScrollState.horizontalStateSign = -1;
         break;
     case SerializedMouseAction_ScrollRight:
-        MouseScrollState.horizontalStateSign = 1;
+        Cfg.MouseScrollState.horizontalStateSign = 1;
         break;
     }
 }
@@ -174,7 +140,7 @@ static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
 
         updateDirectionSigns(kineticState);
 
-        if ( kineticState->horizontalStateSign != 0 && kineticState->verticalStateSign != 0 && DiagonalSpeedCompensation ) {
+        if ( kineticState->horizontalStateSign != 0 && kineticState->verticalStateSign != 0 && Cfg.DiagonalSpeedCompensation ) {
             distance /= 1.41f;
         }
 
@@ -222,17 +188,17 @@ void MouseKeys_ProcessMouseActions()
 {
     mouseElapsedTime = Timer_GetElapsedTimeAndSetCurrent(&mouseUsbReportUpdateTime);
 
-    processMouseKineticState(&MouseMoveState);
-    ActiveUsbMouseReport->x += MouseMoveState.xOut;
-    ActiveUsbMouseReport->y += MouseMoveState.yOut;
-    MouseMoveState.xOut = 0;
-    MouseMoveState.yOut = 0;
+    processMouseKineticState(&Cfg.MouseMoveState);
+    ActiveUsbMouseReport->x += Cfg.MouseMoveState.xOut;
+    ActiveUsbMouseReport->y += Cfg.MouseMoveState.yOut;
+    Cfg.MouseMoveState.xOut = 0;
+    Cfg.MouseMoveState.yOut = 0;
 
-    processMouseKineticState(&MouseScrollState);
-    ActiveUsbMouseReport->wheelX += MouseScrollState.xOut;
-    ActiveUsbMouseReport->wheelY += MouseScrollState.yOut;
-    MouseScrollState.xOut = 0;
-    MouseScrollState.yOut = 0;
+    processMouseKineticState(&Cfg.MouseScrollState);
+    ActiveUsbMouseReport->wheelX += Cfg.MouseScrollState.xOut;
+    ActiveUsbMouseReport->wheelY += Cfg.MouseScrollState.yOut;
+    Cfg.MouseScrollState.xOut = 0;
+    Cfg.MouseScrollState.yOut = 0;
 
     if (ActiveMouseStates[SerializedMouseAction_LeftClick]) {
         ActiveUsbMouseReport->buttons |= MouseButton_Left;

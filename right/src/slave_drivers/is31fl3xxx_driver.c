@@ -3,6 +3,7 @@
 #include "led_display.h"
 #include "ledmap.h"
 #include "debug.h"
+#include "config_manager.h"
 
 #ifndef __ZEPHYR__
 #include "device/device.h"
@@ -11,14 +12,11 @@
 #define SleepModeActive false
 #endif
 
-bool LedsEnabled = true;
-bool LedSleepModeActive = false;
-float LedBrightnessMultiplier = 1.0f;
+static void recalculateLedBrightness();
 
 bool LedSlaveDriver_FullUpdateNeeded = false;
 
 uint8_t KeyBacklightBrightness = 0xff;
-uint8_t KeyBacklightBrightnessDefault = 0xff;
 #ifndef __ZEPHYR__
 uint8_t LedDriverValues[LED_DRIVER_MAX_COUNT][LED_DRIVER_LED_COUNT_MAX];
 
@@ -199,14 +197,14 @@ void LedSlaveDriver_DisableLeds(void)
 
 static void recalculateLedBrightness()
 {
-    if (!LedsEnabled || LedSleepModeActive || SleepModeActive || LedBrightnessMultiplier == 0.0f) {
+    if (!Cfg.LedsEnabled || Cfg.LedSleepModeActive || SleepModeActive || Cfg.LedBrightnessMultiplier == 0.0f) {
         KeyBacklightBrightness = 0;
         IconsAndLayerTextsBrightness = 0;
         AlphanumericSegmentsBrightness = 0;
     } else {
-        KeyBacklightBrightness = MIN(255, KeyBacklightBrightnessDefault * LedBrightnessMultiplier);
-        IconsAndLayerTextsBrightness = MIN(255, IconsAndLayerTextsBrightnessDefault * LedBrightnessMultiplier);
-        AlphanumericSegmentsBrightness = MIN(255, AlphanumericSegmentsBrightnessDefault * LedBrightnessMultiplier);
+        KeyBacklightBrightness = MIN(255, Cfg.KeyBacklightBrightnessDefault * Cfg.LedBrightnessMultiplier);
+        IconsAndLayerTextsBrightness = MIN(255, Cfg.IconsAndLayerTextsBrightnessDefault * Cfg.LedBrightnessMultiplier);
+        AlphanumericSegmentsBrightness = MIN(255, Cfg.AlphanumericSegmentsBrightnessDefault * Cfg.LedBrightnessMultiplier);
     }
 }
 

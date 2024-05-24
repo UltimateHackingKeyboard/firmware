@@ -8,11 +8,8 @@
 #include "device/device.h"
 #endif
 
-uint32_t LedsFadeTimeout = 0;
 uint8_t IconsAndLayerTextsBrightness = 0xff;
-uint8_t IconsAndLayerTextsBrightnessDefault = 0xff;
 uint8_t AlphanumericSegmentsBrightness = 0xff;
-uint8_t AlphanumericSegmentsBrightnessDefault = 0xff;
 bool ledIconStates[LedDisplayIcon_Count];
 
 #ifndef __ZEPHYR__

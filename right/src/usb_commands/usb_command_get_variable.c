@@ -4,6 +4,7 @@
 #include "test_switches.h"
 #include "usb_report_updater.h"
 #include "macros/core.h"
+#include "config_manager.h"
 
 void UsbCommand_GetVariable(void)
 {
@@ -17,10 +18,10 @@ void UsbCommand_GetVariable(void)
             SetUsbTxBufferUint8(1, TestUsbStack);
             break;
         case UsbVariable_DebounceTimePress:
-            SetUsbTxBufferUint8(1, DebounceTimePress);
+            SetUsbTxBufferUint8(1, Cfg.DebounceTimePress);
             break;
         case UsbVariable_DebounceTimeRelease:
-            SetUsbTxBufferUint8(1, DebounceTimeRelease);
+            SetUsbTxBufferUint8(1, Cfg.DebounceTimeRelease);
             break;
         case UsbVariable_UsbReportSemaphore:
             SetUsbTxBufferUint8(1, UsbReportUpdateSemaphore);

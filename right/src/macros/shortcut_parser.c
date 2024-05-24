@@ -648,15 +648,17 @@ bool MacroShortcutParser_Parse(const char* str, const char* strEnd, macro_sub_ac
     bool success = false;
 
     if (FindChar('-', str, strEnd) == strEnd || str+1 == strEnd) {
-        //"-" notation not used
+        // input is either just "<modmask>" or just a "<key>"
         success = success || parseAbbrev(str, strEnd, outMacroAction, outKeyAction);
-        success = success || parseMods(str, strEnd, outMacroAction, outKeyAction);
 
         if (outMacroAction != NULL) {
             outMacroAction->key.action = type;
         }
+
+        success = success || parseMods(str, strEnd, outMacroAction, outKeyAction);
     }
     else {
+        // input is of form "<modmask>-<scancode>"
         const char* delim = FindChar('-', str, strEnd);
         success = success || parseAbbrev(delim+1, strEnd, outMacroAction, outKeyAction);
 

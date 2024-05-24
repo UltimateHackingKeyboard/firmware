@@ -271,6 +271,7 @@ COMMAND = setStatus STRING
 COMMAND = clearStatus
 COMMAND = set setEmergencyKey KEYID
 COMMAND = validateUserConfig
+COMMAND = resetConfiguration
 ##############
 # DEPRECATED #
 ##############
@@ -330,7 +331,7 @@ COMMAND = setEmergencyKey KEYID
     - `{S|C|A|G}` - Shift Control Alt Gui. (Windows, Super, and Gui are the same thing.)
     - `[L|R]` - Left Right (which hand side modifier should be used) E.g. `holdKey RA-c` (right alt + c).
     - `{s|i|o}` - modifiers (ctrl, alt, shift, gui) exist in three composition modes within UHK - sticky, input, output:
-        - **sticky modifiers** are modifiers of composite shortcuts. These are applied only until the next key press. In certain contexts, they will take effect even after their activation key is released (e.g., to support alt + tab on non-base layers, you can do `holdKey sLA-tab`).
+        - **sticky modifiers** are modifiers of composite shortcuts. These are applied only until the next (physical) key press. In certain contexts, they will take effect even after their activation key is released (e.g., to support alt + tab on non-base layers, you can do `holdKey sLA-tab`).
         - **input modifiers** are queried by `ifMod` conditions, and can be suppressed by `suppressMods`. E.g. `holdKey iLS`.
         - **output modifiers** are ignored by `ifMod` conditions, and are not suppressed by `suppressMods`.
 
@@ -501,7 +502,7 @@ Macro slots are identified by a single character or a number or `$thisKeyId` (me
 
 Internally, values are saved in one of the following types, and types are automatically converted as needed in expressions:
 - `INT` - as a int32_t. E.g., `(7/3)` yields 2
-- `FLOA`T - as 32-bit floating point value. E.g., `(7/3.0)` yields 2.333...
+- `FLOAT` - as 32-bit floating point value. E.g., `(7/3.0)` yields 2.333...
 - `BOOL` - 1 or 0 value
 
 ### Configuration options:
