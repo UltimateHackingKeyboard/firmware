@@ -43,7 +43,7 @@ void ConsoleWidget_Draw(widget_t* self, framebuffer_t* buffer)
         for (uint8_t line = 0; line < CONSOLE_BUFFER_LINE_COUNT; line++) {
             const char* text = &consoleBuffer[(consoleBufferStart + CONSOLE_BUFFER_LINE_COUNT - line)%CONSOLE_BUFFER_LINE_COUNT][0];
 
-            Framebuffer_DrawText(self, buffer, 0, self->h - line_height*(line+1), logFont, text);
+            Framebuffer_DrawText(self, buffer, 0, self->h - line_height*(line+1), logFont, text, NULL);
         }
     }
 }

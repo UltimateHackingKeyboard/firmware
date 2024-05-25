@@ -103,6 +103,14 @@ void ReplaceLayer(layer_id_t dstLayer, uint8_t srcKeymap, layer_id_t srcLayer)
     ParseKeymap(&ValidatedUserConfigBuffer, srcKeymap, AllKeymapsCount, AllMacrosCount, parseConfig);
 }
 
+string_segment_t GetKeymapName(uint8_t keymapId)
+{
+    const char* name;
+    uint16_t len;
+    ValidatedUserConfigBuffer.offset = AllKeymaps[keymapId].offset;
+    ParseKeymapName(&ValidatedUserConfigBuffer, &name, &len);
+    return (string_segment_t){ .start = name, .end = name + len };
+}
 
 // The factory keymap is initialized before it gets overwritten by the default keymap of the EEPROM.
 #ifndef __ZEPHYR__
