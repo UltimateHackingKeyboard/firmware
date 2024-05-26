@@ -101,7 +101,6 @@ static void uart_callback(const struct device *dev, struct uart_event *evt, void
 
     case UART_RX_BUF_REQUEST:
     {
-        printk("UART_RX_BUF_REQUEST\n");
         rxbuf = (rxbuf == rxbuf1) ? rxbuf2 : rxbuf1;
         err = uart_rx_buf_rsp(uart_dev, rxbuf, BUF_SIZE);
         __ASSERT(err == 0, "Failed to provide new buffer");
@@ -109,7 +108,6 @@ static void uart_callback(const struct device *dev, struct uart_event *evt, void
     }
 
     case UART_RX_BUF_RELEASED:
-        printk("UART_RX_BUF_RELEASED\n");
         break;
 
     case UART_RX_DISABLED:
