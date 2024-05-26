@@ -4,11 +4,12 @@
 // Includes:
 //
     #include "link_protocol.h"
+    #include "messenger.h"
 
 // Functions:
 
     extern void NusServer_Init(void);
     extern void NusServer_Send(const uint8_t *data, uint16_t len);
-    extern void NusServer_SendSyncableProperty(syncable_property_id_t property, const uint8_t *data, uint16_t len);
+    extern void NusServer_SendMessage(message_t msg);
 
 #endif // __NUS_SERVER_H__

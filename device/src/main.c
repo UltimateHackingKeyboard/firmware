@@ -108,7 +108,11 @@ int main(void) {
         k_msleep(1);
     }
 #else
-    k_sleep(K_FOREVER);
+    while (true)
+    {
+        CurrentTime = k_uptime_get();
+        k_msleep(1);
+    }
 #endif
 }
 

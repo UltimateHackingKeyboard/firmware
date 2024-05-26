@@ -21,6 +21,7 @@
         uint8_t id;
         char name[PeerNameMaxLength + 1];
         bt_addr_le_t addr;
+        bool isConnected;
     } peer_t;
 
 // Functions:
@@ -30,6 +31,7 @@
     extern void bt_init(void);
     extern void num_comp_reply(uint8_t accept);
 
+    bool Bt_DeviceIsConnected(uint8_t deviceId);
 // Variables:
 
     extern peer_t Peers[];
