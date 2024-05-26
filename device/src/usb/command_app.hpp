@@ -5,19 +5,17 @@
 #include "hid/application.hpp"
 #include "hid/rdf/descriptor.hpp"
 #include "hid/report_protocol.hpp"
+#include "report_ids.h"
 
-namespace hid::page
-{
+namespace hid::page {
 enum class ugl : uint8_t;
 template <>
-struct info<ugl>
-{
+struct info<ugl> {
     constexpr static page_id_t page_id = 0xFF00;
     constexpr static usage_id_t max_usage_id = 0x0003;
-    constexpr static const char* name = "UGL";
+    constexpr static const char *name = "UGL";
 };
-enum class ugl : uint8_t
-{
+enum class ugl : uint8_t {
     COMMAND_APP = 0x0001,
     COMMAND_DATA_IN = 0x0002,
     COMMAND_DATA_OUT = 0x0003,
@@ -25,15 +23,11 @@ enum class ugl : uint8_t
 
 } // namespace hid::page
 
-class command_app : public hid::application
-{
-    command_app()
-        : application(report_protocol())
-    {}
+class command_app : public hid::application {
+    command_app() : application(report_protocol()) {}
 
   public:
-    static constexpr size_t MESSAGE_SIZE = 64;
-    static constexpr uint8_t REPORT_ID = 0;
+    static constexpr size_t MESSAGE_SIZE = 63;
 
     static constexpr auto report_desc()
     {
@@ -45,12 +39,13 @@ class command_app : public hid::application
             usage_page<ugl>(),
             usage(ugl::COMMAND_APP),
             collection::application(
-                conditional_report_id<REPORT_ID>(),
+                conditional_report_id<report_ids::IN_COMMAND>(),
                 report_size(8),
                 report_count(MESSAGE_SIZE),
                 logical_limits<1, 1>(0, 0xff),
                 usage(ugl::COMMAND_DATA_IN),
                 input::buffered_variable(),
+                conditional_report_id<report_ids::OUT_COMMAND>(),
                 usage(ugl::COMMAND_DATA_OUT),
                 output::buffered_variable()
             )
@@ -58,13 +53,13 @@ class command_app : public hid::application
         // clang-format off
     }
 
-    template <hid::report::type TYPE>
-    struct report_base : public hid::report::base<TYPE, 0>
+    template <hid::report::type TYPE, hid::report::id::type ID>
+    struct report_base : public hid::report::base<TYPE, ID>
     {
         std::array<uint8_t, MESSAGE_SIZE> payload{};
     };
-    using report_in = report_base<hid::report::type::INPUT>;
-    using report_out = report_base<hid::report::type::OUTPUT>;
+    using report_in = report_base<hid::report::type::INPUT, report_ids::IN_COMMAND>;
+    using report_out = report_base<hid::report::type::OUTPUT, report_ids::OUT_COMMAND>;
 
     static command_app& handle();
 
@@ -76,10 +71,10 @@ class command_app : public hid::application
     void in_report_sent(const std::span<const uint8_t>& data) override;
 
   private:
-    static const hid::report_protocol& report_protocol()
+    static hid::report_protocol report_protocol()
     {
         static constexpr const auto rd{report_desc()};
-        static constexpr const hid::report_protocol rp{rd};
+        constexpr hid::report_protocol rp{rd};
         return rp;
     }
 

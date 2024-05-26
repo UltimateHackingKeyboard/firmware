@@ -7,9 +7,9 @@
 #include "hid/page/generic_desktop.hpp"
 #include "hid/rdf/descriptor.hpp"
 #include "hid/report_protocol.hpp"
+#include "report_ids.h"
 
-enum class gamepad_button
-{
+enum class gamepad_button {
     UP = 0,
     DOWN = 1,
     LEFT = 2,
@@ -27,11 +27,8 @@ enum class gamepad_button
     Y = 15
 };
 
-class gamepad_app : public hid::application
-{
-    gamepad_app()
-        : application(report_protocol())
-    {}
+class gamepad_app : public hid::application {
+    gamepad_app() : application(report_protocol()) {}
 
   public:
     static constexpr auto report_desc()
@@ -40,14 +37,15 @@ class gamepad_app : public hid::application
         using namespace hid::rdf;
 
         // clang-format off
-        // translate XBOX360 report mapping to HID as best as possible
+        // translate XBOX360 report mapping to HID as much as possible
         return descriptor(
             usage_page<generic_desktop>(),
             usage(generic_desktop::GAMEPAD),
             collection::application(
                 // Report ID (0, which isn't valid, mark it as reserved)
+                report_id(report_ids::IN_GAMEPAD),
                 // Report size
-                input::padding(16),
+                input::padding(8),
 
                 // Buttons p1
                 usage_page<button>(),
@@ -134,17 +132,15 @@ class gamepad_app : public hid::application
         // clang-format on
     }
 
-    struct joystick
-    {
+    struct joystick {
         hid::le_int16_t X{};
         hid::le_int16_t Y{};
         constexpr joystick() = default;
-        bool operator==(const joystick& other) const = default;
+        bool operator==(const joystick &other) const = default;
     };
-    struct gamepad_report : public hid::report::base<hid::report::type::INPUT, 0>
-    {
+    struct gamepad_report
+        : public hid::report::base<hid::report::type::INPUT, report_ids::IN_GAMEPAD> {
       private:
-        uint8_t report_id{0};
         uint8_t report_size{sizeof(gamepad_report)};
 
       public:
@@ -156,17 +152,14 @@ class gamepad_app : public hid::application
 
         constexpr gamepad_report() = default;
 
-        bool operator==(const gamepad_report& other) const = default;
-        bool operator!=(const gamepad_report& other) const = default;
+        bool operator==(const gamepad_report &other) const = default;
+        bool operator!=(const gamepad_report &other) const = default;
 
         void set_button(gamepad_button b, bool value = true)
         {
-            if (value)
-            {
+            if (value) {
                 buttons = buttons | (1 << static_cast<uint16_t>(b));
-            }
-            else
-            {
+            } else {
                 buttons = buttons & ~(1 << static_cast<uint16_t>(b));
             }
         }
@@ -176,26 +169,26 @@ class gamepad_app : public hid::application
         }
     };
 
-    static gamepad_app& handle();
+    static gamepad_app &handle();
 
-    void set_report_state(const gamepad_report& data);
+    void set_report_state(const gamepad_report &data);
 
   private:
-    static const hid::report_protocol& report_protocol()
+    static hid::report_protocol report_protocol()
     {
         static constexpr const auto rd{report_desc()};
-        static constexpr const hid::report_protocol rp{rd};
+        constexpr hid::report_protocol rp{rd};
         return rp;
     }
 
     void start(hid::protocol prot) override;
     void stop() override;
-    void set_report(hid::report::type type, const std::span<const uint8_t>& data) override
+    void set_report(hid::report::type type, const std::span<const uint8_t> &data) override
     {
         // no FEATURE or OUTPUT reports
     }
-    void in_report_sent(const std::span<const uint8_t>& data) override;
-    void get_report(hid::report::selector select, const std::span<uint8_t>& buffer) override;
+    void in_report_sent(const std::span<const uint8_t> &data) override;
+    void get_report(hid::report::selector select, const std::span<uint8_t> &buffer) override;
     void send_buffer(uint8_t buf_idx);
 
     double_buffer<gamepad_report> report_buffer_{};

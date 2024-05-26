@@ -6,9 +6,9 @@
 #include "hid/application.hpp"
 #include "hid/page/consumer.hpp"
 #include "hid/report_protocol.hpp"
+#include "report_ids.h"
 
-enum class mouse_button
-{
+enum class mouse_button {
     LEFT = 0,
     RIGHT,
     MIDDLE,
@@ -19,15 +19,12 @@ enum class mouse_button
     _8
 };
 
-class mouse_app : public hid::application
-{
+class mouse_app : public hid::application {
     static constexpr auto LAST_BUTTON = hid::page::button(20);
     static constexpr int16_t AXIS_LIMIT = 4096;
     static constexpr int8_t WHEEL_LIMIT = 127;
 
-    mouse_app()
-        : application(report_protocol())
-    {}
+    mouse_app() : application(report_protocol()) {}
 
   public:
     static constexpr auto report_desc()
@@ -40,6 +37,7 @@ class mouse_app : public hid::application
             usage_page<generic_desktop>(),
             usage(generic_desktop::MOUSE),
             collection::application(
+                conditional_report_id<report_ids::IN_MOUSE>(),
                 usage(generic_desktop::POINTER),
                 collection::physical(
                     // buttons
@@ -81,8 +79,7 @@ class mouse_app : public hid::application
     }
 
     template <uint8_t REPORT_ID = 0>
-    struct mouse_report_base : public hid::report::base<hid::report::type::INPUT, REPORT_ID>
-    {
+    struct mouse_report_base : public hid::report::base<hid::report::type::INPUT, REPORT_ID> {
         hid::report_bitset<hid::page::button, hid::page::button(1), mouse_app::LAST_BUTTON>
             buttons{};
         hid::le_int16_t x{};
@@ -92,33 +89,34 @@ class mouse_app : public hid::application
 
         constexpr mouse_report_base() = default;
 
-        bool operator==(const mouse_report_base& other) const = default;
-        bool operator!=(const mouse_report_base& other) const = default;
+        bool operator==(const mouse_report_base &other) const = default;
+        bool operator!=(const mouse_report_base &other) const = default;
     };
 
-    static mouse_app& handle();
+    static mouse_app &handle();
 
-    void set_report_state(const mouse_report_base<>& data);
+    void set_report_state(const mouse_report_base<> &data);
 
   private:
-    static const hid::report_protocol& report_protocol()
+    static hid::report_protocol report_protocol()
     {
         static constexpr const auto rd{report_desc()};
-        static constexpr const hid::report_protocol rp{rd};
+        constexpr hid::report_protocol rp{rd};
         return rp;
     }
 
     void start(hid::protocol prot) override;
     void stop() override;
-    void set_report(hid::report::type type, const std::span<const uint8_t>& data) override
+    void set_report(hid::report::type type, const std::span<const uint8_t> &data) override
     {
         // no FEATURE or OUTPUT reports
     }
-    void in_report_sent(const std::span<const uint8_t>& data) override;
-    void get_report(hid::report::selector select, const std::span<uint8_t>& buffer) override;
+    void in_report_sent(const std::span<const uint8_t> &data) override;
+    void get_report(hid::report::selector select, const std::span<uint8_t> &buffer) override;
     void send_buffer(uint8_t buf_idx);
 
-    double_buffer<mouse_report_base<>> report_buffer_{};
+    using mouse_report = mouse_report_base<report_ids::IN_MOUSE>;
+    double_buffer<mouse_report> report_buffer_{};
 };
 
 using mouse_buffer = mouse_app::mouse_report_base<>;
