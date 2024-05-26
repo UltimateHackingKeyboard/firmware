@@ -18,11 +18,6 @@ static struct k_thread thread_data;
 
 const struct device *uart_dev = DEVICE_DT_GET(DT_NODELABEL(uart1));
 
-#define BUF_SIZE 64
-uint8_t *rxbuf;
-uint8_t rxbuf1[BUF_SIZE];
-uint8_t rxbuf2[BUF_SIZE];
-
 #define TX_BUF_SIZE UART_MAX_PACKET_LENGTH*2+1
 uint8_t txBuffer[TX_BUF_SIZE];
 uint16_t txPosition = 0;
@@ -31,6 +26,11 @@ K_SEM_DEFINE(txBufferBusy, 1, 1);
 #define RX_BUF_SIZE UART_MAX_PACKET_LENGTH
 uint8_t rxBuffer[RX_BUF_SIZE];
 uint16_t rxPosition = 0;
+
+#define BUF_SIZE TX_BUF_SIZE
+uint8_t *rxbuf;
+uint8_t rxbuf1[BUF_SIZE];
+uint8_t rxbuf2[BUF_SIZE];
 
 uint32_t lastPingTime = 0;
 
