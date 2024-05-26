@@ -34,10 +34,15 @@ uint16_t rxPosition = 0;
 
 uint32_t lastPingTime = 0;
 
-static void appendRxByte(uint8_t byte);
+static void appendRxByte(uint8_t byte) {
+    if (rxPosition < RX_BUF_SIZE) {
+        rxBuffer[rxPosition++] = byte;
+    } else {
+        printk("Uart error: too long message in rx buffer\n");
+    }
+}
 
-static void rxPacketReceived()
-{
+static void rxPacketReceived() {
     lastPingTime = CurrentTime;
     if (rxPosition == 0) {
         printk("UART pinged\n");
@@ -49,17 +54,7 @@ static void rxPacketReceived()
     rxPosition = 0;
 }
 
-static void appendRxByte(uint8_t byte)
-{
-    if (rxPosition < RX_BUF_SIZE) {
-        rxBuffer[rxPosition++] = byte;
-    } else {
-        printk("Uart error: too long message in rx buffer\n");
-    }
-}
-
-static void processIncomingByte(uint8_t byte)
-{
+static void processIncomingByte(uint8_t byte) {
     static bool escaping = false;
     switch (byte) {
         case END_BYTE:
@@ -84,8 +79,7 @@ static void processIncomingByte(uint8_t byte)
     }
 }
 
-static void uart_callback(const struct device *dev, struct uart_event *evt, void *user_data)
-{
+static void uart_callback(const struct device *dev, struct uart_event *evt, void *user_data) {
     int err;
 
     switch (evt->type) {
@@ -94,7 +88,7 @@ static void uart_callback(const struct device *dev, struct uart_event *evt, void
         break;
 
     case UART_TX_ABORTED:
-        uart_tx(uart_dev, txBuffer, txPosition, 10000);
+        uart_tx(uart_dev, txBuffer, txPosition, UART_TIMEOUT);
         printk("Tx aborted, retrying\n");
         break;
 
@@ -129,8 +123,7 @@ static void uart_callback(const struct device *dev, struct uart_event *evt, void
 }
 
 
-static void appendTxByte(uint8_t byte)
-{
+static void appendTxByte(uint8_t byte) {
     if (txPosition < TX_BUF_SIZE) {
         txBuffer[txPosition++] = byte;
     } else {
@@ -138,8 +131,7 @@ static void appendTxByte(uint8_t byte)
     }
 }
 
-static void processOutgoingByte(uint8_t byte)
-{
+static void processOutgoingByte(uint8_t byte) {
     switch (byte) {
         case END_BYTE:
             appendTxByte(ESCAPE_BYTE);
@@ -166,7 +158,7 @@ void Uart_SendPacket(const uint8_t* data, uint16_t len) {
 
     appendTxByte(END_BYTE);
 
-    uart_tx(uart_dev, txBuffer, txPosition, 10000);
+    uart_tx(uart_dev, txBuffer, txPosition, UART_TIMEOUT);
 
 }
 
@@ -183,18 +175,18 @@ void testUart() {
     const char* bye = "Good bye!";
     while (1) {
         ping();
-        k_sleep(K_MSEC(5000));
+        k_sleep(K_MSEC(UART_TIMEOUT/2));
         Uart_SendPacket((uint8_t*)hello, strlen(hello)+1);
-        k_sleep(K_MSEC(5000));
+        k_sleep(K_MSEC(UART_TIMEOUT/2));
         Uart_SendPacket((uint8_t*)bye, strlen(bye)+1);
-        k_sleep(K_MSEC(5000));
+        k_sleep(K_MSEC(UART_TIMEOUT/2));
     }
 }
 
 void InitUart(void) {
     uart_callback_set(uart_dev, uart_callback, NULL);
     rxbuf = rxbuf1;
-    uart_rx_enable(uart_dev, rxbuf, BUF_SIZE, 10000);
+    uart_rx_enable(uart_dev, rxbuf, BUF_SIZE, UART_TIMEOUT);
 
     k_thread_create(
         &thread_data, stack_area,
