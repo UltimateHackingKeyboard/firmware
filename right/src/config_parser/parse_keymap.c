@@ -267,6 +267,15 @@ void interpretConfig(parse_config_t parseConfig, layer_id_t srcLayer, layer_id_t
     }
 }
 
+parser_error_t ParseKeymapName(config_buffer_t* buffer, const char** name, uint16_t* len)
+{
+    uint16_t abbreviationLen;
+    ReadString(buffer, &abbreviationLen);
+    ReadBool(buffer);
+    *name = ReadString(buffer, len);
+    return ParserError_Success;
+}
+
 parser_error_t ParseKeymap(config_buffer_t *buffer, uint8_t keymapIdx, uint8_t keymapCount, uint8_t macroCount, parse_config_t parseConfig)
 {
     uint16_t offset = buffer->offset;
