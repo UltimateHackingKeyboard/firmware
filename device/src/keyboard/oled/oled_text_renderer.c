@@ -10,6 +10,7 @@
 #include <stdarg.h>
 #include "widgets/widget.h"
 #include <zephyr/sys/util.h>
+#include "legacy/str_utils.h"
 
 static uint8_t drawGlyph(widget_t* canvas, framebuffer_t* buffer, int16_t x, int16_t y, const lv_font_t* font, uint8_t glyphIdx)
 {
@@ -64,29 +65,42 @@ static uint8_t drawGlyph(widget_t* canvas, framebuffer_t* buffer, int16_t x, int
    return rw;
 }
 
-void Framebuffer_DrawText(widget_t* canvas, framebuffer_t* buffer, int16_t x, int16_t y, const lv_font_t* font, const char* text)
+void Framebuffer_DrawText(widget_t* canvas, framebuffer_t* buffer, int16_t x, int16_t y, const lv_font_t* font, const char* text, const char* textEnd)
 {
     uint16_t consumed = 0;
-    while (*text != '\0') {
+    while (*text != '\0' && (textEnd == NULL || text < textEnd)) {
         consumed += drawGlyph(canvas, buffer, x+consumed, y, font, (*text)-31);
         text++;
     }
 }
 
-static uint16_t approximateTextLength(const lv_font_t* font, const char* text)
+static uint16_t approximateTextLength(const lv_font_t* font, const char* text, const char* textEnd)
 {
     //assume monospace font!
     const lv_font_fmt_txt_glyph_dsc_t* someGlyph = &font->dsc->glyph_dsc[1];
     uint8_t charWidth = someGlyph->adv_w/16;
-    return strlen(text) * charWidth;
+    uint8_t len = textEnd == NULL ? strlen(text) : textEnd - text;
+    return len * charWidth;
 }
 
-void Framebuffer_DrawTextAnchored(widget_t* canvas, framebuffer_t* buffer, anchor_type_t horizontalAnchor, anchor_type_t verticalAnchor, const lv_font_t* font, const char* text)
+static string_segment_t truncateText(const lv_font_t* font, uint8_t width, const char* text, const char* textEnd)
+{
+    const lv_font_fmt_txt_glyph_dsc_t* someGlyph = &font->dsc->glyph_dsc[1];
+    uint8_t charWidth = someGlyph->adv_w/16;
+    uint8_t maxLen = width/charWidth;
+    uint8_t len = textEnd == NULL ? strlen(text) : textEnd - text;
+    uint8_t truncatedLen = MIN(maxLen, len);
+    return (string_segment_t){ .start = text, .end = text + truncatedLen };
+}
+
+void Framebuffer_DrawTextAnchored(widget_t* canvas, framebuffer_t* buffer, anchor_type_t horizontalAnchor, anchor_type_t verticalAnchor, const lv_font_t* font, const char* text, const char* textEnd)
 {
     int16_t canvasWidth = canvas == NULL ? DISPLAY_WIDTH : canvas->w;
     int16_t canvasHeight = canvas == NULL ? DISPLAY_HEIGHT : canvas->h;
 
     int16_t x, y;
+
+    string_segment_t truncatedString = truncateText(font, canvasWidth, text, textEnd);
 
     switch (horizontalAnchor) {
         default:
@@ -94,10 +108,10 @@ void Framebuffer_DrawTextAnchored(widget_t* canvas, framebuffer_t* buffer, ancho
             x = 0;
             break;
         case AnchorType_Center:
-            x = canvasWidth/2 - approximateTextLength(font, text)/2;
+            x = canvasWidth/2 - approximateTextLength(font, truncatedString.start, truncatedString.end)/2;
             break;
         case AnchorType_End:
-            x = canvasWidth - approximateTextLength(font, text);
+            x = canvasWidth - approximateTextLength(font, truncatedString.start, truncatedString.end);
             break;
     }
 
@@ -114,5 +128,5 @@ void Framebuffer_DrawTextAnchored(widget_t* canvas, framebuffer_t* buffer, ancho
             break;
     }
 
-    Framebuffer_DrawText(canvas, buffer, x, y, font, text);
+    Framebuffer_DrawText(canvas, buffer, x, y, font, truncatedString.start, truncatedString.end);
 }
