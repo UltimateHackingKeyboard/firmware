@@ -3,9 +3,23 @@
 #include "bt_conn.h"
 #include "bt_advertise.h"
 #include "bt_conn.h"
+#include "messenger.h"
+#include "device.h"
 
 static void received(struct bt_conn *conn, const uint8_t *const data, uint16_t len) {
     printk("NUS data received from %s: %i\n", GetPeerStringByConn(conn), len);
+
+    switch (DEVICE_ID) {
+        case DeviceId_Uhk80_Left:
+            Messenger_Receive(DeviceId_Uhk80_Right, data, len);
+            break;
+        case DeviceId_Uhk80_Right:
+            Messenger_Receive(DeviceId_Uhk_Dongle, data, len);
+            break;
+        default:
+            printk("Ble received message from unknown source.");
+            break;
+    }
 }
 
 static void sent(struct bt_conn *conn) {
@@ -36,10 +50,10 @@ void NusServer_Send(const uint8_t *data, uint16_t len) {
     }
 }
 
-void NusServer_SendSyncableProperty(syncable_property_id_t property, const uint8_t *data, uint16_t len) {
+void NusServer_SendMessage(message_t msg) {
     uint8_t buffer[MAX_LINK_PACKET_LENGTH];
-    buffer[0] = property;
-    memcpy(&buffer[1], data, len);
+    buffer[0] = msg.messageId;
+    memcpy(&buffer[1], msg.data, msg.len);
 
-    NusServer_Send(buffer, len+1);
+    NusServer_Send(buffer, msg.len+1);
 }

@@ -2,6 +2,8 @@
 #include <zephyr/drivers/uart.h>
 #include "legacy/timer.h"
 #include "uart.h"
+#include "messenger.h"
+#include "device.h"
 
 // Thread definitions
 
@@ -45,11 +47,15 @@ static void appendRxByte(uint8_t byte) {
 static void rxPacketReceived() {
     lastPingTime = CurrentTime;
     if (rxPosition == 0) {
-        printk("UART pinged\n");
+        // we received ping
     } else {
-        appendRxByte(0);
         printk("UART received: %s\n", rxBuffer);
-        //TODO: process packet
+
+        if (DEVICE_IS_UHK80_RIGHT) {
+            Messenger_Receive(DeviceId_Uhk80_Left, rxBuffer, rxPosition);
+        } else if (DEVICE_IS_UHK80_LEFT) {
+            Messenger_Receive(DeviceId_Uhk80_Right, rxBuffer, rxPosition);
+        }
     }
     rxPosition = 0;
 }
@@ -157,7 +163,22 @@ void Uart_SendPacket(const uint8_t* data, uint16_t len) {
     appendTxByte(END_BYTE);
 
     uart_tx(uart_dev, txBuffer, txPosition, UART_TIMEOUT);
+}
 
+void Uart_SendMessage(message_t msg) {
+    k_sem_take(&txBufferBusy, K_FOREVER);
+
+    txPosition = 0;
+
+    processOutgoingByte(msg.messageId);
+
+    for (uint16_t i = 0; i < msg.len; i++) {
+        processOutgoingByte(msg.data[i]);
+    }
+
+    appendTxByte(END_BYTE);
+
+    uart_tx(uart_dev, txBuffer, txPosition, UART_TIMEOUT);
 }
 
 static void ping() {
@@ -169,14 +190,8 @@ bool Uart_IsConnected() {
 }
 
 void testUart() {
-    const char* hello = "Hello world!";
-    const char* bye = "Good bye!";
     while (1) {
         ping();
-        k_sleep(K_MSEC(UART_TIMEOUT/2));
-        Uart_SendPacket((uint8_t*)hello, strlen(hello)+1);
-        k_sleep(K_MSEC(UART_TIMEOUT/2));
-        Uart_SendPacket((uint8_t*)bye, strlen(bye)+1);
         k_sleep(K_MSEC(UART_TIMEOUT/2));
     }
 }

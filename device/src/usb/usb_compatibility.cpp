@@ -8,6 +8,7 @@ extern "C"
 #include "link_protocol.h"
 #include "legacy/debug.h"
 #include "nus_server.h"
+#include "messenger.h"
 }
 #include "usb/df/class/hid.hpp"
 #include "command_app.hpp"
@@ -35,7 +36,7 @@ extern "C" void UsbCompatibility_SendKeyboardReport(const usb_basic_keyboard_rep
     keyboard_app::handle().set_report_state(*reinterpret_cast<const scancode_buffer*>(report));
 
     if (DEVICE_IS_UHK80_RIGHT) {
-        NusServer_SendSyncableProperty(SyncablePropertyId_KeyboardReport, (const uint8_t*)report, sizeof(*report));
+        Messenger_Send(DeviceId_Uhk_Dongle, SyncablePropertyId_KeyboardReport, (const uint8_t*)report, sizeof(*report));
     }
 }
 
@@ -44,7 +45,7 @@ extern "C" void UsbCompatibility_SendMouseReport(const usb_mouse_report_t* repor
     mouse_app::handle().set_report_state(*reinterpret_cast<const mouse_buffer*>(report));
 
     if (DEVICE_IS_UHK80_RIGHT) {
-        NusServer_SendSyncableProperty(SyncablePropertyId_MouseReport, (const uint8_t*)report, sizeof(*report));
+        Messenger_Send(DeviceId_Uhk_Dongle, SyncablePropertyId_MouseReport, (const uint8_t*)report, sizeof(*report));
     }
 }
 
@@ -64,7 +65,7 @@ extern "C" void UsbCompatibility_SendConsumerReport(const usb_media_keyboard_rep
     controls_app::handle().set_report_state(controls);
 
     if (DEVICE_IS_UHK80_RIGHT) {
-        NusServer_SendSyncableProperty(SyncablePropertyId_ControlsReport, (const uint8_t*)(&controls), sizeof(controls));
+        Messenger_Send(DeviceId_Uhk_Dongle, SyncablePropertyId_ControlsReport, (const uint8_t*)(&controls), sizeof(controls));
     }
 }
 

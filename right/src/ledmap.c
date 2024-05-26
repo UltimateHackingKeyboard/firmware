@@ -549,7 +549,7 @@ void Ledmap_UpdateBacklightLeds(void) {
             updateLedsByConstantRgbStrategy();
             break;
     }
-#ifdef __ZEPHYR__
+#if DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK80_LEFT
     Uhk80_UpdateLeds();
 #endif
 }
