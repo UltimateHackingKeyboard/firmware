@@ -116,7 +116,9 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
 
     printk("Disconnected from %s, reason %u\n", GetPeerStringByConn(conn), reason);
 
-    Peers[peerId].isConnected = false;
+    if (peerId != PeerIdUnknown) {
+        Peers[peerId].isConnected = false;
+    }
 
     if (DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK_DONGLE) {
         if (peerId == PeerIdUnknown) {
