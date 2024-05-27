@@ -43,8 +43,10 @@ extern "C" void UsbCompatibility_SendKeyboardReport(const usb_basic_keyboard_rep
 
 extern "C" void UsbCompatibility_SendMouseReport(const usb_mouse_report_t* report) 
 {
-    if (keyboard_app::handle().has_transport()) {
-        mouse_app::handle().set_report_state(*reinterpret_cast<const mouse_buffer*>(report));
+    mouse_app& mouse_app = mouse_app::handle();
+
+    if (mouse_app.has_transport()) {
+        mouse_app.set_report_state(*reinterpret_cast<const mouse_buffer*>(report));
     } else if (DEVICE_IS_UHK80_RIGHT)  {
         Messenger_Send(DeviceId_Uhk_Dongle, SyncablePropertyId_MouseReport, (const uint8_t*)report, sizeof(*report));
     }
@@ -63,8 +65,10 @@ extern "C" void UsbCompatibility_SendConsumerReport(const usb_media_keyboard_rep
     }
     UsbSystemKeyboard_ForeachScancode(systemReport, &UsbCompatibility_ConsumerKeyboardAddScancode);
 
-    if (keyboard_app::handle().has_transport()) {
-        controls_app::handle().set_report_state(controls);
+    controls_app& controls_app = controls_app::handle();
+
+    if (controls_app.has_transport()) {
+        controls_app.set_report_state(controls);
     } else if (DEVICE_IS_UHK80_RIGHT) {
         Messenger_Send(DeviceId_Uhk_Dongle, SyncablePropertyId_ControlsReport, (const uint8_t*)(&controls), sizeof(controls));
     }
@@ -72,7 +76,9 @@ extern "C" void UsbCompatibility_SendConsumerReport(const usb_media_keyboard_rep
 
 extern "C" void UsbCompatibility_SendConsumerReport2(const uint8_t* report)
 {
-    if (keyboard_app::handle().has_transport()) {
-        controls_app::handle().set_report_state(*(const controls_buffer*)report);
+    controls_app& controls_app = controls_app::handle();
+
+    if (controls_app.has_transport()) {
+        controls_app.set_report_state(*(const controls_buffer*)report);
     }
 }
