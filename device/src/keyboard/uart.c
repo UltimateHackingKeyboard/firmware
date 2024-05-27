@@ -40,24 +40,24 @@ static void appendRxByte(uint8_t byte) {
     if (rxPosition < RX_BUF_SIZE) {
         rxBuffer[rxPosition++] = byte;
     } else {
-        printk("Uart error: too long message in rx buffer\n");
+        printk("Uart error: too long message in rx buffer, length: %i, begins with [%i, %i, ...]\n", rxPosition, rxBuffer[0], rxBuffer[1]);
     }
 }
 
 static void rxPacketReceived() {
+    uint16_t len = rxPosition;
+
     lastPingTime = CurrentTime;
-    if (rxPosition == 0) {
+    rxPosition = 0;
+    if (len == 0) {
         // we received ping
     } else {
-        printk("UART received: %s\n", rxBuffer);
-
         if (DEVICE_IS_UHK80_RIGHT) {
-            Messenger_Receive(DeviceId_Uhk80_Left, rxBuffer, rxPosition);
+            Messenger_Receive(DeviceId_Uhk80_Left, rxBuffer, len);
         } else if (DEVICE_IS_UHK80_LEFT) {
-            Messenger_Receive(DeviceId_Uhk80_Right, rxBuffer, rxPosition);
+            Messenger_Receive(DeviceId_Uhk80_Right, rxBuffer, len);
         }
     }
-    rxPosition = 0;
 }
 
 static void processIncomingByte(uint8_t byte) {
@@ -99,7 +99,7 @@ static void uart_callback(const struct device *dev, struct uart_event *evt, void
         break;
 
     case UART_RX_RDY:
-        for (uint8_t i = 0; i < evt->data.rx.len; i++) {
+        for (uint16_t i = 0; i < evt->data.rx.len; i++) {
             uint8_t byte = evt->data.rx.buf[evt->data.rx.offset+i];
             processIncomingByte(byte);
         }
@@ -108,7 +108,11 @@ static void uart_callback(const struct device *dev, struct uart_event *evt, void
     case UART_RX_BUF_REQUEST:
     {
         rxbuf = (rxbuf == rxbuf1) ? rxbuf2 : rxbuf1;
+
         err = uart_rx_buf_rsp(uart_dev, rxbuf, BUF_SIZE);
+        if (err != 0) {
+            printk("Could not provide new buffer because %i\n", err);
+        }
         __ASSERT(err == 0, "Failed to provide new buffer");
         break;
     }
@@ -170,7 +174,9 @@ void Uart_SendMessage(message_t msg) {
 
     txPosition = 0;
 
-    processOutgoingByte(msg.messageId);
+    for (uint8_t id = 0; id < msg.idsUsed; id++) {
+        processOutgoingByte(msg.messageId[id]);
+    }
 
     for (uint16_t i = 0; i < msg.len; i++) {
         processOutgoingByte(msg.data[i]);

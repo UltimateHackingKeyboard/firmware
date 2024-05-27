@@ -148,8 +148,17 @@ void NusClient_Send(const uint8_t *data, uint16_t len) {
 
 void NusClient_SendMessage(message_t msg) {
     uint8_t buffer[MAX_LINK_PACKET_LENGTH];
-    buffer[0] = msg.messageId;
-    memcpy(&buffer[1], msg.data, msg.len);
+
+    for (uint8_t id = 0; id < msg.idsUsed; id++) {
+        buffer[id] = msg.messageId[id];
+    }
+
+    if (msg.len + msg.idsUsed > MAX_LINK_PACKET_LENGTH) {
+        printk("Message is too long for NUS packets! [%i, %i, ...]\n", buffer[0], buffer[1]);
+        return;
+    }
+
+    memcpy(&buffer[msg.idsUsed], msg.data, msg.len);
 
     NusClient_Send(buffer, msg.len+1);
 }

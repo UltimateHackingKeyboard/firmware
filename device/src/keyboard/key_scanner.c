@@ -107,7 +107,7 @@ static void scanKeys() {
     }
 
     if (DEVICE_IS_UHK80_LEFT) {
-        Messenger_Send(DeviceId_Uhk80_Right, SyncablePropertyId_LeftHalfKeyStates, compressedBuffer, compressedLength);
+        Messenger_Send2(DeviceId_Uhk80_Right, MessageId_SyncableProperty, SyncablePropertyId_LeftHalfKeyStates, compressedBuffer, compressedLength);
     }
 }
 

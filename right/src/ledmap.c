@@ -1,17 +1,20 @@
 #include "key_action.h"
 #include "keymap.h"
+#include "layer.h"
 #include "layer_switcher.h"
 #include "ledmap.h"
 #include "slave_drivers/is31fl3xxx_driver.h"
-#ifdef __ZEPHYR__
-#include "keyboard/leds.h"
-#else
-#include "device/device.h"
-#endif
 #include "config_parser/config_globals.h"
 #include "debug.h"
 #include "slot.h"
 #include "config_manager.h"
+
+#ifdef __ZEPHYR__
+#include "keyboard/leds.h"
+#include "state_sync.h"
+#else
+#include "device/device.h"
+#endif
 
 #define RGB(R, G, B) { .red = (R), .green = (G), .blue = (B)}
 #define MONO(M) { .red = (M) }
@@ -397,9 +400,9 @@ static void setPerKeyRgb(const rgb_t* color, uint8_t slotId, uint8_t keyId)
     bool matchesRightHalf = DEVICE_IS_UHK80_RIGHT && slotId == SlotId_RightKeyboardHalf;
     bool matchesLeftHalf = DEVICE_IS_UHK80_LEFT && slotId == SlotId_LeftKeyboardHalf;
     if (matchesRightHalf || matchesLeftHalf) {
-        Uhk80LedDriverValues[ledMapItem->red] = color->red * KeyBacklightBrightness / 255;
-        Uhk80LedDriverValues[ledMapItem->green] = color->green * KeyBacklightBrightness / 255;
-        Uhk80LedDriverValues[ledMapItem->blue] = color->blue * KeyBacklightBrightness / 255;
+        Uhk80LedDriverValues[ledMapItem->red] = color->red;
+        Uhk80LedDriverValues[ledMapItem->green] = color->green;
+        Uhk80LedDriverValues[ledMapItem->blue] = color->blue;
     }
 #endif
 }
@@ -574,4 +577,7 @@ void Ledmap_InitLedLayout(void) {
 void Ledmap_SetLedBacklightingMode(backlighting_mode_t newMode)
 {
     Cfg.BacklightingMode = newMode;
+#ifdef __ZEPHYR__
+    StateSync_UpdateBacklight();
+#endif
 }
