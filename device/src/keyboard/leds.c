@@ -6,6 +6,7 @@
 #include "shell.h"
 #include "keyboard/key_scanner.h"
 #include "legacy/ledmap.h"
+#include "legacy/slave_drivers/is31fl3xxx_driver.h"
 
 // Thread definitions
 
@@ -29,6 +30,8 @@ void setLedsCs(bool state)
 }
 
 #define LedPagePrefix 0b01010000
+
+static volatile bool ledsNeedUpdate = false;
 
 void ledUpdater() {
     k_sleep(K_MSEC(100));
@@ -74,22 +77,21 @@ void ledUpdater() {
         writeSpi(LedPagePrefix | 1);
         writeSpi(0x00);
         for (int i=0; i<255; i++) {
-            writeSpi(0xff);
+            writeSpi(KeyBacklightBrightness);
         }
         setLedsCs(false);
 
         k_mutex_unlock(&SpiMutex);
 
-#if DEVICE_IS_UHK80_RIGHT
-        k_sleep(K_FOREVER);
-#else
-        k_sleep(K_MSEC(100));
-        Ledmap_UpdateBacklightLeds();
-#endif
+        if (!ledsNeedUpdate) {
+            k_sleep(K_FOREVER);
+        }
+        ledsNeedUpdate = false;
     }
 }
 
 void Uhk80_UpdateLeds() {
+    ledsNeedUpdate = true;
     k_wakeup(ledUpdaterTid);
 }
 

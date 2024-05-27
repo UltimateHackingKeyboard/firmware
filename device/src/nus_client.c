@@ -81,20 +81,17 @@ static void exchange_func(struct bt_conn *conn, uint8_t err, struct bt_gatt_exch
     }
 }
 
-bool NusClient_Setup(struct bt_conn *conn) {
+void NusClient_Setup(struct bt_conn *conn) {
     static struct bt_gatt_exchange_params exchange_params;
-    bool success = true;
 
     exchange_params.func = exchange_func;
     int err = bt_gatt_exchange_mtu(conn, &exchange_params);
     if (err) {
-        success = false;
         printk("MTU exchange failed with %s, err %d\n", GetPeerStringByConn(conn), err);
     }
 
     err = bt_conn_set_security(conn, BT_SECURITY_L2);
     if (err) {
-        success = false;
         printk("Failed to set security for %s: %d\n", GetPeerStringByConn(conn), err);
     }
 
@@ -104,8 +101,6 @@ bool NusClient_Setup(struct bt_conn *conn) {
     if ((!err) && (err != -EALREADY)) {
         printk("Stop LE scan failed (err %d)\n", err);
     }
-
-    return success;
 }
 
 void NusClient_Init(void) {
@@ -148,8 +143,17 @@ void NusClient_Send(const uint8_t *data, uint16_t len) {
 
 void NusClient_SendMessage(message_t msg) {
     uint8_t buffer[MAX_LINK_PACKET_LENGTH];
-    buffer[0] = msg.messageId;
-    memcpy(&buffer[1], msg.data, msg.len);
 
-    NusClient_Send(buffer, msg.len+1);
+    for (uint8_t id = 0; id < msg.idsUsed; id++) {
+        buffer[id] = msg.messageId[id];
+    }
+
+    if (msg.len + msg.idsUsed > MAX_LINK_PACKET_LENGTH) {
+        printk("Message is too long for NUS packets! [%i, %i, ...]\n", buffer[0], buffer[1]);
+        return;
+    }
+
+    memcpy(&buffer[msg.idsUsed], msg.data, msg.len);
+
+    NusClient_Send(buffer, msg.len+msg.idsUsed);
 }

@@ -27,11 +27,14 @@
 #include "caret_config.h"
 #include "config_parser/parse_macro.h"
 #include "slave_drivers/is31fl3xxx_driver.h"
-#ifndef __ZEPHYR__
-#include "init_peripherals.h"
-#endif
 #include <stdint.h>
 #include "config_manager.h"
+
+#ifdef __ZEPHYR__
+#include "state_sync.h"
+#else
+#include "init_peripherals.h"
+#endif
 
 typedef enum {
     SetCommandAction_Write,
@@ -680,6 +683,10 @@ static macro_variable_t keymapAction(parser_context_t* ctx, set_command_action_t
     }
 
     key_action_t* actionSlot = &CurrentKeymap[layerId][slotIdx][inSlotIdx];
+
+#ifdef __ZEPHYR__
+    StateSync_UpdateLayer(layerId, false);
+#endif
 
     *actionSlot = keyAction;
     return noneVar();

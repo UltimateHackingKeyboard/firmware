@@ -5,11 +5,12 @@
 #include "debug.h"
 #include "config_manager.h"
 
-#ifndef __ZEPHYR__
-#include "device/device.h"
-#else
+#ifdef __ZEPHYR__
 #include <zephyr/sys/util.h>
+#include "state_sync.h"
 #define SleepModeActive false
+#else
+#include "device/device.h"
 #endif
 
 static void recalculateLedBrightness();
@@ -197,6 +198,8 @@ void LedSlaveDriver_DisableLeds(void)
 
 static void recalculateLedBrightness()
 {
+    uint8_t oldKeyBacklightBrightness = KeyBacklightBrightness;
+
     if (!Cfg.LedsEnabled || Cfg.LedSleepModeActive || SleepModeActive || Cfg.LedBrightnessMultiplier == 0.0f) {
         KeyBacklightBrightness = 0;
         IconsAndLayerTextsBrightness = 0;
@@ -206,6 +209,11 @@ static void recalculateLedBrightness()
         IconsAndLayerTextsBrightness = MIN(255, Cfg.IconsAndLayerTextsBrightnessDefault * Cfg.LedBrightnessMultiplier);
         AlphanumericSegmentsBrightness = MIN(255, Cfg.AlphanumericSegmentsBrightnessDefault * Cfg.LedBrightnessMultiplier);
     }
+#ifdef __ZEPHYR__
+    if (KeyBacklightBrightness != oldKeyBacklightBrightness) {
+        StateSync_UpdateBacklight();
+    }
+#endif
 }
 
 void LedSlaveDriver_UpdateLeds(void)

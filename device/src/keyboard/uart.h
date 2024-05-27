@@ -4,11 +4,12 @@
 // Includes:
 
     #include "messenger.h"
+    #include "link_protocol.h"
 
 // Macros:
 
     #define UART_TIMEOUT 2000
-    #define UART_MAX_PACKET_LENGTH 128
+    #define UART_MAX_PACKET_LENGTH MAX_LINK_PACKET_LENGTH
 
 // Variables:
 

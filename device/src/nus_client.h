@@ -10,7 +10,7 @@
 
     extern void NusClient_Init(void);
     extern void gatt_discover(struct bt_conn *conn);
-    extern bool NusClient_Setup(struct bt_conn *conn);
+    extern void NusClient_Setup(struct bt_conn *conn);
     extern void NusClient_Send(const uint8_t *data, uint16_t len);
     extern void NusClient_SendMessage(message_t msg);
 
