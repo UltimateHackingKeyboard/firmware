@@ -8,6 +8,11 @@
 #include "ledmap.h"
 #include "led_display.h"
 #include "config_manager.h"
+#include "parse_keymap.h"
+
+#ifdef __ZEPHYR__
+#include "state_sync.h"
+#endif
 
 static uint8_t tempKeymapCount;
 static uint8_t tempMacroCount;
@@ -327,5 +332,16 @@ parser_error_t ParseKeymap(config_buffer_t *buffer, uint8_t keymapIdx, uint8_t k
             return errorCode;
         }
     }
+
+#ifdef __ZEPHYR__
+    if (parseConfig.mode == ParseKeymapMode_FullRun || parseConfig.mode == ParseKeymapMode_OverlayKeymap) {
+        for (uint8_t layerId = 0; layerId < LayerId_Count; layerId++) {
+            StateSync_UpdateLayer(layerId, !Cfg.LayerConfig[layerId].layerIsDefined);
+        }
+    } else if (parseConfig.mode != ParseKeymapMode_DryRun) {
+        StateSync_UpdateLayer(parseConfig.dstLayer, false);
+    }
+#endif
+
     return ParserError_Success;
 }

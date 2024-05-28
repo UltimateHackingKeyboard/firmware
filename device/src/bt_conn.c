@@ -103,10 +103,9 @@ static void connected(struct bt_conn *conn, uint8_t err) {
         }
     } else {
         if (DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK_DONGLE) {
-            Peers[peerId].isConnected = NusClient_Setup(conn);
-        } else {
-            Peers[peerId].isConnected = true;
+            NusClient_Setup(conn);
         }
+        Peers[peerId].isConnected = true;
     }
 }
 
