@@ -4,6 +4,7 @@
 #include "keyboard/uart.h"
 #include "autoconf.h"
 #include "link_protocol.h"
+#include "messenger_queue.h"
 #include "state_sync.h"
 #include "usb/usb_compatibility.h"
 #include "nus_server.h"
@@ -11,6 +12,8 @@
 #include "legacy/module.h"
 #include "legacy/key_states.h"
 #include "shared/attributes.h"
+
+static k_tid_t mainThreadId = 0;
 
 static const char* deviceIdToString(device_id_t deviceId) {
     switch (deviceId) {
@@ -83,7 +86,7 @@ static void processSyncablePropertyRight(device_id_t src, const uint8_t* data, u
             }
             break;
         default:
-            printk("Unrecognized or unexpected property %i\n", data[0]);
+            printk("Unrecognized or unexpected message [%i, %i, ...]\n", data[0], data[1]);
             break;
     }
 }
@@ -97,7 +100,7 @@ static void receiveRight(device_id_t src, const uint8_t* data, uint16_t len) {
             processSyncablePropertyRight(src, data, len);
             break;
         default:
-            printk("Unrecognized or unexpected message %i\n", data[0]);
+            printk("Unrecognized or unexpected message [%i, %i, ...]\n", data[0], data[1]);
             break;
     }
 }
@@ -115,12 +118,12 @@ static void receiveDongle(device_id_t src, const uint8_t* data, uint16_t len) {
             UsbCompatibility_SendConsumerReport2(message);
             break;
         default:
-            printk("Unrecognized or unexpected property %i\n", data[0]);
+            printk("Unrecognized or unexpected message [%i, %i, ...]\n", data[0], data[1]);
             break;
     }
 }
 
-void Messenger_Receive(device_id_t src, const uint8_t* data, uint16_t len) {
+static void receive(device_id_t src, const uint8_t* data, uint16_t len) {
     switch (DEVICE_ID) {
         case DeviceId_Uhk80_Left:
             receiveLeft(src, data, len);
@@ -131,6 +134,21 @@ void Messenger_Receive(device_id_t src, const uint8_t* data, uint16_t len) {
         case DeviceId_Uhk_Dongle:
             receiveDongle(src, data, len);
             break;
+    }
+}
+
+void Messenger_Enqueue(uint8_t src, const uint8_t* data, uint16_t len) {
+    MessengerQueue_Put(src, data, len);
+    k_wakeup(mainThreadId);
+}
+
+void Messenger_ProcessQueue() {
+    messenger_queue_record_t rec = MessengerQueue_Take();
+    while (rec.data != NULL) {
+        receive(rec.src, rec.data, rec.len);
+        MessengerQueue_FreeMemory(rec.data);
+
+        rec = MessengerQueue_Take();
     }
 }
 
@@ -157,5 +175,10 @@ void Messenger_Send(device_id_t dst, uint8_t messageId, const uint8_t* data, uin
 void Messenger_Send2(device_id_t dst, uint8_t messageId, uint8_t messageId2, const uint8_t* data, uint16_t len) {
     message_t msg = { .data = data, .len = len, .messageId[0] = messageId, .messageId[1] = messageId2, .idsUsed = 2 };
     Messenger_SendMessage(dst, msg);
+}
+
+void Messenger_Init() {
+    MessengerQueue_Init();
+    mainThreadId = k_current_get();
 }
 

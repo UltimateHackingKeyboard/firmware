@@ -29,4 +29,7 @@
     void Messenger_Send(uint8_t dst, uint8_t messageId, const uint8_t* data, uint16_t len);
     void Messenger_Send2(uint8_t dst, uint8_t messageId, uint8_t messageId2, const uint8_t* data, uint16_t len);
 
+    void Messenger_Enqueue(uint8_t src, const uint8_t* data, uint16_t len);
+    void Messenger_ProcessQueue();
+
 #endif // __MESSENGER_H__
