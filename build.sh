@@ -13,6 +13,10 @@ usage: ./build [ uhk-80-left | uhk-80-right | uhk-60-right | uhk-dongle ] { setu
     flash    make and then flash
     shell    open build shell
     uart     open uhk shell
+
+    Optionally run with "--dev-id 123" to select device for flashing.
+
+    Example: ./build uhk-80-right flash --dev-id 123
 END
 }
 
@@ -28,6 +32,8 @@ case $DEVICE in
 esac
 
 ACTION=$1
+shift
+
 PWD=`pwd`
 
 if [ "$ACTION" == "" -o "$DEVICE" == "" ] 
@@ -65,7 +71,7 @@ END
         ;;
     flash)
         nrfutil toolchain-manager launch --shell --ncs-version $NCS_VERSION << END
-            west flash -d $PWD/device/build/$DEVICE < /dev/tty
+            west flash -d $PWD/device/build/$DEVICE $@ < /dev/tty
 END
         ;;
     shell)
