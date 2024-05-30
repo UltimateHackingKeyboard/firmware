@@ -12,6 +12,7 @@
     typedef enum {
         MessageId_StateSync = 1,
         MessageId_SyncableProperty,
+        MessageId_Log,
     } message_id_t;
 
     // the point of message_t is to reduce the number of times we need to copy the message.

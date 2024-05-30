@@ -16,7 +16,7 @@ extern "C"
 #include "gamepad_app.hpp"
 #include "keyboard_app.hpp"
 #include "mouse_app.hpp"
-#include "keyboard/logger.h"
+#include "logger.h"
 
 static scancode_buffer keys;
 static mouse_buffer mouseState;

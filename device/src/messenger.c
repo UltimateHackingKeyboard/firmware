@@ -1,7 +1,6 @@
 #include "messenger.h"
 #include "bt_conn.h"
 #include "device.h"
-#include "keyboard/uart.h"
 #include "autoconf.h"
 #include "link_protocol.h"
 #include "messenger_queue.h"
@@ -12,6 +11,10 @@
 #include "legacy/module.h"
 #include "legacy/key_states.h"
 #include "shared/attributes.h"
+
+#ifdef DEVICE_IS_KEYBOARD
+#include "keyboard/uart.h"
+#endif
 
 static k_tid_t mainThreadId = 0;
 
@@ -99,6 +102,9 @@ static void receiveRight(device_id_t src, const uint8_t* data, uint16_t len) {
         case MessageId_SyncableProperty:
             processSyncablePropertyRight(src, data, len);
             break;
+        case MessageId_Log:
+            printk("%s: %s\n", deviceIdToString(src), data);
+            break;
         default:
             printk("Unrecognized or unexpected message [%i, %i, ...]\n", data[0], data[1]);
             break;
@@ -153,11 +159,12 @@ void Messenger_ProcessQueue() {
 }
 
 void Messenger_SendMessage(device_id_t dst, message_t message) {
-
+#ifdef DEVICE_IS_KEYBOARD
     if (Uart_IsConnected() && (dst == DeviceId_Uhk80_Left || dst == DeviceId_Uhk80_Right)) {
         Uart_SendMessage(message);
         return;
     }
+#endif
 
     if (Bt_DeviceIsConnected(dst)) {
         sendOverBt(dst, message);

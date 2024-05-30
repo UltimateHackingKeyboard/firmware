@@ -31,10 +31,7 @@
 #define POOL_REGION_SIZE MAX_LINK_PACKET_LENGTH
 #define QUEUE_REGION_SIZE sizeof(messenger_queue_record_t)
 
-struct { bool segmentTaken[16]; uint8_t segments[16][MAX_LINK_PACKET_LENGTH]; uint8_t idx; } regionPool;;
-
-
-// POOL(regionPool, POOL_SIZE, POOL_REGION_SIZE);
+POOL(regionPool, POOL_SIZE, POOL_REGION_SIZE);
 POOL(queuePool, POOL_SIZE, QUEUE_REGION_SIZE);
 
 #define FIFO_RETRIES 10

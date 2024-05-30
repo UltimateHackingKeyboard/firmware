@@ -76,6 +76,10 @@ int main(void) {
     bt_init();
     InitSettings();
 
+#if DEVICE_IS_UHK_DONGLE
+    LogBt("Main loop A");
+#endif
+
     if (DEVICE_IS_UHK80_LEFT || DEVICE_IS_UHK80_RIGHT) {
         NusServer_Init();
     }
@@ -122,6 +126,9 @@ int main(void) {
         k_msleep(1);
     }
 #else
+#if DEVICE_IS_UHK_DONGLE
+    LogBt("Main loop B");
+#endif
     while (true)
     {
         CurrentTime = k_uptime_get();

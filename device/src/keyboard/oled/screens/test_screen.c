@@ -1,6 +1,5 @@
 #include "test_screen.h"
 #include "keyboard/oled/widgets/widgets.h"
-#include "keyboard/logger.h"
 
 static widget_t consoleWidget;
 static widget_t helloWidget;
