@@ -32,10 +32,10 @@ static uint8_t ble_data_received(struct bt_nus_client *nus, const uint8_t *data,
 
     switch (DEVICE_ID) {
         case DeviceId_Uhk80_Right:
-            Messenger_Enqueue(DeviceId_Uhk80_Left, data, len);
+            Messenger_Enqueue(DeviceId_Uhk80_Left, copy, len);
             break;
         case DeviceId_Uhk_Dongle:
-            Messenger_Enqueue(DeviceId_Uhk80_Right, data, len);
+            Messenger_Enqueue(DeviceId_Uhk80_Right, copy, len);
             break;
         default:
             printk("Ble received message from unknown source.");
