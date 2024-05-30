@@ -1,7 +1,6 @@
 #include "oled_text_renderer.h"
 #include "framebuffer.h"
 #include "lvgl/lvgl.h"
-#include "keyboard/logger.h"
 #include "fonts/fonts.h"
 #include "oled_buffer.h"
 #include <stdint.h>

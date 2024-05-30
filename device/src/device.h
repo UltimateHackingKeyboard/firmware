@@ -52,6 +52,10 @@
         #define DEVICE_HAS_OLED
     #endif
 
+    #if DEVICE_IS_UHK80_LEFT || DEVICE_IS_UHK80_RIGHT
+        #define DEVICE_IS_KEYBOARD
+    #endif
+
     #if !DEVICE_IS_UHK60V1_RIGHT && !DEVICE_IS_UHK60V1_RIGHT
         #define DEVICE_HAS_NRF
     #endif

@@ -28,8 +28,7 @@ typedef struct {
 } syncable_state_right_t;
 
 typedef enum {
-    SyncCommand_Ack = 1,
-    SyncCommand_ClearLayer,
+    SyncCommand_ClearLayer = 1,
     SyncCommand_SyncLayer,
     SyncCommand_SyncActiveLayer,
     SyncCommand_SyncBacklight,
@@ -45,15 +44,7 @@ static K_THREAD_STACK_DEFINE(stack_area, THREAD_STACK_SIZE);
 static struct k_thread thread_data;
 #endif
 
-#if DEVICE_IS_UHK80_LEFT
-static K_THREAD_STACK_DEFINE(stack_area2, THREAD_STACK_SIZE);
-static struct k_thread thread_data2;
-#endif
-
 static k_tid_t stateSyncThreadId = 0;
-static k_tid_t stateSyncAckThreadId = 0;
-
-K_SEM_DEFINE(leftHalfBusy, 1, 1);
 
 #define STATE_SYNC_LOG(fmt, ...) //printk(fmt, __VA_ARGS__)
 
@@ -93,10 +84,6 @@ static void sendSyncLayer(layer_id_t layerId) {
     STATE_SYNC_LOG("State sync sending sync layer %i\n", layerId);
 }
 
-static void ack() {
-    k_wakeup(stateSyncAckThreadId);
-}
-
 void StateSync_LeftReceiveStateUpdate(const uint8_t* data, uint16_t len) {
     data++;
     sync_command_type_t command = *(data++);
@@ -109,7 +96,6 @@ void StateSync_LeftReceiveStateUpdate(const uint8_t* data, uint16_t len) {
                 if (layerId == ActiveLayer) {
                     Ledmap_UpdateBacklightLeds();
                 }
-                ack();
             }
             break;
         case SyncCommand_SyncLayer: {
@@ -127,13 +113,11 @@ void StateSync_LeftReceiveStateUpdate(const uint8_t* data, uint16_t len) {
                 if (layerId == ActiveLayer) {
                     Ledmap_UpdateBacklightLeds();
                 }
-                ack();
             }
             break;
         case SyncCommand_SyncActiveLayer: {
                 ActiveLayer = *(data++);
                 Ledmap_UpdateBacklightLeds();
-                ack();
             }
             break;
         case SyncCommand_SyncBacklight: {
@@ -143,7 +127,6 @@ void StateSync_LeftReceiveStateUpdate(const uint8_t* data, uint16_t len) {
                 Cfg.LedMap_ConstantRGB.green = *(data++);
                 Cfg.LedMap_ConstantRGB.blue = *(data++);
                 Ledmap_UpdateBacklightLeds();
-                ack();
             }
             break;
         default:
@@ -157,9 +140,6 @@ void StateSync_RightReceiveStateUpdate(const uint8_t* data, uint16_t len) {
     sync_command_type_t command = *(data++);
 
     switch (command) {
-        case SyncCommand_Ack:
-            k_sem_give(&leftHalfBusy);
-            break;
         default:
             printk("Unrecognized sync command [%i, %i, ...]\n", msgId, command);
             break;
@@ -210,22 +190,11 @@ static bool transmitStateUpdate() {
 
 static ATTR_UNUSED void stateSynceUpdaterRight() {
     while(true) {
-        k_sem_take(&leftHalfBusy, K_MSEC(1000));
         if (transmitStateUpdate()) {
-            k_sem_give(&leftHalfBusy);
             k_sleep(K_FOREVER);
         }
     }
 }
-
-// TODO: figure out a more intelligent way to send replies :-(
-static ATTR_UNUSED void acker() {
-    while(true) {
-        k_sleep(K_FOREVER);
-        Messenger_Send2(DeviceId_Uhk80_Right, MessageId_StateSync, SyncCommand_Ack, NULL, 0);
-    }
-}
-
 
 void StateSync_UpdateActiveLayer() {
     syncState.activeLayerNeedsUpdate = true;
@@ -252,16 +221,5 @@ void StateSync_Init() {
                 THREAD_PRIORITY, 0, K_NO_WAIT
                 );
         k_thread_name_set(&thread_data, "state_sync_updater");
-#endif
-
-#if DEVICE_IS_UHK80_LEFT
-        stateSyncAckThreadId = k_thread_create(
-                &thread_data2, stack_area2,
-                K_THREAD_STACK_SIZEOF(stack_area2),
-                acker,
-                NULL, NULL, NULL,
-                THREAD_PRIORITY, 0, K_NO_WAIT
-                );
-        k_thread_name_set(&thread_data2, "state_sync_acker");
 #endif
 }

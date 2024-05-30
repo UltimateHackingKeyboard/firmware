@@ -1,6 +1,5 @@
 #include "splitter_widget.h"
 #include "widget.h"
-#include "keyboard/logger.h"
 
 void SplitterWidget_LayOut(widget_t* self, uint8_t x, uint8_t y, uint8_t w, uint8_t h)
 {
