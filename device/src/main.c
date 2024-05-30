@@ -24,6 +24,7 @@
 #include "legacy/user_logic.h"
 #include "state_sync.h"
 #include "legacy/config_manager.h"
+#include "messenger.h"
 // #include <zephyr/drivers/gpio.h>
 // #include "dongle_leds.h"
 

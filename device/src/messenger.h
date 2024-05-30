@@ -33,4 +33,6 @@
     void Messenger_Enqueue(uint8_t src, const uint8_t* data, uint16_t len);
     void Messenger_ProcessQueue();
 
+    void Messenger_Init();
+
 #endif // __MESSENGER_H__

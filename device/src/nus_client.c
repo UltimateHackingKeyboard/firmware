@@ -16,6 +16,7 @@
 #include "keyboard/oled/widgets/console_widget.h"
 #include "usb/usb_compatibility.h"
 #include "link_protocol.h"
+#include "messenger_queue.h"
 
 static struct bt_nus_client nus_client;
 
