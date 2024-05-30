@@ -8,16 +8,23 @@
 #ifdef __ZEPHYR__
 #include <zephyr/sys/util.h>
 #include "state_sync.h"
+#include "keyboard/power.h"
+#include "keyboard/oled/oled.h"
 #define SleepModeActive false
 #else
 #include "device/device.h"
+#include "stubs.h"
 #endif
 
 static void recalculateLedBrightness();
 
+bool KeyBacklightSleepModeActive = false;
+bool DisplaySleepModeActive = false;
+
 bool LedSlaveDriver_FullUpdateNeeded = false;
 
 uint8_t KeyBacklightBrightness = 0xff;
+
 #ifndef __ZEPHYR__
 uint8_t LedDriverValues[LED_DRIVER_MAX_COUNT][LED_DRIVER_LED_COUNT_MAX];
 
@@ -194,26 +201,26 @@ void LedSlaveDriver_DisableLeds(void)
         memset(LedDriverValues[ledDriverId], 0, ledDriverStates[ledDriverId].ledCount);
     }
 }
-#endif
+#endif //__ZEPHYR__
+
 
 static void recalculateLedBrightness()
 {
-    uint8_t oldKeyBacklightBrightness = KeyBacklightBrightness;
+    bool globalSleepMode = !Cfg.LedsEnabled || SleepModeActive || Cfg.LedBrightnessMultiplier == 0.0f;
 
-    if (!Cfg.LedsEnabled || Cfg.LedSleepModeActive || SleepModeActive || Cfg.LedBrightnessMultiplier == 0.0f) {
+    if (globalSleepMode || KeyBacklightSleepModeActive) {
         KeyBacklightBrightness = 0;
-        IconsAndLayerTextsBrightness = 0;
-        AlphanumericSegmentsBrightness = 0;
     } else {
-        KeyBacklightBrightness = MIN(255, Cfg.KeyBacklightBrightnessDefault * Cfg.LedBrightnessMultiplier);
-        IconsAndLayerTextsBrightness = MIN(255, Cfg.IconsAndLayerTextsBrightnessDefault * Cfg.LedBrightnessMultiplier);
-        AlphanumericSegmentsBrightness = MIN(255, Cfg.AlphanumericSegmentsBrightnessDefault * Cfg.LedBrightnessMultiplier);
+        uint8_t keyBacklightBrightnessBase = Power_RunningOnBattery() ? Cfg.KeyBacklightBrightnessBatteryDefault : Cfg.KeyBacklightBrightnessDefault;
+        KeyBacklightBrightness = MIN(255, keyBacklightBrightnessBase * Cfg.LedBrightnessMultiplier);
     }
-#ifdef __ZEPHYR__
-    if (KeyBacklightBrightness != oldKeyBacklightBrightness) {
-        StateSync_UpdateBacklight();
+
+    if (globalSleepMode || DisplaySleepModeActive) {
+        DisplayBrightness = 0;
+    } else {
+        uint8_t displayBrightnessBase = Power_RunningOnBattery() ? Cfg.DisplayBrightnessBatteryDefault : Cfg.DisplayBrightnessDefault;
+        DisplayBrightness = MIN(255, displayBrightnessBase * Cfg.LedBrightnessMultiplier);
     }
-#endif
 }
 
 void LedSlaveDriver_UpdateLeds(void)
@@ -221,12 +228,16 @@ void LedSlaveDriver_UpdateLeds(void)
     recalculateLedBrightness();
     Ledmap_UpdateBacklightLeds();
 
-#ifndef __ZEPHYR__
+#ifdef __ZEPHYR__
+    Oled_UpdateBrightness();
+    StateSync_UpdateBacklight();
+#else
     LedDisplay_UpdateAll();
 
     LedSlaveDriver_FullUpdateNeeded = false;
 #endif
 }
+
 
 #ifndef __ZEPHYR__
 void LedSlaveDriver_RecalculateLedBrightness()

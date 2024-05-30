@@ -524,8 +524,33 @@ static macro_variable_t constantRgb(parser_context_t* ctx, set_command_action_t 
 static macro_variable_t leds(parser_context_t* ctx, set_command_action_t action)
 {
     if (ConsumeToken(ctx, "fadeTimeout")) {
+        if (action == SetCommandAction_Read) {
+            Macros_ReportError("Reading global fade timeout is not supported!", ConsumedToken(ctx), ConsumedToken(ctx));
+            return noneVar();
+        }
+
+        uint32_t res = Macros_ConsumeInt(ctx)*1000;
+
+        if (Macros_ParserError || Macros_DryRun) {
+            return noneVar();
+        }
+
+        Cfg.KeyBacklightFadeOutTimeout = res;
+        Cfg.KeyBacklightFadeOutBatteryTimeout = res;
+        Cfg.DisplayFadeOutTimeout = res;
+        Cfg.DisplayFadeOutBatteryTimeout = res;
+    } else if (ConsumeToken(ctx, "keyBacklightFadeTimeout")) {
         DEFINE_NONE_LIMITS();
-        ASSIGN_INT_MUL(Cfg.LedsFadeTimeout, 1000);
+        ASSIGN_INT_MUL(Cfg.KeyBacklightFadeOutTimeout, 1000);
+    } else if (ConsumeToken(ctx, "displayFadeTimeout")) {
+        DEFINE_NONE_LIMITS();
+        ASSIGN_INT_MUL(Cfg.DisplayFadeOutTimeout, 1000);
+    } else if (ConsumeToken(ctx, "keyBacklightFadeBatteryTimeout")) {
+        DEFINE_NONE_LIMITS();
+        ASSIGN_INT_MUL(Cfg.KeyBacklightFadeOutBatteryTimeout, 1000);
+    } else if (ConsumeToken(ctx, "displayFadeBatteryTimeout")) {
+        DEFINE_NONE_LIMITS();
+        ASSIGN_INT_MUL(Cfg.DisplayFadeOutBatteryTimeout, 1000);
     } else if (ConsumeToken(ctx, "brightness")) {
         DEFINE_FLOAT_LIMITS(1.0f/256.0f, 255.0f);
         ASSIGN_FLOAT(Cfg.LedBrightnessMultiplier);

@@ -18,6 +18,7 @@
 
 typedef enum {
     OledCommand_SetDisplayOn = 0xaf,
+    OledCommand_SetDisplayOff = 0xae,
     OledCommand_SetContrast = 0x81,
     OledCommand_SetRowAddress = 0xb0,
     OledCommand_SetColumnLow = 0x00,

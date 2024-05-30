@@ -2,6 +2,7 @@
 #include "key_action.h"
 #include "led_display.h"
 #include "layer.h"
+#include "stubs.h"
 #include "test_switches.h"
 #include "slot.h"
 #include "usb_interfaces/usb_interface_basic_keyboard.h"
@@ -39,10 +40,13 @@
 #include "config_manager.h"
 #include <string.h>
 
-#if __ZEPHYR__
+#ifdef __ZEPHYR__
 #include "shell.h"
 #include "usb/usb_compatibility.h"
 #include "keyboard/input_interceptor.h"
+#include "keyboard/power.h"
+#else
+#include "stubs.h"
 #endif
 
 bool TestUsbStack = false;
@@ -536,12 +540,27 @@ uint32_t UsbReportUpdateCounter;
 
 static void updateLedSleepModeState() {
     uint32_t elapsedTime = Timer_GetElapsedTime(&lastActivityTime);
+    bool ledsNeedUpdate = false;
 
-    if (elapsedTime > Cfg.LedsFadeTimeout && !Cfg.LedSleepModeActive && Cfg.LedsFadeTimeout) {
-        Cfg.LedSleepModeActive = true;
-        LedSlaveDriver_UpdateLeds();
-    } else if (elapsedTime < Cfg.LedsFadeTimeout && Cfg.LedSleepModeActive) {
-        Cfg.LedSleepModeActive = false;
+    uint32_t keyBacklightTimeout = Power_RunningOnBattery() ? Cfg.KeyBacklightFadeOutBatteryTimeout : Cfg.KeyBacklightFadeOutTimeout;
+    if (elapsedTime > keyBacklightTimeout && !KeyBacklightSleepModeActive && keyBacklightTimeout) {
+        KeyBacklightSleepModeActive = true;
+        ledsNeedUpdate = true;
+    } else if ((elapsedTime < keyBacklightTimeout || !keyBacklightTimeout)  && KeyBacklightSleepModeActive) {
+        KeyBacklightSleepModeActive = false;
+        ledsNeedUpdate = true;
+    }
+
+    uint32_t displayTimeout = Power_RunningOnBattery() ? Cfg.DisplayFadeOutBatteryTimeout : Cfg.DisplayFadeOutTimeout;
+    if (elapsedTime > displayTimeout && !DisplaySleepModeActive && displayTimeout) {
+        DisplaySleepModeActive = true;
+        ledsNeedUpdate = true;
+    } else if ((elapsedTime < displayTimeout || !displayTimeout) && DisplaySleepModeActive) {
+        DisplaySleepModeActive = false;
+        ledsNeedUpdate = true;
+    }
+
+    if (ledsNeedUpdate) {
         LedSlaveDriver_UpdateLeds();
     }
 }

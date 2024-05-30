@@ -33,17 +33,31 @@ void setLedsCs(bool state)
 
 static volatile bool ledsNeedUpdate = false;
 
+static void setOperationMode(bool on) {
+    // Set software shutdown control (SSD) register to normal mode
+    setLedsCs(true);
+    writeSpi(LedPagePrefix | 2);
+    writeSpi(0x00);
+    writeSpi(0b00001000 | (on ? 1 : 0));
+    setLedsCs(false);
+}
+
+static void sleepLeds() {
+    k_mutex_lock(&SpiMutex, K_FOREVER);
+    setOperationMode(0);
+    k_mutex_unlock(&SpiMutex);
+
+    while (KeyBacklightBrightness == 0) {
+        k_sleep(K_FOREVER);
+    }
+}
+
 void ledUpdater() {
     k_sleep(K_MSEC(100));
     while (true) {
         k_mutex_lock(&SpiMutex, K_FOREVER);
 
-        // Set software shutdown control (SSD) register to normal mode
-        setLedsCs(true);
-        writeSpi(LedPagePrefix | 2);
-        writeSpi(0x00);
-        writeSpi(0b00001001);
-        setLedsCs(false);
+        setOperationMode(1);
 
         // Set 180 degree phase delay to reduce audible noise, although it doesn't seem to make a difference
         setLedsCs(true);
@@ -86,6 +100,11 @@ void ledUpdater() {
         if (!ledsNeedUpdate) {
             k_sleep(K_FOREVER);
         }
+
+        if (KeyBacklightBrightness == 0) {
+            sleepLeds();
+        }
+
         ledsNeedUpdate = false;
     }
 }

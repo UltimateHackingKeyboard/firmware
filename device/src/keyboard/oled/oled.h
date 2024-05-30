@@ -18,5 +18,6 @@
     void Oled_ActivateScreen(widget_t* screen, bool forceRedraw);
     void Oled_RequestRedraw(void);
     void Oled_ShiftScreen();
+    void Oled_UpdateBrightness();
 
 #endif // __OLED_H__

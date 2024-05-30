@@ -1,6 +1,5 @@
 #define WATCHES
 
-
 #ifdef WATCHES
 #ifndef SRC_UTILS_DBG_H_
 #define SRC_UTILS_DBG_H_

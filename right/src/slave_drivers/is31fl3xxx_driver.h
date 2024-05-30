@@ -85,6 +85,8 @@
     extern uint8_t LedDriverValues[LED_DRIVER_MAX_COUNT][LED_DRIVER_LED_COUNT_MAX];
 #endif
 
+    extern bool KeyBacklightSleepModeActive;
+    extern bool DisplaySleepModeActive;
     extern bool LedSlaveDriver_FullUpdateNeeded;
 
 // Functions:

@@ -24,8 +24,7 @@
 
 // Variables:
 
-    extern uint8_t IconsAndLayerTextsBrightness;
-    extern uint8_t AlphanumericSegmentsBrightness;
+    extern uint8_t DisplayBrightness;
     extern char LedDisplay_DebugString[];
 
 // Functions:
