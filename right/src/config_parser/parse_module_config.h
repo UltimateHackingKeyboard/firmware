@@ -20,6 +20,7 @@
         SerializedModuleProperty_ScrollAxisLock,
         SerializedModuleProperty_CaretAxisLock,
         SerializedModuleProperty_InvertScrollDirectionY,
+        SerializedModuleProperty_InvertScrollDirectionX,
 
         // module specific
 

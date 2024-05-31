@@ -27,10 +27,14 @@
 #include "caret_config.h"
 #include "config_parser/parse_macro.h"
 #include "slave_drivers/is31fl3xxx_driver.h"
-#ifndef __ZEPHYR__
+#include <stdint.h>
+#include "config_manager.h"
+
+#ifdef __ZEPHYR__
+#include "state_sync.h"
+#else
 #include "init_peripherals.h"
 #endif
-#include <stdint.h>
 
 typedef enum {
     SetCommandAction_Write,
@@ -205,7 +209,7 @@ static macro_variable_t moduleSpeed(parser_context_t* ctx, set_command_action_t 
     }
     else if (ConsumeToken(ctx, "pinchZoomMode") && moduleId == ModuleId_TouchpadRight) {
         DEFINE_NONE_LIMITS();
-        ASSIGN_CUSTOM(int32_t, intVar, TouchpadPinchZoomMode, ConsumeNavigationModeId(ctx));
+        ASSIGN_CUSTOM(int32_t, intVar, Cfg.TouchpadPinchZoomMode, ConsumeNavigationModeId(ctx));
     }
     else if (ConsumeToken(ctx, "axisLockSkew")) {
         DEFINE_FLOAT_LIMITS(0.0f, 1000.0f);
@@ -260,7 +264,7 @@ static macro_variable_t module(parser_context_t* ctx, set_command_action_t actio
     }
     else if (ConsumeToken(ctx, "holdContinuationTimeout") && moduleId == ModuleId_TouchpadRight) {
         DEFINE_INT_LIMITS(0, 65535);
-        ASSIGN_INT(HoldContinuationTimeout);
+        ASSIGN_INT(Cfg.HoldContinuationTimeout);
     }
     else {
         return moduleSpeed(ctx, action, module, moduleId);
@@ -272,31 +276,31 @@ static macro_variable_t secondaryRoleAdvanced(parser_context_t* ctx, set_command
 {
     if (ConsumeToken(ctx, "timeout")) {
         DEFINE_INT_LIMITS(0, 65535);
-        ASSIGN_INT(SecondaryRoles_AdvancedStrategyTimeout);
+        ASSIGN_INT(Cfg.SecondaryRoles_AdvancedStrategyTimeout);
     }
     else if (ConsumeToken(ctx, "timeoutAction")) {
         DEFINE_NONE_LIMITS();
-        ASSIGN_CUSTOM(int32_t, intVar, SecondaryRoles_AdvancedStrategyTimeoutAction, ConsumeSecondaryRoleTimeoutAction(ctx));
+        ASSIGN_CUSTOM(int32_t, intVar, Cfg.SecondaryRoles_AdvancedStrategyTimeoutAction, ConsumeSecondaryRoleTimeoutAction(ctx));
     }
     else if (ConsumeToken(ctx, "safetyMargin")) {
         DEFINE_INT_LIMITS(-32768, 32767);
-        ASSIGN_INT(SecondaryRoles_AdvancedStrategySafetyMargin);
+        ASSIGN_INT(Cfg.SecondaryRoles_AdvancedStrategySafetyMargin);
     }
     else if (ConsumeToken(ctx, "triggerByRelease")) {
-        ASSIGN_BOOL(SecondaryRoles_AdvancedStrategyTriggerByRelease);
+        ASSIGN_BOOL(Cfg.SecondaryRoles_AdvancedStrategyTriggerByRelease);
     }
     else if (ConsumeToken(ctx, "triggerByPress")) {
-        ASSIGN_BOOL(SecondaryRoles_AdvancedStrategyTriggerByPress);
+        ASSIGN_BOOL(Cfg.SecondaryRoles_AdvancedStrategyTriggerByPress);
     }
     else if (ConsumeToken(ctx, "triggerByMouse")) {
-        ASSIGN_BOOL(SecondaryRoles_AdvancedStrategyTriggerByMouse);
+        ASSIGN_BOOL(Cfg.SecondaryRoles_AdvancedStrategyTriggerByMouse);
     }
     else if (ConsumeToken(ctx, "doubletapToPrimary")) {
-        ASSIGN_BOOL(SecondaryRoles_AdvancedStrategyDoubletapToPrimary);
+        ASSIGN_BOOL(Cfg.SecondaryRoles_AdvancedStrategyDoubletapToPrimary);
     }
     else if (ConsumeToken(ctx, "doubletapTime")) {
         DEFINE_INT_LIMITS(0, 65535);
-        ASSIGN_INT(SecondaryRoles_AdvancedStrategyDoubletapTimeout);
+        ASSIGN_INT(Cfg.SecondaryRoles_AdvancedStrategyDoubletapTimeout);
     }
     else {
         Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
@@ -308,7 +312,7 @@ static macro_variable_t secondaryRoles(parser_context_t* ctx, set_command_action
 {
     if (ConsumeToken(ctx, "defaultStrategy")) {
         DEFINE_NONE_LIMITS();
-        ASSIGN_CUSTOM(int32_t, intVar, SecondaryRoles_Strategy, ConsumeSecondaryRoleStrategy(ctx));
+        ASSIGN_CUSTOM(int32_t, intVar, Cfg.SecondaryRoles_Strategy, ConsumeSecondaryRoleStrategy(ctx));
     }
     else if (ConsumeToken(ctx, "advanced")) {
         ConsumeUntilDot(ctx);
@@ -322,12 +326,12 @@ static macro_variable_t secondaryRoles(parser_context_t* ctx, set_command_action
 
 static macro_variable_t mouseKeys(parser_context_t* ctx, set_command_action_t action)
 {
-    mouse_kinetic_state_t* state = &MouseMoveState;
+    mouse_kinetic_state_t* state = &Cfg.MouseMoveState;
 
     if (ConsumeToken(ctx, "move")) {
-        state = &MouseMoveState;
+        state = &Cfg.MouseMoveState;
     } else if (ConsumeToken(ctx, "scroll")) {
-        state = &MouseScrollState;
+        state = &Cfg.MouseScrollState;
     } else {
         Macros_ReportError("Scroll or move expected!", ctx->at, ctx->at);
         return noneVar();
@@ -368,13 +372,13 @@ static macro_variable_t mouseKeys(parser_context_t* ctx, set_command_action_t ac
 static macro_variable_t stickyModifiers(parser_context_t* ctx, set_command_action_t action)
 {
     if (ConsumeToken(ctx, "never")) {
-        ASSIGN_ENUM(StickyModifierStrategy, Stick_Never);
+        ASSIGN_ENUM(Cfg.StickyModifierStrategy, Stick_Never);
     }
     else if (ConsumeToken(ctx, "smart")) {
-        ASSIGN_ENUM(StickyModifierStrategy, Stick_Smart);
+        ASSIGN_ENUM(Cfg.StickyModifierStrategy, Stick_Smart);
     }
     else if (ConsumeToken(ctx, "always")) {
-        ASSIGN_ENUM(StickyModifierStrategy, Stick_Always);
+        ASSIGN_ENUM(Cfg.StickyModifierStrategy, Stick_Always);
     }
     else {
         Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
@@ -385,10 +389,10 @@ static macro_variable_t stickyModifiers(parser_context_t* ctx, set_command_actio
 static macro_variable_t macroEngineScheduler(parser_context_t* ctx, set_command_action_t action)
 {
     if (ConsumeToken(ctx, "preemptive")) {
-        ASSIGN_ENUM(Macros_Scheduler, Scheduler_Preemptive);
+        ASSIGN_ENUM(Cfg.Macros_Scheduler, Scheduler_Preemptive);
     }
     else if (ConsumeToken(ctx, "blocking")) {
-        ASSIGN_ENUM(Macros_Scheduler, Scheduler_Blocking);
+        ASSIGN_ENUM(Cfg.Macros_Scheduler, Scheduler_Blocking);
     }
     else {
         Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
@@ -403,7 +407,7 @@ static macro_variable_t macroEngine(parser_context_t* ctx, set_command_action_t 
     }
     else if (ConsumeToken(ctx, "batchSize")) {
         DEFINE_INT_LIMITS(0, 255);
-        ASSIGN_INT(Macros_MaxBatchSize);
+        ASSIGN_INT(Cfg.Macros_MaxBatchSize);
     }
     else if (ConsumeToken(ctx, "extendedCommands")) {
         Macros_ConsumeInt(ctx);
@@ -418,7 +422,7 @@ static macro_variable_t macroEngine(parser_context_t* ctx, set_command_action_t 
 static macro_variable_t backlightStrategy(parser_context_t* ctx, set_command_action_t action)
 {
     if (action == SetCommandAction_Read) {
-        return intVar(BacklightingMode);
+        return intVar(Cfg.BacklightingMode);
     }
 
     backlighting_mode_t res = 0;
@@ -505,7 +509,7 @@ static macro_variable_t constantRgb(parser_context_t* ctx, set_command_action_t 
             return noneVar();
         }
 
-        LedMap_ConstantRGB = rgb;
+        Cfg.LedMap_ConstantRGB = rgb;
         Ledmap_SetLedBacklightingMode(BacklightingMode_ConstantRGB);
         Ledmap_UpdateBacklightLeds();
 
@@ -521,12 +525,12 @@ static macro_variable_t leds(parser_context_t* ctx, set_command_action_t action)
 {
     if (ConsumeToken(ctx, "fadeTimeout")) {
         DEFINE_NONE_LIMITS();
-        ASSIGN_INT_MUL(LedsFadeTimeout, 1000);
+        ASSIGN_INT_MUL(Cfg.LedsFadeTimeout, 1000);
     } else if (ConsumeToken(ctx, "brightness")) {
         DEFINE_FLOAT_LIMITS(1.0f/256.0f, 255.0f);
-        ASSIGN_FLOAT(LedBrightnessMultiplier);
+        ASSIGN_FLOAT(Cfg.LedBrightnessMultiplier);
     } else if (ConsumeToken(ctx, "enabled")) {
-        ASSIGN_BOOL(LedsEnabled);
+        ASSIGN_BOOL(Cfg.LedsEnabled);
     } else {
         Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
     }
@@ -650,7 +654,12 @@ static macro_variable_t keymapAction(parser_context_t* ctx, set_command_action_t
 
     ConsumeUntilDot(ctx);
 
-    uint16_t keyId = Macros_ConsumeInt(ctx);
+    uint16_t keyId = Macros_TryConsumeKeyId(ctx);
+
+    if (keyId == 255) {
+        Macros_ReportError("Failed to decode keyid!", ctx->at, ctx->at);
+        return noneVar();
+    }
 
     if (action == SetCommandAction_Read) {
         Macros_ReportError("Reading actions is not supported!", ctx->at, ctx->at);
@@ -674,6 +683,10 @@ static macro_variable_t keymapAction(parser_context_t* ctx, set_command_action_t
     }
 
     key_action_t* actionSlot = &CurrentKeymap[layerId][slotIdx][inSlotIdx];
+
+#ifdef __ZEPHYR__
+    StateSync_UpdateLayer(layerId, false);
+#endif
 
     *actionSlot = keyAction;
     return noneVar();
@@ -708,7 +721,7 @@ static macro_variable_t modLayerTriggers(parser_context_t* ctx, set_command_acti
     }
 
     if (action == SetCommandAction_Read) {
-        return intVar(LayerConfig[layerId].modifierLayerMask);
+        return intVar(Cfg.LayerConfig[layerId].modifierLayerMask);
     }
 
     uint8_t mask = 0;
@@ -733,7 +746,7 @@ static macro_variable_t modLayerTriggers(parser_context_t* ctx, set_command_acti
         return noneVar();
     }
 
-    LayerConfig[layerId].modifierLayerMask = mask;
+    Cfg.LayerConfig[layerId].modifierLayerMask = mask;
     return noneVar();
 }
 
@@ -777,61 +790,62 @@ static macro_variable_t root(parser_context_t* ctx, set_command_action_t action)
         return modLayerTriggers(ctx, action);
     }
     else if (ConsumeToken(ctx, "diagonalSpeedCompensation")) {
-        ASSIGN_BOOL(DiagonalSpeedCompensation);
+        ASSIGN_BOOL(Cfg.DiagonalSpeedCompensation);
     }
     else if (ConsumeToken(ctx, "stickyModifiers")) {
         return stickyModifiers(ctx, action);
     }
     else if (ConsumeToken(ctx, "debounceDelay")) {
         DEFINE_INT_LIMITS(0, 255);
-        ASSIGN_INT2(DebounceTimePress, DebounceTimeRelease);
+        ASSIGN_INT2(Cfg.DebounceTimePress, Cfg.DebounceTimeRelease);
     }
     else if (ConsumeToken(ctx, "keystrokeDelay")) {
         DEFINE_INT_LIMITS(0, 65535);
-        ASSIGN_INT(KeystrokeDelay);
+        ASSIGN_INT(Cfg.KeystrokeDelay);
     }
     else if (
             ConsumeToken(ctx, "doubletapTimeout")  // new name
             || (ConsumeToken(ctx, "doubletapDelay")) // deprecated alias - old name
             ) {
         DEFINE_INT_LIMITS(0, 65535);
-        ASSIGN_INT(DoubletapTimeout);
+        ASSIGN_INT(Cfg.DoubletapTimeout);
     }
     else if (ConsumeToken(ctx, "autoRepeatDelay")) {
         DEFINE_INT_LIMITS(0, 65535);
-        ASSIGN_INT(AutoRepeatInitialDelay);
+        ASSIGN_INT(Cfg.AutoRepeatInitialDelay);
     }
     else if (ConsumeToken(ctx, "autoRepeatRate")) {
         DEFINE_INT_LIMITS(0, 65535);
-        ASSIGN_INT(AutoRepeatDelayRate);
+        ASSIGN_INT(Cfg.AutoRepeatDelayRate);
     }
     else if (ConsumeToken(ctx, "oneShotTimeout")) {
         DEFINE_INT_LIMITS(0, 65535);
-        ASSIGN_INT(Macros_OneShotTimeout);
+        ASSIGN_INT(Cfg.Macros_OneShotTimeout);
     }
     else if (ConsumeToken(ctx, "chordingDelay")) {
         DEFINE_INT_LIMITS(0, 255);
-        ASSIGN_INT(ChordingDelay);
+        ASSIGN_INT(Cfg.ChordingDelay);
     }
     else if (ConsumeToken(ctx, "autoShiftDelay")) {
         DEFINE_INT_LIMITS(0, 65535);
-        ASSIGN_INT(AutoShiftDelay);
+        ASSIGN_INT(Cfg.AutoShiftDelay);
     }
 #ifndef __ZEPHYR__
     else if (ConsumeToken(ctx, "i2cBaudRate")) {
         if (action == SetCommandAction_Read) {
-            return intVar(I2cMainBusRequestedBaudRateBps);
+            return intVar(Cfg.I2cBaudRate);
         }
 
         uint32_t baudRate = Macros_ConsumeInt(ctx);
         if (Macros_DryRun) {
             return noneVar();
         }
+        Cfg.I2cBaudRate = baudRate;
         ChangeI2cBaudRate(baudRate);
     }
 #endif
     else if (ConsumeToken(ctx, "emergencyKey")) {
-        ASSIGN_NO_LIMITS(key_state_t*, noneVar,, EmergencyKey, Utils_KeyIdToKeyState(Macros_ConsumeInt(ctx)));
+        ASSIGN_NO_LIMITS(key_state_t*, noneVar,, Cfg.EmergencyKey, Utils_KeyIdToKeyState(Macros_ConsumeInt(ctx)));
     }
     else if (action == SetCommandAction_Write) {
         Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);

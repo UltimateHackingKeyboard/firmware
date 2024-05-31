@@ -10,6 +10,7 @@
 #include "keymap.h"
 #include "key_action.h"
 #include "debug.h"
+#include "config_manager.h"
 
 #if !defined(MAX)
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -27,8 +28,6 @@ static uint32_t lastPressTime;
 
 #define POS(idx) ((bufferPosition + POSTPONER_BUFFER_SIZE + (idx)) % POSTPONER_BUFFER_SIZE)
 
-uint16_t AutoShiftDelay = 0;
-uint8_t ChordingDelay = 0;
 uint32_t CurrentPostponedTime = 0;
 
 bool Postponer_MouseBlocked = false;
@@ -175,7 +174,7 @@ void PostponerCore_PostponeNCycles(uint8_t n)
 
 bool PostponerCore_IsActive(void)
 {
-    return bufferSize > 0 || cyclesUntilActivation > 0 || ChordingDelay || AutoShiftDelay;
+    return bufferSize > 0 || cyclesUntilActivation > 0 || Cfg.ChordingDelay || Cfg.AutoShiftDelay;
 }
 
 
@@ -225,10 +224,10 @@ void PostponerCore_TrackDelay(uint32_t length)
 
 void PostponerCore_RunPostponedEvents(void)
 {
-    if (ChordingDelay) {
+    if (Cfg.ChordingDelay) {
         chording();
     }
-    if (AutoShiftDelay) {
+    if (Cfg.AutoShiftDelay) {
         autoShift();
     }
     // Process one event every two cycles. (Unless someone keeps Postponer active by touching cycles_until_activation.)
@@ -472,7 +471,7 @@ static uint8_t priority(key_state_t *key, bool active)
 
 static void chording()
 {
-    if (bufferSize == 0 || CurrentTime - buffer[bufferPosition].time < ChordingDelay ) {
+    if (bufferSize == 0 || CurrentTime - buffer[bufferPosition].time < Cfg.ChordingDelay ) {
         PostponerCore_PostponeNCycles(0);
     } else {
         bool activated = false;
@@ -489,7 +488,7 @@ static void chording()
                 // Originally, this also swapped releases to go before presses.
                 // Not sure why anymore, but it caused race condition on secondary role.
                 if ( aIsActive && bIsActive && pa < pb ) {
-                    if (aKeyState != bKeyState && b->time - a->time < ChordingDelay) {
+                    if (aKeyState != bKeyState && b->time - a->time < Cfg.ChordingDelay) {
                         postponer_buffer_record_type_t tmp = *a;
                         *a = *b;
                         *b = tmp;
@@ -554,13 +553,13 @@ static void autoShift()
         PostponerQuery_InfoByKeystate(keyState, &press, &release);
 
         if (release == NULL) {
-            if ( CurrentTime - buffer[bufferPosition].time < AutoShiftDelay ) {
+            if ( CurrentTime - buffer[bufferPosition].time < Cfg.AutoShiftDelay ) {
                 PostponerCore_PostponeNCycles(0);
             } else {
                 buffer[bufferPosition].event.key.modifiers = HID_KEYBOARD_MODIFIER_LEFTSHIFT;
             }
         }
-        else if (release != NULL && release->time - press->time >= AutoShiftDelay) {
+        else if (release != NULL && release->time - press->time >= Cfg.AutoShiftDelay) {
             buffer[bufferPosition].event.key.modifiers = HID_KEYBOARD_MODIFIER_LEFTSHIFT;
         }
     } else if (bufferSize == 0) {

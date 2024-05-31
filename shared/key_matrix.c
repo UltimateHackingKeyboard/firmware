@@ -4,7 +4,6 @@
 
 #include "key_matrix.h"
 
-uint8_t DebounceTimePress = 50, DebounceTimeRelease = 50;
 
 #ifndef __ZEPHYR__
 void KeyMatrix_Init(key_matrix_t *keyMatrix)

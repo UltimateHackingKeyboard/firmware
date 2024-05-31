@@ -61,12 +61,9 @@
         bool swapAxes;
         bool invertScrollDirectionX;
         bool invertScrollDirectionY;
-    } module_configuration_t;
+    } module_configuration_t ;
 
 // Variables:
-
-    extern navigation_mode_t TouchpadPinchZoomMode;
-    extern module_configuration_t ModuleConfigurations[ModuleId_ModuleCount];
 
 // Functions:
 

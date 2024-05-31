@@ -237,10 +237,7 @@
     extern macro_scope_state_t MacroScopeState[MACRO_SCOPE_STATE_POOL_SIZE];
     extern macro_state_t *S;
     extern bool MacroPlaying;
-    extern macro_scheduler_t Macros_Scheduler;
     extern scheduler_state_t Macros_SchedulerState;
-    extern bool Macros_ExtendedCommands;
-    extern uint8_t Macros_MaxBatchSize;
     extern uint32_t Macros_WakeMeOnTime;
     extern bool Macros_WakeMeOnKeystateChange;
     extern bool Macros_WakedBecauseOfTime;

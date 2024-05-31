@@ -42,11 +42,13 @@ void SwitchKeymapById(uint8_t index)
 #ifdef DEVICE_HAS_OLED
     KeymapWidget_Update();
 #endif
-    SegmentDisplay_UpdateKeymapText();
     Ledmap_UpdateBacklightLeds();
-    MacroEvent_RegisterLayerMacros();
-    MacroEvent_OnKeymapChange(index);
-    MacroEvent_OnLayerChange(ActiveLayer);
+    SegmentDisplay_UpdateKeymapText();
+    if (DEVICE_IS_MASTER) {
+        MacroEvent_RegisterLayerMacros();
+        MacroEvent_OnKeymapChange(index);
+        MacroEvent_OnLayerChange(ActiveLayer);
+    }
     KeymapReloadNeeded = false;
 }
 
@@ -103,6 +105,14 @@ void ReplaceLayer(layer_id_t dstLayer, uint8_t srcKeymap, layer_id_t srcLayer)
     ParseKeymap(&ValidatedUserConfigBuffer, srcKeymap, AllKeymapsCount, AllMacrosCount, parseConfig);
 }
 
+string_segment_t GetKeymapName(uint8_t keymapId)
+{
+    const char* name;
+    uint16_t len;
+    ValidatedUserConfigBuffer.offset = AllKeymaps[keymapId].offset;
+    ParseKeymapName(&ValidatedUserConfigBuffer, &name, &len);
+    return (string_segment_t){ .start = name, .end = name + len };
+}
 
 // The factory keymap is initialized before it gets overwritten by the default keymap of the EEPROM.
 #ifndef __ZEPHYR__

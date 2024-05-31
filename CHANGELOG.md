@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [11.1.0] - 2024-05-03
+
+Device Protocol: 4.10.0 | Module Protocol: 4.3.0 | User Config: 7.**1.0** | Hardware Config: 1.0.0 | Smart Macros: 2.4.**3**
+
+- Allow inverting horizontal scroll direction for all modules. `USERCONFIG:MINOR`
+- Fix USB Switch Keymap getting reverted on first macro layer switch. `SMARTMACROS:PATCH`
+- Parse key id abbreviations in `set keymapAction`. `SMARTMACROS:PATCH`
+
 ## [11.0.2] - 2024-03-15
 
 Device Protocol: 4.10.0 | Module Protocol: 4.3.0 | User Config: 7.0.0 | Hardware Config: 1.0.0 | Smart Macros: 2.4.**2**

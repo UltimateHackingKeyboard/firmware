@@ -26,6 +26,12 @@
         uint8_t len;
     } ATTR_PACKED string_ref_t;
 
+    typedef struct {
+        const char* start;
+        const char* end;
+    } ATTR_PACKED string_segment_t;
+
+
 // Functions:
 
     bool StrLessOrEqual(const char* a, const char* aEnd, const char* b, const char* bEnd);

@@ -3,8 +3,10 @@
 #include <bluetooth/scan.h>
 #include "bt_scan.h"
 #include "bt_conn.h"
+#include "device.h"
 #include "legacy/usb_interfaces/usb_interface_basic_keyboard.h"
 #include "legacy/usb_interfaces/usb_interface_mouse.h"
+#include "messenger.h"
 #include "nus_client.h"
 #include "bool_array_converter.h"
 #include "legacy/slot.h"
@@ -14,6 +16,7 @@
 #include "keyboard/oled/widgets/console_widget.h"
 #include "usb/usb_compatibility.h"
 #include "link_protocol.h"
+#include "messenger_queue.h"
 
 static struct bt_nus_client nus_client;
 
@@ -25,40 +28,18 @@ static void ble_data_sent(struct bt_nus_client *nus, uint8_t err, const uint8_t 
 }
 
 static uint8_t ble_data_received(struct bt_nus_client *nus, const uint8_t *data, uint16_t len) {
-    const uint8_t* message = data+1;
-    switch (data[0]) {
-        case SyncablePropertyId_LeftHalfKeyStates:
-            if (!DEVICE_IS_UHK80_RIGHT) {
-                printk("Didn't expect to receive property %i\n", message[0]);
-            } else {
-                for (uint8_t keyId = 0; keyId < MAX_KEY_COUNT_PER_MODULE; keyId++) {
-                    KeyStates[SlotId_LeftKeyboardHalf][keyId].hardwareSwitchState = !!(message[keyId/8] & (1 << (keyId % 8)));
-                }
-            }
+    uint8_t* copy = MessengerQueue_AllocateMemory();
+    memcpy(copy, data, len);
+
+    switch (DEVICE_ID) {
+        case DeviceId_Uhk80_Right:
+            Messenger_Enqueue(DeviceId_Uhk80_Left, copy, len);
             break;
-        case SyncablePropertyId_KeyboardReport:
-            if (!DEVICE_IS_UHK_DONGLE) {
-                printk("Didn't expect to receive property %i\n", data[0]);
-            } else {
-                UsbCompatibility_SendKeyboardReport((usb_basic_keyboard_report_t*)message);
-            }
-            break;
-        case SyncablePropertyId_MouseReport:
-            if (!DEVICE_IS_UHK_DONGLE) {
-                printk("Didn't expect to receive property %i\n", data[0]);
-            } else {
-                UsbCompatibility_SendMouseReport((usb_mouse_report_t*)message);
-            }
-            break;
-        case SyncablePropertyId_ControlsReport:
-            if (!DEVICE_IS_UHK_DONGLE) {
-                printk("Didn't expect to receive property %i\n", data[0]);
-            } else {
-                UsbCompatibility_SendConsumerReport2(message);
-            }
+        case DeviceId_Uhk_Dongle:
+            Messenger_Enqueue(DeviceId_Uhk80_Right, copy, len);
             break;
         default:
-            printk("Unrecognized property %i\n", data[0]);
+            printk("Ble received message from unknown source.");
             break;
     }
     return BT_GATT_ITER_CONTINUE;
@@ -165,3 +146,19 @@ void NusClient_Send(const uint8_t *data, uint16_t len) {
     }
 }
 
+void NusClient_SendMessage(message_t msg) {
+    uint8_t buffer[MAX_LINK_PACKET_LENGTH];
+
+    for (uint8_t id = 0; id < msg.idsUsed; id++) {
+        buffer[id] = msg.messageId[id];
+    }
+
+    if (msg.len + msg.idsUsed > MAX_LINK_PACKET_LENGTH) {
+        printk("Message is too long for NUS packets! [%i, %i, ...]\n", buffer[0], buffer[1]);
+        return;
+    }
+
+    memcpy(&buffer[msg.idsUsed], msg.data, msg.len);
+
+    NusClient_Send(buffer, msg.len+msg.idsUsed);
+}

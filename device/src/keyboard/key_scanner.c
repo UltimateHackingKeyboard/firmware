@@ -13,7 +13,9 @@
 #include "keyboard/key_layout.h"
 #include "bool_array_converter.h"
 #include "legacy/module.h"
-#include "keyboard/logger.h"
+#include "logger.h"
+#include "messenger.h"
+#include "device.h"
 
 // Thread definitions
 
@@ -105,7 +107,7 @@ static void scanKeys() {
     }
 
     if (DEVICE_IS_UHK80_LEFT) {
-        NusServer_SendSyncableProperty(SyncablePropertyId_LeftHalfKeyStates, compressedBuffer, compressedLength);
+        Messenger_Send2(DeviceId_Uhk80_Right, MessageId_SyncableProperty, SyncablePropertyId_LeftHalfKeyStates, compressedBuffer, compressedLength);
     }
 }
 

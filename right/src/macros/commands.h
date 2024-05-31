@@ -15,8 +15,6 @@
 
 // Variables:
 
-    extern uint16_t Macros_OneShotTimeout;
-
 // Functions:
 
     macro_result_t Macros_ProcessCommandAction(void);

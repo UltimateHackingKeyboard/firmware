@@ -17,6 +17,7 @@
 #include "layer_switcher.h"
 #include "usb_report_updater.h"
 #include "debug.h"
+#include "config_manager.h"
 
     uint16_t DataModelMajorVersion = 0;
     uint16_t DataModelMinorVersion = 0;
@@ -57,9 +58,9 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
     uint8_t alphanumericSegmentsBrightness = ReadUInt8(buffer);
     uint8_t keyBacklightBrightness = ReadUInt8(buffer);
 
-    uint32_t ledsFadeTimeout = LedsFadeTimeout;
+    uint32_t ledsFadeTimeout = Cfg.LedsFadeTimeout;
     bool previousPerKeyRgbPresent = PerKeyRgbPresent;
-    backlighting_mode_t backlightingMode = BacklightingMode;
+    backlighting_mode_t backlightingMode = Cfg.BacklightingMode;
     rgb_t keyActionColors[keyActionColor_Length];
 
     if (DataModelMajorVersion >= 6) {
@@ -110,15 +111,15 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
     float mouseScrollAxisSkew = 1.0f;
     bool diagonalSpeedCompensation = false;
 
-    uint16_t doubletapTimeout = DoubletapTimeout;
-    uint16_t keystrokeDelay = KeystrokeDelay;
+    uint16_t doubletapTimeout = Cfg.DoubletapTimeout;
+    uint16_t keystrokeDelay = Cfg.KeystrokeDelay;
 
     secondary_role_strategy_t secondaryRoles_Strategy = SecondaryRoleStrategy_Simple;
-    uint16_t secondaryRoles_AdvancedStrategyDoubletapTimeout = SecondaryRoles_AdvancedStrategyDoubletapTimeout;
-    uint16_t secondaryRoles_AdvancedStrategyTimeout = SecondaryRoles_AdvancedStrategyTimeout;
-    int16_t secondaryRoles_AdvancedStrategySafetyMargin = SecondaryRoles_AdvancedStrategySafetyMargin;
-    bool secondaryRoles_AdvancedStrategyTriggerByRelease = SecondaryRoles_AdvancedStrategyTriggerByRelease;
-    bool secondaryRoles_AdvancedStrategyDoubletapToPrimary = SecondaryRoles_AdvancedStrategyDoubletapToPrimary;
+    uint16_t secondaryRoles_AdvancedStrategyDoubletapTimeout = Cfg.SecondaryRoles_AdvancedStrategyDoubletapTimeout;
+    uint16_t secondaryRoles_AdvancedStrategyTimeout = Cfg.SecondaryRoles_AdvancedStrategyTimeout;
+    int16_t secondaryRoles_AdvancedStrategySafetyMargin = Cfg.SecondaryRoles_AdvancedStrategySafetyMargin;
+    bool secondaryRoles_AdvancedStrategyTriggerByRelease = Cfg.SecondaryRoles_AdvancedStrategyTriggerByRelease;
+    bool secondaryRoles_AdvancedStrategyDoubletapToPrimary = Cfg.SecondaryRoles_AdvancedStrategyDoubletapToPrimary;
     serialized_secondary_role_action_type_t secondaryRoles_AdvancedStrategyTimeoutAction = SerializedSecondaryRoleActionType_Secondary;
 
     if (DataModelMajorVersion >= 7) {
@@ -190,9 +191,9 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
 
         ValidatedUserConfigLength = userConfigLength;
 
-        IconsAndLayerTextsBrightnessDefault = iconsAndLayerTextsBrightness;
-        AlphanumericSegmentsBrightnessDefault = alphanumericSegmentsBrightness;
-        KeyBacklightBrightnessDefault = keyBacklightBrightness;
+        Cfg.IconsAndLayerTextsBrightnessDefault = iconsAndLayerTextsBrightness;
+        Cfg.AlphanumericSegmentsBrightnessDefault = alphanumericSegmentsBrightness;
+        Cfg.KeyBacklightBrightnessDefault = keyBacklightBrightness;
 
 #ifndef __ZEPHYR__
         LedSlaveDriver_RecalculateLedBrightness();
@@ -200,53 +201,53 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
 
         // Update mouse key speeds
 
-        MouseMoveState.initialSpeed = mouseMoveInitialSpeed;
-        MouseMoveState.acceleration = mouseMoveAcceleration;
-        MouseMoveState.deceleratedSpeed = mouseMoveDeceleratedSpeed;
-        MouseMoveState.baseSpeed = mouseMoveBaseSpeed;
-        MouseMoveState.acceleratedSpeed = mouseMoveAcceleratedSpeed;
+        Cfg.MouseMoveState.initialSpeed = mouseMoveInitialSpeed;
+        Cfg.MouseMoveState.acceleration = mouseMoveAcceleration;
+        Cfg.MouseMoveState.deceleratedSpeed = mouseMoveDeceleratedSpeed;
+        Cfg.MouseMoveState.baseSpeed = mouseMoveBaseSpeed;
+        Cfg.MouseMoveState.acceleratedSpeed = mouseMoveAcceleratedSpeed;
 
-        MouseScrollState.initialSpeed = mouseScrollInitialSpeed;
-        MouseScrollState.acceleration = mouseScrollAcceleration;
-        MouseScrollState.deceleratedSpeed = mouseScrollDeceleratedSpeed;
-        MouseScrollState.baseSpeed = mouseScrollBaseSpeed;
-        MouseScrollState.acceleratedSpeed = mouseScrollAcceleratedSpeed;
+        Cfg.MouseScrollState.initialSpeed = mouseScrollInitialSpeed;
+        Cfg.MouseScrollState.acceleration = mouseScrollAcceleration;
+        Cfg.MouseScrollState.deceleratedSpeed = mouseScrollDeceleratedSpeed;
+        Cfg.MouseScrollState.baseSpeed = mouseScrollBaseSpeed;
+        Cfg.MouseScrollState.acceleratedSpeed = mouseScrollAcceleratedSpeed;
 
         // Version 6
 
         if (DataModelMajorVersion >= 6) {
-            LedsFadeTimeout = ledsFadeTimeout;
-            BacklightingMode = backlightingMode;
+            Cfg.LedsFadeTimeout = ledsFadeTimeout;
+            Cfg.BacklightingMode = backlightingMode;
 
-            memcpy(KeyActionColors, keyActionColors, sizeof(keyActionColors));
+            memcpy(Cfg.KeyActionColors, keyActionColors, sizeof(keyActionColors));
         }
 
         // Version 7
 
         if (DataModelMajorVersion >= 7) {
-            SecondaryRoles_Strategy = secondaryRoles_Strategy;
-            SecondaryRoles_AdvancedStrategyDoubletapTimeout = secondaryRoles_AdvancedStrategyDoubletapTimeout;
-            SecondaryRoles_AdvancedStrategyTimeout = secondaryRoles_AdvancedStrategyTimeout;
-            SecondaryRoles_AdvancedStrategySafetyMargin = secondaryRoles_AdvancedStrategySafetyMargin;
-            SecondaryRoles_AdvancedStrategyTriggerByRelease = secondaryRoles_AdvancedStrategyTriggerByRelease;
-            SecondaryRoles_AdvancedStrategyDoubletapToPrimary = secondaryRoles_AdvancedStrategyDoubletapToPrimary;
+            Cfg.SecondaryRoles_Strategy = secondaryRoles_Strategy;
+            Cfg.SecondaryRoles_AdvancedStrategyDoubletapTimeout = secondaryRoles_AdvancedStrategyDoubletapTimeout;
+            Cfg.SecondaryRoles_AdvancedStrategyTimeout = secondaryRoles_AdvancedStrategyTimeout;
+            Cfg.SecondaryRoles_AdvancedStrategySafetyMargin = secondaryRoles_AdvancedStrategySafetyMargin;
+            Cfg.SecondaryRoles_AdvancedStrategyTriggerByRelease = secondaryRoles_AdvancedStrategyTriggerByRelease;
+            Cfg.SecondaryRoles_AdvancedStrategyDoubletapToPrimary = secondaryRoles_AdvancedStrategyDoubletapToPrimary;
             switch (secondaryRoles_AdvancedStrategyTimeoutAction) {
                 case SerializedSecondaryRoleActionType_Primary:
-                    SecondaryRoles_AdvancedStrategyTimeoutAction = SecondaryRoleState_Primary;
+                    Cfg.SecondaryRoles_AdvancedStrategyTimeoutAction = SecondaryRoleState_Primary;
                     break;
                 case SerializedSecondaryRoleActionType_Secondary:
-                    SecondaryRoles_AdvancedStrategyTimeoutAction = SecondaryRoleState_Secondary;
+                    Cfg.SecondaryRoles_AdvancedStrategyTimeoutAction = SecondaryRoleState_Secondary;
                     break;
                 default:
                     return ParserError_InvalidSecondaryRoleActionType;
             }
 
-            MouseMoveState.axisSkew = mouseMoveAxisSkew;
-            MouseScrollState.axisSkew = mouseScrollAxisSkew;
-            DiagonalSpeedCompensation = diagonalSpeedCompensation;
+            Cfg.MouseMoveState.axisSkew = mouseMoveAxisSkew;
+            Cfg.MouseScrollState.axisSkew = mouseScrollAxisSkew;
+            Cfg.DiagonalSpeedCompensation = diagonalSpeedCompensation;
 
-            DoubletapTimeout = doubletapTimeout;
-            KeystrokeDelay = keystrokeDelay;
+            Cfg.DoubletapTimeout = doubletapTimeout;
+            Cfg.KeystrokeDelay = keystrokeDelay;
         }
 
         // Update counts

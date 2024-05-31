@@ -29,7 +29,7 @@ CPU = -mcpu=cortex-m0plus
 FPU = -mfloat-abi=soft
 
 # Command for flashing the key cluster module.
-FLASH_CMD = ../lib/agent/node_modules/.bin/ts-node-script ../lib/agent/packages/usb/update-module-firmware.ts rightModule $(PROJECT_OBJ:.axf=.bin)
+FLASH_CMD = ../lib/agent/node_modules/.bin/tsx ../lib/agent/packages/usb/update-module-firmware.ts rightModule $(PROJECT_OBJ:.axf=.bin)
 
 # Path to the JLink script used for the key cluster module.
 JLINK_SCRIPT = ../scripts/flash-trackball.jlink

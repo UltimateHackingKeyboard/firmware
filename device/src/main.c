@@ -22,6 +22,9 @@
 #include "macros/core.h"
 #include "legacy/timer.h"
 #include "legacy/user_logic.h"
+#include "state_sync.h"
+#include "legacy/config_manager.h"
+#include "messenger.h"
 // #include <zephyr/drivers/gpio.h>
 // #include "dongle_leds.h"
 
@@ -100,15 +103,32 @@ int main(void) {
         Macros_Initialize();
     }
 
+    Messenger_Init();
+
+    if (DEVICE_IS_UHK80_LEFT || DEVICE_IS_UHK80_RIGHT) {
+        StateSync_Init();
+    }
+
+    if (DEVICE_IS_UHK80_LEFT) {
+        ConfigManager_ResetConfiguration(false);
+    }
+
+
 #if DEVICE_IS_UHK80_RIGHT
     while (true)
     {
         CurrentTime = k_uptime_get();
+        Messenger_ProcessQueue();
         RunUserLogic();
         k_msleep(1);
     }
 #else
-    k_sleep(K_FOREVER);
+    while (true)
+    {
+        CurrentTime = k_uptime_get();
+        Messenger_ProcessQueue();
+        k_msleep(1);
+    }
 #endif
 }
 

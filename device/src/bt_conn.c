@@ -105,6 +105,7 @@ static void connected(struct bt_conn *conn, uint8_t err) {
         if (DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK_DONGLE) {
             NusClient_Setup(conn);
         }
+        Peers[peerId].isConnected = true;
     }
 }
 
@@ -113,6 +114,10 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
     ARG_UNUSED(peerId);
 
     printk("Disconnected from %s, reason %u\n", GetPeerStringByConn(conn), reason);
+
+    if (peerId != PeerIdUnknown) {
+        Peers[peerId].isConnected = false;
+    }
 
     if (DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK_DONGLE) {
         if (peerId == PeerIdUnknown) {
@@ -129,6 +134,19 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
                 printk("Scanning failed to start (err %d)\n", err);
             }
         }
+    }
+}
+
+bool Bt_DeviceIsConnected(device_id_t deviceId) {
+    switch (deviceId) {
+        case DeviceId_Uhk80_Left:
+            return Peers[PeerIdLeft].isConnected;
+        case DeviceId_Uhk80_Right:
+            return Peers[PeerIdRight].isConnected;
+        case DeviceId_Uhk_Dongle:
+            return Peers[PeerIdDongle].isConnected;
+        default:
+            return false;
     }
 }
 

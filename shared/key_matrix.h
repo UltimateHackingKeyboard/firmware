@@ -33,8 +33,6 @@
 
 // Variables:
 
-    extern uint8_t DebounceTimePress, DebounceTimeRelease;
-
 // Functions:
 
 #ifndef __ZEPHYR__

@@ -8,6 +8,8 @@ extern "C"
 #include "link_protocol.h"
 #include "legacy/debug.h"
 #include "nus_server.h"
+#include "messenger.h"
+#include "bt_conn.h"
 }
 #include "usb/df/class/hid.hpp"
 #include "command_app.hpp"
@@ -15,7 +17,7 @@ extern "C"
 #include "gamepad_app.hpp"
 #include "keyboard_app.hpp"
 #include "mouse_app.hpp"
-#include "keyboard/logger.h"
+#include "logger.h"
 
 static scancode_buffer keys;
 static mouse_buffer mouseState;
@@ -31,20 +33,23 @@ static controls_buffer controls;
 
 extern "C" void UsbCompatibility_SendKeyboardReport(const usb_basic_keyboard_report_t* report) 
 {
-    // the report layout is the same (as long as the report is in NKRO mode)
-    keyboard_app::handle().set_report_state(*reinterpret_cast<const scancode_buffer*>(report));
+    keyboard_app& keyboard_app = keyboard_app::handle();
 
-    if (DEVICE_IS_UHK80_RIGHT) {
-        NusServer_SendSyncableProperty(SyncablePropertyId_KeyboardReport, (const uint8_t*)report, sizeof(*report));
+    if (keyboard_app.has_transport()) {
+        keyboard_app.set_report_state(*reinterpret_cast<const scancode_buffer*>(report));
+    } else if (DEVICE_IS_UHK80_RIGHT && Bt_DeviceIsConnected(DeviceId_Uhk_Dongle))  {
+        Messenger_Send(DeviceId_Uhk_Dongle, SyncablePropertyId_KeyboardReport, (const uint8_t*)report, sizeof(*report));
     }
 }
 
 extern "C" void UsbCompatibility_SendMouseReport(const usb_mouse_report_t* report) 
 {
-    mouse_app::handle().set_report_state(*reinterpret_cast<const mouse_buffer*>(report));
+    mouse_app& mouse_app = mouse_app::handle();
 
-    if (DEVICE_IS_UHK80_RIGHT) {
-        NusServer_SendSyncableProperty(SyncablePropertyId_MouseReport, (const uint8_t*)report, sizeof(*report));
+    if (mouse_app.has_transport()) {
+        mouse_app.set_report_state(*reinterpret_cast<const mouse_buffer*>(report));
+    } else if (DEVICE_IS_UHK80_RIGHT && Bt_DeviceIsConnected(DeviceId_Uhk_Dongle))  {
+        Messenger_Send(DeviceId_Uhk_Dongle, SyncablePropertyId_MouseReport, (const uint8_t*)report, sizeof(*report));
     }
 }
 
@@ -61,14 +66,20 @@ extern "C" void UsbCompatibility_SendConsumerReport(const usb_media_keyboard_rep
     }
     UsbSystemKeyboard_ForeachScancode(systemReport, &UsbCompatibility_ConsumerKeyboardAddScancode);
 
-    controls_app::handle().set_report_state(controls);
+    controls_app& controls_app = controls_app::handle();
 
-    if (DEVICE_IS_UHK80_RIGHT) {
-        NusServer_SendSyncableProperty(SyncablePropertyId_ControlsReport, (const uint8_t*)(&controls), sizeof(controls));
+    if (controls_app.has_transport()) {
+        controls_app.set_report_state(controls);
+    } else if (DEVICE_IS_UHK80_RIGHT && Bt_DeviceIsConnected(DeviceId_Uhk_Dongle)) {
+        Messenger_Send(DeviceId_Uhk_Dongle, SyncablePropertyId_ControlsReport, (const uint8_t*)(&controls), sizeof(controls));
     }
 }
 
 extern "C" void UsbCompatibility_SendConsumerReport2(const uint8_t* report)
 {
-    controls_app::handle().set_report_state(*(const controls_buffer*)report);
+    controls_app& controls_app = controls_app::handle();
+
+    if (controls_app.has_transport()) {
+        controls_app.set_report_state(*(const controls_buffer*)report);
+    }
 }

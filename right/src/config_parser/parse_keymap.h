@@ -108,5 +108,6 @@
 // Functions:
 
     parser_error_t ParseKeymap(config_buffer_t *buffer, uint8_t keymapIdx, uint8_t keymapCount, uint8_t macroCount, parse_config_t parseConfig);
+    parser_error_t ParseKeymapName(config_buffer_t* buffer, const char** name, uint16_t* len);
 
 #endif
