@@ -4,6 +4,7 @@
 #include "ledmap.h"
 #include "debug.h"
 #include "config_manager.h"
+#include "stubs.h"
 
 #ifdef __ZEPHYR__
 #include <zephyr/sys/util.h>
@@ -15,6 +16,7 @@
 #include "device/device.h"
 #include "stubs.h"
 #endif
+
 
 static void recalculateLedBrightness();
 

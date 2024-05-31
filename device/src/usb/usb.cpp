@@ -115,13 +115,13 @@ struct usb_manager
             using event = enum usb::df::device::event;
             switch (ev) {
             case event::CONFIGURATION_CHANGE:
-                /* printk("USB configured: %u, granted current: %uuA\n", dev.configured(), */
-                /*     dev.granted_bus_current_uA()); */
+                // printk("USB configured: %u, granted current: %uuA\n", dev.configured(), dev.granted_bus_current_uA()); 
                 break;
             case event::POWER_STATE_CHANGE:
-                Power_ReportPowerState(3 - static_cast<uint8_t>(dev.power_state()), dev.granted_bus_current_uA());
-                /* printk("USB power state: L%u, granted current: %uuA\n", */
-                /*     3 - static_cast<uint8_t>(dev.power_state()), dev.granted_bus_current_uA()); */
+                if (!DEVICE_IS_UHK_DONGLE) {
+                    Power_ReportPowerState(3 - static_cast<uint8_t>(dev.power_state()), dev.granted_bus_current_uA());
+                }
+                // printk("USB power state: L%u, granted current: %uuA\n", 3 - static_cast<uint8_t>(dev.power_state()), dev.granted_bus_current_uA());
                 break;
             }
         });
