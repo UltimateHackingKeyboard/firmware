@@ -6,6 +6,7 @@
 #include "device.h"
 #include "legacy/usb_interfaces/usb_interface_basic_keyboard.h"
 #include "legacy/usb_interfaces/usb_interface_mouse.h"
+#include "messenger.h"
 #include "nus_client.h"
 #include "bool_array_converter.h"
 #include "legacy/slot.h"
@@ -15,6 +16,7 @@
 #include "keyboard/oled/widgets/console_widget.h"
 #include "usb/usb_compatibility.h"
 #include "link_protocol.h"
+#include "messenger_queue.h"
 
 static struct bt_nus_client nus_client;
 
@@ -26,12 +28,15 @@ static void ble_data_sent(struct bt_nus_client *nus, uint8_t err, const uint8_t 
 }
 
 static uint8_t ble_data_received(struct bt_nus_client *nus, const uint8_t *data, uint16_t len) {
+    uint8_t* copy = MessengerQueue_AllocateMemory();
+    memcpy(copy, data, len);
+
     switch (DEVICE_ID) {
         case DeviceId_Uhk80_Right:
-            Messenger_Receive(DeviceId_Uhk80_Left, data, len);
+            Messenger_Enqueue(DeviceId_Uhk80_Left, copy, len);
             break;
         case DeviceId_Uhk_Dongle:
-            Messenger_Receive(DeviceId_Uhk80_Right, data, len);
+            Messenger_Enqueue(DeviceId_Uhk80_Right, copy, len);
             break;
         default:
             printk("Ble received message from unknown source.");

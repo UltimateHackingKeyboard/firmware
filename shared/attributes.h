@@ -5,6 +5,7 @@
 
     #define ATTR_UNUSED __attribute__((unused))
     #define ATTR_PACKED __attribute__ ((packed))
+    #define ATTR_ALIGNED __attribute__((aligned))
     #define ATTR_NO_INIT __attribute__ ((section (".noinit")))
     #define ATTR_BOOTLOADER_CONFIG __attribute__((used, section(".BootloaderConfig")))
 

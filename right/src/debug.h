@@ -13,7 +13,7 @@
 // Includes:
 
     #ifdef __ZEPHYR__
-    #include "keyboard/logger.h"
+    #include "logger.h"
     #endif
 
     #include <stdint.h>

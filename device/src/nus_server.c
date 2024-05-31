@@ -5,16 +5,20 @@
 #include "bt_conn.h"
 #include "messenger.h"
 #include "device.h"
+#include "messenger_queue.h"
 
 static void received(struct bt_conn *conn, const uint8_t *const data, uint16_t len) {
     printk("NUS data received from %s: %i\n", GetPeerStringByConn(conn), len);
 
+    uint8_t* copy = MessengerQueue_AllocateMemory();
+    memcpy(copy, data, len);
+
     switch (DEVICE_ID) {
         case DeviceId_Uhk80_Left:
-            Messenger_Receive(DeviceId_Uhk80_Right, data, len);
+            Messenger_Enqueue(DeviceId_Uhk80_Right, copy, len);
             break;
         case DeviceId_Uhk80_Right:
-            Messenger_Receive(DeviceId_Uhk_Dongle, data, len);
+            Messenger_Enqueue(DeviceId_Uhk_Dongle, copy, len);
             break;
         default:
             printk("Ble received message from unknown source.");

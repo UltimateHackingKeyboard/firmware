@@ -1,7 +1,6 @@
 #include "screen_manager.h"
 #include "keyboard/oled/widgets/widgets.h"
 #include "keyboard/oled/oled.h"
-#include "keyboard/logger.h"
 #include "pairing_screen.h"
 #include "test_screen.h"
 #include "legacy/timer.h"

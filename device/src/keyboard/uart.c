@@ -3,6 +3,7 @@
 #include "legacy/timer.h"
 #include "uart.h"
 #include "messenger.h"
+#include "messenger_queue.h"
 #include "device.h"
 
 // Thread definitions
@@ -26,7 +27,7 @@ uint16_t txPosition = 0;
 K_SEM_DEFINE(txBufferBusy, 1, 1);
 
 #define RX_BUF_SIZE UART_MAX_PACKET_LENGTH
-uint8_t rxBuffer[RX_BUF_SIZE];
+uint8_t* rxBuffer = NULL;
 uint16_t rxPosition = 0;
 
 #define BUF_SIZE TX_BUF_SIZE
@@ -45,17 +46,21 @@ static void appendRxByte(uint8_t byte) {
 }
 
 static void rxPacketReceived() {
+    lastPingTime = CurrentTime;
     uint16_t len = rxPosition;
 
-    lastPingTime = CurrentTime;
-    rxPosition = 0;
     if (len == 0) {
         // we received ping
     } else {
+        uint8_t* oldPacket = rxBuffer;
+
+        rxBuffer = MessengerQueue_AllocateMemory();
+        rxPosition = 0;
+
         if (DEVICE_IS_UHK80_RIGHT) {
-            Messenger_Receive(DeviceId_Uhk80_Left, rxBuffer, len);
+            Messenger_Enqueue(DeviceId_Uhk80_Left, oldPacket, len);
         } else if (DEVICE_IS_UHK80_LEFT) {
-            Messenger_Receive(DeviceId_Uhk80_Right, rxBuffer, len);
+            Messenger_Enqueue(DeviceId_Uhk80_Right, oldPacket, len);
         }
     }
 }
@@ -203,6 +208,8 @@ void testUart() {
 }
 
 void InitUart(void) {
+    rxBuffer = MessengerQueue_AllocateMemory();
+
     uart_callback_set(uart_dev, uart_callback, NULL);
     rxbuf = rxbuf1;
     uart_rx_enable(uart_dev, rxbuf, BUF_SIZE, UART_TIMEOUT);

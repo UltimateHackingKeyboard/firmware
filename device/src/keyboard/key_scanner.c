@@ -13,7 +13,7 @@
 #include "keyboard/key_layout.h"
 #include "bool_array_converter.h"
 #include "legacy/module.h"
-#include "keyboard/logger.h"
+#include "logger.h"
 #include "messenger.h"
 #include "device.h"
 
