@@ -1,6 +1,6 @@
 #!/bin/bash
 
-NCS_VERSION=v2.6.0
+NCS_VERSION=v2.6.1
 
 function help() {
     cat << END
