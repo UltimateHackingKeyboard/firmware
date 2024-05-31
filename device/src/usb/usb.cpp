@@ -8,6 +8,7 @@ extern "C"
 #include "key_states.h"
 #include "legacy/user_logic.h"
 #include "legacy/timer.h"
+#include "keyboard/power.h"
 }
 #include "command_app.hpp"
 #include "controls_app.hpp"
@@ -114,12 +115,13 @@ struct usb_manager
             using event = enum usb::df::device::event;
             switch (ev) {
             case event::CONFIGURATION_CHANGE:
-                printk("USB configured: %u, granted current: %uuA\n", dev.configured(),
-                    dev.granted_bus_current_uA());
+                /* printk("USB configured: %u, granted current: %uuA\n", dev.configured(), */
+                /*     dev.granted_bus_current_uA()); */
                 break;
             case event::POWER_STATE_CHANGE:
-                printk("USB power state: L%u, granted current: %uuA\n",
-                    3 - static_cast<uint8_t>(dev.power_state()), dev.granted_bus_current_uA());
+                Power_ReportPowerState(3 - static_cast<uint8_t>(dev.power_state()), dev.granted_bus_current_uA());
+                /* printk("USB power state: L%u, granted current: %uuA\n", */
+                /*     3 - static_cast<uint8_t>(dev.power_state()), dev.granted_bus_current_uA()); */
                 break;
             }
         });

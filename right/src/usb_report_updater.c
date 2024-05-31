@@ -542,7 +542,7 @@ static void updateLedSleepModeState() {
     uint32_t elapsedTime = Timer_GetElapsedTime(&lastActivityTime);
     bool ledsNeedUpdate = false;
 
-    uint32_t keyBacklightTimeout = Power_RunningOnBattery() ? Cfg.KeyBacklightFadeOutBatteryTimeout : Cfg.KeyBacklightFadeOutTimeout;
+    uint32_t keyBacklightTimeout = RunningOnBattery ? Cfg.KeyBacklightFadeOutBatteryTimeout : Cfg.KeyBacklightFadeOutTimeout;
     if (elapsedTime > keyBacklightTimeout && !KeyBacklightSleepModeActive && keyBacklightTimeout) {
         KeyBacklightSleepModeActive = true;
         ledsNeedUpdate = true;
@@ -551,7 +551,7 @@ static void updateLedSleepModeState() {
         ledsNeedUpdate = true;
     }
 
-    uint32_t displayTimeout = Power_RunningOnBattery() ? Cfg.DisplayFadeOutBatteryTimeout : Cfg.DisplayFadeOutTimeout;
+    uint32_t displayTimeout = RunningOnBattery ? Cfg.DisplayFadeOutBatteryTimeout : Cfg.DisplayFadeOutTimeout;
     if (elapsedTime > displayTimeout && !DisplaySleepModeActive && displayTimeout) {
         DisplaySleepModeActive = true;
         ledsNeedUpdate = true;

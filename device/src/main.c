@@ -65,7 +65,6 @@ int main(void) {
 
         InitLeds();
         InitCharger();
-        InitPower();
 
     #ifdef DEVICE_HAS_MERGE_SENSOR
         MergeSensor_Init();

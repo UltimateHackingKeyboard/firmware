@@ -4,17 +4,16 @@
 // Includes:
 
     #include <stdbool.h>
+    #include <stdint.h>
 
 // Variables:
 
-
-    extern bool HavePower;
+    extern bool RunningOnBattery;
 
 // Functions:
 
     bool Power_RunningOnBattery();
-
-    void InitPower(void);
+    void Power_ReportPowerState(uint8_t level, uint32_t ma);
 
 #endif // __POWER_H__
 

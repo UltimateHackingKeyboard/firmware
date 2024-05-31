@@ -211,14 +211,14 @@ static void recalculateLedBrightness()
     if (globalSleepMode || KeyBacklightSleepModeActive) {
         KeyBacklightBrightness = 0;
     } else {
-        uint8_t keyBacklightBrightnessBase = Power_RunningOnBattery() ? Cfg.KeyBacklightBrightnessBatteryDefault : Cfg.KeyBacklightBrightnessDefault;
+        uint8_t keyBacklightBrightnessBase = RunningOnBattery ? Cfg.KeyBacklightBrightnessBatteryDefault : Cfg.KeyBacklightBrightnessDefault;
         KeyBacklightBrightness = MIN(255, keyBacklightBrightnessBase * Cfg.LedBrightnessMultiplier);
     }
 
     if (globalSleepMode || DisplaySleepModeActive) {
         DisplayBrightness = 0;
     } else {
-        uint8_t displayBrightnessBase = Power_RunningOnBattery() ? Cfg.DisplayBrightnessBatteryDefault : Cfg.DisplayBrightnessDefault;
+        uint8_t displayBrightnessBase = RunningOnBattery ? Cfg.DisplayBrightnessBatteryDefault : Cfg.DisplayBrightnessDefault;
         DisplayBrightness = MIN(255, displayBrightnessBase * Cfg.LedBrightnessMultiplier);
     }
 }

@@ -13,7 +13,7 @@
 
 #ifndef __ZEPHYR__
 
-    static bool Power_RunningOnBattery() { return false; };
+    static bool RunningOnBattery = false;
 
 #endif
 
