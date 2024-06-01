@@ -23,7 +23,7 @@ static void showInt(int32_t n) {
 #ifdef __ZEPHYR__
     Log("%i: %i", CurrentWatch, n);
 #else
-    SegmentDisplay_SetInt(CurrentTime - lastUpdate, SegmentDisplaySlot_Debug);
+    SegmentDisplay_SetInt(n, SegmentDisplaySlot_Debug);
 #endif
 }
 
