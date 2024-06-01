@@ -1,6 +1,6 @@
 #!/bin/bash
 
-NCS_VERSION=v2.6.0
+NCS_VERSION=v2.6.1
 
 function help() {
     cat << END
@@ -71,7 +71,7 @@ function processArguments() {
         esac
     done
 
-    if [ "$ACTIONS" == "" -a "$DEVICES" == "" ]
+    if [ "$ACTIONS" == "" ]
     then
         help
     fi
@@ -105,10 +105,47 @@ function determineDevIdArg() {
     echo "--dev-id $DEVICEID"
 }
 
+function establishSession() {
+    SESSION_NAME=$1
+    NUM_PANES=$2
+
+    tmux has-session -t $SESSION_NAME 2>/dev/null
+    if [ $? != 0 ]; then
+        tmux new-session -d -s $SESSION_NAME
+        is_new_session=true
+        pane_count=1
+    else
+        pane_count=$(tmux list-panes -t $SESSION_NAME | wc -l)
+        is_new_session=false
+    fi
+
+    for ((i = $pane_count; i < $NUM_PANES; i++))
+    do
+        tmux split-window -t $SESSION_NAME
+        tmux select-layout -t $SESSION_NAME tiled
+    done
+}
+
+function setupUartMonitor() {
+    SESSION_NAME="uartsession"
+    establishSession $SESSION_NAME `ls /dev/ttyUSB* | wc -l`
+
+    i=0
+    for TTY in `ls /dev/ttyUSB*`
+    do
+        tmux send-keys -t $SESSION_NAME.$i "screen $TTY 115200" C-m
+        i=$(( $i + 1 ))
+    done
+
+    if [ "$is_new_session" == "true" ]
+    then
+        tmux attach -t $SESSION_NAME
+    fi
+}
+
 function performAction() {
     DEVICE=$1
     ACTION=$2
-    DEVICEARG=`determineDevIdArg $DEVICE`
     PWD=`pwd`
 
     case $ACTION in
@@ -142,6 +179,7 @@ END
 END
             ;;
         flash)
+            DEVICEARG=`determineDevIdArg $DEVICE`
             nrfutil toolchain-manager launch --shell --ncs-version $NCS_VERSION << END
                 west flash -d $PWD/device/build/$DEVICE $DEVICEARG $OTHER_ARGS < /dev/tty
 END
@@ -150,11 +188,7 @@ END
             nrfutil toolchain-manager launch --shell --ncs-version $NCS_VERSION
             ;;
         uart)
-            tmux new-session -d -s mysession \; \
-                send-keys "screen /dev/ttyUSB0 115200" C-m \; \
-                split-window -v \; \
-                send-keys "screen /dev/ttyUSB1 115200" C-m
-            tmux attach-session -t mysession
+            setupUartMonitor
             ;;
         *)
             help
@@ -166,30 +200,10 @@ function performActions() {
     DEVICE=$1
     for ACTION in $ACTIONS
     do
-        performAction $DEVICE $ACTION
+        performAction "$DEVICE" $ACTION
     done
 }
 
-function establishSession() {
-    SESSION_NAME=$1
-    NUM_PANES=$2
-
-    tmux has-session -t $SESSION_NAME 2>/dev/null
-    if [ $? != 0 ]; then
-        tmux new-session -d -s $SESSION_NAME
-        is_new_session=true
-        pane_count=1
-    else
-        pane_count=$(tmux list-panes -t $SESSION_NAME | wc -l)
-        is_new_session=false
-    fi
-
-    for ((i = $pane_count; i < $NUM_PANES; i++))
-    do
-        tmux split-window -t $SESSION_NAME
-        tmux select-layout -t $SESSION_NAME tiled
-    done
-}
 
 function runPerDevice() {
     SESSION_NAME="buildsession"
