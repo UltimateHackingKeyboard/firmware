@@ -99,7 +99,14 @@ function determineDevIdArg() {
 
     if [ "$DEVICEID" == "" ]
     then
-        echo "Please, consider defining your device ids in a file '.devices' as variables DEVICEID_UHK80_LEFT, DEVICE_ID_UHK80_RIGHT, DEVICEID_UHK_DONGLE, DEVICEID_UHK60" > /dev/tty
+        cat > /dev/tty << END
+        "In order to make your life comfortable, you can define your device
+        ids in file .devices. Example content:
+
+        DEVICEID_UHK80_LEFT=69660648
+        DEVICE_ID_UHK80_RIGHT=69660578
+        DEVICEID_UHK_DONGLE=683150769
+END
     fi
 
     echo "--dev-id $DEVICEID"
