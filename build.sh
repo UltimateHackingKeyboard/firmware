@@ -8,7 +8,7 @@ usage: ./build DEVICE1 DEVICE2 ... ACTION1 ACTION2 ...
 
     DEVICE is in { uhk-80-left | uhk-80-right | uhk-60-right | uhk-dongle }
              there are also these aliases: { left | right | dongle | all }
-    ACTION is in { cleanSetup | setup | update | build | make | flash | shell | uart }
+    ACTION is in { clean | setup | update | build | make | flash | shell | uart }
 
     setup    initialize submodules and set up zephyr environment
     clean    removes zephyr libraries
@@ -24,7 +24,7 @@ usage: ./build DEVICE1 DEVICE2 ... ACTION1 ACTION2 ...
     Or you can also specify dev ids in a .devices file, e.g.:
 
         DEVICEID_UHK80_LEFT=69660648
-        DEVICE_ID_UHK80_RIGHT=69660578
+        DEVICEID_UHK80_RIGHT=69660578
         DEVICEID_UHK_DONGLE=683150769
 
     Examples:
@@ -104,7 +104,7 @@ function determineDevIdArg() {
         ids in file .devices. Example content:
 
         DEVICEID_UHK80_LEFT=69660648
-        DEVICE_ID_UHK80_RIGHT=69660578
+        DEVICEID_UHK80_RIGHT=69660578
         DEVICEID_UHK_DONGLE=683150769
 END
     fi
@@ -119,8 +119,8 @@ function establishSession() {
     tmux has-session -t $SESSION_NAME 2>/dev/null
     if [ $? != 0 ]; then
         tmux new-session -d -s $SESSION_NAME
-        is_new_session=true
         pane_count=1
+        is_new_session=true
     else
         pane_count=$(tmux list-panes -t $SESSION_NAME | wc -l)
         is_new_session=false
@@ -159,7 +159,7 @@ function performAction() {
         update)
             git submodule update --init --recursive
             ;;
-        cleanSetup)
+        clean)
             rm -rf device/build .west bootloader modules nrf nrfxlib test tools zephyr
             ;;
         setup)
