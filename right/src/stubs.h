@@ -13,9 +13,7 @@
 
 
 #if !defined(__ZEPHYR__) || DEVICE_IS_UHK_DONGLE
-
-    static bool RunningOnBattery = false;
-
+    static ATTR_UNUSED bool RunningOnBattery = false;
 #endif
 
 #ifndef DEVICE_HAS_OLED

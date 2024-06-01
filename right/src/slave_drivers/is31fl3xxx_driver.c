@@ -6,27 +6,6 @@
 #include "config_manager.h"
 #include "stubs.h"
 
-#ifdef __ZEPHYR__
-#include <zephyr/sys/util.h>
-#include "state_sync.h"
-#include "keyboard/power.h"
-#include "keyboard/oled/oled.h"
-#define SleepModeActive false
-#else
-#include "device/device.h"
-#include "stubs.h"
-#endif
-
-
-static void recalculateLedBrightness();
-
-bool KeyBacklightSleepModeActive = false;
-bool DisplaySleepModeActive = false;
-
-bool LedSlaveDriver_FullUpdateNeeded = false;
-
-uint8_t KeyBacklightBrightness = 0xff;
-
 #ifndef __ZEPHYR__
 uint8_t LedDriverValues[LED_DRIVER_MAX_COUNT][LED_DRIVER_LED_COUNT_MAX];
 
@@ -198,53 +177,10 @@ static uint8_t updatePwmRegistersBuffer[PWM_REGISTER_BUFFER_LENGTH];
 
 void LedSlaveDriver_DisableLeds(void)
 {
-    recalculateLedBrightness();
+    LedManager_RecalculateLedBrightness();
     for (uint8_t ledDriverId=0; ledDriverId<=LedDriverId_Last; ledDriverId++) {
         memset(LedDriverValues[ledDriverId], 0, ledDriverStates[ledDriverId].ledCount);
     }
-}
-#endif //__ZEPHYR__
-
-
-static void recalculateLedBrightness()
-{
-    bool globalSleepMode = !Cfg.LedsEnabled || SleepModeActive || Cfg.LedBrightnessMultiplier == 0.0f;
-
-    if (globalSleepMode || KeyBacklightSleepModeActive) {
-        KeyBacklightBrightness = 0;
-    } else {
-        uint8_t keyBacklightBrightnessBase = RunningOnBattery ? Cfg.KeyBacklightBrightnessBatteryDefault : Cfg.KeyBacklightBrightnessDefault;
-        KeyBacklightBrightness = MIN(255, keyBacklightBrightnessBase * Cfg.LedBrightnessMultiplier);
-    }
-
-    if (globalSleepMode || DisplaySleepModeActive) {
-        DisplayBrightness = 0;
-    } else {
-        uint8_t displayBrightnessBase = RunningOnBattery ? Cfg.DisplayBrightnessBatteryDefault : Cfg.DisplayBrightnessDefault;
-        DisplayBrightness = MIN(255, displayBrightnessBase * Cfg.LedBrightnessMultiplier);
-    }
-}
-
-void LedSlaveDriver_UpdateLeds(void)
-{
-    recalculateLedBrightness();
-    Ledmap_UpdateBacklightLeds();
-
-#ifdef __ZEPHYR__
-    Oled_UpdateBrightness();
-    StateSync_UpdateBacklight();
-#else
-    LedDisplay_UpdateAll();
-
-    LedSlaveDriver_FullUpdateNeeded = false;
-#endif
-}
-
-
-#ifndef __ZEPHYR__
-void LedSlaveDriver_RecalculateLedBrightness()
-{
-    recalculateLedBrightness();
 }
 
 void LedSlaveDriver_EnableAllLeds()

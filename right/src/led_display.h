@@ -24,7 +24,6 @@
 
 // Variables:
 
-    extern uint8_t DisplayBrightness;
     extern char LedDisplay_DebugString[];
 
 // Functions:

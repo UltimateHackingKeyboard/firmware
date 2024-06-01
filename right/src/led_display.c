@@ -8,7 +8,6 @@
 #include "device/device.h"
 #endif
 
-uint8_t DisplayBrightness = 0xff;
 bool ledIconStates[LedDisplayIcon_Count];
 
 #ifndef __ZEPHYR__

@@ -39,6 +39,7 @@
 #include "macros/key_timing.h"
 #include "config_manager.h"
 #include <string.h>
+#include "led_manager.h"
 
 #ifdef __ZEPHYR__
 #include "shell.h"
@@ -561,7 +562,7 @@ static void updateLedSleepModeState() {
     }
 
     if (ledsNeedUpdate) {
-        LedSlaveDriver_UpdateLeds();
+        LedManager_FullUpdate();
     }
 }
 

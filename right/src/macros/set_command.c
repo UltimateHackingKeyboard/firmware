@@ -29,6 +29,7 @@
 #include "slave_drivers/is31fl3xxx_driver.h"
 #include <stdint.h>
 #include "config_manager.h"
+#include "led_manager.h"
 
 #ifdef __ZEPHYR__
 #include "state_sync.h"
@@ -560,7 +561,7 @@ static macro_variable_t leds(parser_context_t* ctx, set_command_action_t action)
         Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
     }
 
-    LedSlaveDriver_UpdateLeds();
+    LedManager_FullUpdate();
     return noneVar();
 }
 

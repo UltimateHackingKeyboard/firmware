@@ -7,6 +7,7 @@
 #include "screens/test_screen.h"
 #include "legacy/event_scheduler.h"
 #include "legacy/timer.h"
+#include "legacy/led_manager.h"
 
 #ifdef DEVICE_HAS_OLED
 
