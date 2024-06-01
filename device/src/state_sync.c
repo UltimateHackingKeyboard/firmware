@@ -2,6 +2,8 @@
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/gpio.h>
 #include "device.h"
+#include "device_state.h"
+#include "keyboard/uart.h"
 #include "legacy/key_action.h"
 #include "legacy/layer.h"
 #include "legacy/slave_drivers/is31fl3xxx_driver.h"
@@ -46,7 +48,7 @@ static struct k_thread thread_data;
 
 static k_tid_t stateSyncThreadId = 0;
 
-#define STATE_SYNC_LOG(fmt, ...) //printk(fmt, __VA_ARGS__)
+#define STATE_SYNC_LOG(fmt, ...) //printk(fmt, ##__VA_ARGS__)
 
 typedef struct {
     uint8_t type : 5;
@@ -87,6 +89,7 @@ static void sendSyncLayer(layer_id_t layerId) {
 void StateSync_LeftReceiveStateUpdate(const uint8_t* data, uint16_t len) {
     data++;
     sync_command_type_t command = *(data++);
+    STATE_SYNC_LOG("Left received state update: %i \n", command);
 
     switch (command) {
         case SyncCommand_ClearLayer: {
@@ -117,10 +120,12 @@ void StateSync_LeftReceiveStateUpdate(const uint8_t* data, uint16_t len) {
             break;
         case SyncCommand_SyncActiveLayer: {
                 ActiveLayer = *(data++);
+                STATE_SYNC_LOG("Setting active layer %i\n", ActiveLayer);
                 Ledmap_UpdateBacklightLeds();
             }
             break;
         case SyncCommand_SyncBacklight: {
+                STATE_SYNC_LOG("Setting backlight parameters\n");
                 Cfg.BacklightingMode = *(data++);
                 KeyBacklightBrightness = *(data++);
                 Cfg.LedMap_ConstantRGB.red = *(data++);
@@ -148,6 +153,7 @@ void StateSync_RightReceiveStateUpdate(const uint8_t* data, uint16_t len) {
 
 
 static bool transmitStateUpdate() {
+    STATE_SYNC_LOG("Running state update\n");
     if (KeyBacklightBrightness != 0 && Cfg.BacklightingMode != BacklightingMode_ConstantRGB) {
         for (uint8_t layerId = 0; layerId < LayerId_Count; layerId++) {
             if (syncState.layerState[layerId] != LayerState_Good) {
@@ -189,7 +195,21 @@ static bool transmitStateUpdate() {
 }
 
 static ATTR_UNUSED void stateSynceUpdaterRight() {
+begin:
+    while (!DeviceState_IsConnected(DeviceId_Uhk80_Left)) {
+        k_sleep(K_FOREVER);
+    }
+    // TODO: At the moment messages sent shortly after nus connection is established
+    // get lost. Probably because NUS client is not ready yet.
+    //
+    // So as a workaround, we wait for one second if device was not connected previously.
+    if (!Uart_IsConnected()) {
+        k_sleep(K_MSEC(1000));
+    }
     while(true) {
+        if (!DeviceState_IsConnected(DeviceId_Uhk80_Left)) {
+            goto begin;
+        }
         if (transmitStateUpdate()) {
             k_sleep(K_FOREVER);
         }
@@ -208,6 +228,12 @@ void StateSync_UpdateLayer(layer_id_t layer, bool justClear) {
 
 void StateSync_UpdateBacklight() {
     syncState.backlightNeedsUpdate |= true;
+    k_wakeup(stateSyncThreadId);
+}
+
+void StateSync_ResetState() {
+    syncState.activeLayerNeedsUpdate = true;
+    syncState.backlightNeedsUpdate = true;
     k_wakeup(stateSyncThreadId);
 }
 

@@ -3,6 +3,7 @@
 #include <bluetooth/scan.h>
 #include "bt_advertise.h"
 #include "bt_conn.h"
+#include "device_state.h"
 #include "nus_client.h"
 #include "device.h"
 #include "keyboard/oled/screens/pairing_screen.h"
@@ -106,6 +107,7 @@ static void connected(struct bt_conn *conn, uint8_t err) {
             NusClient_Setup(conn);
         }
         Peers[peerId].isConnected = true;
+        DeviceState_TriggerUpdate();
     }
 }
 
@@ -114,10 +116,6 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
     ARG_UNUSED(peerId);
 
     printk("Disconnected from %s, reason %u\n", GetPeerStringByConn(conn), reason);
-
-    if (peerId != PeerIdUnknown) {
-        Peers[peerId].isConnected = false;
-    }
 
     if (DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK_DONGLE) {
         if (peerId == PeerIdUnknown) {
@@ -134,6 +132,11 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
                 printk("Scanning failed to start (err %d)\n", err);
             }
         }
+    }
+
+    if (peerId != PeerIdUnknown) {
+        Peers[peerId].isConnected = false;
+        DeviceState_TriggerUpdate();
     }
 }
 

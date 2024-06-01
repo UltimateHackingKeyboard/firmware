@@ -44,6 +44,7 @@ void ScreenManager_SwitchScreenEvent()
 
 void ScreenManager_Init()
 {
+    WidgetStore_Init();
     PairingScreen_Init();
     TestScreen_Init();
 }
