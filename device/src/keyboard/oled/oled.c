@@ -30,7 +30,7 @@ const struct gpio_dt_spec oledResetDt = GPIO_DT_SPEC_GET(DT_ALIAS(oled_reset), g
 const struct gpio_dt_spec oledCsDt = GPIO_DT_SPEC_GET(DT_ALIAS(oled_cs), gpios);
 const struct gpio_dt_spec oledA0Dt = GPIO_DT_SPEC_GET(DT_ALIAS(oled_a0), gpios);
 
-static bool displayOn = true;
+static uint8_t lastBrightness = 0xff;
 
 static void setOledCs(bool state) {
     gpio_pin_set_dt(&oledCsDt, state);
@@ -107,9 +107,6 @@ void Oled_ActivateScreen(widget_t* screen, bool forceRedraw) {
 }
 
 void Oled_UpdateBrightness() {
-    //force widgets to redraw with new brightness
-    Framebuffer_Clear(NULL, OledBuffer);
-    currentScreen->layOut(currentScreen, currentXShift, currentYShift, DISPLAY_WIDTH - DISPLAY_SHIFTING_MARGIN, DISPLAY_HEIGHT - DISPLAY_SHIFTING_MARGIN);
     Oled_RequestRedraw();
 }
 
@@ -159,13 +156,26 @@ static uint16_t roundToEven(uint16_t a) {
     return a & ~1;
 }
 
+static void adjustBrightness() {
+    uint8_t brightness = DisplayBrightness;
+
+    if (brightness == 0) {
+        oledCommand1(0, OledCommand_SetDisplayOff);
+    } else {
+        oledCommand1(0, OledCommand_SetDisplayOn);
+        oledCommand2(0, OledCommand_SetContrast, DisplayBrightness);
+    }
+
+    lastBrightness = brightness;
+}
+
 static void diffUpdate() {
     k_mutex_lock(&SpiMutex, K_FOREVER);
 
-    if (!displayOn) {
-        oledCommand1(0, OledCommand_SetDisplayOn);
-        displayOn = true;
+    if (lastBrightness != DisplayBrightness) {
+        adjustBrightness();
     }
+
 
     setA0(true);
     setOledCs(true);
@@ -221,8 +231,7 @@ static void diffUpdate() {
 
 void sleepDisplay() {
     k_mutex_lock(&SpiMutex, K_FOREVER);
-    oledCommand1(0, OledCommand_SetDisplayOff);
-    displayOn = false;
+    adjustBrightness();
     k_mutex_unlock(&SpiMutex);
 
     while (DisplayBrightness == 0) {
@@ -248,7 +257,7 @@ void oledUpdater() {
             k_sleep(K_FOREVER);
         }
 
-        if (displayOn && DisplayBrightness == 0) {
+        if (lastBrightness != DisplayBrightness) {
             sleepDisplay();
         }
 

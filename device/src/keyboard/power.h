@@ -12,7 +12,6 @@
 
 // Functions:
 
-    bool Power_RunningOnBattery();
     void Power_ReportPowerState(uint8_t level, uint32_t ma);
 
 #endif // __POWER_H__
