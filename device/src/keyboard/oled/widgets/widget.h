@@ -7,6 +7,7 @@
     #include <stdbool.h>
     #include "../framebuffer.h"
     #include "keyboard/oled/fonts/fonts.h"
+    #include "legacy/str_utils.h"
 
 // Macros:
 
@@ -46,8 +47,9 @@
                 widget_t* content;
             } simpleContentData;
             struct {
-                const char* text;
+                string_segment_t text;
                 const lv_font_t* font;
+                string_segment_t (*textProvider)();
             } textData;
         };
     };

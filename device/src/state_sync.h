@@ -16,5 +16,6 @@
     void StateSync_UpdateBacklight();
     void StateSync_LeftReceiveStateUpdate(const uint8_t* data, uint16_t len);
     void StateSync_RightReceiveStateUpdate(const uint8_t* data, uint16_t len);
+    void StateSync_ResetState();
 
 #endif // __STATE_SYNC_H__

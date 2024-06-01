@@ -15,7 +15,8 @@
 #include "slave_drivers/uhk_module_driver.h"
 
 #ifdef __ZEPHYR__
-#include "keyboard/oled/widgets/keymap_widget.h"
+#include "keyboard/oled/widgets/widget_store.h"
+#include "keyboard/oled/widgets/text_widget.h"
 #include "device.h"
 #endif
 
@@ -40,7 +41,7 @@ void SwitchKeymapById(uint8_t index)
     ValidatedUserConfigBuffer.offset = AllKeymaps[index].offset;
     ParseKeymap(&ValidatedUserConfigBuffer, index, AllKeymapsCount, AllMacrosCount, parseConfig);
 #ifdef DEVICE_HAS_OLED
-    KeymapWidget_Update();
+    TextWidget_Refresh(&KeymapWidget);
 #endif
     Ledmap_UpdateBacklightLeds();
     SegmentDisplay_UpdateKeymapText();

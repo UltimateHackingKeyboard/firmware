@@ -12,7 +12,8 @@
 #include "config_manager.h"
 
 #ifdef __ZEPHYR__
-#include "keyboard/oled/widgets/layer_widget.h"
+#include "keyboard/oled/widgets/text_widget.h"
+#include "keyboard/oled/widgets/widget_store.h"
 #include "state_sync.h"
 #endif
 
@@ -84,7 +85,7 @@ void updateActiveLayer() {
 
     if (ActiveLayer != previousLayer) {
 #ifdef DEVICE_HAS_OLED
-        LayerWidget_Update();
+        TextWidget_Refresh(&LayerWidget);
 #endif
 #ifdef __ZEPHYR__
         StateSync_UpdateActiveLayer();

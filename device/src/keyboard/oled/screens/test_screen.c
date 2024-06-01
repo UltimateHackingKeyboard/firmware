@@ -6,8 +6,7 @@ static widget_t helloWidget;
 static widget_t frameWidget;
 static widget_t splitterWidget;
 static widget_t layerKeymapSplitter;
-static widget_t layerWidget;
-static widget_t keymapWidget;
+static widget_t statusSplitter;
 
 widget_t* TestScreen;
 
@@ -23,11 +22,10 @@ static void drawHello(widget_t* self, framebuffer_t* buffer)
 void TestScreen_Init()
 {
     helloWidget = CustomWidget_Build(&drawHello);
-    layerWidget = LayerWidget_Build();
-    keymapWidget = KeymapWidget_Build();
     consoleWidget = ConsoleWidget_Build();
-    layerKeymapSplitter = SplitterWidget_BuildHorizontal(&keymapWidget, &layerWidget, 30, false);
+    layerKeymapSplitter = SplitterWidget_BuildHorizontal(&KeymapWidget, &LayerWidget, 26, false);
     splitterWidget = SplitterWidget_BuildVertical(&consoleWidget, &layerKeymapSplitter, 120, true);
     frameWidget = FrameWidget_Build(&splitterWidget);
-    TestScreen = &frameWidget;
+    statusSplitter = SplitterWidget_BuildHorizontal(&StatusWidget, &frameWidget, 12, false);
+    TestScreen = &statusSplitter;
 }
