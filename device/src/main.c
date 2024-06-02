@@ -27,6 +27,7 @@
 #include "legacy/config_manager.h"
 #include "keyboard/power.h"
 #include "messenger.h"
+#include "legacy/led_manager.h"
 // #include <zephyr/drivers/gpio.h>
 // #include "dongle_leds.h"
 
