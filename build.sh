@@ -60,7 +60,7 @@ function processArguments() {
                 DEVICES="$DEVICES uhk-80-left uhk-80-right uhk-dongle"
                 shift
                 ;;
-            setup|update|build|make|flash|shell|uart)
+            clean|setup|update|build|make|flash|shell|uart)
                 ACTIONS="$ACTIONS $1"
                 shift
                 ;;
