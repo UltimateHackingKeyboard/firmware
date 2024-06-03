@@ -18,6 +18,7 @@
         ScreenId_Pairing,
         ScreenId_PairingFailed,
         ScreenId_PairingSucceeded,
+        ScreenId_Canvas,
     } screen_id_t;
 
 // Variables:

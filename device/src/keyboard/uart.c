@@ -5,6 +5,7 @@
 #include "messenger.h"
 #include "messenger_queue.h"
 #include "device.h"
+#include "device_state.h"
 
 // Thread definitions
 
@@ -35,7 +36,9 @@ uint8_t *rxbuf;
 uint8_t rxbuf1[BUF_SIZE];
 uint8_t rxbuf2[BUF_SIZE];
 
-uint32_t lastPingTime = 0;
+uint32_t lastPingTime = -2*UART_TIMEOUT;
+
+bool isConnected = false;
 
 static void appendRxByte(uint8_t byte) {
     if (rxPosition < RX_BUF_SIZE) {
@@ -197,12 +200,21 @@ static void ping() {
 }
 
 bool Uart_IsConnected() {
-    return (CurrentTime - lastPingTime) < UART_TIMEOUT;
+    return isConnected;
+}
+
+static void updateConnectionState() {
+    bool newIsConnected = (CurrentTime - lastPingTime) < UART_TIMEOUT;
+    if (isConnected != newIsConnected) {
+        isConnected = newIsConnected;
+        DeviceState_TriggerUpdate();
+    }
 }
 
 void testUart() {
     while (1) {
         ping();
+        updateConnectionState();
         k_sleep(K_MSEC(UART_TIMEOUT/2));
     }
 }

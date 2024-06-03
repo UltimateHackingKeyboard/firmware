@@ -1,3 +1,4 @@
+#include "keyboard/power.h"
 #include "zephyr/storage/flash_map.h"
 #include "keyboard/key_scanner.h"
 #include "keyboard/leds.h"
@@ -24,7 +25,9 @@
 #include "legacy/user_logic.h"
 #include "state_sync.h"
 #include "legacy/config_manager.h"
+#include "keyboard/power.h"
 #include "messenger.h"
+#include "legacy/led_manager.h"
 // #include <zephyr/drivers/gpio.h>
 // #include "dongle_leds.h"
 
@@ -90,13 +93,22 @@ int main(void) {
         NusClient_Init();
     }
 
+    if (DEVICE_IS_UHK80_LEFT || DEVICE_IS_UHK80_RIGHT) {
+        ConfigManager_ResetConfiguration(false);
+    }
+
     if (DEVICE_IS_UHK80_RIGHT) {
         printk("Reading hardware config\n");
         flash_area_read(hardwareConfigArea, 0, HardwareConfigBuffer.buffer, HARDWARE_CONFIG_SIZE);
         printk("Reading user config\n");
         flash_area_read(userConfigArea, 0, StagingUserConfigBuffer.buffer, USER_CONFIG_SIZE);
         printk("Applying user config\n");
-        UsbCommand_ApplyConfig();
+        bool factoryMode = true;
+        if (factoryMode) {
+            LedManager_FullUpdate();
+        } else {
+            UsbCommand_ApplyConfig();
+        }
         printk("User config applied\n");
         ShortcutParser_initialize();
         KeyIdParser_initialize();
@@ -108,11 +120,6 @@ int main(void) {
     if (DEVICE_IS_UHK80_LEFT || DEVICE_IS_UHK80_RIGHT) {
         StateSync_Init();
     }
-
-    if (DEVICE_IS_UHK80_LEFT) {
-        ConfigManager_ResetConfiguration(false);
-    }
-
 
 #if DEVICE_IS_UHK80_RIGHT
     while (true)

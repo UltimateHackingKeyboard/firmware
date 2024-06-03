@@ -165,6 +165,7 @@ COMMAND = set backlight.keyRgb.LAYERID.KEYID <number 0-255 (INT)> <number 0-255 
 COMMAND = set leds.enabled BOOL
 COMMAND = set leds.brightness <0-1 multiple of default (FLOAT)>
 COMMAND = set leds.fadeTimeout <seconds to fade after (INT)>
+COMMAND = set leds.{keyBacklightFadeTimeout|keyBacklightFadeBatteryTimeout|displayFadeTimeout|displayFadeBatteryTimeout} <seconds to fade after (INT)>
 COMMAND = set modifierLayerTriggers.{shift|alt|super|ctrl} {left|right|both}
 CONDITION = <condition>
 CONDITION = if (EXPRESSION)
@@ -645,7 +646,7 @@ Internally, values are saved in one of the following types, and types are automa
 - general led configuration:
     - `leds.enabled BOOL` turns on/off all keyboard leds: i.e., backlight, indicator leds, segment display
     - `leds.brightness <0-1 multiple of default (FLOAT)>` allows scaling default brightness. E.g., `0.5` will dim the entire keyboard to half of the default values that are configured in Agent
-    - `leds.fadeTimeout <seconds to fade after (INT)>` will turn off leds after the configured interval.
+    - `leds.fadeTimeout <seconds to fade after (INT)>` will make uhk turn off all leds after the configured interval. (This is an alias that sets all of `{keyBacklightFadeTimeout|keyBacklightFadeBatteryTimeout|displayFadeTimeout|displayFadeBatteryTimeout}`)
 
 - modifier layer triggers:
     - `set modifierLayerTriggers.{shift|alt|super|ctrl} {left|right|both}` controls whether modifier layers are triggered by left or right or either of the modifiers.

@@ -4,20 +4,8 @@
 #include "ledmap.h"
 #include "debug.h"
 #include "config_manager.h"
+#include "stubs.h"
 
-#ifdef __ZEPHYR__
-#include <zephyr/sys/util.h>
-#include "state_sync.h"
-#define SleepModeActive false
-#else
-#include "device/device.h"
-#endif
-
-static void recalculateLedBrightness();
-
-bool LedSlaveDriver_FullUpdateNeeded = false;
-
-uint8_t KeyBacklightBrightness = 0xff;
 #ifndef __ZEPHYR__
 uint8_t LedDriverValues[LED_DRIVER_MAX_COUNT][LED_DRIVER_LED_COUNT_MAX];
 
@@ -189,49 +177,10 @@ static uint8_t updatePwmRegistersBuffer[PWM_REGISTER_BUFFER_LENGTH];
 
 void LedSlaveDriver_DisableLeds(void)
 {
-    recalculateLedBrightness();
+    LedManager_RecalculateLedBrightness();
     for (uint8_t ledDriverId=0; ledDriverId<=LedDriverId_Last; ledDriverId++) {
         memset(LedDriverValues[ledDriverId], 0, ledDriverStates[ledDriverId].ledCount);
     }
-}
-#endif
-
-static void recalculateLedBrightness()
-{
-    uint8_t oldKeyBacklightBrightness = KeyBacklightBrightness;
-
-    if (!Cfg.LedsEnabled || Cfg.LedSleepModeActive || SleepModeActive || Cfg.LedBrightnessMultiplier == 0.0f) {
-        KeyBacklightBrightness = 0;
-        IconsAndLayerTextsBrightness = 0;
-        AlphanumericSegmentsBrightness = 0;
-    } else {
-        KeyBacklightBrightness = MIN(255, Cfg.KeyBacklightBrightnessDefault * Cfg.LedBrightnessMultiplier);
-        IconsAndLayerTextsBrightness = MIN(255, Cfg.IconsAndLayerTextsBrightnessDefault * Cfg.LedBrightnessMultiplier);
-        AlphanumericSegmentsBrightness = MIN(255, Cfg.AlphanumericSegmentsBrightnessDefault * Cfg.LedBrightnessMultiplier);
-    }
-#ifdef __ZEPHYR__
-    if (KeyBacklightBrightness != oldKeyBacklightBrightness) {
-        StateSync_UpdateBacklight();
-    }
-#endif
-}
-
-void LedSlaveDriver_UpdateLeds(void)
-{
-    recalculateLedBrightness();
-    Ledmap_UpdateBacklightLeds();
-
-#ifndef __ZEPHYR__
-    LedDisplay_UpdateAll();
-
-    LedSlaveDriver_FullUpdateNeeded = false;
-#endif
-}
-
-#ifndef __ZEPHYR__
-void LedSlaveDriver_RecalculateLedBrightness()
-{
-    recalculateLedBrightness();
 }
 
 void LedSlaveDriver_EnableAllLeds()

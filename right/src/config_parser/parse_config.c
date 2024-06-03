@@ -1,4 +1,5 @@
 #include <string.h>
+#include "basic_types.h"
 #include "parse_config.h"
 #include "parse_keymap.h"
 #include "parse_macro.h"
@@ -54,17 +55,25 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
 
     // LED brightness
 
-    uint8_t iconsAndLayerTextsBrightness = ReadUInt8(buffer);
-    uint8_t alphanumericSegmentsBrightness = ReadUInt8(buffer);
-    uint8_t keyBacklightBrightness = ReadUInt8(buffer);
+    uint8_t iconsAndLayerTextsBrightness = 0xff;
+    uint8_t alphanumericSegmentsBrightness = 0xff;
+    uint8_t keyBacklightBrightness = 0xff;
 
-    uint32_t ledsFadeTimeout = Cfg.LedsFadeTimeout;
+    if (DataModelMajorVersion < 8) {
+        iconsAndLayerTextsBrightness = ReadUInt8(buffer);
+        alphanumericSegmentsBrightness = ReadUInt8(buffer);
+        keyBacklightBrightness = ReadUInt8(buffer);
+    }
+
+    uint32_t ledsFadeTimeout = Cfg.DisplayFadeOutTimeout;
     bool previousPerKeyRgbPresent = PerKeyRgbPresent;
     backlighting_mode_t backlightingMode = Cfg.BacklightingMode;
     rgb_t keyActionColors[keyActionColor_Length];
 
     if (DataModelMajorVersion >= 6) {
-        ledsFadeTimeout = 1000 * ReadUInt16(buffer);
+        if (DataModelMajorVersion < 8) {
+            ledsFadeTimeout = 1000 * ReadUInt16(buffer);
+        }
         PerKeyRgbPresent = ReadBool(buffer);
         backlightingMode = ReadUInt8(buffer);
 
@@ -139,6 +148,37 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
         keystrokeDelay = ReadUInt16(buffer);
     }
 
+    // Version 8:
+
+    uint8_t displayBrightness;
+    uint8_t displayBrightnessBattery;
+    uint8_t keyBacklightBrightnessBattery;
+
+    uint8_t displayFadeOutTimeout;
+    uint8_t displayFadeOutBatteryTimeout;
+    uint8_t keyBacklightFadeOutTimeout;
+    uint8_t keyBacklightFadeOutBatteryTimeout;
+
+    if (DataModelMajorVersion >= 8) {
+        displayBrightness = ReadUInt8(buffer);
+        displayBrightnessBattery = ReadUInt8(buffer);
+        keyBacklightBrightness = ReadUInt8(buffer);
+        keyBacklightBrightnessBattery = ReadUInt8(buffer);
+        displayFadeOutTimeout = 1000 * ReadUInt16(buffer);
+        displayFadeOutBatteryTimeout = 1000 * ReadUInt16(buffer);
+        keyBacklightFadeOutTimeout = 1000 * ReadUInt16(buffer);
+        keyBacklightFadeOutBatteryTimeout = 1000 * ReadUInt16(buffer);
+    } else {
+        displayBrightness = alphanumericSegmentsBrightness;
+        displayBrightnessBattery = alphanumericSegmentsBrightness;
+        keyBacklightBrightness = keyBacklightBrightness;
+        keyBacklightBrightnessBattery = keyBacklightBrightness;
+        displayFadeOutTimeout = ledsFadeTimeout;
+        displayFadeOutBatteryTimeout = ledsFadeTimeout;
+        keyBacklightFadeOutTimeout = ledsFadeTimeout;
+        keyBacklightFadeOutBatteryTimeout = ledsFadeTimeout;
+    }
+
     // Module configurations
 
     uint16_t moduleConfigurationCount = ReadCompactLength(buffer);
@@ -191,9 +231,9 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
 
         ValidatedUserConfigLength = userConfigLength;
 
-        Cfg.IconsAndLayerTextsBrightnessDefault = iconsAndLayerTextsBrightness;
-        Cfg.AlphanumericSegmentsBrightnessDefault = alphanumericSegmentsBrightness;
-        Cfg.KeyBacklightBrightnessDefault = keyBacklightBrightness;
+        // removed in version 8
+        // Cfg.IconsAndLayerTextsBrightnessDefault = iconsAndLayerTextsBrightness;
+        // Cfg.AlphanumericSegmentsBrightnessDefault = alphanumericSegmentsBrightness;
 
 #ifndef __ZEPHYR__
         LedSlaveDriver_RecalculateLedBrightness();
@@ -216,7 +256,9 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
         // Version 6
 
         if (DataModelMajorVersion >= 6) {
-            Cfg.LedsFadeTimeout = ledsFadeTimeout;
+            // removed in version 8
+            // Cfg.LedsFadeTimeout = ledsFadeTimeout;
+
             Cfg.BacklightingMode = backlightingMode;
 
             memcpy(Cfg.KeyActionColors, keyActionColors, sizeof(keyActionColors));
@@ -249,6 +291,19 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
             Cfg.DoubletapTimeout = doubletapTimeout;
             Cfg.KeystrokeDelay = keystrokeDelay;
         }
+
+        // Version 8
+
+
+        Cfg.DisplayBrightnessDefault = displayBrightness;
+        Cfg.DisplayBrightnessBatteryDefault = displayBrightnessBattery;
+        Cfg.KeyBacklightBrightnessDefault = keyBacklightBrightness;
+        Cfg.KeyBacklightBrightnessBatteryDefault = keyBacklightBrightnessBattery;
+        Cfg.DisplayFadeOutTimeout = displayFadeOutTimeout;
+        Cfg.DisplayFadeOutBatteryTimeout = displayFadeOutBatteryTimeout;
+        Cfg.KeyBacklightFadeOutTimeout = keyBacklightFadeOutTimeout;
+        Cfg.KeyBacklightFadeOutBatteryTimeout = keyBacklightFadeOutBatteryTimeout;
+
 
         // Update counts
 

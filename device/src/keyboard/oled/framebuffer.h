@@ -6,6 +6,7 @@
     #include "oled_display.h"
     #include <inttypes.h>
     #include <stdbool.h>
+    #include "legacy/led_display.h"
     #include <zephyr/sys/util.h>
 
 // Macros:
@@ -47,10 +48,11 @@
     static inline void Framebuffer_SetPixel(framebuffer_t* buffer, uint16_t x, uint16_t y, uint8_t value)
     {
         uint16_t index = (y*DISPLAY_WIDTH+x)/2;
+        uint8_t shadedValue = value >> 4;
         if (x%2 == 1) {
-            buffer->buffer[index].value = (buffer->buffer[index].value & 0x0f) | (value & 0xf0);
+            buffer->buffer[index].value = (buffer->buffer[index].value & 0x0f) | (shadedValue << 4);
         } else {
-            buffer->buffer[index].value = (buffer->buffer[index].value & 0xf0) | (value >> 4);
+            buffer->buffer[index].value = (buffer->buffer[index].value & 0xf0) | (shadedValue & 0x0f);
         }
     };
 
