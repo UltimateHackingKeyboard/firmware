@@ -85,12 +85,9 @@
     extern uint8_t LedDriverValues[LED_DRIVER_MAX_COUNT][LED_DRIVER_LED_COUNT_MAX];
 #endif
 
-    extern bool LedSlaveDriver_FullUpdateNeeded;
 
 // Functions:
 
-    void LedSlaveDriver_UpdateLeds(void);
-    void LedSlaveDriver_RecalculateLedBrightness();
 #ifndef __ZEPHYR__
     void LedSlaveDriver_DisableLeds(void);
     void LedSlaveDriver_EnableAllLeds();

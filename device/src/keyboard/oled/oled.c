@@ -7,6 +7,7 @@
 #include "screens/test_screen.h"
 #include "legacy/event_scheduler.h"
 #include "legacy/timer.h"
+#include "legacy/led_manager.h"
 
 #ifdef DEVICE_HAS_OLED
 
@@ -29,6 +30,8 @@ const struct gpio_dt_spec oledEn = GPIO_DT_SPEC_GET(DT_ALIAS(oled_en), gpios);
 const struct gpio_dt_spec oledResetDt = GPIO_DT_SPEC_GET(DT_ALIAS(oled_reset), gpios);
 const struct gpio_dt_spec oledCsDt = GPIO_DT_SPEC_GET(DT_ALIAS(oled_cs), gpios);
 const struct gpio_dt_spec oledA0Dt = GPIO_DT_SPEC_GET(DT_ALIAS(oled_a0), gpios);
+
+static uint8_t lastBrightness = 0xff;
 
 static void setOledCs(bool state) {
     gpio_pin_set_dt(&oledCsDt, state);
@@ -104,6 +107,10 @@ void Oled_ActivateScreen(widget_t* screen, bool forceRedraw) {
     }
 }
 
+void Oled_UpdateBrightness() {
+    Oled_RequestRedraw();
+}
+
 void Oled_ShiftScreen() {
     wantScreenShift = true;
     Oled_RequestRedraw();
@@ -150,8 +157,26 @@ static uint16_t roundToEven(uint16_t a) {
     return a & ~1;
 }
 
+static void adjustBrightness() {
+    uint8_t brightness = DisplayBrightness;
+
+    if (brightness == 0) {
+        oledCommand1(0, OledCommand_SetDisplayOff);
+    } else {
+        oledCommand1(0, OledCommand_SetDisplayOn);
+        oledCommand2(0, OledCommand_SetContrast, DisplayBrightness);
+    }
+
+    lastBrightness = brightness;
+}
+
 static void diffUpdate() {
     k_mutex_lock(&SpiMutex, K_FOREVER);
+
+    if (lastBrightness != DisplayBrightness) {
+        adjustBrightness();
+    }
+
 
     setA0(true);
     setOledCs(true);
@@ -205,6 +230,16 @@ static void diffUpdate() {
     k_mutex_unlock(&SpiMutex);
 }
 
+void sleepDisplay() {
+    k_mutex_lock(&SpiMutex, K_FOREVER);
+    adjustBrightness();
+    k_mutex_unlock(&SpiMutex);
+
+    while (DisplayBrightness == 0) {
+        k_sleep(K_FOREVER);
+    }
+}
+
 void oledUpdater() {
     k_mutex_lock(&SpiMutex, K_FOREVER);
     oledCommand1(0, OledCommand_SetDisplayOn);
@@ -221,6 +256,10 @@ void oledUpdater() {
 
         if (!oledNeedsRedraw) {
             k_sleep(K_FOREVER);
+        }
+
+        if (lastBrightness != DisplayBrightness) {
+            sleepDisplay();
         }
 
         oledNeedsRedraw = false;

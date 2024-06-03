@@ -9,13 +9,14 @@
 #include "debug.h"
 #include "event_scheduler.h"
 #include "user_logic.h"
+#include "led_manager.h"
 
 void RunUserLogic(void) {
     if (KeymapReloadNeeded) {
         SwitchKeymapById(CurrentKeymapIndex);
     }
-    if (LedSlaveDriver_FullUpdateNeeded) {
-        LedSlaveDriver_UpdateLeds();
+    if (LedManager_FullUpdateNeeded) {
+        LedManager_FullUpdate();
     }
 #ifndef __ZEPHYR__
     if (UsbBasicKeyboard_ProtocolChanged) {

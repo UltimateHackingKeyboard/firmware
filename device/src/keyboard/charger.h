@@ -14,6 +14,6 @@
 
 // Functions:
 
-    extern void InitCharger(void);
+    void InitCharger(void);
 
 #endif // __CHARGER_H__
