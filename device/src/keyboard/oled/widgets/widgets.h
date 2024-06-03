@@ -10,6 +10,7 @@
 #include "keyboard/oled/widgets/frame_widget.h"
 #include "keyboard/oled/widgets/console_widget.h"
 #include "keyboard/oled/widgets/splitter_widget.h"
+#include "keyboard/oled/widgets/canvas_widget.h"
 #include "keyboard/oled/widgets/widget_store.h"
 
 #endif
