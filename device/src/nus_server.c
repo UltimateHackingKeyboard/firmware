@@ -37,14 +37,13 @@ static struct bt_nus_cb nus_cb = {
     .sent = sent,
 };
 
-void NusServer_Init(void) {
+int NusServer_Init(void) {
     int err = bt_nus_init(&nus_cb);
     if (err) {
         printk("Failed to initialize UART service (err: %d)\n", err);
-        return;
     }
 
-    AdvertiseNus();
+    return err;
 }
 
 void NusServer_Send(const uint8_t *data, uint16_t len) {
