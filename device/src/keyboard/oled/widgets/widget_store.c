@@ -1,6 +1,5 @@
-#include "keyboard/oled/widgets/custom_widget.h"
 #include "keyboard/oled/oled.h"
-#include "keyboard/oled/widgets/widget.h"
+#include "keyboard/oled/widgets/widgets.h"
 #include "keyboard/oled/fonts/fonts.h"
 #include "keyboard/oled/framebuffer.h"
 #include "keyboard/oled/oled_text_renderer.h"
@@ -18,6 +17,7 @@
 widget_t KeymapWidget;
 widget_t LayerWidget;
 widget_t StatusWidget;
+widget_t CanvasWidget;
 
 static string_segment_t getLayerText() {
     return (string_segment_t){ .start = LayerNames[ActiveLayer], .end = NULL };
@@ -51,4 +51,5 @@ void WidgetStore_Init()
     LayerWidget = TextWidget_BuildRefreshable(&JetBrainsMono16, &getLayerText);
     KeymapWidget = TextWidget_BuildRefreshable(&JetBrainsMono16, &getKeymapText);
     StatusWidget = TextWidget_BuildRefreshable(&JetBrainsMono8, &getStatusText);
+    CanvasWidget = CustomWidget_Build(NULL);
 }

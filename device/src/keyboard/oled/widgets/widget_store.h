@@ -16,6 +16,7 @@
     extern widget_t KeymapWidget;
     extern widget_t LayerWidget;
     extern widget_t StatusWidget;
+    extern widget_t CanvasWidget;
 
 // Functions:
 
