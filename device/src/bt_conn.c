@@ -106,8 +106,6 @@ static void connected(struct bt_conn *conn, uint8_t err) {
         if (DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK_DONGLE) {
             NusClient_Setup(conn);
         }
-        Peers[peerId].isConnected = true;
-        DeviceState_TriggerUpdate();
     }
 }
 
@@ -151,6 +149,23 @@ bool Bt_DeviceIsConnected(device_id_t deviceId) {
         default:
             return false;
     }
+}
+
+void Bt_SetDeviceConnected(device_id_t deviceId) {
+    switch (deviceId) {
+        case DeviceId_Uhk80_Left:
+            Peers[PeerIdLeft].isConnected = true;
+            break;
+        case DeviceId_Uhk80_Right:
+            Peers[PeerIdRight].isConnected = true;
+            break;
+        case DeviceId_Uhk_Dongle:
+            Peers[PeerIdDongle].isConnected = true;
+            break;
+        default:
+            break;
+    }
+    DeviceState_TriggerUpdate();
 }
 
 static void security_changed(struct bt_conn *conn, bt_security_t level, enum bt_security_err err) {

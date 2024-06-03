@@ -111,9 +111,11 @@ static void receiveRight(device_id_t src, const uint8_t* data, uint16_t len) {
     }
 }
 
-static void receiveDongle(device_id_t src, const uint8_t* data, uint16_t len) {
-    const uint8_t* message = data+1;
-    switch (data[0]) {
+static void processSyncablePropertyDongle(device_id_t src, const uint8_t* data, uint16_t len) {
+    uint8_t ATTR_UNUSED messageId = *(data++);
+    uint8_t propertyId = *(data++);
+    const uint8_t* message = data;
+    switch (propertyId) {
         case SyncablePropertyId_KeyboardReport:
             UsbCompatibility_SendKeyboardReport((usb_basic_keyboard_report_t*)message);
             break;
@@ -122,6 +124,17 @@ static void receiveDongle(device_id_t src, const uint8_t* data, uint16_t len) {
             break;
         case SyncablePropertyId_ControlsReport:
             UsbCompatibility_SendConsumerReport2(message);
+            break;
+        default:
+            printk("Unrecognized or unexpected message [%i, %i, ...]\n", data[0], data[1]);
+            break;
+    }
+}
+
+static void receiveDongle(device_id_t src, const uint8_t* data, uint16_t len) {
+    switch (data[0]) {
+        case MessageId_SyncableProperty:
+            processSyncablePropertyDongle(src, data, len);
             break;
         default:
             printk("Unrecognized or unexpected message [%i, %i, ...]\n", data[0], data[1]);

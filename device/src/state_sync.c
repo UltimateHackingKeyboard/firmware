@@ -195,22 +195,8 @@ static bool transmitStateUpdate() {
 }
 
 static ATTR_UNUSED void stateSynceUpdaterRight() {
-begin:
-    while (!DeviceState_IsConnected(DeviceId_Uhk80_Left)) {
-        k_sleep(K_FOREVER);
-    }
-    // TODO: At the moment messages sent shortly after nus connection is established
-    // get lost. Probably because NUS client is not ready yet.
-    //
-    // So as a workaround, we wait for one second if device was not connected previously.
-    if (!Uart_IsConnected()) {
-        k_sleep(K_MSEC(1000));
-    }
     while(true) {
-        if (!DeviceState_IsConnected(DeviceId_Uhk80_Left)) {
-            goto begin;
-        }
-        if (transmitStateUpdate()) {
+        if (!DeviceState_IsConnected(DeviceId_Uhk80_Left) || transmitStateUpdate()) {
             k_sleep(K_FOREVER);
         }
     }

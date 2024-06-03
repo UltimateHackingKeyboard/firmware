@@ -55,6 +55,13 @@ static void discovery_complete(struct bt_gatt_dm *dm, void *context) {
     bt_nus_subscribe_receive(nus);
 
     bt_gatt_dm_data_release(dm);
+
+    if (DEVICE_ID == DeviceId_Uhk80_Right) {
+        Bt_SetDeviceConnected(DeviceId_Uhk80_Left);
+    }
+    if (DEVICE_ID == DeviceId_Uhk_Dongle) {
+        Bt_SetDeviceConnected(DeviceId_Uhk80_Right);
+    }
 }
 
 static void discovery_service_not_found(struct bt_conn *conn, void *context) {

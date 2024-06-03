@@ -103,7 +103,7 @@ int main(void) {
         printk("Reading user config\n");
         flash_area_read(userConfigArea, 0, StagingUserConfigBuffer.buffer, USER_CONFIG_SIZE);
         printk("Applying user config\n");
-        bool factoryMode = true;
+        bool factoryMode = false;
         if (factoryMode) {
             LedManager_FullUpdate();
         } else {
