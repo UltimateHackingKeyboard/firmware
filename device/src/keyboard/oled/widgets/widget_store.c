@@ -1,3 +1,6 @@
+#include "console_widget.h"
+#include "custom_widget.h"
+#include "keyboard/oled/widgets/custom_widget.h"
 #include "keyboard/oled/oled.h"
 #include "keyboard/oled/widgets/widgets.h"
 #include "keyboard/oled/fonts/fonts.h"
@@ -16,8 +19,10 @@
 
 widget_t KeymapWidget;
 widget_t LayerWidget;
+widget_t KeymapLayerWidget;
 widget_t StatusWidget;
 widget_t CanvasWidget;
+widget_t ConsoleWidget;
 
 static string_segment_t getLayerText() {
     return (string_segment_t){ .start = LayerNames[ActiveLayer], .end = NULL };
@@ -29,6 +34,16 @@ static string_segment_t getKeymapText() {
     } else {
         return GetKeymapName(CurrentKeymapIndex);
     }
+}
+
+static string_segment_t getKeymapLayerText() {
+#define BUFFER_LENGTH 32
+    static char buffer[BUFFER_LENGTH] = { [BUFFER_LENGTH-1] = 0 };
+    string_segment_t layerText = getLayerText();
+    string_segment_t keymapText = getKeymapText();
+    snprintf(buffer, BUFFER_LENGTH-1, "%.*s   %.*s", SegmentLen(keymapText), keymapText.start, SegmentLen(layerText), layerText.start);
+    return (string_segment_t){ .start = buffer, .end = NULL };
+#undef BUFFER_LENGTH
 }
 
 static string_segment_t getStatusText() {
@@ -44,12 +59,24 @@ static string_segment_t getStatusText() {
     }
     snprintf(buffer, BUFFER_LENGTH-1, "left: %s", connState);
     return (string_segment_t){ .start = buffer, .end = NULL };
+#undef BUFFER_LENGTH
+}
+
+static void drawStatus(widget_t* self, framebuffer_t* buffer)
+{
+    if (self->dirty) {
+        self->dirty = false;
+        Framebuffer_Clear(self, buffer);
+        Framebuffer_DrawTextAnchored(self, buffer, AnchorType_Begin, AnchorType_Center, &JetBrainsMono8, getStatusText().start, NULL);
+    }
 }
 
 void WidgetStore_Init()
 {
     LayerWidget = TextWidget_BuildRefreshable(&JetBrainsMono16, &getLayerText);
     KeymapWidget = TextWidget_BuildRefreshable(&JetBrainsMono16, &getKeymapText);
-    StatusWidget = TextWidget_BuildRefreshable(&JetBrainsMono8, &getStatusText);
+    KeymapLayerWidget = TextWidget_BuildRefreshable(&JetBrainsMono16, &getKeymapLayerText);
+    StatusWidget = CustomWidget_Build(&drawStatus);
     CanvasWidget = CustomWidget_Build(NULL);
+    ConsoleWidget = ConsoleWidget_Build();
 }

@@ -34,6 +34,7 @@
 
 // Functions:
 
+    uint8_t SegmentLen(string_segment_t str);
     bool StrLessOrEqual(const char* a, const char* aEnd, const char* b, const char* bEnd);
     bool StrEqual(const char* a, const char* aEnd, const char* b, const char* bEnd);
     const char* FindChar(char c, const char* str, const char* strEnd);

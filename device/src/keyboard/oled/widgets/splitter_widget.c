@@ -9,7 +9,7 @@ void SplitterWidget_LayOut(widget_t* self, uint8_t x, uint8_t y, uint8_t w, uint
     self->h = h;
     self->dirty = true;
     uint8_t splitWidth = self->splitterData.splitLine ? 1 : 0;
-    if (self->type == WidgetType_HSplitter) {
+    if (self->type == WidgetType_VSplitter) {
         self->splitterData.child1->layOut(self->splitterData.child1, x, y, w, self->splitterData.splitAt);
         self->splitterData.child2->layOut(self->splitterData.child2, x, y+self->splitterData.splitAt+splitWidth, w, h-splitWidth-self->splitterData.splitAt);
     } else {
@@ -23,7 +23,7 @@ void SplitterWidget_Draw(widget_t* self, framebuffer_t* buffer)
 {
     if (self->dirty) {
         self->dirty = false;
-        if (self->type == WidgetType_HSplitter) {
+        if (self->type == WidgetType_VSplitter) {
             Framebuffer_DrawHLine(self, buffer, 0, self->w, self->splitterData.splitAt);
         } else {
             Framebuffer_DrawVLine(self, buffer, self->splitterData.splitAt, 0, self->h);

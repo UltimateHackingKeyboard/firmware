@@ -1,4 +1,6 @@
+#ifdef DEBUG
 #define WATCHES
+#endif
 
 #ifdef WATCHES
 #ifndef SRC_UTILS_DBG_H_

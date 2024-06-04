@@ -4,10 +4,10 @@
 #include "oled_display.h"
 #include "oled_buffer.h"
 #include "screens/screen_manager.h"
-#include "screens/test_screen.h"
 #include "legacy/event_scheduler.h"
 #include "legacy/timer.h"
 #include "legacy/led_manager.h"
+#include "keyboard/oled/screens/screens.h"
 
 #ifdef DEVICE_HAS_OLED
 
@@ -291,7 +291,7 @@ void InitOled(void) {
 
     OledBuffer_Init();
     ScreenManager_Init();
-    currentScreen = TestScreen;
+    currentScreen = MainScreen;
 
     oledThreadId = k_thread_create(
             &thread_data, stack_area,
