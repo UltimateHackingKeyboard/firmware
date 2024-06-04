@@ -38,7 +38,7 @@ extern "C" void UsbCompatibility_SendKeyboardReport(const usb_basic_keyboard_rep
     if (keyboard_app.has_transport()) {
         keyboard_app.set_report_state(*reinterpret_cast<const scancode_buffer*>(report));
     } else if (DEVICE_IS_UHK80_RIGHT && Bt_DeviceIsConnected(DeviceId_Uhk_Dongle))  {
-        Messenger_Send(DeviceId_Uhk_Dongle, SyncablePropertyId_KeyboardReport, (const uint8_t*)report, sizeof(*report));
+        Messenger_Send2(DeviceId_Uhk_Dongle, MessageId_SyncableProperty, SyncablePropertyId_KeyboardReport, (const uint8_t*)report, sizeof(*report));
     }
 }
 
@@ -49,7 +49,7 @@ extern "C" void UsbCompatibility_SendMouseReport(const usb_mouse_report_t* repor
     if (mouse_app.has_transport()) {
         mouse_app.set_report_state(*reinterpret_cast<const mouse_buffer*>(report));
     } else if (DEVICE_IS_UHK80_RIGHT && Bt_DeviceIsConnected(DeviceId_Uhk_Dongle))  {
-        Messenger_Send(DeviceId_Uhk_Dongle, SyncablePropertyId_MouseReport, (const uint8_t*)report, sizeof(*report));
+        Messenger_Send2(DeviceId_Uhk_Dongle, MessageId_SyncableProperty, SyncablePropertyId_MouseReport, (const uint8_t*)report, sizeof(*report));
     }
 }
 
@@ -71,7 +71,7 @@ extern "C" void UsbCompatibility_SendConsumerReport(const usb_media_keyboard_rep
     if (controls_app.has_transport()) {
         controls_app.set_report_state(controls);
     } else if (DEVICE_IS_UHK80_RIGHT && Bt_DeviceIsConnected(DeviceId_Uhk_Dongle)) {
-        Messenger_Send(DeviceId_Uhk_Dongle, SyncablePropertyId_ControlsReport, (const uint8_t*)(&controls), sizeof(controls));
+        Messenger_Send2(DeviceId_Uhk_Dongle, MessageId_SyncableProperty, SyncablePropertyId_ControlsReport, (const uint8_t*)(&controls), sizeof(controls));
     }
 }
 
