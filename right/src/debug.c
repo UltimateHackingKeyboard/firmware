@@ -1,6 +1,10 @@
 #include <string.h>
 #include "debug.h"
-#ifndef __ZEPHYR__
+
+#ifdef __ZEPHYR__
+#include "logger.h"
+#include "keyboard/oled/screens/screen_manager.h"
+#else
 #include "segment_display.h"
 #endif
 
@@ -65,8 +69,11 @@ void TriggerWatch(key_state_t *keyState)
 {
     int16_t key = (keyState - &KeyStates[SlotId_LeftKeyboardHalf][0]);
     if (0 <= key && key <= 7) {
-        // Set the LED value to RES until next update occurs.
-        showString("RES");
+        // Set the LED value to --- until next update occurs.
+#ifdef __ZEPHYR__
+        ScreenManager_ActivateScreen(ScreenId_Debug);
+#endif
+        showString("---");
         CurrentWatch = key;
         tickCount = 0;
     }

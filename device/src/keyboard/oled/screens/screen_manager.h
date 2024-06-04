@@ -14,7 +14,8 @@
 // Typedefs:
 
     typedef enum {
-        ScreenId_Test,
+        ScreenId_Main,
+        ScreenId_Debug,
         ScreenId_Pairing,
         ScreenId_PairingFailed,
         ScreenId_PairingSucceeded,
