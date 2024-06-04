@@ -39,3 +39,9 @@ void RunUserLogic(void) {
         SegmentDisplay_Update();
     }
 }
+
+void RunUhk80LeftHalfLogic() {
+    if (EventScheduler_IsActive) {
+        EventScheduler_Process();
+    }
+}
