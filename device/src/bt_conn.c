@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <zephyr/settings/settings.h>
+#include <zephyr/bluetooth/conn.h>
 #include <bluetooth/scan.h>
 #include "bt_advertise.h"
 #include "bt_conn.h"
@@ -70,6 +71,17 @@ char *GetPeerStringByConn(const struct bt_conn *conn) {
     return GetPeerStringByAddr(addr);
 }
 
+static struct bt_conn_le_data_len_param *data_len;
+
+static void set_le_params(struct bt_conn *conn) {
+    data_len = BT_LE_DATA_LEN_PARAM_MAX;
+
+    int err = bt_conn_le_data_len_update(conn, data_len);
+    if (err) {
+        printk("LE data length update failed: %d", err);
+    }
+}
+
 static void connected(struct bt_conn *conn, uint8_t err) {
     int8_t peerId = getPeerIdByConn(conn);
 
@@ -103,6 +115,7 @@ static void connected(struct bt_conn *conn, uint8_t err) {
             USB_DisableHid();
         }
     } else {
+        set_le_params(conn);
         if (DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK_DONGLE) {
             NusClient_Setup(conn);
         }
@@ -192,9 +205,7 @@ BT_CONN_CB_DEFINE(conn_callbacks) = {
     .connected = connected,
     .disconnected = disconnected,
     .security_changed = security_changed,
-#if DEVICE_IS_UHK80_RIGHT
     .le_param_updated = le_param_updated,
-#endif
 };
 
 // Auth callbacks
