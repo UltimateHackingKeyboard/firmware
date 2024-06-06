@@ -8,6 +8,7 @@
 #include "shell.h"
 #include "usb/usb.h"
 #include "bt_conn.h"
+#include "keyboard/charger.h"
 
 shell_t Shell = {
     .keyLog = 1,
@@ -18,7 +19,6 @@ shell_t Shell = {
     .chargerState = 1,
 };
 
-#define VOLTAGE_DIVIDER_MULTIPLIER 2
 
 static int cmd_uhk_keylog(const struct shell *shell, size_t argc, char *argv[])
 {
@@ -69,22 +69,9 @@ static int cmd_uhk_charger(const struct shell *shell, size_t argc, char *argv[])
 {
     if (argc == 1) {
         shell_fprintf(shell, SHELL_NORMAL, "CHARGER_EN: %i | ", Shell.chargerState ? 1 : 0);
-        shell_fprintf(shell, SHELL_NORMAL, "STAT: %i", gpio_pin_get_dt(&chargerStatDt) ? 1 : 0);
+        shell_fprintf(shell, SHELL_NORMAL, "STAT: %i ", gpio_pin_get_dt(&chargerStatDt) ? 1 : 0);
 
-        int err;
-        uint16_t buf;
-        struct adc_sequence sequence = {
-            .buffer = &buf,
-            .buffer_size = sizeof(buf),
-        };
-
-        printk(" | VBAT");
-        (void)adc_sequence_init_dt(&adc_channel, &sequence);
-        err = adc_read(adc_channel.dev, &sequence);
-        int32_t val_mv = (int32_t)buf;
-        printk(": %d", val_mv);
-        adc_raw_to_millivolts_dt(&adc_channel, &val_mv);
-        printk(" = %d mV\n", VOLTAGE_DIVIDER_MULTIPLIER * val_mv);
+        Charger_PrintState();
     } else {
         Shell.chargerState = argv[1][0] == '1';
         gpio_pin_set_dt(&chargerEnDt, Shell.chargerState);

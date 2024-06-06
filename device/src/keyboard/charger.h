@@ -5,6 +5,9 @@
 
     #include <zephyr/drivers/adc.h>
 
+// Macros:
+
+    #define VOLTAGE_DIVIDER_MULTIPLIER 2
 
 // Variables:
 
@@ -15,5 +18,7 @@
 // Functions:
 
     void InitCharger(void);
+    void Charger_PrintState();
+    void Charger_UpdateBatteryState();
 
 #endif // __CHARGER_H__

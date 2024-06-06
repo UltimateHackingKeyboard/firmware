@@ -11,5 +11,6 @@
 // Functions:
 
     void RunUserLogic(void);
+    void RunUhk80LeftHalfLogic();
 
 #endif

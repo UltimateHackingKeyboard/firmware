@@ -135,6 +135,7 @@ int main(void) {
     {
         CurrentTime = k_uptime_get();
         Messenger_ProcessQueue();
+        RunUhk80LeftHalfLogic();
         k_msleep(1);
     }
 #endif
