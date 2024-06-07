@@ -3,7 +3,7 @@
 #include "device.h"
 #include "keyboard/uart.h"
 #include "keyboard/oled/widgets/widgets.h"
-#include "state_sync.h"
+#include "keyboard/state_sync.h"
 
 typedef enum {
     ConnectionType_None,
@@ -21,11 +21,14 @@ void handleStateTransition(device_id_t remoteId, bool isConnected) {
     if (isConnected) {
         switch (DEVICE_ID) {
             case DeviceId_Uhk80_Left:
+                if (remoteId == DeviceId_Uhk80_Right) {
+                    StateSync_Reset();
+                }
                 break;
             case DeviceId_Uhk80_Right:
                 if (remoteId == DeviceId_Uhk80_Left) {
-                    TextWidget_Refresh(&StatusWidget);
-                    StateSync_ResetState();
+                    Widget_Refresh(&StatusWidget);
+                    StateSync_Reset();
                 }
                 break;
             case DeviceId_Uhk_Dongle:

@@ -41,8 +41,8 @@ void SwitchKeymapById(uint8_t index)
     ValidatedUserConfigBuffer.offset = AllKeymaps[index].offset;
     ParseKeymap(&ValidatedUserConfigBuffer, index, AllKeymapsCount, AllMacrosCount, parseConfig);
 #ifdef DEVICE_HAS_OLED
-    TextWidget_Refresh(&KeymapWidget);
-    TextWidget_Refresh(&KeymapLayerWidget);
+    Widget_Refresh(&KeymapWidget);
+    Widget_Refresh(&KeymapLayerWidget);
 #endif
     Ledmap_UpdateBacklightLeds();
     SegmentDisplay_UpdateKeymapText();

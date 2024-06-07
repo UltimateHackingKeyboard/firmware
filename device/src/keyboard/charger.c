@@ -16,13 +16,6 @@ const struct adc_dt_spec adc_channel = ADC_DT_SPEC_GET_BY_IDX(DT_PATH(zephyr_use
 #define CHARGER_UPDATE_PERIOD 60000
 #define CHARGER_STAT_PERIOD 700
 
-typedef struct {
-    uint16_t batteryVoltage;
-    uint8_t batteryPercentage;
-    bool batteryPresent;
-    bool batteryCharging;
-} ATTR_PACKED battery_state_t;
-
 static battery_state_t batteryState;
 
 static uint16_t minCharge = 3000;

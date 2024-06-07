@@ -65,7 +65,7 @@ void Oled_LogConstant(const char* text)
     consoleBuffer[consoleBufferStart][CONSOLE_BUFFER_LINE_LENGTH-1] = '\0';
 
     consoleBufferIsDirty = true;
-    Widget_RequestRedraw(NULL);
+    Widget_Refresh(NULL);
 }
 
 void Oled_Log(const char *fmt, ...)

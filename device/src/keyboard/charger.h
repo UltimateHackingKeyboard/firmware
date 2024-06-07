@@ -3,11 +3,22 @@
 
 // Includes:
 
+    #include "shared/attributes.h"
     #include <zephyr/drivers/adc.h>
+    #include <inttypes.h>
 
 // Macros:
 
     #define VOLTAGE_DIVIDER_MULTIPLIER 2
+
+// Typedefs:
+
+    typedef struct {
+        uint16_t batteryVoltage;
+        uint8_t batteryPercentage;
+        bool batteryPresent;
+        bool batteryCharging;
+    } ATTR_PACKED battery_state_t;
 
 // Variables:
 

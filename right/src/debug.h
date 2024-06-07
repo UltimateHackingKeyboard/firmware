@@ -1,6 +1,7 @@
 #define WATCHES false
 #define DEBUG_SEMAPHORES false
 #define DEBUG_EVENTLOOP_TIMING false
+#define DEBUG_STATESYNC false
 
 #if WATCHES && !defined(SRC_UTILS_DBG_H_)
 
@@ -80,6 +81,11 @@
         #define SEM_TAKE(SEM) k_sem_take(SEM, K_FOREVER)
         #endif
 
+        #if DEBUG_STATESYNC
+            #define STATE_SYNC_LOG(fmt, ...) printk(fmt, ##__VA_ARGS__)
+        #else
+            #define STATE_SYNC_LOG(fmt, ...)
+        #endif
     #endif
 
 
@@ -126,6 +132,7 @@
     #define WATCH_STRING(V, N)
     #define WATCH_SEMAPHORE_TAKE(SEM, LABEL, N) k_sem_take(SEM, K_FOREVER);
     #define SEM_TAKE(SEM) k_sem_take(SEM, K_FOREVER);
+    #define STATE_SYNC_LOG(fmt, ...)
     #define SHOW_STRING(V, N)
     #define SHOW_VALUE(V, N)
     #define ERR(E)

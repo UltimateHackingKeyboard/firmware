@@ -5,7 +5,7 @@
 
 #ifdef __ZEPHYR__
 #include <zephyr/sys/util.h>
-#include "state_sync.h"
+#include "keyboard/state_sync.h"
 #include "keyboard/power.h"
 #include "keyboard/oled/oled.h"
 #define SleepModeActive false
@@ -47,7 +47,7 @@ void LedManager_FullUpdate()
 
 #ifdef __ZEPHYR__
     Oled_UpdateBrightness();
-    StateSync_UpdateBacklight();
+    StateSync_UpdateProperty(StateSyncPropertyId_Backlight, NULL);
 #else
     LedDisplay_UpdateAll();
 #endif
