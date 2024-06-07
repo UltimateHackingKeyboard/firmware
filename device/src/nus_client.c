@@ -17,6 +17,7 @@
 #include "usb/usb_compatibility.h"
 #include "link_protocol.h"
 #include "messenger_queue.h"
+#include "legacy/debug.h"
 
 static struct bt_nus_client nus_client;
 
@@ -150,7 +151,7 @@ void NusClient_Init(void) {
 }
 
 void NusClient_Send(const uint8_t *data, uint16_t len) {
-    k_sem_take(&nusBusy, K_FOREVER);
+    SEM_TAKE(&nusBusy);
     int err = bt_nus_client_send(&nus_client, data, len);
     if (err) {
         k_sem_give(&nusBusy);

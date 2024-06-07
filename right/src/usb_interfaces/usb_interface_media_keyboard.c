@@ -100,13 +100,13 @@ void UsbMediaKeyboard_MergeReports(const usb_media_keyboard_report_t* sourceRepo
 {
     uint8_t idx, i = 0;
     /* find empty position */
-    for (idx = 0; idx < ARRAY_SIZE(targetReport->scancodes); idx++) {
+    for (idx = 0; idx < UTILS_ARRAY_SIZE(targetReport->scancodes); idx++) {
         if (targetReport->scancodes[idx] == 0) {
             break;
         }
     }
     /* copy into empty positions */
-    while ((i < ARRAY_SIZE(sourceReport->scancodes)) && (sourceReport->scancodes[i] != 0) && (idx < ARRAY_SIZE(targetReport->scancodes))) {
+    while ((i < UTILS_ARRAY_SIZE(sourceReport->scancodes)) && (sourceReport->scancodes[i] != 0) && (idx < UTILS_ARRAY_SIZE(targetReport->scancodes))) {
         targetReport->scancodes[idx++] = sourceReport->scancodes[i++];
     }
 }
@@ -116,7 +116,7 @@ bool UsbMediaKeyboard_AddScancode(usb_media_keyboard_report_t* report, uint16_t 
     if (scancode == 0)
         return true;
 
-    for (uint8_t i = 0; i < ARRAY_SIZE(report->scancodes); i++) {
+    for (uint8_t i = 0; i < UTILS_ARRAY_SIZE(report->scancodes); i++) {
         if (report->scancodes[i] == 0) {
             report->scancodes[i] = scancode;
             return true;
