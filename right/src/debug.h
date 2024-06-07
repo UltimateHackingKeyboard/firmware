@@ -1,10 +1,8 @@
-#ifdef DEBUG
-#define WATCHES
-#endif
+#define WATCHES false
+#define DEBUG_SEMAPHORES false
+#define DEBUG_EVENTLOOP_TIMING false
 
-#ifdef WATCHES
-#ifndef SRC_UTILS_DBG_H_
-#define SRC_UTILS_DBG_H_
+#if WATCHES && !defined(SRC_UTILS_DBG_H_)
 
 // When a key '~' to '6' is pressed, corresponding slot (identified by numbers 0-6) is activated.
 // This means that corresponding watched value is shown on the LED display and then updated in certain intervals.
@@ -16,6 +14,7 @@
 
     #ifdef __ZEPHYR__
     #include "logger.h"
+    #include <zephyr/kernel.h>
     #endif
 
     #include <stdint.h>
@@ -71,6 +70,19 @@
 
     #define IF_DEBUG(CMD) CMD
 
+    #ifdef __ZEPHYR__
+
+        #define WATCH_SEMAPHORE_TAKE(SEM, FILENAME, N) if(CurrentWatch == N) { WatchSemaforeTake(SEM, FILENAME, N); } else { k_sem_take(SEM, K_FOREVER); }
+
+        #if DEBUG_SEMAPHORES
+        #define SEM_TAKE(SEM) WATCH_SEMAPHORE_TAKE(SEM, __FILE__, 0)
+        #else
+        #define SEM_TAKE(SEM) k_sem_take(SEM, K_FOREVER)
+        #endif
+
+    #endif
+
+
 // Variables:
 
     extern uint8_t CurrentWatch;
@@ -92,8 +104,11 @@
     void ShowString(char const * v, uint8_t n);
     void AddReportToStatusBuffer(char* dbgTag, usb_basic_keyboard_report_t *report);
 
+    #ifdef __ZEPHYR__
+        void WatchSemaforeTake(struct k_sem* sem, char const * label, uint8_t n);
+    #endif
 
-#endif /* SRC_UTILS_DBG_H_ */
+
 #else
 
 // Macros:
@@ -109,6 +124,8 @@
     #define WATCH_FLOAT_VALUE_MIN(V, N)
     #define WATCH_FLOAT_VALUE_MAX(V, N)
     #define WATCH_STRING(V, N)
+    #define WATCH_SEMAPHORE_TAKE(SEM, LABEL, N) k_sem_take(SEM, K_FOREVER);
+    #define SEM_TAKE(SEM) k_sem_take(SEM, K_FOREVER);
     #define SHOW_STRING(V, N)
     #define SHOW_VALUE(V, N)
     #define ERR(E)

@@ -6,6 +6,7 @@
 #include "messenger.h"
 #include "device.h"
 #include "messenger_queue.h"
+#include "legacy/debug.h"
 
 static K_SEM_DEFINE(nusBusy, 1, 1);
 
@@ -63,7 +64,7 @@ int NusServer_Init(void) {
 }
 
 void NusServer_Send(const uint8_t *data, uint16_t len) {
-    k_sem_take(&nusBusy, K_FOREVER);
+    SEM_TAKE(&nusBusy);
     int err = bt_nus_send(NULL, data, len);
     if (err) {
         k_sem_give(&nusBusy);

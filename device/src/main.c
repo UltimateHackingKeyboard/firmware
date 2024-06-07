@@ -33,7 +33,6 @@
 // #include "dongle_leds.h"
 
 static void sleepTillNextMs() {
-    bool logTime = false;
     static uint16_t counter = 0;
     static uint64_t wakeupTimeUs = 0;
     static uint64_t maxDiff = 0;
@@ -44,7 +43,7 @@ static void sleepTillNextMs() {
     counter++;
 
     if (counter == 1000) {
-        if (logTime) {
+        if (DEBUG_EVENTLOOP_TIMING) {
             printk("Current diff %lld, max diff %lld\n", currentTimeUs-startTimeUs, maxDiff);
         }
         counter = 0;

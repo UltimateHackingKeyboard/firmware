@@ -45,7 +45,6 @@ static void setBatteryPresent(bool present) {
             batteryState.batteryVoltage = 0;
             batteryState.batteryPercentage = 0;
         }
-        static bool firstRun = true;
         Charger_PrintState();
         //todo call state sync here
     }

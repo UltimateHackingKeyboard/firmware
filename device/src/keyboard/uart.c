@@ -6,6 +6,7 @@
 #include "messenger_queue.h"
 #include "device.h"
 #include "device_state.h"
+#include "legacy/debug.h"
 
 // Thread definitions
 
@@ -164,7 +165,7 @@ static void processOutgoingByte(uint8_t byte) {
 }
 
 void Uart_SendPacket(const uint8_t* data, uint16_t len) {
-    k_sem_take(&txBufferBusy, K_FOREVER);
+    SEM_TAKE(&txBufferBusy);
 
     txPosition = 0;
 
@@ -178,7 +179,7 @@ void Uart_SendPacket(const uint8_t* data, uint16_t len) {
 }
 
 void Uart_SendMessage(message_t msg) {
-    k_sem_take(&txBufferBusy, K_FOREVER);
+    SEM_TAKE(&txBufferBusy);
 
     txPosition = 0;
 
