@@ -109,14 +109,19 @@ int main(void) {
     bt_init();
     InitSettings();
 
-    if (DEVICE_IS_UHK80_LEFT) {
+    if (DEVICE_IS_UHK80_RIGHT) {
+        HOGP_Enable();
+    }
+
+    if (DEVICE_IS_UHK80_LEFT || DEVICE_IS_UHK80_RIGHT) {
         int err = NusServer_Init();
         if (!err) {
+            uint8_t advType = ADVERTISE_NUS;
+            if (DEVICE_IS_UHK80_RIGHT) {
+                advType |= ADVERTISE_HID;
+            }
             Advertise(ADVERTISE_NUS);
         }
-    } else if (DEVICE_IS_UHK80_RIGHT) {
-        HOGP_Enable();
-        Advertise(ADVERTISE_NUS | ADVERTISE_HID);
     }
 
     if (DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK_DONGLE) {
