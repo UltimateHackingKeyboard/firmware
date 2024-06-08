@@ -17,6 +17,7 @@
 #include "keyboard/state_sync.h"
 #include <string.h>
 #include <stdio.h>
+#include "device_state.h"
 
 widget_t KeymapWidget;
 widget_t LayerWidget;
@@ -63,8 +64,10 @@ static string_segment_t getLeftStatusText() {
 #undef BUFFER_LENGTH
 }
 
-static void getBatteryStatusText(battery_state_t* battery, char* buffer) {
-    if (!battery->batteryPresent) {
+static void getBatteryStatusText(device_id_t deviceId, battery_state_t* battery, char* buffer) {
+    if (!DeviceState_IsConnected(deviceId)) {
+        sprintf(buffer, "---");
+    } else if (!battery->batteryPresent) {
         sprintf(buffer, "n/a");
     } else if (battery->batteryCharging) {
         sprintf(buffer, "%i+", battery->batteryPercentage);
@@ -78,8 +81,8 @@ static string_segment_t getRightStatusText() {
     static char buffer [BUFFER_LENGTH] = { [BUFFER_LENGTH-1] = 0 };
     char leftBattery[5];
     char rightBattery[5];
-    getBatteryStatusText(&SyncLeftHalfState.battery, leftBattery);
-    getBatteryStatusText(&SyncRightHalfState.battery, rightBattery);
+    getBatteryStatusText(DeviceId_Uhk80_Left, &SyncLeftHalfState.battery, leftBattery);
+    getBatteryStatusText(DeviceId_Uhk80_Right, &SyncRightHalfState.battery, rightBattery);
     snprintf(buffer, BUFFER_LENGTH-1, "%s %s", leftBattery, rightBattery);
     return (string_segment_t){ .start = buffer, .end = NULL };
 #undef BUFFER_LENGTH

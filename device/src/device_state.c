@@ -14,7 +14,7 @@ typedef enum {
 static connection_type_t isConnected[DEVICE_STATE_LAST_DEVICE - DEVICE_STATE_FIRST_DEVICE + 1] = {};
 
 bool DeviceState_IsConnected(device_id_t deviceId) {
-    return isConnected[deviceId - DEVICE_STATE_FIRST_DEVICE] != ConnectionType_None;
+    return deviceId == DEVICE_ID || isConnected[deviceId - DEVICE_STATE_FIRST_DEVICE] != ConnectionType_None;
 }
 
 void handleStateTransition(device_id_t remoteId, bool isConnected) {
