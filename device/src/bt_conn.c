@@ -5,6 +5,7 @@
 #include "bt_advertise.h"
 #include "bt_conn.h"
 #include "device_state.h"
+#include "keyboard/oled/screens/screen_manager.h"
 #include "nus_client.h"
 #include "device.h"
 #include "keyboard/oled/screens/pairing_screen.h"
@@ -284,6 +285,10 @@ void bt_init(void)
 
 void num_comp_reply(uint8_t accept) {
     struct bt_conn *conn;
+
+#ifdef DEVICE_HAS_OLED
+    ScreenManager_SwitchScreenEvent();
+#endif
 
     if (!auth_conn) {
         return;
