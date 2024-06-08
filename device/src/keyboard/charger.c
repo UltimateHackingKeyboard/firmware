@@ -65,7 +65,7 @@ static bool setPercentage(uint16_t voltage, uint8_t perc) {
 static bool updateBatteryPresent() {
     uint32_t statPeriod = MIN((uint32_t)(lastStatZeroTime - lastStatOneTime), (uint32_t)(lastStatOneTime-lastStatZeroTime));
     uint32_t lastStat = MAX(lastStatZeroTime, lastStatOneTime);
-    bool batteryOscilates = statPeriod > CHARGER_STAT_PERIOD;
+    bool batteryOscilates = statPeriod < CHARGER_STAT_PERIOD;
     bool changedRecently = (CurrentTime - lastStat) < CHARGER_STAT_PERIOD;
     bool batteryPresent = !(changedRecently && batteryOscilates);
     return setBatteryPresent(batteryPresent);
