@@ -54,8 +54,4 @@ widget_t TextWidget_BuildRefreshable(const lv_font_t* font, string_segment_t (*t
     };
 }
 
-void TextWidget_Refresh(widget_t* self) {
-    self->dirty = true;
-    Oled_RequestRedraw();
-}
 

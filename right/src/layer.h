@@ -24,6 +24,7 @@
         LayerId_Ctrl,
         LayerId_Alt,
         LayerId_Gui,
+        LayerId_First = LayerId_Base,
         LayerId_Last = LayerId_Gui,
         LayerId_Count = LayerId_Last + 1,
         LayerId_RegularLast = LayerId_Fn5,

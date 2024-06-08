@@ -23,12 +23,12 @@
 #include "macros/core.h"
 #include "legacy/timer.h"
 #include "legacy/user_logic.h"
-#include "state_sync.h"
 #include "legacy/config_manager.h"
 #include "keyboard/power.h"
 #include "messenger.h"
 #include "legacy/led_manager.h"
 #include "legacy/debug.h"
+#include "keyboard/state_sync.h"
 // #include <zephyr/drivers/gpio.h>
 // #include "dongle_leds.h"
 
@@ -155,7 +155,6 @@ int main(void) {
     if (DEVICE_IS_UHK80_LEFT || DEVICE_IS_UHK80_RIGHT) {
         StateSync_Init();
     }
-
 
 #if DEVICE_IS_UHK80_RIGHT
     while (true)

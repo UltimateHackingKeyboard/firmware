@@ -19,6 +19,8 @@
 #include "usb_report_updater.h"
 #include "debug.h"
 #include "config_manager.h"
+#include "led_manager.h"
+#include "attributes.h"
 
     uint16_t DataModelMajorVersion = 0;
     uint16_t DataModelMinorVersion = 0;
@@ -55,7 +57,7 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
 
     // LED brightness
 
-    uint8_t iconsAndLayerTextsBrightness = 0xff;
+    ATTR_UNUSED uint8_t iconsAndLayerTextsBrightness = 0xff;
     uint8_t alphanumericSegmentsBrightness = 0xff;
     uint8_t keyBacklightBrightness = 0xff;
 
@@ -236,7 +238,7 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
         // Cfg.AlphanumericSegmentsBrightnessDefault = alphanumericSegmentsBrightness;
 
 #ifndef __ZEPHYR__
-        LedSlaveDriver_RecalculateLedBrightness();
+        LedManager_RecalculateLedBrightness();
 #endif
 
         // Update mouse key speeds

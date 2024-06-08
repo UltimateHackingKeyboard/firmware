@@ -11,7 +11,7 @@
 
 #ifdef __ZEPHYR__
 #include "keyboard/leds.h"
-#include "state_sync.h"
+#include "keyboard/state_sync.h"
 #else
 #include "device/device.h"
 #endif
@@ -578,6 +578,6 @@ void Ledmap_SetLedBacklightingMode(backlighting_mode_t newMode)
 {
     Cfg.BacklightingMode = newMode;
 #ifdef __ZEPHYR__
-    StateSync_UpdateBacklight();
+    StateSync_UpdateProperty(StateSyncPropertyId_Backlight, NULL);
 #endif
 }

@@ -3,7 +3,7 @@
 #include "device.h"
 #include <stdlib.h>
 
-void Widget_RequestRedraw(widget_t* widget)
+void Widget_Refresh(widget_t* widget)
 {
 #ifdef DEVICE_HAS_OLED
     if (widget != NULL) {

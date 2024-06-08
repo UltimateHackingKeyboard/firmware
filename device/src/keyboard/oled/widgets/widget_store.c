@@ -14,8 +14,10 @@
 #include "legacy/str_utils.h"
 #include "keyboard/uart.h"
 #include "bt_conn.h"
+#include "keyboard/state_sync.h"
 #include <string.h>
 #include <stdio.h>
+#include "device_state.h"
 
 widget_t KeymapWidget;
 widget_t LayerWidget;
@@ -46,7 +48,7 @@ static string_segment_t getKeymapLayerText() {
 #undef BUFFER_LENGTH
 }
 
-static string_segment_t getStatusText() {
+static string_segment_t getLeftStatusText() {
 #define BUFFER_LENGTH 20
     static char buffer [BUFFER_LENGTH] = { [BUFFER_LENGTH-1] = 0 };
     const char* connState = "---";
@@ -62,12 +64,37 @@ static string_segment_t getStatusText() {
 #undef BUFFER_LENGTH
 }
 
+static void getBatteryStatusText(device_id_t deviceId, battery_state_t* battery, char* buffer) {
+    if (!DeviceState_IsConnected(deviceId)) {
+        sprintf(buffer, "---");
+    } else if (!battery->batteryPresent) {
+        sprintf(buffer, "n/a");
+    } else if (battery->batteryCharging) {
+        sprintf(buffer, "%i+", battery->batteryPercentage);
+    } else {
+        sprintf(buffer, "%i%%", battery->batteryPercentage);
+    }
+}
+
+static string_segment_t getRightStatusText() {
+#define BUFFER_LENGTH 20
+    static char buffer [BUFFER_LENGTH] = { [BUFFER_LENGTH-1] = 0 };
+    char leftBattery[5];
+    char rightBattery[5];
+    getBatteryStatusText(DeviceId_Uhk80_Left, &SyncLeftHalfState.battery, leftBattery);
+    getBatteryStatusText(DeviceId_Uhk80_Right, &SyncRightHalfState.battery, rightBattery);
+    snprintf(buffer, BUFFER_LENGTH-1, "%s %s", leftBattery, rightBattery);
+    return (string_segment_t){ .start = buffer, .end = NULL };
+#undef BUFFER_LENGTH
+}
+
 static void drawStatus(widget_t* self, framebuffer_t* buffer)
 {
     if (self->dirty) {
         self->dirty = false;
         Framebuffer_Clear(self, buffer);
-        Framebuffer_DrawTextAnchored(self, buffer, AnchorType_Begin, AnchorType_Center, &JetBrainsMono8, getStatusText().start, NULL);
+        Framebuffer_DrawTextAnchored(self, buffer, AnchorType_Begin, AnchorType_Center, &JetBrainsMono8, getLeftStatusText().start, NULL);
+        Framebuffer_DrawTextAnchored(self, buffer, AnchorType_End, AnchorType_Center, &JetBrainsMono8, getRightStatusText().start, NULL);
     }
 }
 

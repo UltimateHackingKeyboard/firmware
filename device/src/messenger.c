@@ -4,32 +4,20 @@
 #include "autoconf.h"
 #include "link_protocol.h"
 #include "messenger_queue.h"
-#include "state_sync.h"
+#include "keyboard/state_sync.h"
 #include "usb/usb_compatibility.h"
 #include "nus_server.h"
 #include "nus_client.h"
 #include "legacy/module.h"
 #include "legacy/key_states.h"
 #include "shared/attributes.h"
+#include "legacy/str_utils.h"
 
 #ifdef DEVICE_IS_KEYBOARD
 #include "keyboard/uart.h"
 #endif
 
 static k_tid_t mainThreadId = 0;
-
-static const char* deviceIdToString(device_id_t deviceId) {
-    switch (deviceId) {
-        case DEVICE_ID_UHK80_LEFT:
-            return "left";
-        case DEVICE_ID_UHK80_RIGHT:
-            return "right";
-        case DEVICE_ID_UHK_DONGLE:
-            return "dongle";
-        default:
-            return "unknown";
-    }
-}
 
 static void sendOverBt(device_id_t dst, message_t message) {
     if (DEVICE_IS_UHK80_LEFT) {
@@ -38,7 +26,7 @@ static void sendOverBt(device_id_t dst, message_t message) {
                 NusServer_SendMessage(message);
                 break;
             default:
-                printk("Cannot send message from %s to %s\n", deviceIdToString(DEVICE_ID), deviceIdToString(dst));
+                printk("Cannot send message from %s to %s\n", Utils_DeviceIdToString(DEVICE_ID), Utils_DeviceIdToString(dst));
         }
     }
 
@@ -51,7 +39,7 @@ static void sendOverBt(device_id_t dst, message_t message) {
                 NusClient_SendMessage(message);
                 break;
             default:
-                printk("Cannot send message from %s to %s\n", deviceIdToString(DEVICE_ID), deviceIdToString(dst));
+                printk("Cannot send message from %s to %s\n", Utils_DeviceIdToString(DEVICE_ID), Utils_DeviceIdToString(dst));
         }
     }
 
@@ -61,7 +49,7 @@ static void sendOverBt(device_id_t dst, message_t message) {
                 NusClient_SendMessage(message);
                 break;
             default:
-                printk("Cannot send message from %s to %s\n", deviceIdToString(DEVICE_ID), deviceIdToString(dst));
+                printk("Cannot send message from %s to %s\n", Utils_DeviceIdToString(DEVICE_ID), Utils_DeviceIdToString(dst));
         }
     }
 }
@@ -69,7 +57,7 @@ static void sendOverBt(device_id_t dst, message_t message) {
 static void receiveLeft(device_id_t src, const uint8_t* data, uint16_t len) {
     switch (data[0]) {
         case MessageId_StateSync:
-            StateSync_LeftReceiveStateUpdate(data, len);
+            StateSync_ReceiveStateUpdate(src, data, len);
             break;
         default:
             printk("Didn't expect to receive message %i %i\n", data[0], data[1]);
@@ -97,13 +85,13 @@ static void processSyncablePropertyRight(device_id_t src, const uint8_t* data, u
 static void receiveRight(device_id_t src, const uint8_t* data, uint16_t len) {
     switch (data[0]) {
         case MessageId_StateSync:
-            StateSync_RightReceiveStateUpdate(data, len);
+            StateSync_ReceiveStateUpdate(src, data, len);
             break;
         case MessageId_SyncableProperty:
             processSyncablePropertyRight(src, data, len);
             break;
         case MessageId_Log:
-            printk("%s: %s\n", deviceIdToString(src), data);
+            printk("%s: %s\n", Utils_DeviceIdToString(src), data);
             break;
         default:
             printk("Unrecognized or unexpected message [%i, %i, ...]\n", data[0], data[1]);
@@ -184,7 +172,7 @@ void Messenger_SendMessage(device_id_t dst, message_t message) {
         return;
     }
 
-    printk("Failed to send message from %s to %s\n", deviceIdToString(DEVICE_ID), deviceIdToString(dst));
+    printk("Failed to send message from %s to %s\n", Utils_DeviceIdToString(DEVICE_ID), Utils_DeviceIdToString(dst));
 }
 
 void Messenger_Send(device_id_t dst, uint8_t messageId, const uint8_t* data, uint16_t len) {

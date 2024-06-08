@@ -5,7 +5,7 @@
 
     #include <stdbool.h>
     #include <stdint.h>
-    #include "shared/attributes.h"
+    #include "attributes.h"
 
 // Macros:
 // Variables:
@@ -14,13 +14,12 @@
 
 #if !defined(__ZEPHYR__) || DEVICE_IS_UHK_DONGLE
     static ATTR_UNUSED bool RunningOnBattery = false;
+
 #endif
 
 #ifndef DEVICE_HAS_OLED
     static ATTR_UNUSED void Oled_UpdateBrightness() {};
 #endif
-
-
 
 
 #endif

@@ -32,7 +32,7 @@
 #include "led_manager.h"
 
 #ifdef __ZEPHYR__
-#include "state_sync.h"
+#include "keyboard/state_sync.h"
 #else
 #include "init_peripherals.h"
 #endif
@@ -711,7 +711,7 @@ static macro_variable_t keymapAction(parser_context_t* ctx, set_command_action_t
     key_action_t* actionSlot = &CurrentKeymap[layerId][slotIdx][inSlotIdx];
 
 #ifdef __ZEPHYR__
-    StateSync_UpdateLayer(layerId, false);
+    StateSync_UpdateLayer(layerId, true);
 #endif
 
     *actionSlot = keyAction;
