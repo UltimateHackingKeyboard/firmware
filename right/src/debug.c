@@ -1,6 +1,11 @@
 #include <string.h>
 #include "debug.h"
-#ifndef __ZEPHYR__
+
+#ifdef __ZEPHYR__
+#include "logger.h"
+#include "keyboard/oled/screens/screen_manager.h"
+#include <zephyr/kernel.h>
+#else
 #include "segment_display.h"
 #endif
 
@@ -65,8 +70,11 @@ void TriggerWatch(key_state_t *keyState)
 {
     int16_t key = (keyState - &KeyStates[SlotId_LeftKeyboardHalf][0]);
     if (0 <= key && key <= 7) {
-        // Set the LED value to RES until next update occurs.
-        showString("RES");
+        // Set the LED value to --- until next update occurs.
+#ifdef __ZEPHYR__
+        ScreenManager_ActivateScreen(ScreenId_Debug);
+#endif
+        showString("---");
         CurrentWatch = key;
         tickCount = 0;
     }
@@ -203,5 +211,31 @@ void WatchFloatValueMax(float v, uint8_t n)
     }
 }
 
+
+#ifdef __ZEPHYR__
+static const char* getJustFilename(const char* filename) {
+    const char* p = filename;
+    const char* lastSlash = filename;
+
+    while (*p != '\0') {
+        if (*p == '/') {
+            lastSlash = p;
+        }
+        p++;
+    }
+    return ++lastSlash;
+}
+
+void WatchSemaforeTake(struct k_sem* sem, char const * label, uint8_t n) {
+    if (k_sem_take(sem, K_NO_WAIT) != 0) {
+        uint64_t startTimeUs = k_cyc_to_us_near64(k_cycle_get_32());
+        k_sem_take(sem, K_FOREVER);
+        uint64_t endTimeUs = k_cyc_to_us_near64(k_cycle_get_32());
+        const char* threadName = k_thread_name_get(k_current_get());
+        printk("Waited %lld us for semaphore %s in thread %s\n", endTimeUs - startTimeUs, getJustFilename(label), threadName);
+    }
+}
+#endif // __ZEPHYR__
+#else
 
 #endif

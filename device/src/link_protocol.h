@@ -8,7 +8,12 @@
 
 // Macros:
 
-#define MAX_LINK_PACKET_LENGTH 251  // With the BLE data length extension enabled
+// 251 = maximum BLE packet length with data length extension
+// 4 bytes reserved for L2CAP header
+// 3 bytes reserved for ATT header
+// https://devzone.nordicsemi.com/f/nordic-q-a/111900/maximum-nus-packet-payload-with-ble-data-length-extensio
+// Should equal `CONFIG_BT_BUF_ACL_RX_SIZE - L2CAP_HEADER_SIZE - ATT_HEADER_SIZE`, otherwise something is wrong
+#define MAX_LINK_PACKET_LENGTH 244
 
 // Typedefs:
 

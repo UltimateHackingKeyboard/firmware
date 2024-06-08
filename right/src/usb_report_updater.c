@@ -46,6 +46,7 @@
 #include "usb/usb_compatibility.h"
 #include "keyboard/input_interceptor.h"
 #include "keyboard/power.h"
+#include "logger.h"
 #else
 #include "stubs.h"
 #endif

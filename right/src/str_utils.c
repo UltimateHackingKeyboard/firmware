@@ -14,6 +14,14 @@ static bool consumeCommentsAsWhite = true;
 
 static bool isIdentifierChar(char c);
 
+uint8_t SegmentLen(string_segment_t str) {
+    if (str.end == NULL) {
+        return strlen(str.start);
+    } else {
+        return str.end - str.start;
+    }
+}
+
 bool StrLessOrEqual(const char* a, const char* aEnd, const char* b, const char* bEnd)
 {
     while(true) {

@@ -2,8 +2,8 @@
 #include "usb_composite_device.h"
 #include "usb_report_updater.h"
 
-#ifndef ARRAY_SIZE
-#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+#ifndef UTILS_ARRAY_SIZE
+#define UTILS_ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 #endif
 
 uint32_t UsbSystemKeyboardActionCounter;
@@ -117,14 +117,14 @@ void UsbSystemKeyboard_RemoveScancode(usb_system_keyboard_report_t* report, uint
 
 void UsbSystemKeyboard_MergeReports(const usb_system_keyboard_report_t* sourceReport, usb_system_keyboard_report_t* targetReport)
 {
-    for (uint8_t i = 0; i < ARRAY_SIZE(targetReport->bitfield); i++) {
+    for (uint8_t i = 0; i < UTILS_ARRAY_SIZE(targetReport->bitfield); i++) {
         targetReport->bitfield[i] |= sourceReport->bitfield[i];
     }
 }
 
 void UsbSystemKeyboard_ForeachScancode(const usb_system_keyboard_report_t* report, void(*action)(uint8_t))
 {
-    for (uint8_t i = 0; i < ARRAY_SIZE(report->bitfield); i++) {
+    for (uint8_t i = 0; i < UTILS_ARRAY_SIZE(report->bitfield); i++) {
         for (uint8_t j = 0, b = report->bitfield[i]; b > 0; j++, b >>= 1) {
             if (b & 1) {
                 action(USB_SYSTEM_KEYBOARD_MIN_BITFIELD_SCANCODE + i * 8 + j);

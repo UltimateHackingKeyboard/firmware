@@ -1,14 +1,14 @@
 #include "screen_manager.h"
 #include "canvas_screen.h"
 #include "keyboard/oled/widgets/widgets.h"
+#include "keyboard/oled/screens/screens.h"
 #include "keyboard/oled/oled.h"
-#include "pairing_screen.h"
-#include "test_screen.h"
-#include "canvas_screen.h"
+#include "legacy/timer.h"
+#include "legacy/event_scheduler.h"
 #include "legacy/timer.h"
 #include "legacy/event_scheduler.h"
 
-screen_id_t ActiveScreen = ScreenId_Test;
+screen_id_t ActiveScreen = ScreenId_Main;
 
 void ScreenManager_ActivateScreen(screen_id_t screen)
 {
@@ -18,8 +18,12 @@ void ScreenManager_ActivateScreen(screen_id_t screen)
         case ScreenId_Pairing:
             screenPtr = PairingScreen;
             break;
-        case ScreenId_Test:
-            screenPtr = TestScreen;
+        case ScreenId_Debug:
+            screenPtr = DebugScreen;
+            EventScheduler_Reschedule(CurrentTime + DEBUG_SCREEN_NOTIFICATION_TIMEOUT, EventSchedulerEvent_SwitchScreen);
+            break;
+        case ScreenId_Main:
+            screenPtr = MainScreen;
             break;
         case ScreenId_PairingSucceeded:
             screenPtr = PairingSucceededScreen;
@@ -30,7 +34,7 @@ void ScreenManager_ActivateScreen(screen_id_t screen)
             EventScheduler_Schedule(CurrentTime + SCREEN_NOTIFICATION_TIMEOUT, EventSchedulerEvent_SwitchScreen);
             break;
         case ScreenId_Canvas:
-            EventScheduler_Schedule(CurrentTime + CANVAS_TIMEOUT, EventSchedulerEvent_SwitchScreen);
+            EventScheduler_Reschedule(CurrentTime + CANVAS_TIMEOUT, EventSchedulerEvent_SwitchScreen);
             screenPtr = CanvasScreen;
             break;
         default:
@@ -44,13 +48,14 @@ void ScreenManager_ActivateScreen(screen_id_t screen)
 
 void ScreenManager_SwitchScreenEvent()
 {
-    ScreenManager_ActivateScreen(ScreenId_Test);
+    ScreenManager_ActivateScreen(ScreenId_Main);
 }
 
 void ScreenManager_Init()
 {
     WidgetStore_Init();
     PairingScreen_Init();
-    TestScreen_Init();
     CanvasScreen_Init();
+    MainScreen_Init();
+    DebugScreen_Init();
 }

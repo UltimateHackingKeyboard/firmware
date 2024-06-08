@@ -86,6 +86,7 @@ void updateActiveLayer() {
     if (ActiveLayer != previousLayer) {
 #ifdef DEVICE_HAS_OLED
         TextWidget_Refresh(&LayerWidget);
+        TextWidget_Refresh(&KeymapLayerWidget);
 #endif
 #ifdef __ZEPHYR__
         StateSync_UpdateActiveLayer();

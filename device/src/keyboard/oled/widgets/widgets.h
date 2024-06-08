@@ -1,6 +1,7 @@
 #ifndef __WIDGETS_H__
 #define __WIDGETS_H__
 
+#include "keyboard/oled/widgets/widget.h"
 #include "keyboard/oled/framebuffer.h"
 #include "keyboard/oled/fonts/fonts.h"
 #include "keyboard/oled/oled_text_renderer.h"

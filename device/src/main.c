@@ -28,8 +28,37 @@
 #include "keyboard/power.h"
 #include "messenger.h"
 #include "legacy/led_manager.h"
+#include "legacy/debug.h"
 // #include <zephyr/drivers/gpio.h>
 // #include "dongle_leds.h"
+
+static void sleepTillNextMs() {
+    static uint16_t counter = 0;
+    static uint64_t wakeupTimeUs = 0;
+    static uint64_t maxDiff = 0;
+    static uint64_t startTimeUs = 0;
+
+    uint64_t currentTimeUs = k_cyc_to_us_near64(k_cycle_get_32());
+    wakeupTimeUs = wakeupTimeUs+1000;
+    counter++;
+
+    if (counter == 1000) {
+        if (DEBUG_EVENTLOOP_TIMING) {
+            printk("Current diff %lld, max diff %lld\n", currentTimeUs-startTimeUs, maxDiff);
+        }
+        counter = 0;
+        maxDiff = 0;
+    }
+    if (currentTimeUs-startTimeUs > maxDiff) {
+        maxDiff = currentTimeUs-startTimeUs;
+    }
+
+    if (currentTimeUs < wakeupTimeUs) {
+        k_usleep(wakeupTimeUs-currentTimeUs);
+    }
+
+    startTimeUs = k_cyc_to_us_near64(k_cycle_get_32());
+}
 
 int main(void) {
     printk("----------\n" DEVICE_NAME " started\n");
@@ -80,13 +109,19 @@ int main(void) {
     bt_init();
     InitSettings();
 
-    if (DEVICE_IS_UHK80_LEFT || DEVICE_IS_UHK80_RIGHT) {
-        NusServer_Init();
-    }
-
     if (DEVICE_IS_UHK80_RIGHT) {
         HOGP_Enable();
-        AdvertiseHid();
+    }
+
+    if (DEVICE_IS_UHK80_LEFT || DEVICE_IS_UHK80_RIGHT) {
+        int err = NusServer_Init();
+        if (!err) {
+            uint8_t advType = ADVERTISE_NUS;
+            if (DEVICE_IS_UHK80_RIGHT) {
+                advType |= ADVERTISE_HID;
+            }
+            Advertise(ADVERTISE_NUS);
+        }
     }
 
     if (DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK_DONGLE) {
@@ -103,7 +138,7 @@ int main(void) {
         printk("Reading user config\n");
         flash_area_read(userConfigArea, 0, StagingUserConfigBuffer.buffer, USER_CONFIG_SIZE);
         printk("Applying user config\n");
-        bool factoryMode = true;
+        bool factoryMode = false;
         if (factoryMode) {
             LedManager_FullUpdate();
         } else {
@@ -121,21 +156,22 @@ int main(void) {
         StateSync_Init();
     }
 
+
 #if DEVICE_IS_UHK80_RIGHT
     while (true)
     {
         CurrentTime = k_uptime_get();
         Messenger_ProcessQueue();
         RunUserLogic();
-        k_msleep(1);
+        sleepTillNextMs();
     }
 #else
     while (true)
     {
         CurrentTime = k_uptime_get();
         Messenger_ProcessQueue();
-        k_msleep(1);
+        RunUhk80LeftHalfLogic();
+        sleepTillNextMs();
     }
 #endif
 }
-

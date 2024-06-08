@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include <zephyr/settings/settings.h>
+#include <zephyr/bluetooth/conn.h>
 #include <bluetooth/scan.h>
 #include "bt_advertise.h"
 #include "bt_conn.h"
 #include "device_state.h"
+#include "keyboard/oled/screens/screen_manager.h"
 #include "nus_client.h"
 #include "device.h"
 #include "keyboard/oled/screens/pairing_screen.h"
@@ -70,6 +72,17 @@ char *GetPeerStringByConn(const struct bt_conn *conn) {
     return GetPeerStringByAddr(addr);
 }
 
+static struct bt_conn_le_data_len_param *data_len;
+
+static void set_le_params(struct bt_conn *conn) {
+    data_len = BT_LE_DATA_LEN_PARAM_MAX;
+
+    int err = bt_conn_le_data_len_update(conn, data_len);
+    if (err) {
+        printk("LE data length update failed: %d", err);
+    }
+}
+
 static void connected(struct bt_conn *conn, uint8_t err) {
     int8_t peerId = getPeerIdByConn(conn);
 
@@ -103,11 +116,10 @@ static void connected(struct bt_conn *conn, uint8_t err) {
             USB_DisableHid();
         }
     } else {
+        set_le_params(conn);
         if (DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK_DONGLE) {
             NusClient_Setup(conn);
         }
-        Peers[peerId].isConnected = true;
-        DeviceState_TriggerUpdate();
     }
 }
 
@@ -119,12 +131,12 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
 
     if (DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK_DONGLE) {
         if (peerId == PeerIdUnknown) {
-            AdvertiseHid();
+            Advertise(ADVERTISE_NUS | ADVERTISE_HID);
             if (DEVICE_IS_UHK80_RIGHT) {
                 USB_EnableHid();
             }
         } else if (peerId == PeerIdDongle) {
-            AdvertiseNus();
+            Advertise(ADVERTISE_NUS);
         } else if (peerId == PeerIdLeft) {
             int err = bt_scan_start(BT_SCAN_TYPE_SCAN_ACTIVE);
             printk("Start scan\n");
@@ -153,6 +165,23 @@ bool Bt_DeviceIsConnected(device_id_t deviceId) {
     }
 }
 
+void Bt_SetDeviceConnected(device_id_t deviceId) {
+    switch (deviceId) {
+        case DeviceId_Uhk80_Left:
+            Peers[PeerIdLeft].isConnected = true;
+            break;
+        case DeviceId_Uhk80_Right:
+            Peers[PeerIdRight].isConnected = true;
+            break;
+        case DeviceId_Uhk_Dongle:
+            Peers[PeerIdDongle].isConnected = true;
+            break;
+        default:
+            break;
+    }
+    DeviceState_TriggerUpdate();
+}
+
 static void security_changed(struct bt_conn *conn, bt_security_t level, enum bt_security_err err) {
     if (!err) {
         printk("Security changed: %s, level %u\n", GetPeerStringByConn(conn), level);
@@ -177,9 +206,7 @@ BT_CONN_CB_DEFINE(conn_callbacks) = {
     .connected = connected,
     .disconnected = disconnected,
     .security_changed = security_changed,
-#if DEVICE_IS_UHK80_RIGHT
     .le_param_updated = le_param_updated,
-#endif
 };
 
 // Auth callbacks
@@ -258,6 +285,10 @@ void bt_init(void)
 
 void num_comp_reply(uint8_t accept) {
     struct bt_conn *conn;
+
+#ifdef DEVICE_HAS_OLED
+    ScreenManager_SwitchScreenEvent();
+#endif
 
     if (!auth_conn) {
         return;

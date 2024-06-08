@@ -4,6 +4,8 @@
 // Includes:
 
     #include <zephyr/bluetooth/bluetooth.h>
+    #include <stdint.h>
+    #include "device.h"
 
 // Macros:
 
@@ -31,6 +33,7 @@
     extern void bt_init(void);
     extern void num_comp_reply(uint8_t accept);
 
+    void Bt_SetDeviceConnected(device_id_t deviceId);
     bool Bt_DeviceIsConnected(uint8_t deviceId);
 // Variables:
 

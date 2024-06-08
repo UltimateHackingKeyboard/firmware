@@ -2,6 +2,7 @@
 #ifdef __ZEPHYR__
 #include "keyboard/oled/screens/screen_manager.h"
 #include "keyboard/oled/oled.h"
+#include "keyboard/charger.h"
 #else
 #include "segment_display.h"
 #endif
@@ -31,14 +32,25 @@ static void scheduleNext()
 static void processEvt(event_scheduler_event_t evt)
 {
     switch (evt) {
+        case EventSchedulerEvent_UpdateBattery:
+#ifdef __ZEPHYR__
+#ifdef DEVICE_IS_KEYBOARD
+            Charger_UpdateBatteryState();
+#endif
+#endif
+            break;
         case EventSchedulerEvent_ShiftScreen:
 #ifdef __ZEPHYR__
+#ifdef DEVICE_HAS_OLED
             Oled_ShiftScreen();
+#endif
 #endif
             break;
         case EventSchedulerEvent_SwitchScreen:
 #ifdef __ZEPHYR__
+#ifdef DEVICE_HAS_OLED
             ScreenManager_SwitchScreenEvent();
+#endif
 #endif
             break;
         case EventSchedulerEvent_SegmentDisplayUpdate:
