@@ -7,6 +7,7 @@
 #include "legacy/timer.h"
 #include "attributes.h"
 #include "legacy/event_scheduler.h"
+#include "keyboard/state_sync.h"
 
 const struct gpio_dt_spec chargerEnDt = GPIO_DT_SPEC_GET(DT_ALIAS(charger_en), gpios);
 const struct gpio_dt_spec chargerStatDt = GPIO_DT_SPEC_GET(DT_ALIAS(charger_stat), gpios);
@@ -30,7 +31,7 @@ static struct adc_sequence sequence = {
     .buffer_size = sizeof(buf),
 };
 
-static void setBatteryPresent(bool present) {
+static bool setBatteryPresent(bool present) {
     if (batteryState.batteryPresent != present) {
         batteryState.batteryPresent = present;
         if (!present) {
@@ -38,35 +39,36 @@ static void setBatteryPresent(bool present) {
             batteryState.batteryVoltage = 0;
             batteryState.batteryPercentage = 0;
         }
-        Charger_PrintState();
-        //todo call state sync here
+        return true;
     }
+    return false;
 }
 
-static void setCharging(bool charging) {
+static bool setCharging(bool charging) {
     if (batteryState.batteryCharging != charging) {
         batteryState.batteryCharging = charging;
-        //todo call state sync here
+        return true;
     }
+    return false;
 }
 
-static void setPercentage(uint16_t voltage, uint8_t perc) {
-    // don't trigger state update due to voltage fluctuations
+static bool setPercentage(uint16_t voltage, uint8_t perc) {
     batteryState.batteryVoltage = voltage;
 
     if (batteryState.batteryPercentage != perc) {
         batteryState.batteryPercentage = perc;
-        //todo call state sync here
+        return true;
     }
+    return false;
 }
 
-static void updateBatteryPresent() {
+static bool updateBatteryPresent() {
     uint32_t statPeriod = MIN((uint32_t)(lastStatZeroTime - lastStatOneTime), (uint32_t)(lastStatOneTime-lastStatZeroTime));
     uint32_t lastStat = MAX(lastStatZeroTime, lastStatOneTime);
     bool batteryOscilates = statPeriod > CHARGER_STAT_PERIOD;
     bool changedRecently = (CurrentTime - lastStat) < CHARGER_STAT_PERIOD;
     bool batteryPresent = !(changedRecently && batteryOscilates);
-    setBatteryPresent(batteryPresent);
+    return setBatteryPresent(batteryPresent);
 }
 
 static uint16_t getVoltage() {
@@ -81,30 +83,28 @@ void Charger_PrintState() {
 }
 
 void Charger_UpdateBatteryState() {
-    updateBatteryPresent();
+    bool stateChanged = updateBatteryPresent();
 
-    if (!batteryState.batteryPresent) {
-        printk("battery not present!\n");
-        return;
+    if (batteryState.batteryPresent) {
+        bool charging = !gpio_pin_get_dt(&chargerStatDt);
+
+        stateChanged |= setCharging(charging);
+
+        uint16_t voltage = getVoltage();
+
+        // TODO: add more accurate computation
+        uint8_t perc = MIN(100, 100*(MAX(voltage, minCharge)-minCharge) / (maxCharge - minCharge));
+        stateChanged |= setPercentage(voltage, perc);
+
+        if (voltage == 0) {
+            EventScheduler_Schedule(CurrentTime + CHARGER_STAT_PERIOD, EventSchedulerEvent_UpdateBattery);
+        } else {
+            EventScheduler_Schedule(CurrentTime + CHARGER_UPDATE_PERIOD, EventSchedulerEvent_UpdateBattery);
+        }
     }
 
-    bool charging = !gpio_pin_get_dt(&chargerStatDt);
-
-    setCharging(charging);
-
-    uint16_t voltage = getVoltage();
-
-    // TODO: add more accurate computation
-    uint8_t perc = MIN(100, 100*(MAX(voltage, minCharge)-minCharge) / (maxCharge - minCharge));
-    setPercentage(voltage, perc);
-
-    // TODO: Remove this later
-    Charger_PrintState();
-
-    if (voltage == 0) {
-        EventScheduler_Schedule(CurrentTime + CHARGER_STAT_PERIOD, EventSchedulerEvent_UpdateBattery);
-    } else {
-        EventScheduler_Schedule(CurrentTime + CHARGER_UPDATE_PERIOD, EventSchedulerEvent_UpdateBattery);
+    if (stateChanged) {
+        StateSync_UpdateProperty(StateSyncPropertyId_Battery, &batteryState);
     }
 }
 
@@ -115,7 +115,10 @@ void chargerStatCallback(const struct device *port, struct gpio_callback *cb, gp
     } else {
         lastStatZeroTime = CurrentTime;
     }
-    updateBatteryPresent();
+    bool stateChanged = updateBatteryPresent();
+    if (stateChanged) {
+        StateSync_UpdateProperty(StateSyncPropertyId_Battery, &batteryState);
+    }
     if (Shell.statLog) {
         printk("STAT changed to %i\n", stat ? 1 : 0);
     }
