@@ -67,7 +67,8 @@ static bool updateBatteryPresent() {
     uint32_t lastStat = MAX(lastStatZeroTime, lastStatOneTime);
     bool batteryOscilates = statPeriod < CHARGER_STAT_PERIOD;
     bool changedRecently = (CurrentTime - lastStat) < CHARGER_STAT_PERIOD;
-    bool batteryPresent = !(changedRecently && batteryOscilates);
+    bool batteryMissing = (changedRecently && batteryOscilates);
+    bool batteryPresent = !batteryMissing;
     return setBatteryPresent(batteryPresent);
 }
 
@@ -142,7 +143,7 @@ void InitCharger(void) {
 
     (void)adc_sequence_init_dt(&adc_channel, &sequence);
 
-    Charger_UpdateBatteryState();
+    EventScheduler_Reschedule(CurrentTime + CHARGER_STAT_PERIOD, EventSchedulerEvent_UpdateBattery);
 
     // TODO: Update battery level. See bas_notify()
 }
