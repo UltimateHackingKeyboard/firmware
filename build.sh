@@ -27,6 +27,10 @@ usage: ./build DEVICE1 DEVICE2 ... ACTION1 ACTION2 ...
         DEVICEID_UHK80_RIGHT=69660578
         DEVICEID_UHK_DONGLE=683150769
 
+    You can also set a command that will be executed after the builds are finished:
+
+        BELL=mplayer ring.mp3
+
     Examples:
         ./build uhk-80-right flash --dev-id 123
         ./build all build flash
@@ -209,6 +213,7 @@ function performActions() {
     do
         performAction "$DEVICE" $ACTION
     done
+    eval $BELL
 }
 
 
