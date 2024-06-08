@@ -189,6 +189,13 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
             break;
         case StateSyncPropertyId_Battery:
             Widget_Refresh(&StatusWidget);
+            {
+                bool newRunningOnBattery = !SyncLeftHalfState.battery.powered || !SyncRightHalfState.battery.powered;
+                if (RunningOnBattery != newRunningOnBattery) {
+                    RunningOnBattery = newRunningOnBattery;
+                    LedManager_FullUpdate();
+                }
+            }
             break;
         case StateSyncPropertyId_ActiveKeymap:
             // TODO

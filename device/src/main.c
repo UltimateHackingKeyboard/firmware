@@ -1,4 +1,3 @@
-#include "keyboard/power.h"
 #include "zephyr/storage/flash_map.h"
 #include "keyboard/key_scanner.h"
 #include "keyboard/leds.h"
@@ -24,11 +23,11 @@
 #include "legacy/timer.h"
 #include "legacy/user_logic.h"
 #include "legacy/config_manager.h"
-#include "keyboard/power.h"
 #include "messenger.h"
 #include "legacy/led_manager.h"
 #include "legacy/debug.h"
 #include "keyboard/state_sync.h"
+#include "keyboard/charger.h"
 // #include <zephyr/drivers/gpio.h>
 // #include "dongle_leds.h"
 
