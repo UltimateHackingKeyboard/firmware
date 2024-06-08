@@ -96,8 +96,8 @@ static void drawStatus(widget_t* self, framebuffer_t* buffer)
     if (self->dirty) {
         self->dirty = false;
         Framebuffer_Clear(self, buffer);
-        Framebuffer_DrawTextAnchored(self, buffer, AnchorType_Begin, AnchorType_Center, &JetBrainsMono10, getLeftStatusText().start, NULL);
-        Framebuffer_DrawTextAnchored(self, buffer, AnchorType_End, AnchorType_Center, &JetBrainsMono10, getRightStatusText().start, NULL);
+        Framebuffer_DrawTextAnchored(self, buffer, AnchorType_Begin, AnchorType_Center, &JetBrainsMono12, getLeftStatusText().start, NULL);
+        Framebuffer_DrawTextAnchored(self, buffer, AnchorType_End, AnchorType_Center, &JetBrainsMono12, getRightStatusText().start, NULL);
     }
 }
 
