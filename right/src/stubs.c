@@ -3,7 +3,7 @@
 #ifdef __ZEPHYR__
 #include "device.h"
 #else
-#include "shared/device/device.h"
+#include "device/device.h"
 #endif
 
 #if DEVICE_IS_UHK_DONGLE

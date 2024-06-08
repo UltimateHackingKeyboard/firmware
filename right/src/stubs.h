@@ -5,7 +5,7 @@
 
     #include <stdbool.h>
     #include <stdint.h>
-    #include "shared/attributes.h"
+    #include "attributes.h"
 
 // Macros:
 // Variables:

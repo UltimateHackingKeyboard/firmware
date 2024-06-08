@@ -5,11 +5,6 @@
 #include "macros/status_buffer.h"
 #include "module.h"
 #include "slave_protocol.h"
-#ifdef __ZEPHYR__
-    #include "device.h"
-#else
-    #include "shared/device/device.h"
-#endif
 
 #if !defined(MIN)
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -464,6 +459,7 @@ uint8_t CountCommands(const char* text, uint16_t textLen)
     }
 }
 
+#ifdef __ZEPHYR__
 const char* Utils_DeviceIdToString(device_id_t deviceId) {
     switch (deviceId) {
         case DEVICE_ID_UHK80_LEFT:
@@ -476,3 +472,4 @@ const char* Utils_DeviceIdToString(device_id_t deviceId) {
             return "unknown";
     }
 }
+#endif

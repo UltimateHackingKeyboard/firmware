@@ -13,7 +13,7 @@
     #ifdef __ZEPHYR__
         #include "device.h"
     #else
-        #include "shared/device/device.h"
+        #include "device/device.h"
     #endif
 
 // Typedefs:
@@ -70,7 +70,10 @@
     secondary_role_state_t ConsumeSecondaryRoleTimeoutAction(parser_context_t* ctx);
     secondary_role_strategy_t ConsumeSecondaryRoleStrategy(parser_context_t* ctx);
     navigation_mode_t ConsumeNavigationModeId(parser_context_t* ctx);
+
+#ifdef __ZEPHYR__
     const char* Utils_DeviceIdToString(device_id_t deviceId);
+#endif
 
 
 #endif /* SRC_STR_UTILS_H_ */

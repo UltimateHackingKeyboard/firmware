@@ -4,6 +4,8 @@
 #include "layer_switcher.h"
 #include "keymap.h"
 #include "segment_display.h"
+#include "led_manager.h"
+
 #ifndef __ZEPHYR__
 #include "device/device.h"
 #endif
@@ -150,7 +152,7 @@ void LedDisplay_SetText(uint8_t length, const char* text)
         for (uint8_t ledId=0; ledId<ledCountPerChar; ledId++) {
             uint8_t ledIdx = segmentLedIds[charId][ledId];
             bool isLedOn = charBits & (1 << ledId);
-            LedDriverValues[LedDriverId_Left][ledIdx] = isLedOn ? AlphanumericSegmentsBrightness : 0;
+            LedDriverValues[LedDriverId_Left][ledIdx] = isLedOn ? DisplayBrightness : 0;
         }
     }
 }
@@ -161,7 +163,7 @@ void LedDisplay_SetLayer(layer_id_t layerId)
 #ifndef __ZEPHYR__
     // layerLedIds is defined for just three values atm
     for (uint8_t i=1; i<4; i++) {
-        LedDriverValues[LedDriverId_Left][layerLedIds[i-1]] = layerId == i ? IconsAndLayerTextsBrightness : 0;
+        LedDriverValues[LedDriverId_Left][layerLedIds[i-1]] = layerId == i ? DisplayBrightness : 0;
     }
 #endif
 }
@@ -179,7 +181,7 @@ void LedDisplay_SetIcon(led_display_icon_t icon, bool isEnabled)
 {
     ledIconStates[icon] = isEnabled;
 #ifndef __ZEPHYR__
-    LedDriverValues[LedDriverId_Left][iconLedIds[icon]] = isEnabled ? IconsAndLayerTextsBrightness : 0;
+    LedDriverValues[LedDriverId_Left][iconLedIds[icon]] = isEnabled ? DisplayBrightness : 0;
 #endif
 }
 
