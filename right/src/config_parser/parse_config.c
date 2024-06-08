@@ -228,7 +228,6 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
     // If parsing succeeded then apply the parsed values.
 
     if (!ParserRunDry) {
-
         // Update LED brightnesses and reinitialize LED drivers
 
         ValidatedUserConfigLength = userConfigLength;
@@ -237,9 +236,6 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
         // Cfg.IconsAndLayerTextsBrightnessDefault = iconsAndLayerTextsBrightness;
         // Cfg.AlphanumericSegmentsBrightnessDefault = alphanumericSegmentsBrightness;
 
-#ifndef __ZEPHYR__
-        LedManager_RecalculateLedBrightness();
-#endif
 
         // Update mouse key speeds
 
@@ -306,6 +302,7 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
         Cfg.KeyBacklightFadeOutTimeout = keyBacklightFadeOutTimeout;
         Cfg.KeyBacklightFadeOutBatteryTimeout = keyBacklightFadeOutBatteryTimeout;
 
+        LedManager_RecalculateLedBrightness();
 
         // Update counts
 

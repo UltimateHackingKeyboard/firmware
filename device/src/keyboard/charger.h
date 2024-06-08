@@ -6,6 +6,7 @@
     #include "shared/attributes.h"
     #include <zephyr/drivers/adc.h>
     #include <inttypes.h>
+    #include <stdbool.h>
 
 // Macros:
 
@@ -18,6 +19,7 @@
         uint8_t batteryPercentage;
         bool batteryPresent;
         bool batteryCharging;
+        bool powered;
     } ATTR_PACKED battery_state_t;
 
 // Variables:
@@ -25,6 +27,9 @@
     extern const struct gpio_dt_spec chargerEnDt;
     extern const struct gpio_dt_spec chargerStatDt;
     extern const struct adc_dt_spec adc_channel;
+
+    extern bool UsbPowered;
+    extern bool RunningOnBattery;
 
 // Functions:
 

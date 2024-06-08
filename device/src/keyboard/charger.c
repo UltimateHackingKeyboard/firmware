@@ -31,6 +31,8 @@ static struct adc_sequence sequence = {
     .buffer_size = sizeof(buf),
 };
 
+bool RunningOnBattery = false;
+
 static bool setBatteryPresent(bool present) {
     if (batteryState.batteryPresent != present) {
         batteryState.batteryPresent = present;
@@ -72,6 +74,16 @@ static bool updateBatteryPresent() {
     return setBatteryPresent(batteryPresent);
 }
 
+static bool updatePowered() {
+    bool powered = (NRF_POWER->USBREGSTATUS & POWER_USBREGSTATUS_VBUSDETECT_Msk) == POWER_USBREGSTATUS_VBUSDETECT_VbusPresent;
+    if (batteryState.powered != powered) {
+        batteryState.powered = powered;
+        StateSync_UpdateProperty(StateSyncPropertyId_Powered, &batteryState);
+        return true;
+    }
+    return false;
+}
+
 static uint16_t getVoltage() {
     adc_read(adc_channel.dev, &sequence);
     int32_t val_mv = (int32_t)buf;
@@ -84,7 +96,9 @@ void Charger_PrintState() {
 }
 
 void Charger_UpdateBatteryState() {
-    bool stateChanged = updateBatteryPresent();
+    bool stateChanged = false;
+    stateChanged |= updateBatteryPresent();
+    stateChanged |= updatePowered();
 
     if (batteryState.batteryPresent) {
         bool charging = !gpio_pin_get_dt(&chargerStatDt);
@@ -116,7 +130,9 @@ void chargerStatCallback(const struct device *port, struct gpio_callback *cb, gp
     } else {
         lastStatZeroTime = CurrentTime;
     }
-    bool stateChanged = updateBatteryPresent();
+    bool stateChanged = false;
+    stateChanged |= updateBatteryPresent();
+    stateChanged |= updatePowered();
     if (stateChanged) {
         StateSync_UpdateProperty(StateSyncPropertyId_Battery, &batteryState);
     }
