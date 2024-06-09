@@ -40,11 +40,23 @@ static string_segment_t getKeymapText() {
 
 static string_segment_t getKeymapLayerText() {
 #define BUFFER_LENGTH 32
-    static char buffer[BUFFER_LENGTH] = { [BUFFER_LENGTH-1] = 0 };
-    string_segment_t layerText = getLayerText();
-    string_segment_t keymapText = getKeymapText();
-    snprintf(buffer, BUFFER_LENGTH-1, "%.*s   %.*s", SegmentLen(keymapText), keymapText.start, SegmentLen(layerText), layerText.start);
-    return (string_segment_t){ .start = buffer, .end = NULL };
+    if (false) {
+        static char buffer[BUFFER_LENGTH] = { [BUFFER_LENGTH-1] = 0 };
+        string_segment_t layerText = getLayerText();
+        string_segment_t keymapText = getKeymapText();
+        snprintf(buffer, BUFFER_LENGTH-1, "%.*s   %.*s", SegmentLen(keymapText), keymapText.start, SegmentLen(layerText), layerText.start);
+        return (string_segment_t){ .start = buffer, .end = NULL };
+    } else {
+        static char buffer[BUFFER_LENGTH] = { [BUFFER_LENGTH-1] = 0 };
+        string_segment_t layerText = getLayerText();
+        string_segment_t keymapText = getKeymapText();
+        if (ActiveLayer == LayerId_Base) {
+            snprintf(buffer, BUFFER_LENGTH-1, "%.*s", SegmentLen(keymapText), keymapText.start);
+        } else {
+            snprintf(buffer, BUFFER_LENGTH-1, "%.*s", SegmentLen(layerText), layerText.start);
+        }
+        return (string_segment_t){ .start = buffer, .end = NULL };
+    }
 #undef BUFFER_LENGTH
 }
 
@@ -104,7 +116,7 @@ static void drawStatus(widget_t* self, framebuffer_t* buffer)
 void WidgetStore_Init()
 {
     LayerWidget = TextWidget_BuildRefreshable(&JetBrainsMono16, &getLayerText);
-    KeymapWidget = TextWidget_BuildRefreshable(&JetBrainsMono16, &getKeymapText);
+    KeymapWidget = TextWidget_BuildRefreshable(&JetBrainsMono24, &getKeymapText);
     KeymapLayerWidget = TextWidget_BuildRefreshable(&JetBrainsMono16, &getKeymapLayerText);
     StatusWidget = CustomWidget_Build(&drawStatus);
     CanvasWidget = CustomWidget_Build(NULL);

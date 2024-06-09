@@ -20,8 +20,8 @@ static void drawTarget(widget_t* self, framebuffer_t* buffer)
 
 void MainScreen_Init()
 {
-    const uint8_t statusHeight = 12;
-    const uint8_t keymapHeight = 32;
+    const uint8_t statusHeight = 18;
+    const uint8_t keymapHeight = 28;
 
     targetWidget = CustomWidget_Build(&drawTarget);
     keymapLayerSplitter = SplitterWidget_BuildHorizontal(&KeymapWidget, &LayerWidget, 128, false);
