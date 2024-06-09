@@ -237,7 +237,7 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
             Widget_Refresh(&StatusWidget);
             break;
         default:
-            STATE_SYNC_LOG("Property %s has no receive handler.\n", prop->name);
+            printk("Property %i ('%s') has no receive handler. If this is correct, please add a separate empty case...\n", propId, prop->name);
             break;
     }
 }
