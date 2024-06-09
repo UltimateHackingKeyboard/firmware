@@ -13,6 +13,11 @@
 
 // Typedefs:
 
+    typedef enum {
+        FontControl_WhiteText = 1,
+        FontControl_GrayText = 2,
+    } font_control_t;
+
     typedef struct widget_t widget_t;
 
 // Functions:
