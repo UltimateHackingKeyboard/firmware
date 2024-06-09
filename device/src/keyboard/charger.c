@@ -78,7 +78,6 @@ static bool updatePowered() {
     bool powered = (NRF_POWER->USBREGSTATUS & POWER_USBREGSTATUS_VBUSDETECT_Msk) == POWER_USBREGSTATUS_VBUSDETECT_VbusPresent;
     if (batteryState.powered != powered) {
         batteryState.powered = powered;
-        StateSync_UpdateProperty(StateSyncPropertyId_Powered, &batteryState);
         return true;
     }
     return false;

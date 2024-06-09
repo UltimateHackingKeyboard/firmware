@@ -59,7 +59,6 @@
         StateSyncPropertyId_Backlight,
         StateSyncPropertyId_ActiveKeymap,
         StateSyncPropertyId_Battery,
-        StateSyncPropertyId_Powered,
         StateSyncPropertyId_KeyboardLedsState,
         StateSyncPropertyId_Count,
     } state_sync_prop_id_t;
