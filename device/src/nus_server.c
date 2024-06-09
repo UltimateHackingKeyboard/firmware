@@ -11,8 +11,6 @@
 static K_SEM_DEFINE(nusBusy, 1, 1);
 
 static void received(struct bt_conn *conn, const uint8_t *const data, uint16_t len) {
-    printk("NUS data received from %s: %i\n", GetPeerStringByConn(conn), len);
-
     uint8_t* copy = MessengerQueue_AllocateMemory();
     memcpy(copy, data, len);
 
@@ -33,7 +31,6 @@ static void sent(struct bt_conn *conn) {
     k_sem_give(&nusBusy);
     char addr[BT_ADDR_LE_STR_LEN] = {0};
     bt_addr_le_to_str(bt_conn_get_dst(conn), addr, ARRAY_SIZE(addr));
-    printk("NUS data sent to %s\n", GetPeerStringByConn(conn));
 }
 
 static void send_enabled(enum bt_nus_send_status status)
