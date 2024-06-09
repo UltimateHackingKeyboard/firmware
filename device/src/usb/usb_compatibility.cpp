@@ -83,3 +83,7 @@ extern "C" void UsbCompatibility_SendConsumerReport2(const uint8_t* report)
         controls_app.set_report_state(*(const controls_buffer*)report);
     }
 }
+
+extern "C" bool UsbCompatibility_UsbConnected() {
+    return keyboard_app::handle().has_transport();
+}

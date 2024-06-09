@@ -6,10 +6,12 @@
 #include "bt_conn.h"
 #include "device_state.h"
 #include "keyboard/oled/screens/screen_manager.h"
+#include "keyboard/oled/widgets/widget.h"
 #include "nus_client.h"
 #include "device.h"
 #include "keyboard/oled/screens/pairing_screen.h"
 #include "usb/usb.h"
+#include "keyboard/oled/widgets/widgets.h"
 
 #define PeerCount 3
 
@@ -114,6 +116,8 @@ static void connected(struct bt_conn *conn, uint8_t err) {
             bt_conn_le_param_update(conn, &conn_params);
 
             USB_DisableHid();
+
+            DeviceState_SetConnection(ConnectionId_BluetoothHid, ConnectionType_Bt);
         }
     } else {
         set_le_params(conn);
@@ -149,6 +153,8 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
     if (peerId != PeerIdUnknown) {
         Peers[peerId].isConnected = false;
         DeviceState_TriggerUpdate();
+    } else {
+        DeviceState_SetConnection(ConnectionId_BluetoothHid, ConnectionType_None);
     }
 }
 

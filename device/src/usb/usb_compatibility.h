@@ -10,5 +10,6 @@ void UsbCompatibility_SendKeyboardReport(const usb_basic_keyboard_report_t* repo
 void UsbCompatibility_SendMouseReport(const usb_mouse_report_t* report) ;
 void UsbCompatibility_SendConsumerReport(const usb_media_keyboard_report_t* mediaReport, const usb_system_keyboard_report_t* systemReport);
 void UsbCompatibility_SendConsumerReport2(const uint8_t* report);
+bool UsbCompatibility_UsbConnected();
 
 #endif // __USB_HEADER__

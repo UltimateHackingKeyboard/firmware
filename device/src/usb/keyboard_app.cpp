@@ -1,6 +1,11 @@
 #include "keyboard_app.hpp"
 #include "zephyr/sys/printk.h"
 
+extern "C"
+{
+#include "device_state.h"
+}
+
 keyboard_app& keyboard_app::handle()
 {
     static keyboard_app app{};
@@ -45,11 +50,14 @@ void keyboard_app::start(hid::protocol prot)
     // TODO start handling keyboard events
     keys_nkro_.reset();
     keys_6kro_.reset();
+
+    DeviceState_SetConnection(ConnectionId_UsbHid, ConnectionType_Usb);
 }
 
 void keyboard_app::stop()
 {
     // TODO stop handling keyboard events
+    DeviceState_SetConnection(ConnectionId_UsbHid, ConnectionType_None);
 }
 
 void keyboard_app::set_report_state(const keys_nkro_report_base<>& data)

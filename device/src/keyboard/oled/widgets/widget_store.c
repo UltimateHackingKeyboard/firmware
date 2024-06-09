@@ -18,6 +18,7 @@
 #include <string.h>
 #include <stdio.h>
 #include "device_state.h"
+#include "usb/usb_compatibility.h"
 
 widget_t KeymapWidget;
 widget_t LayerWidget;
@@ -25,6 +26,7 @@ widget_t KeymapLayerWidget;
 widget_t StatusWidget;
 widget_t CanvasWidget;
 widget_t ConsoleWidget;
+widget_t TargetWidget;
 
 static string_segment_t getLayerText() {
     return (string_segment_t){ .start = LayerNames[ActiveLayer], .end = NULL };
@@ -37,6 +39,20 @@ static string_segment_t getKeymapText() {
         return GetKeymapName(CurrentKeymapIndex);
     }
 }
+
+
+static string_segment_t getTargetText() {
+    if (DeviceState_IsConnected(ConnectionId_UsbHid)) {
+        return (string_segment_t){ .start = "Usb Cable", .end = NULL };
+    } else if (DeviceState_IsConnected(ConnectionId_Dongle)) {
+        return (string_segment_t){ .start = "Uhk Dongle", .end = NULL };
+    } else if (DeviceState_IsConnected(ConnectionId_BluetoothHid)) {
+        return (string_segment_t){ .start = "Bluetooth", .end = NULL };
+    } else {
+        return (string_segment_t){ .start = "Disconnected", .end = NULL };
+    }
+}
+
 
 static string_segment_t getKeymapLayerText() {
 #define BUFFER_LENGTH 32
@@ -118,6 +134,7 @@ void WidgetStore_Init()
     LayerWidget = TextWidget_BuildRefreshable(&JetBrainsMono16, &getLayerText);
     KeymapWidget = TextWidget_BuildRefreshable(&JetBrainsMono24, &getKeymapText);
     KeymapLayerWidget = TextWidget_BuildRefreshable(&JetBrainsMono16, &getKeymapLayerText);
+    TargetWidget = TextWidget_BuildRefreshable(&JetBrainsMono12, &getTargetText);
     StatusWidget = CustomWidget_Build(&drawStatus);
     CanvasWidget = CustomWidget_Build(NULL);
     ConsoleWidget = ConsoleWidget_Build();
