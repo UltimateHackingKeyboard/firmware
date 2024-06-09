@@ -25,6 +25,16 @@ void mouse_app::set_report_state(const mouse_report_base<>& data)
     send_buffer(buf_idx);
 }
 
+bool mouse_app::swap_buffers(uint8_t buf_idx) {
+    auto& report = report_buffer_[buf_idx];
+    report.x = 0;
+    report.y = 0;
+    report.wheel_x = 0;
+    report.wheel_y = 0; 
+
+    return report_buffer_.compare_swap_copy(buf_idx);
+}
+
 void mouse_app::send_buffer(uint8_t buf_idx)
 {
     if (!report_buffer_.differs())
@@ -33,14 +43,14 @@ void mouse_app::send_buffer(uint8_t buf_idx)
     }
     if (send_report(&report_buffer_[buf_idx]) == hid::result::OK)
     {
-        report_buffer_.compare_swap_copy(buf_idx);
+        swap_buffers(buf_idx);
     }
 }
 
 void mouse_app::in_report_sent(const std::span<const uint8_t>& data)
 {
     auto buf_idx = report_buffer_.indexof(data.data());
-    if (!report_buffer_.compare_swap_copy(buf_idx))
+    if (!swap_buffers(buf_idx))
     {
         send_buffer(1 - buf_idx);
     }

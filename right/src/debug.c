@@ -90,6 +90,15 @@ void WatchTime(uint8_t n)
     lastUpdate = CurrentTime;
 }
 
+bool WatchCondition(uint8_t n)
+{
+    if (CurrentTime - lastWatch > watchInterval) {
+        lastWatch = CurrentTime;
+        return true;
+    }
+    return false;
+}
+
 void WatchTimeMicros(uint8_t n)
 {
     static uint32_t lastUpdate = 0;
