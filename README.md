@@ -6,6 +6,12 @@ This repository hosts the firmware of the [Ultimate Hacking Keyboard](https://ul
 
 If you want to use the latest firmware version for your UHK, then instead of going through the pain of building the firmware, simply download the [latest release of Agent](https://github.com/UltimateHackingKeyboard/agent/releases/latest) and update to the latest firmware version within Agent with a click of a button.
 
+## Macro documentation
+
+- Agent smart macro pane - covers commands that configure your UHK. 
+- [user guide](https://github.com/UltimateHackingKeyboard/firmware/blob/master/doc-dev/user-guide.md) tries to give a a basic understanding of how macro commands can be combined, and describe common usecases.
+- [reference manual](https://github.com/UltimateHackingKeyboard/firmware/blob/master/doc-dev/reference-manual.md) is a dry and rather formal list of all the commands and features.
+
 ## Developing
 
 If you're one of the brave few who wants to hack the firmware then read on.
@@ -46,7 +52,6 @@ Going forward, it's easier to flash the firmware of your choice by using the dow
 5. Generate `versions.h`. `cd scripts && npm ci && ./generate-versions-h.js`
 
 6. When developing, cd to the directory you're working on (`left`/`right`). To build and flash the firmware, run `make flash`. Plain `make` just builds without flashing.
-
 
 ### Releasing
 
