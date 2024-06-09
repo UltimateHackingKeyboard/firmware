@@ -7,7 +7,7 @@
 #include "legacy/timer.h"
 #include "attributes.h"
 #include "legacy/event_scheduler.h"
-#include "keyboard/state_sync.h"
+#include "state_sync.h"
 
 const struct gpio_dt_spec chargerEnDt = GPIO_DT_SPEC_GET(DT_ALIAS(charger_en), gpios);
 const struct gpio_dt_spec chargerStatDt = GPIO_DT_SPEC_GET(DT_ALIAS(charger_stat), gpios);

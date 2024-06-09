@@ -10,6 +10,7 @@ extern "C"
 #include "nus_server.h"
 #include "messenger.h"
 #include "bt_conn.h"
+#include "state_sync.h"
 }
 #include "usb/df/class/hid.hpp"
 #include "command_app.hpp"
@@ -22,6 +23,8 @@ extern "C"
 static scancode_buffer keys;
 static mouse_buffer mouseState;
 static controls_buffer controls;
+
+keyboard_led_state_t KeyboardLedsState;
 
         /*
         gamepad.set_button(gamepad_button::X, KeyStates[CURRENT_SLOT_ID][3].current);
@@ -86,4 +89,11 @@ extern "C" void UsbCompatibility_SendConsumerReport2(const uint8_t* report)
 
 extern "C" bool UsbCompatibility_UsbConnected() {
     return keyboard_app::handle().has_transport();
+}
+
+extern "C" void UsbCompatibility_SetKeyboardLedsState(bool capsLock, bool numLock) {
+    KeyboardLedsState.capsLock = capsLock;
+    KeyboardLedsState.numLock = numLock;
+
+    StateSync_UpdateProperty(StateSyncPropertyId_KeyboardLedsState, NULL);
 }

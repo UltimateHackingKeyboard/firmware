@@ -4,7 +4,7 @@
 #include "autoconf.h"
 #include "link_protocol.h"
 #include "messenger_queue.h"
-#include "keyboard/state_sync.h"
+#include "state_sync.h"
 #include "usb/usb_compatibility.h"
 #include "nus_server.h"
 #include "nus_client.h"

@@ -3,7 +3,7 @@
 #include "device.h"
 #include "keyboard/uart.h"
 #include "keyboard/oled/widgets/widgets.h"
-#include "keyboard/state_sync.h"
+#include "state_sync.h"
 
 static connection_type_t isConnected[ConnectionId_Count] = {};
 

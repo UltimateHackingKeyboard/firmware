@@ -14,7 +14,7 @@
 #include "legacy/str_utils.h"
 #include "keyboard/uart.h"
 #include "bt_conn.h"
-#include "keyboard/state_sync.h"
+#include "state_sync.h"
 #include <string.h>
 #include <stdio.h>
 #include "device_state.h"
@@ -93,15 +93,15 @@ static string_segment_t getLeftStatusText() {
 }
 
 static void getBatteryStatusText(device_id_t deviceId, battery_state_t* battery, char* buffer) {
-    const char* powered = battery->powered ? "pwr+" : "pwr-";
-    if (!DeviceState_IsConnected(deviceId)) {
+    const char* powered = battery->powered ? "P" : "";
+    if (!DeviceState_IsDeviceConnected(deviceId)) {
         sprintf(buffer, "---");
     } else if (!battery->batteryPresent) {
         sprintf(buffer, "n/a %s", powered);
     } else if (battery->batteryCharging) {
-        sprintf(buffer, "%i+ %s", battery->batteryPercentage, powered);
+        sprintf(buffer, "%i+%s", battery->batteryPercentage, powered);
     } else {
-        sprintf(buffer, "%i%% %s", battery->batteryPercentage, powered);
+        sprintf(buffer, "%i%%%s", battery->batteryPercentage, powered);
     }
 }
 
@@ -119,12 +119,20 @@ static string_segment_t getRightStatusText() {
 #undef BUFFER_LENGTH
 }
 
+static string_segment_t getKeyboardLedsStateText() {
+    static char buffer [4] = {};
+    sprintf(buffer, "%s %s", KeyboardLedsState.numLock ? "N" : " ", KeyboardLedsState.capsLock ? "C" : " ");
+    return (string_segment_t){ .start = buffer, .end = NULL };
+}
+
+
 static void drawStatus(widget_t* self, framebuffer_t* buffer)
 {
     if (self->dirty) {
         self->dirty = false;
         Framebuffer_Clear(self, buffer);
         Framebuffer_DrawTextAnchored(self, buffer, AnchorType_Begin, AnchorType_Center, &JetBrainsMono12, getLeftStatusText().start, NULL);
+        Framebuffer_DrawTextAnchored(self, buffer, AnchorType_Center, AnchorType_Center, &JetBrainsMono12, getKeyboardLedsStateText().start, NULL);
         Framebuffer_DrawTextAnchored(self, buffer, AnchorType_End, AnchorType_Center, &JetBrainsMono12, getRightStatusText().start, NULL);
     }
 }

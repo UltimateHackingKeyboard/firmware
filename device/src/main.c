@@ -26,7 +26,7 @@
 #include "messenger.h"
 #include "legacy/led_manager.h"
 #include "legacy/debug.h"
-#include "keyboard/state_sync.h"
+#include "state_sync.h"
 #include "keyboard/charger.h"
 // #include <zephyr/drivers/gpio.h>
 // #include "dongle_leds.h"
@@ -151,9 +151,7 @@ int main(void) {
 
     Messenger_Init();
 
-    if (DEVICE_IS_UHK80_LEFT || DEVICE_IS_UHK80_RIGHT) {
-        StateSync_Init();
-    }
+    StateSync_Init();
 
 #if DEVICE_IS_UHK80_RIGHT
     while (true)

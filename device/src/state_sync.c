@@ -1,5 +1,5 @@
-#include "keyboard/state_sync.h"
-#include "charger.h"
+#include "state_sync.h"
+#include "device.h"
 #include "state_sync.h"
 #include <stdint.h>
 #include <zephyr/kernel.h>
@@ -12,6 +12,7 @@
 #include "keyboard/oled/widgets/widgets.h"
 #include "device_state.h"
 #include "messenger.h"
+#include "usb/usb_compatibility.h"
 
 
 #define THREAD_STACK_SIZE 1000
@@ -28,6 +29,7 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t property, cons
 #define DEFAULT_LAYER_PROP(NAME) [StateSyncPropertyId_##NAME] = { \
     .leftData = NULL, \
     .rightData = NULL, \
+    .dongleData = NULL, \
     .len = 0, \
     .direction = SyncDirection_MasterToSlave, \
     .dirtyState = DirtyState_Clean, \
@@ -38,6 +40,7 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t property, cons
 #define SIMPLE_MASTER_TO_SLAVE(NAME, DATA, DEFAULT_DIRTY) [StateSyncPropertyId_##NAME] = { \
     .leftData = &DATA, \
     .rightData = &DATA, \
+    .dongleData = &DATA, \
     .len = sizeof(DATA), \
     .direction = SyncDirection_MasterToSlave, \
     .dirtyState = DEFAULT_DIRTY, \
@@ -45,9 +48,22 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t property, cons
     .name = #NAME \
 }
 
+#define SIMPLE_DONGLE_TO_MASTER(NAME, DATA, DEFAULT_DIRTY) [StateSyncPropertyId_##NAME] = { \
+    .leftData = &DATA, \
+    .rightData = &DATA, \
+    .dongleData = &DATA, \
+    .len = sizeof(DATA), \
+    .direction = SyncDirection_DongleToMaster, \
+    .dirtyState = DEFAULT_DIRTY, \
+    .defaultDirty = DEFAULT_DIRTY, \
+    .name = #NAME \
+}
+
+
 #define CUSTOM_MASTER_TO_SLAVE(NAME, DEFAULT_DIRTY) [ StateSyncPropertyId_##NAME] = { \
     .leftData = NULL, \
     .rightData = NULL, \
+    .dongleData = NULL, \
     .len = 0, \
     .direction = SyncDirection_MasterToSlave, \
     .dirtyState = DEFAULT_DIRTY, \
@@ -58,6 +74,7 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t property, cons
 #define DUAL_SLAVE_TO_MASTER(NAME, LEFT, RIGHT, DEFAULT_DIRTY) [ StateSyncPropertyId_##NAME] = { \
     .leftData = &LEFT, \
     .rightData = &RIGHT, \
+    .dongleData = NULL, \
     .len = sizeof(LEFT), \
     .direction = SyncDirection_SlaveToMaster, \
     .dirtyState = DEFAULT_DIRTY, \
@@ -82,6 +99,7 @@ static state_sync_prop_t stateSyncProps[StateSyncPropertyId_Count] = {
     SIMPLE_MASTER_TO_SLAVE(ActiveLayer, ActiveLayer, DirtyState_Clean),
     CUSTOM_MASTER_TO_SLAVE(Backlight, DirtyState_Clean),
     SIMPLE_MASTER_TO_SLAVE(ActiveKeymap, CurrentKeymapIndex, DirtyState_Clean),
+    SIMPLE_DONGLE_TO_MASTER(KeyboardLedsState, KeyboardLedsState, DirtyState_Clean),
     DUAL_SLAVE_TO_MASTER(Battery, SyncLeftHalfState.battery, SyncRightHalfState.battery, DirtyState_Clean),
 };
 
@@ -102,6 +120,9 @@ void StateSync_UpdateProperty(state_sync_prop_id_t propId, void* data) {
         memcpy(prop->rightData, data, prop->len);
     }
 
+    if (DEVICE_ID == DeviceId_Uhk_Dongle && prop->dongleData && data) {
+        memcpy(prop->dongleData, data, prop->len);
+    }
 
     switch (prop->direction) {
         case SyncDirection_LeftToRight:
@@ -119,6 +140,14 @@ void StateSync_UpdateProperty(state_sync_prop_id_t propId, void* data) {
                 receiveProperty(DEVICE_ID, propId, NULL, 0);
             }
             if (DEVICE_ID == DeviceId_Uhk80_Right) {
+                invalidateProperty(propId);
+            }
+            break;
+        case SyncDirection_DongleToMaster:
+            if (DEVICE_ID == DeviceId_Uhk80_Right) {
+                receiveProperty(DEVICE_ID, propId, NULL, 0);
+            }
+            if (DEVICE_ID == DeviceId_Uhk_Dongle) {
                 invalidateProperty(propId);
             }
             break;
@@ -167,6 +196,10 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
         memcpy(prop->rightData, data, prop->len);
     }
 
+    if (src == DeviceId_Uhk_Dongle && prop->dongleData && data) {
+        memcpy(prop->dongleData, data, prop->len);
+    }
+
     switch (propId) {
         case StateSyncPropertyId_LayerActionsClear:
             receiveLayerActionsClear(*((layer_id_t*)data));
@@ -199,6 +232,9 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
             break;
         case StateSyncPropertyId_ActiveKeymap:
             // TODO
+            break;
+        case StateSyncPropertyId_KeyboardLedsState:
+            Widget_Refresh(&StatusWidget);
             break;
         default:
             STATE_SYNC_LOG("Property %s has no receive handler.\n", prop->name);
@@ -237,9 +273,10 @@ static void prepareBacklight(sync_command_backlight_t* buffer) {
     buffer->LedMap_ConstantRGB = Cfg.LedMap_ConstantRGB;
 }
 
-static void prepareData(device_id_t dst, state_sync_prop_id_t propId) {
+static void prepareData(device_id_t dst, const uint8_t* propDataPtr, state_sync_prop_id_t propId) {
     state_sync_prop_t* prop = &stateSyncProps[propId];
-    const uint8_t* data = DEVICE_ID == DeviceId_Uhk80_Left ? prop->leftData : prop->rightData;
+    const uint8_t* data = propDataPtr;
+
     uint8_t len = prop->len;
 
     STATE_SYNC_LOG("Preparing %s data for %s\n", prop->name, Utils_DeviceIdToString(dst));
@@ -279,23 +316,31 @@ static void prepareData(device_id_t dst, state_sync_prop_id_t propId) {
 
 static void updateProperty(state_sync_prop_id_t propId) {
     device_id_t dst;
+    const uint8_t* dataPtr;
     state_sync_prop_t* prop = &stateSyncProps[propId];
+
 
     switch (prop->direction) {
         case SyncDirection_LeftToRight:
         case SyncDirection_SlaveToMaster:
             dst = DeviceId_Uhk80_Right;
+            dataPtr = prop->leftData;
             break;
         case SyncDirection_RightToLeft:
         case SyncDirection_MasterToSlave:
             dst = DeviceId_Uhk80_Left;
+            dataPtr = prop->rightData;
+            break;
+        case SyncDirection_DongleToMaster:
+            dst = DeviceId_Uhk80_Right;
+            dataPtr = prop->dongleData;
             break;
         default:
             printk("Invalid sync direction for property %s\n", prop->name);
             return;
     }
 
-    prepareData(dst, propId);
+    prepareData(dst, dataPtr, propId);
 }
 
 #define UPDATE_AND_RETURN_IF_DIRTY(propId) \
@@ -327,10 +372,16 @@ static bool handlePropertyUpdateSlave() {
     return true;
 }
 
+static bool handlePropertyUpdateDongle() {
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_KeyboardLedsState);
+
+    return true;
+}
+
 static void updateLoop() {
     if (DEVICE_ID == DeviceId_Uhk80_Left) {
         while(true) {
-            if (!DeviceState_IsConnected(DeviceId_Uhk80_Right) || handlePropertyUpdateSlave()) {
+            if (!DeviceState_IsDeviceConnected(DeviceId_Uhk80_Right) || handlePropertyUpdateSlave()) {
                 k_sleep(K_FOREVER);
             }
         }
@@ -338,7 +389,15 @@ static void updateLoop() {
 
     if (DEVICE_ID == DeviceId_Uhk80_Right) {
         while(true) {
-            if (!DeviceState_IsConnected(DeviceId_Uhk80_Left) || handlePropertyUpdateMaster()) {
+            if (!DeviceState_IsDeviceConnected(DeviceId_Uhk80_Left) || handlePropertyUpdateMaster()) {
+                k_sleep(K_FOREVER);
+            }
+        }
+    }
+
+    if (DEVICE_ID == DeviceId_Uhk_Dongle) {
+        while(true) {
+            if (!DeviceState_IsDeviceConnected(DeviceId_Uhk80_Right) || handlePropertyUpdateDongle()) {
                 k_sleep(K_FOREVER);
             }
         }
@@ -369,6 +428,9 @@ void StateSync_Reset() {
     invalidateProperty(StateSyncPropertyId_Backlight);
     if (DEVICE_ID == DeviceId_Uhk80_Left) {
         invalidateProperty(StateSyncPropertyId_Battery);
+    }
+    if (DEVICE_ID == DeviceId_Uhk_Dongle) {
+        invalidateProperty(StateSyncPropertyId_KeyboardLedsState);
     }
 }
 

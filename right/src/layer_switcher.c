@@ -14,7 +14,7 @@
 #ifdef __ZEPHYR__
 #include "keyboard/oled/widgets/text_widget.h"
 #include "keyboard/oled/widgets/widget_store.h"
-#include "keyboard/state_sync.h"
+#include "state_sync.h"
 #endif
 
 

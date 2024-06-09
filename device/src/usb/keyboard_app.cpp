@@ -4,6 +4,7 @@
 extern "C"
 {
 #include "device_state.h"
+#include "usb/usb_compatibility.h"
 }
 
 keyboard_app& keyboard_app::handle()
@@ -148,7 +149,11 @@ void keyboard_app::set_report(hid::report::type type, const std::span<const uint
     // offset it if report ID is not present due to BOOT protocol
     auto& leds = *reinterpret_cast<const uint8_t*>(data.data() + static_cast<size_t>(prot_));
 
-    // TODO use LEDs bitfields
+    const uint8_t CapsLockMask = 2;
+    const uint8_t NumLockMask = 1;
+
+    UsbCompatibility_SetKeyboardLedsState(leds & CapsLockMask, leds & NumLockMask);
+
     printk("keyboard LED status: %x\n", leds);
 
     // always keep receiving new reports

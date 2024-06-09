@@ -32,7 +32,7 @@
 #include "led_manager.h"
 
 #ifdef __ZEPHYR__
-#include "keyboard/state_sync.h"
+#include "state_sync.h"
 #else
 #include "init_peripherals.h"
 #endif
