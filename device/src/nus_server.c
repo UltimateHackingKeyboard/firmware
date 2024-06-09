@@ -8,7 +8,7 @@
 #include "messenger_queue.h"
 #include "legacy/debug.h"
 
-static K_SEM_DEFINE(nusBusy, 1, 1);
+static K_SEM_DEFINE(nusBusy, 2, 2);
 
 static void received(struct bt_conn *conn, const uint8_t *const data, uint16_t len) {
     uint8_t* copy = MessengerQueue_AllocateMemory();

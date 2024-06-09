@@ -27,12 +27,20 @@ void mouse_app::set_report_state(const mouse_report_base<>& data)
 
 bool mouse_app::swap_buffers(uint8_t buf_idx) {
     auto& report = report_buffer_[buf_idx];
-    report.x = 0;
-    report.y = 0;
-    report.wheel_x = 0;
-    report.wheel_y = 0; 
+    auto& otherReport = report_buffer_[1-buf_idx];
 
-    return report_buffer_.compare_swap_copy(buf_idx);
+    bool res = report_buffer_.compare_swap_copy(buf_idx);
+    if (res) {
+        report.x = 0;
+        report.y = 0;
+        report.wheel_x = 0;
+        report.wheel_y = 0; 
+        otherReport.x = 0;
+        otherReport.y = 0;
+        otherReport.wheel_x = 0;
+        otherReport.wheel_y = 0; 
+    }
+    return res;
 }
 
 void mouse_app::send_buffer(uint8_t buf_idx)
