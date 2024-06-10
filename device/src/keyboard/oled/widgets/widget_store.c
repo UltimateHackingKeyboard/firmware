@@ -56,23 +56,15 @@ static string_segment_t getTargetText() {
 
 static string_segment_t getKeymapLayerText() {
 #define BUFFER_LENGTH 32
-    if (false) {
-        static char buffer[BUFFER_LENGTH] = { [BUFFER_LENGTH-1] = 0 };
-        string_segment_t layerText = getLayerText();
-        string_segment_t keymapText = getKeymapText();
-        snprintf(buffer, BUFFER_LENGTH-1, "%.*s   %.*s", SegmentLen(keymapText), keymapText.start, SegmentLen(layerText), layerText.start);
-        return (string_segment_t){ .start = buffer, .end = NULL };
+    static char buffer[BUFFER_LENGTH] = { [BUFFER_LENGTH-1] = 0 };
+    string_segment_t layerText = getLayerText();
+    string_segment_t keymapText = getKeymapText();
+    if (ActiveLayer == LayerId_Base) {
+        snprintf(buffer, BUFFER_LENGTH-1, "%.*s", SegmentLen(keymapText), keymapText.start);
     } else {
-        static char buffer[BUFFER_LENGTH] = { [BUFFER_LENGTH-1] = 0 };
-        string_segment_t layerText = getLayerText();
-        string_segment_t keymapText = getKeymapText();
-        if (ActiveLayer == LayerId_Base) {
-            snprintf(buffer, BUFFER_LENGTH-1, "%.*s", SegmentLen(keymapText), keymapText.start);
-        } else {
-            snprintf(buffer, BUFFER_LENGTH-1, "%.*s", SegmentLen(layerText), layerText.start);
-        }
-        return (string_segment_t){ .start = buffer, .end = NULL };
+        snprintf(buffer, BUFFER_LENGTH-1, "%.*s: %.*s", SegmentLen(keymapText), keymapText.start, SegmentLen(layerText), layerText.start);
     }
+    return (string_segment_t){ .start = buffer, .end = NULL };
 #undef BUFFER_LENGTH
 }
 
