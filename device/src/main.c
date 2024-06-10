@@ -119,7 +119,7 @@ int main(void) {
             if (DEVICE_IS_UHK80_RIGHT) {
                 advType |= ADVERTISE_HID;
             }
-            Advertise(ADVERTISE_NUS);
+            Advertise(advType);
         }
     }
 
