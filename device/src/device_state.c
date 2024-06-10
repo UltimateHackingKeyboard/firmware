@@ -40,6 +40,9 @@ void handleStateTransition(connection_id_t remoteId, bool isConnected) {
                 }
                 break;
             case DeviceId_Uhk_Dongle:
+                if (remoteId == ConnectionId_Right && isConnected) {
+                    StateSync_Reset();
+                }
                 break;
             default:
                 break;
