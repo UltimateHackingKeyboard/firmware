@@ -1,6 +1,12 @@
 #include "keyboard_app.hpp"
 #include "zephyr/sys/printk.h"
 
+extern "C"
+{
+#include "device_state.h"
+#include "usb/usb_compatibility.h"
+}
+
 keyboard_app& keyboard_app::handle()
 {
     static keyboard_app app{};
@@ -45,11 +51,14 @@ void keyboard_app::start(hid::protocol prot)
     // TODO start handling keyboard events
     keys_nkro_.reset();
     keys_6kro_.reset();
+
+    DeviceState_SetConnection(ConnectionId_UsbHid, ConnectionType_Usb);
 }
 
 void keyboard_app::stop()
 {
     // TODO stop handling keyboard events
+    DeviceState_SetConnection(ConnectionId_UsbHid, ConnectionType_None);
 }
 
 void keyboard_app::set_report_state(const keys_nkro_report_base<>& data)
@@ -140,7 +149,11 @@ void keyboard_app::set_report(hid::report::type type, const std::span<const uint
     // offset it if report ID is not present due to BOOT protocol
     auto& leds = *reinterpret_cast<const uint8_t*>(data.data() + static_cast<size_t>(prot_));
 
-    // TODO use LEDs bitfields
+    const uint8_t CapsLockMask = 2;
+    const uint8_t NumLockMask = 1;
+
+    UsbCompatibility_SetKeyboardLedsState(leds & CapsLockMask, leds & NumLockMask);
+
     printk("keyboard LED status: %x\n", leds);
 
     // always keep receiving new reports
