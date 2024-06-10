@@ -43,9 +43,9 @@ static string_segment_t getKeymapText() {
 
 static string_segment_t getTargetText() {
     if (DeviceState_IsConnected(ConnectionId_UsbHid)) {
-        return (string_segment_t){ .start = "Usb Cable", .end = NULL };
+        return (string_segment_t){ .start = "USB Cable", .end = NULL };
     } else if (DeviceState_IsConnected(ConnectionId_Dongle)) {
-        return (string_segment_t){ .start = "Uhk Dongle", .end = NULL };
+        return (string_segment_t){ .start = "UHK Dongle", .end = NULL };
     } else if (DeviceState_IsConnected(ConnectionId_BluetoothHid)) {
         return (string_segment_t){ .start = "Bluetooth", .end = NULL };
     } else {
