@@ -11,7 +11,7 @@
 #include "parse_keymap.h"
 
 #ifdef __ZEPHYR__
-#include "keyboard/state_sync.h"
+#include "state_sync.h"
 #endif
 
 static uint8_t tempKeymapCount;

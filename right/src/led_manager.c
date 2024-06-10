@@ -6,7 +6,7 @@
 
 #ifdef __ZEPHYR__
 #include <zephyr/sys/util.h>
-#include "keyboard/state_sync.h"
+#include "state_sync.h"
 #include "keyboard/charger.h"
 #include "keyboard/oled/oled.h"
 #define SleepModeActive false

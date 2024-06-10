@@ -11,7 +11,7 @@
 #include <zephyr/sys/util.h>
 #include "legacy/str_utils.h"
 
-static uint8_t drawGlyph(widget_t* canvas, framebuffer_t* buffer, int16_t x, int16_t y, const lv_font_t* font, uint8_t glyphIdx)
+static uint8_t drawGlyph(widget_t* canvas, framebuffer_t* buffer, int16_t x, int16_t y, const lv_font_t* font, uint8_t glyphIdx, bool gray)
 {
     int16_t canvasOffsetX = canvas == NULL ? 0 : canvas->x;
     int16_t canvasOffsetY = canvas == NULL ? 0 : canvas->y;
@@ -57,6 +57,10 @@ static uint8_t drawGlyph(widget_t* canvas, framebuffer_t* buffer, int16_t x, int
                pixelValue = byte << 4;
            }
 
+           if (gray) {
+               pixelValue /= 8;
+           }
+
            Framebuffer_SetPixel(buffer, canvasOffsetX + dstX, canvasOffsetY + dstY, pixelValue);
        }
    }
@@ -66,19 +70,37 @@ static uint8_t drawGlyph(widget_t* canvas, framebuffer_t* buffer, int16_t x, int
 
 void Framebuffer_DrawText(widget_t* canvas, framebuffer_t* buffer, int16_t x, int16_t y, const lv_font_t* font, const char* text, const char* textEnd)
 {
+    bool gray = false;
+
     uint16_t consumed = 0;
     while (*text != '\0' && (textEnd == NULL || text < textEnd)) {
-        consumed += drawGlyph(canvas, buffer, x+consumed, y, font, (*text)-31);
+        if (*text >= 32) {
+            consumed += drawGlyph(canvas, buffer, x+consumed, y, font, (*text)-31, gray);
+        } else {
+            switch (*text) {
+                case FontControl_WhiteText:
+                    gray = false;
+                    break;
+                case FontControl_GrayText:
+                    gray = true;
+                    break;
+            }
+        }
         text++;
     }
 }
 
 static uint16_t approximateTextLength(const lv_font_t* font, const char* text, const char* textEnd)
 {
-    //assume monospace font!
+    int len = 0;
+    for(const char *ptr = text; ptr != textEnd && *ptr != 0; ptr++) {
+        if(*ptr >= 32) {
+            len++;
+        }
+    }
+
     const lv_font_fmt_txt_glyph_dsc_t* someGlyph = &font->dsc->glyph_dsc[1];
     uint8_t charWidth = someGlyph->adv_w/16;
-    uint8_t len = textEnd == NULL ? strlen(text) : textEnd - text;
     return len * charWidth;
 }
 

@@ -59,7 +59,7 @@
         StateSyncPropertyId_Backlight,
         StateSyncPropertyId_ActiveKeymap,
         StateSyncPropertyId_Battery,
-        StateSyncPropertyId_Powered,
+        StateSyncPropertyId_KeyboardLedsState,
         StateSyncPropertyId_Count,
     } state_sync_prop_id_t;
 
@@ -68,6 +68,7 @@
         SyncDirection_RightToLeft,
         SyncDirection_MasterToSlave,
         SyncDirection_SlaveToMaster,
+        SyncDirection_DongleToMaster,
     } sync_direction_t;
 
     typedef enum {
@@ -80,6 +81,7 @@
         const char* name;
         void* leftData;
         void* rightData;
+        void* dongleData;
         uint8_t len;
         sync_direction_t direction;
         dirty_state_t dirtyState;

@@ -11,7 +11,7 @@
 
 #ifdef __ZEPHYR__
 #include "keyboard/leds.h"
-#include "keyboard/state_sync.h"
+#include "state_sync.h"
 #else
 #include "device/device.h"
 #endif
