@@ -381,7 +381,9 @@ static bool handlePropertyUpdateDongle() {
 static void updateLoop() {
     if (DEVICE_ID == DeviceId_Uhk80_Left) {
         while(true) {
-            if (!DeviceState_IsDeviceConnected(DeviceId_Uhk80_Right) || handlePropertyUpdateSlave()) {
+            bool isConnected = DeviceState_IsDeviceConnected(DeviceId_Uhk80_Right);
+            STATE_SYNC_LOG("Left update loop, connected: %i\n", isConnected);
+            if (!isConnected || handlePropertyUpdateSlave()) {
                 k_sleep(K_FOREVER);
             }
         }
@@ -389,7 +391,9 @@ static void updateLoop() {
 
     if (DEVICE_ID == DeviceId_Uhk80_Right) {
         while(true) {
-            if (!DeviceState_IsDeviceConnected(DeviceId_Uhk80_Left) || handlePropertyUpdateMaster()) {
+            bool isConnected = DeviceState_IsDeviceConnected(DeviceId_Uhk80_Left);
+            STATE_SYNC_LOG("Right update loop, connected: %i\n", isConnected);
+            if (!isConnected || handlePropertyUpdateMaster()) {
                 k_sleep(K_FOREVER);
             }
         }
@@ -397,7 +401,9 @@ static void updateLoop() {
 
     if (DEVICE_ID == DeviceId_Uhk_Dongle) {
         while(true) {
-            if (!DeviceState_IsDeviceConnected(DeviceId_Uhk80_Right) || handlePropertyUpdateDongle()) {
+            bool isConnected = DeviceState_IsDeviceConnected(DeviceId_Uhk80_Right);
+            STATE_SYNC_LOG("Dongle update loop, connected: %i\n", isConnected);
+            if (!isConnected || handlePropertyUpdateDongle()) {
                 k_sleep(K_FOREVER);
             }
         }
@@ -424,8 +430,10 @@ void StateSync_Init() {
 }
 
 void StateSync_Reset() {
-    invalidateProperty(StateSyncPropertyId_ActiveLayer);
-    invalidateProperty(StateSyncPropertyId_Backlight);
+    if (DEVICE_ID == DeviceId_Uhk80_Right) {
+        invalidateProperty(StateSyncPropertyId_ActiveLayer);
+        invalidateProperty(StateSyncPropertyId_Backlight);
+    }
     if (DEVICE_ID == DeviceId_Uhk80_Left) {
         invalidateProperty(StateSyncPropertyId_Battery);
     }
