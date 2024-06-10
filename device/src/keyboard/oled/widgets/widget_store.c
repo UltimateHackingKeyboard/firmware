@@ -93,15 +93,13 @@ static string_segment_t getLeftStatusText() {
 }
 
 static void getBatteryStatusText(device_id_t deviceId, battery_state_t* battery, char* buffer) {
-    const char* powered = battery->powered ? "P" : "";
+    char percSign = !battery->powered ? '-' : battery->batteryCharging ? '+' : '%';
     if (!DeviceState_IsDeviceConnected(deviceId)) {
-        sprintf(buffer, "---");
+        sprintf(buffer, "    ");
     } else if (!battery->batteryPresent) {
-        sprintf(buffer, "n/a %s", powered);
-    } else if (battery->batteryCharging) {
-        sprintf(buffer, "%i+%s", battery->batteryPercentage, powered);
+        sprintf(buffer, "    ");
     } else {
-        sprintf(buffer, "%i%%%s", battery->batteryPercentage, powered);
+        sprintf(buffer, "%3i%c", battery->batteryPercentage, percSign);
     }
 }
 
