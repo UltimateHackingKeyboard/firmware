@@ -34,11 +34,10 @@ void mouse_app::set_report_state(const mouse_report_base<>& data)
 }
 
 bool mouse_app::swap_buffers(uint8_t buf_idx) {
-    auto& report = report_buffer_[buf_idx];
     auto& otherReport = report_buffer_[1-buf_idx];
 
     if (report_buffer_.compare_swap_copy(buf_idx)) {
-        // report report is now inactive and waiting to be sent
+        // buf_idx report is now inactive and waiting to be sent
         // otherReport is now active and ready to be written
         otherReport.x = 0;
         otherReport.y = 0;
@@ -52,14 +51,19 @@ bool mouse_app::swap_buffers(uint8_t buf_idx) {
 void mouse_app::send_buffer(uint8_t buf_idx)
 {
     auto& report = report_buffer_[buf_idx];
-    if (!report_buffer_.differs() && report.x == 0 && report.y == 0 && report.wheel_x == 0 && report.wheel_y == 0)
-    {
+    if (
+            !report_buffer_.differs()
+            && report.x == (hid::le_int16_t)0
+            && report.y == (hid::le_int16_t)0
+            && report.wheel_x == (int16_t)0
+            && report.wheel_y == (int16_t)0
+    ) {
         k_sem_give(&reportSending);
         return;
     }
     // an asynchronous api to send the buffer
     // OK means that the report is scheduled to be sent
-    // BUSY: means that another report is already being sent. 
+    // BUSY: means that another report is already being sent.
     //       In that case, in_report_sent will trigger another sent attempt
     if (send_report(&report_buffer_[buf_idx]) == hid::result::OK)
     {
@@ -79,7 +83,7 @@ void mouse_app::in_report_sent(const std::span<const uint8_t>& data)
     // continue and try to send the active buffer
     if (!swap_buffers(buf_idx))
     {
-        // If someone tried to set_report_state inbetween, they have failed to 
+        // If someone tried to set_report_state inbetween, they have failed to
         // send the buffer, so we need to take care of that.
         send_buffer(1 - buf_idx);
     }
