@@ -155,7 +155,7 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
             }
         } else if (peerId == PeerIdDongle) {
             Advertise(ADVERTISE_NUS);
-        } else if (peerId == PeerIdLeft) {
+        } else if (peerId == PeerIdLeft || peerId == PeerIdRight) {
             int err = bt_scan_start(BT_SCAN_TYPE_SCAN_ACTIVE);
             printk("Start scan\n");
             if (err) {
