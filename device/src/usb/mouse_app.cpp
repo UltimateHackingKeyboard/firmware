@@ -1,6 +1,7 @@
 #include "mouse_app.hpp"
 
 extern "C" {
+#include "usb/usb.h"
 #include <zephyr/kernel.h>
 #include "legacy/debug.h"
 }
@@ -26,7 +27,7 @@ void mouse_app::stop()
 
 void mouse_app::set_report_state(const mouse_report_base<>& data)
 {
-    k_sem_take(&reportSending, K_MSEC(100));
+    k_sem_take(&reportSending, K_MSEC(SEMAPHOR_RESET_TIMEOUT));
     auto buf_idx = report_buffer_.active_side();
     auto& report = report_buffer_[buf_idx];
     report = data;
