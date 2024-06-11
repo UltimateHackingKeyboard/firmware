@@ -640,7 +640,7 @@ The following example allows you to cycle through different backlight colors.
 In your `$onInit`:
 
 ```
-setVar backroundColor 0
+setVar backgroundColor 0
 ```
 
 Then in the macro itself:
