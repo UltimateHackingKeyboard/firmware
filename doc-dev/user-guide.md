@@ -837,7 +837,7 @@ Or, in linux, you can put the following script into your path... and then use it
 
 ```
 #!/bin/bash
-hidraw=`grep 'UHK 60' /sys/class/hidraw/hidraw*/device/uevent | LC_ALL=C sort -h | head -n 1 | grep -o 'hidraw[0-9][0-9]*'`
+hidraw=`grep 'UHK 60' /sys/class/hidraw/hidraw*/device/uevent | LC_ALL=C sort -rh | head -n 1 | grep -o 'hidraw[0-9][0-9]*'`
 echo -e "\x14$*" > "/dev/$hidraw"
 ```
 
