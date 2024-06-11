@@ -2,6 +2,7 @@
 #define DEBUG_SEMAPHORES false
 #define DEBUG_EVENTLOOP_TIMING false
 #define DEBUG_STATESYNC false
+#define WATCH_INTERVAL 500
 
 #if WATCHES && !defined(SRC_UTILS_DBG_H_)
 
@@ -57,6 +58,9 @@
     // Watches string V in slot N.
     #define WATCH_STRING(V, N) if(CurrentWatch == N) { WatchString(V, N); }
 
+    // Returns true if watch n should print
+    #define WATCH_CONDITION(N) (CurrentWatch == N && WatchCondition(N))
+
     // Always show value, but respect slot logic
     #define SHOW_VALUE(V, N) if(CurrentWatch == N) { ShowValue(V, N); }
 
@@ -76,9 +80,9 @@
         #define WATCH_SEMAPHORE_TAKE(SEM, FILENAME, N) if(CurrentWatch == N) { WatchSemaforeTake(SEM, FILENAME, N); } else { k_sem_take(SEM, K_FOREVER); }
 
         #if DEBUG_SEMAPHORES
-        #define SEM_TAKE(SEM) WATCH_SEMAPHORE_TAKE(SEM, __FILE__, 0)
+            #define SEM_TAKE(SEM) WATCH_SEMAPHORE_TAKE(SEM, __FILE__, 0)
         #else
-        #define SEM_TAKE(SEM) k_sem_take(SEM, K_FOREVER)
+            #define SEM_TAKE(SEM) k_sem_take(SEM, K_FOREVER)
         #endif
 
         #if DEBUG_STATESYNC
@@ -106,6 +110,7 @@
     void WatchFloatValueMin(float, uint8_t n);
     void WatchFloatValueMax(float, uint8_t n);
     void WatchString(char const * v, uint8_t n);
+    bool WatchCondition(uint8_t n);
     void ShowValue(int v, uint8_t n);
     void ShowString(char const * v, uint8_t n);
     void AddReportToStatusBuffer(char* dbgTag, usb_basic_keyboard_report_t *report);
@@ -130,6 +135,7 @@
     #define WATCH_FLOAT_VALUE_MIN(V, N)
     #define WATCH_FLOAT_VALUE_MAX(V, N)
     #define WATCH_STRING(V, N)
+    #define WATCH_CONDITION(N) false
     #define WATCH_SEMAPHORE_TAKE(SEM, LABEL, N) k_sem_take(SEM, K_FOREVER);
     #define SEM_TAKE(SEM) k_sem_take(SEM, K_FOREVER);
     #define STATE_SYNC_LOG(fmt, ...)

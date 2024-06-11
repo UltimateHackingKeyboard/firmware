@@ -3,9 +3,13 @@
 
 extern "C"
 {
+#include "usb/usb.h"
 #include "device_state.h"
 #include "usb/usb_compatibility.h"
+#include <zephyr/kernel.h>
 }
+
+static K_SEM_DEFINE(reportSending, 1, 1);
 
 keyboard_app& keyboard_app::handle()
 {
@@ -63,7 +67,8 @@ void keyboard_app::stop()
 
 void keyboard_app::set_report_state(const keys_nkro_report_base<>& data)
 {
-    // TODO: report data accessing mutex?
+    // DOCS: For report sending logic, see comments in mouse_app.cpp
+    k_sem_take(&reportSending, K_MSEC(SEMAPHORE_RESET_TIMEOUT));
 
     if ((prot_ == hid::protocol::BOOT) || (rollover_ != rollover::N_KEY) ||
         (rollover_override_ != rollover::N_KEY))
@@ -97,6 +102,7 @@ void keyboard_app::send_6kro_buffer(uint8_t buf_idx)
 {
     if (!keys_6kro_.differs() || !has_transport())
     {
+        k_sem_give(&reportSending);
         return;
     }
     auto result = hid::result::INVALID;
@@ -117,6 +123,7 @@ void keyboard_app::send_6kro_buffer(uint8_t buf_idx)
     if (result == hid::result::OK)
     {
         keys_6kro_.compare_swap_copy(buf_idx);
+        k_sem_give(&reportSending);
     }
 }
 
@@ -124,6 +131,7 @@ void keyboard_app::send_nkro_buffer(uint8_t buf_idx)
 {
     if (!keys_nkro_.differs() || !has_transport())
     {
+        k_sem_give(&reportSending);
         return;
     }
     auto result = send_report(&keys_nkro_[buf_idx]);
@@ -140,6 +148,7 @@ void keyboard_app::send_nkro_buffer(uint8_t buf_idx)
     else if (result == hid::result::OK)
     {
         keys_nkro_.compare_swap_copy(buf_idx);
+        k_sem_give(&reportSending);
     }
 }
 

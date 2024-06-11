@@ -1,5 +1,13 @@
 #include "controls_app.hpp"
 
+extern "C"
+{
+#include "usb/usb.h"
+#include <zephyr/kernel.h>
+}
+
+static K_SEM_DEFINE(reportSending, 1, 1);
+
 controls_app& controls_app::handle()
 {
     static controls_app app{};
@@ -19,6 +27,7 @@ void controls_app::stop()
 
 void controls_app::set_report_state(const controls_report& data)
 {
+    k_sem_take(&reportSending, K_MSEC(SEMAPHORE_RESET_TIMEOUT));
     auto buf_idx = report_buffer_.active_side();
     auto& report = report_buffer_[buf_idx];
     report = data;
@@ -29,11 +38,13 @@ void controls_app::send_buffer(uint8_t buf_idx)
 {
     if (!report_buffer_.differs())
     {
+        k_sem_give(&reportSending);
         return;
     }
     if (send_report(&report_buffer_[buf_idx]) == hid::result::OK)
     {
         report_buffer_.compare_swap_copy(buf_idx);
+        k_sem_give(&reportSending);
     }
 }
 
