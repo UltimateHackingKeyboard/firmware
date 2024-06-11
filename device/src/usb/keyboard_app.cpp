@@ -68,7 +68,7 @@ void keyboard_app::stop()
 void keyboard_app::set_report_state(const keys_nkro_report_base<>& data)
 {
     // DOCS: For report sending logic, see comments in mouse_app.cpp
-    k_sem_take(&reportSending, K_MSEC(SEMAPHOR_RESET_TIMEOUT));
+    k_sem_take(&reportSending, K_MSEC(SEMAPHORE_RESET_TIMEOUT));
 
     if ((prot_ == hid::protocol::BOOT) || (rollover_ != rollover::N_KEY) ||
         (rollover_override_ != rollover::N_KEY))

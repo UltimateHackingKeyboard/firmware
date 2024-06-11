@@ -27,7 +27,7 @@ void gamepad_app::stop()
 
 void gamepad_app::set_report_state(const gamepad_report& data)
 {
-    k_sem_take(&reportSending, K_MSEC(SEMAPHOR_RESET_TIMEOUT));
+    k_sem_take(&reportSending, K_MSEC(SEMAPHORE_RESET_TIMEOUT));
     auto buf_idx = report_buffer_.active_side();
     auto& report = report_buffer_[buf_idx];
     report = data;

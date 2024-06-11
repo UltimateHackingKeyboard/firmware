@@ -10,7 +10,7 @@
 
 // Macros:
 
-    #define SEMAPHOR_RESET_TIMEOUT 100
+    #define SEMAPHORE_RESET_TIMEOUT 100
 
 // Typedefs:
 
