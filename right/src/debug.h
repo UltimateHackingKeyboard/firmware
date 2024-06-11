@@ -2,6 +2,7 @@
 #define DEBUG_SEMAPHORES false
 #define DEBUG_EVENTLOOP_TIMING false
 #define DEBUG_STATESYNC false
+#define WATCH_INTERVAL 500
 
 #if WATCHES && !defined(SRC_UTILS_DBG_H_)
 

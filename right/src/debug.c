@@ -22,7 +22,6 @@ uint8_t CurrentWatch = 0;
 
 static uint16_t tickCount = 0;
 static uint32_t lastWatch = 0;
-static uint32_t watchInterval = 500;
 
 static void showInt(int32_t n) {
 #ifdef __ZEPHYR__
@@ -83,7 +82,7 @@ void TriggerWatch(key_state_t *keyState)
 void WatchTime(uint8_t n)
 {
     static uint32_t lastUpdate = 0;
-    if (CurrentTime - lastWatch > watchInterval) {
+    if (CurrentTime - lastWatch > WATCH_INTERVAL) {
         showInt(CurrentTime - lastUpdate);
         lastWatch = CurrentTime;
     }
@@ -92,7 +91,7 @@ void WatchTime(uint8_t n)
 
 bool WatchCondition(uint8_t n)
 {
-    if (CurrentTime - lastWatch > watchInterval) {
+    if (CurrentTime - lastWatch > WATCH_INTERVAL) {
         lastWatch = CurrentTime;
         return true;
     }
@@ -118,7 +117,7 @@ void WatchCallCount(uint8_t n)
 {
     tickCount++;
 
-    if (CurrentTime - lastWatch > watchInterval) {
+    if (CurrentTime - lastWatch > WATCH_INTERVAL) {
         showInt(tickCount);
         lastWatch = CurrentTime;
     }
@@ -126,7 +125,7 @@ void WatchCallCount(uint8_t n)
 
 void WatchValue(int v, uint8_t n)
 {
-    if (CurrentTime - lastWatch > watchInterval) {
+    if (CurrentTime - lastWatch > WATCH_INTERVAL) {
         showInt(v);
         lastWatch = CurrentTime;
     }
@@ -134,7 +133,7 @@ void WatchValue(int v, uint8_t n)
 
 void WatchString(char const *v, uint8_t n)
 {
-    if (CurrentTime - lastWatch > watchInterval) {
+    if (CurrentTime - lastWatch > WATCH_INTERVAL) {
         showString(v);
         lastWatch = CurrentTime;
     }
@@ -159,7 +158,7 @@ void WatchValueMin(int v, uint8_t n)
         m = v;
     }
 
-    if (CurrentTime - lastWatch > watchInterval) {
+    if (CurrentTime - lastWatch > WATCH_INTERVAL) {
         showInt(m);
         lastWatch = CurrentTime;
         m = INT_MAX;
@@ -174,7 +173,7 @@ void WatchValueMax(int v, uint8_t n)
         m = v;
     }
 
-    if (CurrentTime - lastWatch > watchInterval) {
+    if (CurrentTime - lastWatch > WATCH_INTERVAL) {
         showInt(m);
         lastWatch = CurrentTime;
         m = INT_MIN;
@@ -184,7 +183,7 @@ void WatchValueMax(int v, uint8_t n)
 
 void WatchFloatValue(float v, uint8_t n)
 {
-    if (CurrentTime - lastWatch > watchInterval) {
+    if (CurrentTime - lastWatch > WATCH_INTERVAL) {
         showFloat(v);
         lastWatch = CurrentTime;
     }
@@ -198,7 +197,7 @@ void WatchFloatValueMin(float v, uint8_t n)
         m = v;
     }
 
-    if (CurrentTime - lastWatch > watchInterval) {
+    if (CurrentTime - lastWatch > WATCH_INTERVAL) {
         showFloat(m);
         lastWatch = CurrentTime;
         m = (float)INT_MAX;
@@ -213,7 +212,7 @@ void WatchFloatValueMax(float v, uint8_t n)
         m = v;
     }
 
-    if (CurrentTime - lastWatch > watchInterval) {
+    if (CurrentTime - lastWatch > WATCH_INTERVAL) {
         showFloat(m);
         lastWatch = CurrentTime;
         m = (float)INT_MIN;
