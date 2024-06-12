@@ -13,21 +13,25 @@
 #include "layer_switcher.h"
 #include "peripherals/merge_sensor.h"
 
-#ifndef __ZEPHYR__
-#include "slave_drivers/uhk_module_driver.h"
-#include "usb_report_updater.h"
-#include "slave_scheduler.h"
+#ifdef __ZEPHYR__
+    #include "flash.h"
+#else
+    #include "slave_drivers/uhk_module_driver.h"
+    #include "usb_report_updater.h"
+    #include "slave_scheduler.h"
 
-#define MODULE_CONNECTION_STATE(SLOT_ID) ( \
-        Timer_GetElapsedTime(&ModuleConnectionStates[SLOT_ID].lastTimeConnected) < 350 ? \
-        ModuleConnectionStates[SLOT_ID].moduleId : 0 \
-    )
+    #define MODULE_CONNECTION_STATE(SLOT_ID) ( \
+            Timer_GetElapsedTime(&ModuleConnectionStates[SLOT_ID].lastTimeConnected) < 350 ? \
+            ModuleConnectionStates[SLOT_ID].moduleId : 0 \
+            )
 #endif
 
 void UsbCommand_GetKeyboardState(void)
 {
 
-#ifndef __ZEPHYR__
+#ifdef __ZEPHYR__
+    SetUsbTxBufferUint8(1, Flash_IsBusy());
+#else
     SetUsbTxBufferUint8(1, IsStorageBusy);
 #endif
 

@@ -132,10 +132,11 @@ int main(void) {
     }
 
     if (DEVICE_IS_UHK80_RIGHT) {
+        InitFlash();
         printk("Reading hardware config\n");
-        flash_area_read(hardwareConfigArea, 0, HardwareConfigBuffer.buffer, HARDWARE_CONFIG_SIZE);
+        Flash_ReadAreaSync(hardwareConfigArea, 0, HardwareConfigBuffer.buffer, HARDWARE_CONFIG_SIZE);
         printk("Reading user config\n");
-        flash_area_read(userConfigArea, 0, StagingUserConfigBuffer.buffer, USER_CONFIG_SIZE);
+        Flash_ReadAreaSync(userConfigArea, 0, StagingUserConfigBuffer.buffer, USER_CONFIG_SIZE);
         printk("Applying user config\n");
         bool factoryMode = false;
         if (factoryMode) {
