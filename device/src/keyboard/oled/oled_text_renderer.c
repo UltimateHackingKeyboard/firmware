@@ -21,18 +21,17 @@ static string_segment_t truncateText(const lv_font_t* font, uint8_t width, const
     return (string_segment_t){ .start = text, .end = text + truncatedLen };
 }
 
-static int16_t computeAlignment(int16_t width, int16_t objectWidth, int16_t anchor)
+static int16_t computeAlignment(int16_t width, int16_t objectWidth, int16_t alignment)
 {
-    int16_t anchorMask = -anchor & (AnchorType_Begin_ | AnchorType_End_ | AnchorType_Center_);
-    int16_t offset = -((-anchor & ((1 << 9) - 1)) - 256);
+    int16_t offset = -((-alignment & ((1 << 9) - 1)) - 256);
 
-    switch (anchor) {
+    switch ((-alignment) >> 9) {
         default:
-        case AnchorType_Begin:
+        case AlignmentType_Begin_:
             return offset;
-        case AnchorType_Center:
+        case AlignmentType_Center_:
             return width/2 - objectWidth/2 + offset;
-        case AnchorType_End:
+        case AlignmentType_End_:
             return width - objectWidth + offset;
     }
 }
