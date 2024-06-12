@@ -71,6 +71,7 @@ void PairingScreen_RegisterScancode(uint8_t scancode)
     switch (scancode)
     {
         case HID_KEYBOARD_SC_ESCAPE:
+        case HID_KEYBOARD_SC_ENTER:
             num_comp_reply(0);
             ScreenManager_ActivateScreen(ScreenId_PairingFailed);
             break;
