@@ -25,7 +25,6 @@ static K_SEM_DEFINE(nusBusy, 1, 1);
 
 static void ble_data_sent(struct bt_nus_client *nus, uint8_t err, const uint8_t *const data, uint16_t len) {
     k_sem_give(&nusBusy);
-    printk("NUS data sent to %s: %i\n", GetPeerStringByConn(nus->conn), len);
     if (err) {
         printk("ATT error code: 0x%02X\n", err);
     }

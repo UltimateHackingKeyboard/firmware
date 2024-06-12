@@ -118,6 +118,8 @@ class mouse_app : public hid::application
     void get_report(hid::report::selector select, const std::span<uint8_t>& buffer) override;
     void send_buffer(uint8_t buf_idx);
 
+    bool swap_buffers(uint8_t buf_idx);
+
     double_buffer<mouse_report_base<>> report_buffer_{};
 };
 
