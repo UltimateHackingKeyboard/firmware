@@ -139,7 +139,7 @@ static void drawKeymapLayer(widget_t* self, framebuffer_t* buffer)
         uint16_t keymapWidth = Framebuffer_TextWidth(keymapFont, keymapText.start, keymapText.end);
         Framebuffer_DrawText(self, buffer, self->w/2 - keymapWidth/2, AlignmentType_Center, keymapFont, keymapText.start, keymapText.end);
         if (ActiveLayer != LayerId_Base) {
-            Framebuffer_DrawText(self, buffer, self->w/2 + keymapWidth/2 + 5, AlignmentType_Center+4, layerFont, layerText.start, layerText.end);
+            Framebuffer_DrawText(self, buffer, self->w/2 + keymapWidth/2 + 10, AlignmentType_Center+(keymapFont->line_height - layerFont->line_height)/2, layerFont, layerText.start, layerText.end);
         }
     }
 }
