@@ -11,6 +11,33 @@
 #include <zephyr/sys/util.h>
 #include "legacy/str_utils.h"
 
+static string_segment_t truncateText(const lv_font_t* font, uint8_t width, const char* text, const char* textEnd)
+{
+    const lv_font_fmt_txt_glyph_dsc_t* someGlyph = &font->dsc->glyph_dsc[1];
+    uint8_t charWidth = someGlyph->adv_w/16;
+    uint8_t maxLen = width/charWidth;
+    uint8_t len = textEnd == NULL ? strlen(text) : textEnd - text;
+    uint8_t truncatedLen = MIN(maxLen, len);
+    return (string_segment_t){ .start = text, .end = text + truncatedLen };
+}
+
+static int16_t computeAlignment(int16_t width, int16_t objectWidth, int16_t anchor)
+{
+    int16_t anchorMask = -anchor & (AnchorType_Begin_ | AnchorType_End_ | AnchorType_Center_);
+    int16_t offset = -((-anchor & ((1 << 9) - 1)) - 256);
+
+    switch (anchor) {
+        default:
+        case AnchorType_Begin:
+            return offset;
+        case AnchorType_Center:
+            return width/2 - objectWidth/2 + offset;
+        case AnchorType_End:
+            return width - objectWidth + offset;
+    }
+}
+
+
 static uint8_t drawGlyph(widget_t* canvas, framebuffer_t* buffer, int16_t x, int16_t y, const lv_font_t* font, uint8_t glyphIdx, bool gray)
 {
     int16_t canvasOffsetX = canvas == NULL ? 0 : canvas->x;
@@ -68,9 +95,27 @@ static uint8_t drawGlyph(widget_t* canvas, framebuffer_t* buffer, int16_t x, int
    return rw;
 }
 
+// TODO: return resulting bounds rectangle?
 void Framebuffer_DrawText(widget_t* canvas, framebuffer_t* buffer, int16_t x, int16_t y, const lv_font_t* font, const char* text, const char* textEnd)
 {
     bool gray = false;
+
+    if (x < 0 || y < 0) {
+        int16_t canvasWidth = canvas == NULL ? DISPLAY_WIDTH : canvas->w;
+        int16_t canvasHeight = canvas == NULL ? DISPLAY_HEIGHT : canvas->h;
+        string_segment_t truncatedText = truncateText(font, canvasWidth, text, textEnd);
+        textEnd = truncatedText.end;
+        int16_t textWidth = Framebuffer_TextWidth(font, text, textEnd);
+        int16_t textHeight = font->line_height;
+
+        if (x < 0) {
+            x = computeAlignment(canvasWidth, textWidth, x);
+        }
+
+        if (y < 0) {
+            y = computeAlignment(canvasHeight, textHeight, y);
+        }
+    }
 
     uint16_t consumed = 0;
     while (*text != '\0' && (textEnd == NULL || text < textEnd)) {
@@ -90,7 +135,7 @@ void Framebuffer_DrawText(widget_t* canvas, framebuffer_t* buffer, int16_t x, in
     }
 }
 
-static uint16_t approximateTextLength(const lv_font_t* font, const char* text, const char* textEnd)
+uint16_t Framebuffer_TextWidth(const lv_font_t* font, const char* text, const char* textEnd)
 {
     int len = 0;
     for(const char *ptr = text; ptr != textEnd && *ptr != 0; ptr++) {
@@ -104,50 +149,3 @@ static uint16_t approximateTextLength(const lv_font_t* font, const char* text, c
     return len * charWidth;
 }
 
-static string_segment_t truncateText(const lv_font_t* font, uint8_t width, const char* text, const char* textEnd)
-{
-    const lv_font_fmt_txt_glyph_dsc_t* someGlyph = &font->dsc->glyph_dsc[1];
-    uint8_t charWidth = someGlyph->adv_w/16;
-    uint8_t maxLen = width/charWidth;
-    uint8_t len = textEnd == NULL ? strlen(text) : textEnd - text;
-    uint8_t truncatedLen = MIN(maxLen, len);
-    return (string_segment_t){ .start = text, .end = text + truncatedLen };
-}
-
-void Framebuffer_DrawTextAnchored(widget_t* canvas, framebuffer_t* buffer, anchor_type_t horizontalAnchor, anchor_type_t verticalAnchor, const lv_font_t* font, const char* text, const char* textEnd)
-{
-    int16_t canvasWidth = canvas == NULL ? DISPLAY_WIDTH : canvas->w;
-    int16_t canvasHeight = canvas == NULL ? DISPLAY_HEIGHT : canvas->h;
-
-    int16_t x, y;
-
-    string_segment_t truncatedString = truncateText(font, canvasWidth, text, textEnd);
-
-    switch (horizontalAnchor) {
-        default:
-        case AnchorType_Begin:
-            x = 0;
-            break;
-        case AnchorType_Center:
-            x = canvasWidth/2 - approximateTextLength(font, truncatedString.start, truncatedString.end)/2;
-            break;
-        case AnchorType_End:
-            x = canvasWidth - approximateTextLength(font, truncatedString.start, truncatedString.end);
-            break;
-    }
-
-    switch (verticalAnchor) {
-        default:
-        case AnchorType_Begin:
-            y = 0;
-            break;
-        case AnchorType_Center:
-            y = canvasHeight/2 - font->line_height/2;
-            break;
-        case AnchorType_End:
-            y = canvasHeight - font->line_height;
-            break;
-    }
-
-    Framebuffer_DrawText(canvas, buffer, x, y, font, truncatedString.start, truncatedString.end);
-}

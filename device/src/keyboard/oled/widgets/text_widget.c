@@ -13,7 +13,7 @@ void TextWidget_Draw(widget_t* self, framebuffer_t* buffer)
             self->textData.text = self->textData.textProvider();
         }
         if (self->textData.text.start != NULL) {
-            Framebuffer_DrawTextAnchored(self, buffer, AnchorType_Center, AnchorType_Center, self->textData.font, self->textData.text.start, self->textData.text.end);
+            Framebuffer_DrawText(self, buffer, AnchorType_Center, AnchorType_Center, self->textData.font, self->textData.text.start, self->textData.text.end);
         }
     }
 }

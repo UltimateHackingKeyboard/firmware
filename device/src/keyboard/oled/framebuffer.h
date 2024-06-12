@@ -14,9 +14,12 @@
 // Typedefs:
 
     typedef enum {
-        AnchorType_Begin,
-        AnchorType_Center,
-        AnchorType_End,
+        AnchorType_Begin = -((1 << 9) + 256),
+        AnchorType_Center = -((2 << 9) + 256),
+        AnchorType_End = -((3 << 9) + 256),
+        AnchorType_Begin_ = 1 << 9,
+        AnchorType_Center_ = 2 << 9,
+        AnchorType_End_ = 3 << 9,
     } anchor_type_t;
 
     typedef struct {

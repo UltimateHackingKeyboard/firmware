@@ -54,7 +54,7 @@ static string_segment_t getTargetText() {
 }
 
 
-static string_segment_t getKeymapLayerText() {
+ATTR_UNUSED static string_segment_t getKeymapLayerText() {
 #define BUFFER_LENGTH 32
     static char buffer[BUFFER_LENGTH] = { [BUFFER_LENGTH-1] = 0 };
     string_segment_t layerText = getLayerText();
@@ -121,9 +121,26 @@ static void drawStatus(widget_t* self, framebuffer_t* buffer)
     if (self->dirty) {
         self->dirty = false;
         Framebuffer_Clear(self, buffer);
-        Framebuffer_DrawTextAnchored(self, buffer, AnchorType_Begin, AnchorType_Center, &JetBrainsMono12, getLeftStatusText().start, NULL);
-        Framebuffer_DrawTextAnchored(self, buffer, AnchorType_Center, AnchorType_Center, &JetBrainsMono12, getKeyboardLedsStateText().start, NULL);
-        Framebuffer_DrawTextAnchored(self, buffer, AnchorType_End, AnchorType_Center, &JetBrainsMono12, getRightStatusText().start, NULL);
+        Framebuffer_DrawText(self, buffer, AnchorType_Begin, AnchorType_Center, &JetBrainsMono12, getLeftStatusText().start, NULL);
+        Framebuffer_DrawText(self, buffer, AnchorType_Center, AnchorType_Center, &JetBrainsMono12, getKeyboardLedsStateText().start, NULL);
+        Framebuffer_DrawText(self, buffer, AnchorType_End, AnchorType_Center, &JetBrainsMono12, getRightStatusText().start, NULL);
+    }
+}
+
+static void drawKeymapLayer(widget_t* self, framebuffer_t* buffer)
+{
+    if (self->dirty) {
+        self->dirty = false;
+        Framebuffer_Clear(self, buffer);
+        const lv_font_t* keymapFont = &JetBrainsMono16;
+        const lv_font_t* layerFont = &JetBrainsMono12;
+        string_segment_t keymapText = getKeymapText();
+        string_segment_t layerText = getLayerText();
+        uint16_t keymapWidth = Framebuffer_TextWidth(keymapFont, keymapText.start, keymapText.end);
+        Framebuffer_DrawText(self, buffer, self->w/2 - keymapWidth/2, AnchorType_Center, keymapFont, keymapText.start, keymapText.end);
+        if (ActiveLayer != LayerId_Base) {
+            Framebuffer_DrawText(self, buffer, self->w/2 + keymapWidth/2 + 5, AnchorType_Center+12, layerFont, layerText.start, layerText.end);
+        }
     }
 }
 
@@ -131,8 +148,8 @@ void WidgetStore_Init()
 {
     LayerWidget = TextWidget_BuildRefreshable(&JetBrainsMono16, &getLayerText);
     KeymapWidget = TextWidget_BuildRefreshable(&JetBrainsMono24, &getKeymapText);
-    KeymapLayerWidget = TextWidget_BuildRefreshable(&JetBrainsMono16, &getKeymapLayerText);
     TargetWidget = TextWidget_BuildRefreshable(&JetBrainsMono12, &getTargetText);
+    KeymapLayerWidget = CustomWidget_Build(&drawKeymapLayer);
     StatusWidget = CustomWidget_Build(&drawStatus);
     CanvasWidget = CustomWidget_Build(NULL);
     ConsoleWidget = ConsoleWidget_Build();
