@@ -111,7 +111,7 @@ static string_segment_t getRightStatusText() {
 
 static string_segment_t getKeyboardLedsStateText() {
     static char buffer [6] = {};
-    sprintf(buffer, "%cN %cC", KeyboardLedsState.numLock ? FontControl_WhiteText : FontControl_GrayText, KeyboardLedsState.capsLock ? FontControl_WhiteText : FontControl_GrayText);
+    sprintf(buffer, "%cC %cN", KeyboardLedsState.capsLock ? FontControl_WhiteText : FontControl_GrayText, KeyboardLedsState.numLock ? FontControl_WhiteText : FontControl_GrayText);
     return (string_segment_t){ .start = buffer, .end = NULL };
 }
 
