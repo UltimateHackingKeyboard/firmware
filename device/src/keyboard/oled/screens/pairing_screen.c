@@ -21,7 +21,7 @@ widget_t* PairingFailedScreen;
 
 static uint8_t passwordCharCount = 0;
 static uint8_t password[PASSWORD_LENGTH];
-static char passwordTextBuffer[PASSWORD_LENGTH + PASSWORD_LENGTH - 1] = { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', };
+static char passwordTextBuffer[2*PASSWORD_LENGTH] = { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '\0'};
 static unsigned int correctPassword;
 
 static void updatePasswordText()
@@ -71,6 +71,7 @@ void PairingScreen_RegisterScancode(uint8_t scancode)
     switch (scancode)
     {
         case HID_KEYBOARD_SC_ESCAPE:
+        case HID_KEYBOARD_SC_ENTER:
             num_comp_reply(0);
             ScreenManager_ActivateScreen(ScreenId_PairingFailed);
             break;
@@ -100,7 +101,7 @@ void PairingScreen_Init()
 {
     questionLine = TextWidget_Build(&JetBrainsMono16, "Pairing code:");
     answerLine = TextWidget_Build(&JetBrainsMono16, passwordTextBuffer);
-    splitterWidget = SplitterWidget_BuildHorizontal(&questionLine, &answerLine, (DISPLAY_HEIGHT-DISPLAY_SHIFTING_MARGIN)/2, false);
+    splitterWidget = SplitterWidget_BuildVertical(&questionLine, &answerLine, (DISPLAY_HEIGHT-DISPLAY_SHIFTING_MARGIN)/2, false);
     PairingScreen = &splitterWidget;
 
     pairingFailed = TextWidget_Build(&JetBrainsMono16, "Pairing failed!");
