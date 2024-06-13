@@ -173,25 +173,22 @@ struct hogp_manager {
 
     static bool active()
     {
-        return instance().hogp_full_.active() || instance().hogp_nopad_.active();
+        return instance().hogp_nopad_.active();
     }
 
     void select_config(hid_config_t conf)
     {
         switch (conf) {
         case Hid_Empty:
-            hogp_full_.stop();
             hogp_nopad_.stop();
             break;
 
         case Hid_NoGamepad:
-            hogp_full_.stop();
             hogp_nopad_.start();
             break;
 
         default:
-            hogp_full_.start();
-            hogp_nopad_.stop();
+            hogp_nopad_.start();
             break;
         }
     }
@@ -202,11 +199,6 @@ struct hogp_manager {
     static const auto security = bluetooth::zephyr::hid::security::ENCRYPT;
     static const auto features = bluetooth::zephyr::hid::flags::NORMALLY_CONNECTABLE |
                                  bluetooth::zephyr::hid::flags::REMOTE_WAKE;
-
-    bluetooth::zephyr::hid::service_instance<hid::report_protocol_properties(
-                                                 multi_hid_full::report_desc()),
-        bluetooth::zephyr::hid::boot_protocol_mode::KEYBOARD>
-        hogp_full_{multi_hid_full::handle(), security, features};
 
     bluetooth::zephyr::hid::service_instance<hid::report_protocol_properties(
                                                  multi_hid_nopad::report_desc()),
