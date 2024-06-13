@@ -4,7 +4,6 @@
 extern "C"
 {
 #include "usb/usb.h"
-#include "device_state.h"
 #include "usb/usb_compatibility.h"
 #include <zephyr/kernel.h>
 }
@@ -44,6 +43,8 @@ void keyboard_app::set_rollover(rollover mode)
     }
 }
 
+extern void hidmgr_set_transport(const hid::transport* tp);
+
 void keyboard_app::start(hid::protocol prot)
 {
     prot_ = prot;
@@ -56,13 +57,13 @@ void keyboard_app::start(hid::protocol prot)
     keys_nkro_.reset();
     keys_6kro_.reset();
 
-    DeviceState_SetConnection(ConnectionId_UsbHid, ConnectionType_Usb);
+    hidmgr_set_transport(get_transport());
 }
 
 void keyboard_app::stop()
 {
     // TODO stop handling keyboard events
-    DeviceState_SetConnection(ConnectionId_UsbHid, ConnectionType_None);
+    hidmgr_set_transport(get_transport());
 }
 
 void keyboard_app::set_report_state(const keys_nkro_report_base<>& data)
