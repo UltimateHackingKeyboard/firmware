@@ -13,7 +13,7 @@ void TextWidget_Draw(widget_t* self, framebuffer_t* buffer)
             self->textData.text = self->textData.textProvider();
         }
         if (self->textData.text.start != NULL) {
-            Framebuffer_DrawTextAnchored(self, buffer, AnchorType_Center, AnchorType_Center, self->textData.font, self->textData.text.start, self->textData.text.end);
+            Framebuffer_DrawText(self, buffer, AlignmentType_Center, AlignmentType_Center, self->textData.font, self->textData.text.start, self->textData.text.end);
         }
     }
 }
@@ -54,8 +54,4 @@ widget_t TextWidget_BuildRefreshable(const lv_font_t* font, string_segment_t (*t
     };
 }
 
-void TextWidget_Refresh(widget_t* self) {
-    self->dirty = true;
-    Oled_RequestRedraw();
-}
 

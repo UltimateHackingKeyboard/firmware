@@ -1,7 +1,17 @@
 #include "keyboard_app.hpp"
 #include "zephyr/sys/printk.h"
 
-keyboard_app &keyboard_app::handle()
+extern "C"
+{
+#include "usb/usb.h"
+#include "device_state.h"
+#include "usb/usb_compatibility.h"
+#include <zephyr/kernel.h>
+}
+
+static K_SEM_DEFINE(reportSending, 1, 1);
+
+keyboard_app& keyboard_app::handle()
 {
     static keyboard_app app{};
     return app;
@@ -50,11 +60,14 @@ void keyboard_app::start(hid::protocol prot)
         keys_[0].sixkro = {};
         keys_[1].sixkro = {};
     }
+
+    DeviceState_SetConnection(ConnectionId_UsbHid, ConnectionType_Usb);
 }
 
 void keyboard_app::stop()
 {
     // TODO stop handling keyboard events
+    DeviceState_SetConnection(ConnectionId_UsbHid, ConnectionType_None);
 }
 
 bool keyboard_app::using_nkro() const
@@ -65,6 +78,9 @@ bool keyboard_app::using_nkro() const
 
 void keyboard_app::set_report_state(const keys_nkro_report_base<> &data)
 {
+    // DOCS: For report sending logic, see comments in mouse_app.cpp
+    k_sem_take(&reportSending, K_MSEC(SEMAPHORE_RESET_TIMEOUT));
+
     auto buf_idx = keys_.active_side();
     if (!using_nkro()) {
         if (prot_ == hid::protocol::BOOT) {
@@ -98,6 +114,7 @@ void keyboard_app::set_report_state(const keys_nkro_report_base<> &data)
 void keyboard_app::send_6kro_buffer(uint8_t buf_idx)
 {
     if (!keys_.differs() || !has_transport()) {
+        k_sem_give(&reportSending);
         return;
     }
     auto result = hid::result::INVALID;
@@ -111,12 +128,14 @@ void keyboard_app::send_6kro_buffer(uint8_t buf_idx)
     // swap sides only if the callback hasn't done yet
     if (result == hid::result::OK) {
         keys_.compare_swap_copy(buf_idx);
+        k_sem_give(&reportSending);
     }
 }
 
 void keyboard_app::send_nkro_buffer(uint8_t buf_idx)
 {
     if (!keys_.differs() || !has_transport()) {
+        k_sem_give(&reportSending);
         return;
     }
     auto result = send_report(&keys_[buf_idx].nkro);
@@ -138,6 +157,7 @@ void keyboard_app::send_nkro_buffer(uint8_t buf_idx)
 
     } else if (result == hid::result::OK) {
         keys_.compare_swap_copy(buf_idx);
+        k_sem_give(&reportSending);
     }
 }
 
@@ -151,7 +171,11 @@ void keyboard_app::set_report(hid::report::type type, const std::span<const uint
     // offset it if report ID is not present due to BOOT protocol
     auto &leds = *reinterpret_cast<const uint8_t *>(data.data() + static_cast<size_t>(prot_));
 
-    // TODO use LEDs bitfields
+    const uint8_t CapsLockMask = 2;
+    const uint8_t NumLockMask = 1;
+
+    UsbCompatibility_SetKeyboardLedsState(leds & CapsLockMask, leds & NumLockMask);
+
     printk("keyboard LED status: %x\n", leds);
 
     // always keep receiving new reports

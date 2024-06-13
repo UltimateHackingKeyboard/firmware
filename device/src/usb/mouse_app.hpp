@@ -117,6 +117,8 @@ class mouse_app : public hid::application {
 
     using mouse_report = mouse_report_base<report_ids::IN_MOUSE>;
     double_buffer<mouse_report> report_buffer_{};
+
+    bool swap_buffers(uint8_t buf_idx);
 };
 
 using mouse_buffer = mouse_app::mouse_report_base<>;

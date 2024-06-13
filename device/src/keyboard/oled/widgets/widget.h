@@ -58,6 +58,6 @@
 
 // Functions:
 
-    void Widget_RequestRedraw(widget_t* widget);
+    void Widget_Refresh(widget_t* widget);
 
 #endif

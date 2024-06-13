@@ -6,10 +6,12 @@
 #include "bt_conn.h"
 #include "device_state.h"
 #include "keyboard/oled/screens/screen_manager.h"
+#include "keyboard/oled/widgets/widget.h"
 #include "nus_client.h"
 #include "device.h"
 #include "keyboard/oled/screens/pairing_screen.h"
 #include "usb/usb.h"
+#include "keyboard/oled/widgets/widgets.h"
 
 #define PeerCount 3
 
@@ -74,13 +76,22 @@ char *GetPeerStringByConn(const struct bt_conn *conn) {
 
 static struct bt_conn_le_data_len_param *data_len;
 
-static void set_le_params(struct bt_conn *conn) {
+static void set_data_length_extension_params(struct bt_conn *conn) {
     data_len = BT_LE_DATA_LEN_PARAM_MAX;
 
     int err = bt_conn_le_data_len_update(conn, data_len);
     if (err) {
         printk("LE data length update failed: %d", err);
     }
+}
+
+static void set_latency_params(struct bt_conn *conn) {
+    static const struct bt_le_conn_param conn_params = BT_LE_CONN_PARAM_INIT(
+        6, 9, // keep it low, lowest allowed is 6 (7.5ms), lowest supported widely is 9 (11.25ms)
+        0, // keeping it higher allows power saving on peripheral when there's nothing to send (keep it under 30 though)
+        100 // connection timeout (*10ms)
+    );
+    bt_conn_le_param_update(conn, &conn_params);
 }
 
 static void connected(struct bt_conn *conn, uint8_t err) {
@@ -114,9 +125,16 @@ static void connected(struct bt_conn *conn, uint8_t err) {
             bt_conn_le_param_update(conn, &conn_params);
 
             USB_DisableHid();
+
+            DeviceState_SetConnection(ConnectionId_BluetoothHid, ConnectionType_Bt);
         }
     } else {
-        set_le_params(conn);
+        if (peerId == PeerIdDongle) {
+            set_latency_params(conn);
+        }
+
+        set_data_length_extension_params(conn);
+
         if (DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK_DONGLE) {
             NusClient_Setup(conn);
         }
@@ -137,7 +155,7 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
             }
         } else if (peerId == PeerIdDongle) {
             Advertise(ADVERTISE_NUS);
-        } else if (peerId == PeerIdLeft) {
+        } else if (peerId == PeerIdLeft || peerId == PeerIdRight) {
             int err = bt_scan_start(BT_SCAN_TYPE_SCAN_ACTIVE);
             printk("Start scan\n");
             if (err) {
@@ -149,6 +167,8 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
     if (peerId != PeerIdUnknown) {
         Peers[peerId].isConnected = false;
         DeviceState_TriggerUpdate();
+    } else {
+        DeviceState_SetConnection(ConnectionId_BluetoothHid, ConnectionType_None);
     }
 }
 

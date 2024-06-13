@@ -458,3 +458,18 @@ uint8_t CountCommands(const char* text, uint16_t textLen)
         }
     }
 }
+
+#ifdef __ZEPHYR__
+const char* Utils_DeviceIdToString(device_id_t deviceId) {
+    switch (deviceId) {
+        case DEVICE_ID_UHK80_LEFT:
+            return "left";
+        case DEVICE_ID_UHK80_RIGHT:
+            return "right";
+        case DEVICE_ID_UHK_DONGLE:
+            return "dongle";
+        default:
+            return "unknown";
+    }
+}
+#endif

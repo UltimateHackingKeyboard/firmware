@@ -14,10 +14,14 @@
 // Typedefs:
 
     typedef enum {
-        AnchorType_Begin,
-        AnchorType_Center,
-        AnchorType_End,
-    } anchor_type_t;
+        AlignmentType_Begin_ = 1,
+        AlignmentType_Center_ = 2,
+        AlignmentType_End_ = 3,
+
+        AlignmentType_Begin = -((AlignmentType_Begin_ << 9) + 256),
+        AlignmentType_Center = -((AlignmentType_Center_ << 9) + 256),
+        AlignmentType_End = -((AlignmentType_End_ << 9) + 256),
+    } alignment_type_t;
 
     typedef struct {
         uint8_t value;

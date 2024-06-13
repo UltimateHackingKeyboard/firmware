@@ -5,34 +5,67 @@
 #include "keyboard/oled/widgets/widgets.h"
 #include "state_sync.h"
 
-typedef enum {
-    ConnectionType_None,
-    ConnectionType_Uart,
-    ConnectionType_Bt,
-} connection_type_t;
+static connection_type_t isConnected[ConnectionId_Count] = {};
 
-static connection_type_t isConnected[DEVICE_STATE_LAST_DEVICE - DEVICE_STATE_FIRST_DEVICE + 1] = {};
-
-bool DeviceState_IsConnected(device_id_t deviceId) {
-    return isConnected[deviceId - DEVICE_STATE_FIRST_DEVICE] != ConnectionType_None;
+bool DeviceState_IsDeviceConnected(device_id_t deviceId) {
+    return deviceId == DEVICE_ID || isConnected[deviceId - DEVICE_STATE_FIRST_DEVICE] != ConnectionType_None;
 }
 
-void handleStateTransition(device_id_t remoteId, bool isConnected) {
-    if (isConnected) {
+bool DeviceState_IsConnected(connection_id_t connectionId) {
+    return isConnected[connectionId] != ConnectionType_None;
+}
+
+void handleStateTransition(connection_id_t remoteId, bool isConnected) {
         switch (DEVICE_ID) {
             case DeviceId_Uhk80_Left:
+                if (remoteId == ConnectionId_Right && isConnected) {
+                    StateSync_Reset();
+                }
                 break;
             case DeviceId_Uhk80_Right:
-                if (remoteId == DeviceId_Uhk80_Left) {
-                    TextWidget_Refresh(&StatusWidget);
-                    StateSync_ResetState();
+                switch (remoteId) {
+                    case ConnectionId_Left:
+                        if (isConnected) {
+                            Widget_Refresh(&StatusWidget);
+                            StateSync_Reset();
+                        }
+                        break;
+                    case ConnectionId_Dongle:
+                    case ConnectionId_UsbHid:
+                    case ConnectionId_BluetoothHid:
+                        Widget_Refresh(&TargetWidget);
+                        break;
+                    default:
+                        break;
                 }
                 break;
             case DeviceId_Uhk_Dongle:
+                if (remoteId == ConnectionId_Right && isConnected) {
+                    StateSync_Reset();
+                }
                 break;
             default:
                 break;
         }
+}
+
+void DeviceState_SetConnection(connection_id_t connection, connection_type_t type) {
+    if (isConnected[connection] != type) {
+        isConnected[connection] = type;
+        handleStateTransition(connection, isConnected[connection] != ConnectionType_None);
+    }
+}
+
+static connection_id_t deviceToConnection(device_id_t deviceId) {
+    switch (deviceId) {
+        case DeviceId_Uhk80_Left:
+            return ConnectionId_Left;
+        case DeviceId_Uhk80_Right:
+            return ConnectionId_Right;
+        case DeviceId_Uhk_Dongle:
+            return ConnectionId_Dongle;
+        default:
+            return ConnectionId_Invalid;
     }
 }
 
@@ -52,10 +85,11 @@ void DeviceState_TriggerUpdate() {
             newIsConnected = ConnectionType_Uart;
         }
 
-        connection_type_t oldIsConnected = isConnected[devId - DEVICE_STATE_FIRST_DEVICE];
-        isConnected[devId - DEVICE_STATE_FIRST_DEVICE] = newIsConnected;
+        connection_id_t conId = deviceToConnection(devId);
+        connection_type_t oldIsConnected = isConnected[conId];
+        isConnected[conId] = newIsConnected;
         if (newIsConnected != oldIsConnected) {
-            handleStateTransition(devId, newIsConnected);
+            handleStateTransition(conId, newIsConnected);
         }
     }
 }

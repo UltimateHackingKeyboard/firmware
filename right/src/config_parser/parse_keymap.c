@@ -336,10 +336,10 @@ parser_error_t ParseKeymap(config_buffer_t *buffer, uint8_t keymapIdx, uint8_t k
 #ifdef __ZEPHYR__
     if (parseConfig.mode == ParseKeymapMode_FullRun || parseConfig.mode == ParseKeymapMode_OverlayKeymap) {
         for (uint8_t layerId = 0; layerId < LayerId_Count; layerId++) {
-            StateSync_UpdateLayer(layerId, !Cfg.LayerConfig[layerId].layerIsDefined);
+            StateSync_UpdateLayer(layerId, Cfg.LayerConfig[layerId].layerIsDefined);
         }
     } else if (parseConfig.mode != ParseKeymapMode_DryRun) {
-        StateSync_UpdateLayer(parseConfig.dstLayer, false);
+        StateSync_UpdateLayer(parseConfig.dstLayer, true);
     }
 #endif
 

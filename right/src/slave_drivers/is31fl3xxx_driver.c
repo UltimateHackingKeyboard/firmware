@@ -5,6 +5,7 @@
 #include "debug.h"
 #include "config_manager.h"
 #include "stubs.h"
+#include "led_manager.h"
 
 #ifndef __ZEPHYR__
 uint8_t LedDriverValues[LED_DRIVER_MAX_COUNT][LED_DRIVER_LED_COUNT_MAX];

@@ -19,6 +19,7 @@
     extern widget_t StatusWidget;
     extern widget_t CanvasWidget;
     extern widget_t ConsoleWidget;
+    extern widget_t TargetWidget;
 
 // Functions:
 

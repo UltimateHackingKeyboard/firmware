@@ -1,6 +1,14 @@
 #include "gamepad_app.hpp"
 
-gamepad_app &gamepad_app::handle()
+extern "C"
+{
+#include "usb/usb.h"
+#include <zephyr/kernel.h>
+}
+
+static K_SEM_DEFINE(reportSending, 1, 1);
+
+gamepad_app& gamepad_app::handle()
 {
     static gamepad_app app{};
     return app;
@@ -23,6 +31,7 @@ void gamepad_app::stop()
 
 void gamepad_app::set_report_state(const gamepad_report &data)
 {
+    k_sem_take(&reportSending, K_MSEC(SEMAPHORE_RESET_TIMEOUT));
     auto buf_idx = report_buffer_.active_side();
     auto &report = report_buffer_[buf_idx];
     report.buttons = data.buttons;
@@ -36,10 +45,12 @@ void gamepad_app::set_report_state(const gamepad_report &data)
 void gamepad_app::send_buffer(uint8_t buf_idx)
 {
     if (!report_buffer_.differs()) {
+        k_sem_give(&reportSending);
         return;
     }
     if (send_report(&report_buffer_[buf_idx]) == hid::result::OK) {
         report_buffer_.compare_swap_copy(buf_idx);
+        k_sem_give(&reportSending);
     }
 }
 

@@ -2,6 +2,8 @@
 
 NCS_VERSION=v2.6.1
 
+BUILD_SESSION_NAME="buildsession"
+
 function help() {
     cat << END
 usage: ./build DEVICE1 DEVICE2 ... ACTION1 ACTION2 ...
@@ -26,6 +28,10 @@ usage: ./build DEVICE1 DEVICE2 ... ACTION1 ACTION2 ...
         DEVICEID_UHK80_LEFT=69660648
         DEVICEID_UHK80_RIGHT=69660578
         DEVICEID_UHK_DONGLE=683150769
+
+    You can also set a command that will be executed after the builds are finished:
+
+        BELL=mplayer ring.mp3
 
     Examples:
         ./build uhk-80-right flash --dev-id 123
@@ -131,6 +137,8 @@ function establishSession() {
         tmux split-window -t $SESSION_NAME
         tmux select-layout -t $SESSION_NAME tiled
     done
+
+    tmux if-shell '[ "$(tmux display-message -p "#{pane_index}")" -gt '"$NUM_PANES"' ]' 'select-pane -t 1'
 }
 
 function setupUartMonitor() {
@@ -209,11 +217,12 @@ function performActions() {
     do
         performAction "$DEVICE" $ACTION
     done
+    eval $BELL
 }
 
 
 function runPerDevice() {
-    SESSION_NAME="buildsession"
+    SESSION_NAME=$BUILD_SESSION_NAME
     establishSession $SESSION_NAME `echo $DEVICES | wc -w`
 
     i=0
@@ -244,7 +253,14 @@ function run() {
     then
         runPerDevice
     else
-        performActions $DEVICES
+        tmux has-session -t $BUILD_SESSION_NAME 2>/dev/null
+        SESSION_EXISTS=$?
+        if [ $SESSION_EXISTS == 0 -a "$TMUX" == "" ] 
+        then
+            runPerDevice
+        else
+            performActions $DEVICES
+        fi
     fi
 
 }

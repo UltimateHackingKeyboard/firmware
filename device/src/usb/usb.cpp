@@ -8,7 +8,7 @@ extern "C" {
 #include "key_states.h"
 #include "legacy/user_logic.h"
 #include "legacy/timer.h"
-#include "keyboard/power.h"
+#include "keyboard/charger.h"
 }
 #include "command_app.hpp"
 #include "controls_app.hpp"
@@ -136,7 +136,7 @@ struct usb_manager {
                 break;
             case event::POWER_STATE_CHANGE:
                 if (!DEVICE_IS_UHK_DONGLE) {
-                    Power_ReportPowerState(3 - static_cast<uint8_t>(dev.power_state()), dev.granted_bus_current_uA());
+                    Charger_UpdateBatteryState();
                 }
                 // printk("USB power state: L%u, granted current: %uuA\n", 3 - static_cast<uint8_t>(dev.power_state()), dev.granted_bus_current_uA());
                 break;

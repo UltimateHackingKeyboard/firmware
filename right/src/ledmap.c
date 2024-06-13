@@ -578,6 +578,6 @@ void Ledmap_SetLedBacklightingMode(backlighting_mode_t newMode)
 {
     Cfg.BacklightingMode = newMode;
 #ifdef __ZEPHYR__
-    StateSync_UpdateBacklight();
+    StateSync_UpdateProperty(StateSyncPropertyId_Backlight, NULL);
 #endif
 }

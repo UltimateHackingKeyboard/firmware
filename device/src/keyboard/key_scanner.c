@@ -20,7 +20,7 @@
 // Thread definitions
 
 #define THREAD_STACK_SIZE 1000
-#define THREAD_PRIORITY 5
+#define THREAD_PRIORITY -1
 
 static K_THREAD_STACK_DEFINE(stack_area, THREAD_STACK_SIZE);
 static struct k_thread thread_data;

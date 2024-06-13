@@ -14,6 +14,6 @@ framebuffer_t* OledBuffer = (framebuffer_t*)&oledBuffer;
 
 void OledBuffer_Init()
 {
-    Framebuffer_DrawTextAnchored(NULL, OledBuffer, AnchorType_Center, AnchorType_Center, &JetBrainsMono32, "Hello world!", NULL);
+    Framebuffer_DrawText(NULL, OledBuffer, AlignmentType_Center, AlignmentType_Center, &JetBrainsMono32, "Hello world!", NULL);
 }
 
