@@ -60,6 +60,7 @@
         StateSyncPropertyId_ActiveKeymap,
         StateSyncPropertyId_Battery,
         StateSyncPropertyId_KeyboardLedsState,
+        StateSyncPropertyId_StateReset,
         StateSyncPropertyId_Count,
     } state_sync_prop_id_t;
 

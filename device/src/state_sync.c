@@ -82,6 +82,17 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t property, cons
     .name = #NAME \
 }
 
+#define EMPTY_MASTER_TO_SLAVE(NAME, DEFAULT_DIRTY) [ StateSyncPropertyId_##NAME] = { \
+    .leftData = NULL, \
+    .rightData = NULL, \
+    .dongleData = NULL, \
+    .len = 0, \
+    .direction = SyncDirection_MasterToSlave, \
+    .dirtyState = DEFAULT_DIRTY, \
+    .defaultDirty = DEFAULT_DIRTY, \
+    .name = #NAME \
+}
+
 static state_sync_prop_t stateSyncProps[StateSyncPropertyId_Count] = {
     DEFAULT_LAYER_PROP(LayerActionsLayer1),
     DEFAULT_LAYER_PROP(LayerActionsLayer2),
@@ -101,6 +112,7 @@ static state_sync_prop_t stateSyncProps[StateSyncPropertyId_Count] = {
     SIMPLE_MASTER_TO_SLAVE(ActiveKeymap, CurrentKeymapIndex, DirtyState_Clean),
     SIMPLE_DONGLE_TO_MASTER(KeyboardLedsState, KeyboardLedsState, DirtyState_Clean),
     DUAL_SLAVE_TO_MASTER(Battery, SyncLeftHalfState.battery, SyncRightHalfState.battery, DirtyState_Clean),
+    EMPTY_MASTER_TO_SLAVE(StateReset, DirtyState_Clean),
 };
 
 static void invalidateProperty(state_sync_prop_id_t propId) {
@@ -236,6 +248,11 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
         case StateSyncPropertyId_KeyboardLedsState:
             Widget_Refresh(&StatusWidget);
             break;
+        case StateSyncPropertyId_StateReset:
+            if (!isLocalUpdate) {
+                StateSync_Reset();
+            }
+            break;
         default:
             printk("Property %i ('%s') has no receive handler. If this is correct, please add a separate empty case...\n", propId, prop->name);
             break;
@@ -350,6 +367,8 @@ static void updateProperty(state_sync_prop_id_t propId) {
     }
 
 static bool handlePropertyUpdateMaster() {
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_StateReset);
+
     if (KeyBacklightBrightness != 0 && Cfg.BacklightingMode != BacklightingMode_ConstantRGB) {
         state_sync_prop_id_t first = StateSyncPropertyId_LayerActionFirst;
         state_sync_prop_id_t last = StateSyncPropertyId_LayerActionLast;
@@ -433,6 +452,7 @@ void StateSync_Reset() {
     if (DEVICE_ID == DeviceId_Uhk80_Right) {
         invalidateProperty(StateSyncPropertyId_ActiveLayer);
         invalidateProperty(StateSyncPropertyId_Backlight);
+        invalidateProperty(StateSyncPropertyId_StateReset);
     }
     if (DEVICE_ID == DeviceId_Uhk80_Left) {
         invalidateProperty(StateSyncPropertyId_Battery);
