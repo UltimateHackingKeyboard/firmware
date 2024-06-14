@@ -1,7 +1,7 @@
-extern "C"
-{
+extern "C" {
 #include "usb.h"
 #include "device.h"
+#include "key_states.h"
 #include "keyboard/key_scanner.h"
 #include <device.h>
 #include <zephyr/kernel.h>
@@ -22,12 +22,12 @@ extern "C"
 #include "usb/df/vendor/microsoft_xinput.hpp"
 #include <magic_enum.hpp>
 
-extern "C"{
+extern "C" {
 #include "usb_report_updater.h"
 }
 
 #if DEVICE_IS_UHK80_RIGHT
-#include "port/zephyr/bluetooth/hid.hpp"
+    #include "port/zephyr/bluetooth/hid.hpp"
 
 using namespace magic_enum::bitwise_operators;
 #endif
@@ -35,21 +35,41 @@ using namespace magic_enum::bitwise_operators;
 // make sure that the USB IDs are used in BT
 static_assert(CONFIG_BT_DIS_PNP_VID_SRC == 2);
 
-constexpr usb::product_info product_info{
-    CONFIG_BT_DIS_PNP_VID, CONFIG_BT_DIS_MANUF, CONFIG_BT_DIS_PNP_PID, CONFIG_BT_DIS_MODEL,
+constexpr usb::product_info product_info{CONFIG_BT_DIS_PNP_VID, CONFIG_BT_DIS_MANUF,
+    CONFIG_BT_DIS_PNP_PID, CONFIG_BT_DIS_MODEL,
     usb::version(CONFIG_BT_DIS_PNP_VER >> 8, CONFIG_BT_DIS_PNP_VER)};
 
-struct usb_manager
-{
-    static usb::df::zephyr::udc_mac& mac() { return instance().mac_; }
-    static usb::df::device& device() { return instance().device_; }
+template <typename... Args>
+class multi_hid : public hid::multi_application {
+  public:
+    static constexpr auto report_desc() { return hid::rdf::descriptor((Args::report_desc(), ...)); }
+
+    static multi_hid &handle()
+    {
+        static multi_hid s;
+        return s;
+    }
+
+  private:
+    std::array<hid::application *, sizeof...(Args) + 1> app_array_{(&Args::handle())..., nullptr};
+    multi_hid() : multi_application({{}, 0, 0, 0}, app_array_)
+    {
+        static constexpr const auto desc = report_desc();
+        constexpr hid::report_protocol rp{hid::rdf::ce_descriptor_view(desc)};
+        report_info_ = rp;
+    }
+};
+
+struct usb_manager {
+    static usb::df::zephyr::udc_mac &mac() { return instance().mac_; }
+    static usb::df::device &device() { return instance().device_; }
     static bool active() { return device().is_open(); }
 
     void select_config(hid_config_t conf)
     {
         static constexpr auto speed = usb::speed::FULL;
-        static usb::df::hid::function usb_kb{keyboard_app::handle(),
-                                             usb::hid::boot_protocol_mode::KEYBOARD};
+        static usb::df::hid::function usb_kb{
+            keyboard_app::handle(), usb::hid::boot_protocol_mode::KEYBOARD};
         static usb::df::hid::function usb_mouse{mouse_app::handle()};
         static usb::df::hid::function usb_command{command_app::handle()};
         static usb::df::hid::function usb_controls{controls_app::handle()};
@@ -67,26 +87,23 @@ struct usb_manager
         static const auto base_config =
             usb::df::config::make_config(config_header, shared_config_elems);
 
-        static const auto gamepad_config = usb::df::config::make_config(
-            config_header, shared_config_elems,
-            usb::df::hid::config(usb_gamepad, speed, usb::endpoint::address(0x85), 1));
+        static const auto gamepad_config =
+            usb::df::config::make_config(config_header, shared_config_elems,
+                usb::df::hid::config(usb_gamepad, speed, usb::endpoint::address(0x85), 1));
 
-        static const auto xpad_config = usb::df::config::make_config(
-            config_header, shared_config_elems,
-            usb::df::microsoft::xconfig(usb_xpad, usb::endpoint::address(0x85), 1,
-                                        usb::endpoint::address(0x05), 255));
+        static const auto xpad_config =
+            usb::df::config::make_config(config_header, shared_config_elems,
+                usb::df::microsoft::xconfig(
+                    usb_xpad, usb::endpoint::address(0x85), 1, usb::endpoint::address(0x05), 255));
 
-        if (device_.is_open())
-        {
+        if (device_.is_open()) {
             device_.close();
-            if (conf == Hid_Empty)
-            {
+            if (conf == Hid_Empty) {
                 return;
             }
             k_msleep(100);
         }
-        switch (conf)
-        {
+        switch (conf) {
         case Hid_Empty:
             assert(false); // returned already
             break;
@@ -102,7 +119,7 @@ struct usb_manager
         device_.open();
     }
 
-    static usb_manager& instance()
+    static usb_manager &instance()
     {
         static usb_manager um;
         return um;
@@ -143,42 +160,35 @@ extern "C" void USB_DisableHid()
 }
 
 #if DEVICE_IS_UHK80_RIGHT
-struct hogp_manager
-{
-    static hogp_manager& instance()
+
+using multi_hid_full = multi_hid<keyboard_app, mouse_app, command_app, controls_app, gamepad_app>;
+using multi_hid_nopad = multi_hid<keyboard_app, mouse_app, command_app, controls_app>;
+
+struct hogp_manager {
+    static hogp_manager &instance()
     {
         static hogp_manager hm;
         return hm;
     }
 
-    static bool active() { return instance().hogp_kb_.active(); }
+    static bool active()
+    {
+        return instance().hogp_nopad_.active();
+    }
 
     void select_config(hid_config_t conf)
     {
-        switch (conf)
-        {
+        switch (conf) {
         case Hid_Empty:
-            hogp_kb_.stop();
-            hogp_mouse_.stop();
-            hogp_controls_.stop();
-            hogp_command_.stop();
-            hogp_gamepad_.stop();
+            hogp_nopad_.stop();
             break;
 
         case Hid_NoGamepad:
-            hogp_kb_.start();
-            hogp_mouse_.start();
-            hogp_controls_.start();
-            hogp_command_.start();
-            hogp_gamepad_.stop();
+            hogp_nopad_.start();
             break;
 
         default:
-            hogp_kb_.start();
-            hogp_mouse_.start();
-            hogp_controls_.start();
-            hogp_command_.start();
-            hogp_gamepad_.start();
+            hogp_nopad_.start();
             break;
         }
     }
@@ -191,25 +201,9 @@ struct hogp_manager
                                  bluetooth::zephyr::hid::flags::REMOTE_WAKE;
 
     bluetooth::zephyr::hid::service_instance<hid::report_protocol_properties(
-                                                 keyboard_app::report_desc()),
-                                             bluetooth::zephyr::hid::boot_protocol_mode::KEYBOARD>
-        hogp_kb_{keyboard_app::handle(), security, features};
-
-    bluetooth::zephyr::hid::service_instance<hid::report_protocol_properties(
-        mouse_app::report_desc())>
-        hogp_mouse_{mouse_app::handle(), security, features};
-
-    bluetooth::zephyr::hid::service_instance<hid::report_protocol_properties(
-        controls_app::report_desc())>
-        hogp_controls_{controls_app::handle(), security, features};
-
-    bluetooth::zephyr::hid::service_instance<hid::report_protocol_properties(
-        command_app::report_desc())>
-        hogp_command_{command_app::handle(), security, features};
-
-    bluetooth::zephyr::hid::service_instance<hid::report_protocol_properties(
-        gamepad_app::report_desc())>
-        hogp_gamepad_{gamepad_app::handle(), security, features};
+                                                 multi_hid_nopad::report_desc()),
+        bluetooth::zephyr::hid::boot_protocol_mode::KEYBOARD>
+        hogp_nopad_{multi_hid_nopad::handle(), security, features};
 };
 
 extern "C" void HOGP_Enable()
@@ -233,13 +227,11 @@ extern "C" bool HID_GetGamepadActive()
 extern "C" void HID_SetGamepadActive(bool active)
 {
     gamepadActive = active;
-    if (usb_manager::active())
-    {
+    if (usb_manager::active()) {
         USB_EnableHid();
     }
 #if DEVICE_IS_UHK80_RIGHT
-    if (hogp_manager::active())
-    {
+    if (hogp_manager::active()) {
         HOGP_Enable();
     }
 #endif
@@ -256,4 +248,3 @@ extern "C" void HID_SetKeyboardRollover(rollover_t mode)
 {
     keyboard_app::handle().set_rollover((keyboard_app::rollover)mode);
 }
-

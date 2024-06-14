@@ -1,12 +1,13 @@
-#include <zephyr/drivers/adc.h>
-#include <zephyr/drivers/gpio.h>
-#include <zephyr/shell/shell.h>
+#include "shell.h"
+#include "bt_conn.h"
 #include "device.h"
 #include "keyboard/charger.h"
 #include "keyboard/leds.h"
 #include "keyboard/oled/oled.h"
-#include "shell.h"
 #include "usb/usb.h"
+#include <zephyr/drivers/adc.h>
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/shell/shell.h>
 #include "bt_conn.h"
 #include "keyboard/charger.h"
 
@@ -106,7 +107,8 @@ static int cmd_uhk_merge(const struct shell *shell, size_t argc, char *argv[])
 static int cmd_uhk_rollover(const struct shell *shell, size_t argc, char *argv[])
 {
     if (argc == 1) {
-        shell_fprintf(shell, SHELL_NORMAL, "%c\n", (HID_GetKeyboardRollover() == Rollover_NKey) ? 'n' : '6');
+        shell_fprintf(
+            shell, SHELL_NORMAL, "%c\n", (HID_GetKeyboardRollover() == Rollover_NKey) ? 'n' : '6');
     } else {
         HID_SetKeyboardRollover((argv[1][0] == '6') ? Rollover_6Key : Rollover_NKey);
     }
@@ -129,48 +131,35 @@ static int cmd_uhk_btacc(const struct shell *shell, size_t argc, char *argv[])
     return 0;
 }
 
+static int cmd_uhk_btunpair(const struct shell *shell, size_t argc, char *argv[])
+{
+    int err = bt_unpair(BT_ID_DEFAULT, NULL);
+    printk("unpair operation result: %d\n", err);
+    return 0;
+}
+
 void InitShell(void)
 {
-    SHELL_STATIC_SUBCMD_SET_CREATE(
-        uhk_cmds,
-        SHELL_CMD_ARG(keylog, NULL,
-            "get/set key logging",
-            cmd_uhk_keylog, 1, 1),
+    SHELL_STATIC_SUBCMD_SET_CREATE(uhk_cmds,
+        SHELL_CMD_ARG(keylog, NULL, "get/set key logging", cmd_uhk_keylog, 1, 1),
 #if !DEVICE_IS_UHK_DONGLE
-        SHELL_CMD_ARG(statlog, NULL,
-            "get/set stat logging",
-            cmd_uhk_statlog, 1, 1),
-        SHELL_CMD_ARG(leds, NULL,
-            "get/set LEDs always on state",
-            cmd_uhk_leds, 1, 1),
-        SHELL_CMD_ARG(sdb, NULL,
-            "get/set LED driver SDB pin",
-            cmd_uhk_sdb, 1, 1),
-        SHELL_CMD_ARG(charger, NULL,
-            "get/set CHARGER_EN pin",
-            cmd_uhk_charger, 1, 1),
+        SHELL_CMD_ARG(statlog, NULL, "get/set stat logging", cmd_uhk_statlog, 1, 1),
+        SHELL_CMD_ARG(leds, NULL, "get/set LEDs always on state", cmd_uhk_leds, 1, 1),
+        SHELL_CMD_ARG(sdb, NULL, "get/set LED driver SDB pin", cmd_uhk_sdb, 1, 1),
+        SHELL_CMD_ARG(charger, NULL, "get/set CHARGER_EN pin", cmd_uhk_charger, 1, 1),
 #endif // !DEVICE_IS_UHK_DONGLE
 #ifdef DEVICE_HAS_OLED
-        SHELL_CMD_ARG(oled, NULL,
-            "get/set OLED_EN pin",
-            cmd_uhk_oled, 1, 1),
+        SHELL_CMD_ARG(oled, NULL, "get/set OLED_EN pin", cmd_uhk_oled, 1, 1),
 #endif
 #ifdef DEVICE_HAS_MERGE_SENSE
-        SHELL_CMD_ARG(merge, NULL,
-            "get the merged state of UHK halves",
-            cmd_uhk_merge, 1, 0),
+        SHELL_CMD_ARG(merge, NULL, "get the merged state of UHK halves", cmd_uhk_merge, 1, 0),
 #endif
-        SHELL_CMD_ARG(rollover, NULL,
-            "get/set keyboard rollover mode (n/6)",
-            cmd_uhk_rollover, 1, 1),
-        SHELL_CMD_ARG(gamepad, NULL,
-            "switch gamepad on/off",
-            cmd_uhk_gamepad, 1, 1),
-        SHELL_CMD_ARG(btacc, NULL,
-            "accept bluetooth pairing",
-            cmd_uhk_btacc, 1, 1),
-        SHELL_SUBCMD_SET_END
-    );
+        SHELL_CMD_ARG(
+            rollover, NULL, "get/set keyboard rollover mode (n/6)", cmd_uhk_rollover, 1, 1),
+        SHELL_CMD_ARG(gamepad, NULL, "switch gamepad on/off", cmd_uhk_gamepad, 1, 1),
+        SHELL_CMD_ARG(btacc, NULL, "accept bluetooth pairing", cmd_uhk_btacc, 1, 1),
+        SHELL_CMD_ARG(btunpair, NULL, "unpair bluetooth devices", cmd_uhk_btunpair, 1, 1),
+        SHELL_SUBCMD_SET_END);
 
     SHELL_CMD_REGISTER(uhk, &uhk_cmds, "UHK commands", NULL);
 }
