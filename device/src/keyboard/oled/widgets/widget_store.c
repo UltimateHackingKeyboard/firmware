@@ -84,14 +84,14 @@ static string_segment_t getLeftStatusText() {
 #undef BUFFER_LENGTH
 }
 
-static void getBatteryStatusText(device_id_t deviceId, battery_state_t* battery, char* buffer) {
+static void getBatteryStatusText(device_id_t deviceId, battery_state_t* battery, char* buffer, bool fixed) {
     char percSign = !battery->powered ? '-' : battery->batteryCharging ? '+' : '%';
     if (!DeviceState_IsDeviceConnected(deviceId)) {
         sprintf(buffer, "    ");
     } else if (!battery->batteryPresent) {
         sprintf(buffer, "    ");
     } else {
-        sprintf(buffer, "%3i%c", battery->batteryPercentage, percSign);
+        sprintf(buffer, fixed ? "%3i%c" : "%i%c", battery->batteryPercentage, percSign);
     }
 }
 
@@ -101,9 +101,19 @@ static string_segment_t getRightStatusText() {
     static char buffer [BUFFER_LENGTH] = { [BUFFER_LENGTH-1] = 0 };
     char leftBattery[BAT_BUFFER_LENGTH];
     char rightBattery[BAT_BUFFER_LENGTH];
-    getBatteryStatusText(DeviceId_Uhk80_Left, &SyncLeftHalfState.battery, leftBattery);
-    getBatteryStatusText(DeviceId_Uhk80_Right, &SyncRightHalfState.battery, rightBattery);
-    snprintf(buffer, BUFFER_LENGTH-1, "%s %s", leftBattery, rightBattery);
+    if (SyncLeftHalfState.battery.batteryPresent && SyncRightHalfState.battery.batteryPresent) {
+        getBatteryStatusText(DeviceId_Uhk80_Left, &SyncLeftHalfState.battery, leftBattery, true);
+        getBatteryStatusText(DeviceId_Uhk80_Right, &SyncRightHalfState.battery, rightBattery, true);
+        snprintf(buffer, BUFFER_LENGTH-1, "%s %s", leftBattery, rightBattery);
+    } else if (SyncLeftHalfState.battery.batteryPresent) {
+        getBatteryStatusText(DeviceId_Uhk80_Left, &SyncLeftHalfState.battery, leftBattery, false);
+        snprintf(buffer, BUFFER_LENGTH-1, "L%s", leftBattery);
+    } else if (SyncRightHalfState.battery.batteryPresent) {
+        getBatteryStatusText(DeviceId_Uhk80_Right, &SyncRightHalfState.battery, rightBattery, false);
+        snprintf(buffer, BUFFER_LENGTH-1, "R%s", rightBattery);
+    } else {
+        snprintf(buffer, BUFFER_LENGTH-1, "");
+    }
     return (string_segment_t){ .start = buffer, .end = NULL };
 #undef BAT_BUFFER_LENGTH
 #undef BUFFER_LENGTH

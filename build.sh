@@ -161,7 +161,7 @@ function setupUartMonitor() {
 function performAction() {
     DEVICE=$1
     ACTION=$2
-    PWD=`pwd`
+    PWD=`realpath .`
 
     case $ACTION in
         update)
@@ -185,7 +185,7 @@ END
             nrfutil toolchain-manager launch --shell --ncs-version $NCS_VERSION << END
                 unset PYTHONPATH
                 unset PYTHONHOME
-                west build --build-dir $PWD/device/build/$DEVICE $PWD/device --pristine --board $DEVICE --no-sysbuild -- -DCMAKE_EXPORT_COMPILE_COMMANDS=1 -DNCS_TOOLCHAIN_VERSION=NONE -DCONF_FILE=$PWD/device/prj.conf -DOVERLAY_CONFIG=$PWD/device/prj.conf.overlays/$DEVICE.prj.conf -DBOARD_ROOT=$PWD
+                west build --build-dir $PWD/device/build/$DEVICE $PWD/device --pristine --board $DEVICE --no-sysbuild -- -DNCS_TOOLCHAIN_VERSION=NONE -DEXTRA_CONF_FILE=prj.conf.overlays/$DEVICE.prj.conf -DBOARD_ROOT=$PWD -Dmcuboot_OVERLAY_CONFIG=$PWD/device/child_image/mcuboot.conf;$PWD/device/child_image/$DEVICE.mcuboot.conf
 END
             ;;
         make)
