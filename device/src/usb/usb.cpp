@@ -239,7 +239,7 @@ void hidmgr_set_transport(const hid::transport* tp)
 #endif
     else
     {
-        DeviceState_SetConnection(ConnectionId_BluetoothHid, ConnectionType_Usb);
+        DeviceState_SetConnection(ConnectionId_UsbHid, ConnectionType_Usb);
     }
 }
 
