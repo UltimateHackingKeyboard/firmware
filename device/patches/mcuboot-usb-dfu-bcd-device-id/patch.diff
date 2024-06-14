@@ -1,9 +1,9 @@
 diff --git a/Kconfig.zephyr b/Kconfig.zephyr
-index d01cc55eea..d2dd38d340 100644
+index 848ce58da7e..045e6258857 100644
 --- a/Kconfig.zephyr
 +++ b/Kconfig.zephyr
-@@ -909,3 +909,9 @@ config COMPAT_INCLUDES
- 	  deprecated header files.
+@@ -928,3 +928,9 @@ config BOOTLOADER_BOSSA_ADAFRUIT_UF2
+ endchoice
  
  endmenu
 +
@@ -13,17 +13,18 @@ index d01cc55eea..d2dd38d340 100644
 +	help
 +	  The major number of the USB DFU bcdDevice descriptor field is (ab)used for exposing the UHK device ID to Agent.
 diff --git a/include/zephyr/usb/usb_ch9.h b/include/zephyr/usb/usb_ch9.h
-index fa18b1c2dc..af51fe6c71 100644
+index fa18b1c2dc8..0353fcc8679 100644
 --- a/include/zephyr/usb/usb_ch9.h
 +++ b/include/zephyr/usb/usb_ch9.h
-@@ -259,8 +259,8 @@ struct usb_association_descriptor {
+@@ -259,8 +259,9 @@ struct usb_association_descriptor {
  #define USB_DEC_TO_BCD(dec)	((((dec) / 10) << 4) | ((dec) % 10))
  
  /** USB Device release number (bcdDevice Descriptor field) */
 -#define USB_BCD_DRN		(USB_DEC_TO_BCD(KERNEL_VERSION_MAJOR) << 8 | \
 -				 USB_DEC_TO_BCD(KERNEL_VERSION_MINOR))
-+#define USB_BCD_DRN		(USB_DEC_TO_BCD(CONFIG_USB_DFU_BCD_DEVICE_ID) << 8 | \
-+				 USB_DEC_TO_BCD(1)) // UHK device flags: 1 means bootloader
++// UHK device flags: 1 means bootloader
++#define USB_BCD_DRN		(USB_DEC_TO_BCD(1) << 8 | \
++				 USB_DEC_TO_BCD(CONFIG_USB_DFU_BCD_DEVICE_ID))
  
  /** Macro to obtain descriptor type from USB_SREQ_GET_DESCRIPTOR request */
  #define USB_GET_DESCRIPTOR_TYPE(wValue)		((uint8_t)((wValue) >> 8))
