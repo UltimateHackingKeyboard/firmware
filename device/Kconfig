@@ -7,3 +7,13 @@ config DEVICE_ID
     default 0
     help
         The device id that identifies the specific UHK half or dongle.
+
+config KEYBOARD_MAX_SCANCODE
+    hex "highest keyboard scancode"
+    default 0x86
+    range 0x66 0xDD
+    help
+        The highest keyboard scancode value influences the overall length of the HID record sent to the host.
+        The default is set so Android devices (which don't exchange the MTU from the default 23)
+        still receive the "NKRO" report layout. If a higher scancode is used, the report size will exceed this size,
+        causing a fallback to 6KRO report layout on Android.

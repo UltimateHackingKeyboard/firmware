@@ -24,6 +24,7 @@ extern "C" {
 
 extern "C" {
 #include "usb_report_updater.h"
+#include "device_state.h"
 }
 
 #if DEVICE_IS_UHK80_RIGHT
@@ -193,6 +194,11 @@ struct hogp_manager {
         }
     }
 
+    const bluetooth::zephyr::hid::service& main_service()
+    {
+        return hogp_nopad_;
+    }
+
   private:
     hogp_manager() {}
 
@@ -216,6 +222,26 @@ extern "C" void HOGP_Disable()
     hogp_manager::instance().select_config(Hid_Empty);
 }
 #endif
+
+void hidmgr_set_transport(const hid::transport* tp)
+{
+    // tp is the transport of the keyboard app
+    if (tp == nullptr)
+    {
+        DeviceState_SetConnection(ConnectionId_BluetoothHid, ConnectionType_None);
+        DeviceState_SetConnection(ConnectionId_UsbHid, ConnectionType_None);
+    }
+#if DEVICE_IS_UHK80_RIGHT
+    else if (tp == &hogp_manager::instance().main_service())
+    {
+        DeviceState_SetConnection(ConnectionId_BluetoothHid, ConnectionType_Bt);
+    }
+#endif
+    else
+    {
+        DeviceState_SetConnection(ConnectionId_UsbHid, ConnectionType_Usb);
+    }
+}
 
 static bool gamepadActive = true;
 
