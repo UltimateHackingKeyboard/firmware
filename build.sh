@@ -29,9 +29,11 @@ usage: ./build DEVICE1 DEVICE2 ... ACTION1 ACTION2 ...
         DEVICEID_UHK80_RIGHT=69660578
         DEVICEID_UHK_DONGLE=683150769
 
-    You can also set a command that will be executed after the builds are finished:
+    You can also set a command that will be executed after the builds are finished,
+    and a command that will be executed whenever this script is invoked:
 
         BELL=mplayer ring.mp3
+        PREBUILD=./fixStuff.sh
 
     Examples:
         ./build uhk-80-right flash --dev-id 123
@@ -242,6 +244,7 @@ function run() {
     if [ -f .devices ]
     then
         source .devices
+        eval $PREBUILD
     fi
 
     processArguments $@
@@ -252,6 +255,9 @@ function run() {
     if [ `echo $DEVICES | wc -w` -gt 1 ]
     then
         runPerDevice
+    elif [ `echo $DEVICES | wc -w` -eq 0 ] 
+    then
+        performActions $DEVICES
     else
         tmux has-session -t $BUILD_SESSION_NAME 2>/dev/null
         SESSION_EXISTS=$?
