@@ -44,14 +44,14 @@ void SwitchKeymapById(uint8_t index)
     Widget_Refresh(&KeymapWidget);
     Widget_Refresh(&KeymapLayerWidget);
 #endif
-    Ledmap_UpdateBacklightLeds();
     SegmentDisplay_UpdateKeymapText();
     if (DEVICE_IS_MASTER) {
         MacroEvent_RegisterLayerMacros();
         MacroEvent_OnKeymapChange(index);
         MacroEvent_OnLayerChange(ActiveLayer);
     }
-    KeymapReloadNeeded = false;
+    EventVector_Set(EventVector_LedMapUpdateNeeded);
+    EventVector_Unset(EventVector_KeymapReloadNeeded);
 }
 
 uint8_t FindKeymapByAbbreviation(uint8_t length, const char *abbrev) {

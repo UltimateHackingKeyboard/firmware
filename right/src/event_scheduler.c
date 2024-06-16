@@ -10,11 +10,17 @@
 #include "macros/core.h"
 #include "macro_recorder.h"
 #include "utils.h"
+#include "stubs.h"
+#include "postponer.h"
+#include "debug.h"
+#include "led_manager.h"
 
-uint32_t times[EventSchedulerEvent_Count] = {};
-event_scheduler_event_t nextEvent;
-uint32_t nextEventAt;
-bool EventScheduler_IsActive = false;
+static uint32_t times[EventSchedulerEvent_Count] = {};
+static const char* labels[EventSchedulerEvent_Count] = {};
+static event_scheduler_event_t nextEvent;
+static uint32_t nextEventAt;
+
+uint32_t EventScheduler_Vector = 0;
 
 static void scheduleNext()
 {
@@ -26,44 +32,45 @@ static void scheduleNext()
             nextEventAt = times[i];
         }
     }
-    EventScheduler_IsActive = gotAny;
+    EventVector_SetValue(EventVector_EventScheduler, gotAny);
 }
 
 static void processEvt(event_scheduler_event_t evt)
 {
     switch (evt) {
         case EventSchedulerEvent_UpdateBattery:
-#ifdef __ZEPHYR__
-#ifdef DEVICE_IS_KEYBOARD
             Charger_UpdateBatteryState();
-#endif
-#endif
             break;
         case EventSchedulerEvent_ShiftScreen:
-#ifdef __ZEPHYR__
-#ifdef DEVICE_HAS_OLED
             Oled_ShiftScreen();
-#endif
-#endif
             break;
         case EventSchedulerEvent_SwitchScreen:
-#ifdef __ZEPHYR__
-#ifdef DEVICE_HAS_OLED
             ScreenManager_SwitchScreenEvent();
-#endif
-#endif
             break;
         case EventSchedulerEvent_SegmentDisplayUpdate:
-#ifndef __ZEPHYR__
-            SegmentDisplay_NeedsUpdate = true;
-#endif
+            EventVector_Set(EventVector_SegmentDisplayNeedsUpdate);
             break;
         case EventSchedulerEvent_MacroWakeOnTime:
             Macros_WakedBecauseOfTime = true;
-            MacroPlaying = true;
+            EventVector_Set(EventVector_MacroEngine);
             break;
         case EventSchedulerEvent_MacroRecorderFlashing:
             MacroRecorder_UpdateRecordingLed();
+            break;
+        case EventSchedulerEvent_Postponer:
+            EventVector_Set(EventVector_Postponer);
+            break;
+        case EventSchedulerEvent_NativeActions:
+            EventVector_Set(EventVector_NativeActions);
+            break;
+        case EventSchedulerEvent_AgentLed:
+            LedManager_UpdateAgentLed();
+            break;
+        case EventSchedulerEvent_UpdateLedSleepModes:
+            LedManager_UpdateSleepModes();
+            break;
+        case EventSchedulerEvent_MouseController:
+            EventVector_Set(EventVector_MouseController);
             break;
         default:
             return;
@@ -71,46 +78,117 @@ static void processEvt(event_scheduler_event_t evt)
 }
 
 
-void EventScheduler_Reschedule(uint32_t at, event_scheduler_event_t evt)
+void EventScheduler_Reschedule(uint32_t at, event_scheduler_event_t evt, const char* label)
 {
+    LOG_SCHEDULE(
+        printk("%c", PostponerCore_EventsShouldBeQueued() ? 'P' : ' ');
+        printk("    !!! Replan: %s\n", label);
+    )
     times[evt] = at;
+    labels[evt] = label;
     if (nextEvent == evt) {
         scheduleNext();
     }
-    if (at < nextEventAt || !EventScheduler_IsActive) {
+    if (at < nextEventAt || !EventVector_IsSet(EventVector_EventScheduler)) {
         nextEventAt = at;
         nextEvent = evt;
-        EventScheduler_IsActive = true;
+        EventVector_Set(EventVector_EventScheduler);
     }
 }
 
-void EventScheduler_Schedule(uint32_t at, event_scheduler_event_t evt)
+void EventScheduler_Schedule(uint32_t at, event_scheduler_event_t evt, const char* label)
 {
+    LOG_SCHEDULE(
+        printk("%c", PostponerCore_EventsShouldBeQueued() ? 'P' : ' ');
+        printk("    !!! Plan: %s\n", label);
+    );
     if (times[evt] == 0 || at < times[evt]) {
         times[evt] = at;
+        labels[evt] = label;
     }
-    if (at < nextEventAt || !EventScheduler_IsActive) {
+    if (at < nextEventAt || !EventVector_IsSet(EventVector_EventScheduler)) {
         nextEventAt = at;
         nextEvent = evt;
-        EventScheduler_IsActive = true;
+        EventVector_Set(EventVector_EventScheduler);
     }
 }
 
 void EventScheduler_Unschedule(event_scheduler_event_t evt)
 {
     times[evt] = 0;
+    labels[evt] = NULL;
 
     if (nextEvent == evt) {
         scheduleNext();
     }
 }
 
-void EventScheduler_Process()
+uint32_t EventScheduler_Process()
 {
-    if (nextEventAt <= CurrentTime) {
+    while (EventVector_IsSet(EventVector_EventScheduler) && nextEventAt <= CurrentTime) {
         event_scheduler_event_t evt = nextEvent;
+        LOG_SCHEDULE(
+            if (labels[evt] != NULL) {
+                printk("%c", PostponerCore_EventsShouldBeQueued() ? 'P' : ' ');
+                printk("!!! Scheduled event: %s\n", labels[evt]);
+            }
+        );
         times[nextEvent] = 0;
+        labels[nextEvent] = NULL;
         scheduleNext();
         processEvt(evt);
     }
+    return nextEventAt;
+}
+
+void EventVector_ReportMask(const char* prefix, uint32_t mask) {
+#ifdef __ZEPHYR__
+#define REPORT_MASK(NAME) if (mask & EventVector_##NAME) {  \
+    printk("%s ", #NAME);  \
+    mask &= ~EventVector_##NAME;  \
+}
+
+    printk("%c", PostponerCore_EventsShouldBeQueued() ? 'P' : ' ');
+    printk("%s", prefix);
+
+    REPORT_MASK(MacroEngine);
+    REPORT_MASK(StateMatrix);
+    REPORT_MASK(NativeActions);
+    REPORT_MASK(MouseKeys);
+    REPORT_MASK(MouseController);
+    REPORT_MASK(Postponer);
+    REPORT_MASK(LayerHolds);
+    REPORT_MASK(EventScheduler);
+
+    REPORT_MASK(KeyboardLedState);
+    REPORT_MASK(UsbMacroCommandWaitingForExecution);
+    REPORT_MASK(ProtocolChanged);
+    REPORT_MASK(LedManagerFullUpdateNeeded);
+    REPORT_MASK(KeymapReloadNeeded);
+    REPORT_MASK(SegmentDisplayNeedsUpdate);
+    REPORT_MASK(LedMapUpdateNeeded);
+
+    REPORT_MASK(NativeActionReportsUsed);
+    REPORT_MASK(MacroReportsUsed);
+    REPORT_MASK(MouseKeysReportsUsed);
+    REPORT_MASK(MouseControllerMouseReportsUsed);
+    REPORT_MASK(MouseControllerKeyboardReportsUsed);
+    REPORT_MASK(ReportsChanged);
+    REPORT_MASK(NativeActionsPostponing);
+    REPORT_MASK(MacroEnginePostponing);
+
+    printk("\n");
+
+    if (mask != 0) {
+        printk("Unknown event vector bits: %u\n", mask);
+    }
+#undef REPORT_MASK
+#endif
+}
+
+void EventVector_Init() {
+    if (DEVICE_IS_UHK60) {
+        EventScheduler_Schedule(1000, EventSchedulerEvent_AgentLed, "Agent led");
+    }
+    EventScheduler_Schedule(1000, EventSchedulerEvent_UpdateLedSleepModes, "Update led sleep modes");
 }

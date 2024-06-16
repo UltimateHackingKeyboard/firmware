@@ -145,3 +145,16 @@ usb_status_t UsbMouseCheckReportReady(bool* buttonsChanged)
     return UsbMouseCheckIdleElapsed();
 }
 
+void UsbMouse_MergeReports(usb_mouse_report_t* sourceReport, usb_mouse_report_t* targetReport)
+{
+    targetReport->buttons |= sourceReport->buttons;
+    targetReport->x += sourceReport->x;
+    targetReport->y += sourceReport->y;
+    targetReport->wheelX += sourceReport->wheelX;
+    targetReport->wheelY += sourceReport->wheelY;
+    sourceReport->x = 0;
+    sourceReport->y = 0;
+    sourceReport->wheelX = 0;
+    sourceReport->wheelY = 0;
+}
+

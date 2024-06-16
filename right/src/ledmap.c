@@ -8,6 +8,7 @@
 #include "debug.h"
 #include "slot.h"
 #include "config_manager.h"
+#include "event_scheduler.h"
 
 #ifdef __ZEPHYR__
 #include "keyboard/leds.h"
@@ -571,6 +572,7 @@ backlighting_mode_t Ledmap_GetEffectiveBacklightMode() {
 }
 
 void Ledmap_UpdateBacklightLeds(void) {
+    EventVector_Unset(EventVector_LedMapUpdateNeeded);
     switch (Ledmap_GetEffectiveBacklightMode()) {
         case BacklightingMode_PerKeyRgb:
             updateLedsByPerKeyKeyStragegy();

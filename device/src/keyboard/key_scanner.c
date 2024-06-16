@@ -16,6 +16,8 @@
 #include "logger.h"
 #include "messenger.h"
 #include "device.h"
+#include "legacy/event_scheduler.h"
+#include "main.h"
 
 // Thread definitions
 
@@ -104,6 +106,11 @@ static void scanKeys() {
                 }
             }
         }
+    }
+
+    if (DEVICE_IS_UHK80_RIGHT) {
+        EventVector_Set(EventVector_StateMatrix);
+        k_wakeup(Main_ThreadId);
     }
 
     if (DEVICE_IS_UHK80_LEFT) {

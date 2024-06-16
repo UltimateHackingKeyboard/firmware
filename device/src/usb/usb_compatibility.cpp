@@ -11,6 +11,9 @@ extern "C"
 #include "messenger.h"
 #include "bt_conn.h"
 #include "state_sync.h"
+#include "legacy/event_scheduler.h"
+#include "legacy/macro_events.h"
+#include "legacy/key_states.h"
 }
 #include "usb/df/class/hid.hpp"
 #include "command_app.hpp"
@@ -91,9 +94,25 @@ extern "C" bool UsbCompatibility_UsbConnected() {
     return keyboard_app::handle().has_transport();
 }
 
-extern "C" void UsbCompatibility_SetKeyboardLedsState(bool capsLock, bool numLock) {
-    KeyboardLedsState.capsLock = capsLock;
-    KeyboardLedsState.numLock = numLock;
+extern "C" void UsbCompatibility_SetKeyboardLedsState(bool capsLock, bool numLock, bool scrollLock) {
+    if ( KeyboardLedsState.capsLock != capsLock ) {
+        KeyboardLedsState.capsLock = capsLock;
+        UsbBasicKeyboard_CapsLockOn = capsLock;
+        EventVector_Set(EventVector_KeyboardLedState);
+        MacroEvent_CapsLockStateChanged = true;
+    }
+    if ( KeyboardLedsState.numLock != numLock ) {
+        KeyboardLedsState.numLock = numLock;
+        UsbBasicKeyboard_NumLockOn = numLock;
+        EventVector_Set(EventVector_KeyboardLedState);
+        MacroEvent_NumLockStateChanged = true;
+    }
+    if ( KeyboardLedsState.scrollLock != scrollLock ) {
+        KeyboardLedsState.scrollLock = scrollLock;
+        UsbBasicKeyboard_ScrollLockOn = scrollLock;
+        EventVector_Set(EventVector_KeyboardLedState);
+        MacroEvent_ScrollLockStateChanged = true;
+    }
 
     StateSync_UpdateProperty(StateSyncPropertyId_KeyboardLedsState, NULL);
 }

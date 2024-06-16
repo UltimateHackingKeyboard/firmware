@@ -64,6 +64,12 @@
         #define DEVICE_HAS_BATTERY
     #endif
 
+    #if DEVICE_IS_UHK60V1_RIGHT || DEVICE_ID_UHK60V2_RIGHT
+        #define DEVICE_HAS_SEGMENT_DISPLAY 1
+    #else
+        #define DEVICE_HAS_SEGMENT_DISPLAY 0
+    #endif
+
 // Typedefs
 
     typedef enum {

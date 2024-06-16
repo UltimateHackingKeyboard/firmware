@@ -7,6 +7,7 @@
 #include "postponer.h"
 #include "config_parser/parse_macro.h"
 #include "timer.h"
+#include "event_scheduler.h"
 
 #ifdef __ZEPHYR__
 #include "device.h"
@@ -95,7 +96,7 @@ macro_result_t Macros_ProcessStatsActiveMacrosCommand()
         return MacroResult_Finished;
     }
     Macros_SetStatusString("Macro playing: ", NULL);
-    Macros_SetStatusNum(MacroPlaying);
+    Macros_SetStatusNum(EventVector_IsSet(EventVector_MacroEngine));
     Macros_SetStatusString("\n", NULL);
     Macros_SetStatusString("macro/slot/adr/properties\n", NULL);
     for (int i = 0; i < MACRO_STATE_POOL_SIZE; i++) {

@@ -112,9 +112,9 @@ void Charger_UpdateBatteryState() {
         stateChanged |= setPercentage(voltage, perc);
 
         if (voltage == 0) {
-            EventScheduler_Schedule(CurrentTime + CHARGER_STAT_PERIOD, EventSchedulerEvent_UpdateBattery);
+            EventScheduler_Schedule(CurrentTime + CHARGER_STAT_PERIOD, EventSchedulerEvent_UpdateBattery, "charger - voltage == 0");
         } else {
-            EventScheduler_Schedule(CurrentTime + CHARGER_UPDATE_PERIOD, EventSchedulerEvent_UpdateBattery);
+            EventScheduler_Schedule(CurrentTime + CHARGER_UPDATE_PERIOD, EventSchedulerEvent_UpdateBattery, "charger - minute period");
         }
     }
 
@@ -127,7 +127,7 @@ static nrfx_power_usb_event_handler_t originalPowerHandler = NULL;
 
 static void powerCallback(nrfx_power_usb_evt_t event) {
     originalPowerHandler(event);
-    EventScheduler_Schedule(CurrentTime + CHARGER_STAT_PERIOD, EventSchedulerEvent_UpdateBattery);
+    EventScheduler_Schedule(CurrentTime + CHARGER_STAT_PERIOD, EventSchedulerEvent_UpdateBattery, "charger - power callback");
 }
 
 void chargerStatCallback(const struct device *port, struct gpio_callback *cb, gpio_port_pins_t pins) {
@@ -146,7 +146,7 @@ void chargerStatCallback(const struct device *port, struct gpio_callback *cb, gp
     if (Shell.statLog) {
         printk("STAT changed to %i\n", stat ? 1 : 0);
     }
-    EventScheduler_Reschedule(CurrentTime + CHARGER_STAT_PERIOD, EventSchedulerEvent_UpdateBattery);
+    EventScheduler_Reschedule(CurrentTime + CHARGER_STAT_PERIOD, EventSchedulerEvent_UpdateBattery, "charger - stat callback");
 }
 
 // charging battery with CHARGER_EN yields STAT 0
@@ -174,7 +174,7 @@ void InitCharger(void) {
     nrfx_power_usbevt_init(&config);
     nrfx_power_usbevt_enable();
 
-    EventScheduler_Reschedule(CurrentTime + CHARGER_STAT_PERIOD, EventSchedulerEvent_UpdateBattery);
+    EventScheduler_Reschedule(CurrentTime + CHARGER_STAT_PERIOD, EventSchedulerEvent_UpdateBattery, "charger - init");
 
     // TODO: Update battery level. See bas_notify()
 }

@@ -4,17 +4,14 @@
 // Includes:
 
     #include "config_parser/config_globals.h"
+    #include "usb_interfaces/usb_interface_generic_hid.h"
 
 // Typedefs:
 
-    #define USB_COMMAND_MACRO_COMMAND_MAX_LENGTH 63
-
-
 // Variables:
 
-extern char UsbMacroCommand[USB_COMMAND_MACRO_COMMAND_MAX_LENGTH+1];
-extern uint8_t UsbMacroCommandLength;
-extern bool UsbMacroCommandWaitingForExecution;
+    extern char UsbMacroCommand[USB_GENERIC_HID_OUT_BUFFER_LENGTH+1];
+    extern uint8_t UsbMacroCommandLength;
 
 // Functions:
 

@@ -303,6 +303,7 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
         Cfg.KeyBacklightFadeOutBatteryTimeout = keyBacklightFadeOutBatteryTimeout;
 
         LedManager_RecalculateLedBrightness();
+        LedManager_UpdateSleepModes();
 
         // Update counts
 

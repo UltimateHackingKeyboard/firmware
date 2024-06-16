@@ -180,6 +180,7 @@ slave_result_t TouchpadDriver_Update(uint8_t uhkModuleDriverId)
 
             res.status = I2cAsyncWrite(address, closeCommunicationWindow, sizeof(closeCommunicationWindow));
             res.hold = false;
+            EventVector_Set(EventVector_MouseController);
             phase = 3;
             break;
         }

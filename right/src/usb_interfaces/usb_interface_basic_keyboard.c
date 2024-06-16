@@ -17,7 +17,6 @@
 #define USB_HID_REPORT_PROTOCOL   1U
 #endif
 
-bool UsbBasicKeyboard_ProtocolChanged = false;
 static usb_basic_keyboard_report_t usbBasicKeyboardReports[2];
 uint32_t UsbBasicKeyboardActionCounter;
 usb_basic_keyboard_report_t* ActiveUsbBasicKeyboardReport = usbBasicKeyboardReports;
@@ -63,6 +62,7 @@ static void processStateChange(bool *targetVar, bool value, bool *onChange)
     if (value != *targetVar) {
         *targetVar = value;
         *onChange = true;
+        EventVector_Set(EventVector_KeyboardLedState);
     }
 }
 
@@ -77,7 +77,7 @@ void UsbBasicKeyboard_HandleProtocolChange()
         // latch the active protocol to avoid ISR <-> Thread race
         usbBasicKeyboardProtocol = ((usb_device_hid_struct_t*)UsbCompositeDevice.basicKeyboardHandle)->protocol;
 
-        UsbBasicKeyboard_ProtocolChanged = false;
+        EventVector_Unset(EventVector_ProtocolChanged);
     }
 }
 
@@ -173,7 +173,7 @@ usb_status_t UsbBasicKeyboardCallback(class_handle_t handle, uint32_t event, voi
         case kUSB_DeviceHidEventSetProtocol: {
             uint8_t report = *(uint16_t*)param;
             if (report <= 1) {
-                UsbBasicKeyboard_ProtocolChanged = true;
+                EventVector_Set(EventVector_ProtocolChanged);
                 hidHandle->protocol = report;
                 error = kStatus_USB_Success;
             }

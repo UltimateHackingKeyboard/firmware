@@ -172,10 +172,11 @@ void keyboard_app::set_report(hid::report::type type, const std::span<const uint
     // offset it if report ID is not present due to BOOT protocol
     auto &leds = *reinterpret_cast<const uint8_t *>(data.data() + static_cast<size_t>(prot_));
 
+    const uint8_t ScrollLockMask = 4;
     const uint8_t CapsLockMask = 2;
     const uint8_t NumLockMask = 1;
 
-    UsbCompatibility_SetKeyboardLedsState(leds & CapsLockMask, leds & NumLockMask);
+    UsbCompatibility_SetKeyboardLedsState(leds & CapsLockMask, leds & NumLockMask, leds & ScrollLockMask);
 
     printk("keyboard LED status: %x\n", leds);
 

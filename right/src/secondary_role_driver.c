@@ -8,6 +8,7 @@
 #include "debug.h"
 #include "macros/key_timing.h"
 #include "config_manager.h"
+#include "event_scheduler.h"
 
 /*
  * ## Strategies:
@@ -55,6 +56,7 @@
  *     - TriggerByRelease = true
  */
 
+static bool resolutionCallerIsMacroEngine = false;
 static key_state_t *resolutionKey;
 static secondary_role_state_t resolutionState;
 static uint32_t resolutionStartTime;
@@ -70,7 +72,7 @@ static void activatePrimary()
     resolutionKey->previous = false;
     resolutionKey->secondary = false;
     // Give the key two cycles (this and next) of activity before allowing postponer to replay any events (esp., the key's own release).
-    PostponerCore_PostponeNCycles(1);
+    // PostponerCore_PostponeNCycles(1);
 }
 
 static void activateSecondary()
@@ -80,7 +82,7 @@ static void activateSecondary()
     resolutionKey->previous = false;
     resolutionKey->secondary = true;
     // Let the secondary role take place before allowing the affected key to execute. Postponing rest of this cycle should suffice.
-    PostponerCore_PostponeNCycles(0); //just for aesthetics - we are already postponed for this cycle so this is no-op
+    // PostponerCore_PostponeNCycles(0); //just for aesthetics - we are already postponed for this cycle so this is no-op
 }
 
 void SecondaryRoles_FakeActivation(secondary_role_result_t res)
@@ -121,6 +123,14 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
 
     PostponerQuery_InfoByKeystate(resolutionKey, &dummy, &dualRoleRelease);
     PostponerQuery_InfoByQueueIdx(0, &actionPress, &actionRelease);
+
+    //register wakeups
+    if (resolutionCallerIsMacroEngine) {
+        Macros_WakedBecauseOfKeystateChange = true;
+        EventScheduler_Schedule(resolutionStartTime + Cfg.SecondaryRoles_AdvancedStrategyTimeout, EventSchedulerEvent_MacroWakeOnTime, "Macros - SecondaryRoles");
+    } else {
+        EventScheduler_Schedule(resolutionStartTime + Cfg.SecondaryRoles_AdvancedStrategyTimeout, EventSchedulerEvent_NativeActions, "NativeActions - SecondaryRoles");
+    }
 
     //handle doubletap logic
     if (
@@ -278,7 +288,7 @@ void SecondaryRoles_ActivateSecondaryImmediately() {
     }
 }
 
-secondary_role_result_t SecondaryRoles_ResolveState(key_state_t* keyState, secondary_role_t rolePreview, secondary_role_strategy_t strategy, bool isNewResolution)
+secondary_role_result_t SecondaryRoles_ResolveState(key_state_t* keyState, secondary_role_t rolePreview, secondary_role_strategy_t strategy, bool isNewResolution, bool isMacroResolution)
 {
     // Since postponer is active during resolutions, KeyState_ActivatedNow can happen only after previous
     // resolution has finished - i.e., if primary action has been activated, carried out and
@@ -287,6 +297,7 @@ secondary_role_result_t SecondaryRoles_ResolveState(key_state_t* keyState, secon
 
     if (isNewResolution) {
         //start new resolution
+        resolutionCallerIsMacroEngine = isMacroResolution;
         resolutionState = startResolution(keyState, strategy);
         resolutionState = resolveCurrentKey(strategy);
         return (secondary_role_result_t){

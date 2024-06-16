@@ -11,6 +11,7 @@
     #include "key_states.h"
     #include "str_utils.h"
     #include "macros/typedefs.h"
+    #include "event_scheduler.h"
 
 // Macros:
     #define MACRO_CYCLES_TO_POSTPONE 4
@@ -153,6 +154,7 @@
             uint8_t oneShotState : 2;
             bool oneShotUsbChangeDetected : 1;
             bool macroInterrupted : 1;
+            // TODO: refactor macroSleeping, macroBroken and macroPlaying into a single state?
             bool macroSleeping : 1;
             bool macroBroken : 1;
             bool macroPlaying : 1;
@@ -267,7 +269,7 @@
     macro_result_t Macros_GoToAddress(uint8_t address);
     macro_result_t Macros_GoToLabel(parser_context_t* ctx);
     macro_result_t Macros_SleepTillKeystateChange();
-    macro_result_t Macros_SleepTillTime(uint32_t time);
+    macro_result_t Macros_SleepTillTime(uint32_t time, const char* reason);
     uint8_t Macros_ConsumeLayerId(parser_context_t* ctx);
     uint8_t Macros_QueueMacro(uint8_t index, key_state_t *keyState, uint8_t queueAfterSlot);
     uint8_t Macros_StartMacro(uint8_t index, key_state_t *keyState, uint8_t parentMacroSlot, bool runFirstAction);
@@ -278,11 +280,6 @@
     void Macros_SignalInterrupt(void);
     void Macros_SignalUsbReportsChange();
     void Macros_ValidateAllMacros();
-
-#define WAKE_MACROS_ON_KEYSTATE_CHANGE()  if (Macros_WakeMeOnKeystateChange) { \
-                                              Macros_WakedBecauseOfKeystateChange = true; \
-                                              MacroPlaying = true; \
-                                          }
-
+    void Macros_WakeBecauseOfKeystateChange();
 
 #endif

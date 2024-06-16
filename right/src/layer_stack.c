@@ -2,6 +2,7 @@
 #include "keymap.h"
 #include "layer.h"
 #include "layer_switcher.h"
+#include "event_scheduler.h"
 
 layer_id_t LayerStack_ActiveLayer = LayerId_Base;
 bool LayerStack_ActiveLayerHeld = false;
@@ -23,6 +24,7 @@ static void activateLayer(layer_id_t layer)
     LayerStack_ActiveLayerHeld = LayerStack[LayerStack_TopIdx].held;
     if (LayerStack_ActiveLayerHeld) {
         LayerSwitcher_HoldLayer(layer, true);
+        EventVector_Set(EventVector_LayerHolds | EventVector_NativeActions);
     } else {
         LayerSwitcher_RecalculateLayerComposition();
     }

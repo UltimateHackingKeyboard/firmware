@@ -12,7 +12,7 @@
 #include "keyboard/charger.h"
 
 shell_t Shell = {
-    .keyLog = 1,
+    .keyLog = 0,
     .statLog = 0,
     .ledsAlwaysOn = 0,
     .oledEn = 1,

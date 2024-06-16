@@ -19,8 +19,6 @@
 #include "macros/core.h"
 #include "versioning.h"
 
-bool KeymapReloadNeeded = false;
-
 uhk_module_state_t UhkModuleStates[UHK_MODULE_MAX_SLOT_COUNT];
 module_connection_state_t ModuleConnectionStates[UHK_MODULE_MAX_SLOT_COUNT];
 
@@ -108,7 +106,7 @@ static void reloadKeymapIfNeeded()
     }
 #ifndef __ZEPHYR__
     if (!someoneElseWillDoTheJob && !TestSwitches) {
-        KeymapReloadNeeded = true;
+        EventVector_Set(EventVector_KeymapReloadNeeded);
     }
 #endif
 }
@@ -362,8 +360,15 @@ slave_result_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
             if (CRC16_IsMessageValid(rxMessage)) {
                 uint8_t slotId = UhkModuleSlaveDriver_DriverIdToSlotId(uhkModuleDriverId);
                 BoolBitsToBytes(rxMessage->data, keyStatesBuffer, uhkModuleState->keyCount);
+                bool stateChanged = false;
                 for (uint8_t keyId=0; keyId < uhkModuleState->keyCount; keyId++) {
-                    KeyStates[slotId][keyId].hardwareSwitchState = keyStatesBuffer[keyId];
+                    if (KeyStates[slotId][keyId].hardwareSwitchState != keyStatesBuffer[keyId]) {
+                        KeyStates[slotId][keyId].hardwareSwitchState = keyStatesBuffer[keyId];
+                        stateChanged = true;
+                    }
+                }
+                if (stateChanged) {
+                    EventVector_Set(EventVector_StateMatrix);
                 }
                 if (uhkModuleState->pointerCount) {
                     uint8_t keyStatesLength = BOOL_BYTES_TO_BITS_COUNT(uhkModuleState->keyCount);
@@ -371,6 +376,7 @@ slave_result_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
                     uhkModuleState->pointerDelta.x += pointerDelta->x;
                     uhkModuleState->pointerDelta.y += pointerDelta->y;
                     uhkModuleState->pointerDelta.debugInfo = pointerDelta->debugInfo;
+                    EventVector_Set(EventVector_MouseController);
                 }
             }
             res.status = kStatus_Uhk_IdleCycle;

@@ -1,5 +1,6 @@
 #include "user_logic.h"
 #include "keymap.h"
+#include "ledmap.h"
 #include "slave_drivers/is31fl3xxx_driver.h"
 #include "slave_drivers/uhk_module_driver.h"
 #include "segment_display.h"
@@ -12,36 +13,42 @@
 #include "led_manager.h"
 
 void RunUserLogic(void) {
-    if (KeymapReloadNeeded) {
+    if (EventVector_IsSet(EventVector_KeymapReloadNeeded)) {
         SwitchKeymapById(CurrentKeymapIndex);
     }
-    if (LedManager_FullUpdateNeeded) {
-        LedManager_FullUpdate();
-    }
 #ifndef __ZEPHYR__
-    if (UsbBasicKeyboard_ProtocolChanged) {
+    if (EventVector_IsSet(EventVector_ProtocolChanged)) {
         UsbBasicKeyboard_HandleProtocolChange();
     }
 #endif
-    if (UsbMacroCommandWaitingForExecution) {
+    if (EventVector_IsSet(EventVector_UsbMacroCommandWaitingForExecution)) {
         UsbMacroCommand_ExecuteSynchronously();
     }
-    if (MacroEvent_ScrollLockStateChanged || MacroEvent_NumLockStateChanged || MacroEvent_CapsLockStateChanged) {
+
+    if (EventVector_IsSet(EventVector_KeyboardLedState)) {
         MacroEvent_ProcessStateKeyEvents();
     }
 
-    UpdateUsbReports();
-
-    if (EventScheduler_IsActive) {
-        EventScheduler_Process();
+    if (EventVector_IsSet(EventVector_ReportUpdateMask)) {
+        UpdateUsbReports();
     }
-    if (SegmentDisplay_NeedsUpdate) {
+
+    if (EventVector_IsSet(EventVector_LedManagerFullUpdateNeeded)) {
+        LedManager_FullUpdate();
+    }
+
+    if (EventVector_IsSet(EventVector_LedMapUpdateNeeded)) {
+        Ledmap_UpdateBacklightLeds();
+    }
+
+    if (EventVector_IsSet(EventVector_SegmentDisplayNeedsUpdate)) {
         SegmentDisplay_Update();
     }
+
+    LOG_SCHEDULE(
+        EventVector_ReportMask("=== ", EventScheduler_Vector)
+    );
 }
 
 void RunUhk80LeftHalfLogic() {
-    if (EventScheduler_IsActive) {
-        EventScheduler_Process();
-    }
 }

@@ -10,6 +10,11 @@
 #include "utils.h"
 #include "debug.h"
 
+#ifdef __ZEPHYR__
+#include "device.h"
+#else
+#include "device/device.h"
+#endif
 
 uint16_t changeInterval = 1500;
 uint32_t lastChange = 0;
@@ -19,14 +24,18 @@ segment_display_slot_record_t slots[SegmentDisplaySlot_Count] = {
 uint8_t activeSlotCount = 1;
 segment_display_slot_t currentSlot = SegmentDisplaySlot_Keymap;
 
-bool SegmentDisplay_NeedsUpdate = false;
-
 static void writeLedDisplay()
 {
 #ifndef __ZEPHYR__
     LedDisplay_SetText(slots[currentSlot].len, slots[currentSlot].text);
 #endif
 }
+
+#if DEVICE_HAS_SEGMENT_DISPLAY
+#define RETURN_IF_SEGMENT_NOT_PRESENT
+#else
+#define RETURN_IF_SEGMENT_NOT_PRESENT return
+#endif
 
 static bool handleOverrides()
 {
@@ -50,7 +59,7 @@ static void changeSlot()
     }
     lastChange = CurrentTime;
     if (activeSlotCount > 1) {
-        EventScheduler_Reschedule(CurrentTime + changeInterval, EventSchedulerEvent_SegmentDisplayUpdate);
+        EventScheduler_Reschedule(CurrentTime + changeInterval, EventSchedulerEvent_SegmentDisplayUpdate, "SegmentDisplay - change slot.");
     }
 
     writeLedDisplay();
@@ -58,6 +67,7 @@ static void changeSlot()
 
 void SegmentDisplay_SetText(uint8_t len, const char* text, segment_display_slot_t slot)
 {
+    RETURN_IF_SEGMENT_NOT_PRESENT;
     activeSlotCount += slots[slot].active ? 0 : 1;
     memcpy(&slots[slot].text, text, len);
     slots[slot].len = len;
@@ -67,12 +77,13 @@ void SegmentDisplay_SetText(uint8_t len, const char* text, segment_display_slot_
     handleOverrides();
     writeLedDisplay();
     if (activeSlotCount > 1) {
-        EventScheduler_Reschedule(CurrentTime + changeInterval, EventSchedulerEvent_SegmentDisplayUpdate);
+        EventScheduler_Reschedule(CurrentTime + changeInterval, EventSchedulerEvent_SegmentDisplayUpdate, "SegmentDisplay - setText slot change");
     }
 }
 
 void SegmentDisplay_DeactivateSlot(segment_display_slot_t slot)
 {
+    RETURN_IF_SEGMENT_NOT_PRESENT;
     activeSlotCount -= slots[slot].active ? 1 : 0;
     slots[slot].active = false;
     if (currentSlot == slot) {
@@ -82,6 +93,8 @@ void SegmentDisplay_DeactivateSlot(segment_display_slot_t slot)
 
 void SegmentDisplay_Update()
 {
+    EventVector_Unset(EventVector_SegmentDisplayNeedsUpdate);
+    RETURN_IF_SEGMENT_NOT_PRESENT;
     if (currentSlot == SegmentDisplaySlot_Debug) {
         activeSlotCount -= slots[SegmentDisplaySlot_Debug].active ? 1 : 0;
         slots[SegmentDisplaySlot_Debug].active = false;
@@ -93,12 +106,14 @@ void SegmentDisplay_Update()
 
 void SegmentDisplay_UpdateKeymapText()
 {
+    RETURN_IF_SEGMENT_NOT_PRESENT;
     keymap_reference_t *currentKeymap = AllKeymaps + CurrentKeymapIndex;
     SegmentDisplay_SetText(currentKeymap->abbreviationLen, currentKeymap->abbreviation, SegmentDisplaySlot_Keymap);
 }
 
 void SegmentDisplay_SerializeVar(char* buffer, macro_variable_t var)
 {
+    RETURN_IF_SEGMENT_NOT_PRESENT;
     switch (var.type) {
         case MacroVariableType_Float:
             SegmentDisplay_SerializeFloat(buffer, var.asFloat);
@@ -117,6 +132,7 @@ void SegmentDisplay_SerializeVar(char* buffer, macro_variable_t var)
 
 void SegmentDisplay_SerializeFloat(char* buffer, float num)
 {
+    RETURN_IF_SEGMENT_NOT_PRESENT;
     if (num <= -10.0f || 10.0f <= num ) {
         SegmentDisplay_SerializeInt(buffer, num);
         return;
@@ -145,6 +161,7 @@ void SegmentDisplay_SerializeFloat(char* buffer, float num)
 
 void SegmentDisplay_SerializeInt(char* buffer, int32_t a)
 {
+    RETURN_IF_SEGMENT_NOT_PRESENT;
     int mag = 0;
     int num = a;
     bool negative = false;
@@ -176,6 +193,7 @@ void SegmentDisplay_SerializeInt(char* buffer, int32_t a)
 
 void SegmentDisplay_SetInt(int32_t a, segment_display_slot_t slot)
 {
+    RETURN_IF_SEGMENT_NOT_PRESENT;
     char b[3];
     SegmentDisplay_SerializeInt(b, a);
     SegmentDisplay_SetText(3, b, slot);
@@ -183,6 +201,7 @@ void SegmentDisplay_SetInt(int32_t a, segment_display_slot_t slot)
 
 void SegmentDisplay_SetFloat(float a, segment_display_slot_t slot)
 {
+    RETURN_IF_SEGMENT_NOT_PRESENT;
     char b[3];
     SegmentDisplay_SerializeFloat(b, a);
     SegmentDisplay_SetText(3, b, slot);

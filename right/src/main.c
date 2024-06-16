@@ -83,8 +83,15 @@ void CopyRightKeystateMatrix(void)
 {
     KeyMatrix_ScanRow(&RightKeyMatrix);
     ++MatrixScanCounter;
+    bool stateChanged = false;
     for (uint8_t keyId = 0; keyId < RIGHT_KEY_MATRIX_KEY_COUNT; keyId++) {
-        KeyStates[SlotId_RightKeyboardHalf][keyId].hardwareSwitchState = RightKeyMatrix.keyStates[keyId];
+        if (KeyStates[SlotId_RightKeyboardHalf][keyId].hardwareSwitchState != RightKeyMatrix.keyStates[keyId]) {
+            KeyStates[SlotId_RightKeyboardHalf][keyId].hardwareSwitchState = RightKeyMatrix.keyStates[keyId];
+            stateChanged = true;
+        }
+    }
+    if (stateChanged) {
+        EventVector_Set(EventVector_StateMatrix);
     }
 }
 
@@ -124,8 +131,11 @@ int main(void)
 
         while (1) {
             CopyRightKeystateMatrix();
-            if ( UsbReadyForTransfers()) {
+            if (UsbReadyForTransfers()) {
                 RunUserLogic();
+            }
+            if (EventVector_IsSet(EventVector_EventScheduler)) {
+                EventScheduler_Process();
             }
             __WFI();
         }

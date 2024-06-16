@@ -1,4 +1,5 @@
 #include "config_manager.h"
+#include "event_scheduler.h"
 #include <string.h>
 
 #ifndef __ZEPHYR__
@@ -235,6 +236,6 @@ void ConfigManager_ResetConfiguration(bool updateLeds) {
 #endif
     if (updateLeds) {
         Ledmap_SetLedBacklightingMode(Cfg.BacklightingMode);
-        Ledmap_UpdateBacklightLeds();
+        EventVector_Set(EventVector_LedMapUpdateNeeded);
     }
 }

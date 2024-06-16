@@ -2,6 +2,8 @@
 #define __MOUSE_KEYS_H__
 
 // Includes:
+
+    #include "usb_interfaces/usb_interface_mouse.h"
     #include "caret_config.h"
     #include "key_action.h"
     #include "key_states.h"
@@ -48,10 +50,13 @@
 
     extern uint8_t ActiveMouseStates[ACTIVE_MOUSE_STATES_COUNT];
     extern uint8_t ToggledMouseStates[ACTIVE_MOUSE_STATES_COUNT];
+    extern usb_mouse_report_t MouseKeysMouseReport;
 
 
 // Functions:
+
     void MouseKeys_ActivateDirectionSigns(uint8_t state);
     void MouseKeys_ProcessMouseActions();
+    void MouseKeys_SetState(serialized_mouse_action_t action, bool lock, bool activate);
 
 #endif

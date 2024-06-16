@@ -506,6 +506,7 @@ void StateSync_Init() {
 }
 
 void StateSync_ResetRightLeftLink(bool bidirectional) {
+    printk("Resetting left right link! %s\n", bidirectional ? "Bidirectional" : "Unidirectional");
     if (bidirectional) {
         invalidateProperty(StateSyncPropertyId_ResetRightLeftLink);
     }
@@ -524,6 +525,7 @@ void StateSync_ResetRightLeftLink(bool bidirectional) {
 }
 
 void StateSync_ResetRightDongleLink(bool bidirectional) {
+    printk("Resetting dongle right link! %s\n", bidirectional ? "Bidirectional" : "Unidirectional");
     if (bidirectional) {
         invalidateProperty(StateSyncPropertyId_ResetRightDongleLink);
     }
