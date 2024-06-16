@@ -165,6 +165,9 @@ void LedDisplay_SetLayer(layer_id_t layerId)
     for (uint8_t i=1; i<4; i++) {
         LedDriverValues[LedDriverId_Left][layerLedIds[i-1]] = layerId == i ? DisplayBrightness : 0;
     }
+    if (LayerId_Fn2 <= layerId && layerId <= LayerId_Fn5) {
+        LedDriverValues[LedDriverId_Left][layerLedIds[LayerId_Fn-1]] = DisplayBrightness;
+    }
 #endif
 }
 

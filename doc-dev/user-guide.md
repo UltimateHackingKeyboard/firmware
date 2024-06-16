@@ -306,7 +306,10 @@ holdKeymapLayer QWR base
 
 The firmware implements a postponing queue which allows some commands to act as a time machine by querying _future_ keystrokes, and decide what to do depending on those. In practice, it means waiting until more input is entered, and then either consuming those keys and doing something special, or rewinding back a bit and performing all the actions as if nothing happened.
 
-One concept that uses this feature is _shortcuts and gestures_.
+One concept that uses this feature is _shortcut and gesture_ conditions.
+
+- By _shortcuts_ we understand combinations of concurrently pressed keys that stand for a specific meaning. E.g., `Ctrl+C` is a shortcut for copying text.
+- By _gestures_ we mean sequences of key taps that stands for a specific meaning. Unlike with "shortcuts", continuity of press is not required. For instance Vim-like gg (tap g twice), gt (tap g then tap t) and gT (tap g then tap shift+t).
 
 You can use `ifShortcut` when you want to map an action to a combination of keys. E.g, if I want z+x to produce Control+x, z+c to produce Control+c, z+v to produce Control+v, I will map following macro on the z key:
 
@@ -319,12 +322,13 @@ holdKey z
 
 An `ifShortcut` macro needs to be placed on the first key of the shortcut, and refers to other keys by their hardware ids. These ids can be entered in numeric form obtained by `resolveNextKeyId` command (i.e., activating the command and pressing the key while having a text editor focused), or abbreviations may be used (as shown above). The `final` modifier breaks the command after the "modified" `tapKey` command finishes.
 
-`ifGesture` can be used to implement "loose gestures" - i.e., shortcuts where the second keypress can follow without continuity of press of the first key. Vim-like gt and gT (g+shift+t) tab switching:
+`ifGesture` can be used to bind actions to "loose gestures" that don't require all keys to be pressed at the same time. Example of Vim-like gt and gT tab switching:
 
 ```
-ifGesture t final tapKey C-pageUp
-ifGesture leftShift t final tapKey C-pageDown
-holdKey g
+// bind this on g
+ifGesture t final tapKey C-pageUp               // tap g then tap t to switch tab right
+ifGesture leftShift t final tapKey C-pageDown   // tap g then tap shift+t to switch tab left
+holdKey g                                       // otherwise act as regular g key
 ```
 
 We can also use these to implement an emoji macro which allows us to write emojis using simple abbreviations - here tap `thisMacro + s + h` (as shrug) to get shrugging person, or `thisMacro + s + w` to get a sweaty smile.
@@ -636,7 +640,7 @@ The following example allows you to cycle through different backlight colors.
 In your `$onInit`:
 
 ```
-setVar backroundColor 0
+setVar backgroundColor 0
 ```
 
 Then in the macro itself:
@@ -833,7 +837,7 @@ Or, in linux, you can put the following script into your path... and then use it
 
 ```
 #!/bin/bash
-hidraw=`grep 'UHK 60' /sys/class/hidraw/hidraw*/device/uevent | LC_ALL=C sort -h | head -n 1 | grep -o 'hidraw[0-9][0-9]*'`
+hidraw=`grep 'UHK 60' /sys/class/hidraw/hidraw*/device/uevent | LC_ALL=C sort -rh | head -n 1 | grep -o 'hidraw[0-9][0-9]*'`
 echo -e "\x14$*" > "/dev/$hidraw"
 ```
 
