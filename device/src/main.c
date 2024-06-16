@@ -94,7 +94,6 @@ int main(void) {
         #endif // DEVICE_HAS_OLED
 
         InitLeds();
-        InitCharger();
 
     #ifdef DEVICE_HAS_MERGE_SENSOR
         MergeSensor_Init();
@@ -104,6 +103,11 @@ int main(void) {
 
     }
     USB_EnableHid();
+
+
+    if (!DEVICE_IS_UHK_DONGLE) {
+        InitCharger(); // has to be after usb initialization
+    }
 
     bt_init();
     InitSettings();

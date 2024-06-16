@@ -8,6 +8,7 @@
 #include "attributes.h"
 #include "legacy/event_scheduler.h"
 #include "state_sync.h"
+#include <nrfx_power.h>
 
 const struct gpio_dt_spec chargerEnDt = GPIO_DT_SPEC_GET(DT_ALIAS(charger_en), gpios);
 const struct gpio_dt_spec chargerStatDt = GPIO_DT_SPEC_GET(DT_ALIAS(charger_stat), gpios);
@@ -75,7 +76,7 @@ static bool updateBatteryPresent() {
 }
 
 static bool updatePowered() {
-    bool powered = (NRF_POWER->USBREGSTATUS & POWER_USBREGSTATUS_VBUSDETECT_Msk) == POWER_USBREGSTATUS_VBUSDETECT_VbusPresent;
+    bool powered = nrfx_power_usbstatus_get() > NRFX_POWER_USB_STATE_DISCONNECTED;
     if (batteryState.powered != powered) {
         batteryState.powered = powered;
         return true;
@@ -122,6 +123,10 @@ void Charger_UpdateBatteryState() {
     }
 }
 
+static void powerCallback(nrfx_power_usb_evt_t event) {
+    EventScheduler_Schedule(CurrentTime + CHARGER_STAT_PERIOD, EventSchedulerEvent_UpdateBattery);
+}
+
 void chargerStatCallback(const struct device *port, struct gpio_callback *cb, gpio_port_pins_t pins) {
     bool stat = gpio_pin_get_dt(&chargerStatDt);
     if (stat) {
@@ -157,6 +162,12 @@ void InitCharger(void) {
     adc_channel_setup_dt(&adc_channel);
 
     (void)adc_sequence_init_dt(&adc_channel, &sequence);
+
+    const nrfx_power_usbevt_config_t config = {
+        .handler = &powerCallback
+    };
+    nrfx_power_usbevt_init(&config);
+    nrfx_power_usbevt_enable();
 
     EventScheduler_Reschedule(CurrentTime + CHARGER_STAT_PERIOD, EventSchedulerEvent_UpdateBattery);
 
