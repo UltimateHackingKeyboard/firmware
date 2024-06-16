@@ -6,6 +6,7 @@
     #include <inttypes.h>
     #include <stdbool.h>
     #include "../widgets/widget.h"
+    #include "legacy/key_action.h"
 
 // Macros:
 
@@ -24,5 +25,6 @@
     void PairingScreen_Init();
     void PairingScreen_RegisterScancode(uint8_t scancode);
     void PairingScreen_AskForPassword(unsigned int pass);
+    const rgb_t* PairingScreen_ActionColor(key_action_t* action);
 
 #endif

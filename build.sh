@@ -115,9 +115,10 @@ function determineDevIdArg() {
         DEVICEID_UHK80_RIGHT=69660578
         DEVICEID_UHK_DONGLE=683150769
 END
+        echo ""
+    else
+        echo "--dev-id $DEVICEID"
     fi
-
-    echo "--dev-id $DEVICEID"
 }
 
 function establishSession() {

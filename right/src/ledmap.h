@@ -11,6 +11,8 @@
         BacklightingMode_Functional,
         BacklightingMode_PerKeyRgb,
         BacklightingMode_ConstantRGB,
+        BacklightingMode_Numpad,
+        BacklightingMode_Unspecified,
     } backlighting_mode_t;
 
     typedef enum {
@@ -43,5 +45,7 @@
     void Ledmap_UpdateBacklightLeds(void);
     void Ledmap_InitLedLayout(void);
     void Ledmap_SetLedBacklightingMode(backlighting_mode_t newMode);
+    void Ledmap_SetTemporaryLedBacklightingMode(backlighting_mode_t newMode);
+    void Ledmap_ResetTemporaryLedBacklightingMode();
 
 #endif
