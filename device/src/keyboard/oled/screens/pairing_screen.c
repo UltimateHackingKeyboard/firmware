@@ -7,6 +7,7 @@
 #include "legacy/lufa/HIDClassCommon.h"
 #include "bt_conn.h"
 #include "screen_manager.h"
+#include "legacy/key_action.h"
 
 static widget_t splitterWidget;
 static widget_t questionLine;
@@ -66,12 +67,41 @@ static void registerPasswordDigit(uint8_t digit)
     }
 }
 
+const rgb_t* PairingScreen_ActionColor(key_action_t* action) {
+    static const rgb_t black = { 0, 0, 0 };
+    static const rgb_t green = { 0, 0xff, 0 };
+    static const rgb_t red = { 0xff, 0, 0 };
+    static const rgb_t blue = { 0, 0, 0xff };
+
+    if (
+            action->type != KeyActionType_Keystroke
+            || action->keystroke.keystrokeType != KeystrokeType_Basic
+            || action->keystroke.modifiers != 0
+    ) {
+        return &black;
+    }
+
+    switch (action->keystroke.scancode) {
+        case HID_KEYBOARD_SC_ESCAPE:
+            return &red;
+        case HID_KEYBOARD_SC_DELETE:
+        case HID_KEYBOARD_SC_BACKSPACE:
+            return &blue;
+        case HID_KEYBOARD_SC_1_AND_EXCLAMATION ... HID_KEYBOARD_SC_9_AND_OPENING_PARENTHESIS:
+        case HID_KEYBOARD_SC_0_AND_CLOSING_PARENTHESIS:
+        case HID_KEYBOARD_SC_KEYPAD_1_AND_END ... HID_KEYBOARD_SC_KEYPAD_9_AND_PAGE_UP:
+        case HID_KEYBOARD_SC_KEYPAD_0_AND_INSERT:
+            return &green;
+        default:
+            return &black;
+    }
+}
+
 void PairingScreen_RegisterScancode(uint8_t scancode)
 {
     switch (scancode)
     {
         case HID_KEYBOARD_SC_ESCAPE:
-        case HID_KEYBOARD_SC_ENTER:
             num_comp_reply(0);
             ScreenManager_ActivateScreen(ScreenId_PairingFailed);
             break;
@@ -84,6 +114,12 @@ void PairingScreen_RegisterScancode(uint8_t scancode)
             registerPasswordDigit(scancode - HID_KEYBOARD_SC_1_AND_EXCLAMATION+1);
             break;
         case HID_KEYBOARD_SC_0_AND_CLOSING_PARENTHESIS:
+            registerPasswordDigit(0);
+            break;
+        case HID_KEYBOARD_SC_KEYPAD_1_AND_END ... HID_KEYBOARD_SC_KEYPAD_9_AND_PAGE_UP:
+            registerPasswordDigit(scancode - HID_KEYBOARD_SC_KEYPAD_1_AND_END+1);
+            break;
+        case HID_KEYBOARD_SC_KEYPAD_0_AND_INSERT:
             registerPasswordDigit(0);
             break;
     }

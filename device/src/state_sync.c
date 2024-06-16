@@ -293,7 +293,7 @@ static void prepareAndSubmitLayer(device_id_t dst, state_sync_prop_id_t propId, 
 }
 
 static void prepareBacklight(sync_command_backlight_t* buffer) {
-    buffer->BacklightingMode = Cfg.BacklightingMode;
+    buffer->BacklightingMode = Ledmap_GetEffectiveBacklightMode();
     buffer->KeyBacklightBrightness = KeyBacklightBrightness;
     buffer->DisplayBacklightBrightness = DisplayBrightness;
     buffer->LedMap_ConstantRGB = Cfg.LedMap_ConstantRGB;

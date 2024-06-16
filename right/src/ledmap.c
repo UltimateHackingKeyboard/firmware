@@ -11,6 +11,7 @@
 
 #ifdef __ZEPHYR__
 #include "keyboard/leds.h"
+#include "keyboard/oled/screens/pairing_screen.h"
 #include "state_sync.h"
 #else
 #include "device/device.h"
@@ -21,6 +22,8 @@
 
 static const rgb_t black = RGB(0x00, 0x00, 0x00);
 static const rgb_t white = RGB(0xff, 0xff, 0xff);
+
+backlighting_mode_t TemporaryBacklightingMode = BacklightingMode_Unspecified;
 
 #if DEVICE_ID == DEVICE_ID_UHK60V1
 
@@ -509,15 +512,19 @@ static const rgb_t* determineFunctionalColor(key_action_t* keyAction, color_mode
     }
 }
 
+static key_action_t* getEffectiveActionColor(uint8_t slotId, uint8_t keyId) {
+    key_action_t *keyAction = &CurrentKeymap[ActiveLayer][slotId][keyId];
+    if (keyAction->type == KeyActionType_None && IS_MODIFIER_LAYER(ActiveLayer)) {
+        keyAction = &CurrentKeymap[LayerId_Base][slotId][keyId];
+    }
+    return keyAction;
+}
+
 static void updateLedsByFunctionalStrategy() {
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         color_mode_t colorMode = determineMode(slotId);
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
-            key_action_t *keyAction = &CurrentKeymap[ActiveLayer][slotId][keyId];
-
-            if (keyAction->type == KeyActionType_None && IS_MODIFIER_LAYER(ActiveLayer)) {
-                keyAction = &CurrentKeymap[LayerId_Base][slotId][keyId];
-            }
+            key_action_t *keyAction = getEffectiveActionColor(slotId, keyId);
 
             const rgb_t* keyActionColor = determineFunctionalColor(keyAction, colorMode);
 
@@ -530,6 +537,20 @@ static void updateLedsByFunctionalStrategy() {
     }
 }
 
+static void updateLedsByNumpadStrategy() {
+#ifdef __ZEPHYR__
+    for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
+        color_mode_t colorMode = determineMode(slotId);
+        for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
+            key_action_t *keyAction = getEffectiveActionColor(slotId, keyId);
+            const rgb_t* keyActionColor = PairingScreen_ActionColor(keyAction);
+
+            setPerKeyColor(keyActionColor, colorMode, slotId, keyId);
+        }
+    }
+#endif
+}
+
 static void updateLedsByPerKeyKeyStragegy() {
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         color_mode_t colorMode = determineMode(slotId);
@@ -540,8 +561,16 @@ static void updateLedsByPerKeyKeyStragegy() {
     }
 }
 
+backlighting_mode_t Ledmap_GetEffectiveBacklightMode() {
+    if (TemporaryBacklightingMode == BacklightingMode_Unspecified) {
+        return Cfg.BacklightingMode;
+    } else {
+        return TemporaryBacklightingMode;
+    }
+}
+
 void Ledmap_UpdateBacklightLeds(void) {
-    switch (Cfg.BacklightingMode) {
+    switch (Ledmap_GetEffectiveBacklightMode()) {
         case BacklightingMode_PerKeyRgb:
             updateLedsByPerKeyKeyStragegy();
             break;
@@ -550,6 +579,11 @@ void Ledmap_UpdateBacklightLeds(void) {
             break;
         case BacklightingMode_ConstantRGB:
             updateLedsByConstantRgbStrategy();
+            break;
+        case BacklightingMode_Numpad:
+            updateLedsByNumpadStrategy();
+            break;
+        case BacklightingMode_Unspecified:
             break;
     }
 #if DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK80_LEFT
@@ -571,6 +605,20 @@ void Ledmap_InitLedLayout(void) {
         LedMap[SlotId_LeftKeyboardHalf][LedMapIndex_LeftSlot_IsoKey].green = 0;
         LedMap[SlotId_LeftKeyboardHalf][LedMapIndex_LeftSlot_IsoKey].blue = 0;
     }
+#endif
+}
+
+void Ledmap_SetTemporaryLedBacklightingMode(backlighting_mode_t newMode) {
+    TemporaryBacklightingMode = newMode;
+#ifdef __ZEPHYR__
+    StateSync_UpdateProperty(StateSyncPropertyId_Backlight, NULL);
+#endif
+}
+
+void Ledmap_ResetTemporaryLedBacklightingMode() {
+    TemporaryBacklightingMode = BacklightingMode_Unspecified;
+#ifdef __ZEPHYR__
+    StateSync_UpdateProperty(StateSyncPropertyId_Backlight, NULL);
 #endif
 }
 

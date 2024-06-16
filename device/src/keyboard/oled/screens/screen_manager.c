@@ -7,16 +7,32 @@
 #include "legacy/event_scheduler.h"
 #include "legacy/timer.h"
 #include "legacy/event_scheduler.h"
+#include "legacy/ledmap.h"
 
 screen_id_t ActiveScreen = ScreenId_Main;
+
+static void onExit(screen_id_t screen) {
+    switch(screen) {
+        case ScreenId_Pairing:
+            Ledmap_ResetTemporaryLedBacklightingMode();
+            Ledmap_UpdateBacklightLeds();
+            break;
+        default:
+            break;
+    }
+}
 
 void ScreenManager_ActivateScreen(screen_id_t screen)
 {
     widget_t* screenPtr = NULL;
 
+    onExit(ActiveScreen);
+
     switch(screen) {
         case ScreenId_Pairing:
             screenPtr = PairingScreen;
+            Ledmap_SetTemporaryLedBacklightingMode(BacklightingMode_Numpad);
+            Ledmap_UpdateBacklightLeds();
             break;
         case ScreenId_Debug:
             screenPtr = DebugScreen;
