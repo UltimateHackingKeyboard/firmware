@@ -1,5 +1,6 @@
 #include "state_sync.h"
 #include "device.h"
+#include "legacy/module.h"
 #include "state_sync.h"
 #include <stdint.h>
 #include <zephyr/kernel.h>
@@ -173,13 +174,13 @@ void receiveLayerActionsClear(layer_id_t layerId) {
 void receiveLayerActions(sync_command_layer_t* buffer) {
     layer_id_t layerId = buffer->layerId;
     sync_command_action_t* actions = buffer->actions;
-    for (uint8_t keyId = 0; keyId < MAX_KEY_COUNT_PER_MODULE; keyId++) {
+    for (uint8_t keyId = buffer->startOffset; keyId < buffer->startOffset + buffer->actionCount; keyId++) {
         key_action_t* action = &CurrentKeymap[layerId][SlotId_LeftKeyboardHalf][keyId];
         action->color = actions[keyId].color;
         action->colorOverridden = actions[keyId].colorOverriden;
         action->type = actions[keyId].type;
         action->keystroke.modifiers = actions[keyId].modifierPresent ? 0xff : 0;
-        action->keystroke.scancode = actions[keyId].scancodePresent ? 0xff : 0;
+        action->keystroke.scancode = actions[keyId].scancode;
     }
 }
 
@@ -271,16 +272,24 @@ static void submitPreparedData(device_id_t dst, state_sync_prop_id_t propId, con
     Messenger_Send2(dst, MessageId_StateSync, propId, data, len);
 }
 
-static void prepareLayer(layer_id_t layerId, sync_command_layer_t* buffer) {
+static void prepareLayer(layer_id_t layerId, uint8_t offset, uint8_t count, sync_command_layer_t* buffer) {
     buffer->layerId = layerId;
-    for (uint8_t keyId = 0; keyId < MAX_KEY_COUNT_PER_MODULE; keyId++) {
-        key_action_t* action = &CurrentKeymap[layerId][SlotId_LeftKeyboardHalf][keyId];
-        buffer->actions[keyId].type = action->type;
-        buffer->actions[keyId].color = action->color;
-        buffer->actions[keyId].colorOverriden = action->colorOverridden;
-        buffer->actions[keyId].modifierPresent = action->keystroke.modifiers != 0;
-        buffer->actions[keyId].scancodePresent = action->keystroke.scancode != 0;
+    buffer->startOffset = offset;
+    buffer->actionCount = count;
+    for (uint8_t dstKeyId = 0; dstKeyId < count; dstKeyId++) {
+        key_action_t* action = &CurrentKeymap[layerId][SlotId_LeftKeyboardHalf][offset+dstKeyId];
+        buffer->actions[dstKeyId].type = action->type;
+        buffer->actions[dstKeyId].scancode = action->keystroke.scancode;
+        buffer->actions[dstKeyId].color = action->color;
+        buffer->actions[dstKeyId].colorOverriden = action->colorOverridden;
+        buffer->actions[dstKeyId].modifierPresent = action->keystroke.modifiers != 0;
     }
+}
+
+static void prepareAndSubmitLayer(device_id_t dst, state_sync_prop_id_t propId, layer_id_t layerId, uint8_t offset, uint8_t count) {
+    sync_command_layer_t buffer;
+    prepareLayer(layerId, offset, count, &buffer);
+    submitPreparedData(dst, propId, (const uint8_t*)&buffer, sizeof(buffer));
 }
 
 static void prepareBacklight(sync_command_backlight_t* buffer) {
@@ -309,9 +318,8 @@ static void prepareData(device_id_t dst, const uint8_t* propDataPtr, state_sync_
                     submitPreparedData(dst, StateSyncPropertyId_LayerActionsClear, &layerId, sizeof(layerId));
                     return;
                 } else {
-                    sync_command_layer_t buffer;
-                    prepareLayer(layerId, &buffer);
-                    submitPreparedData(dst, propId, (const uint8_t*)&buffer, sizeof(buffer));
+                    prepareAndSubmitLayer(dst, propId, layerId, 0, MAX_KEY_COUNT_PER_UPDATE);
+                    prepareAndSubmitLayer(dst, propId, layerId, MAX_KEY_COUNT_PER_UPDATE, MAX_KEY_COUNT_PER_MODULE - MAX_KEY_COUNT_PER_UPDATE);
                     return;
                 }
             }

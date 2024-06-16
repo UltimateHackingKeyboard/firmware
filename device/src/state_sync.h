@@ -12,6 +12,8 @@
 
 // Macros:
 
+    #define MAX_KEY_COUNT_PER_UPDATE ((MAX_KEY_COUNT_PER_MODULE)/2+1)
+
 // Typedefs:
 
     typedef struct {
@@ -19,16 +21,18 @@
     } sync_generic_half_state_t;
 
     typedef struct {
-        uint8_t type : 5;
-        uint8_t scancodePresent : 1;
+        uint8_t type : 6;
         uint8_t modifierPresent : 1;
         uint8_t colorOverriden : 1;
+        uint8_t scancode;
         rgb_t color;
     } ATTR_PACKED sync_command_action_t;
 
     typedef struct {
         layer_id_t layerId;
-        sync_command_action_t actions[MAX_KEY_COUNT_PER_MODULE];
+        uint8_t startOffset;
+        uint8_t actionCount;
+        sync_command_action_t actions[MAX_KEY_COUNT_PER_UPDATE];
     } sync_command_layer_t;
 
     typedef struct {
