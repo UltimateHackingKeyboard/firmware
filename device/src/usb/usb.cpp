@@ -128,22 +128,7 @@ struct usb_manager {
 
   private:
     usb_manager()
-    {
-        device_.set_power_event_delegate([](usb::df::device &dev, usb::df::device::event ev) {
-            using event = enum usb::df::device::event;
-            switch (ev) {
-            case event::CONFIGURATION_CHANGE:
-                // printk("USB configured: %u, granted current: %uuA\n", dev.configured(), dev.granted_bus_current_uA()); 
-                break;
-            case event::POWER_STATE_CHANGE:
-                if (!DEVICE_IS_UHK_DONGLE) {
-                    Charger_UpdateBatteryState();
-                }
-                // printk("USB power state: L%u, granted current: %uuA\n", 3 - static_cast<uint8_t>(dev.power_state()), dev.granted_bus_current_uA());
-                break;
-            }
-        });
-    }
+    {}
 
     usb::df::zephyr::udc_mac mac_{DEVICE_DT_GET(DT_NODELABEL(zephyr_udc0))};
     usb::df::microsoft::alternate_enumeration<usb::speeds(usb::speed::FULL)> ms_enum_{};
