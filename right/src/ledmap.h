@@ -47,5 +47,6 @@
     void Ledmap_SetLedBacklightingMode(backlighting_mode_t newMode);
     void Ledmap_SetTemporaryLedBacklightingMode(backlighting_mode_t newMode);
     void Ledmap_ResetTemporaryLedBacklightingMode();
+    backlighting_mode_t Ledmap_GetEffectiveBacklightMode();
 
 #endif
