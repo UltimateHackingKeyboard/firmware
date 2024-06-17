@@ -173,14 +173,13 @@ void receiveLayerActionsClear(layer_id_t layerId) {
 
 void receiveLayerActions(sync_command_layer_t* buffer) {
     layer_id_t layerId = buffer->layerId;
-    sync_command_action_t* actions = buffer->actions;
-    for (uint8_t keyId = buffer->startOffset; keyId < buffer->startOffset + buffer->actionCount; keyId++) {
-        key_action_t* action = &CurrentKeymap[layerId][SlotId_LeftKeyboardHalf][keyId];
-        action->color = actions[keyId].color;
-        action->colorOverridden = actions[keyId].colorOverriden;
-        action->type = actions[keyId].type;
-        action->keystroke.modifiers = actions[keyId].modifierPresent ? 0xff : 0;
-        action->keystroke.scancode = actions[keyId].scancode;
+    for (uint8_t i = 0; i < buffer->actionCount; i++) {
+        key_action_t* dstAction = &CurrentKeymap[layerId][SlotId_LeftKeyboardHalf][i + buffer->startOffset];
+        dstAction->color = buffer->actions[i].color;
+        dstAction->colorOverridden = buffer->actions[i].colorOverriden;
+        dstAction->type = buffer->actions[i].type;
+        dstAction->keystroke.modifiers = buffer->actions[i].modifierPresent ? 0xff : 0;
+        dstAction->keystroke.scancode = buffer->actions[i].scancode;
     }
 }
 
