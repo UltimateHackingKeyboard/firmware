@@ -13,6 +13,7 @@
 #include "keyboard/leds.h"
 #include "keyboard/oled/screens/pairing_screen.h"
 #include "state_sync.h"
+#include "stubs.h"
 #else
 #include "device/device.h"
 #endif

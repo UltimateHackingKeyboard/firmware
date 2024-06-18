@@ -6,6 +6,7 @@
     #include <stdbool.h>
     #include <stdint.h>
     #include "attributes.h"
+    #include "key_action.h"
 
 // Macros:
 // Variables:
@@ -13,7 +14,7 @@
 
 
 #if !defined(__ZEPHYR__) || DEVICE_IS_UHK_DONGLE
-    static ATTR_UNUSED bool RunningOnBattery = false;
+     __attribute__((weak)) ATTR_UNUSED bool RunningOnBattery = false;
 
 #endif
 
@@ -21,5 +22,6 @@
     static ATTR_UNUSED void Oled_UpdateBrightness() {};
 #endif
 
+    ATTR_UNUSED __attribute__((weak)) const rgb_t* PairingScreen_ActionColor(key_action_t* action);
 
 #endif
