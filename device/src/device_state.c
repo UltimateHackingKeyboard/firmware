@@ -19,18 +19,21 @@ void handleStateTransition(connection_id_t remoteId, bool isConnected) {
         switch (DEVICE_ID) {
             case DeviceId_Uhk80_Left:
                 if (remoteId == ConnectionId_Right && isConnected) {
-                    StateSync_Reset();
+                    StateSync_ResetRightLeftLink(true);
                 }
                 break;
             case DeviceId_Uhk80_Right:
                 switch (remoteId) {
                     case ConnectionId_Left:
+                        Widget_Refresh(&StatusWidget);
                         if (isConnected) {
-                            Widget_Refresh(&StatusWidget);
-                            StateSync_Reset();
+                            StateSync_ResetRightLeftLink(true);
                         }
                         break;
                     case ConnectionId_Dongle:
+                        if (isConnected) {
+                            StateSync_ResetRightDongleLink(true);
+                        }
                     case ConnectionId_UsbHid:
                     case ConnectionId_BluetoothHid:
                         Widget_Refresh(&TargetWidget);
@@ -41,7 +44,7 @@ void handleStateTransition(connection_id_t remoteId, bool isConnected) {
                 break;
             case DeviceId_Uhk_Dongle:
                 if (remoteId == ConnectionId_Right && isConnected) {
-                    StateSync_Reset();
+                    StateSync_ResetRightDongleLink(true);
                 }
                 break;
             default:
