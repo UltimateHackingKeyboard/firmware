@@ -5,6 +5,7 @@
 
     #include <stdbool.h>
     #include <stdint.h>
+    #include <stddef.h>
     #include "attributes.h"
     #include "key_action.h"
 
@@ -22,6 +23,12 @@
     static ATTR_UNUSED void Oled_UpdateBrightness() {};
 #endif
 
-    ATTR_UNUSED __attribute__((weak)) const rgb_t* PairingScreen_ActionColor(key_action_t* action);
+    ATTR_UNUSED __attribute__((weak)) const rgb_t* PairingScreen_ActionColor(key_action_t* action) { return NULL; };
+
+#ifdef DEVICE_HAS_OLED
+#define WIDGET_REFRESH(W) Widget_Refresh(W)
+#else
+#define WIDGET_REFRESH(W)
+#endif
 
 #endif

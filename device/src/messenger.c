@@ -124,6 +124,9 @@ static void receiveDongle(device_id_t src, const uint8_t* data, uint16_t len) {
         case MessageId_SyncableProperty:
             processSyncablePropertyDongle(src, data, len);
             break;
+        case MessageId_StateSync:
+            StateSync_ReceiveStateUpdate(src, data, len);
+            break;
         default:
             printk("Unrecognized or unexpected message [%i, %i, ...]\n", data[0], data[1]);
             break;

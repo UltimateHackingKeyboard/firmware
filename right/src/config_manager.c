@@ -234,6 +234,7 @@ void ConfigManager_ResetConfiguration(bool updateLeds) {
     ChangeI2cBaudRate(Cfg.I2cBaudRate);
 #endif
     if (updateLeds) {
+        Ledmap_SetLedBacklightingMode(Cfg.BacklightingMode);
         Ledmap_UpdateBacklightLeds();
     }
 }

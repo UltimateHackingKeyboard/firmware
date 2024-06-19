@@ -64,16 +64,18 @@
         StateSyncPropertyId_ActiveKeymap,
         StateSyncPropertyId_Battery,
         StateSyncPropertyId_KeyboardLedsState,
-        StateSyncPropertyId_StateReset,
+        StateSyncPropertyId_ResetRightLeftLink,
+        StateSyncPropertyId_ResetRightDongleLink,
         StateSyncPropertyId_Count,
     } state_sync_prop_id_t;
 
     typedef enum {
-        SyncDirection_LeftToRight,
-        SyncDirection_RightToLeft,
-        SyncDirection_MasterToSlave,
-        SyncDirection_SlaveToMaster,
-        SyncDirection_DongleToMaster,
+        SyncDirection_LeftToRight = 1 << 0,
+        SyncDirection_RightToLeft = 1 << 1,
+        SyncDirection_DongleToRight = 1 << 2,
+        SyncDirection_RightToDongle = 1 << 3,
+        SyncDirection_RightDongleBidir = SyncDirection_RightToDongle | SyncDirection_DongleToRight,
+        SyncDirection_RightLeftBidir = SyncDirection_LeftToRight | SyncDirection_RightToLeft,
     } sync_direction_t;
 
     typedef enum {
@@ -105,6 +107,8 @@
     void StateSync_ReceiveProperty(device_id_t src, state_sync_prop_id_t property, void* data, uint8_t len);
     void StateSync_UpdateProperty(state_sync_prop_id_t propId, void* data);
     void StateSync_ReceiveStateUpdate(device_id_t src, const uint8_t* data, uint8_t len);
-    void StateSync_Reset();
+
+    void StateSync_ResetRightLeftLink(bool bidirectional);
+    void StateSync_ResetRightDongleLink(bool bidirectional);
 
 #endif

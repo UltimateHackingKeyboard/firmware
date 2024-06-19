@@ -71,7 +71,9 @@ void TriggerWatch(key_state_t *keyState)
     if (0 <= key && key <= 7) {
         // Set the LED value to --- until next update occurs.
 #ifdef __ZEPHYR__
-        ScreenManager_ActivateScreen(ScreenId_Debug);
+        if (DEBUG_CONSOLE) {
+            ScreenManager_ActivateScreen(ScreenId_Debug);
+        }
 #endif
         showString("---");
         CurrentWatch = key;
