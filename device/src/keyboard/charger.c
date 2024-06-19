@@ -123,7 +123,10 @@ void Charger_UpdateBatteryState() {
     }
 }
 
+static nrfx_power_usb_event_handler_t originalPowerHandler = NULL;
+
 static void powerCallback(nrfx_power_usb_evt_t event) {
+    originalPowerHandler(event);
     EventScheduler_Schedule(CurrentTime + CHARGER_STAT_PERIOD, EventSchedulerEvent_UpdateBattery);
 }
 
@@ -166,6 +169,8 @@ void InitCharger(void) {
     const nrfx_power_usbevt_config_t config = {
         .handler = &powerCallback
     };
+
+    originalPowerHandler = nrfx_power_usb_handler_get();
     nrfx_power_usbevt_init(&config);
     nrfx_power_usbevt_enable();
 
