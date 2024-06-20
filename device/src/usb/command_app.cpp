@@ -58,13 +58,16 @@ bool command_app::send(std::span<const uint8_t> buffer)
     auto buf_idx = in_buffer_.active_side();
     auto &report = in_buffer_[buf_idx];
     if (buffer.size() > report.payload.max_size()) {
+        printk("Usb payload exceeded maximum size!\n");
         return false;
     }
     std::copy(buffer.begin(), buffer.end(), report.payload.begin());
-    if (send_report(&in_buffer_[buf_idx]) == hid::result::OK) {
+    c2usb::result err = send_report(&in_buffer_[buf_idx]);
+    if (err == hid::result::OK) {
         in_buffer_.compare_swap(buf_idx);
         return true;
     }
+    printk("Command app failed to send report with: %i\n", (int)err);
     return false;
 }
 
