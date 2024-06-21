@@ -15,6 +15,7 @@
         "array": "cpp",
         "string": "cpp",
         "string_view": "cpp",
-        "compare": "c"
+        "compare": "c",
+        "system_error": "c"
     }
 }
