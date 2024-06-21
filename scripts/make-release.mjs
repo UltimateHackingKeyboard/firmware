@@ -87,7 +87,7 @@ for (const device of packageJson.devices) {
     const deviceMMap = `${__dirname}/../${device.mmap}`;
     shell.mkdir('-p', deviceDir);
     shell.chmod(644, deviceSource);
-    shell.cp(deviceSource, `${deviceDir}/firmware.hex`);
+    shell.cp(deviceSource, `${deviceDir}/firmware${path.extname(device.source)}`);
     shell.cp(deviceMMap, `${deviceDir}/firmware.map`);
     shell.exec(`npm run convert-user-config-to-bin -- ${deviceDir}/config.bin`, { cwd: agentDir });
 }
