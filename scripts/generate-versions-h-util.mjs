@@ -20,30 +20,30 @@ const patchVersions = ['Major', 'Minor', 'Patch'];
 /**
  * @param {object} packageJson - The package.json file
  * @param {GitInfo} gitInfo
- * @param {boolean} useRealData - If true, use real data. If false, use "0" data.
+ * @param {boolean} useRealShas - If true, use real data. If false, use "0" data.
  */
-export function generateVersionsH({packageJson, gitInfo, useRealData}) {
+export function generateVersionsH({packageJson, gitInfo, useRealShas, useZeroVersions}) {
   packageJson = structuredClone(packageJson)
 
-  gitInfo = useRealData
-    ? gitInfo
-    : {
+  gitInfo = useZeroVersions
+    ? {
       repo: '',
       tag: ''
     }
+    : gitInfo
 
   const versionVariables = versionPropertyPrefixes.map(versionPropertyPrefix => {
     const versionPropertyName = `${versionPropertyPrefix}Version`
     const versionPropertyValues = packageJson[versionPropertyName].split('.');
     return patchVersions.map(patchVersion => {
-      const versionPropertyValue = useRealData ? versionPropertyValues.shift() : "0";
+      const versionPropertyValue = useZeroVersions ? "0" : versionPropertyValues.shift();
       const versionPropertyMacroName = `${versionPropertyPrefix}${patchVersion}Version`.split(/(?=[A-Z])/).join('_').toUpperCase()
       return `    #define ${versionPropertyMacroName} ${versionPropertyValue}`;
     }).join('\n') + '\n';
   }).join('\n');
 
   const deviceMd5Sums = packageJson.devices.map(device => {
-    const md5 = useRealData
+    const md5 = useRealShas
       ? calculateMd5ChecksumOfFile(path.join(__dirname, '..', device.source))
       : ZERO_MD5;
 
@@ -53,7 +53,7 @@ export function generateVersionsH({packageJson, gitInfo, useRealData}) {
   }).join('\n');
 
   const moduleMd5Sums = packageJson.modules.map(module => {
-    const md5 = useRealData
+    const md5 = useRealShas
       ? calculateMd5ChecksumOfFile(path.join(__dirname, '..', module.source))
       : ZERO_MD5;
 

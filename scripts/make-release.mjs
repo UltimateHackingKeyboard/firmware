@@ -44,7 +44,7 @@ function build(buildTarget, step) {
     }
 }
 
-generateVersionsH({packageJson, gitInfo, useRealData:false});
+generateVersionsH({packageJson, gitInfo, useRealShas:false, useZeroVersions:true});
 
 const version = packageJson.firmwareVersion;
 const releaseName = `uhk-firmware-${version}`;
@@ -72,7 +72,7 @@ if (process.argv.includes('--buildTest')) {
     process.exit(0);
 }
 
-const {devices, modules} = generateVersionsH({packageJson, gitInfo, useRealData:true});
+const {devices, modules} = generateVersionsH({packageJson, gitInfo, useRealShas:true, useZeroVersions:false});
 packageJson.devices = devices;
 packageJson.modules = modules;
 for (const buildTarget of buildTargets) {
@@ -109,3 +109,6 @@ shell.cp('-RL', `${__dirname}/../doc/dist`, `${releaseDir}/doc`);
 shell.mkdir('-p', `${releaseDir}/doc-dev`);
 shell.cp('-RL', `${__dirname}/../doc-dev/reference-manual.md`, `${releaseDir}/doc-dev/reference-manual.md`);
 shell.exec(`tar -czvf ${releaseFile} -C ${releaseDir} .`);
+
+// Restore development values
+generateVersionsH({packageJson, gitInfo, useRealShas:false, useZeroVersions:false});

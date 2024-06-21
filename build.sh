@@ -68,7 +68,7 @@ function processArguments() {
                 DEVICES="$DEVICES uhk-80-left uhk-80-right uhk-dongle"
                 shift
                 ;;
-            clean|setup|update|build|make|flash|shell|uart)
+            clean|setup|update|build|make|flash|shell|uart|release)
                 ACTIONS="$ACTIONS $1"
                 shift
                 ;;
@@ -200,6 +200,11 @@ END
             DEVICEARG=`determineDevIdArg $DEVICE`
             nrfutil toolchain-manager launch --shell --ncs-version $NCS_VERSION << END
                 west flash -d $PWD/device/build/$DEVICE $DEVICEARG $OTHER_ARGS < /dev/tty
+END
+            ;;
+        release)
+            nrfutil toolchain-manager launch --shell --ncs-version $NCS_VERSION << END
+                scripts/make-release.mjs --allowSha
 END
             ;;
         shell)
