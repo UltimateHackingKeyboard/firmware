@@ -69,17 +69,17 @@ ATTR_UNUSED static string_segment_t getKeymapLayerText() {
 }
 
 static string_segment_t getLeftStatusText() {
-#define BUFFER_LENGTH 20
+#define BUFFER_LENGTH 10
     static char buffer [BUFFER_LENGTH] = { [BUFFER_LENGTH-1] = 0 };
-    const char* connState = "---";
+    font_icons_t icon = FontIcon_CircleXmark;
     if (DEVICE_ID == DeviceId_Uhk80_Right) {
         if (Uart_IsConnected()) {
-            connState = "uart";
+            icon = FontIcon_Plug;
         } else if (Bt_DeviceIsConnected(DeviceId_Uhk80_Left)) {
-            connState = "bt";
+            icon = FontIcon_SignalStream;
         }
     }
-    snprintf(buffer, BUFFER_LENGTH-1, "left: %s", connState);
+    snprintf(buffer, BUFFER_LENGTH-1, "%c%c", (char)FontControl_NextCharIcon12, (char)icon);
     return (string_segment_t){ .start = buffer, .end = NULL };
 #undef BUFFER_LENGTH
 }
@@ -121,7 +121,7 @@ static string_segment_t getRightStatusText() {
 
 static string_segment_t getKeyboardLedsStateText() {
     static char buffer [6] = {};
-    sprintf(buffer, "%cC %cN", KeyboardLedsState.capsLock ? FontControl_WhiteText : FontControl_GrayText, KeyboardLedsState.numLock ? FontControl_WhiteText : FontControl_GrayText);
+    sprintf(buffer, "%cC %cN", KeyboardLedsState.capsLock ? FontControl_NextCharWhite : FontControl_NextCharGray, KeyboardLedsState.numLock ? FontControl_NextCharWhite : FontControl_NextCharGray);
     return (string_segment_t){ .start = buffer, .end = NULL };
 }
 
