@@ -14,9 +14,17 @@
 // Typedefs:
 
     typedef enum {
-        FontControl_WhiteText = 1,
-        FontControl_GrayText = 2,
+        FontControl_NextCharGray = 1,
+        FontControl_NextCharWhite,
+        FontControl_NextCharIcon12,
     } font_control_t;
+
+    typedef enum {
+        FontIcon_CircleXmarkLarge = 32,
+        FontIcon_CircleXmark,
+        FontIcon_Plug,
+        FontIcon_SignalStream,
+    } font_icons_t;
 
     typedef struct widget_t widget_t;
 

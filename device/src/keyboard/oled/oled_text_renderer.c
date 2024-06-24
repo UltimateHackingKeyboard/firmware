@@ -97,8 +97,6 @@ static uint8_t drawGlyph(widget_t* canvas, framebuffer_t* buffer, int16_t x, int
 // TODO: return resulting bounds rectangle?
 void Framebuffer_DrawText(widget_t* canvas, framebuffer_t* buffer, int16_t x, int16_t y, const lv_font_t* font, const char* text, const char* textEnd)
 {
-    bool gray = false;
-
     if (x < 0 || y < 0) {
         int16_t canvasWidth = canvas == NULL ? DISPLAY_WIDTH : canvas->w;
         int16_t canvasHeight = canvas == NULL ? DISPLAY_HEIGHT : canvas->h;
@@ -116,22 +114,36 @@ void Framebuffer_DrawText(widget_t* canvas, framebuffer_t* buffer, int16_t x, in
         }
     }
 
+    bool gray = false;
+    bool icon12 = false;
+
     uint16_t consumed = 0;
     while (*text != '\0' && (textEnd == NULL || text < textEnd)) {
         if (*text >= 32) {
-            consumed += drawGlyph(canvas, buffer, x+consumed, y, font, (*text)-31, gray);
+            consumed += drawGlyph(canvas, buffer, x+consumed, y, icon12 ? &FontAwesome12 : font, (*text)-31, gray);
+            icon12 = false;
+            gray = false;
         } else {
             switch (*text) {
-                case FontControl_WhiteText:
+                case FontControl_NextCharGray:
+                    gray = true;
+                    break;
+                case FontControl_NextCharWhite:
                     gray = false;
                     break;
-                case FontControl_GrayText:
-                    gray = true;
+                case FontControl_NextCharIcon12:
+                    icon12 = true;
                     break;
             }
         }
         text++;
     }
+}
+
+static uint16_t getGlyphWidth(const lv_font_t* font, uint8_t glyphIdx)
+{
+    const lv_font_fmt_txt_glyph_dsc_t* someGlyph = &font->dsc->glyph_dsc[glyphIdx];
+    return someGlyph->adv_w/16;
 }
 
 uint16_t Framebuffer_TextWidth(const lv_font_t* font, const char* text, const char* textEnd)
@@ -146,5 +158,30 @@ uint16_t Framebuffer_TextWidth(const lv_font_t* font, const char* text, const ch
     const lv_font_fmt_txt_glyph_dsc_t* someGlyph = &font->dsc->glyph_dsc[1];
     uint8_t charWidth = someGlyph->adv_w/16;
     return len * charWidth;
+
+
+    bool gray = false;
+    bool icon12 = false;
+
+    uint16_t consumed = 0;
+    while (*text != '\0' && (textEnd == NULL || text < textEnd)) {
+        if (*text >= 32) {
+            consumed += getGlyphWidth(icon12 ? &FontAwesome12 : font, (*text)-31);
+            icon12 = false;
+            gray = false;
+        } else {
+            switch (*text) {
+                case FontControl_NextCharGray:
+                    gray = true;
+                    break;
+                case FontControl_NextCharIcon12:
+                    icon12 = true;
+                    break;
+            }
+        }
+        text++;
+    }
+
+    return consumed;
 }
 
