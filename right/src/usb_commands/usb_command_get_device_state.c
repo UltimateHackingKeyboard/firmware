@@ -15,6 +15,7 @@
 
 #ifdef __ZEPHYR__
     #include "flash.h"
+    #include "device_state.h"
 #else
     #include "slave_drivers/uhk_module_driver.h"
     #include "usb_report_updater.h"
@@ -39,7 +40,9 @@ void UsbCommand_GetKeyboardState(void)
     SetUsbTxBufferUint8(2, MergeSensor_IsMerged());
 #endif
 
-#ifndef __ZEPHYR__
+#ifdef __ZEPHYR__
+    SetUsbTxBufferUint8(3, DeviceState_IsDeviceConnected(DeviceId_Uhk80_Left) ? ModuleId_LeftKeyboardHalf : 0);
+#else
     SetUsbTxBufferUint8(3, MODULE_CONNECTION_STATE(UhkModuleDriverId_LeftKeyboardHalf));
     SetUsbTxBufferUint8(4, MODULE_CONNECTION_STATE(UhkModuleDriverId_LeftModule));
     SetUsbTxBufferUint8(5, MODULE_CONNECTION_STATE(UhkModuleDriverId_RightModule));
