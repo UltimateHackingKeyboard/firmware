@@ -20,7 +20,8 @@
     } font_control_t;
 
     typedef enum {
-        FontIcon_CircleXmark = 32,
+        FontIcon_CircleXmarkLarge = 32,
+        FontIcon_CircleXmark,
         FontIcon_Plug,
         FontIcon_SignalStream,
     } font_icons_t;

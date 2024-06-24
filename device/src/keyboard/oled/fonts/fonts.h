@@ -22,11 +22,12 @@
  *  - f057 - circle-xmark
  *  - f8dd - signal-stream
  *  - f1e6 - plug
+ *  - e000 - circle-xmark-large (custom)
  *
  *  Commands to create icon fonts:
  *  `
- *  fontforge -lang=ff -c 'Open($1); Generate($2);' Font\ Awesome\ 6\ Pro-Regular-400.otf font_awesome_6_reguler.ttf
- *  npx lv_font_conv --lv-font-name FontAwesome12 --format lvgl --bpp 4 -o font_awesome_12.c --size 12 --font /opt/fontawesome/otfs/font_awesome_6_reguler.ttf --range 0xf057,0xf8dd,0xf1e6 --no-compress
+ *  fontforge -lang=ff -c 'Open($1); Generate($2);' Font\ Awesome\ 6\ Pro-Regular-400.otf font_awesome_6_regular.ttf
+ *  npx lv_font_conv --lv-font-name FontAwesome12 --format lvgl --bpp 4 -o font_awesome_12.c --size 12 --font /opt/fontawesome/otfs/font_awesome_6_regular.ttf --range 0xf057,0xf8dd,0xf1e6,0xe000 --no-compress
  *  */
 
     extern const lv_font_t JetBrainsMono8;
