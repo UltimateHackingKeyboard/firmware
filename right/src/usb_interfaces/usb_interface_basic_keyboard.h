@@ -52,7 +52,6 @@
     } ATTR_PACKED usb_basic_keyboard_report_t;
 
 // Variables:
-    extern bool UsbBasicKeyboard_ProtocolChanged;
     extern bool UsbBasicKeyboard_CapsLockOn;
     extern bool UsbBasicKeyboard_NumLockOn;
     extern bool UsbBasicKeyboard_ScrollLockOn;

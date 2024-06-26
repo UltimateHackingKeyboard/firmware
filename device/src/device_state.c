@@ -15,10 +15,10 @@ bool DeviceState_IsConnected(connection_id_t connectionId) {
     return isConnected[connectionId] != ConnectionType_None;
 }
 
-void handleStateTransition(connection_id_t remoteId, bool isConnected) {
+void handleStateTransition(connection_id_t remoteId, bool connected) {
         switch (DEVICE_ID) {
             case DeviceId_Uhk80_Left:
-                if (remoteId == ConnectionId_Right && isConnected) {
+                if (remoteId == ConnectionId_Right && connected) {
                     StateSync_ResetRightLeftLink(true);
                 }
                 break;
@@ -26,12 +26,12 @@ void handleStateTransition(connection_id_t remoteId, bool isConnected) {
                 switch (remoteId) {
                     case ConnectionId_Left:
                         Widget_Refresh(&StatusWidget);
-                        if (isConnected) {
+                        if (connected) {
                             StateSync_ResetRightLeftLink(true);
                         }
                         break;
                     case ConnectionId_Dongle:
-                        if (isConnected) {
+                        if (connected) {
                             StateSync_ResetRightDongleLink(true);
                         }
                     case ConnectionId_UsbHid:
@@ -43,7 +43,7 @@ void handleStateTransition(connection_id_t remoteId, bool isConnected) {
                 }
                 break;
             case DeviceId_Uhk_Dongle:
-                if (remoteId == ConnectionId_Right && isConnected) {
+                if (remoteId == ConnectionId_Right && connected) {
                     StateSync_ResetRightDongleLink(true);
                 }
                 break;

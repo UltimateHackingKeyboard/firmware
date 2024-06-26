@@ -50,7 +50,7 @@ static void appendRxByte(uint8_t byte) {
 }
 
 static void rxPacketReceived() {
-    lastPingTime = CurrentTime;
+    lastPingTime = k_uptime_get();
     uint16_t len = rxPosition;
 
     if (len == 0) {
@@ -205,7 +205,8 @@ bool Uart_IsConnected() {
 }
 
 static void updateConnectionState() {
-    bool newIsConnected = (CurrentTime - lastPingTime) < UART_TIMEOUT;
+    uint32_t pingDiff = (k_uptime_get() - lastPingTime);
+    bool newIsConnected =  pingDiff < UART_TIMEOUT;
     if (isConnected != newIsConnected) {
         isConnected = newIsConnected;
         DeviceState_TriggerUpdate();

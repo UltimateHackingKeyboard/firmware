@@ -5,6 +5,8 @@
     #include "caret_config.h"
     #include "key_action.h"
     #include "key_states.h"
+    #include "usb_report_updater.h"
+    #include "usb_interfaces/usb_interface_mouse.h"
 
 // Macros:
 
@@ -28,6 +30,10 @@
     } module_kinetic_state_t;
 
 // Variables:
+
+    extern usb_keyboard_reports_t MouseControllerKeyboardReports;
+    extern usb_mouse_report_t MouseControllerMouseReport;
+
 
 // Functions:
     void MouseController_ProcessMouseActions();

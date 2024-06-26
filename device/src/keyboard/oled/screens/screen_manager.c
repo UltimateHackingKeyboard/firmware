@@ -36,21 +36,21 @@ void ScreenManager_ActivateScreen(screen_id_t screen)
             break;
         case ScreenId_Debug:
             screenPtr = DebugScreen;
-            EventScheduler_Reschedule(CurrentTime + DEBUG_SCREEN_NOTIFICATION_TIMEOUT, EventSchedulerEvent_SwitchScreen);
+            EventScheduler_Reschedule(CurrentTime + DEBUG_SCREEN_NOTIFICATION_TIMEOUT, EventSchedulerEvent_SwitchScreen, "ScreenManager - switch to main screen");
             break;
         case ScreenId_Main:
             screenPtr = MainScreen;
             break;
         case ScreenId_PairingSucceeded:
             screenPtr = PairingSucceededScreen;
-            EventScheduler_Schedule(CurrentTime + SCREEN_NOTIFICATION_TIMEOUT, EventSchedulerEvent_SwitchScreen);
+            EventScheduler_Schedule(CurrentTime + SCREEN_NOTIFICATION_TIMEOUT, EventSchedulerEvent_SwitchScreen, "ScreenManager - switch to main screen");
             break;
         case ScreenId_PairingFailed:
             screenPtr = PairingFailedScreen;
-            EventScheduler_Schedule(CurrentTime + SCREEN_NOTIFICATION_TIMEOUT, EventSchedulerEvent_SwitchScreen);
+            EventScheduler_Schedule(CurrentTime + SCREEN_NOTIFICATION_TIMEOUT, EventSchedulerEvent_SwitchScreen, "ScreenManager - switch to main screen");
             break;
         case ScreenId_Canvas:
-            EventScheduler_Reschedule(CurrentTime + CANVAS_TIMEOUT, EventSchedulerEvent_SwitchScreen);
+            EventScheduler_Reschedule(CurrentTime + CANVAS_TIMEOUT, EventSchedulerEvent_SwitchScreen, "ScreenManager - switch to main screen");
             screenPtr = CanvasScreen;
             break;
         default:

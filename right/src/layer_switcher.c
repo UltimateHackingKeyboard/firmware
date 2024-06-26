@@ -10,6 +10,7 @@
 #include "led_display.h"
 #include "usb_report_updater.h"
 #include "config_manager.h"
+#include "event_scheduler.h"
 
 #ifdef __ZEPHYR__
 #include "keyboard/oled/widgets/text_widget.h"
@@ -92,7 +93,7 @@ void updateActiveLayer() {
         StateSync_UpdateProperty(StateSyncPropertyId_ActiveLayer, NULL);
 #endif
         LedDisplay_SetLayer(ActiveLayer);
-        Ledmap_UpdateBacklightLeds();
+        EventVector_Set(EventVector_LedMapUpdateNeeded);
         MacroEvent_OnLayerChange(activeLayer);
     }
 }
@@ -188,6 +189,9 @@ void LayerSwitcher_HoldLayer(layer_id_t layer, bool forceSwap) {
 // If modifier layer is active, maskOutput will be used as a negative sticky modifier
 // mask in order to negate effect of the activation modifier.
 static bool layerMeetsHoldConditions(uint8_t layer, uint8_t* maskOutput) {
+    if (layer == LayerStack_ActiveLayer && LayerStack_ActiveLayer != LayerId_None && LayerStack_ActiveLayerHeld) {
+        return true;
+    }
     if (heldLayers[layer]) {
         return true;
     }
@@ -206,12 +210,8 @@ static bool layerMeetsHoldConditions(uint8_t layer, uint8_t* maskOutput) {
 
 // Gathers states set by LayerSwitcher_HoldLayer during previous update cycle and updates heldLayer.
 void LayerSwitcher_UpdateActiveLayer() {
+    EventVector_Unset(EventVector_LayerHolds);
     layer_id_t previousHeldLayer = heldLayer;
-
-    // Include macro held layer into computation
-    if (LayerStack_ActiveLayer != LayerId_None && LayerStack_ActiveLayerHeld) {
-        heldLayers[LayerStack_ActiveLayer] = true;
-    }
 
     // Reset held layer if no longer relevant
     if (heldLayer != LayerId_None && !layerMeetsHoldConditions(heldLayer, NULL)) {
@@ -225,7 +225,6 @@ void LayerSwitcher_UpdateActiveLayer() {
         if (heldLayerCanBeOverriden && layerMeetsHoldConditions(layerId, &ActiveLayerModifierMask)) {
             heldLayer = layerId;
         }
-        heldLayers[layerId] = false;
     }
     if (!Cfg.LayerConfig[heldLayer].modifierLayerMask) {
         ActiveLayerModifierMask = 0;
@@ -235,9 +234,15 @@ void LayerSwitcher_UpdateActiveLayer() {
     }
 }
 
+void LayerSwitcher_ResetHolds() {
+    for (uint8_t i = 0; i < LayerId_Count; i++) {
+        heldLayers[i] = false;
+    }
+}
+
 /**
  * Fork extensions:
  */
 void LayerSwitcher_RecalculateLayerComposition() {
-    updateActiveLayer();
+    LayerSwitcher_UpdateActiveLayer();
 }

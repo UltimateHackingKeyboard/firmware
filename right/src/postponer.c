@@ -11,6 +11,11 @@
 #include "key_action.h"
 #include "debug.h"
 #include "config_manager.h"
+#include "event_scheduler.h"
+
+#ifdef __ZEPHYR__
+#include <zephyr/sys/printk.h>
+#endif
 
 #if !defined(MAX)
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -23,7 +28,7 @@ static uint8_t bufferPosition = 0;
 uint8_t Postponer_LastKeyLayer = 255;
 uint8_t Postponer_LastKeyMods = 0;
 
-static uint8_t cyclesUntilActivation = 0;
+//static uint8_t cyclesUntilActivation = 0;
 static uint32_t lastPressTime;
 
 #define POS(idx) ((bufferPosition + POSTPONER_BUFFER_SIZE + (idx)) % POSTPONER_BUFFER_SIZE)
@@ -80,15 +85,15 @@ static void applyEventAndConsume(postponer_buffer_record_type_t* rec) {
             Postponer_LastKeyLayer = rec->event.key.layer;
             Postponer_LastKeyMods = rec->event.key.modifiers;
             // This gives the key two ticks (this and next) to get properly processed before execution of next queued event.
-            PostponerCore_PostponeNCycles(1);
-            WAKE_MACROS_ON_KEYSTATE_CHANGE();
+            // PostponerCore_PostponeNCycles(1);
+            Macros_WakeBecauseOfKeystateChange();
             consumeEvent(1);
             break;
         case PostponerEventType_UnblockMouse:
             Postponer_MouseBlocked = false;
             Postponer_LastKeyLayer = 255;
             Postponer_LastKeyMods = 0;
-            PostponerCore_PostponeNCycles(1);
+            // PostponerCore_PostponeNCycles(1);
             consumeEvent(1);
             break;
         case PostponerEventType_Delay: {
@@ -163,23 +168,38 @@ static void appendEvent(postponer_event_t event)
 // If you just want to perform some action of known length without being disturbed
 // (e.g., activation of a key with extra usb reports takes 2 cycles), then you just
 // call this once with the required number.
-void PostponerCore_PostponeNCycles(uint8_t n)
+
+//TODO: remove this
+// void PostponerCore_PostponeNCycles(uint8_t n)
+// {
+//     if(bufferSize == 0 && cyclesUntilActivation == 0) {
+//         // ensure correct CurrentPostponedTime when postponing starts, since current postponed time is the time of last executed action
+//         buffer[POS(0-1+POSTPONER_BUFFER_SIZE)].time = CurrentTime;
+// 	}
+//     cyclesUntilActivation = MAX(n + 1, cyclesUntilActivation);
+// }
+
+struct postponer_run_state_t {
+    bool runEventsThisCycle;
+    bool runEventsNextCycle;
+    bool eventsShouldBeQueued;
+} runState;
+
+
+bool PostponerCore_EventsShouldBeQueued(void)
 {
-    if(bufferSize == 0 && cyclesUntilActivation == 0) {
-        // ensure correct CurrentPostponedTime when postponing starts, since current postponed time is the time of last executed action
-        buffer[POS(0-1+POSTPONER_BUFFER_SIZE)].time = CurrentTime;
-	}
-    cyclesUntilActivation = MAX(n + 1, cyclesUntilActivation);
+    return runState.eventsShouldBeQueued || EventScheduler_Vector & EventVector_NativeActionsPostponing || EventScheduler_Vector & EventVector_MacroEnginePostponing;
 }
 
 bool PostponerCore_IsActive(void)
 {
-    return bufferSize > 0 || cyclesUntilActivation > 0 || Cfg.ChordingDelay || Cfg.AutoShiftDelay;
+    return runState.eventsShouldBeQueued;
 }
 
 
 void PostponerCore_PrependKeyEvent(key_state_t *keyState, bool active, uint8_t layer)
 {
+    LOG_SCHEDULE(printk("P postponer: new event\n"));
     prependEvent(
                 (postponer_event_t){
                     .type = active ? PostponerEventType_PressKey : PostponerEventType_ReleaseKey,
@@ -195,6 +215,7 @@ void PostponerCore_PrependKeyEvent(key_state_t *keyState, bool active, uint8_t l
 
 void PostponerCore_TrackKeyEvent(key_state_t *keyState, bool active, uint8_t layer)
 {
+    LOG_SCHEDULE(printk("P postponer: new event\n"));
     appendEvent(
                 (postponer_event_t){
                     .type = active ? PostponerEventType_PressKey : PostponerEventType_ReleaseKey,
@@ -211,6 +232,7 @@ void PostponerCore_TrackKeyEvent(key_state_t *keyState, bool active, uint8_t lay
 
 void PostponerCore_TrackDelay(uint32_t length)
 {
+    LOG_SCHEDULE(printk("P postponer: new event\n"));
     appendEvent(
                 (postponer_event_t){
                     .type = PostponerEventType_Delay,
@@ -224,6 +246,12 @@ void PostponerCore_TrackDelay(uint32_t length)
 
 void PostponerCore_RunPostponedEvents(void)
 {
+    runState.runEventsThisCycle = bufferSize > 0;
+    runState.runEventsNextCycle = bufferSize > 0;
+    runState.eventsShouldBeQueued = bufferSize > 0 || Cfg.ChordingDelay || Cfg.AutoShiftDelay || EventVector_IsSet(EventVector_NativeActionsPostponing) || EventVector_IsSet(EventVector_MacroEnginePostponing);
+
+    runState.runEventsThisCycle &= !EventVector_IsSet(EventVector_NativeActionsPostponing) && !EventVector_IsSet(EventVector_MacroEnginePostponing);
+
     if (Cfg.ChordingDelay) {
         chording();
     }
@@ -231,16 +259,20 @@ void PostponerCore_RunPostponedEvents(void)
         autoShift();
     }
     // Process one event every two cycles. (Unless someone keeps Postponer active by touching cycles_until_activation.)
-    if (bufferSize != 0 && (cyclesUntilActivation == 0 || bufferSize > POSTPONER_BUFFER_MAX_FILL)) {
+    if ( bufferSize != 0 && (runState.runEventsThisCycle || bufferSize > POSTPONER_BUFFER_MAX_FILL)) {
+        LOG_SCHEDULE(printk("P applying event\n"));
         CurrentPostponedTime = buffer[bufferPosition].time;
         applyEventAndConsume(&buffer[bufferPosition]);
     }
+
+    bool executeNextCycle = bufferSize > 0 && (runState.runEventsThisCycle || runState.runEventsNextCycle);
+    EventVector_SetValue(EventVector_Postponer, executeNextCycle);
 }
 
 void PostponerCore_FinishCycle(void)
 {
-    cyclesUntilActivation -= cyclesUntilActivation > 0 ? 1 : 0;
-    if(bufferSize == 0 && cyclesUntilActivation == 0) {
+    // cyclesUntilActivation -= cyclesUntilActivation > 0 ? 1 : 0;
+    if(bufferSize == 0 /*&& cyclesUntilActivation == 0*/) {
         CurrentPostponedTime = CurrentTime;
     }
 }
@@ -350,7 +382,7 @@ static void consumeOneKeypress()
 
 void PostponerExtended_ResetPostponer(void)
 {
-    cyclesUntilActivation = 0;
+    // cyclesUntilActivation = 0;
     bufferSize = 0;
 }
 
@@ -432,6 +464,7 @@ void PostponerExtended_BlockMouse() {
 }
 
 void PostponerExtended_UnblockMouse() {
+    LOG_SCHEDULE(printk("P postponer: new event mouseUnblock\n"));
     appendEvent((postponer_event_t){ .type = PostponerEventType_UnblockMouse });
 }
 
@@ -472,7 +505,11 @@ static uint8_t priority(key_state_t *key, bool active)
 static void chording()
 {
     if (bufferSize == 0 || CurrentTime - buffer[bufferPosition].time < Cfg.ChordingDelay ) {
-        PostponerCore_PostponeNCycles(0);
+        runState.runEventsThisCycle = false;
+        runState.runEventsNextCycle = false;
+        if (bufferSize > 0) {
+            EventScheduler_Schedule(buffer[bufferPosition].time + Cfg.ChordingDelay, EventSchedulerEvent_Postponer, "Postponer - chording");
+        }
     } else {
         bool activated = false;
         for ( uint8_t i = 0; i < bufferSize - 1; i++ ) {
@@ -498,7 +535,7 @@ static void chording()
             }
         }
         if (activated) {
-            PostponerCore_PostponeNCycles(0);
+            runState.runEventsThisCycle = false;
         }
     }
 }
@@ -554,7 +591,9 @@ static void autoShift()
 
         if (release == NULL) {
             if ( CurrentTime - buffer[bufferPosition].time < Cfg.AutoShiftDelay ) {
-                PostponerCore_PostponeNCycles(0);
+                runState.runEventsThisCycle = false;
+                runState.runEventsNextCycle = false;
+                EventScheduler_Schedule(buffer[bufferPosition].time + Cfg.AutoShiftDelay, EventSchedulerEvent_Postponer, "Postponer - autoshift");
             } else {
                 buffer[bufferPosition].event.key.modifiers = HID_KEYBOARD_MODIFIER_LEFTSHIFT;
             }
@@ -562,7 +601,5 @@ static void autoShift()
         else if (release != NULL && release->time - press->time >= Cfg.AutoShiftDelay) {
             buffer[bufferPosition].event.key.modifiers = HID_KEYBOARD_MODIFIER_LEFTSHIFT;
         }
-    } else if (bufferSize == 0) {
-        PostponerCore_PostponeNCycles(0);
     }
 }

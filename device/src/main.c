@@ -1,3 +1,5 @@
+#include "main.h"
+#include "shared/attributes.h"
 #include "zephyr/storage/flash_map.h"
 #include "keyboard/key_scanner.h"
 #include "keyboard/leds.h"
@@ -28,38 +30,54 @@
 #include "legacy/debug.h"
 #include "state_sync.h"
 #include "keyboard/charger.h"
+#include <stdint.h>
+#include "debug_eventloop_timing.h"
 // #include <zephyr/drivers/gpio.h>
 // #include "dongle_leds.h"
 
+k_tid_t Main_ThreadId = 0;
+
 static void sleepTillNextMs() {
-    static uint16_t counter = 0;
     static uint64_t wakeupTimeUs = 0;
-    static uint64_t maxDiff = 0;
-    static uint64_t startTimeUs = 0;
-
+    const uint64_t minSleepTime = 100;
     uint64_t currentTimeUs = k_cyc_to_us_near64(k_cycle_get_32());
-    wakeupTimeUs = wakeupTimeUs+1000;
-    counter++;
 
-    if (counter == 1000) {
-        if (DEBUG_EVENTLOOP_TIMING) {
-            printk("Current diff %lld, max diff %lld\n", currentTimeUs-startTimeUs, maxDiff);
-        }
-        counter = 0;
-        maxDiff = 0;
-    }
-    if (currentTimeUs-startTimeUs > maxDiff) {
-        maxDiff = currentTimeUs-startTimeUs;
-    }
+    wakeupTimeUs = wakeupTimeUs+1000;
 
     if (currentTimeUs < wakeupTimeUs) {
-        k_usleep(wakeupTimeUs-currentTimeUs);
+        k_usleep(MAX(wakeupTimeUs-currentTimeUs, minSleepTime));
+    } else {
+        k_usleep(minSleepTime);
+        wakeupTimeUs = currentTimeUs;
     }
+}
 
-    startTimeUs = k_cyc_to_us_near64(k_cycle_get_32());
+static void scheduleNextRun() {
+    uint32_t nextEventTime = 0;
+    bool eventIsValid = false;
+    if (EventScheduler_Vector & EventVector_EventScheduler) {
+        nextEventTime = EventScheduler_Process();
+        eventIsValid = true;
+    }
+    CurrentTime = k_uptime_get();
+    int32_t diff = nextEventTime - CurrentTime;
+    bool haveMoreWork = (EventScheduler_Vector & EventVector_ReportUpdateMask);
+    if (haveMoreWork) {
+        EVENTLOOP_TIMING(printk("Continuing immediately\n"));
+        // Mouse keys don't like being called twice in one second for some reason
+        sleepTillNextMs();
+        return;
+    } else if (eventIsValid) {
+        EVENTLOOP_TIMING(printk("Sleeping for %d\n", diff));
+        k_sleep(K_MSEC(diff));
+    } else {
+        EVENTLOOP_TIMING(printk("Sleeping forever\n"));
+        k_sleep(K_FOREVER);
+    }
 }
 
 int main(void) {
+    Main_ThreadId = k_current_get();
     printk("----------\n" DEVICE_NAME " started\n");
 
     // const struct gpio_dt_spec led0 = GPIO_DT_SPEC_GET(DT_ALIAS(led0_green), gpios);
@@ -163,8 +181,12 @@ int main(void) {
     {
         CurrentTime = k_uptime_get();
         Messenger_ProcessQueue();
-        RunUserLogic();
-        sleepTillNextMs();
+        if (EventScheduler_Vector & EventVector_UserLogicUpdateMask) {
+            EVENTLOOP_TIMING(EVENTLOOP_TIMING(EventloopTiming_Start()));
+            RunUserLogic();
+            EVENTLOOP_TIMING(EventloopTiming_End());
+        }
+        scheduleNextRun();
     }
 #else
     while (true)
@@ -172,7 +194,8 @@ int main(void) {
         CurrentTime = k_uptime_get();
         Messenger_ProcessQueue();
         RunUhk80LeftHalfLogic();
-        sleepTillNextMs();
+        scheduleNextRun();
     }
 #endif
 }
+

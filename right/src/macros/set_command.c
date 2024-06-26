@@ -453,7 +453,7 @@ static macro_variable_t backlightStrategy(parser_context_t* ctx, set_command_act
     }
 
     Ledmap_SetLedBacklightingMode(res);
-    Ledmap_UpdateBacklightLeds();
+    EventVector_Set(EventVector_LedMapUpdateNeeded);
     return noneVar();
 }
 
@@ -488,7 +488,7 @@ static macro_variable_t keyRgb(parser_context_t* ctx, set_command_action_t actio
     CurrentKeymap[layerId][slotIdx][inSlotIdx].colorOverridden = true;
     CurrentKeymap[layerId][slotIdx][inSlotIdx].color = rgb;
 
-    Ledmap_UpdateBacklightLeds();
+    EventVector_Set(EventVector_LedMapUpdateNeeded);
     return noneVar();
 }
 
@@ -512,7 +512,7 @@ static macro_variable_t constantRgb(parser_context_t* ctx, set_command_action_t 
 
         Cfg.LedMap_ConstantRGB = rgb;
         Ledmap_SetLedBacklightingMode(BacklightingMode_ConstantRGB);
-        Ledmap_UpdateBacklightLeds();
+        EventVector_Set(EventVector_LedMapUpdateNeeded);
 
         return noneVar();
     }
@@ -561,7 +561,7 @@ static macro_variable_t leds(parser_context_t* ctx, set_command_action_t action)
         Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
     }
 
-    LedManager_FullUpdate();
+    EventVector_Set(EventVector_LedManagerFullUpdateNeeded);
     return noneVar();
 }
 

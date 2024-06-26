@@ -12,6 +12,7 @@
 #include "legacy/key_states.h"
 #include "shared/attributes.h"
 #include "legacy/str_utils.h"
+#include "legacy/event_scheduler.h"
 
 #ifdef DEVICE_IS_KEYBOARD
 #include "keyboard/uart.h"
@@ -75,6 +76,7 @@ static void processSyncablePropertyRight(device_id_t src, const uint8_t* data, u
             for (uint8_t keyId = 0; keyId < MAX_KEY_COUNT_PER_MODULE; keyId++) {
                 KeyStates[SlotId_LeftKeyboardHalf][keyId].hardwareSwitchState = !!(message[keyId/8] & (1 << (keyId % 8)));
             }
+            EventVector_Set(EventVector_StateMatrix);
             break;
         default:
             printk("Unrecognized or unexpected message [%i, %i, ...]\n", data[0], data[1]);

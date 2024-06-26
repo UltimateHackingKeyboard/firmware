@@ -1,30 +1,30 @@
+#ifndef __DEBUG_H__
+#define __DEBUG_H__
+
 #define WATCHES false
 #define DEBUG_SEMAPHORES false
 #define DEBUG_EVENTLOOP_TIMING false
 #define DEBUG_STATESYNC false
 #define DEBUG_CONSOLE false
+#define DEBUG_EVENTLOOP_SCHEDULE false
 #define WATCH_INTERVAL 500
 
-#if WATCHES && !defined(SRC_UTILS_DBG_H_)
+#ifdef __ZEPHYR__
+    #include "logger.h"
+    #include <zephyr/kernel.h>
+#endif
+
+#include <stdint.h>
+#include "key_states.h"
+#include "usb_interfaces/usb_interface_basic_keyboard.h"
+
+#if WATCHES
 
 // When a key '~' to '6' is pressed, corresponding slot (identified by numbers 0-6) is activated.
 // This means that corresponding watched value is shown on the LED display and then updated in certain intervals.
 //
 // Numbers are outputted in an exponent notation in form '[0-9][0-9]' + '[0A-Z]' where letter denotes added magnitude (10A = 1000, 10B = 10000...).
 // Letters are used for magnitude so that brain is not confused by seeing three digit numbers.
-
-// Includes:
-
-    #ifdef __ZEPHYR__
-    #include "logger.h"
-    #include <zephyr/kernel.h>
-    #endif
-
-    #include <stdint.h>
-    #include "key_states.h"
-    #include "usb_interfaces/usb_interface_basic_keyboard.h"
-
-// Macros:
 
     // This hook is to be placed in usb_report_updater and to be called whenever a key is activated (i.e., on key-down event).
     #define WATCH_TRIGGER(STATE) TriggerWatch(STATE);
@@ -76,29 +76,11 @@
 
     #define IF_DEBUG(CMD) CMD
 
-    #ifdef __ZEPHYR__
-
-        #define WATCH_SEMAPHORE_TAKE(SEM, FILENAME, N) if(CurrentWatch == N) { WatchSemaforeTake(SEM, FILENAME, N); } else { k_sem_take(SEM, K_FOREVER); }
-
-        #if DEBUG_SEMAPHORES
-            #define SEM_TAKE(SEM) WATCH_SEMAPHORE_TAKE(SEM, __FILE__, 0)
-        #else
-            #define SEM_TAKE(SEM) k_sem_take(SEM, K_FOREVER)
-        #endif
-
-        #if DEBUG_STATESYNC
-            #define STATE_SYNC_LOG(fmt, ...) printk(fmt, ##__VA_ARGS__)
-        #else
-            #define STATE_SYNC_LOG(fmt, ...)
-        #endif
-    #endif
-
-
-// Variables:
+    // Variables:
 
     extern uint8_t CurrentWatch;
 
-// Functions:
+    // Functions:
 
     void TriggerWatch(key_state_t *keyState);
     void WatchTime(uint8_t n);
@@ -123,8 +105,6 @@
 
 #else
 
-// Macros:
-
     #define WATCH_TRIGGER(N)
     #define WATCH_TIME(N)
     #define WATCH_TIME_MICROS(N)
@@ -137,9 +117,6 @@
     #define WATCH_FLOAT_VALUE_MAX(V, N)
     #define WATCH_STRING(V, N)
     #define WATCH_CONDITION(N) false
-    #define WATCH_SEMAPHORE_TAKE(SEM, LABEL, N) k_sem_take(SEM, K_FOREVER);
-    #define SEM_TAKE(SEM) k_sem_take(SEM, K_FOREVER);
-    #define STATE_SYNC_LOG(fmt, ...)
     #define SHOW_STRING(V, N)
     #define SHOW_VALUE(V, N)
     #define ERR(E)
@@ -148,3 +125,32 @@
     #define IF_DEBUG(CMD)
 
 #endif
+
+#if defined(__ZEPHYR__) && DEBUG_SEMAPHORES
+#define WATCH_SEMAPHORE_TAKE(SEM, FILENAME, N) if(CurrentWatch == N) { WatchSemaforeTake(SEM, FILENAME, N); } else { k_sem_take(SEM, K_FOREVER); }
+#define SEM_TAKE(SEM) WATCH_SEMAPHORE_TAKE(SEM, __FILE__, 0)
+#else
+#define SEM_TAKE(SEM) k_sem_take(SEM, K_FOREVER)
+#define WATCH_SEMAPHORE_TAKE(SEM, LABEL, N) k_sem_take(SEM, K_FOREVER);
+#endif
+
+#if defined(__ZEPHYR__) && DEBUG_STATESYNC
+#define STATE_SYNC_LOG(fmt, ...) printk(fmt, ##__VA_ARGS__)
+#else
+#define STATE_SYNC_LOG(fmt, ...)
+#endif
+
+#if defined(__ZEPHYR__) && DEBUG_EVENTLOOP_SCHEDULE
+#define LOG_SCHEDULE(CODE) CODE
+#else
+#define LOG_SCHEDULE(CODE)
+#endif
+
+
+#if defined(__ZEPHYR__) && DEBUG_EVENTLOOP_TIMING
+#define EVENTLOOP_TIMING(CODE) CODE
+#else
+#define EVENTLOOP_TIMING(CODE)
+#endif
+
+#endif // __DEBUG_H__

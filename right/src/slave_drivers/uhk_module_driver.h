@@ -123,7 +123,6 @@
 
     extern uhk_module_state_t UhkModuleStates[UHK_MODULE_MAX_SLOT_COUNT];
     extern module_connection_state_t ModuleConnectionStates[UHK_MODULE_MAX_SLOT_COUNT];
-    extern bool KeymapReloadNeeded;
 
 // Functions:
     uint8_t UhkModuleSlaveDriver_SlotIdToDriverId(uint8_t slotId);

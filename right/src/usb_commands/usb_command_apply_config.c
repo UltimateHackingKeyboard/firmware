@@ -10,6 +10,7 @@
 #include "macros/status_buffer.h"
 #include "debug.h"
 #include "config_manager.h"
+#include "led_manager.h"
 
 void updateUsbBuffer(uint8_t usbStatusCode, uint16_t parserOffset, parser_stage_t parserStage)
 {

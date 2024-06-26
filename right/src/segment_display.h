@@ -28,8 +28,6 @@
 
 // Variables:
 
-    extern bool SegmentDisplay_NeedsUpdate;
-
 // Functions:
 
     void SegmentDisplay_Update();

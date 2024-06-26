@@ -298,7 +298,7 @@ void MacroRecorder_UpdateRecordingLed()
 
     ledOn = !ledOn;
     LedDisplay_SetIcon(LedDisplayIcon_Adaptive, ledOn);
-    EventScheduler_Schedule(CurrentTime + ledFlashingPeriod, EventSchedulerEvent_MacroRecorderFlashing);
+    EventScheduler_Schedule(CurrentTime + ledFlashingPeriod, EventSchedulerEvent_MacroRecorderFlashing, "macro recorder flashing");
 }
 
 void MacroRecorder_StartRecording(uint16_t id, bool blind)
