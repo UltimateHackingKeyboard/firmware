@@ -205,9 +205,9 @@ bool Uart_IsConnected() {
 }
 
 static void updateConnectionState() {
-    bool newIsConnected = (k_uptime_get() - lastPingTime) < UART_TIMEOUT;
+    uint32_t pingDiff = (k_uptime_get() - lastPingTime);
+    bool newIsConnected =  pingDiff < UART_TIMEOUT;
     if (isConnected != newIsConnected) {
-        printk("Uart state change: %i\n", newIsConnected);
         isConnected = newIsConnected;
         DeviceState_TriggerUpdate();
     }
