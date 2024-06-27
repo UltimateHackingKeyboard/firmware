@@ -24,6 +24,8 @@ command_t currentCommand = {};
 
 struct k_mutex isBusyMutex;
 
+#define ALIGNMENT 4096
+#define ALIGN_SIZE(S) ((((S)-1)/ALIGNMENT+1)*ALIGNMENT)
 
 uint8_t Flash_LaunchTransfer(storage_operation_t operation, config_buffer_id_t configBufferId, void (*successCallback))
 {
@@ -61,7 +63,7 @@ static void executeCommand() {
     if (currentCommand.operation == StorageOperation_Read) {
         flash_area_read(configArea, 0, ConfigBufferIdToConfigBuffer(currentCommand.configBufferId)->buffer, configSize);
     } else if (currentCommand.operation == StorageOperation_Write) {
-        flash_area_erase(configArea, 0, configSize);
+        flash_area_erase(configArea, 0, ALIGN_SIZE(configSize));
         flash_area_write(configArea, 0, ConfigBufferIdToConfigBuffer(currentCommand.configBufferId)->buffer, configSize);
     }
     if (currentCommand.successCallback) {
