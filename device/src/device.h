@@ -70,6 +70,12 @@
         #define DEVICE_HAS_SEGMENT_DISPLAY 0
     #endif
 
+    #if DEVICE_IS_UHK80_LEFT
+        #define MODULE_ID ModuleId_LeftKeyboardHalf
+        #define MODULE_KEY_COUNT 41
+        #define MODULE_POINTER_COUNT 0
+    #endif
+
 // Typedefs
 
     typedef enum {

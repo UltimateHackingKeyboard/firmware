@@ -9,6 +9,9 @@
     #include "legacy/key_action.h"
     #include "legacy/module.h"
     #include "keyboard/charger.h"
+    #include "shared/attributes.h"
+    #include "legacy/slave_drivers/uhk_module_driver.h"
+    #include "versioning.h"
 
 // Macros:
 
@@ -42,6 +45,17 @@
         rgb_t LedMap_ConstantRGB;
     } ATTR_PACKED sync_command_backlight_t;
 
+    typedef struct {
+        uint8_t moduleId;
+        version_t moduleProtocolVersion;
+        version_t firmwareVersion;
+        uint8_t keyCount;
+        uint8_t pointerCount;
+        char gitRepo[MAX_STRING_PROPERTY_LENGTH];
+        char gitTag[MAX_STRING_PROPERTY_LENGTH];
+        char firmwareChecksum[MD5_CHECKSUM_LENGTH];
+    } ATTR_PACKED sync_command_module_state_t;
+
     // Draft for generic properties
     typedef enum {
         StateSyncPropertyId_LayerActionsLayer1 = 1,
@@ -66,6 +80,7 @@
         StateSyncPropertyId_KeyboardLedsState,
         StateSyncPropertyId_ResetRightLeftLink,
         StateSyncPropertyId_ResetRightDongleLink,
+        StateSyncPropertyId_ModuleStateLeft,
         StateSyncPropertyId_Count,
     } state_sync_prop_id_t;
 
