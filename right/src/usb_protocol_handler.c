@@ -41,6 +41,7 @@ void UsbProtocolHandler(void)
 {
     bzero(GenericHidInBuffer, USB_GENERIC_HID_IN_BUFFER_LENGTH);
     uint8_t command = GetUsbRxBufferUint8(0);
+    printk("command %i\n", command);
     switch (command) {
         case UsbCommandId_GetDeviceProperty:
             UsbCommand_GetDeviceProperty();
@@ -81,6 +82,9 @@ void UsbProtocolHandler(void)
         case UsbCommandId_LaunchStorageTransfer:
             UsbCommand_LaunchStorageTransfer();
             break;
+        case UsbCommandId_GetModuleProperty:
+            UsbCommand_GetModuleProperty();
+            break;
 #ifdef __ZEPHYR__
         case UsbCommandId_DrawOled:
             UsbCommand_DrawOled();
@@ -100,9 +104,6 @@ void UsbProtocolHandler(void)
             break;
         case UsbCommandId_SetLedPwmBrightness:
             UsbCommand_SetLedPwmBrightness();
-            break;
-        case UsbCommandId_GetModuleProperty:
-            UsbCommand_GetModuleProperty();
             break;
         case UsbCommandId_GetSlaveI2cErrors:
             UsbCommand_GetSlaveI2cErrors();

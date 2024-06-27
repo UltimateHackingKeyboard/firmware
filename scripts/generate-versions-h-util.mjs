@@ -82,12 +82,12 @@ ${versionVariables}
 #define GIT_TAG "${gitInfo.tag}"
 
 #ifdef DEVICE_ID
-char const * const DeviceMD5Checksums[DEVICE_COUNT+1] = {
+static char const * const DeviceMD5Checksums[DEVICE_COUNT+1] = {
 ${deviceMd5Sums}
 };
 #endif
 
-char const * const ModuleMD5Checksums[ModuleId_AllCount] = {
+static char const * const ModuleMD5Checksums[ModuleId_AllCount] = {
 ${moduleMd5Sums}
 };
 

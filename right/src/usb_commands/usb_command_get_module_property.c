@@ -1,4 +1,7 @@
+#ifndef __ZEPHYR__
 #include "fsl_common.h"
+#endif
+
 #include "usb_commands/usb_command_get_module_property.h"
 #include "usb_protocol_handler.h"
 #include "slot.h"
