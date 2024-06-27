@@ -41,7 +41,6 @@ void UsbProtocolHandler(void)
 {
     bzero(GenericHidInBuffer, USB_GENERIC_HID_IN_BUFFER_LENGTH);
     uint8_t command = GetUsbRxBufferUint8(0);
-    printk("command %i\n", command);
     switch (command) {
         case UsbCommandId_GetDeviceProperty:
             UsbCommand_GetDeviceProperty();
