@@ -13,8 +13,10 @@
     #define EEPROM_PAGE_SIZE 64
     #define EEPROM_BUFFER_SIZE (EEPROM_ADDRESS_SIZE + EEPROM_PAGE_SIZE)
 
+#ifndef __ZEPHYR__
     #define HARDWARE_CONFIG_SIZE 64
     #define USER_CONFIG_SIZE (EEPROM_SIZE - HARDWARE_CONFIG_SIZE)
+#endif
 
 // Functions:
 
