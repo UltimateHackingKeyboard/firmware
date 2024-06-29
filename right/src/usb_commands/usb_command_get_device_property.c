@@ -2,18 +2,19 @@
 
 #ifdef __ZEPHYR__
 #include "device.h"
+#include "flash.h"
 #else
 #include "fsl_common.h"
 #include "slave_drivers/kboot_driver.h"
 #include "i2c.h"
 #include "init_peripherals.h"
 #include "fsl_i2c.h"
+#include "eeprom.h"
 #endif
 
 #include "slave_protocol.h"
 #include "usb_commands/usb_command_get_device_property.h"
 #include "usb_protocol_handler.h"
-#include "eeprom.h"
 #include "versioning.h"
 #include "versions.h"
 #include "timer.h"

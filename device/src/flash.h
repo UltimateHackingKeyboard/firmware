@@ -9,8 +9,11 @@
 
 // Macros:
 
+#ifdef __ZEPHYR__
+    // Don't mix them with UHK60 definitions as USER_CONFIG_SIZE differs
     #define HARDWARE_CONFIG_SIZE 64
     #define USER_CONFIG_SIZE (32*1024)
+#endif
 
 // Variables:
 

@@ -2,7 +2,12 @@
 #include <stddef.h>
 #include "config_globals.h"
 #include "attributes.h"
+
+#ifdef __ZEPHYR__
+#include "flash.h"
+#else
 #include "eeprom.h"
+#endif
 
 static uint8_t hardwareConfig[HARDWARE_CONFIG_SIZE];
 

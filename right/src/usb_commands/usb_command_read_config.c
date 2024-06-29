@@ -1,7 +1,12 @@
 #include <string.h>
-#ifndef __ZEPHYR__
+
+#ifdef __ZEPHYR__
+#include "flash.h"
+#else
+#include "eeprom.h"
 #include "fsl_common.h"
 #endif
+
 #include "usb_commands/usb_command_read_config.h"
 #include "usb_protocol_handler.h"
 #include "eeprom.h"

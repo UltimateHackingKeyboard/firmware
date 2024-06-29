@@ -8,9 +8,14 @@
 #include "segment_display.h"
 #include "config_parser/parse_macro.h"
 #include "config_parser/config_globals.h"
-#include "eeprom.h"
 #include <math.h>
 #include <stdarg.h>
+
+#ifdef __ZEPHYR__
+#include "flash.h"
+#else
+#include "eeprom.h"
+#endif
 
 static uint16_t consumeStatusCharReadingPos = 0;
 bool Macros_ConsumeStatusCharDirtyFlag = false;

@@ -15,6 +15,7 @@ static struct k_thread thread_data;
 static k_tid_t threadId = 0;
 
 typedef struct {
+    bool pending;
     storage_operation_t operation;
     config_buffer_id_t configBufferId;
     void (*successCallback)(void);
@@ -33,6 +34,7 @@ uint8_t Flash_LaunchTransfer(storage_operation_t operation, config_buffer_id_t c
         currentCommand.operation = operation;
         currentCommand.configBufferId = configBufferId;
         currentCommand.successCallback = successCallback;
+        currentCommand.pending = true;
         k_wakeup(threadId);
         return 0;
     } else {
@@ -43,6 +45,9 @@ uint8_t Flash_LaunchTransfer(storage_operation_t operation, config_buffer_id_t c
 int Flash_ReadAreaSync(const struct flash_area *fa, off_t off, void *dst, size_t len) {
     k_mutex_lock(&isBusyMutex, K_FOREVER);
     int res = flash_area_read(fa, off, dst, len);
+    if (res != 0) {
+        printk("Flash read error: %d\n", res);
+    }
     k_mutex_unlock(&isBusyMutex);
     return res;
 }
@@ -57,26 +62,44 @@ bool Flash_IsBusy() {
 }
 
 static void executeCommand() {
+    if (!currentCommand.pending) {
+        return;
+    }
+
     const struct flash_area *configArea = currentCommand.configBufferId == ConfigBufferId_HardwareConfig ? hardwareConfigArea : userConfigArea;
     size_t configSize = currentCommand.configBufferId == ConfigBufferId_HardwareConfig ? HARDWARE_CONFIG_SIZE : USER_CONFIG_SIZE;
 
     if (currentCommand.operation == StorageOperation_Read) {
-        flash_area_read(configArea, 0, ConfigBufferIdToConfigBuffer(currentCommand.configBufferId)->buffer, configSize);
+        int err = 0;
+        err = flash_area_read(configArea, 0, ConfigBufferIdToConfigBuffer(currentCommand.configBufferId)->buffer, configSize);
+        if (err != 0) {
+            printk("Flash read error: %d\n", err);
+        }
     } else if (currentCommand.operation == StorageOperation_Write) {
-        flash_area_erase(configArea, 0, ALIGN_SIZE(configSize));
-        flash_area_write(configArea, 0, ConfigBufferIdToConfigBuffer(currentCommand.configBufferId)->buffer, configSize);
+        int err = 0;
+        uint32_t alignedLen = ALIGN_SIZE(configSize);
+        err = flash_area_erase(configArea, 0, alignedLen);
+        if (err != 0) {
+            printk("Flash erase error: %d\n", err);
+        }
+        err = flash_area_write(configArea, 0, ConfigBufferIdToConfigBuffer(currentCommand.configBufferId)->buffer, configSize);
+        if (err != 0) {
+            printk("Flash write error: %d\n", err);
+        }
     }
+    currentCommand.pending = false;
     if (currentCommand.successCallback) {
         currentCommand.successCallback();
     }
 }
 
 void flash() {
+    k_sleep(K_FOREVER);
     while (true) {
         if (k_mutex_lock(&isBusyMutex, K_NO_WAIT) != 0) {
             executeCommand();
+            k_mutex_unlock(&isBusyMutex);
         }
-        k_mutex_unlock(&isBusyMutex);
         k_sleep(K_FOREVER);
     }
 }
