@@ -13,11 +13,11 @@
 #include "usb_commands/usb_command_set_variable.h"
 #include "usb_commands/usb_command_switch_keymap.h"
 #include "usb_commands/usb_command_launch_storage_transfer.h"
+#include "usb_commands/usb_command_get_module_property.h"
 
 #ifdef __ZEPHYR__
 #include "usb_commands/usb_command_draw_oled.h"
 #else
-#include "usb_commands/usb_command_get_module_property.h"
 #include "usb_commands/usb_command_set_test_led.h"
 #include "usb_commands/usb_command_set_led_pwm_brightness.h"
 #include "usb_commands/usb_command_get_adc_value.h"
