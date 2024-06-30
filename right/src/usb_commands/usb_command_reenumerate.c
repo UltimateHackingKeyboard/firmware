@@ -1,4 +1,5 @@
 #ifdef __ZEPHYR__
+#include <zephyr/retention/bootmode.h>
 #include <zephyr/sys/reboot.h>
 #else
 #include "fsl_common.h"
@@ -11,7 +12,8 @@
 void UsbCommand_Reenumerate(void)
 {
 #ifdef __ZEPHYR__
-    sys_reboot(SYS_REBOOT_COLD);
+    bootmode_set(BOOT_MODE_TYPE_BOOTLOADER);
+    sys_reboot(SYS_REBOOT_WARM);
 #else
     Wormhole.magicNumber = WORMHOLE_MAGIC_NUMBER;
     Wormhole.enumerationMode = GetUsbRxBufferUint8(1);
