@@ -78,6 +78,8 @@ void UsbBasicKeyboard_HandleProtocolChange()
         usbBasicKeyboardProtocol = ((usb_device_hid_struct_t*)UsbCompositeDevice.basicKeyboardHandle)->protocol;
 
         EventVector_Unset(EventVector_ProtocolChanged);
+        // Recompute all saved reports
+        EventVector_Set(EventVector_MacroEngine | EventVector_NativeActions | EventVector_MouseKeys | EventVector_MouseController);
     }
 }
 
