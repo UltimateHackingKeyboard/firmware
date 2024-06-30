@@ -33,7 +33,9 @@
         #error USB_BASIC_KEYBOARD_REPORT_LENGTH greater than max usb report length (64)
     #endif
 
-    #define USB_BASIC_KEYBOARD_OUT_REPORT_LENGTH 1
+    // Technically should be one, but the stack for some reason always writes 4,
+    // so we need to dedicate 4 bytes in order to avoid overwriting other data.
+    #define USB_BASIC_KEYBOARD_OUT_REPORT_LENGTH 4
 
     #define USB_BOOT_KEYBOARD_REPORT_LENGTH (2 + USB_BOOT_KEYBOARD_MAX_KEYS)
     #define USB_BOOT_KEYBOARD_MAX_KEYS 6
