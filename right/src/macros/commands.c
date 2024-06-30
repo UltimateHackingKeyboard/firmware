@@ -1031,6 +1031,51 @@ static macro_result_t processResolveNextKeyIdCommand()
     return res;
 }
 
+static macro_result_t processIfHoldCommand(parser_context_t* ctx, bool negate)
+{
+    if (Macros_DryRun) {
+        goto conditionPassed;
+    }
+
+    if (S->ls->as.currentIfHoldConditionPassed) {
+        if (S->ls->as.currentConditionPassed) {
+            goto conditionPassed;
+        } else {
+            S->ls->as.currentIfHoldConditionPassed = false;
+        }
+    }
+
+    postponer_buffer_record_type_t *dummy;
+    postponer_buffer_record_type_t *keyReleased;
+    PostponerQuery_InfoByKeystate(S->ms.currentMacroKey, &dummy, &keyReleased);
+
+    if (keyReleased != NULL) {
+        bool releasedAfterTimeout = keyReleased->time - S->ms.currentMacroStartTime >= Cfg.HoldTimeout;
+        if (releasedAfterTimeout != negate) {
+            goto conditionPassed;
+        } else {
+            return MacroResult_Finished | MacroResult_ConditionFailedFlag;
+        }
+    }
+
+    if (CurrentTime - S->ms.currentMacroStartTime >= Cfg.HoldTimeout) {
+        if (negate) {
+            return MacroResult_Finished | MacroResult_ConditionFailedFlag;
+        } else {
+            goto conditionPassed;
+        }
+    }
+
+    postponeCurrentCycle();
+    Macros_SleepTillKeystateChange();
+    return Macros_SleepTillTime(S->ms.currentMacroStartTime + Cfg.HoldTimeout);
+
+conditionPassed:
+    S->ls->as.currentIfHoldConditionPassed = true;
+    S->ls->as.currentConditionPassed = false; //otherwise following conditions would be skipped
+    return processCommand(ctx);
+}
+
 static macro_result_t processIfShortcutCommand(parser_context_t* ctx, bool negate, bool untilRelease)
 {
     //parse optional flags
@@ -1974,6 +2019,12 @@ static macro_result_t processCommand(parser_context_t* ctx)
                 if (!processIfModuleConnected(ctx, true) && !S->ls->as.currentConditionPassed) {
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
+            }
+            else if (ConsumeToken(ctx, "ifHold")) {
+                return processIfHoldCommand(ctx, false);
+            }
+            else if (ConsumeToken(ctx, "ifTap")) {
+                return processIfHoldCommand(ctx, true);
             }
             else if (ConsumeToken(ctx, "ifSecondary")) {
                 return processIfSecondaryCommand(ctx, false);

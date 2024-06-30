@@ -419,7 +419,7 @@ uint8_t initMacro(uint8_t index, key_state_t *keyState, uint8_t parentMacroSlot)
     S->ms.macroPlaying = true;
     S->ms.currentMacroIndex = index;
     S->ms.currentMacroKey = keyState;
-    S->ms.currentMacroStartTime = CurrentTime;
+    S->ms.currentMacroStartTime = CurrentPostponedTime;
     S->ms.parentMacroSlot = parentMacroSlot;
 
     //this loads the first action and resets all adresses

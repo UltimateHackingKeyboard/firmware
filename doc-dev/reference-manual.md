@@ -152,6 +152,7 @@ COMMAND = set autoShiftDelay <time in ms (INT)>
 COMMAND = set stickyModifiers {never|smart|always}
 COMMAND = set debounceDelay <time in ms, at most 250 (INT)>
 COMMAND = set doubletapTimeout <time in ms (INT)>
+COMMAND = set holdTimeout <time in ms (INT)>
 COMMAND = set keystrokeDelay <time in ms (INT)>
 COMMAND = set autoRepeatDelay <time in ms (INT)>
 COMMAND = set autoRepeatRate <time in ms (INT)>
@@ -172,6 +173,7 @@ CONDITION = else
 CONDITION = {ifShortcut | ifNotShortcut} [IFSHORTCUT_OPTIONS]* [KEYID]+
 CONDITION = {ifGesture | ifNotGesture} [IFSHORTCUT_OPTIONS]* [KEYID]+
 CONDITION = {ifPrimary | ifSecondary} [ simpleStrategy | advancedStrategy ]
+CONDITION = {ifHold | ifTap}
 CONDITION = {ifDoubletap | ifNotDoubletap}
 CONDITION = {ifInterrupted | ifNotInterrupted}
 CONDITION = {ifReleased | ifNotReleased}
@@ -422,6 +424,7 @@ We allow postponing key activations in order to allow deciding between some scen
 - `consumePending <n>` will remove n records from the queue.
 - `activateKeyPostponed KEYID` will add tap of KEYID at the end of queue. If `atLayer LAYERID` is specified, action will be taken from that layer rather than current one. If `prepend` option is specified, event will be place at the beginning of the queue.
 - `ifPrimary/ifSecondary [ simpleStrategy | advancedStrategy ] ... COMMAND` will wait until the firmware can distinguish whether primary or secondary action should be activated and then either execute `COMMAND` or skip it.
+- `ifHold/ifTap COMMAND` will wait until the key that activated the macro will be released or until holdTimeout elapses. Then it will either execute the command or skip it.
 - `ifShortcut/ifNotShortcut/ifGesture/ifNotGesture [IFSHORTCUT_OPTIONS]* [KEYID]*` will wait for next keypresses until sufficient number of keys has been pressed. If the next keypresses correspond to the provided arguments (hardware ids), the keypresses are consumed and the condition is performed. Consuming takes place in both `if` and `ifNot` versions if the full list is matched. E.g., `ifShortcut 090 089 final tapKey C-V; holdKey v`.
   - `Shortcut` requires continual press of keys (e.g., Ctrl+c). By default, it timeouts with the activation key release.
   - `Gesture` allows a noncontinual sequence of keys (e.g., vim's gg). By default, timeouts in 1000 ms since activation.
