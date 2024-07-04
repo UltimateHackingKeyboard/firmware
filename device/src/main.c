@@ -1,4 +1,5 @@
 #include "main.h"
+#include "legacy/config_parser/config_globals.h"
 #include "shared/attributes.h"
 #include "zephyr/storage/flash_map.h"
 #include "keyboard/key_scanner.h"
@@ -120,12 +121,32 @@ int main(void) {
         InitKeyScanner();
 
     }
-    USB_EnableHid();
 
-
-    if (!DEVICE_IS_UHK_DONGLE) {
-        InitCharger(); // has to be after usb initialization
+    if (DEVICE_IS_UHK80_LEFT || DEVICE_IS_UHK80_RIGHT) {
+        ConfigManager_ResetConfiguration(false);
     }
+
+    if (DEVICE_IS_UHK80_RIGHT) {
+        InitFlash();
+        printk("Reading hardware config\n");
+        Flash_ReadAreaSync(hardwareConfigArea, 0, HardwareConfigBuffer.buffer, HARDWARE_CONFIG_SIZE);
+        printk("Reading user config\n");
+        Flash_ReadAreaSync(userConfigArea, 0, StagingUserConfigBuffer.buffer, USER_CONFIG_SIZE);
+        USB_SetSerialNumber(HardwareConfig->uniqueId);
+        printk("Applying user config\n");
+        bool factoryMode = false;
+         if (factoryMode) {
+             LedManager_FullUpdate();
+         } else {
+             UsbCommand_ApplyConfig();
+         }
+         printk("User config applied\n");
+         ShortcutParser_initialize();
+         KeyIdParser_initialize();
+         Macros_Initialize();
+    }
+
+    USB_EnableHid(); // has to be after USB_SetSerialNumber
 
     bt_init();
     InitSettings();
@@ -149,27 +170,8 @@ int main(void) {
         NusClient_Init();
     }
 
-    if (DEVICE_IS_UHK80_LEFT || DEVICE_IS_UHK80_RIGHT) {
-        ConfigManager_ResetConfiguration(false);
-    }
-
-    if (DEVICE_IS_UHK80_RIGHT) {
-        InitFlash();
-        printk("Reading hardware config\n");
-        Flash_ReadAreaSync(hardwareConfigArea, 0, HardwareConfigBuffer.buffer, HARDWARE_CONFIG_SIZE);
-        printk("Reading user config\n");
-        Flash_ReadAreaSync(userConfigArea, 0, StagingUserConfigBuffer.buffer, USER_CONFIG_SIZE);
-        printk("Applying user config\n");
-        bool factoryMode = false;
-        if (factoryMode) {
-            LedManager_FullUpdate();
-        } else {
-            UsbCommand_ApplyConfig();
-        }
-        printk("User config applied\n");
-        ShortcutParser_initialize();
-        KeyIdParser_initialize();
-        Macros_Initialize();
+    if (!DEVICE_IS_UHK_DONGLE) {
+        InitCharger(); // has to be after usb initialization
     }
 
     Messenger_Init();

@@ -24,6 +24,7 @@
 #endif
     #define USB_ALIGNMENT               __attribute__((aligned(4))) // required by USB DMA engine
     #define USB_DESC_STORAGE_TYPE(T)    const T USB_ALIGNMENT
+    #define USB_DESC_STORAGE_TYPE_VAR(T)      T USB_ALIGNMENT
 
     // General constants
 

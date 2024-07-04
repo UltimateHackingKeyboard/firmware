@@ -2,13 +2,12 @@ extern "C" {
 #include "usb.h"
 #include "device.h"
 #include "key_states.h"
+#include "keyboard/charger.h"
 #include "keyboard/key_scanner.h"
+#include "legacy/timer.h"
+#include "legacy/user_logic.h"
 #include <device.h>
 #include <zephyr/kernel.h>
-#include "key_states.h"
-#include "legacy/user_logic.h"
-#include "legacy/timer.h"
-#include "keyboard/charger.h"
 }
 #include "command_app.hpp"
 #include "controls_app.hpp"
@@ -23,8 +22,8 @@ extern "C" {
 #include <magic_enum.hpp>
 
 extern "C" {
-#include "usb_report_updater.h"
 #include "device_state.h"
+#include "usb_report_updater.h"
 }
 
 #if DEVICE_IS_UHK80_RIGHT
@@ -36,9 +35,11 @@ using namespace magic_enum::bitwise_operators;
 // make sure that the USB IDs are used in BT
 static_assert(CONFIG_BT_DIS_PNP_VID_SRC == 2);
 
+uint8_t UsbSerialNumber[5];
+
 constexpr usb::product_info product_info{CONFIG_BT_DIS_PNP_VID, CONFIG_BT_DIS_MANUF,
     CONFIG_BT_DIS_PNP_PID, CONFIG_BT_DIS_MODEL,
-    usb::version(CONFIG_BT_DIS_PNP_VER >> 8, CONFIG_BT_DIS_PNP_VER)};
+    usb::version(CONFIG_BT_DIS_PNP_VER >> 8, CONFIG_BT_DIS_PNP_VER), UsbSerialNumber};
 
 template <typename... Args>
 class multi_hid : public hid::multi_application {
@@ -211,19 +212,16 @@ extern "C" void HOGP_Disable()
 void hidmgr_set_transport(const hid::transport* tp)
 {
     // tp is the transport of the keyboard app
-    if (tp == nullptr)
-    {
+    if (tp == nullptr) {
         DeviceState_SetConnection(ConnectionId_BluetoothHid, ConnectionType_None);
         DeviceState_SetConnection(ConnectionId_UsbHid, ConnectionType_None);
     }
 #if DEVICE_IS_UHK80_RIGHT
-    else if (tp == &hogp_manager::instance().main_service())
-    {
+    else if (tp == &hogp_manager::instance().main_service()) {
         DeviceState_SetConnection(ConnectionId_BluetoothHid, ConnectionType_Bt);
     }
 #endif
-    else
-    {
+    else {
         DeviceState_SetConnection(ConnectionId_UsbHid, ConnectionType_Usb);
     }
 }
@@ -258,4 +256,24 @@ extern "C" rollover_t HID_GetKeyboardRollover()
 extern "C" void HID_SetKeyboardRollover(rollover_t mode)
 {
     keyboard_app::handle().set_rollover((keyboard_app::rollover)mode);
+}
+
+extern "C" void USB_SetSerialNumber(uint32_t serialNumber) {
+    // Ensure UsbSerialNumber has enough space
+    if (sizeof(UsbSerialNumber) < 5) {
+        return;
+    }
+
+    // Convert each pair of decimal digits into a single byte
+    for (uint8_t i = 4; i < 255; --i) {
+        uint8_t byte = 0;
+        for (uint8_t j = 0; j < 2; ++j) {
+            uint8_t digit = serialNumber % 10;
+            serialNumber /= 10;
+
+            byte |= digit << (j * 4);
+        }
+
+        UsbSerialNumber[i] = byte;
+    }
 }

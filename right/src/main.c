@@ -26,9 +26,11 @@
 #include "event_scheduler.h"
 #include "config_parser/config_globals.h"
 #include "user_logic.h"
+#include "usb_descriptors/usb_descriptor_strings.h"
 
 static bool IsEepromInitialized = false;
 static bool IsConfigInitialized = false;
+static bool IsHardwareConfigInitialized = false;
 
 static void userConfigurationReadFinished(void)
 {
@@ -37,6 +39,7 @@ static void userConfigurationReadFinished(void)
 
 static void hardwareConfigurationReadFinished(void)
 {
+    IsHardwareConfigInitialized = true;
     Ledmap_InitLedLayout();
     if (IsFactoryResetModeEnabled) {
         HardwareConfig->signatureLength = HARDWARE_CONFIG_SIGNATURE_LENGTH;
@@ -106,6 +109,13 @@ bool UsbReadyForTransfers(void) {
     return true;
 }
 
+static void initUsb() {
+    while (!IsHardwareConfigInitialized) {
+        __WFI();
+    }
+    USB_SetSerialNo(HardwareConfig->uniqueId);
+    InitUsb();
+}
 
 int main(void)
 {
@@ -123,7 +133,7 @@ int main(void)
         InitSlaveScheduler();
 
         KeyMatrix_Init(&RightKeyMatrix);
-        InitUsb();
+        initUsb();
 
         initConfig();
 

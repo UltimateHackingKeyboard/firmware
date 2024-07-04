@@ -39,5 +39,6 @@
     void HOGP_Disable(void);
     void USB_DisableHid(void);
     void USB_EnableHid(void);
+    void USB_SetSerialNumber(uint32_t serialNumber);
 
 #endif // __USB_HEADER__
