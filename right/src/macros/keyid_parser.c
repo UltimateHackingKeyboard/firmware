@@ -137,7 +137,17 @@ static const lookup_record_t* lookup(uint8_t begin, uint8_t end, const char* str
 
 uint8_t MacroKeyIdParser_TryConsumeKeyId(parser_context_t* ctx)
 {
-    const lookup_record_t* record = lookup(0, lookup_size-1, ctx->at, IdentifierEnd(ctx));
+    // this gets identifier till the next dot only
+    const char* end1 = IdentifierEnd(ctx);
+    const lookup_record_t* record = lookup(0, lookup_size-1, ctx->at, end1);
+
+    // if failed, try consume with dot
+    if (record == NULL && *end1 == '.' && end1+1 < ctx->end) {
+        parser_context_t ctx2 = *ctx;
+        ctx2.at = end1 + 1;
+        const char* end2 = IdentifierEnd(&ctx2);
+        record = lookup(0, lookup_size-1, ctx->at, end2);
+    }
 
     if (record == NULL) {
         return 255;

@@ -1375,7 +1375,12 @@ static macro_result_t processOverlayLayerCommand(parser_context_t* ctx)
 static bool processIfKeyPendingAtCommand(parser_context_t* ctx, bool negate)
 {
     uint16_t idx = Macros_ConsumeInt(ctx);
-    uint16_t key = Macros_ConsumeInt(ctx);
+    uint16_t key = Macros_TryConsumeKeyId(ctx);
+
+    if (key == 255) {
+        Macros_ReportError("Failed to decode keyId.", ctx->at, ctx->at);
+        return false;
+    }
 
     if (Macros_DryRun) {
         return true;
@@ -1386,8 +1391,15 @@ static bool processIfKeyPendingAtCommand(parser_context_t* ctx, bool negate)
 
 static bool processIfKeyActiveCommand(parser_context_t* ctx, bool negate)
 {
-    uint16_t keyid = Macros_ConsumeInt(ctx);
+    uint16_t keyid = Macros_TryConsumeKeyId(ctx);
     key_state_t* key = Utils_KeyIdToKeyState(keyid);
+
+    if (key == 255) {
+        Macros_ReportError("Failed to decode keyId.", ctx->at, ctx->at);
+        return false;
+    }
+
+
     if (Macros_DryRun) {
         return true;
     }
@@ -1405,7 +1417,13 @@ static bool processIfPendingKeyReleasedCommand(parser_context_t* ctx, bool negat
 
 static bool processIfKeyDefinedCommand(parser_context_t* ctx, bool negate)
 {
-    uint16_t keyid = Macros_ConsumeInt(ctx);
+    uint16_t keyid = Macros_TryConsumeKeyId(ctx);
+
+    if (keyid == 255) {
+        Macros_ReportError("Failed to decode keyId.", ctx->at, ctx->at);
+        return false;
+    }
+
     if (Macros_DryRun) {
         return true;
     }
@@ -1455,8 +1473,13 @@ static macro_result_t processActivateKeyPostponedCommand(parser_context_t* ctx)
         }
     }
 
-    uint16_t keyid = Macros_ConsumeInt(ctx);
+    uint16_t keyid = Macros_TryConsumeKeyId(ctx);
     key_state_t* key = Utils_KeyIdToKeyState(keyid);
+
+    if (keyid == 255) {
+        Macros_ReportError("Failed to decode keyId.", ctx->at, ctx->at);
+        return MacroResult_Finished;
+    }
 
     if (Macros_ParserError) {
         return MacroResult_Finished;
