@@ -257,3 +257,23 @@ extern "C" void HID_SetKeyboardRollover(rollover_t mode)
 {
     keyboard_app::handle().set_rollover((keyboard_app::rollover)mode);
 }
+
+extern "C" void USB_SetSerialNumber(uint32_t serialNumber) {
+    // Ensure UsbSerialNumber has enough space
+    if (sizeof(UsbSerialNumber) < 5) {
+        return;
+    }
+
+    // Convert each pair of decimal digits into a single byte
+    for (uint8_t i = 4; i < 255; --i) {
+        uint8_t byte = 0;
+        for (uint8_t j = 0; j < 2; ++j) {
+            uint8_t digit = serialNumber % 10;
+            serialNumber /= 10;
+
+            byte |= digit << (j * 4);
+        }
+
+        UsbSerialNumber[i] = byte;
+    }
+}
