@@ -13,6 +13,10 @@
 #include "led_manager.h"
 #include "legacy/event_scheduler.h"
 
+#ifdef __ZEPHYR__
+#include "main.h"
+#endif
+
 void updateUsbBuffer(uint8_t usbStatusCode, uint16_t parserOffset, parser_stage_t parserStage)
 {
     SetUsbTxBufferUint8(0, usbStatusCode);
@@ -22,6 +26,9 @@ void updateUsbBuffer(uint8_t usbStatusCode, uint16_t parserOffset, parser_stage_
 
 void UsbCommand_ApplyConfigAsync(void) {
     EventVector_Set(EventVector_ApplyConfig);
+#ifdef __ZEPHYR__
+    k_wakeup(Main_ThreadId);
+#endif
 }
 
 void UsbCommand_ApplyConfig(void)
