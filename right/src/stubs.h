@@ -23,6 +23,7 @@
     ATTRS void ScreenManager_SwitchScreenEvent() {};
     ATTRS void Charger_UpdateBatteryState() {};
     ATTRS const rgb_t* PairingScreen_ActionColor(key_action_t* action) { return NULL; };
+    ATTRS void Uart_Reenable() {};
 
 #ifdef DEVICE_HAS_OLED
 #define WIDGET_REFRESH(W) Widget_Refresh(W)
