@@ -58,7 +58,12 @@ void UsbProtocolHandler(void)
             UsbCommand_WriteConfig(ConfigBufferId_StagingUserConfig);
             break;
         case UsbCommandId_ApplyConfig:
+
+#ifdef __ZEPHYR__
+            UsbCommand_ApplyConfigAsync();
+#else
             UsbCommand_ApplyConfig();
+#endif
             break;
         case UsbCommandId_GetDeviceState:
             UsbCommand_GetKeyboardState();

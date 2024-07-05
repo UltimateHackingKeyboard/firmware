@@ -11,5 +11,6 @@
 // Functions:
 
     void UsbCommand_ApplyConfig(void);
+    void UsbCommand_ApplyConfigAsync(void);
 
 #endif
