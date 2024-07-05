@@ -40,6 +40,7 @@
        EventVector_LayerHolds =                            1 << 6,
        EventVector_EventScheduler =                        1 << 7,
 
+
        // some other minor triggers
        EventVector_KeyboardLedState =                      1 << 8,
        EventVector_UsbMacroCommandWaitingForExecution =    1 << 9,
@@ -48,9 +49,10 @@
        EventVector_KeymapReloadNeeded =                    1 << 12,
        EventVector_SegmentDisplayNeedsUpdate =             1 << 13,
        EventVector_LedMapUpdateNeeded =                    1 << 14,
+       EventVector_ApplyConfig =                           1 << 15,
 
        EventVector_ReportUpdateMask = ((1 << 8) - 1) & ~EventVector_EventScheduler,
-       EventVector_UserLogicUpdateMask = ((1 << 15) - 1) & ~EventVector_EventScheduler,
+       EventVector_UserLogicUpdateMask = ((1 << 16) - 1) & ~EventVector_EventScheduler,
 
        // events that are informational only
        EventVector_NativeActionReportsUsed =               1 << 16,

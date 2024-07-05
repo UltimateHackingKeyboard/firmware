@@ -11,6 +11,7 @@
 #include "debug.h"
 #include "config_manager.h"
 #include "led_manager.h"
+#include "legacy/event_scheduler.h"
 
 void updateUsbBuffer(uint8_t usbStatusCode, uint16_t parserOffset, parser_stage_t parserStage)
 {
@@ -19,9 +20,14 @@ void updateUsbBuffer(uint8_t usbStatusCode, uint16_t parserOffset, parser_stage_
     SetUsbTxBufferUint8(3, parserStage);
 }
 
+void UsbCommand_ApplyConfigAsync(void) {
+    EventVector_Set(EventVector_ApplyConfig);
+}
+
 void UsbCommand_ApplyConfig(void)
 {
     static bool isBoot = true;
+    EventVector_Unset(EventVector_ApplyConfig);
 
     // Validate the staging configuration.
     ParserRunDry = true;

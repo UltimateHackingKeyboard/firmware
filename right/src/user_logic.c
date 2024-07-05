@@ -11,8 +11,12 @@
 #include "event_scheduler.h"
 #include "user_logic.h"
 #include "led_manager.h"
+#include "usb_commands/usb_command_apply_config.h"
 
 void RunUserLogic(void) {
+    if (EventVector_IsSet(EventVector_ApplyConfig)) {
+        UsbCommand_ApplyConfig();
+    }
     if (EventVector_IsSet(EventVector_KeymapReloadNeeded)) {
         SwitchKeymapById(CurrentKeymapIndex);
     }
