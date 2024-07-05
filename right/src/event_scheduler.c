@@ -3,6 +3,8 @@
 #include "keyboard/oled/screens/screen_manager.h"
 #include "keyboard/oled/oled.h"
 #include "keyboard/charger.h"
+#include "keyboard/uart.h"
+#include "main.h"
 #else
 #include "segment_display.h"
 #endif
@@ -72,6 +74,9 @@ static void processEvt(event_scheduler_event_t evt)
         case EventSchedulerEvent_MouseController:
             EventVector_Set(EventVector_MouseController);
             break;
+        case EventSchedulerEvent_ReenableUart:
+            Uart_Enable();
+            break;
         default:
             return;
     }
@@ -93,6 +98,9 @@ void EventScheduler_Reschedule(uint32_t at, event_scheduler_event_t evt, const c
         nextEventAt = at;
         nextEvent = evt;
         EventVector_Set(EventVector_EventScheduler);
+#ifdef __ZEPHYR__
+        k_wakeup(Main_ThreadId);
+#endif
     }
 }
 
@@ -110,6 +118,9 @@ void EventScheduler_Schedule(uint32_t at, event_scheduler_event_t evt, const cha
         nextEventAt = at;
         nextEvent = evt;
         EventVector_Set(EventVector_EventScheduler);
+#ifdef __ZEPHYR__
+        k_wakeup(Main_ThreadId);
+#endif
     }
 }
 

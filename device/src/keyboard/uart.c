@@ -7,6 +7,7 @@
 #include "device.h"
 #include "device_state.h"
 #include "legacy/debug.h"
+#include "legacy/event_scheduler.h"
 
 // Thread definitions
 
@@ -131,10 +132,14 @@ static void uart_callback(const struct device *dev, struct uart_event *evt, void
 
     case UART_RX_DISABLED:
         printk("UART_RX_DISABLED\n");
+        CurrentTime = k_uptime_get();
+        EventScheduler_Schedule(CurrentTime + 1000, EventSchedulerEvent_ReenableUart, "reenable uart");
         break;
 
     case UART_RX_STOPPED:
         printk("UART_RX_STOPPED\n");
+        CurrentTime = k_uptime_get();
+        EventScheduler_Schedule(CurrentTime + 1000, EventSchedulerEvent_ReenableUart, "reenable uart");
         break;
     }
 }
@@ -226,7 +231,7 @@ void InitUart(void) {
 
     uart_callback_set(uart_dev, uart_callback, NULL);
     rxbuf = rxbuf1;
-    uart_rx_enable(uart_dev, rxbuf, BUF_SIZE, UART_TIMEOUT);
+    Uart_Enable();
 
     k_thread_create(
         &thread_data, stack_area,
@@ -236,4 +241,9 @@ void InitUart(void) {
         THREAD_PRIORITY, 0, K_NO_WAIT
     );
     k_thread_name_set(&thread_data, "test_uart");
+}
+
+void Uart_Enable() {
+    printk("Enabling UART\n");
+    uart_rx_enable(uart_dev, rxbuf, BUF_SIZE, UART_TIMEOUT);
 }

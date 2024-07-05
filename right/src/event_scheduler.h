@@ -24,6 +24,7 @@
         EventSchedulerEvent_AgentLed,
         EventSchedulerEvent_UpdateLedSleepModes,
         EventSchedulerEvent_MouseController,
+        EventSchedulerEvent_ReenableUart,
         EventSchedulerEvent_Count
     } event_scheduler_event_t;
 
