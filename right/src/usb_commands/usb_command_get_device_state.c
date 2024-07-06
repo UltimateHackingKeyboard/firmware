@@ -16,6 +16,15 @@
 #ifdef __ZEPHYR__
     #include "flash.h"
     #include "device_state.h"
+    #include "slave_drivers/uhk_module_driver.h"
+    #include "usb_report_updater.h"
+    #include "slave_scheduler.h"
+
+    #define MODULE_CONNECTION_STATE2(SLOT_ID) ( \
+            (k_uptime_get() - ModuleConnectionStates[SLOT_ID].lastTimeConnected) < 2000 ? \
+            ModuleConnectionStates[SLOT_ID].moduleId : 0 \
+            )
+
 #else
     #include "slave_drivers/uhk_module_driver.h"
     #include "usb_report_updater.h"
@@ -41,7 +50,9 @@ void UsbCommand_GetKeyboardState(void)
 #endif
 
 #ifdef __ZEPHYR__
+    CurrentTime = k_uptime_get();
     SetUsbTxBufferUint8(3, DeviceState_IsDeviceConnected(DeviceId_Uhk80_Left) ? ModuleId_LeftKeyboardHalf : 0);
+    SetUsbTxBufferUint8(5, MODULE_CONNECTION_STATE2(UhkModuleDriverId_RightModule));
 #else
     SetUsbTxBufferUint8(3, MODULE_CONNECTION_STATE(UhkModuleDriverId_LeftKeyboardHalf));
     SetUsbTxBufferUint8(4, MODULE_CONNECTION_STATE(UhkModuleDriverId_LeftModule));

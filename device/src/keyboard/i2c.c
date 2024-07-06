@@ -1,6 +1,9 @@
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/sys/printk.h>
 #include "device.h"
+#include "legacy/timer.h"
+#include "shared/slave_protocol.h"
+#include "legacy/slave_drivers/uhk_module_driver.h"
 
 #if DEVICE_IS_UHK80_LEFT
     #define device_addr 0x18 // left module i2c address
@@ -37,6 +40,13 @@ void i2cPoller() {
         if (ret != 0) {
             printk("write-read fail\n");
         }
+
+        if (DEVICE_ID == DeviceId_Uhk80_Right && ret == 0) {
+            module_connection_state_t *moduleConnectionState = ModuleConnectionStates + UhkModuleDriverId_RightModule;
+            moduleConnectionState->moduleId =  ModuleId_TrackpointRight;
+            moduleConnectionState->lastTimeConnected = k_uptime_get();
+        }
+
         printk("buttons:%d x:%hd y:%hd\n", rx_buf[2], *(int16_t*)(&rx_buf[3]), *(int16_t*)(&rx_buf[5]));
         k_msleep(1000);
     }
