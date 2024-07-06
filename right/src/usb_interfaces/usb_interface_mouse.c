@@ -2,9 +2,12 @@
 #include "usb_report_updater.h"
 
 static usb_mouse_report_t usbMouseReports[2];
+static uint8_t usbMouseFeatBuffer[USB_MOUSE_FEAT_REPORT_LENGTH];
 usb_hid_protocol_t usbMouseProtocol;
 uint32_t UsbMouseActionCounter;
 usb_mouse_report_t* ActiveUsbMouseReport = usbMouseReports;
+
+bool UsbMouse_HighResMode = false;
 
 static usb_mouse_report_t* GetInactiveUsbMouseReport(void)
 {
@@ -90,13 +93,77 @@ usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param
 
         case kUSB_DeviceHidEventGetReport: {
             usb_device_hid_report_struct_t *report = (usb_device_hid_report_struct_t*)param;
-            if (report->reportType == USB_DEVICE_HID_REQUEST_GET_REPORT_TYPE_INPUT && report->reportId == 0 && report->reportLength <= USB_MOUSE_REPORT_LENGTH) {
+            if (report->reportId != 0) {
+                error = kStatus_USB_InvalidRequest;
+            } else if (report->reportType == USB_DEVICE_HID_REQUEST_GET_REPORT_TYPE_INPUT && report->reportLength <= USB_MOUSE_REPORT_LENGTH) {
                 report->reportBuffer = (void*)ActiveUsbMouseReport;
                 UsbMouseActionCounter++;
                 SwitchActiveUsbMouseReport();
                 error = kStatus_USB_Success;
+            } else if (report->reportType == USB_DEVICE_HID_REQUEST_GET_REPORT_TYPE_FEATURE) {
+                usbMouseFeatBuffer[0] = (uint8_t)UsbMouse_HighResMode;
+                usbMouseFeatBuffer[1] = (uint8_t)UsbMouse_HighResMode;
+                report->reportBuffer = usbMouseFeatBuffer;
+                report->reportLength = sizeof(usbMouseFeatBuffer);
+                error = kStatus_USB_Success;
             } else {
                 error = kStatus_USB_InvalidRequest;
+            }
+            break;
+        }
+
+        case kUSB_DeviceHidEventSetReport: {
+            usb_device_hid_report_struct_t *report = (usb_device_hid_report_struct_t*)param;
+            if (report->reportType == USB_DEVICE_HID_REQUEST_GET_REPORT_TYPE_FEATURE && report->reportId == 0 && report->reportLength <= sizeof(usbMouseFeatBuffer)) {
+                // according to the windows [enhanced wheel support in
+                // windows](https://learn.microsoft.com/en-us/previous-versions/windows/hardware/design/dn613912(v=vs.85))
+                // whitepaper, the setreport request *should* include all
+                // values (as we'd expect for a proper request). so re-write
+                // this to either (TODO):
+                // 1. succeed iff the given values match the actual (logical)
+                //    max; or
+                // 2. read the values and set appropriate variables, and use
+                //    those variables when putting together the mouse report.
+                // windows' own whitepaper says that they only ever use the
+                // physical max, and linux follows suit, so there are no known
+                // implementations that actually set the value. keeping the
+                // logical min/max set to 0/1 so that the value is effectively
+                // binary should make this behaviour consistent even for some
+                // unknown host that implements this properly. however it *is*
+                // possible via windows registry keys to disable high-res
+                // scrolling for a single axis only, so it might be worth
+                // reading these values.
+                // NB: there will need to be exceptions for linux, which sends a
+                // broken report: it sends only one value instead of two (or
+                // zero values if only one multiplier is defined in the
+                // descriptor)
+                // * when the length is zero, this case isn't invoked after the
+                //   kUSB_DeviceHidEventRequestReportBuffer case, so that one
+                //   must also return success in order for the kernel to use the
+                //   physical max
+                // NB: high-res scrolling should be used iff this request
+                // returns success *and* the values in the setreport request
+                // indicate that it should be used.
+                // * if we return a failure, linux uses the *minimum* physical
+                //   value, i.e., disables high-res scrolling
+                // * TODO: verify that windows does the same (and other windows
+                //   behaviour)
+                error = kStatus_USB_Success;
+            } else {
+                error = kStatus_USB_InvalidRequest;
+            }
+            break;
+        }
+
+        case kUSB_DeviceHidEventRequestReportBuffer: {
+            usb_device_hid_report_struct_t *report = (usb_device_hid_report_struct_t*)param;
+            if (report->reportType == USB_DEVICE_HID_REQUEST_GET_REPORT_TYPE_FEATURE && report->reportId == 0 && report->reportLength <= sizeof(usbMouseFeatBuffer)) {
+                // see notes above
+                UsbMouse_HighResMode = true;
+                report->reportBuffer = usbMouseFeatBuffer;
+                error = kStatus_USB_Success;
+            } else {
+                error = kStatus_USB_AllocFail;
             }
             break;
         }
