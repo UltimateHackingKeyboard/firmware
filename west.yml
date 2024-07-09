@@ -1,6 +1,7 @@
 manifest:
   self:
-    path: uhk
+    path: device
+    west-commands: scripts/west-commands.yml
   remotes:
     - name: sdk
       url-base: https://github.com/nrfconnect
@@ -15,7 +16,19 @@ manifest:
       import:
         path-prefix: nrfconnect
       clone-depth: 1
+      import:
+        name-allowlist:
+          - zephyr
+          - cmsis
+          - hal_nordic
+          - mcuboot
+          - nrfxlib
+          - lvgl
+          - segger
+          - tinycrypt
+          - zcbor
+
     - name: hal_nxp
       remote: zephyr
-      path: zephyr-hal-nxp
+      path: nrfconnect/zephyr-hal-nxp
       clone-depth: 1
