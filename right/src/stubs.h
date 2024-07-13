@@ -12,9 +12,10 @@
 // Macros:
 
 #define ATTRS __attribute__((weak)) __attribute__((unused))
-// Variables:
-// Functions:
 
+// Variables:
+
+// Functions:
 
     ATTRS bool SegmentDisplay_NeedsUpdate = false;
     ATTRS bool RunningOnBattery = false;
@@ -24,6 +25,7 @@
     ATTRS void Charger_UpdateBatteryState() {};
     ATTRS const rgb_t* PairingScreen_ActionColor(key_action_t* action) { return NULL; };
     ATTRS void Uart_Reenable() {};
+    ATTRS void Uart_Enable() {};
 
 #ifdef DEVICE_HAS_OLED
 #define WIDGET_REFRESH(W) Widget_Refresh(W)
