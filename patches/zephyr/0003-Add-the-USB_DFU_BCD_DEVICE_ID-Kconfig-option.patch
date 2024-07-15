@@ -1,5 +1,19 @@
+From 8af07cac410f748fe3653278adb6332b7f186598 Mon Sep 17 00:00:00 2001
+From: Benedek Kupper <kupper.benedek@gmail.com>
+Date: Tue, 9 Jul 2024 22:28:47 +0200
+Subject: [PATCH] Add the USB_DFU_BCD_DEVICE_ID Kconfig option
+
+Adds the USB_DFU_BCD_DEVICE_ID Kconfig option which is used by MCUboot
+as the major number of the USB DFU bcdDevice descriptor field.
+This value is used by Agent to identify the UHK device.
+
+---
+ Kconfig.zephyr               | 6 ++++++
+ include/zephyr/usb/usb_ch9.h | 5 +++--
+ 2 files changed, 9 insertions(+), 2 deletions(-)
+
 diff --git a/Kconfig.zephyr b/Kconfig.zephyr
-index 848ce58da7e..045e6258857 100644
+index 848ce58da..045e62588 100644
 --- a/Kconfig.zephyr
 +++ b/Kconfig.zephyr
 @@ -928,3 +928,9 @@ config BOOTLOADER_BOSSA_ADAFRUIT_UF2
@@ -13,7 +27,7 @@ index 848ce58da7e..045e6258857 100644
 +	help
 +	  The major number of the USB DFU bcdDevice descriptor field is (ab)used for exposing the UHK device ID to Agent.
 diff --git a/include/zephyr/usb/usb_ch9.h b/include/zephyr/usb/usb_ch9.h
-index fa18b1c2dc8..0353fcc8679 100644
+index fa18b1c2d..0353fcc86 100644
 --- a/include/zephyr/usb/usb_ch9.h
 +++ b/include/zephyr/usb/usb_ch9.h
 @@ -259,8 +259,9 @@ struct usb_association_descriptor {
@@ -28,3 +42,6 @@ index fa18b1c2dc8..0353fcc8679 100644
  
  /** Macro to obtain descriptor type from USB_SREQ_GET_DESCRIPTOR request */
  #define USB_GET_DESCRIPTOR_TYPE(wValue)		((uint8_t)((wValue) >> 8))
+-- 
+2.44.0
+
