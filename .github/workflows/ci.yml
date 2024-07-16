@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+
+      - name: Use Node.js (.nvmrc)
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: scripts/.nvmrc
+          cache: npm
+
+      - name: Install node dependencies
+        run: |
+          cd scripts
+          npm install
+
+#      - name: Setup Zephyr project
+#        uses: zephyrproject-rtos/action-zephyr-setup@v1
+#        with:
+#          app-path: example-application
+#          toolchains: arm-zephyr-eabi
+#          manifest-file-name: west.yml
