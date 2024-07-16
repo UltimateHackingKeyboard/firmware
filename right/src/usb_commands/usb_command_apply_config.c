@@ -11,9 +11,9 @@
 #include "debug.h"
 #include "config_manager.h"
 #include "led_manager.h"
-#include "legacy/event_scheduler.h"
 
 #ifdef __ZEPHYR__
+#include "legacy/event_scheduler.h"
 #include "main.h"
 #endif
 
