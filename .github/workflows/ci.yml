@@ -10,27 +10,64 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
 
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: 'recursive'
+          path: firmware-uhk80
+          submodules: recursive
+          token: '${{ secrets.FIRMWARE80_BUILD }}'
+
+      - name: Install build dependencies
+        run: sudo apt-get install -y gcc-arm-none-eabi
+
+      - name: Install west
+        run: pip3 install --user -U west
+
+      - name: Install python dependencies of scripts
+        run: |
+          cd firmware-uhk80/scripts
+          pip install -r requirements.txt
+
+      - name: Setup Zephyr project
+        uses: zephyrproject-rtos/action-zephyr-setup@v1
+        with:
+          app-path: firmware-uhk80
+          toolchains: arm-zephyr-eabi
+          sdk-version: 0.16.8
+
+      - name: Git user setup
+        run: |
+          git config --global user.email "git-patch@uhk.com"
+          git config --global user.name "Git Patch"
+
+      - name: West patch
+        run: west patch
+
+      - name: West config
+        run: west config --local build.cmake-args -- "-Wno-dev"
 
       - name: Use Node.js (.nvmrc)
         uses: actions/setup-node@v4
         with:
-          node-version-file: scripts/.nvmrc
-          cache: npm
+          node-version-file: firmware-uhk80/scripts/.nvmrc
 
-      - name: Install node dependencies
+      - name: Install node dependencies in scripts folder
         run: |
-          cd scripts
+          cd firmware-uhk80/scripts
           npm install
 
-#      - name: Setup Zephyr project
-#        uses: zephyrproject-rtos/action-zephyr-setup@v1
-#        with:
-#          app-path: example-application
-#          toolchains: arm-zephyr-eabi
-#          manifest-file-name: west.yml
+      - name: Create firmware tarball
+        run: |
+          cd firmware-uhk80
+          scripts/make-release.mjs --allowSha
+
+      - name: Upload firmware artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware
+          path: firmware-uhk80/scripts/uhk-firmware-*.tar.gz
+          compression-level: 0
+          retention-days: 10
