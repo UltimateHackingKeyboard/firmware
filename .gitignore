@@ -7,4 +7,3 @@ build
 CMakeCache.txt
 build.ninja
 .vscode/settings.json
-scripts/__pycache__

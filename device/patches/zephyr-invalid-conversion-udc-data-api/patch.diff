@@ -1,16 +1,5 @@
-From df36898ebd062b07764d8437ccf17d16a0d70411 Mon Sep 17 00:00:00 2001
-From: Benedek Kupper <kupper.benedek@gmail.com>
-Date: Tue, 9 Jul 2024 22:34:13 +0200
-Subject: [PATCH] drivers: udc: eliminate C++ compiler warnings
-
-Pending upstream PR: https://github.com/zephyrproject-rtos/zephyr/pull/69490
-
----
- include/zephyr/drivers/usb/udc.h | 12 ++++++------
- 1 file changed, 6 insertions(+), 6 deletions(-)
-
 diff --git a/include/zephyr/drivers/usb/udc.h b/include/zephyr/drivers/usb/udc.h
-index 0f01d877e..70012660d 100644
+index f5f74ec127..eba4e78b07 100644
 --- a/include/zephyr/drivers/usb/udc.h
 +++ b/include/zephyr/drivers/usb/udc.h
 @@ -299,7 +299,7 @@ struct udc_data {
@@ -67,6 +56,3 @@ index 0f01d877e..70012660d 100644
  	int ret;
  
  	if (!udc_is_enabled(dev)) {
--- 
-2.44.0
-

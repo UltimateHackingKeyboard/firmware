@@ -16,17 +16,16 @@ If you want to use the latest firmware version for your UHK, then instead of goi
 
 If you're one of the brave few who wants to hack the firmware then read on.
 
-### Fetching the codebase
-
-Note that these commands will create a [west workspace](https://docs.zephyrproject.org/latest/develop/west/workspaces.html#t2-star-topology-application-is-the-manifest-repository) in your current directory.
+1. Make sure to clone this repo with:
 
 ```bash
-git clone --recurse-submodules git@github.com:UltimateHackingKeyboard/firmware-uhk80.git
-west init -l firmware-uhk80
-west update
-west patch
-west config --local build.cmake-args -- "-Wno-dev"
+west init -m git@github.com:UltimateHackingKeyboard/firmware-uhk80.git firmware-uhk80
 cd firmware-uhk80
+west update
+west config --local build.cmake-args -- "-Wno-dev"
+./uhk/device/patches/patch-all.sh
+cd uhk
+git submodule update --init --recursive
 cd scripts
 npm i
 ./generate-versions-h.mjs
@@ -45,7 +44,7 @@ Then, depending whether you want a full IDE experience or just minimal tools for
 - Install commandline stuff from [nRF Connect SDK](https://developer.nordicsemi.com/nRF_Connect_SDK/doc/latest/nrf/installation/install_ncs.html)
 - Launch nrfutil shell:
     ```
-    nrfutil toolchain-manager launch --shell --ncs-version v2.6.1
+    nrfutil toolchain-manager launch --shell --ncs-version v2.5.0 
     ```
 - In the shell, you can build (e.g.) uhk-80-left as follows:
   - full build including cmake steps, as extracted from VS Code:
