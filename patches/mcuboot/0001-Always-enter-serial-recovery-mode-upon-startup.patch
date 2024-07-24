@@ -1,3 +1,17 @@
+From 5245ce30a25475ca9239e702f67dee29ea154d39 Mon Sep 17 00:00:00 2001
+From: Benedek Kupper <kupper.benedek@gmail.com>
+Date: Tue, 9 Jul 2024 22:24:40 +0200
+Subject: [PATCH] Always enter serial recovery mode upon startup
+
+Adds the BOOT_SERIAL_WAIT_FOR_DFU_ALWAYS MCUboot Kconfig option to enter serial recovery
+for the duration of BOOT_SERIAL_WAIT_FOR_DFU_TIMEOUT upon physically resetting the board.
+Otherwise, MCUboot immediately executes the application.
+
+---
+ boot/zephyr/Kconfig.serial_recovery | 8 ++++++++
+ boot/zephyr/main.c                  | 8 ++++++--
+ 2 files changed, 14 insertions(+), 2 deletions(-)
+
 diff --git a/boot/zephyr/Kconfig.serial_recovery b/boot/zephyr/Kconfig.serial_recovery
 index c73baddf..22cdd081 100644
 --- a/boot/zephyr/Kconfig.serial_recovery
@@ -52,3 +66,6 @@ index d601eae0..f12c4493 100644
      timeout_in_ms -= (k_uptime_get_32() - start);
      if( timeout_in_ms <= 0 ) {
          /* at least one check if time was expired */
+-- 
+2.44.0
+

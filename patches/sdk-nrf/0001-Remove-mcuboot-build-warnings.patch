@@ -1,5 +1,15 @@
+From 9f6342a09c416553381e4d478c894903ead17566 Mon Sep 17 00:00:00 2001
+From: Benedek Kupper <kupper.benedek@gmail.com>
+Date: Tue, 9 Jul 2024 22:38:48 +0200
+Subject: [PATCH] Remove mcuboot build warnings
+
+---
+ cmake/partition_manager.cmake  | 12 ------------
+ modules/mcuboot/CMakeLists.txt |  7 -------
+ 2 files changed, 19 deletions(-)
+
 diff --git a/cmake/partition_manager.cmake b/cmake/partition_manager.cmake
-index a45650a2..292dd9c3 100644
+index a45650a2d..292dd9c3f 100644
 --- a/cmake/partition_manager.cmake
 +++ b/cmake/partition_manager.cmake
 @@ -76,18 +76,6 @@ endif()
@@ -22,7 +32,7 @@ index a45650a2..292dd9c3 100644
  
  
 diff --git a/modules/mcuboot/CMakeLists.txt b/modules/mcuboot/CMakeLists.txt
-index 5ec2643d..70c706d5 100644
+index 5ec2643d7..70c706d52 100644
 --- a/modules/mcuboot/CMakeLists.txt
 +++ b/modules/mcuboot/CMakeLists.txt
 @@ -379,13 +379,6 @@ if(CONFIG_BOOTLOADER_MCUBOOT)
@@ -39,3 +49,6 @@ index 5ec2643d..70c706d5 100644
        set(mcuboot_key_file ${ZEPHYR_MCUBOOT_MODULE_DIR}/${CONFIG_BOOT_SIGNATURE_KEY_FILE})
      endif()
  
+-- 
+2.44.0
+
