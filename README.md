@@ -26,10 +26,9 @@ west init -l firmware-uhk80
 west update
 west patch
 west config --local build.cmake-args -- "-Wno-dev"
-cd firmware-uhk80
-cd scripts
+cd firmware-uhk80/scripts
 npm i
-./generate-versions-h.mjs
+./generate-versions.mjs
 ```
 
 Then, depending whether you want a full IDE experience or just minimal tools for building and flashing firmware, read *VS Code setup* or *Minimal development setup* (if you prefer a text editor + command line).
@@ -105,6 +104,15 @@ Going forward, it's easier to flash the firmware of your choice by using the dow
     1. Run `npm install` in `scripts`.
     2. Run `scripts/make-release.mjs`. (Or `scripts/make-release.mjs --allowSha` for development purposes.)
     3. Now, the created tarball `scripts/uhk-firmware-VERSION.tar.gz` can be flashed with UHK Agent.
+
+If `make-release.mjs` fails with:
+
+>  Add the installation prefix of "Zephyr-sdk" to CMAKE_PREFIX_PATH or set
+>  "Zephyr-sdk_DIR" to a directory containing one of the above files.  If
+>  "Zephyr-sdk" provides a separate development package or SDK, be sure it has
+>  been installed.
+
+Then export `CMAKE_PREFIX_PATH`, such as `export CMAKE_PREFIX_PATH=~/projects/ncs/toolchains/e9dba88316/opt/zephyr-sdk/cmake` before running `make-release.mjs`.
 
 ## Contributing
 
