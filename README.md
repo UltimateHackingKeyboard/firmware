@@ -105,6 +105,15 @@ Going forward, it's easier to flash the firmware of your choice by using the dow
     2. Run `scripts/make-release.mjs`. (Or `scripts/make-release.mjs --allowSha` for development purposes.)
     3. Now, the created tarball `scripts/uhk-firmware-VERSION.tar.gz` can be flashed with UHK Agent.
 
+If `make-release.mjs` fails with:
+
+>  Add the installation prefix of "Zephyr-sdk" to CMAKE_PREFIX_PATH or set
+>  "Zephyr-sdk_DIR" to a directory containing one of the above files.  If
+>  "Zephyr-sdk" provides a separate development package or SDK, be sure it has
+>  been installed.
+
+Then export `CMAKE_PREFIX_PATH`, such as `export CMAKE_PREFIX_PATH=~/projects/ncs/toolchains/e9dba88316/opt/zephyr-sdk/cmake` before running `make-release.mjs`.
+
 ## Contributing
 
 Want to contribute? Let us show you [how](/CONTRIBUTING.md).
