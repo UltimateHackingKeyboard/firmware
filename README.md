@@ -26,8 +26,7 @@ west init -l firmware-uhk80
 west update
 west patch
 west config --local build.cmake-args -- "-Wno-dev"
-cd firmware-uhk80
-cd scripts
+cd firmware-uhk80/scripts
 npm i
 ./generate-versions.mjs
 ```
