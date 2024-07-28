@@ -70,7 +70,8 @@ class WestPatch(WestCommand):
                         project_repo.git.am(patch_file.as_posix())
                         log.inf(f'Applied {patch_file.name} to {project.name}')
                     except git.exc.GitCommandError as e:
-                        log.err(f'Error applying {patch_file.name} to {project.name}: {e}')
+                        project_repo.git.am('--abort')
+                        log.die(f'Error applying {patch_file.name} to {project.name}: {e}')
 
     def list_patches(self):
         for project in self.get_git_projects():

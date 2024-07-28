@@ -12,11 +12,11 @@ steps:
   - git submodule init
   - git submodule update --recursive
 
-- name: Generate versions.h
+- name: Generate versions.c
   image: node:16
   commands:
   - npm install --prefix scripts
-  - scripts/generate-versions-h.js
+  - scripts/generate-versions.mjs
 
 - name: Build (Ubuntu Linux)
   image: abcminiuser/docker-ci-arm-toolchain:latest

@@ -29,7 +29,7 @@ west config --local build.cmake-args -- "-Wno-dev"
 cd firmware-uhk80
 cd scripts
 npm i
-./generate-versions-h.mjs
+./generate-versions.mjs
 ```
 
 Then, depending whether you want a full IDE experience or just minimal tools for building and flashing firmware, read *VS Code setup* or *Minimal development setup* (if you prefer a text editor + command line).

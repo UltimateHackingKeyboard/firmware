@@ -18,6 +18,12 @@ file(GLOB lvgl_dummy src/lvgl/*.c)
 file(GLOB_RECURSE legacy_sources src/legacy/*.c)
 file(GLOB_RECURSE shared_sources src/shared/*.c)
 
+# add the versions.c source file conditionally
+if(NOT NOVERSIONS)
+    target_sources(app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../shared/versions.c)
+    set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/../shared/versions.c PROPERTIES GENERATED TRUE)
+endif()
+
 if(BOARD STREQUAL "uhk-60-right")
     file(GLOB main src/uhk60/main.c)
     target_sources(app PRIVATE ${main})
