@@ -24,6 +24,8 @@ typedef struct {
     float x;
     float y;
     float speed;
+    float scaleX;
+    float scaleY;
     int16_t yInversion;
     int16_t xInversion;
     float speedDivisor;
@@ -362,6 +364,8 @@ static void processAxisLocking(
     float x = args.x;
     float y = args.y;
     float speed = args.speed;
+    float scaleX = args.scaleX;
+    float scaleY = args.scaleY;
     int16_t yInversion = args.yInversion;
     int16_t xInversion = args.xInversion;
     float speedDivisor = args.speedDivisor;
@@ -424,11 +428,15 @@ static void processAxisLocking(
 
         float* axisFractionRemainders [CaretAxis_Count] = {&ks->xFractionRemainder, &ks->yFractionRemainder};
         float axisIntegerParts [CaretAxis_Count] = { 0, 0 };
+        float maxScale = MAX(scaleX, scaleY);
+        float axisScales [CaretAxis_Count] = {scaleX, scaleY};
 
         // determine integer parts
-
-        modff(ks->xFractionRemainder, &axisIntegerParts[CaretAxis_Horizontal]);
-        modff(ks->yFractionRemainder, &axisIntegerParts[CaretAxis_Vertical]);
+        // use maxScale so that the subsequent axis-picking is done on an evenly
+        // scaled basis and to avoid having to potentially re-compute the values
+        // for *both* axes afterwards
+        modff(ks->xFractionRemainder * maxScale, &axisIntegerParts[CaretAxis_Horizontal]);
+        modff(ks->yFractionRemainder * maxScale, &axisIntegerParts[CaretAxis_Vertical]);
 
         // pick axis to apply action on, if possible - check previously active axis first
         if ( axisIntegerParts[axisCandidate] != 0 ) {
@@ -439,12 +447,27 @@ static void processAxisLocking(
             axisCandidate = CaretAxis_None;
         }
 
+        // re-scale and re-check picked axis if needed
+        if (axisCandidate < CaretAxis_Count && axisScales[axisCandidate] != maxScale) {
+            modff(*axisFractionRemainders[axisCandidate] * axisScales[axisCandidate], &axisIntegerParts[axisCandidate]);
+            if (axisIntegerParts[axisCandidate] == 0) {
+                axisCandidate = CaretAxis_None;
+            }
+        }
+
         // handle the action
         if ( axisCandidate < CaretAxis_Count ) {
             float sgn = axisIntegerParts[axisCandidate] > 0 ? 1 : -1;
             int8_t currentAxisInversion = axisCandidate == CaretAxis_Vertical ? yInversion : xInversion;
-            float consumedAmount = continuous ? axisIntegerParts[axisCandidate] : sgn;
-            *axisFractionRemainders[axisCandidate] -= consumedAmount;
+            float consumedAmount;
+            if (continuous) {
+                consumedAmount = axisIntegerParts[axisCandidate];
+                *axisFractionRemainders[axisCandidate] -= consumedAmount / axisScales[axisCandidate];
+            }
+            else {
+                consumedAmount = sgn;
+                *axisFractionRemainders[axisCandidate] -= consumedAmount;
+            }
 
             //always zero primary axis - experimental
             // TODO: this slows down maximum rate, as right half processing is much faster than module refresh rate.
@@ -510,6 +533,8 @@ static void processModuleKineticState(
                     .x = x,
                     .y = y,
                     .speed = speed,
+                    .scaleX = 1.0f,
+                    .scaleY = 1.0f,
                     .yInversion = yInversion,
                     .xInversion = xInversion,
                     .speedDivisor = 1.0,
@@ -523,15 +548,21 @@ static void processModuleKineticState(
             break;
         }
         case NavigationMode_Scroll:  {
-            if (UsbMouse_HighResMode) {
-                speed *= USB_MOUSE_REPORT_DESCRIPTOR_MAX_RESOLUTION_MULTIPLIER_PHYSICAL_VALUE;
-            }
+            float scaleX = UsbMouseHighResModeX ? USB_MOUSE_REPORT_DESCRIPTOR_MAX_RESOLUTION_MULTIPLIER_PHYSICAL_VALUE : 1.0f;
+            float scaleY = UsbMouseHighResModeY ? USB_MOUSE_REPORT_DESCRIPTOR_MAX_RESOLUTION_MULTIPLIER_PHYSICAL_VALUE : 1.0f;
+
             if (!moduleConfiguration->scrollAxisLock) {
                 float xIntegerPart;
                 float yIntegerPart;
 
-                ks->xFractionRemainder = modff(ks->xFractionRemainder + x * speed / moduleConfiguration->scrollSpeedDivisor, &xIntegerPart);
-                ks->yFractionRemainder = modff(ks->yFractionRemainder + y * speed / moduleConfiguration->scrollSpeedDivisor, &yIntegerPart);
+                // since the kinetic state is shared among navigation modes, and
+                // since axis locking needs the stored x and y values to have
+                // the same scale, make sure the kinetic state values stay
+                // unscaled
+                ks->xFractionRemainder += x * speed / moduleConfiguration->scrollSpeedDivisor;
+                ks->yFractionRemainder += y * speed / moduleConfiguration->scrollSpeedDivisor;
+                ks->xFractionRemainder = modff(ks->xFractionRemainder * scaleX, &xIntegerPart) / scaleX;
+                ks->yFractionRemainder = modff(ks->yFractionRemainder * scaleY, &yIntegerPart) / scaleY;
 
                 ActiveUsbMouseReport->wheelX += xInversion*xIntegerPart;
                 ActiveUsbMouseReport->wheelY += yInversion*yIntegerPart;
@@ -541,6 +572,8 @@ static void processModuleKineticState(
                     .x = x,
                     .y = y,
                     .speed = speed,
+                    .scaleX = scaleX,
+                    .scaleY = scaleY,
                     .yInversion = yInversion,
                     .xInversion = xInversion,
                     .speedDivisor = moduleConfiguration->scrollSpeedDivisor,
@@ -566,6 +599,8 @@ static void processModuleKineticState(
                 .x = x,
                 .y = y,
                 .speed = speed,
+                .scaleX = 1.0f,
+                .scaleY = 1.0f,
                 .yInversion = yInversion,
                 .xInversion = xInversion,
                 .speedDivisor = speedDivisor,
