@@ -90,6 +90,16 @@ for (const device of packageJson.devices) {
     shell.cp(deviceSource, `${deviceDir}/firmware${path.extname(device.source)}`);
     shell.cp(deviceMMap, `${deviceDir}/firmware.map`);
     shell.exec(`npm run convert-user-config-to-bin -- ${deviceDir}/config.bin`, { cwd: agentDir });
+
+    if (device.kboot) {
+      const kbootPath = path.join(__dirname, '..', device.kboot);
+      shell.cp(kbootPath, path.join(deviceDir, 'kboot.hex'))
+    }
+
+    if (device.merged) {
+      const kbootPath = path.join(__dirname, '..', device.merged);
+      shell.cp(kbootPath, path.join(deviceDir, 'merged.hex'))
+    }
 }
 
 for (const module of packageJson.modules) {
