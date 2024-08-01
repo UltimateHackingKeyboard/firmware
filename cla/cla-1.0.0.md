@@ -110,6 +110,7 @@ I have read this Agreement, and fully agree to it by signing it with my GitHub u
 - @Lauszus
 - @mondalaci
 - @nathanph
+- @rightaditya
 - @santiagogf89
 - @soraxas
 - @steamraven
