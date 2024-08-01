@@ -7,8 +7,7 @@ usb_hid_protocol_t usbMouseProtocol;
 uint32_t UsbMouseActionCounter;
 usb_mouse_report_t* ActiveUsbMouseReport = usbMouseReports;
 
-bool UsbMouseHighResModeY = false;
-bool UsbMouseHighResModeX = false;
+bool UsbMouseHighResMode = false;
 
 static usb_mouse_report_t* GetInactiveUsbMouseReport(void)
 {
@@ -102,8 +101,7 @@ usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param
                 SwitchActiveUsbMouseReport();
                 error = kStatus_USB_Success;
             } else if (report->reportType == USB_DEVICE_HID_REQUEST_GET_REPORT_TYPE_FEATURE) {
-                usbMouseFeatBuffer[0] = (uint8_t)UsbMouseHighResModeY;
-                usbMouseFeatBuffer[1] = (uint8_t)UsbMouseHighResModeX;
+                usbMouseFeatBuffer[0] = (uint8_t)UsbMouseHighResMode;
                 report->reportBuffer = usbMouseFeatBuffer;
                 report->reportLength = sizeof(usbMouseFeatBuffer);
                 error = kStatus_USB_Success;
@@ -116,17 +114,12 @@ usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param
         case kUSB_DeviceHidEventSetReport: {
             usb_device_hid_report_struct_t *report = (usb_device_hid_report_struct_t*)param;
             if (report->reportType == USB_DEVICE_HID_REQUEST_GET_REPORT_TYPE_FEATURE && report->reportId == 0 && report->reportLength <= sizeof(usbMouseFeatBuffer)) {
-                if (report->reportLength == sizeof(usbMouseFeatBuffer[0]) * (USB_MOUSE_FEAT_REPORT_LENGTH - 1)) {
-                    // the SetReport *should* specify all feature values, but
-                    // the first one that Linux sends is broken and missing one
-                    // value. it only sends this on init in an attempt to set
-                    // the resolution multipliers to their maximum values, so
-                    // repair the values under the assumption that this case is
-                    // only triggered in that one specific scenario.
-                    usbMouseFeatBuffer[USB_MOUSE_FEAT_REPORT_LENGTH - 1] = usbMouseFeatBuffer[USB_MOUSE_FEAT_REPORT_LENGTH - 2];
-                }
-                UsbMouseHighResModeY = (bool)usbMouseFeatBuffer[0];
-                UsbMouseHighResModeX = (bool)usbMouseFeatBuffer[1];
+                // With a single resolution multiplier, this case will never be
+                // hit on Linux (for multiple resolution multipliers, one value
+                // will be missing, so would have to be inferred from the
+                // other(s)). But Windows does use this request properly, so
+                // make sure to handle it as needed.
+                UsbMouseHighResMode = (bool)usbMouseFeatBuffer[0];
                 error = kStatus_USB_Success;
             } else {
                 error = kStatus_USB_InvalidRequest;
@@ -137,18 +130,14 @@ usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param
         case kUSB_DeviceHidEventRequestReportBuffer: {
             usb_device_hid_report_struct_t *report = (usb_device_hid_report_struct_t*)param;
             if (report->reportType == USB_DEVICE_HID_REQUEST_GET_REPORT_TYPE_FEATURE && report->reportId == 0 && report->reportLength <= sizeof(usbMouseFeatBuffer)) {
-                // the Linux implementation of SetReport when initializing a
+                // The Linux implementation of SetReport when initializing a
                 // device with a single resolution multiplier value is broken,
                 // sending an empty report, and as a result the
                 // kUSB_DeviceHidEventSetReport case above isn't triggered at
                 // all; but it only sends this report when it detects the
                 // resolution multiplier, and the intention is to activate the
                 // feature, so turn high-res mode on here.
-                // with two resolution multipliers, doing this is unnecessary,
-                // but might as well so the issue is known and documented in
-                // case of future changes.
-                UsbMouseHighResModeY = true;
-                UsbMouseHighResModeX = true;
+                UsbMouseHighResMode = true;
                 report->reportBuffer = usbMouseFeatBuffer;
                 error = kStatus_USB_Success;
             } else {
