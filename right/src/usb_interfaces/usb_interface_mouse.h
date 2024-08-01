@@ -18,7 +18,7 @@
     #define USB_MOUSE_INTERRUPT_IN_INTERVAL 1
 
     #define USB_MOUSE_REPORT_LENGTH (sizeof(usb_mouse_report_t))
-    #define USB_MOUSE_FEAT_REPORT_LENGTH 2
+    #define USB_MOUSE_FEAT_REPORT_LENGTH 1
 
 // Typedefs:
 
@@ -38,8 +38,7 @@
 
 // Variables:
 
-    extern bool UsbMouseHighResModeY;
-    extern bool UsbMouseHighResModeX;
+    extern bool UsbMouseHighResMode;
     extern uint32_t UsbMouseActionCounter;
     extern usb_mouse_report_t* ActiveUsbMouseReport;
 
