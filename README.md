@@ -100,19 +100,18 @@ Going forward, it's easier to flash the firmware of your choice by using the dow
 
 ### Releasing
 
-6. To build a full firmware tarball:
-    1. Run `npm install` in `scripts`.
-    2. Run `scripts/make-release.mjs`. (Or `scripts/make-release.mjs --allowSha` for development purposes.)
-    3. Now, the created tarball `scripts/uhk-firmware-VERSION.tar.gz` can be flashed with UHK Agent.
+To build a full firmware tarball:
 
-If `make-release.mjs` fails with:
+1. Run `npm install` in `scripts`.
+2. Run `scripts/make-release.mjs`. (Or `scripts/make-release.mjs --allowSha` for development purposes.)
+3. Now, the created tarball `scripts/uhk-firmware-VERSION.tar.gz` can be flashed with UHK Agent.
 
->  Add the installation prefix of "Zephyr-sdk" to CMAKE_PREFIX_PATH or set
->  "Zephyr-sdk_DIR" to a directory containing one of the above files.  If
->  "Zephyr-sdk" provides a separate development package or SDK, be sure it has
->  been installed.
+If `make-release.mjs` fails with a build error, it'll probably succeed in Nordic's shell environment.
 
-Then export `CMAKE_PREFIX_PATH`, such as `export CMAKE_PREFIX_PATH=~/projects/ncs/toolchains/e9dba88316/opt/zephyr-sdk/cmake` before running `make-release.mjs`.
+1. Install [nRF Util](https://www.nordicsemi.com/Products/Development-tools/nRF-Util).
+2. Install the nRF Connect Toolchain Manager with `nrfutil install toolchain-manager`
+3. Enter the Toolchain Manager shell with `nrfutil toolchain-manager launch --shell`
+4. Within the shell, run `make-release.mjs` according to the above.
 
 ## Contributing
 
