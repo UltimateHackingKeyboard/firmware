@@ -3,6 +3,7 @@
 NCS_VERSION=v2.6.1
 
 BUILD_SESSION_NAME="buildsession"
+UART_SESSION_NAME="uartsession"
 
 function help() {
     cat << END
@@ -68,8 +69,14 @@ function processArguments() {
                 DEVICES="$DEVICES uhk-80-left uhk-80-right uhk-dongle"
                 shift
                 ;;
-            clean|setup|update|build|make|flash|shell|uart|release)
+            clean|setup|update|build|make|flash|shell|release)
                 ACTIONS="$ACTIONS $1"
+                TARGET_TMUX_SESSION=$BUILD_SESSION_NAME
+                shift
+                ;;
+            uart)
+                ACTIONS="$ACTIONS $1"
+                TARGET_TMUX_SESSION=$UART_SESSION_NAME
                 shift
                 ;;
             *)
@@ -145,7 +152,7 @@ function establishSession() {
 }
 
 function setupUartMonitor() {
-    SESSION_NAME="uartsession"
+    SESSION_NAME=$TARGET_TMUX_SESSION
     establishSession $SESSION_NAME `ls /dev/ttyUSB* | wc -l`
 
     i=0
@@ -230,7 +237,7 @@ function performActions() {
 
 
 function runPerDevice() {
-    SESSION_NAME=$BUILD_SESSION_NAME
+    SESSION_NAME=$TARGET_TMUX_SESSION
     establishSession $SESSION_NAME `echo $DEVICES | wc -w`
 
     i=0
@@ -265,7 +272,7 @@ function run() {
     then
         performActions $DEVICES
     else
-        tmux has-session -t $BUILD_SESSION_NAME 2>/dev/null
+        tmux has-session -t $TARGET_TMUX_SESSION 2>/dev/null
         SESSION_EXISTS=$?
         if [ $SESSION_EXISTS == 0 -a "$TMUX" == "" ] 
         then
