@@ -196,4 +196,5 @@ void TouchpadDriver_Disconnect(uint8_t uhkModuleDriverId)
     TouchpadEvents.x = 0;
     TouchpadEvents.y = 0;
     phase = 0;
+    EventScheduler_Schedule(CurrentTime + MODULE_CONNECTION_TIMEOUT, EventSchedulerEvent_ModuleConnectionStatusUpdate, "ModuleConnectionStatusUpdate");
 }

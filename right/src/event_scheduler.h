@@ -17,6 +17,7 @@
 // Typedefs:
 
     typedef enum {
+        EventSchedulerEvent_ModuleConnectionStatusUpdate,
         EventSchedulerEvent_SegmentDisplayUpdate,
         EventSchedulerEvent_MacroWakeOnTime,
         EventSchedulerEvent_MacroRecorderFlashing,

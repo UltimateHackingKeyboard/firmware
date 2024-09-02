@@ -115,6 +115,7 @@ static state_sync_prop_t stateSyncProps[StateSyncPropertyId_Count] = {
     EMPTY(ResetRightDongleLink, SyncDirection_RightDongleBidir, DirtyState_Clean),
     CUSTOM(ModuleStateLeftHalf, SyncDirection_LeftToRight, DirtyState_Clean),
     CUSTOM(ModuleStateLeftModule, SyncDirection_LeftToRight, DirtyState_Clean),
+    EMPTY(LeftModuleDisconnected, SyncDirection_LeftToRight, DirtyState_Clean),
 };
 
 static void invalidateProperty(state_sync_prop_id_t propId)
@@ -212,7 +213,11 @@ void receiveBacklight(sync_command_backlight_t *buffer)
 
 static void receiveModuleStateData(sync_command_module_state_t *buffer)
 {
-    uhk_module_state_t *moduleState = UhkModuleStates + UhkModuleSlaveDriver_SlotIdToDriverId(buffer->slotId);
+    uint8_t driverId = UhkModuleSlaveDriver_SlotIdToDriverId(buffer->slotId);
+    uhk_module_state_t *moduleState = &UhkModuleStates[driverId];
+    module_connection_state_t *moduleConnectionState = &ModuleConnectionStates[driverId];
+
+    moduleConnectionState->moduleId = buffer->moduleId;
     moduleState->moduleId = buffer->moduleId;
     moduleState->moduleProtocolVersion = buffer->moduleProtocolVersion;
     moduleState->firmwareVersion = buffer->firmwareVersion;
@@ -293,9 +298,15 @@ static void receiveProperty(
     case StateSyncPropertyId_ResetRightDongleLink:
         StateSync_ResetRightDongleLink(false);
         break;
+    case StateSyncPropertyId_LeftModuleDisconnected:
+        module_connection_state_t *moduleConnectionState = &ModuleConnectionStates[UhkModuleDriverId_LeftModule];
+        moduleConnectionState->moduleId = 0;
+        break;
     case StateSyncPropertyId_ModuleStateLeftHalf:
     case StateSyncPropertyId_ModuleStateLeftModule:
-        receiveModuleStateData((sync_command_module_state_t *)data);
+        if (!isLocalUpdate) {
+            receiveModuleStateData((sync_command_module_state_t *)data);
+        }
         break;
     default:
         printk("Property %i ('%s') has no receive handler. If this is correct, please add a "
@@ -377,7 +388,6 @@ static void prepareLeftModuleStateData(sync_command_module_state_t *buffer)
     buffer->moduleProtocolVersion = moduleState->moduleProtocolVersion;
     buffer->firmwareVersion = moduleState->firmwareVersion;
     buffer->keyCount = moduleState->keyCount;
-    printk("Sending left module keycount %d\n", moduleState->keyCount);
     buffer->pointerCount = moduleState->pointerCount;
     memcpy(buffer->gitRepo, moduleState->gitRepo, MAX_STRING_PROPERTY_LENGTH);
     memcpy(buffer->gitTag, moduleState->gitTag, MAX_STRING_PROPERTY_LENGTH);
@@ -498,6 +508,7 @@ static bool handlePropertyUpdateLeftToRight()
 
     UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ModuleStateLeftHalf);
     UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ModuleStateLeftModule);
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_LeftModuleDisconnected);
     UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_Battery);
 
     return true;

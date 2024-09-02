@@ -110,10 +110,16 @@ static void reloadKeymapIfNeeded()
 
         someoneElseWillDoTheJob |= uhkModuleState->moduleId == 0 && slave->isConnected;
     }
-#ifndef __ZEPHYR__
+#ifdef __ZEPHYR__
+    if (DEVICE_ID == DeviceId_Uhk80_Right) {
+        EventVector_Set(EventVector_KeymapReloadNeeded);
+        EventVector_WakeMain();
+    }
+#else
     if (!someoneElseWillDoTheJob && !TestSwitches) {
         EventVector_Set(EventVector_KeymapReloadNeeded);
     }
+
 #endif
 }
 
@@ -496,5 +502,38 @@ void UhkModuleSlaveDriver_Disconnect(uint8_t uhkModuleDriverId)
 
     if (IS_VALID_MODULE_SLOT(slotId)) {
         memset(KeyStates[slotId], 0, MAX_KEY_COUNT_PER_MODULE * sizeof(key_state_t));
+    }
+
+    EventScheduler_Schedule(CurrentTime + MODULE_CONNECTION_TIMEOUT, EventSchedulerEvent_ModuleConnectionStatusUpdate, "ModuleConnectionStatusUpdate");
+}
+
+static void updateModuleConnectionStatus(uint8_t uhkModuleDriverId) {
+    module_connection_state_t *moduleConnectionState = ModuleConnectionStates + uhkModuleDriverId;
+    if (moduleConnectionState->moduleId) {
+        uint32_t timeoutAt = moduleConnectionState->lastTimeConnected + MODULE_CONNECTION_TIMEOUT;
+        if (timeoutAt <= CurrentTime) {
+            moduleConnectionState->moduleId = 0;
+#ifdef __ZEPHYR__
+            if (DEVICE_ID == DeviceId_Uhk80_Left) {
+                StateSync_UpdateProperty(StateSyncPropertyId_LeftModuleDisconnected, NULL);
+            }
+#endif
+        }
+    }
+}
+
+void UhkModuleSlaveDriver_UpdateConnectionStatus() {
+    switch (DEVICE_ID) {
+        case DeviceId_Uhk80_Left:
+            updateModuleConnectionStatus(UhkModuleDriverId_LeftModule);
+            break;
+        case DeviceId_Uhk80_Right:
+            updateModuleConnectionStatus(UhkModuleDriverId_RightModule);
+            break;
+        default:
+            for (uint8_t driverId = 0; driverId < UHK_MODULE_MAX_SLOT_COUNT; driverId++) {
+                updateModuleConnectionStatus(driverId);
+            }
+            break;
     }
 }

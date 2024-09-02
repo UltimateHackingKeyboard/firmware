@@ -1,5 +1,5 @@
-#ifndef __KEYBOARD_I2C_H__
-#define __KEYBOARD_I2C_H__
+#ifndef __ZEPHYR_I2C_H__
+#define __ZEPHYR_I2C_H__
 
 // Includes:
 
@@ -9,7 +9,7 @@
 
 // Functions:
 
-    extern void InitKeyboardI2c(void);
-    status_t KeyboardI2c_MasterTransferNonBlocking(i2c_master_transfer_t *transfer);
+    extern void InitZephyrI2c(void);
+    status_t ZephyrI2c_MasterTransferNonBlocking(i2c_master_transfer_t *transfer);
 
-#endif // __KEYBOARD_I2C_H__
+#endif // __ZEPHYR_I2C_H__

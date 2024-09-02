@@ -22,7 +22,7 @@ static i2c_master_transfer_t* masterTransfer;
 
 const struct device *i2c0_dev = DEVICE_DT_GET(DT_NODELABEL(i2c0));
 
-status_t KeyboardI2c_MasterTransferNonBlocking(i2c_master_transfer_t *transfer) {
+status_t ZephyrI2c_MasterTransferNonBlocking(i2c_master_transfer_t *transfer) {
     if (masterTransferInProgress) {
         return kStatus_I2C_Busy;
     } else {
@@ -79,7 +79,7 @@ void i2cPoller() {
     InitSlaveScheduler();
 
     while (true) {
-        status_t lastStatus = kStatus_Success;
+        static status_t lastStatus = kStatus_Success;
 
         SlaveSchedulerCallback(lastStatus);
 
@@ -93,7 +93,7 @@ void i2cPoller() {
     }
 }
 
-void InitKeyboardI2c(void) {
+void InitZephyrI2c(void) {
     k_thread_create(
         &thread_data, stack_area,
         K_THREAD_STACK_SIZEOF(stack_area),

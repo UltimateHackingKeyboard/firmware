@@ -18,6 +18,8 @@
 
     #define MAX_STRING_PROPERTY_LENGTH 63
 
+    #define MODULE_CONNECTION_TIMEOUT 350
+
 // Typedefs:
 
     typedef enum {
@@ -134,4 +136,5 @@
     void UhkModuleSlaveDriver_Disconnect(uint8_t uhkModuleDriverId);
 
     void UhkModuleSlaveDriver_ProcessKeystates(uint8_t uhkModuleDriverId, uhk_module_state_t* uhkModuleState, const uint8_t* rxMessageData);
+    void UhkModuleSlaveDriver_UpdateConnectionStatus();
 #endif

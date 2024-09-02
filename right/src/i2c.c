@@ -16,7 +16,7 @@ status_t I2cAsyncWrite(uint8_t i2cAddress, uint8_t *data, size_t dataSize)
     masterTransfer.dataSize = dataSize;
     I2cMasterHandle.userData = NULL;
 #ifdef __ZEPHYR__
-    return KeyboardI2c_MasterTransferNonBlocking(&masterTransfer);
+    return ZephyrI2c_MasterTransferNonBlocking(&masterTransfer);
 #else
     return I2C_MasterTransferNonBlocking(I2C_MAIN_BUS_BASEADDR, &I2cMasterHandle, &masterTransfer);
 #endif
@@ -31,7 +31,7 @@ status_t I2cAsyncWriteMessage(uint8_t i2cAddress, i2c_message_t *message)
     I2cMasterHandle.userData = NULL;
     CRC16_UpdateMessageChecksum(message);
 #ifdef __ZEPHYR__
-    return KeyboardI2c_MasterTransferNonBlocking(&masterTransfer);
+    return ZephyrI2c_MasterTransferNonBlocking(&masterTransfer);
 #else
     return I2C_MasterTransferNonBlocking(I2C_MAIN_BUS_BASEADDR, &I2cMasterHandle, &masterTransfer);
 #endif
@@ -45,7 +45,7 @@ status_t I2cAsyncRead(uint8_t i2cAddress, uint8_t *data, size_t dataSize)
     masterTransfer.dataSize = dataSize;
     I2cMasterHandle.userData = NULL;
 #ifdef __ZEPHYR__
-    return KeyboardI2c_MasterTransferNonBlocking(&masterTransfer);
+    return ZephyrI2c_MasterTransferNonBlocking(&masterTransfer);
 #else
     return I2C_MasterTransferNonBlocking(I2C_MAIN_BUS_BASEADDR, &I2cMasterHandle, &masterTransfer);
 #endif
@@ -60,7 +60,7 @@ status_t I2cAsyncReadMessage(uint8_t i2cAddress, i2c_message_t *message)
     masterTransfer.dataSize = I2C_MESSAGE_MAX_TOTAL_LENGTH;
     I2cMasterHandle.userData = (void*)1;
 #ifdef __ZEPHYR__
-    return KeyboardI2c_MasterTransferNonBlocking(&masterTransfer);
+    return ZephyrI2c_MasterTransferNonBlocking(&masterTransfer);
 #else
     return I2C_MasterTransferNonBlocking(I2C_MAIN_BUS_BASEADDR, &I2cMasterHandle, &masterTransfer);
 #endif

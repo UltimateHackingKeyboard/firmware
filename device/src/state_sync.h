@@ -83,6 +83,7 @@
         StateSyncPropertyId_ResetRightDongleLink,
         StateSyncPropertyId_ModuleStateLeftHalf,
         StateSyncPropertyId_ModuleStateLeftModule,
+        StateSyncPropertyId_LeftModuleDisconnected,
         StateSyncPropertyId_Count,
     } state_sync_prop_id_t;
 
