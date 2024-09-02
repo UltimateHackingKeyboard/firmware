@@ -164,6 +164,19 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
         }
     }
 
+    if (DEVICE_IS_UHK80_LEFT && peerId == PeerIdRight) {
+        NusServer_Disconnected();
+    }
+    if (DEVICE_IS_UHK80_RIGHT && peerId == PeerIdDongle) {
+        NusServer_Disconnected();
+    }
+    if (DEVICE_IS_UHK80_RIGHT && peerId == PeerIdLeft) {
+        NusClient_Disconnected();
+    }
+    if (DEVICE_IS_UHK_DONGLE && peerId == PeerIdRight) {
+        NusClient_Disconnected();
+    }
+
     if (peerId != PeerIdUnknown) {
         Peers[peerId].isConnected = false;
         DeviceState_TriggerUpdate();

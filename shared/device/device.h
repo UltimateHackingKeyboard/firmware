@@ -47,5 +47,13 @@
     #define DEVICE_HAS_SEGMENT_DISPLAY 0
 #endif
 
+    typedef enum {
+        DeviceId_Uhk60v1_Right = DEVICE_ID_UHK60V1_RIGHT,
+        DeviceId_Uhk60v2_Right = DEVICE_ID_UHK60V2_RIGHT,
+        DeviceId_Uhk80_Right = DEVICE_ID_UHK80_RIGHT,
+        DeviceId_Uhk80_Left = DEVICE_ID_UHK80_LEFT,
+        DeviceId_Uhk_Dongle = DEVICE_ID_UHK_DONGLE,
+        DeviceId_Count = DEVICE_ID_UHK_DONGLE + 1,
+    } device_id_t;
 
 #endif

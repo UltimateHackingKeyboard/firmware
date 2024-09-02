@@ -273,6 +273,7 @@ static void processTouchpadActions(touchpad_events_t events) {
     }
 
     KeyStates[SlotId_RightModule][1].hardwareSwitchState = events.twoFingerTap;
+    EventVector_Set(EventVector_StateMatrix);
 }
 
 static void progressZoomAction(module_kinetic_state_t* ks) {
@@ -694,12 +695,13 @@ bool canWeRun(module_kinetic_state_t* ks)
 void MouseController_ProcessMouseActions()
 {
     EventVector_Unset(EventVector_MouseController);
-#ifndef __ZEPHYR__
-    if (Slaves[SlaveId_RightTouchpad].isConnected) {
-#else
-    if (false) {
-#endif
 
+    memset(&MouseControllerMouseReport, 0, sizeof(MouseControllerMouseReport));
+    memset(&MouseControllerKeyboardReports.basic, 0, sizeof MouseControllerKeyboardReports.basic);
+    memset(&MouseControllerKeyboardReports.media, 0, sizeof MouseControllerKeyboardReports.media);
+    memset(&MouseControllerKeyboardReports.system, 0, sizeof MouseControllerKeyboardReports.system);
+
+    if (Slaves[SlaveId_RightTouchpad].isConnected) {
         module_kinetic_state_t *ks = getKineticState(ModuleId_TouchpadRight);
 
         if (caretModeActionIsRunning(ks)) {

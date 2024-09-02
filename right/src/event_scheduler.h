@@ -8,11 +8,16 @@
     #include "timer.h"
     #include "debug.h"
 
+#ifdef __ZEPHYR__
+    #include "main.h"
+#endif
+
 // Macros:
 
 // Typedefs:
 
     typedef enum {
+        EventSchedulerEvent_ModuleConnectionStatusUpdate,
         EventSchedulerEvent_SegmentDisplayUpdate,
         EventSchedulerEvent_MacroWakeOnTime,
         EventSchedulerEvent_MacroRecorderFlashing,
@@ -114,5 +119,11 @@
             EventVector_Unset(evt);
         }
     };
+
+    static inline void EventVector_WakeMain() {
+#ifdef __ZEPHYR__
+        k_wakeup(Main_ThreadId);
+#endif
+    }
 
 #endif

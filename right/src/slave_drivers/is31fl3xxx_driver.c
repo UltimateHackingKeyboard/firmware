@@ -352,4 +352,11 @@ slave_result_t LedSlaveDriver_Update(uint8_t ledDriverId)
 
     return res;
 }
+#else
+
+    void LedSlaveDriver_DisableLeds(void){};
+    void LedSlaveDriver_EnableAllLeds(){};
+    void LedSlaveDriver_Init(uint8_t ledDriverId){};
+    slave_result_t LedSlaveDriver_Update(uint8_t ledDriverId){ return (slave_result_t){ .status = 123}; };
+
 #endif

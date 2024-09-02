@@ -1,4 +1,3 @@
-#include "fsl_i2c.h"
 #include "i2c_error_logger.h"
 
 i2c_slave_error_counter_t I2cSlaveErrorCounters[SLAVE_COUNT];

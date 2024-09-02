@@ -12,7 +12,7 @@
 // Functions:
 
     void BoolBytesToBits(const uint8_t *srcBytes, uint8_t *dstBits, uint8_t byteCount);
-    void BoolBitsToBytes(uint8_t *srcBits, uint8_t *dstBytes, uint8_t byteCount);
+    void BoolBitsToBytes(const uint8_t *srcBits, uint8_t *dstBytes, uint8_t byteCount);
     void BoolBitToBytes(bool srcVal, uint8_t srcPos, uint8_t *dstBytes);
 
 #endif

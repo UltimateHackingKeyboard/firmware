@@ -46,6 +46,7 @@
     } ATTR_PACKED sync_command_backlight_t;
 
     typedef struct {
+        uint8_t slotId;
         uint8_t moduleId;
         version_t moduleProtocolVersion;
         version_t firmwareVersion;
@@ -80,7 +81,9 @@
         StateSyncPropertyId_KeyboardLedsState,
         StateSyncPropertyId_ResetRightLeftLink,
         StateSyncPropertyId_ResetRightDongleLink,
-        StateSyncPropertyId_ModuleStateLeft,
+        StateSyncPropertyId_ModuleStateLeftHalf,
+        StateSyncPropertyId_ModuleStateLeftModule,
+        StateSyncPropertyId_LeftModuleDisconnected,
         StateSyncPropertyId_Count,
     } state_sync_prop_id_t;
 

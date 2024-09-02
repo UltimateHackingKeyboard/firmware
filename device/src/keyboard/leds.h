@@ -1,6 +1,10 @@
 #ifndef __LEDS_H__
 #define __LEDS_H__
 
+// Includes
+
+    #include <stdint.h>
+
 // Macros:
 
     #define LED_DRIVER_LED_COUNT_MAX 255

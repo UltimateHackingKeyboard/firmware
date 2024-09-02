@@ -8,7 +8,9 @@
 #include "messenger_queue.h"
 #include "legacy/debug.h"
 
-static K_SEM_DEFINE(nusBusy, 2, 2);
+#define NUS_SLOTS 2
+
+static K_SEM_DEFINE(nusBusy, NUS_SLOTS, NUS_SLOTS);
 
 static void received(struct bt_conn *conn, const uint8_t *const data, uint16_t len) {
     uint8_t* copy = MessengerQueue_AllocateMemory();
@@ -58,6 +60,11 @@ int NusServer_Init(void) {
     }
 
     return err;
+}
+
+void NusServer_Disconnected() {
+    // I argue that when bt is not connected, freeing the semaphore causes no trouble.
+    k_sem_init(&nusBusy, NUS_SLOTS, NUS_SLOTS);
 }
 
 void NusServer_Send(const uint8_t *data, uint16_t len) {
