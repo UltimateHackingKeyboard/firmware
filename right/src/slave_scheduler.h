@@ -67,5 +67,6 @@
 // Functions:
 
     void InitSlaveScheduler(void);
+    void SlaveSchedulerCallback(status_t status);
 
 #endif

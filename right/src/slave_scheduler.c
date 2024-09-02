@@ -1,17 +1,22 @@
-#include "fsl_common.h"
-#include "fsl_i2c.h"
-#include "fsl_clock.h"
 #include "slave_scheduler.h"
 #include "slot.h"
 #include "slave_drivers/is31fl3xxx_driver.h"
 #include "slave_drivers/touchpad_driver.h"
 #include "slave_drivers/uhk_module_driver.h"
-#include "slave_drivers/kboot_driver.h"
 #include "i2c.h"
 #include "i2c_addresses.h"
 #include "i2c_error_logger.h"
 #include "macros/core.h"
 #include "debug.h"
+
+#ifdef __ZEPHYR__
+    #include "keyboard/i2c.h"
+#else
+    #include "fsl_common.h"
+    #include "fsl_i2c.h"
+    #include "fsl_clock.h"
+#include "slave_drivers/kboot_driver.h"
+#endif
 
 uint32_t I2cSlaveScheduler_Counter;
 
@@ -58,12 +63,32 @@ uhk_slave_t Slaves[SLAVE_COUNT] = {
         .update = LedSlaveDriver_Update,
         .perDriverId = LedDriverId_ModuleLeft,
     },
+#ifndef __ZEPHYR__
     {
         .init = KbootSlaveDriver_Init,
         .update = KbootSlaveDriver_Update,
         .perDriverId = KbootDriverId_Singleton,
     },
+#endif
 };
+
+static uint8_t getNextSlaveId(uint8_t slaveId)
+{
+#ifndef __ZEPHYR__
+    slaveId++;
+    if (slaveId >= SLAVE_COUNT) {
+        slaveId = 0;
+    }
+    return slaveId;
+#elif DEVICE_IS_UHK80_LEFT
+    return SlaveId_LeftModule;
+#elif DEVICE_IS_UHK80_RIGHT
+    return slaveId == SlaveId_RightModule ? SlaveId_RightTouchpad : SlaveId_RightModule;
+    // return SlaveId_RightTouchpad;
+#else
+    return slaveId;
+#endif
+}
 
 static void slaveSchedulerCallback(I2C_Type *base, i2c_master_handle_t *handle, status_t previousStatus, void *userData)
 {
@@ -103,15 +128,18 @@ static void slaveSchedulerCallback(I2C_Type *base, i2c_master_handle_t *handle, 
         isTransferScheduled = currentStatus != kStatus_Uhk_IdleSlave && currentStatus != kStatus_Uhk_IdleCycle;
 
         if (!res.hold || !currentSlave->isConnected) {
-            previousSlaveId = currentSlaveId++;
-            if (currentSlaveId >= SLAVE_COUNT) {
-                currentSlaveId = 0;
-            }
+            previousSlaveId = currentSlaveId;
+            currentSlaveId = getNextSlaveId(currentSlaveId);
         } else {
             previousSlaveId = currentSlaveId;
         }
 
     } while (!isTransferScheduled);
+}
+
+void SlaveSchedulerCallback(status_t status)
+{
+    slaveSchedulerCallback(NULL, NULL, status, NULL);
 }
 
 void InitSlaveScheduler(void)
@@ -127,8 +155,10 @@ void InitSlaveScheduler(void)
         currentSlave->isConnected = false;
     }
 
+#ifndef __ZEPHYR__
     I2C_MasterTransferCreateHandle(I2C_MAIN_BUS_BASEADDR, &I2cMasterHandle, slaveSchedulerCallback, NULL);
 
     // Kickstart the scheduler by triggering the first transfer.
     slaveSchedulerCallback(I2C_MAIN_BUS_BASEADDR, &I2cMasterHandle, kStatus_Fail, NULL);
+#endif
 }

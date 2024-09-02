@@ -8,6 +8,10 @@
     #include "timer.h"
     #include "debug.h"
 
+#ifdef __ZEPHYR__
+    #include "main.h"
+#endif
+
 // Macros:
 
 // Typedefs:
@@ -114,5 +118,11 @@
             EventVector_Unset(evt);
         }
     };
+
+    static inline void EventVector_WakeMain() {
+#ifdef __ZEPHYR__
+        k_wakeup(Main_ThreadId);
+#endif
+    }
 
 #endif

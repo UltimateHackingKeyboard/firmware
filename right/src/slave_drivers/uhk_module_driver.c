@@ -1,10 +1,13 @@
 #include <string.h>
 #include "i2c_addresses.h"
-#ifndef __ZEPHYR__
 #include "i2c.h"
+
+#ifndef __ZEPHYR__
 #include "peripherals/test_led.h"
 #include "test_switches.h"
+#include "device/device.h"
 #endif
+
 #include "slave_scheduler.h"
 #include "slave_drivers/uhk_module_driver.h"
 #include "slave_protocol.h"
@@ -39,7 +42,6 @@ void UhkModuleSlaveDriver_ResetTrackpoint()
     shouldResetTrackpoint = true;
 }
 
-#ifndef __ZEPHYR__
 static uint8_t keyStatesBuffer[MAX_KEY_COUNT_PER_MODULE];
 static i2c_message_t txMessage;
 
@@ -369,6 +371,7 @@ slave_result_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
                 }
                 if (stateChanged) {
                     EventVector_Set(EventVector_StateMatrix);
+                    EventVector_WakeMain();
                 }
                 if (uhkModuleState->pointerCount) {
                     uint8_t keyStatesLength = BOOL_BYTES_TO_BITS_COUNT(uhkModuleState->keyCount);
@@ -377,6 +380,7 @@ slave_result_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
                     uhkModuleState->pointerDelta.y += pointerDelta->y;
                     uhkModuleState->pointerDelta.debugInfo = pointerDelta->debugInfo;
                     EventVector_Set(EventVector_MouseController);
+                    EventVector_WakeMain();
                 }
             }
             res.status = kStatus_Uhk_IdleCycle;
@@ -449,4 +453,3 @@ void UhkModuleSlaveDriver_Disconnect(uint8_t uhkModuleDriverId)
         memset(KeyStates[slotId], 0, MAX_KEY_COUNT_PER_MODULE * sizeof(key_state_t));
     }
 }
-#endif

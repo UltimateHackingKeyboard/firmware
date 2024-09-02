@@ -105,7 +105,7 @@ int main(void) {
 
     if (!DEVICE_IS_UHK_DONGLE) {
         InitUart();
-        InitI2c();
+        InitKeyboardI2c();
         InitSpi();
 
         #ifdef DEVICE_HAS_OLED

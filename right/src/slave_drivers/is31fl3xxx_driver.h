@@ -3,7 +3,9 @@
 
 // Includes:
 
-#ifndef __ZEPHYR__
+#ifdef __ZEPHYR__
+    #include "keyboard/leds.h"
+#else
     #include "fsl_common.h"
     #include "peripherals/led_driver.h"
 #endif
@@ -17,7 +19,6 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #endif
 
-#ifndef __ZEPHYR__
     #define LED_DRIVER_MAX_COUNT 3
 
     #define LED_CONTROL_REGISTERS_COMMAND_LENGTH_IS31FL3731 19
@@ -76,7 +77,6 @@
         uint8_t setupLedControlRegistersCommandLength;
         uint8_t setupLedControlRegistersCommand[LED_CONTROL_REGISTERS_COMMAND_LENGTH_MAX];
     } led_driver_state_t;
-#endif
 
 // Variables:
 
@@ -88,12 +88,10 @@
 
 // Functions:
 
-#ifndef __ZEPHYR__
     void LedSlaveDriver_DisableLeds(void);
     void LedSlaveDriver_EnableAllLeds();
     void LedSlaveDriver_Init(uint8_t ledDriverId);
 
     slave_result_t LedSlaveDriver_Update(uint8_t ledDriverId);
-#endif
 
 #endif

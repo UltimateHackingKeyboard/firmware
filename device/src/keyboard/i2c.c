@@ -1,15 +1,13 @@
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/sys/printk.h>
 #include "device.h"
+#include "i2c_compatibility.h"
 #include "legacy/timer.h"
 #include "shared/slave_protocol.h"
+#include "legacy/slave_scheduler.h"
 #include "legacy/slave_drivers/uhk_module_driver.h"
-
-#if DEVICE_IS_UHK80_LEFT
-    #define device_addr 0x18 // left module i2c address
-#elif DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK60V1_RIGHT || DEVICE_IS_UHK60V2_RIGHT
-    #define device_addr 0x28 // right module i2c address
-#endif
+#include "legacy/i2c.h"
+#include "keyboard/i2c.h"
 
 // Thread definitions
 
@@ -19,48 +17,83 @@
 static K_THREAD_STACK_DEFINE(stack_area, THREAD_STACK_SIZE);
 static struct k_thread thread_data;
 
+static bool masterTransferInProgress;
+static i2c_master_transfer_t* masterTransfer;
+
 const struct device *i2c0_dev = DEVICE_DT_GET(DT_NODELABEL(i2c0));
 
-void i2cPoller() {
-    uint8_t rx_buf[10] = {};
-    struct i2c_msg msg;
-    msg.buf = rx_buf;
-    msg.len = 1;
-    msg.flags = I2C_MSG_READ; // Unlike i2c_read(), don't use I2C_MSG_STOP
-
-    while (true) {
-        int ret = i2c_transfer(i2c0_dev, &msg, 1, device_addr);
-        if (ret != 0) {
-            printk("I2C read length error: %d\n", ret);
-        }
-        uint8_t msgLen = rx_buf[0];
-        // printk("sync len: %d\n", msgLen);
-
-        ret = i2c_read(i2c0_dev, rx_buf, msgLen+2, device_addr);
-        if (ret != 0) {
-            printk("write-read fail\n");
-        }
-
-        if (DEVICE_ID == DeviceId_Uhk80_Right && ret == 0) {
-            module_connection_state_t *moduleConnectionState = ModuleConnectionStates + UhkModuleDriverId_RightModule;
-            moduleConnectionState->moduleId =  ModuleId_TrackpointRight;
-            moduleConnectionState->lastTimeConnected = k_uptime_get();
-        }
-
-        printk("buttons:%d x:%hd y:%hd\n", rx_buf[2], *(int16_t*)(&rx_buf[3]), *(int16_t*)(&rx_buf[5]));
-        k_msleep(1000);
+status_t KeyboardI2c_MasterTransferNonBlocking(i2c_master_transfer_t *transfer) {
+    if (masterTransferInProgress) {
+        return kStatus_I2C_Busy;
+    } else {
+        masterTransfer = transfer;
+        masterTransferInProgress = true;
+        return kStatus_Success;
     }
 }
 
-void InitI2c(void) {
-    uint8_t tx_buf[] = {/*length*/ 1, /* crc */ 0x10, 0x21, /* request key, pointer state */ 0x02};
-    int ret;
-
-    ret = i2c_write(i2c0_dev, tx_buf, sizeof(tx_buf), device_addr);
-    if (ret != 0) {
-        printk("i2c write error: %d\n", ret);
+status_t processMasterTransfer() {
+    if (masterTransfer->direction == kI2C_Write) {
+        status_t ret = i2c_write(i2c0_dev, masterTransfer->data, masterTransfer->dataSize, masterTransfer->slaveAddress);
+        masterTransferInProgress = false;
+        if (ret != 0) {
+            return kStatus_Fail;
+        }
+        return kStatus_Success;
     }
+    if (masterTransfer->direction == kI2C_Read && masterTransfer->dataSize == I2C_MESSAGE_MAX_TOTAL_LENGTH) {
+        struct i2c_msg msg;
+        msg.buf = masterTransfer->data;
+        msg.len = 1;
+        msg.flags = I2C_MSG_READ; // Unlike i2c_read(), don't use I2C_MSG_STOP
+        int ret = i2c_transfer(i2c0_dev, &msg, 1, masterTransfer->slaveAddress);
+        size_t msgLen = masterTransfer->data[0];
 
+        if (ret != 0) {
+            return kStatus_Fail;
+        }
+
+        ret = i2c_read(i2c0_dev, masterTransfer->data+1, msgLen+2, masterTransfer->slaveAddress);
+        if (ret != 0) {
+            return kStatus_Fail;
+        }
+
+        masterTransferInProgress = false;
+        return kStatus_Success;
+    }
+    if (masterTransfer->direction == kI2C_Read) {
+        int ret = i2c_read(i2c0_dev, masterTransfer->data, masterTransfer->dataSize, masterTransfer->slaveAddress);
+
+        masterTransferInProgress = false;
+
+        if (ret != 0) {
+            return kStatus_Fail;
+        }
+        return kStatus_Success;
+    }
+    masterTransferInProgress = false;
+    return kStatus_Fail;
+}
+
+void i2cPoller() {
+    InitSlaveScheduler();
+
+    while (true) {
+        status_t lastStatus = kStatus_Success;
+
+        SlaveSchedulerCallback(lastStatus);
+
+        if (masterTransfer->direction == kI2C_Write) {
+            k_msleep(1);
+        }
+
+        if (masterTransferInProgress) {
+            lastStatus = processMasterTransfer();
+        }
+    }
+}
+
+void InitKeyboardI2c(void) {
     k_thread_create(
         &thread_data, stack_area,
         K_THREAD_STACK_SIZEOF(stack_area),
