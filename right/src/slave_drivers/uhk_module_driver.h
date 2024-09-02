@@ -133,4 +133,5 @@
     slave_result_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId);
     void UhkModuleSlaveDriver_Disconnect(uint8_t uhkModuleDriverId);
 
+    void UhkModuleSlaveDriver_ProcessKeystates(uint8_t uhkModuleDriverId, uhk_module_state_t* uhkModuleState, const uint8_t* rxMessageData);
 #endif

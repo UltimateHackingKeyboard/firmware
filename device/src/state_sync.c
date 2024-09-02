@@ -9,6 +9,7 @@
 #include "legacy/ledmap.h"
 #include "legacy/module.h"
 #include "legacy/slave_drivers/uhk_module_driver.h"
+#include "legacy/slot.h"
 #include "legacy/str_utils.h"
 #include "legacy/stubs.h"
 #include "legacy/utils.h"
@@ -112,7 +113,8 @@ static state_sync_prop_t stateSyncProps[StateSyncPropertyId_Count] = {
         &SyncRightHalfState.battery),
     EMPTY(ResetRightLeftLink, SyncDirection_RightLeftBidir, DirtyState_Clean),
     EMPTY(ResetRightDongleLink, SyncDirection_RightDongleBidir, DirtyState_Clean),
-    CUSTOM(ModuleStateLeft, SyncDirection_LeftToRight, DirtyState_Clean),
+    CUSTOM(ModuleStateLeftHalf, SyncDirection_LeftToRight, DirtyState_Clean),
+    CUSTOM(ModuleStateLeftModule, SyncDirection_LeftToRight, DirtyState_Clean),
 };
 
 static void invalidateProperty(state_sync_prop_id_t propId)
@@ -210,8 +212,7 @@ void receiveBacklight(sync_command_backlight_t *buffer)
 
 static void receiveModuleStateData(sync_command_module_state_t *buffer)
 {
-    // TODO: extend this for all modules
-    uhk_module_state_t *moduleState = &UhkModuleStates[UhkModuleDriverId_LeftKeyboardHalf];
+    uhk_module_state_t *moduleState = UhkModuleStates + UhkModuleSlaveDriver_SlotIdToDriverId(buffer->slotId);
     moduleState->moduleId = buffer->moduleId;
     moduleState->moduleProtocolVersion = buffer->moduleProtocolVersion;
     moduleState->firmwareVersion = buffer->firmwareVersion;
@@ -292,10 +293,9 @@ static void receiveProperty(
     case StateSyncPropertyId_ResetRightDongleLink:
         StateSync_ResetRightDongleLink(false);
         break;
-    case StateSyncPropertyId_ModuleStateLeft:
-        if (!isLocalUpdate) {
-            receiveModuleStateData((sync_command_module_state_t *)data);
-        }
+    case StateSyncPropertyId_ModuleStateLeftHalf:
+    case StateSyncPropertyId_ModuleStateLeftModule:
+        receiveModuleStateData((sync_command_module_state_t *)data);
         break;
     default:
         printk("Property %i ('%s') has no receive handler. If this is correct, please add a "
@@ -353,10 +353,10 @@ static void prepareBacklight(sync_command_backlight_t *buffer)
     buffer->LedMap_ConstantRGB = Cfg.LedMap_ConstantRGB;
 }
 
-static void prepareModuleStateData(sync_command_module_state_t *buffer)
+static void prepareLeftHalfStateData(sync_command_module_state_t *buffer)
 {
-    // TODO: extend this for all modules
 #if DEVICE_IS_UHK80_LEFT
+    buffer->slotId = SlotId_LeftKeyboardHalf;
     buffer->moduleId = MODULE_ID;
     buffer->moduleProtocolVersion = moduleProtocolVersion;
     buffer->firmwareVersion = firmwareVersion;
@@ -366,6 +366,22 @@ static void prepareModuleStateData(sync_command_module_state_t *buffer)
     Utils_SafeStrCopy(buffer->gitTag, gitTag, MAX_STRING_PROPERTY_LENGTH);
     memcpy(buffer->firmwareChecksum, ModuleMD5Checksums[MODULE_ID], MD5_CHECKSUM_LENGTH);
 #endif
+}
+
+static void prepareLeftModuleStateData(sync_command_module_state_t *buffer)
+{
+    uhk_module_state_t *moduleState = UhkModuleStates + UhkModuleSlaveDriver_SlotIdToDriverId(SlotId_LeftModule);;
+
+    buffer->slotId = SlotId_LeftModule;
+    buffer->moduleId = moduleState->moduleId;
+    buffer->moduleProtocolVersion = moduleState->moduleProtocolVersion;
+    buffer->firmwareVersion = moduleState->firmwareVersion;
+    buffer->keyCount = moduleState->keyCount;
+    printk("Sending left module keycount %d\n", moduleState->keyCount);
+    buffer->pointerCount = moduleState->pointerCount;
+    memcpy(buffer->gitRepo, moduleState->gitRepo, MAX_STRING_PROPERTY_LENGTH);
+    memcpy(buffer->gitTag, moduleState->gitTag, MAX_STRING_PROPERTY_LENGTH);
+    memcpy(buffer->firmwareChecksum, moduleState->firmwareChecksum, MD5_CHECKSUM_LENGTH);
 }
 
 static void prepareData(device_id_t dst, const uint8_t *propDataPtr, state_sync_prop_id_t propId)
@@ -394,9 +410,15 @@ static void prepareData(device_id_t dst, const uint8_t *propDataPtr, state_sync_
             return;
         }
     } break;
-    case StateSyncPropertyId_ModuleStateLeft: {
+    case StateSyncPropertyId_ModuleStateLeftHalf: {
         sync_command_module_state_t buffer = {};
-        prepareModuleStateData(&buffer);
+        prepareLeftHalfStateData(&buffer);
+        submitPreparedData(dst, propId, (const uint8_t *)&buffer, sizeof(buffer));
+        return;
+    } break;
+    case StateSyncPropertyId_ModuleStateLeftModule: {
+        sync_command_module_state_t buffer = {};
+        prepareLeftModuleStateData(&buffer);
         submitPreparedData(dst, propId, (const uint8_t *)&buffer, sizeof(buffer));
         return;
     } break;
@@ -474,7 +496,8 @@ static bool handlePropertyUpdateLeftToRight()
 {
     UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ResetRightLeftLink);
 
-    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ModuleStateLeft);
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ModuleStateLeftHalf);
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ModuleStateLeftModule);
     UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_Battery);
 
     return true;
@@ -587,7 +610,8 @@ void StateSync_ResetRightLeftLink(bool bidirectional)
     }
     if (DEVICE_ID == DeviceId_Uhk80_Left) {
         invalidateProperty(StateSyncPropertyId_Battery);
-        invalidateProperty(StateSyncPropertyId_ModuleStateLeft);
+        invalidateProperty(StateSyncPropertyId_ModuleStateLeftHalf);
+        invalidateProperty(StateSyncPropertyId_ModuleStateLeftModule);
     }
 }
 

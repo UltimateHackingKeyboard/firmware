@@ -2,7 +2,11 @@
 #include "i2c_addresses.h"
 #include "i2c.h"
 
-#ifndef __ZEPHYR__
+#ifdef __ZEPHYR__
+#include "messenger.h"
+#include "link_protocol.h"
+#include "state_sync.h"
+#else
 #include "peripherals/test_led.h"
 #include "test_switches.h"
 #include "device/device.h"
@@ -109,6 +113,59 @@ static void reloadKeymapIfNeeded()
 #ifndef __ZEPHYR__
     if (!someoneElseWillDoTheJob && !TestSwitches) {
         EventVector_Set(EventVector_KeymapReloadNeeded);
+    }
+#endif
+}
+
+void UhkModuleSlaveDriver_ProcessKeystates(uint8_t uhkModuleDriverId, uhk_module_state_t* uhkModuleState, const uint8_t* rxMessageData) {
+    uint8_t slotId = UhkModuleSlaveDriver_DriverIdToSlotId(uhkModuleDriverId);
+    BoolBitsToBytes(rxMessageData, keyStatesBuffer, uhkModuleState->keyCount);
+    bool stateChanged = false;
+    bool nonzeroDeltas = false;
+    for (uint8_t keyId=0; keyId < uhkModuleState->keyCount; keyId++) {
+        if (KeyStates[slotId][keyId].hardwareSwitchState != keyStatesBuffer[keyId]) {
+            KeyStates[slotId][keyId].hardwareSwitchState = keyStatesBuffer[keyId];
+            stateChanged = true;
+        }
+    }
+    if (uhkModuleState->pointerCount) {
+        uint8_t keyStatesLength = BOOL_BYTES_TO_BITS_COUNT(uhkModuleState->keyCount);
+        pointer_delta_t *pointerDelta = (pointer_delta_t*)(rxMessageData + keyStatesLength);
+        uhkModuleState->pointerDelta.x += pointerDelta->x;
+        uhkModuleState->pointerDelta.y += pointerDelta->y;
+        uhkModuleState->pointerDelta.debugInfo = pointerDelta->debugInfo;
+        nonzeroDeltas = uhkModuleState->pointerDelta.x != 0 || uhkModuleState->pointerDelta.y != 0;
+    }
+    if (stateChanged) {
+        EventVector_Set(EventVector_StateMatrix);
+    }
+    if (nonzeroDeltas) {
+        EventVector_Set(EventVector_MouseController);
+    }
+    if (stateChanged || nonzeroDeltas) {
+        EventVector_WakeMain();
+    }
+}
+
+static void forwardKeystates(uint8_t uhkModuleDriverId, uhk_module_state_t* uhkModuleState, i2c_message_t* rxMessage) {
+#ifdef __ZEPHYR__
+    static bool lastDeltasWereZero = true;
+
+    uint8_t slotId = UhkModuleSlaveDriver_DriverIdToSlotId(uhkModuleDriverId);
+    BoolBitsToBytes(rxMessage->data, keyStatesBuffer, uhkModuleState->keyCount);
+    bool stateChanged = false;
+    for (uint8_t keyId=0; keyId < uhkModuleState->keyCount; keyId++) {
+        if (KeyStates[slotId][keyId].hardwareSwitchState != keyStatesBuffer[keyId]) {
+            KeyStates[slotId][keyId].hardwareSwitchState = keyStatesBuffer[keyId];
+            stateChanged = true;
+        }
+    }
+
+    bool thisDeltasAreZero = uhkModuleState->pointerDelta.x == 0 && uhkModuleState->pointerDelta.y == 0;
+
+    if (stateChanged || !lastDeltasWereZero || !thisDeltasAreZero) {
+        Messenger_Send2(DeviceId_Uhk80_Right, MessageId_SyncableProperty, SyncablePropertyId_LeftModuleKeyStates, rxMessage->data, rxMessage->length);
+        lastDeltasWereZero = thisDeltasAreZero;
     }
 #endif
 }
@@ -340,6 +397,11 @@ slave_result_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
             }
             res.status = kStatus_Uhk_IdleCycle;
             *uhkModulePhase = isMessageValid ? UhkModulePhase_RequestKeyStates : UhkModulePhase_RequestFirmwareChecksum;
+#ifdef __ZEPHYR__
+            if (DEVICE_ID == DeviceId_Uhk80_Left && uhkModuleDriverId == UhkModuleDriverId_LeftModule) {
+                StateSync_UpdateProperty(StateSyncPropertyId_ModuleStateLeftModule, NULL);
+            }
+#endif
             break;
         }
 
@@ -360,27 +422,10 @@ slave_result_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
             break;
         case UhkModulePhase_ProcessKeystates:
             if (CRC16_IsMessageValid(rxMessage)) {
-                uint8_t slotId = UhkModuleSlaveDriver_DriverIdToSlotId(uhkModuleDriverId);
-                BoolBitsToBytes(rxMessage->data, keyStatesBuffer, uhkModuleState->keyCount);
-                bool stateChanged = false;
-                for (uint8_t keyId=0; keyId < uhkModuleState->keyCount; keyId++) {
-                    if (KeyStates[slotId][keyId].hardwareSwitchState != keyStatesBuffer[keyId]) {
-                        KeyStates[slotId][keyId].hardwareSwitchState = keyStatesBuffer[keyId];
-                        stateChanged = true;
-                    }
-                }
-                if (stateChanged) {
-                    EventVector_Set(EventVector_StateMatrix);
-                    EventVector_WakeMain();
-                }
-                if (uhkModuleState->pointerCount) {
-                    uint8_t keyStatesLength = BOOL_BYTES_TO_BITS_COUNT(uhkModuleState->keyCount);
-                    pointer_delta_t *pointerDelta = (pointer_delta_t*)(rxMessage->data + keyStatesLength);
-                    uhkModuleState->pointerDelta.x += pointerDelta->x;
-                    uhkModuleState->pointerDelta.y += pointerDelta->y;
-                    uhkModuleState->pointerDelta.debugInfo = pointerDelta->debugInfo;
-                    EventVector_Set(EventVector_MouseController);
-                    EventVector_WakeMain();
+                if (DEVICE_ID == DeviceId_Uhk80_Left) {
+                    forwardKeystates(uhkModuleDriverId, uhkModuleState, rxMessage);
+                } else {
+                    UhkModuleSlaveDriver_ProcessKeystates(uhkModuleDriverId, uhkModuleState, rxMessage->data);
                 }
             }
             res.status = kStatus_Uhk_IdleCycle;
