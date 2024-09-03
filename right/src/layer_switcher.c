@@ -85,7 +85,7 @@ void updateActiveLayer() {
     ActiveLayerHeld = activeLayerHeld;
 
     if (ActiveLayer != previousLayer) {
-#ifdef DEVICE_HAS_OLED
+#if DEVICE_HAS_OLED
         Widget_Refresh(&LayerWidget);
         Widget_Refresh(&KeymapLayerWidget);
 #endif

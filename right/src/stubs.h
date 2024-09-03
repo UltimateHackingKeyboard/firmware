@@ -27,7 +27,7 @@
     ATTRS void Uart_Reenable() {};
     ATTRS void Uart_Enable() {};
 
-#ifdef DEVICE_HAS_OLED
+#if DEVICE_HAS_OLED
 #define WIDGET_REFRESH(W) Widget_Refresh(W)
 #else
 #define WIDGET_REFRESH(W)

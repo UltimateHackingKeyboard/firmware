@@ -13,6 +13,7 @@
 #include "layer_switcher.h"
 #include "peripherals/merge_sensor.h"
 #include "slave_drivers/uhk_module_driver.h"
+#include "device.h"
 
 #ifdef __ZEPHYR__
     #include "flash.h"
@@ -33,10 +34,7 @@ void UsbCommand_GetKeyboardState(void)
     SetUsbTxBufferUint8(1, IsStorageBusy);
 #endif
 
-#ifdef HAS_MERGE_SENSOR
     SetUsbTxBufferUint8(2, MergeSensor_IsMerged());
-#endif
-
     SetUsbTxBufferUint8(3, ModuleConnectionStates[UhkModuleDriverId_LeftKeyboardHalf].moduleId);
     SetUsbTxBufferUint8(4, ModuleConnectionStates[UhkModuleDriverId_LeftModule].moduleId);
     SetUsbTxBufferUint8(5, ModuleConnectionStates[UhkModuleDriverId_RightModule].moduleId);

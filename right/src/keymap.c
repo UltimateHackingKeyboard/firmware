@@ -40,7 +40,7 @@ void SwitchKeymapById(uint8_t index)
     CurrentKeymapIndex = index;
     ValidatedUserConfigBuffer.offset = AllKeymaps[index].offset;
     ParseKeymap(&ValidatedUserConfigBuffer, index, AllKeymapsCount, AllMacrosCount, parseConfig);
-#ifdef DEVICE_HAS_OLED
+#if DEVICE_HAS_OLED
     Widget_Refresh(&KeymapWidget);
     Widget_Refresh(&KeymapLayerWidget);
 #endif

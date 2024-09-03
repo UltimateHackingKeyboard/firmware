@@ -81,7 +81,7 @@ static int cmd_uhk_charger(const struct shell *shell, size_t argc, char *argv[])
 }
 #endif // !DEVICE_IS_UHK_DONGLE
 
-#ifdef DEVICE_HAS_OLED
+#if DEVICE_HAS_OLED
 static int cmd_uhk_oled(const struct shell *shell, size_t argc, char *argv[])
 {
     if (argc == 1) {
@@ -94,7 +94,7 @@ static int cmd_uhk_oled(const struct shell *shell, size_t argc, char *argv[])
 }
 #endif
 
-#ifdef DEVICE_HAS_MERGE_SENSE
+#if DEVICE_HAS_MERGE_SENSOR
 static const struct gpio_dt_spec mergeSenseDt = GPIO_DT_SPEC_GET(DT_ALIAS(merge_sense), gpios);
 
 static int cmd_uhk_merge(const struct shell *shell, size_t argc, char *argv[])
@@ -148,10 +148,10 @@ void InitShell(void)
         SHELL_CMD_ARG(sdb, NULL, "get/set LED driver SDB pin", cmd_uhk_sdb, 1, 1),
         SHELL_CMD_ARG(charger, NULL, "get/set CHARGER_EN pin", cmd_uhk_charger, 1, 1),
 #endif // !DEVICE_IS_UHK_DONGLE
-#ifdef DEVICE_HAS_OLED
+#if DEVICE_HAS_OLED
         SHELL_CMD_ARG(oled, NULL, "get/set OLED_EN pin", cmd_uhk_oled, 1, 1),
 #endif
-#ifdef DEVICE_HAS_MERGE_SENSE
+#if DEVICE_HAS_MERGE_SENSOR
         SHELL_CMD_ARG(merge, NULL, "get the merged state of UHK halves", cmd_uhk_merge, 1, 0),
 #endif
         SHELL_CMD_ARG(

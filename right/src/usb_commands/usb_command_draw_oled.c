@@ -17,7 +17,7 @@
 
 void UsbCommand_DrawOled()
 {
-#if defined(__ZEPHYR__) && defined(DEVICE_HAS_OLED)
+#if defined(__ZEPHYR__) && DEVICE_HAS_OLED
     uint8_t x = GetUsbRxBufferUint8(1);
     uint8_t y = GetUsbRxBufferUint8(2);
     uint8_t len = GetUsbRxBufferUint8(3);

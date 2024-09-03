@@ -9,7 +9,7 @@
 #else
 #include "peripherals/test_led.h"
 #include "test_switches.h"
-#include "device/device.h"
+#include "device.h"
 #endif
 
 #include "slave_scheduler.h"
