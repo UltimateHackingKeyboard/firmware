@@ -196,6 +196,7 @@ const config_t DefaultCfg = (config_t){
         .DebounceTimeRelease = 50,
         .DoubletapTimeout = 400,
         .DoubletapSwitchLayerReleaseTimeout = 200,
+        .HoldTimeout = 200,
         .KeystrokeDelay = 0,
         .AutoRepeatInitialDelay = 500,
         .AutoRepeatDelayRate = 50,

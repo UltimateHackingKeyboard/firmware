@@ -457,7 +457,12 @@ static macro_variable_t keyRgb(parser_context_t* ctx, set_command_action_t actio
 
     ConsumeUntilDot(ctx);
 
-    uint8_t keyId = Macros_ConsumeInt(ctx);
+    uint16_t keyId = Macros_TryConsumeKeyId(ctx);
+
+    if (keyId == 255) {
+        Macros_ReportError("Failed to decode keyid!", ctx->at, ctx->at);
+        return noneVar();
+    }
 
     if (action == SetCommandAction_Read) {
         Macros_ReportError("Reading RGB values not supported!", ConsumedToken(ctx), ConsumedToken(ctx));
@@ -800,6 +805,10 @@ static macro_variable_t root(parser_context_t* ctx, set_command_action_t action)
             ) {
         DEFINE_INT_LIMITS(0, 65535);
         ASSIGN_INT(Cfg.DoubletapTimeout);
+    }
+    else if ( ConsumeToken(ctx, "holdTimeout")) {
+        DEFINE_INT_LIMITS(0, 65535);
+        ASSIGN_INT(Cfg.HoldTimeout);
     }
     else if (ConsumeToken(ctx, "autoRepeatDelay")) {
         DEFINE_INT_LIMITS(0, 65535);

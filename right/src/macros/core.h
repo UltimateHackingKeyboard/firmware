@@ -124,6 +124,7 @@
             bool currentConditionPassed : 1;
             bool currentIfShortcutConditionPassed : 1;
             bool currentIfSecondaryConditionPassed : 1;
+            bool currentIfHoldConditionPassed : 1;
         } ATTR_PACKED as;
     } ATTR_PACKED macro_scope_state_t;
 
