@@ -7,7 +7,7 @@
 #ifdef __ZEPHYR__
     #include "device.h"
 #elif defined(DEVICE_ID)
-    #include "device/device.h"
+    #include "device.h"
 #endif
 
 // Macros:

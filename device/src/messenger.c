@@ -16,7 +16,7 @@
 #include "legacy/event_scheduler.h"
 #include "legacy/slave_drivers/uhk_module_driver.h"
 
-#ifdef DEVICE_IS_KEYBOARD
+#if DEVICE_IS_KEYBOARD
 #include "keyboard/uart.h"
 #endif
 
@@ -174,7 +174,7 @@ void Messenger_ProcessQueue() {
 }
 
 void Messenger_SendMessage(device_id_t dst, message_t message) {
-#ifdef DEVICE_IS_KEYBOARD
+#if DEVICE_IS_KEYBOARD
     if (Uart_IsConnected() && (dst == DeviceId_Uhk80_Left || dst == DeviceId_Uhk80_Right)) {
         Uart_SendMessage(message);
         return;

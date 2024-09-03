@@ -16,7 +16,7 @@
 #include "state_sync.h"
 #include "stubs.h"
 #else
-#include "device/device.h"
+#include "device.h"
 #endif
 
 #define RGB(R, G, B) { .red = (R), .green = (G), .blue = (B)}

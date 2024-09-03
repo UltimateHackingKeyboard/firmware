@@ -9,7 +9,7 @@
 #include "legacy/led_manager.h"
 #include "keyboard/oled/screens/screens.h"
 
-#ifdef DEVICE_HAS_OLED
+#if DEVICE_HAS_OLED
 
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/gpio.h>

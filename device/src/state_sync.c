@@ -18,6 +18,7 @@
 #include "usb/usb_compatibility.h"
 #include <stdint.h>
 #include <zephyr/kernel.h>
+#include "legacy/peripherals/merge_sensor.h"
 
 #define THREAD_STACK_SIZE 2000
 #define THREAD_PRIORITY 5
@@ -50,7 +51,7 @@ static void receiveProperty(
         .rightData = DATA,                                                                         \
         .dongleData = DATA,                                                                        \
         .len = sizeof(*DATA),                                                                      \
-        .direction = SyncDirection_RightToLeft,                                                    \
+        .direction = DIRECTION,                                                    \
         .dirtyState = DEFAULT_DIRTY,                                                               \
         .defaultDirty = DEFAULT_DIRTY,                                                             \
         .name = #NAME}
@@ -116,6 +117,7 @@ static state_sync_prop_t stateSyncProps[StateSyncPropertyId_Count] = {
     CUSTOM(ModuleStateLeftHalf, SyncDirection_LeftToRight, DirtyState_Clean),
     CUSTOM(ModuleStateLeftModule, SyncDirection_LeftToRight, DirtyState_Clean),
     EMPTY(LeftModuleDisconnected, SyncDirection_LeftToRight, DirtyState_Clean),
+    SIMPLE(MergeSensor, SyncDirection_LeftToRight, DirtyState_Clean, &MergeSensor_HalvesAreMerged),
 };
 
 static void invalidateProperty(state_sync_prop_id_t propId)
@@ -307,6 +309,8 @@ static void receiveProperty(
         if (!isLocalUpdate) {
             receiveModuleStateData((sync_command_module_state_t *)data);
         }
+        break;
+    case StateSyncPropertyId_MergeSensor:
         break;
     default:
         printk("Property %i ('%s') has no receive handler. If this is correct, please add a "
@@ -509,6 +513,7 @@ static bool handlePropertyUpdateLeftToRight()
     UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ModuleStateLeftHalf);
     UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ModuleStateLeftModule);
     UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_LeftModuleDisconnected);
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_MergeSensor);
     UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_Battery);
 
     return true;
@@ -538,6 +543,8 @@ static void updateLoopRightLeft()
             STATE_SYNC_LOG("--- Left to right update loop, connected: %i\n", isConnected);
             if (!isConnected || handlePropertyUpdateLeftToRight()) {
                 k_sleep(K_FOREVER);
+            } else {
+                k_sleep(K_MSEC(1));
             }
         }
     }
@@ -548,6 +555,8 @@ static void updateLoopRightLeft()
             STATE_SYNC_LOG("--- Right to left update loop, connected: %i\n", isConnected);
             if (!isConnected || handlePropertyUpdateRightToLeft()) {
                 k_sleep(K_FOREVER);
+            } else {
+                k_sleep(K_MSEC(1));
             }
         }
     }
@@ -561,6 +570,8 @@ static void updateLoopRightDongle()
             STATE_SYNC_LOG("--- Right to dongle update loop, connected: %i\n", isConnected);
             if (!isConnected || handlePropertyUpdateRightToDongle()) {
                 k_sleep(K_FOREVER);
+            } else {
+                k_sleep(K_MSEC(1));
             }
         }
     }
@@ -571,6 +582,8 @@ static void updateLoopRightDongle()
             STATE_SYNC_LOG("--- Dongle update loop, connected: %i\n", isConnected);
             if (!isConnected || handlePropertyUpdateDongleToRight()) {
                 k_sleep(K_FOREVER);
+            } else {
+                k_sleep(K_MSEC(1));
             }
         }
     }
@@ -623,6 +636,7 @@ void StateSync_ResetRightLeftLink(bool bidirectional)
         invalidateProperty(StateSyncPropertyId_Battery);
         invalidateProperty(StateSyncPropertyId_ModuleStateLeftHalf);
         invalidateProperty(StateSyncPropertyId_ModuleStateLeftModule);
+        invalidateProperty(StateSyncPropertyId_MergeSensor);
     }
 }
 
