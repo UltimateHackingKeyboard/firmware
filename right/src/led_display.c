@@ -7,7 +7,7 @@
 #include "led_manager.h"
 
 #ifndef __ZEPHYR__
-#include "device/device.h"
+#include "device.h"
 #endif
 
 bool ledIconStates[LedDisplayIcon_Count];

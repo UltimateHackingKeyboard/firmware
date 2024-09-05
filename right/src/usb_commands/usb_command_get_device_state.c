@@ -12,28 +12,17 @@
 #include "timer.h"
 #include "layer_switcher.h"
 #include "peripherals/merge_sensor.h"
+#include "slave_drivers/uhk_module_driver.h"
+#include "device.h"
 
 #ifdef __ZEPHYR__
     #include "flash.h"
     #include "device_state.h"
-    #include "slave_drivers/uhk_module_driver.h"
     #include "usb_report_updater.h"
     #include "slave_scheduler.h"
-
-    #define MODULE_CONNECTION_STATE2(SLOT_ID) ( \
-            (k_uptime_get() - ModuleConnectionStates[SLOT_ID].lastTimeConnected) < 2000 ? \
-            ModuleConnectionStates[SLOT_ID].moduleId : 0 \
-            )
-
 #else
-    #include "slave_drivers/uhk_module_driver.h"
     #include "usb_report_updater.h"
     #include "slave_scheduler.h"
-
-    #define MODULE_CONNECTION_STATE(SLOT_ID) ( \
-            Timer_GetElapsedTime(&ModuleConnectionStates[SLOT_ID].lastTimeConnected) < 350 ? \
-            ModuleConnectionStates[SLOT_ID].moduleId : 0 \
-            )
 #endif
 
 void UsbCommand_GetKeyboardState(void)
@@ -45,20 +34,10 @@ void UsbCommand_GetKeyboardState(void)
     SetUsbTxBufferUint8(1, IsStorageBusy);
 #endif
 
-#ifdef HAS_MERGE_SENSOR
     SetUsbTxBufferUint8(2, MergeSensor_IsMerged());
-#endif
-
-#ifdef __ZEPHYR__
-    CurrentTime = k_uptime_get();
-    SetUsbTxBufferUint8(3, DeviceState_IsDeviceConnected(DeviceId_Uhk80_Left) ? ModuleId_LeftKeyboardHalf : 0);
-    SetUsbTxBufferUint8(5, MODULE_CONNECTION_STATE2(UhkModuleDriverId_RightModule));
-#else
-    SetUsbTxBufferUint8(3, MODULE_CONNECTION_STATE(UhkModuleDriverId_LeftKeyboardHalf));
-    SetUsbTxBufferUint8(4, MODULE_CONNECTION_STATE(UhkModuleDriverId_LeftModule));
-    SetUsbTxBufferUint8(5, MODULE_CONNECTION_STATE(UhkModuleDriverId_RightModule));
-#endif
-
+    SetUsbTxBufferUint8(3, ModuleConnectionStates[UhkModuleDriverId_LeftKeyboardHalf].moduleId);
+    SetUsbTxBufferUint8(4, ModuleConnectionStates[UhkModuleDriverId_LeftModule].moduleId);
+    SetUsbTxBufferUint8(5, ModuleConnectionStates[UhkModuleDriverId_RightModule].moduleId);
     SetUsbTxBufferUint8(6, ActiveLayer | (ActiveLayer != LayerId_Base && !ActiveLayerHeld ? (1 << 7) : 0) ); // Active layer + most significant bit if layer is toggled
     SetUsbTxBufferUint8(7, Macros_ConsumeStatusCharDirtyFlag);
     SetUsbTxBufferUint8(8, CurrentKeymapIndex);

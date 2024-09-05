@@ -3,6 +3,6 @@
 #ifdef __ZEPHYR__
 #include "device.h"
 #else
-#include "device/device.h"
+#include "device.h"
 #endif
 

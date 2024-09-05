@@ -33,7 +33,7 @@ void Log(const char *fmt, ...) {
     vsprintf(buffer, fmt, myargs);
 
     Uart_LogConstant(buffer);
-#ifdef DEVICE_HAS_OLED
+#if DEVICE_HAS_OLED
     Oled_LogConstant(buffer);
 #endif
 }

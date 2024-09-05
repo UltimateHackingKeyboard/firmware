@@ -462,11 +462,13 @@ uint8_t CountCommands(const char* text, uint16_t textLen)
 #ifdef __ZEPHYR__
 const char* Utils_DeviceIdToString(device_id_t deviceId) {
     switch (deviceId) {
-        case DEVICE_ID_UHK80_LEFT:
+        case DeviceId_Uhk80_Left:
             return "left";
-        case DEVICE_ID_UHK80_RIGHT:
+        case DeviceId_Uhk80_Right:
+        case DeviceId_Uhk60v1_Right:
+        case DeviceId_Uhk60v2_Right:
             return "right";
-        case DEVICE_ID_UHK_DONGLE:
+        case DeviceId_Uhk_Dongle:
             return "dongle";
         default:
             return "unknown";

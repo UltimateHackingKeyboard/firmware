@@ -105,18 +105,18 @@ int main(void) {
 
     if (!DEVICE_IS_UHK_DONGLE) {
         InitUart();
-        InitI2c();
+        InitZephyrI2c();
         InitSpi();
 
-        #ifdef DEVICE_HAS_OLED
+#if DEVICE_HAS_OLED
         InitOled();
-        #endif // DEVICE_HAS_OLED
+#endif // DEVICE_HAS_OLED
 
         InitLeds();
 
-    #ifdef DEVICE_HAS_MERGE_SENSOR
+#if DEVICE_HAS_MERGE_SENSOR
         MergeSensor_Init();
-    #endif // DEVICE_HAS_MERGE_SENSOR
+#endif // DEVICE_HAS_MERGE_SENSOR
 
         InitKeyScanner();
 

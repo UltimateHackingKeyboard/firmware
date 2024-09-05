@@ -3,7 +3,9 @@
 #include "device.h"
 #include "keyboard/uart.h"
 #include "keyboard/oled/widgets/widgets.h"
+#include "legacy/slave_drivers/uhk_module_driver.h"
 #include "state_sync.h"
+#include "shared/slave_protocol.h"
 
 static connection_type_t isConnected[ConnectionId_Count] = {};
 
@@ -28,6 +30,10 @@ void handleStateTransition(connection_id_t remoteId, bool connected) {
                         Widget_Refresh(&StatusWidget);
                         if (connected) {
                             StateSync_ResetRightLeftLink(true);
+                            ModuleConnectionStates[UhkModuleDriverId_LeftKeyboardHalf].moduleId = ModuleId_LeftKeyboardHalf;
+                        } else {
+                            ModuleConnectionStates[UhkModuleDriverId_LeftKeyboardHalf].moduleId = 0;
+                            ModuleConnectionStates[UhkModuleDriverId_LeftModule].moduleId = 0;
                         }
                         break;
                     case ConnectionId_Dongle:

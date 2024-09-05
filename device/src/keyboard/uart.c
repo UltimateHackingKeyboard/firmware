@@ -27,7 +27,9 @@ const struct device *uart_dev = DEVICE_DT_GET(DT_NODELABEL(uart1));
 #define TX_BUF_SIZE UART_MAX_PACKET_LENGTH*2+1
 uint8_t txBuffer[TX_BUF_SIZE];
 uint16_t txPosition = 0;
-K_SEM_DEFINE(txBufferBusy, 1, 1);
+
+#define UART_SLOTS 1
+K_SEM_DEFINE(txBufferBusy, UART_SLOTS, UART_SLOTS);
 
 #define RX_BUF_SIZE UART_MAX_PACKET_LENGTH
 uint8_t* rxBuffer = NULL;
@@ -215,6 +217,9 @@ static void updateConnectionState() {
     if (isConnected != newIsConnected) {
         isConnected = newIsConnected;
         DeviceState_TriggerUpdate();
+        if (!isConnected) {
+            k_sem_init(&txBufferBusy, UART_SLOTS, UART_SLOTS);
+        }
     }
 }
 

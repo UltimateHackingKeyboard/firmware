@@ -1,3 +1,4 @@
+#include "device.h"
 #include <stdio.h>
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/gpio.h>
@@ -6,7 +7,6 @@
 #include "keyboard/uart.h"
 #include "nus_client.h"
 #include "nus_server.h"
-#include "device.h"
 #include "oled/oled_buffer.h"
 #include "logger.h"
 #include "key_states.h"

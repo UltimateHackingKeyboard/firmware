@@ -8,11 +8,16 @@
     #include "timer.h"
     #include "debug.h"
 
+#ifdef __ZEPHYR__
+    #include "main.h"
+#endif
+
 // Macros:
 
 // Typedefs:
 
     typedef enum {
+        EventSchedulerEvent_ModuleConnectionStatusUpdate,
         EventSchedulerEvent_SegmentDisplayUpdate,
         EventSchedulerEvent_MacroWakeOnTime,
         EventSchedulerEvent_MacroRecorderFlashing,
@@ -25,6 +30,7 @@
         EventSchedulerEvent_UpdateLedSleepModes,
         EventSchedulerEvent_MouseController,
         EventSchedulerEvent_ReenableUart,
+        EventSchedulerEvent_UpdateMergeSensor,
         EventSchedulerEvent_Count
     } event_scheduler_event_t;
 
@@ -114,5 +120,11 @@
             EventVector_Unset(evt);
         }
     };
+
+    static inline void EventVector_WakeMain() {
+#ifdef __ZEPHYR__
+        k_wakeup(Main_ThreadId);
+#endif
+    }
 
 #endif

@@ -1,8 +1,5 @@
 #include "i2c_addresses.h"
-#ifndef __ZEPHYR__
 #include "i2c.h"
-#include "peripherals/test_led.h"
-#endif
 #include "slave_scheduler.h"
 #include "slave_drivers/uhk_module_driver.h"
 #include "slave_protocol.h"
@@ -14,6 +11,10 @@
 #include "debug.h"
 #include "timer.h"
 #include "macros/core.h"
+
+#ifndef __ZEPHYR__
+#include "peripherals/test_led.h"
+#endif
 
 /*
 |  Actually produced sequences:
@@ -76,7 +77,7 @@ uint8_t address = I2C_ADDRESS_RIGHT_IQS5XX_FIRMWARE;
 touchpad_events_t TouchpadEvents;
 const touchpad_events_t ZeroTouchpadEvents;
 uint8_t phase = 0;
-#ifndef __ZEPHYR__
+
 static gesture_events_t gestureEvents;
 static uint8_t enableEventMode[] = {0x05, 0x8f, 0x07};
 
@@ -181,6 +182,7 @@ slave_result_t TouchpadDriver_Update(uint8_t uhkModuleDriverId)
             res.status = I2cAsyncWrite(address, closeCommunicationWindow, sizeof(closeCommunicationWindow));
             res.hold = false;
             EventVector_Set(EventVector_MouseController);
+            EventVector_WakeMain();
             phase = 3;
             break;
         }
@@ -194,5 +196,5 @@ void TouchpadDriver_Disconnect(uint8_t uhkModuleDriverId)
     TouchpadEvents.x = 0;
     TouchpadEvents.y = 0;
     phase = 0;
+    EventScheduler_Schedule(CurrentTime + MODULE_CONNECTION_TIMEOUT, EventSchedulerEvent_ModuleConnectionStatusUpdate, "ModuleConnectionStatusUpdate");
 }
-#endif

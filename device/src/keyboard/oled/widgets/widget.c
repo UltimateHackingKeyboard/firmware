@@ -5,7 +5,7 @@
 
 void Widget_Refresh(widget_t* widget)
 {
-#ifdef DEVICE_HAS_OLED
+#if DEVICE_HAS_OLED
     if (widget != NULL) {
         widget->dirty = true;
     }

@@ -14,7 +14,7 @@
 #include "keyboard/oled/oled.h"
 #define SleepModeActive false
 #else
-#include "device/device.h"
+#include "device.h"
 #endif
 
 bool KeyBacklightSleepModeActive = false;

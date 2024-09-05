@@ -9,6 +9,7 @@
 // Functions:
 
     extern void NusClient_Init(void);
+    void NusClient_Disconnected();
     extern void gatt_discover(struct bt_conn *conn);
     extern void NusClient_Setup(struct bt_conn *conn);
     extern void NusClient_Send(const uint8_t *data, uint16_t len);

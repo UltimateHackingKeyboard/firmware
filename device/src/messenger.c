@@ -4,6 +4,7 @@
 #include "autoconf.h"
 #include "link_protocol.h"
 #include "messenger_queue.h"
+#include "shared/slave_protocol.h"
 #include "state_sync.h"
 #include "usb/usb_compatibility.h"
 #include "nus_server.h"
@@ -13,8 +14,9 @@
 #include "shared/attributes.h"
 #include "legacy/str_utils.h"
 #include "legacy/event_scheduler.h"
+#include "legacy/slave_drivers/uhk_module_driver.h"
 
-#ifdef DEVICE_IS_KEYBOARD
+#if DEVICE_IS_KEYBOARD
 #include "keyboard/uart.h"
 #endif
 
@@ -77,6 +79,13 @@ static void processSyncablePropertyRight(device_id_t src, const uint8_t* data, u
                 KeyStates[SlotId_LeftKeyboardHalf][keyId].hardwareSwitchState = !!(message[keyId/8] & (1 << (keyId % 8)));
             }
             EventVector_Set(EventVector_StateMatrix);
+            break;
+        case SyncablePropertyId_LeftModuleKeyStates:
+            {
+                uint8_t driverId = UhkModuleDriverId_LeftModule;
+                uhk_module_state_t *moduleState = UhkModuleStates + driverId;
+                UhkModuleSlaveDriver_ProcessKeystates(driverId, moduleState, data);
+            }
             break;
         default:
             printk("Unrecognized or unexpected message [%i, %i, ...]\n", data[0], data[1]);
@@ -165,7 +174,7 @@ void Messenger_ProcessQueue() {
 }
 
 void Messenger_SendMessage(device_id_t dst, message_t message) {
-#ifdef DEVICE_IS_KEYBOARD
+#if DEVICE_IS_KEYBOARD
     if (Uart_IsConnected() && (dst == DeviceId_Uhk80_Left || dst == DeviceId_Uhk80_Right)) {
         Uart_SendMessage(message);
         return;

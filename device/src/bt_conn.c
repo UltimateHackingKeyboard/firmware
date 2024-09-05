@@ -8,6 +8,7 @@
 #include "keyboard/oled/screens/screen_manager.h"
 #include "keyboard/oled/widgets/widget.h"
 #include "nus_client.h"
+#include "nus_server.h"
 #include "device.h"
 #include "keyboard/oled/screens/pairing_screen.h"
 #include "usb/usb.h"
@@ -164,6 +165,19 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
         }
     }
 
+    if (DEVICE_IS_UHK80_LEFT && peerId == PeerIdRight) {
+        NusServer_Disconnected();
+    }
+    if (DEVICE_IS_UHK80_RIGHT && peerId == PeerIdDongle) {
+        NusServer_Disconnected();
+    }
+    if (DEVICE_IS_UHK80_RIGHT && peerId == PeerIdLeft) {
+        NusClient_Disconnected();
+    }
+    if (DEVICE_IS_UHK_DONGLE && peerId == PeerIdRight) {
+        NusClient_Disconnected();
+    }
+
     if (peerId != PeerIdUnknown) {
         Peers[peerId].isConnected = false;
         DeviceState_TriggerUpdate();
@@ -244,7 +258,7 @@ static void auth_passkey_confirm(struct bt_conn *conn, unsigned int passkey) {
         return;
     }
 
-#ifdef DEVICE_HAS_OLED
+#if DEVICE_HAS_OLED
     PairingScreen_AskForPassword(passkey);
 #endif
 
@@ -306,7 +320,7 @@ void bt_init(void)
 void num_comp_reply(uint8_t accept) {
     struct bt_conn *conn;
 
-#ifdef DEVICE_HAS_OLED
+#if DEVICE_HAS_OLED
     ScreenManager_SwitchScreenEvent();
 #endif
 

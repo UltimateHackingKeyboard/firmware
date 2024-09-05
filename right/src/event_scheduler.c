@@ -1,4 +1,15 @@
 #include "event_scheduler.h"
+#include "timer.h"
+#include "macros/core.h"
+#include "macro_recorder.h"
+#include "utils.h"
+#include "stubs.h"
+#include "postponer.h"
+#include "debug.h"
+#include "led_manager.h"
+#include "slave_drivers/uhk_module_driver.h"
+#include "peripherals/merge_sensor.h"
+
 #ifdef __ZEPHYR__
 #include "keyboard/oled/screens/screen_manager.h"
 #include "keyboard/oled/oled.h"
@@ -8,14 +19,6 @@
 #else
 #include "segment_display.h"
 #endif
-#include "timer.h"
-#include "macros/core.h"
-#include "macro_recorder.h"
-#include "utils.h"
-#include "stubs.h"
-#include "postponer.h"
-#include "debug.h"
-#include "led_manager.h"
 
 static uint32_t times[EventSchedulerEvent_Count] = {};
 static const char* labels[EventSchedulerEvent_Count] = {};
@@ -76,6 +79,12 @@ static void processEvt(event_scheduler_event_t evt)
             break;
         case EventSchedulerEvent_ReenableUart:
             Uart_Enable();
+            break;
+        case EventSchedulerEvent_ModuleConnectionStatusUpdate:
+            UhkModuleSlaveDriver_UpdateConnectionStatus();
+            break;
+        case EventSchedulerEvent_UpdateMergeSensor:
+            MergeSensor_Update();
             break;
         default:
             return;

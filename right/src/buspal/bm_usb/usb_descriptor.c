@@ -1,7 +1,7 @@
 #include "usb_device_config.h"
 #include "bootloader_hid_report_ids.h"
 #include "usb_descriptor.h"
-#include "device/device.h"
+#include "device.h"
 
 #define BL_MIN_PACKET_SIZE (32)
 #define BL_PACKET_SIZE_HEADER_SIZE (3) // alignment byte + length lsb + length msb (does not include report id)

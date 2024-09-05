@@ -10,11 +10,17 @@
 #include <device.h>
 #endif
 
+// Variables:
+
+    extern bool MergeSensor_HalvesAreMerged;
+
 // Functions:
 
-#if !(defined(__ZEPHYR__) && !defined(DEVICE_HAS_MERGE_SENSE))
+#if !(defined(__ZEPHYR__) && !defined(DEVICE_HAS_MERGE_SENSOR))
     void MergeSensor_Init(void);
     bool MergeSensor_IsMerged(void);
 #endif
+
+    void MergeSensor_Update(void);
 
 #endif

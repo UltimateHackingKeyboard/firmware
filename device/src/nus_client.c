@@ -21,7 +21,8 @@
 
 static struct bt_nus_client nus_client;
 
-static K_SEM_DEFINE(nusBusy, 1, 1);
+#define NUS_SLOTS 1
+static K_SEM_DEFINE(nusBusy, NUS_SLOTS, NUS_SLOTS);
 
 static void ble_data_sent(struct bt_nus_client *nus, uint8_t err, const uint8_t *const data, uint16_t len) {
     k_sem_give(&nusBusy);
@@ -116,6 +117,11 @@ void NusClient_Setup(struct bt_conn *conn) {
     if ((!err) && (err != -EALREADY)) {
         printk("Stop LE scan failed (err %d)\n", err);
     }
+}
+
+void NusClient_Disconnected() {
+    // I argue that when bt is not connected, freeing the semaphore causes no trouble.
+    k_sem_init(&nusBusy, NUS_SLOTS, NUS_SLOTS);
 }
 
 void NusClient_Init(void) {
