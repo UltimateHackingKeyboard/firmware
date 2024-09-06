@@ -1,6 +1,7 @@
 #include "usb_device_config.h"
 #include "bootloader_hid_report_ids.h"
 #include "usb_descriptor.h"
+#include "device.h"
 
 #define BL_MIN_PACKET_SIZE (32)
 #define BL_PACKET_SIZE_HEADER_SIZE (3) // alignment byte + length lsb + length msb (does not include report id)
@@ -105,9 +106,13 @@ uint8_t g_device_descriptor[USB_DEVICE_DESCRIPTOR_LENGTH] = {
     /* Max Packet size */
     USB_CONTROL_MAX_PACKET_SIZE,
     /* Vendor ID */
-    0x50, 0x1d, /* UHK bootloader proxy VID */
+    0xa8, 0x37, /* UHK bootloader proxy VID */
     /* Product ID */
-    0x21, 0x61, /* UHK bootloader proxy PID */
+    #if DEVICE_ID == DEVICE_ID_UHK60V1
+    0x00, 0x00, /* UHK bootloader proxy PID */
+    #elif DEVICE_ID == DEVICE_ID_UHK60V2
+    0x02, 0x00, /* UHK bootloader proxy PID */
+    #endif
     /* BCD Device version */
     0x02, 0x00,
     /* Manufacturer string index */
