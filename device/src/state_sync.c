@@ -3,6 +3,7 @@
 #include "device_state.h"
 #include "keyboard/oled/widgets/widgets.h"
 #include "legacy/config_manager.h"
+#include "legacy/config_parser/config_globals.h"
 #include "legacy/debug.h"
 #include "legacy/keymap.h"
 #include "legacy/led_manager.h"
@@ -211,6 +212,11 @@ void receiveBacklight(sync_command_backlight_t *buffer)
     KeyBacklightBrightness = buffer->KeyBacklightBrightness;
     DisplayBrightness = buffer->DisplayBacklightBrightness;
     Cfg.LedMap_ConstantRGB = buffer->LedMap_ConstantRGB;
+    if (HardwareConfig->isIso != buffer->isIso) {
+        HardwareConfig->isIso = buffer->isIso;
+        Ledmap_InitLedLayout();
+        Ledmap_UpdateBacklightLeds();
+    }
 }
 
 static void receiveModuleStateData(sync_command_module_state_t *buffer)
@@ -366,6 +372,7 @@ static void prepareBacklight(sync_command_backlight_t *buffer)
     buffer->KeyBacklightBrightness = KeyBacklightBrightness;
     buffer->DisplayBacklightBrightness = DisplayBrightness;
     buffer->LedMap_ConstantRGB = Cfg.LedMap_ConstantRGB;
+    buffer->isIso = HardwareConfig->isIso;
 }
 
 static void prepareLeftHalfStateData(sync_command_module_state_t *buffer)

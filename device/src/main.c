@@ -1,5 +1,6 @@
 #include "main.h"
 #include "legacy/config_parser/config_globals.h"
+#include "legacy/ledmap.h"
 #include "shared/attributes.h"
 #include "zephyr/storage/flash_map.h"
 #include "keyboard/key_scanner.h"
@@ -124,6 +125,7 @@ int main(void) {
 
     if (DEVICE_IS_UHK80_LEFT || DEVICE_IS_UHK80_RIGHT) {
         ConfigManager_ResetConfiguration(false);
+        Ledmap_InitLedLayout();
     }
 
     if (DEVICE_IS_UHK80_RIGHT) {

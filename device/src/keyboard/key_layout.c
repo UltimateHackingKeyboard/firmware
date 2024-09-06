@@ -107,6 +107,7 @@ const uint8_t KeyLayout_Uhk80_to_Uhk60[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
         [26] = 20, // g
 
         [28] = 21, // shift
+        [29] = 22, // iso key
         [30] = 23, // z
         [31] = 24, // x
         [32] = 25, // c
@@ -136,7 +137,6 @@ const uint8_t KeyLayout_Uhk80_to_Uhk60[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
         // unused
         [20] = 255,
         [27] = 255,
-        [29] = 255,
         [42] = 255,
         [43] = 255,
         [44] = 255,
