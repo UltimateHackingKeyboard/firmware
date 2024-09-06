@@ -162,13 +162,7 @@ static parser_error_t parseKeyActions(uint8_t targetLayer, config_buffer_t *buff
     if (actionCount > MAX_KEY_COUNT_PER_MODULE) {
         return ParserError_InvalidActionCount;
     }
-    // TODO: get rid of this hack
-#ifndef DEVICE_IS_UHK80_RIGHT
-#define DEVICE_IS_UHK80_RIGHT 0
-#endif
-    if (DEVICE_IS_UHK80_RIGHT && moduleId == ModuleId_LeftKeyboardHalf) {
-        // TODO: extend this to support modules
-        //assume that left half is connected
+    if (moduleId == ModuleId_LeftKeyboardHalf || moduleId == ModuleId_KeyClusterLeft) {
         parseMode = parseMode;
     } else {
         parseMode = IsModuleAttached(moduleId) ? parseMode : ParseMode_DryRun;
