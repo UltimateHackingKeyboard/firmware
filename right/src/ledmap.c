@@ -356,8 +356,8 @@ static rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
         RGB(118,119,120), // f
         RGB(0,0,0),       // 19
         RGB(136,137,138), // g
-        RGB(157,158,160), // shift
-        RGB(0,0,0),       // unused
+        RGB(190,191,192), // shift
+        RGB(67,68,70),    // isoKey
         RGB(49,50,52),    // z
         RGB(85,86,88),    // x
         RGB(121,122,124), // c
@@ -595,19 +595,49 @@ void Ledmap_UpdateBacklightLeds(void) {
 }
 
 void Ledmap_InitLedLayout(void) {
+
 #if DEVICE_ID == DEVICE_ID_UHK60V2
     // clear the RGB first, since the default mapping will no longer be reachable
     setPerKeyColor(&black, ColorMode_Rgb, SlotId_LeftKeyboardHalf, LedMapIndex_LeftSlot_IsoKey);
+    setPerKeyColor(&black, ColorMode_Rgb, SlotId_LeftKeyboardHalf, LedMapIndex_LeftSlot_LeftShift);
 
     if (HardwareConfig->isIso) {
         LedMap[SlotId_LeftKeyboardHalf][LedMapIndex_LeftSlot_LeftShift].red = 0x6D;
         LedMap[SlotId_LeftKeyboardHalf][LedMapIndex_LeftSlot_LeftShift].green = 0x7D;
         LedMap[SlotId_LeftKeyboardHalf][LedMapIndex_LeftSlot_LeftShift].blue = 0x8D;
+        LedMap[SlotId_LeftKeyboardHalf][LedMapIndex_LeftSlot_IsoKey].red = 0x32;
+        LedMap[SlotId_LeftKeyboardHalf][LedMapIndex_LeftSlot_IsoKey].green = 0x42;
+        LedMap[SlotId_LeftKeyboardHalf][LedMapIndex_LeftSlot_IsoKey].blue = 0x52;
     } else {
+        LedMap[SlotId_LeftKeyboardHalf][LedMapIndex_LeftSlot_LeftShift].red = 0x30;
+        LedMap[SlotId_LeftKeyboardHalf][LedMapIndex_LeftSlot_LeftShift].green = 0x40;
+        LedMap[SlotId_LeftKeyboardHalf][LedMapIndex_LeftSlot_LeftShift].blue = 0x50;
         LedMap[SlotId_LeftKeyboardHalf][LedMapIndex_LeftSlot_IsoKey].red = 0;
         LedMap[SlotId_LeftKeyboardHalf][LedMapIndex_LeftSlot_IsoKey].green = 0;
         LedMap[SlotId_LeftKeyboardHalf][LedMapIndex_LeftSlot_IsoKey].blue = 0;
     }
+#endif
+
+#if DEVICE_IS_UHK80_LEFT
+    setPerKeyColor(&black, ColorMode_Rgb, SlotId_LeftKeyboardHalf, LedMapIndex_LeftSlot_IsoKey);
+    setPerKeyColor(&black, ColorMode_Rgb, SlotId_LeftKeyboardHalf, LedMapIndex_LeftSlot_LeftShift);
+
+    if (HardwareConfig->isIso) {
+        LedMap[SlotId_LeftKeyboardHalf][LedMapIndex_LeftSlot_LeftShift].red = 190;
+        LedMap[SlotId_LeftKeyboardHalf][LedMapIndex_LeftSlot_LeftShift].green = 191;
+        LedMap[SlotId_LeftKeyboardHalf][LedMapIndex_LeftSlot_LeftShift].blue = 192;
+        LedMap[SlotId_LeftKeyboardHalf][LedMapIndex_LeftSlot_IsoKey].red = 67;
+        LedMap[SlotId_LeftKeyboardHalf][LedMapIndex_LeftSlot_IsoKey].green = 68;
+        LedMap[SlotId_LeftKeyboardHalf][LedMapIndex_LeftSlot_IsoKey].blue = 70;
+    } else {
+        LedMap[SlotId_LeftKeyboardHalf][LedMapIndex_LeftSlot_LeftShift].red = 157;
+        LedMap[SlotId_LeftKeyboardHalf][LedMapIndex_LeftSlot_LeftShift].green = 158;
+        LedMap[SlotId_LeftKeyboardHalf][LedMapIndex_LeftSlot_LeftShift].blue = 160;
+        LedMap[SlotId_LeftKeyboardHalf][LedMapIndex_LeftSlot_IsoKey].red = 0;
+        LedMap[SlotId_LeftKeyboardHalf][LedMapIndex_LeftSlot_IsoKey].green = 0;
+        LedMap[SlotId_LeftKeyboardHalf][LedMapIndex_LeftSlot_IsoKey].blue = 0;
+    }
+
 #endif
 }
 

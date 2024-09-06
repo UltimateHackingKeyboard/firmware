@@ -43,6 +43,7 @@
         uint8_t KeyBacklightBrightness;
         uint8_t DisplayBacklightBrightness;
         rgb_t LedMap_ConstantRGB;
+        bool isIso;
     } ATTR_PACKED sync_command_backlight_t;
 
     typedef struct {
