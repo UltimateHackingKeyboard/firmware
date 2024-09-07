@@ -101,17 +101,20 @@ static void scanKeys() {
             uint8_t targetKeyId = KeyLayout_Uhk80_to_Uhk60[slotId][sourceIndex];
 
             if (targetKeyId < MAX_KEY_COUNT_PER_MODULE) {
+                if (currentBacklightingMode == BacklightingMode_LedTest) {
+                    if ( keyStateBuffer[sourceIndex] ) {
+                        Ledmap_ActivateTestled(slotId, targetKeyId);
+                    }
+                    KeyStates[CURRENT_SLOT_ID][targetKeyId].hardwareSwitchState = false;
+                    continue;
+                }
+
                 if (DEVICE_IS_UHK80_RIGHT) {
                     KeyStates[CURRENT_SLOT_ID][targetKeyId].hardwareSwitchState = keyStateBuffer[sourceIndex];
                 }
 
                 if (DEVICE_IS_UHK80_LEFT) {
                     BoolBitToBytes(keyStateBuffer[sourceIndex], targetKeyId, compressedBuffer);
-                }
-
-                if (keyStateBuffer[sourceIndex] && currentBacklightingMode == BacklightingMode_LedTest) {
-                    Ledmap_ActivateTestled(slotId, targetKeyId);
-                    EventVector_WakeMain();
                 }
             }
         }
