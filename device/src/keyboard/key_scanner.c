@@ -104,6 +104,7 @@ static void scanKeys() {
                 if (currentBacklightingMode == BacklightingMode_LedTest) {
                     if ( keyStateBuffer[sourceIndex] ) {
                         Ledmap_ActivateTestled(slotId, targetKeyId);
+                        EventVector_WakeMain();
                     }
                     KeyStates[CURRENT_SLOT_ID][targetKeyId].hardwareSwitchState = false;
                     continue;
@@ -122,7 +123,7 @@ static void scanKeys() {
 
     if (DEVICE_IS_UHK80_RIGHT) {
         EventVector_Set(EventVector_StateMatrix);
-        k_wakeup(Main_ThreadId);
+        EventVector_WakeMain();
     }
 
     if (DEVICE_IS_UHK80_LEFT) {
