@@ -127,11 +127,13 @@ static nrfx_power_usb_event_handler_t originalPowerHandler = NULL;
 
 static void powerCallback(nrfx_power_usb_evt_t event) {
     originalPowerHandler(event);
+    CurrentTime = k_uptime_get_32();
     EventScheduler_Schedule(CurrentTime + CHARGER_STAT_PERIOD, EventSchedulerEvent_UpdateBattery, "charger - power callback");
 }
 
 void chargerStatCallback(const struct device *port, struct gpio_callback *cb, gpio_port_pins_t pins) {
     bool stat = gpio_pin_get_dt(&chargerStatDt);
+    CurrentTime = k_uptime_get_32();
     if (stat) {
         lastStatOneTime = CurrentTime;
     } else {
