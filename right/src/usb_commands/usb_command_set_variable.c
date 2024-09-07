@@ -4,6 +4,7 @@
 #include "test_switches.h"
 #include "usb_report_updater.h"
 #include "config_manager.h"
+#include "ledmap.h"
 
 void UsbCommand_SetVariable(void)
 {
@@ -14,6 +15,9 @@ void UsbCommand_SetVariable(void)
             if (GetUsbRxBufferUint8(2)) {
                 TestSwitches = true;
                 TestSwitches_Activate();
+                Ledmap_ActivateTestLedMode(true);
+            } else {
+                Ledmap_ActivateTestLedMode(false);
             }
             break;
         case UsbVariable_TestUsbStack:

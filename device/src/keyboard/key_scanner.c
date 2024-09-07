@@ -18,6 +18,7 @@
 #include "device.h"
 #include "legacy/event_scheduler.h"
 #include "main.h"
+#include "legacy/config_manager.h"
 
 // Thread definitions
 
@@ -84,11 +85,14 @@ static void scanKeys() {
         return;
     }
 
+    CurrentTime = k_uptime_get_32();
     uint8_t compressedLength = MAX_KEY_COUNT_PER_MODULE/8+1;
     uint8_t compressedBuffer[compressedLength];
     if (DEVICE_IS_UHK80_LEFT) {
         memset(compressedBuffer, 0, compressedLength);
     }
+
+    backlighting_mode_t currentBacklightingMode = Ledmap_GetEffectiveBacklightMode();
 
     uint8_t slotId = DEVICE_IS_UHK80_LEFT ? SlotId_LeftKeyboardHalf : SlotId_RightKeyboardHalf;
     for (uint8_t rowId=0; rowId<KEY_MATRIX_ROWS; rowId++) {
@@ -103,6 +107,11 @@ static void scanKeys() {
 
                 if (DEVICE_IS_UHK80_LEFT) {
                     BoolBitToBytes(keyStateBuffer[sourceIndex], targetKeyId, compressedBuffer);
+                }
+
+                if (keyStateBuffer[sourceIndex] && currentBacklightingMode == BacklightingMode_LedTest) {
+                    Ledmap_ActivateTestled(slotId, targetKeyId);
+                    EventVector_WakeMain();
                 }
             }
         }

@@ -3,6 +3,7 @@
 #include "key_action.h"
 #include "led_display.h"
 #include "layer.h"
+#include "ledmap.h"
 #include "stubs.h"
 #include "test_switches.h"
 #include "slot.h"
@@ -540,6 +541,10 @@ static void updateActionStates() {
 #ifndef __ZEPHYR__
                     if (SleepModeActive) {
                         WakeUpHost();
+                    }
+
+                    if (Ledmap_GetEffectiveBacklightMode() == BacklightingMode_LedTest) {
+                        Ledmap_ActivateTestled(slotId, keyId);
                     }
 #endif
 

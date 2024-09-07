@@ -55,4 +55,7 @@ void RunUserLogic(void) {
 }
 
 void RunUhk80LeftHalfLogic() {
+    if (EventVector_IsSet(EventVector_LedMapUpdateNeeded)) {
+        Ledmap_UpdateBacklightLeds();
+    }
 }
