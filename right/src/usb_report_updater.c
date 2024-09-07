@@ -435,6 +435,12 @@ static void commitKeyState(key_state_t *keyState, bool active)
     }
 #endif
 
+    if (Ledmap_LedTestActive && active) {
+        key_coordinates_t key = Utils_KeyIdToKeyCoordinates(Utils_KeyStateToKeyId(keyState));
+        Ledmap_ActivateTestled(key.slotId, key.inSlotId);
+        return;
+    }
+
     if (PostponerCore_EventsShouldBeQueued()) {
         PostponerCore_TrackKeyEvent(keyState, active, 255);
     } else {
@@ -541,10 +547,6 @@ static void updateActionStates() {
 #ifndef __ZEPHYR__
                     if (SleepModeActive) {
                         WakeUpHost();
-                    }
-
-                    if (Ledmap_GetEffectiveBacklightMode() == BacklightingMode_LedTest) {
-                        Ledmap_ActivateTestled(slotId, keyId);
                     }
 #endif
 

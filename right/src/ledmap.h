@@ -41,6 +41,8 @@
 
 // Variables:
 
+    extern bool Ledmap_LedTestActive;
+
 // Functions:
 
     void Ledmap_UpdateBacklightLeds(void);

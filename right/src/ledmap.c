@@ -32,6 +32,7 @@ typedef enum {
     BacklightingLedTestModeState_Additive,
 } backlighting_led_test_mode_state_t;
 
+bool Ledmap_LedTestActive = false;
 static uint32_t backlightingLedTestStart = 0;
 static backlighting_led_test_mode_state_t backlightingLedTestModeState = BacklightingLedTestModeState_All;
 
@@ -617,10 +618,12 @@ void handleModeChange(backlighting_mode_t from, backlighting_mode_t to) {
 
 void Ledmap_ActivateTestLedMode(bool active) {
     if (active) {
+        Ledmap_LedTestActive = true;
         Ledmap_SetTemporaryLedBacklightingMode(BacklightingMode_LedTest);
         EventVector_Set(EventVector_LedMapUpdateNeeded);
         EventVector_WakeMain();
     } else {
+        Ledmap_LedTestActive = false;
         Ledmap_ResetTemporaryLedBacklightingMode();
         EventVector_Set(EventVector_LedMapUpdateNeeded);
         EventVector_WakeMain();
