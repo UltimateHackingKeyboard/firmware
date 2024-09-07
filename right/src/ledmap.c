@@ -306,9 +306,9 @@ static rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
         RGB(147,148,149), // h
         RGB(151,150,152), // n
         RGB(111,112,113), // m
-        RGB(3,4,5),       // ,
-        RGB(21,22,23),    // .
-        RGB(39,40,41),    // /
+        RGB(39,40,41),    // ,
+        RGB(3,4,5),       // .
+        RGB(21,22,23),    // /
         RGB(183,184,185), // shift
         RGB(0,0,0),       // unused
         RGB(115,114,116), // space
@@ -324,10 +324,10 @@ static rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
         RGB(11,10,12),    // f11
         RGB(29,28,30),    // f12
         RGB(191,190,192), // print
-        RGB(140,139,141), // del
-        RGB(176,175,177), // ins
-        RGB(173,172,174), // scrl lck
-        RGB(137,136,138), // pause
+        RGB(173,172,174), // del
+        RGB(137,136,138), // ins
+        RGB(176,175,177), // scrlk
+        RGB(140,139,141), // pause
         RGB(178,179,180), // home
         RGB(142,143,144), // pg up
         RGB(163,164,171), // end
