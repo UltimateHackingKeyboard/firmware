@@ -33,7 +33,7 @@ usage: ./build DEVICE1 DEVICE2 ... ACTION1 ACTION2 ...
     You can also set a command that will be executed after the builds are finished,
     and a command that will be executed whenever this script is invoked:
 
-        BELL=mplayer ring.mp3
+        POSTBUILD=mplayer ring.mp3
         PREBUILD=./fixStuff.sh
 
     Examples:
@@ -168,6 +168,16 @@ function setupUartMonitor() {
     fi
 }
 
+function createCentralCompileCommands() {
+    TEMP_COMMANDS=`mktemp`
+
+    echo creating central compile_commands.json
+
+    jq -s 'add' $PWD/device/build/*/compile_commands.json $PWD/right/uhk60v2/compile_commands.json $PWD/*/compile_commands.json > $TEMP_COMMANDS
+
+    mv $TEMP_COMMANDS $PWD/compile_commands.json
+}
+
 function performAction() {
     DEVICE=$1
     ACTION=$2
@@ -197,6 +207,7 @@ END
                 unset PYTHONHOME
                 west build --build-dir $PWD/device/build/$DEVICE $PWD/device --pristine --board $DEVICE --no-sysbuild -- -DNCS_TOOLCHAIN_VERSION=NONE -DEXTRA_CONF_FILE=prj.conf.overlays/$DEVICE.prj.conf -DBOARD_ROOT=$PWD -Dmcuboot_OVERLAY_CONFIG=$PWD/device/child_image/mcuboot.conf;$PWD/device/child_image/$DEVICE.mcuboot.conf
 END
+            createCentralCompileCommands
             ;;
         make)
             nrfutil toolchain-manager launch --shell --ncs-version $NCS_VERSION << END
@@ -232,7 +243,7 @@ function performActions() {
     do
         performAction "$DEVICE" $ACTION
     done
-    eval $BELL
+    eval $POSTBUILD
 }
 
 
