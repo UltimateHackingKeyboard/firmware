@@ -38,7 +38,7 @@
 
 // Variables:
 
-    extern bool UsbMouseHighResMode;
+    extern int16_t UsbMouseScrollMultiplier;
     extern uint32_t UsbMouseActionCounter;
     extern usb_mouse_report_t* ActiveUsbMouseReport;
 

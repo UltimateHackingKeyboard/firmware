@@ -2,7 +2,6 @@
 #include "key_action.h"
 #include "layer.h"
 #include "slave_protocol.h"
-#include "usb_descriptors/usb_descriptor_mouse_report.h"
 #include "usb_interfaces/usb_interface_mouse.h"
 #include "slave_drivers/uhk_module_driver.h"
 #include "timer.h"
@@ -523,7 +522,7 @@ static void processModuleKineticState(
             break;
         }
         case NavigationMode_Scroll:  {
-            speed *= UsbMouseHighResMode ? USB_MOUSE_REPORT_DESCRIPTOR_MAX_RESOLUTION_MULTIPLIER_PHYSICAL_VALUE : USB_MOUSE_REPORT_DESCRIPTOR_MIN_RESOLUTION_MULTIPLIER_PHYSICAL_VALUE;
+            speed *= UsbMouseScrollMultiplier;
             if (!moduleConfiguration->scrollAxisLock) {
                 float xIntegerPart;
                 float yIntegerPart;
