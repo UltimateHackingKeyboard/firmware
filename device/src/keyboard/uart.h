@@ -20,6 +20,7 @@
     bool Uart_IsConnected();
     void Uart_SendPacket(const uint8_t* data, uint16_t len);
     void Uart_SendMessage(message_t msg);
+    bool Uart_Availability(messenger_availability_op_t total);
     void Uart_Enable();
     void InitUart(void);
 

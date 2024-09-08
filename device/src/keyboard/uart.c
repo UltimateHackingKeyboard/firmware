@@ -248,6 +248,21 @@ void InitUart(void) {
     k_thread_name_set(&thread_data, "test_uart");
 }
 
+bool Uart_Availability(messenger_availability_op_t operation) {
+    switch (operation) {
+        case MessengerAvailabilityOp_InquireOneEmpty:
+            return k_sem_count_get(&txBufferBusy) > 0;
+        case MessengerAvailabilityOp_InquireAllEmpty:
+            return k_sem_count_get(&txBufferBusy) == UART_SLOTS;
+        case MessengerAvailabilityOp_BlockTillOneEmpty:
+            k_sem_take(&txBufferBusy, K_FOREVER);
+            k_sem_give(&txBufferBusy);
+            return true;
+        default:
+            return false;
+    }
+}
+
 void Uart_Enable() {
     printk("Enabling UART\n");
     uart_rx_enable(uart_dev, rxbuf, BUF_SIZE, UART_TIMEOUT);

@@ -155,6 +155,21 @@ void NusClient_Init(void) {
     printk("Scanning successfully started\n");
 }
 
+bool NusClient_Availability(messenger_availability_op_t operation) {
+    switch (operation) {
+        case MessengerAvailabilityOp_InquireOneEmpty:
+            return k_sem_count_get(&nusBusy) > 0;
+        case MessengerAvailabilityOp_InquireAllEmpty:
+            return k_sem_count_get(&nusBusy) == NUS_SLOTS;
+        case MessengerAvailabilityOp_BlockTillOneEmpty:
+            k_sem_take(&nusBusy, K_FOREVER);
+            k_sem_give(&nusBusy);
+            return true;
+        default:
+            return false;
+    }
+}
+
 void NusClient_Send(const uint8_t *data, uint16_t len) {
     SEM_TAKE(&nusBusy);
     int err = bt_nus_client_send(&nus_client, data, len);
