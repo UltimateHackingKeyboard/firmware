@@ -6,6 +6,7 @@
 #include "legacy/slave_drivers/uhk_module_driver.h"
 #include "state_sync.h"
 #include "shared/slave_protocol.h"
+#include "legacy/event_scheduler.h"
 
 static connection_type_t isConnected[ConnectionId_Count] = {};
 
@@ -34,6 +35,21 @@ void handleStateTransition(connection_id_t remoteId, bool connected) {
                         } else {
                             ModuleConnectionStates[UhkModuleDriverId_LeftKeyboardHalf].moduleId = 0;
                             ModuleConnectionStates[UhkModuleDriverId_LeftModule].moduleId = 0;
+
+                            bool changed = false;
+                            for (uint8_t slotId = SlotId_LeftKeyboardHalf; slotId <= SlotId_LeftModule; slotId++) {
+                                for (uint8_t keyId = 0; keyId < MAX_KEY_COUNT_PER_MODULE; keyId++) {
+                                    if (KeyStates[slotId][keyId].hardwareSwitchState) {
+                                        KeyStates[slotId][keyId].hardwareSwitchState = false;
+                                        changed = true;
+                                    }
+                                }
+                            }
+
+                            if (changed) {
+                                EventVector_Set(EventVector_StateMatrix);
+                                EventVector_WakeMain();
+                            }
                         }
                         break;
                     case ConnectionId_Dongle:
