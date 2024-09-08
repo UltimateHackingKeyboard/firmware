@@ -62,6 +62,8 @@ static void scanKeys() {
     static bool keyStateBuffer[KEY_MATRIX_ROWS*KEY_MATRIX_COLS];
     bool keyPressed = false;
 
+    CurrentTime = k_uptime_get_32();
+
     for (uint8_t rowId=0; rowId<KEY_MATRIX_ROWS; rowId++) {
         gpio_pin_set_dt(&rows[rowId], 1);
         for (uint8_t colId=0; colId<KEY_MATRIX_COLS; colId++) {
@@ -85,7 +87,6 @@ static void scanKeys() {
         return;
     }
 
-    CurrentTime = k_uptime_get_32();
     uint8_t compressedLength = MAX_KEY_COUNT_PER_MODULE/8+1;
     uint8_t compressedBuffer[compressedLength];
     if (DEVICE_IS_UHK80_LEFT) {
