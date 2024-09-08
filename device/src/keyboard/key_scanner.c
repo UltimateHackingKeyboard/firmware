@@ -18,6 +18,7 @@
 #include "device.h"
 #include "legacy/event_scheduler.h"
 #include "main.h"
+#include "legacy/config_manager.h"
 
 // Thread definitions
 
@@ -84,11 +85,14 @@ static void scanKeys() {
         return;
     }
 
+    CurrentTime = k_uptime_get_32();
     uint8_t compressedLength = MAX_KEY_COUNT_PER_MODULE/8+1;
     uint8_t compressedBuffer[compressedLength];
     if (DEVICE_IS_UHK80_LEFT) {
         memset(compressedBuffer, 0, compressedLength);
     }
+
+    backlighting_mode_t currentBacklightingMode = Ledmap_GetEffectiveBacklightMode();
 
     uint8_t slotId = DEVICE_IS_UHK80_LEFT ? SlotId_LeftKeyboardHalf : SlotId_RightKeyboardHalf;
     for (uint8_t rowId=0; rowId<KEY_MATRIX_ROWS; rowId++) {
@@ -97,6 +101,15 @@ static void scanKeys() {
             uint8_t targetKeyId = KeyLayout_Uhk80_to_Uhk60[slotId][sourceIndex];
 
             if (targetKeyId < MAX_KEY_COUNT_PER_MODULE) {
+                if (currentBacklightingMode == BacklightingMode_LedTest) {
+                    if ( keyStateBuffer[sourceIndex] ) {
+                        Ledmap_ActivateTestled(slotId, targetKeyId);
+                        EventVector_WakeMain();
+                    }
+                    KeyStates[CURRENT_SLOT_ID][targetKeyId].hardwareSwitchState = false;
+                    continue;
+                }
+
                 if (DEVICE_IS_UHK80_RIGHT) {
                     KeyStates[CURRENT_SLOT_ID][targetKeyId].hardwareSwitchState = keyStateBuffer[sourceIndex];
                 }
@@ -110,7 +123,7 @@ static void scanKeys() {
 
     if (DEVICE_IS_UHK80_RIGHT) {
         EventVector_Set(EventVector_StateMatrix);
-        k_wakeup(Main_ThreadId);
+        EventVector_WakeMain();
     }
 
     if (DEVICE_IS_UHK80_LEFT) {

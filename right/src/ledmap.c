@@ -27,6 +27,15 @@ static const rgb_t white = RGB(0xff, 0xff, 0xff);
 
 backlighting_mode_t TemporaryBacklightingMode = BacklightingMode_Unspecified;
 
+typedef enum {
+    BacklightingLedTestModeState_All,
+    BacklightingLedTestModeState_Additive,
+} backlighting_led_test_mode_state_t;
+
+bool Ledmap_LedTestActive = false;
+static uint32_t backlightingLedTestStart = 0;
+static backlighting_led_test_mode_state_t backlightingLedTestModeState = BacklightingLedTestModeState_All;
+
 #if DEVICE_ID == DEVICE_ID_UHK60V1
 
 static rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
@@ -298,9 +307,9 @@ static rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
         RGB(147,148,149), // h
         RGB(151,150,152), // n
         RGB(111,112,113), // m
-        RGB(3,4,5),       // ,
-        RGB(21,22,23),    // .
-        RGB(39,40,41),    // /
+        RGB(39,40,41),    // ,
+        RGB(3,4,5),       // .
+        RGB(21,22,23),    // /
         RGB(183,184,185), // shift
         RGB(0,0,0),       // unused
         RGB(115,114,116), // space
@@ -316,10 +325,10 @@ static rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
         RGB(11,10,12),    // f11
         RGB(29,28,30),    // f12
         RGB(191,190,192), // print
-        RGB(140,139,141), // del
-        RGB(176,175,177), // ins
-        RGB(173,172,174), // scrl lck
-        RGB(137,136,138), // pause
+        RGB(173,172,174), // del
+        RGB(137,136,138), // ins
+        RGB(176,175,177), // scrlk
+        RGB(140,139,141), // pause
         RGB(178,179,180), // home
         RGB(142,143,144), // pg up
         RGB(163,164,171), // end
@@ -563,6 +572,35 @@ static void updateLedsByPerKeyKeyStragegy() {
     }
 }
 
+static void setAllTo(const rgb_t* color) {
+    for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
+        color_mode_t colorMode = determineMode(slotId);
+        for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
+            setPerKeyColor(color, colorMode, slotId, keyId);
+        }
+    }
+}
+
+static void updateLedsByLedTestStragegy() {
+    if (backlightingLedTestModeState == BacklightingLedTestModeState_All) {
+        setAllTo(&white);
+    }
+}
+
+void Ledmap_ActivateTestled(uint8_t slotId, uint8_t keyId) {
+    if (CurrentTime < backlightingLedTestStart + 1000) {
+        return;
+    }
+
+    if (backlightingLedTestModeState == BacklightingLedTestModeState_All) {
+        setAllTo(&black);
+        backlightingLedTestModeState = BacklightingLedTestModeState_Additive;
+    }
+    color_mode_t colorMode = determineMode(slotId);
+    setPerKeyColor(&white, colorMode, slotId, keyId);
+    EventVector_Set(EventVector_LedMapUpdateNeeded);
+}
+
 backlighting_mode_t Ledmap_GetEffectiveBacklightMode() {
     if (TemporaryBacklightingMode == BacklightingMode_Unspecified) {
         return Cfg.BacklightingMode;
@@ -571,9 +609,39 @@ backlighting_mode_t Ledmap_GetEffectiveBacklightMode() {
     }
 }
 
+void handleModeChange(backlighting_mode_t from, backlighting_mode_t to) {
+    if (to == BacklightingMode_LedTest) {
+        backlightingLedTestModeState = BacklightingLedTestModeState_All;
+        backlightingLedTestStart = CurrentTime;
+    }
+}
+
+void Ledmap_ActivateTestLedMode(bool active) {
+    if (active) {
+        Ledmap_LedTestActive = true;
+        Ledmap_SetTemporaryLedBacklightingMode(BacklightingMode_LedTest);
+        EventVector_Set(EventVector_LedMapUpdateNeeded);
+        EventVector_WakeMain();
+    } else {
+        Ledmap_LedTestActive = false;
+        Ledmap_ResetTemporaryLedBacklightingMode();
+        EventVector_Set(EventVector_LedMapUpdateNeeded);
+        EventVector_WakeMain();
+    }
+}
+
 void Ledmap_UpdateBacklightLeds(void) {
     EventVector_Unset(EventVector_LedMapUpdateNeeded);
-    switch (Ledmap_GetEffectiveBacklightMode()) {
+
+    backlighting_mode_t currentMode = Ledmap_GetEffectiveBacklightMode();
+
+    static backlighting_mode_t lastBacklightingMode = BacklightingMode_Unspecified;
+    if (lastBacklightingMode != currentMode) {
+        handleModeChange(lastBacklightingMode, currentMode);
+        lastBacklightingMode = currentMode;
+    }
+
+    switch (currentMode) {
         case BacklightingMode_PerKeyRgb:
             updateLedsByPerKeyKeyStragegy();
             break;
@@ -585,6 +653,9 @@ void Ledmap_UpdateBacklightLeds(void) {
             break;
         case BacklightingMode_Numpad:
             updateLedsByNumpadStrategy();
+            break;
+        case BacklightingMode_LedTest:
+            updateLedsByLedTestStragegy();
             break;
         case BacklightingMode_Unspecified:
             break;

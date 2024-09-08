@@ -12,6 +12,7 @@
         BacklightingMode_PerKeyRgb,
         BacklightingMode_ConstantRGB,
         BacklightingMode_Numpad,
+        BacklightingMode_LedTest,
         BacklightingMode_Unspecified,
     } backlighting_mode_t;
 
@@ -40,10 +41,14 @@
 
 // Variables:
 
+    extern bool Ledmap_LedTestActive;
+
 // Functions:
 
     void Ledmap_UpdateBacklightLeds(void);
     void Ledmap_InitLedLayout(void);
+    void Ledmap_ActivateTestled(uint8_t slotId, uint8_t keyId);
+    void Ledmap_ActivateTestLedMode(bool active);
     void Ledmap_SetLedBacklightingMode(backlighting_mode_t newMode);
     void Ledmap_SetTemporaryLedBacklightingMode(backlighting_mode_t newMode);
     void Ledmap_ResetTemporaryLedBacklightingMode();

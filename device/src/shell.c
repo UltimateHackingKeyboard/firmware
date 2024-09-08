@@ -10,6 +10,8 @@
 #include <zephyr/shell/shell.h>
 #include "bt_conn.h"
 #include "keyboard/charger.h"
+#include "legacy/ledmap.h"
+#include "legacy/event_scheduler.h"
 
 shell_t Shell = {
     .keyLog = 0,
@@ -81,6 +83,18 @@ static int cmd_uhk_charger(const struct shell *shell, size_t argc, char *argv[])
 }
 #endif // !DEVICE_IS_UHK_DONGLE
 
+#if DEVICE_IS_UHK80_RIGHT
+static int cmd_uhk_testled(const struct shell *shell, size_t argc, char *argv[])
+{
+    if (argc == 1 || argv[1][0] == '1') {
+        Ledmap_ActivateTestLedMode(true);
+    } else {
+        Ledmap_ActivateTestLedMode(false);
+    }
+    return 0;
+}
+#endif
+
 #if DEVICE_HAS_OLED
 static int cmd_uhk_oled(const struct shell *shell, size_t argc, char *argv[])
 {
@@ -148,6 +162,10 @@ void InitShell(void)
         SHELL_CMD_ARG(sdb, NULL, "get/set LED driver SDB pin", cmd_uhk_sdb, 1, 1),
         SHELL_CMD_ARG(charger, NULL, "get/set CHARGER_EN pin", cmd_uhk_charger, 1, 1),
 #endif // !DEVICE_IS_UHK_DONGLE
+#if DEVICE_IS_UHK80_RIGHT
+        SHELL_CMD_ARG(testled, NULL, "enable led test mode", cmd_uhk_testled, 0, 1),
+        SHELL_CMD_ARG(ledtest, NULL, "enable led test mode", cmd_uhk_testled, 0, 1),
+#endif
 #if DEVICE_HAS_OLED
         SHELL_CMD_ARG(oled, NULL, "get/set OLED_EN pin", cmd_uhk_oled, 1, 1),
 #endif

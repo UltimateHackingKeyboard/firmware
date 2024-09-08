@@ -3,6 +3,7 @@
 #include "key_action.h"
 #include "led_display.h"
 #include "layer.h"
+#include "ledmap.h"
 #include "stubs.h"
 #include "test_switches.h"
 #include "slot.h"
@@ -433,6 +434,12 @@ static void commitKeyState(key_state_t *keyState, bool active)
         Log("Key %i %s", Utils_KeyStateToKeyId(keyState), active ? "down" : "up");
     }
 #endif
+
+    if (Ledmap_LedTestActive && active) {
+        key_coordinates_t key = Utils_KeyIdToKeyCoordinates(Utils_KeyStateToKeyId(keyState));
+        Ledmap_ActivateTestled(key.slotId, key.inSlotId);
+        return;
+    }
 
     if (PostponerCore_EventsShouldBeQueued()) {
         PostponerCore_TrackKeyEvent(keyState, active, 255);
