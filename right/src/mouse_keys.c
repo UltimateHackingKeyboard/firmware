@@ -176,11 +176,6 @@ void MouseKeys_ProcessMouseActions()
     mouseElapsedTime = Timer_GetElapsedTimeAndSetCurrent(&mouseUsbReportUpdateTime);
     memset(&MouseKeysMouseReport, 0, sizeof(MouseKeysMouseReport));
 
-    if (mouseElapsedTime == 0) {
-        EventVector_Set(EventVector_MouseKeys);
-        return;
-    }
-
     processMouseKineticState(&Cfg.MouseMoveState);
     MouseKeysMouseReport.x += Cfg.MouseMoveState.xOut;
     MouseKeysMouseReport.y += Cfg.MouseMoveState.yOut;
