@@ -130,9 +130,7 @@ static void connected(struct bt_conn *conn, uint8_t err) {
             DeviceState_SetConnection(ConnectionId_BluetoothHid, ConnectionType_Bt);
         }
     } else {
-        if (peerId == PeerIdDongle) {
-            set_latency_params(conn);
-        }
+        set_latency_params(conn);
 
         set_data_length_extension_params(conn);
 
