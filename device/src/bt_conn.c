@@ -92,7 +92,10 @@ static void set_latency_params(struct bt_conn *conn) {
         0, // keeping it higher allows power saving on peripheral when there's nothing to send (keep it under 30 though)
         100 // connection timeout (*10ms)
     );
-    bt_conn_le_param_update(conn, &conn_params);
+    int err = bt_conn_le_param_update(conn, &conn_params);
+    if (err) {
+        printk("LE latencies update failed: %d", err);
+    }
 }
 
 static void connected(struct bt_conn *conn, uint8_t err) {

@@ -172,8 +172,10 @@ static void receive(device_id_t src, const uint8_t* data, uint16_t len) {
 }
 
 void Messenger_Enqueue(uint8_t src, const uint8_t* data, uint16_t len) {
-    MessengerQueue_Put(src, data, len);
-    k_wakeup(mainThreadId);
+    if (data[0] != MessageId_Ping) {
+        MessengerQueue_Put(src, data, len);
+        k_wakeup(mainThreadId);
+    }
 }
 
 void Messenger_ProcessQueue() {
