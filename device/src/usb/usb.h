@@ -40,5 +40,6 @@
     void USB_DisableHid(void);
     void USB_EnableHid(void);
     void USB_SetSerialNumber(uint32_t serialNumber);
+void USB_RemoteWakeup(void);
 
 #endif // __USB_HEADER__
