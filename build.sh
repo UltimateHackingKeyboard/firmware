@@ -19,6 +19,7 @@ usage: ./build DEVICE1 DEVICE2 ... ACTION1 ACTION2 ...
     build    full clean build with cmake execution
     make     just recompile / relink the binary
     flash    make and then flash
+    flashUsb just flash via USB
     shell    open build shell
     uart     open uhk shell
 
@@ -69,7 +70,7 @@ function processArguments() {
                 DEVICES="$DEVICES uhk-80-left uhk-80-right uhk-dongle"
                 shift
                 ;;
-            clean|setup|update|build|make|flash|shell|release)
+            clean|setup|update|build|make|flash|flashUsb|shell|release)
                 ACTIONS="$ACTIONS $1"
                 TARGET_TMUX_SESSION=$BUILD_SESSION_NAME
                 shift
@@ -173,15 +174,15 @@ function createCentralCompileCommands() {
 
     echo creating central compile_commands.json
 
-    jq -s 'add' $PWD/device/build/*/compile_commands.json $PWD/right/uhk60v2/compile_commands.json $PWD/*/compile_commands.json > $TEMP_COMMANDS
+    jq -s 'add' $ROOT/device/build/*/compile_commands.json $ROOT/right/uhk60v2/compile_commands.json $ROOT/*/compile_commands.json > $TEMP_COMMANDS
 
-    mv $TEMP_COMMANDS $PWD/compile_commands.json
+    mv $TEMP_COMMANDS $ROOT/compile_commands.json
 }
 
 function performAction() {
     DEVICE=$1
     ACTION=$2
-    PWD=`realpath .`
+    ROOT=`realpath .`
 
     case $ACTION in
         update)
@@ -205,20 +206,26 @@ END
             nrfutil toolchain-manager launch --shell --ncs-version $NCS_VERSION << END
                 unset PYTHONPATH
                 unset PYTHONHOME
-                west build --build-dir $PWD/device/build/$DEVICE $PWD/device --pristine --board $DEVICE --no-sysbuild -- -DNCS_TOOLCHAIN_VERSION=NONE -DEXTRA_CONF_FILE=prj.conf.overlays/$DEVICE.prj.conf -DBOARD_ROOT=$PWD -Dmcuboot_OVERLAY_CONFIG=$PWD/device/child_image/mcuboot.conf;$PWD/device/child_image/$DEVICE.mcuboot.conf
+                west build --build-dir $ROOT/device/build/$DEVICE $ROOT/device --pristine --board $DEVICE --no-sysbuild -- -DNCS_TOOLCHAIN_VERSION=NONE -DEXTRA_CONF_FILE=prj.conf.overlays/$DEVICE.prj.conf -DBOARD_ROOT=$ROOT -Dmcuboot_OVERLAY_CONFIG=$ROOT/device/child_image/mcuboot.conf;$ROOT/device/child_image/$DEVICE.mcuboot.conf
 END
             createCentralCompileCommands
             ;;
         make)
             nrfutil toolchain-manager launch --shell --ncs-version $NCS_VERSION << END
-                west build --build-dir $PWD/device/build/$DEVICE device
+                west build --build-dir $ROOT/device/build/$DEVICE device
 END
             ;;
         flash)
             DEVICEARG=`determineDevIdArg $DEVICE`
             nrfutil toolchain-manager launch --shell --ncs-version $NCS_VERSION << END
-                west flash -d $PWD/device/build/$DEVICE $DEVICEARG $OTHER_ARGS < /dev/tty
+                west flash -d $ROOT/device/build/$DEVICE $DEVICEARG $OTHER_ARGS < /dev/tty
 END
+            ;;
+        flashUsb)
+            cd $ROOT/lib/agent/packages/usb/
+            echo ./update-device-firmware.ts --vid=14248 --pid=5 --usb-interface=2 $ROOT/device/build/$DEVICE/zephyr/app_update.bin
+            ./update-device-firmware.ts --vid=14248 --pid=5 --usb-interface=2 $ROOT/device/build/$DEVICE/zephyr/app_update.bin
+            cd $ROOT
             ;;
         release)
             nrfutil toolchain-manager launch --shell --ncs-version $NCS_VERSION << END
