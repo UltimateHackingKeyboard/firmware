@@ -7,6 +7,7 @@
     #include <stdbool.h>
     #include "timer.h"
     #include "debug.h"
+    #include "atomicity.h"
 
 #ifdef __ZEPHYR__
     #include "main.h"
@@ -86,7 +87,9 @@
     void EventVector_ReportMask(const char* prefix, uint32_t mask);
 
     static inline void EventVector_Set(event_vector_event_t evt) {
+        DISABLE_IRQ();
         EventScheduler_Vector |= evt;
+        ENABLE_IRQ();
         LOG_SCHEDULE(
             if (evt != EventVector_EventScheduler) {
                 EventVector_ReportMask("    +++ ", evt);
@@ -110,7 +113,9 @@
                 EventVector_ReportMask("        --- ", evt);
             }
         );
+        DISABLE_IRQ();
         EventScheduler_Vector &= ~evt;
+        ENABLE_IRQ();
     };
 
     static inline void EventVector_SetValue(event_vector_event_t evt, bool active) {

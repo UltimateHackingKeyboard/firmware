@@ -19,6 +19,7 @@
 #include "layer.h"
 #include "config_manager.h"
 #include "event_scheduler.h"
+#include "atomicity.h"
 
 typedef struct {
     float x;
@@ -711,9 +712,7 @@ void MouseController_ProcessMouseActions()
         bool eventsIsNonzero = memcmp(&TouchpadEvents, &ZeroTouchpadEvents, sizeof TouchpadEvents) != 0;
         if (!eventsIsNonzero || (eventsIsNonzero && canWeRun(ks))) {
             //eventsIsNonzero is needed for touchpad action state automaton timer
-#ifndef __ZEPHYR__
-            __disable_irq();
-#endif
+            DISABLE_IRQ();
             touchpad_events_t events = TouchpadEvents;
             TouchpadEvents.zoomLevel = 0;
             TouchpadEvents.wheelX = 0;
@@ -721,9 +720,7 @@ void MouseController_ProcessMouseActions()
             TouchpadEvents.x = 0;
             TouchpadEvents.y = 0;
             // note that not all fields are resetted and that's correct
-#ifndef __ZEPHYR__
-            __enable_irq();
-#endif
+            ENABLE_IRQ();
             processTouchpadActions(events);
 
             processModuleActions(ks, ModuleId_TouchpadRight, (int16_t)events.x, (int16_t)events.y, 0xFF);
@@ -748,9 +745,7 @@ void MouseController_ProcessMouseActions()
 
         bool eventsIsNonzero = moduleState->pointerDelta.x || moduleState->pointerDelta.y;
         if (eventsIsNonzero && canWeRun(ks)) {
-#ifndef __ZEPHYR__
-            __disable_irq();
-#endif
+            DISABLE_IRQ();
             // Gcc compiles those int16_t assignments as sequences of
             // single-byte instructions, therefore we need to make the
             // sequence atomic.
@@ -758,9 +753,7 @@ void MouseController_ProcessMouseActions()
             int16_t y = moduleState->pointerDelta.y;
             moduleState->pointerDelta.x = 0;
             moduleState->pointerDelta.y = 0;
-#ifndef __ZEPHYR__
-            __enable_irq();
-#endif
+            ENABLE_IRQ();
 
             processModuleActions(ks, moduleState->moduleId, x, y, 0xFF);
         }
