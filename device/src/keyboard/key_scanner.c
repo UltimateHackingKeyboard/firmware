@@ -19,6 +19,8 @@
 #include "legacy/event_scheduler.h"
 #include "main.h"
 #include "legacy/config_manager.h"
+#include "legacy/macros/keyid_parser.h"
+#include "attributes.h"
 
 // Thread definitions
 
@@ -57,10 +59,23 @@ static struct gpio_dt_spec cols[KEY_MATRIX_COLS] = {
 #define COLS_COUNT (sizeof(cols) / sizeof(cols[0]))
 volatile bool KeyPressed;
 
+ATTR_UNUSED static void reportChange(uint8_t sourceIndex, bool active) {
+    uint8_t slotId = DEVICE_IS_UHK80_LEFT ? SlotId_LeftKeyboardHalf : SlotId_RightKeyboardHalf;
+    uint8_t keyId = KeyLayout_Uhk80_to_Uhk60[slotId][sourceIndex];
+    const char* abbrev = MacroKeyIdParser_KeyIdToAbbreviation(slotId*64 + keyId);
+    if (active) {
+        printk("%s   down\n", abbrev);
+    } else {
+        printk("  %s up\n", abbrev);
+    }
+}
+
 static void scanKeys() {
     bool somethingChanged = false;
     static bool keyStateBuffer[KEY_MATRIX_ROWS*KEY_MATRIX_COLS];
     bool keyPressed = false;
+
+    CurrentTime = k_uptime_get_32();
 
     for (uint8_t rowId=0; rowId<KEY_MATRIX_ROWS; rowId++) {
         gpio_pin_set_dt(&rows[rowId], 1);
@@ -74,6 +89,9 @@ static void scanKeys() {
             if (keyStateBuffer[targetIndex] != keyState) {
                 somethingChanged = true;
                 keyStateBuffer[targetIndex] = keyState;
+                // if (DEVICE_ID == DeviceId_Uhk80_Left) {
+                //     reportChange(targetIndex, keyState);
+                // }
             }
         }
         gpio_pin_set_dt(&rows[rowId], 0);
@@ -85,7 +103,6 @@ static void scanKeys() {
         return;
     }
 
-    CurrentTime = k_uptime_get_32();
     uint8_t compressedLength = MAX_KEY_COUNT_PER_MODULE/8+1;
     uint8_t compressedBuffer[compressedLength];
     if (DEVICE_IS_UHK80_LEFT) {

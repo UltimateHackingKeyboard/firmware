@@ -76,6 +76,21 @@ void NusServer_Send(const uint8_t *data, uint16_t len) {
     }
 }
 
+bool NusServer_Availability(messenger_availability_op_t operation) {
+    switch (operation) {
+        case MessengerAvailabilityOp_InquireOneEmpty:
+            return k_sem_count_get(&nusBusy) > 0;
+        case MessengerAvailabilityOp_InquireAllEmpty:
+            return k_sem_count_get(&nusBusy) == NUS_SLOTS;
+        case MessengerAvailabilityOp_BlockTillOneEmpty:
+            k_sem_take(&nusBusy, K_FOREVER);
+            k_sem_give(&nusBusy);
+            return true;
+        default:
+            return false;
+    }
+}
+
 void NusServer_SendMessage(message_t msg) {
     uint8_t buffer[MAX_LINK_PACKET_LENGTH];
 

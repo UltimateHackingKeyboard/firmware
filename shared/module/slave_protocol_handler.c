@@ -1,4 +1,5 @@
 #include "slave_protocol_handler.h"
+#include "atomicity.h"
 #include "bool_array_converter.h"
 #include "bootloader.h"
 #include "i2c_addresses.h"
@@ -10,6 +11,7 @@
 #include "slave_protocol.h"
 #include "versioning.h"
 #include <string.h>
+#include "atomicity.h"
 
 i2c_message_t RxMessage;
 i2c_message_t TxMessage;
@@ -111,7 +113,7 @@ void SlaveTxHandler(void)
         uint8_t messageLength = BOOL_BYTES_TO_BITS_COUNT(MODULE_KEY_COUNT);
         if (MODULE_POINTER_COUNT) {
             pointer_delta_t *pointerDelta = (pointer_delta_t *)(TxMessage.data + messageLength);
-            __disable_irq();
+            DISABLE_IRQ();
             // Gcc compiles those int16_t assignments as sequences of
             // single-byte instructions, therefore we need to make the
             // sequence atomic in order to prevent race conditions.
@@ -121,7 +123,7 @@ void SlaveTxHandler(void)
             pointerDelta->debugInfo = PointerDelta.debugInfo;
             PointerDelta.x = 0;
             PointerDelta.y = 0;
-            __enable_irq();
+            ENABLE_IRQ();
             messageLength += sizeof(pointer_delta_t);
         }
         TxMessage.length = messageLength;

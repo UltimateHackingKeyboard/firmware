@@ -1,6 +1,7 @@
 #include "state_sync.h"
 #include "device.h"
 #include "device_state.h"
+#include "event_scheduler.h"
 #include "keyboard/oled/widgets/widgets.h"
 #include "legacy/config_manager.h"
 #include "legacy/config_parser/config_globals.h"
@@ -271,17 +272,19 @@ static void receiveProperty(
     case StateSyncPropertyId_LayerActionFirst ... StateSyncPropertyId_LayerActionLast:
         receiveLayerActions((sync_command_layer_t *)data);
         if ((propId - StateSyncPropertyId_LayerActionFirst) == ActiveLayer) {
-            Ledmap_UpdateBacklightLeds();
+            EventVector_Set(EventVector_LedMapUpdateNeeded);
         }
         break;
     case StateSyncPropertyId_ActiveLayer:
-        Ledmap_UpdateBacklightLeds();
+        if (!isLocalUpdate) {
+            EventVector_Set(EventVector_LedMapUpdateNeeded);
+        }
         break;
     case StateSyncPropertyId_Backlight:
         if (!isLocalUpdate) {
             receiveBacklight((sync_command_backlight_t *)data);
         }
-        Ledmap_UpdateBacklightLeds();
+        EventVector_Set(EventVector_LedMapUpdateNeeded);
         break;
     case StateSyncPropertyId_Battery:
         WIDGET_REFRESH(&StatusWidget);

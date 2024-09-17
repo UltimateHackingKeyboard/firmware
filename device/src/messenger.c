@@ -22,39 +22,52 @@
 
 static k_tid_t mainThreadId = 0;
 
-static void sendOverBt(device_id_t dst, message_t message) {
-    if (DEVICE_IS_UHK80_LEFT) {
-        switch (dst) {
-            case DeviceId_Uhk80_Right:
-                NusServer_SendMessage(message);
-                break;
-            default:
-                printk("Cannot send message from %s to %s\n", Utils_DeviceIdToString(DEVICE_ID), Utils_DeviceIdToString(dst));
+typedef enum {
+    MessengerChannel_NusServer,
+    MessengerChannel_NusClient,
+    MessengerChannel_Uart,
+    MessengerChannel_None,
+} messenger_channel_t;
+
+static messenger_channel_t determineChannel(device_id_t dst) {
+#if DEVICE_IS_KEYBOARD
+    if (Uart_IsConnected() && (dst == DeviceId_Uhk80_Left || dst == DeviceId_Uhk80_Right)) {
+        return MessengerChannel_Uart;
+    }
+#endif
+
+    if (Bt_DeviceIsConnected(dst)) {
+        if (DEVICE_IS_UHK80_LEFT) {
+            switch (dst) {
+                case DeviceId_Uhk80_Right:
+                    return MessengerChannel_NusServer;
+                default:
+                    return MessengerChannel_None;
+            }
+        }
+
+        if (DEVICE_IS_UHK80_RIGHT) {
+            switch (dst) {
+                case DeviceId_Uhk_Dongle:
+                    return MessengerChannel_NusServer;
+                case DeviceId_Uhk80_Left:
+                    return MessengerChannel_NusClient;
+                default:
+                    return MessengerChannel_None;
+            }
+        }
+
+        if (DEVICE_IS_UHK_DONGLE) {
+            switch (dst) {
+                case DeviceId_Uhk80_Right:
+                    return MessengerChannel_NusClient;
+                default:
+                    return MessengerChannel_None;
+            }
         }
     }
 
-    if (DEVICE_IS_UHK80_RIGHT) {
-        switch (dst) {
-            case DeviceId_Uhk_Dongle:
-                NusServer_SendMessage(message);
-                break;
-            case DeviceId_Uhk80_Left:
-                NusClient_SendMessage(message);
-                break;
-            default:
-                printk("Cannot send message from %s to %s\n", Utils_DeviceIdToString(DEVICE_ID), Utils_DeviceIdToString(dst));
-        }
-    }
-
-    if (DEVICE_IS_UHK_DONGLE) {
-        switch (dst) {
-            case DeviceId_Uhk80_Right:
-                NusClient_SendMessage(message);
-                break;
-            default:
-                printk("Cannot send message from %s to %s\n", Utils_DeviceIdToString(DEVICE_ID), Utils_DeviceIdToString(dst));
-        }
-    }
+    return MessengerChannel_None;
 }
 
 static void receiveLeft(device_id_t src, const uint8_t* data, uint16_t len) {
@@ -159,8 +172,10 @@ static void receive(device_id_t src, const uint8_t* data, uint16_t len) {
 }
 
 void Messenger_Enqueue(uint8_t src, const uint8_t* data, uint16_t len) {
-    MessengerQueue_Put(src, data, len);
-    k_wakeup(mainThreadId);
+    if (data[0] != MessageId_Ping) {
+        MessengerQueue_Put(src, data, len);
+        k_wakeup(mainThreadId);
+    }
 }
 
 void Messenger_ProcessQueue() {
@@ -173,20 +188,43 @@ void Messenger_ProcessQueue() {
     }
 }
 
-void Messenger_SendMessage(device_id_t dst, message_t message) {
+bool Messenger_Availability(device_id_t dst, messenger_availability_op_t operation) {
+    messenger_channel_t channel = determineChannel(dst);
+
+    switch (channel) {
+        case MessengerChannel_Uart:
 #if DEVICE_IS_KEYBOARD
-    if (Uart_IsConnected() && (dst == DeviceId_Uhk80_Left || dst == DeviceId_Uhk80_Right)) {
-        Uart_SendMessage(message);
-        return;
-    }
+            return Uart_Availability(operation);
 #endif
-
-    if (Bt_DeviceIsConnected(dst)) {
-        sendOverBt(dst, message);
-        return;
+            return false;
+        case MessengerChannel_NusServer:
+            return NusServer_Availability(operation);
+        case MessengerChannel_NusClient:
+            return NusClient_Availability(operation);
+        default:
+            return false;
     }
+}
 
-    printk("Failed to send message from %s to %s\n", Utils_DeviceIdToString(DEVICE_ID), Utils_DeviceIdToString(dst));
+void Messenger_SendMessage(device_id_t dst, message_t message) {
+    messenger_channel_t channel = determineChannel(dst);
+
+    switch (channel) {
+        case MessengerChannel_Uart:
+#if DEVICE_IS_KEYBOARD
+            Uart_SendMessage(message);
+#endif
+            break;
+        case MessengerChannel_NusServer:
+            NusServer_SendMessage(message);
+            break;
+        case MessengerChannel_NusClient:
+            NusClient_SendMessage(message);
+            break;
+        default:
+            printk("Failed to send message from %s to %s\n", Utils_DeviceIdToString(DEVICE_ID), Utils_DeviceIdToString(dst));
+            break;
+    }
 }
 
 void Messenger_Send(device_id_t dst, uint8_t messageId, const uint8_t* data, uint16_t len) {

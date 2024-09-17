@@ -14,5 +14,6 @@
     extern void NusClient_Setup(struct bt_conn *conn);
     extern void NusClient_Send(const uint8_t *data, uint16_t len);
     extern void NusClient_SendMessage(message_t msg);
+    extern bool NusClient_Availability(messenger_availability_op_t operation);
 
 #endif // __NUS_CLIENT_H__
