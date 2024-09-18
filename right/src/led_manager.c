@@ -79,6 +79,8 @@ void LedManager_UpdateSleepModes() {
     uint32_t elapsedTime = Timer_GetElapsedTime(&UsbReportUpdater_LastActivityTime);
     bool ledsNeedUpdate = false;
 
+    EventScheduler_Unschedule(EventSchedulerEvent_UpdateLedSleepModes);
+
     uint32_t keyBacklightTimeout = RunningOnBattery ? Cfg.KeyBacklightFadeOutBatteryTimeout : Cfg.KeyBacklightFadeOutTimeout;
     if (elapsedTime >= keyBacklightTimeout && !KeyBacklightSleepModeActive && keyBacklightTimeout) {
         KeyBacklightSleepModeActive = true;
@@ -89,7 +91,7 @@ void LedManager_UpdateSleepModes() {
     }
 
     if (!KeyBacklightSleepModeActive && keyBacklightTimeout) {
-        EventScheduler_Reschedule(UsbReportUpdater_LastActivityTime + keyBacklightTimeout, EventSchedulerEvent_UpdateLedSleepModes, "LedManager - update key backlight sleep mode");
+        EventScheduler_Schedule(UsbReportUpdater_LastActivityTime + keyBacklightTimeout, EventSchedulerEvent_UpdateLedSleepModes, "LedManager - update key backlight sleep mode");
     }
 
     uint32_t displayTimeout = RunningOnBattery ? Cfg.DisplayFadeOutBatteryTimeout : Cfg.DisplayFadeOutTimeout;
@@ -102,7 +104,7 @@ void LedManager_UpdateSleepModes() {
     }
 
     if (!DisplaySleepModeActive && displayTimeout) {
-        EventScheduler_Reschedule(UsbReportUpdater_LastActivityTime + displayTimeout, EventSchedulerEvent_UpdateLedSleepModes, "LedManager - update display sleep mode");
+        EventScheduler_Schedule(UsbReportUpdater_LastActivityTime + displayTimeout, EventSchedulerEvent_UpdateLedSleepModes, "LedManager - update display sleep mode");
     }
 
     if (ledsNeedUpdate) {
