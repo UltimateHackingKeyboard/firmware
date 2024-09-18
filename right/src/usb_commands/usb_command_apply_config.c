@@ -13,6 +13,7 @@
 #include "led_manager.h"
 
 #ifdef __ZEPHYR__
+#include "state_sync.h"
 #include "legacy/event_scheduler.h"
 #include "main.h"
 #endif
@@ -79,6 +80,10 @@ void UsbCommand_ApplyConfig(void)
     }
 
     MacroEvent_OnInit();
+
+#ifdef __ZEPHYR__
+    StateSync_ResetConfig();
+#endif
 
     // Switch to the keymap of the updated configuration of the same name or the default keymap.
     if (SwitchKeymapByAbbreviation(oldKeymapAbbreviationLen, oldKeymapAbbreviation)) {

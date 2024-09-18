@@ -86,6 +86,7 @@
         StateSyncPropertyId_ModuleStateLeftModule,
         StateSyncPropertyId_LeftModuleDisconnected,
         StateSyncPropertyId_MergeSensor,
+        StateSyncPropertyId_FunctionalColors,
         StateSyncPropertyId_Count,
     } state_sync_prop_id_t;
 
@@ -130,5 +131,6 @@
 
     void StateSync_ResetRightLeftLink(bool bidirectional);
     void StateSync_ResetRightDongleLink(bool bidirectional);
+    void StateSync_ResetConfig();
 
 #endif
