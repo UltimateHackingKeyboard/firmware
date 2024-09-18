@@ -146,6 +146,11 @@ static uint16_t getGlyphWidth(const lv_font_t* font, uint8_t glyphIdx)
     return someGlyph->adv_w/16;
 }
 
+uint16_t Framebuffer_GetGlyphWidth(const lv_font_t* font, uint8_t glyphIdx)
+{
+    return getGlyphWidth(font, glyphIdx-31);
+}
+
 uint16_t Framebuffer_TextWidth(const lv_font_t* font, const char* text, const char* textEnd)
 {
     int len = 0;

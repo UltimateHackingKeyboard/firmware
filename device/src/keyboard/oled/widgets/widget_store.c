@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include "device_state.h"
 #include "usb/usb_compatibility.h"
+#include "macros/status_buffer.h"
 
 widget_t KeymapWidget;
 widget_t LayerWidget;
@@ -119,9 +120,18 @@ static string_segment_t getRightStatusText() {
 #undef BUFFER_LENGTH
 }
 
+static string_segment_t getErrorIndicatorText() {
+    static char buffer [3] = {};
+    sprintf(buffer, "%c%c", (char)FontControl_NextCharIcon12, (char)FontIcon_TriangleExclamation);
+    return (string_segment_t){ .start = buffer, .end = NULL };
+}
+
 static string_segment_t getKeyboardLedsStateText() {
     static char buffer [6] = {};
-    sprintf(buffer, "%cC %cN", KeyboardLedsState.capsLock ? FontControl_NextCharWhite : FontControl_NextCharGray, KeyboardLedsState.numLock ? FontControl_NextCharWhite : FontControl_NextCharGray);
+    sprintf(buffer, "%cC %cN",
+            KeyboardLedsState.capsLock ? FontControl_NextCharWhite : FontControl_NextCharGray,
+            KeyboardLedsState.numLock ? FontControl_NextCharWhite : FontControl_NextCharGray
+            );
     return (string_segment_t){ .start = buffer, .end = NULL };
 }
 
@@ -132,6 +142,9 @@ static void drawStatus(widget_t* self, framebuffer_t* buffer)
         self->dirty = false;
         Framebuffer_Clear(self, buffer);
         Framebuffer_DrawText(self, buffer, AlignmentType_Begin, AlignmentType_Center, &JetBrainsMono12, getLeftStatusText().start, NULL);
+        if (Macros_StatusBufferError) {
+            Framebuffer_DrawText(self, buffer, AlignmentType_Center - 30, AlignmentType_Center, &JetBrainsMono12, getErrorIndicatorText().start, NULL);
+        }
         Framebuffer_DrawText(self, buffer, AlignmentType_Center, AlignmentType_Center, &JetBrainsMono12, getKeyboardLedsStateText().start, NULL);
         Framebuffer_DrawText(self, buffer, AlignmentType_End, AlignmentType_Center, &JetBrainsMono12, getRightStatusText().start, NULL);
     }

@@ -16,6 +16,7 @@
 // Variables:
 //
     extern bool Macros_ConsumeStatusCharDirtyFlag;
+    extern bool Macros_StatusBufferError;
 
 // Functions:
 
