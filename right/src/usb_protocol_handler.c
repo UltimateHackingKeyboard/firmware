@@ -18,6 +18,8 @@
 
 #ifdef __ZEPHYR__
 #include "usb_commands/usb_command_draw_oled.h"
+#include "usb_commands/usb_command_pairing.h"
+#include "bt_conn.h"
 #else
 #include "usb_commands/usb_command_set_test_led.h"
 #include "usb_commands/usb_command_set_led_pwm_brightness.h"
@@ -94,6 +96,24 @@ void UsbProtocolHandler(void)
         case UsbCommandId_DrawOled:
             UsbCommand_DrawOled();
             break;
+        case UsbCommandId_GetPairingData:
+            UsbCommand_GetPairingData();
+            break;
+        case UsbCommandId_SetPairingData:
+            UsbCommand_SetPairingData();
+            break;
+        case UsbCommandId_PairCentral:
+            UsbCommand_PairCentral();
+            break;
+        case UsbCommandId_PairPeripheral:
+            UsbCommand_PairPeripheral();
+            break;
+        case UsbCommandId_UnpairAll:
+            UsbCommand_Unpair();
+            break;
+        case UsbCommandId_IsPaired:
+            UsbCommand_IsPaired();
+            break;
 #else
         case UsbCommandId_JumpToModuleBootloader:
             UsbCommand_JumpToModuleBootloader();
@@ -155,3 +175,20 @@ void SetUsbTxBufferUint32(uint32_t offset, uint32_t value)
 {
     SetBufferUint32(GenericHidInBuffer, offset, value);
 }
+
+#ifdef __ZEPHYR__
+bt_addr_le_t GetUsbRxBufferBleAddress(uint32_t offset) {
+    bt_addr_le_t addr;
+    addr.type = 1;
+    for (uint8_t i = 0; i < BLE_ADDR_LEN; i++) {
+        addr.a.val[i] = GenericHidOutBuffer[offset + i];
+    }
+    return addr;
+}
+
+void SetUsbTxBufferBleAddress(uint32_t offset, const bt_addr_le_t* addr) {
+    for (uint8_t i = 0; i < BLE_ADDR_LEN; i++) {
+        GenericHidInBuffer[offset + i] = addr->a.val[i];
+    }
+}
+#endif

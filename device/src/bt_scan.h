@@ -3,6 +3,7 @@
 
 // Functions:
 
+    extern int scan_reload_filters(void);
     extern int scan_init(void);
 
 #endif // __BT_SCAN_H__

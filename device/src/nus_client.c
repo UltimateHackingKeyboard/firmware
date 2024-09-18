@@ -18,6 +18,7 @@
 #include "link_protocol.h"
 #include "messenger_queue.h"
 #include "legacy/debug.h"
+#include <zephyr/settings/settings.h>
 
 static struct bt_nus_client nus_client;
 
@@ -97,7 +98,7 @@ static void exchange_func(struct bt_conn *conn, uint8_t err, struct bt_gatt_exch
     }
 }
 
-void NusClient_Setup(struct bt_conn *conn) {
+void NusClient_Connect(struct bt_conn *conn) {
     static struct bt_gatt_exchange_params exchange_params;
 
     exchange_params.func = exchange_func;
@@ -106,15 +107,10 @@ void NusClient_Setup(struct bt_conn *conn) {
         printk("MTU exchange failed with %s, err %d\n", GetPeerStringByConn(conn), err);
     }
 
-    err = bt_conn_set_security(conn, BT_SECURITY_L2);
-    if (err) {
-        printk("Failed to set security for %s: %d\n", GetPeerStringByConn(conn), err);
-    }
-
     gatt_discover(conn);
 
     err = bt_scan_stop();
-    if ((!err) && (err != -EALREADY)) {
+    if (err && (err != -EALREADY)) {
         printk("Stop LE scan failed (err %d)\n", err);
     }
 }

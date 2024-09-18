@@ -40,6 +40,7 @@
     ATTRS void Uart_Log(const char *fmt, ...) {};
     ATTRS void Log(const char *fmt, ...) {};
     ATTRS void LogBt(const char *fmt, ...) {};
+    ATTRS void BtPair_EndPairing(bool success, const char* msg) {};
 
 #if DEVICE_HAS_OLED
 #define WIDGET_REFRESH(W) Widget_Refresh(W)

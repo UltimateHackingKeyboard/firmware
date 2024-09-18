@@ -176,16 +176,12 @@ int main(void) {
     if (DEVICE_IS_UHK80_LEFT || DEVICE_IS_UHK80_RIGHT) {
         int err = NusServer_Init();
         if (!err) {
-            uint8_t advType = ADVERTISE_NUS;
-            if (DEVICE_IS_UHK80_RIGHT) {
-                advType |= ADVERTISE_HID;
-            }
-            Advertise(advType);
+            Advertise(AdvertiseType());
         }
     }
 
     if (DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK_DONGLE) {
-        NusClient_Init();
+         NusClient_Init();
     }
 
     if (!DEVICE_IS_UHK_DONGLE) {

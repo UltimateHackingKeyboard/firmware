@@ -17,6 +17,10 @@
     #define PeerIdRight 1
     #define PeerIdDongle 2
 
+
+    #define BLE_ADDR_LEN 6
+    #define BLE_KEY_LEN 16
+
 // Typedefs:
 
     typedef struct {

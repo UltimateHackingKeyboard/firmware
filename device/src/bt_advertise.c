@@ -1,7 +1,9 @@
 #include "bt_advertise.h"
 #include <bluetooth/services/nus.h>
 #include <zephyr/bluetooth/gatt.h>
+#include "device.h"
 
+#undef DEVICE_NAME
 #define DEVICE_NAME CONFIG_BT_DEVICE_NAME
 #define DEVICE_NAME_LEN (sizeof(DEVICE_NAME) - 1)
 
@@ -61,5 +63,19 @@ void Advertise(uint8_t adv_type)
         printk("%s advertising continued\n", adv_type_string);
     } else {
         printk("%s advertising failed to start (err %d)\n", adv_type_string, err);
+    }
+}
+
+uint8_t AdvertiseType() {
+    switch (DEVICE_ID) {
+        case DeviceId_Uhk80_Left:
+            return ADVERTISE_NUS;
+        case DeviceId_Uhk80_Right:
+            return ADVERTISE_NUS | ADVERTISE_HID;
+        case DeviceId_Uhk_Dongle:
+            return 0;
+        default:
+            printk("unknown device!\n");
+            return 0;
     }
 }

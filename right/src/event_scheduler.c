@@ -97,6 +97,9 @@ static void processEvt(event_scheduler_event_t evt)
         case EventSchedulerEvent_PowerMode:
             PowerMode_Update();
             break;
+        case EventSchedulerEvent_EndBtPairing:
+            BtPair_EndPairing(false, "Pairing timeout");
+            break;
         default:
             return;
     }

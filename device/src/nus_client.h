@@ -11,7 +11,7 @@
     extern void NusClient_Init(void);
     void NusClient_Disconnected();
     extern void gatt_discover(struct bt_conn *conn);
-    extern void NusClient_Setup(struct bt_conn *conn);
+    extern void NusClient_Connect(struct bt_conn *conn);
     extern void NusClient_Send(const uint8_t *data, uint16_t len);
     extern void NusClient_SendMessage(message_t msg);
     extern bool NusClient_Availability(messenger_availability_op_t operation);

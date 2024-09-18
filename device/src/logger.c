@@ -9,46 +9,48 @@
 #include "device.h"
 #include "messenger.h"
 #include "legacy/macros/status_buffer.h"
+#include "zephyr/device.h"
 
 #ifdef DEVICE_HAS_OLED
 #include "keyboard/oled/widgets/console_widget.h"
 #endif
+
+#define MAX_LOG_LENGTH 64
+
+#define EXPAND_STRING(BUFFER)  \
+char BUFFER[MAX_LOG_LENGTH]; \
+{ \
+    va_list myargs; \
+    va_start(myargs, fmt); \
+    BUFFER[MAX_LOG_LENGTH-1] = '\0'; \
+    vsnprintf(BUFFER, MAX_LOG_LENGTH-1, fmt, myargs); \
+}
 
 void Uart_LogConstant(const char* buffer) {
     printk("%s", buffer);
 }
 
 void Uart_Log(const char *fmt, ...) {
-    va_list myargs;
-    va_start(myargs, fmt);
-    char buffer[256];
-    vsprintf(buffer, fmt, myargs);
+    EXPAND_STRING(buffer);
 
     Uart_LogConstant(buffer);
 }
 
 void Log(const char *fmt, ...) {
-    va_list myargs;
-    va_start(myargs, fmt);
-    char buffer[256];
-    vsprintf(buffer, fmt, myargs);
+    EXPAND_STRING(buffer);
 
-    Uart_LogConstant(buffer);
-#if DEVICE_HAS_OLED
-    Oled_LogConstant(buffer);
-#endif
+    switch (DEVICE_ID) {
+        case DeviceId_Uhk80_Left:
+            LogConstantTo(DeviceId_Uhk80_Right, LogTarget_Uart, buffer);
+            break;
+        default:
+            LogConstantTo(DEVICE_ID, LogTarget_Uart, buffer);
+            break;
+    }
 }
 
-
-void LogRight(log_target_t logMask, const char *fmt, ...) {
-    va_list myargs;
-    va_start(myargs, fmt);
-    static char buffer[64];
-    vsprintf(buffer, fmt, myargs);
-    buffer[63]=0;
-
-    // on right, log according to logMask
-    if (DEVICE_ID == DeviceId_Uhk80_Right) {
+void LogConstantTo(device_id_t deviceId, log_target_t logMask, const char* buffer) {
+    if (DEVICE_ID == deviceId) {
         if (logMask & LogTarget_Oled) {
             Oled_LogConstant(buffer);
         }
@@ -58,10 +60,14 @@ void LogRight(log_target_t logMask, const char *fmt, ...) {
         if (logMask & LogTarget_ErrorBuffer) {
             Macros_ReportPrintf(NULL, "%s", buffer);
         }
+    } else {
+        Messenger_Send2(deviceId, MessageId_Log, logMask, buffer, strlen(buffer)+1);
     }
+}
 
-    if (DEVICE_ID == DeviceId_Uhk80_Left) {
-        Messenger_Send2(DeviceId_Uhk80_Right, MessageId_Log, logMask, buffer, strlen(buffer)+1);
-    }
+void LogTo(device_id_t deviceId, log_target_t logMask, const char *fmt, ...) {
+    EXPAND_STRING(buffer);
+
+    LogConstantTo(deviceId, logMask, buffer);
 }
 

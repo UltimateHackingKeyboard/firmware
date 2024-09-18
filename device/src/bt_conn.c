@@ -13,8 +13,13 @@
 #include "keyboard/oled/screens/pairing_screen.h"
 #include "usb/usb.h"
 #include "keyboard/oled/widgets/widgets.h"
+#include <zephyr/settings/settings.h>
+#include "bt_pair.h"
 
 #define PeerCount 3
+
+#define BLE_KEY_LEN 16
+#define BLE_ADDR_LEN 6
 
 peer_t Peers[PeerCount] = {
     {
@@ -77,7 +82,7 @@ char *GetPeerStringByConn(const struct bt_conn *conn) {
 
 static struct bt_conn_le_data_len_param *data_len;
 
-static void set_data_length_extension_params(struct bt_conn *conn) {
+static void enableDataLengthExtension(struct bt_conn *conn) {
     data_len = BT_LE_DATA_LEN_PARAM_MAX;
 
     int err = bt_conn_le_data_len_update(conn, data_len);
@@ -86,7 +91,10 @@ static void set_data_length_extension_params(struct bt_conn *conn) {
     }
 }
 
-static void set_latency_params(struct bt_conn *conn) {
+static void configureLatency(struct bt_conn *conn) {
+    // https://developer.apple.com/library/archive/qa/qa1931/_index.html
+    // https://punchthrough.com/manage-ble-connection/
+    // https://devzone.nordicsemi.com/f/nordic-q-a/28058/what-is-connection-parameters
     static const struct bt_le_conn_param conn_params = BT_LE_CONN_PARAM_INIT(
         6, 9, // keep it low, lowest allowed is 6 (7.5ms), lowest supported widely is 9 (11.25ms)
         0, // keeping it higher allows power saving on peripheral when there's nothing to send (keep it under 30 though)
@@ -118,9 +126,6 @@ static void connected(struct bt_conn *conn, uint8_t err) {
 
     if (peerId == PeerIdUnknown) {
         if (DEVICE_IS_UHK80_RIGHT) {
-            // https://developer.apple.com/library/archive/qa/qa1931/_index.html
-            // https://punchthrough.com/manage-ble-connection/
-            // https://devzone.nordicsemi.com/f/nordic-q-a/28058/what-is-connection-parameters
             static const struct bt_le_conn_param conn_params = BT_LE_CONN_PARAM_INIT(
                 6, 9, // keep it low, lowest allowed is 6 (7.5ms), lowest supported widely is 9 (11.25ms)
                 10, // keeping it higher allows power saving on peripheral when there's nothing to send (keep it under 30 though)
@@ -133,13 +138,8 @@ static void connected(struct bt_conn *conn, uint8_t err) {
             DeviceState_SetConnection(ConnectionId_BluetoothHid, ConnectionType_Bt);
         }
     } else {
-        set_latency_params(conn);
-
-        set_data_length_extension_params(conn);
-
-        if (DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK_DONGLE) {
-            NusClient_Setup(conn);
-        }
+        bt_conn_set_security(conn, BT_SECURITY_L4);
+        // continue connection process in in `connectionSecured()`
     }
 }
 
@@ -217,11 +217,24 @@ void Bt_SetDeviceConnected(device_id_t deviceId) {
     DeviceState_TriggerUpdate();
 }
 
-static void security_changed(struct bt_conn *conn, bt_security_t level, enum bt_security_err err) {
-    if (!err) {
-        printk("Security changed: %s, level %u\n", GetPeerStringByConn(conn), level);
-    } else {
-        printk("Security failed: %s, level %u, err %d\n", GetPeerStringByConn(conn), level, err);
+static void securityChanged(struct bt_conn *conn, bt_security_t level, enum bt_security_err err) {
+    int8_t peerId = getPeerIdByConn(conn);
+
+    if (err || (peerId != PeerIdUnknown && level < BT_SECURITY_L4)) {
+        printk("Security failed: %s, level %u, err %d, disconnecting\n", GetPeerStringByConn(conn), level, err);
+        bt_conn_auth_cancel(conn);
+        return;
+    }
+
+    printk("Connection secured: %s, level %u, peerId %d\n", GetPeerStringByConn(conn), level, peerId);
+
+    if (peerId != PeerIdUnknown) {
+        configureLatency(conn);
+        enableDataLengthExtension(conn);
+
+        if (DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK_DONGLE) {
+            NusClient_Connect(conn);
+        }
     }
 
 #if DEVICE_IS_UHK80_LEFT
@@ -229,7 +242,7 @@ static void security_changed(struct bt_conn *conn, bt_security_t level, enum bt_
 #endif
 }
 
-__attribute__((unused)) static void le_param_updated(struct bt_conn* conn, uint16_t interval, uint16_t latency, uint16_t timeout)
+__attribute__((unused)) static void infoLatencyParamsUpdated(struct bt_conn* conn, uint16_t interval, uint16_t latency, uint16_t timeout)
 {
     if (getPeerIdByConn(conn) == PeerIdUnknown) {
         printk("BLE HID conn params: interval=%u ms, latency=%u, timeout=%u ms\n",
@@ -240,8 +253,8 @@ __attribute__((unused)) static void le_param_updated(struct bt_conn* conn, uint1
 BT_CONN_CB_DEFINE(conn_callbacks) = {
     .connected = connected,
     .disconnected = disconnected,
-    .security_changed = security_changed,
-    .le_param_updated = le_param_updated,
+    .security_changed = securityChanged,
+    .le_param_updated = infoLatencyParamsUpdated,
 };
 
 // Auth callbacks
@@ -259,6 +272,13 @@ static void auth_passkey_confirm(struct bt_conn *conn, unsigned int passkey) {
         return;
     }
 
+    int8_t peerId = getPeerIdByConn(conn);
+    if (peerId != PeerIdUnknown || BtPair_OobPairingInProgress) {
+        printk("refusing passkey authentification for %s\n", GetPeerStringByConn(conn));
+        bt_conn_auth_cancel(conn);
+        return;
+    }
+
 #if DEVICE_HAS_OLED
     PairingScreen_AskForPassword(passkey);
 #endif
@@ -271,9 +291,34 @@ static void auth_cancel(struct bt_conn *conn) {
     printk("Pairing cancelled: peer %s\n", GetPeerStringByConn(conn));
 }
 
+static void auth_oob_data_request(struct bt_conn *conn, struct bt_conn_oob_info *oob_info) {
+    int err;
+    struct bt_conn_info info;
+
+    err = bt_conn_get_info(conn, &info);
+    if (err) {
+        return;
+    }
+
+
+    struct bt_le_oob* oobLocal = BtPair_GetLocalOob();
+    struct bt_le_oob* oobRemote = BtPair_GetRemoteOob();
+
+    if (memcmp(info.le.remote->a.val, oobRemote->addr.a.val, sizeof(info.le.remote->a.val))) {
+        printk("Addresses not matching! Cancelling authentication\n");
+        bt_conn_auth_cancel(conn);
+        return;
+    }
+
+    printk("Pairing OOB data requested!\n");
+
+    bt_le_oob_set_sc_data(conn, &oobLocal->le_sc_data, &oobRemote->le_sc_data);
+}
+
 static struct bt_conn_auth_cb conn_auth_callbacks = {
     .passkey_display = auth_passkey_display,
     .passkey_confirm = auth_passkey_confirm,
+    .oob_data_request = auth_oob_data_request,
     .cancel = auth_cancel,
 };
 
@@ -281,6 +326,7 @@ static struct bt_conn_auth_cb conn_auth_callbacks = {
 
 static void pairing_complete(struct bt_conn *conn, bool bonded) {
     printk("Pairing completed: %s, bonded %d\n", GetPeerStringByConn(conn), bonded);
+    BtPair_EndPairing(true, "Successfuly bonded!");
 }
 
 static void pairing_failed(struct bt_conn *conn, enum bt_security_err reason) {
@@ -290,6 +336,7 @@ static void pairing_failed(struct bt_conn *conn, enum bt_security_err reason) {
 
     if (auth_conn == conn) {
         bt_conn_unref(auth_conn);
+        printk("Pairing of auth conn failed because of %d\n", reason);
         auth_conn = NULL;
     }
 

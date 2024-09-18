@@ -33,6 +33,7 @@
         EventSchedulerEvent_ReenableUart,
         EventSchedulerEvent_UpdateMergeSensor,
         EventSchedulerEvent_PowerMode,
+        EventSchedulerEvent_EndBtPairing,
         EventSchedulerEvent_Count
     } event_scheduler_event_t;
 

@@ -72,10 +72,35 @@ static messenger_channel_t determineChannel(device_id_t dst) {
     return MessengerChannel_None;
 }
 
+static void receiveLog(device_id_t src, const uint8_t* data, uint16_t len) {
+    uint8_t ATTR_UNUSED messageId = *(data++);
+    uint8_t logmask = *(data++);
+    char deviceAbbrev;
+    switch (src) {
+        case DeviceId_Uhk80_Left:
+            deviceAbbrev = 'L';
+            break;
+        case DeviceId_Uhk80_Right:
+            deviceAbbrev = 'R';
+            break;
+        case DeviceId_Uhk_Dongle:
+            deviceAbbrev = 'D';
+            break;
+        default:
+            deviceAbbrev = '?';
+            break;
+    }
+    LogTo(DEVICE_ID, logmask, "%c>>> %s", deviceAbbrev, data);
+}
+
+
 static void receiveLeft(device_id_t src, const uint8_t* data, uint16_t len) {
     switch (data[0]) {
         case MessageId_StateSync:
             StateSync_ReceiveStateUpdate(src, data, len);
+            break;
+        case MessageId_Log:
+            receiveLog(src, data, len);
             break;
         default:
             printk("Didn't expect to receive message %i %i\n", data[0], data[1]);
@@ -106,27 +131,6 @@ static void processSyncablePropertyRight(device_id_t src, const uint8_t* data, u
             printk("Unrecognized or unexpected message [%i, %i, ...]\n", data[0], data[1]);
             break;
     }
-}
-
-static void receiveLog(device_id_t src, const uint8_t* data, uint16_t len) {
-    uint8_t ATTR_UNUSED messageId = *(data++);
-    uint8_t logmask = *(data++);
-    char deviceAbbrev;
-    switch (src) {
-        case DeviceId_Uhk80_Left:
-            deviceAbbrev = 'L';
-            break;
-        case DeviceId_Uhk80_Right:
-            deviceAbbrev = 'R';
-            break;
-        case DeviceId_Uhk_Dongle:
-            deviceAbbrev = 'D';
-            break;
-        default:
-            deviceAbbrev = '?';
-            break;
-    }
-    LogRight(logmask, "%c %s", deviceAbbrev, data);
 }
 
 static void receiveRight(device_id_t src, const uint8_t* data, uint16_t len) {
@@ -173,6 +177,9 @@ static void receiveDongle(device_id_t src, const uint8_t* data, uint16_t len) {
             break;
         case MessageId_StateSync:
             StateSync_ReceiveStateUpdate(src, data, len);
+            break;
+        case MessageId_Log:
+            receiveLog(src, data, len);
             break;
         default:
             printk("Unrecognized or unexpected message [%i, %i, ...]\n", data[0], data[1]);
