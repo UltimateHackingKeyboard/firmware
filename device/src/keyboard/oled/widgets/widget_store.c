@@ -141,7 +141,7 @@ static void drawStatus(widget_t* self, framebuffer_t* buffer)
     if (self->dirty) {
         self->dirty = false;
         Framebuffer_Clear(self, buffer);
-        Framebuffer_DrawText(self, buffer, AlignmentType_Begin, AlignmentType_Center, &JetBrainsMono12, getLeftStatusText().start, NULL);
+        Framebuffer_DrawText(self, buffer, AlignmentType_Begin + 5, AlignmentType_Center, &JetBrainsMono12, getLeftStatusText().start, NULL);
         if (Macros_StatusBufferError) {
             Framebuffer_DrawText(self, buffer, AlignmentType_Center - 30, AlignmentType_Center, &JetBrainsMono12, getErrorIndicatorText().start, NULL);
         }
