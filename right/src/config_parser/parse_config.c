@@ -156,10 +156,10 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
     uint8_t displayBrightnessBattery;
     uint8_t keyBacklightBrightnessBattery;
 
-    uint8_t displayFadeOutTimeout;
-    uint8_t displayFadeOutBatteryTimeout;
-    uint8_t keyBacklightFadeOutTimeout;
-    uint8_t keyBacklightFadeOutBatteryTimeout;
+    uint32_t displayFadeOutTimeout;
+    uint32_t displayFadeOutBatteryTimeout;
+    uint32_t keyBacklightFadeOutTimeout;
+    uint32_t keyBacklightFadeOutBatteryTimeout;
 
     if (DataModelMajorVersion >= 8) {
         displayBrightness = ReadUInt8(buffer);
