@@ -21,6 +21,7 @@
 #include "config_manager.h"
 #include "led_manager.h"
 #include "attributes.h"
+#include "parse_target.h"
 
     uint16_t DataModelMajorVersion = 0;
     uint16_t DataModelMinorVersion = 0;
@@ -179,6 +180,14 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
         displayFadeOutBatteryTimeout = ledsFadeTimeout;
         keyBacklightFadeOutTimeout = ledsFadeTimeout;
         keyBacklightFadeOutBatteryTimeout = ledsFadeTimeout;
+    }
+
+    // Target configuration
+
+    if (DataModelMajorVersion >= 8 && DataModelPatchVersion >= 1) {
+        RETURN_ON_ERROR(
+            ParseTargets(buffer);
+        )
     }
 
     // Module configurations
