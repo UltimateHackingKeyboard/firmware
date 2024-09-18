@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #include "macros/core.h"
@@ -12,6 +13,7 @@
 #include <stdarg.h>
 
 #ifdef __ZEPHYR__
+#include "keyboard/oled/widgets/widgets.h"
 #include "flash.h"
 #else
 #include "eeprom.h"
@@ -19,10 +21,42 @@
 
 static uint16_t consumeStatusCharReadingPos = 0;
 bool Macros_ConsumeStatusCharDirtyFlag = false;
+bool Macros_StatusBufferError = false;
 
 static char statusBuffer[STATUS_BUFFER_MAX_LENGTH];
 static uint16_t statusBufferLen;
 static bool statusBufferPrinting;
+
+static void updateErrorIndicator(bool newValue) {
+#if DEVICE_HAS_OLED
+    if (Macros_StatusBufferError != newValue) {
+        Macros_StatusBufferError = newValue;
+        Widget_Refresh(&StatusWidget);
+    }
+#endif
+}
+
+static void indicateError() {
+    updateErrorIndicator(true);
+    SegmentDisplay_SetText(3, "ERR", SegmentDisplaySlot_Error);
+}
+
+static void indicateWarn() {
+    updateErrorIndicator(true);
+    SegmentDisplay_SetText(3, "WRN", SegmentDisplaySlot_Warn);
+}
+
+static void indicateOut() {
+    updateErrorIndicator(true);
+    SegmentDisplay_SetText(3, "OUT", SegmentDisplaySlot_Error);
+}
+
+static void clearIndication() {
+    updateErrorIndicator(false);
+    SegmentDisplay_DeactivateSlot(SegmentDisplaySlot_Error);
+    SegmentDisplay_DeactivateSlot(SegmentDisplaySlot_Warn);
+}
+
 
 macro_result_t Macros_ProcessClearStatusCommand()
 {
@@ -33,8 +67,7 @@ macro_result_t Macros_ProcessClearStatusCommand()
     statusBufferLen = 0;
     consumeStatusCharReadingPos = 0;
     Macros_ConsumeStatusCharDirtyFlag = false;
-    SegmentDisplay_DeactivateSlot(SegmentDisplaySlot_Error);
-    SegmentDisplay_DeactivateSlot(SegmentDisplaySlot_Warn);
+    clearIndication();
     return MacroResult_Finished;
 }
 
@@ -249,7 +282,7 @@ void Macros_ReportError(const char* err, const char* arg, const char *argEnd)
 {
     //if this line of code already caused an error, don't throw another one
     Macros_ParserError = true;
-    SegmentDisplay_SetText(3, "ERR", SegmentDisplaySlot_Error);
+    indicateError();
     reportErrorHeader("Error", findPosition(arg));
     reportError(err, arg, argEnd);
 }
@@ -259,7 +292,7 @@ void Macros_ReportWarn(const char* err, const char* arg, const char *argEnd)
     if (!Macros_ValidationInProgress) {
         return;
     }
-    SegmentDisplay_SetText(3, "WRN", SegmentDisplaySlot_Warn);
+    indicateWarn();
     reportErrorHeader("Warning", findPosition(arg));
     reportError(err, arg, argEnd);
 }
@@ -271,7 +304,7 @@ void Macros_ReportPrintf(const char* pos, const char *fmt, ...)
     char buffer[256];
     vsprintf(buffer, fmt, myargs);
 
-    SegmentDisplay_SetText(3, "OUT", SegmentDisplaySlot_Error);
+    indicateOut();
     if (pos != NULL) {
         reportErrorHeader("Out", findPosition(pos));
         reportError(buffer, pos, pos);
@@ -294,7 +327,7 @@ void Macros_ReportErrorPrintf(const char* pos, const char *fmt, ...)
 void Macros_ReportErrorFloat(const char* err, float num, const char* pos)
 {
     Macros_ParserError = true;
-    SegmentDisplay_SetText(3, "ERR", SegmentDisplaySlot_Error);
+    indicateError();
     reportErrorHeader("Error", findPosition(pos));
     Macros_SetStatusString(err, NULL);
     Macros_SetStatusFloat(num);
@@ -304,7 +337,7 @@ void Macros_ReportErrorFloat(const char* err, float num, const char* pos)
 void Macros_ReportErrorNum(const char* err, int32_t num, const char* pos)
 {
     Macros_ParserError = true;
-    SegmentDisplay_SetText(3, "ERR", SegmentDisplaySlot_Error);
+    indicateError();
     reportErrorHeader("Error", findPosition(pos));
     Macros_SetStatusString(err, NULL);
     Macros_SetStatusNum(num);
@@ -339,6 +372,5 @@ macro_result_t Macros_ProcessSetStatusCommand(parser_context_t* ctx, bool addEnd
 
 void Macros_ClearStatus(void)
 {
-    SegmentDisplay_DeactivateSlot(SegmentDisplaySlot_Error);
     Macros_ProcessClearStatusCommand();
 }

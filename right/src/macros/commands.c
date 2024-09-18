@@ -1,4 +1,5 @@
 #include <string.h>
+#include "attributes.h"
 #include "config_parser/config_globals.h"
 #include "config_parser/parse_macro.h"
 #include "keymap.h"
@@ -709,15 +710,16 @@ static macro_result_t processBreakCommand(parser_context_t *ctx)
 
 static macro_result_t processSetLedTxtCommand(parser_context_t* ctx)
 {
-#ifndef __ZEPHYR__
-    int16_t time = Macros_ConsumeInt(ctx);
+    ATTR_UNUSED int16_t time = Macros_ConsumeInt(ctx);
     char text[3];
     uint8_t textLen = 0;
 
     if (isNUM(ctx)) {
+#ifndef __ZEPHYR__
         macro_variable_t value = Macros_ConsumeAnyValue(ctx);
         SegmentDisplay_SerializeVar(text, value);
         textLen = 3;
+#endif
     } else if (ctx->at != ctx->end) {
         uint16_t stringOffset = 0, textIndex = 0, textSubIndex = 0;
         for (uint8_t i = 0; true; i++) {
@@ -740,6 +742,7 @@ static macro_result_t processSetLedTxtCommand(parser_context_t* ctx)
         return MacroResult_Finished;
     }
 
+#ifndef __ZEPHYR__
     macro_result_t res = MacroResult_Finished;
     if (time == 0) {
         SegmentDisplay_SetText(textLen, text, SegmentDisplaySlot_Macro);

@@ -22,6 +22,7 @@
     typedef enum {
         FontIcon_CircleXmarkLarge = 32,
         FontIcon_CircleXmark,
+        FontIcon_TriangleExclamation,
         FontIcon_Plug,
         FontIcon_SignalStream,
     } font_icons_t;
@@ -31,6 +32,7 @@
 // Functions:
 
     void Framebuffer_DrawText(widget_t* canvas, framebuffer_t* buffer, int16_t x, int16_t y, const lv_font_t* font, const char* text, const char* textEnd);
+    uint16_t Framebuffer_GetGlyphWidth(const lv_font_t* font, uint8_t glyphIdx);
     uint16_t Framebuffer_TextWidth(const lv_font_t* font, const char* text, const char* textEnd);
 
 #endif

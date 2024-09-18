@@ -113,7 +113,6 @@ macro_variable_t* Macros_ConsumeExistingWritableVariable(parser_context_t* ctx)
             return &macroVariables[i];
         }
     }
-    Macros_ReportError("Variable not found:", ctx->at, ctx->end);
     return NULL;
 }
 
@@ -138,7 +137,6 @@ static macro_variable_t consumeVariable(parser_context_t* ctx)
         }
     }
 
-    Macros_ReportError("Variable not found:", ctx->at, ctx->end);
     ConsumeAnyIdentifier(ctx);
     return (macro_variable_t){};
 }
