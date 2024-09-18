@@ -63,7 +63,7 @@ static void scheduleNextRun() {
     }
     CurrentTime = k_uptime_get();
     int32_t diff = nextEventTime - CurrentTime;
-    bool haveMoreWork = (EventScheduler_Vector & EventVector_ReportUpdateMask);
+    bool haveMoreWork = (EventScheduler_Vector & EventVector_UserLogicUpdateMask);
     if (haveMoreWork) {
         EVENTLOOP_TIMING(printk("Continuing immediately\n"));
         // Mouse keys don't like being called twice in one second for some reason
