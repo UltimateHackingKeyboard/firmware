@@ -8,6 +8,8 @@ extern "C" {
 #include "legacy/user_logic.h"
 #include <device.h>
 #include <zephyr/kernel.h>
+#include "logger.h"
+#include "legacy/sleep_mode.h"
 }
 #include "command_app.hpp"
 #include "controls_app.hpp"

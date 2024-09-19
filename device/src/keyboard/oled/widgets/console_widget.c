@@ -10,6 +10,7 @@
 #include "../oled_buffer.h"
 #include "../oled_text_renderer.h"
 #include "../oled.h"
+#include "../screens/screen_manager.h"
 
 #define MIN_CHAR_WIDTH 5
 #define MIN_CHAR_HEIGHT 7
@@ -65,7 +66,9 @@ void Oled_LogConstant(const char* text)
     consoleBuffer[consoleBufferStart][CONSOLE_BUFFER_LINE_LENGTH-1] = '\0';
 
     consoleBufferIsDirty = true;
-    Widget_Refresh(NULL);
+
+    ScreenManager_ActivateScreen(ScreenId_Debug);
+    // Widget_Refresh(NULL);
 }
 
 void Oled_Log(const char *fmt, ...)

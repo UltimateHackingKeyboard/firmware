@@ -27,6 +27,7 @@
 #include "config_parser/config_globals.h"
 #include "user_logic.h"
 #include "usb_descriptors/usb_descriptor_strings.h"
+#include "sleep_mode.h"
 
 static bool IsEepromInitialized = false;
 static bool IsConfigInitialized = false;

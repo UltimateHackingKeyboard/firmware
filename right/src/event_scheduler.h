@@ -32,6 +32,7 @@
         EventSchedulerEvent_MouseController,
         EventSchedulerEvent_ReenableUart,
         EventSchedulerEvent_UpdateMergeSensor,
+        EventSchedulerEvent_SleepMode,
         EventSchedulerEvent_Count
     } event_scheduler_event_t;
 

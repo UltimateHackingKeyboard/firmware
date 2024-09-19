@@ -6,13 +6,13 @@
 #include "led_display.h"
 #include "usb_report_updater.h"
 #include "test_switches.h"
+#include "sleep_mode.h"
 
 #ifdef __ZEPHYR__
 #include <zephyr/sys/util.h>
 #include "state_sync.h"
 #include "keyboard/charger.h"
 #include "keyboard/oled/oled.h"
-#define SleepModeActive false
 #else
 #include "device.h"
 #endif
