@@ -12,7 +12,8 @@
 #endif
 
 static bool usbAwake = false;
-bool SleepModeActive = false;
+
+bool SleepModeActive = true;
 
 // originally written for Benedek's power callback
 // TODO: remove this and simplify the rest of the code if the callback is not used.
@@ -44,19 +45,21 @@ void SleepMode_Update() {
 
 void SleepMode_Enter() {
     SleepModeActive = true;
+
     EventVector_Set(EventVector_LedManagerFullUpdateNeeded);
     EventVector_WakeMain();
 }
 
 void SleepMode_Exit() {
     SleepModeActive = false;
+
     EventVector_Set(EventVector_LedManagerFullUpdateNeeded);
     EventVector_WakeMain();
 }
 
 void SleepMode_WakeHost() {
 #ifdef __ZEPHYR__
-    // USB_RemoteWakeup();
+    USB_RemoteWakeup();
 #else
     WakeUpHost();
 #endif

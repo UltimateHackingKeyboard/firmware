@@ -34,6 +34,12 @@
     ATTRS void Uart_Reenable() {};
     ATTRS void Uart_Enable() {};
     ATTRS status_t ZephyrI2c_MasterTransferNonBlocking(i2c_master_transfer_t *transfer) { return kStatus_Fail; };
+    ATTRS void Oled_LogConstant(const char* text) {};
+    ATTRS void Oled_Log(const char *fmt, ...) {};
+    ATTRS void Uart_LogConstant(const char* buffer) {};
+    ATTRS void Uart_Log(const char *fmt, ...) {};
+    ATTRS void Log(const char *fmt, ...) {};
+    ATTRS void LogBt(const char *fmt, ...) {};
 
 #if DEVICE_HAS_OLED
 #define WIDGET_REFRESH(W) Widget_Refresh(W)

@@ -145,9 +145,17 @@ struct usb_manager {
                     // TODO: handle suspend, maybe only when the HID target is USB?
                     // TODO: stop battery charging, maybe only if dev.configured(),
                     // to distinguish between USB host and charger
+
+                    Log("usb L2_suspend");
+                    SleepMode_SetUsbAwake(false);
                     break;
                 case usb::power::state::L0_ON:
                     //TODO: handle wakeup, only if in suspend
+
+                    Log("usb L0_on\n");
+                    SleepMode_SetUsbAwake(true);
+                    break;
+                default:
                     break;
                 }
                 break;
