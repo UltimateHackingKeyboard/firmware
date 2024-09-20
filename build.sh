@@ -93,6 +93,27 @@ function processArguments() {
     fi
 }
 
+function determineUsbDeviceArg() {
+    DEVICE=$1
+    DEVICEUSBID=""
+
+    case $DEVICE in
+        uhk-80-left)
+            DEVICEUSBID="--vid=37a8 --pid=7 --usb-interface=2"
+            ;;
+        uhk-80-right)
+            DEVICEUSBID="--vid=37a8 --pid=9 --usb-interface=2"
+            ;;
+        uhk-dongle)
+            DEVICEUSBID="--vid=37a8 --pid=5 --usb-interface=2"
+            ;;
+        uhk-60)
+            ;;
+    esac
+
+    echo $DEVICEUSBID
+}
+
 function determineDevIdArg() {
     DEVICE=$1
     DEVICEID=""
@@ -222,9 +243,9 @@ END
 END
             ;;
         flashUsb)
+            USBDEVICEARG=`determineUsbDeviceArg $DEVICE`
             cd $ROOT/lib/agent/packages/usb/
-            echo ./update-device-firmware.ts --vid=14248 --pid=5 --usb-interface=2 $ROOT/device/build/$DEVICE/zephyr/app_update.bin
-            ./update-device-firmware.ts --vid=14248 --pid=5 --usb-interface=2 $ROOT/device/build/$DEVICE/zephyr/app_update.bin
+            ./update-device-firmware.ts $USBDEVICEARG $ROOT/device/build/$DEVICE/zephyr/app_update.bin
             cd $ROOT
             ;;
         release)
