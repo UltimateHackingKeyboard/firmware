@@ -120,6 +120,7 @@ static state_sync_prop_t stateSyncProps[StateSyncPropertyId_Count] = {
     CUSTOM(ModuleStateLeftModule, SyncDirection_LeftToRight, DirtyState_Clean),
     EMPTY(LeftModuleDisconnected, SyncDirection_LeftToRight, DirtyState_Clean),
     SIMPLE(MergeSensor, SyncDirection_LeftToRight, DirtyState_Clean, &MergeSensor_HalvesAreMerged),
+    SIMPLE(FunctionalColors, SyncDirection_RightToLeft, DirtyState_Clean, &Cfg.KeyActionColors),
 };
 
 static void invalidateProperty(state_sync_prop_id_t propId)
@@ -319,6 +320,11 @@ static void receiveProperty(
             receiveModuleStateData((sync_command_module_state_t *)data);
         }
         break;
+    case StateSyncPropertyId_FunctionalColors:
+        if (!isLocalUpdate) {
+            EventVector_Set(EventVector_LedMapUpdateNeeded);
+        }
+        break;
     case StateSyncPropertyId_MergeSensor:
         break;
     default:
@@ -499,6 +505,7 @@ static bool handlePropertyUpdateRightToLeft()
 
     if (KeyBacklightBrightness != 0 && Cfg.BacklightingMode != BacklightingMode_ConstantRGB) {
         // Update relevant data
+        UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_FunctionalColors);
         UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_LayerActionFirst + ActiveLayer);
         UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ActiveKeymap);
         UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ActiveLayer);
@@ -659,4 +666,9 @@ void StateSync_ResetRightDongleLink(bool bidirectional)
     if (DEVICE_ID == DeviceId_Uhk_Dongle) {
         invalidateProperty(StateSyncPropertyId_KeyboardLedsState);
     }
+}
+
+void StateSync_ResetConfig()
+{
+    invalidateProperty(StateSyncPropertyId_FunctionalColors);
 }
