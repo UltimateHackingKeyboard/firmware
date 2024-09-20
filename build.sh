@@ -244,7 +244,9 @@ END
             ;;
         flashUsb)
             USBDEVICEARG=`determineUsbDeviceArg $DEVICE`
-            cd $ROOT/lib/agent/packages/usb/
+            USB_SCRIPT_DIR=$ROOT/lib/agent/packages/usb/
+            cd $USB_SCRIPT_DIR
+            echo "running $USB_SCRIPT_DIR$ ./update-device-firmware.ts $USBDEVICEARG $ROOT/device/build/$DEVICE/zephyr/app_update.bin"
             ./update-device-firmware.ts $USBDEVICEARG $ROOT/device/build/$DEVICE/zephyr/app_update.bin
             cd $ROOT
             ;;
