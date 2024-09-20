@@ -1,3 +1,4 @@
+#include "config_parser/parse_config.h"
 #include "keymap.h"
 #include "slave_drivers/is31fl3xxx_driver.h"
 #include "slave_drivers/uhk_module_driver.h"
@@ -27,6 +28,7 @@
 #include "config_parser/config_globals.h"
 #include "user_logic.h"
 #include "usb_descriptors/usb_descriptor_strings.h"
+#include "layouts/key_layout_60_to_universal.h"
 
 static bool IsEepromInitialized = false;
 static bool IsConfigInitialized = false;
@@ -88,8 +90,17 @@ void CopyRightKeystateMatrix(void)
     ++MatrixScanCounter;
     bool stateChanged = false;
     for (uint8_t keyId = 0; keyId < RIGHT_KEY_MATRIX_KEY_COUNT; keyId++) {
-        if (KeyStates[SlotId_RightKeyboardHalf][keyId].hardwareSwitchState != RightKeyMatrix.keyStates[keyId]) {
-            KeyStates[SlotId_RightKeyboardHalf][keyId].hardwareSwitchState = RightKeyMatrix.keyStates[keyId];
+        uint8_t targetKeyId;
+
+        // TODO: optimize this? This translation is quite costly :-/
+        if (DataModelMajorVersion >= 8) {
+            targetKeyId = KeyLayout_Uhk60_to_Universal[SlotId_RightKeyboardHalf][keyId];
+        } else {
+            targetKeyId = keyId;
+        }
+
+        if (KeyStates[SlotId_RightKeyboardHalf][targetKeyId].hardwareSwitchState != RightKeyMatrix.keyStates[keyId]) {
+            KeyStates[SlotId_RightKeyboardHalf][targetKeyId].hardwareSwitchState = RightKeyMatrix.keyStates[keyId];
             stateChanged = true;
         }
     }

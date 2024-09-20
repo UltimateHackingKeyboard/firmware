@@ -57,6 +57,7 @@ static rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
         MONO(6), // Backspace
 
         // Row 2
+        MONO(32), // Y
         MONO(16), // U
         MONO(17), // I
         MONO(18), // O
@@ -64,16 +65,15 @@ static rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
         MONO(20), // [
         MONO(21), // ]
         MONO(22), // Backslash
-        MONO(32), // Y
 
         // Row 3
+        MONO(48), // H
         MONO(33), // J
         MONO(34), // K
         MONO(35), // L
         MONO(36), // ;
         MONO(37), // '
         MONO(38), // Enter
-        MONO(48), // H
 
         // Row 4
         MONO(49), // N
@@ -82,15 +82,16 @@ static rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
         MONO(52), // .
         MONO(53), // /
         MONO(54), // Right Shift
-        MONO(0), // Unused
 
         // Row 5
         MONO(65), // Right Space
-        MONO(0), // Right Mod (no backlight)
         MONO(67), // Right Fn
         MONO(68), // Right Alt
         MONO(69), // Right Super
         MONO(70), // Right Control
+
+        // Row 6
+        MONO(0), // Right Mod (no backlight)
     },
 
     // Left keyboard half
@@ -114,7 +115,6 @@ static rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
         MONO(18), // W
         MONO(19), // E
         MONO(20), // R
-        MONO(0), // Unused
         MONO(22), // T
 
         // Row 3
@@ -123,7 +123,6 @@ static rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
         MONO(34), // S
         MONO(35), // D
         MONO(36), // F
-        MONO(0), // Unused
         MONO(38), // G
 
         // Row 4
@@ -140,9 +139,10 @@ static rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
         MONO(65), // Left Super
         MONO(66), // Left Alt
         MONO(67), // Left Fn
-        MONO(0), // Left Space (no backlight)
         MONO(69), // Left Mod
-        MONO(0), // Unused
+
+        // Row 6
+        MONO(0), // Left Space (no backlight)
     },
 
     // Left module
@@ -177,6 +177,7 @@ static rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
         RGB(0x95, 0xA5, 0x25), // =
         RGB(0x98, 0xA8, 0x28), // Backspace
         // Row 2
+        RGB(0x9D, 0xAD, 0x2D), // Y
         RGB(0x99, 0xA9, 0x29), // U
         RGB(0x9A, 0xAA, 0x2A), // I
         RGB(0x9B, 0xAB, 0x2B), // O
@@ -184,16 +185,15 @@ static rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
         RGB(0x60, 0x70, 0x80), // [
         RGB(0x61, 0x71, 0x81), // ]
         RGB(0x62, 0x72, 0x82), // Backslash
-        RGB(0x9D, 0xAD, 0x2D), // Y
 
         // Row 3
+        RGB(0x3D, 0x4D, 0x5D), // H
         RGB(0x30, 0x40, 0x50), // J
         RGB(0x31, 0x41, 0x51), // K
         RGB(0x32, 0x42, 0x52), // L
         RGB(0x33, 0x43, 0x53), // ;
         RGB(0x34, 0x44, 0x54), // '
         RGB(0x35, 0x45, 0x55), // Enter
-        RGB(0x3D, 0x4D, 0x5D), // H
 
         // Row 4
         RGB(0x39, 0x49, 0x59), // N
@@ -202,15 +202,16 @@ static rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
         RGB(0x3C, 0x4C, 0x5C), // .
         RGB(0x38, 0x48, 0x58), // /
         RGB(0x63, 0x73, 0x83), // Right Shift
-        RGB(0x00, 0x00, 0x00), // Unused
 
         // Row 5
         RGB(0x69, 0x79, 0x89), // Right Space
-        RGB(0x00, 0x00, 0x00), // Right Mod (no backlight)
         RGB(0x6A, 0x7A, 0x8A), // Right Fn
         RGB(0x68, 0x78, 0x88), // Right Alt
         RGB(0x64, 0x74, 0x84), // Right Super
         RGB(0x65, 0x75, 0x85), // Right Control
+
+        // Row 6
+        RGB(0x00, 0x00, 0x00), // Right Mod (no backlight)
     },
 
     // Left keyboard half
@@ -234,7 +235,6 @@ static rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
         RGB(0x04, 0x14, 0x24), // W
         RGB(0x08, 0x18, 0x28), // E
         RGB(0x0A, 0x1A, 0x2A), // R
-        RGB(0x00, 0x00, 0x00), // Unused
         RGB(0x0C, 0x1C, 0x2c), // T
 
         // Row 3
@@ -243,7 +243,6 @@ static rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
         RGB(0x05, 0x15, 0x25), // S
         RGB(0x09, 0x19, 0x29), // D
         RGB(0x0B, 0x1B, 0x2B), // F
-        RGB(0x00, 0x00, 0x00), // Unused
         RGB(0x0D, 0x1D, 0x2D), // G
 
         // Row 4
@@ -261,9 +260,10 @@ static rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
         RGB(0x33, 0x43, 0x53), // Left Super
         RGB(0x35, 0x45, 0x55), // Left Alt
         RGB(0x39, 0x49, 0x59), // Left Fn
-        RGB(0x00, 0x00, 0x00), // Left Space (no backlight)
         RGB(0x3C, 0x4C, 0x5C), // Left Mod
-        RGB(0x00, 0x00, 0x00), // Unused
+
+        // Row 6
+        RGB(0x00, 0x00, 0x00), // Left Space (no backlight)
     },
 
     // Left module
@@ -290,6 +290,7 @@ static rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
         RGB(14,13,15),    // -
         RGB(32,31,33),    // =
         RGB(194,193,195), // backspace
+        RGB(145,146,153), // y
         RGB(160,161,162), // u
         RGB(124,125,126), // i
         RGB(88,89,90),    // o
@@ -297,27 +298,26 @@ static rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
         RGB(16,17,18),    // [
         RGB(34,35,36),    // ]
         RGB(196,197,198), // |
-        RGB(145,146,153), // y
+        RGB(147,148,149), // h
         RGB(109,110,117), // j
         RGB(73,74,81),    // k
         RGB(37,38,45),    // l
         RGB(1,2,9),       // ;
         RGB(19,20,27),    // '
         RGB(181,182,189), // enter
-        RGB(147,148,149), // h
         RGB(151,150,152), // n
         RGB(111,112,113), // m
         RGB(39,40,41),    // ,
         RGB(3,4,5),       // .
         RGB(21,22,23),    // /
         RGB(183,184,185), // shift
-        RGB(0,0,0),       // unused
         RGB(115,114,116), // space
-        RGB(79,78,80),    // inner case button
         RGB(75,76,77),    // fn
         RGB(7,6,8),       // alt
         RGB(25,24,26),    // super
         RGB(187,186,188), // ctrl
+        RGB(79,78,80),    // inner case button
+        RGB(43,42,44),    // right case button
         RGB(155,154,156), // f7
         RGB(119,118,120), // f8
         RGB(83,82,84),    // f9
@@ -339,7 +339,6 @@ static rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
         RGB(97,96,98),    // arrow left
         RGB(169,168,170), // arrow down
         RGB(133,132,134), // arrow right
-        RGB(43,42,44),    // right case button
     },
 
     // Left keyboard half
@@ -356,14 +355,12 @@ static rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
         RGB(44,45,38),    // w
         RGB(80,81,74),    // e
         RGB(116,117,110), // r
-        RGB(0,0,0),       // unused
         RGB(134,135,128), // t
         RGB(154,155,156), // mouse
         RGB(64,65,66),    // a
         RGB(46,47,48),    // s
         RGB(82,83,84),    // d
         RGB(118,119,120), // f
-        RGB(0,0,0),       // 19
         RGB(136,137,138), // g
         RGB(190,191,192), // shift
         RGB(67,68,70),    // isoKey
@@ -376,8 +373,9 @@ static rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
         RGB(69,72,71),    // super
         RGB(51,54,53),    // alt
         RGB(141,144,143), // fn
-        RGB(123,126,125), // inner case button
         RGB(195,198,197), // mod
+        RGB(123,126,125), // inner case button
+        RGB(87,90,89),    // left case button
         RGB(147,148,149), // esc
         RGB(57,58,59),    // f1
         RGB(39,40,41),    // f2
@@ -385,7 +383,6 @@ static rgb_t LedMap[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
         RGB(111,112,113), // f4
         RGB(129,130,131), // f5
         RGB(183,184,185), // f6
-        RGB(87,90,89),    // left case button
     },
 
     // Left module

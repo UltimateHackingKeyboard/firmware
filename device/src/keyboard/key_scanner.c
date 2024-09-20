@@ -10,7 +10,6 @@
 #include "oled/oled_buffer.h"
 #include "logger.h"
 #include "key_states.h"
-#include "keyboard/key_layout.h"
 #include "bool_array_converter.h"
 #include "legacy/module.h"
 #include "logger.h"
@@ -21,6 +20,8 @@
 #include "legacy/config_manager.h"
 #include "legacy/macros/keyid_parser.h"
 #include "attributes.h"
+#include "legacy/layouts/key_layout.h"
+#include "legacy/layouts/key_layout_80_to_universal.h"
 
 // Thread definitions
 
@@ -115,7 +116,13 @@ static void scanKeys() {
     for (uint8_t rowId=0; rowId<KEY_MATRIX_ROWS; rowId++) {
         for (uint8_t colId=0; colId<KEY_MATRIX_COLS; colId++) {
             uint8_t sourceIndex = rowId*KEY_MATRIX_COLS + colId;
-            uint8_t targetKeyId = KeyLayout_Uhk80_to_Uhk60[slotId][sourceIndex];
+            uint8_t targetKeyId;
+
+            if (DataModelMajorVersion >= 8) {
+                targetKeyId = KeyLayout_Uhk80_to_Universal[slotId][sourceIndex];
+            } else {
+                targetKeyId = KeyLayout_Uhk80_to_Uhk60[slotId][sourceIndex];
+            }
 
             if (targetKeyId < MAX_KEY_COUNT_PER_MODULE) {
                 if (currentBacklightingMode == BacklightingMode_LedTest) {
