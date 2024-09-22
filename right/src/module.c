@@ -19,10 +19,8 @@ bool IsModuleAttached(module_id_t moduleId) {
         case ModuleId_TrackballRight:
         case ModuleId_TrackpointRight:
             return UhkModuleStates[UhkModuleDriverId_RightModule].moduleId == moduleId;
-#ifndef __ZEPHYR__
         case ModuleId_TouchpadRight:
             return Slaves[SlaveId_RightTouchpad].isConnected;
-#endif
         default:
             return false;
     }
