@@ -103,7 +103,7 @@ void EventScheduler_Reschedule(uint32_t at, event_scheduler_event_t evt, const c
     if (nextEvent == evt) {
         scheduleNext();
     }
-    if (at < nextEventAt || !EventVector_IsSet(EventVector_EventScheduler)) {
+    if (at < nextEventAt || !EventVector_IsSet(EventVector_EventScheduler) || nextEvent == evt) {
         nextEventAt = at;
         nextEvent = evt;
         EventVector_Set(EventVector_EventScheduler);
