@@ -648,6 +648,7 @@ void StateSync_ResetRightLeftLink(bool bidirectional)
         }
         invalidateProperty(StateSyncPropertyId_ActiveLayer);
         invalidateProperty(StateSyncPropertyId_Backlight);
+        invalidateProperty(StateSyncPropertyId_FunctionalColors);
     }
     if (DEVICE_ID == DeviceId_Uhk80_Left) {
         invalidateProperty(StateSyncPropertyId_Battery);
