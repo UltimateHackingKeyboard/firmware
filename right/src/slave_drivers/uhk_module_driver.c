@@ -167,7 +167,9 @@ static void forwardKeystates(uint8_t uhkModuleDriverId, uhk_module_state_t* uhkM
         }
     }
 
-    bool thisDeltasAreZero = uhkModuleState->pointerDelta.x == 0 && uhkModuleState->pointerDelta.y == 0;
+    uint8_t keyStatesLength = BOOL_BYTES_TO_BITS_COUNT(uhkModuleState->keyCount);
+    pointer_delta_t *pointerDelta = (pointer_delta_t*)(rxMessage->data + keyStatesLength);
+    bool thisDeltasAreZero = pointerDelta->x == 0 && pointerDelta->y == 0;
 
     if (stateChanged || !lastDeltasWereZero || !thisDeltasAreZero) {
         Messenger_Send2(DeviceId_Uhk80_Right, MessageId_SyncableProperty, SyncablePropertyId_LeftModuleKeyStates, rxMessage->data, rxMessage->length);
