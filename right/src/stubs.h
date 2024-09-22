@@ -9,6 +9,13 @@
     #include "attributes.h"
     #include "key_action.h"
 
+
+    #ifdef __ZEPHYR__
+        #include "keyboard/i2c_compatibility.h"
+    #else
+        #include "fsl_i2c.h"
+    #endif
+
 // Macros:
 
 #define ATTRS __attribute__((weak)) __attribute__((unused))
@@ -26,6 +33,7 @@
     ATTRS const rgb_t* PairingScreen_ActionColor(key_action_t* action) { return NULL; };
     ATTRS void Uart_Reenable() {};
     ATTRS void Uart_Enable() {};
+    ATTRS status_t ZephyrI2c_MasterTransferNonBlocking(i2c_master_transfer_t *transfer) { return kStatus_Fail; };
 
 #if DEVICE_HAS_OLED
 #define WIDGET_REFRESH(W) Widget_Refresh(W)
