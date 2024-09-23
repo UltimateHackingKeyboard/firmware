@@ -8,13 +8,14 @@
 #include "nus_server.h"
 #include "device.h"
 #include "messenger.h"
+#include "legacy/macros/status_buffer.h"
 
 #ifdef DEVICE_HAS_OLED
 #include "keyboard/oled/widgets/console_widget.h"
 #endif
 
 void Uart_LogConstant(const char* buffer) {
-    printk("%s\n", buffer);
+    printk("%s", buffer);
 }
 
 void Uart_Log(const char *fmt, ...) {
@@ -38,11 +39,29 @@ void Log(const char *fmt, ...) {
 #endif
 }
 
-void LogBt(const char *fmt, ...) {
+
+void LogRight(log_target_t logMask, const char *fmt, ...) {
     va_list myargs;
     va_start(myargs, fmt);
-    char buffer[256];
+    static char buffer[64];
     vsprintf(buffer, fmt, myargs);
+    buffer[63]=0;
 
-    Messenger_Send(DeviceId_Uhk80_Right, MessageId_Log, buffer, strlen(buffer)+1);
+    // on right, log according to logMask
+    if (DEVICE_ID == DeviceId_Uhk80_Right) {
+        if (logMask & LogTarget_Oled) {
+            Oled_LogConstant(buffer);
+        }
+        if (logMask & LogTarget_Uart) {
+            Uart_LogConstant(buffer);
+        }
+        if (logMask & LogTarget_ErrorBuffer) {
+            Macros_ReportPrintf(NULL, "%s", buffer);
+        }
+    }
+
+    if (DEVICE_ID == DeviceId_Uhk80_Left) {
+        Messenger_Send2(DeviceId_Uhk80_Right, MessageId_Log, logMask, buffer, strlen(buffer)+1);
+    }
 }
+
