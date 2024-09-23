@@ -22,7 +22,7 @@
 
 /*Store the image of the glyphs*/
 static LV_ATTRIBUTE_LARGE_CONST const uint8_t glyph_bitmap[] = {
-    /* U+E000 "" */
+    /* U+E000 "circle-xmark-large" */
     0x0, 0x0, 0x13, 0x31, 0x0, 0x0, 0x0, 0x3b,
     0xfe, 0xef, 0xb3, 0x0, 0x5, 0xf8, 0x10, 0x1,
     0x8f, 0x40, 0x2f, 0x53, 0x10, 0x1, 0x35, 0xf2,
@@ -68,7 +68,7 @@ static LV_ATTRIBUTE_LARGE_CONST const uint8_t glyph_bitmap[] = {
     0x0, 0x0, 0x0, 0xf, 0x0, 0x0, 0x0, 0x0,
     0x60, 0x0, 0x0,
 
-    /* U+F8DD "" */
+    /* U+F8DD "signal-stream" */
     0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0xa,
     0x60, 0x0, 0x0, 0x0, 0x1d, 0x10, 0x4e, 0x11,
     0x0, 0x0, 0x2, 0xa, 0xa0, 0xa8, 0xc, 0x60,
@@ -88,7 +88,7 @@ static LV_ATTRIBUTE_LARGE_CONST const uint8_t glyph_bitmap[] = {
 
 static const lv_font_fmt_txt_glyph_dsc_t glyph_dsc[] = {
     {.bitmap_index = 0, .adv_w = 0, .box_w = 0, .box_h = 0, .ofs_x = 0, .ofs_y = 0} /* id = 0 reserved */,
-    {.bitmap_index = 0, .adv_w = 240, .box_w = 16, .box_h = 12, .ofs_x = 0, .ofs_y = -2},
+    {.bitmap_index = 0, .adv_w = 192, .box_w = 12, .box_h = 13, .ofs_x = 0, .ofs_y = -2},
     {.bitmap_index = 78, .adv_w = 192, .box_w = 13, .box_h = 13, .ofs_x = 0, .ofs_y = -2},
     {.bitmap_index = 163, .adv_w = 192, .box_w = 12, .box_h = 11, .ofs_x = 0, .ofs_y = -1},
     {.bitmap_index = 229, .adv_w = 144, .box_w = 9, .box_h = 13, .ofs_x = 0, .ofs_y = -2},
