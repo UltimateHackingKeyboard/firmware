@@ -3,6 +3,7 @@
 #include "device.h"
 #include "autoconf.h"
 #include "link_protocol.h"
+#include "logger.h"
 #include "messenger_queue.h"
 #include "shared/slave_protocol.h"
 #include "state_sync.h"
@@ -106,6 +107,27 @@ static void processSyncablePropertyRight(device_id_t src, const uint8_t* data, u
     }
 }
 
+static void receiveLog(device_id_t src, const uint8_t* data, uint16_t len) {
+    uint8_t ATTR_UNUSED messageId = *(data++);
+    uint8_t logmask = *(data++);
+    char deviceAbbrev;
+    switch (src) {
+        case DeviceId_Uhk80_Left:
+            deviceAbbrev = 'L';
+            break;
+        case DeviceId_Uhk80_Right:
+            deviceAbbrev = 'R';
+            break;
+        case DeviceId_Uhk_Dongle:
+            deviceAbbrev = 'D';
+            break;
+        default:
+            deviceAbbrev = '?';
+            break;
+    }
+    LogRight(logmask, "%c %s", deviceAbbrev, data);
+}
+
 static void receiveRight(device_id_t src, const uint8_t* data, uint16_t len) {
     switch (data[0]) {
         case MessageId_StateSync:
@@ -115,7 +137,7 @@ static void receiveRight(device_id_t src, const uint8_t* data, uint16_t len) {
             processSyncablePropertyRight(src, data, len);
             break;
         case MessageId_Log:
-            printk("%s: %s\n", Utils_DeviceIdToString(src), data);
+            receiveLog(src, data, len);
             break;
         default:
             printk("Unrecognized or unexpected message [%i, %i, ...]\n", data[0], data[1]);
