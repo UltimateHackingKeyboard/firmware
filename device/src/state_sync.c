@@ -379,7 +379,7 @@ static void prepareAndSubmitLayer(device_id_t dst, state_sync_prop_id_t propId, 
     buffer.moduleActionCount = secondPacketLeftModuleActionCount;
 
     prepareLayerActions(layerId, SlotId_LeftKeyboardHalf, 0, firstPacketLeftHalfActionCount, secondPacketLeftHalfActionCount, &buffer);
-    prepareLayerActions(layerId, SlotId_LeftKeyboardHalf, secondPacketLeftHalfActionCount, 0, secondPacketLeftModuleActionCount, &buffer);
+    prepareLayerActions(layerId, SlotId_LeftModule, secondPacketLeftHalfActionCount, 0, secondPacketLeftModuleActionCount, &buffer);
     submitPreparedData(dst, propId, (const uint8_t *)&buffer, sizeof(buffer));
 }
 
