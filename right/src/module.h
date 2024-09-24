@@ -15,6 +15,8 @@
     #define MAX_KEY_COUNT_PER_MODULE 35
 #endif
 
+    #define MAX_BACKLIT_KEY_COUNT_PER_LEFT_MODULE 3
+
 // Typedefs:
 
     typedef enum {

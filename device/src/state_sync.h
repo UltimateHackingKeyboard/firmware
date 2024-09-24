@@ -15,7 +15,7 @@
 
 // Macros:
 
-    #define MAX_KEY_COUNT_PER_UPDATE ((MAX_KEY_COUNT_PER_MODULE)/2+1)
+    #define KEY_COUNT_PER_UPDATE ((MAX_KEY_COUNT_PER_MODULE+MAX_BACKLIT_KEY_COUNT_PER_LEFT_MODULE)/2+1)
 
 // Typedefs:
 
@@ -35,7 +35,8 @@
         layer_id_t layerId;
         uint8_t startOffset;
         uint8_t actionCount;
-        sync_command_action_t actions[MAX_KEY_COUNT_PER_UPDATE];
+        uint8_t moduleActionCount;
+        sync_command_action_t actions[KEY_COUNT_PER_UPDATE];
     } sync_command_layer_t;
 
     typedef struct {
