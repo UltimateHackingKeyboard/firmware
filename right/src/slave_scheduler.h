@@ -40,12 +40,14 @@
     typedef void (slave_init_t)(uint8_t);
     typedef slave_result_t (slave_update_t)(uint8_t);
     typedef void (slave_disconnect_t)(uint8_t);
+    typedef void (slave_connect_t)(uint8_t);
 
     typedef struct {
         uint8_t perDriverId;  // Identifies the slave instance on a per-driver basis
         slave_init_t *init;
         slave_update_t *update;
         slave_disconnect_t *disconnect;
+        slave_connect_t *connect;
         bool isConnected;
         status_t previousStatus;
     } uhk_slave_t;
