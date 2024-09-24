@@ -3,11 +3,13 @@
 
 // Includes:
 
+#ifndef __ZEPHYR__
     #include "fsl_gpio.h"
     #include "fsl_port.h"
     #include "fsl_i2c.h"
     #include "i2c.h"
     #include "i2c_addresses.h"
+#endif
 
 // Macros:
 
@@ -72,6 +74,8 @@
 
 // Functions:
 
+#ifndef __ZEPHYR__
     void InitLedDriver(void);
+#endif
 
 #endif

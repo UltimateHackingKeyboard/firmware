@@ -7,10 +7,10 @@
 
 // Macros:
 
-    #define LED_DRIVER_LED_COUNT_MAX 255
+    #define UHK80_LED_DRIVER_LED_COUNT_MAX 255
 // Variables:
 
-    extern uint8_t Uhk80LedDriverValues[LED_DRIVER_LED_COUNT_MAX];
+    extern uint8_t Uhk80LedDriverValues[UHK80_LED_DRIVER_LED_COUNT_MAX];
     extern const struct gpio_dt_spec ledsCsDt;
     extern const struct gpio_dt_spec ledsSdbDt;
 
