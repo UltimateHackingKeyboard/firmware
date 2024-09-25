@@ -38,6 +38,7 @@
 
     void TouchpadDriver_Init(uint8_t uhkModuleDriverId);
     slave_result_t TouchpadDriver_Update(uint8_t uhkModuleDriverId);
+    void TouchpadDriver_Connect(uint8_t uhkModuleDriverId);
     void TouchpadDriver_Disconnect(uint8_t uhkModuleDriverId);
 
 #endif

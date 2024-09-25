@@ -9,6 +9,9 @@
 #include "led_display.h"
 #include "config_manager.h"
 #include "parse_keymap.h"
+#include "slave_protocol.h"
+#include "slot.h"
+#include "slave_drivers/uhk_module_driver.h"
 
 #ifdef __ZEPHYR__
 #include "state_sync.h"
@@ -209,6 +212,21 @@ static parser_error_t parseLayerId(config_buffer_t *buffer, uint8_t layer, layer
     return ParserError_Success;
 }
 
+static void applyDefaultRightModuleActions(uint8_t layer, parse_mode_t parseMode) {
+    if(parseMode != ParseMode_DryRun && layer <= LayerId_RegularLast) {
+        CurrentKeymap[layer][SlotId_RightModule][0] = (key_action_t){ .type = KeyActionType_Mouse, .mouseAction = SerializedMouseAction_LeftClick };
+        CurrentKeymap[layer][SlotId_RightModule][1] = (key_action_t){ .type = KeyActionType_Mouse, .mouseAction = SerializedMouseAction_RightClick };
+    }
+}
+
+static void applyDefaultLeftModuleActions(uint8_t layer, parse_mode_t parseMode) {
+    if(parseMode != ParseMode_DryRun && layer <= LayerId_RegularLast) {
+        CurrentKeymap[layer][SlotId_LeftModule][0] = (key_action_t){ .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_DELETE }};
+        CurrentKeymap[layer][SlotId_LeftModule][1] = (key_action_t){ .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_BACKSPACE }};
+        CurrentKeymap[layer][SlotId_LeftModule][2] = (key_action_t){ .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_ENTER }};
+    }
+}
+
 static parser_error_t parseLayer(config_buffer_t *buffer, uint8_t layer, parse_mode_t parseMode)
 {
     if (parseMode != ParseMode_DryRun) {
@@ -227,6 +245,19 @@ static parser_error_t parseLayer(config_buffer_t *buffer, uint8_t layer, parse_m
             return errorCode;
         }
     }
+
+    // if current config doesn't configuration of the connected module, fill in hardwired values
+    bool rightUhkModuleUnmapped = moduleCount <= UhkModuleStates[UhkModuleSlaveDriver_SlotIdToDriverId(SlotId_RightModule)].moduleId;
+    bool touchpadUnmapped = moduleCount <= ModuleId_TouchpadRight && IsModuleAttached(ModuleId_TouchpadRight);
+    if (rightUhkModuleUnmapped || touchpadUnmapped) {
+        applyDefaultRightModuleActions(layer, parseMode);
+    }
+
+    // if current config doesn't configuration of the connected module, fill in hardwired values
+    if (moduleCount <= UhkModuleStates[UhkModuleSlaveDriver_SlotIdToDriverId(SlotId_LeftModule)].moduleId) {
+        applyDefaultLeftModuleActions(layer, parseMode);
+    }
+
     return ParserError_Success;
 }
 

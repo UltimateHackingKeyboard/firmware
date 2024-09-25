@@ -191,6 +191,11 @@ slave_result_t TouchpadDriver_Update(uint8_t uhkModuleDriverId)
     return res;
 }
 
+void TouchpadDriver_Connect(uint8_t uhkModuleDriverId) {
+    EventVector_Set(EventVector_KeymapReloadNeeded);
+    EventVector_WakeMain();
+}
+
 void TouchpadDriver_Disconnect(uint8_t uhkModuleDriverId)
 {
     TouchpadEvents.x = 0;
