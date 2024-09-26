@@ -65,6 +65,7 @@ static void scheduleNextRun() {
     int32_t diff = nextEventTime - CurrentTime;
     bool haveMoreWork = (EventScheduler_Vector & EventVector_UserLogicUpdateMask);
     if (haveMoreWork) {
+        LOG_SCHEDULE( EventVector_ReportMask("Continuing immediately because of: ", EventScheduler_Vector & EventVector_UserLogicUpdateMask););
         EVENTLOOP_TIMING(printk("Continuing immediately\n"));
         // Mouse keys don't like being called twice in one second for some reason
         sleepTillNextMs();
