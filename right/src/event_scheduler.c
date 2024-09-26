@@ -25,7 +25,7 @@ static const char* labels[EventSchedulerEvent_Count] = {};
 static event_scheduler_event_t nextEvent;
 static uint32_t nextEventAt;
 
-uint32_t EventScheduler_Vector = 0;
+volatile uint32_t EventScheduler_Vector = 0;
 
 static void scheduleNext()
 {
@@ -108,7 +108,7 @@ void EventScheduler_Reschedule(uint32_t at, event_scheduler_event_t evt, const c
         nextEvent = evt;
         EventVector_Set(EventVector_EventScheduler);
 #ifdef __ZEPHYR__
-        k_wakeup(Main_ThreadId);
+        Main_Wake();
 #endif
     }
 }
@@ -128,7 +128,7 @@ void EventScheduler_Schedule(uint32_t at, event_scheduler_event_t evt, const cha
         nextEvent = evt;
         EventVector_Set(EventVector_EventScheduler);
 #ifdef __ZEPHYR__
-        k_wakeup(Main_ThreadId);
+        Main_Wake();
 #endif
     }
 }
@@ -187,6 +187,8 @@ void EventVector_ReportMask(const char* prefix, uint32_t mask) {
     REPORT_MASK(KeymapReloadNeeded);
     REPORT_MASK(SegmentDisplayNeedsUpdate);
     REPORT_MASK(LedMapUpdateNeeded);
+    REPORT_MASK(ApplyConfig);
+    REPORT_MASK(NewMessage);
 
     REPORT_MASK(NativeActionReportsUsed);
     REPORT_MASK(MacroReportsUsed);

@@ -28,7 +28,7 @@ void updateUsbBuffer(uint8_t usbStatusCode, uint16_t parserOffset, parser_stage_
 void UsbCommand_ApplyConfigAsync(void) {
     EventVector_Set(EventVector_ApplyConfig);
 #ifdef __ZEPHYR__
-    k_wakeup(Main_ThreadId);
+    Main_Wake();
 #endif
 }
 
