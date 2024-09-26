@@ -40,10 +40,16 @@ static void scheduleNext()
     EventVector_SetValue(EventVector_EventScheduler, gotAny);
 }
 
+#define DISABLE_IN_EVENTLOOP_SCHEDULE_DEBUG() \
+    if (DEBUG_EVENTLOOP_SCHEDULE) { \
+        return; \
+    }
+
 static void processEvt(event_scheduler_event_t evt)
 {
     switch (evt) {
         case EventSchedulerEvent_UpdateBattery:
+            DISABLE_IN_EVENTLOOP_SCHEDULE_DEBUG();
             Charger_UpdateBatteryState();
             break;
         case EventSchedulerEvent_ShiftScreen:
@@ -84,6 +90,7 @@ static void processEvt(event_scheduler_event_t evt)
             UhkModuleSlaveDriver_UpdateConnectionStatus();
             break;
         case EventSchedulerEvent_UpdateMergeSensor:
+            DISABLE_IN_EVENTLOOP_SCHEDULE_DEBUG();
             MergeSensor_Update();
             break;
         default:
