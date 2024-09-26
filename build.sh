@@ -99,13 +99,13 @@ function determineUsbDeviceArg() {
 
     case $DEVICE in
         uhk-80-left)
-            DEVICEUSBID="--vid=37a8 --pid=7 --usb-interface=2"
+            DEVICEUSBID="--vid=0x37a8 --pid=7 --usb-interface=2"
             ;;
         uhk-80-right)
-            DEVICEUSBID="--vid=37a8 --pid=9 --usb-interface=2"
+            DEVICEUSBID="--vid=0x37a8 --pid=9 --usb-interface=2"
             ;;
         uhk-dongle)
-            DEVICEUSBID="--vid=37a8 --pid=5 --usb-interface=2"
+            DEVICEUSBID="--vid=0x37a8 --pid=5 --usb-interface=2"
             ;;
         uhk-60)
             ;;
@@ -246,8 +246,8 @@ END
             USBDEVICEARG=`determineUsbDeviceArg $DEVICE`
             USB_SCRIPT_DIR=$ROOT/lib/agent/packages/usb/
             cd $USB_SCRIPT_DIR
-            echo "running $USB_SCRIPT_DIR$ ./update-device-firmware.ts $USBDEVICEARG $ROOT/device/build/$DEVICE/zephyr/app_update.bin"
-            ./update-device-firmware.ts $USBDEVICEARG $ROOT/device/build/$DEVICE/zephyr/app_update.bin
+            echo "running $USB_SCRIPT_DIR$ ./update-device-firmware.ts $USBDEVICEARG $ROOT/device/build/$DEVICE/zephyr/app_update.bin $OTHER_ARGS"
+            ./update-device-firmware.ts $USBDEVICEARG $ROOT/device/build/$DEVICE/zephyr/app_update.bin $OTHER_ARGS
             cd $ROOT
             ;;
         release)
