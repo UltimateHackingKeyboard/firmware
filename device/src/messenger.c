@@ -4,6 +4,7 @@
 #include "autoconf.h"
 #include "link_protocol.h"
 #include "logger.h"
+#include "main.h"
 #include "messenger_queue.h"
 #include "shared/slave_protocol.h"
 #include "state_sync.h"
@@ -196,11 +197,13 @@ static void receive(device_id_t src, const uint8_t* data, uint16_t len) {
 void Messenger_Enqueue(uint8_t src, const uint8_t* data, uint16_t len) {
     if (data[0] != MessageId_Ping) {
         MessengerQueue_Put(src, data, len);
-        k_wakeup(mainThreadId);
+        EventVector_Set(EventVector_NewMessage);
+        Main_Wake();
     }
 }
 
 void Messenger_ProcessQueue() {
+    EventVector_Unset(EventVector_NewMessage);
     messenger_queue_record_t rec = MessengerQueue_Take();
     while (rec.data != NULL) {
         receive(rec.src, rec.data, rec.len);

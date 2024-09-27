@@ -2,6 +2,7 @@
 #include "legacy/config_parser/config_globals.h"
 #include "legacy/ledmap.h"
 #include "shared/attributes.h"
+#include "zephyr/kernel.h"
 #include "zephyr/storage/flash_map.h"
 #include "keyboard/key_scanner.h"
 #include "keyboard/leds.h"
@@ -54,6 +55,9 @@ static void sleepTillNextMs() {
     }
 }
 
+
+static K_SEM_DEFINE(mainWakeupSemaphore, 1, 1);
+
 static void scheduleNextRun() {
     uint32_t nextEventTime = 0;
     bool eventIsValid = false;
@@ -63,19 +67,31 @@ static void scheduleNextRun() {
     }
     CurrentTime = k_uptime_get();
     int32_t diff = nextEventTime - CurrentTime;
+
+    k_sem_take(&mainWakeupSemaphore, K_NO_WAIT);
     bool haveMoreWork = (EventScheduler_Vector & EventVector_UserLogicUpdateMask);
     if (haveMoreWork) {
+        LOG_SCHEDULE( EventVector_ReportMask("Continuing immediately because of: ", EventScheduler_Vector & EventVector_UserLogicUpdateMask););
         EVENTLOOP_TIMING(printk("Continuing immediately\n"));
         // Mouse keys don't like being called twice in one second for some reason
+        k_sem_give(&mainWakeupSemaphore);
         sleepTillNextMs();
         return;
     } else if (eventIsValid) {
         EVENTLOOP_TIMING(printk("Sleeping for %d\n", diff));
-        k_sleep(K_MSEC(diff));
+        k_sem_take(&mainWakeupSemaphore, K_MSEC(diff));
+        // k_sleep(K_MSEC(diff));
     } else {
         EVENTLOOP_TIMING(printk("Sleeping forever\n"));
-        k_sleep(K_FOREVER);
+        k_sem_take(&mainWakeupSemaphore, K_FOREVER);
+        // k_sleep(K_FOREVER);
     }
+}
+
+//TODO: inline this
+void Main_Wake() {
+    k_sem_give(&mainWakeupSemaphore);
+    // k_wakeup(Main_ThreadId);
 }
 
 int main(void) {

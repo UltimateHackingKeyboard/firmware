@@ -287,15 +287,17 @@ static void applyKeystrokeSecondary(key_state_t *keyState, key_action_t *action,
     if ( IS_SECONDARY_ROLE_LAYER_SWITCHER(secondaryRole) ) {
         // If the cached action is the current base role, then hold, otherwise keymap was changed. In that case do nothing just
         // as a well behaved hold action should.
-        if(action->type == actionBase->type && action->keystroke.secondaryRole == actionBase->keystroke.secondaryRole) {
+        if(KeyState_Active(keyState) && action->type == actionBase->type && action->keystroke.secondaryRole == actionBase->keystroke.secondaryRole) {
             LayerSwitcher_HoldLayer(SECONDARY_ROLE_LAYER_TO_LAYER_ID(secondaryRole), false);
         }
         if (KeyState_ActivatedNow(keyState) || KeyState_DeactivatedNow(keyState)) {
             EventVector_Set(EventVector_LayerHolds);
         }
     } else if (IS_SECONDARY_ROLE_MODIFIER(secondaryRole)) {
-        NativeActionInputModifiers |= SECONDARY_ROLE_MODIFIER_TO_HID_MODIFIER(secondaryRole);
-        EventVector_Set(EventVector_ReportsChanged);
+        if (KeyState_Active(keyState)) {
+            NativeActionInputModifiers |= SECONDARY_ROLE_MODIFIER_TO_HID_MODIFIER(secondaryRole);
+            EventVector_Set(EventVector_ReportsChanged);
+        }
     }
 }
 
