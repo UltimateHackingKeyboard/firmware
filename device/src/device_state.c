@@ -7,7 +7,7 @@
 #include "state_sync.h"
 #include "shared/slave_protocol.h"
 #include "legacy/event_scheduler.h"
-#include "legacy/sleep_mode.h"
+#include "legacy/power_mode.h"
 
 static connection_type_t isConnected[ConnectionId_Count] = {};
 
@@ -58,14 +58,14 @@ void handleStateTransition(connection_id_t remoteId, bool connected) {
                             StateSync_ResetRightDongleLink(true);
                         }
                         Widget_Refresh(&TargetWidget);
-                        EventScheduler_Reschedule(CurrentTime + SLEEP_MODE_UPDATE_DELAY, EventSchedulerEvent_SleepMode, "update sleep mode from device state dongle");
+                        EventScheduler_Reschedule(CurrentTime + POWER_MODE_UPDATE_DELAY, EventSchedulerEvent_PowerMode, "update sleep mode from device state dongle");
                         break;
                     case ConnectionId_UsbHid:
                         Widget_Refresh(&TargetWidget);
                         break;
                     case ConnectionId_BluetoothHid:
                         Widget_Refresh(&TargetWidget);
-                        EventScheduler_Reschedule(CurrentTime + SLEEP_MODE_UPDATE_DELAY, EventSchedulerEvent_SleepMode, "update sleep mode from device state bluetooth hid");
+                        EventScheduler_Reschedule(CurrentTime + POWER_MODE_UPDATE_DELAY, EventSchedulerEvent_PowerMode, "update sleep mode from device state bluetooth hid");
                         break;
                     default:
                         break;

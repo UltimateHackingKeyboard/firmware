@@ -6,7 +6,7 @@
 #include "led_display.h"
 #include "usb_report_updater.h"
 #include "test_switches.h"
-#include "sleep_mode.h"
+#include "power_mode.h"
 
 #ifdef __ZEPHYR__
 #include <zephyr/sys/util.h>
@@ -25,7 +25,7 @@ uint8_t KeyBacklightBrightness = 0xff;
 
 static void recalculateLedBrightness()
 {
-    bool globalSleepMode = !Cfg.LedsEnabled || SleepModeActive || Cfg.LedBrightnessMultiplier == 0.0f;
+    bool globalSleepMode = !Cfg.LedsEnabled || CurrentPowerMode > PowerMode_Awake || Cfg.LedBrightnessMultiplier == 0.0f;
 
     if (globalSleepMode || KeyBacklightSleepModeActive) {
         KeyBacklightBrightness = 0;

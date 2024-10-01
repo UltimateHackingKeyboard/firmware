@@ -9,7 +9,7 @@
 #include "led_manager.h"
 #include "slave_drivers/uhk_module_driver.h"
 #include "peripherals/merge_sensor.h"
-#include "sleep_mode.h"
+#include "power_mode.h"
 
 #ifdef __ZEPHYR__
 #include "keyboard/oled/screens/screen_manager.h"
@@ -94,8 +94,8 @@ static void processEvt(event_scheduler_event_t evt)
             DISABLE_IN_EVENTLOOP_SCHEDULE_DEBUG();
             MergeSensor_Update();
             break;
-        case EventSchedulerEvent_SleepMode:
-            SleepMode_Update();
+        case EventSchedulerEvent_PowerMode:
+            PowerMode_Update();
             break;
         default:
             return;

@@ -9,7 +9,7 @@ extern "C" {
 #include <device.h>
 #include <zephyr/kernel.h>
 #include "logger.h"
-#include "legacy/sleep_mode.h"
+#include "legacy/power_mode.h"
 }
 #include "command_app.hpp"
 #include "controls_app.hpp"
@@ -146,16 +146,18 @@ struct usb_manager {
                     // TODO: stop battery charging, maybe only if dev.configured(),
                     // to distinguish between USB host and charger
 
-                    Log("usb L2_suspend");
-                    SleepMode_SetUsbAwake(false);
+                    printk("L2 Suspend\n");
+                    // uncomment when the waking stuff works.
+                    /* PowerMode_SetUsbAwake(false); */
                     break;
                 case usb::power::state::L0_ON:
                     //TODO: handle wakeup, only if in suspend
 
-                    Log("usb L0_on\n");
-                    SleepMode_SetUsbAwake(true);
+                    printk("L0 ON\n");
+                    /* PowerMode_SetUsbAwake(true); */
                     break;
                 default:
+                    printk("L state %i\n", ev);
                     break;
                 }
                 break;
