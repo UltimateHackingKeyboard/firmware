@@ -24,10 +24,10 @@ static void activateLayer(layer_id_t layer)
     LayerStack_ActiveLayerHeld = LayerStack[LayerStack_TopIdx].held;
     if (LayerStack_ActiveLayerHeld) {
         LayerSwitcher_HoldLayer(layer, true);
-        EventVector_Set(EventVector_LayerHolds | EventVector_NativeActions);
     } else {
         LayerSwitcher_RecalculateLayerComposition();
     }
+    EventVector_Set(EventVector_LayerHolds | EventVector_NativeActions);
 }
 
 bool LayerStack_IsLayerToggled() {
