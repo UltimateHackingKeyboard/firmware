@@ -7,12 +7,14 @@
 #include "device_state.h"
 #include "keyboard/oled/screens/screen_manager.h"
 #include "keyboard/oled/widgets/widget.h"
+#include "legacy/power_mode.h"
 #include "nus_client.h"
 #include "nus_server.h"
 #include "device.h"
 #include "keyboard/oled/screens/pairing_screen.h"
 #include "usb/usb.h"
 #include "keyboard/oled/widgets/widgets.h"
+#include "power_mode.h"
 
 #define PeerCount 3
 
@@ -20,14 +22,20 @@ peer_t Peers[PeerCount] = {
     {
         .id = PeerIdLeft,
         .name = "left",
+        .isConnected = false,
+        .conn = NULL,
     },
     {
         .id = PeerIdRight,
         .name = "right",
+        .isConnected = false,
+        .conn = NULL,
     },
     {
         .id = PeerIdDongle,
         .name = "dongle",
+        .isConnected = false,
+        .conn = NULL,
     },
 };
 
@@ -87,12 +95,27 @@ static void set_data_length_extension_params(struct bt_conn *conn) {
 }
 
 static void set_latency_params(struct bt_conn *conn) {
-    static const struct bt_le_conn_param conn_params = BT_LE_CONN_PARAM_INIT(
-        6, 9, // keep it low, lowest allowed is 6 (7.5ms), lowest supported widely is 9 (11.25ms)
-        0, // keeping it higher allows power saving on peripheral when there's nothing to send (keep it under 30 though)
-        100 // connection timeout (*10ms)
+    static const struct bt_le_conn_param rightActive = BT_LE_CONN_PARAM_INIT(
+        6, 6, // keep it low, lowest allowed is 6 (7.5ms), lowest supported widely is 9 (11.25ms)
+        10, // keeping it higher allows power saving on peripheral when there's nothing to send (keep it under 30 though)
+        300 // connection timeout (*10ms)
     );
-    int err = bt_conn_le_param_update(conn, &conn_params);
+    static const struct bt_le_conn_param rightSleep = BT_LE_CONN_PARAM_INIT(
+        100, 100,
+        10, // so this means a ping every 1.25s?
+        300
+    );
+    static const struct bt_le_conn_param slave = BT_LE_CONN_PARAM_INIT(
+        6, 100,
+        10,
+        300
+    );
+    int err;
+    if (DEVICE_IS_UHK80_RIGHT) {
+        err = bt_conn_le_param_update(conn, CurrentPowerMode >= PowerMode_LightSleep ? &rightSleep : &rightActive);
+    } else {
+        err = bt_conn_le_param_update(conn, &slave);
+    }
     if (err) {
         printk("LE latencies update failed: %d", err);
     }
@@ -133,6 +156,8 @@ static void connected(struct bt_conn *conn, uint8_t err) {
             DeviceState_SetConnection(ConnectionId_BluetoothHid, ConnectionType_Bt);
         }
     } else {
+        Peers[peerId].conn = bt_conn_ref(conn);
+
         set_latency_params(conn);
 
         set_data_length_extension_params(conn);
@@ -180,10 +205,21 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
     }
 
     if (peerId != PeerIdUnknown) {
+        bt_conn_unref(Peers[peerId].conn);
         Peers[peerId].isConnected = false;
         DeviceState_TriggerUpdate();
     } else {
         DeviceState_SetConnection(ConnectionId_BluetoothHid, ConnectionType_None);
+    }
+}
+
+void Bt_UpdatePowerModes() {
+    if (DEVICE_IS_UHK80_RIGHT) {
+        for (uint8_t peerId = 0; peerId < PeerCount; peerId++) {
+            if (Peers[peerId].isConnected && Peers[peerId].conn) {
+                set_latency_params(Peers[peerId].conn);
+            }
+        }
     }
 }
 

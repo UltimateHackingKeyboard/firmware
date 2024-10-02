@@ -21,6 +21,7 @@
 #include "legacy/config_manager.h"
 #include "legacy/macros/keyid_parser.h"
 #include "attributes.h"
+#include "power_mode.h"
 
 // Thread definitions
 
@@ -149,7 +150,11 @@ static void scanKeys() {
 void keyScanner() {
     while (true) {
         scanKeys();
-        k_msleep(1);
+        if (CurrentPowerMode >= PowerMode_LightSleep) {
+            k_msleep(100);
+        } else {
+            k_msleep(1);
+        }
     }
 }
 
