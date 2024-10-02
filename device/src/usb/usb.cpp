@@ -146,18 +146,18 @@ struct usb_manager {
                     // TODO: stop battery charging, maybe only if dev.configured(),
                     // to distinguish between USB host and charger
 
-                    printk("L2 Suspend\n");
+                    Log("L2 Suspend\n");
                     // uncomment when the waking stuff works.
-                    /* PowerMode_SetUsbAwake(false); */
+                    PowerMode_SetUsbAwake(false);
                     break;
                 case usb::power::state::L0_ON:
                     //TODO: handle wakeup, only if in suspend
 
-                    printk("L0 ON\n");
-                    /* PowerMode_SetUsbAwake(true); */
+                    Log("L0 ON\n");
+                    PowerMode_SetUsbAwake(true);
                     break;
                 default:
-                    printk("L state %i\n", ev);
+                    Log("L state %i\n", (int)ev);
                     break;
                 }
                 break;

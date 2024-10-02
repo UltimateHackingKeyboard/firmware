@@ -11,7 +11,7 @@
 
 // Typedefs:
 
-    #define DEBUG_SCREEN_NOTIFICATION_TIMEOUT 60000
+    #define DEBUG_SCREEN_NOTIFICATION_TIMEOUT 10000
 
 // Variables:
 

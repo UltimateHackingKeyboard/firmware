@@ -38,14 +38,14 @@ void PowerMode_Update() {
     PowerMode_ActivateMode(newPowerMode, false);
 }
 
-static void enterSleep() {
+static void sleep() {
     CurrentPowerMode = PowerMode_Sleep;
 
     EventVector_Set(EventVector_LedManagerFullUpdateNeeded);
     EventVector_WakeMain();
 }
 
-void wake() {
+static void wake() {
     CurrentPowerMode = PowerMode_Awake;
 
     EventVector_Set(EventVector_LedManagerFullUpdateNeeded);
@@ -66,7 +66,7 @@ void PowerMode_ActivateMode(power_mode_t mode, bool toggle) {
             wake();
             break;
         case PowerMode_Sleep:
-            enterSleep();
+            sleep();
             break;
         default:
             break;
