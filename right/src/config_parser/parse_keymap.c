@@ -12,6 +12,7 @@
 #include "slave_protocol.h"
 #include "slot.h"
 #include "slave_drivers/uhk_module_driver.h"
+#include "error_reporting.h"
 
 #ifdef __ZEPHYR__
 #include "state_sync.h"
@@ -59,6 +60,7 @@ static parser_error_t parseKeyStrokeAction(key_action_t *keyAction, uint8_t keyS
             keyAction->keystroke.keystrokeType = KeystrokeType_System;
             break;
         default:
+            ConfigParser_Error(buffer, "Invalid keystroke type: %d", keystrokeType);
             return ParserError_InvalidSerializedKeystrokeType;
     }
     keyAction->keystroke.scancode = keyStrokeAction & SERIALIZED_KEYSTROKE_TYPE_MASK_HAS_SCANCODE
@@ -91,6 +93,7 @@ static parser_error_t parseSwitchKeymapAction(key_action_t *keyAction, config_bu
     uint8_t keymapIndex = ReadUInt8(buffer);
 
     if (keymapIndex >= tempKeymapCount) {
+        ConfigParser_Error(buffer, "Invalid keymap index: %d", keymapIndex);
         return ParserError_InvalidSerializedSwitchKeymapAction;
     }
     keyAction->type = KeyActionType_SwitchKeymap;
@@ -104,6 +107,7 @@ static parser_error_t parsePlayMacroAction(key_action_t *keyAction, config_buffe
     uint8_t macroIndex = ReadUInt8(buffer);
 
     if (macroIndex >= tempMacroCount) {
+        ConfigParser_Error(buffer, "Invalid macro index: %d", macroIndex);
         return ParserError_InvalidSerializedPlayMacroAction;
     }
     keyAction->type = KeyActionType_PlayMacro;
@@ -118,6 +122,7 @@ static parser_error_t parseMouseAction(key_action_t *keyAction, config_buffer_t 
 
     uint8_t mouseAction = ReadUInt8(buffer);
     if (mouseAction > SerializedMouseAction_Last) {
+        ConfigParser_Error(buffer, "Invalid mouse action: %d", mouseAction);
         return ParserError_InvalidSerializedMouseAction;
     }
 
@@ -154,6 +159,8 @@ static parser_error_t parseKeyAction(key_action_t *keyAction, config_buffer_t *b
         case SerializedKeyActionType_PlayMacro:
             return parsePlayMacroAction(keyAction, buffer);
     }
+
+    ConfigParser_Error(buffer, "Invalid key action type: %d", keyActionType);
     return ParserError_InvalidSerializedKeyActionType;
 }
 
@@ -163,6 +170,7 @@ static parser_error_t parseKeyActions(uint8_t targetLayer, config_buffer_t *buff
     uint16_t actionCount = ReadCompactLength(buffer);
 
     if (actionCount > MAX_KEY_COUNT_PER_MODULE) {
+        ConfigParser_Error(buffer, "Invalid action count: %d", actionCount);
         return ParserError_InvalidActionCount;
     }
     if (moduleId == ModuleId_LeftKeyboardHalf || moduleId == ModuleId_KeyClusterLeft) {
@@ -193,7 +201,7 @@ static parser_error_t parseModule(config_buffer_t *buffer, uint8_t layer, parse_
 
 static parser_error_t parseLayerId(config_buffer_t *buffer, uint8_t layer, layer_id_t* parsedLayerId)
 {
-    if(DataModelMajorVersion >= 5) {
+    if(DataModelVersion.major >= 5) {
         uint8_t layerId = ReadUInt8(buffer);
         switch(layerId) {
         case SerializedLayerName_base:
@@ -203,6 +211,7 @@ static parser_error_t parseLayerId(config_buffer_t *buffer, uint8_t layer, layer
             *parsedLayerId = layerId + 1;
             break;
         default:
+            ConfigParser_Error(buffer, "Invalid layer id: %d", layerId);
             return ParserError_InvalidLayerId;
         }
     } else {
@@ -237,6 +246,7 @@ static parser_error_t parseLayer(config_buffer_t *buffer, uint8_t layer, parse_m
     uint16_t moduleCount = ReadCompactLength(buffer);
 
     if (moduleCount > ModuleId_AllCount) {
+        ConfigParser_Error(buffer, "Invalid module count: %d", moduleCount);
         return ParserError_InvalidModuleCount;
     }
     for (uint8_t moduleIdx = 0; moduleIdx < moduleCount; moduleIdx++) {
@@ -322,9 +332,11 @@ parser_error_t ParseKeymap(config_buffer_t *buffer, uint8_t keymapIdx, uint8_t k
     (void)name;
     (void)description;
     if (!abbreviationLen || abbreviationLen > 3) {
+        ConfigParser_Error(buffer, "Invalid abbreviation length: %d", abbreviationLen);
         return ParserError_InvalidAbbreviationLen;
     }
     if (layerCount > LayerId_Count) {
+        ConfigParser_Error(buffer, "Invalid layer count: %d", layerCount);
         return ParserError_InvalidLayerCount;
     }
     if (parseConfig.mode == ParseKeymapMode_FullRun) {
