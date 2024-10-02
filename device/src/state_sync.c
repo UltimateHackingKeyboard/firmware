@@ -22,6 +22,7 @@
 #include <zephyr/kernel.h>
 #include "legacy/peripherals/merge_sensor.h"
 #include "power_mode.h"
+#include "bt_conn.h"
 
 #define THREAD_STACK_SIZE 2000
 #define THREAD_PRIORITY 5
@@ -324,6 +325,10 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
         if (!isLocalUpdate) {
             EventVector_Set(EventVector_LedMapUpdateNeeded);
         }
+        break;
+    case StateSyncPropertyId_PowerMode:
+        // for both local and remote!
+        Bt_UpdatePowerModes();
         break;
     case StateSyncPropertyId_MergeSensor:
         break;
