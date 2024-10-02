@@ -21,6 +21,7 @@
 #include "macros/vars.h"
 #include "postponer.h"
 #include "secondary_role_driver.h"
+#include "power_mode.h"
 #ifndef __ZEPHYR__
 #include "segment_display.h"
 #endif
@@ -1402,6 +1403,32 @@ static bool processIfModuleConnected(parser_context_t* ctx, bool negate)
     return moduleConnected != negate;
 }
 
+static macro_result_t processPowerModeCommand(parser_context_t* ctx) {
+    bool toggle = false;
+
+    if (ConsumeToken(ctx, "toggle")) {
+        toggle = true;
+    }
+
+    if (ConsumeToken(ctx, "sleep")) {
+        if (Macros_DryRun) {
+            return MacroResult_Finished;
+        }
+        PowerMode_ActivateMode(PowerMode_Sleep, toggle);
+    }
+    else if (ConsumeToken(ctx, "wake")) {
+        if (Macros_DryRun) {
+            return MacroResult_Finished;
+        }
+        PowerMode_ActivateMode(PowerMode_Awake, toggle);
+    }
+    else {
+        Macros_ReportError("Unrecognized parameter:", ctx->at, ctx->at);
+    }
+
+    return MacroResult_Finished;
+}
+
 static macro_result_t processActivateKeyPostponedCommand(parser_context_t* ctx)
 {
     uint8_t layer = 255;
@@ -2076,6 +2103,9 @@ static macro_result_t processCommand(parser_context_t* ctx)
             }
             else if (ConsumeToken(ctx, "progressHue")) {
                 return processProgressHueCommand();
+            }
+            else if (ConsumeToken(ctx, "powerMode")) {
+                return processPowerModeCommand(ctx);
             }
             else {
                 goto failed;

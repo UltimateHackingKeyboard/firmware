@@ -88,6 +88,7 @@
         StateSyncPropertyId_LeftModuleDisconnected,
         StateSyncPropertyId_MergeSensor,
         StateSyncPropertyId_FunctionalColors,
+        StateSyncPropertyId_PowerMode,
         StateSyncPropertyId_Count,
     } state_sync_prop_id_t;
 

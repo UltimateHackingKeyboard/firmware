@@ -1,5 +1,6 @@
 #include "led_display.h"
 #include "slave_drivers/is31fl3xxx_driver.h"
+#include "power_mode.h"
 #include "usb_device_config.h"
 #include "usb_composite_device.h"
 #include "usb_descriptors/usb_descriptor_hid.h"
@@ -11,6 +12,7 @@
 #include "debug.h"
 #include "led_manager.h"
 #include "event_scheduler.h"
+#include "power_mode.h"
 
 static uint8_t MsAltEnumMode = 0;
 usb_composite_device_t UsbCompositeDevice;
@@ -169,18 +171,7 @@ static usb_device_class_config_list_struct_t UsbDeviceCompositeConfigList = {
     },
 }};
 
-volatile bool SleepModeActive = true;
 static volatile bool wakeUpHostAllowed;
-
-static void suspendUhk(void) {
-    SleepModeActive = true;
-    LedSlaveDriver_DisableLeds();
-}
-
-static void wakeUpUhk(void) {
-    SleepModeActive = false;
-    EventVector_Set(EventVector_LedManagerFullUpdateNeeded);
-}
 
 void WakeUpHost(void) {
     if (!wakeUpHostAllowed) {
@@ -188,7 +179,7 @@ void WakeUpHost(void) {
     }
     // Send resume signal - this will call USB_DeviceKhciControl(khciHandle, kUSB_DeviceControlResume, NULL);
     USB_DeviceSetStatus(UsbCompositeDevice.deviceHandle, kUSB_DeviceStatusBus, NULL);
-    while (SleepModeActive) {
+    while (CurrentPowerMode != PowerMode_Awake) {
         ;
     }
 }
@@ -211,18 +202,18 @@ static usb_status_t usbDeviceCallback(usb_device_handle handle, uint32_t event, 
             break;
         case kUSB_DeviceEventSuspend:
             if (UsbCompositeDevice.attach) {
-                suspendUhk(); // The host sends this event when it goes to sleep, so turn off all the LEDs.
+                PowerMode_ActivateMode(PowerMode_Uhk60Sleep, false);
                 status = kStatus_USB_Success;
             }
             break;
         case kUSB_DeviceEventResume:
-            wakeUpUhk();
+            PowerMode_ActivateMode(PowerMode_Awake, false);
             status = kStatus_USB_Success;
             break;
         case kUSB_DeviceEventSetConfiguration: {
             uint8_t interface;
             UsbCompositeDevice.attach = 1;
-            wakeUpUhk();
+            PowerMode_ActivateMode(PowerMode_Awake, false);
             for (interface = 0; interface < USB_DEVICE_CONFIG_HID; ++interface) {
                 usb_device_class_config_struct_t *intf = &UsbDeviceCompositeConfigList.config[interface];
 

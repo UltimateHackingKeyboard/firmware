@@ -20,6 +20,8 @@
 
 #define THREAD_STACK_SIZE 1000
 #define THREAD_PRIORITY 5
+#define OLED_FADE_TIME 2*255
+#define OLED_FADE_STEP 1
 
 static K_THREAD_STACK_DEFINE(stack_area, THREAD_STACK_SIZE);
 static struct k_thread thread_data;
@@ -90,6 +92,14 @@ static uint16_t currentXShift = 0;
 static uint16_t currentYShift = 0;
 static bool wantScreenShift;
 
+static uint8_t computeBrightness() {
+    if (ActiveScreen == ScreenId_Debug && DisplayBrightness == 0) {
+        return 255;
+    } else {
+        return DisplayBrightness;
+    }
+}
+
 static void forceRedraw() {
     for (uint16_t x = 0; x < DISPLAY_WIDTH; x+=2) {
         for (uint16_t y = 0; y < DISPLAY_HEIGHT; y++) {
@@ -158,26 +168,31 @@ static uint16_t roundToEven(uint16_t a) {
 }
 
 static void adjustBrightness() {
-    uint8_t brightness = DisplayBrightness;
+    uint8_t targetBrightness = computeBrightness();
 
-    if (brightness == 0) {
+    uint8_t nextBrightness = lastBrightness;
+
+    if (nextBrightness != targetBrightness) {
+        if (nextBrightness - OLED_FADE_STEP > targetBrightness) {
+            nextBrightness -= OLED_FADE_STEP;
+        } else if (nextBrightness + OLED_FADE_STEP < targetBrightness) {
+            nextBrightness += OLED_FADE_STEP;
+        } else {
+            nextBrightness = targetBrightness;
+        }
+    }
+
+    if (nextBrightness == 0) {
         oledCommand1(0, OledCommand_SetDisplayOff);
     } else {
         oledCommand1(0, OledCommand_SetDisplayOn);
-        oledCommand2(0, OledCommand_SetContrast, DisplayBrightness);
+        oledCommand2(0, OledCommand_SetContrast, nextBrightness);
     }
 
-    lastBrightness = brightness;
+    lastBrightness = nextBrightness;
 }
 
 static void diffUpdate() {
-    k_mutex_lock(&SpiMutex, K_FOREVER);
-
-    if (lastBrightness != DisplayBrightness) {
-        adjustBrightness();
-    }
-
-
     setA0(true);
     setOledCs(true);
 
@@ -226,16 +241,10 @@ static void diffUpdate() {
     }
     setOledCs(false);
     // printk("update took %ims\n", k_uptime_get_32() - time);
-
-    k_mutex_unlock(&SpiMutex);
 }
 
 void sleepDisplay() {
-    k_mutex_lock(&SpiMutex, K_FOREVER);
-    adjustBrightness();
-    k_mutex_unlock(&SpiMutex);
-
-    while (DisplayBrightness == 0) {
+    while (computeBrightness() == 0 && lastBrightness == 0) {
         k_sleep(K_FOREVER);
     }
 }
@@ -251,17 +260,35 @@ void oledUpdater() {
     currentScreen->draw(currentScreen, OledBuffer);
     forceRedraw();
 
-    while (true) {
-        diffUpdate();
+    bool lastOledNeedsRedraw = true;
 
-        if (!oledNeedsRedraw) {
-            k_sleep(K_FOREVER);
+    while (true) {
+        {
+            k_mutex_lock(&SpiMutex, K_FOREVER);
+
+            if (lastBrightness != computeBrightness()) {
+                adjustBrightness();
+            }
+
+            if (lastOledNeedsRedraw) {
+                lastOledNeedsRedraw = false;
+                diffUpdate();
+            }
+
+            k_mutex_unlock(&SpiMutex);
         }
 
-        if (lastBrightness != DisplayBrightness) {
+        if (!oledNeedsRedraw && lastBrightness == computeBrightness()) {
+            k_sleep(K_FOREVER);
+        } else {
+            k_sleep(K_MSEC(OLED_FADE_TIME / (255/OLED_FADE_STEP)));
+        }
+
+        if (lastBrightness == 0) {
             sleepDisplay();
         }
 
+        lastOledNeedsRedraw = oledNeedsRedraw;
         oledNeedsRedraw = false;
 
         if (wantScreenShift) {

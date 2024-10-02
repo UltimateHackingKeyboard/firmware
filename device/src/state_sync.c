@@ -21,6 +21,7 @@
 #include <stdint.h>
 #include <zephyr/kernel.h>
 #include "legacy/peripherals/merge_sensor.h"
+#include "power_mode.h"
 
 #define THREAD_STACK_SIZE 2000
 #define THREAD_PRIORITY 5
@@ -119,6 +120,7 @@ static state_sync_prop_t stateSyncProps[StateSyncPropertyId_Count] = {
     EMPTY(LeftModuleDisconnected,   SyncDirection_LeftToRight,        DirtyState_Clean),
     SIMPLE(MergeSensor,             SyncDirection_LeftToRight,        DirtyState_Clean,    &MergeSensor_HalvesAreMerged),
     SIMPLE(FunctionalColors,        SyncDirection_RightToLeft,        DirtyState_Clean,    &Cfg.KeyActionColors),
+    SIMPLE(PowerMode,               SyncDirection_RightToLeft,        DirtyState_Clean,    &CurrentPowerMode),
 };
 
 static void invalidateProperty(state_sync_prop_id_t propId) {
@@ -505,6 +507,7 @@ static bool handlePropertyUpdateRightToLeft() {
 
     if (KeyBacklightBrightness != 0 && Cfg.BacklightingMode != BacklightingMode_ConstantRGB) {
         // Update relevant data
+        UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_PowerMode);
         UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_FunctionalColors);
         UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_LayerActionFirst + ActiveLayer);
         UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ActiveKeymap);
@@ -640,6 +643,7 @@ void StateSync_ResetRightLeftLink(bool bidirectional) {
         invalidateProperty(StateSyncPropertyId_ActiveLayer);
         invalidateProperty(StateSyncPropertyId_Backlight);
         invalidateProperty(StateSyncPropertyId_FunctionalColors);
+        invalidateProperty(StateSyncPropertyId_PowerMode);
     }
     if (DEVICE_ID == DeviceId_Uhk80_Left) {
         invalidateProperty(StateSyncPropertyId_Battery);

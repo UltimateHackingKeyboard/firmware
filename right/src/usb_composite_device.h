@@ -34,7 +34,7 @@
 // Variables:
 
     extern uint8_t ReportDescriptorsTouched;
-    extern volatile bool SleepModeActive;
+
 #ifndef __ZEPHYR__
     extern usb_composite_device_t UsbCompositeDevice;
 #endif

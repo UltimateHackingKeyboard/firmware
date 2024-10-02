@@ -38,6 +38,7 @@
 #include "config_manager.h"
 #include <string.h>
 #include "led_manager.h"
+#include "power_mode.h"
 
 #ifdef __ZEPHYR__
 #include "debug_eventloop_timing.h"
@@ -546,11 +547,9 @@ static void updateActionStates() {
                     // as it is pressed
                     actionCache[slotId][keyId].modifierLayerMask = 0;
 
-#ifndef __ZEPHYR__
-                    if (SleepModeActive) {
-                        WakeUpHost();
+                    if (CurrentPowerMode >= PowerMode_Sleep) {
+                        PowerMode_WakeHost();
                     }
-#endif
 
                     if (Postponer_LastKeyLayer != 255 && PostponerCore_IsActive()) {
                         actionCache[slotId][keyId].action = CurrentKeymap[Postponer_LastKeyLayer][slotId][keyId];
@@ -732,9 +731,11 @@ void UpdateUsbReports(void)
 
     updateActiveUsbReports();
 
-    if (EventVector_IsSet(EventVector_ReportsChanged)) {
+    if (EventVector_IsSet(EventVector_ReportsChanged) && CurrentPowerMode < PowerMode_Sleep) {
         mergeReports();
         sendActiveReports();
+    } else {
+        EventVector_Unset(EventVector_ReportsChanged);
     }
 
     if (DisplaySleepModeActive || KeyBacklightSleepModeActive) {
