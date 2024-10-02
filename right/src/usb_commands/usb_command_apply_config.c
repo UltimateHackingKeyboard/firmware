@@ -25,11 +25,23 @@ void updateUsbBuffer(uint8_t usbStatusCode, uint16_t parserOffset, parser_stage_
     SetUsbTxBufferUint8(3, parserStage);
 }
 
+static bool validateConfig() {
+    // Validate the staging configuration.
+    ParserRunDry = true;
+    StagingUserConfigBuffer.offset = 0;
+    uint8_t parseConfigStatus = ParseConfig(&StagingUserConfigBuffer);
+    updateUsbBuffer(parseConfigStatus, StagingUserConfigBuffer.offset, ParsingStage_Validate);
+
+    return parseConfigStatus == UsbStatusCode_Success;
+}
+
 void UsbCommand_ApplyConfigAsync(void) {
-    EventVector_Set(EventVector_ApplyConfig);
+    if (validateConfig()) {
+        EventVector_Set(EventVector_ApplyConfig);
 #ifdef __ZEPHYR__
-    Main_Wake();
+        Main_Wake();
 #endif
+    }
 }
 
 void UsbCommand_ApplyConfig(void)
@@ -37,18 +49,7 @@ void UsbCommand_ApplyConfig(void)
     static bool isBoot = true;
     EventVector_Unset(EventVector_ApplyConfig);
 
-    // Validate the staging configuration.
-    ParserRunDry = true;
-    StagingUserConfigBuffer.offset = 0;
-    uint8_t parseConfigStatus = ParseConfig(&StagingUserConfigBuffer);
-    updateUsbBuffer(parseConfigStatus, StagingUserConfigBuffer.offset, ParsingStage_Validate);
-
-    if (parseConfigStatus != UsbStatusCode_Success) {
-        return;
-    }
-
     // Make the staging configuration the current one.
-
     char oldKeymapAbbreviation[KEYMAP_ABBREVIATION_LENGTH];
     uint8_t oldKeymapAbbreviationLen;
     memcpy(oldKeymapAbbreviation, AllKeymaps[CurrentKeymapIndex].abbreviation, KEYMAP_ABBREVIATION_LENGTH);
@@ -66,7 +67,7 @@ void UsbCommand_ApplyConfig(void)
 
     ParserRunDry = false;
     ValidatedUserConfigBuffer.offset = 0;
-    parseConfigStatus = ParseConfig(&ValidatedUserConfigBuffer);
+    uint8_t parseConfigStatus = ParseConfig(&ValidatedUserConfigBuffer);
     updateUsbBuffer(parseConfigStatus, ValidatedUserConfigBuffer.offset, ParsingStage_Apply);
 
     if (parseConfigStatus != UsbStatusCode_Success) {
