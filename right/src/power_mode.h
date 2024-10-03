@@ -13,8 +13,9 @@
 
 typedef enum {
     PowerMode_Awake,
-    PowerMode_Sleep,
-    PowerMode_Uhk60Sleep = PowerMode_Sleep,
+    PowerMode_LightSleep,
+    PowerMode_Uhk60Sleep = PowerMode_LightSleep,
+    PowerMode_DeepSleep,
     PowerMode_Count,
 } power_mode_t;
 // Variables:

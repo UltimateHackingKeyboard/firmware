@@ -1410,11 +1410,17 @@ static macro_result_t processPowerModeCommand(parser_context_t* ctx) {
         toggle = true;
     }
 
-    if (ConsumeToken(ctx, "sleep")) {
+    if (ConsumeToken(ctx, "deepSleep") || ConsumeToken(ctx, "sleep")) {
         if (Macros_DryRun) {
             return MacroResult_Finished;
         }
-        PowerMode_ActivateMode(PowerMode_Sleep, toggle);
+        PowerMode_ActivateMode(PowerMode_DeepSleep, toggle);
+    }
+    else if (ConsumeToken(ctx, "lightSleep")) {
+        if (Macros_DryRun) {
+            return MacroResult_Finished;
+        }
+        PowerMode_ActivateMode(PowerMode_LightSleep, toggle);
     }
     else if (ConsumeToken(ctx, "wake")) {
         if (Macros_DryRun) {
