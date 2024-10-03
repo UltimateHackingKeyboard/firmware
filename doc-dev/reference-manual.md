@@ -435,17 +435,12 @@ We allow postponing key activations in order to allow deciding between some scen
     - `orGate` will treat the given list of keys as *or-conditions* (rather than as *and-conditions*). Check any presence of mentioned keyIds in postponer queue for the next key press. Implies `anyOrder`.
     - `timeoutIn <time (INT)>` adds a timeout timer to both `Shortcut` and `Gesture` commands. If the timer times out (i.e., the condition does not suceed or fail earlier), the command continues as if matching KEYIDs failed. Can be used to shorten life of `Shortcut` resolution.
     - `cancelIn <time (INT)>` adds a timer to both commands. If this timer times out, all related keys are consumed and macro is broken. *"This action has never happened, lets not talk about it anymore."* (Note that this is an only condition which behaves same in both `if` and `ifNot` cases.)
-  - `arg1 - queue idx` idx of key to compare, indexed from 0. Typically 0, if we want to resolve the key after next key then 1, etc.
-  - `arg2 - key id` key id obtained by `resolveNextKeyId`. This is static identifier of the hardware key.
-  - `arg3 - timeout` timeout. If not enough keys is pressed within the time, goto to `arg5` is issued. Either number in ms, or `untilRelease`.
-  - `arg4 - adr1` index of macro action to go to if the `arg1`th next key's hardware identifier equals `arg2`.
-  - `arg5 - adr2` index of macro action to go to otherwise.
 - `resolveNextKeyId` will wait for next key press. When the next key is pressed, it will type a unique identifier identifying the pressed hardware key.
-  - E.g., create a macro containing this command, and bint it to key `a`. Focus text editor. Tap `a`, tap `b`. Now, you should see `91` in your text editor, which is `b`'s `KEYID`.
+  - E.g., create a macro containing this command, and bind it to key `a`. Focus text editor. Tap `a`, tap `b`. Now, you should see `91` in your text editor, which is `b`'s `KEYID`.
 
 ### Conditions
 
-Conditions are checked before processing the rest of the command. If the condition does not hold, the rest of the command is skipped entirelly. If the command is evaluated multiple times (i.e., if it internally consists of multiple steps, such as the delay, which is evaluated repeatedly until the desired time has passed), the condition is evaluated only in the first iteration.
+Conditions are checked before processing the rest of the command. If the condition does not hold, the rest of the command is skipped entirely. If the command is evaluated multiple times (i.e., if it internally consists of multiple steps, such as the delay, which is evaluated repeatedly until the desired time has passed), the condition is evaluated only in the first iteration.
 
 - `if BOOL` allows switching based on a custom expression. E.g., `if ($keystrokeDelay > 10) ...`
 - `else` condition is true if the previous command ended due to a failed condition.
