@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.20.0)
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(uhk)
 
+if(NOT CONFIG_DEBUG)
+    add_definitions(-DNDEBUG)
+endif()
+
 target_include_directories(app PUBLIC
     src
     src/legacy
