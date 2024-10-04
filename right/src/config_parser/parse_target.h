@@ -1,5 +1,5 @@
-#ifndef __CONNECTIONS_H__
-#define __CONNECTIONS_H__
+#ifndef __TARGETS_H__
+#define __TARGETS_H__
 
 
 // Includes:
@@ -13,6 +13,6 @@
 
 // Functions:
 
-    parser_error_t ParseConnections(config_buffer_t *buffer);
+    parser_error_t ParseTargets(config_buffer_t *buffer);
 
 #endif
