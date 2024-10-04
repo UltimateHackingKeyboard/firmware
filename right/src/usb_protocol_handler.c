@@ -1,4 +1,5 @@
 #include <strings.h>
+#include "macros/status_buffer.h"
 #include "usb_protocol_handler.h"
 #include "buffer.h"
 #include "usb_commands/usb_command_get_device_state.h"
@@ -119,6 +120,9 @@ void UsbProtocolHandler(void)
         default:
             SetUsbTxBufferUint8(0, UsbStatusCode_InvalidCommand);
             break;
+    }
+    if (GenericHidInBuffer[0] != UsbStatusCode_Success) {
+        Macros_ReportErrorPrintf(NULL, "Usb protocol command %d failed with: %d\n", command, GenericHidInBuffer[0]);
     }
 }
 

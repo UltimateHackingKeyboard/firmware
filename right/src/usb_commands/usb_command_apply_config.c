@@ -36,8 +36,8 @@ static uint8_t validateConfig() {
 }
 
 void UsbCommand_ApplyConfigAsync(void) {
-    if (validateConfig()) {
-    EventVector_Set(EventVector_ApplyConfig);
+    if (validateConfig() == UsbStatusCode_Success) {
+        EventVector_Set(EventVector_ApplyConfig);
 #ifdef __ZEPHYR__
         Main_Wake();
 #endif
