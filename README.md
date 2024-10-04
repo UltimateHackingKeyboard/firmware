@@ -67,6 +67,19 @@ Then, depending whether you want a full IDE experience or just minimal tools for
     west flash -d $PWD/device/build/$DEVICE
     ```
 
+### Recommended tweaks
+
+You may find this `.git/hooks/post-checkout` git hook useful:
+
+```bash
+#!/bin/bash
+
+# Update the submodule in lib/c2usb to the commit recorded in the checked-out commit
+git submodule update --init --recursive lib/c2usb
+# Refresh versions.c, so that Agent always shows what commit you are on (although it doesn't indicate unstaged changes)
+scripts/generate-versions.mjs
+```
+
 ### Old IDE setup
 
 2. Download and install MCUXpresso IDE for [Linux](https://ultimatehackingkeyboard.com/mcuxpressoide/mcuxpressoide-11.2.0_4120.x86_64.deb.bin), [Mac](https://ultimatehackingkeyboard.com/mcuxpressoide/MCUXpressoIDE_11.2.0_4120.pkg), or [Windows](https://ultimatehackingkeyboard.com/mcuxpressoide/MCUXpressoIDE_11.2.0_4120.exe).
