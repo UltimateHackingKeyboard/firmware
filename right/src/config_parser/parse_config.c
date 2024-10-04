@@ -22,7 +22,7 @@
 #include "config_manager.h"
 #include "led_manager.h"
 #include "attributes.h"
-#include "parse_target.h"
+#include "parse_host_connection.h"
 #include "error_reporting.h"
 #include "versioning.h"
 
@@ -184,14 +184,14 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
         keyBacklightFadeOutBatteryTimeout = ledsFadeTimeout;
     }
 
-    // Target configuration
+    // HostConnection configuration
 
     if (VERSION_AT_LEAST(DataModelVersion, 8, 1, 0)) {
-        ConfigParser_Error(buffer, "Started parsing targets here.");
+        ConfigParser_Error(buffer, "Started parsing host_connections here.");
         RETURN_ON_ERROR(
-            ParseTargets(buffer);
+            ParseHostConnections(buffer);
         )
-        ConfigParser_Error(buffer, "Finished parsing targets here.");
+        ConfigParser_Error(buffer, "Finished parsing host_connections here.");
     }
 
 

@@ -1,1 +1,0 @@
-../../../../right/src/config_parser/parse_target.h
