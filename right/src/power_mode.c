@@ -33,17 +33,27 @@ void PowerMode_Update() {
     bool someoneAwake = CurrentPowerMode == PowerMode_Awake;
 #endif
 
-    bool newPowerMode = someoneAwake ? PowerMode_Awake : PowerMode_Sleep;
+    bool newPowerMode = someoneAwake ? PowerMode_Awake : PowerMode_LightSleep;
 
-    PowerMode_ActivateMode(newPowerMode, false);
+    if (CurrentPowerMode <= PowerMode_LightSleep) {
+        PowerMode_ActivateMode(newPowerMode, false);
+    }
 }
 
-static void sleep() {
-    CurrentPowerMode = PowerMode_Sleep;
+static void lightSleep() {
+    CurrentPowerMode = PowerMode_LightSleep;
 
     EventVector_Set(EventVector_LedManagerFullUpdateNeeded);
     EventVector_WakeMain();
 }
+
+static void deepSleep() {
+    CurrentPowerMode = PowerMode_DeepSleep;
+
+    EventVector_Set(EventVector_LedManagerFullUpdateNeeded);
+    EventVector_WakeMain();
+}
+
 
 static void wake() {
     CurrentPowerMode = PowerMode_Awake;
@@ -53,10 +63,17 @@ static void wake() {
 }
 
 void PowerMode_ActivateMode(power_mode_t mode, bool toggle) {
+    // if toggling a mode that's currently active, wake up
     if (CurrentPowerMode == mode && toggle) {
         mode = PowerMode_Awake;
     }
 
+    // if two modes are activated, always sink into the deeper of them
+    if (mode > PowerMode_Awake && CurrentPowerMode > mode) {
+        return;
+    }
+
+    // if we are already in the requested mode, do nothing
     if (CurrentPowerMode == mode) {
         return;
     }
@@ -65,8 +82,11 @@ void PowerMode_ActivateMode(power_mode_t mode, bool toggle) {
         case PowerMode_Awake:
             wake();
             break;
-        case PowerMode_Sleep:
-            sleep();
+        case PowerMode_LightSleep:
+            lightSleep();
+            break;
+        case PowerMode_DeepSleep:
+            deepSleep();
             break;
         default:
             break;
