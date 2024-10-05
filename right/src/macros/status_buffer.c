@@ -319,7 +319,7 @@ void Macros_ReportErrorPrintf(const char* pos, const char *fmt, ...)
     va_list myargs;
     va_start(myargs, fmt);
     char buffer[256];
-    sprintf(buffer, fmt, myargs);
+    vsprintf(buffer, fmt, myargs);
     Macros_ReportError(buffer, pos, pos);
 
 }

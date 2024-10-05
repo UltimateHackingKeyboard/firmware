@@ -7,6 +7,7 @@
 #include "module.h"
 #include "mouse_controller.h"
 #include "config_manager.h"
+#include "error_reporting.h"
 
 static parser_error_t parseNavigationModes(config_buffer_t *buffer, module_configuration_t* moduleConfiguration)
 {
@@ -15,6 +16,7 @@ static parser_error_t parseNavigationModes(config_buffer_t *buffer, module_confi
         uint8_t navigationModeId = ReadUInt8(buffer);
 
         if (navigationModeId >= NavigationMode_Count) {
+            ConfigParser_Error(buffer, "Invalid navigation mode id: %d", navigationModeId);
             return ParserError_InvalidNavigationMode;
         }
 
@@ -74,6 +76,7 @@ static parser_error_t parseProperty(config_buffer_t* buffer, module_configuratio
                             Cfg.HoldContinuationTimeout = ReadUInt16(buffer);
                             break;
                         default:
+                            ConfigParser_Error(buffer, "Invalid module property id: %d", propertyId);
                             return ParserError_InvalidModuleProperty;
                     }
                     break;
@@ -87,10 +90,12 @@ static parser_error_t parseProperty(config_buffer_t* buffer, module_configuratio
                             moduleConfiguration->invertScrollDirectionX = ReadBool(buffer);
                             break;
                         default:
+                            ConfigParser_Error(buffer, "Invalid module property id: %d", propertyId);
                             return ParserError_InvalidModuleProperty;
                     }
                     break;
                 default:
+                    ConfigParser_Error(buffer, "Invalid module id: %d", moduleId);
                     return ParserError_InvalidModuleProperty;
             }
     }
