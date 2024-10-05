@@ -187,18 +187,15 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
     // HostConnection configuration
 
     if (VERSION_AT_LEAST(DataModelVersion, 8, 1, 0)) {
-        ConfigParser_Error(buffer, "Started parsing host_connections here.");
         RETURN_ON_ERROR(
             ParseHostConnections(buffer);
         )
-        ConfigParser_Error(buffer, "Finished parsing host_connections here.");
     }
 
 
     // Module configurations
 
     uint16_t moduleConfigurationCount = ReadCompactLength(buffer);
-    Macros_ReportPrintf(NULL, "moduleConfigurationCount: %d", moduleConfigurationCount);
 
     if (moduleConfigurationCount > 255) {
         ConfigParser_Error(buffer, "Invalid module configuration count: %u", moduleConfigurationCount);
@@ -206,7 +203,6 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
     }
 
     for (uint8_t moduleConfigurationIdx = 0; moduleConfigurationIdx < moduleConfigurationCount; moduleConfigurationIdx++) {
-        Macros_ReportPrintf(NULL, "parsing module configuration for %d at offset %d", moduleConfigurationIdx, buffer->offset);
         RETURN_ON_ERROR(
             ParseModuleConfiguration(buffer);
         )
@@ -221,7 +217,6 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
     }
 
     for (uint8_t macroIdx = 0; macroIdx < macroCount; macroIdx++) {
-        Macros_ReportPrintf(NULL, "parsing macro %d at offset %d", macroIdx, buffer->offset);
         RETURN_ON_ERROR(
             ParseMacro(buffer, macroIdx);
         )
