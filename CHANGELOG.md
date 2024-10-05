@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [11.2.0] - 2024-10-06
+
+Device Protocol: 4.10.0 | Module Protocol: 4.3.0 | User Config: 7.1.0 | Hardware Config: 1.0.0 | Smart Macros: 2.**5**.0
+
+- Implement ifHold/ifTap commands. `SMARTMACROS:MINOR`
+- Fix macroStartTime for postponed time. `SMARTMACROS:PATCH`
+- Keyid parser fixes. `SMARTMACROS:PATCH`
+
 ## [11.1.1] - 2024-06-27
 
 Device Protocol: 4.10.0 | Module Protocol: 4.3.0 | User Config: 7.1.0 | Hardware Config: 1.0.0 | Smart Macros: 2.4.**4**

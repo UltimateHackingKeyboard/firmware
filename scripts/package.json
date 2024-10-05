@@ -17,12 +17,12 @@
     "md5": "2.3.0",
     "shelljs": "^0.8.4"
   },
-  "firmwareVersion": "11.1.1",
+  "firmwareVersion": "11.2.0",
   "deviceProtocolVersion": "4.10.0",
   "moduleProtocolVersion": "4.3.0",
   "userConfigVersion": "7.1.0",
   "hardwareConfigVersion": "1.0.0",
-  "smartMacrosVersion": "2.4.4",
+  "smartMacrosVersion": "2.5.0",
   "devices": [
     {
       "deviceId": 1,
