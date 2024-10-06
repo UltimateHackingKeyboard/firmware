@@ -224,10 +224,12 @@ function performAction() {
 END
             ;;
         build)
+            # reference version of the build process is to be found in scripts/make-release.mjs
             nrfutil toolchain-manager launch --shell --ncs-version $NCS_VERSION << END
                 unset PYTHONPATH
                 unset PYTHONHOME
-                west build --build-dir $ROOT/device/build/$DEVICE $ROOT/device --pristine --board $DEVICE --no-sysbuild -- -DNCS_TOOLCHAIN_VERSION=NONE -DEXTRA_CONF_FILE=prj.conf.overlays/$DEVICE.prj.conf -DBOARD_ROOT=$ROOT -Dmcuboot_OVERLAY_CONFIG=$ROOT/device/child_image/mcuboot.conf;$ROOT/device/child_image/$DEVICE.mcuboot.conf
+                ZEPHYR_TOOLCHAIN_VARIANT=zephyr west build --build-dir "$ROOT/device/build/$DEVICE" "$ROOT/device" --pristine --board "$DEVICE" --no-sysbuild -- -DNCS_TOOLCHAIN_VERSION=NONE -DEXTRA_CONF_FILE=prj.conf.overlays/$DEVICE.prj.conf -DBOARD_ROOT="$ROOT" -Dmcuboot_OVERLAY_CONFIG="$ROOT/device/child_image/mcuboot.conf;$ROOT/device/child_image/$DEVICE.mcuboot.conf"
+
 END
             createCentralCompileCommands
             ;;

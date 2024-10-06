@@ -42,11 +42,16 @@ Then, depending whether you want a full IDE experience or just minimal tools for
 ### Minimal development setup
 
 - Install commandline stuff from [nRF Connect SDK](https://developer.nordicsemi.com/nRF_Connect_SDK/doc/latest/nrf/installation/install_ncs.html)
-- Launch nrfutil shell:
+- You can use `./build.sh` script that basically just packs the following snippets, but should be more up to date:
+
+    - e.g. `./build.sh uhk-80-left build make flash`, which will perform the three actions below
+
+- If the `build.sh` doesn't suit you, then launch the nrfutil shell:
     ```
     nrfutil toolchain-manager launch --shell --ncs-version v2.6.1
     ```
 - In the shell, you can build (e.g.) uhk-80-left as follows:
+
   - full build including cmake steps, as extracted from VS Code:
     ```
     export DEVICE=uhk-80-left
@@ -60,12 +65,15 @@ Then, depending whether you want a full IDE experience or just minimal tools for
     export PWD=`pwd`
     west build --build-dir $PWD/device/build/$DEVICE $PWD/device
     ```
+
   - flash:
     ```
     export DEVICE=uhk-80-left
     export PWD=`pwd`
     west flash -d $PWD/device/build/$DEVICE
     ```
+
+In case of problems, please refer to scripts/make-release.mjs
 
 ### Recommended tweaks
 
