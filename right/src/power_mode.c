@@ -4,13 +4,11 @@
 #include "led_manager.h"
 
 #ifdef __ZEPHYR__
-    #include "state_sync.h"
     #include "device_state.h"
     #include "usb/usb.h"
 #else
     #include "slave_drivers/is31fl3xxx_driver.h"
     #include "usb_composite_device.h"
-    #include "stubs.h"
 #endif
 
 ATTR_UNUSED static bool usbAwake = false;
@@ -45,9 +43,6 @@ void PowerMode_Update() {
 static void lightSleep() {
     CurrentPowerMode = PowerMode_LightSleep;
 
-#ifdef __ZEPHYR__
-    StateSync_UpdateProperty(StateSyncPropertyId_PowerMode, &CurrentPowerMode);
-#endif
     EventVector_Set(EventVector_LedManagerFullUpdateNeeded);
     EventVector_WakeMain();
 }
@@ -63,9 +58,6 @@ static void deepSleep() {
 static void wake() {
     CurrentPowerMode = PowerMode_Awake;
 
-#ifdef __ZEPHYR__
-    StateSync_UpdateProperty(StateSyncPropertyId_PowerMode, &CurrentPowerMode);
-#endif
     EventVector_Set(EventVector_LedManagerFullUpdateNeeded);
     EventVector_WakeMain();
 }

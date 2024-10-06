@@ -22,7 +22,6 @@
     typedef struct {
         uint8_t id;
         char name[PeerNameMaxLength + 1];
-        struct bt_conn *conn;
         bt_addr_le_t addr;
         bool isConnected;
     } peer_t;
@@ -33,7 +32,6 @@
     char *GetPeerStringByConn(const struct bt_conn *conn);
     extern void bt_init(void);
     extern void num_comp_reply(uint8_t accept);
-    void Bt_UpdatePowerModes();
 
     void Bt_SetDeviceConnected(device_id_t deviceId);
     bool Bt_DeviceIsConnected(uint8_t deviceId);

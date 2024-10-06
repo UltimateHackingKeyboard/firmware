@@ -1,5 +1,5 @@
-#ifndef __UHK_POWER_MODE_H__
-#define __UHK_POWER_MODE_H__
+#ifndef __POWER_MODE_H__
+#define __POWER_MODE_H__
 
 // Includes:
 

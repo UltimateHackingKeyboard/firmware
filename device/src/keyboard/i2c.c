@@ -8,7 +8,6 @@
 #include "legacy/slave_drivers/uhk_module_driver.h"
 #include "legacy/i2c.h"
 #include "keyboard/i2c.h"
-#include "power_mode.h"
 
 // Thread definitions
 
@@ -90,10 +89,6 @@ void i2cPoller() {
 
         if (masterTransferInProgress) {
             lastStatus = processMasterTransfer();
-        }
-
-        if (CurrentPowerMode >= PowerMode_Sleep) {
-            k_msleep(100);
         }
     }
 }
