@@ -80,11 +80,11 @@ void MouseKeys_ActivateDirectionSigns(uint8_t state) {
 
 static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
 {
-    float initialSpeed = kineticState->intMultiplier * kineticState->initialSpeed;
-    float acceleration = kineticState->intMultiplier * kineticState->acceleration;
-    float deceleratedSpeed = kineticState->intMultiplier * kineticState->deceleratedSpeed;
-    float baseSpeed = kineticState->intMultiplier * kineticState->baseSpeed;
-    float acceleratedSpeed = kineticState->intMultiplier * kineticState->acceleratedSpeed;
+    float initialSpeed = UsbMouseScrollMultiplier * kineticState->intMultiplier * kineticState->initialSpeed;
+    float acceleration = UsbMouseScrollMultiplier * kineticState->intMultiplier * kineticState->acceleration;
+    float deceleratedSpeed = UsbMouseScrollMultiplier * kineticState->intMultiplier * kineticState->deceleratedSpeed;
+    float baseSpeed = UsbMouseScrollMultiplier * kineticState->intMultiplier * kineticState->baseSpeed;
+    float acceleratedSpeed = UsbMouseScrollMultiplier * kineticState->intMultiplier * kineticState->acceleratedSpeed;
 
     if (!kineticState->wasMoveAction && !ActiveMouseStates[SerializedMouseAction_Decelerate]) {
         kineticState->currentSpeed = initialSpeed;

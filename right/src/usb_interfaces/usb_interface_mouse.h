@@ -18,6 +18,7 @@
     #define USB_MOUSE_INTERRUPT_IN_INTERVAL 1
 
     #define USB_MOUSE_REPORT_LENGTH (sizeof(usb_mouse_report_t))
+    #define USB_MOUSE_FEAT_REPORT_LENGTH 1
 
 // Typedefs:
 
@@ -31,12 +32,13 @@
         uint32_t buttons : 24;
         int16_t x;
         int16_t y;
-        int8_t wheelY;
-        int8_t wheelX;
+        int16_t wheelY;
+        int16_t wheelX;
     } ATTR_PACKED usb_mouse_report_t;
 
 // Variables:
 
+    extern int16_t UsbMouseScrollMultiplier;
     extern uint32_t UsbMouseActionCounter;
     extern usb_mouse_report_t* ActiveUsbMouseReport;
 
