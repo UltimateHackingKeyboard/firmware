@@ -331,6 +331,8 @@ static void handleNewCaretModeAction(caret_axis_t axis, uint8_t resultSign, int1
             ks->caretAction.action = resultSign > 0 ? dirActions->positiveAction : dirActions->negativeAction;
             ks->caretFakeKeystate.current = true;
             ApplyKeyAction(&ks->caretFakeKeystate, &ks->caretAction, &ks->caretAction.action, &MouseControllerKeyboardReports);
+            Macros_WakeBecauseOfKeystateChange();
+            EventVector_Set(EventVector_MouseController);
             break;
         }
         case NavigationMode_Zoom:
@@ -352,6 +354,8 @@ static void handleSimpleRunningAction(module_kinetic_state_t* ks) {
     ks->caretFakeKeystate.current = !ks->caretFakeKeystate.previous;
     ks->caretFakeKeystate.previous = tmp;
     ApplyKeyAction(&ks->caretFakeKeystate, &ks->caretAction, &ks->caretAction.action, &MouseControllerKeyboardReports);
+    Macros_WakeBecauseOfKeystateChange();
+    EventVector_Set(EventVector_MouseController);
 }
 
 static void handleRunningCaretModeAction(module_kinetic_state_t* ks) {
@@ -360,7 +364,6 @@ static void handleRunningCaretModeAction(module_kinetic_state_t* ks) {
     } else {
         handleSimpleRunningAction(ks);
     }
-    EventVector_Set(EventVector_MouseController);
 }
 
 static bool caretModeActionIsRunning(module_kinetic_state_t* ks) {
@@ -704,6 +707,8 @@ void MouseController_ProcessMouseActions()
     uint8_t previousMods = MouseControllerKeyboardReports.basic.modifiers | MouseControllerKeyboardReports.inputModifiers;
     UsbReportUpdater_ResetKeyboardReports(&MouseControllerKeyboardReports);
 
+    bool caretModeActionWasRunningSomewhere = caretModeActionIsRunning(&leftModuleKineticState) || caretModeActionIsRunning(&rightModuleKineticState);
+
     if (Slaves[SlaveId_RightTouchpad].isConnected) {
         module_kinetic_state_t *ks = getKineticState(ModuleId_TouchpadRight);
 
@@ -763,12 +768,13 @@ void MouseController_ProcessMouseActions()
 
     uint8_t currentMods = MouseControllerKeyboardReports.basic.modifiers | MouseControllerKeyboardReports.inputModifiers;
     bool modsChanged = previousMods != currentMods;
-    bool keyboardReportsUsed = caretModeActionIsRunning(&leftModuleKineticState) || caretModeActionIsRunning(&rightModuleKineticState);
+    bool caretModeActionIsRunningSomewhere = caretModeActionIsRunning(&leftModuleKineticState) || caretModeActionIsRunning(&rightModuleKineticState);
+    bool keyboardReportsUsed = caretModeActionIsRunningSomewhere;
     bool mouseReportsUsed = MouseControllerMouseReport.x || MouseControllerMouseReport.y || MouseControllerMouseReport.wheelX || MouseControllerMouseReport.wheelY || MouseControllerMouseReport.buttons;
     EventVector_SetValue(EventVector_MouseControllerKeyboardReportsUsed, keyboardReportsUsed);
     EventVector_SetValue(EventVector_MouseControllerMouseReportsUsed, mouseReportsUsed);
 
-    if (keyboardReportsUsed || mouseReportsUsed || modsChanged) {
+    if (keyboardReportsUsed || mouseReportsUsed || caretModeActionWasRunningSomewhere || modsChanged) {
         EventVector_Set(EventVector_ReportsChanged);
     }
 }

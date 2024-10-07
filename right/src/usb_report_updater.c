@@ -237,7 +237,7 @@ void ActivateStickyMods(key_state_t *keyState, uint8_t mods)
     //do nothing to stickyModifiersNegative
     StickyModifiers = mods;
     stickyModifierKey = keyState;
-    stickyModifierShouldStick = true;
+    stickyModifierShouldStick = ActiveLayerHeld;
     EventVector_Set(EventVector_ReportsChanged);
 }
 
