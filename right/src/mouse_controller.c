@@ -59,7 +59,10 @@ module_kinetic_state_t rightModuleKineticState = {
     .lastUpdate = 0,
 };
 
-usb_keyboard_reports_t MouseControllerKeyboardReports;
+usb_keyboard_reports_t MouseControllerKeyboardReports = {
+    .reportsUsedVectorMask = EventVector_MouseControllerKeyboardReportsUsed,
+    .recomputeStateVectorMask = EventVector_MouseController,
+};
 usb_mouse_report_t MouseControllerMouseReport;
 
 static void processAxisLocking(axis_locking_args_t args);
@@ -698,9 +701,8 @@ void MouseController_ProcessMouseActions()
     EventVector_Unset(EventVector_MouseController);
 
     memset(&MouseControllerMouseReport, 0, sizeof(MouseControllerMouseReport));
-    memset(&MouseControllerKeyboardReports.basic, 0, sizeof MouseControllerKeyboardReports.basic);
-    memset(&MouseControllerKeyboardReports.media, 0, sizeof MouseControllerKeyboardReports.media);
-    memset(&MouseControllerKeyboardReports.system, 0, sizeof MouseControllerKeyboardReports.system);
+    uint8_t previousMods = MouseControllerKeyboardReports.basic.modifiers | MouseControllerKeyboardReports.inputModifiers;
+    UsbReportUpdater_ResetKeyboardReports(&MouseControllerKeyboardReports);
 
     if (Slaves[SlaveId_RightTouchpad].isConnected) {
         module_kinetic_state_t *ks = getKineticState(ModuleId_TouchpadRight);
@@ -759,12 +761,14 @@ void MouseController_ProcessMouseActions()
         }
     }
 
+    uint8_t currentMods = MouseControllerKeyboardReports.basic.modifiers | MouseControllerKeyboardReports.inputModifiers;
+    bool modsChanged = previousMods != currentMods;
     bool keyboardReportsUsed = caretModeActionIsRunning(&leftModuleKineticState) || caretModeActionIsRunning(&rightModuleKineticState);
     bool mouseReportsUsed = MouseControllerMouseReport.x || MouseControllerMouseReport.y || MouseControllerMouseReport.wheelX || MouseControllerMouseReport.wheelY || MouseControllerMouseReport.buttons;
     EventVector_SetValue(EventVector_MouseControllerKeyboardReportsUsed, keyboardReportsUsed);
     EventVector_SetValue(EventVector_MouseControllerMouseReportsUsed, mouseReportsUsed);
 
-    if (keyboardReportsUsed || mouseReportsUsed) {
+    if (keyboardReportsUsed || mouseReportsUsed || modsChanged) {
         EventVector_Set(EventVector_ReportsChanged);
     }
 }

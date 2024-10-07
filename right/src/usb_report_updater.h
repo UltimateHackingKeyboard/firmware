@@ -20,9 +20,17 @@
 // Typedefs:
 
     typedef struct {
+    } ATTR_PACKED usb_keyboard_reports_nullable_t;
+
+    typedef struct {
+        // these are metadata that should never be zeroed!
+        uint32_t recomputeStateVectorMask; // mask that should be set in order to recompute them in the next update
+        uint32_t reportsUsedVectorMask; // mask that indicates that these reports were used and should be merged
+        // these are the working data
         usb_basic_keyboard_report_t basic;
         usb_media_keyboard_report_t media;
         usb_system_keyboard_report_t system;
+        uint8_t inputModifiers;
     } ATTR_PACKED usb_keyboard_reports_t;
 
 // Variables:
@@ -51,6 +59,7 @@
     void ActivateStickyMods(key_state_t *keyState, uint8_t mods);
     void ApplyKeyAction(key_state_t *keyState, key_action_cached_t *cachedAction, key_action_t *actionBase, usb_keyboard_reports_t* reports);
 
+    void UsbReportUpdater_ResetKeyboardReports(usb_keyboard_reports_t* reports);
     void RecordKeyTiming_ReportKeystroke(key_state_t *keyState, bool active, uint32_t pressTime, uint32_t activationTime);
 
 #endif
