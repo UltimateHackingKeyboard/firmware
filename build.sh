@@ -11,7 +11,7 @@ usage: ./build DEVICE1 DEVICE2 ... ACTION1 ACTION2 ...
 
     DEVICE is in { uhk-80-left | uhk-80-right | uhk-60-right | uhk-dongle }
              there are also these aliases: { left | right | dongle | all }
-    ACTION is in { clean | setup | update | build | make | flash | shell | uart }
+    ACTION is in { clean | setup | update | build | make | flash | flashUsb | shell | uart }
 
     setup    initialize submodules and set up zephyr environment
     clean    removes zephyr libraries
@@ -91,6 +91,17 @@ function processArguments() {
     then
         help
     fi
+}
+
+mutex() {
+  local lockfile="/tmp/uhk_build_lockfile"
+  if [ "$1" == "lock" ]; then
+    exec 200>"$lockfile"  # Open file descriptor 200 for the lockfile
+    flock 200             # Block until lock is acquired
+  elif [ "$1" == "unlock" ]; then
+    flock -u 200          # Unlock the file descriptor
+    rm -f "$lockfile"     # Remove lockfile
+  fi
 }
 
 function determineUsbDeviceArg() {
@@ -249,7 +260,9 @@ END
             USB_SCRIPT_DIR=$ROOT/lib/agent/packages/usb/
             cd $USB_SCRIPT_DIR
             echo "running $USB_SCRIPT_DIR$ ./update-device-firmware.ts $USBDEVICEARG $ROOT/device/build/$DEVICE/zephyr/app_update.bin $OTHER_ARGS"
+            mutex lock
             ./update-device-firmware.ts $USBDEVICEARG $ROOT/device/build/$DEVICE/zephyr/app_update.bin $OTHER_ARGS
+            mutex unlock
             cd $ROOT
             ;;
         release)
@@ -277,7 +290,6 @@ function performActions() {
     done
     eval $POSTBUILD
 }
-
 
 function runPerDevice() {
     SESSION_NAME=$TARGET_TMUX_SESSION
