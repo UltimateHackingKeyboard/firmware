@@ -64,12 +64,15 @@ volatile uint8_t UsbReportUpdateSemaphore = 0;
 //   - affect "ifMod" (in next cycle)
 //   - can be suppressed
 //   - by default will be outputted into the report, unless supressed
+//   - implementation: they are kept separately in variables that are local to report modules
 // - output:
 //   - do not affect "ifMod" conditions
 //   - will always be outputted into the report
+//   - implementation: they go straight into the associated reports and are not handled explicitly
 // - sticky mods:
 //   - these are stateful and change state so that modifiers of last pressed
 //     composite shortcut is applied
+//   - implementation: they are kept in one global place
 
 uint8_t NativeActionInputModifiers;
 uint8_t InputModifiers;
@@ -78,7 +81,10 @@ uint8_t OutputModifiers;
 bool SuppressMods = false;
 bool SuppressKeys = false;
 
-usb_keyboard_reports_t NativeKeyboardReports;
+usb_keyboard_reports_t NativeKeyboardReports = {
+    .recomputeStateVectorMask = EventVector_NativeActions,
+    .reportsUsedVectorMask = EventVector_NativeActionReportsUsed,
+};
 
 static void resetActiveReports() {
     memset(ActiveUsbMouseReport, 0, sizeof *ActiveUsbMouseReport);
@@ -87,13 +93,12 @@ static void resetActiveReports() {
     memset(ActiveUsbSystemKeyboardReport, 0, sizeof *ActiveUsbSystemKeyboardReport);
 }
 
-static void resetNativeKeyboardReports(void)
-{
-    memset(&NativeKeyboardReports.basic, 0, sizeof NativeKeyboardReports.basic);
-    memset(&NativeKeyboardReports.media, 0, sizeof NativeKeyboardReports.media);
-    memset(&NativeKeyboardReports.system, 0, sizeof NativeKeyboardReports.system);
+void UsbReportUpdater_ResetKeyboardReports(usb_keyboard_reports_t* reports) {
+    memset(&reports->basic, 0, sizeof reports->basic);
+    memset(&reports->media, 0, sizeof reports->media);
+    memset(&reports->system, 0, sizeof reports->system);
+    reports->inputModifiers = 0;
 }
-
 
 // Holds are applied on current base layer.
 static void applyLayerHolds(key_state_t *keyState, key_action_t *action) {
@@ -232,7 +237,7 @@ void ActivateStickyMods(key_state_t *keyState, uint8_t mods)
     //do nothing to stickyModifiersNegative
     StickyModifiers = mods;
     stickyModifierKey = keyState;
-    stickyModifierShouldStick = true;
+    stickyModifierShouldStick = ActiveLayerHeld;
     EventVector_Set(EventVector_ReportsChanged);
 }
 
@@ -251,7 +256,10 @@ static void applyKeystrokePrimary(key_state_t *keyState, key_action_cached_t *ca
                 activateStickyMods(keyState, cachedAction);
             }
         } else {
-            NativeActionInputModifiers |= action->keystroke.modifiers;
+            if (action->keystroke.modifiers) {
+                reports->inputModifiers |= action->keystroke.modifiers;
+                EventVector_Set(EventVector_ReportsChanged | reports->reportsUsedVectorMask);
+            }
         }
         // If there are mods: first cycle send just mods, in next cycle start sending mods+scancode
         if (!stickyModifiersChanged || KeyState_ActivatedEarlier(keyState)) {
@@ -268,21 +276,22 @@ static void applyKeystrokePrimary(key_state_t *keyState, key_action_cached_t *ca
             }
         }
         if (stickyModifiersChanged) {
-            EventVector_Set(EventVector_NativeActions);
+            EventVector_Set(reports->recomputeStateVectorMask); // trigger next update in order to clear them, usually EventVector_NativeActions here
         }
     } else if (KeyState_DeactivatedNow(keyState)) {
         bool stickyModsAreNonZero = StickyModifiers != 0 || StickyModifiersNegative != 0;
         if (stickyModifierKey == keyState && !stickyModifierShouldStick && stickyModsAreNonZero) {
             //disable the modifiers, but send one last report of modifiers without scancode
-            OutputModifiers |= StickyModifiers;
+            reports->basic.modifiers |= StickyModifiers;
             StickyModifiers = 0;
             StickyModifiersNegative = 0;
-            EventVector_Set(EventVector_NativeActions);
+            EventVector_Set(reports->recomputeStateVectorMask); // trigger next update in order to clear them, usually EventVector_NativeActions here
+            EventVector_Set(EventVector_ReportsChanged | reports->reportsUsedVectorMask);
         }
     }
 }
 
-static void applyKeystrokeSecondary(key_state_t *keyState, key_action_t *action, key_action_t *actionBase)
+static void applyKeystrokeSecondary(key_state_t *keyState, key_action_t *action, key_action_t *actionBase, usb_keyboard_reports_t* reports)
 {
     secondary_role_t secondaryRole = action->keystroke.secondaryRole;
     if ( IS_SECONDARY_ROLE_LAYER_SWITCHER(secondaryRole) ) {
@@ -296,8 +305,8 @@ static void applyKeystrokeSecondary(key_state_t *keyState, key_action_t *action,
         }
     } else if (IS_SECONDARY_ROLE_MODIFIER(secondaryRole)) {
         if (KeyState_Active(keyState)) {
-            NativeActionInputModifiers |= SECONDARY_ROLE_MODIFIER_TO_HID_MODIFIER(secondaryRole);
-            EventVector_Set(EventVector_ReportsChanged);
+            reports->inputModifiers |= SECONDARY_ROLE_MODIFIER_TO_HID_MODIFIER(secondaryRole);
+            EventVector_Set(EventVector_ReportsChanged | reports->reportsUsedVectorMask);
         }
     }
 }
@@ -315,7 +324,7 @@ static void applyKeystroke(key_state_t *keyState, key_action_cached_t *cachedAct
                 applyKeystrokePrimary(keyState, cachedAction, reports);
                 return;
             case SecondaryRoleState_Secondary:
-                applyKeystrokeSecondary(keyState, action, actionBase);
+                applyKeystrokeSecondary(keyState, action, actionBase, reports);
                 return;
             case SecondaryRoleState_DontKnowYet:
                 // Repeatedly trigger to keep Postponer in postponing mode until the driver decides.
@@ -376,7 +385,6 @@ static void mergeReports(void)
     resetActiveReports();
 
     InputModifiers = 0;
-    InputModifiers |= NativeActionInputModifiers;
 
     if (EventVector_IsSet(EventVector_MacroReportsUsed)) {
         for(uint8_t j = 0; j < MACRO_STATE_POOL_SIZE; j++) {
@@ -399,6 +407,7 @@ static void mergeReports(void)
         UsbBasicKeyboard_MergeReports(&NativeKeyboardReports.basic, ActiveUsbBasicKeyboardReport);
         UsbMediaKeyboard_MergeReports(&NativeKeyboardReports.media, ActiveUsbMediaKeyboardReport);
         UsbSystemKeyboard_MergeReports(&NativeKeyboardReports.system, ActiveUsbSystemKeyboardReport);
+        InputModifiers |= NativeKeyboardReports.inputModifiers;
     }
 
     if (EventVector_IsSet(EventVector_MouseKeysReportsUsed)) {
@@ -517,8 +526,8 @@ static void handleLayerChanges() {
 }
 
 static void updateActionStates() {
-    resetNativeKeyboardReports();
-    NativeActionInputModifiers = 0;
+    uint8_t previousMods = NativeKeyboardReports.basic.modifiers | NativeKeyboardReports.inputModifiers;
+    UsbReportUpdater_ResetKeyboardReports(&NativeKeyboardReports);
 
     LayerSwitcher_ResetHolds();
 
@@ -584,6 +593,10 @@ static void updateActionStates() {
                 keyState->previous = keyState->current;
             }
         }
+    }
+    uint8_t currentMods = NativeKeyboardReports.basic.modifiers | NativeKeyboardReports.inputModifiers;
+    if (currentMods != previousMods) {
+        EventVector_Set(EventVector_ReportsChanged);
     }
 }
 
