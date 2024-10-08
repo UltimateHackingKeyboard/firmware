@@ -40,7 +40,7 @@ static_assert(CONFIG_BT_DIS_PNP_VID_SRC == 2);
 uint8_t UsbSerialNumber[5];
 
 constexpr usb::product_info product_info{CONFIG_BT_DIS_PNP_VID, CONFIG_BT_DIS_MANUF,
-    CONFIG_BT_DIS_PNP_PID, CONFIG_BT_DIS_MODEL,
+    CONFIG_USB_PID, CONFIG_BT_DIS_MODEL,
     usb::version(CONFIG_BT_DIS_PNP_VER >> 8, CONFIG_BT_DIS_PNP_VER), UsbSerialNumber};
 
 template <typename... Args>
