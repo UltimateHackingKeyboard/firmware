@@ -30,6 +30,7 @@
 
     extern bool UsbPowered;
     extern bool RunningOnBattery;
+    extern bool RightRunningOnBattery;
 
 // Functions:
 

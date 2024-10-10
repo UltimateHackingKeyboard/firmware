@@ -2,10 +2,12 @@
 #include "device.h"
 #include "device_state.h"
 #include "event_scheduler.h"
+#include "keyboard/charger.h"
 #include "keyboard/oled/widgets/widgets.h"
 #include "legacy/config_manager.h"
 #include "legacy/config_parser/config_globals.h"
 #include "legacy/debug.h"
+#include "legacy/event_scheduler.h"
 #include "legacy/keymap.h"
 #include "legacy/led_manager.h"
 #include "legacy/ledmap.h"
@@ -292,9 +294,14 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
         WIDGET_REFRESH(&StatusWidget);
         {
             bool newRunningOnBattery = !SyncLeftHalfState.battery.powered || !SyncRightHalfState.battery.powered;
+            bool newRightRunningOnBattery = !SyncRightHalfState.battery.powered;
             if (RunningOnBattery != newRunningOnBattery) {
                 RunningOnBattery = newRunningOnBattery;
-                LedManager_FullUpdate();
+                RightRunningOnBattery = newRightRunningOnBattery;
+                EventVector_Set(EventVector_LedManagerFullUpdateNeeded);
+            } else if (RightRunningOnBattery != newRightRunningOnBattery) {
+                RightRunningOnBattery = newRightRunningOnBattery;
+                LedManager_UpdateSleepModes();
             }
         }
         break;

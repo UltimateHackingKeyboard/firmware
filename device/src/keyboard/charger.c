@@ -33,6 +33,7 @@ static struct adc_sequence sequence = {
 };
 
 bool RunningOnBattery = false;
+bool RightRunningOnBattery = false;
 
 static bool setBatteryPresent(bool present) {
     if (batteryState.batteryPresent != present) {
