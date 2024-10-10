@@ -8,18 +8,9 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include "widgets/widget.h"
+#include <sys/_stdint.h>
 #include <zephyr/sys/util.h>
 #include "legacy/str_utils.h"
-
-static string_segment_t truncateText(const lv_font_t* font, uint8_t width, const char* text, const char* textEnd)
-{
-    const lv_font_fmt_txt_glyph_dsc_t* someGlyph = &font->dsc->glyph_dsc[1];
-    uint8_t charWidth = someGlyph->adv_w/16;
-    uint8_t maxLen = width/charWidth;
-    uint8_t len = textEnd == NULL ? strlen(text) : textEnd - text;
-    uint8_t truncatedLen = MIN(maxLen, len);
-    return (string_segment_t){ .start = text, .end = text + truncatedLen };
-}
 
 static int16_t computeAlignment(int16_t width, int16_t objectWidth, int16_t alignment)
 {
@@ -37,7 +28,7 @@ static int16_t computeAlignment(int16_t width, int16_t objectWidth, int16_t alig
 }
 
 
-static uint8_t drawGlyph(widget_t* canvas, framebuffer_t* buffer, int16_t x, int16_t y, const lv_font_t* font, uint8_t glyphIdx, bool gray)
+static uint8_t drawGlyph(widget_t* canvas, framebuffer_t* buffer, int16_t x, int16_t y, const lv_font_t* font, uint8_t glyphIdx, uint8_t color)
 {
     int16_t canvasOffsetX = canvas == NULL ? 0 : canvas->x;
     int16_t canvasOffsetY = canvas == NULL ? 0 : canvas->y;
@@ -83,8 +74,11 @@ static uint8_t drawGlyph(widget_t* canvas, framebuffer_t* buffer, int16_t x, int
                pixelValue = byte << 4;
            }
 
-           if (gray) {
+           if (color == FontControl_NextCharGray) {
                pixelValue /= 8;
+           }
+           if (color == FontControl_NextCharBlack) {
+               pixelValue = 0;
            }
 
            Framebuffer_SetPixel(buffer, canvasOffsetX + dstX, canvasOffsetY + dstY, pixelValue);
@@ -94,16 +88,32 @@ static uint8_t drawGlyph(widget_t* canvas, framebuffer_t* buffer, int16_t x, int
    return rw;
 }
 
+static uint8_t getUtf8Length(uint8_t firstByte) {
+    if ((firstByte & 0xe0) == 0xc0) {
+        return 2;
+    } else if ((firstByte & 0xf0) == 0xe0) {
+        return 3;
+    } else if ((firstByte & 0xf8) == 0xf0) {
+        return 4;
+    } else {
+        return 1;
+    }
+}
+
 // TODO: return resulting bounds rectangle?
 void Framebuffer_DrawText(widget_t* canvas, framebuffer_t* buffer, int16_t x, int16_t y, const lv_font_t* font, const char* text, const char* textEnd)
 {
+    bool truncated;
     if (x < 0 || y < 0) {
         int16_t canvasWidth = canvas == NULL ? DISPLAY_WIDTH : canvas->w;
         int16_t canvasHeight = canvas == NULL ? DISPLAY_HEIGHT : canvas->h;
-        string_segment_t truncatedText = truncateText(font, canvasWidth, text, textEnd);
-        textEnd = truncatedText.end;
-        int16_t textWidth = Framebuffer_TextWidth(font, text, textEnd);
+        const char* truncatedEnd;
+        int16_t textWidth = Framebuffer_TextWidth(font, text, textEnd, canvasWidth, &truncated, &truncatedEnd);
         int16_t textHeight = font->line_height;
+
+        if (truncated) {
+            textEnd = truncatedEnd;
+        }
 
         if (x < 0) {
             x = computeAlignment(canvasWidth, textWidth, x);
@@ -114,29 +124,41 @@ void Framebuffer_DrawText(widget_t* canvas, framebuffer_t* buffer, int16_t x, in
         }
     }
 
-    bool gray = false;
+    uint8_t color = FontControl_NextCharWhite;
     bool icon12 = false;
 
     uint16_t consumed = 0;
     while (*text != '\0' && (textEnd == NULL || text < textEnd)) {
-        if (*text >= 32) {
-            consumed += drawGlyph(canvas, buffer, x+consumed, y, icon12 ? &FontAwesome12 : font, (*text)-31, gray);
+        if (*text > 127) {
+            consumed += drawGlyph(canvas, buffer, x+consumed, y, &FontAwesome12, FontIcon_Gift-31, color);
             icon12 = false;
-            gray = false;
-        } else {
+            color = FontControl_NextCharWhite;
+            text+= getUtf8Length(*text);
+        }
+        if (*text >= 32) {
+            consumed += drawGlyph(canvas, buffer, x+consumed, y, icon12 ? &FontAwesome12 : font, (*text)-31, color);
+            icon12 = false;
+            color = FontControl_NextCharWhite;
+            text++;
+        } else if (*text < 32) {
             switch (*text) {
+                case FontControl_NextCharBlack:
                 case FontControl_NextCharGray:
-                    gray = true;
-                    break;
                 case FontControl_NextCharWhite:
-                    gray = false;
+                    color = *text;
                     break;
                 case FontControl_NextCharIcon12:
                     icon12 = true;
                     break;
             }
+            text++;
         }
-        text++;
+    }
+
+    if (truncated) {
+        for (uint8_t i = 0; i < 3; i++) {
+            consumed += drawGlyph(canvas, buffer, x+consumed, y, font, '.'-31, color);
+        }
     }
 }
 
@@ -151,42 +173,63 @@ uint16_t Framebuffer_GetGlyphWidth(const lv_font_t* font, uint8_t glyphIdx)
     return getGlyphWidth(font, glyphIdx-31);
 }
 
-uint16_t Framebuffer_TextWidth(const lv_font_t* font, const char* text, const char* textEnd)
+uint16_t Framebuffer_TextWidth(const lv_font_t* font, const char* text, const char* textEnd, uint16_t maxWidth, bool* truncated, const char** truncatedText)
 {
-    int len = 0;
-    for(const char *ptr = text; ptr != textEnd && *ptr != 0; ptr++) {
-        if(*ptr >= 32) {
-            len++;
-        }
+    bool dummyBool;
+    const char* dummyChar;
+
+    if (truncated == NULL) {
+        truncated = &dummyBool;
     }
 
-    const lv_font_fmt_txt_glyph_dsc_t* someGlyph = &font->dsc->glyph_dsc[1];
-    uint8_t charWidth = someGlyph->adv_w/16;
-    return len * charWidth;
+    if (truncatedText == NULL) {
+        truncatedText = &dummyChar;
+    }
 
+    uint16_t dotsWidth = getGlyphWidth(font, '.'-31)*3;
 
-    bool gray = false;
+    uint8_t color = FontControl_NextCharWhite;
     bool icon12 = false;
 
+    *truncatedText = text;
+
+    uint16_t previousConsumed = 0;
     uint16_t consumed = 0;
     while (*text != '\0' && (textEnd == NULL || text < textEnd)) {
-        if (*text >= 32) {
+        previousConsumed = consumed;
+        if (*text > 127) {
+            consumed += getGlyphWidth(&FontAwesome12, FontIcon_Gift-31);
+            icon12 = false;
+            color = FontControl_NextCharWhite;
+            text+= getUtf8Length(*text);
+        }
+        else if (*text >= 32) {
             consumed += getGlyphWidth(icon12 ? &FontAwesome12 : font, (*text)-31);
             icon12 = false;
-            gray = false;
-        } else {
+            color = FontControl_NextCharWhite;
+            text++;
+        } else if (*text < 32) {
             switch (*text) {
+                case FontControl_NextCharBlack:
                 case FontControl_NextCharGray:
-                    gray = true;
+                case FontControl_NextCharWhite:
+                    color = *text;
                     break;
                 case FontControl_NextCharIcon12:
                     icon12 = true;
                     break;
             }
+            text++;
         }
-        text++;
+
+        if ( consumed + dotsWidth < maxWidth ) {
+            *truncatedText = text;
+        } else {
+            *truncated = true;
+            return previousConsumed + dotsWidth;
+        }
     }
 
+    *truncated = false;
     return consumed;
 }
-
