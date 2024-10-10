@@ -134,8 +134,7 @@ void Framebuffer_DrawText(widget_t* canvas, framebuffer_t* buffer, int16_t x, in
             icon12 = false;
             color = FontControl_NextCharWhite;
             text+= getUtf8Length(*text);
-        }
-        if (*text >= 32) {
+        } else if (*text >= 32) {
             consumed += drawGlyph(canvas, buffer, x+consumed, y, icon12 ? &FontAwesome12 : font, (*text)-31, color);
             icon12 = false;
             color = FontControl_NextCharWhite;
@@ -202,8 +201,7 @@ uint16_t Framebuffer_TextWidth(const lv_font_t* font, const char* text, const ch
             icon12 = false;
             color = FontControl_NextCharWhite;
             text+= getUtf8Length(*text);
-        }
-        else if (*text >= 32) {
+        } else if (*text >= 32) {
             consumed += getGlyphWidth(icon12 ? &FontAwesome12 : font, (*text)-31);
             icon12 = false;
             color = FontControl_NextCharWhite;
