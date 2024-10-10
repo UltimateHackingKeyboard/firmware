@@ -26,6 +26,7 @@
 
     ATTRS bool SegmentDisplay_NeedsUpdate = false;
     ATTRS bool RunningOnBattery = false;
+    ATTRS bool RightRunningOnBattery = false;
     ATTRS void Oled_UpdateBrightness() {};
     ATTRS void Oled_ShiftScreen() {};
     ATTRS void ScreenManager_SwitchScreenEvent() {};
