@@ -130,7 +130,7 @@ void Framebuffer_DrawText(widget_t* canvas, framebuffer_t* buffer, int16_t x, in
     uint16_t consumed = 0;
     while (*text != '\0' && (textEnd == NULL || text < textEnd)) {
         if (*text > 127) {
-            consumed += drawGlyph(canvas, buffer, x+consumed, y, &FontAwesome12, FontIcon_Gift-31, color);
+            consumed += drawGlyph(canvas, buffer, x+consumed, y, font, '*'-31, color);
             icon12 = false;
             color = FontControl_NextCharWhite;
             text+= getUtf8Length(*text);
@@ -197,7 +197,7 @@ uint16_t Framebuffer_TextWidth(const lv_font_t* font, const char* text, const ch
     while (*text != '\0' && (textEnd == NULL || text < textEnd)) {
         previousConsumed = consumed;
         if (*text > 127) {
-            consumed += getGlyphWidth(&FontAwesome12, FontIcon_Gift-31);
+            consumed += getGlyphWidth(font, '*'-31);
             icon12 = false;
             color = FontControl_NextCharWhite;
             text+= getUtf8Length(*text);
