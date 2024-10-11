@@ -5,9 +5,15 @@
 // Includes:
 
     #include <zephyr/drivers/pwm.h>
+    #include <stdbool.h>
+    #include <stdint.h>
+
+// Typedefs:
 
 // Functions:
 
+    extern void DongleLeds_Set(bool r, bool g, bool b);
+    extern void DongleLeds_Update();
     extern void set_dongle_led(const struct pwm_dt_spec *device, uint8_t percentage);
 
 // Variables:

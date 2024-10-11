@@ -34,9 +34,10 @@
 #include "state_sync.h"
 #include "keyboard/charger.h"
 #include <stdint.h>
+#include "dongle_leds.h"
 #include "debug_eventloop_timing.h"
-// #include <zephyr/drivers/gpio.h>
-// #include "dongle_leds.h"
+#include <zephyr/drivers/gpio.h>
+#include "dongle_leds.h"
 
 k_tid_t Main_ThreadId = 0;
 
@@ -97,23 +98,6 @@ void Main_Wake() {
 int main(void) {
     Main_ThreadId = k_current_get();
     printk("----------\n" DEVICE_NAME " started\n");
-
-    // const struct gpio_dt_spec led0 = GPIO_DT_SPEC_GET(DT_ALIAS(led0_green), gpios);
-    // gpio_pin_configure_dt(&led0, GPIO_OUTPUT);
-    // while (true) {
-    //     gpio_pin_set_dt(&led0, true);
-    //     k_sleep(K_MSEC(1000));
-    //     gpio_pin_set_dt(&led0, false);
-    //     set_dongle_led(&red_pwm_led, 100);
-    //     k_sleep(K_MSEC(1000));
-    //     set_dongle_led(&red_pwm_led, 0);
-    //     set_dongle_led(&green_pwm_led, 100);
-    //     k_sleep(K_MSEC(1000));
-    //     set_dongle_led(&green_pwm_led, 0);
-    //     set_dongle_led(&blue_pwm_led, 100);
-    //     k_sleep(K_MSEC(1000));
-    //     set_dongle_led(&blue_pwm_led, 0);
-    // }
 
     if (DEVICE_IS_UHK80_RIGHT) {
         flash_area_open(FLASH_AREA_ID(hardware_config_partition), &hardwareConfigArea);

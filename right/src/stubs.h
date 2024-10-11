@@ -41,6 +41,7 @@
     ATTRS void Uart_Log(const char *fmt, ...) {};
     ATTRS void Log(const char *fmt, ...) {};
     ATTRS void LogBt(const char *fmt, ...) {};
+    ATTRS void DongleLeds_Update() {};
 
 #if DEVICE_HAS_OLED
 #define WIDGET_REFRESH(W) Widget_Refresh(W)

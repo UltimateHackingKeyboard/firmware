@@ -1,11 +1,17 @@
 #include <zephyr/bluetooth/addr.h>
 #include <zephyr/settings/settings.h>
 #include "bt_conn.h"
+#include "dongle_leds.h"
+#include "stubs.h"
+
+bool RightAddressIsSet = false;
 
 static int peerAddressSet(const char *name, size_t len, settings_read_cb read_cb, void *cb_arg)
 {
     static char foo_val[BT_ADDR_SIZE];
     read_cb(cb_arg, &foo_val, len);
+
+    bool rightAddressIsSet = false;
 
     for (uint8_t i=0; i<PeerCount; i++) {
         if (strcmp(name, Peers[i].name) == 0) {
@@ -17,8 +23,16 @@ static int peerAddressSet(const char *name, size_t len, settings_read_cb read_cb
                 printk("%02x", addr->a.val[j]);
             }
             printk("\n");
+            if (i == PeerIdRight) {
+                rightAddressIsSet = true;
+            }
             break;
         }
+    }
+
+    if (rightAddressIsSet != RightAddressIsSet) {
+        RightAddressIsSet = rightAddressIsSet;
+        DongleLeds_Update();
     }
 
     return 0;
