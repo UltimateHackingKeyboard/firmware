@@ -671,5 +671,6 @@ void StateSync_ResetRightDongleLink(bool bidirectional) {
 }
 
 void StateSync_ResetConfig() {
-    invalidateProperty(StateSyncPropertyId_FunctionalColors);
+    // For simplicity, update all for now
+    StateSync_ResetRightLeftLink(false);
 }
