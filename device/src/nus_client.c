@@ -52,14 +52,32 @@ static uint8_t ble_data_received(struct bt_nus_client *nus, const uint8_t *data,
 
 static void discovery_complete(struct bt_gatt_dm *dm, void *context) {
     struct bt_nus_client *nus = context;
-    printk("Service discovery completed\n");
+    int err = 0;
 
     bt_gatt_dm_data_print(dm);
 
-    bt_nus_handles_assign(dm, nus);
-    bt_nus_subscribe_receive(nus);
+    err = bt_nus_handles_assign(dm, nus);
 
-    bt_gatt_dm_data_release(dm);
+    if (err) {
+        printk("Could not assign NUS handles (err %d)\n", err);
+        return;
+    }
+
+    err = bt_nus_subscribe_receive(nus);
+
+    if (err) {
+        printk("Could not subscribe to NUS notifications (err %d)\n", err);
+        return;
+    }
+
+    err = bt_gatt_dm_data_release(dm);
+
+    if (err) {
+        printk("Could not release the discovery data (err %d)\n", err);
+        return;
+    }
+
+    printk("NUS connection with %s successfully established\n", GetPeerStringByConn(nus->conn));
 
     if (DEVICE_ID == DeviceId_Uhk80_Right) {
         Bt_SetDeviceConnected(DeviceId_Uhk80_Left);

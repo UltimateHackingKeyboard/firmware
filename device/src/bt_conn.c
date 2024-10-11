@@ -122,7 +122,7 @@ static void connected(struct bt_conn *conn, uint8_t err) {
         return;
     }
 
-    printk("Connected to %s\n", GetPeerStringByConn(conn));
+    printk("Bt connected to %s\n", GetPeerStringByConn(conn));
 
     if (peerId == PeerIdUnknown) {
         if (DEVICE_IS_UHK80_RIGHT) {
@@ -147,7 +147,7 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
     int8_t peerId = getPeerIdByConn(conn);
     ARG_UNUSED(peerId);
 
-    printk("Disconnected from %s, reason %u\n", GetPeerStringByConn(conn), reason);
+    printk("Bt disconnected from %s, reason %u\n", GetPeerStringByConn(conn), reason);
 
     if (DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK_DONGLE) {
         if (peerId == PeerIdUnknown) {
@@ -221,18 +221,22 @@ static void securityChanged(struct bt_conn *conn, bt_security_t level, enum bt_s
     int8_t peerId = getPeerIdByConn(conn);
 
     if (err || (peerId != PeerIdUnknown && level < BT_SECURITY_L4)) {
-        printk("Security failed: %s, level %u, err %d, disconnecting\n", GetPeerStringByConn(conn), level, err);
+        printk("Bt security failed: %s, level %u, err %d, disconnecting\n", GetPeerStringByConn(conn), level, err);
         bt_conn_auth_cancel(conn);
         return;
     }
 
-    printk("Connection secured: %s, level %u, peerId %d\n", GetPeerStringByConn(conn), level, peerId);
+    printk("Bt connection secured: %s, level %u, peerId %d\n", GetPeerStringByConn(conn), level, peerId);
 
     if (peerId != PeerIdUnknown) {
         configureLatency(conn);
         enableDataLengthExtension(conn);
 
-        if (DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK_DONGLE) {
+        if (
+                (DEVICE_IS_UHK80_RIGHT && peerId == PeerIdLeft)
+                || (DEVICE_IS_UHK_DONGLE && peerId == PeerIdRight)
+        ) {
+            printk("Initiating NUS connection with %s\n", GetPeerStringByConn(conn));
             NusClient_Connect(conn);
         }
     }

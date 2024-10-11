@@ -38,6 +38,7 @@ static void sent(struct bt_conn *conn) {
 static void send_enabled(enum bt_nus_send_status status)
 {
     if (status == BT_NUS_SEND_STATUS_ENABLED) {
+        printk("NUS peripheral connection is ready.\n");
         if (DEVICE_ID == DeviceId_Uhk80_Left) {
             Bt_SetDeviceConnected(DeviceId_Uhk80_Right);
         }
