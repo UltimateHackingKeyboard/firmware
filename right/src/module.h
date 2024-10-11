@@ -36,6 +36,7 @@
         NavigationMode_Count,
         NavigationMode_RemappableFirst = NavigationMode_Caret,
         NavigationMode_RemappableLast = NavigationMode_ZoomMac,
+        NavigationMode_RemappableCount = NavigationMode_RemappableLast - NavigationMode_RemappableFirst + 1,
     } navigation_mode_t;
 
     typedef struct {

@@ -16,6 +16,7 @@
     typedef struct {
         // modules
         module_configuration_t ModuleConfigurations[ModuleId_ModuleCount];
+        caret_configuration_t NavigationModes[NavigationMode_RemappableCount];
         navigation_mode_t TouchpadPinchZoomMode;
         uint16_t HoldContinuationTimeout;
 
