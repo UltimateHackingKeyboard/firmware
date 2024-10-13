@@ -22,13 +22,28 @@
  *  - f057 - circle-xmark
  *  - f8dd - signal-stream
  *  - f1e6 - plug
- *  - e000 - circle-xmark-large (custom)
  *  - f071 - triangle-exclamation
+ *  - f06b - gift
  *
- *  Commands to create icon fonts:
- *  `
- *  fontforge -lang=ff -c 'Open($1); Generate($2);' Font\ Awesome\ 6\ Pro-Regular-400.otf font_awesome_6_regular.ttf
- *  npx lv_font_conv --lv-font-name FontAwesome12 --format lvgl --bpp 4 -o font_awesome_12.c --size 12 --font /opt/fontawesome/otfs/font_awesome_6_regular.ttf --range 0xf057,0xf8dd,0xf1e6,0xe000,0xf071 --no-compress
+ *  customs:
+ *  - e000 - circle-xmark-large (custom)
+ *  - e001,e002 - caps lock, numlock
+ *  - e003 - connected plug
+ *
+ *  Script to create icon fonts, to be run from the root of a decompressed fontawesome folder:
+```
+#!/bin/bash
+mkdir ttfs
+
+fontforge -lang=ff -c 'Open($1); Generate($2);' otfs/Font\ Awesome\ 6\ Pro-Regular-400.otf ttfs/font_awesome_6_regular.ttf
+fontforge -lang=ff -c 'Open($1); Generate($2);' otfs/Font\ Awesome\ 6\ Pro-Solid-900.otf ttfs/font_awesome_6_solid.ttf
+fontforge -lang=ff -c 'Open($1); Generate($2);' otfs/Font\ Awesome\ Kit\ 4711ad2078-Regular-400.otf ttfs/font_awesome_custom.ttf
+
+npx lv_font_conv --lv-font-name CustomIcons --format lvgl --bpp 4 -o icons_custom.c --size 12 --font ttfs/font_awesome_custom.ttf --range 0xe000-0xe003 --no-compress
+npx lv_font_conv --lv-font-name RegularIcons --format lvgl --bpp 4 -o icons_regular.c --size 12 --font ttfs/font_awesome_6_regular.ttf --range 0xf057,0xf8dd,0xf1e6,0xf071,0xf06b --no-compress
+npx lv_font_conv --lv-font-name SolidIcons --format lvgl --bpp 4 -o icons_solid.c --size 12 --font ttfs/font_awesome_6_solid.ttf --range 0xe423,0xe422 --no-compress
+```
+
  *  */
 
     extern const lv_font_t JetBrainsMono8;

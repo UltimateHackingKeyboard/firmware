@@ -26,6 +26,7 @@
 
     ATTRS bool SegmentDisplay_NeedsUpdate = false;
     ATTRS bool RunningOnBattery = false;
+    ATTRS bool RightRunningOnBattery = false;
     ATTRS void Oled_UpdateBrightness() {};
     ATTRS void Oled_ShiftScreen() {};
     ATTRS void ScreenManager_SwitchScreenEvent() {};
@@ -41,6 +42,7 @@
     ATTRS void Log(const char *fmt, ...) {};
     ATTRS void LogBt(const char *fmt, ...) {};
     ATTRS void BtPair_EndPairing(bool success, const char* msg) {};
+    ATTRS void DongleLeds_Update() {};
 
 #if DEVICE_HAS_OLED
 #define WIDGET_REFRESH(W) Widget_Refresh(W)
