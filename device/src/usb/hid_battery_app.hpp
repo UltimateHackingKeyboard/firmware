@@ -43,6 +43,8 @@ class hid_battery_app : public hid::application {
     {
         uint8_t remaining_capacity : 7;
         bool charging : 1;
+
+        bool operator==(const report &other) const = default;
     };
 
     static hid_battery_app& handle();

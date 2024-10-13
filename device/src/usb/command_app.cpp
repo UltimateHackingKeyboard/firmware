@@ -10,12 +10,6 @@ extern "C" bool CommandProtocolTx(const uint8_t *data, size_t size)
 
 extern "C" void CommandProtocolRxHandler(const uint8_t *data, size_t size);
 
-void __attribute__((weak)) CommandProtocolRxHandler(const uint8_t *data, size_t size)
-{
-    printk("CommandProtocolRxHandler: data[0]:%u size:%d\n", data[0], size);
-    CommandProtocolTx(data, size);
-}
-
 command_app &command_app::handle()
 {
     static command_app app{};
@@ -33,12 +27,12 @@ void command_app::set_report(hid::report::type type, const std::span<const uint8
     if (((type != hid::report::type::OUTPUT) || (data.front() != report_ids::OUT_COMMAND))) {
         return;
     }
-    auto &out = *reinterpret_cast<const report_out *>(data.data());
-    CommandProtocolRxHandler(out.payload.data(), data.size() - (report_out::has_id() ? 1 : 0));
-
     // always keep receiving new reports
     out_buffer_.swap_sides();
     receive_report(&out_buffer_[out_buffer_.active_side()]);
+
+    auto &out = *reinterpret_cast<const report_out *>(data.data());
+    CommandProtocolRxHandler(out.payload.data(), data.size() - (report_out::has_id() ? 1 : 0));
 }
 
 void command_app::get_report(hid::report::selector select, const std::span<uint8_t> &buffer)

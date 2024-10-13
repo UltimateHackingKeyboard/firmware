@@ -290,6 +290,19 @@ extern "C" void HOGP_Disable()
 }
 #endif
 
+bool app_base::active() const
+{
+    if (!get_transport()) {
+        return false;
+    }
+#if DEVICE_IS_UHK80_RIGHT
+    if (get_transport() == &hogp_manager::instance().main_service()) {
+        return true;
+    }
+#endif
+    return usb_manager::instance().device().power_state() == usb::power::state::L0_ON;
+}
+
 void hidmgr_set_transport(const hid::transport *tp)
 {
     // tp is the transport of the keyboard app
