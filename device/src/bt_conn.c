@@ -145,8 +145,6 @@ static void connected(struct bt_conn *conn, uint8_t err) {
             bt_conn_le_param_update(conn, &conn_params);
 
             USB_DisableHid();
-
-            DeviceState_SetConnection(ConnectionId_BluetoothHid, ConnectionType_Bt);
         }
     } else {
         bt_conn_set_security(conn, BT_SECURITY_L4);
@@ -193,8 +191,6 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
     if (peerId != PeerIdUnknown) {
         Peers[peerId].isConnected = false;
         DeviceState_TriggerUpdate();
-    } else {
-        DeviceState_SetConnection(ConnectionId_BluetoothHid, ConnectionType_None);
     }
 }
 
