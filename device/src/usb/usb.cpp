@@ -4,12 +4,12 @@ extern "C" {
 #include "key_states.h"
 #include "keyboard/charger.h"
 #include "keyboard/key_scanner.h"
+#include "legacy/power_mode.h"
 #include "legacy/timer.h"
 #include "legacy/user_logic.h"
+#include "logger.h"
 #include <device.h>
 #include <zephyr/kernel.h>
-#include "logger.h"
-#include "legacy/power_mode.h"
 }
 #include "command_app.hpp"
 #include "controls_app.hpp"
@@ -27,7 +27,9 @@ extern "C" {
 #include "device_state.h"
 #include "usb_report_updater.h"
 }
-
+#if DEVICE_HAS_BATTERY
+    #include "hid_battery_app.hpp"
+#endif
 #if DEVICE_IS_UHK80_RIGHT
     #include "port/zephyr/bluetooth/hid.hpp"
 
@@ -63,11 +65,49 @@ class multi_hid : public hid::multi_application {
 };
 
 struct usb_manager {
-    static usb::df::zephyr::udc_mac &mac() { return instance().mac_; }
+    static usb::zephyr::udc_mac &mac() { return instance().mac_; }
     static usb::df::device &device() { return instance().device_; }
     static bool active() { return device().is_open(); }
 
+    static usb_manager &instance()
+    {
+        static usb_manager um;
+        return um;
+    }
+
     void select_config(hid_config_t conf)
+    {
+        if (conf == next_config_.load()) {
+            return;
+        }
+        auto config = next_config_.exchange(conf | launch_flag | change_flag);
+        if (config & launch_flag) {
+            return;
+        }
+        [[maybe_unused]] auto result = mac().queue_task([]() { instance().change_config(); });
+        assert(result == usb::result::OK);
+    }
+
+  private:
+    void change_config()
+    {
+        next_config_.fetch_and(~launch_flag);
+        // pretend that the device is disconnected
+        if (device().is_open()) {
+            device().close();
+            k_msleep(80);
+        }
+        // attempt to avoid unnecessary races
+        int new_conf = next_config_.fetch_and(~(launch_flag | change_flag));
+        for (; new_conf & (launch_flag | change_flag);
+             new_conf = next_config_.fetch_and(~(launch_flag | change_flag))) {
+            k_msleep(50); // TODO: this is guesswork so far
+        }
+
+        open_config((hid_config_t)new_conf);
+    }
+
+    void open_config(hid_config_t conf)
     {
         static constexpr auto speed = usb::speed::FULL;
         static usb::df::hid::function usb_kb{
@@ -77,14 +117,28 @@ struct usb_manager {
         static usb::df::hid::function usb_controls{controls_app::handle()};
         static usb::df::hid::function usb_gamepad{gamepad_app::handle()};
         static usb::df::microsoft::xfunction usb_xpad{gamepad_app::handle()};
+#if DEVICE_HAS_BATTERY
+        static usb::df::hid::function usb_battery{hid_battery_app::handle()};
+#endif
 
         constexpr auto config_header =
             usb::df::config::header(usb::df::config::power::bus(500, true));
         const auto shared_config_elems = usb::df::config::join_elements(
             usb::df::hid::config(usb_kb, speed, usb::endpoint::address(0x81), 1),
             usb::df::hid::config(usb_mouse, speed, usb::endpoint::address(0x82), 1),
-            usb::df::hid::config(usb_command, speed, usb::endpoint::address(0x83), 20),
-            usb::df::hid::config(usb_controls, speed, usb::endpoint::address(0x84), 1));
+            usb::df::hid::config(usb_command, speed, usb::endpoint::address(0x83), 10),
+            usb::df::hid::config(usb_controls, speed, usb::endpoint::address(0x84), 1)
+#if !DEVICE_HAS_BATTERY
+        );
+#else
+                ,
+            usb::df::hid::config(usb_battery, speed, usb::endpoint::address(0x86), 1)
+            // not very useful at the moment
+        );
+
+        static const auto battery_config = usb::df::config::make_config(config_header,
+            usb::df::hid::config(usb_battery, speed, usb::endpoint::address(0x86), 1));
+#endif
 
         static const auto base_config =
             usb::df::config::make_config(config_header, shared_config_elems);
@@ -98,16 +152,15 @@ struct usb_manager {
                 usb::df::microsoft::xconfig(
                     usb_xpad, usb::endpoint::address(0x85), 1, usb::endpoint::address(0x05), 255));
 
-        if (device_.is_open()) {
-            device_.close();
-            if (conf == Hid_Empty) {
-                return;
-            }
-            k_msleep(100);
-        }
+        printk("USB config changing to %s\n", magic_enum::enum_name(conf).data());
         switch (conf) {
         case Hid_Empty:
-            assert(false); // returned already
+#if DEVICE_HAS_BATTERY
+            ms_enum_.set_config({});
+            device_.set_config(battery_config);
+#else
+            assert(false);
+#endif
             break;
         case Hid_NoGamepad:
             ms_enum_.set_config({});
@@ -121,13 +174,6 @@ struct usb_manager {
         device_.open();
     }
 
-    static usb_manager &instance()
-    {
-        static usb_manager um;
-        return um;
-    }
-
-  private:
     usb_manager()
     {
         device_.set_power_event_delegate([](usb::df::device &dev, usb::df::device::event ev) {
@@ -163,9 +209,12 @@ struct usb_manager {
         });
     }
 
-    usb::df::zephyr::udc_mac mac_{DEVICE_DT_GET(DT_NODELABEL(zephyr_udc0))};
+    usb::zephyr::udc_mac mac_{DEVICE_DT_GET(DT_NODELABEL(zephyr_udc0))};
     usb::df::microsoft::alternate_enumeration<usb::speeds(usb::speed::FULL)> ms_enum_{};
     usb::df::device_instance<usb::speeds(usb::speed::FULL)> device_{mac_, product_info, ms_enum_};
+    static constexpr int change_flag = 0x100;
+    static constexpr int launch_flag = 0x200;
+    std::atomic<int> next_config_{0xff};
 };
 
 extern "C" void USB_EnableHid()
@@ -180,7 +229,8 @@ extern "C" void USB_DisableHid()
 
 extern "C" void USB_RemoteWakeup()
 {
-    usb_manager::instance().device().remote_wakeup();
+    usb_manager::instance().mac().queue_task(
+        []() { usb_manager::instance().device().remote_wakeup(); });
 }
 
 #if DEVICE_IS_UHK80_RIGHT
@@ -195,10 +245,7 @@ struct hogp_manager {
         return hm;
     }
 
-    static bool active()
-    {
-        return instance().hogp_nopad_.active();
-    }
+    static bool active() { return instance().hogp_nopad_.active(); }
 
     void select_config(hid_config_t conf)
     {
@@ -217,10 +264,7 @@ struct hogp_manager {
         }
     }
 
-    const bluetooth::zephyr::hid::service& main_service()
-    {
-        return hogp_nopad_;
-    }
+    const bluetooth::zephyr::hid::service &main_service() { return hogp_nopad_; }
 
   private:
     hogp_manager() {}
@@ -246,7 +290,7 @@ extern "C" void HOGP_Disable()
 }
 #endif
 
-void hidmgr_set_transport(const hid::transport* tp)
+void hidmgr_set_transport(const hid::transport *tp)
 {
     // tp is the transport of the keyboard app
     if (tp == nullptr) {
@@ -295,7 +339,8 @@ extern "C" void HID_SetKeyboardRollover(rollover_t mode)
     keyboard_app::handle().set_rollover((keyboard_app::rollover)mode);
 }
 
-extern "C" void USB_SetSerialNumber(uint32_t serialNumber) {
+extern "C" void USB_SetSerialNumber(uint32_t serialNumber)
+{
     // Ensure UsbSerialNumber has enough space
     if (sizeof(UsbSerialNumber) < 5) {
         return;
