@@ -68,7 +68,7 @@ void NusServer_Disconnected() {
     k_sem_init(&nusBusy, NUS_SLOTS, NUS_SLOTS);
 }
 
-void NusServer_Send(const uint8_t *data, uint16_t len) {
+static void send_raw_buffer(const uint8_t *data, uint16_t len) {
     SEM_TAKE(&nusBusy);
     int err = bt_nus_send(NULL, data, len);
     if (err) {
@@ -94,17 +94,21 @@ bool NusServer_Availability(messenger_availability_op_t operation) {
 
 void NusServer_SendMessage(message_t msg) {
     uint8_t buffer[MAX_LINK_PACKET_LENGTH];
+    uint8_t bufferIdx = 0;
+
+    buffer[bufferIdx++] = msg.src;
+    buffer[bufferIdx++] = msg.dst;
 
     for (uint8_t id = 0; id < msg.idsUsed; id++) {
-        buffer[id] = msg.messageId[id];
+        buffer[bufferIdx++] = msg.messageId[id];
     }
 
-    if (msg.len + msg.idsUsed > MAX_LINK_PACKET_LENGTH) {
+    if (msg.len + msg.idsUsed + 2 > MAX_LINK_PACKET_LENGTH) {
         printk("Message is too long for NUS packets! [%i, %i, ...]\n", buffer[0], buffer[1]);
         return;
     }
 
-    memcpy(&buffer[msg.idsUsed], msg.data, msg.len);
+    memcpy(&buffer[bufferIdx], msg.data, msg.len);
 
-    NusServer_Send(buffer, msg.len+msg.idsUsed);
+    send_raw_buffer(buffer, msg.len+msg.idsUsed+2);
 }

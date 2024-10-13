@@ -39,14 +39,7 @@ void Uart_Log(const char *fmt, ...) {
 void Log(const char *fmt, ...) {
     EXPAND_STRING(buffer);
 
-    switch (DEVICE_ID) {
-        case DeviceId_Uhk80_Left:
-            LogConstantTo(DeviceId_Uhk80_Right, LogTarget_Uart, buffer);
-            break;
-        default:
-            LogConstantTo(DEVICE_ID, LogTarget_Uart, buffer);
-            break;
-    }
+    LogConstantTo(DeviceId_Uhk_Dongle, LogTarget_Uart, buffer);
 }
 
 void LogConstantTo(device_id_t deviceId, log_target_t logMask, const char* buffer) {

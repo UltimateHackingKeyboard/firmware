@@ -7,6 +7,7 @@
 #include "device_state.h"
 #include "keyboard/oled/screens/screen_manager.h"
 #include "keyboard/oled/widgets/widget.h"
+#include "legacy/host_connection.h"
 #include "nus_client.h"
 #include "nus_server.h"
 #include "device.h"
@@ -15,6 +16,7 @@
 #include "keyboard/oled/widgets/widgets.h"
 #include <zephyr/settings/settings.h>
 #include "bt_pair.h"
+#include <zephyr/bluetooth/addr.h>
 
 #define PeerCount 3
 
@@ -40,6 +42,22 @@ peer_t *getPeerByAddr(const bt_addr_le_t *addr) {
     for (uint8_t i = 0; i < PeerCount; i++) {
         if (bt_addr_le_eq(addr, &Peers[i].addr)) {
             return &Peers[i];
+        }
+    }
+
+    for (uint8_t hostConnectionId = 0; hostConnectionId < HOST_CONNECTION_COUNT_MAX; hostConnectionId++) {
+        host_connection_t* hostConnection = &HostConnections[hostConnectionId];
+
+        if (hostConnection->type == HostConnectionType_Dongle)) {
+            if (bt_addr_le_eq(addr, hostConnection->bleAddress)) {
+                Peers[PeerIdDongle].addr = *addr;
+            };
+            bt_addr_le_t addr;
+            memcpy(addr.a.val, hostConnection.bleAddress, sizeof(addr.a.val));
+            addr.type = BT_ADDR_LE_RANDOM;
+            if (bt_addr_le_eq(addr, addr)) {
+                return &Peers[hostConnection.ble_id];
+            }
         }
     }
 

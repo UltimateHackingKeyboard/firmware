@@ -176,6 +176,11 @@ void Uart_SendPacket(const uint8_t* data, uint16_t len) {
 
     txPosition = 0;
 
+    if (len > 0) {
+        processOutgoingByte(DEVICE_ID);
+        processOutgoingByte(DEVICE_ID == DeviceId_Uhk80_Right ? DeviceId_Uhk80_Left : DeviceId_Uhk80_Right);
+    }
+
     for (uint16_t i = 0; i < len; i++) {
         processOutgoingByte(data[i]);
     }
@@ -189,6 +194,9 @@ void Uart_SendMessage(message_t msg) {
     SEM_TAKE(&txBufferBusy);
 
     txPosition = 0;
+
+    processOutgoingByte(msg.src);
+    processOutgoingByte(msg.dst);
 
     for (uint8_t id = 0; id < msg.idsUsed; id++) {
         processOutgoingByte(msg.messageId[id]);

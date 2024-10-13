@@ -28,12 +28,14 @@
         uint16_t len;
         uint8_t messageId[2];
         uint8_t idsUsed;
+        uint8_t src;
+        uint8_t dst;
     } ATTR_PACKED message_t;
 
 // Functions:
 
     void Messenger_Receive(uint8_t src, const uint8_t* data, uint16_t len);
-    void Messenger_SendMessage(uint8_t dst, message_t message);
+    void Messenger_SendMessage(message_t message);
     void Messenger_Send(uint8_t dst, uint8_t messageId, const uint8_t* data, uint16_t len);
     void Messenger_Send2(uint8_t dst, uint8_t messageId, uint8_t messageId2, const uint8_t* data, uint16_t len);
     bool Messenger_Availability(uint8_t dst, messenger_availability_op_t operation);
