@@ -9,6 +9,8 @@
 #include "legacy/event_scheduler.h"
 #include "state_sync.h"
 #include <nrfx_power.h>
+#include "device.h"
+#include <zephyr/bluetooth/services/bas.h>
 
 const struct gpio_dt_spec chargerEnDt = GPIO_DT_SPEC_GET(DT_ALIAS(charger_en), gpios);
 const struct gpio_dt_spec chargerStatDt = GPIO_DT_SPEC_GET(DT_ALIAS(charger_stat), gpios);
@@ -121,6 +123,14 @@ void Charger_UpdateBatteryState() {
 
     if (stateChanged) {
         StateSync_UpdateProperty(StateSyncPropertyId_Battery, &batteryState);
+
+#ifdef CONFIG_BT_BAS
+        bt_bas_set_battery_level(batteryState.batteryPercentage);
+#endif
+#if DEVICE_HAS_BATTERY
+        extern void HID_SetBatteryStatus(uint8_t remaining_capacity, bool charging);
+        HID_SetBatteryStatus(batteryState.batteryPercentage, batteryState.batteryCharging);
+#endif
     }
 }
 
