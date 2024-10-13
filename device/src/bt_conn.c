@@ -48,16 +48,9 @@ peer_t *getPeerByAddr(const bt_addr_le_t *addr) {
     for (uint8_t hostConnectionId = 0; hostConnectionId < HOST_CONNECTION_COUNT_MAX; hostConnectionId++) {
         host_connection_t* hostConnection = &HostConnections[hostConnectionId];
 
-        if (hostConnection->type == HostConnectionType_Dongle)) {
-            if (bt_addr_le_eq(addr, hostConnection->bleAddress)) {
-                Peers[PeerIdDongle].addr = *addr;
-            };
-            bt_addr_le_t addr;
-            memcpy(addr.a.val, hostConnection.bleAddress, sizeof(addr.a.val));
-            addr.type = BT_ADDR_LE_RANDOM;
-            if (bt_addr_le_eq(addr, addr)) {
-                return &Peers[hostConnection.ble_id];
-            }
+        if (hostConnection->type == HostConnectionType_Dongle && bt_addr_le_eq(addr, &hostConnection->bleAddress)) {
+            Peers[PeerIdDongle].addr = *addr;
+            return &Peers[PeerIdDongle];
         }
     }
 
