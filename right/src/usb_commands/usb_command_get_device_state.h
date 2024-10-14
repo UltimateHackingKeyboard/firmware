@@ -6,6 +6,7 @@
 typedef enum {
     GetDeviceStateByte2_HalvesMerged = 1 << 0,
     GetDeviceStateByte2_PairingInProgress = 1 << 1,
+    GetDeviceStateByte2_NewPairedDevice = 1 << 2,
 
 } usb_command_get_device_state_byte2_mask_t;
 

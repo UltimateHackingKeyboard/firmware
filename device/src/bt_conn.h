@@ -9,13 +9,14 @@
 
 // Macros:
 
-    #define PeerCount 3
     #define PeerNameMaxLength 8
 
     #define PeerIdUnknown -1
     #define PeerIdLeft 0
     #define PeerIdRight 1
     #define PeerIdDongle 2
+    #define PeerIdHid 3
+    #define PeerCount 4
 
 
     #define BLE_ADDR_LEN 6
@@ -30,6 +31,11 @@
         bool isConnected;
     } peer_t;
 
+// Variables:
+
+    extern peer_t Peers[];
+    extern bool Bt_NewPairedDevice;
+
 // Functions:
 
     char *GetPeerStringByAddr(const bt_addr_le_t *addr);
@@ -39,8 +45,5 @@
 
     void Bt_SetDeviceConnected(device_id_t deviceId);
     bool Bt_DeviceIsConnected(uint8_t deviceId);
-// Variables:
-
-    extern peer_t Peers[];
 
 #endif // __BT_CONN_H__

@@ -21,6 +21,7 @@
     #include "usb_report_updater.h"
     #include "slave_scheduler.h"
     #include "bt_pair.h"
+    #include "bt_conn.h"
 #else
     #include "usb_report_updater.h"
     #include "slave_scheduler.h"
@@ -38,7 +39,8 @@ void UsbCommand_GetKeyboardState(void)
 
     uint8_t byte2 = 0
         | (MergeSensor_IsMerged() ? GetDeviceStateByte2_HalvesMerged : 0)
-        | (BtPair_OobPairingInProgress ? GetDeviceStateByte2_PairingInProgress : 0);
+        | (BtPair_OobPairingInProgress ? GetDeviceStateByte2_PairingInProgress : 0)
+        | (Bt_NewPairedDevice ? GetDeviceStateByte2_NewPairedDevice : 0);
     SetUsbTxBufferUint8(2, byte2);
     SetUsbTxBufferUint8(3, ModuleConnectionStates[UhkModuleDriverId_LeftKeyboardHalf].moduleId);
     SetUsbTxBufferUint8(4, ModuleConnectionStates[UhkModuleDriverId_LeftModule].moduleId);

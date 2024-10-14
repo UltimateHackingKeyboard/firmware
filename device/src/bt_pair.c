@@ -162,10 +162,7 @@ void checkBondedDevice(const struct bt_bond_info *info, void *user_data) {
     if (bt_addr_le_cmp(&info->addr, args->addr) == 0) {
         *args->bonded = true;
         printk("Device %s is bonded, ref %s\n", addr, ref);
-    } else {
-        printk("Device %s is not bonded, ref %s\n", addr, ref);
     }
-
 };
 
 bool BtPair_IsDeviceBonded(const bt_addr_le_t *addr)

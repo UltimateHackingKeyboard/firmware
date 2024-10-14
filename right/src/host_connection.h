@@ -41,7 +41,9 @@
     extern host_connection_t HostConnections[HOST_CONNECTION_COUNT_MAX];
 
 // Functions:
-//
+
+    bool HostConnections_IsKnownBleAddress(const bt_addr_le_t *address);
+
 #endif
 
 #endif

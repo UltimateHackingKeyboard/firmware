@@ -17,6 +17,7 @@
 
 #include "slave_protocol.h"
 #include "timer.h"
+#include "usb_commands/usb_command_get_new_pairings.h"
 #include "usb_commands/usb_command_get_device_property.h"
 #include "usb_protocol_handler.h"
 #include "utils.h"
@@ -102,6 +103,11 @@ void UsbCommand_GetDeviceProperty(void)
         }
 #endif
     } break;
+    case DevicePropertyId_NewPairings:
+#ifdef __ZEPHYR__
+        UsbCommand_GetNewPairings();
+#endif
+        break;
     default:
         SetUsbTxBufferUint8(0, UsbStatusCode_GetDeviceProperty_InvalidProperty);
         break;
