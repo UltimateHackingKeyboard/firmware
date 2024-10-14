@@ -6,6 +6,7 @@
 #include "config_manager.h"
 #include "config_parser/basic_types.h"
 #include "host_connection.h"
+#include "parse_config.h"
 
 #ifdef __ZEPHYR__
 static parser_error_t parseHostConnection(config_buffer_t* buffer, host_connection_t* hostConnection) {
@@ -26,6 +27,10 @@ static parser_error_t parseHostConnection(config_buffer_t* buffer, host_connecti
     }
 
     if (hostConnection->type != HostConnectionType_Empty) {
+        if (VERSION_AT_LEAST(DataModelVersion, 8, 2, 0)) {
+            hostConnection->switchOver = ReadUInt8(buffer);
+        }
+
         uint16_t len;
         hostConnection->name.start = ReadString(buffer, &len);
         hostConnection->name.end = hostConnection->name.start + len;

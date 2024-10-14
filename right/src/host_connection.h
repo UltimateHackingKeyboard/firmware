@@ -34,6 +34,7 @@
         host_connection_type_t type;
         bt_addr_le_t bleAddress;
         string_segment_t name;
+        bool switchOver;
     } ATTR_PACKED host_connection_t;
 
 // Variables:
