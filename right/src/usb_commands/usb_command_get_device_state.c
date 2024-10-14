@@ -26,6 +26,7 @@
     #include "usb_report_updater.h"
     #include "slave_scheduler.h"
     #define BtPair_OobPairingInProgress 0
+    #define Bt_NewPairedDevice 0
 #endif
 
 void UsbCommand_GetKeyboardState(void)
