@@ -44,6 +44,7 @@ uhk_slave_t Slaves[SLAVE_COUNT] = {
     },
     {
         .init = TouchpadDriver_Init,
+        .connect = TouchpadDriver_Connect,
         .update = TouchpadDriver_Update,
         .disconnect = TouchpadDriver_Disconnect,
         .perDriverId = TouchpadDriverId_Singleton,
@@ -81,7 +82,7 @@ static uint8_t getNextSlaveId(uint8_t slaveId)
     }
     return slaveId;
 #elif DEVICE_IS_UHK80_LEFT
-    return SlaveId_LeftModule;
+    return slaveId == SlaveId_LeftModule ? SlaveId_ModuleLeftLedDriver : SlaveId_LeftModule;
 #elif DEVICE_IS_UHK80_RIGHT
     return slaveId == SlaveId_RightModule ? SlaveId_RightTouchpad : SlaveId_RightModule;
     // return SlaveId_RightTouchpad;
@@ -108,8 +109,13 @@ static void slaveSchedulerCallback(I2C_Type *base, i2c_master_handle_t *handle, 
 
             bool wasPreviousSlaveConnected = previousSlave->isConnected;
             previousSlave->isConnected = previousStatus == kStatus_Success;
-            if (wasPreviousSlaveConnected && !previousSlave->isConnected && previousSlave->disconnect) {
-                previousSlave->disconnect(previousSlave->perDriverId);
+            if (wasPreviousSlaveConnected != previousSlave->isConnected) {
+                if (previousSlave->isConnected && previousSlave->connect) {
+                    previousSlave->connect(previousSlave->perDriverId);
+                }
+                if (!previousSlave->isConnected && previousSlave->disconnect) {
+                    previousSlave->disconnect(previousSlave->perDriverId);
+                }
             }
 
             isFirstCycle = false;

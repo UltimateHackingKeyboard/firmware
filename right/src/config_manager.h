@@ -16,6 +16,7 @@
     typedef struct {
         // modules
         module_configuration_t ModuleConfigurations[ModuleId_ModuleCount];
+        caret_configuration_t NavigationModes[NavigationMode_RemappableCount];
         navigation_mode_t TouchpadPinchZoomMode;
         uint16_t HoldContinuationTimeout;
 
@@ -38,6 +39,7 @@
         // key behavior
         uint16_t KeystrokeDelay;
         uint16_t DoubletapTimeout;
+        uint16_t HoldTimeout; // not present in UserConfig atm.
         uint16_t DoubletapSwitchLayerReleaseTimeout;
         sticky_strategy_t StickyModifierStrategy;
         uint8_t DebounceTimePress;

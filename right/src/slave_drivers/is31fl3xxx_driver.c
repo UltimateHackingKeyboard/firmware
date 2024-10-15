@@ -1,4 +1,4 @@
-#include "slave_drivers/is31fl3xxx_driver.h"
+#include "is31fl3xxx_driver.h"
 #include "slave_scheduler.h"
 #include "led_display.h"
 #include "ledmap.h"
@@ -6,8 +6,10 @@
 #include "config_manager.h"
 #include "stubs.h"
 #include "led_manager.h"
+#include "i2c_addresses.h"
+#include "i2c.h"
 
-#ifndef __ZEPHYR__
+// TODO: this wastes memory on UHK80
 uint8_t LedDriverValues[LED_DRIVER_MAX_COUNT][LED_DRIVER_LED_COUNT_MAX];
 
 #if DEVICE_ID == DEVICE_ID_UHK60V1
@@ -152,6 +154,11 @@ static led_driver_state_t ledDriverStates[LED_DRIVER_MAX_COUNT] = {
             0b00111111,
             0b00111111,
         }
+    },
+#else
+    {
+    },
+    {
     },
 #endif
     {
@@ -352,11 +359,4 @@ slave_result_t LedSlaveDriver_Update(uint8_t ledDriverId)
 
     return res;
 }
-#else
 
-    void LedSlaveDriver_DisableLeds(void){};
-    void LedSlaveDriver_EnableAllLeds(){};
-    void LedSlaveDriver_Init(uint8_t ledDriverId){};
-    slave_result_t LedSlaveDriver_Update(uint8_t ledDriverId){ return (slave_result_t){ .status = 123}; };
-
-#endif

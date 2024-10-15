@@ -13,6 +13,7 @@
 #include "led_manager.h"
 
 #ifdef __ZEPHYR__
+#include "state_sync.h"
 #include "legacy/event_scheduler.h"
 #include "main.h"
 #endif
@@ -24,11 +25,23 @@ void updateUsbBuffer(uint8_t usbStatusCode, uint16_t parserOffset, parser_stage_
     SetUsbTxBufferUint8(3, parserStage);
 }
 
+static uint8_t validateConfig() {
+    // Validate the staging configuration.
+    ParserRunDry = true;
+    StagingUserConfigBuffer.offset = 0;
+    uint8_t parseConfigStatus = ParseConfig(&StagingUserConfigBuffer);
+    updateUsbBuffer(parseConfigStatus, StagingUserConfigBuffer.offset, ParsingStage_Validate);
+
+    return parseConfigStatus;
+}
+
 void UsbCommand_ApplyConfigAsync(void) {
-    EventVector_Set(EventVector_ApplyConfig);
+    if (validateConfig() == UsbStatusCode_Success) {
+        EventVector_Set(EventVector_ApplyConfig);
 #ifdef __ZEPHYR__
-    k_wakeup(Main_ThreadId);
+        Main_Wake();
 #endif
+    }
 }
 
 void UsbCommand_ApplyConfig(void)
@@ -36,18 +49,13 @@ void UsbCommand_ApplyConfig(void)
     static bool isBoot = true;
     EventVector_Unset(EventVector_ApplyConfig);
 
-    // Validate the staging configuration.
-    ParserRunDry = true;
-    StagingUserConfigBuffer.offset = 0;
-    uint8_t parseConfigStatus = ParseConfig(&StagingUserConfigBuffer);
-    updateUsbBuffer(parseConfigStatus, StagingUserConfigBuffer.offset, ParsingStage_Validate);
+    uint8_t parseConfigStatus = validateConfig();
 
     if (parseConfigStatus != UsbStatusCode_Success) {
         return;
     }
 
     // Make the staging configuration the current one.
-
     char oldKeymapAbbreviation[KEYMAP_ABBREVIATION_LENGTH];
     uint8_t oldKeymapAbbreviationLen;
     memcpy(oldKeymapAbbreviation, AllKeymaps[CurrentKeymapIndex].abbreviation, KEYMAP_ABBREVIATION_LENGTH);
@@ -79,6 +87,10 @@ void UsbCommand_ApplyConfig(void)
     }
 
     MacroEvent_OnInit();
+
+#ifdef __ZEPHYR__
+    StateSync_ResetConfig();
+#endif
 
     // Switch to the keymap of the updated configuration of the same name or the default keymap.
     if (SwitchKeymapByAbbreviation(oldKeymapAbbreviationLen, oldKeymapAbbreviation)) {

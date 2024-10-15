@@ -65,9 +65,9 @@ ATTR_UNUSED static void reportChange(uint8_t sourceIndex, bool active) {
     uint8_t keyId = KeyLayout_Uhk80_to_Uhk60[slotId][sourceIndex];
     const char* abbrev = MacroKeyIdParser_KeyIdToAbbreviation(slotId*64 + keyId);
     if (active) {
-        printk("%s   down\n", abbrev);
+        LogRight(LogTarget_Uart, "%s   down\n", abbrev);
     } else {
-        printk("  %s up\n", abbrev);
+        LogRight(LogTarget_Uart, "  %s up\n", abbrev);
     }
 }
 
@@ -90,9 +90,7 @@ static void scanKeys() {
             if (keyStateBuffer[targetIndex] != keyState) {
                 somethingChanged = true;
                 keyStateBuffer[targetIndex] = keyState;
-                // if (DEVICE_ID == DeviceId_Uhk80_Left) {
-                //     reportChange(targetIndex, keyState);
-                // }
+                // reportChange(targetIndex, keyState);
             }
         }
         gpio_pin_set_dt(&rows[rowId], 0);
@@ -118,7 +116,7 @@ static void scanKeys() {
             uint8_t sourceIndex = rowId*KEY_MATRIX_COLS + colId;
             uint8_t targetKeyId;
 
-            if (DataModelMajorVersion >= 8) {
+            if (DataModelVersion.major >= 8) {
                 targetKeyId = KeyLayout_Uhk80_to_Universal[slotId][sourceIndex];
             } else {
                 targetKeyId = KeyLayout_Uhk80_to_Uhk60[slotId][sourceIndex];

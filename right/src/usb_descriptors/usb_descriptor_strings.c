@@ -89,10 +89,10 @@ USB_DESC_STORAGE_TYPE_VAR(uint8_t) UsbSerialString[USB_SERIAL_STRING_DESCRIPTOR_
     'i', 0x00U,
     'a', 0x00U,
     'l', 0x00U,
-    ' ', 0x00U,
-    ' ', 0x00U,
-    ' ', 0x00U,
-    ' ', 0x00U,
+    '0', 0x00U,
+    '0', 0x00U,
+    '0', 0x00U,
+    '0', 0x00U,
 };
 
 const uint32_t UsbStringDescriptorLengths[USB_STRING_DESCRIPTOR_COUNT] = {
@@ -128,10 +128,13 @@ usb_status_t USB_DeviceGetStringDescriptor(
 
 void USB_SetSerialNo(uint32_t serial)
 {
-    char serialString[10];
-    size_t len = sprintf(serialString, "%li", serial);
-    for (size_t i = 0; i < len; i++) {
+#define SERIAL_LEN 10
+    char serialString[SERIAL_LEN];
+    sprintf(serialString, "%li", serial);
+    for (size_t i = 0; i < SERIAL_LEN; i++) {
+        if (serialString[i] < '0' || serialString[i] > '9') {
+            serialString[i] = '0';
+        }
         UsbSerialString[2 * i + 2] = serialString[i];
     }
-    UsbSerialString[0] = 2 * len + 2;
 }

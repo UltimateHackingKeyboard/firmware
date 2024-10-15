@@ -21,6 +21,7 @@
 #include "macros/vars.h"
 #include "postponer.h"
 #include "secondary_role_driver.h"
+#include "power_mode.h"
 #ifndef __ZEPHYR__
 #include "segment_display.h"
 #endif
@@ -1045,6 +1046,51 @@ static macro_result_t processResolveNextKeyIdCommand()
     return res;
 }
 
+static macro_result_t processIfHoldCommand(parser_context_t* ctx, bool negate)
+{
+    if (Macros_DryRun) {
+        goto conditionPassed;
+    }
+
+    if (S->ls->as.currentIfHoldConditionPassed) {
+        if (S->ls->as.currentConditionPassed) {
+            goto conditionPassed;
+        } else {
+            S->ls->as.currentIfHoldConditionPassed = false;
+        }
+    }
+
+    postponer_buffer_record_type_t *dummy;
+    postponer_buffer_record_type_t *keyReleased;
+    PostponerQuery_InfoByKeystate(S->ms.currentMacroKey, &dummy, &keyReleased);
+
+    if (keyReleased != NULL) {
+        bool releasedAfterTimeout = keyReleased->time - S->ms.currentMacroStartTime >= Cfg.HoldTimeout;
+        if (releasedAfterTimeout != negate) {
+            goto conditionPassed;
+        } else {
+            return MacroResult_Finished | MacroResult_ConditionFailedFlag;
+        }
+    }
+
+    if (CurrentTime - S->ms.currentMacroStartTime >= Cfg.HoldTimeout) {
+        if (negate) {
+            return MacroResult_Finished | MacroResult_ConditionFailedFlag;
+        } else {
+            goto conditionPassed;
+        }
+    }
+
+    postponeCurrentCycle();
+    Macros_SleepTillKeystateChange();
+    return Macros_SleepTillTime(S->ms.currentMacroStartTime + Cfg.HoldTimeout, "ifHold timeout");
+
+conditionPassed:
+    S->ls->as.currentIfHoldConditionPassed = true;
+    S->ls->as.currentConditionPassed = false; //otherwise following conditions would be skipped
+    return processCommand(ctx);
+}
+
 static macro_result_t processIfShortcutCommand(parser_context_t* ctx, bool negate, bool untilRelease)
 {
     //parse optional flags
@@ -1344,7 +1390,12 @@ static macro_result_t processOverlayLayerCommand(parser_context_t* ctx)
 static bool processIfKeyPendingAtCommand(parser_context_t* ctx, bool negate)
 {
     uint16_t idx = Macros_ConsumeInt(ctx);
-    uint16_t key = Macros_ConsumeInt(ctx);
+    uint16_t key = Macros_TryConsumeKeyId(ctx);
+
+    if (key == 255) {
+        Macros_ReportError("Failed to decode keyId.", ctx->at, ctx->at);
+        return false;
+    }
 
     if (Macros_DryRun) {
         return true;
@@ -1355,11 +1406,19 @@ static bool processIfKeyPendingAtCommand(parser_context_t* ctx, bool negate)
 
 static bool processIfKeyActiveCommand(parser_context_t* ctx, bool negate)
 {
-    uint16_t keyid = Macros_ConsumeInt(ctx);
-    key_state_t* key = Utils_KeyIdToKeyState(keyid);
+    uint16_t keyid = Macros_TryConsumeKeyId(ctx);
+
+    if (keyid == 255) {
+        Macros_ReportError("Failed to decode keyId.", ctx->at, ctx->at);
+        return false;
+    }
+
     if (Macros_DryRun) {
         return true;
     }
+
+    key_state_t* key = Utils_KeyIdToKeyState(keyid);
+
     return KeyState_Active(key) != negate;
 }
 
@@ -1374,7 +1433,13 @@ static bool processIfPendingKeyReleasedCommand(parser_context_t* ctx, bool negat
 
 static bool processIfKeyDefinedCommand(parser_context_t* ctx, bool negate)
 {
-    uint16_t keyid = Macros_ConsumeInt(ctx);
+    uint16_t keyid = Macros_TryConsumeKeyId(ctx);
+
+    if (keyid == 255) {
+        Macros_ReportError("Failed to decode keyId.", ctx->at, ctx->at);
+        return false;
+    }
+
     if (Macros_DryRun) {
         return true;
     }
@@ -1402,6 +1467,38 @@ static bool processIfModuleConnected(parser_context_t* ctx, bool negate)
     return moduleConnected != negate;
 }
 
+static macro_result_t processPowerModeCommand(parser_context_t* ctx) {
+    bool toggle = false;
+
+    if (ConsumeToken(ctx, "toggle")) {
+        toggle = true;
+    }
+
+    if (ConsumeToken(ctx, "deepSleep") || ConsumeToken(ctx, "sleep")) {
+        if (Macros_DryRun) {
+            return MacroResult_Finished;
+        }
+        PowerMode_ActivateMode(PowerMode_DeepSleep, toggle);
+    }
+    else if (ConsumeToken(ctx, "lightSleep")) {
+        if (Macros_DryRun) {
+            return MacroResult_Finished;
+        }
+        PowerMode_ActivateMode(PowerMode_LightSleep, toggle);
+    }
+    else if (ConsumeToken(ctx, "wake")) {
+        if (Macros_DryRun) {
+            return MacroResult_Finished;
+        }
+        PowerMode_ActivateMode(PowerMode_Awake, toggle);
+    }
+    else {
+        Macros_ReportError("Unrecognized parameter:", ctx->at, ctx->at);
+    }
+
+    return MacroResult_Finished;
+}
+
 static macro_result_t processActivateKeyPostponedCommand(parser_context_t* ctx)
 {
     uint8_t layer = 255;
@@ -1424,8 +1521,13 @@ static macro_result_t processActivateKeyPostponedCommand(parser_context_t* ctx)
         }
     }
 
-    uint16_t keyid = Macros_ConsumeInt(ctx);
+    uint16_t keyid = Macros_TryConsumeKeyId(ctx);
     key_state_t* key = Utils_KeyIdToKeyState(keyid);
+
+    if (keyid == 255) {
+        Macros_ReportError("Failed to decode keyId.", ctx->at, ctx->at);
+        return MacroResult_Finished;
+    }
 
     if (Macros_ParserError) {
         return MacroResult_Finished;
@@ -1989,6 +2091,12 @@ static macro_result_t processCommand(parser_context_t* ctx)
                     return MacroResult_Finished | MacroResult_ConditionFailedFlag;
                 }
             }
+            else if (ConsumeToken(ctx, "ifHold")) {
+                return processIfHoldCommand(ctx, false);
+            }
+            else if (ConsumeToken(ctx, "ifTap")) {
+                return processIfHoldCommand(ctx, true);
+            }
             else if (ConsumeToken(ctx, "ifSecondary")) {
                 return processIfSecondaryCommand(ctx, false);
             }
@@ -2076,6 +2184,9 @@ static macro_result_t processCommand(parser_context_t* ctx)
             }
             else if (ConsumeToken(ctx, "progressHue")) {
                 return processProgressHueCommand();
+            }
+            else if (ConsumeToken(ctx, "powerMode")) {
+                return processPowerModeCommand(ctx);
             }
             else {
                 goto failed;

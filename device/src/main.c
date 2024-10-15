@@ -2,6 +2,7 @@
 #include "legacy/config_parser/config_globals.h"
 #include "legacy/ledmap.h"
 #include "shared/attributes.h"
+#include "zephyr/kernel.h"
 #include "zephyr/storage/flash_map.h"
 #include "keyboard/key_scanner.h"
 #include "keyboard/leds.h"
@@ -33,9 +34,10 @@
 #include "state_sync.h"
 #include "keyboard/charger.h"
 #include <stdint.h>
+#include "dongle_leds.h"
 #include "debug_eventloop_timing.h"
-// #include <zephyr/drivers/gpio.h>
-// #include "dongle_leds.h"
+#include <zephyr/drivers/gpio.h>
+#include "dongle_leds.h"
 
 k_tid_t Main_ThreadId = 0;
 
@@ -54,6 +56,9 @@ static void sleepTillNextMs() {
     }
 }
 
+
+static K_SEM_DEFINE(mainWakeupSemaphore, 1, 1);
+
 static void scheduleNextRun() {
     uint32_t nextEventTime = 0;
     bool eventIsValid = false;
@@ -63,41 +68,36 @@ static void scheduleNextRun() {
     }
     CurrentTime = k_uptime_get();
     int32_t diff = nextEventTime - CurrentTime;
+
+    k_sem_take(&mainWakeupSemaphore, K_NO_WAIT);
     bool haveMoreWork = (EventScheduler_Vector & EventVector_UserLogicUpdateMask);
     if (haveMoreWork) {
+        LOG_SCHEDULE( EventVector_ReportMask("Continuing immediately because of: ", EventScheduler_Vector & EventVector_UserLogicUpdateMask););
         EVENTLOOP_TIMING(printk("Continuing immediately\n"));
         // Mouse keys don't like being called twice in one second for some reason
+        k_sem_give(&mainWakeupSemaphore);
         sleepTillNextMs();
         return;
     } else if (eventIsValid) {
         EVENTLOOP_TIMING(printk("Sleeping for %d\n", diff));
-        k_sleep(K_MSEC(diff));
+        k_sem_take(&mainWakeupSemaphore, K_MSEC(diff));
+        // k_sleep(K_MSEC(diff));
     } else {
         EVENTLOOP_TIMING(printk("Sleeping forever\n"));
-        k_sleep(K_FOREVER);
+        k_sem_take(&mainWakeupSemaphore, K_FOREVER);
+        // k_sleep(K_FOREVER);
     }
+}
+
+//TODO: inline this
+void Main_Wake() {
+    k_sem_give(&mainWakeupSemaphore);
+    // k_wakeup(Main_ThreadId);
 }
 
 int main(void) {
     Main_ThreadId = k_current_get();
     printk("----------\n" DEVICE_NAME " started\n");
-
-    // const struct gpio_dt_spec led0 = GPIO_DT_SPEC_GET(DT_ALIAS(led0_green), gpios);
-    // gpio_pin_configure_dt(&led0, GPIO_OUTPUT);
-    // while (true) {
-    //     gpio_pin_set_dt(&led0, true);
-    //     k_sleep(K_MSEC(1000));
-    //     gpio_pin_set_dt(&led0, false);
-    //     set_dongle_led(&red_pwm_led, 100);
-    //     k_sleep(K_MSEC(1000));
-    //     set_dongle_led(&red_pwm_led, 0);
-    //     set_dongle_led(&green_pwm_led, 100);
-    //     k_sleep(K_MSEC(1000));
-    //     set_dongle_led(&green_pwm_led, 0);
-    //     set_dongle_led(&blue_pwm_led, 100);
-    //     k_sleep(K_MSEC(1000));
-    //     set_dongle_led(&blue_pwm_led, 0);
-    // }
 
     if (DEVICE_IS_UHK80_RIGHT) {
         flash_area_open(FLASH_AREA_ID(hardware_config_partition), &hardwareConfigArea);

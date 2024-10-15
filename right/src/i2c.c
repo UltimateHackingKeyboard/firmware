@@ -1,5 +1,6 @@
 #include "i2c.h"
 #include "crc16.h"
+#include "stubs.h"
 
 #ifdef __ZEPHYR__
 #include "keyboard/i2c.h"

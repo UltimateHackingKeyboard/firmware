@@ -29,6 +29,7 @@
 #include "user_logic.h"
 #include "usb_descriptors/usb_descriptor_strings.h"
 #include "layouts/key_layout_60_to_universal.h"
+#include "power_mode.h"
 
 static bool IsEepromInitialized = false;
 static bool IsConfigInitialized = false;
@@ -110,7 +111,7 @@ void CopyRightKeystateMatrix(void)
 }
 
 bool UsbReadyForTransfers(void) {
-    if (UsbReportUpdateSemaphore && !SleepModeActive) {
+    if (UsbReportUpdateSemaphore && CurrentPowerMode != PowerMode_Awake) {
         if (Timer_GetElapsedTime(&UpdateUsbReports_LastUpdateTime) < USB_SEMAPHORE_TIMEOUT) {
             return false;
         } else {

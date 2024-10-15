@@ -178,8 +178,6 @@ void keyboard_app::set_report(hid::report::type type, const std::span<const uint
 
     UsbCompatibility_SetKeyboardLedsState(leds & CapsLockMask, leds & NumLockMask, leds & ScrollLockMask);
 
-    printk("keyboard LED status: %x\n", leds);
-
     // always keep receiving new reports
     // if the report data is processed immediately, the same buffer can be used
     receive_report(&leds_buffer_);

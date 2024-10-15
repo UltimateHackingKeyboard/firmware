@@ -11,7 +11,7 @@ usage: ./build DEVICE1 DEVICE2 ... ACTION1 ACTION2 ...
 
     DEVICE is in { uhk-80-left | uhk-80-right | uhk-60-right | uhk-dongle }
              there are also these aliases: { left | right | dongle | all }
-    ACTION is in { clean | setup | update | build | make | flash | shell | uart }
+    ACTION is in { clean | setup | update | build | make | flash | flashUsb | shell | uart }
 
     setup    initialize submodules and set up zephyr environment
     clean    removes zephyr libraries
@@ -93,19 +93,30 @@ function processArguments() {
     fi
 }
 
+mutex() {
+  local lockfile="/tmp/uhk_build_lockfile"
+  if [ "$1" == "lock" ]; then
+    exec 200>"$lockfile"  # Open file descriptor 200 for the lockfile
+    flock 200             # Block until lock is acquired
+  elif [ "$1" == "unlock" ]; then
+    flock -u 200          # Unlock the file descriptor
+    rm -f "$lockfile"     # Remove lockfile
+  fi
+}
+
 function determineUsbDeviceArg() {
     DEVICE=$1
     DEVICEUSBID=""
 
     case $DEVICE in
         uhk-80-left)
-            DEVICEUSBID="--vid=37a8 --pid=7 --usb-interface=2"
+            DEVICEUSBID="--vid=0x37a8 --pid=7 --usb-interface=2"
             ;;
         uhk-80-right)
-            DEVICEUSBID="--vid=37a8 --pid=9 --usb-interface=2"
+            DEVICEUSBID="--vid=0x37a8 --pid=9 --usb-interface=2"
             ;;
         uhk-dongle)
-            DEVICEUSBID="--vid=37a8 --pid=5 --usb-interface=2"
+            DEVICEUSBID="--vid=0x37a8 --pid=5 --usb-interface=2"
             ;;
         uhk-60)
             ;;
@@ -224,10 +235,12 @@ function performAction() {
 END
             ;;
         build)
+            # reference version of the build process is to be found in scripts/make-release.mjs
             nrfutil toolchain-manager launch --shell --ncs-version $NCS_VERSION << END
                 unset PYTHONPATH
                 unset PYTHONHOME
-                west build --build-dir $ROOT/device/build/$DEVICE $ROOT/device --pristine --board $DEVICE --no-sysbuild -- -DNCS_TOOLCHAIN_VERSION=NONE -DEXTRA_CONF_FILE=prj.conf.overlays/$DEVICE.prj.conf -DBOARD_ROOT=$ROOT -Dmcuboot_OVERLAY_CONFIG=$ROOT/device/child_image/mcuboot.conf;$ROOT/device/child_image/$DEVICE.mcuboot.conf
+                ZEPHYR_TOOLCHAIN_VARIANT=zephyr west build --build-dir "$ROOT/device/build/$DEVICE" "$ROOT/device" --pristine --board "$DEVICE" --no-sysbuild -- -DNCS_TOOLCHAIN_VERSION=NONE -DEXTRA_CONF_FILE=prj.conf.overlays/$DEVICE.prj.conf -DBOARD_ROOT="$ROOT" -Dmcuboot_OVERLAY_CONFIG="$ROOT/device/child_image/mcuboot.conf;$ROOT/device/child_image/$DEVICE.mcuboot.conf"
+
 END
             createCentralCompileCommands
             ;;
@@ -244,8 +257,12 @@ END
             ;;
         flashUsb)
             USBDEVICEARG=`determineUsbDeviceArg $DEVICE`
-            cd $ROOT/lib/agent/packages/usb/
-            ./update-device-firmware.ts $USBDEVICEARG $ROOT/device/build/$DEVICE/zephyr/app_update.bin
+            USB_SCRIPT_DIR=$ROOT/lib/agent/packages/usb/
+            cd $USB_SCRIPT_DIR
+            echo "running $USB_SCRIPT_DIR$ ./update-device-firmware.ts $USBDEVICEARG $ROOT/device/build/$DEVICE/zephyr/app_update.bin $OTHER_ARGS"
+            mutex lock
+            ./update-device-firmware.ts $USBDEVICEARG $ROOT/device/build/$DEVICE/zephyr/app_update.bin $OTHER_ARGS
+            mutex unlock
             cd $ROOT
             ;;
         release)
@@ -273,7 +290,6 @@ function performActions() {
     done
     eval $POSTBUILD
 }
-
 
 function runPerDevice() {
     SESSION_NAME=$TARGET_TMUX_SESSION

@@ -4,6 +4,7 @@
 // Includes:
 
     #include "basic_types.h"
+    #include "versioning.h"
 
 // Macros:
 
@@ -42,9 +43,7 @@
         SerializedSecondaryRoleActionType_Secondary,
     } serialized_secondary_role_action_type_t;
 
-    extern uint16_t DataModelMajorVersion;
-    extern uint16_t DataModelMinorVersion;
-    extern uint16_t DataModelPatchVersion;
+    extern version_t DataModelVersion;
 
     extern bool PerKeyRgbPresent;
 

@@ -100,6 +100,7 @@ I have read this Agreement, and fully agree to it by signing it with my GitHub u
 - @abcminiuser
 - @benedekkupper
 - @bodograumann
+- @csnyder616
 - @dancek
 - @eltang
 - @ert78gb
@@ -108,8 +109,10 @@ I have read this Agreement, and fully agree to it by signing it with my GitHub u
 - @kenhys
 - @larok00
 - @Lauszus
+- @mhantsch
 - @mondalaci
 - @nathanph
+- @rightaditya
 - @santiagogf89
 - @soraxas
 - @steamraven

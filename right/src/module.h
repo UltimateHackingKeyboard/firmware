@@ -15,6 +15,8 @@
     #define MAX_KEY_COUNT_PER_MODULE 35
 #endif
 
+    #define MAX_BACKLIT_KEY_COUNT_PER_LEFT_MODULE 3
+
 // Typedefs:
 
     typedef enum {
@@ -34,6 +36,7 @@
         NavigationMode_Count,
         NavigationMode_RemappableFirst = NavigationMode_Caret,
         NavigationMode_RemappableLast = NavigationMode_ZoomMac,
+        NavigationMode_RemappableCount = NavigationMode_RemappableLast - NavigationMode_RemappableFirst + 1,
     } navigation_mode_t;
 
     typedef struct {

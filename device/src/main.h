@@ -17,5 +17,7 @@
 
 // Functions:
 
+    void Main_Wake();
+
 #endif // __MAIN_H__
 

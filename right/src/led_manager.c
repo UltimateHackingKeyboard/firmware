@@ -6,13 +6,13 @@
 #include "led_display.h"
 #include "usb_report_updater.h"
 #include "test_switches.h"
+#include "power_mode.h"
 
 #ifdef __ZEPHYR__
 #include <zephyr/sys/util.h>
 #include "state_sync.h"
 #include "keyboard/charger.h"
 #include "keyboard/oled/oled.h"
-#define SleepModeActive false
 #else
 #include "device.h"
 #endif
@@ -25,7 +25,7 @@ uint8_t KeyBacklightBrightness = 0xff;
 
 static void recalculateLedBrightness()
 {
-    bool globalSleepMode = !Cfg.LedsEnabled || SleepModeActive || Cfg.LedBrightnessMultiplier == 0.0f;
+    bool globalSleepMode = !Cfg.LedsEnabled || CurrentPowerMode > PowerMode_Awake || Cfg.LedBrightnessMultiplier == 0.0f;
 
     if (globalSleepMode || KeyBacklightSleepModeActive) {
         KeyBacklightBrightness = 0;
@@ -94,7 +94,7 @@ void LedManager_UpdateSleepModes() {
         EventScheduler_Schedule(UsbReportUpdater_LastActivityTime + keyBacklightTimeout, EventSchedulerEvent_UpdateLedSleepModes, "LedManager - update key backlight sleep mode");
     }
 
-    uint32_t displayTimeout = RunningOnBattery ? Cfg.DisplayFadeOutBatteryTimeout : Cfg.DisplayFadeOutTimeout;
+    uint32_t displayTimeout = RightRunningOnBattery ? Cfg.DisplayFadeOutBatteryTimeout : Cfg.DisplayFadeOutTimeout;
     if (elapsedTime >= displayTimeout && !DisplaySleepModeActive && displayTimeout) {
         DisplaySleepModeActive = true;
         ledsNeedUpdate = true;

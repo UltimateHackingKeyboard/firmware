@@ -22,7 +22,7 @@ static k_tid_t ledUpdaterTid = 0;
 const struct gpio_dt_spec ledsCsDt = GPIO_DT_SPEC_GET(DT_ALIAS(leds_cs), gpios);
 const struct gpio_dt_spec ledsSdbDt = GPIO_DT_SPEC_GET(DT_ALIAS(leds_sdb), gpios);
 
-uint8_t Uhk80LedDriverValues[LED_DRIVER_LED_COUNT_MAX];
+uint8_t Uhk80LedDriverValues[UHK80_LED_DRIVER_LED_COUNT_MAX];
 
 void setLedsCs(bool state)
 {

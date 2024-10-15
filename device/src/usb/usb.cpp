@@ -8,6 +8,8 @@ extern "C" {
 #include "legacy/user_logic.h"
 #include <device.h>
 #include <zephyr/kernel.h>
+#include "logger.h"
+#include "legacy/power_mode.h"
 }
 #include "command_app.hpp"
 #include "controls_app.hpp"
@@ -129,7 +131,39 @@ struct usb_manager {
 
   private:
     usb_manager()
-    {}
+    {
+        device_.set_power_event_delegate([](usb::df::device &dev, usb::df::device::event ev) {
+            using event = enum usb::df::device::event;
+            switch (ev) {
+            case event::CONFIGURATION_CHANGE:
+                // printk("USB configured: %u, granted current: %uuA\n", dev.configured(), dev.granted_bus_current_uA());
+                break;
+            case event::POWER_STATE_CHANGE:
+                // printk("USB power state: L%u, granted current: %uuA\n", 3 - static_cast<uint8_t>(dev.power_state()), dev.granted_bus_current_uA());
+                switch (dev.power_state()) {
+                case usb::power::state::L2_SUSPEND:
+                    // TODO: handle suspend, maybe only when the HID target is USB?
+                    // TODO: stop battery charging, maybe only if dev.configured(),
+                    // to distinguish between USB host and charger
+
+                    /* Log("L2 Suspend\n"); */
+                    // uncomment when the waking stuff works.
+                    PowerMode_SetUsbAwake(false);
+                    break;
+                case usb::power::state::L0_ON:
+                    //TODO: handle wakeup, only if in suspend
+
+                    /* Log("L0 ON\n"); */
+                    PowerMode_SetUsbAwake(true);
+                    break;
+                default:
+                    /* Log("L state %i\n", (int)ev); */
+                    break;
+                }
+                break;
+            }
+        });
+    }
 
     usb::df::zephyr::udc_mac mac_{DEVICE_DT_GET(DT_NODELABEL(zephyr_udc0))};
     usb::df::microsoft::alternate_enumeration<usb::speeds(usb::speed::FULL)> ms_enum_{};
@@ -144,6 +178,11 @@ extern "C" void USB_EnableHid()
 extern "C" void USB_DisableHid()
 {
     usb_manager::instance().select_config(Hid_Empty);
+}
+
+extern "C" void USB_RemoteWakeup()
+{
+    usb_manager::instance().device().remote_wakeup();
 }
 
 #if DEVICE_IS_UHK80_RIGHT

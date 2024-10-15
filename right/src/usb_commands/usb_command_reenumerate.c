@@ -13,7 +13,7 @@ void UsbCommand_Reenumerate(void)
 {
 #ifdef __ZEPHYR__
     bootmode_set(BOOT_MODE_TYPE_BOOTLOADER);
-    sys_reboot(SYS_REBOOT_WARM);
+    sys_reboot(SYS_REBOOT_COLD);
 #else
     Wormhole.magicNumber = WORMHOLE_MAGIC_NUMBER;
     Wormhole.enumerationMode = GetUsbRxBufferUint8(1);

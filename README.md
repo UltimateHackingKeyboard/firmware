@@ -42,11 +42,16 @@ Then, depending whether you want a full IDE experience or just minimal tools for
 ### Minimal development setup
 
 - Install commandline stuff from [nRF Connect SDK](https://developer.nordicsemi.com/nRF_Connect_SDK/doc/latest/nrf/installation/install_ncs.html)
-- Launch nrfutil shell:
+- You can use `./build.sh` script that basically just packs the following snippets, but should be more up to date:
+
+    - e.g. `./build.sh uhk-80-left build make flash`, which will perform the three actions below
+
+- If the `build.sh` doesn't suit you, then launch the nrfutil shell:
     ```
     nrfutil toolchain-manager launch --shell --ncs-version v2.6.1
     ```
 - In the shell, you can build (e.g.) uhk-80-left as follows:
+
   - full build including cmake steps, as extracted from VS Code:
     ```
     export DEVICE=uhk-80-left
@@ -60,12 +65,28 @@ Then, depending whether you want a full IDE experience or just minimal tools for
     export PWD=`pwd`
     west build --build-dir $PWD/device/build/$DEVICE $PWD/device
     ```
+
   - flash:
     ```
     export DEVICE=uhk-80-left
     export PWD=`pwd`
     west flash -d $PWD/device/build/$DEVICE
     ```
+
+In case of problems, please refer to scripts/make-release.mjs
+
+### Recommended tweaks
+
+You may find this `.git/hooks/post-checkout` git hook useful:
+
+```bash
+#!/bin/bash
+
+# Update the submodule in lib/c2usb to the commit recorded in the checked-out commit
+git submodule update --init --recursive lib/c2usb
+# Refresh versions.c, so that Agent always shows what commit you are on (although it doesn't indicate unstaged changes)
+scripts/generate-versions.mjs
+```
 
 ### Old IDE setup
 
@@ -116,12 +137,3 @@ If `make-release.mjs` fails with a build error, it'll probably succeed in Nordic
 ## Contributing
 
 Want to contribute? Let us show you [how](/CONTRIBUTING.md).
-
-## Custom Firmwares
-
-The following list contains unofficial forks of the firmware. These forks provide functionality unavailable in the official firmware, but come without guarantees of any kind:
-
-- [https://github.com/kareltucek/firmware](https://github.com/kareltucek/firmware) - firmware featuring macro engine extended by a set of custom commands, allowing more advanced configurations including custom layer switching logic, doubletap bindings, alternative secondary roles etc.
-
-- [https://github.com/p4elkin/firmware](https://github.com/p4elkin/firmware) - firmware fork which comes with an alternative implementation of the secondary key role mechanism making it possible to use the feature for keys actively involved in typing (e.g. alphanumeric ones).
-

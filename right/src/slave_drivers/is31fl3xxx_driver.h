@@ -5,6 +5,7 @@
 
 #ifdef __ZEPHYR__
     #include "keyboard/leds.h"
+    #include "peripherals/led_driver.h"
 #else
     #include "fsl_common.h"
     #include "peripherals/led_driver.h"
@@ -81,10 +82,7 @@
 // Variables:
 
     extern uint8_t KeyBacklightBrightness;
-#ifndef __ZEPHYR__
     extern uint8_t LedDriverValues[LED_DRIVER_MAX_COUNT][LED_DRIVER_LED_COUNT_MAX];
-#endif
-
 
 // Functions:
 

@@ -32,6 +32,7 @@
         EventSchedulerEvent_MouseController,
         EventSchedulerEvent_ReenableUart,
         EventSchedulerEvent_UpdateMergeSensor,
+        EventSchedulerEvent_PowerMode,
         EventSchedulerEvent_Count
     } event_scheduler_event_t;
 
@@ -58,24 +59,25 @@
        EventVector_SegmentDisplayNeedsUpdate =             1 << 13,
        EventVector_LedMapUpdateNeeded =                    1 << 14,
        EventVector_ApplyConfig =                           1 << 15,
+       EventVector_NewMessage =                            1 << 16,
 
        EventVector_ReportUpdateMask = ((1 << 8) - 1) & ~EventVector_EventScheduler,
-       EventVector_UserLogicUpdateMask = ((1 << 16) - 1) & ~EventVector_EventScheduler,
+       EventVector_UserLogicUpdateMask = ((1 << 17) - 1) & ~EventVector_EventScheduler,
 
        // events that are informational only
-       EventVector_NativeActionReportsUsed =               1 << 16,
-       EventVector_MacroReportsUsed =                      1 << 17,
-       EventVector_MouseKeysReportsUsed =                  1 << 18,
-       EventVector_MouseControllerMouseReportsUsed =       1 << 19,
-       EventVector_MouseControllerKeyboardReportsUsed =    1 << 20,
-       EventVector_ReportsChanged =                        1 << 21,
-       EventVector_NativeActionsPostponing =               1 << 22,
-       EventVector_MacroEnginePostponing =                 1 << 23,
+       EventVector_NativeActionReportsUsed =               1 << 17,
+       EventVector_MacroReportsUsed =                      1 << 18,
+       EventVector_MouseKeysReportsUsed =                  1 << 19,
+       EventVector_MouseControllerMouseReportsUsed =       1 << 20,
+       EventVector_MouseControllerKeyboardReportsUsed =    1 << 21,
+       EventVector_ReportsChanged =                        1 << 22,
+       EventVector_NativeActionsPostponing =               1 << 23,
+       EventVector_MacroEnginePostponing =                 1 << 24,
     } event_vector_event_t;
 
 // Variables:
 
-    extern uint32_t EventScheduler_Vector;
+    extern volatile uint32_t EventScheduler_Vector;
 
 // Functions:
 
@@ -128,7 +130,7 @@
 
     static inline void EventVector_WakeMain() {
 #ifdef __ZEPHYR__
-        k_wakeup(Main_ThreadId);
+        Main_Wake();
 #endif
     }
 

@@ -133,7 +133,7 @@ void UhkModuleSlaveDriver_ProcessKeystates(uint8_t uhkModuleDriverId, uhk_module
         uint8_t targetKeyId;
 
         // TODO: optimize this? This translation is quite costly :-/
-        if (DataModelMajorVersion >= 8 && uhkModuleDriverId == UhkModuleDriverId_LeftKeyboardHalf) {
+        if (DataModelVersion.major >= 8 && uhkModuleDriverId == UhkModuleDriverId_LeftKeyboardHalf) {
             targetKeyId = KeyLayout_Uhk60_to_Universal[SlotId_LeftKeyboardHalf][keyId];
         } else {
             targetKeyId = keyId;
@@ -177,7 +177,9 @@ static void forwardKeystates(uint8_t uhkModuleDriverId, uhk_module_state_t* uhkM
         }
     }
 
-    bool thisDeltasAreZero = uhkModuleState->pointerDelta.x == 0 && uhkModuleState->pointerDelta.y == 0;
+    uint8_t keyStatesLength = BOOL_BYTES_TO_BITS_COUNT(uhkModuleState->keyCount);
+    pointer_delta_t *pointerDelta = (pointer_delta_t*)(rxMessage->data + keyStatesLength);
+    bool thisDeltasAreZero = pointerDelta->x == 0 && pointerDelta->y == 0;
 
     if (stateChanged || !lastDeltasWereZero || !thisDeltasAreZero) {
         Messenger_Send2(DeviceId_Uhk80_Right, MessageId_SyncableProperty, SyncablePropertyId_LeftModuleKeyStates, rxMessage->data, rxMessage->length);
