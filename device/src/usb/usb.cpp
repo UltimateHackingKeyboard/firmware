@@ -263,7 +263,7 @@ void hidmgr_set_transport(const hid::transport* tp)
     }
 #endif
     else {
-        printk("USBTransport: changed to Bluetooth Usb HID.\n");
+        printk("USBTransport: changed to Usb HID.\n");
         DeviceState_SetConnection(ConnectionId_UsbHid, ConnectionType_Usb);
     }
 }
