@@ -11,7 +11,7 @@ void app_base::send(const std::span<const uint8_t> &buffer)
         return;
     }
     if (!sending_sem_.try_acquire_for(SEMAPHORE_RESET_TIMEOUT)) {
-        return;
+        //return;
     }
     std::copy(buffer.begin(), buffer.end(), in_buffer_.data() + sizeof(in_id_));
     auto result = send_report(in_buffer_);

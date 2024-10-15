@@ -73,7 +73,7 @@ void keyboard_app::set_report_state(const keys_nkro_report_base<> &data)
         return;
     }
     if (!sending_sem_.try_acquire_for(SEMAPHORE_RESET_TIMEOUT)) {
-        return;
+        //return;
     }
     auto result = hid::result::INVALID;
     if (!using_nkro()) {
