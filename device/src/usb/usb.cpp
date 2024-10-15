@@ -252,15 +252,18 @@ void hidmgr_set_transport(const hid::transport* tp)
 {
     // tp is the transport of the keyboard app
     if (tp == nullptr) {
+        printk("USBTransport: changed to none.\n");
         DeviceState_SetConnection(ConnectionId_BluetoothHid, ConnectionType_None);
         DeviceState_SetConnection(ConnectionId_UsbHid, ConnectionType_None);
     }
 #if DEVICE_IS_UHK80_RIGHT
     else if (tp == &hogp_manager::instance().main_service()) {
+        printk("USBTransport: changed to Bluetooth HID.\n");
         DeviceState_SetConnection(ConnectionId_BluetoothHid, ConnectionType_Bt);
     }
 #endif
     else {
+        printk("USBTransport: changed to Bluetooth Usb HID.\n");
         DeviceState_SetConnection(ConnectionId_UsbHid, ConnectionType_Usb);
     }
 }
