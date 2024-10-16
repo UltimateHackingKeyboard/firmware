@@ -9,17 +9,25 @@
 #include "bt_scan.h"
 #include "legacy/event_scheduler.h"
 #include "zephyr/kernel.h"
+#include "bt_manager.h"
+#include "bt_advertise.h"
 
 bool BtPair_LastPairingSucceeded = true;
 bool BtPair_OobPairingInProgress = false;
 
+static bool pairingAsCentral = false;
 static bool initialized = false;
 static struct bt_le_oob oobRemote;
 static struct bt_le_oob oobLocal;
 
-struct bt_le_oob* BtPair_GetLocalOob() {
-    EventScheduler_Reschedule(k_uptime_get_32() + PAIRING_TIMEOUT, EventSchedulerEvent_EndBtPairing, "Oob pairing timeout.");
+void BtManager_EnterPairingMode() {
+    printk("--- Entering pairing mode. Going to stop BT and disconnect all connections. ---\n");
     BtPair_OobPairingInProgress = true;
+    BtManager_StopBt();
+    BtConn_DisconnectAll();
+}
+
+struct bt_le_oob* BtPair_GetLocalOob() {
     if (!initialized) {
         int err = bt_le_oob_get_local(BT_ID_DEFAULT, &oobLocal);
         if (err) {
@@ -32,44 +40,53 @@ struct bt_le_oob* BtPair_GetLocalOob() {
 }
 
 struct bt_le_oob* BtPair_GetRemoteOob() {
-    EventScheduler_Reschedule(k_uptime_get_32() + PAIRING_TIMEOUT, EventSchedulerEvent_EndBtPairing, "Oob pairing timeout.");
-    BtPair_OobPairingInProgress = true;
     return &oobRemote;
 }
 
+void BtPair_SetRemoteOob(const struct bt_le_oob* oob) {
+    oobRemote = *oob;
+}
+
 void BtPair_PairCentral() {
-    printk ("Scanning for pairable device\n");
+    pairingAsCentral = true;
     settings_load();
     bt_le_oob_set_sc_flag(true);
-    scan_reload_filters();
-}
-
-static void bt_foreach_conn_cb(struct bt_conn *conn, void *user_data) {
-    bt_conn_disconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
-    // gpt says you should unref here. Don't believe it!
-}
-
-static void disconnectAll() {
-    bt_conn_foreach(BT_CONN_TYPE_LE, bt_foreach_conn_cb, NULL);
+    BtScan_Start();
+    printk ("Scanning for pairable device\n");
+    EventScheduler_Reschedule(k_uptime_get_32() + PAIRING_TIMEOUT, EventSchedulerEvent_EndBtPairing, "Oob pairing timeout.");
 }
 
 void BtPair_PairPeripheral() {
-    printk ("Advertising as pairable device\n");
+    pairingAsCentral = false;
     settings_load();
-
     bt_le_oob_set_sc_flag(true);
-
-    disconnectAll();
+    BtAdvertise_Start(ADVERTISE_NUS);
+    printk ("Waiting for central to pair to me.\n");
+    EventScheduler_Reschedule(k_uptime_get_32() + PAIRING_TIMEOUT, EventSchedulerEvent_EndBtPairing, "Oob pairing timeout.");
 }
 
 void BtPair_EndPairing(bool success, const char* msg) {
-    printk("Pairing ended, success = %d: %s\n", success, msg);
+    printk("--- Pairing ended, success = %d: %s ---\n", success, msg);
+
     initialized = false;
-    BtPair_LastPairingSucceeded = success;
+
+    memset(&oobRemote, 0, sizeof(oobRemote));
+    memset(&oobLocal, 0, sizeof(oobLocal));
+
     BtPair_OobPairingInProgress = false;
+    BtPair_LastPairingSucceeded = success;
     bt_le_oob_set_sc_flag(false);
     EventScheduler_Unschedule(EventSchedulerEvent_EndBtPairing);
-    scan_reload_filters();
+
+    if (pairingAsCentral) {
+        BtScan_Stop();
+    } else {
+        BtAdvertise_Stop();
+    }
+
+    k_sleep(K_MSEC(100));
+
+    BtManager_StartBt();
 }
 
 struct delete_args_t {

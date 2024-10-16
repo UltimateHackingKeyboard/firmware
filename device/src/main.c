@@ -1,4 +1,8 @@
 #include "main.h"
+#include "bt_advertise.h"
+#include "nus_client.h"
+#include "nus_server.h"
+#include "bt_manager.h"
 #include "legacy/config_parser/config_globals.h"
 #include "legacy/ledmap.h"
 #include "shared/attributes.h"
@@ -10,15 +14,12 @@
 #include "keyboard/charger.h"
 #include "keyboard/spi.h"
 #include "keyboard/uart.h"
-#include "nus_client.h"
-#include "nus_server.h"
 #include "keyboard/i2c.h"
 #include "peripherals/merge_sensor.h"
 #include "shell.h"
 #include "device.h"
 #include "usb/usb.h"
 #include "bt_conn.h"
-#include "bt_advertise.h"
 #include "settings.h"
 #include "flash.h"
 #include "usb_commands/usb_command_apply_config.h"
@@ -150,23 +151,14 @@ int main(void) {
 
     USB_EnableHid(); // has to be after USB_SetSerialNumber
 
-    bt_init();
+    bt_enable(NULL);
+
+    // has to be after bt_enable
     InitSettings();
 
-    if (DEVICE_IS_UHK80_RIGHT) {
-        HOGP_Enable();
-    }
-
-    if (DEVICE_IS_UHK80_LEFT || DEVICE_IS_UHK80_RIGHT) {
-        int err = NusServer_Init();
-        if (!err) {
-            Advertise(AdvertiseType());
-        }
-    }
-
-    if (DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK_DONGLE) {
-         NusClient_Init();
-    }
+    // has to be after InitSettings
+    BtManager_InitBt();
+    BtManager_StartBt();
 
     if (!DEVICE_IS_UHK_DONGLE) {
         InitCharger(); // has to be after usb initialization

@@ -12,7 +12,8 @@
 
 // Functions:
 
-    extern void Advertise(uint8_t adv_type);
-    extern uint8_t AdvertiseType();
+    void BtAdvertise_Start(uint8_t adv_type);
+    void BtAdvertise_Stop();
+    uint8_t BtAdvertise_Type();
 
 #endif // __BT_ADVERTISE_H__

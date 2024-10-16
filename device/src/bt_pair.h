@@ -18,11 +18,13 @@
 
     struct bt_le_oob* BtPair_GetLocalOob();
     struct bt_le_oob* BtPair_GetRemoteOob();
+    void BtPair_SetRemoteOob(const struct bt_le_oob* oob);
     void BtPair_PairCentral();
     void BtPair_PairPeripheral();
     void BtPair_EndPairing(bool success, const char* msg);
     void BtPair_Unpair(const bt_addr_le_t addr);
     bool BtPair_IsDeviceBonded(const bt_addr_le_t *addr);
+    void BtManager_EnterPairingMode();
 
 // Variables
 

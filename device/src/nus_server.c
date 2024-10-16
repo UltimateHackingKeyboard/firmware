@@ -70,9 +70,12 @@ int NusServer_Init(void) {
     int err = bt_nus_init(&nus_cb);
     if (err) {
         printk("Failed to initialize UART service (err: %d)\n", err);
+        return err;
     }
 
-    return err;
+    printk("NUS Server module initialized.\n");
+
+    return 0;
 }
 
 void NusServer_Disconnected() {

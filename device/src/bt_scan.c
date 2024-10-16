@@ -55,14 +55,39 @@ static int scan_fill() {
     return err;
 }
 
-int scan_reload_filters(void) {
+int BtScan_Stop(void) {
     int err;
 
     bt_scan_stop();
+    bt_scan_start(BT_SCAN_TYPE_SCAN_ACTIVE);
+    err = bt_scan_stop();
+    if (err) {
+        printk("Stop LE scan failed (err %d)\n", err);
+    } else {
+        printk("Scanning successfully stopped.\n");
+    }
 
     bt_scan_filter_disable();
 
     bt_scan_filter_remove_all();
+
+    return err;
+}
+
+int BtScan_Init(void) {
+    struct bt_scan_init_param scan_init = {
+        .connect_if_match = 1,
+    };
+
+    bt_scan_init(&scan_init);
+    bt_scan_cb_register(&scan_cb);
+
+    printk("Scan module initialized\n");
+    return 0;
+}
+
+int BtScan_Start(void) {
+    int err;
 
     scan_fill();
 
@@ -75,30 +100,9 @@ int scan_reload_filters(void) {
     err = bt_scan_start(BT_SCAN_TYPE_SCAN_ACTIVE);
     if (err) {
         printk("Scanning failed to start (err %d)\n", err);
-        return err;
+    } else {
+        printk("Scanning successfully started\n");
     }
 
-    printk("reloaded scan filters\n");
-    return err;
-}
-
-int scan_init(void) {
-    int err;
-    struct bt_scan_init_param scan_init = {
-        .connect_if_match = 1,
-    };
-
-    bt_scan_init(&scan_init);
-    bt_scan_cb_register(&scan_cb);
-
-    scan_fill();
-
-    err = bt_scan_filter_enable(BT_SCAN_ADDR_FILTER, false);
-    if (err) {
-        printk("Filters cannot be turned on (err %d)\n", err);
-        return err;
-    }
-
-    printk("Scan module initialized\n");
     return err;
 }

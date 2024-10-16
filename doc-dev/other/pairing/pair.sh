@@ -2,6 +2,13 @@
 
 # I am somewhat confused about ble address endianity. If you feel something is wrong, please let me know...
 
+# Pairing process:
+# - Enter pairing mode
+# - (Optional) delete some or all bonds. If bonds are deleted outside of pairing mode, the device may try to reconnect and be treated as HID device, which urrently results in loosing usb connection.
+# - Retrieve pairing data for both devices
+# - Set pairing data for both devices
+# - Start pairing for both devices. (They will automatically exit pairing mode after success or timeout.)
+
 function extractData() {
     cat | grep '^[0-9].*' | sed 's/^ *[0-9]* *//;s/0 *$//'
 }
@@ -12,10 +19,13 @@ donglesPairedKeyboardAddress=`./cmd.sh dongle 0 10 | extractData`
 echo "dongleAddress: $dongleAddress"
 echo "donglesPairedKeyboardAddress: $donglesPairedKeyboardAddress"
 
-#delete all bonds on all devices
-./cmd.sh left 0x1a 0 0 0 0 0 0 > /dev/null
-./cmd.sh right 0x1a 0 0 0 0 0 0 > /dev/null
+#enter pairing mode
+./cmd.sh dongle 0x1d > /dev/null
+./cmd.sh right 0x1d > /dev/null
+
+#delete all bonds
 ./cmd.sh dongle 0x1a 0 0 0 0 0 0 > /dev/null
+./cmd.sh right 0x1a 0 0 0 0 0 0 > /dev/null
 
 echo "All bonds deleted"
 
@@ -57,17 +67,29 @@ echo "dongle pairing status: $pairingStatus"
 echo "Hopefully, right <--> dongle are paired now; Tap key to continue..."
 read a
 
+#enter pairing mode
+./cmd.sh left 0x1d > /dev/null
+./cmd.sh right 0x1d > /dev/null
+
+# delete left bonds
+./cmd.sh left 0x1a 0 0 0 0 0 0 > /dev/null
+
+# get keys
 leftKey=`./cmd.sh left 0x16 | extractData`
 rightKey=`./cmd.sh right 0x16 | extractData`
 
 echo "leftKey: $leftKey"
 echo "rightKey: $rightKey"
 
+# exchange keys
 ./cmd.sh left 0x17 1 $rightKey
 ./cmd.sh right 0x17 0 $leftKey
 
+# pair
 ./cmd.sh left 0x18
 ./cmd.sh right 0x19
+
+sleep 1
 
 echo "Hopefully, right <--> left are paired now"
 

@@ -4,6 +4,7 @@
 #include <bluetooth/scan.h>
 #include "bt_advertise.h"
 #include "bt_conn.h"
+#include "bt_scan.h"
 #include "device_state.h"
 #include "keyboard/oled/screens/screen_manager.h"
 #include "keyboard/oled/widgets/widget.h"
@@ -16,6 +17,7 @@
 #include "keyboard/oled/widgets/widgets.h"
 #include <zephyr/settings/settings.h>
 #include "bt_pair.h"
+#include "bt_manager.h"
 #include <zephyr/bluetooth/addr.h>
 
 bool Bt_NewPairedDevice = false;
@@ -120,7 +122,7 @@ static void configureLatency(struct bt_conn *conn) {
     );
     int err = bt_conn_le_param_update(conn, &conn_params);
     if (err) {
-        printk("LE latencies update failed: %d", err);
+        printk("LE latencies update failed: %d\n", err);
     }
 }
 
@@ -182,20 +184,26 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
 
     printk("Bt disconnected from %s, reason %u\n", GetPeerStringByConn(conn), reason);
 
-    if (DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK_DONGLE) {
-        if (peerId == PeerIdHid || peerId == PeerIdUnknown) {
-            Advertise(AdvertiseType());
-            if (DEVICE_IS_UHK80_RIGHT) {
+    if (!BtPair_OobPairingInProgress && !BtManager_Restarting) {
+        if (DEVICE_IS_UHK80_RIGHT) {
+            if (peerId == PeerIdHid || peerId == PeerIdUnknown) {
+                BtAdvertise_Start(BtAdvertise_Type());
                 USB_EnableHid();
             }
-        } else if (peerId == PeerIdDongle) {
-            Advertise(AdvertiseType());
-        } else if (peerId == PeerIdRight || peerId == PeerIdDongle) {
-            int err = bt_scan_start(BT_SCAN_TYPE_SCAN_ACTIVE);
-            printk("Start scan\n");
-            if (err) {
-                printk("Scanning failed to start (err %d)\n", err);
+            if (peerId == PeerIdDongle) {
+                BtAdvertise_Start(BtAdvertise_Type());
             }
+            if (peerId == PeerIdLeft) {
+                BtScan_Start();
+            }
+        }
+
+        if (DEVICE_IS_UHK_DONGLE && peerId == PeerIdRight) {
+            BtScan_Start();
+        }
+
+        if (DEVICE_IS_UHK80_LEFT && peerId == PeerIdRight) {
+            BtScan_Start();
         }
     }
 
@@ -214,6 +222,7 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
 
     if (peerId != PeerIdUnknown) {
         Peers[peerId].isConnected = false;
+        Peers[peerId].isConnectedAndConfigured = false;
         DeviceState_TriggerUpdate();
     }
 }
@@ -221,11 +230,11 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
 bool Bt_DeviceIsConnected(device_id_t deviceId) {
     switch (deviceId) {
         case DeviceId_Uhk80_Left:
-            return Peers[PeerIdLeft].isConnected;
+            return Peers[PeerIdLeft].isConnectedAndConfigured;
         case DeviceId_Uhk80_Right:
-            return Peers[PeerIdRight].isConnected;
+            return Peers[PeerIdRight].isConnectedAndConfigured;
         case DeviceId_Uhk_Dongle:
-            return Peers[PeerIdDongle].isConnected;
+            return Peers[PeerIdDongle].isConnectedAndConfigured;
         default:
             return false;
     }
@@ -234,13 +243,13 @@ bool Bt_DeviceIsConnected(device_id_t deviceId) {
 void Bt_SetDeviceConnected(device_id_t deviceId) {
     switch (deviceId) {
         case DeviceId_Uhk80_Left:
-            Peers[PeerIdLeft].isConnected = true;
+            Peers[PeerIdLeft].isConnectedAndConfigured = true;
             break;
         case DeviceId_Uhk80_Right:
-            Peers[PeerIdRight].isConnected = true;
+            Peers[PeerIdRight].isConnectedAndConfigured = true;
             break;
         case DeviceId_Uhk_Dongle:
-            Peers[PeerIdDongle].isConnected = true;
+            Peers[PeerIdDongle].isConnectedAndConfigured = true;
             break;
         default:
             break;
@@ -378,6 +387,15 @@ static void pairing_complete(struct bt_conn *conn, bool bonded) {
     }
 }
 
+static void bt_foreach_conn_cb(struct bt_conn *conn, void *user_data) {
+    bt_conn_disconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
+    // gpt says you should unref here. Don't believe it!
+}
+
+void BtConn_DisconnectAll() {
+    bt_conn_foreach(BT_CONN_TYPE_LE, bt_foreach_conn_cb, NULL);
+}
+
 static void pairing_failed(struct bt_conn *conn, enum bt_security_err reason) {
     if (!auth_conn) {
         return;
@@ -397,8 +415,7 @@ static struct bt_conn_auth_info_cb conn_auth_info_callbacks = {
     .pairing_failed = pairing_failed
 };
 
-void bt_init(void)
-{
+void BtConn_Init(void) {
     int err = 0;
 
     err = bt_conn_auth_cb_register(&conn_auth_callbacks);
@@ -410,8 +427,6 @@ void bt_init(void)
     if (err) {
         printk("Failed to register authorization info callbacks.\n");
     }
-
-    bt_enable(NULL);
 }
 
 void num_comp_reply(uint8_t accept) {

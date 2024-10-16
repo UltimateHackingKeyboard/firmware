@@ -14,6 +14,7 @@
 #include "legacy/module.h"
 #include "legacy/key_states.h"
 #include "keyboard/oled/widgets/console_widget.h"
+#include "state_sync.h"
 #include "usb/usb_compatibility.h"
 #include "link_protocol.h"
 #include "messenger_queue.h"
@@ -101,7 +102,7 @@ struct bt_gatt_dm_cb discovery_cb = {
     .error_found       = discovery_error,
 };
 
-void gatt_discover(struct bt_conn *conn) {
+static void gatt_discover(struct bt_conn *conn) {
     int err = bt_gatt_dm_start(conn, BT_UUID_NUS_SERVICE, &discovery_cb, &nus_client);
     if (err) {
         printk("could not start the discovery procedure, error code: %d\n", err);
@@ -139,11 +140,7 @@ void NusClient_Disconnected() {
 }
 
 void NusClient_Init(void) {
-    int err = scan_init();
-    if (err != 0) {
-        printk("scan_init failed (err %d)\n", err);
-        return;
-    }
+    int err;
 
     struct bt_nus_client_init_param init = {
         .cb = {
@@ -159,14 +156,6 @@ void NusClient_Init(void) {
     }
 
     printk("NUS Client module initialized\n");
-
-    err = bt_scan_start(BT_SCAN_TYPE_SCAN_ACTIVE);
-    if (err) {
-        printk("Scanning failed to start (err %d)\n", err);
-        return;
-    }
-
-    printk("Scanning successfully started\n");
 }
 
 bool NusClient_Availability(messenger_availability_op_t operation) {
