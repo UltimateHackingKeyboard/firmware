@@ -94,7 +94,7 @@ void CopyRightKeystateMatrix(void)
         uint8_t targetKeyId;
 
         // TODO: optimize this? This translation is quite costly :-/
-        if (DataModelVersion.major >= 8) {
+        if (VERSION_AT_LEAST(DataModelVersion, 8, 2, 0)) {
             targetKeyId = KeyLayout_Uhk60_to_Universal[SlotId_RightKeyboardHalf][keyId];
         } else {
             targetKeyId = keyId;

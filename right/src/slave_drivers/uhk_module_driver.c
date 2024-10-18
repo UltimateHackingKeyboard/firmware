@@ -1,4 +1,5 @@
 #include <string.h>
+#include "config_parser/parse_config.h"
 #include "i2c_addresses.h"
 #include "i2c.h"
 
@@ -133,14 +134,18 @@ void UhkModuleSlaveDriver_ProcessKeystates(uint8_t uhkModuleDriverId, uhk_module
         uint8_t targetKeyId;
 
         // TODO: optimize this? This translation is quite costly :-/
-        if (DataModelVersion.major >= 8 && uhkModuleDriverId == UhkModuleDriverId_LeftKeyboardHalf) {
+        if (
+                DEVICE_IS_UHK60
+                && VERSION_AT_LEAST(DataModelVersion, 8, 2, 0)
+                && uhkModuleDriverId == UhkModuleDriverId_LeftKeyboardHalf
+        ) {
             targetKeyId = KeyLayout_Uhk60_to_Universal[SlotId_LeftKeyboardHalf][keyId];
         } else {
             targetKeyId = keyId;
         }
 
-        if (KeyStates[slotId][targetKeyId].hardwareSwitchState != keyStatesBuffer[targetKeyId]) {
-            KeyStates[slotId][targetKeyId].hardwareSwitchState = keyStatesBuffer[targetKeyId];
+        if (KeyStates[slotId][targetKeyId].hardwareSwitchState != keyStatesBuffer[keyId]) {
+            KeyStates[slotId][targetKeyId].hardwareSwitchState = keyStatesBuffer[keyId];
             stateChanged = true;
         }
     }
