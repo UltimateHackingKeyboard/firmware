@@ -21,22 +21,19 @@ class hid_battery_app : public hid::application {
 
         // clang-format off
         return descriptor(
-            usage_page<power>(),
-            usage(power::BATTERY_SYSTEM),
+            usage_page<generic_desktop>(),
+            usage(generic_desktop::SYSTEM_CONTROL),
             collection::application(
-                usage(power::BATTERY),
-                collection::physical(
-                    usage_page<battery_system>(),
-                    usage(battery_system::ABSOLUTE_STATE_OF_CHARGE),
-                    logical_limits<1, 1>(0, 100),
-                    report_size(7),
-                    report_count(1),
-                    input::absolute_variable(),
-                    usage(battery_system::CHARGING),
-                    logical_limits<1, 1>(0, 1),
-                    report_size(1),
-                    input::absolute_variable()
-                )
+                usage_page<battery_system>(),
+                usage(battery_system::ABSOLUTE_STATE_OF_CHARGE),
+                logical_limits<1, 1>(0, 100),
+                report_size(7),
+                report_count(1),
+                input::absolute_variable(),
+                usage(battery_system::CHARGING),
+                logical_limits<1, 1>(0, 1),
+                report_size(1),
+                input::absolute_variable()
             )
         );
         // clang-format off
