@@ -59,6 +59,10 @@
         char firmwareChecksum[MD5_CHECKSUM_LENGTH];
     } ATTR_PACKED sync_command_module_state_t;
 
+    typedef struct {
+        version_t dataModelVersion;
+    } sync_command_config_t;
+
     // Draft for generic properties
     typedef enum {
         StateSyncPropertyId_LayerActionsLayer1 = 1,
@@ -89,6 +93,7 @@
         StateSyncPropertyId_MergeSensor,
         StateSyncPropertyId_FunctionalColors,
         StateSyncPropertyId_PowerMode,
+        StateSyncPropertyId_Config,
         StateSyncPropertyId_Count,
     } state_sync_prop_id_t;
 

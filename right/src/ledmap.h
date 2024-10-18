@@ -30,8 +30,8 @@
     } key_action_color_t;
 
     typedef enum {
-        LedMapIndex_LeftSlot_LeftShift = 21,
-        LedMapIndex_LeftSlot_IsoKey = 22,
+        LedMapIndex_LeftSlot_LeftShift = 19,
+        LedMapIndex_LeftSlot_IsoKey = 20,
     } led_map_index_t;
 
     typedef enum {

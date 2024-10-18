@@ -123,6 +123,7 @@ static state_sync_prop_t stateSyncProps[StateSyncPropertyId_Count] = {
     SIMPLE(MergeSensor,             SyncDirection_LeftToRight,        DirtyState_Clean,    &MergeSensor_HalvesAreMerged),
     SIMPLE(FunctionalColors,        SyncDirection_RightToLeft,        DirtyState_Clean,    &Cfg.KeyActionColors),
     SIMPLE(PowerMode,               SyncDirection_RightToLeft,        DirtyState_Clean,    &CurrentPowerMode),
+    CUSTOM(Config,                  SyncDirection_RightToLeft,        DirtyState_Clean),
 };
 
 static void invalidateProperty(state_sync_prop_id_t propId) {
@@ -332,6 +333,12 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
             EventVector_Set(EventVector_LedMapUpdateNeeded);
         }
         break;
+    case StateSyncPropertyId_Config:
+        if (!isLocalUpdate) {
+            sync_command_config_t* buffer = (sync_command_config_t*)data;
+            DataModelVersion = buffer->dataModelVersion;
+        }
+        break;
     case StateSyncPropertyId_MergeSensor:
         break;
     default:
@@ -469,6 +476,12 @@ static void prepareData(device_id_t dst, const uint8_t *propDataPtr, state_sync_
         submitPreparedData(dst, propId, (const uint8_t *)&buffer, sizeof(buffer));
         return;
     } break;
+    case StateSyncPropertyId_Config: {
+        sync_command_config_t buffer;
+        buffer.dataModelVersion = DataModelVersion;
+        submitPreparedData(dst, propId, (const uint8_t *)&buffer, sizeof(buffer));
+        return;
+    } break;
     default:
         break;
     }
@@ -511,6 +524,7 @@ static void updateProperty(state_sync_prop_id_t propId) {
 
 static bool handlePropertyUpdateRightToLeft() {
     UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ResetRightLeftLink);
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_Config);
 
     if (KeyBacklightBrightness != 0 && Cfg.BacklightingMode != BacklightingMode_ConstantRGB) {
         // Update relevant data
@@ -642,6 +656,7 @@ void StateSync_ResetRightLeftLink(bool bidirectional) {
         invalidateProperty(StateSyncPropertyId_ResetRightLeftLink);
     }
     if (DEVICE_ID == DeviceId_Uhk80_Right) {
+        invalidateProperty(StateSyncPropertyId_Config);
         state_sync_prop_id_t first = StateSyncPropertyId_LayerActionFirst;
         state_sync_prop_id_t last = StateSyncPropertyId_LayerActionLast;
         for (state_sync_prop_id_t propId = first; propId <= last; propId++) {

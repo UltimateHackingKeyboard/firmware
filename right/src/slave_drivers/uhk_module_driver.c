@@ -1,4 +1,5 @@
 #include <string.h>
+#include "config_parser/parse_config.h"
 #include "i2c_addresses.h"
 #include "i2c.h"
 
@@ -25,6 +26,7 @@
 #include "debug.h"
 #include "macros/core.h"
 #include "versioning.h"
+#include "layouts/key_layout_60_to_universal.h"
 
 uhk_module_state_t UhkModuleStates[UHK_MODULE_MAX_SLOT_COUNT];
 module_connection_state_t ModuleConnectionStates[UHK_MODULE_MAX_SLOT_COUNT];
@@ -129,8 +131,21 @@ void UhkModuleSlaveDriver_ProcessKeystates(uint8_t uhkModuleDriverId, uhk_module
     bool stateChanged = false;
     bool nonzeroDeltas = false;
     for (uint8_t keyId=0; keyId < uhkModuleState->keyCount; keyId++) {
-        if (KeyStates[slotId][keyId].hardwareSwitchState != keyStatesBuffer[keyId]) {
-            KeyStates[slotId][keyId].hardwareSwitchState = keyStatesBuffer[keyId];
+        uint8_t targetKeyId;
+
+        // TODO: optimize this? This translation is quite costly :-/
+        if (
+                DEVICE_IS_UHK60
+                && VERSION_AT_LEAST(DataModelVersion, 8, 2, 0)
+                && uhkModuleDriverId == UhkModuleDriverId_LeftKeyboardHalf
+        ) {
+            targetKeyId = KeyLayout_Uhk60_to_Universal[SlotId_LeftKeyboardHalf][keyId];
+        } else {
+            targetKeyId = keyId;
+        }
+
+        if (KeyStates[slotId][targetKeyId].hardwareSwitchState != keyStatesBuffer[keyId]) {
+            KeyStates[slotId][targetKeyId].hardwareSwitchState = keyStatesBuffer[keyId];
             stateChanged = true;
         }
     }
