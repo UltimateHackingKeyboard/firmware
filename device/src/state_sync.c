@@ -526,7 +526,7 @@ static bool handlePropertyUpdateRightToLeft() {
     UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ResetRightLeftLink);
     UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_Config);
 
-    if (KeyBacklightBrightness != 0 && Cfg.BacklightingMode != BacklightingMode_ConstantRGB) {
+    if (KeyBacklightBrightness != 0) {
         // Update relevant data
         UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_PowerMode);
         UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_FunctionalColors);

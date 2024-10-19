@@ -11,6 +11,7 @@
 #include "macros/commands.h"
 #include "module.h"
 #include "secondary_role_driver.h"
+#include "slot.h"
 #include "timer.h"
 #include "keymap.h"
 #include "key_matrix.h"
@@ -493,6 +494,11 @@ static macro_variable_t keyRgb(parser_context_t* ctx, set_command_action_t actio
     CurrentKeymap[layerId][slotIdx][inSlotIdx].colorOverridden = true;
     CurrentKeymap[layerId][slotIdx][inSlotIdx].color = rgb;
 
+#ifdef __ZEPHYR__
+    if (slotIdx != SlotId_RightKeyboardHalf) {
+        StateSync_UpdateLayer(layerId, true);
+    }
+#endif
     EventVector_Set(EventVector_LedMapUpdateNeeded);
     return noneVar();
 }
