@@ -41,6 +41,8 @@
     ATTRS void Uart_Log(const char *fmt, ...) {};
     ATTRS void Log(const char *fmt, ...) {};
     ATTRS void LogBt(const char *fmt, ...) {};
+    ATTRS void BtPair_EndPairing(bool success, const char* msg) {};
+    ATTRS void BtManager_RestartBt() {};
     ATTRS void DongleLeds_Update() {};
 
 #if DEVICE_HAS_OLED

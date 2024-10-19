@@ -35,7 +35,8 @@
         ParserError_InvalidLayerId                      = 15,
         ParserError_InvalidNavigationMode               = 16,
         ParserError_InvalidModuleProperty               = 17,
-        ParserError_InvalidSecondaryRoleActionType       = 18,
+        ParserError_InvalidSecondaryRoleActionType      = 18,
+        ParserError_InvalidHostType                     = 19,
     } parser_error_t;
 
     typedef enum {

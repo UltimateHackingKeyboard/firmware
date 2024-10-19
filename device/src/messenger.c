@@ -33,49 +33,104 @@ typedef enum {
 
 static messenger_channel_t determineChannel(device_id_t dst) {
 #if DEVICE_IS_KEYBOARD
-    if (Uart_IsConnected() && (dst == DeviceId_Uhk80_Left || dst == DeviceId_Uhk80_Right)) {
-        return MessengerChannel_Uart;
-    }
-#endif
-
-    if (Bt_DeviceIsConnected(dst)) {
+    if (Uart_IsConnected()) {
         if (DEVICE_IS_UHK80_LEFT) {
             switch (dst) {
+                case DeviceId_Uhk_Dongle:
                 case DeviceId_Uhk80_Right:
-                    return MessengerChannel_NusServer;
+                    return MessengerChannel_Uart;
                 default:
-                    return MessengerChannel_None;
+                    break;
             }
         }
 
         if (DEVICE_IS_UHK80_RIGHT) {
             switch (dst) {
                 case DeviceId_Uhk_Dongle:
-                    return MessengerChannel_NusServer;
+                    break;
                 case DeviceId_Uhk80_Left:
-                    return MessengerChannel_NusClient;
+                    return MessengerChannel_Uart;
                 default:
-                    return MessengerChannel_None;
+                    break;
             }
         }
+    }
+#endif
 
-        if (DEVICE_IS_UHK_DONGLE) {
-            switch (dst) {
-                case DeviceId_Uhk80_Right:
+    if (DEVICE_IS_UHK80_LEFT && Bt_DeviceIsConnected(DeviceId_Uhk80_Right)) {
+        switch (dst) {
+            case DeviceId_Uhk_Dongle:
+            case DeviceId_Uhk80_Right:
+                if (Bt_DeviceIsConnected(DeviceId_Uhk80_Right)) {
+                    return MessengerChannel_NusServer;
+                }
+            default:
+                return MessengerChannel_None;
+        }
+    }
+
+    if (DEVICE_IS_UHK80_RIGHT) {
+        switch (dst) {
+            case DeviceId_Uhk_Dongle:
+                if (Bt_DeviceIsConnected(DeviceId_Uhk_Dongle)) {
+                    return MessengerChannel_NusServer;
+                }
+                break;
+            case DeviceId_Uhk80_Left:
+                if (Bt_DeviceIsConnected(DeviceId_Uhk80_Left)) {
                     return MessengerChannel_NusClient;
-                default:
-                    return MessengerChannel_None;
-            }
+                }
+                break;
+            default:
+                return MessengerChannel_None;
+        }
+    }
+
+    if (DEVICE_IS_UHK_DONGLE) {
+        switch (dst) {
+            case DeviceId_Uhk80_Right:
+            case DeviceId_Uhk80_Left:
+                if (Bt_DeviceIsConnected(DeviceId_Uhk80_Right)) {
+                    return MessengerChannel_NusClient;
+                }
+                break;
+            default:
+                return MessengerChannel_None;
         }
     }
 
     return MessengerChannel_None;
 }
 
+static void receiveLog(device_id_t src, const uint8_t* data, uint16_t len) {
+    uint8_t ATTR_UNUSED messageId = *(data++);
+    uint8_t logmask = *(data++);
+    char deviceAbbrev;
+    switch (src) {
+        case DeviceId_Uhk80_Left:
+            deviceAbbrev = 'L';
+            break;
+        case DeviceId_Uhk80_Right:
+            deviceAbbrev = 'R';
+            break;
+        case DeviceId_Uhk_Dongle:
+            deviceAbbrev = 'D';
+            break;
+        default:
+            deviceAbbrev = '?';
+            break;
+    }
+    LogTo(DEVICE_ID, logmask, "%c>>> %s", deviceAbbrev, data);
+}
+
+
 static void receiveLeft(device_id_t src, const uint8_t* data, uint16_t len) {
     switch (data[0]) {
         case MessageId_StateSync:
             StateSync_ReceiveStateUpdate(src, data, len);
+            break;
+        case MessageId_Log:
+            receiveLog(src, data, len);
             break;
         default:
             printk("Didn't expect to receive message %i %i\n", data[0], data[1]);
@@ -106,27 +161,6 @@ static void processSyncablePropertyRight(device_id_t src, const uint8_t* data, u
             printk("Unrecognized or unexpected message [%i, %i, ...]\n", data[0], data[1]);
             break;
     }
-}
-
-static void receiveLog(device_id_t src, const uint8_t* data, uint16_t len) {
-    uint8_t ATTR_UNUSED messageId = *(data++);
-    uint8_t logmask = *(data++);
-    char deviceAbbrev;
-    switch (src) {
-        case DeviceId_Uhk80_Left:
-            deviceAbbrev = 'L';
-            break;
-        case DeviceId_Uhk80_Right:
-            deviceAbbrev = 'R';
-            break;
-        case DeviceId_Uhk_Dongle:
-            deviceAbbrev = 'D';
-            break;
-        default:
-            deviceAbbrev = '?';
-            break;
-    }
-    LogRight(logmask, "%c %s", deviceAbbrev, data);
 }
 
 static void receiveRight(device_id_t src, const uint8_t* data, uint16_t len) {
@@ -174,28 +208,47 @@ static void receiveDongle(device_id_t src, const uint8_t* data, uint16_t len) {
         case MessageId_StateSync:
             StateSync_ReceiveStateUpdate(src, data, len);
             break;
+        case MessageId_Log:
+            receiveLog(src, data, len);
+            break;
         default:
             printk("Unrecognized or unexpected message [%i, %i, ...]\n", data[0], data[1]);
             break;
     }
 }
 
-static void receive(device_id_t src, const uint8_t* data, uint16_t len) {
-    switch (DEVICE_ID) {
-        case DeviceId_Uhk80_Left:
-            receiveLeft(src, data, len);
-            break;
-        case DeviceId_Uhk80_Right:
-            receiveRight(src, data, len);
-            break;
-        case DeviceId_Uhk_Dongle:
-            receiveDongle(src, data, len);
-            break;
+static void receive(const uint8_t* data, uint16_t len) {
+    device_id_t src = *data++;
+    device_id_t dst = *data++;
+    len-= 2;
+
+    if (dst != DEVICE_ID) {
+        message_t msg = {
+            .data = data,
+            .len = len,
+            .idsUsed = 0,
+            .src = src,
+            .dst = dst,
+        };
+        printk("Forwarding message from %d to %d\n", msg.src, msg.dst);
+        Messenger_SendMessage(msg);
+    } else {
+        switch (DEVICE_ID) {
+            case DeviceId_Uhk80_Left:
+                receiveLeft(src, data, len);
+                break;
+            case DeviceId_Uhk80_Right:
+                receiveRight(src, data, len);
+                break;
+            case DeviceId_Uhk_Dongle:
+                receiveDongle(src, data, len);
+                break;
+        }
     }
 }
 
 void Messenger_Enqueue(uint8_t src, const uint8_t* data, uint16_t len) {
-    if (data[0] != MessageId_Ping) {
+    if (data[2] != MessageId_Ping) {
         MessengerQueue_Put(src, data, len);
         EventVector_Set(EventVector_NewMessage);
         Main_Wake();
@@ -206,7 +259,7 @@ void Messenger_ProcessQueue() {
     EventVector_Unset(EventVector_NewMessage);
     messenger_queue_record_t rec = MessengerQueue_Take();
     while (rec.data != NULL) {
-        receive(rec.src, rec.data, rec.len);
+        receive(rec.data, rec.len);
         MessengerQueue_FreeMemory(rec.data);
 
         rec = MessengerQueue_Take();
@@ -231,8 +284,9 @@ bool Messenger_Availability(device_id_t dst, messenger_availability_op_t operati
     }
 }
 
-void Messenger_SendMessage(device_id_t dst, message_t message) {
-    messenger_channel_t channel = determineChannel(dst);
+void Messenger_SendMessage(message_t message) {
+    messenger_channel_t channel = determineChannel(message.dst);
+    device_id_t dst = message.dst;
 
     switch (channel) {
         case MessengerChannel_Uart:
@@ -253,13 +307,28 @@ void Messenger_SendMessage(device_id_t dst, message_t message) {
 }
 
 void Messenger_Send(device_id_t dst, uint8_t messageId, const uint8_t* data, uint16_t len) {
-    message_t msg = { .data = data, .len = len, .messageId[0] = messageId, .idsUsed = 1 };
-    Messenger_SendMessage(dst, msg);
+    message_t msg = {
+        .data = data,
+        .len = len,
+        .messageId[0] = messageId,
+        .idsUsed = 1,
+        .src = DEVICE_ID,
+        .dst = dst,
+    };
+    Messenger_SendMessage(msg);
 }
 
 void Messenger_Send2(device_id_t dst, uint8_t messageId, uint8_t messageId2, const uint8_t* data, uint16_t len) {
-    message_t msg = { .data = data, .len = len, .messageId[0] = messageId, .messageId[1] = messageId2, .idsUsed = 2 };
-    Messenger_SendMessage(dst, msg);
+    message_t msg = {
+        .data = data,
+        .len = len,
+        .messageId[0] = messageId,
+        .messageId[1] = messageId2,
+        .idsUsed = 2,
+        .src = DEVICE_ID,
+        .dst = dst,
+    };
+    Messenger_SendMessage(msg);
 }
 
 void Messenger_Init() {

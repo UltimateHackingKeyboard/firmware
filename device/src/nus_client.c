@@ -14,10 +14,12 @@
 #include "legacy/module.h"
 #include "legacy/key_states.h"
 #include "keyboard/oled/widgets/console_widget.h"
+#include "state_sync.h"
 #include "usb/usb_compatibility.h"
 #include "link_protocol.h"
 #include "messenger_queue.h"
 #include "legacy/debug.h"
+#include <zephyr/settings/settings.h>
 
 static struct bt_nus_client nus_client;
 
@@ -51,14 +53,32 @@ static uint8_t ble_data_received(struct bt_nus_client *nus, const uint8_t *data,
 
 static void discovery_complete(struct bt_gatt_dm *dm, void *context) {
     struct bt_nus_client *nus = context;
-    printk("Service discovery completed\n");
+    int err = 0;
 
     bt_gatt_dm_data_print(dm);
 
-    bt_nus_handles_assign(dm, nus);
-    bt_nus_subscribe_receive(nus);
+    err = bt_nus_handles_assign(dm, nus);
 
-    bt_gatt_dm_data_release(dm);
+    if (err) {
+        printk("Could not assign NUS handles (err %d)\n", err);
+        return;
+    }
+
+    err = bt_nus_subscribe_receive(nus);
+
+    if (err) {
+        printk("Could not subscribe to NUS notifications (err %d)\n", err);
+        return;
+    }
+
+    err = bt_gatt_dm_data_release(dm);
+
+    if (err) {
+        printk("Could not release the discovery data (err %d)\n", err);
+        return;
+    }
+
+    printk("NUS connection with %s successfully established\n", GetPeerStringByConn(nus->conn));
 
     if (DEVICE_ID == DeviceId_Uhk80_Right) {
         Bt_SetDeviceConnected(DeviceId_Uhk80_Left);
@@ -82,7 +102,7 @@ struct bt_gatt_dm_cb discovery_cb = {
     .error_found       = discovery_error,
 };
 
-void gatt_discover(struct bt_conn *conn) {
+static void gatt_discover(struct bt_conn *conn) {
     int err = bt_gatt_dm_start(conn, BT_UUID_NUS_SERVICE, &discovery_cb, &nus_client);
     if (err) {
         printk("could not start the discovery procedure, error code: %d\n", err);
@@ -97,7 +117,7 @@ static void exchange_func(struct bt_conn *conn, uint8_t err, struct bt_gatt_exch
     }
 }
 
-void NusClient_Setup(struct bt_conn *conn) {
+void NusClient_Connect(struct bt_conn *conn) {
     static struct bt_gatt_exchange_params exchange_params;
 
     exchange_params.func = exchange_func;
@@ -106,15 +126,10 @@ void NusClient_Setup(struct bt_conn *conn) {
         printk("MTU exchange failed with %s, err %d\n", GetPeerStringByConn(conn), err);
     }
 
-    err = bt_conn_set_security(conn, BT_SECURITY_L2);
-    if (err) {
-        printk("Failed to set security for %s: %d\n", GetPeerStringByConn(conn), err);
-    }
-
     gatt_discover(conn);
 
     err = bt_scan_stop();
-    if ((!err) && (err != -EALREADY)) {
+    if (err && (err != -EALREADY)) {
         printk("Stop LE scan failed (err %d)\n", err);
     }
 }
@@ -125,11 +140,7 @@ void NusClient_Disconnected() {
 }
 
 void NusClient_Init(void) {
-    int err = scan_init();
-    if (err != 0) {
-        printk("scan_init failed (err %d)\n", err);
-        return;
-    }
+    int err;
 
     struct bt_nus_client_init_param init = {
         .cb = {
@@ -145,14 +156,6 @@ void NusClient_Init(void) {
     }
 
     printk("NUS Client module initialized\n");
-
-    err = bt_scan_start(BT_SCAN_TYPE_SCAN_ACTIVE);
-    if (err) {
-        printk("Scanning failed to start (err %d)\n", err);
-        return;
-    }
-
-    printk("Scanning successfully started\n");
 }
 
 bool NusClient_Availability(messenger_availability_op_t operation) {
@@ -170,7 +173,7 @@ bool NusClient_Availability(messenger_availability_op_t operation) {
     }
 }
 
-void NusClient_Send(const uint8_t *data, uint16_t len) {
+static void send_raw_buffer(const uint8_t *data, uint16_t len) {
     SEM_TAKE(&nusBusy);
     int err = bt_nus_client_send(&nus_client, data, len);
     if (err) {
@@ -181,17 +184,21 @@ void NusClient_Send(const uint8_t *data, uint16_t len) {
 
 void NusClient_SendMessage(message_t msg) {
     uint8_t buffer[MAX_LINK_PACKET_LENGTH];
+    uint8_t bufferIdx = 0;
+
+    buffer[bufferIdx++] = msg.src;
+    buffer[bufferIdx++] = msg.dst;
 
     for (uint8_t id = 0; id < msg.idsUsed; id++) {
-        buffer[id] = msg.messageId[id];
+        buffer[bufferIdx++] = msg.messageId[id];
     }
 
-    if (msg.len + msg.idsUsed > MAX_LINK_PACKET_LENGTH) {
+    if (msg.len + msg.idsUsed + 2 > MAX_LINK_PACKET_LENGTH) {
         printk("Message is too long for NUS packets! [%i, %i, ...]\n", buffer[0], buffer[1]);
         return;
     }
 
-    memcpy(&buffer[msg.idsUsed], msg.data, msg.len);
+    memcpy(&buffer[bufferIdx], msg.data, msg.len);
 
-    NusClient_Send(buffer, msg.len+msg.idsUsed);
+    send_raw_buffer(buffer, msg.len+msg.idsUsed+2);
 }

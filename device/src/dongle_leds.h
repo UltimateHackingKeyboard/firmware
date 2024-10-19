@@ -22,4 +22,6 @@
     extern const struct pwm_dt_spec green_pwm_led;
     extern const struct pwm_dt_spec blue_pwm_led;
 
+#else
+    #include "stubs.h"
 #endif // __DONGLE_LEDS_H__
