@@ -38,7 +38,8 @@ void readRgbColor(config_buffer_t *buffer, rgb_t* keyActionColors, key_action_co
     color->blue = ReadUInt8(buffer);
 }
 
-parser_error_t ParseConfig(config_buffer_t *buffer)
+
+parser_error_t parseConfig(config_buffer_t *buffer)
 {
     // Miscellaneous properties
 
@@ -330,4 +331,14 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
     }
 
     return ParserError_Success;
+}
+
+
+parser_error_t ParseConfig(config_buffer_t *buffer) {
+    version_t oldModelVersion = DataModelVersion;
+    parser_error_t errorCode = parseConfig(buffer);
+    if (errorCode != ParserError_Success || ParserRunDry) {
+        DataModelVersion = oldModelVersion;
+    }
+    return errorCode;
 }
