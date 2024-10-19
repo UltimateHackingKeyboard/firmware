@@ -186,7 +186,7 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
 
     // HostConnection configuration
 
-    if (VERSION_AT_LEAST(DataModelVersion, 8, 3, 0)) {
+    if (VERSION_AT_LEAST(DataModelVersion, 8, 1, 0)) {
         RETURN_ON_ERROR(
             ParseHostConnections(buffer);
         )
