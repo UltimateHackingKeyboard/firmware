@@ -135,6 +135,7 @@ key_action_t CurrentKeymap[LayerId_Count][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] 
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_BACKSPACE }},
 
             // Row 2
+            { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_Y }},
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_U }},
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_I }},
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_O }},
@@ -142,16 +143,15 @@ key_action_t CurrentKeymap[LayerId_Count][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] 
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_OPENING_BRACKET_AND_OPENING_BRACE }},
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_CLOSING_BRACKET_AND_CLOSING_BRACE }},
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_BACKSLASH_AND_PIPE }},
-            { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_Y }},
 
             // Row 3
+            { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_H }},
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_J }},
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_K }},
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_L }},
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_SEMICOLON_AND_COLON }},
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_APOSTROPHE_AND_QUOTE }},
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_ENTER }},
-            { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_H }},
 
             // Row 4
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_N }},
@@ -160,15 +160,15 @@ key_action_t CurrentKeymap[LayerId_Count][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] 
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_DOT_AND_GREATER_THAN_SIGN }},
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_SLASH_AND_QUESTION_MARK }},
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_RIGHT_SHIFT }},
-            { .type = KeyActionType_None },
 
             // Row 5
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_SPACE }},
-            { .type = KeyActionType_SwitchLayer, .switchLayer = { .layer = LayerId_Mod, .mode = SwitchLayerMode_Hold }},
             { .type = KeyActionType_SwitchLayer, .switchLayer = { .layer = LayerId_Fn , .mode = SwitchLayerMode_Hold }},
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_RIGHT_ALT }},
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_RIGHT_GUI }},
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_RIGHT_CONTROL }},
+            { .type = KeyActionType_SwitchLayer, .switchLayer = { .layer = LayerId_Mod, .mode = SwitchLayerMode_Hold }},
+            { .type = KeyActionType_SwitchLayer, .switchLayer = { .layer = LayerId_Fn2, .mode = SwitchLayerMode_HoldAndDoubleTapToggle }},
 
 #if DEVICE_IS_UHK80
             // Row 0
@@ -194,7 +194,6 @@ key_action_t CurrentKeymap[LayerId_Count][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] 
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_LEFT_ARROW}},
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_DOWN_ARROW}},
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_RIGHT_ARROW}},
-            { .type = KeyActionType_SwitchLayer, .switchLayer = { .layer = LayerId_Fn2, .mode = SwitchLayerMode_HoldAndDoubleTapToggle }},
 #endif
 
         },
@@ -216,7 +215,6 @@ key_action_t CurrentKeymap[LayerId_Count][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] 
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_W }},
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_E }},
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_R }},
-            { .type = KeyActionType_None },
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_T }},
 
             // Row 3
@@ -225,7 +223,6 @@ key_action_t CurrentKeymap[LayerId_Count][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] 
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_S }},
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_D }},
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_F }},
-            { .type = KeyActionType_None },
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_G }},
 
             // Row 4
@@ -242,8 +239,9 @@ key_action_t CurrentKeymap[LayerId_Count][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] 
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_LEFT_GUI }},
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_LEFT_ALT }},
             { .type = KeyActionType_SwitchLayer, .switchLayer = { .layer = LayerId_Fn, .mode = SwitchLayerMode_Hold }},
-            { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_SPACE }},
             { .type = KeyActionType_SwitchLayer, .switchLayer = { .layer = LayerId_Mod, .mode = SwitchLayerMode_Hold }},
+            { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_SPACE }},
+            { .type = KeyActionType_SwitchLayer, .switchLayer = { .layer = LayerId_Fn2, .mode = SwitchLayerMode_HoldAndDoubleTapToggle }},
 
 #if DEVICE_IS_UHK80
             // Row 0
@@ -254,7 +252,6 @@ key_action_t CurrentKeymap[LayerId_Count][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] 
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_F4 }},
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_F5 }},
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_F6 }},
-            { .type = KeyActionType_SwitchLayer, .switchLayer = { .layer = LayerId_Fn2, .mode = SwitchLayerMode_HoldAndDoubleTapToggle }},
 #endif
         },
 
@@ -288,6 +285,7 @@ key_action_t CurrentKeymap[LayerId_Count][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] 
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_DELETE }},
 
             // Row 2
+            { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_PAGE_UP }},
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_HOME }},
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_UP_ARROW }},
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_END }},
@@ -295,16 +293,15 @@ key_action_t CurrentKeymap[LayerId_Count][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] 
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_PRINT_SCREEN }},
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_SCROLL_LOCK }},
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_PAUSE }},
-            { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_PAGE_UP }},
 
             // Row 3
+            { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_PAGE_DOWN }},
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_LEFT_ARROW }},
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_DOWN_ARROW }},
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_RIGHT_ARROW }},
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_INSERT }},
             { .type = KeyActionType_None },
             { .type = KeyActionType_None },
-            { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_PAGE_DOWN }},
 
             // Row 4
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_ESCAPE }},
@@ -313,15 +310,14 @@ key_action_t CurrentKeymap[LayerId_Count][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] 
             { .type = KeyActionType_None },
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_APPLICATION }},
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_RIGHT_SHIFT }},
-            { .type = KeyActionType_None },
 
             // Row 5
             { .type = KeyActionType_None },
-            { .type = KeyActionType_SwitchLayer, .switchLayer = { .layer = LayerId_Mod, .mode = SwitchLayerMode_Hold }},
             { .type = KeyActionType_None },
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_RIGHT_ALT }},
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_RIGHT_GUI }},
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_RIGHT_CONTROL }},
+            { .type = KeyActionType_SwitchLayer, .switchLayer = { .layer = LayerId_Mod, .mode = SwitchLayerMode_Hold }},
         },
 
         // Left keyboard half
@@ -342,7 +338,6 @@ key_action_t CurrentKeymap[LayerId_Count][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] 
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_T, .modifiers = HID_KEYBOARD_MODIFIER_LEFTCTRL }}, // [+] tab new
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_PAGE_DOWN, .modifiers = HID_KEYBOARD_MODIFIER_LEFTCTRL }}, // [>] tab next
             { .type = KeyActionType_None },
-            { .type = KeyActionType_None },
 
             // Row 3
             { .type = KeyActionType_None },
@@ -350,7 +345,6 @@ key_action_t CurrentKeymap[LayerId_Count][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] 
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_LEFT_ARROW, .modifiers = HID_KEYBOARD_MODIFIER_LEFTCTRL | HID_KEYBOARD_MODIFIER_LEFTALT }}, // workspace prev
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_TAB, .modifiers = HID_KEYBOARD_MODIFIER_LEFTALT }}, // window switch
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_RIGHT_ARROW, .modifiers = HID_KEYBOARD_MODIFIER_LEFTCTRL | HID_KEYBOARD_MODIFIER_LEFTALT }}, // workspace next
-            { .type = KeyActionType_None },
             { .type = KeyActionType_None },
 
             // Row 4
@@ -367,8 +361,8 @@ key_action_t CurrentKeymap[LayerId_Count][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] 
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_LEFT_GUI }},
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_LEFT_ALT }},
             { .type = KeyActionType_None },
-            { .type = KeyActionType_None },
             { .type = KeyActionType_SwitchLayer, .switchLayer = { .layer = LayerId_Mod, .mode = SwitchLayerMode_Hold }},
+            { .type = KeyActionType_None },
             { .type = KeyActionType_None },
         },
 
@@ -402,6 +396,7 @@ key_action_t CurrentKeymap[LayerId_Count][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] 
             { .type = KeyActionType_None },
 
             // Row 2
+            { .type = KeyActionType_None },
             { .type = KeyActionType_Keystroke, .keystroke = { .keystrokeType = KeystrokeType_Media, .scancode = MEDIA_PLAY_PAUSE }},
             { .type = KeyActionType_Keystroke, .keystroke = { .keystrokeType = KeystrokeType_Media, .scancode = MEDIA_VOLUME_UP }},
             { .type = KeyActionType_Keystroke, .keystroke = { .keystrokeType = KeystrokeType_Media, .scancode = MEDIA_STOP }},
@@ -409,13 +404,12 @@ key_action_t CurrentKeymap[LayerId_Count][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] 
             { .type = KeyActionType_None },
             { .type = KeyActionType_Keystroke, .keystroke = { .keystrokeType = KeystrokeType_System, .scancode = SYSTEM_SLEEP }},
             { .type = KeyActionType_Keystroke, .keystroke = { .keystrokeType = KeystrokeType_System, .scancode = SYSTEM_POWER_DOWN }},
-            { .type = KeyActionType_None },
 
             // Row 3
+            { .type = KeyActionType_None },
             { .type = KeyActionType_Keystroke, .keystroke = { .keystrokeType = KeystrokeType_Media, .scancode = MEDIA_PREVIOUS }},
             { .type = KeyActionType_Keystroke, .keystroke = { .keystrokeType = KeystrokeType_Media, .scancode = MEDIA_VOLUME_DOWN }},
             { .type = KeyActionType_Keystroke, .keystroke = { .keystrokeType = KeystrokeType_Media, .scancode = MEDIA_NEXT }},
-            { .type = KeyActionType_None },
             { .type = KeyActionType_None },
             { .type = KeyActionType_None },
             { .type = KeyActionType_None },
@@ -427,15 +421,14 @@ key_action_t CurrentKeymap[LayerId_Count][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] 
             { .type = KeyActionType_None },
             { .type = KeyActionType_None },
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_RIGHT_SHIFT }},
-            { .type = KeyActionType_None },
 
             // Row 5
-            { .type = KeyActionType_None },
             { .type = KeyActionType_None },
             { .type = KeyActionType_SwitchLayer, .switchLayer = { .layer = LayerId_Fn, .mode = SwitchLayerMode_Hold }},
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_RIGHT_ALT }},
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_RIGHT_GUI }},
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_RIGHT_CONTROL }},
+            { .type = KeyActionType_None },
         },
 
         // Left keyboard half
@@ -456,7 +449,6 @@ key_action_t CurrentKeymap[LayerId_Count][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] 
             { .type = KeyActionType_Keystroke, .keystroke = { .keystrokeType = KeystrokeType_Media, .scancode = CONSUMER_BROWSER_REFRESH }},
             { .type = KeyActionType_None },
             { .type = KeyActionType_None },
-            { .type = KeyActionType_None },
 
             // Row 3
             { .type = KeyActionType_None },
@@ -464,7 +456,6 @@ key_action_t CurrentKeymap[LayerId_Count][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] 
             { .type = KeyActionType_Keystroke, .keystroke = { .keystrokeType = KeystrokeType_Media, .scancode = CONSUMER_BROWSER_BACK }},
             { .type = KeyActionType_Keystroke, .keystroke = { .keystrokeType = KeystrokeType_Media, .scancode = CONSUMER_EXPLORER }},
             { .type = KeyActionType_Keystroke, .keystroke = { .keystrokeType = KeystrokeType_Media, .scancode = CONSUMER_BROWSER_FORWARD }},
-            { .type = KeyActionType_None },
             { .type = KeyActionType_None },
 
             // Row 4
@@ -516,6 +507,7 @@ key_action_t CurrentKeymap[LayerId_Count][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] 
             { .type = KeyActionType_None },
 
             // Row 2
+            { .type = KeyActionType_Mouse, .mouseAction = SerializedMouseAction_ScrollUp },
             { .type = KeyActionType_Mouse, .mouseAction = SerializedMouseAction_Button_4 },
             { .type = KeyActionType_Mouse, .mouseAction = SerializedMouseAction_MoveUp },
             { .type = KeyActionType_Mouse, .mouseAction = SerializedMouseAction_Button_5 },
@@ -523,16 +515,15 @@ key_action_t CurrentKeymap[LayerId_Count][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] 
             { .type = KeyActionType_None },
             { .type = KeyActionType_None },
             { .type = KeyActionType_None },
-            { .type = KeyActionType_Mouse, .mouseAction = SerializedMouseAction_ScrollUp },
 
             // Row 3
+            { .type = KeyActionType_Mouse, .mouseAction = SerializedMouseAction_ScrollDown },
             { .type = KeyActionType_Mouse, .mouseAction= SerializedMouseAction_MoveLeft },
             { .type = KeyActionType_Mouse, .mouseAction = SerializedMouseAction_MoveDown },
             { .type = KeyActionType_Mouse, .mouseAction = SerializedMouseAction_MoveRight },
             { .type = KeyActionType_None },
             { .type = KeyActionType_None },
             { .type = KeyActionType_None },
-            { .type = KeyActionType_Mouse, .mouseAction = SerializedMouseAction_ScrollDown },
 
             // Row 4
             { .type = KeyActionType_None },
@@ -541,15 +532,14 @@ key_action_t CurrentKeymap[LayerId_Count][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] 
             { .type = KeyActionType_None },
             { .type = KeyActionType_None },
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_RIGHT_SHIFT }},
-            { .type = KeyActionType_None },
 
             // Row 5
-            { .type = KeyActionType_None },
             { .type = KeyActionType_None },
             { .type = KeyActionType_None },
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_RIGHT_ALT }},
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_RIGHT_GUI }},
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_RIGHT_CONTROL }},
+            { .type = KeyActionType_None },
         },
 
         // Left keyboard half
@@ -570,7 +560,6 @@ key_action_t CurrentKeymap[LayerId_Count][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] 
             { .type = KeyActionType_None },
             { .type = KeyActionType_None },
             { .type = KeyActionType_None },
-            { .type = KeyActionType_None },
 
             // Row 3
             { .type = KeyActionType_SwitchLayer, .switchLayer = { .layer = LayerId_Mouse, .mode = SwitchLayerMode_HoldAndDoubleTapToggle }},
@@ -578,7 +567,6 @@ key_action_t CurrentKeymap[LayerId_Count][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] 
             { .type = KeyActionType_Mouse, .mouseAction = SerializedMouseAction_RightClick },
             { .type = KeyActionType_Mouse, .mouseAction = SerializedMouseAction_MiddleClick },
             { .type = KeyActionType_Mouse, .mouseAction = SerializedMouseAction_LeftClick },
-            { .type = KeyActionType_None },
             { .type = KeyActionType_None },
 
             // Row 4
@@ -595,8 +583,8 @@ key_action_t CurrentKeymap[LayerId_Count][SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] 
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_LEFT_GUI }},
             { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_LEFT_ALT }},
             { .type = KeyActionType_None },
-            { .type = KeyActionType_Mouse, .mouseAction = SerializedMouseAction_Decelerate },
             { .type = KeyActionType_Mouse, .mouseAction = SerializedMouseAction_Accelerate },
+            { .type = KeyActionType_Mouse, .mouseAction = SerializedMouseAction_Decelerate },
             { .type = KeyActionType_None },
         },
 

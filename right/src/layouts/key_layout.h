@@ -3,13 +3,14 @@
 
 // Includes
 
-    #include "legacy/module.h"
-    #include "legacy/slot.h"
+    #include "module.h"
+    #include "slot.h"
 
 // Variables:
 
-
+#ifdef __ZEPHYR__
     extern const uint8_t KeyLayout_Uhk80_to_Uhk60[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
+#endif
 
 // Functions:
 

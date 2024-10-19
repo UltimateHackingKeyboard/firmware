@@ -197,12 +197,6 @@ static const lv_font_fmt_txt_cmap_t cmaps[] =
     }
 };
 
-void DebugFont() {
-    for (uint8_t i = 0; i < 5; i++) {
-        printk("Glyph %d: %d\n", i, glyph_dsc[i].bitmap_index);
-    }
-}
-
 /*--------------------
  *  ALL CUSTOM DATA
  *--------------------*/
