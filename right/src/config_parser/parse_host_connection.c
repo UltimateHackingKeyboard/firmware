@@ -27,7 +27,7 @@ static parser_error_t parseHostConnection(config_buffer_t* buffer, host_connecti
     }
 
     if (hostConnection->type != HostConnectionType_Empty) {
-        hostConnection->switchOver = ReadUInt8(buffer);
+        hostConnection->switchover = ReadUInt8(buffer);
 
         uint16_t len;
         hostConnection->name.start = ReadString(buffer, &len);
