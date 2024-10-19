@@ -9,7 +9,6 @@
     void UsbCommand_PairPeripheral(void);
     void UsbCommand_Unpair(void);
     void UsbCommand_IsPaired(void);
-    void UsbCommand_RestartBluetooth(void);
     void UsbCommand_EnterPairingMode(void);
 
 // Typedefs:

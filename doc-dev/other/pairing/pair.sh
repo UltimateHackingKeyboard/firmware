@@ -20,8 +20,8 @@ echo "dongleAddress: $dongleAddress"
 echo "donglesPairedKeyboardAddress: $donglesPairedKeyboardAddress"
 
 #enter pairing mode
-./cmd.sh dongle 0x1d > /dev/null
-./cmd.sh right 0x1d > /dev/null
+./cmd.sh dongle 0x1c > /dev/null
+./cmd.sh right 0x1c > /dev/null
 
 #delete all bonds
 ./cmd.sh dongle 0x1a 0 0 0 0 0 0 > /dev/null
@@ -68,8 +68,8 @@ echo "Hopefully, right <--> dongle are paired now; Tap key to continue..."
 read a
 
 #enter pairing mode
-./cmd.sh left 0x1d > /dev/null
-./cmd.sh right 0x1d > /dev/null
+./cmd.sh left 0x1c > /dev/null
+./cmd.sh right 0x1c > /dev/null
 
 # delete left bonds
 ./cmd.sh left 0x1a 0 0 0 0 0 0 > /dev/null

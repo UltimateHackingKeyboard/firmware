@@ -73,10 +73,6 @@ void UsbCommand_IsPaired(void) {
     SetUsbTxBufferUint8(1, isPaired);
 }
 
-void UsbCommand_RestartBluetooth(void) {
-    BtManager_RestartBt();
-}
-
 void UsbCommand_EnterPairingMode(void) {
     BtManager_EnterPairingMode();
 }

@@ -114,9 +114,6 @@ void UsbProtocolHandler(void)
         case UsbCommandId_IsPaired:
             UsbCommand_IsPaired();
             break;
-        case UsbCommandId_RestartBluetooth:
-            UsbCommand_RestartBluetooth();
-            break;
         case UsbCommandId_EnterPairingMode:
             UsbCommand_EnterPairingMode();
             break;

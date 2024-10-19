@@ -53,8 +53,7 @@
         UsbCommandId_PairCentral              = 0x19,
         UsbCommandId_UnpairAll                = 0x1a,
         UsbCommandId_IsPaired                 = 0x1b,
-        UsbCommandId_RestartBluetooth         = 0x1c,
-        UsbCommandId_EnterPairingMode         = 0x1d,
+        UsbCommandId_EnterPairingMode         = 0x1c,
     } usb_command_id_t;
 
     typedef enum {
