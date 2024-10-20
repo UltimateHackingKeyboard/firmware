@@ -740,6 +740,10 @@ void UpdateUsbReports(void)
         return;
     }
 
+#if __ZEPHYR__ && (DEBUG_POSTPONER || DEBUG_EVENTLOOP_SCHEDULE)
+    printk("========== new UpdateUsbReports cycle ==========\n");
+#endif
+
     UpdateUsbReports_LastUpdateTime = CurrentTime;
     UsbReportUpdateCounter++;
 

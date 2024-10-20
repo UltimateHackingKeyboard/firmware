@@ -102,25 +102,23 @@ static messenger_channel_t determineChannel(device_id_t dst) {
     return MessengerChannel_None;
 }
 
+static char getDeviceAbbrev(device_id_t src) {
+    switch (src) {
+        case DeviceId_Uhk80_Left:
+            return 'L';
+        case DeviceId_Uhk80_Right:
+            return 'R';
+        case DeviceId_Uhk_Dongle:
+            return 'D';
+        default:
+            return '?';
+    }
+}
+
 static void receiveLog(device_id_t src, const uint8_t* data, uint16_t len) {
     uint8_t ATTR_UNUSED messageId = *(data++);
     uint8_t logmask = *(data++);
-    char deviceAbbrev;
-    switch (src) {
-        case DeviceId_Uhk80_Left:
-            deviceAbbrev = 'L';
-            break;
-        case DeviceId_Uhk80_Right:
-            deviceAbbrev = 'R';
-            break;
-        case DeviceId_Uhk_Dongle:
-            deviceAbbrev = 'D';
-            break;
-        default:
-            deviceAbbrev = '?';
-            break;
-    }
-    LogTo(DEVICE_ID, logmask, "%c>>> %s", deviceAbbrev, data);
+    LogTo(DEVICE_ID, logmask, "%c>>> %s", getDeviceAbbrev(src), data);
 }
 
 
@@ -247,10 +245,51 @@ static void receive(const uint8_t* data, uint16_t len) {
     }
 }
 
+static bool isSpam(const uint8_t* data) {
+    if (data[MessageOffset_MsgId1] == MessageId_Ping) {
+        return true;
+    }
+    if (data[MessageOffset_MsgId1] == MessageId_StateSync && data[MessageOffset_MsgId1+1] == StateSyncPropertyId_Battery) {
+        return DEBUG_EVENTLOOP_SCHEDULE;
+    }
+    return false;
+}
+
+ATTR_UNUSED static void getMessageDescription(const uint8_t* data, const char** out1, const char** out2) {
+    switch (data[MessageOffset_MsgId1]) {
+        case MessageId_StateSync:
+            *out1 = "StateSync";
+            *out2 = StateSync_PropertyIdToString(data[MessageOffset_MsgId1+1]);
+            return;
+        case MessageId_SyncableProperty:
+            *out1 = "SyncableProperty";
+            *out2 = NULL;
+            return;
+        case MessageId_Log:
+            *out1 = "Log";
+            *out2 = NULL;
+            return;
+        case MessageId_Ping:
+            *out1 = "Ping";
+            *out2 = NULL;
+            return;
+        default:
+            *out1 = "Unknown";
+            *out2 = NULL;
+            return;
+    }
+}
+
 void Messenger_Enqueue(uint8_t src, const uint8_t* data, uint16_t len) {
-    if (data[2] != MessageId_Ping) {
+    if (!isSpam(data)) {
         MessengerQueue_Put(src, data, len);
         EventVector_Set(EventVector_NewMessage);
+        LOG_SCHEDULE(
+            const char* desc1;
+            const char* desc2;
+            getMessageDescription(data, &desc1, &desc2);
+            printk("        (%c %s %s)\n", getDeviceAbbrev(data[MessageOffset_Src]), desc1, desc2 == NULL ? "" : desc2);
+        );
         Main_Wake();
     }
 }
