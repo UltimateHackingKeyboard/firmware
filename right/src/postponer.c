@@ -249,7 +249,8 @@ void PostponerCore_TrackDelay(uint32_t length)
             );
 }
 
-static const char* actionToString(postponer_event_type_t action) {
+#ifdef __ZEPHYR__
+ATTR_UNUSED static const char* actionToString(postponer_event_type_t action) {
     switch(action) {
     case PostponerEventType_PressKey:
         return "PressKey";
@@ -263,7 +264,6 @@ static const char* actionToString(postponer_event_type_t action) {
     return "Unknown";
 }
 
-#ifdef __ZEPHYR__
 ATTR_UNUSED static void printRecord(const char* prefix, postponer_buffer_record_type_t* record) {
     postponer_event_type_t actionType = record->event.type;
     bool isKeyAction = actionType == PostponerEventType_PressKey || actionType == PostponerEventType_ReleaseKey;
