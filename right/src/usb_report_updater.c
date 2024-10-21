@@ -606,6 +606,8 @@ static void updateActiveUsbReports(void)
     InputModifiersPrevious = InputModifiers;
     OutputModifiers = 0;
 
+    PostponerCore_UpdatePostponedTime();
+
     if (EventVector_IsSet(EventVector_MacroEngine)) {
         EVENTLOOP_TIMING(EventloopTiming_WatchReset());
         Macros_ContinueMacro();
@@ -638,8 +640,6 @@ static void updateActiveUsbReports(void)
     if (EventVector_IsSet(EventVector_MouseController)) {
         MouseController_ProcessMouseActions();
     }
-
-    PostponerCore_FinishCycle();
 }
 
 void justPreprocessInput(void) {

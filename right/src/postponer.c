@@ -323,10 +323,8 @@ void PostponerCore_RunPostponedEvents(void)
     EventVector_SetValue(EventVector_Postponer, executeNextCycle);
 }
 
-void PostponerCore_FinishCycle(void)
-{
-    // cyclesUntilActivation -= cyclesUntilActivation > 0 ? 1 : 0;
-    if(bufferSize == 0 /*&& cyclesUntilActivation == 0*/) {
+void PostponerCore_UpdatePostponedTime() {
+    if (bufferSize == 0) {
         CurrentPostponedTime = CurrentTime;
     }
 }
