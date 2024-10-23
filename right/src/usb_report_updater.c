@@ -465,14 +465,16 @@ static void commitKeyState(key_state_t *keyState, bool active)
 static inline void preprocessKeyState(key_state_t *keyState)
 {
     uint8_t debounceTime = keyState->previous ? Cfg.DebounceTimePress : Cfg.DebounceTimeRelease;
-    if (keyState->debouncing && (uint8_t)(CurrentTime - keyState->timestamp) > debounceTime) {
+    if (keyState->debouncing && (uint8_t)(CurrentTime - keyState->timestamp) >= debounceTime) {
         keyState->debouncing = false;
     }
 
-    if (!keyState->debouncing && keyState->debouncedSwitchState != keyState->hardwareSwitchState) {
+    // read just once! Otherwise the key might get stuck
+    bool hardwareState = keyState->hardwareSwitchState;
+    if (!keyState->debouncing && keyState->debouncedSwitchState != hardwareState) {
         keyState->timestamp = CurrentTime;
         keyState->debouncing = true;
-        keyState->debouncedSwitchState = keyState->hardwareSwitchState;
+        keyState->debouncedSwitchState = hardwareState;
 
         commitKeyState(keyState, keyState->debouncedSwitchState);
     }
