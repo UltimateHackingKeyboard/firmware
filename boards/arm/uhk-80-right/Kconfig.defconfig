@@ -1,12 +1,32 @@
-# Copyright (c) 2023 Nordic Semiconductor ASA
 # SPDX-License-Identifier: Apache-2.0
-
+# used for both zephyr and mcuboot -> no custom kconfig symbols here
 if BOARD_UHK_80_RIGHT
 
 config BOARD
     default "uhk-80-right"
 
-config BT_CTLR
-   default BT
+if SHELL_BACKEND_RTT
+config SHELL_PROMPT_RTT
+    default "uhk80:right$ "
+endif # SHELL_BACKEND_RTT
 
-endif
+if SHELL_BACKEND_SERIAL
+config SHELL_PROMPT_UART
+    default "uhk80:right$ "
+endif # SHELL_BACKEND_SERIAL
+
+if BT_DIS && BT_DIS_PNP
+config BT_DIS_PNP_PID
+    default 0x8009
+endif # BT_DIS && BT_DIS_PNP
+
+config USB_DEVICE_PRODUCT
+    default "UHK 80 right half"
+
+config USB_DEVICE_PID
+    default 0x0009
+
+config BT_CTLR
+    default BT
+
+endif # BOARD_UHK_80_RIGHT

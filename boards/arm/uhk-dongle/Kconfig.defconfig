@@ -1,12 +1,32 @@
-# Copyright (c) 2023 Nordic Semiconductor ASA
 # SPDX-License-Identifier: Apache-2.0
-
+# used for both zephyr and mcuboot -> no custom kconfig symbols here
 if BOARD_UHK_DONGLE
 
 config BOARD
     default "uhk-dongle"
 
+if SHELL_BACKEND_RTT
+config SHELL_PROMPT_RTT
+    default "uhk-dongle$ "
+endif # SHELL_BACKEND_RTT
+
+if SHELL_BACKEND_SERIAL
+config SHELL_PROMPT_UART
+    default "uhk-dongle$ "
+endif # SHELL_BACKEND_SERIAL
+
+if BT_DIS && BT_DIS_PNP
+config BT_DIS_PNP_PID
+    default 0x8005
+endif # BT_DIS && BT_DIS_PNP
+
+config USB_DEVICE_PRODUCT
+    default "UHK dongle"
+
+config USB_DEVICE_PID
+    default 0x0005
+
 config BT_CTLR
     default BT
 
-endif
+endif # BOARD_UHK_DONGLE
