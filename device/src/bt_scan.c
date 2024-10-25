@@ -33,15 +33,6 @@ static int scan_fill() {
     int err = 0;
 
     if (DEVICE_IS_UHK80_RIGHT) {
-        if (!BtPair_OobPairingInProgress) {
-            // iterate host connections and add all that are of type dongle
-            for (uint8_t i = 0; i < HOST_CONNECTION_COUNT_MAX; i++) {
-                if (HostConnections[i].type == HostConnectionType_Dongle) {
-                    addAddress(&err, &HostConnections[i].bleAddress);
-                }
-            }
-        }
-
         addAddress(&err, &Peers[PeerIdLeft].addr);
     }
     if (DEVICE_IS_UHK_DONGLE) {
