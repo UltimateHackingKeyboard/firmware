@@ -44,6 +44,7 @@
     ATTRS void BtPair_EndPairing(bool success, const char* msg) {};
     ATTRS void BtManager_RestartBt() {};
     ATTRS void DongleLeds_Update() {};
+    ATTRS void BtPair_ClearUnknownBonds() {};
 
 #if DEVICE_HAS_OLED
 #define WIDGET_REFRESH(W) Widget_Refresh(W)
