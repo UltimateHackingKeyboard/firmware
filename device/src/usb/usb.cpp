@@ -229,8 +229,14 @@ extern "C" void USB_DisableHid()
 
 extern "C" void USB_RemoteWakeup()
 {
-    usb_manager::instance().mac().queue_task(
-        []() { usb_manager::instance().device().remote_wakeup(); });
+    printk("USB: requesting remote wakeup\n");
+    usb_manager::instance().mac().queue_task([]() {
+        if (usb_manager::instance().device().remote_wakeup()) {
+            printk("USB: sending remote wakeup\n");
+        } else {
+            printk("USB: remote wakeup disabled\n");
+        }
+    });
 }
 
 #if DEVICE_IS_UHK80_RIGHT
