@@ -8,7 +8,6 @@
 #include "host_connection.h"
 #include "parse_config.h"
 
-#ifdef __ZEPHYR__
 static parser_error_t parseHostConnection(config_buffer_t* buffer, host_connection_t* hostConnection) {
     hostConnection->type = ReadUInt8(buffer);
 
@@ -38,22 +37,23 @@ static parser_error_t parseHostConnection(config_buffer_t* buffer, host_connecti
 
     return ParserError_Success;
 }
-#endif
 
 parser_error_t ParseHostConnections(config_buffer_t *buffer) {
-#ifdef __ZEPHYR__
     int errorCode;
 
     for (uint8_t hostConnectionId = 0; hostConnectionId < HOST_CONNECTION_COUNT_MAX; hostConnectionId++) {
         host_connection_t dummy;
 
-        host_connection_t* hostConnection = ParserRunDry ? &dummy : &HostConnections[hostConnectionId];
+        host_connection_t* hostConnection = &dummy;
+
+#ifdef __ZEPHYR__
+        hostConnection = ParserRunDry ? &dummy : &HostConnections[hostConnectionId];
+#endif
 
         RETURN_ON_ERROR(
             parseHostConnection(buffer, hostConnection);
         );
     }
-#endif
 
     return ParserError_Success;
 }
