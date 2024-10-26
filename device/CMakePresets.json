@@ -47,7 +47,7 @@
                 "BOARD": "uhk-80-right",
                 "BOARD_ROOT": "${sourceParentDir}/",
                 "mcuboot_OVERLAY_CONFIG": "${sourceDir}/child_image/mcuboot.conf;${sourceDir}/child_image/uhk-80-right.mcuboot.conf",
-                "EXTRA_CONF_FILE": "${sourceDir}/prj.conf.overlays/uhk-80-right.prj.conf"
+                "EXTRA_CONF_FILE": "${sourceDir}/prj.conf.overlays/nrf_shared.conf;${sourceDir}/prj.conf.overlays/c2usb.conf;${sourceDir}/prj.conf.overlays/uhk-80.conf;${sourceDir}/prj.conf.overlays/ble-hid.conf"
             },
             "warnings": {
                 "dev": false
@@ -63,7 +63,7 @@
                 "BOARD": "uhk-80-left",
                 "BOARD_ROOT": "${sourceParentDir}/",
                 "mcuboot_OVERLAY_CONFIG": "${sourceDir}/child_image/mcuboot.conf;${sourceDir}/child_image/uhk-80-left.mcuboot.conf",
-                "EXTRA_CONF_FILE": "${sourceDir}/prj.conf.overlays/uhk-80-left.prj.conf"
+                "EXTRA_CONF_FILE": "${sourceDir}/prj.conf.overlays/nrf_shared.conf;${sourceDir}/prj.conf.overlays/c2usb.conf;${sourceDir}/prj.conf.overlays/uhk-80.conf"
             },
             "warnings": {
                 "dev": false
@@ -79,7 +79,7 @@
                 "BOARD": "uhk-dongle",
                 "BOARD_ROOT": "${sourceParentDir}/",
                 "mcuboot_OVERLAY_CONFIG": "${sourceDir}/child_image/mcuboot.conf;${sourceDir}/child_image/uhk-dongle.mcuboot.conf",
-                "EXTRA_CONF_FILE": "${sourceDir}/prj.conf.overlays/uhk-dongle.prj.conf"
+                "EXTRA_CONF_FILE": "${sourceDir}/prj.conf.overlays/nrf_shared.conf;${sourceDir}/prj.conf.overlays/c2usb.conf"
             },
             "warnings": {
                 "dev": false

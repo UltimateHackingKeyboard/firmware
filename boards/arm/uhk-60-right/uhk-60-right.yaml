@@ -19,3 +19,5 @@ supported:
   - spi
   - usb_device
   - watchdog
+
+# TODO: use board revisions: https://docs.zephyrproject.org/latest/hardware/porting/board_porting.html#multiple-board-revisions
