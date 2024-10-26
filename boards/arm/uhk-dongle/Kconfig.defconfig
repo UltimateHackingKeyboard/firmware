@@ -2,9 +2,6 @@
 # used for both zephyr and mcuboot -> no custom kconfig symbols here
 if BOARD_UHK_DONGLE
 
-config BOARD
-    default "uhk-dongle"
-
 if SHELL_BACKEND_RTT
 config SHELL_PROMPT_RTT
     default "uhk-dongle$ "

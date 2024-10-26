@@ -3,6 +3,7 @@
 
 identifier: uhk-80-right
 name: UHK 80 right
+vendor: ugl
 type: mcu
 arch: arm
 ram: 256

@@ -3,6 +3,7 @@
 
 identifier: uhk-dongle
 name: UHK dongle
+vendor: ugl
 type: mcu
 arch: arm
 ram: 256

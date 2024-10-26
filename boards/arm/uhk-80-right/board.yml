@@ -1,0 +1,5 @@
+board:
+  name: uhk-80-right
+  vendor: ugl
+  socs:
+    - name: nrf52840

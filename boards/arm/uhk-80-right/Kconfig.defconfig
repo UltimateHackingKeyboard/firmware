@@ -2,9 +2,6 @@
 # used for both zephyr and mcuboot -> no custom kconfig symbols here
 if BOARD_UHK_80_RIGHT
 
-config BOARD
-    default "uhk-80-right"
-
 if SHELL_BACKEND_RTT
 config SHELL_PROMPT_RTT
     default "uhk80:right$ "
