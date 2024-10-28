@@ -1,6 +1,0 @@
-# SPDX-License-Identifier: Apache-2.0
-
-build:
-  settings:
-    # hardware model 2 doesn't work with out-of-tree board roots without this:
-    board_root: .
