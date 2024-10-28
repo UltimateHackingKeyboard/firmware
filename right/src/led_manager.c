@@ -47,6 +47,11 @@ void LedManager_FullUpdate()
     EventVector_Unset(EventVector_LedManagerFullUpdateNeeded);
     EventVector_Unset(EventVector_LedMapUpdateNeeded);
 
+    if (DEVICE_IS_UHK80_LEFT) {
+        Ledmap_UpdateBacklightLeds();
+        return;
+    }
+
     LedManager_UpdateSleepModes();
     recalculateLedBrightness();
     Ledmap_UpdateBacklightLeds();

@@ -65,9 +65,9 @@ ATTR_UNUSED static void reportChange(uint8_t sourceIndex, bool active) {
     uint8_t keyId = KeyLayout_Uhk80_to_Uhk60[slotId][sourceIndex];
     const char* abbrev = MacroKeyIdParser_KeyIdToAbbreviation(slotId*64 + keyId);
     if (active) {
-        LogRight(LogTarget_Uart, "%s   down\n", abbrev);
+        Log("%s   down\n", abbrev);
     } else {
-        LogRight(LogTarget_Uart, "  %s up\n", abbrev);
+        Log("  %s up\n", abbrev);
     }
 }
 

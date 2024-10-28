@@ -25,6 +25,8 @@
 #include "legacy/peripherals/merge_sensor.h"
 #include "power_mode.h"
 
+#define STATE_SYNC_SEND_DELAY 2
+
 #define THREAD_STACK_SIZE 2000
 #define THREAD_PRIORITY 5
 static K_THREAD_STACK_DEFINE(stack_area_left, THREAD_STACK_SIZE);
@@ -581,7 +583,7 @@ static void updateLoopRightLeft() {
             if (!isConnected || handlePropertyUpdateLeftToRight()) {
                 k_sleep(K_FOREVER);
             } else {
-                k_sleep(K_MSEC(1));
+                k_sleep(K_MSEC(STATE_SYNC_SEND_DELAY));
             }
         }
     }
@@ -593,7 +595,7 @@ static void updateLoopRightLeft() {
             if (!isConnected || handlePropertyUpdateRightToLeft()) {
                 k_sleep(K_FOREVER);
             } else {
-                k_sleep(K_MSEC(1));
+                k_sleep(K_MSEC(STATE_SYNC_SEND_DELAY));
             }
         }
     }
@@ -607,7 +609,7 @@ static void updateLoopRightDongle() {
             if (!isConnected || handlePropertyUpdateRightToDongle()) {
                 k_sleep(K_FOREVER);
             } else {
-                k_sleep(K_MSEC(1));
+                k_sleep(K_MSEC(STATE_SYNC_SEND_DELAY));
             }
         }
     }
@@ -619,7 +621,7 @@ static void updateLoopRightDongle() {
             if (!isConnected || handlePropertyUpdateDongleToRight()) {
                 k_sleep(K_FOREVER);
             } else {
-                k_sleep(K_MSEC(1));
+                k_sleep(K_MSEC(STATE_SYNC_SEND_DELAY));
             }
         }
     }
