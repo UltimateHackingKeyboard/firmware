@@ -8,6 +8,7 @@
 #include "shared/slave_protocol.h"
 #include "legacy/event_scheduler.h"
 #include "legacy/power_mode.h"
+#include "dongle_leds.h"
 
 static connection_type_t isConnected[ConnectionId_Count] = {};
 
@@ -75,6 +76,7 @@ void handleStateTransition(connection_id_t remoteId, bool connected) {
                 if (remoteId == ConnectionId_Right && connected) {
                     StateSync_ResetRightDongleLink(true);
                 }
+                DongleLeds_Update();
                 break;
             default:
                 break;

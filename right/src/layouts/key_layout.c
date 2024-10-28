@@ -1,5 +1,6 @@
 #include "key_layout.h"
 
+#ifdef __ZEPHYR__
 const uint8_t KeyLayout_Uhk80_to_Uhk60[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
     {
         // UHK60 keys
@@ -159,3 +160,4 @@ const uint8_t KeyLayout_Uhk80_to_Uhk60[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE] = {
     {},
     {},
 };
+#endif

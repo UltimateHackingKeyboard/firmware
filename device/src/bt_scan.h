@@ -3,6 +3,8 @@
 
 // Functions:
 
-    extern int scan_init(void);
+    int BtScan_Init(void);
+    int BtScan_Start(void);
+    int BtScan_Stop(void);
 
 #endif // __BT_SCAN_H__

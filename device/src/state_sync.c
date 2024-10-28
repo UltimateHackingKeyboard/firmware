@@ -2,10 +2,12 @@
 #include "device.h"
 #include "device_state.h"
 #include "event_scheduler.h"
+#include "keyboard/charger.h"
 #include "keyboard/oled/widgets/widgets.h"
 #include "legacy/config_manager.h"
 #include "legacy/config_parser/config_globals.h"
 #include "legacy/debug.h"
+#include "legacy/event_scheduler.h"
 #include "legacy/keymap.h"
 #include "legacy/led_manager.h"
 #include "legacy/ledmap.h"
@@ -22,6 +24,8 @@
 #include <zephyr/kernel.h>
 #include "legacy/peripherals/merge_sensor.h"
 #include "power_mode.h"
+
+#define STATE_SYNC_SEND_DELAY 2
 
 #define THREAD_STACK_SIZE 2000
 #define THREAD_PRIORITY 5
@@ -121,6 +125,7 @@ static state_sync_prop_t stateSyncProps[StateSyncPropertyId_Count] = {
     SIMPLE(MergeSensor,             SyncDirection_LeftToRight,        DirtyState_Clean,    &MergeSensor_HalvesAreMerged),
     SIMPLE(FunctionalColors,        SyncDirection_RightToLeft,        DirtyState_Clean,    &Cfg.KeyActionColors),
     SIMPLE(PowerMode,               SyncDirection_RightToLeft,        DirtyState_Clean,    &CurrentPowerMode),
+    CUSTOM(Config,                  SyncDirection_RightToLeft,        DirtyState_Clean),
 };
 
 static void invalidateProperty(state_sync_prop_id_t propId) {
@@ -292,9 +297,14 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
         WIDGET_REFRESH(&StatusWidget);
         {
             bool newRunningOnBattery = !SyncLeftHalfState.battery.powered || !SyncRightHalfState.battery.powered;
+            bool newRightRunningOnBattery = !SyncRightHalfState.battery.powered;
             if (RunningOnBattery != newRunningOnBattery) {
                 RunningOnBattery = newRunningOnBattery;
-                LedManager_FullUpdate();
+                RightRunningOnBattery = newRightRunningOnBattery;
+                EventVector_Set(EventVector_LedManagerFullUpdateNeeded);
+            } else if (RightRunningOnBattery != newRightRunningOnBattery) {
+                RightRunningOnBattery = newRightRunningOnBattery;
+                LedManager_UpdateSleepModes();
             }
         }
         break;
@@ -323,6 +333,12 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
     case StateSyncPropertyId_FunctionalColors:
         if (!isLocalUpdate) {
             EventVector_Set(EventVector_LedMapUpdateNeeded);
+        }
+        break;
+    case StateSyncPropertyId_Config:
+        if (!isLocalUpdate) {
+            sync_command_config_t* buffer = (sync_command_config_t*)data;
+            DataModelVersion = buffer->dataModelVersion;
         }
         break;
     case StateSyncPropertyId_MergeSensor:
@@ -462,6 +478,12 @@ static void prepareData(device_id_t dst, const uint8_t *propDataPtr, state_sync_
         submitPreparedData(dst, propId, (const uint8_t *)&buffer, sizeof(buffer));
         return;
     } break;
+    case StateSyncPropertyId_Config: {
+        sync_command_config_t buffer;
+        buffer.dataModelVersion = DataModelVersion;
+        submitPreparedData(dst, propId, (const uint8_t *)&buffer, sizeof(buffer));
+        return;
+    } break;
     default:
         break;
     }
@@ -504,6 +526,7 @@ static void updateProperty(state_sync_prop_id_t propId) {
 
 static bool handlePropertyUpdateRightToLeft() {
     UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ResetRightLeftLink);
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_Config);
 
     if (KeyBacklightBrightness != 0 && Cfg.BacklightingMode != BacklightingMode_ConstantRGB) {
         // Update relevant data
@@ -560,7 +583,7 @@ static void updateLoopRightLeft() {
             if (!isConnected || handlePropertyUpdateLeftToRight()) {
                 k_sleep(K_FOREVER);
             } else {
-                k_sleep(K_MSEC(1));
+                k_sleep(K_MSEC(STATE_SYNC_SEND_DELAY));
             }
         }
     }
@@ -572,7 +595,7 @@ static void updateLoopRightLeft() {
             if (!isConnected || handlePropertyUpdateRightToLeft()) {
                 k_sleep(K_FOREVER);
             } else {
-                k_sleep(K_MSEC(1));
+                k_sleep(K_MSEC(STATE_SYNC_SEND_DELAY));
             }
         }
     }
@@ -586,7 +609,7 @@ static void updateLoopRightDongle() {
             if (!isConnected || handlePropertyUpdateRightToDongle()) {
                 k_sleep(K_FOREVER);
             } else {
-                k_sleep(K_MSEC(1));
+                k_sleep(K_MSEC(STATE_SYNC_SEND_DELAY));
             }
         }
     }
@@ -598,7 +621,7 @@ static void updateLoopRightDongle() {
             if (!isConnected || handlePropertyUpdateDongleToRight()) {
                 k_sleep(K_FOREVER);
             } else {
-                k_sleep(K_MSEC(1));
+                k_sleep(K_MSEC(STATE_SYNC_SEND_DELAY));
             }
         }
     }
@@ -635,6 +658,7 @@ void StateSync_ResetRightLeftLink(bool bidirectional) {
         invalidateProperty(StateSyncPropertyId_ResetRightLeftLink);
     }
     if (DEVICE_ID == DeviceId_Uhk80_Right) {
+        invalidateProperty(StateSyncPropertyId_Config);
         state_sync_prop_id_t first = StateSyncPropertyId_LayerActionFirst;
         state_sync_prop_id_t last = StateSyncPropertyId_LayerActionLast;
         for (state_sync_prop_id_t propId = first; propId <= last; propId++) {
@@ -664,5 +688,6 @@ void StateSync_ResetRightDongleLink(bool bidirectional) {
 }
 
 void StateSync_ResetConfig() {
-    invalidateProperty(StateSyncPropertyId_FunctionalColors);
+    // For simplicity, update all for now
+    StateSync_ResetRightLeftLink(false);
 }

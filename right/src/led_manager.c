@@ -47,6 +47,11 @@ void LedManager_FullUpdate()
     EventVector_Unset(EventVector_LedManagerFullUpdateNeeded);
     EventVector_Unset(EventVector_LedMapUpdateNeeded);
 
+    if (DEVICE_IS_UHK80_LEFT) {
+        Ledmap_UpdateBacklightLeds();
+        return;
+    }
+
     LedManager_UpdateSleepModes();
     recalculateLedBrightness();
     Ledmap_UpdateBacklightLeds();
@@ -94,7 +99,7 @@ void LedManager_UpdateSleepModes() {
         EventScheduler_Schedule(UsbReportUpdater_LastActivityTime + keyBacklightTimeout, EventSchedulerEvent_UpdateLedSleepModes, "LedManager - update key backlight sleep mode");
     }
 
-    uint32_t displayTimeout = RunningOnBattery ? Cfg.DisplayFadeOutBatteryTimeout : Cfg.DisplayFadeOutTimeout;
+    uint32_t displayTimeout = RightRunningOnBattery ? Cfg.DisplayFadeOutBatteryTimeout : Cfg.DisplayFadeOutTimeout;
     if (elapsedTime >= displayTimeout && !DisplaySleepModeActive && displayTimeout) {
         DisplaySleepModeActive = true;
         ledsNeedUpdate = true;

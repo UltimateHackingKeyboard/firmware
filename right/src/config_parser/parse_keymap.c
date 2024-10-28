@@ -169,10 +169,6 @@ static parser_error_t parseKeyActions(uint8_t targetLayer, config_buffer_t *buff
     parser_error_t errorCode;
     uint16_t actionCount = ReadCompactLength(buffer);
 
-    if (actionCount > MAX_KEY_COUNT_PER_MODULE) {
-        ConfigParser_Error(buffer, "Invalid action count: %d", actionCount);
-        return ParserError_InvalidActionCount;
-    }
     if (moduleId == ModuleId_LeftKeyboardHalf || moduleId == ModuleId_KeyClusterLeft) {
         parseMode = parseMode;
     } else {
@@ -180,7 +176,9 @@ static parser_error_t parseKeyActions(uint8_t targetLayer, config_buffer_t *buff
     }
     slot_t slotId = ModuleIdToSlotId(moduleId);
     for (uint8_t actionIdx = 0; actionIdx < actionCount; actionIdx++) {
-        errorCode = parseKeyAction(&CurrentKeymap[targetLayer][slotId][actionIdx], buffer, parseMode);
+        key_action_t dummyKeyAction;
+        key_action_t *keyAction = actionIdx < MAX_KEY_COUNT_PER_MODULE ? &CurrentKeymap[targetLayer][slotId][actionIdx] : &dummyKeyAction;
+        errorCode = parseKeyAction(keyAction, buffer, parseMode);
         if (errorCode != ParserError_Success) {
             return errorCode;
         }

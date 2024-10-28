@@ -103,6 +103,7 @@
         DeviceId_Uhk80_Right = DEVICE_ID_UHK80_RIGHT,
         DeviceId_Uhk80_Left = DEVICE_ID_UHK80_LEFT,
         DeviceId_Uhk_Dongle = DEVICE_ID_UHK_DONGLE,
+        DeviceId_Uhk80_Dongle = DeviceId_Uhk_Dongle,
         DeviceId_Count = DEVICE_ID_UHK_DONGLE + 1,
     } device_id_t;
 

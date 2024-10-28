@@ -75,7 +75,7 @@ static string_segment_t getLeftStatusText() {
     font_icons_t icon = FontIcon_CircleXmarkLarge;
     if (DEVICE_ID == DeviceId_Uhk80_Right) {
         if (Uart_IsConnected()) {
-            icon = FontIcon_Plug;
+            icon = FontIcon_PlugsConnected;
         } else if (Bt_DeviceIsConnected(DeviceId_Uhk80_Left)) {
             icon = FontIcon_SignalStream;
         }
@@ -127,11 +127,42 @@ static string_segment_t getErrorIndicatorText() {
 }
 
 static string_segment_t getKeyboardLedsStateText() {
-    static char buffer [6] = {};
-    sprintf(buffer, "%cC %cN",
-            KeyboardLedsState.capsLock ? FontControl_NextCharWhite : FontControl_NextCharGray,
-            KeyboardLedsState.numLock ? FontControl_NextCharWhite : FontControl_NextCharGray
-            );
+    static char buffer [8] = {};
+    const uint8_t variant = 3;
+    switch (variant) {
+        case 0:
+            sprintf(buffer, "%cC %cN",
+                    KeyboardLedsState.capsLock ? FontControl_NextCharWhite : FontControl_NextCharGray,
+                    KeyboardLedsState.numLock ? FontControl_NextCharWhite : FontControl_NextCharGray
+                   );
+            break;
+        case 1:
+            sprintf(buffer, "%cA %c1",
+                    KeyboardLedsState.capsLock ? FontControl_NextCharWhite : FontControl_NextCharGray,
+                    KeyboardLedsState.numLock ? FontControl_NextCharWhite : FontControl_NextCharGray
+                   );
+            break;
+        case 2:
+            sprintf(buffer, "%c%c%c %c%c%c",
+                    KeyboardLedsState.capsLock ? FontControl_NextCharWhite : FontControl_NextCharGray,
+                    FontControl_NextCharIcon12,
+                    FontIcon_LockA,
+                    KeyboardLedsState.numLock ? FontControl_NextCharWhite : FontControl_NextCharGray,
+                    FontControl_NextCharIcon12,
+                    FontIcon_LockHashtag
+                   );
+            break;
+        case 3:
+            sprintf(buffer, "%c%c%c %c%c%c",
+                    KeyboardLedsState.capsLock ? FontControl_NextCharWhite : FontControl_NextCharGray,
+                    FontControl_NextCharIcon12,
+                    FontIcon_LockSquareA,
+                    KeyboardLedsState.numLock ? FontControl_NextCharWhite : FontControl_NextCharGray,
+                    FontControl_NextCharIcon12,
+                    FontIcon_LockSquareOne
+                   );
+            break;
+    }
     return (string_segment_t){ .start = buffer, .end = NULL };
 }
 
@@ -159,7 +190,7 @@ static void drawKeymapLayer(widget_t* self, framebuffer_t* buffer)
         const lv_font_t* layerFont = &JetBrainsMono12;
         string_segment_t keymapText = getKeymapText();
         string_segment_t layerText = getLayerText();
-        uint16_t keymapWidth = Framebuffer_TextWidth(keymapFont, keymapText.start, keymapText.end);
+        uint16_t keymapWidth = Framebuffer_TextWidth(keymapFont, keymapText.start, keymapText.end, self->w, NULL, NULL);
         Framebuffer_DrawText(self, buffer, self->w/2 - keymapWidth/2, AlignmentType_Center, keymapFont, keymapText.start, keymapText.end);
         if (ActiveLayer != LayerId_Base) {
             Framebuffer_DrawText(self, buffer, self->w/2 + keymapWidth/2 + 10, AlignmentType_Center+(keymapFont->line_height - layerFont->line_height)/2, layerFont, layerText.start, layerText.end);

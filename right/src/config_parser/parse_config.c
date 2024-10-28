@@ -38,7 +38,8 @@ void readRgbColor(config_buffer_t *buffer, rgb_t* keyActionColors, key_action_co
     color->blue = ReadUInt8(buffer);
 }
 
-parser_error_t ParseConfig(config_buffer_t *buffer)
+
+parser_error_t parseConfig(config_buffer_t *buffer)
 {
     // Miscellaneous properties
 
@@ -50,6 +51,13 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
     DataModelVersion.major = ReadUInt16(buffer);
     DataModelVersion.minor = ReadUInt16(buffer);
     DataModelVersion.patch = ReadUInt16(buffer);
+
+#ifdef __ZEPHYR__
+    if (!ParserRunDry) {
+        printk("Flashed User Config version: %u.%u.%u\n", DataModelVersion.major, DataModelVersion.minor, DataModelVersion.patch);
+    }
+#endif
+
     uint32_t userConfigLength = DataModelVersion.major < 6 ? ReadUInt16(buffer) : ReadUInt32(buffer);
     const char *deviceName = ReadString(buffer, &len);
     uint16_t doubleTapSwitchLayerTimeout = ReadUInt16(buffer);
@@ -330,4 +338,14 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
     }
 
     return ParserError_Success;
+}
+
+
+parser_error_t ParseConfig(config_buffer_t *buffer) {
+    version_t oldModelVersion = DataModelVersion;
+    parser_error_t errorCode = parseConfig(buffer);
+    if (errorCode != ParserError_Success || ParserRunDry) {
+        DataModelVersion = oldModelVersion;
+    }
+    return errorCode;
 }

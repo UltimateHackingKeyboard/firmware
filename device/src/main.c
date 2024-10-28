@@ -1,4 +1,8 @@
 #include "main.h"
+#include "bt_advertise.h"
+#include "nus_client.h"
+#include "nus_server.h"
+#include "bt_manager.h"
 #include "legacy/config_parser/config_globals.h"
 #include "legacy/ledmap.h"
 #include "shared/attributes.h"
@@ -10,15 +14,12 @@
 #include "keyboard/charger.h"
 #include "keyboard/spi.h"
 #include "keyboard/uart.h"
-#include "nus_client.h"
-#include "nus_server.h"
 #include "keyboard/i2c.h"
 #include "peripherals/merge_sensor.h"
 #include "shell.h"
 #include "device.h"
 #include "usb/usb.h"
 #include "bt_conn.h"
-#include "bt_advertise.h"
 #include "settings.h"
 #include "flash.h"
 #include "usb_commands/usb_command_apply_config.h"
@@ -34,9 +35,10 @@
 #include "state_sync.h"
 #include "keyboard/charger.h"
 #include <stdint.h>
+#include "dongle_leds.h"
 #include "debug_eventloop_timing.h"
-// #include <zephyr/drivers/gpio.h>
-// #include "dongle_leds.h"
+#include <zephyr/drivers/gpio.h>
+#include "dongle_leds.h"
 
 k_tid_t Main_ThreadId = 0;
 
@@ -98,23 +100,6 @@ int main(void) {
     Main_ThreadId = k_current_get();
     printk("----------\n" DEVICE_NAME " started\n");
 
-    // const struct gpio_dt_spec led0 = GPIO_DT_SPEC_GET(DT_ALIAS(led0_green), gpios);
-    // gpio_pin_configure_dt(&led0, GPIO_OUTPUT);
-    // while (true) {
-    //     gpio_pin_set_dt(&led0, true);
-    //     k_sleep(K_MSEC(1000));
-    //     gpio_pin_set_dt(&led0, false);
-    //     set_dongle_led(&red_pwm_led, 100);
-    //     k_sleep(K_MSEC(1000));
-    //     set_dongle_led(&red_pwm_led, 0);
-    //     set_dongle_led(&green_pwm_led, 100);
-    //     k_sleep(K_MSEC(1000));
-    //     set_dongle_led(&green_pwm_led, 0);
-    //     set_dongle_led(&blue_pwm_led, 100);
-    //     k_sleep(K_MSEC(1000));
-    //     set_dongle_led(&blue_pwm_led, 0);
-    // }
-
     if (DEVICE_IS_UHK80_RIGHT) {
         flash_area_open(FLASH_AREA_ID(hardware_config_partition), &hardwareConfigArea);
         flash_area_open(FLASH_AREA_ID(user_config_partition), &userConfigArea);
@@ -166,27 +151,14 @@ int main(void) {
 
     USB_EnableHid(); // has to be after USB_SetSerialNumber
 
-    bt_init();
+    bt_enable(NULL);
+
+    // has to be after bt_enable
     InitSettings();
 
-    if (DEVICE_IS_UHK80_RIGHT) {
-        HOGP_Enable();
-    }
-
-    if (DEVICE_IS_UHK80_LEFT || DEVICE_IS_UHK80_RIGHT) {
-        int err = NusServer_Init();
-        if (!err) {
-            uint8_t advType = ADVERTISE_NUS;
-            if (DEVICE_IS_UHK80_RIGHT) {
-                advType |= ADVERTISE_HID;
-            }
-            Advertise(advType);
-        }
-    }
-
-    if (DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK_DONGLE) {
-        NusClient_Init();
-    }
+    // has to be after InitSettings
+    BtManager_InitBt();
+    BtManager_StartBt();
 
     if (!DEVICE_IS_UHK_DONGLE) {
         InitCharger(); // has to be after usb initialization

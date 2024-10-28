@@ -1,7 +1,9 @@
 #include "bt_advertise.h"
 #include <bluetooth/services/nus.h>
 #include <zephyr/bluetooth/gatt.h>
+#include "device.h"
 
+#undef DEVICE_NAME
 #define DEVICE_NAME CONFIG_BT_DEVICE_NAME
 #define DEVICE_NAME_LEN (sizeof(DEVICE_NAME) - 1)
 
@@ -36,7 +38,7 @@ static const struct bt_data sdHid[] = {SD_HID_DATA};
 
 static const struct bt_data sdNusHid[] = {SD_NUS_DATA SD_HID_DATA};
 
-void Advertise(uint8_t adv_type)
+void BtAdvertise_Start(uint8_t adv_type)
 {
     int err;
     const char *adv_type_string;
@@ -51,7 +53,7 @@ void Advertise(uint8_t adv_type)
         adv_type_string = "HID";
         err = bt_le_adv_start(BT_LE_ADV_CONN, adHid, ARRAY_SIZE(adHid), sdHid, ARRAY_SIZE(sdHid));
     } else {
-        assert(false);
+        printk("Attempted to start advertising without any type! Ignoring.\n");
         return;
     }
 
@@ -61,5 +63,28 @@ void Advertise(uint8_t adv_type)
         printk("%s advertising continued\n", adv_type_string);
     } else {
         printk("%s advertising failed to start (err %d)\n", adv_type_string, err);
+    }
+}
+
+void BtAdvertise_Stop() {
+    int err = bt_le_adv_stop();
+    if (err) {
+        printk("Advertising failed to stop (err %d)\n", err);
+    } else {
+        printk("Advertising successfully stopped\n");
+    }
+}
+
+uint8_t BtAdvertise_Type() {
+    switch (DEVICE_ID) {
+        case DeviceId_Uhk80_Left:
+            return ADVERTISE_NUS;
+        case DeviceId_Uhk80_Right:
+            return ADVERTISE_NUS | ADVERTISE_HID;
+        case DeviceId_Uhk_Dongle:
+            return 0;
+        default:
+            printk("unknown device!\n");
+            return 0;
     }
 }
