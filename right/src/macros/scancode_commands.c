@@ -293,6 +293,8 @@ static void clearScancodes()
 
 macro_result_t Macros_DispatchText(const char* text, uint16_t textLen, bool rawString)
 {
+    const uint8_t maxGroupSize=3;
+    static uint8_t currentReportSize=0;
     S->ms.reportsUsed = true;
     static macro_state_t* dispatchMutex = NULL;
     if (dispatchMutex != S && dispatchMutex != NULL) {
@@ -339,6 +341,7 @@ macro_result_t Macros_DispatchText(const char* text, uint16_t textLen, bool rawS
         if (S->as.dispatchData.reportState != REPORT_EMPTY) {
             S->as.dispatchData.reportState = REPORT_EMPTY;
             clearScancodes();
+            currentReportSize = 0;
             return MacroResult_Blocking;
         } else {
             S->ms.macroBasicKeyboardReport.modifiers = mods;
@@ -349,6 +352,7 @@ macro_result_t Macros_DispatchText(const char* text, uint16_t textLen, bool rawS
     // If all characters have been sent, finish.
     if (S->as.dispatchData.textIdx == textLen) {
         if (S->as.dispatchData.reportState != REPORT_EMPTY) {
+            currentReportSize = 0;
             S->as.dispatchData.reportState = REPORT_EMPTY;
             memset(&S->ms.macroBasicKeyboardReport, 0, sizeof S->ms.macroBasicKeyboardReport);
             return MacroResult_Blocking;
@@ -356,12 +360,14 @@ macro_result_t Macros_DispatchText(const char* text, uint16_t textLen, bool rawS
             S->as.dispatchData.textIdx = 0;
             S->as.dispatchData.subIndex = 0;
             dispatchMutex = NULL;
+
             return MacroResult_Finished;
         }
     }
 
     // Whenever the report is full, we clear the report and send it empty before continuing.
     if (S->as.dispatchData.reportState == REPORT_FULL) {
+        currentReportSize = 0;
         S->as.dispatchData.reportState = REPORT_EMPTY;
         memset(&S->ms.macroBasicKeyboardReport, 0, sizeof S->ms.macroBasicKeyboardReport);
         return MacroResult_Blocking;
@@ -377,8 +383,7 @@ macro_result_t Macros_DispatchText(const char* text, uint16_t textLen, bool rawS
 
     // Send the scancode.
     UsbBasicKeyboard_AddScancode(&S->ms.macroBasicKeyboardReport, scancode);
-    S->as.dispatchData.reportState = UsbBasicKeyboard_IsFullScancodes(&S->ms.macroBasicKeyboardReport) ?
-            REPORT_FULL : REPORT_PARTIAL;
+    S->as.dispatchData.reportState = ++currentReportSize >= maxGroupSize ? REPORT_FULL : REPORT_PARTIAL;
     if (rawString) {
         ++S->as.dispatchData.textIdx;
     } else {

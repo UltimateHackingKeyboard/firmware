@@ -3,15 +3,28 @@
 
 // Includes:
 
-#ifdef __ZEPHYR__
-
     #include <stdint.h>
     #include <stdbool.h>
     #include "str_utils.h"
 
+#ifdef __ZEPHYR__
+
     #include <zephyr/kernel.h>
     #include <zephyr/bluetooth/bluetooth.h>
     #include <zephyr/bluetooth/addr.h>
+
+#else
+    typedef struct {
+        uint8_t val[6];
+    } bt_addr_t;
+
+    struct bt_addr_le {
+        uint8_t      type;
+        bt_addr_t    a;
+    };
+
+    typedef struct bt_addr_le bt_addr_le_t;
+#endif
 
 // Macros:
 
@@ -44,7 +57,5 @@
 // Functions:
 
     bool HostConnections_IsKnownBleAddress(const bt_addr_le_t *address);
-
-#endif
 
 #endif
