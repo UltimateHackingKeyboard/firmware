@@ -522,6 +522,7 @@ static void processModuleKineticState(
             break;
         }
         case NavigationMode_Scroll:  {
+            speed *= UsbMouseScrollMultiplier;
             if (!moduleConfiguration->scrollAxisLock) {
                 float xIntegerPart;
                 float yIntegerPart;
