@@ -135,6 +135,7 @@
     void StateSync_ReceiveProperty(device_id_t src, state_sync_prop_id_t property, void* data, uint8_t len);
     void StateSync_UpdateProperty(state_sync_prop_id_t propId, void* data);
     void StateSync_ReceiveStateUpdate(device_id_t src, const uint8_t* data, uint8_t len);
+    const char* StateSync_PropertyIdToString(state_sync_prop_id_t propId);
 
     void StateSync_ResetRightLeftLink(bool bidirectional);
     void StateSync_ResetRightDongleLink(bool bidirectional);

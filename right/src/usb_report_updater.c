@@ -608,6 +608,8 @@ static void updateActiveUsbReports(void)
     InputModifiersPrevious = InputModifiers;
     OutputModifiers = 0;
 
+    PostponerCore_UpdatePostponedTime();
+
     if (EventVector_IsSet(EventVector_MacroEngine)) {
         EVENTLOOP_TIMING(EventloopTiming_WatchReset());
         Macros_ContinueMacro();
@@ -640,8 +642,6 @@ static void updateActiveUsbReports(void)
     if (EventVector_IsSet(EventVector_MouseController)) {
         MouseController_ProcessMouseActions();
     }
-
-    PostponerCore_FinishCycle();
 }
 
 void justPreprocessInput(void) {
@@ -741,6 +741,10 @@ void UpdateUsbReports(void)
         justPreprocessInput();
         return;
     }
+
+#if __ZEPHYR__ && (DEBUG_POSTPONER || DEBUG_EVENTLOOP_SCHEDULE)
+    printk("========== new UpdateUsbReports cycle ==========\n");
+#endif
 
     UpdateUsbReports_LastUpdateTime = CurrentTime;
     UsbReportUpdateCounter++;

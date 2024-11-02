@@ -22,6 +22,12 @@
         MessageId_Ping,
     } message_id_t;
 
+typedef enum {
+    MessageOffset_Src = 0,
+    MessageOffset_Dst = 1,
+    MessageOffset_MsgId1 = 2,
+} message_offset_t;
+
     // the point of message_t is to reduce the number of times we need to copy the message.
     typedef struct {
         const uint8_t* data;

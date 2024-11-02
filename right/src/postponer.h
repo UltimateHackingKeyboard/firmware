@@ -78,6 +78,7 @@
     void PostponerCore_TrackDelay(uint32_t length) ;
     void PostponerCore_RunPostponedEvents(void);
     void PostponerCore_FinishCycle(void);
+    void PostponerCore_UpdatePostponedTime();
 
 // Functions (Basic Query APIs):
 

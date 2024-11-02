@@ -691,3 +691,7 @@ void StateSync_ResetConfig() {
     // For simplicity, update all for now
     StateSync_ResetRightLeftLink(false);
 }
+
+const char* StateSync_PropertyIdToString(state_sync_prop_id_t propId) {
+    return stateSyncProps[propId].name;
+}

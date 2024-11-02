@@ -7,6 +7,7 @@
 #define DEBUG_STATESYNC false
 #define DEBUG_CONSOLE false
 #define DEBUG_EVENTLOOP_SCHEDULE false
+#define DEBUG_POSTPONER false
 #define WATCH_INTERVAL 500
 
 #ifdef __ZEPHYR__
@@ -146,6 +147,11 @@
 #define LOG_SCHEDULE(CODE)
 #endif
 
+#if defined(__ZEPHYR__) && DEBUG_POSTPONER
+#define LOG_POSTPONER(CODE) CODE
+#else
+#define LOG_POSTPONER(CODE)
+#endif
 
 #if defined(__ZEPHYR__) && DEBUG_EVENTLOOP_TIMING
 #define EVENTLOOP_TIMING(CODE) CODE
