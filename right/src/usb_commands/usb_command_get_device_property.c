@@ -3,6 +3,9 @@
 #ifdef __ZEPHYR__
     #include "device.h"
     #include "flash.h"
+    #include <zephyr/bluetooth/bluetooth.h>
+    #include "bt_conn.h"
+    #include "bt_pair.h"
 #else
     #include "eeprom.h"
     #include "fsl_common.h"
@@ -14,6 +17,7 @@
 
 #include "slave_protocol.h"
 #include "timer.h"
+#include "usb_commands/usb_command_get_new_pairings.h"
 #include "usb_commands/usb_command_get_device_property.h"
 #include "usb_protocol_handler.h"
 #include "utils.h"
@@ -77,6 +81,33 @@ void UsbCommand_GetDeviceProperty(void)
                 MD5_CHECKSUM_LENGTH + 1);
         }
     } break;
+    case DevicePropertyId_BleAddress: {
+#ifdef __ZEPHYR__
+        bt_addr_le_t addr;
+        size_t count = 1;
+        bt_id_get(&addr, &count);
+        memcpy(GenericHidInBuffer + 1, addr.a.val, sizeof(addr.a.val));
+#endif
+    } break;
+    case DevicePropertyId_PairedRightPeerBleAddress: {
+#ifdef __ZEPHYR__
+        memcpy(GenericHidInBuffer + 1, Peers[PeerIdRight].addr.a.val, sizeof(Peers[PeerIdRight].addr.a.val));
+#endif
+    } break;
+    case DevicePropertyId_PairingStatus: {
+#ifdef __ZEPHYR__
+        if (BtPair_OobPairingInProgress) {
+            SetUsbTxBufferUint8(1, PairingStatus_InProgress);
+        } else {
+            SetUsbTxBufferUint8(1, BtPair_LastPairingSucceeded ? PairingStatus_Success : PairingStatus_Failed);
+        }
+#endif
+    } break;
+    case DevicePropertyId_NewPairings:
+#ifdef __ZEPHYR__
+        UsbCommand_GetNewPairings();
+#endif
+        break;
     default:
         SetUsbTxBufferUint8(0, UsbStatusCode_GetDeviceProperty_InvalidProperty);
         break;

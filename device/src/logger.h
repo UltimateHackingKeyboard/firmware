@@ -21,6 +21,7 @@ typedef enum {
     void Uart_LogConstant(const char* buffer);
     void Uart_Log(const char *fmt, ...);
     void Log(const char *fmt, ...);
-    void LogRight(log_target_t logMask, const char *fmt, ...);
+    void LogTo(device_id_t deviceId, log_target_t logMask, const char *fmt, ...);
+    void LogConstantTo(device_id_t deviceId, log_target_t logMask, const char* buffer);
 
 #endif // __LOGGER_H__

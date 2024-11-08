@@ -51,6 +51,13 @@ parser_error_t parseConfig(config_buffer_t *buffer)
     DataModelVersion.major = ReadUInt16(buffer);
     DataModelVersion.minor = ReadUInt16(buffer);
     DataModelVersion.patch = ReadUInt16(buffer);
+
+#ifdef __ZEPHYR__
+    if (!ParserRunDry) {
+        printk("Flashed User Config version: %u.%u.%u\n", DataModelVersion.major, DataModelVersion.minor, DataModelVersion.patch);
+    }
+#endif
+
     uint32_t userConfigLength = DataModelVersion.major < 6 ? ReadUInt16(buffer) : ReadUInt32(buffer);
     const char *deviceName = ReadString(buffer, &len);
     uint16_t doubleTapSwitchLayerTimeout = ReadUInt16(buffer);

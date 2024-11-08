@@ -11,7 +11,7 @@ usage: ./build DEVICE1 DEVICE2 ... ACTION1 ACTION2 ...
 
     DEVICE is in { uhk-80-left | uhk-80-right | uhk-60-right | uhk-dongle }
              there are also these aliases: { left | right | dongle | all }
-    ACTION is in { clean | setup | update | build | make | flash | flashUsb | shell | uart }
+    ACTION is in { clean | setup | update | build | make | flash | flashUsb | shell | uart | addrline <address> }
 
     setup    initialize submodules and set up zephyr environment
     clean    removes zephyr libraries
@@ -74,6 +74,19 @@ function processArguments() {
                 ACTIONS="$ACTIONS $1"
                 TARGET_TMUX_SESSION=$BUILD_SESSION_NAME
                 shift
+                ;;
+            addrline)
+                shift
+                ADDR=$1
+                shift
+                for device in $DEVICES
+                do
+                    echo "addrline for $ADDR:"
+                    printf "    "
+                    # addr2line -e device/build/$device/zephyr/zephyr.elf $ADDR
+                    arm-none-eabi-addr2line -e device/build/$device/zephyr/zephyr.elf $ADDR
+                done
+                exit 0
                 ;;
             uart)
                 ACTIONS="$ACTIONS $1"
@@ -275,6 +288,8 @@ END
             ;;
         uart)
             setupUartMonitor
+            ;;
+        addrline)
             ;;
         *)
             help

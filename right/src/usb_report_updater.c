@@ -465,14 +465,16 @@ static void commitKeyState(key_state_t *keyState, bool active)
 static inline void preprocessKeyState(key_state_t *keyState)
 {
     uint8_t debounceTime = keyState->previous ? Cfg.DebounceTimePress : Cfg.DebounceTimeRelease;
-    if (keyState->debouncing && (uint8_t)(CurrentTime - keyState->timestamp) > debounceTime) {
+    if (keyState->debouncing && (uint8_t)(CurrentTime - keyState->timestamp) >= debounceTime) {
         keyState->debouncing = false;
     }
 
-    if (!keyState->debouncing && keyState->debouncedSwitchState != keyState->hardwareSwitchState) {
+    // read just once! Otherwise the key might get stuck
+    bool hardwareState = keyState->hardwareSwitchState;
+    if (!keyState->debouncing && keyState->debouncedSwitchState != hardwareState) {
         keyState->timestamp = CurrentTime;
         keyState->debouncing = true;
-        keyState->debouncedSwitchState = keyState->hardwareSwitchState;
+        keyState->debouncedSwitchState = hardwareState;
 
         commitKeyState(keyState, keyState->debouncedSwitchState);
     }
@@ -606,6 +608,8 @@ static void updateActiveUsbReports(void)
     InputModifiersPrevious = InputModifiers;
     OutputModifiers = 0;
 
+    PostponerCore_UpdatePostponedTime();
+
     if (EventVector_IsSet(EventVector_MacroEngine)) {
         EVENTLOOP_TIMING(EventloopTiming_WatchReset());
         Macros_ContinueMacro();
@@ -638,8 +642,6 @@ static void updateActiveUsbReports(void)
     if (EventVector_IsSet(EventVector_MouseController)) {
         MouseController_ProcessMouseActions();
     }
-
-    PostponerCore_FinishCycle();
 }
 
 void justPreprocessInput(void) {
@@ -739,6 +741,10 @@ void UpdateUsbReports(void)
         justPreprocessInput();
         return;
     }
+
+#if __ZEPHYR__ && (DEBUG_POSTPONER || DEBUG_EVENTLOOP_SCHEDULE)
+    printk("========== new UpdateUsbReports cycle ==========\n");
+#endif
 
     UpdateUsbReports_LastUpdateTime = CurrentTime;
     UsbReportUpdateCounter++;

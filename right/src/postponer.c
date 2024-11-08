@@ -12,6 +12,7 @@
 #include "debug.h"
 #include "config_manager.h"
 #include "event_scheduler.h"
+#include "macros/keyid_parser.h"
 
 #ifdef __ZEPHYR__
 #include <zephyr/sys/printk.h>
@@ -40,6 +41,11 @@ bool Postponer_MouseBlocked = false;
 static void autoShift();
 static void chording();
 
+struct postponer_run_state_t {
+    bool runEventsThisCycle;
+    bool runEventsNextCycle;
+    bool eventsShouldBeQueued;
+} runState;
 
 //##############################
 //### Implementation Helpers ###
@@ -86,13 +92,16 @@ static void applyEventAndConsume(postponer_buffer_record_type_t* rec) {
             Postponer_LastKeyMods = rec->event.key.modifiers;
             // This gives the key two ticks (this and next) to get properly processed before execution of next queued event.
             // PostponerCore_PostponeNCycles(1);
+            EventVector_Set(EventVector_NativeActions);
             Macros_WakeBecauseOfKeystateChange();
             consumeEvent(1);
+
             break;
         case PostponerEventType_UnblockMouse:
             Postponer_MouseBlocked = false;
             Postponer_LastKeyLayer = 255;
             Postponer_LastKeyMods = 0;
+            EventVector_Set(EventVector_MouseController);
             // PostponerCore_PostponeNCycles(1);
             consumeEvent(1);
             break;
@@ -106,11 +115,14 @@ static void applyEventAndConsume(postponer_buffer_record_type_t* rec) {
                 if (Timer_GetElapsedTime(&delayStartedAt) >= rec->event.delay.length) {
                     delayActive = false;
                     consumeEvent(1);
+                } else {
+                    runState.runEventsThisCycle = false;
+                    runState.runEventsNextCycle = false;
+                    EventScheduler_Schedule(delayStartedAt + rec->event.delay.length, EventSchedulerEvent_Postponer, "Postponer - apply delay");
                 }
             }
             break;
         }
-
     }
 }
 
@@ -179,12 +191,6 @@ static void appendEvent(postponer_event_t event)
 //     cyclesUntilActivation = MAX(n + 1, cyclesUntilActivation);
 // }
 
-struct postponer_run_state_t {
-    bool runEventsThisCycle;
-    bool runEventsNextCycle;
-    bool eventsShouldBeQueued;
-} runState;
-
 
 bool PostponerCore_EventsShouldBeQueued(void)
 {
@@ -243,9 +249,50 @@ void PostponerCore_TrackDelay(uint32_t length)
             );
 }
 
+#ifdef __ZEPHYR__
+ATTR_UNUSED static const char* actionToString(postponer_event_type_t action) {
+    switch(action) {
+    case PostponerEventType_PressKey:
+        return "PressKey";
+    case PostponerEventType_ReleaseKey:
+        return "ReleaseKey";
+    case PostponerEventType_UnblockMouse:
+        return "UnblockMouse";
+    case PostponerEventType_Delay:
+        return "Delay";
+    }
+    return "Unknown";
+}
+
+ATTR_UNUSED static void printRecord(const char* prefix, postponer_buffer_record_type_t* record) {
+    postponer_event_type_t actionType = record->event.type;
+    bool isKeyAction = actionType == PostponerEventType_PressKey || actionType == PostponerEventType_ReleaseKey;
+    const char* action = actionToString(actionType);
+    const char* keyAbbrev;
+    if (isKeyAction) {
+        keyAbbrev = MacroKeyIdParser_KeyIdToAbbreviation(Utils_KeyStateToKeyId(record->event.key.keyState));
+    } else {
+        keyAbbrev = "";
+    }
+    printk("%s %s %s\n", prefix, action, keyAbbrev);
+}
+
+ATTR_UNUSED static void printContentPretty() {
+    if (bufferSize == 0) {
+        printk("? Postponer queue is empty!\n");
+        return;
+    }
+    printk("? Postponer content:\n");
+    for (uint8_t i = 0; i < bufferSize; i++) {
+        postponer_buffer_record_type_t* record = &buffer[POS(i)];
+        printRecord("    -", record);
+    }
+}
+#endif
 
 void PostponerCore_RunPostponedEvents(void)
 {
+    LOG_POSTPONER(printk("? RunPostponedEvents called! ---\n"));
     runState.runEventsThisCycle = bufferSize > 0;
     runState.runEventsNextCycle = bufferSize > 0;
     runState.eventsShouldBeQueued = bufferSize > 0 || Cfg.ChordingDelay || Cfg.AutoShiftDelay || EventVector_IsSet(EventVector_NativeActionsPostponing) || EventVector_IsSet(EventVector_MacroEnginePostponing);
@@ -260,19 +307,24 @@ void PostponerCore_RunPostponedEvents(void)
     }
     // Process one event every two cycles. (Unless someone keeps Postponer active by touching cycles_until_activation.)
     if ( bufferSize != 0 && (runState.runEventsThisCycle || bufferSize > POSTPONER_BUFFER_MAX_FILL)) {
+        LOG_POSTPONER(printRecord("? applying event", &buffer[bufferPosition]););
         LOG_SCHEDULE(printk("P applying event\n"));
         CurrentPostponedTime = buffer[bufferPosition].time;
         applyEventAndConsume(&buffer[bufferPosition]);
+    } else {
+        if (bufferSize) {
+            LOG_POSTPONER(printRecord("? NOT applying event", &buffer[bufferPosition]););
+        }
     }
 
     bool executeNextCycle = bufferSize > 0 && (runState.runEventsThisCycle || runState.runEventsNextCycle);
+
+    LOG_POSTPONER(printContentPretty());
     EventVector_SetValue(EventVector_Postponer, executeNextCycle);
 }
 
-void PostponerCore_FinishCycle(void)
-{
-    // cyclesUntilActivation -= cyclesUntilActivation > 0 ? 1 : 0;
-    if(bufferSize == 0 /*&& cyclesUntilActivation == 0*/) {
+void PostponerCore_UpdatePostponedTime() {
+    if (bufferSize == 0) {
         CurrentPostponedTime = CurrentTime;
     }
 }

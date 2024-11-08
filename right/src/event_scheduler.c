@@ -41,16 +41,23 @@ static void scheduleNext()
     EventVector_SetValue(EventVector_EventScheduler, gotAny);
 }
 
-#define DISABLE_IN_EVENTLOOP_SCHEDULE_DEBUG() \
-    if (DEBUG_EVENTLOOP_SCHEDULE) { \
-        return; \
+#define RETURN_IF_SPAM(EVT) if (isSpam(EVT)) { return; }
+
+static bool isSpam(event_scheduler_event_t evt)
+{
+    switch (evt) {
+        case EventSchedulerEvent_UpdateBattery:
+        case EventSchedulerEvent_UpdateMergeSensor:
+            return DEBUG_EVENTLOOP_SCHEDULE;
+        default:
+            return false;
     }
+}
 
 static void processEvt(event_scheduler_event_t evt)
 {
     switch (evt) {
         case EventSchedulerEvent_UpdateBattery:
-            DISABLE_IN_EVENTLOOP_SCHEDULE_DEBUG();
             Charger_UpdateBatteryState();
             break;
         case EventSchedulerEvent_ShiftScreen:
@@ -91,11 +98,16 @@ static void processEvt(event_scheduler_event_t evt)
             UhkModuleSlaveDriver_UpdateConnectionStatus();
             break;
         case EventSchedulerEvent_UpdateMergeSensor:
-            DISABLE_IN_EVENTLOOP_SCHEDULE_DEBUG();
             MergeSensor_Update();
             break;
         case EventSchedulerEvent_PowerMode:
             PowerMode_Update();
+            break;
+        case EventSchedulerEvent_EndBtPairing:
+            BtPair_EndPairing(false, "Pairing timeout");
+            break;
+        case EventSchedulerEvent_RestartBt:
+            BtManager_RestartBt();
             break;
         default:
             return;
@@ -105,6 +117,7 @@ static void processEvt(event_scheduler_event_t evt)
 
 void EventScheduler_Reschedule(uint32_t at, event_scheduler_event_t evt, const char* label)
 {
+    RETURN_IF_SPAM(evt);
     LOG_SCHEDULE(
         printk("%c", PostponerCore_EventsShouldBeQueued() ? 'P' : ' ');
         printk("    !!! Replan: %s\n", label);
@@ -126,6 +139,7 @@ void EventScheduler_Reschedule(uint32_t at, event_scheduler_event_t evt, const c
 
 void EventScheduler_Schedule(uint32_t at, event_scheduler_event_t evt, const char* label)
 {
+    RETURN_IF_SPAM(evt);
     LOG_SCHEDULE(
         printk("%c", PostponerCore_EventsShouldBeQueued() ? 'P' : ' ');
         printk("    !!! Plan: %s\n", label);
@@ -146,6 +160,7 @@ void EventScheduler_Schedule(uint32_t at, event_scheduler_event_t evt, const cha
 
 void EventScheduler_Unschedule(event_scheduler_event_t evt)
 {
+    RETURN_IF_SPAM(evt);
     times[evt] = 0;
     labels[evt] = NULL;
 

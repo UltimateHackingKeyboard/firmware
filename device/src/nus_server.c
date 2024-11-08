@@ -7,14 +7,31 @@
 #include "device.h"
 #include "messenger_queue.h"
 #include "legacy/debug.h"
+#include "zephyr/bluetooth/addr.h"
 
 #define NUS_SLOTS 2
 
 static K_SEM_DEFINE(nusBusy, NUS_SLOTS, NUS_SLOTS);
 
+static void setPeerConnected(uint8_t peerId, device_id_t peerDeviceId, struct bt_conn *conn) {
+    const bt_addr_le_t *addr = bt_conn_get_dst(conn);
+    if (!Peers[peerId].isConnected || bt_addr_le_eq(&Peers[peerId].addr, addr) != 0) {
+        Peers[peerId].addr = *addr;
+        Bt_SetDeviceConnected(peerDeviceId);
+    }
+}
+
 static void received(struct bt_conn *conn, const uint8_t *const data, uint16_t len) {
     uint8_t* copy = MessengerQueue_AllocateMemory();
     memcpy(copy, data, len);
+
+    if (DEVICE_ID == DeviceId_Uhk80_Left) {
+        setPeerConnected(PeerIdRight, DeviceId_Uhk80_Right, conn);
+    }
+
+    if (DEVICE_ID == DeviceId_Uhk80_Right) {
+        setPeerConnected(PeerIdDongle, DeviceId_Uhk_Dongle, conn);
+    }
 
     switch (DEVICE_ID) {
         case DeviceId_Uhk80_Left:
@@ -38,12 +55,8 @@ static void sent(struct bt_conn *conn) {
 static void send_enabled(enum bt_nus_send_status status)
 {
     if (status == BT_NUS_SEND_STATUS_ENABLED) {
-        if (DEVICE_ID == DeviceId_Uhk80_Left) {
-            Bt_SetDeviceConnected(DeviceId_Uhk80_Right);
-        }
-        if (DEVICE_ID == DeviceId_Uhk80_Right) {
-            Bt_SetDeviceConnected(DeviceId_Uhk_Dongle);
-        }
+        // in theory, NUS is ready. In practice, it is once we receive a message from the client.
+        printk("NUS peripheral connection is ready.\n");
     }
 }
 
@@ -57,9 +70,12 @@ int NusServer_Init(void) {
     int err = bt_nus_init(&nus_cb);
     if (err) {
         printk("Failed to initialize UART service (err: %d)\n", err);
+        return err;
     }
 
-    return err;
+    printk("NUS Server module initialized.\n");
+
+    return 0;
 }
 
 void NusServer_Disconnected() {
@@ -67,7 +83,7 @@ void NusServer_Disconnected() {
     k_sem_init(&nusBusy, NUS_SLOTS, NUS_SLOTS);
 }
 
-void NusServer_Send(const uint8_t *data, uint16_t len) {
+static void send_raw_buffer(const uint8_t *data, uint16_t len) {
     SEM_TAKE(&nusBusy);
     int err = bt_nus_send(NULL, data, len);
     if (err) {
@@ -93,17 +109,21 @@ bool NusServer_Availability(messenger_availability_op_t operation) {
 
 void NusServer_SendMessage(message_t msg) {
     uint8_t buffer[MAX_LINK_PACKET_LENGTH];
+    uint8_t bufferIdx = 0;
+
+    buffer[bufferIdx++] = msg.src;
+    buffer[bufferIdx++] = msg.dst;
 
     for (uint8_t id = 0; id < msg.idsUsed; id++) {
-        buffer[id] = msg.messageId[id];
+        buffer[bufferIdx++] = msg.messageId[id];
     }
 
-    if (msg.len + msg.idsUsed > MAX_LINK_PACKET_LENGTH) {
+    if (msg.len + msg.idsUsed + 2 > MAX_LINK_PACKET_LENGTH) {
         printk("Message is too long for NUS packets! [%i, %i, ...]\n", buffer[0], buffer[1]);
         return;
     }
 
-    memcpy(&buffer[msg.idsUsed], msg.data, msg.len);
+    memcpy(&buffer[bufferIdx], msg.data, msg.len);
 
-    NusServer_Send(buffer, msg.len+msg.idsUsed);
+    send_raw_buffer(buffer, msg.len+msg.idsUsed+2);
 }
