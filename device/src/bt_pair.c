@@ -11,6 +11,7 @@
 #include "zephyr/kernel.h"
 #include "bt_manager.h"
 #include "bt_advertise.h"
+#include "legacy/host_connection.h"
 
 bool BtPair_LastPairingSucceeded = true;
 bool BtPair_OobPairingInProgress = false;
@@ -94,20 +95,10 @@ struct delete_args_t {
     const bt_addr_le_t* addr;
 };
 
-static void bt_foreach_bond_cb_delete(const struct bt_bond_info *info, void *user_data)
-{
+static void deleteBond(const struct bt_bond_info *info) {
     int err;
 
     struct bt_conn* conn;
-
-    struct delete_args_t* args = (struct delete_args_t*)user_data;
-
-    if (!args->all && bt_addr_le_cmp(args->addr, &info->addr) != 0) {
-        char addr[32];
-        bt_addr_le_to_str(&info->addr, addr, sizeof(addr));
-        printk("Not deleting bond for %s\n", addr);
-        return;
-    }
 
     if (bt_addr_le_cmp(&Peers[PeerIdLeft].addr, &info->addr) == 0) {
         settings_delete("uhk/addr/left");
@@ -137,6 +128,20 @@ static void bt_foreach_bond_cb_delete(const struct bt_bond_info *info, void *use
         bt_conn_disconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
         bt_conn_unref(conn);
     }
+}
+
+static void bt_foreach_bond_cb_delete(const struct bt_bond_info *info, void *user_data)
+{
+    struct delete_args_t* args = (struct delete_args_t*)user_data;
+
+    if (!args->all && bt_addr_le_cmp(args->addr, &info->addr) != 0) {
+        char addr[32];
+        bt_addr_le_to_str(&info->addr, addr, sizeof(addr));
+        printk("Not deleting bond for %s\n", addr);
+        return;
+    }
+
+    deleteBond(info);
 }
 
 void BtPair_Unpair(const bt_addr_le_t addr) {
@@ -195,4 +200,15 @@ bool BtPair_IsDeviceBonded(const bt_addr_le_t *addr)
     bt_foreach_bond(BT_ID_DEFAULT, checkBondedDevice, (void*)&args);
 
     return bonded;
+}
+
+void deleteBondIfUnknown(const struct bt_bond_info *info, void *user_data) {
+    if (!HostConnections_IsKnownBleAddress(&info->addr)) {
+        deleteBond(info);
+    }
+};
+
+
+void BtPair_ClearUnknownBonds() {
+    bt_foreach_bond(BT_ID_DEFAULT, deleteBondIfUnknown, NULL);
 }

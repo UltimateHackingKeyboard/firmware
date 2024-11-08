@@ -25,6 +25,7 @@
 #include "parse_host_connection.h"
 #include "error_reporting.h"
 #include "versioning.h"
+#include "stubs.h"
 
 version_t DataModelVersion = {0, 0, 0};
 
@@ -328,6 +329,7 @@ parser_error_t parseConfig(config_buffer_t *buffer)
 
         LedManager_RecalculateLedBrightness();
         LedManager_UpdateSleepModes();
+        BtPair_ClearUnknownBonds();
 
         // Update counts
 
