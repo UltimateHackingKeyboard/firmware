@@ -5,15 +5,187 @@
 			"label": "Build UHK 60 v2 firmware",
 			"type": "shell",
 			"command": "make",
-			"args": ["${command:cpptools.activeConfigName}"],
+			"args": [
+				"${command:cpptools.activeConfigName}"
+			],
 			"options": {
 				"cwd": "${workspaceFolder}/right/uhk60v2"
 			},
-			"problemMatcher": ["$gcc"],
+			"problemMatcher": [
+				"$gcc"
+			],
 			"group": {
 				"kind": "build",
 				"isDefault": true
 			}
 		},
+		{
+			"label": "Generate UHK versions",
+			"type": "shell",
+			"command": "node",
+			"args": [
+				"scripts/generate-versions.mjs"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [],
+			"group": {
+				"kind": "none",
+				"isDefault": true
+			}
+		},
+		{
+			"label": "West update",
+			"group": {
+				"kind": "none",
+				"isDefault": true
+			},
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"type": "process",
+			"command": "nrfutil",
+			"args": [
+				"toolchain-manager",
+				"launch",
+				"--shell",
+				"--",
+				"west",
+				"update"
+			]
+		},
+		{
+			"label": "West patch",
+			"group": {
+				"kind": "none",
+				"isDefault": true
+			},
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"type": "process",
+			"command": "nrfutil",
+			"args": [
+				"toolchain-manager",
+				"launch",
+				"--shell",
+				"--",
+				"west",
+				"patch"
+			],
+			"dependsOrder": "sequence",
+			"dependsOn": [
+				"West update"
+			]
+		},
+		{
+			"label": "Build UHK 80 left firmware",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"type": "process",
+			"command": "nrfutil",
+			"args": [
+				"toolchain-manager",
+				"launch",
+				"--shell",
+				"--",
+				"west",
+				"build",
+				"--build-dir",
+				"${cwd}/device/build/uhk-80-left",
+				"${cwd}/device",
+				"--pristine",
+				"--board",
+				"uhk-80-left",
+				"--no-sysbuild",
+				"--",
+				"-DNCS_TOOLCHAIN_VERSION=NONE",
+				"-DCONF_FILE=${cwd}/device/prj.conf",
+				"-DEXTRA_CONF_FILE=${cwd}/device/prj.conf.overlays/nrf_shared.conf;${cwd}/device/prj.conf.overlays/c2usb.conf;${cwd}/device/prj.conf.overlays/uhk-80.conf",
+				"-DBOARD_ROOT=${cwd}",
+				"-Dmcuboot_OVERLAY_CONFIG=${cwd}/device/child_image/mcuboot.conf;${cwd}/device/child_image/uhk-80-left.mcuboot.conf"
+			],
+			"problemMatcher": [
+				"$gcc"
+			]
+		},
+		{
+			"label": "Build UHK 80 right firmware",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"type": "process",
+			"command": "nrfutil",
+			"args": [
+				"toolchain-manager",
+				"launch",
+				"--shell",
+				"--",
+				"west",
+				"build",
+				"--build-dir",
+				"${cwd}/device/build/uhk-80-right",
+				"${cwd}/device",
+				"--pristine",
+				"--board",
+				"uhk-80-right",
+				"--no-sysbuild",
+				"--",
+				"-DNCS_TOOLCHAIN_VERSION=NONE",
+				"-DCONF_FILE=${cwd}/device/prj.conf",
+				"-DEXTRA_CONF_FILE=${cwd}/device/prj.conf.overlays/nrf_shared.conf;${cwd}/device/prj.conf.overlays/c2usb.conf;${cwd}/device/prj.conf.overlays/uhk-80.conf;${cwd}/device/prj.conf.overlays/ble-hid.conf",
+				"-DBOARD_ROOT=${cwd}",
+				"-Dmcuboot_OVERLAY_CONFIG=${cwd}/device/child_image/mcuboot.conf;${cwd}/device/child_image/uhk-80-right.mcuboot.conf"
+			],
+			"problemMatcher": [
+				"$gcc"
+			]
+		},
+		{
+			"label": "Build UHK dongle firmware",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"type": "process",
+			"command": "nrfutil",
+			"args": [
+				"toolchain-manager",
+				"launch",
+				"--shell",
+				"--",
+				"west",
+				"build",
+				"--build-dir",
+				"${cwd}/device/build/uhk-dongle",
+				"${cwd}/device",
+				"--pristine",
+				"--board",
+				"uhk-dongle",
+				"--no-sysbuild",
+				"--",
+				"-DNCS_TOOLCHAIN_VERSION=NONE",
+				"-DCONF_FILE=${cwd}/device/prj.conf",
+				"-DEXTRA_CONF_FILE=${cwd}/device/prj.conf.overlays/nrf_shared.conf;${cwd}/device/prj.conf.overlays/c2usb.conf",
+				"-DBOARD_ROOT=${cwd}",
+				"-Dmcuboot_OVERLAY_CONFIG=${cwd}/device/child_image/mcuboot.conf;${cwd}/device/child_image/uhk-dongle.mcuboot.conf"
+			],
+			"problemMatcher": [
+				"$gcc"
+			]
+		}
 	]
 }
