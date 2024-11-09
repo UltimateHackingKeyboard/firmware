@@ -7,6 +7,8 @@ manifest:
       url-base: https://github.com/nrfconnect
     - name: zephyr
       url-base: https://github.com/zephyrproject-rtos
+    - name: IntergatedCircuits
+      url-base: https://github.com/IntergatedCircuits
 
   projects:
     - name: sdk-nrf
@@ -30,5 +32,9 @@ manifest:
 
     - name: hal_nxp
       remote: zephyr
-      path: nrfconnect/zephyr-hal-nxp
+      clone-depth: 1
+
+    - name: c2usb
+      remote: IntergatedCircuits
+      revision: da4ad86f1cd3a4f8b42aa2d9acdd43e384341ce4
       clone-depth: 1

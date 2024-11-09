@@ -41,10 +41,6 @@ if(NOT BOARD STREQUAL "uhk-60-right")
     # C headers compiled with C++ give pointer conversion errors, turn them to warnings
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive")
 
-    set(C2USB_PATH "c2usb")
-
-    add_subdirectory(${C2USB_PATH})
-
     # Link app to c2usb
     target_link_libraries(app PRIVATE
         c2usb

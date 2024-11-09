@@ -73,5 +73,3 @@ configdefault BT_DEVICE_APPEARANCE
 # to these application-specific defaults instead of the unconditional default in the Zephyr Kconfig tree.
 # https://github.com/nrfconnect/sdk-nrf/blob/4b9841a28e97e9d61b93f8981375d644b9d04ea0/samples/bluetooth/mesh/light/Kconfig#L11C1-L13C30
 source "Kconfig.zephyr"
-
-rsource "c2usb/c2usb/port/zephyr/Kconfig"
