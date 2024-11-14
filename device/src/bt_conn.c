@@ -131,7 +131,6 @@ static void assignPeer(const bt_addr_le_t *addr, int8_t peerId) {
         char addrString[32];
         bt_addr_le_to_str(addr, addrString, sizeof(addrString));
         printk("Peer slot %s already occupied. Overwriting with address %s\n", Peers[peerId].name, addrString);
-        return;
     }
     Peers[peerId].addr = *addr;
     Peers[peerId].isConnected = true;
@@ -155,26 +154,30 @@ static void connected(struct bt_conn *conn, uint8_t err) {
 
     printk("Bt connected to %s\n", GetPeerStringByConn(conn));
 
+    if (peerId == PeerIdUnknown || peerId == PeerIdHid) {
+        static const struct bt_le_conn_param conn_params = BT_LE_CONN_PARAM_INIT(
+                6, 9, // keep it low, lowest allowed is 6 (7.5ms), lowest supported widely is 9 (11.25ms)
+                10, // keeping it higher allows power saving on peripheral when there's nothing to send (keep it under 30 though)
+                100 // connection timeout (*10ms)
+                );
+        bt_conn_le_param_update(conn, &conn_params);
+    }
+
     if (peerId == PeerIdUnknown) {
-        peerId = PeerIdHid;
+        return;
     }
 
     assignPeer(bt_conn_get_dst(conn), peerId);
 
     if (peerId == PeerIdHid) {
-        if (DEVICE_IS_UHK80_RIGHT) {
-            static const struct bt_le_conn_param conn_params = BT_LE_CONN_PARAM_INIT(
-                6, 9, // keep it low, lowest allowed is 6 (7.5ms), lowest supported widely is 9 (11.25ms)
-                10, // keeping it higher allows power saving on peripheral when there's nothing to send (keep it under 30 though)
-                100 // connection timeout (*10ms)
-            );
-            bt_conn_le_param_update(conn, &conn_params);
-
-            USB_DisableHid();
-        }
+        // USB_DisableHid();
     } else {
         bt_conn_set_security(conn, BT_SECURITY_L4);
         // continue connection process in in `connectionSecured()`
+    }
+
+    if (DEVICE_IS_UHK80_RIGHT && (peerId == PeerIdHid || peerId == PeerIdUnknown || peerId == PeerIdDongle)) {
+        BtAdvertise_Start(BtAdvertise_Type());
     }
 }
 
@@ -188,7 +191,7 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
         if (DEVICE_IS_UHK80_RIGHT) {
             if (peerId == PeerIdHid || peerId == PeerIdUnknown) {
                 BtAdvertise_Start(BtAdvertise_Type());
-                USB_EnableHid();
+                // USB_EnableHid();
             }
             if (peerId == PeerIdDongle) {
                 BtAdvertise_Start(BtAdvertise_Type());
@@ -203,7 +206,7 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
         }
 
         if (DEVICE_IS_UHK80_LEFT && peerId == PeerIdRight) {
-            BtScan_Start();
+            BtAdvertise_Start(BtAdvertise_Type());
         }
     }
 
