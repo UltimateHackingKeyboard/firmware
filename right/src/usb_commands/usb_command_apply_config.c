@@ -11,6 +11,7 @@
 #include "debug.h"
 #include "config_manager.h"
 #include "led_manager.h"
+#include "versioning.h"
 
 #ifdef __ZEPHYR__
 #include "state_sync.h"
@@ -42,6 +43,24 @@ void UsbCommand_ApplyConfigAsync(void) {
         Main_Wake();
 #endif
     }
+}
+
+void UsbCommand_ApplyFactory(void)
+{
+    EventVector_Unset(EventVector_ApplyConfig);
+
+    DataModelVersion = userConfigVersion;
+
+    Macros_ClearStatus();
+
+    ConfigManager_ResetConfiguration(false);
+
+#ifdef __ZEPHYR__
+    StateSync_ResetConfig();
+    StateSync_ResetRightLeftLink(true);
+#endif
+
+    LedManager_FullUpdate();
 }
 
 void UsbCommand_ApplyConfig(void)

@@ -139,7 +139,7 @@ int main(void) {
         printk("Applying user config\n");
         bool factoryMode = false;
          if (factoryMode) {
-             LedManager_FullUpdate();
+             UsbCommand_ApplyFactory();
          } else {
              UsbCommand_ApplyConfig();
          }
