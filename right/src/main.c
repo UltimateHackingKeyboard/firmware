@@ -30,6 +30,7 @@
 #include "usb_descriptors/usb_descriptor_strings.h"
 #include "layouts/key_layout_60_to_universal.h"
 #include "power_mode.h"
+#include "usb_protocol_handler.h"
 
 static bool IsEepromInitialized = false;
 static bool IsConfigInitialized = false;
@@ -56,7 +57,9 @@ static void initConfig()
     while (!IsConfigInitialized) {
         if (IsEepromInitialized) {
 
-            UsbCommand_ApplyConfig();
+            if (IsFactoryResetModeEnabled || UsbCommand_ApplyConfig() != UsbStatusCode_Success) {
+                UsbCommand_ApplyFactory();
+            }
             ShortcutParser_initialize();
             KeyIdParser_initialize();
             Macros_Initialize();
