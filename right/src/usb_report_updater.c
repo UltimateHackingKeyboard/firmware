@@ -582,7 +582,11 @@ static void updateActionStates() {
                     }
                     handleEventInterrupts(keyState);
 
-                    // Macros_ReportPrintf(NULL, "R+%s", Utils_KeyStateToKeyAbbreviation(keyState));
+                    Macros_ReportPrintf(NULL, "R+%s", Utils_KeyStateToKeyAbbreviation(keyState));
+                }
+
+                if (KeyState_DeactivatedNow(keyState)) {
+                    Macros_ReportPrintf(NULL, "R-%s", Utils_KeyStateToKeyAbbreviation(keyState));
                 }
 
                 cachedAction = &actionCache[slotId][keyId];
