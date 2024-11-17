@@ -39,6 +39,7 @@
 #include "debug_eventloop_timing.h"
 #include <zephyr/drivers/gpio.h>
 #include "dongle_leds.h"
+#include "legacy/usb_protocol_handler.h"
 
 k_tid_t Main_ThreadId = 0;
 
@@ -138,10 +139,8 @@ int main(void) {
         USB_SetSerialNumber(HardwareConfig->uniqueId);
         printk("Applying user config\n");
         bool factoryMode = false;
-         if (factoryMode) {
+         if (factoryMode || UsbCommand_ApplyConfig() != UsbStatusCode_Success) {
              UsbCommand_ApplyFactory();
-         } else {
-             UsbCommand_ApplyConfig();
          }
          printk("User config applied\n");
          ShortcutParser_initialize();

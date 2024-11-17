@@ -31,7 +31,7 @@ static uint8_t validateConfig() {
     ParserRunDry = true;
     StagingUserConfigBuffer.offset = 0;
     uint8_t parseConfigStatus = ParseConfig(&StagingUserConfigBuffer);
-    updateUsbBuffer(parseConfigStatus, StagingUserConfigBuffer.offset, ParsingStage_Validate);
+    updateUsbBuffer(UsbStatusCode_Success, StagingUserConfigBuffer.offset, ParsingStage_Validate);
 
     return parseConfigStatus;
 }
@@ -63,7 +63,7 @@ void UsbCommand_ApplyFactory(void)
     LedManager_FullUpdate();
 }
 
-void UsbCommand_ApplyConfig(void)
+uint8_t UsbCommand_ApplyConfig(void)
 {
     static bool isBoot = true;
     EventVector_Unset(EventVector_ApplyConfig);
@@ -71,7 +71,7 @@ void UsbCommand_ApplyConfig(void)
     uint8_t parseConfigStatus = validateConfig();
 
     if (parseConfigStatus != UsbStatusCode_Success) {
-        return;
+        return parseConfigStatus;
     }
 
     // Make the staging configuration the current one.
@@ -85,7 +85,7 @@ void UsbCommand_ApplyConfig(void)
     StagingUserConfigBuffer.buffer = temp;
 
     if (IsFactoryResetModeEnabled) {
-        return;
+        return UsbStatusCode_Success;
     }
 
     ConfigManager_ResetConfiguration(false);
@@ -93,10 +93,10 @@ void UsbCommand_ApplyConfig(void)
     ParserRunDry = false;
     ValidatedUserConfigBuffer.offset = 0;
     parseConfigStatus = ParseConfig(&ValidatedUserConfigBuffer);
-    updateUsbBuffer(parseConfigStatus, ValidatedUserConfigBuffer.offset, ParsingStage_Apply);
 
     if (parseConfigStatus != UsbStatusCode_Success) {
-        return;
+        Macros_ReportErrorPrintf(NULL, "UserConfig validated successfuly, but failed to parse. This wasn't supposed to happen.");
+        return parseConfigStatus;
     }
 
     Macros_ClearStatus();
@@ -113,9 +113,11 @@ void UsbCommand_ApplyConfig(void)
 
     // Switch to the keymap of the updated configuration of the same name or the default keymap.
     if (SwitchKeymapByAbbreviation(oldKeymapAbbreviationLen, oldKeymapAbbreviation)) {
-        return;
+        return UsbStatusCode_Success;
     }
 
     SwitchKeymapById(DefaultKeymapIndex);
     isBoot = false;
+
+    return UsbStatusCode_Success;
 }
