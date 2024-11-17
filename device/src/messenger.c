@@ -152,7 +152,7 @@ static void processSyncablePropertyRight(device_id_t src, const uint8_t* data, u
                         KeyStates[SlotId_LeftKeyboardHalf][keyId].hardwareSwitchState = state;
                         somethingChanged = true;
 
-                        Macros_ReportPrintf(NULL, "M+%s", MacroKeyIdParser_KeyIdToAbbreviation(SlotId_LeftKeyboardHalf*64 + keyId));
+                        // Macros_ReportPrintf(NULL, "M+%s", MacroKeyIdParser_KeyIdToAbbreviation(SlotId_LeftKeyboardHalf*64 + keyId));
                     }
                     KeyStates[SlotId_LeftKeyboardHalf][keyId].hardwareSwitchState = !!(message[keyId/8] & (1 << (keyId % 8)));
                 }
