@@ -581,6 +581,8 @@ static void updateActionStates() {
                         Postponer_LastKeyMods = 0;
                     }
                     handleEventInterrupts(keyState);
+
+                    Macros_ReportPrintf(NULL, "R+%s", Utils_KeyStateToKeyAbbreviation(keyState));
                 }
 
                 cachedAction = &actionCache[slotId][keyId];

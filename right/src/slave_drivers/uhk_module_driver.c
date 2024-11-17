@@ -2,6 +2,7 @@
 #include "config_parser/parse_config.h"
 #include "i2c_addresses.h"
 #include "i2c.h"
+#include "macros/keyid_parser.h"
 
 #ifdef __ZEPHYR__
 #include "messenger.h"
@@ -145,6 +146,11 @@ void UhkModuleSlaveDriver_ProcessKeystates(uint8_t uhkModuleDriverId, uhk_module
         }
 
         if (KeyStates[slotId][targetKeyId].hardwareSwitchState != keyStatesBuffer[keyId]) {
+            if (keyStatesBuffer[keyId]) {
+                Macros_ReportPrintf(NULL, "S+%s", MacroKeyIdParser_KeyIdToAbbreviation(keyId+slotId*64));
+            } else {
+                Macros_ReportPrintf(NULL, "S-%s", MacroKeyIdParser_KeyIdToAbbreviation(keyId+slotId*64));
+            }
             KeyStates[slotId][targetKeyId].hardwareSwitchState = keyStatesBuffer[keyId];
             stateChanged = true;
         }
@@ -446,6 +452,7 @@ slave_result_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
         case UhkModulePhase_ProcessKeystates:
             if (CRC16_IsMessageValid(rxMessage)) {
                 if (DEVICE_ID == DeviceId_Uhk80_Left) {
+                    // this handles forwarding left module states in uhk80 left half
                     forwardKeystates(uhkModuleDriverId, uhkModuleState, rxMessage);
                 } else {
                     UhkModuleSlaveDriver_ProcessKeystates(uhkModuleDriverId, uhkModuleState, rxMessage->data);

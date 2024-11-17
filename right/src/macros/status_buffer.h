@@ -13,6 +13,7 @@
 
 // Typedefs:
 
+
 // Variables:
 //
     extern bool Macros_ConsumeStatusCharDirtyFlag;
