@@ -124,8 +124,6 @@ void Utils_PrintReport(const char* prefix, usb_basic_keyboard_report_t* report)
 {
     Macros_SetStatusString(prefix, NULL);
 
-    Macros_SetStatusString(" ", NULL);
-
     bool modifierFound = reportModifiers(report->modifiers);
 
     if (modifierFound) {

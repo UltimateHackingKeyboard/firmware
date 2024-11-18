@@ -683,6 +683,7 @@ static void sendActiveReports() {
 
 #endif
         {
+            Utils_PrintReport("O:", ActiveUsbBasicKeyboardReport);
             MacroRecorder_RecordBasicReport(ActiveUsbBasicKeyboardReport);
 
             KEY_TIMING(KeyTiming_RecordReport(ActiveUsbBasicKeyboardReport));
