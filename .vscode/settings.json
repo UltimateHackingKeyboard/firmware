@@ -1,6 +1,6 @@
 {
-    "nrf-connect.toolchain.path": "${nrf-connect.toolchain:2.7.0}",
-    "nrf-connect.topdir": "${nrf-connect.sdk:2.7.0}",
+    "nrf-connect.toolchain.path": "${nrf-connect.toolchain:2.8.0}",
+    "nrf-connect.topdir": "${nrf-connect.sdk:2.8.0}",
     "nrf-connect.applications": [
         "${workspaceFolder}/device"
     ],
