@@ -282,6 +282,7 @@ static void applyKeystrokePrimary(key_state_t *keyState, key_action_cached_t *ca
         bool stickyModsAreNonZero = StickyModifiers != 0 || StickyModifiersNegative != 0;
         if (stickyModifierKey == keyState && !stickyModifierShouldStick && stickyModsAreNonZero) {
             //disable the modifiers, but send one last report of modifiers without scancode
+            //do we actually want / need extra modifier report on release?
             reports->basic.modifiers |= StickyModifiers;
             StickyModifiers = 0;
             StickyModifiersNegative = 0;
@@ -539,6 +540,8 @@ static void updateActionStates() {
     EventVector_Unset(EventVector_NativeActions);
     EventVector_Unset(EventVector_StateMatrix);
     EventVector_Unset(EventVector_NativeActionsPostponing);
+
+    Macros_ReportPrintf(NULL, "U");
 
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
