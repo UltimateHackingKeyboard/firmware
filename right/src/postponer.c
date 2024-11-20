@@ -43,7 +43,6 @@ static void chording();
 
 struct postponer_run_state_t {
     bool runEventsThisCycle;
-    bool runEventsNextCycle;
     bool eventsShouldBeQueued;
 } runState;
 
@@ -117,7 +116,6 @@ static void applyEventAndConsume(postponer_buffer_record_type_t* rec) {
                     consumeEvent(1);
                 } else {
                     runState.runEventsThisCycle = false;
-                    runState.runEventsNextCycle = false;
                     EventScheduler_Schedule(delayStartedAt + rec->event.delay.length, EventSchedulerEvent_Postponer, "Postponer - apply delay");
                 }
             }
@@ -294,10 +292,9 @@ void PostponerCore_RunPostponedEvents(void)
 {
     LOG_POSTPONER(printk("? RunPostponedEvents called! ---\n"));
     runState.runEventsThisCycle = bufferSize > 0;
-    runState.runEventsNextCycle = bufferSize > 0;
-    runState.eventsShouldBeQueued = bufferSize > 0 || Cfg.ChordingDelay || Cfg.AutoShiftDelay || EventVector_IsSet(EventVector_NativeActionsPostponing) || EventVector_IsSet(EventVector_MacroEnginePostponing);
+    runState.eventsShouldBeQueued = bufferSize > 0 || Cfg.ChordingDelay || Cfg.AutoShiftDelay || EventVector_IsSet(EventVector_SomeonePostponing);
 
-    runState.runEventsThisCycle &= !EventVector_IsSet(EventVector_NativeActionsPostponing) && !EventVector_IsSet(EventVector_MacroEnginePostponing);
+    runState.runEventsThisCycle &= !EventVector_IsSet(EventVector_SomeonePostponing);
 
     if (Cfg.ChordingDelay) {
         chording();
@@ -317,7 +314,7 @@ void PostponerCore_RunPostponedEvents(void)
         }
     }
 
-    bool executeNextCycle = bufferSize > 0 && (runState.runEventsThisCycle || runState.runEventsNextCycle);
+    bool executeNextCycle = bufferSize > 0 && runState.runEventsThisCycle;
 
     LOG_POSTPONER(printContentPretty());
     EventVector_SetValue(EventVector_Postponer, executeNextCycle);
@@ -558,7 +555,6 @@ static void chording()
 {
     if (bufferSize == 0 || CurrentTime - buffer[bufferPosition].time < Cfg.ChordingDelay ) {
         runState.runEventsThisCycle = false;
-        runState.runEventsNextCycle = false;
         if (bufferSize > 0) {
             EventScheduler_Schedule(buffer[bufferPosition].time + Cfg.ChordingDelay, EventSchedulerEvent_Postponer, "Postponer - chording");
         }
@@ -644,7 +640,6 @@ static void autoShift()
         if (release == NULL) {
             if ( CurrentTime - buffer[bufferPosition].time < Cfg.AutoShiftDelay ) {
                 runState.runEventsThisCycle = false;
-                runState.runEventsNextCycle = false;
                 EventScheduler_Schedule(buffer[bufferPosition].time + Cfg.AutoShiftDelay, EventSchedulerEvent_Postponer, "Postponer - autoshift");
             } else {
                 buffer[bufferPosition].event.key.modifiers = HID_KEYBOARD_MODIFIER_LEFTSHIFT;

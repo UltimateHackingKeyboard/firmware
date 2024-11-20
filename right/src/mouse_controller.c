@@ -62,6 +62,7 @@ module_kinetic_state_t rightModuleKineticState = {
 usb_keyboard_reports_t MouseControllerKeyboardReports = {
     .reportsUsedVectorMask = EventVector_MouseControllerKeyboardReportsUsed,
     .recomputeStateVectorMask = EventVector_MouseController,
+    .postponeMask = EventVector_MouseControllerPostponing,
 };
 usb_mouse_report_t MouseControllerMouseReport;
 
@@ -776,5 +777,8 @@ void MouseController_ProcessMouseActions()
 
     if (keyboardReportsUsed || mouseReportsUsed || caretModeActionWasRunningSomewhere || modsChanged) {
         EventVector_Set(EventVector_ReportsChanged);
+    }
+    if (!caretModeActionIsRunningSomewhere) {
+        EventVector_Unset(EventVector_MouseControllerPostponing);
     }
 }
