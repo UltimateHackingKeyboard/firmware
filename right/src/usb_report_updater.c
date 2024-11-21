@@ -84,6 +84,7 @@ bool SuppressKeys = false;
 usb_keyboard_reports_t NativeKeyboardReports = {
     .recomputeStateVectorMask = EventVector_NativeActions,
     .reportsUsedVectorMask = EventVector_NativeActionReportsUsed,
+    .postponeMask = EventVector_NativeActionsPostponing,
 };
 
 static void resetActiveReports() {
@@ -276,7 +277,7 @@ static void applyKeystrokePrimary(key_state_t *keyState, key_action_cached_t *ca
             }
         }
         if (stickyModifiersChanged) {
-            EventVector_Set(reports->recomputeStateVectorMask); // trigger next update in order to clear them, usually EventVector_NativeActions here
+            EventVector_Set(reports->recomputeStateVectorMask | reports->postponeMask); // trigger next update in order to clear them, usually EventVector_NativeActions here
         }
     } else if (KeyState_DeactivatedNow(keyState)) {
         bool stickyModsAreNonZero = StickyModifiers != 0 || StickyModifiersNegative != 0;
@@ -285,8 +286,11 @@ static void applyKeystrokePrimary(key_state_t *keyState, key_action_cached_t *ca
             reports->basic.modifiers |= StickyModifiers;
             StickyModifiers = 0;
             StickyModifiersNegative = 0;
-            EventVector_Set(reports->recomputeStateVectorMask); // trigger next update in order to clear them, usually EventVector_NativeActions here
-            EventVector_Set(EventVector_ReportsChanged | reports->reportsUsedVectorMask);
+            EventVector_Set(
+                    reports->recomputeStateVectorMask | // trigger next update in order to clear them, usually EventVector_NativeActions here
+                    EventVector_ReportsChanged | reports->reportsUsedVectorMask |
+                    reports->postponeMask
+                );
         }
     }
 }
