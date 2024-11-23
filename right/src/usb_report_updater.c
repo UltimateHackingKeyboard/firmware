@@ -541,9 +541,7 @@ static void updateActionStates() {
     EventVector_Unset(EventVector_StateMatrix);
     EventVector_Unset(EventVector_NativeActionsPostponing);
 
-    static uint32_t lastUpdate = 0;
-    Macros_ReportPrintf(NULL, "U+%d", CurrentTime - lastUpdate);
-    lastUpdate = CurrentTime;
+    Macros_ReportPrintf(NULL, "U");
 
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {

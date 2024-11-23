@@ -10,6 +10,7 @@
 #include "segment_display.h"
 #include "config_parser/parse_macro.h"
 #include "config_parser/config_globals.h"
+#include "timer.h"
 #include <math.h>
 #include <stdarg.h>
 
@@ -305,14 +306,20 @@ void Macros_ReportPrintf(const char* pos, const char *fmt, ...)
     char buffer[256];
     vsprintf(buffer, fmt, myargs);
 
+    static uint32_t lastUpdate = 0;
+
     indicateOut();
     if (pos != NULL) {
         reportErrorHeader("Out", findPosition(pos));
         reportError(buffer, pos, pos);
     } else {
+        Macros_SetStatusChar('+');
+        Macros_SetStatusNumSpaced(CurrentTime-lastUpdate, false);
+        Macros_SetStatusChar(' ');
         Macros_SetStatusString(buffer, NULL);
         Macros_SetStatusString("\n", NULL);
     }
+    lastUpdate = CurrentTime;
 }
 
 void Macros_ReportErrorPrintf(const char* pos, const char *fmt, ...)
