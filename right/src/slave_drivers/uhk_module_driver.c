@@ -147,9 +147,9 @@ void UhkModuleSlaveDriver_ProcessKeystates(uint8_t uhkModuleDriverId, uhk_module
 
         if (KeyStates[slotId][targetKeyId].hardwareSwitchState != keyStatesBuffer[keyId]) {
             if (keyStatesBuffer[keyId]) {
-                Macros_ReportPrintf(NULL, "S+%s", MacroKeyIdParser_KeyIdToAbbreviation(keyId+slotId*64));
+                Macros_ReportPrintf(NULL, "S+%s", MacroKeyIdParser_KeyIdToAbbreviation(targetKeyId+slotId*64));
             } else {
-                Macros_ReportPrintf(NULL, "S-%s", MacroKeyIdParser_KeyIdToAbbreviation(keyId+slotId*64));
+                Macros_ReportPrintf(NULL, "S-%s", MacroKeyIdParser_KeyIdToAbbreviation(targetKeyId+slotId*64));
             }
             KeyStates[slotId][targetKeyId].hardwareSwitchState = keyStatesBuffer[keyId];
             stateChanged = true;
