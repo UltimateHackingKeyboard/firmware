@@ -8,7 +8,8 @@
 
 // Functions:
 
-    extern void InitSettings(void);
+    void InitSettings(void);
+    void Settings_Reload(void);
 
 // Variables:
 

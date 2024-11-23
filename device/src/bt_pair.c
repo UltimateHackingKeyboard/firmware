@@ -12,6 +12,7 @@
 #include "bt_manager.h"
 #include "bt_advertise.h"
 #include "legacy/host_connection.h"
+#include "settings.h"
 
 bool BtPair_LastPairingSucceeded = true;
 bool BtPair_OobPairingInProgress = false;
@@ -50,7 +51,7 @@ void BtPair_SetRemoteOob(const struct bt_le_oob* oob) {
 
 void BtPair_PairCentral() {
     pairingAsCentral = true;
-    settings_load();
+    Settings_Reload();
     bt_le_oob_set_sc_flag(true);
     BtScan_Start();
     printk ("Scanning for pairable device\n");
@@ -59,7 +60,7 @@ void BtPair_PairCentral() {
 
 void BtPair_PairPeripheral() {
     pairingAsCentral = false;
-    settings_load();
+    Settings_Reload();
     bt_le_oob_set_sc_flag(true);
     BtAdvertise_Start(ADVERTISE_NUS);
     printk ("Waiting for central to pair to me.\n");
@@ -168,6 +169,9 @@ void BtPair_Unpair(const bt_addr_le_t addr) {
 
     // Iterate through all stored bonds
     bt_foreach_bond(BT_ID_DEFAULT, bt_foreach_bond_cb_delete, (void*)&args);
+
+    // Update settings
+    Settings_Reload();
 }
 
 struct check_bonded_device_args_t {

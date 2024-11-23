@@ -6,12 +6,19 @@
 
 bool RightAddressIsSet = false;
 
+static void setRightAddressIsSet(bool isSet)
+{
+    if (RightAddressIsSet != isSet) {
+        RightAddressIsSet = isSet;
+        DongleLeds_Update();
+    }
+}
+
+// (This isn't getting called at all when there is no "uhk/addr" settings present.)
 static int peerAddressSet(const char *name, size_t len, settings_read_cb read_cb, void *cb_arg)
 {
     static char foo_val[BT_ADDR_SIZE];
     read_cb(cb_arg, &foo_val, len);
-
-    bool rightAddressIsSet = false;
 
     for (uint8_t i=0; i<PeerCount; i++) {
         if (strcmp(name, Peers[i].name) == 0) {
@@ -24,15 +31,10 @@ static int peerAddressSet(const char *name, size_t len, settings_read_cb read_cb
             }
             printk("\n");
             if (i == PeerIdRight) {
-                rightAddressIsSet = true;
+                setRightAddressIsSet(true);
             }
             break;
         }
-    }
-
-    if (rightAddressIsSet != RightAddressIsSet) {
-        RightAddressIsSet = rightAddressIsSet;
-        DongleLeds_Update();
     }
 
     return 0;
@@ -47,5 +49,11 @@ void InitSettings(void)
 {
     settings_subsys_init();
     settings_register(&settingsHandler);
+    settings_load();
+}
+
+void Settings_Reload(void)
+{
+    setRightAddressIsSet(false);
     settings_load();
 }
