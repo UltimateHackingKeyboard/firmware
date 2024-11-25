@@ -54,11 +54,15 @@ void UsbCommand_SetPairingData(void) {
 }
 
 void UsbCommand_PairCentral(void) {
+#ifdef CONFIG_BT_CENTRAL
     BtPair_PairCentral();
+#endif
 }
 
 void UsbCommand_PairPeripheral(void) {
+#ifdef CONFIG_BT_PERIPHERAL
     BtPair_PairPeripheral();
+#endif
 }
 
 // If zero address is provided, all existing bonds will be deleted

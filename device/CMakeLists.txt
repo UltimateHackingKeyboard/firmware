@@ -6,21 +6,7 @@ if(NOT CONFIG_DEBUG)
     add_definitions(-DNDEBUG)
 endif()
 
-target_include_directories(app PUBLIC
-    src
-    src/legacy
-    src/legacy/config_parser
-    src/shared
-)
-
-file(GLOB usb_sources src/usb/*.c)
-file(GLOB usb_cpp_sources src/usb/*.cpp)
-file(GLOB_RECURSE keyboard_sources src/keyboard/*.c)
-file(GLOB app_sources src/*.c)
-file(GLOB app_cpp_sources src/*.cpp)
-file(GLOB lvgl_dummy src/lvgl/*.c)
-file(GLOB_RECURSE legacy_sources src/legacy/*.c)
-file(GLOB_RECURSE shared_sources src/shared/*.c)
+add_subdirectory(src)
 
 # add the versions.c source file conditionally
 if(NOT NOVERSIONS)
@@ -28,16 +14,7 @@ if(NOT NOVERSIONS)
     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/../shared/versions.c PROPERTIES GENERATED TRUE)
 endif()
 
-if(BOARD STREQUAL "uhk-60-right")
-    file(GLOB main src/uhk60/main.c)
-    target_sources(app PRIVATE ${main})
-elseif ((BOARD STREQUAL "uhk-dongle"))
-    target_sources(app PRIVATE ${app_sources} ${app_cpp_sources} ${usb_sources} ${usb_cpp_sources} ${legacy_sources} ${shared_sources})
-else()
-    target_sources(app PRIVATE ${app_sources} ${app_cpp_sources} ${usb_sources} ${usb_cpp_sources} ${legacy_sources} ${shared_sources} ${keyboard_sources} ${lvgl_dummy})
-endif()
-
-if(NOT BOARD STREQUAL "uhk-60-right")
+if(NOT CONFIG_BOARD_UHK_60_RIGHT)
     # C headers compiled with C++ give pointer conversion errors, turn them to warnings
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive")
 

@@ -32,73 +32,54 @@ typedef enum {
 } messenger_channel_t;
 
 static messenger_channel_t determineChannel(device_id_t dst) {
-#if DEVICE_IS_KEYBOARD
+#if DEVICE_IS_UHK80_LEFT
     if (Uart_IsConnected()) {
-        if (DEVICE_IS_UHK80_LEFT) {
-            switch (dst) {
-                case DeviceId_Uhk_Dongle:
-                case DeviceId_Uhk80_Right:
-                    return MessengerChannel_Uart;
-                default:
-                    break;
-            }
+        switch (dst) {
+            case DeviceId_Uhk_Dongle:
+            case DeviceId_Uhk80_Right:
+                return MessengerChannel_Uart;
+            default:
+                break;
         }
-
-        if (DEVICE_IS_UHK80_RIGHT) {
-            switch (dst) {
-                case DeviceId_Uhk_Dongle:
-                    break;
-                case DeviceId_Uhk80_Left:
-                    return MessengerChannel_Uart;
-                default:
-                    break;
-            }
+    }
+    if (Bt_DeviceIsConnected(DeviceId_Uhk80_Right)) {
+        switch (dst) {
+            case DeviceId_Uhk_Dongle:
+            case DeviceId_Uhk80_Right:
+                return MessengerChannel_NusServer;
+            default:
+                break;
         }
     }
 #endif
 
-    if (DEVICE_IS_UHK80_LEFT && Bt_DeviceIsConnected(DeviceId_Uhk80_Right)) {
-        switch (dst) {
-            case DeviceId_Uhk_Dongle:
-            case DeviceId_Uhk80_Right:
-                if (Bt_DeviceIsConnected(DeviceId_Uhk80_Right)) {
-                    return MessengerChannel_NusServer;
-                }
-            default:
-                return MessengerChannel_None;
-        }
+#if DEVICE_IS_UHK80_RIGHT
+    if (Uart_IsConnected() && (dst == DeviceId_Uhk80_Left)) {
+        return MessengerChannel_Uart;
     }
-
-    if (DEVICE_IS_UHK80_RIGHT) {
+    if (Bt_DeviceIsConnected(dst)) {
         switch (dst) {
             case DeviceId_Uhk_Dongle:
-                if (Bt_DeviceIsConnected(DeviceId_Uhk_Dongle)) {
-                    return MessengerChannel_NusServer;
-                }
-                break;
+                return MessengerChannel_NusServer;
             case DeviceId_Uhk80_Left:
-                if (Bt_DeviceIsConnected(DeviceId_Uhk80_Left)) {
-                    return MessengerChannel_NusClient;
-                }
-                break;
+                return MessengerChannel_NusClient;
             default:
-                return MessengerChannel_None;
+                break;
         }
     }
+#endif
 
-    if (DEVICE_IS_UHK_DONGLE) {
+#if DEVICE_IS_UHK_DONGLE
+    if (Bt_DeviceIsConnected(DeviceId_Uhk80_Right)) {
         switch (dst) {
             case DeviceId_Uhk80_Right:
             case DeviceId_Uhk80_Left:
-                if (Bt_DeviceIsConnected(DeviceId_Uhk80_Right)) {
-                    return MessengerChannel_NusClient;
-                }
-                break;
+                return MessengerChannel_NusClient;
             default:
-                return MessengerChannel_None;
+                break;
         }
     }
-
+#endif
     return MessengerChannel_None;
 }
 
@@ -312,12 +293,21 @@ bool Messenger_Availability(device_id_t dst, messenger_availability_op_t operati
         case MessengerChannel_Uart:
 #if DEVICE_IS_KEYBOARD
             return Uart_Availability(operation);
-#endif
+#else
             return false;
+#endif
         case MessengerChannel_NusServer:
+#ifdef CONFIG_BT_NUS
             return NusServer_Availability(operation);
+#else
+            return false;
+#endif
         case MessengerChannel_NusClient:
+#ifdef CONFIG_BT_NUS_CLIENT
             return NusClient_Availability(operation);
+#else
+            return false;
+#endif
         default:
             return false;
     }
@@ -334,10 +324,14 @@ void Messenger_SendMessage(message_t message) {
 #endif
             break;
         case MessengerChannel_NusServer:
+#if defined(CONFIG_BT_NUS) && defined(CONFIG_BT_PERIPHERAL)
             NusServer_SendMessage(message);
+#endif
             break;
         case MessengerChannel_NusClient:
+#ifdef CONFIG_BT_NUS_CLIENT
             NusClient_SendMessage(message);
+#endif
             break;
         default:
             printk("Failed to send message from %s to %s\n", Utils_DeviceIdToString(DEVICE_ID), Utils_DeviceIdToString(dst));

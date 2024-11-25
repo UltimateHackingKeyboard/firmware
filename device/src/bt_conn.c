@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <zephyr/settings/settings.h>
 #include <zephyr/bluetooth/conn.h>
+#ifdef CONFIG_BT_SCAN
 #include <bluetooth/scan.h>
+#endif
 #include "bt_advertise.h"
 #include "bt_conn.h"
 #include "bt_scan.h"
@@ -142,12 +144,12 @@ static void connected(struct bt_conn *conn, uint8_t err) {
     if (err) {
         printk("Failed to connect to %s, err %u\n", GetPeerStringByConn(conn), err);
 
-        if (DEVICE_IS_UHK80_RIGHT) {
-            err = bt_scan_start(BT_SCAN_TYPE_SCAN_ACTIVE);
-            if (err) {
-                printk("Scanning failed to start (err %d)\n", err);
-            }
+#if DEVICE_IS_UHK80_RIGHT
+        err = bt_scan_start(BT_SCAN_TYPE_SCAN_ACTIVE);
+        if (err) {
+            printk("Scanning failed to start (err %d)\n", err);
         }
+#endif
 
         return;
     }
