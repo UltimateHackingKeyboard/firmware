@@ -163,6 +163,9 @@ static void connected(struct bt_conn *conn, uint8_t err) {
                 100 // connection timeout (*10ms)
                 );
         bt_conn_le_param_update(conn, &conn_params);
+#if DEVICE_IS_UHK80_RIGHT
+        USB_DisableHid();
+#endif
     }
 
     if (peerId == PeerIdUnknown) {
@@ -172,13 +175,12 @@ static void connected(struct bt_conn *conn, uint8_t err) {
     assignPeer(bt_conn_get_dst(conn), peerId);
 
     if (peerId == PeerIdHid) {
-        // USB_DisableHid();
     } else {
         bt_conn_set_security(conn, BT_SECURITY_L4);
         // continue connection process in in `connectionSecured()`
     }
 
-    if (DEVICE_IS_UHK80_RIGHT && (peerId == PeerIdHid || peerId == PeerIdUnknown || peerId == PeerIdDongle)) {
+    if (DEVICE_IS_UHK80_RIGHT && (peerId != PeerIdLeft)) {
         BtAdvertise_Start(BtAdvertise_Type());
     }
 }
@@ -193,7 +195,7 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
         if (DEVICE_IS_UHK80_RIGHT) {
             if (peerId == PeerIdHid || peerId == PeerIdUnknown) {
                 BtAdvertise_Start(BtAdvertise_Type());
-                // USB_EnableHid();
+                USB_EnableHid();
             }
             if (peerId == PeerIdDongle) {
                 BtAdvertise_Start(BtAdvertise_Type());
