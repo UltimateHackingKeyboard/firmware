@@ -2,67 +2,84 @@
 # used for both zephyr and mcuboot -> no custom kconfig symbols here
 
 if SHELL_BACKEND_RTT
-if BOARD_UHK_80_LEFT
-config SHELL_PROMPT_RTT
-    default "uhk80:left$ "
-endif
-if BOARD_UHK_80_RIGHT
-config SHELL_PROMPT_RTT
-    default "uhk80:right$ "
-endif
-if BOARD_UHK_DONGLE
-config SHELL_PROMPT_RTT
-    default "uhk-dongle$ "
-endif
+    if BOARD_UHK_80_LEFT
+        config SHELL_PROMPT_RTT
+            default "uhk80:left$ "
+    endif
+    if BOARD_UHK_80_RIGHT
+        config SHELL_PROMPT_RTT
+            default "uhk80:right$ "
+    endif
+    if BOARD_UHK_DONGLE
+        config SHELL_PROMPT_RTT
+            default "uhk-dongle$ "
+    endif
 endif # SHELL_BACKEND_RTT
 
 if SHELL_BACKEND_SERIAL
-if BOARD_UHK_80_LEFT
-config SHELL_PROMPT_UART
-    default "uhk80:left$ "
-endif
-if BOARD_UHK_80_RIGHT
-config SHELL_PROMPT_UART
-    default "uhk80:right$ "
-endif
-if BOARD_UHK_DONGLE
-config SHELL_PROMPT_UART
-    default "uhk-dongle$ "
-endif
+    if BOARD_UHK_80_LEFT
+        config SHELL_PROMPT_UART
+            default "uhk80:left$ "
+    endif
+    if BOARD_UHK_80_RIGHT
+        config SHELL_PROMPT_UART
+            default "uhk80:right$ "
+    endif
+    if BOARD_UHK_DONGLE
+        config SHELL_PROMPT_UART
+            default "uhk-dongle$ "
+    endif
 endif # SHELL_BACKEND_SERIAL
 
 if BOARD_UHK_80_LEFT
-config USB_DEVICE_PRODUCT
-    default "UHK 80 left half"
-config USB_DEVICE_PID
-    default 0x0007
-if BT_DIS && BT_DIS_PNP
-config BT_DIS_PNP_PID
-    default 0x8007
-endif # BT_DIS && BT_DIS_PNP
-endif
+    config USB_DEVICE_PRODUCT
+        default "UHK 80 left half"
+    config USB_DEVICE_PID
+        default 0x0007
+    if BT_DIS && BT_DIS_PNP
+        config BT_DIS_PNP_PID
+            default 0x8007
+    endif # BT_DIS && BT_DIS_PNP
+endif # BOARD_UHK_80_LEFT
 
 if BOARD_UHK_80_RIGHT
-config USB_DEVICE_PRODUCT
-    default "UHK 80 right half"
-config USB_DEVICE_PID
-    default 0x0009
-if BT_DIS && BT_DIS_PNP
-config BT_DIS_PNP_PID
-    default 0x8009
-endif # BT_DIS && BT_DIS_PNP
-endif
+    config USB_DEVICE_PRODUCT
+        default "UHK 80 right half"
+    config USB_DEVICE_PID
+        default 0x0009
+
+    if BT_DIS && BT_DIS_PNP
+        config BT_DIS_PNP_PID
+            default 0x8009
+    endif # BT_DIS && BT_DIS_PNP
+
+    if BT
+        # uhk-80-right is NUS server AND client, and HID server
+        config BT_MAX_CONN
+            default 3
+        # use different connection parameters for HID clients and dongle
+        config BT_GAP_AUTO_UPDATE_CONN_PARAMS
+            default n
+    endif # BT
+endif # BOARD_UHK_80_RIGHT
 
 if BOARD_UHK_DONGLE
-config USB_DEVICE_PRODUCT
-    default "UHK dongle"
-config USB_DEVICE_PID
-    default 0x0005
-if BT_DIS && BT_DIS_PNP
-config BT_DIS_PNP_PID
-    default 0x8005
-endif # BT_DIS && BT_DIS_PNP
-endif
+    config USB_DEVICE_PRODUCT
+        default "UHK dongle"
+    config USB_DEVICE_PID
+        default 0x0005
+    if BT_DIS && BT_DIS_PNP
+        config BT_DIS_PNP_PID
+            default 0x8005
+    endif # BT_DIS && BT_DIS_PNP
+endif # BOARD_UHK_DONGLE
+
+if BT
+    config BT_DEVICE_NAME
+        default "UHK 80" if BOARD_UHK_80_LEFT || BOARD_UHK_80_RIGHT
+    config BT_DEVICE_APPEARANCE
+        default 961
+endif # BT
 
 config BT_CTLR
     default BT

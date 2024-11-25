@@ -107,7 +107,7 @@
 				"--",
 				"-DNCS_TOOLCHAIN_VERSION=NONE",
 				"-DCONF_FILE=${cwd}/device/prj.conf",
-				"-DEXTRA_CONF_FILE=${cwd}/device/prj.conf.overlays/nrf_shared.conf;${cwd}/device/prj.conf.overlays/c2usb.conf;${cwd}/device/prj.conf.overlays/uhk-80.conf",
+				"-DEXTRA_CONF_FILE=${cwd}/device/prj.conf.overlays/nrf_shared.conf;${cwd}/device/prj.conf.overlays/c2usb.conf;${cwd}/device/prj.conf.overlays/uhk-80.conf;${cwd}/device/prj.conf.overlays/ble_nus.conf",
 				"-DBOARD_ROOT=${cwd}",
 				"-Dmcuboot_OVERLAY_CONFIG=${cwd}/device/child_image/mcuboot.conf;${cwd}/device/child_image/uhk-80-left.mcuboot.conf"
 			],
@@ -143,7 +143,7 @@
 				"--",
 				"-DNCS_TOOLCHAIN_VERSION=NONE",
 				"-DCONF_FILE=${cwd}/device/prj.conf",
-				"-DEXTRA_CONF_FILE=${cwd}/device/prj.conf.overlays/nrf_shared.conf;${cwd}/device/prj.conf.overlays/c2usb.conf;${cwd}/device/prj.conf.overlays/uhk-80.conf;${cwd}/device/prj.conf.overlays/ble-hid.conf",
+				"-DEXTRA_CONF_FILE=${cwd}/device/prj.conf.overlays/nrf_shared.conf;${cwd}/device/prj.conf.overlays/c2usb.conf;${cwd}/device/prj.conf.overlays/uhk-80.conf;${cwd}/device/prj.conf.overlays/ble_nus.conf;${cwd}/device/prj.conf.overlays/ble_nus_client.conf;${cwd}/device/prj.conf.overlays/ble_hid.conf",
 				"-DBOARD_ROOT=${cwd}",
 				"-Dmcuboot_OVERLAY_CONFIG=${cwd}/device/child_image/mcuboot.conf;${cwd}/device/child_image/uhk-80-right.mcuboot.conf"
 			],
@@ -179,7 +179,7 @@
 				"--",
 				"-DNCS_TOOLCHAIN_VERSION=NONE",
 				"-DCONF_FILE=${cwd}/device/prj.conf",
-				"-DEXTRA_CONF_FILE=${cwd}/device/prj.conf.overlays/nrf_shared.conf;${cwd}/device/prj.conf.overlays/c2usb.conf",
+				"-DEXTRA_CONF_FILE=${cwd}/device/prj.conf.overlays/nrf_shared.conf;${cwd}/device/prj.conf.overlays/c2usb.conf;${cwd}/device/prj.conf.overlays/ble_nus_client.conf",
 				"-DBOARD_ROOT=${cwd}",
 				"-Dmcuboot_OVERLAY_CONFIG=${cwd}/device/child_image/mcuboot.conf;${cwd}/device/child_image/uhk-dongle.mcuboot.conf"
 			],

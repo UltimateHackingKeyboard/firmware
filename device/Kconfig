@@ -8,6 +8,12 @@ config DEVICE_ID
     help
         The device id that identifies the specific UHK half or dongle.
 
+config UHK_BATTERY_DEVICE
+    bool
+    default y if BOARD_UHK_80_LEFT || BOARD_UHK_80_RIGHT
+    default n
+    imply ADC
+
 config KEYBOARD_MAX_SCANCODE
     hex "highest keyboard scancode"
     default 0x86
@@ -64,10 +70,9 @@ configdefault BT_DIS_PNP_VID
 configdefault BT_DIS_PNP_VER
     default USB_DEVICE_PRODUCT_VERSION
 
-configdefault BT_DEVICE_NAME
-    default "UHK 80" if BOARD_UHK_80_LEFT || BOARD_UHK_80_RIGHT
-configdefault BT_DEVICE_APPEARANCE
-    default 961
+# CONFIG_NCS_SAMPLES_DEFAULTS:
+configdefault LOG_DEFAULT_MINIMAL
+    default y
 
 # configdefaults must come before sourcing "Kconfig.zephyr" in order to give precedence
 # to these application-specific defaults instead of the unconditional default in the Zephyr Kconfig tree.
