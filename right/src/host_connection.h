@@ -41,6 +41,7 @@
         HostConnectionType_BtHid,
         HostConnectionType_Dongle,
         HostConnectionType_NewBtHid,
+        HostConnectionType_Count,
     } host_connection_type_t;
 
     typedef struct {

@@ -10,6 +10,7 @@ extern "C" {
 #include <zephyr/kernel.h>
 #include "logger.h"
 #include "legacy/power_mode.h"
+#include "connections.h"
 }
 #include "command_app.hpp"
 #include "controls_app.hpp"
@@ -254,17 +255,17 @@ void hidmgr_set_transport(const hid::transport* tp)
 
     // tp is the transport of the keyboard app
     if (tp == nullptr) {
-        Connections_SetState(ConnectionId_BluetoothHid, ConnectionState_Disconnected);
+        Connections_SetState(ConnectionId_BtHid, ConnectionState_Disconnected);
         Connections_SetState(usbHidConnId, ConnectionState_Disconnected);
     }
 #if DEVICE_IS_UHK80_RIGHT
     else if (tp == &hogp_manager::instance().main_service()) {
-        Connections_SetState(ConnectionId_BluetoothHid, ConnectionState_Ready);
+        Connections_SetState(ConnectionId_BtHid, ConnectionState_Ready);
         Connections_SetState(usbHidConnId, ConnectionState_Disconnected);
     }
 #endif
     else {
-        Connections_SetState(ConnectionId_BluetoothHid, ConnectionState_Disconnected);
+        Connections_SetState(ConnectionId_BtHid, ConnectionState_Disconnected);
         Connections_SetState(usbHidConnId, ConnectionState_Ready);
     }
 }

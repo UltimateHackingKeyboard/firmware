@@ -13,7 +13,7 @@
 
 // static connection_type_t isConnected[ConnectionId_Count] = {};
 
-static connection_target_t targetsConnection[ConnectionTarget_Count] = {};
+static connection_id_t targetsConnection[ConnectionTarget_Count] = {};
 
 // void handleStateTransition(connection_id_t remoteId, bool connected) {
 void handleStateTransition(connection_target_t remote, connection_id_t connectionId, bool connected) {
@@ -106,8 +106,6 @@ void DeviceState_Update(uint8_t connectionTarget) {
 
     if (oldConnection != newConnection) {
         targetsConnection[connectionTarget] = newConnection;
-
-        connection_target_t dst = connectionTarget;
 
         handleStateTransition(connectionTarget, newConnection, Connections[newConnection].state == ConnectionState_Ready);
     }

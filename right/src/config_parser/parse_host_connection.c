@@ -18,7 +18,7 @@ static parser_error_t parseHostConnection(config_buffer_t* buffer, host_connecti
         return ParserError_InvalidHostType;
     }
 
-    if (hostConnection->type == HostConnectionType_Ble || hostConnection->type == HostConnectionType_Dongle) {
+    if (hostConnection->type == HostConnectionType_BtHid || hostConnection->type == HostConnectionType_Dongle) {
         hostConnection->bleAddress.type = 1;
         for (uint8_t i = 0; i < BLE_ADDRESS_LENGTH; i++) {
             hostConnection->bleAddress.a.val[i] = ReadUInt8(buffer);

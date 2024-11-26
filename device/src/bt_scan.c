@@ -2,6 +2,7 @@
 #include "bt_conn.h"
 #include "bt_pair.h"
 #include "device.h"
+#include "bt_pair.h"
 #include "legacy/host_connection.h"
 
 static void scan_filter_match(struct bt_scan_device_info *device_info,

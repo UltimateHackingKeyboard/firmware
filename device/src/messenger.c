@@ -36,26 +36,24 @@ typedef enum {
 
 static connection_id_t determineChannel(device_id_t dst) {
 #if DEVICE_IS_KEYBOARD
-    if (Uart_IsConnected()) {
-        if (DEVICE_IS_UHK80_LEFT) {
-            switch (dst) {
-                case DeviceId_Uhk_Dongle:
-                case DeviceId_Uhk80_Right:
-                    return ConnectionId_UartRight;
-                default:
-                    break;
-            }
+    if (DEVICE_IS_UHK80_LEFT && Connections_IsReady(ConnectionId_UartRight)) {
+        switch (dst) {
+            case DeviceId_Uhk_Dongle:
+            case DeviceId_Uhk80_Right:
+                return ConnectionId_UartRight;
+            default:
+                break;
         }
+    }
 
-        if (DEVICE_IS_UHK80_RIGHT) {
-            switch (dst) {
-                case DeviceId_Uhk_Dongle:
-                    break;
-                case DeviceId_Uhk80_Left:
-                    return ConnectionId_UartLeft;
-                default:
-                    break;
-            }
+    if (DEVICE_IS_UHK80_RIGHT && Connections_IsReady(ConnectionId_UartLeft)) {
+        switch (dst) {
+            case DeviceId_Uhk_Dongle:
+                break;
+            case DeviceId_Uhk80_Left:
+                return ConnectionId_UartLeft;
+            default:
+                break;
         }
     }
 #endif
@@ -73,8 +71,8 @@ static connection_id_t determineChannel(device_id_t dst) {
     if (DEVICE_IS_UHK80_RIGHT) {
         switch (dst) {
             case DeviceId_Uhk_Dongle:
-                if (Connections_IsReady(TargetHostConnectionId) && Connections_Type(TargetHostConnectionId) == ConnectionType_NusDongle) {
-                    return TargetHostConnectionId;
+                if (Connections_IsReady(TargetConnectionId) && Connections_Type(TargetConnectionId) == ConnectionType_NusDongle) {
+                    return TargetConnectionId;
                 }
                 break;
             case DeviceId_Uhk80_Left:
@@ -310,7 +308,8 @@ bool Messenger_Availability(device_id_t dst, messenger_availability_op_t operati
     connection_id_t connection = determineChannel(dst);
 
     switch (connection) {
-        case MessengerChannel_Uart:
+        case ConnectionId_UartLeft:
+        case ConnectionId_UartRight:
 #if DEVICE_IS_KEYBOARD
             return Uart_Availability(operation);
 #endif
@@ -341,7 +340,7 @@ void Messenger_SendMessage(message_t message) {
             NusServer_SendMessage(message);
             break;
         case ConnectionId_HostConnectionFirst ... ConnectionId_HostConnectionLast:
-            if (Connections_Type(connection) == ConnectionType_NusDongle)) {
+            if (Connections_Type(connection) == ConnectionType_NusDongle) {
                 NusServer_SendMessageTo(message, Peers[Connections[connection].peerId].conn);
             } else {
                 printk("Failed to send message from %s to %s; incompatible connection type\n", Utils_DeviceIdToString(DEVICE_ID), Utils_DeviceIdToString(dst));

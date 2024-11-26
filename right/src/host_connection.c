@@ -12,14 +12,14 @@ bool HostConnections_IsKnownBleAddress(const bt_addr_le_t *address) {
             case HostConnectionType_Empty:
             case HostConnectionType_UsbHidRight:
             case HostConnectionType_UsbHidLeft:
+            case HostConnectionType_NewBtHid:
+            case HostConnectionType_Count:
                 break;
             case HostConnectionType_Dongle:
-            case HostConnectionType_BleHid:
+            case HostConnectionType_BtHid:
                 if (bt_addr_le_cmp(address, &HostConnections[i].bleAddress) == 0) {
                     return true;
                 }
-                break;
-            default:
                 break;
         }
     }

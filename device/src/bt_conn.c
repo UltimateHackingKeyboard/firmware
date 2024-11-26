@@ -176,7 +176,7 @@ static void connected(struct bt_conn *conn, uint8_t err) {
 
     printk("Bt connected to %s\n", GetPeerStringByConn(conn));
 
-    if (connectionType == ConnectionId_BluetoothHid || connectionType == ConnectionType_Unknown) {
+    if (connectionType == ConnectionType_BtHid || connectionType == ConnectionType_NewBtHid || connectionType == ConnectionType_Unknown) {
         static const struct bt_le_conn_param conn_params = BT_LE_CONN_PARAM_INIT(
                 6, 9, // keep it low, lowest allowed is 6 (7.5ms), lowest supported widely is 9 (11.25ms)
                 10, // keeping it higher allows power saving on peripheral when there's nothing to send (keep it under 30 though)
@@ -191,7 +191,7 @@ static void connected(struct bt_conn *conn, uint8_t err) {
 
     assignPeer(conn, connectionId, connectionType);
 
-    if (connectionType == ConnectionType_BleHid) {
+    if (connectionType == ConnectionType_BtHid || connectionType == ConnectionType_NewBtHid) {
         // USB_DisableHid();
     } else {
         bt_conn_set_security(conn, BT_SECURITY_L4);
@@ -213,23 +213,23 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
 
     if (!BtPair_OobPairingInProgress && !BtManager_Restarting) {
         if (DEVICE_IS_UHK80_RIGHT) {
-            if (peerId == PeerIdHid || peerId == PeerIdUnknown) {
+            if (connectionType == ConnectionType_BtHid || connectionType == ConnectionType_NewBtHid) {
                 BtAdvertise_Start(BtAdvertise_Type());
                 // USB_EnableHid();
             }
-            if (peerId == PeerIdDongle) {
+            if (connectionType == ConnectionType_NusDongle) {
                 BtAdvertise_Start(BtAdvertise_Type());
             }
-            if (peerId == PeerIdLeft) {
+            if (connectionType == ConnectionType_NusLeft) {
                 BtScan_Start();
             }
         }
 
-        if (DEVICE_IS_UHK_DONGLE && peerId == PeerIdRight) {
+        if (DEVICE_IS_UHK_DONGLE && connectionType == ConnectionType_NusRight) {
             BtScan_Start();
         }
 
-        if (DEVICE_IS_UHK80_LEFT && peerId == PeerIdRight) {
+        if (DEVICE_IS_UHK80_LEFT && connectionType == ConnectionType_NusRight) {
             BtAdvertise_Start(BtAdvertise_Type());
         }
     }
@@ -307,7 +307,7 @@ __attribute__((unused)) static void infoLatencyParamsUpdated(struct bt_conn* con
     uint8_t peerId = getPeerIdByConn(conn);
     connection_type_t connectionType = Connections_Type(Peers[peerId].connectionId);
 
-    if (connectionType == ConnectionType_BleHid || connectionType == ConnectionType_Unknown) {
+    if (connectionType == ConnectionType_BtHid || connectionType == ConnectionType_NewBtHid || connectionType == ConnectionType_Unknown) {
         printk("BLE HID conn params: interval=%u ms, latency=%u, timeout=%u ms\n",
             interval * 5 / 4, latency, timeout * 10);
     }

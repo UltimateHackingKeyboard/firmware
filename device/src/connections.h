@@ -49,6 +49,7 @@
         ConnectionTarget_Left,
         ConnectionTarget_Right,
         ConnectionTarget_Host,
+        ConnectionTarget_Count,
     } connection_target_t;
 
     typedef enum {
@@ -87,6 +88,6 @@
     bool Connections_IsHostConnection(connection_id_t connectionId);
     bool Connections_IsReady(connection_id_t connectionId);
 
-    void Connections_HandleSwitchover(connection_id_t connectionId);
+    void Connections_HandleSwitchover(connection_id_t connectionId, bool forceSwitch);
 
 #endif // __CONNECTIONS_H__

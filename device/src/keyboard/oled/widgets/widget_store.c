@@ -98,9 +98,9 @@ static string_segment_t getLeftStatusText() {
     static char buffer [BUFFER_LENGTH] = { [BUFFER_LENGTH-1] = 0 };
     font_icons_t icon = FontIcon_CircleXmarkLarge;
     if (DEVICE_ID == DeviceId_Uhk80_Right) {
-        if (Uart_IsConnected()) {
+        if (Connections_IsReady(ConnectionId_UartLeft)) {
             icon = FontIcon_PlugsConnected;
-        } else if (Bt_DeviceIsConnected(DeviceId_Uhk80_Left)) {
+        } else if (Connections_IsReady(ConnectionId_NusServerLeft)) {
             icon = FontIcon_SignalStream;
         }
     }

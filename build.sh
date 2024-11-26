@@ -346,7 +346,7 @@ function run() {
     if [ `echo $DEVICES | wc -w` -gt 1 ]
     then
         runPerDevice
-    elif [ `echo $DEVICES | wc -w` -eq 0 ] 
+    elif [ `echo $DEVICES | wc -w` -le 1 ] 
     then
         performActions $DEVICES
     else

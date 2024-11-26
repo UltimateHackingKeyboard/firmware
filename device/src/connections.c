@@ -2,6 +2,7 @@
 #include "device.h"
 #include "host_connection.h"
 #include "device_state.h"
+#include <zephyr/bluetooth/addr.h>
 
 connection_t Connections[ConnectionId_Count] = {};
 
@@ -10,8 +11,11 @@ connection_id_t TargetConnectionId = ConnectionId_Invalid;
 void Connections_SetState(connection_id_t connectionId, connection_state_t state) {
     if ( Connections[connectionId].state != state ) {
         Connections[connectionId].state = state;
-        Connections_HandleSwitchover(connectionId);
-        DeviceState_Update(Connections_Target(connectionId));
+        if (Connections_Target(connectionId) == ConnectionTarget_Host) {
+            Connections_HandleSwitchover(connectionId, false);
+        } else {
+            DeviceState_Update(Connections_Target(connectionId));
+        }
     }
 }
 
@@ -42,6 +46,8 @@ connection_type_t Connections_Type(connection_id_t connectionId) {
         case ConnectionId_NewBtHid:
             return ConnectionType_NewBtHid;
         case ConnectionId_Count:
+        case ConnectionId_Invalid:
+            return ConnectionType_Unknown;
             break;
     }
     printk("Unhandled connectionId %d\n", connectionId);
@@ -61,6 +67,7 @@ connection_target_t Connections_Target(connection_id_t connectionId) {
                 case HostConnectionType_Dongle:
                     return ConnectionTarget_Host;
                 case HostConnectionType_Empty:
+                case HostConnectionType_Count:
                     return ConnectionTarget_None;
             }
         case ConnectionId_UartLeft:
@@ -87,7 +94,7 @@ connection_target_t Connections_Target(connection_id_t connectionId) {
 
 connection_id_t Connections_GetConnectionIdByBtAddr(const bt_addr_le_t *addr) {
     for (uint8_t connectionId = ConnectionId_HostConnectionFirst; connectionId <= ConnectionId_HostConnectionLast; connectionId++) {
-        host_connection_t *hostConnection = &HostConnections(connectionId);
+        host_connection_t *hostConnection = HostConnection(connectionId);
         switch (hostConnection->type) {
             case HostConnectionType_Dongle:
             case HostConnectionType_BtHid:
@@ -99,6 +106,7 @@ connection_id_t Connections_GetConnectionIdByBtAddr(const bt_addr_le_t *addr) {
             case HostConnectionType_Empty:
             case HostConnectionType_UsbHidLeft:
             case HostConnectionType_UsbHidRight:
+            case HostConnectionType_Count:
                 break;
         }
     }
@@ -132,19 +140,25 @@ static connection_id_t resolveAliases(connection_id_t connectionId) {
     return connectionId;
 }
 
-void Connections_HandleSwitchover(connection_id_t connectionId) {
+void Connections_HandleSwitchover(connection_id_t connectionId, bool forceSwitch) {
     connectionId = resolveAliases(connectionId);
+    bool isReady = Connections_IsReady(connectionId);
+
+    // Unset if disconnected
+    if (connectionId == TargetConnectionId && !isReady) {
+        TargetConnectionId = ConnectionId_Invalid;
+    }
 
     // Decide whether to switch to the supplied connection
-    if (Connections_IsHostConnection(connectionId) || Connections[connectionId].state == ConnectionState_Ready) {
+    if (isReady && Connections_IsHostConnection(connectionId)) {
         host_connection_t *hostConnection = HostConnection(connectionId);
-        if (hostConnection->switchover || TargetConnectionId == ConnectionId_Invalid) {
+        if (hostConnection->switchover || TargetConnectionId == ConnectionId_Invalid || forceSwitch) {
             TargetConnectionId = connectionId;
         }
     }
 
     // If current target is not usable
-    if (TargetConnectionId == ConnectionId_Invalid || Connections[TargetConnectionId].state != ConnectionState_Ready) {
+    if (TargetConnectionId == ConnectionId_Invalid) {
         // Find the first ready host connection
         for (uint8_t i = ConnectionId_HostConnectionFirst; i <= ConnectionId_HostConnectionLast; i++) {
             if (Connections[i].state == ConnectionState_Ready) {
@@ -153,6 +167,8 @@ void Connections_HandleSwitchover(connection_id_t connectionId) {
             }
         }
     }
+
+    DeviceState_Update(Connections_Target(connectionId));
 }
 
 connection_target_t Connections_DeviceToTarget(device_id_t deviceId) {
