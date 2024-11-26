@@ -250,18 +250,22 @@ extern "C" void HOGP_Disable()
 
 void hidmgr_set_transport(const hid::transport* tp)
 {
+    connection_id_t usbHidConnId = DEVICE_IS_UHK80_RIGHT ? ConnectionId_UsbHidRight : ConnectionId_UsbHidLeft;
+
     // tp is the transport of the keyboard app
     if (tp == nullptr) {
-        DeviceState_SetConnection(ConnectionId_BluetoothHid, ConnectionType_None);
-        DeviceState_SetConnection(ConnectionId_UsbHid, ConnectionType_None);
+        Connections_SetState(ConnectionId_BluetoothHid, ConnectionState_Disconnected);
+        Connections_SetState(usbHidConnId, ConnectionState_Disconnected);
     }
 #if DEVICE_IS_UHK80_RIGHT
     else if (tp == &hogp_manager::instance().main_service()) {
-        DeviceState_SetConnection(ConnectionId_BluetoothHid, ConnectionType_Bt);
+        Connections_SetState(ConnectionId_BluetoothHid, ConnectionState_Ready);
+        Connections_SetState(usbHidConnId, ConnectionState_Disconnected);
     }
 #endif
     else {
-        DeviceState_SetConnection(ConnectionId_UsbHid, ConnectionType_Usb);
+        Connections_SetState(ConnectionId_BluetoothHid, ConnectionState_Disconnected);
+        Connections_SetState(usbHidConnId, ConnectionState_Ready);
     }
 }
 

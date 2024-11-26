@@ -36,11 +36,11 @@
 
     typedef enum {
         HostConnectionType_Empty,
-        HostConnectionType_UsbRight,
-        HostConnectionType_UsbLeft,
-        HostConnectionType_Ble,
+        HostConnectionType_UsbHidRight,
+        HostConnectionType_UsbHidLeft,
+        HostConnectionType_BtHid,
         HostConnectionType_Dongle,
-        HostConnectionType_Count,
+        HostConnectionType_NewBtHid,
     } host_connection_type_t;
 
     typedef struct {
@@ -57,5 +57,6 @@
 // Functions:
 
     bool HostConnections_IsKnownBleAddress(const bt_addr_le_t *address);
+    host_connection_t* HostConnection(uint8_t connectionId);
 
 #endif

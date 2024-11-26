@@ -20,6 +20,8 @@
 #include "device_state.h"
 #include "usb/usb_compatibility.h"
 #include "macros/status_buffer.h"
+#include "legacy/host_connection.h"
+#include "connections.h"
 
 widget_t KeymapWidget;
 widget_t LayerWidget;
@@ -43,14 +45,36 @@ static string_segment_t getKeymapText() {
 
 
 static string_segment_t getTargetText() {
-    if (DeviceState_IsConnected(ConnectionId_UsbHid)) {
-        return (string_segment_t){ .start = "USB Cable", .end = NULL };
-    } else if (DeviceState_IsConnected(ConnectionId_Dongle)) {
-        return (string_segment_t){ .start = "UHK Dongle", .end = NULL };
-    } else if (DeviceState_IsConnected(ConnectionId_BluetoothHid)) {
-        return (string_segment_t){ .start = "Bluetooth", .end = NULL };
-    } else {
-        return (string_segment_t){ .start = "Disconnected", .end = NULL };
+    switch (TargetConnectionId) {
+        case ConnectionId_UsbHidRight:
+            return (string_segment_t){ .start = "USB Cable", .end = NULL };
+        case ConnectionId_BtHid:
+            return (string_segment_t){ .start = "Bluetooth", .end = NULL };
+        case ConnectionId_HostConnectionFirst ... ConnectionId_HostConnectionLast: {
+            host_connection_t* hostConnection = HostConnection(TargetConnectionId);
+
+            if (SegmentLen(hostConnection->name) > 0) {
+                return hostConnection->name;
+            }
+
+            switch(hostConnection->type) {
+                case HostConnectionType_UsbHidRight:
+                    return (string_segment_t){ .start = "USB Cable", .end = NULL };
+                case HostConnectionType_UsbHidLeft:
+                    return (string_segment_t){ .start = "USB Cable", .end = NULL };
+                case HostConnectionType_BtHid:
+                    return (string_segment_t){ .start = "Bluetooth", .end = NULL };
+                case HostConnectionType_Dongle:
+                    return (string_segment_t){ .start = "UHK Dongle", .end = NULL };
+                default:
+                    return (string_segment_t){ .start = "Unknown", .end = NULL };
+
+            }
+        }
+        case ConnectionId_Invalid:
+            return (string_segment_t){ .start = "Disconnected", .end = NULL };
+        default:
+            return (string_segment_t){ .start = "Unknown", .end = NULL };
     }
 }
 

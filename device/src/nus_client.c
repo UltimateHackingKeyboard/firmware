@@ -81,10 +81,10 @@ static void discovery_complete(struct bt_gatt_dm *dm, void *context) {
     printk("NUS connection with %s successfully established\n", GetPeerStringByConn(nus->conn));
 
     if (DEVICE_ID == DeviceId_Uhk80_Right) {
-        Bt_SetDeviceConnected(DeviceId_Uhk80_Left);
+        Bt_SetConnectionConfigured(Peers[PeerIdLeft].conn);
     }
     if (DEVICE_ID == DeviceId_Uhk_Dongle) {
-        Bt_SetDeviceConnected(DeviceId_Uhk80_Right);
+        Bt_SetConnectionConfigured(Peers[PeerIdRight].conn);
     }
 }
 

@@ -1,3 +1,4 @@
+#include "connections.h"
 #include "device.h"
 #if DEVICE_IS_UHK_DONGLE
 #include "dongle_leds.h"
@@ -28,7 +29,7 @@ void DongleLeds_Set(bool r, bool g, bool b) {
 }
 
 void DongleLeds_Update() {
-    if (DeviceState_IsConnected(ConnectionId_Right)) {
+    if (Connections_IsReady(ConnectionId_NusServerRight)) {
         DongleLeds_Set(false, true, false);
         return;
     }

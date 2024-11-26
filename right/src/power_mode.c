@@ -2,6 +2,7 @@
 #include "usb_composite_device.h"
 #include "event_scheduler.h"
 #include "led_manager.h"
+#include "connections.h"
 
 #ifdef __ZEPHYR__
     #include "device_state.h"
@@ -28,7 +29,7 @@ void PowerMode_SetUsbAwake(bool awake) {
 
 void PowerMode_Update() {
 #ifdef __ZEPHYR__
-    bool someoneAwake = usbAwake || DeviceState_IsConnected(ConnectionId_BluetoothHid) || DeviceState_IsConnected(ConnectionId_Dongle);
+    bool someoneAwake = DeviceState_IsTargetConnected(ConnectionTarget_Host);
 #else
     bool someoneAwake = CurrentPowerMode == PowerMode_Awake;
 #endif

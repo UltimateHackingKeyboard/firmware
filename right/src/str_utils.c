@@ -15,7 +15,9 @@ static bool consumeCommentsAsWhite = true;
 static bool isIdentifierChar(char c);
 
 uint8_t SegmentLen(string_segment_t str) {
-    if (str.end == NULL) {
+    if (str.start == NULL) {
+        return 0;
+    } else if (str.end == NULL) {
         return strlen(str.start);
     } else {
         return str.end - str.start;

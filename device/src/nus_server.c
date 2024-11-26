@@ -13,25 +13,11 @@
 
 static K_SEM_DEFINE(nusBusy, NUS_SLOTS, NUS_SLOTS);
 
-static void setPeerConnected(uint8_t peerId, device_id_t peerDeviceId, struct bt_conn *conn) {
-    const bt_addr_le_t *addr = bt_conn_get_dst(conn);
-    if (!Peers[peerId].isConnected || bt_addr_le_eq(&Peers[peerId].addr, addr) != 0) {
-        Peers[peerId].addr = *addr;
-        Bt_SetDeviceConnected(peerDeviceId);
-    }
-}
-
 static void received(struct bt_conn *conn, const uint8_t *const data, uint16_t len) {
     uint8_t* copy = MessengerQueue_AllocateMemory();
     memcpy(copy, data, len);
 
-    if (DEVICE_ID == DeviceId_Uhk80_Left) {
-        setPeerConnected(PeerIdRight, DeviceId_Uhk80_Right, conn);
-    }
-
-    if (DEVICE_ID == DeviceId_Uhk80_Right) {
-        setPeerConnected(PeerIdDongle, DeviceId_Uhk_Dongle, conn);
-    }
+    Bt_SetConnectionConfigured(conn);
 
     switch (DEVICE_ID) {
         case DeviceId_Uhk80_Left:
@@ -83,9 +69,9 @@ void NusServer_Disconnected() {
     k_sem_init(&nusBusy, NUS_SLOTS, NUS_SLOTS);
 }
 
-static void send_raw_buffer(const uint8_t *data, uint16_t len) {
+static void send_raw_buffer(const uint8_t *data, uint16_t len, struct bt_conn* conn) {
     SEM_TAKE(&nusBusy);
-    int err = bt_nus_send(NULL, data, len);
+    int err = bt_nus_send(conn, data, len);
     if (err) {
         k_sem_give(&nusBusy);
         printk("Failed to send data over BLE connection (err: %d)\n", err);
@@ -107,7 +93,7 @@ bool NusServer_Availability(messenger_availability_op_t operation) {
     }
 }
 
-void NusServer_SendMessage(message_t msg) {
+void NusServer_SendMessageTo(message_t msg, struct bt_conn* conn) {
     uint8_t buffer[MAX_LINK_PACKET_LENGTH];
     uint8_t bufferIdx = 0;
 
@@ -125,5 +111,9 @@ void NusServer_SendMessage(message_t msg) {
 
     memcpy(&buffer[bufferIdx], msg.data, msg.len);
 
-    send_raw_buffer(buffer, msg.len+msg.idsUsed+2);
+    send_raw_buffer(buffer, msg.len+msg.idsUsed+2, conn);
+}
+
+void NusServer_SendMessage(message_t msg) {
+    NusServer_SendMessageTo(msg, NULL);
 }
