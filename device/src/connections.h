@@ -68,6 +68,7 @@
     typedef struct {
         uint8_t peerId;
         connection_state_t state;
+        bool isAlias;
     } ATTR_PACKED connection_t;
 
 // Variables:

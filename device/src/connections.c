@@ -4,11 +4,44 @@
 #include "device_state.h"
 #include <zephyr/bluetooth/addr.h>
 
-connection_t Connections[ConnectionId_Count] = {};
+connection_t Connections[ConnectionId_Count] = {
+    [ConnectionId_UsbHidRight] = { .isAlias = true },
+    [ConnectionId_BtHid] = { .isAlias = true },
+};
 
 connection_id_t TargetConnectionId = ConnectionId_Invalid;
 
+static connection_id_t resolveAliases(connection_id_t connectionId) {
+    if (!Connections[connectionId].isAlias) {
+        return connectionId;
+    }
+
+    if (connectionId == ConnectionId_UsbHidRight) {
+        for (uint8_t i = ConnectionId_HostConnectionFirst; i <= ConnectionId_HostConnectionLast; i++) {
+            if (HostConnection(i)->type == HostConnectionType_UsbHidRight) {
+                return i;
+            }
+        }
+    }
+
+    if (connectionId == ConnectionId_BtHid) {
+        for (uint8_t i = ConnectionId_HostConnectionFirst; i <= ConnectionId_HostConnectionLast; i++) {
+            if (Connections[i].state == ConnectionState_Ready && HostConnection(i)->type == HostConnectionType_BtHid) {
+                return i;
+            }
+        }
+        if (Connections[ConnectionId_NewBtHid].state == ConnectionState_Ready) {
+            return ConnectionId_NewBtHid;
+        }
+    }
+
+    return connectionId;
+}
+
+
 void Connections_SetState(connection_id_t connectionId, connection_state_t state) {
+    connectionId = resolveAliases(connectionId);
+
     if ( Connections[connectionId].state != state ) {
         Connections[connectionId].state = state;
         if (Connections_Target(connectionId) == ConnectionTarget_Host) {
@@ -81,7 +114,6 @@ connection_target_t Connections_Target(connection_id_t connectionId) {
         case ConnectionId_UsbHidRight:
         case ConnectionId_UsbHidLeft:
             return ConnectionTarget_Host;
-        case ConnectionId_BtHid:
         case ConnectionId_NewBtHid:
             return ConnectionTarget_Host;
         case ConnectionId_Count:
@@ -125,19 +157,8 @@ bool Connections_IsHostConnection(connection_id_t connectionId) {
 }
 
 bool Connections_IsReady(connection_id_t connectionId) {
+    connectionId = resolveAliases(connectionId);
     return Connections[connectionId].state == ConnectionState_Ready;
-}
-
-static connection_id_t resolveAliases(connection_id_t connectionId) {
-    if (connectionId == ConnectionId_UsbHidRight) {
-        for (uint8_t i = ConnectionId_HostConnectionFirst; i <= ConnectionId_HostConnectionLast; i++) {
-            if (HostConnection(i)->type == HostConnectionType_UsbHidRight) {
-                return i;
-            }
-        }
-    }
-
-    return connectionId;
 }
 
 void Connections_HandleSwitchover(connection_id_t connectionId, bool forceSwitch) {
@@ -183,3 +204,4 @@ connection_target_t Connections_DeviceToTarget(device_id_t deviceId) {
             return ConnectionTarget_None;
     }
 }
+
