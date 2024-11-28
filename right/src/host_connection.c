@@ -42,6 +42,40 @@ host_connection_t* HostConnection(connection_id_t connectionId) {
     return &HostConnections[connectionId - ConnectionId_HostConnectionFirst];
 }
 
+static void selectConnection(int8_t direction) {
+    for (uint8_t i = TargetConnectionId + direction; i != TargetConnectionId; ) {
+        if (Connections_IsReady(i)) {
+            Connections_HandleSwitchover(i, true);
+            return;
+        }
+
+        i+= direction;
+        if (i > ConnectionId_HostConnectionLast) {
+            i = ConnectionId_HostConnectionFirst;
+        }
+        if (i < ConnectionId_HostConnectionFirst) {
+            i = ConnectionId_HostConnectionLast;
+        }
+    }
+}
+
+void HostConnections_SelectNextConnection(void) {
+    selectConnection(1);
+}
+
+void HostConnections_SelectPreviousConnection(void) {
+    selectConnection(-1);
+}
+
+void HostConnections_SelectByName(string_segment_t name) {
+    for (uint8_t i = ConnectionId_HostConnectionFirst; i <= ConnectionId_HostConnectionLast; i++) {
+        if (Connections_IsReady(i) && SegmentEqual(name, HostConnection(i)->name)) {
+            Connections_HandleSwitchover(i, true);
+            return;
+        }
+    }
+}
+
 #endif
 
 

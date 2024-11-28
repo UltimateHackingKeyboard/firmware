@@ -20,6 +20,7 @@
 #include "bt_pair.h"
 #include "bt_manager.h"
 #include <zephyr/bluetooth/addr.h>
+#include "legacy/config_manager.h"
 
 bool Bt_NewPairedDevice = false;
 
@@ -276,7 +277,7 @@ static void securityChanged(struct bt_conn *conn, bt_security_t level, enum bt_s
     connection_type_t connectionType = Connections_Type(Peers[peerId].connectionId);
 
     bool isUhkPeer = isUhkDeviceConnection(connectionType);
-    if (err || (isUhkPeer && level < BT_SECURITY_L4)) {
+    if (err || (isUhkPeer && level < BT_SECURITY_L4 && !Cfg.AllowUnsecuredConnections)) {
         printk("Bt security failed: %s, level %u, err %d, disconnecting\n", GetPeerStringByConn(conn), level, err);
         bt_conn_auth_cancel(conn);
         return;

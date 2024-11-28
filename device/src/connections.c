@@ -115,6 +115,7 @@ connection_target_t Connections_Target(connection_id_t connectionId) {
         case ConnectionId_UsbHidLeft:
             return ConnectionTarget_Host;
         case ConnectionId_NewBtHid:
+        case ConnectionId_BtHid:
             return ConnectionTarget_Host;
         case ConnectionId_Count:
         case ConnectionId_Invalid:

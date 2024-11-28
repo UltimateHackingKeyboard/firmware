@@ -24,6 +24,10 @@ uint8_t SegmentLen(string_segment_t str) {
     }
 }
 
+bool SegmentEqual(string_segment_t str1, string_segment_t str2) {
+    return StrEqual(str1.start, str1.end, str2.start, str2.end);
+}
+
 bool StrLessOrEqual(const char* a, const char* aEnd, const char* b, const char* bEnd)
 {
     while(true) {
