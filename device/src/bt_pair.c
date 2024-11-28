@@ -13,6 +13,7 @@
 #include "bt_advertise.h"
 #include "legacy/host_connection.h"
 #include "settings.h"
+#include "legacy/usb_commands/usb_command_get_new_pairings.h"
 
 bool BtPair_LastPairingSucceeded = true;
 bool BtPair_OobPairingInProgress = false;
@@ -172,6 +173,7 @@ void BtPair_Unpair(const bt_addr_le_t addr) {
 
     // Update settings
     Settings_Reload();
+    UsbCommand_UpdateNewPairingsFlag();
 }
 
 struct check_bonded_device_args_t {
@@ -215,4 +217,5 @@ void deleteBondIfUnknown(const struct bt_bond_info *info, void *user_data) {
 
 void BtPair_ClearUnknownBonds() {
     bt_foreach_bond(BT_ID_DEFAULT, deleteBondIfUnknown, NULL);
+    UsbCommand_UpdateNewPairingsFlag();
 }

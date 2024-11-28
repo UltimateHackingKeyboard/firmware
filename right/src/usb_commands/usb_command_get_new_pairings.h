@@ -3,11 +3,16 @@
 
 #ifdef __ZEPHYR__
 
+// Includes:
+
+    #include <stdint.h>
+
 // Typedefs:
 
 // Functions:
 
-    void UsbCommand_GetNewPairings(void);
+    void UsbCommand_UpdateNewPairingsFlag();
+    void UsbCommand_GetNewPairings(uint8_t page);
 
 #endif
 
