@@ -20,7 +20,7 @@ enum _generic_status
 #include "eeprom.h"
 #endif
 
-void UsbCommand_LaunchStorageTransfer(void)
+void UsbCommand_LaunchStorageTransfer(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer)
 {
     storage_operation_t storageOperation = GetUsbRxBufferUint8(1);
     config_buffer_id_t configBufferId = GetUsbRxBufferUint8(2);

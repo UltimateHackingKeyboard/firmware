@@ -14,7 +14,7 @@ char UsbMacroCommand[USB_GENERIC_HID_OUT_BUFFER_LENGTH+1];
 uint8_t UsbMacroCommandLength = 0;
 key_state_t dummyState;
 
-static void requestExecution()
+static void requestExecution(const uint8_t *GenericHidOutBuffer)
 {
     Utils_SafeStrCopy(UsbMacroCommand, ((char*)GenericHidOutBuffer) + 1, sizeof(GenericHidOutBuffer)-1);
     UsbMacroCommandLength = strlen(UsbMacroCommand);
@@ -41,9 +41,9 @@ void UsbMacroCommand_ExecuteSynchronously()
     EventVector_Unset(EventVector_UsbMacroCommandWaitingForExecution);
 }
 
-void UsbCommand_ExecMacroCommand()
+void UsbCommand_ExecMacroCommand(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer)
 {
     if (canExecute()) {
-        requestExecution();
+        requestExecution(GenericHidOutBuffer);
     }
 }

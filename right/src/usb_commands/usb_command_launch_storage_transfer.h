@@ -1,6 +1,10 @@
 #ifndef __USB_COMMAND_LAUNCH_STORAGE_TRANSFER_H__
 #define __USB_COMMAND_LAUNCH_STORAGE_TRANSFER_H__
 
+// Includes:
+
+    #include <stdint.h>
+
 // Typedef
 
     typedef enum {
@@ -11,6 +15,6 @@
 
 // Functions:
 
-    void UsbCommand_LaunchStorageTransfer(void);
+    void UsbCommand_LaunchStorageTransfer(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer);
 
 #endif

@@ -29,7 +29,7 @@
     #define Bt_NewPairedDevice 0
 #endif
 
-void UsbCommand_GetKeyboardState(void)
+void UsbCommand_GetKeyboardState(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer)
 {
 
 #ifdef __ZEPHYR__

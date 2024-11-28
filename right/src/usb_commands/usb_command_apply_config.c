@@ -19,25 +19,26 @@
 #include "main.h"
 #endif
 
-void updateUsbBuffer(uint8_t usbStatusCode, uint16_t parserOffset, parser_stage_t parserStage)
+void updateUsbBuffer(uint8_t *GenericHidInBuffer, uint8_t usbStatusCode, uint16_t parserOffset, parser_stage_t parserStage)
 {
     SetUsbTxBufferUint8(0, usbStatusCode);
     SetUsbTxBufferUint16(1, parserOffset);
     SetUsbTxBufferUint8(3, parserStage);
 }
 
-static uint8_t validateConfig() {
+static uint8_t validateConfig(uint8_t *GenericHidInBuffer) {
     // Validate the staging configuration.
     ParserRunDry = true;
     StagingUserConfigBuffer.offset = 0;
     uint8_t parseConfigStatus = ParseConfig(&StagingUserConfigBuffer);
-    updateUsbBuffer(UsbStatusCode_Success, StagingUserConfigBuffer.offset, ParsingStage_Validate);
-
+    if (GenericHidInBuffer) {
+        updateUsbBuffer(GenericHidInBuffer, UsbStatusCode_Success, StagingUserConfigBuffer.offset, ParsingStage_Validate);
+    }
     return parseConfigStatus;
 }
 
-void UsbCommand_ApplyConfigAsync(void) {
-    if (validateConfig() == UsbStatusCode_Success) {
+void UsbCommand_ApplyConfigAsync(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer) {
+    if (validateConfig(GenericHidInBuffer) == UsbStatusCode_Success) {
         EventVector_Set(EventVector_ApplyConfig);
 #ifdef __ZEPHYR__
         Main_Wake();
@@ -45,7 +46,7 @@ void UsbCommand_ApplyConfigAsync(void) {
     }
 }
 
-void UsbCommand_ApplyFactory(void)
+void UsbCommand_ApplyFactory(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer)
 {
     EventVector_Unset(EventVector_ApplyConfig);
 
@@ -63,12 +64,12 @@ void UsbCommand_ApplyFactory(void)
     LedManager_FullUpdate();
 }
 
-uint8_t UsbCommand_ApplyConfig(void)
+uint8_t UsbCommand_ApplyConfig(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer)
 {
     static bool isBoot = true;
     EventVector_Unset(EventVector_ApplyConfig);
 
-    uint8_t parseConfigStatus = validateConfig();
+    uint8_t parseConfigStatus = validateConfig(GenericHidInBuffer);
 
     if (parseConfigStatus != UsbStatusCode_Success) {
         return parseConfigStatus;

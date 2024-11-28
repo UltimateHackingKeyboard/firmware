@@ -11,7 +11,7 @@
 
 // Functions:
 
-    void UsbCommand_GetDebugBuffer(void);
+    void UsbCommand_GetDebugBuffer(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer);
 
     void SetDebugBufferUint8(uint32_t offset, uint8_t value);
     void SetDebugBufferUint16(uint32_t offset, uint16_t value);

@@ -8,7 +8,7 @@
 #include "config_manager.h"
 #include "ledmap.h"
 
-void UsbCommand_SetVariable(void)
+void UsbCommand_SetVariable(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer)
 {
     usb_variable_id_t variableId = GetUsbRxBufferUint8(1);
 

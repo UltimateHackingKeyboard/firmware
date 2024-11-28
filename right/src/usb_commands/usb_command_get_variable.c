@@ -6,7 +6,7 @@
 #include "macros/core.h"
 #include "config_manager.h"
 
-void UsbCommand_GetVariable(void)
+void UsbCommand_GetVariable(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer)
 {
     usb_variable_id_t variableId = GetUsbRxBufferUint8(1);
 

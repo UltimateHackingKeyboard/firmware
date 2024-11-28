@@ -113,7 +113,7 @@ struct usb_manager {
         static usb::df::hid::function usb_kb{
             keyboard_app::handle(), usb::hid::boot_protocol_mode::KEYBOARD};
         static usb::df::hid::function usb_mouse{mouse_app::handle()};
-        static usb::df::hid::function usb_command{command_app::handle()};
+        static usb::df::hid::function usb_command{command_app::usb_handle()};
         static usb::df::hid::function usb_controls{controls_app::handle()};
         static usb::df::hid::function usb_gamepad{gamepad_app::handle()};
         static usb::df::microsoft::xfunction usb_xpad{gamepad_app::handle()};
@@ -128,17 +128,19 @@ struct usb_manager {
             usb::df::hid::config(usb_mouse, speed, usb::endpoint::address(0x82), 1),
             usb::df::hid::config(usb_command, speed, usb::endpoint::address(0x83), 10),
             usb::df::hid::config(usb_controls, speed, usb::endpoint::address(0x84), 1)
-#if !DEVICE_HAS_BATTERY
-        );
-#else
+#if DEVICE_HAS_BATTERY
                 ,
             usb::df::hid::config(usb_battery, speed, usb::endpoint::address(0x86), 1)
             // not very useful at the moment
-        );
-
-        static const auto battery_config = usb::df::config::make_config(config_header,
-            usb::df::hid::config(usb_battery, speed, usb::endpoint::address(0x86), 1));
 #endif
+        );
+        static const auto inactive_config = usb::df::config::make_config(config_header,
+            usb::df::hid::config(usb_command, speed, usb::endpoint::address(0x83), 10)
+#if DEVICE_HAS_BATTERY
+                ,
+            usb::df::hid::config(usb_battery, speed, usb::endpoint::address(0x86), 1)
+#endif
+            );
 
         static const auto base_config =
             usb::df::config::make_config(config_header, shared_config_elems);
@@ -155,12 +157,8 @@ struct usb_manager {
         printk("USB config changing to %s\n", magic_enum::enum_name(conf).data());
         switch (conf) {
         case Hid_Empty:
-#if DEVICE_HAS_BATTERY
             ms_enum_.set_config({});
-            device_.set_config(battery_config);
-#else
-            assert(false);
-#endif
+            device_.set_config(inactive_config);
             break;
         case Hid_NoGamepad:
             ms_enum_.set_config({});

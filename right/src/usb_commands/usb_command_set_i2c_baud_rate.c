@@ -3,7 +3,7 @@
 #include "init_peripherals.h"
 #include "fsl_i2c.h"
 
-void UsbCommand_SetI2cBaudRate(void)
+void UsbCommand_SetI2cBaudRate(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer)
 {
     uint32_t i2cBaudRate = GetUsbRxBufferUint32(1);
     ChangeI2cBaudRate(i2cBaudRate);

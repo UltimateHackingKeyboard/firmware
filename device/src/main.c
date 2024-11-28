@@ -139,8 +139,8 @@ int main(void) {
         USB_SetSerialNumber(HardwareConfig->uniqueId);
         printk("Applying user config\n");
         bool factoryMode = false;
-         if (factoryMode || UsbCommand_ApplyConfig() != UsbStatusCode_Success) {
-             UsbCommand_ApplyFactory();
+         if (factoryMode || UsbCommand_ApplyConfig(NULL, NULL) != UsbStatusCode_Success) {
+             UsbCommand_ApplyFactory(NULL, NULL);
          }
          printk("User config applied\n");
          ShortcutParser_initialize();
