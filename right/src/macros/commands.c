@@ -1007,7 +1007,8 @@ static macro_result_t processIfSecondaryCommand(parser_context_t* ctx, bool nega
 
     switch(res.state) {
     case SecondaryRoleState_DontKnowYet:
-        return MacroResult_Waiting;
+        // secondary role driver has its own scheduler hook to wake us up
+        return MacroResult_Sleeping;
     case SecondaryRoleState_Primary:
         if (negate) {
             goto conditionPassed;

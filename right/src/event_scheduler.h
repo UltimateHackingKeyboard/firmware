@@ -75,6 +75,11 @@
        EventVector_ReportsChanged =                        1 << 22,
        EventVector_NativeActionsPostponing =               1 << 23,
        EventVector_MacroEnginePostponing =                 1 << 24,
+       EventVector_MouseControllerPostponing =             1 << 25,
+
+       // helpers
+       EventVector_SomeonePostponing = EventVector_NativeActionsPostponing | EventVector_MacroEnginePostponing | EventVector_MouseControllerPostponing,
+
     } event_vector_event_t;
 
 // Variables:

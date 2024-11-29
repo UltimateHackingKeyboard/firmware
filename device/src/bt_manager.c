@@ -11,6 +11,7 @@
 #include <zephyr/settings/settings.h>
 #include "bt_conn.h"
 #include "bt_scan.h"
+#include "settings.h"
 
 bool BtManager_Restarting = false;
 
@@ -99,7 +100,7 @@ void BtManager_RestartBt() {
         printk("Bluetooth init failed (err %d)\n", err);
     }
 
-    settings_load();
+    Settings_Reload();
 
     BtManager_StartBt();
 

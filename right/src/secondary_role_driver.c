@@ -1,4 +1,5 @@
 #include "secondary_role_driver.h"
+#include "macros/core.h"
 #include "postponer.h"
 #include "timer.h"
 #ifndef __ZEPHYR__
@@ -111,6 +112,15 @@ void SecondaryRoles_FakeActivation(secondary_role_result_t res)
  * TriggerByRelease = false
  */
 
+static void sleepTimeoutStrategy() {
+    //register wakeups
+    if (resolutionCallerIsMacroEngine) {
+        Macros_SleepTillKeystateChange();
+        Macros_SleepTillTime(resolutionStartTime + Cfg.SecondaryRoles_AdvancedStrategyTimeout, "SecondaryRoles - Macros");
+    } else {
+        EventScheduler_Schedule(resolutionStartTime + Cfg.SecondaryRoles_AdvancedStrategyTimeout, EventSchedulerEvent_NativeActions, "NativeActions - SecondaryRoles");
+    }
+}
 
 static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
 {
@@ -123,14 +133,6 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
 
     PostponerQuery_InfoByKeystate(resolutionKey, &dummy, &dualRoleRelease);
     PostponerQuery_InfoByQueueIdx(0, &actionPress, &actionRelease);
-
-    //register wakeups
-    if (resolutionCallerIsMacroEngine) {
-        Macros_WakedBecauseOfKeystateChange = true;
-        EventScheduler_Schedule(resolutionStartTime + Cfg.SecondaryRoles_AdvancedStrategyTimeout, EventSchedulerEvent_MacroWakeOnTime, "Macros - SecondaryRoles");
-    } else {
-        EventScheduler_Schedule(resolutionStartTime + Cfg.SecondaryRoles_AdvancedStrategyTimeout, EventSchedulerEvent_NativeActions, "NativeActions - SecondaryRoles");
-    }
 
     //handle doubletap logic
     if (
@@ -160,9 +162,11 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
                 KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "SC"));
                 return SecondaryRoleState_Secondary;
             default:
+                sleepTimeoutStrategy();
                 return SecondaryRoleState_DontKnowYet;
             }
         } else {
+            sleepTimeoutStrategy();
             return SecondaryRoleState_DontKnowYet;
         }
     }
@@ -220,6 +224,7 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
         return SecondaryRoleState_Primary;
     }
 
+    sleepTimeoutStrategy();
     return SecondaryRoleState_DontKnowYet;
 }
 
@@ -232,6 +237,9 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowSimple()
         KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "PK"));
         return SecondaryRoleState_Primary;
     } else {
+        if (resolutionCallerIsMacroEngine) {
+            Macros_SleepTillKeystateChange();
+        }
         return SecondaryRoleState_DontKnowYet;
     }
 }
