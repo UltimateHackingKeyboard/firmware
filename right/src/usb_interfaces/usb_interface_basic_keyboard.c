@@ -5,6 +5,7 @@
 #include "macro_events.h"
 #include "usb_composite_device.h"
 #include "usb_report_updater.h"
+#include "macros/status_buffer.h"
 
 #ifdef __ZEPHYR__
 #include "usb/usb_compatibility.h"
@@ -206,6 +207,7 @@ void UsbBasicKeyboardSendActiveReport(void)
         //This is *not* asynchronously safe as long as multiple reports of different type can be sent at the same time.
         //TODO: consider either making it atomic, or lowering semaphore reset delay
         UsbReportUpdateSemaphore &= ~(1 << USB_BASIC_KEYBOARD_INTERFACE_INDEX);
+        Macros_ReportPrintf(NULL, "UsbError: %d", status);
     }
 #endif
 }
