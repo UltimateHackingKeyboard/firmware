@@ -650,11 +650,7 @@ static void updateActiveUsbReports(void)
 
 void justPreprocessInput(void) {
     // Make preprocessKeyState push new events into postponer queue.
-
-
-    //// As a side-effect, postpone first cycle after we switch back to regular update loop
-    //// Eh? but why?
-    //PostponerCore_PostponeNCycles(0);
+    EventVector_Set(EventVector_NativeActionsPostponing);
 
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
