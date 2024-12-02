@@ -47,6 +47,7 @@
     extern version_t DataModelVersion;
 
     extern bool PerKeyRgbPresent;
+    extern bool ConfigParser_ConfigVersionIsEmpty;
 
 // Functions:
 

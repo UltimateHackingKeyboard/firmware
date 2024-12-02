@@ -45,6 +45,12 @@ void UsbCommand_ApplyConfigAsync(void) {
     }
 }
 
+static bool flashEmpty() {
+    bool hwConfigEmpty = HardwareConfig->majorVersion == 0 || HardwareConfig->majorVersion == 255;
+    bool swConfigEmpty = ConfigParser_ConfigVersionIsEmpty;
+    return swConfigEmpty && hwConfigEmpty;
+}
+
 void UsbCommand_ApplyFactory(void)
 {
     EventVector_Unset(EventVector_ApplyConfig);
@@ -54,6 +60,13 @@ void UsbCommand_ApplyFactory(void)
     Macros_ClearStatus();
 
     ConfigManager_ResetConfiguration(false);
+
+    if (flashEmpty()) {
+        Cfg.LedMap_ConstantRGB = (rgb_t){ 255, 255, 255 };
+        Ledmap_SetLedBacklightingMode(BacklightingMode_ConstantRGB);
+        AlwaysOnMode = true;
+        EventVector_Set(EventVector_LedMapUpdateNeeded);
+    }
 
 #ifdef __ZEPHYR__
     StateSync_ResetConfig();

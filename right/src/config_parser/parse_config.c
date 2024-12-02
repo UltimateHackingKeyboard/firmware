@@ -29,6 +29,8 @@
 
 version_t DataModelVersion = {0, 0, 0};
 
+bool ConfigParser_ConfigVersionIsEmpty = false;
+
     bool PerKeyRgbPresent = false;
 
 void readRgbColor(config_buffer_t *buffer, rgb_t* keyActionColors, key_action_color_t keyActionColor)
@@ -52,6 +54,8 @@ parser_error_t parseConfig(config_buffer_t *buffer)
     DataModelVersion.major = ReadUInt16(buffer);
     DataModelVersion.minor = ReadUInt16(buffer);
     DataModelVersion.patch = ReadUInt16(buffer);
+
+    ConfigParser_ConfigVersionIsEmpty = VERSION_EQUAL(DataModelVersion, 0, 0, 0) || VERSION_EQUAL(DataModelVersion, 0xFFFF, 0xFFFF, 0xFFFF);
 
 #ifdef __ZEPHYR__
     if (!ParserRunDry) {
@@ -327,6 +331,7 @@ parser_error_t parseConfig(config_buffer_t *buffer)
         Cfg.KeyBacklightFadeOutTimeout = keyBacklightFadeOutTimeout;
         Cfg.KeyBacklightFadeOutBatteryTimeout = keyBacklightFadeOutBatteryTimeout;
 
+        AlwaysOnMode = false;
         LedManager_RecalculateLedBrightness();
         LedManager_UpdateSleepModes();
         BtPair_ClearUnknownBonds();
