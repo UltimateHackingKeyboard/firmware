@@ -24,6 +24,7 @@
 #include <zephyr/kernel.h>
 #include "legacy/peripherals/merge_sensor.h"
 #include "power_mode.h"
+#include "dongle_leds.h"
 
 #define STATE_SYNC_SEND_DELAY 2
 
@@ -126,7 +127,10 @@ static state_sync_prop_t stateSyncProps[StateSyncPropertyId_Count] = {
     SIMPLE(FunctionalColors,        SyncDirection_RightToLeft,        DirtyState_Clean,    &Cfg.KeyActionColors),
     SIMPLE(PowerMode,               SyncDirection_RightToLeft,        DirtyState_Clean,    &CurrentPowerMode),
     CUSTOM(Config,                  SyncDirection_RightToLeft,        DirtyState_Clean),
+    SIMPLE(DongleStandby,           SyncDirection_RightToDongle,      DirtyState_Clean,    &MergeSensor_HalvesAreMerged),
 };
+
+
 
 static void invalidateProperty(state_sync_prop_id_t propId) {
     STATE_SYNC_LOG("<<< Invalidating property %s\n", stateSyncProps[propId].name);
@@ -342,6 +346,11 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
         }
         break;
     case StateSyncPropertyId_MergeSensor:
+        break;
+    case StateSyncPropertyId_DongleStandby:
+        if (DEVICE_IS_UHK_DONGLE) {
+            DongleLeds_Update();
+        }
         break;
     default:
         printk("Property %i ('%s') has no receive handler. If this is correct, please add a "
@@ -618,7 +627,7 @@ static void updateLoopRightDongle() {
         while (true) {
             bool isConnected = DeviceState_IsDeviceConnected(DeviceId_Uhk80_Right);
             STATE_SYNC_LOG("--- Dongle update loop, connected: %i\n", isConnected);
-            if (!isConnected || handlePropertyUpdateDongleToRight()) {
+            if (!isConnected || DongleStandby || handlePropertyUpdateDongleToRight()) {
                 k_sleep(K_FOREVER);
             } else {
                 k_sleep(K_MSEC(STATE_SYNC_SEND_DELAY));
@@ -683,6 +692,7 @@ void StateSync_ResetRightDongleLink(bool bidirectional) {
         invalidateProperty(StateSyncPropertyId_ResetRightDongleLink);
     }
     if (DEVICE_ID == DeviceId_Uhk_Dongle) {
+        DongleStandby = false;
         invalidateProperty(StateSyncPropertyId_KeyboardLedsState);
     }
 }

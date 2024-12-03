@@ -2,6 +2,8 @@
 #include "device.h"
 #include "host_connection.h"
 #include "device_state.h"
+#include "messenger.h"
+#include "state_sync.h"
 #include <zephyr/bluetooth/addr.h>
 
 connection_t Connections[ConnectionId_Count] = {
@@ -162,6 +164,14 @@ bool Connections_IsReady(connection_id_t connectionId) {
     return Connections[connectionId].state == ConnectionState_Ready;
 }
 
+static void setCurrentDongleToStandby() {
+    host_connection_t *hostConnection = HostConnection(TargetConnectionId);
+    if (hostConnection && hostConnection->type == HostConnectionType_Dongle) {
+        bool standby = true;
+        Messenger_Send2(DeviceId_Uhk_Dongle, MessageId_StateSync, StateSyncPropertyId_DongleStandby, (const uint8_t*)&standby, 1);
+    }
+}
+
 void Connections_HandleSwitchover(connection_id_t connectionId, bool forceSwitch) {
     connectionId = resolveAliases(connectionId);
     bool isReady = Connections_IsReady(connectionId);
@@ -175,6 +185,7 @@ void Connections_HandleSwitchover(connection_id_t connectionId, bool forceSwitch
     if (isReady && Connections_IsHostConnection(connectionId)) {
         host_connection_t *hostConnection = HostConnection(connectionId);
         if (hostConnection->switchover || TargetConnectionId == ConnectionId_Invalid || forceSwitch) {
+            setCurrentDongleToStandby();
             TargetConnectionId = connectionId;
         }
     }

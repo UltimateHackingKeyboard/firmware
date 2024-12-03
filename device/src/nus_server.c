@@ -3,6 +3,7 @@
 #include "bt_conn.h"
 #include "bt_advertise.h"
 #include "bt_conn.h"
+#include "connections.h"
 #include "messenger.h"
 #include "device.h"
 #include "messenger_queue.h"
@@ -19,12 +20,15 @@ static void received(struct bt_conn *conn, const uint8_t *const data, uint16_t l
 
     Bt_SetConnectionConfigured(conn);
 
+    uint8_t peerId = GetPeerIdByConn(conn);
+    uint8_t connectionId = peerId == PeerIdUnknown ? ConnectionId_Invalid : Peers[peerId].connectionId;
+
     switch (DEVICE_ID) {
         case DeviceId_Uhk80_Left:
-            Messenger_Enqueue(DeviceId_Uhk80_Right, copy, len);
+            Messenger_Enqueue(connectionId, DeviceId_Uhk80_Right, copy, len);
             break;
         case DeviceId_Uhk80_Right:
-            Messenger_Enqueue(DeviceId_Uhk_Dongle, copy, len);
+            Messenger_Enqueue(connectionId, DeviceId_Uhk_Dongle, copy, len);
             break;
         default:
             printk("Ble received message from unknown source.");

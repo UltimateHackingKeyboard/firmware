@@ -76,6 +76,12 @@ void HostConnections_SelectByName(string_segment_t name) {
     }
 }
 
+void HostConnections_SelectById(uint8_t connectionId) {
+    if (Connections_IsReady(connectionId)) {
+        Connections_HandleSwitchover(connectionId, true);
+    }
+}
+
 #endif
 
 

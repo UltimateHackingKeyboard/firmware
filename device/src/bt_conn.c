@@ -69,7 +69,7 @@ peer_t *getPeerByAddr(const bt_addr_le_t *addr) {
     return NULL;
 }
 
-int8_t getPeerIdByConn(const struct bt_conn *conn) {
+int8_t GetPeerIdByConn(const struct bt_conn *conn) {
     const bt_addr_le_t *addr = bt_conn_get_dst(conn);
     peer_t *peer = getPeerByAddr(addr);
     int8_t peerId = peer ? peer->id : PeerIdUnknown;
@@ -205,7 +205,7 @@ static void connected(struct bt_conn *conn, uint8_t err) {
 }
 
 static void disconnected(struct bt_conn *conn, uint8_t reason) {
-    int8_t peerId = getPeerIdByConn(conn);
+    int8_t peerId = GetPeerIdByConn(conn);
     connection_type_t connectionType = Connections_Type(Peers[peerId].connectionId);
 
     ARG_UNUSED(peerId);
@@ -257,7 +257,7 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
 }
 
 void Bt_SetConnectionConfigured(struct bt_conn* conn) {
-    uint8_t peerId = getPeerIdByConn(conn);
+    uint8_t peerId = GetPeerIdByConn(conn);
     Connections_SetState(Peers[peerId].connectionId, ConnectionState_Ready);
 }
 
@@ -273,7 +273,7 @@ static bool isUhkDeviceConnection(connection_type_t connectionType) {
 }
 
 static void securityChanged(struct bt_conn *conn, bt_security_t level, enum bt_security_err err) {
-    int8_t peerId = getPeerIdByConn(conn);
+    int8_t peerId = GetPeerIdByConn(conn);
     connection_type_t connectionType = Connections_Type(Peers[peerId].connectionId);
 
     bool isUhkPeer = isUhkDeviceConnection(connectionType);
@@ -305,7 +305,7 @@ static void securityChanged(struct bt_conn *conn, bt_security_t level, enum bt_s
 
 __attribute__((unused)) static void infoLatencyParamsUpdated(struct bt_conn* conn, uint16_t interval, uint16_t latency, uint16_t timeout)
 {
-    uint8_t peerId = getPeerIdByConn(conn);
+    uint8_t peerId = GetPeerIdByConn(conn);
     connection_type_t connectionType = Connections_Type(Peers[peerId].connectionId);
 
     if (connectionType == ConnectionType_BtHid || connectionType == ConnectionType_NewBtHid || connectionType == ConnectionType_Unknown) {
@@ -340,7 +340,7 @@ static void auth_passkey_confirm(struct bt_conn *conn, unsigned int passkey) {
         return;
     }
 
-    int8_t peerId = getPeerIdByConn(conn);
+    int8_t peerId = GetPeerIdByConn(conn);
     connection_type_t connectionType = Connections_Type(Peers[peerId].connectionId);
     bool isUhkPeer = isUhkDeviceConnection(connectionType);
     if (isUhkPeer || BtPair_OobPairingInProgress) {
@@ -399,7 +399,7 @@ static void pairing_complete(struct bt_conn *conn, bool bonded) {
     BtPair_EndPairing(true, "Successfuly bonded!");
 
     bt_addr_le_t addr = *bt_conn_get_dst(conn);
-    uint8_t peerId = getPeerIdByConn(conn);
+    uint8_t peerId = GetPeerIdByConn(conn);
     connection_type_t connectionType = Connections_Type(Peers[peerId].connectionId);
     bool isUhkPeer = isUhkDeviceConnection(connectionType);
 

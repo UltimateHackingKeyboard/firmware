@@ -35,12 +35,14 @@
 
 // Typedefs:
 
+// Variables:
+
+    extern bool DongleStandby;
+
 // Functions:
 
     bool DeviceState_IsTargetConnected(uint8_t target);
     bool DeviceState_IsDeviceConnected(device_id_t deviceId);
     void DeviceState_Update(uint8_t connectionTarget);
-
-// Variables:
 
 #endif // __DEVICE_STATE_H__

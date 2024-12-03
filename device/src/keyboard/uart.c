@@ -63,10 +63,12 @@ static void rxPacketReceived() {
         rxBuffer = MessengerQueue_AllocateMemory();
         rxPosition = 0;
 
+        connection_id_t connectionId = DEVICE_IS_UHK80_LEFT ? ConnectionId_UartRight : ConnectionId_UartLeft;
+
         if (DEVICE_IS_UHK80_RIGHT) {
-            Messenger_Enqueue(DeviceId_Uhk80_Left, oldPacket, len);
+            Messenger_Enqueue(connectionId, DeviceId_Uhk80_Left, oldPacket, len);
         } else if (DEVICE_IS_UHK80_LEFT) {
-            Messenger_Enqueue(DeviceId_Uhk80_Right, oldPacket, len);
+            Messenger_Enqueue(connectionId, DeviceId_Uhk80_Right, oldPacket, len);
         }
     }
 }

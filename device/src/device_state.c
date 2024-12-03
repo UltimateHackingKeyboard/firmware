@@ -15,6 +15,8 @@
 
 static connection_id_t targetsConnection[ConnectionTarget_Count] = {};
 
+bool DongleStandby = false;
+
 // void handleStateTransition(connection_id_t remoteId, bool connected) {
 void handleStateTransition(connection_target_t remote, connection_id_t connectionId, bool connected) {
         connection_target_t local = Connections_DeviceToTarget(DEVICE_ID);
@@ -27,7 +29,9 @@ void handleStateTransition(connection_target_t remote, connection_id_t connectio
             case ConnectionTarget_Right:
                 switch (remote) {
                     case ConnectionTarget_Left:
+#if DEVICE_HAS_OLED
                         Widget_Refresh(&StatusWidget);
+#endif
                         if (connected) {
                             StateSync_ResetRightLeftLink(true);
                             ModuleConnectionStates[UhkModuleDriverId_LeftKeyboardHalf].moduleId = ModuleId_LeftKeyboardHalf;
@@ -55,7 +59,9 @@ void handleStateTransition(connection_target_t remote, connection_id_t connectio
                         if (HostConnection(connectionId)->type == HostConnectionType_Dongle && connected) {
                             StateSync_ResetRightDongleLink(true);
                         }
+#if DEVICE_HAS_OLED
                         Widget_Refresh(&TargetWidget);
+#endif
                         EventScheduler_Reschedule(CurrentTime + POWER_MODE_UPDATE_DELAY, EventSchedulerEvent_PowerMode, "update sleep mode from device state");
                         break;
                     default:
@@ -125,7 +131,7 @@ bool DeviceState_IsDeviceConnected(device_id_t deviceId) {
     return connectionId != ConnectionId_Invalid && Connections[connectionId].state == ConnectionState_Ready;
 }
 
-bool DeviceState_IsTargetConnected(connection_target_t target) {
+bool DeviceState_IsTargetConnected(uint8_t target) {
     connection_id_t connectionId = findPreferredConnection(target);
 
     return connectionId != ConnectionId_Invalid && Connections[connectionId].state == ConnectionState_Ready;

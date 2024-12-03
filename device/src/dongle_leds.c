@@ -9,7 +9,6 @@ const struct pwm_dt_spec red_pwm_led = PWM_DT_SPEC_GET(DT_ALIAS(red_pwm_led));
 const struct pwm_dt_spec green_pwm_led = PWM_DT_SPEC_GET(DT_ALIAS(green_pwm_led));
 const struct pwm_dt_spec blue_pwm_led = PWM_DT_SPEC_GET(DT_ALIAS(blue_pwm_led));
 
-
 // There is also the following zero led.
 // const struct gpio_dt_spec led0 = GPIO_DT_SPEC_GET(DT_ALIAS(led0_green), gpios);
 // gpio_pin_configure_dt(&led0, GPIO_OUTPUT);
@@ -30,11 +29,16 @@ void DongleLeds_Set(bool r, bool g, bool b) {
 
 void DongleLeds_Update() {
     if (Connections_IsReady(ConnectionId_NusServerRight)) {
-        DongleLeds_Set(false, true, false);
-        return;
+        if (DongleStandby) {
+            DongleLeds_Set(false, false, true);
+            return;
+        } else {
+            DongleLeds_Set(false, true, false);
+            return;
+        }
     }
     if (RightAddressIsSet) {
-        DongleLeds_Set(false, false, true);
+        DongleLeds_Set(true, false, true);
         return;
     }
     DongleLeds_Set(true, false, false);

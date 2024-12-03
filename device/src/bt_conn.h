@@ -50,6 +50,7 @@
 
 // Functions:
 
+    int8_t GetPeerIdByConn(const struct bt_conn *conn);
     char *GetPeerStringByAddr(const bt_addr_le_t *addr);
     char *GetPeerStringByConn(const struct bt_conn *conn);
     extern void num_comp_reply(uint8_t accept);

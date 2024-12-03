@@ -244,12 +244,15 @@ static void receive(const uint8_t* data, uint16_t len) {
     }
 }
 
-static bool isSpam(const uint8_t* data) {
+static bool isSpam(const uint8_t* data, connection_id_t connectionId) {
     if (data[MessageOffset_MsgId1] == MessageId_Ping) {
         return true;
     }
     if (data[MessageOffset_MsgId1] == MessageId_StateSync && data[MessageOffset_MsgId1+1] == StateSyncPropertyId_Battery) {
         return DEBUG_EVENTLOOP_SCHEDULE;
+    }
+    if (DEVICE_IS_UHK80_RIGHT && Connections_Type(connectionId) == ConnectionType_NusDongle && connectionId != TargetConnectionId) {
+        return true;
     }
     return false;
 }
@@ -279,8 +282,8 @@ ATTR_UNUSED static void getMessageDescription(const uint8_t* data, const char** 
     }
 }
 
-void Messenger_Enqueue(uint8_t src, const uint8_t* data, uint16_t len) {
-    if (!isSpam(data)) {
+void Messenger_Enqueue(uint8_t srcConnectionId, uint8_t src, const uint8_t* data, uint16_t len) {
+    if (!isSpam(data, srcConnectionId)) {
         MessengerQueue_Put(src, data, len);
         EventVector_Set(EventVector_NewMessage);
         LOG_SCHEDULE(
