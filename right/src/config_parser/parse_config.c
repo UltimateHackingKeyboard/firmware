@@ -29,7 +29,7 @@
 
 version_t DataModelVersion = {0, 0, 0};
 
-bool ConfigParser_ConfigVersionIsEmpty = false;
+bool ConfigParser_ConfigVersionIsEmpty = true;
 
     bool PerKeyRgbPresent = false;
 

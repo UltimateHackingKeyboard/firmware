@@ -65,6 +65,8 @@ void UsbCommand_ApplyFactory(void)
         Cfg.LedMap_ConstantRGB = (rgb_t){ 255, 255, 255 };
         Ledmap_SetLedBacklightingMode(BacklightingMode_ConstantRGB);
         AlwaysOnMode = true;
+        Cfg.KeyBacklightBrightnessDefault = 255;
+        Cfg.KeyBacklightBrightnessBatteryDefault = 255;
         EventVector_Set(EventVector_LedMapUpdateNeeded);
     }
 
