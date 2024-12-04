@@ -45,10 +45,17 @@ void UsbCommand_ApplyConfigAsync(void) {
     }
 }
 
-static bool flashEmpty() {
-    bool hwConfigEmpty = HardwareConfig->majorVersion == 0 || HardwareConfig->majorVersion == 255;
-    bool swConfigEmpty = ConfigParser_ConfigVersionIsEmpty;
-    return swConfigEmpty && hwConfigEmpty;
+static void setLedsWhite() {
+    Cfg.LedMap_ConstantRGB = (rgb_t){ 255, 255, 255 };
+    Ledmap_SetLedBacklightingMode(BacklightingMode_ConstantRGB);
+    AlwaysOnMode = true;
+    Cfg.KeyBacklightBrightnessDefault = 255;
+    Cfg.KeyBacklightBrightnessBatteryDefault = 255;
+    EventVector_Set(EventVector_LedMapUpdateNeeded);
+}
+
+static bool hwConfigEmpty() {
+    return HardwareConfig->majorVersion == 0 || HardwareConfig->majorVersion == 255;
 }
 
 void UsbCommand_ApplyFactory(void)
@@ -61,13 +68,8 @@ void UsbCommand_ApplyFactory(void)
 
     ConfigManager_ResetConfiguration(false);
 
-    if (flashEmpty()) {
-        Cfg.LedMap_ConstantRGB = (rgb_t){ 255, 255, 255 };
-        Ledmap_SetLedBacklightingMode(BacklightingMode_ConstantRGB);
-        AlwaysOnMode = true;
-        Cfg.KeyBacklightBrightnessDefault = 255;
-        Cfg.KeyBacklightBrightnessBatteryDefault = 255;
-        EventVector_Set(EventVector_LedMapUpdateNeeded);
+    if (hwConfigEmpty()) {
+        setLedsWhite();
     }
 
 #ifdef __ZEPHYR__
@@ -121,6 +123,10 @@ uint8_t UsbCommand_ApplyConfig(void)
     }
 
     MacroEvent_OnInit();
+
+    if (hwConfigEmpty()) {
+        setLedsWhite();
+    }
 
 #ifdef __ZEPHYR__
     StateSync_ResetConfig();
