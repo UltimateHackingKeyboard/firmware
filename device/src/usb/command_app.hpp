@@ -6,7 +6,7 @@
 #include "hid/rdf/descriptor.hpp"
 #include "hid/report_protocol.hpp"
 #include "report_ids.h"
-#include "../device.h"
+#include "device.h"
 
 namespace hid::page {
 enum class ugl : uint8_t;

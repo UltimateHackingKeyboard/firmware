@@ -11,12 +11,12 @@
 #include "usb/usb_compatibility.h"
 #include "nus_server.h"
 #include "nus_client.h"
-#include "legacy/module.h"
-#include "legacy/key_states.h"
+#include "module.h"
+#include "key_states.h"
 #include "shared/attributes.h"
-#include "legacy/str_utils.h"
-#include "legacy/event_scheduler.h"
-#include "legacy/slave_drivers/uhk_module_driver.h"
+#include "str_utils.h"
+#include "event_scheduler.h"
+#include "slave_drivers/uhk_module_driver.h"
 
 #if DEVICE_IS_KEYBOARD
 #include "keyboard/uart.h"

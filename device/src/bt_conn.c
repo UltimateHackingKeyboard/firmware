@@ -10,7 +10,7 @@
 #include "device_state.h"
 #include "keyboard/oled/screens/screen_manager.h"
 #include "keyboard/oled/widgets/widget.h"
-#include "legacy/host_connection.h"
+#include "host_connection.h"
 #include "nus_client.h"
 #include "nus_server.h"
 #include "device.h"

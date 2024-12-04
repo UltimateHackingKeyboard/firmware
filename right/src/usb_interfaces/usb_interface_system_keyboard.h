@@ -3,11 +3,6 @@
 
 // Includes:
 
-#ifndef __ZEPHYR__
-    #include "fsl_common.h"
-#else
-    #include "keyboard/legacy_ports.h"
-#endif
     #include "usb_descriptors/usb_descriptor_system_keyboard_report.h"
     #include "attributes.h"
     #include "usb_api.h"

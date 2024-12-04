@@ -5,7 +5,7 @@
 
     #include <inttypes.h>
     #include <stdbool.h>
-    #include "legacy/debug.h"
+    #include "debug.h"
 
 // Macros:
 

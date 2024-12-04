@@ -4,9 +4,9 @@
 #include "charger.h"
 #include "keyboard/charger.h"
 #include "shell.h"
-#include "legacy/timer.h"
+#include "timer.h"
 #include "attributes.h"
-#include "legacy/event_scheduler.h"
+#include "event_scheduler.h"
 #include "state_sync.h"
 #include <nrfx_power.h>
 #include "device.h"

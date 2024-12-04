@@ -7,11 +7,11 @@
 #include <zephyr/bluetooth/addr.h>
 #include "bt_conn.h"
 #include "bt_scan.h"
-#include "legacy/event_scheduler.h"
+#include "event_scheduler.h"
 #include "zephyr/kernel.h"
 #include "bt_manager.h"
 #include "bt_advertise.h"
-#include "legacy/host_connection.h"
+#include "host_connection.h"
 #include "settings.h"
 
 bool BtPair_LastPairingSucceeded = true;

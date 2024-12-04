@@ -6,12 +6,6 @@
     #include <stddef.h>
     #include <stdint.h>
 
-#ifndef __ZEPHYR__
-    #include "fsl_common.h"
-#else
-    #include "keyboard/legacy_ports.h"
-#endif
-
     #include "attributes.h"
     #include "usb_api.h"
     #include "usb_descriptors/usb_descriptor_basic_keyboard_report.h"

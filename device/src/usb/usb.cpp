@@ -4,9 +4,9 @@ extern "C" {
 #include "key_states.h"
 #include "keyboard/charger.h"
 #include "keyboard/key_scanner.h"
-#include "legacy/power_mode.h"
-#include "legacy/timer.h"
-#include "legacy/user_logic.h"
+#include "power_mode.h"
+#include "timer.h"
+#include "user_logic.h"
 #include "logger.h"
 #include <device.h>
 #include <zephyr/kernel.h>

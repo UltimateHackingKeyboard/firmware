@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 build:
+  # sharing common uhk source code between zephyr and legacy
+  cmake: .
   settings:
     # hardware model 2 doesn't work with out-of-tree board roots without this:
     board_root: .

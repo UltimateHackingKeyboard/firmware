@@ -15,7 +15,7 @@
 
 #ifdef __ZEPHYR__
 #include "state_sync.h"
-#include "legacy/event_scheduler.h"
+#include "event_scheduler.h"
 #include "main.h"
 #endif
 

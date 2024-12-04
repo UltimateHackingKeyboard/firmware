@@ -1,1 +1,0 @@
-../../../../right/src/macros/shortcut_parser.h

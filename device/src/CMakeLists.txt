@@ -1,8 +1,5 @@
-target_include_directories(app PUBLIC
-    .
-    legacy
-    legacy/config_parser
-    shared
+target_include_directories(${PROJECT_NAME} PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}
     usb
 )
 
@@ -19,18 +16,16 @@ set(usb_cpp_sources
 )
 file(GLOB_RECURSE keyboard_sources keyboard/*.c)
 file(GLOB lvgl_dummy lvgl/*.c)
-file(GLOB_RECURSE legacy_sources legacy/*.c)
-file(GLOB_RECURSE shared_sources shared/*.c)
 
-if(CONFIG_BOARD_UHK_60_RIGHT)
-    target_sources(app PRIVATE
-        uhk60/main.c
+if(NOT CONFIG_BOARD_UHK_60_RIGHT)
+    # C headers compiled with C++ give pointer conversion errors, turn them to warnings
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive")
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+        c2usb
     )
-else()
-    target_sources(app PRIVATE
+
+    target_sources(${PROJECT_NAME} PRIVATE
         ${usb_cpp_sources}
-        ${legacy_sources}
-        ${shared_sources}
         bt_conn.c
         bt_manager.c
         bt_pair.c
@@ -38,7 +33,6 @@ else()
         device_state.c
         flash.c
         logger.c
-        main.c
         messenger_queue.c
         messenger.c
         settings.c
@@ -47,27 +41,27 @@ else()
         state_sync.c
     )
     if(CONFIG_BT_PERIPHERAL)
-        target_sources(app PRIVATE
+        target_sources(${PROJECT_NAME} PRIVATE
             bt_advertise.c
             nus_server.c
         )
     endif()
     if(CONFIG_BT_CENTRAL)
-        target_sources(app PRIVATE
+        target_sources(${PROJECT_NAME} PRIVATE
             bt_scan.c
             nus_client.c
         )
     endif()
     if(CONFIG_BOARD_UHK_DONGLE)
-        target_sources(app PRIVATE
+        target_sources(${PROJECT_NAME} PRIVATE
             dongle_leds.c
         )
     else()
-        target_sources(app PRIVATE
+        target_sources(${PROJECT_NAME} PRIVATE
             ${keyboard_sources}
         )
         if(CONFIG_BOARD_UHK_80_RIGHT)
-            target_sources(app PRIVATE
+            target_sources(${PROJECT_NAME} PRIVATE
                 ${lvgl_dummy}
             )
         endif()
