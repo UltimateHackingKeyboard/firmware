@@ -1,4 +1,5 @@
 #include <string.h>
+#include "ledmap.h"
 #include "usb_commands/usb_command_apply_config.h"
 #include "config_parser/config_globals.h"
 #include "config_parser/parse_config.h"
@@ -46,8 +47,8 @@ void UsbCommand_ApplyConfigAsync(void) {
 }
 
 static void setLedsWhite() {
-    Cfg.LedMap_ConstantRGB = (rgb_t){ 255, 255, 255 };
-    Ledmap_SetLedBacklightingMode(BacklightingMode_ConstantRGB);
+    // Set the led test backlight mode, but don't activate the switch test mode.
+    Ledmap_SetLedBacklightingMode(BacklightingMode_LightAll);
     AlwaysOnMode = true;
     Cfg.KeyBacklightBrightnessDefault = 255;
     Cfg.KeyBacklightBrightnessBatteryDefault = 255;
