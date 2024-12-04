@@ -1,17 +1,22 @@
 #include "usb_composite_device.h"
 #include "usb_report_updater.h"
 #include <string.h>
+#include "event_scheduler.h"
 
 #ifdef __ZEPHYR__
 #include "usb/usb_compatibility.h"
 #endif
 
 
+#include "usb_descriptors/usb_descriptor_mouse_report.h"
+
 static usb_mouse_report_t usbMouseReports[2];
+static uint8_t usbMouseFeatBuffer[USB_MOUSE_FEAT_REPORT_LENGTH];
+usb_hid_protocol_t usbMouseProtocol;
 uint32_t UsbMouseActionCounter;
 usb_mouse_report_t* ActiveUsbMouseReport = usbMouseReports;
 
-usb_hid_protocol_t usbMouseProtocol;
+int16_t UsbMouseScrollMultiplier = USB_MOUSE_REPORT_DESCRIPTOR_MIN_RESOLUTION_MULTIPLIER_PHYSICAL_VALUE;
 
 static usb_mouse_report_t* GetInactiveUsbMouseReport(void)
 {
@@ -79,13 +84,55 @@ usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param
 
         case kUSB_DeviceHidEventGetReport: {
             usb_device_hid_report_struct_t *report = (usb_device_hid_report_struct_t*)param;
-            if (report->reportType == USB_DEVICE_HID_REQUEST_GET_REPORT_TYPE_INPUT && report->reportId == 0 && report->reportLength <= USB_MOUSE_REPORT_LENGTH) {
+            if (report->reportId != 0) {
+                error = kStatus_USB_InvalidRequest;
+            } else if (report->reportType == USB_DEVICE_HID_REQUEST_GET_REPORT_TYPE_INPUT && report->reportLength <= USB_MOUSE_REPORT_LENGTH) {
                 report->reportBuffer = (void*)ActiveUsbMouseReport;
                 UsbMouseActionCounter++;
                 SwitchActiveUsbMouseReport();
                 error = kStatus_USB_Success;
+            } else if (report->reportType == USB_DEVICE_HID_REQUEST_GET_REPORT_TYPE_FEATURE) {
+                usbMouseFeatBuffer[0] = (uint8_t)(UsbMouseScrollMultiplier != USB_MOUSE_REPORT_DESCRIPTOR_MIN_RESOLUTION_MULTIPLIER_PHYSICAL_VALUE);
+                report->reportBuffer = usbMouseFeatBuffer;
+                report->reportLength = sizeof(usbMouseFeatBuffer);
+                error = kStatus_USB_Success;
             } else {
                 error = kStatus_USB_InvalidRequest;
+            }
+            break;
+        }
+
+        case kUSB_DeviceHidEventSetReport: {
+            usb_device_hid_report_struct_t *report = (usb_device_hid_report_struct_t*)param;
+            if (report->reportType == USB_DEVICE_HID_REQUEST_GET_REPORT_TYPE_FEATURE && report->reportId == 0 && report->reportLength <= sizeof(usbMouseFeatBuffer)) {
+                // With a single resolution multiplier, this case will never be
+                // hit on Linux (for multiple resolution multipliers, one value
+                // will be missing, so would have to be inferred from the
+                // other(s)). But Windows does use this request properly, so it
+                // needs to be handled appropriately.
+                UsbMouseScrollMultiplier = usbMouseFeatBuffer[0] ? USB_MOUSE_REPORT_DESCRIPTOR_MAX_RESOLUTION_MULTIPLIER_PHYSICAL_VALUE : USB_MOUSE_REPORT_DESCRIPTOR_MIN_RESOLUTION_MULTIPLIER_PHYSICAL_VALUE;
+                error = kStatus_USB_Success;
+            } else {
+                error = kStatus_USB_InvalidRequest;
+            }
+            break;
+        }
+
+        case kUSB_DeviceHidEventRequestReportBuffer: {
+            usb_device_hid_report_struct_t *report = (usb_device_hid_report_struct_t*)param;
+            if (report->reportType == USB_DEVICE_HID_REQUEST_GET_REPORT_TYPE_FEATURE && report->reportId == 0 && report->reportLength <= sizeof(usbMouseFeatBuffer)) {
+                // The Linux implementation of SetReport when initializing a
+                // device with a single resolution multiplier value is broken,
+                // sending an empty report, and as a result the
+                // kUSB_DeviceHidEventSetReport case above isn't triggered at
+                // all; but it only sends this report when it detects the
+                // resolution multiplier, and the intention is to activate the
+                // feature, so turn high-res mode on here.
+                UsbMouseScrollMultiplier = USB_MOUSE_REPORT_DESCRIPTOR_MAX_RESOLUTION_MULTIPLIER_PHYSICAL_VALUE;
+                report->reportBuffer = usbMouseFeatBuffer;
+                error = kStatus_USB_Success;
+            } else {
+                error = kStatus_USB_AllocFail;
             }
             break;
         }
@@ -121,6 +168,7 @@ void UsbMouseSendActiveReport(void)
     usb_status_t status = UsbMouseAction();
     if (status != kStatus_USB_Success) {
         UsbReportUpdateSemaphore &= ~(1 << USB_MOUSE_INTERFACE_INDEX);
+        EventVector_Set(EventVector_SendUsbReports);
     }
 #endif
 }

@@ -66,11 +66,12 @@ void MouseKeys_ActivateDirectionSigns(uint8_t state) {
 
 static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
 {
-    float initialSpeed = kineticState->intMultiplier * kineticState->initialSpeed;
-    float acceleration = kineticState->intMultiplier * kineticState->acceleration;
-    float deceleratedSpeed = kineticState->intMultiplier * kineticState->deceleratedSpeed;
-    float baseSpeed = kineticState->intMultiplier * kineticState->baseSpeed;
-    float acceleratedSpeed = kineticState->intMultiplier * kineticState->acceleratedSpeed;
+    int16_t scrollMultiplier = kineticState->isScroll ? UsbMouseScrollMultiplier : 1;
+    float initialSpeed = scrollMultiplier * kineticState->intMultiplier * kineticState->initialSpeed;
+    float acceleration = scrollMultiplier * kineticState->intMultiplier * kineticState->acceleration;
+    float deceleratedSpeed = scrollMultiplier * kineticState->intMultiplier * kineticState->deceleratedSpeed;
+    float baseSpeed = scrollMultiplier * kineticState->intMultiplier * kineticState->baseSpeed;
+    float acceleratedSpeed = scrollMultiplier * kineticState->intMultiplier * kineticState->acceleratedSpeed;
 
     if (!kineticState->wasMoveAction && !ActiveMouseStates[SerializedMouseAction_Decelerate]) {
         kineticState->currentSpeed = initialSpeed;
@@ -209,13 +210,13 @@ void MouseKeys_ProcessMouseActions()
         EventVector_Set(EventVector_MouseKeysReportsUsed);
     }
     if (wasMoving) {
-        EventVector_Set(EventVector_MouseKeys | EventVector_ReportsChanged);
+        EventVector_Set(EventVector_MouseKeys | EventVector_SendUsbReports);
     }
 }
 
 void MouseKeys_SetState(serialized_mouse_action_t action, bool lock, bool activate)
 {
-    EventVector_Set(EventVector_MouseKeys | EventVector_ReportsChanged);
+    EventVector_Set(EventVector_MouseKeys | EventVector_SendUsbReports);
     if (activate) {
         if (lock) {
             EventVector_Set(EventVector_NativeActions);
