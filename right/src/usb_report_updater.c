@@ -675,7 +675,8 @@ uint32_t UpdateUsbReports_LastUpdateTime = 0;
 uint32_t lastBasicReportTime = 0;
 
 static void sendActiveReports() {
-    bool usbReportsChanged = false;
+    bool usbReportsChangedByAction = false;
+    bool usbReportsChangedByAnything = false;
 
     if (UsbBasicKeyboardCheckReportReady() == kStatus_USB_Success) {
 #ifdef __ZEPHYR__
@@ -695,7 +696,8 @@ static void sendActiveReports() {
             } else {
                 UsbBasicKeyboardSendActiveReport();
             }
-            usbReportsChanged = true;
+            usbReportsChangedByAction = true;
+            usbReportsChangedByAnything = true;
             lastBasicReportTime = CurrentTime;
             UsbReportUpdater_LastActivityTime = CurrentTime;
         }
@@ -707,7 +709,8 @@ static void sendActiveReports() {
         SwitchActiveUsbMediaKeyboardReport();
         SwitchActiveUsbSystemKeyboardReport();
         UsbReportUpdater_LastActivityTime = CurrentTime;
-        usbReportsChanged = true;
+        usbReportsChangedByAction = true;
+        usbReportsChangedByAnything = true;
     }
 #else
     if (UsbMediaKeyboardCheckReportReady() == kStatus_USB_Success) {
@@ -717,7 +720,8 @@ static void sendActiveReports() {
             UsbReportUpdateSemaphore &= ~(1 << USB_MEDIA_KEYBOARD_INTERFACE_INDEX);
         }
         UsbReportUpdater_LastActivityTime = CurrentTime;
-        usbReportsChanged = true;
+        usbReportsChangedByAction = true;
+        usbReportsChangedByAnything = true;
     }
 
     if (UsbSystemKeyboardCheckReportReady() == kStatus_USB_Success) {
@@ -727,7 +731,8 @@ static void sendActiveReports() {
             UsbReportUpdateSemaphore &= ~(1 << USB_SYSTEM_KEYBOARD_INTERFACE_INDEX);
         }
         UsbReportUpdater_LastActivityTime = CurrentTime;
-        usbReportsChanged = true;
+        usbReportsChangedByAction = true;
+        usbReportsChangedByAnything = true;
     }
 #endif
 
@@ -735,12 +740,14 @@ static void sendActiveReports() {
     if (UsbMouseCheckReportReady(&usbMouseButtonsChanged) == kStatus_USB_Success) {
         UsbMouseSendActiveReport();
         UsbReportUpdater_LastActivityTime = CurrentTime;
-        usbReportsChanged |= usbMouseButtonsChanged;
+        usbReportsChangedByAction |= usbMouseButtonsChanged;
+        usbReportsChangedByAnything = true;
     }
 
-    if (usbReportsChanged) {
+    if (usbReportsChangedByAction) {
         Macros_SignalUsbReportsChange();
     }
+    EventVector_SetValue(EventVector_ZeroScan, usbReportsChangedByAnything);
 }
 
 void UpdateUsbReports(void)
@@ -759,7 +766,7 @@ void UpdateUsbReports(void)
 
     updateActiveUsbReports();
 
-    if (EventVector_IsSet(EventVector_ReportsChanged) && CurrentPowerMode < PowerMode_DeepSleep) {
+    if (EventVector_IsSet(EventVector_ReportsChanged | EventVector_ZeroScan) && CurrentPowerMode < PowerMode_DeepSleep) {
         mergeReports();
         sendActiveReports();
     } else {
