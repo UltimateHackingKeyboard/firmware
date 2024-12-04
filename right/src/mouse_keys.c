@@ -209,13 +209,13 @@ void MouseKeys_ProcessMouseActions()
         EventVector_Set(EventVector_MouseKeysReportsUsed);
     }
     if (wasMoving) {
-        EventVector_Set(EventVector_MouseKeys | EventVector_ReportsChanged);
+        EventVector_Set(EventVector_MouseKeys | EventVector_SendUsbReports);
     }
 }
 
 void MouseKeys_SetState(serialized_mouse_action_t action, bool lock, bool activate)
 {
-    EventVector_Set(EventVector_MouseKeys | EventVector_ReportsChanged);
+    EventVector_Set(EventVector_MouseKeys | EventVector_SendUsbReports);
     if (activate) {
         if (lock) {
             EventVector_Set(EventVector_NativeActions);

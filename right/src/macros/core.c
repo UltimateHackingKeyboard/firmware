@@ -624,7 +624,7 @@ static void executePreemptive(void)
 
             if (res & MacroResult_BlockingFlag) {
                 SchedulerPostponing = true;
-                EventVector_Set(EventVector_ReportsChanged);
+                EventVector_Set(EventVector_SendUsbReports);
             }
 
             if (S->ms.macroInterrupted) {
@@ -784,7 +784,7 @@ static void executeBlocking(void)
 
         if ((someoneBlocking = (res & MacroResult_BlockingFlag))) {
             SchedulerPostponing = true;
-            EventVector_Set(EventVector_ReportsChanged);
+            EventVector_Set(EventVector_SendUsbReports);
             break;
         }
 

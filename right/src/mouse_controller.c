@@ -776,7 +776,7 @@ void MouseController_ProcessMouseActions()
     EventVector_SetValue(EventVector_MouseControllerMouseReportsUsed, mouseReportsUsed);
 
     if (keyboardReportsUsed || mouseReportsUsed || caretModeActionWasRunningSomewhere || modsChanged) {
-        EventVector_Set(EventVector_ReportsChanged);
+        EventVector_Set(EventVector_SendUsbReports);
     }
     if (!caretModeActionIsRunningSomewhere) {
         EventVector_Unset(EventVector_MouseControllerPostponing);

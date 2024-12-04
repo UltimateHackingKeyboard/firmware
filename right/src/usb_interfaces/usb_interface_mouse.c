@@ -1,6 +1,7 @@
 #include "usb_composite_device.h"
 #include "usb_report_updater.h"
 #include <string.h>
+#include "event_scheduler.h"
 
 #ifdef __ZEPHYR__
 #include "usb/usb_compatibility.h"
@@ -121,6 +122,7 @@ void UsbMouseSendActiveReport(void)
     usb_status_t status = UsbMouseAction();
     if (status != kStatus_USB_Success) {
         UsbReportUpdateSemaphore &= ~(1 << USB_MOUSE_INTERFACE_INDEX);
+        EventVector_Set(EventVector_SendUsbReports);
     }
 #endif
 }
