@@ -611,6 +611,7 @@ static void updateActiveUsbReports(void)
     EventVector_Unset(EventVector_ReportsChanged);
     InputModifiersPrevious = InputModifiers;
     OutputModifiers = 0;
+    static bool lastSomeonePostponing = false;
 
     PostponerCore_UpdatePostponedTime();
 
@@ -646,6 +647,13 @@ static void updateActiveUsbReports(void)
     if (EventVector_IsSet(EventVector_MouseController)) {
         MouseController_ProcessMouseActions();
     }
+
+    // If someone was postponing, the postponer has set itself to sleep. Wake it now.
+    bool currentSomeonePostponing = EventVector_IsSet(EventVector_SomeonePostponing);
+    if (lastSomeonePostponing && !currentSomeonePostponing && PostponerCore_IsNonEmpty()) {
+        EventVector_Set(EventVector_Postponer);
+    }
+    lastSomeonePostponing = currentSomeonePostponing;
 }
 
 void justPreprocessInput(void) {

@@ -82,6 +82,12 @@
 
     } event_vector_event_t;
 
+/**
+ * Notes on EventVector flags:
+ *
+ * EventVector_Postponer means that Postponer is active. There may be events in the postponer queue while someone is postponing while sleeping (e.g., macro engine waiting for future events.), and in this case EventVector_Postponer is unset.
+ * */
+
 // Variables:
 
     extern volatile uint32_t EventScheduler_Vector;
