@@ -459,9 +459,11 @@ static void commitKeyState(key_state_t *keyState, bool active)
     }
 
     if (PostponerCore_EventsShouldBeQueued()) {
+        Macros_ReportPrintf(NULL, "CP%c%s", active ? '+' : '-', Utils_KeyStateToKeyAbbreviation(keyState));
         PostponerCore_TrackKeyEvent(keyState, active, 255);
     } else {
         KEY_TIMING(KeyTiming_RecordKeystroke(keyState, active, CurrentTime, CurrentTime));
+        Macros_ReportPrintf(NULL, "C%c%s", active ? '+' : '-', Utils_KeyStateToKeyAbbreviation(keyState));
         keyState->current = active;
     }
     Macros_WakeBecauseOfKeystateChange();

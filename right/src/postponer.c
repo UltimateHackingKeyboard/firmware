@@ -91,6 +91,7 @@ static void applyEventAndConsume(postponer_buffer_record_type_t* rec) {
             Postponer_LastKeyMods = rec->event.key.modifiers;
             // This gives the key two ticks (this and next) to get properly processed before execution of next queued event.
             // PostponerCore_PostponeNCycles(1);
+            Macros_ReportPrintf(NULL, "P%c%s", rec->event.key.active ? '+' : '-', Utils_KeyStateToKeyAbbreviation(rec->event.key.keyState));
             EventVector_Set(EventVector_NativeActions);
             Macros_WakeBecauseOfKeystateChange();
             consumeEvent(1);
