@@ -232,20 +232,28 @@ function performAction() {
     case $ACTION in
         update)
             git submodule update --init --recursive
+            west update
+            west patch
+            west config --local build.cmake-args -- "-Wno-dev"
+            cd "$ROOT/scripts"
+            npm ci
+            ./generate-versions.mjs
             ;;
         clean)
             rm -rf device/build .west bootloader modules nrf nrfxlib test tools zephyr
             ;;
         setup)
+            # update this according to README
             git submodule init
             git submodule update --init --recursive
-            nrfutil install toolchain-manager
-            nrfutil toolchain-manager install --ncs-version $NCS_VERSION
-            nrfutil toolchain-manager launch --shell << END
-                west init -m https://github.com/nrfconnect/sdk-nrf --mr $NCS_VERSION
-                west update
-                west zephyr-export
-END
+            cd "$ROOT/.."
+            west init -l "$ROOT"
+            west update
+            west patch
+            west config --local build.cmake-args -- "-Wno-dev"
+            cd "$ROOT/scripts"
+            npm i
+            ./generate-versions.mjs
             ;;
         build)
             # reference version of the build process is to be found in scripts/make-release.mjs
