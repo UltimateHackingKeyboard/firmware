@@ -32,7 +32,8 @@
       "source": "right/uhk60v1/build_make/uhk60v1.hex",
       "mmap": "right/uhk60v1/build_make/uhk60v1.map",
       "kboot": "scripts/kboot-releases/uhk60-right/kboot.hex",
-      "platform": "kinetis"
+      "platform": "kinetis",
+      "userConfigType": "uhk60"
     },
     {
       "deviceId": 2,
@@ -40,7 +41,8 @@
       "source": "right/uhk60v2/build_make/uhk60v2.hex",
       "mmap": "right/uhk60v2/build_make/uhk60v2.map",
       "kboot": "scripts/kboot-releases/uhk60v2-right/kboot.hex",
-      "platform": "kinetis"
+      "platform": "kinetis",
+      "userConfigType": "uhk60"
     },
     {
       "deviceId": 3,
@@ -48,7 +50,8 @@
       "source": "device/build/uhk-80-left/zephyr/app_update.bin",
       "mmap": "device/build/uhk-80-left/zephyr/zephyr.map",
       "merged": "device/build/uhk-80-left/zephyr/merged.hex",
-      "platform": "nordic"
+      "platform": "nordic",
+      "userConfigType": "uhk80"
     },
     {
       "deviceId": 4,
@@ -56,7 +59,8 @@
       "source": "device/build/uhk-80-right/zephyr/app_update.bin",
       "mmap": "device/build/uhk-80-right/zephyr/zephyr.map",
       "merged": "device/build/uhk-80-right/zephyr/merged.hex",
-      "platform": "nordic"
+      "platform": "nordic",
+      "userConfigType": "uhk80"
     },
     {
       "deviceId": 5,

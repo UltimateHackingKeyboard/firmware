@@ -89,7 +89,10 @@ for (const device of packageJson.devices) {
     shell.chmod(644, deviceSource);
     shell.cp(deviceSource, `${deviceDir}/firmware${path.extname(device.source)}`);
     shell.cp(deviceMMap, `${deviceDir}/firmware.map`);
-    shell.exec(`npm run convert-user-config-to-bin -- ${deviceDir}/config.bin`, { cwd: agentDir });
+
+    if (device.userConfigType) {
+        shell.exec(`npm run convert-user-config-to-bin -- ${device.userConfigType} ${deviceDir}/config.bin`, { cwd: agentDir });
+    }
 
     if (device.kboot) {
       const kbootPath = path.join(__dirname, '..', device.kboot);

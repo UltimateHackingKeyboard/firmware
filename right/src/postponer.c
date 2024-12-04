@@ -201,6 +201,9 @@ bool PostponerCore_IsActive(void)
     return runState.eventsShouldBeQueued;
 }
 
+bool PostponerCore_IsNonEmpty(void) {
+    return bufferSize > 0;
+}
 
 void PostponerCore_PrependKeyEvent(key_state_t *keyState, bool active, uint8_t layer)
 {

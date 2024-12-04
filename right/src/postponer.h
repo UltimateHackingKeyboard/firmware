@@ -70,6 +70,7 @@
 // Functions (Core hooks):
 
     bool PostponerCore_IsActive(void);
+    bool PostponerCore_IsNonEmpty(void);
     bool PostponerCore_EventsShouldBeQueued(void);
     /* void PostponerCore_PostponeNCycles(uint8_t n); */
     bool PostponerCore_RunKey(key_state_t* key, bool active);
