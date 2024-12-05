@@ -1,0 +1,34 @@
+manifest:
+  self:
+    path: device
+    west-commands: scripts/west-commands.yml
+  remotes:
+    - name: sdk
+      url-base: https://github.com/nrfconnect
+    - name: zephyr
+      url-base: https://github.com/zephyrproject-rtos
+
+  projects:
+    - name: sdk-nrf
+      remote: sdk
+      path: nrf
+      revision: v2.6.1
+      import:
+        path-prefix: nrfconnect
+      clone-depth: 1
+      import:
+        name-allowlist:
+          - zephyr
+          - cmsis
+          - hal_nordic
+          - mcuboot
+          - nrfxlib
+          - lvgl
+          - segger
+          - tinycrypt
+          - zcbor
+
+    - name: hal_nxp
+      remote: zephyr
+      path: nrfconnect/zephyr-hal-nxp
+      clone-depth: 1

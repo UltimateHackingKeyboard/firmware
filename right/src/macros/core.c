@@ -26,7 +26,6 @@ macro_reference_t AllMacros[MacroIndex_MaxCount] = {
 };
 uint8_t AllMacrosCount;
 
-bool MacroPlaying = false;
 bool Macros_WakedBecauseOfTime = false;
 bool Macros_WakedBecauseOfKeystateChange = false;
 uint32_t Macros_WakeMeOnTime = 0xFFFFFFFF;
@@ -35,6 +34,7 @@ bool Macros_WakeMeOnKeystateChange = false;
 bool Macros_ParserError = false;
 bool Macros_DryRun = false;
 bool Macros_ValidationInProgress = false;
+bool SchedulerPostponing = false;
 
 scheduler_state_t Macros_SchedulerState = {
     .previousSlotIdx = 0,
@@ -76,6 +76,14 @@ void Macros_SignalUsbReportsChange()
         if (MacroState[i].ms.macroPlaying && MacroState[i].ms.macroInterrupted) {
             MacroState[i].ms.oneShotUsbChangeDetected = true;
         }
+    }
+}
+
+
+void Macros_WakeBecauseOfKeystateChange() {
+    if (Macros_WakeMeOnKeystateChange) {
+        Macros_WakedBecauseOfKeystateChange = true;
+        EventVector_Set(EventVector_MacroEngine);
     }
 }
 
@@ -412,7 +420,7 @@ uint8_t initMacro(uint8_t index, key_state_t *keyState, uint8_t parentMacroSlot)
        return 255;
     }
 
-    MacroPlaying = true;
+    EventVector_Set(EventVector_MacroEngine);
 
     memset(&S->ms, 0, sizeof S->ms);
 
@@ -450,7 +458,8 @@ uint8_t Macros_StartMacro(uint8_t index, key_state_t *keyState, uint8_t parentMa
     scheduleSlot(slotIndex);
     if (Cfg.Macros_Scheduler == Scheduler_Blocking) {
         // We don't care. Let it execute in regular macro execution loop, irrespectively whether this cycle or next.
-        PostponerCore_PostponeNCycles(0);
+        // PostponerCore_PostponeNCycles(0);
+        EventVector_Set(EventVector_MacroEnginePostponing);
     }
 
     S = oldState;
@@ -523,7 +532,7 @@ macro_result_t continueMacro(void)
 
     if (S->ms.postponeNextNCommands > 0) {
         S->ls->as.modifierPostpone = true;
-        PostponerCore_PostponeNCycles(1);
+        //PostponerCore_PostponeNCycles(1);
     }
 
     macro_result_t res = MacroResult_YieldFlag;
@@ -552,7 +561,7 @@ macro_result_t Macros_SleepTillKeystateChange()
         if(S->ms.oneShotState > 1) {
             return MacroResult_Blocking;
         } else if (Cfg.Macros_OneShotTimeout != 0) {
-            Macros_SleepTillTime(S->ms.currentMacroStartTime + Cfg.Macros_OneShotTimeout);
+            Macros_SleepTillTime(S->ms.currentMacroStartTime + Cfg.Macros_OneShotTimeout, "Macros - OneShot");
         }
     }
     if (!S->ms.macroSleeping) {
@@ -564,19 +573,19 @@ macro_result_t Macros_SleepTillKeystateChange()
     return MacroResult_Sleeping;
 }
 
-macro_result_t Macros_SleepTillTime(uint32_t time)
+macro_result_t Macros_SleepTillTime(uint32_t time, const char* reason)
 {
     if(S->ms.oneShotState > 0) {
         if(S->ms.oneShotState > 1) {
             return MacroResult_Blocking;
         } else if (Cfg.Macros_OneShotTimeout != 0) {
-            EventScheduler_Schedule(S->ms.currentMacroStartTime + Cfg.Macros_OneShotTimeout, EventSchedulerEvent_MacroWakeOnTime);
+            EventScheduler_Schedule(S->ms.currentMacroStartTime + Cfg.Macros_OneShotTimeout, EventSchedulerEvent_MacroWakeOnTime, "Macros - OneShot");
         }
     }
     if (!S->ms.macroSleeping) {
         unscheduleCurrentSlot();
     }
-    EventScheduler_Schedule(time, EventSchedulerEvent_MacroWakeOnTime);
+    EventScheduler_Schedule(time, EventSchedulerEvent_MacroWakeOnTime, reason);
     S->ms.wakeMeOnTime = true;
     S->ms.macroSleeping = true;
     return MacroResult_Sleeping;
@@ -606,11 +615,23 @@ static void wakeSleepers()
 
 static void executePreemptive(void)
 {
+    SchedulerPostponing = false;
     for (uint8_t i = 0; i < MACRO_STATE_POOL_SIZE; i++) {
         if (MacroState[i].ms.macroPlaying && !MacroState[i].ms.macroSleeping) {
             S = &MacroState[i];
 
             macro_result_t res = MacroResult_Finished;
+
+            if (res & MacroResult_BlockingFlag) {
+                SchedulerPostponing = true;
+                EventVector_Set(EventVector_ReportsChanged);
+            }
+
+            if (S->ms.macroInterrupted) {
+                S->ms.macroInterrupted = false;
+                res = endMacro();
+        }
+
             uint8_t remainingExecution = Cfg.Macros_MaxBatchSize;
             while (MacroState[i].ms.macroPlaying && !MacroState[i].ms.macroSleeping && res == MacroResult_Finished && remainingExecution > 0) {
                 res = continueMacro();
@@ -746,6 +767,7 @@ static void getNextScheduledSlot()
 
 static void executeBlocking(void)
 {
+    SchedulerPostponing = false;
     bool someoneBlocking = false;
     uint8_t remainingExecution = Cfg.Macros_MaxBatchSize;
     Macros_SchedulerState.remainingCount = Macros_SchedulerState.activeSlotCount;
@@ -761,6 +783,8 @@ static void executeBlocking(void)
         }
 
         if ((someoneBlocking = (res & MacroResult_BlockingFlag))) {
+            SchedulerPostponing = true;
+            EventVector_Set(EventVector_ReportsChanged);
             break;
         }
 
@@ -772,33 +796,62 @@ static void executeBlocking(void)
     }
 
     if(someoneBlocking || remainingExecution == 0) {
-        PostponerCore_PostponeNCycles(0);
+        SchedulerPostponing = true;
     }
 
     S = NULL;
 }
 
-static void applySleepingMods()
+
+typedef struct {
+    bool modifierSuppressMods;
+    bool reportsUsed;
+    bool someoneAlive;
+    bool someoneAwake;
+    bool someonePostponing;
+} macro_applicable_state_t;
+
+static macro_applicable_state_t applicableState = {
+    .modifierSuppressMods = false,
+    .reportsUsed = false,
+    .someoneAlive = false,
+    .someoneAwake = false,
+    .someonePostponing = false,
+};
+
+static void recalculateSleepingMods()
 {
-    bool someoneAlive = false;
+    applicableState.modifierSuppressMods = false;
+    applicableState.reportsUsed = false;
+    applicableState.someoneAlive = false;
+    applicableState.someoneAwake = false;
+    applicableState.someonePostponing = SchedulerPostponing;
+
     for (uint8_t i = 0; i < MACRO_STATE_POOL_SIZE; i++) {
         if (MacroState[i].ms.macroPlaying) {
-            someoneAlive = true;
-            break;
+            applicableState.someoneAlive = true;
+            applicableState.reportsUsed |= MacroState[i].ms.reportsUsed;
+        }
+        if (MacroState[i].ms.macroPlaying && !MacroState[i].ms.macroSleeping) {
+            applicableState.someoneAwake = true;
         }
     }
     for (uint8_t i = 0; i < MACRO_SCOPE_STATE_POOL_SIZE; i++) {
         if (MacroScopeState[i].slotUsed) {
             macro_scope_state_t* ls = &MacroScopeState[i];
             if ( ls->as.modifierPostpone ) {
-                PostponerCore_PostponeNCycles(0);
+                applicableState.someonePostponing = true;
             }
             if ( ls->as.modifierSuppressMods ) {
                 SuppressMods = true;
+                applicableState.modifierSuppressMods = true;
             }
         }
     }
-    MacroPlaying = someoneAlive;
+    EventVector_SetValue(EventVector_MacroEnginePostponing, applicableState.someonePostponing);
+    EventVector_SetValue(EventVector_MacroEngine, applicableState.someoneAwake);
+    EventVector_SetValue(EventVector_MacroReportsUsed, applicableState.reportsUsed);
+    SuppressMods = applicableState.modifierSuppressMods;
     S = NULL;
 }
 
@@ -809,16 +862,17 @@ void Macros_ContinueMacro(void)
     switch (Cfg.Macros_Scheduler) {
     case Scheduler_Preemptive:
         executePreemptive();
-        applySleepingMods();
+        recalculateSleepingMods();
         break;
     case Scheduler_Blocking:
         executeBlocking();
-        applySleepingMods();
+        recalculateSleepingMods();
         break;
     default:
         break;
     }
 }
+
 
 bool Macros_MacroHasActiveInstance(macro_index_t macroIdx)
 {

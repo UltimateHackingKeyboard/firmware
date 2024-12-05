@@ -1,11 +1,15 @@
+#include <stdint.h>
+#include <string.h>
+#ifndef __ZEPHYR__
 #include "fsl_i2c.h"
+#include "i2c_watchdog.h"
+#include "right_key_matrix.h"
+#endif
 #include "usb_command_get_debug_buffer.h"
 #include "usb_protocol_handler.h"
 #include "slave_scheduler.h"
-#include "i2c_watchdog.h"
 #include "buffer.h"
 #include "timer.h"
-#include "right_key_matrix.h"
 #include "usb_report_updater.h"
 #include "usb_interfaces/usb_interface_basic_keyboard.h"
 #include "usb_interfaces/usb_interface_media_keyboard.h"
@@ -17,19 +21,23 @@ uint8_t DebugBuffer[USB_GENERIC_HID_IN_BUFFER_LENGTH];
 
 void UsbCommand_GetDebugBuffer(void)
 {
+#ifndef __ZEPHYR__
     SetDebugBufferUint32(1, I2C_Watchdog);
     SetDebugBufferUint32(5, I2cSlaveScheduler_Counter);
     SetDebugBufferUint32(9, I2cWatchdog_WatchCounter);
     SetDebugBufferUint32(13, I2cWatchdog_RecoveryCounter);
     SetDebugBufferUint32(17, MatrixScanCounter);
     SetDebugBufferUint32(21, UsbReportUpdateCounter);
+#endif
     SetDebugBufferUint32(25, CurrentTime);
+#ifndef __ZEPHYR__
     SetDebugBufferUint32(29, UsbGenericHidActionCounter);
     SetDebugBufferUint32(33, UsbBasicKeyboardActionCounter);
     SetDebugBufferUint32(37, UsbMediaKeyboardActionCounter);
     SetDebugBufferUint32(41, UsbSystemKeyboardActionCounter);
     SetDebugBufferUint32(45, UsbMouseActionCounter);
     SetDebugBufferUint32(49, UsbGamepadActionCounter);
+#endif
 
     memcpy(GenericHidInBuffer, DebugBuffer, USB_GENERIC_HID_IN_BUFFER_LENGTH);
 }

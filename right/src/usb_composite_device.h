@@ -5,7 +5,9 @@
 
     #include "usb_descriptors/usb_descriptor_configuration.h"
     #include "usb_device_config.h"
+#ifndef __ZEPHYR__
     #include "usb_device.h"
+#endif
 
 // Macros:
 
@@ -14,6 +16,7 @@
 
 // Typedefs:
 
+#ifndef __ZEPHYR__
     typedef struct {
         usb_device_handle deviceHandle;
         class_handle_t basicKeyboardHandle;
@@ -26,12 +29,15 @@
         uint8_t currentConfiguration;
         uint8_t currentInterfaceAlternateSetting[USB_DEVICE_CONFIG_HID];
     } usb_composite_device_t;
+#endif
 
 // Variables:
 
     extern uint8_t ReportDescriptorsTouched;
-    extern volatile bool SleepModeActive;
+
+#ifndef __ZEPHYR__
     extern usb_composite_device_t UsbCompositeDevice;
+#endif
 
 //Functions:
 

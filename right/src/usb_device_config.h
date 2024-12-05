@@ -8,9 +8,7 @@
 #include "usb_interfaces/usb_interface_mouse.h"
 #include "usb_interfaces/usb_interface_media_keyboard.h"
 #include "usb_interfaces/usb_interface_system_keyboard.h"
-#include "usb_interfaces/usb_interface_mouse.h"
 #include "usb_interfaces/usb_interface_gamepad.h"
-#include "usb_interfaces/usb_interface_mouse.h"
 #include "usb_interfaces/usb_interface_generic_hid.h"
 
 // Device instance count, the sum of KHCI and EHCI instance counts

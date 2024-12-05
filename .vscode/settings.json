@@ -1,0 +1,21 @@
+{
+    "nrf-connect.toolchain.path": "${nrf-connect.toolchain:2.6.1}",
+    "nrf-connect.topdir": "${nrf-connect.sdk:2.4.1}",
+    "nrf-connect.applications": [
+        "${workspaceFolder}/device"
+    ],
+    "nrf-connect.boardRoots": [
+        "${workspaceFolder}/"
+    ],
+    "files.associations": {
+        "*.h": "c",
+        "*.c": "c",
+        "bitset": "cpp",
+        "span": "cpp",
+        "array": "cpp",
+        "string": "cpp",
+        "string_view": "cpp",
+        "compare": "c",
+        "system_error": "c"
+    }
+}

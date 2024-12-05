@@ -94,6 +94,7 @@
 
 // Functions:
 
+#ifndef __ZEPHYR__
     usb_status_t UsbGamepadCallback(class_handle_t handle, uint32_t event, void *param);
 
     void UsbGamepadResetActiveReport(void);
@@ -102,5 +103,6 @@
     usb_status_t UsbGamepadCheckReportReady();
 
     void UsbGamepadSetProperty(usb_gamepad_report_t* report, usb_gamepad_property_t key, int value);
+#endif
 
 #endif

@@ -3,7 +3,9 @@
 
 // Includes:
 
+#ifndef __ZEPHYR__
     #include "fsl_common.h"
+#endif
     #include "slot.h"
     #include "module.h"
 

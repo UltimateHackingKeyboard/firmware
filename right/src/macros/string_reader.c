@@ -6,6 +6,10 @@
 #include <inttypes.h>
 #include "macros/vars.h"
 
+#if !defined(MAX)
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#endif
+
 typedef enum {
    StringType_Raw,
    StringType_DoubleQuote,

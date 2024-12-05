@@ -3,12 +3,13 @@
 
 // Includes:
 
+#ifndef __ZEPHYR__
     #include "fsl_common.h"
+#endif
     #include "crc16.h"
-#include "slave_scheduler.h"
+    #include "slave_scheduler.h"
     #include "versioning.h"
     #include "slot.h"
-    #include "usb_interfaces/usb_interface_mouse.h"
 
 // Macros:
 
@@ -16,6 +17,8 @@
     #define MAX_PWM_BRIGHTNESS 0x64
 
     #define MAX_STRING_PROPERTY_LENGTH 63
+
+    #define MODULE_CONNECTION_TIMEOUT 350
 
 // Typedefs:
 
@@ -122,17 +125,16 @@
 
     extern uhk_module_state_t UhkModuleStates[UHK_MODULE_MAX_SLOT_COUNT];
     extern module_connection_state_t ModuleConnectionStates[UHK_MODULE_MAX_SLOT_COUNT];
-    extern bool KeymapReloadNeeded;
 
 // Functions:
-
     uint8_t UhkModuleSlaveDriver_SlotIdToDriverId(uint8_t slotId);
     uint8_t UhkModuleSlaveDriver_DriverIdToSlotId(uint8_t uhkModuleDriverId);
+    void UhkModuleSlaveDriver_ResetTrackpoint();
 
     void UhkModuleSlaveDriver_Init(uint8_t uhkModuleDriverId);
     slave_result_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId);
     void UhkModuleSlaveDriver_Disconnect(uint8_t uhkModuleDriverId);
 
-    void UhkModuleSlaveDriver_ResetTrackpoint();
-
+    void UhkModuleSlaveDriver_ProcessKeystates(uint8_t uhkModuleDriverId, uhk_module_state_t* uhkModuleState, const uint8_t* rxMessageData);
+    void UhkModuleSlaveDriver_UpdateConnectionStatus();
 #endif

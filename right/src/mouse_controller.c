@@ -1,4 +1,5 @@
 #include <math.h>
+#include <string.h>
 #include "key_action.h"
 #include "layer.h"
 #include "slave_protocol.h"
@@ -17,7 +18,8 @@
 #include "postponer.h"
 #include "layer.h"
 #include "config_manager.h"
-#include "config_manager.h"
+#include "event_scheduler.h"
+#include "atomicity.h"
 
 typedef struct {
     float x;
@@ -56,6 +58,13 @@ module_kinetic_state_t rightModuleKineticState = {
     .yFractionRemainder = 0.0f,
     .lastUpdate = 0,
 };
+
+usb_keyboard_reports_t MouseControllerKeyboardReports = {
+    .reportsUsedVectorMask = EventVector_MouseControllerKeyboardReportsUsed,
+    .recomputeStateVectorMask = EventVector_MouseController,
+    .postponeMask = EventVector_MouseControllerPostponing,
+};
+usb_mouse_report_t MouseControllerMouseReport;
 
 static void processAxisLocking(axis_locking_args_t args);
 static void handleRunningCaretModeAction(module_kinetic_state_t* ks);
@@ -220,10 +229,10 @@ static void feedTapHoldStateMachine(touchpad_events_t events)
     } else if (lastFinger != (events.noFingers == 1)) {
         event = lastFinger ? Event_FingerOut : Event_FingerIn ;
         lastFinger = !lastFinger;
-    } else if (lastSingleTapTimerActive && lastSingleTapTime + tapTimeout < CurrentTime) {
+    } else if (lastSingleTapTimerActive && lastSingleTapTime + tapTimeout <= CurrentTime) {
         event = Event_Timeout;
         lastSingleTapTimerActive = false;
-    } else if (holdContinuationTimerActive && continuationDelayStart + Cfg.HoldContinuationTimeout < CurrentTime) {
+    } else if (holdContinuationTimerActive && continuationDelayStart + Cfg.HoldContinuationTimeout <= CurrentTime) {
         event = Event_HoldContinuationTimeout;
         holdContinuationTimerActive = false;
     }
@@ -250,6 +259,14 @@ static void feedTapHoldStateMachine(touchpad_events_t events)
         holdContinuationTimerActive = true;
     }
 
+    if (lastSingleTapTimerActive) {
+        EventScheduler_Schedule(lastSingleTapTime + tapTimeout, EventSchedulerEvent_MouseController, "MouseController single tap timer");
+    }
+
+    if (holdContinuationTimerActive) {
+        EventScheduler_Schedule(continuationDelayStart + Cfg.HoldContinuationTimeout, EventSchedulerEvent_MouseController, "MouseController hold continuation timer");
+    }
+
     lastSingleTapValue &= events.singleTap;
     lastTapAndHoldValue &= events.tapAndHold;
 }
@@ -261,6 +278,7 @@ static void processTouchpadActions(touchpad_events_t events) {
     }
 
     KeyStates[SlotId_RightModule][1].hardwareSwitchState = events.twoFingerTap;
+    EventVector_Set(EventVector_StateMatrix);
 }
 
 static void progressZoomAction(module_kinetic_state_t* ks) {
@@ -296,13 +314,13 @@ static void progressZoomAction(module_kinetic_state_t* ks) {
 static void handleNewCaretModeAction(caret_axis_t axis, uint8_t resultSign, int16_t value, module_kinetic_state_t* ks) {
     switch(ks->currentNavigationMode) {
         case NavigationMode_Cursor: {
-            ActiveUsbMouseReport->x += axis == CaretAxis_Horizontal ? value : 0;
-            ActiveUsbMouseReport->y -= axis == CaretAxis_Vertical ? value : 0;
+            MouseControllerMouseReport.x += axis == CaretAxis_Horizontal ? value : 0;
+            MouseControllerMouseReport.y -= axis == CaretAxis_Vertical ? value : 0;
             break;
         }
         case NavigationMode_Scroll: {
-            ActiveUsbMouseReport->wheelX += axis == CaretAxis_Horizontal ? value : 0;
-            ActiveUsbMouseReport->wheelY += axis == CaretAxis_Vertical ? value : 0;
+            MouseControllerMouseReport.wheelX += axis == CaretAxis_Horizontal ? value : 0;
+            MouseControllerMouseReport.wheelY += axis == CaretAxis_Vertical ? value : 0;
             break;
         }
         case NavigationMode_ZoomMac:
@@ -313,7 +331,9 @@ static void handleNewCaretModeAction(caret_axis_t axis, uint8_t resultSign, int1
             caret_dir_action_t* dirActions = &currentCaretConfig->axisActions[ks->caretAxis];
             ks->caretAction.action = resultSign > 0 ? dirActions->positiveAction : dirActions->negativeAction;
             ks->caretFakeKeystate.current = true;
-            ApplyKeyAction(&ks->caretFakeKeystate, &ks->caretAction, &ks->caretAction.action);
+            ApplyKeyAction(&ks->caretFakeKeystate, &ks->caretAction, &ks->caretAction.action, &MouseControllerKeyboardReports);
+            Macros_WakeBecauseOfKeystateChange();
+            EventVector_Set(EventVector_MouseController);
             break;
         }
         case NavigationMode_Zoom:
@@ -334,7 +354,9 @@ static void handleSimpleRunningAction(module_kinetic_state_t* ks) {
     bool tmp = ks->caretFakeKeystate.current;
     ks->caretFakeKeystate.current = !ks->caretFakeKeystate.previous;
     ks->caretFakeKeystate.previous = tmp;
-    ApplyKeyAction(&ks->caretFakeKeystate, &ks->caretAction, &ks->caretAction.action);
+    ApplyKeyAction(&ks->caretFakeKeystate, &ks->caretAction, &ks->caretAction.action, &MouseControllerKeyboardReports);
+    Macros_WakeBecauseOfKeystateChange();
+    EventVector_Set(EventVector_MouseController);
 }
 
 static void handleRunningCaretModeAction(module_kinetic_state_t* ks) {
@@ -463,6 +485,10 @@ static void processAxisLocking(
             }
             ks->caretAxis = axisCandidate;
 
+            if (!continuous) {
+                EventVector_Set(EventVector_MouseController);
+            }
+
             handleNewCaretModeAction(ks->caretAxis, sgn*currentAxisInversion, consumedAmount*currentAxisInversion, ks);
         }
     }
@@ -502,8 +528,8 @@ static void processModuleKineticState(
                 ks->xFractionRemainder = modff(ks->xFractionRemainder + x * speed, &xIntegerPart);
                 ks->yFractionRemainder = modff(ks->yFractionRemainder + y * speed, &yIntegerPart);
 
-                ActiveUsbMouseReport->x += xInversion*xIntegerPart;
-                ActiveUsbMouseReport->y -= yInversion*yIntegerPart;
+                MouseControllerMouseReport.x += xInversion*xIntegerPart;
+                MouseControllerMouseReport.y -= yInversion*yIntegerPart;
             } else {
                 processAxisLocking((axis_locking_args_t) {
                     .x = x,
@@ -530,8 +556,8 @@ static void processModuleKineticState(
                 ks->xFractionRemainder = modff(ks->xFractionRemainder + x * speed / moduleConfiguration->scrollSpeedDivisor, &xIntegerPart);
                 ks->yFractionRemainder = modff(ks->yFractionRemainder + y * speed / moduleConfiguration->scrollSpeedDivisor, &yIntegerPart);
 
-                ActiveUsbMouseReport->wheelX += xInversion*xIntegerPart;
-                ActiveUsbMouseReport->wheelY += yInversion*yIntegerPart;
+                MouseControllerMouseReport.wheelX += xInversion*xIntegerPart;
+                MouseControllerMouseReport.wheelY += yInversion*yIntegerPart;
             } else {
 
                 processAxisLocking((axis_locking_args_t) {
@@ -658,15 +684,18 @@ static void processModuleActions(
 bool canWeRun(module_kinetic_state_t* ks)
 {
     if (caretModeActionIsRunning(ks)) {
+        EventVector_Set(EventVector_MouseController);
         return false;
     }
     if (StickyModifiers) {
         StickyModifiers = 0;
         StickyModifiersNegative = 0;
+        EventVector_Set(EventVector_MouseController);
         return false;
     }
     if (Postponer_MouseBlocked) {
         PostponerExtended_RequestUnblockMouse();
+        EventVector_Set(EventVector_MouseController);
         return false;
     }
     return true;
@@ -674,8 +703,15 @@ bool canWeRun(module_kinetic_state_t* ks)
 
 void MouseController_ProcessMouseActions()
 {
-    if (Slaves[SlaveId_RightTouchpad].isConnected) {
+    EventVector_Unset(EventVector_MouseController);
 
+    memset(&MouseControllerMouseReport, 0, sizeof(MouseControllerMouseReport));
+    uint8_t previousMods = MouseControllerKeyboardReports.basic.modifiers | MouseControllerKeyboardReports.inputModifiers;
+    UsbReportUpdater_ResetKeyboardReports(&MouseControllerKeyboardReports);
+
+    bool caretModeActionWasRunningSomewhere = caretModeActionIsRunning(&leftModuleKineticState) || caretModeActionIsRunning(&rightModuleKineticState);
+
+    if (Slaves[SlaveId_RightTouchpad].isConnected) {
         module_kinetic_state_t *ks = getKineticState(ModuleId_TouchpadRight);
 
         if (caretModeActionIsRunning(ks)) {
@@ -685,7 +721,7 @@ void MouseController_ProcessMouseActions()
         bool eventsIsNonzero = memcmp(&TouchpadEvents, &ZeroTouchpadEvents, sizeof TouchpadEvents) != 0;
         if (!eventsIsNonzero || (eventsIsNonzero && canWeRun(ks))) {
             //eventsIsNonzero is needed for touchpad action state automaton timer
-            __disable_irq();
+            DISABLE_IRQ();
             touchpad_events_t events = TouchpadEvents;
             TouchpadEvents.zoomLevel = 0;
             TouchpadEvents.wheelX = 0;
@@ -693,8 +729,7 @@ void MouseController_ProcessMouseActions()
             TouchpadEvents.x = 0;
             TouchpadEvents.y = 0;
             // note that not all fields are resetted and that's correct
-            __enable_irq();
-
+            ENABLE_IRQ();
             processTouchpadActions(events);
 
             processModuleActions(ks, ModuleId_TouchpadRight, (int16_t)events.x, (int16_t)events.y, 0xFF);
@@ -719,7 +754,7 @@ void MouseController_ProcessMouseActions()
 
         bool eventsIsNonzero = moduleState->pointerDelta.x || moduleState->pointerDelta.y;
         if (eventsIsNonzero && canWeRun(ks)) {
-            __disable_irq();
+            DISABLE_IRQ();
             // Gcc compiles those int16_t assignments as sequences of
             // single-byte instructions, therefore we need to make the
             // sequence atomic.
@@ -727,10 +762,24 @@ void MouseController_ProcessMouseActions()
             int16_t y = moduleState->pointerDelta.y;
             moduleState->pointerDelta.x = 0;
             moduleState->pointerDelta.y = 0;
-            __enable_irq();
+            ENABLE_IRQ();
 
             processModuleActions(ks, moduleState->moduleId, x, y, 0xFF);
         }
     }
-}
 
+    uint8_t currentMods = MouseControllerKeyboardReports.basic.modifiers | MouseControllerKeyboardReports.inputModifiers;
+    bool modsChanged = previousMods != currentMods;
+    bool caretModeActionIsRunningSomewhere = caretModeActionIsRunning(&leftModuleKineticState) || caretModeActionIsRunning(&rightModuleKineticState);
+    bool keyboardReportsUsed = caretModeActionIsRunningSomewhere;
+    bool mouseReportsUsed = MouseControllerMouseReport.x || MouseControllerMouseReport.y || MouseControllerMouseReport.wheelX || MouseControllerMouseReport.wheelY || MouseControllerMouseReport.buttons;
+    EventVector_SetValue(EventVector_MouseControllerKeyboardReportsUsed, keyboardReportsUsed);
+    EventVector_SetValue(EventVector_MouseControllerMouseReportsUsed, mouseReportsUsed);
+
+    if (keyboardReportsUsed || mouseReportsUsed || caretModeActionWasRunningSomewhere || modsChanged) {
+        EventVector_Set(EventVector_ReportsChanged);
+    }
+    if (!caretModeActionIsRunningSomewhere) {
+        EventVector_Unset(EventVector_MouseControllerPostponing);
+    }
+}

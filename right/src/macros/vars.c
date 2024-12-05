@@ -12,6 +12,14 @@
 #include "debug.h"
 #include "macros/set_command.h"
 
+#if !defined(MAX)
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#endif
+
+#if !defined(MIN)
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#endif
+
 typedef enum {
     Operator_Add,
     Operator_Sub,
@@ -105,7 +113,6 @@ macro_variable_t* Macros_ConsumeExistingWritableVariable(parser_context_t* ctx)
             return &macroVariables[i];
         }
     }
-    Macros_ReportError("Variable not found:", ctx->at, ctx->end);
     return NULL;
 }
 
@@ -130,7 +137,6 @@ static macro_variable_t consumeVariable(parser_context_t* ctx)
         }
     }
 
-    Macros_ReportError("Variable not found:", ctx->at, ctx->end);
     ConsumeAnyIdentifier(ctx);
     return (macro_variable_t){};
 }
@@ -804,4 +810,3 @@ macro_result_t Macros_ProcessSetVarCommand(parser_context_t* ctx)
 
     return MacroResult_Finished;
 }
-

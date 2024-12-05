@@ -1,9 +1,12 @@
+#include <string.h>
 #include "macro_recorder.h"
 #include "event_scheduler.h"
 #include "led_display.h"
 #include "macros/core.h"
 #include "macros/status_buffer.h"
+#ifndef __ZEPHYR__
 #include "segment_display.h"
+#endif
 #include "timer.h"
 
 /**
@@ -295,7 +298,7 @@ void MacroRecorder_UpdateRecordingLed()
 
     ledOn = !ledOn;
     LedDisplay_SetIcon(LedDisplayIcon_Adaptive, ledOn);
-    EventScheduler_Schedule(CurrentTime + ledFlashingPeriod, EventSchedulerEvent_MacroRecorderFlashing);
+    EventScheduler_Schedule(CurrentTime + ledFlashingPeriod, EventSchedulerEvent_MacroRecorderFlashing, "macro recorder flashing");
 }
 
 void MacroRecorder_StartRecording(uint16_t id, bool blind)

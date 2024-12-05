@@ -3,7 +3,6 @@
 #include "slave_scheduler.h"
 #include "slave_drivers/uhk_module_driver.h"
 #include "slave_protocol.h"
-#include "peripherals/test_led.h"
 #include "bool_array_converter.h"
 #include "crc16.h"
 #include "key_states.h"
@@ -12,6 +11,10 @@
 #include "debug.h"
 #include "timer.h"
 #include "macros/core.h"
+
+#ifndef __ZEPHYR__
+#include "peripherals/test_led.h"
+#endif
 
 /*
 |  Actually produced sequences:
@@ -67,7 +70,6 @@ typedef struct {
     } events1;
 } gesture_events_t;
 
-static gesture_events_t gestureEvents;
 
 
 
@@ -75,6 +77,8 @@ uint8_t address = I2C_ADDRESS_RIGHT_IQS5XX_FIRMWARE;
 touchpad_events_t TouchpadEvents;
 const touchpad_events_t ZeroTouchpadEvents;
 uint8_t phase = 0;
+
+static gesture_events_t gestureEvents;
 static uint8_t enableEventMode[] = {0x05, 0x8f, 0x07};
 
 // Disable touchpad's default state transitions, in order to make it always
@@ -177,6 +181,8 @@ slave_result_t TouchpadDriver_Update(uint8_t uhkModuleDriverId)
 
             res.status = I2cAsyncWrite(address, closeCommunicationWindow, sizeof(closeCommunicationWindow));
             res.hold = false;
+            EventVector_Set(EventVector_MouseController);
+            EventVector_WakeMain();
             phase = 3;
             break;
         }
@@ -185,9 +191,15 @@ slave_result_t TouchpadDriver_Update(uint8_t uhkModuleDriverId)
     return res;
 }
 
+void TouchpadDriver_Connect(uint8_t uhkModuleDriverId) {
+    EventVector_Set(EventVector_KeymapReloadNeeded);
+    EventVector_WakeMain();
+}
+
 void TouchpadDriver_Disconnect(uint8_t uhkModuleDriverId)
 {
     TouchpadEvents.x = 0;
     TouchpadEvents.y = 0;
     phase = 0;
+    EventScheduler_Schedule(CurrentTime + MODULE_CONNECTION_TIMEOUT, EventSchedulerEvent_ModuleConnectionStatusUpdate, "ModuleConnectionStatusUpdate");
 }

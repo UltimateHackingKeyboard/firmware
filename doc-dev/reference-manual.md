@@ -113,6 +113,7 @@ COMMAND = {startMouse|stopMouse} {move DIRECTION|scroll DIRECTION|accelerate|dec
 COMMAND = setVar <variable name (IDENTIFIER)> <value (PARENTHESSED_EXPRESSION)>
 COMMAND = {pressKey|holdKey|tapKey|releaseKey} SHORTCUT
 COMMAND = tapKeySeq [SHORTCUT]+
+COMMAND = powerMode [toggle] { wake | lightSleep | sleep | deepSleep }
 COMMAND = set module.MODULEID.navigationMode.LAYERID_BASIC NAVIGATION_MODE
 COMMAND = set module.MODULEID.baseSpeed <non-xcelerated speed, 0-10.0 (FLOAT)>
 COMMAND = set module.MODULEID.speed <xcelerated speed, 0-10.0 (FLOAT)>
@@ -166,6 +167,7 @@ COMMAND = set backlight.keyRgb.LAYERID.KEYID <number 0-255 (INT)> <number 0-255 
 COMMAND = set leds.enabled BOOL
 COMMAND = set leds.brightness <0-1 multiple of default (FLOAT)>
 COMMAND = set leds.fadeTimeout <seconds to fade after (INT)>
+COMMAND = set leds.{keyBacklightFadeTimeout|keyBacklightFadeBatteryTimeout|displayFadeTimeout|displayFadeBatteryTimeout} <seconds to fade after (INT)>
 COMMAND = set modifierLayerTriggers.{shift|alt|super|ctrl} {left|right|both}
 CONDITION = <condition>
 CONDITION = if (EXPRESSION)
@@ -252,9 +254,11 @@ KEYID_ABBREV = ' | , | - | . | / | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | ; | =
 KEYID_ABBREV = a | q | w | e | r | t | y | u | i | o | p | a | s | d | f | g | h | j | k | l | z | x | c | v | b | n | m
 KEYID_ABBREV = apostropheAndQuote | backspace | capsLock | closingBracketAndClosingBrace | commaAndLessThanSign | dotAndGreaterThanSign | enter
 KEYID_ABBREV = equalAndPlus | graveAccentAndTilde | isoKey | semicolonAndColon | slashAndQuestionMark | tab | minusAndUnderscore | openingBracketAndOpeningBrace
-KEYID_ABBREV = leftAlt | leftCtrl | leftFn | leftMod | leftMouse | leftShift | leftSpace | leftSuper
+KEYID_ABBREV = leftAlt | leftCtrl | leftFn | leftMod | leftMouse | leftShift | leftSpace | leftSuper | leftFn2
 KEYID_ABBREV = leftModule.key1 | leftModule.key2 | leftModule.key3 | leftModule.leftButton | leftModule.middleButton | leftModule.rightButton
-KEYID_ABBREV = rightAlt | rightCtrl | rightFn | rightMod | rightShift | rightSpace | rightSuper | rightModule.leftButton | rightModule.rightButton
+KEYID_ABBREV = rightAlt | rightCtrl | rightFn | rightMod | rightShift | rightSpace | rightSuper | rightModule.leftButton | rightModule.rightButton | rightFn2
+KEYID_ABBREV = escape | f1 | f2 | f3 | f4 | f5 | f6 |  f7 | f8 | f9 | f10 | f11 | f12
+KEYID_ABBREV = print | delete | insert | scrollLock | pause | home | pageUp | end | pageDown | previous | upArrow | next | leftArrow | downArrow | rightArrow
 MACRONAME = <macro name (IDENTIFIER)>
 #####################
 # DEVELOPMENT TOOLS #
@@ -314,6 +318,14 @@ COMMAND = setEmergencyKey KEYID
 - `resetTrackpoint` resets the internal trackpoint board. Can be used to recover the trackpoint from drift conditions. Drifts usually happen if you keep the cursor moving at slow constant speeds, because of the boards's internal adaptive calibration. Since the board's parameters cannot be altered, the only way around is or you to learn not to do the type of movement which triggers them.
 - `i2cBaudRate <baud rate, default 100000(INT)>` sets i2c baud rate. Lowering this value may improve module reliability, while increasing latency.
 - `{|}` Braces allow grouping multiple commands as if they were a single command. Please note that from the point of view of the engine, braces are (almost) regular commands, and have to be followed by newlines like any other command. Therefore idioms like `} else {` are not possible at the moment.
+- `powerMode [toggle] { wake | lightSleep | sleep | deepSleep }`
+  - `lightSleep` disables all leds. When any key is pressed, the uhk is waked up, and remote wakeup of the host is attempted.
+  - `deepSleep` disables all leds, disables USB output, and (in the future will) put the device into a low-power mode.
+  - `sleep` is a general alias that at the moment points to `deepSleep`.
+  - `wake` wakes up the device from "any" sleep mode (that doesn't disable macro engine and the half link).
+  Further rules:
+    - If a sleep mode is activated while another sleep mode is active, the deeper of them will be activated.
+    - If `toggle` is specified and the device is already in the (exact) sleep mode, it will wake the device instead.
 
 ### Triggering keyboard actions (pressing keys, clicking, etc.):
 
@@ -641,7 +653,7 @@ Internally, values are saved in one of the following types, and types are automa
 - general led configuration:
     - `leds.enabled BOOL` turns on/off all keyboard leds: i.e., backlight, indicator leds, segment display
     - `leds.brightness <0-1 multiple of default (FLOAT)>` allows scaling default brightness. E.g., `0.5` will dim the entire keyboard to half of the default values that are configured in Agent
-    - `leds.fadeTimeout <seconds to fade after (INT)>` will turn off leds after the configured interval.
+    - `leds.fadeTimeout <seconds to fade after (INT)>` will make uhk turn off all leds after the configured interval. (This is an alias that sets all of `{keyBacklightFadeTimeout|keyBacklightFadeBatteryTimeout|displayFadeTimeout|displayFadeBatteryTimeout}`)
 
 - modifier layer triggers:
     - `set modifierLayerTriggers.{shift|alt|super|ctrl} {left|right|both}` controls whether modifier layers are triggered by left or right or either of the modifiers.

@@ -46,6 +46,8 @@
 #ifndef __HIDREPORTDATA_H__
 #define __HIDREPORTDATA_H__
 
+#include "lufa/Common.h"
+
 /* Private Interface - For use in library only: */
     #if !defined(__DOXYGEN__)
         /* Macros: */
@@ -123,4 +125,3 @@
 /** @} */
 
 #endif
-

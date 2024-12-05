@@ -119,31 +119,31 @@ Header files are composed of sections. The order of sections is fixed. Every hea
 
 // Includes:
 
-    #include "fsl_gpio.h"
-    ...
+#include "fsl_gpio.h"
+...
 
 // Macros:
 
-    #define LED_DRIVER_SDB_PORT PORTA
-    ...
+#define LED_DRIVER_SDB_PORT PORTA
+...
 
 // Typedefs:
 
-    typedef enum {
-        KeystrokeType_Basic,
-        KeystrokeType_Media,
-        KeystrokeType_System,
-    } keystroke_type_t;
+typedef enum {
+    KeystrokeType_Basic,
+    KeystrokeType_Media,
+    KeystrokeType_System,
+} keystroke_type_t;
 
 // Variables:
 
-    extern led_driver_state_t LedDriverState;
-    ...
+extern led_driver_state_t LedDriverState;
+...
 
 // Functions:
 
-    void LedDriver_WriteBuffer(uint8_t i2cAddress, uint8_t buffer[], uint8_t size);
-    ...
+void LedDriver_WriteBuffer(uint8_t i2cAddress, uint8_t buffer[], uint8_t size);
+...
 
 #endif
 ```
@@ -154,4 +154,5 @@ The build process must not yield any warnings, and the build must pass [on on th
 
 ## Clang format
 
-There is a `.clang-format` present, which allows you to format your `.c` files simply by `clang-format -i <your source file>`. (It does **not** ensure the required header file structure though!) 
+There is a `.clang-format` present, which allows you to format your source files simply by `clang-format -i <your source file>`.
+(It does **not** ensure the required header file structure though!)

@@ -15,10 +15,12 @@
 
 // Functions:
 
+#ifndef __ZEPHYR__
     usb_status_t USB_DeviceGetHidDescriptor(
         usb_device_handle handle, usb_device_get_hid_descriptor_struct_t *hidDescriptor);
 
     usb_status_t USB_DeviceGetConfigurationDescriptor(
         usb_device_handle handle, usb_device_get_configuration_descriptor_struct_t *configurationDescriptor, uint8_t msAltEnumCode);
+#endif
 
 #endif

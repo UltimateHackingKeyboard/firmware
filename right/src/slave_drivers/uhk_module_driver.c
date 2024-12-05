@@ -1,13 +1,24 @@
+#include <string.h>
+#include "config_parser/parse_config.h"
 #include "i2c_addresses.h"
 #include "i2c.h"
+
+#ifdef __ZEPHYR__
+#include "messenger.h"
+#include "link_protocol.h"
+#include "state_sync.h"
+#else
+#include "peripherals/test_led.h"
+#include "test_switches.h"
+#include "device.h"
+#endif
+
 #include "slave_scheduler.h"
 #include "slave_drivers/uhk_module_driver.h"
 #include "slave_protocol.h"
-#include "peripherals/test_led.h"
 #include "bool_array_converter.h"
 #include "crc16.h"
 #include "key_states.h"
-#include "test_switches.h"
 #include "timer.h"
 #include "usb_report_updater.h"
 #include "utils.h"
@@ -15,8 +26,7 @@
 #include "debug.h"
 #include "macros/core.h"
 #include "versioning.h"
-
-bool KeymapReloadNeeded = false;
+#include "layouts/key_layout_60_to_universal.h"
 
 uhk_module_state_t UhkModuleStates[UHK_MODULE_MAX_SLOT_COUNT];
 module_connection_state_t ModuleConnectionStates[UHK_MODULE_MAX_SLOT_COUNT];
@@ -102,10 +112,85 @@ static void reloadKeymapIfNeeded()
 
         someoneElseWillDoTheJob |= uhkModuleState->moduleId == 0 && slave->isConnected;
     }
-
-    if (!someoneElseWillDoTheJob && !TestSwitches) {
-        KeymapReloadNeeded = true;
+#ifdef __ZEPHYR__
+    if (DEVICE_ID == DeviceId_Uhk80_Right) {
+        EventVector_Set(EventVector_KeymapReloadNeeded);
+        EventVector_WakeMain();
     }
+#else
+    if (!someoneElseWillDoTheJob && !TestSwitches) {
+        EventVector_Set(EventVector_KeymapReloadNeeded);
+    }
+
+#endif
+}
+
+void UhkModuleSlaveDriver_ProcessKeystates(uint8_t uhkModuleDriverId, uhk_module_state_t* uhkModuleState, const uint8_t* rxMessageData) {
+    uint8_t slotId = UhkModuleSlaveDriver_DriverIdToSlotId(uhkModuleDriverId);
+    BoolBitsToBytes(rxMessageData, keyStatesBuffer, uhkModuleState->keyCount);
+    bool stateChanged = false;
+    bool nonzeroDeltas = false;
+    for (uint8_t keyId=0; keyId < uhkModuleState->keyCount; keyId++) {
+        uint8_t targetKeyId;
+
+        // TODO: optimize this? This translation is quite costly :-/
+        if (
+                DEVICE_IS_UHK60
+                && VERSION_AT_LEAST(DataModelVersion, 8, 2, 0)
+                && uhkModuleDriverId == UhkModuleDriverId_LeftKeyboardHalf
+        ) {
+            targetKeyId = KeyLayout_Uhk60_to_Universal[SlotId_LeftKeyboardHalf][keyId];
+        } else {
+            targetKeyId = keyId;
+        }
+
+        if (KeyStates[slotId][targetKeyId].hardwareSwitchState != keyStatesBuffer[keyId]) {
+            KeyStates[slotId][targetKeyId].hardwareSwitchState = keyStatesBuffer[keyId];
+            stateChanged = true;
+        }
+    }
+    if (uhkModuleState->pointerCount) {
+        uint8_t keyStatesLength = BOOL_BYTES_TO_BITS_COUNT(uhkModuleState->keyCount);
+        pointer_delta_t *pointerDelta = (pointer_delta_t*)(rxMessageData + keyStatesLength);
+        uhkModuleState->pointerDelta.x += pointerDelta->x;
+        uhkModuleState->pointerDelta.y += pointerDelta->y;
+        uhkModuleState->pointerDelta.debugInfo = pointerDelta->debugInfo;
+        nonzeroDeltas = uhkModuleState->pointerDelta.x != 0 || uhkModuleState->pointerDelta.y != 0;
+    }
+    if (stateChanged) {
+        EventVector_Set(EventVector_StateMatrix);
+    }
+    if (nonzeroDeltas) {
+        EventVector_Set(EventVector_MouseController);
+    }
+    if (stateChanged || nonzeroDeltas) {
+        EventVector_WakeMain();
+    }
+}
+
+static void forwardKeystates(uint8_t uhkModuleDriverId, uhk_module_state_t* uhkModuleState, i2c_message_t* rxMessage) {
+#ifdef __ZEPHYR__
+    static bool lastDeltasWereZero = true;
+
+    uint8_t slotId = UhkModuleSlaveDriver_DriverIdToSlotId(uhkModuleDriverId);
+    BoolBitsToBytes(rxMessage->data, keyStatesBuffer, uhkModuleState->keyCount);
+    bool stateChanged = false;
+    for (uint8_t keyId=0; keyId < uhkModuleState->keyCount; keyId++) {
+        if (KeyStates[slotId][keyId].hardwareSwitchState != keyStatesBuffer[keyId]) {
+            KeyStates[slotId][keyId].hardwareSwitchState = keyStatesBuffer[keyId];
+            stateChanged = true;
+        }
+    }
+
+    uint8_t keyStatesLength = BOOL_BYTES_TO_BITS_COUNT(uhkModuleState->keyCount);
+    pointer_delta_t *pointerDelta = (pointer_delta_t*)(rxMessage->data + keyStatesLength);
+    bool thisDeltasAreZero = pointerDelta->x == 0 && pointerDelta->y == 0;
+
+    if (stateChanged || !lastDeltasWereZero || !thisDeltasAreZero) {
+        Messenger_Send2(DeviceId_Uhk80_Right, MessageId_SyncableProperty, SyncablePropertyId_LeftModuleKeyStates, rxMessage->data, rxMessage->length);
+        lastDeltasWereZero = thisDeltasAreZero;
+    }
+#endif
 }
 
 slave_result_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
@@ -335,6 +420,11 @@ slave_result_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
             }
             res.status = kStatus_Uhk_IdleCycle;
             *uhkModulePhase = isMessageValid ? UhkModulePhase_RequestKeyStates : UhkModulePhase_RequestFirmwareChecksum;
+#ifdef __ZEPHYR__
+            if (DEVICE_ID == DeviceId_Uhk80_Left && uhkModuleDriverId == UhkModuleDriverId_LeftModule) {
+                StateSync_UpdateProperty(StateSyncPropertyId_ModuleStateLeftModule, NULL);
+            }
+#endif
             break;
         }
 
@@ -355,17 +445,10 @@ slave_result_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
             break;
         case UhkModulePhase_ProcessKeystates:
             if (CRC16_IsMessageValid(rxMessage)) {
-                uint8_t slotId = UhkModuleSlaveDriver_DriverIdToSlotId(uhkModuleDriverId);
-                BoolBitsToBytes(rxMessage->data, keyStatesBuffer, uhkModuleState->keyCount);
-                for (uint8_t keyId=0; keyId < uhkModuleState->keyCount; keyId++) {
-                    KeyStates[slotId][keyId].hardwareSwitchState = keyStatesBuffer[keyId];
-                }
-                if (uhkModuleState->pointerCount) {
-                    uint8_t keyStatesLength = BOOL_BYTES_TO_BITS_COUNT(uhkModuleState->keyCount);
-                    pointer_delta_t *pointerDelta = (pointer_delta_t*)(rxMessage->data + keyStatesLength);
-                    uhkModuleState->pointerDelta.x += pointerDelta->x;
-                    uhkModuleState->pointerDelta.y += pointerDelta->y;
-                    uhkModuleState->pointerDelta.debugInfo = pointerDelta->debugInfo;
+                if (DEVICE_ID == DeviceId_Uhk80_Left) {
+                    forwardKeystates(uhkModuleDriverId, uhkModuleState, rxMessage);
+                } else {
+                    UhkModuleSlaveDriver_ProcessKeystates(uhkModuleDriverId, uhkModuleState, rxMessage->data);
                 }
             }
             res.status = kStatus_Uhk_IdleCycle;
@@ -436,5 +519,38 @@ void UhkModuleSlaveDriver_Disconnect(uint8_t uhkModuleDriverId)
 
     if (IS_VALID_MODULE_SLOT(slotId)) {
         memset(KeyStates[slotId], 0, MAX_KEY_COUNT_PER_MODULE * sizeof(key_state_t));
+    }
+
+    EventScheduler_Schedule(CurrentTime + MODULE_CONNECTION_TIMEOUT, EventSchedulerEvent_ModuleConnectionStatusUpdate, "ModuleConnectionStatusUpdate");
+}
+
+static void updateModuleConnectionStatus(uint8_t uhkModuleDriverId) {
+    module_connection_state_t *moduleConnectionState = ModuleConnectionStates + uhkModuleDriverId;
+    if (moduleConnectionState->moduleId) {
+        uint32_t timeoutAt = moduleConnectionState->lastTimeConnected + MODULE_CONNECTION_TIMEOUT;
+        if (timeoutAt <= CurrentTime) {
+            moduleConnectionState->moduleId = 0;
+#ifdef __ZEPHYR__
+            if (DEVICE_ID == DeviceId_Uhk80_Left) {
+                StateSync_UpdateProperty(StateSyncPropertyId_LeftModuleDisconnected, NULL);
+            }
+#endif
+        }
+    }
+}
+
+void UhkModuleSlaveDriver_UpdateConnectionStatus() {
+    switch (DEVICE_ID) {
+        case DeviceId_Uhk80_Left:
+            updateModuleConnectionStatus(UhkModuleDriverId_LeftModule);
+            break;
+        case DeviceId_Uhk80_Right:
+            updateModuleConnectionStatus(UhkModuleDriverId_RightModule);
+            break;
+        default:
+            for (uint8_t driverId = 0; driverId < UHK_MODULE_MAX_SLOT_COUNT; driverId++) {
+                updateModuleConnectionStatus(driverId);
+            }
+            break;
     }
 }

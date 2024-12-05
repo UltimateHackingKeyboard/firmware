@@ -1,0 +1,89 @@
+{
+    "version": 2,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 20
+    },
+    "configurePresets": [
+        {
+            "name": "build-uhk-60-v1-right",
+            "displayName": "UHK 60 v1 right",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/uhk-60-right-v1",
+            "cacheVariables": {
+                "NCS_TOOLCHAIN_VERSION": "NONE",
+                "BOARD": "uhk-60-right",
+                "BOARD_ROOT": "${sourceParentDir}/",
+                "CONF_FILE": "${sourceDir}/prj.conf",
+                "OVERLAY_CONFIG": "${sourceDir}/prj.conf.overlays/uhk-60-v1-right.prj.conf"
+            },
+            "warnings": {
+                "dev": false
+            }
+        },
+        {
+            "name": "build-uhk-60-v2-right",
+            "displayName": "UHK 60 v2 right",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/uhk-60-right-v2",
+            "cacheVariables": {
+                "NCS_TOOLCHAIN_VERSION": "NONE",
+                "BOARD": "uhk-60-right",
+                "BOARD_ROOT": "${sourceParentDir}/",
+                "CONF_FILE": "${sourceDir}/prj.conf",
+                "OVERLAY_CONFIG": "${sourceDir}/prj.conf.overlays/uhk-60-v2-right.prj.conf"
+            },
+            "warnings": {
+                "dev": false
+            }
+        },
+        {
+            "name": "build/uhk-80-right",
+            "displayName": "Build for UHK 80 right",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/uhk-80-right",
+            "cacheVariables": {
+                "NCS_TOOLCHAIN_VERSION": "NONE",
+                "BOARD": "uhk-80-right",
+                "BOARD_ROOT": "${sourceParentDir}/",
+                "mcuboot_OVERLAY_CONFIG": "${sourceDir}/child_image/mcuboot.conf;${sourceDir}/child_image/uhk-80-right.mcuboot.conf",
+                "EXTRA_CONF_FILE": "${sourceDir}/prj.conf.overlays/uhk-80-right.prj.conf"
+            },
+            "warnings": {
+                "dev": false
+            }
+        },
+        {
+            "name": "build/uhk-80-left",
+            "displayName": "Build for UHK 80 left",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/uhk-80-left",
+            "cacheVariables": {
+                "NCS_TOOLCHAIN_VERSION": "NONE",
+                "BOARD": "uhk-80-left",
+                "BOARD_ROOT": "${sourceParentDir}/",
+                "mcuboot_OVERLAY_CONFIG": "${sourceDir}/child_image/mcuboot.conf;${sourceDir}/child_image/uhk-80-left.mcuboot.conf",
+                "EXTRA_CONF_FILE": "${sourceDir}/prj.conf.overlays/uhk-80-left.prj.conf"
+            },
+            "warnings": {
+                "dev": false
+            }
+        },
+        {
+            "name": "build/uhk-dongle",
+            "displayName": "Build for UHK dongle",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/uhk-dongle",
+            "cacheVariables": {
+                "NCS_TOOLCHAIN_VERSION": "NONE",
+                "BOARD": "uhk-dongle",
+                "BOARD_ROOT": "${sourceParentDir}/",
+                "mcuboot_OVERLAY_CONFIG": "${sourceDir}/child_image/mcuboot.conf;${sourceDir}/child_image/uhk-dongle.mcuboot.conf",
+                "EXTRA_CONF_FILE": "${sourceDir}/prj.conf.overlays/uhk-dongle.prj.conf"
+            },
+            "warnings": {
+                "dev": false
+            }
+        }
+    ]
+}

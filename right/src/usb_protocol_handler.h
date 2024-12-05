@@ -3,8 +3,15 @@
 
 // Includes:
 
-    #include "fsl_common.h"
+    #include <stdbool.h>
+    #include <stddef.h>
+    #include <stdint.h>
     #include "usb_interfaces/usb_interface_generic_hid.h"
+#ifdef __ZEPHYR__
+    #include <zephyr/bluetooth/bluetooth.h>
+#else
+    #include "fsl_common.h"
+#endif
 
 // Macros:
 
@@ -23,7 +30,7 @@
         UsbCommandId_WriteHardwareConfig      = 0x05,
         UsbCommandId_WriteStagingUserConfig   = 0x06,
         UsbCommandId_ApplyConfig              = 0x07,
-        UsbCommandId_LaunchEepromTransfer     = 0x08,
+        UsbCommandId_LaunchStorageTransfer    = 0x08,
 
         UsbCommandId_GetDeviceState           = 0x09,
         UsbCommandId_SetTestLed               = 0x0a,
@@ -37,6 +44,16 @@
         UsbCommandId_GetVariable              = 0x12,
         UsbCommandId_SetVariable              = 0x13,
         UsbCommandId_ExecMacroCommand         = 0x14,
+
+        UsbCommandId_DrawOled                 = 0x15,
+
+        UsbCommandId_GetPairingData           = 0x16,
+        UsbCommandId_SetPairingData           = 0x17,
+        UsbCommandId_PairPeripheral           = 0x18,
+        UsbCommandId_PairCentral              = 0x19,
+        UsbCommandId_UnpairAll                = 0x1a,
+        UsbCommandId_IsPaired                 = 0x1b,
+        UsbCommandId_EnterPairingMode         = 0x1c,
     } usb_command_id_t;
 
     typedef enum {
@@ -59,6 +76,12 @@
 
 // Functions:
 
+#ifdef __ZEPHYR__
+    extern bool CommandProtocolTx(const uint8_t* data, size_t size);
+
+    void SetUsbTxBufferBleAddress(uint32_t offset, const bt_addr_le_t* addr);
+    extern bt_addr_le_t GetUsbRxBufferBleAddress(uint32_t offset);
+#endif
     void UsbProtocolHandler(void);
 
     uint8_t GetUsbRxBufferUint8(uint32_t offset);

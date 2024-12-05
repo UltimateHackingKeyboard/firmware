@@ -1,3 +1,4 @@
+#include <string.h>
 #include "key_action.h"
 #include "macros/core.h"
 #include "macros/status_buffer.h"

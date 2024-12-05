@@ -1,5 +1,13 @@
+#include <string.h>
 #include "debug.h"
+
+#ifdef __ZEPHYR__
+#include "logger.h"
+#include "keyboard/oled/screens/screen_manager.h"
+#include <zephyr/kernel.h>
+#else
 #include "segment_display.h"
+#endif
 
 #ifdef WATCHES
 
@@ -14,7 +22,30 @@ uint8_t CurrentWatch = 0;
 
 static uint16_t tickCount = 0;
 static uint32_t lastWatch = 0;
-static uint32_t watchInterval = 500;
+
+static void showInt(int32_t n) {
+#ifdef __ZEPHYR__
+    Log("%i: %i", CurrentWatch, n);
+#else
+    SegmentDisplay_SetInt(n, SegmentDisplaySlot_Debug);
+#endif
+}
+
+static void showString(const char* str) {
+#ifdef __ZEPHYR__
+    Log("%i: %s", CurrentWatch, str);
+#else
+    SegmentDisplay_SetText(strlen(str), str, SegmentDisplaySlot_Debug);
+#endif
+}
+
+static void showFloat(float f) {
+#ifdef __ZEPHYR__
+    Log("%i: %f", CurrentWatch, f);
+#else
+    SegmentDisplay_SetFloat(f, SegmentDisplaySlot_Debug);
+#endif
+}
 
 static void writeScancode(uint8_t b)
 {
@@ -38,8 +69,13 @@ void TriggerWatch(key_state_t *keyState)
 {
     int16_t key = (keyState - &KeyStates[SlotId_LeftKeyboardHalf][0]);
     if (0 <= key && key <= 7) {
-        // Set the LED value to RES until next update occurs.
-        SegmentDisplay_SetText(3, "RES", SegmentDisplaySlot_Debug);
+        // Set the LED value to --- until next update occurs.
+#ifdef __ZEPHYR__
+        if (DEBUG_CONSOLE) {
+            ScreenManager_ActivateScreen(ScreenId_Debug);
+        }
+#endif
+        showString("---");
         CurrentWatch = key;
         tickCount = 0;
     }
@@ -48,11 +84,20 @@ void TriggerWatch(key_state_t *keyState)
 void WatchTime(uint8_t n)
 {
     static uint32_t lastUpdate = 0;
-    if (CurrentTime - lastWatch > watchInterval) {
-        SegmentDisplay_SetInt(CurrentTime - lastUpdate, SegmentDisplaySlot_Debug);
+    if (CurrentTime - lastWatch > WATCH_INTERVAL) {
+        showInt(CurrentTime - lastUpdate);
         lastWatch = CurrentTime;
     }
     lastUpdate = CurrentTime;
+}
+
+bool WatchCondition(uint8_t n)
+{
+    if (CurrentTime - lastWatch > WATCH_INTERVAL) {
+        lastWatch = CurrentTime;
+        return true;
+    }
+    return false;
 }
 
 void WatchTimeMicros(uint8_t n)
@@ -63,7 +108,7 @@ void WatchTimeMicros(uint8_t n)
     i++;
 
     if (i == 1000) {
-        SegmentDisplay_SetInt(CurrentTime - lastUpdate, SegmentDisplaySlot_Debug);
+        showInt(CurrentTime - lastUpdate);
         lastUpdate = CurrentTime;
         i = 0;
     }
@@ -74,36 +119,36 @@ void WatchCallCount(uint8_t n)
 {
     tickCount++;
 
-    if (CurrentTime - lastWatch > watchInterval) {
-        SegmentDisplay_SetInt(tickCount, SegmentDisplaySlot_Debug);
+    if (CurrentTime - lastWatch > WATCH_INTERVAL) {
+        showInt(tickCount);
         lastWatch = CurrentTime;
     }
 }
 
 void WatchValue(int v, uint8_t n)
 {
-    if (CurrentTime - lastWatch > watchInterval) {
-        SegmentDisplay_SetInt(v, SegmentDisplaySlot_Debug);
+    if (CurrentTime - lastWatch > WATCH_INTERVAL) {
+        showInt(v);
         lastWatch = CurrentTime;
     }
 }
 
 void WatchString(char const *v, uint8_t n)
 {
-    if (CurrentTime - lastWatch > watchInterval) {
-        SegmentDisplay_SetText(strlen(v), v, SegmentDisplaySlot_Debug);
+    if (CurrentTime - lastWatch > WATCH_INTERVAL) {
+        showString(v);
         lastWatch = CurrentTime;
     }
 }
 
 void ShowString(char const *v, uint8_t n)
 {
-    SegmentDisplay_SetText(strlen(v), v, SegmentDisplaySlot_Debug);
+    showString(v);
 }
 
 void ShowValue(int v, uint8_t n)
 {
-    SegmentDisplay_SetInt(v, SegmentDisplaySlot_Debug);
+    showInt(v);
 }
 
 
@@ -115,8 +160,8 @@ void WatchValueMin(int v, uint8_t n)
         m = v;
     }
 
-    if (CurrentTime - lastWatch > watchInterval) {
-        SegmentDisplay_SetInt(m, SegmentDisplaySlot_Debug);
+    if (CurrentTime - lastWatch > WATCH_INTERVAL) {
+        showInt(m);
         lastWatch = CurrentTime;
         m = INT_MAX;
     }
@@ -130,8 +175,8 @@ void WatchValueMax(int v, uint8_t n)
         m = v;
     }
 
-    if (CurrentTime - lastWatch > watchInterval) {
-        SegmentDisplay_SetInt(m, SegmentDisplaySlot_Debug);
+    if (CurrentTime - lastWatch > WATCH_INTERVAL) {
+        showInt(m);
         lastWatch = CurrentTime;
         m = INT_MIN;
     }
@@ -140,8 +185,8 @@ void WatchValueMax(int v, uint8_t n)
 
 void WatchFloatValue(float v, uint8_t n)
 {
-    if (CurrentTime - lastWatch > watchInterval) {
-        SegmentDisplay_SetFloat(v, SegmentDisplaySlot_Debug);
+    if (CurrentTime - lastWatch > WATCH_INTERVAL) {
+        showFloat(v);
         lastWatch = CurrentTime;
     }
 }
@@ -154,8 +199,8 @@ void WatchFloatValueMin(float v, uint8_t n)
         m = v;
     }
 
-    if (CurrentTime - lastWatch > watchInterval) {
-        SegmentDisplay_SetFloat(m, SegmentDisplaySlot_Debug);
+    if (CurrentTime - lastWatch > WATCH_INTERVAL) {
+        showFloat(m);
         lastWatch = CurrentTime;
         m = (float)INT_MAX;
     }
@@ -169,12 +214,38 @@ void WatchFloatValueMax(float v, uint8_t n)
         m = v;
     }
 
-    if (CurrentTime - lastWatch > watchInterval) {
-        SegmentDisplay_SetFloat(m, SegmentDisplaySlot_Debug);
+    if (CurrentTime - lastWatch > WATCH_INTERVAL) {
+        showFloat(m);
         lastWatch = CurrentTime;
         m = (float)INT_MIN;
     }
 }
 
+
+#ifdef __ZEPHYR__
+static const char* getJustFilename(const char* filename) {
+    const char* p = filename;
+    const char* lastSlash = filename;
+
+    while (*p != '\0') {
+        if (*p == '/') {
+            lastSlash = p;
+        }
+        p++;
+    }
+    return ++lastSlash;
+}
+
+void WatchSemaforeTake(struct k_sem* sem, char const * label, uint8_t n) {
+    if (k_sem_take(sem, K_NO_WAIT) != 0) {
+        uint64_t startTimeUs = k_cyc_to_us_near64(k_cycle_get_32());
+        k_sem_take(sem, K_FOREVER);
+        uint64_t endTimeUs = k_cyc_to_us_near64(k_cycle_get_32());
+        const char* threadName = k_thread_name_get(k_current_get());
+        printk("Waited %lld us for semaphore %s in thread %s\n", endTimeUs - startTimeUs, getJustFilename(label), threadName);
+    }
+}
+#endif // __ZEPHYR__
+#else
 
 #endif

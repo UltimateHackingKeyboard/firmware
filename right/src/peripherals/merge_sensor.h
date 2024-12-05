@@ -3,21 +3,24 @@
 
 // Includes:
 
-    #include "fsl_gpio.h"
+#include <stdbool.h>
 
-// Macros:
+#ifdef __ZEPHYR__
+#include <zephyr/kernel.h>
+#include <device.h>
+#endif
 
-    #define MERGE_SENSOR_GPIO        GPIOB
-    #define MERGE_SENSOR_PORT        PORTB
-    #define MERGE_SENSOR_CLOCK       kCLOCK_PortB
-    #define MERGE_SENSOR_PIN         3
-    #define MERGE_SENSOR_IRQ         PORTB_IRQn
-    #define MERGE_SENSOR_IRQ_HANDLER PORTB_IRQHandler
+// Variables:
 
-    #define MERGE_SENSOR_IS_MERGED !GPIO_ReadPinInput(MERGE_SENSOR_GPIO, MERGE_SENSOR_PIN)
+    extern bool MergeSensor_HalvesAreMerged;
 
 // Functions:
 
-    void InitMergeSensor(void);
+#if !(defined(__ZEPHYR__) && !defined(DEVICE_HAS_MERGE_SENSOR))
+    void MergeSensor_Init(void);
+    bool MergeSensor_IsMerged(void);
+#endif
+
+    void MergeSensor_Update(void);
 
 #endif

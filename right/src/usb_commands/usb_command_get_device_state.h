@@ -4,10 +4,17 @@
 // Typedefs:
 
 typedef enum {
-    UhkErrorState_Fine = 0,
-    UhkErrorState_Warn = 1,
-    UhkErrorState_Error = 2,
-} uhk_error_state_t;
+    GetDeviceStateByte2_HalvesMerged = 1 << 0,
+    GetDeviceStateByte2_PairingInProgress = 1 << 1,
+    GetDeviceStateByte2_NewPairedDevice = 1 << 2,
+
+} usb_command_get_device_state_byte2_mask_t;
+
+    typedef enum {
+        UhkErrorState_Fine = 0,
+        UhkErrorState_Warn = 1,
+        UhkErrorState_Error = 2,
+    } uhk_error_state_t;
 
 // Functions:
 

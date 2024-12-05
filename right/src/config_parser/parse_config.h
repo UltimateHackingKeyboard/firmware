@@ -4,6 +4,7 @@
 // Includes:
 
     #include "basic_types.h"
+    #include "versioning.h"
 
 // Macros:
 
@@ -34,7 +35,8 @@
         ParserError_InvalidLayerId                      = 15,
         ParserError_InvalidNavigationMode               = 16,
         ParserError_InvalidModuleProperty               = 17,
-        ParserError_InvalidSecondaryRoleActionType       = 18,
+        ParserError_InvalidSecondaryRoleActionType      = 18,
+        ParserError_InvalidHostType                     = 19,
     } parser_error_t;
 
     typedef enum {
@@ -42,9 +44,7 @@
         SerializedSecondaryRoleActionType_Secondary,
     } serialized_secondary_role_action_type_t;
 
-    extern uint16_t DataModelMajorVersion;
-    extern uint16_t DataModelMinorVersion;
-    extern uint16_t DataModelPatchVersion;
+    extern version_t DataModelVersion;
 
     extern bool PerKeyRgbPresent;
 

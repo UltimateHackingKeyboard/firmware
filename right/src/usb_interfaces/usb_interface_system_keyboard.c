@@ -1,5 +1,10 @@
+#include <string.h>
 #include "usb_composite_device.h"
 #include "usb_report_updater.h"
+
+#ifndef UTILS_ARRAY_SIZE
+#define UTILS_ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+#endif
 
 uint32_t UsbSystemKeyboardActionCounter;
 static usb_system_keyboard_report_t usbSystemKeyboardReports[2];
@@ -10,15 +15,17 @@ static usb_system_keyboard_report_t* GetInactiveUsbSystemKeyboardReport()
     return ActiveUsbSystemKeyboardReport == usbSystemKeyboardReports ? usbSystemKeyboardReports+1 : usbSystemKeyboardReports;
 }
 
-static void SwitchActiveUsbSystemKeyboardReport(void)
+void UsbSystemKeyboardResetActiveReport(void)
+{
+    memset(ActiveUsbSystemKeyboardReport, 0, USB_SYSTEM_KEYBOARD_REPORT_LENGTH);
+}
+
+void SwitchActiveUsbSystemKeyboardReport(void)
 {
     ActiveUsbSystemKeyboardReport = GetInactiveUsbSystemKeyboardReport();
 }
 
-void UsbSystemKeyboardResetActiveReport(void)
-{
-    bzero(ActiveUsbSystemKeyboardReport, USB_SYSTEM_KEYBOARD_REPORT_LENGTH);
-}
+#ifndef __ZEPHYR__
 
 usb_status_t UsbSystemKeyboardAction(void)
 {
@@ -36,18 +43,6 @@ usb_status_t UsbSystemKeyboardAction(void)
     return usb_status;
 }
 
-usb_status_t UsbSystemKeyboardCheckIdleElapsed()
-{
-    return kStatus_USB_Busy;
-}
-
-usb_status_t UsbSystemKeyboardCheckReportReady()
-{
-    if (memcmp(ActiveUsbSystemKeyboardReport, GetInactiveUsbSystemKeyboardReport(), sizeof(usb_system_keyboard_report_t)) != 0)
-        return kStatus_USB_Success;
-
-    return UsbSystemKeyboardCheckIdleElapsed();
-}
 
 usb_status_t UsbSystemKeyboardCallback(class_handle_t handle, uint32_t event, void *param)
 {
@@ -88,6 +83,20 @@ usb_status_t UsbSystemKeyboardCallback(class_handle_t handle, uint32_t event, vo
 
     return error;
 }
+#endif
+
+usb_status_t UsbSystemKeyboardCheckIdleElapsed()
+{
+    return kStatus_USB_Busy;
+}
+
+usb_status_t UsbSystemKeyboardCheckReportReady()
+{
+    if (memcmp(ActiveUsbSystemKeyboardReport, GetInactiveUsbSystemKeyboardReport(), sizeof(usb_system_keyboard_report_t)) != 0)
+        return kStatus_USB_Success;
+
+    return UsbSystemKeyboardCheckIdleElapsed();
+}
 
 bool UsbSystemKeyboard_AddScancode(usb_system_keyboard_report_t* report, uint8_t scancode)
 {
@@ -108,7 +117,18 @@ void UsbSystemKeyboard_RemoveScancode(usb_system_keyboard_report_t* report, uint
 
 void UsbSystemKeyboard_MergeReports(const usb_system_keyboard_report_t* sourceReport, usb_system_keyboard_report_t* targetReport)
 {
-    for (uint8_t i = 0; i < ARRAY_SIZE(targetReport->bitfield); i++) {
+    for (uint8_t i = 0; i < UTILS_ARRAY_SIZE(targetReport->bitfield); i++) {
         targetReport->bitfield[i] |= sourceReport->bitfield[i];
+    }
+}
+
+void UsbSystemKeyboard_ForeachScancode(const usb_system_keyboard_report_t* report, void(*action)(uint8_t))
+{
+    for (uint8_t i = 0; i < UTILS_ARRAY_SIZE(report->bitfield); i++) {
+        for (uint8_t j = 0, b = report->bitfield[i]; b > 0; j++, b >>= 1) {
+            if (b & 1) {
+                action(USB_SYSTEM_KEYBOARD_MIN_BITFIELD_SCANCODE + i * 8 + j);
+            }
+        }
     }
 }

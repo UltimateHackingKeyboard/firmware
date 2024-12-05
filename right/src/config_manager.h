@@ -16,6 +16,7 @@
     typedef struct {
         // modules
         module_configuration_t ModuleConfigurations[ModuleId_ModuleCount];
+        caret_configuration_t NavigationModes[NavigationMode_RemappableCount];
         navigation_mode_t TouchpadPinchZoomMode;
         uint16_t HoldContinuationTimeout;
 
@@ -51,14 +52,19 @@
         // backlight
         rgb_t KeyActionColors[keyActionColor_Length];
         float LedBrightnessMultiplier;
-        uint32_t LedsFadeTimeout;
         rgb_t LedMap_ConstantRGB;
         backlighting_mode_t BacklightingMode;
-        uint8_t IconsAndLayerTextsBrightnessDefault;
-        uint8_t AlphanumericSegmentsBrightnessDefault;
+        uint8_t DisplayBrightnessDefault;
+        uint8_t DisplayBrightnessBatteryDefault;
         uint8_t KeyBacklightBrightnessDefault;
+        uint8_t KeyBacklightBrightnessBatteryDefault;
+
+        uint32_t DisplayFadeOutTimeout;
+        uint32_t DisplayFadeOutBatteryTimeout;
+        uint32_t KeyBacklightFadeOutTimeout;
+        uint32_t KeyBacklightFadeOutBatteryTimeout;
+
         bool LedsEnabled;
-        bool LedSleepModeActive;
 
         // layers
         layer_config_t LayerConfig[LayerId_Count];

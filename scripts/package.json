@@ -15,12 +15,14 @@
   "dependencies": {
     "commander": "^2.11.0",
     "md5": "2.3.0",
+    "moment": "^2.30.1",
+    "serialport": "^12.0.0",
     "shelljs": "^0.8.4"
   },
   "firmwareVersion": "11.2.0",
-  "deviceProtocolVersion": "4.10.0",
+  "deviceProtocolVersion": "4.11.0",
   "moduleProtocolVersion": "4.3.0",
-  "userConfigVersion": "7.1.0",
+  "userConfigVersion": "8.3.0",
   "hardwareConfigVersion": "1.0.0",
   "smartMacrosVersion": "2.5.0",
   "devices": [
@@ -28,13 +30,45 @@
       "deviceId": 1,
       "name": "uhk60-right",
       "source": "right/uhk60v1/build_make/uhk60v1.hex",
-      "mmap": "right/uhk60v1/build_make/uhk60v1.map"
+      "mmap": "right/uhk60v1/build_make/uhk60v1.map",
+      "kboot": "scripts/kboot-releases/uhk60-right/kboot.hex",
+      "platform": "kinetis",
+      "userConfigType": "uhk60"
     },
     {
       "deviceId": 2,
       "name": "uhk60v2-right",
       "source": "right/uhk60v2/build_make/uhk60v2.hex",
-      "mmap": "right/uhk60v2/build_make/uhk60v2.map"
+      "mmap": "right/uhk60v2/build_make/uhk60v2.map",
+      "kboot": "scripts/kboot-releases/uhk60v2-right/kboot.hex",
+      "platform": "kinetis",
+      "userConfigType": "uhk60"
+    },
+    {
+      "deviceId": 3,
+      "name": "uhk-80-left",
+      "source": "device/build/uhk-80-left/zephyr/app_update.bin",
+      "mmap": "device/build/uhk-80-left/zephyr/zephyr.map",
+      "merged": "device/build/uhk-80-left/zephyr/merged.hex",
+      "platform": "nordic",
+      "userConfigType": "uhk80"
+    },
+    {
+      "deviceId": 4,
+      "name": "uhk-80-right",
+      "source": "device/build/uhk-80-right/zephyr/app_update.bin",
+      "mmap": "device/build/uhk-80-right/zephyr/zephyr.map",
+      "merged": "device/build/uhk-80-right/zephyr/merged.hex",
+      "platform": "nordic",
+      "userConfigType": "uhk80"
+    },
+    {
+      "deviceId": 5,
+      "name": "uhk-dongle",
+      "source": "device/build/uhk-dongle/zephyr/app_update.bin",
+      "mmap": "device/build/uhk-dongle/zephyr/zephyr.map",
+      "merged": "device/build/uhk-dongle/zephyr/merged.hex",
+      "platform": "nordic"
     }
   ],
   "modules": [
@@ -42,25 +76,29 @@
       "moduleId": 1,
       "name": "uhk60-left",
       "source": "left/build_make/uhk_left.bin",
-      "mmap": "left/build_make/uhk_left.map"
+      "mmap": "left/build_make/uhk_left.map",
+      "platform": "kinetis"
     },
     {
       "moduleId": 2,
       "name": "keycluster-left",
       "source": "keycluster/build_make/uhk_keycluster.bin",
-      "mmap": "keycluster/build_make/uhk_keycluster.map"
+      "mmap": "keycluster/build_make/uhk_keycluster.map",
+      "platform": "kinetis"
     },
     {
       "moduleId": 3,
       "name": "trackball-right",
       "source": "trackball/build_make/uhk_trackball.bin",
-      "mmap": "trackball/build_make/uhk_trackball.map"
+      "mmap": "trackball/build_make/uhk_trackball.map",
+      "platform": "kinetis"
     },
     {
       "moduleId": 4,
       "name": "trackpoint-right",
       "source": "trackpoint/build_make/uhk_trackpoint.bin",
-      "mmap": "trackpoint/build_make/uhk_trackpoint.map"
+      "mmap": "trackpoint/build_make/uhk_trackpoint.map",
+      "platform": "kinetis"
     }
   ]
 }

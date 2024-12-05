@@ -1,29 +1,13 @@
 #include <math.h>
 #include "key_action.h"
-#include "led_display.h"
-#include "layer.h"
 #include "usb_interfaces/usb_interface_mouse.h"
-#include "peripherals/test_led.h"
-#include "slave_drivers/is31fl3xxx_driver.h"
-#include "slave_drivers/uhk_module_driver.h"
 #include "timer.h"
 #include "config_parser/parse_keymap.h"
-#include "usb_commands/usb_command_get_debug_buffer.h"
-#include "arduino_hid/ConsumerAPI.h"
-#include "secondary_role_driver.h"
-#include "slave_drivers/touchpad_driver.h"
 #include "mouse_keys.h"
-#include "slave_scheduler.h"
-#include "layer_switcher.h"
-#include "usb_report_updater.h"
-#include "caret_config.h"
-#include "keymap.h"
-#include "macros/core.h"
 #include "debug.h"
-#include "postponer.h"
-#include "layer.h"
-#include "secondary_role_driver.h"
 #include "config_manager.h"
+#include "event_scheduler.h"
+#include <string.h>
 
 static uint32_t mouseUsbReportUpdateTime = 0;
 static uint32_t mouseElapsedTime;
@@ -31,6 +15,8 @@ static uint32_t mouseElapsedTime;
 uint8_t ActiveMouseStates[ACTIVE_MOUSE_STATES_COUNT];
 uint8_t ToggledMouseStates[ACTIVE_MOUSE_STATES_COUNT];
 
+
+usb_mouse_report_t MouseKeysMouseReport;
 
 static void updateOneDirectionSign(int8_t* sign, int8_t expectedSign, uint8_t expectedState, uint8_t otherState) {
     if (*sign == expectedSign && !ActiveMouseStates[expectedState]) {
@@ -187,47 +173,65 @@ static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
 
 void MouseKeys_ProcessMouseActions()
 {
+    EventVector_Unset(EventVector_MouseKeys);
     mouseElapsedTime = Timer_GetElapsedTimeAndSetCurrent(&mouseUsbReportUpdateTime);
+    memset(&MouseKeysMouseReport, 0, sizeof(MouseKeysMouseReport));
 
     processMouseKineticState(&Cfg.MouseMoveState);
-    ActiveUsbMouseReport->x += Cfg.MouseMoveState.xOut;
-    ActiveUsbMouseReport->y += Cfg.MouseMoveState.yOut;
+    MouseKeysMouseReport.x += Cfg.MouseMoveState.xOut;
+    MouseKeysMouseReport.y += Cfg.MouseMoveState.yOut;
     Cfg.MouseMoveState.xOut = 0;
     Cfg.MouseMoveState.yOut = 0;
 
     processMouseKineticState(&Cfg.MouseScrollState);
-    ActiveUsbMouseReport->wheelX += Cfg.MouseScrollState.xOut;
-    ActiveUsbMouseReport->wheelY += Cfg.MouseScrollState.yOut;
+    MouseKeysMouseReport.wheelX += Cfg.MouseScrollState.xOut;
+    MouseKeysMouseReport.wheelY += Cfg.MouseScrollState.yOut;
     Cfg.MouseScrollState.xOut = 0;
     Cfg.MouseScrollState.yOut = 0;
 
     if (ActiveMouseStates[SerializedMouseAction_LeftClick]) {
-        ActiveUsbMouseReport->buttons |= MouseButton_Left;
+        MouseKeysMouseReport.buttons |= MouseButton_Left;
     }
     if (ActiveMouseStates[SerializedMouseAction_MiddleClick]) {
-        ActiveUsbMouseReport->buttons |= MouseButton_Middle;
+        MouseKeysMouseReport.buttons |= MouseButton_Middle;
     }
     if (ActiveMouseStates[SerializedMouseAction_RightClick]) {
-        ActiveUsbMouseReport->buttons |= MouseButton_Right;
+        MouseKeysMouseReport.buttons |= MouseButton_Right;
     }
     for (uint8_t serializedButton = SerializedMouseAction_Button_4; serializedButton <= SerializedMouseAction_Button_Last; serializedButton++)
     {
         if (ActiveMouseStates[serializedButton]) {
-            ActiveUsbMouseReport->buttons |= 1 << ((serializedButton - SerializedMouseAction_Button_4) + 3);
+            MouseKeysMouseReport.buttons |= 1 << ((serializedButton - SerializedMouseAction_Button_4) + 3);
         }
+    }
+
+    bool wasMoving = Cfg.MouseMoveState.wasMoveAction || Cfg.MouseScrollState.wasMoveAction;
+    if (MouseKeysMouseReport.buttons || wasMoving) {
+        EventVector_Set(EventVector_MouseKeysReportsUsed);
+    }
+    if (wasMoving) {
+        EventVector_Set(EventVector_MouseKeys | EventVector_ReportsChanged);
     }
 }
 
-void ToggleMouseState(serialized_mouse_action_t action, bool activate)
+void MouseKeys_SetState(serialized_mouse_action_t action, bool lock, bool activate)
 {
+    EventVector_Set(EventVector_MouseKeys | EventVector_ReportsChanged);
     if (activate) {
-        ToggledMouseStates[action]++;
-        // First macro action is ran during key update cycle, i.e., after ActiveMouseStates is copied from ToggledMouseStates.
-        // Otherwise, direction sign will be resetted at the end of this cycle
-        ActiveMouseStates[action]++;
+        if (lock) {
+            EventVector_Set(EventVector_NativeActions);
+            ToggledMouseStates[action]++;
+            // First macro action is ran during key update cycle, i.e., after ActiveMouseStates is copied from ToggledMouseStates.
+            // Otherwise, direction sign will be resetted at the end of this cycle
+            ActiveMouseStates[action]++;
+        }
         MouseKeys_ActivateDirectionSigns(action);
+        mouseUsbReportUpdateTime = CurrentTime;
     }
     else{
-        ToggledMouseStates[action] -= ToggledMouseStates[action] > 0 ? 1 : 0;
+        if (lock) {
+            EventVector_Set(EventVector_NativeActions);
+            ToggledMouseStates[action] -= ToggledMouseStates[action] > 0 ? 1 : 0;
+        }
     }
 }

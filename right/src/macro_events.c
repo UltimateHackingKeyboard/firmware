@@ -7,6 +7,7 @@
 #include "keymap.h"
 #include "led_display.h"
 #include "debug.h"
+#include "event_scheduler.h"
 
 
 static macro_index_t anyLayerChangeMacro = MacroIndex_None;
@@ -163,6 +164,8 @@ static void registerKeyboardStates()
 
 void MacroEvent_ProcessStateKeyEvents()
 {
+    EventVector_Unset(EventVector_KeyboardLedState);
+
     if (MacroEvent_CapsLockStateChanged && capsLockChangeMacro != MacroIndex_None) {
         MacroEvent_CapsLockStateChanged = false;
         startMacroInSlot(capsLockChangeMacro, &previousEventMacroSlot);

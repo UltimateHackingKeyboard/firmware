@@ -11,6 +11,7 @@
 #include "macros/commands.h"
 #include "module.h"
 #include "secondary_role_driver.h"
+#include "slot.h"
 #include "timer.h"
 #include "keymap.h"
 #include "key_matrix.h"
@@ -27,9 +28,15 @@
 #include "caret_config.h"
 #include "config_parser/parse_macro.h"
 #include "slave_drivers/is31fl3xxx_driver.h"
-#include "init_peripherals.h"
 #include <stdint.h>
 #include "config_manager.h"
+#include "led_manager.h"
+
+#ifdef __ZEPHYR__
+#include "state_sync.h"
+#else
+#include "init_peripherals.h"
+#endif
 
 typedef enum {
     SetCommandAction_Write,
@@ -447,7 +454,7 @@ static macro_variable_t backlightStrategy(parser_context_t* ctx, set_command_act
     }
 
     Ledmap_SetLedBacklightingMode(res);
-    Ledmap_UpdateBacklightLeds();
+    EventVector_Set(EventVector_LedMapUpdateNeeded);
     return noneVar();
 }
 
@@ -487,7 +494,12 @@ static macro_variable_t keyRgb(parser_context_t* ctx, set_command_action_t actio
     CurrentKeymap[layerId][slotIdx][inSlotIdx].colorOverridden = true;
     CurrentKeymap[layerId][slotIdx][inSlotIdx].color = rgb;
 
-    Ledmap_UpdateBacklightLeds();
+#ifdef __ZEPHYR__
+    if (slotIdx != SlotId_RightKeyboardHalf) {
+        StateSync_UpdateLayer(layerId, true);
+    }
+#endif
+    EventVector_Set(EventVector_LedMapUpdateNeeded);
     return noneVar();
 }
 
@@ -511,7 +523,7 @@ static macro_variable_t constantRgb(parser_context_t* ctx, set_command_action_t 
 
         Cfg.LedMap_ConstantRGB = rgb;
         Ledmap_SetLedBacklightingMode(BacklightingMode_ConstantRGB);
-        Ledmap_UpdateBacklightLeds();
+        EventVector_Set(EventVector_LedMapUpdateNeeded);
 
         return noneVar();
     }
@@ -524,8 +536,33 @@ static macro_variable_t constantRgb(parser_context_t* ctx, set_command_action_t 
 static macro_variable_t leds(parser_context_t* ctx, set_command_action_t action)
 {
     if (ConsumeToken(ctx, "fadeTimeout")) {
+        if (action == SetCommandAction_Read) {
+            Macros_ReportError("Reading global fade timeout is not supported!", ConsumedToken(ctx), ConsumedToken(ctx));
+            return noneVar();
+        }
+
+        uint32_t res = Macros_ConsumeInt(ctx)*1000;
+
+        if (Macros_ParserError || Macros_DryRun) {
+            return noneVar();
+        }
+
+        Cfg.KeyBacklightFadeOutTimeout = res;
+        Cfg.KeyBacklightFadeOutBatteryTimeout = res;
+        Cfg.DisplayFadeOutTimeout = res;
+        Cfg.DisplayFadeOutBatteryTimeout = res;
+    } else if (ConsumeToken(ctx, "keyBacklightFadeTimeout")) {
         DEFINE_NONE_LIMITS();
-        ASSIGN_INT_MUL(Cfg.LedsFadeTimeout, 1000);
+        ASSIGN_INT_MUL(Cfg.KeyBacklightFadeOutTimeout, 1000);
+    } else if (ConsumeToken(ctx, "displayFadeTimeout")) {
+        DEFINE_NONE_LIMITS();
+        ASSIGN_INT_MUL(Cfg.DisplayFadeOutTimeout, 1000);
+    } else if (ConsumeToken(ctx, "keyBacklightFadeBatteryTimeout")) {
+        DEFINE_NONE_LIMITS();
+        ASSIGN_INT_MUL(Cfg.KeyBacklightFadeOutBatteryTimeout, 1000);
+    } else if (ConsumeToken(ctx, "displayFadeBatteryTimeout")) {
+        DEFINE_NONE_LIMITS();
+        ASSIGN_INT_MUL(Cfg.DisplayFadeOutBatteryTimeout, 1000);
     } else if (ConsumeToken(ctx, "brightness")) {
         DEFINE_FLOAT_LIMITS(1.0f/256.0f, 255.0f);
         ASSIGN_FLOAT(Cfg.LedBrightnessMultiplier);
@@ -535,7 +572,7 @@ static macro_variable_t leds(parser_context_t* ctx, set_command_action_t action)
         Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
     }
 
-    LedSlaveDriver_UpdateLeds();
+    EventVector_Set(EventVector_LedManagerFullUpdateNeeded);
     return noneVar();
 }
 
@@ -684,6 +721,10 @@ static macro_variable_t keymapAction(parser_context_t* ctx, set_command_action_t
 
     key_action_t* actionSlot = &CurrentKeymap[layerId][slotIdx][inSlotIdx];
 
+#ifdef __ZEPHYR__
+    StateSync_UpdateLayer(layerId, true);
+#endif
+
     *actionSlot = keyAction;
     return noneVar();
 }
@@ -830,6 +871,7 @@ static macro_variable_t root(parser_context_t* ctx, set_command_action_t action)
         DEFINE_INT_LIMITS(0, 65535);
         ASSIGN_INT(Cfg.AutoShiftDelay);
     }
+#ifndef __ZEPHYR__
     else if (ConsumeToken(ctx, "i2cBaudRate")) {
         if (action == SetCommandAction_Read) {
             return intVar(Cfg.I2cBaudRate);
@@ -842,6 +884,7 @@ static macro_variable_t root(parser_context_t* ctx, set_command_action_t action)
         Cfg.I2cBaudRate = baudRate;
         ChangeI2cBaudRate(baudRate);
     }
+#endif
     else if (ConsumeToken(ctx, "emergencyKey")) {
         ASSIGN_NO_LIMITS(key_state_t*, noneVar,, Cfg.EmergencyKey, Utils_KeyIdToKeyState(Macros_ConsumeInt(ctx)));
     }

@@ -16,13 +16,79 @@ If you want to use the latest firmware version for your UHK, then instead of goi
 
 If you're one of the brave few who wants to hack the firmware then read on.
 
-1. Make sure to clone this repo with:
+### Fetching the codebase
 
-`git clone --recursive git@github.com:UltimateHackingKeyboard/firmware.git`
+Note that these commands will create a [west workspace](https://docs.zephyrproject.org/latest/develop/west/workspaces.html#t2-star-topology-application-is-the-manifest-repository) in your current directory.
 
-Then, depending whether you want a full IDE experience or just minimal tools for building and flashing firmware, read *IDE setup* or *Minimal development setup* (if you prefer a text editor + command line).
+```bash
+git clone --recurse-submodules git@github.com:UltimateHackingKeyboard/firmware-uhk80.git
+west init -l firmware-uhk80
+west update
+west patch
+west config --local build.cmake-args -- "-Wno-dev"
+cd firmware-uhk80/scripts
+npm i
+./generate-versions.mjs
+```
 
-### IDE setup
+Then, depending whether you want a full IDE experience or just minimal tools for building and flashing firmware, read *VS Code setup* or *Minimal development setup* (if you prefer a text editor + command line).
+
+### VS Code setup
+
+- Install [nRF Connect SDK](https://developer.nordicsemi.com/nRF_Connect_SDK/doc/latest/nrf/installation/install_ncs.html) including VS Code extensions.
+- In VS Code, click nRF connect icon in the left pane, then `Applications -> Create new build configuration` and select the relevant CMake preset. Now hit Build. This executes cmake steps.
+- Now you can rebuild or flash using the Build and Flash actions.
+
+### Minimal development setup
+
+- Install commandline stuff from [nRF Connect SDK](https://developer.nordicsemi.com/nRF_Connect_SDK/doc/latest/nrf/installation/install_ncs.html)
+- You can use `./build.sh` script that basically just packs the following snippets, but should be more up to date:
+
+    - e.g. `./build.sh uhk-80-left build make flash`, which will perform the three actions below
+
+- If the `build.sh` doesn't suit you, then launch the nrfutil shell:
+    ```
+    nrfutil toolchain-manager launch --shell --ncs-version v2.6.1
+    ```
+- In the shell, you can build (e.g.) uhk-80-left as follows:
+
+  - full build including cmake steps, as extracted from VS Code:
+    ```
+    export DEVICE=uhk-80-left
+    export PWD=`pwd`
+    west build --build-dir $PWD/device/build/$DEVICE $PWD/device --pristine --board $DEVICE --no-sysbuild -- -DNCS_TOOLCHAIN_VERSION=NONE -DCONF_FILE=$PWD/device/prj.conf -DOVERLAY_CONFIG=$PWD/device/prj.conf.overlays/$DEVICE.prj.conf -DBOARD_ROOT=$PWD
+    ```
+
+  - quick rebuild:
+    ```
+    export DEVICE=uhk-80-left
+    export PWD=`pwd`
+    west build --build-dir $PWD/device/build/$DEVICE $PWD/device
+    ```
+
+  - flash:
+    ```
+    export DEVICE=uhk-80-left
+    export PWD=`pwd`
+    west flash -d $PWD/device/build/$DEVICE
+    ```
+
+In case of problems, please refer to scripts/make-release.mjs
+
+### Recommended tweaks
+
+You may find this `.git/hooks/post-checkout` git hook useful:
+
+```bash
+#!/bin/bash
+
+# Update the submodule in lib/c2usb to the commit recorded in the checked-out commit
+git submodule update --init --recursive lib/c2usb
+# Refresh versions.c, so that Agent always shows what commit you are on (although it doesn't indicate unstaged changes)
+scripts/generate-versions.mjs
+```
+
+### Old IDE setup
 
 2. Download and install MCUXpresso IDE for [Linux](https://ultimatehackingkeyboard.com/mcuxpressoide/mcuxpressoide-11.2.0_4120.x86_64.deb.bin), [Mac](https://ultimatehackingkeyboard.com/mcuxpressoide/MCUXpressoIDE_11.2.0_4120.pkg), or [Windows](https://ultimatehackingkeyboard.com/mcuxpressoide/MCUXpressoIDE_11.2.0_4120.exe).
 
@@ -39,7 +105,7 @@ Then, depending whether you want a full IDE experience or just minimal tools for
 
 Going forward, it's easier to flash the firmware of your choice by using the downwards toolbar icon which is located rightwards of the *green play + toolbox icon*.
 
-### Minimal development setup
+### Old Minimal development setup
 
 1. Install the ARM cross-compiler, cross-assembler and stdlib implementation. Eg. on Arch Linux the packages `arm-none-eabi-binutils`, `arm-none-eabi-gcc`, `arm-none-eabi-newlib`.
 
@@ -55,10 +121,18 @@ Going forward, it's easier to flash the firmware of your choice by using the dow
 
 ### Releasing
 
-6. To build a full firmware tarball:
-    1. Run `npm install` in `scripts`.
-    2. Run `scripts/make-release.js`. (Or `scripts/make-release.js --allowSha` for development purposes.)
-    3. Now, the created tarball `scripts/uhk-firmware-VERSION.tar.gz` can be flashed with UHK Agent.
+To build a full firmware tarball:
+
+1. Run `npm install` in `scripts`.
+2. Run `scripts/make-release.mjs`. (Or `scripts/make-release.mjs --allowSha` for development purposes.)
+3. Now, the created tarball `scripts/uhk-firmware-VERSION.tar.gz` can be flashed with UHK Agent.
+
+If `make-release.mjs` fails with a build error, it'll probably succeed in Nordic's shell environment.
+
+1. Install [nRF Util](https://www.nordicsemi.com/Products/Development-tools/nRF-Util).
+2. Install the nRF Connect Toolchain Manager with `nrfutil install toolchain-manager`
+3. Enter the Toolchain Manager shell with `nrfutil toolchain-manager launch --shell`
+4. Within the shell, run `make-release.mjs` according to the above.
 
 ## Contributing
 

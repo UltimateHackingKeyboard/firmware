@@ -1,3 +1,4 @@
+#include <string.h>
 #include "str_utils.h"
 #include "debug.h"
 #include "config_parser/config_globals.h"
@@ -5,9 +6,21 @@
 #include "module.h"
 #include "slave_protocol.h"
 
+#if !defined(MIN)
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#endif
+
 static bool consumeCommentsAsWhite = true;
 
 static bool isIdentifierChar(char c);
+
+uint8_t SegmentLen(string_segment_t str) {
+    if (str.end == NULL) {
+        return strlen(str.start);
+    } else {
+        return str.end - str.start;
+    }
+}
 
 bool StrLessOrEqual(const char* a, const char* aEnd, const char* b, const char* bEnd)
 {
@@ -446,4 +459,19 @@ uint8_t CountCommands(const char* text, uint16_t textLen)
     }
 }
 
-
+#ifdef __ZEPHYR__
+const char* Utils_DeviceIdToString(device_id_t deviceId) {
+    switch (deviceId) {
+        case DeviceId_Uhk80_Left:
+            return "left";
+        case DeviceId_Uhk80_Right:
+        case DeviceId_Uhk60v1_Right:
+        case DeviceId_Uhk60v2_Right:
+            return "right";
+        case DeviceId_Uhk_Dongle:
+            return "dongle";
+        default:
+            return "unknown";
+    }
+}
+#endif

@@ -1,4 +1,7 @@
+#include <string.h>
+#ifndef __ZEPHYR__
 #include "fsl_common.h"
+#endif
 #include "usb_commands/usb_command_write_config.h"
 #include "usb_protocol_handler.h"
 #include "eeprom.h"

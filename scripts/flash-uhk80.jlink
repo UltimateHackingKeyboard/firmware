@@ -1,0 +1,6 @@
+# JLinkExe -Device NRF52840_XXAA -if SWD -speed 4000 scriptfilename
+device NRF52840_XXAA
+connect
+erase
+loadfile /home/laci/download/firmware/nrf52840_xxaa.hex
+loadfile /home/laci/download/firmware/s140_nrf52_7.2.0_softdevice.hex

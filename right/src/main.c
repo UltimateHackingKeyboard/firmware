@@ -1,3 +1,4 @@
+#include "config_parser/parse_config.h"
 #include "keymap.h"
 #include "slave_drivers/is31fl3xxx_driver.h"
 #include "slave_drivers/uhk_module_driver.h"
@@ -24,9 +25,16 @@
 #include "ledmap.h"
 #include "debug.h"
 #include "event_scheduler.h"
+#include "config_parser/config_globals.h"
+#include "user_logic.h"
+#include "usb_descriptors/usb_descriptor_strings.h"
+#include "layouts/key_layout_60_to_universal.h"
+#include "power_mode.h"
+#include "usb_protocol_handler.h"
 
 static bool IsEepromInitialized = false;
 static bool IsConfigInitialized = false;
+static bool IsHardwareConfigInitialized = false;
 
 static void userConfigurationReadFinished(void)
 {
@@ -35,12 +43,13 @@ static void userConfigurationReadFinished(void)
 
 static void hardwareConfigurationReadFinished(void)
 {
+    IsHardwareConfigInitialized = true;
     Ledmap_InitLedLayout();
     if (IsFactoryResetModeEnabled) {
         HardwareConfig->signatureLength = HARDWARE_CONFIG_SIGNATURE_LENGTH;
         strncpy(HardwareConfig->signature, "FTY", HARDWARE_CONFIG_SIGNATURE_LENGTH);
     }
-    EEPROM_LaunchTransfer(EepromOperation_Read, ConfigBufferId_StagingUserConfig, userConfigurationReadFinished);
+    EEPROM_LaunchTransfer(StorageOperation_Read, ConfigBufferId_StagingUserConfig, userConfigurationReadFinished);
 }
 
 static void initConfig()
@@ -48,7 +57,9 @@ static void initConfig()
     while (!IsConfigInitialized) {
         if (IsEepromInitialized) {
 
-            UsbCommand_ApplyConfig();
+            if (IsFactoryResetModeEnabled || UsbCommand_ApplyConfig() != UsbStatusCode_Success) {
+                UsbCommand_ApplyFactory();
+            }
             ShortcutParser_initialize();
             KeyIdParser_initialize();
             Macros_Initialize();
@@ -77,6 +88,50 @@ static void sendFirstReport()
     }
 }
 
+void CopyRightKeystateMatrix(void)
+{
+    KeyMatrix_ScanRow(&RightKeyMatrix);
+    ++MatrixScanCounter;
+    bool stateChanged = false;
+    for (uint8_t keyId = 0; keyId < RIGHT_KEY_MATRIX_KEY_COUNT; keyId++) {
+        uint8_t targetKeyId;
+
+        // TODO: optimize this? This translation is quite costly :-/
+        if (VERSION_AT_LEAST(DataModelVersion, 8, 2, 0)) {
+            targetKeyId = KeyLayout_Uhk60_to_Universal[SlotId_RightKeyboardHalf][keyId];
+        } else {
+            targetKeyId = keyId;
+        }
+
+        if (KeyStates[SlotId_RightKeyboardHalf][targetKeyId].hardwareSwitchState != RightKeyMatrix.keyStates[keyId]) {
+            KeyStates[SlotId_RightKeyboardHalf][targetKeyId].hardwareSwitchState = RightKeyMatrix.keyStates[keyId];
+            stateChanged = true;
+        }
+    }
+    if (stateChanged) {
+        EventVector_Set(EventVector_StateMatrix);
+    }
+}
+
+bool UsbReadyForTransfers(void) {
+    if (UsbReportUpdateSemaphore && CurrentPowerMode != PowerMode_Awake) {
+        if (Timer_GetElapsedTime(&UpdateUsbReports_LastUpdateTime) < USB_SEMAPHORE_TIMEOUT) {
+            return false;
+        } else {
+            UsbReportUpdateSemaphore = 0;
+        }
+    }
+    return true;
+}
+
+static void initUsb() {
+    while (!IsHardwareConfigInitialized) {
+        __WFI();
+    }
+    USB_SetSerialNo(HardwareConfig->uniqueId);
+    InitUsb();
+}
+
 int main(void)
 {
     InitClock();
@@ -84,7 +139,7 @@ int main(void)
 
     IsFactoryResetModeEnabled = RESET_BUTTON_IS_PRESSED;
 
-    EEPROM_LaunchTransfer(EepromOperation_Read, ConfigBufferId_HardwareConfig, hardwareConfigurationReadFinished);
+    EEPROM_LaunchTransfer(StorageOperation_Read, ConfigBufferId_HardwareConfig, hardwareConfigurationReadFinished);
 
     if (IsBusPalOn) {
         init_hardware();
@@ -93,38 +148,19 @@ int main(void)
         InitSlaveScheduler();
 
         KeyMatrix_Init(&RightKeyMatrix);
-        InitUsb();
+        initUsb();
 
         initConfig();
 
         sendFirstReport();
 
         while (1) {
-            if (KeymapReloadNeeded) {
-                SwitchKeymapById(CurrentKeymapIndex);
+            CopyRightKeystateMatrix();
+            if (UsbReadyForTransfers()) {
+                RunUserLogic();
             }
-            if (LedSlaveDriver_FullUpdateNeeded) {
-                LedSlaveDriver_UpdateLeds();
-            }
-            if (UsbBasicKeyboard_ProtocolChanged) {
-                UsbBasicKeyboard_HandleProtocolChange();
-            }
-            if (UsbMacroCommandWaitingForExecution) {
-                UsbMacroCommand_ExecuteSynchronously();
-            }
-            if (MacroEvent_ScrollLockStateChanged || MacroEvent_NumLockStateChanged || MacroEvent_CapsLockStateChanged) {
-                MacroEvent_ProcessStateKeyEvents();
-            }
-
-            KeyMatrix_ScanRow(&RightKeyMatrix);
-            ++MatrixScanCounter;
-            UpdateUsbReports();
-
-            if (EventScheduler_IsActive) {
+            if (EventVector_IsSet(EventVector_EventScheduler)) {
                 EventScheduler_Process();
-            }
-            if (SegmentDisplay_NeedsUpdate) {
-                SegmentDisplay_Update();
             }
             __WFI();
         }

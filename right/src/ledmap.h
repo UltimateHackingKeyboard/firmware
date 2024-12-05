@@ -11,6 +11,9 @@
         BacklightingMode_Functional,
         BacklightingMode_PerKeyRgb,
         BacklightingMode_ConstantRGB,
+        BacklightingMode_Numpad,
+        BacklightingMode_LedTest,
+        BacklightingMode_Unspecified,
     } backlighting_mode_t;
 
     typedef enum {
@@ -27,8 +30,8 @@
     } key_action_color_t;
 
     typedef enum {
-        LedMapIndex_LeftSlot_LeftShift = 21,
-        LedMapIndex_LeftSlot_IsoKey = 22,
+        LedMapIndex_LeftSlot_LeftShift = 19,
+        LedMapIndex_LeftSlot_IsoKey = 20,
     } led_map_index_t;
 
     typedef enum {
@@ -38,10 +41,17 @@
 
 // Variables:
 
+    extern bool Ledmap_LedTestActive;
+
 // Functions:
 
     void Ledmap_UpdateBacklightLeds(void);
     void Ledmap_InitLedLayout(void);
+    void Ledmap_ActivateTestled(uint8_t slotId, uint8_t keyId);
+    void Ledmap_ActivateTestLedMode(bool active);
     void Ledmap_SetLedBacklightingMode(backlighting_mode_t newMode);
+    void Ledmap_SetTemporaryLedBacklightingMode(backlighting_mode_t newMode);
+    void Ledmap_ResetTemporaryLedBacklightingMode();
+    backlighting_mode_t Ledmap_GetEffectiveBacklightMode();
 
 #endif

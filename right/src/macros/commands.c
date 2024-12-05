@@ -1,3 +1,5 @@
+#include <string.h>
+#include "attributes.h"
 #include "config_parser/config_globals.h"
 #include "config_parser/parse_macro.h"
 #include "keymap.h"
@@ -19,7 +21,10 @@
 #include "macros/vars.h"
 #include "postponer.h"
 #include "secondary_role_driver.h"
+#include "power_mode.h"
+#ifndef __ZEPHYR__
 #include "segment_display.h"
+#endif
 #include "slave_drivers/uhk_module_driver.h"
 #include "str_utils.h"
 #include "timer.h"
@@ -27,6 +32,10 @@
 #include "utils.h"
 #include "debug.h"
 #include "config_manager.h"
+
+#if !defined(MAX)
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#endif
 
 static uint8_t lastLayerIdx;
 static uint8_t lastLayerKeymapIdx;
@@ -45,7 +54,7 @@ static macro_result_t processDelay(uint32_t time)
             S->as.delayData.start = 0;
             return MacroResult_Finished;
         }
-        Macros_SleepTillTime(S->as.delayData.start + time);
+        Macros_SleepTillTime(S->as.delayData.start + time, "Macros - delay");
         return MacroResult_Sleeping;
     } else {
         S->as.delayData.start = CurrentTime;
@@ -63,12 +72,12 @@ static void postponeNextN(uint8_t count)
 {
     S->ms.postponeNextNCommands = count + 1;
     S->ls->as.modifierPostpone = true;
-    PostponerCore_PostponeNCycles(MACRO_CYCLES_TO_POSTPONE);
+    //PostponerCore_PostponeNCycles(MACRO_CYCLES_TO_POSTPONE);
 }
 
 static void postponeCurrentCycle()
 {
-    PostponerCore_PostponeNCycles(MACRO_CYCLES_TO_POSTPONE);
+    //PostponerCore_PostponeNCycles(MACRO_CYCLES_TO_POSTPONE);
     S->ls->as.modifierPostpone = true;
 }
 
@@ -353,7 +362,7 @@ static macro_result_t processHoldLayer(uint8_t layer, uint8_t keymap, uint16_t t
     else {
         if (Macros_CurrentMacroKeyIsActive() && (Timer_GetElapsedTime(&S->ms.currentMacroStartTime) < timeout || S->ms.macroInterrupted)) {
             if (!S->ms.macroInterrupted) {
-                Macros_SleepTillTime(S->ms.currentMacroStartTime + timeout);
+                Macros_SleepTillTime(S->ms.currentMacroStartTime + timeout, "Macros - holdLayer timeout");
             }
             Macros_SleepTillKeystateChange();
             return MacroResult_Sleeping;
@@ -442,7 +451,7 @@ static macro_result_t processDelayUntilReleaseMaxCommand(parser_context_t* ctx)
 
     if (Macros_CurrentMacroKeyIsActive() && Timer_GetElapsedTime(&S->ms.currentMacroStartTime) < timeout) {
         Macros_SleepTillKeystateChange();
-        Macros_SleepTillTime(S->ms.currentMacroStartTime + timeout);
+        Macros_SleepTillTime(S->ms.currentMacroStartTime + timeout, "Macros - delayUntilRelease timeout");
         return MacroResult_Sleeping;
     }
     return MacroResult_Finished;
@@ -702,14 +711,16 @@ static macro_result_t processBreakCommand(parser_context_t *ctx)
 
 static macro_result_t processSetLedTxtCommand(parser_context_t* ctx)
 {
-    int16_t time = Macros_ConsumeInt(ctx);
+    ATTR_UNUSED int16_t time = Macros_ConsumeInt(ctx);
     char text[3];
     uint8_t textLen = 0;
 
     if (isNUM(ctx)) {
+#ifndef __ZEPHYR__
         macro_variable_t value = Macros_ConsumeAnyValue(ctx);
         SegmentDisplay_SerializeVar(text, value);
         textLen = 3;
+#endif
     } else if (ctx->at != ctx->end) {
         uint16_t stringOffset = 0, textIndex = 0, textSubIndex = 0;
         for (uint8_t i = 0; true; i++) {
@@ -732,6 +743,7 @@ static macro_result_t processSetLedTxtCommand(parser_context_t* ctx)
         return MacroResult_Finished;
     }
 
+#ifndef __ZEPHYR__
     macro_result_t res = MacroResult_Finished;
     if (time == 0) {
         SegmentDisplay_SetText(textLen, text, SegmentDisplaySlot_Macro);
@@ -743,6 +755,9 @@ static macro_result_t processSetLedTxtCommand(parser_context_t* ctx)
         SegmentDisplay_SetText(textLen, text, SegmentDisplaySlot_Macro);
         return res;
     }
+#else
+    return MacroResult_Finished;
+#endif
 }
 
 macro_result_t goTo(parser_context_t* ctx)
@@ -873,7 +888,7 @@ static macro_result_t processMouseCommand(parser_context_t* ctx, bool enable)
     }
 
     if (baseAction != SerializedMouseAction_LeftClick) {
-        ToggleMouseState(baseAction + dirOffset, enable);
+        MouseKeys_SetState(baseAction + dirOffset, true, enable);
     }
     return MacroResult_Finished;
 }
@@ -986,13 +1001,14 @@ static macro_result_t processIfSecondaryCommand(parser_context_t* ctx, bool nega
     }
 
     postponeCurrentCycle();
-    secondary_role_result_t res = SecondaryRoles_ResolveState(S->ms.currentMacroKey, 0, strategy, !S->as.actionActive);
+    secondary_role_result_t res = SecondaryRoles_ResolveState(S->ms.currentMacroKey, 0, strategy, !S->as.actionActive, true);
 
     S->as.actionActive = res.state == SecondaryRoleState_DontKnowYet;
 
     switch(res.state) {
     case SecondaryRoleState_DontKnowYet:
-        return MacroResult_Waiting;
+        // secondary role driver has its own scheduler hook to wake us up
+        return MacroResult_Sleeping;
     case SecondaryRoleState_Primary:
         if (negate) {
             goto conditionPassed;
@@ -1021,7 +1037,7 @@ static macro_result_t processResolveNextKeyIdCommand()
     }
     postponeCurrentCycle();
     if (PostponerQuery_PendingKeypressCount() == 0) {
-        return MacroResult_Waiting;
+        return Macros_SleepTillKeystateChange();
     }
     macro_result_t res = writeNum(PostponerExtended_PendingId(0));
     if (res == MacroResult_Finished) {
@@ -1068,7 +1084,7 @@ static macro_result_t processIfHoldCommand(parser_context_t* ctx, bool negate)
 
     postponeCurrentCycle();
     Macros_SleepTillKeystateChange();
-    return Macros_SleepTillTime(S->ms.currentMacroStartTime + Cfg.HoldTimeout);
+    return Macros_SleepTillTime(S->ms.currentMacroStartTime + Cfg.HoldTimeout, "ifHold timeout");
 
 conditionPassed:
     S->ls->as.currentIfHoldConditionPassed = true;
@@ -1135,13 +1151,13 @@ static macro_result_t processIfShortcutCommand(parser_context_t* ctx, bool negat
             bool timeoutInTimedOut = timeoutIn != 0 && elapsedSinceReference > timeoutIn;
             if (!shortcutTimedOut && !gestureDefaultTimedOut && !cancelInTimedOut && !timeoutInTimedOut) {
                 if (!untilRelease && cancelIn == 0 && timeoutIn == 0) {
-                    Macros_SleepTillTime(referenceTime+1000);
+                    Macros_SleepTillTime(referenceTime+1000, "Macros - shortcut timeout");
                 }
                 if (cancelIn != 0) {
-                    Macros_SleepTillTime(referenceTime+cancelIn);
+                    Macros_SleepTillTime(referenceTime+cancelIn, "Macros - shortcut cancelIn");
                 }
                 if (timeoutIn != 0) {
-                    Macros_SleepTillTime(referenceTime+timeoutIn);
+                    Macros_SleepTillTime(referenceTime+timeoutIn, "Macros - shortcut timeoutIn");
                 }
                 Macros_SleepTillKeystateChange();
                 return MacroResult_Sleeping;
@@ -1452,6 +1468,38 @@ static bool processIfModuleConnected(parser_context_t* ctx, bool negate)
     return moduleConnected != negate;
 }
 
+static macro_result_t processPowerModeCommand(parser_context_t* ctx) {
+    bool toggle = false;
+
+    if (ConsumeToken(ctx, "toggle")) {
+        toggle = true;
+    }
+
+    if (ConsumeToken(ctx, "deepSleep") || ConsumeToken(ctx, "sleep")) {
+        if (Macros_DryRun) {
+            return MacroResult_Finished;
+        }
+        PowerMode_ActivateMode(PowerMode_DeepSleep, toggle);
+    }
+    else if (ConsumeToken(ctx, "lightSleep")) {
+        if (Macros_DryRun) {
+            return MacroResult_Finished;
+        }
+        PowerMode_ActivateMode(PowerMode_LightSleep, toggle);
+    }
+    else if (ConsumeToken(ctx, "wake")) {
+        if (Macros_DryRun) {
+            return MacroResult_Finished;
+        }
+        PowerMode_ActivateMode(PowerMode_Awake, toggle);
+    }
+    else {
+        Macros_ReportError("Unrecognized parameter:", ctx->at, ctx->at);
+    }
+
+    return MacroResult_Finished;
+}
+
 static macro_result_t processActivateKeyPostponedCommand(parser_context_t* ctx)
 {
     uint8_t layer = 255;
@@ -1526,7 +1574,7 @@ static macro_result_t processPostponeNextNCommand(parser_context_t* ctx)
     if (Macros_DryRun) {
         return MacroResult_Finished;
     }
-    PostponerCore_PostponeNCycles(MACRO_CYCLES_TO_POSTPONE);
+    //PostponerCore_PostponeNCycles(MACRO_CYCLES_TO_POSTPONE);
     postponeNextN(cnt);
     return MacroResult_Finished;
 }
@@ -1658,7 +1706,7 @@ static macro_result_t processProgressHueCommand()
     }
 
     Ledmap_SetLedBacklightingMode(BacklightingMode_ConstantRGB);
-    Ledmap_UpdateBacklightLeds();
+    EventVector_Set(EventVector_LedMapUpdateNeeded);
     return MacroResult_Finished;
 #undef C
 }
@@ -2137,6 +2185,9 @@ static macro_result_t processCommand(parser_context_t* ctx)
             }
             else if (ConsumeToken(ctx, "progressHue")) {
                 return processProgressHueCommand();
+            }
+            else if (ConsumeToken(ctx, "powerMode")) {
+                return processPowerModeCommand(ctx);
             }
             else {
                 goto failed;

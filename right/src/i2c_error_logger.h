@@ -3,7 +3,13 @@
 
 // Includes:
 
+#ifdef __ZEPHYR__
+    #include "keyboard/i2c_compatibility.h"
+#else
+    #include "fsl_i2c.h"
     #include "fsl_common.h"
+#endif
+
     #include "slave_scheduler.h"
 
 // Macros:

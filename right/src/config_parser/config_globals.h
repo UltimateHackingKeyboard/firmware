@@ -3,7 +3,9 @@
 
 // Includes:
 
+#ifndef __ZEPHYR__
     #include "fsl_common.h"
+#endif
     #include "attributes.h"
     #include "basic_types.h"
 

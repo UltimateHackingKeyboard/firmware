@@ -3,6 +3,7 @@
 #include "str_utils.h"
 #include "macros/core.h"
 #include "macros/status_buffer.h"
+#include "error_reporting.h"
 
 parser_error_t parseKeyMacroAction(config_buffer_t *buffer, macro_action_t *macroAction, serialized_macro_action_type_t macroActionType)
 {
@@ -117,6 +118,7 @@ parser_error_t ParseMacroAction(config_buffer_t *buffer, macro_action_t *macroAc
         case SerializedMacroActionType_CommandMacroAction:
             return parseCommandMacroAction(buffer, macroAction);
     }
+    ConfigParser_Error(buffer, "Invalid macro action type: %d", macroActionType);
     return ParserError_InvalidSerializedMacroActionType;
 }
 

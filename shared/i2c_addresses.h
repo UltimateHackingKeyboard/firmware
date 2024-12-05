@@ -3,7 +3,9 @@
 
 // Includes:
 
+#ifndef __ZEPHYR__
     #include "fsl_gpio.h"
+#endif
 
 // Macros:
 

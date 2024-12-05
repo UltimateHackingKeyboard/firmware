@@ -1,0 +1,1 @@
+../../../../right/src/usb_descriptors/usb_descriptor_configuration.h

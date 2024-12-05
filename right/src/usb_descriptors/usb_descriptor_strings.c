@@ -1,6 +1,7 @@
 #include "usb_api.h"
 #include "usb_descriptor_strings.h"
-#include "device/device.h"
+#include "device.h"
+#include <strings.h>
 
 USB_DESC_STORAGE_TYPE(uint8_t) UsbLanguageListStringDescriptor[USB_LANGUAGE_LIST_STRING_DESCRIPTOR_LENGTH] = {
     sizeof(UsbLanguageListStringDescriptor),
@@ -78,16 +79,34 @@ USB_DESC_STORAGE_TYPE(uint8_t) UsbProductString[USB_PRODUCT_STRING_DESCRIPTOR_LE
 
 #endif
 
+#define USB_SERIAL_STRING_DESCRIPTOR_LENGTH 22
+USB_DESC_STORAGE_TYPE_VAR(uint8_t) UsbSerialString[USB_SERIAL_STRING_DESCRIPTOR_LENGTH] = {
+    sizeof(UsbSerialString),
+    USB_DESCRIPTOR_TYPE_STRING,
+    'S', 0x00U,
+    'e', 0x00U,
+    'r', 0x00U,
+    'i', 0x00U,
+    'a', 0x00U,
+    'l', 0x00U,
+    '0', 0x00U,
+    '0', 0x00U,
+    '0', 0x00U,
+    '0', 0x00U,
+};
+
 const uint32_t UsbStringDescriptorLengths[USB_STRING_DESCRIPTOR_COUNT] = {
     sizeof(UsbLanguageListStringDescriptor),
     sizeof(UsbManufacturerString),
     sizeof(UsbProductString),
+    sizeof(UsbSerialString),
 };
 
 USB_DESC_STORAGE_TYPE(uint8_t) *UsbStringDescriptors[USB_STRING_DESCRIPTOR_COUNT] = {
     UsbLanguageListStringDescriptor,
     UsbManufacturerString,
     UsbProductString,
+    UsbSerialString,
 };
 
 usb_status_t USB_DeviceGetStringDescriptor(
@@ -105,4 +124,17 @@ usb_status_t USB_DeviceGetStringDescriptor(
         return kStatus_USB_InvalidRequest;
     }
     return kStatus_USB_Success;
+}
+
+void USB_SetSerialNo(uint32_t serial)
+{
+#define SERIAL_LEN 10
+    char serialString[SERIAL_LEN];
+    sprintf(serialString, "%li", serial);
+    for (size_t i = 0; i < SERIAL_LEN; i++) {
+        if (serialString[i] < '0' || serialString[i] > '9') {
+            serialString[i] = '0';
+        }
+        UsbSerialString[2 * i + 2] = serialString[i];
+    }
 }

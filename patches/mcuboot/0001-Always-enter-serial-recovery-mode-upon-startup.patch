@@ -1,0 +1,71 @@
+From 5245ce30a25475ca9239e702f67dee29ea154d39 Mon Sep 17 00:00:00 2001
+From: Benedek Kupper <kupper.benedek@gmail.com>
+Date: Tue, 9 Jul 2024 22:24:40 +0200
+Subject: [PATCH] Always enter serial recovery mode upon startup
+
+Adds the BOOT_SERIAL_WAIT_FOR_DFU_ALWAYS MCUboot Kconfig option to enter serial recovery
+for the duration of BOOT_SERIAL_WAIT_FOR_DFU_TIMEOUT upon physically resetting the board.
+Otherwise, MCUboot immediately executes the application.
+
+---
+ boot/zephyr/Kconfig.serial_recovery | 8 ++++++++
+ boot/zephyr/main.c                  | 8 ++++++--
+ 2 files changed, 14 insertions(+), 2 deletions(-)
+
+diff --git a/boot/zephyr/Kconfig.serial_recovery b/boot/zephyr/Kconfig.serial_recovery
+index c73baddf..22cdd081 100644
+--- a/boot/zephyr/Kconfig.serial_recovery
++++ b/boot/zephyr/Kconfig.serial_recovery
+@@ -156,6 +156,14 @@ menuconfig BOOT_SERIAL_WAIT_FOR_DFU
+ 	  for DFU to be invoked. The serial recovery can be entered by receiving any
+ 	  mcumgr command.
+ 
++config BOOT_SERIAL_WAIT_FOR_DFU_ALWAYS
++	bool "Always enter serial recovery mode upon startup"
++	depends on BOOT_SERIAL_WAIT_FOR_DFU
++	help
++	  If y, MCUboot always enters serial recovery mode upon startup for the
++	  duration of BOOT_SERIAL_WAIT_FOR_DFU_TIMEOUT. Otherwise, MCUboot only
++	  enters serial recovery mode if the board was physically reset.
++
+ config BOOT_SERIAL_WAIT_FOR_DFU_TIMEOUT
+ 	int "Duration to wait for the serial DFU timeout in ms"
+ 	default 500
+diff --git a/boot/zephyr/main.c b/boot/zephyr/main.c
+index d601eae0..f12c4493 100644
+--- a/boot/zephyr/main.c
++++ b/boot/zephyr/main.c
+@@ -561,8 +561,12 @@ static void boot_serial_enter()
+     BOOT_LOG_INF("Enter the serial recovery mode");
+     rc = boot_console_init();
+     __ASSERT(rc == 0, "Error initializing boot console.\n");
++#ifdef CONFIG_BOOT_SERIAL_WAIT_FOR_DFU
++    boot_serial_check_start(&boot_funcs, CONFIG_BOOT_SERIAL_WAIT_FOR_DFU_TIMEOUT);
++#else
+     boot_serial_start(&boot_funcs);
+     __ASSERT(0, "Bootloader serial process was terminated unexpectedly.\n");
++#endif
+ }
+ #endif
+ 
+@@ -651,7 +655,7 @@ int main(void)
+     }
+ #endif
+ 
+-#ifdef CONFIG_BOOT_SERIAL_WAIT_FOR_DFU
++#ifdef CONFIG_BOOT_SERIAL_WAIT_FOR_DFU_ALWAYS
+     /* Initialize the boot console, so we can already fill up our buffers while
+      * waiting for the boot image check to finish. This image check, can take
+      * some time, so it's better to reuse thistime to already receive the
+@@ -680,7 +684,7 @@ int main(void)
+     }
+ #endif
+ 
+-#ifdef CONFIG_BOOT_SERIAL_WAIT_FOR_DFU
++#ifdef CONFIG_BOOT_SERIAL_WAIT_FOR_DFU_ALWAYS
+     timeout_in_ms -= (k_uptime_get_32() - start);
+     if( timeout_in_ms <= 0 ) {
+         /* at least one check if time was expired */
+-- 
+2.44.0
+

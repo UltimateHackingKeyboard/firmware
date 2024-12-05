@@ -149,7 +149,7 @@ void InitPeripherals(void)
     Timer_Init();
     InitLedDriver();
     InitResetButton();
-    InitMergeSensor();
+    MergeSensor_Init();
     ADC_Init();
     initI2c();
     TestLed_Init();

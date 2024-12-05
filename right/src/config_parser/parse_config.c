@@ -1,3 +1,6 @@
+#include <string.h>
+#include "basic_types.h"
+#include "macros/status_buffer.h"
 #include "parse_config.h"
 #include "parse_keymap.h"
 #include "parse_macro.h"
@@ -17,10 +20,14 @@
 #include "usb_report_updater.h"
 #include "debug.h"
 #include "config_manager.h"
+#include "led_manager.h"
+#include "attributes.h"
+#include "parse_host_connection.h"
+#include "error_reporting.h"
+#include "versioning.h"
+#include "stubs.h"
 
-    uint16_t DataModelMajorVersion = 0;
-    uint16_t DataModelMinorVersion = 0;
-    uint16_t DataModelPatchVersion = 0;
+version_t DataModelVersion = {0, 0, 0};
 
     bool PerKeyRgbPresent = false;
 
@@ -32,7 +39,8 @@ void readRgbColor(config_buffer_t *buffer, rgb_t* keyActionColors, key_action_co
     color->blue = ReadUInt8(buffer);
 }
 
-parser_error_t ParseConfig(config_buffer_t *buffer)
+
+parser_error_t parseConfig(config_buffer_t *buffer)
 {
     // Miscellaneous properties
 
@@ -41,10 +49,17 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
     uint16_t keymapCount;
     parser_error_t errorCode;
 
-    DataModelMajorVersion = ReadUInt16(buffer);
-    DataModelMinorVersion = ReadUInt16(buffer);
-    DataModelPatchVersion = ReadUInt16(buffer);
-    uint32_t userConfigLength = DataModelMajorVersion < 6 ? ReadUInt16(buffer) : ReadUInt32(buffer);
+    DataModelVersion.major = ReadUInt16(buffer);
+    DataModelVersion.minor = ReadUInt16(buffer);
+    DataModelVersion.patch = ReadUInt16(buffer);
+
+#ifdef __ZEPHYR__
+    if (!ParserRunDry) {
+        printk("Flashed User Config version: %u.%u.%u\n", DataModelVersion.major, DataModelVersion.minor, DataModelVersion.patch);
+    }
+#endif
+
+    uint32_t userConfigLength = DataModelVersion.major < 6 ? ReadUInt16(buffer) : ReadUInt32(buffer);
     const char *deviceName = ReadString(buffer, &len);
     uint16_t doubleTapSwitchLayerTimeout = ReadUInt16(buffer);
 
@@ -53,17 +68,25 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
 
     // LED brightness
 
-    uint8_t iconsAndLayerTextsBrightness = ReadUInt8(buffer);
-    uint8_t alphanumericSegmentsBrightness = ReadUInt8(buffer);
-    uint8_t keyBacklightBrightness = ReadUInt8(buffer);
+    ATTR_UNUSED uint8_t iconsAndLayerTextsBrightness = 0xff;
+    uint8_t alphanumericSegmentsBrightness = 0xff;
+    uint8_t keyBacklightBrightness = 0xff;
 
-    uint32_t ledsFadeTimeout = Cfg.LedsFadeTimeout;
+    if (DataModelVersion.major < 8) {
+        iconsAndLayerTextsBrightness = ReadUInt8(buffer);
+        alphanumericSegmentsBrightness = ReadUInt8(buffer);
+        keyBacklightBrightness = ReadUInt8(buffer);
+    }
+
+    uint32_t ledsFadeTimeout = Cfg.DisplayFadeOutTimeout;
     bool previousPerKeyRgbPresent = PerKeyRgbPresent;
     backlighting_mode_t backlightingMode = Cfg.BacklightingMode;
     rgb_t keyActionColors[keyActionColor_Length];
 
-    if (DataModelMajorVersion >= 6) {
-        ledsFadeTimeout = 1000 * ReadUInt16(buffer);
+    if (DataModelVersion.major >= 6) {
+        if (DataModelVersion.major < 8) {
+            ledsFadeTimeout = 1000 * ReadUInt16(buffer);
+        }
         PerKeyRgbPresent = ReadBool(buffer);
         backlightingMode = ReadUInt8(buffer);
 
@@ -101,6 +124,7 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
         mouseScrollBaseSpeed == 0 ||
         mouseScrollAcceleratedSpeed == 0)
     {
+        ConfigParser_Error(buffer, "Invalid mouse kinetic property");
         return ParserError_InvalidMouseKineticProperty;
     }
 
@@ -121,7 +145,7 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
     bool secondaryRoles_AdvancedStrategyDoubletapToPrimary = Cfg.SecondaryRoles_AdvancedStrategyDoubletapToPrimary;
     serialized_secondary_role_action_type_t secondaryRoles_AdvancedStrategyTimeoutAction = SerializedSecondaryRoleActionType_Secondary;
 
-    if (DataModelMajorVersion >= 7) {
+    if (DataModelVersion.major >= 7) {
         secondaryRoles_Strategy = ReadUInt8(buffer);
         secondaryRoles_AdvancedStrategyDoubletapTimeout = ReadUInt16(buffer);
         secondaryRoles_AdvancedStrategyTimeout = ReadUInt16(buffer);
@@ -138,11 +162,52 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
         keystrokeDelay = ReadUInt16(buffer);
     }
 
+    // Version 8:
+
+    uint8_t displayBrightness;
+    uint8_t displayBrightnessBattery;
+    uint8_t keyBacklightBrightnessBattery;
+
+    uint32_t displayFadeOutTimeout;
+    uint32_t displayFadeOutBatteryTimeout;
+    uint32_t keyBacklightFadeOutTimeout;
+    uint32_t keyBacklightFadeOutBatteryTimeout;
+
+    if (DataModelVersion.major >= 8) {
+        displayBrightness = ReadUInt8(buffer);
+        displayBrightnessBattery = ReadUInt8(buffer);
+        keyBacklightBrightness = ReadUInt8(buffer);
+        keyBacklightBrightnessBattery = ReadUInt8(buffer);
+        displayFadeOutTimeout = 1000 * ReadUInt16(buffer);
+        displayFadeOutBatteryTimeout = 1000 * ReadUInt16(buffer);
+        keyBacklightFadeOutTimeout = 1000 * ReadUInt16(buffer);
+        keyBacklightFadeOutBatteryTimeout = 1000 * ReadUInt16(buffer);
+    } else {
+        displayBrightness = alphanumericSegmentsBrightness;
+        displayBrightnessBattery = alphanumericSegmentsBrightness;
+        keyBacklightBrightness = keyBacklightBrightness;
+        keyBacklightBrightnessBattery = keyBacklightBrightness;
+        displayFadeOutTimeout = ledsFadeTimeout;
+        displayFadeOutBatteryTimeout = ledsFadeTimeout;
+        keyBacklightFadeOutTimeout = ledsFadeTimeout;
+        keyBacklightFadeOutBatteryTimeout = ledsFadeTimeout;
+    }
+
+    // HostConnection configuration
+
+    if (VERSION_AT_LEAST(DataModelVersion, 8, 1, 0)) {
+        RETURN_ON_ERROR(
+            ParseHostConnections(buffer);
+        )
+    }
+
+
     // Module configurations
 
     uint16_t moduleConfigurationCount = ReadCompactLength(buffer);
 
     if (moduleConfigurationCount > 255) {
+        ConfigParser_Error(buffer, "Invalid module configuration count: %u", moduleConfigurationCount);
         return ParserError_InvalidModuleConfigurationCount;
     }
 
@@ -156,6 +221,7 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
 
     macroCount = ReadCompactLength(buffer);
     if (macroCount > MacroIndex_MaxUserDefinableCount) {
+        ConfigParser_Error(buffer, "Too many macros: %u", macroCount);
         return ParserError_InvalidMacroCount;
     }
 
@@ -169,6 +235,7 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
     //
     keymapCount = ReadCompactLength(buffer);
     if (keymapCount == 0 || keymapCount > MAX_KEYMAP_NUM) {
+        ConfigParser_Error(buffer, "Invalid keymap count: %u", keymapCount);
         return ParserError_InvalidKeymapCount;
     }
 
@@ -185,16 +252,14 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
     // If parsing succeeded then apply the parsed values.
 
     if (!ParserRunDry) {
-
         // Update LED brightnesses and reinitialize LED drivers
 
         ValidatedUserConfigLength = userConfigLength;
 
-        Cfg.IconsAndLayerTextsBrightnessDefault = iconsAndLayerTextsBrightness;
-        Cfg.AlphanumericSegmentsBrightnessDefault = alphanumericSegmentsBrightness;
-        Cfg.KeyBacklightBrightnessDefault = keyBacklightBrightness;
+        // removed in version 8
+        // Cfg.IconsAndLayerTextsBrightnessDefault = iconsAndLayerTextsBrightness;
+        // Cfg.AlphanumericSegmentsBrightnessDefault = alphanumericSegmentsBrightness;
 
-        LedSlaveDriver_RecalculateLedBrightness();
 
         // Update mouse key speeds
 
@@ -212,8 +277,10 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
 
         // Version 6
 
-        if (DataModelMajorVersion >= 6) {
-            Cfg.LedsFadeTimeout = ledsFadeTimeout;
+        if (DataModelVersion.major >= 6) {
+            // removed in version 8
+            // Cfg.LedsFadeTimeout = ledsFadeTimeout;
+
             Cfg.BacklightingMode = backlightingMode;
 
             memcpy(Cfg.KeyActionColors, keyActionColors, sizeof(keyActionColors));
@@ -221,7 +288,7 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
 
         // Version 7
 
-        if (DataModelMajorVersion >= 7) {
+        if (DataModelVersion.major >= 7) {
             Cfg.SecondaryRoles_Strategy = secondaryRoles_Strategy;
             Cfg.SecondaryRoles_AdvancedStrategyDoubletapTimeout = secondaryRoles_AdvancedStrategyDoubletapTimeout;
             Cfg.SecondaryRoles_AdvancedStrategyTimeout = secondaryRoles_AdvancedStrategyTimeout;
@@ -236,6 +303,7 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
                     Cfg.SecondaryRoles_AdvancedStrategyTimeoutAction = SecondaryRoleState_Secondary;
                     break;
                 default:
+                    ConfigParser_Error(buffer, "Invalid secondary role action type: %u", secondaryRoles_AdvancedStrategyTimeoutAction);
                     return ParserError_InvalidSecondaryRoleActionType;
             }
 
@@ -247,6 +315,22 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
             Cfg.KeystrokeDelay = keystrokeDelay;
         }
 
+        // Version 8
+
+
+        Cfg.DisplayBrightnessDefault = displayBrightness;
+        Cfg.DisplayBrightnessBatteryDefault = displayBrightnessBattery;
+        Cfg.KeyBacklightBrightnessDefault = keyBacklightBrightness;
+        Cfg.KeyBacklightBrightnessBatteryDefault = keyBacklightBrightnessBattery;
+        Cfg.DisplayFadeOutTimeout = displayFadeOutTimeout;
+        Cfg.DisplayFadeOutBatteryTimeout = displayFadeOutBatteryTimeout;
+        Cfg.KeyBacklightFadeOutTimeout = keyBacklightFadeOutTimeout;
+        Cfg.KeyBacklightFadeOutBatteryTimeout = keyBacklightFadeOutBatteryTimeout;
+
+        LedManager_RecalculateLedBrightness();
+        LedManager_UpdateSleepModes();
+        BtPair_ClearUnknownBonds();
+
         // Update counts
 
         AllKeymapsCount = keymapCount;
@@ -256,4 +340,14 @@ parser_error_t ParseConfig(config_buffer_t *buffer)
     }
 
     return ParserError_Success;
+}
+
+
+parser_error_t ParseConfig(config_buffer_t *buffer) {
+    version_t oldModelVersion = DataModelVersion;
+    parser_error_t errorCode = parseConfig(buffer);
+    if (errorCode != ParserError_Success || ParserRunDry) {
+        DataModelVersion = oldModelVersion;
+    }
+    return errorCode;
 }

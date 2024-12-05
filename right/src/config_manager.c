@@ -1,7 +1,13 @@
 #include "config_manager.h"
-#include "i2c.h"
+#include "event_scheduler.h"
 #include <string.h>
+#include "arduino_hid/ConsumerAPI.h"
+#include "arduino_hid/SystemAPI.h"
+
+#ifndef __ZEPHYR__
+#include "i2c.h"
 #include "init_peripherals.h"
+#endif
 
 const config_t DefaultCfg = (config_t){
     .ModuleConfigurations = {
@@ -149,6 +155,60 @@ const config_t DefaultCfg = (config_t){
             .acceleratedSpeed = 50,
             .axisSkew = 1.0f,
         },
+        .NavigationModes = {
+            {
+                // caret mode
+                .axisActions = { //axis array
+                    { // horizontal axis
+                        .positiveAction = { .type = KeyActionType_Keystroke, .keystroke = { .keystrokeType = KeystrokeType_Basic, .scancode = HID_KEYBOARD_SC_RIGHT_ARROW }},
+                        .negativeAction = { .type = KeyActionType_Keystroke, .keystroke = { .keystrokeType = KeystrokeType_Basic, .scancode = HID_KEYBOARD_SC_LEFT_ARROW }},
+                    },
+                    { // vertical axis
+                        .positiveAction = { .type = KeyActionType_Keystroke, .keystroke = { .keystrokeType = KeystrokeType_Basic, .scancode = HID_KEYBOARD_SC_UP_ARROW }},
+                        .negativeAction = { .type = KeyActionType_Keystroke, .keystroke = { .keystrokeType = KeystrokeType_Basic, .scancode = HID_KEYBOARD_SC_DOWN_ARROW }},
+                    }
+                }
+            },
+            {
+                // media mode
+                .axisActions = { //axis array
+                    { // horizontal axis
+                        .positiveAction = { .type = KeyActionType_Keystroke, .keystroke = { .keystrokeType = KeystrokeType_Media, .scancode = MEDIA_NEXT }},
+                        .negativeAction = { .type = KeyActionType_Keystroke, .keystroke = { .keystrokeType = KeystrokeType_Media, .scancode = MEDIA_PREVIOUS }},
+                    },
+                    { // vertical axis
+                        .positiveAction = { .type = KeyActionType_Keystroke, .keystroke = { .keystrokeType = KeystrokeType_Media, .scancode = MEDIA_VOLUME_UP }},
+                        .negativeAction = { .type = KeyActionType_Keystroke, .keystroke = { .keystrokeType = KeystrokeType_Media, .scancode = MEDIA_VOLUME_DOWN }},
+                    }
+                }
+            },
+            {
+                // zoomMac
+                .axisActions = { //axis array
+                    { // horizontal axis
+                        .positiveAction = { .type = KeyActionType_None },
+                        .negativeAction = { .type = KeyActionType_None },
+                    },
+                    { // vertical axis
+                        .positiveAction = { .type = KeyActionType_Keystroke, .keystroke = { .keystrokeType = KeystrokeType_Basic, .scancode = HID_KEYBOARD_SC_EQUAL_AND_PLUS, .modifiers = HID_KEYBOARD_MODIFIER_LEFTGUI | HID_KEYBOARD_MODIFIER_LEFTSHIFT}},
+                        .negativeAction = { .type = KeyActionType_Keystroke, .keystroke = { .keystrokeType = KeystrokeType_Basic, .scancode = HID_KEYBOARD_SC_MINUS_AND_UNDERSCORE, .modifiers = HID_KEYBOARD_MODIFIER_LEFTGUI}},
+                    }
+                }
+            },
+            {
+                // zoomPc
+                .axisActions = { //axis array
+                    { // horizontal axis
+                        .positiveAction = { .type = KeyActionType_None },
+                        .negativeAction = { .type = KeyActionType_None },
+                    },
+                    { // vertical axis
+                        .positiveAction = { .type = KeyActionType_Keystroke, .keystroke = { .keystrokeType = KeystrokeType_Basic, .scancode = HID_KEYBOARD_SC_EQUAL_AND_PLUS, .modifiers = HID_KEYBOARD_MODIFIER_LEFTCTRL | HID_KEYBOARD_MODIFIER_LEFTSHIFT}},
+                        .negativeAction = { .type = KeyActionType_Keystroke, .keystroke = { .keystrokeType = KeystrokeType_Basic, .scancode = HID_KEYBOARD_SC_MINUS_AND_UNDERSCORE, .modifiers = HID_KEYBOARD_MODIFIER_LEFTCTRL}},
+                    }
+                }
+            },
+        },
         .DiagonalSpeedCompensation = false,
         .TouchpadPinchZoomMode = NavigationMode_Zoom,
         .HoldContinuationTimeout = 0,
@@ -166,12 +226,15 @@ const config_t DefaultCfg = (config_t){
         .Macros_MaxBatchSize = 20,
         .LedMap_ConstantRGB = { 0xFF, 0xFF, 0xFF },
         .BacklightingMode = BacklightingMode_Functional,
-        .LedsFadeTimeout = 0,
-        .IconsAndLayerTextsBrightnessDefault = 0xff,
-        .AlphanumericSegmentsBrightnessDefault = 0xff,
+        .DisplayBrightnessBatteryDefault = 0x20,
+        .DisplayBrightnessDefault = 0xff,
+        .KeyBacklightBrightnessBatteryDefault = 0x20,
         .KeyBacklightBrightnessDefault = 0xff,
+        .DisplayFadeOutTimeout = 0,
+        .DisplayFadeOutBatteryTimeout = 60000,
+        .KeyBacklightFadeOutTimeout = 0,
+        .KeyBacklightFadeOutBatteryTimeout = 60000,
         .LedsEnabled = true,
-        .LedSleepModeActive = false,
         .LedBrightnessMultiplier = 1.0f,
         .LayerConfig = {
             { .layerIsDefined = true, .exactModifierMatch = false, .modifierLayerMask = 0},
@@ -203,7 +266,11 @@ const config_t DefaultCfg = (config_t){
         .Macros_OneShotTimeout = 500,
         .AutoShiftDelay = 0,
         .ChordingDelay = 0,
+#ifdef __ZEPHYR__
+        .I2cBaudRate = 0,
+#else
         .I2cBaudRate = I2C_MAIN_BUS_NORMAL_BAUD_RATE,
+#endif
         .EmergencyKey = NULL,
         .KeyActionColors = {
             {0x00, 0x00, 0x00}, // KeyActionColor_None
@@ -221,8 +288,11 @@ config_t Cfg = {};
 
 void ConfigManager_ResetConfiguration(bool updateLeds) {
     memcpy(&Cfg, &DefaultCfg, sizeof(Cfg));
+#ifndef __ZEPHYR__
     ChangeI2cBaudRate(Cfg.I2cBaudRate);
+#endif
     if (updateLeds) {
-        Ledmap_UpdateBacklightLeds();
+        Ledmap_SetLedBacklightingMode(Cfg.BacklightingMode);
+        EventVector_Set(EventVector_LedMapUpdateNeeded);
     }
 }

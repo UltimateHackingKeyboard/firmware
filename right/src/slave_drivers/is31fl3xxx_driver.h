@@ -3,11 +3,22 @@
 
 // Includes:
 
+#ifdef __ZEPHYR__
+    #include "keyboard/leds.h"
+    #include "peripherals/led_driver.h"
+#else
     #include "fsl_common.h"
     #include "peripherals/led_driver.h"
+#endif
+    #include <stdbool.h>
+    #include <stdint.h>
     #include "slave_scheduler.h"
 
 // Macros:
+
+#if !defined(MAX)
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#endif
 
     #define LED_DRIVER_MAX_COUNT 3
 
@@ -73,15 +84,11 @@
     extern uint8_t KeyBacklightBrightness;
     extern uint8_t LedDriverValues[LED_DRIVER_MAX_COUNT][LED_DRIVER_LED_COUNT_MAX];
 
-    extern bool LedSlaveDriver_FullUpdateNeeded;
-
 // Functions:
 
     void LedSlaveDriver_DisableLeds(void);
-    void LedSlaveDriver_UpdateLeds(void);
     void LedSlaveDriver_EnableAllLeds();
     void LedSlaveDriver_Init(uint8_t ledDriverId);
-    void LedSlaveDriver_RecalculateLedBrightness();
 
     slave_result_t LedSlaveDriver_Update(uint8_t ledDriverId);
 

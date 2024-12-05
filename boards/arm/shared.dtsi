@@ -1,0 +1,96 @@
+&uicr {
+    gpio-as-nreset;
+};
+
+&gpiote {
+    status = "okay";
+};
+
+&gpio0 {
+    status = "okay";
+    sense-edge-mask = <0xffffffff>;
+};
+
+&uart0 {
+    compatible = "nordic,nrf-uarte";
+    status = "okay";
+    current-speed = <115200>;
+    pinctrl-0 = <&uart0_default>;
+    pinctrl-1 = <&uart0_sleep>;
+    pinctrl-names = "default", "sleep";
+};
+
+zephyr_udc0: &usbd {
+    compatible = "nordic,nrf-usbd";
+    status = "okay";
+};
+
+/ {
+    chosen {
+        zephyr,console = &uart0;
+        zephyr,shell-uart = &uart0;
+        zephyr,sram = &sram0;
+        zephyr,flash = &flash0;
+        zephyr,code-partition = &slot0_partition;
+    };
+};
+
+/ {
+    sram@2003FFFF {
+            compatible = "zephyr,memory-region", "mmio-sram";
+            reg = <0x2003FFFF 0x1>;
+            zephyr,memory-region = "RetainedMem";
+            status = "okay";
+
+            retainedmem {
+                    compatible = "zephyr,retained-ram";
+                    status = "okay";
+                    #address-cells = <1>;
+                    #size-cells = <1>;
+
+                    retention0: retention@0 {
+                            compatible = "zephyr,retention";
+                            status = "okay";
+                            reg = <0x0 0x1>;
+                    };
+            };
+    };
+
+    chosen {
+            zephyr,boot-mode = &retention0;
+    };
+};
+
+/* Reduce SRAM0 usage by 1 byte to account for non-init area */
+&sram0 {
+    reg = <0x20000000 0x3FFFF>;
+};
+
+&flash0 {
+    partitions {
+        compatible = "fixed-partitions";
+        #address-cells = <1>;
+        #size-cells = <1>;
+
+        boot_partition: partition@0 {
+            label = "mcuboot";
+            reg = <0x0 0x10000>;
+        };
+        slot0_partition: partition@10000 {
+            label = "image-0";
+            reg = <0x10000 0xdc000>;
+        };
+        hardware_config_partition: partition@ec000 {
+            label = "hardware-config";
+            reg = <0xec000 0x1000>;
+        };
+        user_config_partition: partition@ed000 {
+            label = "user-config";
+            reg = <0xed000 0x10000>;
+        };
+        storage_partition: partition@fd000 {
+            label = "storage";
+            reg = <0xfd000 0x3000>;
+        };
+    };
+};

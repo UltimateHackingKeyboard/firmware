@@ -1,0 +1,6 @@
+west-commands:
+  - file: scripts/west_patch.py
+    commands:
+      - name: patch
+        class: WestPatch
+        help: Manage patching across zephyr ecosystem repositories

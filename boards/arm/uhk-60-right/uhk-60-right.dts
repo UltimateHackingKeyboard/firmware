@@ -1,0 +1,262 @@
+/dts-v1/;
+
+#include <nxp/nxp_k2x.dtsi>
+#include <zephyr/dt-bindings/pwm/pwm.h>
+#include <nxp/kinetis/MK22FN512VLH12-pinctrl.h>
+
+&pinctrl {
+    ftm0_default: ftm0_default {
+        group0 {
+            pinmux = <FTM0_CH6_PTA1>,
+                <FTM0_CH7_PTA2>;
+            drive-strength = "low";
+            bias-pull-up;
+            slew-rate = "fast";
+        };
+        group1 {
+            pinmux = <FTM0_CH5_PTD5>;
+            drive-strength = "low";
+            slew-rate = "fast";
+        };
+    };
+
+    i2c0_default: i2c0_default {
+        group0 {
+            pinmux = <I2C0_SCL_PTB2>,
+                <I2C0_SDA_PTB3>;
+            drive-strength = "low";
+            drive-open-drain;
+            slew-rate = "fast";
+        };
+    };
+
+    spi0_default: spi0_default {
+        group0 {
+            pinmux = <SPI0_PCS4_PTC0>,
+                <SPI0_SCK_PTD1>,
+                <SPI0_SIN_PTD3>,
+                <SPI0_SOUT_PTD2>;
+            drive-strength = "low";
+            slew-rate = "fast";
+        };
+    };
+
+    uart1_default: uart1_default {
+        group0 {
+            pinmux = <UART1_RX_PTE1>,
+                <UART1_TX_PTE0>;
+            drive-strength = "low";
+            slew-rate = "fast";
+        };
+    };
+
+    uart2_default: uart2_default {
+        group0 {
+            pinmux = <UART2_RX_PTD2>,
+                <UART2_TX_PTD3>;
+            drive-strength = "low";
+            slew-rate = "fast";
+        };
+    };
+
+};
+
+/ {
+    model = "NXP Freedom MK22F board";
+    compatible = "nxp,mk22f12", "nxp,k22f", "nxp,k2x";
+
+    gpios {
+        compatible = "gpio-keys";
+
+        row1: row1 {
+            gpios = <&gpioa 12 (GPIO_ACTIVE_HIGH)>;
+            label = "row1";
+        };
+        row2: row2 {
+            gpios = <&gpioa 13 (GPIO_ACTIVE_HIGH)>;
+            label = "row2";
+        };
+        row3: row3 {
+            gpios = <&gpioc 1 (GPIO_ACTIVE_HIGH)>;
+            label = "row3";
+        };
+        row4: row4 {
+            gpios = <&gpioc 0 (GPIO_ACTIVE_HIGH)>;
+            label = "row4";
+        };
+        row5: row5 {
+            gpios = <&gpiod 5 (GPIO_ACTIVE_HIGH)>;
+            label = "row5";
+        };
+
+        col1: col1 {
+            gpios = <&gpioa 5 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+            label = "col1";
+        };
+        col2: col2 {
+            gpios = <&gpiob 16 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+            label = "col2";
+        };
+        col3: col3 {
+            gpios = <&gpiob 17 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+            label = "col3";
+        };
+        col4: col4 {
+            gpios = <&gpiob 18 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+            label = "col4";
+        };
+        col5: col5 {
+            gpios = <&gpiob 19 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+            label = "col5";
+        };
+        col6: col6 {
+            gpios = <&gpioa 1 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+            label = "col6";
+        };
+        col7: col7 {
+            gpios = <&gpiob 1 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+            label = "col7";
+        };
+
+        test_led: test_led {
+            gpios = <&gpiod 7 GPIO_ACTIVE_HIGH>;
+            label = "test_led";
+        };
+    };
+
+    aliases {
+        row1 = &row1;
+        row2 = &row2;
+        row3 = &row3;
+        row4 = &row4;
+        row5 = &row5;
+
+        col1 = &col1;
+        col2 = &col2;
+        col3 = &col3;
+        col4 = &col4;
+        col5 = &col5;
+        col6 = &col6;
+        col7 = &col7;
+
+        test-led = &test_led;
+    };
+
+    chosen {
+        zephyr,sram = &sram0;
+        zephyr,flash = &flash0;
+        zephyr,code-partition = &slot0_partition;
+        zephyr,console = &uart1;
+        zephyr,shell-uart = &uart1;
+        zephyr,uart-pipe = &uart1;
+    };
+};
+
+&sim {
+    pllfll-select = <KINETIS_SIM_PLLFLLSEL_MCGPLLCLK>;
+    er32k-select = <KINETIS_SIM_ER32KSEL_RTC>;
+};
+
+&adc0 {
+    status = "okay";
+};
+
+&dac0 {
+    status = "okay";
+    voltage-reference = <2>;
+};
+arduino_i2c: &i2c0 {
+    status = "okay";
+    pinctrl-0 = <&i2c0_default>;
+    pinctrl-names = "default";
+};
+
+
+arduino_spi: &spi0 {
+    status = "okay";
+    pinctrl-0 = <&spi0_default>;
+    pinctrl-names = "default";
+};
+
+&ftm0 {
+    status = "okay";
+    compatible = "nxp,kinetis-ftm-pwm";
+    #pwm-cells = <3>;
+    pinctrl-0 = <&ftm0_default>;
+    pinctrl-names = "default";
+};
+
+&uart1 {
+    status = "okay";
+    current-speed = <115200>;
+    pinctrl-0 = <&uart1_default>;
+    pinctrl-names = "default";
+};
+
+&uart2 {
+    pinctrl-0 = <&uart2_default>;
+    pinctrl-names = "default";
+};
+
+zephyr_udc0: &usbotg {
+    compatible = "nxp,kinetis-usbd";
+    status = "okay";
+    num-bidir-endpoints = <8>;
+};
+
+&gpioa {
+    status = "okay";
+};
+
+&gpiob {
+    status = "okay";
+};
+
+&gpioc {
+    status = "okay";
+};
+
+&gpiod {
+    status = "okay";
+};
+
+&gpioe {
+    status = "okay";
+};
+
+&flash0 {
+    partitions {
+        compatible = "fixed-partitions";
+        #address-cells = <1>;
+        #size-cells = <1>;
+
+        boot_partition: partition@0 {
+            label = "mcuboot";
+            reg = <0x00000000 0x00010000>;
+            read-only;
+        };
+        slot0_partition: partition@10000 {
+            label = "image-0";
+            reg = <0x00010000 0x00020000>;
+        };
+        slot1_partition: partition@30000 {
+            label = "image-1";
+            reg = <0x00030000 0x00020000>;
+        };
+        scratch_partition: partition@50000 {
+            label = "image-scratch";
+            reg = <0x00050000 0x00010000>;
+        };
+
+        /*
+         * The flash starting at 0x00060000 and ending at
+         * 0x0007ffff (sectors 16-31) is reserved for use
+         * by the application.
+         */
+        storage_partition: partition@60000 {
+            label = "storage";
+            reg = <0x00060000 0x00020000>;
+        };
+
+    };
+};

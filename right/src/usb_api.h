@@ -4,19 +4,27 @@
 // Includes:
 
     #include <stdbool.h>
+    #include <stdint.h>
+#ifndef __ZEPHYR__
     #include "usb.h"
     #include "usb_device.h"
     #include "ksdk_usb/usb_device_class.h"
     #include "ksdk_usb/usb_device_hid.h"
+#endif
 
-    #include "lufa/Common.h"
+    // #include "lufa/Common.h"
     #include "lufa/HIDClassCommon.h"
 
 // Macros:
 
+#ifdef __ZEPHYR__
+    #define PACKED(X) X
+#else
     #define PACKED(X) X __packed
+#endif
     #define USB_ALIGNMENT               __attribute__((aligned(4))) // required by USB DMA engine
     #define USB_DESC_STORAGE_TYPE(T)    const T USB_ALIGNMENT
+    #define USB_DESC_STORAGE_TYPE_VAR(T)      T USB_ALIGNMENT
 
     // General constants
 

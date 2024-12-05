@@ -3,6 +3,8 @@
 
 // Includes:
 
+    #include <stdint.h>
+#ifndef __ZEPHYR__
     #include "fsl_common.h"
     #include "fsl_port.h"
 
@@ -27,12 +29,15 @@
         key_matrix_pin_t *rows;
         uint8_t keyStates[MAX_KEYS_IN_MATRIX];
     } key_matrix_t;
+#endif
 
 // Variables:
 
 // Functions:
 
+#ifndef __ZEPHYR__
     void KeyMatrix_Init(key_matrix_t *keyMatrix);
     void KeyMatrix_ScanRow(key_matrix_t *keyMatrix);
+#endif
 
 #endif

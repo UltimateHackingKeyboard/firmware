@@ -3,7 +3,10 @@
 
 // Includes:
 
+    #include <stdint.h>
+#ifndef __ZEPHYR__
     #include "fsl_common.h"
+#endif
 
 // Functions:
 

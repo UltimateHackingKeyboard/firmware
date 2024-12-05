@@ -1,14 +1,15 @@
-#include "slave_drivers/is31fl3xxx_driver.h"
+#include "is31fl3xxx_driver.h"
 #include "slave_scheduler.h"
 #include "led_display.h"
-#include "device/device.h"
 #include "ledmap.h"
 #include "debug.h"
 #include "config_manager.h"
+#include "stubs.h"
+#include "led_manager.h"
+#include "i2c_addresses.h"
+#include "i2c.h"
 
-bool LedSlaveDriver_FullUpdateNeeded = false;
-
-uint8_t KeyBacklightBrightness = 0xff;
+// TODO: this wastes memory on UHK80
 uint8_t LedDriverValues[LED_DRIVER_MAX_COUNT][LED_DRIVER_LED_COUNT_MAX];
 
 #if DEVICE_ID == DEVICE_ID_UHK60V1
@@ -154,6 +155,11 @@ static led_driver_state_t ledDriverStates[LED_DRIVER_MAX_COUNT] = {
             0b00111111,
         }
     },
+#else
+    {
+    },
+    {
+    },
 #endif
     {
         .i2cAddress = I2C_ADDRESS_IS31FL3199_MODULE_LEFT,
@@ -177,40 +183,12 @@ static uint8_t updateDataBuffer[] = {0x10, 0x00};
 static uint8_t setLedBrightness[] = {0x04, 0b00110000};
 static uint8_t updatePwmRegistersBuffer[PWM_REGISTER_BUFFER_LENGTH];
 
-static void recalculateLedBrightness()
-{
-    if (!Cfg.LedsEnabled || Cfg.LedSleepModeActive || SleepModeActive || Cfg.LedBrightnessMultiplier == 0.0f) {
-        KeyBacklightBrightness = 0;
-        IconsAndLayerTextsBrightness = 0;
-        AlphanumericSegmentsBrightness = 0;
-    } else {
-        KeyBacklightBrightness = MIN(255, Cfg.KeyBacklightBrightnessDefault * Cfg.LedBrightnessMultiplier);
-        IconsAndLayerTextsBrightness = MIN(255, Cfg.IconsAndLayerTextsBrightnessDefault * Cfg.LedBrightnessMultiplier);
-        AlphanumericSegmentsBrightness = MIN(255, Cfg.AlphanumericSegmentsBrightnessDefault * Cfg.LedBrightnessMultiplier);
-    }
-}
-
 void LedSlaveDriver_DisableLeds(void)
 {
-    recalculateLedBrightness();
+    LedManager_RecalculateLedBrightness();
     for (uint8_t ledDriverId=0; ledDriverId<=LedDriverId_Last; ledDriverId++) {
         memset(LedDriverValues[ledDriverId], 0, ledDriverStates[ledDriverId].ledCount);
     }
-}
-
-
-void LedSlaveDriver_UpdateLeds(void)
-{
-    recalculateLedBrightness();
-    Ledmap_UpdateBacklightLeds();
-    LedDisplay_UpdateAll();
-
-    LedSlaveDriver_FullUpdateNeeded = false;
-}
-
-void LedSlaveDriver_RecalculateLedBrightness()
-{
-    recalculateLedBrightness();
 }
 
 void LedSlaveDriver_EnableAllLeds()
@@ -381,3 +359,4 @@ slave_result_t LedSlaveDriver_Update(uint8_t ledDriverId)
 
     return res;
 }
+

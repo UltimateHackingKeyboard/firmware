@@ -3,7 +3,9 @@
 
 // Includes:
 
+#ifndef __ZEPHYR__
     #include "fsl_common.h"
+#endif
     #include "key_states.h"
     #include "layer.h"
 
@@ -24,6 +26,7 @@
 
 // Functions - hooks:
 
+    void LayerSwitcher_ResetHolds();
     void LayerSwitcher_UpdateActiveLayer();
 
     void LayerSwitcher_RecalculateLayerComposition();

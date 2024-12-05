@@ -3,9 +3,14 @@
 
 // Includes:
 
+#ifndef __ZEPHYR__
     #include "fsl_common.h"
-    #include "usb_api.h"
+#else
+    #include "keyboard/legacy_ports.h"
+#endif
+
     #include "usb_descriptors/usb_descriptor_media_keyboard_report.h"
+    #include "usb_api.h"
 
 // Macros:
 
@@ -33,14 +38,17 @@
 
 // Functions:
 
+#ifndef __ZEPHYR__
     usb_status_t UsbMediaKeyboardCallback(class_handle_t handle, uint32_t event, void *param);
-
-    void UsbMediaKeyboardResetActiveReport(void);
     usb_status_t UsbMediaKeyboardAction();
+#endif
+
+    bool UsbMediaKeyboard_AddScancode(usb_media_keyboard_report_t* report, uint16_t scancode);
+    void UsbMediaKeyboardResetActiveReport(void);
+    void SwitchActiveUsbMediaKeyboardReport(void);
     usb_status_t UsbMediaKeyboardCheckIdleElapsed();
     usb_status_t UsbMediaKeyboardCheckReportReady();
 
-    bool UsbMediaKeyboard_AddScancode(usb_media_keyboard_report_t* report, uint16_t scancode);
     void UsbMediaKeyboard_MergeReports(const usb_media_keyboard_report_t* sourceReport, usb_media_keyboard_report_t* targetReport);
 
 #endif
