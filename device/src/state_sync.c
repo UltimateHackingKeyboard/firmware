@@ -25,6 +25,8 @@
 #include "peripherals/merge_sensor.h"
 #include "power_mode.h"
 
+#define WAKE(TID) if (TID != 0) { k_wakeup(TID); }
+
 #define STATE_SYNC_SEND_DELAY 2
 
 #define THREAD_STACK_SIZE 2000
@@ -141,14 +143,14 @@ static void invalidateProperty(state_sync_prop_id_t propId) {
     bool isRightLeftLink = (stateSyncProps[propId].direction &
                             (SyncDirection_RightToLeft | SyncDirection_LeftToRight));
     if (isRightLeftLink && isRightLeftDevice) {
-        k_wakeup(stateSyncThreadLeftId);
+        WAKE(stateSyncThreadLeftId);
     }
     bool isRightDongleDevice =
         (DEVICE_ID == DeviceId_Uhk80_Right || DEVICE_ID == DeviceId_Uhk_Dongle);
     bool isRightDongleLink = (stateSyncProps[propId].direction &
                               (SyncDirection_DongleToRight | SyncDirection_RightToDongle));
     if (isRightDongleLink && isRightDongleDevice) {
-        k_wakeup(stateSyncThreadDongleId);
+        WAKE(stateSyncThreadDongleId);
     }
 }
 
@@ -633,7 +635,7 @@ void StateSync_UpdateLayer(layer_id_t layerId, bool fullUpdate) {
     stateSyncProps[propId].dirtyState = fullUpdate ? DirtyState_NeedsUpdate : DirtyState_NeedsClearing;
     stateSyncProps[propId].defaultDirty = stateSyncProps[propId].dirtyState;
 
-    k_wakeup(stateSyncThreadLeftId);
+    WAKE(stateSyncThreadLeftId);
 }
 
 void StateSync_Init() {
