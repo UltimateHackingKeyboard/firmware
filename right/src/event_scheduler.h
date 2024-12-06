@@ -49,8 +49,8 @@
        EventVector_MouseController =                       1 << 4,
        EventVector_Postponer =                             1 << 5,
        EventVector_LayerHolds =                            1 << 6,
-       EventVector_ZeroScan =                              1 << 7,
-       EventVector_EventScheduler =                        1 << 8,
+       EventVector_EventScheduler =                        1 << 7,
+       EventVector_MainTriggers =                          ((EventVector_EventScheduler << 1) - 1),
 
 
        // some other minor triggers
@@ -63,9 +63,7 @@
        EventVector_LedMapUpdateNeeded =                    1 << 15,
        EventVector_ApplyConfig =                           1 << 16,
        EventVector_NewMessage =                            1 << 17,
-
-       EventVector_ReportUpdateMask = ((1 << 9) - 1) & ~EventVector_EventScheduler,
-       EventVector_UserLogicUpdateMask = ((1 << 18) - 1) & ~EventVector_EventScheduler,
+       EventVector_AuxiliaryTriggers =                     ((EventVector_NewMessage << 1) - 1),
 
        // events that are informational only
        EventVector_NativeActionReportsUsed =               1 << 18,
@@ -73,14 +71,15 @@
        EventVector_MouseKeysReportsUsed =                  1 << 20,
        EventVector_MouseControllerMouseReportsUsed =       1 << 21,
        EventVector_MouseControllerKeyboardReportsUsed =    1 << 22,
-       EventVector_ReportsChanged =                        1 << 23,
+       EventVector_SendUsbReports =                        1 << 23,
        EventVector_NativeActionsPostponing =               1 << 24,
        EventVector_MacroEnginePostponing =                 1 << 25,
        EventVector_MouseControllerPostponing =             1 << 26,
 
-       // helpers
+       // helper masks
+       EventVector_ReportUpdateMask = EventVector_MainTriggers & ~EventVector_EventScheduler,
+       EventVector_UserLogicUpdateMask = EventVector_AuxiliaryTriggers & ~EventVector_EventScheduler,
        EventVector_SomeonePostponing = EventVector_NativeActionsPostponing | EventVector_MacroEnginePostponing | EventVector_MouseControllerPostponing,
-
     } event_vector_event_t;
 
 /**

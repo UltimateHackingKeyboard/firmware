@@ -10,6 +10,8 @@
 #define DEBUG_POSTPONER false
 #define WATCH_INTERVAL 500
 
+#define DEBUG_ROLL_STATUS_BUFFER true
+
 #ifdef __ZEPHYR__
     #include "logger.h"
     #include <zephyr/kernel.h>

@@ -221,7 +221,7 @@ static void resetStickyMods(key_action_cached_t *cachedAction)
 {
     StickyModifiers = 0;
     StickyModifiersNegative = cachedAction->modifierLayerMask;
-    EventVector_Set(EventVector_ReportsChanged);
+    EventVector_Set(EventVector_SendUsbReports);
 }
 
 static void activateStickyMods(key_state_t *keyState, key_action_cached_t *action)
@@ -230,7 +230,7 @@ static void activateStickyMods(key_state_t *keyState, key_action_cached_t *actio
     StickyModifiers = action->action.keystroke.modifiers;
     stickyModifierKey = keyState;
     stickyModifierShouldStick = shouldStickAction(&action->action);
-    EventVector_Set(EventVector_ReportsChanged);
+    EventVector_Set(EventVector_SendUsbReports);
 }
 
 void ActivateStickyMods(key_state_t *keyState, uint8_t mods)
@@ -239,12 +239,12 @@ void ActivateStickyMods(key_state_t *keyState, uint8_t mods)
     StickyModifiers = mods;
     stickyModifierKey = keyState;
     stickyModifierShouldStick = ActiveLayerHeld;
-    EventVector_Set(EventVector_ReportsChanged);
+    EventVector_Set(EventVector_SendUsbReports);
 }
 
 static void applyKeystrokePrimary(key_state_t *keyState, key_action_cached_t *cachedAction, usb_keyboard_reports_t* reports)
 {
-    EventVector_Set(EventVector_ReportsChanged);
+    EventVector_Set(EventVector_SendUsbReports);
 
     if (KeyState_Active(keyState)) {
         key_action_t* action = &cachedAction->action;
@@ -259,7 +259,7 @@ static void applyKeystrokePrimary(key_state_t *keyState, key_action_cached_t *ca
         } else {
             if (action->keystroke.modifiers) {
                 reports->inputModifiers |= action->keystroke.modifiers;
-                EventVector_Set(EventVector_ReportsChanged | reports->reportsUsedVectorMask);
+                EventVector_Set(reports->reportsUsedVectorMask);
             }
         }
         // If there are mods: first cycle send just mods, in next cycle start sending mods+scancode
@@ -283,12 +283,13 @@ static void applyKeystrokePrimary(key_state_t *keyState, key_action_cached_t *ca
         bool stickyModsAreNonZero = StickyModifiers != 0 || StickyModifiersNegative != 0;
         if (stickyModifierKey == keyState && !stickyModifierShouldStick && stickyModsAreNonZero) {
             //disable the modifiers, but send one last report of modifiers without scancode
+            //do we actually want / need extra modifier report on release?
             reports->basic.modifiers |= StickyModifiers;
             StickyModifiers = 0;
             StickyModifiersNegative = 0;
             EventVector_Set(
                     reports->recomputeStateVectorMask | // trigger next update in order to clear them, usually EventVector_NativeActions here
-                    EventVector_ReportsChanged | reports->reportsUsedVectorMask |
+                    reports->reportsUsedVectorMask |
                     reports->postponeMask
                 );
         }
@@ -310,7 +311,7 @@ static void applyKeystrokeSecondary(key_state_t *keyState, key_action_t *action,
     } else if (IS_SECONDARY_ROLE_MODIFIER(secondaryRole)) {
         if (KeyState_Active(keyState)) {
             reports->inputModifiers |= SECONDARY_ROLE_MODIFIER_TO_HID_MODIFIER(secondaryRole);
-            EventVector_Set(EventVector_ReportsChanged | reports->reportsUsedVectorMask);
+            EventVector_Set(EventVector_SendUsbReports | reports->reportsUsedVectorMask);
         }
     }
 }
@@ -458,9 +459,11 @@ static void commitKeyState(key_state_t *keyState, bool active)
     }
 
     if (PostponerCore_EventsShouldBeQueued()) {
+        Macros_ReportPrintf(NULL, "CP%c%s", active ? '+' : '-', Utils_KeyStateToKeyAbbreviation(keyState));
         PostponerCore_TrackKeyEvent(keyState, active, 255);
     } else {
         KEY_TIMING(KeyTiming_RecordKeystroke(keyState, active, CurrentTime, CurrentTime));
+        Macros_ReportPrintf(NULL, "C%c%s", active ? '+' : '-', Utils_KeyStateToKeyAbbreviation(keyState));
         keyState->current = active;
     }
     Macros_WakeBecauseOfKeystateChange();
@@ -512,7 +515,7 @@ static void handleUsbStackTestMode() {
             Cfg.MouseMoveState.xOut = isEven ? -5 : 5;
         }
         EventVector_Set(EventVector_NativeActions);
-        EventVector_Set(EventVector_ReportsChanged);
+        EventVector_Set(EventVector_SendUsbReports);
         EventVector_Set(EventVector_NativeActionReportsUsed);
     }
 }
@@ -527,7 +530,7 @@ static void handleLayerChanges() {
         previousLayer = ActiveLayer;
         StickyModifiers = 0;
         StickyModifiersNegative = 0;
-        EventVector_Set(EventVector_ReportsChanged);
+        EventVector_Set(EventVector_SendUsbReports);
     }
 }
 
@@ -543,6 +546,8 @@ static void updateActionStates() {
     EventVector_Unset(EventVector_NativeActions);
     EventVector_Unset(EventVector_StateMatrix);
     EventVector_Unset(EventVector_NativeActionsPostponing);
+
+    Macros_ReportPrintf(NULL, "U");
 
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
@@ -585,6 +590,12 @@ static void updateActionStates() {
                         Postponer_LastKeyMods = 0;
                     }
                     handleEventInterrupts(keyState);
+
+                    Macros_ReportPrintf(NULL, "R+%s", Utils_KeyStateToKeyAbbreviation(keyState));
+                }
+
+                if (KeyState_DeactivatedNow(keyState)) {
+                    Macros_ReportPrintf(NULL, "R-%s", Utils_KeyStateToKeyAbbreviation(keyState));
                 }
 
                 cachedAction = &actionCache[slotId][keyId];
@@ -602,13 +613,12 @@ static void updateActionStates() {
     }
     uint8_t currentMods = NativeKeyboardReports.basic.modifiers | NativeKeyboardReports.inputModifiers;
     if (currentMods != previousMods) {
-        EventVector_Set(EventVector_ReportsChanged);
+        EventVector_Set(EventVector_SendUsbReports);
     }
 }
 
 static void updateActiveUsbReports(void)
 {
-    EventVector_Unset(EventVector_ReportsChanged);
     InputModifiersPrevious = InputModifiers;
     OutputModifiers = 0;
     static bool lastSomeonePostponing = false;
@@ -678,6 +688,9 @@ static void sendActiveReports() {
     bool usbReportsChangedByAction = false;
     bool usbReportsChangedByAnything = false;
 
+    // in case of usb error, this gets set back again
+    EventVector_Unset(EventVector_SendUsbReports);
+
     if (UsbBasicKeyboardCheckReportReady() == kStatus_USB_Success) {
 #ifdef __ZEPHYR__
         if (InputInterceptor_RegisterReport(ActiveUsbBasicKeyboardReport)) {
@@ -686,6 +699,7 @@ static void sendActiveReports() {
 
 #endif
         {
+            Utils_PrintReport("O:", ActiveUsbBasicKeyboardReport);
             MacroRecorder_RecordBasicReport(ActiveUsbBasicKeyboardReport);
 
             KEY_TIMING(KeyTiming_RecordReport(ActiveUsbBasicKeyboardReport));
@@ -718,6 +732,7 @@ static void sendActiveReports() {
         usb_status_t status = UsbMediaKeyboardAction();
         if (status != kStatus_USB_Success) {
             UsbReportUpdateSemaphore &= ~(1 << USB_MEDIA_KEYBOARD_INTERFACE_INDEX);
+            EventVector_Set(EventVector_SendUsbReports);
         }
         UsbReportUpdater_LastActivityTime = CurrentTime;
         usbReportsChangedByAction = true;
@@ -729,6 +744,7 @@ static void sendActiveReports() {
         usb_status_t status = UsbSystemKeyboardAction();
         if (status != kStatus_USB_Success) {
             UsbReportUpdateSemaphore &= ~(1 << USB_SYSTEM_KEYBOARD_INTERFACE_INDEX);
+            EventVector_Set(EventVector_SendUsbReports);
         }
         UsbReportUpdater_LastActivityTime = CurrentTime;
         usbReportsChangedByAction = true;
@@ -747,7 +763,12 @@ static void sendActiveReports() {
     if (usbReportsChangedByAction) {
         Macros_SignalUsbReportsChange();
     }
-    EventVector_SetValue(EventVector_ZeroScan, usbReportsChangedByAnything);
+
+    // If anything changed, trigger one more update to send zero reports
+    // TODO: consider doing this depending on change of ReportsUsed mask(s) and actual module scans
+    if (usbReportsChangedByAnything) {
+        EventVector_Set(EventVector_SendUsbReports);
+    }
 }
 
 void UpdateUsbReports(void)
@@ -766,11 +787,13 @@ void UpdateUsbReports(void)
 
     updateActiveUsbReports();
 
-    if (EventVector_IsSet(EventVector_ReportsChanged | EventVector_ZeroScan) && CurrentPowerMode < PowerMode_DeepSleep) {
-        mergeReports();
-        sendActiveReports();
-    } else {
-        EventVector_Unset(EventVector_ReportsChanged);
+    if (EventVector_IsSet(EventVector_SendUsbReports)) {
+        if (CurrentPowerMode < PowerMode_DeepSleep) {
+            mergeReports();
+            sendActiveReports();
+        } else {
+            EventVector_Unset(EventVector_SendUsbReports);
+        }
     }
 
     if (DisplaySleepModeActive || KeyBacklightSleepModeActive) {

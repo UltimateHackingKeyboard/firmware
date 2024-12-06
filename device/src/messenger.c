@@ -17,6 +17,7 @@
 #include "legacy/str_utils.h"
 #include "legacy/event_scheduler.h"
 #include "legacy/slave_drivers/uhk_module_driver.h"
+#include "macros/status_buffer.h"
 
 #if DEVICE_IS_KEYBOARD
 #include "keyboard/uart.h"
@@ -143,11 +144,22 @@ static void processSyncablePropertyRight(device_id_t src, const uint8_t* data, u
     const uint8_t* message = data;
     switch (propertyId) {
         case SyncablePropertyId_LeftHalfKeyStates:
-            for (uint8_t keyId = 0; keyId < MAX_KEY_COUNT_PER_MODULE; keyId++) {
-                KeyStates[SlotId_LeftKeyboardHalf][keyId].hardwareSwitchState = !!(message[keyId/8] & (1 << (keyId % 8)));
-            }
-            EventVector_Set(EventVector_StateMatrix);
-            break;
+            {
+                bool somethingChanged = false;
+                for (uint8_t keyId = 0; keyId < MAX_KEY_COUNT_PER_MODULE; keyId++) {
+                    bool state = !!(message[keyId/8] & (1 << (keyId % 8)));
+                    if (KeyStates[SlotId_LeftKeyboardHalf][keyId].hardwareSwitchState != state) {
+                        KeyStates[SlotId_LeftKeyboardHalf][keyId].hardwareSwitchState = state;
+                        somethingChanged = true;
+
+                        Macros_ReportPrintf(NULL, "M+%s", MacroKeyIdParser_KeyIdToAbbreviation(SlotId_LeftKeyboardHalf*64 + keyId));
+                    }
+                    KeyStates[SlotId_LeftKeyboardHalf][keyId].hardwareSwitchState = !!(message[keyId/8] & (1 << (keyId % 8)));
+                }
+                if (somethingChanged) {
+                    EventVector_Set(EventVector_StateMatrix);
+                }
+            } break;
         case SyncablePropertyId_LeftModuleKeyStates:
             {
                 uint8_t driverId = UhkModuleDriverId_LeftModule;
