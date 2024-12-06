@@ -164,25 +164,46 @@ slave_result_t TouchpadDriver_Update(uint8_t uhkModuleDriverId)
 
             ModuleConnectionStates[UhkModuleDriverId_RightModule].lastTimeConnected = CurrentTime;
 
-            TouchpadEvents.singleTap = gestureEvents.events0.singleTap;
-            TouchpadEvents.twoFingerTap = gestureEvents.events1.twoFingerTap;
-            TouchpadEvents.tapAndHold = gestureEvents.events0.tapAndHold;
-            TouchpadEvents.noFingers = noFingers;
+            if (deltaX || deltaY || *(uint16_t*)&gestureEvents) {
+                bool somethingChanged = false;
 
-            if (gestureEvents.events1.scroll) {
-                TouchpadEvents.wheelX -= deltaX;
-                TouchpadEvents.wheelY += deltaY;
-            } else if (gestureEvents.events1.zoom) {
-                TouchpadEvents.zoomLevel -= deltaY;
-            } else {
-                TouchpadEvents.x -= deltaX;
-                TouchpadEvents.y += deltaY;
+                if (
+                        TouchpadEvents.singleTap != gestureEvents.events0.singleTap
+                        || TouchpadEvents.twoFingerTap != gestureEvents.events1.twoFingerTap
+                        || TouchpadEvents.tapAndHold != gestureEvents.events0.tapAndHold
+                        || TouchpadEvents.noFingers != noFingers
+                   ) {
+                    TouchpadEvents.singleTap = gestureEvents.events0.singleTap;
+                    TouchpadEvents.twoFingerTap = gestureEvents.events1.twoFingerTap;
+                    TouchpadEvents.tapAndHold = gestureEvents.events0.tapAndHold;
+                    TouchpadEvents.noFingers = noFingers;
+                    somethingChanged = true;
+                }
+
+                if (deltaX != 0 || deltaY != 0) {
+                    if (gestureEvents.events1.scroll) {
+                        TouchpadEvents.wheelX -= deltaX;
+                        TouchpadEvents.wheelY += deltaY;
+                        somethingChanged = true;
+                    } else if (gestureEvents.events1.zoom) {
+                        TouchpadEvents.zoomLevel -= deltaY;
+                        somethingChanged = true;
+                    } else {
+                        TouchpadEvents.x -= deltaX;
+                        TouchpadEvents.y += deltaY;
+                        somethingChanged = true;
+                    }
+                }
+
+                if (somethingChanged) {
+                    EventVector_Set(EventVector_MouseController);
+                    EventVector_WakeMain();
+                }
             }
 
             res.status = I2cAsyncWrite(address, closeCommunicationWindow, sizeof(closeCommunicationWindow));
             res.hold = false;
-            EventVector_Set(EventVector_MouseController);
-            EventVector_WakeMain();
+
             phase = 3;
             break;
         }
