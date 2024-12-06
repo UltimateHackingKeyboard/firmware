@@ -7,12 +7,17 @@
 #include <zephyr/bluetooth/addr.h>
 #include "host_connection.h"
 
-static uint8_t idx;
+#define ADDRESS_COUNT_PER_PAGE 10
+
+static uint8_t pageIdxOffset;
+static uint8_t writeOffset;
 static uint8_t count;
+
+static bool dryRun = false;
 
 static void bt_foreach_bond_cb(const struct bt_bond_info *info, void *user_data)
 {
-    if (idx + BLE_ADDR_LEN+1 >= USB_GENERIC_HID_IN_BUFFER_LENGTH) {
+    if (writeOffset + BLE_ADDR_LEN+1 >= USB_GENERIC_HID_IN_BUFFER_LENGTH) {
         return;
     }
 
@@ -20,24 +25,38 @@ static void bt_foreach_bond_cb(const struct bt_bond_info *info, void *user_data)
         return;
     }
 
+    Bt_NewPairedDevice = true;
+
     count++;
 
-    SetUsbTxBufferBleAddress(idx, &info->addr);
-    idx += BLE_ADDR_LEN;
+    if (!dryRun && count >= pageIdxOffset && count < pageIdxOffset+ADDRESS_COUNT_PER_PAGE) {
+        SetUsbTxBufferBleAddress(writeOffset, &info->addr);
+        writeOffset += BLE_ADDR_LEN;
+    }
 
-    // Name placeholder
-    SetUsbTxBufferUint8(idx++, 0);
 }
 
-void UsbCommand_GetNewPairings(void) {
+void UsbCommand_UpdateNewPairingsFlag() {
+    dryRun = true;
+    pageIdxOffset = 0;
     count = 0;
-    idx = 2;
+
+    bt_foreach_bond(BT_ID_DEFAULT, bt_foreach_bond_cb, NULL);
+}
+
+void UsbCommand_GetNewPairings(uint8_t page) {
+    dryRun = false;
+    pageIdxOffset = ADDRESS_COUNT_PER_PAGE*page;
+    count = 0;
+    writeOffset = 2;
 
     bt_foreach_bond(BT_ID_DEFAULT, bt_foreach_bond_cb, NULL);
 
-    SetUsbTxBufferUint8(1, count);
-
-    Bt_NewPairedDevice = false;
+    if (count < pageIdxOffset) {
+        SetUsbTxBufferUint8(1, 0);
+    } else {
+        SetUsbTxBufferUint8(1, count-pageIdxOffset);
+    }
 }
 
 #endif

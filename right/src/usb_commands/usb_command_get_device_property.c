@@ -15,6 +15,8 @@
     #include "slave_drivers/kboot_driver.h"
 #endif
 
+#include <stdbool.h>
+#include <stdint.h>
 #include "slave_protocol.h"
 #include "timer.h"
 #include "usb_commands/usb_command_get_new_pairings.h"
@@ -105,7 +107,7 @@ void UsbCommand_GetDeviceProperty(void)
     } break;
     case DevicePropertyId_NewPairings:
 #ifdef __ZEPHYR__
-        UsbCommand_GetNewPairings();
+        UsbCommand_GetNewPairings(GetUsbRxBufferUint8(2));
 #endif
         break;
     default:
