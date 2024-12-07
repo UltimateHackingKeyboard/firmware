@@ -13,7 +13,6 @@
     "url": "https://github.com/UltimateHackingKeyboard/firmware/issues"
   },
   "dependencies": {
-    "commander": "^2.11.0",
     "md5": "2.3.0",
     "moment": "^2.30.1",
     "serialport": "^12.0.0",
