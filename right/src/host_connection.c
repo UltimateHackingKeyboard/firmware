@@ -33,9 +33,9 @@ bool HostConnections_IsKnownBleAddress(const bt_addr_le_t *address) {
     return false;
 }
 
-host_connection_t* HostConnection(connection_id_t connectionId) {
+host_connection_t* HostConnection(uint8_t connectionId) {
     if (connectionId < ConnectionId_HostConnectionFirst || connectionId > ConnectionId_HostConnectionLast) {
-        printk("Supplied connection doesn't correspond to a host connection!\n");
+        printk("Supplied connection (%d) doesn't correspond to a host connection!\n", connectionId);
         return NULL;
     }
 

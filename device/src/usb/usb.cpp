@@ -251,7 +251,8 @@ extern "C" void HOGP_Disable()
 
 void hidmgr_set_transport(const hid::transport* tp)
 {
-    connection_id_t usbHidConnId = DEVICE_IS_UHK80_RIGHT ? ConnectionId_UsbHidRight : ConnectionId_UsbHidLeft;
+    printk("=== set transport\n");
+    connection_id_t usbHidConnId = DEVICE_IS_UHK80_LEFT ? ConnectionId_UsbHidLeft : ConnectionId_UsbHidRight;
 
     // tp is the transport of the keyboard app
     if (tp == nullptr) {

@@ -329,10 +329,11 @@ bool Messenger_Availability(device_id_t dst, messenger_availability_op_t operati
 }
 
 void Messenger_SendMessage(message_t message) {
-    connection_id_t connection = determineChannel(message.dst);
+    connection_id_t connectionId = determineChannel(message.dst);
     device_id_t dst = message.dst;
 
-    switch (connection) {
+
+    switch (connectionId) {
         case ConnectionId_UartLeft:
         case ConnectionId_UartRight:
 #if DEVICE_IS_KEYBOARD
@@ -343,8 +344,8 @@ void Messenger_SendMessage(message_t message) {
             NusServer_SendMessage(message);
             break;
         case ConnectionId_HostConnectionFirst ... ConnectionId_HostConnectionLast:
-            if (Connections_Type(connection) == ConnectionType_NusDongle) {
-                NusServer_SendMessageTo(message, Peers[Connections[connection].peerId].conn);
+            if (Connections_Type(connectionId) == ConnectionType_NusDongle) {
+                NusServer_SendMessageTo(message, Peers[Connections[connectionId].peerId].conn);
             } else {
                 printk("Failed to send message from %s to %s; incompatible connection type\n", Utils_DeviceIdToString(DEVICE_ID), Utils_DeviceIdToString(dst));
             }

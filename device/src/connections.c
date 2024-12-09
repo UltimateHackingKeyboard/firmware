@@ -2,6 +2,7 @@
 #include "device.h"
 #include "host_connection.h"
 #include "device_state.h"
+#include "legacy/host_connection.h"
 #include "messenger.h"
 #include "state_sync.h"
 #include <zephyr/bluetooth/addr.h>
@@ -40,14 +41,63 @@ static connection_id_t resolveAliases(connection_id_t connectionId) {
     return connectionId;
 }
 
+static const char* getStateString(connection_state_t state) {
+    switch (state) {
+        case ConnectionState_Disconnected:
+            return "Disconnected";
+        case ConnectionState_Connected:
+            return "Connected";
+        case ConnectionState_Ready:
+            return "Ready";
+        default:
+            return "Invalid";
+    }
+}
+
+static void reportConnectionState(connection_id_t connectionId, const char* message) {
+    connectionId = resolveAliases(connectionId);
+
+
+#define CASE_FOR(NAME) case ConnectionId_##NAME: name = #NAME; break;
+
+    bool isHostConnection = false;
+    const char* name = "Invalid";
+
+    switch (connectionId) {
+        case ConnectionId_HostConnectionFirst ... ConnectionId_HostConnectionLast:
+            isHostConnection = true;
+            name = "HostConnection";
+            break;
+        CASE_FOR(UsbHidLeft);
+        CASE_FOR(UsbHidRight);
+        CASE_FOR(UartLeft);
+        CASE_FOR(UartRight);
+        CASE_FOR(NusServerLeft);
+        CASE_FOR(NusServerRight);
+        CASE_FOR(NusClientRight);
+        CASE_FOR(BtHid);
+        CASE_FOR(NewBtHid);
+        CASE_FOR(Invalid);
+        CASE_FOR(Count);
+    }
+
+    if (isHostConnection) {
+        host_connection_t* hc = HostConnection(connectionId);
+        printk("%s: %s%d(%.*s, %s)\n", message, name, connectionId - ConnectionId_HostConnectionFirst, hc->name.end - hc->name.start, hc->name.start, getStateString(Connections[connectionId].state));
+    } else {
+        printk("%s: %s(%s)\n", message, name, getStateString(Connections[connectionId].state));
+    }
+}
 
 void Connections_SetState(connection_id_t connectionId, connection_state_t state) {
     connectionId = resolveAliases(connectionId);
 
     if ( Connections[connectionId].state != state ) {
         Connections[connectionId].state = state;
-        if (Connections_Target(connectionId) == ConnectionTarget_Host) {
+        reportConnectionState(connectionId, "Connection state");
+        if (Connections_Target(connectionId) == ConnectionTarget_Host || TargetConnectionId == ConnectionId_Invalid) {
             Connections_HandleSwitchover(connectionId, false);
+            // Connections_HandleSwitchover calls DeviceState_Update for us
         } else {
             DeviceState_Update(Connections_Target(connectionId));
         }
@@ -165,8 +215,7 @@ bool Connections_IsReady(connection_id_t connectionId) {
 }
 
 static void setCurrentDongleToStandby() {
-    host_connection_t *hostConnection = HostConnection(TargetConnectionId);
-    if (hostConnection && hostConnection->type == HostConnectionType_Dongle) {
+    if (Connections_IsHostConnection(TargetConnectionId) && HostConnection(TargetConnectionId)->type == HostConnectionType_Dongle) {
         bool standby = true;
         Messenger_Send2(DeviceId_Uhk_Dongle, MessageId_StateSync, StateSyncPropertyId_DongleStandby, (const uint8_t*)&standby, 1);
     }
@@ -185,6 +234,7 @@ void Connections_HandleSwitchover(connection_id_t connectionId, bool forceSwitch
     if (isReady && Connections_IsHostConnection(connectionId)) {
         host_connection_t *hostConnection = HostConnection(connectionId);
         if (hostConnection->switchover || TargetConnectionId == ConnectionId_Invalid || forceSwitch) {
+            reportConnectionState(connectionId, "Switching to host");
             setCurrentDongleToStandby();
             TargetConnectionId = connectionId;
         }
@@ -195,6 +245,7 @@ void Connections_HandleSwitchover(connection_id_t connectionId, bool forceSwitch
         // Find the first ready host connection
         for (uint8_t i = ConnectionId_HostConnectionFirst; i <= ConnectionId_HostConnectionLast; i++) {
             if (Connections[i].state == ConnectionState_Ready) {
+                reportConnectionState(connectionId, "Switching to host");
                 TargetConnectionId = i;
                 break;
             }

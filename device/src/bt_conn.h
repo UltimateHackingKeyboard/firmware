@@ -58,6 +58,7 @@
     void BtConn_Init(void);
     void BtConn_DisconnectAll();
 
+    void BtConn_ReviseConnections();
     void Bt_SetConnectionConfigured(struct bt_conn* conn);
 
 #endif // __BT_CONN_H__

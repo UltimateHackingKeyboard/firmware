@@ -45,6 +45,9 @@
     ATTRS void BtManager_RestartBt() {};
     ATTRS void DongleLeds_Update() {};
     ATTRS void BtPair_ClearUnknownBonds() {};
+    ATTRS void BtAdvertise_Start(uint8_t adv_type) {};
+    ATTRS uint8_t BtAdvertise_Type() { return 0; };
+    ATTRS int BtScan_Start(void) { return 0; };
 
 #if DEVICE_HAS_OLED
 #define WIDGET_REFRESH(W) Widget_Refresh(W)

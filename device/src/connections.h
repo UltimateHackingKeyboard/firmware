@@ -29,8 +29,9 @@
     } connection_type_t;
 
     typedef enum {
-        ConnectionId_HostConnectionFirst = 0,
-        ConnectionId_HostConnectionLast = HOST_CONNECTION_COUNT_MAX - 1,
+        ConnectionId_Invalid,
+        ConnectionId_HostConnectionFirst,
+        ConnectionId_HostConnectionLast = ConnectionId_HostConnectionFirst + HOST_CONNECTION_COUNT_MAX - 1,
         ConnectionId_UsbHidLeft,
         ConnectionId_UsbHidRight,
         ConnectionId_UartLeft,
@@ -40,7 +41,6 @@
         ConnectionId_NusClientRight,
         ConnectionId_BtHid,
         ConnectionId_NewBtHid,
-        ConnectionId_Invalid,
         ConnectionId_Count,
     } connection_id_t;
 

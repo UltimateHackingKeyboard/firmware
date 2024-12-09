@@ -39,6 +39,10 @@ keyboard_led_state_t KeyboardLedsState;
         */
 
 static bool sendOverC2usb() {
+    if (DEVICE_IS_UHK_DONGLE) {
+        return true;
+    }
+
     connection_type_t connectionType = Connections_Type(TargetConnectionId);
 
     if (!Connections_IsReady(TargetConnectionId)) {

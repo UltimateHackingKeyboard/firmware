@@ -1,7 +1,9 @@
 #include "bt_advertise.h"
 #include <bluetooth/services/nus.h>
 #include <zephyr/bluetooth/gatt.h>
+#include "bt_conn.h"
 #include "device.h"
+#include "legacy/event_scheduler.h"
 
 #undef DEVICE_NAME
 #define DEVICE_NAME CONFIG_BT_DEVICE_NAME
@@ -63,6 +65,8 @@ void BtAdvertise_Start(uint8_t adv_type)
         printk("%s advertising continued\n", adv_type_string);
     } else {
         printk("%s advertising failed to start (err %d)\n", adv_type_string, err);
+        BtConn_ReviseConnections();
+        EventScheduler_Schedule(CurrentTime + 1000, EventSchedulerEvent_BtStartAdvertisement, "BtStartAdvertisement");
     }
 }
 

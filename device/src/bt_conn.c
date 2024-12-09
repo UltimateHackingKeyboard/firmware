@@ -151,10 +151,27 @@ static void assignPeer(struct bt_conn* conn, uint8_t connectionId, uint8_t conne
     if (Peers[peerId].conn) {
         printk("Peer slot %d already occupied!\n", peerId);
     }
+    printk("Allocating connectionId %d to peer %d\n", connectionId, peerId);
     Peers[peerId].addr = addr;
     Peers[peerId].conn = bt_conn_ref(conn);
     Peers[peerId].connectionId = connectionId;
+    Connections[connectionId].peerId = peerId;
     Connections_SetState(connectionId, ConnectionState_Connected);
+}
+
+void check_connection(struct bt_conn *conn, void *data)
+{
+    int8_t peerId = GetPeerIdByConn(conn);
+    if (peerId == PeerIdUnknown) {
+        printk("  - unknown peer\n");
+    } else {
+        printk("  - peer %d(%s), connection %d, state %d\n", peerId, Peers[peerId].name, Peers[peerId].connectionId);
+    }
+}
+
+void BtConn_ReviseConnections() {
+    printk("Current connections:\n");
+    bt_conn_foreach(BT_CONN_TYPE_LE, check_connection, NULL);
 }
 
 static void connected(struct bt_conn *conn, uint8_t err) {
@@ -252,6 +269,7 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
         bt_conn_unref(Peers[peerId].conn);
         Connections_SetState(Peers[peerId].connectionId, ConnectionState_Disconnected);
         Peers[peerId].conn = NULL;
+        Connections[Peers[peerId].connectionId].peerId = PeerIdUnknown;
         Peers[peerId].connectionId = ConnectionId_Invalid;
     }
 }
