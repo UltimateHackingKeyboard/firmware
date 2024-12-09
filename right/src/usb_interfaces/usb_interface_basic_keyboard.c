@@ -6,6 +6,7 @@
 #include "macro_events.h"
 #include "usb_composite_device.h"
 #include "usb_report_updater.h"
+#include "macros/status_buffer.h"
 
 #ifdef __ZEPHYR__
 #include "usb/usb_compatibility.h"
