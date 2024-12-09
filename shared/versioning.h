@@ -18,6 +18,9 @@
     (((v).major > (MAJ)) || ((v).major == (MAJ) && (v).minor > (MIN)) ||                           \
         ((v).major == (MAJ) && (v).minor == (MIN) && (v).patch >= (PATCH)))
 
+#define VERSION_EQUAL(v, MAJ, MIN, PATCH)                                                         \
+    ((v).major == (MAJ) && (v).minor == (MIN) && (v).patch == (PATCH))
+
 // Typedefs:
 
 typedef struct {

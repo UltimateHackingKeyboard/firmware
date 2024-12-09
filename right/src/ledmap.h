@@ -13,6 +13,7 @@
         BacklightingMode_ConstantRGB,
         BacklightingMode_Numpad,
         BacklightingMode_LedTest,
+        BacklightingMode_LightAll,
         BacklightingMode_Unspecified,
     } backlighting_mode_t;
 

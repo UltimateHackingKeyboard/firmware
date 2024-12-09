@@ -16,6 +16,8 @@
     extern bool KeyBacklightSleepModeActive;
     extern bool DisplaySleepModeActive;
 
+    extern bool AlwaysOnMode;
+
 // Functions:
 
     void LedManager_FullUpdate();

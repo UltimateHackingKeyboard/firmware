@@ -126,7 +126,6 @@ int main(void) {
     }
 
     if (DEVICE_IS_UHK80_LEFT || DEVICE_IS_UHK80_RIGHT) {
-        ConfigManager_ResetConfiguration(false);
         Ledmap_InitLedLayout();
     }
 
@@ -146,6 +145,10 @@ int main(void) {
          ShortcutParser_initialize();
          KeyIdParser_initialize();
          Macros_Initialize();
+    }
+
+    if (DEVICE_IS_UHK80_LEFT) {
+        UsbCommand_ApplyFactory();
     }
 
     USB_EnableHid(); // has to be after USB_SetSerialNumber
