@@ -1,4 +1,6 @@
 #include "host_connection.h"
+#include "str_utils.h"
+#include "macros/string_reader.h"
 
 #ifdef __ZEPHYR__
 #include "bt_conn.h"
@@ -43,18 +45,17 @@ host_connection_t* HostConnection(uint8_t connectionId) {
 }
 
 static void selectConnection(int8_t direction) {
-    for (uint8_t i = TargetConnectionId + direction; i != TargetConnectionId; ) {
-        if (Connections_IsReady(i)) {
-            Connections_HandleSwitchover(i, true);
-            return;
-        }
-
-        i+= direction;
+    for (int8_t i = TargetConnectionId + direction; i != TargetConnectionId; i += direction) {
         if (i > ConnectionId_HostConnectionLast) {
             i = ConnectionId_HostConnectionFirst;
         }
         if (i < ConnectionId_HostConnectionFirst) {
             i = ConnectionId_HostConnectionLast;
+        }
+
+        if (Connections_IsReady(i)) {
+            Connections_HandleSwitchover(i, true);
+            return;
         }
     }
 }
@@ -67,11 +68,13 @@ void HostConnections_SelectPreviousConnection(void) {
     selectConnection(-1);
 }
 
-void HostConnections_SelectByName(string_segment_t name) {
+void HostConnections_SelectByName(parser_context_t* ctx) {
     for (uint8_t i = ConnectionId_HostConnectionFirst; i <= ConnectionId_HostConnectionLast; i++) {
-        if (Connections_IsReady(i) && SegmentEqual(name, HostConnection(i)->name)) {
-            Connections_HandleSwitchover(i, true);
-            return;
+        if (Connections_IsReady(i)) {
+            if (Macros_CompareStringToken(ctx, HostConnection(i)->name)) {
+                Connections_HandleSwitchover(i, true);
+                return;
+            }
         }
     }
 }

@@ -1,4 +1,6 @@
 #include "state_sync.h"
+#include "bt_conn.h"
+#include "connections.h"
 #include "device.h"
 #include "device_state.h"
 #include "event_scheduler.h"
@@ -127,7 +129,7 @@ static state_sync_prop_t stateSyncProps[StateSyncPropertyId_Count] = {
     SIMPLE(FunctionalColors,        SyncDirection_RightToLeft,        DirtyState_Clean,    &Cfg.KeyActionColors),
     SIMPLE(PowerMode,               SyncDirection_RightToLeft,        DirtyState_Clean,    &CurrentPowerMode),
     CUSTOM(Config,                  SyncDirection_RightToLeft,        DirtyState_Clean),
-    SIMPLE(DongleStandby,           SyncDirection_RightToDongle,      DirtyState_Clean,    &MergeSensor_HalvesAreMerged),
+    SIMPLE(DongleStandby,           SyncDirection_RightToDongle,      DirtyState_Clean,    &DongleStandby),
 };
 
 
@@ -610,11 +612,26 @@ static void updateLoopRightLeft() {
     }
 }
 
+static void updateStandbys() {
+    for (uint8_t peerId = PeerIdHost1; peerId <= PeerIdHost3; peerId++) {
+        uint8_t connectionId = Peers[peerId].connectionId;
+        if (Connections_Type(connectionId) == ConnectionType_NusDongle) {
+            bool standby = !(TargetConnectionId == connectionId);
+            Messenger_Send2Via(DeviceId_Uhk_Dongle, connectionId, MessageId_StateSync, StateSyncPropertyId_DongleStandby, (const uint8_t*)&standby, 1);
+        }
+    }
+}
+
 static void updateLoopRightDongle() {
     if (DEVICE_ID == DeviceId_Uhk80_Right) {
         while (true) {
             bool isConnected = DeviceState_IsDeviceConnected(DeviceId_Uhk_Dongle);
             STATE_SYNC_LOG("--- Right to dongle update loop, connected: %i\n", isConnected);
+
+            if (stateSyncProps[StateSyncPropertyId_DongleStandby].dirtyState != DirtyState_Clean) {                                   \
+                updateStandbys();                                                                    \
+            }
+
             if (!isConnected || handlePropertyUpdateRightToDongle()) {
                 k_sleep(K_FOREVER);
             } else {

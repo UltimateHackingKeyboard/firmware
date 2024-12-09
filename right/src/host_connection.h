@@ -63,6 +63,6 @@
     void HostConnections_SelectById(uint8_t connectionId);
     void HostConnections_SelectNextConnection(void);
     void HostConnections_SelectPreviousConnection(void);
-    void HostConnections_SelectByName(string_segment_t name);
+    void HostConnections_SelectByName(parser_context_t* ctx);
 
 #endif

@@ -226,6 +226,7 @@ static void receive(const uint8_t* data, uint16_t len) {
             .idsUsed = 0,
             .src = src,
             .dst = dst,
+            .connectionId = determineChannel(dst),
         };
         printk("Forwarding message from %d to %d\n", msg.src, msg.dst);
         Messenger_SendMessage(msg);
@@ -252,6 +253,7 @@ static bool isSpam(const uint8_t* data, connection_id_t connectionId) {
         return DEBUG_EVENTLOOP_SCHEDULE;
     }
     if (DEVICE_IS_UHK80_RIGHT && Connections_Type(connectionId) == ConnectionType_NusDongle && connectionId != TargetConnectionId) {
+        StateSync_UpdateProperty(StateSyncPropertyId_DongleStandby, NULL);
         return true;
     }
     return false;
@@ -329,7 +331,7 @@ bool Messenger_Availability(device_id_t dst, messenger_availability_op_t operati
 }
 
 void Messenger_SendMessage(message_t message) {
-    connection_id_t connectionId = determineChannel(message.dst);
+    connection_id_t connectionId = message.connectionId;
     device_id_t dst = message.dst;
 
 
@@ -368,6 +370,7 @@ void Messenger_Send(device_id_t dst, uint8_t messageId, const uint8_t* data, uin
         .idsUsed = 1,
         .src = DEVICE_ID,
         .dst = dst,
+        .connectionId = determineChannel(dst),
     };
     Messenger_SendMessage(msg);
 }
@@ -381,6 +384,21 @@ void Messenger_Send2(device_id_t dst, uint8_t messageId, uint8_t messageId2, con
         .idsUsed = 2,
         .src = DEVICE_ID,
         .dst = dst,
+        .connectionId = determineChannel(dst),
+    };
+    Messenger_SendMessage(msg);
+}
+
+void Messenger_Send2Via(device_id_t dst, connection_id_t connectionId, uint8_t messageId, uint8_t messageId2, const uint8_t* data, uint16_t len) {
+    message_t msg = {
+        .data = data,
+        .len = len,
+        .messageId[0] = messageId,
+        .messageId[1] = messageId2,
+        .idsUsed = 2,
+        .src = DEVICE_ID,
+        .dst = dst,
+        .connectionId = connectionId,
     };
     Messenger_SendMessage(msg);
 }

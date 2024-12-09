@@ -21,27 +21,31 @@ void set_dongle_led(const struct pwm_dt_spec *device, uint8_t percentage) {
 }
 
 
-void DongleLeds_Set(bool r, bool g, bool b) {
-    set_dongle_led(&red_pwm_led, r ? 100 : 0);
-    set_dongle_led(&green_pwm_led, g ? 100 : 0);
-    set_dongle_led(&blue_pwm_led, b ? 100 : 0);
+void DongleLeds_Set(uint8_t r, uint8_t g, uint8_t b) {
+    set_dongle_led(&red_pwm_led, r);
+    set_dongle_led(&green_pwm_led, g);
+    set_dongle_led(&blue_pwm_led, b);
 }
 
 void DongleLeds_Update() {
     if (Connections_IsReady(ConnectionId_NusServerRight)) {
-        if (DongleStandby) {
-            DongleLeds_Set(false, false, true);
+        if (!DongleStandby) {
+            // connected and receiving: green
+            DongleLeds_Set(0, 100, 0);
             return;
         } else {
-            DongleLeds_Set(false, true, false);
+            // connected in standby: blue
+            DongleLeds_Set(0, 100, 100);
             return;
         }
     }
     if (RightAddressIsSet) {
-        DongleLeds_Set(true, false, true);
+        // trying to connect: violet
+        DongleLeds_Set(100, 0, 70);
         return;
     }
-    DongleLeds_Set(true, false, false);
+    // disconnected: red
+    DongleLeds_Set(100, 0, 0);
 }
 
 #endif // DEVICE_IS_UHK_DONGLE

@@ -165,7 +165,7 @@ void check_connection(struct bt_conn *conn, void *data)
     if (peerId == PeerIdUnknown) {
         printk("  - unknown peer\n");
     } else {
-        printk("  - peer %d(%s), connection %d, state %d\n", peerId, Peers[peerId].name, Peers[peerId].connectionId);
+        printk("  - peer %d(%s), connection %d\n", peerId, Peers[peerId].name, Peers[peerId].connectionId);
     }
 }
 
@@ -270,7 +270,10 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
         Connections_SetState(Peers[peerId].connectionId, ConnectionState_Disconnected);
         Peers[peerId].conn = NULL;
         Connections[Peers[peerId].connectionId].peerId = PeerIdUnknown;
-        Peers[peerId].connectionId = ConnectionId_Invalid;
+        if (peerId >= PeerIdHost1) {
+            Peers[peerId].connectionId = ConnectionId_Invalid;
+            memset(&Peers[peerId].addr, 0, sizeof(bt_addr_le_t));
+        }
     }
 }
 

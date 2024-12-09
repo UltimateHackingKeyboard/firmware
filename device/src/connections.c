@@ -95,7 +95,7 @@ void Connections_SetState(connection_id_t connectionId, connection_state_t state
     if ( Connections[connectionId].state != state ) {
         Connections[connectionId].state = state;
         reportConnectionState(connectionId, "Connection state");
-        if (Connections_Target(connectionId) == ConnectionTarget_Host || TargetConnectionId == ConnectionId_Invalid) {
+        if (Connections_Target(connectionId) == ConnectionTarget_Host && DEVICE_IS_UHK80_RIGHT) {
             Connections_HandleSwitchover(connectionId, false);
             // Connections_HandleSwitchover calls DeviceState_Update for us
         } else {

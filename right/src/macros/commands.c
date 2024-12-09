@@ -1739,30 +1739,34 @@ static macro_result_t processResetConfigurationCommand(parser_context_t* ctx)
 
 static macro_result_t processSwitchHostCommand(parser_context_t* ctx)
 {
-    if (Macros_DryRun) {
-        ConsumeAnyIdentifier(ctx);
-        return MacroResult_Finished;
-    }
+#define DRY_RUN_FINISH() if (Macros_DryRun) { return MacroResult_Finished; }
 
 #ifdef __ZEPHYR__
     static uint8_t lastConnection = 0;
     uint8_t currentConnection = TargetConnectionId;
 
     if (ConsumeToken(ctx, "next")) {
+        DRY_RUN_FINISH();
         HostConnections_SelectNextConnection();
     }
     else if (ConsumeToken(ctx, "prev") || ConsumeToken(ctx, "previous")) {
+        DRY_RUN_FINISH();
         HostConnections_SelectPreviousConnection();
     }
     else if (ConsumeToken(ctx, "last")) {
+        DRY_RUN_FINISH();
         HostConnections_SelectById(lastConnection);
     } else {
-        string_segment_t name = (string_segment_t) { .start = ctx->at, .end = TokEnd(ctx->at, ctx->end) };
-        HostConnections_SelectByName(name);
+        if (!Macros_DryRun) {
+            HostConnections_SelectByName(ctx);
+        }
+        Macros_ConsumeStringToken(ctx);
     }
 
     lastConnection = currentConnection;
 #endif
+
+#undef DRY_RUN_FINISH
 
     return MacroResult_Finished;
 }
