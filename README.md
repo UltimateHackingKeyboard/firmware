@@ -21,12 +21,12 @@ If you're one of the brave few who wants to hack the firmware then read on.
 Note that these commands will create a [west workspace](https://docs.zephyrproject.org/latest/develop/west/workspaces.html#t2-star-topology-application-is-the-manifest-repository) in your current directory.
 
 ```bash
-git clone --recurse-submodules git@github.com:UltimateHackingKeyboard/firmware-uhk80.git
-west init -l firmware-uhk80
+git clone --recurse-submodules git@github.com:UltimateHackingKeyboard/firmware.git
+west init -l firmware
 west update
 west patch
 west config --local build.cmake-args -- "-Wno-dev"
-cd firmware-uhk80/scripts
+cd firmware/scripts
 npm i
 ./generate-versions.mjs
 ```
