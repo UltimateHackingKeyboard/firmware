@@ -221,7 +221,7 @@ void EventVector_ReportMask(const char* prefix, uint32_t mask) {
     REPORT_MASK(MouseKeysReportsUsed);
     REPORT_MASK(MouseControllerMouseReportsUsed);
     REPORT_MASK(MouseControllerKeyboardReportsUsed);
-    REPORT_MASK(ReportsChanged);
+    REPORT_MASK(SendUsbReports);
     REPORT_MASK(NativeActionsPostponing);
     REPORT_MASK(MacroEnginePostponing);
 
