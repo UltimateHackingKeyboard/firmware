@@ -1,4 +1,5 @@
 #include <string.h>
+#include "ledmap.h"
 #include "usb_commands/usb_command_apply_config.h"
 #include "config_parser/config_globals.h"
 #include "config_parser/parse_config.h"
@@ -45,6 +46,19 @@ void UsbCommand_ApplyConfigAsync(void) {
     }
 }
 
+static void setLedsWhite() {
+    // Set the led test backlight mode, but don't activate the switch test mode.
+    Ledmap_SetLedBacklightingMode(BacklightingMode_LightAll);
+    AlwaysOnMode = true;
+    Cfg.KeyBacklightBrightnessDefault = 255;
+    Cfg.KeyBacklightBrightnessBatteryDefault = 255;
+    EventVector_Set(EventVector_LedMapUpdateNeeded);
+}
+
+static bool hwConfigEmpty() {
+    return HardwareConfig->majorVersion == 0 || HardwareConfig->majorVersion == 255;
+}
+
 void UsbCommand_ApplyFactory(void)
 {
     EventVector_Unset(EventVector_ApplyConfig);
@@ -54,6 +68,10 @@ void UsbCommand_ApplyFactory(void)
     Macros_ClearStatus();
 
     ConfigManager_ResetConfiguration(false);
+
+    if (hwConfigEmpty()) {
+        setLedsWhite();
+    }
 
 #ifdef __ZEPHYR__
     StateSync_ResetConfig();
@@ -106,6 +124,10 @@ uint8_t UsbCommand_ApplyConfig(void)
     }
 
     MacroEvent_OnInit();
+
+    if (hwConfigEmpty()) {
+        setLedsWhite();
+    }
 
 #ifdef __ZEPHYR__
     StateSync_ResetConfig();

@@ -591,6 +591,22 @@ static void updateLedsByLedTestStragegy() {
     }
 }
 
+static void updateLedsByLightAllStragegy() {
+#ifdef __ZEPHYR__
+#if DEVICE_IS_UHK80_LEFT || DEVICE_IS_UHK80_RIGHT
+    for (uint8_t i = 0; i < UHK80_LED_DRIVER_LED_COUNT_MAX; i++) {
+        Uhk80LedDriverValues[i] = 255;
+    }
+#endif
+#else
+    for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
+        for (uint8_t i=0; i<LED_DRIVER_LED_COUNT_MAX; i++) {
+            LedDriverValues[slotId][i] = 255;
+        }
+    }
+#endif
+}
+
 void Ledmap_ActivateTestled(uint8_t slotId, uint8_t keyId) {
     if (CurrentTime < backlightingLedTestStart + 1000) {
         return;
@@ -660,6 +676,9 @@ void Ledmap_UpdateBacklightLeds(void) {
             break;
         case BacklightingMode_LedTest:
             updateLedsByLedTestStragegy();
+            break;
+        case BacklightingMode_LightAll:
+            updateLedsByLightAllStragegy();
             break;
         case BacklightingMode_Unspecified:
             break;
