@@ -580,13 +580,13 @@ static void setEntireMatrix(uint8_t v) {
 #ifdef __ZEPHYR__
 #if DEVICE_IS_UHK80_LEFT || DEVICE_IS_UHK80_RIGHT
     for (uint8_t i = 0; i < UHK80_LED_DRIVER_LED_COUNT_MAX; i++) {
-        Uhk80LedDriverValues[i] = 255;
+        Uhk80LedDriverValues[i] = v;
     }
 #endif
 #else
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         for (uint8_t i=0; i<LED_DRIVER_LED_COUNT_MAX; i++) {
-            LedDriverValues[slotId][i] = 255;
+            LedDriverValues[slotId][i] = v;
         }
     }
 #endif
