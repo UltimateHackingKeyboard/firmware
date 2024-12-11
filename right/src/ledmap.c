@@ -576,6 +576,22 @@ static void updateLedsByPerKeyKeyStragegy() {
     }
 }
 
+static void setEntireMatrix(uint8_t v) {
+#ifdef __ZEPHYR__
+#if DEVICE_IS_UHK80_LEFT || DEVICE_IS_UHK80_RIGHT
+    for (uint8_t i = 0; i < UHK80_LED_DRIVER_LED_COUNT_MAX; i++) {
+        Uhk80LedDriverValues[i] = 255;
+    }
+#endif
+#else
+    for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
+        for (uint8_t i=0; i<LED_DRIVER_LED_COUNT_MAX; i++) {
+            LedDriverValues[slotId][i] = 255;
+        }
+    }
+#endif
+}
+
 static void setAllTo(const rgb_t* color) {
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         color_mode_t colorMode = determineMode(slotId);
@@ -591,20 +607,9 @@ static void updateLedsByLedTestStragegy() {
     }
 }
 
+
 static void updateLedsByLightAllStragegy() {
-#ifdef __ZEPHYR__
-#if DEVICE_IS_UHK80_LEFT || DEVICE_IS_UHK80_RIGHT
-    for (uint8_t i = 0; i < UHK80_LED_DRIVER_LED_COUNT_MAX; i++) {
-        Uhk80LedDriverValues[i] = 255;
-    }
-#endif
-#else
-    for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
-        for (uint8_t i=0; i<LED_DRIVER_LED_COUNT_MAX; i++) {
-            LedDriverValues[slotId][i] = 255;
-        }
-    }
-#endif
+    setEntireMatrix(255);
 }
 
 void Ledmap_ActivateTestled(uint8_t slotId, uint8_t keyId) {
@@ -630,6 +635,9 @@ backlighting_mode_t Ledmap_GetEffectiveBacklightMode() {
 }
 
 void handleModeChange(backlighting_mode_t from, backlighting_mode_t to) {
+    if (from == BacklightingMode_LightAll) {
+        setEntireMatrix(0);
+    }
     if (to == BacklightingMode_LedTest) {
         backlightingLedTestModeState = BacklightingLedTestModeState_All;
         backlightingLedTestStart = CurrentTime;
