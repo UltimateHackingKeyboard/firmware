@@ -234,8 +234,10 @@ void receiveBacklight(sync_command_backlight_t *buffer) {
 static void receiveModuleStateData(sync_command_module_state_t *buffer) {
     uint8_t driverId = UhkModuleSlaveDriver_SlotIdToDriverId(buffer->slotId);
     uhk_module_state_t *moduleState = &UhkModuleStates[driverId];
-    module_connection_state_t *moduleConnectionState = &ModuleConnectionStates[driverId];
 
+    // once we have multiple left modules, reload keymap here
+
+    module_connection_state_t *moduleConnectionState = &ModuleConnectionStates[driverId];
     moduleConnectionState->moduleId = buffer->moduleId;
     moduleState->moduleId = buffer->moduleId;
     moduleState->moduleProtocolVersion = buffer->moduleProtocolVersion;
