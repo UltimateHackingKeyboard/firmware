@@ -254,15 +254,18 @@ static parser_error_t parseLayer(config_buffer_t *buffer, uint8_t layer, parse_m
         }
     }
 
-    // if current config doesn't configuration of the connected module, fill in hardwired values
+    // if current config doesn't contain configuration of the connected module, fill in hardwired values
     bool rightUhkModuleUnmapped = moduleCount <= UhkModuleStates[UhkModuleSlaveDriver_SlotIdToDriverId(SlotId_RightModule)].moduleId;
     bool touchpadUnmapped = moduleCount <= ModuleId_TouchpadRight && IsModuleAttached(ModuleId_TouchpadRight);
     if (rightUhkModuleUnmapped || touchpadUnmapped) {
         applyDefaultRightModuleActions(layer, parseMode);
     }
 
-    // if current config doesn't configuration of the connected module, fill in hardwired values
-    if (moduleCount <= UhkModuleStates[UhkModuleSlaveDriver_SlotIdToDriverId(SlotId_LeftModule)].moduleId) {
+    // if current config doesn't contain configuration of the connected module, fill in hardwired values
+    uint8_t leftModuleId = UhkModuleStates[UhkModuleSlaveDriver_SlotIdToDriverId(SlotId_LeftModule)].moduleId;
+    bool leftUhkModuleUnmapped = moduleCount <= leftModuleId;
+    bool keyclusterUnmapped = moduleCount <= ModuleId_KeyClusterLeft;
+    if ((leftModuleId != 0 && leftUhkModuleUnmapped) || (leftModuleId == 0 && keyclusterUnmapped)) {
         applyDefaultLeftModuleActions(layer, parseMode);
     }
 
