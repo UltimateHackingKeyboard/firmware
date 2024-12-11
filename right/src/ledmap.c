@@ -3,6 +3,7 @@
 #include "layer.h"
 #include "layer_switcher.h"
 #include "ledmap.h"
+#include "led_manager.h"
 #include "slave_drivers/is31fl3xxx_driver.h"
 #include "config_parser/config_globals.h"
 #include "debug.h"
@@ -25,6 +26,7 @@
 static const rgb_t black = RGB(0x00, 0x00, 0x00);
 static const rgb_t white = RGB(0xff, 0xff, 0xff);
 
+bool Ledmap_AlwaysOn = false;
 backlighting_mode_t TemporaryBacklightingMode = BacklightingMode_Unspecified;
 
 typedef enum {
@@ -576,6 +578,22 @@ static void updateLedsByPerKeyKeyStragegy() {
     }
 }
 
+static void setEntireMatrix(uint8_t v) {
+#ifdef __ZEPHYR__
+#if DEVICE_IS_UHK80_LEFT || DEVICE_IS_UHK80_RIGHT
+    for (uint8_t i = 0; i < UHK80_LED_DRIVER_LED_COUNT_MAX; i++) {
+        Uhk80LedDriverValues[i] = v;
+    }
+#endif
+#else
+    for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
+        for (uint8_t i=0; i<LED_DRIVER_LED_COUNT_MAX; i++) {
+            LedDriverValues[slotId][i] = v;
+        }
+    }
+#endif
+}
+
 static void setAllTo(const rgb_t* color) {
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         color_mode_t colorMode = determineMode(slotId);
@@ -591,20 +609,9 @@ static void updateLedsByLedTestStragegy() {
     }
 }
 
+
 static void updateLedsByLightAllStragegy() {
-#ifdef __ZEPHYR__
-#if DEVICE_IS_UHK80_LEFT || DEVICE_IS_UHK80_RIGHT
-    for (uint8_t i = 0; i < UHK80_LED_DRIVER_LED_COUNT_MAX; i++) {
-        Uhk80LedDriverValues[i] = 255;
-    }
-#endif
-#else
-    for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
-        for (uint8_t i=0; i<LED_DRIVER_LED_COUNT_MAX; i++) {
-            LedDriverValues[slotId][i] = 255;
-        }
-    }
-#endif
+    setEntireMatrix(255);
 }
 
 void Ledmap_ActivateTestled(uint8_t slotId, uint8_t keyId) {
@@ -630,6 +637,9 @@ backlighting_mode_t Ledmap_GetEffectiveBacklightMode() {
 }
 
 void handleModeChange(backlighting_mode_t from, backlighting_mode_t to) {
+    if (from == BacklightingMode_LightAll) {
+        setEntireMatrix(0);
+    }
     if (to == BacklightingMode_LedTest) {
         backlightingLedTestModeState = BacklightingLedTestModeState_All;
         backlightingLedTestStart = CurrentTime;
@@ -735,8 +745,14 @@ void Ledmap_InitLedLayout(void) {
 #endif
 }
 
+static void updateAlwaysOn() {
+    backlighting_mode_t mode = Ledmap_GetEffectiveBacklightMode();
+    Ledmap_AlwaysOn = mode == BacklightingMode_LightAll || mode == BacklightingMode_LedTest;
+}
+
 void Ledmap_SetTemporaryLedBacklightingMode(backlighting_mode_t newMode) {
     TemporaryBacklightingMode = newMode;
+    updateAlwaysOn();
 #ifdef __ZEPHYR__
     StateSync_UpdateProperty(StateSyncPropertyId_Backlight, NULL);
 #endif
@@ -752,6 +768,7 @@ void Ledmap_ResetTemporaryLedBacklightingMode() {
 void Ledmap_SetLedBacklightingMode(backlighting_mode_t newMode)
 {
     Cfg.BacklightingMode = newMode;
+    updateAlwaysOn();
 #ifdef __ZEPHYR__
     StateSync_UpdateProperty(StateSyncPropertyId_Backlight, NULL);
 #endif

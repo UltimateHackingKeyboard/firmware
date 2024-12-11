@@ -65,6 +65,7 @@
         uint32_t KeyBacklightFadeOutBatteryTimeout;
 
         bool LedsEnabled;
+        bool LedsAlwaysOn;
 
         // layers
         layer_config_t LayerConfig[LayerId_Count];

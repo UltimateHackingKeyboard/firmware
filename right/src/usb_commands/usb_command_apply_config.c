@@ -49,9 +49,6 @@ void UsbCommand_ApplyConfigAsync(void) {
 static void setLedsWhite() {
     // Set the led test backlight mode, but don't activate the switch test mode.
     Ledmap_SetLedBacklightingMode(BacklightingMode_LightAll);
-    AlwaysOnMode = true;
-    Cfg.KeyBacklightBrightnessDefault = 255;
-    Cfg.KeyBacklightBrightnessBatteryDefault = 255;
     EventVector_Set(EventVector_LedMapUpdateNeeded);
 }
 

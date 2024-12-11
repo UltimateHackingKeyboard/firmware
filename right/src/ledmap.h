@@ -43,6 +43,7 @@
 // Variables:
 
     extern bool Ledmap_LedTestActive;
+    extern bool Ledmap_AlwaysOn;
 
 // Functions:
 
