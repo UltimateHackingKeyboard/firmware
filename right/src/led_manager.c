@@ -1,5 +1,6 @@
 #include "led_manager.h"
 #include "event_scheduler.h"
+#include "ledmap.h"
 #include "usb_composite_device.h"
 #include "config_manager.h"
 #include "stubs.h"
@@ -23,24 +24,27 @@ bool DisplaySleepModeActive = false;
 uint8_t DisplayBrightness = 0xff;
 uint8_t KeyBacklightBrightness = 0xff;
 
-bool AlwaysOnMode = false;
-
 static void recalculateLedBrightness()
 {
     bool globalSleepMode = !Cfg.LedsEnabled || CurrentPowerMode > PowerMode_Awake || Cfg.LedBrightnessMultiplier == 0.0f;
+    bool globalAlwaysOn = Cfg.LedsAlwaysOn || Ledmap_AlwaysOn;
 
-    if (!AlwaysOnMode && (globalSleepMode || KeyBacklightSleepModeActive)) {
+    if (!globalAlwaysOn && (globalSleepMode || KeyBacklightSleepModeActive)) {
         KeyBacklightBrightness = 0;
     } else {
         uint8_t keyBacklightBrightnessBase = RunningOnBattery ? Cfg.KeyBacklightBrightnessBatteryDefault : Cfg.KeyBacklightBrightnessDefault;
         KeyBacklightBrightness = MIN(255, keyBacklightBrightnessBase * Cfg.LedBrightnessMultiplier);
     }
 
-    if (!AlwaysOnMode && (globalSleepMode || DisplaySleepModeActive)) {
+    if (!globalAlwaysOn && (globalSleepMode || DisplaySleepModeActive)) {
         DisplayBrightness = 0;
     } else {
         uint8_t displayBrightnessBase = RunningOnBattery ? Cfg.DisplayBrightnessBatteryDefault : Cfg.DisplayBrightnessDefault;
         DisplayBrightness = MIN(255, displayBrightnessBase * Cfg.LedBrightnessMultiplier);
+    }
+
+    if (Ledmap_AlwaysOn) {
+        KeyBacklightBrightness = 255;
     }
 }
 

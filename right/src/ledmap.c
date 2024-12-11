@@ -3,6 +3,7 @@
 #include "layer.h"
 #include "layer_switcher.h"
 #include "ledmap.h"
+#include "led_manager.h"
 #include "slave_drivers/is31fl3xxx_driver.h"
 #include "config_parser/config_globals.h"
 #include "debug.h"
@@ -25,6 +26,7 @@
 static const rgb_t black = RGB(0x00, 0x00, 0x00);
 static const rgb_t white = RGB(0xff, 0xff, 0xff);
 
+bool Ledmap_AlwaysOn = false;
 backlighting_mode_t TemporaryBacklightingMode = BacklightingMode_Unspecified;
 
 typedef enum {
@@ -743,8 +745,14 @@ void Ledmap_InitLedLayout(void) {
 #endif
 }
 
+static void updateAlwaysOn() {
+    backlighting_mode_t mode = Ledmap_GetEffectiveBacklightMode();
+    Ledmap_AlwaysOn = mode == BacklightingMode_LightAll || mode == BacklightingMode_LedTest;
+}
+
 void Ledmap_SetTemporaryLedBacklightingMode(backlighting_mode_t newMode) {
     TemporaryBacklightingMode = newMode;
+    updateAlwaysOn();
 #ifdef __ZEPHYR__
     StateSync_UpdateProperty(StateSyncPropertyId_Backlight, NULL);
 #endif
@@ -760,6 +768,7 @@ void Ledmap_ResetTemporaryLedBacklightingMode() {
 void Ledmap_SetLedBacklightingMode(backlighting_mode_t newMode)
 {
     Cfg.BacklightingMode = newMode;
+    updateAlwaysOn();
 #ifdef __ZEPHYR__
     StateSync_UpdateProperty(StateSyncPropertyId_Backlight, NULL);
 #endif

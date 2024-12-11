@@ -568,7 +568,10 @@ static macro_variable_t leds(parser_context_t* ctx, set_command_action_t action)
         ASSIGN_FLOAT(Cfg.LedBrightnessMultiplier);
     } else if (ConsumeToken(ctx, "enabled")) {
         ASSIGN_BOOL(Cfg.LedsEnabled);
-    } else {
+    } else if (ConsumeToken(ctx, "alwaysOn")) {
+        ASSIGN_BOOL(Cfg.LedsAlwaysOn);
+    }
+    else {
         Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
     }
 

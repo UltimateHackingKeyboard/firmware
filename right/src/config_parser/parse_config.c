@@ -327,7 +327,6 @@ parser_error_t parseConfig(config_buffer_t *buffer)
         Cfg.KeyBacklightFadeOutTimeout = keyBacklightFadeOutTimeout;
         Cfg.KeyBacklightFadeOutBatteryTimeout = keyBacklightFadeOutBatteryTimeout;
 
-        AlwaysOnMode = false;
         LedManager_RecalculateLedBrightness();
         LedManager_UpdateSleepModes();
         BtPair_ClearUnknownBonds();

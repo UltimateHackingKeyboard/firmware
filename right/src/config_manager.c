@@ -235,6 +235,7 @@ const config_t DefaultCfg = (config_t){
         .KeyBacklightFadeOutTimeout = 0,
         .KeyBacklightFadeOutBatteryTimeout = 60000,
         .LedsEnabled = true,
+        .LedsAlwaysOn = false,
         .LedBrightnessMultiplier = 1.0f,
         .LayerConfig = {
             { .layerIsDefined = true, .exactModifierMatch = false, .modifierLayerMask = 0},
