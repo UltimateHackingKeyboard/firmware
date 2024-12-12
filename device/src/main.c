@@ -101,7 +101,7 @@ int main(void) {
     Main_ThreadId = k_current_get();
     printk("----------\n" DEVICE_NAME " started\n");
 
-    if (DEVICE_IS_UHK80_RIGHT) {
+    {
         flash_area_open(FLASH_AREA_ID(hardware_config_partition), &hardwareConfigArea);
         flash_area_open(FLASH_AREA_ID(user_config_partition), &userConfigArea);
     }
@@ -129,26 +129,28 @@ int main(void) {
         Ledmap_InitLedLayout();
     }
 
-    if (DEVICE_IS_UHK80_RIGHT) {
+    // read configurations
+    {
         InitFlash();
         printk("Reading hardware config\n");
         Flash_ReadAreaSync(hardwareConfigArea, 0, HardwareConfigBuffer.buffer, HARDWARE_CONFIG_SIZE);
-        printk("Reading user config\n");
-        Flash_ReadAreaSync(userConfigArea, 0, StagingUserConfigBuffer.buffer, USER_CONFIG_SIZE);
         USB_SetSerialNumber(HardwareConfig->uniqueId);
-        printk("Applying user config\n");
-        bool factoryMode = false;
-         if (factoryMode || UsbCommand_ApplyConfig() != UsbStatusCode_Success) {
-             UsbCommand_ApplyFactory();
-         }
-         printk("User config applied\n");
-         ShortcutParser_initialize();
-         KeyIdParser_initialize();
-         Macros_Initialize();
-    }
 
-    if (DEVICE_IS_UHK80_LEFT) {
-        UsbCommand_ApplyFactory();
+        if (DEVICE_IS_UHK80_RIGHT) {
+            printk("Reading user config\n");
+            Flash_ReadAreaSync(userConfigArea, 0, StagingUserConfigBuffer.buffer, USER_CONFIG_SIZE);
+            printk("Applying user config\n");
+            bool factoryMode = false;
+            if (factoryMode || UsbCommand_ApplyConfig() != UsbStatusCode_Success) {
+                UsbCommand_ApplyFactory();
+            }
+            printk("User config applied\n");
+            ShortcutParser_initialize();
+            KeyIdParser_initialize();
+            Macros_Initialize();
+        } else {
+            UsbCommand_ApplyFactory();
+        }
     }
 
     USB_EnableHid(); // has to be after USB_SetSerialNumber
