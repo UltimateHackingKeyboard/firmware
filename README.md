@@ -16,11 +16,29 @@ If you want to use the latest firmware version for your UHK, then instead of goi
 
 If you're one of the brave few who wants to hack the firmware then read on.
 
+### UHK80 quick dev setup
+
+```
+mkdir west
+cd west
+git clone --recurse-submodules git@github.com:UltimateHackingKeyboard/firmware.git
+cd firmware
+./build.sh setup
+./build.sh all build make flash
+```
+
+In case the above doesn't work, please see (or create a ticket):
+- further sections of this readme 
+- content of `scripts/make-release.mjs` (this one is directive for build command form)
+- content of `build.sh` (this is an auxiliary script; it works for me)
+
 ### Fetching the codebase
 
 Note that these commands will create a [west workspace](https://docs.zephyrproject.org/latest/develop/west/workspaces.html#t2-star-topology-application-is-the-manifest-repository) in your current directory.
 
 ```bash
+mkdir west
+cd west
 git clone --recurse-submodules git@github.com:UltimateHackingKeyboard/firmware.git
 west init -l firmware
 west update

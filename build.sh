@@ -243,6 +243,17 @@ function performAction() {
             rm -rf device/build .west bootloader modules nrf nrfxlib test tools zephyr
             ;;
         setup)
+            # basic dependencies
+            if ! command -v nrfutil &> /dev/null;
+            then
+                echo "Going to download nrfutil into /usr/local/bin. Please, either authorize it, or install nrfutil independently according to https://docs.nordicsemi.com/bundle/nrfutil/page/guides/installing.html"
+                sudo curl https://files.nordicsemi.com/artifactory/swtools/external/nrfutil/executables/x86_64-unknown-linux-gnu/nrfutil -o /usr/local/bin/nrfutil
+                sudo chmod +x /usr/local/bin/nrfutil
+            fi
+            pip3 install west
+            pip3 install -r scripts/requirements.txt
+            nrfutil install toolchain-manager
+            nrfutil toolchain-manager install --ncs-version $NCS_VERSION
             # update this according to README
             git submodule init
             git submodule update --init --recursive
