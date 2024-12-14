@@ -49,7 +49,8 @@
        EventVector_MouseController =                       1 << 4,
        EventVector_Postponer =                             1 << 5,
        EventVector_LayerHolds =                            1 << 6,
-       EventVector_EventScheduler =                        1 << 7,
+       EventVector_SendUsbReports =                        1 << 7,
+       EventVector_EventScheduler =                        1 << 8,
        EventVector_MainTriggers =                          ((EventVector_EventScheduler << 1) - 1),
 
 
@@ -71,15 +72,15 @@
        EventVector_MouseKeysReportsUsed =                  1 << 20,
        EventVector_MouseControllerMouseReportsUsed =       1 << 21,
        EventVector_MouseControllerKeyboardReportsUsed =    1 << 22,
-       EventVector_SendUsbReports =                        1 << 23,
        EventVector_NativeActionsPostponing =               1 << 24,
-       EventVector_MacroEnginePostponing =                 1 << 25,
-       EventVector_MouseControllerPostponing =             1 << 26,
+       EventVector_KeystrokeDelayPostponing =              1 << 25,
+       EventVector_MacroEnginePostponing =                 1 << 26,
+       EventVector_MouseControllerPostponing =             1 << 27,
 
        // helper masks
        EventVector_ReportUpdateMask = EventVector_MainTriggers & ~EventVector_EventScheduler,
        EventVector_UserLogicUpdateMask = EventVector_AuxiliaryTriggers & ~EventVector_EventScheduler,
-       EventVector_SomeonePostponing = EventVector_NativeActionsPostponing | EventVector_MacroEnginePostponing | EventVector_MouseControllerPostponing,
+       EventVector_SomeonePostponing = EventVector_KeystrokeDelayPostponing | EventVector_NativeActionsPostponing | EventVector_MacroEnginePostponing | EventVector_MouseControllerPostponing,
     } event_vector_event_t;
 
 /**
