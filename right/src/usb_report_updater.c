@@ -676,7 +676,7 @@ static void sendActiveReports() {
     bool usbReportsChangedByAnything = false;
 
     // in case of usb error, this gets set back again
-    EventVector_Unset(EventVector_SendUsbReports);
+    EventVector_Unset(EventVector_SendUsbReports | EventVector_ResendUsbReports);
 
     if (UsbBasicKeyboardCheckReportReady() == kStatus_USB_Success) {
 #ifdef __ZEPHYR__
@@ -718,7 +718,7 @@ static void sendActiveReports() {
         usb_status_t status = UsbMediaKeyboardAction();
         if (status != kStatus_USB_Success) {
             UsbReportUpdateSemaphore &= ~(1 << USB_MEDIA_KEYBOARD_INTERFACE_INDEX);
-            EventVector_Set(EventVector_SendUsbReports);
+            EventVector_Set(EventVector_ResendUsbReports);
         }
         UsbReportUpdater_LastActivityTime = CurrentTime;
         usbReportsChangedByAction = true;
@@ -730,7 +730,7 @@ static void sendActiveReports() {
         usb_status_t status = UsbSystemKeyboardAction();
         if (status != kStatus_USB_Success) {
             UsbReportUpdateSemaphore &= ~(1 << USB_SYSTEM_KEYBOARD_INTERFACE_INDEX);
-            EventVector_Set(EventVector_SendUsbReports);
+            EventVector_Set(EventVector_ResendUsbReports);
         }
         UsbReportUpdater_LastActivityTime = CurrentTime;
         usbReportsChangedByAction = true;
@@ -792,14 +792,16 @@ void UpdateUsbReports(void)
     UpdateUsbReports_LastUpdateTime = CurrentTime;
     UsbReportUpdateCounter++;
 
-    updateActiveUsbReports();
+    if (!EventVector_IsSet(EventVector_ResendUsbReports)) {
+        updateActiveUsbReports();
+    }
 
-    if (EventVector_IsSet(EventVector_SendUsbReports)) {
+    if (EventVector_IsSet(EventVector_SendUsbReports | EventVector_ResendUsbReports)) {
         if (CurrentPowerMode < PowerMode_DeepSleep) {
             mergeReports();
             sendActiveReports();
         } else {
-            EventVector_Unset(EventVector_SendUsbReports);
+            EventVector_Unset(EventVector_SendUsbReports | EventVector_ResendUsbReports);
         }
     }
 
