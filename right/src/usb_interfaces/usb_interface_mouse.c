@@ -168,7 +168,7 @@ void UsbMouseSendActiveReport(void)
     usb_status_t status = UsbMouseAction();
     if (status != kStatus_USB_Success) {
         UsbReportUpdateSemaphore &= ~(1 << USB_MOUSE_INTERFACE_INDEX);
-        EventVector_Set(EventVector_SendUsbReports);
+        EventVector_Set(EventVector_ResendUsbReports);
     }
 #endif
 }

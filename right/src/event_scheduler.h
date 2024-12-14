@@ -72,9 +72,10 @@
        EventVector_MouseControllerMouseReportsUsed =       1 << 21,
        EventVector_MouseControllerKeyboardReportsUsed =    1 << 22,
        EventVector_SendUsbReports =                        1 << 23,
-       EventVector_NativeActionsPostponing =               1 << 24,
-       EventVector_MacroEnginePostponing =                 1 << 25,
-       EventVector_MouseControllerPostponing =             1 << 26,
+       EventVector_ResendUsbReports =                      1 << 24,
+       EventVector_NativeActionsPostponing =               1 << 25,
+       EventVector_MacroEnginePostponing =                 1 << 26,
+       EventVector_MouseControllerPostponing =             1 << 27,
 
        // helper masks
        EventVector_ReportUpdateMask = EventVector_MainTriggers & ~EventVector_EventScheduler,
