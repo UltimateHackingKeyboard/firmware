@@ -5,10 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [12.0.0] - 2024-12-15
+
+Device Protocol: 4.**11.0** | Module Protocol: 4.3.0 | User Config: **8.3.0** | Hardware Config: 1.0.0 | Smart Macros: **3.0.0**
+
+- Add support for the UHK 80. `USERCONFIG:MAJOR` `DEVICEPROTOCOL:MINOR`
+- The UHK 60 v1 and UHK 60 v2 may experience some minor regressions due to major refactors, but this firmware should be well-suited for everyday use.
+- The key ids have been changed to be more consistent with the UHK 80 and future keyboards. For example, `ifGesture 21 holdKey a` used to be triggered by `j`, now it's triggered by `h`. `SMARTMACROS:MAJOR`
+- Some new key id abbreviations have been added. `SMARTMACROS:MINOR`
+- New `powerMode` macro command and battery-related `leds.*` fade timeout variables. `SMARTMACROS:MINOR`
+
 ## [11.2.0] - 2024-10-06
 
-Device Protocol: 4.10.0 | Module Protocol: 4.3.0 | User Config: 7.1.0 | Hardware Config: 1.0.0 | Smart Macros: 2.**5**.0
-
+Device Protocol: 4.10.0 | Module Protocol: 4.3.0 | User Config: 7.1.0 | Hardware Config: 1.0.0 | Smart Macros: 2.**5.0**
 - Implement ifHold/ifTap commands. `SMARTMACROS:MINOR`
 - Fix macroStartTime for postponed time. `SMARTMACROS:PATCH`
 - Keyid parser fixes. `SMARTMACROS:PATCH`
