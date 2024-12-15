@@ -11,7 +11,7 @@ Device Protocol: 4.**11.0** | Module Protocol: 4.3.0 | User Config: **8.3.0** | 
 
 - Add support for the UHK 80. `USERCONFIG:MAJOR` `DEVICEPROTOCOL:MINOR`
 - The UHK 60 v1 and UHK 60 v2 may experience some regressions due to major refactors, but this firmware should be well-suited for everyday use, as we are not aware of any major issues.
-- The key ids have been changed to be more consistent with the UHK 80 and future keyboards. This means that old numeric key ids need to be migrated, ideally to key id abbreviations. Otherwise, for instance, `ifGesture 21 holdKey a` used to be triggered by `j`, now it's triggered by `h`. `SMARTMACROS:MAJOR`
+- The key ids have been changed to be more consistent with the UHK 80 and future keyboards. This means that old numeric key ids need to be migrated, ideally to key id abbreviations. Otherwise, for instance, `ifGesture 21 holdKey a` will be triggered by `h`, where formerly it used to be triggered by `j`. `SMARTMACROS:MAJOR`
 - Key id abbreviations for UHK 80 have been added. Previous key id abbreviations remain the same and are universal for both the UHK 80 and UHK 60 v1/v2. `SMARTMACROS:MINOR`
 - New `powerMode` macro command and battery-related `leds.*` fade timeout variables. `SMARTMACROS:MINOR`
 
