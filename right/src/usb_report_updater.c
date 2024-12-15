@@ -283,6 +283,7 @@ static void applyKeystrokePrimary(key_state_t *keyState, key_action_cached_t *ca
         bool stickyModsAreNonZero = StickyModifiers != 0 || StickyModifiersNegative != 0;
         if (stickyModifierKey == keyState && !stickyModifierShouldStick && stickyModsAreNonZero) {
             //disable the modifiers, but send one last report of modifiers without scancode
+            //do we actually want / need extra modifier report on release?
             reports->basic.modifiers |= StickyModifiers;
             StickyModifiers = 0;
             StickyModifiersNegative = 0;
@@ -458,9 +459,11 @@ static void commitKeyState(key_state_t *keyState, bool active)
     }
 
     if (PostponerCore_EventsShouldBeQueued()) {
+        Macros_ReportPrintf(NULL, "CP%c%s", active ? '+' : '-', Utils_KeyStateToKeyAbbreviation(keyState));
         PostponerCore_TrackKeyEvent(keyState, active, 255);
     } else {
         KEY_TIMING(KeyTiming_RecordKeystroke(keyState, active, CurrentTime, CurrentTime));
+        Macros_ReportPrintf(NULL, "C%c%s", active ? '+' : '-', Utils_KeyStateToKeyAbbreviation(keyState));
         keyState->current = active;
     }
     Macros_WakeBecauseOfKeystateChange();
@@ -544,6 +547,8 @@ static void updateActionStates() {
     EventVector_Unset(EventVector_StateMatrix);
     EventVector_Unset(EventVector_NativeActionsPostponing);
 
+    Macros_ReportPrintf(NULL, "U");
+
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
             key_state_t *keyState = &KeyStates[slotId][keyId];
@@ -585,6 +590,12 @@ static void updateActionStates() {
                         Postponer_LastKeyMods = 0;
                     }
                     handleEventInterrupts(keyState);
+
+                    Macros_ReportPrintf(NULL, "R+%s", Utils_KeyStateToKeyAbbreviation(keyState));
+                }
+
+                if (KeyState_DeactivatedNow(keyState)) {
+                    Macros_ReportPrintf(NULL, "R-%s", Utils_KeyStateToKeyAbbreviation(keyState));
                 }
 
                 cachedAction = &actionCache[slotId][keyId];
@@ -688,6 +699,7 @@ static void sendActiveReports() {
 
 #endif
         {
+            Utils_PrintReport("O:", ActiveUsbBasicKeyboardReport);
             MacroRecorder_RecordBasicReport(ActiveUsbBasicKeyboardReport);
 
             KEY_TIMING(KeyTiming_RecordReport(ActiveUsbBasicKeyboardReport));

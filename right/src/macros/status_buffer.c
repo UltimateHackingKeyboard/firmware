@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
+#include "debug.h"
 #include "macros/core.h"
 #include "macros/scancode_commands.h"
 #include "macros/status_buffer.h"
@@ -9,6 +10,7 @@
 #include "segment_display.h"
 #include "config_parser/parse_macro.h"
 #include "config_parser/config_globals.h"
+#include "timer.h"
 #include <math.h>
 #include <stdarg.h>
 
@@ -112,9 +114,11 @@ static void setStatusChar(char n)
         return;
     }
 
-    if (n && statusBufferLen == STATUS_BUFFER_MAX_LENGTH) {
+    if (n && statusBufferLen == STATUS_BUFFER_MAX_LENGTH && DEBUG_ROLL_STATUS_BUFFER) {
         memcpy(statusBuffer, &statusBuffer[STATUS_BUFFER_MAX_LENGTH/2], STATUS_BUFFER_MAX_LENGTH/2);
+        int16_t shiftBy = STATUS_BUFFER_MAX_LENGTH - STATUS_BUFFER_MAX_LENGTH/2;
         statusBufferLen = STATUS_BUFFER_MAX_LENGTH/2;
+        consumeStatusCharReadingPos = consumeStatusCharReadingPos > shiftBy ? consumeStatusCharReadingPos - shiftBy : 0;
     }
 
     if (n && statusBufferLen < STATUS_BUFFER_MAX_LENGTH) {
@@ -304,14 +308,20 @@ void Macros_ReportPrintf(const char* pos, const char *fmt, ...)
     char buffer[256];
     vsprintf(buffer, fmt, myargs);
 
+    static uint32_t lastUpdate = 0;
+
     indicateOut();
     if (pos != NULL) {
         reportErrorHeader("Out", findPosition(pos));
         reportError(buffer, pos, pos);
     } else {
+        Macros_SetStatusChar('+');
+        Macros_SetStatusNumSpaced(CurrentTime-lastUpdate, false);
+        Macros_SetStatusChar(' ');
         Macros_SetStatusString(buffer, NULL);
         Macros_SetStatusString("\n", NULL);
     }
+    lastUpdate = CurrentTime;
 }
 
 void Macros_ReportErrorPrintf(const char* pos, const char *fmt, ...)
