@@ -1,4 +1,5 @@
 #include <math.h>
+#include "atomicity.h"
 #include "event_scheduler.h"
 #include "key_action.h"
 #include "led_display.h"
@@ -656,9 +657,6 @@ static void updateActiveUsbReports(void)
 }
 
 void justPreprocessInput(void) {
-    // Make preprocessKeyState push new events into postponer queue.
-    EventVector_Set(EventVector_NativeActionsPostponing);
-
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
             key_state_t *keyState = &KeyStates[slotId][keyId];
@@ -759,10 +757,31 @@ static void sendActiveReports() {
     }
 }
 
+static bool blockedByKeystrokeDelay() {
+    static uint32_t postponedMasks = 0;
+    if (CurrentTime < lastBasicReportTime + Cfg.KeystrokeDelay) {
+        DISABLE_IRQ();
+        postponedMasks |= EventScheduler_Vector & EventVector_MainTriggers;
+        EventScheduler_Vector = (EventScheduler_Vector & ~EventVector_MainTriggers) | EventVector_KeystrokeDelayPostponing;
+        ENABLE_IRQ();
+
+        // Make sure to wake up postponer so that it can process the events.
+        EventScheduler_Reschedule(lastBasicReportTime + Cfg.KeystrokeDelay, EventSchedulerEvent_Postponer, "keystroke delay");
+
+        justPreprocessInput();
+        return true;
+    } else if (postponedMasks) {
+        DISABLE_IRQ();
+        EventScheduler_Vector = (EventScheduler_Vector & ~EventVector_KeystrokeDelayPostponing) | postponedMasks;
+        postponedMasks = 0;
+        ENABLE_IRQ();
+    }
+    return false;
+}
+
 void UpdateUsbReports(void)
 {
-    if (Timer_GetElapsedTime(&lastBasicReportTime) < Cfg.KeystrokeDelay) {
-        justPreprocessInput();
+    if (blockedByKeystrokeDelay()) {
         return;
     }
 

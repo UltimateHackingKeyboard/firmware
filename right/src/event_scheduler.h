@@ -49,38 +49,39 @@
        EventVector_MouseController =                       1 << 4,
        EventVector_Postponer =                             1 << 5,
        EventVector_LayerHolds =                            1 << 6,
-       EventVector_EventScheduler =                        1 << 7,
+       EventVector_SendUsbReports =                        1 << 7,
+       EventVector_ResendUsbReports =                      1 << 8,
+       EventVector_EventScheduler =                        1 << 9,
        EventVector_MainTriggers =                          ((EventVector_EventScheduler << 1) - 1),
 
 
        // some other minor triggers
-       EventVector_KeyboardLedState =                      1 << 9,
-       EventVector_UsbMacroCommandWaitingForExecution =    1 << 10,
-       EventVector_ProtocolChanged =                       1 << 11,
-       EventVector_LedManagerFullUpdateNeeded =            1 << 12,
-       EventVector_KeymapReloadNeeded =                    1 << 13,
-       EventVector_SegmentDisplayNeedsUpdate =             1 << 14,
-       EventVector_LedMapUpdateNeeded =                    1 << 15,
-       EventVector_ApplyConfig =                           1 << 16,
-       EventVector_NewMessage =                            1 << 17,
+       EventVector_KeyboardLedState =                      1 << 10,
+       EventVector_UsbMacroCommandWaitingForExecution =    1 << 11,
+       EventVector_ProtocolChanged =                       1 << 12,
+       EventVector_LedManagerFullUpdateNeeded =            1 << 13,
+       EventVector_KeymapReloadNeeded =                    1 << 14,
+       EventVector_SegmentDisplayNeedsUpdate =             1 << 15,
+       EventVector_LedMapUpdateNeeded =                    1 << 16,
+       EventVector_ApplyConfig =                           1 << 17,
+       EventVector_NewMessage =                            1 << 18,
        EventVector_AuxiliaryTriggers =                     ((EventVector_NewMessage << 1) - 1),
 
        // events that are informational only
-       EventVector_NativeActionReportsUsed =               1 << 18,
-       EventVector_MacroReportsUsed =                      1 << 19,
-       EventVector_MouseKeysReportsUsed =                  1 << 20,
-       EventVector_MouseControllerMouseReportsUsed =       1 << 21,
-       EventVector_MouseControllerKeyboardReportsUsed =    1 << 22,
-       EventVector_SendUsbReports =                        1 << 23,
-       EventVector_ResendUsbReports =                      1 << 24,
-       EventVector_NativeActionsPostponing =               1 << 25,
+       EventVector_NativeActionReportsUsed =               1 << 19,
+       EventVector_MacroReportsUsed =                      1 << 20,
+       EventVector_MouseKeysReportsUsed =                  1 << 21,
+       EventVector_MouseControllerMouseReportsUsed =       1 << 22,
+       EventVector_MouseControllerKeyboardReportsUsed =    1 << 23,
+       EventVector_NativeActionsPostponing =               1 << 24,
+       EventVector_KeystrokeDelayPostponing =              1 << 25,
        EventVector_MacroEnginePostponing =                 1 << 26,
        EventVector_MouseControllerPostponing =             1 << 27,
 
        // helper masks
        EventVector_ReportUpdateMask = EventVector_MainTriggers & ~EventVector_EventScheduler,
        EventVector_UserLogicUpdateMask = EventVector_AuxiliaryTriggers & ~EventVector_EventScheduler,
-       EventVector_SomeonePostponing = EventVector_NativeActionsPostponing | EventVector_MacroEnginePostponing | EventVector_MouseControllerPostponing,
+       EventVector_SomeonePostponing = EventVector_KeystrokeDelayPostponing | EventVector_NativeActionsPostponing | EventVector_MacroEnginePostponing | EventVector_MouseControllerPostponing,
     } event_vector_event_t;
 
 /**

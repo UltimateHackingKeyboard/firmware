@@ -192,7 +192,7 @@ static void appendEvent(postponer_event_t event)
 
 bool PostponerCore_EventsShouldBeQueued(void)
 {
-    return runState.eventsShouldBeQueued || (EventScheduler_Vector & EventVector_NativeActionsPostponing) || (EventScheduler_Vector & EventVector_MacroEnginePostponing);
+    return runState.eventsShouldBeQueued || (EventScheduler_Vector & (EventVector_KeystrokeDelayPostponing | EventVector_NativeActionsPostponing | EventVector_MacroEnginePostponing /* should here be mouse controller too? */));
 }
 
 bool PostponerCore_IsActive(void)
