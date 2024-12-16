@@ -5,8 +5,8 @@
 #include "leds.h"
 #include "shell.h"
 #include "keyboard/key_scanner.h"
-#include "legacy/ledmap.h"
-#include "legacy/slave_drivers/is31fl3xxx_driver.h"
+#include "ledmap.h"
+#include "slave_drivers/is31fl3xxx_driver.h"
 
 // Thread definitions
 

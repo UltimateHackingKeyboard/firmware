@@ -1,14 +1,16 @@
 #include <stdio.h>
 #include <zephyr/settings/settings.h>
 #include <zephyr/bluetooth/conn.h>
+#ifdef CONFIG_BT_SCAN
 #include <bluetooth/scan.h>
+#endif
 #include "bt_advertise.h"
 #include "bt_conn.h"
 #include "bt_scan.h"
 #include "device_state.h"
 #include "keyboard/oled/screens/screen_manager.h"
 #include "keyboard/oled/widgets/widget.h"
-#include "legacy/host_connection.h"
+#include "host_connection.h"
 #include "nus_client.h"
 #include "nus_server.h"
 #include "device.h"
@@ -142,12 +144,12 @@ static void connected(struct bt_conn *conn, uint8_t err) {
     if (err) {
         printk("Failed to connect to %s, err %u\n", GetPeerStringByConn(conn), err);
 
-        if (DEVICE_IS_UHK80_RIGHT) {
-            err = bt_scan_start(BT_SCAN_TYPE_SCAN_ACTIVE);
-            if (err) {
-                printk("Scanning failed to start (err %d)\n", err);
-            }
+#if DEVICE_IS_UHK80_RIGHT
+        err = bt_scan_start(BT_SCAN_TYPE_SCAN_ACTIVE);
+        if (err) {
+            printk("Scanning failed to start (err %d)\n", err);
         }
+#endif
 
         return;
     }
@@ -161,6 +163,9 @@ static void connected(struct bt_conn *conn, uint8_t err) {
                 100 // connection timeout (*10ms)
                 );
         bt_conn_le_param_update(conn, &conn_params);
+#if DEVICE_IS_UHK80_RIGHT
+        USB_DisableHid();
+#endif
     }
 
     if (peerId == PeerIdUnknown) {
@@ -170,13 +175,12 @@ static void connected(struct bt_conn *conn, uint8_t err) {
     assignPeer(bt_conn_get_dst(conn), peerId);
 
     if (peerId == PeerIdHid) {
-        // USB_DisableHid();
     } else {
         bt_conn_set_security(conn, BT_SECURITY_L4);
         // continue connection process in in `connectionSecured()`
     }
 
-    if (DEVICE_IS_UHK80_RIGHT && (peerId == PeerIdHid || peerId == PeerIdUnknown || peerId == PeerIdDongle)) {
+    if (DEVICE_IS_UHK80_RIGHT && (peerId != PeerIdLeft)) {
         BtAdvertise_Start(BtAdvertise_Type());
     }
 }
@@ -191,7 +195,7 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
         if (DEVICE_IS_UHK80_RIGHT) {
             if (peerId == PeerIdHid || peerId == PeerIdUnknown) {
                 BtAdvertise_Start(BtAdvertise_Type());
-                // USB_EnableHid();
+                USB_EnableHid();
             }
             if (peerId == PeerIdDongle) {
                 BtAdvertise_Start(BtAdvertise_Type());

@@ -48,7 +48,7 @@ Then, depending whether you want a full IDE experience or just minimal tools for
 
 - If the `build.sh` doesn't suit you, then launch the nrfutil shell:
     ```
-    nrfutil toolchain-manager launch --shell --ncs-version v2.6.1
+    nrfutil toolchain-manager launch --shell --ncs-version v2.8.0
     ```
 - In the shell, you can build (e.g.) uhk-80-left as follows:
 

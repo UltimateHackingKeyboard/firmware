@@ -19,7 +19,7 @@
 
 uint8_t DebugBuffer[USB_GENERIC_HID_IN_BUFFER_LENGTH];
 
-void UsbCommand_GetDebugBuffer(void)
+void UsbCommand_GetDebugBuffer(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer)
 {
 #ifndef __ZEPHYR__
     SetDebugBufferUint32(1, I2C_Watchdog);

@@ -57,8 +57,8 @@ static void initConfig()
     while (!IsConfigInitialized) {
         if (IsEepromInitialized) {
 
-            if (IsFactoryResetModeEnabled || UsbCommand_ApplyConfig() != UsbStatusCode_Success) {
-                UsbCommand_ApplyFactory();
+            if (IsFactoryResetModeEnabled || UsbCommand_ApplyConfig(NULL, NULL) != UsbStatusCode_Success) {
+                UsbCommand_ApplyFactory(NULL, NULL);
             }
             ShortcutParser_initialize();
             KeyIdParser_initialize();

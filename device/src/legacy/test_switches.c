@@ -1,1 +1,0 @@
-../../../right/src/test_switches.c

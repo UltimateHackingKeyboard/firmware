@@ -1,1 +1,0 @@
-../../../../right/src/config_parser/parse_module_config.c

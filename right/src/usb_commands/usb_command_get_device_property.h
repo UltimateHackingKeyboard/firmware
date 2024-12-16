@@ -1,6 +1,10 @@
 #ifndef __USB_COMMAND_GET_DEVICE_PROPERTY_H__
 #define __USB_COMMAND_GET_DEVICE_PROPERTY_H__
 
+// Includes:
+
+    #include <stdint.h>
+
 // Typedefs:
 
     typedef enum {
@@ -31,6 +35,6 @@
 
 // Functions:
 
-    void UsbCommand_GetDeviceProperty(void);
+    void UsbCommand_GetDeviceProperty(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer);
 
 #endif

@@ -1,0 +1,50 @@
+target_include_directories(${PROJECT_NAME} PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/arduino_hid
+)
+
+add_subdirectory(config_parser)
+add_subdirectory(layouts)
+add_subdirectory(macros)
+add_subdirectory(peripherals)
+add_subdirectory(slave_drivers)
+add_subdirectory(usb_commands)
+add_subdirectory(usb_interfaces)
+
+target_sources(${PROJECT_NAME} PRIVATE
+    caret_config.c
+    config_manager.c
+    debug.c
+    eeprom.c
+    event_scheduler.c
+    host_connection.c
+    i2c.c
+    i2c_error_logger.c
+    key_states.c
+    keymap.c
+    layer.c
+    layer_stack.c
+    layer_switcher.c
+    led_display.c
+    led_manager.c
+    ledmap.c
+    macro_events.c
+    macro_recorder.c
+    mouse_controller.c
+    mouse_keys.c
+    module.c
+    postponer.c
+    power_mode.c
+    secondary_role_driver.c
+    segment_display.c
+    slave_scheduler.c
+    storage.c
+    str_utils.c
+    stubs.c
+    test_switches.c
+    timer.c
+    usb_protocol_handler.c
+    usb_report_updater.c
+    user_logic.c
+    utils.c
+)

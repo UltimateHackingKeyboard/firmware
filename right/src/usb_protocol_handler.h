@@ -7,6 +7,7 @@
     #include <stddef.h>
     #include <stdint.h>
     #include "usb_interfaces/usb_interface_generic_hid.h"
+    #include "buffer.h"
 #ifdef __ZEPHYR__
     #include <zephyr/bluetooth/bluetooth.h>
 #else
@@ -16,6 +17,17 @@
 // Macros:
 
     #define USB_STATUS_CODE_SIZE 1
+
+    #define GetUsbRxBufferUint8(OFFSET) (GetBufferUint8(GenericHidOutBuffer, OFFSET))
+    #define GetUsbRxBufferUint16(OFFSET) (GetBufferUint16(GenericHidOutBuffer, OFFSET))
+    #define GetUsbRxBufferUint32(OFFSET) (GetBufferUint32(GenericHidOutBuffer, OFFSET))
+
+    #define SetUsbTxBufferUint8(OFFSET, VALUE) (SetBufferUint8(GenericHidInBuffer, OFFSET, VALUE))
+    #define SetUsbTxBufferUint16(OFFSET, VALUE) (SetBufferUint16(GenericHidInBuffer, OFFSET, VALUE))
+    #define SetUsbTxBufferUint32(OFFSET, VALUE) (SetBufferUint32(GenericHidInBuffer, OFFSET, VALUE))
+
+    #define GetUsbRxBufferBleAddress(OFFSET) (GetBufferBleAddress(GenericHidOutBuffer, OFFSET))
+    #define SetUsbTxBufferBleAddress(OFFSET, VALUE) (SetBufferBleAddress(GenericHidInBuffer, OFFSET, VALUE))
 
 // Typedefs:
 
@@ -77,19 +89,9 @@
 // Functions:
 
 #ifdef __ZEPHYR__
-    extern bool CommandProtocolTx(const uint8_t* data, size_t size);
-
-    void SetUsbTxBufferBleAddress(uint32_t offset, const bt_addr_le_t* addr);
-    extern bt_addr_le_t GetUsbRxBufferBleAddress(uint32_t offset);
+    bt_addr_le_t GetBufferBleAddress(const uint8_t *GenericHidOutBuffer, uint32_t offset);
+    void SetBufferBleAddress(uint8_t *GenericHidInBuffer, uint32_t offset, const bt_addr_le_t* addr);
 #endif
-    void UsbProtocolHandler(void);
-
-    uint8_t GetUsbRxBufferUint8(uint32_t offset);
-    uint16_t GetUsbRxBufferUint16(uint32_t offset);
-    uint32_t GetUsbRxBufferUint32(uint32_t offset);
-
-    void SetUsbTxBufferUint8(uint32_t offset, uint8_t value);
-    void SetUsbTxBufferUint16(uint32_t offset, uint16_t value);
-    void SetUsbTxBufferUint32(uint32_t offset, uint32_t value);
+    void UsbProtocolHandler(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer);
 
 #endif

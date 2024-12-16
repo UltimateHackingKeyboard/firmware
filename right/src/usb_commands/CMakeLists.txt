@@ -1,0 +1,24 @@
+target_sources(${PROJECT_NAME} PRIVATE
+    usb_command_apply_config.c
+    usb_command_draw_oled.c
+    usb_command_exec_macro_command.c
+    #usb_command_get_adc_value.c
+    usb_command_get_debug_buffer.c
+    usb_command_get_device_property.c
+    usb_command_get_device_state.c
+    usb_command_get_module_property.c
+    usb_command_get_new_pairings.c
+    #usb_command_get_slave_i2c_errors.c
+    usb_command_get_variable.c
+    #usb_command_jump_to_module_bootloader.c
+    usb_command_launch_storage_transfer.c
+    usb_command_pairing.c
+    usb_command_read_config.c
+    usb_command_reenumerate.c
+    #usb_command_send_kboot_command_to_module.c
+    #usb_command_set_i2c_baudrate.c
+    #usb_command_set_led_pwm_brightness.c
+    usb_command_set_variable.c
+    usb_command_switch_keymap.c
+    usb_command_write_config.c
+)

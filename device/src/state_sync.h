@@ -5,12 +5,12 @@
 
     #include <inttypes.h>
     #include <stdbool.h>
-    #include "legacy/layer_switcher.h"
-    #include "legacy/key_action.h"
-    #include "legacy/module.h"
+    #include "layer_switcher.h"
+    #include "key_action.h"
+    #include "module.h"
     #include "keyboard/charger.h"
     #include "shared/attributes.h"
-    #include "legacy/slave_drivers/uhk_module_driver.h"
+    #include "slave_drivers/uhk_module_driver.h"
     #include "versioning.h"
 
 // Macros:

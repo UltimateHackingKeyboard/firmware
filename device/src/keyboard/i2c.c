@@ -2,11 +2,11 @@
 #include <zephyr/sys/printk.h>
 #include "device.h"
 #include "i2c_compatibility.h"
-#include "legacy/timer.h"
+#include "timer.h"
 #include "shared/slave_protocol.h"
-#include "legacy/slave_scheduler.h"
-#include "legacy/slave_drivers/uhk_module_driver.h"
-#include "legacy/i2c.h"
+#include "slave_scheduler.h"
+#include "slave_drivers/uhk_module_driver.h"
+#include "i2c.h"
 #include "keyboard/i2c.h"
 
 // Thread definitions

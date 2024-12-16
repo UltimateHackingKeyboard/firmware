@@ -3,7 +3,7 @@
 #include "slot.h"
 #include "slave_drivers/uhk_module_driver.h"
 
-void UsbCommand_JumpToModuleBootloader(void)
+void UsbCommand_JumpToModuleBootloader(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer)
 {
     uint8_t slotId = GetUsbRxBufferUint8(1);
 

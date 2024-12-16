@@ -1,9 +1,10 @@
 #!/bin/bash
 
-NCS_VERSION=v2.6.1
+NCS_VERSION=v2.8.0
 
-BUILD_SESSION_NAME="buildsession"
-UART_SESSION_NAME="uartsession"
+ROOT_HASH=`realpath . | md5sum | sed 's/ .*//g'`
+BUILD_SESSION_NAME="buildsession_$ROOT_HASH"
+UART_SESSION_NAME="uartsession_$ROOT_HASH"
 
 function help() {
     cat << END
@@ -224,6 +225,12 @@ function createCentralCompileCommands() {
     mv $TEMP_COMMANDS $ROOT/compile_commands.json
 }
 
+function getExtraConfFiles() {
+    DEVICE=$1
+    EXTRA_CONF_FILES=`jq -r '.configurePresets[] | select(.name == "build/'"$DEVICE"'") | .cacheVariables.EXTRA_CONF_FILE' device/CMakePresets.json`
+    echo "$EXTRA_CONF_FILES" | sed 's=${sourceDir}='"$ROOT"/device'=g'
+}
+
 function performAction() {
     DEVICE=$1
     ACTION=$2
@@ -240,7 +247,7 @@ function performAction() {
             ./generate-versions.mjs
             ;;
         clean)
-            rm -rf device/build .west bootloader modules nrf nrfxlib test tools zephyr
+            rm -rf ../bootloader  ../c2usb  ../hal_nxp  ../modules  ../nrf  ../nrfxlib  ../zephyr ../.west
             ;;
         setup)
             # update this according to README
@@ -260,8 +267,17 @@ function performAction() {
             nrfutil toolchain-manager launch --shell --ncs-version $NCS_VERSION << END
                 unset PYTHONPATH
                 unset PYTHONHOME
-                ZEPHYR_TOOLCHAIN_VARIANT=zephyr west build --build-dir "$ROOT/device/build/$DEVICE" "$ROOT/device" --pristine --board "$DEVICE" --no-sysbuild -- -DNCS_TOOLCHAIN_VERSION=NONE -DEXTRA_CONF_FILE=prj.conf.overlays/$DEVICE.prj.conf -DBOARD_ROOT="$ROOT" -Dmcuboot_OVERLAY_CONFIG="$ROOT/device/child_image/mcuboot.conf;$ROOT/device/child_image/$DEVICE.mcuboot.conf"
-
+                ZEPHYR_TOOLCHAIN_VARIANT=zephyr west build \
+                    --build-dir "$ROOT/device/build/$DEVICE" "$ROOT/device" \
+                    --pristine \
+                    --board "$DEVICE" \
+                    --no-sysbuild \
+                    -- \
+                    -DNCS_TOOLCHAIN_VERSION=NONE \
+                    -DCONF_FILE="$ROOT/device/prj_release.conf" \
+                    -DEXTRA_CONF_FILE="`getExtraConfFiles $DEVICE`" \
+                    -DBOARD_ROOT="$ROOT" \
+                    -Dmcuboot_OVERLAY_CONFIG="$ROOT/device/child_image/mcuboot.conf;$ROOT/device/child_image/$DEVICE.mcuboot.conf"
 END
             createCentralCompileCommands
             ;;

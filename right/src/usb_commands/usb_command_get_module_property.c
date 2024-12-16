@@ -10,7 +10,7 @@
 #include "utils.h"
 #include "versioning.h"
 
-void UsbCommand_GetModuleProperty()
+void UsbCommand_GetModuleProperty(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer)
 {
     slot_t slotId = GetUsbRxBufferUint8(1);
 

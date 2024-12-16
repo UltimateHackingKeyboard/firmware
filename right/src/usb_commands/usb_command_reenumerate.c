@@ -9,7 +9,7 @@
 #include "usb_commands/usb_command_reenumerate.h"
 #include "usb_protocol_handler.h"
 
-void UsbCommand_Reenumerate(void)
+void UsbCommand_Reenumerate(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer)
 {
 #ifdef __ZEPHYR__
     bootmode_set(BOOT_MODE_TYPE_BOOTLOADER);

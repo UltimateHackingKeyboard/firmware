@@ -15,8 +15,8 @@
 
 // Functions:
 
-    uint8_t UsbCommand_ApplyConfig(void);
-    void UsbCommand_ApplyFactory(void);
-    void UsbCommand_ApplyConfigAsync(void);
+    uint8_t UsbCommand_ApplyConfig(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer);
+    void UsbCommand_ApplyFactory(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer);
+    void UsbCommand_ApplyConfigAsync(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer);
 
 #endif

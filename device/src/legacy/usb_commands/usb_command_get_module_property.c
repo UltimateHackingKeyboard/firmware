@@ -1,1 +1,0 @@
-../../../../right/src/usb_commands/usb_command_get_module_property.c

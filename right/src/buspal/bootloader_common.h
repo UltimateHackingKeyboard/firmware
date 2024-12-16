@@ -5,7 +5,6 @@
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include "bootloader_common.h"
 #include "fsl_common.h"
 
 ////////////////////////////////////////////////////////////////////////////////

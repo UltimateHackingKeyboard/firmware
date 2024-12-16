@@ -6,6 +6,7 @@
 #include "hid/rdf/descriptor.hpp"
 #include "hid/report_protocol.hpp"
 #include "report_ids.h"
+#include "device.h"
 
 namespace hid::page {
 enum class ugl : uint8_t;
@@ -61,9 +62,10 @@ class command_app : public hid::application {
     using report_in = report_base<hid::report::type::INPUT, report_ids::IN_COMMAND>;
     using report_out = report_base<hid::report::type::OUTPUT, report_ids::OUT_COMMAND>;
 
+    static command_app& usb_handle();
+#if DEVICE_IS_UHK80_RIGHT
     static command_app& handle();
-
-    bool send(std::span<const uint8_t> buffer);
+#endif
 
     void start(hid::protocol prot) override;
     void set_report(hid::report::type type, const std::span<const uint8_t>& data) override;
