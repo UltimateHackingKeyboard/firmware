@@ -141,6 +141,10 @@ static void prependEvent(postponer_event_t event)
         && bufferSize == 0 ? CurrentTime : lastPressTime;
     bufferSize = bufferSize < POSTPONER_BUFFER_SIZE ? bufferSize + 1 : bufferSize;
     bufferPosition--;
+
+    if (bufferSize == 1) {
+        EventVector_Set(EventVector_Postponer);
+    }
 }
 
 static void appendEvent(postponer_event_t event)
@@ -158,6 +162,10 @@ static void appendEvent(postponer_event_t event)
 
     lastPressTime = event.type == PostponerEventType_PressKey ? CurrentTime : lastPressTime;
     bufferSize = bufferSize < POSTPONER_BUFFER_SIZE ? bufferSize + 1 : bufferSize;
+
+    if (bufferSize == 1) {
+        EventVector_Set(EventVector_Postponer);
+    }
 }
 
 //######################

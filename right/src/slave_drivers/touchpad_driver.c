@@ -1,5 +1,6 @@
 #include "i2c_addresses.h"
 #include "i2c.h"
+#include "macros/status_buffer.h"
 #include "slave_scheduler.h"
 #include "slave_drivers/uhk_module_driver.h"
 #include "slave_protocol.h"
@@ -11,6 +12,7 @@
 #include "debug.h"
 #include "timer.h"
 #include "macros/core.h"
+#include <stdint.h>
 
 #ifndef __ZEPHYR__
 #include "peripherals/test_led.h"
@@ -164,7 +166,7 @@ slave_result_t TouchpadDriver_Update(uint8_t uhkModuleDriverId)
 
             ModuleConnectionStates[UhkModuleDriverId_RightModule].lastTimeConnected = CurrentTime;
 
-            if (deltaX || deltaY || *(uint16_t*)&gestureEvents) {
+            if (noFingers || deltaX || deltaY || *(uint16_t*)&gestureEvents || *(uint16_t*)&TouchpadEvents) {
                 bool somethingChanged = false;
 
                 if (

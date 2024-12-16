@@ -2,6 +2,7 @@
 #include <string.h>
 #include "key_action.h"
 #include "layer.h"
+#include "macros/status_buffer.h"
 #include "slave_protocol.h"
 #include "usb_interfaces/usb_interface_mouse.h"
 #include "slave_drivers/uhk_module_driver.h"
@@ -203,7 +204,7 @@ static tap_hold_action_t tapHoldStateMachine(tap_hold_event_t event)
     return 0;
 }
 
-static void feedTapHoldStateMachine(touchpad_events_t events)
+static bool feedTapHoldStateMachine(touchpad_events_t events)
 {
     key_state_t* singleTap = &KeyStates[SlotId_RightModule][0];
     //todo: finetune this value. Low value will yield natural doubletaps, but requires fast doubletap to trigger tapAndHold.
@@ -269,12 +270,14 @@ static void feedTapHoldStateMachine(touchpad_events_t events)
 
     lastSingleTapValue &= events.singleTap;
     lastTapAndHoldValue &= events.tapAndHold;
+
+    return event != 0;
 }
 
 static void processTouchpadActions(touchpad_events_t events) {
 
     if (events.singleTap || events.tapAndHold || tapHoldAutomatonState != State_Zero) {
-        feedTapHoldStateMachine(events);
+        while (feedTapHoldStateMachine(events)) {}
     }
 
     KeyStates[SlotId_RightModule][1].hardwareSwitchState = events.twoFingerTap;
