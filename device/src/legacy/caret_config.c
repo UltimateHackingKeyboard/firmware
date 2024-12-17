@@ -1,1 +1,0 @@
-../../../right/src/caret_config.c

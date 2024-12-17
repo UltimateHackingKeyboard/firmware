@@ -1,5 +1,5 @@
 #include "flash.h"
-#include "legacy/storage.h"
+#include "storage.h"
 #include <zephyr/kernel.h>
 
 const struct flash_area *hardwareConfigArea;

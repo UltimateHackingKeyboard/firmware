@@ -10,8 +10,8 @@
 #include <zephyr/shell/shell.h>
 #include "bt_conn.h"
 #include "keyboard/charger.h"
-#include "legacy/ledmap.h"
-#include "legacy/event_scheduler.h"
+#include "ledmap.h"
+#include "event_scheduler.h"
 
 shell_t Shell = {
     .keyLog = 0,

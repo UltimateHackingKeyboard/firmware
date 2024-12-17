@@ -11,7 +11,7 @@
 #include "usb_protocol_handler.h"
 #include "eeprom.h"
 
-void UsbCommand_ReadConfig()
+void UsbCommand_ReadConfig(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer)
 {
     config_buffer_id_t configBufferId = GetUsbRxBufferUint8(1);
     uint8_t length = GetUsbRxBufferUint8(2);

@@ -1,11 +1,10 @@
 #ifndef __MOUSE_APP_HEADER__
 #define __MOUSE_APP_HEADER__
 
+#include "app_base.hpp"
 #include "double_buffer.hpp"
 #include "hid/app/mouse.hpp"
-#include "hid/application.hpp"
 #include "hid/page/consumer.hpp"
-#include "hid/report_protocol.hpp"
 #include "report_ids.h"
 
 enum class mouse_button {
@@ -19,12 +18,10 @@ enum class mouse_button {
     _8
 };
 
-class mouse_app : public hid::application {
+class mouse_app : public app_base {
     static constexpr auto LAST_BUTTON = hid::page::button(20);
     static constexpr int16_t AXIS_LIMIT = 4096;
     static constexpr int8_t WHEEL_LIMIT = 127;
-
-    mouse_app() : application(report_protocol()) {}
 
   public:
     static constexpr auto report_desc()
@@ -98,27 +95,12 @@ class mouse_app : public hid::application {
     void set_report_state(const mouse_report_base<> &data);
 
   private:
-    static hid::report_protocol report_protocol()
-    {
-        static constexpr const auto rd{report_desc()};
-        constexpr hid::report_protocol rp{rd};
-        return rp;
-    }
+    mouse_app() : app_base(this, report_buffer_) {}
 
     void start(hid::protocol prot) override;
-    void stop() override;
-    void set_report(hid::report::type type, const std::span<const uint8_t> &data) override
-    {
-        // no FEATURE or OUTPUT reports
-    }
-    void in_report_sent(const std::span<const uint8_t> &data) override;
-    void get_report(hid::report::selector select, const std::span<uint8_t> &buffer) override;
-    void send_buffer(uint8_t buf_idx);
 
     using mouse_report = mouse_report_base<report_ids::IN_MOUSE>;
-    double_buffer<mouse_report> report_buffer_{};
-
-    bool swap_buffers(uint8_t buf_idx);
+    C2USB_USB_TRANSFER_ALIGN(mouse_report, report_buffer_){};
 };
 
 using mouse_buffer = mouse_app::mouse_report_base<>;

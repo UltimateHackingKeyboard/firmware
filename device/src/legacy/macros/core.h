@@ -1,1 +1,0 @@
-../../../../right/src/macros/core.h

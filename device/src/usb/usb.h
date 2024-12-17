@@ -8,10 +8,6 @@
     #include <inttypes.h>
     #include <stdbool.h>
 
-// Macros:
-
-    #define SEMAPHORE_RESET_TIMEOUT 100
-
 // Typedefs:
 
     typedef enum

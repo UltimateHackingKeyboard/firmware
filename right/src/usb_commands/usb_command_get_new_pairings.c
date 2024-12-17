@@ -7,12 +7,20 @@
 #include <zephyr/bluetooth/addr.h>
 #include "host_connection.h"
 
-static uint8_t idx;
-static uint8_t count;
+typedef struct {
+    const uint8_t *OutBuffer;
+    uint8_t *InBuffer;
+    uint8_t idx;
+    uint8_t count;
+} CommandUserData;
+
 
 static void bt_foreach_bond_cb(const struct bt_bond_info *info, void *user_data)
 {
-    if (idx + BLE_ADDR_LEN+1 >= USB_GENERIC_HID_IN_BUFFER_LENGTH) {
+    CommandUserData *data = (CommandUserData *)user_data;
+    uint8_t *GenericHidInBuffer = data->InBuffer;
+
+    if ((data->idx + BLE_ADDR_LEN + 1) >= USB_GENERIC_HID_IN_BUFFER_LENGTH) {
         return;
     }
 
@@ -20,22 +28,26 @@ static void bt_foreach_bond_cb(const struct bt_bond_info *info, void *user_data)
         return;
     }
 
-    count++;
+    data->count++;
 
-    SetUsbTxBufferBleAddress(idx, &info->addr);
-    idx += BLE_ADDR_LEN;
+    SetUsbTxBufferBleAddress(data->idx, &info->addr);
+    data->idx += BLE_ADDR_LEN;
 
     // Name placeholder
-    SetUsbTxBufferUint8(idx++, 0);
+    SetUsbTxBufferUint8(data->idx++, 0);
 }
 
-void UsbCommand_GetNewPairings(void) {
-    count = 0;
-    idx = 2;
+void UsbCommand_GetNewPairings(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer) {
+    CommandUserData data = {
+        .OutBuffer = GenericHidOutBuffer,
+        .InBuffer = GenericHidInBuffer,
+        .idx = 2,
+        .count = 0
+    };
 
-    bt_foreach_bond(BT_ID_DEFAULT, bt_foreach_bond_cb, NULL);
+    bt_foreach_bond(BT_ID_DEFAULT, bt_foreach_bond_cb, &data);
 
-    SetUsbTxBufferUint8(1, count);
+    SetUsbTxBufferUint8(1, data.count);
 
     Bt_NewPairedDevice = false;
 }

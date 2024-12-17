@@ -6,7 +6,7 @@
 #include "usb_protocol_handler.h"
 #include "eeprom.h"
 
-void UsbCommand_WriteConfig(config_buffer_id_t configBufferId)
+void UsbCommand_WriteConfig(config_buffer_id_t configBufferId, const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer)
 {
     uint8_t length = GetUsbRxBufferUint8(1);
     uint16_t offset = GetUsbRxBufferUint16(2);

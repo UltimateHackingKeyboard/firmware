@@ -4,10 +4,10 @@
 #include "keyboard/oled/oled.h"
 #include "keyboard/oled/oled_buffer.h"
 #include "logger.h"
-#include "legacy/lufa/HIDClassCommon.h"
+#include "lufa/HIDClassCommon.h"
 #include "bt_conn.h"
 #include "screen_manager.h"
-#include "legacy/key_action.h"
+#include "key_action.h"
 
 static widget_t splitterWidget;
 static widget_t questionLine;

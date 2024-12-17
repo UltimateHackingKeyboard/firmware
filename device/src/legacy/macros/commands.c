@@ -1,1 +1,0 @@
-../../../../right/src/macros/commands.c

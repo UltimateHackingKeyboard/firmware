@@ -15,7 +15,7 @@
 #define BUF_KEY_R_POS 7
 #define BUF_KEY_C_POS 23
 
-void UsbCommand_GetPairingData(void) {
+void UsbCommand_GetPairingData(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer) {
     struct bt_le_oob* oob = BtPair_GetLocalOob();
 
     SetUsbTxBufferBleAddress(BUF_ADR_POS, &oob->addr);
@@ -23,7 +23,7 @@ void UsbCommand_GetPairingData(void) {
     memcpy(GenericHidInBuffer + BUF_KEY_C_POS, oob->le_sc_data.c, BLE_KEY_LEN);
 }
 
-void UsbCommand_SetPairingData(void) {
+void UsbCommand_SetPairingData(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer) {
     struct bt_le_oob oob;
     uint8_t peerId = GenericHidOutBuffer[BUF_PEER_POS];
 
@@ -53,27 +53,31 @@ void UsbCommand_SetPairingData(void) {
     }
 }
 
-void UsbCommand_PairCentral(void) {
+void UsbCommand_PairCentral(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer) {
+#ifdef CONFIG_BT_CENTRAL
     BtPair_PairCentral();
+#endif
 }
 
-void UsbCommand_PairPeripheral(void) {
+void UsbCommand_PairPeripheral(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer) {
+#ifdef CONFIG_BT_PERIPHERAL
     BtPair_PairPeripheral();
+#endif
 }
 
 // If zero address is provided, all existing bonds will be deleted
-void UsbCommand_Unpair(void) {
+void UsbCommand_Unpair(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer) {
     bt_addr_le_t addr = GetUsbRxBufferBleAddress(1);
     BtPair_Unpair(addr);
 }
 
-void UsbCommand_IsPaired(void) {
+void UsbCommand_IsPaired(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer) {
     bt_addr_le_t addr = GetUsbRxBufferBleAddress(1);
     bool isPaired = BtPair_IsDeviceBonded(&addr);
     SetUsbTxBufferUint8(1, isPaired);
 }
 
-void UsbCommand_EnterPairingMode(void) {
+void UsbCommand_EnterPairingMode(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer) {
     BtManager_EnterPairingMode();
 }
 

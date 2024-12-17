@@ -6,7 +6,7 @@
     #include <inttypes.h>
     #include <stdbool.h>
     #include "../widgets/widget.h"
-    #include "legacy/key_action.h"
+    #include "key_action.h"
 
 // Macros:
 

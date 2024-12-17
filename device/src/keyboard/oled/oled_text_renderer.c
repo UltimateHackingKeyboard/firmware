@@ -10,7 +10,7 @@
 #include "widgets/widget.h"
 #include <sys/_stdint.h>
 #include <zephyr/sys/util.h>
-#include "legacy/str_utils.h"
+#include "str_utils.h"
 
 static int16_t computeAlignment(int16_t width, int16_t objectWidth, int16_t alignment)
 {

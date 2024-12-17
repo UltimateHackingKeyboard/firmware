@@ -1,1 +1,0 @@
-../../../../right/src/usb_commands/usb_command_launch_storage_transfer.h

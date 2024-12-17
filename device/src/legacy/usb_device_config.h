@@ -1,1 +1,0 @@
-../../../right/src/usb_device_config.h

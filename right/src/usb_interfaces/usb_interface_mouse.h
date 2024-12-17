@@ -6,10 +6,6 @@
     #include "usb_api.h"
     // #include "usb_descriptors/usb_descriptor_device.h"
 
-#ifdef __ZEPHYR__
-    #include "keyboard/legacy_ports.h"
-#endif
-
 // Macros:
 
     #define USB_MOUSE_INTERFACE_INDEX 1

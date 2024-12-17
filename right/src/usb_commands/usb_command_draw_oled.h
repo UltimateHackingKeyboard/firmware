@@ -11,6 +11,6 @@
 
 // Functions:
 
-    void UsbCommand_DrawOled();
+    void UsbCommand_DrawOled(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer);
 
 #endif
