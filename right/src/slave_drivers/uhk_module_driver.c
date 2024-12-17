@@ -436,6 +436,7 @@ slave_result_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
             res.status = tx(i2cAddress);
             res.hold = true;
             moduleConnectionState->lastTimeConnected = CurrentTime;
+            moduleConnectionState->moduleId = uhkModuleState->moduleId;
             *uhkModulePhase = UhkModulePhase_ReceiveKeystates;
             break;
         case UhkModulePhase_ReceiveKeystates:
