@@ -8,6 +8,7 @@
 #include "ledmap.h"
 #include "led_display.h"
 #include "config_manager.h"
+#include "module.h"
 #include "parse_keymap.h"
 #include "slave_protocol.h"
 #include "slot.h"
@@ -191,9 +192,8 @@ static parser_error_t parseKeyActions(uint8_t targetLayer, config_buffer_t *buff
     return ParserError_Success;
 }
 
-static parser_error_t parseModule(config_buffer_t *buffer, uint8_t layer, parse_mode_t parseMode)
+static parser_error_t parseModule(config_buffer_t *buffer, uint8_t moduleId, uint8_t layer, parse_mode_t parseMode)
 {
-    uint8_t moduleId = ReadUInt8(buffer);
     return parseKeyActions(layer, buffer, moduleId, parseMode);
 }
 
@@ -243,29 +243,30 @@ static parser_error_t parseLayer(config_buffer_t *buffer, uint8_t layer, parse_m
     parser_error_t errorCode;
     uint16_t moduleCount = ReadCompactLength(buffer);
 
+    bool currentRightModuleWasRead = false;
+    bool currentLeftModuleWasRead = false;
+
     if (moduleCount > ModuleId_AllCount) {
         ConfigParser_Error(buffer, "Invalid module count: %d", moduleCount);
         return ParserError_InvalidModuleCount;
     }
     for (uint8_t moduleIdx = 0; moduleIdx < moduleCount; moduleIdx++) {
-        errorCode = parseModule(buffer, layer, parseMode);
+        uint8_t moduleId = ReadUInt8(buffer);
+
+        currentRightModuleWasRead |= ModuleIdToSlotId(moduleId) == SlotId_RightModule && IsModuleAttached(moduleId);
+        currentLeftModuleWasRead |= ModuleIdToSlotId(moduleId) == SlotId_LeftModule && IsModuleAttached(moduleId);
+
+        errorCode = parseModule(buffer, moduleId, layer, parseMode);
         if (errorCode != ParserError_Success) {
             return errorCode;
         }
     }
 
-    // if current config doesn't contain configuration of the connected module, fill in hardwired values
-    bool rightUhkModuleUnmapped = moduleCount <= UhkModuleStates[UhkModuleSlaveDriver_SlotIdToDriverId(SlotId_RightModule)].moduleId;
-    bool touchpadUnmapped = moduleCount <= ModuleId_TouchpadRight && IsModuleAttached(ModuleId_TouchpadRight);
-    if (rightUhkModuleUnmapped || touchpadUnmapped) {
+    if (!currentRightModuleWasRead) {
         applyDefaultRightModuleActions(layer, parseMode);
     }
 
-    // if current config doesn't contain configuration of the connected module, fill in hardwired values
-    uint8_t leftModuleId = UhkModuleStates[UhkModuleSlaveDriver_SlotIdToDriverId(SlotId_LeftModule)].moduleId;
-    bool leftUhkModuleUnmapped = moduleCount <= leftModuleId;
-    bool keyclusterUnmapped = moduleCount <= ModuleId_KeyClusterLeft;
-    if ((leftModuleId != 0 && leftUhkModuleUnmapped) || (leftModuleId == 0 && keyclusterUnmapped)) {
+    if (!currentLeftModuleWasRead) {
         applyDefaultLeftModuleActions(layer, parseMode);
     }
 
