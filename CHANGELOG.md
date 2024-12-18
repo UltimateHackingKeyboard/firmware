@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [12.0.1] - 2024-12-18
+
+Device Protocol: 4.11.0 | Module Protocol: 4.3.0 | User Config: 8.3.0 | Hardware Config: 1.0.0 | Smart Macros: 3.0.0
+
+- Fix left half dissapearing in Agent.
+- Fix spurious loads of default module mappings.
+- Fix touchpad gestures.
+
 ## [12.0.0] - 2024-12-15
 
 Device Protocol: 4.**11.0** | Module Protocol: 4.3.0 | User Config: **8.3.0** | Hardware Config: 1.0.0 | Smart Macros: **3.0.0**
@@ -14,6 +22,7 @@ Device Protocol: 4.**11.0** | Module Protocol: 4.3.0 | User Config: **8.3.0** | 
 - The key ids have been changed to be more consistent with the UHK 80 and future keyboards. This means that old numeric key ids need to be migrated, ideally to key id abbreviations. Otherwise, for instance, `ifGesture 21 holdKey a` will be triggered by `h`, where formerly it used to be triggered by `j`. `SMARTMACROS:MAJOR`
 - Key id abbreviations for UHK 80 have been added. Previous key id abbreviations remain the same and are universal for both the UHK 80 and UHK 60 v1/v2. `SMARTMACROS:MINOR`
 - New `powerMode` macro command and battery-related `leds.*` fade timeout variables. `SMARTMACROS:MINOR`
+- Implement high resolution scrolling for the UHK 60 v1 and UHK 60 v2.
 
 ## [11.2.0] - 2024-10-06
 
