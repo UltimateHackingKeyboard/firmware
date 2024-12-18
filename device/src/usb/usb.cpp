@@ -10,6 +10,7 @@ extern "C" {
 #include <zephyr/kernel.h>
 #include "logger.h"
 #include "legacy/power_mode.h"
+#include "connections.h"
 }
 #include "command_app.hpp"
 #include "controls_app.hpp"
@@ -250,18 +251,23 @@ extern "C" void HOGP_Disable()
 
 void hidmgr_set_transport(const hid::transport* tp)
 {
+    printk("=== set transport\n");
+    connection_id_t usbHidConnId = DEVICE_IS_UHK80_LEFT ? ConnectionId_UsbHidLeft : ConnectionId_UsbHidRight;
+
     // tp is the transport of the keyboard app
     if (tp == nullptr) {
-        DeviceState_SetConnection(ConnectionId_BluetoothHid, ConnectionType_None);
-        DeviceState_SetConnection(ConnectionId_UsbHid, ConnectionType_None);
+        Connections_SetState(ConnectionId_BtHid, ConnectionState_Disconnected);
+        Connections_SetState(usbHidConnId, ConnectionState_Disconnected);
     }
 #if DEVICE_IS_UHK80_RIGHT
     else if (tp == &hogp_manager::instance().main_service()) {
-        DeviceState_SetConnection(ConnectionId_BluetoothHid, ConnectionType_Bt);
+        Connections_SetState(ConnectionId_BtHid, ConnectionState_Ready);
+        Connections_SetState(usbHidConnId, ConnectionState_Disconnected);
     }
 #endif
     else {
-        DeviceState_SetConnection(ConnectionId_UsbHid, ConnectionType_Usb);
+        Connections_SetState(ConnectionId_BtHid, ConnectionState_Disconnected);
+        Connections_SetState(usbHidConnId, ConnectionState_Ready);
     }
 }
 

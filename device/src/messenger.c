@@ -1,5 +1,6 @@
 #include "messenger.h"
 #include "bt_conn.h"
+#include "connections.h"
 #include "device.h"
 #include "autoconf.h"
 #include "link_protocol.h"
@@ -17,6 +18,8 @@
 #include "legacy/str_utils.h"
 #include "legacy/event_scheduler.h"
 #include "legacy/slave_drivers/uhk_module_driver.h"
+#include "macros/status_buffer.h"
+#include "connections.h"
 
 #if DEVICE_IS_KEYBOARD
 #include "keyboard/uart.h"
@@ -31,58 +34,54 @@ typedef enum {
     MessengerChannel_None,
 } messenger_channel_t;
 
-static messenger_channel_t determineChannel(device_id_t dst) {
+static connection_id_t determineChannel(device_id_t dst) {
 #if DEVICE_IS_KEYBOARD
-    if (Uart_IsConnected()) {
-        if (DEVICE_IS_UHK80_LEFT) {
-            switch (dst) {
-                case DeviceId_Uhk_Dongle:
-                case DeviceId_Uhk80_Right:
-                    return MessengerChannel_Uart;
-                default:
-                    break;
-            }
+    if (DEVICE_IS_UHK80_LEFT && Connections_IsReady(ConnectionId_UartRight)) {
+        switch (dst) {
+            case DeviceId_Uhk_Dongle:
+            case DeviceId_Uhk80_Right:
+                return ConnectionId_UartRight;
+            default:
+                break;
         }
+    }
 
-        if (DEVICE_IS_UHK80_RIGHT) {
-            switch (dst) {
-                case DeviceId_Uhk_Dongle:
-                    break;
-                case DeviceId_Uhk80_Left:
-                    return MessengerChannel_Uart;
-                default:
-                    break;
-            }
+    if (DEVICE_IS_UHK80_RIGHT && Connections_IsReady(ConnectionId_UartLeft)) {
+        switch (dst) {
+            case DeviceId_Uhk_Dongle:
+                break;
+            case DeviceId_Uhk80_Left:
+                return ConnectionId_UartLeft;
+            default:
+                break;
         }
     }
 #endif
 
-    if (DEVICE_IS_UHK80_LEFT && Bt_DeviceIsConnected(DeviceId_Uhk80_Right)) {
+    if (DEVICE_IS_UHK80_LEFT && Connections_IsReady(ConnectionId_NusClientRight)) {
         switch (dst) {
             case DeviceId_Uhk_Dongle:
             case DeviceId_Uhk80_Right:
-                if (Bt_DeviceIsConnected(DeviceId_Uhk80_Right)) {
-                    return MessengerChannel_NusServer;
-                }
+                return ConnectionId_NusClientRight;
             default:
-                return MessengerChannel_None;
+                return ConnectionId_Invalid;
         }
     }
 
     if (DEVICE_IS_UHK80_RIGHT) {
         switch (dst) {
             case DeviceId_Uhk_Dongle:
-                if (Bt_DeviceIsConnected(DeviceId_Uhk_Dongle)) {
-                    return MessengerChannel_NusServer;
+                if (Connections_IsReady(ActiveHostConnectionId) && Connections_Type(ActiveHostConnectionId) == ConnectionType_NusDongle) {
+                    return ActiveHostConnectionId;
                 }
                 break;
             case DeviceId_Uhk80_Left:
-                if (Bt_DeviceIsConnected(DeviceId_Uhk80_Left)) {
-                    return MessengerChannel_NusClient;
+                if (Connections_IsReady(ConnectionId_NusServerLeft)) {
+                    return ConnectionId_NusServerLeft;
                 }
                 break;
             default:
-                return MessengerChannel_None;
+                return ConnectionId_Invalid;
         }
     }
 
@@ -90,16 +89,16 @@ static messenger_channel_t determineChannel(device_id_t dst) {
         switch (dst) {
             case DeviceId_Uhk80_Right:
             case DeviceId_Uhk80_Left:
-                if (Bt_DeviceIsConnected(DeviceId_Uhk80_Right)) {
-                    return MessengerChannel_NusClient;
+                if (Connections_IsReady(ConnectionId_NusServerRight)) {
+                    return ConnectionId_NusServerRight;
                 }
                 break;
             default:
-                return MessengerChannel_None;
+                return ConnectionId_Invalid;
         }
     }
 
-    return MessengerChannel_None;
+    return ConnectionId_Invalid;
 }
 
 static char getDeviceAbbrev(device_id_t src) {
@@ -227,6 +226,7 @@ static void receive(const uint8_t* data, uint16_t len) {
             .idsUsed = 0,
             .src = src,
             .dst = dst,
+            .connectionId = determineChannel(dst),
         };
         printk("Forwarding message from %d to %d\n", msg.src, msg.dst);
         Messenger_SendMessage(msg);
@@ -245,12 +245,16 @@ static void receive(const uint8_t* data, uint16_t len) {
     }
 }
 
-static bool isSpam(const uint8_t* data) {
+static bool isSpam(const uint8_t* data, connection_id_t connectionId) {
     if (data[MessageOffset_MsgId1] == MessageId_Ping) {
         return true;
     }
     if (data[MessageOffset_MsgId1] == MessageId_StateSync && data[MessageOffset_MsgId1+1] == StateSyncPropertyId_Battery) {
         return DEBUG_EVENTLOOP_SCHEDULE;
+    }
+    if (DEVICE_IS_UHK80_RIGHT && Connections_Type(connectionId) == ConnectionType_NusDongle && connectionId != ActiveHostConnectionId) {
+        StateSync_UpdateProperty(StateSyncPropertyId_DongleStandby, NULL);
+        return true;
     }
     return false;
 }
@@ -280,8 +284,10 @@ ATTR_UNUSED static void getMessageDescription(const uint8_t* data, const char** 
     }
 }
 
-void Messenger_Enqueue(uint8_t src, const uint8_t* data, uint16_t len) {
-    if (!isSpam(data)) {
+void Messenger_Enqueue(uint8_t srcConnectionId, uint8_t src, const uint8_t* data, uint16_t len) {
+    if (isSpam(data, srcConnectionId)) {
+        MessengerQueue_FreeMemory(data);
+    } else {
         MessengerQueue_Put(src, data, len);
         EventVector_Set(EventVector_NewMessage);
         LOG_SCHEDULE(
@@ -306,17 +312,20 @@ void Messenger_ProcessQueue() {
 }
 
 bool Messenger_Availability(device_id_t dst, messenger_availability_op_t operation) {
-    messenger_channel_t channel = determineChannel(dst);
+    connection_id_t connection = determineChannel(dst);
 
-    switch (channel) {
-        case MessengerChannel_Uart:
+    switch (connection) {
+        case ConnectionId_UartLeft:
+        case ConnectionId_UartRight:
 #if DEVICE_IS_KEYBOARD
             return Uart_Availability(operation);
 #endif
             return false;
-        case MessengerChannel_NusServer:
+        case ConnectionId_NusClientRight:
+        case ConnectionId_HostConnectionFirst ... ConnectionId_HostConnectionLast:
             return NusServer_Availability(operation);
-        case MessengerChannel_NusClient:
+        case ConnectionId_NusServerRight:
+        case ConnectionId_NusServerLeft:
             return NusClient_Availability(operation);
         default:
             return false;
@@ -324,19 +333,29 @@ bool Messenger_Availability(device_id_t dst, messenger_availability_op_t operati
 }
 
 void Messenger_SendMessage(message_t message) {
-    messenger_channel_t channel = determineChannel(message.dst);
+    connection_id_t connectionId = message.connectionId;
     device_id_t dst = message.dst;
 
-    switch (channel) {
-        case MessengerChannel_Uart:
+
+    switch (connectionId) {
+        case ConnectionId_UartLeft:
+        case ConnectionId_UartRight:
 #if DEVICE_IS_KEYBOARD
             Uart_SendMessage(message);
 #endif
             break;
-        case MessengerChannel_NusServer:
+        case ConnectionId_NusClientRight:
             NusServer_SendMessage(message);
             break;
-        case MessengerChannel_NusClient:
+        case ConnectionId_HostConnectionFirst ... ConnectionId_HostConnectionLast:
+            if (Connections_Type(connectionId) == ConnectionType_NusDongle) {
+                NusServer_SendMessageTo(message, Peers[Connections[connectionId].peerId].conn);
+            } else {
+                printk("Failed to send message from %s to %s; incompatible connection type\n", Utils_DeviceIdToString(DEVICE_ID), Utils_DeviceIdToString(dst));
+            }
+            break;
+        case ConnectionId_NusServerRight:
+        case ConnectionId_NusServerLeft:
             NusClient_SendMessage(message);
             break;
         default:
@@ -353,6 +372,7 @@ void Messenger_Send(device_id_t dst, uint8_t messageId, const uint8_t* data, uin
         .idsUsed = 1,
         .src = DEVICE_ID,
         .dst = dst,
+        .connectionId = determineChannel(dst),
     };
     Messenger_SendMessage(msg);
 }
@@ -366,6 +386,21 @@ void Messenger_Send2(device_id_t dst, uint8_t messageId, uint8_t messageId2, con
         .idsUsed = 2,
         .src = DEVICE_ID,
         .dst = dst,
+        .connectionId = determineChannel(dst),
+    };
+    Messenger_SendMessage(msg);
+}
+
+void Messenger_Send2Via(device_id_t dst, connection_id_t connectionId, uint8_t messageId, uint8_t messageId2, const uint8_t* data, uint16_t len) {
+    message_t msg = {
+        .data = data,
+        .len = len,
+        .messageId[0] = messageId,
+        .messageId[1] = messageId2,
+        .idsUsed = 2,
+        .src = DEVICE_ID,
+        .dst = dst,
+        .connectionId = connectionId,
     };
     Messenger_SendMessage(msg);
 }

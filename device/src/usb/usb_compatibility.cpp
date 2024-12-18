@@ -14,6 +14,7 @@ extern "C"
 #include "legacy/event_scheduler.h"
 #include "legacy/macro_events.h"
 #include "legacy/key_states.h"
+#include "connections.h"
 }
 #include "usb/df/class/hid.hpp"
 #include "command_app.hpp"
@@ -37,13 +38,38 @@ keyboard_led_state_t KeyboardLedsState;
         gamepad_app::handle().set_report_state(gamepad);
         */
 
+static bool sendOverC2usb() {
+    if (DEVICE_IS_UHK_DONGLE) {
+        return true;
+    }
+
+    connection_type_t connectionType = Connections_Type(ActiveHostConnectionId);
+
+    if (!Connections_IsReady(ActiveHostConnectionId)) {
+        printk("Can't send report - selected connection is not ready!\n");
+        return false;
+    }
+
+    switch (connectionType) {
+        case ConnectionType_BtHid:
+        case ConnectionType_NewBtHid:
+        case ConnectionType_UsbHidRight:
+            return true;
+        case ConnectionType_NusDongle:
+            return false;
+        default:
+            printk("Unhandled connection type. Is this connection really meant to be a report target?\n");
+            return false;
+    }
+}
+
 extern "C" void UsbCompatibility_SendKeyboardReport(const usb_basic_keyboard_report_t* report) 
 {
     keyboard_app& keyboard_app = keyboard_app::handle();
 
-    if (keyboard_app.has_transport()) {
+    if (sendOverC2usb()) {
         keyboard_app.set_report_state(*reinterpret_cast<const scancode_buffer*>(report));
-    } else if (DEVICE_IS_UHK80_RIGHT && Bt_DeviceIsConnected(DeviceId_Uhk_Dongle))  {
+    } else if (DEVICE_IS_UHK80_RIGHT){
         Messenger_Send2(DeviceId_Uhk_Dongle, MessageId_SyncableProperty, SyncablePropertyId_KeyboardReport, (const uint8_t*)report, sizeof(*report));
     }
 }
@@ -52,9 +78,9 @@ extern "C" void UsbCompatibility_SendMouseReport(const usb_mouse_report_t* repor
 {
     mouse_app& mouse_app = mouse_app::handle();
 
-    if (mouse_app.has_transport()) {
+    if (sendOverC2usb()) {
         mouse_app.set_report_state(*reinterpret_cast<const mouse_buffer*>(report));
-    } else if (DEVICE_IS_UHK80_RIGHT && Bt_DeviceIsConnected(DeviceId_Uhk_Dongle))  {
+    } else if (DEVICE_IS_UHK80_RIGHT)  {
         Messenger_Send2(DeviceId_Uhk_Dongle, MessageId_SyncableProperty, SyncablePropertyId_MouseReport, (const uint8_t*)report, sizeof(*report));
     }
 }
@@ -74,9 +100,9 @@ extern "C" void UsbCompatibility_SendConsumerReport(const usb_media_keyboard_rep
 
     controls_app& controls_app = controls_app::handle();
 
-    if (controls_app.has_transport()) {
+    if (sendOverC2usb()) {
         controls_app.set_report_state(controls);
-    } else if (DEVICE_IS_UHK80_RIGHT && Bt_DeviceIsConnected(DeviceId_Uhk_Dongle)) {
+    } else if (DEVICE_IS_UHK80_RIGHT) {
         Messenger_Send2(DeviceId_Uhk_Dongle, MessageId_SyncableProperty, SyncablePropertyId_ControlsReport, (const uint8_t*)(&controls), sizeof(controls));
     }
 }
