@@ -129,6 +129,11 @@ int main(void) {
         Ledmap_InitLedLayout();
     }
 
+    bt_enable(NULL);
+
+    // has to be after bt_enable, has to be before ApplyConfig
+    InitSettings();
+
     // read configurations
     {
         InitFlash();
@@ -154,11 +159,6 @@ int main(void) {
     }
 
     USB_EnableHid(); // has to be after USB_SetSerialNumber
-
-    bt_enable(NULL);
-
-    // has to be after bt_enable
-    InitSettings();
 
     // has to be after InitSettings
     BtManager_InitBt();
