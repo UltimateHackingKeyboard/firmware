@@ -15,6 +15,21 @@ shell.config.verbose = true;
 const gitInfo = getGitInfo();
 const packageJson = readPackageJson();
 
+function getZephyrBuildParameters(buildTarget) {
+    let cmakePresetsFile = fs.readFileSync(`${gitInfo.root}/device/CMakePresets.json`, 'utf8');
+    cmakePresetsFile = cmakePresetsFile.replace(/\$\{sourceDir\}/g, `${gitInfo.root}/device`);
+    const cmakePresets = JSON.parse(cmakePresetsFile);
+    const configurePresets = cmakePresets.configurePresets;
+
+    for (const preset of configurePresets) {
+        if (preset.cacheVariables.BOARD === buildTarget.name) {
+            return preset.cacheVariables;
+        }
+    }
+    console.error(`Unknown Zephyr build target: ${buildTarget.name}`);
+    process.exit(1);
+}
+
 function build(buildTarget, step) {
     const buildDir = path.dirname(`${__dirname}/../${buildTarget.source}`);
     if (step === 1) {
@@ -29,6 +44,8 @@ function build(buildTarget, step) {
             shell.exec(`cd ${buildDir}/..; make -j8`);
         }
     } else if (buildTarget.platform === 'nordic') {
+        const cacheVariables = getZephyrBuildParameters(buildTarget);
+
         shell.exec(`ZEPHYR_TOOLCHAIN_VARIANT=zephyr west build \
             --build-dir ${gitInfo.root}/device/build/${buildTarget.name} \
             ${gitInfo.root}/device \
@@ -36,10 +53,11 @@ function build(buildTarget, step) {
             --board ${buildTarget.name} \
             --no-sysbuild \
             -- \
-            -DNCS_TOOLCHAIN_VERSION=NONE \
-            -DEXTRA_CONF_FILE=prj.conf.overlays/${buildTarget.name}.prj.conf \
+            -DNCS_TOOLCHAIN_VERSION=${cacheVariables.NCS_TOOLCHAIN_VERSION} \
+            -DCONF_FILE=${gitInfo.root}/device/prj_release.conf \
+            -DEXTRA_CONF_FILE="${cacheVariables.EXTRA_CONF_FILE}" \
             -DBOARD_ROOT=${gitInfo.root} \
-            -Dmcuboot_OVERLAY_CONFIG="${gitInfo.root}/device/child_image/mcuboot.conf;${gitInfo.root}/device/child_image/${buildTarget.name}.mcuboot.conf"`
+            -Dmcuboot_OVERLAY_CONFIG="${cacheVariables.mcuboot_OVERLAY_CONFIG}"`
         );
     }
 }

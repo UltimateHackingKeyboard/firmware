@@ -1,1 +1,0 @@
-../../../right/src/str_utils.c

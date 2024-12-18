@@ -1,9 +1,13 @@
 #ifndef __USB_COMMAND_JUMP_TO_MODULE_BOOTLOADER_H__
 #define __USB_COMMAND_JUMP_TO_MODULE_BOOTLOADER_H__
 
+// Includes:
+
+    #include <stdint.h>
+
 // Functions:
 
-    void UsbCommand_JumpToModuleBootloader(void);
+    void UsbCommand_JumpToModuleBootloader(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer);
 
 // Typedefs:
 

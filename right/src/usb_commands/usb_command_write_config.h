@@ -14,6 +14,6 @@
 
 // Functions:
 
-    void UsbCommand_WriteConfig(config_buffer_id_t configBufferId);
+    void UsbCommand_WriteConfig(config_buffer_id_t configBufferId, const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer);
 
 #endif

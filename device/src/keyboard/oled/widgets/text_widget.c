@@ -2,7 +2,7 @@
 #include "keyboard/oled/widgets/widgets.h"
 #include "keyboard/oled/oled.h"
 #include <stdlib.h>
-#include "legacy/str_utils.h"
+#include "str_utils.h"
 
 void TextWidget_Draw(widget_t* self, framebuffer_t* buffer)
 {

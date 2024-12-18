@@ -6,7 +6,7 @@
 #include "messenger.h"
 #include "device.h"
 #include "messenger_queue.h"
-#include "legacy/debug.h"
+#include "debug.h"
 #include "zephyr/bluetooth/addr.h"
 
 #define NUS_SLOTS 2

@@ -1,0 +1,23 @@
+identifier: uhk-60-right
+name: UHK 60 right
+type: mcu
+arch: arm
+ram: 64
+toolchain:
+  - zephyr
+  - gnuarmemb
+supported:
+  - adc
+  - arduino_gpio
+  - arduino_i2c
+  - arduino_spi
+  - dac
+  - gpio
+  - i2c
+  - nvs
+  - pwm
+  - spi
+  - usb_device
+  - watchdog
+
+# TODO: use board revisions: https://docs.zephyrproject.org/latest/hardware/porting/board_porting.html#multiple-board-revisions

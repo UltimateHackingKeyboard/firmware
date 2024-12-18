@@ -4,9 +4,9 @@
 #include "oled_display.h"
 #include "oled_buffer.h"
 #include "screens/screen_manager.h"
-#include "legacy/event_scheduler.h"
-#include "legacy/timer.h"
-#include "legacy/led_manager.h"
+#include "event_scheduler.h"
+#include "timer.h"
+#include "led_manager.h"
 #include "keyboard/oled/screens/screens.h"
 
 #if DEVICE_HAS_OLED

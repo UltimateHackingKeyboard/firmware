@@ -1,9 +1,12 @@
 #ifndef __USB_DEVICE_CONFIG_H__
 #define __USB_DEVICE_CONFIG_H__
 
+#ifndef __ZEPHYR__
 // KHCI instance count
 #define USB_DEVICE_CONFIG_KHCI 1
 
+#include "fsl_common.h"
+#endif
 #include "usb_interfaces/usb_interface_basic_keyboard.h"
 #include "usb_interfaces/usb_interface_mouse.h"
 #include "usb_interfaces/usb_interface_media_keyboard.h"

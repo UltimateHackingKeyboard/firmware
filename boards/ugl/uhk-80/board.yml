@@ -1,0 +1,13 @@
+boards:
+  - name: uhk-80-left
+    vendor: ugl
+    socs:
+      - name: nrf52840
+  - name: uhk-80-right
+    vendor: ugl
+    socs:
+      - name: nrf52840
+  - name: uhk-dongle
+    vendor: ugl
+    socs:
+      - name: nrf52840

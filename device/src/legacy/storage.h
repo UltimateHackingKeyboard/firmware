@@ -1,1 +1,0 @@
-../../../right/src/storage.h

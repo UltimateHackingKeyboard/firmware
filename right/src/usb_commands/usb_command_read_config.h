@@ -1,9 +1,13 @@
 #ifndef __USB_COMMAND_READ_CONFIG_H__
 #define __USB_COMMAND_READ_CONFIG_H__
 
+// Includes:
+
+    #include <stdint.h>
+
 // Functions:
 
-    void UsbCommand_ReadConfig();
+    void UsbCommand_ReadConfig(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer);
 
 // Typedefs:
 

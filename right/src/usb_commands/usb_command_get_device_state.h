@@ -1,6 +1,10 @@
 #ifndef __USB_COMMAND_GET_KEYBOARD_STATE_H__
 #define __USB_COMMAND_GET_KEYBOARD_STATE_H__
 
+// Includes:
+
+    #include <stdint.h>
+
 // Typedefs:
 
 typedef enum {
@@ -18,6 +22,6 @@ typedef enum {
 
 // Functions:
 
-    void UsbCommand_GetKeyboardState(void);
+    void UsbCommand_GetKeyboardState(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer);
 
 #endif

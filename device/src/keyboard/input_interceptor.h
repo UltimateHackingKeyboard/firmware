@@ -5,7 +5,7 @@
 
     #include <inttypes.h>
     #include <stdbool.h>
-    #include "legacy/usb_interfaces/usb_interface_basic_keyboard.h"
+    #include "usb_interfaces/usb_interface_basic_keyboard.h"
 
 // Macros:
 

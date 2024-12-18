@@ -1,9 +1,13 @@
 #ifndef __USB_COMMAND_GET_SLAVE_I2C_ERRORS_H__
 #define __USB_COMMAND_GET_SLAVE_I2C_ERRORS_H__
 
+// Includes:
+
+    #include <stdint.h>
+
 // Functions:
 
-    void UsbCommand_GetSlaveI2cErrors();
+    void UsbCommand_GetSlaveI2cErrors(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer);
 
 // Typedefs:
 

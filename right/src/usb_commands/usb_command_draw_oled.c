@@ -15,7 +15,7 @@
 #include "debug.h"
 #include <stdint.h>
 
-void UsbCommand_DrawOled()
+void UsbCommand_DrawOled(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer)
 {
 #if defined(__ZEPHYR__) && DEVICE_HAS_OLED
     uint8_t x = GetUsbRxBufferUint8(1);

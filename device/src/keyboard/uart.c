@@ -1,13 +1,13 @@
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/uart.h>
-#include "legacy/timer.h"
+#include "timer.h"
 #include "uart.h"
 #include "messenger.h"
 #include "messenger_queue.h"
 #include "device.h"
 #include "device_state.h"
-#include "legacy/debug.h"
-#include "legacy/event_scheduler.h"
+#include "debug.h"
+#include "event_scheduler.h"
 
 // Thread definitions
 
