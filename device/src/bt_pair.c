@@ -210,12 +210,16 @@ bool BtPair_IsDeviceBonded(const bt_addr_le_t *addr)
 
 void deleteBondIfUnknown(const struct bt_bond_info *info, void *user_data) {
     if (!HostConnections_IsKnownBleAddress(&info->addr)) {
+        printk(" - Deleting an unknown bond!\n");
         deleteBond(info);
+    } else {
+        printk(" - Keeping a known bond.\n");
     }
 };
 
 
 void BtPair_ClearUnknownBonds() {
+    printk("Clearing bonds\n");
     bt_foreach_bond(BT_ID_DEFAULT, deleteBondIfUnknown, NULL);
     UsbCommand_UpdateNewPairingsFlag();
 }
