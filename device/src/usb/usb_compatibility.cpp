@@ -4,8 +4,8 @@ extern "C" {
 #include "debug.h"
 #include "event_scheduler.h"
 #include "key_states.h"
-#include "macro_events.h"
 #include "link_protocol.h"
+#include "macro_events.h"
 #include "messenger.h"
 #include "nus_server.h"
 #include "state_sync.h"
@@ -113,4 +113,14 @@ extern "C" void UsbCompatibility_SetKeyboardLedsState(bool capsLock, bool numLoc
     }
 
     StateSync_UpdateProperty(StateSyncPropertyId_KeyboardLedsState, NULL);
+}
+
+extern "C" float VerticalScrollMultiplier(void)
+{
+    return mouse_app::handle().resolution_report().vertical_scroll_multiplier();
+}
+
+extern "C" float HorizontalScrollMultiplier(void)
+{
+    return mouse_app::handle().resolution_report().horizontal_scroll_multiplier();
 }

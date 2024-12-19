@@ -13,6 +13,8 @@ enum report_ids {
     // OUT
     OUT_KEYBOARD_LEDS = 1,
     OUT_COMMAND = 4,
+    // FEATURE
+    FEATURE_MOUSE = 3,
 };
 
 #endif // __REPORT_IDS__

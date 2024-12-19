@@ -8,6 +8,7 @@
 #include "config_manager.h"
 #include "event_scheduler.h"
 #include <string.h>
+#include <assert.h>
 
 static uint32_t mouseUsbReportUpdateTime = 0;
 static uint32_t mouseElapsedTime;
@@ -66,7 +67,11 @@ void MouseKeys_ActivateDirectionSigns(uint8_t state) {
 
 static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
 {
-    int16_t scrollMultiplier = kineticState->isScroll ? UsbMouseScrollMultiplier : 1;
+    float scrollMultiplier = 1.f;
+    if (kineticState->isScroll) {
+        // in practice the vertical and horizontal scroll multipliers are always the same
+        scrollMultiplier = VerticalScrollMultiplier();
+    }
     float initialSpeed = scrollMultiplier * kineticState->intMultiplier * kineticState->initialSpeed;
     float acceleration = scrollMultiplier * kineticState->intMultiplier * kineticState->acceleration;
     float deceleratedSpeed = scrollMultiplier * kineticState->intMultiplier * kineticState->deceleratedSpeed;

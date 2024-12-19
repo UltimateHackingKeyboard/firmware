@@ -18,10 +18,15 @@ enum class mouse_button {
     _8
 };
 
+template <int LIMIT>
+using limit_fitted_int =
+    std::conditional_t<(LIMIT > std::numeric_limits<int8_t>::max()), hid::le_int16_t, int8_t>;
+
 class mouse_app : public app_base {
     static constexpr auto LAST_BUTTON = hid::page::button(20);
     static constexpr int16_t AXIS_LIMIT = 4096;
-    static constexpr int8_t WHEEL_LIMIT = 127;
+    static constexpr int16_t MAX_SCROLL_RESOLUTION = 120;
+    static constexpr int16_t WHEEL_LIMIT = 32767;
 
   public:
     static constexpr auto report_desc()
@@ -48,27 +53,12 @@ class mouse_app : public app_base {
                     // relative X,Y directions
                     usage(generic_desktop::X),
                     usage(generic_desktop::Y),
-                    logical_limits<2, 2>(-AXIS_LIMIT, AXIS_LIMIT),
+                    logical_limits<(AXIS_LIMIT > std::numeric_limits<int8_t>::max() ? 2 : 1)>(-AXIS_LIMIT, AXIS_LIMIT),
                     report_count(2),
-                    report_size(16),
+                    report_size(AXIS_LIMIT > std::numeric_limits<int8_t>::max() ? 16 : 8),
                     input::relative_variable(),
 
-                    // vertical wheel
-                    collection::logical(
-                        usage(generic_desktop::WHEEL),
-                        logical_limits<1, 1>(-WHEEL_LIMIT, WHEEL_LIMIT),
-                        report_count(1),
-                        report_size(8),
-                        input::relative_variable()
-                    ),
-                    // horizontal wheel
-                    collection::logical(
-                        usage_extended(consumer::AC_PAN),
-                        logical_limits<1, 1>(-WHEEL_LIMIT, WHEEL_LIMIT),
-                        report_count(1),
-                        report_size(8),
-                        input::relative_variable()
-                    )
+                    hid::app::mouse::high_resolution_scrolling<WHEEL_LIMIT, MAX_SCROLL_RESOLUTION>()
                 )
             )
         );
@@ -79,10 +69,10 @@ class mouse_app : public app_base {
     struct mouse_report_base : public hid::report::base<hid::report::type::INPUT, REPORT_ID> {
         hid::report_bitset<hid::page::button, hid::page::button(1), mouse_app::LAST_BUTTON>
             buttons{};
-        hid::le_int16_t x{};
-        hid::le_int16_t y{};
-        int8_t wheel_y{};
-        int8_t wheel_x{};
+        limit_fitted_int<AXIS_LIMIT> x{};
+        limit_fitted_int<AXIS_LIMIT> y{};
+        limit_fitted_int<WHEEL_LIMIT> wheel_y{};
+        limit_fitted_int<WHEEL_LIMIT> wheel_x{};
 
         constexpr mouse_report_base() = default;
 
@@ -98,9 +88,18 @@ class mouse_app : public app_base {
     mouse_app() : app_base(this, report_buffer_) {}
 
     void start(hid::protocol prot) override;
+    void set_report(hid::report::type type, const std::span<const uint8_t> &data) override;
+    void get_report(hid::report::selector select, const std::span<uint8_t> &buffer) override;
 
     using mouse_report = mouse_report_base<report_ids::IN_MOUSE>;
-    C2USB_USB_TRANSFER_ALIGN(mouse_report, report_buffer_){};
+    C2USB_USB_TRANSFER_ALIGN(mouse_report, report_buffer_) {};
+    using scroll_resolution_report =
+        hid::app::mouse::resolution_multiplier_report<MAX_SCROLL_RESOLUTION,
+            report_ids::FEATURE_MOUSE>;
+    C2USB_USB_TRANSFER_ALIGN(scroll_resolution_report, resolution_buffer_) {};
+
+  public:
+    const auto &resolution_report() const { return resolution_buffer_; }
 };
 
 using mouse_buffer = mouse_app::mouse_report_base<>;
