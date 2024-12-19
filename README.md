@@ -1,6 +1,6 @@
 # Ultimate Hacking Keyboard firmware
 
-[![Build Status](https://cloud.drone.io/api/badges/UltimateHackingKeyboard/firmware/status.svg)](https://cloud.drone.io/UltimateHackingKeyboard/firmware)
+[![CI](https://github.com/UltimateHackingKeyboard/firmware/actions/workflows/ci.yml/badge.svg)](https://github.com/UltimateHackingKeyboard/firmware/actions/workflows/ci.yml)
 
 This repository hosts the firmware of the [Ultimate Hacking Keyboard](https://ultimatehackingkeyboard.com/).
 
