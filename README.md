@@ -19,8 +19,8 @@ If you're one of the brave few who wants to hack the firmware then read on.
 ### UHK80 quick dev setup
 
 ```
-mkdir west
-cd west
+mkdir firmware
+cd firmware
 git clone --recurse-submodules git@github.com:UltimateHackingKeyboard/firmware.git
 cd firmware
 ./build.sh setup
@@ -37,8 +37,8 @@ In case the above doesn't work, please see (or create a ticket):
 Note that these commands will create a [west workspace](https://docs.zephyrproject.org/latest/develop/west/workspaces.html#t2-star-topology-application-is-the-manifest-repository) in your current directory.
 
 ```bash
-mkdir west
-cd west
+mkdir firmware
+cd firmware
 git clone --recurse-submodules git@github.com:UltimateHackingKeyboard/firmware.git
 west init -l firmware
 west update
