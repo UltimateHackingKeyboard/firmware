@@ -150,7 +150,7 @@ void LedDriver_WriteBuffer(uint8_t i2cAddress, uint8_t buffer[], uint8_t size);
 
 ## Semantics
 
-The build process must not yield any warnings, and the build must pass [on on the current CI build platform](https://cloud.drone.io/UltimateHackingKeyboard/firmware).
+The build process must not yield any warnings, and the build must pass on on the current CI build platform.
 
 ## Clang format
 
