@@ -4,6 +4,13 @@
     "nrf-connect.applications": [
         "${workspaceFolder}/device"
     ],
+    "nrf-connect.applicationOptions": {
+        "${workspaceFolder}/device": {
+            "flash": {
+                "softreset": true
+            }
+        }
+    },
     "nrf-connect.boardRoots": [
         "${workspaceFolder}/"
     ],
