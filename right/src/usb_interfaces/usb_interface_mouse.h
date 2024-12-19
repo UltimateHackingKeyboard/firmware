@@ -38,7 +38,6 @@
 
 // Variables:
 
-    extern int16_t UsbMouseScrollMultiplier;
     extern uint32_t UsbMouseActionCounter;
     extern usb_mouse_report_t* ActiveUsbMouseReport;
 
@@ -50,6 +49,8 @@
     usb_hid_protocol_t UsbMouseGetProtocol(void);
 #endif
 
+    float VerticalScrollMultiplier(void);
+    float HorizontalScrollMultiplier(void);
     void UsbMouseResetActiveReport(void);
     void UsbMouseSendActiveReport(void);
     usb_status_t UsbMouseCheckIdleElapsed();
