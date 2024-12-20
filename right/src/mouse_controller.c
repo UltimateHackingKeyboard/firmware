@@ -551,13 +551,12 @@ static void processModuleKineticState(
             break;
         }
         case NavigationMode_Scroll:  {
-            speed *= UsbMouseScrollMultiplier;
             if (!moduleConfiguration->scrollAxisLock) {
                 float xIntegerPart;
                 float yIntegerPart;
 
-                ks->xFractionRemainder = modff(ks->xFractionRemainder + x * speed / moduleConfiguration->scrollSpeedDivisor, &xIntegerPart);
-                ks->yFractionRemainder = modff(ks->yFractionRemainder + y * speed / moduleConfiguration->scrollSpeedDivisor, &yIntegerPart);
+                ks->xFractionRemainder = modff(ks->xFractionRemainder + x * speed * HorizontalScrollMultiplier() / moduleConfiguration->scrollSpeedDivisor, &xIntegerPart);
+                ks->yFractionRemainder = modff(ks->yFractionRemainder + y * speed * VerticalScrollMultiplier() / moduleConfiguration->scrollSpeedDivisor, &yIntegerPart);
 
                 MouseControllerMouseReport.wheelX += xInversion*xIntegerPart;
                 MouseControllerMouseReport.wheelY += yInversion*yIntegerPart;
