@@ -41,7 +41,7 @@ static void showString(const char* str) {
 
 static void showFloat(float f) {
 #ifdef __ZEPHYR__
-    Log("%i: %f", CurrentWatch, f);
+    Log("%i: %f", CurrentWatch, (double)f);
 #else
     SegmentDisplay_SetFloat(f, SegmentDisplaySlot_Debug);
 #endif

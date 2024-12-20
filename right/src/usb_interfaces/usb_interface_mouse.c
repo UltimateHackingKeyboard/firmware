@@ -2,6 +2,7 @@
 #include "usb_report_updater.h"
 #include <string.h>
 #include "event_scheduler.h"
+#include "shared/attributes.h"
 
 #ifdef __ZEPHYR__
 #include "usb/usb_compatibility.h"
@@ -11,7 +12,11 @@
 #include "usb_descriptors/usb_descriptor_mouse_report.h"
 
 static usb_mouse_report_t usbMouseReports[2];
+
+#ifndef __ZEPHYR__
 static uint8_t usbMouseFeatBuffer[USB_MOUSE_FEAT_REPORT_LENGTH];
+#endif
+
 usb_hid_protocol_t usbMouseProtocol;
 uint32_t UsbMouseActionCounter;
 usb_mouse_report_t* ActiveUsbMouseReport = usbMouseReports;
