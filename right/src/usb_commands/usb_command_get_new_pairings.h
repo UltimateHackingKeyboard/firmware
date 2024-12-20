@@ -7,11 +7,16 @@
 
 #ifdef __ZEPHYR__
 
+// Includes:
+
+    #include <stdint.h>
+
 // Typedefs:
 
 // Functions:
 
-    void UsbCommand_GetNewPairings(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer);
+    void UsbCommand_UpdateNewPairingsFlag();
+    void UsbCommand_GetNewPairings(uint8_t page, const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer);
 
 #endif
 
