@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          path: firmware-uhk80
+          path: firmware
           submodules: recursive
 
       - name: Install build dependencies
@@ -27,13 +27,13 @@ jobs:
 
       - name: Install python dependencies of scripts
         run: |
-          cd firmware-uhk80/scripts
+          cd firmware/scripts
           pip install -r requirements.txt
 
       - name: Setup Zephyr project
         uses: zephyrproject-rtos/action-zephyr-setup@v1
         with:
-          app-path: firmware-uhk80
+          app-path: firmware
           toolchains: arm-zephyr-eabi
           sdk-version: 0.16.8
 
@@ -51,22 +51,22 @@ jobs:
       - name: Use Node.js (.nvmrc)
         uses: actions/setup-node@v4
         with:
-          node-version-file: firmware-uhk80/scripts/.nvmrc
+          node-version-file: firmware/scripts/.nvmrc
 
       - name: Install node dependencies in scripts folder
         run: |
-          cd firmware-uhk80/scripts
+          cd firmware/scripts
           npm install
 
       - name: Create firmware tarball
         run: |
-          cd firmware-uhk80
+          cd firmware
           scripts/make-release.mjs --allowSha
 
       - name: Upload firmware artifacts
         uses: actions/upload-artifact@v4
         with:
           name: firmware
-          path: firmware-uhk80/scripts/uhk-firmware-*.tar.gz
+          path: firmware/scripts/uhk-firmware-*.tar.gz
           compression-level: 0
           retention-days: 10

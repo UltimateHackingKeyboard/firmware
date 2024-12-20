@@ -1,7 +1,6 @@
 #include <strings.h>
 #include "macros/status_buffer.h"
 #include "usb_protocol_handler.h"
-#include "buffer.h"
 #include "usb_commands/usb_command_get_device_state.h"
 #include "usb_commands/usb_command_read_config.h"
 #include "usb_commands/usb_command_reenumerate.h"
@@ -30,114 +29,104 @@
 #include "usb_commands/usb_command_set_i2c_baud_rate.h"
 #endif
 
-#ifdef __ZEPHYR__
-void CommandProtocolRxHandler(const uint8_t* data, size_t size)
-{
-    GenericHidOutBuffer = data;
-    // printk("CommandProtocolRxHandler: data[0]:%u size:%d\n", data[0], size);
-    UsbProtocolHandler();
-    CommandProtocolTx(GenericHidInBuffer, USB_GENERIC_HID_OUT_BUFFER_LENGTH);
-}
-#endif
-
-void UsbProtocolHandler(void)
+void UsbProtocolHandler(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer)
 {
     bzero(GenericHidInBuffer, USB_GENERIC_HID_IN_BUFFER_LENGTH);
     uint8_t command = GetUsbRxBufferUint8(0);
     switch (command) {
         case UsbCommandId_GetDeviceProperty:
-            UsbCommand_GetDeviceProperty();
+            UsbCommand_GetDeviceProperty(GenericHidOutBuffer, GenericHidInBuffer);
             break;
         case UsbCommandId_Reenumerate:
-            UsbCommand_Reenumerate();
+            UsbCommand_Reenumerate(GenericHidOutBuffer, GenericHidInBuffer);
             break;
         case UsbCommandId_ReadConfig:
-            UsbCommand_ReadConfig();
+            UsbCommand_ReadConfig(GenericHidOutBuffer, GenericHidInBuffer);
             break;
         case UsbCommandId_WriteHardwareConfig:
-            UsbCommand_WriteConfig(ConfigBufferId_HardwareConfig);
+            UsbCommand_WriteConfig(ConfigBufferId_HardwareConfig, GenericHidOutBuffer, GenericHidInBuffer);
             break;
         case UsbCommandId_WriteStagingUserConfig:
-            UsbCommand_WriteConfig(ConfigBufferId_StagingUserConfig);
+            UsbCommand_WriteConfig(ConfigBufferId_StagingUserConfig, GenericHidOutBuffer, GenericHidInBuffer);
             break;
         case UsbCommandId_ApplyConfig:
 
 #ifdef __ZEPHYR__
-            UsbCommand_ApplyConfigAsync();
+            UsbCommand_ApplyConfigAsync(GenericHidOutBuffer, GenericHidInBuffer);
 #else
-            UsbCommand_ApplyConfig();
+            UsbCommand_ApplyConfig(GenericHidOutBuffer, GenericHidInBuffer);
 #endif
             break;
         case UsbCommandId_GetDeviceState:
-            UsbCommand_GetKeyboardState();
+            UsbCommand_GetKeyboardState(GenericHidOutBuffer, GenericHidInBuffer);
             break;
         case UsbCommandId_GetDebugBuffer:
-            UsbCommand_GetDebugBuffer();
+            UsbCommand_GetDebugBuffer(GenericHidOutBuffer, GenericHidInBuffer);
             break;
         case UsbCommandId_SwitchKeymap:
-            UsbCommand_SwitchKeymap();
+            UsbCommand_SwitchKeymap(GenericHidOutBuffer, GenericHidInBuffer);
             break;
         case UsbCommandId_GetVariable:
-            UsbCommand_GetVariable();
+            UsbCommand_GetVariable(GenericHidOutBuffer, GenericHidInBuffer);
             break;
         case UsbCommandId_SetVariable:
-            UsbCommand_SetVariable();
+            UsbCommand_SetVariable(GenericHidOutBuffer, GenericHidInBuffer);
             break;
         case UsbCommandId_ExecMacroCommand:
-            UsbCommand_ExecMacroCommand();
+            UsbCommand_ExecMacroCommand(GenericHidOutBuffer, GenericHidInBuffer);
             break;
         case UsbCommandId_LaunchStorageTransfer:
-            UsbCommand_LaunchStorageTransfer();
+            UsbCommand_LaunchStorageTransfer(GenericHidOutBuffer, GenericHidInBuffer);
             break;
         case UsbCommandId_GetModuleProperty:
-            UsbCommand_GetModuleProperty();
+            UsbCommand_GetModuleProperty(GenericHidOutBuffer, GenericHidInBuffer);
             break;
 #ifdef __ZEPHYR__
         case UsbCommandId_DrawOled:
-            UsbCommand_DrawOled();
+            UsbCommand_DrawOled(GenericHidOutBuffer, GenericHidInBuffer);
             break;
         case UsbCommandId_GetPairingData:
-            UsbCommand_GetPairingData();
+            UsbCommand_GetPairingData(GenericHidOutBuffer, GenericHidInBuffer);
             break;
         case UsbCommandId_SetPairingData:
-            UsbCommand_SetPairingData();
+            UsbCommand_SetPairingData(GenericHidOutBuffer, GenericHidInBuffer);
             break;
         case UsbCommandId_PairCentral:
-            UsbCommand_PairCentral();
+            UsbCommand_PairCentral(GenericHidOutBuffer, GenericHidInBuffer);
             break;
         case UsbCommandId_PairPeripheral:
-            UsbCommand_PairPeripheral();
+            UsbCommand_PairPeripheral(GenericHidOutBuffer, GenericHidInBuffer);
             break;
         case UsbCommandId_UnpairAll:
-            UsbCommand_Unpair();
+            UsbCommand_Unpair(GenericHidOutBuffer, GenericHidInBuffer);
             break;
         case UsbCommandId_IsPaired:
-            UsbCommand_IsPaired();
+            UsbCommand_IsPaired(GenericHidOutBuffer, GenericHidInBuffer);
             break;
         case UsbCommandId_EnterPairingMode:
-            UsbCommand_EnterPairingMode();
+            UsbCommand_EnterPairingMode(GenericHidOutBuffer, GenericHidInBuffer);
             break;
 #else
         case UsbCommandId_JumpToModuleBootloader:
-            UsbCommand_JumpToModuleBootloader();
+            UsbCommand_JumpToModuleBootloader(GenericHidOutBuffer, GenericHidInBuffer);
             break;
         case UsbCommandId_SendKbootCommandToModule:
-            UsbCommand_SendKbootCommandToModule();
+            UsbCommand_SendKbootCommandToModule(GenericHidOutBuffer, GenericHidInBuffer);
             break;
         case UsbCommandId_SetTestLed:
-            UsbCommand_SetTestLed();
+            UsbCommand_SetTestLed(GenericHidOutBuffer, GenericHidInBuffer);
             break;
         case UsbCommandId_GetAdcValue:
-            UsbCommand_GetAdcValue();
+            UsbCommand_GetAdcValue(GenericHidOutBuffer, GenericHidInBuffer);
             break;
         case UsbCommandId_SetLedPwmBrightness:
-            UsbCommand_SetLedPwmBrightness();
+            UsbCommand_SetLedPwmBrightness(GenericHidOutBuffer, GenericHidInBuffer);
             break;
         case UsbCommandId_GetSlaveI2cErrors:
-            UsbCommand_GetSlaveI2cErrors();
+            UsbCommand_GetSlaveI2cErrors(GenericHidOutBuffer, GenericHidInBuffer);
             break;
         case UsbCommandId_SetI2cBaudRate:
-            UsbCommand_SetI2cBaudRate();
+            UsbCommand_SetI2cBaudRate(GenericHidOutBuffer, GenericHidInBuffer);
             break;
 #endif
         default:
@@ -149,38 +138,8 @@ void UsbProtocolHandler(void)
     }
 }
 
-uint8_t GetUsbRxBufferUint8(uint32_t offset)
-{
-    return GetBufferUint8(GenericHidOutBuffer, offset);
-}
-
-uint16_t GetUsbRxBufferUint16(uint32_t offset)
-{
-    return GetBufferUint16(GenericHidOutBuffer, offset);
-}
-
-uint32_t GetUsbRxBufferUint32(uint32_t offset)
-{
-    return GetBufferUint32(GenericHidOutBuffer, offset);
-}
-
-void SetUsbTxBufferUint8(uint32_t offset, uint8_t value)
-{
-    SetBufferUint8(GenericHidInBuffer, offset, value);
-}
-
-void SetUsbTxBufferUint16(uint32_t offset, uint16_t value)
-{
-    SetBufferUint16(GenericHidInBuffer, offset, value);
-}
-
-void SetUsbTxBufferUint32(uint32_t offset, uint32_t value)
-{
-    SetBufferUint32(GenericHidInBuffer, offset, value);
-}
-
 #ifdef __ZEPHYR__
-bt_addr_le_t GetUsbRxBufferBleAddress(uint32_t offset) {
+bt_addr_le_t GetBufferBleAddress(const uint8_t *GenericHidOutBuffer, uint32_t offset) {
     bt_addr_le_t addr;
     addr.type = 1;
     for (uint8_t i = 0; i < BLE_ADDR_LEN; i++) {
@@ -189,7 +148,7 @@ bt_addr_le_t GetUsbRxBufferBleAddress(uint32_t offset) {
     return addr;
 }
 
-void SetUsbTxBufferBleAddress(uint32_t offset, const bt_addr_le_t* addr) {
+void SetBufferBleAddress(uint8_t *GenericHidInBuffer, uint32_t offset, const bt_addr_le_t* addr) {
     for (uint8_t i = 0; i < BLE_ADDR_LEN; i++) {
         GenericHidInBuffer[offset + i] = addr->a.val[i];
     }

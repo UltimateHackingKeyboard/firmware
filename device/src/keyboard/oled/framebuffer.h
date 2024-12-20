@@ -6,7 +6,7 @@
     #include "oled_display.h"
     #include <inttypes.h>
     #include <stdbool.h>
-    #include "legacy/led_display.h"
+    #include "led_display.h"
     #include <zephyr/sys/util.h>
 
 // Macros:

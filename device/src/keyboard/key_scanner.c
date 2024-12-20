@@ -11,17 +11,17 @@
 #include "logger.h"
 #include "key_states.h"
 #include "bool_array_converter.h"
-#include "legacy/module.h"
+#include "module.h"
 #include "logger.h"
 #include "messenger.h"
 #include "device.h"
-#include "legacy/event_scheduler.h"
+#include "event_scheduler.h"
 #include "main.h"
-#include "legacy/config_manager.h"
-#include "legacy/macros/keyid_parser.h"
+#include "config_manager.h"
+#include "macros/keyid_parser.h"
 #include "attributes.h"
-#include "legacy/layouts/key_layout.h"
-#include "legacy/layouts/key_layout_80_to_universal.h"
+#include "layouts/key_layout.h"
+#include "layouts/key_layout_80_to_universal.h"
 
 // Thread definitions
 

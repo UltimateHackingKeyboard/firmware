@@ -1,1 +1,0 @@
-../../../right/src/config_manager.h

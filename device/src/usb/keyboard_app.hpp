@@ -1,23 +1,20 @@
 #ifndef __KEYBOARD_APP_HEADER__
 #define __KEYBOARD_APP_HEADER__
 
-#include "double_buffer.hpp"
+#include "app_base.hpp"
 #include "hid/app/keyboard.hpp"
-#include "hid/application.hpp"
-#include "hid/report_protocol.hpp"
 #include "report_ids.h"
 
 using scancode = hid::page::keyboard_keypad;
 
-class keyboard_app : public hid::application {
+class keyboard_app : public app_base {
     static constexpr uint8_t KEYS_6KRO_REPORT_ID = report_ids::IN_KEYBOARD_6KRO;
     static constexpr uint8_t KEYS_NKRO_REPORT_ID = report_ids::IN_KEYBOARD_NKRO;
     static constexpr uint8_t LEDS_REPORT_ID = report_ids::OUT_KEYBOARD_LEDS;
 
     static constexpr auto NKRO_FIRST_USAGE =
         scancode::KEYBOARD_A; // the first 4 codes are error codes
-    static constexpr auto NKRO_LAST_USAGE =
-        (scancode)CONFIG_KEYBOARD_MAX_SCANCODE;
+    static constexpr auto NKRO_LAST_USAGE = (scancode)CONFIG_KEYBOARD_MAX_SCANCODE;
     static constexpr auto LOWEST_SCANCODE = NKRO_FIRST_USAGE;
     static constexpr auto HIGHEST_SCANCODE = NKRO_LAST_USAGE;
 
@@ -110,14 +107,7 @@ class keyboard_app : public hid::application {
     void set_report_state(const keys_nkro_report_base<> &data);
 
   private:
-    static hid::report_protocol report_protocol()
-    {
-        static constexpr const auto rd{report_desc()};
-        constexpr hid::report_protocol rp{rd};
-        return rp;
-    }
-
-    keyboard_app() : application(report_protocol()) {}
+    keyboard_app() : app_base(this, keys_.nkro) {}
 
     using keys_boot_report = hid::app::keyboard::keys_input_report<0>;
     using keys_6kro_report = hid::app::keyboard::keys_input_report<KEYS_6KRO_REPORT_ID>;
@@ -137,6 +127,8 @@ class keyboard_app : public hid::application {
     void send_6kro_buffer(uint8_t buf_idx);
     void send_nkro_buffer(uint8_t buf_idx);
 
+    void reset_keys();
+
     C2USB_USB_TRANSFER_ALIGN(leds_report, leds_buffer_){};
     hid::protocol prot_{};
     rollover rollover_{};
@@ -146,7 +138,7 @@ class keyboard_app : public hid::application {
         keys_boot_report boot;
         keys_6kro_report sixkro;
     };
-    double_buffer<keys_reports> keys_{};
+    C2USB_USB_TRANSFER_ALIGN(keys_reports, keys_){};
 };
 
 using scancode_buffer = keyboard_app::keys_nkro_report_base<>;

@@ -4,26 +4,28 @@
 #include "event_scheduler.h"
 #include "keyboard/charger.h"
 #include "keyboard/oled/widgets/widgets.h"
-#include "legacy/config_manager.h"
-#include "legacy/config_parser/config_globals.h"
-#include "legacy/debug.h"
-#include "legacy/event_scheduler.h"
-#include "legacy/keymap.h"
-#include "legacy/led_manager.h"
-#include "legacy/ledmap.h"
-#include "legacy/module.h"
-#include "legacy/slave_drivers/uhk_module_driver.h"
-#include "legacy/slot.h"
-#include "legacy/str_utils.h"
-#include "legacy/stubs.h"
-#include "legacy/utils.h"
+#include "config_manager.h"
+#include "config_parser/config_globals.h"
+#include "debug.h"
+#include "event_scheduler.h"
+#include "keymap.h"
+#include "led_manager.h"
+#include "ledmap.h"
+#include "module.h"
+#include "slave_drivers/uhk_module_driver.h"
+#include "slot.h"
+#include "str_utils.h"
+#include "stubs.h"
+#include "utils.h"
 #include "messenger.h"
 #include "state_sync.h"
 #include "usb/usb_compatibility.h"
 #include <stdint.h>
 #include <zephyr/kernel.h>
-#include "legacy/peripherals/merge_sensor.h"
+#include "peripherals/merge_sensor.h"
 #include "power_mode.h"
+
+#define WAKE(TID) if (TID != 0) { k_wakeup(TID); }
 
 #define STATE_SYNC_SEND_DELAY 2
 
@@ -141,14 +143,14 @@ static void invalidateProperty(state_sync_prop_id_t propId) {
     bool isRightLeftLink = (stateSyncProps[propId].direction &
                             (SyncDirection_RightToLeft | SyncDirection_LeftToRight));
     if (isRightLeftLink && isRightLeftDevice) {
-        k_wakeup(stateSyncThreadLeftId);
+        WAKE(stateSyncThreadLeftId);
     }
     bool isRightDongleDevice =
         (DEVICE_ID == DeviceId_Uhk80_Right || DEVICE_ID == DeviceId_Uhk_Dongle);
     bool isRightDongleLink = (stateSyncProps[propId].direction &
                               (SyncDirection_DongleToRight | SyncDirection_RightToDongle));
     if (isRightDongleLink && isRightDongleDevice) {
-        k_wakeup(stateSyncThreadDongleId);
+        WAKE(stateSyncThreadDongleId);
     }
 }
 
@@ -635,7 +637,7 @@ void StateSync_UpdateLayer(layer_id_t layerId, bool fullUpdate) {
     stateSyncProps[propId].dirtyState = fullUpdate ? DirtyState_NeedsUpdate : DirtyState_NeedsClearing;
     stateSyncProps[propId].defaultDirty = stateSyncProps[propId].dirtyState;
 
-    k_wakeup(stateSyncThreadLeftId);
+    WAKE(stateSyncThreadLeftId);
 }
 
 void StateSync_Init() {

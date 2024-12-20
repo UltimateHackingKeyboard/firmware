@@ -7,13 +7,13 @@
 #include <zephyr/bluetooth/addr.h>
 #include "bt_conn.h"
 #include "bt_scan.h"
-#include "legacy/event_scheduler.h"
+#include "event_scheduler.h"
 #include "zephyr/kernel.h"
 #include "bt_manager.h"
 #include "bt_advertise.h"
-#include "legacy/host_connection.h"
+#include "host_connection.h"
 #include "settings.h"
-#include "legacy/usb_commands/usb_command_get_new_pairings.h"
+#include "usb_commands/usb_command_get_new_pairings.h"
 
 bool BtPair_LastPairingSucceeded = true;
 bool BtPair_OobPairingInProgress = false;
@@ -50,6 +50,7 @@ void BtPair_SetRemoteOob(const struct bt_le_oob* oob) {
     oobRemote = *oob;
 }
 
+#ifdef CONFIG_BT_CENTRAL
 void BtPair_PairCentral() {
     pairingAsCentral = true;
     Settings_Reload();
@@ -58,7 +59,9 @@ void BtPair_PairCentral() {
     printk ("Scanning for pairable device\n");
     EventScheduler_Reschedule(k_uptime_get_32() + PAIRING_TIMEOUT, EventSchedulerEvent_EndBtPairing, "Oob pairing timeout.");
 }
+#endif
 
+#ifdef CONFIG_BT_PERIPHERAL
 void BtPair_PairPeripheral() {
     pairingAsCentral = false;
     Settings_Reload();
@@ -67,6 +70,7 @@ void BtPair_PairPeripheral() {
     printk ("Waiting for central to pair to me.\n");
     EventScheduler_Reschedule(k_uptime_get_32() + PAIRING_TIMEOUT, EventSchedulerEvent_EndBtPairing, "Oob pairing timeout.");
 }
+#endif
 
 void BtPair_EndPairing(bool success, const char* msg) {
     printk("--- Pairing ended, success = %d: %s ---\n", success, msg);
@@ -82,9 +86,13 @@ void BtPair_EndPairing(bool success, const char* msg) {
     EventScheduler_Unschedule(EventSchedulerEvent_EndBtPairing);
 
     if (pairingAsCentral) {
+#ifdef CONFIG_BT_SCAN
         BtScan_Stop();
+#endif
     } else {
+#ifdef CONFIG_BT_PERIPHERAL
         BtAdvertise_Stop();
+#endif
     }
 
     k_sleep(K_MSEC(100));

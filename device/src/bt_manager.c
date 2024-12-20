@@ -4,7 +4,7 @@
 #include "bt_advertise.h"
 #include "nus_client.h"
 #include "nus_server.h"
-#include "legacy/event_scheduler.h"
+#include "event_scheduler.h"
 #include <zephyr/kernel.h>
 #include <zephyr/bluetooth/bluetooth.h>
 #include <zephyr/bluetooth/hci.h>

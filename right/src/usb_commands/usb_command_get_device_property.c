@@ -27,7 +27,7 @@
 
 uint16_t configSizes[] = {HARDWARE_CONFIG_SIZE, USER_CONFIG_SIZE};
 
-void UsbCommand_GetDeviceProperty(void)
+void UsbCommand_GetDeviceProperty(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer)
 {
     uint8_t propertyId = GetUsbRxBufferUint8(1);
     uint8_t *dest = GenericHidInBuffer + 1;
@@ -107,7 +107,7 @@ void UsbCommand_GetDeviceProperty(void)
     } break;
     case DevicePropertyId_NewPairings:
 #ifdef __ZEPHYR__
-        UsbCommand_GetNewPairings(GetUsbRxBufferUint8(2));
+        UsbCommand_GetNewPairings(GetUsbRxBufferUint8(2), GenericHidOutBuffer, GenericHidInBuffer);
 #endif
         break;
     default:

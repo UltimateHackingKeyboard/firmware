@@ -3,11 +3,11 @@
 #include "keyboard/oled/widgets/widgets.h"
 #include "keyboard/oled/screens/screens.h"
 #include "keyboard/oled/oled.h"
-#include "legacy/timer.h"
-#include "legacy/event_scheduler.h"
-#include "legacy/timer.h"
-#include "legacy/event_scheduler.h"
-#include "legacy/ledmap.h"
+#include "timer.h"
+#include "event_scheduler.h"
+#include "timer.h"
+#include "event_scheduler.h"
+#include "ledmap.h"
 
 screen_id_t ActiveScreen = ScreenId_Main;
 

@@ -18,7 +18,7 @@
     "serialport": "^12.0.0",
     "shelljs": "^0.8.4"
   },
-  "firmwareVersion": "12.0.0",
+  "firmwareVersion": "12.0.1",
   "deviceProtocolVersion": "4.11.0",
   "moduleProtocolVersion": "4.3.0",
   "userConfigVersion": "8.3.0",

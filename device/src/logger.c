@@ -8,7 +8,7 @@
 #include "nus_server.h"
 #include "device.h"
 #include "messenger.h"
-#include "legacy/macros/status_buffer.h"
+#include "macros/status_buffer.h"
 #include "zephyr/device.h"
 
 #ifdef DEVICE_HAS_OLED

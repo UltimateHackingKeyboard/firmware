@@ -16,6 +16,6 @@
 // Functions:
 
     void UsbMacroCommand_ExecuteSynchronously();
-    void UsbCommand_ExecMacroCommand();
+    void UsbCommand_ExecMacroCommand(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer);
 
 #endif

@@ -1,1 +1,0 @@
-../../../right/src/slot.h

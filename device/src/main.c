@@ -3,8 +3,8 @@
 #include "nus_client.h"
 #include "nus_server.h"
 #include "bt_manager.h"
-#include "legacy/config_parser/config_globals.h"
-#include "legacy/ledmap.h"
+#include "config_parser/config_globals.h"
+#include "ledmap.h"
 #include "shared/attributes.h"
 #include "zephyr/kernel.h"
 #include "zephyr/storage/flash_map.h"
@@ -26,12 +26,12 @@
 #include "macros/shortcut_parser.h"
 #include "macros/keyid_parser.h"
 #include "macros/core.h"
-#include "legacy/timer.h"
-#include "legacy/user_logic.h"
-#include "legacy/config_manager.h"
+#include "timer.h"
+#include "user_logic.h"
+#include "config_manager.h"
 #include "messenger.h"
-#include "legacy/led_manager.h"
-#include "legacy/debug.h"
+#include "led_manager.h"
+#include "debug.h"
 #include "state_sync.h"
 #include "keyboard/charger.h"
 #include <stdint.h>
@@ -39,7 +39,7 @@
 #include "debug_eventloop_timing.h"
 #include <zephyr/drivers/gpio.h>
 #include "dongle_leds.h"
-#include "legacy/usb_protocol_handler.h"
+#include "usb_protocol_handler.h"
 
 k_tid_t Main_ThreadId = 0;
 
@@ -146,15 +146,15 @@ int main(void) {
             Flash_ReadAreaSync(userConfigArea, 0, StagingUserConfigBuffer.buffer, USER_CONFIG_SIZE);
             printk("Applying user config\n");
             bool factoryMode = false;
-            if (factoryMode || UsbCommand_ApplyConfig() != UsbStatusCode_Success) {
-                UsbCommand_ApplyFactory();
+            if (factoryMode || UsbCommand_ApplyConfig(NULL, NULL) != UsbStatusCode_Success) {
+                UsbCommand_ApplyFactory(NULL, NULL);
             }
             printk("User config applied\n");
             ShortcutParser_initialize();
             KeyIdParser_initialize();
             Macros_Initialize();
         } else {
-            UsbCommand_ApplyFactory();
+            UsbCommand_ApplyFactory(NULL, NULL);
         }
     }
 

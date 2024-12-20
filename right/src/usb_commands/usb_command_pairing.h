@@ -1,15 +1,19 @@
 #ifndef __USB_COMMAND_PAIRING_H__
 #define __USB_COMMAND_PAIRING_H__
 
+// Includes:
+
+    #include <stdint.h>
+
 // Functions:
 
-    void UsbCommand_GetPairingData(void);
-    void UsbCommand_SetPairingData(void);
-    void UsbCommand_PairCentral(void);
-    void UsbCommand_PairPeripheral(void);
-    void UsbCommand_Unpair(void);
-    void UsbCommand_IsPaired(void);
-    void UsbCommand_EnterPairingMode(void);
+    void UsbCommand_GetPairingData(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer);
+    void UsbCommand_SetPairingData(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer);
+    void UsbCommand_PairCentral(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer);
+    void UsbCommand_PairPeripheral(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer);
+    void UsbCommand_Unpair(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer);
+    void UsbCommand_IsPaired(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer);
+    void UsbCommand_EnterPairingMode(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer);
 
 // Typedefs:
 

@@ -1,26 +1,21 @@
 #ifndef __CONTROLS_APP_HEADER__
 #define __CONTROLS_APP_HEADER__
 
-#include "double_buffer.hpp"
-#include "hid/application.hpp"
+#include "app_base.hpp"
 #include "hid/page/consumer.hpp"
 #include "hid/page/generic_desktop.hpp"
 #include "hid/page/telephony.hpp"
-#include "hid/rdf/descriptor.hpp"
 #include "hid/report_array.hpp"
-#include "hid/report_protocol.hpp"
 #include "report_ids.h"
 
 using system_code = hid::page::generic_desktop;
 using consumer_code = hid::page::consumer;
 using telephony_code = hid::page::telephony;
 
-class controls_app : public hid::application {
+class controls_app : public app_base {
     static constexpr size_t CONSUMER_CODE_COUNT = 2;
     static constexpr size_t SYSTEM_CODE_COUNT = 2;
     static constexpr size_t TELEPHONY_CODE_COUNT = 2;
-
-    controls_app() : application(report_protocol()) {}
 
   public:
     template <hid::report::id::type REPORT_ID>
@@ -82,25 +77,12 @@ class controls_app : public hid::application {
     void set_report_state(const controls_report_base<0> &data);
 
   private:
-    static hid::report_protocol report_protocol()
-    {
-        static constexpr const auto rd{report_desc()};
-        constexpr hid::report_protocol rp{rd};
-        return rp;
-    }
+    controls_app() : app_base(this, report_buffer_) {}
 
     void start(hid::protocol prot) override;
-    void stop() override;
-    void set_report(hid::report::type type, const std::span<const uint8_t> &data) override
-    {
-        // no FEATURE or OUTPUT reports
-    }
-    void in_report_sent(const std::span<const uint8_t> &data) override;
-    void get_report(hid::report::selector select, const std::span<uint8_t> &buffer) override;
-    void send_buffer(uint8_t buf_idx);
 
     using controls_report = controls_report_base<report_ids::IN_CONTROLS>;
-    double_buffer<controls_report> report_buffer_{};
+    C2USB_USB_TRANSFER_ALIGN(controls_report, report_buffer_){};
 };
 
 using controls_buffer = controls_app::controls_report_base<0>;

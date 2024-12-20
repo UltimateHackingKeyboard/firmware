@@ -27,7 +27,7 @@ void DongleLeds_Set(bool r, bool g, bool b) {
     set_dongle_led(&blue_pwm_led, b ? 100 : 0);
 }
 
-void DongleLeds_Update() {
+void DongleLeds_Update(void) {
     if (DeviceState_IsConnected(ConnectionId_Right)) {
         DongleLeds_Set(false, true, false);
         return;

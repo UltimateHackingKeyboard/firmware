@@ -3,23 +3,23 @@
 
 #include <array>
 #include <atomic>
-#include <cstring>
 #include <c2usb.hpp>
+#include <cstring>
 
 template <typename T>
-class double_buffer
-{
-    struct aligned_storage
-    {
+class double_buffer {
+    struct aligned_storage {
         C2USB_USB_TRANSFER_ALIGN(T, m_){};
+        constexpr bool operator==(const aligned_storage &other) const = default;
+        constexpr bool operator!=(const aligned_storage &other) const = default;
     };
 
   public:
     constexpr double_buffer() {}
 
-    T& operator[](uint8_t i) { return buffers_[i].m_; }
+    T &operator[](uint8_t i) { return buffers_[i].m_; }
 
-    const T& operator[](uint8_t i) const { return buffers_[i].m_; }
+    const T &operator[](uint8_t i) const { return buffers_[i].m_; }
 
     uint8_t active_side(std::memory_order mo = std::memory_order::seq_cst) const
     {
@@ -32,7 +32,7 @@ class double_buffer
     }
 
     template <typename TArg>
-    uint8_t indexof(TArg* ptr) const
+    uint8_t indexof(TArg *ptr) const
     {
         auto oneptr = reinterpret_cast<std::uintptr_t>(&buffers_[1]);
         auto dataptr = reinterpret_cast<std::uintptr_t>(ptr);
@@ -48,8 +48,7 @@ class double_buffer
 
     bool compare_swap_copy(uint8_t i, std::memory_order mo = std::memory_order::seq_cst)
     {
-        if (compare_swap(i, mo))
-        {
+        if (compare_swap(i, mo)) {
             buffers_[1 - i] = buffers_[i];
             return true;
         }
@@ -58,7 +57,8 @@ class double_buffer
 
     void reset() { buffers_ = {}; }
 
-    bool differs() const { return std::memcmp(&buffers_[0], &buffers_[1], sizeof(T)) != 0; }
+    // bool differs() const { return std::memcmp(&buffers_[0] != &buffers_[1], sizeof(T)) != 0; }
+    bool differs() const { return buffers_[0] != buffers_[1]; }
 
   private:
     std::array<aligned_storage, 2> buffers_{};

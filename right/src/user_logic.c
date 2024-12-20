@@ -15,7 +15,7 @@
 
 void RunUserLogic(void) {
     if (EventVector_IsSet(EventVector_ApplyConfig)) {
-        UsbCommand_ApplyConfig();
+        UsbCommand_ApplyConfig(NULL, NULL);
     }
     if (EventVector_IsSet(EventVector_KeymapReloadNeeded)) {
         SwitchKeymapById(CurrentKeymapIndex);

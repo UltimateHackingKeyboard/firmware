@@ -7,7 +7,7 @@
     #include <stdbool.h>
     #include "../framebuffer.h"
     #include "keyboard/oled/fonts/fonts.h"
-    #include "legacy/str_utils.h"
+    #include "str_utils.h"
 
 // Macros:
 

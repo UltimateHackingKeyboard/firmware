@@ -28,13 +28,6 @@
 // Variables:
 
     extern uint32_t UsbGenericHidActionCounter;
-    extern uint8_t GenericHidInBuffer[USB_GENERIC_HID_IN_BUFFER_LENGTH];
-
-#ifdef __ZEPHYR__
-    extern const uint8_t *GenericHidOutBuffer;
-#else
-    extern uint8_t GenericHidOutBuffer[USB_GENERIC_HID_OUT_BUFFER_LENGTH];
-#endif
 
 // Functions:
 

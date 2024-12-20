@@ -1,1 +1,0 @@
-../../../right/src/power_mode.h

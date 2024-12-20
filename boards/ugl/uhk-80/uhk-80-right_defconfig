@@ -1,0 +1,7 @@
+# SPDX-License-Identifier: Apache-2.0
+# used for both zephyr and mcuboot -> only shared kconfig symbols here
+# Enable MPU
+CONFIG_ARM_MPU=y
+
+# Enable hardware stack protection
+CONFIG_HW_STACK_PROTECTION=y

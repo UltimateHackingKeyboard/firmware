@@ -3,7 +3,7 @@
 #include "keymap.h"
 #include "layer_stack.h"
 
-void UsbCommand_SwitchKeymap(void)
+void UsbCommand_SwitchKeymap(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer)
 {
     uint32_t keymapLength = GetUsbRxBufferUint8(1);
     char *keymapAbbrev = (char*)GenericHidOutBuffer + 2;

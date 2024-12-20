@@ -4,7 +4,7 @@
 #include "slave_scheduler.h"
 #include "i2c_error_logger.h"
 
-void UsbCommand_GetSlaveI2cErrors()
+void UsbCommand_GetSlaveI2cErrors(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer)
 {
     uint8_t slaveId = GetUsbRxBufferUint8(1);
 
