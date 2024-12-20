@@ -125,13 +125,9 @@ int main(void) {
 
     }
 
-    if (DEVICE_IS_UHK80_LEFT || DEVICE_IS_UHK80_RIGHT) {
-        Ledmap_InitLedLayout();
-    }
+    bt_enable(NULL); // has to be before InitSettings
 
-    bt_enable(NULL);
-
-    // has to be after bt_enable, has to be before ApplyConfig
+    // has to be after bt_enable; has to be before ApplyConfig
     InitSettings();
 
     // read configurations
@@ -140,6 +136,10 @@ int main(void) {
         printk("Reading hardware config\n");
         Flash_ReadAreaSync(hardwareConfigArea, 0, HardwareConfigBuffer.buffer, HARDWARE_CONFIG_SIZE);
         USB_SetSerialNumber(HardwareConfig->uniqueId);
+
+        if (DEVICE_IS_UHK80_LEFT || DEVICE_IS_UHK80_RIGHT) {
+            Ledmap_InitLedLayout(); // has to be after hwconfig read
+        }
 
         if (DEVICE_IS_UHK80_RIGHT) {
             printk("Reading user config\n");
