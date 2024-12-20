@@ -2,7 +2,7 @@
 #include "usb_report_updater.h"
 #include <string.h>
 #include "event_scheduler.h"
-#include "shared/attributes.h"
+#include "attributes.h"
 
 #ifdef __ZEPHYR__
 #include "usb/usb_compatibility.h"
