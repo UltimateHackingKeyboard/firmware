@@ -239,7 +239,8 @@ function performAction() {
     case $ACTION in
         update)
             git submodule update --init --recursive
-            west update
+            cd "$ROOT/.."
+            west update -o=--depth=1 -n
             west patch
             west config --local build.cmake-args -- "-Wno-dev"
             cd "$ROOT/scripts"
@@ -265,8 +266,8 @@ function performAction() {
             git submodule init
             git submodule update --init --recursive
             cd "$ROOT/.."
-            west init -l "$ROOT"
-            west update
+            west init -l "$ROOT" -mf west.yml
+            west update -o=--depth=1 -n
             west patch
             west config --local build.cmake-args -- "-Wno-dev"
             cd "$ROOT/scripts"
@@ -300,7 +301,7 @@ END
         flash)
             DEVICEARG=`determineDevIdArg $DEVICE`
             nrfutil toolchain-manager launch --shell --ncs-version $NCS_VERSION << END
-                west flash -d $ROOT/device/build/$DEVICE $DEVICEARG $OTHER_ARGS < /dev/tty
+                west flash --softreset -d $ROOT/device/build/$DEVICE $DEVICEARG $OTHER_ARGS < /dev/tty
 END
             ;;
         flashUsb)
