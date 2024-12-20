@@ -166,7 +166,10 @@ slave_result_t TouchpadDriver_Update(uint8_t uhkModuleDriverId)
 
             ModuleConnectionStates[UhkModuleDriverId_RightModule].lastTimeConnected = CurrentTime;
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstrict-aliasing"
             if (noFingers || deltaX || deltaY || *(uint16_t*)&gestureEvents || *(uint16_t*)&TouchpadEvents) {
+#pragma GCC diagnostic pop
                 bool somethingChanged = false;
 
                 if (
