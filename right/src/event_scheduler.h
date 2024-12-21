@@ -35,6 +35,8 @@
         EventSchedulerEvent_PowerMode,
         EventSchedulerEvent_EndBtPairing,
         EventSchedulerEvent_RestartBt,
+        EventSchedulerEvent_BtStartAdvertisement,
+        EventSchedulerEvent_BtStartScanning,
         EventSchedulerEvent_Count
     } event_scheduler_event_t;
 

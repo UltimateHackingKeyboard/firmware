@@ -272,6 +272,7 @@ const config_t DefaultCfg = (config_t){
 #else
         .I2cBaudRate = I2C_MAIN_BUS_NORMAL_BAUD_RATE,
 #endif
+        .AllowUnsecuredConnections = false,
         .EmergencyKey = NULL,
         .KeyActionColors = {
             {0x00, 0x00, 0x00}, // KeyActionColor_None

@@ -2,6 +2,8 @@
 #include "bt_conn.h"
 #include "bt_pair.h"
 #include "device.h"
+#include "bt_pair.h"
+#include "event_scheduler.h"
 #include "host_connection.h"
 
 static void scan_filter_match(struct bt_scan_device_info *device_info,
@@ -91,6 +93,7 @@ int BtScan_Start(void) {
     err = bt_scan_start(BT_SCAN_TYPE_SCAN_ACTIVE);
     if (err) {
         printk("Scanning failed to start (err %d)\n", err);
+        EventScheduler_Schedule(CurrentTime + 1000, EventSchedulerEvent_BtStartScanning, "BtStartScanning");
     } else {
         printk("Scanning successfully started\n");
     }

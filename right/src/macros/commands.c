@@ -2,6 +2,7 @@
 #include "attributes.h"
 #include "config_parser/config_globals.h"
 #include "config_parser/parse_macro.h"
+#include "host_connection.h"
 #include "keymap.h"
 #include "layer.h"
 #include "layer_stack.h"
@@ -22,9 +23,8 @@
 #include "postponer.h"
 #include "secondary_role_driver.h"
 #include "power_mode.h"
-#ifndef __ZEPHYR__
-#include "segment_display.h"
-#endif
+#include "usb_composite_device.h"
+#include "host_connection.h"
 #include "slave_drivers/uhk_module_driver.h"
 #include "str_utils.h"
 #include "timer.h"
@@ -32,6 +32,12 @@
 #include "utils.h"
 #include "debug.h"
 #include "config_manager.h"
+
+#ifdef __ZEPHYR__
+#include "connections.h"
+#else
+#include "segment_display.h"
+#endif
 
 #if !defined(MAX)
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -1731,6 +1737,40 @@ static macro_result_t processResetConfigurationCommand(parser_context_t* ctx)
     return MacroResult_Finished;
 }
 
+static macro_result_t processSwitchHostCommand(parser_context_t* ctx)
+{
+#define DRY_RUN_FINISH() if (Macros_DryRun) { return MacroResult_Finished; }
+
+#ifdef __ZEPHYR__
+    static uint8_t lastConnection = 0;
+    uint8_t currentConnection = ActiveHostConnectionId;
+
+    if (ConsumeToken(ctx, "next")) {
+        DRY_RUN_FINISH();
+        HostConnections_SelectNextConnection();
+    }
+    else if (ConsumeToken(ctx, "prev") || ConsumeToken(ctx, "previous")) {
+        DRY_RUN_FINISH();
+        HostConnections_SelectPreviousConnection();
+    }
+    else if (ConsumeToken(ctx, "last")) {
+        DRY_RUN_FINISH();
+        HostConnections_SelectById(lastConnection);
+    } else {
+        if (!Macros_DryRun) {
+            HostConnections_SelectByName(ctx);
+        }
+        Macros_ConsumeStringToken(ctx);
+    }
+
+    lastConnection = currentConnection;
+#endif
+
+#undef DRY_RUN_FINISH
+
+    return MacroResult_Finished;
+}
+
 static macro_result_t processCommand(parser_context_t* ctx)
 {
     if (*ctx->at == '$') {
@@ -2310,6 +2350,9 @@ static macro_result_t processCommand(parser_context_t* ctx)
             else if (ConsumeToken(ctx, "switchLayer")) {
     Macros_ReportError("Command deprecated. Please, replace switchKeymapLayer by toggleKeymapLayer or holdKeymapLayer. Or complain on github that you actually need this command.", ctx->at, ctx->at);
                 return MacroResult_Finished;
+            }
+            else if (ConsumeToken(ctx, "switchHost")) {
+                return processSwitchHostCommand(ctx);
             }
             else {
                 goto failed;

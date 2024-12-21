@@ -116,9 +116,6 @@ static void deleteBond(const struct bt_bond_info *info) {
     if (bt_addr_le_cmp(&Peers[PeerIdRight].addr, &info->addr) == 0) {
         settings_delete("uhk/addr/right");
     }
-    if (bt_addr_le_cmp(&Peers[PeerIdDongle].addr, &info->addr) == 0) {
-        settings_delete("uhk/addr/dongle");
-    }
 
     // Get the connection object if the device is currently connected
     conn = bt_conn_lookup_addr_le(BT_ID_DEFAULT, &info->addr);

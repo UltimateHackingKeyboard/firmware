@@ -95,6 +95,7 @@
         StateSyncPropertyId_PowerMode = 26,
         StateSyncPropertyId_Config = 27,
         StateSyncPropertyId_SwitchTestMode = 28,
+        StateSyncPropertyId_DongleStandby = 29,
         StateSyncPropertyId_Count,
     } state_sync_prop_id_t;
 
