@@ -46,10 +46,8 @@ void UsbCommand_SetPairingData(const uint8_t *GenericHidOutBuffer, uint8_t *Gene
         case PeerIdRight:
             settings_save_one("uhk/addr/right", addr, BLE_ADDR_LEN);
             break;
-        case PeerIdDongle:
-            settings_save_one("uhk/addr/dongle", addr, BLE_ADDR_LEN);
-            break;
         default:
+            break;
     }
 }
 

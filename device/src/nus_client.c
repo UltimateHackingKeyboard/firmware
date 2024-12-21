@@ -3,6 +3,7 @@
 #include <bluetooth/scan.h>
 #include "bt_scan.h"
 #include "bt_conn.h"
+#include "connections.h"
 #include "device.h"
 #include "usb_interfaces/usb_interface_basic_keyboard.h"
 #include "usb_interfaces/usb_interface_mouse.h"
@@ -39,10 +40,10 @@ static uint8_t ble_data_received(struct bt_nus_client *nus, const uint8_t *data,
 
     switch (DEVICE_ID) {
         case DeviceId_Uhk80_Right:
-            Messenger_Enqueue(DeviceId_Uhk80_Left, copy, len);
+            Messenger_Enqueue(ConnectionId_NusServerLeft, DeviceId_Uhk80_Left, copy, len);
             break;
         case DeviceId_Uhk_Dongle:
-            Messenger_Enqueue(DeviceId_Uhk80_Right, copy, len);
+            Messenger_Enqueue(ConnectionId_NusServerRight, DeviceId_Uhk80_Right, copy, len);
             break;
         default:
             printk("Ble received message from unknown source.");
@@ -81,10 +82,10 @@ static void discovery_complete(struct bt_gatt_dm *dm, void *context) {
     printk("NUS connection with %s successfully established\n", GetPeerStringByConn(nus->conn));
 
     if (DEVICE_ID == DeviceId_Uhk80_Right) {
-        Bt_SetDeviceConnected(DeviceId_Uhk80_Left);
+        Bt_SetConnectionConfigured(Peers[PeerIdLeft].conn);
     }
     if (DEVICE_ID == DeviceId_Uhk_Dongle) {
-        Bt_SetDeviceConnected(DeviceId_Uhk80_Right);
+        Bt_SetConnectionConfigured(Peers[PeerIdRight].conn);
     }
 }
 

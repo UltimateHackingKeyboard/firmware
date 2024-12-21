@@ -7,9 +7,11 @@
 #include "bt_advertise.h"
 #include "bt_conn.h"
 #include "bt_scan.h"
+#include "connections.h"
 #include "device_state.h"
 #include "keyboard/oled/screens/screen_manager.h"
 #include "keyboard/oled/widgets/widget.h"
+#include "event_scheduler.h"
 #include "host_connection.h"
 #include "nus_client.h"
 #include "nus_server.h"
@@ -21,6 +23,8 @@
 #include "bt_pair.h"
 #include "bt_manager.h"
 #include <zephyr/bluetooth/addr.h>
+#include "config_manager.h"
+#include "zephyr/kernel.h"
 
 bool Bt_NewPairedDevice = false;
 
@@ -31,21 +35,18 @@ peer_t Peers[PeerCount] = {
     {
         .id = PeerIdLeft,
         .name = "left",
+        .connectionId = ConnectionId_NusServerLeft,
     },
     {
         .id = PeerIdRight,
         .name = "right",
-    },
-    {
-        .id = PeerIdDongle,
-        .name = "dongle",
-    },
-    {
-        .id = PeerIdHid,
-        .name = "bthid",
+#if DEVICE_IS_UHK_DONGLE
+        .connectionId = ConnectionId_NusServerRight,
+#elif DEVICE_IS_UHK80_LEFT
+        .connectionId = ConnectionId_NusClientRight,
+#endif
     },
 };
-
 
 peer_t *getPeerByAddr(const bt_addr_le_t *addr) {
     for (uint8_t i = 0; i < PeerCount; i++) {
@@ -54,23 +55,21 @@ peer_t *getPeerByAddr(const bt_addr_le_t *addr) {
         }
     }
 
-    for (uint8_t hostConnectionId = 0; hostConnectionId < HOST_CONNECTION_COUNT_MAX; hostConnectionId++) {
-        host_connection_t* hostConnection = &HostConnections[hostConnectionId];
+    return NULL;
+}
 
-        if (hostConnection->type == HostConnectionType_Dongle && bt_addr_le_eq(addr, &hostConnection->bleAddress)) {
-            return &Peers[PeerIdDongle];
-        }
-        if (hostConnection->type == HostConnectionType_Ble && bt_addr_le_eq(addr, &hostConnection->bleAddress)) {
-            return &Peers[PeerIdHid];
+peer_t *getPeerByConn(const struct bt_conn *conn) {
+    for (uint8_t i = 0; i < PeerCount; i++) {
+        if (conn == Peers[i].conn) {
+            return &Peers[i];
         }
     }
 
     return NULL;
 }
 
-int8_t getPeerIdByConn(const struct bt_conn *conn) {
-    const bt_addr_le_t *addr = bt_conn_get_dst(conn);
-    peer_t *peer = getPeerByAddr(addr);
+int8_t GetPeerIdByConn(const struct bt_conn *conn) {
+    peer_t *peer = getPeerByConn(conn);
     int8_t peerId = peer ? peer->id : PeerIdUnknown;
     return peerId;
 }
@@ -128,18 +127,56 @@ static void configureLatency(struct bt_conn *conn) {
     }
 }
 
-static void assignPeer(const bt_addr_le_t *addr, int8_t peerId) {
-    if (Peers[peerId].isConnected) {
-        char addrString[32];
-        bt_addr_le_to_str(addr, addrString, sizeof(addrString));
-        printk("Peer slot %s already occupied. Overwriting with address %s\n", Peers[peerId].name, addrString);
+static uint8_t allocateHostPeer(uint8_t connectionType) {
+    switch (connectionType) {
+        case ConnectionType_NusLeft:
+            return PeerIdLeft;
+        case ConnectionType_NusRight:
+            return PeerIdRight;
+        default:
+            for (uint8_t peerId = PeerIdFirstHost; peerId <= PeerIdLastHost; peerId++) {
+                if (!Peers[peerId].conn) {
+                    return peerId;
+                }
+            }
+            break;
     }
-    Peers[peerId].addr = *addr;
-    Peers[peerId].isConnected = true;
+    return PeerIdLastHost;
+}
+
+static void assignPeer(struct bt_conn* conn, uint8_t connectionId, uint8_t connectionType) {
+    uint8_t peerId = allocateHostPeer(connectionType);
+    bt_addr_le_t addr = *bt_conn_get_dst(conn);
+    if (Peers[peerId].conn) {
+        printk("Peer slot %d already occupied!\n", peerId);
+    }
+    printk("Allocating connectionId %d to peer %d\n", connectionId, peerId);
+    Peers[peerId].addr = addr;
+    Peers[peerId].conn = bt_conn_ref(conn);
+    Peers[peerId].connectionId = connectionId;
+    Connections[connectionId].peerId = peerId;
+    Connections_SetState(connectionId, ConnectionState_Connected);
+}
+
+void check_connection(struct bt_conn *conn, void *data)
+{
+    int8_t peerId = GetPeerIdByConn(conn);
+    if (peerId == PeerIdUnknown) {
+        printk("  - %s\n", GetPeerStringByConn(conn));
+    } else {
+        printk("  - peer %d(%s), connection %d\n", peerId, GetPeerStringByConn(conn), Peers[peerId].connectionId);
+    }
+}
+
+void BtConn_ReviseConnections() {
+    printk("Current connections:\n");
+    bt_conn_foreach(BT_CONN_TYPE_LE, check_connection, NULL);
 }
 
 static void connected(struct bt_conn *conn, uint8_t err) {
-    int8_t peerId = getPeerIdByConn(conn);
+    const bt_addr_le_t * addr = bt_conn_get_dst(conn);
+    connection_id_t connectionId = Connections_GetConnectionIdByBtAddr(addr);
+    connection_type_t connectionType = Connections_Type(connectionId);
 
     if (err) {
         printk("Failed to connect to %s, err %u\n", GetPeerStringByConn(conn), err);
@@ -154,9 +191,19 @@ static void connected(struct bt_conn *conn, uint8_t err) {
         return;
     }
 
-    printk("Bt connected to %s\n", GetPeerStringByConn(conn));
+    // If last available slot is reserved for a selected connection, refuse other connections
+    if (
+            connectionType != ConnectionType_NusLeft &&
+            BtConn_UnusedPeripheralConnectionCount() <= 1 &&
+            SelectedHostConnectionId != ConnectionId_Invalid &&
+            bt_addr_le_cmp(bt_conn_get_dst(conn), &HostConnection(SelectedHostConnectionId)->bleAddress) != 0
+    ) {
+        printk("Refusing connenction %d (this is not a selected connection)\n", connectionId);
+        err = bt_conn_disconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
+        return;
+    }
 
-    if (peerId == PeerIdUnknown || peerId == PeerIdHid) {
+    if (connectionType == ConnectionType_BtHid || connectionType == ConnectionType_Unknown) {
         static const struct bt_le_conn_param conn_params = BT_LE_CONN_PARAM_INIT(
                 6, 9, // keep it low, lowest allowed is 6 (7.5ms), lowest supported widely is 9 (11.25ms)
                 10, // keeping it higher allows power saving on peripheral when there's nothing to send (keep it under 30 though)
@@ -168,56 +215,38 @@ static void connected(struct bt_conn *conn, uint8_t err) {
 #endif
     }
 
-    if (peerId == PeerIdUnknown) {
+    if (connectionType == ConnectionType_Unknown) {
+        printk("Bt connected to UNKNOWN %s\n", GetPeerStringByConn(conn));
         return;
     }
 
-    assignPeer(bt_conn_get_dst(conn), peerId);
+    assignPeer(conn, connectionId, connectionType);
 
-    if (peerId == PeerIdHid) {
+    printk("Bt connected to %s\n", GetPeerStringByConn(conn));
+
+    if (connectionType == ConnectionType_BtHid) {
     } else {
         bt_conn_set_security(conn, BT_SECURITY_L4);
         // continue connection process in in `connectionSecured()`
     }
 
-    if (DEVICE_IS_UHK80_RIGHT && (peerId != PeerIdLeft)) {
+    if (DEVICE_IS_UHK80_RIGHT) {
         BtAdvertise_Start(BtAdvertise_Type());
     }
 }
 
 static void disconnected(struct bt_conn *conn, uint8_t reason) {
-    int8_t peerId = getPeerIdByConn(conn);
+    int8_t peerId = GetPeerIdByConn(conn);
+    connection_type_t connectionType = Connections_Type(Peers[peerId].connectionId);
+
     ARG_UNUSED(peerId);
 
     printk("Bt disconnected from %s, reason %u\n", GetPeerStringByConn(conn), reason);
 
-    if (!BtPair_OobPairingInProgress && !BtManager_Restarting) {
-        if (DEVICE_IS_UHK80_RIGHT) {
-            if (peerId == PeerIdHid || peerId == PeerIdUnknown) {
-                BtAdvertise_Start(BtAdvertise_Type());
-                USB_EnableHid();
-            }
-            if (peerId == PeerIdDongle) {
-                BtAdvertise_Start(BtAdvertise_Type());
-            }
-            if (peerId == PeerIdLeft) {
-                BtScan_Start();
-            }
-        }
-
-        if (DEVICE_IS_UHK_DONGLE && peerId == PeerIdRight) {
-            BtScan_Start();
-        }
-
-        if (DEVICE_IS_UHK80_LEFT && peerId == PeerIdRight) {
-            BtAdvertise_Start(BtAdvertise_Type());
-        }
-    }
-
     if (DEVICE_IS_UHK80_LEFT && peerId == PeerIdRight) {
         NusServer_Disconnected();
     }
-    if (DEVICE_IS_UHK80_RIGHT && peerId == PeerIdDongle) {
+    if (DEVICE_IS_UHK80_RIGHT && connectionType == ConnectionType_NusDongle) {
         NusServer_Disconnected();
     }
     if (DEVICE_IS_UHK80_RIGHT && peerId == PeerIdLeft) {
@@ -228,47 +257,66 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
     }
 
     if (peerId != PeerIdUnknown) {
-        Peers[peerId].isConnected = false;
-        Peers[peerId].isConnectedAndConfigured = false;
-        DeviceState_TriggerUpdate();
+        Connections_SetState(Peers[peerId].connectionId, ConnectionState_Disconnected);
+        bt_conn_unref(Peers[peerId].conn);
+        Peers[peerId].conn = NULL;
+        Connections[Peers[peerId].connectionId].peerId = PeerIdUnknown;
+        if (peerId >= PeerIdFirstHost) {
+            Peers[peerId].connectionId = ConnectionId_Invalid;
+            memset(&Peers[peerId].addr, 0, sizeof(bt_addr_le_t));
+        }
+    }
+
+    if (!BtPair_OobPairingInProgress && !BtManager_Restarting) {
+        if (DEVICE_IS_UHK80_RIGHT) {
+            if (connectionType == ConnectionType_BtHid) {
+                BtAdvertise_Stop();
+                BtAdvertise_Start(BtAdvertise_Type());
+                USB_EnableHid();
+            }
+            if (connectionType == ConnectionType_NusDongle) {
+                BtAdvertise_Stop();
+                BtAdvertise_Start(BtAdvertise_Type());
+            }
+            if (connectionType == ConnectionType_NusLeft) {
+                BtScan_Start();
+            }
+        }
+
+        if (DEVICE_IS_UHK_DONGLE && connectionType == ConnectionType_NusRight) {
+            // give other dongles a chance to connect
+            EventScheduler_Schedule(k_uptime_get_32()+50, EventSchedulerEvent_BtStartScanning, "disconnected");
+        }
+
+        if (DEVICE_IS_UHK80_LEFT && connectionType == ConnectionType_NusRight) {
+            BtAdvertise_Start(BtAdvertise_Type());
+        }
     }
 }
 
-bool Bt_DeviceIsConnected(device_id_t deviceId) {
-    switch (deviceId) {
-        case DeviceId_Uhk80_Left:
-            return Peers[PeerIdLeft].isConnectedAndConfigured;
-        case DeviceId_Uhk80_Right:
-            return Peers[PeerIdRight].isConnectedAndConfigured;
-        case DeviceId_Uhk_Dongle:
-            return Peers[PeerIdDongle].isConnectedAndConfigured;
+void Bt_SetConnectionConfigured(struct bt_conn* conn) {
+    uint8_t peerId = GetPeerIdByConn(conn);
+    Connections_SetState(Peers[peerId].connectionId, ConnectionState_Ready);
+}
+
+static bool isUhkDeviceConnection(connection_type_t connectionType) {
+    switch (connectionType) {
+        case ConnectionType_NusLeft:
+        case ConnectionType_NusRight:
+        case ConnectionType_NusDongle:
+            return true;
         default:
             return false;
     }
 }
 
-void Bt_SetDeviceConnected(device_id_t deviceId) {
-    switch (deviceId) {
-        case DeviceId_Uhk80_Left:
-            Peers[PeerIdLeft].isConnectedAndConfigured = true;
-            break;
-        case DeviceId_Uhk80_Right:
-            Peers[PeerIdRight].isConnectedAndConfigured = true;
-            break;
-        case DeviceId_Uhk_Dongle:
-            Peers[PeerIdDongle].isConnectedAndConfigured = true;
-            break;
-        default:
-            break;
-    }
-    DeviceState_TriggerUpdate();
-}
-
 static void securityChanged(struct bt_conn *conn, bt_security_t level, enum bt_security_err err) {
-    int8_t peerId = getPeerIdByConn(conn);
+    int8_t peerId = GetPeerIdByConn(conn);
+    uint8_t connectionId = Peers[peerId].connectionId;
+    connection_type_t connectionType = Connections_Type(connectionId);
 
-    bool isUhkPeer = peerId == PeerIdLeft || peerId == PeerIdRight || peerId == PeerIdDongle;
-    if (err || (isUhkPeer && level < BT_SECURITY_L4)) {
+    bool isUhkPeer = isUhkDeviceConnection(connectionType);
+    if (err || (isUhkPeer && level < BT_SECURITY_L4 && !Cfg.AllowUnsecuredConnections)) {
         printk("Bt security failed: %s, level %u, err %d, disconnecting\n", GetPeerStringByConn(conn), level, err);
         bt_conn_auth_cancel(conn);
         return;
@@ -296,8 +344,10 @@ static void securityChanged(struct bt_conn *conn, bt_security_t level, enum bt_s
 
 __attribute__((unused)) static void infoLatencyParamsUpdated(struct bt_conn* conn, uint16_t interval, uint16_t latency, uint16_t timeout)
 {
-    uint8_t peerId = getPeerIdByConn(conn);
-    if (peerId == PeerIdUnknown || peerId == PeerIdHid) {
+    uint8_t peerId = GetPeerIdByConn(conn);
+    connection_type_t connectionType = Connections_Type(Peers[peerId].connectionId);
+
+    if (connectionType == ConnectionType_BtHid || connectionType == ConnectionType_Unknown) {
         printk("BLE HID conn params: interval=%u ms, latency=%u, timeout=%u ms\n",
             interval * 5 / 4, latency, timeout * 10);
     }
@@ -329,8 +379,9 @@ static void auth_passkey_confirm(struct bt_conn *conn, unsigned int passkey) {
         return;
     }
 
-    int8_t peerId = getPeerIdByConn(conn);
-    bool isUhkPeer = peerId == PeerIdLeft || peerId == PeerIdRight || peerId == PeerIdDongle;
+    int8_t peerId = GetPeerIdByConn(conn);
+    connection_type_t connectionType = Connections_Type(Peers[peerId].connectionId);
+    bool isUhkPeer = isUhkDeviceConnection(connectionType);
     if (isUhkPeer || BtPair_OobPairingInProgress) {
         printk("refusing passkey authentification for %s\n", GetPeerStringByConn(conn));
         bt_conn_auth_cancel(conn);
@@ -386,9 +437,15 @@ static void pairing_complete(struct bt_conn *conn, bool bonded) {
     printk("Pairing completed: %s, bonded %d\n", GetPeerStringByConn(conn), bonded);
     BtPair_EndPairing(true, "Successfuly bonded!");
 
+    uint8_t peerId = GetPeerIdByConn(conn);
+
+    // address can change during pairing
     bt_addr_le_t addr = *bt_conn_get_dst(conn);
-    uint8_t peerId = getPeerIdByConn(conn);
-    bool isUhkPeer = peerId == PeerIdLeft || peerId == PeerIdRight || peerId == PeerIdDongle;
+    Peers[peerId].addr = addr;
+
+    connection_type_t connectionType = Connections_Type(Peers[peerId].connectionId);
+    bool isUhkPeer = isUhkDeviceConnection(connectionType);
+
     if (!HostConnections_IsKnownBleAddress(&addr) && !isUhkPeer) {
         Bt_NewPairedDevice = true;
     }
@@ -425,6 +482,14 @@ static struct bt_conn_auth_info_cb conn_auth_info_callbacks = {
 void BtConn_Init(void) {
     int err = 0;
 
+    for (uint8_t peerId = PeerIdFirstHost; peerId <= PeerIdLastHost; peerId++) {
+        Peers[peerId].id = peerId;
+        Peers[peerId].conn = NULL;
+        Peers[peerId].connectionId = ConnectionId_Invalid;
+        strcpy(Peers[peerId].name, "host0");
+        Peers[peerId].name[4] = '1' + peerId - PeerIdFirstHost;
+    }
+
     err = bt_conn_auth_cb_register(&conn_auth_callbacks);
     if (err) {
         printk("Failed to register authorization callbacks.\n");
@@ -460,3 +525,48 @@ void num_comp_reply(uint8_t accept) {
     bt_conn_unref(auth_conn);
     auth_conn = NULL;
 }
+
+uint8_t BtConn_UnusedPeripheralConnectionCount() {
+    uint8_t count = 0;
+    for (uint8_t peerId = PeerIdFirstHost; peerId <= PeerIdLastHost; peerId++) {
+        if (!Peers[peerId].conn) {
+            count++;
+        }
+    }
+    return count;
+}
+
+static void disconnectOldestHost() {
+    uint32_t oldestSwitchover = UINT32_MAX;
+    uint8_t oldestPeerId = PeerIdUnknown;
+    for (uint8_t peerId = PeerIdFirstHost; peerId <= PeerIdLastHost; peerId++) {
+        if (Peers[peerId].conn && Peers[peerId].lastSwitchover < oldestSwitchover) {
+            oldestSwitchover = Peers[peerId].lastSwitchover;
+            oldestPeerId = peerId;
+        }
+    }
+
+    if (oldestPeerId != PeerIdUnknown) {
+        printk("Disconnecting oldest host %d\n", oldestPeerId);
+        bt_conn_disconnect(Peers[oldestPeerId].conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
+    }
+}
+
+void BtConn_ReserveConnections() {
+    bool hostSelected = SelectedHostConnectionId != ConnectionId_Invalid;
+    bool hostActive = hostSelected && Connections_IsReady(SelectedHostConnectionId);
+    bool selectionIsSatisfied = !hostSelected || hostActive;
+    uint8_t unusedConnectionCount = BtConn_UnusedPeripheralConnectionCount();
+
+    if (!selectionIsSatisfied) {
+        // clear filters and restart advertising
+        BtAdvertise_Stop();
+        if (unusedConnectionCount == 0) {
+            disconnectOldestHost();
+            // Advertising will get started when the host actually gets disconnected
+        } else {
+            BtAdvertise_Start(ADVERTISE_HID | ADVERTISE_NUS);
+        }
+    }
+}
+
