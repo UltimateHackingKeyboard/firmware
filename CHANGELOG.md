@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [12.1.0] - 2024-12-23
+
+Device Protocol: 4.**12.0** | Module Protocol: 4.3.0 | User Config: 8.3.0 | Hardware Config: 1.0.0 | Smart Macros: 3.0.0
+
+- Fix layer toggling.
+- Fix ISO LEDs handling.
+- Fix firmware tags and version numbers returned by the firmware and shown by Agent.
+- Make USB resume from sleep via keypress work.
+- Fix NewPairings flag and add GetNewPairings paging device protocol command. `DEVICEPROTOCOL:MINOR`
+- Fix BLE bond clearing.
+- Make mouse interface not freeze when switching between host connections.
+- Add HID battery interface.
+- Upgrade to nRF Connect SDK 2.8.0
+
 ## [12.0.1] - 2024-12-18
 
 Device Protocol: 4.11.0 | Module Protocol: 4.3.0 | User Config: 8.3.0 | Hardware Config: 1.0.0 | Smart Macros: 3.0.0
