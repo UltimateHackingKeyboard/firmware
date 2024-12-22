@@ -244,5 +244,5 @@ void LayerSwitcher_ResetHolds() {
  * Fork extensions:
  */
 void LayerSwitcher_RecalculateLayerComposition() {
-    LayerSwitcher_UpdateActiveLayer();
+    updateActiveLayer();
 }
