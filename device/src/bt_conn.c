@@ -388,6 +388,10 @@ static void auth_passkey_display(struct bt_conn *conn, unsigned int passkey)
 }
 
 static void auth_passkey_confirm(struct bt_conn *conn, unsigned int passkey) {
+    if (auth_conn) {
+        bt_conn_unref(auth_conn);
+    }
+
     auth_conn = bt_conn_ref(conn);
 
     printk("Received passkey pairing inquiry.\n");
