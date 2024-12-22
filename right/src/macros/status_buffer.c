@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
+#include "debug.h"
 #include "macros/core.h"
 #include "macros/scancode_commands.h"
 #include "macros/status_buffer.h"
@@ -112,9 +113,11 @@ static void setStatusChar(char n)
         return;
     }
 
-    if (n && statusBufferLen == STATUS_BUFFER_MAX_LENGTH) {
+    if (n && statusBufferLen == STATUS_BUFFER_MAX_LENGTH && DEBUG_ROLL_STATUS_BUFFER) {
         memcpy(statusBuffer, &statusBuffer[STATUS_BUFFER_MAX_LENGTH/2], STATUS_BUFFER_MAX_LENGTH/2);
+        int16_t shiftBy = STATUS_BUFFER_MAX_LENGTH - STATUS_BUFFER_MAX_LENGTH/2;
         statusBufferLen = STATUS_BUFFER_MAX_LENGTH/2;
+        consumeStatusCharReadingPos = consumeStatusCharReadingPos > shiftBy ? consumeStatusCharReadingPos - shiftBy : 0;
     }
 
     if (n && statusBufferLen < STATUS_BUFFER_MAX_LENGTH) {

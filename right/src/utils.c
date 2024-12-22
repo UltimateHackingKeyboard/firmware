@@ -2,6 +2,7 @@
 #include "utils.h"
 #include "key_action.h"
 #include "key_states.h"
+#include "macros/keyid_parser.h"
 
 #ifdef __ZEPHYR__
 #include "device.h"
@@ -51,6 +52,15 @@ key_state_t* Utils_KeyIdToKeyState(uint16_t keyid)
 #else
     return &(((key_state_t*)KeyStates)[recodeId(keyid, 64, MAX_KEY_COUNT_PER_MODULE)]);
 #endif
+}
+
+const char* Utils_KeyStateToKeyAbbreviation(key_state_t* key)
+{
+    if (key == NULL) {
+        return NULL;
+    }
+    uint16_t keyId = Utils_KeyStateToKeyId(key);
+    return MacroKeyIdParser_KeyIdToAbbreviation(keyId);
 }
 
 key_coordinates_t Utils_KeyIdToKeyCoordinates(uint16_t keyId)
