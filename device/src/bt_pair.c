@@ -110,10 +110,10 @@ static void deleteBond(const struct bt_bond_info *info) {
 
     struct bt_conn* conn;
 
-    if (bt_addr_le_cmp(&Peers[PeerIdLeft].addr, &info->addr) == 0) {
+    if (BtAddrEq(&Peers[PeerIdLeft].addr, &info->addr)) {
         settings_delete("uhk/addr/left");
     }
-    if (bt_addr_le_cmp(&Peers[PeerIdRight].addr, &info->addr) == 0) {
+    if (BtAddrEq(&Peers[PeerIdRight].addr, &info->addr)) {
         settings_delete("uhk/addr/right");
     }
 
@@ -141,7 +141,7 @@ static void bt_foreach_bond_cb_delete(const struct bt_bond_info *info, void *use
 {
     struct delete_args_t* args = (struct delete_args_t*)user_data;
 
-    if (!args->all && bt_addr_le_cmp(args->addr, &info->addr) != 0) {
+    if (!args->all && !BtAddrEq(args->addr, &info->addr) ) {
         char addr[32];
         bt_addr_le_to_str(&info->addr, addr, sizeof(addr));
         printk("Not deleting bond for %s\n", addr);
@@ -192,7 +192,7 @@ void checkBondedDevice(const struct bt_bond_info *info, void *user_data) {
     bt_addr_le_to_str(&info->addr, addr, sizeof(addr));
     char ref[32];
     bt_addr_le_to_str(args->addr, ref, sizeof(ref));
-    if (bt_addr_le_cmp(&info->addr, args->addr) == 0) {
+    if (BtAddrEq(&info->addr, args->addr)) {
         *args->bonded = true;
         printk("Device %s is bonded, ref %s\n", addr, ref);
     }

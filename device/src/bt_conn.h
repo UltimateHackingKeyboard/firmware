@@ -65,4 +65,8 @@
     void BtConn_ListCurrentConnections();
     void BtConn_ListAllBonds();
 
+    static inline bool BtAddrEq(const bt_addr_le_t *a, const bt_addr_le_t *b) {
+        return 0 == memcmp(a->a.val, b->a.val, sizeof(a->a.val));
+    }
+
 #endif // __BT_CONN_H__
