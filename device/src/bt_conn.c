@@ -74,6 +74,13 @@ int8_t GetPeerIdByConn(const struct bt_conn *conn) {
     return peerId;
 }
 
+char* GetAddrString(const bt_addr_le_t *addr)
+{
+    static char addr_str[BT_ADDR_LE_STR_LEN]; // Length defined by Zephyr
+    bt_addr_le_to_str(addr, addr_str, sizeof(addr_str));
+    return addr_str;
+}
+
 char *GetPeerStringByAddr(const bt_addr_le_t *addr) {
     char addrStr[BT_ADDR_STR_LEN];
     for (uint8_t i=0; i<BT_ADDR_SIZE; i++) {
@@ -168,9 +175,20 @@ void check_connection(struct bt_conn *conn, void *data)
     }
 }
 
-void BtConn_ReviseConnections() {
+void BtConn_ListCurrentConnections() {
     printk("Current connections:\n");
     bt_conn_foreach(BT_CONN_TYPE_LE, check_connection, NULL);
+}
+
+
+static void bt_foreach_print_bond(const struct bt_bond_info *info, void *user_data)
+{
+    printk(" - %s\n", GetAddrString(&info->addr));
+}
+
+void BtConn_ListAllBonds() {
+    printk("All bonds:\n");
+    bt_foreach_bond(BT_ID_DEFAULT, bt_foreach_print_bond, NULL);
 }
 
 static void connected(struct bt_conn *conn, uint8_t err) {
@@ -446,9 +464,16 @@ static void pairing_complete(struct bt_conn *conn, bool bonded) {
     connection_type_t connectionType = Connections_Type(Peers[peerId].connectionId);
     bool isUhkPeer = isUhkDeviceConnection(connectionType);
 
-    if (!HostConnections_IsKnownBleAddress(&addr) && !isUhkPeer) {
+    bool isKnown = HostConnections_IsKnownBleAddress(&addr);
+    printk("- is known: %d, isUhkPeer: %d\n", isKnown, isUhkPeer);
+    if (!isKnown && !isUhkPeer) {
+        printk("setting NewPairedDevice\n");
         Bt_NewPairedDevice = true;
     }
+
+    BtConn_ListCurrentConnections();
+    BtConn_ListAllBonds();
+    HostConnections_ListKnownBleConnections();
 }
 
 static void bt_foreach_conn_cb(struct bt_conn *conn, void *user_data) {

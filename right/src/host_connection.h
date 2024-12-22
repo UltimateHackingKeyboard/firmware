@@ -61,6 +61,8 @@
     bool HostConnections_IsKnownBleAddress(const bt_addr_le_t *address);
     host_connection_t* HostConnection(uint8_t connectionId);
 
+    void HostConnections_ListKnownBleConnections();
+
     void HostConnections_SelectById(uint8_t connectionId);
     void HostConnections_SelectNextConnection(void);
     void HostConnections_SelectPreviousConnection(void);

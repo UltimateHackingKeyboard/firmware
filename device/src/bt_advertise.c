@@ -84,7 +84,7 @@ void BtAdvertise_Start(uint8_t adv_type)
         printk("%s advertising continued\n", adv_type_string);
     } else {
         printk("%s advertising failed to start (err %d)\n", adv_type_string, err);
-        BtConn_ReviseConnections();
+        BtConn_ListCurrentConnections();
         EventScheduler_Schedule(CurrentTime + 1000, EventSchedulerEvent_BtStartAdvertisement, "BtStartAdvertisement");
     }
 }
