@@ -67,11 +67,11 @@ void UsbCommand_GetDeviceProperty(const uint8_t *GenericHidOutBuffer, uint8_t *G
         SetUsbTxBufferUint32(1, CurrentTime);
         break;
     case DevicePropertyId_GitTag:
-        Utils_SafeStrCopy(((char *)GenericHidInBuffer) + 1, gitTag, sizeof(GenericHidInBuffer) - 1);
+        Utils_SafeStrCopy(((char *)GenericHidInBuffer) + 1, gitTag, USB_GENERIC_HID_IN_BUFFER_LENGTH - 1);
         break;
     case DevicePropertyId_GitRepo:
         Utils_SafeStrCopy(
-            ((char *)GenericHidInBuffer) + 1, gitRepo, sizeof(GenericHidInBuffer) - 1);
+            ((char *)GenericHidInBuffer) + 1, gitRepo, USB_GENERIC_HID_IN_BUFFER_LENGTH - 1);
         break;
     case DevicePropertyId_FirmwareChecksum: {
         uint8_t moduleId = GetUsbRxBufferUint8(2);
