@@ -31,13 +31,13 @@ void UsbCommand_GetModuleProperty(const uint8_t *GenericHidOutBuffer, uint8_t *G
         case ModulePropertyId_GitTag: {
             uint8_t moduleDriverId = UhkModuleSlaveDriver_SlotIdToDriverId(slotId);
             uhk_module_state_t *moduleState = UhkModuleStates + moduleDriverId;
-            Utils_SafeStrCopy(((char*)GenericHidInBuffer) + 1, moduleState->gitTag, sizeof(GenericHidInBuffer) - 1);
+            Utils_SafeStrCopy(((char*)GenericHidInBuffer) + 1, moduleState->gitTag, USB_GENERIC_HID_IN_BUFFER_LENGTH - 1);
             break;
         }
         case ModulePropertyId_GitRepo: {
             uint8_t moduleDriverId = UhkModuleSlaveDriver_SlotIdToDriverId(slotId);
             uhk_module_state_t *moduleState = UhkModuleStates + moduleDriverId;
-            Utils_SafeStrCopy(((char*)GenericHidInBuffer) + 1, moduleState->gitRepo, sizeof(GenericHidInBuffer) - 1);
+            Utils_SafeStrCopy(((char*)GenericHidInBuffer) + 1, moduleState->gitRepo, USB_GENERIC_HID_IN_BUFFER_LENGTH - 1);
             break;
         }
         case ModulePropertyId_FirmwareChecksum: {

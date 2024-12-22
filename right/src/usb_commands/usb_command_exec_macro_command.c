@@ -16,7 +16,7 @@ key_state_t dummyState;
 
 static void requestExecution(const uint8_t *GenericHidOutBuffer)
 {
-    Utils_SafeStrCopy(UsbMacroCommand, ((char*)GenericHidOutBuffer) + 1, sizeof(GenericHidOutBuffer)-1);
+    Utils_SafeStrCopy(UsbMacroCommand, ((char*)GenericHidOutBuffer) + 1, USB_GENERIC_HID_OUT_BUFFER_LENGTH - 1);
     UsbMacroCommandLength = strlen(UsbMacroCommand);
 
     EventVector_Set(EventVector_UsbMacroCommandWaitingForExecution);
