@@ -220,11 +220,13 @@ struct usb_manager {
 
 extern "C" void USB_EnableHid()
 {
+    printk(" === Usb Enable Hid\n");
     usb_manager::instance().select_config(HID_GetGamepadActive() ? Hid_Full : Hid_NoGamepad);
 }
 
 extern "C" void USB_DisableHid()
 {
+    printk(" === Usb Disable Hid\n");
     usb_manager::instance().select_config(Hid_Empty);
 }
 
@@ -316,16 +318,19 @@ void hidmgr_set_transport(const hid::transport *tp)
 
     // tp is the transport of the keyboard app
     if (tp == nullptr) {
+        printk(" === set transport null\n");
         Connections_SetState(ConnectionId_BtHid, ConnectionState_Disconnected);
         Connections_SetState(usbHidConnId, ConnectionState_Disconnected);
     }
 #if DEVICE_IS_UHK80_RIGHT
     else if (tp == &hogp_manager::instance().main_service()) {
+        printk(" === set transport hogp\n");
         Connections_SetState(ConnectionId_BtHid, ConnectionState_Ready);
         Connections_SetState(usbHidConnId, ConnectionState_Disconnected);
     }
 #endif
     else {
+        printk(" === set transport usb\n");
         Connections_SetState(ConnectionId_BtHid, ConnectionState_Disconnected);
         Connections_SetState(usbHidConnId, ConnectionState_Ready);
     }
