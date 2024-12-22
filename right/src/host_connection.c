@@ -25,7 +25,7 @@ bool HostConnections_IsKnownBleAddress(const bt_addr_le_t *address) {
                 break;
             case HostConnectionType_Dongle:
             case HostConnectionType_BtHid:
-                if (bt_addr_le_cmp(address, &HostConnections[i].bleAddress) == 0) {
+                if (BtAddrEq(address, &HostConnections[i].bleAddress)) {
                     return true;
                 }
                 break;
@@ -35,7 +35,7 @@ bool HostConnections_IsKnownBleAddress(const bt_addr_le_t *address) {
     // Don't count new ble connections
     // Do check devices that are paired via settings - left, right, dongle
     for (int peerIdx = 0; peerIdx < PeerIdFirstHost; peerIdx++) {
-        if (bt_addr_le_cmp(address, &Peers[peerIdx].addr) == 0) {
+        if (BtAddrEq(address, &Peers[peerIdx].addr)) {
             return true;
         }
     }

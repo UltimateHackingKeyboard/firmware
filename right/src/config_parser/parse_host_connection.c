@@ -19,10 +19,10 @@ static parser_error_t parseHostConnection(config_buffer_t* buffer, host_connecti
     }
 
     if (hostConnection->type == HostConnectionType_BtHid || hostConnection->type == HostConnectionType_Dongle) {
-        hostConnection->bleAddress.type = 1;
         for (uint8_t i = 0; i < BLE_ADDRESS_LENGTH; i++) {
             hostConnection->bleAddress.a.val[i] = ReadUInt8(buffer);
         }
+        hostConnection->bleAddress.type = hostConnection->bleAddress.a.val[0] & 0x01;
     }
 
     if (hostConnection->type != HostConnectionType_Empty) {

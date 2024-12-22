@@ -50,7 +50,7 @@ peer_t Peers[PeerCount] = {
 
 peer_t *getPeerByAddr(const bt_addr_le_t *addr) {
     for (uint8_t i = 0; i < PeerCount; i++) {
-        if (bt_addr_le_eq(addr, &Peers[i].addr)) {
+        if (BtAddrEq(addr, &Peers[i].addr)) {
             return &Peers[i];
         }
     }
@@ -214,7 +214,7 @@ static void connected(struct bt_conn *conn, uint8_t err) {
             connectionType != ConnectionType_NusLeft &&
             BtConn_UnusedPeripheralConnectionCount() <= 1 &&
             SelectedHostConnectionId != ConnectionId_Invalid &&
-            bt_addr_le_cmp(bt_conn_get_dst(conn), &HostConnection(SelectedHostConnectionId)->bleAddress) != 0
+            !BtAddrEq(bt_conn_get_dst(conn), &HostConnection(SelectedHostConnectionId)->bleAddress)
     ) {
         printk("Refusing connenction %d (this is not a selected connection)\n", connectionId);
         err = bt_conn_disconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);

@@ -184,7 +184,7 @@ connection_id_t Connections_GetConnectionIdByBtAddr(const bt_addr_le_t *addr) {
     uint8_t newBtConnection = ConnectionId_Invalid;
 
     for (uint8_t peerId = 0; peerId < PeerCount; peerId++) {
-        if (bt_addr_le_cmp(addr, &Peers[peerId].addr) == 0) {
+        if (BtAddrEq(addr, &Peers[peerId].addr)) {
             return Peers[peerId].connectionId;
         }
     }
@@ -197,7 +197,7 @@ connection_id_t Connections_GetConnectionIdByBtAddr(const bt_addr_le_t *addr) {
                 break;
             case HostConnectionType_Dongle:
             case HostConnectionType_BtHid:
-                if (bt_addr_le_cmp(addr, &hostConnection->bleAddress) == 0) {
+                if (BtAddrEq(addr, &hostConnection->bleAddress)) {
                     return connectionId;
                 }
                 break;
