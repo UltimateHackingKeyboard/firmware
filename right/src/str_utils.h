@@ -16,7 +16,12 @@
         #include "device.h"
     #endif
 
+// Macros:
+
+    #define EXPAND_SEGMENT(SEGMENT) SegmentLen(SEGMENT), SEGMENT.start
+
 // Typedefs:
+
 
     typedef struct macro_state_t macro_state_t;
 

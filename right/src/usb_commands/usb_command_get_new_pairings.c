@@ -66,6 +66,10 @@ void UsbCommand_GetNewPairings(uint8_t page, const uint8_t *GenericHidOutBuffer,
         .dryRun = false,
     };
 
+    BtConn_ListCurrentConnections();
+    HostConnections_ListKnownBleConnections();
+    BtConn_ListAllBonds();
+
     bt_foreach_bond(BT_ID_DEFAULT, bt_foreach_bond_cb, &data);
 
     if (data.addressCount < data.pageIdxOffset) {

@@ -52,14 +52,17 @@
     int8_t GetPeerIdByConn(const struct bt_conn *conn);
     char *GetPeerStringByAddr(const bt_addr_le_t *addr);
     char *GetPeerStringByConn(const struct bt_conn *conn);
+    char* GetAddrString(const bt_addr_le_t *addr);
     extern void num_comp_reply(uint8_t accept);
 
     void BtConn_Init(void);
     void BtConn_DisconnectAll();
 
-    void BtConn_ReviseConnections();
     void BtConn_ReserveConnections();
     void Bt_SetConnectionConfigured(struct bt_conn* conn);
     uint8_t BtConn_UnusedPeripheralConnectionCount();
+
+    void BtConn_ListCurrentConnections();
+    void BtConn_ListAllBonds();
 
 #endif // __BT_CONN_H__
