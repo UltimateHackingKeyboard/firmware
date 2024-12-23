@@ -18,11 +18,11 @@ static parser_error_t parseHostConnection(config_buffer_t* buffer, host_connecti
         return ParserError_InvalidHostType;
     }
 
-    if (hostConnection->type == HostConnectionType_Ble || hostConnection->type == HostConnectionType_Dongle) {
-        hostConnection->bleAddress.type = 1;
+    if (hostConnection->type == HostConnectionType_BtHid || hostConnection->type == HostConnectionType_Dongle) {
         for (uint8_t i = 0; i < BLE_ADDRESS_LENGTH; i++) {
             hostConnection->bleAddress.a.val[i] = ReadUInt8(buffer);
         }
+        hostConnection->bleAddress.type = hostConnection->bleAddress.a.val[0] & 0x01;
     }
 
     if (hostConnection->type != HostConnectionType_Empty) {
@@ -41,7 +41,7 @@ static parser_error_t parseHostConnection(config_buffer_t* buffer, host_connecti
 parser_error_t ParseHostConnections(config_buffer_t *buffer) {
     int errorCode;
 
-    for (uint8_t hostConnectionId = 0; hostConnectionId < HOST_CONNECTION_COUNT_MAX; hostConnectionId++) {
+    for (uint8_t hostConnectionId = 0; hostConnectionId < SERIALIZED_HOST_CONNECTION_COUNT_MAX; hostConnectionId++) {
         host_connection_t dummy;
 
         host_connection_t* hostConnection = &dummy;

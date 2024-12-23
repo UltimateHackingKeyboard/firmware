@@ -20,6 +20,8 @@
 #include "device_state.h"
 #include "usb/usb_compatibility.h"
 #include "macros/status_buffer.h"
+#include "host_connection.h"
+#include "connections.h"
 
 widget_t KeymapWidget;
 widget_t LayerWidget;
@@ -43,14 +45,36 @@ static string_segment_t getKeymapText() {
 
 
 static string_segment_t getTargetText() {
-    if (DeviceState_IsConnected(ConnectionId_UsbHid)) {
-        return (string_segment_t){ .start = "USB Cable", .end = NULL };
-    } else if (DeviceState_IsConnected(ConnectionId_Dongle)) {
-        return (string_segment_t){ .start = "UHK Dongle", .end = NULL };
-    } else if (DeviceState_IsConnected(ConnectionId_BluetoothHid)) {
-        return (string_segment_t){ .start = "Bluetooth", .end = NULL };
-    } else {
-        return (string_segment_t){ .start = "Disconnected", .end = NULL };
+    switch (ActiveHostConnectionId) {
+        case ConnectionId_UsbHidRight:
+            return (string_segment_t){ .start = "USB Cable", .end = NULL };
+        case ConnectionId_BtHid:
+            return (string_segment_t){ .start = "Bluetooth", .end = NULL };
+        case ConnectionId_HostConnectionFirst ... ConnectionId_HostConnectionLast: {
+            host_connection_t* hostConnection = HostConnection(ActiveHostConnectionId);
+
+            if (SegmentLen(hostConnection->name) > 0) {
+                return hostConnection->name;
+            }
+
+            switch(hostConnection->type) {
+                case HostConnectionType_UsbHidRight:
+                    return (string_segment_t){ .start = "USB Cable", .end = NULL };
+                case HostConnectionType_UsbHidLeft:
+                    return (string_segment_t){ .start = "USB Cable", .end = NULL };
+                case HostConnectionType_BtHid:
+                    return (string_segment_t){ .start = "Bluetooth", .end = NULL };
+                case HostConnectionType_Dongle:
+                    return (string_segment_t){ .start = "UHK Dongle", .end = NULL };
+                default:
+                    return (string_segment_t){ .start = "Unknown", .end = NULL };
+
+            }
+        }
+        case ConnectionId_Invalid:
+            return (string_segment_t){ .start = "Disconnected", .end = NULL };
+        default:
+            return (string_segment_t){ .start = "Unknown", .end = NULL };
     }
 }
 
@@ -74,9 +98,9 @@ static string_segment_t getLeftStatusText() {
     static char buffer [BUFFER_LENGTH] = { [BUFFER_LENGTH-1] = 0 };
     font_icons_t icon = FontIcon_CircleXmarkLarge;
     if (DEVICE_ID == DeviceId_Uhk80_Right) {
-        if (Uart_IsConnected()) {
+        if (Connections_IsReady(ConnectionId_UartLeft)) {
             icon = FontIcon_PlugsConnected;
-        } else if (Bt_DeviceIsConnected(DeviceId_Uhk80_Left)) {
+        } else if (Connections_IsReady(ConnectionId_NusServerLeft)) {
             icon = FontIcon_SignalStream;
         }
     }

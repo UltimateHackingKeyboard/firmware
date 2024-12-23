@@ -874,6 +874,9 @@ static macro_variable_t root(parser_context_t* ctx, set_command_action_t action)
         DEFINE_INT_LIMITS(0, 65535);
         ASSIGN_INT(Cfg.AutoShiftDelay);
     }
+    else if (ConsumeToken(ctx, "allowUnsecuredConnections")) {
+        ASSIGN_BOOL(Cfg.AllowUnsecuredConnections);
+    }
 #ifndef __ZEPHYR__
     else if (ConsumeToken(ctx, "i2cBaudRate")) {
         if (action == SetCommandAction_Read) {

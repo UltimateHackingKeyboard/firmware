@@ -1,3 +1,4 @@
+#include "connections.h"
 #include "device.h"
 #if DEVICE_IS_UHK_DONGLE
 #include "dongle_leds.h"
@@ -7,7 +8,6 @@
 const struct pwm_dt_spec red_pwm_led = PWM_DT_SPEC_GET(DT_ALIAS(red_pwm_led));
 const struct pwm_dt_spec green_pwm_led = PWM_DT_SPEC_GET(DT_ALIAS(green_pwm_led));
 const struct pwm_dt_spec blue_pwm_led = PWM_DT_SPEC_GET(DT_ALIAS(blue_pwm_led));
-
 
 // There is also the following zero led.
 // const struct gpio_dt_spec led0 = GPIO_DT_SPEC_GET(DT_ALIAS(led0_green), gpios);
@@ -21,22 +21,31 @@ void set_dongle_led(const struct pwm_dt_spec *device, uint8_t percentage) {
 }
 
 
-void DongleLeds_Set(bool r, bool g, bool b) {
-    set_dongle_led(&red_pwm_led, r ? 100 : 0);
-    set_dongle_led(&green_pwm_led, g ? 100 : 0);
-    set_dongle_led(&blue_pwm_led, b ? 100 : 0);
+void DongleLeds_Set(uint8_t r, uint8_t g, uint8_t b) {
+    set_dongle_led(&red_pwm_led, r);
+    set_dongle_led(&green_pwm_led, g);
+    set_dongle_led(&blue_pwm_led, b);
 }
 
 void DongleLeds_Update(void) {
-    if (DeviceState_IsConnected(ConnectionId_Right)) {
-        DongleLeds_Set(false, true, false);
-        return;
+    if (Connections_IsReady(ConnectionId_NusServerRight)) {
+        if (!DongleStandby) {
+            // connected and receiving: green
+            DongleLeds_Set(0, 100, 0);
+            return;
+        } else {
+            // connected in standby: blue
+            DongleLeds_Set(0, 100, 100);
+            return;
+        }
     }
     if (RightAddressIsSet) {
-        DongleLeds_Set(false, false, true);
+        // trying to connect: violet
+        DongleLeds_Set(100, 0, 70);
         return;
     }
-    DongleLeds_Set(true, false, false);
+    // disconnected: red
+    DongleLeds_Set(100, 0, 0);
 }
 
 #endif // DEVICE_IS_UHK_DONGLE
