@@ -238,6 +238,7 @@ static void receiveModuleStateData(sync_command_module_state_t *buffer) {
     uhk_module_state_t *moduleState = &UhkModuleStates[driverId];
 
     // once we have multiple left modules, reload keymap here
+    bool leftModuleChanged = buffer->slotId != SlotId_LeftKeyboardHalf && moduleState->moduleId != buffer->moduleId;
 
     module_connection_state_t *moduleConnectionState = &ModuleConnectionStates[driverId];
     moduleConnectionState->moduleId = buffer->moduleId;
@@ -249,6 +250,10 @@ static void receiveModuleStateData(sync_command_module_state_t *buffer) {
     Utils_SafeStrCopy(moduleState->gitRepo, buffer->gitRepo, MAX_STRING_PROPERTY_LENGTH);
     Utils_SafeStrCopy(moduleState->gitTag, buffer->gitTag, MAX_STRING_PROPERTY_LENGTH);
     memcpy(moduleState->firmwareChecksum, buffer->firmwareChecksum, MD5_CHECKSUM_LENGTH);
+
+    if (DEVICE_IS_UHK80_RIGHT && leftModuleChanged) {
+        EventVector_Set(EventVector_KeymapReloadNeeded);
+    }
 }
 
 static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const uint8_t *data, uint8_t len) {
