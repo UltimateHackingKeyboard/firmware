@@ -5,6 +5,13 @@
 #include "keymap.h"
 #include "segment_display.h"
 #include "slave_drivers/is31fl3xxx_driver.h"
+#include "ledmap.h"
+#include "led_manager.h"
+#include "event_scheduler.h"
+
+#ifdef __ZEPHYR__
+#include "state_sync.h"
+#endif
 
 bool TestSwitches = false;
 
@@ -111,9 +118,29 @@ static const key_action_t TestKeymap[1][2][MAX_KEY_COUNT_PER_MODULE] = {
 
 void TestSwitches_Activate(void)
 {
+    TestSwitches = true;
     memcpy(&CurrentKeymap, &TestKeymap, sizeof TestKeymap);
     SegmentDisplay_SetText(3, "TES", SegmentDisplaySlot_Keymap);
+
 #ifndef __ZEPHYR__
     LedSlaveDriver_EnableAllLeds();
 #endif
+
+    Ledmap_ActivateTestLedMode(true);
+
+#if DEVICE_IS_UHK80_RIGHT
+    StateSync_UpdateProperty(StateSyncPropertyId_SwitchTestMode, NULL);
+#endif
+}
+
+void TestSwitches_Deactivate(void)
+{
+    TestSwitches = false;
+    Ledmap_ActivateTestLedMode(false);
+
+#if DEVICE_IS_UHK80_RIGHT
+    StateSync_UpdateProperty(StateSyncPropertyId_SwitchTestMode, NULL);
+    EventVector_Set(EventVector_KeymapReloadNeeded);
+#endif
+
 }

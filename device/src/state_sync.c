@@ -24,6 +24,7 @@
 #include <zephyr/kernel.h>
 #include "peripherals/merge_sensor.h"
 #include "power_mode.h"
+#include "test_switches.h"
 
 #define WAKE(TID) if (TID != 0) { k_wakeup(TID); }
 
@@ -128,6 +129,7 @@ static state_sync_prop_t stateSyncProps[StateSyncPropertyId_Count] = {
     SIMPLE(FunctionalColors,        SyncDirection_RightToLeft,        DirtyState_Clean,    &Cfg.KeyActionColors),
     SIMPLE(PowerMode,               SyncDirection_RightToLeft,        DirtyState_Clean,    &CurrentPowerMode),
     CUSTOM(Config,                  SyncDirection_RightToLeft,        DirtyState_Clean),
+    CUSTOM(SwitchTestMode,          SyncDirection_RightToLeft,        DirtyState_Clean),
 };
 
 static void invalidateProperty(state_sync_prop_id_t propId) {
@@ -347,6 +349,15 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
         break;
     case StateSyncPropertyId_MergeSensor:
         break;
+    case StateSyncPropertyId_SwitchTestMode:
+        if (!isLocalUpdate) {
+            bool newMode = *(bool*)data;
+            if (newMode != TestSwitches) {
+                newMode ? TestSwitches_Activate() : TestSwitches_Deactivate();
+                Main_Wake();
+            }
+        }
+        break;
     default:
         printk("Property %i ('%s') has no receive handler. If this is correct, please add a "
                "separate empty case...\n",
@@ -488,6 +499,10 @@ static void prepareData(device_id_t dst, const uint8_t *propDataPtr, state_sync_
         submitPreparedData(dst, propId, (const uint8_t *)&buffer, sizeof(buffer));
         return;
     } break;
+    case StateSyncPropertyId_SwitchTestMode: {
+        submitPreparedData(dst, propId, (const uint8_t *)&TestSwitches, sizeof(TestSwitches));
+        return;
+    }
     default:
         break;
     }
@@ -531,6 +546,7 @@ static void updateProperty(state_sync_prop_id_t propId) {
 static bool handlePropertyUpdateRightToLeft() {
     UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ResetRightLeftLink);
     UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_Config);
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_SwitchTestMode);
 
     if (KeyBacklightBrightness != 0) {
         // Update relevant data

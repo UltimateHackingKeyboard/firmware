@@ -15,14 +15,9 @@ void UsbCommand_SetVariable(const uint8_t *GenericHidOutBuffer, uint8_t *Generic
     switch (variableId) {
         case UsbVariable_TestSwitches:
             if (GetUsbRxBufferUint8(2)) {
-                TestSwitches = true;
                 TestSwitches_Activate();
-                Ledmap_ActivateTestLedMode(true);
             } else {
-                TestSwitches = false;
-                Ledmap_ActivateTestLedMode(false);
-                SwitchKeymapById(CurrentKeymapIndex);
-                LedManager_FullUpdate();
+                TestSwitches_Deactivate();
             }
             break;
         case UsbVariable_TestUsbStack:
