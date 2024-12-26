@@ -166,10 +166,10 @@ slave_result_t TouchpadDriver_Update(uint8_t uhkModuleDriverId)
 
             ModuleConnectionStates[UhkModuleDriverId_RightModule].lastTimeConnected = CurrentTime;
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wstrict-aliasing"
-            if (noFingers || deltaX || deltaY || *(uint16_t*)&gestureEvents || *(uint16_t*)&TouchpadEvents) {
-#pragma GCC diagnostic pop
+            static bool somethingWasNonZero = false;
+            bool somethingIsNonZero = noFingers || deltaX || deltaY || ((uint8_t*)&gestureEvents)[0] || ((uint8_t*)&gestureEvents)[1];
+
+            if (somethingIsNonZero || somethingWasNonZero) {
                 bool somethingChanged = false;
 
                 if (
@@ -208,6 +208,7 @@ slave_result_t TouchpadDriver_Update(uint8_t uhkModuleDriverId)
 
             res.status = I2cAsyncWrite(address, closeCommunicationWindow, sizeof(closeCommunicationWindow));
             res.hold = false;
+            somethingWasNonZero = somethingIsNonZero;
 
             phase = 3;
             break;
