@@ -39,7 +39,7 @@ void Uart_Log(const char *fmt, ...) {
 void Log(const char *fmt, ...) {
     EXPAND_STRING(buffer);
 
-    LogConstantTo(DeviceId_Uhk_Dongle, LogTarget_Uart, buffer);
+    LogConstantTo(DEVICE_ID, LogTarget_Uart, buffer);
 }
 
 void LogConstantTo(device_id_t deviceId, log_target_t logMask, const char* buffer) {
