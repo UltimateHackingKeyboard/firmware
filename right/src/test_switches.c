@@ -140,7 +140,9 @@ void TestSwitches_Deactivate(void)
 
 #if DEVICE_IS_UHK80_RIGHT
     StateSync_UpdateProperty(StateSyncPropertyId_SwitchTestMode, NULL);
-    EventVector_Set(EventVector_KeymapReloadNeeded);
 #endif
 
+#if DEVICE_IS_MASTER
+    EventVector_Set(EventVector_KeymapReloadNeeded);
+#endif
 }
