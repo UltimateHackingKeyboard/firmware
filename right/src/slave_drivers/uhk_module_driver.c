@@ -9,7 +9,6 @@
 #include "state_sync.h"
 #else
 #include "peripherals/test_led.h"
-#include "test_switches.h"
 #include "device.h"
 #endif
 
@@ -27,6 +26,7 @@
 #include "macros/core.h"
 #include "versioning.h"
 #include "layouts/key_layout_60_to_universal.h"
+#include "test_switches.h"
 
 uhk_module_state_t UhkModuleStates[UHK_MODULE_MAX_SLOT_COUNT];
 module_connection_state_t ModuleConnectionStates[UHK_MODULE_MAX_SLOT_COUNT];
@@ -113,7 +113,7 @@ static void reloadKeymapIfNeeded()
         someoneElseWillDoTheJob |= uhkModuleState->moduleId == 0 && slave->isConnected;
     }
 #ifdef __ZEPHYR__
-    if (DEVICE_ID == DeviceId_Uhk80_Right) {
+    if (DEVICE_ID == DeviceId_Uhk80_Right && !TestSwitches) {
         EventVector_Set(EventVector_KeymapReloadNeeded);
         EventVector_WakeMain();
     }
