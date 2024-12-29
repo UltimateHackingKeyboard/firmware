@@ -67,7 +67,7 @@ void AddReportToStatusBuffer(char* dbgTag, usb_basic_keyboard_report_t *report)
 
 void TriggerWatch(key_state_t *keyState)
 {
-    int16_t key = (keyState - &KeyStates[SlotId_LeftKeyboardHalf][0]);
+    int16_t key = (keyState - &KeyStates[SlotId_RightKeyboardHalf][0]);
     if (0 <= key && key <= 7) {
         // Set the LED value to --- until next update occurs.
 #ifdef __ZEPHYR__

@@ -69,12 +69,14 @@ void SlaveTxHandler(void)
         }
         case SlaveProperty_ModuleId: {
             TxMessage.data[0] = MODULE_ID;
-            TxMessage.length = 1;
+            TxMessage.data[1] = 123;
+            TxMessage.length = 2;
             break;
         }
         case SlaveProperty_KeyCount: {
             TxMessage.data[0] = MODULE_KEY_COUNT;
-            TxMessage.length = 1;
+            TxMessage.data[1] = 234;
+            TxMessage.length = 2;
             break;
         }
         case SlaveProperty_PointerCount: {

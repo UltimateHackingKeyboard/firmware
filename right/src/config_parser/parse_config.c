@@ -335,6 +335,8 @@ parser_error_t parseConfig(config_buffer_t *buffer)
 
         AllKeymapsCount = keymapCount;
         AllMacrosCount = macroCount;
+
+        Cfg.KeystrokeDelay = 10;
     } else {
         PerKeyRgbPresent = previousPerKeyRgbPresent;
     }

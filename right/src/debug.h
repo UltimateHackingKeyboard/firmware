@@ -1,7 +1,7 @@
 #ifndef __DEBUG_H__
 #define __DEBUG_H__
 
-#define WATCHES false
+#define WATCHES true
 #define DEBUG_SEMAPHORES false
 #define DEBUG_EVENTLOOP_TIMING false
 #define DEBUG_STATESYNC false
@@ -10,7 +10,7 @@
 #define DEBUG_POSTPONER false
 #define WATCH_INTERVAL 500
 
-#define DEBUG_ROLL_STATUS_BUFFER true
+#define DEBUG_ROLL_STATUS_BUFFER false
 
 #ifdef __ZEPHYR__
     #include "logger.h"

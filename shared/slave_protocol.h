@@ -34,15 +34,15 @@
     } module_specific_command_t;
 
     typedef enum {
-        SlaveProperty_Sync,
-        SlaveProperty_ModuleProtocolVersion,
-        SlaveProperty_FirmwareVersion,
-        SlaveProperty_ModuleId,
-        SlaveProperty_KeyCount,
-        SlaveProperty_PointerCount,
-        SlaveProperty_GitTag,
-        SlaveProperty_GitRepo,
-        SlaveProperty_FirmwareChecksum,
+        SlaveProperty_Sync = 0,
+        SlaveProperty_ModuleProtocolVersion = 1,
+        SlaveProperty_FirmwareVersion = 2,
+        SlaveProperty_ModuleId = 3,
+        SlaveProperty_KeyCount = 4,
+        SlaveProperty_PointerCount = 5,
+        SlaveProperty_GitTag = 6,
+        SlaveProperty_GitRepo = 7,
+        SlaveProperty_FirmwareChecksum = 8,
     } slave_property_t;
 
     typedef enum {

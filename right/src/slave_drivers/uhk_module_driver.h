@@ -31,60 +31,60 @@
     typedef enum {
 
         // Sync communication
-        UhkModulePhase_RequestSync,
-        UhkModulePhase_ReceiveSync,
-        UhkModulePhase_ProcessSync,
+        UhkModulePhase_RequestSync = 0,
+        UhkModulePhase_ReceiveSync = 1,
+        UhkModulePhase_ProcessSync = 2,
 
         // Get protocol version
-        UhkModulePhase_RequestModuleProtocolVersion,
-        UhkModulePhase_ReceiveModuleProtocolVersion,
-        UhkModulePhase_ProcessModuleProtocolVersion,
+        UhkModulePhase_RequestModuleProtocolVersion = 3,
+        UhkModulePhase_ReceiveModuleProtocolVersion = 4,
+        UhkModulePhase_ProcessModuleProtocolVersion = 5,
 
         // Get firmware version
-        UhkModulePhase_RequestFirmwareVersion,
-        UhkModulePhase_ReceiveFirmwareVersion,
-        UhkModulePhase_ProcessFirmwareVersion,
+        UhkModulePhase_RequestFirmwareVersion = 6,
+        UhkModulePhase_ReceiveFirmwareVersion = 7,
+        UhkModulePhase_ProcessFirmwareVersion = 8,
 
         // Get module id
-        UhkModulePhase_RequestModuleId,
-        UhkModulePhase_ReceiveModuleId,
-        UhkModulePhase_ProcessModuleId,
+        UhkModulePhase_RequestModuleId = 9,
+        UhkModulePhase_ReceiveModuleId = 10,
+        UhkModulePhase_ProcessModuleId = 11,
 
         // Get module key count
-        UhkModulePhase_RequestModuleKeyCount,
-        UhkModulePhase_ReceiveModuleKeyCount,
-        UhkModulePhase_ProcessModuleKeyCount,
+        UhkModulePhase_RequestModuleKeyCount = 12,
+        UhkModulePhase_ReceiveModuleKeyCount = 13,
+        UhkModulePhase_ProcessModuleKeyCount = 14,
 
         // Get module key count
-        UhkModulePhase_RequestModulePointerCount,
-        UhkModulePhase_ReceiveModulePointerCount,
-        UhkModulePhase_ProcessModulePointerCount,
+        UhkModulePhase_RequestModulePointerCount = 15,
+        UhkModulePhase_ReceiveModulePointerCount = 16,
+        UhkModulePhase_ProcessModulePointerCount = 17,
 
         // Get key states
-        UhkModulePhase_RequestKeyStates,
-        UhkModulePhase_ReceiveKeystates,
-        UhkModulePhase_ProcessKeystates,
+        UhkModulePhase_RequestKeyStates = 18,
+        UhkModulePhase_ReceiveKeystates = 19,
+        UhkModulePhase_ProcessKeystates = 20,
 
         // Get git tag
-        UhkModulePhase_RequestGitTag,
-        UhkModulePhase_ReceiveGitTag,
-        UhkModulePhase_ProcessGitTag,
+        UhkModulePhase_RequestGitTag = 21,
+        UhkModulePhase_ReceiveGitTag = 22,
+        UhkModulePhase_ProcessGitTag = 23,
 
         // Get git repo
-        UhkModulePhase_RequestGitRepo,
-        UhkModulePhase_ReceiveGitRepo,
-        UhkModulePhase_ProcessGitRepo,
+        UhkModulePhase_RequestGitRepo = 24,
+        UhkModulePhase_ReceiveGitRepo = 25,
+        UhkModulePhase_ProcessGitRepo = 26,
 
         // Get firmware checksum
-        UhkModulePhase_RequestFirmwareChecksum,
-        UhkModulePhase_ReceiveFirmwareChecksum,
-        UhkModulePhase_ProcessFirmwareChecksum,
+        UhkModulePhase_RequestFirmwareChecksum = 27,
+        UhkModulePhase_ReceiveFirmwareChecksum = 28,
+        UhkModulePhase_ProcessFirmwareChecksum = 29,
 
         // Misc phases
-        UhkModulePhase_SetTestLed,
-        UhkModulePhase_SetLedPwmBrightness,
-        UhkModulePhase_JumpToBootloader,
-        UhkModulePhase_ResetTrackpoint,
+        UhkModulePhase_SetTestLed = 30,
+        UhkModulePhase_SetLedPwmBrightness = 31,
+        UhkModulePhase_JumpToBootloader = 32,
+        UhkModulePhase_ResetTrackpoint = 33,
 
     } uhk_module_phase_t;
 

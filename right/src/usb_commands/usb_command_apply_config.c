@@ -59,6 +59,7 @@ static bool hwConfigEmpty() {
 
 void UsbCommand_ApplyFactory(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer)
 {
+    PRINTM("ApplyFactory");
     EventVector_Unset(EventVector_ApplyConfig);
 
     DataModelVersion = userConfigVersion;
@@ -81,6 +82,7 @@ void UsbCommand_ApplyFactory(const uint8_t *GenericHidOutBuffer, uint8_t *Generi
 
 uint8_t UsbCommand_ApplyConfig(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer)
 {
+    PRINTM("ApplyCfg");
     static bool isBoot = true;
     EventVector_Unset(EventVector_ApplyConfig);
 

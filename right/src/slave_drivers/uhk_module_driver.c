@@ -13,6 +13,7 @@
 #include "device.h"
 #endif
 
+#include "macros/status_buffer.h"
 #include "slave_scheduler.h"
 #include "slave_drivers/uhk_module_driver.h"
 #include "slave_protocol.h"
@@ -205,6 +206,7 @@ slave_result_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
     uint8_t i2cAddress = uhkModuleState->firmwareI2cAddress;
     i2c_message_t *rxMessage = &uhkModuleState->rxMessage;
 
+    uint8_t oldPhase = *uhkModulePhase;
     switch (*uhkModulePhase) {
 
         // Jump to bootloader
@@ -319,8 +321,12 @@ slave_result_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
         case UhkModulePhase_ProcessModuleKeyCount: {
             bool isMessageValid = CRC16_IsMessageValid(rxMessage);
             if (isMessageValid) {
+                SHOW_VALUE(rxMessage->data[0], 0);
                 uhkModuleState->keyCount = rxMessage->data[0];
+            } else {
+                PRINTM("Invalid crc!\n");
             }
+            isMessageValid &= uhkModuleState->keyCount != 1;
             res.status = kStatus_Uhk_IdleCycle;
             *uhkModulePhase = isMessageValid ? UhkModulePhase_RequestModulePointerCount : UhkModulePhase_RequestModuleKeyCount;
             break;
@@ -504,6 +510,16 @@ slave_result_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
             *uhkModulePhase = UhkModulePhase_RequestKeyStates;
             break;
     }
+
+    if (uhkModuleDriverId == SlaveId_LeftKeyboardHalf && oldPhase > UhkModulePhase_ProcessSync) {
+    PRINTM("D%d %d | %d: %d %d", uhkModuleDriverId, oldPhase,
+            rxMessage->length,
+            rxMessage->data[0], rxMessage->data[1]
+            );
+    }
+
+    // invalidate the message
+    rxMessage->crc++;
 
     return res;
 }

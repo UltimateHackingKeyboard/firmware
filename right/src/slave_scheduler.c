@@ -8,6 +8,7 @@
 #include "i2c_error_logger.h"
 #include "macros/core.h"
 #include "debug.h"
+#include "macros/status_buffer.h"
 
 #ifdef __ZEPHYR__
     #include "keyboard/i2c.h"
