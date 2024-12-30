@@ -264,8 +264,10 @@ void Connections_HandleSwitchover(connection_id_t connectionId, bool forceSwitch
 
     // If current target is not usable
     if (ActiveHostConnectionId == ConnectionId_Invalid) {
+        printk("Current connection is not usable. Trying:\n");
         // Find the first ready host connection
         for (uint8_t i = ConnectionId_HostConnectionFirst; i <= ConnectionId_HostConnectionLast; i++) {
+            reportConnectionState(i, " - ");
             if (Connections[i].state == ConnectionState_Ready) {
                 reportConnectionState(i, "Switching to first active host");
                 switchOver(i);

@@ -46,7 +46,10 @@ static bool sendOverC2usb() {
 
     if (!Connections_IsReady(ActiveHostConnectionId)) {
         printk("Can't send report - selected connection is not ready!\n");
-        return false;
+        Connections_HandleSwitchover(ConnectionId_Invalid, false);
+        if (!Connections_IsReady(ActiveHostConnectionId)) {
+            return false;
+        }
     }
 
     switch (connectionType) {
