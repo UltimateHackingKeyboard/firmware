@@ -25,6 +25,7 @@
 #include <zephyr/bluetooth/addr.h>
 #include "config_manager.h"
 #include "zephyr/kernel.h"
+#include <zephyr/bluetooth/gatt.h>
 
 bool Bt_NewPairedDevice = false;
 
@@ -434,7 +435,6 @@ static struct bt_conn_auth_cb conn_auth_callbacks = {
 
 static void pairing_complete(struct bt_conn *conn, bool bonded) {
     printk("Pairing completed: %s, bonded %d\n", GetPeerStringByConn(conn), bonded);
-    BtPair_EndPairing(true, "Successfuly bonded!");
 
     uint8_t peerId = GetPeerIdByConn(conn);
 
@@ -442,14 +442,17 @@ static void pairing_complete(struct bt_conn *conn, bool bonded) {
     bt_addr_le_t addr = *bt_conn_get_dst(conn);
     Peers[peerId].addr = addr;
 
-    connection_type_t connectionType = Connections_Type(Peers[peerId].connectionId);
-    bool isUhkPeer = isUhkDeviceConnection(connectionType);
-
-    bool isKnown = HostConnections_IsKnownBleAddress(&addr);
-    printk("- is known: %d, isUhkPeer: %d\n", isKnown, isUhkPeer);
-    if (!isKnown && !isUhkPeer) {
-        printk("setting NewPairedDevice\n");
-        Bt_NewPairedDevice = true;
+    if (BtPair_OobPairingInProgress) {
+        BtPair_EndPairing(true, "Successfuly bonded!");
+    } else {
+        connection_type_t connectionType = Connections_Type(Peers[peerId].connectionId);
+        bool isUhkPeer = isUhkDeviceConnection(connectionType);
+        bool isKnown = HostConnections_IsKnownBleAddress(&addr);
+        printk("- is known: %d, isUhkPeer: %d\n", isKnown, isUhkPeer);
+        if (!isKnown && !isUhkPeer) {
+            printk("setting NewPairedDevice\n");
+            Bt_NewPairedDevice = true;
+        }
     }
 
     BtConn_ListCurrentConnections();

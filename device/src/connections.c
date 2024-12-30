@@ -181,8 +181,6 @@ connection_target_t Connections_Target(connection_id_t connectionId) {
 }
 
 connection_id_t Connections_GetConnectionIdByBtAddr(const bt_addr_le_t *addr) {
-    uint8_t newBtConnection = ConnectionId_Invalid;
-
     for (uint8_t peerId = 0; peerId < PeerCount; peerId++) {
         if (BtAddrEq(addr, &Peers[peerId].addr)) {
             return Peers[peerId].connectionId;
@@ -193,7 +191,6 @@ connection_id_t Connections_GetConnectionIdByBtAddr(const bt_addr_le_t *addr) {
         host_connection_t *hostConnection = HostConnection(connectionId);
         switch (hostConnection->type) {
             case HostConnectionType_NewBtHid:
-                newBtConnection = connectionId;
                 break;
             case HostConnectionType_Dongle:
             case HostConnectionType_BtHid:
@@ -209,10 +206,20 @@ connection_id_t Connections_GetConnectionIdByBtAddr(const bt_addr_le_t *addr) {
         }
     }
 
-    if (newBtConnection != ConnectionId_Invalid) {
-        return newBtConnection;
-    }
+    return ConnectionId_Invalid;
+}
 
+connection_id_t Connections_GetNewHidConnectionId() {
+    for (uint8_t connectionId = ConnectionId_HostConnectionFirst; connectionId <= ConnectionId_HostConnectionLast; connectionId++) {
+        host_connection_t *hostConnection = HostConnection(connectionId);
+        switch (hostConnection->type) {
+            case HostConnectionType_NewBtHid:
+                return connectionId;
+                break;
+            default:
+                break;
+        }
+    }
     return ConnectionId_Invalid;
 }
 
