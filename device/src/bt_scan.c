@@ -93,7 +93,8 @@ int BtScan_Start(void) {
     err = bt_scan_start(BT_SCAN_TYPE_SCAN_ACTIVE);
     if (err) {
         printk("Scanning failed to start (err %d)\n", err);
-        EventScheduler_Schedule(CurrentTime + 1000, EventSchedulerEvent_BtStartScanning, "BtStartScanning");
+        // if any problems pop up here, add a disconnect all call.
+        EventScheduler_Schedule(CurrentTime + 1000, EventSchedulerEvent_BtStartScanningAndAdvertising, "BtStartScanning");
     } else {
         printk("Scanning successfully started\n");
     }

@@ -71,6 +71,28 @@ void BtManager_StopBt() {
     }
 }
 
+void BtManager_StartScanningAndAdvertising() {
+    if (DEVICE_IS_UHK80_LEFT || DEVICE_IS_UHK80_RIGHT) {
+        BtAdvertise_Stop();
+    }
+
+    if (DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK_DONGLE) {
+        BtScan_Stop();
+    }
+
+    bool leftShouldAdvertise = DEVICE_IS_UHK80_LEFT && Peers[PeerIdRight].conn == NULL;
+    bool rightShouldAdvertise = DEVICE_IS_UHK80_RIGHT && true;
+    if (leftShouldAdvertise || rightShouldAdvertise) {
+        BtAdvertise_Start(BtAdvertise_Type());
+    }
+
+    bool rightShouldScan = DEVICE_IS_UHK80_RIGHT && Peers[PeerIdLeft].conn == NULL;
+    bool dongleShouldScan = DEVICE_IS_UHK_DONGLE && Peers[PeerIdRight].conn == NULL;
+    if (rightShouldScan || dongleShouldScan) {
+        BtScan_Start();
+    }
+}
+
 void BtManager_RestartBt() {
     printk("Going to reset bluetooth stack\n");
 

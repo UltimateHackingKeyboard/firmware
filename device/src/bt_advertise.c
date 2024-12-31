@@ -5,6 +5,7 @@
 #include "connections.h"
 #include "device.h"
 #include "event_scheduler.h"
+#include "bt_scan.h"
 
 #undef DEVICE_NAME
 #define DEVICE_NAME CONFIG_BT_DEVICE_NAME
@@ -85,7 +86,7 @@ void BtAdvertise_Start(uint8_t adv_type)
     } else {
         printk("%s advertising failed to start (err %d)\n", adv_type_string, err);
         BtConn_DisconnectAll();
-        EventScheduler_Schedule(CurrentTime + 50, EventSchedulerEvent_BtStartAdvertisement, "BtStartAdvertisement");
+        EventScheduler_Reschedule(CurrentTime + 5000, EventSchedulerEvent_BtStartScanningAndAdvertising, "BtStartAdvertisement");
     }
 }
 

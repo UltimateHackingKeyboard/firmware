@@ -17,8 +17,7 @@
 #include "keyboard/charger.h"
 #include "keyboard/uart.h"
 #include "main.h"
-#include "bt_scan.h"
-#include "bt_advertise.h"
+#include "bt_manager.h"
 #else
 #include "segment_display.h"
 #endif
@@ -111,11 +110,8 @@ static void processEvt(event_scheduler_event_t evt)
         case EventSchedulerEvent_RestartBt:
             BtManager_RestartBt();
             break;
-        case EventSchedulerEvent_BtStartScanning:
-            BtScan_Start();
-            break;
-        case EventSchedulerEvent_BtStartAdvertisement:
-            BtAdvertise_Start(BtAdvertise_Type());
+        case EventSchedulerEvent_BtStartScanningAndAdvertising:
+            BtManager_StartScanningAndAdvertising();
             break;
         default:
             return;

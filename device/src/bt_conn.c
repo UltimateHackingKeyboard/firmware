@@ -198,14 +198,7 @@ static void connected(struct bt_conn *conn, uint8_t err) {
 
     if (err) {
         printk("Failed to connect to %s, err %u\n", GetPeerStringByConn(conn), err);
-
-#if DEVICE_IS_UHK80_RIGHT
-        err = bt_scan_start(BT_SCAN_TYPE_SCAN_ACTIVE);
-        if (err) {
-            printk("Scanning failed to start (err %d)\n", err);
-        }
-#endif
-
+        BtManager_StartScanningAndAdvertising();
         return;
     }
 
@@ -249,7 +242,7 @@ static void connected(struct bt_conn *conn, uint8_t err) {
     }
 
     if (DEVICE_IS_UHK80_RIGHT) {
-        BtAdvertise_Start(BtAdvertise_Type());
+        BtManager_StartScanningAndAdvertising();
     }
 }
 
@@ -288,27 +281,11 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
     if (!BtPair_OobPairingInProgress && !BtManager_Restarting) {
         if (DEVICE_IS_UHK80_RIGHT) {
             if (connectionType == ConnectionType_BtHid) {
-                BtAdvertise_Stop();
-                BtAdvertise_Start(BtAdvertise_Type());
                 USB_EnableHid();
             }
-            if (connectionType == ConnectionType_NusDongle) {
-                BtAdvertise_Stop();
-                BtAdvertise_Start(BtAdvertise_Type());
-            }
-            if (connectionType == ConnectionType_NusLeft) {
-                BtScan_Start();
-            }
         }
 
-        if (DEVICE_IS_UHK_DONGLE && connectionType == ConnectionType_NusRight) {
-            // give other dongles a chance to connect
-            EventScheduler_Schedule(k_uptime_get_32()+50, EventSchedulerEvent_BtStartScanning, "disconnected");
-        }
-
-        if (DEVICE_IS_UHK80_LEFT && connectionType == ConnectionType_NusRight) {
-            BtAdvertise_Start(BtAdvertise_Type());
-        }
+        EventScheduler_Schedule(k_uptime_get_32()+50, EventSchedulerEvent_BtStartScanningAndAdvertising, "disconnected");
     }
 }
 
@@ -594,7 +571,7 @@ void BtConn_ReserveConnections() {
             disconnectOldestHost();
             // Advertising will get started when the host actually gets disconnected
         } else {
-            BtAdvertise_Start(ADVERTISE_HID | ADVERTISE_NUS);
+            BtManager_StartScanningAndAdvertising();
         }
     }
 }

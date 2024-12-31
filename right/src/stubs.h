@@ -46,6 +46,7 @@
     extern void BtAdvertise_Start(uint8_t adv_type);
     extern uint8_t BtAdvertise_Type();
     extern int BtScan_Start(void);
+    extern void BtManager_StartScanningAndAdvertising();
 
 #if DEVICE_HAS_OLED
 #define WIDGET_REFRESH(W) Widget_Refresh(W)

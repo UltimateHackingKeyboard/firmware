@@ -32,3 +32,4 @@
     ATTRS void BtAdvertise_Start(uint8_t adv_type) {};
     ATTRS uint8_t BtAdvertise_Type() { return 0; };
     ATTRS int BtScan_Start(void) { return 0; };
+    ATTRS void BtManager_StartScanningAndAdvertising() {};
