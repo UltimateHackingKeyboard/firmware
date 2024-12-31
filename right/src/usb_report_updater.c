@@ -522,7 +522,7 @@ static void handleUsbStackTestMode() {
 static void handleLayerChanges() {
     static layer_id_t previousLayer = LayerId_Base;
 
-    LayerSwitcher_UpdateActiveLayer();
+    LayerSwitcher_UpdateHeldLayer();
 
     if(ActiveLayer != previousLayer) {
         previousLayer = ActiveLayer;
