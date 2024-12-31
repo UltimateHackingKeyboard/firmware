@@ -4,10 +4,12 @@
 #include "host_connection.h"
 #include "device_state.h"
 #include "host_connection.h"
+#include "keyboard/oled/widgets/widget_store.h"
 #include "messenger.h"
 #include "state_sync.h"
 #include <zephyr/bluetooth/addr.h>
 #include "connections.h"
+#include "stubs.h"
 
 connection_t Connections[ConnectionId_Count] = {
     [ConnectionId_UsbHidRight] = { .isAlias = true },
@@ -191,13 +193,17 @@ connection_target_t Connections_Target(connection_id_t connectionId) {
     return ConnectionTarget_None;
 }
 
-connection_id_t Connections_GetConnectionIdByBtAddr(const bt_addr_le_t *addr) {
+static connection_id_t getConnIdByPeer(const bt_addr_le_t *addr) {
     for (uint8_t peerId = 0; peerId < PeerCount; peerId++) {
         if (BtAddrEq(addr, &Peers[peerId].addr)) {
             return Peers[peerId].connectionId;
         }
     }
 
+    return ConnectionId_Invalid;
+}
+
+static connection_id_t getConnIdByAddr(const bt_addr_le_t *addr) {
     for (uint8_t connectionId = ConnectionId_HostConnectionFirst; connectionId <= ConnectionId_HostConnectionLast; connectionId++) {
         host_connection_t *hostConnection = HostConnection(connectionId);
         switch (hostConnection->type) {
@@ -220,6 +226,26 @@ connection_id_t Connections_GetConnectionIdByBtAddr(const bt_addr_le_t *addr) {
     return ConnectionId_Invalid;
 }
 
+connection_id_t Connections_GetConnectionIdByBtAddr(const bt_addr_le_t *addr) {
+    connection_id_t res = ConnectionId_Invalid;
+
+    res = getConnIdByPeer(addr);
+    if (res != ConnectionId_Invalid) {
+        return res;
+    }
+
+    res = getConnIdByAddr(addr);
+    if (res != ConnectionId_Invalid) {
+        return res;
+    }
+
+    return ConnectionId_Invalid;
+}
+
+connection_id_t Connections_GetConnectionIdByHostAddr(const bt_addr_le_t *addr) {
+    return getConnIdByAddr(addr);
+}
+
 connection_id_t Connections_GetNewBtHidConnectionId() {
     for (uint8_t connectionId = ConnectionId_HostConnectionFirst; connectionId <= ConnectionId_HostConnectionLast; connectionId++) {
         host_connection_t *hostConnection = HostConnection(connectionId);
@@ -232,6 +258,26 @@ connection_id_t Connections_GetNewBtHidConnectionId() {
         }
     }
     return ConnectionId_Invalid;
+}
+
+void Connections_MoveConnection(uint8_t peerId, connection_id_t oldConnectionId, connection_id_t newConnectionId) {
+    bool isActiveConnection = oldConnectionId == ActiveHostConnectionId;
+    bool isSelectedConnection = oldConnectionId == SelectedHostConnectionId;
+
+    Connections[newConnectionId].peerId = Connections[oldConnectionId].peerId;
+    Connections[newConnectionId].state = Connections[oldConnectionId].state;
+
+    Peers[Connections[oldConnectionId].peerId].connectionId = newConnectionId;
+
+    Connections[oldConnectionId].peerId = PeerIdUnknown;
+    Connections[oldConnectionId].state = ConnectionState_Disconnected;
+
+    ActiveHostConnectionId = isActiveConnection ? newConnectionId : ActiveHostConnectionId;
+    SelectedHostConnectionId = isSelectedConnection ? newConnectionId : ActiveHostConnectionId;
+
+    if (isActiveConnection) {
+        WIDGET_REFRESH(&TargetWidget);
+    }
 }
 
 bool Connections_IsHostConnection(connection_id_t connectionId) {

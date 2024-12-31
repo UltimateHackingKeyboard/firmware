@@ -33,3 +33,4 @@
     ATTRS uint8_t BtAdvertise_Type() { return 0; };
     ATTRS int BtScan_Start(void) { return 0; };
     ATTRS void BtManager_StartScanningAndAdvertising() {};
+    ATTRS void BtConn_UpdateHostConnectionPeerAllocations() {};

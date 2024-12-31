@@ -1,4 +1,6 @@
+#include "keyboard/oled/framebuffer.h"
 #include <stdio.h>
+#include <sys/types.h>
 #include <zephyr/settings/settings.h>
 #include <zephyr/bluetooth/conn.h>
 #ifdef CONFIG_BT_SCAN
@@ -137,6 +139,21 @@ static void configureLatency(struct bt_conn *conn) {
     int err = bt_conn_le_param_update(conn, &conn_params);
     if (err) {
         printk("LE latencies update failed: %d\n", err);
+    }
+}
+
+void BtConn_UpdateHostConnectionPeerAllocations() {
+    //for each peer
+    for (uint8_t peerId = PeerIdFirstHost; peerId <= PeerIdLastHost; peerId++) {
+        struct bt_conn* conn = Peers[peerId].conn;
+        if (conn) {
+            connection_id_t currentId = Peers[peerId].connectionId;
+            connection_id_t newId = Connections_GetConnectionIdByHostAddr(bt_conn_get_dst(conn));
+            printk("Reallocating peer %s from connection %d -> %d\n", Peers[peerId].name, currentId, newId);
+            if (newId != ConnectionId_Invalid && newId != currentId) {
+                Connections_MoveConnection(peerId, currentId, newId);
+            }
+        }
     }
 }
 

@@ -335,6 +335,7 @@ parser_error_t parseConfig(config_buffer_t *buffer)
         LedManager_RecalculateLedBrightness();
         LedManager_UpdateSleepModes();
         BtPair_ClearUnknownBonds();
+        BtConn_UpdateHostConnectionPeerAllocations();
 
         // Update counts
 

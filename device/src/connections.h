@@ -84,6 +84,9 @@
 
     connection_id_t Connections_GetNewBtHidConnectionId();
     connection_id_t Connections_GetConnectionIdByBtAddr(const bt_addr_le_t *addr);
+    connection_id_t Connections_GetConnectionIdByHostAddr(const bt_addr_le_t *addr);
+
+    void Connections_MoveConnection(uint8_t peerId, connection_id_t oldConnectionId, connection_id_t newConnectionId);
 
     bool Connections_IsHostConnection(connection_id_t connectionId);
     bool Connections_IsReady(connection_id_t connectionId);
