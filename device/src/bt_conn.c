@@ -261,7 +261,7 @@ ATTR_UNUSED static uint8_t discover_func(struct bt_conn *conn, const struct bt_g
         struct bt_gatt_service_val *service_val = (struct bt_gatt_service_val *)attr->user_data;
         if (service_val && service_val->uuid) {
             if (service_val->uuid->type == BT_UUID_TYPE_128 && !bt_uuid_cmp(service_val->uuid, BT_UUID_NUS)) {
-                if (!BtPair_OobPairingInProgress) {
+                if (!BtPair_OobPairingInProgress && DEVICE_IS_UHK80_RIGHT) {
                     printk("Unknown NUS trying to connect. Refusing!\n");
                     bt_conn_disconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
                 }
@@ -581,9 +581,8 @@ static void pairing_complete(struct bt_conn *conn, bool bonded) {
     if (BtPair_OobPairingInProgress) {
         BtPair_EndPairing(true, "Successfuly bonded!");
 
-        connection_id_t connectionId = Connections_GetConnectionIdByBtAddr(&addr);
-        connection_type_t connectionType = Connections_Type(connectionId);
-        connectNus(conn, connectionId, connectionType);
+        // Disconnect it so that the connection is established only after it is identified as a host connection
+        bt_conn_disconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
     } else {
         connection_id_t connectionId = Connections_GetConnectionIdByBtAddr(&addr);
         connection_type_t connectionType = Connections_Type(connectionId);
