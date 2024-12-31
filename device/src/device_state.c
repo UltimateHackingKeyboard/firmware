@@ -1,5 +1,6 @@
 #include "device_state.h"
 #include "bt_conn.h"
+#include "bt_manager.h"
 #include "connections.h"
 #include "device.h"
 #include "keyboard/uart.h"
@@ -51,6 +52,8 @@ void handleStateTransition(connection_target_t remote, connection_id_t connectio
                                 EventVector_Set(EventVector_StateMatrix);
                                 EventVector_WakeMain();
                             }
+
+                            BtManager_StartScanningAndAdvertisingAsync();
                         }
                         break;
                     case ConnectionTarget_Host:

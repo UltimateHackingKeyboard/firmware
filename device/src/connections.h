@@ -82,7 +82,7 @@
     connection_target_t Connections_Target(connection_id_t connectionId);
     connection_target_t Connections_DeviceToTarget(device_id_t deviceId);
 
-    connection_id_t Connections_GetNewHidConnectionId();
+    connection_id_t Connections_GetNewBtHidConnectionId();
     connection_id_t Connections_GetConnectionIdByBtAddr(const bt_addr_le_t *addr);
 
     bool Connections_IsHostConnection(connection_id_t connectionId);

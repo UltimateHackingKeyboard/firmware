@@ -80,11 +80,22 @@ static void reportConnectionState(connection_id_t connectionId, const char* mess
         CASE_FOR(Count);
     }
 
+    int8_t peerId = Connections[connectionId].peerId;
+    const char* peerLabel = "";
+    const char* peerString = "";
+    if (peerId != PeerIdUnknown) {
+        peerLabel = ", Peer ";
+        peerString = Peers[peerId].name;
+    }
+
+    const char* activeLabel = connectionId == ActiveHostConnectionId ? ", Active" : "";
+    const char* selectedLabel = connectionId == SelectedHostConnectionId ? ", Selected" : "";
+
     if (isHostConnection) {
         host_connection_t* hc = HostConnection(connectionId);
-        printk("%s: %s%d(%.*s, %s)\n", message, name, connectionId - ConnectionId_HostConnectionFirst, hc->name.end - hc->name.start, hc->name.start, getStateString(Connections[connectionId].state));
+        printk("%s: %s%d(%.*s, %s)%s%s%s%s\n", message, name, connectionId - ConnectionId_HostConnectionFirst, hc->name.end - hc->name.start, hc->name.start, getStateString(Connections[connectionId].state), peerLabel, peerString, activeLabel, selectedLabel);
     } else {
-        printk("%s: %s(%s)\n", message, name, getStateString(Connections[connectionId].state));
+        printk("%s: %s(%s)%s%s%s%s\n", message, name, getStateString(Connections[connectionId].state), peerLabel, peerString, activeLabel, selectedLabel);
     }
 }
 
@@ -209,7 +220,7 @@ connection_id_t Connections_GetConnectionIdByBtAddr(const bt_addr_le_t *addr) {
     return ConnectionId_Invalid;
 }
 
-connection_id_t Connections_GetNewHidConnectionId() {
+connection_id_t Connections_GetNewBtHidConnectionId() {
     for (uint8_t connectionId = ConnectionId_HostConnectionFirst; connectionId <= ConnectionId_HostConnectionLast; connectionId++) {
         host_connection_t *hostConnection = HostConnection(connectionId);
         switch (hostConnection->type) {
@@ -246,6 +257,7 @@ static void switchOver(connection_id_t connectionId) {
     if (connectionId == SelectedHostConnectionId) {
         SelectedHostConnectionId = ConnectionId_Invalid;
     }
+
 }
 
 void Connections_HandleSwitchover(connection_id_t connectionId, bool forceSwitch) {
@@ -263,21 +275,19 @@ void Connections_HandleSwitchover(connection_id_t connectionId, bool forceSwitch
         bool connectionIsSelected = SelectedHostConnectionId == connectionId;
         bool noHostIsConnected = ActiveHostConnectionId == ConnectionId_Invalid;
         if (hostConnection->switchover || noHostIsConnected || forceSwitch || connectionIsSelected) {
-            reportConnectionState(connectionId, "Switching to host");
             setCurrentDongleToStandby();
             switchOver(connectionId);
+            reportConnectionState(connectionId, "Connection state");
         }
     }
 
     // If current target is not usable
     if (ActiveHostConnectionId == ConnectionId_Invalid) {
-        printk("Current connection is not usable. Trying:\n");
         // Find the first ready host connection
         for (uint8_t i = ConnectionId_HostConnectionFirst; i <= ConnectionId_HostConnectionLast; i++) {
-            reportConnectionState(i, " - ");
             if (Connections[i].state == ConnectionState_Ready) {
-                reportConnectionState(i, "Switching to first active host");
                 switchOver(i);
+                reportConnectionState(i, "Connection state");
                 break;
             }
         }

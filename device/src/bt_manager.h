@@ -22,5 +22,6 @@
     void BtManager_StopBt();
     void BtManager_RestartBt();
     void BtManager_StartScanningAndAdvertising();
+    void BtManager_StartScanningAndAdvertisingAsync();
 
 #endif // __BT_MANAGER_H__

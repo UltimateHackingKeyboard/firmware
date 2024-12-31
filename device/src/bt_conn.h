@@ -13,9 +13,9 @@
     // please edit this in prj.conf
     #define PERIPHERAL_CONNECTION_COUNT CONFIG_BT_CTLR_SDC_PERIPHERAL_COUNT
 
-    #define PeerIdUnknown -1
-    #define PeerIdLeft 0
-    #define PeerIdRight 1
+    #define PeerIdUnknown 0
+    #define PeerIdLeft 1
+    #define PeerIdRight 2
     #define PeerIdFirstHost (PeerIdRight+1)
     #define PeerIdLastHost (PeerIdFirstHost+PERIPHERAL_CONNECTION_COUNT-1)
     #define PeerCount (PeerIdLastHost+1)

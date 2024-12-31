@@ -48,7 +48,8 @@ static bool sendOverC2usb() {
         printk("Can't send report - selected connection is not ready!\n");
         Connections_HandleSwitchover(ConnectionId_Invalid, false);
         if (!Connections_IsReady(ActiveHostConnectionId)) {
-            return false;
+            printk("Giving report to c2usb anyways!\n");
+            return true;
         }
     }
 
@@ -69,6 +70,7 @@ extern "C" void UsbCompatibility_SendKeyboardReport(const usb_basic_keyboard_rep
     keyboard_app &keyboard_app = keyboard_app::handle();
 
     if (sendOverC2usb()) {
+        printk("Handing report over to c2usb!\n");
         keyboard_app.set_report_state(*reinterpret_cast<const scancode_buffer*>(report));
     } else if (DEVICE_IS_UHK80_RIGHT){
         Messenger_Send2(DeviceId_Uhk_Dongle, MessageId_SyncableProperty, SyncablePropertyId_KeyboardReport, (const uint8_t*)report, sizeof(*report));

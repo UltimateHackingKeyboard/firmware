@@ -56,8 +56,6 @@ int BtScan_Stop(void) {
     err = bt_scan_stop();
     if (err) {
         printk("Stop LE scan failed (err %d)\n", err);
-    } else {
-        printk("Scanning successfully stopped.\n");
     }
 
     bt_scan_filter_disable();
@@ -93,10 +91,6 @@ int BtScan_Start(void) {
     err = bt_scan_start(BT_SCAN_TYPE_SCAN_ACTIVE);
     if (err) {
         printk("Scanning failed to start (err %d)\n", err);
-        // if any problems pop up here, add a disconnect all call.
-        EventScheduler_Schedule(CurrentTime + 1000, EventSchedulerEvent_BtStartScanningAndAdvertising, "BtStartScanning");
-    } else {
-        printk("Scanning successfully started\n");
     }
 
     return err;

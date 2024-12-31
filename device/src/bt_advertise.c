@@ -48,17 +48,15 @@ static void setFilters() {
     bt_le_filter_accept_list_clear();
     if (DEVICE_IS_UHK80_RIGHT) {
         if (BtConn_UnusedPeripheralConnectionCount() <= 1 && SelectedHostConnectionId != ConnectionId_Invalid) {
-            printk("Setting an advertising filter to connection %d\n", SelectedHostConnectionId);
             bt_le_filter_accept_list_add(&HostConnection(SelectedHostConnectionId)->bleAddress);
             advertisementParams->options = BT_LE_ADV_OPT_FILTER_CONN;
         } else {
-            printk("Setting no advertising filter\n");
             advertisementParams->options = BT_LE_ADV_OPT_NONE;
         }
     }
 }
 
-void BtAdvertise_Start(uint8_t adv_type)
+uint8_t BtAdvertise_Start(uint8_t adv_type)
 {
     setFilters();
 
@@ -76,17 +74,18 @@ void BtAdvertise_Start(uint8_t adv_type)
         err = bt_le_adv_start(BT_LE_ADV_CONN, adHid, ARRAY_SIZE(adHid), sdHid, ARRAY_SIZE(sdHid));
     } else {
         printk("Attempted to start advertising without any type! Ignoring.\n");
-        return;
+        return 0;
     }
 
     if (err == 0) {
         printk("%s advertising successfully started\n", adv_type_string);
+        return 0;
     } else if (err == -EALREADY) {
         printk("%s advertising continued\n", adv_type_string);
+        return 0;
     } else {
-        printk("%s advertising failed to start (err %d)\n", adv_type_string, err);
-        BtConn_DisconnectAll();
-        EventScheduler_Reschedule(CurrentTime + 5000, EventSchedulerEvent_BtStartScanningAndAdvertising, "BtStartAdvertisement");
+        printk("%s advertising failed to start (err %d), free connections: %d\n", adv_type_string, err, BtConn_UnusedPeripheralConnectionCount());
+        return err;
     }
 }
 
@@ -94,8 +93,6 @@ void BtAdvertise_Stop() {
     int err = bt_le_adv_stop();
     if (err) {
         printk("Advertising failed to stop (err %d)\n", err);
-    } else {
-        printk("Advertising successfully stopped\n");
     }
 }
 
@@ -121,6 +118,8 @@ uint8_t BtAdvertise_Type() {
                     return ADVERTISE_NUS | ADVERTISE_HID;
                 }
             } else {
+                printk("Current slot count %d, not advertising\n", BtConn_UnusedPeripheralConnectionCount());
+                BtConn_ListCurrentConnections();
                 return 0;
             }
         case DeviceId_Uhk_Dongle:

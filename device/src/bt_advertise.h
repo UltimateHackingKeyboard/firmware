@@ -12,7 +12,7 @@
 
 // Functions:
 
-    void BtAdvertise_Start(uint8_t adv_type);
+    uint8_t BtAdvertise_Start(uint8_t adv_type);
     void BtAdvertise_Stop();
     uint8_t BtAdvertise_Type();
 
