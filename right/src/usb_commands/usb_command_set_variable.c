@@ -8,6 +8,10 @@
 #include "config_manager.h"
 #include "ledmap.h"
 
+#ifdef __ZEPHYR__
+#include "keyboard/leds.h"
+#endif
+
 void UsbCommand_SetVariable(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer)
 {
     usb_variable_id_t variableId = GetUsbRxBufferUint8(1);
@@ -33,6 +37,16 @@ void UsbCommand_SetVariable(const uint8_t *GenericHidOutBuffer, uint8_t *Generic
             UsbReportUpdateSemaphore = GetUsbRxBufferUint8(2);
             break;
         case UsbVariable_StatusBuffer:
+            break;
+        case UsbVariable_LedAudioRegisters:
+#ifdef __ZEPHYR__
+            uint8_t phaseDelay = GetUsbRxBufferUint8(2);
+            uint8_t spreadSpectrum = GetUsbRxBufferUint8(3);
+            uint8_t pwmFrequency = GetUsbRxBufferUint8(4);
+            UpdateLedAudioRegisters(phaseDelay, spreadSpectrum, pwmFrequency);
+#endif
+            break;
+        default:
             break;
     }
 }
