@@ -10,6 +10,9 @@ extern "C" {
 #include "logger.h"
 #include <device.h>
 #include <zephyr/kernel.h>
+#include "logger.h"
+#include "power_mode.h"
+#include "connections.h"
 }
 #include "command_app.hpp"
 #include "controls_app.hpp"
@@ -217,11 +220,13 @@ struct usb_manager {
 
 extern "C" void USB_EnableHid()
 {
+    printk(" === Usb Enable Hid\n");
     usb_manager::instance().select_config(HID_GetGamepadActive() ? Hid_Full : Hid_NoGamepad);
 }
 
 extern "C" void USB_DisableHid()
 {
+    printk(" === Usb Disable Hid\n");
     usb_manager::instance().select_config(Hid_Empty);
 }
 
@@ -309,18 +314,25 @@ bool app_base::active() const
 
 void hidmgr_set_transport(const hid::transport *tp)
 {
+    connection_id_t usbHidConnId = DEVICE_IS_UHK80_LEFT ? ConnectionId_UsbHidLeft : ConnectionId_UsbHidRight;
+
     // tp is the transport of the keyboard app
     if (tp == nullptr) {
-        DeviceState_SetConnection(ConnectionId_BluetoothHid, ConnectionType_None);
-        DeviceState_SetConnection(ConnectionId_UsbHid, ConnectionType_None);
+        printk(" === set transport null\n");
+        Connections_SetState(ConnectionId_BtHid, ConnectionState_Disconnected);
+        Connections_SetState(usbHidConnId, ConnectionState_Disconnected);
     }
 #if DEVICE_IS_UHK80_RIGHT
     else if (tp == &hogp_manager::instance().main_service()) {
-        DeviceState_SetConnection(ConnectionId_BluetoothHid, ConnectionType_Bt);
+        printk(" === set transport hogp\n");
+        Connections_SetState(ConnectionId_BtHid, ConnectionState_Ready);
+        Connections_SetState(usbHidConnId, ConnectionState_Disconnected);
     }
 #endif
     else {
-        DeviceState_SetConnection(ConnectionId_UsbHid, ConnectionType_Usb);
+        printk(" === set transport usb\n");
+        Connections_SetState(ConnectionId_BtHid, ConnectionState_Disconnected);
+        Connections_SetState(usbHidConnId, ConnectionState_Ready);
     }
 }
 

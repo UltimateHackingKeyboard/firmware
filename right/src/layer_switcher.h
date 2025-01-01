@@ -27,7 +27,7 @@
 // Functions - hooks:
 
     void LayerSwitcher_ResetHolds();
-    void LayerSwitcher_UpdateActiveLayer();
+    void LayerSwitcher_UpdateHeldLayer();
 
     void LayerSwitcher_RecalculateLayerComposition();
 

@@ -209,7 +209,7 @@ static bool layerMeetsHoldConditions(uint8_t layer, uint8_t* maskOutput) {
 }
 
 // Gathers states set by LayerSwitcher_HoldLayer during previous update cycle and updates heldLayer.
-void LayerSwitcher_UpdateActiveLayer() {
+void LayerSwitcher_UpdateHeldLayer() {
     EventVector_Unset(EventVector_LayerHolds);
     layer_id_t previousHeldLayer = heldLayer;
 

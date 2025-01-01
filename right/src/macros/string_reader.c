@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <inttypes.h>
 #include "macros/vars.h"
+#include "str_utils.h"
 
 #if !defined(MAX)
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -149,6 +150,39 @@ static char tryConsumeAnotherStringLiteral(parser_context_t* ctx, uint16_t* stri
             *stringOffset = 0;
             *subIndex = 0;
             return '\0';
+    }
+}
+
+bool Macros_CompareStringToken(parser_context_t* ctx, string_segment_t str) {
+    parser_context_t ctx2 = *ctx;
+    uint16_t stringOffset = 0, textIndex = 0, textSubIndex = 0;
+    const char* str2 = str.start;
+
+    char c1, c2;
+    while (true) {
+        c1 = Macros_ConsumeCharOfString(&ctx2, &stringOffset, &textIndex, &textSubIndex);
+        c2 = *str2;
+
+        bool c1Ended = c1 == '\0';
+        bool c2Ended = c2 == '\0' || str2 >= str.end;
+
+        if (c1Ended || c2Ended) {
+            return c1Ended && c2Ended;
+        }
+
+        if (c1 != c2) {
+            return false;
+        }
+
+        str2++;
+    }
+}
+
+void Macros_ConsumeStringToken(parser_context_t* ctx) {
+    uint16_t stringOffset = 0, textIndex = 0, textSubIndex = 0;
+    char c = 'a';
+    while (c != '\0') {
+        c = Macros_ConsumeCharOfString(ctx, &stringOffset, &textIndex, &textSubIndex);
     }
 }
 

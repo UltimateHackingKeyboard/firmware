@@ -47,6 +47,7 @@ struct settings_handler settingsHandler = {
 
 void InitSettings(void)
 {
+    DongleLeds_Update();
     settings_subsys_init();
     settings_register(&settingsHandler);
     settings_load();

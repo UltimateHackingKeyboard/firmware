@@ -3,6 +3,7 @@
 
 // Includes:
 
+    #include "connections.h"
     #include "shared/attributes.h"
     #include <inttypes.h>
     #include "device.h"

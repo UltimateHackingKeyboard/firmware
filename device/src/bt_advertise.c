@@ -1,7 +1,11 @@
 #include "bt_advertise.h"
 #include <bluetooth/services/nus.h>
 #include <zephyr/bluetooth/gatt.h>
+#include "bt_conn.h"
+#include "connections.h"
 #include "device.h"
+#include "event_scheduler.h"
+#include "bt_scan.h"
 
 #undef DEVICE_NAME
 #define DEVICE_NAME CONFIG_BT_DEVICE_NAME
@@ -38,8 +42,24 @@ static const struct bt_data sdHid[] = {SD_HID_DATA};
 
 static const struct bt_data sdNusHid[] = {SD_NUS_DATA SD_HID_DATA};
 
-void BtAdvertise_Start(uint8_t adv_type)
+static struct bt_le_adv_param advertisementParams[] = BT_LE_ADV_CONN;
+
+static void setFilters() {
+    bt_le_filter_accept_list_clear();
+    if (DEVICE_IS_UHK80_RIGHT) {
+        if (BtConn_UnusedPeripheralConnectionCount() <= 1 && SelectedHostConnectionId != ConnectionId_Invalid) {
+            bt_le_filter_accept_list_add(&HostConnection(SelectedHostConnectionId)->bleAddress);
+            advertisementParams->options = BT_LE_ADV_OPT_FILTER_CONN;
+        } else {
+            advertisementParams->options = BT_LE_ADV_OPT_NONE;
+        }
+    }
+}
+
+uint8_t BtAdvertise_Start(uint8_t adv_type)
 {
+    setFilters();
+
     int err;
     const char *adv_type_string;
     if (adv_type == (ADVERTISE_NUS | ADVERTISE_HID)) {
@@ -54,15 +74,18 @@ void BtAdvertise_Start(uint8_t adv_type)
         err = bt_le_adv_start(BT_LE_ADV_CONN, adHid, ARRAY_SIZE(adHid), sdHid, ARRAY_SIZE(sdHid));
     } else {
         printk("Attempted to start advertising without any type! Ignoring.\n");
-        return;
+        return 0;
     }
 
     if (err == 0) {
         printk("%s advertising successfully started\n", adv_type_string);
+        return 0;
     } else if (err == -EALREADY) {
         printk("%s advertising continued\n", adv_type_string);
+        return 0;
     } else {
-        printk("%s advertising failed to start (err %d)\n", adv_type_string, err);
+        printk("%s advertising failed to start (err %d), free connections: %d\n", adv_type_string, err, BtConn_UnusedPeripheralConnectionCount());
+        return err;
     }
 }
 
@@ -70,9 +93,17 @@ void BtAdvertise_Stop() {
     int err = bt_le_adv_stop();
     if (err) {
         printk("Advertising failed to stop (err %d)\n", err);
-    } else {
-        printk("Advertising successfully stopped\n");
     }
+}
+
+static uint8_t connectedHidCount() {
+    uint8_t connectedHids = 0;
+    for (uint8_t peerId = PeerIdFirstHost; peerId <= PeerIdLastHost; peerId++) {
+        if (Peers[peerId].conn && Connections_Type(Peers[peerId].connectionId) == ConnectionType_BtHid) {
+            connectedHids++;
+        }
+    }
+    return connectedHids;
 }
 
 uint8_t BtAdvertise_Type() {
@@ -80,7 +111,17 @@ uint8_t BtAdvertise_Type() {
         case DeviceId_Uhk80_Left:
             return ADVERTISE_NUS;
         case DeviceId_Uhk80_Right:
-            return ADVERTISE_NUS | ADVERTISE_HID;
+            if (BtConn_UnusedPeripheralConnectionCount() > 0)  {
+                if (connectedHidCount() > 0) {
+                    return ADVERTISE_NUS;
+                } else {
+                    return ADVERTISE_NUS | ADVERTISE_HID;
+                }
+            } else {
+                printk("Current slot count %d, not advertising\n", BtConn_UnusedPeripheralConnectionCount());
+                BtConn_ListCurrentConnections();
+                return 0;
+            }
         case DeviceId_Uhk_Dongle:
             return 0;
         default:

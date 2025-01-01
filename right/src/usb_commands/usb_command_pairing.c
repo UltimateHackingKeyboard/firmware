@@ -25,7 +25,7 @@ void UsbCommand_GetPairingData(const uint8_t *GenericHidOutBuffer, uint8_t *Gene
 
 void UsbCommand_SetPairingData(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer) {
     struct bt_le_oob oob;
-    uint8_t peerId = GenericHidOutBuffer[BUF_PEER_POS];
+    uint8_t peerId = GenericHidOutBuffer[BUF_PEER_POS] + 1; //+1 because I refactored the enum so that unknown is zero.
 
     oob.addr = GetUsbRxBufferBleAddress(1 + BUF_ADR_POS);
     memcpy(oob.le_sc_data.r, GenericHidOutBuffer + 1 + BUF_KEY_R_POS, BLE_KEY_LEN);
@@ -46,10 +46,8 @@ void UsbCommand_SetPairingData(const uint8_t *GenericHidOutBuffer, uint8_t *Gene
         case PeerIdRight:
             settings_save_one("uhk/addr/right", addr, BLE_ADDR_LEN);
             break;
-        case PeerIdDongle:
-            settings_save_one("uhk/addr/dongle", addr, BLE_ADDR_LEN);
-            break;
         default:
+            break;
     }
 }
 

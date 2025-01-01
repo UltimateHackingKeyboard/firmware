@@ -1,4 +1,6 @@
 #include "bt_manager.h"
+#include "connections.h"
+#include "device_state.h"
 #include "event_scheduler.h"
 #include "usb/usb.h"
 #include "bt_advertise.h"
@@ -12,6 +14,7 @@
 #include "bt_conn.h"
 #include "bt_scan.h"
 #include "settings.h"
+
 
 bool BtManager_Restarting = false;
 
@@ -68,6 +71,76 @@ void BtManager_StopBt() {
 
     if (DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK_DONGLE) {
         BtScan_Stop();
+    }
+}
+
+
+void BtManager_StartScanningAndAdvertisingAsync() {
+    uint32_t delay = 50;
+    EventScheduler_Reschedule(CurrentTime + delay, EventSchedulerEvent_BtStartScanningAndAdvertising, "BtManager_StartScanningAndAdvertising");
+}
+
+/*
+ * Retry logic:
+ * - first try: start advertising and scanning
+ * - second try: stop and then start advertising and scanning
+ * - third try: disconnect all connections, stop and then start advertising and scanning
+ */
+void BtManager_StartScanningAndAdvertising() {
+    bool success = true;
+    static uint8_t try = 0;
+    int err = 0;
+
+    if (try > 0) {
+        if (DEVICE_IS_UHK80_LEFT || DEVICE_IS_UHK80_RIGHT) {
+            BtAdvertise_Stop();
+        }
+
+        if (DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK_DONGLE) {
+            BtScan_Stop();
+        }
+    }
+
+    bool leftShouldAdvertise = DEVICE_IS_UHK80_LEFT && Peers[PeerIdRight].conn == NULL;
+    bool rightShouldAdvertise = DEVICE_IS_UHK80_RIGHT && true;
+    bool shouldAdvertise = leftShouldAdvertise || rightShouldAdvertise;
+
+    bool rightShouldScan = DEVICE_IS_UHK80_RIGHT && !DeviceState_IsTargetConnected(ConnectionTarget_Left);
+    bool dongleShouldScan = DEVICE_IS_UHK_DONGLE && Peers[PeerIdRight].conn == NULL;
+    bool shouldScan = rightShouldScan || dongleShouldScan;
+
+    if (shouldAdvertise || shouldScan) {
+        const char* label = "";
+        if (shouldAdvertise && shouldScan) {
+            label = "advertising and scanning";
+        } else if (shouldAdvertise) {
+            label = "advertising";
+        } else if (shouldScan) {
+            label = "scanning";
+        }
+        printk("Starting %s, try %d!\n", label, try);
+    }
+
+    if (leftShouldAdvertise || rightShouldAdvertise) {
+        err = BtAdvertise_Start(BtAdvertise_Type());
+        success &= err == 0;
+    }
+
+    if (rightShouldScan || dongleShouldScan) {
+        err = BtScan_Start();
+        success &= err == 0;
+    }
+
+    if (!success && try > 0) {
+        BtConn_DisconnectAll();
+    }
+
+    if (success) {
+        try = 0;
+    } else {
+        try++;
+        uint32_t delay = try < 3 ? 100 : 10000;
+        EventScheduler_Reschedule(CurrentTime + delay, EventSchedulerEvent_BtStartScanningAndAdvertising, "BtManager_StartScanningAndAdvertising failed");
     }
 }
 

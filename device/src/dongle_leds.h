@@ -12,7 +12,7 @@
 
 // Functions:
 
-    extern void DongleLeds_Set(bool r, bool g, bool b);
+    extern void DongleLeds_Set(uint8_t r, uint8_t g, uint8_t b);
     extern void DongleLeds_Update(void);
     extern void set_dongle_led(const struct pwm_dt_spec *device, uint8_t percentage);
 
