@@ -15,6 +15,7 @@
 
     #define PeerIdUnknown 0
     #define PeerIdLeft 1
+    #define PeerIdFirst 1
     #define PeerIdRight 2
     #define PeerIdFirstHost (PeerIdRight+1)
     #define PeerIdLastHost (PeerIdFirstHost+PERIPHERAL_CONNECTION_COUNT-1)

@@ -319,7 +319,9 @@ void hidmgr_set_transport(const hid::transport *tp)
     // tp is the transport of the keyboard app
     if (tp == nullptr) {
         printk(" === set transport null\n");
-        Connections_SetState(ConnectionId_BtHid, ConnectionState_Disconnected);
+        bool btIsConnected = Connections_GetState(ConnectionId_BtHid) != ConnectionState_Disconnected;
+        connection_state_t btState = btIsConnected ? ConnectionState_Connected : ConnectionState_Disconnected;
+        Connections_SetState(ConnectionId_BtHid, btState);
         Connections_SetState(usbHidConnId, ConnectionState_Disconnected);
     }
 #if DEVICE_IS_UHK80_RIGHT
@@ -331,7 +333,9 @@ void hidmgr_set_transport(const hid::transport *tp)
 #endif
     else {
         printk(" === set transport usb\n");
-        Connections_SetState(ConnectionId_BtHid, ConnectionState_Disconnected);
+        bool btIsConnected = Connections_GetState(ConnectionId_BtHid) != ConnectionState_Disconnected;
+        connection_state_t btState = btIsConnected ? ConnectionState_Connected : ConnectionState_Disconnected;
+        Connections_SetState(ConnectionId_BtHid, btState);
         Connections_SetState(usbHidConnId, ConnectionState_Ready);
     }
 }

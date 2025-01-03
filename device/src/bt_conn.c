@@ -31,6 +31,8 @@
 
 bool Bt_NewPairedDevice = false;
 
+struct bt_conn *auth_conn;
+
 #define BLE_KEY_LEN 16
 #define BLE_ADDR_LEN 6
 
@@ -57,7 +59,7 @@ peer_t Peers[PeerCount] = {
 };
 
 peer_t *getPeerByAddr(const bt_addr_le_t *addr) {
-    for (uint8_t i = 0; i < PeerCount; i++) {
+    for (uint8_t i = PeerIdFirst; i < PeerCount; i++) {
         if (BtAddrEq(addr, &Peers[i].addr)) {
             return &Peers[i];
         }
@@ -67,7 +69,7 @@ peer_t *getPeerByAddr(const bt_addr_le_t *addr) {
 }
 
 peer_t *getPeerByConn(const struct bt_conn *conn) {
-    for (uint8_t i = 0; i < PeerCount; i++) {
+    for (uint8_t i = PeerIdFirst; i < PeerCount; i++) {
         if (conn == Peers[i].conn) {
             return &Peers[i];
         }
@@ -171,17 +173,32 @@ static uint8_t allocateHostPeer(uint8_t connectionType) {
             }
             break;
     }
-    return PeerIdLastHost;
+    return PeerIdUnknown;
 }
 
 static void assignPeer(struct bt_conn* conn, uint8_t connectionId, uint8_t connectionType) {
-    uint8_t peerId = allocateHostPeer(connectionType);
     bt_addr_le_t addr = *bt_conn_get_dst(conn);
-    if (Peers[peerId].conn) {
-        printk("Peer slot %d already occupied!\n", peerId);
+
+    // be idempotent
+    for (uint8_t i = PeerIdFirst; i < PeerCount; i++) {
+        if (Peers[i].conn == conn) {
+            if (Peers[i].connectionId != connectionId) {
+                Connections_MoveConnection(i, Peers[i].connectionId, connectionId);
+            }
+            return;
+        }
     }
-    Peers[peerId].addr = addr;
+
+    uint8_t peerId = allocateHostPeer(connectionType);
+
+    if (peerId == PeerIdUnknown) {
+        printk("No peer slot available for connection %d\n", connectionId);
+        bt_conn_disconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
+        return;
+    }
+
     Peers[peerId].conn = bt_conn_ref(conn);
+    Peers[peerId].addr = addr;
     Peers[peerId].connectionId = connectionId;
     Connections[connectionId].peerId = peerId;
     Connections_SetState(connectionId, ConnectionState_Connected);
@@ -238,7 +255,6 @@ static void connectNus(struct bt_conn *conn, connection_id_t connectionId, conne
     bt_conn_set_security(conn, BT_SECURITY_L4);
 }
 
-
 static void connectHid(struct bt_conn *conn, connection_id_t connectionId, connection_type_t connectionType) {
     int err;
 
@@ -254,6 +270,7 @@ static void connectHid(struct bt_conn *conn, connection_id_t connectionId, conne
             100 // connection timeout (*10ms)
             );
     bt_conn_le_param_update(conn, &conn_params);
+
 #if DEVICE_IS_UHK80_RIGHT
     USB_DisableHid();
 #endif
@@ -270,7 +287,9 @@ static void connectHid(struct bt_conn *conn, connection_id_t connectionId, conne
 ATTR_UNUSED static uint8_t discover_func(struct bt_conn *conn, const struct bt_gatt_attr *attr, struct bt_gatt_discover_params *params)
 {
     if (!attr) {
-        printk("Service discovery completed, connection wasn't matched. Disconnecting!\n");
+        printk("Service discovery completed, connection wasn't matched.!\n");
+        // connectHid(conn, Connections_GetNewBtHidConnectionId(), ConnectionType_BtHid);
+        bt_conn_set_security(conn, BT_SECURITY_L4);
         return BT_GATT_ITER_STOP;
     }
 
@@ -317,6 +336,8 @@ static void connected(struct bt_conn *conn, uint8_t err) {
         connection_id_t connectionId = Connections_GetConnectionIdByBtAddr(addr);
         connection_type_t connectionType = Connections_Type(connectionId);
 
+        printk("connected %d %d\n", connectionId, connectionType);
+
         if (err) {
             printk("Failed to connect to %s, err %u\n", GetPeerStringByConn(conn), err);
             BtManager_StartScanningAndAdvertising();
@@ -339,7 +360,7 @@ static void connected(struct bt_conn *conn, uint8_t err) {
         }
 
         if (DEVICE_IS_UHK80_RIGHT) {
-            BtManager_StartScanningAndAdvertising();
+            BtManager_StartScanningAndAdvertisingAsync();
         }
     }
 
@@ -445,6 +466,11 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
 
         BtManager_StartScanningAndAdvertisingAsync();
     }
+
+    if (conn == auth_conn) {
+        bt_conn_unref(auth_conn);
+        auth_conn = NULL;
+    }
 }
 
 void Bt_SetConnectionConfigured(struct bt_conn* conn) {
@@ -465,8 +491,26 @@ static bool isUhkDeviceConnection(connection_type_t connectionType) {
 
 static void securityChanged(struct bt_conn *conn, bt_security_t level, enum bt_security_err err) {
     int8_t peerId = GetPeerIdByConn(conn);
-    uint8_t connectionId = Peers[peerId].connectionId;
-    connection_type_t connectionType = Connections_Type(connectionId);
+    uint8_t connectionId;
+    uint8_t connectionType;
+
+    if (peerId == PeerIdUnknown) {
+        connectionId = Connections_GetConnectionIdByBtAddr(bt_conn_get_dst(conn));
+        connectionType = Connections_Type(connectionId);
+
+        if (connectionType == ConnectionType_BtHid) {
+            connectHid(conn, connectionId, connectionType);
+        }
+
+        if (connectionId == ConnectionId_Invalid && conn != auth_conn) {
+            printk("Unknown and non-autheticating connection secured. Disconnecting %s\n", GetPeerStringByConn(conn));
+            bt_conn_disconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
+            return;
+        }
+    } else {
+        connectionId = Peers[peerId].connectionId;
+        connectionType = Connections_Type(connectionId);
+    }
 
     bool isUhkPeer = isUhkDeviceConnection(connectionType);
     if (err || (isUhkPeer && level < BT_SECURITY_L4 && !Cfg.AllowUnsecuredConnections)) {
@@ -515,8 +559,6 @@ BT_CONN_CB_DEFINE(conn_callbacks) = {
 
 // Auth callbacks
 
-struct bt_conn *auth_conn;
-
 static void auth_passkey_display(struct bt_conn *conn, unsigned int passkey)
 {
     printk("Passkey for %s: %06u\n", GetPeerStringByConn(conn), passkey);
@@ -524,7 +566,9 @@ static void auth_passkey_display(struct bt_conn *conn, unsigned int passkey)
 
 static void auth_passkey_confirm(struct bt_conn *conn, unsigned int passkey) {
     if (auth_conn) {
+        bt_conn_disconnect(auth_conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
         bt_conn_unref(auth_conn);
+        auth_conn = NULL;
     }
 
     auth_conn = bt_conn_ref(conn);
@@ -555,6 +599,11 @@ static void auth_passkey_confirm(struct bt_conn *conn, unsigned int passkey) {
 
 static void auth_cancel(struct bt_conn *conn) {
     printk("Pairing cancelled: peer %s\n", GetPeerStringByConn(conn));
+
+    if (auth_conn) {
+        bt_conn_unref(auth_conn);
+        auth_conn = NULL;
+    }
 }
 
 static void auth_oob_data_request(struct bt_conn *conn, struct bt_conn_oob_info *oob_info) {
@@ -611,7 +660,14 @@ static void pairing_complete(struct bt_conn *conn, bool bonded) {
             Bt_NewPairedDevice = true;
         }
 
+        // we have to connect from here, because central changes its address *after* setting security
         connectHid(conn, connectionId, connectionType);
+    }
+
+
+    if (auth_conn) {
+        bt_conn_unref(auth_conn);
+        auth_conn = NULL;
     }
 
     BtManager_StartScanningAndAdvertisingAsync();
@@ -686,10 +742,9 @@ void num_comp_reply(uint8_t accept) {
     } else {
         bt_conn_auth_cancel(conn);
         printk("Numeric Reject, conn %p\n", conn);
+        bt_conn_unref(auth_conn);
+        auth_conn = NULL;
     }
-
-    bt_conn_unref(auth_conn);
-    auth_conn = NULL;
 }
 
 uint8_t BtConn_UnusedPeripheralConnectionCount() {

@@ -64,6 +64,7 @@ static void selectConnection(uint8_t connectionId) {
     } else {
         BtConn_ReserveConnections();
     }
+    Connections_ReportState(connectionId);
 }
 
 static void selectNextConnection(int8_t direction) {

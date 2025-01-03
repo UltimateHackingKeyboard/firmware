@@ -101,6 +101,15 @@ static void reportConnectionState(connection_id_t connectionId, const char* mess
     }
 }
 
+void Connections_ReportState(connection_id_t connectionId) {
+    reportConnectionState(connectionId, "Connection state");
+}
+
+connection_state_t Connections_GetState(connection_id_t connectionId) {
+    connectionId = resolveAliases(connectionId);
+    return Connections[connectionId].state;
+}
+
 void Connections_SetState(connection_id_t connectionId, connection_state_t state) {
     connectionId = resolveAliases(connectionId);
 
@@ -195,7 +204,9 @@ connection_target_t Connections_Target(connection_id_t connectionId) {
 
 static connection_id_t getConnIdByPeer(const bt_addr_le_t *addr) {
     for (uint8_t peerId = 0; peerId < PeerCount; peerId++) {
-        if (BtAddrEq(addr, &Peers[peerId].addr)) {
+        bool addressMatches = BtAddrEq(addr, &Peers[peerId].addr);
+        bool isValidPeer = peerId < PeerIdFirstHost || Peers[peerId].conn;
+        if (addressMatches && isValidPeer) {
             return Peers[peerId].connectionId;
         }
     }
@@ -208,7 +219,6 @@ static connection_id_t getConnIdByAddr(const bt_addr_le_t *addr) {
         host_connection_t *hostConnection = HostConnection(connectionId);
         switch (hostConnection->type) {
             case HostConnectionType_NewBtHid:
-                break;
             case HostConnectionType_Dongle:
             case HostConnectionType_BtHid:
                 if (BtAddrEq(addr, &hostConnection->bleAddress)) {
