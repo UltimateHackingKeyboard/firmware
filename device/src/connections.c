@@ -202,8 +202,9 @@ connection_target_t Connections_Target(connection_id_t connectionId) {
     return ConnectionTarget_None;
 }
 
-static connection_id_t getConnIdByPeer(const bt_addr_le_t *addr) {
-    for (uint8_t peerId = 0; peerId < PeerCount; peerId++) {
+static connection_id_t getConnIdByPeer(const bt_addr_le_t *addr, bool searchHosts) {
+    uint8_t stopAt = searchHosts ? PeerCount : PeerIdFirstHost;
+    for (uint8_t peerId = 0; peerId < stopAt; peerId++) {
         bool addressMatches = BtAddrEq(addr, &Peers[peerId].addr);
         bool isValidPeer = peerId < PeerIdFirstHost || Peers[peerId].conn;
         if (addressMatches && isValidPeer) {
@@ -239,7 +240,7 @@ static connection_id_t getConnIdByAddr(const bt_addr_le_t *addr) {
 connection_id_t Connections_GetConnectionIdByBtAddr(const bt_addr_le_t *addr) {
     connection_id_t res = ConnectionId_Invalid;
 
-    res = getConnIdByPeer(addr);
+    res = getConnIdByPeer(addr, true);
     if (res != ConnectionId_Invalid) {
         return res;
     }
@@ -253,7 +254,19 @@ connection_id_t Connections_GetConnectionIdByBtAddr(const bt_addr_le_t *addr) {
 }
 
 connection_id_t Connections_GetConnectionIdByHostAddr(const bt_addr_le_t *addr) {
-    return getConnIdByAddr(addr);
+    connection_id_t res = ConnectionId_Invalid;
+
+    res = getConnIdByPeer(addr, false);
+    if (res != ConnectionId_Invalid) {
+        return res;
+    }
+
+    res = getConnIdByAddr(addr);
+    if (res != ConnectionId_Invalid) {
+        return res;
+    }
+
+    return ConnectionId_Invalid;
 }
 
 connection_id_t Connections_GetNewBtHidConnectionId() {

@@ -43,6 +43,11 @@
         uint32_t lastSwitchover;
     } peer_t;
 
+typedef enum {
+    LatencyMode_NUS,
+    LatencyMode_BleHid,
+} latency_mode_t;
+
 // Variables:
 
     extern peer_t Peers[];
