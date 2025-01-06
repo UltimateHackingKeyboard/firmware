@@ -16,7 +16,21 @@ If you want to use the latest firmware version for your UHK, then instead of goi
 
 If you're one of the brave few who wants to hack the firmware then read on.
 
+### Global prerequisities (for both UHK60 and UHK80):
+
+- git
+- pip3
+- nodejs (and optionally nvm for version management, then (e.g.) `nvm install 20; nvm use 20`)
+- west (`pip3 install west`)
+
 ### UHK80 quick dev setup
+
+On top of the above, install:
+- nrfutil and nrf commandline tools:
+  - https://www.nordicsemi.com/Products/Development-tools/nRF-Util/Download
+  - https://www.nordicsemi.com/Products/Development-tools/nrf-command-line-tools/download
+
+Now, following should work on latest Ubuntu.
 
 ```
 mkdir firmware
@@ -31,10 +45,11 @@ In case the above doesn't work, please see (or create a ticket):
 - further sections of this readme 
 - content of `scripts/make-release.mjs` (this one is directive for build command form)
 - content of `build.sh` (this is an auxiliary script; it works for me)
+- the github CI build script (`.github/workflows/ci.yml`) (this one is directive for getting dependencies)
 
-### Fetching the codebase
+### Fetching the codebase manually
 
-Note that these commands will create a [west workspace](https://docs.zephyrproject.org/latest/develop/west/workspaces.html#t2-star-topology-application-is-the-manifest-repository) in your current directory.
+Note that these commands will create a [west workspace](https://docs.zephyrproject.org/latest/develop/west/workspaces.html#t2-star-topology-application-is-the-manifest-repository) in your current directory - the top "firmware".
 
 ```bash
 mkdir firmware
@@ -106,7 +121,7 @@ git submodule update --init --recursive lib/c2usb
 scripts/generate-versions.mjs
 ```
 
-### Old IDE setup
+### UHK60 - IDE setup
 
 2. Download and install MCUXpresso IDE for [Linux](https://ultimatehackingkeyboard.com/mcuxpressoide/mcuxpressoide-11.2.0_4120.x86_64.deb.bin), [Mac](https://ultimatehackingkeyboard.com/mcuxpressoide/MCUXpressoIDE_11.2.0_4120.pkg), or [Windows](https://ultimatehackingkeyboard.com/mcuxpressoide/MCUXpressoIDE_11.2.0_4120.exe).
 
@@ -123,7 +138,9 @@ scripts/generate-versions.mjs
 
 Going forward, it's easier to flash the firmware of your choice by using the downwards toolbar icon which is located rightwards of the *green play + toolbox icon*.
 
-### Old Minimal development setup
+### UHK60 Minimal development setup
+
+This is tested on latest Ubuntu. Especially Windows may suffer from path issues.
 
 1. Install the ARM cross-compiler, cross-assembler and stdlib implementation. Eg. on Arch Linux the packages `arm-none-eabi-binutils`, `arm-none-eabi-gcc`, `arm-none-eabi-newlib`.
 
