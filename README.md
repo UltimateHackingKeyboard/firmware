@@ -66,13 +66,13 @@ npm i
 
 Then, depending whether you want a full IDE experience or just minimal tools for building and flashing firmware, read *VS Code setup* or *Minimal development setup* (if you prefer a text editor + command line).
 
-### VS Code setup
+### UHK80 VS Code setup
 
 - Install [nRF Connect SDK](https://developer.nordicsemi.com/nRF_Connect_SDK/doc/latest/nrf/installation/install_ncs.html) including VS Code extensions.
 - In VS Code, click nRF connect icon in the left pane, then `Applications -> Create new build configuration` and select the relevant CMake preset. Now hit Build. This executes cmake steps.
 - Now you can rebuild or flash using the Build and Flash actions.
 
-### Minimal development setup
+### UHK80 Minimal development setup
 
 - Install commandline stuff from [nRF Connect SDK](https://developer.nordicsemi.com/nRF_Connect_SDK/doc/latest/nrf/installation/install_ncs.html)
 - You can use `./build.sh` script that basically just packs the following snippets, but should be more up to date:
@@ -159,6 +159,7 @@ This is tested on latest Ubuntu. Especially Windows may suffer from path issues.
 To build a full firmware tarball:
 
 1. Run `npm install` in `scripts`.
+2. Enter nrf shell `nrfutil toolchain-manager launch --shell --ncs-version v2.8.0`
 2. Run `scripts/make-release.mjs`. (Or `scripts/make-release.mjs --allowSha` for development purposes.)
 3. Now, the created tarball `scripts/uhk-firmware-VERSION.tar.gz` can be flashed with UHK Agent.
 
