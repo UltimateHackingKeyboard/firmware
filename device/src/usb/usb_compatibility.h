@@ -9,6 +9,7 @@
     #include "usb_interfaces/usb_interface_media_keyboard.h"
     #include "usb_interfaces/usb_interface_system_keyboard.h"
     #include "usb_interfaces/usb_interface_mouse.h"
+    #include "connections.h"
 
 // Macros:
 
@@ -30,7 +31,6 @@
     void UsbCompatibility_SendMouseReport(const usb_mouse_report_t* report) ;
     void UsbCompatibility_SendConsumerReport(const usb_media_keyboard_report_t* mediaReport, const usb_system_keyboard_report_t* systemReport);
     void UsbCompatibility_SendConsumerReport2(const uint8_t* report);
-    void UsbCompatibility_SetKeyboardLedsState(bool capsLock, bool numLock, bool scrollLock);
-    bool UsbCompatibility_UsbConnected();
+    void UsbCompatibility_SetKeyboardLedsState(connection_id_t connectionId, bool capsLock, bool numLock, bool scrollLock);
 
 #endif // __USB_HEADER__

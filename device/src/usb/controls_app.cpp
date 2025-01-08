@@ -1,10 +1,18 @@
 #include "controls_app.hpp"
 
-controls_app &controls_app::handle()
+controls_app &controls_app::usb_handle()
 {
     static controls_app app{};
     return app;
 }
+
+#if DEVICE_IS_UHK80_RIGHT
+controls_app &controls_app::ble_handle()
+{
+    static controls_app ble_app{};
+    return ble_app;
+}
+#endif
 
 void controls_app::start(hid::protocol prot)
 {

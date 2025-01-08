@@ -276,10 +276,6 @@ static void connectHid(struct bt_conn *conn, connection_id_t connectionId, conne
 
     configureLatency(conn, LatencyMode_NUS);
 
-#if DEVICE_IS_UHK80_RIGHT
-    USB_DisableHid();
-#endif
-
     // Assume that HOGP is ready
     printf("Established HID connection with %s\n", GetPeerStringByConn(conn));
     Connections_SetState(connectionId, ConnectionState_Ready);
@@ -416,9 +412,6 @@ static void connected(struct bt_conn *conn, uint8_t err) {
                 100 // connection timeout (*10ms)
                 );
         bt_conn_le_param_update(conn, &conn_params);
-#if DEVICE_IS_UHK80_RIGHT
-        USB_DisableHid();
-#endif
     }
 
     if (connectionType == ConnectionType_Unknown) {
@@ -475,12 +468,6 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
     }
 
     if (!BtPair_OobPairingInProgress && !BtManager_Restarting) {
-        if (DEVICE_IS_UHK80_RIGHT) {
-            if (connectionType == ConnectionType_BtHid) {
-                USB_EnableHid();
-            }
-        }
-
         BtManager_StartScanningAndAdvertisingAsync();
     }
 

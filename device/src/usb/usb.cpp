@@ -1,18 +1,17 @@
 extern "C" {
 #include "usb.h"
+#include "connections.h"
 #include "device.h"
+#include "device_state.h"
 #include "key_states.h"
 #include "keyboard/charger.h"
 #include "keyboard/key_scanner.h"
+#include "logger.h"
 #include "power_mode.h"
 #include "timer.h"
+#include "usb_report_updater.h"
 #include "user_logic.h"
-#include "logger.h"
-#include <device.h>
 #include <zephyr/kernel.h>
-#include "logger.h"
-#include "power_mode.h"
-#include "connections.h"
 }
 #include "command_app.hpp"
 #include "controls_app.hpp"
@@ -26,13 +25,6 @@ extern "C" {
 #include "usb/df/vendor/microsoft_xinput.hpp"
 #include <magic_enum.hpp>
 
-extern "C" {
-#include "device_state.h"
-#include "usb_report_updater.h"
-}
-#if DEVICE_HAS_BATTERY
-    #include "hid_battery_app.hpp"
-#endif
 #if DEVICE_IS_UHK80_RIGHT
     #include "port/zephyr/bluetooth/hid.hpp"
 
@@ -58,7 +50,7 @@ class multi_hid : public hid::multi_application {
     }
 
   private:
-    std::array<hid::application *, sizeof...(Args) + 1> app_array_{(&Args::handle())..., nullptr};
+    std::array<hid::application *, sizeof...(Args) + 1> app_array_{(&Args::ble_handle())..., nullptr};
     multi_hid() : multi_application({{}, 0, 0, 0}, app_array_)
     {
         static constexpr const auto desc = report_desc();
@@ -103,7 +95,7 @@ struct usb_manager {
         // attempt to avoid unnecessary races
         int new_conf = next_config_.fetch_and(~(launch_flag | change_flag));
         for (; new_conf & (launch_flag | change_flag);
-             new_conf = next_config_.fetch_and(~(launch_flag | change_flag))) {
+            new_conf = next_config_.fetch_and(~(launch_flag | change_flag))) {
             k_msleep(50); // TODO: this is guesswork so far
         }
 
@@ -114,15 +106,12 @@ struct usb_manager {
     {
         static constexpr auto speed = usb::speed::FULL;
         static usb::df::hid::function usb_kb{
-            keyboard_app::handle(), usb::hid::boot_protocol_mode::KEYBOARD};
-        static usb::df::hid::function usb_mouse{mouse_app::handle()};
+            keyboard_app::usb_handle(), usb::hid::boot_protocol_mode::KEYBOARD};
+        static usb::df::hid::function usb_mouse{mouse_app::usb_handle()};
         static usb::df::hid::function usb_command{command_app::usb_handle()};
-        static usb::df::hid::function usb_controls{controls_app::handle()};
-        static usb::df::hid::function usb_gamepad{gamepad_app::handle()};
-        static usb::df::microsoft::xfunction usb_xpad{gamepad_app::handle()};
-#if DEVICE_HAS_BATTERY
-        static usb::df::hid::function usb_battery{hid_battery_app::handle()};
-#endif
+        static usb::df::hid::function usb_controls{controls_app::usb_handle()};
+        static usb::df::hid::function usb_gamepad{gamepad_app::usb_handle()};
+        static usb::df::microsoft::xfunction usb_xpad{gamepad_app::usb_handle()};
 
         constexpr auto config_header =
             usb::df::config::header(usb::df::config::power::bus(500, true));
@@ -130,20 +119,7 @@ struct usb_manager {
             usb::df::hid::config(usb_kb, speed, usb::endpoint::address(0x81), 1),
             usb::df::hid::config(usb_mouse, speed, usb::endpoint::address(0x82), 1),
             usb::df::hid::config(usb_command, speed, usb::endpoint::address(0x83), 10),
-            usb::df::hid::config(usb_controls, speed, usb::endpoint::address(0x84), 1)
-#if DEVICE_HAS_BATTERY
-                ,
-            usb::df::hid::config(usb_battery, speed, usb::endpoint::address(0x86), 1)
-            // not very useful at the moment
-#endif
-        );
-        static const auto inactive_config = usb::df::config::make_config(config_header,
-            usb::df::hid::config(usb_command, speed, usb::endpoint::address(0x83), 10)
-#if DEVICE_HAS_BATTERY
-                ,
-            usb::df::hid::config(usb_battery, speed, usb::endpoint::address(0x86), 1)
-#endif
-            );
+            usb::df::hid::config(usb_controls, speed, usb::endpoint::address(0x84), 1));
 
         static const auto base_config =
             usb::df::config::make_config(config_header, shared_config_elems);
@@ -158,19 +134,12 @@ struct usb_manager {
                     usb_xpad, usb::endpoint::address(0x85), 1, usb::endpoint::address(0x05), 255));
 
         printk("USB config changing to %s\n", magic_enum::enum_name(conf).data());
-        switch (conf) {
-        case Hid_Empty:
-            ms_enum_.set_config({});
-            device_.set_config(inactive_config);
-            break;
-        case Hid_NoGamepad:
+        if (conf == Hid_NoGamepad) {
             ms_enum_.set_config({});
             device_.set_config(base_config);
-            break;
-        default:
+        } else {
             ms_enum_.set_config(xpad_config);
             device_.set_config(gamepad_config);
-            break;
         }
         device_.open();
     }
@@ -218,16 +187,9 @@ struct usb_manager {
     std::atomic<int> next_config_{0xff};
 };
 
-extern "C" void USB_EnableHid()
+extern "C" void USB_Enable()
 {
-    printk(" === Usb Enable Hid\n");
     usb_manager::instance().select_config(HID_GetGamepadActive() ? Hid_Full : Hid_NoGamepad);
-}
-
-extern "C" void USB_DisableHid()
-{
-    printk(" === Usb Disable Hid\n");
-    usb_manager::instance().select_config(Hid_Empty);
 }
 
 extern "C" void USB_RemoteWakeup()
@@ -312,34 +274,6 @@ bool app_base::active() const
     return usb_manager::instance().device().power_state() == usb::power::state::L0_ON;
 }
 
-void hidmgr_set_transport(const hid::transport *tp)
-{
-    connection_id_t usbHidConnId = DEVICE_IS_UHK80_LEFT ? ConnectionId_UsbHidLeft : ConnectionId_UsbHidRight;
-
-    // tp is the transport of the keyboard app
-    if (tp == nullptr) {
-        printk(" === set transport null\n");
-        bool btIsConnected = Connections_GetState(ConnectionId_BtHid) != ConnectionState_Disconnected;
-        connection_state_t btState = btIsConnected ? ConnectionState_Connected : ConnectionState_Disconnected;
-        Connections_SetState(ConnectionId_BtHid, btState);
-        Connections_SetState(usbHidConnId, ConnectionState_Disconnected);
-    }
-#if DEVICE_IS_UHK80_RIGHT
-    else if (tp == &hogp_manager::instance().main_service()) {
-        printk(" === set transport hogp\n");
-        Connections_SetState(ConnectionId_BtHid, ConnectionState_Ready);
-        Connections_SetState(usbHidConnId, ConnectionState_Disconnected);
-    }
-#endif
-    else {
-        printk(" === set transport usb\n");
-        bool btIsConnected = Connections_GetState(ConnectionId_BtHid) != ConnectionState_Disconnected;
-        connection_state_t btState = btIsConnected ? ConnectionState_Connected : ConnectionState_Disconnected;
-        Connections_SetState(ConnectionId_BtHid, btState);
-        Connections_SetState(usbHidConnId, ConnectionState_Ready);
-    }
-}
-
 static bool gamepadActive = true;
 
 extern "C" bool HID_GetGamepadActive()
@@ -351,7 +285,7 @@ extern "C" void HID_SetGamepadActive(bool active)
 {
     gamepadActive = active;
     if (usb_manager::active()) {
-        USB_EnableHid();
+        USB_Enable();
     }
 #if DEVICE_IS_UHK80_RIGHT
     if (hogp_manager::active()) {
@@ -364,12 +298,15 @@ extern "C" rollover_t HID_GetKeyboardRollover()
 {
     static_assert(((uint8_t)Rollover_6Key == (uint8_t)keyboard_app::rollover::SIX_KEY) &&
                   ((uint8_t)Rollover_NKey == (uint8_t)keyboard_app::rollover::N_KEY));
-    return (rollover_t)keyboard_app::handle().get_rollover();
+    return (rollover_t)keyboard_app::usb_handle().get_rollover();
 }
 
 extern "C" void HID_SetKeyboardRollover(rollover_t mode)
 {
-    keyboard_app::handle().set_rollover((keyboard_app::rollover)mode);
+    keyboard_app::usb_handle().set_rollover((keyboard_app::rollover)mode);
+#if DEVICE_IS_UHK80_RIGHT
+    keyboard_app::ble_handle().set_rollover((keyboard_app::rollover)mode);
+#endif
 }
 
 extern "C" void USB_SetSerialNumber(uint32_t serialNumber)
