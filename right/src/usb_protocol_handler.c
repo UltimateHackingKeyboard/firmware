@@ -18,6 +18,7 @@
 #ifdef __ZEPHYR__
 #include "usb_commands/usb_command_draw_oled.h"
 #include "usb_commands/usb_command_pairing.h"
+#include "usb_commands/usb_command_erase_ble_settings.h"
 #include "bt_conn.h"
 #else
 #include "usb_commands/usb_command_set_test_led.h"
@@ -106,6 +107,9 @@ void UsbProtocolHandler(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidI
         case UsbCommandId_EnterPairingMode:
             UsbCommand_EnterPairingMode(GenericHidOutBuffer, GenericHidInBuffer);
             break;
+        case UsbCommandId_EraseBleSettings:
+            UsbCommand_EraseAllSettings();
+            break;
 #else
         case UsbCommandId_JumpToModuleBootloader:
             UsbCommand_JumpToModuleBootloader(GenericHidOutBuffer, GenericHidInBuffer);
@@ -153,4 +157,10 @@ void SetBufferBleAddress(uint8_t *GenericHidInBuffer, uint32_t offset, const bt_
         GenericHidInBuffer[offset + i] = addr->a.val[i];
     }
 }
+
+
+// void UsbCommand_EraseBleSettings(void) {
+//     Settings_Erase();
+// }
+
 #endif

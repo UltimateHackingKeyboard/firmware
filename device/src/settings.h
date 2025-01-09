@@ -10,6 +10,7 @@
 
     void InitSettings(void);
     void Settings_Reload(void);
+    void Settings_Erase(void);
 
 // Variables:
 
