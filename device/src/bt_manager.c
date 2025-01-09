@@ -15,6 +15,7 @@
 #include "bt_scan.h"
 #include "settings.h"
 
+#define BT_SHORT_RETRY_DELAY 1000
 
 bool BtManager_Restarting = false;
 
@@ -85,6 +86,8 @@ void BtManager_StartScanningAndAdvertisingAsync() {
  * - first try: start advertising and scanning
  * - second try: stop and then start advertising and scanning
  * - third try: disconnect all connections, stop and then start advertising and scanning
+ *
+ * This should be called from the event scheduler.
  */
 void BtManager_StartScanningAndAdvertising() {
     bool success = true;
@@ -139,7 +142,7 @@ void BtManager_StartScanningAndAdvertising() {
         try = 0;
     } else {
         try++;
-        uint32_t delay = try < 3 ? 100 : 10000;
+        uint32_t delay = try < 3 ? BT_SHORT_RETRY_DELAY : 10000;
         EventScheduler_Reschedule(CurrentTime + delay, EventSchedulerEvent_BtStartScanningAndAdvertising, "BtManager_StartScanningAndAdvertising failed");
     }
 }
@@ -183,5 +186,5 @@ void BtManager_RestartBt() {
 }
 
 void BtManager_RestartBtAsync() {
-    EventScheduler_Schedule(k_uptime_get()+10, EventSchedulerEvent_RestartBt, "Restart bluetooth");
+    EventScheduler_Schedule(k_uptime_get()+BT_SHORT_RETRY_DELAY, EventSchedulerEvent_RestartBt, "Restart bluetooth");
 }

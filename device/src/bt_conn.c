@@ -287,8 +287,8 @@ static void connectHid(struct bt_conn *conn, connection_id_t connectionId, conne
 ATTR_UNUSED static uint8_t discover_func(struct bt_conn *conn, const struct bt_gatt_attr *attr, struct bt_gatt_discover_params *params)
 {
     if (!attr) {
-        printk("Service discovery completed, connection wasn't matched. Requesting authentication!\n");
-        bt_conn_set_security(conn, BT_SECURITY_L4);
+        printk("Service discovery completed, connection wasn't matched.\n");
+        // TODO: consider setting a timer to disconnect the connection if neither auth nor security is Established
         return BT_GATT_ITER_STOP;
     }
 
@@ -807,6 +807,9 @@ uint8_t BtConn_UnusedPeripheralConnectionCount() {
         if (!Peers[peerId].conn) {
             count++;
         }
+    }
+    if (auth_conn) {
+        count--;
     }
     return count;
 }
