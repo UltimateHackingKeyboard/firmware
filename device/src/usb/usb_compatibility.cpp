@@ -27,6 +27,9 @@ static controls_buffer controls;
 
 keyboard_led_state_t KeyboardLedsState;
 
+keyboard_led_state_t KeyboardLedsStateBle;
+keyboard_led_state_t KeyboardLedsStateUsb;
+
 typedef enum {
     ReportSink_Invalid,
     ReportSink_Usb,
@@ -148,9 +151,31 @@ extern "C" void UsbCompatibility_SendConsumerReport2(const uint8_t *report)
     }
 }
 
-extern "C" void UsbCompatibility_SetKeyboardLedsState(connection_id_t connectionId, bool capsLock, bool numLock, bool scrollLock)
+extern "C" void UsbCompatibility_UpdateKeyboardLedsState()
 {
-    // TODO: deal with connectionId
+    switch (Connections_Type(ActiveHostConnectionId)) {
+        case ConnectionType_UsbHidRight:
+        case ConnectionType_UsbHidLeft:
+            UsbCompatibility_SetCurrentKeyboardLedsState(KeyboardLedsStateUsb);
+            break;
+        case ConnectionType_BtHid:
+        case ConnectionType_NewBtHid:
+            UsbCompatibility_SetCurrentKeyboardLedsState(KeyboardLedsStateBle);
+            break;
+        case ConnectionType_NusDongle:
+            UsbCompatibility_SetCurrentKeyboardLedsState(KeyboardLedsState);
+            break;
+        default:
+            printk("Unhandled connection type %d\n", Connections_Type(ActiveHostConnectionId));
+            break;
+    }
+}
+
+extern "C" void UsbCompatibility_SetCurrentKeyboardLedsState(keyboard_led_state_t state) {
+    bool capsLock = state.capsLock;
+    bool numLock = state.numLock;
+    bool scrollLock = state.scrollLock;
+
     if (KeyboardLedsState.capsLock != capsLock) {
         KeyboardLedsState.capsLock = capsLock;
         UsbBasicKeyboard_CapsLockOn = capsLock;
@@ -171,4 +196,33 @@ extern "C" void UsbCompatibility_SetKeyboardLedsState(connection_id_t connection
     }
 
     StateSync_UpdateProperty(StateSyncPropertyId_KeyboardLedsState, NULL);
+}
+
+extern "C" void UsbCompatibility_SetKeyboardLedsState(connection_id_t connectionId, bool capsLock, bool numLock, bool scrollLock)
+{
+    keyboard_led_state_t state = { capsLock, numLock, scrollLock };
+
+#if DEVICE_IS_UHK80_RIGHT
+    switch (Connections_Type(connectionId)) {
+        case ConnectionType_UsbHidLeft:
+        case ConnectionType_UsbHidRight:
+            KeyboardLedsStateUsb = state;
+            break;
+        case ConnectionType_BtHid:
+        case ConnectionType_NewBtHid:
+            KeyboardLedsStateBle = state;
+            break;  
+        case ConnectionType_NusDongle:
+            break;
+        default:
+            printk("Unhandled connection type %d\n", Connections_Type(connectionId));
+            return;
+    }
+
+    if (Connections_IsActiveHostConnection(connectionId)) {
+        UsbCompatibility_SetCurrentKeyboardLedsState(state);
+    }
+#else
+    UsbCompatibility_SetCurrentKeyboardLedsState(state);
+#endif
 }

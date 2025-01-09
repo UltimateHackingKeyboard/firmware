@@ -10,6 +10,7 @@
 #include <zephyr/bluetooth/addr.h>
 #include "connections.h"
 #include "stubs.h"
+#include "usb_compatibility.h"
 
 connection_t Connections[ConnectionId_Count] = {
     [ConnectionId_UsbHidRight] = { .isAlias = true },
@@ -312,6 +313,10 @@ bool Connections_IsReady(connection_id_t connectionId) {
     return Connections[connectionId].state == ConnectionState_Ready;
 }
 
+bool Connections_IsActiveHostConnection(connection_id_t connectionId) {
+    return resolveAliases(connectionId) == ActiveHostConnectionId;
+}
+
 static void setCurrentDongleToStandby() {
     if (Connections_IsHostConnection(ActiveHostConnectionId) && HostConnection(ActiveHostConnectionId)->type == HostConnectionType_Dongle) {
         bool standby = true;
@@ -327,6 +332,7 @@ static void switchOver(connection_id_t connectionId) {
         SelectedHostConnectionId = ConnectionId_Invalid;
     }
 
+    UsbCompatibility_UpdateKeyboardLedsState();
 }
 
 void Connections_HandleSwitchover(connection_id_t connectionId, bool forceSwitch) {

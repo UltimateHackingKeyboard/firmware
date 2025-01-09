@@ -92,6 +92,7 @@
 
     bool Connections_IsHostConnection(connection_id_t connectionId);
     bool Connections_IsReady(connection_id_t connectionId);
+    bool Connections_IsActiveHostConnection(connection_id_t connectionId);
 
     void Connections_HandleSwitchover(connection_id_t connectionId, bool forceSwitch);
 
