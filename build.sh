@@ -266,7 +266,7 @@ function performAction() {
             git submodule init
             git submodule update --init --recursive
             cd "$ROOT/.."
-            west init -l "$ROOT" -mf west.yml
+            west init -l "$ROOT"
             west update -o=--depth=1 -n
             west patch
             west config --local build.cmake-args -- "-Wno-dev"
