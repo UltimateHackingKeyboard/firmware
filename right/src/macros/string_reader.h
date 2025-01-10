@@ -26,6 +26,8 @@
 // Functions:
 
     char Macros_ConsumeCharOfString(parser_context_t* ctx, uint16_t* stringOffset, uint16_t* index, uint16_t* subIndex);
+    bool Macros_CompareStringToken(parser_context_t* ctx, string_segment_t str);
+    void Macros_ConsumeStringToken(parser_context_t* ctx);
 
 #endif
 

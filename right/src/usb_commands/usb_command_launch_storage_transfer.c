@@ -1,4 +1,6 @@
 #include "usb_commands/usb_command_launch_storage_transfer.h"
+#include "event_scheduler.h"
+#include "ledmap.h"
 #include "usb_protocol_handler.h"
 #include "config_parser/config_globals.h"
 
@@ -38,6 +40,12 @@ void UsbCommand_LaunchStorageTransfer(const uint8_t *GenericHidOutBuffer, uint8_
 #else
     status_t status = EEPROM_LaunchTransfer(storageOperation, configBufferId, NULL);
 #endif
+
+    if (configBufferId == ConfigBufferId_HardwareConfig) {
+        // reload is/ansi led settings
+        Ledmap_InitLedLayout();
+        EventVector_Set(EventVector_LedMapUpdateNeeded);
+    }
 
     if (status != kStatus_Success) {
         SetUsbTxBufferUint8(0, UsbStatusCode_LaunchStorageTransferTransferError);

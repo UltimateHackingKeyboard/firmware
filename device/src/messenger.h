@@ -4,8 +4,10 @@
 // Includes:
 
     #include "shared/attributes.h"
-#include <zephyr/bluetooth/conn.h>
+    #include <zephyr/bluetooth/conn.h>
     #include <inttypes.h>
+    #include "device.h"
+    #include "connections.h"
 
 // Typedefs:
 
@@ -36,17 +38,18 @@ typedef enum {
         uint8_t idsUsed;
         uint8_t src;
         uint8_t dst;
+        uint8_t connectionId;
     } ATTR_PACKED message_t;
 
 // Functions:
 
-    void Messenger_Receive(uint8_t src, const uint8_t* data, uint16_t len);
     void Messenger_SendMessage(message_t message);
-    void Messenger_Send(uint8_t dst, uint8_t messageId, const uint8_t* data, uint16_t len);
-    void Messenger_Send2(uint8_t dst, uint8_t messageId, uint8_t messageId2, const uint8_t* data, uint16_t len);
-    bool Messenger_Availability(uint8_t dst, messenger_availability_op_t operation);
+    void Messenger_Send(device_id_t dst, uint8_t messageId, const uint8_t* data, uint16_t len);
+    void Messenger_Send2(device_id_t dst, uint8_t messageId, uint8_t messageId2, const uint8_t* data, uint16_t len);
+    void Messenger_Send2Via(device_id_t dst, connection_id_t connectionId, uint8_t messageId, uint8_t messageId2, const uint8_t* data, uint16_t len);
+    bool Messenger_Availability(device_id_t dst, messenger_availability_op_t operation);
 
-    void Messenger_Enqueue(uint8_t src, const uint8_t* data, uint16_t len);
+    void Messenger_Enqueue(uint8_t srcConnectionId, uint8_t src, const uint8_t* data, uint16_t len);
     void Messenger_ProcessQueue();
 
     void Messenger_Init();

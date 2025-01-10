@@ -12,7 +12,7 @@ command_app &command_app::usb_handle()
 }
 
 #if DEVICE_IS_UHK80_RIGHT
-command_app &command_app::handle()
+command_app &command_app::ble_handle()
 {
     static command_app ble_app{};
     return ble_app;

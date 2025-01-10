@@ -158,7 +158,7 @@ int main(void) {
         }
     }
 
-    USB_EnableHid(); // has to be after USB_SetSerialNumber
+    USB_Enable(); // has to be after USB_SetSerialNumber
 
     // has to be after InitSettings
     BtManager_InitBt();

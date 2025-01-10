@@ -43,6 +43,7 @@ static void bt_foreach_bond_cb(const struct bt_bond_info *info, void *user_data)
 }
 
 void UsbCommand_UpdateNewPairingsFlag() {
+    Bt_NewPairedDevice = false;
 
     CommandUserData data = {
         .OutBuffer = NULL,

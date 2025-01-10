@@ -12,6 +12,7 @@
 #include "keyboard/charger.h"
 #include "ledmap.h"
 #include "event_scheduler.h"
+#include "host_connection.h"
 
 shell_t Shell = {
     .keyLog = 0,
@@ -152,6 +153,14 @@ static int cmd_uhk_btunpair(const struct shell *shell, size_t argc, char *argv[]
     return 0;
 }
 
+static int cmd_uhk_connections(const struct shell *shell, size_t argc, char *argv[])
+{
+    HostConnections_ListKnownBleConnections();
+    BtConn_ListAllBonds();
+    BtConn_ListCurrentConnections();
+    return 0;
+}
+
 void InitShell(void)
 {
     SHELL_STATIC_SUBCMD_SET_CREATE(uhk_cmds,
@@ -177,6 +186,7 @@ void InitShell(void)
         SHELL_CMD_ARG(gamepad, NULL, "switch gamepad on/off", cmd_uhk_gamepad, 1, 1),
         SHELL_CMD_ARG(btacc, NULL, "accept bluetooth pairing", cmd_uhk_btacc, 1, 1),
         SHELL_CMD_ARG(btunpair, NULL, "unpair bluetooth devices", cmd_uhk_btunpair, 1, 1),
+        [10]=SHELL_CMD_ARG(connections, NULL, "list BLE connections", cmd_uhk_connections, 1, 0),
         SHELL_SUBCMD_SET_END);
 
     SHELL_CMD_REGISTER(uhk, &uhk_cmds, "UHK commands", NULL);

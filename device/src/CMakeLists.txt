@@ -8,7 +8,6 @@ set(usb_cpp_sources
     usb/command_app.cpp
     usb/controls_app.cpp
     usb/gamepad_app.cpp
-    usb/hid_battery_app.cpp
     usb/keyboard_app.cpp
     usb/mouse_app.cpp
     usb/usb_compatibility.cpp
@@ -29,6 +28,7 @@ if(NOT CONFIG_BOARD_UHK_60_RIGHT)
         bt_conn.c
         bt_manager.c
         bt_pair.c
+        connections.c
         debug_eventloop_timing.c
         device_state.c
         flash.c

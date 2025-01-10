@@ -27,6 +27,10 @@
 #include "versioning.h"
 #include "stubs.h"
 
+#if DEVICE_HAS_OLED
+#include "keyboard/oled/widgets/widgets.h"
+#endif
+
 version_t DataModelVersion = {0, 0, 0};
 
     bool PerKeyRgbPresent = false;
@@ -55,7 +59,12 @@ parser_error_t parseConfig(config_buffer_t *buffer)
 
 #ifdef __ZEPHYR__
     if (!ParserRunDry) {
-        printk("Flashed User Config version: %u.%u.%u\n", DataModelVersion.major, DataModelVersion.minor, DataModelVersion.patch);
+        printk(
+                "Flashed User Config version: %u.%u.%u (native version: %u.%u.%u., at %s)\n",
+                DataModelVersion.major, DataModelVersion.minor, DataModelVersion.patch,
+                userConfigVersion.major, userConfigVersion.minor, userConfigVersion.patch,
+                gitTag
+        );
     }
 #endif
 
@@ -330,6 +339,8 @@ parser_error_t parseConfig(config_buffer_t *buffer)
         LedManager_RecalculateLedBrightness();
         LedManager_UpdateSleepModes();
         BtPair_ClearUnknownBonds();
+        BtConn_UpdateHostConnectionPeerAllocations();
+        WIDGET_REFRESH(&TargetWidget); // the target may have been renamed
 
         // Update counts
 
