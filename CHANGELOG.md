@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [12.2.0] - 2025-01-01
+
+Device Protocol: 4.**13.0** | Module Protocol: 4.3.0 | User Config: 8.3.0 | Hardware Config: 1.0.0 | Smart Macros: 3.0.0
+
+- Fix touchpad stuck tap and doubletap.
+- Always update keymap on module change, including bootup.
+- Make pairing screen always on.
+- Reduce audible noise and expose related settings via the device protocol. `DEVICEPROTOCOL:MINOR`
+- Fix ISO LED lighting in switch test mode.
+- Fade UHK 80 LEDs gradually.
+
 ## [12.1.0] - 2024-12-23
 
 Device Protocol: 4.**12.0** | Module Protocol: 4.3.0 | User Config: 8.3.0 | Hardware Config: 1.0.0 | Smart Macros: 3.0.0
