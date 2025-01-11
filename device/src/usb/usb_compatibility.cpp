@@ -229,10 +229,10 @@ extern "C" void UsbCompatibility_SetKeyboardLedsState(connection_id_t connection
 
 extern "C" float VerticalScrollMultiplier(void)
 {
-    return mouse_app::handle().resolution_report().vertical_scroll_multiplier();
+    return mouse_app::usb_handle().resolution_report().vertical_scroll_multiplier();
 }
 
 extern "C" float HorizontalScrollMultiplier(void)
 {
-    return mouse_app::handle().resolution_report().horizontal_scroll_multiplier();
+    return mouse_app::usb_handle().resolution_report().horizontal_scroll_multiplier();
 }
