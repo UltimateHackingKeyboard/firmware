@@ -18,5 +18,6 @@
 
     extern void Uhk80_UpdateLeds();
     extern void InitLeds(void);
+    extern void UpdateLedAudioRegisters(uint8_t spreadSpectrum, uint8_t phaseDelay, uint8_t pwmFrequency);
 
 #endif // __LEDS_H__

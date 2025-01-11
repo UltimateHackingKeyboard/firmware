@@ -90,7 +90,10 @@ class mouse_app : public app_base {
         bool operator!=(const mouse_report_base &other) const = default;
     };
 
-    static mouse_app &handle();
+    static mouse_app &usb_handle();
+#if DEVICE_IS_UHK80_RIGHT
+    static mouse_app &ble_handle();
+#endif
 
     void set_report_state(const mouse_report_base<> &data);
 
@@ -100,7 +103,7 @@ class mouse_app : public app_base {
     void start(hid::protocol prot) override;
 
     using mouse_report = mouse_report_base<report_ids::IN_MOUSE>;
-    C2USB_USB_TRANSFER_ALIGN(mouse_report, report_buffer_){};
+    C2USB_USB_TRANSFER_ALIGN(mouse_report, report_buffer_) {};
 };
 
 using mouse_buffer = mouse_app::mouse_report_base<>;

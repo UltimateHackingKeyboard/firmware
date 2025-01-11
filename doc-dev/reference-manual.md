@@ -114,6 +114,7 @@ COMMAND = setVar <variable name (IDENTIFIER)> <value (PARENTHESSED_EXPRESSION)>
 COMMAND = {pressKey|holdKey|tapKey|releaseKey} SHORTCUT
 COMMAND = tapKeySeq [SHORTCUT]+
 COMMAND = powerMode [toggle] { wake | lightSleep | sleep | deepSleep }
+COMMAND = switchHost { last | next | previous | <host connection name (IDENTIFIER)> | <host connection name (STRING)> }
 COMMAND = set module.MODULEID.navigationMode.LAYERID_BASIC NAVIGATION_MODE
 COMMAND = set module.MODULEID.baseSpeed <non-xcelerated speed, 0-10.0 (FLOAT)>
 COMMAND = set module.MODULEID.speed <xcelerated speed, 0-10.0 (FLOAT)>

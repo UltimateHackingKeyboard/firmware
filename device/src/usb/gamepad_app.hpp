@@ -169,7 +169,10 @@ class gamepad_app : public hid::application {
         }
     };
 
-    static gamepad_app &handle();
+    static gamepad_app &usb_handle();
+#if DEVICE_IS_UHK80_RIGHT
+    static gamepad_app &ble_handle();
+#endif
 
     void set_report_state(const gamepad_report &data);
 

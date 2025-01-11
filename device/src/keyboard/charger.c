@@ -127,10 +127,6 @@ void Charger_UpdateBatteryState() {
 #ifdef CONFIG_BT_BAS
         bt_bas_set_battery_level(batteryState.batteryPercentage);
 #endif
-#if DEVICE_HAS_BATTERY
-        extern void HID_SetBatteryStatus(uint8_t remaining_capacity, bool charging);
-        HID_SetBatteryStatus(batteryState.batteryPercentage, batteryState.batteryCharging);
-#endif
     }
 }
 

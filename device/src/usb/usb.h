@@ -33,8 +33,7 @@
     bool HID_GetGamepadActive(void);
     void HOGP_Enable(void);
     void HOGP_Disable(void);
-    void USB_DisableHid(void);
-    void USB_EnableHid(void);
+    void USB_Enable(void);
     void USB_SetSerialNumber(uint32_t serialNumber);
     void USB_RemoteWakeup(void);
 

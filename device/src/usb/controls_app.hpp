@@ -72,7 +72,10 @@ class controls_app : public app_base {
         // clang-format on
     }
 
-    static controls_app &handle();
+    static controls_app &usb_handle();
+#if DEVICE_IS_UHK80_RIGHT
+    static controls_app &ble_handle();
+#endif
 
     void set_report_state(const controls_report_base<0> &data);
 
@@ -82,7 +85,7 @@ class controls_app : public app_base {
     void start(hid::protocol prot) override;
 
     using controls_report = controls_report_base<report_ids::IN_CONTROLS>;
-    C2USB_USB_TRANSFER_ALIGN(controls_report, report_buffer_){};
+    C2USB_USB_TRANSFER_ALIGN(controls_report, report_buffer_) {};
 };
 
 using controls_buffer = controls_app::controls_report_base<0>;

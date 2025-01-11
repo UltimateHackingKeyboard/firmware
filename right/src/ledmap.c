@@ -10,6 +10,7 @@
 #include "slot.h"
 #include "config_manager.h"
 #include "event_scheduler.h"
+#include "test_switches.h"
 
 #ifdef __ZEPHYR__
 #include "keyboard/leds.h"
@@ -29,14 +30,7 @@ static const rgb_t white = RGB(0xff, 0xff, 0xff);
 bool Ledmap_AlwaysOn = false;
 backlighting_mode_t TemporaryBacklightingMode = BacklightingMode_Unspecified;
 
-typedef enum {
-    BacklightingLedTestModeState_All,
-    BacklightingLedTestModeState_Additive,
-} backlighting_led_test_mode_state_t;
-
-bool Ledmap_LedTestActive = false;
 static uint32_t backlightingLedTestStart = 0;
-static backlighting_led_test_mode_state_t backlightingLedTestModeState = BacklightingLedTestModeState_All;
 
 #if DEVICE_ID == DEVICE_ID_UHK60V1
 
@@ -594,38 +588,26 @@ static void setEntireMatrix(uint8_t v) {
 #endif
 }
 
-static void setAllTo(const rgb_t* color) {
-    for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
-        color_mode_t colorMode = determineMode(slotId);
-        for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
-            setPerKeyColor(color, colorMode, slotId, keyId);
-        }
-    }
-}
-
 static void updateLedsByLedTestStragegy() {
-    if (backlightingLedTestModeState == BacklightingLedTestModeState_All) {
-        setAllTo(&white);
-    }
 }
-
 
 static void updateLedsByLightAllStragegy() {
     setEntireMatrix(255);
 }
 
 void Ledmap_ActivateTestled(uint8_t slotId, uint8_t keyId) {
-    if (CurrentTime < backlightingLedTestStart + 1000) {
+    if (CurrentTime < backlightingLedTestStart + 1000 || !TestSwitches) {
         return;
     }
 
-    if (backlightingLedTestModeState == BacklightingLedTestModeState_All) {
-        setAllTo(&black);
-        backlightingLedTestModeState = BacklightingLedTestModeState_Additive;
+    if (TemporaryBacklightingMode == BacklightingMode_LightAll) {
+        Ledmap_SetTemporaryLedBacklightingMode(BacklightingMode_LedTest);
+        setEntireMatrix(0);
     }
+
     color_mode_t colorMode = determineMode(slotId);
     setPerKeyColor(&white, colorMode, slotId, keyId);
-    EventVector_Set(EventVector_LedMapUpdateNeeded);
+    EventVector_Set(EventVector_LedManagerFullUpdateNeeded);
 }
 
 backlighting_mode_t Ledmap_GetEffectiveBacklightMode() {
@@ -637,25 +619,24 @@ backlighting_mode_t Ledmap_GetEffectiveBacklightMode() {
 }
 
 void handleModeChange(backlighting_mode_t from, backlighting_mode_t to) {
-    if (from == BacklightingMode_LightAll) {
-        setEntireMatrix(0);
+    if (to == BacklightingMode_LightAll) {
+        setEntireMatrix(255);
     }
-    if (to == BacklightingMode_LedTest) {
-        backlightingLedTestModeState = BacklightingLedTestModeState_All;
-        backlightingLedTestStart = CurrentTime;
+
+    if (from == BacklightingMode_LightAll && to != BacklightingMode_LedTest) {
+        setEntireMatrix(0);
     }
 }
 
 void Ledmap_ActivateTestLedMode(bool active) {
     if (active) {
-        Ledmap_LedTestActive = true;
-        Ledmap_SetTemporaryLedBacklightingMode(BacklightingMode_LedTest);
-        EventVector_Set(EventVector_LedMapUpdateNeeded);
+        backlightingLedTestStart = CurrentTime;
+        Ledmap_SetTemporaryLedBacklightingMode(BacklightingMode_LightAll);
+        EventVector_Set(EventVector_LedManagerFullUpdateNeeded);
         EventVector_WakeMain();
     } else {
-        Ledmap_LedTestActive = false;
         Ledmap_ResetTemporaryLedBacklightingMode();
-        EventVector_Set(EventVector_LedMapUpdateNeeded);
+        EventVector_Set(EventVector_LedManagerFullUpdateNeeded);
         EventVector_WakeMain();
     }
 }
@@ -760,6 +741,7 @@ void Ledmap_SetTemporaryLedBacklightingMode(backlighting_mode_t newMode) {
 
 void Ledmap_ResetTemporaryLedBacklightingMode() {
     TemporaryBacklightingMode = BacklightingMode_Unspecified;
+    updateAlwaysOn();
 #ifdef __ZEPHYR__
     StateSync_UpdateProperty(StateSyncPropertyId_Backlight, NULL);
 #endif

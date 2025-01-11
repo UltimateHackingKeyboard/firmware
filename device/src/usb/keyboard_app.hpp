@@ -65,7 +65,10 @@ class keyboard_app : public app_base {
         N_KEY = 0,
         SIX_KEY = 1,
     };
-    static keyboard_app &handle();
+    static keyboard_app &usb_handle();
+#if DEVICE_IS_UHK80_RIGHT
+    static keyboard_app &ble_handle();
+#endif
 
     void set_rollover(rollover mode);
     rollover get_rollover() const { return rollover_; }
@@ -129,7 +132,7 @@ class keyboard_app : public app_base {
 
     void reset_keys();
 
-    C2USB_USB_TRANSFER_ALIGN(leds_report, leds_buffer_){};
+    C2USB_USB_TRANSFER_ALIGN(leds_report, leds_buffer_) {};
     hid::protocol prot_{};
     rollover rollover_{};
     rollover rollover_override_{};
@@ -138,7 +141,7 @@ class keyboard_app : public app_base {
         keys_boot_report boot;
         keys_6kro_report sixkro;
     };
-    C2USB_USB_TRANSFER_ALIGN(keys_reports, keys_){};
+    C2USB_USB_TRANSFER_ALIGN(keys_reports, keys_) {};
 };
 
 using scancode_buffer = keyboard_app::keys_nkro_report_base<>;

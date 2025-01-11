@@ -1,6 +1,9 @@
 #ifndef __APP_BASE_HEADER__
 #define __APP_BASE_HEADER__
 
+extern "C" {
+#include "device.h"
+}
 #include "hid/application.hpp"
 #include "hid/rdf/descriptor.hpp"
 #include "hid/report_protocol.hpp"

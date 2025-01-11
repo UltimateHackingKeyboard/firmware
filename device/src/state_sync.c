@@ -1,4 +1,6 @@
 #include "state_sync.h"
+#include "bt_conn.h"
+#include "connections.h"
 #include "device.h"
 #include "device_state.h"
 #include "event_scheduler.h"
@@ -24,6 +26,8 @@
 #include <zephyr/kernel.h>
 #include "peripherals/merge_sensor.h"
 #include "power_mode.h"
+#include "test_switches.h"
+#include "dongle_leds.h"
 
 #define WAKE(TID) if (TID != 0) { k_wakeup(TID); }
 
@@ -128,7 +132,11 @@ static state_sync_prop_t stateSyncProps[StateSyncPropertyId_Count] = {
     SIMPLE(FunctionalColors,        SyncDirection_RightToLeft,        DirtyState_Clean,    &Cfg.KeyActionColors),
     SIMPLE(PowerMode,               SyncDirection_RightToLeft,        DirtyState_Clean,    &CurrentPowerMode),
     CUSTOM(Config,                  SyncDirection_RightToLeft,        DirtyState_Clean),
+    CUSTOM(SwitchTestMode,          SyncDirection_RightToLeft,        DirtyState_Clean),
+    SIMPLE(DongleStandby,           SyncDirection_RightToDongle,      DirtyState_Clean,    &DongleStandby),
 };
+
+
 
 static void invalidateProperty(state_sync_prop_id_t propId) {
     STATE_SYNC_LOG("<<< Invalidating property %s\n", stateSyncProps[propId].name);
@@ -352,6 +360,19 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
         break;
     case StateSyncPropertyId_MergeSensor:
         break;
+    case StateSyncPropertyId_SwitchTestMode:
+        if (!isLocalUpdate) {
+            bool newMode = *(bool*)data;
+            if (newMode != TestSwitches) {
+                newMode ? TestSwitches_Activate() : TestSwitches_Deactivate();
+                Main_Wake();
+            }
+        }
+    case StateSyncPropertyId_DongleStandby:
+        if (DEVICE_IS_UHK_DONGLE) {
+            DongleLeds_Update();
+        }
+        break;
     default:
         printk("Property %i ('%s') has no receive handler. If this is correct, please add a "
                "separate empty case...\n",
@@ -493,6 +514,10 @@ static void prepareData(device_id_t dst, const uint8_t *propDataPtr, state_sync_
         submitPreparedData(dst, propId, (const uint8_t *)&buffer, sizeof(buffer));
         return;
     } break;
+    case StateSyncPropertyId_SwitchTestMode: {
+        submitPreparedData(dst, propId, (const uint8_t *)&TestSwitches, sizeof(TestSwitches));
+        return;
+    }
     default:
         break;
     }
@@ -536,6 +561,7 @@ static void updateProperty(state_sync_prop_id_t propId) {
 static bool handlePropertyUpdateRightToLeft() {
     UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ResetRightLeftLink);
     UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_Config);
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_SwitchTestMode);
 
     if (KeyBacklightBrightness != 0) {
         // Update relevant data
@@ -610,11 +636,26 @@ static void updateLoopRightLeft() {
     }
 }
 
+static void updateStandbys() {
+    for (uint8_t peerId = PeerIdFirstHost; peerId <= PeerIdLastHost; peerId++) {
+        uint8_t connectionId = Peers[peerId].connectionId;
+        if (Connections_Type(connectionId) == ConnectionType_NusDongle) {
+            bool standby = !(ActiveHostConnectionId == connectionId);
+            Messenger_Send2Via(DeviceId_Uhk_Dongle, connectionId, MessageId_StateSync, StateSyncPropertyId_DongleStandby, (const uint8_t*)&standby, 1);
+        }
+    }
+}
+
 static void updateLoopRightDongle() {
     if (DEVICE_ID == DeviceId_Uhk80_Right) {
         while (true) {
             bool isConnected = DeviceState_IsDeviceConnected(DeviceId_Uhk_Dongle);
             STATE_SYNC_LOG("--- Right to dongle update loop, connected: %i\n", isConnected);
+
+            if (stateSyncProps[StateSyncPropertyId_DongleStandby].dirtyState != DirtyState_Clean) {                                   \
+                updateStandbys();                                                                    \
+            }
+
             if (!isConnected || handlePropertyUpdateRightToDongle()) {
                 k_sleep(K_FOREVER);
             } else {
@@ -627,7 +668,7 @@ static void updateLoopRightDongle() {
         while (true) {
             bool isConnected = DeviceState_IsDeviceConnected(DeviceId_Uhk80_Right);
             STATE_SYNC_LOG("--- Dongle update loop, connected: %i\n", isConnected);
-            if (!isConnected || handlePropertyUpdateDongleToRight()) {
+            if (!isConnected || DongleStandby || handlePropertyUpdateDongleToRight()) {
                 k_sleep(K_FOREVER);
             } else {
                 k_sleep(K_MSEC(STATE_SYNC_SEND_DELAY));
@@ -692,6 +733,7 @@ void StateSync_ResetRightDongleLink(bool bidirectional) {
         invalidateProperty(StateSyncPropertyId_ResetRightDongleLink);
     }
     if (DEVICE_ID == DeviceId_Uhk_Dongle) {
+        DongleStandby = false;
         invalidateProperty(StateSyncPropertyId_KeyboardLedsState);
     }
 }

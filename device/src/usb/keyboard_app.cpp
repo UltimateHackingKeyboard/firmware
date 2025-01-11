@@ -1,15 +1,22 @@
 #include "keyboard_app.hpp"
-#include "zephyr/sys/printk.h"
-
 extern "C" {
-#include "usb/usb_compatibility.h"
+#include "connections.h"
+#include "usb_compatibility.h"
+#include "zephyr/sys/printk.h"
 }
 
-keyboard_app &keyboard_app::handle()
+keyboard_app &keyboard_app::usb_handle()
 {
     static keyboard_app app{};
     return app;
 }
+#if DEVICE_IS_UHK80_RIGHT
+keyboard_app &keyboard_app::ble_handle()
+{
+    static keyboard_app ble_app{};
+    return ble_app;
+}
+#endif
 
 void keyboard_app::set_rollover(rollover mode)
 {
@@ -38,7 +45,10 @@ void keyboard_app::reset_keys()
     }
 }
 
-extern void hidmgr_set_transport(const hid::transport *tp);
+static inline connection_id_t usbHidConnId()
+{
+    return DEVICE_IS_UHK80_LEFT ? ConnectionId_UsbHidLeft : ConnectionId_UsbHidRight;
+}
 
 void keyboard_app::start(hid::protocol prot)
 {
@@ -51,14 +61,16 @@ void keyboard_app::start(hid::protocol prot)
     // TODO start handling keyboard events
     reset_keys();
 
-    hidmgr_set_transport(get_transport());
+    Connections_SetState(
+        (this == &usb_handle()) ? usbHidConnId() : ConnectionId_BtHid, ConnectionState_Ready);
 }
 
 void keyboard_app::stop()
 {
     sending_sem_.release();
     // TODO stop handling keyboard events
-    hidmgr_set_transport(get_transport());
+    Connections_SetState((this == &usb_handle()) ? usbHidConnId() : ConnectionId_BtHid,
+        ConnectionState_Disconnected);
 }
 
 bool keyboard_app::using_nkro() const
@@ -82,7 +94,7 @@ void keyboard_app::set_report_state(const keys_nkro_report_base<> &data)
             keys_6kro.modifiers = data.modifiers;
             keys_6kro.scancodes.reset();
             for (auto code = LOWEST_SCANCODE; code <= HIGHEST_SCANCODE;
-                 code = static_cast<decltype(code)>(static_cast<uint8_t>(code) + 1)) {
+                code = static_cast<decltype(code)>(static_cast<uint8_t>(code) + 1)) {
                 keys_6kro.scancodes.set(code, data.test(code));
             }
         } else {
@@ -90,7 +102,7 @@ void keyboard_app::set_report_state(const keys_nkro_report_base<> &data)
             keys_6kro.modifiers = data.modifiers;
             keys_6kro.scancodes.reset();
             for (auto code = LOWEST_SCANCODE; code <= HIGHEST_SCANCODE;
-                 code = static_cast<decltype(code)>(static_cast<uint8_t>(code) + 1)) {
+                code = static_cast<decltype(code)>(static_cast<uint8_t>(code) + 1)) {
                 keys_6kro.scancodes.set(code, data.test(code));
             }
         }
@@ -122,7 +134,7 @@ void keyboard_app::set_report_state(const keys_nkro_report_base<> &data)
             keys_.sixkro.modifiers = data.modifiers;
             keys_.sixkro.scancodes.reset();
             for (auto code = LOWEST_SCANCODE; code <= HIGHEST_SCANCODE;
-                 code = static_cast<decltype(code)>(static_cast<uint8_t>(code) + 1)) {
+                code = static_cast<decltype(code)>(static_cast<uint8_t>(code) + 1)) {
                 keys_.sixkro.scancodes.set(code, data.test(code));
             }
 
@@ -149,7 +161,8 @@ void keyboard_app::set_report(hid::report::type type, const std::span<const uint
     const uint8_t NumLockMask = 1;
 
     UsbCompatibility_SetKeyboardLedsState(
-        leds & CapsLockMask, leds & NumLockMask, leds & ScrollLockMask);
+        (this == &usb_handle()) ? usbHidConnId() : ConnectionId_BtHid, leds & CapsLockMask,
+        leds & NumLockMask, leds & ScrollLockMask);
 
     // always keep receiving new reports
     // if the report data is processed immediately, the same buffer can be used

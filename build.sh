@@ -71,8 +71,13 @@ function processArguments() {
                 DEVICES="$DEVICES uhk-80-left uhk-80-right uhk-dongle"
                 shift
                 ;;
-            clean|setup|update|build|make|flash|flashUsb|shell|release)
+            clean|setup|update|build|make|flash|shell|release)
                 ACTIONS="$ACTIONS $1"
+                TARGET_TMUX_SESSION=$BUILD_SESSION_NAME
+                shift
+                ;;
+            flashUsb)
+                ACTIONS="$ACTIONS make $1"
                 TARGET_TMUX_SESSION=$BUILD_SESSION_NAME
                 shift
                 ;;
@@ -266,7 +271,7 @@ function performAction() {
             git submodule init
             git submodule update --init --recursive
             cd "$ROOT/.."
-            west init -l "$ROOT" -mf west.yml
+            west init -l "$ROOT"
             west update -o=--depth=1 -n
             west patch
             west config --local build.cmake-args -- "-Wno-dev"
@@ -374,7 +379,7 @@ function run() {
     if [ `echo $DEVICES | wc -w` -gt 1 ]
     then
         runPerDevice
-    elif [ `echo $DEVICES | wc -w` -eq 0 ] 
+    elif [ `echo $DEVICES | wc -w` -le 1 ] 
     then
         performActions $DEVICES
     else

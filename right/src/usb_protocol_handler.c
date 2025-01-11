@@ -145,10 +145,10 @@ void UsbProtocolHandler(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidI
 #ifdef __ZEPHYR__
 bt_addr_le_t GetBufferBleAddress(const uint8_t *GenericHidOutBuffer, uint32_t offset) {
     bt_addr_le_t addr;
-    addr.type = 1;
     for (uint8_t i = 0; i < BLE_ADDR_LEN; i++) {
         addr.a.val[i] = GenericHidOutBuffer[offset + i];
     }
+    addr.type = addr.a.val[0] & 0x01;
     return addr;
 }
 
