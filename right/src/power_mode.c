@@ -6,6 +6,7 @@
 #ifdef __ZEPHYR__
     #include "device_state.h"
     #include "usb/usb.h"
+    #include "connections.h"
 #else
     #include "slave_drivers/is31fl3xxx_driver.h"
     #include "usb_composite_device.h"
@@ -28,7 +29,7 @@ void PowerMode_SetUsbAwake(bool awake) {
 
 void PowerMode_Update() {
 #ifdef __ZEPHYR__
-    bool someoneAwake = usbAwake || DeviceState_IsConnected(ConnectionId_BluetoothHid) || DeviceState_IsConnected(ConnectionId_Dongle);
+    bool someoneAwake = DeviceState_IsTargetConnected(ConnectionTarget_Host);
 #else
     bool someoneAwake = CurrentPowerMode == PowerMode_Awake;
 #endif

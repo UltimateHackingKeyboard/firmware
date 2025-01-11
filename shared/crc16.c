@@ -51,5 +51,5 @@ bool CRC16_IsMessageValid(i2c_message_t *message)
     crc16_init(&crc16data);
     crc16_update(&crc16data, message->data, message->length);
     crc16_finalize(&crc16data, &hash);
-    return message->crc == hash;
+    return message->crc == hash && message->length != 0;
 }

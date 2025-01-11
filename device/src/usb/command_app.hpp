@@ -64,7 +64,7 @@ class command_app : public hid::application {
 
     static command_app& usb_handle();
 #if DEVICE_IS_UHK80_RIGHT
-    static command_app& handle();
+    static command_app& ble_handle();
 #endif
 
     void start(hid::protocol prot) override;

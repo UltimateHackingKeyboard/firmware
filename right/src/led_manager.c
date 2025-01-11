@@ -18,6 +18,12 @@
 #include "device.h"
 #endif
 
+#if DEVICE_IS_UHK80_RIGHT
+#include "keyboard/oled/screens/screen_manager.h"
+#else
+#define InteractivePairingInProgress false;
+#endif
+
 bool KeyBacklightSleepModeActive = false;
 bool DisplaySleepModeActive = false;
 
@@ -27,7 +33,7 @@ uint8_t KeyBacklightBrightness = 0xff;
 static void recalculateLedBrightness()
 {
     bool globalSleepMode = !Cfg.LedsEnabled || CurrentPowerMode > PowerMode_Awake || Cfg.LedBrightnessMultiplier == 0.0f;
-    bool globalAlwaysOn = Cfg.LedsAlwaysOn || Ledmap_AlwaysOn;
+    bool globalAlwaysOn = Cfg.LedsAlwaysOn || Ledmap_AlwaysOn || InteractivePairingInProgress;
 
     if (!globalAlwaysOn && (globalSleepMode || KeyBacklightSleepModeActive)) {
         KeyBacklightBrightness = 0;

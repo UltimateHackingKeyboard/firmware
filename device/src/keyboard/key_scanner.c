@@ -22,6 +22,7 @@
 #include "attributes.h"
 #include "layouts/key_layout.h"
 #include "layouts/key_layout_80_to_universal.h"
+#include "test_switches.h"
 
 // Thread definitions
 
@@ -108,8 +109,6 @@ static void scanKeys() {
         memset(compressedBuffer, 0, compressedLength);
     }
 
-    backlighting_mode_t currentBacklightingMode = Ledmap_GetEffectiveBacklightMode();
-
     uint8_t slotId = DEVICE_IS_UHK80_LEFT ? SlotId_LeftKeyboardHalf : SlotId_RightKeyboardHalf;
     for (uint8_t rowId=0; rowId<KEY_MATRIX_ROWS; rowId++) {
         for (uint8_t colId=0; colId<KEY_MATRIX_COLS; colId++) {
@@ -123,7 +122,7 @@ static void scanKeys() {
             }
 
             if (targetKeyId < MAX_KEY_COUNT_PER_MODULE) {
-                if (currentBacklightingMode == BacklightingMode_LedTest) {
+                if (TestSwitches) {
                     if ( keyStateBuffer[sourceIndex] ) {
                         Ledmap_ActivateTestled(slotId, targetKeyId);
                         EventVector_WakeMain();

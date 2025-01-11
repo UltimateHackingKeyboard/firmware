@@ -8,6 +8,7 @@
 #include "device_state.h"
 #include "debug.h"
 #include "event_scheduler.h"
+#include "connections.h"
 
 // Thread definitions
 
@@ -42,8 +43,6 @@ uint8_t rxbuf2[BUF_SIZE];
 
 uint32_t lastPingTime = -2*UART_TIMEOUT;
 
-bool isConnected = false;
-
 static void appendRxByte(uint8_t byte) {
     if (rxPosition < RX_BUF_SIZE) {
         rxBuffer[rxPosition++] = byte;
@@ -64,10 +63,12 @@ static void rxPacketReceived() {
         rxBuffer = MessengerQueue_AllocateMemory();
         rxPosition = 0;
 
+        connection_id_t connectionId = DEVICE_IS_UHK80_LEFT ? ConnectionId_UartRight : ConnectionId_UartLeft;
+
         if (DEVICE_IS_UHK80_RIGHT) {
-            Messenger_Enqueue(DeviceId_Uhk80_Left, oldPacket, len);
+            Messenger_Enqueue(connectionId, DeviceId_Uhk80_Left, oldPacket, len);
         } else if (DEVICE_IS_UHK80_LEFT) {
-            Messenger_Enqueue(DeviceId_Uhk80_Right, oldPacket, len);
+            Messenger_Enqueue(connectionId, DeviceId_Uhk80_Right, oldPacket, len);
         }
     }
 }
@@ -215,17 +216,14 @@ static void ping() {
     Uart_SendPacket(NULL, 0);
 }
 
-bool Uart_IsConnected() {
-    return isConnected;
-}
-
 static void updateConnectionState() {
     uint32_t pingDiff = (k_uptime_get() - lastPingTime);
+    connection_id_t connectionId = DEVICE_IS_UHK80_LEFT ? ConnectionId_UartRight : ConnectionId_UartLeft;
+    bool oldIsConnected = Connections_IsReady(connectionId);
     bool newIsConnected =  pingDiff < UART_TIMEOUT;
-    if (isConnected != newIsConnected) {
-        isConnected = newIsConnected;
-        DeviceState_TriggerUpdate();
-        if (!isConnected) {
+    if (oldIsConnected != newIsConnected) {
+        Connections_SetState(connectionId, newIsConnected ? ConnectionState_Ready : ConnectionState_Disconnected);
+        if (!newIsConnected) {
             k_sem_init(&txBufferBusy, UART_SLOTS, UART_SLOTS);
         }
     }

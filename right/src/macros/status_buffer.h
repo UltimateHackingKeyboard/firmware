@@ -13,6 +13,8 @@
 
 // Typedefs:
 
+    #define PRINTM(...) Macros_ReportPrintf(NULL, __VA_ARGS__)
+
 // Variables:
 //
     extern bool Macros_ConsumeStatusCharDirtyFlag;

@@ -118,7 +118,7 @@ static void reloadKeymapIfNeeded()
         EventVector_WakeMain();
     }
 #else
-    if (!someoneElseWillDoTheJob && !TestSwitches) {
+    if (!someoneElseWillDoTheJob) {
         EventVector_Set(EventVector_KeymapReloadNeeded);
     }
 

@@ -8,6 +8,7 @@
 // Functions:
 
     void TestSwitches_Activate(void);
+    void TestSwitches_Deactivate(void);
 
 // Variables:
 

@@ -33,6 +33,10 @@ void setLedsCs(bool state)
 
 static volatile bool ledsNeedUpdate = false;
 
+static uint8_t currentScaling = 0;
+static uint8_t scalingFadeStep = 5;
+static uint8_t scalingFadeDelay = 10;
+
 static void setOperationMode(bool on) {
     // Set software shutdown control (SSD) register to normal mode
     setLedsCs(true);
@@ -52,6 +56,67 @@ static void sleepLeds() {
     }
 }
 
+static void recalculateScaling() {
+    if (currentScaling == KeyBacklightBrightness) {
+        return;
+    }
+
+    if (currentScaling < KeyBacklightBrightness) {
+        if (currentScaling < KeyBacklightBrightness && KeyBacklightBrightness - currentScaling >= scalingFadeStep) {
+            currentScaling += scalingFadeStep;
+        } else {
+            currentScaling = KeyBacklightBrightness;
+        }
+    }
+
+    if (currentScaling > KeyBacklightBrightness) {
+        if (currentScaling > KeyBacklightBrightness && currentScaling - KeyBacklightBrightness >= scalingFadeStep) {
+            currentScaling -= scalingFadeStep;
+        } else {
+            currentScaling = KeyBacklightBrightness;
+        }
+    }
+}
+
+void UpdateLedAudioRegisters(uint8_t phaseDelay, uint8_t spreadSpectrum, uint8_t pwmFrequency) {
+    k_mutex_lock(&SpiMutex, K_FOREVER);
+
+    // Set phase delay
+    setLedsCs(true);
+    writeSpi(LedPagePrefix | 2);
+    writeSpi(0x02);
+    writeSpi(phaseDelay | 0b00110011);
+    setLedsCs(false);
+    printk("Phase delay: %d\n", phaseDelay);
+
+    // Set spread spectrum
+    setLedsCs(true);
+    writeSpi(LedPagePrefix | 2);
+    writeSpi(0x25);
+    writeSpi(spreadSpectrum);
+    setLedsCs(false);
+    printk("Spread spectrum: %d\n", spreadSpectrum);
+
+    // Enter test mode to set PWM frequency
+    setLedsCs(true);
+    writeSpi(LedPagePrefix | 2);
+    writeSpi(0x52);
+    writeSpi(0xe0);
+    writeSpi(1);
+    setLedsCs(false);
+
+    // Set PWM frequency
+    setLedsCs(true);
+    writeSpi(LedPagePrefix | 2);
+    writeSpi(0x52);
+    writeSpi(0xe2);
+    writeSpi(pwmFrequency);
+    setLedsCs(false);
+    printk("PWM frequency: %d\n", pwmFrequency);
+
+    k_mutex_unlock(&SpiMutex);
+}
+
 void ledUpdater() {
     k_sleep(K_MSEC(100));
     while (true) {
@@ -66,11 +131,11 @@ void ledUpdater() {
         writeSpi(0b10110011);
         setLedsCs(false);
 
-        // Enable spread spectrum with 15% range and 1980us cycle time, which substantially reduces audible noise
+        // Enable spread spectrum with 5% range and 1980us cycle time, which substantially reduces audible noise
         setLedsCs(true);
         writeSpi(LedPagePrefix | 2);
         writeSpi(0x25);
-        writeSpi(0x14);
+        writeSpi(0x10);
         setLedsCs(false);
 
         setLedsCs(true);
@@ -91,7 +156,7 @@ void ledUpdater() {
         writeSpi(LedPagePrefix | 1);
         writeSpi(0x00);
         for (int i=0; i<255; i++) {
-            writeSpi(KeyBacklightBrightness);
+            writeSpi(currentScaling);
         }
         setLedsCs(false);
 
@@ -101,11 +166,16 @@ void ledUpdater() {
             k_sleep(K_FOREVER);
         }
 
-        if (KeyBacklightBrightness == 0) {
+        if (currentScaling == 0 && KeyBacklightBrightness == 0) {
             sleepLeds();
         }
 
-        ledsNeedUpdate = false;
+        if (currentScaling != KeyBacklightBrightness) {
+            k_sleep(K_MSEC(scalingFadeDelay));
+            recalculateScaling();
+        }
+
+        ledsNeedUpdate = currentScaling != KeyBacklightBrightness;
     }
 }
 

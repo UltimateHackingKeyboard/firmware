@@ -1,10 +1,17 @@
 #include "gamepad_app.hpp"
 
-gamepad_app &gamepad_app::handle()
+gamepad_app &gamepad_app::usb_handle()
 {
     static gamepad_app app{};
     return app;
 }
+#if DEVICE_IS_UHK80_RIGHT
+gamepad_app &gamepad_app::ble_handle()
+{
+    static gamepad_app ble_app{};
+    return ble_app;
+}
+#endif
 
 void gamepad_app::start(hid::protocol prot)
 {

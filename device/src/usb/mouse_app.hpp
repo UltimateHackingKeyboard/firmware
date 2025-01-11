@@ -80,7 +80,10 @@ class mouse_app : public app_base {
         bool operator!=(const mouse_report_base &other) const = default;
     };
 
-    static mouse_app &handle();
+    static mouse_app &usb_handle();
+#if DEVICE_IS_UHK80_RIGHT
+    static mouse_app &ble_handle();
+#endif
 
     void set_report_state(const mouse_report_base<> &data);
 

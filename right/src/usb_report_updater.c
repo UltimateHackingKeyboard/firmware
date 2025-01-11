@@ -452,7 +452,7 @@ static void commitKeyState(key_state_t *keyState, bool active)
     }
 #endif
 
-    if (Ledmap_LedTestActive && active) {
+    if (TestSwitches && active) {
         key_coordinates_t key = Utils_KeyIdToKeyCoordinates(Utils_KeyStateToKeyId(keyState));
         Ledmap_ActivateTestled(key.slotId, key.inSlotId);
         return;
@@ -522,7 +522,7 @@ static void handleUsbStackTestMode() {
 static void handleLayerChanges() {
     static layer_id_t previousLayer = LayerId_Base;
 
-    LayerSwitcher_UpdateActiveLayer();
+    LayerSwitcher_UpdateHeldLayer();
 
     if(ActiveLayer != previousLayer) {
         previousLayer = ActiveLayer;

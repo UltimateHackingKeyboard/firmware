@@ -56,7 +56,7 @@ mkdir firmware
 cd firmware
 git clone --recurse-submodules git@github.com:UltimateHackingKeyboard/firmware.git
 west init -l firmware
-west update
+west update -o=--depth=1 -n
 west patch
 west config --local build.cmake-args -- "-Wno-dev"
 cd firmware/scripts

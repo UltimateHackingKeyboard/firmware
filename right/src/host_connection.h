@@ -28,7 +28,8 @@
 
 // Macros:
 
-    #define HOST_CONNECTION_COUNT_MAX 22
+    #define SERIALIZED_HOST_CONNECTION_COUNT_MAX 22
+    #define HOST_CONNECTION_COUNT_MAX (SERIALIZED_HOST_CONNECTION_COUNT_MAX+2)
 
     #define BLE_ADDRESS_LENGTH 6
 
@@ -36,10 +37,11 @@
 
     typedef enum {
         HostConnectionType_Empty,
-        HostConnectionType_UsbRight,
-        HostConnectionType_UsbLeft,
-        HostConnectionType_Ble,
+        HostConnectionType_UsbHidRight,
+        HostConnectionType_UsbHidLeft,
+        HostConnectionType_BtHid,
         HostConnectionType_Dongle,
+        HostConnectionType_NewBtHid,
         HostConnectionType_Count,
     } host_connection_type_t;
 
@@ -57,5 +59,13 @@
 // Functions:
 
     bool HostConnections_IsKnownBleAddress(const bt_addr_le_t *address);
+    host_connection_t* HostConnection(uint8_t connectionId);
+
+    void HostConnections_ListKnownBleConnections();
+
+    void HostConnections_SelectById(uint8_t connectionId);
+    void HostConnections_SelectNextConnection(void);
+    void HostConnections_SelectPreviousConnection(void);
+    void HostConnections_SelectByName(parser_context_t* ctx);
 
 #endif
