@@ -10,11 +10,11 @@ and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 Device Protocol: 4.**14.0** | Module Protocol: 4.3.0 | User Config: 8.3.0 | Hardware Config: 1.0.0 | Smart Macros: 3.**1.0**
 
 - Make connection handling more robust.
-- Add `switchHost { next | previous | last }` macro command which iterates over host connections. `SMARTMACROS:MINOR`
-- Add `switchHost "name"` macro command which can be used to select a specific host connection.
-- Implement connection switchover. If host connection's switchover checkbox is checked, then the UHK automatically switches over to this host when its connection is established.
+- Add the `switchHost { next | previous | last }` macro command which iterates over host connections. `SMARTMACROS:MINOR`
+- Add the `switchHost "name"` macro command, which can be used to select a specific host connection.
+- Implement connection switchover. If a host connection's switchover checkbox is checked, the UHK automatically switches to this host when its connection is established.
 - When a connection is disconnected, switch to the host connection that is currently connected and highest in the host connection list.
-- The OLED display now shows host connection's name.
+- The OLED display now shows the name of the current host connection.
 - Multiple dongles can be connected at the same time.
 - Support caps/num/scroll lock states in host routing.
 - Add `EraseAllSettings` device protocol command. `DEVICEPROTOCOL:MINOR`
