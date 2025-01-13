@@ -36,5 +36,10 @@ void UsbCommand_GetVariable(const uint8_t *GenericHidOutBuffer, uint8_t *Generic
                 }
             }
             break;
+        case UsbVariable_LedAudioRegisters:
+#if defined(__ZEPHYR__) && DEVICE_IS_KEYBOARD
+            SetUsbTxBufferUint8(0, 1);
+#endif
+            break;
     }
 }
