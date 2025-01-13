@@ -129,13 +129,13 @@ function determineUsbDeviceArg() {
 
     case $DEVICE in
         uhk-80-left)
-            DEVICEUSBID="--vid=0x37a8 --pid=7 --usb-interface=2"
+            DEVICEUSBID="--vid=0x37a8 --pid=7"
             ;;
         uhk-80-right)
-            DEVICEUSBID="--vid=0x37a8 --pid=9 --usb-interface=2"
+            DEVICEUSBID="--vid=0x37a8 --pid=9"
             ;;
         uhk-dongle)
-            DEVICEUSBID="--vid=0x37a8 --pid=5 --usb-interface=2"
+            DEVICEUSBID="--vid=0x37a8 --pid=5"
             ;;
         uhk-60)
             ;;

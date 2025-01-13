@@ -36,7 +36,7 @@ CPU = -mcpu=cortex-m4
 FPU = -mfpu=fpv4-sp-d16 -mfloat-abi=hard
 
 # Command for flashing the right half of the keyboard.
-FLASH_CMD = ../../lib/agent/node_modules/.bin/tsx ../../lib/agent/packages/usb/update-device-firmware.ts --vid=14248 --pid=$(DEVICE_PID) --usb-interface=4 $(PROJECT_OBJ:.axf=.hex)
+FLASH_CMD = ../../lib/agent/node_modules/.bin/tsx ../../lib/agent/packages/usb/update-device-firmware.ts --vid=14248 --pid=$(DEVICE_PID) $(PROJECT_OBJ:.axf=.hex)
 
 # Path to the JLink script used for the right half.
 JLINK_SCRIPT = ../../scripts/flash-right.jlink
