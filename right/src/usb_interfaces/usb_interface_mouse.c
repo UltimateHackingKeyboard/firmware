@@ -61,16 +61,14 @@ usb_status_t UsbMouseAction(void)
     return usb_status;
 }
 
-static uint8_t scrollMultipliers = 0;
-
 float VerticalScrollMultiplier(void)
 {
-    return scrollMultipliers & 0x01 ? USB_MOUSE_REPORT_DESCRIPTOR_MAX_RESOLUTION_MULTIPLIER_PHYSICAL_VALUE : USB_MOUSE_REPORT_DESCRIPTOR_MIN_RESOLUTION_MULTIPLIER_PHYSICAL_VALUE;
+    return usbMouseFeatBuffer[0] & 0x01 ? USB_MOUSE_REPORT_DESCRIPTOR_MAX_RESOLUTION_MULTIPLIER_PHYSICAL_VALUE : USB_MOUSE_REPORT_DESCRIPTOR_MIN_RESOLUTION_MULTIPLIER_PHYSICAL_VALUE;
 }
 
 float HorizontalScrollMultiplier(void)
 {
-    return scrollMultipliers & 0x04 ? USB_MOUSE_REPORT_DESCRIPTOR_MAX_RESOLUTION_MULTIPLIER_PHYSICAL_VALUE : USB_MOUSE_REPORT_DESCRIPTOR_MIN_RESOLUTION_MULTIPLIER_PHYSICAL_VALUE;
+    return usbMouseFeatBuffer[0] & 0x04 ? USB_MOUSE_REPORT_DESCRIPTOR_MAX_RESOLUTION_MULTIPLIER_PHYSICAL_VALUE : USB_MOUSE_REPORT_DESCRIPTOR_MIN_RESOLUTION_MULTIPLIER_PHYSICAL_VALUE;
 }
 
 usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param)
@@ -80,7 +78,7 @@ usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param
 
     switch (event) {
         case ((uint32_t)-kUSB_DeviceEventSetConfiguration):
-            scrollMultipliers = 0;
+            usbMouseFeatBuffer[0] = 0;
             error = kStatus_USB_Success;
             break;
         case ((uint32_t)-kUSB_DeviceEventSetInterface):
@@ -106,7 +104,6 @@ usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param
                 SwitchActiveUsbMouseReport();
                 error = kStatus_USB_Success;
             } else if (report->reportType == USB_DEVICE_HID_REQUEST_GET_REPORT_TYPE_FEATURE) {
-                usbMouseFeatBuffer[0] = scrollMultipliers;
                 report->reportBuffer = usbMouseFeatBuffer;
                 report->reportLength = sizeof(usbMouseFeatBuffer);
                 error = kStatus_USB_Success;
@@ -119,7 +116,6 @@ usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param
         case kUSB_DeviceHidEventSetReport: {
             usb_device_hid_report_struct_t *report = (usb_device_hid_report_struct_t*)param;
             if (report->reportType == USB_DEVICE_HID_REQUEST_GET_REPORT_TYPE_FEATURE && report->reportId == 0 && report->reportLength <= sizeof(usbMouseFeatBuffer)) {
-                scrollMultipliers = usbMouseFeatBuffer[0];
                 error = kStatus_USB_Success;
             } else {
                 error = kStatus_USB_InvalidRequest;
