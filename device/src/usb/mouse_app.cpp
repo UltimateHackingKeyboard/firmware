@@ -2,6 +2,10 @@
 #include "app_base.hpp"
 #include "zephyr/sys/printk.h"
 
+extern "C" {
+#include "state_sync.h"
+}
+
 mouse_app &mouse_app::usb_handle()
 {
     static mouse_app app{};
@@ -35,6 +39,13 @@ void mouse_app::set_report(hid::report::type type, const std::span<const uint8_t
     }
     resolution_buffer_ = *reinterpret_cast<const decltype(resolution_buffer_) *>(data.data());
     receive_report(&resolution_buffer_);
+
+    // When running on dongle, update the scroll multiplier state
+    if (DEVICE_IS_UHK_DONGLE) {
+        DongleScrollMultipliers.vertical = resolution_buffer_.vertical_scroll_multiplier();
+        DongleScrollMultipliers.horizontal = resolution_buffer_.horizontal_scroll_multiplier();
+        StateSync_UpdateProperty(StateSyncPropertyId_DongleScrollMultipliers, NULL);
+    }
 }
 
 void mouse_app::get_report(hid::report::selector select, const std::span<uint8_t> &buffer)

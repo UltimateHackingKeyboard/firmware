@@ -46,6 +46,8 @@ static k_tid_t stateSyncThreadDongleId = 0;
 sync_generic_half_state_t SyncLeftHalfState;
 sync_generic_half_state_t SyncRightHalfState;
 
+scroll_multipliers_t DongleScrollMultipliers = {1, 1};
+
 static void receiveProperty(device_id_t src, state_sync_prop_id_t property, const uint8_t *data, uint8_t len);
 
 #define DEFAULT_LAYER_PROP(NAME)                                                                   \
@@ -134,6 +136,7 @@ static state_sync_prop_t stateSyncProps[StateSyncPropertyId_Count] = {
     CUSTOM(Config,                  SyncDirection_RightToLeft,        DirtyState_Clean),
     CUSTOM(SwitchTestMode,          SyncDirection_RightToLeft,        DirtyState_Clean),
     SIMPLE(DongleStandby,           SyncDirection_RightToDongle,      DirtyState_Clean,    &DongleStandby),
+    SIMPLE(DongleScrollMultipliers, SyncDirection_DongleToRight,      DirtyState_Clean,    &DongleScrollMultipliers),
 };
 
 
@@ -373,6 +376,11 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
             DongleLeds_Update();
         }
         break;
+    case StateSyncPropertyId_DongleScrollMultipliers:
+        if (!isLocalUpdate) {
+            DongleScrollMultipliers = *(scroll_multipliers_t*)data;
+        }
+        break;
     default:
         printk("Property %i ('%s') has no receive handler. If this is correct, please add a "
                "separate empty case...\n",
@@ -600,6 +608,7 @@ static bool handlePropertyUpdateDongleToRight() {
     UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ResetRightDongleLink);
 
     UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_KeyboardLedsState);
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_DongleScrollMultipliers);
 
     return true;
 }
@@ -735,6 +744,7 @@ void StateSync_ResetRightDongleLink(bool bidirectional) {
     if (DEVICE_ID == DeviceId_Uhk_Dongle) {
         DongleStandby = false;
         invalidateProperty(StateSyncPropertyId_KeyboardLedsState);
+        invalidateProperty(StateSyncPropertyId_DongleScrollMultipliers);
     }
 }
 
