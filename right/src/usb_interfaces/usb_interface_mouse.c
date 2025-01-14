@@ -127,6 +127,8 @@ usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param
             usb_device_hid_report_struct_t *report = (usb_device_hid_report_struct_t*)param;
             if (report->reportType == USB_DEVICE_HID_REQUEST_GET_REPORT_TYPE_FEATURE && report->reportId == 0 && report->reportLength <= sizeof(usbMouseFeatBuffer)) {
                 report->reportBuffer = usbMouseFeatBuffer;
+                // the only expected written value is this, set it early to workaround the bug
+                usbMouseFeatBuffer[0] = 0x5;
                 error = kStatus_USB_Success;
             } else {
                 error = kStatus_USB_AllocFail;
