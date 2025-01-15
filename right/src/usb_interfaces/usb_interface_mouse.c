@@ -68,7 +68,7 @@ float VerticalScrollMultiplier(void)
 
 float HorizontalScrollMultiplier(void)
 {
-    return usbMouseFeatBuffer[0] & 0x04 ? USB_MOUSE_REPORT_DESCRIPTOR_MAX_RESOLUTION_MULTIPLIER_PHYSICAL_VALUE : USB_MOUSE_REPORT_DESCRIPTOR_MIN_RESOLUTION_MULTIPLIER_PHYSICAL_VALUE;
+    return usbMouseFeatBuffer[0] & 0x01 ? USB_MOUSE_REPORT_DESCRIPTOR_MAX_RESOLUTION_MULTIPLIER_PHYSICAL_VALUE : USB_MOUSE_REPORT_DESCRIPTOR_MIN_RESOLUTION_MULTIPLIER_PHYSICAL_VALUE;
 }
 
 usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param)
@@ -116,6 +116,11 @@ usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param
         case kUSB_DeviceHidEventSetReport: {
             usb_device_hid_report_struct_t *report = (usb_device_hid_report_struct_t*)param;
             if (report->reportType == USB_DEVICE_HID_REQUEST_GET_REPORT_TYPE_FEATURE && report->reportId == 0 && report->reportLength <= sizeof(usbMouseFeatBuffer)) {
+                // With a single resolution multiplier, this case will never be
+                // hit on Linux (for multiple resolution multipliers, one value
+                // will be missing, so would have to be inferred from the
+                // other(s)). But Windows does use this request properly, so it
+                // needs to be handled appropriately.
                 error = kStatus_USB_Success;
             } else {
                 error = kStatus_USB_InvalidRequest;
@@ -126,9 +131,15 @@ usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param
         case kUSB_DeviceHidEventRequestReportBuffer: {
             usb_device_hid_report_struct_t *report = (usb_device_hid_report_struct_t*)param;
             if (report->reportType == USB_DEVICE_HID_REQUEST_GET_REPORT_TYPE_FEATURE && report->reportId == 0 && report->reportLength <= sizeof(usbMouseFeatBuffer)) {
+                // The Linux implementation of SetReport when initializing a
+                // device with a single resolution multiplier value is broken,
+                // sending an empty report, and as a result the
+                // kUSB_DeviceHidEventSetReport case above isn't triggered at
+                // all; but it only sends this report when it detects the
+                // resolution multiplier, and the intention is to activate the
+                // feature, so turn high-res mode on here.
                 report->reportBuffer = usbMouseFeatBuffer;
-                // the only expected written value is this, set it early to workaround the bug
-                usbMouseFeatBuffer[0] = 0x5;
+                usbMouseFeatBuffer[0] = 0x1;
                 error = kStatus_USB_Success;
             } else {
                 error = kStatus_USB_AllocFail;
