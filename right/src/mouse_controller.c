@@ -428,13 +428,15 @@ static void processAxisLocking(
         caretYModeMultiplier = ks->caretAxis == CaretAxis_Vertical ? 1.0f : axisLockSkew;
     }
 
-    float scrollMultiplier = 1.0f;
+    float xScrollMultiplier = 1.0f;
+    float yScrollMultiplier = 1.0f;
     if (ks->currentNavigationMode == NavigationMode_Scroll) {
-        scrollMultiplier = VerticalScrollMultiplier();
+        xScrollMultiplier = HorizontalScrollMultiplier();
+        yScrollMultiplier = VerticalScrollMultiplier();
     }
 
-    ks->xFractionRemainder += x * speed / speedDivisor * scrollMultiplier * caretXModeMultiplier;
-    ks->yFractionRemainder += y * speed / speedDivisor * scrollMultiplier * caretYModeMultiplier;
+    ks->xFractionRemainder += x * speed / speedDivisor * xScrollMultiplier * caretXModeMultiplier;
+    ks->yFractionRemainder += y * speed / speedDivisor * yScrollMultiplier * caretYModeMultiplier;
 
 
     // Start a new action (new "tick"), unless there is an action in progress.
