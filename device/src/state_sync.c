@@ -5,6 +5,7 @@
 #include "device_state.h"
 #include "event_scheduler.h"
 #include "keyboard/charger.h"
+#include "keyboard/key_scanner.h"
 #include "keyboard/oled/widgets/widgets.h"
 #include "config_manager.h"
 #include "config_parser/config_globals.h"
@@ -134,6 +135,7 @@ static state_sync_prop_t stateSyncProps[StateSyncPropertyId_Count] = {
     CUSTOM(Config,                  SyncDirection_RightToLeft,        DirtyState_Clean),
     CUSTOM(SwitchTestMode,          SyncDirection_RightToLeft,        DirtyState_Clean),
     SIMPLE(DongleStandby,           SyncDirection_RightToDongle,      DirtyState_Clean,    &DongleStandby),
+    CUSTOM(KeyStatesDummy,          SyncDirection_LeftToRight,        DirtyState_Clean),
 };
 
 
@@ -373,6 +375,8 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
             DongleLeds_Update();
         }
         break;
+    case StateSyncPropertyId_KeyStatesDummy:
+        break;
     default:
         printk("Property %i ('%s') has no receive handler. If this is correct, please add a "
                "separate empty case...\n",
@@ -518,6 +522,10 @@ static void prepareData(device_id_t dst, const uint8_t *propDataPtr, state_sync_
         submitPreparedData(dst, propId, (const uint8_t *)&TestSwitches, sizeof(TestSwitches));
         return;
     }
+    case StateSyncPropertyId_KeyStatesDummy: {
+        KeyScanner_ResendKeyStates = true;
+        return;
+    }
     default:
         break;
     }
@@ -589,6 +597,7 @@ static bool handlePropertyUpdateLeftToRight() {
 
     UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ModuleStateLeftHalf);
     UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ModuleStateLeftModule);
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_KeyStatesDummy);
     UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_LeftModuleDisconnected);
     UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_MergeSensor);
     UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_Battery);
@@ -723,6 +732,7 @@ void StateSync_ResetRightLeftLink(bool bidirectional) {
         invalidateProperty(StateSyncPropertyId_Battery);
         invalidateProperty(StateSyncPropertyId_ModuleStateLeftHalf);
         invalidateProperty(StateSyncPropertyId_ModuleStateLeftModule);
+        invalidateProperty(StateSyncPropertyId_KeyStatesDummy);
         invalidateProperty(StateSyncPropertyId_MergeSensor);
     }
 }

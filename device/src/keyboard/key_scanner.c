@@ -61,6 +61,8 @@ static struct gpio_dt_spec cols[KEY_MATRIX_COLS] = {
 #define COLS_COUNT (sizeof(cols) / sizeof(cols[0]))
 volatile bool KeyPressed;
 
+volatile bool KeyScanner_ResendKeyStates = false;
+
 ATTR_UNUSED static void reportChange(uint8_t sourceIndex, bool active) {
     uint8_t slotId = DEVICE_IS_UHK80_LEFT ? SlotId_LeftKeyboardHalf : SlotId_RightKeyboardHalf;
     uint8_t keyId = KeyLayout_Uhk80_to_Uhk60[slotId][sourceIndex];
@@ -99,9 +101,11 @@ static void scanKeys() {
 
     KeyPressed = keyPressed;
 
-    if (!somethingChanged) {
+    if (!somethingChanged && !KeyScanner_ResendKeyStates) {
         return;
     }
+
+    KeyScanner_ResendKeyStates = false;
 
     uint8_t compressedLength = MAX_KEY_COUNT_PER_MODULE/8+1;
     uint8_t compressedBuffer[compressedLength];

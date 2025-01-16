@@ -11,6 +11,7 @@
 #include "connections.h"
 #include "crc16.h"
 #include "macros/status_buffer.h"
+#include "state_sync.h"
 
 // Thread definitions
 
@@ -97,6 +98,7 @@ static void rxPacketReceived() {
     } else {
         printk("Invalid UART message received!\n");
         Macros_ReportErrorPrintf(NULL, "Invalid UART message received!");
+        StateSync_ResetRightLeftLink(true);
         rxPosition = 0;
         return;
     }

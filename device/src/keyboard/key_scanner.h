@@ -10,6 +10,7 @@
 // Variables:
 
     extern volatile bool KeyPressed;
+    extern volatile bool KeyScanner_ResendKeyStates;
 
 // Functions:
 
