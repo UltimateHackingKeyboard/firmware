@@ -40,6 +40,11 @@
     } sync_command_layer_t;
 
     typedef struct {
+        uint16_t vertical;
+        uint16_t horizontal;
+    } scroll_multipliers_t;
+
+    typedef struct {
         uint8_t BacklightingMode;
         uint8_t KeyBacklightBrightness;
         uint8_t DisplayBacklightBrightness;
@@ -96,6 +101,7 @@
         StateSyncPropertyId_Config = 27,
         StateSyncPropertyId_SwitchTestMode = 28,
         StateSyncPropertyId_DongleStandby = 29,
+        StateSyncPropertyId_DongleScrollMultipliers = 30,
         StateSyncPropertyId_Count,
     } state_sync_prop_id_t;
 
@@ -129,6 +135,7 @@
 
     extern sync_generic_half_state_t SyncLeftHalfState;
     extern sync_generic_half_state_t SyncRightHalfState;
+    extern scroll_multipliers_t DongleScrollMultipliers;
 
 // Functions:
 
