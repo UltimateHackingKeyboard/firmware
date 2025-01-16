@@ -128,11 +128,12 @@ void freeQueueSegment(const uint8_t* segment) {
     POOL_FREE(segment, queuePool, POOL_SIZE, QUEUE_REGION_SIZE);
 }
 
-void MessengerQueue_Put(device_id_t src, const uint8_t* data, uint16_t len) {
+void MessengerQueue_Put(device_id_t src, const uint8_t* data, uint16_t len, uint8_t offset) {
     messenger_queue_record_t* record = (messenger_queue_record_t*)allocateQueueSegment();
     record->src = src;
     record->len = len;
     record->data = data;
+    record->offset = offset;
     fifoPut(record);
 }
 

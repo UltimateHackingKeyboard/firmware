@@ -284,16 +284,16 @@ ATTR_UNUSED static void getMessageDescription(const uint8_t* data, const char** 
     }
 }
 
-void Messenger_Enqueue(uint8_t srcConnectionId, uint8_t src, const uint8_t* data, uint16_t len) {
-    if (isSpam(data, srcConnectionId)) {
-        MessengerQueue_FreeMemory(data);
+void Messenger_Enqueue(uint8_t srcConnectionId, uint8_t src, const uint8_t* data, uint16_t len, uint8_t offset) {
+    if (isSpam(data+offset, srcConnectionId)) {
+        MessengerQueue_FreeMemory(data+offset);
     } else {
-        MessengerQueue_Put(src, data, len);
+        MessengerQueue_Put(src, data, len, offset);
         EventVector_Set(EventVector_NewMessage);
         LOG_SCHEDULE(
             const char* desc1;
             const char* desc2;
-            getMessageDescription(data, &desc1, &desc2);
+            getMessageDescription(data+offset, &desc1, &desc2);
             printk("        (%c %s %s)\n", getDeviceAbbrev(data[MessageOffset_Src]), desc1, desc2 == NULL ? "" : desc2);
         );
         Main_Wake();
@@ -304,7 +304,7 @@ void Messenger_ProcessQueue() {
     EventVector_Unset(EventVector_NewMessage);
     messenger_queue_record_t rec = MessengerQueue_Take();
     while (rec.data != NULL) {
-        receive(rec.data, rec.len);
+        receive(rec.data+rec.offset, rec.len);
         MessengerQueue_FreeMemory(rec.data);
 
         rec = MessengerQueue_Take();

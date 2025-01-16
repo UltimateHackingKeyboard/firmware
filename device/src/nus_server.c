@@ -25,10 +25,10 @@ static void received(struct bt_conn *conn, const uint8_t *const data, uint16_t l
 
     switch (DEVICE_ID) {
         case DeviceId_Uhk80_Left:
-            Messenger_Enqueue(connectionId, DeviceId_Uhk80_Right, copy, len);
+            Messenger_Enqueue(connectionId, DeviceId_Uhk80_Right, copy, len, 0);
             break;
         case DeviceId_Uhk80_Right:
-            Messenger_Enqueue(connectionId, DeviceId_Uhk_Dongle, copy, len);
+            Messenger_Enqueue(connectionId, DeviceId_Uhk_Dongle, copy, len, 0);
             break;
         default:
             printk("Ble received message from unknown source.");

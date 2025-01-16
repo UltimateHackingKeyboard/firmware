@@ -11,6 +11,12 @@ typedef struct Crc16Data {
     uint16_t currentCrc;
 } crc16_data_t;
 
+typedef struct {
+    uint16_t length; //length of data
+    uint16_t crc;
+    uint8_t* data;
+} ATTR_PACKED crc16_message_t;
+
 //! @brief Initializes the parameters of the crc function, must be called first.
 //! @param crc16Config Instantiation of the data structure of type crc16_data_t.
 void crc16_init(crc16_data_t *crc16Config);
@@ -28,5 +34,7 @@ void crc16_finalize(crc16_data_t *crc16Config, uint16_t *hash);
 
 void CRC16_UpdateMessageChecksum(i2c_message_t *message);
 bool CRC16_IsMessageValid(i2c_message_t *message);
+bool CRC16_IsMessageValidExt(crc16_message_t *message);
+
 
 #endif
