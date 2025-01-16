@@ -4,4 +4,5 @@ Before submitting a new issue, make sure to do the following:
    https://github.com/UltimateHackingKeyboard/agent/releases/latest
 2. Use Agent to update to the latest firmware:
    https://github.com/UltimateHackingKeyboard/firmware/releases/latest
-3. Our contact form will suggest you solutions, so copy-paste your message at https://ultimatehackingkeyboard.com/contact-us - Please don't post customer support issues here.
+3. If your issue is UHK 80 specific, state your connection type (USB, BLE, or dongle) and whether the keyboard halves are connected with the bridge cable.
+4. Our contact form will suggest solutions, so copy-paste your message at https://ultimatehackingkeyboard.com/contact-us - Please don't post customer support issues here.
