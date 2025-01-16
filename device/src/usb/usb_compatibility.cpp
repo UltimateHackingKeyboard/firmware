@@ -4,8 +4,8 @@ extern "C" {
 #include "debug.h"
 #include "event_scheduler.h"
 #include "key_states.h"
-#include "macro_events.h"
 #include "link_protocol.h"
+#include "macro_events.h"
 #include "messenger.h"
 #include "nus_server.h"
 #include "state_sync.h"
@@ -225,4 +225,40 @@ extern "C" void UsbCompatibility_SetKeyboardLedsState(connection_id_t connection
 #else
     UsbCompatibility_SetCurrentKeyboardLedsState(state);
 #endif
+}
+
+extern "C" float VerticalScrollMultiplier(void)
+{
+    switch (Connections_Type(ActiveHostConnectionId)) {
+        case ConnectionType_UsbHidRight:
+        case ConnectionType_UsbHidLeft:
+            return mouse_app::usb_handle().resolution_report().vertical_scroll_multiplier();
+#if DEVICE_IS_UHK80_RIGHT
+        case ConnectionType_BtHid:
+        case ConnectionType_NewBtHid:
+            return mouse_app::ble_handle().resolution_report().vertical_scroll_multiplier();
+#endif
+        case ConnectionType_NusDongle:
+            return DongleScrollMultipliers.vertical;
+        default:
+            return mouse_app::usb_handle().resolution_report().vertical_scroll_multiplier();
+    }
+}
+
+extern "C" float HorizontalScrollMultiplier(void)
+{
+    switch (Connections_Type(ActiveHostConnectionId)) {
+        case ConnectionType_UsbHidRight:
+        case ConnectionType_UsbHidLeft:
+            return mouse_app::usb_handle().resolution_report().horizontal_scroll_multiplier();
+#if DEVICE_IS_UHK80_RIGHT
+        case ConnectionType_BtHid:
+        case ConnectionType_NewBtHid:
+            return mouse_app::ble_handle().resolution_report().horizontal_scroll_multiplier();
+#endif
+        case ConnectionType_NusDongle:
+            return DongleScrollMultipliers.horizontal;
+        default:
+            return mouse_app::usb_handle().resolution_report().horizontal_scroll_multiplier();
+    }
 }

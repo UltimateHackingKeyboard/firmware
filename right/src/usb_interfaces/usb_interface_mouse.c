@@ -13,15 +13,9 @@
 
 static usb_mouse_report_t usbMouseReports[2];
 
-#ifndef __ZEPHYR__
-static uint8_t usbMouseFeatBuffer[USB_MOUSE_FEAT_REPORT_LENGTH];
-#endif
-
 usb_hid_protocol_t usbMouseProtocol;
 uint32_t UsbMouseActionCounter;
 usb_mouse_report_t* ActiveUsbMouseReport = usbMouseReports;
-
-int16_t UsbMouseScrollMultiplier = USB_MOUSE_REPORT_DESCRIPTOR_MIN_RESOLUTION_MULTIPLIER_PHYSICAL_VALUE;
 
 static usb_mouse_report_t* GetInactiveUsbMouseReport(void)
 {
@@ -39,6 +33,8 @@ static void SwitchActiveUsbMouseReport(void)
 }
 
 #ifndef __ZEPHYR__
+
+static uint8_t usbMouseFeatBuffer[USB_MOUSE_FEAT_REPORT_LENGTH];
 
 usb_hid_protocol_t UsbMouseGetProtocol(void)
 {
@@ -65,6 +61,16 @@ usb_status_t UsbMouseAction(void)
     return usb_status;
 }
 
+float VerticalScrollMultiplier(void)
+{
+    return usbMouseFeatBuffer[0] & 0x01 ? USB_MOUSE_REPORT_DESCRIPTOR_MAX_RESOLUTION_MULTIPLIER_PHYSICAL_VALUE : USB_MOUSE_REPORT_DESCRIPTOR_MIN_RESOLUTION_MULTIPLIER_PHYSICAL_VALUE;
+}
+
+float HorizontalScrollMultiplier(void)
+{
+    return usbMouseFeatBuffer[0] & 0x01 ? USB_MOUSE_REPORT_DESCRIPTOR_MAX_RESOLUTION_MULTIPLIER_PHYSICAL_VALUE : USB_MOUSE_REPORT_DESCRIPTOR_MIN_RESOLUTION_MULTIPLIER_PHYSICAL_VALUE;
+}
+
 usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param)
 {
     usb_device_hid_struct_t *hidHandle = (usb_device_hid_struct_t *)handle;
@@ -72,6 +78,7 @@ usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param
 
     switch (event) {
         case ((uint32_t)-kUSB_DeviceEventSetConfiguration):
+            usbMouseFeatBuffer[0] = 0;
             error = kStatus_USB_Success;
             break;
         case ((uint32_t)-kUSB_DeviceEventSetInterface):
@@ -97,7 +104,6 @@ usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param
                 SwitchActiveUsbMouseReport();
                 error = kStatus_USB_Success;
             } else if (report->reportType == USB_DEVICE_HID_REQUEST_GET_REPORT_TYPE_FEATURE) {
-                usbMouseFeatBuffer[0] = (uint8_t)(UsbMouseScrollMultiplier != USB_MOUSE_REPORT_DESCRIPTOR_MIN_RESOLUTION_MULTIPLIER_PHYSICAL_VALUE);
                 report->reportBuffer = usbMouseFeatBuffer;
                 report->reportLength = sizeof(usbMouseFeatBuffer);
                 error = kStatus_USB_Success;
@@ -115,7 +121,6 @@ usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param
                 // will be missing, so would have to be inferred from the
                 // other(s)). But Windows does use this request properly, so it
                 // needs to be handled appropriately.
-                UsbMouseScrollMultiplier = usbMouseFeatBuffer[0] ? USB_MOUSE_REPORT_DESCRIPTOR_MAX_RESOLUTION_MULTIPLIER_PHYSICAL_VALUE : USB_MOUSE_REPORT_DESCRIPTOR_MIN_RESOLUTION_MULTIPLIER_PHYSICAL_VALUE;
                 error = kStatus_USB_Success;
             } else {
                 error = kStatus_USB_InvalidRequest;
@@ -133,8 +138,8 @@ usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param
                 // all; but it only sends this report when it detects the
                 // resolution multiplier, and the intention is to activate the
                 // feature, so turn high-res mode on here.
-                UsbMouseScrollMultiplier = USB_MOUSE_REPORT_DESCRIPTOR_MAX_RESOLUTION_MULTIPLIER_PHYSICAL_VALUE;
                 report->reportBuffer = usbMouseFeatBuffer;
+                usbMouseFeatBuffer[0] = 0x1;
                 error = kStatus_USB_Success;
             } else {
                 error = kStatus_USB_AllocFail;
