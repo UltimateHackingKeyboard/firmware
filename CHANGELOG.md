@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [12.3.1] - 2025-01-16
+
+Device Protocol: 4.14.0 | Module Protocol: 4.3.0 | User Config: 8.3.0 | Hardware Config: 1.0.0 | Smart Macros: 3.1.0
+
+- Implement high resolution scrolling for the UHK 80.
+- Fix horizontal scrolling on the UHK 80.
+- Use full keyboard scancode range for the UHK 80, including scancodes such as International 1.
+
 ## [12.3.0] - 2025-01-12
 
 Device Protocol: 4.**14.0** | Module Protocol: 4.3.0 | User Config: 8.3.0 | Hardware Config: 1.0.0 | Smart Macros: 3.**1.0**
