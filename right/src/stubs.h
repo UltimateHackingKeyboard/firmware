@@ -48,6 +48,7 @@
     extern int BtScan_Start(void);
     extern void BtManager_StartScanningAndAdvertising();
     extern void BtConn_UpdateHostConnectionPeerAllocations();
+    extern void Oled_RequestRedraw();
 
 #if DEVICE_HAS_OLED
 #define WIDGET_REFRESH(W) Widget_Refresh(W)

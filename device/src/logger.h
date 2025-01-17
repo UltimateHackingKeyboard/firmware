@@ -24,4 +24,7 @@ typedef enum {
     void LogTo(device_id_t deviceId, log_target_t logMask, const char *fmt, ...);
     void LogConstantTo(device_id_t deviceId, log_target_t logMask, const char* buffer);
 
+    // Log to UART and OLED
+    void LogUO(const char *fmt, ...);
+
 #endif // __LOGGER_H__

@@ -34,3 +34,4 @@
     ATTRS int BtScan_Start(void) { return 0; };
     ATTRS void BtManager_StartScanningAndAdvertising() {};
     ATTRS void BtConn_UpdateHostConnectionPeerAllocations() {};
+    ATTRS void Oled_RequestRedraw() {};

@@ -18,6 +18,7 @@ bool DongleStandby = false;
 
 // void handleStateTransition(connection_id_t remoteId, bool connected) {
 void handleStateTransition(connection_target_t remote, connection_id_t connectionId, bool connected) {
+
         connection_target_t local = Connections_DeviceToTarget(DEVICE_ID);
         switch (local) {
             case ConnectionTarget_Left:

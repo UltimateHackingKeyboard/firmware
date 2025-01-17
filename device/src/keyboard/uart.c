@@ -313,6 +313,11 @@ static void updateConnectionState() {
     bool oldIsConnected = Connections_IsReady(connectionId);
     bool newIsConnected =  pingDiff < UART_TIMEOUT;
     if (oldIsConnected != newIsConnected) {
+        if (newIsConnected) {
+            Oled_Log("Uart connected\n");
+        } else {
+            Oled_Log("Uart timed out\n");
+        }
         Connections_SetState(connectionId, newIsConnected ? ConnectionState_Ready : ConnectionState_Disconnected);
         if (!newIsConnected) {
             k_sem_init(&txBufferBusy, UART_SLOTS, UART_SLOTS);

@@ -96,4 +96,6 @@
 
     void Connections_HandleSwitchover(connection_id_t connectionId, bool forceSwitch);
 
+    const char* Connections_GetStaticName(connection_id_t connectionId);
+
 #endif // __CONNECTIONS_H__
