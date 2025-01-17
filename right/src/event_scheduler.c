@@ -113,6 +113,9 @@ static void processEvt(event_scheduler_event_t evt)
         case EventSchedulerEvent_BtStartScanningAndAdvertising:
             BtManager_StartScanningAndAdvertising();
             break;
+        case EventSchedulerEvent_RedrawOled:
+            Oled_RequestRedraw();
+            break;
         default:
             return;
     }

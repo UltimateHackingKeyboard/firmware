@@ -301,7 +301,9 @@ void oledUpdater() {
 
 void Oled_RequestRedraw() {
     oledNeedsRedraw = true;
-    k_wakeup(oledThreadId);
+    if (oledThreadId) {
+        k_wakeup(oledThreadId);
+    }
 }
 
 void InitOled(void) {

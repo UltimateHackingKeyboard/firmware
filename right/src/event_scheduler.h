@@ -36,6 +36,7 @@
         EventSchedulerEvent_EndBtPairing,
         EventSchedulerEvent_RestartBt,
         EventSchedulerEvent_BtStartScanningAndAdvertising,
+        EventSchedulerEvent_RedrawOled,
         EventSchedulerEvent_Count
     } event_scheduler_event_t;
 
