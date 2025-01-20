@@ -29,6 +29,7 @@
 #include "power_mode.h"
 #include "test_switches.h"
 #include "dongle_leds.h"
+#include "logger.h"
 
 #define WAKE(TID) if (TID != 0) { k_wakeup(TID); }
 
@@ -246,6 +247,35 @@ void receiveBacklight(sync_command_backlight_t *buffer) {
     }
 }
 
+static void checkFirmwareVersions(const uhk_module_state_t *moduleState, slot_t slotId) {
+    #if DEVICE_IS_UHK80_RIGHT
+
+    if (slotId != SlotId_LeftKeyboardHalf) {
+        return;
+    }
+
+    bool versionsMatch = VERSIONS_EQUAL(moduleState->firmwareVersion, firmwareVersion);
+    bool leftChecksumMatches = memcmp(moduleState->firmwareChecksum, DeviceMD5Checksums[DeviceId_Uhk80_Left], MD5_CHECKSUM_LENGTH) == 0;
+    bool gitTagsMatch = strcmp(moduleState->gitTag, gitTag) == 0;
+
+    bool anyVersionZero = (moduleState->firmwareVersion.major == 0 || firmwareVersion.major == 0);
+    bool anyChecksumZero = memcmp(DeviceMD5Checksums[DeviceId_Uhk80_Right], DeviceMD5Checksums[DeviceId_Uhk80_Left], MD5_CHECKSUM_LENGTH) == 0;
+
+
+    if (!versionsMatch) {
+        LogUOS("Error: Left and right keyboard halves have different firmware versions (Left: %u, Right: %u)!\n", moduleState->firmwareVersion, firmwareVersion);
+    } else if (!gitTagsMatch) {
+        LogUOS("Error: Left and right keyboard halves have different git tags (Left: %s, Right: %s)!\n", moduleState->gitTag, gitTag);
+    } else if (!leftChecksumMatches) {
+        LogUOS("Error: Left checksum differs from the expected!\n", moduleState->firmwareVersion, firmwareVersion);
+    } else if (anyVersionZero) {
+        LogUOS("Warning: Keyboard halves have zero versions!\n");
+    } else if (anyChecksumZero) {
+        LogUOS("Warning: Keyboard halves have zero checksums!\n");
+    }
+    #endif
+}
+
 static void receiveModuleStateData(sync_command_module_state_t *buffer) {
     uint8_t driverId = UhkModuleSlaveDriver_SlotIdToDriverId(buffer->slotId);
     uhk_module_state_t *moduleState = &UhkModuleStates[driverId];
@@ -263,6 +293,8 @@ static void receiveModuleStateData(sync_command_module_state_t *buffer) {
     Utils_SafeStrCopy(moduleState->gitRepo, buffer->gitRepo, MAX_STRING_PROPERTY_LENGTH);
     Utils_SafeStrCopy(moduleState->gitTag, buffer->gitTag, MAX_STRING_PROPERTY_LENGTH);
     memcpy(moduleState->firmwareChecksum, buffer->firmwareChecksum, MD5_CHECKSUM_LENGTH);
+
+    checkFirmwareVersions(moduleState, buffer->slotId);
 
     if (DEVICE_IS_UHK80_RIGHT && leftModuleChanged) {
         EventVector_Set(EventVector_KeymapReloadNeeded);

@@ -48,6 +48,12 @@ void LogUO(const char *fmt, ...) {
     LogConstantTo(DEVICE_ID, LogTarget_Uart | LogTarget_Oled, buffer);
 }
 
+void LogUOS(const char *fmt, ...) {
+    EXPAND_STRING(buffer);
+
+    LogConstantTo(DEVICE_ID, LogTarget_Uart | LogTarget_Oled | LogTarget_ErrorBuffer, buffer);
+}
+
 void LogConstantTo(device_id_t deviceId, log_target_t logMask, const char* buffer) {
     if (DEVICE_ID == deviceId) {
         if (logMask & LogTarget_Oled) {
