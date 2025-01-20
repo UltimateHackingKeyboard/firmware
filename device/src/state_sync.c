@@ -50,6 +50,9 @@ sync_generic_half_state_t SyncRightHalfState;
 
 scroll_multipliers_t DongleScrollMultipliers = {1, 1};
 
+uint16_t StateSync_LeftResetCounter = 0;
+uint16_t StateSync_DongleResetCounter = 0;
+
 static void receiveProperty(device_id_t src, state_sync_prop_id_t property, const uint8_t *data, uint8_t len);
 
 #define DEFAULT_LAYER_PROP(NAME)                                                                   \
@@ -754,6 +757,7 @@ void StateSync_Init() {
 
 void StateSync_ResetRightLeftLink(bool bidirectional) {
     printk("Resetting left right link! %s\n", bidirectional ? "Bidirectional" : "Unidirectional");
+    StateSync_LeftResetCounter++;
     if (bidirectional) {
         invalidateProperty(StateSyncPropertyId_ResetRightLeftLink);
     }
@@ -779,6 +783,7 @@ void StateSync_ResetRightLeftLink(bool bidirectional) {
 }
 
 void StateSync_ResetRightDongleLink(bool bidirectional) {
+    StateSync_DongleResetCounter++;
     printk("Resetting dongle right link! %s\n", bidirectional ? "Bidirectional" : "Unidirectional");
     if (bidirectional) {
         invalidateProperty(StateSyncPropertyId_ResetRightDongleLink);

@@ -134,6 +134,8 @@
 
 // Variables:
 
+    extern uint16_t StateSync_LeftResetCounter;
+    extern uint16_t StateSync_DongleResetCounter;
     extern sync_generic_half_state_t SyncLeftHalfState;
     extern sync_generic_half_state_t SyncRightHalfState;
     extern scroll_multipliers_t DongleScrollMultipliers;

@@ -13,6 +13,7 @@
 
 #ifdef __ZEPHYR__
 #include "keyboard/oled/screens/screen_manager.h"
+#include "keyboard/oled/widgets/widgets.h"
 #include "keyboard/oled/oled.h"
 #include "keyboard/charger.h"
 #include "keyboard/uart.h"
@@ -115,6 +116,12 @@ static void processEvt(event_scheduler_event_t evt)
             break;
         case EventSchedulerEvent_RedrawOled:
             Oled_RequestRedraw();
+            break;
+        case EventSchedulerEvent_UpdateDebugOledLine:
+            WIDGET_REFRESH(&DebugLineWidget);
+#if DEBUG_SHOW_DEBUG_OLED_LINE
+            EventScheduler_Schedule(CurrentTime+1000, EventSchedulerEvent_UpdateDebugOledLine, "Event scheduler loop");
+#endif
             break;
         default:
             return;

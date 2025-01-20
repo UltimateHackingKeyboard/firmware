@@ -101,6 +101,11 @@ static connection_id_t determineChannel(device_id_t dst) {
     return ConnectionId_Invalid;
 }
 
+uint16_t Messenger_GetMissedMessages(device_id_t dst) {
+    connection_id_t connId = determineChannel(dst);
+    return Connections[connId].watermarks.missedCount;
+}
+
 static char getDeviceAbbrev(device_id_t src) {
     switch (src) {
         case DeviceId_Uhk80_Left:
@@ -215,9 +220,11 @@ static void receiveDongle(device_id_t src, const uint8_t* data, uint16_t len) {
 }
 
 static void receive(const uint8_t* data, uint16_t len) {
-    device_id_t src = *data++;
-    device_id_t dst = *data++;
-    len-= 2;
+    device_id_t src = data[MessageOffset_Src];
+    device_id_t dst = data[MessageOffset_Dst];
+
+    data += MessageOffset_MsgId1;
+    len-= MessageOffset_MsgId1;
 
     if (dst != DEVICE_ID) {
         message_t msg = {
@@ -284,7 +291,24 @@ ATTR_UNUSED static void getMessageDescription(const uint8_t* data, const char** 
     }
 }
 
+void processWatermarks(uint8_t srcConnectionId, uint8_t src, const uint8_t* data, uint16_t len, uint8_t offset) {
+    uint8_t wm = data[offset+MessageOffset_Wm];
+    uint8_t expectedWm = Connections[srcConnectionId].watermarks.rxIdx++;
+    if (wm != expectedWm) {
+        if (wm != 0) {
+            uint8_t difference = wm - Connections[srcConnectionId].watermarks.rxIdx - 1;
+            LogUOS("Missedd %d message(s) from connection %d (%s), wm %d / %d\n", difference, srcConnectionId, Connections_GetStaticName(srcConnectionId), wm, expectedWm);
+        } else {
+            // they have resetted their connection; that is fine, just update our watermarks
+        }
+        Connections[srcConnectionId].watermarks.missedCount++;
+        Connections[srcConnectionId].watermarks.rxIdx = wm+1;
+    }
+}
+
 void Messenger_Enqueue(uint8_t srcConnectionId, uint8_t src, const uint8_t* data, uint16_t len, uint8_t offset) {
+    processWatermarks(srcConnectionId, src, data, len, offset);
+
     if (isSpam(data+offset, srcConnectionId)) {
         MessengerQueue_FreeMemory(data+offset);
     } else {
@@ -344,7 +368,7 @@ bool Messenger_Availability(device_id_t dst, messenger_availability_op_t operati
 void Messenger_SendMessage(message_t message) {
     connection_id_t connectionId = message.connectionId;
     device_id_t dst = message.dst;
-
+    message.wm = Connections[connectionId].watermarks.txIdx++;
 
     switch (connectionId) {
         case ConnectionId_UartLeft:

@@ -103,6 +103,7 @@ void NusServer_SendMessageTo(message_t msg, struct bt_conn* conn) {
 
     buffer[bufferIdx++] = msg.src;
     buffer[bufferIdx++] = msg.dst;
+    buffer[bufferIdx++] = msg.wm;
 
     for (uint8_t id = 0; id < msg.idsUsed; id++) {
         buffer[bufferIdx++] = msg.messageId[id];

@@ -63,9 +63,16 @@
     } connection_state_t;
 
     typedef struct {
+        uint8_t rxIdx;
+        uint8_t txIdx;
+        uint16_t missedCount;
+    } ATTR_PACKED connection_watermarks_t;
+
+    typedef struct {
         uint8_t peerId;
         connection_state_t state;
         bool isAlias;
+        connection_watermarks_t watermarks;
     } ATTR_PACKED connection_t;
 
 // Variables:

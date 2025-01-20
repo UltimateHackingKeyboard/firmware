@@ -111,9 +111,9 @@ static void reportConnectionState(connection_id_t connectionId, const char* mess
 
     if (isHostConnection) {
         host_connection_t* hc = HostConnection(connectionId);
-        LogUO("%s: %s%d(%.*s, %s)%s%s%s%s\n", message, name, connectionId - ConnectionId_HostConnectionFirst, hc->name.end - hc->name.start, hc->name.start, getStateString(Connections[connectionId].state), peerLabel, peerString, activeLabel, selectedLabel);
+        LogU("%s: %s%d(%.*s, %s)%s%s%s%s\n", message, name, connectionId - ConnectionId_HostConnectionFirst, hc->name.end - hc->name.start, hc->name.start, getStateString(Connections[connectionId].state), peerLabel, peerString, activeLabel, selectedLabel);
     } else {
-        LogUO("%s: %s(%s)%s%s%s%s\n", message, name, getStateString(Connections[connectionId].state), peerLabel, peerString, activeLabel, selectedLabel);
+        LogU("%s: %s(%s)%s%s%s%s\n", message, name, getStateString(Connections[connectionId].state), peerLabel, peerString, activeLabel, selectedLabel);
     }
 }
 
@@ -132,6 +132,12 @@ void Connections_SetState(connection_id_t connectionId, connection_state_t state
     if ( Connections[connectionId].state != state ) {
         Connections[connectionId].state = state;
         reportConnectionState(connectionId, "Con state");
+
+        if (state == ConnectionState_Disconnected) {
+            Connections[connectionId].watermarks.txIdx = 0;
+            Connections[connectionId].watermarks.rxIdx = 0;
+        }
+
         if (Connections_Target(connectionId) == ConnectionTarget_Host && DEVICE_IS_UHK80_RIGHT) {
             Connections_HandleSwitchover(connectionId, false);
             // Connections_HandleSwitchover calls DeviceState_Update for us

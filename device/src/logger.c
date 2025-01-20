@@ -42,6 +42,12 @@ void Log(const char *fmt, ...) {
     LogConstantTo(DEVICE_ID, LogTarget_Uart, buffer);
 }
 
+void LogU(const char *fmt, ...) {
+    EXPAND_STRING(buffer);
+
+    LogConstantTo(DEVICE_ID, LogTarget_Uart, buffer);
+}
+
 void LogUO(const char *fmt, ...) {
     EXPAND_STRING(buffer);
 

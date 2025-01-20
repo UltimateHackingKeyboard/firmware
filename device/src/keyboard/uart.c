@@ -53,6 +53,8 @@ uint8_t rxbuf2[BUF_SIZE];
 
 uint32_t lastPingTime = -2*UART_TIMEOUT;
 
+uint16_t Uart_InvalidMessagesCounter = 0;
+
 /* UART message format:
  * [START_BYTE,crc16,escaped(messengerPacket), ENDBYTE]
  * crcMessage = 4 bytes = CRC16 in format [ESCAPE_BYTE,byte1,ESCAPE_BYTE,byte2]
@@ -96,8 +98,8 @@ static void rxPacketReceived() {
         lastPingTime = k_uptime_get();
         len -= CRC_LEN;
     } else {
-        printk("Invalid UART message received!\n");
-        Macros_ReportErrorPrintf(NULL, "Invalid UART message received!");
+        Uart_InvalidMessagesCounter++;
+        LogU("Crc-invalid UART message received!\n");
         StateSync_ResetRightLeftLink(true);
         rxPosition = 0;
         return;
@@ -261,6 +263,7 @@ void Uart_SendPacket(const uint8_t* data, uint16_t len) {
     if (len > 0) {
         processOutgoingByteWithCrc(DEVICE_ID, &crcState);
         processOutgoingByteWithCrc(DEVICE_ID == DeviceId_Uhk80_Right ? DeviceId_Uhk80_Left : DeviceId_Uhk80_Right, &crcState);
+        processOutgoingByteWithCrc(0, &crcState); //this will cause errors; send non-zero messages via SendMessage
     }
 
     for (uint16_t i = 0; i < len; i++) {
@@ -286,6 +289,7 @@ void Uart_SendMessage(message_t msg) {
 
     processOutgoingByteWithCrc(msg.src, &crcState);
     processOutgoingByteWithCrc(msg.dst, &crcState);
+    processOutgoingByteWithCrc(msg.wm, &crcState);
 
     for (uint8_t id = 0; id < msg.idsUsed; id++) {
         processOutgoingByteWithCrc(msg.messageId[id], &crcState);
@@ -313,11 +317,6 @@ static void updateConnectionState() {
     bool oldIsConnected = Connections_IsReady(connectionId);
     bool newIsConnected =  pingDiff < UART_TIMEOUT;
     if (oldIsConnected != newIsConnected) {
-        if (newIsConnected) {
-            Oled_Log("Uart connected\n");
-        } else {
-            Oled_Log("Uart timed out\n");
-        }
         Connections_SetState(connectionId, newIsConnected ? ConnectionState_Ready : ConnectionState_Disconnected);
         if (!newIsConnected) {
             k_sem_init(&txBufferBusy, UART_SLOTS, UART_SLOTS);

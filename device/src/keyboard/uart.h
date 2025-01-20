@@ -15,6 +15,7 @@
 // Variables:
 
     extern const struct device *uart_dev;
+    extern uint16_t Uart_InvalidMessagesCounter;
 
 // Functions:
 

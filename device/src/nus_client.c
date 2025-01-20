@@ -189,6 +189,7 @@ void NusClient_SendMessage(message_t msg) {
 
     buffer[bufferIdx++] = msg.src;
     buffer[bufferIdx++] = msg.dst;
+    buffer[bufferIdx++] = msg.wm;
 
     for (uint8_t id = 0; id < msg.idsUsed; id++) {
         buffer[bufferIdx++] = msg.messageId[id];

@@ -27,10 +27,13 @@
 typedef enum {
     MessageOffset_Src = 0,
     MessageOffset_Dst = 1,
-    MessageOffset_MsgId1 = 2,
+    MessageOffset_Wm = 2,
+    MessageOffset_MsgId1 = 3,
+    MessageOffset_Payload = MessageOffset_MsgId1,
 } message_offset_t;
 
     // the point of message_t is to reduce the number of times we need to copy the message.
+    // for this reason we also serialize multiple protocol layers in a single go later.
     typedef struct {
         const uint8_t* data;
         uint16_t len;
@@ -38,10 +41,13 @@ typedef enum {
         uint8_t idsUsed;
         uint8_t src;
         uint8_t dst;
+        uint8_t wm;
         uint8_t connectionId;
     } ATTR_PACKED message_t;
 
 // Functions:
+
+    uint16_t Messenger_GetMissedMessages(device_id_t dst);
 
     void Messenger_SendMessage(message_t message);
     void Messenger_Send(device_id_t dst, uint8_t messageId, const uint8_t* data, uint16_t len);
