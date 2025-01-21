@@ -35,3 +35,5 @@
     ATTRS void BtManager_StartScanningAndAdvertising() {};
     ATTRS void BtConn_UpdateHostConnectionPeerAllocations() {};
     ATTRS void Oled_RequestRedraw() {};
+    ATTRS void RoundTripTest_Run() {};
+

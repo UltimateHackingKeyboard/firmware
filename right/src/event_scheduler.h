@@ -38,6 +38,7 @@
         EventSchedulerEvent_BtStartScanningAndAdvertising,
         EventSchedulerEvent_RedrawOled,
         EventSchedulerEvent_UpdateDebugOledLine,
+        EventSchedulerEvent_RoundTripTest,
         EventSchedulerEvent_Count
     } event_scheduler_event_t;
 

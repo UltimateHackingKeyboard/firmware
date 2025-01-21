@@ -7,6 +7,7 @@
 #include "logger.h"
 #include "main.h"
 #include "messenger_queue.h"
+#include "round_trip_test.h"
 #include "shared/slave_protocol.h"
 #include "state_sync.h"
 #include "usb/usb_compatibility.h"
@@ -134,6 +135,9 @@ static void receiveLeft(device_id_t src, const uint8_t* data, uint16_t len) {
         case MessageId_Log:
             receiveLog(src, data, len);
             break;
+        case MessageId_RoundTripTest:
+            RoundTripTest_Receive(data, len);
+            break;
         default:
             printk("Didn't expect to receive message %i %i\n", data[0], data[1]);
             break;
@@ -141,7 +145,6 @@ static void receiveLeft(device_id_t src, const uint8_t* data, uint16_t len) {
 }
 
 static void processSyncablePropertyRight(device_id_t src, const uint8_t* data, uint16_t len) {
-
     uint8_t ATTR_UNUSED messageId = *(data++);
     uint8_t propertyId = *(data++);
     const uint8_t* message = data;
@@ -175,6 +178,9 @@ static void receiveRight(device_id_t src, const uint8_t* data, uint16_t len) {
             break;
         case MessageId_Log:
             receiveLog(src, data, len);
+            break;
+        case MessageId_RoundTripTest:
+            RoundTripTest_Receive(data, len);
             break;
         default:
             printk("Unrecognized or unexpected message [%i, %i, ...]\n", data[0], data[1]);
@@ -212,6 +218,9 @@ static void receiveDongle(device_id_t src, const uint8_t* data, uint16_t len) {
             break;
         case MessageId_Log:
             receiveLog(src, data, len);
+            break;
+        case MessageId_RoundTripTest:
+            RoundTripTest_Receive(data, len);
             break;
         default:
             printk("Unrecognized or unexpected message [%i, %i, ...]\n", data[0], data[1]);
@@ -292,15 +301,16 @@ ATTR_UNUSED static void getMessageDescription(const uint8_t* data, const char** 
 }
 
 void processWatermarks(uint8_t srcConnectionId, uint8_t src, const uint8_t* data, uint16_t len, uint8_t offset) {
+    uint8_t wm = data[offset+MessageOffset_Wm];
+    uint8_t expectedWm = Connections[srcConnectionId].watermarks.rxIdx++;
+
     if (data == MessengerQueue_BlackholeBuffer) {
         return;
     }
 
-    uint8_t wm = data[offset+MessageOffset_Wm];
-    uint8_t expectedWm = Connections[srcConnectionId].watermarks.rxIdx++;
     if (wm != expectedWm) {
         if (wm != 0) {
-            uint8_t difference = wm - Connections[srcConnectionId].watermarks.rxIdx - 1;
+            uint8_t difference = wm - expectedWm;
             LogUOS("Missedd %d message(s) from connection %d (%s), wm %d / %d\n", difference, srcConnectionId, Connections_GetStaticName(srcConnectionId), wm, expectedWm);
         } else {
             // they have resetted their connection; that is fine, just update our watermarks

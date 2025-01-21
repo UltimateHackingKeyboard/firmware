@@ -5,6 +5,7 @@
 #include "bt_manager.h"
 #include "config_parser/config_globals.h"
 #include "ledmap.h"
+#include "round_trip_test.h"
 #include "shared/attributes.h"
 #include "zephyr/kernel.h"
 #include "zephyr/storage/flash_map.h"
@@ -171,6 +172,8 @@ int main(void) {
     Messenger_Init();
 
     StateSync_Init();
+
+    RoundTripTest_Init();
 
 #if DEVICE_IS_UHK80_RIGHT
     while (true)

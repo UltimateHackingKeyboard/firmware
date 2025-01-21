@@ -70,6 +70,7 @@
 
     // Draft for generic properties
     typedef enum {
+        StateSyncPropertyId_ZeroDummy = 0,
         StateSyncPropertyId_LayerActionsLayer1 = 1,
         StateSyncPropertyId_LayerActionsLayer2 = 2,
         StateSyncPropertyId_LayerActionsLayer3 = 3,

@@ -22,6 +22,7 @@
         MessageId_SyncableProperty,
         MessageId_Log,
         MessageId_Ping,
+        MessageId_RoundTripTest,
     } message_id_t;
 
 typedef enum {

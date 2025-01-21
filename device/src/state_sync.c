@@ -114,6 +114,7 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t property, cons
 #define CUSTOM(...) EMPTY(__VA_ARGS__)
 
 static state_sync_prop_t stateSyncProps[StateSyncPropertyId_Count] = {
+    CUSTOM(ZeroDummy, SyncDirection_RightToLeft, DirtyState_Clean),
     DEFAULT_LAYER_PROP(LayerActionsLayer1),
     DEFAULT_LAYER_PROP(LayerActionsLayer2),
     DEFAULT_LAYER_PROP(LayerActionsLayer3),
@@ -147,8 +148,6 @@ static state_sync_prop_t stateSyncProps[StateSyncPropertyId_Count] = {
     SIMPLE(DongleProtocolVersion,   SyncDirection_DongleToRight,      DirtyState_Clean,    &DongleProtocolVersion),
     CUSTOM(KeyStatesDummy,          SyncDirection_LeftToRight,        DirtyState_Clean),
 };
-
-
 
 static void invalidateProperty(state_sync_prop_id_t propId) {
     STATE_SYNC_LOG("<<< Invalidating property %s\n", stateSyncProps[propId].name);
@@ -383,11 +382,6 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
         break;
     case StateSyncPropertyId_KeyboardLedsState:
         WIDGET_REFRESH(&StatusWidget);
-        if (!isLocalUpdate) {
-            if (DongleProtocolVersion.major == 0) {
-                LogUOS("Warning: You seem to run an old firmware on the dongle. Please upgrade!\n");
-            }
-        }
         break;
     case StateSyncPropertyId_ResetRightLeftLink:
         StateSync_ResetRightLeftLink(false);
@@ -443,6 +437,11 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
             DongleProtocolVersion = *(version_t*)data;
             checkDongleProtocolVersion();
         }
+        break;
+    case StateSyncPropertyId_ZeroDummy:
+        printk("Received an invalid message: %d %d %d | %d %d | %d %d %d %d %d\n", data[-5], data[-4], data[-3], data[-2], data[-1], data[0], data[1], data[2], data[3], data[4]);
+        break;
+    case StateSyncPropertyId_PowerMode:
         break;
     default:
         printk("Property %i ('%s') has no receive handler. If this is correct, please add a "

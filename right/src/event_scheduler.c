@@ -12,6 +12,7 @@
 #include "power_mode.h"
 
 #ifdef __ZEPHYR__
+#include "round_trip_test.h"
 #include "keyboard/oled/screens/screen_manager.h"
 #include "keyboard/oled/widgets/widgets.h"
 #include "keyboard/oled/oled.h"
@@ -119,9 +120,14 @@ static void processEvt(event_scheduler_event_t evt)
             break;
         case EventSchedulerEvent_UpdateDebugOledLine:
             WIDGET_REFRESH(&DebugLineWidget);
-#if DEBUG_SHOW_DEBUG_OLED_LINE
-            EventScheduler_Schedule(CurrentTime+1000, EventSchedulerEvent_UpdateDebugOledLine, "Event scheduler loop");
-#endif
+            if (DEBUG_SHOW_DEBUG_OLED_LINE) {
+                EventScheduler_Schedule(CurrentTime+1000, EventSchedulerEvent_UpdateDebugOledLine, "Event scheduler loop");
+            }
+            break;
+
+        case EventSchedulerEvent_RoundTripTest:
+            RoundTripTest_Run();
+            EventScheduler_Schedule(CurrentTime+10000, EventSchedulerEvent_RoundTripTest, "Event scheduler loop");
             break;
         default:
             return;
