@@ -267,16 +267,17 @@ static void checkFirmwareVersions(const uhk_module_state_t *moduleState, slot_t 
     bool anyChecksumZero = memcmp(DeviceMD5Checksums[DeviceId_Uhk80_Right], DeviceMD5Checksums[DeviceId_Uhk80_Left], MD5_CHECKSUM_LENGTH) == 0;
 
 
+    const char* universal = "Please flash both halves to the same version!";
     if (!versionsMatch) {
-        LogUOS("Error: Left and right keyboard halves have different firmware versions (Left: %u, Right: %u)!\n", moduleState->firmwareVersion, firmwareVersion);
+        LogUOS("Error: Left and right keyboard halves have different firmware versions (Left: %u, Right: %u)! %s\n", moduleState->firmwareVersion, firmwareVersion, universal);
     } else if (!gitTagsMatch) {
-        LogUOS("Error: Left and right keyboard halves have different git tags (Left: %s, Right: %s)!\n", moduleState->gitTag, gitTag);
+        LogUOS("Error: Left and right keyboard halves have different git tags (Left: %s, Right: %s)! %s\n", moduleState->gitTag, gitTag, universal);
     } else if (!leftChecksumMatches) {
-        LogUOS("Error: Left checksum differs from the expected!\n", moduleState->firmwareVersion, firmwareVersion);
+        LogUOS("Error: Left checksum differs from the expected! %s\n", moduleState->firmwareVersion, firmwareVersion, universal);
     } else if (anyVersionZero) {
-        LogUOS("Warning: Keyboard halves have zero versions!\n");
+        LogUOS("Warning: Keyboard halves have zero versions! %s\n", universal);
     } else if (anyChecksumZero) {
-        LogUOS("Warning: Keyboard halves have zero checksums!\n");
+        LogUOS("Warning: Keyboard halves have zero checksums! %s\n", universal);
     }
     #endif
 }
