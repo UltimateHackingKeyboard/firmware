@@ -15,7 +15,7 @@
 #include "keyboard/oled/widgets/console_widget.h"
 #endif
 
-#define MAX_LOG_LENGTH 64
+#define MAX_LOG_LENGTH 256
 
 #define EXPAND_STRING(BUFFER)  \
 char BUFFER[MAX_LOG_LENGTH]; \

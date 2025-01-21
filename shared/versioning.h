@@ -38,6 +38,7 @@ extern const version_t moduleProtocolVersion;
 extern const version_t userConfigVersion;
 extern const version_t hardwareConfigVersion;
 extern const version_t smartMacrosVersion;
+extern const version_t dongleProtocolVersion;
 
 extern const char gitRepo[];
 extern const char gitTag[];

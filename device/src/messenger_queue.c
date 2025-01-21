@@ -5,6 +5,9 @@
 #include <stdint.h>
 #include <zephyr/kernel.h>
 #include <zephyr/sys/printk.h>
+#include "logger.h"
+
+uint16_t MessengerQueue_DroppedMessageCount = 0;
 
 // define pool helpers
 #define POOL(NAME, POOL_SIZE, SEGMENT_SIZE) \
@@ -41,6 +44,9 @@
 #define POOL_SIZE 16
 #define POOL_REGION_SIZE MAX_LINK_PACKET_LENGTH
 #define QUEUE_REGION_SIZE sizeof(messenger_queue_record_t)
+
+static uint8_t blackholeBuffer[MAX_LINK_PACKET_LENGTH];
+uint8_t* MessengerQueue_BlackholeBuffer = blackholeBuffer;
 
 POOL(regionPool, POOL_SIZE, POOL_REGION_SIZE);
 POOL(queuePool, POOL_SIZE, QUEUE_REGION_SIZE);
@@ -106,8 +112,8 @@ uint8_t* MessengerQueue_AllocateMemory() {
     for (uint8_t tries = 0; tries < POOL_SIZE; tries++) {
         POOL_ALLOCATE(regionPool, POOL_SIZE, POOL_REGION_SIZE);
     }
-    panic("Message segment queue space ran out!\n");
-    return NULL;
+    LogUOS("Messanger message pool space ran out!\n");
+    return blackholeBuffer;
 }
 
 void MessengerQueue_FreeMemory(const uint8_t* segment) {
@@ -116,11 +122,11 @@ void MessengerQueue_FreeMemory(const uint8_t* segment) {
 
 // handle queues
 
-uint8_t* allocateQueueSegment() {
+static uint8_t* allocateQueueSegment() {
     for (uint8_t tries = 0; tries < POOL_SIZE; tries++) {
         POOL_ALLOCATE(queuePool, POOL_SIZE, QUEUE_REGION_SIZE);
     }
-    panic("Message segment queue space ran out!\n");
+    LogUOS("Messager queue node space ran out!\n");
     return NULL;
 }
 
@@ -129,7 +135,18 @@ void freeQueueSegment(const uint8_t* segment) {
 }
 
 void MessengerQueue_Put(device_id_t src, const uint8_t* data, uint16_t len, uint8_t offset) {
+    if (data == blackholeBuffer) {
+        MessengerQueue_DroppedMessageCount++;
+        return;
+    }
+
     messenger_queue_record_t* record = (messenger_queue_record_t*)allocateQueueSegment();
+
+    if (record == NULL) {
+        MessengerQueue_DroppedMessageCount++;
+        return;
+    }
+
     record->src = src;
     record->len = len;
     record->data = data;

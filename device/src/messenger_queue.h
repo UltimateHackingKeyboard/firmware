@@ -18,6 +18,10 @@
         const uint8_t* data;
     } messenger_queue_record_t;
 
+// Variables:
+
+    extern uint16_t MessengerQueue_DroppedMessageCount;
+    extern uint8_t* MessengerQueue_BlackholeBuffer;
 
 // Functions:
     void MessengerQueue_Init();

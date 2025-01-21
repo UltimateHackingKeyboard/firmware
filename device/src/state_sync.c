@@ -30,6 +30,7 @@
 #include "test_switches.h"
 #include "dongle_leds.h"
 #include "logger.h"
+#include "versioning.h"
 
 #define WAKE(TID) if (TID != 0) { k_wakeup(TID); }
 
@@ -49,6 +50,7 @@ sync_generic_half_state_t SyncLeftHalfState;
 sync_generic_half_state_t SyncRightHalfState;
 
 scroll_multipliers_t DongleScrollMultipliers = {1, 1};
+version_t DongleProtocolVersion = {0, 0, 0};
 
 uint16_t StateSync_LeftResetCounter = 0;
 uint16_t StateSync_DongleResetCounter = 0;
@@ -142,6 +144,7 @@ static state_sync_prop_t stateSyncProps[StateSyncPropertyId_Count] = {
     CUSTOM(SwitchTestMode,          SyncDirection_RightToLeft,        DirtyState_Clean),
     SIMPLE(DongleStandby,           SyncDirection_RightToDongle,      DirtyState_Clean,    &DongleStandby),
     SIMPLE(DongleScrollMultipliers, SyncDirection_DongleToRight,      DirtyState_Clean,    &DongleScrollMultipliers),
+    SIMPLE(DongleProtocolVersion,   SyncDirection_DongleToRight,      DirtyState_Clean,    &DongleProtocolVersion),
     CUSTOM(KeyStatesDummy,          SyncDirection_LeftToRight,        DirtyState_Clean),
 };
 
@@ -279,6 +282,16 @@ static void checkFirmwareVersions(const uhk_module_state_t *moduleState, slot_t 
     #endif
 }
 
+static void checkDongleProtocolVersion() {
+    if (DongleProtocolVersion.major != dongleProtocolVersion.major) {
+        LogUOS("Error: Dongle runs an incompatible protocol version (dongle: %d.%d.%d, right: %d.%d.%d)!\n",
+                DongleProtocolVersion.major, DongleProtocolVersion.minor, DongleProtocolVersion.patch,
+                dongleProtocolVersion.major, dongleProtocolVersion.minor, dongleProtocolVersion.patch
+        );
+        return;
+    }
+}
+
 static void receiveModuleStateData(sync_command_module_state_t *buffer) {
     uint8_t driverId = UhkModuleSlaveDriver_SlotIdToDriverId(buffer->slotId);
     uhk_module_state_t *moduleState = &UhkModuleStates[driverId];
@@ -370,6 +383,11 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
         break;
     case StateSyncPropertyId_KeyboardLedsState:
         WIDGET_REFRESH(&StatusWidget);
+        if (!isLocalUpdate) {
+            if (DongleProtocolVersion.major == 0) {
+                LogUOS("Warning: You seem to run an old firmware on the dongle. Please upgrade!\n");
+            }
+        }
         break;
     case StateSyncPropertyId_ResetRightLeftLink:
         StateSync_ResetRightLeftLink(false);
@@ -418,6 +436,12 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
     case StateSyncPropertyId_DongleScrollMultipliers:
         if (!isLocalUpdate) {
             DongleScrollMultipliers = *(scroll_multipliers_t*)data;
+        }
+        break;
+    case StateSyncPropertyId_DongleProtocolVersion:
+        if (!isLocalUpdate) {
+            DongleProtocolVersion = *(version_t*)data;
+            checkDongleProtocolVersion();
         }
         break;
     default:
@@ -566,7 +590,9 @@ static void prepareData(device_id_t dst, const uint8_t *propDataPtr, state_sync_
         return;
     }
     case StateSyncPropertyId_KeyStatesDummy: {
+#if DEVICE_IS_KEYBOARD
         KeyScanner_ResendKeyStates = true;
+#endif
         return;
     }
     default:
@@ -651,6 +677,7 @@ static bool handlePropertyUpdateLeftToRight() {
 static bool handlePropertyUpdateDongleToRight() {
     UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ResetRightDongleLink);
 
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_DongleProtocolVersion);
     UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_KeyboardLedsState);
     UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_DongleScrollMultipliers);
 
@@ -791,6 +818,7 @@ void StateSync_ResetRightDongleLink(bool bidirectional) {
     if (DEVICE_ID == DeviceId_Uhk_Dongle) {
         DongleStandby = false;
         invalidateProperty(StateSyncPropertyId_KeyboardLedsState);
+        invalidateProperty(StateSyncPropertyId_DongleProtocolVersion);
         invalidateProperty(StateSyncPropertyId_DongleScrollMultipliers);
     }
 }

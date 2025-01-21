@@ -103,6 +103,7 @@
         StateSyncPropertyId_DongleStandby = 29,
         StateSyncPropertyId_DongleScrollMultipliers = 30,
         StateSyncPropertyId_KeyStatesDummy = 31,
+        StateSyncPropertyId_DongleProtocolVersion = 32,
         StateSyncPropertyId_Count,
     } state_sync_prop_id_t;
 

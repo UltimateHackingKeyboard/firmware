@@ -64,6 +64,10 @@ uint16_t Uart_InvalidMessagesCounter = 0;
  * We serialize both uart-level and messenger-level packets at the same place to avoid unnecessary copying.
  * */
 
+static connection_id_t remoteConnectionId() {
+    return DEVICE_IS_UHK80_LEFT ? ConnectionId_UartRight : ConnectionId_UartLeft;
+}
+
 static void appendRxByte(uint8_t byte) {
     if (rxPosition < RX_BUF_SIZE) {
         rxBuffer[rxPosition++] = byte;
@@ -99,6 +103,7 @@ static void rxPacketReceived() {
         len -= CRC_LEN;
     } else {
         Uart_InvalidMessagesCounter++;
+        Connections[remoteConnectionId()].watermarks.rxIdx++;
         LogU("Crc-invalid UART message received!\n");
         StateSync_ResetRightLeftLink(true);
         rxPosition = 0;
@@ -313,7 +318,7 @@ static void ping() {
 
 static void updateConnectionState() {
     uint32_t pingDiff = (k_uptime_get() - lastPingTime);
-    connection_id_t connectionId = DEVICE_IS_UHK80_LEFT ? ConnectionId_UartRight : ConnectionId_UartLeft;
+    connection_id_t connectionId = remoteConnectionId();
     bool oldIsConnected = Connections_IsReady(connectionId);
     bool newIsConnected =  pingDiff < UART_TIMEOUT;
     if (oldIsConnected != newIsConnected) {

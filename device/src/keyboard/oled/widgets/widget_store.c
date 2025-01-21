@@ -24,6 +24,7 @@
 #include "connections.h"
 #include "keyboard/uart.h"
 #include "messenger.h"
+#include "messenger_queue.h"
 #include "event_scheduler.h"
 
 widget_t KeymapWidget;
@@ -50,9 +51,16 @@ static string_segment_t getKeymapText() {
 uint16_t RoundTripTime = 0;
 
 static string_segment_t getDebugLineText() {
-#define BUFFER_LENGTH 64
+#define BUFFER_LENGTH 80
     static char buffer[BUFFER_LENGTH] = { [BUFFER_LENGTH-1] = 0 };
-    snprintf(buffer, BUFFER_LENGTH-1, "MM %d, ICRC %d, SSLR %d, RTT %d", Messenger_GetMissedMessages(DeviceId_Uhk80_Left), Uart_InvalidMessagesCounter, StateSync_LeftResetCounter, RoundTripTime);
+    snprintf(buffer, BUFFER_LENGTH-1, "D %d, MB %d, MU %d, IU %d, R %d, RTT %d",
+            MessengerQueue_DroppedMessageCount,
+            Connections[ConnectionId_UartLeft].watermarks.missedCount,
+            Connections[ConnectionId_NusServerLeft].watermarks.missedCount,
+            Uart_InvalidMessagesCounter,
+            StateSync_LeftResetCounter,
+            RoundTripTime
+            );
     return (string_segment_t){ .start = buffer, .end = NULL };
 #undef BUFFER_LENGTH
 }

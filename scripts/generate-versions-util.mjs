@@ -8,7 +8,7 @@ const __dirname = path.dirname(__filename);
 
 const ZERO_MD5 = '000000000000000000000000000000000'
 
-const versionPropertyPrefixes = ['firmware', 'deviceProtocol', 'moduleProtocol', 'userConfig', 'hardwareConfig', 'smartMacros'];
+const versionPropertyPrefixes = ['firmware', 'deviceProtocol', 'moduleProtocol', 'userConfig', 'hardwareConfig', 'smartMacros', 'dongleProtocol'];
 const patchVersions = ['Major', 'Minor', 'Patch'];
 
 /**

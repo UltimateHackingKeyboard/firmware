@@ -5,7 +5,7 @@ import shutil
 
 ZERO_MD5 = '00000000000000000000000000000000'
 
-version_property_prefixes = ['firmware', 'deviceProtocol', 'moduleProtocol', 'userConfig', 'hardwareConfig', 'smartMacros']
+version_property_prefixes = ['firmware', 'deviceProtocol', 'moduleProtocol', 'userConfig', 'hardwareConfig', 'smartMacros', 'dongleProtocol']
 patch_versions = ['Major', 'Minor', 'Patch']
 
 def generate_versions(package_json, git_info, use_real_shas, use_zero_versions):

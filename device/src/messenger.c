@@ -292,6 +292,10 @@ ATTR_UNUSED static void getMessageDescription(const uint8_t* data, const char** 
 }
 
 void processWatermarks(uint8_t srcConnectionId, uint8_t src, const uint8_t* data, uint16_t len, uint8_t offset) {
+    if (data == MessengerQueue_BlackholeBuffer) {
+        return;
+    }
+
     uint8_t wm = data[offset+MessageOffset_Wm];
     uint8_t expectedWm = Connections[srcConnectionId].watermarks.rxIdx++;
     if (wm != expectedWm) {
