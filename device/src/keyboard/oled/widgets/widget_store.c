@@ -26,6 +26,7 @@
 #include "messenger.h"
 #include "messenger_queue.h"
 #include "event_scheduler.h"
+#include "round_trip_test.h"
 
 widget_t KeymapWidget;
 widget_t LayerWidget;
@@ -47,8 +48,6 @@ static string_segment_t getKeymapText() {
         return GetKeymapName(CurrentKeymapIndex);
     }
 }
-
-uint16_t RoundTripTime = 0;
 
 static string_segment_t getDebugLineText() {
 #define BUFFER_LENGTH 80

@@ -35,6 +35,7 @@ if(NOT CONFIG_BOARD_UHK_60_RIGHT)
         logger.c
         messenger_queue.c
         messenger.c
+        round_trip_test.c
         settings.c
         shell.c
         stack_trace.c
