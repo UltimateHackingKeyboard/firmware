@@ -138,7 +138,18 @@ static void setLatency(struct bt_conn* conn, const struct bt_le_conn_param* para
 
 static void configureLatency(struct bt_conn *conn, latency_mode_t latencyMode) {
     switch (latencyMode) {
-        case LatencyMode_NUS:
+        case LatencyMode_NUS: {
+                // https://developer.apple.com/library/archive/qa/qa1931/_index.html
+                // https://punchthrough.com/manage-ble-connection/
+                // https://devzone.nordicsemi.com/f/nordic-q-a/28058/what-is-connection-parameters
+                const struct bt_le_conn_param conn_params = BT_LE_CONN_PARAM_INIT(
+                    6, 6, // keep it low, lowest allowed is 6 (7.5ms), lowest supported widely is 9 (11.25ms)
+                    0, // keeping it higher allows power saving on peripheral when there's nothing to send (keep it under 30 though)
+                    100 // connection timeout (*10ms)
+                );
+                setLatency(conn, &conn_params);
+             }
+            break;
         case LatencyMode_BleHid: {
                 // https://developer.apple.com/library/archive/qa/qa1931/_index.html
                 // https://punchthrough.com/manage-ble-connection/
@@ -471,8 +482,10 @@ __attribute__((unused)) static void infoLatencyParamsUpdated(struct bt_conn* con
 {
     printk("%s conn params: interval=%u ms, latency=%u, timeout=%u ms\n", GetPeerStringByConn(conn), interval * 5 / 4, latency, timeout * 10);
 
+    bool isUhkPeer = isUhkDeviceConnection(Connections_Type(Peers[GetPeerIdByConn(conn)].connectionId));
+
     if (interval > 10) {
-        configureLatency(conn, LatencyMode_NUS);
+        configureLatency(conn, isUhkPeer ? LatencyMode_NUS : LatencyMode_BleHid);
     }
 }
 
