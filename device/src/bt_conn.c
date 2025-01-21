@@ -540,67 +540,12 @@ static void securityChanged(struct bt_conn *conn, bt_security_t level, enum bt_s
     connectAuthenticatedConnection(conn, connectionId, connectionType);
 }
 
-
-/*
-static void securityChanged(struct bt_conn *conn, bt_security_t level, enum bt_security_err err) {
-    int8_t peerId = GetPeerIdByConn(conn);
-    uint8_t connectionId;
-    uint8_t connectionType;
-
-    if (peerId == PeerIdUnknown) {
-        connectionId = Connections_GetConnectionIdByBtAddr(bt_conn_get_dst(conn));
-        connectionType = Connections_Type(connectionId);
-
-        if (connectionType == ConnectionType_BtHid) {
-            connectHid(conn, connectionId, connectionType);
-        }
-
-        if (connectionId == ConnectionId_Invalid && conn != auth_conn) {
-            printk("Unknown and non-autheticating connection secured. Disconnecting %s\n", GetPeerStringByConn(conn));
-            bt_conn_disconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
-            return;
-        }
-    } else {
-        connectionId = Peers[peerId].connectionId;
-        connectionType = Connections_Type(connectionId);
-    }
-
-    bool isUhkPeer = isUhkDeviceConnection(connectionType);
-    if (err || (isUhkPeer && level < BT_SECURITY_L4 && !Cfg.AllowUnsecuredConnections)) {
-        printk("Bt security failed: %s, level %u, err %d, disconnecting\n", GetPeerStringByConn(conn), level, err);
-        bt_conn_auth_cancel(conn);
-        return;
-    }
-
-    printk("Bt connection secured: %s, level %u, peerId %d\n", GetPeerStringByConn(conn), level, peerId);
-
-    if (isUhkPeer) {
-        configureLatency(conn);
-        enableDataLengthExtension(conn);
-
-        if (
-                (DEVICE_IS_UHK80_RIGHT && peerId == PeerIdLeft)
-                || (DEVICE_IS_UHK_DONGLE && peerId == PeerIdRight)
-        ) {
-            printk("Initiating NUS connection with %s\n", GetPeerStringByConn(conn));
-            NusClient_Connect(conn);
-        }
-    }
-
-#if DEVICE_IS_UHK80_LEFT
-    // gatt_discover(conn); // Taken from bt_central_uart.c
-#endif
-}
-*/
-
 __attribute__((unused)) static void infoLatencyParamsUpdated(struct bt_conn* conn, uint16_t interval, uint16_t latency, uint16_t timeout)
 {
-    uint8_t peerId = GetPeerIdByConn(conn);
-    connection_type_t connectionType = Connections_Type(Peers[peerId].connectionId);
+    printk("%s conn params: interval=%u ms, latency=%u, timeout=%u ms\n", GetPeerStringByConn(conn), interval * 5 / 4, latency, timeout * 10);
 
-    if (connectionType == ConnectionType_BtHid || connectionType == ConnectionType_Unknown) {
-        printk("BLE HID conn params: interval=%u ms, latency=%u, timeout=%u ms\n",
-            interval * 5 / 4, latency, timeout * 10);
+    if (interval > 10) {
+        configureLatency(conn, LatencyMode_NUS);
     }
 }
 
