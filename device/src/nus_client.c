@@ -195,12 +195,14 @@ void NusClient_SendMessage(message_t msg) {
         buffer[bufferIdx++] = msg.messageId[id];
     }
 
-    if (msg.len + msg.idsUsed + 2 > MAX_LINK_PACKET_LENGTH) {
+    if (bufferIdx + msg.len > MAX_LINK_PACKET_LENGTH) {
         printk("Message is too long for NUS packets! [%i, %i, ...]\n", buffer[0], buffer[1]);
         return;
     }
 
     memcpy(&buffer[bufferIdx], msg.data, msg.len);
 
-    send_raw_buffer(buffer, msg.len+msg.idsUsed+2);
+    bufferIdx += msg.len;
+
+    send_raw_buffer(buffer, bufferIdx);
 }

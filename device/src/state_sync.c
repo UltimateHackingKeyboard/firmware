@@ -353,6 +353,10 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
         break;
     case StateSyncPropertyId_ActiveLayer:
         if (!isLocalUpdate) {
+            if (ActiveLayer >= LayerId_Count) {
+                LogUOS("Received invalid active layer %d --- %d %d %d %d %d | %d %d | %d %d\n", ActiveLayer, data[-5], data[-4], data[-3], data[-2], data[-1], data[0], data[1], data[2], data[3]);
+                ActiveLayer = LayerId_Base;
+            }
             EventVector_Set(EventVector_LedMapUpdateNeeded);
         }
         break;
