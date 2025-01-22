@@ -269,14 +269,21 @@ static void checkFirmwareVersions(const uhk_module_state_t *moduleState, slot_t 
 
     const char* universal = "Please flash both halves to the same version!";
     if (!versionsMatch) {
-        LogUOS("Error: Left and right keyboard halves have different firmware versions (Left: %u, Right: %u)! %s\n", moduleState->firmwareVersion, firmwareVersion, universal);
-    } else if (!gitTagsMatch) {
-        LogUOS("Error: Left and right keyboard halves have different git tags (Left: %s, Right: %s)! %s\n", moduleState->gitTag, gitTag, universal);
-    } else if (!leftChecksumMatches) {
-        LogUOS("Error: Left checksum differs from the expected! %s\n", moduleState->firmwareVersion, firmwareVersion, universal);
-    } else if (anyVersionZero) {
+        LogUOS("Error: Left and right keyboard halves have different firmware versions (Left: %u, Right: %u)!\n", moduleState->firmwareVersion, firmwareVersion);
+    }
+    if (!gitTagsMatch) {
+        LogUOS("Error: Left and right keyboard halves have different git tags (Left: %s, Right: %s)!\n", moduleState->gitTag, gitTag);
+    }
+    if (!leftChecksumMatches) {
+        LogUOS("Error: Left checksum differs from the expected! Expected '%s', got '%s'!\n", DeviceMD5Checksums[DeviceId_Uhk80_Left], moduleState->firmwareChecksum);
+    }
+    if (!versionsMatch || !gitTagsMatch || !leftChecksumMatches) {
+        LogUOS("    %s", universal);
+    }
+    if (anyVersionZero) {
         LogUOS("Warning: Keyboard halves have zero versions! %s\n", universal);
-    } else if (anyChecksumZero) {
+    }
+    if (anyChecksumZero) {
         LogUOS("Warning: Keyboard halves have zero checksums! %s\n", universal);
     }
     #endif
@@ -682,6 +689,7 @@ static bool handlePropertyUpdateDongleToRight() {
     UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ResetRightDongleLink);
 
     UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_DongleProtocolVersion);
+
     UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_KeyboardLedsState);
     UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_DongleScrollMultipliers);
 

@@ -13,11 +13,11 @@
 #include "config_manager.h"
 #include "led_manager.h"
 #include "versioning.h"
+#include "device.h"
 
 #ifdef __ZEPHYR__
 #include "state_sync.h"
 #include "event_scheduler.h"
-#include "main.h"
 #endif
 
 void updateUsbBuffer(uint8_t *GenericHidInBuffer, uint8_t usbStatusCode, uint16_t parserOffset, parser_stage_t parserStage)
@@ -66,6 +66,15 @@ void UsbCommand_ApplyFactory(const uint8_t *GenericHidOutBuffer, uint8_t *Generi
     Macros_ClearStatus();
 
     ConfigManager_ResetConfiguration(false);
+
+#ifdef __ZEPHYR__
+    printk(
+            "Loading Factory Config: N/A (native version: %u.%u.%u., at %s / %s)\n",
+            userConfigVersion.major, userConfigVersion.minor, userConfigVersion.patch,
+            gitTag,
+            DeviceMD5Checksums[DEVICE_ID]
+          );
+#endif
 
     if (hwConfigEmpty()) {
         setLedsWhite();
