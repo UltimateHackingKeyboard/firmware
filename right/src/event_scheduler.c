@@ -120,7 +120,7 @@ static void processEvt(event_scheduler_event_t evt)
             break;
         case EventSchedulerEvent_UpdateDebugOledLine:
             WIDGET_REFRESH(&DebugLineWidget);
-            if (DEBUG_SHOW_DEBUG_OLED_LINE) {
+            if (DEBUG_MODE) {
                 EventScheduler_Schedule(CurrentTime+1000, EventSchedulerEvent_UpdateDebugOledLine, "Event scheduler loop");
             }
             break;
