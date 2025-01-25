@@ -40,7 +40,7 @@ void UsbCommand_GetModuleProperty(const uint8_t *GenericHidOutBuffer, uint8_t *G
             Utils_SafeStrCopy(((char*)GenericHidInBuffer) + 1, moduleState->gitRepo, USB_GENERIC_HID_IN_BUFFER_LENGTH - 1);
             break;
         }
-        case ModulePropertyId_FirmwareChecksum: {
+        case ModulePropertyId_RemoteFirmwareChecksumBySlotId: {
             uint8_t moduleDriverId = UhkModuleSlaveDriver_SlotIdToDriverId(slotId);
             uhk_module_state_t *moduleState = UhkModuleStates + moduleDriverId;
             Utils_SafeStrCopy(((char*)GenericHidInBuffer) + 1, moduleState->firmwareChecksum, MD5_CHECKSUM_LENGTH + 1);

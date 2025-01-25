@@ -73,15 +73,40 @@ void UsbCommand_GetDeviceProperty(const uint8_t *GenericHidOutBuffer, uint8_t *G
         Utils_SafeStrCopy(
             ((char *)GenericHidInBuffer) + 1, gitRepo, USB_GENERIC_HID_IN_BUFFER_LENGTH - 1);
         break;
-    case DevicePropertyId_FirmwareChecksum: {
+    case DevicePropertyId_BuiltFirmwareChecksumByModuleId: {
         uint8_t moduleId = GetUsbRxBufferUint8(2);
-        if (moduleId == ModuleId_RightKeyboardHalf) {
-            Utils_SafeStrCopy(((char *)GenericHidInBuffer) + 1, DeviceMD5Checksums[DEVICE_ID],
-                MD5_CHECKSUM_LENGTH + 1);
-        } else {
-            Utils_SafeStrCopy(((char *)GenericHidInBuffer) + 1, ModuleMD5Checksums[moduleId],
-                MD5_CHECKSUM_LENGTH + 1);
+        const char *checksum = NULL;
+        switch (DEVICE_ID) {
+            case DEVICE_ID_UHK60V1_RIGHT:
+            case DEVICE_ID_UHK60V2_RIGHT:
+                if (moduleId == ModuleId_RightKeyboardHalf) {
+                    checksum = DeviceMD5Checksums[DEVICE_ID];
+                } else if (moduleId < ModuleId_ModuleCount) {
+                    checksum = ModuleMD5Checksums[moduleId];
+                } else {
+                    SetUsbTxBufferUint8(0, UsbStatusCode_GetDeviceProperty_InvalidArgument);
+                }
+                break;
+            case DEVICE_ID_UHK80_LEFT:
+            case DEVICE_ID_UHK80_RIGHT:
+            case DEVICE_ID_UHK_DONGLE:
+                switch (moduleId) {
+                    case ModuleId_LeftKeyboardHalf:
+                        checksum = DeviceMD5Checksums[DeviceId_Uhk80_Left];
+                        break;
+                    case ModuleId_RightKeyboardHalf:
+                        checksum = DeviceMD5Checksums[DeviceId_Uhk80_Right];
+                        break;
+                    case ModuleId_Dongle:
+                        checksum = DeviceMD5Checksums[DeviceId_Uhk_Dongle];
+                        break;
+                    default:
+                        checksum = ModuleMD5Checksums[moduleId];
+                        break;
+                }
+                break;
         }
+        Utils_SafeStrCopy(((char *)GenericHidInBuffer) + 1, checksum, MD5_CHECKSUM_LENGTH + 1);
     } break;
     case DevicePropertyId_BleAddress: {
 #ifdef __ZEPHYR__

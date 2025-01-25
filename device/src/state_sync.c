@@ -531,7 +531,7 @@ static void prepareLeftHalfStateData(sync_command_module_state_t *buffer) {
     buffer->pointerCount = MODULE_POINTER_COUNT;
     Utils_SafeStrCopy(buffer->gitRepo, gitRepo, MAX_STRING_PROPERTY_LENGTH);
     Utils_SafeStrCopy(buffer->gitTag, gitTag, MAX_STRING_PROPERTY_LENGTH);
-    memcpy(buffer->firmwareChecksum, ModuleMD5Checksums[MODULE_ID], MD5_CHECKSUM_LENGTH);
+    memcpy(buffer->firmwareChecksum, DeviceMD5Checksums[DEVICE_ID], MD5_CHECKSUM_LENGTH);
 #endif
 }
 
