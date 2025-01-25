@@ -10,7 +10,7 @@
 #define DEBUG_POSTPONER false
 #define WATCH_INTERVAL 500
 
-#define DEBUG_SHOW_DEBUG_OLED_LINE true
+#define DEBUG_MODE true
 
 #define DEBUG_ROLL_STATUS_BUFFER true
 

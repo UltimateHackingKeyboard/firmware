@@ -12,7 +12,7 @@ widget_t* MainScreen;
 
 void MainScreen_Init()
 {
-#if DEBUG_SHOW_DEBUG_OLED_LINE
+#if DEBUG_MODE
     ATTR_UNUSED const uint8_t totalHeight = DISPLAY_HEIGHT - 2*DISPLAY_SHIFTING_MARGIN; //56
     ATTR_UNUSED const uint8_t statusHeight = 14;
     ATTR_UNUSED const uint8_t keymapHeight = 22;
@@ -29,7 +29,7 @@ void MainScreen_Init()
 
     widget_t* debugLineAndTarget;
 
-    if (DEBUG_SHOW_DEBUG_OLED_LINE) {
+    if (DEBUG_MODE) {
         debugLineAndTarget = &debugLineAndTargetSplitter;
     } else {
         debugLineAndTarget = &TargetWidget;
