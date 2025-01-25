@@ -59,6 +59,8 @@
         ModuleId_Last = ModuleId_Next,
         ModuleId_ModuleCount = ModuleId_Last - ModuleId_FirstRealModule + 1,
         ModuleId_AllCount = ModuleId_Last + 1,
+        ModuleId_Dongle = 254,
+        ModuleId_Invalid = 255,
     } module_id_t;
 
     typedef struct {

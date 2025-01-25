@@ -15,7 +15,7 @@
         ModulePropertyId_VersionNumbers = 0,
         ModulePropertyId_GitTag = 1,
         ModulePropertyId_GitRepo = 2,
-        ModulePropertyId_FirmwareChecksum = 3,
+        ModulePropertyId_RemoteFirmwareChecksumBySlotId = 3,
     } module_property_id_t;
 
     typedef enum {
