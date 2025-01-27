@@ -28,6 +28,7 @@
 #include "config_manager.h"
 #include "zephyr/kernel.h"
 #include <zephyr/bluetooth/gatt.h>
+#include "stubs.h"
 
 bool Bt_NewPairedDevice = false;
 
