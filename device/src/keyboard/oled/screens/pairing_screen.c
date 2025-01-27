@@ -23,9 +23,8 @@ widget_t* PairingFailedScreen;
 static uint8_t passwordCharCount = 0;
 static uint8_t password[PASSWORD_LENGTH];
 static char passwordTextBuffer[2*PASSWORD_LENGTH] = { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '\0'};
-static unsigned int correctPassword;
 
-static void updatePasswordText()
+static void updatePasswordText(void)
 {
     for (uint8_t i = 0; i < PASSWORD_LENGTH; i++) {
         if (i < passwordCharCount) {
@@ -39,7 +38,7 @@ static void updatePasswordText()
     Oled_RequestRedraw();
 }
 
-unsigned int computePassword()
+unsigned int computePassword(void)
 {
     unsigned int res = 0;
     for (uint8_t i = 0; i < PASSWORD_LENGTH; i++) {
@@ -57,14 +56,13 @@ static void registerPasswordDigit(uint8_t digit)
     updatePasswordText();
 
     if (passwordCharCount == PASSWORD_LENGTH) {
-        if (computePassword() == correctPassword) {
-            num_comp_reply(1);
-            ScreenManager_ActivateScreen(ScreenId_PairingSucceeded);
-        } else {
-            num_comp_reply(0);
-            ScreenManager_ActivateScreen(ScreenId_PairingFailed);
-        }
+        num_comp_reply(computePassword());
     }
+}
+
+void PairingScreen_Feedback(bool success)
+{
+    ScreenManager_ActivateScreen(success ? ScreenId_PairingSucceeded : ScreenId_PairingFailed);
 }
 
 const rgb_t* PairingScreen_ActionColor(key_action_t* action) {
@@ -102,8 +100,7 @@ void PairingScreen_RegisterScancode(uint8_t scancode)
     switch (scancode)
     {
         case HID_KEYBOARD_SC_ESCAPE:
-            num_comp_reply(0);
-            ScreenManager_ActivateScreen(ScreenId_PairingFailed);
+            num_comp_reply(-1);
             break;
         case HID_KEYBOARD_SC_DELETE:
         case HID_KEYBOARD_SC_BACKSPACE:
@@ -125,15 +122,14 @@ void PairingScreen_RegisterScancode(uint8_t scancode)
     }
 }
 
-void PairingScreen_AskForPassword(unsigned int pass)
+void PairingScreen_AskForPassword(void)
 {
-    correctPassword = pass;
     passwordCharCount = 0;
     updatePasswordText();
     ScreenManager_ActivateScreen(ScreenId_Pairing);
 }
 
-void PairingScreen_Init()
+void PairingScreen_Init(void)
 {
     questionLine = TextWidget_Build(&JetBrainsMono16, "Pairing code:");
     answerLine = TextWidget_Build(&JetBrainsMono16, passwordTextBuffer);

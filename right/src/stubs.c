@@ -1,11 +1,5 @@
 #include "stubs.h"
 
-#ifdef __ZEPHYR__
-#include "device.h"
-#else
-#include "device.h"
-#endif
-
 #define ATTRS __attribute__((weak))
 
     ATTRS bool SegmentDisplay_NeedsUpdate = false;
@@ -34,3 +28,4 @@
     ATTRS int BtScan_Start(void) { return 0; };
     ATTRS void BtManager_StartScanningAndAdvertising() {};
     ATTRS void BtConn_UpdateHostConnectionPeerAllocations() {};
+    ATTRS void PairingScreen_Feedback(bool success) {};
