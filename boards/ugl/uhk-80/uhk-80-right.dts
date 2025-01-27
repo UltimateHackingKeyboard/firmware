@@ -24,7 +24,7 @@
 &uart1 {
     compatible = "nordic,nrf-uarte";
     status = "okay";
-    current-speed = <115200>;
+    current-speed = <38400>;
     pinctrl-0 = <&uart1_default>;
     pinctrl-1 = <&uart1_sleep>;
     pinctrl-names = "default", "sleep";
