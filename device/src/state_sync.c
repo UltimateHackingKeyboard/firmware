@@ -266,9 +266,14 @@ static void checkFirmwareVersions(const uhk_module_state_t *moduleState, slot_t 
     bool anyVersionZero = (moduleState->firmwareVersion.major == 0 || firmwareVersion.major == 0);
     bool anyChecksumZero = memcmp(DeviceMD5Checksums[DeviceId_Uhk80_Right], DeviceMD5Checksums[DeviceId_Uhk80_Left], MD5_CHECKSUM_LENGTH) == 0;
 
+    if (anyChecksumZero) {
+        // Don't spam development builds.
+        return;
+    }
 
     const char* universal = "Please flash both halves to the same version!";
     bool fine = true;
+    static bool lastLogWasSuccess = false;
 
     if (!versionsMatch) {
         fine = false;
@@ -295,9 +300,12 @@ static void checkFirmwareVersions(const uhk_module_state_t *moduleState, slot_t 
         LogUOS("Warning: Keyboard halves have zero checksums! %s\n", universal);
     }
 
-    if (fine) {
+    if (fine && !lastLogWasSuccess) {
         LogUOS("Left and right keyboard halves have matching firmware versions, git tags and checksums now!\n");
+        lastLogWasSuccess = true;
     }
+
+    lastLogWasSuccess = fine;
     #endif
 }
 
