@@ -275,11 +275,12 @@ static bool isSpam(const uint8_t* data, connection_id_t connectionId) {
     return false;
 }
 
-ATTR_UNUSED static void getMessageDescription(const uint8_t* data, const char** out1, const char** out2) {
-    switch (data[MessageOffset_MsgId1]) {
+ATTR_UNUSED static void getMessageDescription(uint8_t msgId1, uint8_t msgId2, const char** out1, const char** out2) {
+
+    switch (msgId1) {
         case MessageId_StateSync:
             *out1 = "StateSync";
-            *out2 = StateSync_PropertyIdToString(data[MessageOffset_MsgId1+1]);
+            *out2 = StateSync_PropertyIdToString(msgId2);
             return;
         case MessageId_SyncableProperty:
             *out1 = "SyncableProperty";
@@ -293,9 +294,18 @@ ATTR_UNUSED static void getMessageDescription(const uint8_t* data, const char** 
             *out1 = "Ping";
             *out2 = NULL;
             return;
-        default:
-            *out1 = "Unknown";
+        case MessageId_RoundTripTest:
+            *out1 = "RoundTripTest";
             *out2 = NULL;
+            return;
+        default: {
+                static char buffer[3];
+                buffer[0] = msgId1+'0';
+                buffer[1] = msgId2+'0';
+                buffer[2] = '\0';
+                *out1 = "Unknown";
+                *out2 = buffer;
+            }
             return;
     }
 }
@@ -303,6 +313,12 @@ ATTR_UNUSED static void getMessageDescription(const uint8_t* data, const char** 
 void processWatermarks(uint8_t srcConnectionId, uint8_t src, const uint8_t* data, uint16_t len, uint8_t offset) {
     uint8_t wm = data[offset+MessageOffset_Wm];
     uint8_t expectedWm = Connections[srcConnectionId].watermarks.rxIdx++;
+
+    const char *desc1, *desc2;
+    getMessageDescription(data[offset+MessageOffset_MsgId1], data[offset+MessageOffset_MsgId1+1], &desc1, &desc2);
+    desc1 = desc1 == NULL ? "" : desc1;
+    desc2 = desc2 == NULL ? "" : desc2;
+    printk("Rec %d    %d %s %s\n", srcConnectionId, wm, desc1, desc2);
 
     if (data == MessengerQueue_BlackholeBuffer) {
         return;
@@ -331,7 +347,7 @@ void Messenger_Enqueue(uint8_t srcConnectionId, uint8_t src, const uint8_t* data
         LOG_SCHEDULE(
             const char* desc1;
             const char* desc2;
-            getMessageDescription(data+offset, &desc1, &desc2);
+            getMessageDescription((data+offset)[0], (data+offset)[1], &desc1, &desc2);
             printk("        (%c %s %s)\n", getDeviceAbbrev(data[MessageOffset_Src]), desc1, desc2 == NULL ? "" : desc2);
         );
         Main_Wake();
@@ -383,6 +399,13 @@ void Messenger_SendMessage(message_t message) {
     connection_id_t connectionId = message.connectionId;
     device_id_t dst = message.dst;
     message.wm = Connections[connectionId].watermarks.txIdx++;
+
+
+    const char *desc1, *desc2;
+    getMessageDescription(message.messageId[0], message.messageId[1], &desc1, &desc2);
+    desc1 = desc1 == NULL ? "" : desc1;
+    desc2 = desc2 == NULL ? "" : desc2;
+    printk("Sen %d        %d %s %s\n", connectionId, message.wm, desc1, desc2);
 
     switch (connectionId) {
         case ConnectionId_UartLeft:

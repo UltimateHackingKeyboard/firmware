@@ -19,10 +19,10 @@
 
     typedef enum {
         MessageId_StateSync = 1,
-        MessageId_SyncableProperty,
-        MessageId_Log,
-        MessageId_Ping,
-        MessageId_RoundTripTest,
+        MessageId_SyncableProperty = 2,
+        MessageId_Log = 3,
+        MessageId_Ping = 4,
+        MessageId_RoundTripTest = 5,
     } message_id_t;
 
 typedef enum {
