@@ -55,6 +55,15 @@ version_t DongleProtocolVersion = {0, 0, 0};
 uint16_t StateSync_LeftResetCounter = 0;
 uint16_t StateSync_DongleResetCounter = 0;
 
+static void wake(k_tid_t tid) {
+    if (tid != 0) {
+        k_wakeup(tid);
+        printk("StateSync woke up %p\n", tid);
+    } else {
+        printk("Skipping wake up, tid is 0");
+    }
+}
+
 static void receiveProperty(device_id_t src, state_sync_prop_id_t property, const uint8_t *data, uint8_t len);
 
 #define DEFAULT_LAYER_PROP(NAME)                                                                   \
@@ -162,14 +171,14 @@ static void invalidateProperty(state_sync_prop_id_t propId) {
     bool isRightLeftLink = (stateSyncProps[propId].direction &
                             (SyncDirection_RightToLeft | SyncDirection_LeftToRight));
     if (isRightLeftLink && isRightLeftDevice) {
-        WAKE(stateSyncThreadLeftId);
+        wake(stateSyncThreadLeftId);
     }
     bool isRightDongleDevice =
         (DEVICE_ID == DeviceId_Uhk80_Right || DEVICE_ID == DeviceId_Uhk_Dongle);
     bool isRightDongleLink = (stateSyncProps[propId].direction &
                               (SyncDirection_DongleToRight | SyncDirection_RightToDongle));
     if (isRightDongleLink && isRightDongleDevice) {
-        WAKE(stateSyncThreadDongleId);
+        wake(stateSyncThreadDongleId);
     }
 }
 
