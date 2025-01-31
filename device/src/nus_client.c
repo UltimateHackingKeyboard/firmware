@@ -175,7 +175,6 @@ bool NusClient_Availability(messenger_availability_op_t operation) {
 }
 
 static void send_raw_buffer(const uint8_t *data, uint16_t len) {
-    SEM_TAKE(&nusBusy);
     int err = bt_nus_client_send(&nus_client, data, len);
     if (err) {
         k_sem_give(&nusBusy);
@@ -184,6 +183,10 @@ static void send_raw_buffer(const uint8_t *data, uint16_t len) {
 }
 
 void NusClient_SendMessage(message_t msg) {
+    SEM_TAKE(&nusBusy);
+
+    msg.wm = Connections[msg.connectionId].watermarks.txIdx++;
+
     uint8_t buffer[MAX_LINK_PACKET_LENGTH];
     uint8_t bufferIdx = 0;
 

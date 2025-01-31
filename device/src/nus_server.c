@@ -74,7 +74,6 @@ void NusServer_Disconnected() {
 }
 
 static void send_raw_buffer(const uint8_t *data, uint16_t len, struct bt_conn* conn) {
-    SEM_TAKE(&nusBusy);
     int err = bt_nus_send(conn, data, len);
     if (err) {
         k_sem_give(&nusBusy);
@@ -98,6 +97,10 @@ bool NusServer_Availability(messenger_availability_op_t operation) {
 }
 
 void NusServer_SendMessageTo(message_t msg, struct bt_conn* conn) {
+    SEM_TAKE(&nusBusy);
+
+    msg.wm = Connections[msg.connectionId].watermarks.txIdx++;
+
     uint8_t buffer[MAX_LINK_PACKET_LENGTH];
     uint8_t bufferIdx = 0;
 

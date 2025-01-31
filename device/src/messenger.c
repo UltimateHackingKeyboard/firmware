@@ -398,14 +398,7 @@ bool Messenger_Availability(device_id_t dst, messenger_availability_op_t operati
 void Messenger_SendMessage(message_t message) {
     connection_id_t connectionId = message.connectionId;
     device_id_t dst = message.dst;
-    message.wm = Connections[connectionId].watermarks.txIdx++;
 
-
-    const char *desc1, *desc2;
-    getMessageDescription(message.messageId[0], message.messageId[1], &desc1, &desc2);
-    desc1 = desc1 == NULL ? "" : desc1;
-    desc2 = desc2 == NULL ? "" : desc2;
-    printk("Sen %d        %d %s %s\n", connectionId, message.wm, desc1, desc2);
 
     switch (connectionId) {
         case ConnectionId_UartLeft:
@@ -438,6 +431,13 @@ void Messenger_SendMessage(message_t message) {
             printk("Failed to send message from %s to %s\n", Utils_DeviceIdToString(DEVICE_ID), Utils_DeviceIdToString(dst));
             break;
     }
+
+    const char *desc1, *desc2;
+    getMessageDescription(message.messageId[0], message.messageId[1], &desc1, &desc2);
+    desc1 = desc1 == NULL ? "" : desc1;
+    desc2 = desc2 == NULL ? "" : desc2;
+    printk("Sen %d        %d %s %s\n", connectionId, message.wm, desc1, desc2);
+
 }
 
 void Messenger_Send(device_id_t dst, uint8_t messageId, const uint8_t* data, uint16_t len) {

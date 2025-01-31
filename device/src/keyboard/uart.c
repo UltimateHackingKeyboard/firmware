@@ -286,6 +286,8 @@ void Uart_SendPacket(const uint8_t* data, uint16_t len) {
 void Uart_SendMessage(message_t msg) {
     SEM_TAKE(&txBufferBusy);
 
+    msg.wm = Connections[msg.connectionId].watermarks.txIdx++;
+
     crc16_data_t crcState;
     crc16_init(&crcState);
 
