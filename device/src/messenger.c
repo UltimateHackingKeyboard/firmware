@@ -318,7 +318,10 @@ void processWatermarks(uint8_t srcConnectionId, uint8_t src, const uint8_t* data
     getMessageDescription(data[offset+MessageOffset_MsgId1], data[offset+MessageOffset_MsgId1+1], &desc1, &desc2);
     desc1 = desc1 == NULL ? "" : desc1;
     desc2 = desc2 == NULL ? "" : desc2;
-    printk("Rec %d    %d %s %s\n", srcConnectionId, wm, desc1, desc2);
+
+    if (DEBUG_MODE) {
+        printk("Rec %d    %d %s %s\n", srcConnectionId, wm, desc1, desc2);
+    }
 
     if (data == MessengerQueue_BlackholeBuffer) {
         return;
@@ -436,7 +439,9 @@ void Messenger_SendMessage(message_t message) {
     getMessageDescription(message.messageId[0], message.messageId[1], &desc1, &desc2);
     desc1 = desc1 == NULL ? "" : desc1;
     desc2 = desc2 == NULL ? "" : desc2;
-    printk("Sen %d        %d %s %s\n", connectionId, message.wm, desc1, desc2);
+    if (DEBUG_MODE) {
+        printk("Sen %d        %d %s %s\n", connectionId, message.wm, desc1, desc2);
+    }
 
 }
 

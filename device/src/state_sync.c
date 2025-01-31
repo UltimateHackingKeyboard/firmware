@@ -58,7 +58,9 @@ uint16_t StateSync_DongleResetCounter = 0;
 static void wake(k_tid_t tid) {
     if (tid != 0) {
         k_wakeup(tid);
-        printk("StateSync woke up %p\n", tid);
+        if (DEBUG_MODE) {
+            printk("StateSync woke up %p\n", tid);
+        }
     } else {
         printk("Skipping wake up, tid is 0");
     }
