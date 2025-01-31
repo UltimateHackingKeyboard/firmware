@@ -211,7 +211,10 @@ function setupUartMonitor() {
     i=0
     for TTY in `ls /dev/ttyUSB*`
     do
-        tmux send-keys -t $SESSION_NAME.$i "screen $TTY $BAUD_RATE" C-m
+        IDX=`echo $TTY | grep -o '[0-9][0-9]*'`
+        INNER_COMMAND="screen $TTY $BAUD_RATE"
+        COMMAND="script -f log.$IDX.txt -c \"$INNER_COMMAND\""
+        tmux send-keys -t $SESSION_NAME.$i "$COMMAND" C-m
         i=$(( $i + 1 ))
     done
 
