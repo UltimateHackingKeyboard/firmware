@@ -12,6 +12,7 @@
 #include "crc16.h"
 #include "macros/status_buffer.h"
 #include "state_sync.h"
+#include "resend.h"
 
 // Thread definitions
 
@@ -72,7 +73,7 @@ static void appendRxByte(uint8_t byte) {
     if (rxPosition < RX_BUF_SIZE) {
         rxBuffer[rxPosition++] = byte;
     } else {
-        printk("Uart error: too long message in rx buffer, length: %i, begins with [%i, %i, ...]\n", rxPosition, rxBuffer[0], rxBuffer[1]);
+        LogU("Uart error: too long message in rx buffer, length: %i, begins with [%i, %i, ...]\n", rxPosition, rxBuffer[0], rxBuffer[1]);
     }
 }
 
@@ -91,9 +92,17 @@ static bool isCrcValid(uint8_t* buf, uint16_t len) {
         .data = &buf[CRC_LEN]
     };
 
-    return CRC16_IsMessageValidExt(&msg);
-}
 
+    // TODO: remove this, for debug purposes
+    bool failRandomly = false;
+    if (DEBUG_STRESS_UART && DEVICE_IS_UHK80_RIGHT && dataLen > 0) {
+        static uint8_t r = 0;
+        uint32_t time = k_uptime_get();
+        failRandomly = (time + r--) % 32 == 0;
+    }
+
+    return failRandomly ^ CRC16_IsMessageValidExt(&msg);
+}
 
 static void rxPacketReceived() {
     uint16_t len = rxPosition;
@@ -103,9 +112,12 @@ static void rxPacketReceived() {
         len -= CRC_LEN;
     } else {
         Uart_InvalidMessagesCounter++;
-        Connections[remoteConnectionId()].watermarks.rxIdx++;
+        uint8_t invalidWatermark = Connections[remoteConnectionId()].watermarks.rxIdx;
         LogU("Crc-invalid UART message received!\n");
-        StateSync_ResetRightLeftLink(true);
+        device_id_t src = DEVICE_IS_UHK80_LEFT ? DeviceId_Uhk80_Right : DeviceId_Uhk80_Left;
+        connection_id_t connectionId = DEVICE_IS_UHK80_LEFT ? ConnectionId_UartRight : ConnectionId_UartLeft;
+        Resend_RequestResendAsync(src, connectionId, invalidWatermark);
+
         rxPosition = 0;
         return;
     }
@@ -174,7 +186,7 @@ static void uart_callback(const struct device *dev, struct uart_event *evt, void
 
     case UART_TX_ABORTED:
         uart_tx(uart_dev, txBuffer, txPosition, UART_TIMEOUT);
-        printk("Tx aborted, retrying\n");
+        LogU("Tx aborted, retrying\n");
         break;
 
     case UART_RX_RDY:
@@ -190,7 +202,7 @@ static void uart_callback(const struct device *dev, struct uart_event *evt, void
 
         err = uart_rx_buf_rsp(uart_dev, rxbuf, BUF_SIZE);
         if (err != 0) {
-            printk("Could not provide new buffer because %i\n", err);
+            LogU("Could not provide new buffer because %i\n", err);
         }
         __ASSERT(err == 0, "Failed to provide new buffer");
         break;
@@ -200,13 +212,13 @@ static void uart_callback(const struct device *dev, struct uart_event *evt, void
         break;
 
     case UART_RX_DISABLED:
-        printk("UART_RX_DISABLED\n");
+        LogU("UART_RX_DISABLED\n");
         CurrentTime = k_uptime_get();
         EventScheduler_Schedule(CurrentTime + 1000, EventSchedulerEvent_ReenableUart, "reenable uart");
         break;
 
     case UART_RX_STOPPED:
-        printk("UART_RX_STOPPED\n");
+        LogU("UART_RX_STOPPED\n");
         CurrentTime = k_uptime_get();
         EventScheduler_Schedule(CurrentTime + 1000, EventSchedulerEvent_ReenableUart, "reenable uart");
         break;
@@ -218,7 +230,7 @@ static void appendTxByte(uint8_t byte) {
     if (txPosition < TX_BUF_SIZE) {
         txBuffer[txPosition++] = byte;
     } else {
-        printk("Uart error: too long message in tx buffer\n");
+        LogU("Uart error: too long message in tx buffer\n");
     }
 }
 
@@ -283,10 +295,11 @@ void Uart_SendPacket(const uint8_t* data, uint16_t len) {
     uart_tx(uart_dev, txBuffer, txPosition, UART_TIMEOUT);
 }
 
-void Uart_SendMessage(message_t msg) {
+void Uart_SendMessage(message_t* msg) {
     SEM_TAKE(&txBufferBusy);
 
-    msg.wm = Connections[msg.connectionId].watermarks.txIdx++;
+    // Call this only after we have taken the semaphore.
+    Resend_RegisterMessageAndUpdateWatermarks(msg);
 
     crc16_data_t crcState;
     crc16_init(&crcState);
@@ -294,18 +307,18 @@ void Uart_SendMessage(message_t msg) {
     appendTxByte(START_BYTE);
     txPosition = CRC_BUF_LEN+1;
 
-    processOutgoingByteWithCrc(msg.src, &crcState);
-    processOutgoingByteWithCrc(msg.dst, &crcState);
-    processOutgoingByteWithCrc(msg.wm, &crcState);
+    processOutgoingByteWithCrc(msg->src, &crcState);
+    processOutgoingByteWithCrc(msg->dst, &crcState);
+    processOutgoingByteWithCrc(msg->wm, &crcState);
 
-    for (uint8_t id = 0; id < msg.idsUsed; id++) {
-        processOutgoingByteWithCrc(msg.messageId[id], &crcState);
+    for (uint8_t id = 0; id < msg->idsUsed; id++) {
+        processOutgoingByteWithCrc(msg->messageId[id], &crcState);
     }
 
-    for (uint16_t i = 0; i < msg.len; i++) {
-        processOutgoingByte(msg.data[i]);
+    for (uint16_t i = 0; i < msg->len; i++) {
+        processOutgoingByte(msg->data[i]);
     }
-    crc16_update(&crcState, msg.data, msg.len);
+    crc16_update(&crcState, msg->data, msg->len);
 
     appendTxByte(END_BYTE);
 
@@ -372,6 +385,6 @@ bool Uart_Availability(messenger_availability_op_t operation) {
 }
 
 void Uart_Enable() {
-    printk("Enabling UART\n");
+    LogU("Enabling UART\n");
     uart_rx_enable(uart_dev, rxbuf, BUF_SIZE, UART_TIMEOUT);
 }

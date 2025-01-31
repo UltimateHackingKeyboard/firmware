@@ -21,6 +21,7 @@
 #include "messenger_queue.h"
 #include "debug.h"
 #include <zephyr/settings/settings.h>
+#include "resend.h"
 
 static struct bt_nus_client nus_client;
 
@@ -182,30 +183,31 @@ static void send_raw_buffer(const uint8_t *data, uint16_t len) {
     }
 }
 
-void NusClient_SendMessage(message_t msg) {
+void NusClient_SendMessage(message_t* msg) {
     SEM_TAKE(&nusBusy);
 
-    msg.wm = Connections[msg.connectionId].watermarks.txIdx++;
+    // Call this only after we have taken the semaphore.
+    Resend_RegisterMessageAndUpdateWatermarks(msg);
 
     uint8_t buffer[MAX_LINK_PACKET_LENGTH];
     uint8_t bufferIdx = 0;
 
-    buffer[bufferIdx++] = msg.src;
-    buffer[bufferIdx++] = msg.dst;
-    buffer[bufferIdx++] = msg.wm;
+    buffer[bufferIdx++] = msg->src;
+    buffer[bufferIdx++] = msg->dst;
+    buffer[bufferIdx++] = msg->wm;
 
-    for (uint8_t id = 0; id < msg.idsUsed; id++) {
-        buffer[bufferIdx++] = msg.messageId[id];
+    for (uint8_t id = 0; id < msg->idsUsed; id++) {
+        buffer[bufferIdx++] = msg->messageId[id];
     }
 
-    if (bufferIdx + msg.len > MAX_LINK_PACKET_LENGTH) {
+    if (bufferIdx + msg->len > MAX_LINK_PACKET_LENGTH) {
         printk("Message is too long for NUS packets! [%i, %i, ...]\n", buffer[0], buffer[1]);
         return;
     }
 
-    memcpy(&buffer[bufferIdx], msg.data, msg.len);
+    memcpy(&buffer[bufferIdx], msg->data, msg->len);
 
-    bufferIdx += msg.len;
+    bufferIdx += msg->len;
 
     send_raw_buffer(buffer, bufferIdx);
 }

@@ -9,6 +9,7 @@
 #include "messenger_queue.h"
 #include "debug.h"
 #include "zephyr/bluetooth/addr.h"
+#include "resend.h"
 
 #define NUS_SLOTS 2
 
@@ -96,33 +97,34 @@ bool NusServer_Availability(messenger_availability_op_t operation) {
     }
 }
 
-void NusServer_SendMessageTo(message_t msg, struct bt_conn* conn) {
+void NusServer_SendMessageTo(message_t* msg, struct bt_conn* conn) {
     SEM_TAKE(&nusBusy);
 
-    msg.wm = Connections[msg.connectionId].watermarks.txIdx++;
+    // Call this only after we have taken the semaphore.
+    Resend_RegisterMessageAndUpdateWatermarks(msg);
 
     uint8_t buffer[MAX_LINK_PACKET_LENGTH];
     uint8_t bufferIdx = 0;
 
-    buffer[bufferIdx++] = msg.src;
-    buffer[bufferIdx++] = msg.dst;
-    buffer[bufferIdx++] = msg.wm;
+    buffer[bufferIdx++] = msg->src;
+    buffer[bufferIdx++] = msg->dst;
+    buffer[bufferIdx++] = msg->wm;
 
-    for (uint8_t id = 0; id < msg.idsUsed; id++) {
-        buffer[bufferIdx++] = msg.messageId[id];
+    for (uint8_t id = 0; id < msg->idsUsed; id++) {
+        buffer[bufferIdx++] = msg->messageId[id];
     }
 
-    if (bufferIdx + msg.len > MAX_LINK_PACKET_LENGTH) {
+    if (bufferIdx + msg->len > MAX_LINK_PACKET_LENGTH) {
         printk("Message is too long for NUS packets! [%i, %i, ...]\n", buffer[0], buffer[1]);
         return;
     }
 
-    memcpy(&buffer[bufferIdx], msg.data, msg.len);
-    bufferIdx += msg.len;
+    memcpy(&buffer[bufferIdx], msg->data, msg->len);
+    bufferIdx += msg->len;
 
     send_raw_buffer(buffer, bufferIdx, conn);
 }
 
-void NusServer_SendMessage(message_t msg) {
+void NusServer_SendMessage(message_t* msg) {
     NusServer_SendMessageTo(msg, NULL);
 }

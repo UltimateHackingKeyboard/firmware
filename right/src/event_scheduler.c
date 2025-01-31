@@ -129,6 +129,9 @@ static void processEvt(event_scheduler_event_t evt)
             RoundTripTest_Run();
             EventScheduler_Schedule(CurrentTime+10000, EventSchedulerEvent_RoundTripTest, "Event scheduler loop");
             break;
+        case EventSchedulerEvent_ResendMessage:
+            Resend_RequestResendSync();
+            break;
         default:
             return;
     }

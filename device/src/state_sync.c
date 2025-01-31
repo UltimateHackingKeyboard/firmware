@@ -59,7 +59,7 @@ static void wake(k_tid_t tid) {
     if (tid != 0) {
         k_wakeup(tid);
         if (DEBUG_MODE) {
-            printk("StateSync woke up %p\n", tid);
+            LogU("StateSync woke up %p\n", tid);
         }
     } else {
         printk("Skipping wake up, tid is 0");
@@ -647,6 +647,7 @@ static void prepareData(device_id_t dst, const uint8_t *propDataPtr, state_sync_
     case StateSyncPropertyId_KeyStatesDummy: {
 #if DEVICE_IS_KEYBOARD
         KeyScanner_ResendKeyStates = true;
+        UhkModuleDriver_ResendKeyStates = true;
 #endif
         return;
     }

@@ -36,4 +36,5 @@
     ATTRS void BtConn_UpdateHostConnectionPeerAllocations() {};
     ATTRS void Oled_RequestRedraw() {};
     ATTRS void RoundTripTest_Run() {};
+    ATTRS void Resend_RequestResendSync() {};
 
