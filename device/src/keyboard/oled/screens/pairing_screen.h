@@ -22,9 +22,10 @@
 
 // Functions:
 
-    void PairingScreen_Init();
+    void PairingScreen_Init(void);
     void PairingScreen_RegisterScancode(uint8_t scancode);
-    void PairingScreen_AskForPassword(unsigned int pass);
+    void PairingScreen_AskForPassword(void);
+    void PairingScreen_Feedback(bool success);
     const rgb_t* PairingScreen_ActionColor(key_action_t* action);
 
 #endif

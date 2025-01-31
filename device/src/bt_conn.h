@@ -59,7 +59,7 @@ typedef enum {
     char *GetPeerStringByAddr(const bt_addr_le_t *addr);
     char *GetPeerStringByConn(const struct bt_conn *conn);
     char* GetAddrString(const bt_addr_le_t *addr);
-    extern void num_comp_reply(uint8_t accept);
+    void num_comp_reply(int passkey);
 
     void BtConn_Init(void);
     void BtConn_DisconnectAll();

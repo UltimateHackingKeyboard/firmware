@@ -140,9 +140,15 @@ static int cmd_uhk_gamepad(const struct shell *shell, size_t argc, char *argv[])
     return 0;
 }
 
-static int cmd_uhk_btacc(const struct shell *shell, size_t argc, char *argv[])
+static int cmd_uhk_passkey(const struct shell *shell, size_t argc, char *argv[])
 {
-    num_comp_reply(argv[1][0]);
+    int err = 0;
+    int passkey = shell_strtol(argv[1], 10, &err);
+    if (err) {
+        shell_error(shell, "Invalid passkey format (%d)\n", err);
+    } else {
+        num_comp_reply(passkey);
+    }
     return 0;
 }
 
@@ -184,7 +190,7 @@ void InitShell(void)
         SHELL_CMD_ARG(
             rollover, NULL, "get/set keyboard rollover mode (n/6)", cmd_uhk_rollover, 1, 1),
         SHELL_CMD_ARG(gamepad, NULL, "switch gamepad on/off", cmd_uhk_gamepad, 1, 1),
-        SHELL_CMD_ARG(btacc, NULL, "accept bluetooth pairing", cmd_uhk_btacc, 1, 1),
+        SHELL_CMD_ARG(passkey, NULL, "send passkey for bluetooth pairing", cmd_uhk_passkey, 2, 0),
         SHELL_CMD_ARG(btunpair, NULL, "unpair bluetooth devices", cmd_uhk_btunpair, 1, 1),
         [10]=SHELL_CMD_ARG(connections, NULL, "list BLE connections", cmd_uhk_connections, 1, 0),
         SHELL_SUBCMD_SET_END);

@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [12.3.2] - 2025-01-27
+
+Device Protocol: 4.14.0 | Module Protocol: 4.3.0 | User Config: 8.3.0 | Hardware Config: 1.0.0 | Smart Macros: 3.1.0
+
+- Don't require confirmation of BLE pairing on the host. Only the pairing code has to be typed on the UHK 80.
+
 ## [12.3.1] - 2025-01-16
 
 Device Protocol: 4.14.0 | Module Protocol: 4.3.0 | User Config: 8.3.0 | Hardware Config: 1.0.0 | Smart Macros: 3.1.0

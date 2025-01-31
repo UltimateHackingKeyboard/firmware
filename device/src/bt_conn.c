@@ -28,6 +28,7 @@
 #include "config_manager.h"
 #include "zephyr/kernel.h"
 #include <zephyr/bluetooth/gatt.h>
+#include "stubs.h"
 
 bool Bt_NewPairedDevice = false;
 
@@ -498,12 +499,7 @@ BT_CONN_CB_DEFINE(conn_callbacks) = {
 
 // Auth callbacks
 
-static void auth_passkey_display(struct bt_conn *conn, unsigned int passkey)
-{
-    printk("Passkey for %s: %06u\n", GetPeerStringByConn(conn), passkey);
-}
-
-static void auth_passkey_confirm(struct bt_conn *conn, unsigned int passkey) {
+static void auth_passkey_entry(struct bt_conn *conn) {
     if (auth_conn) {
         bt_conn_disconnect(auth_conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
         bt_conn_unref(auth_conn);
@@ -529,11 +525,10 @@ static void auth_passkey_confirm(struct bt_conn *conn, unsigned int passkey) {
     }
 
 #if DEVICE_HAS_OLED
-    PairingScreen_AskForPassword(passkey);
+    PairingScreen_AskForPassword();
 #endif
 
-    printk("Passkey for %s: %06u\n", GetPeerStringByConn(conn), passkey);
-    printk("Type `uhk btacc 1/0` to accept/reject\n");
+    printk("Type `uhk passkey xxxxxx` to pair, or `uhk passkey -1` to reject\n");
 }
 
 static void auth_cancel(struct bt_conn *conn) {
@@ -570,8 +565,7 @@ static void auth_oob_data_request(struct bt_conn *conn, struct bt_conn_oob_info 
 }
 
 static struct bt_conn_auth_cb conn_auth_callbacks = {
-    .passkey_display = auth_passkey_display,
-    .passkey_confirm = auth_passkey_confirm,
+    .passkey_entry = auth_passkey_entry,
     .oob_data_request = auth_oob_data_request,
     .cancel = auth_cancel,
 };
@@ -607,6 +601,7 @@ static void pairing_complete(struct bt_conn *conn, bool bonded) {
     if (auth_conn) {
         bt_conn_unref(auth_conn);
         auth_conn = NULL;
+        PairingScreen_Feedback(true);
     }
 
     BtManager_StartScanningAndAdvertisingAsync();
@@ -630,6 +625,7 @@ static void pairing_failed(struct bt_conn *conn, enum bt_security_err reason) {
         bt_conn_unref(auth_conn);
         printk("Pairing of auth conn failed because of %d\n", reason);
         auth_conn = NULL;
+        PairingScreen_Feedback(false);
     }
 
     printk("Pairing failed: %s, reason %d\n", GetPeerStringByConn(conn), reason);
@@ -662,7 +658,7 @@ void BtConn_Init(void) {
     }
 }
 
-void num_comp_reply(uint8_t accept) {
+void num_comp_reply(int passkey) {
     struct bt_conn *conn;
 
 #if DEVICE_HAS_OLED
@@ -675,12 +671,12 @@ void num_comp_reply(uint8_t accept) {
 
     conn = auth_conn;
 
-    if (accept) {
-        bt_conn_auth_passkey_confirm(conn);
-        printk("Numeric Match, conn %p\n", conn);
+    if (passkey >= 0) {
+        bt_conn_auth_passkey_entry(conn, passkey);
+        printk("Sending passkey to conn %p\n", conn);
     } else {
         bt_conn_auth_cancel(conn);
-        printk("Numeric Reject, conn %p\n", conn);
+        printk("Reject pairing to conn %p\n", conn);
         bt_conn_unref(auth_conn);
         auth_conn = NULL;
     }
