@@ -10,6 +10,7 @@
 #include "messenger.h"
 #include "macros/status_buffer.h"
 #include "zephyr/device.h"
+#include "macro_events.h"
 
 #ifdef DEVICE_HAS_OLED
 #include "keyboard/oled/widgets/console_widget.h"
@@ -58,6 +59,7 @@ void LogUOS(const char *fmt, ...) {
     EXPAND_STRING(buffer);
 
     LogConstantTo(DeviceId_Uhk80_Right, LogTarget_Uart | LogTarget_Oled | LogTarget_ErrorBuffer, buffer);
+    MacroEvent_OnError();
 }
 
 void LogConstantTo(device_id_t deviceId, log_target_t logMask, const char* buffer) {

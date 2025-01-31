@@ -12,6 +12,7 @@
 #include "config_parser/config_globals.h"
 #include <math.h>
 #include <stdarg.h>
+#include "macro_events.h"
 
 #ifdef __ZEPHYR__
 #include "keyboard/oled/widgets/widgets.h"
@@ -288,6 +289,7 @@ void Macros_ReportError(const char* err, const char* arg, const char *argEnd)
     indicateError();
     reportErrorHeader("Error", findPosition(arg));
     reportError(err, arg, argEnd);
+    MacroEvent_OnError();
 }
 
 void Macros_ReportWarn(const char* err, const char* arg, const char *argEnd)

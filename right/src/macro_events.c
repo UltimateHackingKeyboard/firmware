@@ -21,6 +21,15 @@ bool MacroEvent_CapsLockStateChanged = false;
 bool MacroEvent_NumLockStateChanged = false;
 bool MacroEvent_ScrollLockStateChanged = false;
 
+typedef struct {
+    const char* name;
+    uint8_t macroIndex;
+} ATTR_PACKED generic_macro_event_metadata_t;
+
+static generic_macro_event_metadata_t genericMacroEvents[GenericMacroEvent_Count] = {
+    [GenericMacroEvent_OnError] = { .name="$onError", .macroIndex=MacroIndex_None},
+};
+
 /**
  * Future possible extensions:
  * - generalize change to always handle "in" and "out" events
@@ -29,6 +38,7 @@ bool MacroEvent_ScrollLockStateChanged = false;
 
 
 static void registerKeyboardStates();
+static void registerGenericEvents();
 
 /**
  * Macro events should be executed in order and wait for each other - first onInit, then `onKmeymapChange any`, finally other `onKeymapChange` ones.
@@ -44,6 +54,7 @@ void MacroEvent_OnInit()
     }
 
     registerKeyboardStates();
+    registerGenericEvents();
 }
 
 static void startMacroInSlot(macro_index_t macroIndex, uint8_t* slotId) {
@@ -159,6 +170,38 @@ static void registerKeyboardStates()
         if (TokenMatches(thisName, thisNameEnd, "$onScrollLockStateChange")) {
             scrollLockChangeMacro = i;
         }
+    }
+}
+
+static void registerGenericEvents()
+{
+    for (int i = 0; i < AllMacrosCount; i++) {
+        const char *thisName, *thisNameEnd;
+        FindMacroName(&AllMacros[i], &thisName, &thisNameEnd);
+
+        for (uint8_t genericEventId = 0; genericEventId < GenericMacroEvent_Count; genericEventId++) {
+            if (TokenMatches(thisName, thisNameEnd, genericMacroEvents[genericEventId].name)) {
+                genericMacroEvents[genericEventId].macroIndex = i;
+            }
+        }
+    }
+}
+
+void MacroEvent_TriggerGenericEvent(generic_macro_event_t eventId)
+{
+    uint8_t macroIndex = genericMacroEvents[eventId].macroIndex;
+    if (macroIndex != MacroIndex_None) {
+        startMacroInSlot(macroIndex, &previousEventMacroSlot);
+    }
+    previousEventMacroSlot = 255;
+}
+
+void MacroEvent_OnError() {
+    static uint32_t last = 0;
+
+    if (CurrentTime - last > 1000) {
+        last = CurrentTime;
+        MacroEvent_TriggerGenericEvent(GenericMacroEvent_OnError);
     }
 }
 

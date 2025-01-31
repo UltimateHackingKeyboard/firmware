@@ -15,6 +15,11 @@
 
 // Typedefs:
 
+    typedef enum {
+        GenericMacroEvent_OnError = 0,
+        GenericMacroEvent_Count,
+    } generic_macro_event_t;
+
 // Variables:
 
     extern bool MacroEvent_CapsLockStateChanged;
@@ -26,7 +31,9 @@
     void MacroEvent_OnInit();
     void MacroEvent_OnKeymapChange(uint8_t keymapIdx);
     void MacroEvent_OnLayerChange(layer_id_t layerId);
+    void MacroEvent_OnError();
     void MacroEvent_RegisterLayerMacros();
     void MacroEvent_ProcessStateKeyEvents();
+    void MacroEvent_TriggerGenericEvent(generic_macro_event_t eventId);
 
 #endif
