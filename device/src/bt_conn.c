@@ -712,6 +712,7 @@ static void disconnectOldestHost() {
 }
 
 void BtConn_ReserveConnections() {
+#if DEVICE_IS_UHK80_RIGHT
     bool hostSelected = SelectedHostConnectionId != ConnectionId_Invalid;
     bool hostActive = hostSelected && Connections_IsReady(SelectedHostConnectionId);
     bool selectionIsSatisfied = !hostSelected || hostActive;
@@ -727,5 +728,6 @@ void BtConn_ReserveConnections() {
             BtManager_StartScanningAndAdvertising();
         }
     }
+#endif
 }
 
