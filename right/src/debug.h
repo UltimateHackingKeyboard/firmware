@@ -10,10 +10,7 @@
 #define DEBUG_POSTPONER false
 #define WATCH_INTERVAL 500
 
-
-
-#define DEBUG_MODE true
-
+#define DEBUG_MODE false
 #define DEBUG_STRESS_UART false
 #define DEBUG_LOG_UART false
 #define DEBUG_TEST_RTT false

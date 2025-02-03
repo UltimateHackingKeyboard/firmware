@@ -263,13 +263,11 @@ void receiveBacklight(sync_command_backlight_t *buffer) {
     }
 }
 
-static void checkFirmwareVersions(const uhk_module_state_t *moduleState, slot_t slotId) {
-    /*
+void StateSync_CheckFirmwareVersions() {
     #if DEVICE_IS_UHK80_RIGHT
 
-    if (slotId != SlotId_LeftKeyboardHalf) {
-        return;
-    }
+    uint8_t driverId = UhkModuleSlaveDriver_SlotIdToDriverId(SlotId_LeftKeyboardHalf);
+    uhk_module_state_t *moduleState = &UhkModuleStates[driverId];
 
     bool versionsMatch = VERSIONS_EQUAL(moduleState->firmwareVersion, firmwareVersion);
     bool leftChecksumMatches = memcmp(moduleState->firmwareChecksum, DeviceMD5Checksums[DeviceId_Uhk80_Left], MD5_CHECKSUM_LENGTH) == 0;
@@ -284,42 +282,29 @@ static void checkFirmwareVersions(const uhk_module_state_t *moduleState, slot_t 
     }
 
     const char* universal = "Please flash both halves to the same version!";
-    bool fine = true;
-    static bool lastLogWasSuccess = false;
 
     if (!versionsMatch) {
-        fine = false;
-        LogUOS("Error: Left and right keyboard halves have different firmware versions (Left: %u, Right: %u)!\n", moduleState->firmwareVersion, firmwareVersion);
+        LogUOS("Error: Left and right keyboard halves have different firmware versions (Left: %d.%d.%d, Right: %d.%d.%d)!\n",
+            moduleState->firmwareVersion.major, moduleState->firmwareVersion.minor, moduleState->firmwareVersion.patch, firmwareVersion.major, firmwareVersion.minor, firmwareVersion.patch
+        );
     }
     if (!gitTagsMatch) {
-        fine = false;
         LogUOS("Error: Left and right keyboard halves have different git tags (Left: %s, Right: %s)!\n", moduleState->gitTag, gitTag);
     }
     if (!leftChecksumMatches) {
-        fine = false;
         LogUOS("Error: Left checksum differs from the expected! Expected '%s', got '%s'!\n", DeviceMD5Checksums[DeviceId_Uhk80_Left], moduleState->firmwareChecksum);
     }
     if (!versionsMatch || !gitTagsMatch || !leftChecksumMatches) {
-        fine = false;
         LogUOS("    %s", universal);
     }
     if (anyVersionZero) {
-        fine = false;
         LogUOS("Warning: Keyboard halves have zero versions! %s\n", universal);
     }
     if (anyChecksumZero) {
-        fine = false;
         LogUOS("Warning: Keyboard halves have zero checksums! %s\n", universal);
     }
 
-    if (fine && !lastLogWasSuccess) {
-        LogUOS("Left and right keyboard halves have matching firmware versions, git tags and checksums now!\n");
-        lastLogWasSuccess = true;
-    }
-
-    lastLogWasSuccess = fine;
     #endif
-    */
 }
 
 static void checkDongleProtocolVersion() {
@@ -353,8 +338,6 @@ static void receiveModuleStateData(sync_command_module_state_t *buffer) {
     Utils_SafeStrCopy(moduleState->gitRepo, buffer->gitRepo, MAX_STRING_PROPERTY_LENGTH);
     Utils_SafeStrCopy(moduleState->gitTag, buffer->gitTag, MAX_STRING_PROPERTY_LENGTH);
     memcpy(moduleState->firmwareChecksum, buffer->firmwareChecksum, MD5_CHECKSUM_LENGTH);
-
-    checkFirmwareVersions(moduleState, buffer->slotId);
 
     if (DEVICE_IS_UHK80_RIGHT && leftModuleChanged) {
         EventVector_Set(EventVector_KeymapReloadNeeded);
@@ -399,7 +382,7 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
     case StateSyncPropertyId_ActiveLayer:
         if (!isLocalUpdate) {
             if (ActiveLayer >= LayerId_Count) {
-                LogUOS("Received invalid active layer %d --- %d %d %d %d %d | %d %d | %d %d\n", ActiveLayer, data[-5], data[-4], data[-3], data[-2], data[-1], data[0], data[1], data[2], data[3]);
+                LogU("Received invalid active layer %d --- %d %d %d %d %d | %d %d | %d %d\n", ActiveLayer, data[-5], data[-4], data[-3], data[-2], data[-1], data[0], data[1], data[2], data[3]);
                 ActiveLayer = LayerId_Base;
             }
             EventVector_Set(EventVector_LedMapUpdateNeeded);
@@ -858,6 +841,8 @@ void StateSync_ResetRightLeftLink(bool bidirectional) {
         invalidateProperty(StateSyncPropertyId_Backlight);
         invalidateProperty(StateSyncPropertyId_FunctionalColors);
         invalidateProperty(StateSyncPropertyId_PowerMode);
+        // Wait sufficiently log so the firmware check isnt triggered during firmware upgrade
+        EventScheduler_Schedule(CurrentTime + 60000, EventSchedulerEvent_CheckFwChecksums, "Reset left right link");
     }
     if (DEVICE_ID == DeviceId_Uhk80_Left) {
         invalidateProperty(StateSyncPropertyId_Battery);

@@ -28,5 +28,6 @@ typedef enum {
     void LogU(const char *fmt, ...);
     void LogUO(const char *fmt, ...);
     void LogUOS(const char *fmt, ...);
+    void LogUSDO(const char *fmt, ...);
 
 #endif // __LOGGER_H__

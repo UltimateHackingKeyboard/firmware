@@ -8,8 +8,8 @@
 
 // Macros:
 
-    #define UART_TIMEOUT 2000
-    #define UART_PING_DELAY 500
+    #define UART_TIMEOUT 500
+    #define UART_PING_DELAY 100
     #define UART_MAX_PACKET_LENGTH MAX_LINK_PACKET_LENGTH
 
 // Variables:

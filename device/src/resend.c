@@ -44,6 +44,7 @@ void Resend_RequestResendSync() {
 }
 
 static void resendSyncableProperty(syncable_property_id_t propId) {
+#if DEVICE_IS_KEYBOARD
     switch(propId) {
         case SyncablePropertyId_LeftHalfKeyStates:
             KeyScanner_ResendKeyStates = true;
@@ -54,6 +55,7 @@ static void resendSyncableProperty(syncable_property_id_t propId) {
         default:
             LogU("Resend request for %d received. This syncable property is unhandled?.", propId);
     }
+#endif
 }
 
 void Resend_ResendRequestReceived(device_id_t src, connection_id_t connectionId, const uint8_t* data, uint16_t len) {

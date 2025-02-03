@@ -32,3 +32,4 @@
     ATTRS void RoundTripTest_Run() {};
     ATTRS void Resend_RequestResendSync() {};
     ATTRS void PairingScreen_Feedback(bool success) {};
+    ATTRS void StateSync_CheckFirmwareVersions() {};

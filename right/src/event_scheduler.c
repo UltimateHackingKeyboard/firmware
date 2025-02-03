@@ -132,6 +132,9 @@ static void processEvt(event_scheduler_event_t evt)
         case EventSchedulerEvent_ResendMessage:
             Resend_RequestResendSync();
             break;
+        case EventSchedulerEvent_CheckFwChecksums:
+            StateSync_CheckFirmwareVersions();
+            break;
         default:
             return;
     }

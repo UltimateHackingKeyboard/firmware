@@ -349,7 +349,7 @@ void processWatermarks(uint8_t srcConnectionId, uint8_t src, const uint8_t* data
     if (wm != expectedWm && DEBUG_MODE) {
         if (wm != 0) {
             int8_t difference = wm - expectedWm;
-            LogUOS("Message index doesn't match by %i message(s) from connection %d (%s), wm %d / %d\n", difference, srcConnectionId, Connections_GetStaticName(srcConnectionId), wm, expectedWm);
+            LogUSDO("Message index doesn't match by %i message(s) from connection %d (%s), wm %d / %d\n", difference, srcConnectionId, Connections_GetStaticName(srcConnectionId), wm, expectedWm);
         } else {
             // they have resetted their connection; that is fine, just update our watermarks
         }
