@@ -67,7 +67,7 @@ void RunUhk80LeftHalfLogic() {
     LOG_SCHEDULE(
         EventVector_ReportMask("=== ", EventScheduler_Vector)
     );
-    if (EventScheduler_Vector & EventVector_UserLogicUpdateMask) {
+    if (EventScheduler_Vector & EventVector_UserLogicUpdateMask & (~EventVector_NewMessage)) {
         EventVector_ReportMask("Warning: following event hasn't been unset: ", EventScheduler_Vector & EventVector_UserLogicUpdateMask);
     }
 }
