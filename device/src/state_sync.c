@@ -264,6 +264,7 @@ void receiveBacklight(sync_command_backlight_t *buffer) {
 }
 
 static void checkFirmwareVersions(const uhk_module_state_t *moduleState, slot_t slotId) {
+    /*
     #if DEVICE_IS_UHK80_RIGHT
 
     if (slotId != SlotId_LeftKeyboardHalf) {
@@ -318,6 +319,7 @@ static void checkFirmwareVersions(const uhk_module_state_t *moduleState, slot_t 
 
     lastLogWasSuccess = fine;
     #endif
+    */
 }
 
 static void checkDongleProtocolVersion() {

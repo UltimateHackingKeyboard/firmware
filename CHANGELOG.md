@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [12.3.3] - 2025-02-02
+
+Device Protocol: 4.14.**1** | Module Protocol: 4.3.0 | User Config: 8.3.0 | Hardware Config: 1.0.0 | Smart Macros: 3.1.0
+
+- Fix NUS latency issue, effectively lowering left-right and right-dongle BLE latencies from 50ms to 7ms, which should fix typing errors while the keyboard halves of the UHK 80 are wirelessly connected and/or when dongles are used.
+- Decrease UART baud rate from 1,000,000Hz to 115,200Hz, making the bridge cable connection more stable.
+- Make communication protocols more robust:
+  - Change UART control packets.
+  - Add message indexing.
+  - Add roundtrip time testing.
+  - Check message CRC for UART.
+- Fix checksum and versioning related issues that resulted in partial upgrades. This resulted in left half or dongle sometimes remaining on incompatible versions, which in turn led to lags, freezes, and crashes. `DEVICEPROTOCOL:PATCH`
+- Improve logging and implement a couple new debug features.
+- Fix some potential causes of firmware crashes.
+
+## [12.3.2] - 2025-01-27
+
+Device Protocol: 4.14.0 | Module Protocol: 4.3.0 | User Config: 8.3.0 | Hardware Config: 1.0.0 | Smart Macros: 3.1.0
+
+- Don't require confirmation of BLE pairing on the host. Only the pairing code has to be typed on the UHK 80.
+
 ## [12.3.1] - 2025-01-16
 
 Device Protocol: 4.14.0 | Module Protocol: 4.3.0 | User Config: 8.3.0 | Hardware Config: 1.0.0 | Smart Macros: 3.1.0

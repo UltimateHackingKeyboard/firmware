@@ -51,6 +51,7 @@
     extern void Oled_RequestRedraw();
     extern void RoundTripTest_Run();
     extern void Resend_RequestResendSync();
+    extern void PairingScreen_Feedback(bool success);
 
 #if DEVICE_HAS_OLED
 #define WIDGET_REFRESH(W) Widget_Refresh(W)

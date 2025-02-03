@@ -1,11 +1,5 @@
 #include "stubs.h"
 
-#ifdef __ZEPHYR__
-#include "device.h"
-#else
-#include "device.h"
-#endif
-
 #define ATTRS __attribute__((weak))
 
     ATTRS bool SegmentDisplay_NeedsUpdate = false;
@@ -37,4 +31,4 @@
     ATTRS void Oled_RequestRedraw() {};
     ATTRS void RoundTripTest_Run() {};
     ATTRS void Resend_RequestResendSync() {};
-
+    ATTRS void PairingScreen_Feedback(bool success) {};
