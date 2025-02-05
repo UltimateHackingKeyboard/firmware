@@ -16,10 +16,9 @@ if(NOT CONFIG_DEVICE_ID)
 endif()
 
 project(uhk)
-add_library(${PROJECT_NAME})
+add_subdirectory(shared)
+add_subdirectory(right/src)
+add_subdirectory(device/src)
 target_link_libraries(${PROJECT_NAME} PUBLIC
     zephyr_interface
 )
-add_subdirectory(device/src)
-add_subdirectory(right/src)
-add_subdirectory(shared)
