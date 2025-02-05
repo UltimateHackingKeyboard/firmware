@@ -52,7 +52,7 @@ void BtManager_StartBt() {
     }
 
     if (DEVICE_IS_UHK80_LEFT || DEVICE_IS_UHK80_RIGHT) {
-        BtAdvertise_Start(BtAdvertise_Type());
+        BtAdvertise_Start();
     }
 
     if (DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK_DONGLE) {
@@ -125,7 +125,7 @@ void BtManager_StartScanningAndAdvertising() {
     }
 
     if (leftShouldAdvertise || rightShouldAdvertise) {
-        err = BtAdvertise_Start(BtAdvertise_Type());
+        err = BtAdvertise_Start();
         success &= err == 0;
     }
 

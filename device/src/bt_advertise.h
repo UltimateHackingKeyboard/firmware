@@ -5,15 +5,9 @@
 
     #include <stdint.h>
 
-// Macros:
-
-    #define ADVERTISE_NUS (1 << 0)
-    #define ADVERTISE_HID (1 << 1)
-
 // Functions:
 
-    uint8_t BtAdvertise_Start(uint8_t adv_type);
-    void BtAdvertise_Stop();
-    uint8_t BtAdvertise_Type();
+    int BtAdvertise_Start(void);
+    void BtAdvertise_Stop(void);
 
 #endif // __BT_ADVERTISE_H__

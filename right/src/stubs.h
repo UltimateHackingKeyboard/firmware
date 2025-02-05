@@ -43,8 +43,7 @@
     extern void BtManager_RestartBt();
     extern void DongleLeds_Update(void);
     extern void BtPair_ClearUnknownBonds();
-    extern uint8_t BtAdvertise_Start(uint8_t adv_type);
-    extern uint8_t BtAdvertise_Type();
+    extern int BtAdvertise_Start(void);
     extern int BtScan_Start(void);
     extern void BtManager_StartScanningAndAdvertising();
     extern void BtConn_UpdateHostConnectionPeerAllocations();
