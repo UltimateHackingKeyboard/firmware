@@ -71,7 +71,10 @@ int NusServer_Init(void) {
 
 void NusServer_Disconnected() {
     // I argue that when bt is not connected, freeing the semaphore causes no trouble.
-    k_sem_init(&nusBusy, NUS_SLOTS, NUS_SLOTS);
+    for (uint8_t i = 0; i < NUS_SLOTS; i++) {
+        // calling init here would leave all the threads deadlocked
+        k_sem_give(&nusBusy);
+    }
 }
 
 static void send_raw_buffer(const uint8_t *data, uint16_t len, struct bt_conn* conn) {

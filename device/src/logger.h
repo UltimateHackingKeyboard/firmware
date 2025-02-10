@@ -27,6 +27,7 @@ typedef enum {
     // Log to UART and OLED and State buffer
     void LogU(const char *fmt, ...);
     void LogUO(const char *fmt, ...);
+    void LogO(const char *fmt, ...);
     void LogUOS(const char *fmt, ...);
     void LogUSDO(const char *fmt, ...);
 

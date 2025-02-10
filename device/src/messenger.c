@@ -338,7 +338,7 @@ void processWatermarks(uint8_t srcConnectionId, uint8_t src, const uint8_t* data
     desc1 = desc1 == NULL ? "" : desc1;
     desc2 = desc2 == NULL ? "" : desc2;
 
-    if (DEBUG_MODE) {
+    if (DEBUG_LOG_MESSAGES) {
         LogU("Rec %d    %d %s %s\n", srcConnectionId, wm, desc1, desc2);
     }
 
@@ -346,7 +346,7 @@ void processWatermarks(uint8_t srcConnectionId, uint8_t src, const uint8_t* data
         return;
     }
 
-    if (wm != expectedWm && DEBUG_MODE) {
+    if (false && wm != expectedWm && DEBUG_MODE) {
         if (wm != 0) {
             int8_t difference = wm - expectedWm;
             LogUSDO("Message index doesn't match by %i message(s) from connection %d (%s), wm %d / %d\n", difference, srcConnectionId, Connections_GetStaticName(srcConnectionId), wm, expectedWm);
@@ -458,7 +458,7 @@ void Messenger_SendMessage(message_t* message) {
     getMessageDescription(message->messageId[0], message->messageId[1], &desc1, &desc2);
     desc1 = desc1 == NULL ? "" : desc1;
     desc2 = desc2 == NULL ? "" : desc2;
-    if (DEBUG_MODE) {
+    if (DEBUG_LOG_MESSAGES) {
         LogU("Sen %d        %d %s %s\n", connectionId, message->wm, desc1, desc2);
     }
 
