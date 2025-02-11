@@ -213,10 +213,16 @@ static void processIncomingByte(uint8_t byte) {
             wakeControlThread();
             break;
         case PING_BYTE:
+            // Always accept pings.
+            //
+            // Reestablishing connection is expensive, so in case of bad quality
+            // uart connection, once successful, we don't want to loose it just
+            // because of a broken packet frame.
+            lastPingTime = k_uptime_get();
+
             if (receivingMessage) {
                 goto msg_byte;
             }
-            lastPingTime = k_uptime_get();
             break;
         case END_BYTE:
             if (escaping) {
