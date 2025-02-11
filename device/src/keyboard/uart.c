@@ -121,16 +121,7 @@ static bool isCrcValid(uint8_t* buf, uint16_t len) {
         .data = &buf[CRC_LEN]
     };
 
-
-    // TODO: remove this, for debug purposes
-    bool failRandomly = false;
-    if (DEBUG_STRESS_UART && DEVICE_IS_UHK80_RIGHT && dataLen > 0) {
-        static uint8_t r = 0;
-        uint32_t time = k_uptime_get();
-        failRandomly = (time + r--) % 32 == 0;
-    }
-
-    return failRandomly ^ CRC16_IsMessageValidExt(&msg);
+    return CRC16_IsMessageValidExt(&msg);
 }
 
 static void setRxState(uart_rx_state_t state) {
@@ -180,9 +171,30 @@ static void rxPacketReceived() {
     }
 }
 
+
+
+static uint16_t get_random(void)
+{
+    static uint16_t lfsr = 0xACE1;  // Non-zero seed
+    uint16_t bit = ((lfsr >> 0) ^ (lfsr >> 2) ^ (lfsr >> 3) ^ (lfsr >> 5)) & 1;
+    lfsr = (lfsr >> 1) | (bit << 15);
+    return lfsr;
+}
+
 static void processIncomingByte(uint8_t byte) {
     static bool escaping = false;
     static bool receivingMessage = false;
+
+#if DEBUG_STRESS_UART
+    uint16_t r1 = get_random();
+    uint8_t r2 = get_random();
+
+    if (r1 < 128) {
+        printk("Oops!\n");
+        byte = byte ^ r2;
+    }
+#endif
+
 
     switch (byte) {
         case ACK_BYTE:
