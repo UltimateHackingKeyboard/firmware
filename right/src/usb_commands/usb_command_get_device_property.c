@@ -85,6 +85,7 @@ void UsbCommand_GetDeviceProperty(const uint8_t *GenericHidOutBuffer, uint8_t *G
                     checksum = ModuleMD5Checksums[moduleId];
                 } else {
                     SetUsbTxBufferUint8(0, UsbStatusCode_GetDeviceProperty_InvalidArgument);
+                    return;
                 }
                 break;
             case DEVICE_ID_UHK80_LEFT:
@@ -100,8 +101,16 @@ void UsbCommand_GetDeviceProperty(const uint8_t *GenericHidOutBuffer, uint8_t *G
                     case ModuleId_Dongle:
                         checksum = DeviceMD5Checksums[DeviceId_Uhk_Dongle];
                         break;
+                    case ModuleId_TouchpadRight:
+                        // return empty buffer
+                        return;
                     default:
-                        checksum = ModuleMD5Checksums[moduleId];
+                        if (moduleId < ModuleId_ModuleCount) {
+                            checksum = ModuleMD5Checksums[moduleId];
+                        } else {
+                            SetUsbTxBufferUint8(0, UsbStatusCode_GetDeviceProperty_InvalidArgument);
+                            return;
+                        }
                         break;
                 }
                 break;
