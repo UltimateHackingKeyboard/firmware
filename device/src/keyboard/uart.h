@@ -8,7 +8,7 @@
 
 // Macros:
 
-    #define UART_TIMEOUT 250
+    #define UART_TIMEOUT 500
     #define UART_PING_DELAY 100
     #define UART_MAX_PACKET_LENGTH MAX_LINK_PACKET_LENGTH
 
@@ -21,7 +21,7 @@
 
     bool Uart_IsConnected();
     void Uart_SendPacket(const uint8_t* data, uint16_t len);
-    void Uart_SendMessage(message_t msg);
+    void Uart_SendMessage(message_t* msg);
     bool Uart_Availability(messenger_availability_op_t total);
     void Uart_Enable();
     void InitUart(void);

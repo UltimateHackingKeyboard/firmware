@@ -12,7 +12,7 @@ typedef struct {
 } ATTR_PACKED rtt_ping_t;
 
 void RoundTripTest_Init() {
-    if (DEVICE_IS_UHK80_RIGHT) {
+    if (DEVICE_IS_UHK80_RIGHT && DEBUG_TEST_RTT) {
         EventScheduler_Schedule(CurrentTime+10000, EventSchedulerEvent_RoundTripTest, "Event scheduler loop");
     }
 }

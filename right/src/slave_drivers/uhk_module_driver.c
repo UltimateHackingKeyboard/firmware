@@ -33,6 +33,8 @@ module_connection_state_t ModuleConnectionStates[UHK_MODULE_MAX_SLOT_COUNT];
 
 static bool shouldResetTrackpoint = false;
 
+bool UhkModuleDriver_ResendKeyStates = false;
+
 uint8_t UhkModuleSlaveDriver_SlotIdToDriverId(uint8_t slotId)
 {
     return slotId-1;
@@ -186,9 +188,10 @@ static void forwardKeystates(uint8_t uhkModuleDriverId, uhk_module_state_t* uhkM
     pointer_delta_t *pointerDelta = (pointer_delta_t*)(rxMessage->data + keyStatesLength);
     bool thisDeltasAreZero = pointerDelta->x == 0 && pointerDelta->y == 0;
 
-    if (stateChanged || !lastDeltasWereZero || !thisDeltasAreZero) {
+    if (UhkModuleDriver_ResendKeyStates || stateChanged || !lastDeltasWereZero || !thisDeltasAreZero) {
         Messenger_Send2(DeviceId_Uhk80_Right, MessageId_SyncableProperty, SyncablePropertyId_LeftModuleKeyStates, rxMessage->data, rxMessage->length);
         lastDeltasWereZero = thisDeltasAreZero;
+        UhkModuleDriver_ResendKeyStates = false;
     }
 #endif
 }

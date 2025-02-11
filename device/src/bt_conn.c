@@ -695,7 +695,8 @@ uint8_t BtConn_UnusedPeripheralConnectionCount() {
     return count;
 }
 
-static void disconnectOldestHost() {
+// Unused in left half
+ATTR_UNUSED static void disconnectOldestHost() {
     uint32_t oldestSwitchover = UINT32_MAX;
     uint8_t oldestPeerId = PeerIdUnknown;
     for (uint8_t peerId = PeerIdFirstHost; peerId <= PeerIdLastHost; peerId++) {
