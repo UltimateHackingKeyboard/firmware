@@ -43,8 +43,6 @@
     extern void BtManager_RestartBt();
     extern void DongleLeds_Update(void);
     extern void BtPair_ClearUnknownBonds();
-    extern int BtAdvertise_Start(void);
-    extern int BtScan_Start(void);
     extern void BtManager_StartScanningAndAdvertising();
     extern void BtConn_UpdateHostConnectionPeerAllocations();
     extern void Oled_RequestRedraw();

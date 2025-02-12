@@ -4,8 +4,6 @@
 #include "bt_conn.h"
 #include "connections.h"
 #include "device.h"
-#include "event_scheduler.h"
-#include "bt_scan.h"
 
 #define ADV_DEVICE_NAME CONFIG_BT_DEVICE_NAME
 #define ADV_DEVICE_NAME_LEN (sizeof(CONFIG_BT_DEVICE_NAME) - 1)
@@ -35,33 +33,57 @@ static const struct bt_data adHid[] = {AD_HID_DATA};
 static const struct bt_data sdNus[] = {SD_NUS_DATA};
 static const struct bt_data sdHid[] = {SD_HID_DATA};
 
-int BtAdvertise_Start(void)
+static const char * advertisingString(uint8_t advType) {
+    switch (advType) {
+        case ADVERTISE_NUS:
+            return "NUS";
+        case ADVERTISE_HID:
+            return "HID";
+        case ADVERTISE_NUS | ADVERTISE_HID:
+            return "HID \"and NUS\"";
+        case ADVERTISE_DIRECTED_NUS:
+            return "Directed NUS";
+        default:
+            return "None";
+    }
+}
+
+uint8_t BtAdvertise_Start(adv_config_t advConfig)
 {
     int err = 0;
-    // directed advertising
-    static struct bt_le_adv_param adv_param;
-    if (DEVICE_IS_UHK80_RIGHT) {
-        adv_param = *BT_LE_ADV_CONN_ONE_TIME;
 
-        err = bt_le_adv_start(&adv_param, adHid, ARRAY_SIZE(adHid), sdHid, ARRAY_SIZE(sdHid));
+    const char * advTypeString = advertisingString(advConfig.advType);
 
-    } else if (DEVICE_IS_UHK80_LEFT) {
-        adv_param = *BT_LE_ADV_CONN_DIR_LOW_DUTY(&HostConnection(ConnectionId_NusClientRight)->bleAddress);
-        // adv_param.options |= BT_LE_ADV_OPT_DIR_ADDR_RPA;
-        err = bt_le_adv_start(&adv_param, adNus, ARRAY_SIZE(adNus), sdNus, ARRAY_SIZE(sdNus));
-
-    } else {
-        return 0;
+    // Start advertising
+    static struct bt_le_adv_param advParam;
+    switch (advConfig.advType) {
+        case ADVERTISE_HID:
+        case ADVERTISE_NUS | ADVERTISE_HID:
+            /* our devices don't check service uuids, so hid advertisement effectively advertises nus too */
+            advParam = *BT_LE_ADV_CONN_ONE_TIME;
+            err = bt_le_adv_start(&advParam, adHid, ARRAY_SIZE(adHid), sdHid, ARRAY_SIZE(sdHid));
+            break;
+        case ADVERTISE_NUS:
+            advParam = *BT_LE_ADV_CONN_ONE_TIME;
+            err = bt_le_adv_start(&advParam, adNus, ARRAY_SIZE(adNus), sdNus, ARRAY_SIZE(sdNus));
+            break;
+        case ADVERTISE_DIRECTED_NUS:
+            advParam = *BT_LE_ADV_CONN_DIR_LOW_DUTY(advConfig.addr);
+            err = bt_le_adv_start(&advParam, adNus, ARRAY_SIZE(adNus), sdNus, ARRAY_SIZE(sdNus));
+        default:
+            printk("Adv: Attempted to start advertising without any type! Ignoring.\n");
+            return 0;
     }
 
+    // Log it
     if (err == 0) {
-        printk("Advertising successfully started\n");
+        printk("Adv: %s advertising successfully started\n", advTypeString);
         return 0;
     } else if (err == -EALREADY) {
-        printk("Advertising continued\n");
+        printk("Adv: %s advertising continued\n", advTypeString);
         return 0;
     } else {
-        printk("Advertising failed to start (err %d), free connections: %d\n", err, BtConn_UnusedPeripheralConnectionCount());
+        printk("Adv: %s advertising failed to start (err %d), free connections: %d\n", advTypeString, err, BtConn_UnusedPeripheralConnectionCount());
         return err;
     }
 }
@@ -69,6 +91,61 @@ int BtAdvertise_Start(void)
 void BtAdvertise_Stop(void) {
     int err = bt_le_adv_stop();
     if (err) {
-        printk("Advertising failed to stop (err %d)\n", err);
+        printk("Adv: Advertising failed to stop (err %d)\n", err);
     }
 }
+
+static uint8_t connectedHidCount() {
+    uint8_t connectedHids = 0;
+    for (uint8_t peerId = PeerIdFirstHost; peerId <= PeerIdLastHost; peerId++) {
+        if (Peers[peerId].conn && Connections_Type(Peers[peerId].connectionId) == ConnectionType_BtHid) {
+            connectedHids++;
+        }
+    }
+    return connectedHids;
+}
+
+#define ADVERTISEMENT(TYPE) ((adv_config_t) { .advType = TYPE })
+#define ADVERTISEMENT_DIRECT_NUS(ADDR) ((adv_config_t) { .advType = ADVERTISE_DIRECTED_NUS, .addr = ADDR })
+
+adv_config_t BtAdvertise_Config() {
+    switch (DEVICE_ID) {
+        case DeviceId_Uhk80_Left:
+            return ADVERTISEMENT_DIRECT_NUS(&Peers[PeerIdRight].addr);
+
+        case DeviceId_Uhk80_Right:
+            if (BtConn_UnusedPeripheralConnectionCount() > 0)  {
+                if (BtConn_UnusedPeripheralConnectionCount() <= 1 && SelectedHostConnectionId != ConnectionId_Invalid) {
+                    /* we need to reserve last peripheral slot for a specific target */
+                    connection_type_t selectedConnectionType = Connections_Type(SelectedHostConnectionId);
+                    if (selectedConnectionType == ConnectionType_NusDongle) {
+                        return ADVERTISEMENT_DIRECT_NUS(&HostConnection(SelectedHostConnectionId)->bleAddress);
+                    } else if (selectedConnectionType == ConnectionType_BtHid) {
+                        return ADVERTISEMENT(ADVERTISE_HID);
+                    } else {
+                        printk("Adv: Selected connection is neither BLE HID nor NUS. Can't advertise!");
+                        return ADVERTISEMENT( 0 );
+                    }
+                }
+                else if (connectedHidCount() > 0) {
+                    /** we can't handle multiple HID connections, so don't advertise it when one HID is already connected */
+                    return ADVERTISEMENT(ADVERTISE_NUS);
+                } else {
+                    /** we can connect both NUS and HID */
+                    return ADVERTISEMENT(ADVERTISE_NUS | ADVERTISE_HID);
+                }
+            } else {
+                /** advertising needs a peripheral slot. When it is not free and we try to advertise, it will fail, and our code will try to
+                 *  disconnect other devices in order to restore proper function. */
+                printk("Adv: Current slot count is zero, not advertising!\n");
+                BtConn_ListCurrentConnections();
+                return ADVERTISEMENT( 0 );
+            }
+        case DeviceId_Uhk_Dongle:
+            return ADVERTISEMENT( 0 );
+        default:
+            printk("unknown device!\n");
+            return ADVERTISEMENT( 0 );
+    }
+}
+
