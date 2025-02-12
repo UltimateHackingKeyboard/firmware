@@ -17,8 +17,8 @@ endif()
 
 project(uhk)
 add_subdirectory(shared)
-add_subdirectory(right/src)
 add_subdirectory(device/src)
+add_subdirectory(right/src)
 target_link_libraries(${PROJECT_NAME} PUBLIC
     zephyr_interface
 )
