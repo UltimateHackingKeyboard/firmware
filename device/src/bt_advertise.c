@@ -111,7 +111,9 @@ static uint8_t connectedHidCount() {
 adv_config_t BtAdvertise_Config() {
     switch (DEVICE_ID) {
         case DeviceId_Uhk80_Left:
-            return ADVERTISEMENT_DIRECT_NUS(&Peers[PeerIdRight].addr);
+            // TODO: fix direct advertisement?
+            // return ADVERTISEMENT_DIRECT_NUS(&Peers[PeerIdRight].addr);
+            return ADVERTISEMENT(ADVERTISE_NUS);
 
         case DeviceId_Uhk80_Right:
             if (BtConn_UnusedPeripheralConnectionCount() > 0)  {
@@ -119,7 +121,9 @@ adv_config_t BtAdvertise_Config() {
                     /* we need to reserve last peripheral slot for a specific target */
                     connection_type_t selectedConnectionType = Connections_Type(SelectedHostConnectionId);
                     if (selectedConnectionType == ConnectionType_NusDongle) {
-                        return ADVERTISEMENT_DIRECT_NUS(&HostConnection(SelectedHostConnectionId)->bleAddress);
+                        // TODO: fix direct advertisement?
+                        // return ADVERTISEMENT_DIRECT_NUS(&HostConnection(SelectedHostConnectionId)->bleAddress);
+                        return ADVERTISEMENT(ADVERTISE_NUS);
                     } else if (selectedConnectionType == ConnectionType_BtHid) {
                         return ADVERTISEMENT(ADVERTISE_HID);
                     } else {
