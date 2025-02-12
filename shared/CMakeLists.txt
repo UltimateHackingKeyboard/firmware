@@ -1,3 +1,6 @@
+# the library target is created here, so version generation will work without extra steps
+add_library(${PROJECT_NAME})
+
 target_include_directories(${PROJECT_NAME} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
     # this really needs to be changed when time and restructuring permits
