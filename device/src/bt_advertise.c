@@ -68,8 +68,13 @@ uint8_t BtAdvertise_Start(adv_config_t advConfig)
             err = bt_le_adv_start(&advParam, adNus, ARRAY_SIZE(adNus), sdNus, ARRAY_SIZE(sdNus));
             break;
         case ADVERTISE_DIRECTED_NUS:
-            advParam = *BT_LE_ADV_CONN_DIR_LOW_DUTY(advConfig.addr);
+
+            advParam = *BT_LE_ADV_CONN_ONE_TIME;
             err = bt_le_adv_start(&advParam, adNus, ARRAY_SIZE(adNus), sdNus, ARRAY_SIZE(sdNus));
+
+            // TODO: fix and reenable this?
+            // advParam = *BT_LE_ADV_CONN_DIR_LOW_DUTY(advConfig.addr);
+            // err = bt_le_adv_start(&advParam, adNus, ARRAY_SIZE(adNus), sdNus, ARRAY_SIZE(sdNus));
         default:
             printk("Adv: Attempted to start advertising without any type! Ignoring.\n");
             return 0;
@@ -111,9 +116,7 @@ static uint8_t connectedHidCount() {
 adv_config_t BtAdvertise_Config() {
     switch (DEVICE_ID) {
         case DeviceId_Uhk80_Left:
-            // TODO: fix direct advertisement?
-            // return ADVERTISEMENT_DIRECT_NUS(&Peers[PeerIdRight].addr);
-            return ADVERTISEMENT(ADVERTISE_NUS);
+            return ADVERTISEMENT_DIRECT_NUS(&Peers[PeerIdRight].addr);
 
         case DeviceId_Uhk80_Right:
             if (BtConn_UnusedPeripheralConnectionCount() > 0)  {
@@ -121,9 +124,7 @@ adv_config_t BtAdvertise_Config() {
                     /* we need to reserve last peripheral slot for a specific target */
                     connection_type_t selectedConnectionType = Connections_Type(SelectedHostConnectionId);
                     if (selectedConnectionType == ConnectionType_NusDongle) {
-                        // TODO: fix direct advertisement?
-                        // return ADVERTISEMENT_DIRECT_NUS(&HostConnection(SelectedHostConnectionId)->bleAddress);
-                        return ADVERTISEMENT(ADVERTISE_NUS);
+                        return ADVERTISEMENT_DIRECT_NUS(&HostConnection(SelectedHostConnectionId)->bleAddress);
                     } else if (selectedConnectionType == ConnectionType_BtHid) {
                         return ADVERTISEMENT(ADVERTISE_HID);
                     } else {
