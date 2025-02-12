@@ -5,14 +5,13 @@
 #include "connections.h"
 #include "device.h"
 
-#define ADV_DEVICE_NAME CONFIG_BT_DEVICE_NAME
-#define ADV_DEVICE_NAME_LEN (sizeof(CONFIG_BT_DEVICE_NAME) - 1)
+#define LEN(NAME) (sizeof(NAME) - 1)
 
 // Advertisement packets
 
-#define AD_NUS_DATA                                                                                \
+#define AD_NUS_DATA(NAME)                                                                                \
     BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),                          \
-        BT_DATA(BT_DATA_NAME_COMPLETE, ADV_DEVICE_NAME, ADV_DEVICE_NAME_LEN),
+        BT_DATA(BT_DATA_NAME_COMPLETE, NAME, LEN(NAME)),
 
 #define AD_HID_DATA                                                                                \
     BT_DATA_BYTES(BT_DATA_GAP_APPEARANCE, (CONFIG_BT_DEVICE_APPEARANCE >> 0) & 0xff,               \
@@ -21,17 +20,18 @@
         BT_DATA_BYTES(BT_DATA_UUID16_ALL, BT_UUID_16_ENCODE(BT_UUID_HIDS_VAL),                     \
             BT_UUID_16_ENCODE(BT_UUID_BAS_VAL)),
 
-static const struct bt_data adNus[] = {AD_NUS_DATA};
+static const struct bt_data adNusLeft[] = {AD_NUS_DATA("UHK80 Left Nus")};
+static const struct bt_data adNusRight[] = {AD_NUS_DATA("UHK80 Right Nus")};
 static const struct bt_data adHid[] = {AD_HID_DATA};
 
 // Scan response packets
 
 #define SD_NUS_DATA BT_DATA_BYTES(BT_DATA_UUID128_ALL, BT_UUID_NUS_VAL),
 
-#define SD_HID_DATA BT_DATA(BT_DATA_NAME_COMPLETE, ADV_DEVICE_NAME, ADV_DEVICE_NAME_LEN),
+#define SD_HID_DATA(NAME) BT_DATA(BT_DATA_NAME_COMPLETE, NAME, LEN(NAME)),
 
 static const struct bt_data sdNus[] = {SD_NUS_DATA};
-static const struct bt_data sdHid[] = {SD_HID_DATA};
+static const struct bt_data sdHid[] = {SD_HID_DATA("UHK 80")};
 
 static const char * advertisingString(uint8_t advType) {
     switch (advType) {
@@ -65,16 +65,25 @@ uint8_t BtAdvertise_Start(adv_config_t advConfig)
             break;
         case ADVERTISE_NUS:
             advParam = *BT_LE_ADV_CONN_ONE_TIME;
-            err = bt_le_adv_start(&advParam, adNus, ARRAY_SIZE(adNus), sdNus, ARRAY_SIZE(sdNus));
+            if (DEVICE_IS_UHK80_RIGHT) {
+                err = bt_le_adv_start(&advParam, adNusRight, ARRAY_SIZE(adNusRight), sdNus, ARRAY_SIZE(sdNus));
+            } else {
+                err = bt_le_adv_start(&advParam, adNusLeft, ARRAY_SIZE(adNusLeft), sdNus, ARRAY_SIZE(sdNus));
+            }
             break;
         case ADVERTISE_DIRECTED_NUS:
-
             advParam = *BT_LE_ADV_CONN_ONE_TIME;
-            err = bt_le_adv_start(&advParam, adNus, ARRAY_SIZE(adNus), sdNus, ARRAY_SIZE(sdNus));
+            if (DEVICE_IS_UHK80_RIGHT) {
+                err = bt_le_adv_start(&advParam, adNusRight, ARRAY_SIZE(adNusRight), sdNus, ARRAY_SIZE(sdNus));
+            } else {
+                err = bt_le_adv_start(&advParam, adNusLeft, ARRAY_SIZE(adNusLeft), sdNus, ARRAY_SIZE(sdNus));
+            }
+            break;
 
             // TODO: fix and reenable this?
             // advParam = *BT_LE_ADV_CONN_DIR_LOW_DUTY(advConfig.addr);
             // err = bt_le_adv_start(&advParam, adNus, ARRAY_SIZE(adNus), sdNus, ARRAY_SIZE(sdNus));
+            break;
         default:
             printk("Adv: Attempted to start advertising without any type! Ignoring.\n");
             return 0;
@@ -116,7 +125,11 @@ static uint8_t connectedHidCount() {
 adv_config_t BtAdvertise_Config() {
     switch (DEVICE_ID) {
         case DeviceId_Uhk80_Left:
-            return ADVERTISEMENT_DIRECT_NUS(&Peers[PeerIdRight].addr);
+            if (Peers[PeerIdRight].conn == NULL) {
+                return ADVERTISEMENT_DIRECT_NUS(&Peers[PeerIdRight].addr);
+            } else {
+                return ADVERTISEMENT( 0 );
+            }
 
         case DeviceId_Uhk80_Right:
             if (BtConn_UnusedPeripheralConnectionCount() > 0)  {
