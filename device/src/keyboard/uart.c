@@ -19,7 +19,9 @@
 #define THREAD_STACK_SIZE 1000
 #define THREAD_PRIORITY 5
 
+#define UART_FOREVER_TIMEOUT 10000
 #define UART_RESEND_DELAY 100
+#define UART_RESEND_COUNT 3
 
 static K_THREAD_STACK_DEFINE(stack_area, THREAD_STACK_SIZE);
 static struct k_thread thread_data;
@@ -98,11 +100,18 @@ static connection_id_t remoteConnectionId() {
     return DEVICE_IS_UHK80_LEFT ? ConnectionId_UartRight : ConnectionId_UartLeft;
 }
 
+static void resetUart() {
+    // This will probably not reset uart, but at least will give main thread some time to run
+    uart_rx_disable(uart_dev);
+    EventScheduler_Schedule(k_uptime_get() + 100, EventSchedulerEvent_ReenableUart, "reenable uart");
+}
+
 static void appendRxByte(uint8_t byte) {
     if (rxPosition < RX_BUF_SIZE) {
         rxBuffer[rxPosition++] = byte;
     } else {
         LogU("Uart error: too long message [%i, %i, ... %i]\n", rxPosition, rxBuffer[0], rxBuffer[1], byte);
+        resetUart();
     }
 }
 
@@ -192,7 +201,7 @@ static void processIncomingByte(uint8_t byte) {
     uint8_t r2 = get_random();
 
     if (r1 < 128) {
-        printk("Oops!\n");
+        LogU("Oops!\n");
         byte = byte ^ r2;
     }
 #endif
@@ -203,16 +212,22 @@ static void processIncomingByte(uint8_t byte) {
             if (receivingMessage) {
                 goto msg_byte;
             }
-            resendTries = 0;
-            uartTxState = UartTxState_Idle;
-            k_sem_give(&txBufferBusy);
+
+            if (uartTxState == UartTxState_WaitingForAck) {
+                resendTries = 0;
+                uartTxState = UartTxState_Idle;
+                k_sem_give(&txBufferBusy);
+            }
             break;
         case NACK_BYTE:
             if (receivingMessage) {
                 goto msg_byte;
             }
-            uartTxState = UartTxState_Resend;
-            wakeControlThread();
+
+            if (uartTxState == UartTxState_WaitingForAck) {
+                uartTxState = UartTxState_Resend;
+                wakeControlThread();
+            }
             break;
         case PING_BYTE:
             // Always accept pings.
@@ -250,7 +265,12 @@ static void processIncomingByte(uint8_t byte) {
 msg_byte:
         default:
             escaping = false;
-            appendRxByte(byte);
+            if (receivingMessage) {
+                appendRxByte(byte);
+            } else {
+                LogU("Uart, unexpected byte: %d\n", byte);
+                resetUart();
+            }
             break;
     }
 }
@@ -310,6 +330,9 @@ static void appendTxByte(uint8_t byte) {
         txBuffer[txPosition++] = byte;
     } else {
         LogU("Uart error: too long message in tx buffer\n");
+
+        uart_rx_disable(uart_dev);
+        uart_rx_enable(uart_dev, rxbuf, BUF_SIZE, UART_TIMEOUT);
     }
 }
 
@@ -355,8 +378,16 @@ void Uart_ControlMessage(const uint8_t* data, uint16_t len) {
 }
 
 void Uart_SendMessage(message_t* msg) {
-    SEM_TAKE(&txBufferBusy);
-    SEM_TAKE(&txControlBusy);
+    int err;
+    err = k_sem_take(&txBufferBusy, K_MSEC(UART_FOREVER_TIMEOUT));
+    if (err != 0) {
+        LogUOS("Uart: failed to take txBufferBusy semaphore.\n");
+    }
+
+    err = k_sem_take(&txControlBusy, K_MSEC(UART_FOREVER_TIMEOUT));
+    if (err != 0) {
+        LogUOS("Uart: failed to take txControlBusy semaphore.\n");
+    }
 
     // Call this only after we have taken the semaphore.
     Resend_RegisterMessageAndUpdateWatermarks(msg);
@@ -396,7 +427,7 @@ static void sendControl(uint8_t byte) {
 }
 
 static void resend() {
-    if (resendTries++ > 5) {
+    if (resendTries++ > 3) {
         LogU("Repeatedly failed to send a message! ");
         for (uint16_t i = 0; i < txPosition; i++) {
             LogU("%i ", txBuffer[i]);
@@ -411,6 +442,7 @@ static void resend() {
         SEM_TAKE(&txControlBusy);
         k_sleep(K_MSEC(13));
         uart_tx(uart_dev, txBuffer, txPosition, UART_TIMEOUT);
+        lastMessageSentTime = k_uptime_get();
     }
 }
 
@@ -421,10 +453,8 @@ static void updateConnectionState() {
     bool newIsConnected =  pingDiff < UART_TIMEOUT;
     if (oldIsConnected != newIsConnected) {
         Connections_SetState(connectionId, newIsConnected ? ConnectionState_Ready : ConnectionState_Disconnected);
-        if (!newIsConnected) {
-            k_sem_give(&txBufferBusy);
-            k_sem_give(&txControlBusy);
-        }
+        k_sem_give(&txBufferBusy);
+        k_sem_give(&txControlBusy);
     }
 }
 
@@ -456,6 +486,7 @@ void testUart() {
             }
 
             if (uartTxState == UartTxState_Resend) {
+                LogU("Uart: received Nack, resending\n");
                 resend();
             }
 
@@ -463,6 +494,7 @@ void testUart() {
             if (uartTxState == UartTxState_WaitingForAck) {
                 uint32_t resendTime = lastMessageSentTime + UART_RESEND_DELAY;
                 if (currentTime >= resendTime) {
+                    LogU("Uart: didn't receive ack %d, resending\n", currentTime);
                     resend();
                 } else {
                     wakeTime = MIN(wakeTime, resendTime);

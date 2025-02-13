@@ -34,7 +34,7 @@
 
 #define WAKE(TID) if (TID != 0) { k_wakeup(TID); }
 
-#define STATE_SYNC_SEND_DELAY 2
+#define STATE_SYNC_SEND_DELAY 1
 
 #define THREAD_STACK_SIZE 2000
 #define THREAD_PRIORITY 5

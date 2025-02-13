@@ -170,6 +170,16 @@ messenger_queue_record_t MessengerQueue_Take() {
     }
 }
 
+ATTR_UNUSED uint8_t MessengerQueue_GetOccupiedCount() {
+    uint8_t count = 0;
+    for (uint8_t i = 0; i < POOL_SIZE; i++) {
+        if (regionPool.segmentTaken[i]) {
+            count++;
+        }
+    }
+    return count;
+}
+
 void MessengerQueue_Init() {
     k_fifo_init(&messageQueue);
 }

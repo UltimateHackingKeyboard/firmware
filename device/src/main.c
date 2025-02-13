@@ -1,5 +1,6 @@
 #include "main.h"
 #include "bt_advertise.h"
+#include "messenger_queue.h"
 #include "nus_client.h"
 #include "nus_server.h"
 #include "bt_manager.h"
