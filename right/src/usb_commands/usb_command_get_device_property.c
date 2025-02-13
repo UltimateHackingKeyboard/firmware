@@ -81,7 +81,10 @@ void UsbCommand_GetDeviceProperty(const uint8_t *GenericHidOutBuffer, uint8_t *G
             case DEVICE_ID_UHK60V2_RIGHT:
                 if (moduleId == ModuleId_RightKeyboardHalf) {
                     checksum = DeviceMD5Checksums[DEVICE_ID];
-                } else if (moduleId < ModuleId_ModuleCount) {
+                } else if (moduleId == ModuleId_TouchpadRight) {
+                    // return empty buffer
+                    return;
+                } else if (moduleId < ModuleId_AllModuleCount) {
                     checksum = ModuleMD5Checksums[moduleId];
                 } else {
                     SetUsbTxBufferUint8(0, UsbStatusCode_GetDeviceProperty_InvalidArgument);
@@ -105,7 +108,7 @@ void UsbCommand_GetDeviceProperty(const uint8_t *GenericHidOutBuffer, uint8_t *G
                         // return empty buffer
                         return;
                     default:
-                        if (moduleId < ModuleId_ModuleCount) {
+                        if (moduleId < ModuleId_AllModuleCount) {
                             checksum = ModuleMD5Checksums[moduleId];
                         } else {
                             SetUsbTxBufferUint8(0, UsbStatusCode_GetDeviceProperty_InvalidArgument);
