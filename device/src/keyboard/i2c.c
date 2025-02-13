@@ -8,6 +8,7 @@
 #include "slave_drivers/uhk_module_driver.h"
 #include "i2c.h"
 #include "keyboard/i2c.h"
+#include "peripherals/merge_sensor.h"
 
 // Thread definitions
 
@@ -88,7 +89,12 @@ void i2cPoller() {
         }
 
         if (masterTransferInProgress) {
-            lastStatus = processMasterTransfer();
+            if (!MergeSensor_HalvesAreMerged) {
+                lastStatus = processMasterTransfer();
+            } else {
+                k_msleep(10);
+                lastStatus = kStatus_Fail;
+            }
         }
     }
 }
