@@ -1,6 +1,7 @@
 #include "bt_advertise.h"
 #include <bluetooth/services/nus.h>
 #include <zephyr/bluetooth/gatt.h>
+#include "attributes.h"
 #include "bt_conn.h"
 #include "connections.h"
 #include "device.h"
@@ -20,8 +21,8 @@
         BT_DATA_BYTES(BT_DATA_UUID16_ALL, BT_UUID_16_ENCODE(BT_UUID_HIDS_VAL),                     \
             BT_UUID_16_ENCODE(BT_UUID_BAS_VAL)),
 
-static const struct bt_data adNusLeft[] = {AD_NUS_DATA("UHK80 Left Nus")};
-static const struct bt_data adNusRight[] = {AD_NUS_DATA("UHK80 Right Nus")};
+ATTR_UNUSED static const struct bt_data adNusLeft[] = {AD_NUS_DATA("UHK80 Left Nus")};
+ATTR_UNUSED static const struct bt_data adNusRight[] = {AD_NUS_DATA("UHK80 Right Nus")};
 static const struct bt_data adHid[] = {AD_HID_DATA};
 
 // Scan response packets
@@ -32,6 +33,14 @@ static const struct bt_data adHid[] = {AD_HID_DATA};
 
 static const struct bt_data sdNus[] = {SD_NUS_DATA};
 static const struct bt_data sdHid[] = {SD_HID_DATA("UHK 80")};
+
+#if DEVICE_IS_UHK80_RIGHT
+#define BY_SIDE(LEFT, RIGHT) RIGHT
+#else
+#define BY_SIDE(LEFT, RIGHT) LEFT
+#endif
+
+#define BT_LE_ADV_START(PARAM, AD, SD) bt_le_adv_start(PARAM, AD, ARRAY_SIZE(AD), SD, ARRAY_SIZE(SD));
 
 static const char * advertisingString(uint8_t advType) {
     switch (advType) {
@@ -61,28 +70,23 @@ uint8_t BtAdvertise_Start(adv_config_t advConfig)
         case ADVERTISE_NUS | ADVERTISE_HID:
             /* our devices don't check service uuids, so hid advertisement effectively advertises nus too */
             advParam = *BT_LE_ADV_CONN_ONE_TIME;
-            err = bt_le_adv_start(&advParam, adHid, ARRAY_SIZE(adHid), sdHid, ARRAY_SIZE(sdHid));
+            err = BT_LE_ADV_START(&advParam, adHid, sdHid);
             break;
         case ADVERTISE_NUS:
             advParam = *BT_LE_ADV_CONN_ONE_TIME;
-            if (DEVICE_IS_UHK80_RIGHT) {
-                err = bt_le_adv_start(&advParam, adNusRight, ARRAY_SIZE(adNusRight), sdNus, ARRAY_SIZE(sdNus));
-            } else {
-                err = bt_le_adv_start(&advParam, adNusLeft, ARRAY_SIZE(adNusLeft), sdNus, ARRAY_SIZE(sdNus));
-            }
+
+            err = BT_LE_ADV_START(&advParam, BY_SIDE(adNusLeft, adNusRight), sdNus);
             break;
         case ADVERTISE_DIRECTED_NUS:
             advParam = *BT_LE_ADV_CONN_ONE_TIME;
-            if (DEVICE_IS_UHK80_RIGHT) {
-                err = bt_le_adv_start(&advParam, adNusRight, ARRAY_SIZE(adNusRight), sdNus, ARRAY_SIZE(sdNus));
-            } else {
-                err = bt_le_adv_start(&advParam, adNusLeft, ARRAY_SIZE(adNusLeft), sdNus, ARRAY_SIZE(sdNus));
-            }
+            err = BT_LE_ADV_START(&advParam, BY_SIDE(adNusLeft, adNusRight), sdNus);
             break;
 
-            // TODO: fix and reenable this?
+            //// TODO: fix and reenable this?
+            // printk("Advertising against %s\n", GetAddrString(advConfig.addr));
             // advParam = *BT_LE_ADV_CONN_DIR_LOW_DUTY(advConfig.addr);
-            // err = bt_le_adv_start(&advParam, adNus, ARRAY_SIZE(adNus), sdNus, ARRAY_SIZE(sdNus));
+            // advParam.options |= BT_LE_ADV_OPT_DIR_ADDR_RPA;
+            // err = BT_LE_ADV_START(&advParam, BY_SIDE(adNusLeft, adNusRight), sdNus);
             break;
         default:
             printk("Adv: Attempted to start advertising without any type! Ignoring.\n");
