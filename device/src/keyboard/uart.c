@@ -102,7 +102,7 @@ static void appendRxByte(uint8_t byte) {
     if (rxPosition < RX_BUF_SIZE) {
         rxBuffer[rxPosition++] = byte;
     } else {
-        LogU("Uart error: too long message in rx buffer, length: %i, begins with [%i, %i, ...]\n", rxPosition, rxBuffer[0], rxBuffer[1]);
+        LogU("Uart error: too long message [%i, %i, ... %i]\n", rxPosition, rxBuffer[0], rxBuffer[1], byte);
     }
 }
 
@@ -138,7 +138,9 @@ static void rxPacketReceived() {
         setRxState(UartRxState_Ack);
     } else {
         Uart_InvalidMessagesCounter++;
-        LogUO("Crc-invalid UART message received!");
+        const char *out1, *out2;
+        Messenger_GetMessageDescription(rxBuffer, CRC_LEN, &out1, &out2);
+        LogUO("Crc-invalid UART message received! %s %s ", out1, out2 == NULL ? "" : out2);
 
         for (uint16_t i = 0; i < rxPosition; i++) {
             LogU("%i ", rxBuffer[i]);

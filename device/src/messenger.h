@@ -59,6 +59,7 @@ typedef enum {
 
     void Messenger_Enqueue(uint8_t srcConnectionId, uint8_t src, const uint8_t* data, uint16_t len, uint8_t offset);
     void Messenger_ProcessQueue();
+    void Messenger_GetMessageDescription(uint8_t* data, uint8_t offset, const char** out1, const char** out2);
 
     void Messenger_Init();
 

@@ -325,6 +325,10 @@ ATTR_UNUSED static void getMessageDescription(uint8_t msgId1, uint8_t msgId2, co
     }
 }
 
+void Messenger_GetMessageDescription(uint8_t* data, uint8_t offset, const char** out1, const char** out2) {
+    getMessageDescription(data[offset+MessageOffset_MsgId1], data[offset+MessageOffset_MsgId1+1], out1, out2);
+}
+
 void processWatermarks(uint8_t srcConnectionId, uint8_t src, const uint8_t* data, uint16_t len, uint8_t offset) {
     if (data[offset+MessageOffset_MsgId1] == MessageId_ResendRequest) {
         return;
