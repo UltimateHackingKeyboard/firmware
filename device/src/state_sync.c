@@ -666,77 +666,89 @@ static void updateProperty(state_sync_prop_id_t propId) {
     }
 }
 
-#define UPDATE_AND_RETURN_IF_DIRTY(propId)                                                         \
+typedef enum {
+    UpdateResult_AllUpToDate,
+    UpdateResult_UpdatedHighPrio,
+    UpdateResult_UpdatedLowPrio,
+    UpdateResult_UpdatedDelayed,
+} update_result_t;
+
+#define UPDATE_AND_RETURN_IF_DIRTY(propId, res)                                                    \
     if (stateSyncProps[propId].dirtyState != DirtyState_Clean) {                                   \
         updateProperty(propId);                                                                    \
-        return false;                                                                              \
+        return res;                                                                                \
     }
 
-static bool handlePropertyUpdateRightToLeft() {
-    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ResetRightLeftLink);
-    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_Config);
-    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_SwitchTestMode);
+static update_result_t handlePropertyUpdateRightToLeft() {
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ResetRightLeftLink, UpdateResult_UpdatedLowPrio);
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_Config, UpdateResult_UpdatedHighPrio);
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_SwitchTestMode, UpdateResult_UpdatedHighPrio);
 
     if (KeyBacklightBrightness != 0) {
         // Update relevant data
-        UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_PowerMode);
-        UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_FunctionalColors);
-        UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_LayerActionFirst + ActiveLayer);
-        UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ActiveKeymap);
-        UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ActiveLayer);
-        UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_Backlight);
+        UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_PowerMode, UpdateResult_UpdatedHighPrio);
+        UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_FunctionalColors, UpdateResult_UpdatedHighPrio);
+        UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_LayerActionFirst + ActiveLayer, UpdateResult_UpdatedHighPrio);
+        UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ActiveKeymap, UpdateResult_UpdatedHighPrio);
+        UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ActiveLayer, UpdateResult_UpdatedHighPrio);
+        UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_Backlight, UpdateResult_UpdatedHighPrio);
 
         // Update rest of layers
         state_sync_prop_id_t first = StateSyncPropertyId_LayerActionFirst;
         state_sync_prop_id_t last = StateSyncPropertyId_LayerActionLast;
         for (state_sync_prop_id_t propId = first; propId <= last; propId++) {
-            UPDATE_AND_RETURN_IF_DIRTY(propId);
+            UPDATE_AND_RETURN_IF_DIRTY(propId, UpdateResult_UpdatedLowPrio);
         }
+    } else {
+        UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_Backlight, UpdateResult_UpdatedHighPrio);
     }
-    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_Backlight);
 
-    return true;
+    return UpdateResult_AllUpToDate;
 }
 
 static bool handlePropertyUpdateLeftToRight() {
-    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ResetRightLeftLink);
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ResetRightLeftLink, UpdateResult_UpdatedLowPrio);
 
-    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ModuleStateLeftHalf);
-    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ModuleStateLeftModule);
-    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_KeyStatesDummy);
-    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_LeftModuleDisconnected);
-    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_MergeSensor);
-    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_Battery);
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ModuleStateLeftHalf, UpdateResult_UpdatedHighPrio);
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ModuleStateLeftModule, UpdateResult_UpdatedHighPrio);
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_KeyStatesDummy, UpdateResult_UpdatedHighPrio);
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_LeftModuleDisconnected, UpdateResult_UpdatedHighPrio);
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_MergeSensor, UpdateResult_UpdatedHighPrio);
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_Battery, UpdateResult_UpdatedHighPrio);
 
-    return true;
+    return UpdateResult_AllUpToDate;
 }
 
 static bool handlePropertyUpdateDongleToRight() {
-    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ResetRightDongleLink);
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ResetRightDongleLink, UpdateResult_UpdatedLowPrio);
 
-    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_DongleProtocolVersion);
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_DongleProtocolVersion, UpdateResult_UpdatedHighPrio);
 
-    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_KeyboardLedsState);
-    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_DongleScrollMultipliers);
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_KeyboardLedsState, UpdateResult_UpdatedHighPrio);
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_DongleScrollMultipliers, UpdateResult_UpdatedHighPrio);
 
-    return true;
+    return UpdateResult_AllUpToDate;
 }
 
 static bool handlePropertyUpdateRightToDongle() {
-    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ResetRightDongleLink);
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ResetRightDongleLink, UpdateResult_UpdatedLowPrio);
 
-    return true;
+    return UpdateResult_AllUpToDate;
 }
 
 static void updateLoopRightLeft() {
+    update_result_t res;
+
     if (DEVICE_ID == DeviceId_Uhk80_Left) {
         while (true) {
             bool isConnected = DeviceState_IsDeviceConnected(DeviceId_Uhk80_Right);
             STATE_SYNC_LOG("--- Left to right update loop, connected: %i\n", isConnected);
-            if (!isConnected || handlePropertyUpdateLeftToRight()) {
+
+            if (!isConnected || (res = handlePropertyUpdateLeftToRight()) == UpdateResult_AllUpToDate) {
                 k_sleep(K_FOREVER);
             } else {
-                k_sleep(K_MSEC(STATE_SYNC_SEND_DELAY));
+                uint32_t delay = res == UpdateResult_UpdatedHighPrio ? STATE_SYNC_SEND_DELAY : STATE_SYNC_SEND_DELAY*10;
+                k_sleep(K_MSEC(delay));
             }
         }
     }
@@ -745,10 +757,11 @@ static void updateLoopRightLeft() {
         while (true) {
             bool isConnected = DeviceState_IsDeviceConnected(DeviceId_Uhk80_Left);
             STATE_SYNC_LOG("--- Right to left update loop, connected: %i\n", isConnected);
-            if (!isConnected || handlePropertyUpdateRightToLeft()) {
+            if (!isConnected || (res = handlePropertyUpdateRightToLeft()) == UpdateResult_AllUpToDate) {
                 k_sleep(K_FOREVER);
             } else {
-                k_sleep(K_MSEC(STATE_SYNC_SEND_DELAY));
+                uint32_t delay = res == UpdateResult_UpdatedHighPrio ? STATE_SYNC_SEND_DELAY : STATE_SYNC_SEND_DELAY*10;
+                k_sleep(K_MSEC(delay));
             }
         }
     }
@@ -765,6 +778,8 @@ static void updateStandbys() {
 }
 
 static void updateLoopRightDongle() {
+    update_result_t res;
+
     if (DEVICE_ID == DeviceId_Uhk80_Right) {
         while (true) {
             bool isConnected = DeviceState_IsDeviceConnected(DeviceId_Uhk_Dongle);
@@ -774,10 +789,11 @@ static void updateLoopRightDongle() {
                 updateStandbys();                                                                    \
             }
 
-            if (!isConnected || handlePropertyUpdateRightToDongle()) {
+            if (!isConnected || (res = handlePropertyUpdateRightToDongle()) == UpdateResult_AllUpToDate) {
                 k_sleep(K_FOREVER);
             } else {
-                k_sleep(K_MSEC(STATE_SYNC_SEND_DELAY));
+                uint32_t delay = res == UpdateResult_UpdatedHighPrio ? STATE_SYNC_SEND_DELAY : STATE_SYNC_SEND_DELAY*10;
+                k_sleep(K_MSEC(delay));
             }
         }
     }
@@ -786,10 +802,11 @@ static void updateLoopRightDongle() {
         while (true) {
             bool isConnected = DeviceState_IsDeviceConnected(DeviceId_Uhk80_Right);
             STATE_SYNC_LOG("--- Dongle update loop, connected: %i\n", isConnected);
-            if (!isConnected || DongleStandby || handlePropertyUpdateDongleToRight()) {
+            if (!isConnected || DongleStandby || (res = handlePropertyUpdateDongleToRight()) == UpdateResult_AllUpToDate) {
                 k_sleep(K_FOREVER);
             } else {
-                k_sleep(K_MSEC(STATE_SYNC_SEND_DELAY));
+                uint32_t delay = res == UpdateResult_UpdatedHighPrio ? STATE_SYNC_SEND_DELAY : STATE_SYNC_SEND_DELAY*10;
+                k_sleep(K_MSEC(delay));
             }
         }
     }
