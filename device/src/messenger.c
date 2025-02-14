@@ -329,13 +329,8 @@ void Messenger_GetMessageDescription(uint8_t* data, uint8_t offset, const char**
     getMessageDescription(data[offset+MessageOffset_MsgId1], data[offset+MessageOffset_MsgId1+1], out1, out2);
 }
 
-void processWatermarks(uint8_t srcConnectionId, uint8_t src, const uint8_t* data, uint16_t len, uint8_t offset) {
-    if (data[offset+MessageOffset_MsgId1] == MessageId_ResendRequest) {
-        return;
-    }
-
+void logAllMessages(uint8_t srcConnectionId, uint8_t src, const uint8_t* data, uint16_t len, uint8_t offset) {
     uint8_t wm = data[offset+MessageOffset_Wm];
-    uint8_t expectedWm = Connections[srcConnectionId].watermarks.rxIdx++;
 
     const char *desc1, *desc2;
     getMessageDescription(data[offset+MessageOffset_MsgId1], data[offset+MessageOffset_MsgId1+1], &desc1, &desc2);
@@ -345,9 +340,25 @@ void processWatermarks(uint8_t srcConnectionId, uint8_t src, const uint8_t* data
     if (DEBUG_LOG_MESSAGES) {
         LogU("Rec %d    %d %s %s\n", srcConnectionId, wm, desc1, desc2);
     }
+}
+
+
+bool processWatermarks(uint8_t srcConnectionId, uint8_t src, const uint8_t* data, uint16_t len, uint8_t offset) {
+    if (data[offset+MessageOffset_MsgId1] == MessageId_ResendRequest) {
+        return true;
+    }
+
+    uint8_t wm = data[offset+MessageOffset_Wm];
+    uint8_t lastWm = Connections[srcConnectionId].watermarks.rxIdx;
+    uint8_t expectedWm = lastWm + 1;
+
+    if (wm == lastWm) {
+        // we have already received this message, so don't push it into the queue again.
+        return false;
+    }
 
     if (data == MessengerQueue_BlackholeBuffer) {
-        return;
+        return false;
     }
 
     if (false && wm != expectedWm && DEBUG_MODE) {
@@ -358,15 +369,23 @@ void processWatermarks(uint8_t srcConnectionId, uint8_t src, const uint8_t* data
             // they have resetted their connection; that is fine, just update our watermarks
         }
         Connections[srcConnectionId].watermarks.missedCount++;
-        Connections[srcConnectionId].watermarks.rxIdx = wm+1;
     }
+
+    Connections[srcConnectionId].watermarks.rxIdx = wm;
+
+    return true;
 }
 
 void Messenger_Enqueue(uint8_t srcConnectionId, uint8_t src, const uint8_t* data, uint16_t len, uint8_t offset) {
-    processWatermarks(srcConnectionId, src, data, len, offset);
+    logAllMessages(srcConnectionId, src, data, len, offset);
+
+    if (!processWatermarks(srcConnectionId, src, data, len, offset)) {
+        MessengerQueue_FreeMemory(data);
+        return;
+    }
 
     if (isSpam(data+offset, srcConnectionId)) {
-        MessengerQueue_FreeMemory(data+offset);
+        MessengerQueue_FreeMemory(data);
     } else {
         MessengerQueue_Put(src, data, len, offset);
         EventVector_Set(EventVector_NewMessage);
