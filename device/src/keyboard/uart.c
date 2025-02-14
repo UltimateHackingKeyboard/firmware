@@ -23,6 +23,8 @@
 #define UART_RESEND_DELAY 100
 #define UART_RESEND_COUNT 3
 
+#define UART_RESET_DELAY 10
+
 static K_THREAD_STACK_DEFINE(stack_area, THREAD_STACK_SIZE);
 static struct k_thread thread_data;
 
@@ -103,7 +105,7 @@ static connection_id_t remoteConnectionId() {
 static void resetUart() {
     // This will probably not reset uart, but at least will give main thread some time to run
     uart_rx_disable(uart_dev);
-    EventScheduler_Schedule(k_uptime_get() + 100, EventSchedulerEvent_ReenableUart, "reenable uart");
+    EventScheduler_Schedule(k_uptime_get() + UART_RESET_DELAY, EventSchedulerEvent_ReenableUart, "reenable uart");
 }
 
 static void appendRxByte(uint8_t byte) {
