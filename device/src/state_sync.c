@@ -323,11 +323,7 @@ static void checkFirmwareVersions(const uhk_module_state_t *moduleState, slot_t 
 }
 
 static void checkDongleProtocolVersion() {
-    if (VERSIONS_EQUAL(DongleProtocolVersion, dongleProtocolVersion)) {
-        LogUOS("Dongle and right half run the same dongle protocol version %d.%d.%d\n",
-                DongleProtocolVersion.major, DongleProtocolVersion.minor, DongleProtocolVersion.patch
-        );
-    } else {
+    if (!VERSIONS_EQUAL(DongleProtocolVersion, dongleProtocolVersion)) {
         LogUOS("Dongle and right half run different dongle protocol versios (dongle: %d.%d.%d, right: %d.%d.%d), please upgrade!\n",
                 DongleProtocolVersion.major, DongleProtocolVersion.minor, DongleProtocolVersion.patch,
                 dongleProtocolVersion.major, dongleProtocolVersion.minor, dongleProtocolVersion.patch
