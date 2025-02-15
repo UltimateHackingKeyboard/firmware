@@ -22,6 +22,7 @@
 #include "debug.h"
 #include <zephyr/settings/settings.h>
 #include "resend.h"
+#include "trace.h"
 
 static struct bt_nus_client nus_client;
 
@@ -187,6 +188,7 @@ static void send_raw_buffer(const uint8_t *data, uint16_t len) {
 }
 
 void NusClient_SendMessage(message_t* msg) {
+    Trace_Printf("s2");
     SEM_TAKE(&nusBusy);
 
     // Call this only after we have taken the semaphore.

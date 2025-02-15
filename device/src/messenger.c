@@ -23,6 +23,7 @@
 #include "connections.h"
 #include "resend.h"
 #include "debug.h"
+#include "trace.h"
 
 #if DEVICE_IS_KEYBOARD
 #include "keyboard/uart.h"
@@ -340,6 +341,7 @@ void logAllMessages(uint8_t srcConnectionId, uint8_t src, const uint8_t* data, u
     if (DEBUG_LOG_MESSAGES) {
         LogU("Rec %d    %d %s %s\n", srcConnectionId, wm, desc1, desc2);
     }
+    Trace_Printf("I%d", MessengerQueue_GetOccupiedCount());
 }
 
 
@@ -403,8 +405,10 @@ void Messenger_ProcessQueue() {
     EventVector_Unset(EventVector_NewMessage);
     messenger_queue_record_t rec = MessengerQueue_Take();
     while (rec.data != NULL) {
+        Trace('<');
         receive(rec.data+rec.offset, rec.len);
         MessengerQueue_FreeMemory(rec.data);
+        Trace('>');
 
         rec = MessengerQueue_Take();
     }
@@ -485,6 +489,8 @@ void Messenger_SendMessage(message_t* message) {
         LogU("Sen %d        %d %s %s\n", connectionId, message->wm, desc1, desc2);
     }
 
+    Trace('O');
+    Trace_Print();
 }
 
 void Messenger_Send(device_id_t dst, uint8_t messageId, const uint8_t* data, uint16_t len) {

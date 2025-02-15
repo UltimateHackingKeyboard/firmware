@@ -41,6 +41,7 @@ if(NOT CONFIG_BOARD_UHK_60_RIGHT)
         shell.c
         stack_trace.c
         state_sync.c
+        trace.c
     )
     if(CONFIG_BT_PERIPHERAL)
         target_sources(${PROJECT_NAME} PRIVATE

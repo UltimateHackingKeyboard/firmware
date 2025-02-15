@@ -42,6 +42,7 @@
 #include <zephyr/drivers/gpio.h>
 #include "dongle_leds.h"
 #include "usb_protocol_handler.h"
+#include "trace.h"
 
 k_tid_t Main_ThreadId = 0;
 
@@ -73,6 +74,8 @@ static void scheduleNextRun() {
     CurrentTime = k_uptime_get();
     int32_t diff = nextEventTime - CurrentTime;
 
+    Trace('-');
+
     k_sem_take(&mainWakeupSemaphore, K_NO_WAIT);
     bool haveMoreWork = (EventScheduler_Vector & EventVector_UserLogicUpdateMask);
     if (haveMoreWork) {
@@ -91,6 +94,7 @@ static void scheduleNextRun() {
         k_sem_take(&mainWakeupSemaphore, K_FOREVER);
         // k_sleep(K_FOREVER);
     }
+    Trace('+');
 }
 
 //TODO: inline this
@@ -102,6 +106,8 @@ void Main_Wake() {
 int main(void) {
     Main_ThreadId = k_current_get();
     printk("----------\n" DEVICE_NAME " started\n");
+
+    Trace_Init();
 
     {
         flash_area_open(FLASH_AREA_ID(hardware_config_partition), &hardwareConfigArea);
