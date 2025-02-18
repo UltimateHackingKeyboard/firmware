@@ -6,6 +6,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/sys/printk.h>
 #include "logger.h"
+#include "thread_stats.h"
 #include "trace.h"
 
 uint16_t MessengerQueue_DroppedMessageCount = 0;
@@ -113,7 +114,10 @@ uint8_t* MessengerQueue_AllocateMemory() {
     for (uint8_t tries = 0; tries < POOL_SIZE; tries++) {
         POOL_ALLOCATE(regionPool, POOL_SIZE, POOL_REGION_SIZE);
     }
+    ThreadStats_Snap();
+    Trace_Printf("E0");
     Trace_Print();
+    ThreadStats_Print();
     LogUOS("Messanger message pool space ran out!\n");
     return blackholeBuffer;
 }

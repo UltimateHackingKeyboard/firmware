@@ -8,6 +8,7 @@
 #define DEBUG_CONSOLE false
 #define DEBUG_EVENTLOOP_SCHEDULE false
 #define DEBUG_POSTPONER false
+#define DEBUG_THREAD_STATS true
 #define WATCH_INTERVAL 500
 
 #define DEBUG_MODE true

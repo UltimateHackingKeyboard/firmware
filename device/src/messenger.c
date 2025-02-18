@@ -490,7 +490,6 @@ void Messenger_SendMessage(message_t* message) {
     }
 
     Trace('O');
-    Trace_Print();
 }
 
 void Messenger_Send(device_id_t dst, uint8_t messageId, const uint8_t* data, uint16_t len) {
