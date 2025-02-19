@@ -309,7 +309,7 @@ void StateSync_CheckFirmwareVersions() {
 
 static void checkDongleProtocolVersion() {
     if (!VERSIONS_EQUAL(DongleProtocolVersion, dongleProtocolVersion)) {
-        LogUOS("Dongle and right half run different dongle protocol versios (dongle: %d.%d.%d, right: %d.%d.%d), please upgrade!\n",
+        LogUOS("Dongle and right half run different dongle protocol versios\n  (dongle: %d.%d.%d, right: %d.%d.%d)\n  please upgrade!\n",
                 DongleProtocolVersion.major, DongleProtocolVersion.minor, DongleProtocolVersion.patch,
                 dongleProtocolVersion.major, dongleProtocolVersion.minor, dongleProtocolVersion.patch
         );
