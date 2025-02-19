@@ -412,7 +412,7 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
         WIDGET_REFRESH(&StatusWidget);
 
         if (!isLocalUpdate && DongleProtocolVersion.major == 0) {
-            LogUOS("Dongle protocol version doesn't seem to have been reported. Is your dongle firmware up to date?\n");
+            LogUOS("Dongle protocol version doesn't seem to have been reported.\nIs your dongle firmware up to date?\n");
         }
         break;
     case StateSyncPropertyId_ResetRightLeftLink:
