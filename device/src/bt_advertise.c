@@ -22,7 +22,7 @@
             BT_UUID_16_ENCODE(BT_UUID_BAS_VAL)),
 
 ATTR_UNUSED static const struct bt_data adNusLeft[] = {AD_NUS_DATA("UHK80 Left Nus")};
-ATTR_UNUSED static const struct bt_data adNusRight[] = {AD_NUS_DATA("UHK80 Right Nus")};
+ATTR_UNUSED static const struct bt_data adNusRight[] = {AD_NUS_DATA("UHK 80 Right")};
 static const struct bt_data adHid[] = {AD_HID_DATA};
 
 // Scan response packets
