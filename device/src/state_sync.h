@@ -155,4 +155,6 @@
     void StateSync_ResetRightDongleLink(bool bidirectional);
     void StateSync_ResetConfig();
 
+    void StateSync_CheckFirmwareVersions();
+
 #endif

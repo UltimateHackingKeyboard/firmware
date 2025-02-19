@@ -11,6 +11,7 @@
 #include "macros/status_buffer.h"
 #include "zephyr/device.h"
 #include "macro_events.h"
+#include <zephyr/arch/arch_interface.h>
 #include "debug.h"
 
 #ifdef DEVICE_HAS_OLED
@@ -56,26 +57,51 @@ void LogUO(const char *fmt, ...) {
     LogConstantTo(DEVICE_ID, LogTarget_Uart | LogTarget_Oled, buffer);
 }
 
+void LogO(const char *fmt, ...) {
+    EXPAND_STRING(buffer);
+
+    LogConstantTo(DEVICE_ID, LogTarget_Oled, buffer);
+}
+
 void LogUOS(const char *fmt, ...) {
     EXPAND_STRING(buffer);
 
-    LogConstantTo(DeviceId_Uhk80_Right, LogTarget_Uart | LogTarget_Oled | LogTarget_ErrorBuffer, buffer);
+    LogConstantTo(DEVICE_ID, LogTarget_Uart | LogTarget_Oled | LogTarget_ErrorBuffer, buffer);
+    MacroEvent_OnError();
+}
+
+void LogUSDO(const char *fmt, ...) {
+    EXPAND_STRING(buffer);
+
+    uint32_t logMask;
+
+    if (DEBUG_MODE) {
+        logMask = LogTarget_Uart | LogTarget_Oled | LogTarget_ErrorBuffer;
+    } else {
+        logMask = LogTarget_Uart | LogTarget_ErrorBuffer;
+    }
+
+    LogConstantTo(DEVICE_ID, logMask, buffer);
     MacroEvent_OnError();
 }
 
 void LogConstantTo(device_id_t deviceId, log_target_t logMask, const char* buffer) {
     if (DEVICE_ID == deviceId) {
-        if ((logMask & LogTarget_Oled) && DEBUG_MODE) {
+        if (logMask & LogTarget_Oled) {
             Oled_LogConstant(buffer);
         }
-        if (logMask & LogTarget_Uart) {
+        if ((logMask & LogTarget_Uart) && DEBUG_LOG_UART) {
             Uart_LogConstant(buffer);
         }
         if (logMask & LogTarget_ErrorBuffer) {
             Macros_ReportPrintf(NULL, "%s", buffer);
         }
     } else {
-        Messenger_Send2(deviceId, MessageId_Log, logMask, buffer, strlen(buffer)+1);
+        if (k_is_in_isr()) {
+            printk("Cannot send log from ISR:\n    %s\n", buffer);
+        } else {
+            Messenger_Send2(deviceId, MessageId_Log, logMask, buffer, strlen(buffer)+1);
+        }
     }
 }
 

@@ -21,7 +21,9 @@
 #include "slave_drivers/uhk_module_driver.h"
 #include "macros/status_buffer.h"
 #include "connections.h"
+#include "resend.h"
 #include "debug.h"
+#include "trace.h"
 
 #if DEVICE_IS_KEYBOARD
 #include "keyboard/uart.h"
@@ -139,6 +141,9 @@ static void receiveLeft(device_id_t src, const uint8_t* data, uint16_t len) {
         case MessageId_RoundTripTest:
             RoundTripTest_Receive(data, len);
             break;
+        case MessageId_ResendRequest:
+            Resend_ResendRequestReceived(src, determineChannel(src), data, len);
+            break;
         default:
             printk("Didn't expect to receive message %i %i\n", data[0], data[1]);
             break;
@@ -183,6 +188,9 @@ static void receiveRight(device_id_t src, const uint8_t* data, uint16_t len) {
         case MessageId_RoundTripTest:
             RoundTripTest_Receive(data, len);
             break;
+        case MessageId_ResendRequest:
+            Resend_ResendRequestReceived(src, determineChannel(src), data, len);
+            break;
         default:
             printk("Unrecognized or unexpected message [%i, %i, ...]\n", data[0], data[1]);
             break;
@@ -223,6 +231,9 @@ static void receiveDongle(device_id_t src, const uint8_t* data, uint16_t len) {
         case MessageId_RoundTripTest:
             RoundTripTest_Receive(data, len);
             break;
+        case MessageId_ResendRequest:
+            Resend_ResendRequestReceived(src, determineChannel(src), data, len);
+            break;
         default:
             printk("Unrecognized or unexpected message [%i, %i, ...]\n", data[0], data[1]);
             break;
@@ -246,7 +257,7 @@ static void receive(const uint8_t* data, uint16_t len) {
             .connectionId = determineChannel(dst),
         };
         printk("Forwarding message from %d to %d\n", msg.src, msg.dst);
-        Messenger_SendMessage(msg);
+        Messenger_SendMessage(&msg);
     } else {
         switch (DEVICE_ID) {
             case DeviceId_Uhk80_Left:
@@ -299,6 +310,10 @@ ATTR_UNUSED static void getMessageDescription(uint8_t msgId1, uint8_t msgId2, co
             *out1 = "RoundTripTest";
             *out2 = NULL;
             return;
+        case MessageId_ResendRequest:
+            *out1 = "PleaseResend";
+            *out2 = NULL;
+            return;
         default: {
                 static char buffer[3];
                 buffer[0] = msgId1+'0';
@@ -311,40 +326,68 @@ ATTR_UNUSED static void getMessageDescription(uint8_t msgId1, uint8_t msgId2, co
     }
 }
 
-void processWatermarks(uint8_t srcConnectionId, uint8_t src, const uint8_t* data, uint16_t len, uint8_t offset) {
+void Messenger_GetMessageDescription(uint8_t* data, uint8_t offset, const char** out1, const char** out2) {
+    getMessageDescription(data[offset+MessageOffset_MsgId1], data[offset+MessageOffset_MsgId1+1], out1, out2);
+}
+
+void logAllMessages(uint8_t srcConnectionId, uint8_t src, const uint8_t* data, uint16_t len, uint8_t offset) {
     uint8_t wm = data[offset+MessageOffset_Wm];
-    uint8_t expectedWm = Connections[srcConnectionId].watermarks.rxIdx++;
 
     const char *desc1, *desc2;
     getMessageDescription(data[offset+MessageOffset_MsgId1], data[offset+MessageOffset_MsgId1+1], &desc1, &desc2);
     desc1 = desc1 == NULL ? "" : desc1;
     desc2 = desc2 == NULL ? "" : desc2;
 
-    if (DEBUG_MODE) {
-        printk("Rec %d    %d %s %s\n", srcConnectionId, wm, desc1, desc2);
+    if (DEBUG_LOG_MESSAGES) {
+        LogU("Rec %d    %d %s %s\n", srcConnectionId, wm, desc1, desc2);
+    }
+    Trace_Printf("I%d", MessengerQueue_GetOccupiedCount());
+}
+
+
+bool processWatermarks(uint8_t srcConnectionId, uint8_t src, const uint8_t* data, uint16_t len, uint8_t offset) {
+    if (data[offset+MessageOffset_MsgId1] == MessageId_ResendRequest) {
+        return true;
+    }
+
+    uint8_t wm = data[offset+MessageOffset_Wm];
+    uint8_t lastWm = Connections[srcConnectionId].watermarks.rxIdx;
+    uint8_t expectedWm = lastWm + 1;
+
+    if (wm == lastWm) {
+        // we have already received this message, so don't push it into the queue again.
+        return false;
     }
 
     if (data == MessengerQueue_BlackholeBuffer) {
-        return;
+        return false;
     }
 
-    if (wm != expectedWm && DEBUG_MODE) {
+    if (false && wm != expectedWm && DEBUG_MODE) {
         if (wm != 0) {
             int8_t difference = wm - expectedWm;
-            LogUOS("Message index doesn't match by %i message(s) from connection %d (%s), wm %d / %d\n", difference, srcConnectionId, Connections_GetStaticName(srcConnectionId), wm, expectedWm);
+            LogUSDO("Message index doesn't match by %i message(s) from connection %d (%s), wm %d / %d\n", difference, srcConnectionId, Connections_GetStaticName(srcConnectionId), wm, expectedWm);
         } else {
             // they have resetted their connection; that is fine, just update our watermarks
         }
         Connections[srcConnectionId].watermarks.missedCount++;
-        Connections[srcConnectionId].watermarks.rxIdx = wm+1;
     }
+
+    Connections[srcConnectionId].watermarks.rxIdx = wm;
+
+    return true;
 }
 
 void Messenger_Enqueue(uint8_t srcConnectionId, uint8_t src, const uint8_t* data, uint16_t len, uint8_t offset) {
-    processWatermarks(srcConnectionId, src, data, len, offset);
+    logAllMessages(srcConnectionId, src, data, len, offset);
+
+    if (!processWatermarks(srcConnectionId, src, data, len, offset)) {
+        MessengerQueue_FreeMemory(data);
+        return;
+    }
 
     if (isSpam(data+offset, srcConnectionId)) {
-        MessengerQueue_FreeMemory(data+offset);
+        MessengerQueue_FreeMemory(data);
     } else {
         MessengerQueue_Put(src, data, len, offset);
         EventVector_Set(EventVector_NewMessage);
@@ -362,8 +405,10 @@ void Messenger_ProcessQueue() {
     EventVector_Unset(EventVector_NewMessage);
     messenger_queue_record_t rec = MessengerQueue_Take();
     while (rec.data != NULL) {
+        Trace('<');
         receive(rec.data+rec.offset, rec.len);
         MessengerQueue_FreeMemory(rec.data);
+        Trace('>');
 
         rec = MessengerQueue_Take();
     }
@@ -399,9 +444,9 @@ bool Messenger_Availability(device_id_t dst, messenger_availability_op_t operati
     }
 }
 
-void Messenger_SendMessage(message_t message) {
-    connection_id_t connectionId = message.connectionId;
-    device_id_t dst = message.dst;
+void Messenger_SendMessage(message_t* message) {
+    connection_id_t connectionId = message->connectionId;
+    device_id_t dst = message->dst;
 
 
     switch (connectionId) {
@@ -437,13 +482,14 @@ void Messenger_SendMessage(message_t message) {
     }
 
     const char *desc1, *desc2;
-    getMessageDescription(message.messageId[0], message.messageId[1], &desc1, &desc2);
+    getMessageDescription(message->messageId[0], message->messageId[1], &desc1, &desc2);
     desc1 = desc1 == NULL ? "" : desc1;
     desc2 = desc2 == NULL ? "" : desc2;
-    if (DEBUG_MODE) {
-        printk("Sen %d        %d %s %s\n", connectionId, message.wm, desc1, desc2);
+    if (DEBUG_LOG_MESSAGES) {
+        LogU("Sen %d        %d %s %s\n", connectionId, message->wm, desc1, desc2);
     }
 
+    Trace('O');
 }
 
 void Messenger_Send(device_id_t dst, uint8_t messageId, const uint8_t* data, uint16_t len) {
@@ -456,7 +502,7 @@ void Messenger_Send(device_id_t dst, uint8_t messageId, const uint8_t* data, uin
         .dst = dst,
         .connectionId = determineChannel(dst),
     };
-    Messenger_SendMessage(msg);
+    Messenger_SendMessage(&msg);
 }
 
 void Messenger_Send2(device_id_t dst, uint8_t messageId, uint8_t messageId2, const uint8_t* data, uint16_t len) {
@@ -470,7 +516,7 @@ void Messenger_Send2(device_id_t dst, uint8_t messageId, uint8_t messageId2, con
         .dst = dst,
         .connectionId = determineChannel(dst),
     };
-    Messenger_SendMessage(msg);
+    Messenger_SendMessage(&msg);
 }
 
 void Messenger_Send2Via(device_id_t dst, connection_id_t connectionId, uint8_t messageId, uint8_t messageId2, const uint8_t* data, uint16_t len) {
@@ -484,7 +530,7 @@ void Messenger_Send2Via(device_id_t dst, connection_id_t connectionId, uint8_t m
         .dst = dst,
         .connectionId = connectionId,
     };
-    Messenger_SendMessage(msg);
+    Messenger_SendMessage(&msg);
 }
 
 void Messenger_Init() {

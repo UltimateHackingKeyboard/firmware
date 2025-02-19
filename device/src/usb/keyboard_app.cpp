@@ -3,6 +3,7 @@ extern "C" {
 #include "connections.h"
 #include "usb_compatibility.h"
 #include "zephyr/sys/printk.h"
+#include "trace.h"
 }
 
 keyboard_app &keyboard_app::usb_handle()
@@ -84,6 +85,7 @@ void keyboard_app::set_report_state(const keys_nkro_report_base<> &data)
     if (!active()) {
         return;
     }
+    Trace_Printf("s1");
     if (!sending_sem_.try_acquire_for(SEMAPHORE_RESET_TIMEOUT)) {
         //return;
     }

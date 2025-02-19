@@ -117,6 +117,13 @@ static void reportConnectionState(connection_id_t connectionId, const char* mess
     }
 }
 
+void Connections_ResetWatermarks(connection_id_t connectionId) {
+    connectionId = resolveAliases(connectionId);
+
+    Connections[connectionId].watermarks.txIdx = 0;
+    Connections[connectionId].watermarks.rxIdx = 255;
+}
+
 void Connections_ReportState(connection_id_t connectionId) {
     reportConnectionState(connectionId, "Conn state");
 }
@@ -133,10 +140,7 @@ void Connections_SetState(connection_id_t connectionId, connection_state_t state
         Connections[connectionId].state = state;
         reportConnectionState(connectionId, "Con state");
 
-        if (state == ConnectionState_Disconnected) {
-            Connections[connectionId].watermarks.txIdx = 0;
-            Connections[connectionId].watermarks.rxIdx = 0;
-        }
+        Connections_ResetWatermarks(connectionId);
 
         if (Connections_Target(connectionId) == ConnectionTarget_Host && DEVICE_IS_UHK80_RIGHT) {
             Connections_HandleSwitchover(connectionId, false);

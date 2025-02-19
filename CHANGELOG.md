@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [12.3.4] - 2025-02-14
+
+Device Protocol: 4.14.1 | Module Protocol: 4.3.0 | User Config: 8.3.0 | Hardware Config: 1.0.0 | Smart Macros: 3.1.0
+
+- Fix bug that was introduced in firmware 12.3.3 and caused the firmware update on the UHK 60 to fail when the touchpad module was connected. Upgrade to this firmware version without the touchpad module connected on the UHK 60 if you're on firmware 12.3.3.
+- Fix caps lock, num lock, and scroll lock states not being updated in a timely manner on the UHK 80.
+- Fix touchpad ghosting in Agent on the UHK 80 when the keyboard halves were merged.
+
 ## [12.3.3] - 2025-02-02
 
 Device Protocol: 4.14.**1** | Module Protocol: 4.3.0 | User Config: 8.3.0 | Hardware Config: 1.0.0 | Smart Macros: 3.1.0
