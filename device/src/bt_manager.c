@@ -14,6 +14,7 @@
 #include "bt_conn.h"
 #include "bt_scan.h"
 #include "settings.h"
+#include "config_manager.h"
 
 #define BT_SHORT_RETRY_DELAY 1000
 
@@ -46,6 +47,10 @@ void BtManager_InitBt() {
 
 void BtManager_StartBt() {
     printk("Starting bluetooth services.\n");
+
+    if (!Cfg.Bt_Enabled) {
+        return;
+    }
 
     if (DEVICE_IS_UHK80_RIGHT) {
         HOGP_Enable();
@@ -93,6 +98,10 @@ void BtManager_StartScanningAndAdvertising() {
     bool success = true;
     static uint8_t try = 0;
     int err = 0;
+
+    if (!Cfg.Bt_Enabled) {
+        return;
+    }
 
     if (try > 0) {
         if (DEVICE_IS_UHK80_LEFT || DEVICE_IS_UHK80_RIGHT) {

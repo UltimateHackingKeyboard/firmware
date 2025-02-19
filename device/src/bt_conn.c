@@ -459,7 +459,7 @@ static void connectAuthenticatedConnection(struct bt_conn *conn, connection_id_t
 
 static void securityChanged(struct bt_conn *conn, bt_security_t level, enum bt_security_err err) {
     // In case of failure, disconnect
-    if (err || (level < BT_SECURITY_L4 && !Cfg.AllowUnsecuredConnections)) {
+    if (err || (level < BT_SECURITY_L4 && !Cfg.Bt_AllowUnsecuredConnections)) {
         printk("Bt security failed: %s, level %u, err %d, disconnecting\n", GetPeerStringByConn(conn), level, err);
         bt_conn_auth_cancel(conn);
         return;
@@ -732,3 +732,15 @@ void BtConn_ReserveConnections() {
 #endif
 }
 
+void Bt_SetEnabled(bool enabled) {
+    Cfg.Bt_Enabled = enabled;
+
+    if (enabled) {
+        printk("Starting bluetooth on request.\n");
+        BtManager_StartScanningAndAdvertising();
+    } else {
+        printk("Shutting down bluetooth on request!\n");
+        BtManager_StopBt();
+        BtConn_DisconnectAll();
+    }
+}

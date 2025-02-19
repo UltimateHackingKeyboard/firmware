@@ -1,4 +1,5 @@
 #include "macros/set_command.h"
+#include "attributes.h"
 #include "config_parser/parse_config.h"
 #include "config_parser/parse_keymap.h"
 #include "key_states.h"
@@ -34,6 +35,7 @@
 
 #ifdef __ZEPHYR__
 #include "state_sync.h"
+#include "bt_conn.h"
 #else
 #include "init_peripherals.h"
 #endif
@@ -319,6 +321,41 @@ static macro_variable_t secondaryRoles(parser_context_t* ctx, set_command_action
     else if (ConsumeToken(ctx, "advanced")) {
         ConsumeUntilDot(ctx);
         return secondaryRoleAdvanced(ctx, action);
+    }
+    else {
+        Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
+    }
+    return noneVar();
+}
+
+
+static macro_variable_t bluetoothEnabled(parser_context_t* ctx, set_command_action_t action)
+{
+    if (action == SetCommandAction_Read) {
+        return boolVar(Cfg.Bt_Enabled);
+    }
+
+    ATTR_UNUSED bool newBtEnabled = Macros_ConsumeBool(ctx);
+
+    if (Macros_ParserError || Macros_DryRun) {
+        return noneVar();
+    }
+
+#if DEVICE_IS_UHK80_RIGHT
+    Bt_SetEnabled(newBtEnabled);
+#endif
+
+    return noneVar();
+}
+
+static macro_variable_t bluetooth(parser_context_t* ctx, set_command_action_t action)
+{
+    if (ConsumeToken(ctx, "enabled")) {
+        return bluetoothEnabled(ctx, action);
+
+    } else if (ConsumeToken(ctx, "allowUnsecuredConnections")) {
+        // deprecated, leave for backward compatibility
+        ASSIGN_BOOL(Cfg.Bt_AllowUnsecuredConnections);
     }
     else {
         Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
@@ -801,6 +838,10 @@ static macro_variable_t root(parser_context_t* ctx, set_command_action_t action)
         ConsumeUntilDot(ctx);
         return secondaryRoles(ctx, action);
     }
+    else if (ConsumeToken(ctx, "bluetooth")) {
+        ConsumeUntilDot(ctx);
+        return bluetooth(ctx, action);
+    }
     else if (ConsumeToken(ctx, "mouseKeys")) {
         ConsumeUntilDot(ctx);
         return mouseKeys(ctx, action);
@@ -875,7 +916,8 @@ static macro_variable_t root(parser_context_t* ctx, set_command_action_t action)
         ASSIGN_INT(Cfg.AutoShiftDelay);
     }
     else if (ConsumeToken(ctx, "allowUnsecuredConnections")) {
-        ASSIGN_BOOL(Cfg.AllowUnsecuredConnections);
+        // deprecated, leave for backward compatibility
+        ASSIGN_BOOL(Cfg.Bt_AllowUnsecuredConnections);
     }
 #ifndef __ZEPHYR__
     else if (ConsumeToken(ctx, "i2cBaudRate")) {
