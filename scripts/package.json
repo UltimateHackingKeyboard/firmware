@@ -21,7 +21,7 @@
   "firmwareVersion": "12.3.4",
   "deviceProtocolVersion": "4.14.1",
   "moduleProtocolVersion": "4.3.0",
-  "dongleProtocolVersion": "1.0.0",
+  "dongleProtocolVersion": "1.0.1",
   "userConfigVersion": "8.3.0",
   "hardwareConfigVersion": "1.0.0",
   "smartMacrosVersion": "3.1.0",

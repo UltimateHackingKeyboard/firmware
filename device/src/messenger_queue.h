@@ -32,4 +32,6 @@
     void MessengerQueue_Put(device_id_t src, const uint8_t* data, uint16_t len, uint8_t offset);
     messenger_queue_record_t MessengerQueue_Take();
 
+    uint8_t MessengerQueue_GetOccupiedCount();
+
 #endif // __MESSENGER_QUEUE_H__

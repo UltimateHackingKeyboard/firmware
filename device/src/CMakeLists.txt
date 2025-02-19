@@ -35,11 +35,13 @@ if(NOT CONFIG_BOARD_UHK_60_RIGHT)
         logger.c
         messenger_queue.c
         messenger.c
+        resend.c
         round_trip_test.c
         settings.c
         shell.c
         stack_trace.c
         state_sync.c
+        trace.c
     )
     if(CONFIG_BT_PERIPHERAL)
         target_sources(${PROJECT_NAME} PRIVATE

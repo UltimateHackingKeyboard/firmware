@@ -12,18 +12,28 @@
 #include "crc16.h"
 #include "macros/status_buffer.h"
 #include "state_sync.h"
+#include "resend.h"
 
 // Thread definitions
 
 #define THREAD_STACK_SIZE 1000
 #define THREAD_PRIORITY 5
 
+#define UART_FOREVER_TIMEOUT 10000
+#define UART_RESEND_DELAY 100
+#define UART_RESEND_COUNT 3
+
+#define UART_RESET_DELAY 10
+
 static K_THREAD_STACK_DEFINE(stack_area, THREAD_STACK_SIZE);
 static struct k_thread thread_data;
 
-#define START_BYTE 0b1010100
-#define END_BYTE 0b1010101
-#define ESCAPE_BYTE 0b1010110
+#define START_BYTE 0b1010100 //84
+#define END_BYTE 0b1010101 //85
+#define ESCAPE_BYTE 0b1010110 //86
+#define ACK_BYTE 0b1010111 //87
+#define NACK_BYTE 0b1011000 //88
+#define PING_BYTE 0b1011001 //89
 
 // UART definitions
 
@@ -41,6 +51,8 @@ uint16_t txPosition = 0;
 
 #define UART_SLOTS 1
 K_SEM_DEFINE(txBufferBusy, UART_SLOTS, UART_SLOTS);
+K_SEM_DEFINE(txControlBusy, UART_SLOTS, UART_SLOTS);
+K_SEM_DEFINE(controlThreadSleeper, 1, 1);
 
 #define RX_BUF_SIZE UART_MAX_PACKET_LENGTH + CRC_LEN
 uint8_t* rxBuffer = NULL;
@@ -55,6 +67,24 @@ uint32_t lastPingTime = -2*UART_TIMEOUT;
 
 uint16_t Uart_InvalidMessagesCounter = 0;
 
+uint8_t resendTries = 0;
+
+typedef enum {
+    UartTxState_Idle,
+    UartTxState_WaitingForAck,
+    UartTxState_Resend,
+} uart_tx_state_t;
+
+typedef enum {
+    UartRxState_Idle,
+    UartRxState_Ack,
+    UartRxState_Nack,
+} uart_rx_state_t;
+
+static volatile uart_tx_state_t uartTxState = UartTxState_Idle;
+static volatile uart_rx_state_t uartRxState = UartRxState_Idle;
+static volatile uint32_t lastMessageSentTime = 0;
+
 /* UART message format:
  * [START_BYTE,crc16,escaped(messengerPacket), ENDBYTE]
  * crcMessage = 4 bytes = CRC16 in format [ESCAPE_BYTE,byte1,ESCAPE_BYTE,byte2]
@@ -64,15 +94,26 @@ uint16_t Uart_InvalidMessagesCounter = 0;
  * We serialize both uart-level and messenger-level packets at the same place to avoid unnecessary copying.
  * */
 
+static void wakeControlThread() {
+    k_sem_give(&controlThreadSleeper);
+}
+
 static connection_id_t remoteConnectionId() {
     return DEVICE_IS_UHK80_LEFT ? ConnectionId_UartRight : ConnectionId_UartLeft;
+}
+
+static void resetUart() {
+    // This will probably not reset uart, but at least will give main thread some time to run
+    uart_rx_disable(uart_dev);
+    EventScheduler_Schedule(k_uptime_get() + UART_RESET_DELAY, EventSchedulerEvent_ReenableUart, "reenable uart");
 }
 
 static void appendRxByte(uint8_t byte) {
     if (rxPosition < RX_BUF_SIZE) {
         rxBuffer[rxPosition++] = byte;
     } else {
-        printk("Uart error: too long message in rx buffer, length: %i, begins with [%i, %i, ...]\n", rxPosition, rxBuffer[0], rxBuffer[1]);
+        LogU("Uart error: too long message [%i, %i, ... %i]\n", rxPosition, rxBuffer[0], rxBuffer[1], byte);
+        resetUart();
     }
 }
 
@@ -94,6 +135,10 @@ static bool isCrcValid(uint8_t* buf, uint16_t len) {
     return CRC16_IsMessageValidExt(&msg);
 }
 
+static void setRxState(uart_rx_state_t state) {
+    uartRxState = state;
+    wakeControlThread();
+}
 
 static void rxPacketReceived() {
     uint16_t len = rxPosition;
@@ -101,65 +146,133 @@ static void rxPacketReceived() {
     if (len >= CRC_LEN && isCrcValid(rxBuffer, len)) {
         lastPingTime = k_uptime_get();
         len -= CRC_LEN;
+        setRxState(UartRxState_Ack);
     } else {
         Uart_InvalidMessagesCounter++;
-        Connections[remoteConnectionId()].watermarks.rxIdx++;
-        LogU("Crc-invalid UART message received!\n");
-        StateSync_ResetRightLeftLink(true);
+        const char *out1, *out2;
+        Messenger_GetMessageDescription(rxBuffer, CRC_LEN, &out1, &out2);
+        LogUO("Crc-invalid UART message received! %s %s ", out1, out2 == NULL ? "" : out2);
+
+        for (uint16_t i = 0; i < rxPosition; i++) {
+            LogU("%i ", rxBuffer[i]);
+        }
+        LogU("\n");
+
+        // uint8_t invalidWatermark = Connections[remoteConnectionId()].watermarks.rxIdx;
+        // device_id_t src = DEVICE_IS_UHK80_LEFT ? DeviceId_Uhk80_Right : DeviceId_Uhk80_Left;
+        // connection_id_t connectionId = DEVICE_IS_UHK80_LEFT ? ConnectionId_UartRight : ConnectionId_UartLeft;
+        // Resend_RequestResendAsync(src, connectionId, invalidWatermark);
+
+        setRxState(UartRxState_Nack);
+
         rxPosition = 0;
         return;
     }
 
-    if (len == 0) {
-        // ping
-        lastPingTime = k_uptime_get();
-    } else {
-        // message
-        uint8_t* oldPacket = rxBuffer;
+    // message
+    uint8_t* oldPacket = rxBuffer;
 
-        rxBuffer = MessengerQueue_AllocateMemory();
-        rxPosition = 0;
+    rxBuffer = MessengerQueue_AllocateMemory();
+    rxPosition = 0;
 
-        connection_id_t connectionId = DEVICE_IS_UHK80_LEFT ? ConnectionId_UartRight : ConnectionId_UartLeft;
+    connection_id_t connectionId = DEVICE_IS_UHK80_LEFT ? ConnectionId_UartRight : ConnectionId_UartLeft;
 
-        if (DEVICE_IS_UHK80_RIGHT) {
-            Messenger_Enqueue(connectionId, DeviceId_Uhk80_Left, oldPacket, len, CRC_LEN);
-        } else if (DEVICE_IS_UHK80_LEFT) {
-            Messenger_Enqueue(connectionId, DeviceId_Uhk80_Right, oldPacket, len, CRC_LEN);
-        }
+    if (DEVICE_IS_UHK80_RIGHT) {
+        Messenger_Enqueue(connectionId, DeviceId_Uhk80_Left, oldPacket, len, CRC_LEN);
+    } else if (DEVICE_IS_UHK80_LEFT) {
+        Messenger_Enqueue(connectionId, DeviceId_Uhk80_Right, oldPacket, len, CRC_LEN);
     }
+}
+
+
+
+static uint16_t get_random(void)
+{
+    static uint16_t lfsr = 0xACE1;  // Non-zero seed
+    uint16_t bit = ((lfsr >> 0) ^ (lfsr >> 2) ^ (lfsr >> 3) ^ (lfsr >> 5)) & 1;
+    lfsr = (lfsr >> 1) | (bit << 15);
+    return lfsr;
 }
 
 static void processIncomingByte(uint8_t byte) {
     static bool escaping = false;
+    static bool receivingMessage = false;
+
+#if DEBUG_STRESS_UART
+    uint16_t r1 = get_random();
+    uint8_t r2 = get_random();
+
+    if (r1 < 128) {
+        LogU("Oops!\n");
+        byte = byte ^ r2;
+    }
+#endif
+
+
     switch (byte) {
+        case ACK_BYTE:
+            if (receivingMessage) {
+                goto msg_byte;
+            }
+
+            if (uartTxState == UartTxState_WaitingForAck) {
+                resendTries = 0;
+                uartTxState = UartTxState_Idle;
+                k_sem_give(&txBufferBusy);
+            }
+            break;
+        case NACK_BYTE:
+            if (receivingMessage) {
+                goto msg_byte;
+            }
+
+            if (uartTxState == UartTxState_WaitingForAck) {
+                uartTxState = UartTxState_Resend;
+                wakeControlThread();
+            }
+            break;
+        case PING_BYTE:
+            // Always accept pings.
+            //
+            // Reestablishing connection is expensive, so in case of bad quality
+            // uart connection, once successful, we don't want to loose it just
+            // because of a broken packet frame.
+            lastPingTime = k_uptime_get();
+
+            if (receivingMessage) {
+                goto msg_byte;
+            }
+            break;
         case END_BYTE:
             if (escaping) {
-                appendRxByte(byte);
-                escaping = false;
-            } else {
-                rxPacketReceived();
+                goto msg_byte;
             }
+
+            receivingMessage = false;
+            rxPacketReceived();
             break;
         case ESCAPE_BYTE:
             if (escaping) {
-                appendRxByte(byte);
-                escaping = false;
-            } else {
-                escaping = true;
+                goto msg_byte;
             }
+            escaping = true;
             break;
         case START_BYTE:
             if (escaping) {
-                appendRxByte(byte);
-                escaping = false;
-            } else {
-                rxPosition = 0;
+                goto msg_byte;
             }
+            receivingMessage = true;
+            rxPosition = 0;
             break;
+msg_byte:
         default:
             escaping = false;
-            appendRxByte(byte);
+            if (receivingMessage) {
+                appendRxByte(byte);
+            } else {
+                LogU("Uart, unexpected byte: %d\n", byte);
+                resetUart();
+            }
             break;
     }
 }
@@ -169,12 +282,12 @@ static void uart_callback(const struct device *dev, struct uart_event *evt, void
 
     switch (evt->type) {
     case UART_TX_DONE:
-        k_sem_give(&txBufferBusy);
+        k_sem_give(&txControlBusy);
         break;
 
     case UART_TX_ABORTED:
         uart_tx(uart_dev, txBuffer, txPosition, UART_TIMEOUT);
-        printk("Tx aborted, retrying\n");
+        LogU("Tx aborted, retrying\n");
         break;
 
     case UART_RX_RDY:
@@ -190,7 +303,7 @@ static void uart_callback(const struct device *dev, struct uart_event *evt, void
 
         err = uart_rx_buf_rsp(uart_dev, rxbuf, BUF_SIZE);
         if (err != 0) {
-            printk("Could not provide new buffer because %i\n", err);
+            LogU("Could not provide new buffer because %i\n", err);
         }
         __ASSERT(err == 0, "Failed to provide new buffer");
         break;
@@ -200,13 +313,13 @@ static void uart_callback(const struct device *dev, struct uart_event *evt, void
         break;
 
     case UART_RX_DISABLED:
-        printk("UART_RX_DISABLED\n");
+        LogU("UART_RX_DISABLED\n");
         CurrentTime = k_uptime_get();
         EventScheduler_Schedule(CurrentTime + 1000, EventSchedulerEvent_ReenableUart, "reenable uart");
         break;
 
     case UART_RX_STOPPED:
-        printk("UART_RX_STOPPED\n");
+        LogU("UART_RX_STOPPED\n");
         CurrentTime = k_uptime_get();
         EventScheduler_Schedule(CurrentTime + 1000, EventSchedulerEvent_ReenableUart, "reenable uart");
         break;
@@ -218,7 +331,10 @@ static void appendTxByte(uint8_t byte) {
     if (txPosition < TX_BUF_SIZE) {
         txBuffer[txPosition++] = byte;
     } else {
-        printk("Uart error: too long message in tx buffer\n");
+        LogU("Uart error: too long message in tx buffer\n");
+
+        uart_rx_disable(uart_dev);
+        uart_rx_enable(uart_dev, rxbuf, BUF_SIZE, UART_TIMEOUT);
     }
 }
 
@@ -229,13 +345,14 @@ static void setEscapedTxByte(uint8_t idx, uint8_t byte) {
 
 static void processOutgoingByte(uint8_t byte) {
     switch (byte) {
+        case START_BYTE:
         case END_BYTE:
-            appendTxByte(ESCAPE_BYTE);
-            appendTxByte(END_BYTE);
-            break;
         case ESCAPE_BYTE:
+        case ACK_BYTE:
+        case NACK_BYTE:
+        case PING_BYTE:
             appendTxByte(ESCAPE_BYTE);
-            appendTxByte(ESCAPE_BYTE);
+            appendTxByte(byte);
             break;
         default:
             appendTxByte(byte);
@@ -256,8 +373,26 @@ static void finalizeCrc(crc16_data_t* crcState) {
     setEscapedTxByte(3, crc >> 8);
 }
 
-void Uart_SendPacket(const uint8_t* data, uint16_t len) {
-    SEM_TAKE(&txBufferBusy);
+void Uart_ControlMessage(const uint8_t* data, uint16_t len) {
+    SEM_TAKE(&txControlBusy);
+
+    uart_tx(uart_dev, txBuffer, txPosition, UART_TIMEOUT);
+}
+
+void Uart_SendMessage(message_t* msg) {
+    int err;
+    err = k_sem_take(&txBufferBusy, K_MSEC(UART_FOREVER_TIMEOUT));
+    if (err != 0) {
+        LogUOS("Uart: failed to take txBufferBusy semaphore.\n");
+    }
+
+    err = k_sem_take(&txControlBusy, K_MSEC(UART_FOREVER_TIMEOUT));
+    if (err != 0) {
+        LogUOS("Uart: failed to take txControlBusy semaphore.\n");
+    }
+
+    // Call this only after we have taken the semaphore.
+    Resend_RegisterMessageAndUpdateWatermarks(msg);
 
     crc16_data_t crcState;
     crc16_init(&crcState);
@@ -265,57 +400,52 @@ void Uart_SendPacket(const uint8_t* data, uint16_t len) {
     appendTxByte(START_BYTE);
     txPosition = CRC_BUF_LEN+1;
 
-    if (len > 0) {
-        processOutgoingByteWithCrc(DEVICE_ID, &crcState);
-        processOutgoingByteWithCrc(DEVICE_ID == DeviceId_Uhk80_Right ? DeviceId_Uhk80_Left : DeviceId_Uhk80_Right, &crcState);
-        processOutgoingByteWithCrc(0, &crcState); //this will cause errors; send non-zero messages via SendMessage
+    processOutgoingByteWithCrc(msg->src, &crcState);
+    processOutgoingByteWithCrc(msg->dst, &crcState);
+    processOutgoingByteWithCrc(msg->wm, &crcState);
+
+    for (uint8_t id = 0; id < msg->idsUsed; id++) {
+        processOutgoingByteWithCrc(msg->messageId[id], &crcState);
     }
 
-    for (uint16_t i = 0; i < len; i++) {
-        processOutgoingByte(data[i]);
+    for (uint16_t i = 0; i < msg->len; i++) {
+        processOutgoingByte(msg->data[i]);
     }
-    crc16_update(&crcState, data, len);
+    crc16_update(&crcState, msg->data, msg->len);
 
     appendTxByte(END_BYTE);
 
     finalizeCrc(&crcState);
 
     uart_tx(uart_dev, txBuffer, txPosition, UART_TIMEOUT);
+
+    lastMessageSentTime = k_uptime_get();
+    uartTxState = UartTxState_WaitingForAck;
 }
 
-void Uart_SendMessage(message_t msg) {
-    SEM_TAKE(&txBufferBusy);
-
-    msg.wm = Connections[msg.connectionId].watermarks.txIdx++;
-
-    crc16_data_t crcState;
-    crc16_init(&crcState);
-
-    appendTxByte(START_BYTE);
-    txPosition = CRC_BUF_LEN+1;
-
-    processOutgoingByteWithCrc(msg.src, &crcState);
-    processOutgoingByteWithCrc(msg.dst, &crcState);
-    processOutgoingByteWithCrc(msg.wm, &crcState);
-
-    for (uint8_t id = 0; id < msg.idsUsed; id++) {
-        processOutgoingByteWithCrc(msg.messageId[id], &crcState);
-    }
-
-    for (uint16_t i = 0; i < msg.len; i++) {
-        processOutgoingByte(msg.data[i]);
-    }
-    crc16_update(&crcState, msg.data, msg.len);
-
-    appendTxByte(END_BYTE);
-
-    finalizeCrc(&crcState);
-
-    uart_tx(uart_dev, txBuffer, txPosition, UART_TIMEOUT);
+static void sendControl(uint8_t byte) {
+    SEM_TAKE(&txControlBusy);
+    uart_tx(uart_dev, &byte, 1, UART_TIMEOUT);
 }
 
-static void ping() {
-    Uart_SendPacket(NULL, 0);
+static void resend() {
+    if (resendTries++ > 3) {
+        LogU("Repeatedly failed to send a message! ");
+        for (uint16_t i = 0; i < txPosition; i++) {
+            LogU("%i ", txBuffer[i]);
+        }
+        LogU("\n");
+
+        resendTries = 0;
+        uartTxState = UartTxState_Idle;
+        k_sem_give(&txBufferBusy);
+    } else {
+        uartTxState = UartTxState_WaitingForAck;
+        SEM_TAKE(&txControlBusy);
+        k_sleep(K_MSEC(13));
+        uart_tx(uart_dev, txBuffer, txPosition, UART_TIMEOUT);
+        lastMessageSentTime = k_uptime_get();
+    }
 }
 
 static void updateConnectionState() {
@@ -325,17 +455,63 @@ static void updateConnectionState() {
     bool newIsConnected =  pingDiff < UART_TIMEOUT;
     if (oldIsConnected != newIsConnected) {
         Connections_SetState(connectionId, newIsConnected ? ConnectionState_Ready : ConnectionState_Disconnected);
-        if (!newIsConnected) {
-            k_sem_init(&txBufferBusy, UART_SLOTS, UART_SLOTS);
-        }
+        k_sem_give(&txBufferBusy);
+        k_sem_give(&txControlBusy);
     }
 }
 
 void testUart() {
+    uint32_t lastPingSentTime = 0;
+    uint32_t currentTime = 0;
     while (1) {
-        ping();
         updateConnectionState();
-        k_sleep(K_MSEC(UART_PING_DELAY));
+
+        if (currentTime >= lastPingSentTime + UART_PING_DELAY) {
+            sendControl(PING_BYTE);
+            lastPingSentTime = currentTime;
+        }
+
+        uint32_t wakeTime = lastPingSentTime + UART_PING_DELAY;
+
+        if (Connections_IsReady(remoteConnectionId())) {
+            switch (uartRxState) {
+                case UartRxState_Ack:
+                    sendControl(ACK_BYTE);
+                    uartRxState = UartRxState_Idle;
+                    break;
+                case UartRxState_Nack:
+                    sendControl(NACK_BYTE);
+                    uartRxState = UartRxState_Idle;
+                    break;
+                case UartRxState_Idle:
+                    break;
+            }
+
+            if (uartTxState == UartTxState_Resend) {
+                LogU("Uart: received Nack, resending\n");
+                resend();
+            }
+
+            currentTime = k_uptime_get();
+            if (uartTxState == UartTxState_WaitingForAck) {
+                uint32_t resendTime = lastMessageSentTime + UART_RESEND_DELAY;
+                if (currentTime >= resendTime) {
+                    LogU("Uart: didn't receive ack %d, resending\n", currentTime);
+                    resend();
+                } else {
+                    wakeTime = MIN(wakeTime, resendTime);
+                }
+            }
+        } else {
+            uartTxState = UartTxState_Idle;
+            uartRxState = UartRxState_Idle;
+        }
+
+        currentTime = k_uptime_get();
+
+        if (wakeTime > currentTime) {
+            k_sem_take(&controlThreadSleeper, K_MSEC(wakeTime - currentTime));
+        }
     }
 }
 
@@ -372,6 +548,6 @@ bool Uart_Availability(messenger_availability_op_t operation) {
 }
 
 void Uart_Enable() {
-    printk("Enabling UART\n");
+    LogU("Enabling UART\n");
     uart_rx_enable(uart_dev, rxbuf, BUF_SIZE, UART_TIMEOUT);
 }

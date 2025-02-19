@@ -11,6 +11,10 @@
 #define WATCH_INTERVAL 500
 
 #define DEBUG_MODE false
+#define DEBUG_STRESS_UART false
+#define DEBUG_TEST_RTT false
+#define DEBUG_LOG_UART true
+#define DEBUG_LOG_MESSAGES false
 
 #define DEBUG_ROLL_STATUS_BUFFER true
 
