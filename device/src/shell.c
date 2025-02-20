@@ -20,7 +20,6 @@ shell_t Shell = {
     .ledsAlwaysOn = 0,
     .oledEn = 1,
     .sdbState = 1,
-    .chargerState = 1,
 };
 
 
@@ -72,13 +71,14 @@ static int cmd_uhk_sdb(const struct shell *shell, size_t argc, char *argv[])
 static int cmd_uhk_charger(const struct shell *shell, size_t argc, char *argv[])
 {
     if (argc == 1) {
-        shell_fprintf(shell, SHELL_NORMAL, "CHARGER_EN: %i | ", Shell.chargerState ? 1 : 0);
+        shell_fprintf(shell, SHELL_NORMAL, "CHARGER_EN: %i | ", Charger_ChargingEnabled ? 1 : 0);
         shell_fprintf(shell, SHELL_NORMAL, "STAT: %i ", gpio_pin_get_dt(&chargerStatDt) ? 1 : 0);
 
         Charger_PrintState();
     } else {
-        Shell.chargerState = argv[1][0] == '1';
-        gpio_pin_set_dt(&chargerEnDt, Shell.chargerState);
+        bool newChargingEnabled = argv[1][0] == '1';
+
+        Charger_EnableCharging(newChargingEnabled);
     }
     return 0;
 }

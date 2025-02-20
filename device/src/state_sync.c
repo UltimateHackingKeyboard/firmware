@@ -158,6 +158,7 @@ static state_sync_prop_t stateSyncProps[StateSyncPropertyId_Count] = {
     SIMPLE(DongleScrollMultipliers, SyncDirection_DongleToRight,      DirtyState_Clean,    &DongleScrollMultipliers),
     CUSTOM(KeyStatesDummy,          SyncDirection_LeftToRight,        DirtyState_Clean),
     CUSTOM(DongleProtocolVersion,   SyncDirection_DongleToRight,      DirtyState_Clean),
+    SIMPLE(BatteryStationaryMode,   SyncDirection_RightToLeft,        DirtyState_Clean,    &Cfg.BatteryStationaryMode),
 };
 
 static void invalidateProperty(state_sync_prop_id_t propId) {
@@ -473,6 +474,10 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
     case StateSyncPropertyId_ZeroDummy:
         printk("Received an invalid state sync property message: %d %d %d | %d %d | %d %d %d %d %d\n", data[-5], data[-4], data[-3], data[-2], data[-1], data[0], data[1], data[2], data[3], data[4]);
         break;
+    case StateSyncPropertyId_BatteryStationaryMode:
+        //for both local and remote
+        EventScheduler_Schedule(CurrentTime + 1000, EventSchedulerEvent_UpdateBattery, "state sync");
+        break;
     case StateSyncPropertyId_PowerMode:
         break;
     default:
@@ -701,6 +706,8 @@ static update_result_t handlePropertyUpdateRightToLeft() {
     } else {
         UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_Backlight, UpdateResult_UpdatedHighPrio);
     }
+
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_BatteryStationaryMode, UpdateResult_UpdatedLowPrio);
 
     return UpdateResult_AllUpToDate;
 }
