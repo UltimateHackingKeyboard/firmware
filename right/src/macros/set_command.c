@@ -328,22 +328,12 @@ static macro_variable_t secondaryRoles(parser_context_t* ctx, set_command_action
     return noneVar();
 }
 
-
-static macro_variable_t bluetoothEnabled(parser_context_t* ctx, set_command_action_t action)
+static macro_variable_t allowUnsecuredConnections(parser_context_t* ctx, set_command_action_t action)
 {
-    if (action == SetCommandAction_Read) {
-        return boolVar(Cfg.Bt_Enabled);
+    ASSIGN_BOOL(Cfg.Bt_AllowUnsecuredConnections);
+    if (Cfg.Bt_AllowUnsecuredConnections) {
+        Macros_ReportPrintf(ctx->at, "Warning: insecure connections were allowed. This may allow eavesdropping on your keyboard input!");
     }
-
-    ATTR_UNUSED bool newBtEnabled = Macros_ConsumeBool(ctx);
-
-    if (Macros_ParserError || Macros_DryRun) {
-        return noneVar();
-    }
-
-#if DEVICE_IS_UHK80_RIGHT
-    Bt_SetEnabled(newBtEnabled);
-#endif
 
     return noneVar();
 }
@@ -351,11 +341,13 @@ static macro_variable_t bluetoothEnabled(parser_context_t* ctx, set_command_acti
 static macro_variable_t bluetooth(parser_context_t* ctx, set_command_action_t action)
 {
     if (ConsumeToken(ctx, "enabled")) {
-        return bluetoothEnabled(ctx, action);
-
+        bool newBtEnabled = Cfg.Bt_Enabled;
+        ASSIGN_BOOL(newBtEnabled);
+#if DEVICE_IS_UHK80_RIGHT
+        Bt_SetEnabled(newBtEnabled);
+#endif
     } else if (ConsumeToken(ctx, "allowUnsecuredConnections")) {
-        // deprecated, leave for backward compatibility
-        ASSIGN_BOOL(Cfg.Bt_AllowUnsecuredConnections);
+        return allowUnsecuredConnections(ctx, action);
     }
     else {
         Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
@@ -916,8 +908,7 @@ static macro_variable_t root(parser_context_t* ctx, set_command_action_t action)
         ASSIGN_INT(Cfg.AutoShiftDelay);
     }
     else if (ConsumeToken(ctx, "allowUnsecuredConnections")) {
-        // deprecated, leave for backward compatibility
-        ASSIGN_BOOL(Cfg.Bt_AllowUnsecuredConnections);
+        return allowUnsecuredConnections(ctx, action);
     }
 #ifndef __ZEPHYR__
     else if (ConsumeToken(ctx, "i2cBaudRate")) {
