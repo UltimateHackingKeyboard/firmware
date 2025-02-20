@@ -583,7 +583,9 @@ static macro_variable_t battery(parser_context_t* ctx, set_command_action_t acti
 {
     if (ConsumeToken(ctx, "stationaryMode")) {
         ASSIGN_BOOL(Cfg.BatteryStationaryMode);
+#if defined(__ZEPHYR__) && DEVICE_IS_KEYBOARD
         StateSync_UpdateProperty(StateSyncPropertyId_BatteryStationaryMode, &Cfg.BatteryStationaryMode);
+#endif
     }
     else {
         Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
