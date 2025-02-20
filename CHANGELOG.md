@@ -19,8 +19,8 @@ Device Protocol: 4.14.1 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.**2** | 
     - Explicitly start message frames to detect and ignore spurious signals or data originating from broken frames.
     - When such spurious signal is detected, disable UART for a couple of milliseconds to make sure that other threads get some CPU time.
     - Accept ping bytes from any traffic: we can't afford to reset the state sync state just because of a missed ping (e.g., because of a broken frame), as resending the data over a faulty connection would be likely to cause another reset.
-    - Resend any corrupted or undelivered messages. (UART)
-    - Explicitly check message sequence and order. (UART+NUS)
+  - Resend any corrupted or undelivered messages. (UART)
+  - Explicitly check message sequence and order. (UART+NUS)
   - Fix a couple of deadlock scenarios and set low semaphore timeouts to prevent any uncaught scenarios. (UART+NUS)
   - Don't queue messages that were received multiple times, to prevent congestion. (UART)
   - Distinguish low and high priority messages and spread them in time to prevent congestion. (NUS+UART)
