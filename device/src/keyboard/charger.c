@@ -151,6 +151,7 @@ void updateChargerEnabled(battery_state_t *batteryState, battery_manager_config_
 }
 
 void Charger_UpdateBatteryState() {
+    printk("Updating battery state\n");
     static uint32_t stabilizationPauseStartTime = 0;
     static bool stateChanged = false;
     static bool previousCharging = false;
@@ -163,6 +164,7 @@ void Charger_UpdateBatteryState() {
         if (stabilizationPause) {
             if (CurrentTime < stabilizationPauseStartTime + CHARGER_STABILIZATION_PERIOD) {
                 // This is a spurious wakeup due to stat change, ignore
+                printk("Spurious update\n");
                 EventScheduler_Reschedule(CurrentTime + CHARGER_STAT_PERIOD, EventSchedulerEvent_UpdateBattery, "spurious wakeup in stabilization pause");
                 return;
             }
@@ -173,6 +175,10 @@ void Charger_UpdateBatteryState() {
             uint16_t voltage = rawVoltage;
             if (previousVoltage != 0 && previousCharging && MAX(rawVoltage-previousVoltage, previousVoltage-rawVoltage) < 500) {
                 voltage = rawVoltage - ((previousVoltage - rawVoltage) / 3);
+            }
+
+            if (batteryState.batteryVoltage != 0) {
+                voltage = (voltage + batteryState.batteryVoltage*3) / 4;
             }
 
             // TODO: add more accurate computation
@@ -252,8 +258,10 @@ static void powerCallback(nrfx_power_usb_evt_t event) {
 
 void chargerStatCallback(const struct device *port, struct gpio_callback *cb, gpio_port_pins_t pins) {
     if (statsToIgnore-- > 0) {
+        printk("Ignoring stat change\n");
         return;
     }
+        printk("Processing stat change\n");
 
     bool stat = gpio_pin_get_dt(&chargerStatDt);
     CurrentTime = k_uptime_get_32();

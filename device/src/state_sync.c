@@ -476,6 +476,7 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
         break;
     case StateSyncPropertyId_BatteryStationaryMode:
         //for both local and remote
+        printk("Setting battery mode to %d\n", Cfg.BatteryStationaryMode);
         EventScheduler_Schedule(CurrentTime + 1000, EventSchedulerEvent_UpdateBattery, "state sync");
         break;
     case StateSyncPropertyId_PowerMode:
