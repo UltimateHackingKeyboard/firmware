@@ -36,6 +36,11 @@
         EventSchedulerEvent_EndBtPairing,
         EventSchedulerEvent_RestartBt,
         EventSchedulerEvent_BtStartScanningAndAdvertising,
+        EventSchedulerEvent_RedrawOled,
+        EventSchedulerEvent_UpdateDebugOledLine,
+        EventSchedulerEvent_RoundTripTest,
+        EventSchedulerEvent_ResendMessage,
+        EventSchedulerEvent_CheckFwChecksums,
         EventSchedulerEvent_Count
     } event_scheduler_event_t;
 

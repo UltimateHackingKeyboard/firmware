@@ -18,6 +18,7 @@ bool DongleStandby = false;
 
 // void handleStateTransition(connection_id_t remoteId, bool connected) {
 void handleStateTransition(connection_target_t remote, connection_id_t connectionId, bool connected) {
+
         connection_target_t local = Connections_DeviceToTarget(DEVICE_ID);
         switch (local) {
             case ConnectionTarget_Left:
@@ -119,6 +120,10 @@ void DeviceState_Update(uint8_t connectionTarget) {
 }
 
 bool DeviceState_IsDeviceConnected(device_id_t deviceId) {
+    if (deviceId == DEVICE_ID) {
+        return true;
+    }
+
     connection_target_t target = Connections_DeviceToTarget(deviceId);
     connection_id_t connectionId = findPreferredConnection(target);
 
@@ -133,8 +138,12 @@ bool DeviceState_IsDeviceConnected(device_id_t deviceId) {
 }
 
 bool DeviceState_IsTargetConnected(uint8_t target) {
-    connection_id_t connectionId = findPreferredConnection(target);
 
-    return connectionId != ConnectionId_Invalid && Connections[connectionId].state == ConnectionState_Ready;
+    if (target == Connections_DeviceToTarget(DEVICE_ID)) {
+        return true;
+    } else {
+        connection_id_t connectionId = findPreferredConnection(target);
+        return connectionId != ConnectionId_Invalid && Connections[connectionId].state == ConnectionState_Ready;
+    }
 }
 

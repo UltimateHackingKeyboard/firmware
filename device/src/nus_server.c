@@ -9,6 +9,7 @@
 #include "messenger_queue.h"
 #include "debug.h"
 #include "zephyr/bluetooth/addr.h"
+#include "resend.h"
 
 #define NUS_SLOTS 2
 
@@ -25,10 +26,10 @@ static void received(struct bt_conn *conn, const uint8_t *const data, uint16_t l
 
     switch (DEVICE_ID) {
         case DeviceId_Uhk80_Left:
-            Messenger_Enqueue(connectionId, DeviceId_Uhk80_Right, copy, len);
+            Messenger_Enqueue(connectionId, DeviceId_Uhk80_Right, copy, len, 0);
             break;
         case DeviceId_Uhk80_Right:
-            Messenger_Enqueue(connectionId, DeviceId_Uhk_Dongle, copy, len);
+            Messenger_Enqueue(connectionId, DeviceId_Uhk_Dongle, copy, len, 0);
             break;
         default:
             printk("Ble received message from unknown source.");
@@ -70,11 +71,13 @@ int NusServer_Init(void) {
 
 void NusServer_Disconnected() {
     // I argue that when bt is not connected, freeing the semaphore causes no trouble.
-    k_sem_init(&nusBusy, NUS_SLOTS, NUS_SLOTS);
+    for (uint8_t i = 0; i < NUS_SLOTS; i++) {
+        // calling init here would leave all the threads deadlocked
+        k_sem_give(&nusBusy);
+    }
 }
 
 static void send_raw_buffer(const uint8_t *data, uint16_t len, struct bt_conn* conn) {
-    SEM_TAKE(&nusBusy);
     int err = bt_nus_send(conn, data, len);
     if (err) {
         k_sem_give(&nusBusy);
@@ -97,27 +100,34 @@ bool NusServer_Availability(messenger_availability_op_t operation) {
     }
 }
 
-void NusServer_SendMessageTo(message_t msg, struct bt_conn* conn) {
+void NusServer_SendMessageTo(message_t* msg, struct bt_conn* conn) {
+    SEM_TAKE(&nusBusy);
+
+    // Call this only after we have taken the semaphore.
+    Resend_RegisterMessageAndUpdateWatermarks(msg);
+
     uint8_t buffer[MAX_LINK_PACKET_LENGTH];
     uint8_t bufferIdx = 0;
 
-    buffer[bufferIdx++] = msg.src;
-    buffer[bufferIdx++] = msg.dst;
+    buffer[bufferIdx++] = msg->src;
+    buffer[bufferIdx++] = msg->dst;
+    buffer[bufferIdx++] = msg->wm;
 
-    for (uint8_t id = 0; id < msg.idsUsed; id++) {
-        buffer[bufferIdx++] = msg.messageId[id];
+    for (uint8_t id = 0; id < msg->idsUsed; id++) {
+        buffer[bufferIdx++] = msg->messageId[id];
     }
 
-    if (msg.len + msg.idsUsed + 2 > MAX_LINK_PACKET_LENGTH) {
+    if (bufferIdx + msg->len > MAX_LINK_PACKET_LENGTH) {
         printk("Message is too long for NUS packets! [%i, %i, ...]\n", buffer[0], buffer[1]);
         return;
     }
 
-    memcpy(&buffer[bufferIdx], msg.data, msg.len);
+    memcpy(&buffer[bufferIdx], msg->data, msg->len);
+    bufferIdx += msg->len;
 
-    send_raw_buffer(buffer, msg.len+msg.idsUsed+2, conn);
+    send_raw_buffer(buffer, bufferIdx, conn);
 }
 
-void NusServer_SendMessage(message_t msg) {
+void NusServer_SendMessage(message_t* msg) {
     NusServer_SendMessageTo(msg, NULL);
 }

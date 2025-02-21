@@ -36,6 +36,15 @@ void crc16_finalize(crc16_data_t *crc16Config, uint16_t *hash)
 
 crc16_data_t crc16data;
 
+void CRC16_UpdateMessageChecksumExt(crc16_message_t *message)
+{
+    uint16_t hash;
+    crc16_init(&crc16data);
+    crc16_update(&crc16data, message->data, message->length);
+    crc16_finalize(&crc16data, &hash);
+    message->crc = hash;
+}
+
 void CRC16_UpdateMessageChecksum(i2c_message_t *message)
 {
     uint16_t hash;
@@ -45,11 +54,25 @@ void CRC16_UpdateMessageChecksum(i2c_message_t *message)
     message->crc = hash;
 }
 
+
 bool CRC16_IsMessageValid(i2c_message_t *message)
 {
     uint16_t hash;
     crc16_init(&crc16data);
     crc16_update(&crc16data, message->data, message->length);
     crc16_finalize(&crc16data, &hash);
+    // i2c messages are not crc-salted
+    // with i2c we don't use zero-length pings
     return message->crc == hash && message->length != 0;
+}
+
+bool CRC16_IsMessageValidExt(crc16_message_t *message)
+{
+    uint16_t hash;
+    crc16_init(&crc16data);
+    crc16_update(&crc16data, message->data, message->length);
+    crc16_finalize(&crc16data, &hash);
+    // we expect these messages to have salted crc, so that valid zero message has nonzero crc
+    // for uart, we do use zero-length pings
+    return message->crc == hash;
 }

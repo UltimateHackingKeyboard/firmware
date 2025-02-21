@@ -59,7 +59,8 @@ widget_t ConsoleWidget_Build()
     };
 }
 
-void Oled_LogConstant(const char* text)
+
+static void logConstant(const char* text)
 {
     consoleBufferStart = (consoleBufferStart+1) % CONSOLE_BUFFER_LINE_COUNT;
     strncpy(&consoleBuffer[consoleBufferStart][0], text, CONSOLE_BUFFER_LINE_LENGTH);
@@ -68,7 +69,11 @@ void Oled_LogConstant(const char* text)
     consoleBufferIsDirty = true;
 
     ScreenManager_ActivateScreen(ScreenId_Debug);
-    // Widget_Refresh(NULL);
+}
+
+void Oled_LogConstant(const char* text)
+{
+    logConstant(text);
 }
 
 void Oled_Log(const char *fmt, ...)
@@ -77,7 +82,5 @@ void Oled_Log(const char *fmt, ...)
     va_start(myargs, fmt);
     char buffer[256];
     vsprintf(buffer, fmt, myargs);
-    Oled_LogConstant(buffer);
+    logConstant(buffer);
 }
-
-

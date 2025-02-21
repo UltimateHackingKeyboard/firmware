@@ -5,6 +5,7 @@
 #include "device_state.h"
 #include "event_scheduler.h"
 #include "keyboard/charger.h"
+#include "keyboard/key_scanner.h"
 #include "keyboard/oled/widgets/widgets.h"
 #include "config_manager.h"
 #include "config_parser/config_globals.h"
@@ -28,10 +29,12 @@
 #include "power_mode.h"
 #include "test_switches.h"
 #include "dongle_leds.h"
+#include "logger.h"
+#include "versioning.h"
 
 #define WAKE(TID) if (TID != 0) { k_wakeup(TID); }
 
-#define STATE_SYNC_SEND_DELAY 2
+#define STATE_SYNC_SEND_DELAY 1
 
 #define THREAD_STACK_SIZE 2000
 #define THREAD_PRIORITY 5
@@ -47,6 +50,21 @@ sync_generic_half_state_t SyncLeftHalfState;
 sync_generic_half_state_t SyncRightHalfState;
 
 scroll_multipliers_t DongleScrollMultipliers = {1, 1};
+version_t DongleProtocolVersion = {0, 0, 0};
+
+uint16_t StateSync_LeftResetCounter = 0;
+uint16_t StateSync_DongleResetCounter = 0;
+
+static void wake(k_tid_t tid) {
+    if (tid != 0) {
+        k_wakeup(tid);
+        // if (DEBUG_MODE) {
+        //     LogU("StateSync woke up %p\n", tid);
+        // }
+    } else {
+        printk("Skipping wake up, tid is 0");
+    }
+}
 
 static void receiveProperty(device_id_t src, state_sync_prop_id_t property, const uint8_t *data, uint8_t len);
 
@@ -107,6 +125,7 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t property, cons
 #define CUSTOM(...) EMPTY(__VA_ARGS__)
 
 static state_sync_prop_t stateSyncProps[StateSyncPropertyId_Count] = {
+    CUSTOM(ZeroDummy, SyncDirection_RightToLeft, DirtyState_Clean),
     DEFAULT_LAYER_PROP(LayerActionsLayer1),
     DEFAULT_LAYER_PROP(LayerActionsLayer2),
     DEFAULT_LAYER_PROP(LayerActionsLayer3),
@@ -137,9 +156,9 @@ static state_sync_prop_t stateSyncProps[StateSyncPropertyId_Count] = {
     CUSTOM(SwitchTestMode,          SyncDirection_RightToLeft,        DirtyState_Clean),
     SIMPLE(DongleStandby,           SyncDirection_RightToDongle,      DirtyState_Clean,    &DongleStandby),
     SIMPLE(DongleScrollMultipliers, SyncDirection_DongleToRight,      DirtyState_Clean,    &DongleScrollMultipliers),
+    CUSTOM(KeyStatesDummy,          SyncDirection_LeftToRight,        DirtyState_Clean),
+    CUSTOM(DongleProtocolVersion,   SyncDirection_DongleToRight,      DirtyState_Clean),
 };
-
-
 
 static void invalidateProperty(state_sync_prop_id_t propId) {
     STATE_SYNC_LOG("<<< Invalidating property %s\n", stateSyncProps[propId].name);
@@ -154,14 +173,14 @@ static void invalidateProperty(state_sync_prop_id_t propId) {
     bool isRightLeftLink = (stateSyncProps[propId].direction &
                             (SyncDirection_RightToLeft | SyncDirection_LeftToRight));
     if (isRightLeftLink && isRightLeftDevice) {
-        WAKE(stateSyncThreadLeftId);
+        wake(stateSyncThreadLeftId);
     }
     bool isRightDongleDevice =
         (DEVICE_ID == DeviceId_Uhk80_Right || DEVICE_ID == DeviceId_Uhk_Dongle);
     bool isRightDongleLink = (stateSyncProps[propId].direction &
                               (SyncDirection_DongleToRight | SyncDirection_RightToDongle));
     if (isRightDongleLink && isRightDongleDevice) {
-        WAKE(stateSyncThreadDongleId);
+        wake(stateSyncThreadDongleId);
     }
 }
 
@@ -244,6 +263,60 @@ void receiveBacklight(sync_command_backlight_t *buffer) {
     }
 }
 
+void StateSync_CheckFirmwareVersions() {
+    #if DEVICE_IS_UHK80_RIGHT
+
+    uint8_t driverId = UhkModuleSlaveDriver_SlotIdToDriverId(SlotId_LeftKeyboardHalf);
+    uhk_module_state_t *moduleState = &UhkModuleStates[driverId];
+
+    bool versionsMatch = VERSIONS_EQUAL(moduleState->firmwareVersion, firmwareVersion);
+    bool leftChecksumMatches = memcmp(moduleState->firmwareChecksum, DeviceMD5Checksums[DeviceId_Uhk80_Left], MD5_CHECKSUM_LENGTH) == 0;
+    bool gitTagsMatch = strcmp(moduleState->gitTag, gitTag) == 0;
+
+    bool anyVersionZero = (moduleState->firmwareVersion.major == 0 || firmwareVersion.major == 0);
+    bool anyChecksumZero = memcmp(DeviceMD5Checksums[DeviceId_Uhk80_Right], DeviceMD5Checksums[DeviceId_Uhk80_Left], MD5_CHECKSUM_LENGTH) == 0;
+
+    if (anyChecksumZero) {
+        // Don't spam development builds.
+        return;
+    }
+
+    const char* universal = "Please flash both halves to the same version!";
+
+    if (!versionsMatch) {
+        LogUOS("Error: Left and right keyboard halves have different firmware versions (Left: %d.%d.%d, Right: %d.%d.%d)!\n",
+            moduleState->firmwareVersion.major, moduleState->firmwareVersion.minor, moduleState->firmwareVersion.patch, firmwareVersion.major, firmwareVersion.minor, firmwareVersion.patch
+        );
+    }
+    if (!gitTagsMatch) {
+        LogUOS("Error: Left and right keyboard halves have different git tags (Left: %s, Right: %s)!\n", moduleState->gitTag, gitTag);
+    }
+    if (!leftChecksumMatches) {
+        LogUOS("Error: Left checksum differs from the expected! Expected '%s', got '%s'!\n", DeviceMD5Checksums[DeviceId_Uhk80_Left], moduleState->firmwareChecksum);
+    }
+    if (!versionsMatch || !gitTagsMatch || !leftChecksumMatches) {
+        LogUOS("    %s", universal);
+    }
+    if (anyVersionZero) {
+        LogUOS("Warning: Keyboard halves have zero versions! %s\n", universal);
+    }
+    if (anyChecksumZero) {
+        LogUOS("Warning: Keyboard halves have zero checksums! %s\n", universal);
+    }
+
+    #endif
+}
+
+static void checkDongleProtocolVersion() {
+    if (!VERSIONS_EQUAL(DongleProtocolVersion, dongleProtocolVersion)) {
+        LogUOS("Dongle and right half run different dongle protocol versios\n  (dongle: %d.%d.%d, right: %d.%d.%d)\n  please upgrade!\n",
+                DongleProtocolVersion.major, DongleProtocolVersion.minor, DongleProtocolVersion.patch,
+                dongleProtocolVersion.major, dongleProtocolVersion.minor, dongleProtocolVersion.patch
+        );
+        return;
+    }
+}
+
 static void receiveModuleStateData(sync_command_module_state_t *buffer) {
     uint8_t driverId = UhkModuleSlaveDriver_SlotIdToDriverId(buffer->slotId);
     uhk_module_state_t *moduleState = &UhkModuleStates[driverId];
@@ -304,6 +377,10 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
         break;
     case StateSyncPropertyId_ActiveLayer:
         if (!isLocalUpdate) {
+            if (ActiveLayer >= LayerId_Count) {
+                LogU("Received invalid active layer %d --- %d %d %d %d %d | %d %d | %d %d\n", ActiveLayer, data[-5], data[-4], data[-3], data[-2], data[-1], data[0], data[1], data[2], data[3]);
+                ActiveLayer = LayerId_Base;
+            }
             EventVector_Set(EventVector_LedMapUpdateNeeded);
         }
         break;
@@ -333,6 +410,10 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
         break;
     case StateSyncPropertyId_KeyboardLedsState:
         WIDGET_REFRESH(&StatusWidget);
+
+        if (!isLocalUpdate && DongleProtocolVersion.major == 0) {
+            LogUOS("Dongle protocol version doesn't seem to have been reported.\nIs your dongle firmware up to date?\n");
+        }
         break;
     case StateSyncPropertyId_ResetRightLeftLink:
         StateSync_ResetRightLeftLink(false);
@@ -376,10 +457,23 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
             DongleLeds_Update();
         }
         break;
+    case StateSyncPropertyId_KeyStatesDummy:
+        break;
     case StateSyncPropertyId_DongleScrollMultipliers:
         if (!isLocalUpdate) {
             DongleScrollMultipliers = *(scroll_multipliers_t*)data;
         }
+        break;
+    case StateSyncPropertyId_DongleProtocolVersion:
+        if (!isLocalUpdate) {
+            DongleProtocolVersion = *(version_t*)data;
+            checkDongleProtocolVersion();
+        }
+        break;
+    case StateSyncPropertyId_ZeroDummy:
+        printk("Received an invalid state sync property message: %d %d %d | %d %d | %d %d %d %d %d\n", data[-5], data[-4], data[-3], data[-2], data[-1], data[0], data[1], data[2], data[3], data[4]);
+        break;
+    case StateSyncPropertyId_PowerMode:
         break;
     default:
         printk("Property %i ('%s') has no receive handler. If this is correct, please add a "
@@ -457,7 +551,7 @@ static void prepareLeftHalfStateData(sync_command_module_state_t *buffer) {
     buffer->pointerCount = MODULE_POINTER_COUNT;
     Utils_SafeStrCopy(buffer->gitRepo, gitRepo, MAX_STRING_PROPERTY_LENGTH);
     Utils_SafeStrCopy(buffer->gitTag, gitTag, MAX_STRING_PROPERTY_LENGTH);
-    memcpy(buffer->firmwareChecksum, ModuleMD5Checksums[MODULE_ID], MD5_CHECKSUM_LENGTH);
+    memcpy(buffer->firmwareChecksum, DeviceMD5Checksums[DEVICE_ID], MD5_CHECKSUM_LENGTH);
 #endif
 }
 
@@ -526,6 +620,17 @@ static void prepareData(device_id_t dst, const uint8_t *propDataPtr, state_sync_
         submitPreparedData(dst, propId, (const uint8_t *)&TestSwitches, sizeof(TestSwitches));
         return;
     }
+    case StateSyncPropertyId_DongleProtocolVersion: {
+        submitPreparedData(dst, propId, (const uint8_t *)&dongleProtocolVersion, sizeof(dongleProtocolVersion));
+        return;
+    }
+    case StateSyncPropertyId_KeyStatesDummy: {
+#if DEVICE_IS_KEYBOARD
+        KeyScanner_ResendKeyStates = true;
+        UhkModuleDriver_ResendKeyStates = true;
+#endif
+        return;
+    }
     default:
         break;
     }
@@ -560,74 +665,89 @@ static void updateProperty(state_sync_prop_id_t propId) {
     }
 }
 
-#define UPDATE_AND_RETURN_IF_DIRTY(propId)                                                         \
+typedef enum {
+    UpdateResult_AllUpToDate,
+    UpdateResult_UpdatedHighPrio,
+    UpdateResult_UpdatedLowPrio,
+    UpdateResult_UpdatedDelayed,
+} update_result_t;
+
+#define UPDATE_AND_RETURN_IF_DIRTY(propId, res)                                                    \
     if (stateSyncProps[propId].dirtyState != DirtyState_Clean) {                                   \
         updateProperty(propId);                                                                    \
-        return false;                                                                              \
+        return res;                                                                                \
     }
 
-static bool handlePropertyUpdateRightToLeft() {
-    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ResetRightLeftLink);
-    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_Config);
-    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_SwitchTestMode);
+static update_result_t handlePropertyUpdateRightToLeft() {
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ResetRightLeftLink, UpdateResult_UpdatedLowPrio);
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_Config, UpdateResult_UpdatedHighPrio);
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_SwitchTestMode, UpdateResult_UpdatedHighPrio);
 
     if (KeyBacklightBrightness != 0) {
         // Update relevant data
-        UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_PowerMode);
-        UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_FunctionalColors);
-        UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_LayerActionFirst + ActiveLayer);
-        UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ActiveKeymap);
-        UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ActiveLayer);
-        UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_Backlight);
+        UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_PowerMode, UpdateResult_UpdatedHighPrio);
+        UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_FunctionalColors, UpdateResult_UpdatedHighPrio);
+        UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_LayerActionFirst + ActiveLayer, UpdateResult_UpdatedHighPrio);
+        UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ActiveKeymap, UpdateResult_UpdatedHighPrio);
+        UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ActiveLayer, UpdateResult_UpdatedHighPrio);
+        UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_Backlight, UpdateResult_UpdatedHighPrio);
 
         // Update rest of layers
         state_sync_prop_id_t first = StateSyncPropertyId_LayerActionFirst;
         state_sync_prop_id_t last = StateSyncPropertyId_LayerActionLast;
         for (state_sync_prop_id_t propId = first; propId <= last; propId++) {
-            UPDATE_AND_RETURN_IF_DIRTY(propId);
+            UPDATE_AND_RETURN_IF_DIRTY(propId, UpdateResult_UpdatedLowPrio);
         }
+    } else {
+        UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_Backlight, UpdateResult_UpdatedHighPrio);
     }
-    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_Backlight);
 
-    return true;
+    return UpdateResult_AllUpToDate;
 }
 
 static bool handlePropertyUpdateLeftToRight() {
-    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ResetRightLeftLink);
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ResetRightLeftLink, UpdateResult_UpdatedLowPrio);
 
-    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ModuleStateLeftHalf);
-    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ModuleStateLeftModule);
-    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_LeftModuleDisconnected);
-    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_MergeSensor);
-    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_Battery);
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ModuleStateLeftHalf, UpdateResult_UpdatedHighPrio);
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ModuleStateLeftModule, UpdateResult_UpdatedHighPrio);
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_KeyStatesDummy, UpdateResult_UpdatedHighPrio);
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_LeftModuleDisconnected, UpdateResult_UpdatedHighPrio);
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_MergeSensor, UpdateResult_UpdatedHighPrio);
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_Battery, UpdateResult_UpdatedHighPrio);
 
-    return true;
+    return UpdateResult_AllUpToDate;
 }
 
 static bool handlePropertyUpdateDongleToRight() {
-    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ResetRightDongleLink);
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ResetRightDongleLink, UpdateResult_UpdatedLowPrio);
 
-    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_KeyboardLedsState);
-    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_DongleScrollMultipliers);
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_DongleProtocolVersion, UpdateResult_UpdatedHighPrio);
 
-    return true;
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_KeyboardLedsState, UpdateResult_UpdatedHighPrio);
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_DongleScrollMultipliers, UpdateResult_UpdatedHighPrio);
+
+    return UpdateResult_AllUpToDate;
 }
 
 static bool handlePropertyUpdateRightToDongle() {
-    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ResetRightDongleLink);
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ResetRightDongleLink, UpdateResult_UpdatedLowPrio);
 
-    return true;
+    return UpdateResult_AllUpToDate;
 }
 
 static void updateLoopRightLeft() {
+    update_result_t res;
+
     if (DEVICE_ID == DeviceId_Uhk80_Left) {
         while (true) {
             bool isConnected = DeviceState_IsDeviceConnected(DeviceId_Uhk80_Right);
             STATE_SYNC_LOG("--- Left to right update loop, connected: %i\n", isConnected);
-            if (!isConnected || handlePropertyUpdateLeftToRight()) {
+
+            if (!isConnected || (res = handlePropertyUpdateLeftToRight()) == UpdateResult_AllUpToDate) {
                 k_sleep(K_FOREVER);
             } else {
-                k_sleep(K_MSEC(STATE_SYNC_SEND_DELAY));
+                uint32_t delay = res == UpdateResult_UpdatedHighPrio ? STATE_SYNC_SEND_DELAY : STATE_SYNC_SEND_DELAY*10;
+                k_sleep(K_MSEC(delay));
             }
         }
     }
@@ -636,10 +756,11 @@ static void updateLoopRightLeft() {
         while (true) {
             bool isConnected = DeviceState_IsDeviceConnected(DeviceId_Uhk80_Left);
             STATE_SYNC_LOG("--- Right to left update loop, connected: %i\n", isConnected);
-            if (!isConnected || handlePropertyUpdateRightToLeft()) {
+            if (!isConnected || (res = handlePropertyUpdateRightToLeft()) == UpdateResult_AllUpToDate) {
                 k_sleep(K_FOREVER);
             } else {
-                k_sleep(K_MSEC(STATE_SYNC_SEND_DELAY));
+                uint32_t delay = res == UpdateResult_UpdatedHighPrio ? STATE_SYNC_SEND_DELAY : STATE_SYNC_SEND_DELAY*10;
+                k_sleep(K_MSEC(delay));
             }
         }
     }
@@ -656,6 +777,8 @@ static void updateStandbys() {
 }
 
 static void updateLoopRightDongle() {
+    update_result_t res;
+
     if (DEVICE_ID == DeviceId_Uhk80_Right) {
         while (true) {
             bool isConnected = DeviceState_IsDeviceConnected(DeviceId_Uhk_Dongle);
@@ -665,10 +788,11 @@ static void updateLoopRightDongle() {
                 updateStandbys();                                                                    \
             }
 
-            if (!isConnected || handlePropertyUpdateRightToDongle()) {
+            if (!isConnected || (res = handlePropertyUpdateRightToDongle()) == UpdateResult_AllUpToDate) {
                 k_sleep(K_FOREVER);
             } else {
-                k_sleep(K_MSEC(STATE_SYNC_SEND_DELAY));
+                uint32_t delay = res == UpdateResult_UpdatedHighPrio ? STATE_SYNC_SEND_DELAY : STATE_SYNC_SEND_DELAY*10;
+                k_sleep(K_MSEC(delay));
             }
         }
     }
@@ -677,10 +801,11 @@ static void updateLoopRightDongle() {
         while (true) {
             bool isConnected = DeviceState_IsDeviceConnected(DeviceId_Uhk80_Right);
             STATE_SYNC_LOG("--- Dongle update loop, connected: %i\n", isConnected);
-            if (!isConnected || DongleStandby || handlePropertyUpdateDongleToRight()) {
+            if (!isConnected || DongleStandby || (res = handlePropertyUpdateDongleToRight()) == UpdateResult_AllUpToDate) {
                 k_sleep(K_FOREVER);
             } else {
-                k_sleep(K_MSEC(STATE_SYNC_SEND_DELAY));
+                uint32_t delay = res == UpdateResult_UpdatedHighPrio ? STATE_SYNC_SEND_DELAY : STATE_SYNC_SEND_DELAY*10;
+                k_sleep(K_MSEC(delay));
             }
         }
     }
@@ -713,6 +838,7 @@ void StateSync_Init() {
 
 void StateSync_ResetRightLeftLink(bool bidirectional) {
     printk("Resetting left right link! %s\n", bidirectional ? "Bidirectional" : "Unidirectional");
+    StateSync_LeftResetCounter++;
     if (bidirectional) {
         invalidateProperty(StateSyncPropertyId_ResetRightLeftLink);
     }
@@ -727,16 +853,20 @@ void StateSync_ResetRightLeftLink(bool bidirectional) {
         invalidateProperty(StateSyncPropertyId_Backlight);
         invalidateProperty(StateSyncPropertyId_FunctionalColors);
         invalidateProperty(StateSyncPropertyId_PowerMode);
+        // Wait sufficiently log so the firmware check isnt triggered during firmware upgrade
+        EventScheduler_Schedule(CurrentTime + 60000, EventSchedulerEvent_CheckFwChecksums, "Reset left right link");
     }
     if (DEVICE_ID == DeviceId_Uhk80_Left) {
         invalidateProperty(StateSyncPropertyId_Battery);
         invalidateProperty(StateSyncPropertyId_ModuleStateLeftHalf);
         invalidateProperty(StateSyncPropertyId_ModuleStateLeftModule);
+        invalidateProperty(StateSyncPropertyId_KeyStatesDummy);
         invalidateProperty(StateSyncPropertyId_MergeSensor);
     }
 }
 
 void StateSync_ResetRightDongleLink(bool bidirectional) {
+    StateSync_DongleResetCounter++;
     printk("Resetting dongle right link! %s\n", bidirectional ? "Bidirectional" : "Unidirectional");
     if (bidirectional) {
         invalidateProperty(StateSyncPropertyId_ResetRightDongleLink);
@@ -744,6 +874,7 @@ void StateSync_ResetRightDongleLink(bool bidirectional) {
     if (DEVICE_ID == DeviceId_Uhk_Dongle) {
         DongleStandby = false;
         invalidateProperty(StateSyncPropertyId_KeyboardLedsState);
+        invalidateProperty(StateSyncPropertyId_DongleProtocolVersion);
         invalidateProperty(StateSyncPropertyId_DongleScrollMultipliers);
     }
 }

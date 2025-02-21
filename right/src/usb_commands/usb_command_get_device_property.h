@@ -8,23 +8,24 @@
 // Typedefs:
 
     typedef enum {
-        DevicePropertyId_DeviceProtocolVersion = 0,
-        DevicePropertyId_ProtocolVersions      = 1,
-        DevicePropertyId_ConfigSizes           = 2,
-        DevicePropertyId_CurrentKbootCommand   = 3,
-        DevicePropertyId_I2cMainBusBaudRate    = 4,
-        DevicePropertyId_Uptime                = 5,
-        DevicePropertyId_GitTag                = 6,
-        DevicePropertyId_GitRepo               = 7,
-        DevicePropertyId_FirmwareChecksum      = 8,
-        DevicePropertyId_BleAddress            = 9,
-        DevicePropertyId_PairedRightPeerBleAddress = 10,
-        DevicePropertyId_PairingStatus             = 11,
-        DevicePropertyId_NewPairings               = 12,
+        DevicePropertyId_DeviceProtocolVersion                = 0,
+        DevicePropertyId_ProtocolVersions                     = 1,
+        DevicePropertyId_ConfigSizes                          = 2,
+        DevicePropertyId_CurrentKbootCommand                  = 3,
+        DevicePropertyId_I2cMainBusBaudRate                   = 4,
+        DevicePropertyId_Uptime                               = 5,
+        DevicePropertyId_GitTag                               = 6,
+        DevicePropertyId_GitRepo                              = 7,
+        DevicePropertyId_BuiltFirmwareChecksumByModuleId      = 8,
+        DevicePropertyId_BleAddress                           = 9,
+        DevicePropertyId_PairedRightPeerBleAddress            = 10,
+        DevicePropertyId_PairingStatus                        = 11,
+        DevicePropertyId_NewPairings                          = 12,
     } device_property_t;
 
     typedef enum {
         UsbStatusCode_GetDeviceProperty_InvalidProperty = 2,
+        UsbStatusCode_GetDeviceProperty_InvalidArgument = 3,
     } usb_status_code_get_device_property_t;
 
     typedef enum {

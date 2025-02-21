@@ -246,7 +246,7 @@ static parser_error_t parseLayer(config_buffer_t *buffer, uint8_t layer, parse_m
     bool currentRightModuleWasRead = false;
     bool currentLeftModuleWasRead = false;
 
-    if (moduleCount > ModuleId_AllCount) {
+    if (moduleCount > ModuleId_AllModuleCount) {
         ConfigParser_Error(buffer, "Invalid module count: %d", moduleCount);
         return ParserError_InvalidModuleCount;
     }

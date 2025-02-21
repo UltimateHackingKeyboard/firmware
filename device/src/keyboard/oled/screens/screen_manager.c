@@ -64,7 +64,12 @@ void ScreenManager_ActivateScreen(screen_id_t screen)
 
     ActiveScreen = screen;
     Oled_ActivateScreen(screenPtr, false);
-    Oled_RequestRedraw();
+    // synchronous version leads to a deadlock from non-main threads
+    if (k_current_get() == Main_ThreadId) {
+        Oled_RequestRedraw();
+    } else {
+        EventScheduler_Schedule(CurrentTime + 10, EventSchedulerEvent_RedrawOled, "Activate screen");
+    }
 }
 
 void ScreenManager_SwitchScreenEvent()

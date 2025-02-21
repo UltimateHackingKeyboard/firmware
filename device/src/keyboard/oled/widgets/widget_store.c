@@ -22,6 +22,11 @@
 #include "macros/status_buffer.h"
 #include "host_connection.h"
 #include "connections.h"
+#include "keyboard/uart.h"
+#include "messenger.h"
+#include "messenger_queue.h"
+#include "event_scheduler.h"
+#include "round_trip_test.h"
 
 widget_t KeymapWidget;
 widget_t LayerWidget;
@@ -30,6 +35,7 @@ widget_t StatusWidget;
 widget_t CanvasWidget;
 widget_t ConsoleWidget;
 widget_t TargetWidget;
+widget_t DebugLineWidget;
 
 static string_segment_t getLayerText() {
     return (string_segment_t){ .start = LayerNames[ActiveLayer], .end = NULL };
@@ -43,6 +49,20 @@ static string_segment_t getKeymapText() {
     }
 }
 
+static string_segment_t getDebugLineText() {
+#define BUFFER_LENGTH 80
+    static char buffer[BUFFER_LENGTH] = { [BUFFER_LENGTH-1] = 0 };
+    snprintf(buffer, BUFFER_LENGTH-1, "D %d, MB %d, MU %d, IU %d, R %d, RTT %d",
+            MessengerQueue_DroppedMessageCount,
+            Connections[ConnectionId_UartLeft].watermarks.missedCount,
+            Connections[ConnectionId_NusServerLeft].watermarks.missedCount,
+            Uart_InvalidMessagesCounter,
+            StateSync_LeftResetCounter,
+            RoundTripTime
+            );
+    return (string_segment_t){ .start = buffer, .end = NULL };
+#undef BUFFER_LENGTH
+}
 
 static string_segment_t getTargetText() {
     switch (ActiveHostConnectionId) {
@@ -190,7 +210,6 @@ static string_segment_t getKeyboardLedsStateText() {
     return (string_segment_t){ .start = buffer, .end = NULL };
 }
 
-
 static void drawStatus(widget_t* self, framebuffer_t* buffer)
 {
     if (self->dirty) {
@@ -227,8 +246,10 @@ void WidgetStore_Init()
     LayerWidget = TextWidget_BuildRefreshable(&JetBrainsMono16, &getLayerText);
     KeymapWidget = TextWidget_BuildRefreshable(&JetBrainsMono24, &getKeymapText);
     TargetWidget = TextWidget_BuildRefreshable(&JetBrainsMono12, &getTargetText);
+    DebugLineWidget = TextWidget_BuildRefreshable(&CustomMono8, &getDebugLineText);
     KeymapLayerWidget = CustomWidget_Build(&drawKeymapLayer);
     StatusWidget = CustomWidget_Build(&drawStatus);
     CanvasWidget = CustomWidget_Build(NULL);
     ConsoleWidget = ConsoleWidget_Build();
+    EventScheduler_Schedule(CurrentTime+1000, EventSchedulerEvent_UpdateDebugOledLine, "Widget store init");
 }

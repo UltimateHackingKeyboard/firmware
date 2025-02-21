@@ -63,9 +63,20 @@
     } connection_state_t;
 
     typedef struct {
+        uint8_t rxIdx;
+        uint8_t txIdx;
+        uint16_t missedCount;
+        bool needsResend;
+        uint8_t lastSentResendableWm;
+        uint8_t lastSentId1;
+        uint8_t lastSentId2;
+    } ATTR_PACKED connection_watermarks_t;
+
+    typedef struct {
         uint8_t peerId;
         connection_state_t state;
         bool isAlias;
+        connection_watermarks_t watermarks;
     } ATTR_PACKED connection_t;
 
 // Variables:
@@ -95,5 +106,7 @@
     bool Connections_IsActiveHostConnection(connection_id_t connectionId);
 
     void Connections_HandleSwitchover(connection_id_t connectionId, bool forceSwitch);
+
+    const char* Connections_GetStaticName(connection_id_t connectionId);
 
 #endif // __CONNECTIONS_H__

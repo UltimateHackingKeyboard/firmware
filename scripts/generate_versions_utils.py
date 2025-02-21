@@ -5,7 +5,7 @@ import shutil
 
 ZERO_MD5 = '00000000000000000000000000000000'
 
-version_property_prefixes = ['firmware', 'deviceProtocol', 'moduleProtocol', 'userConfig', 'hardwareConfig', 'smartMacros']
+version_property_prefixes = ['firmware', 'deviceProtocol', 'moduleProtocol', 'userConfig', 'hardwareConfig', 'smartMacros', 'dongleProtocol']
 patch_versions = ['Major', 'Minor', 'Patch']
 
 def generate_versions(package_json, git_info, use_real_shas, use_zero_versions):
@@ -48,7 +48,7 @@ const char *const DeviceMD5Checksums[DEVICE_COUNT + 1] = {{
 }};
 #endif
 
-const char *const ModuleMD5Checksums[ModuleId_AllCount] = {{
+const char *const ModuleMD5Checksums[ModuleId_AllModuleCount] = {{
 {module_md5_sums}
 }};
 """)

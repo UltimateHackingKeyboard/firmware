@@ -36,12 +36,12 @@
 // Typedefs:
 
     typedef enum {
-        HostConnectionType_Empty,
-        HostConnectionType_UsbHidRight,
-        HostConnectionType_UsbHidLeft,
-        HostConnectionType_BtHid,
-        HostConnectionType_Dongle,
-        HostConnectionType_NewBtHid,
+        HostConnectionType_Empty = 0,
+        HostConnectionType_UsbHidRight = 1,
+        HostConnectionType_UsbHidLeft = 2,
+        HostConnectionType_BtHid = 3,
+        HostConnectionType_Dongle = 4,
+        HostConnectionType_NewBtHid = 5,
         HostConnectionType_Count,
     } host_connection_type_t;
 

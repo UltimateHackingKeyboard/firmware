@@ -8,7 +8,7 @@ const __dirname = path.dirname(__filename);
 
 const ZERO_MD5 = '000000000000000000000000000000000'
 
-const versionPropertyPrefixes = ['firmware', 'deviceProtocol', 'moduleProtocol', 'userConfig', 'hardwareConfig', 'smartMacros'];
+const versionPropertyPrefixes = ['firmware', 'deviceProtocol', 'moduleProtocol', 'userConfig', 'hardwareConfig', 'smartMacros', 'dongleProtocol'];
 const patchVersions = ['Major', 'Minor', 'Patch'];
 
 /**
@@ -75,7 +75,7 @@ ${deviceMd5Sums}
 };
 #endif
 
-const char *const ModuleMD5Checksums[ModuleId_AllCount] = {
+const char *const ModuleMD5Checksums[ModuleId_AllModuleCount] = {
 ${moduleMd5Sums}
 };
 `);

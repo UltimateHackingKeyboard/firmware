@@ -10,6 +10,29 @@
 
 // Typedefs:
 
+/**
+ * Device vid / pid / comment:
+ *
+ * old:
+ * 0x1D50    0x6120    UHK 60 v1 KBOOT Bootloader
+ * 0x1D50    0x6121    UHK Bootloader proxy
+ * 0x1D50    0x6122    UHK 60 v1 Keyboard firmware
+ * 0x1D50    0x6123    UHK 60 v2 KBOOT Bootloader
+ * 0x1D50    0x6124    UHK 60 v2 Keyboard firmware
+ *
+ * new:
+ * 0x37A8    0x0000    UHK 60 v1 BusPal proxy
+ * 0x37A8    0x0001    UHK 60 v1 keyboard firmware
+ * 0x37A8    0x0002    UHK 60 v2 BusPal proxy
+ * 0x37A8    0x0003    UHK 60 v2 keyboard firmware
+ * 0x37A8    0x0004    UHK Dongle MCUboot bootloader
+ * 0x37A8    0x0005    UHK Dongle firmware
+ * 0x37A8    0x0006    UHK 80 left MCUboot
+ * 0x37A8    0x0007    UHK 80 left keyboard firmware
+ * 0x37A8    0x0008    UHK 80 right MCUboot
+ * 0x37A8    0x0009    UHK 80 right keyboard firmware
+ * */
+
     #define DEVICE_ID_UHK60V1 1
     #define DEVICE_ID_UHK60V2 2
     #define DEVICE_ID_UHK60V1_RIGHT 1

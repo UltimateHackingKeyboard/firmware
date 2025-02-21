@@ -70,6 +70,7 @@
 
     // Draft for generic properties
     typedef enum {
+        StateSyncPropertyId_ZeroDummy = 0,
         StateSyncPropertyId_LayerActionsLayer1 = 1,
         StateSyncPropertyId_LayerActionsLayer2 = 2,
         StateSyncPropertyId_LayerActionsLayer3 = 3,
@@ -102,6 +103,8 @@
         StateSyncPropertyId_SwitchTestMode = 28,
         StateSyncPropertyId_DongleStandby = 29,
         StateSyncPropertyId_DongleScrollMultipliers = 30,
+        StateSyncPropertyId_KeyStatesDummy = 31,
+        StateSyncPropertyId_DongleProtocolVersion = 32,
         StateSyncPropertyId_Count,
     } state_sync_prop_id_t;
 
@@ -133,6 +136,8 @@
 
 // Variables:
 
+    extern uint16_t StateSync_LeftResetCounter;
+    extern uint16_t StateSync_DongleResetCounter;
     extern sync_generic_half_state_t SyncLeftHalfState;
     extern sync_generic_half_state_t SyncRightHalfState;
     extern scroll_multipliers_t DongleScrollMultipliers;
@@ -149,5 +154,7 @@
     void StateSync_ResetRightLeftLink(bool bidirectional);
     void StateSync_ResetRightDongleLink(bool bidirectional);
     void StateSync_ResetConfig();
+
+    void StateSync_CheckFirmwareVersions();
 
 #endif

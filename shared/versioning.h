@@ -21,6 +21,9 @@
 #define VERSION_EQUAL(v, MAJ, MIN, PATCH)                                                         \
     ((v).major == (MAJ) && (v).minor == (MIN) && (v).patch == (PATCH))
 
+#define VERSIONS_EQUAL(v, w)                                                                      \
+    ((v).major == (w).major && (v).minor == (w).minor && (v).patch == (w).patch)
+
 // Typedefs:
 
 typedef struct {
@@ -35,6 +38,7 @@ extern const version_t moduleProtocolVersion;
 extern const version_t userConfigVersion;
 extern const version_t hardwareConfigVersion;
 extern const version_t smartMacrosVersion;
+extern const version_t dongleProtocolVersion;
 
 extern const char gitRepo[];
 extern const char gitTag[];
@@ -42,6 +46,6 @@ extern const char gitTag[];
 #ifdef DEVICE_COUNT
 extern const char *const DeviceMD5Checksums[DEVICE_COUNT + 1];
 #endif
-extern const char *const ModuleMD5Checksums[ModuleId_AllCount];
+extern const char *const ModuleMD5Checksums[ModuleId_AllModuleCount];
 
 #endif

@@ -139,7 +139,18 @@ static void setLatency(struct bt_conn* conn, const struct bt_le_conn_param* para
 
 static void configureLatency(struct bt_conn *conn, latency_mode_t latencyMode) {
     switch (latencyMode) {
-        case LatencyMode_NUS:
+        case LatencyMode_NUS: {
+                // https://developer.apple.com/library/archive/qa/qa1931/_index.html
+                // https://punchthrough.com/manage-ble-connection/
+                // https://devzone.nordicsemi.com/f/nordic-q-a/28058/what-is-connection-parameters
+                const struct bt_le_conn_param conn_params = BT_LE_CONN_PARAM_INIT(
+                    6, 6, // keep it low, lowest allowed is 6 (7.5ms), lowest supported widely is 9 (11.25ms)
+                    0, // keeping it higher allows power saving on peripheral when there's nothing to send (keep it under 30 though)
+                    100 // connection timeout (*10ms)
+                );
+                setLatency(conn, &conn_params);
+             }
+            break;
         case LatencyMode_BleHid: {
                 // https://developer.apple.com/library/archive/qa/qa1931/_index.html
                 // https://punchthrough.com/manage-ble-connection/
@@ -347,93 +358,22 @@ static void connected(struct bt_conn *conn, uint8_t err) {
 
     if (connectionId == ConnectionId_Invalid) {
         connectUnknown(conn);
+        BtManager_StartScanningAndAdvertisingAsync();
     } else {
 
         if (isWanted(conn, connectionType)) {
             bt_conn_set_security(conn, BT_SECURITY_L4);
+            // advertising/scanning needs to be started only after peers are assigned :-/
         } else {
             printk("Refusing connenction %d (this is not a selected connection)\n", connectionId);
             bt_conn_disconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
+            BtManager_StartScanningAndAdvertisingAsync();
         }
     }
 
-    BtManager_StartScanningAndAdvertisingAsync();
 
 
     return;
-
-    /*
-     *+        switch (connectionType) {
-+            case ConnectionType_NusLeft:
-+            case ConnectionType_NusRight:
-+            case ConnectionType_NusDongle:
-+                connectNus(conn, connectionId, connectionType);
-+                break;
-+            case ConnectionType_BtHid:
-+                connectHid(conn, connectionId, connectionType);
-+                break;
-+            case ConnectionType_Unknown:
-+            default:
-+                connectedUnknown(conn);
-+                break;
-+        }
-+
-+        if (DEVICE_IS_UHK80_RIGHT) {
-+            BtManager_StartScanningAndAdvertising();
-+        }
-*/
-
-/*
-    const bt_addr_le_t * addr = bt_conn_get_dst(conn);
-    connection_id_t connectionId = Connections_GetConnectionIdByBtAddr(addr);
-    connection_type_t connectionType = Connections_Type(connectionId);
-
-    if (err) {
-        printk("Failed to connect to %s, err %u\n", GetPeerStringByConn(conn), err);
-        BtManager_StartScanningAndAdvertising();
-        return;
-    }
-
-    // If last available slot is reserved for a selected connection, refuse other connections
-    if (
-            connectionType != ConnectionType_NusLeft &&
-            BtConn_UnusedPeripheralConnectionCount() <= 1 &&
-            SelectedHostConnectionId != ConnectionId_Invalid &&
-            !BtAddrEq(bt_conn_get_dst(conn), &HostConnection(SelectedHostConnectionId)->bleAddress)
-    ) {
-        printk("Refusing connenction %d (this is not a selected connection)\n", connectionId);
-        err = bt_conn_disconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
-        return;
-    }
-
-    if (connectionType == ConnectionType_BtHid || connectionType == ConnectionType_Unknown) {
-        static const struct bt_le_conn_param conn_params = BT_LE_CONN_PARAM_INIT(
-                6, 9, // keep it low, lowest allowed is 6 (7.5ms), lowest supported widely is 9 (11.25ms)
-                10, // keeping it higher allows power saving on peripheral when there's nothing to send (keep it under 30 though)
-                100 // connection timeout (*10ms)
-                );
-        bt_conn_le_param_update(conn, &conn_params);
-    }
-
-    if (connectionType == ConnectionType_Unknown) {
-        printk("Bt connected to UNKNOWN %s\n", GetPeerStringByConn(conn));
-        return;
-    }
-
-    assignPeer(conn, connectionId, connectionType);
-
-    printk("Bt connected to %s\n", GetPeerStringByConn(conn));
-
-    if (connectionType == ConnectionType_BtHid) {
-    } else {
-        bt_conn_set_security(conn, BT_SECURITY_L4);
-        // continue connection process in in `connectionSecured()`
-    }
-
-    if (DEVICE_IS_UHK80_RIGHT) {
-        BtManager_StartScanningAndAdvertising();
-    }
-    */
 }
 
 static void disconnected(struct bt_conn *conn, uint8_t reason) {
@@ -517,6 +457,8 @@ static void connectAuthenticatedConnection(struct bt_conn *conn, connection_id_t
             bt_conn_disconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
             break;
     }
+
+    BtManager_StartScanningAndAdvertisingAsync();
 }
 
 static void securityChanged(struct bt_conn *conn, bt_security_t level, enum bt_security_err err) {
@@ -541,67 +483,14 @@ static void securityChanged(struct bt_conn *conn, bt_security_t level, enum bt_s
     connectAuthenticatedConnection(conn, connectionId, connectionType);
 }
 
-
-/*
-static void securityChanged(struct bt_conn *conn, bt_security_t level, enum bt_security_err err) {
-    int8_t peerId = GetPeerIdByConn(conn);
-    uint8_t connectionId;
-    uint8_t connectionType;
-
-    if (peerId == PeerIdUnknown) {
-        connectionId = Connections_GetConnectionIdByBtAddr(bt_conn_get_dst(conn));
-        connectionType = Connections_Type(connectionId);
-
-        if (connectionType == ConnectionType_BtHid) {
-            connectHid(conn, connectionId, connectionType);
-        }
-
-        if (connectionId == ConnectionId_Invalid && conn != auth_conn) {
-            printk("Unknown and non-autheticating connection secured. Disconnecting %s\n", GetPeerStringByConn(conn));
-            bt_conn_disconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
-            return;
-        }
-    } else {
-        connectionId = Peers[peerId].connectionId;
-        connectionType = Connections_Type(connectionId);
-    }
-
-    bool isUhkPeer = isUhkDeviceConnection(connectionType);
-    if (err || (isUhkPeer && level < BT_SECURITY_L4 && !Cfg.AllowUnsecuredConnections)) {
-        printk("Bt security failed: %s, level %u, err %d, disconnecting\n", GetPeerStringByConn(conn), level, err);
-        bt_conn_auth_cancel(conn);
-        return;
-    }
-
-    printk("Bt connection secured: %s, level %u, peerId %d\n", GetPeerStringByConn(conn), level, peerId);
-
-    if (isUhkPeer) {
-        configureLatency(conn);
-        enableDataLengthExtension(conn);
-
-        if (
-                (DEVICE_IS_UHK80_RIGHT && peerId == PeerIdLeft)
-                || (DEVICE_IS_UHK_DONGLE && peerId == PeerIdRight)
-        ) {
-            printk("Initiating NUS connection with %s\n", GetPeerStringByConn(conn));
-            NusClient_Connect(conn);
-        }
-    }
-
-#if DEVICE_IS_UHK80_LEFT
-    // gatt_discover(conn); // Taken from bt_central_uart.c
-#endif
-}
-*/
-
 __attribute__((unused)) static void infoLatencyParamsUpdated(struct bt_conn* conn, uint16_t interval, uint16_t latency, uint16_t timeout)
 {
-    uint8_t peerId = GetPeerIdByConn(conn);
-    connection_type_t connectionType = Connections_Type(Peers[peerId].connectionId);
+    printk("%s conn params: interval=%u ms, latency=%u, timeout=%u ms\n", GetPeerStringByConn(conn), interval * 5 / 4, latency, timeout * 10);
 
-    if (connectionType == ConnectionType_BtHid || connectionType == ConnectionType_Unknown) {
-        printk("BLE HID conn params: interval=%u ms, latency=%u, timeout=%u ms\n",
-            interval * 5 / 4, latency, timeout * 10);
+    bool isUhkPeer = isUhkDeviceConnection(Connections_Type(Peers[GetPeerIdByConn(conn)].connectionId));
+
+    if (interval > 10) {
+        configureLatency(conn, isUhkPeer ? LatencyMode_NUS : LatencyMode_BleHid);
     }
 }
 
@@ -810,7 +699,8 @@ uint8_t BtConn_UnusedPeripheralConnectionCount() {
     return count;
 }
 
-static void disconnectOldestHost() {
+// Unused in left half
+ATTR_UNUSED static void disconnectOldestHost() {
     uint32_t oldestSwitchover = UINT32_MAX;
     uint8_t oldestPeerId = PeerIdUnknown;
     for (uint8_t peerId = PeerIdFirstHost; peerId <= PeerIdLastHost; peerId++) {
@@ -827,6 +717,7 @@ static void disconnectOldestHost() {
 }
 
 void BtConn_ReserveConnections() {
+#if DEVICE_IS_UHK80_RIGHT
     bool hostSelected = SelectedHostConnectionId != ConnectionId_Invalid;
     bool hostActive = hostSelected && Connections_IsReady(SelectedHostConnectionId);
     bool selectionIsSatisfied = !hostSelected || hostActive;
@@ -842,5 +733,6 @@ void BtConn_ReserveConnections() {
             BtManager_StartScanningAndAdvertising();
         }
     }
+#endif
 }
 

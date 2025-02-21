@@ -60,10 +60,11 @@ parser_error_t parseConfig(config_buffer_t *buffer)
 #ifdef __ZEPHYR__
     if (!ParserRunDry) {
         printk(
-                "Flashed User Config version: %u.%u.%u (native version: %u.%u.%u., at %s)\n",
+                "Flashed User Config version: %u.%u.%u (native version: %u.%u.%u., at %s / %s)\n",
                 DataModelVersion.major, DataModelVersion.minor, DataModelVersion.patch,
                 userConfigVersion.major, userConfigVersion.minor, userConfigVersion.patch,
-                gitTag
+                gitTag,
+                DeviceMD5Checksums[DEVICE_ID]
         );
     }
 #endif

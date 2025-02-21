@@ -5,6 +5,7 @@ NCS_VERSION=v2.8.0
 ROOT_HASH=`realpath . | md5sum | sed 's/ .*//g'`
 BUILD_SESSION_NAME="buildsession_$ROOT_HASH"
 UART_SESSION_NAME="uartsession_$ROOT_HASH"
+BAUD_RATE=`cat boards/ugl/uhk-80/shared.dtsi | grep "current-speed" | grep -o '[0-9][0-9]*'`
 
 function help() {
     cat << END
@@ -210,7 +211,10 @@ function setupUartMonitor() {
     i=0
     for TTY in `ls /dev/ttyUSB*`
     do
-        tmux send-keys -t $SESSION_NAME.$i "screen $TTY 115200" C-m
+        IDX=`echo $TTY | grep -o '[0-9][0-9]*'`
+        INNER_COMMAND="screen $TTY $BAUD_RATE"
+        COMMAND="script -f log.$IDX.txt -c \"$INNER_COMMAND\""
+        tmux send-keys -t $SESSION_NAME.$i "$COMMAND" C-m
         i=$(( $i + 1 ))
     done
 

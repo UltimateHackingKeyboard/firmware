@@ -14,14 +14,20 @@ void UsbCommand_GetModuleProperty(const uint8_t *GenericHidOutBuffer, uint8_t *G
 {
     slot_t slotId = GetUsbRxBufferUint8(1);
 
+    uint8_t moduleDriverId = UhkModuleSlaveDriver_SlotIdToDriverId(slotId);
+
     if (!IS_VALID_MODULE_SLOT(slotId)) {
         SetUsbTxBufferUint8(0, UsbStatusCode_GetModuleProperty_InvalidModuleSlotId);
+    }
+
+    if (!ModuleConnectionStates[moduleDriverId].moduleId || ModuleConnectionStates[moduleDriverId].moduleId == ModuleId_TouchpadRight) {
+        // return empty buffer
+        return;
     }
 
     module_property_id_t modulePropertyId = GetUsbRxBufferUint8(2);
     switch (modulePropertyId) {
         case ModulePropertyId_VersionNumbers: {
-            uint8_t moduleDriverId = UhkModuleSlaveDriver_SlotIdToDriverId(slotId);
             uhk_module_state_t *moduleState = UhkModuleStates + moduleDriverId;
             GenericHidInBuffer[1] = moduleState->moduleId;
             memcpy(GenericHidInBuffer + 2, &moduleState->moduleProtocolVersion, sizeof(version_t));
@@ -29,19 +35,16 @@ void UsbCommand_GetModuleProperty(const uint8_t *GenericHidOutBuffer, uint8_t *G
             break;
         }
         case ModulePropertyId_GitTag: {
-            uint8_t moduleDriverId = UhkModuleSlaveDriver_SlotIdToDriverId(slotId);
             uhk_module_state_t *moduleState = UhkModuleStates + moduleDriverId;
             Utils_SafeStrCopy(((char*)GenericHidInBuffer) + 1, moduleState->gitTag, USB_GENERIC_HID_IN_BUFFER_LENGTH - 1);
             break;
         }
         case ModulePropertyId_GitRepo: {
-            uint8_t moduleDriverId = UhkModuleSlaveDriver_SlotIdToDriverId(slotId);
             uhk_module_state_t *moduleState = UhkModuleStates + moduleDriverId;
             Utils_SafeStrCopy(((char*)GenericHidInBuffer) + 1, moduleState->gitRepo, USB_GENERIC_HID_IN_BUFFER_LENGTH - 1);
             break;
         }
-        case ModulePropertyId_FirmwareChecksum: {
-            uint8_t moduleDriverId = UhkModuleSlaveDriver_SlotIdToDriverId(slotId);
+        case ModulePropertyId_RemoteFirmwareChecksumBySlotId: {
             uhk_module_state_t *moduleState = UhkModuleStates + moduleDriverId;
             Utils_SafeStrCopy(((char*)GenericHidInBuffer) + 1, moduleState->firmwareChecksum, MD5_CHECKSUM_LENGTH + 1);
             break;

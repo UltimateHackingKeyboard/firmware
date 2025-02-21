@@ -11,6 +11,7 @@
 #include "connections.h"
 #include "stubs.h"
 #include "usb_compatibility.h"
+#include "logger.h"
 
 connection_t Connections[ConnectionId_Count] = {
     [ConnectionId_UsbHidRight] = { .isAlias = true },
@@ -57,20 +58,11 @@ static const char* getStateString(connection_state_t state) {
     }
 }
 
-static void reportConnectionState(connection_id_t connectionId, const char* message) {
-    connectionId = resolveAliases(connectionId);
-
-
-#define CASE_FOR(NAME) case ConnectionId_##NAME: name = #NAME; break;
-
-    bool isHostConnection = false;
-    const char* name = "Invalid";
-
+static const char* getStaticName(connection_id_t connectionId) {
+#define CASE_FOR(NAME) case ConnectionId_##NAME: return #NAME;
     switch (connectionId) {
         case ConnectionId_HostConnectionFirst ... ConnectionId_HostConnectionLast:
-            isHostConnection = true;
-            name = "HostConnection";
-            break;
+            return "Host";
         CASE_FOR(UsbHidLeft);
         CASE_FOR(UsbHidRight);
         CASE_FOR(UartLeft);
@@ -81,6 +73,29 @@ static void reportConnectionState(connection_id_t connectionId, const char* mess
         CASE_FOR(BtHid);
         CASE_FOR(Invalid);
         CASE_FOR(Count);
+        default:
+            return "Invalid";
+    }
+}
+
+const char* Connections_GetStaticName(connection_id_t connectionId) {
+    return getStaticName(connectionId);
+}
+
+static void reportConnectionState(connection_id_t connectionId, const char* message) {
+    connectionId = resolveAliases(connectionId);
+
+    bool isHostConnection = false;
+    const char* name = "Invalid";
+
+    switch (connectionId) {
+        case ConnectionId_HostConnectionFirst ... ConnectionId_HostConnectionLast:
+            isHostConnection = true;
+            name = "Host";
+            break;
+        default:
+            name = Connections_GetStaticName(connectionId);
+            break;
     }
 
     int8_t peerId = Connections[connectionId].peerId;
@@ -96,14 +111,21 @@ static void reportConnectionState(connection_id_t connectionId, const char* mess
 
     if (isHostConnection) {
         host_connection_t* hc = HostConnection(connectionId);
-        printk("%s: %s%d(%.*s, %s)%s%s%s%s\n", message, name, connectionId - ConnectionId_HostConnectionFirst, hc->name.end - hc->name.start, hc->name.start, getStateString(Connections[connectionId].state), peerLabel, peerString, activeLabel, selectedLabel);
+        LogU("%s: %s%d(%.*s, %s)%s%s%s%s\n", message, name, connectionId - ConnectionId_HostConnectionFirst, hc->name.end - hc->name.start, hc->name.start, getStateString(Connections[connectionId].state), peerLabel, peerString, activeLabel, selectedLabel);
     } else {
-        printk("%s: %s(%s)%s%s%s%s\n", message, name, getStateString(Connections[connectionId].state), peerLabel, peerString, activeLabel, selectedLabel);
+        LogU("%s: %s(%s)%s%s%s%s\n", message, name, getStateString(Connections[connectionId].state), peerLabel, peerString, activeLabel, selectedLabel);
     }
 }
 
+void Connections_ResetWatermarks(connection_id_t connectionId) {
+    connectionId = resolveAliases(connectionId);
+
+    Connections[connectionId].watermarks.txIdx = 0;
+    Connections[connectionId].watermarks.rxIdx = 255;
+}
+
 void Connections_ReportState(connection_id_t connectionId) {
-    reportConnectionState(connectionId, "Connection state");
+    reportConnectionState(connectionId, "Conn state");
 }
 
 connection_state_t Connections_GetState(connection_id_t connectionId) {
@@ -116,7 +138,10 @@ void Connections_SetState(connection_id_t connectionId, connection_state_t state
 
     if ( Connections[connectionId].state != state ) {
         Connections[connectionId].state = state;
-        reportConnectionState(connectionId, "Connection state");
+        reportConnectionState(connectionId, "Con state");
+
+        Connections_ResetWatermarks(connectionId);
+
         if (Connections_Target(connectionId) == ConnectionTarget_Host && DEVICE_IS_UHK80_RIGHT) {
             Connections_HandleSwitchover(connectionId, false);
             // Connections_HandleSwitchover calls DeviceState_Update for us
@@ -352,7 +377,7 @@ void Connections_HandleSwitchover(connection_id_t connectionId, bool forceSwitch
         if (hostConnection->switchover || noHostIsConnected || forceSwitch || connectionIsSelected) {
             setCurrentDongleToStandby();
             switchOver(connectionId);
-            reportConnectionState(connectionId, "Connection state");
+            reportConnectionState(connectionId, "Conn state");
         }
     }
 
@@ -362,7 +387,7 @@ void Connections_HandleSwitchover(connection_id_t connectionId, bool forceSwitch
         for (uint8_t i = ConnectionId_HostConnectionFirst; i <= ConnectionId_HostConnectionLast; i++) {
             if (Connections[i].state == ConnectionState_Ready) {
                 switchOver(i);
-                reportConnectionState(i, "Connection state");
+                reportConnectionState(i, "Conn state");
                 break;
             }
         }

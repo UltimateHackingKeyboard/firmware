@@ -1,10 +1,12 @@
 #include "main.h"
 #include "bt_advertise.h"
+#include "messenger_queue.h"
 #include "nus_client.h"
 #include "nus_server.h"
 #include "bt_manager.h"
 #include "config_parser/config_globals.h"
 #include "ledmap.h"
+#include "round_trip_test.h"
 #include "shared/attributes.h"
 #include "zephyr/kernel.h"
 #include "zephyr/storage/flash_map.h"
@@ -40,6 +42,8 @@
 #include <zephyr/drivers/gpio.h>
 #include "dongle_leds.h"
 #include "usb_protocol_handler.h"
+#include "trace.h"
+#include "thread_stats.h"
 
 k_tid_t Main_ThreadId = 0;
 
@@ -71,24 +75,30 @@ static void scheduleNextRun() {
     CurrentTime = k_uptime_get();
     int32_t diff = nextEventTime - CurrentTime;
 
+    Trace('-');
+
     k_sem_take(&mainWakeupSemaphore, K_NO_WAIT);
     bool haveMoreWork = (EventScheduler_Vector & EventVector_UserLogicUpdateMask);
     if (haveMoreWork) {
         LOG_SCHEDULE( EventVector_ReportMask("Continuing immediately because of: ", EventScheduler_Vector & EventVector_UserLogicUpdateMask););
         EVENTLOOP_TIMING(printk("Continuing immediately\n"));
         // Mouse keys don't like being called twice in one second for some reason
+        Trace_Printf("s31");
         k_sem_give(&mainWakeupSemaphore);
         sleepTillNextMs();
         return;
     } else if (eventIsValid) {
         EVENTLOOP_TIMING(printk("Sleeping for %d\n", diff));
+        Trace_Printf("s32");
         k_sem_take(&mainWakeupSemaphore, K_MSEC(diff));
         // k_sleep(K_MSEC(diff));
     } else {
         EVENTLOOP_TIMING(printk("Sleeping forever\n"));
+        Trace_Printf("s33");
         k_sem_take(&mainWakeupSemaphore, K_FOREVER);
         // k_sleep(K_FOREVER);
     }
+    Trace('+');
 }
 
 //TODO: inline this
@@ -100,6 +110,8 @@ void Main_Wake() {
 int main(void) {
     Main_ThreadId = k_current_get();
     printk("----------\n" DEVICE_NAME " started\n");
+
+    Trace_Init();
 
     {
         flash_area_open(FLASH_AREA_ID(hardware_config_partition), &hardwareConfigArea);
@@ -171,6 +183,13 @@ int main(void) {
     Messenger_Init();
 
     StateSync_Init();
+
+    InitShell();
+
+    RoundTripTest_Init();
+
+    // Call after all threads have been created
+    ThreadStats_Init();
 
 #if DEVICE_IS_UHK80_RIGHT
     while (true)

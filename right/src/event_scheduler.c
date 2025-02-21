@@ -12,7 +12,9 @@
 #include "power_mode.h"
 
 #ifdef __ZEPHYR__
+#include "round_trip_test.h"
 #include "keyboard/oled/screens/screen_manager.h"
+#include "keyboard/oled/widgets/widgets.h"
 #include "keyboard/oled/oled.h"
 #include "keyboard/charger.h"
 #include "keyboard/uart.h"
@@ -112,6 +114,26 @@ static void processEvt(event_scheduler_event_t evt)
             break;
         case EventSchedulerEvent_BtStartScanningAndAdvertising:
             BtManager_StartScanningAndAdvertising();
+            break;
+        case EventSchedulerEvent_RedrawOled:
+            Oled_RequestRedraw();
+            break;
+        case EventSchedulerEvent_UpdateDebugOledLine:
+            WIDGET_REFRESH(&DebugLineWidget);
+            if (DEBUG_MODE) {
+                EventScheduler_Schedule(CurrentTime+1000, EventSchedulerEvent_UpdateDebugOledLine, "Event scheduler loop");
+            }
+            break;
+
+        case EventSchedulerEvent_RoundTripTest:
+            RoundTripTest_Run();
+            EventScheduler_Schedule(CurrentTime+10000, EventSchedulerEvent_RoundTripTest, "Event scheduler loop");
+            break;
+        case EventSchedulerEvent_ResendMessage:
+            Resend_RequestResendSync();
+            break;
+        case EventSchedulerEvent_CheckFwChecksums:
+            StateSync_CheckFirmwareVersions();
             break;
         default:
             return;
