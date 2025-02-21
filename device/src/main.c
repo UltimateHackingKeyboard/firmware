@@ -104,6 +104,10 @@ void Main_Wake() {
 }
 
 int main(void) {
+    if (DEVICE_HAS_BATTERY) {
+        Charger_EnterSleepIfDepleted(false);
+    }
+
     Main_ThreadId = k_current_get();
     printk("----------\n" DEVICE_NAME " started\n");
 

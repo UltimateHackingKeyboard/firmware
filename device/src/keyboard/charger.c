@@ -3,6 +3,7 @@
 #include <zephyr/sys/util.h>
 #include "charger.h"
 #include "keyboard/charger.h"
+#include "nrf52840.h"
 #include "shell.h"
 #include "timer.h"
 #include "event_scheduler.h"
@@ -12,6 +13,8 @@
 #include <zephyr/bluetooth/services/bas.h>
 #include "battery_manager.h"
 #include "config_manager.h"
+#include <zephyr/pm/pm.h>
+#include <nrfx_power.h>
 
 /**
  * chargerStatDt == 1 => (actually) not charging (e.g., fully charged, or no power provided)
@@ -129,6 +132,27 @@ void Charger_EnableCharging(bool enabled) {
     }
 }
 
+static bool isStillDepleted() {
+    updatePowered();
+    return !batteryState.powered;
+}
+
+void Charger_EnterSleepIfDepleted(bool enter) {
+    if (enter) {
+        NVIC_SystemReset();
+    }
+    if (isStillDepleted()) {
+        LogU("Going to enter low power mode because of depleted battery!\n");
+        while (isStillDepleted()) {
+
+            k_sleep(K_MSEC(10000));
+        }
+
+        NVIC_SystemReset();
+    }
+}
+
+
 void updateChargerEnabled(battery_state_t *batteryState, battery_manager_config_t* config) {
     battery_manager_automaton_state_t newState = BatteryManager_UpdateState(
             currentChargingAutomatonState,
@@ -140,10 +164,12 @@ void updateChargerEnabled(battery_state_t *batteryState, battery_manager_config_
         currentChargingAutomatonState = newState;
         switch (newState) {
             case BatteryManagerAutomatonState_TurnOff:
+                Charger_EnterSleepIfDepleted(true);
+                break;
             case BatteryManagerAutomatonState_Charging:
                 Charger_EnableCharging(true);
                 break;
-            case BatteryManagerAutomatonState_NotCharging:
+            case BatteryManagerAutomatonState_Charged:
                 Charger_EnableCharging(false);
                 break;
         }
@@ -151,7 +177,6 @@ void updateChargerEnabled(battery_state_t *batteryState, battery_manager_config_
 }
 
 void Charger_UpdateBatteryState() {
-    printk("Updating battery state\n");
     static uint32_t stabilizationPauseStartTime = 0;
     static bool stateChanged = false;
     static bool previousCharging = false;
@@ -164,7 +189,6 @@ void Charger_UpdateBatteryState() {
         if (stabilizationPause) {
             if (CurrentTime < stabilizationPauseStartTime + CHARGER_STABILIZATION_PERIOD) {
                 // This is a spurious wakeup due to stat change, ignore
-                printk("Spurious update\n");
                 EventScheduler_Reschedule(CurrentTime + CHARGER_STAT_PERIOD, EventSchedulerEvent_UpdateBattery, "spurious wakeup in stabilization pause");
                 return;
             }
@@ -185,7 +209,7 @@ void Charger_UpdateBatteryState() {
             battery_manager_config_t* currentBatteryConfig = getCurrentBatteryConfig();
             uint16_t minCharge = currentBatteryConfig->minVoltage;
             uint16_t maxCharge = currentBatteryConfig->maxVoltage;
-            uint8_t perc = MIN(100, 100*(MAX(voltage, minCharge)-minCharge) / (maxCharge - minCharge));
+            uint8_t perc = MIN(100, 1 + 99*(MAX(voltage, minCharge)-minCharge) / (maxCharge - minCharge));
             stateChanged |= setPercentage(voltage, perc);
 
             if (voltage == 0) {
@@ -258,11 +282,9 @@ static void powerCallback(nrfx_power_usb_evt_t event) {
 
 void chargerStatCallback(const struct device *port, struct gpio_callback *cb, gpio_port_pins_t pins) {
     if (statsToIgnore > 0) {
-        printk("Ignoring stat change\n");
         statsToIgnore--;
         return;
     }
-        printk("Processing stat change\n");
 
     bool stat = gpio_pin_get_dt(&chargerStatDt);
     CurrentTime = k_uptime_get_32();

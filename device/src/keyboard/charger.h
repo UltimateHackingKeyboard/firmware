@@ -39,5 +39,6 @@
     void Charger_PrintState();
     void Charger_UpdateBatteryState();
     void Charger_EnableCharging(bool enabled);
+    void Charger_EnterSleepIfDepleted(bool enter);
 
 #endif // __CHARGER_H__

@@ -14,8 +14,8 @@
 
     typedef enum {
         BatteryManagerAutomatonState_TurnOff,
-        BatteryManagerAutomatonState_NotCharging,
         BatteryManagerAutomatonState_Charging,
+        BatteryManagerAutomatonState_Charged,
     } battery_manager_automaton_state_t;
 
     typedef struct {
@@ -23,6 +23,7 @@
         uint16_t stopChargingVoltage;      // maximum voltage to charge to
                                            // optimum storage voltage is 3.8V according to Claude
         uint16_t startChargingVoltage;
+        uint16_t minWakeupVoltage;         // once the keyboard enters shut down mode, it won't wake up until it is either externally powered, or the battery voltage reaches this level
         uint16_t minVoltage;               // voltage reported as 0%, we shut down at this voltage
     } ATTR_PACKED battery_manager_config_t;
 
