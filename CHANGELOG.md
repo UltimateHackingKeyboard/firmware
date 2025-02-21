@@ -5,9 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [12.3.5] - 2025-02-20
+
+Device Protocol: 4.14.1 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.**2** | User Config: 8.3.0 | Hardware Config: 1.0.0 | Smart Macros: 3.1.0
+
+- Fix right battery indication on the OLED display when the right-side USB is disconnected.
+- Rename UHK 80 USB and BLE device names to make them easily distinguishable.
+- Implement a number of measures to make the communication between UHK 80 halves more reliable. Recent changes:
+  - Set baud rate to 115200. (UART)
+  - Check message consistency with CRC. (UART)
+  - Redesign the UART protocol. (UART)
+    - Use control sequences that are not likely to be triggered by a constant signal.
+    - Explicitly start message frames to detect and ignore spurious signals or data originating from broken frames.
+    - When such spurious signal is detected, disable UART for a couple of milliseconds to make sure that other threads get some CPU time.
+    - Accept ping bytes from any traffic: we can't afford to reset the state sync state just because of a missed ping (e.g., because of a broken frame), as resending the data over a faulty connection would be likely to cause another reset.
+  - Resend any corrupted or undelivered messages. (UART)
+  - Explicitly check message sequence and order. (UART+NUS)
+  - Fix a couple of deadlock scenarios and set low semaphore timeouts to prevent any uncaught scenarios. (UART+NUS)
+  - Don't queue messages that were received multiple times, to prevent congestion. (UART)
+  - Distinguish low and high priority messages and spread them in time to prevent congestion. (NUS+UART)
+
+## [12.3.4] - 2025-02-14
+
+Device Protocol: 4.14.1 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.0 | User Config: 8.3.0 | Hardware Config: 1.0.0 | Smart Macros: 3.1.0
+
+- Fix bug that was introduced in firmware 12.3.3 and caused the firmware update on the UHK 60 to fail when the touchpad module was connected. Upgrade to this firmware version without the touchpad module connected on the UHK 60 if you're on firmware 12.3.3.
+- Fix caps lock, num lock, and scroll lock states not being updated in a timely manner on the UHK 80.
+- Fix touchpad ghosting in Agent on the UHK 80 when the keyboard halves were merged.
+
 ## [12.3.3] - 2025-02-02
 
-Device Protocol: 4.14.**1** | Module Protocol: 4.3.0 | User Config: 8.3.0 | Hardware Config: 1.0.0 | Smart Macros: 3.1.0
+Device Protocol: 4.14.**1** | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.0 | User Config: 8.3.0 | Hardware Config: 1.0.0 | Smart Macros: 3.1.0
 
 - Fix NUS latency issue, effectively lowering left-right and right-dongle BLE latencies from 50ms to 7ms, which should fix typing errors while the keyboard halves of the UHK 80 are wirelessly connected and/or when dongles are used.
 - Decrease UART baud rate from 1,000,000Hz to 115,200Hz, making the bridge cable connection more stable.

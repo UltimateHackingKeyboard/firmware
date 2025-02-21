@@ -75,7 +75,7 @@ ${deviceMd5Sums}
 };
 #endif
 
-const char *const ModuleMD5Checksums[ModuleId_AllCount] = {
+const char *const ModuleMD5Checksums[ModuleId_AllModuleCount] = {
 ${moduleMd5Sums}
 };
 `);

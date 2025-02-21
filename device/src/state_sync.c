@@ -309,7 +309,7 @@ void StateSync_CheckFirmwareVersions() {
 
 static void checkDongleProtocolVersion() {
     if (!VERSIONS_EQUAL(DongleProtocolVersion, dongleProtocolVersion)) {
-        LogUOS("Dongle and right half run different dongle protocol versios (dongle: %d.%d.%d, right: %d.%d.%d), please upgrade!\n",
+        LogUOS("Dongle and right half run different dongle protocol versios\n  (dongle: %d.%d.%d, right: %d.%d.%d)\n  please upgrade!\n",
                 DongleProtocolVersion.major, DongleProtocolVersion.minor, DongleProtocolVersion.patch,
                 dongleProtocolVersion.major, dongleProtocolVersion.minor, dongleProtocolVersion.patch
         );
@@ -409,11 +409,10 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
         // TODO
         break;
     case StateSyncPropertyId_KeyboardLedsState:
-        if (!isLocalUpdate) {
-            WIDGET_REFRESH(&StatusWidget);
-            if (DongleProtocolVersion.major == 0) {
-                LogUOS("Dongle protocol version doesn't seem to have been reported. Is your dongle firmware up to date?\n");
-            }
+        WIDGET_REFRESH(&StatusWidget);
+
+        if (!isLocalUpdate && DongleProtocolVersion.major == 0) {
+            LogUOS("Dongle protocol version doesn't seem to have been reported.\nIs your dongle firmware up to date?\n");
         }
         break;
     case StateSyncPropertyId_ResetRightLeftLink:

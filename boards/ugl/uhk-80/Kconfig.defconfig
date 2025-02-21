@@ -33,7 +33,7 @@ endif # SHELL_BACKEND_SERIAL
 
 if BOARD_UHK_80_LEFT
     config USB_DEVICE_PRODUCT
-        default "UHK 80 left half"
+        default "UHK 80 Left USB"
     config USB_DEVICE_PID
         default 0x0007
     if BT_DIS && BT_DIS_PNP
@@ -44,7 +44,7 @@ endif # BOARD_UHK_80_LEFT
 
 if BOARD_UHK_80_RIGHT
     config USB_DEVICE_PRODUCT
-        default "UHK 80 right half"
+        default "UHK 80 Right USB"
     config USB_DEVICE_PID
         default 0x0009
 

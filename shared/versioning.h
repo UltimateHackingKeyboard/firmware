@@ -46,6 +46,6 @@ extern const char gitTag[];
 #ifdef DEVICE_COUNT
 extern const char *const DeviceMD5Checksums[DEVICE_COUNT + 1];
 #endif
-extern const char *const ModuleMD5Checksums[ModuleId_AllCount];
+extern const char *const ModuleMD5Checksums[ModuleId_AllModuleCount];
 
 #endif

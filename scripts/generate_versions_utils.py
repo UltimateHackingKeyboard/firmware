@@ -48,7 +48,7 @@ const char *const DeviceMD5Checksums[DEVICE_COUNT + 1] = {{
 }};
 #endif
 
-const char *const ModuleMD5Checksums[ModuleId_AllCount] = {{
+const char *const ModuleMD5Checksums[ModuleId_AllModuleCount] = {{
 {module_md5_sums}
 }};
 """)

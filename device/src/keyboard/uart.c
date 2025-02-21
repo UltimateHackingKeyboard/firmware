@@ -1,5 +1,6 @@
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/uart.h>
+#include "attributes.h"
 #include "timer.h"
 #include "uart.h"
 #include "messenger.h"
@@ -186,7 +187,7 @@ static void rxPacketReceived() {
 
 
 
-static uint16_t get_random(void)
+ATTR_UNUSED static uint16_t get_random(void)
 {
     static uint16_t lfsr = 0xACE1;  // Non-zero seed
     uint16_t bit = ((lfsr >> 0) ^ (lfsr >> 2) ^ (lfsr >> 3) ^ (lfsr >> 5)) & 1;

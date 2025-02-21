@@ -358,17 +358,19 @@ static void connected(struct bt_conn *conn, uint8_t err) {
 
     if (connectionId == ConnectionId_Invalid) {
         connectUnknown(conn);
+        BtManager_StartScanningAndAdvertisingAsync();
     } else {
 
         if (isWanted(conn, connectionType)) {
             bt_conn_set_security(conn, BT_SECURITY_L4);
+            // advertising/scanning needs to be started only after peers are assigned :-/
         } else {
             printk("Refusing connenction %d (this is not a selected connection)\n", connectionId);
             bt_conn_disconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
+            BtManager_StartScanningAndAdvertisingAsync();
         }
     }
 
-    BtManager_StartScanningAndAdvertisingAsync();
 
 
     return;
@@ -455,6 +457,8 @@ static void connectAuthenticatedConnection(struct bt_conn *conn, connection_id_t
             bt_conn_disconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
             break;
     }
+
+    BtManager_StartScanningAndAdvertisingAsync();
 }
 
 static void securityChanged(struct bt_conn *conn, bt_security_t level, enum bt_security_err err) {
