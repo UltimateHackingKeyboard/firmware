@@ -257,8 +257,9 @@ static void powerCallback(nrfx_power_usb_evt_t event) {
 }
 
 void chargerStatCallback(const struct device *port, struct gpio_callback *cb, gpio_port_pins_t pins) {
-    if (statsToIgnore-- > 0) {
+    if (statsToIgnore > 0) {
         printk("Ignoring stat change\n");
+        statsToIgnore--;
         return;
     }
         printk("Processing stat change\n");
