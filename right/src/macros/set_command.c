@@ -579,6 +579,21 @@ static macro_variable_t leds(parser_context_t* ctx, set_command_action_t action)
     return noneVar();
 }
 
+static macro_variable_t battery(parser_context_t* ctx, set_command_action_t action)
+{
+    if (ConsumeToken(ctx, "stationaryMode")) {
+        ASSIGN_BOOL(Cfg.BatteryStationaryMode);
+#if defined(__ZEPHYR__) && DEVICE_IS_KEYBOARD
+        StateSync_UpdateProperty(StateSyncPropertyId_BatteryStationaryMode, &Cfg.BatteryStationaryMode);
+#endif
+    }
+    else {
+        Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
+    }
+
+    return noneVar();
+}
+
 static macro_variable_t backlight(parser_context_t* ctx, set_command_action_t action)
 {
     if (ConsumeToken(ctx, "strategy")) {
@@ -820,6 +835,10 @@ static macro_variable_t root(parser_context_t* ctx, set_command_action_t action)
     else if (ConsumeToken(ctx, "backlight")) {
         ConsumeUntilDot(ctx);
         return backlight(ctx, action);
+    }
+    else if (ConsumeToken(ctx, "battery")) {
+        ConsumeUntilDot(ctx);
+        return battery(ctx, action);
     }
     else if (ConsumeToken(ctx, "leds")) {
         ConsumeUntilDot(ctx);
