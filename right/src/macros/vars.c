@@ -11,6 +11,7 @@
 #include "config_parser/config_globals.h"
 #include "debug.h"
 #include "macros/set_command.h"
+#include "config_manager.h"
 
 #if !defined(MAX)
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -809,4 +810,44 @@ macro_result_t Macros_ProcessSetVarCommand(parser_context_t* ctx)
     }
 
     return MacroResult_Finished;
+}
+
+
+
+static void test(const char* command, macro_variable_t expectedResult, const char* comment) {
+#ifdef __ZEPHYR__
+    Macros_ParserError = false;
+    parser_context_t ctx = {
+        .at = command,
+        .begin = command,
+        .end = command + strlen(command),
+        .macroState = NULL
+    };
+    macro_variable_t res = Macros_ConsumeAnyValue(&ctx);
+
+    bool isExpected = true;
+
+    if (expectedResult.type != MacroVariableType_None) {
+        macro_variable_t eq = computeEqOperation(res, Operator_Eq, &ctx, expectedResult);
+        isExpected = eq.asBool;
+    }
+
+    if (!isExpected || Macros_ParserError) {
+        LogU("  Test failed: '%s': %s\n", command, comment);
+    } else {
+        LogU("  Test succes: '%s': %s\n", command, comment);
+    }
+#endif
+}
+
+
+void MacroVariables_RunTests(void) {
+#ifdef __ZEPHYR__
+    LogU("Running macro variable parser tests!\n");
+    test("($leds.brightness / 1.5)", noneVar(), "Reads numeric expressions");
+    test("$bluetooth.enabled", boolVar(Cfg.Bt_Enabled), "Reads bluetooth enabled");
+    test("!$bluetooth.enabled", boolVar(!Cfg.Bt_Enabled), "Reads top level parentheses");
+    test("(!$bluetooth.enabled)", boolVar(!Cfg.Bt_Enabled), "Reads negation");
+    LogU("  tests finished!\n");
+#endif
 }

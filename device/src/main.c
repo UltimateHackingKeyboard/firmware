@@ -43,6 +43,7 @@
 #include "dongle_leds.h"
 #include "usb_protocol_handler.h"
 #include "trace.h"
+#include "macros/vars.h"
 #include "thread_stats.h"
 
 k_tid_t Main_ThreadId = 0;
@@ -188,8 +189,13 @@ int main(void) {
 
     RoundTripTest_Init();
 
+    if (DEBUG_RUN_TESTS) {
+        MacroVariables_RunTests();
+    }
+
     // Call after all threads have been created
     ThreadStats_Init();
+
 
 #if DEVICE_IS_UHK80_RIGHT
     while (true)
