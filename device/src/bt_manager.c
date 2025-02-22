@@ -57,7 +57,7 @@ void BtManager_StartBt() {
     }
 
     if (DEVICE_IS_UHK80_LEFT || DEVICE_IS_UHK80_RIGHT) {
-        BtAdvertise_Start(BtAdvertise_Type());
+        BtAdvertise_Start(BtAdvertise_Config());
     }
 
     if (DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK_DONGLE) {
@@ -133,15 +133,20 @@ void BtManager_StartScanningAndAdvertising() {
         printk("Starting %s, try %d!\n", label, try);
     }
 
+#ifdef CONFIG_BT_PERIPHERAL
     if (leftShouldAdvertise || rightShouldAdvertise) {
-        err = BtAdvertise_Start(BtAdvertise_Type());
+        err = BtAdvertise_Start(BtAdvertise_Config());
         success &= err == 0;
     }
+#endif
 
+#ifdef CONFIG_BT_CENTRAL
     if (rightShouldScan || dongleShouldScan) {
         err = BtScan_Start();
         success &= err == 0;
     }
+#endif
+
 
     if (!success && try > 0) {
         BtConn_DisconnectAll();

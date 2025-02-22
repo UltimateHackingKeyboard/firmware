@@ -1,7 +1,8 @@
 #include "trace.h"
+#include "logger.h"
 #include <stdio.h>
 
-#define TRACE_BUFFER_SIZE 64
+#define TRACE_BUFFER_SIZE 128
 
 
 #define EXPAND_STRING(BUFFER, MAX_LOG_LENGTH)  \
@@ -44,11 +45,6 @@ void Trace_Init(void) {
 }
 
 void Trace_Print(void) {
-    printk("Trace: ");
-    uint8_t pos = traceBufferPosition;
-    for (uint8_t i = 0; i < TRACE_BUFFER_SIZE; i++) {
-        printk("%c", traceBuffer[(pos+i) % TRACE_BUFFER_SIZE]);
-    }
-    printk(" :ecarT\n");
+    printk("Trace: %.*s%.*s", TRACE_BUFFER_SIZE - traceBufferPosition, traceBuffer + traceBufferPosition, traceBufferPosition, traceBuffer);
 }
 

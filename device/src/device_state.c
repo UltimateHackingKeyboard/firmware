@@ -120,6 +120,10 @@ void DeviceState_Update(uint8_t connectionTarget) {
 }
 
 bool DeviceState_IsDeviceConnected(device_id_t deviceId) {
+    if (deviceId == DEVICE_ID) {
+        return true;
+    }
+
     connection_target_t target = Connections_DeviceToTarget(deviceId);
     connection_id_t connectionId = findPreferredConnection(target);
 
@@ -134,8 +138,12 @@ bool DeviceState_IsDeviceConnected(device_id_t deviceId) {
 }
 
 bool DeviceState_IsTargetConnected(uint8_t target) {
-    connection_id_t connectionId = findPreferredConnection(target);
 
-    return connectionId != ConnectionId_Invalid && Connections[connectionId].state == ConnectionState_Ready;
+    if (target == Connections_DeviceToTarget(DEVICE_ID)) {
+        return true;
+    } else {
+        connection_id_t connectionId = findPreferredConnection(target);
+        return connectionId != ConnectionId_Invalid && Connections[connectionId].state == ConnectionState_Ready;
+    }
 }
 
