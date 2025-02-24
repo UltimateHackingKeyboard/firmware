@@ -16,6 +16,7 @@ typedef enum {
     PowerMode_LightSleep,
     PowerMode_Uhk60Sleep = PowerMode_LightSleep,
     PowerMode_DeepSleep,
+    // PowerMode_ShutDown, currently there is a partial implementation in charger.c, but not connected here.
     PowerMode_Count,
 } power_mode_t;
 // Variables:
