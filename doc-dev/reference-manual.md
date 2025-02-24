@@ -171,6 +171,7 @@ COMMAND = set leds.brightness <0-1 multiple of default (FLOAT)>
 COMMAND = set leds.fadeTimeout <seconds to fade after (INT)>
 COMMAND = set leds.{keyBacklightFadeTimeout|keyBacklightFadeBatteryTimeout|displayFadeTimeout|displayFadeBatteryTimeout} <seconds to fade after (INT)>
 COMMAND = set battery.stationaryMode BOOL
+COMMAND = set bluetooth.enabled BOOL
 COMMAND = set modifierLayerTriggers.{shift|alt|super|ctrl} {left|right|both}
 CONDITION = <condition>
 CONDITION = if (EXPRESSION)
@@ -280,6 +281,7 @@ COMMAND = set setEmergencyKey KEYID
 COMMAND = validateUserConfig
 COMMAND = resetConfiguration
 COMMAND = set leds.alwaysOn BOOL
+COMMAND = set bluetooth.allowUnsecuredConnections BOOL
 ##############
 # DEPRECATED #
 ##############

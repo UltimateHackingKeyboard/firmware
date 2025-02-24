@@ -8,6 +8,7 @@
 #define DEBUG_CONSOLE false
 #define DEBUG_EVENTLOOP_SCHEDULE false
 #define DEBUG_POSTPONER false
+#define DEBUG_THREAD_STATS true
 #define WATCH_INTERVAL 500
 
 #define DEBUG_MODE false
@@ -15,6 +16,7 @@
 #define DEBUG_TEST_RTT false
 #define DEBUG_LOG_UART true
 #define DEBUG_LOG_MESSAGES false
+#define DEBUG_RUN_TESTS false
 
 #define DEBUG_ROLL_STATUS_BUFFER true
 

@@ -207,6 +207,8 @@ void NusClient_SendMessage(message_t* msg) {
 
     if (bufferIdx + msg->len > MAX_LINK_PACKET_LENGTH) {
         printk("Message is too long for NUS packets! [%i, %i, ...]\n", buffer[0], buffer[1]);
+        Trace_Printf("E1");
+        Trace_Printf("r2");
         return;
     }
 
@@ -215,4 +217,5 @@ void NusClient_SendMessage(message_t* msg) {
     bufferIdx += msg->len;
 
     send_raw_buffer(buffer, bufferIdx);
+    Trace_Printf("r2");
 }

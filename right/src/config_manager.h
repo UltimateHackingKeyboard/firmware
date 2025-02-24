@@ -83,7 +83,8 @@
 
         // others
         uint32_t I2cBaudRate;
-        bool AllowUnsecuredConnections;
+        bool Bt_AllowUnsecuredConnections;
+        bool Bt_Enabled;
     } config_t;
 
 // Variables:

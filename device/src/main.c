@@ -43,6 +43,8 @@
 #include "dongle_leds.h"
 #include "usb_protocol_handler.h"
 #include "trace.h"
+#include "macros/vars.h"
+#include "thread_stats.h"
 
 k_tid_t Main_ThreadId = 0;
 
@@ -82,15 +84,18 @@ static void scheduleNextRun() {
         LOG_SCHEDULE( EventVector_ReportMask("Continuing immediately because of: ", EventScheduler_Vector & EventVector_UserLogicUpdateMask););
         EVENTLOOP_TIMING(printk("Continuing immediately\n"));
         // Mouse keys don't like being called twice in one second for some reason
+        Trace_Printf("s31");
         k_sem_give(&mainWakeupSemaphore);
         sleepTillNextMs();
         return;
     } else if (eventIsValid) {
         EVENTLOOP_TIMING(printk("Sleeping for %d\n", diff));
+        Trace_Printf("s32");
         k_sem_take(&mainWakeupSemaphore, K_MSEC(diff));
         // k_sleep(K_MSEC(diff));
     } else {
         EVENTLOOP_TIMING(printk("Sleeping forever\n"));
+        Trace_Printf("s33");
         k_sem_take(&mainWakeupSemaphore, K_FOREVER);
         // k_sleep(K_FOREVER);
     }
@@ -184,7 +189,17 @@ int main(void) {
 
     StateSync_Init();
 
+    InitShell();
+
     RoundTripTest_Init();
+
+    if (DEBUG_RUN_TESTS) {
+        MacroVariables_RunTests();
+    }
+
+    // Call after all threads have been created
+    ThreadStats_Init();
+
 
 #if DEVICE_IS_UHK80_RIGHT
     while (true)

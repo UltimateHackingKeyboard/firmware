@@ -13,6 +13,8 @@
 #include "ledmap.h"
 #include "event_scheduler.h"
 #include "host_connection.h"
+#include "thread_stats.h"
+#include "trace.h"
 
 shell_t Shell = {
     .keyLog = 0,
@@ -167,6 +169,22 @@ static int cmd_uhk_connections(const struct shell *shell, size_t argc, char *arg
     return 0;
 }
 
+static int cmd_uhk_threads(const struct shell *shell, size_t argc, char *argv[])
+{
+#if DEBUG_THREAD_STATS
+    ThreadStats_Print();
+#else
+    printk("Thread stats are disabled\n");
+#endif
+    return 0;
+}
+
+static int cmd_uhk_trace(const struct shell *shell, size_t argc, char *argv[])
+{
+    Trace_Print();
+    return 0;
+}
+
 void InitShell(void)
 {
     SHELL_STATIC_SUBCMD_SET_CREATE(uhk_cmds,
@@ -193,6 +211,8 @@ void InitShell(void)
         SHELL_CMD_ARG(passkey, NULL, "send passkey for bluetooth pairing", cmd_uhk_passkey, 2, 0),
         SHELL_CMD_ARG(btunpair, NULL, "unpair bluetooth devices", cmd_uhk_btunpair, 1, 1),
         SHELL_CMD_ARG(connections, NULL, "list BLE connections", cmd_uhk_connections, 1, 0),
+        SHELL_CMD_ARG(threads, NULL, "list thread statistics", cmd_uhk_threads, 1, 0),
+        SHELL_CMD_ARG(trace, NULL, "lists minimalistic event trace", cmd_uhk_trace, 1, 0),
         SHELL_SUBCMD_SET_END);
 
     SHELL_CMD_REGISTER(uhk, &uhk_cmds, "UHK commands", NULL);
