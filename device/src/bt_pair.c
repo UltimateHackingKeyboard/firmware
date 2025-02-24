@@ -181,6 +181,21 @@ void BtPair_Unpair(const bt_addr_le_t addr) {
     UsbCommand_UpdateNewPairingsFlag();
 }
 
+static void bt_foreach_bond_cb_delete_non_lr(const struct bt_bond_info *info, void *user_data) {
+    if (!BtAddrEq(&Peers[PeerIdLeft].addr, &info->addr) && !BtAddrEq(&Peers[PeerIdRight].addr, &info->addr)) {
+        deleteBond(info);
+    }
+}
+
+void BtPair_UnpairAllNonLR() {
+    // Iterate through all stored bonds
+    bt_foreach_bond(BT_ID_DEFAULT, bt_foreach_bond_cb_delete_non_lr, NULL);
+
+    // Update settings
+    Settings_Reload();
+    UsbCommand_UpdateNewPairingsFlag();
+}
+
 struct check_bonded_device_args_t {
     const bt_addr_le_t* addr;
     bool* bonded;
