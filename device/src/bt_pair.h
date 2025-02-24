@@ -26,6 +26,7 @@
     bool BtPair_IsDeviceBonded(const bt_addr_le_t *addr);
     void BtManager_EnterPairingMode();
     void BtPair_ClearUnknownBonds();
+    void BtPair_UnpairAllNonLR();
 
 // Variables
 
