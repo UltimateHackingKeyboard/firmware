@@ -181,6 +181,8 @@ int main(void) {
         InitCharger(); // has to be after usb initialization
     }
 
+    EventVector_Init();
+
     Messenger_Init();
 
     StateSync_Init();
