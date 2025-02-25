@@ -134,7 +134,7 @@ class keyboard_app : public app_base {
 
     C2USB_USB_TRANSFER_ALIGN(leds_report, leds_buffer_) {};
     hid::protocol prot_{};
-    rollover rollover_{};
+    rollover rollover_{rollover::SIX_KEY};
     rollover rollover_override_{};
     union keys_reports {
         keys_nkro_report nkro{};
