@@ -114,7 +114,7 @@ void CopyRightKeystateMatrix(void)
 }
 
 bool UsbReadyForTransfers(void) {
-    if (UsbReportUpdateSemaphore && CurrentPowerMode != PowerMode_Awake) {
+    if (UsbReportUpdateSemaphore && CurrentPowerMode > PowerMode_LastAwake) {
         if (Timer_GetElapsedTime(&UpdateUsbReports_LastUpdateTime) < USB_SEMAPHORE_TIMEOUT) {
             return false;
         } else {

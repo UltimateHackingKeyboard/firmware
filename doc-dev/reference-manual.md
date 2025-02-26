@@ -114,7 +114,7 @@ COMMAND = {startMouse|stopMouse} {move DIRECTION|scroll DIRECTION|accelerate|dec
 COMMAND = setVar <variable name (IDENTIFIER)> <value (PARENTHESSED_EXPRESSION)>
 COMMAND = {pressKey|holdKey|tapKey|releaseKey} SHORTCUT
 COMMAND = tapKeySeq [SHORTCUT]+
-COMMAND = powerMode [toggle] { wake | lightSleep | sleep | deepSleep }
+COMMAND = powerMode [toggle] { wake | lock | sleep | shutDown }
 COMMAND = switchHost { last | next | previous | <host connection name (IDENTIFIER)> | <host connection name (STRING)> }
 COMMAND = set module.MODULEID.navigationMode.LAYERID_BASIC NAVIGATION_MODE
 COMMAND = set module.MODULEID.baseSpeed <non-xcelerated speed, 0-10.0 (FLOAT)>
@@ -324,11 +324,11 @@ COMMAND = setEmergencyKey KEYID
 - `resetTrackpoint` resets the internal trackpoint board. Can be used to recover the trackpoint from drift conditions. Drifts usually happen if you keep the cursor moving at slow constant speeds, because of the boards's internal adaptive calibration. Since the board's parameters cannot be altered, the only way around is or you to learn not to do the type of movement which triggers them.
 - `i2cBaudRate <baud rate, default 100000(INT)>` sets i2c baud rate. Lowering this value may improve module reliability, while increasing latency.
 - `{|}` Braces allow grouping multiple commands as if they were a single command. Please note that from the point of view of the engine, braces are (almost) regular commands, and have to be followed by newlines like any other command. Therefore idioms like `} else {` are not possible at the moment.
-- `powerMode [toggle] { wake | lightSleep | sleep | deepSleep }`
-  - `lightSleep` disables all leds. When any key is pressed, the uhk is waked up, and remote wakeup of the host is attempted.
-  - `deepSleep` disables all leds, disables USB output, and (in the future will) put the device into a low-power mode.
-  - `sleep` is a general alias that at the moment points to `deepSleep`.
-  - `wake` wakes up the device from "any" sleep mode (that doesn't disable macro engine and the half link).
+- `powerMode [toggle] { wake | lock | sleep | shutDown }`
+  - `lock` disables all leds, disables USB output. Connections remain active. Device can be woken up by either pressing s+f and j+l keys, or by another macro call. This mode is experimental.
+  - `sleep` reboots the keyboard into a low power mode, that still scans keys and can be woken up by s+f or j+l keys.
+  - `shutDown` is used by uhk when its battery runs out. You can wake up by plugging in the USB cable.
+  - `wake` wakes up the device from "any" sleep mode that doesn't disable macro engine and the half link.
   Further rules:
     - If a sleep mode is activated while another sleep mode is active, the deeper of them will be activated.
     - If `toggle` is specified and the device is already in the (exact) sleep mode, it will wake the device instead.

@@ -49,6 +49,7 @@
 
     void Ledmap_UpdateBacklightLeds(void);
     void Ledmap_InitLedLayout(void);
+    void Ledmap_SetSfjlValues(void);
     void Ledmap_ActivateTestled(uint8_t slotId, uint8_t keyId);
     void Ledmap_ActivateTestLedMode(bool active);
     void Ledmap_SetLedBacklightingMode(backlighting_mode_t newMode);
