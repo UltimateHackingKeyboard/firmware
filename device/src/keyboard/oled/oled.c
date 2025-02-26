@@ -251,7 +251,7 @@ void sleepDisplay() {
 
 void oledUpdater() {
     k_mutex_lock(&SpiMutex, K_FOREVER);
-    oledCommand1(0, OledCommand_SetDisplayOn);
+    // oledCommand1(0, OledCommand_SetDisplayOn);
     oledCommand2(0, OledCommand_SetContrast, 0xff);
     oledCommand1(0, OledCommand_SetScanDirectionDown);
     k_mutex_unlock(&SpiMutex);

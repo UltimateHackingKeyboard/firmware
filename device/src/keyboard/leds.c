@@ -117,48 +117,63 @@ void UpdateLedAudioRegisters(uint8_t phaseDelay, uint8_t spreadSpectrum, uint8_t
     k_mutex_unlock(&SpiMutex);
 }
 
+static void setBasicConfiguration() {
+    // Set 180 degree phase delay to reduce audible noise, although it doesn't seem to make a difference
+    setLedsCs(true);
+    writeSpi(LedPagePrefix | 2);
+    writeSpi(0x02);
+    writeSpi(0b10110011);
+    setLedsCs(false);
+
+    // Enable spread spectrum with 5% range and 1980us cycle time, which substantially reduces audible noise
+    setLedsCs(true);
+    writeSpi(LedPagePrefix | 2);
+    writeSpi(0x25);
+    writeSpi(0x10);
+    setLedsCs(false);
+
+    setLedsCs(true);
+    writeSpi(LedPagePrefix | 2);
+    writeSpi(0x01);
+    writeSpi(0xff);
+    setLedsCs(false);
+}
+
+static void setLedValues() {
+    setLedsCs(true);
+    writeSpi(LedPagePrefix | 0);
+    writeSpi(0x00);
+    for (int i=0; i<255; i++) {
+        writeSpi(Uhk80LedDriverValues[i]);
+    }
+    setLedsCs(false);
+}
+
+static void setScaling(uint8_t currentScaling) {
+    setLedsCs(true);
+    writeSpi(LedPagePrefix | 1);
+    writeSpi(0x00);
+    for (int i=0; i<255; i++) {
+        writeSpi(currentScaling);
+    }
+    setLedsCs(false);
+}
+
 void ledUpdater() {
     k_sleep(K_MSEC(100));
+    k_mutex_lock(&SpiMutex, K_FOREVER);
+    setScaling(0);
+    k_mutex_unlock(&SpiMutex);
     while (true) {
         k_mutex_lock(&SpiMutex, K_FOREVER);
 
+        setBasicConfiguration();
+
         setOperationMode(1);
 
-        // Set 180 degree phase delay to reduce audible noise, although it doesn't seem to make a difference
-        setLedsCs(true);
-        writeSpi(LedPagePrefix | 2);
-        writeSpi(0x02);
-        writeSpi(0b10110011);
-        setLedsCs(false);
+        setLedValues();
 
-        // Enable spread spectrum with 5% range and 1980us cycle time, which substantially reduces audible noise
-        setLedsCs(true);
-        writeSpi(LedPagePrefix | 2);
-        writeSpi(0x25);
-        writeSpi(0x10);
-        setLedsCs(false);
-
-        setLedsCs(true);
-        writeSpi(LedPagePrefix | 2);
-        writeSpi(0x01);
-        writeSpi(0xff);
-        setLedsCs(false);
-
-        setLedsCs(true);
-        writeSpi(LedPagePrefix | 0);
-        writeSpi(0x00);
-        for (int i=0; i<255; i++) {
-            writeSpi(Uhk80LedDriverValues[i]);
-        }
-        setLedsCs(false);
-
-        setLedsCs(true);
-        writeSpi(LedPagePrefix | 1);
-        writeSpi(0x00);
-        for (int i=0; i<255; i++) {
-            writeSpi(currentScaling);
-        }
-        setLedsCs(false);
+        setScaling(currentScaling);
 
         k_mutex_unlock(&SpiMutex);
 
@@ -179,23 +194,44 @@ void ledUpdater() {
     }
 }
 
+void Leds_BlinkSfjl(uint16_t time) {
+    Ledmap_SetSfjlValues();
+
+    k_mutex_lock(&SpiMutex, K_FOREVER);
+
+    setScaling(0);
+    setOperationMode(1);
+    setBasicConfiguration();
+    setLedValues();
+    setScaling(255);
+    k_sleep(K_MSEC(time));
+    setScaling(currentScaling);
+    setOperationMode(0);
+
+    k_mutex_unlock(&SpiMutex);
+}
+
 void Uhk80_UpdateLeds() {
     ledsNeedUpdate = true;
     k_wakeup(ledUpdaterTid);
 }
 
-void InitLeds(void) {
+void InitLeds_Min(void) {
     gpio_pin_configure_dt(&ledsCsDt, GPIO_OUTPUT);
 
     gpio_pin_configure_dt(&ledsSdbDt, GPIO_OUTPUT);
     gpio_pin_set_dt(&ledsSdbDt, true);
+}
+
+void InitLeds(void) {
+    InitLeds_Min();
 
     ledUpdaterTid = k_thread_create(
-        &thread_data, stack_area,
-        K_THREAD_STACK_SIZEOF(stack_area),
-        ledUpdater,
-        NULL, NULL, NULL,
-        THREAD_PRIORITY, 0, K_NO_WAIT
-    );
+            &thread_data, stack_area,
+            K_THREAD_STACK_SIZEOF(stack_area),
+            ledUpdater,
+            NULL, NULL, NULL,
+            THREAD_PRIORITY, 0, K_NO_WAIT
+            );
     k_thread_name_set(&thread_data, "led_updater");
 }

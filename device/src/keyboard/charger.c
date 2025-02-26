@@ -4,6 +4,7 @@
 #include "charger.h"
 #include "keyboard/charger.h"
 #include "nrf52840.h"
+#include "power_mode.h"
 #include "shell.h"
 #include "timer.h"
 #include "event_scheduler.h"
@@ -132,27 +133,6 @@ void Charger_EnableCharging(bool enabled) {
     }
 }
 
-static bool isStillDepleted() {
-    updatePowered();
-    return !batteryState.powered;
-}
-
-void Charger_EnterSleepIfDepleted(bool enter) {
-    if (enter) {
-        NVIC_SystemReset();
-    }
-    if (isStillDepleted()) {
-        LogU("Going to enter low power mode because of depleted battery!\n");
-        while (isStillDepleted()) {
-
-            k_sleep(K_MSEC(10000));
-        }
-
-        NVIC_SystemReset();
-    }
-}
-
-
 void updateChargerEnabled(battery_state_t *batteryState, battery_manager_config_t* config) {
     battery_manager_automaton_state_t newState = BatteryManager_UpdateState(
             currentChargingAutomatonState,
@@ -164,7 +144,7 @@ void updateChargerEnabled(battery_state_t *batteryState, battery_manager_config_
         currentChargingAutomatonState = newState;
         switch (newState) {
             case BatteryManagerAutomatonState_TurnOff:
-                Charger_EnterSleepIfDepleted(true);
+                PowerMode_ActivateMode(PowerMode_ShutDown, false);
                 break;
             case BatteryManagerAutomatonState_Charging:
                 Charger_EnableCharging(true);
@@ -305,11 +285,30 @@ void chargerStatCallback(const struct device *port, struct gpio_callback *cb, gp
     EventScheduler_Reschedule(CurrentTime + CHARGER_STAT_PERIOD, EventSchedulerEvent_UpdateBattery, "charger - stat callback");
 }
 
-// charging battery with CHARGER_EN yields STAT 0
-// fully charged battery with CHARGER_EN yields STAT 1
-// CHARGER_EN 0 yields STAT 1
+bool Charger_ShouldRemainInDepletedMode(bool checkVoltage) {
+    updatePowered();
+    if (checkVoltage) {
+        uint16_t voltage = getVoltage();
+        return !batteryState.powered && voltage < getCurrentBatteryConfig()->minWakeupVoltage;
+    } else {
+        return !batteryState.powered;
+    }
+}
+
+bool Charger_ShouldEnterDepletedMode() {
+    updatePowered();
+    uint16_t voltage = getVoltage();
+    return !batteryState.powered && voltage < getCurrentBatteryConfig()->minVoltage;
+}
+
+void InitCharger_Min(void) {
+    adc_channel_setup_dt(&adc_channel);
+    (void)adc_sequence_init_dt(&adc_channel, &sequence);
+}
 
 void InitCharger(void) {
+    InitCharger_Min();
+
     gpio_pin_configure_dt(&chargerEnDt, GPIO_OUTPUT);
     Charger_EnableCharging(true);
 
@@ -317,10 +316,6 @@ void InitCharger(void) {
     gpio_pin_interrupt_configure_dt(&chargerStatDt, GPIO_INT_EDGE_BOTH);
     gpio_init_callback(&callbackStruct, chargerStatCallback, BIT(chargerStatDt.pin));
     gpio_add_callback(chargerStatDt.port, &callbackStruct);
-
-    adc_channel_setup_dt(&adc_channel);
-
-    (void)adc_sequence_init_dt(&adc_channel, &sequence);
 
     const nrfx_power_usbevt_config_t config = {
         .handler = &powerCallback
@@ -334,3 +329,4 @@ void InitCharger(void) {
 
     // TODO: Update battery level. See bas_notify()
 }
+

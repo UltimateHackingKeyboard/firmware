@@ -45,6 +45,8 @@
 #include "trace.h"
 #include "macros/vars.h"
 #include "thread_stats.h"
+#include "wormhole.h"
+#include "power_mode.h"
 
 k_tid_t Main_ThreadId = 0;
 
@@ -108,11 +110,7 @@ void Main_Wake() {
     // k_wakeup(Main_ThreadId);
 }
 
-int main(void) {
-    if (DEVICE_HAS_BATTERY) {
-        Charger_EnterSleepIfDepleted(false);
-    }
-
+void mainRuntime(void) {
     Main_ThreadId = k_current_get();
     printk("----------\n" DEVICE_NAME " started\n");
 
@@ -200,7 +198,6 @@ int main(void) {
     // Call after all threads have been created
     ThreadStats_Init();
 
-
 #if DEVICE_IS_UHK80_RIGHT
     while (true)
     {
@@ -222,4 +219,19 @@ int main(void) {
         scheduleNextRun();
     }
 #endif
+}
+
+int main(void) {
+    power_mode_t mode = StateWormhole.restartPowerMode;
+    StateWormhole.restartPowerMode = PowerMode_Awake;
+
+    if (mode != PowerMode_Awake) {
+        LogU("Restarted, sinking into mode %d!\n", mode);
+        k_sleep(K_MSEC(1000));
+        PowerMode_RestartedTo(mode);
+    }
+
+    LogU("Going to resume!\n");
+
+    mainRuntime();
 }

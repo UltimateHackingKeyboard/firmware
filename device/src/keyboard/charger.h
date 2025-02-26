@@ -36,9 +36,12 @@
 // Functions:
 
     void InitCharger(void);
+    void InitCharger_Min(void);
     void Charger_PrintState();
     void Charger_UpdateBatteryState();
     void Charger_EnableCharging(bool enabled);
-    void Charger_EnterSleepIfDepleted(bool enter);
+
+    bool Charger_ShouldRemainInDepletedMode(bool checkVoltage);
+    bool Charger_ShouldEnterDepletedMode();
 
 #endif // __CHARGER_H__
