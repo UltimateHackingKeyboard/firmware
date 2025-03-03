@@ -21,6 +21,8 @@
         KeyActionType_SwitchLayer,
         KeyActionType_SwitchKeymap,
         KeyActionType_PlayMacro,
+        KeyActionType_Connections,
+        KeyActionType_Other,
     } key_action_type_t;
 
     typedef enum {
@@ -34,6 +36,16 @@
         SwitchLayerMode_Toggle,
         SwitchLayerMode_Hold,
     } switch_layer_mode_t;
+
+    typedef enum {
+        ConnectionAction_Next,
+        ConnectionAction_Previous,
+        ConnectionAction_SwitchByHostConnectionId,
+    } connection_action_t;
+
+    typedef enum {
+        OtherAction_Sleep,
+    } other_action_t;
 
     typedef enum {
         MouseButton_Left   = 1 << 0,
@@ -84,6 +96,13 @@
             struct {
                 uint8_t macroId;
             } ATTR_PACKED playMacro;
+            struct {
+                connection_action_t command;
+                uint8_t hostConnectionId;
+            } ATTR_PACKED connections;
+            struct {
+                other_action_t actionSubtype;
+            } ATTR_PACKED other;
         };
         rgb_t color;
         bool colorOverridden;

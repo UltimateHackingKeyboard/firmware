@@ -1,6 +1,7 @@
 #include <math.h>
 #include "atomicity.h"
 #include "event_scheduler.h"
+#include "host_connection.h"
 #include "key_action.h"
 #include "led_display.h"
 #include "layer.h"
@@ -342,6 +343,32 @@ static void applyKeystroke(key_state_t *keyState, key_action_cached_t *cachedAct
     }
 }
 
+static void applyConnectionAction(connection_action_t command, uint8_t hostConnectionId)
+{
+#ifdef __ZEPHYR__
+    switch(command) {
+        case ConnectionAction_Next:
+            HostConnections_SelectNextConnection();
+            break;
+        case ConnectionAction_Previous:
+            HostConnections_SelectPreviousConnection();
+            break;
+        case ConnectionAction_SwitchByHostConnectionId:
+            HostConnections_SelectById(hostConnectionId);
+            break;
+    }
+#endif
+}
+
+static void applyOtherAction(other_action_t actionSubtype)
+{
+    switch(actionSubtype) {
+        case OtherAction_Sleep:
+            PowerMode_ActivateMode(PowerMode_DeepSleep, false);
+            break;
+    }
+}
+
 void ApplyKeyAction(key_state_t *keyState, key_action_cached_t *cachedAction, key_action_t *actionBase, usb_keyboard_reports_t* reports)
 {
     key_action_t* action = &cachedAction->action;
@@ -381,6 +408,16 @@ void ApplyKeyAction(key_state_t *keyState, key_action_cached_t *cachedAction, ke
             if (KeyState_ActivatedNow(keyState)) {
                 resetStickyMods(cachedAction);
                 Macros_StartMacro(action->playMacro.macroId, keyState, 255, true);
+            }
+            break;
+        case KeyActionType_Connections:
+            if (KeyState_ActivatedNow(keyState)) {
+                applyConnectionAction(action->connections.command, action->connections.hostConnectionId);
+            }
+            break;
+        case KeyActionType_Other:
+            if (KeyState_ActivatedNow(keyState)) {
+                applyOtherAction(action->other.actionSubtype);
             }
             break;
     }
