@@ -93,23 +93,44 @@ char* GetAddrString(const bt_addr_le_t *addr)
 }
 
 char *GetPeerStringByAddr(const bt_addr_le_t *addr) {
+    // determine address string
     char addrStr[BT_ADDR_STR_LEN];
     for (uint8_t i=0; i<BT_ADDR_SIZE; i++) {
         sprintf(&addrStr[i*3], "%02x:", addr->a.val[BT_ADDR_SIZE-1-i]);
     }
     addrStr[BT_ADDR_STR_LEN-1] = '\0';
 
+    // determine peer name
     peer_t *peer = getPeerByAddr(addr);
     char peerName[PeerNameMaxLength];
 
     if (peer) {
         strcpy(peerName, peer->name);
     } else {
-        strcpy(peerName, "unknown");
+        strcpy(peerName, "n/a");
     }
 
-    static char peerString[PeerNameMaxLength + BT_ADDR_LE_STR_LEN + 3];
-    sprintf(peerString, "%s (%s)", peerName, addrStr);
+
+    // determine user's host name
+    #define MAX_HOST_NAME_LENGTH 16
+    const char* unknown = "n/a";
+    string_segment_t hostName = { .start = unknown, .end = unknown + strlen(unknown) };
+
+    connection_id_t connId = ConnectionId_Invalid;
+    if (peer) {
+        connId = peer->connectionId;
+    } else {
+        connId = Connections_GetConnectionIdByHostAddr(addr);
+    }
+
+    host_connection_t *hostConnection = HostConnection(peer->connectionId);
+    if (hostConnection) {
+        hostName = hostConnection->name;
+    }
+
+    // put it together
+    static char peerString[PeerNameMaxLength + BT_ADDR_LE_STR_LEN + 6 + MAX_HOST_NAME_LENGTH];
+    sprintf(peerString, "%s (%.*s, %s)", peerName, MIN(MAX_HOST_NAME_LENGTH, hostName.end - hostName.start), hostName.start, addrStr);
 
     return peerString;
 }
