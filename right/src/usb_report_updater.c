@@ -563,7 +563,7 @@ static void updateActionStates() {
                     // as it is pressed
                     actionCache[slotId][keyId].modifierLayerMask = 0;
 
-                    if (CurrentPowerMode != PowerMode_Awake && CurrentPowerMode <= PowerMode_LightSleep) {
+                    if (CurrentPowerMode > PowerMode_LastAwake && CurrentPowerMode <= PowerMode_LightSleep) {
                         PowerMode_WakeHost();
                         PowerMode_ActivateMode(PowerMode_Awake, false);
                     }
@@ -797,7 +797,7 @@ void UpdateUsbReports(void)
     }
 
     if (EventVector_IsSet(EventVector_SendUsbReports | EventVector_ResendUsbReports)) {
-        if (CurrentPowerMode < PowerMode_DeepSleep) {
+        if (CurrentPowerMode < PowerMode_Lock) {
             mergeReports();
             sendActiveReports();
         } else {

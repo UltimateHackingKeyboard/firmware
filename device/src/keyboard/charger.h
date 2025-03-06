@@ -31,11 +31,17 @@
     extern bool UsbPowered;
     extern bool RunningOnBattery;
     extern bool RightRunningOnBattery;
+    extern bool Charger_ChargingEnabled;
 
 // Functions:
 
     void InitCharger(void);
+    void InitCharger_Min(void);
     void Charger_PrintState();
     void Charger_UpdateBatteryState();
+    void Charger_EnableCharging(bool enabled);
+
+    bool Charger_ShouldRemainInDepletedMode(bool checkVoltage);
+    bool Charger_ShouldEnterDepletedMode();
 
 #endif // __CHARGER_H__
