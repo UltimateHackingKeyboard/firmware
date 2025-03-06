@@ -45,6 +45,6 @@ void Trace_Init(void) {
 }
 
 void Trace_Print(void) {
-    printk("Trace: %.*s%.*s", TRACE_BUFFER_SIZE - traceBufferPosition, traceBuffer + traceBufferPosition, traceBufferPosition, traceBuffer);
+    LogUS("Trace: %.*s%.*s", TRACE_BUFFER_SIZE - traceBufferPosition, traceBuffer + traceBufferPosition, traceBufferPosition, traceBuffer);
 }
 

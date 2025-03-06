@@ -18,7 +18,7 @@
 #define DEBUG_LOG_MESSAGES false
 #define DEBUG_RUN_TESTS false
 
-#define DEBUG_ROLL_STATUS_BUFFER true
+#define DEBUG_ROLL_STATUS_BUFFER false
 
 #ifdef __ZEPHYR__
     #include "logger.h"

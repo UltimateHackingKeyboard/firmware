@@ -2,6 +2,7 @@
 #include "main.h"
 #include "zephyr/kernel/thread.h"
 #include <zephyr/kernel.h>
+#include "logger.h"
 
 #define THREAD_COUNT 30
 #define MONITOR_INTERVAL_MS 10
@@ -88,9 +89,9 @@ void ThreadStats_Snap(void) {
 
 void ThreadStats_Print(void) {
     ThreadStats_Snap();
-    printk("Threads (%d), interval %d ms:\n", threadCount, MONITOR_INTERVAL_MS);
+    LogUS("Threads (%d), interval %d ms:\n", threadCount, MONITOR_INTERVAL_MS);
     for (uint8_t i = 0; i < threadCount; i++) {
-        printk("    - %s: %d\n", threadStats[i].name, (uint32_t)(threadStats[i].time*100/timeTotal));
+        LogUS("    - %s: %d\n", threadStats[i].name, (uint32_t)(threadStats[i].time*100/timeTotal));
     }
     enabled = true;
 }
