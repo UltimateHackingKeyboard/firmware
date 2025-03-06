@@ -2269,6 +2269,10 @@ static macro_result_t processCommand(parser_context_t* ctx)
             else if (ConsumeToken(ctx, "resetConfiguration")) {
                 return processResetConfigurationCommand(ctx);
             }
+            else if (ConsumeToken(ctx, "reboot")) {
+                Reboot(true);
+                return MacroResult_Finished;
+            }
             else {
                 goto failed;
             }
