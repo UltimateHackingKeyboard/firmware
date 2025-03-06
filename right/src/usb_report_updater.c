@@ -801,6 +801,7 @@ void UpdateUsbReports(void)
             mergeReports();
             sendActiveReports();
         } else {
+            printk("we are asleep, ignoring send usb reports\n");
             EventVector_Unset(EventVector_SendUsbReports | EventVector_ResendUsbReports);
         }
     }

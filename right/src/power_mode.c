@@ -34,6 +34,8 @@ void PowerMode_Update() {
     bool someoneAwake = CurrentPowerMode == PowerMode_Awake;
 #endif
 
+    printk("------ pm update: someone awake %d\n", someoneAwake);
+
     bool newPowerMode = someoneAwake ? PowerMode_Awake : PowerMode_LightSleep;
 
     if (CurrentPowerMode <= PowerMode_LightSleep) {
@@ -78,6 +80,8 @@ void PowerMode_ActivateMode(power_mode_t mode, bool toggle) {
     if (CurrentPowerMode == mode) {
         return;
     }
+
+    printk("==== changing power mode to %d\n", mode);
 
     switch (mode) {
         case PowerMode_Awake:

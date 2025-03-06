@@ -72,6 +72,7 @@ extern "C" void UsbCompatibility_SendKeyboardReport(const usb_basic_keyboard_rep
 {
     switch (determineSink()) {
         case ReportSink_Usb:
+            printk("Giving report to c2usb usb hid!\n");
             keyboard_app::usb_handle().set_report_state(*reinterpret_cast<const scancode_buffer*>(report));
             break;
 #if DEVICE_IS_UHK80_RIGHT
@@ -232,16 +233,29 @@ extern "C" float VerticalScrollMultiplier(void)
     switch (Connections_Type(ActiveHostConnectionId)) {
         case ConnectionType_UsbHidRight:
         case ConnectionType_UsbHidLeft:
-            return mouse_app::usb_handle().resolution_report().vertical_scroll_multiplier();
+            {
+            float res =  mouse_app::usb_handle().resolution_report().vertical_scroll_multiplier();
+            printk("hid vscroll multiplier is %d\n", (int)(res*100));
+            return res;
+            }
 #if DEVICE_IS_UHK80_RIGHT
         case ConnectionType_BtHid:
         case ConnectionType_NewBtHid:
-            return mouse_app::ble_handle().resolution_report().vertical_scroll_multiplier();
+            {
+            float res = mouse_app::ble_handle().resolution_report().vertical_scroll_multiplier();
+            printk("bt vscroll multiplier is %d\n", (int)(res*100));
+            return res;
+            }
 #endif
         case ConnectionType_NusDongle:
+            printk("remembered dongle vscroll multiplier is %d\n", DongleScrollMultipliers.vertical*100);
             return DongleScrollMultipliers.vertical;
         default:
-            return mouse_app::usb_handle().resolution_report().vertical_scroll_multiplier();
+            {
+            float res = mouse_app::usb_handle().resolution_report().vertical_scroll_multiplier();
+            printk("own dongle scroll multiplier is %d\n", (int)(DongleScrollMultipliers.horizontal*100));
+            return res;
+            }
     }
 }
 
@@ -250,15 +264,30 @@ extern "C" float HorizontalScrollMultiplier(void)
     switch (Connections_Type(ActiveHostConnectionId)) {
         case ConnectionType_UsbHidRight:
         case ConnectionType_UsbHidLeft:
-            return mouse_app::usb_handle().resolution_report().horizontal_scroll_multiplier();
+            {
+            float res = mouse_app::usb_handle().resolution_report().horizontal_scroll_multiplier();
+            printk("hid scroll multiplier is %d\n", (int)(res*100));
+            return res;
+            }
 #if DEVICE_IS_UHK80_RIGHT
         case ConnectionType_BtHid:
         case ConnectionType_NewBtHid:
-            return mouse_app::ble_handle().resolution_report().horizontal_scroll_multiplier();
+            {
+            float res = mouse_app::ble_handle().resolution_report().horizontal_scroll_multiplier();
+            printk("bt scroll multiplier is %d\n", (int)(res*100));
+            return res;
+            }
 #endif
         case ConnectionType_NusDongle:
+            {
+            printk("remembered dongle scroll multiplier is %d\n", DongleScrollMultipliers.horizontal*100);
             return DongleScrollMultipliers.horizontal;
+            }
         default:
-            return mouse_app::usb_handle().resolution_report().horizontal_scroll_multiplier();
+            {
+            float res = mouse_app::usb_handle().resolution_report().horizontal_scroll_multiplier();
+            printk("own dongle scroll multiplier is %d\n", (int)(DongleScrollMultipliers.horizontal*100));
+            return res;
+            }
     }
 }

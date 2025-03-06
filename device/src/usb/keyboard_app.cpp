@@ -62,6 +62,7 @@ void keyboard_app::start(hid::protocol prot)
     // TODO start handling keyboard events
     reset_keys();
 
+    printk("=============\n");
     Connections_SetState(
         (this == &usb_handle()) ? usbHidConnId() : ConnectionId_BtHid, ConnectionState_Ready);
 }
@@ -70,6 +71,7 @@ void keyboard_app::stop()
 {
     sending_sem_.release();
     // TODO stop handling keyboard events
+    printk("=============\n");
     Connections_SetState((this == &usb_handle()) ? usbHidConnId() : ConnectionId_BtHid,
         ConnectionState_Disconnected);
 }
