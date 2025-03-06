@@ -49,6 +49,7 @@
     usb_hid_protocol_t UsbMouseGetProtocol(void);
 #endif
 
+    void ReportScrolls(void);
     float VerticalScrollMultiplier(void);
     float HorizontalScrollMultiplier(void);
     void UsbMouseResetActiveReport(void);

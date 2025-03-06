@@ -2295,6 +2295,11 @@ static macro_result_t processCommand(parser_context_t* ctx)
             else if (ConsumeToken(ctx, "statsRuntime")) {
                 return Macros_ProcessStatsRuntimeCommand();
             }
+            else if (ConsumeToken(ctx, "statsScroll")) {
+                ReportScrolls();
+
+                return MacroResult_Finished;
+            }
             else if (ConsumeToken(ctx, "statsRecordKeyTiming")) {
                 return Macros_ProcessStatsRecordKeyTimingCommand();
             }
