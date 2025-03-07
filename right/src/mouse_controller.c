@@ -1,4 +1,5 @@
 #include <math.h>
+#include <stdint.h>
 #include <string.h>
 #include "key_action.h"
 #include "layer.h"
@@ -711,6 +712,55 @@ bool canWeRun(module_kinetic_state_t* ks)
     return true;
 }
 
+ATTR_UNUSED static bool detectJumps(int16_t v, bool* state)
+{
+#ifdef __ZEPHYR__
+    union {
+        struct {
+            uint8_t low;
+            uint8_t high;
+        } bytes;
+        int16_t word;
+    } u;
+
+    u.word = v;
+    bool isSmall = ((u.bytes.low & 0xC0) ^ (u.bytes.high & 0xC0)) == 0;
+    bool wasSmall = *state;
+    bool looksLikeJump = wasSmall && !isSmall;
+    *state = isSmall;
+
+    if (looksLikeJump) {
+        return true;
+    } else {
+        return false;
+    }
+#else
+    return false;
+#endif
+}
+
+
+ATTR_UNUSED static void test(bool actual, bool expected, const char* comment) {
+#ifdef __ZEPHYR__
+    if (actual != expected) {
+        printk("  - test failed: %s\n", comment);
+    } else {
+        printk("  - test succeeded: %s\n", comment);
+    }
+#endif
+}
+
+ATTR_UNUSED void MouseController_RunTests() {
+    bool state = false;
+    bool res = false;
+    printk("Mouse Controller tests:\n");
+    res = detectJumps(1, &state);
+    res = detectJumps(2, &state);
+    test(res, false, "detect non jump");
+    res = detectJumps((int16_t)(0xff << 8 | 0x01), &state);
+    test(res, true, "detect jump");
+}
+
 void MouseController_ProcessMouseActions()
 {
     EventVector_Unset(EventVector_MouseController);
@@ -773,6 +823,15 @@ void MouseController_ProcessMouseActions()
             moduleState->pointerDelta.x = 0;
             moduleState->pointerDelta.y = 0;
             ENABLE_IRQ();
+
+#ifdef __ZEPHYR__
+            bool jumped = false;
+            jumped |= detectJumps(x, &ks->wasSmallX);
+            jumped |= detectJumps(y, &ks->wasSmallY);
+            if (jumped) {
+                LogUOS("Probable jump detected! %d %d\n", x, y);
+            }
+#endif
 
             processModuleActions(ks, moduleState->moduleId, x, y, 0xFF);
         }
