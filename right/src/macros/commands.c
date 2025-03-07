@@ -1737,6 +1737,16 @@ static macro_result_t processResetConfigurationCommand(parser_context_t* ctx)
     return MacroResult_Finished;
 }
 
+static macro_result_t processRebootCommand()
+{
+    if (Macros_DryRun) {
+        return MacroResult_Finished;
+    }
+
+    Reboot(true);
+    return MacroResult_Finished;
+}
+
 static macro_result_t processSwitchHostCommand(parser_context_t* ctx)
 {
 #define DRY_RUN_FINISH() if (Macros_DryRun) { return MacroResult_Finished; }
@@ -2270,8 +2280,7 @@ static macro_result_t processCommand(parser_context_t* ctx)
                 return processResetConfigurationCommand(ctx);
             }
             else if (ConsumeToken(ctx, "reboot")) {
-                Reboot(true);
-                return MacroResult_Finished;
+                return processRebootCommand();
             }
             else {
                 goto failed;
