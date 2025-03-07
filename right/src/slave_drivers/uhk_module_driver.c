@@ -2,6 +2,7 @@
 #include "config_parser/parse_config.h"
 #include "i2c_addresses.h"
 #include "i2c.h"
+#include "atomicity.h"
 
 #ifdef __ZEPHYR__
 #include "messenger.h"
@@ -154,8 +155,10 @@ void UhkModuleSlaveDriver_ProcessKeystates(uint8_t uhkModuleDriverId, uhk_module
     if (uhkModuleState->pointerCount) {
         uint8_t keyStatesLength = BOOL_BYTES_TO_BITS_COUNT(uhkModuleState->keyCount);
         pointer_delta_t *pointerDelta = (pointer_delta_t*)(rxMessageData + keyStatesLength);
+        DISABLE_IRQ();
         uhkModuleState->pointerDelta.x += pointerDelta->x;
         uhkModuleState->pointerDelta.y += pointerDelta->y;
+        ENABLE_IRQ();
         uhkModuleState->pointerDelta.debugInfo = pointerDelta->debugInfo;
         nonzeroDeltas = uhkModuleState->pointerDelta.x != 0 || uhkModuleState->pointerDelta.y != 0;
     }
