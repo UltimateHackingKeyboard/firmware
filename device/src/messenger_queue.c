@@ -123,7 +123,9 @@ uint8_t* MessengerQueue_AllocateMemory() {
 }
 
 void MessengerQueue_FreeMemory(const uint8_t* segment) {
-    POOL_FREE(segment, regionPool, POOL_SIZE, POOL_REGION_SIZE);
+    if (segment != blackholeBuffer) {
+        POOL_FREE(segment, regionPool, POOL_SIZE, POOL_REGION_SIZE);
+    }
 }
 
 // handle queues
