@@ -45,6 +45,8 @@
 #include "trace.h"
 #include "macros/vars.h"
 #include "thread_stats.h"
+#include "power_mode.h"
+#include "mouse_controller.h"
 
 k_tid_t Main_ThreadId = 0;
 
@@ -194,6 +196,7 @@ int main(void) {
 
     if (DEBUG_RUN_TESTS) {
         MacroVariables_RunTests();
+        MouseController_RunTests();
     }
 
     // Call after all threads have been created
