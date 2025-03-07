@@ -724,7 +724,8 @@ ATTR_UNUSED static bool detectJumps(int16_t v, bool* state)
     } u;
 
     u.word = v;
-    bool isSmall = ((u.bytes.low & 0xC0) ^ (u.bytes.high & 0xC0)) == 0;
+    bool highByteIsUniform = (u.bytes.high >> 4) == (u.bytes.high & 0x0F);
+    bool isSmall = ((u.bytes.low & 0xC0) ^ (u.bytes.high & 0xC0)) == 0 && highByteIsUniform;
     bool wasSmall = *state;
     bool looksLikeJump = wasSmall && !isSmall;
     *state = isSmall;
@@ -825,11 +826,13 @@ void MouseController_ProcessMouseActions()
             ENABLE_IRQ();
 
 #ifdef __ZEPHYR__
-            bool jumped = false;
-            jumped |= detectJumps(x, &ks->wasSmallX);
-            jumped |= detectJumps(y, &ks->wasSmallY);
-            if (jumped) {
-                LogUOS("Probable jump detected! %d %d\n", x, y);
+            if (moduleState->moduleId == ModuleId_TrackpointRight) {
+                bool jumped = false;
+                jumped |= detectJumps(x, &ks->wasSmallX);
+                jumped |= detectJumps(y, &ks->wasSmallY);
+                if (jumped) {
+                    LogUOS("Probable jump detected! %d %d\n", x, y);
+                }
             }
 #endif
 
