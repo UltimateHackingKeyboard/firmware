@@ -14,6 +14,7 @@
 #include "slot.h"
 #include "slave_drivers/uhk_module_driver.h"
 #include "error_reporting.h"
+#include "host_connection.h"
 
 #ifdef __ZEPHYR__
 #include "state_sync.h"
@@ -73,6 +74,59 @@ static parser_error_t parseKeyStrokeAction(key_action_t *keyAction, uint8_t keyS
     keyAction->keystroke.secondaryRole = keyStrokeAction & SERIALIZED_KEYSTROKE_TYPE_MASK_HAS_LONGPRESS
         ? ReadUInt8(buffer) + 1
         : 0;
+    parseKeyActionColor(keyAction, buffer);
+    return ParserError_Success;
+}
+
+static parser_error_t parseConnectionsAction(key_action_t *keyAction, config_buffer_t *buffer) {
+    uint8_t connectionCommand = ReadUInt8(buffer);
+
+    keyAction->type = KeyActionType_Connections;
+
+    switch (connectionCommand) {
+        case SerializedConnectionAction_SwitchByHostConnectionId: {
+            uint8_t hostConnectionId = ReadUInt8(buffer);
+            if (hostConnectionId < SERIALIZED_HOST_CONNECTION_COUNT_MAX) {
+                keyAction->connections.command = ConnectionAction_SwitchByHostConnectionId;
+                keyAction->connections.hostConnectionId = hostConnectionId;
+            } else {
+                ConfigParser_Error(buffer, "Invalid host connection id: %d", hostConnectionId);
+                return ParserError_InvalidHostConnectionId;
+            }
+                                                                  }
+            break;
+        case SerializedConnectionAction_Next:
+            keyAction->connections.command = ConnectionAction_Next;
+            keyAction->connections.hostConnectionId = 0;
+            break;
+        case SerializedConnectionAction_Previous:
+            keyAction->connections.command = ConnectionAction_Previous;
+            keyAction->connections.hostConnectionId = 0;
+            break;
+        default:
+            ConfigParser_Error(buffer, "Invalid serialized connection action: %d", connectionCommand);
+            return ParserError_InvalidSerializedConnectionAction;
+
+            break;
+    }
+
+    parseKeyActionColor(keyAction, buffer);
+    return ParserError_Success;
+}
+
+static parser_error_t parseOtherAction(key_action_t *keyAction, config_buffer_t *buffer) {
+    uint8_t otherAction = ReadUInt8(buffer);
+
+    switch (otherAction) {
+        case SerializedOtherAction_Sleep:
+            keyAction->type = KeyActionType_Other;
+            keyAction->other.actionSubtype = OtherAction_Sleep;
+            break;
+        default:
+            ConfigParser_Error(buffer, "Invalid other action: %d", otherAction);
+            return ParserError_InvalidSerializedOtherAction;
+    }
+
     parseKeyActionColor(keyAction, buffer);
     return ParserError_Success;
 }
@@ -159,6 +213,10 @@ static parser_error_t parseKeyAction(key_action_t *keyAction, config_buffer_t *b
             return parseMouseAction(keyAction, buffer);
         case SerializedKeyActionType_PlayMacro:
             return parsePlayMacroAction(keyAction, buffer);
+        case SerializedKeyActionType_Connections:
+            return parseConnectionsAction(keyAction, buffer);
+        case SerializedKeyActionType_Other:
+            return parseOtherAction(keyAction, buffer);
     }
 
     ConfigParser_Error(buffer, "Invalid key action type: %d", keyActionType);

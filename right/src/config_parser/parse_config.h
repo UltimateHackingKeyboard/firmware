@@ -37,6 +37,9 @@
         ParserError_InvalidModuleProperty               = 17,
         ParserError_InvalidSecondaryRoleActionType      = 18,
         ParserError_InvalidHostType                     = 19,
+        ParserError_InvalidSerializedConnectionAction   = 20,
+        ParserError_InvalidHostConnectionId             = 21,
+        ParserError_InvalidSerializedOtherAction        = 22,
     } parser_error_t;
 
     typedef enum {
