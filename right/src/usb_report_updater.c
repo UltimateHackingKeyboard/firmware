@@ -792,13 +792,20 @@ void UpdateUsbReports(void)
     UpdateUsbReports_LastUpdateTime = CurrentTime;
     UsbReportUpdateCounter++;
 
-    if (!EventVector_IsSet(EventVector_ResendUsbReports)) {
+    bool resending = EventVector_IsSet(EventVector_ResendUsbReports);
+
+    if (!resending) {
         updateActiveUsbReports();
     }
 
-    if (EventVector_IsSet(EventVector_SendUsbReports | EventVector_ResendUsbReports)) {
+    bool sendingNew = EventVector_IsSet(EventVector_SendUsbReports);
+
+    if (resending || sendingNew) {
         if (CurrentPowerMode < PowerMode_DeepSleep) {
-            mergeReports();
+            if (!resending) {
+                mergeReports();
+            }
+
             sendActiveReports();
         } else {
             EventVector_Unset(EventVector_SendUsbReports | EventVector_ResendUsbReports);
