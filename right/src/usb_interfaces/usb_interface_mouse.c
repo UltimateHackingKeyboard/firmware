@@ -3,6 +3,7 @@
 #include <string.h>
 #include "event_scheduler.h"
 #include "attributes.h"
+#include "macros/status_buffer.h"
 
 #ifdef __ZEPHYR__
 #include "usb/usb_compatibility.h"
