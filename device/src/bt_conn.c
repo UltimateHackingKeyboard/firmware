@@ -123,7 +123,7 @@ char *GetPeerStringByAddr(const bt_addr_le_t *addr) {
         connId = Connections_GetConnectionIdByHostAddr(addr);
     }
 
-    host_connection_t *hostConnection = HostConnection(peer->connectionId);
+    host_connection_t *hostConnection = HostConnection(connId);
     if (hostConnection) {
         hostName = hostConnection->name;
     }
