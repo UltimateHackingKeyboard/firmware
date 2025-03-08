@@ -72,10 +72,6 @@ float HorizontalScrollMultiplier(void)
     return usbMouseFeatBuffer[0] & 0x01 ? USB_MOUSE_REPORT_DESCRIPTOR_MAX_RESOLUTION_MULTIPLIER_PHYSICAL_VALUE : USB_MOUSE_REPORT_DESCRIPTOR_MIN_RESOLUTION_MULTIPLIER_PHYSICAL_VALUE;
 }
 
-void ReportScrolls(void) {
-    Macros_ReportPrintf(NULL, "Mouse feat buffer: %d (%d %d).", usbMouseFeatBuffer[0], USB_MOUSE_REPORT_DESCRIPTOR_MAX_RESOLUTION_MULTIPLIER_PHYSICAL_VALUE , USB_MOUSE_REPORT_DESCRIPTOR_MIN_RESOLUTION_MULTIPLIER_PHYSICAL_VALUE);
-}
-
 usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param)
 {
     usb_device_hid_struct_t *hidHandle = (usb_device_hid_struct_t *)handle;
