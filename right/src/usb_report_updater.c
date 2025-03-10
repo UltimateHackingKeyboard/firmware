@@ -794,17 +794,24 @@ void UpdateUsbReports(void)
     UpdateUsbReports_LastUpdateTime = CurrentTime;
     UsbReportUpdateCounter++;
 
-    if (!EventVector_IsSet(EventVector_ResendUsbReports)) {
+    bool resending = EventVector_IsSet(EventVector_ResendUsbReports);
+
+    if (!resending) {
         Trace_Printf("c2");
         updateActiveUsbReports();
         Trace_Printf("c3");
     }
 
-    if (EventVector_IsSet(EventVector_SendUsbReports | EventVector_ResendUsbReports)) {
+    bool sendingNew = EventVector_IsSet(EventVector_SendUsbReports);
+
+    if (resending || sendingNew) {
         if (CurrentPowerMode < PowerMode_DeepSleep) {
-            Trace_Printf("c4");
-            mergeReports();
-            Trace_Printf("c5");
+            if (!resending) {
+                Trace_Printf("c4");
+                mergeReports();
+                Trace_Printf("c5");
+            }
+
             sendActiveReports();
             Trace_Printf("c6");
         } else {

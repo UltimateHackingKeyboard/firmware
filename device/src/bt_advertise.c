@@ -113,16 +113,6 @@ void BtAdvertise_Stop(void) {
     }
 }
 
-static uint8_t connectedHidCount() {
-    uint8_t connectedHids = 0;
-    for (uint8_t peerId = PeerIdFirstHost; peerId <= PeerIdLastHost; peerId++) {
-        if (Peers[peerId].conn && Connections_Type(Peers[peerId].connectionId) == ConnectionType_BtHid) {
-            connectedHids++;
-        }
-    }
-    return connectedHids;
-}
-
 #define ADVERTISEMENT(TYPE) ((adv_config_t) { .advType = TYPE })
 #define ADVERTISEMENT_DIRECT_NUS(ADDR) ((adv_config_t) { .advType = ADVERTISE_DIRECTED_NUS, .addr = ADDR })
 
@@ -135,9 +125,10 @@ adv_config_t BtAdvertise_Config() {
                 return ADVERTISEMENT( 0 );
             }
 
-        case DeviceId_Uhk80_Right:
-            if (BtConn_UnusedPeripheralConnectionCount() > 0)  {
-                if (BtConn_UnusedPeripheralConnectionCount() <= 1 && SelectedHostConnectionId != ConnectionId_Invalid) {
+        case DeviceId_Uhk80_Right: {
+            bool freeSlots = BtConn_UnusedPeripheralConnectionCount();
+            if (freeSlots > 0) {
+                if (freeSlots == 1 && SelectedHostConnectionId != ConnectionId_Invalid) {
                     /* we need to reserve last peripheral slot for a specific target */
                     connection_type_t selectedConnectionType = Connections_Type(SelectedHostConnectionId);
                     if (selectedConnectionType == ConnectionType_NusDongle) {
@@ -149,7 +140,7 @@ adv_config_t BtAdvertise_Config() {
                         return ADVERTISEMENT( 0 );
                     }
                 }
-                else if (connectedHidCount() > 0) {
+                else if (BtConn_ConnectedHidCount() > 0) {
                     /** we can't handle multiple HID connections, so don't advertise it when one HID is already connected */
                     return ADVERTISEMENT(ADVERTISE_NUS);
                 } else {
@@ -163,6 +154,7 @@ adv_config_t BtAdvertise_Config() {
                 BtConn_ListCurrentConnections();
                 return ADVERTISEMENT( 0 );
             }
+        }
         case DeviceId_Uhk_Dongle:
             return ADVERTISEMENT( 0 );
         default:

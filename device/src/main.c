@@ -172,6 +172,7 @@ int main(void) {
         }
     }
 
+    HID_SetGamepadActive(false);
     USB_Enable(); // has to be after USB_SetSerialNumber
 
     // has to be after InitSettings

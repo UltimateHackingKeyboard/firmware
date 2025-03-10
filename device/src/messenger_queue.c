@@ -118,12 +118,14 @@ uint8_t* MessengerQueue_AllocateMemory() {
     Trace_Printf("E0");
     Trace_Print();
     ThreadStats_Print();
-    LogUOS("Messanger message pool space ran out!\n");
+    LogUOS("Messenger message pool space ran out!\n");
     return blackholeBuffer;
 }
 
 void MessengerQueue_FreeMemory(const uint8_t* segment) {
-    POOL_FREE(segment, regionPool, POOL_SIZE, POOL_REGION_SIZE);
+    if (segment != blackholeBuffer) {
+        POOL_FREE(segment, regionPool, POOL_SIZE, POOL_REGION_SIZE);
+    }
 }
 
 // handle queues

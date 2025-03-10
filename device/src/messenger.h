@@ -24,15 +24,21 @@
         MessageId_Ping = 4,
         MessageId_RoundTripTest = 5,
         MessageId_ResendRequest = 6,
+        MessageId_Command = 7,
     } message_id_t;
 
-typedef enum {
-    MessageOffset_Src = 0,
-    MessageOffset_Dst = 1,
-    MessageOffset_Wm = 2,
-    MessageOffset_MsgId1 = 3,
-    MessageOffset_Payload = MessageOffset_MsgId1,
-} message_offset_t;
+    typedef enum {
+        MessengerCommand_Reboot = 0,
+        MessengerCommand_Count,
+    } messenger_command_t;
+
+    typedef enum {
+        MessageOffset_Src = 0,
+        MessageOffset_Dst = 1,
+        MessageOffset_Wm = 2,
+        MessageOffset_MsgId1 = 3,
+        MessageOffset_Payload = MessageOffset_MsgId1,
+    } message_offset_t;
 
     // the point of message_t is to reduce the number of times we need to copy the message.
     // for this reason we also serialize multiple protocol layers in a single go later.
