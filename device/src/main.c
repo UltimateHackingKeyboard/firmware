@@ -87,6 +87,7 @@ static void scheduleNextRun() {
         Trace_Printf("s31");
         k_sem_give(&mainWakeupSemaphore);
         sleepTillNextMs();
+        Trace('+');
         return;
     } else if (eventIsValid) {
         EVENTLOOP_TIMING(printk("Sleeping for %d\n", diff));
@@ -204,7 +205,9 @@ int main(void) {
     while (true)
     {
         CurrentTime = k_uptime_get();
+        Trace_Printf("b1");
         Messenger_ProcessQueue();
+        Trace_Printf("b2");
         if (EventScheduler_Vector & EventVector_UserLogicUpdateMask) {
             EVENTLOOP_TIMING(EVENTLOOP_TIMING(EventloopTiming_Start()));
             RunUserLogic();

@@ -48,6 +48,7 @@
 #include "keyboard/input_interceptor.h"
 #include "keyboard/charger.h"
 #include "logger.h"
+#include "trace.h"
 #else
 #include "stubs.h"
 #endif
@@ -782,6 +783,7 @@ static bool blockedByKeystrokeDelay() {
 void UpdateUsbReports(void)
 {
     if (blockedByKeystrokeDelay()) {
+        Trace_Printf("c1");
         return;
     }
 
@@ -795,7 +797,9 @@ void UpdateUsbReports(void)
     bool resending = EventVector_IsSet(EventVector_ResendUsbReports);
 
     if (!resending) {
+        Trace_Printf("c2");
         updateActiveUsbReports();
+        Trace_Printf("c3");
     }
 
     bool sendingNew = EventVector_IsSet(EventVector_SendUsbReports);
@@ -803,10 +807,13 @@ void UpdateUsbReports(void)
     if (resending || sendingNew) {
         if (CurrentPowerMode < PowerMode_DeepSleep) {
             if (!resending) {
+                Trace_Printf("c4");
                 mergeReports();
+                Trace_Printf("c5");
             }
 
             sendActiveReports();
+            Trace_Printf("c6");
         } else {
             EventVector_Unset(EventVector_SendUsbReports | EventVector_ResendUsbReports);
         }
@@ -815,4 +822,5 @@ void UpdateUsbReports(void)
     if (DisplaySleepModeActive || KeyBacklightSleepModeActive) {
         LedManager_UpdateSleepModes();
     }
+    Trace_Printf("c7");
 }
