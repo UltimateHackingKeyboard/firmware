@@ -58,6 +58,7 @@ typedef enum {
     int8_t GetPeerIdByConn(const struct bt_conn *conn);
     char *GetPeerStringByAddr(const bt_addr_le_t *addr);
     char *GetPeerStringByConn(const struct bt_conn *conn);
+    char *GetPeerStringByConnId(uint8_t connectionId);
     char* GetAddrString(const bt_addr_le_t *addr);
     void num_comp_reply(int passkey);
 
