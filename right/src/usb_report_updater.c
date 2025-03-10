@@ -347,6 +347,9 @@ static void applyConnectionAction(connection_action_t command, uint8_t hostConne
 {
 #ifdef __ZEPHYR__
     switch(command) {
+        case ConnectionAction_Last:
+            HostConnections_SelectLastConnection();
+            break;
         case ConnectionAction_Next:
             HostConnections_SelectNextConnection();
             break;

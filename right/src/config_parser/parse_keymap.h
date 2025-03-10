@@ -102,6 +102,7 @@
     } parse_keymap_mode_t;
 
     typedef enum {
+        SerializedConnectionAction_Last,
         SerializedConnectionAction_Next,
         SerializedConnectionAction_Previous,
         SerializedConnectionAction_SwitchByHostConnectionId,

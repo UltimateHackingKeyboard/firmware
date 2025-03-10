@@ -95,6 +95,10 @@ static parser_error_t parseConnectionsAction(key_action_t *keyAction, config_buf
             }
                                                                   }
             break;
+        case SerializedConnectionAction_Last:
+            keyAction->connections.command = ConnectionAction_Last;
+            keyAction->connections.hostConnectionId = 0;
+            break;
         case SerializedConnectionAction_Next:
             keyAction->connections.command = ConnectionAction_Next;
             keyAction->connections.hostConnectionId = 0;
