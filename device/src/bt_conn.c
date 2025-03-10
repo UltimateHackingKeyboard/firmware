@@ -39,6 +39,7 @@ struct bt_conn *auth_conn;
 #define BLE_KEY_LEN 16
 #define BLE_ADDR_LEN 6
 
+
 static void disconnectAllHids();
 
 peer_t Peers[PeerCount] = {
@@ -191,6 +192,26 @@ static void configureLatency(struct bt_conn *conn, latency_mode_t latencyMode) {
     }
 }
 
+static void youAreNotWanted(struct bt_conn *conn) {
+// BT_HCI_ERR_REMOTE_USER_TERM_CONN
+    static uint32_t lastAttemptTime = 0;
+    uint32_t currentTime = k_uptime_get_32();
+
+    if (currentTime - lastAttemptTime < 2000) {
+        printk(">>> You are repeatedly not wanted %s!\n", GetPeerStringByConn(conn));
+        bt_conn_disconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
+    } else {
+        printk(">>> You are not wanted %s!\n", GetPeerStringByConn(conn));
+        bt_conn_disconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
+    }
+
+    lastAttemptTime = currentTime;
+}
+
+ATTR_UNUSED static void youAreNotAuthenticated(struct bt_conn *conn) {
+    printk("Implement this!\n");
+}
+
 void BtConn_UpdateHostConnectionPeerAllocations() {
     //for each peer
     for (uint8_t peerId = PeerIdFirstHost; peerId <= PeerIdLastHost; peerId++) {
@@ -280,15 +301,20 @@ void BtConn_ListAllBonds() {
     bt_foreach_bond(BT_ID_DEFAULT, bt_foreach_print_bond, NULL);
 }
 
-
 // If last available slot is reserved for a selected connection, refuse other connections
 static bool isWanted(struct bt_conn *conn, connection_id_t connectionId, connection_type_t connectionType) {
+    bool selectedConnectionIsBleHid = Connections_Type(SelectedHostConnectionId) == ConnectionType_BtHid;
+
     bool isHidCollision = connectionType == ConnectionType_BtHid && BtConn_ConnectedHidCount() > 0;
     bool isSelectedConnection = BtAddrEq(bt_conn_get_dst(conn), &HostConnection(SelectedHostConnectionId)->bleAddress);
     bool weHaveSlotToSpare = BtConn_UnusedPeripheralConnectionCount() > 1 || SelectedHostConnectionId == ConnectionId_Invalid;
     bool isLeftConnection = connectionType == ConnectionType_NusLeft;
-    /**
+
+
     if (isHidCollision) {
+        printk("=== isWanted: inplace hid to hid switchover\n");
+    /**
+     * TODO: uncomment and test this code if we want to allow inplace hid switchover initiated by the remote.
         if (SelectedHostConnectionId == ConnectionId_Invalid) {
             host_connection_t *hostConnection = HostConnection(connectionId);
             bool wantSwitch = hostConnection != NULL && hostConnection->switchover;
@@ -306,11 +332,16 @@ static bool isWanted(struct bt_conn *conn, connection_id_t connectionId, connect
                 return false;
             }
         }
-    } else {
+    */
+        return false;
+    } else if (selectedConnectionIsBleHid) {
+        printk("=== isWanted: selected ble hid switchover\n");
+        return isSelectedConnection;
+    }
+    else {
+        printk("=== isWanted: normal switchover\n");
         return weHaveSlotToSpare || isSelectedConnection || isLeftConnection;
     }
-    */
-    return !isHidCollision && (weHaveSlotToSpare || isSelectedConnection || isLeftConnection);
 }
 
 static void connectNus(struct bt_conn *conn, connection_id_t connectionId, connection_type_t connectionType) {
@@ -414,7 +445,7 @@ static void connected(struct bt_conn *conn, uint8_t err) {
             // advertising/scanning needs to be started only after peers are assigned :-/
         } else {
             printk("Refusing connenction %d (this is not a selected connection)\n", connectionId);
-            bt_conn_disconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
+            youAreNotWanted(conn);
             BtManager_StartScanningAndAdvertisingAsync();
         }
     }
@@ -485,8 +516,8 @@ static bool isUhkDeviceConnection(connection_type_t connectionType) {
 static void connectAuthenticatedConnection(struct bt_conn *conn, connection_id_t connectionId, connection_type_t connectionType) {
     // in case we don't have free connection slots and this is not the selected connection, then refuse
     if (!isWanted(conn, connectionId, connectionType)) {
-        printk("Refusing connenction %d (this is not a selected connection)\n", connectionId);
-        bt_conn_disconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
+        printk("Refusing authenticated connenction %d (this is not a selected connection)\n", connectionId);
+        youAreNotWanted(conn);
         return;
     }
 
@@ -668,6 +699,20 @@ void BtConn_DisconnectAll() {
     bt_conn_foreach(BT_CONN_TYPE_LE, bt_foreach_conn_cb, NULL);
 }
 
+static void bt_foreach_conn_cb_disconnect_unidentified(struct bt_conn *conn, void *user_data) {
+    peer_t* peer = getPeerByConn(conn);
+    if (!peer) {
+    printk("     disconnecting unassigned connection %s\n", GetPeerStringByConn(conn));
+        bt_conn_disconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
+    }
+}
+
+void BtConn_DisconnectAllUnidentified() {
+    printk("==== disconnecting unidentified connections\n");
+    bt_conn_foreach(BT_CONN_TYPE_LE, bt_foreach_conn_cb_disconnect_unidentified, NULL);
+}
+
+
 static void pairing_failed(struct bt_conn *conn, enum bt_security_err reason) {
     if (!auth_conn) {
         return;
@@ -777,12 +822,17 @@ void BtConn_ReserveConnections() {
     bool hostSelected = SelectedHostConnectionId != ConnectionId_Invalid;
     bool hostActive = hostSelected && Connections_IsReady(SelectedHostConnectionId);
     bool selectionIsSatisfied = !hostSelected || hostActive;
-    uint8_t unusedConnectionCount = BtConn_UnusedPeripheralConnectionCount();
 
     if (!selectionIsSatisfied) {
         // clear filters and restart advertising
         BtAdvertise_Stop();
-        if (BtConn_ConnectedHidCount() > 0) {
+
+        BtConn_DisconnectAllUnidentified();
+
+        uint8_t unusedConnectionCount = BtConn_UnusedPeripheralConnectionCount();
+        bool selectedConnectionIsBleHid = Connections_Type(SelectedHostConnectionId) == ConnectionType_BtHid;
+
+        if (selectedConnectionIsBleHid && BtConn_ConnectedHidCount() > 0) {
             disconnectAllHids();
             // Advertising will get started when the host actually gets disconnected
         } else if (unusedConnectionCount == 0) {
