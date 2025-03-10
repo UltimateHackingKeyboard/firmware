@@ -343,7 +343,7 @@ static void applyKeystroke(key_state_t *keyState, key_action_cached_t *cachedAct
     }
 }
 
-static void applyConnectionAction(connection_action_t command, uint8_t hostConnectionId)
+static void applyConnectionAction(connection_action_t command, uint8_t hostConnectionIdx)
 {
 #ifdef __ZEPHYR__
     switch(command) {
@@ -357,7 +357,7 @@ static void applyConnectionAction(connection_action_t command, uint8_t hostConne
             HostConnections_SelectPreviousConnection();
             break;
         case ConnectionAction_SwitchByHostConnectionId:
-            HostConnections_SelectById(hostConnectionId);
+            HostConnections_SelectByHostConnIndex(hostConnectionIdx);
             break;
     }
 #endif
