@@ -64,7 +64,7 @@ static string_segment_t getDebugLineText() {
 #undef BUFFER_LENGTH
 }
 
-static string_segment_t getTargetText() {
+static string_segment_t getTargetText_() {
     switch (ActiveHostConnectionId) {
         case ConnectionId_UsbHidRight:
             return (string_segment_t){ .start = "USB Cable", .end = NULL };
@@ -97,6 +97,29 @@ static string_segment_t getTargetText() {
             return (string_segment_t){ .start = "Unknown", .end = NULL };
     }
 }
+
+static string_segment_t getTargetText() {
+    static char buffer [64] = {};
+    buffer[63] = 0;
+
+    string_segment_t currentConnection = getTargetText_();
+
+    string_segment_t selectedConnection = (string_segment_t){ .start = NULL, .end = NULL };
+
+    if (SelectedHostConnectionId != ConnectionId_Invalid) {
+        host_connection_t* hostConnection = HostConnection(SelectedHostConnectionId);
+        if (hostConnection) {
+            selectedConnection = hostConnection->name;
+        }
+    }
+
+    if (selectedConnection.start) {
+        snprintf(buffer, sizeof(buffer)-1, "%.*s -> %.*s", SegmentLen(currentConnection), currentConnection.start, SegmentLen(selectedConnection), selectedConnection.start);
+    } else {
+        snprintf(buffer, sizeof(buffer)-1, "%.*s", SegmentLen(currentConnection), currentConnection.start);
+    }
+    return (string_segment_t){ .start = buffer, .end = NULL };
+};
 
 
 ATTR_UNUSED static string_segment_t getKeymapLayerText() {

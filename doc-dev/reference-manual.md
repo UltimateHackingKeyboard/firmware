@@ -282,6 +282,7 @@ COMMAND = validateUserConfig
 COMMAND = resetConfiguration
 COMMAND = set leds.alwaysOn BOOL
 COMMAND = set bluetooth.allowUnsecuredConnections BOOL
+COMMAND = set bluetooth.peripheralConnectionCount INT
 ##############
 # DEPRECATED #
 ##############
@@ -333,6 +334,12 @@ COMMAND = setEmergencyKey KEYID
   Further rules:
     - If a sleep mode is activated while another sleep mode is active, the deeper of them will be activated.
     - If `toggle` is specified and the device is already in the (exact) sleep mode, it will wake the device instead.
+
+- `switchHost { last | next | previous | <host connection name (IDENTIFIER)> | <host connection name (STRING)> }` switches the host connection. 
+  - `previous | next` switch to the next currently connected host in the list of hosts. E.g., this iterates over blue dongles, as well as some other connections.
+  - `last` switches to the previously active host connection. For instance the last in `switchHost "pc"; switchHost "laptop"; switchHost last` switches to "pc".
+  - `<host connection identifier>` switches to the host connection with the given name. If the connection is not available, UHK will reserve a connection slot for this host. Therefore it is possible to connect to violet dongles too. 
+  - See the bluetooth section for more information.
 
 ### Triggering keyboard actions (pressing keys, clicking, etc.):
 
@@ -709,6 +716,23 @@ UHK modules feature four navigation modes, which are mapped by layer and module.
 - **Zoom mode** - This mode serves specifically to implement the touchpad pinch zoom gesture. It alternates actions of zoomPc and zoomMac modes. Can be customized via `set module.touchpad.pinchZoomMode NAVIGATION_MODE`.
 
 Caret and media modes can be customized by `set navigationModeAction` command.
+
+### bluetooth connectiviy rules:
+
+Dongle colors:
+- red means the dongle is either not paired to any device, or not actively trying to connect.
+- violet means the dongle is paired to some UHK and is actively trying to establish a connection.
+- blue means a dongle is connected to some uhk, but is not its usb report target. These are dongles that are prepared for action and can be immediately switched to via `switchHost` command.
+- green is the currently active dongle.
+
+Connection counts:
+- Uhk can handle up to 3 peripheral connections at a time, including 3 simultaneously connected dongles. Peripheral connection can be a ble hid connection (for instance a smartphone), a dongle connection, or ble advertising.
+- Uhk handles at most one BLE HID at a time.
+
+Rules:
+- Uhk will iterate over connected devices (blue dongles, usb, ble hid) by `switchHost {previous | next | last}`. This switchover is almost instantaneous, but can reach only currently connected devices.
+- Uhk can connect to violet dongles or additional ble hids by calling `switchHost <host connection name(STRING)>`. In that case, it reserves one connection slot for the selected device. This may mean disconnecting some of the currently connected devices. This kind of switchover usually takes a second or so, but can reach all devices.
+
 
 ### Modifier layers:
 
