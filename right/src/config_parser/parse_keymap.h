@@ -22,10 +22,12 @@
         SerializedKeyActionType_None = 0,
         SerializedKeyActionType_KeyStroke = 1,
         SerializedKeyActionType_LastKeyStroke = 31,
-        SerializedKeyActionType_SwitchLayer,
-        SerializedKeyActionType_SwitchKeymap,
-        SerializedKeyActionType_Mouse,
-        SerializedKeyActionType_PlayMacro
+        SerializedKeyActionType_SwitchLayer = 32,
+        SerializedKeyActionType_SwitchKeymap = 33,
+        SerializedKeyActionType_Mouse = 34,
+        SerializedKeyActionType_PlayMacro = 35,
+        SerializedKeyActionType_Connections = 36,
+        SerializedKeyActionType_Other = 37,
     } serialized_key_action_type_t;
 
     typedef enum {
@@ -98,6 +100,17 @@
         ParseKeymapMode_OverlayLayer,
         ParseKeymapMode_ReplaceLayer,
     } parse_keymap_mode_t;
+
+    typedef enum {
+        SerializedConnectionAction_Last,
+        SerializedConnectionAction_Next,
+        SerializedConnectionAction_Previous,
+        SerializedConnectionAction_SwitchByHostConnectionId,
+    } serialized_connection_action_t;
+
+    typedef enum {
+        SerializedOtherAction_Sleep,
+    } serialized_other_action_t;
 
     typedef struct {
         parse_keymap_mode_t mode;

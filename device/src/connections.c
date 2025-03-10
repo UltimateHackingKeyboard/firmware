@@ -18,6 +18,7 @@ connection_t Connections[ConnectionId_Count] = {
     [ConnectionId_BtHid] = { .isAlias = true },
 };
 
+connection_id_t LastActiveHostConnectionId = ConnectionId_Invalid;
 connection_id_t ActiveHostConnectionId = ConnectionId_Invalid;
 connection_id_t SelectedHostConnectionId = ConnectionId_Invalid;
 
@@ -349,7 +350,19 @@ static void setCurrentDongleToStandby() {
     }
 }
 
+static void updateLastConnection(connection_id_t lastConnId, connection_id_t newConnId) {
+    if (
+            LastActiveHostConnectionId != lastConnId
+            && lastConnId != ConnectionId_Invalid
+            && lastConnId != newConnId
+       ) {
+        LastActiveHostConnectionId = lastConnId;
+    }
+}
+
 static void switchOver(connection_id_t connectionId) {
+    updateLastConnection(ActiveHostConnectionId, connectionId);
+
     ActiveHostConnectionId = connectionId;
     Peers[Connections[connectionId].peerId].lastSwitchover = k_uptime_get_32();
 
@@ -366,6 +379,7 @@ void Connections_HandleSwitchover(connection_id_t connectionId, bool forceSwitch
 
     // Unset if disconnected
     if (connectionId == ActiveHostConnectionId && !isReady) {
+        updateLastConnection(ActiveHostConnectionId, ConnectionId_Invalid);
         ActiveHostConnectionId = ConnectionId_Invalid;
     }
 

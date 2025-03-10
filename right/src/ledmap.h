@@ -26,8 +26,9 @@
         KeyActionColor_SwitchKeymap,
         KeyActionColor_Mouse,
         KeyActionColor_Macro,
-        keyActionColor_Last = KeyActionColor_Macro,
-        keyActionColor_Length = keyActionColor_Last + 1,
+        KeyActionColor_Special,
+        keyActionColor_Length,
+        keyActionColor_Last = keyActionColor_Length - 1,
     } key_action_color_t;
 
     typedef enum {
