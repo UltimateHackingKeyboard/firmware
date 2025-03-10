@@ -57,6 +57,12 @@ void LogUO(const char *fmt, ...) {
     LogConstantTo(DEVICE_ID, LogTarget_Uart | LogTarget_Oled, buffer);
 }
 
+void LogUS(const char *fmt, ...) {
+    EXPAND_STRING(buffer);
+
+    LogConstantTo(DEVICE_ID, LogTarget_Uart | LogTarget_ErrorBuffer, buffer);
+}
+
 void LogO(const char *fmt, ...) {
     EXPAND_STRING(buffer);
 

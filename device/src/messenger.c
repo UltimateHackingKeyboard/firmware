@@ -24,6 +24,7 @@
 #include "resend.h"
 #include "debug.h"
 #include "trace.h"
+#include "usb_commands/usb_command_reenumerate.h"
 
 #if DEVICE_IS_KEYBOARD
 #include "keyboard/uart.h"
@@ -378,8 +379,26 @@ bool processWatermarks(uint8_t srcConnectionId, uint8_t src, const uint8_t* data
     return true;
 }
 
+static void handleCommand(device_id_t src, const uint8_t* data, uint16_t len) {
+    uint8_t command = data[MessageOffset_MsgId1+1];
+    switch (command) {
+        case MessengerCommand_Reboot:
+            Reboot(false);
+            break;
+        default:
+            printk("Unknown command: %d\n", command);
+            break;
+    }
+}
+
 void Messenger_Enqueue(uint8_t srcConnectionId, uint8_t src, const uint8_t* data, uint16_t len, uint8_t offset) {
     logAllMessages(srcConnectionId, src, data, len, offset);
+
+    if (data[offset+MessageOffset_MsgId1] == MessageId_Command) {
+        handleCommand(src, data+offset, len);
+        MessengerQueue_FreeMemory(data);
+        return;
+    }
 
     if (!processWatermarks(srcConnectionId, src, data, len, offset)) {
         MessengerQueue_FreeMemory(data);

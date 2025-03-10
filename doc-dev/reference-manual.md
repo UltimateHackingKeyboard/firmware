@@ -114,6 +114,7 @@ COMMAND = {startMouse|stopMouse} {move DIRECTION|scroll DIRECTION|accelerate|dec
 COMMAND = setVar <variable name (IDENTIFIER)> <value (PARENTHESSED_EXPRESSION)>
 COMMAND = {pressKey|holdKey|tapKey|releaseKey} SHORTCUT
 COMMAND = tapKeySeq [SHORTCUT]+
+COMMAND = reboot
 COMMAND = powerMode [toggle] { wake | lightSleep | sleep | deepSleep }
 COMMAND = switchHost { last | next | previous | <host connection name (IDENTIFIER)> | <host connection name (STRING)> }
 COMMAND = set module.MODULEID.navigationMode.LAYERID_BASIC NAVIGATION_MODE
@@ -323,6 +324,7 @@ COMMAND = setEmergencyKey KEYID
 - `resetTrackpoint` resets the internal trackpoint board. Can be used to recover the trackpoint from drift conditions. Drifts usually happen if you keep the cursor moving at slow constant speeds, because of the boards's internal adaptive calibration. Since the board's parameters cannot be altered, the only way around is or you to learn not to do the type of movement which triggers them.
 - `i2cBaudRate <baud rate, default 100000(INT)>` sets i2c baud rate. Lowering this value may improve module reliability, while increasing latency.
 - `{|}` Braces allow grouping multiple commands as if they were a single command. Please note that from the point of view of the engine, braces are (almost) regular commands, and have to be followed by newlines like any other command. Therefore idioms like `} else {` are not possible at the moment.
+- `reboot` - reboots the right half, and in case of uhk80, also left half and connected dongles. (Uhk60 left half shouldn't need reboot as it is a simple module.)
 - `powerMode [toggle] { wake | lightSleep | sleep | deepSleep }`
   - `lightSleep` disables all leds. When any key is pressed, the uhk is waked up, and remote wakeup of the host is attempted.
   - `deepSleep` disables all leds, disables USB output, and (in the future will) put the device into a low-power mode.
