@@ -311,7 +311,7 @@ void StateSync_CheckDongleProtocolVersion() {
     host_connection_t *hostConnection = HostConnection(ActiveHostConnectionId);
     if (hostConnection->type == HostConnectionType_Dongle) {
         if (!VERSIONS_EQUAL(RemoteDongleProtocolVersion, dongleProtocolVersion)) {
-            LogUOS("Dongle (%s) and right half run different dongle protocol versios\n  (dongle: %d.%d.%d, right: %d.%d.%d)\n  please upgrade!\n",
+            LogUOS("Dongle (%s) and right half run different dongle protocol versions\n  (dongle: %d.%d.%d, right: %d.%d.%d)\n  Please upgrade!\n",
                     GetPeerStringByConnId(ActiveHostConnectionId),
                     RemoteDongleProtocolVersion.major, RemoteDongleProtocolVersion.minor, RemoteDongleProtocolVersion.patch,
                     dongleProtocolVersion.major, dongleProtocolVersion.minor, dongleProtocolVersion.patch
