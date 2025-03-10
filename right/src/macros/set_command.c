@@ -348,8 +348,14 @@ static macro_variable_t bluetooth(parser_context_t* ctx, set_command_action_t ac
 #endif
     } else if (ConsumeToken(ctx, "allowUnsecuredConnections")) {
         return allowUnsecuredConnections(ctx, action);
-    }
-    else {
+    } else if (ConsumeToken(ctx, "peripheralConnectionCount")) {
+#ifdef __ZEPHYR__
+        DEFINE_INT_LIMITS(1, PERIPHERAL_CONNECTION_COUNT);
+#else
+        DEFINE_INT_LIMITS(1, 1);
+#endif
+        ASSIGN_INT(Cfg.Bt_MaxPeripheralConnections);
+    } else {
         Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
     }
     return noneVar();

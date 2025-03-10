@@ -198,10 +198,9 @@ static void youAreNotWanted(struct bt_conn *conn) {
     uint32_t currentTime = k_uptime_get_32();
 
     if (currentTime - lastAttemptTime < 2000) {
-        printk(">>> You are repeatedly not wanted %s!\n", GetPeerStringByConn(conn));
         bt_conn_disconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
     } else {
-        printk(">>> You are not wanted %s!\n", GetPeerStringByConn(conn));
+        printk("Refusing connenction %s (this is not a selected connection)\n", GetPeerStringByConn(conn));
         bt_conn_disconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
     }
 
@@ -312,7 +311,6 @@ static bool isWanted(struct bt_conn *conn, connection_id_t connectionId, connect
 
 
     if (isHidCollision) {
-        printk("=== isWanted: inplace hid to hid switchover\n");
     /**
      * TODO: uncomment and test this code if we want to allow inplace hid switchover initiated by the remote.
         if (SelectedHostConnectionId == ConnectionId_Invalid) {
@@ -335,11 +333,9 @@ static bool isWanted(struct bt_conn *conn, connection_id_t connectionId, connect
     */
         return false;
     } else if (selectedConnectionIsBleHid) {
-        printk("=== isWanted: selected ble hid switchover\n");
         return isSelectedConnection;
     }
     else {
-        printk("=== isWanted: normal switchover\n");
         return weHaveSlotToSpare || isSelectedConnection || isLeftConnection;
     }
 }
@@ -444,7 +440,6 @@ static void connected(struct bt_conn *conn, uint8_t err) {
             bt_conn_set_security(conn, BT_SECURITY_L4);
             // advertising/scanning needs to be started only after peers are assigned :-/
         } else {
-            printk("Refusing connenction %d (this is not a selected connection)\n", connectionId);
             youAreNotWanted(conn);
             BtManager_StartScanningAndAdvertisingAsync();
         }
@@ -545,6 +540,7 @@ static void securityChanged(struct bt_conn *conn, bt_security_t level, enum bt_s
     if (err || (level < BT_SECURITY_L4 && !Cfg.Bt_AllowUnsecuredConnections)) {
         printk("Bt security failed: %s, level %u, err %d, disconnecting\n", GetPeerStringByConn(conn), level, err);
         bt_conn_auth_cancel(conn);
+        // bt_conn_disconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
         return;
     }
 
@@ -708,7 +704,6 @@ static void bt_foreach_conn_cb_disconnect_unidentified(struct bt_conn *conn, voi
 }
 
 void BtConn_DisconnectAllUnidentified() {
-    printk("==== disconnecting unidentified connections\n");
     bt_conn_foreach(BT_CONN_TYPE_LE, bt_foreach_conn_cb_disconnect_unidentified, NULL);
 }
 
@@ -780,13 +775,14 @@ void num_comp_reply(int passkey) {
 }
 
 uint8_t BtConn_UnusedPeripheralConnectionCount() {
-    uint8_t count = 0;
+    uint8_t count = MIN(PERIPHERAL_CONNECTION_COUNT, Cfg.Bt_MaxPeripheralConnections);
+
     for (uint8_t peerId = PeerIdFirstHost; peerId <= PeerIdLastHost; peerId++) {
-        if (!Peers[peerId].conn) {
-            count++;
+        if (Peers[peerId].conn && count > 0) {
+            count--;
         }
     }
-    if (auth_conn) {
+    if (auth_conn && count > 0) {
         count--;
     }
     return count;
@@ -841,6 +837,7 @@ void BtConn_ReserveConnections() {
         } else {
             BtManager_StartScanningAndAdvertising();
         }
+        WIDGET_REFRESH(&TargetWidget);
     }
 #endif
 }

@@ -282,6 +282,7 @@ COMMAND = validateUserConfig
 COMMAND = resetConfiguration
 COMMAND = set leds.alwaysOn BOOL
 COMMAND = set bluetooth.allowUnsecuredConnections BOOL
+COMMAND = set bluetooth.peripheralConnectionCount INT
 ##############
 # DEPRECATED #
 ##############
