@@ -79,6 +79,7 @@ usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param
 
     switch (event) {
         case ((uint32_t)-kUSB_DeviceEventSetConfiguration):
+            Macros_ReportPrintf(NULL, "USB Mouse: Set Configuration -> 0");
             usbMouseFeatBuffer[0] = 0;
             error = kStatus_USB_Success;
             break;
@@ -139,6 +140,8 @@ usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param
                 // all; but it only sends this report when it detects the
                 // resolution multiplier, and the intention is to activate the
                 // feature, so turn high-res mode on here.
+
+                Macros_ReportPrintf(NULL, "USB Mouse: Request Report Buffer -> 1");
                 report->reportBuffer = usbMouseFeatBuffer;
                 usbMouseFeatBuffer[0] = 0x1;
                 error = kStatus_USB_Success;
