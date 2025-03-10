@@ -5,6 +5,7 @@
 #ifdef __ZEPHYR__
 #include "bt_conn.h"
 #include "connections.h"
+#include "logger.h"
 
 host_connection_t HostConnections[HOST_CONNECTION_COUNT_MAX] = {
     [HOST_CONNECTION_COUNT_MAX - 2] = {
@@ -107,8 +108,14 @@ void HostConnections_SelectByName(parser_context_t* ctx) {
     }
 }
 
-void HostConnections_SelectById(uint8_t connectionId) {
-    selectConnection(connectionId);
+void HostConnections_SelectByHostConnIndex(uint8_t hostConnIndex) {
+    uint8_t connId = ConnectionId_HostConnectionFirst + hostConnIndex;
+    host_connection_t *hostConnection = HostConnection(connId);
+    if (hostConnection && hostConnection->type != HostConnectionType_Empty) {
+        selectConnection(connId);
+    } else {
+        LogUS("Invalid host connection index: %d. Ignoring!\n", hostConnIndex);
+    }
 }
 
 void HostConnections_ListKnownBleConnections() {
