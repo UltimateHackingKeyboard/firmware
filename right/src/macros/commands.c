@@ -32,6 +32,7 @@
 #include "utils.h"
 #include "debug.h"
 #include "config_manager.h"
+#include "usb_commands/usb_command_reenumerate.h"
 
 #ifdef __ZEPHYR__
 #include "connections.h"
