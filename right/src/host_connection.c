@@ -92,6 +92,12 @@ void HostConnections_SelectPreviousConnection(void) {
     selectNextConnection(-1);
 }
 
+void HostConnections_SelectLastConnection(void) {
+    if (LastActiveHostConnectionId != ConnectionId_Invalid) {
+        selectConnection(LastActiveHostConnectionId);
+    }
+}
+
 void HostConnections_SelectByName(parser_context_t* ctx) {
     for (uint8_t i = ConnectionId_HostConnectionFirst; i <= ConnectionId_HostConnectionLast; i++) {
         if (Macros_CompareStringToken(ctx, HostConnection(i)->name)) {

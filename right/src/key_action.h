@@ -38,6 +38,7 @@
     } switch_layer_mode_t;
 
     typedef enum {
+        ConnectionAction_Last,
         ConnectionAction_Next,
         ConnectionAction_Previous,
         ConnectionAction_SwitchByHostConnectionId,

@@ -1742,9 +1742,6 @@ static macro_result_t processSwitchHostCommand(parser_context_t* ctx)
 #define DRY_RUN_FINISH() if (Macros_DryRun) { return MacroResult_Finished; }
 
 #ifdef __ZEPHYR__
-    static uint8_t lastConnection = 0;
-    uint8_t currentConnection = ActiveHostConnectionId;
-
     if (ConsumeToken(ctx, "next")) {
         DRY_RUN_FINISH();
         HostConnections_SelectNextConnection();
@@ -1755,15 +1752,13 @@ static macro_result_t processSwitchHostCommand(parser_context_t* ctx)
     }
     else if (ConsumeToken(ctx, "last")) {
         DRY_RUN_FINISH();
-        HostConnections_SelectById(lastConnection);
+        HostConnections_SelectLastConnection();
     } else {
         if (!Macros_DryRun) {
             HostConnections_SelectByName(ctx);
         }
         Macros_ConsumeStringToken(ctx);
     }
-
-    lastConnection = currentConnection;
 #endif
 
 #undef DRY_RUN_FINISH
