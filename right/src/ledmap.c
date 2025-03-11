@@ -507,7 +507,7 @@ static rgb_t* determineFunctionalRgb(key_action_t* keyAction) {
             break;
         case KeyActionType_Connections:
         case KeyActionType_Other:
-            keyActionColor = KeyActionColor_Special;
+            keyActionColor = KeyActionColor_Device;
             break;
         default:
             keyActionColor = KeyActionColor_None;
