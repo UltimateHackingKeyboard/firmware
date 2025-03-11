@@ -313,6 +313,7 @@ static bool isWanted(struct bt_conn *conn, connection_id_t connectionId, connect
     if (isHidCollision) {
     /**
      * TODO: uncomment and test this code if we want to allow inplace hid switchover initiated by the remote.
+     *       I predict this is not workable due to aggressive connection policies of third parties.
         if (SelectedHostConnectionId == ConnectionId_Invalid) {
             host_connection_t *hostConnection = HostConnection(connectionId);
             bool wantSwitch = hostConnection != NULL && hostConnection->switchover;
@@ -560,7 +561,7 @@ static void securityChanged(struct bt_conn *conn, bt_security_t level, enum bt_s
 
 __attribute__((unused)) static void infoLatencyParamsUpdated(struct bt_conn* conn, uint16_t interval, uint16_t latency, uint16_t timeout)
 {
-    printk("%s conn params: interval=%u ms, latency=%u, timeout=%u ms\n", GetPeerStringByConn(conn), interval * 5 / 4, latency, timeout * 10);
+    printk("BT: %s conn params: interval=%u ms, latency=%u, timeout=%u ms\n", GetPeerStringByConn(conn), interval * 5 / 4, latency, timeout * 10);
 
     bool isUhkPeer = isUhkDeviceConnection(Connections_Type(Peers[GetPeerIdByConn(conn)].connectionId));
 

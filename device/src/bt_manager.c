@@ -56,14 +56,7 @@ void BtManager_StartBt() {
         HOGP_Enable();
     }
 
-    if (DEVICE_IS_UHK80_LEFT || DEVICE_IS_UHK80_RIGHT) {
-        BtAdvertise_Start(BtAdvertise_Config());
-    }
-
-    if (DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK_DONGLE) {
-        // This scan effectively initiates NUS client connection.
-        BtScan_Start();
-    }
+    BtManager_StartScanningAndAdvertising();
 }
 
 void BtManager_StopBt() {
@@ -130,7 +123,7 @@ void BtManager_StartScanningAndAdvertising() {
         } else if (shouldScan) {
             label = "scanning";
         }
-        printk("Starting %s, try %d!\n", label, try);
+        printk("Bt: Starting %s, try %d!\n", label, try);
     }
 
 #ifdef CONFIG_BT_PERIPHERAL

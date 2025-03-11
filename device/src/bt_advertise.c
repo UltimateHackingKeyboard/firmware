@@ -4,7 +4,10 @@
 #include "attributes.h"
 #include "bt_conn.h"
 #include "connections.h"
+#include "debug.h"
 #include "device.h"
+#include "device_state.h"
+#include "host_connection.h"
 
 #define LEN(NAME) (sizeof(NAME) - 1)
 
@@ -24,6 +27,11 @@
 ATTR_UNUSED static const struct bt_data adNusLeft[] = {AD_NUS_DATA("UHK 80 Left NUS")};
 ATTR_UNUSED static const struct bt_data adNusRight[] = {AD_NUS_DATA("UHK 80 Right NUS")};
 static const struct bt_data adHid[] = {AD_HID_DATA};
+
+// Helpers
+
+#define ADVERTISEMENT(TYPE) ((adv_config_t) { .advType = TYPE })
+#define ADVERTISEMENT_DIRECT_NUS(ADDR) ((adv_config_t) { .advType = ADVERTISE_DIRECTED_NUS, .addr = ADDR })
 
 // Scan response packets
 
@@ -57,11 +65,44 @@ static const char * advertisingString(uint8_t advType) {
     }
 }
 
+static void setFilters(adv_config_t advConfig) {
+    bt_le_filter_accept_list_clear();
+
+    if (advConfig.advType & (ADVERTISE_HID | ADVERTISE_NUS)) {
+        for (uint8_t connId = ConnectionId_HostConnectionFirst; connId <= ConnectionId_HostConnectionLast; connId++) {
+            host_connection_t* hostConnection = HostConnection(connId);
+
+            if (!hostConnection) {
+                continue;
+            }
+
+            if (advConfig.advType & ADVERTISE_HID && (hostConnection->type == HostConnectionType_BtHid || hostConnection->type == HostConnectionType_NewBtHid)) {
+                bt_le_filter_accept_list_add(&hostConnection->bleAddress);
+            }
+            if (advConfig.advType & ADVERTISE_NUS && hostConnection->type == HostConnectionType_Dongle) {
+                bt_le_filter_accept_list_add(&hostConnection->bleAddress);
+            }
+        }
+    }
+
+    if (advConfig.advType & ADVERTISE_DIRECTED_NUS) {
+        bt_le_filter_accept_list_add(advConfig.addr);
+    }
+}
+
 uint8_t BtAdvertise_Start(adv_config_t advConfig)
 {
     int err = 0;
 
+    if ( DEVICE_IS_UHK80_RIGHT && !DeviceState_IsTargetConnected(ConnectionTarget_Left) ) {
+        // In this case, scanning is in progress, so we cannot use the allow list.
+        advConfig = ADVERTISEMENT(ADVERTISE_NUS | ADVERTISE_HID);
+    }
+
     const char * advTypeString = advertisingString(advConfig.advType);
+
+    // to clear filters
+    BtAdvertise_Stop();
 
     // Start advertising
     static struct bt_le_adv_param advParam;
@@ -71,14 +112,22 @@ uint8_t BtAdvertise_Start(adv_config_t advConfig)
             /* our devices don't check service uuids, so hid advertisement effectively advertises nus too */
             advParam = *BT_LE_ADV_CONN_ONE_TIME;
             err = BT_LE_ADV_START(&advParam, adHid, sdHid);
+
             break;
         case ADVERTISE_NUS:
+            setFilters(advConfig);
+
             advParam = *BT_LE_ADV_CONN_ONE_TIME;
+            advParam.options = BT_LE_ADV_OPT_CONNECTABLE | BT_LE_ADV_OPT_ONE_TIME | BT_LE_ADV_OPT_FILTER_CONN | BT_LE_ADV_OPT_USE_IDENTITY,
 
             err = BT_LE_ADV_START(&advParam, BY_SIDE(adNusLeft, adNusRight), sdNus);
             break;
         case ADVERTISE_DIRECTED_NUS:
+            setFilters(advConfig);
+
             advParam = *BT_LE_ADV_CONN_ONE_TIME;
+            advParam.options = BT_LE_ADV_OPT_CONNECTABLE | BT_LE_ADV_OPT_ONE_TIME | BT_LE_ADV_OPT_FILTER_CONN | BT_LE_ADV_OPT_USE_IDENTITY,
+
             err = BT_LE_ADV_START(&advParam, BY_SIDE(adNusLeft, adNusRight), sdNus);
             break;
 
@@ -112,9 +161,6 @@ void BtAdvertise_Stop(void) {
         printk("Adv: Advertising failed to stop (err %d)\n", err);
     }
 }
-
-#define ADVERTISEMENT(TYPE) ((adv_config_t) { .advType = TYPE })
-#define ADVERTISEMENT_DIRECT_NUS(ADDR) ((adv_config_t) { .advType = ADVERTISE_DIRECTED_NUS, .addr = ADDR })
 
 adv_config_t BtAdvertise_Config() {
     switch (DEVICE_ID) {
