@@ -109,9 +109,9 @@ parser_error_t parseConfig(config_buffer_t *buffer)
         readRgbColor(buffer, keyActionColors, KeyActionColor_Mouse);
         readRgbColor(buffer, keyActionColors, KeyActionColor_Macro);
         if (DataModelVersion.major >= 9) {
-            readRgbColor(buffer, keyActionColors, KeyActionColor_Special);
+            readRgbColor(buffer, keyActionColors, KeyActionColor_Device);
         } else {
-            keyActionColors[KeyActionColor_Special] = Cfg.KeyActionColors[KeyActionColor_Special];
+            keyActionColors[KeyActionColor_Device] = Cfg.KeyActionColors[KeyActionColor_Device];
         }
     }
 

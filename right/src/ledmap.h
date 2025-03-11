@@ -26,7 +26,7 @@
         KeyActionColor_SwitchKeymap,
         KeyActionColor_Mouse,
         KeyActionColor_Macro,
-        KeyActionColor_Special,
+        KeyActionColor_Device,
         keyActionColor_Length,
         keyActionColor_Last = keyActionColor_Length - 1,
     } key_action_color_t;
