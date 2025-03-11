@@ -209,7 +209,6 @@ void checkBondedDevice(const struct bt_bond_info *info, void *user_data) {
     bt_addr_le_to_str(args->addr, ref, sizeof(ref));
     if (BtAddrEq(&info->addr, args->addr)) {
         *args->bonded = true;
-        printk("Device %s is bonded, ref %s\n", addr, ref);
     }
 };
 
