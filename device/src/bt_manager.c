@@ -23,9 +23,9 @@ bool BtManager_Restarting = false;
 static void bt_ready(int err)
 {
     if (err) {
-        printk("Bluetooth init failed (err %d)\n", err);
+        LogU("Bluetooth init failed (err %d)\n", err);
     } else {
-        printk("Bluetooth initialized successfully\n");
+        LOG_BT("Bluetooth initialized successfully\n");
     }
 }
 
@@ -35,7 +35,7 @@ void BtManager_InitBt() {
     if (DEVICE_IS_UHK80_LEFT || DEVICE_IS_UHK80_RIGHT) {
         int err = NusServer_Init();
         if (err) {
-            printk("NusServer_Init failed with error %d\n", err);
+            LogU("NusServer_Init failed with error %d\n", err);
         }
     }
 
@@ -46,7 +46,7 @@ void BtManager_InitBt() {
 }
 
 void BtManager_StartBt() {
-    printk("Starting bluetooth services.\n");
+    LOG_BT("Starting bluetooth services.\n");
 
     if (!Cfg.Bt_Enabled) {
         return;
@@ -123,7 +123,7 @@ void BtManager_StartScanningAndAdvertising() {
         } else if (shouldScan) {
             label = "scanning";
         }
-        printk("Bt: Starting %s, try %d!\n", label, try);
+        LOG_BT("Starting %s, try %d!\n", label, try);
     }
 
 #ifdef CONFIG_BT_PERIPHERAL
@@ -155,7 +155,7 @@ void BtManager_StartScanningAndAdvertising() {
 }
 
 void BtManager_RestartBt() {
-    printk("Going to reset bluetooth stack\n");
+    LOG_BT("Going to reset bluetooth stack\n");
 
     BtManager_Restarting = true;
     int err;
@@ -166,7 +166,7 @@ void BtManager_RestartBt() {
 
     err = bt_disable();
     if (err) {
-        printk("Bluetooth disable failed (err %d)\n", err);
+        LogU("Bluetooth disable failed (err %d)\n", err);
         return;
     }
 
@@ -175,12 +175,12 @@ void BtManager_RestartBt() {
 
     err = bt_hci_cmd_send(BT_HCI_OP_RESET, NULL);
     if (err) {
-        printk("HCI Reset failed (err %d)\n", err);
+        LogU("HCI Reset failed (err %d)\n", err);
     }
 
     err = bt_enable(bt_ready);
     if (err) {
-        printk("Bluetooth init failed (err %d)\n", err);
+        LogU("Bluetooth init failed (err %d)\n", err);
     }
 
     Settings_Reload();
@@ -189,7 +189,7 @@ void BtManager_RestartBt() {
 
     BtManager_Restarting = false;
 
-    printk("Bluetooth subsystem restart finished\n");
+    LOG_BT("Bluetooth subsystem restart finished\n");
 }
 
 void BtManager_RestartBtAsync() {

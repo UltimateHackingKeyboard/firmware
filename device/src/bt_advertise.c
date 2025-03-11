@@ -99,7 +99,7 @@ uint8_t BtAdvertise_Start(adv_config_t advConfig)
         advConfig = ADVERTISEMENT(ADVERTISE_NUS | ADVERTISE_HID);
     }
 
-    const char * advTypeString = advertisingString(advConfig.advType);
+    ATTR_UNUSED const char * advTypeString = advertisingString(advConfig.advType);
 
     // to clear filters
     BtAdvertise_Stop();
@@ -138,19 +138,19 @@ uint8_t BtAdvertise_Start(adv_config_t advConfig)
             // err = BT_LE_ADV_START(&advParam, BY_SIDE(adNusLeft, adNusRight), sdNus);
             break;
         default:
-            printk("Adv: Attempted to start advertising without any type! Ignoring.\n");
+            LOG_BT("Adv: Attempted to start advertising without any type! Ignoring.\n");
             return 0;
     }
 
     // Log it
     if (err == 0) {
-        printk("Adv: %s advertising successfully started\n", advTypeString);
+        LOG_BT("Adv: %s advertising successfully started\n", advTypeString);
         return 0;
     } else if (err == -EALREADY) {
-        printk("Adv: %s advertising continued\n", advTypeString);
+        LOG_BT("Adv: %s advertising continued\n", advTypeString);
         return 0;
     } else {
-        printk("Adv: %s advertising failed to start (err %d), free connections: %d\n", advTypeString, err, BtConn_UnusedPeripheralConnectionCount());
+        LOG_BT("Adv: %s advertising failed to start (err %d), free connections: %d\n", advTypeString, err, BtConn_UnusedPeripheralConnectionCount());
         return err;
     }
 }
@@ -158,7 +158,7 @@ uint8_t BtAdvertise_Start(adv_config_t advConfig)
 void BtAdvertise_Stop(void) {
     int err = bt_le_adv_stop();
     if (err) {
-        printk("Adv: Advertising failed to stop (err %d)\n", err);
+        LogU("Adv: Advertising failed to stop (err %d)\n", err);
     }
 }
 
@@ -182,7 +182,7 @@ adv_config_t BtAdvertise_Config() {
                     } else if (selectedConnectionType == ConnectionType_BtHid) {
                         return ADVERTISEMENT(ADVERTISE_HID);
                     } else {
-                        printk("Adv: Selected connection is neither BLE HID nor NUS. Can't advertise!");
+                        LOG_BT("Adv: Selected connection is neither BLE HID nor NUS. Can't advertise!");
                         return ADVERTISEMENT( 0 );
                     }
                 }
@@ -196,15 +196,15 @@ adv_config_t BtAdvertise_Config() {
             } else {
                 /** advertising needs a peripheral slot. When it is not free and we try to advertise, it will fail, and our code will try to
                  *  disconnect other devices in order to restore proper function. */
-                printk("Adv: Current slot count is zero, not advertising!\n");
-                BtConn_ListCurrentConnections();
+                LOG_BT("Adv: Current slot count is zero, not advertising!\n");
+                // BtConn_ListCurrentConnections();
                 return ADVERTISEMENT( 0 );
             }
         }
         case DeviceId_Uhk_Dongle:
             return ADVERTISEMENT( 0 );
         default:
-            printk("unknown device!\n");
+            LogU("unknown device!\n");
             return ADVERTISEMENT( 0 );
     }
 }

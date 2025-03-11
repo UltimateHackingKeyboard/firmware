@@ -39,7 +39,6 @@ struct bt_conn *auth_conn;
 #define BLE_KEY_LEN 16
 #define BLE_ADDR_LEN 6
 
-
 static void disconnectAllHids();
 
 peer_t Peers[PeerCount] = {
@@ -152,14 +151,14 @@ static void enableDataLengthExtension(struct bt_conn *conn) {
 
     int err = bt_conn_le_data_len_update(conn, data_len);
     if (err) {
-        printk("LE data length update failed: %d", err);
+        LOG_BT("LE data length update failed: %d", err);
     }
 }
 
 static void setLatency(struct bt_conn* conn, const struct bt_le_conn_param* params) {
     int err = bt_conn_le_param_update(conn, params);
     if (err) {
-        printk("LE latencies update failed: %d\n", err);
+        LogU("LE latencies update failed: %d\n", err);
     }
 }
 
@@ -200,7 +199,7 @@ static void youAreNotWanted(struct bt_conn *conn) {
     if (currentTime - lastAttemptTime < 2000) {
         bt_conn_disconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
     } else {
-        printk("Refusing connenction %s (this is not a selected connection)\n", GetPeerStringByConn(conn));
+        LogU("Refusing connenction %s (this is not a selected connection)\n", GetPeerStringByConn(conn));
         bt_conn_disconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
     }
 
@@ -208,7 +207,7 @@ static void youAreNotWanted(struct bt_conn *conn) {
 }
 
 ATTR_UNUSED static void youAreNotAuthenticated(struct bt_conn *conn) {
-    printk("Implement this!\n");
+    LogU("Implement this!\n");
 }
 
 void BtConn_UpdateHostConnectionPeerAllocations() {
@@ -218,7 +217,7 @@ void BtConn_UpdateHostConnectionPeerAllocations() {
         if (conn) {
             connection_id_t currentId = Peers[peerId].connectionId;
             connection_id_t newId = Connections_GetConnectionIdByHostAddr(bt_conn_get_dst(conn));
-            printk("Reallocating peer %s from connection %d -> %d\n", Peers[peerId].name, currentId, newId);
+            LOG_BT("Reallocating peer %s from connection %d -> %d\n", Peers[peerId].name, currentId, newId);
             if (newId != ConnectionId_Invalid && newId != currentId) {
                 Connections_MoveConnection(peerId, currentId, newId);
             }
@@ -260,7 +259,7 @@ static uint8_t assignPeer(struct bt_conn* conn, uint8_t connectionId, uint8_t co
     uint8_t peerId = allocateHostPeer(connectionType);
 
     if (peerId == PeerIdUnknown) {
-        printk("No peer slot available for connection %d\n", connectionId);
+        LogU("No peer slot available for connection %d\n", connectionId);
         bt_conn_disconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
         return PeerIdUnknown;
     }
@@ -278,25 +277,25 @@ void bt_foreach_list_current_connections(struct bt_conn *conn, void *data)
 {
     int8_t peerId = GetPeerIdByConn(conn);
     if (peerId == PeerIdUnknown) {
-        printk("  - %s\n", GetPeerStringByConn(conn));
+        LogU("  - %s\n", GetPeerStringByConn(conn));
     } else {
-        printk("  - peer %d(%s), connection %d\n", peerId, GetPeerStringByConn(conn), Peers[peerId].connectionId);
+        LogU("  - peer %d(%s), connection %d\n", peerId, GetPeerStringByConn(conn), Peers[peerId].connectionId);
     }
 }
 
 void BtConn_ListCurrentConnections() {
-    printk("Current connections:\n");
+    LogU("Current connections:\n");
     bt_conn_foreach(BT_CONN_TYPE_LE, bt_foreach_list_current_connections, NULL);
 }
 
 
 static void bt_foreach_print_bond(const struct bt_bond_info *info, void *user_data)
 {
-    printk(" - %s\n", GetAddrString(&info->addr));
+    LogU(" - %s\n", GetAddrString(&info->addr));
 }
 
 void BtConn_ListAllBonds() {
-    printk("All bonds:\n");
+    LogU("All bonds:\n");
     bt_foreach_bond(BT_ID_DEFAULT, bt_foreach_print_bond, NULL);
 }
 
@@ -344,7 +343,7 @@ static bool isWanted(struct bt_conn *conn, connection_id_t connectionId, connect
 static void connectNus(struct bt_conn *conn, connection_id_t connectionId, connection_type_t connectionType) {
     uint8_t peerId = assignPeer(conn, connectionId, connectionType);
 
-    printf("Bt connected to %s\n", GetPeerStringByConn(conn));
+    LOG_BT("connected to %s\n", GetPeerStringByConn(conn));
 
     configureLatency(conn, LatencyMode_NUS);
     enableDataLengthExtension(conn);
@@ -352,7 +351,7 @@ static void connectNus(struct bt_conn *conn, connection_id_t connectionId, conne
     bool isRightClient = DEVICE_IS_UHK80_RIGHT && peerId == PeerIdLeft;
     bool isDongleClient = DEVICE_IS_UHK_DONGLE && peerId == PeerIdRight;
     if ( isRightClient || isDongleClient ) {
-        printk("Initiating NUS connection with %s\n", GetPeerStringByConn(conn));
+        LOG_BT("Initiating NUS connection with %s\n", GetPeerStringByConn(conn));
         NusClient_Connect(conn);
     }
 }
@@ -360,12 +359,10 @@ static void connectNus(struct bt_conn *conn, connection_id_t connectionId, conne
 static void connectHid(struct bt_conn *conn, connection_id_t connectionId, connection_type_t connectionType) {
     assignPeer(conn, connectionId, connectionType);
 
-    printf("Bt connected to %s\n", GetPeerStringByConn(conn));
-
     configureLatency(conn, LatencyMode_NUS);
 
     // Assume that HOGP is ready
-    printf("Established HID connection with %s\n", GetPeerStringByConn(conn));
+    LOG_BT("Established HID connection with %s\n", GetPeerStringByConn(conn));
     Connections_SetState(connectionId, ConnectionState_Ready);
 }
 
@@ -375,7 +372,7 @@ static void connectHid(struct bt_conn *conn, connection_id_t connectionId, conne
 ATTR_UNUSED static uint8_t discover_func(struct bt_conn *conn, const struct bt_gatt_attr *attr, struct bt_gatt_discover_params *params)
 {
     if (!attr) {
-        printk("Service discovery completed, connection wasn't matched.\n");
+        LOG_BT("Service discovery completed, connection wasn't matched.\n");
         // TODO: consider setting a timer to disconnect the connection if neither auth nor security is Established
         return BT_GATT_ITER_STOP;
     }
@@ -385,7 +382,7 @@ ATTR_UNUSED static uint8_t discover_func(struct bt_conn *conn, const struct bt_g
         if (service_val && service_val->uuid) {
             if (service_val->uuid->type == BT_UUID_TYPE_128 && !bt_uuid_cmp(service_val->uuid, BT_UUID_NUS)) {
                 if (!BtPair_OobPairingInProgress && DEVICE_IS_UHK80_RIGHT) {
-                    printk("Unknown NUS trying to connect. Refusing!\n");
+                    LOG_BT("Unknown NUS trying to connect. Refusing!\n");
                     bt_conn_disconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
                 }
                 return BT_GATT_ITER_STOP;
@@ -403,7 +400,7 @@ static void connectUnknown(struct bt_conn *conn) {
 #if DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK_DONGLE
     int err;
 
-    printk("Bt connected to unknown. Starting discovery.\n");
+    LOG_BT("Bt connected to unknown. Starting discovery.\n");
     static struct bt_gatt_discover_params discover_params;
     discover_params.uuid = NULL;  // Will discover all services
     discover_params.start_handle = 0x0001;
@@ -413,7 +410,7 @@ static void connectUnknown(struct bt_conn *conn) {
 
     err = bt_gatt_discover(conn, &discover_params);
     if (err) {
-        printk("Service discovery failed (err %u)\n", err);
+        LogU("Service discovery failed (err %u)\n", err);
         return;
     }
 #endif
@@ -421,7 +418,7 @@ static void connectUnknown(struct bt_conn *conn) {
 
 static void connected(struct bt_conn *conn, uint8_t err) {
     if (err) {
-        printk("Failed to connect to %s, err %u\n", GetPeerStringByConn(conn), err);
+        LogU("Failed to connect to %s, err %u\n", GetPeerStringByConn(conn), err);
         BtManager_StartScanningAndAdvertising();
         return;
     }
@@ -430,7 +427,7 @@ static void connected(struct bt_conn *conn, uint8_t err) {
     connection_id_t connectionId = Connections_GetConnectionIdByHostAddr(addr);
     connection_type_t connectionType = Connections_Type(connectionId);
 
-    printk("connected %s, %d %d\n", GetPeerStringByConn(conn), connectionId, connectionType);
+    LOG_BT("connected %s, %d %d\n", GetPeerStringByConn(conn), connectionId, connectionType);
 
     if (connectionId == ConnectionId_Invalid) {
         connectUnknown(conn);
@@ -457,7 +454,7 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
 
     ARG_UNUSED(peerId);
 
-    printk("Bt disconnected from %s, reason %u\n", GetPeerStringByConn(conn), reason);
+    LOG_BT("Bt disconnected from %s, reason %u\n", GetPeerStringByConn(conn), reason);
 
     if (DEVICE_IS_UHK80_LEFT && peerId == PeerIdRight) {
         NusServer_Disconnected();
@@ -512,7 +509,7 @@ static bool isUhkDeviceConnection(connection_type_t connectionType) {
 static void connectAuthenticatedConnection(struct bt_conn *conn, connection_id_t connectionId, connection_type_t connectionType) {
     // in case we don't have free connection slots and this is not the selected connection, then refuse
     if (!isWanted(conn, connectionId, connectionType)) {
-        printk("Refusing authenticated connenction %d (this is not a selected connection)\n", connectionId);
+        LogU("Refusing authenticated connenction %d (this is not a selected connection)\n", connectionId);
         youAreNotWanted(conn);
         return;
     }
@@ -528,7 +525,7 @@ static void connectAuthenticatedConnection(struct bt_conn *conn, connection_id_t
             break;
         case ConnectionType_Unknown:
         default:
-            printk("Authenticated connection is not known. Disconnecting %s", GetPeerStringByConn(conn));
+            LogU("Authenticated connection is not known. Disconnecting %s", GetPeerStringByConn(conn));
             bt_conn_disconnect(conn, BT_HCI_ERR_AUTH_FAIL);
             break;
     }
@@ -539,7 +536,7 @@ static void connectAuthenticatedConnection(struct bt_conn *conn, connection_id_t
 static void securityChanged(struct bt_conn *conn, bt_security_t level, enum bt_security_err err) {
     // In case of failure, disconnect
     if (err || (level < BT_SECURITY_L4 && !Cfg.Bt_AllowUnsecuredConnections)) {
-        printk("Bt security failed: %s, level %u, err %d, disconnecting\n", GetPeerStringByConn(conn), level, err);
+        LogU("Bt security failed: %s, level %u, err %d, disconnecting\n", GetPeerStringByConn(conn), level, err);
         bt_conn_auth_cancel(conn);
         // bt_conn_disconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
         return;
@@ -549,7 +546,7 @@ static void securityChanged(struct bt_conn *conn, bt_security_t level, enum bt_s
     // Ignore connection that is being paired. At this point, the central is
     // probably talking to us via an anonymous address, and it will yet change.
     if (conn == auth_conn) {
-        printk("Bt connection secured: %s, level %u. It is auth_conn, so ignoring.\n", GetPeerStringByConn(conn), level);
+        LOG_BT("Bt connection secured: %s, level %u. It is auth_conn, so ignoring.\n", GetPeerStringByConn(conn), level);
         return;
     }
 
@@ -561,7 +558,7 @@ static void securityChanged(struct bt_conn *conn, bt_security_t level, enum bt_s
 
 __attribute__((unused)) static void infoLatencyParamsUpdated(struct bt_conn* conn, uint16_t interval, uint16_t latency, uint16_t timeout)
 {
-    printk("BT: %s conn params: interval=%u ms, latency=%u, timeout=%u ms\n", GetPeerStringByConn(conn), interval * 5 / 4, latency, timeout * 10);
+    LOG_BT("%s conn params: interval=%u ms, latency=%u, timeout=%u ms\n", GetPeerStringByConn(conn), interval * 5 / 4, latency, timeout * 10);
 
     bool isUhkPeer = isUhkDeviceConnection(Connections_Type(Peers[GetPeerIdByConn(conn)].connectionId));
 
@@ -588,10 +585,10 @@ static void auth_passkey_entry(struct bt_conn *conn) {
 
     auth_conn = bt_conn_ref(conn);
 
-    printk("Received passkey pairing inquiry.\n");
+    LOG_BT("Received passkey pairing inquiry.\n");
 
     if (!auth_conn) {
-        printk("Returning: no auth conn\n");
+        LOG_BT("Returning: no auth conn\n");
         return;
     }
 
@@ -599,7 +596,7 @@ static void auth_passkey_entry(struct bt_conn *conn) {
     connection_type_t connectionType = Connections_Type(Peers[peerId].connectionId);
     bool isUhkPeer = isUhkDeviceConnection(connectionType);
     if (isUhkPeer || BtPair_OobPairingInProgress) {
-        printk("refusing passkey authentification for %s\n", GetPeerStringByConn(conn));
+        LOG_BT("refusing passkey authentification for %s\n", GetPeerStringByConn(conn));
         bt_conn_auth_cancel(conn);
         return;
     }
@@ -608,11 +605,11 @@ static void auth_passkey_entry(struct bt_conn *conn) {
     PairingScreen_AskForPassword();
 #endif
 
-    printk("Type `uhk passkey xxxxxx` to pair, or `uhk passkey -1` to reject\n");
+    LOG_BT("Type `uhk passkey xxxxxx` to pair, or `uhk passkey -1` to reject\n");
 }
 
 static void auth_cancel(struct bt_conn *conn) {
-    printk("Pairing cancelled: peer %s\n", GetPeerStringByConn(conn));
+    LOG_BT("Pairing cancelled: peer %s\n", GetPeerStringByConn(conn));
 
     if (auth_conn) {
         bt_conn_unref(auth_conn);
@@ -634,12 +631,12 @@ static void auth_oob_data_request(struct bt_conn *conn, struct bt_conn_oob_info 
     struct bt_le_oob* oobRemote = BtPair_GetRemoteOob();
 
     if (memcmp(info.le.remote->a.val, oobRemote->addr.a.val, sizeof(info.le.remote->a.val))) {
-        printk("Addresses not matching! Cancelling authentication\n");
+        LogU("Addresses not matching! Cancelling authentication\n");
         bt_conn_auth_cancel(conn);
         return;
     }
 
-    printk("Pairing OOB data requested!\n");
+    LOG_BT("Pairing OOB data requested!\n");
 
     bt_le_oob_set_sc_data(conn, &oobLocal->le_sc_data, &oobRemote->le_sc_data);
 }
@@ -653,7 +650,7 @@ static struct bt_conn_auth_cb conn_auth_callbacks = {
 // Auth info callbacks
 
 static void pairing_complete(struct bt_conn *conn, bool bonded) {
-    printk("Pairing completed: %s, bonded %d\n", GetPeerStringByConn(conn), bonded);
+    LogU("Pairing completed: %s, bonded %d\n", GetPeerStringByConn(conn), bonded);
 
     bt_addr_le_t addr = *bt_conn_get_dst(conn);
 
@@ -699,7 +696,7 @@ void BtConn_DisconnectAll() {
 static void bt_foreach_conn_cb_disconnect_unidentified(struct bt_conn *conn, void *user_data) {
     peer_t* peer = getPeerByConn(conn);
     if (!peer) {
-    printk("     disconnecting unassigned connection %s\n", GetPeerStringByConn(conn));
+    LOG_BT("     disconnecting unassigned connection %s\n", GetPeerStringByConn(conn));
         bt_conn_disconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
     }
 }
@@ -716,12 +713,12 @@ static void pairing_failed(struct bt_conn *conn, enum bt_security_err reason) {
 
     if (auth_conn == conn) {
         bt_conn_unref(auth_conn);
-        printk("Pairing of auth conn failed because of %d\n", reason);
+        LogU("Pairing of auth conn failed because of %d\n", reason);
         auth_conn = NULL;
         PairingScreen_Feedback(false);
     }
 
-    printk("Pairing failed: %s, reason %d\n", GetPeerStringByConn(conn), reason);
+    LogU("Pairing failed: %s, reason %d\n", GetPeerStringByConn(conn), reason);
 }
 
 static struct bt_conn_auth_info_cb conn_auth_info_callbacks = {
@@ -742,12 +739,12 @@ void BtConn_Init(void) {
 
     err = bt_conn_auth_cb_register(&conn_auth_callbacks);
     if (err) {
-        printk("Failed to register authorization callbacks.\n");
+        LogU("Failed to register authorization callbacks.\n");
     }
 
     err = bt_conn_auth_info_cb_register(&conn_auth_info_callbacks);
     if (err) {
-        printk("Failed to register authorization info callbacks.\n");
+        LogU("Failed to register authorization info callbacks.\n");
     }
 }
 
@@ -766,10 +763,10 @@ void num_comp_reply(int passkey) {
 
     if (passkey >= 0) {
         bt_conn_auth_passkey_entry(conn, passkey);
-        printk("Sending passkey to conn %p\n", conn);
+        LOG_BT("Sending passkey to conn %p\n", conn);
     } else {
         bt_conn_auth_cancel(conn);
-        printk("Reject pairing to conn %p\n", conn);
+        LOG_BT("Reject pairing to conn %p\n", conn);
         bt_conn_unref(auth_conn);
         auth_conn = NULL;
     }
@@ -801,7 +798,7 @@ ATTR_UNUSED static void disconnectOldestHost() {
     }
 
     if (oldestPeerId != PeerIdUnknown) {
-        printk("Disconnecting oldest host %d\n", oldestPeerId);
+        LOG_BT("Disconnecting oldest host %d\n", oldestPeerId);
         bt_conn_disconnect(Peers[oldestPeerId].conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
     }
 }
@@ -847,10 +844,10 @@ void Bt_SetEnabled(bool enabled) {
     Cfg.Bt_Enabled = enabled;
 
     if (enabled) {
-        printk("Starting bluetooth on request.\n");
+        LogU("Starting bluetooth on request.\n");
         BtManager_StartScanningAndAdvertising();
     } else {
-        printk("Shutting down bluetooth on request!\n");
+        LogU("Shutting down bluetooth on request!\n");
         BtManager_StopBt();
         BtConn_DisconnectAll();
     }

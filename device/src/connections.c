@@ -139,7 +139,7 @@ void Connections_SetState(connection_id_t connectionId, connection_state_t state
 
     if ( Connections[connectionId].state != state ) {
         Connections[connectionId].state = state;
-        reportConnectionState(connectionId, "Con state");
+        reportConnectionState(connectionId, "Conn state");
 
         Connections_ResetWatermarks(connectionId);
 
