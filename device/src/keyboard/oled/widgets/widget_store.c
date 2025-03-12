@@ -1,3 +1,4 @@
+#include "bt_advertise.h"
 #include "console_widget.h"
 #include "custom_widget.h"
 #include "keyboard/oled/widgets/custom_widget.h"
@@ -139,15 +140,19 @@ ATTR_UNUSED static string_segment_t getKeymapLayerText() {
 static string_segment_t getLeftStatusText() {
 #define BUFFER_LENGTH 10
     static char buffer [BUFFER_LENGTH] = { [BUFFER_LENGTH-1] = 0 };
-    font_icons_t icon = FontIcon_CircleXmarkLarge;
+    font_icons_t connectionIcon = FontIcon_CircleXmarkLarge;
     if (DEVICE_ID == DeviceId_Uhk80_Right) {
         if (Connections_IsReady(ConnectionId_UartLeft)) {
-            icon = FontIcon_PlugsConnected;
+            connectionIcon = FontIcon_PlugsConnected;
         } else if (Connections_IsReady(ConnectionId_NusServerLeft)) {
-            icon = FontIcon_SignalStream;
+            connectionIcon = FontIcon_SignalStream;
         }
     }
-    snprintf(buffer, BUFFER_LENGTH-1, "%c%c", (char)FontControl_NextCharIcon12, (char)icon);
+    snprintf(buffer, BUFFER_LENGTH-1, "%c%c %c%c%c",
+            (char)FontControl_NextCharIcon12, (char)connectionIcon,
+            AdvertisingHid ? FontControl_NextCharWhite : FontControl_NextCharBlack,
+            (char)FontControl_NextCharIcon12, FontIcon_BluetoothSignal
+    );
     return (string_segment_t){ .start = buffer, .end = NULL };
 #undef BUFFER_LENGTH
 }

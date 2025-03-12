@@ -8,8 +8,11 @@
 #include "device.h"
 #include "device_state.h"
 #include "host_connection.h"
+#include "keyboard/oled/widgets/widgets.h"
 
 #define LEN(NAME) (sizeof(NAME) - 1)
+
+bool AdvertisingHid = false;
 
 // Advertisement packets
 
@@ -90,6 +93,15 @@ static void setFilters(adv_config_t advConfig) {
     }
 }
 
+static void updateAdvertisingIcon(bool newAdvertising) {
+    if (DEVICE_ID == DeviceId_Uhk80_Right && AdvertisingHid != newAdvertising) {
+        AdvertisingHid = newAdvertising;
+#if DEVICE_HAS_OLED
+        Widget_Refresh(&StatusWidget);
+#endif
+    }
+}
+
 uint8_t BtAdvertise_Start(adv_config_t advConfig)
 {
     int err = 0;
@@ -103,6 +115,8 @@ uint8_t BtAdvertise_Start(adv_config_t advConfig)
 
     // to clear filters
     BtAdvertise_Stop();
+
+    updateAdvertisingIcon(advConfig.advType & ADVERTISE_HID);
 
     // Start advertising
     static struct bt_le_adv_param advParam;
