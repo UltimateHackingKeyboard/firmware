@@ -103,6 +103,7 @@ void LayerStack_Reset()
     LayerStack[LayerStack_TopIdx].layer = LayerId_Base;
     LayerStack[LayerStack_TopIdx].removed = false;
     LayerStack[LayerStack_TopIdx].held = false;
+    activateLayer(LayerId_Base);
 }
 
 void LayerStack_Push(uint8_t layer, uint8_t keymap, bool hold)

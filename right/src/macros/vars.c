@@ -814,7 +814,7 @@ macro_result_t Macros_ProcessSetVarCommand(parser_context_t* ctx)
 
 
 
-static void test(const char* command, macro_variable_t expectedResult, const char* comment) {
+ATTR_UNUSED static void test(const char* command, macro_variable_t expectedResult, const char* comment) {
 #ifdef __ZEPHYR__
     Macros_ParserError = false;
     parser_context_t ctx = {

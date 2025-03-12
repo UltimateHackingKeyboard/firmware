@@ -1,6 +1,7 @@
 #include <math.h>
 #include "atomicity.h"
 #include "event_scheduler.h"
+#include "host_connection.h"
 #include "key_action.h"
 #include "led_display.h"
 #include "layer.h"
@@ -48,6 +49,7 @@
 #include "keyboard/input_interceptor.h"
 #include "keyboard/charger.h"
 #include "logger.h"
+#include "trace.h"
 #else
 #include "stubs.h"
 #endif
@@ -341,6 +343,35 @@ static void applyKeystroke(key_state_t *keyState, key_action_cached_t *cachedAct
     }
 }
 
+static void applyConnectionAction(connection_action_t command, uint8_t hostConnectionIdx)
+{
+#ifdef __ZEPHYR__
+    switch(command) {
+        case ConnectionAction_Last:
+            HostConnections_SelectLastConnection();
+            break;
+        case ConnectionAction_Next:
+            HostConnections_SelectNextConnection();
+            break;
+        case ConnectionAction_Previous:
+            HostConnections_SelectPreviousConnection();
+            break;
+        case ConnectionAction_SwitchByHostConnectionId:
+            HostConnections_SelectByHostConnIndex(hostConnectionIdx);
+            break;
+    }
+#endif
+}
+
+static void applyOtherAction(other_action_t actionSubtype)
+{
+    switch(actionSubtype) {
+        case OtherAction_Sleep:
+            PowerMode_ActivateMode(PowerMode_SfjlSleep, false);
+            break;
+    }
+}
+
 void ApplyKeyAction(key_state_t *keyState, key_action_cached_t *cachedAction, key_action_t *actionBase, usb_keyboard_reports_t* reports)
 {
     key_action_t* action = &cachedAction->action;
@@ -380,6 +411,16 @@ void ApplyKeyAction(key_state_t *keyState, key_action_cached_t *cachedAction, ke
             if (KeyState_ActivatedNow(keyState)) {
                 resetStickyMods(cachedAction);
                 Macros_StartMacro(action->playMacro.macroId, keyState, 255, true);
+            }
+            break;
+        case KeyActionType_Connections:
+            if (KeyState_ActivatedNow(keyState)) {
+                applyConnectionAction(action->connections.command, action->connections.hostConnectionId);
+            }
+            break;
+        case KeyActionType_Other:
+            if (KeyState_ActivatedNow(keyState)) {
+                applyOtherAction(action->other.actionSubtype);
             }
             break;
     }
@@ -782,6 +823,7 @@ static bool blockedByKeystrokeDelay() {
 void UpdateUsbReports(void)
 {
     if (blockedByKeystrokeDelay()) {
+        Trace_Printf("c1");
         return;
     }
 
@@ -792,14 +834,26 @@ void UpdateUsbReports(void)
     UpdateUsbReports_LastUpdateTime = CurrentTime;
     UsbReportUpdateCounter++;
 
-    if (!EventVector_IsSet(EventVector_ResendUsbReports)) {
+    bool resending = EventVector_IsSet(EventVector_ResendUsbReports);
+
+    if (!resending) {
+        Trace_Printf("c2");
         updateActiveUsbReports();
+        Trace_Printf("c3");
     }
 
-    if (EventVector_IsSet(EventVector_SendUsbReports | EventVector_ResendUsbReports)) {
+    bool sendingNew = EventVector_IsSet(EventVector_SendUsbReports);
+
+    if (resending || sendingNew) {
         if (CurrentPowerMode < PowerMode_Lock) {
-            mergeReports();
+            if (!resending) {
+                Trace_Printf("c4");
+                mergeReports();
+                Trace_Printf("c5");
+            }
+
             sendActiveReports();
+            Trace_Printf("c6");
         } else {
             EventVector_Unset(EventVector_SendUsbReports | EventVector_ResendUsbReports);
         }
@@ -808,4 +862,5 @@ void UpdateUsbReports(void)
     if (DisplaySleepModeActive || KeyBacklightSleepModeActive) {
         LedManager_UpdateSleepModes();
     }
+    Trace_Printf("c7");
 }
