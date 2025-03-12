@@ -10,6 +10,7 @@
 #include "round_trip_test.h"
 #include "shared/slave_protocol.h"
 #include "state_sync.h"
+#include "thread_stats.h"
 #include "usb/usb_compatibility.h"
 #include "nus_server.h"
 #include "nus_client.h"
@@ -335,14 +336,21 @@ void logAllMessages(uint8_t srcConnectionId, uint8_t src, const uint8_t* data, u
     uint8_t wm = data[offset+MessageOffset_Wm];
 
     const char *desc1, *desc2;
-    getMessageDescription(data[offset+MessageOffset_MsgId1], data[offset+MessageOffset_MsgId1+1], &desc1, &desc2);
+    uint8_t id1 = data[offset+MessageOffset_MsgId1];
+    uint8_t id2 = data[offset+MessageOffset_MsgId1+1];
+    getMessageDescription(id1, id2, &desc1, &desc2);
     desc1 = desc1 == NULL ? "" : desc1;
     desc2 = desc2 == NULL ? "" : desc2;
 
     if (DEBUG_LOG_MESSAGES) {
         LogU("Rec %d    %d %s %s\n", srcConnectionId, wm, desc1, desc2);
     }
-    Trace_Printf("I%d", MessengerQueue_GetOccupiedCount());
+
+    static uint32_t lastTime = 0;
+    uint32_t currentTime = k_uptime_get_32();
+    uint32_t diff = currentTime - lastTime;
+    lastTime = currentTime;
+    Trace_Printf("I%d,%d,%d,%d", MessengerQueue_GetOccupiedCount(), id1, id2, diff);
 }
 
 
