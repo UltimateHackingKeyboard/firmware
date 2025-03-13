@@ -47,6 +47,7 @@
 #include "thread_stats.h"
 #include "wormhole.h"
 #include "power_mode.h"
+#include "proxy_log_backend.h"
 
 k_tid_t Main_ThreadId = 0;
 
@@ -122,6 +123,8 @@ void mainRuntime(void) {
     printk("----------\n" DEVICE_NAME " started\n");
 
     Trace_Init();
+
+    InitProxyLogBackend();
 
     {
         flash_area_open(FLASH_AREA_ID(hardware_config_partition), &hardwareConfigArea);
@@ -235,12 +238,17 @@ void mainRuntime(void) {
 
 int main(void) {
     power_mode_t mode = PowerMode_Awake;
+
     if (IS_STATE_WORMHOLE_OPEN) {
-        mode = StateWormhole.restartPowerMode;
-        StateWormhole.restartPowerMode = PowerMode_Awake;
+        if (StateWormhole.rebootToPowerMode) {
+            mode = StateWormhole.restartPowerMode;
+            StateWormhole.restartPowerMode = PowerMode_Awake;
+        }
+        MacroStatusBuffer_InitFromWormhole();
+        StateWormhole_Close();
     }
 
-    if (mode != PowerMode_Awake) {
+    if (mode != PowerMode_Awake && false) {
         LogU("Restarted, sinking into mode %d!\n", mode);
         k_sleep(K_MSEC(1000));
         PowerMode_RestartedTo(mode);

@@ -1475,6 +1475,17 @@ static bool processIfModuleConnected(parser_context_t* ctx, bool negate)
     return moduleConnected != negate;
 }
 
+static macro_result_t processPanicCommand(parser_context_t* ctx) {
+    if (Macros_DryRun) {
+        return MacroResult_Finished;
+    }
+
+#ifdef __ZEPHYR__
+    k_panic();
+#endif
+    return MacroResult_Finished;
+}
+
 static macro_result_t processPowerModeCommand(parser_context_t* ctx) {
     bool toggle = false;
 
@@ -1823,7 +1834,7 @@ static macro_result_t processCommand(parser_context_t* ctx)
                 return processConsumePendingCommand(ctx);
             }
             else if (ConsumeToken(ctx, "clearStatus")) {
-                return Macros_ProcessClearStatusCommand();
+                return Macros_ProcessClearStatusCommand(true);
             }
             else if (ConsumeToken(ctx, "call")) {
                 return processCallCommand(ctx);
@@ -2236,6 +2247,9 @@ static macro_result_t processCommand(parser_context_t* ctx)
             }
             else if (ConsumeToken(ctx, "powerMode")) {
                 return processPowerModeCommand(ctx);
+            }
+            else if (ConsumeToken(ctx, "panic")) {
+                return processPanicCommand(ctx);
             }
             else {
                 goto failed;

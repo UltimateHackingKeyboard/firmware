@@ -6,7 +6,7 @@
     #include <stdbool.h>
     #include <stdint.h>
     #include "power_mode.h"
-
+    #include "macros/status_buffer.h"
 
 // Macros:
 
@@ -17,13 +17,22 @@
 
     typedef struct {
         uint64_t magicNumber;
+
+        bool rebootToPowerMode;
         power_mode_t restartPowerMode;
+
+        bool persistStatusBuffer;
+        macro_status_buffer_t statusBuffer;
     } wormhole_data_t;
+
+    void StateWormhole_Close();
 
 // Variables:
 
     extern wormhole_data_t StateWormhole;
 
 // Functions:
+
+
 
 #endif

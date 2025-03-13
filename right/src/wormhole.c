@@ -13,3 +13,9 @@ ATTR_NO_INIT wormhole_data_t StateWormhole;
 
 #endif
 
+void StateWormhole_Close() {
+    StateWormhole.magicNumber = 0;
+    StateWormhole.rebootToPowerMode = false;
+    StateWormhole.persistStatusBuffer = false;
+}
+

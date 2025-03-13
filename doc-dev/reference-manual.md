@@ -276,6 +276,7 @@ COMMAND = statsActiveKeys
 COMMAND = statsActiveMacros
 COMMAND = statsRecordKeyTiming
 COMMAND = diagnose
+COMMAND = panic
 COMMAND = setStatus STRING
 COMMAND = clearStatus
 COMMAND = set setEmergencyKey KEYID

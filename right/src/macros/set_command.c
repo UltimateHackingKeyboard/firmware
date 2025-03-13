@@ -332,7 +332,7 @@ static macro_variable_t allowUnsecuredConnections(parser_context_t* ctx, set_com
 {
     ASSIGN_BOOL(Cfg.Bt_AllowUnsecuredConnections);
     if (Cfg.Bt_AllowUnsecuredConnections) {
-        Macros_ReportPrintf(ctx->at, "Warning: insecure connections were allowed. This may allow eavesdropping on your keyboard input!");
+        Macros_ReportPrintfWithPos(ctx->at, "Warning: insecure connections were allowed. This may allow eavesdropping on your keyboard input!");
     }
 
     return noneVar();
