@@ -108,6 +108,11 @@ parser_error_t parseConfig(config_buffer_t *buffer)
         readRgbColor(buffer, keyActionColors, KeyActionColor_SwitchKeymap);
         readRgbColor(buffer, keyActionColors, KeyActionColor_Mouse);
         readRgbColor(buffer, keyActionColors, KeyActionColor_Macro);
+        if (DataModelVersion.major >= 9) {
+            readRgbColor(buffer, keyActionColors, KeyActionColor_Device);
+        } else {
+            keyActionColors[KeyActionColor_Device] = Cfg.KeyActionColors[KeyActionColor_Device];
+        }
     }
 
     // Mouse kinetic properties

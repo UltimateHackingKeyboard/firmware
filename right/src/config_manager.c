@@ -274,6 +274,7 @@ const config_t DefaultCfg = (config_t){
 #endif
         .Bt_Enabled = true,
         .Bt_AllowUnsecuredConnections = false,
+        .Bt_MaxPeripheralConnections = 3,
         .EmergencyKey = NULL,
         .KeyActionColors = {
             {0x00, 0x00, 0x00}, // KeyActionColor_None
@@ -284,6 +285,7 @@ const config_t DefaultCfg = (config_t){
             {0xFF, 0x00, 0x00}, // KeyActionColor_SwitchKeymap
             {0x00, 0xFF, 0x00}, // KeyActionColor_Mouse
             {0xFF, 0x00, 0xFF}, // KeyActionColor_Macro
+            {0xFF, 0x88, 0x44}, // KeyActionColor_Special
         },
 };
 

@@ -61,7 +61,7 @@ static void wake(k_tid_t tid) {
         // if (DEBUG_MODE) {
         //     LogU("StateSync woke up %p\n", tid);
         // }
-    } else {
+    } else if (k_uptime_get_32() > 5000) {
         printk("Skipping wake up, tid is 0");
     }
 }
@@ -867,7 +867,7 @@ void StateSync_ResetRightLeftLink(bool bidirectional) {
 
 void StateSync_ResetRightDongleLink(bool bidirectional) {
     StateSync_DongleResetCounter++;
-    printk("Resetting dongle right link! %s\n", bidirectional ? "Bidirectional" : "Unidirectional");
+    // printk("Resetting dongle right link! %s\n", bidirectional ? "Bidirectional" : "Unidirectional");
     if (bidirectional) {
         invalidateProperty(StateSyncPropertyId_ResetRightDongleLink);
     }
