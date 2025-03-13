@@ -234,8 +234,11 @@ void mainRuntime(void) {
 }
 
 int main(void) {
-    power_mode_t mode = StateWormhole.restartPowerMode;
-    StateWormhole.restartPowerMode = PowerMode_Awake;
+    power_mode_t mode = PowerMode_Awake;
+    if (IS_STATE_WORMHOLE_OPEN) {
+        mode = StateWormhole.restartPowerMode;
+        StateWormhole.restartPowerMode = PowerMode_Awake;
+    }
 
     if (mode != PowerMode_Awake) {
         LogU("Restarted, sinking into mode %d!\n", mode);

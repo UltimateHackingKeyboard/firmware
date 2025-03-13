@@ -181,6 +181,7 @@ void PowerMode_WakeHost() {
 void PowerMode_Restart() {
 #if DEVICE_IS_KEYBOARD && defined(__ZEPHYR__)
     StateWormhole.restartPowerMode = CurrentPowerMode;
+    StateWormhole.magicNumber = WORMHOLE_MAGIC_NUMBER;
     NVIC_SystemReset();
 #endif
 }
