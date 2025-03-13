@@ -30,3 +30,5 @@
     ATTRS void Resend_RequestResendSync() {};
     ATTRS void PairingScreen_Feedback(bool success) {};
     ATTRS void StateSync_CheckFirmwareVersions() {};
+    ATTRS void Trace(char a) {};
+    ATTRS void Trace_Printf(const char *fmt, ...) {};

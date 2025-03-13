@@ -12,11 +12,11 @@
  * We use the lvgl font converter from https://lvgl.io/tools/fontconverter. Unfortunately, from some version the font converter stopped generating fonts compatible with our rendering code, so we need to use an older version.
  *
  * ```
- *  git clone git@github.com:lvgl/lv_font_conv.git
- *  cd lv_font_conv
- *  git checkout 968adde4d1d6e01af18774ce83e51da119cf5d91
- *  npm ci
- *  npx lv_font_conv --lv-font-name JetBrainsMono10 --format lvgl --bpp 4 -o jet_brains_mono_10.c --size 10 --font ~/Downloads/fonts/ttf/JetBrainsMono-Regular.ttf --range 0x20-0x7F --no-compress
+ git clone git@github.com:lvgl/lv_font_conv.git
+ cd lv_font_conv
+ git checkout 968adde4d1d6e01af18774ce83e51da119cf5d91
+ npm ci
+ npx lv_font_conv --lv-font-name JetBrainsMono10 --format lvgl --bpp 4 -o jet_brains_mono_10.c --size 10 --font ../fonts/ttf/JetBrainsMono-Regular.ttf --range 0x20-0x7F --no-compress
  *  ```
  *
  *  - f057 - circle-xmark
@@ -40,7 +40,7 @@ fontforge -lang=ff -c 'Open($1); Generate($2);' otfs/Font\ Awesome\ 6\ Pro-Solid
 fontforge -lang=ff -c 'Open($1); Generate($2);' otfs/Font\ Awesome\ Kit\ 4711ad2078-Regular-400.otf ttfs/font_awesome_custom.ttf
 
 npx lv_font_conv --lv-font-name CustomIcons --format lvgl --bpp 4 -o icons_custom.c --size 12 --font ttfs/font_awesome_custom.ttf --range 0xe000-0xe003 --no-compress
-npx lv_font_conv --lv-font-name RegularIcons --format lvgl --bpp 4 -o icons_regular.c --size 12 --font ttfs/font_awesome_6_regular.ttf --range 0xf057,0xf8dd,0xf1e6,0xf071,0xf06b --no-compress
+npx lv_font_conv --lv-font-name RegularIcons --format lvgl --bpp 4 -o icons_regular.c --size 12 --font ttfs/font_awesome_6_regular.ttf --range 0xf057,0xf8dd,0xf1e6,0xf071,0xf06b,0xf293 --no-compress
 npx lv_font_conv --lv-font-name SolidIcons --format lvgl --bpp 4 -o icons_solid.c --size 12 --font ttfs/font_awesome_6_solid.ttf --range 0xe423,0xe422 --no-compress
 ```
 

@@ -25,6 +25,11 @@
     #define BLE_ADDR_LEN 6
     #define BLE_KEY_LEN 16
 
+
+    /* #define LOG_BT(...) printk("Bt: " __VA_ARGS__) */
+    #define LOG_BT(...)
+
+
 // Typedefs:
 
     typedef enum {
@@ -71,6 +76,8 @@ typedef enum {
     void BtConn_ListCurrentConnections();
     void BtConn_ListAllBonds();
     void Bt_SetEnabled(bool enabled);
+
+    uint8_t BtConn_ConnectedHidCount();
 
     static inline bool BtAddrEq(const bt_addr_le_t *a, const bt_addr_le_t *b) {
         return 0 == memcmp(a->a.val, b->a.val, sizeof(a->a.val));

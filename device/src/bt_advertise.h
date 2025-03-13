@@ -20,6 +20,9 @@
         bt_addr_le_t* addr;
     } ATTR_PACKED adv_config_t;
 
+// Variables:
+
+    extern bool AdvertisingHid;
 
 // Functions:
 

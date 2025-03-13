@@ -2,6 +2,8 @@
 #include "main.h"
 #include "zephyr/kernel/thread.h"
 #include <zephyr/kernel.h>
+#include "logger.h"
+#include "trace.h"
 
 #define THREAD_COUNT 30
 #define MONITOR_INTERVAL_MS 10
@@ -22,10 +24,16 @@ static uint8_t threadCount = 0;
 static uint64_t lastThreadStartTime = 0;
 static k_tid_t lastThreadId = 0;
 
+bool ThreadStats_TraceSwitches = false;
+
 void ThreadStats_Init(void) {
     timeTotal = 0;
     threadCount = 0;
     enabled = true;
+}
+
+static uint16_t shortId(k_tid_t threadId) {
+    return (((uint32_t)threadId) / 16) % 1024;
 }
 
 static uint8_t getThreadIdx(k_tid_t threadId) {
@@ -88,9 +96,9 @@ void ThreadStats_Snap(void) {
 
 void ThreadStats_Print(void) {
     ThreadStats_Snap();
-    printk("Threads (%d), interval %d ms:\n", threadCount, MONITOR_INTERVAL_MS);
+    LogUS("Threads (%d), interval %d ms:\n", threadCount, MONITOR_INTERVAL_MS);
     for (uint8_t i = 0; i < threadCount; i++) {
-        printk("    - %s: %d\n", threadStats[i].name, (uint32_t)(threadStats[i].time*100/timeTotal));
+        LogUS("    - %s (%d): %d\n", threadStats[i].name, shortId(threadStats[i].threadId), (uint32_t)(threadStats[i].time*100/timeTotal));
     }
     enabled = true;
 }

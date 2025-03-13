@@ -109,6 +109,7 @@
     uint32_t EventScheduler_Process();
 
     void EventVector_ReportMask(const char* prefix, uint32_t mask);
+    void EventVector_Init();
 
     static inline void EventVector_Set(event_vector_event_t evt) {
         DISABLE_IRQ();

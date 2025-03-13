@@ -58,9 +58,14 @@ static void sleepTillNextMs() {
     wakeupTimeUs = wakeupTimeUs+1000;
 
     if (currentTimeUs < wakeupTimeUs) {
-        k_usleep(MAX(wakeupTimeUs-currentTimeUs, minSleepTime));
+        uint64_t timeToSleep = MAX(wakeupTimeUs-currentTimeUs, minSleepTime);
+        Trace_Printf("d1,%d", (uint32_t)timeToSleep);
+        k_usleep(timeToSleep);
+        Trace_Printf("d2");
     } else {
+        Trace_Printf("d3");
         k_usleep(minSleepTime);
+        Trace_Printf("d4");
         wakeupTimeUs = currentTimeUs;
     }
 }
@@ -88,7 +93,9 @@ static void scheduleNextRun() {
         // Mouse keys don't like being called twice in one second for some reason
         Trace_Printf("s31");
         k_sem_give(&mainWakeupSemaphore);
+        Trace_Printf("d0");
         sleepTillNextMs();
+        Trace('+');
         return;
     } else if (eventIsValid) {
         EVENTLOOP_TIMING(printk("Sleeping for %d\n", diff));
@@ -173,6 +180,7 @@ void mainRuntime(void) {
         }
     }
 
+    HID_SetGamepadActive(false);
     USB_Enable(); // has to be after USB_SetSerialNumber
 
     // has to be after InitSettings
@@ -182,6 +190,8 @@ void mainRuntime(void) {
     if (!DEVICE_IS_UHK_DONGLE) {
         InitCharger(); // has to be after usb initialization
     }
+
+    EventVector_Init();
 
     Messenger_Init();
 
@@ -202,7 +212,9 @@ void mainRuntime(void) {
     while (true)
     {
         CurrentTime = k_uptime_get();
+        Trace_Printf("b1");
         Messenger_ProcessQueue();
+        Trace_Printf("b2");
         if (EventScheduler_Vector & EventVector_UserLogicUpdateMask) {
             EVENTLOOP_TIMING(EVENTLOOP_TIMING(EventloopTiming_Start()));
             RunUserLogic();

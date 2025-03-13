@@ -133,7 +133,7 @@ struct usb_manager {
                 usb::df::microsoft::xconfig(
                     usb_xpad, usb::endpoint::address(0x85), 1, usb::endpoint::address(0x05), 255));
 
-        printk("USB config changing to %s\n", magic_enum::enum_name(conf).data());
+        printk("USB config changing to %s\n", magic_enum::enum_name(conf).data() == NULL ? "NULL" : magic_enum::enum_name(conf).data());
         if (conf == Hid_NoGamepad) {
             ms_enum_.set_config({});
             device_.set_config(base_config);

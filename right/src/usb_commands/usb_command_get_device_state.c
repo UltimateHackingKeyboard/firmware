@@ -49,5 +49,6 @@ void UsbCommand_GetKeyboardState(const uint8_t *GenericHidOutBuffer, uint8_t *Ge
     SetUsbTxBufferUint8(6, ActiveLayer | (ActiveLayer != LayerId_Base && !ActiveLayerHeld ? (1 << 7) : 0) ); // Active layer + most significant bit if layer is toggled
     SetUsbTxBufferUint8(7, Macros_ConsumeStatusCharDirtyFlag);
     SetUsbTxBufferUint8(8, CurrentKeymapIndex);
+
     LastUsbGetKeyboardStateRequestTimestamp = CurrentTime;
 }

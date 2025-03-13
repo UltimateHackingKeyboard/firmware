@@ -31,6 +31,7 @@
 #include "layouts/key_layout_60_to_universal.h"
 #include "power_mode.h"
 #include "usb_protocol_handler.h"
+#include "event_scheduler.h"
 
 static bool IsEepromInitialized = false;
 static bool IsConfigInitialized = false;
@@ -63,6 +64,7 @@ static void initConfig()
             ShortcutParser_initialize();
             KeyIdParser_initialize();
             Macros_Initialize();
+            EventVector_Init();
             IsConfigInitialized = true;
         } else {
             __WFI();

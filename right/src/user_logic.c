@@ -12,8 +12,14 @@
 #include "user_logic.h"
 #include "led_manager.h"
 #include "usb_commands/usb_command_apply_config.h"
+#ifdef __ZEPHYR__
+#include "trace.h"
+#else
+#include "stubs.h"
+#endif
 
 void RunUserLogic(void) {
+    Trace_Printf("a1");
     if (EventVector_IsSet(EventVector_ApplyConfig)) {
         UsbCommand_ApplyConfig(NULL, NULL);
     }
@@ -33,9 +39,11 @@ void RunUserLogic(void) {
         MacroEvent_ProcessStateKeyEvents();
     }
 
+    Trace_Printf("a2");
     if (EventVector_IsSet(EventVector_ReportUpdateMask)) {
         UpdateUsbReports();
     }
+    Trace_Printf("a3");
 
     if (EventVector_IsSet(EventVector_LedManagerFullUpdateNeeded)) {
         LedManager_FullUpdate();
@@ -52,6 +60,7 @@ void RunUserLogic(void) {
     LOG_SCHEDULE(
         EventVector_ReportMask("=== ", EventScheduler_Vector)
     );
+    Trace_Printf("a4");
 }
 
 void RunUhk80LeftHalfLogic() {

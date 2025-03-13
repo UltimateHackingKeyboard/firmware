@@ -83,7 +83,7 @@ void LedManager_RecalculateLedBrightness()
 
 void LedManager_UpdateAgentLed()
 {
-#ifndef __ZEPHYR
+#ifndef __ZEPHYR__
     const uint32_t updatePeriod = 1000;
     if (!TestSwitches) {
        LedDisplay_SetIcon(LedDisplayIcon_Agent, CurrentTime - LastUsbGetKeyboardStateRequestTimestamp < 1000);

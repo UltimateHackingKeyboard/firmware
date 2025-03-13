@@ -18,13 +18,13 @@
     "serialport": "^12.0.0",
     "shelljs": "^0.8.4"
   },
-  "firmwareVersion": "12.3.5",
+  "firmwareVersion": "12.4.0",
   "deviceProtocolVersion": "4.14.1",
   "moduleProtocolVersion": "4.3.0",
   "dongleProtocolVersion": "1.0.2",
-  "userConfigVersion": "8.3.0",
+  "userConfigVersion": "9.0.0",
   "hardwareConfigVersion": "1.0.0",
-  "smartMacrosVersion": "3.1.0",
+  "smartMacrosVersion": "3.2.0",
   "devices": [
     {
       "deviceId": 1,
