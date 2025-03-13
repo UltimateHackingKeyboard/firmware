@@ -367,7 +367,7 @@ static void applyOtherAction(other_action_t actionSubtype)
 {
     switch(actionSubtype) {
         case OtherAction_Sleep:
-            PowerMode_ActivateMode(PowerMode_DeepSleep, false);
+            PowerMode_ActivateMode(PowerMode_SfjlSleep, false);
             break;
     }
 }
