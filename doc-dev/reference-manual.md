@@ -173,6 +173,7 @@ COMMAND = set leds.fadeTimeout <seconds to fade after (INT)>
 COMMAND = set leds.{keyBacklightFadeTimeout|keyBacklightFadeBatteryTimeout|displayFadeTimeout|displayFadeBatteryTimeout} <seconds to fade after (INT)>
 COMMAND = set battery.stationaryMode BOOL
 COMMAND = set bluetooth.enabled BOOL
+COMMAND = set bluetooth.alwaysAdvertiseHid BOOL
 COMMAND = set modifierLayerTriggers.{shift|alt|super|ctrl} {left|right|both}
 CONDITION = <condition>
 CONDITION = if (EXPRESSION)
