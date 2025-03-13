@@ -9,6 +9,7 @@
 #include "device_state.h"
 #include "host_connection.h"
 #include "keyboard/oled/widgets/widgets.h"
+#include "config_manager.h"
 
 #define LEN(NAME) (sizeof(NAME) - 1)
 
@@ -205,7 +206,11 @@ adv_config_t BtAdvertise_Config() {
                     return ADVERTISEMENT(ADVERTISE_NUS);
                 } else {
                     /** we can connect both NUS and HID */
-                    return ADVERTISEMENT(ADVERTISE_NUS | ADVERTISE_HID);
+                    if (Cfg.Bt_AlwaysAdvertiseHid) {
+                        return ADVERTISEMENT(ADVERTISE_NUS | ADVERTISE_HID);
+                    } else {
+                        return ADVERTISEMENT(ADVERTISE_NUS);
+                    }
                 }
             } else {
                 /** advertising needs a peripheral slot. When it is not free and we try to advertise, it will fail, and our code will try to

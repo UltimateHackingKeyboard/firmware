@@ -355,6 +355,11 @@ static macro_variable_t bluetooth(parser_context_t* ctx, set_command_action_t ac
         DEFINE_INT_LIMITS(1, 1);
 #endif
         ASSIGN_INT(Cfg.Bt_MaxPeripheralConnections);
+    } else if (ConsumeToken(ctx, "alwaysAdvertiseHid")) {
+        ASSIGN_BOOL(Cfg.Bt_AlwaysAdvertiseHid);
+#if DEVICE_IS_UHK80_RIGHT
+        BtManager_StartScanningAndAdvertisingAsync();
+#endif
     } else {
         Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
     }
