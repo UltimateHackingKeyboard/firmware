@@ -1777,6 +1777,10 @@ static macro_result_t processSwitchHostCommand(parser_context_t* ctx)
     return MacroResult_Finished;
 }
 
+void ReportScrolls(void) {
+    Macros_ReportPrintf(NULL, "Scroll multipliers %d %d", (int)(VerticalScrollMultiplier()), (int)(HorizontalScrollMultiplier()));
+}
+
 static macro_result_t processCommand(parser_context_t* ctx)
 {
     if (*ctx->at == '$') {
@@ -2303,6 +2307,11 @@ static macro_result_t processCommand(parser_context_t* ctx)
             }
             else if (ConsumeToken(ctx, "statsRuntime")) {
                 return Macros_ProcessStatsRuntimeCommand();
+            }
+            else if (ConsumeToken(ctx, "statsScroll")) {
+                ReportScrolls();
+
+                return MacroResult_Finished;
             }
             else if (ConsumeToken(ctx, "statsRecordKeyTiming")) {
                 return Macros_ProcessStatsRecordKeyTimingCommand();
