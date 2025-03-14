@@ -144,6 +144,15 @@ char *GetPeerStringByConn(const struct bt_conn *conn) {
     return GetPeerStringByAddr(addr);
 }
 
+char *GetPeerStringByConnId(uint8_t connectionId) {
+    uint8_t peerId = Connections[connectionId].peerId;
+    if (peerId != PeerIdUnknown) {
+        return GetPeerStringByConn(Peers[peerId].conn);
+    } else {
+        return "not-a-bt-peer";
+    }
+}
+
 static struct bt_conn_le_data_len_param *data_len;
 
 static void enableDataLengthExtension(struct bt_conn *conn) {
