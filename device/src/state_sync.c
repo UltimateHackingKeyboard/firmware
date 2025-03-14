@@ -151,13 +151,14 @@ static state_sync_prop_t stateSyncProps[StateSyncPropertyId_Count] = {
     EMPTY(LeftModuleDisconnected,   SyncDirection_LeftToRight,        DirtyState_Clean),
     SIMPLE(MergeSensor,             SyncDirection_LeftToRight,        DirtyState_Clean,    &MergeSensor_HalvesAreMerged),
     SIMPLE(FunctionalColors,        SyncDirection_RightToLeft,        DirtyState_Clean,    &Cfg.KeyActionColors),
-    SIMPLE(PowerMode,               SyncDirection_RightToLeft,        DirtyState_Clean,    &CurrentPowerMode),
+    CUSTOM(PowerMode,               SyncDirection_RightToLeft,        DirtyState_Clean),
     CUSTOM(Config,                  SyncDirection_RightToLeft,        DirtyState_Clean),
     CUSTOM(SwitchTestMode,          SyncDirection_RightToLeft,        DirtyState_Clean),
     SIMPLE(DongleStandby,           SyncDirection_RightToDongle,      DirtyState_Clean,    &DongleStandby),
     SIMPLE(DongleScrollMultipliers, SyncDirection_DongleToRight,      DirtyState_Clean,    &DongleScrollMultipliers),
     CUSTOM(KeyStatesDummy,          SyncDirection_LeftToRight,        DirtyState_Clean),
     CUSTOM(DongleProtocolVersion,   SyncDirection_DongleToRight,      DirtyState_Clean),
+    SIMPLE(BatteryStationaryMode,   SyncDirection_RightToLeft,        DirtyState_Clean,    &Cfg.BatteryStationaryMode),
 };
 
 static void invalidateProperty(state_sync_prop_id_t propId) {
@@ -259,6 +260,7 @@ void receiveBacklight(sync_command_backlight_t *buffer) {
     if (HardwareConfig->isIso != buffer->isIso) {
         HardwareConfig->isIso = buffer->isIso;
         Ledmap_InitLedLayout();
+        LedManager_RecalculateLedBrightness();
         Ledmap_UpdateBacklightLeds();
     }
 }
@@ -473,7 +475,15 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
     case StateSyncPropertyId_ZeroDummy:
         printk("Received an invalid state sync property message: %d %d %d | %d %d | %d %d %d %d %d\n", data[-5], data[-4], data[-3], data[-2], data[-1], data[0], data[1], data[2], data[3], data[4]);
         break;
+    case StateSyncPropertyId_BatteryStationaryMode:
+        //for both local and remote
+        printk("Setting battery mode to %d\n", Cfg.BatteryStationaryMode);
+        EventScheduler_Schedule(CurrentTime + 1000, EventSchedulerEvent_UpdateBattery, "state sync");
+        break;
     case StateSyncPropertyId_PowerMode:
+        if (!isLocalUpdate) {
+            PowerMode_ActivateMode(*(power_mode_t *)data, false);
+        }
         break;
     default:
         printk("Property %i ('%s') has no receive handler. If this is correct, please add a "
@@ -624,6 +634,10 @@ static void prepareData(device_id_t dst, const uint8_t *propDataPtr, state_sync_
         submitPreparedData(dst, propId, (const uint8_t *)&dongleProtocolVersion, sizeof(dongleProtocolVersion));
         return;
     }
+    case StateSyncPropertyId_PowerMode: {
+        submitPreparedData(dst, propId, (const uint8_t *)&CurrentPowerMode, sizeof(CurrentPowerMode));
+        return;
+    }
     case StateSyncPropertyId_KeyStatesDummy: {
 #if DEVICE_IS_KEYBOARD
         KeyScanner_ResendKeyStates = true;
@@ -685,7 +699,7 @@ static update_result_t handlePropertyUpdateRightToLeft() {
 
     if (KeyBacklightBrightness != 0) {
         // Update relevant data
-        UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_PowerMode, UpdateResult_UpdatedHighPrio);
+        UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_PowerMode, UpdateResult_UpdatedHighPrio); //has to be before Backlight
         UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_FunctionalColors, UpdateResult_UpdatedHighPrio);
         UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_LayerActionFirst + ActiveLayer, UpdateResult_UpdatedHighPrio);
         UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ActiveKeymap, UpdateResult_UpdatedHighPrio);
@@ -699,8 +713,11 @@ static update_result_t handlePropertyUpdateRightToLeft() {
             UPDATE_AND_RETURN_IF_DIRTY(propId, UpdateResult_UpdatedLowPrio);
         }
     } else {
+        UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_PowerMode, UpdateResult_UpdatedHighPrio);
         UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_Backlight, UpdateResult_UpdatedHighPrio);
     }
+
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_BatteryStationaryMode, UpdateResult_UpdatedLowPrio);
 
     return UpdateResult_AllUpToDate;
 }
