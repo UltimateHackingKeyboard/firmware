@@ -5,6 +5,7 @@
 #ifdef __ZEPHYR__
 #include "bt_conn.h"
 #include "connections.h"
+#include "logger.h"
 
 host_connection_t HostConnections[HOST_CONNECTION_COUNT_MAX] = {
     [HOST_CONNECTION_COUNT_MAX - 2] = {
@@ -50,7 +51,6 @@ bool HostConnections_IsKnownBleAddress(const bt_addr_le_t *address) {
 
 host_connection_t* HostConnection(uint8_t connectionId) {
     if (connectionId < ConnectionId_HostConnectionFirst || connectionId > ConnectionId_HostConnectionLast) {
-        printk("Supplied connection (%d) doesn't correspond to a host connection!\n", connectionId);
         return NULL;
     }
 
@@ -92,6 +92,12 @@ void HostConnections_SelectPreviousConnection(void) {
     selectNextConnection(-1);
 }
 
+void HostConnections_SelectLastConnection(void) {
+    if (LastActiveHostConnectionId != ConnectionId_Invalid) {
+        selectConnection(LastActiveHostConnectionId);
+    }
+}
+
 void HostConnections_SelectByName(parser_context_t* ctx) {
     for (uint8_t i = ConnectionId_HostConnectionFirst; i <= ConnectionId_HostConnectionLast; i++) {
         if (Macros_CompareStringToken(ctx, HostConnection(i)->name)) {
@@ -101,8 +107,14 @@ void HostConnections_SelectByName(parser_context_t* ctx) {
     }
 }
 
-void HostConnections_SelectById(uint8_t connectionId) {
-    selectConnection(connectionId);
+void HostConnections_SelectByHostConnIndex(uint8_t hostConnIndex) {
+    uint8_t connId = ConnectionId_HostConnectionFirst + hostConnIndex;
+    host_connection_t *hostConnection = HostConnection(connId);
+    if (hostConnection && hostConnection->type != HostConnectionType_Empty) {
+        selectConnection(connId);
+    } else {
+        LogUS("Invalid host connection index: %d. Ignoring!\n", hostConnIndex);
+    }
 }
 
 void HostConnections_ListKnownBleConnections() {

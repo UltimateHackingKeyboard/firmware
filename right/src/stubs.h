@@ -51,6 +51,8 @@
     extern void PairingScreen_Feedback(bool success);
     extern void StateSync_CheckFirmwareVersions();
     extern void StateSync_CheckDongleProtocolVersion();
+    extern void Trace(char a);
+    extern void Trace_Printf(const char *fmt, ...);
 
 #if DEVICE_HAS_OLED
 #define WIDGET_REFRESH(W) Widget_Refresh(W)
