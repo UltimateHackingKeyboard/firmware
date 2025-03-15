@@ -61,9 +61,7 @@ static void sleepTillNextMs() {
         k_usleep(timeToSleep);
         Trace_Printf("d2");
     } else {
-        Trace_Printf("d3");
         k_usleep(minSleepTime);
-        Trace_Printf("d4");
         wakeupTimeUs = currentTimeUs;
     }
 }
@@ -89,20 +87,16 @@ static void scheduleNextRun() {
         LOG_SCHEDULE( EventVector_ReportMask("Continuing immediately because of: ", EventScheduler_Vector & EventVector_UserLogicUpdateMask););
         EVENTLOOP_TIMING(printk("Continuing immediately\n"));
         // Mouse keys don't like being called twice in one second for some reason
-        Trace_Printf("s31");
         k_sem_give(&mainWakeupSemaphore);
-        Trace_Printf("d0");
         sleepTillNextMs();
         Trace('+');
         return;
     } else if (eventIsValid) {
         EVENTLOOP_TIMING(printk("Sleeping for %d\n", diff));
-        Trace_Printf("s32");
         k_sem_take(&mainWakeupSemaphore, K_MSEC(diff));
         // k_sleep(K_MSEC(diff));
     } else {
         EVENTLOOP_TIMING(printk("Sleeping forever\n"));
-        Trace_Printf("s33");
         k_sem_take(&mainWakeupSemaphore, K_FOREVER);
         // k_sleep(K_FOREVER);
     }
@@ -211,9 +205,7 @@ int main(void) {
     while (true)
     {
         CurrentTime = k_uptime_get();
-        Trace_Printf("b1");
         Messenger_ProcessQueue();
-        Trace_Printf("b2");
         if (EventScheduler_Vector & EventVector_UserLogicUpdateMask) {
             EVENTLOOP_TIMING(EVENTLOOP_TIMING(EventloopTiming_Start()));
             RunUserLogic();
