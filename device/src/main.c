@@ -53,7 +53,7 @@ static void sleepTillNextMs() {
     const uint64_t minSleepTime = 100;
     uint64_t currentTimeUs = k_cyc_to_us_near64(k_cycle_get_32());
 
-    wakeupTimeUs = wakeupTimeUs+1000;
+    wakeupTimeUs = MIN(currentTimeUs,wakeupTimeUs)+1000;
 
     if (currentTimeUs < wakeupTimeUs) {
         uint64_t timeToSleep = MAX(wakeupTimeUs-currentTimeUs, minSleepTime);
