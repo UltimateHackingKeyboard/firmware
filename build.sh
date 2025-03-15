@@ -271,14 +271,22 @@ function performAction() {
             pip3 install -r scripts/requirements.txt
             nrfutil install toolchain-manager
             nrfutil toolchain-manager install --ncs-version $NCS_VERSION
-            # update this according to README
+            # update following according to README
             git submodule init
             git submodule update --init --recursive
+            # c2usb is broken by default for some reason, so set it up manually
+            cd "$ROOT/.."
+            git clone https://github.com/IntergatedCircuits/c2usb
+            cd "$ROOT/../c2usb"
+            git submodule init
+            git submodule update --init --recursive
+            # now resume in normal setup
             cd "$ROOT/.."
             west init -l "$ROOT"
             west update -o=--depth=1 -n
             west patch
             west config --local build.cmake-args -- "-Wno-dev"
+            rm -rf c2usb
             cd "$ROOT/scripts"
             npm i
             ./generate-versions.mjs
