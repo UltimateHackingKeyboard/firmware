@@ -606,10 +606,13 @@ static void auth_passkey_entry(struct bt_conn *conn) {
         return;
     }
 
+    connection_id_t connectionId = Connections_GetConnectionIdByHostAddr(bt_conn_get_dst(conn));
+    bool isUhkPeerByAddr = isUhkDeviceConnection(Connections_Type(connectionId));
+
     int8_t peerId = GetPeerIdByConn(conn);
     connection_type_t connectionType = Connections_Type(Peers[peerId].connectionId);
     bool isUhkPeer = isUhkDeviceConnection(connectionType);
-    if (isUhkPeer || BtPair_OobPairingInProgress) {
+    if (isUhkPeer || isUhkPeerByAddr || BtPair_PairingMode == PairingMode_Oob) {
         LOG_BT("refusing passkey authentification for %s\n", GetPeerStringByConn(conn));
         bt_conn_auth_cancel(conn);
         return;
