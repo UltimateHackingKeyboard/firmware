@@ -3,6 +3,7 @@
 #include <zephyr/bluetooth/gatt.h>
 #include "attributes.h"
 #include "bt_conn.h"
+#include "bt_pair.h"
 #include "connections.h"
 #include "debug.h"
 #include "device.h"
@@ -180,7 +181,11 @@ void BtAdvertise_Stop(void) {
 adv_config_t BtAdvertise_Config() {
     switch (DEVICE_ID) {
         case DeviceId_Uhk80_Left:
-            if (Peers[PeerIdRight].conn == NULL) {
+            if (BtPair_OobPairingInProgress) {
+                struct bt_le_oob* oob = BtPair_GetRemoteOob();
+                return ADVERTISEMENT_DIRECT_NUS(&oob->addr);
+            }
+            else if (Peers[PeerIdRight].conn == NULL) {
                 return ADVERTISEMENT_DIRECT_NUS(&Peers[PeerIdRight].addr);
             } else {
                 return ADVERTISEMENT( 0 );
@@ -189,7 +194,11 @@ adv_config_t BtAdvertise_Config() {
         case DeviceId_Uhk80_Right: {
             bool freeSlots = BtConn_UnusedPeripheralConnectionCount();
             if (freeSlots > 0) {
-                if (freeSlots == 1 && SelectedHostConnectionId != ConnectionId_Invalid) {
+                if (BtPair_OobPairingInProgress) {
+                    struct bt_le_oob* oob = BtPair_GetRemoteOob();
+                    return ADVERTISEMENT_DIRECT_NUS(&oob->addr);
+                }
+                else if (freeSlots == 1 && SelectedHostConnectionId != ConnectionId_Invalid) {
                     /* we need to reserve last peripheral slot for a specific target */
                     connection_type_t selectedConnectionType = Connections_Type(SelectedHostConnectionId);
                     if (selectedConnectionType == ConnectionType_NusDongle) {

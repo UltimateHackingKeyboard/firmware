@@ -66,7 +66,7 @@ void BtPair_PairPeripheral() {
     pairingAsCentral = false;
     Settings_Reload();
     bt_le_oob_set_sc_flag(true);
-    BtAdvertise_Start((adv_config_t) { .advType = ADVERTISE_NUS });
+    BtAdvertise_Start(BtAdvertise_Config());
     printk ("Waiting for central to pair to me.\n");
     EventScheduler_Reschedule(k_uptime_get_32() + PAIRING_TIMEOUT, EventSchedulerEvent_EndBtPairing, "Oob pairing timeout.");
 }

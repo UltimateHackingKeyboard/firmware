@@ -135,6 +135,9 @@ static void processEvt(event_scheduler_event_t evt)
         case EventSchedulerEvent_CheckFwChecksums:
             StateSync_CheckFirmwareVersions();
             break;
+        case EventSchedulerEvent_CheckDongleProtocolVersion:
+            StateSync_CheckDongleProtocolVersion();
+            break;
         default:
             return;
     }

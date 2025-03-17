@@ -144,6 +144,15 @@ char *GetPeerStringByConn(const struct bt_conn *conn) {
     return GetPeerStringByAddr(addr);
 }
 
+char *GetPeerStringByConnId(uint8_t connectionId) {
+    uint8_t peerId = Connections[connectionId].peerId;
+    if (peerId != PeerIdUnknown) {
+        return GetPeerStringByConn(Peers[peerId].conn);
+    } else {
+        return "not-a-bt-peer";
+    }
+}
+
 static struct bt_conn_le_data_len_param *data_len;
 
 static void enableDataLengthExtension(struct bt_conn *conn) {
@@ -382,8 +391,13 @@ ATTR_UNUSED static uint8_t discover_func(struct bt_conn *conn, const struct bt_g
         if (service_val && service_val->uuid) {
             if (service_val->uuid->type == BT_UUID_TYPE_128 && !bt_uuid_cmp(service_val->uuid, BT_UUID_NUS)) {
                 if (!BtPair_OobPairingInProgress && DEVICE_IS_UHK80_RIGHT) {
-                    LOG_BT("Unknown NUS trying to connect. Refusing!\n");
-                    bt_conn_disconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
+                    LOG_BT("Unknown NUS trying to connect. Is auth conn: %d. Refusing!\n", conn == auth_conn);
+                    if (conn == auth_conn) {
+                        bt_conn_auth_cancel(conn);
+                        auth_conn = NULL;
+                    } else {
+                        bt_conn_disconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
+                    }
                 }
                 return BT_GATT_ITER_STOP;
             }

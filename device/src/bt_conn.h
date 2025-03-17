@@ -26,8 +26,8 @@
     #define BLE_KEY_LEN 16
 
 
-    /* #define LOG_BT(...) printk("Bt: " __VA_ARGS__) */
-    #define LOG_BT(...)
+    #define LOG_BT(...) printk("Bt: " __VA_ARGS__)
+    /* #define LOG_BT(...) */
 
 
 // Typedefs:
@@ -63,6 +63,7 @@ typedef enum {
     int8_t GetPeerIdByConn(const struct bt_conn *conn);
     char *GetPeerStringByAddr(const bt_addr_le_t *addr);
     char *GetPeerStringByConn(const struct bt_conn *conn);
+    char *GetPeerStringByConnId(uint8_t connectionId);
     char* GetAddrString(const bt_addr_le_t *addr);
     void num_comp_reply(int passkey);
 

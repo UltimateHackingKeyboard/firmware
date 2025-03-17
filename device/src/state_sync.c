@@ -50,7 +50,7 @@ sync_generic_half_state_t SyncLeftHalfState;
 sync_generic_half_state_t SyncRightHalfState;
 
 scroll_multipliers_t DongleScrollMultipliers = {1, 1};
-version_t DongleProtocolVersion = {0, 0, 0};
+version_t RemoteDongleProtocolVersion = {0, 0, 0};
 
 uint16_t StateSync_LeftResetCounter = 0;
 uint16_t StateSync_DongleResetCounter = 0;
@@ -307,13 +307,24 @@ void StateSync_CheckFirmwareVersions() {
     #endif
 }
 
-static void checkDongleProtocolVersion() {
-    if (!VERSIONS_EQUAL(DongleProtocolVersion, dongleProtocolVersion)) {
-        LogUOS("Dongle and right half run different dongle protocol versios\n  (dongle: %d.%d.%d, right: %d.%d.%d)\n  please upgrade!\n",
-                DongleProtocolVersion.major, DongleProtocolVersion.minor, DongleProtocolVersion.patch,
-                dongleProtocolVersion.major, dongleProtocolVersion.minor, dongleProtocolVersion.patch
-        );
-        return;
+void StateSync_CheckDongleProtocolVersion() {
+    host_connection_t *hostConnection = HostConnection(ActiveHostConnectionId);
+    if (hostConnection->type == HostConnectionType_Dongle) {
+        if (!VERSIONS_EQUAL(RemoteDongleProtocolVersion, dongleProtocolVersion)) {
+            LogUOS("Dongle (%s) and right half run different dongle protocol versions\n  (dongle: %d.%d.%d, right: %d.%d.%d)\n  Please upgrade!\n",
+                    GetPeerStringByConnId(ActiveHostConnectionId),
+                    RemoteDongleProtocolVersion.major, RemoteDongleProtocolVersion.minor, RemoteDongleProtocolVersion.patch,
+                    dongleProtocolVersion.major, dongleProtocolVersion.minor, dongleProtocolVersion.patch
+                  );
+            return;
+        } else {
+            LogU("Dongle (%s) and right half run the same dongle protocol version %d.%d.%d\n",
+                    GetPeerStringByConnId(ActiveHostConnectionId),
+                    RemoteDongleProtocolVersion.major, RemoteDongleProtocolVersion.minor, RemoteDongleProtocolVersion.patch,
+                    dongleProtocolVersion.major, dongleProtocolVersion.minor, dongleProtocolVersion.patch
+                  );
+        }
+        EventScheduler_Unschedule(EventSchedulerEvent_CheckDongleProtocolVersion);
     }
 }
 
@@ -411,7 +422,7 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
     case StateSyncPropertyId_KeyboardLedsState:
         WIDGET_REFRESH(&StatusWidget);
 
-        if (!isLocalUpdate && DongleProtocolVersion.major == 0) {
+        if (!isLocalUpdate && RemoteDongleProtocolVersion.major == 0) {
             LogUOS("Dongle protocol version doesn't seem to have been reported.\nIs your dongle firmware up to date?\n");
         }
         break;
@@ -466,8 +477,9 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
         break;
     case StateSyncPropertyId_DongleProtocolVersion:
         if (!isLocalUpdate) {
-            DongleProtocolVersion = *(version_t*)data;
-            checkDongleProtocolVersion();
+            RemoteDongleProtocolVersion = *(version_t*)data;
+            // This should prevent the check from being printed multiple times.
+            EventScheduler_Reschedule(CurrentTime+1000, EventSchedulerEvent_CheckDongleProtocolVersion, "state sync received dongle protocol version");
         }
         break;
     case StateSyncPropertyId_ZeroDummy:
@@ -876,6 +888,10 @@ void StateSync_ResetRightDongleLink(bool bidirectional) {
         invalidateProperty(StateSyncPropertyId_KeyboardLedsState);
         invalidateProperty(StateSyncPropertyId_DongleProtocolVersion);
         invalidateProperty(StateSyncPropertyId_DongleScrollMultipliers);
+    }
+    if (DEVICE_ID == DeviceId_Uhk80_Right) {
+        RemoteDongleProtocolVersion = (version_t){0, 0, 0};
+        EventScheduler_Reschedule(CurrentTime+1000, EventSchedulerEvent_CheckDongleProtocolVersion, "state sync - reset right dongle link");
     }
 }
 
