@@ -26,8 +26,8 @@
     #define BLE_KEY_LEN 16
 
 
-    /* #define LOG_BT(...) printk("Bt: " __VA_ARGS__) */
-    #define LOG_BT(...)
+    #define LOG_BT(...) printk("Bt: " __VA_ARGS__)
+    /* #define LOG_BT(...) */
 
 
 // Typedefs:
