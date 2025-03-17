@@ -77,6 +77,7 @@ typedef enum {
     void BtConn_ListCurrentConnections();
     void BtConn_ListAllBonds();
     void Bt_SetEnabled(bool enabled);
+    void BtConn_MakeSpaceForHid();
 
     uint8_t BtConn_ConnectedHidCount();
 

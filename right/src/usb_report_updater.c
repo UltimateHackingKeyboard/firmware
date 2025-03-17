@@ -1,5 +1,6 @@
 #include <math.h>
 #include "atomicity.h"
+#include "bt_defs.h"
 #include "event_scheduler.h"
 #include "host_connection.h"
 #include "key_action.h"
@@ -50,6 +51,7 @@
 #include "keyboard/charger.h"
 #include "logger.h"
 #include "trace.h"
+#include "bt_pair.h"
 #else
 #include "stubs.h"
 #endif
@@ -358,6 +360,12 @@ static void applyConnectionAction(connection_action_t command, uint8_t hostConne
             break;
         case ConnectionAction_SwitchByHostConnectionId:
             HostConnections_SelectByHostConnIndex(hostConnectionIdx);
+            break;
+        case ConnectionAction_ToggleAdvertisement:
+            BtManager_EnterMode(PairingMode_Advertise, true);
+            break;
+        case ConnectionAction_TogglePairing:
+            BtManager_EnterMode(PairingMode_PairHid, true);
             break;
     }
 #endif

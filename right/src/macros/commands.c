@@ -33,9 +33,11 @@
 #include "debug.h"
 #include "config_manager.h"
 #include "usb_commands/usb_command_reenumerate.h"
+#include "bt_defs.h"
 
 #ifdef __ZEPHYR__
 #include "connections.h"
+#include "bt_pair.h"
 #else
 #include "segment_display.h"
 #endif
@@ -715,6 +717,37 @@ static macro_result_t processBreakCommand(parser_context_t *ctx)
     S->ms.macroBroken = true;
     return MacroResult_Finished;
 }
+
+static macro_result_t processBluetoothCommand(parser_context_t *ctx)
+{
+    ATTR_UNUSED bool toggle = false;
+    ATTR_UNUSED pairing_mode_t mode = PairingMode_Off;
+    if (ConsumeToken(ctx, "toggle")) {
+        toggle = true;
+    }
+
+    if (ConsumeToken(ctx, "pair")) {
+        mode = PairingMode_PairHid;
+    } else if (ConsumeToken(ctx, "advertise")) {
+        mode = PairingMode_Advertise;
+    } else if (ConsumeToken(ctx, "noadvertise") || ConsumeToken(ctx, "noAdvertise")) {
+        mode = PairingMode_Off;
+    } else {
+        Macros_ReportError("Unrecognized argument:", ctx->at, ctx->end);
+        return MacroResult_Finished;
+    }
+
+    if (Macros_ParserError || Macros_DryRun) {
+        return MacroResult_Finished;
+    }
+
+#ifdef __ZEPHYR__
+    BtManager_EnterMode(mode, toggle);
+#endif
+
+    return MacroResult_Finished;
+}
+
 
 static macro_result_t processSetLedTxtCommand(parser_context_t* ctx)
 {
@@ -1811,6 +1844,9 @@ static macro_result_t processCommand(parser_context_t* ctx)
         case 'b':
             if (ConsumeToken(ctx, "break")) {
                 return processBreakCommand(ctx);
+            }
+            else if (ConsumeToken(ctx, "bluetooth")) {
+                return processBluetoothCommand(ctx);
             }
             else {
                 goto failed;

@@ -36,6 +36,7 @@
 #ifdef __ZEPHYR__
 #include "state_sync.h"
 #include "bt_conn.h"
+#include "bt_manager.h"
 #else
 #include "init_peripherals.h"
 #endif

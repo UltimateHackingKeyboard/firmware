@@ -14,7 +14,7 @@
 
 #define LEN(NAME) (sizeof(NAME) - 1)
 
-bool AdvertisingHid = false;
+pairing_mode_t AdvertisingHid = false;
 
 // Advertisement packets
 
@@ -96,8 +96,10 @@ static void setFilters(adv_config_t advConfig) {
 }
 
 static void updateAdvertisingIcon(bool newAdvertising) {
-    if (DEVICE_ID == DeviceId_Uhk80_Right && AdvertisingHid != newAdvertising) {
-        AdvertisingHid = newAdvertising;
+    pairing_mode_t actualMode = newAdvertising ? (BtPair_PairingMode == PairingMode_PairHid ? PairingMode_PairHid : PairingMode_Advertise) : PairingMode_Off;
+
+    if (DEVICE_ID == DeviceId_Uhk80_Right && AdvertisingHid != actualMode) {
+        AdvertisingHid = actualMode;
 #if DEVICE_HAS_OLED
         Widget_Refresh(&StatusWidget);
 #endif
@@ -181,7 +183,7 @@ void BtAdvertise_Stop(void) {
 adv_config_t BtAdvertise_Config() {
     switch (DEVICE_ID) {
         case DeviceId_Uhk80_Left:
-            if (BtPair_OobPairingInProgress) {
+            if (BtPair_PairingMode == PairingMode_Oob) {
                 struct bt_le_oob* oob = BtPair_GetRemoteOob();
                 return ADVERTISEMENT_DIRECT_NUS(&oob->addr);
             }
@@ -194,7 +196,7 @@ adv_config_t BtAdvertise_Config() {
         case DeviceId_Uhk80_Right: {
             bool freeSlots = BtConn_UnusedPeripheralConnectionCount();
             if (freeSlots > 0) {
-                if (BtPair_OobPairingInProgress) {
+                if (BtPair_PairingMode == PairingMode_Oob) {
                     struct bt_le_oob* oob = BtPair_GetRemoteOob();
                     return ADVERTISEMENT_DIRECT_NUS(&oob->addr);
                 }
@@ -215,7 +217,7 @@ adv_config_t BtAdvertise_Config() {
                     return ADVERTISEMENT(ADVERTISE_NUS);
                 } else {
                     /** we can connect both NUS and HID */
-                    if (Cfg.Bt_AlwaysAdvertiseHid) {
+                    if (Cfg.Bt_AlwaysAdvertiseHid || BtPair_PairingMode == PairingMode_Advertise || BtPair_PairingMode == PairingMode_PairHid) {
                         return ADVERTISEMENT(ADVERTISE_NUS | ADVERTISE_HID);
                     } else {
                         return ADVERTISEMENT(ADVERTISE_NUS);
