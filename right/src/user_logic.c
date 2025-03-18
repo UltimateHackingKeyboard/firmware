@@ -19,7 +19,6 @@
 #endif
 
 void RunUserLogic(void) {
-    Trace_Printf("a1");
     if (EventVector_IsSet(EventVector_ApplyConfig)) {
         UsbCommand_ApplyConfig(NULL, NULL);
     }
@@ -39,11 +38,9 @@ void RunUserLogic(void) {
         MacroEvent_ProcessStateKeyEvents();
     }
 
-    Trace_Printf("a2");
     if (EventVector_IsSet(EventVector_ReportUpdateMask)) {
         UpdateUsbReports();
     }
-    Trace_Printf("a3");
 
     if (EventVector_IsSet(EventVector_LedManagerFullUpdateNeeded)) {
         LedManager_FullUpdate();
@@ -60,7 +57,6 @@ void RunUserLogic(void) {
     LOG_SCHEDULE(
         EventVector_ReportMask("=== ", EventScheduler_Vector)
     );
-    Trace_Printf("a4");
 }
 
 void RunUhk80LeftHalfLogic() {
