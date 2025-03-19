@@ -13,6 +13,7 @@
 #include <math.h>
 #include <stdarg.h>
 #include "macro_events.h"
+#include "wormhole.h"
 
 #ifdef __ZEPHYR__
 #include "keyboard/oled/widgets/widgets.h"
@@ -21,13 +22,13 @@
 #include "eeprom.h"
 #endif
 
+static bool printing;
+static bool containsWormholeData = false;
 static uint16_t consumeStatusCharReadingPos = 0;
 bool Macros_ConsumeStatusCharDirtyFlag = false;
 bool Macros_StatusBufferError = false;
 
-static char statusBuffer[STATUS_BUFFER_MAX_LENGTH];
-static uint16_t statusBufferLen;
-static bool statusBufferPrinting;
+#define Buf StateWormhole.statusBuffer
 
 static void updateErrorIndicator(bool newValue) {
 #if DEVICE_HAS_OLED
@@ -59,27 +60,27 @@ static void clearIndication() {
     SegmentDisplay_DeactivateSlot(SegmentDisplaySlot_Warn);
 }
 
-
-macro_result_t Macros_ProcessClearStatusCommand()
+macro_result_t Macros_ProcessClearStatusCommand(bool force)
 {
     if (Macros_DryRun) {
         return MacroResult_Finished;
     }
 
-    statusBufferLen = 0;
-    consumeStatusCharReadingPos = 0;
-    Macros_ConsumeStatusCharDirtyFlag = false;
-    clearIndication();
+    if (force || !containsWormholeData) {
+        Buf.len = 0;
+        consumeStatusCharReadingPos = 0;
+        Macros_ConsumeStatusCharDirtyFlag = false;
+        clearIndication();
+    }
     return MacroResult_Finished;
 }
-
 
 char Macros_ConsumeStatusChar()
 {
     char res;
 
-    if (consumeStatusCharReadingPos < statusBufferLen) {
-        res = statusBuffer[consumeStatusCharReadingPos++];
+    if (consumeStatusCharReadingPos < Buf.len) {
+        res = Buf.data[consumeStatusCharReadingPos++];
     } else {
         res = '\0';
         consumeStatusCharReadingPos = 0;
@@ -92,7 +93,7 @@ char Macros_ConsumeStatusChar()
 //textEnd is allowed to be null if text is null-terminated
 static void setStatusStringInterpolated(parser_context_t* ctx)
 {
-    if (statusBufferPrinting) {
+    if (printing) {
         return;
     }
     uint16_t stringOffset = 0, textIndex = 0, textSubIndex = 0;
@@ -100,41 +101,41 @@ static void setStatusStringInterpolated(parser_context_t* ctx)
     char c;
     while (
             (c = Macros_ConsumeCharOfString(ctx, &stringOffset, &textIndex, &textSubIndex)) != '\0'
-            && statusBufferLen < STATUS_BUFFER_MAX_LENGTH
+            && Buf.len < STATUS_BUFFER_MAX_LENGTH
           ) {
-        statusBuffer[statusBufferLen] = c;
-        statusBufferLen++;
+        Buf.data[Buf.len] = c;
+        Buf.len++;
         Macros_ConsumeStatusCharDirtyFlag = true;
     }
 }
 
 static void setStatusChar(char n)
 {
-    if (statusBufferPrinting) {
+    if (printing) {
         return;
     }
 
-    if (n && statusBufferLen == STATUS_BUFFER_MAX_LENGTH && DEBUG_ROLL_STATUS_BUFFER) {
-        memcpy(statusBuffer, &statusBuffer[STATUS_BUFFER_MAX_LENGTH/2], STATUS_BUFFER_MAX_LENGTH/2);
+    if (n && Buf.len == STATUS_BUFFER_MAX_LENGTH && DEBUG_ROLL_STATUS_BUFFER) {
+        memcpy(Buf.data, &Buf.data[STATUS_BUFFER_MAX_LENGTH/2], STATUS_BUFFER_MAX_LENGTH/2);
         int16_t shiftBy = STATUS_BUFFER_MAX_LENGTH - STATUS_BUFFER_MAX_LENGTH/2;
-        statusBufferLen = STATUS_BUFFER_MAX_LENGTH/2;
+        Buf.len = STATUS_BUFFER_MAX_LENGTH/2;
         consumeStatusCharReadingPos = consumeStatusCharReadingPos > shiftBy ? consumeStatusCharReadingPos - shiftBy : 0;
     }
 
-    if (n && statusBufferLen < STATUS_BUFFER_MAX_LENGTH) {
-        statusBuffer[statusBufferLen] = n;
-        statusBufferLen++;
+    if (n && Buf.len < STATUS_BUFFER_MAX_LENGTH) {
+        Buf.data[Buf.len] = n;
+        Buf.len++;
         Macros_ConsumeStatusCharDirtyFlag = true;
     }
 }
 
 void Macros_SetStatusString(const char* text, const char *textEnd)
 {
-    if (statusBufferPrinting) {
+    if (printing) {
         return;
     }
 
-    while(*text && statusBufferLen < STATUS_BUFFER_MAX_LENGTH && (text < textEnd || textEnd == NULL)) {
+    while(*text && Buf.len < STATUS_BUFFER_MAX_LENGTH && (text < textEnd || textEnd == NULL)) {
         setStatusChar(*text);
         text++;
     }
@@ -235,9 +236,9 @@ static void reportErrorHeader(const char* status, uint16_t pos)
 static void reportCommandLocation(uint16_t line, uint16_t pos, const char* begin, const char* end, bool reportPosition)
 {
     Macros_SetStatusString("> ", NULL);
-    uint16_t l = statusBufferLen;
+    uint16_t l = Buf.len;
     Macros_SetStatusNumSpaced(line, false);
-    l = statusBufferLen - l;
+    l = Buf.len - l;
     Macros_SetStatusString(" | ", NULL);
     Macros_SetStatusString(begin, end);
     Macros_SetStatusString("\n", NULL);
@@ -302,7 +303,7 @@ void Macros_ReportWarn(const char* err, const char* arg, const char *argEnd)
     reportError(err, arg, argEnd);
 }
 
-void Macros_ReportPrintf(const char* pos, const char *fmt, ...)
+void Macros_ReportPrintfWithPos(const char* pos, const char *fmt, ...)
 {
     va_list myargs;
     va_start(myargs, fmt);
@@ -315,7 +316,6 @@ void Macros_ReportPrintf(const char* pos, const char *fmt, ...)
         reportError(buffer, pos, pos);
     } else {
         Macros_SetStatusString(buffer, NULL);
-        Macros_SetStatusString("\n", NULL);
     }
 }
 
@@ -326,7 +326,6 @@ void Macros_ReportErrorPrintf(const char* pos, const char *fmt, ...)
     char buffer[256];
     vsprintf(buffer, fmt, myargs);
     Macros_ReportError(buffer, pos, pos);
-
 }
 
 void Macros_ReportErrorFloat(const char* err, float num, const char* pos)
@@ -354,11 +353,11 @@ macro_result_t Macros_ProcessPrintStatusCommand()
     if (Macros_DryRun) {
         return MacroResult_Finished;
     }
-    statusBufferPrinting = true;
-    macro_result_t res = Macros_DispatchText(statusBuffer, statusBufferLen, true);
+    printing = true;
+    macro_result_t res = Macros_DispatchText(Buf.data, Buf.len, true);
     if (res == MacroResult_Finished) {
-        Macros_ProcessClearStatusCommand();
-        statusBufferPrinting = false;
+        Macros_ProcessClearStatusCommand(true);
+        printing = false;
     }
     return res;
 }
@@ -375,7 +374,15 @@ macro_result_t Macros_ProcessSetStatusCommand(parser_context_t* ctx, bool addEnd
     return MacroResult_Finished;
 }
 
-void Macros_ClearStatus(void)
+void Macros_ClearStatus(bool force)
 {
-    Macros_ProcessClearStatusCommand();
+    Macros_ProcessClearStatusCommand(force);
+}
+
+void MacroStatusBuffer_InitFromWormhole() {
+    containsWormholeData = Buf.len > 0;
+
+    if (containsWormholeData) {
+        indicateError();
+    }
 }

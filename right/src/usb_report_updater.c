@@ -367,7 +367,7 @@ static void applyOtherAction(other_action_t actionSubtype)
 {
     switch(actionSubtype) {
         case OtherAction_Sleep:
-            PowerMode_ActivateMode(PowerMode_DeepSleep, false);
+            PowerMode_ActivateMode(PowerMode_SfjlSleep, false);
             break;
     }
 }
@@ -604,7 +604,7 @@ static void updateActionStates() {
                     // as it is pressed
                     actionCache[slotId][keyId].modifierLayerMask = 0;
 
-                    if (CurrentPowerMode != PowerMode_Awake && CurrentPowerMode <= PowerMode_LightSleep) {
+                    if (CurrentPowerMode > PowerMode_LastAwake && CurrentPowerMode <= PowerMode_LightSleep) {
                         PowerMode_WakeHost();
                         PowerMode_ActivateMode(PowerMode_Awake, false);
                     }
@@ -842,7 +842,7 @@ void UpdateUsbReports(void)
     bool sendingNew = EventVector_IsSet(EventVector_SendUsbReports);
 
     if (resending || sendingNew) {
-        if (CurrentPowerMode < PowerMode_DeepSleep) {
+        if (CurrentPowerMode < PowerMode_Lock) {
             if (!resending) {
                 mergeReports();
             }
