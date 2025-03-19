@@ -107,6 +107,14 @@ static parser_error_t parseConnectionsAction(key_action_t *keyAction, config_buf
             keyAction->connections.command = ConnectionAction_Previous;
             keyAction->connections.hostConnectionId = 0;
             break;
+        case SerializedConnectionAction_ToggleAdvertisement:
+            keyAction->connections.command = ConnectionAction_ToggleAdvertisement;
+            keyAction->connections.hostConnectionId = 0;
+            break;
+        case SerializedConnectionAction_TogglePairing:
+            keyAction->connections.command = ConnectionAction_TogglePairing;
+            keyAction->connections.hostConnectionId = 0;
+            break;
         default:
             ConfigParser_Error(buffer, "Invalid serialized connection action: %d", connectionCommand);
             return ParserError_InvalidSerializedConnectionAction;

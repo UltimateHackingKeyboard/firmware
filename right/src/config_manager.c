@@ -275,6 +275,7 @@ const config_t DefaultCfg = (config_t){
         .Bt_Enabled = true,
         .Bt_AllowUnsecuredConnections = false,
         .Bt_MaxPeripheralConnections = 3,
+        .Bt_AlwaysAdvertiseHid = true,
         .EmergencyKey = NULL,
         .KeyActionColors = {
             {0x00, 0x00, 0x00}, // KeyActionColor_None

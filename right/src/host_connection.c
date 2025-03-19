@@ -6,6 +6,8 @@
 #include "bt_conn.h"
 #include "connections.h"
 #include "logger.h"
+#include "keyboard/oled/widgets/widget_store.h"
+#include "stubs.h"
 
 host_connection_t HostConnections[HOST_CONNECTION_COUNT_MAX] = {
     [HOST_CONNECTION_COUNT_MAX - 2] = {
@@ -57,12 +59,20 @@ host_connection_t* HostConnection(uint8_t connectionId) {
     return &HostConnections[connectionId - ConnectionId_HostConnectionFirst];
 }
 
+void HostConnection_SetSelectedConnection(uint8_t connectionId) {
+    if (SelectedHostConnectionId != connectionId) {
+        SelectedHostConnectionId = connectionId;
+        WIDGET_REFRESH(&TargetWidget);
+    }
+}
+
 static void selectConnection(uint8_t connectionId) {
-    SelectedHostConnectionId = connectionId;
     if (Connections_IsReady(connectionId)) {
         Connections_HandleSwitchover(connectionId, true);
+        HostConnection_SetSelectedConnection(ConnectionId_Invalid);
     } else {
         BtConn_ReserveConnections();
+        HostConnection_SetSelectedConnection(connectionId);
     }
     Connections_ReportState(connectionId);
 }
@@ -81,7 +91,8 @@ static void selectNextConnection(int8_t direction) {
             break;
         }
     }
-    SelectedHostConnectionId = ConnectionId_Invalid;
+
+    HostConnection_SetSelectedConnection(ConnectionId_Invalid);
 }
 
 void HostConnections_SelectNextConnection(void) {

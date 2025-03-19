@@ -116,6 +116,7 @@ COMMAND = {pressKey|holdKey|tapKey|releaseKey} SHORTCUT
 COMMAND = tapKeySeq [SHORTCUT]+
 COMMAND = reboot
 COMMAND = powerMode [toggle] { wake | lightSleep | sleep | deepSleep }
+COMMAND = bluetooth [toggle] { pair | advertise | noAdvertise }
 COMMAND = switchHost { last | next | previous | <host connection name (IDENTIFIER)> | <host connection name (STRING)> }
 COMMAND = set module.MODULEID.navigationMode.LAYERID_BASIC NAVIGATION_MODE
 COMMAND = set module.MODULEID.baseSpeed <non-xcelerated speed, 0-10.0 (FLOAT)>
@@ -172,6 +173,7 @@ COMMAND = set leds.brightness <0-1 multiple of default (FLOAT)>
 COMMAND = set leds.fadeTimeout <seconds to fade after (INT)>
 COMMAND = set leds.{keyBacklightFadeTimeout|keyBacklightFadeBatteryTimeout|displayFadeTimeout|displayFadeBatteryTimeout} <seconds to fade after (INT)>
 COMMAND = set bluetooth.enabled BOOL
+COMMAND = set bluetooth.alwaysAdvertiseHid BOOL
 COMMAND = set modifierLayerTriggers.{shift|alt|super|ctrl} {left|right|both}
 CONDITION = <condition>
 CONDITION = if (EXPRESSION)
@@ -335,6 +337,12 @@ COMMAND = setEmergencyKey KEYID
     - If a sleep mode is activated while another sleep mode is active, the deeper of them will be activated.
     - If `toggle` is specified and the device is already in the (exact) sleep mode, it will wake the device instead.
 
+### Bluetooth:
+- `bluetooth [toggle] { pair | advertise | noAdvertise }` controls advertising for hid devices - this doesn't affect dongle and left half advertising.
+  - `pair` will start pairing mode. The device will be discoverable for 2 minutes, and will refuse connections from all known devices so that it is possible to pair a new device.
+  - `advertise` will make the device discoverable for 2 minutes. This allows ble hid devices to either connect or pair.
+  - `noAdvertise` will return the normal operation mode (depends on bluetooth.alwaysAdvertiseHid). 
+  - `toggle` will make keyboard enter the default mode if the supplied mode is active. This doesn't disable advertisement if bluetooth.alwaysAdvertiseHid is set to true. 
 - `switchHost { last | next | previous | <host connection name (IDENTIFIER)> | <host connection name (STRING)> }` switches the host connection. 
   - `previous | next` switch to the next currently connected host in the list of hosts. E.g., this iterates over blue dongles, as well as some other connections.
   - `last` switches to the previously active host connection. For instance the last in `switchHost "pc"; switchHost "laptop"; switchHost last` switches to "pc".

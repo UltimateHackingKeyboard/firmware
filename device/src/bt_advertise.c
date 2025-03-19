@@ -3,16 +3,18 @@
 #include <zephyr/bluetooth/gatt.h>
 #include "attributes.h"
 #include "bt_conn.h"
+#include "bt_pair.h"
 #include "connections.h"
 #include "debug.h"
 #include "device.h"
 #include "device_state.h"
 #include "host_connection.h"
 #include "keyboard/oled/widgets/widgets.h"
+#include "config_manager.h"
 
 #define LEN(NAME) (sizeof(NAME) - 1)
 
-bool AdvertisingHid = false;
+pairing_mode_t AdvertisingHid = false;
 
 // Advertisement packets
 
@@ -94,8 +96,10 @@ static void setFilters(adv_config_t advConfig) {
 }
 
 static void updateAdvertisingIcon(bool newAdvertising) {
-    if (DEVICE_ID == DeviceId_Uhk80_Right && AdvertisingHid != newAdvertising) {
-        AdvertisingHid = newAdvertising;
+    pairing_mode_t actualMode = newAdvertising ? (BtPair_PairingMode == PairingMode_PairHid ? PairingMode_PairHid : PairingMode_Advertise) : PairingMode_Off;
+
+    if (DEVICE_ID == DeviceId_Uhk80_Right && AdvertisingHid != actualMode) {
+        AdvertisingHid = actualMode;
 #if DEVICE_HAS_OLED
         Widget_Refresh(&StatusWidget);
 #endif
@@ -179,7 +183,11 @@ void BtAdvertise_Stop(void) {
 adv_config_t BtAdvertise_Config() {
     switch (DEVICE_ID) {
         case DeviceId_Uhk80_Left:
-            if (Peers[PeerIdRight].conn == NULL) {
+            if (BtPair_PairingMode == PairingMode_Oob) {
+                struct bt_le_oob* oob = BtPair_GetRemoteOob();
+                return ADVERTISEMENT_DIRECT_NUS(&oob->addr);
+            }
+            else if (Peers[PeerIdRight].conn == NULL) {
                 return ADVERTISEMENT_DIRECT_NUS(&Peers[PeerIdRight].addr);
             } else {
                 return ADVERTISEMENT( 0 );
@@ -188,7 +196,11 @@ adv_config_t BtAdvertise_Config() {
         case DeviceId_Uhk80_Right: {
             bool freeSlots = BtConn_UnusedPeripheralConnectionCount();
             if (freeSlots > 0) {
-                if (freeSlots == 1 && SelectedHostConnectionId != ConnectionId_Invalid) {
+                if (BtPair_PairingMode == PairingMode_Oob) {
+                    struct bt_le_oob* oob = BtPair_GetRemoteOob();
+                    return ADVERTISEMENT_DIRECT_NUS(&oob->addr);
+                }
+                else if (freeSlots == 1 && SelectedHostConnectionId != ConnectionId_Invalid) {
                     /* we need to reserve last peripheral slot for a specific target */
                     connection_type_t selectedConnectionType = Connections_Type(SelectedHostConnectionId);
                     if (selectedConnectionType == ConnectionType_NusDongle) {
@@ -205,7 +217,11 @@ adv_config_t BtAdvertise_Config() {
                     return ADVERTISEMENT(ADVERTISE_NUS);
                 } else {
                     /** we can connect both NUS and HID */
-                    return ADVERTISEMENT(ADVERTISE_NUS | ADVERTISE_HID);
+                    if (Cfg.Bt_AlwaysAdvertiseHid || BtPair_PairingMode == PairingMode_Advertise || BtPair_PairingMode == PairingMode_PairHid) {
+                        return ADVERTISEMENT(ADVERTISE_NUS | ADVERTISE_HID);
+                    } else {
+                        return ADVERTISEMENT(ADVERTISE_NUS);
+                    }
                 }
             } else {
                 /** advertising needs a peripheral slot. When it is not free and we try to advertise, it will fail, and our code will try to

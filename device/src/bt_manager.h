@@ -1,3 +1,4 @@
+
 #ifndef __BT_MANAGER_H__
 #define __BT_MANAGER_H__
 

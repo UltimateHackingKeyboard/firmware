@@ -14,18 +14,28 @@
 #include "host_connection.h"
 #include "settings.h"
 #include "usb_commands/usb_command_get_new_pairings.h"
+#include "config_manager.h"
 
-bool BtPair_LastPairingSucceeded = true;
-bool BtPair_OobPairingInProgress = false;
+bool BtPair_LastOobPairingSucceeded = true;
+
+pairing_mode_t BtPair_PairingMode = PairingMode_Advertise;
 
 static bool pairingAsCentral = false;
 static bool initialized = false;
 static struct bt_le_oob oobRemote;
 static struct bt_le_oob oobLocal;
 
-void BtManager_EnterPairingMode() {
+static pairing_mode_t defaultPairingMode() {
+    if (Cfg.Bt_AlwaysAdvertiseHid) {
+        return PairingMode_Advertise;
+    } else {
+        return PairingMode_Off;
+    }
+}
+
+static void enterOobPairingMode() {
     printk("--- Entering pairing mode. Going to stop BT and disconnect all connections. ---\n");
-    BtPair_OobPairingInProgress = true;
+    BtPair_PairingMode = PairingMode_Oob;
     BtManager_StopBt();
     BtConn_DisconnectAll();
 }
@@ -40,6 +50,48 @@ struct bt_le_oob* BtPair_GetLocalOob() {
         initialized = true;
     }
     return &oobLocal;
+}
+
+void BtManager_EnterMode(pairing_mode_t mode, bool toggle) {
+    pairing_mode_t defaultMode = defaultPairingMode();
+
+    if (toggle && BtPair_PairingMode == mode) {
+        mode = defaultMode;
+    }
+
+    if (mode == PairingMode_Off) {
+        mode = defaultMode;
+    }
+
+    if (mode == defaultMode) {
+        EventScheduler_Unschedule(EventSchedulerEvent_EndBtPairing);
+    }
+
+    switch (mode) {
+        case PairingMode_Oob:
+            enterOobPairingMode();
+            break;
+        case PairingMode_PairHid:
+        case PairingMode_Advertise:
+            if (BtPair_PairingMode == PairingMode_Oob) {
+                BtPair_EndPairing(BtPair_LastOobPairingSucceeded, "Exiting OOB pairing mode because of switch to another mode.");
+            }
+            BtPair_PairingMode = mode;
+#ifdef CONFIG_BT_PERIPHERAL
+            BtAdvertise_Stop();
+#endif
+            if (mode == PairingMode_PairHid) {
+                BtConn_MakeSpaceForHid();
+            }
+            BtManager_StartScanningAndAdvertisingAsync();
+            if (mode != defaultMode) {
+                EventScheduler_Reschedule(k_uptime_get_32() + USER_PAIRING_TIMEOUT, EventSchedulerEvent_EndBtPairing, "User pairing mode timeout.");
+            }
+            break;
+        case PairingMode_Off:
+            BtPair_EndPairing(false, "Pairing mode off.");
+            break;
+    }
 }
 
 struct bt_le_oob* BtPair_GetRemoteOob() {
@@ -66,7 +118,7 @@ void BtPair_PairPeripheral() {
     pairingAsCentral = false;
     Settings_Reload();
     bt_le_oob_set_sc_flag(true);
-    BtAdvertise_Start((adv_config_t) { .advType = ADVERTISE_NUS });
+    BtAdvertise_Start(BtAdvertise_Config());
     printk ("Waiting for central to pair to me.\n");
     EventScheduler_Reschedule(k_uptime_get_32() + PAIRING_TIMEOUT, EventSchedulerEvent_EndBtPairing, "Oob pairing timeout.");
 }
@@ -74,30 +126,30 @@ void BtPair_PairPeripheral() {
 
 void BtPair_EndPairing(bool success, const char* msg) {
     printk("--- Pairing ended, success = %d: %s ---\n", success, msg);
+    if (BtPair_PairingMode == PairingMode_Oob) {
 
-    initialized = false;
+        initialized = false;
 
-    memset(&oobRemote, 0, sizeof(oobRemote));
-    memset(&oobLocal, 0, sizeof(oobLocal));
+        memset(&oobRemote, 0, sizeof(oobRemote));
+        memset(&oobLocal, 0, sizeof(oobLocal));
 
-    BtPair_OobPairingInProgress = false;
-    BtPair_LastPairingSucceeded = success;
-    bt_le_oob_set_sc_flag(false);
+        BtPair_LastOobPairingSucceeded = success;
+        bt_le_oob_set_sc_flag(false);
+
+    }
+
+    BtPair_PairingMode = defaultPairingMode();
+
     EventScheduler_Unschedule(EventSchedulerEvent_EndBtPairing);
 
-    if (pairingAsCentral) {
 #ifdef CONFIG_BT_SCAN
         BtScan_Stop();
 #endif
-    } else {
 #ifdef CONFIG_BT_PERIPHERAL
         BtAdvertise_Stop();
 #endif
-    }
 
-    k_sleep(K_MSEC(100));
-
-    BtManager_StartBt();
+    BtManager_StartScanningAndAdvertisingAsync();
 }
 
 struct delete_args_t {

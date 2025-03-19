@@ -106,6 +106,8 @@
         SerializedConnectionAction_Next,
         SerializedConnectionAction_Previous,
         SerializedConnectionAction_SwitchByHostConnectionId,
+        SerializedConnectionAction_ToggleAdvertisement,
+        SerializedConnectionAction_TogglePairing,
     } serialized_connection_action_t;
 
     typedef enum {
