@@ -151,7 +151,7 @@ static string_segment_t getLeftStatusText() {
     snprintf(buffer, BUFFER_LENGTH-1, "%c%c %c%c%c",
             (char)FontControl_NextCharIcon12, (char)connectionIcon,
             (AdvertisingHid == PairingMode_PairHid || AdvertisingHid == PairingMode_Advertise) ? FontControl_NextCharWhite : FontControl_NextCharBlack,
-            (char)FontControl_NextCharIcon12, AdvertisingHid == PairingMode_PairHid ? FontIcon_BluetoothSignal : FontIcon_Bluetooth
+            (char)FontControl_NextCharIcon12, AdvertisingHid == PairingMode_PairHid ? FontIcon_BluetoothSignalPlus : FontIcon_BluetoothSignal
     );
     return (string_segment_t){ .start = buffer, .end = NULL };
 #undef BUFFER_LENGTH
