@@ -240,15 +240,18 @@ int main(void) {
     power_mode_t mode = PowerMode_Awake;
 
     if (IS_STATE_WORMHOLE_OPEN) {
+        printk("Wormhole is open, reboot to power mode %d %d\n", StateWormhole.rebootToPowerMode, StateWormhole.restartPowerMode);
         if (StateWormhole.rebootToPowerMode) {
             mode = StateWormhole.restartPowerMode;
             StateWormhole.restartPowerMode = PowerMode_Awake;
         }
         MacroStatusBuffer_InitFromWormhole();
         StateWormhole_Close();
+    } else {
+        printk("Wormhole is closed\n");
     }
 
-    if (mode != PowerMode_Awake && false) {
+    if (mode != PowerMode_Awake) {
         LogU("Restarted, sinking into mode %d!\n", mode);
         k_sleep(K_MSEC(1000));
         PowerMode_RestartedTo(mode);
