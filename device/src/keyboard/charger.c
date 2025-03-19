@@ -11,6 +11,8 @@
 #include <nrfx_power.h>
 #include "device.h"
 #include <zephyr/bluetooth/services/bas.h>
+#include "config_manager.h"
+#include "led_manager.h"
 
 const struct gpio_dt_spec chargerEnDt = GPIO_DT_SPEC_GET(DT_ALIAS(charger_en), gpios);
 const struct gpio_dt_spec chargerStatDt = GPIO_DT_SPEC_GET(DT_ALIAS(charger_stat), gpios);
@@ -99,6 +101,7 @@ void Charger_PrintState() {
 }
 
 void Charger_UpdateBatteryState() {
+    /*
     bool stateChanged = false;
     stateChanged |= updateBatteryPresent();
     stateChanged |= updatePowered();
@@ -128,6 +131,7 @@ void Charger_UpdateBatteryState() {
         bt_bas_set_battery_level(batteryState.batteryPercentage);
 #endif
     }
+    */
 }
 
 static nrfx_power_usb_event_handler_t originalPowerHandler = NULL;
@@ -139,6 +143,7 @@ static void powerCallback(nrfx_power_usb_evt_t event) {
 }
 
 void chargerStatCallback(const struct device *port, struct gpio_callback *cb, gpio_port_pins_t pins) {
+    /*
     bool stat = gpio_pin_get_dt(&chargerStatDt);
     CurrentTime = k_uptime_get_32();
     if (stat) {
@@ -156,11 +161,51 @@ void chargerStatCallback(const struct device *port, struct gpio_callback *cb, gp
         printk("STAT changed to %i\n", stat ? 1 : 0);
     }
     EventScheduler_Reschedule(CurrentTime + CHARGER_STAT_PERIOD, EventSchedulerEvent_UpdateBattery, "charger - stat callback");
+*/
 }
 
 // charging battery with CHARGER_EN yields STAT 0
 // fully charged battery with CHARGER_EN yields STAT 1
 // CHARGER_EN 0 yields STAT 1
+
+static void setBrightness(uint8_t brightness) {
+    DisplayBrightness = brightness;
+    KeyBacklightBrightness = brightness;
+    Ledmap_UpdateBacklightLeds();
+}
+
+static void measure(uint32_t idx, uint8_t brightness) {
+    setBrightness(brightness);
+    k_sleep(K_MSEC(10000));
+    LogTo(DeviceId_Uhk_Dongle, LogTarget_Uart, "IDX,DevId,B,V %d %d %d %d\n", idx, DEVICE_ID, brightness, getVoltage());
+}
+
+static void recordCurves() {
+    uint32_t idx = 0;
+    k_sleep(K_MSEC(5000));
+    LogTo(DeviceId_Uhk_Dongle, LogTarget_Uart, "Starting battery curves log for device %d!", DEVICE_ID);
+    while (true) {
+        DisplayBrightness = 0xff;
+        KeyBacklightBrightness = 0xff;
+        k_sleep(K_MSEC(100000));
+
+        measure(idx, 255);
+        measure(idx, 128);
+        measure(idx, 64);
+        measure(idx, 32);
+        measure(idx, 16);
+        measure(idx, 0);
+
+        idx++;
+    }
+}
+
+#define THREAD_STACK_SIZE 2000
+#define THREAD_PRIORITY 5
+static K_THREAD_STACK_DEFINE(charger_stack_area, THREAD_STACK_SIZE);
+static struct k_thread thread_data_left;
+static k_tid_t curveTid = 0;
+
 
 void InitCharger(void) {
     gpio_pin_configure_dt(&chargerEnDt, GPIO_OUTPUT);
@@ -184,6 +229,12 @@ void InitCharger(void) {
     nrfx_power_usbevt_enable();
 
     EventScheduler_Reschedule(CurrentTime + CHARGER_STAT_PERIOD, EventSchedulerEvent_UpdateBattery, "charger - init");
+
+
+    curveTid = k_thread_create(&thread_data_left, charger_stack_area,
+            K_THREAD_STACK_SIZEOF(charger_stack_area), recordCurves, NULL, NULL, NULL,
+            THREAD_PRIORITY, 0, K_NO_WAIT);
+    k_thread_name_set(&thread_data_left, "state_sync_left_right");
 
     // TODO: Update battery level. See bas_notify()
 }
