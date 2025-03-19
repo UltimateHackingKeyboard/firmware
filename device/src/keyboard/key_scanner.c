@@ -31,6 +31,8 @@
 #define THREAD_STACK_SIZE 1000
 #define THREAD_PRIORITY -1
 
+#define USE_QUICK_SCAN true
+
 static K_THREAD_STACK_DEFINE(stack_area, THREAD_STACK_SIZE);
 static struct k_thread thread_data;
 
@@ -173,6 +175,21 @@ static bool scanSfjlWithBlinking(bool fullScan) {
     return false;
 }
 
+// This doesn't seem to decrease power consumption much, bu no reason not to use it.
+static bool quickScan() {
+    bool someKeyPressed = false;
+    for (uint8_t rowId=0; rowId<KEY_MATRIX_ROWS; rowId++) {
+        gpio_pin_set_dt(&rows[rowId], 1);
+    }
+    for (uint8_t colId=0; colId<KEY_MATRIX_COLS; colId++) {
+        someKeyPressed |= gpio_pin_get_dt(&cols[colId]);
+    }
+    for (uint8_t rowId=0; rowId<KEY_MATRIX_ROWS; rowId++) {
+        gpio_pin_set_dt(&rows[rowId], 0);
+    }
+    return someKeyPressed;
+}
+
 static void scanAllKeys() {
     bool somethingChanged = false;
     static bool keyStateBuffer[KEY_MATRIX_ROWS*KEY_MATRIX_COLS];
@@ -270,7 +287,7 @@ static void scanKeys() {
 
     if (CurrentPowerMode > PowerMode_LightSleep) {
         KeyScanner_ScanAndWakeOnSfjl(true, true);
-    } else {
+    } else if (!USE_QUICK_SCAN || KeyPressed || quickScan()) {
         scanAllKeys();
     }
 }
