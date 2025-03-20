@@ -174,10 +174,13 @@ static void setBrightness(uint8_t brightness) {
     Ledmap_UpdateBacklightLeds();
 }
 
-static void measure(uint32_t idx, uint8_t brightness) {
+static void measure(uint32_t idx, bool enableCharger, uint8_t brightness) {
+    bool powered = nrfx_power_usbstatus_get() > NRFX_POWER_USB_STATE_DISCONNECTED;
     setBrightness(brightness);
-    k_sleep(K_MSEC(10000));
-    LogTo(DeviceId_Uhk_Dongle, LogTarget_Uart, "IDX,DevId,B,V %d %d %d %d\n", idx, DEVICE_ID, brightness, getVoltage());
+    gpio_pin_set_dt(&chargerEnDt, 0);
+    k_sleep(K_MSEC(5000));
+    LogTo(DeviceId_Uhk_Dongle, LogTarget_Uart, "IDX,DevId,enCh,Pow,B,V %d %d %d %d %d %d\n", idx, DEVICE_ID, enableCharger, powered, brightness, getVoltage());
+    gpio_pin_set_dt(&chargerEnDt, 1);
 }
 
 static void recordCurves() {
@@ -185,16 +188,17 @@ static void recordCurves() {
     k_sleep(K_MSEC(5000));
     LogTo(DeviceId_Uhk_Dongle, LogTarget_Uart, "Starting battery curves log for device %d!", DEVICE_ID);
     while (true) {
-        DisplayBrightness = 0xff;
-        KeyBacklightBrightness = 0xff;
+        setBrightness(255);
         k_sleep(K_MSEC(100000));
 
-        measure(idx, 255);
-        measure(idx, 128);
-        measure(idx, 64);
-        measure(idx, 32);
-        measure(idx, 16);
-        measure(idx, 0);
+        measure(idx, true, 255);
+        measure(idx, true, 128);
+        measure(idx, true, 64);
+        measure(idx, true, 0);
+        measure(idx, false, 255);
+        measure(idx, false, 128);
+        measure(idx, false, 64);
+        measure(idx, false, 0);
 
         idx++;
     }
