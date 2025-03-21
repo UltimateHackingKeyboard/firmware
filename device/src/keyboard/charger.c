@@ -177,7 +177,7 @@ static void setBrightness(uint8_t brightness) {
 static void measure(uint32_t idx, bool enableCharger, uint8_t brightness) {
     bool powered = nrfx_power_usbstatus_get() > NRFX_POWER_USB_STATE_DISCONNECTED;
     setBrightness(brightness);
-    gpio_pin_set_dt(&chargerEnDt, 0);
+    gpio_pin_set_dt(&chargerEnDt, enableCharger);
     k_sleep(K_MSEC(5000));
     LogTo(DeviceId_Uhk_Dongle, LogTarget_Uart, "IDX,DevId,enCh,Pow,B,V %d %d %d %d %d %d\n", idx, DEVICE_ID, enableCharger, powered, brightness, getVoltage());
     gpio_pin_set_dt(&chargerEnDt, 1);
