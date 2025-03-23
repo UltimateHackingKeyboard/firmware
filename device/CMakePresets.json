@@ -14,6 +14,7 @@
                 "NCS_TOOLCHAIN_VERSION": "NONE",
                 "BOARD": "uhk-60-right",
                 "BOARD_ROOT": "${sourceParentDir}/",
+                "CONF_FILE": "${sourceDir}/prj.conf",
                 "OVERLAY_CONFIG": "${sourceDir}/prj.conf.overlays/uhk-60-v1-right.prj.conf"
             },
             "warnings": {
@@ -29,6 +30,7 @@
                 "NCS_TOOLCHAIN_VERSION": "NONE",
                 "BOARD": "uhk-60-right",
                 "BOARD_ROOT": "${sourceParentDir}/",
+                "CONF_FILE": "${sourceDir}/prj.conf",
                 "OVERLAY_CONFIG": "${sourceDir}/prj.conf.overlays/uhk-60-v2-right.prj.conf"
             }
         },
