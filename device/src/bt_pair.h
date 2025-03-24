@@ -34,5 +34,6 @@
 
     extern pairing_mode_t BtPair_PairingMode;
     extern bool BtPair_LastOobPairingSucceeded;
+    extern bool BtPair_PairingAsCentral;
 
 #endif // __BT_PAIR_H__

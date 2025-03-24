@@ -20,7 +20,7 @@ bool BtPair_LastOobPairingSucceeded = true;
 
 pairing_mode_t BtPair_PairingMode = PairingMode_Advertise;
 
-static bool pairingAsCentral = false;
+bool BtPair_PairingAsCentral = false;
 static bool initialized = false;
 static struct bt_le_oob oobRemote;
 static struct bt_le_oob oobLocal;
@@ -104,7 +104,7 @@ void BtPair_SetRemoteOob(const struct bt_le_oob* oob) {
 
 #ifdef CONFIG_BT_CENTRAL
 void BtPair_PairCentral() {
-    pairingAsCentral = true;
+    BtPair_PairingAsCentral = true;
     Settings_Reload();
     bt_le_oob_set_sc_flag(true);
     BtScan_Start();
@@ -115,7 +115,7 @@ void BtPair_PairCentral() {
 
 #ifdef CONFIG_BT_PERIPHERAL
 void BtPair_PairPeripheral() {
-    pairingAsCentral = false;
+    BtPair_PairingAsCentral = false;
     Settings_Reload();
     bt_le_oob_set_sc_flag(true);
     BtAdvertise_Start(BtAdvertise_Config());
