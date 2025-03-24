@@ -5,11 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [13.0.1] - 2025-03-24
+
+Device Protocol: 4.14.1 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 9.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.3.0
+
+- Fix bug that broke the factory-pairing of the keyboard halves.
+
 ## [13.0.0] - 2025-03-20
 
 Device Protocol: 4.14.1 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: **9.0.0** | Hardware Config: 1.0.0 | Smart Macros: 3.**3.0**
 
-- Parse device actions to easily switch between connections in Agent. `DEVICECONFIG:MAJOR`
+- Parse device actions to easily switch between connections in Agent. `USERCONFIG:MAJOR`
 - Add `reboot` macro command, making standing bugs more bearable by allowing easily rebooting the keyboard. `SMARTMACROS:MINOR`
 - Indicate HID advertisement on the OLED display. HID hosts should be disconnected before pairing new devices.
 - Fix bug that sometimes made diagonal mouse key movements diverge from diagonal direction.
