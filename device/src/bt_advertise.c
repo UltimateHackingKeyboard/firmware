@@ -184,8 +184,10 @@ adv_config_t BtAdvertise_Config() {
     switch (DEVICE_ID) {
         case DeviceId_Uhk80_Left:
             if (BtPair_PairingMode == PairingMode_Oob) {
-                struct bt_le_oob* oob = BtPair_GetRemoteOob();
-                return ADVERTISEMENT_DIRECT_NUS(&oob->addr);
+                return ADVERTISEMENT(ADVERTISE_NUS | ADVERTISE_HID);
+                // Fails handshake with "RF Noise?"
+                // struct bt_le_oob* oob = BtPair_GetRemoteOob();
+                // return ADVERTISEMENT_DIRECT_NUS(&oob->addr);
             }
             else if (Peers[PeerIdRight].conn == NULL) {
                 return ADVERTISEMENT_DIRECT_NUS(&Peers[PeerIdRight].addr);
@@ -197,8 +199,10 @@ adv_config_t BtAdvertise_Config() {
             bool freeSlots = BtConn_UnusedPeripheralConnectionCount();
             if (freeSlots > 0) {
                 if (BtPair_PairingMode == PairingMode_Oob) {
-                    struct bt_le_oob* oob = BtPair_GetRemoteOob();
-                    return ADVERTISEMENT_DIRECT_NUS(&oob->addr);
+                    return ADVERTISEMENT(ADVERTISE_NUS | ADVERTISE_HID);
+                    // Fails handshake with "RF Noise?"
+                    // struct bt_le_oob* oob = BtPair_GetRemoteOob();
+                    // return ADVERTISEMENT_DIRECT_NUS(&oob->addr);
                 }
                 else if (freeSlots == 1 && SelectedHostConnectionId != ConnectionId_Invalid) {
                     /* we need to reserve last peripheral slot for a specific target */

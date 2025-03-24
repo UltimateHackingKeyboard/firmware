@@ -526,7 +526,7 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
         }
     }
 
-    if (BtPair_PairingMode != PairingMode_Oob && !BtManager_Restarting) {
+    if (!BtManager_Restarting) {
         BtManager_StartScanningAndAdvertisingAsync();
     }
 
