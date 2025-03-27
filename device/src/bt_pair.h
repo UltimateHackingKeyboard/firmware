@@ -7,12 +7,14 @@
     #include <stdint.h>
     #include "device.h"
     #include <stdbool.h>
+    #include "bt_defs.h"
 
 // Macros:
 
 // Typedefs:
 
     #define PAIRING_TIMEOUT 20000
+    #define USER_PAIRING_TIMEOUT 120000
 
 // Functions:
 
@@ -24,13 +26,14 @@
     void BtPair_EndPairing(bool success, const char* msg);
     void BtPair_Unpair(const bt_addr_le_t addr);
     bool BtPair_IsDeviceBonded(const bt_addr_le_t *addr);
-    void BtManager_EnterPairingMode();
+    void BtManager_EnterMode(pairing_mode_t mode, bool toggle);
     void BtPair_ClearUnknownBonds();
     void BtPair_UnpairAllNonLR();
 
 // Variables
 
-    extern bool BtPair_OobPairingInProgress;
-    extern bool BtPair_LastPairingSucceeded;
+    extern pairing_mode_t BtPair_PairingMode;
+    extern bool BtPair_LastOobPairingSucceeded;
+    extern bool BtPair_PairingAsCentral;
 
 #endif // __BT_PAIR_H__

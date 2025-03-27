@@ -1,5 +1,6 @@
 #include <math.h>
 #include "atomicity.h"
+#include "bt_defs.h"
 #include "event_scheduler.h"
 #include "host_connection.h"
 #include "key_action.h"
@@ -50,6 +51,7 @@
 #include "keyboard/charger.h"
 #include "logger.h"
 #include "trace.h"
+#include "bt_pair.h"
 #else
 #include "stubs.h"
 #endif
@@ -358,6 +360,12 @@ static void applyConnectionAction(connection_action_t command, uint8_t hostConne
             break;
         case ConnectionAction_SwitchByHostConnectionId:
             HostConnections_SelectByHostConnIndex(hostConnectionIdx);
+            break;
+        case ConnectionAction_ToggleAdvertisement:
+            BtManager_EnterMode(PairingMode_Advertise, true);
+            break;
+        case ConnectionAction_TogglePairing:
+            BtManager_EnterMode(PairingMode_PairHid, true);
             break;
     }
 #endif
@@ -823,7 +831,6 @@ static bool blockedByKeystrokeDelay() {
 void UpdateUsbReports(void)
 {
     if (blockedByKeystrokeDelay()) {
-        Trace_Printf("c1");
         return;
     }
 
@@ -837,9 +844,7 @@ void UpdateUsbReports(void)
     bool resending = EventVector_IsSet(EventVector_ResendUsbReports);
 
     if (!resending) {
-        Trace_Printf("c2");
         updateActiveUsbReports();
-        Trace_Printf("c3");
     }
 
     bool sendingNew = EventVector_IsSet(EventVector_SendUsbReports);
@@ -847,13 +852,10 @@ void UpdateUsbReports(void)
     if (resending || sendingNew) {
         if (CurrentPowerMode < PowerMode_Lock) {
             if (!resending) {
-                Trace_Printf("c4");
                 mergeReports();
-                Trace_Printf("c5");
             }
 
             sendActiveReports();
-            Trace_Printf("c6");
         } else {
             EventVector_Unset(EventVector_SendUsbReports | EventVector_ResendUsbReports);
         }
@@ -862,5 +864,4 @@ void UpdateUsbReports(void)
     if (DisplaySleepModeActive || KeyBacklightSleepModeActive) {
         LedManager_UpdateSleepModes();
     }
-    Trace_Printf("c7");
 }

@@ -42,6 +42,8 @@
         ConnectionAction_Next,
         ConnectionAction_Previous,
         ConnectionAction_SwitchByHostConnectionId,
+        ConnectionAction_ToggleAdvertisement,
+        ConnectionAction_TogglePairing,
     } connection_action_t;
 
     typedef enum {

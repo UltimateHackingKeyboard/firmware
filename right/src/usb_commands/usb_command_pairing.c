@@ -76,7 +76,7 @@ void UsbCommand_IsPaired(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHid
 }
 
 void UsbCommand_EnterPairingMode(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer) {
-    BtManager_EnterPairingMode();
+    BtManager_EnterMode(PairingMode_Oob, false);
 }
 
 #endif

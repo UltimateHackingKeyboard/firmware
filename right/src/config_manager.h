@@ -85,6 +85,7 @@
         uint32_t I2cBaudRate;
         bool Bt_AllowUnsecuredConnections;
         bool Bt_Enabled;
+        bool Bt_AlwaysAdvertiseHid;
         uint8_t Bt_MaxPeripheralConnections;
     } config_t;
 

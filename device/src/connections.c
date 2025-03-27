@@ -367,7 +367,7 @@ static void switchOver(connection_id_t connectionId) {
     Peers[Connections[connectionId].peerId].lastSwitchover = k_uptime_get_32();
 
     if (connectionId == SelectedHostConnectionId) {
-        SelectedHostConnectionId = ConnectionId_Invalid;
+        HostConnection_SetSelectedConnection(ConnectionId_Invalid);
     }
 
     UsbCompatibility_UpdateKeyboardLedsState();

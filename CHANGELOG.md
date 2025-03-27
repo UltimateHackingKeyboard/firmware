@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [13.0.1] - 2025-03-24
+
+Device Protocol: 4.14.1 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 9.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.3.0
+
+- Fix bug that broke the factory-pairing of the keyboard halves.
+
+## [13.0.0] - 2025-03-20
+
+Device Protocol: 4.14.1 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: **9.0.0** | Hardware Config: 1.0.0 | Smart Macros: 3.**3.0**
+
+- Parse device actions to easily switch between connections in Agent. `USERCONFIG:MAJOR`
+- Add `reboot` macro command, making standing bugs more bearable by allowing easily rebooting the keyboard. `SMARTMACROS:MINOR`
+- Indicate HID advertisement on the OLED display. HID hosts should be disconnected before pairing new devices.
+- Fix bug that sometimes made diagonal mouse key movements diverge from diagonal direction.
+- Update target OLED widget when the connection is selected, so it doesn't get stuck on the old target.
+- Check the dongle protocol version of the connected dongle and warn if it doesn't match the expected version.
+- Fix unwanted pairing screen that was shown for dongles that were bonded on the dongle side but not on the right side.
+- Disable gamepad USB interface by default.
+- Delete bonds when deleting device pairings.
+- Prevent simultaneous BLE HID connections until c2usb supports them.
+- Fix main loop freezes.
+- Add the `bluetooth [toggle] { pair | advertise | noAdvertise }` macro command, but they can cause connection oscillations for now. `SMARTMACROS:MINOR`
+- Expose the `bluetooth.alwaysAdvertiseHid` boolean variable. `SMARTMACROS:MINOR`
+- Expose the `bluetooth.peripheralConnectionCount` integer variable for development purposes. `SMARTMACROS:MINOR`
+- Always feature connection names in the Zephyr log.
+
 ## [12.4.0] - 2025-02-26
 
 Device Protocol: 4.14.1 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 8.3.0 | Hardware Config: 1.0.0 | Smart Macros: 3.**2.0**

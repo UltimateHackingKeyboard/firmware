@@ -157,5 +157,6 @@
     void StateSync_ResetConfig();
 
     void StateSync_CheckFirmwareVersions();
+    void StateSync_CheckDongleProtocolVersion();
 
 #endif

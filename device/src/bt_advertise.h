@@ -5,6 +5,7 @@
 
     #include <stdint.h>
     #include <zephyr/bluetooth/addr.h>
+    #include "bt_pair.h"
     #include "shared/attributes.h"
 
 // Macros:
@@ -22,7 +23,7 @@
 
 // Variables:
 
-    extern bool AdvertisingHid;
+    extern pairing_mode_t AdvertisingHid;
 
 // Functions:
 

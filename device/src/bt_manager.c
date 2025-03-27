@@ -1,4 +1,5 @@
 #include "bt_manager.h"
+#include "bt_pair.h"
 #include "connections.h"
 #include "device_state.h"
 #include "event_scheduler.h"
@@ -113,9 +114,13 @@ void BtManager_StartScanningAndAdvertising() {
     bool rightShouldAdvertise = DEVICE_IS_UHK80_RIGHT && true;
     bool shouldAdvertise = leftShouldAdvertise || rightShouldAdvertise;
 
-    bool rightShouldScan = DEVICE_IS_UHK80_RIGHT && !DeviceState_IsTargetConnected(ConnectionTarget_Left);
-    bool dongleShouldScan = DEVICE_IS_UHK_DONGLE && Peers[PeerIdRight].conn == NULL;
-    bool shouldScan = rightShouldScan || dongleShouldScan;
+    bool rightShouldScanForPeer = DEVICE_IS_UHK80_RIGHT && BtPair_PairingMode != PairingMode_Oob && !DeviceState_IsTargetConnected(ConnectionTarget_Left);
+    bool rightShouldScanForOob = DEVICE_IS_UHK80_RIGHT && BtPair_PairingMode == PairingMode_Oob && BtPair_PairingAsCentral;
+    bool dongleShouldScanForPeer = DEVICE_IS_UHK_DONGLE && BtPair_PairingMode != PairingMode_Oob && Peers[PeerIdRight].conn == NULL;
+    bool dongleShouldScanForOob = DEVICE_IS_UHK_DONGLE && BtPair_PairingMode == PairingMode_Oob && BtPair_PairingAsCentral;
+    bool shouldScan = rightShouldScanForPeer || rightShouldScanForOob || dongleShouldScanForPeer || dongleShouldScanForOob;
+
+    printk("==== btManager: should scanAndAdvertise %d %d\n", shouldScan, shouldAdvertise);
 
     if (shouldAdvertise || shouldScan) {
         const char* label = "";
@@ -130,14 +135,14 @@ void BtManager_StartScanningAndAdvertising() {
     }
 
 #ifdef CONFIG_BT_PERIPHERAL
-    if (leftShouldAdvertise || rightShouldAdvertise) {
+    if (!shouldScan && shouldAdvertise) {
         err = BtAdvertise_Start(BtAdvertise_Config());
         success &= err == 0;
     }
 #endif
 
 #ifdef CONFIG_BT_CENTRAL
-    if (rightShouldScan || dongleShouldScan) {
+    if (shouldScan) {
         err = BtScan_Start();
         success &= err == 0;
     }
