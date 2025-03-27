@@ -664,6 +664,8 @@ static void auth_cancel(struct bt_conn *conn) {
         bt_conn_unref(auth_conn);
         auth_conn = NULL;
     }
+
+    PairingScreen_Feedback(false);
 }
 
 static void auth_oob_data_request(struct bt_conn *conn, struct bt_conn_oob_info *oob_info) {
