@@ -41,6 +41,8 @@
 
 // Functions:
 
+    void MacroVariables_Reset(void);
+    macro_result_t Macros_ProcessStatsVariablesCommand(void);
     macro_result_t Macros_ProcessSetVarCommand(parser_context_t* ctx);
     macro_variable_t* Macros_ConsumeExistingWritableVariable(parser_context_t* ctx);
     int32_t Macros_ConsumeInt(parser_context_t* ctx);

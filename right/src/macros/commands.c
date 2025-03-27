@@ -2355,6 +2355,9 @@ static macro_result_t processCommand(parser_context_t* ctx)
             else if (ConsumeToken(ctx, "statsPostponerStack")) {
                 return Macros_ProcessStatsPostponerStackCommand();
             }
+            else if (ConsumeToken(ctx, "statsVariables")) {
+                return Macros_ProcessStatsVariablesCommand();
+            }
             else if (ConsumeToken(ctx, "switchKeymap")) {
                 return processSwitchKeymapCommand(ctx);
             }
