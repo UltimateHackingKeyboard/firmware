@@ -10,6 +10,7 @@
 #include "debug.h"
 #include "zephyr/bluetooth/addr.h"
 #include "resend.h"
+#include "bt_manager.h"
 
 #define NUS_SLOTS 2
 
