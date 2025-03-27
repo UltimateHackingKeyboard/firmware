@@ -150,11 +150,12 @@ static void setLedValues() {
 }
 
 static void setScaling(uint8_t currentScaling) {
+    uint8_t limitedScaling = currentScaling - (currentScaling/4);
     setLedsCs(true);
     writeSpi(LedPagePrefix | 1);
     writeSpi(0x00);
     for (int i=0; i<255; i++) {
-        writeSpi(currentScaling);
+        writeSpi(limitedScaling);
     }
     setLedsCs(false);
 }
