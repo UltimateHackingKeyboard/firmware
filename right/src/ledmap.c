@@ -406,7 +406,7 @@ static void setPerKeyRgb(const rgb_t* color, uint8_t slotId, uint8_t keyId)
     if (DEVICE_IS_UHK60 || slotId == SlotId_LeftModule) {
         LedDriverValues[slotId][ledMapItem->red] = color->red * KeyBacklightBrightness / 255;
         LedDriverValues[slotId][ledMapItem->green] = color->green * KeyBacklightBrightness / brightnessDivisor / 255;
-        LedDriverValues[slotId][ledMapItem->blue] = color->blue * KeyBacklightBrightness / 255;
+        LedDriverValues[slotId][ledMapItem->blue] = color->blue * KeyBacklightBrightness / 255 / 2;
     }
 
 #ifdef __ZEPHYR__
@@ -416,7 +416,7 @@ static void setPerKeyRgb(const rgb_t* color, uint8_t slotId, uint8_t keyId)
     if (matchesRightHalf || matchesLeftHalf) {
         Uhk80LedDriverValues[ledMapItem->red] = color->red;
         Uhk80LedDriverValues[ledMapItem->green] = color->green;
-        Uhk80LedDriverValues[ledMapItem->blue] = color->blue;
+        Uhk80LedDriverValues[ledMapItem->blue] = color->blue / 2;
     }
 #endif
 }
@@ -620,6 +620,18 @@ backlighting_mode_t Ledmap_GetEffectiveBacklightMode() {
     } else {
         return TemporaryBacklightingMode;
     }
+}
+
+static void setKeyColor(const rgb_t* color, uint8_t slotId, uint8_t keyId) {
+    setPerKeyColor(color, determineMode(slotId), slotId, keyId);
+}
+
+void Ledmap_SetSfjlValues(void) {
+    setEntireMatrix(0);
+    setKeyColor(&white, SlotId_LeftKeyboardHalf, 15);
+    setKeyColor(&white, SlotId_LeftKeyboardHalf, 17);
+    setKeyColor(&white, SlotId_RightKeyboardHalf, 16);
+    setKeyColor(&white, SlotId_RightKeyboardHalf, 18);
 }
 
 void handleModeChange(backlighting_mode_t from, backlighting_mode_t to) {

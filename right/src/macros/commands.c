@@ -1508,6 +1508,17 @@ static bool processIfModuleConnected(parser_context_t* ctx, bool negate)
     return moduleConnected != negate;
 }
 
+static macro_result_t processPanicCommand(parser_context_t* ctx) {
+    if (Macros_DryRun) {
+        return MacroResult_Finished;
+    }
+
+#ifdef __ZEPHYR__
+    k_panic();
+#endif
+    return MacroResult_Finished;
+}
+
 static macro_result_t processPowerModeCommand(parser_context_t* ctx) {
     bool toggle = false;
 
@@ -1515,27 +1526,29 @@ static macro_result_t processPowerModeCommand(parser_context_t* ctx) {
         toggle = true;
     }
 
-    if (ConsumeToken(ctx, "deepSleep") || ConsumeToken(ctx, "sleep")) {
-        if (Macros_DryRun) {
-            return MacroResult_Finished;
-        }
-        PowerMode_ActivateMode(PowerMode_DeepSleep, toggle);
-    }
-    else if (ConsumeToken(ctx, "lightSleep")) {
-        if (Macros_DryRun) {
-            return MacroResult_Finished;
-        }
-        PowerMode_ActivateMode(PowerMode_LightSleep, toggle);
-    }
-    else if (ConsumeToken(ctx, "wake")) {
-        if (Macros_DryRun) {
-            return MacroResult_Finished;
-        }
-        PowerMode_ActivateMode(PowerMode_Awake, toggle);
-    }
+    power_mode_t mode = PowerMode_Awake;
+
+    parser_context_t ctxCopy = *ctx;
+
+    if (false) { }
+    else if (ConsumeToken(ctx, "wake")) { mode = PowerMode_Awake; }
+    else if (ConsumeToken(ctx, "lock")) { mode = PowerMode_Lock; }
+    else if (ConsumeToken(ctx, "sleep")) { mode = PowerMode_SfjlSleep; }
+    else if (ConsumeToken(ctx, "shutDown")) { mode = PowerMode_ShutDown; }
     else {
-        Macros_ReportError("Unrecognized parameter:", ctx->at, ctx->at);
+        Macros_ReportError("This mode is not available in this release:", ctxCopy.at, ctxCopy.at);
     }
+
+    if (Macros_DryRun || Macros_ParserError) {
+        return MacroResult_Finished;
+    }
+
+    /* wait until the key is released to prevent backlight flashing */
+    if (Macros_CurrentMacroKeyIsActive()) {
+        return Macros_SleepTillKeystateChange();
+    }
+
+    PowerMode_ActivateMode(mode, toggle);
 
     return MacroResult_Finished;
 }
@@ -1857,7 +1870,7 @@ static macro_result_t processCommand(parser_context_t* ctx)
                 return processConsumePendingCommand(ctx);
             }
             else if (ConsumeToken(ctx, "clearStatus")) {
-                return Macros_ProcessClearStatusCommand();
+                return Macros_ProcessClearStatusCommand(true);
             }
             else if (ConsumeToken(ctx, "call")) {
                 return processCallCommand(ctx);
@@ -2270,6 +2283,9 @@ static macro_result_t processCommand(parser_context_t* ctx)
             }
             else if (ConsumeToken(ctx, "powerMode")) {
                 return processPowerModeCommand(ctx);
+            }
+            else if (ConsumeToken(ctx, "panic")) {
+                return processPanicCommand(ctx);
             }
             else {
                 goto failed;
