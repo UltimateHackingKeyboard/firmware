@@ -7,6 +7,7 @@
     #include <zephyr/bluetooth/bluetooth.h>
     #include <stdint.h>
     #include "device.h"
+    #include "bt_defs.h"
 
 // Macros:
 
@@ -24,5 +25,6 @@
     void BtManager_RestartBt();
     void BtManager_StartScanningAndAdvertising();
     void BtManager_StartScanningAndAdvertisingAsync();
+    void BtManager_EnterMode(pairing_mode_t mode, bool toggle);
 
 #endif // __BT_MANAGER_H__

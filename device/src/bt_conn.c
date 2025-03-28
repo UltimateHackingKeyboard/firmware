@@ -398,6 +398,7 @@ static void connectHid(struct bt_conn *conn, connection_id_t connectionId, conne
     // Assume that HOGP is ready
     LOG_BT("Established HID connection with %s\n", GetPeerStringByConn(conn));
     Connections_SetState(connectionId, ConnectionState_Ready);
+    BtManager_StartScanningAndAdvertisingAsync();
 }
 
 #define BT_UUID_NUS_VAL BT_UUID_128_ENCODE(0x6e400001, 0xb5a3, 0xf393, 0xe0a9, 0xe50e24dcca9e)
@@ -539,6 +540,7 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
 void Bt_SetConnectionConfigured(struct bt_conn* conn) {
     uint8_t peerId = GetPeerIdByConn(conn);
     Connections_SetState(Peers[peerId].connectionId, ConnectionState_Ready);
+    BtManager_StartScanningAndAdvertisingAsync();
 }
 
 static bool isUhkDeviceConnection(connection_type_t connectionType) {
@@ -573,10 +575,9 @@ static void connectAuthenticatedConnection(struct bt_conn *conn, connection_id_t
         default:
             LogU("Authenticated connection is not known. Disconnecting %s", GetPeerStringByConn(conn));
             safeDisconnect(conn, BT_HCI_ERR_AUTH_FAIL);
+            BtManager_StartScanningAndAdvertisingAsync();
             break;
     }
-
-    BtManager_StartScanningAndAdvertisingAsync();
 }
 
 static void securityChanged(struct bt_conn *conn, bt_security_t level, enum bt_security_err err) {
@@ -886,7 +887,7 @@ void BtConn_ReserveConnections() {
             disconnectOldestHost();
             // Advertising will get started when the host actually gets disconnected
         } else {
-            BtManager_StartScanningAndAdvertising();
+            BtManager_StartScanningAndAdvertisingAsync();
         }
         WIDGET_REFRESH(&TargetWidget);
     }

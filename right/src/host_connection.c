@@ -71,8 +71,8 @@ static void selectConnection(uint8_t connectionId) {
         Connections_HandleSwitchover(connectionId, true);
         HostConnection_SetSelectedConnection(ConnectionId_Invalid);
     } else {
-        BtConn_ReserveConnections();
         HostConnection_SetSelectedConnection(connectionId);
+        BtConn_ReserveConnections();
     }
     Connections_ReportState(connectionId);
 }
