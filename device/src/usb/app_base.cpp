@@ -15,7 +15,7 @@ void app_base::send(const std::span<const uint8_t> &buffer)
     }
     std::copy(buffer.begin(), buffer.end(), in_buffer_.data() + sizeof(in_id_));
     auto result = send_report(in_buffer_);
-    if (result != hid::result::OK) {
+    if (result != hid::result::ok) {
         sending_sem_.release();
     }
 }

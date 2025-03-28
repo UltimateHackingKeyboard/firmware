@@ -1,0 +1,25 @@
+From a64431fb94f0bec11c74e47497d146a26c27df0e Mon Sep 17 00:00:00 2001
+From: Benedek Kupper <kupper.benedek@gmail.com>
+Date: Thu, 27 Mar 2025 10:30:49 +0100
+Subject: [PATCH] udc: nrf: disable SOF interrupts
+
+---
+ drivers/usb/udc/udc_nrf.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/usb/udc/udc_nrf.c b/drivers/usb/udc/udc_nrf.c
+index e722917446..fdb713db2e 100644
+--- a/drivers/usb/udc/udc_nrf.c
++++ b/drivers/usb/udc/udc_nrf.c
+@@ -553,7 +553,7 @@ static void udc_nrf_power_handler(nrfx_power_usb_evt_t pwr_evt)
+ 		break;
+ 	case NRFX_POWER_USB_EVT_READY:
+ 		LOG_DBG("POWER event ready");
+-		nrf_usbd_common_start(true);
++		nrf_usbd_common_start(false);
+ 		break;
+ 	case NRFX_POWER_USB_EVT_REMOVED:
+ 		LOG_DBG("POWER event removed");
+-- 
+2.44.0
+
