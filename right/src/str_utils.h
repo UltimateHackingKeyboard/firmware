@@ -19,6 +19,7 @@
 // Macros:
 
     #define EXPAND_SEGMENT(SEGMENT) SegmentLen(SEGMENT), SEGMENT.start
+    #define EXPAND_REF(REF) REF.len, (const char*)ValidatedUserConfigBuffer.buffer + REF.offset
 
 // Typedefs:
 

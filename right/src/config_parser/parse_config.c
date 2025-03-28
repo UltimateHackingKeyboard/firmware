@@ -26,6 +26,7 @@
 #include "error_reporting.h"
 #include "versioning.h"
 #include "stubs.h"
+#include "macros/vars.h"
 
 #if DEVICE_HAS_OLED
 #include "keyboard/oled/widgets/widgets.h"
@@ -346,6 +347,7 @@ parser_error_t parseConfig(config_buffer_t *buffer)
         LedManager_UpdateSleepModes();
         BtPair_ClearUnknownBonds();
         BtConn_UpdateHostConnectionPeerAllocations();
+        MacroVariables_Reset();
         WIDGET_REFRESH(&TargetWidget); // the target may have been renamed
 
         // Update counts

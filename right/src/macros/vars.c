@@ -2,6 +2,7 @@
 #include "macros/string_reader.h"
 #include "postponer.h"
 #include "macros/keyid_parser.h"
+#include "typedefs.h"
 #include "utils.h"
 #include "str_utils.h"
 #include "macros/core.h"
@@ -12,6 +13,7 @@
 #include "debug.h"
 #include "macros/set_command.h"
 #include "config_manager.h"
+#include "str_utils.h"
 
 #if !defined(MAX)
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -48,6 +50,19 @@ static macro_variable_t consumeValue(parser_context_t* ctx);
 static macro_variable_t negate(parser_context_t *ctx, macro_variable_t res);
 static macro_variable_t consumeMinMaxOperation(parser_context_t* ctx, operator_t op);
 static macro_variable_t negateBool(parser_context_t *ctx, macro_variable_t res);
+
+macro_result_t Macros_ProcessStatsVariablesCommand(void) {
+    if (Macros_DryRun) {
+        return MacroResult_Finished;
+    }
+
+    PRINTM("Variables:");
+    for (uint8_t i = 0; i < macroVariableCount; i++) {
+        PRINTM("  %.*s: %d", EXPAND_REF(macroVariables[i].name), macroVariables[i].asInt);
+    }
+
+    return MacroResult_Finished;
+}
 
 static macro_variable_t intVar(int32_t value)
 {
@@ -838,6 +853,10 @@ ATTR_UNUSED static void test(const char* command, macro_variable_t expectedResul
         LogU("  Test succes: '%s': %s\n", command, comment);
     }
 #endif
+}
+
+void MacroVariables_Reset(void) {
+    macroVariableCount = 0;
 }
 
 
