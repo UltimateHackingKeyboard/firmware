@@ -34,6 +34,7 @@ static void addAddress(int* err, bt_addr_le_t* addr) {
 static int scan_fill() {
     int err = 0;
 
+    printk("Bt: filling scan filters\n");
     if (DEVICE_IS_UHK80_RIGHT) {
         addAddress(&err, &Peers[PeerIdLeft].addr);
     }
