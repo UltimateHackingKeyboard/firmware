@@ -138,6 +138,9 @@ static void processEvt(event_scheduler_event_t evt)
         case EventSchedulerEvent_CheckDongleProtocolVersion:
             StateSync_CheckDongleProtocolVersion();
             break;
+        case EventSchedulerEvent_UpdateConnectionStates:
+            Connections_UpdateStates();
+            break;
         default:
             return;
     }
