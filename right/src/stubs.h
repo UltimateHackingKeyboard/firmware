@@ -53,6 +53,7 @@
     extern void StateSync_CheckDongleProtocolVersion();
     extern void Trace(char a);
     extern void Trace_Printf(const char *fmt, ...);
+    extern void BtAdvertise_DisableAdvertisingIcon(void);
 
 #if DEVICE_HAS_OLED
 #define WIDGET_REFRESH(W) Widget_Refresh(W)
