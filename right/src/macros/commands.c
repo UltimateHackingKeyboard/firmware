@@ -741,6 +741,9 @@ static macro_result_t processBluetoothCommand(parser_context_t *ctx)
         return MacroResult_Finished;
     }
 
+    if (mode == PairingMode_Off) {
+        Cfg.Bt_AlwaysAdvertiseHid = false;
+    }
 #ifdef __ZEPHYR__
     BtManager_EnterMode(mode, toggle);
 #endif

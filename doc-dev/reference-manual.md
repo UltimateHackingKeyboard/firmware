@@ -341,8 +341,8 @@ COMMAND = setEmergencyKey KEYID
 - `bluetooth [toggle] { pair | advertise | noAdvertise }` controls advertising for hid devices - this doesn't affect dongle and left half advertising.
   - `pair` will start pairing mode. The device will be discoverable for 2 minutes, and will refuse connections from all known devices so that it is possible to pair a new device.
   - `advertise` will make the device discoverable for 2 minutes. This allows ble hid devices to either connect or pair.
-  - `noAdvertise` will return the normal operation mode (depends on bluetooth.alwaysAdvertiseHid). 
-  - `toggle` will make keyboard enter the default mode if the supplied mode is active. This doesn't disable advertisement if bluetooth.alwaysAdvertiseHid is set to true. 
+  - `noAdvertise` will disable alwaysAdvertiseHid and stop advertising.
+  - `toggle` will make keyboard enter the default mode if the supplied mode is active.
 - `switchHost { last | next | previous | <host connection name (IDENTIFIER)> | <host connection name (STRING)> }` switches the host connection. 
   - `previous | next` switch to the next currently connected host in the list of hosts. E.g., this iterates over blue dongles, as well as some other connections.
   - `last` switches to the previously active host connection. For instance the last in `switchHost "pc"; switchHost "laptop"; switchHost last` switches to "pc".
