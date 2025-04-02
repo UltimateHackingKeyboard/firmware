@@ -12,6 +12,7 @@
 #include "stubs.h"
 #include "usb_compatibility.h"
 #include "logger.h"
+#include "event_scheduler.h"
 
 connection_t Connections[ConnectionId_Count] = {
     [ConnectionId_UsbHidRight] = { .isAlias = true },
@@ -139,6 +140,7 @@ void Connections_SetState(connection_id_t connectionId, connection_state_t state
 
     if ( Connections[connectionId].state != state ) {
         Connections[connectionId].state = state;
+        Connections[connectionId].newState = state;
         reportConnectionState(connectionId, "Conn state");
 
         Connections_ResetWatermarks(connectionId);
@@ -148,6 +150,23 @@ void Connections_SetState(connection_id_t connectionId, connection_state_t state
             // Connections_HandleSwitchover calls DeviceState_Update for us
         } else {
             DeviceState_Update(Connections_Target(connectionId));
+        }
+    }
+}
+
+void Connections_SetStateAsync(connection_id_t connectionId, connection_state_t state) {
+    connectionId = resolveAliases(connectionId);
+
+    if (Connections[connectionId].newState != state) {
+        Connections[connectionId].newState = state;
+        EventScheduler_Schedule(CurrentTime + 50, EventSchedulerEvent_UpdateConnectionStates, "SetStateAsync");
+    }
+}
+
+void Connections_UpdateStates(void) {
+    for (uint8_t i = ConnectionId_Invalid; i < ConnectionId_Count; i++) {
+        if (Connections[i].state != Connections[i].newState) {
+            Connections_SetState(i, Connections[i].newState);
         }
     }
 }
