@@ -278,6 +278,7 @@ COMMAND = statsPostponerStack
 COMMAND = statsActiveKeys
 COMMAND = statsActiveMacros
 COMMAND = statsRecordKeyTiming
+COMMAND = statsVariables
 COMMAND = diagnose
 COMMAND = panic
 COMMAND = setStatus STRING
