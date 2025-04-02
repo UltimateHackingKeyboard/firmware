@@ -38,4 +38,7 @@
     void UsbCompatibility_SetCurrentKeyboardLedsState(keyboard_led_state_t state);
     void UsbCompatibility_SetKeyboardLedsState(connection_id_t connectionId, bool capsLock, bool numLock, bool scrollLock);
 
+    float VerticalScrollMultiplier(void);
+    float HorizontalScrollMultiplier(void);
+
 #endif // __USB_HEADER__
