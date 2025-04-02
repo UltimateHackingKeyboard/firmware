@@ -34,3 +34,4 @@
     ATTRS void Trace(char a) {};
     ATTRS void Trace_Printf(const char *fmt, ...) {};
     ATTRS void BtAdvertise_DisableAdvertisingIcon(void) {};
+    ATTRS void Connections_UpdateStates(void) {};
