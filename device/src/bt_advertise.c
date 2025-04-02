@@ -108,6 +108,10 @@ static void updateAdvertisingIcon(bool newAdvertising) {
     }
 }
 
+void BtAdvertise_DisableAdvertisingIcon(void) {
+    updateAdvertisingIcon(false);
+}
+
 uint8_t BtAdvertise_Start(adv_config_t advConfig)
 {
     int err = 0;

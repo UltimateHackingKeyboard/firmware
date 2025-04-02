@@ -27,6 +27,7 @@
 
 // Functions:
 
+    void BtAdvertise_DisableAdvertisingIcon(void);
     uint8_t BtAdvertise_Start(adv_config_t advConfig);
     void BtAdvertise_Stop(void);
     adv_config_t BtAdvertise_Config();
