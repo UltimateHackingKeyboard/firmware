@@ -359,6 +359,7 @@ static macro_variable_t bluetooth(parser_context_t* ctx, set_command_action_t ac
     } else if (ConsumeToken(ctx, "alwaysAdvertiseHid")) {
         ASSIGN_BOOL(Cfg.Bt_AlwaysAdvertiseHid);
 #if DEVICE_IS_UHK80_RIGHT
+        BtManager_EnterMode(PairingMode_Default, false);
         BtManager_StartScanningAndAdvertisingAsync();
 #endif
     } else {

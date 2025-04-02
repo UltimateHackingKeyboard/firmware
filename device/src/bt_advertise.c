@@ -77,6 +77,7 @@ static void setFilters(adv_config_t advConfig) {
     bt_le_filter_accept_list_clear();
 
     if (advConfig.advType & (ADVERTISE_HID | ADVERTISE_NUS)) {
+        printk("Bt: filling adv allow filter\n");
         for (uint8_t connId = ConnectionId_HostConnectionFirst; connId <= ConnectionId_HostConnectionLast; connId++) {
             host_connection_t* hostConnection = HostConnection(connId);
 
@@ -94,6 +95,7 @@ static void setFilters(adv_config_t advConfig) {
     }
 
     if (advConfig.advType & ADVERTISE_DIRECTED_NUS) {
+        printk("Bt: filling adv allow filter for \"directed\" advertising.\n");
         bt_le_filter_accept_list_add(advConfig.addr);
     }
 }
@@ -124,6 +126,8 @@ uint8_t BtAdvertise_Start(adv_config_t advConfig)
     BtAdvertise_Stop();
 
     updateAdvertisingIcon(advConfig.advType & ADVERTISE_HID);
+
+    printk("Bt: start advertising\n");
 
     // Start advertising
     static struct bt_le_adv_param advParam;

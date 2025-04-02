@@ -11,7 +11,8 @@
         PairingMode_Oob,
         PairingMode_PairHid,
         PairingMode_Advertise,
-        PairingMode_Off
+        PairingMode_Default,
+        PairingMode_Off = PairingMode_Default,
     } pairing_mode_t;
 
 // Functions:

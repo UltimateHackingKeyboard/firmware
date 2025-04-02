@@ -11,6 +11,7 @@
 #include "zephyr/bluetooth/addr.h"
 #include "resend.h"
 #include <zephyr/logging/log.h>
+#include "bt_manager.h"
 
 LOG_MODULE_DECLARE(Bt);
 

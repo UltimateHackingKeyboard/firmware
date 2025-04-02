@@ -323,7 +323,7 @@ void Connections_MoveConnection(uint8_t peerId, connection_id_t oldConnectionId,
     Connections[oldConnectionId].state = ConnectionState_Disconnected;
 
     ActiveHostConnectionId = isActiveConnection ? newConnectionId : ActiveHostConnectionId;
-    SelectedHostConnectionId = isSelectedConnection ? newConnectionId : ActiveHostConnectionId;
+    SelectedHostConnectionId = isSelectedConnection ? newConnectionId : SelectedHostConnectionId;
 
     if (isActiveConnection) {
         WIDGET_REFRESH(&TargetWidget);
