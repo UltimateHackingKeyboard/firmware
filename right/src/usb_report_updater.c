@@ -374,6 +374,9 @@ static void applyConnectionAction(connection_action_t command, uint8_t hostConne
 static void applyOtherAction(other_action_t actionSubtype)
 {
     switch(actionSubtype) {
+        case OtherAction_Lock:
+            PowerMode_ActivateMode(PowerMode_Lock, false);
+            break;
         case OtherAction_Sleep:
             PowerMode_ActivateMode(PowerMode_SfjlSleep, false);
             break;

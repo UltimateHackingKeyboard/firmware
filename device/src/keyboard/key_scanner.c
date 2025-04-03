@@ -167,8 +167,25 @@ static bool scanSfjlWithBlinking(bool fullScan) {
             result = scanKeysOnce(result, fullScan);
         }
 
-        if (result == SfjlScanResult_FullMatch || CurrentPowerMode < PowerMode_LightSleep) {
+        if ( CurrentPowerMode < PowerMode_LightSleep) {
             return true;
+        }
+
+        if (result == SfjlScanResult_FullMatch) {
+            for (uint16_t j = 0; j < 2000/scanInterval; j++) {
+                result = scanKeysOnce(result, fullScan);
+                if (result != SfjlScanResult_FullMatch) {
+                    break;
+                }
+
+                if ( CurrentPowerMode < PowerMode_LightSleep) {
+                    return true;
+                }
+                k_msleep(scanInterval);
+            }
+            if (result == SfjlScanResult_FullMatch) {
+                return true;
+            }
         }
     }
 

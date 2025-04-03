@@ -26,6 +26,7 @@
 
 static const rgb_t black = RGB(0x00, 0x00, 0x00);
 static const rgb_t white = RGB(0xff, 0xff, 0xff);
+static const rgb_t red = RGB(0xff, 0x00, 0x00);
 
 bool Ledmap_AlwaysOn = false;
 backlighting_mode_t TemporaryBacklightingMode = BacklightingMode_Unspecified;
@@ -626,12 +627,17 @@ static void setKeyColor(const rgb_t* color, uint8_t slotId, uint8_t keyId) {
     setPerKeyColor(color, determineMode(slotId), slotId, keyId);
 }
 
+
+void Ledmap_SetBlackValues(void) {
+    setEntireMatrix(0);
+}
+
 void Ledmap_SetSfjlValues(void) {
     setEntireMatrix(0);
-    setKeyColor(&white, SlotId_LeftKeyboardHalf, 15);
-    setKeyColor(&white, SlotId_LeftKeyboardHalf, 17);
-    setKeyColor(&white, SlotId_RightKeyboardHalf, 16);
-    setKeyColor(&white, SlotId_RightKeyboardHalf, 18);
+    setKeyColor(&red, SlotId_LeftKeyboardHalf, 15);
+    setKeyColor(&red, SlotId_LeftKeyboardHalf, 17);
+    setKeyColor(&red, SlotId_RightKeyboardHalf, 16);
+    setKeyColor(&red, SlotId_RightKeyboardHalf, 18);
 }
 
 void handleModeChange(backlighting_mode_t from, backlighting_mode_t to) {

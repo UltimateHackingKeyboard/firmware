@@ -41,13 +41,13 @@ power_mode_config_t PowerModeConfig[PowerMode_Count] = {
     },
     [PowerMode_SfjlSleep] = {
         .name = "SfjlSleep",
-        .i2cInterval = 100,
-        .keyScanInterval = 100,
+        .i2cInterval = 500,
+        .keyScanInterval = 500,
     },
     [PowerMode_ShutDown] = {
         .name = "ShutDown",
-        .i2cInterval = 100,
-        .keyScanInterval = 100,
+        .i2cInterval = 500,
+        .keyScanInterval = 500,
     },
 };
 

@@ -217,11 +217,26 @@ void Uhk80_UpdateLeds() {
     k_wakeup(ledUpdaterTid);
 }
 
+static void setBlack() {
+    k_mutex_lock(&SpiMutex, K_FOREVER);
+
+    setScaling(0);
+    setOperationMode(1);
+    setBasicConfiguration();
+    setLedValues();
+    setScaling(0);
+    setOperationMode(0);
+
+    k_mutex_unlock(&SpiMutex);
+}
+
 void InitLeds_Min(void) {
     gpio_pin_configure_dt(&ledsCsDt, GPIO_OUTPUT);
 
     gpio_pin_configure_dt(&ledsSdbDt, GPIO_OUTPUT);
     gpio_pin_set_dt(&ledsSdbDt, true);
+
+    setBlack();
 }
 
 void InitLeds(void) {

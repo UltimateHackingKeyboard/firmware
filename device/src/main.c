@@ -130,11 +130,12 @@ void mainRuntime(void) {
         InitZephyrI2c();
         InitSpi();
 
+        InitLeds();
+
 #if DEVICE_HAS_OLED
         InitOled();
 #endif // DEVICE_HAS_OLED
 
-        InitLeds();
 
 #if DEVICE_HAS_MERGE_SENSOR
         MergeSensor_Init();

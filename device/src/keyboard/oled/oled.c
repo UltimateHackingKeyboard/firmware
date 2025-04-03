@@ -229,10 +229,13 @@ static void diffUpdate() {
                 buf[buf_pos++] = pixel->value;
                 pixel->oldValue = pixel->value;
 
+                uint16_t changed = 0;
+
                 while (shouldContinueWithoutPositionChange(x, y)) {
                     x -= 2;
                     buf[buf_pos++] = PIXEL(x, y).value;
                     PIXEL(x, y).oldValue = PIXEL(x, y).value;
+                    changed++;
                 }
 
                 writeSpi2(buf, buf_pos);
