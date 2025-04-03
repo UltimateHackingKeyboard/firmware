@@ -12,8 +12,14 @@
 
 // Variables:
 
+
+    extern bool ProxyLog_IsAttached;
+    extern bool ProxyLog_HasLog;
+
 // Functions:
 
-    void InitProxyLogBackend();
+    void ProxyLog_SetAttached(bool attached);
+    void InitProxyLogBackend(void);
+    uint16_t ProxyLog_ConsumeLog(uint8_t* outBuf, uint16_t outBufSize);
 
 #endif /* __MACRO_SET_COMMAND_H__ */

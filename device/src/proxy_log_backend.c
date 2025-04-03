@@ -15,11 +15,53 @@
 
 static bool isInPanicMode = false;
 
-/*
 static char buffer[PROXY_BACKEND_BUFFER_SIZE];
 uint16_t bufferPosition = 0;
 uint16_t bufferLength = 0;
-*/
+
+bool ProxyLog_HasLog = false;
+bool ProxyLog_IsAttached = false;
+
+#define POS(x) ((bufferPosition + (x) + PROXY_BACKEND_BUFFER_SIZE) % PROXY_BACKEND_BUFFER_SIZE)
+
+static void updateNonemptyFlag() {
+    ProxyLog_HasLog = (bufferLength > 0);
+}
+
+uint16_t ProxyLog_ConsumeLog(uint8_t* outBuf, uint16_t outBufSize) {
+    uint16_t copied = 0;
+    uint16_t remaining = MIN(bufferLength, outBufSize);
+    while (remaining > 0) {
+        outBuf[copied++] = buffer[bufferPosition++];
+        if (bufferPosition >= PROXY_BACKEND_BUFFER_SIZE) {
+            bufferPosition = 0;
+        }
+        remaining--;
+        bufferLength--;
+    }
+    if (copied < outBufSize) {
+        outBuf[copied] = 0;
+    }
+    updateNonemptyFlag();
+    return copied;
+}
+
+void ProxyLog_SetAttached(bool attached) {
+    ProxyLog_IsAttached = attached;
+}
+
+void printToOurBuffer(uint8_t *data, size_t length) {
+    for (uint16_t i = 0; i < length; i++) {
+        if (bufferLength < PROXY_BACKEND_BUFFER_SIZE) {
+            buffer[POS(bufferLength)] = data[i];
+            bufferLength++;
+        } else {
+            buffer[bufferPosition++] = data[i];
+            bufferPosition %= PROXY_BACKEND_BUFFER_SIZE;
+        }
+    }
+    updateNonemptyFlag();
+}
 
 static void processLog(const struct log_backend *const backend, union log_msg_generic *msg);
 
@@ -32,7 +74,12 @@ void panic(const struct log_backend *const backend) {
 
 static int outputFunc(uint8_t *data, size_t length, void *ctx)
 {
-    Macros_ReportPrintf("%.*s", length-1, (const char*)data);
+    if (isInPanicMode) {
+        Macros_ReportPrintf("%.*s", length-1, (const char*)data);
+    }
+    if (ProxyLog_IsAttached) {
+        printToOurBuffer(data, length);
+    }
     return length;
 }
 
@@ -48,7 +95,7 @@ static int outputFunc(uint8_t *data, size_t length, void *ctx)
     };
 
 static void processLog(const struct log_backend *const backend, union log_msg_generic *msg) {
-    if (isInPanicMode) {
+    if (isInPanicMode || ProxyLog_IsAttached) {
         log_output_msg_process(&logOutput, &msg->log, 0);
     }
 }
@@ -69,7 +116,7 @@ static struct log_backend_api proxyApi = (struct log_backend_api) {
 
 LOG_BACKEND_DEFINE(logProxy, proxyApi, false);
 
-void InitProxyLogBackend() {
+void InitProxyLogBackend(void) {
     log_init();
 
     const struct log_backend *backend = log_backend_get_by_name("logProxy");
