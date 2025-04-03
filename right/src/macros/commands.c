@@ -1208,11 +1208,7 @@ static macro_result_t processIfShortcutCommand(parser_context_t* ctx, bool negat
                 goto conditionFailed;
             }
             else {
-                if (negate) {
-                    goto conditionPassed;
-                } else {
-                    goto conditionFailed;
-                }
+                goto notMatched;
             }
         }
         else if (orGate) {
@@ -1220,41 +1216,26 @@ static macro_result_t processIfShortcutCommand(parser_context_t* ctx, bool negat
             while (true) {
                 // first keyid had already been processed.
                 if (PostponerQuery_ContainsKeyId(argKeyId)) {
-                    if (negate) {
-                        goto conditionFailed;
-                    } else {
-                        goto conditionPassed;
-                    }
+                    numArgs = 1;
+                    goto matched;
                 }
                 if ((argKeyId = Macros_TryConsumeKeyId(ctx)) == 255 || ctx->at == ctx->end) {
                     break;
                 }
             }
-            // none is matched
-            if (negate) {
-                goto conditionPassed;
-            } else {
-                goto conditionFailed;
-            }
+            goto notMatched;
         }
         else if (fixedOrder && PostponerExtended_PendingId(numArgs - 1) != argKeyId) {
-            if (negate) {
-                goto conditionPassed;
-            } else {
-                goto conditionFailed;
-            }
+            goto notMatched;
         }
         else if (!fixedOrder && !PostponerQuery_ContainsKeyId(argKeyId)) {
-            if (negate) {
-                goto conditionPassed;
-            } else {
-                goto conditionFailed;
-            }
+            goto notMatched;
         }
         else {
             someoneNotReleased |= !PostponerQuery_IsKeyReleased(Utils_KeyIdToKeyState(argKeyId));
         }
     }
+matched:
     //all keys match
     if (consume) {
         PostponerExtended_ConsumePendingKeypresses(numArgs, true);
@@ -1263,6 +1244,12 @@ static macro_result_t processIfShortcutCommand(parser_context_t* ctx, bool negat
         goto conditionFailed;
     } else {
         goto conditionPassed;
+    }
+notMatched:
+    if (negate) {
+        goto conditionPassed;
+    } else {
+        goto conditionFailed;
     }
 conditionFailed:
     while(Macros_TryConsumeKeyId(ctx) != 255) { };
