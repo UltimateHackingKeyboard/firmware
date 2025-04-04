@@ -141,6 +141,9 @@ static void processEvt(event_scheduler_event_t evt)
         case EventSchedulerEvent_CheckDongleProtocolVersion:
             StateSync_CheckDongleProtocolVersion();
             break;
+        case EventSchedulerEvent_PutBackToShutDown:
+            PowerMode_PutBackToSleepMaybe();
+            break;
         default:
             return;
     }

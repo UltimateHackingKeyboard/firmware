@@ -4,6 +4,7 @@
 #include "led_manager.h"
 #include "wormhole.h"
 #include "stubs.h"
+#include "zephyr/kernel.h"
 
 #ifdef __ZEPHYR__
     #include "device_state.h"
@@ -13,6 +14,7 @@
     #include "keyboard/charger.h"
     #include "keyboard/leds.h"
     #include "state_sync.h"
+    #include "proxy_log_backend.h"
 #else
     #include "slave_drivers/is31fl3xxx_driver.h"
     #include "usb_composite_device.h"
@@ -45,7 +47,12 @@ power_mode_config_t PowerModeConfig[PowerMode_Count] = {
         .keyScanInterval = 500,
     },
     [PowerMode_AutoShutDown] = {
-        .name = "ShutDown",
+        .name = "AutoShutDown",
+        .i2cInterval = 500,
+        .keyScanInterval = 500,
+    },
+    [PowerMode_ManualShutDown] = {
+        .name = "ManualShutDown",
         .i2cInterval = 500,
         .keyScanInterval = 500,
     },
@@ -86,7 +93,7 @@ void PowerMode_Update() {
     }
 
     if (CurrentPowerMode <= PowerMode_LightSleep) {
-        PowerMode_ActivateMode(newPowerMode, false);
+        PowerMode_ActivateMode(newPowerMode, false, false);
     }
 }
 
@@ -125,14 +132,14 @@ static void wake() {
     notifyEveryone();
 }
 
-void PowerMode_ActivateMode(power_mode_t mode, bool toggle) {
+void PowerMode_ActivateMode(power_mode_t mode, bool toggle, bool force) {
     // if toggling a mode that's currently active, wake up
     if (CurrentPowerMode == mode && toggle) {
         mode = PowerMode_Awake;
     }
 
     // if two modes are activated, always sink into the deeper of them
-    if (mode > PowerMode_LastAwake && CurrentPowerMode > mode) {
+    if (mode > PowerMode_LastAwake && CurrentPowerMode > mode && !force) {
         return;
     }
 
@@ -190,16 +197,18 @@ void PowerMode_Restart() {
 
 #if DEVICE_IS_KEYBOARD && defined(__ZEPHYR__)
 
+power_mode_t lastDeepPowerMode = PowerMode_Awake;
+
 static void runDepletedSleep(bool allowWake) {
     // if the keyboard is powered, give the user a chance to disconnect it
-    while (!Charger_ShouldRemainInDepletedMode(false) && k_uptime_get() < 10*1000) {
+    while (!Charger_ShouldRemainInDepletedMode(false) && k_uptime_get() < 30*1000) {
         if (allowWake && KeyScanner_ScanAndWakeOnSfjl(true, false)) {
             return;
         }
         k_sleep(K_MSEC(PowerModeConfig[CurrentPowerMode].keyScanInterval));
     }
 
-    LogU("Battery is empty. Entering low power mode.\n");
+    LogU("Battery is empty. Entering low power mode. Allow wake by voltage raise %d\n", allowWake);
 
     while (Charger_ShouldRemainInDepletedMode(allowWake)) {
         k_sleep(K_MSEC(1000));
@@ -221,10 +230,19 @@ static void runSfjlSleep() {
     }
 }
 
+void PowerMode_PutBackToSleepMaybe(void) {
+    if (DEVICE_IS_UHK80_LEFT && CurrentPowerMode >= PowerMode_LightSleep && !DeviceState_IsDeviceConnected(DeviceId_Uhk80_Right)) {
+        power_mode_t newMode = lastDeepPowerMode == PowerMode_ManualShutDown ? PowerMode_ManualShutDown : PowerMode_SfjlSleep;
+        PowerMode_ActivateMode(newMode, false, false);
+    }
+}
+
 void PowerMode_RestartedTo(power_mode_t mode) {
     CurrentPowerMode = mode;
     KeyBacklightBrightness = 0;
+    lastDeepPowerMode = mode;
 
+    InitProxyLogBackend();
     InitLeds_Min();
     InitKeyScanner_Min();
     InitCharger_Min();
@@ -235,6 +253,7 @@ void PowerMode_RestartedTo(power_mode_t mode) {
             break;
         case PowerMode_AutoShutDown:
         case PowerMode_ManualShutDown:
+            printk("A mode %d\n", mode);
             runDepletedSleep(mode == PowerMode_AutoShutDown);
             break;
         default:
@@ -242,9 +261,10 @@ void PowerMode_RestartedTo(power_mode_t mode) {
     }
 
     if (DEVICE_IS_UHK80_LEFT) {
-        PowerMode_ActivateMode(PowerMode_LightSleep, false);
+        PowerMode_ActivateMode(PowerMode_LightSleep, false, true);
+        EventScheduler_Schedule(CurrentTime + 60*1000, EventSchedulerEvent_PutBackToShutDown, "We were woken up, but right may not.");
     } else {
-        PowerMode_ActivateMode(PowerMode_Awake, false);
+        PowerMode_ActivateMode(PowerMode_Awake, false, true);
     }
 }
 

@@ -144,7 +144,7 @@ void updateChargerEnabled(battery_state_t *batteryState, battery_manager_config_
         currentChargingAutomatonState = newState;
         switch (newState) {
             case BatteryManagerAutomatonState_TurnOff:
-                PowerMode_ActivateMode(PowerMode_AutoShutDown, false);
+                PowerMode_ActivateMode(PowerMode_AutoShutDown, false, false);
                 break;
             case BatteryManagerAutomatonState_Charging:
                 Charger_EnableCharging(true);

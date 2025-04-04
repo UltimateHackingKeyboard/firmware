@@ -375,10 +375,10 @@ static void applyOtherAction(other_action_t actionSubtype)
 {
     switch(actionSubtype) {
         case OtherAction_Lock:
-            PowerMode_ActivateMode(PowerMode_Lock, false);
+            PowerMode_ActivateMode(PowerMode_Lock, false, false);
             break;
         case OtherAction_Sleep:
-            PowerMode_ActivateMode(PowerMode_SfjlSleep, false);
+            PowerMode_ActivateMode(PowerMode_SfjlSleep, false, false);
             break;
     }
 }
@@ -617,7 +617,7 @@ static void updateActionStates() {
 
                     if (CurrentPowerMode > PowerMode_LastAwake && CurrentPowerMode <= PowerMode_LightSleep) {
                         PowerMode_WakeHost();
-                        PowerMode_ActivateMode(PowerMode_Awake, false);
+                        PowerMode_ActivateMode(PowerMode_Awake, false, false);
                     }
 
                     if (Postponer_LastKeyLayer != 255 && PostponerCore_IsActive()) {

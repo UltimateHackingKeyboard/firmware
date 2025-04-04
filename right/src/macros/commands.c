@@ -1550,7 +1550,7 @@ static macro_result_t processPowerModeCommand(parser_context_t* ctx) {
         return Macros_SleepTillKeystateChange();
     }
 
-    PowerMode_ActivateMode(mode, toggle);
+    PowerMode_ActivateMode(mode, toggle, false);
 
     return MacroResult_Finished;
 }

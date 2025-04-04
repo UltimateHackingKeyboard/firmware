@@ -43,6 +43,7 @@
         EventSchedulerEvent_ResendMessage,
         EventSchedulerEvent_CheckFwChecksums,
         EventSchedulerEvent_CheckDongleProtocolVersion,
+        EventSchedulerEvent_PutBackToShutDown,
         EventSchedulerEvent_Count
     } event_scheduler_event_t;
 

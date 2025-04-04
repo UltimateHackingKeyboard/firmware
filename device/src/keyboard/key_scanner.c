@@ -291,7 +291,7 @@ static void scanAllKeys() {
 bool KeyScanner_ScanAndWakeOnSfjl(bool fullScan, bool wake) {
     if (scanSfjlWithBlinking(true)) {
         if (wake) {
-            PowerMode_ActivateMode(PowerMode_Awake, false);
+            PowerMode_ActivateMode(PowerMode_Awake, false, false);
             EventVector_Set(EventVector_LedManagerFullUpdateNeeded);
         }
         return true;
