@@ -17,16 +17,16 @@ battery_manager_config_t BatteryManager_StandardUse = {
     .maxVoltage = 4000,
     .stopChargingVoltage = 4100,
     .startChargingVoltage = 3900,
-    .minWakeupVoltage = 3300,
-    .minVoltage = 3200,
+    .minWakeupVoltage = 3500,
+    .minVoltage = 3400,
 };
 
 battery_manager_config_t BatteryManager_LongLife = {
     .maxVoltage = 4000,
     .stopChargingVoltage =  3850,
     .startChargingVoltage = 3750,
-    .minWakeupVoltage = 3300,
-    .minVoltage = 3200,
+    .minWakeupVoltage = 3500,
+    .minVoltage = 3400,
 };
 
 static charge_region_t getCurrentChargeRegion(
