@@ -78,9 +78,10 @@ void BtManager_StopBt() {
 }
 
 
-void BtManager_StartScanningAndAdvertisingAsync() {
+void BtManager_StartScanningAndAdvertisingAsync(const char* eventLabel) {
     uint32_t delay = 50;
-    EventScheduler_Reschedule(CurrentTime + delay, EventSchedulerEvent_BtStartScanningAndAdvertising, "BtManager_StartScanningAndAdvertising");
+    LOG_INF("btManager: BtManager_StartScanningAndAdvertisingAsync because %s\n", eventLabel);
+    EventScheduler_Reschedule(CurrentTime + delay, EventSchedulerEvent_BtStartScanningAndAdvertising, eventLabel);
 }
 
 /*
@@ -120,7 +121,7 @@ void BtManager_StartScanningAndAdvertising() {
     bool dongleShouldScanForOob = DEVICE_IS_UHK_DONGLE && BtPair_PairingMode == PairingMode_Oob && BtPair_PairingAsCentral;
     bool shouldScan = rightShouldScanForPeer || rightShouldScanForOob || dongleShouldScanForPeer || dongleShouldScanForOob;
 
-    printk("==== btManager: should scanAndAdvertise %d %d\n", shouldScan, shouldAdvertise);
+    LOG_INF("btManager: should scanAndAdvertise %d %d\n", shouldScan, shouldAdvertise);
 
     if (shouldAdvertise || shouldScan) {
         const char* label = "";
