@@ -34,6 +34,7 @@
 
 // Functions:
 
+    battery_manager_config_t* BatteryManager_GetCurrentBatteryConfig(void);
     battery_manager_automaton_state_t BatteryManager_UpdateState(battery_manager_automaton_state_t currentState, battery_state_t* batteryState, battery_manager_config_t* config);
 
 #endif // __BATTERY_MANAGER_H__

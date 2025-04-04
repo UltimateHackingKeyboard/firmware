@@ -144,6 +144,9 @@ static void processEvt(event_scheduler_event_t evt)
         case EventSchedulerEvent_PutBackToShutDown:
             PowerMode_PutBackToSleepMaybe();
             break;
+        case EventSchedulerEvent_CheckChargeMe:
+            StateSync_CheckChargeMe();
+            break;
         default:
             return;
     }

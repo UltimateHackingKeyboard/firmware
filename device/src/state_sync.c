@@ -4,6 +4,7 @@
 #include "device.h"
 #include "device_state.h"
 #include "event_scheduler.h"
+#include "keyboard/battery_manager.h"
 #include "keyboard/charger.h"
 #include "keyboard/key_scanner.h"
 #include "keyboard/oled/widgets/widgets.h"
@@ -19,6 +20,7 @@
 #include "slot.h"
 #include "str_utils.h"
 #include "stubs.h"
+#include "timer.h"
 #include "utils.h"
 #include "messenger.h"
 #include "state_sync.h"
@@ -411,6 +413,9 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
             if (RunningOnBattery != newRunningOnBattery) {
                 RunningOnBattery = newRunningOnBattery;
                 RightRunningOnBattery = newRightRunningOnBattery;
+                if (RunningOnBattery) {
+                    StateSync_CheckChargeMe();
+                }
                 EventVector_Set(EventVector_LedManagerFullUpdateNeeded);
             } else if (RightRunningOnBattery != newRightRunningOnBattery) {
                 RightRunningOnBattery = newRightRunningOnBattery;
@@ -503,6 +508,31 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
             propId, prop->name);
         break;
     }
+}
+
+#if DEVICE_IS_UHK80_RIGHT
+static bool needsCharging(battery_state_t *batteryState) {
+    battery_manager_config_t* config = BatteryManager_GetCurrentBatteryConfig();
+    if (batteryState->batteryVoltage < config->minWakeupVoltage && batteryState->batteryPresent && !batteryState->powered) {
+        return true;
+    }
+    return false;
+}
+#endif
+
+void StateSync_CheckChargeMe(void) {
+#if DEVICE_IS_UHK80_RIGHT
+    if (CurrentTime < 10*1000) {
+        return;
+    }
+    bool someoneNeedsCharging = needsCharging(&SyncLeftHalfState.battery) || needsCharging(&SyncRightHalfState.battery);
+    if (someoneNeedsCharging && CurrentTime > 10*1000) {
+        NotificationScreen_Notify("Charge me!");
+    }
+    if (RunningOnBattery) {
+        EventScheduler_Schedule(CurrentTime + 10*1000, EventSchedulerEvent_CheckChargeMe, "check charge me");
+    }
+#endif
 }
 
 void StateSync_ReceiveStateUpdate(device_id_t src, const uint8_t *data, uint8_t len) {

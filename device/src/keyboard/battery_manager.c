@@ -1,4 +1,5 @@
 #include "battery_manager.h"
+#include "config_manager.h"
 
     // TODO:
     // - adaptive detection of 100%
@@ -80,4 +81,8 @@ battery_manager_automaton_state_t BatteryManager_UpdateState(
             printk("Unknown charge region\n");
             return BatteryManagerAutomatonState_Charging;
     }
+}
+
+battery_manager_config_t* BatteryManager_GetCurrentBatteryConfig(void) {
+    return Cfg.BatteryStationaryMode ? &BatteryManager_LongLife : &BatteryManager_StandardUse;
 }

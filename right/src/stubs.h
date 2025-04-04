@@ -54,6 +54,7 @@
     extern void Trace(char a);
     extern void Trace_Printf(const char *fmt, ...);
     extern void PowerMode_PutBackToSleepMaybe(void);
+    extern void StateSync_CheckChargeMe(void);
 
 #if DEVICE_HAS_OLED
 #define WIDGET_REFRESH(W) Widget_Refresh(W)

@@ -44,6 +44,7 @@
         EventSchedulerEvent_CheckFwChecksums,
         EventSchedulerEvent_CheckDongleProtocolVersion,
         EventSchedulerEvent_PutBackToShutDown,
+        EventSchedulerEvent_CheckChargeMe,
         EventSchedulerEvent_Count
     } event_scheduler_event_t;
 

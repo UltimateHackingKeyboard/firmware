@@ -4,6 +4,7 @@
 #include "charger.h"
 #include "keyboard/charger.h"
 #include "nrf52840.h"
+#include "oled/screens/notification_screen.h"
 #include "power_mode.h"
 #include "shell.h"
 #include "timer.h"
@@ -55,10 +56,6 @@ static bool stabilizationPause = false;
 static uint8_t statsToIgnore = 0;
 
 static battery_manager_automaton_state_t currentChargingAutomatonState = BatteryManagerAutomatonState_Charging;
-
-static battery_manager_config_t* getCurrentBatteryConfig() {
-    return Cfg.BatteryStationaryMode ? &BatteryManager_LongLife : &BatteryManager_StandardUse;
-}
 
 static bool setBatteryPresent(bool present) {
     if (batteryState.batteryPresent != present) {
@@ -186,7 +183,7 @@ void Charger_UpdateBatteryState() {
             }
 
             // TODO: add more accurate computation
-            battery_manager_config_t* currentBatteryConfig = getCurrentBatteryConfig();
+            battery_manager_config_t* currentBatteryConfig = BatteryManager_GetCurrentBatteryConfig();
             uint16_t minCharge = currentBatteryConfig->minVoltage;
             uint16_t maxCharge = currentBatteryConfig->maxVoltage;
             uint8_t perc = MIN(100, 1 + 99*(MAX(voltage, minCharge)-minCharge) / (maxCharge - minCharge));
@@ -290,7 +287,7 @@ bool Charger_ShouldRemainInDepletedMode(bool checkVoltage) {
     if (checkVoltage) {
         uint16_t voltage = getVoltage();
         printk("Should remain in depleted mode because powered = %d && voltage = %d\n", batteryState.powered, voltage);
-        return !batteryState.powered && voltage > 1000 && voltage < getCurrentBatteryConfig()->minWakeupVoltage;
+        return !batteryState.powered && voltage > 1000 && voltage < BatteryManager_GetCurrentBatteryConfig()->minWakeupVoltage;
     } else {
         printk("Should remain in depleted mode because powered = %d\n", batteryState.powered);
         return !batteryState.powered;
@@ -300,7 +297,7 @@ bool Charger_ShouldRemainInDepletedMode(bool checkVoltage) {
 bool Charger_ShouldEnterDepletedMode() {
     updatePowered();
     uint16_t voltage = getVoltage();
-    return !batteryState.powered && voltage < getCurrentBatteryConfig()->minVoltage;
+    return !batteryState.powered && voltage < BatteryManager_GetCurrentBatteryConfig()->minVoltage;
 }
 
 void InitCharger_Min(void) {

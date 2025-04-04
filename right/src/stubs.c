@@ -34,3 +34,4 @@
     ATTRS void Trace(char a) {};
     ATTRS void Trace_Printf(const char *fmt, ...) {};
     ATTRS void PowerMode_PutBackToSleepMaybe(void) {};
+    ATTRS void StateSync_CheckChargeMe(void) {};
