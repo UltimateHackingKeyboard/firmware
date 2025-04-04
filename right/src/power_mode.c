@@ -44,7 +44,7 @@ power_mode_config_t PowerModeConfig[PowerMode_Count] = {
         .i2cInterval = 500,
         .keyScanInterval = 500,
     },
-    [PowerMode_ShutDown] = {
+    [PowerMode_AutoShutDown] = {
         .name = "ShutDown",
         .i2cInterval = 500,
         .keyScanInterval = 500,
@@ -115,8 +115,8 @@ static void sfjlSleep() {
     notifyEveryone();
 }
 
-static void shutDown() {
-    CurrentPowerMode = PowerMode_ShutDown;
+static void shutDown(power_mode_t mode) {
+    CurrentPowerMode = mode;
     notifyEveryone();
 }
 
@@ -154,8 +154,9 @@ void PowerMode_ActivateMode(power_mode_t mode, bool toggle) {
         case PowerMode_SfjlSleep:
             sfjlSleep();
             break;
-        case PowerMode_ShutDown:
-            shutDown();
+        case PowerMode_ManualShutDown:
+        case PowerMode_AutoShutDown:
+            shutDown(mode);
             break;
         default:
             break;
@@ -190,8 +191,8 @@ void PowerMode_Restart() {
 #if DEVICE_IS_KEYBOARD && defined(__ZEPHYR__)
 
 static void runDepletedSleep(bool allowWake) {
-    // if the keyboard is powered, wait until it is disconnected
-    while (!Charger_ShouldRemainInDepletedMode(false)) {
+    // if the keyboard is powered, give the user a chance to disconnect it
+    while (!Charger_ShouldRemainInDepletedMode(false) && k_uptime_get() < 10*1000) {
         if (allowWake && KeyScanner_ScanAndWakeOnSfjl(true, false)) {
             return;
         }
@@ -201,7 +202,7 @@ static void runDepletedSleep(bool allowWake) {
     LogU("Battery is empty. Entering low power mode.\n");
 
     while (Charger_ShouldRemainInDepletedMode(allowWake)) {
-        k_sleep(K_MSEC(5000));
+        k_sleep(K_MSEC(1000));
     }
     LogU("Waking from low power mode.");
 }
@@ -232,8 +233,9 @@ void PowerMode_RestartedTo(power_mode_t mode) {
         case PowerMode_SfjlSleep:
             runSfjlSleep();
             break;
-        case PowerMode_ShutDown:
-            runDepletedSleep(false);
+        case PowerMode_AutoShutDown:
+        case PowerMode_ManualShutDown:
+            runDepletedSleep(mode == PowerMode_AutoShutDown);
             break;
         default:
             break;

@@ -27,7 +27,8 @@
         PowerMode_Uhk60Sleep = PowerMode_LightSleep,
         PowerMode_Lock,
         PowerMode_SfjlSleep,
-        PowerMode_ShutDown,
+        PowerMode_AutoShutDown,
+        PowerMode_ManualShutDown,
         PowerMode_Count,
     } power_mode_t;
 

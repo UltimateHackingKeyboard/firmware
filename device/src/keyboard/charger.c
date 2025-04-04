@@ -144,7 +144,7 @@ void updateChargerEnabled(battery_state_t *batteryState, battery_manager_config_
         currentChargingAutomatonState = newState;
         switch (newState) {
             case BatteryManagerAutomatonState_TurnOff:
-                PowerMode_ActivateMode(PowerMode_ShutDown, false);
+                PowerMode_ActivateMode(PowerMode_AutoShutDown, false);
                 break;
             case BatteryManagerAutomatonState_Charging:
                 Charger_EnableCharging(true);
@@ -289,8 +289,10 @@ bool Charger_ShouldRemainInDepletedMode(bool checkVoltage) {
     updatePowered();
     if (checkVoltage) {
         uint16_t voltage = getVoltage();
-        return !batteryState.powered && voltage < getCurrentBatteryConfig()->minWakeupVoltage;
+        printk("Should remain in depleted mode because powered = %d && voltage = %d\n", batteryState.powered, voltage);
+        return !batteryState.powered && voltage > 1000 && voltage < getCurrentBatteryConfig()->minWakeupVoltage;
     } else {
+        printk("Should remain in depleted mode because powered = %d\n", batteryState.powered);
         return !batteryState.powered;
     }
 }

@@ -1534,8 +1534,9 @@ static macro_result_t processPowerModeCommand(parser_context_t* ctx) {
     else if (ConsumeToken(ctx, "wake")) { mode = PowerMode_Awake; }
     else if (ConsumeToken(ctx, "lock")) { mode = PowerMode_Lock; }
     else if (ConsumeToken(ctx, "sleep")) { mode = PowerMode_SfjlSleep; }
-    else if (ConsumeToken(ctx, "shutdown")) { mode = PowerMode_ShutDown; }
-    else if (ConsumeToken(ctx, "shutDown")) { mode = PowerMode_ShutDown; }
+    else if (ConsumeToken(ctx, "shutdown")) { mode = PowerMode_ManualShutDown; }
+    else if (ConsumeToken(ctx, "shutDown")) { mode = PowerMode_ManualShutDown; }
+    else if (ConsumeToken(ctx, "autoShutdown")) { mode = PowerMode_AutoShutDown; }
     else {
         Macros_ReportError("This mode is not available in this release:", ctxCopy.at, ctxCopy.at);
     }
