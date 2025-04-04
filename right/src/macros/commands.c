@@ -1173,15 +1173,29 @@ static macro_result_t processIfShortcutCommand(parser_context_t* ctx, bool negat
         }
     }
 
+    uint8_t pendingCount = PostponerQuery_PendingKeypressCount();
+
+    bool insufficientNumberForAnyOrder = false;
+    if (!fixedOrder) {
+        parser_context_t ctx2 = *ctx;
+        uint8_t totalArgs = 0;
+        uint8_t argKeyId = 255;
+        while((argKeyId = Macros_TryConsumeKeyId(&ctx2)) != 255 && ctx2.at < ctx2.end) {
+            totalArgs++;
+        }
+        if (totalArgs > PostponerQuery_PendingKeypressCount()) {
+            insufficientNumberForAnyOrder = true;
+        }
+    }
+
     //parse and check KEYIDs
     postponeCurrentCycle();
-    uint8_t pendingCount = PostponerQuery_PendingKeypressCount();
     uint8_t numArgs = 0;
     bool someoneNotReleased = false;
     uint8_t argKeyId = 255;
     while((argKeyId = Macros_TryConsumeKeyId(ctx)) != 255 && ctx->at < ctx->end) {
         numArgs++;
-        if (pendingCount < numArgs) {
+        if (pendingCount < numArgs || insufficientNumberForAnyOrder) {
             uint32_t referenceTime = transitive && pendingCount > 0 ? PostponerExtended_LastPressTime() : S->ms.currentMacroStartTime;
             uint16_t elapsedSinceReference = Timer_GetElapsedTime(&referenceTime);
 
