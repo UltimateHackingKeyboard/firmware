@@ -202,18 +202,18 @@ static usb_status_t usbDeviceCallback(usb_device_handle handle, uint32_t event, 
             break;
         case kUSB_DeviceEventSuspend:
             if (UsbCompositeDevice.attach) {
-                PowerMode_ActivateMode(PowerMode_Uhk60Sleep, false);
+                PowerMode_ActivateMode(PowerMode_Uhk60Sleep, false, false);
                 status = kStatus_USB_Success;
             }
             break;
         case kUSB_DeviceEventResume:
-            PowerMode_ActivateMode(PowerMode_Awake, false);
+            PowerMode_ActivateMode(PowerMode_Awake, false, false);
             status = kStatus_USB_Success;
             break;
         case kUSB_DeviceEventSetConfiguration: {
             uint8_t interface;
             UsbCompositeDevice.attach = 1;
-            PowerMode_ActivateMode(PowerMode_Awake, false);
+            PowerMode_ActivateMode(PowerMode_Awake, false, false);
             for (interface = 0; interface < USB_DEVICE_CONFIG_HID; ++interface) {
                 usb_device_class_config_struct_t *intf = &UsbDeviceCompositeConfigList.config[interface];
 

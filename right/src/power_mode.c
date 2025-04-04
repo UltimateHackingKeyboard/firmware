@@ -4,7 +4,6 @@
 #include "led_manager.h"
 #include "wormhole.h"
 #include "stubs.h"
-#include "zephyr/kernel.h"
 
 #ifdef __ZEPHYR__
     #include "device_state.h"
@@ -43,8 +42,8 @@ power_mode_config_t PowerModeConfig[PowerMode_Count] = {
     },
     [PowerMode_SfjlSleep] = {
         .name = "SfjlSleep",
-        .i2cInterval = 500,
-        .keyScanInterval = 500,
+        .i2cInterval = 100,
+        .keyScanInterval = 100,
     },
     [PowerMode_AutoShutDown] = {
         .name = "AutoShutDown",
