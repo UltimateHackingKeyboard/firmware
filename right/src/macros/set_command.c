@@ -621,13 +621,38 @@ static macro_variable_t leds(parser_context_t* ctx, set_command_action_t action)
     return noneVar();
 }
 
-static macro_variable_t battery(parser_context_t* ctx, set_command_action_t action)
-{
-    if (ConsumeToken(ctx, "stationaryMode")) {
-        ASSIGN_BOOL(Cfg.BatteryStationaryMode);
+static macro_variable_t chargeLimit(parser_context_t* ctx, set_command_action_t action) {
+    if (action == SetCommandAction_Read) {
+        return boolVar(Cfg.BatteryStationaryMode);
+    }
+
+    bool res = Cfg.BatteryStationaryMode;
+    if (ConsumeToken(ctx, "full")) {
+        res = false;
+    }
+    else if (ConsumeToken(ctx, "optimizeHealth")) {
+        res = true;
+    }
+    else {
+        Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
+    }
+
+    if (Macros_ParserError || Macros_DryRun) {
+        return noneVar();
+    }
+
+    Cfg.BatteryStationaryMode = res;
+
 #if defined(__ZEPHYR__) && DEVICE_IS_KEYBOARD
         StateSync_UpdateProperty(StateSyncPropertyId_BatteryStationaryMode, &Cfg.BatteryStationaryMode);
 #endif
+    return noneVar();
+}
+
+static macro_variable_t battery(parser_context_t* ctx, set_command_action_t action)
+{
+    if (ConsumeToken(ctx, "chargeLimit")) {
+        return chargeLimit(ctx, action);
     }
     else {
         Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
