@@ -47,6 +47,7 @@
     } connection_action_t;
 
     typedef enum {
+        OtherAction_Lock,
         OtherAction_Sleep,
     } other_action_t;
 

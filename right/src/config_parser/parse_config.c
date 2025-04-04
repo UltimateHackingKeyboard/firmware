@@ -342,8 +342,7 @@ parser_error_t parseConfig(config_buffer_t *buffer)
         Cfg.KeyBacklightFadeOutTimeout = keyBacklightFadeOutTimeout;
         Cfg.KeyBacklightFadeOutBatteryTimeout = keyBacklightFadeOutBatteryTimeout;
 
-        LedManager_RecalculateLedBrightness();
-        LedManager_UpdateSleepModes();
+        LedManager_FullUpdate();
         BtPair_ClearUnknownBonds();
         BtConn_UpdateHostConnectionPeerAllocations();
         WIDGET_REFRESH(&TargetWidget); // the target may have been renamed

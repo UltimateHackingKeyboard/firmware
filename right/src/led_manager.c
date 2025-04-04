@@ -32,7 +32,7 @@ uint8_t KeyBacklightBrightness = 0xff;
 
 static void recalculateLedBrightness()
 {
-    bool globalSleepMode = !Cfg.LedsEnabled || CurrentPowerMode > PowerMode_Awake || Cfg.LedBrightnessMultiplier == 0.0f;
+    bool globalSleepMode = !Cfg.LedsEnabled || CurrentPowerMode > PowerMode_LastAwake || Cfg.LedBrightnessMultiplier == 0.0f;
     bool globalAlwaysOn = Cfg.LedsAlwaysOn || Ledmap_AlwaysOn || InteractivePairingInProgress;
 
     if (!globalAlwaysOn && (globalSleepMode || KeyBacklightSleepModeActive)) {

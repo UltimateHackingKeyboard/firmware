@@ -64,8 +64,8 @@ MEMORY
   m_interrupts          (RX)  : ORIGIN = 0x0 + BL_APP_VECTOR_TABLE_ADDRESS, LENGTH = 0x00000400
   m_text                (RX)  : ORIGIN = 0x00000400 + BL_APP_VECTOR_TABLE_ADDRESS, LENGTH = 512K - 0x400 - BL_APP_VECTOR_TABLE_ADDRESS
   m_data                (RW)  : ORIGIN = 0x1FFF0000, LENGTH = 0x00010000
-  m_data_2              (RW)  : ORIGIN = 0x20000000, LENGTH = 0x0000FF00
-  m_noinit              (RW)  : ORIGIN = 0x2000FF00, LENGTH = 0x000000FF
+  m_data_2              (RW)  : ORIGIN = 0x20000000, LENGTH = 0x0000F800
+  m_noinit              (RW)  : ORIGIN = 0x2000F800, LENGTH = 0x000008FF
 }
 
 /* Define output sections */

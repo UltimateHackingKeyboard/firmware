@@ -105,6 +105,7 @@
         StateSyncPropertyId_DongleScrollMultipliers = 30,
         StateSyncPropertyId_KeyStatesDummy = 31,
         StateSyncPropertyId_DongleProtocolVersion = 32,
+        StateSyncPropertyId_BatteryStationaryMode = 33,
         StateSyncPropertyId_Count,
     } state_sync_prop_id_t;
 
@@ -155,6 +156,8 @@
     void StateSync_ResetRightDongleLink(bool bidirectional);
     void StateSync_ResetConfig();
 
+
+    void StateSync_CheckChargeMe(void);
     void StateSync_CheckFirmwareVersions();
     void StateSync_CheckDongleProtocolVersion();
 
