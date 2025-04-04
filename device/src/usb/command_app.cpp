@@ -39,10 +39,10 @@ void command_app::set_report(hid::report::type type, const std::span<const uint8
     auto &in = in_buffer_[buf_idx];
     UsbProtocolHandler(out.payload.data(), in.payload.data());
     auto err = send_report(&in);
-    if (err == hid::result::OK) {
+    if (err == hid::result::ok) {
         in_buffer_.compare_swap(buf_idx);
     } else {
-        printk("Command app failed to send report with: %d\n", (int)err);
+        printk("Command app failed to send report with: %d\n", std::bit_cast<int>(err));
     }
 }
 

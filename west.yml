@@ -36,5 +36,5 @@ manifest:
 
     - name: c2usb
       remote: IntergatedCircuits
-      revision: 5af7af626bd82c3937ca16395d6777259effa3fc
+      revision: cac26fa089687f7fd2e85a7213a99af03c6a8758
       clone-depth: 1

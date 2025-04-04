@@ -27,9 +27,9 @@ extern "C" {
 
 #if DEVICE_IS_UHK80_RIGHT
     #include "port/zephyr/bluetooth/hid.hpp"
+#endif
 
 using namespace magic_enum::bitwise_operators;
-#endif
 
 uint8_t UsbSerialNumber[5];
 
@@ -80,7 +80,7 @@ struct usb_manager {
             return;
         }
         [[maybe_unused]] auto result = mac().queue_task([]() { instance().change_config(); });
-        assert(result == usb::result::OK);
+        assert(result == usb::result::ok);
     }
 
   private:
@@ -148,33 +148,17 @@ struct usb_manager {
     {
         device_.set_power_event_delegate([](usb::df::device &dev, usb::df::device::event ev) {
             using event = enum usb::df::device::event;
-            switch (ev) {
-            case event::CONFIGURATION_CHANGE:
-                // printk("USB configured: %u, granted current: %uuA\n", dev.configured(), dev.granted_bus_current_uA());
-                break;
-            case event::POWER_STATE_CHANGE:
-                // printk("USB power state: L%u, granted current: %uuA\n", 3 - static_cast<uint8_t>(dev.power_state()), dev.granted_bus_current_uA());
+            if ((ev & event::POWER_STATE_CHANGE) != event::NONE) {
                 switch (dev.power_state()) {
-                case usb::power::state::L2_SUSPEND:
-                    // TODO: handle suspend, maybe only when the HID target is USB?
-                    // TODO: stop battery charging, maybe only if dev.configured(),
-                    // to distinguish between USB host and charger
-
-                    /* Log("L2 Suspend\n"); */
-                    // uncomment when the waking stuff works.
-                    PowerMode_SetUsbAwake(false);
-                    break;
-                case usb::power::state::L0_ON:
-                    //TODO: handle wakeup, only if in suspend
-
-                    /* Log("L0 ON\n"); */
-                    PowerMode_SetUsbAwake(true);
-                    break;
-                default:
-                    /* Log("L state %i\n", (int)ev); */
-                    break;
-                }
-                break;
+                    case usb::power::state::L2_SUSPEND:
+                        PowerMode_SetUsbAwake(false);
+                        break;
+                    case usb::power::state::L0_ON:
+                        PowerMode_SetUsbAwake(true);
+                        break;
+                    default:
+                        break;
+                    }
             }
         });
     }
@@ -194,14 +178,10 @@ extern "C" void USB_Enable()
 
 extern "C" void USB_RemoteWakeup()
 {
-    printk("USB: requesting remote wakeup\n");
-    usb_manager::instance().mac().queue_task([]() {
-        if (usb_manager::instance().device().remote_wakeup()) {
-            printk("USB: sending remote wakeup\n");
-        } else {
-            printk("USB: remote wakeup disabled\n");
-        }
-    });
+    auto err = usb_manager::instance().device().remote_wakeup();
+    if (err != usb::result::ok) {
+        printk("USB: remote wakeup request failed: %d\n", std::bit_cast<int>(err));
+    }
 }
 
 #if DEVICE_IS_UHK80_RIGHT
