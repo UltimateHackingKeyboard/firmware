@@ -33,3 +33,4 @@
     ATTRS void StateSync_CheckDongleProtocolVersion() {};
     ATTRS void Trace(char a) {};
     ATTRS void Trace_Printf(const char *fmt, ...) {};
+    ATTRS void BtAdvertise_DisableAdvertisingIcon(void) {};
