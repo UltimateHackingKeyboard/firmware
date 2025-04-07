@@ -2,6 +2,7 @@
 #include <zephyr/drivers/adc.h>
 #include <zephyr/sys/util.h>
 #include "charger.h"
+#include "battery_calculator.h"
 #include "keyboard/charger.h"
 #include "nrf52840.h"
 #include "oled/screens/notification_screen.h"
@@ -17,6 +18,9 @@
 #include "config_manager.h"
 #include <zephyr/pm/pm.h>
 #include <nrfx_power.h>
+#include <zephyr/logging/log.h>
+
+LOG_MODULE_REGISTER(Battery, LOG_LEVEL_WRN);
 
 /**
  * chargerStatDt == 1 => (actually) not charging (e.g., fully charged, or no power provided)
@@ -153,6 +157,27 @@ void updateChargerEnabled(battery_state_t *batteryState, battery_manager_config_
     }
 }
 
+static uint16_t correctForCharging(uint16_t rawVoltage, uint16_t rawVoltageBeforeStabilization) {
+    uint16_t correctedVoltage = rawVoltage - ((rawVoltageBeforeStabilization - rawVoltage) / 3);
+    return correctedVoltage;
+}
+
+static uint16_t getCorrectedVoltage(uint16_t previousVoltage, bool previousCharging) {
+    uint16_t rawVoltage = getVoltage();
+
+    uint16_t voltage = rawVoltage;
+    if (batteryState.powered) {
+        if (previousVoltage != 0 && previousCharging && MAX(rawVoltage-previousVoltage, previousVoltage-rawVoltage) < 500) {
+            voltage = correctForCharging(rawVoltage, previousVoltage);
+            LOG_INF("... Voltage corrected because of charging %d -> %d -> %d\n", previousVoltage, rawVoltage, voltage);
+        }
+    } else {
+        voltage = BatteryCalculator_CalculateUnloadedVoltage(rawVoltage);
+        LOG_INF("... Voltage corrected because of load %d -> %d\n", rawVoltage, voltage);
+    }
+    return voltage;
+}
+
 void Charger_UpdateBatteryState() {
     static uint32_t stabilizationPauseStartTime = 0;
     static bool stateChanged = false;
@@ -171,12 +196,7 @@ void Charger_UpdateBatteryState() {
             }
 
             // actually measure voltage
-            uint16_t rawVoltage = getVoltage();
-
-            uint16_t voltage = rawVoltage;
-            if (previousVoltage != 0 && previousCharging && MAX(rawVoltage-previousVoltage, previousVoltage-rawVoltage) < 500) {
-                voltage = rawVoltage - ((previousVoltage - rawVoltage) / 3);
-            }
+            uint16_t voltage = getCorrectedVoltage(previousVoltage, previousCharging);
 
             if (batteryState.batteryVoltage != 0) {
                 voltage = (voltage + batteryState.batteryVoltage*3) / 4;
@@ -213,6 +233,8 @@ void Charger_UpdateBatteryState() {
             bool actuallyCharging = !gpio_pin_get_dt(&chargerStatDt);
             stateChanged |= setActuallyCharging(actuallyCharging && Charger_ChargingEnabled);
 
+            gpio_pin_set_dt(&chargerEnDt, false);
+
             if (actuallyCharging) {
                 previousVoltage = getVoltage();
                 previousCharging = true;
@@ -224,7 +246,6 @@ void Charger_UpdateBatteryState() {
             // turn of charger and let the battery voltage stabilize for measurement; Store any state changes until the measurement is done, just then apply.
             stabilizationPause = true;
             statsToIgnore = 1;
-            gpio_pin_set_dt(&chargerEnDt, false);
 
             EventScheduler_Reschedule(CurrentTime + CHARGER_STABILIZATION_PERIOD, EventSchedulerEvent_UpdateBattery, "start stabilization pause");
             return;

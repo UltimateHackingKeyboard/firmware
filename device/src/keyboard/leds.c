@@ -7,6 +7,7 @@
 #include "keyboard/key_scanner.h"
 #include "ledmap.h"
 #include "slave_drivers/is31fl3xxx_driver.h"
+#include "battery_calculator.h"
 
 // Thread definitions
 
@@ -149,8 +150,12 @@ static void setLedValues() {
     setLedsCs(false);
 }
 
+static uint8_t limitScaling(uint8_t currentScaling) {
+    return currentScaling - (currentScaling/4);
+}
+
 static void setScaling(uint8_t currentScaling) {
-    uint8_t limitedScaling = currentScaling - (currentScaling/4);
+    uint8_t limitedScaling = limitScaling(currentScaling);
     setLedsCs(true);
     writeSpi(LedPagePrefix | 1);
     writeSpi(0x00);
@@ -228,6 +233,18 @@ static void setBlack() {
     setOperationMode(0);
 
     k_mutex_unlock(&SpiMutex);
+}
+
+uint32_t Leds_CalculateBrightnessSum(void) {
+    uint32_t brightnesses = 0;
+
+    for (int i=0; i<255; i++) {
+        brightnesses += Uhk80LedDriverValues[i];
+    }
+
+    double brightnessCoefficient = limitScaling(currentScaling) / 255.0;
+
+    return brightnesses * brightnessCoefficient;
 }
 
 void InitLeds_Min(void) {

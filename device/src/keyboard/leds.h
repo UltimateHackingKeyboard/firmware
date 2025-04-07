@@ -20,6 +20,7 @@
     extern void InitLeds(void);
     extern void InitLeds_Min(void);
     extern void Leds_BlinkSfjl(uint16_t time);
+    extern uint32_t Leds_CalculateBrightnessSum(void);
     extern void UpdateLedAudioRegisters(uint8_t spreadSpectrum, uint8_t phaseDelay, uint8_t pwmFrequency);
 
 #endif // __LEDS_H__
