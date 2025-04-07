@@ -49,6 +49,10 @@
 #include "power_mode.h"
 #include "proxy_log_backend.h"
 
+#if DEVICE_IS_KEYBOARD
+#include "keyboard/battery_calculator.h"
+#endif
+
 k_tid_t Main_ThreadId = 0;
 
 static void sleepTillNextMs() {
@@ -201,6 +205,9 @@ void mainRuntime(void) {
 
     if (DEBUG_RUN_TESTS) {
         MacroVariables_RunTests();
+#if DEVICE_IS_KEYBOARD
+        BatteryCalculator_RunTests();
+#endif
     }
 
     // Call after all threads have been created
