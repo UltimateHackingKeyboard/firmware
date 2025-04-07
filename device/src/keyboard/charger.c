@@ -286,10 +286,10 @@ bool Charger_ShouldRemainInDepletedMode(bool checkVoltage) {
     updatePowered();
     if (checkVoltage) {
         uint16_t voltage = getVoltage();
-        printk("Should remain in depleted mode because powered = %d && voltage = %d\n", batteryState.powered, voltage);
+        printk("Charger_ShouldRemainInDepletedMode called; powered = %d && voltage = %d\n", batteryState.powered, voltage);
         return !batteryState.powered && voltage > 1000 && voltage < BatteryManager_GetCurrentBatteryConfig()->minWakeupVoltage;
     } else {
-        printk("Should remain in depleted mode because powered = %d\n", batteryState.powered);
+        printk("Charger_ShouldRemainInDepletedMode called; powered = %d\n", batteryState.powered);
         return !batteryState.powered;
     }
 }

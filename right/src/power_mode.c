@@ -199,15 +199,13 @@ void PowerMode_Restart() {
 power_mode_t lastDeepPowerMode = PowerMode_Awake;
 
 static void runDepletedSleep(bool allowWake) {
-    // if the keyboard is powered, give the user a chance to disconnect it
-    while (!Charger_ShouldRemainInDepletedMode(false) && k_uptime_get() < 30*1000) {
-        if (allowWake && KeyScanner_ScanAndWakeOnSfjl(true, false)) {
-            return;
-        }
+    // if the keyboard is powered, give the user a chance to disconnect it for 30 seconds.
+    while (!allowWake && !Charger_ShouldRemainInDepletedMode(false) && k_uptime_get() < 30*1000) {
         k_sleep(K_MSEC(PowerModeConfig[CurrentPowerMode].keyScanInterval));
+        printk("In order to shut down the keyboard, please disconnect UHK from power.\n");
     }
 
-    LogU("Battery is empty. Entering low power mode. Allow wake by voltage raise %d\n", allowWake);
+    LogU("Entering low power mode. Allow wake by voltage raise %d\n", allowWake);
 
     while (Charger_ShouldRemainInDepletedMode(allowWake)) {
         k_sleep(K_MSEC(1000));
