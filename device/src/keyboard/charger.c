@@ -171,6 +171,11 @@ void chargerStatCallback(const struct device *port, struct gpio_callback *cb, gp
 static void setBrightness(uint8_t brightness) {
     DisplayBrightness = brightness;
     KeyBacklightBrightness = brightness;
+    Ledmap_SetTemporaryLedBacklightingMode(BacklightingMode_ConstantRGB);
+
+    Cfg.LedMap_ConstantRGB = (rgb_t){ .red=255, .green=255, .blue=255 };
+    Ledmap_SetLedBacklightingMode(BacklightingMode_ConstantRGB);
+
     Ledmap_UpdateBacklightLeds();
 }
 
