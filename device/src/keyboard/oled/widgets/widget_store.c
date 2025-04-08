@@ -168,22 +168,38 @@ static void getBatteryStatusText(device_id_t deviceId, battery_state_t* battery,
     }
 }
 
+static void getBlinkingBattery(char* buffer, uint8_t len) {
+    char color = FontControl_NextCharBlack;
+
+    if (StateSync_BlinkBatteryIcon) {
+        uint32_t state = (CurrentTime / 1024) % 2;
+        color = state ? FontControl_NextCharWhite : FontControl_NextCharGray;
+        uint32_t nextTime = ((CurrentTime / 1024) + 1) * 1024;
+        EventScheduler_Schedule(nextTime + 1, EventSchedulerEvent_BlinkBatteryIcon, "battery icon blink");
+    }
+
+    snprintf(buffer, len, "%c%c%c", (char)color, (char)FontControl_NextCharIcon12, (char)FontIcon_BatteryLow);
+}
+
 static string_segment_t getRightStatusText() {
-#define BUFFER_LENGTH 22
+#define BUFFER_LENGTH 26
 #define BAT_BUFFER_LENGTH 10
+#define BAT_ICON_BUFFER_LENGTH 4
     static char buffer [BUFFER_LENGTH] = { [BUFFER_LENGTH-1] = 0 };
     char leftBattery[BAT_BUFFER_LENGTH];
     char rightBattery[BAT_BUFFER_LENGTH];
+    char blinkingBattery[BAT_ICON_BUFFER_LENGTH];
+    getBlinkingBattery(blinkingBattery, BAT_ICON_BUFFER_LENGTH);
     if (SyncLeftHalfState.battery.batteryPresent && SyncRightHalfState.battery.batteryPresent) {
         getBatteryStatusText(DeviceId_Uhk80_Left, &SyncLeftHalfState.battery, leftBattery, true);
         getBatteryStatusText(DeviceId_Uhk80_Right, &SyncRightHalfState.battery, rightBattery, true);
-        snprintf(buffer, BUFFER_LENGTH-1, "%s %s", leftBattery, rightBattery);
+        snprintf(buffer, BUFFER_LENGTH-1, "%s %s %s", blinkingBattery, leftBattery, rightBattery);
     } else if (SyncLeftHalfState.battery.batteryPresent) {
         getBatteryStatusText(DeviceId_Uhk80_Left, &SyncLeftHalfState.battery, leftBattery, false);
-        snprintf(buffer, BUFFER_LENGTH-1, "L%s", leftBattery);
+        snprintf(buffer, BUFFER_LENGTH-1, "%s L%s", blinkingBattery, leftBattery);
     } else if (SyncRightHalfState.battery.batteryPresent) {
         getBatteryStatusText(DeviceId_Uhk80_Right, &SyncRightHalfState.battery, rightBattery, false);
-        snprintf(buffer, BUFFER_LENGTH-1, "R%s", rightBattery);
+        snprintf(buffer, BUFFER_LENGTH-1, "%s R%s", blinkingBattery, rightBattery);
     } else {
         snprintf(buffer, BUFFER_LENGTH-1, "");
     }

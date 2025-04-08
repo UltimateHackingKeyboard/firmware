@@ -57,6 +57,8 @@ version_t RemoteDongleProtocolVersion = {0, 0, 0};
 uint16_t StateSync_LeftResetCounter = 0;
 uint16_t StateSync_DongleResetCounter = 0;
 
+bool StateSync_BlinkBatteryIcon = false;
+
 static void wake(k_tid_t tid) {
     if (tid != 0) {
         k_wakeup(tid);
@@ -413,14 +415,12 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
             if (RunningOnBattery != newRunningOnBattery) {
                 RunningOnBattery = newRunningOnBattery;
                 RightRunningOnBattery = newRightRunningOnBattery;
-                if (RunningOnBattery) {
-                    StateSync_CheckChargeMe();
-                }
                 EventVector_Set(EventVector_LedManagerFullUpdateNeeded);
             } else if (RightRunningOnBattery != newRightRunningOnBattery) {
                 RightRunningOnBattery = newRightRunningOnBattery;
                 LedManager_UpdateSleepModes();
             }
+            StateSync_CheckChargeMe();
         }
         break;
     case StateSyncPropertyId_ActiveKeymap:
@@ -520,17 +520,14 @@ static bool needsCharging(battery_state_t *batteryState) {
 }
 #endif
 
+
 void StateSync_CheckChargeMe(void) {
 #if DEVICE_IS_UHK80_RIGHT
-    if (CurrentTime < 10*1000) {
-        return;
-    }
-    bool someoneNeedsCharging = needsCharging(&SyncLeftHalfState.battery) || needsCharging(&SyncRightHalfState.battery);
-    if (someoneNeedsCharging && CurrentTime > 10*1000) {
-        NotificationScreen_Notify("Charge me!");
-    }
-    if (RunningOnBattery) {
-        EventScheduler_Schedule(CurrentTime + 10*1000, EventSchedulerEvent_CheckChargeMe, "check charge me");
+    StateSync_BlinkBatteryIcon = needsCharging(&SyncLeftHalfState.battery) || needsCharging(&SyncRightHalfState.battery);
+    StateSync_BlinkBatteryIcon = RunningOnBattery;
+
+    if (StateSync_BlinkBatteryIcon) {
+        WIDGET_REFRESH(&StatusWidget);
     }
 #endif
 }

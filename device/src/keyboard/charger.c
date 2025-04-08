@@ -264,6 +264,7 @@ void Charger_UpdateBatteryState() {
     } else {
         gpio_pin_set_dt(&chargerEnDt, true);
         previousVoltage = 0;
+        stateChanged = true;
     }
 
     if (stateChanged) {
