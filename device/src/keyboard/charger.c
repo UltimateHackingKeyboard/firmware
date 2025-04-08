@@ -19,6 +19,7 @@
 #include <zephyr/pm/pm.h>
 #include <nrfx_power.h>
 #include <zephyr/logging/log.h>
+#include "battery_percent_calculator.h"
 
 LOG_MODULE_REGISTER(Battery, LOG_LEVEL_WRN);
 
@@ -204,9 +205,10 @@ void Charger_UpdateBatteryState() {
 
             // TODO: add more accurate computation
             battery_manager_config_t* currentBatteryConfig = BatteryManager_GetCurrentBatteryConfig();
-            uint16_t minCharge = currentBatteryConfig->minVoltage;
-            uint16_t maxCharge = currentBatteryConfig->maxVoltage;
-            uint8_t perc = MIN(100, 1 + 99*(MAX(voltage, minCharge)-minCharge) / (maxCharge - minCharge));
+            // uint16_t minCharge = currentBatteryConfig->minVoltage;
+            // uint16_t maxCharge = currentBatteryConfig->maxVoltage;
+            // uint8_t perc = MIN(100, 1 + 99*(MAX(voltage, minCharge)-minCharge) / (maxCharge - minCharge));
+            uint8_t perc = BatteryCalculator_CalculatePercent(voltage);
             stateChanged |= setPercentage(voltage, perc);
 
             if (voltage == 0) {
