@@ -12,21 +12,20 @@ static bool testing = false;
 const resistance_reference_t ReferenceResistanceRight = {
     .keyCount = 56,
     .brightnessSum = 255*3*56,
-    .loadedVoltage = 3500,
-    .unloadedVoltage = 3680,
-    .loadedCurrent = 230,
+    .loadedVoltage = 3945,
+    .unloadedVoltage = 4000,
+    .loadedCurrent = 344,
     .unloadedCurrent = 30,
 };
 
 const resistance_reference_t ReferenceResistanceLeft = {
     .keyCount = 40,
     .brightnessSum = 255*3*40,
-    .loadedVoltage = 3500,
-    .unloadedVoltage = 3590,
-    .loadedCurrent = 150,
+    .loadedVoltage = 3940,
+    .unloadedVoltage = 4000,
+    .loadedCurrent = 260,
     .unloadedCurrent = 30,
 };
-
 
 static double calculateLedResistance(const resistance_reference_t* ref, double referenceResistance, uint32_t brightnessSum) {
     double ledResistance = referenceResistance * (ref->brightnessSum+1) / (brightnessSum+1);
@@ -37,8 +36,8 @@ static double getInternalResistance(const resistance_reference_t* ref, double re
     uint16_t voltageDiff = ref->unloadedVoltage - ref->loadedVoltage;
     uint16_t currentDiff = ref->loadedCurrent - ref->unloadedCurrent;
     ATTR_UNUSED double internalResistance = (double)voltageDiff / (double)currentDiff;
-    return 0.4;
-    //return internalResistance;
+    // return 0.4;
+    return internalResistance;
 }
 
 static double calculateUnloadedVoltageFromInternalResistance(double rawVoltage, double externalResistance, double internalResistance) {

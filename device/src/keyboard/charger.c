@@ -2,7 +2,6 @@
 #include <zephyr/drivers/adc.h>
 #include <zephyr/sys/util.h>
 #include "charger.h"
-#include "battery_calculator.h"
 #include "keyboard/charger.h"
 #include "nrf52840.h"
 #include "oled/screens/notification_screen.h"
@@ -20,6 +19,7 @@
 #include <nrfx_power.h>
 #include <zephyr/logging/log.h>
 #include "battery_percent_calculator.h"
+#include "battery_unloaded_calculator.h"
 
 LOG_MODULE_REGISTER(Battery, LOG_LEVEL_WRN);
 
@@ -159,7 +159,10 @@ void updateChargerEnabled(battery_state_t *batteryState, battery_manager_config_
 }
 
 static uint16_t correctForCharging(uint16_t rawVoltage, uint16_t rawVoltageBeforeStabilization) {
-    uint16_t correctedVoltage = rawVoltage - ((rawVoltageBeforeStabilization - rawVoltage) / 3);
+    // TODO: how does the fall of this depend on internal resistance? :D
+    //       - it looks like higher internal resistance means slower fall
+    //       for pink right it is / 3 (~0.8 Ohm), for white right it is / 8 (~0.175 Ohm)
+    uint16_t correctedVoltage = rawVoltage - ((rawVoltageBeforeStabilization - rawVoltage) / 8);
     return correctedVoltage;
 }
 

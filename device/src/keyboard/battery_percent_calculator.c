@@ -63,13 +63,12 @@ static uint16_t uninterpolate(
     uint16_t inRange = inRight - inLeft;
     uint16_t outRange = outRight - outLeft;
 
-    if (inRange || outRange == 0) {
+    if (inRange == 0 || outRange == 0) {
         return (outLeft + outRight) / 2;
     }
 
     float pos = (float)(in - inLeft) / (float)(inRight - inLeft);
     float out = (float)outLeft + pos * ((float)outRight - (float)outLeft);
-
     return (uint16_t)out;
 }
 
