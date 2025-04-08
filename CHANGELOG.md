@@ -11,14 +11,14 @@ Device Protocol: 4.14.1 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User
 
 - Fix BLE HID to BLE HID switchover.
 - Fix target getting stuck on "USB -> USB" connection transition when host connections are reordered.
-- Exit pairing mode when pairing is cancelled on the host.
-- Fix dongle connections when `bluetooth.alwaysAdvertiseHid` is false.
-- Update BLE advertising icon when scanning/advertising/Bluetooth is stopped.
+- Exit pairing mode screen when pairing is cancelled on the host.
+- Fix dongle connections. The UHK would not start advertising after scanning.
+- Fix BLE advertising icon. Namely, update the icon when scanning/advertising/Bluetooth is stopped.
 - Fix BLE advertising icon updates when Bluetooth is disabled.
-- Make Bluetooth `noAdvertise` macro command disable `bluetooth.alwaysAdvertiseHid`.
-- Consume keypress on the `ifShortcut orGate` macro command.
-- Fix the `ifShortcut anyOrder` macro command.
-- Fix macro name corruption caused by buffer shifts when new configuration is saved.
+- Make `bluetooth noAdvertise` macro command disable `bluetooth.alwaysAdvertiseHid`.
+- Fix the `ifShortcut orGate` macro command. It wouldn't consume keys.
+- Fix the `ifShortcut anyOrder` macro command. It would trigger randomly.
+- Fix "Can't allocate variables" due to configuration shifts.
 
 ## [13.0.1] - 2025-03-24
 
