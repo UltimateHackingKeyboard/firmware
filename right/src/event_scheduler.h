@@ -42,7 +42,6 @@
         EventSchedulerEvent_ResendMessage,
         EventSchedulerEvent_CheckFwChecksums,
         EventSchedulerEvent_CheckDongleProtocolVersion,
-        EventSchedulerEvent_UpdateConnectionStates,
         EventSchedulerEvent_Count
     } event_scheduler_event_t;
 
