@@ -75,6 +75,8 @@ void BtManager_StopBt() {
     if (DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK_DONGLE) {
         BtScan_Stop();
     }
+
+    BtAdvertise_DisableAdvertisingIcon();
 }
 
 
@@ -146,6 +148,7 @@ void BtManager_StartScanningAndAdvertising() {
     if (shouldScan) {
         err = BtScan_Start();
         success &= err == 0;
+        BtAdvertise_DisableAdvertisingIcon();
     }
 #endif
 

@@ -15,6 +15,9 @@
 #include "host_connection.h"
 #include "thread_stats.h"
 #include "trace.h"
+#include "usb_compatibility.h"
+#include "mouse_keys.h"
+#include "config_manager.h"
 
 shell_t Shell = {
     .keyLog = 0,
@@ -185,6 +188,57 @@ static int cmd_uhk_trace(const struct shell *shell, size_t argc, char *argv[])
     return 0;
 }
 
+static void printMouseKeyState(mouse_kinetic_state_t* state) {
+
+    int16_t multiplier = state->intMultiplier;
+    int16_t currentSpeed = state->currentSpeed;
+    int16_t targetSpeed = state->targetSpeed;
+    int16_t axisSkew = state->axisSkew*100;
+    int16_t xSum = state->xSum*100;
+    int16_t ySum = state->ySum*100;
+
+    printk(" - isScroll %d\n", state->isScroll);
+    printk(" - wasMoveAction %d\n", state->wasMoveAction);
+    printk(" - upState %d\n", state->upState);
+    printk(" - downState %d\n", state->downState);
+    printk(" - leftState %d\n", state->leftState);
+    printk(" - rightState %d\n", state->rightState);
+    printk(" - prevMouseSpeed %d\n", state->prevMouseSpeed);
+    printk(" - intMultiplier %d\n", multiplier);
+    printk(" - currentSpeed %d\n", currentSpeed);
+    printk(" - targetSpeed %d\n", targetSpeed);
+    printk(" - axisSkew*100 %d\n", axisSkew);
+    printk(" - initialSpeed %d\n", state->initialSpeed);
+    printk(" - acceleration %d\n", state->acceleration);
+    printk(" - deceleratedSpeed %d\n", state->deceleratedSpeed);
+    printk(" - baseSpeed %d\n", state->baseSpeed);
+    printk(" - acceleratedSpeed %d\n", state->acceleratedSpeed);
+    printk(" - xSum*100 %d\n", xSum);
+    printk(" - ySum*100 %d\n", ySum);
+    printk(" - xOut %d\n", state->xOut);
+    printk(" - yOut %d\n", state->yOut);
+    printk(" - verticalStateSign %d\n", state->verticalStateSign);
+    printk(" - horizontalStateSign %d\n", state->horizontalStateSign);
+}
+
+static int cmd_uhk_mouseMultipliers(const struct shell *shell, size_t argc, char *argv[]) {
+    int16_t horizontalScrollMultiplier = HorizontalScrollMultiplier();
+    int16_t verticalScrollMultiplier = VerticalScrollMultiplier();
+    printk("h scroll multiplier: %d (x.xx)\n", horizontalScrollMultiplier);
+    printk("v scroll multiplier: %d (x.xx)\n", verticalScrollMultiplier);
+    printk("accel / deccel states: %d %d\n", ActiveMouseStates[SerializedMouseAction_Accelerate], ActiveMouseStates[SerializedMouseAction_Decelerate]);
+
+    printk("Mouse move states:\n");
+
+    printMouseKeyState(&Cfg.MouseMoveState);
+
+    printk("Mouse scroll states:\n");
+
+    printMouseKeyState(&Cfg.MouseScrollState);
+
+    return 0;
+}
+
 void InitShell(void)
 {
     SHELL_STATIC_SUBCMD_SET_CREATE(uhk_cmds,
@@ -213,6 +267,7 @@ void InitShell(void)
         SHELL_CMD_ARG(connections, NULL, "list BLE connections", cmd_uhk_connections, 1, 0),
         SHELL_CMD_ARG(threads, NULL, "list thread statistics", cmd_uhk_threads, 1, 0),
         SHELL_CMD_ARG(trace, NULL, "lists minimalistic event trace", cmd_uhk_trace, 1, 0),
+        SHELL_CMD_ARG(mouseMultipliers, NULL, "print mouse multipliers", cmd_uhk_mouseMultipliers, 1, 2),
         SHELL_SUBCMD_SET_END);
 
     SHELL_CMD_REGISTER(uhk, &uhk_cmds, "UHK commands", NULL);

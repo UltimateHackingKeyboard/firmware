@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [13.0.2] - 2025-04-08
+
+Device Protocol: 4.14.1 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 9.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.3.0
+
+- Fix BLE HID to BLE HID switchover.
+- Fix target getting stuck on "USB -> USB" connection transition when host connections are reordered.
+- Exit pairing mode screen when pairing is cancelled on the host.
+- Fix dongle connections. The UHK would not start advertising after scanning.
+- Fix BLE advertising icon. Namely, update the icon when scanning/advertising/Bluetooth is stopped.
+- Fix BLE advertising icon updates when Bluetooth is disabled.
+- Make `bluetooth noAdvertise` macro command disable `bluetooth.alwaysAdvertiseHid`.
+- Fix the `ifShortcut orGate` macro command. It wouldn't consume keys.
+- Fix the `ifShortcut anyOrder` macro command. It would trigger randomly.
+- Fix "Can't allocate variables" due to configuration shifts.
+
 ## [13.0.1] - 2025-03-24
 
 Device Protocol: 4.14.1 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 9.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.3.0

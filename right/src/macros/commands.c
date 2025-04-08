@@ -741,6 +741,9 @@ static macro_result_t processBluetoothCommand(parser_context_t *ctx)
         return MacroResult_Finished;
     }
 
+    if (mode == PairingMode_Off) {
+        Cfg.Bt_AlwaysAdvertiseHid = false;
+    }
 #ifdef __ZEPHYR__
     BtManager_EnterMode(mode, toggle);
 #endif
@@ -1173,15 +1176,29 @@ static macro_result_t processIfShortcutCommand(parser_context_t* ctx, bool negat
         }
     }
 
+    uint8_t pendingCount = PostponerQuery_PendingKeypressCount();
+
+    bool insufficientNumberForAnyOrder = false;
+    if (!fixedOrder) {
+        parser_context_t ctx2 = *ctx;
+        uint8_t totalArgs = 0;
+        uint8_t argKeyId = 255;
+        while((argKeyId = Macros_TryConsumeKeyId(&ctx2)) != 255 && ctx2.at < ctx2.end) {
+            totalArgs++;
+        }
+        if (totalArgs > PostponerQuery_PendingKeypressCount()) {
+            insufficientNumberForAnyOrder = true;
+        }
+    }
+
     //parse and check KEYIDs
     postponeCurrentCycle();
-    uint8_t pendingCount = PostponerQuery_PendingKeypressCount();
     uint8_t numArgs = 0;
     bool someoneNotReleased = false;
     uint8_t argKeyId = 255;
     while((argKeyId = Macros_TryConsumeKeyId(ctx)) != 255 && ctx->at < ctx->end) {
         numArgs++;
-        if (pendingCount < numArgs) {
+        if (pendingCount < numArgs || insufficientNumberForAnyOrder) {
             uint32_t referenceTime = transitive && pendingCount > 0 ? PostponerExtended_LastPressTime() : S->ms.currentMacroStartTime;
             uint16_t elapsedSinceReference = Timer_GetElapsedTime(&referenceTime);
 
@@ -1208,11 +1225,7 @@ static macro_result_t processIfShortcutCommand(parser_context_t* ctx, bool negat
                 goto conditionFailed;
             }
             else {
-                if (negate) {
-                    goto conditionPassed;
-                } else {
-                    goto conditionFailed;
-                }
+                goto notMatched;
             }
         }
         else if (orGate) {
@@ -1220,41 +1233,26 @@ static macro_result_t processIfShortcutCommand(parser_context_t* ctx, bool negat
             while (true) {
                 // first keyid had already been processed.
                 if (PostponerQuery_ContainsKeyId(argKeyId)) {
-                    if (negate) {
-                        goto conditionFailed;
-                    } else {
-                        goto conditionPassed;
-                    }
+                    numArgs = 1;
+                    goto matched;
                 }
                 if ((argKeyId = Macros_TryConsumeKeyId(ctx)) == 255 || ctx->at == ctx->end) {
                     break;
                 }
             }
-            // none is matched
-            if (negate) {
-                goto conditionPassed;
-            } else {
-                goto conditionFailed;
-            }
+            goto notMatched;
         }
         else if (fixedOrder && PostponerExtended_PendingId(numArgs - 1) != argKeyId) {
-            if (negate) {
-                goto conditionPassed;
-            } else {
-                goto conditionFailed;
-            }
+            goto notMatched;
         }
         else if (!fixedOrder && !PostponerQuery_ContainsKeyId(argKeyId)) {
-            if (negate) {
-                goto conditionPassed;
-            } else {
-                goto conditionFailed;
-            }
+            goto notMatched;
         }
         else {
             someoneNotReleased |= !PostponerQuery_IsKeyReleased(Utils_KeyIdToKeyState(argKeyId));
         }
     }
+matched:
     //all keys match
     if (consume) {
         PostponerExtended_ConsumePendingKeypresses(numArgs, true);
@@ -1263,6 +1261,12 @@ static macro_result_t processIfShortcutCommand(parser_context_t* ctx, bool negat
         goto conditionFailed;
     } else {
         goto conditionPassed;
+    }
+notMatched:
+    if (negate) {
+        goto conditionPassed;
+    } else {
+        goto conditionFailed;
     }
 conditionFailed:
     while(Macros_TryConsumeKeyId(ctx) != 255) { };
@@ -2372,6 +2376,9 @@ static macro_result_t processCommand(parser_context_t* ctx)
             }
             else if (ConsumeToken(ctx, "statsPostponerStack")) {
                 return Macros_ProcessStatsPostponerStackCommand();
+            }
+            else if (ConsumeToken(ctx, "statsVariables")) {
+                return Macros_ProcessStatsVariablesCommand();
             }
             else if (ConsumeToken(ctx, "switchKeymap")) {
                 return processSwitchKeymapCommand(ctx);
