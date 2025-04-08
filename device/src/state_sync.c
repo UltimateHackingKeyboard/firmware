@@ -524,7 +524,6 @@ static bool needsCharging(battery_state_t *batteryState) {
 void StateSync_CheckChargeMe(void) {
 #if DEVICE_IS_UHK80_RIGHT
     StateSync_BlinkBatteryIcon = needsCharging(&SyncLeftHalfState.battery) || needsCharging(&SyncRightHalfState.battery);
-    StateSync_BlinkBatteryIcon = RunningOnBattery;
 
     if (StateSync_BlinkBatteryIcon) {
         WIDGET_REFRESH(&StatusWidget);
