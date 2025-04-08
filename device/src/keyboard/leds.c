@@ -7,7 +7,7 @@
 #include "keyboard/key_scanner.h"
 #include "ledmap.h"
 #include "slave_drivers/is31fl3xxx_driver.h"
-#include "battery_calculator.h"
+#include "battery_unloaded_calculator.h"
 
 // Thread definitions
 

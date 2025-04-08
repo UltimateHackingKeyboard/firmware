@@ -2,6 +2,7 @@
 #include <zephyr/drivers/adc.h>
 #include <zephyr/sys/util.h>
 #include "charger.h"
+#include "battery_window_calculator.h"
 #include "keyboard/charger.h"
 #include "nrf52840.h"
 #include "oled/screens/notification_screen.h"
@@ -21,7 +22,12 @@
 #include "battery_percent_calculator.h"
 #include "battery_unloaded_calculator.h"
 
-LOG_MODULE_REGISTER(Battery, LOG_LEVEL_WRN);
+
+#if DEBUG_BATTERY_TESTING
+    LOG_MODULE_REGISTER(Battery, LOG_LEVEL_INF);
+#else
+    LOG_MODULE_REGISTER(Battery, LOG_LEVEL_WRN);
+#endif
 
 /**
  * chargerStatDt == 1 => (actually) not charging (e.g., fully charged, or no power provided)
@@ -36,10 +42,6 @@ const struct gpio_dt_spec chargerEnDt = GPIO_DT_SPEC_GET(DT_ALIAS(charger_en), g
 const struct gpio_dt_spec chargerStatDt = GPIO_DT_SPEC_GET(DT_ALIAS(charger_stat), gpios);
 struct gpio_callback callbackStruct;
 const struct adc_dt_spec adc_channel = ADC_DT_SPEC_GET_BY_IDX(DT_PATH(zephyr_user), 0);
-
-#define CHARGER_UPDATE_PERIOD 60000
-#define CHARGER_STAT_PERIOD 700
-#define CHARGER_STABILIZATION_PERIOD 500
 
 static battery_state_t batteryState;
 
@@ -179,6 +181,11 @@ static uint16_t getCorrectedVoltage(uint16_t previousVoltage, bool previousCharg
         voltage = BatteryCalculator_CalculateUnloadedVoltage(rawVoltage);
         LOG_INF("... Voltage corrected because of load %d -> %d\n", rawVoltage, voltage);
     }
+
+    voltage = BatteryCalculator_CalculateWindowAverageVoltage(voltage);
+        LOG_INF("    ... Averaged to %d", voltage);
+        LOG_INF("    ... which is    %d%%", BatteryCalculator_CalculatePercent(voltage));
+
     return voltage;
 }
 
@@ -201,10 +208,6 @@ void Charger_UpdateBatteryState() {
 
             // actually measure voltage
             uint16_t voltage = getCorrectedVoltage(previousVoltage, previousCharging);
-
-            if (batteryState.batteryVoltage != 0) {
-                voltage = (voltage + batteryState.batteryVoltage*3) / 4;
-            }
 
             // TODO: add more accurate computation
             battery_manager_config_t* currentBatteryConfig = BatteryManager_GetCurrentBatteryConfig();

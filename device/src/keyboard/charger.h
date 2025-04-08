@@ -7,10 +7,21 @@
     #include <zephyr/drivers/adc.h>
     #include <inttypes.h>
     #include <stdbool.h>
+    #include "debug.h"
 
 // Macros:
 
     #define VOLTAGE_DIVIDER_MULTIPLIER 2
+
+
+#if DEBUG_BATTERY_TESTING
+    #define CHARGER_UPDATE_PERIOD 10*1000
+#else
+    #define CHARGER_UPDATE_PERIOD 60*1000
+#endif
+
+    #define CHARGER_STAT_PERIOD 700
+    #define CHARGER_STABILIZATION_PERIOD 500
 
 // Typedefs:
 

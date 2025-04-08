@@ -50,7 +50,7 @@
 #include "proxy_log_backend.h"
 
 #if DEVICE_IS_KEYBOARD
-#include "keyboard/battery_calculator.h"
+#include "keyboard/battery_unloaded_calculator.h"
 #endif
 
 k_tid_t Main_ThreadId = 0;

@@ -1,5 +1,5 @@
-#ifndef __BATTERY_CALCULATOR_H__
-#define __BATTERY_CALCULATOR_H__
+#ifndef __BATTERY_UNLOADED_CALCULATOR_H__
+#define __BATTERY_UNLOADED_CALCULATOR_H__
 
 // Includes:
 
