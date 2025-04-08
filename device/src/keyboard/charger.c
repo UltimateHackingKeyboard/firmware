@@ -173,9 +173,11 @@ static uint16_t getCorrectedVoltage(uint16_t previousVoltage, bool previousCharg
 
     uint16_t voltage = rawVoltage;
     if (batteryState.powered) {
-        if (previousVoltage != 0 && previousCharging && MAX(rawVoltage-previousVoltage, previousVoltage-rawVoltage) < 500) {
+        if (previousVoltage != 0 && previousCharging) {
             voltage = correctForCharging(rawVoltage, previousVoltage);
             LOG_INF("... Voltage corrected because of charging %d -> %d -> %d\n", previousVoltage, rawVoltage, voltage);
+        } else {
+            LOG_INF("... Powered, but cannot measure");
         }
     } else {
         voltage = BatteryCalculator_CalculateUnloadedVoltage(rawVoltage);
@@ -183,8 +185,9 @@ static uint16_t getCorrectedVoltage(uint16_t previousVoltage, bool previousCharg
     }
 
     voltage = BatteryCalculator_CalculateWindowAverageVoltage(voltage);
-        LOG_INF("    ... Averaged to %d", voltage);
-        LOG_INF("    ... which is    %d%%", BatteryCalculator_CalculatePercent(voltage));
+
+    LOG_INF("    ... Averaged to %d", voltage);
+    LOG_INF("    ... which is    %d%%", BatteryCalculator_CalculatePercent(voltage));
 
     return voltage;
 }
@@ -259,6 +262,7 @@ void Charger_UpdateBatteryState() {
             return;
         }
     } else {
+        gpio_pin_set_dt(&chargerEnDt, true);
         previousVoltage = 0;
     }
 

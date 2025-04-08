@@ -58,7 +58,8 @@ const life_reference_record_t RightRecords[] = {
 
 static uint16_t uninterpolate(
     uint16_t outLeft, uint16_t outRight,
-    uint16_t inLeft, uint16_t in, uint16_t inRight
+    uint16_t inLeft, uint16_t in, uint16_t inRight,
+    bool coalesce
 ) {
     uint16_t inRange = inRight - inLeft;
     uint16_t outRange = outRight - outLeft;
@@ -68,8 +69,27 @@ static uint16_t uninterpolate(
     }
 
     float pos = (float)(in - inLeft) / (float)(inRight - inLeft);
-    float out = (float)outLeft + pos * ((float)outRight - (float)outLeft);
-    return (uint16_t)out;
+    float _out = (float)outLeft + pos * ((float)outRight - (float)outLeft);
+    int16_t out = (uint16_t)_out;
+
+    if (coalesce) {
+        if (out < outLeft && outLeft <= outRight) {
+            return outLeft;
+        }
+
+        if (out > outLeft && outLeft >= outRight) {
+            return outRight;
+        }
+
+        if (out < outRight && outRight <= outLeft) {
+            return outLeft;
+        }
+
+        if (out > outRight && outRight >= outLeft) {
+            return outRight;
+        }
+    }
+    return out;
 }
 
 static uint16_t findMinuteOf(uint16_t voltage, const life_reference_record_t* records, uint16_t count) {
@@ -90,7 +110,7 @@ static uint16_t findMinuteOf(uint16_t voltage, const life_reference_record_t* re
         return records[count-1].unit;
     }
 
-    return uninterpolate(bigger->unit, smaller->unit, bigger->voltage, voltage, smaller->voltage);
+    return uninterpolate(bigger->unit, smaller->unit, bigger->voltage, voltage, smaller->voltage, true);
 }
 
 static uint16_t calculatePercent(
@@ -101,7 +121,7 @@ static uint16_t calculatePercent(
     uint16_t fullMinute = findMinuteOf(config->maxVoltage, records, count);
     uint16_t emptyMinute = findMinuteOf(config->minVoltage, records, count);
     uint16_t currentMinute = findMinuteOf(voltage, records, count);
-    uint16_t percent = uninterpolate(1, 100, emptyMinute, currentMinute, fullMinute);
+    uint16_t percent = uninterpolate(1, 100, emptyMinute, currentMinute, fullMinute, true);
 
     return percent;
 }

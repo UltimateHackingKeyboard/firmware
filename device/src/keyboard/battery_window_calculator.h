@@ -10,7 +10,7 @@
 
 // Macros:
 
-    #define BATTERY_CALCULATOR_AVERAGE_ENABLED true
+    #define BATTERY_CALCULATOR_AVERAGE_ENABLED false
 
 // Typedefs:
 
