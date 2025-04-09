@@ -11,11 +11,11 @@ uint32_t sum = 0;
 uint8_t pos = 0;
 uint8_t count = 0;
 
-static void addNewRecord(uint16_t voltage) {
-    if (count > 0 && CurrentTime - lastMeasurement < CHARGER_UPDATE_PERIOD/2 && voltage != 0) {
-        return;
-    }
+static bool shouldAddRecord(uint16_t voltage) {
+    return count > 0 && CurrentTime - lastMeasurement < CHARGER_UPDATE_PERIOD/2 && voltage != 0;
+}
 
+static void addNewRecord(uint16_t voltage) {
     sum -= values[pos];
 
     values[pos] = voltage;
@@ -29,8 +29,12 @@ static void addNewRecord(uint16_t voltage) {
 
 uint16_t BatteryCalculator_CalculateWindowAverageVoltage(uint16_t voltage) {
     if (BATTERY_CALCULATOR_AVERAGE_ENABLED) {
-        addNewRecord(voltage);
-        return sum / count;
+        if (shouldAddRecord(voltage)) {
+            addNewRecord(voltage);
+            return sum / count;
+        } else {
+            return (sum + voltage) / (count + 1);
+        }
     } else {
         return voltage;
     }
