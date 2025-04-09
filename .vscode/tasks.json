@@ -106,7 +106,7 @@
 				"--no-sysbuild",
 				"--",
 				"-DNCS_TOOLCHAIN_VERSION=NONE",
-				"-DCONF_FILE=${cwd}/device/prj.conf",
+				"-DCONF_FILE=${cwd}/device/prj_release.conf",
 				"-DEXTRA_CONF_FILE=${cwd}/device/prj.conf.overlays/nrf_shared.conf;${cwd}/device/prj.conf.overlays/c2usb.conf;${cwd}/device/prj.conf.overlays/uhk-80.conf;${cwd}/device/prj.conf.overlays/ble_nus.conf",
 				"-DBOARD_ROOT=${cwd}",
 				"-Dmcuboot_OVERLAY_CONFIG=${cwd}/device/child_image/mcuboot.conf;${cwd}/device/child_image/uhk-80-left.mcuboot.conf"
@@ -142,7 +142,7 @@
 				"--no-sysbuild",
 				"--",
 				"-DNCS_TOOLCHAIN_VERSION=NONE",
-				"-DCONF_FILE=${cwd}/device/prj.conf",
+				"-DCONF_FILE=${cwd}/device/prj_release.conf",
 				"-DEXTRA_CONF_FILE=${cwd}/device/prj.conf.overlays/nrf_shared.conf;${cwd}/device/prj.conf.overlays/c2usb.conf;${cwd}/device/prj.conf.overlays/uhk-80.conf;${cwd}/device/prj.conf.overlays/ble_nus.conf;${cwd}/device/prj.conf.overlays/ble_nus_client.conf;${cwd}/device/prj.conf.overlays/ble_hid.conf",
 				"-DBOARD_ROOT=${cwd}",
 				"-Dmcuboot_OVERLAY_CONFIG=${cwd}/device/child_image/mcuboot.conf;${cwd}/device/child_image/uhk-80-right.mcuboot.conf"
@@ -171,6 +171,114 @@
 				"build",
 				"--build-dir",
 				"${cwd}/device/build/uhk-dongle",
+				"${cwd}/device",
+				"--pristine",
+				"--board",
+				"uhk-dongle",
+				"--no-sysbuild",
+				"--",
+				"-DNCS_TOOLCHAIN_VERSION=NONE",
+				"-DCONF_FILE=${cwd}/device/prj_release.conf",
+				"-DEXTRA_CONF_FILE=${cwd}/device/prj.conf.overlays/nrf_shared.conf;${cwd}/device/prj.conf.overlays/c2usb.conf;${cwd}/device/prj.conf.overlays/ble_nus_client.conf",
+				"-DBOARD_ROOT=${cwd}",
+				"-Dmcuboot_OVERLAY_CONFIG=${cwd}/device/child_image/mcuboot.conf;${cwd}/device/child_image/uhk-dongle.mcuboot.conf"
+			],
+			"problemMatcher": [
+				"$gcc"
+			]
+		},
+		{
+			"label": "Build UHK 80 left DEBUG firmware",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"type": "process",
+			"command": "nrfutil",
+			"args": [
+				"toolchain-manager",
+				"launch",
+				"--shell",
+				"--",
+				"west",
+				"build",
+				"--build-dir",
+				"${cwd}/device/build/debug-uhk-80-left",
+				"${cwd}/device",
+				"--pristine",
+				"--board",
+				"uhk-80-left",
+				"--no-sysbuild",
+				"--",
+				"-DNCS_TOOLCHAIN_VERSION=NONE",
+				"-DCONF_FILE=${cwd}/device/prj.conf",
+				"-DEXTRA_CONF_FILE=${cwd}/device/prj.conf.overlays/nrf_shared.conf;${cwd}/device/prj.conf.overlays/c2usb.conf;${cwd}/device/prj.conf.overlays/uhk-80.conf;${cwd}/device/prj.conf.overlays/ble_nus.conf",
+				"-DBOARD_ROOT=${cwd}",
+				"-Dmcuboot_OVERLAY_CONFIG=${cwd}/device/child_image/mcuboot.conf;${cwd}/device/child_image/uhk-80-left.mcuboot.conf"
+			],
+			"problemMatcher": [
+				"$gcc"
+			]
+		},
+		{
+			"label": "Build UHK 80 right DEBUG firmware",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"type": "process",
+			"command": "nrfutil",
+			"args": [
+				"toolchain-manager",
+				"launch",
+				"--shell",
+				"--",
+				"west",
+				"build",
+				"--build-dir",
+				"${cwd}/device/build/debug-uhk-80-right",
+				"${cwd}/device",
+				"--pristine",
+				"--board",
+				"uhk-80-right",
+				"--no-sysbuild",
+				"--",
+				"-DNCS_TOOLCHAIN_VERSION=NONE",
+				"-DCONF_FILE=${cwd}/device/prj.conf",
+				"-DEXTRA_CONF_FILE=${cwd}/device/prj.conf.overlays/nrf_shared.conf;${cwd}/device/prj.conf.overlays/c2usb.conf;${cwd}/device/prj.conf.overlays/uhk-80.conf;${cwd}/device/prj.conf.overlays/ble_nus.conf;${cwd}/device/prj.conf.overlays/ble_nus_client.conf;${cwd}/device/prj.conf.overlays/ble_hid.conf",
+				"-DBOARD_ROOT=${cwd}",
+				"-Dmcuboot_OVERLAY_CONFIG=${cwd}/device/child_image/mcuboot.conf;${cwd}/device/child_image/uhk-80-right.mcuboot.conf"
+			],
+			"problemMatcher": [
+				"$gcc"
+			]
+		},
+		{
+			"label": "Build UHK dongle DEBUG firmware",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"type": "process",
+			"command": "nrfutil",
+			"args": [
+				"toolchain-manager",
+				"launch",
+				"--shell",
+				"--",
+				"west",
+				"build",
+				"--build-dir",
+				"${cwd}/device/build/debug-uhk-dongle",
 				"${cwd}/device",
 				"--pristine",
 				"--board",
