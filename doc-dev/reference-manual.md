@@ -99,7 +99,7 @@ COMMAND = yield
 COMMAND = {exec|call|fork} MACRONAME
 COMMAND = resetTrackpoint
 COMMAND = printStatus
-COMMAND = setLedTxt <timeout, or 0 forever (INT)> { STRING | VALUE }
+COMMAND = setLedTxt <timeout, or 0 forever (INT)> [ DISPLAY_LOCATION STRING ]+ { STRING | VALUE }
 COMMAND = write STRING
 COMMAND = goTo <index (ADDRESS)>
 COMMAND = repeatFor <var name (IDENTIFIER)> <action adr (ADDRESS)>
@@ -235,6 +235,7 @@ SCANCODE = <en-US character (CHAR)> | SCANCODE_ABBREV
 SHORTCUT = <MODMASK-SCANCODE, e.g. LC-c (COMPOSITE_SHORTCUT)>
 SHORTCUT = <SCANCODE long abbreviation (SCANCODE)> 
 SHORTCUT = <MODMASK, e.g. LS for left shift(MODMASK)> 
+DISPLAY_LOCATION = abbrev | notification | leftStatus | rightStatus | keymap | layer | host
 COMPOSITE_SHORTCUT = MODMASK-SCANCODE
 SCANCODE_ABBREV = enter | escape | backspace | tab | space | minusAndUnderscore | equalAndPlus | openingBracketAndOpeningBrace | closingBracketAndClosingBrace
 SCANCODE_ABBREV = backslashAndPipeIso | backslashAndPipe | nonUsHashmarkAndTilde | semicolonAndColon | apostropheAndQuote | graveAccentAndTilde | commaAndLessThanSign
@@ -328,6 +329,9 @@ COMMAND = setEmergencyKey KEYID
 - `setLedTxt <time> { STRING | VALUE }` will set led display to the supplemented text and block for the given time before updating display back to default value.
     - If the given time is zero, i.e. `<time> = 0`, the led text will be set indefinitely (until the display is refreshed by other text) and this command will return immediately.
     - If `VALUE` is given (e.g., `$keystrokeDelay`), will be shown in notation that shows first two significant digits and a letter denoting floating point shift. E.g., `A23 = 2.3`, `Y23 = -0.23`, `23B = 2300`...
+    - If location is given, the text will be show there. For uhk60, only "abbrev" location is valid (and default). For uhk80, "notification" is default, and "abbrev" is invalid. E.g.:
+      - `setLedTxt 2000 abbrev "HLW" "Hello world!"`
+      - `setLedTxt 2000 leftStatus "0" rightStatus "35 T"`
 - `progressHue` or better `autoRepeat progressHue` will slowly adjust constantRGB value in order to rotate the per-key-RGB backlight through all hues.
 - `resetTrackpoint` resets the internal trackpoint board. Can be used to recover the trackpoint from drift conditions. Drifts usually happen if you keep the cursor moving at slow constant speeds, because of the boards's internal adaptive calibration. Since the board's parameters cannot be altered, the only way around is or you to learn not to do the type of movement which triggers them.
 - `i2cBaudRate <baud rate, default 100000(INT)>` sets i2c baud rate. Lowering this value may improve module reliability, while increasing latency.
