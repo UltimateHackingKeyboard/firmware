@@ -2,6 +2,7 @@ target_sources(${PROJECT_NAME} PRIVATE
     commands.c
     core.c
     debug_commands.c
+    display.c
     key_timing.c
     keyid_parser.c
     scancode_commands.c

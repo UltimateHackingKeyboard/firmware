@@ -129,7 +129,14 @@ void Framebuffer_DrawText(widget_t* canvas, framebuffer_t* buffer, int16_t x, in
 
     uint16_t consumed = 0;
     while (*text != '\0' && (textEnd == NULL || text < textEnd)) {
-        if (*text > 127) {
+        if(color == FontControl_NextCharAndSpaceGone && *text >=32) {
+            icon12 = false;
+            color = FontControl_NextCharWhite;
+            text+= getUtf8Length(*text);
+            if (*text == ' ') {
+                text++;
+            }
+        } else if (*text > 127) {
             consumed += drawGlyph(canvas, buffer, x+consumed, y, font, '*'-31, color);
             icon12 = false;
             color = FontControl_NextCharWhite;
@@ -144,6 +151,7 @@ void Framebuffer_DrawText(widget_t* canvas, framebuffer_t* buffer, int16_t x, in
                 case FontControl_NextCharBlack:
                 case FontControl_NextCharGray:
                 case FontControl_NextCharWhite:
+                case FontControl_NextCharAndSpaceGone:
                     color = *text;
                     break;
                 case FontControl_NextCharIcon12:
@@ -196,7 +204,14 @@ uint16_t Framebuffer_TextWidth(const lv_font_t* font, const char* text, const ch
     uint16_t consumed = 0;
     while (*text != '\0' && (textEnd == NULL || text < textEnd)) {
         previousConsumed = consumed;
-        if (*text > 127) {
+        if(color == FontControl_NextCharAndSpaceGone && *text >=32) {
+            icon12 = false;
+            color = FontControl_NextCharWhite;
+            text+= getUtf8Length(*text);
+            if (*text == ' ') {
+                text++;
+            }
+        } else if (*text > 127) {
             consumed += getGlyphWidth(font, '*'-31);
             icon12 = false;
             color = FontControl_NextCharWhite;

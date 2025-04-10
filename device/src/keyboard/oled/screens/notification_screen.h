@@ -19,5 +19,6 @@
 
     void NotificationScreen_Init(void);
     void NotificationScreen_Notify(const char* message);
+    void NotificationScreen_NotifyFor(const char* message, uint16_t duration);
 
 #endif

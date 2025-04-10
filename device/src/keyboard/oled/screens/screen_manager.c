@@ -61,7 +61,6 @@ void ScreenManager_ActivateScreen(screen_id_t screen)
             break;
         case ScreenId_Notification:
             screenPtr = NotificationScreen;
-            EventScheduler_Schedule(CurrentTime + SCREEN_NOTIFICATION_TIMEOUT, EventSchedulerEvent_SwitchScreen, "ScreenManager - switch to main screen");
             break;
         default:
             break;

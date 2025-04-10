@@ -14,6 +14,7 @@
 #include "macros/set_command.h"
 #include "config_manager.h"
 #include "str_utils.h"
+#include <math.h>
 
 #if !defined(MAX)
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -827,6 +828,28 @@ macro_result_t Macros_ProcessSetVarCommand(parser_context_t* ctx)
     return MacroResult_Finished;
 }
 
+void Macros_SerializeVar(char* buffer, uint8_t len, macro_variable_t var) {
+    switch (var.type) {
+        case MacroVariableType_Float: {
+            float intPart = 0;
+            float fraPart = modff(var.asFloat, &intPart);
+            int32_t intPartAsInt = (int32_t)intPart;
+            int32_t fraPartAsInt = (int32_t)(fraPart * 1000 / 1);
+
+            snprintf(buffer, len, "%ld.%ld", intPartAsInt, fraPartAsInt);
+            break;
+        }
+        case MacroVariableType_Int:
+            snprintf(buffer, len, "%ld", var.asInt);
+            break;
+        case MacroVariableType_Bool:
+            snprintf(buffer, len, "%s", var.asBool ? "true" : "false");
+            break;
+        default:
+            Macros_ReportErrorNum("Unexpected variable type:", var.type, NULL);
+            break;
+    }
+}
 
 
 ATTR_UNUSED static void test(const char* command, macro_variable_t expectedResult, const char* comment) {

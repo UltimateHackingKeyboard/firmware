@@ -17,6 +17,8 @@
 
 // Functions:
 
+    bool Macros_IsNUM(parser_context_t* ctx);
+    macro_result_t Macros_ProcessDelay(uint32_t time);
     macro_result_t Macros_ProcessCommandAction(void);
     macro_result_t Macros_ProcessDelayAction();
 

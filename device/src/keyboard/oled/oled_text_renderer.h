@@ -19,6 +19,8 @@
         FontControl_NextCharWhite,
         FontControl_NextCharBlack,
         FontControl_NextCharIcon12,
+        FontControl_NextCharAndSpaceGone,
+        FontControl_NextCharSingleSpace,
     } font_control_t;
 
     typedef struct widget_t widget_t;

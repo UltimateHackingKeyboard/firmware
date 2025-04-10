@@ -19,6 +19,7 @@
 #include "macros/status_buffer.h"
 #include "macros/string_reader.h"
 #include "macros/typedefs.h"
+#include "macros/display.h"
 #include "macros/vars.h"
 #include "postponer.h"
 #include "secondary_role_driver.h"
@@ -70,6 +71,11 @@ static macro_result_t processDelay(uint32_t time)
         S->as.actionActive = true;
         return processDelay(time);
     }
+}
+
+macro_result_t Macros_ProcessDelay(uint32_t time)
+{
+    return processDelay(time);
 }
 
 macro_result_t Macros_ProcessDelayAction()
@@ -146,6 +152,10 @@ static bool isNUM(parser_context_t* ctx)
     default:
         return false;
     }
+}
+
+bool Macros_IsNUM(parser_context_t* ctx) {
+    return isNUM(ctx);
 }
 
 static int32_t consumeRuntimeMacroSlotId(parser_context_t* ctx)
@@ -749,58 +759,6 @@ static macro_result_t processBluetoothCommand(parser_context_t *ctx)
 #endif
 
     return MacroResult_Finished;
-}
-
-
-static macro_result_t processSetLedTxtCommand(parser_context_t* ctx)
-{
-    ATTR_UNUSED int16_t time = Macros_ConsumeInt(ctx);
-    char text[3];
-    uint8_t textLen = 0;
-
-    if (isNUM(ctx)) {
-#ifndef __ZEPHYR__
-        macro_variable_t value = Macros_ConsumeAnyValue(ctx);
-        SegmentDisplay_SerializeVar(text, value);
-        textLen = 3;
-#endif
-    } else if (ctx->at != ctx->end) {
-        uint16_t stringOffset = 0, textIndex = 0, textSubIndex = 0;
-        for (uint8_t i = 0; true; i++) {
-            char c = Macros_ConsumeCharOfString(ctx, &stringOffset, &textIndex, &textSubIndex);
-            if (c == '\0') {
-                break;
-            }
-            if (i < 3) {
-                text[i] = c;
-                textLen++;
-            }
-        }
-        ConsumeWhite(ctx);
-    } else {
-        Macros_ReportError("Text argument expected.", ctx->at, ctx->at);
-        return MacroResult_Finished;
-    }
-
-    if (Macros_DryRun || Macros_ParserError) {
-        return MacroResult_Finished;
-    }
-
-#ifndef __ZEPHYR__
-    macro_result_t res = MacroResult_Finished;
-    if (time == 0) {
-        SegmentDisplay_SetText(textLen, text, SegmentDisplaySlot_Macro);
-        return MacroResult_Finished;
-    } else if ((res = processDelay(time)) == MacroResult_Finished) {
-        SegmentDisplay_DeactivateSlot(SegmentDisplaySlot_Macro);
-        return MacroResult_Finished;
-    } else {
-        SegmentDisplay_SetText(textLen, text, SegmentDisplaySlot_Macro);
-        return res;
-    }
-#else
-    return MacroResult_Finished;
-#endif
 }
 
 macro_result_t goTo(parser_context_t* ctx)
@@ -2357,7 +2315,7 @@ static macro_result_t processCommand(parser_context_t* ctx)
                 return processStartRecordingCommand(ctx, true);
             }
             else if (ConsumeToken(ctx, "setLedTxt")) {
-                return processSetLedTxtCommand(ctx);
+                return Macros_ProcessSetLedTxtCommand(ctx);
             }
             else if (ConsumeToken(ctx, "statsRuntime")) {
                 return Macros_ProcessStatsRuntimeCommand();
