@@ -836,11 +836,11 @@ void Macros_SerializeVar(char* buffer, uint8_t len, macro_variable_t var) {
             int32_t intPartAsInt = (int32_t)intPart;
             int32_t fraPartAsInt = (int32_t)(fraPart * 1000 / 1);
 
-            snprintf(buffer, len, "%ld.%ld", intPartAsInt, fraPartAsInt);
+            snprintf(buffer, len, "%" PRId32 ".%" PRId32 , intPartAsInt, fraPartAsInt);
             break;
         }
         case MacroVariableType_Int:
-            snprintf(buffer, len, "%ld", var.asInt);
+            snprintf(buffer, len, "%" PRId32, var.asInt);
             break;
         case MacroVariableType_Bool:
             snprintf(buffer, len, "%s", var.asBool ? "true" : "false");
