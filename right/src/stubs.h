@@ -55,6 +55,7 @@
     extern void Trace_Printf(const char *fmt, ...);
     extern void PowerMode_PutBackToSleepMaybe(void);
     extern void BtAdvertise_DisableAdvertisingIcon(void);
+    extern void NotificationScreen_NotifyFor(const char* message, uint16_t duration);
 
 #if DEVICE_HAS_OLED
 #define WIDGET_REFRESH(W) Widget_Refresh(W)
