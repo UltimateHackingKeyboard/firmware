@@ -410,7 +410,10 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
     case StateSyncPropertyId_Battery:
         WIDGET_REFRESH(&StatusWidget);
         {
-            printk("Betteries: %d%% %d%%\n", SyncLeftHalfState.battery.batteryPercentage, SyncRightHalfState.battery.batteryPercentage);
+            printk("Batteries: %d%% %d%% (%d %d)\n"
+                , SyncLeftHalfState.battery.batteryPercentage, SyncRightHalfState.battery.batteryPercentage
+                , SyncLeftHalfState.battery.batteryVoltage, SyncRightHalfState.battery.batteryVoltage
+            );
             bool newRunningOnBattery = !SyncLeftHalfState.battery.powered || !SyncRightHalfState.battery.powered;
             bool newRightRunningOnBattery = !SyncRightHalfState.battery.powered;
             if (RunningOnBattery != newRunningOnBattery) {
