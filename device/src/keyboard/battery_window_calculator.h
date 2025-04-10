@@ -7,10 +7,15 @@
     #include <zephyr/drivers/adc.h>
     #include <inttypes.h>
     #include <stdbool.h>
+    #include "debug.h"
 
 // Macros:
 
+#if DEBUG_BATTERY_TESTING
     #define BATTERY_CALCULATOR_AVERAGE_ENABLED false
+#else
+    #define BATTERY_CALCULATOR_AVERAGE_ENABLED true
+#endif
 
 // Typedefs:
 
