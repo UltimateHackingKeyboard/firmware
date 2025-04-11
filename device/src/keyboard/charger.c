@@ -23,11 +23,7 @@
 #include "battery_unloaded_calculator.h"
 
 
-#if DEBUG_BATTERY_TESTING
-    LOG_MODULE_REGISTER(Battery, LOG_LEVEL_INF);
-#else
-    LOG_MODULE_REGISTER(Battery, LOG_LEVEL_WRN);
-#endif
+LOG_MODULE_REGISTER(Battery, LOG_LEVEL_INF);
 
 /**
  * chargerStatDt == 1 => (actually) not charging (e.g., fully charged, or no power provided)
@@ -320,7 +316,7 @@ bool Charger_ShouldRemainInDepletedMode(bool checkVoltage) {
     updatePowered();
     if (checkVoltage) {
         uint16_t voltage = getVoltage();
-        printk("Charger_ShouldRemainInDepletedMode called; powered = %d && voltage = %d\n", batteryState.powered, voltage);
+        printk("Charger_ShouldRemainInDepletedMode called; powered = %d && raw voltage = %d\n", batteryState.powered, voltage);
         return !batteryState.powered && voltage > 1000 && voltage < BatteryManager_GetCurrentBatteryConfig()->minWakeupVoltage;
     } else {
         printk("Charger_ShouldRemainInDepletedMode called; powered = %d\n", batteryState.powered);
@@ -331,6 +327,8 @@ bool Charger_ShouldRemainInDepletedMode(bool checkVoltage) {
 bool Charger_ShouldEnterDepletedMode() {
     updatePowered();
     uint16_t voltage = getVoltage();
+
+    printk("Charger_ShouldEnterDepletedMode called; powered = %d && raw voltage = %d\n", batteryState.powered, voltage);
     return !batteryState.powered && voltage < BatteryManager_GetCurrentBatteryConfig()->minVoltage;
 }
 
