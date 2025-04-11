@@ -32,11 +32,6 @@ static void addNewRecord(uint16_t voltage) {
 
 uint16_t BatteryCalculator_CalculateWindowAverageVoltage(uint16_t voltage) {
     if (BATTERY_CALCULATOR_AVERAGE_ENABLED) {
-        printk("Averaging battery values (%d): ", voltage);
-        for (uint8_t i = 0; i < count; i++) {
-            printk("%d ", values[i]);
-        }
-        printk("\n");
         if (shouldAddRecord(voltage)) {
             addNewRecord(voltage);
             return sum / count;
