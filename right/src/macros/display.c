@@ -218,7 +218,7 @@ macro_result_t Macros_ProcessSetLedTxtCommand(parser_context_t* ctx)
         processList(ctx, false, time);
         return MacroResult_Finished;
     } else {
-        if (!delayIsInProgress) {
+        if (!delayIsInProgress || Macros_DryRun) {
             processList(ctx, true, time);
         }
         return res;
