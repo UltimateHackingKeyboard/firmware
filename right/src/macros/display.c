@@ -170,9 +170,7 @@ static void showStringInSlot(bool show, display_string_slot_t slotId, char* text
 #endif
 }
 
-uint8_t processList(parser_context_t* ctx, bool show, uint16_t time) {
-    uint8_t stringsProcessed = 0;
-
+void processList(parser_context_t* ctx, bool show, uint16_t time) {
     while (ctx->at != ctx->end) {
         display_string_slot_t slotId = BY_DEVICE(DisplayStringSlot_Abbrev, DisplayStringSlot_Notify);
 
@@ -182,10 +180,16 @@ uint8_t processList(parser_context_t* ctx, bool show, uint16_t time) {
             slotId = parsedSlotId;
         }
 
+        char dummy[1];
         char* bufPtr = NULL;
         uint8_t bufLen = 0;
 
-        getDisplayStringBuffer(slotId, &bufPtr, &bufLen);
+        if (Macros_DryRun) {
+            bufPtr = dummy;
+            bufLen = sizeof(dummy);
+        } else {
+            getDisplayStringBuffer(slotId, &bufPtr, &bufLen);
+        }
 
         consumeDisplayString(ctx, bufPtr, bufLen);
 
@@ -194,12 +198,9 @@ uint8_t processList(parser_context_t* ctx, bool show, uint16_t time) {
         }
 
         if (!Macros_DryRun && !Macros_ParserError) {
-            stringsProcessed++;
             showStringInSlot(show, slotId, bufPtr, bufLen, time);
         }
     }
-
-    return stringsProcessed;
 }
 
 macro_result_t Macros_ProcessSetLedTxtCommand(parser_context_t* ctx)
@@ -211,12 +212,7 @@ macro_result_t Macros_ProcessSetLedTxtCommand(parser_context_t* ctx)
     bool delayIsInProgress = S->as.actionActive;
 
     if (time == 0) {
-        uint8_t stringsProcessed = processList(ctx, true, time);
-
-        if (stringsProcessed == 0) {
-            Macros_ReportError("Text argument expected.", ctx->at, ctx->at);
-        }
-
+        processList(ctx, true, time);
         return MacroResult_Finished;
     } else if ((res = Macros_ProcessDelay(time)) == MacroResult_Finished) {
         processList(ctx, false, time);
