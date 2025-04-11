@@ -238,7 +238,7 @@ void Charger_UpdateBatteryState() {
                 // we are done, schedule the next update
                 stabilizationPauseStartTime = CurrentTime;
                 EventScheduler_Schedule(CurrentTime + CHARGER_UPDATE_PERIOD, EventSchedulerEvent_UpdateBattery, "charger - minute period");
-                statsToIgnore = 1;
+                statsToIgnore = 3;
                 gpio_pin_set_dt(&chargerEnDt, Charger_ChargingEnabled);
                 stabilizationPause = false;
                 // continue processing
@@ -260,7 +260,7 @@ void Charger_UpdateBatteryState() {
 
             // turn of charger and let the battery voltage stabilize for measurement; Store any state changes until the measurement is done, just then apply.
             stabilizationPause = true;
-            statsToIgnore = 1;
+            statsToIgnore = 3;
 
             EventScheduler_Reschedule(CurrentTime + CHARGER_STABILIZATION_PERIOD, EventSchedulerEvent_UpdateBattery, "start stabilization pause");
             return;
