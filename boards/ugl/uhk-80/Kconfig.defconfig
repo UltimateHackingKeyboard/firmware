@@ -56,6 +56,8 @@ if BOARD_UHK_80_RIGHT
     if BT
         # uhk-80-right is NUS server AND client, and HID server
         config BT_MAX_CONN
+            default 4
+        config BT_CTLR_SDC_PERIPHERAL_COUNT
             default 3
         # use different connection parameters for HID clients and dongle
         config BT_GAP_AUTO_UPDATE_CONN_PARAMS
