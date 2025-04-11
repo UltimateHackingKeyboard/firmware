@@ -59,7 +59,11 @@ battery_manager_automaton_state_t BatteryManager_UpdateState(
 
     switch (currentRegion) {
         case ChargeRegion_Empty:
-            return BatteryManagerAutomatonState_TurnOff;
+            if (!batteryState->powered) {
+                return BatteryManagerAutomatonState_TurnOff;
+            } else {
+                return BatteryManagerAutomatonState_Charging;
+            }
         case ChargeRegion_AlmostEmpty:
             if (currentState == BatteryManagerAutomatonState_TurnOff || currentState == BatteryManagerAutomatonState_Charging) {
                 return currentState;
