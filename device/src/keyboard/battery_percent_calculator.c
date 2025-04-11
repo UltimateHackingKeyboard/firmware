@@ -11,17 +11,11 @@ typedef struct {
 const life_reference_record_t LeftRecords [] = {
     { .unit = 0, .voltage = 4022 },
     { .unit = 18, .voltage = 3998 },
-    { .unit = 38, .voltage = 3982 },
     { .unit = 58, .voltage = 3950 },
-    { .unit = 78, .voltage = 3893 },
     { .unit = 98, .voltage = 3859 },
-    { .unit = 118, .voltage = 3839 },
     { .unit = 138, .voltage = 3818 },
-    { .unit = 158, .voltage = 3804 },
     { .unit = 178, .voltage = 3771 },
-    { .unit = 198, .voltage = 3716 },
     { .unit = 218, .voltage = 3629 },
-    { .unit = 238, .voltage = 3544 },
     { .unit = 258, .voltage = 3496 },
     { .unit = 278, .voltage = 3420 },
     { .unit = 288, .voltage = 3317 },
@@ -31,27 +25,17 @@ const life_reference_record_t LeftRecords [] = {
 const life_reference_record_t RightRecords[] = {
     { .unit = 0, .voltage = 4039 },
     { .unit = 18, .voltage = 3974 },
-    { .unit = 38, .voltage = 3916 },
     { .unit = 58, .voltage = 3863 },
-    { .unit = 78, .voltage = 3813 },
     { .unit = 98, .voltage = 3770 },
-    { .unit = 118, .voltage = 3711 },
     { .unit = 138, .voltage = 3682 },
-    { .unit = 158, .voltage = 3659 },
     { .unit = 178, .voltage = 3645 },
-    { .unit = 198, .voltage = 3625 },
     { .unit = 218, .voltage = 3611 },
-    { .unit = 238, .voltage = 3601 },
     { .unit = 258, .voltage = 3587 },
-    { .unit = 278, .voltage = 3575 },
     { .unit = 298, .voltage = 3548 },
-    { .unit = 318, .voltage = 3529 },
     { .unit = 338, .voltage = 3500 },
-    { .unit = 358, .voltage = 3468 },
     { .unit = 378, .voltage = 3438 },
     { .unit = 398, .voltage = 3415 },
     { .unit = 408, .voltage = 3392 },
-    { .unit = 418, .voltage = 3332 },
     { .unit = 428, .voltage = 3230 },
     { .unit = 438, .voltage = 3065 },
 };
@@ -134,4 +118,35 @@ uint16_t BatteryCalculator_CalculatePercent(uint16_t correctedVoltage) {
 
     return percent;
 }
+
+#define TOLERANCE 4
+
+uint16_t BatteryCalculator_Step(uint8_t oldPercentage, uint8_t newPercentage) {
+    if (oldPercentage == newPercentage || oldPercentage == 0) {
+        return newPercentage;
+    }
+
+    int8_t step;
+    int8_t absoluteDiff;
+    int8_t res = 0;
+
+    if (oldPercentage < newPercentage) {
+        step = 1;
+        absoluteDiff = newPercentage - oldPercentage;
+    } else {
+        step = -1;
+        absoluteDiff = oldPercentage - newPercentage;
+    }
+
+    if (absoluteDiff > TOLERANCE*2) {
+        res = oldPercentage + (absoluteDiff-TOLERANCE*2)*step;
+    } else if (absoluteDiff > TOLERANCE || newPercentage == 100 || newPercentage == 1) {
+        res = oldPercentage + step;
+    } else if (absoluteDiff) {
+        res = oldPercentage;
+    }
+    printk("Step called with %d %d -> %d\n", oldPercentage, newPercentage, res);
+    return res;
+}
+
 

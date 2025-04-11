@@ -18,7 +18,7 @@
 #define DEBUG_LOG_MESSAGES false
 #define DEBUG_RUN_TESTS false
 
-#define DEBUG_BATTERY_TESTING false
+#define DEBUG_BATTERY_TESTING true
 
 #define DEBUG_ROLL_STATUS_BUFFER false
 

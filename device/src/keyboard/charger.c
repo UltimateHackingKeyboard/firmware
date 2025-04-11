@@ -133,7 +133,7 @@ void Charger_EnableCharging(bool enabled) {
     }
 }
 
-void updateChargerEnabled(battery_state_t *batteryState, battery_manager_config_t* config) {
+void updateChargerEnabled(battery_state_t *batteryState, battery_manager_config_t* config, uint16_t rawVoltage) {
     battery_manager_automaton_state_t newState = BatteryManager_UpdateState(
             currentChargingAutomatonState,
             batteryState,
@@ -144,6 +144,7 @@ void updateChargerEnabled(battery_state_t *batteryState, battery_manager_config_
         currentChargingAutomatonState = newState;
         switch (newState) {
             case BatteryManagerAutomatonState_TurnOff:
+                printk("Going to shut down. Measured voltage %d, computed voltage %d, powered %d\n", rawVoltage, batteryState->batteryVoltage, batteryState->powered);
                 PowerMode_ActivateMode(PowerMode_AutoShutDown, false, false);
                 break;
             case BatteryManagerAutomatonState_Charging:
@@ -164,9 +165,7 @@ static uint16_t correctForCharging(uint16_t rawVoltage, uint16_t rawVoltageBefor
     return correctedVoltage;
 }
 
-static uint16_t getCorrectedVoltage(uint16_t previousVoltage, bool previousCharging) {
-    uint16_t rawVoltage = getVoltage();
-
+static uint16_t correctVoltage(uint16_t previousVoltage, bool previousCharging, uint16_t rawVoltage) {
     uint16_t voltage = rawVoltage;
 
     if (voltage != 0) {
@@ -211,14 +210,18 @@ void Charger_UpdateBatteryState() {
             }
 
             // actually measure voltage
-            uint16_t voltage = getCorrectedVoltage(previousVoltage, previousCharging);
+            uint16_t rawVoltage = getVoltage();
+            uint16_t voltage = correctVoltage(previousVoltage, previousCharging, rawVoltage);
 
             // TODO: add more accurate computation
             battery_manager_config_t* currentBatteryConfig = BatteryManager_GetCurrentBatteryConfig();
             // uint16_t minCharge = currentBatteryConfig->minVoltage;
             // uint16_t maxCharge = currentBatteryConfig->maxVoltage;
             // uint8_t perc = MIN(100, 1 + 99*(MAX(voltage, minCharge)-minCharge) / (maxCharge - minCharge));
-            uint8_t perc = BatteryCalculator_CalculatePercent(voltage);
+            uint8_t perc;
+            perc = BatteryCalculator_CalculatePercent(voltage);
+            perc = BatteryCalculator_Step(batteryState.batteryPercentage, perc);
+
             stateChanged |= setPercentage(voltage, perc);
 
             if (voltage == 0) {
@@ -227,7 +230,7 @@ void Charger_UpdateBatteryState() {
                 return;
             } else {
                 // run the state automaton that decides when to charge
-                updateChargerEnabled(&batteryState, currentBatteryConfig);
+                updateChargerEnabled(&batteryState, currentBatteryConfig, rawVoltage);
 
                 // if we have changed charger state, update whether actually charging
                 stateChanged |= setActuallyCharging(batteryState.batteryCharging && Charger_ChargingEnabled);
