@@ -407,7 +407,7 @@ static void setPerKeyRgb(const rgb_t* color, uint8_t slotId, uint8_t keyId)
     if (DEVICE_IS_UHK60 || slotId == SlotId_LeftModule) {
         LedDriverValues[slotId][ledMapItem->red] = color->red * KeyBacklightBrightness / 255;
         LedDriverValues[slotId][ledMapItem->green] = color->green * KeyBacklightBrightness / brightnessDivisor / 255;
-        LedDriverValues[slotId][ledMapItem->blue] = color->blue * KeyBacklightBrightness / 255 / 2;
+        LedDriverValues[slotId][ledMapItem->blue] = color->blue * KeyBacklightBrightness / 255;
     }
 
 #ifdef __ZEPHYR__
@@ -417,7 +417,7 @@ static void setPerKeyRgb(const rgb_t* color, uint8_t slotId, uint8_t keyId)
     if (matchesRightHalf || matchesLeftHalf) {
         Uhk80LedDriverValues[ledMapItem->red] = color->red;
         Uhk80LedDriverValues[ledMapItem->green] = color->green;
-        Uhk80LedDriverValues[ledMapItem->blue] = color->blue / 2;
+        Uhk80LedDriverValues[ledMapItem->blue] = color->blue;
     }
 #endif
 }

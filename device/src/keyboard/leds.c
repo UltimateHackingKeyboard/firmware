@@ -151,7 +151,8 @@ static void setLedValues() {
 }
 
 static uint8_t limitScaling(uint8_t currentScaling) {
-    return currentScaling - (currentScaling/4);
+    //return currentScaling - (currentScaling/4);
+    return currentScaling;
 }
 
 static void setScaling(uint8_t currentScaling) {
