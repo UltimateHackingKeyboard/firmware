@@ -168,22 +168,27 @@ static uint16_t getCorrectedVoltage(uint16_t previousVoltage, bool previousCharg
     uint16_t rawVoltage = getVoltage();
 
     uint16_t voltage = rawVoltage;
-    if (batteryState.powered) {
-        if (previousVoltage != 0 && previousCharging) {
-            voltage = correctForCharging(rawVoltage, previousVoltage);
-            LOG_INF("... Voltage corrected because of charging %d -> %d -> %d\n", previousVoltage, rawVoltage, voltage);
+
+    if (voltage != 0) {
+        if (batteryState.powered) {
+            if (previousVoltage != 0 && previousCharging) {
+                voltage = correctForCharging(rawVoltage, previousVoltage);
+                LOG_INF("... Voltage corrected because of charging %d -> %d -> %d", previousVoltage, rawVoltage, voltage);
+            } else {
+                LOG_INF("... Powered, but cannot measure");
+            }
         } else {
-            LOG_INF("... Powered, but cannot measure");
+            voltage = BatteryCalculator_CalculateUnloadedVoltage(rawVoltage);
+            LOG_INF("... Voltage corrected because of load %d -> %d", rawVoltage, voltage);
         }
+
+        voltage = BatteryCalculator_CalculateWindowAverageVoltage(voltage);
+
+        LOG_INF("    ... Averaged to %d", voltage);
+        LOG_INF("    ... which is    %d%%", BatteryCalculator_CalculatePercent(voltage));
     } else {
-        voltage = BatteryCalculator_CalculateUnloadedVoltage(rawVoltage);
-        LOG_INF("... Voltage corrected because of load %d -> %d\n", rawVoltage, voltage);
+        LOG_INF("    ... Voltage is 0, not correcting");
     }
-
-    voltage = BatteryCalculator_CalculateWindowAverageVoltage(voltage);
-
-    LOG_INF("    ... Averaged to %d", voltage);
-    LOG_INF("    ... which is    %d%%", BatteryCalculator_CalculatePercent(voltage));
 
     return voltage;
 }
