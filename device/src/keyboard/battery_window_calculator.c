@@ -1,10 +1,11 @@
 #include "battery_window_calculator.h"
 #include "timer.h"
+#include <inttypes.h>
 
 uint32_t lastMeasurement = 0;
 
-#define WINDOW_SIZE_MS 8*60*1000
-#define WINDOW_SIZE (((WINDOW_SIZE_MS)/1000) / ((CHARGER_UPDATE_PERIOD)/1000))
+#define WINDOW_SIZE_MS ((uint32_t)8)*60*1000
+#define WINDOW_SIZE (((WINDOW_SIZE_MS)/1000) / (((uint32_t)CHARGER_UPDATE_PERIOD)/1000))
 
 uint16_t values[WINDOW_SIZE];
 uint32_t sum = 0;
@@ -12,11 +13,13 @@ uint8_t pos = 0;
 uint8_t count = 0;
 
 static bool shouldAddRecord(uint16_t voltage) {
-    return count > 0 && CurrentTime - lastMeasurement < CHARGER_UPDATE_PERIOD/2 && voltage != 0;
+    return CurrentTime - lastMeasurement > CHARGER_UPDATE_PERIOD/2 && voltage != 0;
 }
 
 static void addNewRecord(uint16_t voltage) {
-    sum -= values[pos];
+    if (count == WINDOW_SIZE) {
+        sum -= values[pos];
+    }
 
     values[pos] = voltage;
     pos++;
