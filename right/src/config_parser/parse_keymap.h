@@ -111,7 +111,8 @@
     } serialized_connection_action_t;
 
     typedef enum {
-        SerializedOtherAction_Sleep,
+        SerializedOtherAction_Sleep = 0,
+        SerializedOtherAction_Lock = 1,
     } serialized_other_action_t;
 
     typedef struct {

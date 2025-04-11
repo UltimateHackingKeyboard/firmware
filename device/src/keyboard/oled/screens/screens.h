@@ -8,6 +8,7 @@
     #include "pairing_screen.h"
     #include "main_screen.h"
     #include "debug_screen.h"
+    #include "notification_screen.h"
 
 // Macros:
 

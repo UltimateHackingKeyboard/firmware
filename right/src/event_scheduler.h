@@ -33,6 +33,7 @@
         EventSchedulerEvent_ReenableUart,
         EventSchedulerEvent_UpdateMergeSensor,
         EventSchedulerEvent_PowerMode,
+        EventSchedulerEvent_PowerModeRestart,
         EventSchedulerEvent_EndBtPairing,
         EventSchedulerEvent_RestartBt,
         EventSchedulerEvent_BtStartScanningAndAdvertising,
@@ -42,6 +43,8 @@
         EventSchedulerEvent_ResendMessage,
         EventSchedulerEvent_CheckFwChecksums,
         EventSchedulerEvent_CheckDongleProtocolVersion,
+        EventSchedulerEvent_PutBackToShutDown,
+        EventSchedulerEvent_BlinkBatteryIcon,
         EventSchedulerEvent_Count
     } event_scheduler_event_t;
 

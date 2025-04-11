@@ -12,5 +12,6 @@
 #include "keyboard/oled/widgets/console_widget.h"
 #include "keyboard/oled/widgets/splitter_widget.h"
 #include "keyboard/oled/widgets/widget_store.h"
+#include "keyboard/oled/screens/notification_screen.h"
 
 #endif

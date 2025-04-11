@@ -67,6 +67,9 @@
         bool LedsEnabled;
         bool LedsAlwaysOn;
 
+        // battery
+        bool BatteryStationaryMode;
+
         // layers
         layer_config_t LayerConfig[LayerId_Count];
 
