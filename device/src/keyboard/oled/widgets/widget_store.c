@@ -187,7 +187,7 @@ static void getBatteryStatusText(device_id_t deviceId, battery_state_t* battery,
     }
 }
 
-static void getBlinkingBattery(char* buffer, uint8_t len) {
+static char getBlinkingBattery(char* buffer, uint8_t len) {
     char color = FontControl_NextCharAndSpaceGone;
 
     if (StateSync_BlinkBatteryIcon) {
@@ -198,6 +198,8 @@ static void getBlinkingBattery(char* buffer, uint8_t len) {
     }
 
     snprintf(buffer, len, "%c%c%c", (char)color, (char)FontControl_NextCharIcon12, (char)FontIcon_BatteryLow);
+
+    return color;
 }
 
 static string_segment_t getRightStatusText() {
@@ -208,17 +210,24 @@ static string_segment_t getRightStatusText() {
     char leftBattery[BAT_BUFFER_LENGTH];
     char rightBattery[BAT_BUFFER_LENGTH];
     char blinkingBattery[BAT_ICON_BUFFER_LENGTH];
-    getBlinkingBattery(blinkingBattery, BAT_ICON_BUFFER_LENGTH);
+    char blinkingColor = getBlinkingBattery(blinkingBattery, BAT_ICON_BUFFER_LENGTH)+1;
     if (SyncLeftHalfState.battery.batteryPresent && SyncRightHalfState.battery.batteryPresent) {
         getBatteryStatusText(DeviceId_Uhk80_Left, &SyncLeftHalfState.battery, leftBattery, true);
         getBatteryStatusText(DeviceId_Uhk80_Right, &SyncRightHalfState.battery, rightBattery, true);
-        snprintf(buffer, BUFFER_LENGTH-1, "%s %s %s %s", Macros_DisplayStringsBuffs.rightStatus,  blinkingBattery, leftBattery, rightBattery);
+        snprintf(buffer, BUFFER_LENGTH-1, "%s %s %c%s %c%s", Macros_DisplayStringsBuffs.rightStatus,  blinkingBattery,
+                StateSync_BlinkLeftBatteryPercentage ? blinkingColor : FontControl_SetColorWhite, leftBattery,
+                StateSync_BlinkRightBatteryPercentage ? blinkingColor : FontControl_SetColorWhite, rightBattery
+        );
     } else if (SyncLeftHalfState.battery.batteryPresent) {
         getBatteryStatusText(DeviceId_Uhk80_Left, &SyncLeftHalfState.battery, leftBattery, false);
-        snprintf(buffer, BUFFER_LENGTH-1, "%s %s L%s", Macros_DisplayStringsBuffs.rightStatus, blinkingBattery, leftBattery);
+        snprintf(buffer, BUFFER_LENGTH-1, "%s %s %cL%s", Macros_DisplayStringsBuffs.rightStatus, blinkingBattery,
+                StateSync_BlinkLeftBatteryPercentage ? blinkingColor : FontControl_SetColorWhite, leftBattery
+        );
     } else if (SyncRightHalfState.battery.batteryPresent) {
         getBatteryStatusText(DeviceId_Uhk80_Right, &SyncRightHalfState.battery, rightBattery, false);
-        snprintf(buffer, BUFFER_LENGTH-1, "%s %s R%s", Macros_DisplayStringsBuffs.rightStatus, blinkingBattery, rightBattery);
+        snprintf(buffer, BUFFER_LENGTH-1, "%s %s %cR%s", Macros_DisplayStringsBuffs.rightStatus, blinkingBattery,
+                StateSync_BlinkRightBatteryPercentage ? blinkingColor : FontControl_SetColorWhite, rightBattery
+        );
     } else {
         snprintf(buffer, BUFFER_LENGTH-1, "%s", Macros_DisplayStringsBuffs.rightStatus);
     }

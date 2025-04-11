@@ -142,7 +142,10 @@
     extern sync_generic_half_state_t SyncLeftHalfState;
     extern sync_generic_half_state_t SyncRightHalfState;
     extern scroll_multipliers_t DongleScrollMultipliers;
+
     extern bool StateSync_BlinkBatteryIcon;
+    extern bool StateSync_BlinkLeftBatteryPercentage;
+    extern bool StateSync_BlinkRightBatteryPercentage;
 
 // Functions:
 

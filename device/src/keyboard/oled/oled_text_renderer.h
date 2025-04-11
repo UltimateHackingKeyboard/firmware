@@ -16,8 +16,11 @@
 
     typedef enum {
         FontControl_NextCharGray = 1,
+        FontControl_SetColorGray = FontControl_NextCharGray + 1,
         FontControl_NextCharWhite,
+        FontControl_SetColorWhite = FontControl_NextCharWhite + 1,
         FontControl_NextCharBlack,
+        FontControl_SetColorBlack = FontControl_NextCharBlack + 1,
         FontControl_NextCharIcon12,
         FontControl_NextCharAndSpaceGone,
         FontControl_NextCharSingleSpace,

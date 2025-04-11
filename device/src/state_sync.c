@@ -58,6 +58,8 @@ uint16_t StateSync_LeftResetCounter = 0;
 uint16_t StateSync_DongleResetCounter = 0;
 
 bool StateSync_BlinkBatteryIcon = false;
+bool StateSync_BlinkLeftBatteryPercentage = false;
+bool StateSync_BlinkRightBatteryPercentage = false;
 
 static void wake(k_tid_t tid) {
     if (tid != 0) {
@@ -527,7 +529,9 @@ static bool needsCharging(battery_state_t *batteryState) {
 
 void StateSync_CheckChargeMe(void) {
 #if DEVICE_IS_UHK80_RIGHT
-    StateSync_BlinkBatteryIcon = needsCharging(&SyncLeftHalfState.battery) || needsCharging(&SyncRightHalfState.battery);
+    StateSync_BlinkLeftBatteryPercentage = needsCharging(&SyncLeftHalfState.battery);
+    StateSync_BlinkRightBatteryPercentage = needsCharging(&SyncRightHalfState.battery);
+    StateSync_BlinkBatteryIcon =  StateSync_BlinkLeftBatteryPercentage || StateSync_BlinkRightBatteryPercentage;
 
     if (StateSync_BlinkBatteryIcon) {
         WIDGET_REFRESH(&StatusWidget);
