@@ -18,5 +18,5 @@ GLYPH_DATA(13, 14, LockSquareOne, 192,  12,  13, 0, -2)
 GLYPH_DATA(14, 15, BatteryLow, 224, 14, 9, 0, 0)
 GLYPH_DATA(15, 16, BatteryExclamationVertical, 115, 5, 10, 2, 0)
 GLYPH_DATA(16, 17, BoltSmall, 115, 7, 11, 1, -1)
-
+GLYPH_DATA(17, 18, Percent, 115, 6, 9, 1, 0)
 

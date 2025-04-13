@@ -1,6 +1,7 @@
 #include "bt_advertise.h"
 #include "console_widget.h"
 #include "custom_widget.h"
+#include "keyboard/oled/fonts/font_awesome_12.h"
 #include "keyboard/oled/widgets/custom_widget.h"
 #include "keyboard/oled/oled.h"
 #include "keyboard/oled/widgets/widgets.h"
@@ -191,19 +192,16 @@ static char getBlinkingColor() {
 static void getBatteryStatusText(device_id_t deviceId, battery_state_t* battery, char* buffer, char* sideIndicator, bool fixed, bool isLow) {
     char percSign;
     char percColor;
-    char percIcon;
     if (battery->powered && battery->batteryCharging) {
         percSign = FontIcon_BoltSmall;
         percColor = FontControl_SetColorWhite;
-        percIcon = FontControl_NextCharIcon12;
     } else if (isLow) {
-        percSign = FontIcon_BatteryExclamationVertical;
+        // percSign = FontIcon_BatteryExclamationVertical;
+        percSign = FontIcon_BatteryLow;
         percColor = getBlinkingColor();
-        percIcon = FontControl_NextCharIcon12;
     } else {
-        percSign = '%';
+        percSign = FontIcon_Percent;
         percColor = FontControl_SetColorWhite;
-        percIcon = FontControl_SetColorWhite;
     }
 
     if (!DeviceState_IsDeviceConnected(deviceId)) {
@@ -211,7 +209,7 @@ static void getBatteryStatusText(device_id_t deviceId, battery_state_t* battery,
     } else if (!battery->batteryPresent) {
         sprintf(buffer, "    ");
     } else {
-        sprintf(buffer, fixed ? "%c%s%3i%c%c" : "%c%s%i%c%c", percColor, sideIndicator, battery->batteryPercentage, percIcon, percSign);
+        sprintf(buffer, fixed ? "%c%s%3i%c%c" : "%c%s%i%c%c", percColor, sideIndicator, battery->batteryPercentage, FontControl_NextCharIcon12, percSign);
     }
 }
 
@@ -223,8 +221,8 @@ static string_segment_t getRightStatusText() {
     char leftBattery[BAT_BUFFER_LENGTH];
     char rightBattery[BAT_BUFFER_LENGTH];
     if (SyncLeftHalfState.battery.batteryPresent && SyncRightHalfState.battery.batteryPresent) {
-        getBatteryStatusText(DeviceId_Uhk80_Left, &SyncLeftHalfState.battery, leftBattery, "", true, StateSync_BlinkLeftBatteryPercentage);
-        getBatteryStatusText(DeviceId_Uhk80_Right, &SyncRightHalfState.battery, rightBattery, "", true, StateSync_BlinkRightBatteryPercentage);
+        getBatteryStatusText(DeviceId_Uhk80_Left, &SyncLeftHalfState.battery, leftBattery, "", false, StateSync_BlinkLeftBatteryPercentage || true);
+        getBatteryStatusText(DeviceId_Uhk80_Right, &SyncRightHalfState.battery, rightBattery, "", false, StateSync_BlinkRightBatteryPercentage);
         snprintf(buffer, BUFFER_LENGTH-1, "%s %s %s", Macros_DisplayStringsBuffs.rightStatus, leftBattery, rightBattery);
     } else if (SyncLeftHalfState.battery.batteryPresent) {
         getBatteryStatusText(DeviceId_Uhk80_Left, &SyncLeftHalfState.battery, leftBattery, "L", false, StateSync_BlinkLeftBatteryPercentage);
