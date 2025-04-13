@@ -24,6 +24,10 @@ static void addNewRecord(uint16_t voltage) {
     values[pos] = voltage;
     pos++;
 
+    if (pos >= WINDOW_SIZE) {
+        pos = 0;
+    }
+
     sum += voltage;
 
     count = MIN(count + 1, WINDOW_SIZE);
@@ -32,6 +36,11 @@ static void addNewRecord(uint16_t voltage) {
 
 uint16_t BatteryCalculator_CalculateWindowAverageVoltage(uint16_t voltage) {
     if (BATTERY_CALCULATOR_AVERAGE_ENABLED) {
+        // printk("BatteryCalculator_CalculateWindowAverageVoltage (%d) of (%d):", voltage, count);
+        // for (uint8_t i = 0; i < count; i++) {
+        //     printk(" %d", values[i]);
+        // }
+        // printk(" sums to %d\n", sum);
         if (shouldAddRecord(voltage)) {
             addNewRecord(voltage);
             return sum / count;
