@@ -13,6 +13,7 @@
 // Typedefs:
 
     typedef enum {
+        BatteryManagerAutomatonState_Unknown,
         BatteryManagerAutomatonState_TurnOff,
         BatteryManagerAutomatonState_Charging,
         BatteryManagerAutomatonState_Charged,

@@ -58,7 +58,7 @@ bool Charger_ChargingEnabled = true;
 static bool stabilizationPause = false;
 static uint8_t statsToIgnore = 0;
 
-static battery_manager_automaton_state_t currentChargingAutomatonState = BatteryManagerAutomatonState_Charged;
+static battery_manager_automaton_state_t currentChargingAutomatonState = BatteryManagerAutomatonState_Unknown;
 
 static bool setBatteryPresent(bool present) {
     if (batteryState.batteryPresent != present) {
@@ -152,6 +152,9 @@ void updateChargerEnabled(battery_state_t *batteryState, battery_manager_config_
                 break;
             case BatteryManagerAutomatonState_Charged:
                 Charger_EnableCharging(false);
+                break;
+            case BatteryManagerAutomatonState_Unknown:
+                Charger_EnableCharging(true);
                 break;
         }
     }
