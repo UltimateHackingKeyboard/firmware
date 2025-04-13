@@ -34,15 +34,21 @@
  *  Script to create icon fonts, to be run from the root of a decompressed fontawesome folder:
 ```
 #!/bin/bash
+
+echo "Please download the kit from https://fontawesome.com/kits/4711ad2078/download and press enter"
+read a
+
+unzip kit-4711ad2078-desktop.zip
+
 mkdir ttfs
 
 fontforge -lang=ff -c 'Open($1); Generate($2);' otfs/Font\ Awesome\ 6\ Pro-Regular-400.otf ttfs/font_awesome_6_regular.ttf
 fontforge -lang=ff -c 'Open($1); Generate($2);' otfs/Font\ Awesome\ 6\ Pro-Solid-900.otf ttfs/font_awesome_6_solid.ttf
 fontforge -lang=ff -c 'Open($1); Generate($2);' otfs/Font\ Awesome\ Kit\ 4711ad2078-Regular-400.otf ttfs/font_awesome_custom.ttf
 
-npx lv_font_conv --lv-font-name CustomIcons --format lvgl --bpp 4 -o icons_custom.c --size 12 --font ttfs/font_awesome_custom.ttf --range 0xe000-0xe003 --no-compress
+npx lv_font_conv --lv-font-name CustomIcons --format lvgl --bpp 4 -o icons_custom.c --size 12 --font ttfs/font_awesome_custom.ttf --range 0xe000-0xe009 --no-compress
 npx lv_font_conv --lv-font-name RegularIcons --format lvgl --bpp 4 -o icons_regular.c --size 12 --font ttfs/font_awesome_6_regular.ttf --range 0xf057,0xf8dd,0xf1e6,0xf071,0xf06b,0xf293,0xe0b1 --no-compress
-npx lv_font_conv --lv-font-name SolidIcons --format lvgl --bpp 4 -o icons_solid.c --size 12 --font ttfs/font_awesome_6_solid.ttf --range 0xe423,0xe422 --no-compress
+npx lv_font_conv --lv-font-name SolidIcons --format lvgl --bpp 4 -o icons_solid.c --size 12 --font ttfs/font_awesome_6_solid.ttf --range 0xe423,0xe422,0xf0e7 --no-compress
 ```
 
  *  */
