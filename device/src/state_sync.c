@@ -33,6 +33,7 @@
 #include "dongle_leds.h"
 #include "logger.h"
 #include "versioning.h"
+#include "event_scheduler.h"
 
 #define WAKE(TID) if (TID != 0) { k_wakeup(TID); }
 
@@ -57,6 +58,7 @@ version_t RemoteDongleProtocolVersion = {0, 0, 0};
 uint16_t StateSync_LeftResetCounter = 0;
 uint16_t StateSync_DongleResetCounter = 0;
 
+bool StateSync_BatteryBacklightPowersavingMode = false;
 bool StateSync_BlinkBatteryIcon = false;
 bool StateSync_BlinkLeftBatteryPercentage = false;
 bool StateSync_BlinkRightBatteryPercentage = false;
@@ -536,6 +538,12 @@ void StateSync_CheckChargeMe(void) {
     if (StateSync_BlinkBatteryIcon) {
         WIDGET_REFRESH(&StatusWidget);
     }
+
+    bool newPowersaving = SyncLeftHalfState.battery.powersaving || SyncRightHalfState.battery.powersaving;
+    if (newPowersaving != StateSync_BatteryBacklightPowersavingMode) {
+        StateSync_BatteryBacklightPowersavingMode = newPowersaving;
+        EventVector_Set(EventVector_LedManagerFullUpdateNeeded);
+    }
 #endif
 }
 
@@ -916,6 +924,7 @@ void StateSync_ResetRightLeftLink(bool bidirectional) {
         invalidateProperty(StateSyncPropertyId_Backlight);
         invalidateProperty(StateSyncPropertyId_FunctionalColors);
         invalidateProperty(StateSyncPropertyId_PowerMode);
+        invalidateProperty(StateSyncPropertyId_BatteryStationaryMode);
         // Wait sufficiently log so the firmware check isnt triggered during firmware upgrade
         EventScheduler_Schedule(CurrentTime + 60000, EventSchedulerEvent_CheckFwChecksums, "Reset left right link");
     }

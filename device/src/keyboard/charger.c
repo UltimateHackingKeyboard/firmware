@@ -110,6 +110,14 @@ static bool updatePowered() {
     return false;
 }
 
+static bool setPowersaving(bool newPowerSaving) {
+    if (batteryState.powersaving != newPowerSaving) {
+        batteryState.powersaving = newPowerSaving;
+        return true;
+    }
+    return false;
+}
+
 static uint16_t getVoltage() {
     // Wait for the battery to stabilize
     adc_read(adc_channel.dev, &sequence);
@@ -133,31 +141,40 @@ void Charger_EnableCharging(bool enabled) {
     }
 }
 
-void updateChargerEnabled(battery_state_t *batteryState, battery_manager_config_t* config, uint16_t rawVoltage) {
+static bool updateChargerEnabled(battery_state_t *batteryState, battery_manager_config_t* config, uint16_t rawVoltage) {
     battery_manager_automaton_state_t newState = BatteryManager_UpdateState(
             currentChargingAutomatonState,
             batteryState,
             config
     );
 
+    bool stateChanged = false;
+
     if (newState != currentChargingAutomatonState) {
         currentChargingAutomatonState = newState;
         switch (newState) {
             case BatteryManagerAutomatonState_TurnOff:
-                printk("Going to shut down. Measured voltage %d, computed voltage %d, powered %d\n", rawVoltage, batteryState->batteryVoltage, batteryState->powered);
-                PowerMode_ActivateMode(PowerMode_AutoShutDown, false, false);
+                // printk("Going to shut down. Measured voltage %d, computed voltage %d, powered %d\n", rawVoltage, batteryState->batteryVoltage, batteryState->powered);
+                // PowerMode_ActivateMode(PowerMode_AutoShutDown, false, false);
+                // break;
+            case BatteryManagerAutomatonState_Powersaving:
+                stateChanged |= setPowersaving(true);
                 break;
             case BatteryManagerAutomatonState_Charging:
+                stateChanged |= setPowersaving(false);
                 Charger_EnableCharging(true);
                 break;
             case BatteryManagerAutomatonState_Charged:
+                stateChanged |= setPowersaving(false);
                 Charger_EnableCharging(false);
                 break;
             case BatteryManagerAutomatonState_Unknown:
+                stateChanged |= setPowersaving(false);
                 Charger_EnableCharging(true);
                 break;
         }
     }
+    return stateChanged;
 }
 
 static uint16_t correctForCharging(uint16_t rawVoltage, uint16_t rawVoltageBeforeStabilization) {
@@ -179,7 +196,8 @@ static uint16_t correctVoltage(uint16_t previousVoltage, bool previousCharging, 
                 uint16_t perc = BatteryCalculator_CalculatePercent(voltage);
                 LOG_INF("... Voltage corrected because of charging %d -> %d (%d) -> %d (%d)", previousVoltage, rawVoltage, rawPerc, voltage, perc);
             } else {
-                LOG_INF("... Powered, but cannot measure");
+                uint16_t perc = BatteryCalculator_CalculatePercent(voltage);
+                LOG_INF("... Powered, not charging, not correcting: %d (%d)", voltage, perc);
             }
         } else {
             voltage = BatteryCalculator_CalculateUnloadedVoltage(rawVoltage);
@@ -236,7 +254,7 @@ void Charger_UpdateBatteryState() {
                 return;
             } else {
                 // run the state automaton that decides when to charge
-                updateChargerEnabled(&batteryState, currentBatteryConfig, rawVoltage);
+                stateChanged |= updateChargerEnabled(&batteryState, currentBatteryConfig, rawVoltage);
 
                 // if we have changed charger state, update whether actually charging
                 stateChanged |= setActuallyCharging(batteryState.batteryCharging && Charger_ChargingEnabled);

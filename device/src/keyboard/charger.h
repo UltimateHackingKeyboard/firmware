@@ -26,6 +26,7 @@
         uint8_t batteryPercentage;
         bool batteryPresent;
         bool batteryCharging;
+        bool powersaving;
         bool powered;
     } ATTR_PACKED battery_state_t;
 

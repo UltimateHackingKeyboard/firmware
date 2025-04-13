@@ -8,7 +8,9 @@
 typedef enum {
     ChargeRegion_Empty,
     ChargeRegion_AlmostEmpty,
-    ChargeRegion_Low,
+    ChargeRegion_Powersaving,
+    ChargeRegion_PowersavingThreshold,
+    ChargeRegion_Moderate,
     ChargeRegion_Storage,
     ChargeRegion_High,
 } charge_region_t;
@@ -17,16 +19,20 @@ battery_manager_config_t BatteryManager_StandardUse = {
     .maxVoltage = 4000,
     .stopChargingVoltage = 4100,
     .startChargingVoltage = 3900,
-    .minWakeupVoltage = 3500,
-    .minVoltage = 3400,
+    .turnOnBacklightVoltage = 3450,
+    .turnOffBacklightVoltage = 3400,
+    .minWakeupVoltage = 3100,
+    .minVoltage = 3000,
 };
 
 battery_manager_config_t BatteryManager_LongLife = {
     .maxVoltage = 4000,
     .stopChargingVoltage =  3850,
     .startChargingVoltage = 3750,
-    .minWakeupVoltage = 3500,
-    .minVoltage = 3400,
+    .turnOnBacklightVoltage = 3450,
+    .turnOffBacklightVoltage = 3400,
+    .minWakeupVoltage = 3100,
+    .minVoltage = 3000,
 };
 
 static charge_region_t getCurrentChargeRegion(
@@ -37,8 +43,12 @@ static charge_region_t getCurrentChargeRegion(
         return ChargeRegion_Empty;
     } else if (voltage < config->minWakeupVoltage) {
         return ChargeRegion_AlmostEmpty;
+    } else if (voltage < config->turnOffBacklightVoltage) {
+        return ChargeRegion_Powersaving;
+    } else if (voltage < config->turnOnBacklightVoltage) {
+        return ChargeRegion_PowersavingThreshold;
     } else if (voltage < config->startChargingVoltage) {
-        return ChargeRegion_Low;
+        return ChargeRegion_Moderate;
     } else if (voltage < config->stopChargingVoltage) {
         return ChargeRegion_Storage;
     } else {
@@ -70,7 +80,21 @@ battery_manager_automaton_state_t BatteryManager_UpdateState(
             } else {
                 return BatteryManagerAutomatonState_Charging;
             }
-        case ChargeRegion_Low:
+        case ChargeRegion_Powersaving:
+            if (!batteryState->powered) {
+                return BatteryManagerAutomatonState_Powersaving;
+            } else {
+                return BatteryManagerAutomatonState_Charging;
+            }
+        case ChargeRegion_PowersavingThreshold:
+            if (!batteryState->powered) {
+                return BatteryManagerAutomatonState_Charging;
+            } else if (currentState == BatteryManagerAutomatonState_Powersaving || currentState == BatteryManagerAutomatonState_Charging) {
+                return currentState;
+            } else {
+                return BatteryManagerAutomatonState_Charging;
+            }
+        case ChargeRegion_Moderate:
             return BatteryManagerAutomatonState_Charging;
         case ChargeRegion_Storage:
             if (currentState == BatteryManagerAutomatonState_Charged || currentState == BatteryManagerAutomatonState_Charging) {
