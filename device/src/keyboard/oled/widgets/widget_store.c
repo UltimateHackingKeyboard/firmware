@@ -221,7 +221,7 @@ static string_segment_t getRightStatusText() {
     char leftBattery[BAT_BUFFER_LENGTH];
     char rightBattery[BAT_BUFFER_LENGTH];
     if (SyncLeftHalfState.battery.batteryPresent && SyncRightHalfState.battery.batteryPresent) {
-        getBatteryStatusText(DeviceId_Uhk80_Left, &SyncLeftHalfState.battery, leftBattery, "", false, StateSync_BlinkLeftBatteryPercentage || true);
+        getBatteryStatusText(DeviceId_Uhk80_Left, &SyncLeftHalfState.battery, leftBattery, "", false, StateSync_BlinkLeftBatteryPercentage);
         getBatteryStatusText(DeviceId_Uhk80_Right, &SyncRightHalfState.battery, rightBattery, "", false, StateSync_BlinkRightBatteryPercentage);
         snprintf(buffer, BUFFER_LENGTH-1, "%s %s %s", Macros_DisplayStringsBuffs.rightStatus, leftBattery, rightBattery);
     } else if (SyncLeftHalfState.battery.batteryPresent) {
