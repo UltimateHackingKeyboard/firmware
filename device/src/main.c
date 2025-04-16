@@ -45,6 +45,13 @@
 #include "trace.h"
 #include "macros/vars.h"
 #include "thread_stats.h"
+#include "wormhole.h"
+#include "power_mode.h"
+#include "proxy_log_backend.h"
+
+#if DEVICE_IS_KEYBOARD
+#include "keyboard/battery_unloaded_calculator.h"
+#endif
 
 k_tid_t Main_ThreadId = 0;
 
@@ -109,11 +116,13 @@ void Main_Wake() {
     // k_wakeup(Main_ThreadId);
 }
 
-int main(void) {
+void mainRuntime(void) {
     Main_ThreadId = k_current_get();
     printk("----------\n" DEVICE_NAME " started\n");
 
     Trace_Init();
+
+    InitProxyLogBackend();
 
     {
         flash_area_open(FLASH_AREA_ID(hardware_config_partition), &hardwareConfigArea);
@@ -125,11 +134,12 @@ int main(void) {
         InitZephyrI2c();
         InitSpi();
 
+        InitLeds();
+
 #if DEVICE_HAS_OLED
         InitOled();
 #endif // DEVICE_HAS_OLED
 
-        InitLeds();
 
 #if DEVICE_HAS_MERGE_SENSOR
         MergeSensor_Init();
@@ -195,11 +205,13 @@ int main(void) {
 
     if (DEBUG_RUN_TESTS) {
         MacroVariables_RunTests();
+#if DEVICE_IS_KEYBOARD
+        BatteryCalculator_RunTests();
+#endif
     }
 
     // Call after all threads have been created
     ThreadStats_Init();
-
 
 #if DEVICE_IS_UHK80_RIGHT
     while (true)
@@ -222,4 +234,30 @@ int main(void) {
         scheduleNextRun();
     }
 #endif
+}
+
+int main(void) {
+    power_mode_t mode = PowerMode_Awake;
+
+    if (IS_STATE_WORMHOLE_OPEN) {
+        printk("Wormhole is open, reboot to power mode %d %d\n", StateWormhole.rebootToPowerMode, StateWormhole.restartPowerMode);
+        if (StateWormhole.rebootToPowerMode) {
+            mode = StateWormhole.restartPowerMode;
+            StateWormhole.restartPowerMode = PowerMode_Awake;
+        }
+        MacroStatusBuffer_InitFromWormhole();
+        StateWormhole_Close();
+    } else {
+        printk("Wormhole is closed\n");
+    }
+
+    if (mode != PowerMode_Awake) {
+        LogU("Restarted, sinking into mode %d!\n", mode);
+        k_sleep(K_MSEC(1000));
+        PowerMode_RestartedTo(mode);
+    }
+
+    LogU("Going to resume!\n");
+
+    mainRuntime();
 }

@@ -10,7 +10,10 @@
 #include "device_state.h"
 #include "host_connection.h"
 #include "keyboard/oled/widgets/widgets.h"
+#include <zephyr/logging/log.h>
 #include "config_manager.h"
+
+LOG_MODULE_DECLARE(Bt);
 
 #define LEN(NAME) (sizeof(NAME) - 1)
 
@@ -164,19 +167,19 @@ uint8_t BtAdvertise_Start(adv_config_t advConfig)
             // err = BT_LE_ADV_START(&advParam, BY_SIDE(adNusLeft, adNusRight), sdNus);
             break;
         default:
-            LOG_BT("Adv: Attempted to start advertising without any type! Ignoring.\n");
+            LOG_INF("Adv: Attempted to start advertising without any type! Ignoring.\n");
             return 0;
     }
 
     // Log it
     if (err == 0) {
-        LOG_BT("Adv: %s advertising successfully started\n", advTypeString);
+        LOG_INF("Adv: %s advertising successfully started\n", advTypeString);
         return 0;
     } else if (err == -EALREADY) {
-        LOG_BT("Adv: %s advertising continued\n", advTypeString);
+        LOG_INF("Adv: %s advertising continued\n", advTypeString);
         return 0;
     } else {
-        LOG_BT("Adv: %s advertising failed to start (err %d), free connections: %d\n", advTypeString, err, BtConn_UnusedPeripheralConnectionCount());
+        LOG_INF("Adv: %s advertising failed to start (err %d), free connections: %d\n", advTypeString, err, BtConn_UnusedPeripheralConnectionCount());
         return err;
     }
 }
@@ -184,7 +187,7 @@ uint8_t BtAdvertise_Start(adv_config_t advConfig)
 void BtAdvertise_Stop(void) {
     int err = bt_le_adv_stop();
     if (err) {
-        LogU("Adv: Advertising failed to stop (err %d)\n", err);
+        LOG_WRN("Adv: Advertising failed to stop (err %d)\n", err);
     }
 }
 
@@ -220,7 +223,7 @@ adv_config_t BtAdvertise_Config() {
                     } else if (selectedConnectionType == ConnectionType_BtHid) {
                         return ADVERTISEMENT(ADVERTISE_HID);
                     } else {
-                        LOG_BT("Adv: Selected connection is neither BLE HID nor NUS. Can't advertise!");
+                        LOG_INF("Adv: Selected connection is neither BLE HID nor NUS. Can't advertise!");
                         return ADVERTISEMENT( 0 );
                     }
                 }
@@ -238,7 +241,7 @@ adv_config_t BtAdvertise_Config() {
             } else {
                 /** advertising needs a peripheral slot. When it is not free and we try to advertise, it will fail, and our code will try to
                  *  disconnect other devices in order to restore proper function. */
-                LOG_BT("Adv: Current slot count is zero, not advertising!\n");
+                LOG_INF("Adv: Current slot count is zero, not advertising!\n");
                 // BtConn_ListCurrentConnections();
                 return ADVERTISEMENT( 0 );
             }
@@ -246,7 +249,7 @@ adv_config_t BtAdvertise_Config() {
         case DeviceId_Uhk_Dongle:
             return ADVERTISEMENT( 0 );
         default:
-            LogU("unknown device!\n");
+            LOG_WRN("unknown device!\n");
             return ADVERTISEMENT( 0 );
     }
 }

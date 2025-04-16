@@ -22,6 +22,7 @@ if(NOT CONFIG_BOARD_UHK_60_RIGHT)
     target_link_libraries(${PROJECT_NAME} PRIVATE
         c2usb
     )
+    target_link_libraries(app PRIVATE zephyr_interface)
 
     target_sources(${PROJECT_NAME} PRIVATE
         ${usb_cpp_sources}
@@ -35,6 +36,7 @@ if(NOT CONFIG_BOARD_UHK_60_RIGHT)
         logger.c
         messenger_queue.c
         messenger.c
+        proxy_log_backend.c
         resend.c
         round_trip_test.c
         settings.c

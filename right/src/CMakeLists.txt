@@ -47,4 +47,5 @@ target_sources(${PROJECT_NAME} PRIVATE
     usb_report_updater.c
     user_logic.c
     utils.c
+    wormhole.c
 )

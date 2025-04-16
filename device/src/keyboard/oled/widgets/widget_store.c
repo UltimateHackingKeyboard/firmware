@@ -1,6 +1,7 @@
 #include "bt_advertise.h"
 #include "console_widget.h"
 #include "custom_widget.h"
+#include "keyboard/oled/fonts/font_awesome_12.h"
 #include "keyboard/oled/widgets/custom_widget.h"
 #include "keyboard/oled/oled.h"
 #include "keyboard/oled/widgets/widgets.h"
@@ -28,6 +29,11 @@
 #include "messenger_queue.h"
 #include "event_scheduler.h"
 #include "round_trip_test.h"
+#include "macros/display.h"
+#include "attributes.h"
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-truncation"
 
 widget_t KeymapWidget;
 widget_t LayerWidget;
@@ -39,11 +45,17 @@ widget_t TargetWidget;
 widget_t DebugLineWidget;
 
 static string_segment_t getLayerText() {
-    return (string_segment_t){ .start = LayerNames[ActiveLayer], .end = NULL };
+    if ( Macros_DisplayStringsBuffs.layer[0] != 0) {
+        return (string_segment_t){ .start = Macros_DisplayStringsBuffs.layer, .end = NULL };
+    } else {
+        return (string_segment_t){ .start = LayerNames[ActiveLayer], .end = NULL };
+    }
 }
 
 static string_segment_t getKeymapText() {
-    if (strcmp(AllKeymaps[CurrentKeymapIndex].abbreviation, "FTY") == 0) {
+    if ( Macros_DisplayStringsBuffs.keymap[0] != 0) {
+        return (string_segment_t){ .start = Macros_DisplayStringsBuffs.keymap, .end = NULL };
+    } else if (strcmp(AllKeymaps[CurrentKeymapIndex].abbreviation, "FTY") == 0) {
         return (string_segment_t){ .start = "Factory default", .end = NULL };
     } else {
         return GetKeymapName(CurrentKeymapIndex);
@@ -103,23 +115,27 @@ static string_segment_t getTargetText() {
     static char buffer [64] = {};
     buffer[63] = 0;
 
-    string_segment_t currentConnection = getTargetText_();
-
-    string_segment_t selectedConnection = (string_segment_t){ .start = NULL, .end = NULL };
-
-    if (SelectedHostConnectionId != ConnectionId_Invalid) {
-        host_connection_t* hostConnection = HostConnection(SelectedHostConnectionId);
-        if (hostConnection) {
-            selectedConnection = hostConnection->name;
-        }
-    }
-
-    if (selectedConnection.start) {
-        snprintf(buffer, sizeof(buffer)-1, "%.*s -> %.*s", SegmentLen(currentConnection), currentConnection.start, SegmentLen(selectedConnection), selectedConnection.start);
+    if ( Macros_DisplayStringsBuffs.host[0] != 0) {
+        return (string_segment_t){ .start = Macros_DisplayStringsBuffs.host, .end = NULL };
     } else {
-        snprintf(buffer, sizeof(buffer)-1, "%.*s", SegmentLen(currentConnection), currentConnection.start);
+        string_segment_t currentConnection = getTargetText_();
+
+        string_segment_t selectedConnection = (string_segment_t){ .start = NULL, .end = NULL };
+
+        if (SelectedHostConnectionId != ConnectionId_Invalid) {
+            host_connection_t* hostConnection = HostConnection(SelectedHostConnectionId);
+            if (hostConnection) {
+                selectedConnection = hostConnection->name;
+            }
+        }
+
+        if (selectedConnection.start) {
+            snprintf(buffer, sizeof(buffer)-1, "%.*s -> %.*s", SegmentLen(currentConnection), currentConnection.start, SegmentLen(selectedConnection), selectedConnection.start);
+        } else {
+            snprintf(buffer, sizeof(buffer)-1, "%.*s", SegmentLen(currentConnection), currentConnection.start);
+        }
+        return (string_segment_t){ .start = buffer, .end = NULL };
     }
-    return (string_segment_t){ .start = buffer, .end = NULL };
 };
 
 
@@ -138,7 +154,7 @@ ATTR_UNUSED static string_segment_t getKeymapLayerText() {
 }
 
 static string_segment_t getLeftStatusText() {
-#define BUFFER_LENGTH 10
+#define BUFFER_LENGTH 32
     static char buffer [BUFFER_LENGTH] = { [BUFFER_LENGTH-1] = 0 };
     font_icons_t connectionIcon = FontIcon_CircleXmarkLarge;
     if (DEVICE_ID == DeviceId_Uhk80_Right) {
@@ -148,44 +164,74 @@ static string_segment_t getLeftStatusText() {
             connectionIcon = FontIcon_SignalStream;
         }
     }
-    snprintf(buffer, BUFFER_LENGTH-1, "%c%c %c%c%c",
+    snprintf(buffer, BUFFER_LENGTH-1, "%c%c %c%c%c %s",
+            // connection icon; always present
             (char)FontControl_NextCharIcon12, (char)connectionIcon,
-            (AdvertisingHid == PairingMode_PairHid || AdvertisingHid == PairingMode_Advertise) ? FontControl_NextCharWhite : FontControl_NextCharBlack,
-            (char)FontControl_NextCharIcon12, AdvertisingHid == PairingMode_PairHid ? FontIcon_BluetoothSignalPlus : FontIcon_BluetoothSignal
+            // pairing icon; sometimes present
+            (AdvertisingHid == PairingMode_PairHid || AdvertisingHid == PairingMode_Advertise) ? FontControl_NextCharWhite : FontControl_NextCharAndSpaceGone,
+            (char)FontControl_NextCharIcon12, AdvertisingHid == PairingMode_PairHid ? FontIcon_BluetoothSignalPlus : FontIcon_BluetoothSignal,
+            // setLedTxt if set
+            Macros_DisplayStringsBuffs.leftStatus
     );
     return (string_segment_t){ .start = buffer, .end = NULL };
 #undef BUFFER_LENGTH
 }
 
-static void getBatteryStatusText(device_id_t deviceId, battery_state_t* battery, char* buffer, bool fixed) {
-    char percSign = !battery->powered ? '-' : battery->batteryCharging ? '+' : '%';
+static char getBlinkingColor() {
+    char color;
+
+    uint32_t state = (CurrentTime / 1024) % 2;
+    color = state ? FontControl_SetColorWhite : FontControl_SetColorGray;
+    uint32_t nextTime = ((CurrentTime / 1024) + 1) * 1024;
+    EventScheduler_Schedule(nextTime + 1, EventSchedulerEvent_BlinkBatteryIcon, "battery icon blink");
+
+    return color;
+}
+
+
+static void getBatteryStatusText(device_id_t deviceId, battery_state_t* battery, char* buffer, char* sideIndicator, bool fixed, bool isLow) {
+    char percSign;
+    char percColor;
+    if (battery->powered && battery->batteryCharging) {
+        percSign = FontIcon_BoltSmall;
+        percColor = FontControl_SetColorWhite;
+    } else if (isLow) {
+        // percSign = FontIcon_BatteryExclamationVertical;
+        percSign = FontIcon_BatteryLow;
+        percColor = getBlinkingColor();
+    } else {
+        percSign = FontIcon_Percent;
+        percColor = FontControl_SetColorWhite;
+    }
+
     if (!DeviceState_IsDeviceConnected(deviceId)) {
         sprintf(buffer, "    ");
     } else if (!battery->batteryPresent) {
         sprintf(buffer, "    ");
     } else {
-        sprintf(buffer, fixed ? "%3i%c" : "%i%c", battery->batteryPercentage, percSign);
+        sprintf(buffer, fixed ? "%c%s%3i%c%c" : "%c%s%i%c%c", percColor, sideIndicator, battery->batteryPercentage, FontControl_NextCharIcon12, percSign);
     }
 }
 
 static string_segment_t getRightStatusText() {
-#define BUFFER_LENGTH 22
+#define BUFFER_LENGTH 26
 #define BAT_BUFFER_LENGTH 10
+#define BAT_ICON_BUFFER_LENGTH 4
     static char buffer [BUFFER_LENGTH] = { [BUFFER_LENGTH-1] = 0 };
     char leftBattery[BAT_BUFFER_LENGTH];
     char rightBattery[BAT_BUFFER_LENGTH];
     if (SyncLeftHalfState.battery.batteryPresent && SyncRightHalfState.battery.batteryPresent) {
-        getBatteryStatusText(DeviceId_Uhk80_Left, &SyncLeftHalfState.battery, leftBattery, true);
-        getBatteryStatusText(DeviceId_Uhk80_Right, &SyncRightHalfState.battery, rightBattery, true);
-        snprintf(buffer, BUFFER_LENGTH-1, "%s %s", leftBattery, rightBattery);
+        getBatteryStatusText(DeviceId_Uhk80_Left, &SyncLeftHalfState.battery, leftBattery, "", false, StateSync_BlinkLeftBatteryPercentage);
+        getBatteryStatusText(DeviceId_Uhk80_Right, &SyncRightHalfState.battery, rightBattery, "", false, StateSync_BlinkRightBatteryPercentage);
+        snprintf(buffer, BUFFER_LENGTH-1, "%s %s %s", Macros_DisplayStringsBuffs.rightStatus, leftBattery, rightBattery);
     } else if (SyncLeftHalfState.battery.batteryPresent) {
-        getBatteryStatusText(DeviceId_Uhk80_Left, &SyncLeftHalfState.battery, leftBattery, false);
-        snprintf(buffer, BUFFER_LENGTH-1, "L%s", leftBattery);
+        getBatteryStatusText(DeviceId_Uhk80_Left, &SyncLeftHalfState.battery, leftBattery, "L", false, StateSync_BlinkLeftBatteryPercentage);
+        snprintf(buffer, BUFFER_LENGTH-1, "%s %s", Macros_DisplayStringsBuffs.rightStatus, leftBattery);
     } else if (SyncRightHalfState.battery.batteryPresent) {
-        getBatteryStatusText(DeviceId_Uhk80_Right, &SyncRightHalfState.battery, rightBattery, false);
-        snprintf(buffer, BUFFER_LENGTH-1, "R%s", rightBattery);
+        getBatteryStatusText(DeviceId_Uhk80_Right, &SyncRightHalfState.battery, rightBattery, "R", false, StateSync_BlinkRightBatteryPercentage);
+        snprintf(buffer, BUFFER_LENGTH-1, "%s %s", Macros_DisplayStringsBuffs.rightStatus, rightBattery);
     } else {
-        snprintf(buffer, BUFFER_LENGTH-1, "");
+        snprintf(buffer, BUFFER_LENGTH-1, "%s", Macros_DisplayStringsBuffs.rightStatus);
     }
     return (string_segment_t){ .start = buffer, .end = NULL };
 #undef BAT_BUFFER_LENGTH
@@ -263,7 +309,7 @@ static void drawKeymapLayer(widget_t* self, framebuffer_t* buffer)
         string_segment_t layerText = getLayerText();
         uint16_t keymapWidth = Framebuffer_TextWidth(keymapFont, keymapText.start, keymapText.end, self->w, NULL, NULL);
         Framebuffer_DrawText(self, buffer, self->w/2 - keymapWidth/2, AlignmentType_Center, keymapFont, keymapText.start, keymapText.end);
-        if (ActiveLayer != LayerId_Base) {
+        if (ActiveLayer != LayerId_Base || Macros_DisplayStringsBuffs.layer[0] != 0) {
             Framebuffer_DrawText(self, buffer, self->w/2 + keymapWidth/2 + 10, AlignmentType_Center+(keymapFont->line_height - layerFont->line_height)/2, layerFont, layerText.start, layerText.end);
         }
     }
@@ -281,3 +327,5 @@ void WidgetStore_Init()
     ConsoleWidget = ConsoleWidget_Build();
     EventScheduler_Schedule(CurrentTime+1000, EventSchedulerEvent_UpdateDebugOledLine, "Widget store init");
 }
+
+#pragma GCC diagnostic pop

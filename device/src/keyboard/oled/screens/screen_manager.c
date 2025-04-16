@@ -3,6 +3,7 @@
 #include "keyboard/oled/widgets/widgets.h"
 #include "keyboard/oled/screens/screens.h"
 #include "keyboard/oled/oled.h"
+#include "notification_screen.h"
 #include "timer.h"
 #include "event_scheduler.h"
 #include "timer.h"
@@ -58,6 +59,9 @@ void ScreenManager_ActivateScreen(screen_id_t screen)
             EventScheduler_Reschedule(CurrentTime + CANVAS_TIMEOUT, EventSchedulerEvent_SwitchScreen, "ScreenManager - switch to main screen");
             screenPtr = CanvasScreen;
             break;
+        case ScreenId_Notification:
+            screenPtr = NotificationScreen;
+            break;
         default:
             break;
     }
@@ -84,4 +88,5 @@ void ScreenManager_Init()
     CanvasScreen_Init();
     MainScreen_Init();
     DebugScreen_Init();
+    NotificationScreen_Init();
 }

@@ -134,6 +134,10 @@ static parser_error_t parseOtherAction(key_action_t *keyAction, config_buffer_t 
             keyAction->type = KeyActionType_Other;
             keyAction->other.actionSubtype = OtherAction_Sleep;
             break;
+        case SerializedOtherAction_Lock:
+            keyAction->type = KeyActionType_Other;
+            keyAction->other.actionSubtype = OtherAction_Lock;
+            break;
         default:
             ConfigParser_Error(buffer, "Invalid other action: %d", otherAction);
             return ParserError_InvalidSerializedOtherAction;
