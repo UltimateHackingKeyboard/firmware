@@ -15,7 +15,6 @@ static bool needsResending = false;
 
 static usb_mouse_report_t usbMouseReports[2];
 
-usb_hid_protocol_t usbMouseProtocol;
 uint32_t UsbMouseActionCounter;
 usb_mouse_report_t* ActiveUsbMouseReport = usbMouseReports;
 
@@ -49,11 +48,6 @@ static usb_mouse_feature_report_t usbMouseFeatureReport = {
 #endif
 };
 
-usb_hid_protocol_t UsbMouseGetProtocol(void)
-{
-    return usbMouseProtocol;
-}
-
 usb_status_t UsbMouseAction(void)
 {
     if (!UsbCompositeDevice.attach) {
@@ -70,9 +64,6 @@ usb_status_t UsbMouseAction(void)
         UsbMouseActionCounter++;
         SwitchActiveUsbMouseReport();
     }
-
-    // latch the active protocol to avoid ISR <-> Thread race
-    usbMouseProtocol = ((usb_device_hid_struct_t*)UsbCompositeDevice.mouseHandle)->protocol;
 
     return usb_status;
 }
@@ -149,18 +140,6 @@ usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param
                 error = kStatus_USB_Success;
             } else {
                 error = kStatus_USB_AllocFail;
-            }
-            break;
-        }
-
-        case kUSB_DeviceHidEventSetProtocol: {
-            uint8_t report = *(uint16_t*)param;
-            if (report <= 1) {
-                hidHandle->protocol = report;
-                error = kStatus_USB_Success;
-            }
-            else {
-                error = kStatus_USB_InvalidRequest;
             }
             break;
         }
