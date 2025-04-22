@@ -520,7 +520,6 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
 
 #if DEVICE_IS_UHK80_RIGHT
 static bool needsCharging(battery_state_t *batteryState) {
-    battery_manager_config_t* config = BatteryManager_GetCurrentBatteryConfig();
     if (batteryState->powersaving && batteryState->batteryPresent && !batteryState->powered) {
         return true;
     }
