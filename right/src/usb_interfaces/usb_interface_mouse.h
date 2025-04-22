@@ -5,6 +5,7 @@
 
     #include "usb_api.h"
     // #include "usb_descriptors/usb_descriptor_device.h"
+    #include "usb_descriptors/usb_descriptor_mouse_report.h"
 
 // Macros:
 
@@ -18,7 +19,6 @@
     #define USB_MOUSE_INTERRUPT_IN_INTERVAL 1
 
     #define USB_MOUSE_REPORT_LENGTH (sizeof(usb_mouse_report_t))
-    #define USB_MOUSE_FEAT_REPORT_LENGTH 1
 
 // Typedefs:
 
@@ -29,6 +29,9 @@
     // reports to the boot protocol format when the host has set boot protocol
     // mode.
     typedef struct {
+#ifdef USB_MOUSE_REPORT_ID
+        uint8_t id;
+#endif
         uint32_t buttons : 24;
         int16_t x;
         int16_t y;
