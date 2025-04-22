@@ -22,12 +22,6 @@
 
 // Typedefs:
 
-    // Note: We support boot protocol mode in this interface, thus the mouse
-    // report may not exceed 8 bytes and must conform to the HID mouse boot
-    // protocol as specified in the USB HID specification. If a different or
-    // longer format is desired in the future, we will need to translate sent
-    // reports to the boot protocol format when the host has set boot protocol
-    // mode.
     typedef struct {
 #ifdef USB_MOUSE_REPORT_ID
         uint8_t id;
@@ -49,7 +43,6 @@
 #ifndef __ZEPHYR__
     usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param);
     usb_status_t UsbMouseAction(void);
-    usb_hid_protocol_t UsbMouseGetProtocol(void);
 #endif
 
     float VerticalScrollMultiplier(void);
