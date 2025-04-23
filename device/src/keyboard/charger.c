@@ -127,7 +127,7 @@ static uint16_t getVoltage() {
 }
 
 static void printState(battery_state_t* state) {
-    printk("Battery is present: %i, charging: %i, charger enabled: %i, at %imV (%i%%)\n", state->batteryPresent, state->batteryCharging, Charger_ChargingEnabled, state->batteryVoltage, state->batteryPercentage);
+    printk("Battery is present: %i, charging: %i, charger enabled: %i, at %imV (%i%%); automaton state %d\n", state->batteryPresent, state->batteryCharging, Charger_ChargingEnabled, state->batteryVoltage, state->batteryPercentage, currentChargingAutomatonState);
 }
 
 void Charger_PrintState() {

@@ -6,19 +6,19 @@
     // - logarithmic correction
 
 typedef enum {
-    ChargeRegion_Empty,
-    ChargeRegion_AlmostEmpty,
-    ChargeRegion_Powersaving,
-    ChargeRegion_PowersavingThreshold,
-    ChargeRegion_Moderate,
-    ChargeRegion_Storage,
-    ChargeRegion_High,
+    ChargeRegion_Empty = 0,
+    ChargeRegion_AlmostEmpty = 1,
+    ChargeRegion_Powersaving = 2,
+    ChargeRegion_PowersavingThreshold = 3,
+    ChargeRegion_Moderate = 4,
+    ChargeRegion_Storage = 5,
+    ChargeRegion_High = 6,
 } charge_region_t;
 
 battery_manager_config_t BatteryManager_StandardUse = {
     .maxVoltage = 4000,
     .stopChargingVoltage = 4100,
-    .startChargingVoltage = 3900,
+    .startChargingVoltage = 4000,
     .turnOnBacklightVoltage = 3550,
     .turnOffBacklightVoltage = 3400,
     .minWakeupVoltage = 3100,
