@@ -47,7 +47,8 @@
     void InitCharger_Min(void);
     void Charger_PrintState();
     void Charger_UpdateBatteryState();
-    void Charger_EnableCharging(bool enabled);
+
+    bool Charger_EnableCharging(bool enabled);
 
     bool Charger_ShouldRemainInDepletedMode(bool checkVoltage);
     bool Charger_ShouldEnterDepletedMode();

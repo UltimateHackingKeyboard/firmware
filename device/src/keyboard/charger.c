@@ -134,11 +134,13 @@ void Charger_PrintState() {
     printState(&batteryState);
 }
 
-void Charger_EnableCharging(bool enabled) {
+bool Charger_EnableCharging(bool enabled) {
     if (Charger_ChargingEnabled != enabled) {
         Charger_ChargingEnabled = enabled;
         gpio_pin_set_dt(&chargerEnDt, Charger_ChargingEnabled && !stabilizationPause);
+        return true;
     }
+    return false;
 }
 
 static bool updateChargerEnabled(battery_state_t *batteryState, battery_manager_config_t* config, uint16_t rawVoltage) {
@@ -162,15 +164,15 @@ static bool updateChargerEnabled(battery_state_t *batteryState, battery_manager_
                 break;
             case BatteryManagerAutomatonState_Charging:
                 stateChanged |= setPowersaving(false);
-                Charger_EnableCharging(true);
+                stateChanged |= Charger_EnableCharging(true);
                 break;
             case BatteryManagerAutomatonState_Charged:
                 stateChanged |= setPowersaving(false);
-                Charger_EnableCharging(false);
+                stateChanged |= Charger_EnableCharging(false);
                 break;
             case BatteryManagerAutomatonState_Unknown:
                 stateChanged |= setPowersaving(false);
-                Charger_EnableCharging(true);
+                stateChanged |= Charger_EnableCharging(true);
                 break;
         }
     }
@@ -254,14 +256,16 @@ void Charger_UpdateBatteryState() {
                 return;
             } else {
                 // run the state automaton that decides when to charge
-                stateChanged |= updateChargerEnabled(&batteryState, currentBatteryConfig, rawVoltage);
+                bool chargerEnabledUpdated = updateChargerEnabled(&batteryState, currentBatteryConfig, rawVoltage);
+                stateChanged |= chargerEnabledUpdated;
 
                 // if we have changed charger state, update whether actually charging
                 stateChanged |= setActuallyCharging(batteryState.batteryCharging && Charger_ChargingEnabled);
 
                 // we are done, schedule the next update
                 stabilizationPauseStartTime = CurrentTime;
-                EventScheduler_Schedule(CurrentTime + CHARGER_UPDATE_PERIOD, EventSchedulerEvent_UpdateBattery, "charger - minute period");
+                uint32_t timeToSleep = chargerEnabledUpdated ? CHARGER_STAT_PERIOD : CHARGER_UPDATE_PERIOD;
+                EventScheduler_Schedule(CurrentTime + timeToSleep, EventSchedulerEvent_UpdateBattery, "charger - minute period");
                 statsToIgnore = 3;
                 gpio_pin_set_dt(&chargerEnDt, Charger_ChargingEnabled);
                 stabilizationPause = false;
