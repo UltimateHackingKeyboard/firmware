@@ -139,9 +139,11 @@ int main(void)
 {
     Trace_Init();
     if (StateWormhole_IsOpen()) {
-        StateWormhole.persistStatusBuffer = true;
-        MacroStatusBuffer_InitFromWormhole();
-        Trace_Print();
+        if (!StateWormhole.wasReboot) {
+            StateWormhole.persistStatusBuffer = true;
+            MacroStatusBuffer_InitFromWormhole();
+            Trace_Print();
+        }
         StateWormhole_Clean();
     } else {
         MacroStatusBuffer_InitNormal();
@@ -171,10 +173,10 @@ int main(void)
 
         while (1) {
             CopyRightKeystateMatrix();
-            if (UsbReadyForTransfers()) {
-                Trace('<');
+            if (UsbReadyForTransfers() && EventScheduler_Vector & EventVector_UserLogicUpdateMask) {
+                Trace('(');
                 RunUserLogic();
-                Trace('>');
+                Trace(')');
             }
             if (EventVector_IsSet(EventVector_EventScheduler)) {
                 EventScheduler_Process();

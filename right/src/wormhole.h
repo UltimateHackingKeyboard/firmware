@@ -16,14 +16,14 @@
     typedef struct {
         uint64_t magicNumber;
 
+        bool wasReboot;
+        trace_buffer_t traceBuffer;
+
         bool rebootToPowerMode;
         power_mode_t restartPowerMode;
 
         bool persistStatusBuffer;
         macro_status_buffer_t statusBuffer;
-
-        trace_buffer_t traceBuffer;
-
     } wormhole_data_t;
 
     bool StateWormhole_IsOpen(void);

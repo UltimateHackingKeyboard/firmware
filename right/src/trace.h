@@ -9,7 +9,7 @@
 
 // Macros:
 
-#define TRACE_BUFFER_SIZE 128
+#define TRACE_BUFFER_SIZE 256
 
 // Typedefs:
 

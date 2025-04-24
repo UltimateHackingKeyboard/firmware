@@ -25,6 +25,7 @@ void StateWormhole_Open(void) {
 void StateWormhole_Clean(void) {
     StateWormhole.rebootToPowerMode = false;
     StateWormhole.persistStatusBuffer = false;
+    StateWormhole.wasReboot = false;
 }
 
 void StateWormhole_Close(void) {

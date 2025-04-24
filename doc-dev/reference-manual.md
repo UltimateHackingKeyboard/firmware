@@ -282,6 +282,7 @@ COMMAND = statsRecordKeyTiming
 COMMAND = statsVariables
 COMMAND = diagnose
 COMMAND = panic
+COMMAND = trace
 COMMAND = setStatus STRING
 COMMAND = clearStatus
 COMMAND = set setEmergencyKey KEYID

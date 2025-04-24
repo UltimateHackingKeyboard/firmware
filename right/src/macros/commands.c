@@ -35,6 +35,7 @@
 #include "config_manager.h"
 #include "usb_commands/usb_command_reenumerate.h"
 #include "bt_defs.h"
+#include "trace.h"
 
 #ifdef __ZEPHYR__
 #include "connections.h"
@@ -1478,7 +1479,8 @@ static macro_result_t processPanicCommand(parser_context_t* ctx) {
 #ifdef __ZEPHYR__
     k_panic();
 #else
-    Reboot(false);
+    Trace_Printf("PretendedPanic");
+    NVIC_SystemReset();
 #endif
     return MacroResult_Finished;
 }
@@ -2402,6 +2404,10 @@ static macro_result_t processCommand(parser_context_t* ctx)
             }
             else if (ConsumeToken(ctx, "tapKeySeq")) {
                 return Macros_ProcessTapKeySeqCommand(ctx);
+            }
+            else if (ConsumeToken(ctx, "trace")) {
+                Trace_Print();
+                return MacroResult_Finished;
             }
             else {
                 goto failed;

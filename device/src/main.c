@@ -84,7 +84,7 @@ static void scheduleNextRun() {
     CurrentTime = k_uptime_get();
     int32_t diff = nextEventTime - CurrentTime;
 
-    Trace('>');
+    Trace(')');
 
     k_sem_take(&mainWakeupSemaphore, K_NO_WAIT);
     bool haveMoreWork = (EventScheduler_Vector & EventVector_UserLogicUpdateMask);
@@ -94,7 +94,7 @@ static void scheduleNextRun() {
         // Mouse keys don't like being called twice in one second for some reason
         k_sem_give(&mainWakeupSemaphore);
         sleepTillNextMs();
-        Trace('<');
+        Trace('(');
         return;
     } else if (eventIsValid) {
         EVENTLOOP_TIMING(printk("Sleeping for %d\n", diff));
@@ -105,7 +105,7 @@ static void scheduleNextRun() {
         k_sem_take(&mainWakeupSemaphore, K_FOREVER);
         // k_sleep(K_FOREVER);
     }
-    Trace('<');
+    Trace('(');
 }
 
 //TODO: inline this

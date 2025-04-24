@@ -33,11 +33,12 @@ void Trace_Printf(const char *fmt, ...) {
         EXPAND_STRING(buffer, TRACE_BUFFER_SIZE);
 
         for (uint16_t i = 0; i < TRACE_BUFFER_SIZE; i++) {
-            if (buffer[i] == '\0') {
+            if (buffer[i] == '\0' || buffer[i] > 126) {
                 break;
             }
             if (buffer[i] == '\n') {
                 Trace(' ');
+                continue;
             }
             Trace(buffer[i]);
         }
@@ -61,24 +62,22 @@ void Trace_Print(void) {
     enabled = false;
 
     Macros_ReportPrintf("Last EV: %d\n", StateWormhole.traceBuffer.eventVector);
-    Macros_ReportPrintf("Trace:");
-    const uint16_t sliceLength = 64;
+    Macros_ReportPrintf("Trace:\n");
 
-    uint16_t remains = 0;
-    iter = TraceBufferPosition;
-    while (iter < TRACE_BUFFER_SIZE) {
-        uint16_t end = MIN(TRACE_BUFFER_SIZE, iter + sliceLength);
-        remains = iter+sliceLength - TRACE_BUFFER_SIZE;
-        Macros_ReportPrintf("\n%.*s", end-iter, TraceBuffer + iter);
-        iter = end;
+    for (iter = 0; iter < TRACE_BUFFER_SIZE; iter++) {
+        char c = TraceBuffer[(TraceBufferPosition+iter)%TRACE_BUFFER_SIZE];
+        if (c < 32) {
+            Macros_SetStatusChar('.');
+        } else if (c <= 126) {
+            Macros_SetStatusChar(c);
+        } else {
+            Macros_SetStatusChar('.');
+        }
+        if ((iter+1) % 64 == 0) {
+            Macros_SetStatusChar('\n');
+        }
     }
-    Macros_ReportPrintf("%.*s\n", remains, TraceBuffer);
-    iter = remains;
-    while (iter < TraceBufferPosition) {
-        uint16_t end = MIN(TraceBufferPosition, iter + sliceLength);
-        Macros_ReportPrintf("%.*s\n", end-iter, TraceBuffer + iter);
-        iter = end;
-    }
+    Macros_SetStatusChar('\n');
 
     enabled = true;
 }

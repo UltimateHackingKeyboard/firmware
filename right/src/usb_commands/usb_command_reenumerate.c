@@ -10,10 +10,14 @@
 #include "bootloader/wormhole.h"
 #endif
 
+#include "trace.h"
 #include "usb_commands/usb_command_reenumerate.h"
 #include "usb_protocol_handler.h"
+#include "wormhole.h"
 
 void Reboot(bool rebootPeripherals) {
+    StateWormhole.wasReboot = true;
+    Trace_Printf("Rebooting...");
 #ifdef __ZEPHYR__
     if (rebootPeripherals) {
         if (DEVICE_IS_UHK80_RIGHT) {
@@ -43,6 +47,8 @@ void Reboot(bool rebootPeripherals) {
 
 void UsbCommand_Reenumerate(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer)
 {
+    StateWormhole.wasReboot = true;
+    Trace_Printf("Rebooting...");
 #ifdef __ZEPHYR__
     bootmode_set(BOOT_MODE_TYPE_BOOTLOADER);
     sys_reboot(SYS_REBOOT_COLD);
