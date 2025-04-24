@@ -54,7 +54,7 @@
     void UsbMouseResetActiveReport(void);
     void UsbMouseSendActiveReport(void);
     usb_status_t UsbMouseCheckIdleElapsed();
-    usb_status_t UsbMouseCheckReportReady(bool* buttonsChanged);
+    usb_status_t UsbMouseCheckReportReady(bool resending, bool* buttonsChanged);
 
     void UsbMouse_MergeReports(usb_mouse_report_t* sourceReport, usb_mouse_report_t* targetReport);
 

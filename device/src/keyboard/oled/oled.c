@@ -8,6 +8,7 @@
 #include "timer.h"
 #include "led_manager.h"
 #include "keyboard/oled/screens/screens.h"
+#include "state_sync.h"
 
 #if DEVICE_HAS_OLED
 
@@ -95,6 +96,8 @@ static bool wantScreenShift;
 static uint8_t computeBrightness() {
     if (ActiveScreen == ScreenId_Debug && DisplayBrightness == 0) {
         return 255;
+    } else if (StateSync_BatteryBacklightPowersavingMode) {
+        return MIN(DisplayBrightness, 1);
     } else {
         return DisplayBrightness;
     }
@@ -167,10 +170,22 @@ static uint16_t roundToEven(uint16_t a) {
     return a & ~1;
 }
 
+static void setOledBrightness(uint8_t brightness) {
+    if (brightness == 0) {
+        oledCommand1(0, OledCommand_SetDisplayOff);
+    } else {
+        oledCommand1(0, OledCommand_SetDisplayOn);
+        oledCommand2(0, OledCommand_SetContrast, brightness);
+    }
+
+    lastBrightness = brightness;
+}
+
 static void adjustBrightness() {
     uint8_t targetBrightness = computeBrightness();
 
     uint8_t nextBrightness = lastBrightness;
+
 
     if (nextBrightness != targetBrightness) {
         if (nextBrightness - OLED_FADE_STEP > targetBrightness) {
@@ -182,14 +197,7 @@ static void adjustBrightness() {
         }
     }
 
-    if (nextBrightness == 0) {
-        oledCommand1(0, OledCommand_SetDisplayOff);
-    } else {
-        oledCommand1(0, OledCommand_SetDisplayOn);
-        oledCommand2(0, OledCommand_SetContrast, nextBrightness);
-    }
-
-    lastBrightness = nextBrightness;
+    setOledBrightness(nextBrightness);
 }
 
 static void diffUpdate() {
@@ -224,10 +232,13 @@ static void diffUpdate() {
                 buf[buf_pos++] = pixel->value;
                 pixel->oldValue = pixel->value;
 
+                uint16_t changed = 0;
+
                 while (shouldContinueWithoutPositionChange(x, y)) {
                     x -= 2;
                     buf[buf_pos++] = PIXEL(x, y).value;
                     PIXEL(x, y).oldValue = PIXEL(x, y).value;
+                    changed++;
                 }
 
                 writeSpi2(buf, buf_pos);
@@ -251,8 +262,7 @@ void sleepDisplay() {
 
 void oledUpdater() {
     k_mutex_lock(&SpiMutex, K_FOREVER);
-    oledCommand1(0, OledCommand_SetDisplayOn);
-    oledCommand2(0, OledCommand_SetContrast, 0xff);
+    setOledBrightness(0);
     oledCommand1(0, OledCommand_SetScanDirectionDown);
     k_mutex_unlock(&SpiMutex);
 

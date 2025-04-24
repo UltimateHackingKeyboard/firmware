@@ -39,8 +39,12 @@ static uint8_t validateConfig(uint8_t *GenericHidInBuffer) {
 }
 
 void UsbCommand_ApplyConfigAsync(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer) {
+    bool calledFromUsb = GenericHidOutBuffer != NULL;
     if (validateConfig(GenericHidInBuffer) == UsbStatusCode_Success) {
         EventVector_Set(EventVector_ApplyConfig);
+        if (calledFromUsb) {
+            Macros_ClearStatus(calledFromUsb);
+        }
 #ifdef __ZEPHYR__
         Main_Wake();
 #endif
@@ -63,7 +67,7 @@ void UsbCommand_ApplyFactory(const uint8_t *GenericHidOutBuffer, uint8_t *Generi
 
     DataModelVersion = userConfigVersion;
 
-    Macros_ClearStatus();
+    Macros_ClearStatus(false);
 
     ConfigManager_ResetConfiguration(false);
 
@@ -91,6 +95,7 @@ void UsbCommand_ApplyFactory(const uint8_t *GenericHidOutBuffer, uint8_t *Generi
 uint8_t UsbCommand_ApplyConfig(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer)
 {
     static bool isBoot = true;
+    bool calledFromUsb = GenericHidOutBuffer != NULL;
     EventVector_Unset(EventVector_ApplyConfig);
 
     uint8_t parseConfigStatus = validateConfig(GenericHidInBuffer);
@@ -124,7 +129,7 @@ uint8_t UsbCommand_ApplyConfig(const uint8_t *GenericHidOutBuffer, uint8_t *Gene
         return parseConfigStatus;
     }
 
-    Macros_ClearStatus();
+    Macros_ClearStatus(calledFromUsb);
 
     if (!isBoot) {
         Macros_ValidateAllMacros();

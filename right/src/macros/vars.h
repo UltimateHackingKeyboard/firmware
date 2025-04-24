@@ -50,6 +50,7 @@
     bool Macros_ConsumeBool(parser_context_t* ctx);
     macro_variable_t Macros_ConsumeAnyValue(parser_context_t* ctx);
     void MacroVariables_RunTests(void);
+    void Macros_SerializeVar(char* buffer, uint8_t len, macro_variable_t var);
 
 #endif
 

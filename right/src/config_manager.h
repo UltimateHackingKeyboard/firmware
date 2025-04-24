@@ -58,6 +58,7 @@
         uint8_t DisplayBrightnessBatteryDefault;
         uint8_t KeyBacklightBrightnessDefault;
         uint8_t KeyBacklightBrightnessBatteryDefault;
+        uint8_t KeyBacklightBrightnessChargingDefault;
 
         uint32_t DisplayFadeOutTimeout;
         uint32_t DisplayFadeOutBatteryTimeout;
@@ -66,6 +67,9 @@
 
         bool LedsEnabled;
         bool LedsAlwaysOn;
+
+        // battery
+        bool BatteryStationaryMode;
 
         // layers
         layer_config_t LayerConfig[LayerId_Count];

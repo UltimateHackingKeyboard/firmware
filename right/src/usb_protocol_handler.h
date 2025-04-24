@@ -70,13 +70,15 @@
     } usb_command_id_t;
 
     typedef enum {
-        UsbVariable_TestSwitches,
-        UsbVariable_TestUsbStack,
-        UsbVariable_DebounceTimePress,
-        UsbVariable_DebounceTimeRelease,
-        UsbVariable_UsbReportSemaphore,
-        UsbVariable_StatusBuffer,
-        UsbVariable_LedAudioRegisters,
+        UsbVariable_TestSwitches              = 0x00,
+        UsbVariable_TestUsbStack              = 0x01,
+        UsbVariable_DebounceTimePress         = 0x02,
+        UsbVariable_DebounceTimeRelease       = 0x03,
+        UsbVariable_UsbReportSemaphore        = 0x04,
+        UsbVariable_StatusBuffer              = 0x05,
+        UsbVariable_LedAudioRegisters         = 0x06,
+        UsbVariable_ShellEnabled              = 0x07,
+        UsbVariable_ShellBuffer               = 0x08,
     } usb_variable_id_t;
 
     typedef enum {

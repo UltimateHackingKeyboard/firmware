@@ -229,6 +229,7 @@ const config_t DefaultCfg = (config_t){
         .DisplayBrightnessBatteryDefault = 0x20,
         .DisplayBrightnessDefault = 0xff,
         .KeyBacklightBrightnessBatteryDefault = 0x20,
+        .KeyBacklightBrightnessChargingDefault = 0x80,
         .KeyBacklightBrightnessDefault = 0xff,
         .DisplayFadeOutTimeout = 0,
         .DisplayFadeOutBatteryTimeout = 60000,
@@ -267,6 +268,7 @@ const config_t DefaultCfg = (config_t){
         .Macros_OneShotTimeout = 500,
         .AutoShiftDelay = 0,
         .ChordingDelay = 0,
+        .BatteryStationaryMode = false,
 #ifdef __ZEPHYR__
         .I2cBaudRate = 0,
 #else

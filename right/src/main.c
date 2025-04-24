@@ -32,6 +32,7 @@
 #include "power_mode.h"
 #include "usb_protocol_handler.h"
 #include "event_scheduler.h"
+#include "wormhole.h"
 
 static bool IsEepromInitialized = false;
 static bool IsConfigInitialized = false;
@@ -116,7 +117,7 @@ void CopyRightKeystateMatrix(void)
 }
 
 bool UsbReadyForTransfers(void) {
-    if (UsbReportUpdateSemaphore && CurrentPowerMode != PowerMode_Awake) {
+    if (UsbReportUpdateSemaphore && CurrentPowerMode > PowerMode_LastAwake) {
         if (Timer_GetElapsedTime(&UpdateUsbReports_LastUpdateTime) < USB_SEMAPHORE_TIMEOUT) {
             return false;
         } else {
@@ -136,6 +137,20 @@ static void initUsb() {
 
 int main(void)
 {
+    Trace_Init();
+    if (StateWormhole_IsOpen()) {
+        if (!StateWormhole.wasReboot) {
+            StateWormhole.persistStatusBuffer = true;
+            MacroStatusBuffer_InitFromWormhole();
+            Trace_Print();
+        }
+        StateWormhole_Clean();
+    } else {
+        MacroStatusBuffer_InitNormal();
+        StateWormhole_Clean();
+        StateWormhole_Open();
+    }
+
     InitClock();
     InitPeripherals();
 
@@ -158,8 +173,10 @@ int main(void)
 
         while (1) {
             CopyRightKeystateMatrix();
-            if (UsbReadyForTransfers()) {
+            if (UsbReadyForTransfers() && EventScheduler_Vector & EventVector_UserLogicUpdateMask) {
+                Trace('(');
                 RunUserLogic();
+                Trace(')');
             }
             if (EventVector_IsSet(EventVector_EventScheduler)) {
                 EventScheduler_Process();

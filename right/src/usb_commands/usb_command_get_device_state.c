@@ -23,11 +23,13 @@
     #include "slave_scheduler.h"
     #include "bt_pair.h"
     #include "bt_conn.h"
+    #include "proxy_log_backend.h"
 #else
     #include "usb_report_updater.h"
     #include "slave_scheduler.h"
     #define BtPair_PairingMode PairingMode_Off
     #define Bt_NewPairedDevice 0
+    #define ProxyLog_HasLog 0
 #endif
 
 void UsbCommand_GetKeyboardState(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer)
@@ -42,7 +44,8 @@ void UsbCommand_GetKeyboardState(const uint8_t *GenericHidOutBuffer, uint8_t *Ge
     uint8_t byte2 = 0
         | (MergeSensor_IsMerged() ? GetDeviceStateByte2_HalvesMerged : 0)
         | (BtPair_PairingMode == PairingMode_Oob ? GetDeviceStateByte2_PairingInProgress : 0)
-        | (Bt_NewPairedDevice ? GetDeviceStateByte2_NewPairedDevice : 0);
+        | (Bt_NewPairedDevice ? GetDeviceStateByte2_NewPairedDevice : 0)
+        | (ProxyLog_HasLog ? GetDeviceStateByte2_ZephyrLog : 0);
     SetUsbTxBufferUint8(2, byte2);
     SetUsbTxBufferUint8(3, ModuleConnectionStates[UhkModuleDriverId_LeftKeyboardHalf].moduleId);
     SetUsbTxBufferUint8(4, ModuleConnectionStates[UhkModuleDriverId_LeftModule].moduleId);

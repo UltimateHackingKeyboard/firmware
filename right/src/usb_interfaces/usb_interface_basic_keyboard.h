@@ -83,7 +83,7 @@
     void UsbBasicKeyboard_ForeachScancode(const usb_basic_keyboard_report_t* report, void(*action)(uint8_t));
     void UsbBasicKeyboard_HandleProtocolChange();
     void UsbBasicKeyboardResetActiveReport(void);
-    usb_status_t UsbBasicKeyboardCheckReportReady();
+    usb_status_t UsbBasicKeyboardCheckReportReady(bool resending);
     void UsbBasicKeyboardSendActiveReport(void);
     usb_basic_keyboard_report_t* GetInactiveUsbBasicKeyboardReport(void);
     void SwitchActiveUsbBasicKeyboardReport(void);

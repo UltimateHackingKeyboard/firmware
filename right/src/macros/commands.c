@@ -19,6 +19,7 @@
 #include "macros/status_buffer.h"
 #include "macros/string_reader.h"
 #include "macros/typedefs.h"
+#include "macros/display.h"
 #include "macros/vars.h"
 #include "postponer.h"
 #include "secondary_role_driver.h"
@@ -34,6 +35,7 @@
 #include "config_manager.h"
 #include "usb_commands/usb_command_reenumerate.h"
 #include "bt_defs.h"
+#include "trace.h"
 
 #ifdef __ZEPHYR__
 #include "connections.h"
@@ -70,6 +72,11 @@ static macro_result_t processDelay(uint32_t time)
         S->as.actionActive = true;
         return processDelay(time);
     }
+}
+
+macro_result_t Macros_ProcessDelay(uint32_t time)
+{
+    return processDelay(time);
 }
 
 macro_result_t Macros_ProcessDelayAction()
@@ -146,6 +153,10 @@ static bool isNUM(parser_context_t* ctx)
     default:
         return false;
     }
+}
+
+bool Macros_IsNUM(parser_context_t* ctx) {
+    return isNUM(ctx);
 }
 
 static int32_t consumeRuntimeMacroSlotId(parser_context_t* ctx)
@@ -749,58 +760,6 @@ static macro_result_t processBluetoothCommand(parser_context_t *ctx)
 #endif
 
     return MacroResult_Finished;
-}
-
-
-static macro_result_t processSetLedTxtCommand(parser_context_t* ctx)
-{
-    ATTR_UNUSED int16_t time = Macros_ConsumeInt(ctx);
-    char text[3];
-    uint8_t textLen = 0;
-
-    if (isNUM(ctx)) {
-#ifndef __ZEPHYR__
-        macro_variable_t value = Macros_ConsumeAnyValue(ctx);
-        SegmentDisplay_SerializeVar(text, value);
-        textLen = 3;
-#endif
-    } else if (ctx->at != ctx->end) {
-        uint16_t stringOffset = 0, textIndex = 0, textSubIndex = 0;
-        for (uint8_t i = 0; true; i++) {
-            char c = Macros_ConsumeCharOfString(ctx, &stringOffset, &textIndex, &textSubIndex);
-            if (c == '\0') {
-                break;
-            }
-            if (i < 3) {
-                text[i] = c;
-                textLen++;
-            }
-        }
-        ConsumeWhite(ctx);
-    } else {
-        Macros_ReportError("Text argument expected.", ctx->at, ctx->at);
-        return MacroResult_Finished;
-    }
-
-    if (Macros_DryRun || Macros_ParserError) {
-        return MacroResult_Finished;
-    }
-
-#ifndef __ZEPHYR__
-    macro_result_t res = MacroResult_Finished;
-    if (time == 0) {
-        SegmentDisplay_SetText(textLen, text, SegmentDisplaySlot_Macro);
-        return MacroResult_Finished;
-    } else if ((res = processDelay(time)) == MacroResult_Finished) {
-        SegmentDisplay_DeactivateSlot(SegmentDisplaySlot_Macro);
-        return MacroResult_Finished;
-    } else {
-        SegmentDisplay_SetText(textLen, text, SegmentDisplaySlot_Macro);
-        return res;
-    }
-#else
-    return MacroResult_Finished;
-#endif
 }
 
 macro_result_t goTo(parser_context_t* ctx)
@@ -1512,6 +1471,20 @@ static bool processIfModuleConnected(parser_context_t* ctx, bool negate)
     return moduleConnected != negate;
 }
 
+static macro_result_t processPanicCommand(parser_context_t* ctx) {
+    if (Macros_DryRun) {
+        return MacroResult_Finished;
+    }
+
+#ifdef __ZEPHYR__
+    k_panic();
+#else
+    Trace_Printf("PretendedPanic");
+    NVIC_SystemReset();
+#endif
+    return MacroResult_Finished;
+}
+
 static macro_result_t processPowerModeCommand(parser_context_t* ctx) {
     bool toggle = false;
 
@@ -1519,27 +1492,31 @@ static macro_result_t processPowerModeCommand(parser_context_t* ctx) {
         toggle = true;
     }
 
-    if (ConsumeToken(ctx, "deepSleep") || ConsumeToken(ctx, "sleep")) {
-        if (Macros_DryRun) {
-            return MacroResult_Finished;
-        }
-        PowerMode_ActivateMode(PowerMode_DeepSleep, toggle);
-    }
-    else if (ConsumeToken(ctx, "lightSleep")) {
-        if (Macros_DryRun) {
-            return MacroResult_Finished;
-        }
-        PowerMode_ActivateMode(PowerMode_LightSleep, toggle);
-    }
-    else if (ConsumeToken(ctx, "wake")) {
-        if (Macros_DryRun) {
-            return MacroResult_Finished;
-        }
-        PowerMode_ActivateMode(PowerMode_Awake, toggle);
-    }
+    power_mode_t mode = PowerMode_Awake;
+
+    parser_context_t ctxCopy = *ctx;
+
+    if (false) { }
+    else if (ConsumeToken(ctx, "wake")) { mode = PowerMode_Awake; }
+    else if (ConsumeToken(ctx, "lock")) { mode = PowerMode_Lock; }
+    else if (ConsumeToken(ctx, "sleep")) { mode = PowerMode_SfjlSleep; }
+    else if (ConsumeToken(ctx, "shutdown")) { mode = PowerMode_ManualShutDown; }
+    else if (ConsumeToken(ctx, "shutDown")) { mode = PowerMode_ManualShutDown; }
+    else if (ConsumeToken(ctx, "autoShutdown")) { mode = PowerMode_AutoShutDown; }
     else {
-        Macros_ReportError("Unrecognized parameter:", ctx->at, ctx->at);
+        Macros_ReportError("This mode is not available in this release:", ctxCopy.at, ctxCopy.at);
     }
+
+    if (Macros_DryRun || Macros_ParserError) {
+        return MacroResult_Finished;
+    }
+
+    /* wait until the key is released to prevent backlight flashing */
+    if (Macros_CurrentMacroKeyIsActive()) {
+        return Macros_SleepTillKeystateChange();
+    }
+
+    PowerMode_ActivateMode(mode, toggle, false);
 
     return MacroResult_Finished;
 }
@@ -1863,7 +1840,7 @@ static macro_result_t processCommand(parser_context_t* ctx)
                 return processConsumePendingCommand(ctx);
             }
             else if (ConsumeToken(ctx, "clearStatus")) {
-                return Macros_ProcessClearStatusCommand();
+                return Macros_ProcessClearStatusCommand(true);
             }
             else if (ConsumeToken(ctx, "call")) {
                 return processCallCommand(ctx);
@@ -2277,6 +2254,9 @@ static macro_result_t processCommand(parser_context_t* ctx)
             else if (ConsumeToken(ctx, "powerMode")) {
                 return processPowerModeCommand(ctx);
             }
+            else if (ConsumeToken(ctx, "panic")) {
+                return processPanicCommand(ctx);
+            }
             else {
                 goto failed;
             }
@@ -2341,7 +2321,7 @@ static macro_result_t processCommand(parser_context_t* ctx)
                 return processStartRecordingCommand(ctx, true);
             }
             else if (ConsumeToken(ctx, "setLedTxt")) {
-                return processSetLedTxtCommand(ctx);
+                return Macros_ProcessSetLedTxtCommand(ctx);
             }
             else if (ConsumeToken(ctx, "statsRuntime")) {
                 return Macros_ProcessStatsRuntimeCommand();
@@ -2424,6 +2404,10 @@ static macro_result_t processCommand(parser_context_t* ctx)
             }
             else if (ConsumeToken(ctx, "tapKeySeq")) {
                 return Macros_ProcessTapKeySeqCommand(ctx);
+            }
+            else if (ConsumeToken(ctx, "trace")) {
+                Trace_Print();
+                return MacroResult_Finished;
             }
             else {
                 goto failed;

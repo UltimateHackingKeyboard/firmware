@@ -16,6 +16,9 @@
 #include "bt_scan.h"
 #include "settings.h"
 #include "config_manager.h"
+#include <zephyr/logging/log.h>
+
+LOG_MODULE_DECLARE(Bt);
 
 #define BT_SHORT_RETRY_DELAY 1000
 
@@ -24,9 +27,9 @@ bool BtManager_Restarting = false;
 static void bt_ready(int err)
 {
     if (err) {
-        LogU("Bluetooth init failed (err %d)\n", err);
+        LOG_WRN("Bluetooth init failed (err %d)\n", err);
     } else {
-        LOG_BT("Bluetooth initialized successfully\n");
+        LOG_INF("Bluetooth initialized successfully\n");
     }
 }
 
@@ -36,7 +39,7 @@ void BtManager_InitBt() {
     if (DEVICE_IS_UHK80_LEFT || DEVICE_IS_UHK80_RIGHT) {
         int err = NusServer_Init();
         if (err) {
-            LogU("NusServer_Init failed with error %d\n", err);
+            LOG_WRN("NusServer_Init failed with error %d\n", err);
         }
     }
 
@@ -47,7 +50,7 @@ void BtManager_InitBt() {
 }
 
 void BtManager_StartBt() {
-    LOG_BT("Starting bluetooth services.\n");
+    LOG_INF("Starting bluetooth services.\n");
 
     if (!Cfg.Bt_Enabled) {
         return;
@@ -77,9 +80,10 @@ void BtManager_StopBt() {
 }
 
 
-void BtManager_StartScanningAndAdvertisingAsync() {
+void BtManager_StartScanningAndAdvertisingAsync(const char* eventLabel) {
     uint32_t delay = 50;
-    EventScheduler_Reschedule(CurrentTime + delay, EventSchedulerEvent_BtStartScanningAndAdvertising, "BtManager_StartScanningAndAdvertising");
+    LOG_INF("btManager: BtManager_StartScanningAndAdvertisingAsync because %s\n", eventLabel);
+    EventScheduler_Reschedule(CurrentTime + delay, EventSchedulerEvent_BtStartScanningAndAdvertising, eventLabel);
 }
 
 /*
@@ -119,7 +123,7 @@ void BtManager_StartScanningAndAdvertising() {
     bool dongleShouldScanForOob = DEVICE_IS_UHK_DONGLE && BtPair_PairingMode == PairingMode_Oob && BtPair_PairingAsCentral;
     bool shouldScan = rightShouldScanForPeer || rightShouldScanForOob || dongleShouldScanForPeer || dongleShouldScanForOob;
 
-    printk("==== btManager: should scanAndAdvertise %d %d\n", shouldScan, shouldAdvertise);
+    LOG_INF("btManager: should scanAndAdvertise %d %d\n", shouldScan, shouldAdvertise);
 
     if (shouldAdvertise || shouldScan) {
         const char* label = "";
@@ -130,7 +134,7 @@ void BtManager_StartScanningAndAdvertising() {
         } else if (shouldScan) {
             label = "scanning";
         }
-        LOG_BT("Starting %s, try %d!\n", label, try);
+        LOG_INF("Starting %s, try %d!\n", label, try);
     }
 
 #ifdef CONFIG_BT_PERIPHERAL
@@ -163,7 +167,7 @@ void BtManager_StartScanningAndAdvertising() {
 }
 
 void BtManager_RestartBt() {
-    LOG_BT("Going to reset bluetooth stack\n");
+    LOG_INF("Going to reset bluetooth stack\n");
 
     BtManager_Restarting = true;
     int err;
@@ -174,7 +178,7 @@ void BtManager_RestartBt() {
 
     err = bt_disable();
     if (err) {
-        LogU("Bluetooth disable failed (err %d)\n", err);
+        LOG_WRN("Bluetooth disable failed (err %d)\n", err);
         return;
     }
 
@@ -183,12 +187,12 @@ void BtManager_RestartBt() {
 
     err = bt_hci_cmd_send(BT_HCI_OP_RESET, NULL);
     if (err) {
-        LogU("HCI Reset failed (err %d)\n", err);
+        LOG_WRN("HCI Reset failed (err %d)\n", err);
     }
 
     err = bt_enable(bt_ready);
     if (err) {
-        LogU("Bluetooth init failed (err %d)\n", err);
+        LOG_WRN("Bluetooth init failed (err %d)\n", err);
     }
 
     Settings_Reload();
@@ -197,7 +201,7 @@ void BtManager_RestartBt() {
 
     BtManager_Restarting = false;
 
-    LOG_BT("Bluetooth subsystem restart finished\n");
+    LOG_INF("Bluetooth subsystem restart finished\n");
 }
 
 void BtManager_RestartBtAsync() {

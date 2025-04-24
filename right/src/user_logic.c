@@ -20,37 +20,46 @@
 
 void RunUserLogic(void) {
     if (EventVector_IsSet(EventVector_ApplyConfig)) {
+        Trace_Printf("l1");
         UsbCommand_ApplyConfig(NULL, NULL);
     }
     if (EventVector_IsSet(EventVector_KeymapReloadNeeded)) {
+        Trace_Printf("l2");
         SwitchKeymapById(CurrentKeymapIndex);
     }
 #ifndef __ZEPHYR__
     if (EventVector_IsSet(EventVector_ProtocolChanged)) {
+        Trace_Printf("l3");
         UsbBasicKeyboard_HandleProtocolChange();
     }
 #endif
     if (EventVector_IsSet(EventVector_UsbMacroCommandWaitingForExecution)) {
+        Trace_Printf("l4");
         UsbMacroCommand_ExecuteSynchronously();
     }
 
     if (EventVector_IsSet(EventVector_KeyboardLedState)) {
+        Trace_Printf("l5");
         MacroEvent_ProcessStateKeyEvents();
     }
 
     if (EventVector_IsSet(EventVector_ReportUpdateMask)) {
+        Trace_Printf("l6");
         UpdateUsbReports();
     }
 
     if (EventVector_IsSet(EventVector_LedManagerFullUpdateNeeded)) {
+        Trace_Printf("l7");
         LedManager_FullUpdate();
     }
 
     if (EventVector_IsSet(EventVector_LedMapUpdateNeeded)) {
+        Trace_Printf("l8");
         Ledmap_UpdateBacklightLeds();
     }
 
     if (EventVector_IsSet(EventVector_SegmentDisplayNeedsUpdate)) {
+        Trace_Printf("l9");
         SegmentDisplay_Update();
     }
 

@@ -217,6 +217,14 @@ parser_error_t parseConfig(config_buffer_t *buffer)
         )
     }
 
+    // Version 10:
+    uint8_t keyBacklightBrightnessChargingDefault;
+
+    if (DataModelVersion.major >= 10) {
+        keyBacklightBrightnessChargingDefault = (uint16_t)ReadUInt8(buffer)*keyBacklightBrightness/100;
+    } else {
+        keyBacklightBrightnessChargingDefault = keyBacklightBrightness/2;
+    }
 
     // Module configurations
 
@@ -343,12 +351,14 @@ parser_error_t parseConfig(config_buffer_t *buffer)
         Cfg.KeyBacklightFadeOutTimeout = keyBacklightFadeOutTimeout;
         Cfg.KeyBacklightFadeOutBatteryTimeout = keyBacklightFadeOutBatteryTimeout;
 
-        LedManager_RecalculateLedBrightness();
-        LedManager_UpdateSleepModes();
+        LedManager_FullUpdate();
         BtPair_ClearUnknownBonds();
         BtConn_UpdateHostConnectionPeerAllocations();
         MacroVariables_Reset();
         WIDGET_REFRESH(&TargetWidget); // the target may have been renamed
+
+        // Version 10
+        Cfg.KeyBacklightBrightnessChargingDefault = keyBacklightBrightnessChargingDefault;
 
         // Update counts
 

@@ -5,6 +5,9 @@
 #include "bt_pair.h"
 #include "event_scheduler.h"
 #include "host_connection.h"
+#include <zephyr/logging/log.h>
+
+LOG_MODULE_DECLARE(Bt);
 
 static void scan_filter_match(struct bt_scan_device_info *device_info,
     struct bt_scan_filter_match *filter_match, bool connectable)

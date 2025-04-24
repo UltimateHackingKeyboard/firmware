@@ -124,27 +124,43 @@ void Framebuffer_DrawText(widget_t* canvas, framebuffer_t* buffer, int16_t x, in
         }
     }
 
-    uint8_t color = FontControl_NextCharWhite;
+
+    uint8_t charColor = FontControl_NextCharWhite;
+    uint8_t persistentColor = FontControl_NextCharWhite;
     bool icon12 = false;
 
     uint16_t consumed = 0;
     while (*text != '\0' && (textEnd == NULL || text < textEnd)) {
-        if (*text > 127) {
-            consumed += drawGlyph(canvas, buffer, x+consumed, y, font, '*'-31, color);
+        if(charColor == FontControl_NextCharAndSpaceGone && *text >=32) {
             icon12 = false;
-            color = FontControl_NextCharWhite;
+            charColor = persistentColor;
+            text+= getUtf8Length(*text);
+            if (*text == ' ') {
+                text++;
+            }
+        } else if (*text > 127) {
+            consumed += drawGlyph(canvas, buffer, x+consumed, y, font, '*'-31, charColor);
+            icon12 = false;
+            charColor = persistentColor;
             text+= getUtf8Length(*text);
         } else if (*text >= 32) {
-            consumed += drawGlyph(canvas, buffer, x+consumed, y, icon12 ? &FontAwesome12 : font, (*text)-31, color);
+            consumed += drawGlyph(canvas, buffer, x+consumed, y, icon12 ? &FontAwesome12 : font, (*text)-31, charColor);
             icon12 = false;
-            color = FontControl_NextCharWhite;
+            charColor = persistentColor;
             text++;
         } else if (*text < 32) {
             switch (*text) {
                 case FontControl_NextCharBlack:
                 case FontControl_NextCharGray:
                 case FontControl_NextCharWhite:
-                    color = *text;
+                case FontControl_NextCharAndSpaceGone:
+                    charColor = *text;
+                    break;
+                case FontControl_SetColorGray:
+                case FontControl_SetColorWhite:
+                case FontControl_SetColorBlack:
+                    persistentColor = *text-1;
+                    charColor = persistentColor;
                     break;
                 case FontControl_NextCharIcon12:
                     icon12 = true;
@@ -156,7 +172,7 @@ void Framebuffer_DrawText(widget_t* canvas, framebuffer_t* buffer, int16_t x, in
 
     if (truncated) {
         for (uint8_t i = 0; i < 3; i++) {
-            consumed += drawGlyph(canvas, buffer, x+consumed, y, font, '.'-31, color);
+            consumed += drawGlyph(canvas, buffer, x+consumed, y, font, '.'-31, charColor);
         }
     }
 }
@@ -187,7 +203,8 @@ uint16_t Framebuffer_TextWidth(const lv_font_t* font, const char* text, const ch
 
     uint16_t dotsWidth = getGlyphWidth(font, '.'-31)*3;
 
-    uint8_t color = FontControl_NextCharWhite;
+    uint8_t charColor = FontControl_NextCharWhite;
+    uint8_t persistentColor = FontControl_NextCharWhite;
     bool icon12 = false;
 
     *truncatedText = text;
@@ -196,22 +213,35 @@ uint16_t Framebuffer_TextWidth(const lv_font_t* font, const char* text, const ch
     uint16_t consumed = 0;
     while (*text != '\0' && (textEnd == NULL || text < textEnd)) {
         previousConsumed = consumed;
-        if (*text > 127) {
+        if(charColor == FontControl_NextCharAndSpaceGone && *text >=32) {
+            icon12 = false;
+            charColor = persistentColor;
+            text+= getUtf8Length(*text);
+            if (*text == ' ') {
+                text++;
+            }
+        } else if (*text > 127) {
             consumed += getGlyphWidth(font, '*'-31);
             icon12 = false;
-            color = FontControl_NextCharWhite;
+            charColor = persistentColor;
             text+= getUtf8Length(*text);
         } else if (*text >= 32) {
             consumed += getGlyphWidth(icon12 ? &FontAwesome12 : font, (*text)-31);
             icon12 = false;
-            color = FontControl_NextCharWhite;
+            charColor = persistentColor;
             text++;
         } else if (*text < 32) {
             switch (*text) {
                 case FontControl_NextCharBlack:
                 case FontControl_NextCharGray:
                 case FontControl_NextCharWhite:
-                    color = *text;
+                    charColor = *text;
+                    break;
+                case FontControl_SetColorGray:
+                case FontControl_SetColorWhite:
+                case FontControl_SetColorBlack:
+                    persistentColor = *text-1;
+                    charColor = persistentColor;
                     break;
                 case FontControl_NextCharIcon12:
                     icon12 = true;

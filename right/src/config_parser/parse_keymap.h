@@ -28,6 +28,7 @@
         SerializedKeyActionType_PlayMacro = 35,
         SerializedKeyActionType_Connections = 36,
         SerializedKeyActionType_Other = 37,
+        SerializedKeyActionType_ZeroBlock = 38,
     } serialized_key_action_type_t;
 
     typedef enum {
@@ -111,7 +112,8 @@
     } serialized_connection_action_t;
 
     typedef enum {
-        SerializedOtherAction_Sleep,
+        SerializedOtherAction_Sleep = 0,
+        SerializedOtherAction_Lock = 1,
     } serialized_other_action_t;
 
     typedef struct {

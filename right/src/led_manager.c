@@ -21,7 +21,8 @@
 #if DEVICE_IS_UHK80_RIGHT
 #include "keyboard/oled/screens/screen_manager.h"
 #else
-#define InteractivePairingInProgress false;
+#define InteractivePairingInProgress false
+#define StateSync_BatteryBacklightPowersavingMode false
 #endif
 
 bool KeyBacklightSleepModeActive = false;
@@ -32,13 +33,20 @@ uint8_t KeyBacklightBrightness = 0xff;
 
 static void recalculateLedBrightness()
 {
-    bool globalSleepMode = !Cfg.LedsEnabled || CurrentPowerMode > PowerMode_Awake || Cfg.LedBrightnessMultiplier == 0.0f;
+    bool globalSleepMode = !Cfg.LedsEnabled || CurrentPowerMode > PowerMode_LastAwake || Cfg.LedBrightnessMultiplier == 0.0f;
     bool globalAlwaysOn = Cfg.LedsAlwaysOn || Ledmap_AlwaysOn || InteractivePairingInProgress;
 
-    if (!globalAlwaysOn && (globalSleepMode || KeyBacklightSleepModeActive)) {
+    if (!globalAlwaysOn && (globalSleepMode || KeyBacklightSleepModeActive || StateSync_BatteryBacklightPowersavingMode)) {
         KeyBacklightBrightness = 0;
     } else {
-        uint8_t keyBacklightBrightnessBase = RunningOnBattery ? Cfg.KeyBacklightBrightnessBatteryDefault : Cfg.KeyBacklightBrightnessDefault;
+        uint8_t keyBacklightBrightnessBase;
+        if (RunningOnBattery) {
+            keyBacklightBrightnessBase = Cfg.KeyBacklightBrightnessBatteryDefault;
+        } else if (BatteryIsCharging) {
+            keyBacklightBrightnessBase = Cfg.KeyBacklightBrightnessChargingDefault;
+        } else {
+            keyBacklightBrightnessBase = Cfg.KeyBacklightBrightnessDefault;
+        }
         KeyBacklightBrightness = MIN(255, keyBacklightBrightnessBase * Cfg.LedBrightnessMultiplier);
     }
 

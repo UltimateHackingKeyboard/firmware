@@ -374,8 +374,11 @@ static void applyConnectionAction(connection_action_t command, uint8_t hostConne
 static void applyOtherAction(other_action_t actionSubtype)
 {
     switch(actionSubtype) {
+        case OtherAction_Lock:
+            PowerMode_ActivateMode(PowerMode_Lock, false, false);
+            break;
         case OtherAction_Sleep:
-            PowerMode_ActivateMode(PowerMode_DeepSleep, false);
+            PowerMode_ActivateMode(PowerMode_SfjlSleep, false, false);
             break;
     }
 }
@@ -612,9 +615,9 @@ static void updateActionStates() {
                     // as it is pressed
                     actionCache[slotId][keyId].modifierLayerMask = 0;
 
-                    if (CurrentPowerMode != PowerMode_Awake && CurrentPowerMode <= PowerMode_LightSleep) {
+                    if (CurrentPowerMode > PowerMode_LastAwake && CurrentPowerMode <= PowerMode_LightSleep) {
                         PowerMode_WakeHost();
-                        PowerMode_ActivateMode(PowerMode_Awake, false);
+                        PowerMode_ActivateMode(PowerMode_Awake, false, false);
                     }
 
                     if (Postponer_LastKeyLayer != 255 && PostponerCore_IsActive()) {
@@ -655,6 +658,8 @@ static void updateActionStates() {
         EventVector_Set(EventVector_SendUsbReports);
     }
 }
+
+bool Resending = false;
 
 static void updateActiveUsbReports(void)
 {
@@ -720,14 +725,14 @@ uint32_t UsbReportUpdateCounter;
 uint32_t UpdateUsbReports_LastUpdateTime = 0;
 uint32_t lastBasicReportTime = 0;
 
-static void sendActiveReports() {
+static void sendActiveReports(bool resending) {
     bool usbReportsChangedByAction = false;
     bool usbReportsChangedByAnything = false;
 
     // in case of usb error, this gets set back again
     EventVector_Unset(EventVector_SendUsbReports | EventVector_ResendUsbReports);
 
-    if (UsbBasicKeyboardCheckReportReady() == kStatus_USB_Success) {
+    if (UsbBasicKeyboardCheckReportReady(resending) == kStatus_USB_Success) {
 #ifdef __ZEPHYR__
         if (InputInterceptor_RegisterReport(ActiveUsbBasicKeyboardReport)) {
             SwitchActiveUsbBasicKeyboardReport();
@@ -753,7 +758,7 @@ static void sendActiveReports() {
     }
 
 #ifdef __ZEPHYR__
-    if (UsbMediaKeyboardCheckReportReady() == kStatus_USB_Success || UsbSystemKeyboardCheckReportReady() == kStatus_USB_Success) {
+    if (UsbMediaKeyboardCheckReportReady(resending) == kStatus_USB_Success || UsbSystemKeyboardCheckReportReady(resending) == kStatus_USB_Success) {
         UsbCompatibility_SendConsumerReport(ActiveUsbMediaKeyboardReport, ActiveUsbSystemKeyboardReport);
         SwitchActiveUsbMediaKeyboardReport();
         SwitchActiveUsbSystemKeyboardReport();
@@ -762,25 +767,15 @@ static void sendActiveReports() {
         usbReportsChangedByAnything = true;
     }
 #else
-    if (UsbMediaKeyboardCheckReportReady() == kStatus_USB_Success) {
-        UsbReportUpdateSemaphore |= 1 << USB_MEDIA_KEYBOARD_INTERFACE_INDEX;
-        usb_status_t status = UsbMediaKeyboardAction();
-        if (status != kStatus_USB_Success) {
-            UsbReportUpdateSemaphore &= ~(1 << USB_MEDIA_KEYBOARD_INTERFACE_INDEX);
-            EventVector_Set(EventVector_ResendUsbReports);
-        }
+    if (UsbMediaKeyboardCheckReportReady(resending) == kStatus_USB_Success) {
+        UsbMediaKeyboardSendActiveReport();
         UsbReportUpdater_LastActivityTime = CurrentTime;
         usbReportsChangedByAction = true;
         usbReportsChangedByAnything = true;
     }
 
-    if (UsbSystemKeyboardCheckReportReady() == kStatus_USB_Success) {
-        UsbReportUpdateSemaphore |= 1 << USB_SYSTEM_KEYBOARD_INTERFACE_INDEX;
-        usb_status_t status = UsbSystemKeyboardAction();
-        if (status != kStatus_USB_Success) {
-            UsbReportUpdateSemaphore &= ~(1 << USB_SYSTEM_KEYBOARD_INTERFACE_INDEX);
-            EventVector_Set(EventVector_ResendUsbReports);
-        }
+    if (UsbSystemKeyboardCheckReportReady(resending) == kStatus_USB_Success) {
+        UsbSystemKeyboardSendActiveReport();
         UsbReportUpdater_LastActivityTime = CurrentTime;
         usbReportsChangedByAction = true;
         usbReportsChangedByAnything = true;
@@ -788,7 +783,9 @@ static void sendActiveReports() {
 #endif
 
     bool usbMouseButtonsChanged = false;
-    if (UsbMouseCheckReportReady(&usbMouseButtonsChanged) == kStatus_USB_Success) {
+    if (UsbMouseCheckReportReady(resending, &usbMouseButtonsChanged) == kStatus_USB_Success) {
+        // Macros_ReportPrintf("sm\n");
+
         UsbMouseSendActiveReport();
         UsbReportUpdater_LastActivityTime = CurrentTime;
         usbReportsChangedByAction |= usbMouseButtonsChanged;
@@ -830,6 +827,7 @@ static bool blockedByKeystrokeDelay() {
 
 void UpdateUsbReports(void)
 {
+    Trace_Printf("u1");
     if (blockedByKeystrokeDelay()) {
         return;
     }
@@ -842,26 +840,34 @@ void UpdateUsbReports(void)
     UsbReportUpdateCounter++;
 
     bool resending = EventVector_IsSet(EventVector_ResendUsbReports);
+    Resending = resending;
 
     if (!resending) {
+        Trace_Printf("u2");
         updateActiveUsbReports();
     }
 
     bool sendingNew = EventVector_IsSet(EventVector_SendUsbReports);
 
     if (resending || sendingNew) {
-        if (CurrentPowerMode < PowerMode_DeepSleep) {
+        if (CurrentPowerMode < PowerMode_Lock) {
             if (!resending) {
+                Trace_Printf("u3");
                 mergeReports();
             }
 
-            sendActiveReports();
+            Trace_Printf("u6");
+            sendActiveReports(resending);
         } else {
             EventVector_Unset(EventVector_SendUsbReports | EventVector_ResendUsbReports);
         }
     }
 
+    Trace_Printf("u7");
+
     if (DisplaySleepModeActive || KeyBacklightSleepModeActive) {
         LedManager_UpdateSleepModes();
     }
+
+    Trace_Printf("u8");
 }
