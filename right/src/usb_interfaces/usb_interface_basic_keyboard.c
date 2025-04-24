@@ -26,6 +26,8 @@ bool UsbBasicKeyboard_CapsLockOn = false;
 bool UsbBasicKeyboard_NumLockOn = false;
 bool UsbBasicKeyboard_ScrollLockOn = false;
 
+static bool needsResending = false;
+
 usb_hid_protocol_t usbBasicKeyboardProtocol;
 
 static void setRolloverError(usb_basic_keyboard_report_t* report);
@@ -206,8 +208,11 @@ void UsbBasicKeyboardSendActiveReport(void)
     if (status != kStatus_USB_Success) {
         //This is *not* asynchronously safe as long as multiple reports of different type can be sent at the same time.
         //TODO: consider either making it atomic, or lowering semaphore reset delay
+        needsResending = true;
         UsbReportUpdateSemaphore &= ~(1 << USB_BASIC_KEYBOARD_INTERFACE_INDEX);
         EventVector_Set(EventVector_ResendUsbReports);
+    } else {
+        needsResending = false;
     }
 #endif
 }
@@ -217,9 +222,10 @@ usb_status_t UsbBasicKeyboardCheckIdleElapsed()
     return kStatus_USB_Busy;
 }
 
-usb_status_t UsbBasicKeyboardCheckReportReady()
+
+usb_status_t UsbBasicKeyboardCheckReportReady(bool resending)
 {
-    if (memcmp(ActiveUsbBasicKeyboardReport, GetInactiveUsbBasicKeyboardReport(), sizeof(usb_basic_keyboard_report_t)) != 0)
+    if (memcmp(ActiveUsbBasicKeyboardReport, GetInactiveUsbBasicKeyboardReport(), sizeof(usb_basic_keyboard_report_t)) != 0 && (!resending || needsResending))
         return kStatus_USB_Success;
 
     return UsbBasicKeyboardCheckIdleElapsed();

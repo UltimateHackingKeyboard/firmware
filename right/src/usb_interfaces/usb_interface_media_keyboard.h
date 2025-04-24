@@ -41,7 +41,9 @@
     void UsbMediaKeyboardResetActiveReport(void);
     void SwitchActiveUsbMediaKeyboardReport(void);
     usb_status_t UsbMediaKeyboardCheckIdleElapsed();
-    usb_status_t UsbMediaKeyboardCheckReportReady();
+    usb_status_t UsbMediaKeyboardCheckReportReady(bool resending);
+
+    void UsbMediaKeyboardSendActiveReport(void);
 
     void UsbMediaKeyboard_MergeReports(const usb_media_keyboard_report_t* sourceReport, usb_media_keyboard_report_t* targetReport);
 

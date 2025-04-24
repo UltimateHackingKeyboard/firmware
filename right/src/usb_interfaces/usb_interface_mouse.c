@@ -3,11 +3,13 @@
 #include <string.h>
 #include "event_scheduler.h"
 #include "attributes.h"
+#include "macros/status_buffer.h"
 
 #ifdef __ZEPHYR__
 #include "usb/usb_compatibility.h"
 #endif
 
+static bool needsResending = false;
 
 #include "usb_descriptors/usb_descriptor_mouse_report.h"
 
@@ -179,6 +181,9 @@ void UsbMouseSendActiveReport(void)
     if (status != kStatus_USB_Success) {
         UsbReportUpdateSemaphore &= ~(1 << USB_MOUSE_INTERFACE_INDEX);
         EventVector_Set(EventVector_ResendUsbReports);
+        needsResending = true;
+    } else {
+        needsResending = false;
     }
 #endif
 }
@@ -188,12 +193,17 @@ usb_status_t UsbMouseCheckIdleElapsed()
     return kStatus_USB_Busy;
 }
 
-usb_status_t UsbMouseCheckReportReady(bool* buttonsChanged)
+usb_status_t UsbMouseCheckReportReady(bool resending, bool* buttonsChanged)
 {
     // Send out the mouse position and wheel values continuously if the report is not zeros, but only send the mouse button states when they change.
-    if ((memcmp(ActiveUsbMouseReport, GetInactiveUsbMouseReport(), sizeof(usb_mouse_report_t)) != 0) ||
-            ActiveUsbMouseReport->x || ActiveUsbMouseReport->y ||
-            ActiveUsbMouseReport->wheelX || ActiveUsbMouseReport->wheelY) {
+    if (
+            (!resending || needsResending) &&
+            (
+                (memcmp(ActiveUsbMouseReport, GetInactiveUsbMouseReport(), sizeof(usb_mouse_report_t)) != 0) ||
+                ActiveUsbMouseReport->x || ActiveUsbMouseReport->y ||
+                ActiveUsbMouseReport->wheelX || ActiveUsbMouseReport->wheelY
+            )
+       ) {
         if (buttonsChanged != NULL) {
             *buttonsChanged = ActiveUsbMouseReport->buttons != GetInactiveUsbMouseReport()->buttons;
         }

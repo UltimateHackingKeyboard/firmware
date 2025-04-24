@@ -659,6 +659,8 @@ static void updateActionStates() {
     }
 }
 
+bool Resending = false;
+
 static void updateActiveUsbReports(void)
 {
     InputModifiersPrevious = InputModifiers;
@@ -723,14 +725,14 @@ uint32_t UsbReportUpdateCounter;
 uint32_t UpdateUsbReports_LastUpdateTime = 0;
 uint32_t lastBasicReportTime = 0;
 
-static void sendActiveReports() {
+static void sendActiveReports(bool resending) {
     bool usbReportsChangedByAction = false;
     bool usbReportsChangedByAnything = false;
 
     // in case of usb error, this gets set back again
     EventVector_Unset(EventVector_SendUsbReports | EventVector_ResendUsbReports);
 
-    if (UsbBasicKeyboardCheckReportReady() == kStatus_USB_Success) {
+    if (UsbBasicKeyboardCheckReportReady(resending) == kStatus_USB_Success) {
 #ifdef __ZEPHYR__
         if (InputInterceptor_RegisterReport(ActiveUsbBasicKeyboardReport)) {
             SwitchActiveUsbBasicKeyboardReport();
@@ -756,7 +758,7 @@ static void sendActiveReports() {
     }
 
 #ifdef __ZEPHYR__
-    if (UsbMediaKeyboardCheckReportReady() == kStatus_USB_Success || UsbSystemKeyboardCheckReportReady() == kStatus_USB_Success) {
+    if (UsbMediaKeyboardCheckReportReady(resending) == kStatus_USB_Success || UsbSystemKeyboardCheckReportReady(resending) == kStatus_USB_Success) {
         UsbCompatibility_SendConsumerReport(ActiveUsbMediaKeyboardReport, ActiveUsbSystemKeyboardReport);
         SwitchActiveUsbMediaKeyboardReport();
         SwitchActiveUsbSystemKeyboardReport();
@@ -765,25 +767,15 @@ static void sendActiveReports() {
         usbReportsChangedByAnything = true;
     }
 #else
-    if (UsbMediaKeyboardCheckReportReady() == kStatus_USB_Success) {
-        UsbReportUpdateSemaphore |= 1 << USB_MEDIA_KEYBOARD_INTERFACE_INDEX;
-        usb_status_t status = UsbMediaKeyboardAction();
-        if (status != kStatus_USB_Success) {
-            UsbReportUpdateSemaphore &= ~(1 << USB_MEDIA_KEYBOARD_INTERFACE_INDEX);
-            EventVector_Set(EventVector_ResendUsbReports);
-        }
+    if (UsbMediaKeyboardCheckReportReady(resending) == kStatus_USB_Success) {
+        UsbMediaKeyboardSendActiveReport();
         UsbReportUpdater_LastActivityTime = CurrentTime;
         usbReportsChangedByAction = true;
         usbReportsChangedByAnything = true;
     }
 
-    if (UsbSystemKeyboardCheckReportReady() == kStatus_USB_Success) {
-        UsbReportUpdateSemaphore |= 1 << USB_SYSTEM_KEYBOARD_INTERFACE_INDEX;
-        usb_status_t status = UsbSystemKeyboardAction();
-        if (status != kStatus_USB_Success) {
-            UsbReportUpdateSemaphore &= ~(1 << USB_SYSTEM_KEYBOARD_INTERFACE_INDEX);
-            EventVector_Set(EventVector_ResendUsbReports);
-        }
+    if (UsbSystemKeyboardCheckReportReady(resending) == kStatus_USB_Success) {
+        UsbSystemKeyboardSendActiveReport();
         UsbReportUpdater_LastActivityTime = CurrentTime;
         usbReportsChangedByAction = true;
         usbReportsChangedByAnything = true;
@@ -791,7 +783,9 @@ static void sendActiveReports() {
 #endif
 
     bool usbMouseButtonsChanged = false;
-    if (UsbMouseCheckReportReady(&usbMouseButtonsChanged) == kStatus_USB_Success) {
+    if (UsbMouseCheckReportReady(resending, &usbMouseButtonsChanged) == kStatus_USB_Success) {
+        // Macros_ReportPrintf("sm\n");
+
         UsbMouseSendActiveReport();
         UsbReportUpdater_LastActivityTime = CurrentTime;
         usbReportsChangedByAction |= usbMouseButtonsChanged;
@@ -845,6 +839,7 @@ void UpdateUsbReports(void)
     UsbReportUpdateCounter++;
 
     bool resending = EventVector_IsSet(EventVector_ResendUsbReports);
+    Resending = resending;
 
     if (!resending) {
         updateActiveUsbReports();
@@ -858,7 +853,7 @@ void UpdateUsbReports(void)
                 mergeReports();
             }
 
-            sendActiveReports();
+            sendActiveReports(resending);
         } else {
             EventVector_Unset(EventVector_SendUsbReports | EventVector_ResendUsbReports);
         }

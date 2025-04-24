@@ -43,13 +43,14 @@
     usb_status_t UsbSystemKeyboardCallback(class_handle_t handle, uint32_t event, void *param);
 
     usb_status_t UsbSystemKeyboardAction(void);
+    void UsbSystemKeyboardSendActiveReport(void);
 
 #endif
 
     void UsbSystemKeyboardResetActiveReport(void);
     void SwitchActiveUsbSystemKeyboardReport(void);
     usb_status_t UsbSystemKeyboardCheckIdleElapsed();
-    usb_status_t UsbSystemKeyboardCheckReportReady();
+    usb_status_t UsbSystemKeyboardCheckReportReady(bool resending);
     void UsbSystemKeyboard_ForeachScancode(const usb_system_keyboard_report_t* report, void(*action)(uint8_t));
     void UsbSystemKeyboard_RemoveScancode(usb_system_keyboard_report_t* report, uint8_t scancode);
     void UsbSystemKeyboard_MergeReports(const usb_system_keyboard_report_t* sourceReport, usb_system_keyboard_report_t* targetReport);
