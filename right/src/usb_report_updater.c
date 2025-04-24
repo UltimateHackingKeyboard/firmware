@@ -827,6 +827,7 @@ static bool blockedByKeystrokeDelay() {
 
 void UpdateUsbReports(void)
 {
+    Trace_Printf("u1");
     if (blockedByKeystrokeDelay()) {
         return;
     }
@@ -842,6 +843,7 @@ void UpdateUsbReports(void)
     Resending = resending;
 
     if (!resending) {
+        Trace_Printf("u2");
         updateActiveUsbReports();
     }
 
@@ -850,16 +852,22 @@ void UpdateUsbReports(void)
     if (resending || sendingNew) {
         if (CurrentPowerMode < PowerMode_Lock) {
             if (!resending) {
+                Trace_Printf("u3");
                 mergeReports();
             }
 
+            Trace_Printf("u6");
             sendActiveReports(resending);
         } else {
             EventVector_Unset(EventVector_SendUsbReports | EventVector_ResendUsbReports);
         }
     }
 
+    Trace_Printf("u7");
+
     if (DisplaySleepModeActive || KeyBacklightSleepModeActive) {
         LedManager_UpdateSleepModes();
     }
+
+    Trace_Printf("u8");
 }

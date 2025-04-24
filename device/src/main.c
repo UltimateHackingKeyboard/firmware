@@ -64,9 +64,7 @@ static void sleepTillNextMs() {
 
     if (currentTimeUs < wakeupTimeUs) {
         uint64_t timeToSleep = MAX(wakeupTimeUs-currentTimeUs, minSleepTime);
-        Trace_Printf("d1,%d", (uint32_t)timeToSleep);
         k_usleep(timeToSleep);
-        Trace_Printf("d2");
     } else {
         k_usleep(minSleepTime);
         wakeupTimeUs = currentTimeUs;
@@ -86,7 +84,7 @@ static void scheduleNextRun() {
     CurrentTime = k_uptime_get();
     int32_t diff = nextEventTime - CurrentTime;
 
-    Trace('-');
+    Trace('>');
 
     k_sem_take(&mainWakeupSemaphore, K_NO_WAIT);
     bool haveMoreWork = (EventScheduler_Vector & EventVector_UserLogicUpdateMask);
@@ -96,7 +94,7 @@ static void scheduleNextRun() {
         // Mouse keys don't like being called twice in one second for some reason
         k_sem_give(&mainWakeupSemaphore);
         sleepTillNextMs();
-        Trace('+');
+        Trace('<');
         return;
     } else if (eventIsValid) {
         EVENTLOOP_TIMING(printk("Sleeping for %d\n", diff));
@@ -107,7 +105,7 @@ static void scheduleNextRun() {
         k_sem_take(&mainWakeupSemaphore, K_FOREVER);
         // k_sleep(K_FOREVER);
     }
-    Trace('+');
+    Trace('<');
 }
 
 //TODO: inline this
@@ -119,8 +117,6 @@ void Main_Wake() {
 void mainRuntime(void) {
     Main_ThreadId = k_current_get();
     printk("----------\n" DEVICE_NAME " started\n");
-
-    Trace_Init();
 
     InitProxyLogBackend();
 
@@ -239,17 +235,20 @@ void mainRuntime(void) {
 int main(void) {
     power_mode_t mode = PowerMode_Awake;
 
-    if (IS_STATE_WORMHOLE_OPEN) {
+    Trace_Init();
+    if (StateWormhole_IsOpen()) {
         printk("Wormhole is open, reboot to power mode %d %d\n", StateWormhole.rebootToPowerMode, StateWormhole.restartPowerMode);
         if (StateWormhole.rebootToPowerMode) {
             mode = StateWormhole.restartPowerMode;
             StateWormhole.restartPowerMode = PowerMode_Awake;
         }
         MacroStatusBuffer_InitFromWormhole();
-        StateWormhole_Close();
+        StateWormhole_Clean();
     } else {
-        MacroStatusBuffer_InitNormal();
         printk("Wormhole is closed\n");
+        MacroStatusBuffer_InitNormal();
+        StateWormhole_Clean();
+        StateWormhole_Open();
     }
 
     if (mode != PowerMode_Awake) {

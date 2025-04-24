@@ -1477,6 +1477,8 @@ static macro_result_t processPanicCommand(parser_context_t* ctx) {
 
 #ifdef __ZEPHYR__
     k_panic();
+#else
+    Reboot(false);
 #endif
     return MacroResult_Finished;
 }

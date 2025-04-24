@@ -14,6 +14,7 @@
 #include <stdarg.h>
 #include "macro_events.h"
 #include "wormhole.h"
+#include "trace.h"
 
 #ifdef __ZEPHYR__
 #include "keyboard/oled/widgets/widgets.h"
@@ -380,7 +381,7 @@ void Macros_ClearStatus(bool force)
 }
 
 void MacroStatusBuffer_InitFromWormhole() {
-    containsWormholeData = Buf.len > 0 && StateWormhole.persistStatusBuffer;
+    containsWormholeData = StateWormhole.persistStatusBuffer;
 
     if (containsWormholeData) {
         indicateError();

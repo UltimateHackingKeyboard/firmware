@@ -68,7 +68,7 @@ static void processLog(const struct log_backend *const backend, union log_msg_ge
 void panic(const struct log_backend *const backend) {
     isInPanicMode = true;
 
-    StateWormhole.magicNumber = WORMHOLE_MAGIC_NUMBER;
+    StateWormhole_Open();
     StateWormhole.persistStatusBuffer = true;
 };
 

@@ -137,11 +137,16 @@ static void initUsb() {
 
 int main(void)
 {
-    if (IS_STATE_WORMHOLE_OPEN) {
+    Trace_Init();
+    if (StateWormhole_IsOpen()) {
+        StateWormhole.persistStatusBuffer = true;
         MacroStatusBuffer_InitFromWormhole();
-        StateWormhole_Close();
+        Trace_Print();
+        StateWormhole_Clean();
     } else {
         MacroStatusBuffer_InitNormal();
+        StateWormhole_Clean();
+        StateWormhole_Open();
     }
 
     InitClock();
@@ -167,7 +172,9 @@ int main(void)
         while (1) {
             CopyRightKeystateMatrix();
             if (UsbReadyForTransfers()) {
+                Trace('<');
                 RunUserLogic();
+                Trace('>');
             }
             if (EventVector_IsSet(EventVector_EventScheduler)) {
                 EventScheduler_Process();

@@ -1,8 +1,10 @@
 #include "trace.h"
-#include "logger.h"
 #include <stdio.h>
-
-#define TRACE_BUFFER_SIZE 512
+#include <stdarg.h>
+#include <string.h>
+#include "macros/status_buffer.h"
+#include "wormhole.h"
+#include "event_scheduler.h"
 
 static bool enabled = true;
 
@@ -15,14 +17,14 @@ char BUFFER[MAX_LOG_LENGTH]; \
     vsnprintf(BUFFER, MAX_LOG_LENGTH-1, fmt, myargs); \
 }
 
-
-char traceBuffer[TRACE_BUFFER_SIZE];
-uint16_t traceBufferPosition = 0;
+#define TraceBuffer StateWormhole.traceBuffer.data
+#define TraceBufferPosition StateWormhole.traceBuffer.position
 
 void Trace(char a) {
     if (enabled) {
-        traceBuffer[traceBufferPosition] = a;
-        traceBufferPosition = (traceBufferPosition + 1) % TRACE_BUFFER_SIZE;
+        StateWormhole.traceBuffer.eventVector = EventScheduler_Vector;
+        TraceBuffer[TraceBufferPosition] = a;
+        TraceBufferPosition = (TraceBufferPosition + 1) % TRACE_BUFFER_SIZE;
     }
 }
 
@@ -44,31 +46,37 @@ void Trace_Printf(const char *fmt, ...) {
 
 void Trace_Init(void) {
     for (uint16_t i = 0; i < TRACE_BUFFER_SIZE; i++) {
-        traceBuffer[i] = ' ';
+        if (TraceBuffer[i] < 32 || TraceBuffer[i] > 126) {
+            TraceBuffer[i] = ' ';
+        }
     }
-    traceBufferPosition = 0;
+    if (TraceBufferPosition >= TRACE_BUFFER_SIZE) {
+        TraceBufferPosition = 0;
+    }
+    Trace_Printf("###");
 }
 
 void Trace_Print(void) {
     uint16_t iter;
     enabled = false;
 
-    LogUS("Trace:");
+    Macros_ReportPrintf("Last EV: %d\n", StateWormhole.traceBuffer.eventVector);
+    Macros_ReportPrintf("Trace:");
     const uint16_t sliceLength = 64;
 
     uint16_t remains = 0;
-    iter = traceBufferPosition;
+    iter = TraceBufferPosition;
     while (iter < TRACE_BUFFER_SIZE) {
         uint16_t end = MIN(TRACE_BUFFER_SIZE, iter + sliceLength);
         remains = iter+sliceLength - TRACE_BUFFER_SIZE;
-        LogUS("\n%.*s", end-iter, traceBuffer + iter);
+        Macros_ReportPrintf("\n%.*s", end-iter, TraceBuffer + iter);
         iter = end;
     }
-    LogUS("%.*s\n", remains, traceBuffer);
+    Macros_ReportPrintf("%.*s\n", remains, TraceBuffer);
     iter = remains;
-    while (iter < traceBufferPosition) {
-        uint16_t end = MIN(traceBufferPosition, iter + sliceLength);
-        LogUS("%.*s\n", end-iter, traceBuffer + iter);
+    while (iter < TraceBufferPosition) {
+        uint16_t end = MIN(TraceBufferPosition, iter + sliceLength);
+        Macros_ReportPrintf("%.*s\n", end-iter, TraceBuffer + iter);
         iter = end;
     }
 

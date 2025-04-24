@@ -9,7 +9,15 @@
 
 // Macros:
 
+#define TRACE_BUFFER_SIZE 128
+
 // Typedefs:
+
+    typedef struct {
+        char data[TRACE_BUFFER_SIZE];
+        uint32_t eventVector;
+        uint16_t position;
+    } ATTR_PACKED trace_buffer_t;
 
 // Variables:
 
