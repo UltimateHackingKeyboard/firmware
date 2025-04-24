@@ -428,6 +428,11 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
                 RightRunningOnBattery = newRightRunningOnBattery;
                 LedManager_UpdateSleepModes();
             }
+            bool newCharging = (SyncLeftHalfState.battery.batteryPresent && SyncLeftHalfState.battery.batteryCharging) || (SyncRightHalfState.battery.batteryPresent && SyncRightHalfState.battery.batteryCharging);
+            if (BatteryIsCharging != newCharging) {
+                BatteryIsCharging = newCharging;
+                EventVector_Set(EventVector_LedManagerFullUpdateNeeded);
+            }
             StateSync_CheckChargeMe();
         }
         break;

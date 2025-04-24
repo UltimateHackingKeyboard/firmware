@@ -38,6 +38,7 @@
 
     extern bool UsbPowered;
     extern bool RunningOnBattery;
+    extern bool BatteryIsCharging;
     extern bool RightRunningOnBattery;
     extern bool Charger_ChargingEnabled;
 

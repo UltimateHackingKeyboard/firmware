@@ -39,7 +39,14 @@ static void recalculateLedBrightness()
     if (!globalAlwaysOn && (globalSleepMode || KeyBacklightSleepModeActive || StateSync_BatteryBacklightPowersavingMode)) {
         KeyBacklightBrightness = 0;
     } else {
-        uint8_t keyBacklightBrightnessBase = RunningOnBattery ? Cfg.KeyBacklightBrightnessBatteryDefault : Cfg.KeyBacklightBrightnessDefault;
+        uint8_t keyBacklightBrightnessBase;
+        if (RunningOnBattery) {
+            keyBacklightBrightnessBase = Cfg.KeyBacklightBrightnessBatteryDefault;
+        } else if (BatteryIsCharging) {
+            keyBacklightBrightnessBase = Cfg.KeyBacklightBrightnessChargingDefault;
+        } else {
+            keyBacklightBrightnessBase = Cfg.KeyBacklightBrightnessDefault;
+        }
         KeyBacklightBrightness = MIN(255, keyBacklightBrightnessBase * Cfg.LedBrightnessMultiplier);
     }
 

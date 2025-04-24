@@ -50,6 +50,7 @@ static struct adc_sequence sequence = {
     .buffer_size = sizeof(buf),
 };
 
+bool BatteryIsCharging;
 bool RunningOnBattery = false;
 bool RightRunningOnBattery = false;
 

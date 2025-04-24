@@ -24,6 +24,7 @@
 
     extern bool SegmentDisplay_NeedsUpdate;
     extern bool RunningOnBattery;
+    extern bool BatteryIsCharging;
     extern bool RightRunningOnBattery;
     extern void Oled_UpdateBrightness();
     extern void Oled_ShiftScreen();
