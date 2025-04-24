@@ -1780,6 +1780,8 @@ static macro_result_t processSwitchHostCommand(parser_context_t* ctx)
         }
         Macros_ConsumeStringToken(ctx);
     }
+#else
+    Macros_ConsumeStringToken(ctx);
 #endif
 
 #undef DRY_RUN_FINISH
