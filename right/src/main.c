@@ -32,6 +32,7 @@
 #include "power_mode.h"
 #include "usb_protocol_handler.h"
 #include "event_scheduler.h"
+#include "wormhole.h"
 
 static bool IsEepromInitialized = false;
 static bool IsConfigInitialized = false;
@@ -136,6 +137,13 @@ static void initUsb() {
 
 int main(void)
 {
+    if (IS_STATE_WORMHOLE_OPEN) {
+        MacroStatusBuffer_InitFromWormhole();
+        StateWormhole_Close();
+    } else {
+        MacroStatusBuffer_InitNormal();
+    }
+
     InitClock();
     InitPeripherals();
 

@@ -248,6 +248,7 @@ int main(void) {
         MacroStatusBuffer_InitFromWormhole();
         StateWormhole_Close();
     } else {
+        MacroStatusBuffer_InitNormal();
         printk("Wormhole is closed\n");
     }
 

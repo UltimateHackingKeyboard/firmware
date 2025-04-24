@@ -50,5 +50,6 @@
     macro_result_t Macros_ProcessPrintStatusCommand();
 
     void MacroStatusBuffer_InitFromWormhole();
+    void MacroStatusBuffer_InitNormal();
 
 #endif

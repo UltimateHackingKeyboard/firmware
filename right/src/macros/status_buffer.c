@@ -380,9 +380,15 @@ void Macros_ClearStatus(bool force)
 }
 
 void MacroStatusBuffer_InitFromWormhole() {
-    containsWormholeData = Buf.len > 0;
+    containsWormholeData = Buf.len > 0 && StateWormhole.persistStatusBuffer;
 
     if (containsWormholeData) {
         indicateError();
+    } else {
+        Macros_ProcessClearStatusCommand(true);
     }
+}
+
+void MacroStatusBuffer_InitNormal() {
+    Macros_ProcessClearStatusCommand(true);
 }
