@@ -144,13 +144,7 @@ bool Charger_EnableCharging(bool enabled) {
     return false;
 }
 
-static bool updateChargerEnabled(battery_state_t *batteryState, battery_manager_config_t* config, uint16_t rawVoltage) {
-    battery_manager_automaton_state_t newState = BatteryManager_UpdateState(
-            currentChargingAutomatonState,
-            batteryState,
-            config
-    );
-
+static bool handleStateTransition(battery_manager_automaton_state_t newState) {
     bool stateChanged = false;
 
     if (newState != currentChargingAutomatonState) {
@@ -178,6 +172,29 @@ static bool updateChargerEnabled(battery_state_t *batteryState, battery_manager_
         }
     }
     return stateChanged;
+}
+
+static bool updateChargerEnabled(battery_state_t *batteryState, battery_manager_config_t* config, uint16_t voltage, bool chargerStopped) {
+    battery_manager_automaton_state_t oldState = currentChargingAutomatonState;
+
+    if (chargerStopped && !Cfg.BatteryStationaryMode) {
+        uint16_t minThreshold = 3800;
+        if (voltage > minThreshold) {
+            BatteryManager_SetMaxCharge(voltage-20);
+            oldState = BatteryManagerAutomatonState_Charged;
+            printk("Charger stopped at %dmV. Setting as new 100%%.\n", voltage);
+        } else {
+            printk("Charger stopped bellow %dmV. This is suspicious!\n", minThreshold);
+        }
+    }
+
+    battery_manager_automaton_state_t newState = BatteryManager_UpdateState(
+            oldState,
+            batteryState,
+            config
+    );
+
+    return handleStateTransition(newState);
 }
 
 static uint16_t correctForCharging(uint16_t rawVoltage, uint16_t rawVoltageBeforeStabilization) {
@@ -223,6 +240,7 @@ void Charger_UpdateBatteryState() {
     static uint32_t stabilizationPauseStartTime = 0;
     static bool stateChanged = false;
     static bool previousCharging = false;
+    static bool chargerStopped = false;
     static uint16_t previousVoltage = 0;
 
     stateChanged |= updateBatteryPresent();
@@ -257,7 +275,7 @@ void Charger_UpdateBatteryState() {
                 return;
             } else {
                 // run the state automaton that decides when to charge
-                bool chargerEnabledUpdated = updateChargerEnabled(&batteryState, currentBatteryConfig, rawVoltage);
+                bool chargerEnabledUpdated = updateChargerEnabled(&batteryState, currentBatteryConfig, voltage, chargerStopped);
                 stateChanged |= chargerEnabledUpdated;
 
                 // if we have changed charger state, update whether actually charging
@@ -274,6 +292,7 @@ void Charger_UpdateBatteryState() {
             }
         } else {
             // check whether the charger is actually charging
+            bool actuallyEnabled = !gpio_pin_get_dt(&chargerEnDt);
             bool actuallyCharging = !gpio_pin_get_dt(&chargerStatDt);
             stateChanged |= setActuallyCharging(actuallyCharging && Charger_ChargingEnabled);
 
@@ -283,6 +302,7 @@ void Charger_UpdateBatteryState() {
                 previousVoltage = getVoltage();
                 previousCharging = true;
             } else {
+                chargerStopped = actuallyEnabled && !actuallyCharging;
                 previousVoltage = 0;
                 previousCharging = false;
             }
