@@ -45,6 +45,21 @@ void Trace_Printf(const char *fmt, ...) {
     }
 }
 
+void Trace_Printc(const char* s) {
+    if (enabled) {
+        for (uint16_t i = 0; s[i] != '\0'; i++) {
+            if (s[i] == '\0' || s[i] > 126) {
+                break;
+            }
+            if (s[i] == '\n') {
+                Trace(' ');
+                continue;
+            }
+            Trace(s[i]);
+        }
+    }
+}
+
 void Trace_Init(void) {
     for (uint16_t i = 0; i < TRACE_BUFFER_SIZE; i++) {
         if (TraceBuffer[i] < 32 || TraceBuffer[i] > 126) {
@@ -54,7 +69,7 @@ void Trace_Init(void) {
     if (TraceBufferPosition >= TRACE_BUFFER_SIZE) {
         TraceBufferPosition = 0;
     }
-    Trace_Printf("###");
+    Trace_Printc("###");
 }
 
 void Trace_Print(const char* reason) {

@@ -33,6 +33,7 @@
     ATTRS void StateSync_CheckFirmwareVersions() {};
     ATTRS void StateSync_CheckDongleProtocolVersion() {};
     ATTRS void Trace(char a) {};
+    ATTRS void Trace_Printc(const char* s) {};
     ATTRS void Trace_Printf(const char *fmt, ...) {};
     ATTRS void PowerMode_PutBackToSleepMaybe(void) {};
     ATTRS void BtAdvertise_DisableAdvertisingIcon(void) {};
