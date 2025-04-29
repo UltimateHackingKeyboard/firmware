@@ -670,12 +670,14 @@ static void updateActiveUsbReports(void)
     PostponerCore_UpdatePostponedTime();
 
     if (EventVector_IsSet(EventVector_MacroEngine)) {
+        Trace_Printf("v1");
         EVENTLOOP_TIMING(EventloopTiming_WatchReset());
         Macros_ContinueMacro();
         EVENTLOOP_TIMING(EventloopTiming_Watch("macros"));
     }
 
     if (EventVector_IsSet(EventVector_LayerHolds)) {
+        Trace_Printf("v2");
         handleLayerChanges();
     }
 
@@ -687,18 +689,21 @@ static void updateActiveUsbReports(void)
     PostponerCore_RunPostponedEvents();
 
     if (EventVector_IsSet(EventVector_NativeActions | EventVector_StateMatrix)) {
+        Trace_Printf("v3");
         EVENTLOOP_TIMING(EventloopTiming_WatchReset());
         updateActionStates();
         EVENTLOOP_TIMING(EventloopTiming_Watch("action state update"));
     }
 
     if (EventVector_IsSet(EventVector_MouseKeys)) {
+        Trace_Printf("v4");
         EVENTLOOP_TIMING(EventloopTiming_WatchReset());
         MouseKeys_ProcessMouseActions();
         EVENTLOOP_TIMING(EventloopTiming_Watch("mouse keys"));
     }
 
     if (EventVector_IsSet(EventVector_MouseController)) {
+        Trace_Printf("v5");
         MouseController_ProcessMouseActions();
     }
 

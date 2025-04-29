@@ -18,6 +18,8 @@
 #include "stubs.h"
 #endif
 
+uint32_t UserLogic_LastEventloopTime = 0;
+
 void RunUserLogic(void) {
     if (EventVector_IsSet(EventVector_ApplyConfig)) {
         Trace_Printf("l1");

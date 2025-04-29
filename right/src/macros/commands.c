@@ -1762,6 +1762,19 @@ static macro_result_t processRebootCommand()
     return MacroResult_Finished;
 }
 
+static macro_result_t processFreezeCommand()
+{
+    if (Macros_DryRun) {
+        return MacroResult_Finished;
+    }
+
+    while (true) {
+        // Hi there!
+    }
+
+    return MacroResult_Finished;
+}
+
 static macro_result_t processSwitchHostCommand(parser_context_t* ctx)
 {
 #define DRY_RUN_FINISH() if (Macros_DryRun) { return MacroResult_Finished; }
@@ -1888,6 +1901,9 @@ static macro_result_t processCommand(parser_context_t* ctx)
             }
             else if (ConsumeToken(ctx, "fork")) {
                 return processForkCommand(ctx);
+            }
+            else if (ConsumeToken(ctx, "freeze")) {
+                return processFreezeCommand(ctx);
             }
             else {
                 goto failed;

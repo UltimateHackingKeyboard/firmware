@@ -15,6 +15,8 @@
 #include "slave_drivers/uhk_module_driver.h"
 #include "device.h"
 #include "bt_defs.h"
+#include "user_logic.h"
+#include "trace.h"
 
 #ifdef __ZEPHYR__
     #include "flash.h"
@@ -32,8 +34,28 @@
     #define ProxyLog_HasLog 0
 #endif
 
+static void detectFreezes() {
+    static uint32_t lastCheckTime = 0;
+    static uint8_t lastCheckCount = 0;
+
+    if (lastCheckTime == UserLogic_LastEventloopTime) {
+        lastCheckCount++;
+    } else {
+        lastCheckCount = 0;
+        lastCheckTime = UserLogic_LastEventloopTime;
+    }
+
+    if (lastCheckCount > 10) {
+        lastCheckCount = 0;
+
+        Macros_ReportPrintf("Looks like the firmware freezed. If that is the case, please report bellow trace to the devs:\n");
+        Trace_Print();
+    }
+}
+
 void UsbCommand_GetKeyboardState(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer)
 {
+    detectFreezes();
 
 #ifdef __ZEPHYR__
     SetUsbTxBufferUint8(1, Flash_IsBusy());
