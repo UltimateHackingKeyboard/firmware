@@ -309,8 +309,7 @@ static macro_result_t processSwitchKeymapCommand(parser_context_t* ctx)
             return MacroResult_Finished;
         }
 
-        SwitchKeymapById(newKeymapIdx);
-        LayerStack_Reset();
+        SwitchKeymapById(newKeymapIdx, true);
     }
     lastKeymapIdx = tmpKeymapIdx;
     return MacroResult_Finished;

@@ -1,5 +1,6 @@
 #include "user_logic.h"
 #include "keymap.h"
+#include "layer_stack.h"
 #include "ledmap.h"
 #include "slave_drivers/is31fl3xxx_driver.h"
 #include "slave_drivers/uhk_module_driver.h"
@@ -25,7 +26,7 @@ void RunUserLogic(void) {
     }
     if (EventVector_IsSet(EventVector_KeymapReloadNeeded)) {
         Trace_Printf("l2");
-        SwitchKeymapById(CurrentKeymapIndex);
+        SwitchKeymapById(CurrentKeymapIndex, true);
     }
 #ifndef __ZEPHYR__
     if (EventVector_IsSet(EventVector_ProtocolChanged)) {
