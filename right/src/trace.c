@@ -57,10 +57,11 @@ void Trace_Init(void) {
     Trace_Printf("###");
 }
 
-void Trace_Print(void) {
+void Trace_Print(const char* reason) {
     uint16_t iter;
     enabled = false;
 
+    Macros_ReportPrintf("Printing trace buffer because: %s\n", reason);
     Macros_ReportPrintf("Last EV: %d\n", StateWormhole.traceBuffer.eventVector);
     Macros_ReportPrintf("Trace:\n");
 

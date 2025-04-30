@@ -2406,7 +2406,7 @@ static macro_result_t processCommand(parser_context_t* ctx)
                 return Macros_ProcessTapKeySeqCommand(ctx);
             }
             else if (ConsumeToken(ctx, "trace")) {
-                Trace_Print();
+                Trace_Print("Triggered by macro command");
                 return MacroResult_Finished;
             }
             else {
