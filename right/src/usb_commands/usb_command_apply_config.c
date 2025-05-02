@@ -146,11 +146,11 @@ uint8_t UsbCommand_ApplyConfig(const uint8_t *GenericHidOutBuffer, uint8_t *Gene
 #endif
 
     // Switch to the keymap of the updated configuration of the same name or the default keymap.
-    if (SwitchKeymapByAbbreviation(oldKeymapAbbreviationLen, oldKeymapAbbreviation)) {
+    if (SwitchKeymapByAbbreviation(oldKeymapAbbreviationLen, oldKeymapAbbreviation, true)) {
         return UsbStatusCode_Success;
     }
 
-    SwitchKeymapById(DefaultKeymapIndex);
+    SwitchKeymapById(DefaultKeymapIndex, true);
     isBoot = false;
 
     return UsbStatusCode_Success;

@@ -184,7 +184,7 @@ static int cmd_uhk_threads(const struct shell *shell, size_t argc, char *argv[])
 
 static int cmd_uhk_trace(const struct shell *shell, size_t argc, char *argv[])
 {
-    Trace_Print();
+    Trace_Print("Triggered by zephyr shell.");
     return 0;
 }
 

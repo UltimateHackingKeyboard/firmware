@@ -309,8 +309,7 @@ static macro_result_t processSwitchKeymapCommand(parser_context_t* ctx)
             return MacroResult_Finished;
         }
 
-        SwitchKeymapById(newKeymapIdx);
-        LayerStack_Reset();
+        SwitchKeymapById(newKeymapIdx, true);
     }
     lastKeymapIdx = tmpKeymapIdx;
     return MacroResult_Finished;
@@ -2406,7 +2405,9 @@ static macro_result_t processCommand(parser_context_t* ctx)
                 return Macros_ProcessTapKeySeqCommand(ctx);
             }
             else if (ConsumeToken(ctx, "trace")) {
-                Trace_Print();
+                if (!Macros_DryRun) {
+                    Trace_Print("Triggered by macro command");
+                }
                 return MacroResult_Finished;
             }
             else {

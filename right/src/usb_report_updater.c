@@ -414,8 +414,7 @@ void ApplyKeyAction(key_state_t *keyState, key_action_cached_t *cachedAction, ke
         case KeyActionType_SwitchKeymap:
             if (KeyState_ActivatedNow(keyState)) {
                 resetStickyMods(cachedAction);
-                SwitchKeymapById(action->switchKeymap.keymapId);
-                LayerStack_Reset();
+                SwitchKeymapById(action->switchKeymap.keymapId, true);
             }
             break;
         case KeyActionType_PlayMacro:
