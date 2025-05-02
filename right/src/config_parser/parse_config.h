@@ -47,6 +47,12 @@
         SerializedSecondaryRoleActionType_Secondary,
     } serialized_secondary_role_action_type_t;
 
+    typedef enum {
+        SerializedChargingMode_Full = 0,
+        SerializedChargingMode_StationaryMode = 1,
+    } serialized_charging_mode_t;
+
+
     extern version_t DataModelVersion;
 
     extern bool PerKeyRgbPresent;

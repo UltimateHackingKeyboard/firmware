@@ -32,6 +32,10 @@
 #include "keyboard/oled/widgets/widgets.h"
 #endif
 
+#ifdef __ZEPHYR__
+#include "state_sync.h"
+#endif
+
 version_t DataModelVersion = {0, 0, 0};
 
     bool PerKeyRgbPresent = false;
@@ -209,21 +213,22 @@ parser_error_t parseConfig(config_buffer_t *buffer)
         keyBacklightFadeOutBatteryTimeout = ledsFadeTimeout;
     }
 
+    // Version 10:
+
+    uint8_t batteryChargingMode = SerializedChargingMode_Full;
+    uint8_t keyBacklightBrightnessChargingDefault = keyBacklightBrightness/2;
+
+    if (VERSION_AT_LEAST(DataModelVersion, 9, 99, 0)) {
+        keyBacklightBrightnessChargingDefault = (uint16_t)ReadUInt8(buffer)*keyBacklightBrightness/100;
+        batteryChargingMode = ReadUInt8(buffer);
+    }
+
     // HostConnection configuration
 
     if (VERSION_AT_LEAST(DataModelVersion, 8, 1, 0)) {
         RETURN_ON_ERROR(
             ParseHostConnections(buffer);
         )
-    }
-
-    // Version 10:
-    uint8_t keyBacklightBrightnessChargingDefault;
-
-    if (DataModelVersion.major >= 10) {
-        keyBacklightBrightnessChargingDefault = (uint16_t)ReadUInt8(buffer)*keyBacklightBrightness/100;
-    } else {
-        keyBacklightBrightnessChargingDefault = keyBacklightBrightness/2;
     }
 
     // Module configurations
@@ -351,14 +356,18 @@ parser_error_t parseConfig(config_buffer_t *buffer)
         Cfg.KeyBacklightFadeOutTimeout = keyBacklightFadeOutTimeout;
         Cfg.KeyBacklightFadeOutBatteryTimeout = keyBacklightFadeOutBatteryTimeout;
 
+        // Version 10
+        Cfg.KeyBacklightBrightnessChargingDefault = keyBacklightBrightnessChargingDefault;
+        Cfg.BatteryStationaryMode = batteryChargingMode > SerializedChargingMode_Full ? SerializedChargingMode_StationaryMode : SerializedChargingMode_Full;
+
+#ifdef __ZEPHYR__
+        StateSync_UpdateProperty(StateSyncPropertyId_BatteryStationaryMode, &Cfg.BatteryStationaryMode);
+#endif
         LedManager_FullUpdate();
         BtPair_ClearUnknownBonds();
         BtConn_UpdateHostConnectionPeerAllocations();
         MacroVariables_Reset();
         WIDGET_REFRESH(&TargetWidget); // the target may have been renamed
-
-        // Version 10
-        Cfg.KeyBacklightBrightnessChargingDefault = keyBacklightBrightnessChargingDefault;
 
         // Update counts
 
