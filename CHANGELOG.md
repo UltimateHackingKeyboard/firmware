@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [14.0.0] - 2025-05-05
+
+Device Protocol: 4.**15.0** | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: **11.0.0** | Hardware Config: 1.0.0 | Smart Macros: 3.**4.0**
+
+- Fix UHK 80 USB power transitioning issues. The UHK 80 should now resume from sleep without reconnecting USB.
+- Make battery readings much more accurate.
+- Add configuration settings for extending battery life and limiting key backlight during charging. `USERCONFIG:MAJOR`
+- Add `set battery.chargeLimit { full | optimizeHealth }` macro variable. `SMARTMACROS:MINOR`
+- Use lightning icons instead of + signs to indicate battery charging.
+- Disable key backlights and dim the OLED display in power saving mode.
+- Blink the battery percentages of the halves that are in power saving mode.
+- Fix variable interpolation when double quotes are not used on the UHK 80. `SMARTMACROS:PATCH`
+- Fix key chatter on the UHK 60 when letters are typed while mouse-keys are being used.
+- Fix warnings regarding the `switchHost` macro commands on the UHK 60. `SMARTMACROS:PATCH`
+- Implement the `setLedTxt` macro command on the UHK 80. `SMARTMACROS:PATCH`
+- Implement key action compression. `USERCONFIG:MAJOR`
+- Implement a Zephyr logging backend that forwards logs to Agent. `DEVICEPROTOCOL:MINOR`
+- Fix "Invalid abbreviation length" produced when saving a configuration that removes currently active keymap.
+
 ## [13.0.2] - 2025-04-08
 
 Device Protocol: 4.14.1 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 9.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.3.0
