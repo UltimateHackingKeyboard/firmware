@@ -13,6 +13,13 @@
 
 // Typedefs:
 
+    typedef enum {
+        UiStyle_Classic,
+        UiStyle_Karel,
+    } ui_style_t;
+
+    extern ui_style_t UiStyle;
+
     typedef struct {
         // modules
         module_configuration_t ModuleConfigurations[ModuleId_RealModuleCount];
@@ -88,6 +95,7 @@
         bool Bt_Enabled;
         bool Bt_AlwaysAdvertiseHid;
         uint8_t Bt_MaxPeripheralConnections;
+        ui_style_t UiStyle;
     } config_t;
 
 // Variables:

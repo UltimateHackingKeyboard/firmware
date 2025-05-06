@@ -120,6 +120,11 @@ void Oled_ActivateScreen(widget_t* screen, bool forceRedraw) {
     }
 }
 
+void Oled_ForceRender() {
+    Oled_ActivateScreen(currentScreen, true);
+    Oled_RequestRedraw();
+}
+
 void Oled_UpdateBrightness() {
     Oled_RequestRedraw();
 }

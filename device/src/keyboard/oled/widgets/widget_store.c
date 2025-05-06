@@ -31,6 +31,7 @@
 #include "round_trip_test.h"
 #include "macros/display.h"
 #include "attributes.h"
+#include "config_manager.h"
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wformat-truncation"
@@ -190,18 +191,32 @@ static char getBlinkingColor() {
 
 
 static void getBatteryStatusText(device_id_t deviceId, battery_state_t* battery, char* buffer, char* sideIndicator, bool fixed, bool isLow) {
+    char percFont = FontControl_NextCharIcon12;
     char percSign;
     char percColor;
+
     if (battery->powered && battery->batteryCharging) {
-        percSign = FontIcon_BoltSmall;
-        percColor = FontControl_SetColorWhite;
+        if (Cfg.UiStyle == UiStyle_Classic) {
+            percSign = FontIcon_BoltSmall;
+            percColor = FontControl_SetColorWhite;
+        } else {
+            percFont = FontControl_NextCharText12;
+            percSign = '+';
+            percColor = FontControl_SetColorWhite;
+        }
     } else if (isLow) {
         // percSign = FontIcon_BatteryExclamationVertical;
         percSign = FontIcon_BatteryLow;
         percColor = getBlinkingColor();
     } else {
-        percSign = FontIcon_Percent;
-        percColor = FontControl_SetColorWhite;
+        if (Cfg.UiStyle == UiStyle_Classic) {
+            percSign = FontIcon_Percent;
+            percColor = FontControl_SetColorWhite;
+        } else {
+            percFont = FontControl_NextCharText12;
+            percSign = !battery->powered ? '-' : '%';
+            percColor = FontControl_SetColorWhite;
+        }
     }
 
     if (!DeviceState_IsDeviceConnected(deviceId)) {
@@ -209,7 +224,7 @@ static void getBatteryStatusText(device_id_t deviceId, battery_state_t* battery,
     } else if (!battery->batteryPresent) {
         sprintf(buffer, "    ");
     } else {
-        sprintf(buffer, fixed ? "%c%s%3i%c%c" : "%c%s%i%c%c", percColor, sideIndicator, battery->batteryPercentage, FontControl_NextCharIcon12, percSign);
+        sprintf(buffer, fixed ? "%c%s%3i%c%c" : "%c%s%i%c%c", percColor, sideIndicator, battery->batteryPercentage, percFont, percSign);
     }
 }
 
@@ -220,15 +235,16 @@ static string_segment_t getRightStatusText() {
     static char buffer [BUFFER_LENGTH] = { [BUFFER_LENGTH-1] = 0 };
     char leftBattery[BAT_BUFFER_LENGTH];
     char rightBattery[BAT_BUFFER_LENGTH];
+    bool fixed = Cfg.UiStyle == UiStyle_Karel;
     if (SyncLeftHalfState.battery.batteryPresent && SyncRightHalfState.battery.batteryPresent) {
-        getBatteryStatusText(DeviceId_Uhk80_Left, &SyncLeftHalfState.battery, leftBattery, "", false, StateSync_BlinkLeftBatteryPercentage);
-        getBatteryStatusText(DeviceId_Uhk80_Right, &SyncRightHalfState.battery, rightBattery, "", false, StateSync_BlinkRightBatteryPercentage);
+        getBatteryStatusText(DeviceId_Uhk80_Left, &SyncLeftHalfState.battery, leftBattery, "", fixed, StateSync_BlinkLeftBatteryPercentage);
+        getBatteryStatusText(DeviceId_Uhk80_Right, &SyncRightHalfState.battery, rightBattery, "", fixed, StateSync_BlinkRightBatteryPercentage);
         snprintf(buffer, BUFFER_LENGTH-1, "%s %s %s", Macros_DisplayStringsBuffs.rightStatus, leftBattery, rightBattery);
     } else if (SyncLeftHalfState.battery.batteryPresent) {
-        getBatteryStatusText(DeviceId_Uhk80_Left, &SyncLeftHalfState.battery, leftBattery, "L", false, StateSync_BlinkLeftBatteryPercentage);
+        getBatteryStatusText(DeviceId_Uhk80_Left, &SyncLeftHalfState.battery, leftBattery, "L", fixed, StateSync_BlinkLeftBatteryPercentage);
         snprintf(buffer, BUFFER_LENGTH-1, "%s %s", Macros_DisplayStringsBuffs.rightStatus, leftBattery);
     } else if (SyncRightHalfState.battery.batteryPresent) {
-        getBatteryStatusText(DeviceId_Uhk80_Right, &SyncRightHalfState.battery, rightBattery, "R", false, StateSync_BlinkRightBatteryPercentage);
+        getBatteryStatusText(DeviceId_Uhk80_Right, &SyncRightHalfState.battery, rightBattery, "R", fixed, StateSync_BlinkRightBatteryPercentage);
         snprintf(buffer, BUFFER_LENGTH-1, "%s %s", Macros_DisplayStringsBuffs.rightStatus, rightBattery);
     } else {
         snprintf(buffer, BUFFER_LENGTH-1, "%s", Macros_DisplayStringsBuffs.rightStatus);

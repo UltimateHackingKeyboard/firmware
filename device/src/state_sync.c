@@ -7,6 +7,7 @@
 #include "keyboard/battery_manager.h"
 #include "keyboard/charger.h"
 #include "keyboard/key_scanner.h"
+#include "keyboard/oled/screens/notification_screen.h"
 #include "keyboard/oled/widgets/widgets.h"
 #include "config_manager.h"
 #include "config_parser/config_globals.h"

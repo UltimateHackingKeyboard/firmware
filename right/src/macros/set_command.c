@@ -41,6 +41,10 @@
 #include "init_peripherals.h"
 #endif
 
+#if DEVICE_HAS_OLED
+#include "keyboard/oled/oled.h"
+#endif
+
 typedef enum {
     SetCommandAction_Write,
     SetCommandAction_Read,
@@ -875,6 +879,39 @@ static macro_variable_t modLayerTriggers(parser_context_t* ctx, set_command_acti
     return noneVar();
 }
 
+static macro_variable_t uiStyle(parser_context_t* ctx, set_command_action_t action) {
+    if (action == SetCommandAction_Read) {
+        return intVar(Cfg.UiStyle);
+    }
+
+    ui_style_t res = 0;
+
+    if (ConsumeToken(ctx, "classic")) {
+        res = UiStyle_Classic;
+    }
+    else if (ConsumeToken(ctx, "karel")) {
+        res = UiStyle_Karel;
+    }
+    else {
+        Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
+    }
+
+    if (Macros_ParserError) {
+        return noneVar();
+    }
+    if (Macros_DryRun) {
+        return noneVar();
+    }
+
+    Cfg.UiStyle = res;
+
+    #if DEVICE_HAS_OLED
+    // force full redraw of current screen
+    Oled_ForceRender();
+    #endif
+    return noneVar();
+}
+
 
 static macro_variable_t root(parser_context_t* ctx, set_command_action_t action)
 {
@@ -969,6 +1006,9 @@ static macro_variable_t root(parser_context_t* ctx, set_command_action_t action)
     }
     else if (ConsumeToken(ctx, "allowUnsecuredConnections")) {
         return allowUnsecuredConnections(ctx, action);
+    }
+    else if (ConsumeToken(ctx, "uiStyle")) {
+        return uiStyle(ctx, action);
     }
 #ifndef __ZEPHYR__
     else if (ConsumeToken(ctx, "i2cBaudRate")) {

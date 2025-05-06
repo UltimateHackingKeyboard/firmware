@@ -165,6 +165,9 @@ void Framebuffer_DrawText(widget_t* canvas, framebuffer_t* buffer, int16_t x, in
                 case FontControl_NextCharIcon12:
                     icon12 = true;
                     break;
+                case FontControl_NextCharText12:
+                    icon12 = false;
+                    break;
             }
             text++;
         }
@@ -245,6 +248,9 @@ uint16_t Framebuffer_TextWidth(const lv_font_t* font, const char* text, const ch
                     break;
                 case FontControl_NextCharIcon12:
                     icon12 = true;
+                    break;
+                case FontControl_NextCharText12:
+                    icon12 = false;
                     break;
             }
             text++;

@@ -272,6 +272,7 @@ void Charger_UpdateBatteryState() {
             perc = BatteryCalculator_Step(batteryState.batteryPercentage, perc);
 
             stateChanged |= setPercentage(voltage, perc);
+            printk("corrected voltage is %d %d\n", voltage, perc);
 
             if (voltage == 0) {
                 // the value is not valid, try again
@@ -323,6 +324,11 @@ void Charger_UpdateBatteryState() {
         previousVoltage = 0;
         stateChanged = true;
     }
+
+
+    battery_manager_config_t* cfg = BatteryManager_GetCurrentBatteryConfig();
+    printk("%dmV %dmV max %dmV", SyncLeftHalfState.battery.batteryVoltage, SyncRightHalfState.battery.batteryVoltage, cfg->maxVoltage);
+    LogO("%dmV %dmV max %dmV", SyncLeftHalfState.battery.batteryVoltage, SyncRightHalfState.battery.batteryVoltage, cfg->maxVoltage);
 
     if (stateChanged) {
         StateSync_UpdateProperty(StateSyncPropertyId_Battery, &batteryState);
