@@ -52,6 +52,8 @@ usb_status_t UsbGenericHidCallback(class_handle_t handle, uint32_t event, void *
         case kUSB_DeviceHidEventRecvResponse:
             UsbProtocolHandler(GenericHidOut, GenericHidIn);
 
+            bzero(GenericHidOut, USB_GENERIC_HID_IN_BUFFER_LENGTH);
+
             USB_DeviceHidSend(UsbCompositeDevice.genericHidHandle,
                               USB_GENERIC_HID_ENDPOINT_IN_INDEX,
                               GenericHidIn,

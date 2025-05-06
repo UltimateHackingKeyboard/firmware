@@ -2,6 +2,7 @@
 #include "fsl_common.h"
 #endif
 #include "macros/core.h"
+#include "macros/status_buffer.h"
 #include "usb_commands/usb_command_exec_macro_command.h"
 #include "usb_interfaces/usb_interface_generic_hid.h"
 #include "usb_protocol_handler.h"
@@ -16,8 +17,9 @@ key_state_t dummyState;
 
 static void requestExecution(const uint8_t *GenericHidOutBuffer)
 {
-    Utils_SafeStrCopy(UsbMacroCommand, ((char*)GenericHidOutBuffer) + 1, USB_GENERIC_HID_OUT_BUFFER_LENGTH - 1);
-    UsbMacroCommandLength = strlen(UsbMacroCommand);
+    uint8_t len = Utils_SafeStrCopy(UsbMacroCommand, ((char*)GenericHidOutBuffer) + 1, USB_GENERIC_HID_OUT_BUFFER_LENGTH - 1);
+    UsbMacroCommandLength = len;
+
 
     EventVector_Set(EventVector_UsbMacroCommandWaitingForExecution);
 }
