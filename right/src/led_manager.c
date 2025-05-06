@@ -40,10 +40,14 @@ static void recalculateLedBrightness()
         KeyBacklightBrightness = 0;
     } else {
         uint8_t keyBacklightBrightnessBase;
-        if (RunningOnBattery) {
+        if (RunningOnBattery && BatteryIsCharging) {
+            uint16_t batteryBrightness = Cfg.KeyBacklightBrightnessBatteryDefault;
+            uint16_t chargingBrightness = (uint16_t)Cfg.KeyBacklightBrightnessBatteryDefault*Cfg.KeyBacklightBrightnessChargingPercent/100;
+            keyBacklightBrightnessBase = MIN(batteryBrightness, chargingBrightness);
+        } else if (RunningOnBattery) {
             keyBacklightBrightnessBase = Cfg.KeyBacklightBrightnessBatteryDefault;
         } else if (BatteryIsCharging) {
-            keyBacklightBrightnessBase = Cfg.KeyBacklightBrightnessChargingDefault;
+            keyBacklightBrightnessBase = (uint16_t)Cfg.KeyBacklightBrightnessDefault*Cfg.KeyBacklightBrightnessChargingPercent/100;
         } else {
             keyBacklightBrightnessBase = Cfg.KeyBacklightBrightnessDefault;
         }

@@ -58,7 +58,7 @@
         uint8_t DisplayBrightnessBatteryDefault;
         uint8_t KeyBacklightBrightnessDefault;
         uint8_t KeyBacklightBrightnessBatteryDefault;
-        uint8_t KeyBacklightBrightnessChargingDefault;
+        uint8_t KeyBacklightBrightnessChargingPercent;
 
         uint32_t DisplayFadeOutTimeout;
         uint32_t DisplayFadeOutBatteryTimeout;

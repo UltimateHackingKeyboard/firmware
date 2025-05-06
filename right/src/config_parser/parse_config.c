@@ -216,10 +216,10 @@ parser_error_t parseConfig(config_buffer_t *buffer)
     // Version 10:
 
     uint8_t batteryChargingMode = SerializedChargingMode_Full;
-    uint8_t keyBacklightBrightnessChargingDefault = keyBacklightBrightness/2;
+    uint8_t keyBacklightBrightnessChargingPercent = 50;
 
     if (VERSION_AT_LEAST(DataModelVersion, 9, 99, 0)) {
-        keyBacklightBrightnessChargingDefault = (uint16_t)ReadUInt8(buffer)*keyBacklightBrightness/100;
+        keyBacklightBrightnessChargingPercent = ReadUInt8(buffer);
         batteryChargingMode = ReadUInt8(buffer);
     }
 
@@ -357,7 +357,7 @@ parser_error_t parseConfig(config_buffer_t *buffer)
         Cfg.KeyBacklightFadeOutBatteryTimeout = keyBacklightFadeOutBatteryTimeout;
 
         // Version 10
-        Cfg.KeyBacklightBrightnessChargingDefault = keyBacklightBrightnessChargingDefault;
+        Cfg.KeyBacklightBrightnessChargingPercent = keyBacklightBrightnessChargingPercent;
         Cfg.BatteryStationaryMode = batteryChargingMode > SerializedChargingMode_Full ? SerializedChargingMode_StationaryMode : SerializedChargingMode_Full;
 
 #ifdef __ZEPHYR__
