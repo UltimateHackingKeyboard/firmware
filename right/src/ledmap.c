@@ -599,6 +599,10 @@ static void updateLedsByLightAllStragegy() {
     setEntireMatrix(255);
 }
 
+static void updateLedsByLightNoneStrategy() {
+    setEntireMatrix(0);
+}
+
 void Ledmap_ActivateTestled(uint8_t slotId, uint8_t keyId) {
     if (CurrentTime < backlightingLedTestStart + 1000 || !TestSwitches) {
         return;
@@ -691,6 +695,9 @@ void Ledmap_UpdateBacklightLeds(void) {
             break;
         case BacklightingMode_LightAll:
             updateLedsByLightAllStragegy();
+            break;
+        case BacklightingMode_LightNone:
+            updateLedsByLightNoneStrategy();
             break;
         case BacklightingMode_Unspecified:
             break;
