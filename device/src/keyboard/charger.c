@@ -177,15 +177,19 @@ static bool handleStateTransition(battery_manager_automaton_state_t newState) {
 static bool updateChargerEnabled(battery_state_t *batteryState, battery_manager_config_t* config, uint16_t voltage, bool chargerStopped) {
     battery_manager_automaton_state_t oldState = currentChargingAutomatonState;
 
+    uint16_t newMaxVoltage = voltage - 0;
+
     if (chargerStopped && !Cfg.BatteryStationaryMode) {
         uint16_t minThreshold = 3800;
         if (voltage > minThreshold) {
-            BatteryManager_SetMaxCharge(voltage-20);
+            BatteryManager_SetMaxCharge(newMaxVoltage);
             oldState = BatteryManagerAutomatonState_Charged;
             printk("Charger stopped at %dmV. Setting as new 100%%.\n", voltage);
         } else {
             printk("Charger stopped bellow %dmV. This is suspicious!\n", minThreshold);
         }
+    } else if (newMaxVoltage > config->maxVoltage) {
+        BatteryManager_SetMaxCharge(newMaxVoltage);
     }
 
     battery_manager_automaton_state_t newState = BatteryManager_UpdateState(
