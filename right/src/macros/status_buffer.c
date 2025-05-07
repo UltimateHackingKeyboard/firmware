@@ -304,7 +304,7 @@ void Macros_ReportWarn(const char* err, const char* arg, const char *argEnd)
     reportError(err, arg, argEnd);
 }
 
-void Macros_ReportPrintfWithPos(const char* pos, const char *fmt, ...)
+void Macros_PrintfWithPos(const char* pos, const char *fmt, ...)
 {
     va_list myargs;
     va_start(myargs, fmt);

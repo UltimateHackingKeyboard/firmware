@@ -171,7 +171,7 @@ void PowerMode_ActivateMode(power_mode_t mode, bool toggle, bool force, const ch
 #ifdef __ZEPHYR__
     LogU("Entered %s power mode\n", PowerModeConfig[CurrentPowerMode].name);
 #else
-    PRINTM("Entered %s power mode, because: %s\n", PowerModeConfig[CurrentPowerMode].name, reason);
+    Macros_Printf("Entered %s power mode, because: %s\n", PowerModeConfig[CurrentPowerMode].name, reason);
 #endif
 
     if (CurrentPowerMode > PowerMode_Lock) {

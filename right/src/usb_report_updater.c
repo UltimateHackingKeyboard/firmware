@@ -803,7 +803,7 @@ static void sendActiveReports(bool resending) {
 
     bool usbMouseButtonsChanged = false;
     if (UsbMouseCheckReportReady(resending, &usbMouseButtonsChanged) == kStatus_USB_Success) {
-        // Macros_ReportPrintf("sm\n");
+        // Macros_Printf("sm\n");
 
         UsbMouseSendActiveReport();
         UsbReportUpdater_LastActivityTime = CurrentTime;

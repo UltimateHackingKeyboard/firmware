@@ -76,9 +76,9 @@ void Trace_Print(const char* reason) {
     uint16_t iter;
     enabled = false;
 
-    Macros_ReportPrintf("Printing trace buffer because: %s\n", reason);
-    Macros_ReportPrintf("Last EV: %d\n", StateWormhole.traceBuffer.eventVector);
-    Macros_ReportPrintf("Trace:\n");
+    Macros_Printf("Printing trace buffer because: %s\n", reason);
+    Macros_Printf("Last EV: %d\n", StateWormhole.traceBuffer.eventVector);
+    Macros_Printf("Trace:\n");
 
     for (iter = 0; iter < TRACE_BUFFER_SIZE; iter++) {
         char c = TraceBuffer[(TraceBufferPosition+iter)%TRACE_BUFFER_SIZE];

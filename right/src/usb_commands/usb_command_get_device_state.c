@@ -50,8 +50,7 @@ static void detectFreezes() {
         lastCheckCount = 0;
         alreadyLogged = true;
 
-        Macros_ReportPrintf("Looks like the firmware freezed. If that is the case, please report bellow trace to the devs:\n");
-        Trace_Print();
+        Trace_Print("Looks like the firmware freezed. If that is the case, please report bellow trace to the devs:\n");
     }
 }
 

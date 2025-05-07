@@ -75,7 +75,7 @@ void panic(const struct log_backend *const backend) {
 static int outputFunc(uint8_t *data, size_t length, void *ctx)
 {
     if (isInPanicMode) {
-        Macros_ReportPrintf("%.*s", length-1, (const char*)data);
+        Macros_Printf("%.*s", length-1, (const char*)data);
     }
     if (ProxyLog_IsAttached) {
         printToOurBuffer(data, length);

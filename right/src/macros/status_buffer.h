@@ -13,7 +13,7 @@
 
 // Typedefs:
 
-    #define Macros_ReportPrintf(...) Macros_ReportPrintfWithPos(NULL, __VA_ARGS__)
+    #define Macros_Printf(...) Macros_PrintfWithPos(NULL, __VA_ARGS__)
 
     typedef struct {
         char data[STATUS_BUFFER_MAX_LENGTH];
@@ -34,7 +34,7 @@
     void Macros_ReportErrorNum(const char* err, int32_t num, const char* pos);
     void Macros_ReportErrorFloat(const char* err, float num, const char* pos);
     void Macros_ReportWarn(const char* err, const char* arg, const char *argEnd);
-    void Macros_ReportPrintfWithPos(const char* pos, const char *fmt, ...);
+    void Macros_PrintfWithPos(const char* pos, const char *fmt, ...);
 
     void Macros_SetStatusString(const char* text, const char *textEnd);
     void Macros_SetStatusStringInterpolated(const char* text, const char *textEnd);
