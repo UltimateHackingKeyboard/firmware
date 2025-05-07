@@ -281,6 +281,7 @@ COMMAND = statsRecordKeyTiming
 COMMAND = statsVariables
 COMMAND = diagnose
 COMMAND = panic
+COMMAND = freeze
 COMMAND = trace
 COMMAND = setStatus STRING
 COMMAND = clearStatus

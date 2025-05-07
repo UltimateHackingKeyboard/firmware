@@ -220,6 +220,7 @@ void mainRuntime(void) {
             EVENTLOOP_TIMING(EventloopTiming_End());
         }
         scheduleNextRun();
+        UserLogic_LastEventloopTime = CurrentTime;
     }
 #else
     while (true)

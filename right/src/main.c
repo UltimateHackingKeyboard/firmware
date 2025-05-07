@@ -181,6 +181,9 @@ int main(void)
             if (EventVector_IsSet(EventVector_EventScheduler)) {
                 EventScheduler_Process();
             }
+
+            UserLogic_LastEventloopTime = CurrentTime;
+
             __WFI();
         }
     }
