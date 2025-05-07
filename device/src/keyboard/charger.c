@@ -83,9 +83,8 @@ static bool setActuallyCharging(bool charging) {
 }
 
 static bool setPercentage(uint16_t voltage, uint8_t perc) {
-    batteryState.batteryVoltage = voltage;
-
-    if (batteryState.batteryPercentage != perc) {
+    if (batteryState.batteryPercentage != perc || batteryState.batteryVoltage != voltage) {
+        batteryState.batteryVoltage = voltage;
         batteryState.batteryPercentage = perc;
         return true;
     }
