@@ -1,3 +1,5 @@
+#include <stdio.h>
+#include <string.h>
 #include "macros/core.h"
 #include "macros/display.h"
 #include "macros/commands.h"
@@ -12,6 +14,10 @@
 #include "keyboard/oled/screens/screens.h"
 #else
 #include "segment_display.h"
+#endif
+
+#if DEVICE_HAS_OLED
+#include "keyboard/oled/screens/screen_manager.h"
 #endif
 
 display_strings_buffs_t Macros_DisplayStringsBuffs = {
@@ -224,3 +230,26 @@ macro_result_t Macros_ProcessSetLedTxtCommand(parser_context_t* ctx)
         return res;
     }
 }
+
+void NotifyPrintf(const char *fmt, ...)
+{
+#if DEVICE_HAS_OLED
+    char* buf;
+    uint8_t bufLen;
+
+    va_list myargs;
+
+    getDisplayStringBuffer(DisplayStringSlot_Notify, &buf, &bufLen);
+
+    va_start(myargs, fmt);
+    vsnprintf(buf, bufLen, fmt, myargs);
+
+    buf[bufLen - 1] = '\0';
+
+    LogU("Notification: %s", buf);
+    NotificationScreen_NotifyFor(buf, SCREEN_NOTIFICATION_TIMEOUT);
+#endif
+}
+
+
+

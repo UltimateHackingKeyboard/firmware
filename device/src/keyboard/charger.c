@@ -325,11 +325,6 @@ void Charger_UpdateBatteryState() {
         stateChanged = true;
     }
 
-
-    battery_manager_config_t* cfg = BatteryManager_GetCurrentBatteryConfig();
-    printk("%dmV %dmV max %dmV", SyncLeftHalfState.battery.batteryVoltage, SyncRightHalfState.battery.batteryVoltage, cfg->maxVoltage);
-    LogO("%dmV %dmV max %dmV", SyncLeftHalfState.battery.batteryVoltage, SyncRightHalfState.battery.batteryVoltage, cfg->maxVoltage);
-
     if (stateChanged) {
         StateSync_UpdateProperty(StateSyncPropertyId_Battery, &batteryState);
 

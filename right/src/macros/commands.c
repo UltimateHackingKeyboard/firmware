@@ -2343,6 +2343,10 @@ static macro_result_t processCommand(parser_context_t* ctx)
             else if (ConsumeToken(ctx, "statsVariables")) {
                 return Macros_ProcessStatsVariablesCommand();
             }
+            else if (ConsumeToken(ctx, "statsBattery")) {
+                return Macros_ProcessStatsBatteryCommand();
+            }
+
             else if (ConsumeToken(ctx, "switchKeymap")) {
                 return processSwitchKeymapCommand(ctx);
             }

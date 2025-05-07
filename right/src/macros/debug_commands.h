@@ -24,5 +24,6 @@
     macro_result_t Macros_ProcessDiagnoseCommand();
     macro_result_t Macros_ProcessStatsRecordKeyTimingCommand();
     macro_result_t Macros_ProcessStatsRuntimeCommand();
+    macro_result_t Macros_ProcessStatsBatteryCommand();
 
 #endif

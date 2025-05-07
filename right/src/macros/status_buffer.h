@@ -13,7 +13,6 @@
 
 // Typedefs:
 
-    #define PRINTM(...) Macros_ReportPrintf(NULL, __VA_ARGS__)
     #define Macros_ReportPrintf(...) Macros_ReportPrintfWithPos(NULL, __VA_ARGS__)
 
     typedef struct {
@@ -51,5 +50,7 @@
 
     void MacroStatusBuffer_InitFromWormhole();
     void MacroStatusBuffer_InitNormal();
+
+    void NotifyPrintf(const char *fmt, ...);
 
 #endif

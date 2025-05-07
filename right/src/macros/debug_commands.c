@@ -13,6 +13,12 @@
 #include "device.h"
 #endif
 
+#if DEVICE_IS_KEYBOARD && defined(__ZEPHYR__)
+#include "keyboard/charger.h"
+#include "keyboard/battery_manager.h"
+#include "state_sync.h"
+#endif
+
 macro_result_t Macros_ProcessStatsLayerStackCommand()
 {
     if (Macros_DryRun) {
@@ -177,5 +183,19 @@ macro_result_t Macros_ProcessStatsRuntimeCommand()
     Macros_SetStatusString("macro runtime is: ", NULL);
     Macros_SetStatusNum(ms);
     Macros_SetStatusString(" ms\n", NULL);
+    return MacroResult_Finished;
+}
+
+macro_result_t Macros_ProcessStatsBatteryCommand()
+{
+    if (Macros_DryRun) {
+        return MacroResult_Finished;
+    }
+
+#if defined(__ZEPHYR__) && DEVICE_IS_KEYBOARD
+    battery_manager_config_t* cfg = BatteryManager_GetCurrentBatteryConfig();
+    NotifyPrintf("%dmV %dmV max %dmV", SyncLeftHalfState.battery.batteryVoltage, SyncRightHalfState.battery.batteryVoltage, cfg->maxVoltage);
+#endif
+
     return MacroResult_Finished;
 }

@@ -280,6 +280,7 @@ COMMAND = statsActiveKeys
 COMMAND = statsActiveMacros
 COMMAND = statsRecordKeyTiming
 COMMAND = statsVariables
+COMMAND = statsBattery
 COMMAND = diagnose
 COMMAND = panic
 COMMAND = trace
