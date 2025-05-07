@@ -246,7 +246,6 @@ void NotifyPrintf(const char *fmt, ...)
 
     buf[bufLen - 1] = '\0';
 
-    LogU("Notification: %s", buf);
     NotificationScreen_NotifyFor(buf, SCREEN_NOTIFICATION_TIMEOUT);
 #endif
 }
