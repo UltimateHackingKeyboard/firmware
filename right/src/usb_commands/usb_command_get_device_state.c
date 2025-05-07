@@ -52,6 +52,9 @@ static void detectFreezes() {
 
         Trace_Print("Looks like the firmware freezed. If that is the case, please report bellow trace to the devs:\n");
     }
+
+    // Just trip it to make the event loop update UserLogic_LastEventloopTime if it is not frozen
+    EventVector_Set(EventVector_NewMessage);
 }
 
 void UsbCommand_GetKeyboardState(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer)
