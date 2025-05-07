@@ -15,7 +15,7 @@
         reg = <1>;
         zephyr,gain = "ADC_GAIN_1_4";
         zephyr,reference = "ADC_REF_INTERNAL";
-        zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+        zephyr,acquisition-time = <ADC_ACQ_TIME_MAX>;
         zephyr,input-positive = <NRF_SAADC_AIN3>; // VBAT_ADC
         zephyr,resolution = <12>;
     };
