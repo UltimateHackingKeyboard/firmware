@@ -14,6 +14,7 @@
         BacklightingMode_Numpad,
         BacklightingMode_LedTest,
         BacklightingMode_LightAll,
+        BacklightingMode_LightNone,
         BacklightingMode_Unspecified,
     } backlighting_mode_t;
 

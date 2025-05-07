@@ -477,6 +477,9 @@ static macro_variable_t backlightStrategy(parser_context_t* ctx, set_command_act
     else if (ConsumeToken(ctx, "constantRgb")) {
         res = BacklightingMode_ConstantRGB;
     }
+    else if (ConsumeToken(ctx, "off")) {
+        res = BacklightingMode_LightNone;
+    }
     else if (ConsumeToken(ctx, "perKeyRgb")) {
         if (PerKeyRgbPresent) {
             res = BacklightingMode_PerKeyRgb;
