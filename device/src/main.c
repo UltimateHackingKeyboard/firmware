@@ -203,6 +203,7 @@ void mainRuntime(void) {
         MacroVariables_RunTests();
 #if DEVICE_IS_KEYBOARD
         BatteryCalculator_RunTests();
+        BatteryCalculator_RunPercentTests();
 #endif
     }
 

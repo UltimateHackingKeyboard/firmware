@@ -9,35 +9,39 @@ typedef struct {
 } life_reference_record_t;
 
 const life_reference_record_t LeftRecords [] = {
-    { .unit = 0, .voltage = 4022 },
-    { .unit = 18, .voltage = 3998 },
-    { .unit = 58, .voltage = 3950 },
-    { .unit = 98, .voltage = 3859 },
-    { .unit = 138, .voltage = 3818 },
-    { .unit = 178, .voltage = 3771 },
-    { .unit = 218, .voltage = 3629 },
-    { .unit = 258, .voltage = 3496 },
-    { .unit = 278, .voltage = 3420 },
-    { .unit = 288, .voltage = 3317 },
-    { .unit = 298, .voltage = 3168 },
+    { .unit = 0, .voltage = 4288 },
+    { .unit = 200, .voltage = 4022 },
+    { .unit = 218, .voltage = 3998 },
+    { .unit = 258, .voltage = 3950 },
+    { .unit = 298, .voltage = 3859 },
+    { .unit = 338, .voltage = 3818 },
+    { .unit = 378, .voltage = 3771 },
+    { .unit = 418, .voltage = 3629 },
+    { .unit = 458, .voltage = 3496 },
+    { .unit = 478, .voltage = 3420 },
+    { .unit = 488, .voltage = 3317 },
+    { .unit = 498, .voltage = 3168 },
+    { .unit = 598, .voltage = 1678 },
 };
 
 const life_reference_record_t RightRecords[] = {
-    { .unit = 0, .voltage = 4039 },
-    { .unit = 18, .voltage = 3974 },
-    { .unit = 58, .voltage = 3863 },
-    { .unit = 98, .voltage = 3770 },
-    { .unit = 138, .voltage = 3682 },
-    { .unit = 178, .voltage = 3645 },
-    { .unit = 218, .voltage = 3611 },
-    { .unit = 258, .voltage = 3587 },
-    { .unit = 298, .voltage = 3548 },
-    { .unit = 338, .voltage = 3500 },
-    { .unit = 378, .voltage = 3438 },
-    { .unit = 398, .voltage = 3415 },
-    { .unit = 408, .voltage = 3392 },
-    { .unit = 428, .voltage = 3230 },
-    { .unit = 438, .voltage = 3065 },
+    { .unit = 0, .voltage = 4400 },
+    { .unit = 100, .voltage = 4039 },
+    { .unit = 118, .voltage = 3974 },
+    { .unit = 158, .voltage = 3863 },
+    { .unit = 198, .voltage = 3770 },
+    { .unit = 238, .voltage = 3682 },
+    { .unit = 278, .voltage = 3645 },
+    { .unit = 318, .voltage = 3611 },
+    { .unit = 358, .voltage = 3587 },
+    { .unit = 398, .voltage = 3548 },
+    { .unit = 438, .voltage = 3500 },
+    { .unit = 478, .voltage = 3438 },
+    { .unit = 498, .voltage = 3415 },
+    { .unit = 508, .voltage = 3392 },
+    { .unit = 528, .voltage = 3230 },
+    { .unit = 538, .voltage = 3065 },
+    { .unit = 638, .voltage = 2400 },
 };
 
 static uint16_t uninterpolate(
@@ -117,6 +121,44 @@ uint16_t BatteryCalculator_CalculatePercent(uint16_t correctedVoltage) {
     uint16_t percent = calculatePercent(correctedVoltage, config, records, count);
 
     return percent;
+}
+
+static void runPercentTest(bool isRight, uint16_t actual, uint16_t max) {
+    battery_manager_config_t cfg = {
+        .maxVoltage = max,
+        .stopChargingVoltage = 4200,
+        .startChargingVoltage = 4000,
+        .turnOnBacklightVoltage = 3550,
+        .turnOffBacklightVoltage = 3400,
+        .minWakeupVoltage = 3100,
+        .minVoltage = 3000,
+    };
+
+    const life_reference_record_t* records = isRight ? RightRecords : LeftRecords;
+    uint16_t count = isRight ? ARRAY_SIZE(RightRecords) : ARRAY_SIZE(LeftRecords);
+    uint16_t percent = calculatePercent(actual, &cfg, records, count);
+
+    printk("  - %d / %d -> %d%%\n", actual, max, percent);
+
+}
+
+void BatteryCalculator_RunPercentTests() {
+    printk("Testing battery percent calculator (right):\n");
+    runPercentTest(true, 3100, 4150);
+    runPercentTest(true, 3800, 4150);
+    runPercentTest(true, 4000, 4150);
+    runPercentTest(true, 4100, 4150);
+    runPercentTest(true, 4145, 4150);
+    printk("  ---- (right)\n");
+    runPercentTest(true, 3100, 4050);
+    runPercentTest(true, 3800, 4050);
+    runPercentTest(true, 4000, 4050);
+    runPercentTest(true, 4045, 4050);
+    printk("  ---- (left)\n");
+    runPercentTest(false, 3100, 4050);
+    runPercentTest(false, 3800, 4050);
+    runPercentTest(false, 4000, 4050);
+    runPercentTest(false, 4045, 4050);
 }
 
 #define TOLERANCE 4
