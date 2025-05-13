@@ -13,6 +13,7 @@
 #include "led_manager.h"
 #include "event_scheduler.h"
 #include "power_mode.h"
+#include "trace.h"
 
 static uint8_t MsAltEnumMode = 0;
 usb_composite_device_t UsbCompositeDevice;
