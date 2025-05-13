@@ -55,6 +55,9 @@ static void detectFreezes() {
 
     // Just trip it to make the event loop update UserLogic_LastEventloopTime if it is not frozen
     EventVector_Set(EventVector_NewMessage);
+#ifdef __ZEPHYR__
+    Main_Wake();
+#endif
 }
 
 void UsbCommand_GetKeyboardState(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer)
