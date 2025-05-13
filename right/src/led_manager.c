@@ -61,7 +61,7 @@ static void recalculateLedBrightness()
         DisplayBrightness = MIN(255, displayBrightnessBase * Cfg.LedBrightnessMultiplier);
     }
 
-    if (Ledmap_AlwaysOn) {
+    if (Ledmap_AlwaysOn || globalAlwaysOn) {
         KeyBacklightBrightness = 255;
     }
 }
