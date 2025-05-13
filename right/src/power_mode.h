@@ -41,7 +41,7 @@
 
     void PowerMode_SetUsbAwake(bool awake);
     void PowerMode_Update();
-    void PowerMode_ActivateMode(power_mode_t mode, bool toggle, bool force);
+    void PowerMode_ActivateMode(power_mode_t mode, bool toggle, bool force, const char* reason);
     void PowerMode_WakeHost();
 
 

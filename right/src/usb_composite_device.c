@@ -177,11 +177,14 @@ void WakeUpHost(void) {
     if (!wakeUpHostAllowed) {
         return;
     }
+    Trace_Printc("y2");
     // Send resume signal - this will call USB_DeviceKhciControl(khciHandle, kUSB_DeviceControlResume, NULL);
     USB_DeviceSetStatus(UsbCompositeDevice.deviceHandle, kUSB_DeviceStatusBus, NULL);
+    Trace_Printc("y3");
     while (CurrentPowerMode > PowerMode_LastAwake) {
         ;
     }
+    Trace_Printc("y4");
 }
 
 static usb_status_t usbDeviceCallback(usb_device_handle handle, uint32_t event, void *param)
@@ -202,18 +205,18 @@ static usb_status_t usbDeviceCallback(usb_device_handle handle, uint32_t event, 
             break;
         case kUSB_DeviceEventSuspend:
             if (UsbCompositeDevice.attach) {
-                PowerMode_ActivateMode(PowerMode_Uhk60Sleep, false, false);
+                PowerMode_ActivateMode(PowerMode_Uhk60Sleep, false, false, "received device suspend event");
                 status = kStatus_USB_Success;
             }
             break;
         case kUSB_DeviceEventResume:
-            PowerMode_ActivateMode(PowerMode_Awake, false, false);
+            PowerMode_ActivateMode(PowerMode_Awake, false, false, "received device resume event");
             status = kStatus_USB_Success;
             break;
         case kUSB_DeviceEventSetConfiguration: {
             uint8_t interface;
             UsbCompositeDevice.attach = 1;
-            PowerMode_ActivateMode(PowerMode_Awake, false, false);
+            PowerMode_ActivateMode(PowerMode_Awake, false, false, "received device set configuration event");
             for (interface = 0; interface < USB_DEVICE_CONFIG_HID; ++interface) {
                 usb_device_class_config_struct_t *intf = &UsbDeviceCompositeConfigList.config[interface];
 

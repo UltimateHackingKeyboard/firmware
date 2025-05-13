@@ -191,7 +191,7 @@ static void send_raw_buffer(const uint8_t *data, uint16_t len) {
 }
 
 void NusClient_SendMessage(message_t* msg) {
-    Trace_Printf("s2");
+    Trace_Printc("s2");
     SEM_TAKE(&nusBusy);
 
     // Call this only after we have taken the semaphore.
@@ -210,8 +210,8 @@ void NusClient_SendMessage(message_t* msg) {
 
     if (bufferIdx + msg->len > MAX_LINK_PACKET_LENGTH) {
         LOG_WRN("Message is too long for NUS packets! [%i, %i, ...]\n", buffer[0], buffer[1]);
-        Trace_Printf("E1");
-        Trace_Printf("r2");
+        Trace_Printc("E1");
+        Trace_Printc("r2");
         return;
     }
 
@@ -220,5 +220,5 @@ void NusClient_SendMessage(message_t* msg) {
     bufferIdx += msg->len;
 
     send_raw_buffer(buffer, bufferIdx);
-    Trace_Printf("r2");
+    Trace_Printc("r2");
 }

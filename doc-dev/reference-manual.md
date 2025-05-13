@@ -283,6 +283,7 @@ COMMAND = statsVariables
 COMMAND = statsBattery
 COMMAND = diagnose
 COMMAND = panic
+COMMAND = freeze
 COMMAND = trace
 COMMAND = setStatus STRING
 COMMAND = clearStatus

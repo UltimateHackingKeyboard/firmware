@@ -58,9 +58,9 @@ macro_result_t Macros_ProcessStatsVariablesCommand(void) {
         return MacroResult_Finished;
     }
 
-    Macros_ReportPrintf("Variables:");
+    Macros_Printf("Variables:");
     for (uint8_t i = 0; i < macroVariableCount; i++) {
-        Macros_ReportPrintf("  %.*s: %d", EXPAND_REF(macroVariables[i].name), macroVariables[i].asInt);
+        Macros_Printf("  %.*s: %d", EXPAND_REF(macroVariables[i].name), macroVariables[i].asInt);
     }
 
     return MacroResult_Finished;

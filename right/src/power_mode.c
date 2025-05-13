@@ -92,7 +92,7 @@ void PowerMode_Update() {
     }
 
     if (CurrentPowerMode <= PowerMode_LightSleep) {
-        PowerMode_ActivateMode(newPowerMode, false, false);
+        PowerMode_ActivateMode(newPowerMode, false, false, "power mode update");
     }
 }
 
@@ -131,7 +131,7 @@ static void wake() {
     notifyEveryone();
 }
 
-void PowerMode_ActivateMode(power_mode_t mode, bool toggle, bool force) {
+void PowerMode_ActivateMode(power_mode_t mode, bool toggle, bool force, const char* reason) {
     // if toggling a mode that's currently active, wake up
     if (CurrentPowerMode == mode && toggle) {
         mode = PowerMode_Awake;
@@ -170,6 +170,8 @@ void PowerMode_ActivateMode(power_mode_t mode, bool toggle, bool force) {
 
 #ifdef __ZEPHYR__
     LogU("Entered %s power mode\n", PowerModeConfig[CurrentPowerMode].name);
+#else
+    Macros_Printf("Entered %s power mode, because: %s\n", PowerModeConfig[CurrentPowerMode].name, reason);
 #endif
 
     if (CurrentPowerMode > PowerMode_Lock) {
@@ -230,7 +232,7 @@ static void runSfjlSleep() {
 void PowerMode_PutBackToSleepMaybe(void) {
     if (DEVICE_IS_UHK80_LEFT && CurrentPowerMode >= PowerMode_LightSleep && !DeviceState_IsDeviceConnected(DeviceId_Uhk80_Right)) {
         power_mode_t newMode = lastDeepPowerMode == PowerMode_ManualShutDown ? PowerMode_ManualShutDown : PowerMode_SfjlSleep;
-        PowerMode_ActivateMode(newMode, false, false);
+        PowerMode_ActivateMode(newMode, false, false, "put back to sleep because right side is not available");
     }
 }
 
@@ -258,10 +260,10 @@ void PowerMode_RestartedTo(power_mode_t mode) {
     }
 
     if (DEVICE_IS_UHK80_LEFT) {
-        PowerMode_ActivateMode(PowerMode_LightSleep, false, true);
+        PowerMode_ActivateMode(PowerMode_LightSleep, false, true, "woken up from sfjl sleep, waiting for right");
         EventScheduler_Schedule(CurrentTime + 60*1000, EventSchedulerEvent_PutBackToShutDown, "We were woken up, but right may not.");
     } else {
-        PowerMode_ActivateMode(PowerMode_Awake, false, true);
+        PowerMode_ActivateMode(PowerMode_Awake, false, true, "woken up from sfjl sleep");
     }
 }
 

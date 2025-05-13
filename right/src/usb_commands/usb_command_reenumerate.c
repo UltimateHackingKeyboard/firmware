@@ -17,7 +17,7 @@
 
 void Reboot(bool rebootPeripherals) {
     StateWormhole.wasReboot = true;
-    Trace_Printf("Rebooting...");
+    Trace_Printc("Rebooting...");
 #ifdef __ZEPHYR__
     if (rebootPeripherals) {
         if (DEVICE_IS_UHK80_RIGHT) {
@@ -48,7 +48,7 @@ void Reboot(bool rebootPeripherals) {
 void UsbCommand_Reenumerate(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer)
 {
     StateWormhole.wasReboot = true;
-    Trace_Printf("Rebooting...");
+    Trace_Printc("Rebooting...");
 #ifdef __ZEPHYR__
     bootmode_set(BOOT_MODE_TYPE_BOOTLOADER);
     sys_reboot(SYS_REBOOT_COLD);

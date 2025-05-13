@@ -513,7 +513,7 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
         break;
     case StateSyncPropertyId_PowerMode:
         if (!isLocalUpdate) {
-            PowerMode_ActivateMode(*(power_mode_t *)data, false, true);
+            PowerMode_ActivateMode(*(power_mode_t *)data, false, true, "Received from state sync");
         }
         break;
     default:

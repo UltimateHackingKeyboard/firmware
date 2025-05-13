@@ -19,48 +19,50 @@
 #include "stubs.h"
 #endif
 
+uint32_t UserLogic_LastEventloopTime = 0;
+
 void RunUserLogic(void) {
     if (EventVector_IsSet(EventVector_ApplyConfig)) {
-        Trace_Printf("l1");
+        Trace_Printc("l1");
         UsbCommand_ApplyConfig(NULL, NULL);
     }
     if (EventVector_IsSet(EventVector_KeymapReloadNeeded)) {
-        Trace_Printf("l2");
+        Trace_Printc("l2");
         SwitchKeymapById(CurrentKeymapIndex, true);
     }
 #ifndef __ZEPHYR__
     if (EventVector_IsSet(EventVector_ProtocolChanged)) {
-        Trace_Printf("l3");
+        Trace_Printc("l3");
         UsbBasicKeyboard_HandleProtocolChange();
     }
 #endif
     if (EventVector_IsSet(EventVector_UsbMacroCommandWaitingForExecution)) {
-        Trace_Printf("l4");
+        Trace_Printc("l4");
         UsbMacroCommand_ExecuteSynchronously();
     }
 
     if (EventVector_IsSet(EventVector_KeyboardLedState)) {
-        Trace_Printf("l5");
+        Trace_Printc("l5");
         MacroEvent_ProcessStateKeyEvents();
     }
 
     if (EventVector_IsSet(EventVector_ReportUpdateMask)) {
-        Trace_Printf("l6");
+        Trace_Printc("l6");
         UpdateUsbReports();
     }
 
     if (EventVector_IsSet(EventVector_LedManagerFullUpdateNeeded)) {
-        Trace_Printf("l7");
+        Trace_Printc("l7");
         LedManager_FullUpdate();
     }
 
     if (EventVector_IsSet(EventVector_LedMapUpdateNeeded)) {
-        Trace_Printf("l8");
+        Trace_Printc("l8");
         Ledmap_UpdateBacklightLeds();
     }
 
     if (EventVector_IsSet(EventVector_SegmentDisplayNeedsUpdate)) {
-        Trace_Printf("l9");
+        Trace_Printc("l9");
         SegmentDisplay_Update();
     }
 
