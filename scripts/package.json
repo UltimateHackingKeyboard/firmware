@@ -19,10 +19,10 @@
     "shelljs": "^0.8.4"
   },
   "firmwareVersion": "14.0.0",
-  "deviceProtocolVersion": "4.14.1",
+  "deviceProtocolVersion": "4.15.0",
   "moduleProtocolVersion": "4.3.0",
   "dongleProtocolVersion": "1.0.2",
-  "userConfigVersion": "9.0.0",
+  "userConfigVersion": "11.0.0",
   "hardwareConfigVersion": "1.0.0",
   "smartMacrosVersion": "3.4.0",
   "devices": [
