@@ -16,6 +16,7 @@
 #if DEVICE_IS_KEYBOARD && defined(__ZEPHYR__)
 #include "keyboard/charger.h"
 #include "keyboard/battery_manager.h"
+#include "keyboard/battery_percent_calculator.h"
 #include "state_sync.h"
 #endif
 
@@ -194,7 +195,8 @@ macro_result_t Macros_ProcessStatsBatteryCommand()
 
 #if defined(__ZEPHYR__) && DEVICE_IS_KEYBOARD
     battery_manager_config_t* cfg = BatteryManager_GetCurrentBatteryConfig();
-    NotifyPrintf("%dmV %dmV max %dmV", SyncLeftHalfState.battery.batteryVoltage, SyncRightHalfState.battery.batteryVoltage, cfg->maxVoltage);
+    uint8_t perc = BatteryCalculator_CalculatePercent(SyncRightHalfState.battery.batteryVoltage);
+    NotifyPrintf("%dmV %d%% / %dmV", SyncRightHalfState.battery.batteryVoltage, perc, cfg->maxVoltage);
 #endif
 
     return MacroResult_Finished;
