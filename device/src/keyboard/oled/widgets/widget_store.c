@@ -235,7 +235,7 @@ static string_segment_t getRightStatusText() {
     static char buffer [BUFFER_LENGTH] = { [BUFFER_LENGTH-1] = 0 };
     char leftBattery[BAT_BUFFER_LENGTH];
     char rightBattery[BAT_BUFFER_LENGTH];
-    bool fixed = Cfg.UiStyle == UiStyle_Karel;
+    bool fixed = Cfg.UiStyle == UiStyle_Alternative;
     if (SyncLeftHalfState.battery.batteryPresent && SyncRightHalfState.battery.batteryPresent) {
         getBatteryStatusText(DeviceId_Uhk80_Left, &SyncLeftHalfState.battery, leftBattery, "", fixed, StateSync_BlinkLeftBatteryPercentage);
         getBatteryStatusText(DeviceId_Uhk80_Right, &SyncRightHalfState.battery, rightBattery, "", fixed, StateSync_BlinkRightBatteryPercentage);

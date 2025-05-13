@@ -15,7 +15,7 @@
 
     typedef enum {
         UiStyle_Classic,
-        UiStyle_Karel,
+        UiStyle_Alternative,
     } ui_style_t;
 
     extern ui_style_t UiStyle;

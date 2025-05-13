@@ -889,8 +889,8 @@ static macro_variable_t uiStyle(parser_context_t* ctx, set_command_action_t acti
     if (ConsumeToken(ctx, "classic")) {
         res = UiStyle_Classic;
     }
-    else if (ConsumeToken(ctx, "karel")) {
-        res = UiStyle_Karel;
+    else if (ConsumeToken(ctx, "alternative")) {
+        res = UiStyle_Alternative;
     }
     else {
         Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
