@@ -1,5 +1,6 @@
 #include "battery_manager.h"
 #include "config_manager.h"
+#include "zephyr/settings/settings.h"
 
     // TODO:
     // - adaptive detection of 100%
@@ -60,6 +61,8 @@ void BatteryManager_SetMaxCharge(uint16_t maxCharge) {
     BatteryManager_StandardUse.maxVoltage = maxCharge;
     BatteryManager_StandardUse.startChargingVoltage = maxCharge;
     BatteryManager_LongLife.maxVoltage = maxCharge;
+
+    settings_save_one("uhk/other/maxVoltage", &maxCharge, sizeof(maxCharge));
 }
 
 battery_manager_automaton_state_t BatteryManager_UpdateState(
