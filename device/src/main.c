@@ -51,6 +51,7 @@
 
 #if DEVICE_IS_KEYBOARD
 #include "keyboard/battery_unloaded_calculator.h"
+#include "keyboard/battery_percent_calculator.h"
 #endif
 
 k_tid_t Main_ThreadId = 0;
