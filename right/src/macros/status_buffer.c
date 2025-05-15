@@ -381,7 +381,13 @@ void Macros_ClearStatus(bool force)
 }
 
 void MacroStatusBuffer_InitFromWormhole() {
-    containsWormholeData = StateWormhole.persistStatusBuffer;
+    bool looksValid = true;
+
+    for (uint16_t i = 0; i < Buf.len; i++) {
+        looksValid &= Buf.data[i] < 128;
+    }
+
+    containsWormholeData = looksValid && StateWormhole.persistStatusBuffer;
 
     if (containsWormholeData) {
         indicateError();

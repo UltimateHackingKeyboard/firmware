@@ -1,6 +1,7 @@
 #include "wormhole.h"
+#include "versioning.h"
 
-#define WORMHOLE_MAGIC_NUMBER (0x3b04cd9e94521f9a ^ 0xdeadbeef)
+#define WORMHOLE_MAGIC_NUMBER (0x3b04cd9e94521f9a ^ 0xdeadbeef ^ *((uint32_t*)DeviceMD5Checksums[DEVICE_ID]))
 
 #ifdef __ZEPHYR__
 
