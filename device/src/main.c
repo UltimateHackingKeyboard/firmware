@@ -51,6 +51,7 @@
 
 #if DEVICE_IS_KEYBOARD
 #include "keyboard/battery_unloaded_calculator.h"
+#include "keyboard/battery_percent_calculator.h"
 #endif
 
 k_tid_t Main_ThreadId = 0;
@@ -203,6 +204,7 @@ void mainRuntime(void) {
         MacroVariables_RunTests();
 #if DEVICE_IS_KEYBOARD
         BatteryCalculator_RunTests();
+        BatteryCalculator_RunPercentTests();
 #endif
     }
 
@@ -220,6 +222,7 @@ void mainRuntime(void) {
             EVENTLOOP_TIMING(EventloopTiming_End());
         }
         scheduleNextRun();
+        UserLogic_LastEventloopTime = CurrentTime;
     }
 #else
     while (true)

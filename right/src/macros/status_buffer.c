@@ -304,7 +304,7 @@ void Macros_ReportWarn(const char* err, const char* arg, const char *argEnd)
     reportError(err, arg, argEnd);
 }
 
-void Macros_ReportPrintfWithPos(const char* pos, const char *fmt, ...)
+void Macros_PrintfWithPos(const char* pos, const char *fmt, ...)
 {
     va_list myargs;
     va_start(myargs, fmt);
@@ -381,7 +381,13 @@ void Macros_ClearStatus(bool force)
 }
 
 void MacroStatusBuffer_InitFromWormhole() {
-    containsWormholeData = StateWormhole.persistStatusBuffer;
+    bool looksValid = true;
+
+    for (uint16_t i = 0; i < Buf.len; i++) {
+        looksValid &= Buf.data[i] < 128;
+    }
+
+    containsWormholeData = looksValid && StateWormhole.persistStatusBuffer;
 
     if (containsWormholeData) {
         indicateError();

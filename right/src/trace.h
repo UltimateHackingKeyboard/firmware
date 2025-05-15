@@ -24,9 +24,12 @@
 // Functions:
 
     void Trace_Init(void);
+
     void Trace(char a);
-    void Trace_Print(const char* reason);
     void Trace_Printf(const char *fmt, ...);
+    void Trace_Printc(const char* s);
+
+    void Trace_Print(const char* reason);
 
 #endif
 

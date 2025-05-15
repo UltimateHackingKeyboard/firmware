@@ -147,6 +147,7 @@ static bool scanSfjlWithBlinking(bool fullScan) {
     const uint16_t blinkCount = 3;
     const uint16_t blinktimeOn = 100;
     const uint16_t blinktimeOff = 200;
+    const uint16_t minPressLength = 0;
     const uint16_t scanInterval = PowerModeConfig[CurrentPowerMode].keyScanInterval;
 
     sfjl_scan_result_t result = SfjlScanResult_NonePressed;
@@ -172,7 +173,7 @@ static bool scanSfjlWithBlinking(bool fullScan) {
         }
 
         if (result == SfjlScanResult_FullMatch) {
-            for (uint16_t j = 0; j < 2000/scanInterval; j++) {
+            for (uint16_t j = 0; j < minPressLength/scanInterval; j++) {
                 result = scanKeysOnce(result, fullScan);
                 if (result != SfjlScanResult_FullMatch) {
                     break;
@@ -291,7 +292,7 @@ static void scanAllKeys() {
 bool KeyScanner_ScanAndWakeOnSfjl(bool fullScan, bool wake) {
     if (scanSfjlWithBlinking(true)) {
         if (wake) {
-            PowerMode_ActivateMode(PowerMode_Awake, false, false);
+            PowerMode_ActivateMode(PowerMode_Awake, false, false, "key scanner wake");
             EventVector_Set(EventVector_LedManagerFullUpdateNeeded);
         }
         return true;

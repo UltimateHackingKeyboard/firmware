@@ -229,7 +229,7 @@ const config_t DefaultCfg = (config_t){
         .DisplayBrightnessBatteryDefault = 0x20,
         .DisplayBrightnessDefault = 0xff,
         .KeyBacklightBrightnessBatteryDefault = 0x20,
-        .KeyBacklightBrightnessChargingDefault = 0x80,
+        .KeyBacklightBrightnessChargingPercent = 50,
         .KeyBacklightBrightnessDefault = 0xff,
         .DisplayFadeOutTimeout = 0,
         .DisplayFadeOutBatteryTimeout = 60000,
@@ -279,6 +279,7 @@ const config_t DefaultCfg = (config_t){
         .Bt_MaxPeripheralConnections = 3,
         .Bt_AlwaysAdvertiseHid = true,
         .EmergencyKey = NULL,
+        .UiStyle = UiStyle_Classic,
         .KeyActionColors = {
             {0x00, 0x00, 0x00}, // KeyActionColor_None
             {0xFF, 0xFF, 0xFF}, // KeyActionColor_Scancode

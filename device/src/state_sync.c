@@ -7,6 +7,7 @@
 #include "keyboard/battery_manager.h"
 #include "keyboard/charger.h"
 #include "keyboard/key_scanner.h"
+#include "keyboard/oled/screens/notification_screen.h"
 #include "keyboard/oled/widgets/widgets.h"
 #include "config_manager.h"
 #include "config_parser/config_globals.h"
@@ -512,7 +513,7 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
         break;
     case StateSyncPropertyId_PowerMode:
         if (!isLocalUpdate) {
-            PowerMode_ActivateMode(*(power_mode_t *)data, false, true);
+            PowerMode_ActivateMode(*(power_mode_t *)data, false, true, "Received from state sync");
         }
         break;
     default:

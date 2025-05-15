@@ -375,10 +375,10 @@ static void applyOtherAction(other_action_t actionSubtype)
 {
     switch(actionSubtype) {
         case OtherAction_Lock:
-            PowerMode_ActivateMode(PowerMode_Lock, false, false);
+            PowerMode_ActivateMode(PowerMode_Lock, false, false, "lock key action");
             break;
         case OtherAction_Sleep:
-            PowerMode_ActivateMode(PowerMode_SfjlSleep, false, false);
+            PowerMode_ActivateMode(PowerMode_SfjlSleep, false, false, "sleep key action");
             break;
     }
 }
@@ -532,12 +532,16 @@ static inline void preprocessKeyState(key_state_t *keyState)
         keyState->debouncing = true;
         keyState->debouncedSwitchState = hardwareState;
 
+        Trace_Printc("x1");
         commitKeyState(keyState, keyState->debouncedSwitchState);
+        Trace_Printc("x2");
     }
 
     if (keyState->debouncing) {
         uint8_t timeSinceActivation = (uint8_t)(CurrentTime - keyState->timestamp);
+        Trace_Printc("x3");
         EventScheduler_Schedule(CurrentTime + (debounceTime - timeSinceActivation), EventSchedulerEvent_NativeActions, "debouncing");
+        Trace_Printc("x4");
     }
 }
 
@@ -587,7 +591,9 @@ static void updateActionStates() {
     uint8_t previousMods = NativeKeyboardReports.basic.modifiers | NativeKeyboardReports.inputModifiers;
     UsbReportUpdater_ResetKeyboardReports(&NativeKeyboardReports);
 
+    Trace_Printc("w0");
     LayerSwitcher_ResetHolds();
+    Trace_Printc("w1");
 
     memcpy(ActiveMouseStates, ToggledMouseStates, ACTIVE_MOUSE_STATES_COUNT);
 
@@ -609,14 +615,18 @@ static void updateActionStates() {
             preprocessKeyState(keyState);
 
             if (KeyState_NonZero(keyState)) {
+                Trace_Printc("w2");
                 if (KeyState_ActivatedNow(keyState)) {
                     // cache action so that key's meaning remains the same as long
                     // as it is pressed
                     actionCache[slotId][keyId].modifierLayerMask = 0;
 
                     if (CurrentPowerMode > PowerMode_LastAwake && CurrentPowerMode <= PowerMode_LightSleep) {
+                        Trace_Printf("y1.%d", CurrentPowerMode);
                         PowerMode_WakeHost();
-                        PowerMode_ActivateMode(PowerMode_Awake, false, false);
+                        Trace_Printc("y5");
+                        PowerMode_ActivateMode(PowerMode_Awake, false, false, "key pressed");
+                        Trace_Printc("y6");
                     }
 
                     if (Postponer_LastKeyLayer != 255 && PostponerCore_IsActive()) {
@@ -642,13 +652,16 @@ static void updateActionStates() {
                 cachedAction = &actionCache[slotId][keyId];
                 actionBase = &CurrentKeymap[LayerId_Base][slotId][keyId];
 
+                Trace_Printc("w3");
                 //apply base-layer holds
                 applyLayerHolds(keyState, actionBase);
+                Trace_Printc("w4");
 
                 //apply active-layer action
                 ApplyKeyAction(keyState, cachedAction, actionBase, &NativeKeyboardReports);
 
                 keyState->previous = keyState->current;
+                Trace_Printc("w5");
             }
         }
     }
@@ -656,6 +669,7 @@ static void updateActionStates() {
     if (currentMods != previousMods) {
         EventVector_Set(EventVector_SendUsbReports);
     }
+    Trace_Printc("w6");
 }
 
 bool Resending = false;
@@ -669,12 +683,14 @@ static void updateActiveUsbReports(void)
     PostponerCore_UpdatePostponedTime();
 
     if (EventVector_IsSet(EventVector_MacroEngine)) {
+        Trace_Printc("v1");
         EVENTLOOP_TIMING(EventloopTiming_WatchReset());
         Macros_ContinueMacro();
         EVENTLOOP_TIMING(EventloopTiming_Watch("macros"));
     }
 
     if (EventVector_IsSet(EventVector_LayerHolds)) {
+        Trace_Printc("v2");
         handleLayerChanges();
     }
 
@@ -686,18 +702,22 @@ static void updateActiveUsbReports(void)
     PostponerCore_RunPostponedEvents();
 
     if (EventVector_IsSet(EventVector_NativeActions | EventVector_StateMatrix)) {
+        Trace_Printc("v3");
         EVENTLOOP_TIMING(EventloopTiming_WatchReset());
         updateActionStates();
         EVENTLOOP_TIMING(EventloopTiming_Watch("action state update"));
+        Trace_Printc("ve3");
     }
 
     if (EventVector_IsSet(EventVector_MouseKeys)) {
+        Trace_Printc("v4");
         EVENTLOOP_TIMING(EventloopTiming_WatchReset());
         MouseKeys_ProcessMouseActions();
         EVENTLOOP_TIMING(EventloopTiming_Watch("mouse keys"));
     }
 
     if (EventVector_IsSet(EventVector_MouseController)) {
+        Trace_Printc("v5");
         MouseController_ProcessMouseActions();
     }
 
@@ -783,7 +803,7 @@ static void sendActiveReports(bool resending) {
 
     bool usbMouseButtonsChanged = false;
     if (UsbMouseCheckReportReady(resending, &usbMouseButtonsChanged) == kStatus_USB_Success) {
-        // Macros_ReportPrintf("sm\n");
+        // Macros_Printf("sm\n");
 
         UsbMouseSendActiveReport();
         UsbReportUpdater_LastActivityTime = CurrentTime;
@@ -826,7 +846,7 @@ static bool blockedByKeystrokeDelay() {
 
 void UpdateUsbReports(void)
 {
-    Trace_Printf("u1");
+    Trace_Printc("u1");
     if (blockedByKeystrokeDelay()) {
         return;
     }
@@ -842,7 +862,7 @@ void UpdateUsbReports(void)
     Resending = resending;
 
     if (!resending) {
-        Trace_Printf("u2");
+        Trace_Printc("u2");
         updateActiveUsbReports();
     }
 
@@ -851,22 +871,22 @@ void UpdateUsbReports(void)
     if (resending || sendingNew) {
         if (CurrentPowerMode < PowerMode_Lock) {
             if (!resending) {
-                Trace_Printf("u3");
+                Trace_Printc("u3");
                 mergeReports();
             }
 
-            Trace_Printf("u6");
+            Trace_Printc("u6");
             sendActiveReports(resending);
         } else {
             EventVector_Unset(EventVector_SendUsbReports | EventVector_ResendUsbReports);
         }
     }
 
-    Trace_Printf("u7");
+    Trace_Printc("u7");
 
     if (DisplaySleepModeActive || KeyBacklightSleepModeActive) {
         LedManager_UpdateSleepModes();
     }
 
-    Trace_Printf("u8");
+    Trace_Printc("u8");
 }

@@ -1478,7 +1478,7 @@ static macro_result_t processPanicCommand(parser_context_t* ctx) {
 #ifdef __ZEPHYR__
     k_panic();
 #else
-    Trace_Printf("PretendedPanic");
+    Trace_Printc("PretendedPanic");
     NVIC_SystemReset();
 #endif
     return MacroResult_Finished;
@@ -1515,7 +1515,7 @@ static macro_result_t processPowerModeCommand(parser_context_t* ctx) {
         return Macros_SleepTillKeystateChange();
     }
 
-    PowerMode_ActivateMode(mode, toggle, false);
+    PowerMode_ActivateMode(mode, toggle, false, "triggered by macro command");
 
     return MacroResult_Finished;
 }
@@ -1761,6 +1761,19 @@ static macro_result_t processRebootCommand()
     return MacroResult_Finished;
 }
 
+static macro_result_t processFreezeCommand()
+{
+    if (Macros_DryRun) {
+        return MacroResult_Finished;
+    }
+
+    while (true) {
+        // Hi there!
+    }
+
+    return MacroResult_Finished;
+}
+
 static macro_result_t processSwitchHostCommand(parser_context_t* ctx)
 {
 #define DRY_RUN_FINISH() if (Macros_DryRun) { return MacroResult_Finished; }
@@ -1887,6 +1900,9 @@ static macro_result_t processCommand(parser_context_t* ctx)
             }
             else if (ConsumeToken(ctx, "fork")) {
                 return processForkCommand(ctx);
+            }
+            else if (ConsumeToken(ctx, "freeze")) {
+                return processFreezeCommand(ctx);
             }
             else {
                 goto failed;
@@ -2343,6 +2359,10 @@ static macro_result_t processCommand(parser_context_t* ctx)
             else if (ConsumeToken(ctx, "statsVariables")) {
                 return Macros_ProcessStatsVariablesCommand();
             }
+            else if (ConsumeToken(ctx, "statsBattery")) {
+                return Macros_ProcessStatsBatteryCommand();
+            }
+
             else if (ConsumeToken(ctx, "switchKeymap")) {
                 return processSwitchKeymapCommand(ctx);
             }

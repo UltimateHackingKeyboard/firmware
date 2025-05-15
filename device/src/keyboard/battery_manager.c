@@ -1,5 +1,6 @@
 #include "battery_manager.h"
 #include "config_manager.h"
+#include "zephyr/settings/settings.h"
 
     // TODO:
     // - adaptive detection of 100%
@@ -17,7 +18,7 @@ typedef enum {
 
 battery_manager_config_t BatteryManager_StandardUse = {
     .maxVoltage = 4000,
-    .stopChargingVoltage = 4100,
+    .stopChargingVoltage = 4200,
     .startChargingVoltage = 4000,
     .turnOnBacklightVoltage = 3550,
     .turnOffBacklightVoltage = 3400,
@@ -54,6 +55,14 @@ static charge_region_t getCurrentChargeRegion(
     } else {
         return ChargeRegion_High;
     }
+}
+
+void BatteryManager_SetMaxCharge(uint16_t maxCharge) {
+    BatteryManager_StandardUse.maxVoltage = maxCharge;
+    BatteryManager_StandardUse.startChargingVoltage = maxCharge;
+    BatteryManager_LongLife.maxVoltage = maxCharge;
+
+    settings_save_one("uhk/other/maxVoltage", &maxCharge, sizeof(maxCharge));
 }
 
 battery_manager_automaton_state_t BatteryManager_UpdateState(
@@ -99,6 +108,8 @@ battery_manager_automaton_state_t BatteryManager_UpdateState(
         case ChargeRegion_Storage:
             if (currentState == BatteryManagerAutomatonState_Charged || currentState == BatteryManagerAutomatonState_Charging) {
                 return currentState;
+            } else if (currentState == BatteryManagerAutomatonState_Unknown) {
+                return BatteryManagerAutomatonState_Charged;
             } else {
                 return BatteryManagerAutomatonState_Charging;
             }

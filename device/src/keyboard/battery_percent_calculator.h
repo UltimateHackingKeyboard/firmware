@@ -16,7 +16,9 @@
 
 // Functions:
 
+    void BatteryCalculator_RunPercentTests();
     uint16_t BatteryCalculator_CalculatePercent(uint16_t correctedVoltage);
     uint16_t BatteryCalculator_Step(uint8_t oldPercentage, uint8_t newPercentage);
+
 
 #endif // __BATTERY_CALCULATOR_H__

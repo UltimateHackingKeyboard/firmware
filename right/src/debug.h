@@ -19,8 +19,9 @@
 #define DEBUG_RUN_TESTS false
 
 #define DEBUG_BATTERY_TESTING true
+#define DEBUG_UHK60_SLEEPS false
 
-#define DEBUG_ROLL_STATUS_BUFFER false
+#define DEBUG_ROLL_STATUS_BUFFER true
 
 #ifdef __ZEPHYR__
     #include "logger.h"
