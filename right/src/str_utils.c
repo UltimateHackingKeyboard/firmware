@@ -10,6 +10,8 @@
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #endif
 
+ATTR_UNUSED static parser_context_t parserContextStack[PARSER_CONTEXT_STACK_SIZE];
+
 static bool consumeCommentsAsWhite = true;
 
 static bool isIdentifierChar(char c);
