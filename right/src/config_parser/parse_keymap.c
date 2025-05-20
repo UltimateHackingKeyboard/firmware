@@ -231,8 +231,7 @@ static parser_error_t skipArgument(config_buffer_t *buffer, bool *wasArgument) {
         *wasArgument = true;
     }
 
-    ATTR_UNUSED uint8_t argumentType = ReadUInt8(buffer);
-    uint16_t length = ReadUInt16(buffer);
+    uint16_t length = ReadCompactLength(buffer);
     for (uint16_t i = 0; i < length; i++) {
         //we don't care here, just discard them
         ReadUInt8(buffer);
@@ -270,6 +269,7 @@ static parser_error_t parseKeyAction(key_action_t *keyAction, config_buffer_t *b
             return parseOtherAction(keyAction, buffer);
         case SerializedKeyActionType_ZeroBlock:
             return parseZeroBlock(keyAction, buffer, actionsToZero);
+        case SerializedKeyActionType_Label:
         case SerializedKeyActionType_Argument:
             return skipArgument(buffer, wasArgument);
     }

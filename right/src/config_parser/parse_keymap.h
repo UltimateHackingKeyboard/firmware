@@ -29,7 +29,8 @@
         SerializedKeyActionType_Connections = 36,
         SerializedKeyActionType_Other = 37,
         SerializedKeyActionType_ZeroBlock = 38,
-        SerializedKeyActionType_Argument = 39,
+        SerializedKeyActionType_Label = 39,
+        SerializedKeyActionType_Argument = 40,
     } serialized_key_action_type_t;
 
     typedef enum {
@@ -88,11 +89,6 @@
         SerializedLayerName_super,
         SerializedLayerName_base = 255
     } serialized_layer_id;
-
-    typedef enum {
-        SerializedArgumentType_Label,
-        SerializedArgumentType_MacroArg,
-    } serialized_argument_type_t;
 
     typedef enum {
         ParseMode_DryRun,
