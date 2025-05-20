@@ -29,6 +29,8 @@ static uint16_t consumeStatusCharReadingPos = 0;
 bool Macros_ConsumeStatusCharDirtyFlag = false;
 bool Macros_StatusBufferError = false;
 
+bool LastRunWasCrash = false;
+
 #define Buf StateWormhole.statusBuffer
 
 static void updateErrorIndicator(bool newValue) {
@@ -390,6 +392,7 @@ void MacroStatusBuffer_InitFromWormhole() {
     containsWormholeData = looksValid && StateWormhole.persistStatusBuffer;
 
     if (containsWormholeData) {
+        LastRunWasCrash = true;
         indicateError();
     } else {
         Macros_ProcessClearStatusCommand(true);

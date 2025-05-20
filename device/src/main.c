@@ -127,7 +127,6 @@ void mainRuntime(void) {
     }
 
     if (!DEVICE_IS_UHK_DONGLE) {
-        InitUart();
         InitZephyrI2c();
         InitSpi();
 
@@ -182,6 +181,17 @@ void mainRuntime(void) {
     HID_SetGamepadActive(false);
     USB_Enable(); // has to be after USB_SetSerialNumber
 
+    if (LastRunWasCrash) {
+        printk("CRASH DETECTED, waiting for 5 seconds to allow Agent to reenumerate\n");
+        k_sleep(K_MSEC(5*1000));
+    }
+
+    // Uart has to be enabled only after we have given Agent a chance to reenumarate into bootloader after a crash
+    if (!DEVICE_IS_UHK_DONGLE) {
+        InitUart();
+    }
+
+    // Uart has to be enabled only after we have given Agent a chance to reenumarate into bootloader after a crash
     // has to be after InitSettings
     BtManager_InitBt();
     BtManager_StartBt();

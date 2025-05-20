@@ -143,6 +143,7 @@ int main(void)
             StateWormhole.persistStatusBuffer = true;
             MacroStatusBuffer_InitFromWormhole();
             Trace_Print("Looks like your uhk60 crashed.");
+            LastRunWasCrash = true;
         }
         StateWormhole_Clean();
     } else {
