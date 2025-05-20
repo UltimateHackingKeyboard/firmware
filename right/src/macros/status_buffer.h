@@ -24,6 +24,7 @@
 //
     extern bool Macros_ConsumeStatusCharDirtyFlag;
     extern bool Macros_StatusBufferError;
+    extern bool LastRunWasCrash;
 
 // Functions:
 
