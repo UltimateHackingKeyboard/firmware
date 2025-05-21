@@ -147,6 +147,7 @@
             uint32_t currentMacroStartTime;
             uint16_t currentMacroActionIndex;
             uint16_t bufferOffset;
+            uint8_t currentMacroKeyStamp;
             uint8_t parentMacroSlot;
             uint8_t currentMacroIndex;
             uint8_t postponeNextNCommands;
@@ -271,8 +272,8 @@
     macro_result_t Macros_SleepTillKeystateChange();
     macro_result_t Macros_SleepTillTime(uint32_t time, const char* reason);
     uint8_t Macros_ConsumeLayerId(parser_context_t* ctx);
-    uint8_t Macros_QueueMacro(uint8_t index, key_state_t *keyState, uint8_t queueAfterSlot);
-    uint8_t Macros_StartMacro(uint8_t index, key_state_t *keyState, uint8_t parentMacroSlot, bool runFirstAction);
+    uint8_t Macros_QueueMacro(uint8_t index, key_state_t *keyState, uint8_t timestamp, uint8_t queueAfterSlot);
+    uint8_t Macros_StartMacro(uint8_t index, key_state_t *keyState, uint8_t timestamp, uint8_t parentMacroSlot, bool runFirstAction);
     uint8_t Macros_TryConsumeKeyId(parser_context_t* ctx);
     void Macros_ContinueMacro(void);
     void Macros_Initialize();

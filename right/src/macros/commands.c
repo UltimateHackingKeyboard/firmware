@@ -109,11 +109,13 @@ bool Macros_CurrentMacroKeyIsActive()
         return S->ms.oneShotState;
     }
     if (S->ms.postponeNextNCommands > 0 || S->ls->as.modifierPostpone) {
+        bool isSameActivation = (S->ms.currentMacroKey->timestamp == S->ms.currentMacroKeyStamp);
         bool keyIsActive = (KeyState_Active(S->ms.currentMacroKey) && !PostponerQuery_IsKeyReleased(S->ms.currentMacroKey));
-        return  keyIsActive || S->ms.oneShotState;
+        return  (isSameActivation && keyIsActive) || S->ms.oneShotState;
     } else {
+        bool isSameActivation = (S->ms.currentMacroKey->timestamp == S->ms.currentMacroKeyStamp);
         bool keyIsActive = KeyState_Active(S->ms.currentMacroKey);
-        return keyIsActive || S->ms.oneShotState;
+        return (isSameActivation && keyIsActive) || S->ms.oneShotState;
     }
 }
 
@@ -1325,7 +1327,7 @@ static macro_result_t processOneShotCommand(parser_context_t* ctx) {
      * */
     if (!S->ms.macroInterrupted || !S->ms.oneShotUsbChangeDetected) {
         S->ms.oneShotState = 1;
-    } else if (S->ms.oneShotState < 3) {
+    } else if (0 < S->ms.oneShotState && S->ms.oneShotState < 3) {
         S->ms.oneShotState++;
     } else {
         S->ms.oneShotState = 0;
