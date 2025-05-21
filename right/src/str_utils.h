@@ -21,6 +21,8 @@
     #define EXPAND_SEGMENT(SEGMENT) SegmentLen(SEGMENT), SEGMENT.start
     #define EXPAND_REF(REF) REF.len, (const char*)ValidatedUserConfigBuffer.buffer + REF.offset
 
+    #define PARSER_CONTEXT_STACK_SIZE 4
+
 // Typedefs:
 
 
@@ -31,6 +33,8 @@
         const char* begin;
         const char* at;
         const char* end;
+        uint8_t nestingBound;
+        uint8_t nestingLevel;
     } parser_context_t;
 
     typedef struct {
