@@ -109,11 +109,13 @@ bool Macros_CurrentMacroKeyIsActive()
         return S->ms.oneShotState;
     }
     if (S->ms.postponeNextNCommands > 0 || S->ls->as.modifierPostpone) {
+        bool isSameActivation = (S->ms.currentMacroKey->timestamp == S->ms.currentMacroKeyStamp);
         bool keyIsActive = (KeyState_Active(S->ms.currentMacroKey) && !PostponerQuery_IsKeyReleased(S->ms.currentMacroKey));
-        return  keyIsActive || S->ms.oneShotState;
+        return  (isSameActivation && keyIsActive) || S->ms.oneShotState;
     } else {
+        bool isSameActivation = (S->ms.currentMacroKey->timestamp == S->ms.currentMacroKeyStamp);
         bool keyIsActive = KeyState_Active(S->ms.currentMacroKey);
-        return keyIsActive || S->ms.oneShotState;
+        return (isSameActivation && keyIsActive) || S->ms.oneShotState;
     }
 }
 
