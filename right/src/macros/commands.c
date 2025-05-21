@@ -1327,7 +1327,7 @@ static macro_result_t processOneShotCommand(parser_context_t* ctx) {
      * */
     if (!S->ms.macroInterrupted || !S->ms.oneShotUsbChangeDetected) {
         S->ms.oneShotState = 1;
-    } else if (S->ms.oneShotState < 3) {
+    } else if (0 < S->ms.oneShotState && S->ms.oneShotState < 3) {
         S->ms.oneShotState++;
     } else {
         S->ms.oneShotState = 0;
