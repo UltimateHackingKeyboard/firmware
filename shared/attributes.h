@@ -14,6 +14,7 @@
     #define ATTR_DATA2
 #else
     #define ATTR_DATA2 __attribute__((section(".m_data_2")))
+    #define ATTR_DATA_NO_INIT __attribute__((section(".m_data_noinit")))
 #endif
 
 #endif
