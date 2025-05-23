@@ -144,21 +144,29 @@ uint8_t BtAdvertise_Start(adv_config_t advConfig)
 
             break;
         case ADVERTISE_NUS:
-            setFilters(advConfig);
-
             advParam = *BT_LE_ADV_CONN_ONE_TIME;
-            advParam.options = BT_LE_ADV_OPT_CONNECTABLE | BT_LE_ADV_OPT_ONE_TIME | BT_LE_ADV_OPT_FILTER_CONN | BT_LE_ADV_OPT_USE_IDENTITY,
-
             err = BT_LE_ADV_START(&advParam, BY_SIDE(adNusLeft, adNusRight), sdNus);
+
+            // TODO: following restricted advertising causes troubles
+            // setFilters(advConfig);
+            //
+            // advParam = *BT_LE_ADV_CONN_ONE_TIME;
+            // advParam.options = BT_LE_ADV_OPT_CONNECTABLE | BT_LE_ADV_OPT_ONE_TIME | BT_LE_ADV_OPT_FILTER_CONN | BT_LE_ADV_OPT_USE_IDENTITY,
+            //
+            // err = BT_LE_ADV_START(&advParam, BY_SIDE(adNusLeft, adNusRight), sdNus);
             break;
         case ADVERTISE_DIRECTED_NUS:
-            setFilters(advConfig);
-
             advParam = *BT_LE_ADV_CONN_ONE_TIME;
-            advParam.options = BT_LE_ADV_OPT_CONNECTABLE | BT_LE_ADV_OPT_ONE_TIME | BT_LE_ADV_OPT_FILTER_CONN | BT_LE_ADV_OPT_USE_IDENTITY,
-
             err = BT_LE_ADV_START(&advParam, BY_SIDE(adNusLeft, adNusRight), sdNus);
-            break;
+
+            // TODO: following restricted advertising causes troubles
+            // setFilters(advConfig);
+            //
+            // advParam = *BT_LE_ADV_CONN_ONE_TIME;
+            // advParam.options = BT_LE_ADV_OPT_CONNECTABLE | BT_LE_ADV_OPT_ONE_TIME | BT_LE_ADV_OPT_FILTER_CONN | BT_LE_ADV_OPT_USE_IDENTITY,
+            //
+            // err = BT_LE_ADV_START(&advParam, BY_SIDE(adNusLeft, adNusRight), sdNus);
+            // break;
 
             //// TODO: fix and reenable this?
             // printk("Advertising against %s\n", GetAddrString(advConfig.addr));
