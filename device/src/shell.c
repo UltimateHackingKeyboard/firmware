@@ -18,6 +18,8 @@
 #include "usb_compatibility.h"
 #include "mouse_keys.h"
 #include "config_manager.h"
+#include <zephyr/shell/shell_backend.h>
+#include "connections.h"
 
 shell_t Shell = {
     .keyLog = 0,
@@ -166,11 +168,7 @@ static int cmd_uhk_btunpair(const struct shell *shell, size_t argc, char *argv[]
 
 static int cmd_uhk_connections(const struct shell *shell, size_t argc, char *argv[])
 {
-    printk("Compiled   peripheral count: %d\n", CONFIG_BT_CTLR_SDC_PERIPHERAL_COUNT);
-    printk("Configured peripheral count: %d\n", Cfg.Bt_MaxPeripheralConnections);
-    HostConnections_ListKnownBleConnections();
-    BtConn_ListAllBonds();
-    BtConn_ListCurrentConnections();
+    Connections_PrintInfo();
     return 0;
 }
 

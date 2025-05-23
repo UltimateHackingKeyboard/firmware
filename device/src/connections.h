@@ -110,4 +110,6 @@
 
     const char* Connections_GetStaticName(connection_id_t connectionId);
 
+    void Connections_PrintInfo(void);
+
 #endif // __CONNECTIONS_H__

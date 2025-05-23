@@ -12,6 +12,10 @@
 #include "keyboard/oled/widgets/widgets.h"
 #include <zephyr/logging/log.h>
 #include "config_manager.h"
+#include "trace.h"
+#include <zephyr/kernel.h>
+#include "right/src/bt_defs.h"
+#include "bt_health.h"
 
 LOG_MODULE_DECLARE(Bt);
 
@@ -117,6 +121,7 @@ void BtAdvertise_DisableAdvertisingIcon(void) {
 
 uint8_t BtAdvertise_Start(adv_config_t advConfig)
 {
+    BT_TRACE_AND_ASSERT("ba1");
     int err = 0;
 
     if ( DEVICE_IS_UHK80_RIGHT && !DeviceState_IsTargetConnected(ConnectionTarget_Left) ) {
@@ -185,9 +190,11 @@ uint8_t BtAdvertise_Start(adv_config_t advConfig)
 }
 
 void BtAdvertise_Stop(void) {
+    BT_TRACE_AND_ASSERT("ba2");
     int err = bt_le_adv_stop();
     if (err) {
         LOG_WRN("Adv: Advertising failed to stop (err %d)\n", err);
+        Bt_HandleError("BtAdvertise_Stop", err);
     }
 }
 
