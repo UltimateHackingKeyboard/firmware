@@ -18,6 +18,7 @@
 #include "usb_compatibility.h"
 #include "mouse_keys.h"
 #include "config_manager.h"
+#include <zephyr/shell/shell_backend.h>
 
 shell_t Shell = {
     .keyLog = 0,
@@ -27,6 +28,19 @@ shell_t Shell = {
     .sdbState = 1,
 };
 
+void Shell_Execute(const char *cmd)
+{
+    const struct shell *sh = shell_backend_get_by_name("shell_rtt");
+    if (!sh) {
+        printk("Error: shell_rtt backend not found\n");
+        return;
+    }
+    printk("Executing following command from usb: '%s'\n", cmd);
+    int err = shell_execute_cmd(sh, cmd);
+    if (err) {
+        printk("Error executing command: %d\n", err);
+    }
+}
 
 static int cmd_uhk_keylog(const struct shell *shell, size_t argc, char *argv[])
 {

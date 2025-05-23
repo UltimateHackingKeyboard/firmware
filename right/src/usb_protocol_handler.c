@@ -14,6 +14,7 @@
 #include "usb_commands/usb_command_switch_keymap.h"
 #include "usb_commands/usb_command_launch_storage_transfer.h"
 #include "usb_commands/usb_command_get_module_property.h"
+#include "usb_commands/usb_command_exec_shell_command.h"
 
 #ifdef __ZEPHYR__
 #include "usb_commands/usb_command_draw_oled.h"
@@ -81,6 +82,9 @@ void UsbProtocolHandler(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidI
             break;
         case UsbCommandId_GetModuleProperty:
             UsbCommand_GetModuleProperty(GenericHidOutBuffer, GenericHidInBuffer);
+            break;
+        case UsbCommandId_ExecShellCommand:
+            UsbCommand_ExecShellCommand(GenericHidOutBuffer, GenericHidInBuffer);
             break;
 #ifdef __ZEPHYR__
         case UsbCommandId_DrawOled:
