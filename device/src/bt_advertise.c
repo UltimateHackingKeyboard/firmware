@@ -73,7 +73,7 @@ static const char * advertisingString(uint8_t advType) {
     }
 }
 
-static void setFilters(adv_config_t advConfig) {
+ATTR_UNUSED static void setFilters(adv_config_t advConfig) {
     bt_le_filter_accept_list_clear();
 
     if (advConfig.advType & (ADVERTISE_HID | ADVERTISE_NUS)) {
