@@ -28,11 +28,26 @@ shell_t Shell = {
     .sdbState = 1,
 };
 
+void list_backends_by_iteration(void) {
+    const struct shell *shell;
+    size_t idx = 0;
+    size_t backendCount = shell_backend_count_get();
+
+    printk("Available shell backends:\n");
+    for (size_t i = 0; i < backendCount; i++) {
+        shell = shell_backend_get(idx);
+        printk("- Backend %zu: %s\n", idx, shell->name);
+        idx++;
+    }
+}
+
 void Shell_Execute(const char *cmd)
 {
-    const struct shell *sh = shell_backend_get_by_name("shell_rtt");
+    const char* backendName = "shell_uart";
+    const struct shell *sh = shell_backend_get_by_name(backendName);
     if (!sh) {
-        printk("Error: shell_rtt backend not found\n");
+        printk("Error: %s backend not found\n", backendName);
+        list_backends_by_iteration();
         return;
     }
     printk("Executing following command from usb: '%s'\n", cmd);
