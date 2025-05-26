@@ -15,6 +15,7 @@
 #include "macro_events.h"
 #include "wormhole.h"
 #include "trace.h"
+#include "utils.h"
 
 #ifdef __ZEPHYR__
 #include "keyboard/oled/widgets/widgets.h"
@@ -308,6 +309,7 @@ void Macros_ReportWarn(const char* err, const char* arg, const char *argEnd)
 
 void Macros_PrintfWithPos(const char* pos, const char *fmt, ...)
 {
+    REENTRANCY_GUARD_BEGIN;
     va_list myargs;
     va_start(myargs, fmt);
     char buffer[256];
@@ -320,6 +322,7 @@ void Macros_PrintfWithPos(const char* pos, const char *fmt, ...)
     } else {
         Macros_SetStatusString(buffer, NULL);
     }
+    REENTRANCY_GUARD_END;
 }
 
 void Macros_ReportErrorPrintf(const char* pos, const char *fmt, ...)

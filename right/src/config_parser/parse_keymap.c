@@ -16,6 +16,7 @@
 #include "slave_drivers/uhk_module_driver.h"
 #include "error_reporting.h"
 #include "host_connection.h"
+#include "macros/status_buffer.h"
 
 #ifdef __ZEPHYR__
 #include "state_sync.h"
@@ -413,6 +414,12 @@ void interpretConfig(parse_config_t parseConfig, layer_id_t srcLayer, layer_id_t
                 *parseMode = ParseMode_DryRun;
             }
             break;
+        default:
+            {
+                Macros_ReportErrorPrintf(NULL, "Unrecognized parse mode: %d\n", parseConfig.mode);
+                *dstLayer = LayerId_Base;
+                *parseMode = ParseMode_DryRun;
+            }
     }
 }
 
