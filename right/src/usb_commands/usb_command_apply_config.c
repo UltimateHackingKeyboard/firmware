@@ -31,7 +31,9 @@ static uint8_t validateConfig(uint8_t *GenericHidInBuffer) {
     // Validate the staging configuration.
     ParserRunDry = true;
     StagingUserConfigBuffer.offset = 0;
+    StagingUserConfigBuffer.isValid = false;
     uint8_t parseConfigStatus = ParseConfig(&StagingUserConfigBuffer);
+    StagingUserConfigBuffer.isValid = parseConfigStatus == UsbStatusCode_Success;
     if (GenericHidInBuffer) {
         updateUsbBuffer(GenericHidInBuffer, UsbStatusCode_Success, StagingUserConfigBuffer.offset, ParsingStage_Validate);
     }
@@ -67,7 +69,8 @@ void UsbCommand_ApplyFactory(const uint8_t *GenericHidOutBuffer, uint8_t *Generi
 
     DataModelVersion = userConfigVersion;
 
-    Macros_ClearStatus(false);
+    // We may be applying factory configuration because we failed to apply User Configuration, therefore we don't want to rest the buffer.
+    // Macros_ClearStatus(false);
 
     ConfigManager_ResetConfiguration(false);
 
@@ -110,9 +113,9 @@ uint8_t UsbCommand_ApplyConfig(const uint8_t *GenericHidOutBuffer, uint8_t *Gene
     memcpy(oldKeymapAbbreviation, AllKeymaps[CurrentKeymapIndex].abbreviation, KEYMAP_ABBREVIATION_LENGTH);
     oldKeymapAbbreviationLen = AllKeymaps[CurrentKeymapIndex].abbreviationLen;
 
-    uint8_t *temp = ValidatedUserConfigBuffer.buffer;
-    ValidatedUserConfigBuffer.buffer = StagingUserConfigBuffer.buffer;
-    StagingUserConfigBuffer.buffer = temp;
+    config_buffer_t temp = ValidatedUserConfigBuffer;
+    ValidatedUserConfigBuffer = StagingUserConfigBuffer;
+    StagingUserConfigBuffer = temp;
 
     if (IsFactoryResetModeEnabled) {
         return UsbStatusCode_Success;

@@ -66,10 +66,10 @@ parser_error_t parseConfig(config_buffer_t *buffer)
     DataModelVersion.patch = ReadUInt16(buffer);
 
     if (VERSION_AT_LEAST(DataModelVersion, userConfigVersion.major, userConfigVersion.minor+1, 0)) {
-        ConfigParser_Error(
-            buffer, "Config version too new: %u.%u.%u (firmware: %u.%u.%u)",
+        Macros_ReportErrorPrintf(NULL,
+            "Config version too new: %u.%u.%u (firmware's userconfig: %u.%u.%u)\n",
             DataModelVersion.major, DataModelVersion.minor, DataModelVersion.patch,
-            firmwareVersion.major, firmwareVersion.minor, firmwareVersion.patch
+            userConfigVersion.major, userConfigVersion.minor, userConfigVersion.patch
         );
         #ifndef __ZEPHYR__
             SegmentDisplay_SetText(3, "DOW", SegmentDisplaySlot_Error);

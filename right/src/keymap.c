@@ -14,6 +14,7 @@
 #include "layer_stack.h"
 #include "debug.h"
 #include "slave_drivers/uhk_module_driver.h"
+#include "macros/status_buffer.h"
 
 #ifdef __ZEPHYR__
 #include "keyboard/oled/widgets/widget_store.h"
@@ -35,6 +36,9 @@ uint8_t CurrentKeymapIndex = 0;
 
 void SwitchKeymapById(uint8_t index, bool resetLayerStack)
 {
+    if (!ValidatedUserConfigBuffer.isValid) {
+        return;
+    }
     parse_config_t parseConfig = (parse_config_t) {
         .mode = ParserRunDry ? ParseKeymapMode_DryRun : ParseKeymapMode_FullRun
     };

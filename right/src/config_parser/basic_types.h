@@ -9,6 +9,7 @@
 // Typedefs:
 
     typedef struct {
+        bool isValid;
         uint8_t *buffer;
         uint16_t offset;
     } config_buffer_t;
