@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [14.0.2] - 2025-05-27
+
+Device Protocol: 4.15.0 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 11.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.4.1
+
+- Make the UHK 80 connect via USB after pressing the reset button instead of being in disconnected state.
+- Don't parse configurations of higher versions than what the firmware supports.
+
 ## [14.0.1] - 2025-05-21
 
 Device Protocol: 4.15.0 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 11.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.4.**1**
