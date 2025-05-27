@@ -81,3 +81,11 @@ jobs:
           S3_BUCKET: "uhk-build-archives"
           S3_KEY_PREFIX: "firmware/"
           S3_REGION: "eu-central-1"
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        if: github.ref_type == 'tag'
+        with:
+          draft: true
+          files: firmware/scripts/uhk-firmware-*.tar.gz
+          token: ${{ secrets.GITHUB_TOKEN }}
