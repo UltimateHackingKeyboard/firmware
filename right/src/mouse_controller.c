@@ -826,7 +826,7 @@ void MouseController_ProcessMouseActions()
             ENABLE_IRQ();
 
 #ifdef __ZEPHYR__
-            if (moduleState->moduleId == ModuleId_TrackpointRight) {
+            {
                 bool jumped = false;
                 jumped |= detectJumps(x, &ks->wasSmallX);
                 jumped |= detectJumps(y, &ks->wasSmallY);
