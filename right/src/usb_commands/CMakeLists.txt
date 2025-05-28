@@ -22,4 +22,5 @@ target_sources(${PROJECT_NAME} PRIVATE
     usb_command_set_variable.c
     usb_command_switch_keymap.c
     usb_command_write_config.c
+    usb_command_exec_shell_command.c
 )

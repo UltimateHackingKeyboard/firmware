@@ -21,5 +21,6 @@ extern shell_t Shell;
 // Functions:
 
 extern void InitShell(void);
+extern void Shell_Execute(const char *cmd);
 
 #endif // SHELL_H__
