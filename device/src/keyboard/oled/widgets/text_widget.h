@@ -22,7 +22,7 @@ typedef enum {
 
 // Functions:
 
-    void TextWidget_SetText(widget_t* self, char* text);
+    void TextWidget_SetText(widget_t* self, const char* text);
     widget_t TextWidget_Build(const lv_font_t* font, char* text);
     widget_t TextWidget_BuildRefreshable(const lv_font_t* font, string_segment_t (*textProvider)());
 

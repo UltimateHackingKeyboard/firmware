@@ -12,8 +12,7 @@ void UsbCommand_SwitchKeymap(const uint8_t *GenericHidOutBuffer, uint8_t *Generi
         SetUsbTxBufferUint8(0, UsbStatusCode_SwitchKeymap_InvalidAbbreviationLength);
     }
 
-    uint8_t res = SwitchKeymapByAbbreviation(keymapLength, keymapAbbrev);
-    LayerStack_Reset();
+    uint8_t res = SwitchKeymapByAbbreviation(keymapLength, keymapAbbrev, true);
 
     if (!res) {
         SetUsbTxBufferUint8(0, UsbStatusCode_SwitchKeymap_InvalidAbbreviation);

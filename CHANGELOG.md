@@ -5,6 +5,106 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [14.0.2] - 2025-05-27
+
+Device Protocol: 4.15.0 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 11.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.4.1
+
+- Make the UHK 80 connect via USB after pressing the reset button instead of being in disconnected state.
+- Don't parse configurations of higher versions than what the firmware supports.
+
+## [14.0.1] - 2025-05-21
+
+Device Protocol: 4.15.0 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 11.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.4.**1**
+
+- Fix BLE connection count bug introduced in firmware 14.0.0, which caused BLE connection issues.
+- Make UHK 80 mouse buttons work in UEFI BIOSes.
+- Map 100% battery charge to actual battery maximum voltage, and store the maximum voltage in settings.
+- Prevent firmware update issues due to boot loops caused by invalid bridge protocol commands of different firmware versions by delaying firmware startup by 5 seconds.
+- Fix UHK 60 wormhole memory region alignment bug introduced in firmware 14.0.0, so that the firmware and the bootloader can pass data between each other.
+- Fix `oneshot` macro command stickiness against the same key taps. `SMARTMACROS:PATCH`
+- Remove the 2 second sleep mode unlock interval.
+- Make battery percentage values more accurate.
+- Log debug traces on freezes.
+- List peripheral counts in the "uhk connections" Zephyr shell command.
+
+## [14.0.0] - 2025-05-05
+
+Device Protocol: 4.**15.0** | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: **11.0.0** | Hardware Config: 1.0.0 | Smart Macros: 3.**4.0**
+
+Fixes:
+- Fix UHK 80 USB power transitioning issues. The UHK 80 should now resume from sleep without reconnecting USB.
+- Fix variable interpolation when double quotes are not used on the UHK 80. `SMARTMACROS:PATCH`
+- Fix key chatter on the UHK 60 when letters are typed while mouse-keys are being used.
+- Fix warnings regarding the `switchHost` macro commands on the UHK 60. `SMARTMACROS:PATCH`
+- Fix "Invalid abbreviation length" produced when saving a configuration that removes currently active keymap.
+
+Battery management:
+- Make battery readings much more accurate and consistent.
+- Add power saving mode.
+- Disable key backlights and dim the OLED display in power saving mode.
+- Blink the battery percentages of the halves that are in power saving mode.
+- Implement battery health optimization mode for stationary use.
+- Implement proper sleep mode. S+F keys together wake up the left half, J+L keys together wake up the right half.
+- Change battery percentage indicator: use lightning icons instead of + signs to indicate battery charging.
+
+Configuration changes:
+- Add `set battery.chargeLimit { full | optimizeHealth }` macro variable. `SMARTMACROS:MINOR`
+- Add configuration settings for extending battery life and limiting key backlight during charging. `USERCONFIG:MAJOR`
+- Implement empty key action compression. This allows efficient storage of sparsely populated layers. `USERCONFIG:MAJOR`
+
+Logging changes:
+- Implement a Zephyr logging backend that forwards logs to Agent. `DEVICEPROTOCOL:MINOR`
+- Implement tracing mechanism to allow debugging UHK 60 crashes and freezes.
+- Dump UHK 80 crash logs into the status buffer.
+- Detect UHK 60 crashes and dump trace logs.
+- Make crash logs survive UHK reboots.
+
+Other features:
+- Implement the `setLedTxt` macro command on the UHK 80. `SMARTMACROS:PATCH`
+- Refactor `setLedTxt` syntax to allow managing UHK 80 text positions. `SMARTMACROS:MINOR`
+- Improve OLED text renderer, allowing better positioning.
+
+## [13.0.2] - 2025-04-08
+
+Device Protocol: 4.14.1 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 9.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.3.0
+
+- Fix BLE HID to BLE HID switchover.
+- Fix target getting stuck on "USB -> USB" connection transition when host connections are reordered.
+- Exit pairing mode screen when pairing is cancelled on the host.
+- Fix dongle connections. The UHK would not start advertising after scanning.
+- Fix BLE advertising icon. Namely, update the icon when scanning/advertising/Bluetooth is stopped.
+- Fix BLE advertising icon updates when Bluetooth is disabled.
+- Make `bluetooth noAdvertise` macro command disable `bluetooth.alwaysAdvertiseHid`.
+- Fix the `ifShortcut orGate` macro command. It wouldn't consume keys.
+- Fix the `ifShortcut anyOrder` macro command. It would trigger randomly.
+- Fix "Can't allocate variables" due to configuration shifts.
+
+## [13.0.1] - 2025-03-24
+
+Device Protocol: 4.14.1 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 9.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.3.0
+
+- Fix bug that broke the factory-pairing of the keyboard halves.
+
+## [13.0.0] - 2025-03-20
+
+Device Protocol: 4.14.1 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: **9.0.0** | Hardware Config: 1.0.0 | Smart Macros: 3.**3.0**
+
+- Parse device actions to easily switch between connections in Agent. `USERCONFIG:MAJOR`
+- Add `reboot` macro command, making standing bugs more bearable by allowing easily rebooting the keyboard. `SMARTMACROS:MINOR`
+- Indicate HID advertisement on the OLED display. HID hosts should be disconnected before pairing new devices.
+- Fix bug that sometimes made diagonal mouse key movements diverge from diagonal direction.
+- Update target OLED widget when the connection is selected, so it doesn't get stuck on the old target.
+- Check the dongle protocol version of the connected dongle and warn if it doesn't match the expected version.
+- Fix unwanted pairing screen that was shown for dongles that were bonded on the dongle side but not on the right side.
+- Disable gamepad USB interface by default.
+- Delete bonds when deleting device pairings.
+- Prevent simultaneous BLE HID connections until c2usb supports them.
+- Fix main loop freezes.
+- Add the `bluetooth [toggle] { pair | advertise | noAdvertise }` macro command, but they can cause connection oscillations for now. `SMARTMACROS:MINOR`
+- Expose the `bluetooth.alwaysAdvertiseHid` boolean variable. `SMARTMACROS:MINOR`
+- Expose the `bluetooth.peripheralConnectionCount` integer variable for development purposes. `SMARTMACROS:MINOR`
+- Always feature connection names in the Zephyr log.
+
 ## [12.4.0] - 2025-02-26
 
 Device Protocol: 4.14.1 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 8.3.0 | Hardware Config: 1.0.0 | Smart Macros: 3.**2.0**

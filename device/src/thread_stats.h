@@ -13,6 +13,8 @@
 
 // Variables:
 
+    extern bool ThreadStats_TraceSwitches;
+
 // Functions:
 
 #if DEBUG_THREAD_STATS

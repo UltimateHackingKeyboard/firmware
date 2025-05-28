@@ -1,6 +1,8 @@
 #include <math.h>
 #include "atomicity.h"
+#include "bt_defs.h"
 #include "event_scheduler.h"
+#include "host_connection.h"
 #include "key_action.h"
 #include "led_display.h"
 #include "layer.h"
@@ -48,6 +50,8 @@
 #include "keyboard/input_interceptor.h"
 #include "keyboard/charger.h"
 #include "logger.h"
+#include "trace.h"
+#include "bt_pair.h"
 #else
 #include "stubs.h"
 #endif
@@ -341,6 +345,44 @@ static void applyKeystroke(key_state_t *keyState, key_action_cached_t *cachedAct
     }
 }
 
+static void applyConnectionAction(connection_action_t command, uint8_t hostConnectionIdx)
+{
+#ifdef __ZEPHYR__
+    switch(command) {
+        case ConnectionAction_Last:
+            HostConnections_SelectLastConnection();
+            break;
+        case ConnectionAction_Next:
+            HostConnections_SelectNextConnection();
+            break;
+        case ConnectionAction_Previous:
+            HostConnections_SelectPreviousConnection();
+            break;
+        case ConnectionAction_SwitchByHostConnectionId:
+            HostConnections_SelectByHostConnIndex(hostConnectionIdx);
+            break;
+        case ConnectionAction_ToggleAdvertisement:
+            BtManager_EnterMode(PairingMode_Advertise, true);
+            break;
+        case ConnectionAction_TogglePairing:
+            BtManager_EnterMode(PairingMode_PairHid, true);
+            break;
+    }
+#endif
+}
+
+static void applyOtherAction(other_action_t actionSubtype)
+{
+    switch(actionSubtype) {
+        case OtherAction_Lock:
+            PowerMode_ActivateMode(PowerMode_Lock, false, false, "lock key action");
+            break;
+        case OtherAction_Sleep:
+            PowerMode_ActivateMode(PowerMode_SfjlSleep, false, false, "sleep key action");
+            break;
+    }
+}
+
 void ApplyKeyAction(key_state_t *keyState, key_action_cached_t *cachedAction, key_action_t *actionBase, usb_keyboard_reports_t* reports)
 {
     key_action_t* action = &cachedAction->action;
@@ -372,14 +414,23 @@ void ApplyKeyAction(key_state_t *keyState, key_action_cached_t *cachedAction, ke
         case KeyActionType_SwitchKeymap:
             if (KeyState_ActivatedNow(keyState)) {
                 resetStickyMods(cachedAction);
-                SwitchKeymapById(action->switchKeymap.keymapId);
-                LayerStack_Reset();
+                SwitchKeymapById(action->switchKeymap.keymapId, true);
             }
             break;
         case KeyActionType_PlayMacro:
             if (KeyState_ActivatedNow(keyState)) {
                 resetStickyMods(cachedAction);
-                Macros_StartMacro(action->playMacro.macroId, keyState, 255, true);
+                Macros_StartMacro(action->playMacro.macroId, keyState, keyState->timestamp, 255, true);
+            }
+            break;
+        case KeyActionType_Connections:
+            if (KeyState_ActivatedNow(keyState)) {
+                applyConnectionAction(action->connections.command, action->connections.hostConnectionId);
+            }
+            break;
+        case KeyActionType_Other:
+            if (KeyState_ActivatedNow(keyState)) {
+                applyOtherAction(action->other.actionSubtype);
             }
             break;
     }
@@ -469,24 +520,33 @@ static void commitKeyState(key_state_t *keyState, bool active)
 
 static inline void preprocessKeyState(key_state_t *keyState)
 {
+    uint32_t currentTime = CurrentTime;
     uint8_t debounceTime = keyState->previous ? Cfg.DebounceTimePress : Cfg.DebounceTimeRelease;
-    if (keyState->debouncing && (uint8_t)(CurrentTime - keyState->timestamp) >= debounceTime) {
+    if (keyState->debouncing && (uint8_t)(currentTime - keyState->timestamp) >= debounceTime) {
         keyState->debouncing = false;
     }
 
     // read just once! Otherwise the key might get stuck
     bool hardwareState = keyState->hardwareSwitchState;
     if (!keyState->debouncing && keyState->debouncedSwitchState != hardwareState) {
-        keyState->timestamp = CurrentTime;
+        if (keyState->timestamp == currentTime) {
+            keyState->timestamp = currentTime-1;
+        } else {
+            keyState->timestamp = currentTime;
+        }
         keyState->debouncing = true;
         keyState->debouncedSwitchState = hardwareState;
 
+        Trace_Printc("x1");
         commitKeyState(keyState, keyState->debouncedSwitchState);
+        Trace_Printc("x2");
     }
 
     if (keyState->debouncing) {
-        uint8_t timeSinceActivation = (uint8_t)(CurrentTime - keyState->timestamp);
-        EventScheduler_Schedule(CurrentTime + (debounceTime - timeSinceActivation), EventSchedulerEvent_NativeActions, "debouncing");
+        uint8_t timeSinceActivation = (uint8_t)(currentTime - keyState->timestamp);
+        Trace_Printc("x3");
+        EventScheduler_Schedule(currentTime + (debounceTime - timeSinceActivation), EventSchedulerEvent_NativeActions, "debouncing");
+        Trace_Printc("x4");
     }
 }
 
@@ -536,7 +596,9 @@ static void updateActionStates() {
     uint8_t previousMods = NativeKeyboardReports.basic.modifiers | NativeKeyboardReports.inputModifiers;
     UsbReportUpdater_ResetKeyboardReports(&NativeKeyboardReports);
 
+    Trace_Printc("w0");
     LayerSwitcher_ResetHolds();
+    Trace_Printc("w1");
 
     memcpy(ActiveMouseStates, ToggledMouseStates, ACTIVE_MOUSE_STATES_COUNT);
 
@@ -558,14 +620,18 @@ static void updateActionStates() {
             preprocessKeyState(keyState);
 
             if (KeyState_NonZero(keyState)) {
+                Trace_Printc("w2");
                 if (KeyState_ActivatedNow(keyState)) {
                     // cache action so that key's meaning remains the same as long
                     // as it is pressed
                     actionCache[slotId][keyId].modifierLayerMask = 0;
 
-                    if (CurrentPowerMode != PowerMode_Awake && CurrentPowerMode <= PowerMode_LightSleep) {
+                    if (CurrentPowerMode > PowerMode_LastAwake && CurrentPowerMode <= PowerMode_LightSleep) {
+                        Trace_Printf("y1.%d", CurrentPowerMode);
                         PowerMode_WakeHost();
-                        PowerMode_ActivateMode(PowerMode_Awake, false);
+                        Trace_Printc("y5");
+                        PowerMode_ActivateMode(PowerMode_Awake, false, false, "key pressed");
+                        Trace_Printc("y6");
                     }
 
                     if (Postponer_LastKeyLayer != 255 && PostponerCore_IsActive()) {
@@ -591,13 +657,16 @@ static void updateActionStates() {
                 cachedAction = &actionCache[slotId][keyId];
                 actionBase = &CurrentKeymap[LayerId_Base][slotId][keyId];
 
+                Trace_Printc("w3");
                 //apply base-layer holds
                 applyLayerHolds(keyState, actionBase);
+                Trace_Printc("w4");
 
                 //apply active-layer action
                 ApplyKeyAction(keyState, cachedAction, actionBase, &NativeKeyboardReports);
 
                 keyState->previous = keyState->current;
+                Trace_Printc("w5");
             }
         }
     }
@@ -605,7 +674,10 @@ static void updateActionStates() {
     if (currentMods != previousMods) {
         EventVector_Set(EventVector_SendUsbReports);
     }
+    Trace_Printc("w6");
 }
+
+bool Resending = false;
 
 static void updateActiveUsbReports(void)
 {
@@ -616,12 +688,14 @@ static void updateActiveUsbReports(void)
     PostponerCore_UpdatePostponedTime();
 
     if (EventVector_IsSet(EventVector_MacroEngine)) {
+        Trace_Printc("v1");
         EVENTLOOP_TIMING(EventloopTiming_WatchReset());
         Macros_ContinueMacro();
         EVENTLOOP_TIMING(EventloopTiming_Watch("macros"));
     }
 
     if (EventVector_IsSet(EventVector_LayerHolds)) {
+        Trace_Printc("v2");
         handleLayerChanges();
     }
 
@@ -633,18 +707,22 @@ static void updateActiveUsbReports(void)
     PostponerCore_RunPostponedEvents();
 
     if (EventVector_IsSet(EventVector_NativeActions | EventVector_StateMatrix)) {
+        Trace_Printc("v3");
         EVENTLOOP_TIMING(EventloopTiming_WatchReset());
         updateActionStates();
         EVENTLOOP_TIMING(EventloopTiming_Watch("action state update"));
+        Trace_Printc("ve3");
     }
 
     if (EventVector_IsSet(EventVector_MouseKeys)) {
+        Trace_Printc("v4");
         EVENTLOOP_TIMING(EventloopTiming_WatchReset());
         MouseKeys_ProcessMouseActions();
         EVENTLOOP_TIMING(EventloopTiming_Watch("mouse keys"));
     }
 
     if (EventVector_IsSet(EventVector_MouseController)) {
+        Trace_Printc("v5");
         MouseController_ProcessMouseActions();
     }
 
@@ -671,14 +749,14 @@ uint32_t UsbReportUpdateCounter;
 uint32_t UpdateUsbReports_LastUpdateTime = 0;
 uint32_t lastBasicReportTime = 0;
 
-static void sendActiveReports() {
+static void sendActiveReports(bool resending) {
     bool usbReportsChangedByAction = false;
     bool usbReportsChangedByAnything = false;
 
     // in case of usb error, this gets set back again
     EventVector_Unset(EventVector_SendUsbReports | EventVector_ResendUsbReports);
 
-    if (UsbBasicKeyboardCheckReportReady() == kStatus_USB_Success) {
+    if (UsbBasicKeyboardCheckReportReady(resending) == kStatus_USB_Success) {
 #ifdef __ZEPHYR__
         if (InputInterceptor_RegisterReport(ActiveUsbBasicKeyboardReport)) {
             SwitchActiveUsbBasicKeyboardReport();
@@ -704,7 +782,7 @@ static void sendActiveReports() {
     }
 
 #ifdef __ZEPHYR__
-    if (UsbMediaKeyboardCheckReportReady() == kStatus_USB_Success || UsbSystemKeyboardCheckReportReady() == kStatus_USB_Success) {
+    if (UsbMediaKeyboardCheckReportReady(resending) == kStatus_USB_Success || UsbSystemKeyboardCheckReportReady(resending) == kStatus_USB_Success) {
         UsbCompatibility_SendConsumerReport(ActiveUsbMediaKeyboardReport, ActiveUsbSystemKeyboardReport);
         SwitchActiveUsbMediaKeyboardReport();
         SwitchActiveUsbSystemKeyboardReport();
@@ -713,25 +791,15 @@ static void sendActiveReports() {
         usbReportsChangedByAnything = true;
     }
 #else
-    if (UsbMediaKeyboardCheckReportReady() == kStatus_USB_Success) {
-        UsbReportUpdateSemaphore |= 1 << USB_MEDIA_KEYBOARD_INTERFACE_INDEX;
-        usb_status_t status = UsbMediaKeyboardAction();
-        if (status != kStatus_USB_Success) {
-            UsbReportUpdateSemaphore &= ~(1 << USB_MEDIA_KEYBOARD_INTERFACE_INDEX);
-            EventVector_Set(EventVector_ResendUsbReports);
-        }
+    if (UsbMediaKeyboardCheckReportReady(resending) == kStatus_USB_Success) {
+        UsbMediaKeyboardSendActiveReport();
         UsbReportUpdater_LastActivityTime = CurrentTime;
         usbReportsChangedByAction = true;
         usbReportsChangedByAnything = true;
     }
 
-    if (UsbSystemKeyboardCheckReportReady() == kStatus_USB_Success) {
-        UsbReportUpdateSemaphore |= 1 << USB_SYSTEM_KEYBOARD_INTERFACE_INDEX;
-        usb_status_t status = UsbSystemKeyboardAction();
-        if (status != kStatus_USB_Success) {
-            UsbReportUpdateSemaphore &= ~(1 << USB_SYSTEM_KEYBOARD_INTERFACE_INDEX);
-            EventVector_Set(EventVector_ResendUsbReports);
-        }
+    if (UsbSystemKeyboardCheckReportReady(resending) == kStatus_USB_Success) {
+        UsbSystemKeyboardSendActiveReport();
         UsbReportUpdater_LastActivityTime = CurrentTime;
         usbReportsChangedByAction = true;
         usbReportsChangedByAnything = true;
@@ -739,7 +807,9 @@ static void sendActiveReports() {
 #endif
 
     bool usbMouseButtonsChanged = false;
-    if (UsbMouseCheckReportReady(&usbMouseButtonsChanged) == kStatus_USB_Success) {
+    if (UsbMouseCheckReportReady(resending, &usbMouseButtonsChanged) == kStatus_USB_Success) {
+        // Macros_Printf("sm\n");
+
         UsbMouseSendActiveReport();
         UsbReportUpdater_LastActivityTime = CurrentTime;
         usbReportsChangedByAction |= usbMouseButtonsChanged;
@@ -781,6 +851,7 @@ static bool blockedByKeystrokeDelay() {
 
 void UpdateUsbReports(void)
 {
+    Trace_Printc("u1");
     if (blockedByKeystrokeDelay()) {
         return;
     }
@@ -792,20 +863,35 @@ void UpdateUsbReports(void)
     UpdateUsbReports_LastUpdateTime = CurrentTime;
     UsbReportUpdateCounter++;
 
-    if (!EventVector_IsSet(EventVector_ResendUsbReports)) {
+    bool resending = EventVector_IsSet(EventVector_ResendUsbReports);
+    Resending = resending;
+
+    if (!resending) {
+        Trace_Printc("u2");
         updateActiveUsbReports();
     }
 
-    if (EventVector_IsSet(EventVector_SendUsbReports | EventVector_ResendUsbReports)) {
-        if (CurrentPowerMode < PowerMode_DeepSleep) {
-            mergeReports();
-            sendActiveReports();
+    bool sendingNew = EventVector_IsSet(EventVector_SendUsbReports);
+
+    if (resending || sendingNew) {
+        if (CurrentPowerMode < PowerMode_Lock) {
+            if (!resending) {
+                Trace_Printc("u3");
+                mergeReports();
+            }
+
+            Trace_Printc("u6");
+            sendActiveReports(resending);
         } else {
             EventVector_Unset(EventVector_SendUsbReports | EventVector_ResendUsbReports);
         }
     }
 
+    Trace_Printc("u7");
+
     if (DisplaySleepModeActive || KeyBacklightSleepModeActive) {
         LedManager_UpdateSleepModes();
     }
+
+    Trace_Printc("u8");
 }

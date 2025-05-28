@@ -8,7 +8,13 @@
 #include "dongle_leds.h"
 #include "stubs.h"
 
+#if DEVICE_IS_KEYBOARD
+#include "keyboard/battery_manager.h"
+#endif
+
 bool RightAddressIsSet = false;
+
+uint16_t Settings_MaxVoltage = 0;
 
 static void setRightAddressIsSet(bool isSet) {
     if (RightAddressIsSet != isSet) {
@@ -42,15 +48,31 @@ static int peerAddressSet(const char *name, size_t len, settings_read_cb read_cb
     return 0;
 }
 
+static int other(const char *name, size_t len, settings_read_cb read_cb, void *cb_arg) {
+    if (strcmp(name, "maxVoltage") == 0) {
+#if DEVICE_IS_KEYBOARD
+        read_cb(cb_arg, &Settings_MaxVoltage, sizeof(Settings_MaxVoltage));
+        BatteryManager_SetMaxCharge(Settings_MaxVoltage);
+#endif
+    }
+    return 0;
+}
+
 struct settings_handler settingsHandler = {
     .name = "uhk/addr",
     .h_set = peerAddressSet,
+};
+
+struct settings_handler otherHandler = {
+    .name = "uhk/other",
+    .h_set = other,
 };
 
 void InitSettings(void) {
     DongleLeds_Update();
     settings_subsys_init();
     settings_register(&settingsHandler);
+    settings_register(&otherHandler);
     settings_load();
 }
 

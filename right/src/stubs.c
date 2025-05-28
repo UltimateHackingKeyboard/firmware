@@ -4,6 +4,7 @@
 
     ATTRS bool SegmentDisplay_NeedsUpdate = false;
     ATTRS bool RunningOnBattery = false;
+    ATTRS bool BatteryIsCharging = false;
     ATTRS bool RightRunningOnBattery = false;
     ATTRS void Oled_UpdateBrightness() {};
     ATTRS void Oled_ShiftScreen() {};
@@ -30,3 +31,10 @@
     ATTRS void Resend_RequestResendSync() {};
     ATTRS void PairingScreen_Feedback(bool success) {};
     ATTRS void StateSync_CheckFirmwareVersions() {};
+    ATTRS void StateSync_CheckDongleProtocolVersion() {};
+    ATTRS void Trace(char a) {};
+    ATTRS void Trace_Printc(const char* s) {};
+    ATTRS void Trace_Printf(const char *fmt, ...) {};
+    ATTRS void PowerMode_PutBackToSleepMaybe(void) {};
+    ATTRS void BtAdvertise_DisableAdvertisingIcon(void) {};
+    ATTRS void NotificationScreen_NotifyFor(const char* message, uint16_t duration) {};

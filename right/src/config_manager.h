@@ -13,6 +13,13 @@
 
 // Typedefs:
 
+    typedef enum {
+        UiStyle_Classic,
+        UiStyle_Alternative,
+    } ui_style_t;
+
+    extern ui_style_t UiStyle;
+
     typedef struct {
         // modules
         module_configuration_t ModuleConfigurations[ModuleId_RealModuleCount];
@@ -58,6 +65,7 @@
         uint8_t DisplayBrightnessBatteryDefault;
         uint8_t KeyBacklightBrightnessDefault;
         uint8_t KeyBacklightBrightnessBatteryDefault;
+        uint8_t KeyBacklightBrightnessChargingPercent;
 
         uint32_t DisplayFadeOutTimeout;
         uint32_t DisplayFadeOutBatteryTimeout;
@@ -66,6 +74,9 @@
 
         bool LedsEnabled;
         bool LedsAlwaysOn;
+
+        // battery
+        bool BatteryStationaryMode;
 
         // layers
         layer_config_t LayerConfig[LayerId_Count];
@@ -82,6 +93,9 @@
         uint32_t I2cBaudRate;
         bool Bt_AllowUnsecuredConnections;
         bool Bt_Enabled;
+        bool Bt_AlwaysAdvertiseHid;
+        uint8_t Bt_MaxPeripheralConnections;
+        ui_style_t UiStyle;
     } config_t;
 
 // Variables:

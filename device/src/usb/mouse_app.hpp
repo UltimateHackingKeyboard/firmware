@@ -43,7 +43,8 @@ class mouse_app : public app_base {
                 usage(generic_desktop::POINTER),
                 collection::physical(
                     // buttons
-                    usage_extended_limits(button(1), LAST_BUTTON),
+                    usage_page<button>(),
+                    usage_limits(button(1), LAST_BUTTON),
                     logical_limits<1, 1>(0, 1),
                     report_count(static_cast<uint8_t>(LAST_BUTTON)),
                     report_size(1),
@@ -51,6 +52,7 @@ class mouse_app : public app_base {
                     input::byte_padding<static_cast<uint8_t>(LAST_BUTTON)>(),
 
                     // relative X,Y directions
+                    usage_page<generic_desktop>(),
                     usage(generic_desktop::X),
                     usage(generic_desktop::Y),
                     logical_limits<(AXIS_LIMIT > std::numeric_limits<int8_t>::max() ? 2 : 1)>(-AXIS_LIMIT, AXIS_LIMIT),

@@ -53,14 +53,6 @@ if BOARD_UHK_80_RIGHT
             default 0x8009
     endif # BT_DIS && BT_DIS_PNP
 
-    if BT
-        # uhk-80-right is NUS server AND client, and HID server
-        config BT_MAX_CONN
-            default 3
-        # use different connection parameters for HID clients and dongle
-        config BT_GAP_AUTO_UPDATE_CONN_PARAMS
-            default n
-    endif # BT
 endif # BOARD_UHK_80_RIGHT
 
 if BOARD_UHK_DONGLE
@@ -75,6 +67,16 @@ if BOARD_UHK_DONGLE
 endif # BOARD_UHK_DONGLE
 
 if BT
+    # uhk-80-right is NUS server AND client, and HID server
+    config BT_MAX_CONN
+        default 4 if BOARD_UHK_80_RIGHT
+        default 2
+    config BT_CTLR_SDC_PERIPHERAL_COUNT
+        default 3 if BOARD_UHK_80_RIGHT
+        default 1
+    # use different connection parameters for HID clients and dongle
+    config BT_GAP_AUTO_UPDATE_CONN_PARAMS
+        default n if BOARD_UHK_80_RIGHT
     config BT_DEVICE_NAME
         default "UHK 80" if BOARD_UHK_80_LEFT || BOARD_UHK_80_RIGHT
     config BT_DEVICE_APPEARANCE

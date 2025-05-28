@@ -106,6 +106,9 @@ static void processEvt(event_scheduler_event_t evt)
         case EventSchedulerEvent_PowerMode:
             PowerMode_Update();
             break;
+        case EventSchedulerEvent_PowerModeRestart:
+            PowerMode_Restart();
+            break;
         case EventSchedulerEvent_EndBtPairing:
             BtPair_EndPairing(false, "Pairing timeout");
             break;
@@ -134,6 +137,15 @@ static void processEvt(event_scheduler_event_t evt)
             break;
         case EventSchedulerEvent_CheckFwChecksums:
             StateSync_CheckFirmwareVersions();
+            break;
+        case EventSchedulerEvent_CheckDongleProtocolVersion:
+            StateSync_CheckDongleProtocolVersion();
+            break;
+        case EventSchedulerEvent_PutBackToShutDown:
+            PowerMode_PutBackToSleepMaybe();
+            break;
+        case EventSchedulerEvent_BlinkBatteryIcon:
+            WIDGET_REFRESH(&StatusWidget);
             break;
         default:
             return;

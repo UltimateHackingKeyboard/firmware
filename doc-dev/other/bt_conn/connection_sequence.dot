@@ -1,0 +1,169 @@
+digraph ConnectionInitiation {
+    // Horizontal layout (left to right)
+    // rankdir=LR;
+    // Vertical layout (top to bottom)
+    rankdir=TB;
+    
+    // Connection establishment nodes
+    Connected [shape=box, label="connected()"];
+    GetConnId [shape=box, label="Connections_GetConnectionIdByHostAddr()"];
+    KnownConn [shape=box, label="Known Connection"];
+    UnknownConn [shape=box, label="Unknown Connection"];
+    
+    // Unknown Connection Flow
+    ConnectUnknown [shape=box, label="connectUnknown()"];
+    GattDiscover [shape=box, label="bt_gatt_discover()"];
+    DiscoverFunc [shape=box, label="discover_func()"];
+    DisconnectUnwantedNus [shape=box, label="bt_conn_disconnect(BT_HCI_ERR_REMOTE_USER_TERM_CONN)"];
+    WaitForPairing [shape=box, label="Wait for remote to ask for pairing", style=dotted];
+    
+    // Pairing initiation
+    RemoteInitiatesPairing [shape=box, style=dotted, label="Remote device initiates pairing"];
+    
+    // Known Connection Flow
+    IsWanted [shape=box, label="isWanted()"];
+    SetSecurity [shape=box, label="bt_conn_set_security(BT_SECURITY_L4)"];
+    DisconnectUnwanted [shape=box, label="bt_conn_disconnect(BT_HCI_ERR_REMOTE_USER_TERM_CONN)"];
+    
+    // Security and authentication
+    SecurityChanged [shape=box, label="securityChanged()"];
+    CancelAuthLowSecurity [shape=box, label="bt_conn_auth_cancel()\n(insufficient security)"];
+    SkipAuthConn [shape=box, label="Skip if conn == auth_conn"];
+    ConnectAuthenticated [shape=box, label="connectAuthenticatedConnection()"];
+    
+    // Authentication callbacks
+    AuthPasskeyEntry [shape=box, label="auth_passkey_entry()"];
+    SetAuthConn [shape=box, label="auth_conn = conn"];
+    CancelAuthUhkPeer [shape=box, label="bt_conn_auth_cancel()\n(UHK peer)"];
+    AskForPassword [shape=box, label="PairingScreen_AskForPassword()"];
+    BtPairPasskey [shape=box, label="BtPair_Passkey()"];
+    PasskeyEntry [shape=box, label="bt_conn_auth_passkey_entry()"];
+    RejectPasskey [shape=box, label="bt_conn_auth_cancel()\n(user rejected)"];
+    
+    // Pairing completion with branching
+    PairingComplete [shape=box, label="pairing_complete()"];
+    OobPairing [shape=box, label="OOB Pairing Case\n(BtPair_OobPairingInProgress)"];
+    KnownBleHid [shape=box, label="Known BLE HID Connection\n"];
+    NewBleHid [shape=box, label="New BLE HID Connection\n"];
+    AuthConnNull [shape=box, label="auth_conn = NULL"];
+    AssignIdentityNewHid [shape=box, label="Assign identity to new BLE HID connection slot"];
+    DisconnectOobDevice [shape=box, label="Disconnect OOB device"];
+    
+    // Authenticated connection handling
+    IsWantedAuth [shape=box, label="isWanted()"];
+    DisconnectUnwantedAuth [shape=box, label="bt_conn_disconnect(BT_HCI_ERR_REMOTE_USER_TERM_CONN)"];
+    ConnTypeSwitch [shape=box, label="ConnectionType Switch"];
+    ConnectNus [shape=box, label="connectNus()"];
+    ConnectHid [shape=box, label="connectHid()"];
+    DisconnectUnknownType [shape=box, label="bt_conn_disconnect(BT_HCI_ERR_AUTH_FAIL)"];
+    
+    // NUS connection
+    AssignPeerNus [shape=box, label="assignPeer()"];
+    ConfigureLatencyNus [shape=box, label="configureLatency(LatencyMode_NUS)"];
+    EnableDLE [shape=box, label="enableDataLengthExtension()"];
+    NusClientConnect [shape=box, label="NusClient_Connect()"];
+    
+    // NUS Client/Server state handling
+    ClientDiscoverServices [shape=box, label="Client discovers NUS services"];
+    ClientSubscribeToNus [shape=box, label="Client subscribes to NUS notifications"];
+    ClientSendsFirstMessage [shape=box, label="Client sends first message"];
+    ServerWaitsForMessage [shape=box, style=dotted, label="Server waits for first message"];
+    ServerProcessesMessage [shape=box, label="Server processes first message"];
+    ServerSetStateReady [shape=box, label="Server: Connections_SetState(ConnectionState_Ready)"];
+    ClientSetStateReady [shape=box, label="Client: Connections_SetState(ConnectionState_Ready)"];
+    
+    // HID connection
+    AssignPeerHid [shape=box, label="assignPeer()"];
+    ConfigureLatencyHid [shape=box, label="configureLatency(LatencyMode_BleHid)"];
+    SetStateReady [shape=box, label="Connections_SetState(ConnectionState_Ready)"];
+    
+    // Peer assignment
+    SetStateConnected [shape=box, label="Connections_SetState(ConnectionState_Connected)"];
+    
+    // Add edges - temporal sequence
+    Connected -> GetConnId;
+    GetConnId -> KnownConn [label="connectionId != Invalid"];
+    GetConnId -> UnknownConn [label="connectionId == Invalid"];
+    
+    // Unknown Connection Flow - with waiting node
+    UnknownConn -> ConnectUnknown;
+    ConnectUnknown -> GattDiscover [label="Start service discovery"];
+    GattDiscover -> DiscoverFunc;
+    DiscoverFunc -> DisconnectUnwantedNus [label="If NUS service found\n(unwanted NUS)"];
+    DiscoverFunc -> WaitForPairing;
+    
+    // Remote initiates pairing (separate flow)
+    RemoteInitiatesPairing -> AuthPasskeyEntry;
+    
+    // Known Connection Flow
+    KnownConn -> IsWanted;
+    IsWanted -> SetSecurity [label="if wanted"];
+    IsWanted -> DisconnectUnwanted [label="if unwanted"];
+    
+    // Security and authentication
+    SetSecurity -> SecurityChanged;
+    SecurityChanged -> CancelAuthLowSecurity [label="if err || level < L4"];
+    SecurityChanged -> SkipAuthConn [label="if conn == auth_conn"];
+    SecurityChanged -> ConnectAuthenticated [label="if secured"];
+    
+    // Authentication callbacks
+    AuthPasskeyEntry -> SetAuthConn;
+    AuthPasskeyEntry -> CancelAuthUhkPeer [label="if UHK peer"];
+    AuthPasskeyEntry -> AskForPassword [label="other device"];
+    AskForPassword -> BtPairPasskey;
+    BtPairPasskey -> PasskeyEntry [label="if accepted"];
+    BtPairPasskey -> RejectPasskey [label="if rejected"];
+    
+    // Expanded pairing completion flow with branching
+    PasskeyEntry -> PairingComplete [label="on success"];
+    PairingComplete -> OobPairing [label="if BtPair_OobPairingInProgress"];
+    PairingComplete -> KnownBleHid [label="if bonded && !OOB"];
+    PairingComplete -> NewBleHid [label="if !bonded && !OOB"];
+    
+    // OOB Pairing path
+    OobPairing -> DisconnectOobDevice;
+    OobPairing -> AuthConnNull;
+    
+    // Known BLE HID path
+    KnownBleHid -> AuthConnNull;
+    
+    // New BLE HID path
+    NewBleHid -> AssignIdentityNewHid;
+    NewBleHid -> AuthConnNull;
+    
+    // All paths lead to security changed, except OOB which is disconnected
+    KnownBleHid -> SecurityChanged [label="triggers security change"];
+    NewBleHid -> SecurityChanged [label="triggers security change"];
+    
+    // Authenticated connection handling
+    ConnectAuthenticated -> IsWantedAuth;
+    IsWantedAuth -> DisconnectUnwantedAuth [label="if unwanted"];
+    IsWantedAuth -> ConnTypeSwitch [label="if wanted"];
+    ConnTypeSwitch -> ConnectNus [label="if NUS type (server or client)"];
+    ConnTypeSwitch -> ConnectHid [label="if BLE HID"];
+    ConnTypeSwitch -> DisconnectUnknownType [label="if unknown"];
+    
+    // NUS connection - temporal sequence with detailed client/server handling
+    ConnectNus -> AssignPeerNus;
+    AssignPeerNus -> ConfigureLatencyNus;
+    ConfigureLatencyNus -> EnableDLE;
+    EnableDLE -> NusClientConnect [label="if NUS Client"];
+    
+    // NUS Client path
+    NusClientConnect -> ClientDiscoverServices;
+    ClientDiscoverServices -> ClientSubscribeToNus;
+    ClientSubscribeToNus -> ClientSendsFirstMessage;
+    ClientSendsFirstMessage -> ClientSetStateReady;
+    
+    // NUS Server path
+    SetStateConnected -> ServerWaitsForMessage [label="if NUS Server"];
+    ServerWaitsForMessage -> ServerProcessesMessage;
+    ServerProcessesMessage -> ServerSetStateReady;
+    
+    // HID connection - temporal sequence
+    ConnectHid -> AssignPeerHid;
+    AssignPeerHid -> ConfigureLatencyHid;
+    ConfigureLatencyHid -> SetStateReady;
+    AssignPeerHid -> SetStateConnected;
+    
+} 

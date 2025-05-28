@@ -63,9 +63,11 @@
 
     void HostConnections_ListKnownBleConnections();
 
-    void HostConnections_SelectById(uint8_t connectionId);
+    void HostConnections_SelectByHostConnIndex(uint8_t connectionId);
+    void HostConnections_SelectLastConnection(void);
     void HostConnections_SelectNextConnection(void);
     void HostConnections_SelectPreviousConnection(void);
     void HostConnections_SelectByName(parser_context_t* ctx);
+    void HostConnection_SetSelectedConnection(uint8_t connectionId);
 
 #endif

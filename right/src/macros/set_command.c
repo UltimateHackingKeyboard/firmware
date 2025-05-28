@@ -36,8 +36,13 @@
 #ifdef __ZEPHYR__
 #include "state_sync.h"
 #include "bt_conn.h"
+#include "bt_manager.h"
 #else
 #include "init_peripherals.h"
+#endif
+
+#if DEVICE_HAS_OLED
+#include "keyboard/oled/oled.h"
 #endif
 
 typedef enum {
@@ -332,7 +337,7 @@ static macro_variable_t allowUnsecuredConnections(parser_context_t* ctx, set_com
 {
     ASSIGN_BOOL(Cfg.Bt_AllowUnsecuredConnections);
     if (Cfg.Bt_AllowUnsecuredConnections) {
-        Macros_ReportPrintf(ctx->at, "Warning: insecure connections were allowed. This may allow eavesdropping on your keyboard input!");
+        Macros_PrintfWithPos(ctx->at, "Warning: insecure connections were allowed. This may allow eavesdropping on your keyboard input!");
     }
 
     return noneVar();
@@ -348,8 +353,20 @@ static macro_variable_t bluetooth(parser_context_t* ctx, set_command_action_t ac
 #endif
     } else if (ConsumeToken(ctx, "allowUnsecuredConnections")) {
         return allowUnsecuredConnections(ctx, action);
-    }
-    else {
+    } else if (ConsumeToken(ctx, "peripheralConnectionCount")) {
+#ifdef __ZEPHYR__
+        DEFINE_INT_LIMITS(1, PERIPHERAL_CONNECTION_COUNT);
+#else
+        DEFINE_INT_LIMITS(1, 1);
+#endif
+        ASSIGN_INT(Cfg.Bt_MaxPeripheralConnections);
+    } else if (ConsumeToken(ctx, "alwaysAdvertiseHid")) {
+        ASSIGN_BOOL(Cfg.Bt_AlwaysAdvertiseHid);
+#if DEVICE_IS_UHK80_RIGHT
+        BtManager_EnterMode(PairingMode_Default, false);
+        BtManager_StartScanningAndAdvertisingAsync("StartScanningAndAdvertisingAsync in set_command - alwaysAdvertiseHid changed");
+#endif
+    } else {
         Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
     }
     return noneVar();
@@ -463,6 +480,9 @@ static macro_variable_t backlightStrategy(parser_context_t* ctx, set_command_act
     }
     else if (ConsumeToken(ctx, "constantRgb")) {
         res = BacklightingMode_ConstantRGB;
+    }
+    else if (ConsumeToken(ctx, "off")) {
+        res = BacklightingMode_LightNone;
     }
     else if (ConsumeToken(ctx, "perKeyRgb")) {
         if (PerKeyRgbPresent) {
@@ -605,6 +625,46 @@ static macro_variable_t leds(parser_context_t* ctx, set_command_action_t action)
     }
 
     EventVector_Set(EventVector_LedManagerFullUpdateNeeded);
+    return noneVar();
+}
+
+static macro_variable_t chargeLimit(parser_context_t* ctx, set_command_action_t action) {
+    if (action == SetCommandAction_Read) {
+        return boolVar(Cfg.BatteryStationaryMode);
+    }
+
+    bool res = Cfg.BatteryStationaryMode;
+    if (ConsumeToken(ctx, "full")) {
+        res = false;
+    }
+    else if (ConsumeToken(ctx, "optimizeHealth")) {
+        res = true;
+    }
+    else {
+        Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
+    }
+
+    if (Macros_ParserError || Macros_DryRun) {
+        return noneVar();
+    }
+
+    Cfg.BatteryStationaryMode = res;
+
+#if defined(__ZEPHYR__) && DEVICE_IS_KEYBOARD
+        StateSync_UpdateProperty(StateSyncPropertyId_BatteryStationaryMode, &Cfg.BatteryStationaryMode);
+#endif
+    return noneVar();
+}
+
+static macro_variable_t battery(parser_context_t* ctx, set_command_action_t action)
+{
+    if (ConsumeToken(ctx, "chargeLimit")) {
+        return chargeLimit(ctx, action);
+    }
+    else {
+        Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
+    }
+
     return noneVar();
 }
 
@@ -819,6 +879,39 @@ static macro_variable_t modLayerTriggers(parser_context_t* ctx, set_command_acti
     return noneVar();
 }
 
+static macro_variable_t uiStyle(parser_context_t* ctx, set_command_action_t action) {
+    if (action == SetCommandAction_Read) {
+        return intVar(Cfg.UiStyle);
+    }
+
+    ui_style_t res = 0;
+
+    if (ConsumeToken(ctx, "classic")) {
+        res = UiStyle_Classic;
+    }
+    else if (ConsumeToken(ctx, "alternative")) {
+        res = UiStyle_Alternative;
+    }
+    else {
+        Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
+    }
+
+    if (Macros_ParserError) {
+        return noneVar();
+    }
+    if (Macros_DryRun) {
+        return noneVar();
+    }
+
+    Cfg.UiStyle = res;
+
+    #if DEVICE_HAS_OLED
+    // force full redraw of current screen
+    Oled_ForceRender();
+    #endif
+    return noneVar();
+}
+
 
 static macro_variable_t root(parser_context_t* ctx, set_command_action_t action)
 {
@@ -853,6 +946,10 @@ static macro_variable_t root(parser_context_t* ctx, set_command_action_t action)
     else if (ConsumeToken(ctx, "backlight")) {
         ConsumeUntilDot(ctx);
         return backlight(ctx, action);
+    }
+    else if (ConsumeToken(ctx, "battery")) {
+        ConsumeUntilDot(ctx);
+        return battery(ctx, action);
     }
     else if (ConsumeToken(ctx, "leds")) {
         ConsumeUntilDot(ctx);
@@ -909,6 +1006,9 @@ static macro_variable_t root(parser_context_t* ctx, set_command_action_t action)
     }
     else if (ConsumeToken(ctx, "allowUnsecuredConnections")) {
         return allowUnsecuredConnections(ctx, action);
+    }
+    else if (ConsumeToken(ctx, "uiStyle")) {
+        return uiStyle(ctx, action);
     }
 #ifndef __ZEPHYR__
     else if (ConsumeToken(ctx, "i2cBaudRate")) {

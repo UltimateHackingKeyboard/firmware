@@ -11,8 +11,10 @@
 #include "macros/core.h"
 #include "macro_events.h"
 #include "segment_display.h"
+#include "layer_stack.h"
 #include "debug.h"
 #include "slave_drivers/uhk_module_driver.h"
+#include "macros/status_buffer.h"
 
 #ifdef __ZEPHYR__
 #include "keyboard/oled/widgets/widget_store.h"
@@ -32,8 +34,11 @@ uint8_t AllKeymapsCount;
 uint8_t DefaultKeymapIndex;
 uint8_t CurrentKeymapIndex = 0;
 
-void SwitchKeymapById(uint8_t index)
+void SwitchKeymapById(uint8_t index, bool resetLayerStack)
 {
+    if (!ValidatedUserConfigBuffer.isValid) {
+        return;
+    }
     parse_config_t parseConfig = (parse_config_t) {
         .mode = ParserRunDry ? ParseKeymapMode_DryRun : ParseKeymapMode_FullRun
     };
@@ -50,6 +55,9 @@ void SwitchKeymapById(uint8_t index)
         MacroEvent_OnKeymapChange(index);
         MacroEvent_OnLayerChange(ActiveLayer);
     }
+    if (resetLayerStack) {
+        LayerStack_Reset();
+    }
     EventVector_Set(EventVector_LedMapUpdateNeeded);
     EventVector_Unset(EventVector_KeymapReloadNeeded);
 }
@@ -64,12 +72,12 @@ uint8_t FindKeymapByAbbreviation(uint8_t length, const char *abbrev) {
     return 0xFF;
 }
 
-bool SwitchKeymapByAbbreviation(uint8_t length, const char *abbrev)
+bool SwitchKeymapByAbbreviation(uint8_t length, const char *abbrev, bool resetLayerStack)
 {
     uint8_t keymapId = FindKeymapByAbbreviation(length, abbrev);
 
     if (keymapId != 0xFF) {
-        SwitchKeymapById(keymapId);
+        SwitchKeymapById(keymapId, resetLayerStack);
         return true;
     } else {
         return false;

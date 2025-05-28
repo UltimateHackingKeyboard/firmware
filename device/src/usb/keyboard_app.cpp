@@ -85,12 +85,12 @@ void keyboard_app::set_report_state(const keys_nkro_report_base<> &data)
     if (!active()) {
         return;
     }
-    Trace_Printf("s1");
+    Trace_Printc("s1");
     if (!sending_sem_.try_acquire_for(SEMAPHORE_RESET_TIMEOUT)) {
-        Trace_Printf("r1");
+        Trace_Printc("r1");
         //return;
     }
-    auto result = hid::result::INVALID;
+    hid::result result = hid::result::invalid_argument;
     if (!using_nkro()) {
         if (prot_ == hid::protocol::BOOT) {
             auto &keys_6kro = keys_.boot;
@@ -122,7 +122,7 @@ void keyboard_app::set_report_state(const keys_nkro_report_base<> &data)
         keys_nkro.scancodes = data.scancodes;
 
         result = send_report(&keys_.nkro);
-        if (result == hid::result::NO_MEMORY) {
+        if (result == hid::result::not_enough_memory) {
             printk("keyboard NKRO mode fails, falling back to 6KRO\n");
 
             // save key state
@@ -144,10 +144,10 @@ void keyboard_app::set_report_state(const keys_nkro_report_base<> &data)
             result = send_report(&keys_.sixkro);
         }
     }
-    if (result != hid::result::OK) {
+    if (result != hid::result::ok) {
         sending_sem_.release();
     }
-    Trace_Printf("r1");
+    Trace_Printc("r1");
 }
 
 void keyboard_app::set_report(hid::report::type type, const std::span<const uint8_t> &data)

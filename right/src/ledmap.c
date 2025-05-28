@@ -505,6 +505,10 @@ static rgb_t* determineFunctionalRgb(key_action_t* keyAction) {
         case KeyActionType_PlayMacro:
             keyActionColor = KeyActionColor_Macro;
             break;
+        case KeyActionType_Connections:
+        case KeyActionType_Other:
+            keyActionColor = KeyActionColor_Device;
+            break;
         default:
             keyActionColor = KeyActionColor_None;
             break;
@@ -595,6 +599,10 @@ static void updateLedsByLightAllStragegy() {
     setEntireMatrix(255);
 }
 
+static void updateLedsByLightNoneStrategy() {
+    setEntireMatrix(0);
+}
+
 void Ledmap_ActivateTestled(uint8_t slotId, uint8_t keyId) {
     if (CurrentTime < backlightingLedTestStart + 1000 || !TestSwitches) {
         return;
@@ -616,6 +624,23 @@ backlighting_mode_t Ledmap_GetEffectiveBacklightMode() {
     } else {
         return TemporaryBacklightingMode;
     }
+}
+
+static void setKeyColor(const rgb_t* color, uint8_t slotId, uint8_t keyId) {
+    setPerKeyColor(color, determineMode(slotId), slotId, keyId);
+}
+
+
+void Ledmap_SetBlackValues(void) {
+    setEntireMatrix(0);
+}
+
+void Ledmap_SetSfjlValues(void) {
+    setEntireMatrix(0);
+    setKeyColor(&white, SlotId_LeftKeyboardHalf, 15);
+    setKeyColor(&white, SlotId_LeftKeyboardHalf, 17);
+    setKeyColor(&white, SlotId_RightKeyboardHalf, 16);
+    setKeyColor(&white, SlotId_RightKeyboardHalf, 18);
 }
 
 void handleModeChange(backlighting_mode_t from, backlighting_mode_t to) {
@@ -670,6 +695,9 @@ void Ledmap_UpdateBacklightLeds(void) {
             break;
         case BacklightingMode_LightAll:
             updateLedsByLightAllStragegy();
+            break;
+        case BacklightingMode_LightNone:
+            updateLedsByLightNoneStrategy();
             break;
         case BacklightingMode_Unspecified:
             break;

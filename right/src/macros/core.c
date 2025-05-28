@@ -396,7 +396,7 @@ macro_result_t Macros_ExecMacro(uint8_t macroIndex)
 macro_result_t Macros_CallMacro(uint8_t macroIndex)
 {
     uint32_t parentSlotIndex = S - MacroState;
-    uint8_t childSlotIndex = Macros_StartMacro(macroIndex, S->ms.currentMacroKey, parentSlotIndex, true);
+    uint8_t childSlotIndex = Macros_StartMacro(macroIndex, S->ms.currentMacroKey, S->ms.currentMacroKeyStamp, parentSlotIndex, true);
 
     if (childSlotIndex != 255) {
         unscheduleCurrentSlot();
@@ -410,11 +410,11 @@ macro_result_t Macros_CallMacro(uint8_t macroIndex)
 
 macro_result_t Macros_ForkMacro(uint8_t macroIndex)
 {
-    Macros_StartMacro(macroIndex, S->ms.currentMacroKey, 255, true);
+    Macros_StartMacro(macroIndex, S->ms.currentMacroKey, S->ms.currentMacroKeyStamp, 255, true);
     return MacroResult_Finished;
 }
 
-uint8_t initMacro(uint8_t index, key_state_t *keyState, uint8_t parentMacroSlot)
+uint8_t initMacro(uint8_t index, key_state_t *keyState, uint8_t timestamp, uint8_t parentMacroSlot)
 {
     if (!macroIsValid(index) || !findFreeStateSlot() || !findFreeScopeStateSlot())  {
        return 255;
@@ -427,6 +427,7 @@ uint8_t initMacro(uint8_t index, key_state_t *keyState, uint8_t parentMacroSlot)
     S->ms.macroPlaying = true;
     S->ms.currentMacroIndex = index;
     S->ms.currentMacroKey = keyState;
+    S->ms.currentMacroKeyStamp = timestamp;
     S->ms.currentMacroStartTime = CurrentPostponedTime;
     S->ms.parentMacroSlot = parentMacroSlot;
 
@@ -438,11 +439,11 @@ uint8_t initMacro(uint8_t index, key_state_t *keyState, uint8_t parentMacroSlot)
 
 
 //partentMacroSlot == 255 means no parent
-uint8_t Macros_StartMacro(uint8_t index, key_state_t *keyState, uint8_t parentMacroSlot, bool runFirstAction)
+uint8_t Macros_StartMacro(uint8_t index, key_state_t *keyState, uint8_t timestamp, uint8_t parentMacroSlot, bool runFirstAction)
 {
     macro_state_t* oldState = S;
 
-    uint8_t slotIndex = initMacro(index, keyState, parentMacroSlot);
+    uint8_t slotIndex = initMacro(index, keyState, timestamp, parentMacroSlot);
 
     if (slotIndex == 255) {
         S = oldState;
@@ -474,7 +475,7 @@ void Macros_ValidateAllMacros()
     Macros_DryRun = true;
     Macros_ValidationInProgress = true;
     for (uint8_t macroIndex = 0; macroIndex < AllMacrosCount; macroIndex++) {
-        uint8_t slotIndex = initMacro(macroIndex, NULL, 255);
+        uint8_t slotIndex = initMacro(macroIndex, NULL, 255, 255);
 
         if (slotIndex == 255) {
             S = NULL;
@@ -501,11 +502,11 @@ void Macros_ValidateAllMacros()
     S = oldS;
 }
 
-uint8_t Macros_QueueMacro(uint8_t index, key_state_t *keyState, uint8_t queueAfterSlot)
+uint8_t Macros_QueueMacro(uint8_t index, key_state_t *keyState, uint8_t timestamp, uint8_t queueAfterSlot)
 {
     macro_state_t* oldState = S;
 
-    uint8_t slotIndex = initMacro(index, keyState, 255);
+    uint8_t slotIndex = initMacro(index, keyState, timestamp, 255);
 
     if (slotIndex == 255) {
         return slotIndex;

@@ -4,8 +4,10 @@
 #include "device.h"
 #include "device_state.h"
 #include "event_scheduler.h"
+#include "keyboard/battery_manager.h"
 #include "keyboard/charger.h"
 #include "keyboard/key_scanner.h"
+#include "keyboard/oled/screens/notification_screen.h"
 #include "keyboard/oled/widgets/widgets.h"
 #include "config_manager.h"
 #include "config_parser/config_globals.h"
@@ -19,6 +21,7 @@
 #include "slot.h"
 #include "str_utils.h"
 #include "stubs.h"
+#include "timer.h"
 #include "utils.h"
 #include "messenger.h"
 #include "state_sync.h"
@@ -31,6 +34,7 @@
 #include "dongle_leds.h"
 #include "logger.h"
 #include "versioning.h"
+#include "event_scheduler.h"
 
 #define WAKE(TID) if (TID != 0) { k_wakeup(TID); }
 
@@ -50,10 +54,15 @@ sync_generic_half_state_t SyncLeftHalfState;
 sync_generic_half_state_t SyncRightHalfState;
 
 scroll_multipliers_t DongleScrollMultipliers = {1, 1};
-version_t DongleProtocolVersion = {0, 0, 0};
+version_t RemoteDongleProtocolVersion = {0, 0, 0};
 
 uint16_t StateSync_LeftResetCounter = 0;
 uint16_t StateSync_DongleResetCounter = 0;
+
+bool StateSync_BatteryBacklightPowersavingMode = false;
+bool StateSync_BlinkBatteryIcon = false;
+bool StateSync_BlinkLeftBatteryPercentage = false;
+bool StateSync_BlinkRightBatteryPercentage = false;
 
 static void wake(k_tid_t tid) {
     if (tid != 0) {
@@ -61,7 +70,7 @@ static void wake(k_tid_t tid) {
         // if (DEBUG_MODE) {
         //     LogU("StateSync woke up %p\n", tid);
         // }
-    } else {
+    } else if (k_uptime_get_32() > 5000) {
         printk("Skipping wake up, tid is 0");
     }
 }
@@ -151,13 +160,14 @@ static state_sync_prop_t stateSyncProps[StateSyncPropertyId_Count] = {
     EMPTY(LeftModuleDisconnected,   SyncDirection_LeftToRight,        DirtyState_Clean),
     SIMPLE(MergeSensor,             SyncDirection_LeftToRight,        DirtyState_Clean,    &MergeSensor_HalvesAreMerged),
     SIMPLE(FunctionalColors,        SyncDirection_RightToLeft,        DirtyState_Clean,    &Cfg.KeyActionColors),
-    SIMPLE(PowerMode,               SyncDirection_RightToLeft,        DirtyState_Clean,    &CurrentPowerMode),
+    CUSTOM(PowerMode,               SyncDirection_RightToLeft,        DirtyState_Clean),
     CUSTOM(Config,                  SyncDirection_RightToLeft,        DirtyState_Clean),
     CUSTOM(SwitchTestMode,          SyncDirection_RightToLeft,        DirtyState_Clean),
     SIMPLE(DongleStandby,           SyncDirection_RightToDongle,      DirtyState_Clean,    &DongleStandby),
     SIMPLE(DongleScrollMultipliers, SyncDirection_DongleToRight,      DirtyState_Clean,    &DongleScrollMultipliers),
     CUSTOM(KeyStatesDummy,          SyncDirection_LeftToRight,        DirtyState_Clean),
     CUSTOM(DongleProtocolVersion,   SyncDirection_DongleToRight,      DirtyState_Clean),
+    SIMPLE(BatteryStationaryMode,   SyncDirection_RightToLeft,        DirtyState_Clean,    &Cfg.BatteryStationaryMode),
 };
 
 static void invalidateProperty(state_sync_prop_id_t propId) {
@@ -259,6 +269,7 @@ void receiveBacklight(sync_command_backlight_t *buffer) {
     if (HardwareConfig->isIso != buffer->isIso) {
         HardwareConfig->isIso = buffer->isIso;
         Ledmap_InitLedLayout();
+        LedManager_RecalculateLedBrightness();
         Ledmap_UpdateBacklightLeds();
     }
 }
@@ -307,13 +318,24 @@ void StateSync_CheckFirmwareVersions() {
     #endif
 }
 
-static void checkDongleProtocolVersion() {
-    if (!VERSIONS_EQUAL(DongleProtocolVersion, dongleProtocolVersion)) {
-        LogUOS("Dongle and right half run different dongle protocol versios\n  (dongle: %d.%d.%d, right: %d.%d.%d)\n  please upgrade!\n",
-                DongleProtocolVersion.major, DongleProtocolVersion.minor, DongleProtocolVersion.patch,
-                dongleProtocolVersion.major, dongleProtocolVersion.minor, dongleProtocolVersion.patch
-        );
-        return;
+void StateSync_CheckDongleProtocolVersion() {
+    host_connection_t *hostConnection = HostConnection(ActiveHostConnectionId);
+    if (hostConnection->type == HostConnectionType_Dongle) {
+        if (!VERSIONS_EQUAL(RemoteDongleProtocolVersion, dongleProtocolVersion)) {
+            LogUOS("Dongle (%s) and right half run different dongle protocol versions\n  (dongle: %d.%d.%d, right: %d.%d.%d)\n  Please upgrade!\n",
+                    GetPeerStringByConnId(ActiveHostConnectionId),
+                    RemoteDongleProtocolVersion.major, RemoteDongleProtocolVersion.minor, RemoteDongleProtocolVersion.patch,
+                    dongleProtocolVersion.major, dongleProtocolVersion.minor, dongleProtocolVersion.patch
+                  );
+            return;
+        } else {
+            LogU("Dongle (%s) and right half run the same dongle protocol version %d.%d.%d\n",
+                    GetPeerStringByConnId(ActiveHostConnectionId),
+                    RemoteDongleProtocolVersion.major, RemoteDongleProtocolVersion.minor, RemoteDongleProtocolVersion.patch,
+                    dongleProtocolVersion.major, dongleProtocolVersion.minor, dongleProtocolVersion.patch
+                  );
+        }
+        EventScheduler_Unschedule(EventSchedulerEvent_CheckDongleProtocolVersion);
     }
 }
 
@@ -393,6 +415,10 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
     case StateSyncPropertyId_Battery:
         WIDGET_REFRESH(&StatusWidget);
         {
+            printk("Batteries: %d%% %d%% (%d %d)\n"
+                , SyncLeftHalfState.battery.batteryPercentage, SyncRightHalfState.battery.batteryPercentage
+                , SyncLeftHalfState.battery.batteryVoltage, SyncRightHalfState.battery.batteryVoltage
+            );
             bool newRunningOnBattery = !SyncLeftHalfState.battery.powered || !SyncRightHalfState.battery.powered;
             bool newRightRunningOnBattery = !SyncRightHalfState.battery.powered;
             if (RunningOnBattery != newRunningOnBattery) {
@@ -403,6 +429,12 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
                 RightRunningOnBattery = newRightRunningOnBattery;
                 LedManager_UpdateSleepModes();
             }
+            bool newCharging = (SyncLeftHalfState.battery.batteryPresent && SyncLeftHalfState.battery.batteryCharging) || (SyncRightHalfState.battery.batteryPresent && SyncRightHalfState.battery.batteryCharging);
+            if (BatteryIsCharging != newCharging) {
+                BatteryIsCharging = newCharging;
+                EventVector_Set(EventVector_LedManagerFullUpdateNeeded);
+            }
+            StateSync_CheckChargeMe();
         }
         break;
     case StateSyncPropertyId_ActiveKeymap:
@@ -411,7 +443,7 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
     case StateSyncPropertyId_KeyboardLedsState:
         WIDGET_REFRESH(&StatusWidget);
 
-        if (!isLocalUpdate && DongleProtocolVersion.major == 0) {
+        if (!isLocalUpdate && RemoteDongleProtocolVersion.major == 0) {
             LogUOS("Dongle protocol version doesn't seem to have been reported.\nIs your dongle firmware up to date?\n");
         }
         break;
@@ -466,14 +498,23 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
         break;
     case StateSyncPropertyId_DongleProtocolVersion:
         if (!isLocalUpdate) {
-            DongleProtocolVersion = *(version_t*)data;
-            checkDongleProtocolVersion();
+            RemoteDongleProtocolVersion = *(version_t*)data;
+            // This should prevent the check from being printed multiple times.
+            EventScheduler_Reschedule(CurrentTime+1000, EventSchedulerEvent_CheckDongleProtocolVersion, "state sync received dongle protocol version");
         }
         break;
     case StateSyncPropertyId_ZeroDummy:
         printk("Received an invalid state sync property message: %d %d %d | %d %d | %d %d %d %d %d\n", data[-5], data[-4], data[-3], data[-2], data[-1], data[0], data[1], data[2], data[3], data[4]);
         break;
+    case StateSyncPropertyId_BatteryStationaryMode:
+        //for both local and remote
+        printk("Setting battery mode to %d\n", Cfg.BatteryStationaryMode);
+        EventScheduler_Schedule(CurrentTime + 1000, EventSchedulerEvent_UpdateBattery, "state sync");
+        break;
     case StateSyncPropertyId_PowerMode:
+        if (!isLocalUpdate) {
+            PowerMode_ActivateMode(*(power_mode_t *)data, false, true, "Received from state sync");
+        }
         break;
     default:
         printk("Property %i ('%s') has no receive handler. If this is correct, please add a "
@@ -481,6 +522,34 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
             propId, prop->name);
         break;
     }
+}
+
+#if DEVICE_IS_UHK80_RIGHT
+static bool needsCharging(battery_state_t *batteryState) {
+    if (batteryState->powersaving && batteryState->batteryPresent && !batteryState->powered) {
+        return true;
+    }
+    return false;
+}
+#endif
+
+
+void StateSync_CheckChargeMe(void) {
+#if DEVICE_IS_UHK80_RIGHT
+    StateSync_BlinkLeftBatteryPercentage = needsCharging(&SyncLeftHalfState.battery);
+    StateSync_BlinkRightBatteryPercentage = needsCharging(&SyncRightHalfState.battery);
+    StateSync_BlinkBatteryIcon =  StateSync_BlinkLeftBatteryPercentage || StateSync_BlinkRightBatteryPercentage;
+
+    if (StateSync_BlinkBatteryIcon) {
+        WIDGET_REFRESH(&StatusWidget);
+    }
+
+    bool newPowersaving = SyncLeftHalfState.battery.powersaving || SyncRightHalfState.battery.powersaving;
+    if (newPowersaving != StateSync_BatteryBacklightPowersavingMode) {
+        StateSync_BatteryBacklightPowersavingMode = newPowersaving;
+        EventVector_Set(EventVector_LedManagerFullUpdateNeeded);
+    }
+#endif
 }
 
 void StateSync_ReceiveStateUpdate(device_id_t src, const uint8_t *data, uint8_t len) {
@@ -624,6 +693,10 @@ static void prepareData(device_id_t dst, const uint8_t *propDataPtr, state_sync_
         submitPreparedData(dst, propId, (const uint8_t *)&dongleProtocolVersion, sizeof(dongleProtocolVersion));
         return;
     }
+    case StateSyncPropertyId_PowerMode: {
+        submitPreparedData(dst, propId, (const uint8_t *)&CurrentPowerMode, sizeof(CurrentPowerMode));
+        return;
+    }
     case StateSyncPropertyId_KeyStatesDummy: {
 #if DEVICE_IS_KEYBOARD
         KeyScanner_ResendKeyStates = true;
@@ -685,7 +758,7 @@ static update_result_t handlePropertyUpdateRightToLeft() {
 
     if (KeyBacklightBrightness != 0) {
         // Update relevant data
-        UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_PowerMode, UpdateResult_UpdatedHighPrio);
+        UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_PowerMode, UpdateResult_UpdatedHighPrio); //has to be before Backlight
         UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_FunctionalColors, UpdateResult_UpdatedHighPrio);
         UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_LayerActionFirst + ActiveLayer, UpdateResult_UpdatedHighPrio);
         UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ActiveKeymap, UpdateResult_UpdatedHighPrio);
@@ -699,8 +772,11 @@ static update_result_t handlePropertyUpdateRightToLeft() {
             UPDATE_AND_RETURN_IF_DIRTY(propId, UpdateResult_UpdatedLowPrio);
         }
     } else {
+        UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_PowerMode, UpdateResult_UpdatedHighPrio);
         UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_Backlight, UpdateResult_UpdatedHighPrio);
     }
+
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_BatteryStationaryMode, UpdateResult_UpdatedLowPrio);
 
     return UpdateResult_AllUpToDate;
 }
@@ -853,6 +929,7 @@ void StateSync_ResetRightLeftLink(bool bidirectional) {
         invalidateProperty(StateSyncPropertyId_Backlight);
         invalidateProperty(StateSyncPropertyId_FunctionalColors);
         invalidateProperty(StateSyncPropertyId_PowerMode);
+        invalidateProperty(StateSyncPropertyId_BatteryStationaryMode);
         // Wait sufficiently log so the firmware check isnt triggered during firmware upgrade
         EventScheduler_Schedule(CurrentTime + 60000, EventSchedulerEvent_CheckFwChecksums, "Reset left right link");
     }
@@ -867,7 +944,7 @@ void StateSync_ResetRightLeftLink(bool bidirectional) {
 
 void StateSync_ResetRightDongleLink(bool bidirectional) {
     StateSync_DongleResetCounter++;
-    printk("Resetting dongle right link! %s\n", bidirectional ? "Bidirectional" : "Unidirectional");
+    // printk("Resetting dongle right link! %s\n", bidirectional ? "Bidirectional" : "Unidirectional");
     if (bidirectional) {
         invalidateProperty(StateSyncPropertyId_ResetRightDongleLink);
     }
@@ -876,6 +953,10 @@ void StateSync_ResetRightDongleLink(bool bidirectional) {
         invalidateProperty(StateSyncPropertyId_KeyboardLedsState);
         invalidateProperty(StateSyncPropertyId_DongleProtocolVersion);
         invalidateProperty(StateSyncPropertyId_DongleScrollMultipliers);
+    }
+    if (DEVICE_ID == DeviceId_Uhk80_Right) {
+        RemoteDongleProtocolVersion = (version_t){0, 0, 0};
+        EventScheduler_Reschedule(CurrentTime+1000, EventSchedulerEvent_CheckDongleProtocolVersion, "state sync - reset right dongle link");
     }
 }
 

@@ -18,7 +18,7 @@ void TextWidget_Draw(widget_t* self, framebuffer_t* buffer)
     }
 }
 
-void TextWidget_SetText(widget_t* self, char* text)
+void TextWidget_SetText(widget_t* self, const char* text)
 {
     self->dirty = true;
     self->textData.text.start = text;

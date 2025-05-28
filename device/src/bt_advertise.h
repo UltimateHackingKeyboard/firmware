@@ -5,6 +5,7 @@
 
     #include <stdint.h>
     #include <zephyr/bluetooth/addr.h>
+    #include "bt_pair.h"
     #include "shared/attributes.h"
 
 // Macros:
@@ -20,9 +21,13 @@
         bt_addr_le_t* addr;
     } ATTR_PACKED adv_config_t;
 
+// Variables:
+
+    extern pairing_mode_t AdvertisingHid;
 
 // Functions:
 
+    void BtAdvertise_DisableAdvertisingIcon(void);
     uint8_t BtAdvertise_Start(adv_config_t advConfig);
     void BtAdvertise_Stop(void);
     adv_config_t BtAdvertise_Config();

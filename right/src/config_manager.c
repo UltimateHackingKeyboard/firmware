@@ -229,6 +229,7 @@ const config_t DefaultCfg = (config_t){
         .DisplayBrightnessBatteryDefault = 0x20,
         .DisplayBrightnessDefault = 0xff,
         .KeyBacklightBrightnessBatteryDefault = 0x20,
+        .KeyBacklightBrightnessChargingPercent = 50,
         .KeyBacklightBrightnessDefault = 0xff,
         .DisplayFadeOutTimeout = 0,
         .DisplayFadeOutBatteryTimeout = 60000,
@@ -267,6 +268,7 @@ const config_t DefaultCfg = (config_t){
         .Macros_OneShotTimeout = 500,
         .AutoShiftDelay = 0,
         .ChordingDelay = 0,
+        .BatteryStationaryMode = false,
 #ifdef __ZEPHYR__
         .I2cBaudRate = 0,
 #else
@@ -274,7 +276,10 @@ const config_t DefaultCfg = (config_t){
 #endif
         .Bt_Enabled = true,
         .Bt_AllowUnsecuredConnections = false,
+        .Bt_MaxPeripheralConnections = 3,
+        .Bt_AlwaysAdvertiseHid = true,
         .EmergencyKey = NULL,
+        .UiStyle = UiStyle_Classic,
         .KeyActionColors = {
             {0x00, 0x00, 0x00}, // KeyActionColor_None
             {0xFF, 0xFF, 0xFF}, // KeyActionColor_Scancode
@@ -284,6 +289,7 @@ const config_t DefaultCfg = (config_t){
             {0xFF, 0x00, 0x00}, // KeyActionColor_SwitchKeymap
             {0x00, 0xFF, 0x00}, // KeyActionColor_Mouse
             {0xFF, 0x00, 0xFF}, // KeyActionColor_Macro
+            {0xFF, 0x88, 0x44}, // KeyActionColor_Special
         },
 };
 

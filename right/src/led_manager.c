@@ -21,7 +21,8 @@
 #if DEVICE_IS_UHK80_RIGHT
 #include "keyboard/oled/screens/screen_manager.h"
 #else
-#define InteractivePairingInProgress false;
+#define InteractivePairingInProgress false
+#define StateSync_BatteryBacklightPowersavingMode false
 #endif
 
 bool KeyBacklightSleepModeActive = false;
@@ -32,13 +33,24 @@ uint8_t KeyBacklightBrightness = 0xff;
 
 static void recalculateLedBrightness()
 {
-    bool globalSleepMode = !Cfg.LedsEnabled || CurrentPowerMode > PowerMode_Awake || Cfg.LedBrightnessMultiplier == 0.0f;
+    bool globalSleepMode = !Cfg.LedsEnabled || CurrentPowerMode > PowerMode_LastAwake || Cfg.LedBrightnessMultiplier == 0.0f;
     bool globalAlwaysOn = Cfg.LedsAlwaysOn || Ledmap_AlwaysOn || InteractivePairingInProgress;
 
-    if (!globalAlwaysOn && (globalSleepMode || KeyBacklightSleepModeActive)) {
+    if (!globalAlwaysOn && (globalSleepMode || KeyBacklightSleepModeActive || StateSync_BatteryBacklightPowersavingMode || Cfg.BacklightingMode == BacklightingMode_LightNone)) {
         KeyBacklightBrightness = 0;
     } else {
-        uint8_t keyBacklightBrightnessBase = RunningOnBattery ? Cfg.KeyBacklightBrightnessBatteryDefault : Cfg.KeyBacklightBrightnessDefault;
+        uint8_t keyBacklightBrightnessBase;
+        if (RunningOnBattery && BatteryIsCharging) {
+            uint16_t batteryBrightness = Cfg.KeyBacklightBrightnessBatteryDefault;
+            uint16_t chargingBrightness = (uint16_t)Cfg.KeyBacklightBrightnessBatteryDefault*Cfg.KeyBacklightBrightnessChargingPercent/100;
+            keyBacklightBrightnessBase = MIN(batteryBrightness, chargingBrightness);
+        } else if (RunningOnBattery) {
+            keyBacklightBrightnessBase = Cfg.KeyBacklightBrightnessBatteryDefault;
+        } else if (BatteryIsCharging) {
+            keyBacklightBrightnessBase = (uint16_t)Cfg.KeyBacklightBrightnessDefault*Cfg.KeyBacklightBrightnessChargingPercent/100;
+        } else {
+            keyBacklightBrightnessBase = Cfg.KeyBacklightBrightnessDefault;
+        }
         KeyBacklightBrightness = MIN(255, keyBacklightBrightnessBase * Cfg.LedBrightnessMultiplier);
     }
 
@@ -49,7 +61,7 @@ static void recalculateLedBrightness()
         DisplayBrightness = MIN(255, displayBrightnessBase * Cfg.LedBrightnessMultiplier);
     }
 
-    if (Ledmap_AlwaysOn) {
+    if (Ledmap_AlwaysOn || globalAlwaysOn) {
         KeyBacklightBrightness = 255;
     }
 }

@@ -26,9 +26,17 @@
 #include "error_reporting.h"
 #include "versioning.h"
 #include "stubs.h"
+#include "macros/vars.h"
 
 #if DEVICE_HAS_OLED
 #include "keyboard/oled/widgets/widgets.h"
+#endif
+
+
+#ifdef __ZEPHYR__
+#include "state_sync.h"
+#else
+#include "segment_display.h"
 #endif
 
 version_t DataModelVersion = {0, 0, 0};
@@ -56,6 +64,18 @@ parser_error_t parseConfig(config_buffer_t *buffer)
     DataModelVersion.major = ReadUInt16(buffer);
     DataModelVersion.minor = ReadUInt16(buffer);
     DataModelVersion.patch = ReadUInt16(buffer);
+
+    if (VERSION_AT_LEAST(DataModelVersion, userConfigVersion.major, userConfigVersion.minor+1, 0)) {
+        Macros_ReportErrorPrintf(NULL,
+            "Config version too new: %u.%u.%u (firmware's userconfig: %u.%u.%u)\n",
+            DataModelVersion.major, DataModelVersion.minor, DataModelVersion.patch,
+            userConfigVersion.major, userConfigVersion.minor, userConfigVersion.patch
+        );
+        #ifndef __ZEPHYR__
+            SegmentDisplay_SetText(3, "DOW", SegmentDisplaySlot_Error);
+        #endif
+        return ParserError_ConfigVersionTooNew;
+    }
 
 #ifdef __ZEPHYR__
     if (!ParserRunDry) {
@@ -108,6 +128,11 @@ parser_error_t parseConfig(config_buffer_t *buffer)
         readRgbColor(buffer, keyActionColors, KeyActionColor_SwitchKeymap);
         readRgbColor(buffer, keyActionColors, KeyActionColor_Mouse);
         readRgbColor(buffer, keyActionColors, KeyActionColor_Macro);
+        if (DataModelVersion.major >= 9) {
+            readRgbColor(buffer, keyActionColors, KeyActionColor_Device);
+        } else {
+            keyActionColors[KeyActionColor_Device] = Cfg.KeyActionColors[KeyActionColor_Device];
+        }
     }
 
     // Mouse kinetic properties
@@ -203,6 +228,16 @@ parser_error_t parseConfig(config_buffer_t *buffer)
         keyBacklightFadeOutBatteryTimeout = ledsFadeTimeout;
     }
 
+    // Version 10:
+
+    uint8_t batteryChargingMode = SerializedChargingMode_Full;
+    uint8_t keyBacklightBrightnessChargingPercent = 50;
+
+    if (VERSION_AT_LEAST(DataModelVersion, 9, 99, 0)) {
+        keyBacklightBrightnessChargingPercent = ReadUInt8(buffer);
+        batteryChargingMode = ReadUInt8(buffer);
+    }
+
     // HostConnection configuration
 
     if (VERSION_AT_LEAST(DataModelVersion, 8, 1, 0)) {
@@ -210,7 +245,6 @@ parser_error_t parseConfig(config_buffer_t *buffer)
             ParseHostConnections(buffer);
         )
     }
-
 
     // Module configurations
 
@@ -337,10 +371,17 @@ parser_error_t parseConfig(config_buffer_t *buffer)
         Cfg.KeyBacklightFadeOutTimeout = keyBacklightFadeOutTimeout;
         Cfg.KeyBacklightFadeOutBatteryTimeout = keyBacklightFadeOutBatteryTimeout;
 
-        LedManager_RecalculateLedBrightness();
-        LedManager_UpdateSleepModes();
+        // Version 10
+        Cfg.KeyBacklightBrightnessChargingPercent = keyBacklightBrightnessChargingPercent;
+        Cfg.BatteryStationaryMode = batteryChargingMode > SerializedChargingMode_Full ? SerializedChargingMode_StationaryMode : SerializedChargingMode_Full;
+
+#ifdef __ZEPHYR__
+        StateSync_UpdateProperty(StateSyncPropertyId_BatteryStationaryMode, &Cfg.BatteryStationaryMode);
+#endif
+        LedManager_FullUpdate();
         BtPair_ClearUnknownBonds();
         BtConn_UpdateHostConnectionPeerAllocations();
+        MacroVariables_Reset();
         WIDGET_REFRESH(&TargetWidget); // the target may have been renamed
 
         // Update counts

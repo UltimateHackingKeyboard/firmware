@@ -19,6 +19,7 @@
 #include "macros/status_buffer.h"
 #include "macros/string_reader.h"
 #include "macros/typedefs.h"
+#include "macros/display.h"
 #include "macros/vars.h"
 #include "postponer.h"
 #include "secondary_role_driver.h"
@@ -32,9 +33,13 @@
 #include "utils.h"
 #include "debug.h"
 #include "config_manager.h"
+#include "usb_commands/usb_command_reenumerate.h"
+#include "bt_defs.h"
+#include "trace.h"
 
 #ifdef __ZEPHYR__
 #include "connections.h"
+#include "bt_pair.h"
 #else
 #include "segment_display.h"
 #endif
@@ -69,6 +74,11 @@ static macro_result_t processDelay(uint32_t time)
     }
 }
 
+macro_result_t Macros_ProcessDelay(uint32_t time)
+{
+    return processDelay(time);
+}
+
 macro_result_t Macros_ProcessDelayAction()
 {
     return processDelay(S->ms.currentMacroAction.delay.delay);
@@ -99,11 +109,13 @@ bool Macros_CurrentMacroKeyIsActive()
         return S->ms.oneShotState;
     }
     if (S->ms.postponeNextNCommands > 0 || S->ls->as.modifierPostpone) {
+        bool isSameActivation = (S->ms.currentMacroKey->timestamp == S->ms.currentMacroKeyStamp);
         bool keyIsActive = (KeyState_Active(S->ms.currentMacroKey) && !PostponerQuery_IsKeyReleased(S->ms.currentMacroKey));
-        return  keyIsActive || S->ms.oneShotState;
+        return  (isSameActivation && keyIsActive) || S->ms.oneShotState;
     } else {
+        bool isSameActivation = (S->ms.currentMacroKey->timestamp == S->ms.currentMacroKeyStamp);
         bool keyIsActive = KeyState_Active(S->ms.currentMacroKey);
-        return keyIsActive || S->ms.oneShotState;
+        return (isSameActivation && keyIsActive) || S->ms.oneShotState;
     }
 }
 
@@ -143,6 +155,10 @@ static bool isNUM(parser_context_t* ctx)
     default:
         return false;
     }
+}
+
+bool Macros_IsNUM(parser_context_t* ctx) {
+    return isNUM(ctx);
 }
 
 static int32_t consumeRuntimeMacroSlotId(parser_context_t* ctx)
@@ -295,8 +311,7 @@ static macro_result_t processSwitchKeymapCommand(parser_context_t* ctx)
             return MacroResult_Finished;
         }
 
-        SwitchKeymapById(newKeymapIdx);
-        LayerStack_Reset();
+        SwitchKeymapById(newKeymapIdx, true);
     }
     lastKeymapIdx = tmpKeymapIdx;
     return MacroResult_Finished;
@@ -715,55 +730,37 @@ static macro_result_t processBreakCommand(parser_context_t *ctx)
     return MacroResult_Finished;
 }
 
-static macro_result_t processSetLedTxtCommand(parser_context_t* ctx)
+static macro_result_t processBluetoothCommand(parser_context_t *ctx)
 {
-    ATTR_UNUSED int16_t time = Macros_ConsumeInt(ctx);
-    char text[3];
-    uint8_t textLen = 0;
+    ATTR_UNUSED bool toggle = false;
+    ATTR_UNUSED pairing_mode_t mode = PairingMode_Off;
+    if (ConsumeToken(ctx, "toggle")) {
+        toggle = true;
+    }
 
-    if (isNUM(ctx)) {
-#ifndef __ZEPHYR__
-        macro_variable_t value = Macros_ConsumeAnyValue(ctx);
-        SegmentDisplay_SerializeVar(text, value);
-        textLen = 3;
+    if (ConsumeToken(ctx, "pair")) {
+        mode = PairingMode_PairHid;
+    } else if (ConsumeToken(ctx, "advertise")) {
+        mode = PairingMode_Advertise;
+    } else if (ConsumeToken(ctx, "noadvertise") || ConsumeToken(ctx, "noAdvertise")) {
+        mode = PairingMode_Off;
+    } else {
+        Macros_ReportError("Unrecognized argument:", ctx->at, ctx->end);
+        return MacroResult_Finished;
+    }
+
+    if (Macros_ParserError || Macros_DryRun) {
+        return MacroResult_Finished;
+    }
+
+    if (mode == PairingMode_Off) {
+        Cfg.Bt_AlwaysAdvertiseHid = false;
+    }
+#ifdef __ZEPHYR__
+    BtManager_EnterMode(mode, toggle);
 #endif
-    } else if (ctx->at != ctx->end) {
-        uint16_t stringOffset = 0, textIndex = 0, textSubIndex = 0;
-        for (uint8_t i = 0; true; i++) {
-            char c = Macros_ConsumeCharOfString(ctx, &stringOffset, &textIndex, &textSubIndex);
-            if (c == '\0') {
-                break;
-            }
-            if (i < 3) {
-                text[i] = c;
-                textLen++;
-            }
-        }
-        ConsumeWhite(ctx);
-    } else {
-        Macros_ReportError("Text argument expected.", ctx->at, ctx->at);
-        return MacroResult_Finished;
-    }
 
-    if (Macros_DryRun || Macros_ParserError) {
-        return MacroResult_Finished;
-    }
-
-#ifndef __ZEPHYR__
-    macro_result_t res = MacroResult_Finished;
-    if (time == 0) {
-        SegmentDisplay_SetText(textLen, text, SegmentDisplaySlot_Macro);
-        return MacroResult_Finished;
-    } else if ((res = processDelay(time)) == MacroResult_Finished) {
-        SegmentDisplay_DeactivateSlot(SegmentDisplaySlot_Macro);
-        return MacroResult_Finished;
-    } else {
-        SegmentDisplay_SetText(textLen, text, SegmentDisplaySlot_Macro);
-        return res;
-    }
-#else
     return MacroResult_Finished;
-#endif
 }
 
 macro_result_t goTo(parser_context_t* ctx)
@@ -1139,15 +1136,29 @@ static macro_result_t processIfShortcutCommand(parser_context_t* ctx, bool negat
         }
     }
 
+    uint8_t pendingCount = PostponerQuery_PendingKeypressCount();
+
+    bool insufficientNumberForAnyOrder = false;
+    if (!fixedOrder) {
+        parser_context_t ctx2 = *ctx;
+        uint8_t totalArgs = 0;
+        uint8_t argKeyId = 255;
+        while((argKeyId = Macros_TryConsumeKeyId(&ctx2)) != 255 && ctx2.at < ctx2.end) {
+            totalArgs++;
+        }
+        if (totalArgs > PostponerQuery_PendingKeypressCount()) {
+            insufficientNumberForAnyOrder = true;
+        }
+    }
+
     //parse and check KEYIDs
     postponeCurrentCycle();
-    uint8_t pendingCount = PostponerQuery_PendingKeypressCount();
     uint8_t numArgs = 0;
     bool someoneNotReleased = false;
     uint8_t argKeyId = 255;
     while((argKeyId = Macros_TryConsumeKeyId(ctx)) != 255 && ctx->at < ctx->end) {
         numArgs++;
-        if (pendingCount < numArgs) {
+        if (pendingCount < numArgs || insufficientNumberForAnyOrder) {
             uint32_t referenceTime = transitive && pendingCount > 0 ? PostponerExtended_LastPressTime() : S->ms.currentMacroStartTime;
             uint16_t elapsedSinceReference = Timer_GetElapsedTime(&referenceTime);
 
@@ -1174,11 +1185,7 @@ static macro_result_t processIfShortcutCommand(parser_context_t* ctx, bool negat
                 goto conditionFailed;
             }
             else {
-                if (negate) {
-                    goto conditionPassed;
-                } else {
-                    goto conditionFailed;
-                }
+                goto notMatched;
             }
         }
         else if (orGate) {
@@ -1186,41 +1193,26 @@ static macro_result_t processIfShortcutCommand(parser_context_t* ctx, bool negat
             while (true) {
                 // first keyid had already been processed.
                 if (PostponerQuery_ContainsKeyId(argKeyId)) {
-                    if (negate) {
-                        goto conditionFailed;
-                    } else {
-                        goto conditionPassed;
-                    }
+                    numArgs = 1;
+                    goto matched;
                 }
                 if ((argKeyId = Macros_TryConsumeKeyId(ctx)) == 255 || ctx->at == ctx->end) {
                     break;
                 }
             }
-            // none is matched
-            if (negate) {
-                goto conditionPassed;
-            } else {
-                goto conditionFailed;
-            }
+            goto notMatched;
         }
         else if (fixedOrder && PostponerExtended_PendingId(numArgs - 1) != argKeyId) {
-            if (negate) {
-                goto conditionPassed;
-            } else {
-                goto conditionFailed;
-            }
+            goto notMatched;
         }
         else if (!fixedOrder && !PostponerQuery_ContainsKeyId(argKeyId)) {
-            if (negate) {
-                goto conditionPassed;
-            } else {
-                goto conditionFailed;
-            }
+            goto notMatched;
         }
         else {
             someoneNotReleased |= !PostponerQuery_IsKeyReleased(Utils_KeyIdToKeyState(argKeyId));
         }
     }
+matched:
     //all keys match
     if (consume) {
         PostponerExtended_ConsumePendingKeypresses(numArgs, true);
@@ -1229,6 +1221,12 @@ static macro_result_t processIfShortcutCommand(parser_context_t* ctx, bool negat
         goto conditionFailed;
     } else {
         goto conditionPassed;
+    }
+notMatched:
+    if (negate) {
+        goto conditionPassed;
+    } else {
+        goto conditionFailed;
     }
 conditionFailed:
     while(Macros_TryConsumeKeyId(ctx) != 255) { };
@@ -1329,7 +1327,7 @@ static macro_result_t processOneShotCommand(parser_context_t* ctx) {
      * */
     if (!S->ms.macroInterrupted || !S->ms.oneShotUsbChangeDetected) {
         S->ms.oneShotState = 1;
-    } else if (S->ms.oneShotState < 3) {
+    } else if (0 < S->ms.oneShotState && S->ms.oneShotState < 3) {
         S->ms.oneShotState++;
     } else {
         S->ms.oneShotState = 0;
@@ -1474,6 +1472,20 @@ static bool processIfModuleConnected(parser_context_t* ctx, bool negate)
     return moduleConnected != negate;
 }
 
+static macro_result_t processPanicCommand(parser_context_t* ctx) {
+    if (Macros_DryRun) {
+        return MacroResult_Finished;
+    }
+
+#ifdef __ZEPHYR__
+    k_panic();
+#else
+    Trace_Printc("PretendedPanic");
+    NVIC_SystemReset();
+#endif
+    return MacroResult_Finished;
+}
+
 static macro_result_t processPowerModeCommand(parser_context_t* ctx) {
     bool toggle = false;
 
@@ -1481,27 +1493,31 @@ static macro_result_t processPowerModeCommand(parser_context_t* ctx) {
         toggle = true;
     }
 
-    if (ConsumeToken(ctx, "deepSleep") || ConsumeToken(ctx, "sleep")) {
-        if (Macros_DryRun) {
-            return MacroResult_Finished;
-        }
-        PowerMode_ActivateMode(PowerMode_DeepSleep, toggle);
-    }
-    else if (ConsumeToken(ctx, "lightSleep")) {
-        if (Macros_DryRun) {
-            return MacroResult_Finished;
-        }
-        PowerMode_ActivateMode(PowerMode_LightSleep, toggle);
-    }
-    else if (ConsumeToken(ctx, "wake")) {
-        if (Macros_DryRun) {
-            return MacroResult_Finished;
-        }
-        PowerMode_ActivateMode(PowerMode_Awake, toggle);
-    }
+    power_mode_t mode = PowerMode_Awake;
+
+    parser_context_t ctxCopy = *ctx;
+
+    if (false) { }
+    else if (ConsumeToken(ctx, "wake")) { mode = PowerMode_Awake; }
+    else if (ConsumeToken(ctx, "lock")) { mode = PowerMode_Lock; }
+    else if (ConsumeToken(ctx, "sleep")) { mode = PowerMode_SfjlSleep; }
+    else if (ConsumeToken(ctx, "shutdown")) { mode = PowerMode_ManualShutDown; }
+    else if (ConsumeToken(ctx, "shutDown")) { mode = PowerMode_ManualShutDown; }
+    else if (ConsumeToken(ctx, "autoShutdown")) { mode = PowerMode_AutoShutDown; }
     else {
-        Macros_ReportError("Unrecognized parameter:", ctx->at, ctx->at);
+        Macros_ReportError("This mode is not available in this release:", ctxCopy.at, ctxCopy.at);
     }
+
+    if (Macros_DryRun || Macros_ParserError) {
+        return MacroResult_Finished;
+    }
+
+    /* wait until the key is released to prevent backlight flashing */
+    if (Macros_CurrentMacroKeyIsActive()) {
+        return Macros_SleepTillKeystateChange();
+    }
+
+    PowerMode_ActivateMode(mode, toggle, false, "triggered by macro command");
 
     return MacroResult_Finished;
 }
@@ -1737,14 +1753,34 @@ static macro_result_t processResetConfigurationCommand(parser_context_t* ctx)
     return MacroResult_Finished;
 }
 
+static macro_result_t processRebootCommand()
+{
+    if (Macros_DryRun) {
+        return MacroResult_Finished;
+    }
+
+    Reboot(true);
+    return MacroResult_Finished;
+}
+
+static macro_result_t processFreezeCommand()
+{
+    if (Macros_DryRun) {
+        return MacroResult_Finished;
+    }
+
+    while (true) {
+        // Hi there!
+    }
+
+    return MacroResult_Finished;
+}
+
 static macro_result_t processSwitchHostCommand(parser_context_t* ctx)
 {
 #define DRY_RUN_FINISH() if (Macros_DryRun) { return MacroResult_Finished; }
 
 #ifdef __ZEPHYR__
-    static uint8_t lastConnection = 0;
-    uint8_t currentConnection = ActiveHostConnectionId;
-
     if (ConsumeToken(ctx, "next")) {
         DRY_RUN_FINISH();
         HostConnections_SelectNextConnection();
@@ -1755,15 +1791,15 @@ static macro_result_t processSwitchHostCommand(parser_context_t* ctx)
     }
     else if (ConsumeToken(ctx, "last")) {
         DRY_RUN_FINISH();
-        HostConnections_SelectById(lastConnection);
+        HostConnections_SelectLastConnection();
     } else {
         if (!Macros_DryRun) {
             HostConnections_SelectByName(ctx);
         }
         Macros_ConsumeStringToken(ctx);
     }
-
-    lastConnection = currentConnection;
+#else
+    Macros_ConsumeStringToken(ctx);
 #endif
 
 #undef DRY_RUN_FINISH
@@ -1806,6 +1842,9 @@ static macro_result_t processCommand(parser_context_t* ctx)
             if (ConsumeToken(ctx, "break")) {
                 return processBreakCommand(ctx);
             }
+            else if (ConsumeToken(ctx, "bluetooth")) {
+                return processBluetoothCommand(ctx);
+            }
             else {
                 goto failed;
             }
@@ -1815,7 +1854,7 @@ static macro_result_t processCommand(parser_context_t* ctx)
                 return processConsumePendingCommand(ctx);
             }
             else if (ConsumeToken(ctx, "clearStatus")) {
-                return Macros_ProcessClearStatusCommand();
+                return Macros_ProcessClearStatusCommand(true);
             }
             else if (ConsumeToken(ctx, "call")) {
                 return processCallCommand(ctx);
@@ -1863,6 +1902,9 @@ static macro_result_t processCommand(parser_context_t* ctx)
             }
             else if (ConsumeToken(ctx, "fork")) {
                 return processForkCommand(ctx);
+            }
+            else if (ConsumeToken(ctx, "freeze")) {
+                return processFreezeCommand(ctx);
             }
             else {
                 goto failed;
@@ -2229,6 +2271,9 @@ static macro_result_t processCommand(parser_context_t* ctx)
             else if (ConsumeToken(ctx, "powerMode")) {
                 return processPowerModeCommand(ctx);
             }
+            else if (ConsumeToken(ctx, "panic")) {
+                return processPanicCommand(ctx);
+            }
             else {
                 goto failed;
             }
@@ -2269,6 +2314,9 @@ static macro_result_t processCommand(parser_context_t* ctx)
             else if (ConsumeToken(ctx, "resetConfiguration")) {
                 return processResetConfigurationCommand(ctx);
             }
+            else if (ConsumeToken(ctx, "reboot")) {
+                return processRebootCommand();
+            }
             else {
                 goto failed;
             }
@@ -2290,7 +2338,7 @@ static macro_result_t processCommand(parser_context_t* ctx)
                 return processStartRecordingCommand(ctx, true);
             }
             else if (ConsumeToken(ctx, "setLedTxt")) {
-                return processSetLedTxtCommand(ctx);
+                return Macros_ProcessSetLedTxtCommand(ctx);
             }
             else if (ConsumeToken(ctx, "statsRuntime")) {
                 return Macros_ProcessStatsRuntimeCommand();
@@ -2310,6 +2358,13 @@ static macro_result_t processCommand(parser_context_t* ctx)
             else if (ConsumeToken(ctx, "statsPostponerStack")) {
                 return Macros_ProcessStatsPostponerStackCommand();
             }
+            else if (ConsumeToken(ctx, "statsVariables")) {
+                return Macros_ProcessStatsVariablesCommand();
+            }
+            else if (ConsumeToken(ctx, "statsBattery")) {
+                return Macros_ProcessStatsBatteryCommand();
+            }
+
             else if (ConsumeToken(ctx, "switchKeymap")) {
                 return processSwitchKeymapCommand(ctx);
             }
@@ -2370,6 +2425,12 @@ static macro_result_t processCommand(parser_context_t* ctx)
             }
             else if (ConsumeToken(ctx, "tapKeySeq")) {
                 return Macros_ProcessTapKeySeqCommand(ctx);
+            }
+            else if (ConsumeToken(ctx, "trace")) {
+                if (!Macros_DryRun) {
+                    Trace_Print("Triggered by macro command");
+                }
+                return MacroResult_Finished;
             }
             else {
                 goto failed;

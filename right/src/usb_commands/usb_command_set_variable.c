@@ -12,6 +12,10 @@
 #include "keyboard/leds.h"
 #endif
 
+#ifdef __ZEPHYR__
+#include "proxy_log_backend.h"
+#endif
+
 void UsbCommand_SetVariable(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer)
 {
     usb_variable_id_t variableId = GetUsbRxBufferUint8(1);
@@ -45,6 +49,11 @@ void UsbCommand_SetVariable(const uint8_t *GenericHidOutBuffer, uint8_t *Generic
             uint8_t pwmFrequency = GetUsbRxBufferUint8(4);
             UpdateLedAudioRegisters(phaseDelay, spreadSpectrum, pwmFrequency);
 #endif
+            break;
+        case UsbVariable_ShellEnabled:
+            #ifdef __ZEPHYR__
+                ProxyLog_SetAttached(GetUsbRxBufferUint8(2));
+            #endif
             break;
         default:
             break;

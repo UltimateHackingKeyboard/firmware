@@ -47,6 +47,14 @@
 #include "thread_stats.h"
 #include "power_mode.h"
 #include "mouse_controller.h"
+#include "wormhole.h"
+#include "power_mode.h"
+#include "proxy_log_backend.h"
+
+#if DEVICE_IS_KEYBOARD
+#include "keyboard/battery_unloaded_calculator.h"
+#include "keyboard/battery_percent_calculator.h"
+#endif
 
 k_tid_t Main_ThreadId = 0;
 
@@ -55,10 +63,11 @@ static void sleepTillNextMs() {
     const uint64_t minSleepTime = 100;
     uint64_t currentTimeUs = k_cyc_to_us_near64(k_cycle_get_32());
 
-    wakeupTimeUs = wakeupTimeUs+1000;
+    wakeupTimeUs = MIN(currentTimeUs,wakeupTimeUs)+1000;
 
     if (currentTimeUs < wakeupTimeUs) {
-        k_usleep(MAX(wakeupTimeUs-currentTimeUs, minSleepTime));
+        uint64_t timeToSleep = MAX(wakeupTimeUs-currentTimeUs, minSleepTime);
+        k_usleep(timeToSleep);
     } else {
         k_usleep(minSleepTime);
         wakeupTimeUs = currentTimeUs;
@@ -78,7 +87,7 @@ static void scheduleNextRun() {
     CurrentTime = k_uptime_get();
     int32_t diff = nextEventTime - CurrentTime;
 
-    Trace('-');
+    Trace(')');
 
     k_sem_take(&mainWakeupSemaphore, K_NO_WAIT);
     bool haveMoreWork = (EventScheduler_Vector & EventVector_UserLogicUpdateMask);
@@ -86,22 +95,20 @@ static void scheduleNextRun() {
         LOG_SCHEDULE( EventVector_ReportMask("Continuing immediately because of: ", EventScheduler_Vector & EventVector_UserLogicUpdateMask););
         EVENTLOOP_TIMING(printk("Continuing immediately\n"));
         // Mouse keys don't like being called twice in one second for some reason
-        Trace_Printf("s31");
         k_sem_give(&mainWakeupSemaphore);
         sleepTillNextMs();
+        Trace('(');
         return;
     } else if (eventIsValid) {
         EVENTLOOP_TIMING(printk("Sleeping for %d\n", diff));
-        Trace_Printf("s32");
         k_sem_take(&mainWakeupSemaphore, K_MSEC(diff));
         // k_sleep(K_MSEC(diff));
     } else {
         EVENTLOOP_TIMING(printk("Sleeping forever\n"));
-        Trace_Printf("s33");
         k_sem_take(&mainWakeupSemaphore, K_FOREVER);
         // k_sleep(K_FOREVER);
     }
-    Trace('+');
+    Trace('(');
 }
 
 //TODO: inline this
@@ -110,11 +117,11 @@ void Main_Wake() {
     // k_wakeup(Main_ThreadId);
 }
 
-int main(void) {
+void mainRuntime(void) {
     Main_ThreadId = k_current_get();
     printk("----------\n" DEVICE_NAME " started\n");
 
-    Trace_Init();
+    InitProxyLogBackend();
 
     {
         flash_area_open(FLASH_AREA_ID(hardware_config_partition), &hardwareConfigArea);
@@ -122,15 +129,15 @@ int main(void) {
     }
 
     if (!DEVICE_IS_UHK_DONGLE) {
-        InitUart();
         InitZephyrI2c();
         InitSpi();
+
+        InitLeds();
 
 #if DEVICE_HAS_OLED
         InitOled();
 #endif // DEVICE_HAS_OLED
 
-        InitLeds();
 
 #if DEVICE_HAS_MERGE_SENSOR
         MergeSensor_Init();
@@ -176,6 +183,17 @@ int main(void) {
     HID_SetGamepadActive(false);
     USB_Enable(); // has to be after USB_SetSerialNumber
 
+    if (LastRunWasCrash) {
+        printk("CRASH DETECTED, waiting for 5 seconds to allow Agent to reenumerate\n");
+        k_sleep(K_MSEC(5*1000));
+    }
+
+    // Uart has to be enabled only after we have given Agent a chance to reenumarate into bootloader after a crash
+    if (!DEVICE_IS_UHK_DONGLE) {
+        InitUart();
+    }
+
+    // Uart has to be enabled only after we have given Agent a chance to reenumarate into bootloader after a crash
     // has to be after InitSettings
     BtManager_InitBt();
     BtManager_StartBt();
@@ -196,12 +214,15 @@ int main(void) {
 
     if (DEBUG_RUN_TESTS) {
         MacroVariables_RunTests();
+#if DEVICE_IS_KEYBOARD
         MouseController_RunTests();
+        BatteryCalculator_RunTests();
+        BatteryCalculator_RunPercentTests();
+#endif
     }
 
     // Call after all threads have been created
     ThreadStats_Init();
-
 
 #if DEVICE_IS_UHK80_RIGHT
     while (true)
@@ -214,6 +235,7 @@ int main(void) {
             EVENTLOOP_TIMING(EventloopTiming_End());
         }
         scheduleNextRun();
+        UserLogic_LastEventloopTime = CurrentTime;
     }
 #else
     while (true)
@@ -224,4 +246,34 @@ int main(void) {
         scheduleNextRun();
     }
 #endif
+}
+
+int main(void) {
+    power_mode_t mode = PowerMode_Awake;
+
+    Trace_Init();
+    if (StateWormhole_IsOpen()) {
+        printk("Wormhole is open, reboot to power mode %d %d\n", StateWormhole.rebootToPowerMode, StateWormhole.restartPowerMode);
+        if (StateWormhole.rebootToPowerMode) {
+            mode = StateWormhole.restartPowerMode;
+            StateWormhole.restartPowerMode = PowerMode_Awake;
+        }
+        MacroStatusBuffer_InitFromWormhole();
+        StateWormhole_Clean();
+    } else {
+        printk("Wormhole is closed\n");
+        MacroStatusBuffer_InitNormal();
+        StateWormhole_Clean();
+        StateWormhole_Open();
+    }
+
+    if (mode != PowerMode_Awake) {
+        LogU("Restarted, sinking into mode %d!\n", mode);
+        k_sleep(K_MSEC(1000));
+        PowerMode_RestartedTo(mode);
+    }
+
+    LogU("Going to resume!\n");
+
+    mainRuntime();
 }

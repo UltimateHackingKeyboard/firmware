@@ -6,13 +6,17 @@
     #include <stdbool.h>
     #include <stdint.h>
 
+// Typedefs:
+
 // Functions:
 
     void InitSettings(void);
     void Settings_Reload(void);
     void Settings_Erase(void);
 
+
 // Variables:
+
 
     extern bool RightAddressIsSet;
 

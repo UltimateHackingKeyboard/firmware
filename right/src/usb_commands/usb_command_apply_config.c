@@ -31,7 +31,9 @@ static uint8_t validateConfig(uint8_t *GenericHidInBuffer) {
     // Validate the staging configuration.
     ParserRunDry = true;
     StagingUserConfigBuffer.offset = 0;
+    StagingUserConfigBuffer.isValid = false;
     uint8_t parseConfigStatus = ParseConfig(&StagingUserConfigBuffer);
+    StagingUserConfigBuffer.isValid = parseConfigStatus == UsbStatusCode_Success;
     if (GenericHidInBuffer) {
         updateUsbBuffer(GenericHidInBuffer, UsbStatusCode_Success, StagingUserConfigBuffer.offset, ParsingStage_Validate);
     }
@@ -39,8 +41,12 @@ static uint8_t validateConfig(uint8_t *GenericHidInBuffer) {
 }
 
 void UsbCommand_ApplyConfigAsync(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer) {
+    bool calledFromUsb = GenericHidOutBuffer != NULL;
     if (validateConfig(GenericHidInBuffer) == UsbStatusCode_Success) {
         EventVector_Set(EventVector_ApplyConfig);
+        if (calledFromUsb) {
+            Macros_ClearStatus(calledFromUsb);
+        }
 #ifdef __ZEPHYR__
         Main_Wake();
 #endif
@@ -63,7 +69,8 @@ void UsbCommand_ApplyFactory(const uint8_t *GenericHidOutBuffer, uint8_t *Generi
 
     DataModelVersion = userConfigVersion;
 
-    Macros_ClearStatus();
+    // We may be applying factory configuration because we failed to apply User Configuration, therefore we don't want to rest the buffer.
+    // Macros_ClearStatus(false);
 
     ConfigManager_ResetConfiguration(false);
 
@@ -91,6 +98,7 @@ void UsbCommand_ApplyFactory(const uint8_t *GenericHidOutBuffer, uint8_t *Generi
 uint8_t UsbCommand_ApplyConfig(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer)
 {
     static bool isBoot = true;
+    bool calledFromUsb = GenericHidOutBuffer != NULL;
     EventVector_Unset(EventVector_ApplyConfig);
 
     uint8_t parseConfigStatus = validateConfig(GenericHidInBuffer);
@@ -105,9 +113,9 @@ uint8_t UsbCommand_ApplyConfig(const uint8_t *GenericHidOutBuffer, uint8_t *Gene
     memcpy(oldKeymapAbbreviation, AllKeymaps[CurrentKeymapIndex].abbreviation, KEYMAP_ABBREVIATION_LENGTH);
     oldKeymapAbbreviationLen = AllKeymaps[CurrentKeymapIndex].abbreviationLen;
 
-    uint8_t *temp = ValidatedUserConfigBuffer.buffer;
-    ValidatedUserConfigBuffer.buffer = StagingUserConfigBuffer.buffer;
-    StagingUserConfigBuffer.buffer = temp;
+    config_buffer_t temp = ValidatedUserConfigBuffer;
+    ValidatedUserConfigBuffer = StagingUserConfigBuffer;
+    StagingUserConfigBuffer = temp;
 
     if (IsFactoryResetModeEnabled) {
         return UsbStatusCode_Success;
@@ -124,7 +132,7 @@ uint8_t UsbCommand_ApplyConfig(const uint8_t *GenericHidOutBuffer, uint8_t *Gene
         return parseConfigStatus;
     }
 
-    Macros_ClearStatus();
+    Macros_ClearStatus(calledFromUsb);
 
     if (!isBoot) {
         Macros_ValidateAllMacros();
@@ -141,11 +149,11 @@ uint8_t UsbCommand_ApplyConfig(const uint8_t *GenericHidOutBuffer, uint8_t *Gene
 #endif
 
     // Switch to the keymap of the updated configuration of the same name or the default keymap.
-    if (SwitchKeymapByAbbreviation(oldKeymapAbbreviationLen, oldKeymapAbbreviation)) {
+    if (SwitchKeymapByAbbreviation(oldKeymapAbbreviationLen, oldKeymapAbbreviation, true)) {
         return UsbStatusCode_Success;
     }
 
-    SwitchKeymapById(DefaultKeymapIndex);
+    SwitchKeymapById(DefaultKeymapIndex, true);
     isBoot = false;
 
     return UsbStatusCode_Success;

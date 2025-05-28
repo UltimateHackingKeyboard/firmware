@@ -1,10 +1,13 @@
 #include <string.h>
 #include "usb_composite_device.h"
 #include "usb_report_updater.h"
+#include "event_scheduler.h"
 
 #ifndef UTILS_ARRAY_SIZE
 #define UTILS_ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 #endif
+
+static bool needsResending = false;
 
 uint32_t UsbSystemKeyboardActionCounter;
 static usb_system_keyboard_report_t usbSystemKeyboardReports[2];
@@ -41,6 +44,19 @@ usb_status_t UsbSystemKeyboardAction(void)
         SwitchActiveUsbSystemKeyboardReport();
     }
     return usb_status;
+}
+
+
+void UsbSystemKeyboardSendActiveReport(void) {
+    UsbReportUpdateSemaphore |= 1 << USB_SYSTEM_KEYBOARD_INTERFACE_INDEX;
+    usb_status_t status = UsbSystemKeyboardAction();
+    if (status != kStatus_USB_Success) {
+        UsbReportUpdateSemaphore &= ~(1 << USB_SYSTEM_KEYBOARD_INTERFACE_INDEX);
+        EventVector_Set(EventVector_ResendUsbReports);
+        needsResending = true;
+    } else {
+        needsResending = false;
+    }
 }
 
 
@@ -90,10 +106,11 @@ usb_status_t UsbSystemKeyboardCheckIdleElapsed()
     return kStatus_USB_Busy;
 }
 
-usb_status_t UsbSystemKeyboardCheckReportReady()
+usb_status_t UsbSystemKeyboardCheckReportReady(bool resending)
 {
-    if (memcmp(ActiveUsbSystemKeyboardReport, GetInactiveUsbSystemKeyboardReport(), sizeof(usb_system_keyboard_report_t)) != 0)
+    if (memcmp(ActiveUsbSystemKeyboardReport, GetInactiveUsbSystemKeyboardReport(), sizeof(usb_system_keyboard_report_t)) != 0 && (!resending || needsResending)) {
         return kStatus_USB_Success;
+    }
 
     return UsbSystemKeyboardCheckIdleElapsed();
 }

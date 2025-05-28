@@ -37,12 +37,22 @@
         ParserError_InvalidModuleProperty               = 17,
         ParserError_InvalidSecondaryRoleActionType      = 18,
         ParserError_InvalidHostType                     = 19,
+        ParserError_InvalidSerializedConnectionAction   = 20,
+        ParserError_InvalidHostConnectionId             = 21,
+        ParserError_InvalidSerializedOtherAction        = 22,
+        ParserError_ConfigVersionTooNew                = 23,
     } parser_error_t;
 
     typedef enum {
         SerializedSecondaryRoleActionType_Primary,
         SerializedSecondaryRoleActionType_Secondary,
     } serialized_secondary_role_action_type_t;
+
+    typedef enum {
+        SerializedChargingMode_Full = 0,
+        SerializedChargingMode_StationaryMode = 1,
+    } serialized_charging_mode_t;
+
 
     extern version_t DataModelVersion;
 

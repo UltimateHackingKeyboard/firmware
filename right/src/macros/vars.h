@@ -41,6 +41,8 @@
 
 // Functions:
 
+    void MacroVariables_Reset(void);
+    macro_result_t Macros_ProcessStatsVariablesCommand(void);
     macro_result_t Macros_ProcessSetVarCommand(parser_context_t* ctx);
     macro_variable_t* Macros_ConsumeExistingWritableVariable(parser_context_t* ctx);
     int32_t Macros_ConsumeInt(parser_context_t* ctx);
@@ -48,6 +50,7 @@
     bool Macros_ConsumeBool(parser_context_t* ctx);
     macro_variable_t Macros_ConsumeAnyValue(parser_context_t* ctx);
     void MacroVariables_RunTests(void);
+    void Macros_SerializeVar(char* buffer, uint8_t len, macro_variable_t var);
 
 #endif
 

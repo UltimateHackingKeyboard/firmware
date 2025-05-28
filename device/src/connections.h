@@ -82,6 +82,7 @@
 // Variables:
 
     extern connection_id_t ActiveHostConnectionId;
+    extern connection_id_t LastActiveHostConnectionId;
     extern connection_id_t SelectedHostConnectionId;
     extern connection_t Connections[ConnectionId_Count];
 

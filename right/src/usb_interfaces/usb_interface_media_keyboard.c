@@ -2,11 +2,14 @@
 #include "usb_report_updater.h"
 #include <string.h>
 #include "utils.h"
+#include "event_scheduler.h"
 
 
 uint32_t UsbMediaKeyboardActionCounter;
 static usb_media_keyboard_report_t usbMediaKeyboardReports[2];
 usb_media_keyboard_report_t* ActiveUsbMediaKeyboardReport = usbMediaKeyboardReports;
+
+static bool needsResending = false;
 
 static usb_media_keyboard_report_t* GetInactiveUsbMediaKeyboardReport(void)
 {
@@ -38,6 +41,18 @@ usb_status_t UsbMediaKeyboardAction(void)
         SwitchActiveUsbMediaKeyboardReport();
     }
     return usb_status;
+}
+
+void UsbMediaKeyboardSendActiveReport(void) {
+    UsbReportUpdateSemaphore |= 1 << USB_MEDIA_KEYBOARD_INTERFACE_INDEX;
+    usb_status_t status = UsbMediaKeyboardAction();
+    if (status != kStatus_USB_Success) {
+        UsbReportUpdateSemaphore &= ~(1 << USB_MEDIA_KEYBOARD_INTERFACE_INDEX);
+        EventVector_Set(EventVector_ResendUsbReports);
+        needsResending = true;
+    } else {
+        needsResending = false;
+    }
 }
 
 usb_status_t UsbMediaKeyboardCallback(class_handle_t handle, uint32_t event, void *param)
@@ -87,10 +102,11 @@ usb_status_t UsbMediaKeyboardCheckIdleElapsed()
     return kStatus_USB_Busy;
 }
 
-usb_status_t UsbMediaKeyboardCheckReportReady()
+usb_status_t UsbMediaKeyboardCheckReportReady(bool resending)
 {
-    if (memcmp(ActiveUsbMediaKeyboardReport, GetInactiveUsbMediaKeyboardReport(), sizeof(usb_media_keyboard_report_t)) != 0)
+    if (memcmp(ActiveUsbMediaKeyboardReport, GetInactiveUsbMediaKeyboardReport(), sizeof(usb_media_keyboard_report_t)) != 0 && (!resending || needsResending)) {
         return kStatus_USB_Success;
+    }
 
     return UsbMediaKeyboardCheckIdleElapsed();
 }

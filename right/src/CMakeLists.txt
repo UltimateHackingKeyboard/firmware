@@ -43,8 +43,10 @@ target_sources(${PROJECT_NAME} PRIVATE
     stubs.c
     test_switches.c
     timer.c
+    trace.c
     usb_protocol_handler.c
     usb_report_updater.c
     user_logic.c
     utils.c
+    wormhole.c
 )

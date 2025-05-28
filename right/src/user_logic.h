@@ -3,11 +3,17 @@
 
 // Includes:
 
+    #include <stdbool.h>
+    #include <stdint.h>
+
 // Macros:
 
 // Typedefs:
 
 // Variables:
+
+    extern uint32_t UserLogic_LastEventloopTime;
+
 // Functions:
 
     void RunUserLogic(void);

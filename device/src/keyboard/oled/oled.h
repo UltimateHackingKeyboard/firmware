@@ -19,5 +19,6 @@
     void Oled_RequestRedraw(void);
     void Oled_ShiftScreen();
     void Oled_UpdateBrightness();
+    void Oled_ForceRender();
 
 #endif // __OLED_H__

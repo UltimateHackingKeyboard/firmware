@@ -10,6 +10,10 @@
 #include "debug.h"
 #include "zephyr/bluetooth/addr.h"
 #include "resend.h"
+#include <zephyr/logging/log.h>
+#include "bt_manager.h"
+
+LOG_MODULE_DECLARE(Bt);
 
 #define NUS_SLOTS 2
 
@@ -32,7 +36,7 @@ static void received(struct bt_conn *conn, const uint8_t *const data, uint16_t l
             Messenger_Enqueue(connectionId, DeviceId_Uhk_Dongle, copy, len, 0);
             break;
         default:
-            printk("Ble received message from unknown source.");
+            LOG_WRN("Ble received message from unknown source.");
             break;
     }
 }
@@ -47,7 +51,7 @@ static void send_enabled(enum bt_nus_send_status status)
 {
     if (status == BT_NUS_SEND_STATUS_ENABLED) {
         // in theory, NUS is ready. In practice, it is once we receive a message from the client.
-        printk("NUS peripheral connection is ready.\n");
+        LOG_INF("NUS peripheral connection is ready.\n");
     }
 }
 
@@ -60,11 +64,11 @@ static struct bt_nus_cb nus_cb = {
 int NusServer_Init(void) {
     int err = bt_nus_init(&nus_cb);
     if (err) {
-        printk("Failed to initialize UART service (err: %d)\n", err);
+        LOG_WRN("Failed to initialize UART service (err: %d)\n", err);
         return err;
     }
 
-    printk("NUS Server module initialized.\n");
+    LOG_INF("NUS Server module initialized.\n");
 
     return 0;
 }
@@ -81,7 +85,7 @@ static void send_raw_buffer(const uint8_t *data, uint16_t len, struct bt_conn* c
     int err = bt_nus_send(conn, data, len);
     if (err) {
         k_sem_give(&nusBusy);
-        printk("Failed to send data over BLE connection (err: %d)\n", err);
+        LOG_WRN("Failed to send data over BLE connection (err: %d)\n", err);
     }
 }
 
@@ -118,7 +122,7 @@ void NusServer_SendMessageTo(message_t* msg, struct bt_conn* conn) {
     }
 
     if (bufferIdx + msg->len > MAX_LINK_PACKET_LENGTH) {
-        printk("Message is too long for NUS packets! [%i, %i, ...]\n", buffer[0], buffer[1]);
+        LOG_WRN("Message is too long for NUS packets! [%i, %i, ...]\n", buffer[0], buffer[1]);
         return;
     }
 

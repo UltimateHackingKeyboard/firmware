@@ -89,7 +89,7 @@ void LayerStack_Pop(bool forceRemoveTop, bool toggledInsteadOfTop)
         LayerStack_Reset();
     }
     if (LayerStack[LayerStack_TopIdx].keymap != CurrentKeymapIndex) {
-        SwitchKeymapById(LayerStack[LayerStack_TopIdx].keymap);
+        SwitchKeymapById(LayerStack[LayerStack_TopIdx].keymap, false);
     }
     activateLayer(LayerStack[LayerStack_TopIdx].layer);
 }
@@ -115,7 +115,7 @@ void LayerStack_Push(uint8_t layer, uint8_t keymap, bool hold)
     LayerStack[LayerStack_TopIdx].removed = false;
     LayerStack_Size = LayerStack_Size < LAYER_STACK_SIZE - 1 ? LayerStack_Size+1 : LayerStack_Size;
     if (keymap != CurrentKeymapIndex) {
-        SwitchKeymapById(keymap);
+        SwitchKeymapById(keymap, false);
     }
     activateLayer(LayerStack[LayerStack_TopIdx].layer);
 }

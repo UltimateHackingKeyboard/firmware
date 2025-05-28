@@ -30,8 +30,8 @@
 
 // Functions:
 
-    void SwitchKeymapById(uint8_t index);
-    bool SwitchKeymapByAbbreviation(uint8_t length, const char *abbrev);
+    void SwitchKeymapById(uint8_t index, bool resetLayerStack);
+    bool SwitchKeymapByAbbreviation(uint8_t length, const char *abbrev, bool resetLayerStack);
     uint8_t FindKeymapByAbbreviation(uint8_t length, const char *abbrev);
 
     string_segment_t GetKeymapName(uint8_t keymapId);

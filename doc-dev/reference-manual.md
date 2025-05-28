@@ -99,7 +99,7 @@ COMMAND = yield
 COMMAND = {exec|call|fork} MACRONAME
 COMMAND = resetTrackpoint
 COMMAND = printStatus
-COMMAND = setLedTxt <timeout, or 0 forever (INT)> { STRING | VALUE }
+COMMAND = setLedTxt <timeout, or 0 forever (INT)> [ DISPLAY_LOCATION STRING ]+ { STRING | VALUE }
 COMMAND = write STRING
 COMMAND = goTo <index (ADDRESS)>
 COMMAND = repeatFor <var name (IDENTIFIER)> <action adr (ADDRESS)>
@@ -114,7 +114,9 @@ COMMAND = {startMouse|stopMouse} {move DIRECTION|scroll DIRECTION|accelerate|dec
 COMMAND = setVar <variable name (IDENTIFIER)> <value (PARENTHESSED_EXPRESSION)>
 COMMAND = {pressKey|holdKey|tapKey|releaseKey} SHORTCUT
 COMMAND = tapKeySeq [SHORTCUT]+
-COMMAND = powerMode [toggle] { wake | lightSleep | sleep | deepSleep }
+COMMAND = powerMode [toggle] { wake | lock | sleep }
+COMMAND = reboot
+COMMAND = bluetooth [toggle] { pair | advertise | noAdvertise }
 COMMAND = switchHost { last | next | previous | <host connection name (IDENTIFIER)> | <host connection name (STRING)> }
 COMMAND = set module.MODULEID.navigationMode.LAYERID_BASIC NAVIGATION_MODE
 COMMAND = set module.MODULEID.baseSpeed <non-xcelerated speed, 0-10.0 (FLOAT)>
@@ -163,14 +165,16 @@ COMMAND = set oneShotTimeout <time in ms (INT)>
 COMMAND = set macroEngine.batchSize <number of commands to execute per one update cycle INT>
 COMMAND = set navigationModeAction.NAVIGATION_MODE_CUSTOM.DIRECTION ACTION
 COMMAND = set keymapAction.LAYERID.KEYID ACTION
-COMMAND = set backlight.strategy { functional | constantRgb | perKeyRgb }
+COMMAND = set backlight.strategy { functional | constantRgb | perKeyRgb | off }
 COMMAND = set backlight.constantRgb.rgb <number 0-255 (INT)> <number 0-255 (INT)> <number 0-255 (INT)><number 0-255 (INT)>
 COMMAND = set backlight.keyRgb.LAYERID.KEYID <number 0-255 (INT)> <number 0-255 (INT)> <number 0-255 (INT)>
 COMMAND = set leds.enabled BOOL
 COMMAND = set leds.brightness <0-1 multiple of default (FLOAT)>
 COMMAND = set leds.fadeTimeout <seconds to fade after (INT)>
 COMMAND = set leds.{keyBacklightFadeTimeout|keyBacklightFadeBatteryTimeout|displayFadeTimeout|displayFadeBatteryTimeout} <seconds to fade after (INT)>
+COMMAND = set battery.chargeLimit { full | optimizeHealth }
 COMMAND = set bluetooth.enabled BOOL
+COMMAND = set bluetooth.alwaysAdvertiseHid BOOL
 COMMAND = set modifierLayerTriggers.{shift|alt|super|ctrl} {left|right|both}
 CONDITION = <condition>
 CONDITION = if (EXPRESSION)
@@ -230,6 +234,7 @@ SCANCODE = <en-US character (CHAR)> | SCANCODE_ABBREV
 SHORTCUT = <MODMASK-SCANCODE, e.g. LC-c (COMPOSITE_SHORTCUT)>
 SHORTCUT = <SCANCODE long abbreviation (SCANCODE)> 
 SHORTCUT = <MODMASK, e.g. LS for left shift(MODMASK)> 
+DISPLAY_LOCATION = abbrev | notification | leftStatus | rightStatus | keymap | layer | host
 COMPOSITE_SHORTCUT = MODMASK-SCANCODE
 SCANCODE_ABBREV = enter | escape | backspace | tab | space | minusAndUnderscore | equalAndPlus | openingBracketAndOpeningBrace | closingBracketAndClosingBrace
 SCANCODE_ABBREV = backslashAndPipeIso | backslashAndPipe | nonUsHashmarkAndTilde | semicolonAndColon | apostropheAndQuote | graveAccentAndTilde | commaAndLessThanSign
@@ -273,7 +278,12 @@ COMMAND = statsPostponerStack
 COMMAND = statsActiveKeys
 COMMAND = statsActiveMacros
 COMMAND = statsRecordKeyTiming
+COMMAND = statsVariables
+COMMAND = statsBattery
 COMMAND = diagnose
+COMMAND = panic
+COMMAND = freeze
+COMMAND = trace
 COMMAND = setStatus STRING
 COMMAND = clearStatus
 COMMAND = set setEmergencyKey KEYID
@@ -281,6 +291,8 @@ COMMAND = validateUserConfig
 COMMAND = resetConfiguration
 COMMAND = set leds.alwaysOn BOOL
 COMMAND = set bluetooth.allowUnsecuredConnections BOOL
+COMMAND = set bluetooth.peripheralConnectionCount INT
+COMMAND = powerMode autoShutdown
 ##############
 # DEPRECATED #
 ##############
@@ -319,18 +331,34 @@ COMMAND = setEmergencyKey KEYID
 - `setLedTxt <time> { STRING | VALUE }` will set led display to the supplemented text and block for the given time before updating display back to default value.
     - If the given time is zero, i.e. `<time> = 0`, the led text will be set indefinitely (until the display is refreshed by other text) and this command will return immediately.
     - If `VALUE` is given (e.g., `$keystrokeDelay`), will be shown in notation that shows first two significant digits and a letter denoting floating point shift. E.g., `A23 = 2.3`, `Y23 = -0.23`, `23B = 2300`...
+    - If location is given, the text will be show there. For uhk60, only "abbrev" location is valid (and default). For uhk80, "notification" is default, and "abbrev" is invalid. E.g.:
+      - `setLedTxt 2000 abbrev "HLW" "Hello world!"`
+      - `setLedTxt 2000 leftStatus "0" rightStatus "35 T"`
 - `progressHue` or better `autoRepeat progressHue` will slowly adjust constantRGB value in order to rotate the per-key-RGB backlight through all hues.
 - `resetTrackpoint` resets the internal trackpoint board. Can be used to recover the trackpoint from drift conditions. Drifts usually happen if you keep the cursor moving at slow constant speeds, because of the boards's internal adaptive calibration. Since the board's parameters cannot be altered, the only way around is or you to learn not to do the type of movement which triggers them.
 - `i2cBaudRate <baud rate, default 100000(INT)>` sets i2c baud rate. Lowering this value may improve module reliability, while increasing latency.
 - `{|}` Braces allow grouping multiple commands as if they were a single command. Please note that from the point of view of the engine, braces are (almost) regular commands, and have to be followed by newlines like any other command. Therefore idioms like `} else {` are not possible at the moment.
-- `powerMode [toggle] { wake | lightSleep | sleep | deepSleep }`
-  - `lightSleep` disables all leds. When any key is pressed, the uhk is waked up, and remote wakeup of the host is attempted.
-  - `deepSleep` disables all leds, disables USB output, and (in the future will) put the device into a low-power mode.
-  - `sleep` is a general alias that at the moment points to `deepSleep`.
-  - `wake` wakes up the device from "any" sleep mode (that doesn't disable macro engine and the half link).
+- `powerMode [toggle] { wake | lock | sleep | shutdown }`
+  - `lock` disables all leds, disables USB output. Connections remain active. Device can be woken up by either pressing s+f and j+l keys, or by another macro call. This mode is experimental.
+  - `sleep` reboots the keyboard into a low power mode, that still scans keys and can be woken up by s+f or j+l keys.
+  - `shutdown` is used by uhk when its battery runs out. You can wake up by plugging in the USB cable. It is not designed to be used directly.
+  - `wake` wakes up the device from "any" sleep mode that doesn't disable macro engine and the half link.
+- `reboot` - reboots the right half, and in case of uhk80, also left half and connected dongles. (Uhk60 left half shouldn't need reboot as it is a simple module.)
   Further rules:
     - If a sleep mode is activated while another sleep mode is active, the deeper of them will be activated.
     - If `toggle` is specified and the device is already in the (exact) sleep mode, it will wake the device instead.
+
+### Bluetooth:
+- `bluetooth [toggle] { pair | advertise | noAdvertise }` controls advertising for hid devices - this doesn't affect dongle and left half advertising.
+  - `pair` will start pairing mode. The device will be discoverable for 2 minutes, and will refuse connections from all known devices so that it is possible to pair a new device.
+  - `advertise` will make the device discoverable for 2 minutes. This allows ble hid devices to either connect or pair.
+  - `noAdvertise` will disable alwaysAdvertiseHid and stop advertising.
+  - `toggle` will make keyboard enter the default mode if the supplied mode is active.
+- `switchHost { last | next | previous | <host connection name (IDENTIFIER)> | <host connection name (STRING)> }` switches the host connection. 
+  - `previous | next` switch to the next currently connected host in the list of hosts. E.g., this iterates over blue dongles, as well as some other connections.
+  - `last` switches to the previously active host connection. For instance the last in `switchHost "pc"; switchHost "laptop"; switchHost last` switches to "pc".
+  - `<host connection identifier>` switches to the host connection with the given name. If the connection is not available, UHK will reserve a connection slot for this host. Therefore it is possible to connect to violet dongles too. 
+  - See the bluetooth section for more information.
 
 ### Triggering keyboard actions (pressing keys, clicking, etc.):
 
@@ -707,6 +735,23 @@ UHK modules feature four navigation modes, which are mapped by layer and module.
 - **Zoom mode** - This mode serves specifically to implement the touchpad pinch zoom gesture. It alternates actions of zoomPc and zoomMac modes. Can be customized via `set module.touchpad.pinchZoomMode NAVIGATION_MODE`.
 
 Caret and media modes can be customized by `set navigationModeAction` command.
+
+### bluetooth connectiviy rules:
+
+Dongle colors:
+- red means the dongle is either not paired to any device, or not actively trying to connect.
+- violet means the dongle is paired to some UHK and is actively trying to establish a connection.
+- blue means a dongle is connected to some uhk, but is not its usb report target. These are dongles that are prepared for action and can be immediately switched to via `switchHost` command.
+- green is the currently active dongle.
+
+Connection counts:
+- Uhk can handle up to 3 peripheral connections at a time, including 3 simultaneously connected dongles. Peripheral connection can be a ble hid connection (for instance a smartphone), a dongle connection, or ble advertising.
+- Uhk handles at most one BLE HID at a time.
+
+Rules:
+- Uhk will iterate over connected devices (blue dongles, usb, ble hid) by `switchHost {previous | next | last}`. This switchover is almost instantaneous, but can reach only currently connected devices.
+- Uhk can connect to violet dongles or additional ble hids by calling `switchHost <host connection name(STRING)>`. In that case, it reserves one connection slot for the selected device. This may mean disconnecting some of the currently connected devices. This kind of switchover usually takes a second or so, but can reach all devices.
+
 
 ### Modifier layers:
 

@@ -7,6 +7,10 @@
 #include "config_manager.h"
 #include "usb_interfaces/usb_interface_generic_hid.h"
 
+#ifdef __ZEPHYR__
+#include "proxy_log_backend.h"
+#endif
+
 void UsbCommand_GetVariable(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer)
 {
     usb_variable_id_t variableId = GetUsbRxBufferUint8(1);
@@ -35,6 +39,16 @@ void UsbCommand_GetVariable(const uint8_t *GenericHidOutBuffer, uint8_t *Generic
                     break;
                 }
             }
+            break;
+        case UsbVariable_ShellEnabled:
+            #ifdef __ZEPHYR__
+                SetUsbTxBufferUint8(1, ProxyLog_IsAttached);
+            #endif
+            break;
+        case UsbVariable_ShellBuffer:
+            #ifdef __ZEPHYR__
+                ProxyLog_ConsumeLog(GenericHidInBuffer + 1, USB_GENERIC_HID_IN_BUFFER_LENGTH - 1);
+            #endif
             break;
         case UsbVariable_LedAudioRegisters:
 #if defined(__ZEPHYR__) && DEVICE_IS_KEYBOARD

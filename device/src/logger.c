@@ -57,6 +57,12 @@ void LogUO(const char *fmt, ...) {
     LogConstantTo(DEVICE_ID, LogTarget_Uart | LogTarget_Oled, buffer);
 }
 
+void LogUS(const char *fmt, ...) {
+    EXPAND_STRING(buffer);
+
+    LogConstantTo(DEVICE_ID, LogTarget_Uart | LogTarget_ErrorBuffer, buffer);
+}
+
 void LogO(const char *fmt, ...) {
     EXPAND_STRING(buffer);
 
@@ -94,7 +100,7 @@ void LogConstantTo(device_id_t deviceId, log_target_t logMask, const char* buffe
             Uart_LogConstant(buffer);
         }
         if (logMask & LogTarget_ErrorBuffer) {
-            Macros_ReportPrintf(NULL, "%s", buffer);
+            Macros_Printf(NULL, "%s", buffer);
         }
     } else {
         if (k_is_in_isr()) {

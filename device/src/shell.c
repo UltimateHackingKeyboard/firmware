@@ -15,6 +15,9 @@
 #include "host_connection.h"
 #include "thread_stats.h"
 #include "trace.h"
+#include "usb_compatibility.h"
+#include "mouse_keys.h"
+#include "config_manager.h"
 
 shell_t Shell = {
     .keyLog = 0,
@@ -22,7 +25,6 @@ shell_t Shell = {
     .ledsAlwaysOn = 0,
     .oledEn = 1,
     .sdbState = 1,
-    .chargerState = 1,
 };
 
 
@@ -74,13 +76,14 @@ static int cmd_uhk_sdb(const struct shell *shell, size_t argc, char *argv[])
 static int cmd_uhk_charger(const struct shell *shell, size_t argc, char *argv[])
 {
     if (argc == 1) {
-        shell_fprintf(shell, SHELL_NORMAL, "CHARGER_EN: %i | ", Shell.chargerState ? 1 : 0);
+        shell_fprintf(shell, SHELL_NORMAL, "CHARGER_EN: %i | ", Charger_ChargingEnabled ? 1 : 0);
         shell_fprintf(shell, SHELL_NORMAL, "STAT: %i ", gpio_pin_get_dt(&chargerStatDt) ? 1 : 0);
 
         Charger_PrintState();
     } else {
-        Shell.chargerState = argv[1][0] == '1';
-        gpio_pin_set_dt(&chargerEnDt, Shell.chargerState);
+        bool newChargingEnabled = argv[1][0] == '1';
+
+        Charger_EnableCharging(newChargingEnabled);
     }
     return 0;
 }
@@ -163,6 +166,8 @@ static int cmd_uhk_btunpair(const struct shell *shell, size_t argc, char *argv[]
 
 static int cmd_uhk_connections(const struct shell *shell, size_t argc, char *argv[])
 {
+    printk("Compiled   peripheral count: %d\n", CONFIG_BT_CTLR_SDC_PERIPHERAL_COUNT);
+    printk("Configured peripheral count: %d\n", Cfg.Bt_MaxPeripheralConnections);
     HostConnections_ListKnownBleConnections();
     BtConn_ListAllBonds();
     BtConn_ListCurrentConnections();
@@ -181,7 +186,58 @@ static int cmd_uhk_threads(const struct shell *shell, size_t argc, char *argv[])
 
 static int cmd_uhk_trace(const struct shell *shell, size_t argc, char *argv[])
 {
-    Trace_Print();
+    Trace_Print("Triggered by zephyr shell.");
+    return 0;
+}
+
+static void printMouseKeyState(mouse_kinetic_state_t* state) {
+
+    int16_t multiplier = state->intMultiplier;
+    int16_t currentSpeed = state->currentSpeed;
+    int16_t targetSpeed = state->targetSpeed;
+    int16_t axisSkew = state->axisSkew*100;
+    int16_t xSum = state->xSum*100;
+    int16_t ySum = state->ySum*100;
+
+    printk(" - isScroll %d\n", state->isScroll);
+    printk(" - wasMoveAction %d\n", state->wasMoveAction);
+    printk(" - upState %d\n", state->upState);
+    printk(" - downState %d\n", state->downState);
+    printk(" - leftState %d\n", state->leftState);
+    printk(" - rightState %d\n", state->rightState);
+    printk(" - prevMouseSpeed %d\n", state->prevMouseSpeed);
+    printk(" - intMultiplier %d\n", multiplier);
+    printk(" - currentSpeed %d\n", currentSpeed);
+    printk(" - targetSpeed %d\n", targetSpeed);
+    printk(" - axisSkew*100 %d\n", axisSkew);
+    printk(" - initialSpeed %d\n", state->initialSpeed);
+    printk(" - acceleration %d\n", state->acceleration);
+    printk(" - deceleratedSpeed %d\n", state->deceleratedSpeed);
+    printk(" - baseSpeed %d\n", state->baseSpeed);
+    printk(" - acceleratedSpeed %d\n", state->acceleratedSpeed);
+    printk(" - xSum*100 %d\n", xSum);
+    printk(" - ySum*100 %d\n", ySum);
+    printk(" - xOut %d\n", state->xOut);
+    printk(" - yOut %d\n", state->yOut);
+    printk(" - verticalStateSign %d\n", state->verticalStateSign);
+    printk(" - horizontalStateSign %d\n", state->horizontalStateSign);
+}
+
+static int cmd_uhk_mouseMultipliers(const struct shell *shell, size_t argc, char *argv[]) {
+    int16_t horizontalScrollMultiplier = HorizontalScrollMultiplier();
+    int16_t verticalScrollMultiplier = VerticalScrollMultiplier();
+    printk("h scroll multiplier: %d (x.xx)\n", horizontalScrollMultiplier);
+    printk("v scroll multiplier: %d (x.xx)\n", verticalScrollMultiplier);
+    printk("accel / deccel states: %d %d\n", ActiveMouseStates[SerializedMouseAction_Accelerate], ActiveMouseStates[SerializedMouseAction_Decelerate]);
+
+    printk("Mouse move states:\n");
+
+    printMouseKeyState(&Cfg.MouseMoveState);
+
+    printk("Mouse scroll states:\n");
+
+    printMouseKeyState(&Cfg.MouseScrollState);
+
     return 0;
 }
 
@@ -213,6 +269,7 @@ void InitShell(void)
         SHELL_CMD_ARG(connections, NULL, "list BLE connections", cmd_uhk_connections, 1, 0),
         SHELL_CMD_ARG(threads, NULL, "list thread statistics", cmd_uhk_threads, 1, 0),
         SHELL_CMD_ARG(trace, NULL, "lists minimalistic event trace", cmd_uhk_trace, 1, 0),
+        SHELL_CMD_ARG(mouseMultipliers, NULL, "print mouse multipliers", cmd_uhk_mouseMultipliers, 1, 2),
         SHELL_SUBCMD_SET_END);
 
     SHELL_CMD_REGISTER(uhk, &uhk_cmds, "UHK commands", NULL);

@@ -45,7 +45,7 @@ void gamepad_app::send_buffer(uint8_t buf_idx)
     if (!report_buffer_.differs()) {
         return;
     }
-    if (send_report(&report_buffer_[buf_idx]) == hid::result::OK) {
+    if (send_report(&report_buffer_[buf_idx]) == hid::result::ok) {
         report_buffer_.compare_swap_copy(buf_idx);
     }
 }

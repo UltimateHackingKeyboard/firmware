@@ -37,7 +37,7 @@ static bool canExecute()
 
 void UsbMacroCommand_ExecuteSynchronously()
 {
-    Macros_StartMacro(MacroIndex_UsbCmdReserved, &dummyState, MacroIndex_None, false);
+    Macros_StartMacro(MacroIndex_UsbCmdReserved, &dummyState, 255, MacroIndex_None, false);
     EventVector_Unset(EventVector_UsbMacroCommandWaitingForExecution);
 }
 

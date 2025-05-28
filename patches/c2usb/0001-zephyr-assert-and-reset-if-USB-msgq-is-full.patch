@@ -1,0 +1,26 @@
+From f7f62f8b3cb300ad455b6d6502fa13bda4254c34 Mon Sep 17 00:00:00 2001
+From: Benedek Kupper <kupper.benedek@gmail.com>
+Date: Fri, 11 Apr 2025 11:43:47 +0200
+Subject: [PATCH] zephyr: assert and reset if USB msgq is full
+
+---
+ c2usb/port/zephyr/udc_mac.cpp | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/c2usb/port/zephyr/udc_mac.cpp b/c2usb/port/zephyr/udc_mac.cpp
+index 89a1f45..614ade8 100644
+--- a/c2usb/port/zephyr/udc_mac.cpp
++++ b/c2usb/port/zephyr/udc_mac.cpp
+@@ -150,7 +150,8 @@ static int udc_mac_event_dispatch(const ::device*, const udc_event* event)
+     last_full = !message_queue().try_post(*event);
+     if (last_full)
+     {
+-        LOG_ERR("udc_mac_msgq full");
++        __ASSERT_PRINT("udc_mac_msgq full\n");
++        __ASSERT_POST_ACTION();
+     }
+ #if CONFIG_C2USB_UDC_MAC_LOG_LEVEL >= LOG_LEVEL_DBG
+     static auto min_free_msgq_space = message_queue().free_space();
+-- 
+2.44.0
+

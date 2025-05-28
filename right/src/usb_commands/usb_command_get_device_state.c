@@ -14,6 +14,9 @@
 #include "peripherals/merge_sensor.h"
 #include "slave_drivers/uhk_module_driver.h"
 #include "device.h"
+#include "bt_defs.h"
+#include "user_logic.h"
+#include "trace.h"
 
 #ifdef __ZEPHYR__
     #include "flash.h"
@@ -22,15 +25,44 @@
     #include "slave_scheduler.h"
     #include "bt_pair.h"
     #include "bt_conn.h"
+    #include "proxy_log_backend.h"
 #else
     #include "usb_report_updater.h"
     #include "slave_scheduler.h"
-    #define BtPair_OobPairingInProgress 0
+    #define BtPair_PairingMode PairingMode_Off
     #define Bt_NewPairedDevice 0
+    #define ProxyLog_HasLog 0
 #endif
+
+static void detectFreezes() {
+    static bool alreadyLogged = 0;
+    static uint32_t lastCheckTime = 0;
+    static uint8_t lastCheckCount = 0;
+
+    if (lastCheckTime == UserLogic_LastEventloopTime) {
+        lastCheckCount++;
+    } else {
+        lastCheckCount = 0;
+        lastCheckTime = UserLogic_LastEventloopTime;
+    }
+
+    if (lastCheckCount > 10 && !alreadyLogged) {
+        lastCheckCount = 0;
+        alreadyLogged = true;
+
+        Trace_Print("Looks like the firmware freezed. If that is the case, please report bellow trace to the devs:\n");
+    }
+
+    // Just trip it to make the event loop update UserLogic_LastEventloopTime if it is not frozen
+    EventVector_Set(EventVector_NewMessage);
+#ifdef __ZEPHYR__
+    Main_Wake();
+#endif
+}
 
 void UsbCommand_GetKeyboardState(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer)
 {
+    detectFreezes();
 
 #ifdef __ZEPHYR__
     SetUsbTxBufferUint8(1, Flash_IsBusy());
@@ -40,8 +72,9 @@ void UsbCommand_GetKeyboardState(const uint8_t *GenericHidOutBuffer, uint8_t *Ge
 
     uint8_t byte2 = 0
         | (MergeSensor_IsMerged() ? GetDeviceStateByte2_HalvesMerged : 0)
-        | (BtPair_OobPairingInProgress ? GetDeviceStateByte2_PairingInProgress : 0)
-        | (Bt_NewPairedDevice ? GetDeviceStateByte2_NewPairedDevice : 0);
+        | (BtPair_PairingMode == PairingMode_Oob ? GetDeviceStateByte2_PairingInProgress : 0)
+        | (Bt_NewPairedDevice ? GetDeviceStateByte2_NewPairedDevice : 0)
+        | (ProxyLog_HasLog ? GetDeviceStateByte2_ZephyrLog : 0);
     SetUsbTxBufferUint8(2, byte2);
     SetUsbTxBufferUint8(3, ModuleConnectionStates[UhkModuleDriverId_LeftKeyboardHalf].moduleId);
     SetUsbTxBufferUint8(4, ModuleConnectionStates[UhkModuleDriverId_LeftModule].moduleId);
