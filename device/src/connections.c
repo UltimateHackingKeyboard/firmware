@@ -12,6 +12,8 @@
 #include "stubs.h"
 #include "usb_compatibility.h"
 #include "logger.h"
+#include <stdio.h>
+#include "config_manager.h"
 
 connection_t Connections[ConnectionId_Count] = {
     [ConnectionId_UsbHidRight] = { .isAlias = true },
@@ -421,5 +423,16 @@ connection_target_t Connections_DeviceToTarget(device_id_t deviceId) {
         default:
             return ConnectionTarget_None;
     }
+}
+
+void Connections_PrintInfo(void) {
+    printk("Connection info:\n");
+    printk("----------------------\n");
+    printk("Compiled   peripheral count: %d\n", CONFIG_BT_CTLR_SDC_PERIPHERAL_COUNT);
+    printk("Configured peripheral count: %d\n", Cfg.Bt_MaxPeripheralConnections);
+    HostConnections_ListKnownBleConnections();
+    BtConn_ListAllBonds();
+    BtConn_ListCurrentConnections();
+    printk("----------------------\n");
 }
 

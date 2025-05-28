@@ -70,10 +70,15 @@ void printToOurBuffer(uint8_t *data, size_t length) {
 static void processLog(const struct log_backend *const backend, union log_msg_generic *msg);
 
 void panic(const struct log_backend *const backend) {
-    isInPanicMode = true;
+    if (!isInPanicMode) {
+        isInPanicMode = true;
+
+        Trace_Print("crash/panic");
+    }
 
     StateWormhole_Open();
     StateWormhole.persistStatusBuffer = true;
+
 };
 
 static int outputFunc(uint8_t *data, size_t length, void *ctx)
