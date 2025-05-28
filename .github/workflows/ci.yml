@@ -84,10 +84,17 @@ jobs:
           S3_KEY_PREFIX: "firmware/"
           S3_REGION: "eu-central-1"
 
+      - name: Strip `v` from git tag and
+        run: |
+          TAG_VERSION=${{ github.ref_name }}
+          TAG_VERSION=${TAG_VERSION#v}
+          echo "TAG_VERSION=$TAG_VERSION" >> $GITHUB_ENV
+
       - name: Release
         uses: softprops/action-gh-release@v2
         if: github.ref_type == 'tag'
         with:
           draft: true
+          name: ${{ env.TAG_VERSION }}
           files: firmware/scripts/uhk-firmware-*.tar.gz
           token: ${{ secrets.GITHUB_TOKEN }}
