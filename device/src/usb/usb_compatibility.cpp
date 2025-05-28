@@ -48,7 +48,7 @@ static report_sink_t determineSink() {
         printk("Can't send report - selected connection is not ready!\n");
         Connections_HandleSwitchover(ConnectionId_Invalid, false);
         if (!Connections_IsReady(ActiveHostConnectionId)) {
-            printk("Giving report to c2usb anyways!\n");
+            // printk("Giving report to c2usb anyways!\n");
             return ReportSink_Usb;
         }
     }
@@ -77,7 +77,7 @@ extern "C" void UsbCompatibility_SendKeyboardReport(const usb_basic_keyboard_rep
 #if DEVICE_IS_UHK80_RIGHT
         case ReportSink_BleHid:
             keyboard_app::ble_handle().set_report_state(*reinterpret_cast<const scancode_buffer*>(report));
-            printk("Giving report to c2usb ble hid!\n");
+            // printk("Giving report to c2usb ble hid!\n");
             break;
 #endif
         case ReportSink_Dongle:
