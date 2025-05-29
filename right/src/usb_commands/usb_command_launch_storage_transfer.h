@@ -11,6 +11,7 @@
         UsbStatusCode_LaunchStorageTransferInvalidStorageOperation = 2,
         UsbStatusCode_LaunchStorageTransferInvalidConfigBufferId = 3,
         UsbStatusCode_LaunchStorageTransferTransferError = 4,
+        UsbStatusCode_LaunchStorageTransferInvalidConfigBuffer = 5,
     } usb_status_code_launch_storage_transfer_t;
 
 // Functions:

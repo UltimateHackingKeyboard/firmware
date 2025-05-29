@@ -17,7 +17,8 @@ void UsbCommand_WriteConfig(config_buffer_id_t configBufferId, const uint8_t *Ge
         return;
     }
 
-    uint8_t *buffer = ConfigBufferIdToConfigBuffer(configBufferId)->buffer;
+    config_buffer_t* bufferHead = ConfigBufferIdToConfigBuffer(configBufferId);
+    uint8_t *buffer = bufferHead->buffer;
     uint16_t bufferLength = ConfigBufferIdToBufferSize(configBufferId);
 
     if (offset + length > bufferLength) {
@@ -25,5 +26,6 @@ void UsbCommand_WriteConfig(config_buffer_id_t configBufferId, const uint8_t *Ge
         return;
     }
 
+    bufferHead->isValid = false;
     memcpy(buffer + offset, GenericHidOutBuffer + paramsSize, length);
 }
