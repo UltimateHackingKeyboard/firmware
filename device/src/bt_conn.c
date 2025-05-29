@@ -36,7 +36,7 @@
 #include "right/src/bt_defs.h"
 #include "bt_health.h"
 
-LOG_MODULE_REGISTER(Bt, LOG_LEVEL_WRN);
+LOG_MODULE_REGISTER(Bt, LOG_LEVEL_INF);
 
 bool Bt_NewPairedDevice = false;
 
