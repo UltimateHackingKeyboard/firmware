@@ -1827,7 +1827,7 @@ static macro_result_t processZephyrCommand(parser_context_t* ctx) {
     return MacroResult_Finished;
 #undef LEN
 #else
-    Macros_ReportErrorPrintf(ctx->at, "Zephyr commands are not available on uhk60.";
+    Macros_ReportErrorPrintf(ctx->at, "Zephyr commands are not available on uhk60.\n");
 
     ctx->at = ctx->end;
     return MacroResult_Finished;
