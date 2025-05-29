@@ -21,7 +21,7 @@
 #include <zephyr/logging/log.h>
 #include "battery_percent_calculator.h"
 #include "battery_unloaded_calculator.h"
-
+#include <zephyr/logging/log_ctrl.h>
 
 LOG_MODULE_REGISTER(Battery, LOG_LEVEL_INF);
 
@@ -271,7 +271,7 @@ void Charger_UpdateBatteryState() {
             perc = BatteryCalculator_Step(batteryState.batteryPercentage, perc);
 
             stateChanged |= setPercentage(voltage, perc);
-            printk("corrected voltage is %d %d\n", voltage, perc);
+            LOG_INF("corrected voltage is %d %d\n", voltage, perc);
 
             if (voltage == 0) {
                 // the value is not valid, try again
@@ -399,6 +399,9 @@ void InitCharger_Min(void) {
 }
 
 void InitCharger(void) {
+    log_filter_set(NULL, 0, log_source_id_get("Battery"), LOG_LEVEL_WRN);
+
+
     InitCharger_Min();
 
     gpio_pin_configure_dt(&chargerEnDt, GPIO_OUTPUT);
