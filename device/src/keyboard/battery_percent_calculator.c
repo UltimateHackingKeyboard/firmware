@@ -2,6 +2,9 @@
 #include <stdint.h>
 #include "battery_manager.h"
 #include "device.h"
+#include <zephyr/logging/log.h>
+
+LOG_MODULE_DECLARE(Battery);
 
 typedef struct {
     uint16_t unit;
@@ -187,7 +190,7 @@ uint16_t BatteryCalculator_Step(uint8_t oldPercentage, uint8_t newPercentage) {
     } else if (absoluteDiff) {
         res = oldPercentage;
     }
-    printk("Step called with %d %d -> %d\n", oldPercentage, newPercentage, res);
+    LOG_INF("Step called with %d %d -> %d\n", oldPercentage, newPercentage, res);
     return res;
 }
 
