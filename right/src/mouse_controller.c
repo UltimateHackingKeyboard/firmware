@@ -752,6 +752,7 @@ ATTR_UNUSED static void test(bool actual, bool expected, const char* comment) {
 }
 
 ATTR_UNUSED void MouseController_RunTests() {
+#ifdef __ZEPHYR__
     bool state = false;
     bool res = false;
     printk("Mouse Controller tests:\n");
@@ -760,6 +761,7 @@ ATTR_UNUSED void MouseController_RunTests() {
     test(res, false, "detect non jump");
     res = detectJumps((int16_t)(0xff << 8 | 0x01), &state);
     test(res, true, "detect jump");
+#endif
 }
 
 void MouseController_ProcessMouseActions()
