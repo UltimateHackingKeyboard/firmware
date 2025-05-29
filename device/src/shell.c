@@ -42,8 +42,7 @@ void list_backends_by_iteration(void) {
     }
 }
 
-void Shell_Execute(const char *cmd)
-{
+void Shell_Execute(const char *cmd, const char *source) {
     const char* backendName = "shell_uart";
     const struct shell *sh = shell_backend_get_by_name(backendName);
     if (!sh) {
@@ -51,7 +50,7 @@ void Shell_Execute(const char *cmd)
         list_backends_by_iteration();
         return;
     }
-    printk("Executing following command from usb: '%s'\n", cmd);
+    printk("Executing following command from %s: '%s'\n", source, cmd);
     int err = shell_execute_cmd(sh, cmd);
     if (err) {
         printk("Error executing command: %d\n", err);
