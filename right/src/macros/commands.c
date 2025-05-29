@@ -40,6 +40,7 @@
 #ifdef __ZEPHYR__
 #include "connections.h"
 #include "bt_pair.h"
+#include "shell.h"
 #else
 #include "segment_display.h"
 #endif
@@ -1807,6 +1808,32 @@ static macro_result_t processSwitchHostCommand(parser_context_t* ctx)
     return MacroResult_Finished;
 }
 
+static macro_result_t processZephyrCommand(parser_context_t* ctx) {
+    if (Macros_DryRun) {
+        ctx->at = ctx->end;
+        return MacroResult_Finished;
+    }
+#ifdef __ZEPHYR__
+#define LEN 64
+    char buffer[LEN];
+
+    size_t len = MIN(LEN-1, (ctx->end - ctx->at));
+    strncpy(buffer, ctx->at, len);
+    buffer[len] = '\0';
+
+    Shell_Execute(buffer, "macro");
+
+    ctx->at = ctx->end;
+    return MacroResult_Finished;
+#undef LEN
+#else
+    Macros_ReportErrorPrintf(ctx->at, "Zephyr commands are not available on uhk60.";
+
+    ctx->at = ctx->end;
+    return MacroResult_Finished;
+#endif
+}
+
 static macro_result_t processCommand(parser_context_t* ctx)
 {
     if (*ctx->at == '$') {
@@ -2473,6 +2500,14 @@ static macro_result_t processCommand(parser_context_t* ctx)
         case 'y':
             if (ConsumeToken(ctx, "yield")) {
                 return processYieldCommand(ctx);
+            }
+            else {
+                goto failed;
+            }
+            break;
+        case 'z':
+            if (ConsumeToken(ctx, "zephyr")) {
+                return processZephyrCommand(ctx);
             }
             else {
                 goto failed;
