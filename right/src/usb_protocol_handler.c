@@ -1,4 +1,5 @@
 #include <strings.h>
+#include "config_parser/config_globals.h"
 #include "macros/status_buffer.h"
 #include "usb_protocol_handler.h"
 #include "usb_commands/usb_command_get_device_state.h"
@@ -53,9 +54,9 @@ void UsbProtocolHandler(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidI
         case UsbCommandId_ApplyConfig:
 
 #ifdef __ZEPHYR__
-            UsbCommand_ApplyConfigAsync(GenericHidOutBuffer, GenericHidInBuffer);
+            UsbCommand_ValidateAndApplyConfigAsync(GenericHidOutBuffer, GenericHidInBuffer);
 #else
-            UsbCommand_ApplyConfig(GenericHidOutBuffer, GenericHidInBuffer);
+            UsbCommand_ValidateAndApplyConfigSync(GenericHidOutBuffer, GenericHidInBuffer);
 #endif
             break;
         case UsbCommandId_GetDeviceState:

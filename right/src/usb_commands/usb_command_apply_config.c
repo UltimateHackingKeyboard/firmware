@@ -20,6 +20,9 @@
 #include "event_scheduler.h"
 #endif
 
+char oldKeymapAbbreviation[KEYMAP_ABBREVIATION_LENGTH];
+uint8_t oldKeymapAbbreviationLen;
+
 void updateUsbBuffer(uint8_t *GenericHidInBuffer, uint8_t usbStatusCode, uint16_t parserOffset, parser_stage_t parserStage)
 {
     SetUsbTxBufferUint8(0, usbStatusCode);
@@ -27,30 +30,34 @@ void updateUsbBuffer(uint8_t *GenericHidInBuffer, uint8_t usbStatusCode, uint16_
     SetUsbTxBufferUint8(3, parserStage);
 }
 
-static uint8_t validateConfig(uint8_t *GenericHidInBuffer) {
+static void swapTheBuffers() {
+    memcpy(oldKeymapAbbreviation, AllKeymaps[CurrentKeymapIndex].abbreviation, KEYMAP_ABBREVIATION_LENGTH);
+    oldKeymapAbbreviationLen = AllKeymaps[CurrentKeymapIndex].abbreviationLen;
+
+    config_buffer_t temp = ValidatedUserConfigBuffer;
+    ValidatedUserConfigBuffer = StagingUserConfigBuffer;
+    StagingUserConfigBuffer = temp;
+
+    StagingUserConfigBuffer.isValid = false;
+}
+
+static uint8_t validateConfigAndSwapBuffers(uint8_t *GenericHidInBuffer) {
     // Validate the staging configuration.
     ParserRunDry = true;
     StagingUserConfigBuffer.offset = 0;
     StagingUserConfigBuffer.isValid = false;
     uint8_t parseConfigStatus = ParseConfig(&StagingUserConfigBuffer);
-    StagingUserConfigBuffer.isValid = parseConfigStatus == UsbStatusCode_Success;
+
+    if (parseConfigStatus == UsbStatusCode_Success) {
+        StagingUserConfigBuffer.isValid = parseConfigStatus == UsbStatusCode_Success;
+        swapTheBuffers();
+    }
+
     if (GenericHidInBuffer) {
         updateUsbBuffer(GenericHidInBuffer, UsbStatusCode_Success, StagingUserConfigBuffer.offset, ParsingStage_Validate);
     }
-    return parseConfigStatus;
-}
 
-void UsbCommand_ApplyConfigAsync(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer) {
-    bool calledFromUsb = GenericHidOutBuffer != NULL;
-    if (validateConfig(GenericHidInBuffer) == UsbStatusCode_Success) {
-        EventVector_Set(EventVector_ApplyConfig);
-        if (calledFromUsb) {
-            Macros_ClearStatus(calledFromUsb);
-        }
-#ifdef __ZEPHYR__
-        Main_Wake();
-#endif
-    }
+    return parseConfigStatus;
 }
 
 static void setLedsWhite() {
@@ -94,28 +101,13 @@ void UsbCommand_ApplyFactory(const uint8_t *GenericHidOutBuffer, uint8_t *Generi
 
     LedManager_FullUpdate();
 }
-
-uint8_t UsbCommand_ApplyConfig(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer)
+static uint8_t applyConfig(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer)
 {
+    EventVector_Unset(EventVector_ApplyConfig);
     static bool isBoot = true;
     bool calledFromUsb = GenericHidOutBuffer != NULL;
-    EventVector_Unset(EventVector_ApplyConfig);
 
-    uint8_t parseConfigStatus = validateConfig(GenericHidInBuffer);
-
-    if (parseConfigStatus != UsbStatusCode_Success) {
-        return parseConfigStatus;
-    }
-
-    // Make the staging configuration the current one.
-    char oldKeymapAbbreviation[KEYMAP_ABBREVIATION_LENGTH];
-    uint8_t oldKeymapAbbreviationLen;
-    memcpy(oldKeymapAbbreviation, AllKeymaps[CurrentKeymapIndex].abbreviation, KEYMAP_ABBREVIATION_LENGTH);
-    oldKeymapAbbreviationLen = AllKeymaps[CurrentKeymapIndex].abbreviationLen;
-
-    config_buffer_t temp = ValidatedUserConfigBuffer;
-    ValidatedUserConfigBuffer = StagingUserConfigBuffer;
-    StagingUserConfigBuffer = temp;
+    uint8_t parseConfigStatus;
 
     if (IsFactoryResetModeEnabled) {
         return UsbStatusCode_Success;
@@ -158,3 +150,41 @@ uint8_t UsbCommand_ApplyConfig(const uint8_t *GenericHidOutBuffer, uint8_t *Gene
 
     return UsbStatusCode_Success;
 }
+
+uint8_t UsbCommand_ValidateAndApplyConfigSync(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer) {
+    // used on both uhk60 and uhk80
+
+    int err;
+
+    err = validateConfigAndSwapBuffers(GenericHidInBuffer);
+
+    if (err == UsbStatusCode_Success) {
+        err = applyConfig(GenericHidOutBuffer, GenericHidInBuffer);
+    }
+
+    return err;
+}
+
+uint8_t UsbCommand_ApplyConfigSync(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer) {
+    ASSERT(DEVICE_IS_UHK80);
+
+    return applyConfig(GenericHidOutBuffer, GenericHidInBuffer);
+}
+
+uint8_t UsbCommand_ValidateAndApplyConfigAsync(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer) {
+    ASSERT(DEVICE_IS_UHK80);
+
+    bool calledFromUsb = GenericHidOutBuffer != NULL;
+    int err = validateConfigAndSwapBuffers(GenericHidInBuffer);
+    if (err == UsbStatusCode_Success) {
+        EventVector_Set(EventVector_ApplyConfig);
+        if (calledFromUsb) {
+            Macros_ClearStatus(calledFromUsb);
+        }
+#ifdef __ZEPHYR__
+        Main_Wake();
+#endif
+    }
+    return err;
+}
+
