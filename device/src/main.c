@@ -168,7 +168,7 @@ void mainRuntime(void) {
             Flash_ReadAreaSync(userConfigArea, 0, StagingUserConfigBuffer.buffer, USER_CONFIG_SIZE);
             printk("Applying user config\n");
             bool factoryMode = false;
-            if (factoryMode || UsbCommand_ApplyConfig(NULL, NULL) != UsbStatusCode_Success) {
+            if (factoryMode || UsbCommand_ValidateAndApplyConfigSync(NULL, NULL) != UsbStatusCode_Success) {
                 UsbCommand_ApplyFactory(NULL, NULL);
             }
             printk("User config applied\n");
