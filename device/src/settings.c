@@ -128,11 +128,11 @@ static int delete_handler(const char *key, size_t len, settings_read_cb read_cb,
 }
 
 void Settings_Erase(const char* reason) {
+    printk("Settings: Erasing all settings, because: %s\n", reason);
+
     settings_load();
     settings_load_subtree_direct(NULL, delete_handler, NULL);
     settings_save();
-
-    printk("Settings: Erased all settings, because: %s\n", reason);
 
     Settings_Reload();
 }
