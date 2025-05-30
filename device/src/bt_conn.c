@@ -222,11 +222,17 @@ static void youAreNotWanted(struct bt_conn *conn) {
     uint32_t currentTime = k_uptime_get_32();
 
     if (currentTime - lastAttemptTime < 2000) {
+        LOG_WRN("Refusing connenction %s (this is not a selected connection)(this is repeated attempt!)\n", GetPeerStringByConn(conn));
         safeDisconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
     } else {
         LOG_WRN("Refusing connenction %s (this is not a selected connection)\n", GetPeerStringByConn(conn));
         safeDisconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
     }
+    LOG_INF("    Free peripheral slots: %d, Peripheral conn count: %d, bt pari mode: %d",
+        BtConn_UnusedPeripheralConnectionCount(),
+        ACTUAL_PERIPHERAL_CONNECTION_COUNT,
+        BtPair_PairingMode
+   );
 
     lastAttemptTime = currentTime;
 }
@@ -843,7 +849,7 @@ void num_comp_reply(int passkey) {
 }
 
 uint8_t BtConn_UnusedPeripheralConnectionCount() {
-    uint8_t count = MIN(PERIPHERAL_CONNECTION_COUNT, Cfg.Bt_MaxPeripheralConnections);
+    uint8_t count = ACTUAL_PERIPHERAL_CONNECTION_COUNT;
 
     for (uint8_t peerId = PeerIdFirstHost; peerId <= PeerIdLastHost; peerId++) {
         if (Peers[peerId].conn && count > 0) {
