@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [14.0.3] - 2025-05-29
+
+Device Protocol: 4.15.0 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 11.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.4.1
+
+- Fix bug that made the configuration not update when saving it in various circumstances.
+
 ## [14.0.2] - 2025-05-27
 
 Device Protocol: 4.15.0 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 11.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.4.1
