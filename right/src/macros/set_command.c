@@ -368,7 +368,9 @@ static macro_variable_t bluetooth(parser_context_t* ctx, set_command_action_t ac
 #endif
     } else if (ConsumeToken(ctx, "directedAdvertisingAllowed")) {
         ASSIGN_BOOL(Cfg.Bt_DirectedAdvertisingAllowed);
+#ifdef __ZEPHYR__
         BtManager_StartScanningAndAdvertisingAsync("StartScanningAndAdvertisingAsync in set_command - directedAdvertisingAllowed changed");
+#endif
     } else {
         Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
     }
