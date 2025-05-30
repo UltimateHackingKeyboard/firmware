@@ -279,6 +279,7 @@ const config_t DefaultCfg = (config_t){
         .Bt_MaxPeripheralConnections = 3,
         .Bt_AlwaysAdvertiseHid = true,
         .Bt_DirectedAdvertisingAllowed = true,
+        .DevMode = false,
         .EmergencyKey = NULL,
         .UiStyle = UiStyle_Classic,
         .KeyActionColors = {

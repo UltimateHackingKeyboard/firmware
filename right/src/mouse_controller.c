@@ -832,7 +832,7 @@ void MouseController_ProcessMouseActions()
                 bool jumped = false;
                 jumped |= detectJumps(x, &ks->wasSmallX);
                 jumped |= detectJumps(y, &ks->wasSmallY);
-                if (jumped) {
+                if (jumped && Cfg.DevMode) {
                     LogUOS("Probable jump detected! %d %d\n", x, y);
                 }
             }
