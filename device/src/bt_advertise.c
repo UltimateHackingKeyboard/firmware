@@ -138,35 +138,41 @@ uint8_t BtAdvertise_Start(adv_config_t advConfig)
     switch (advConfig.advType) {
         case ADVERTISE_HID:
         case ADVERTISE_NUS | ADVERTISE_HID:
+            LOG_INF("Adv: advertise nus+hid.\n");
             /* our devices don't check service uuids, so hid advertisement effectively advertises nus too */
             advParam = *BT_LE_ADV_CONN_ONE_TIME;
             err = BT_LE_ADV_START(&advParam, adHid, sdHid);
 
             break;
         case ADVERTISE_NUS:
-            advParam = *BT_LE_ADV_CONN_ONE_TIME;
-            err = BT_LE_ADV_START(&advParam, BY_SIDE(adNusLeft, adNusRight), sdNus);
+            if (Cfg.Bt_DirectedAdvertisingAllowed) {
+                LOG_INF("Adv: advertise nus, with allow list.\n");
+                setFilters(advConfig);
 
-            // TODO: following restricted advertising causes troubles
-            // setFilters(advConfig);
-            //
-            // advParam = *BT_LE_ADV_CONN_ONE_TIME;
-            // advParam.options = BT_LE_ADV_OPT_CONNECTABLE | BT_LE_ADV_OPT_ONE_TIME | BT_LE_ADV_OPT_FILTER_CONN | BT_LE_ADV_OPT_USE_IDENTITY,
-            //
-            // err = BT_LE_ADV_START(&advParam, BY_SIDE(adNusLeft, adNusRight), sdNus);
+                advParam = *BT_LE_ADV_CONN_ONE_TIME;
+                advParam.options = BT_LE_ADV_OPT_CONNECTABLE | BT_LE_ADV_OPT_ONE_TIME | BT_LE_ADV_OPT_FILTER_CONN | BT_LE_ADV_OPT_USE_IDENTITY;
+
+                err = BT_LE_ADV_START(&advParam, BY_SIDE(adNusLeft, adNusRight), sdNus);
+            } else {
+                LOG_INF("Adv: advertise nus, without allow list.\n");
+                advParam = *BT_LE_ADV_CONN_ONE_TIME;
+                err = BT_LE_ADV_START(&advParam, BY_SIDE(adNusLeft, adNusRight), sdNus);
+            }
             break;
         case ADVERTISE_DIRECTED_NUS:
-            advParam = *BT_LE_ADV_CONN_ONE_TIME;
-            err = BT_LE_ADV_START(&advParam, BY_SIDE(adNusLeft, adNusRight), sdNus);
+            if (Cfg.Bt_DirectedAdvertisingAllowed) {
+                LOG_INF("Adv: direct advertise nus, with allow list.\n");
+                setFilters(advConfig);
 
-            // TODO: following restricted advertising causes troubles
-            // setFilters(advConfig);
-            //
-            // advParam = *BT_LE_ADV_CONN_ONE_TIME;
-            // advParam.options = BT_LE_ADV_OPT_CONNECTABLE | BT_LE_ADV_OPT_ONE_TIME | BT_LE_ADV_OPT_FILTER_CONN | BT_LE_ADV_OPT_USE_IDENTITY,
-            //
-            // err = BT_LE_ADV_START(&advParam, BY_SIDE(adNusLeft, adNusRight), sdNus);
-            // break;
+                advParam = *BT_LE_ADV_CONN_ONE_TIME;
+                advParam.options = BT_LE_ADV_OPT_CONNECTABLE | BT_LE_ADV_OPT_ONE_TIME | BT_LE_ADV_OPT_FILTER_CONN | BT_LE_ADV_OPT_USE_IDENTITY;
+
+                err = BT_LE_ADV_START(&advParam, BY_SIDE(adNusLeft, adNusRight), sdNus);
+            } else {
+                LOG_INF("Adv: direct advertise nus, without allow list.\n");
+                advParam = *BT_LE_ADV_CONN_ONE_TIME;
+                err = BT_LE_ADV_START(&advParam, BY_SIDE(adNusLeft, adNusRight), sdNus);
+            }
 
             //// TODO: fix and reenable this?
             // printk("Advertising against %s\n", GetAddrString(advConfig.addr));
