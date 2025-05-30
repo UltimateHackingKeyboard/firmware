@@ -14,6 +14,7 @@
 #include "logger.h"
 #include <stdio.h>
 #include "config_manager.h"
+#include "bt_pair.h"
 
 connection_t Connections[ConnectionId_Count] = {
     [ConnectionId_UsbHidRight] = { .isAlias = true },
@@ -430,6 +431,8 @@ void Connections_PrintInfo(void) {
     printk("----------------------\n");
     printk("Compiled   peripheral count: %d\n", CONFIG_BT_CTLR_SDC_PERIPHERAL_COUNT);
     printk("Configured peripheral count: %d\n", Cfg.Bt_MaxPeripheralConnections);
+    printk("Pairing mode: %d\n", BtPair_PairingMode);
+    printk("Directed advertising enabled: %d\n", Cfg.Bt_DirectedAdvertisingAllowed);
     HostConnections_ListKnownBleConnections();
     BtConn_ListAllBonds();
     BtConn_ListCurrentConnections();
