@@ -12,7 +12,7 @@
 
     void InitSettings(void);
     void Settings_Reload(void);
-    void Settings_Erase(void);
+    void Settings_Erase(const char* reason);
 
 
 // Variables:

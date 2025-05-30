@@ -6,7 +6,7 @@
 
 void UsbCommand_EraseAllSettings(void) {
     BtPair_UnpairAllNonLR();
-    Settings_Erase();
+    Settings_Erase("Erase usb command received.");
 }
 
 #endif
