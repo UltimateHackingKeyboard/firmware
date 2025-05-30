@@ -6,6 +6,9 @@
 #include "event_scheduler.h"
 #include "host_connection.h"
 #include <zephyr/logging/log.h>
+#include "trace.h"
+#include <zephyr/kernel.h>
+#include "right/src/bt_defs.h"
 
 LOG_MODULE_DECLARE(Bt);
 
@@ -53,6 +56,7 @@ static int scan_fill() {
 }
 
 int BtScan_Stop(void) {
+    BT_TRACE_AND_ASSERT("bs1");
     int err;
 
     bt_scan_stop();
@@ -70,6 +74,7 @@ int BtScan_Stop(void) {
 }
 
 int BtScan_Init(void) {
+    BT_TRACE_AND_ASSERT("bs2");
     struct bt_scan_init_param scan_init = {
         .connect_if_match = 1,
     };
@@ -82,6 +87,7 @@ int BtScan_Init(void) {
 }
 
 int BtScan_Start(void) {
+    BT_TRACE_AND_ASSERT("bs3");
     int err;
 
     scan_fill();

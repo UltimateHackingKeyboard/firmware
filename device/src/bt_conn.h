@@ -13,6 +13,8 @@
     // please edit this in prj.conf
     #define PERIPHERAL_CONNECTION_COUNT CONFIG_BT_CTLR_SDC_PERIPHERAL_COUNT
 
+    #define ACTUAL_PERIPHERAL_CONNECTION_COUNT (MIN(PERIPHERAL_CONNECTION_COUNT, Cfg.Bt_MaxPeripheralConnections))
+
     #define PeerIdUnknown 0
     #define PeerIdLeft 1
     #define PeerIdFirst 1

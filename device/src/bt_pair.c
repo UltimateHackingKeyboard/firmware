@@ -15,6 +15,8 @@
 #include "settings.h"
 #include "usb_commands/usb_command_get_new_pairings.h"
 #include "config_manager.h"
+#include "right/src/bt_defs.h"
+#include "bt_health.h"
 
 bool BtPair_LastOobPairingSucceeded = true;
 
@@ -41,10 +43,12 @@ static void enterOobPairingMode() {
 }
 
 struct bt_le_oob* BtPair_GetLocalOob() {
+    BT_TRACE_AND_ASSERT("bp1");
     if (!initialized) {
         int err = bt_le_oob_get_local(BT_ID_DEFAULT, &oobLocal);
         if (err) {
             printk("Failed to get local OOB data (err %d)\n", err);
+            Bt_HandleError("bt_le_oob_get_local", err);
             return NULL;
         }
         initialized = true;
@@ -104,6 +108,7 @@ void BtPair_SetRemoteOob(const struct bt_le_oob* oob) {
 
 #ifdef CONFIG_BT_CENTRAL
 void BtPair_PairCentral() {
+    BT_TRACE_AND_ASSERT("bp2");
     BtPair_PairingAsCentral = true;
     Settings_Reload();
     bt_le_oob_set_sc_flag(true);
@@ -115,6 +120,7 @@ void BtPair_PairCentral() {
 
 #ifdef CONFIG_BT_PERIPHERAL
 void BtPair_PairPeripheral() {
+    BT_TRACE_AND_ASSERT("bp3");
     BtPair_PairingAsCentral = false;
     Settings_Reload();
     bt_le_oob_set_sc_flag(true);
@@ -125,6 +131,7 @@ void BtPair_PairPeripheral() {
 #endif
 
 void BtPair_EndPairing(bool success, const char* msg) {
+    BT_TRACE_AND_ASSERT("bp4");
     printk("--- Pairing ended, success = %d: %s ---\n", success, msg);
     if (BtPair_PairingMode == PairingMode_Oob) {
 
@@ -158,6 +165,7 @@ struct delete_args_t {
 };
 
 static void deleteBond(const struct bt_bond_info *info) {
+    BT_TRACE_AND_ASSERT("bp5");
     int err;
 
     struct bt_conn* conn;
@@ -176,6 +184,7 @@ static void deleteBond(const struct bt_bond_info *info) {
     err = bt_unpair(BT_ID_DEFAULT, &info->addr);
     if (err) {
         printk("Failed to unpair (err %d)\n", err);
+        Bt_HandleError("bt_unpair", err);
     } else {
         char addr[32];
         bt_addr_le_to_str(&info->addr, addr, sizeof(addr));
@@ -204,6 +213,7 @@ static void bt_foreach_bond_cb_delete(const struct bt_bond_info *info, void *use
 }
 
 void BtPair_Unpair(const bt_addr_le_t addr) {
+    BT_TRACE_AND_ASSERT("bp6");
     bool deleteAll = true;
 
     for (uint8_t i = 0; i < BLE_ADDR_LEN; i++) {
@@ -240,6 +250,7 @@ static void bt_foreach_bond_cb_delete_non_lr(const struct bt_bond_info *info, vo
 }
 
 void BtPair_UnpairAllNonLR() {
+    BT_TRACE_AND_ASSERT("bp7");
     // Iterate through all stored bonds
     bt_foreach_bond(BT_ID_DEFAULT, bt_foreach_bond_cb_delete_non_lr, NULL);
 
@@ -266,6 +277,7 @@ void checkBondedDevice(const struct bt_bond_info *info, void *user_data) {
 
 bool BtPair_IsDeviceBonded(const bt_addr_le_t *addr)
 {
+    BT_TRACE_AND_ASSERT("bp8");
     bool bonded = false;
 
     struct check_bonded_device_args_t args = {
@@ -290,6 +302,7 @@ void deleteBondIfUnknown(const struct bt_bond_info *info, void *user_data) {
 
 
 void BtPair_ClearUnknownBonds() {
+    BT_TRACE_AND_ASSERT("bp9");
     printk("Clearing bonds\n");
     bt_foreach_bond(BT_ID_DEFAULT, deleteBondIfUnknown, NULL);
     UsbCommand_UpdateNewPairingsFlag();

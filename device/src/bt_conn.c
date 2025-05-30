@@ -32,8 +32,11 @@
 #include <zephyr/bluetooth/gatt.h>
 #include "stubs.h"
 #include <zephyr/logging/log.h>
+#include "trace.h"
+#include "right/src/bt_defs.h"
+#include "bt_health.h"
 
-LOG_MODULE_REGISTER(Bt, LOG_LEVEL_WRN);
+LOG_MODULE_REGISTER(Bt, LOG_LEVEL_INF);
 
 bool Bt_NewPairedDevice = false;
 
@@ -180,6 +183,7 @@ static void setLatency(struct bt_conn* conn, const struct bt_le_conn_param* para
     int err = bt_conn_le_param_update(conn, params);
     if (err) {
         LOG_WRN("LE latencies update failed: %d\n", err);
+        Bt_HandleError("bt_conn_le_param_update", err);
     }
 }
 
@@ -218,11 +222,17 @@ static void youAreNotWanted(struct bt_conn *conn) {
     uint32_t currentTime = k_uptime_get_32();
 
     if (currentTime - lastAttemptTime < 2000) {
+        LOG_WRN("Refusing connenction %s (this is not a selected connection)(this is repeated attempt!)\n", GetPeerStringByConn(conn));
         safeDisconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
     } else {
         LOG_WRN("Refusing connenction %s (this is not a selected connection)\n", GetPeerStringByConn(conn));
         safeDisconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
     }
+    LOG_INF("    Free peripheral slots: %d, Peripheral conn count: %d, bt pari mode: %d",
+        BtConn_UnusedPeripheralConnectionCount(),
+        ACTUAL_PERIPHERAL_CONNECTION_COUNT,
+        BtPair_PairingMode
+   );
 
     lastAttemptTime = currentTime;
 }
@@ -461,12 +471,14 @@ static void connectUnknown(struct bt_conn *conn) {
     err = bt_gatt_discover(conn, &discover_params);
     if (err) {
         LOG_WRN("Service discovery failed (err %u)\n", err);
+        Bt_HandleError("bt_gatt_discover", err);
         return;
     }
 #endif
 }
 
 static void connected(struct bt_conn *conn, uint8_t err) {
+    BT_TRACE_AND_ASSERT("bc1");
     if (err) {
         LOG_WRN("Failed to connect to %s, err %u\n", GetPeerStringByConn(conn), err);
         BtManager_StartScanningAndAdvertising();
@@ -499,6 +511,7 @@ static void connected(struct bt_conn *conn, uint8_t err) {
 }
 
 static void disconnected(struct bt_conn *conn, uint8_t reason) {
+    BT_TRACE_AND_ASSERT("bc2");
     int8_t peerId = GetPeerIdByConn(conn);
     connection_type_t connectionType = Connections_Type(Peers[peerId].connectionId);
 
@@ -586,6 +599,7 @@ static void connectAuthenticatedConnection(struct bt_conn *conn, connection_id_t
 }
 
 static void securityChanged(struct bt_conn *conn, bt_security_t level, enum bt_security_err err) {
+    BT_TRACE_AND_ASSERT("bc3");
     // In case of failure, disconnect
     if (err || (level < BT_SECURITY_L4 && !Cfg.Bt_AllowUnsecuredConnections)) {
         LOG_WRN("Bt security failed: %s, level %u, err %d, disconnecting\n", GetPeerStringByConn(conn), level, err);
@@ -749,6 +763,7 @@ static void bt_foreach_conn_cb(struct bt_conn *conn, void *user_data) {
 }
 
 void BtConn_DisconnectAll() {
+    BT_TRACE_AND_ASSERT("bc4");
     bt_conn_foreach(BT_CONN_TYPE_LE, bt_foreach_conn_cb, NULL);
 }
 
@@ -761,6 +776,7 @@ static void bt_foreach_conn_cb_disconnect_unidentified(struct bt_conn *conn, voi
 }
 
 void BtConn_DisconnectAllUnidentified() {
+    BT_TRACE_AND_ASSERT("bc5");
     bt_conn_foreach(BT_CONN_TYPE_LE, bt_foreach_conn_cb_disconnect_unidentified, NULL);
 }
 
@@ -786,6 +802,7 @@ static struct bt_conn_auth_info_cb conn_auth_info_callbacks = {
 };
 
 void BtConn_Init(void) {
+    BT_TRACE_AND_ASSERT("bc6");
     int err = 0;
 
     for (uint8_t peerId = PeerIdFirstHost; peerId <= PeerIdLastHost; peerId++) {
@@ -832,7 +849,7 @@ void num_comp_reply(int passkey) {
 }
 
 uint8_t BtConn_UnusedPeripheralConnectionCount() {
-    uint8_t count = MIN(PERIPHERAL_CONNECTION_COUNT, Cfg.Bt_MaxPeripheralConnections);
+    uint8_t count = ACTUAL_PERIPHERAL_CONNECTION_COUNT;
 
     for (uint8_t peerId = PeerIdFirstHost; peerId <= PeerIdLastHost; peerId++) {
         if (Peers[peerId].conn && count > 0) {

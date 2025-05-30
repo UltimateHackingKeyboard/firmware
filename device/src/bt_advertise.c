@@ -12,6 +12,10 @@
 #include "keyboard/oled/widgets/widgets.h"
 #include <zephyr/logging/log.h>
 #include "config_manager.h"
+#include "trace.h"
+#include <zephyr/kernel.h>
+#include "right/src/bt_defs.h"
+#include "bt_health.h"
 
 LOG_MODULE_DECLARE(Bt);
 
@@ -73,7 +77,7 @@ static const char * advertisingString(uint8_t advType) {
     }
 }
 
-static void setFilters(adv_config_t advConfig) {
+ATTR_UNUSED static void setFilters(adv_config_t advConfig) {
     bt_le_filter_accept_list_clear();
 
     if (advConfig.advType & (ADVERTISE_HID | ADVERTISE_NUS)) {
@@ -117,6 +121,7 @@ void BtAdvertise_DisableAdvertisingIcon(void) {
 
 uint8_t BtAdvertise_Start(adv_config_t advConfig)
 {
+    BT_TRACE_AND_ASSERT("ba1");
     int err = 0;
 
     if ( DEVICE_IS_UHK80_RIGHT && !DeviceState_IsTargetConnected(ConnectionTarget_Left) ) {
@@ -138,27 +143,41 @@ uint8_t BtAdvertise_Start(adv_config_t advConfig)
     switch (advConfig.advType) {
         case ADVERTISE_HID:
         case ADVERTISE_NUS | ADVERTISE_HID:
+            LOG_INF("Adv: advertise nus+hid.\n");
             /* our devices don't check service uuids, so hid advertisement effectively advertises nus too */
             advParam = *BT_LE_ADV_CONN_ONE_TIME;
             err = BT_LE_ADV_START(&advParam, adHid, sdHid);
 
             break;
         case ADVERTISE_NUS:
-            setFilters(advConfig);
+            if (Cfg.Bt_DirectedAdvertisingAllowed) {
+                LOG_INF("Adv: advertise nus, with allow list.\n");
+                setFilters(advConfig);
 
-            advParam = *BT_LE_ADV_CONN_ONE_TIME;
-            advParam.options = BT_LE_ADV_OPT_CONNECTABLE | BT_LE_ADV_OPT_ONE_TIME | BT_LE_ADV_OPT_FILTER_CONN | BT_LE_ADV_OPT_USE_IDENTITY,
+                advParam = *BT_LE_ADV_CONN_ONE_TIME;
+                advParam.options = BT_LE_ADV_OPT_CONNECTABLE | BT_LE_ADV_OPT_ONE_TIME | BT_LE_ADV_OPT_FILTER_CONN | BT_LE_ADV_OPT_USE_IDENTITY;
 
-            err = BT_LE_ADV_START(&advParam, BY_SIDE(adNusLeft, adNusRight), sdNus);
+                err = BT_LE_ADV_START(&advParam, BY_SIDE(adNusLeft, adNusRight), sdNus);
+            } else {
+                LOG_INF("Adv: advertise nus, without allow list.\n");
+                advParam = *BT_LE_ADV_CONN_ONE_TIME;
+                err = BT_LE_ADV_START(&advParam, BY_SIDE(adNusLeft, adNusRight), sdNus);
+            }
             break;
         case ADVERTISE_DIRECTED_NUS:
-            setFilters(advConfig);
+            if (Cfg.Bt_DirectedAdvertisingAllowed) {
+                LOG_INF("Adv: direct advertise nus, with allow list.\n");
+                setFilters(advConfig);
 
-            advParam = *BT_LE_ADV_CONN_ONE_TIME;
-            advParam.options = BT_LE_ADV_OPT_CONNECTABLE | BT_LE_ADV_OPT_ONE_TIME | BT_LE_ADV_OPT_FILTER_CONN | BT_LE_ADV_OPT_USE_IDENTITY,
+                advParam = *BT_LE_ADV_CONN_ONE_TIME;
+                advParam.options = BT_LE_ADV_OPT_CONNECTABLE | BT_LE_ADV_OPT_ONE_TIME | BT_LE_ADV_OPT_FILTER_CONN | BT_LE_ADV_OPT_USE_IDENTITY;
 
-            err = BT_LE_ADV_START(&advParam, BY_SIDE(adNusLeft, adNusRight), sdNus);
-            break;
+                err = BT_LE_ADV_START(&advParam, BY_SIDE(adNusLeft, adNusRight), sdNus);
+            } else {
+                LOG_INF("Adv: direct advertise nus, without allow list.\n");
+                advParam = *BT_LE_ADV_CONN_ONE_TIME;
+                err = BT_LE_ADV_START(&advParam, BY_SIDE(adNusLeft, adNusRight), sdNus);
+            }
 
             //// TODO: fix and reenable this?
             // printk("Advertising against %s\n", GetAddrString(advConfig.addr));
@@ -185,9 +204,11 @@ uint8_t BtAdvertise_Start(adv_config_t advConfig)
 }
 
 void BtAdvertise_Stop(void) {
+    BT_TRACE_AND_ASSERT("ba2");
     int err = bt_le_adv_stop();
     if (err) {
         LOG_WRN("Adv: Advertising failed to stop (err %d)\n", err);
+        Bt_HandleError("BtAdvertise_Stop", err);
     }
 }
 

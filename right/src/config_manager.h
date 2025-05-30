@@ -89,11 +89,15 @@
         uint8_t ChordingDelay;
         key_state_t* EmergencyKey;
 
-        // others
-        uint32_t I2cBaudRate;
+        // bluetooth
         bool Bt_AllowUnsecuredConnections;
+        bool Bt_DirectedAdvertisingAllowed;
         bool Bt_Enabled;
         bool Bt_AlwaysAdvertiseHid;
+
+        // others
+        bool DevMode;
+        uint32_t I2cBaudRate;
         uint8_t Bt_MaxPeripheralConnections;
         ui_style_t UiStyle;
     } config_t;

@@ -366,6 +366,11 @@ static macro_variable_t bluetooth(parser_context_t* ctx, set_command_action_t ac
         BtManager_EnterMode(PairingMode_Default, false);
         BtManager_StartScanningAndAdvertisingAsync("StartScanningAndAdvertisingAsync in set_command - alwaysAdvertiseHid changed");
 #endif
+    } else if (ConsumeToken(ctx, "directedAdvertisingAllowed")) {
+        ASSIGN_BOOL(Cfg.Bt_DirectedAdvertisingAllowed);
+#ifdef __ZEPHYR__
+        BtManager_StartScanningAndAdvertisingAsync("StartScanningAndAdvertisingAsync in set_command - directedAdvertisingAllowed changed");
+#endif
     } else {
         Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
     }
@@ -961,6 +966,9 @@ static macro_variable_t root(parser_context_t* ctx, set_command_action_t action)
     }
     else if (ConsumeToken(ctx, "diagonalSpeedCompensation")) {
         ASSIGN_BOOL(Cfg.DiagonalSpeedCompensation);
+    }
+    else if (ConsumeToken(ctx, "devMode")) {
+        ASSIGN_BOOL(Cfg.DevMode);
     }
     else if (ConsumeToken(ctx, "stickyModifiers")) {
         return stickyModifiers(ctx, action);
