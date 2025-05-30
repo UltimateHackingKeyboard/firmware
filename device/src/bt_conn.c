@@ -534,6 +534,7 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
 
     if (peerId != PeerIdUnknown) {
         Connections_SetState(Peers[peerId].connectionId, ConnectionState_Disconnected);
+        Trace_Printc("bu2");
         bt_conn_unref(Peers[peerId].conn);
         Peers[peerId].conn = NULL;
         Connections[Peers[peerId].connectionId].peerId = PeerIdUnknown;
@@ -548,6 +549,7 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
     }
 
     if (conn == auth_conn) {
+        Trace_Printc("bu3");
         bt_conn_unref(auth_conn);
         auth_conn = NULL;
     }
@@ -645,6 +647,7 @@ BT_CONN_CB_DEFINE(conn_callbacks) = {
 static void auth_passkey_entry(struct bt_conn *conn) {
     if (auth_conn) {
         safeDisconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
+        Trace_Printc("bu4");
         bt_conn_unref(auth_conn);
         auth_conn = NULL;
     }
@@ -681,6 +684,7 @@ static void auth_cancel(struct bt_conn *conn) {
     LOG_INF("Pairing cancelled: peer %s\n", GetPeerStringByConn(conn));
 
     if (auth_conn) {
+        Trace_Printc("bu5");
         bt_conn_unref(auth_conn);
         auth_conn = NULL;
     }
@@ -749,6 +753,7 @@ static void pairing_complete(struct bt_conn *conn, bool bonded) {
 
 
     if (auth_conn) {
+        Trace_Printc("bu6");
         bt_conn_unref(auth_conn);
         auth_conn = NULL;
         PairingScreen_Feedback(true);
@@ -787,6 +792,7 @@ static void pairing_failed(struct bt_conn *conn, enum bt_security_err reason) {
     }
 
     if (auth_conn == conn) {
+        Trace_Printc("bu7");
         bt_conn_unref(auth_conn);
         LOG_WRN("Pairing of auth conn failed because of %d\n", reason);
         auth_conn = NULL;
@@ -843,6 +849,7 @@ void num_comp_reply(int passkey) {
     } else {
         bt_conn_auth_cancel(conn);
         LOG_INF("Reject pairing to conn %s\n", GetPeerStringByConn(conn));
+        Trace_Printc("bu1");
         bt_conn_unref(auth_conn);
         auth_conn = NULL;
     }
