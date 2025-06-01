@@ -90,10 +90,24 @@ jobs:
           TAG_VERSION=${TAG_VERSION#v}
           echo "TAG_VERSION=$TAG_VERSION" >> $GITHUB_ENV
 
+      - name: Extract changelog
+        id: changelog
+        env:
+          VERSION: ${{ env.TAG_VERSION }}
+        run: |
+          DELIMITER=$(openssl rand -hex 16)
+          echo "content<<$DELIMITER" >> $GITHUB_OUTPUT
+          sed -n "/^## \\[${VERSION}\\]/,/^## \\[/p" CHANGELOG.md | sed '$d' >> $GITHUB_OUTPUT
+          echo "$DELIMITER" >> $GITHUB_OUTPUT
+
+      - name: Print the output
+        run: echo "${{ steps.changelog.outputs.content }}"
+
       - name: Release
         uses: softprops/action-gh-release@v2
         if: github.ref_type == 'tag'
         with:
+          body: ${{ steps.changelog.outputs.content }}
           draft: true
           name: ${{ env.TAG_VERSION }}
           files: firmware/scripts/uhk-firmware-*.tar.gz
