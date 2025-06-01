@@ -92,17 +92,15 @@ jobs:
 
       - name: Extract changelog
         id: changelog
+        if: github.ref_type == 'tag'
         env:
-          VERSION: 14.0.3
+          VERSION: ${{ env.TAG_VERSION }}
         run: |
           cd firmware
           DELIMITER=$(openssl rand -hex 16)
           echo "content<<$DELIMITER" >> $GITHUB_OUTPUT
           sed -n "/^## \\[${VERSION}\\]/,/^## \\[/p" CHANGELOG.md | sed '$d' | tail -n +3 >> $GITHUB_OUTPUT
           echo "$DELIMITER" >> $GITHUB_OUTPUT
-
-      - name: Print the output
-        run: echo "${{ steps.changelog.outputs.content }}"
 
       - name: Release
         uses: softprops/action-gh-release@v2
