@@ -20,6 +20,7 @@
 
     #define EXPAND_SEGMENT(SEGMENT) SegmentLen(SEGMENT), SEGMENT.start
     #define EXPAND_REF(REF) REF.len, (const char*)ValidatedUserConfigBuffer.buffer + REF.offset
+    #define CHAR_IS_VALID(C) ((C >= 32 && C < 127) || (C == '\n') || (C == '\r') || (C == '\t'))
 
 // Typedefs:
 

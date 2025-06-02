@@ -5,6 +5,8 @@
 #include "macros/status_buffer.h"
 #include "wormhole.h"
 #include "event_scheduler.h"
+#include "logger.h"
+#include "versioning.h"
 
 static bool enabled = true;
 
@@ -76,25 +78,34 @@ void Trace_Print(const char* reason) {
     uint16_t iter;
     enabled = false;
 
-    Macros_Printf("Printing trace buffer because: %s\n", reason);
-    Macros_Printf("Last EV: %d\n", StateWormhole.traceBuffer.eventVector);
-    Macros_Printf("Trace:\n");
+#define LOG_TO LogU
+
+    LOG_TO("Printing trace buffer because: %s\n", reason);
+    LOG_TO("EV: %d\n", StateWormhole.traceBuffer.eventVector);
+    LOG_TO("Tag: %s\n", gitTag);
+    LOG_TO("Trace:\n");
+
+#define LINE_LENGTH 64
+
+    char buff[LINE_LENGTH+1];
 
     for (iter = 0; iter < TRACE_BUFFER_SIZE; iter++) {
         char c = TraceBuffer[(TraceBufferPosition+iter)%TRACE_BUFFER_SIZE];
         if (c < 32) {
-            Macros_SetStatusChar('.');
-        } else if (c <= 126) {
-            Macros_SetStatusChar(c);
+            buff[iter%LINE_LENGTH] = '.';
+        } else if (c < 127) {
+            buff[iter%LINE_LENGTH] = c;
         } else {
-            Macros_SetStatusChar('.');
+            buff[iter%LINE_LENGTH] = '.';
         }
         if ((iter+1) % 64 == 0) {
-            Macros_SetStatusChar('\n');
+            buff[LINE_LENGTH] = '\0';
+            LOG_TO("%s\n", buff);
         }
     }
-    Macros_SetStatusChar('\n');
 
     enabled = true;
+#undef LINE_LENGTH
+#undef LOG_TO
 }
 

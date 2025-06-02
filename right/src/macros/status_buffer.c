@@ -389,7 +389,9 @@ void MacroStatusBuffer_InitFromWormhole() {
     bool looksValid = true;
 
     for (uint16_t i = 0; i < Buf.len; i++) {
-        looksValid &= Buf.data[i] < 128;
+        if (Buf.data[i] >= 128) {
+            looksValid = false;
+        }
     }
 
     containsWormholeData = looksValid && StateWormhole.persistStatusBuffer;
@@ -404,4 +406,28 @@ void MacroStatusBuffer_InitFromWormhole() {
 
 void MacroStatusBuffer_InitNormal() {
     Macros_ProcessClearStatusCommand(true);
+}
+
+void MacroStatusBuffer_Validate(void) {
+#ifdef __ZEPHYR__
+    REENTRANCY_GUARD_BEGIN;
+    for (uint16_t i = 0; i < Buf.len; i++) {
+        if (!CHAR_IS_VALID(Buf.data[i])) {
+            printk("Invalid character in status buffer: %d at %d/%d, clearing!\n", Buf.data[i], i, Buf.len);
+            Buf.len = 0;
+            return;
+        }
+    }
+    REENTRANCY_GUARD_END;
+#endif
+}
+
+void Macros_SanitizedPut(const char* text, const char *textEnd)
+{
+    while (text < textEnd && *text != '\0') {
+        if (CHAR_IS_VALID(*text)) {
+            setStatusChar(*text);
+        }
+        text++;
+    }
 }

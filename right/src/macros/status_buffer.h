@@ -36,6 +36,9 @@
     void Macros_ReportErrorFloat(const char* err, float num, const char* pos);
     void Macros_ReportWarn(const char* err, const char* arg, const char *argEnd);
     void Macros_PrintfWithPos(const char* pos, const char *fmt, ...);
+    void Macros_SanitizedPut(const char* text, const char *textEnd);
+
+    void MacroStatusBuffer_Validate(void);
 
     void Macros_SetStatusString(const char* text, const char *textEnd);
     void Macros_SetStatusStringInterpolated(const char* text, const char *textEnd);
@@ -51,6 +54,7 @@
 
     void MacroStatusBuffer_InitFromWormhole();
     void MacroStatusBuffer_InitNormal();
+    void MacroStatusBuffer_SafePrint();
 
     void NotifyPrintf(const char *fmt, ...);
 
