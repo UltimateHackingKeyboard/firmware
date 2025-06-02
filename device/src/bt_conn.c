@@ -605,8 +605,16 @@ static void securityChanged(struct bt_conn *conn, bt_security_t level, enum bt_s
     // In case of failure, disconnect
     if (err || (level < BT_SECURITY_L4 && !Cfg.Bt_AllowUnsecuredConnections)) {
         LOG_WRN("Bt security failed: %s, level %u, err %d, disconnecting\n", GetPeerStringByConn(conn), level, err);
-        bt_conn_auth_cancel(conn);
-        // bt_conn_disconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
+
+        struct bt_conn_info info;
+        int err = bt_conn_get_info(conn, &info);
+        if (err == 0 && info.state == BT_CONN_STATE_CONNECTED) {
+            bt_conn_auth_cancel(conn);
+            // bt_conn_disconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
+        } else {
+            // Sometimes securityChanged gets called twice, resulting in a race and a crash, so check for it \efp.
+            LOG_WRN("The connection (%s) isn't even connected! Ignoring.", GetPeerStringByConn(conn));
+        }
         return;
     }
 
