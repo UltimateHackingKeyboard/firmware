@@ -16,10 +16,16 @@ typedef enum {
 
 // Functions:
 
+#if DEVICE_HAS_OLED
     void Oled_LogConstant(const char* text);
     void Oled_Log(const char *fmt, ...);
+#endif
+
+#ifdef __ZEPHYR__
     void Uart_LogConstant(const char* buffer);
     void Uart_Log(const char *fmt, ...);
+#endif
+
     void Log(const char *fmt, ...);
     void LogTo(device_id_t deviceId, log_target_t logMask, const char *fmt, ...);
     void LogConstantTo(device_id_t deviceId, log_target_t logMask, const char* buffer);
@@ -29,6 +35,7 @@ typedef enum {
     void LogUS(const char *fmt, ...);
     void LogUO(const char *fmt, ...);
     void LogO(const char *fmt, ...);
+    void LogS(const char *fmt, ...);
     void LogUOS(const char *fmt, ...);
     void LogUSDO(const char *fmt, ...);
 

@@ -34,7 +34,6 @@ if(NOT CONFIG_BOARD_UHK_60_RIGHT)
         debug_eventloop_timing.c
         device_state.c
         flash.c
-        logger.c
         messenger_queue.c
         messenger.c
         proxy_log_backend.c

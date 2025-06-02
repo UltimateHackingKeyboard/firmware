@@ -22,6 +22,7 @@
 #include "config_manager.h"
 #include "event_scheduler.h"
 #include "atomicity.h"
+#include "logger.h"
 
 typedef struct {
     float x;
