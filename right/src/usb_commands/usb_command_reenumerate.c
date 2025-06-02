@@ -16,6 +16,7 @@
 #include "wormhole.h"
 
 void Reboot(bool rebootPeripherals) {
+    StateWormhole_Open();
     StateWormhole.wasReboot = true;
     Trace_Printc("Rebooting...");
 #ifdef __ZEPHYR__
@@ -47,6 +48,7 @@ void Reboot(bool rebootPeripherals) {
 
 void UsbCommand_Reenumerate(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer)
 {
+    StateWormhole_Open();
     StateWormhole.wasReboot = true;
     Trace_Printc("Rebooting...");
 #ifdef __ZEPHYR__

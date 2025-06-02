@@ -144,6 +144,8 @@ int main(void)
             MacroStatusBuffer_InitFromWormhole();
             Trace_Print("Looks like your uhk60 crashed.");
             LastRunWasCrash = true;
+        } else {
+            MacroStatusBuffer_InitNormal();
         }
         StateWormhole_Clean();
     } else {
