@@ -92,7 +92,7 @@ void panic(const struct log_backend *const backend) {
 static int outputFunc(uint8_t *data, size_t length, void *ctx)
 {
     if (isInPanicMode) {
-        Macros_SanitizedPut(data, data + length - 1);
+        Macros_SanitizedPut(data, data + length);
     }
     if (ProxyLog_IsAttached) {
         printToOurBuffer(data, length);
@@ -113,7 +113,8 @@ static int outputFunc(uint8_t *data, size_t length, void *ctx)
 
 static void processLog(const struct log_backend *const backend, union log_msg_generic *msg) {
     if (isInPanicMode || ProxyLog_IsAttached) {
-        log_output_msg_process(&logOutput, &msg->log, 0);
+        uint8_t flags = LOG_OUTPUT_FLAG_CRLF_LFONLY;
+        log_output_msg_process(&logOutput, &msg->log, flags);
     }
 }
 
