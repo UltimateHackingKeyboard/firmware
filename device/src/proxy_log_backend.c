@@ -32,7 +32,10 @@ uint16_t ProxyLog_ConsumeLog(uint8_t* outBuf, uint16_t outBufSize) {
     uint16_t copied = 0;
     uint16_t remaining = MIN(bufferLength, outBufSize);
     while (remaining > 0) {
-        outBuf[copied++] = buffer[bufferPosition++];
+        char a = buffer[bufferPosition++];
+        if (a == '<') a = '[';
+        if (a == '>') a = ']';
+        outBuf[copied++] = a;
         if (bufferPosition >= PROXY_BACKEND_BUFFER_SIZE) {
             bufferPosition = 0;
         }
@@ -51,12 +54,15 @@ void ProxyLog_SetAttached(bool attached) {
 }
 
 static void addChar(char c) {
-    if (bufferLength < PROXY_BACKEND_BUFFER_SIZE) {
-        buffer[POS(bufferLength)] = c;
-        bufferLength++;
-    } else {
-        buffer[bufferPosition++] = c;
-        bufferPosition %= PROXY_BACKEND_BUFFER_SIZE;
+    if (CHAR_IS_VALID(c)) {
+        if (bufferLength < PROXY_BACKEND_BUFFER_SIZE) {
+            buffer[POS(bufferLength)] = c;
+            bufferLength++;
+        } else {
+            buffer[bufferPosition++] = c;
+            bufferPosition %= PROXY_BACKEND_BUFFER_SIZE;
+        }
+
     }
 }
 
@@ -70,21 +76,23 @@ void printToOurBuffer(uint8_t *data, size_t length) {
 static void processLog(const struct log_backend *const backend, union log_msg_generic *msg);
 
 void panic(const struct log_backend *const backend) {
+    StateWormhole_Open();
+    StateWormhole.persistStatusBuffer = true;
+
     if (!isInPanicMode) {
         isInPanicMode = true;
 
+        MacroStatusBuffer_Validate();
+        printk("===== PANIC =====\n");
         Trace_Print("crash/panic");
     }
-
-    StateWormhole_Open();
-    StateWormhole.persistStatusBuffer = true;
 
 };
 
 static int outputFunc(uint8_t *data, size_t length, void *ctx)
 {
     if (isInPanicMode) {
-        Macros_Printf("%.*s", length-1, (const char*)data);
+        Macros_SanitizedPut(data, data + length - 1);
     }
     if (ProxyLog_IsAttached) {
         printToOurBuffer(data, length);
