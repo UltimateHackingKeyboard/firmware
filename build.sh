@@ -229,7 +229,9 @@ function createCentralCompileCommands() {
 
     echo creating central compile_commands.json
 
-    jq -s 'add' $ROOT/device/build/*/compile_commands.json $ROOT/right/uhk60v2/compile_commands.json $ROOT/*/compile_commands.json > $TEMP_COMMANDS
+    local existing_jsons=`ls $ROOT/device/build/*/compile_commands.json $ROOT/right/uhk60v2/compile_commands.json $ROOT/*/compile_commands.json`
+
+    jq -s 'add' $existing_jsons > $TEMP_COMMANDS
 
     mv $TEMP_COMMANDS $ROOT/compile_commands.json
 }
