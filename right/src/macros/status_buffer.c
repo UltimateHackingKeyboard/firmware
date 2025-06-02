@@ -394,7 +394,7 @@ void MacroStatusBuffer_InitFromWormhole() {
         }
     }
 
-    containsWormholeData = looksValid && StateWormhole.persistStatusBuffer;
+    containsWormholeData = looksValid && StateWormhole.persistStatusBuffer && Buf.len > 0;
 
     if (containsWormholeData) {
         LastRunWasCrash = true;
