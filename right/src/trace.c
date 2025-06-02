@@ -8,6 +8,12 @@
 #include "logger.h"
 #include "versioning.h"
 
+#ifdef __ZEPHYR__
+#include "proxy_log_backend.h"
+#else
+#define ProxyLog_IsInPanicMode false
+#endif
+
 static bool enabled = true;
 
 #define EXPAND_STRING(BUFFER, MAX_LOG_LENGTH)  \
@@ -78,12 +84,19 @@ void Trace_Print(const char* reason) {
     uint16_t iter;
     enabled = false;
 
-#define LOG_TO LogU
+    device_id_t targetDeviceId = DEVICE_ID;
+    log_target_t targetInterface = 0;
 
-    LOG_TO("Printing trace buffer because: %s\n", reason);
-    LOG_TO("EV: %d\n", StateWormhole.traceBuffer.eventVector);
-    LOG_TO("Tag: %s\n", gitTag);
-    LOG_TO("Trace:\n");
+    if (ProxyLog_IsInPanicMode) {
+        targetInterface = LogTarget_Uart;
+    } else {
+        targetInterface = LogTarget_Uart | LogTarget_ErrorBuffer;
+    }
+
+    LogTo(targetDeviceId, targetInterface, "Printing trace buffer because: %s\n", reason);
+    LogTo(targetDeviceId, targetInterface, "EV: %d\n", StateWormhole.traceBuffer.eventVector);
+    LogTo(targetDeviceId, targetInterface, "Tag: %s\n", gitTag);
+    LogTo(targetDeviceId, targetInterface, "Trace:\n");
 
 #define LINE_LENGTH 64
 
@@ -92,20 +105,19 @@ void Trace_Print(const char* reason) {
     for (iter = 0; iter < TRACE_BUFFER_SIZE; iter++) {
         char c = TraceBuffer[(TraceBufferPosition+iter)%TRACE_BUFFER_SIZE];
         if (c < 32) {
-            buff[iter%LINE_LENGTH] = '.';
+            buff[iter%LINE_LENGTH] = '?';
         } else if (c < 127) {
             buff[iter%LINE_LENGTH] = c;
         } else {
-            buff[iter%LINE_LENGTH] = '.';
+            buff[iter%LINE_LENGTH] = '?';
         }
         if ((iter+1) % 64 == 0) {
             buff[LINE_LENGTH] = '\0';
-            LOG_TO("%s\n", buff);
+            LogTo(targetDeviceId, targetInterface, "%s\n", buff);
         }
     }
 
     enabled = true;
 #undef LINE_LENGTH
-#undef LOG_TO
 }
 

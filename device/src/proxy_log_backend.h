@@ -15,6 +15,7 @@
 
     extern bool ProxyLog_IsAttached;
     extern bool ProxyLog_HasLog;
+    extern bool ProxyLog_IsInPanicMode;
 
 // Functions:
 
