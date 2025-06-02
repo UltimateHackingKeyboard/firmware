@@ -16,6 +16,7 @@
 #include "wormhole.h"
 #include "trace.h"
 #include "utils.h"
+#include "logger.h"
 
 #ifdef __ZEPHYR__
 #include "keyboard/oled/widgets/widgets.h"
@@ -390,11 +391,12 @@ void MacroStatusBuffer_InitFromWormhole() {
 
     for (uint16_t i = 0; i < Buf.len; i++) {
         if (Buf.data[i] >= 128) {
+            Buf.data[i] = '?';
             looksValid = false;
         }
     }
 
-    containsWormholeData = looksValid && StateWormhole.persistStatusBuffer;
+    containsWormholeData = looksValid && StateWormhole.persistStatusBuffer && Buf.len > 0;
 
     if (containsWormholeData) {
         LastRunWasCrash = true;
@@ -409,17 +411,15 @@ void MacroStatusBuffer_InitNormal() {
 }
 
 void MacroStatusBuffer_Validate(void) {
-#ifdef __ZEPHYR__
     REENTRANCY_GUARD_BEGIN;
     for (uint16_t i = 0; i < Buf.len; i++) {
         if (!CHAR_IS_VALID(Buf.data[i])) {
-            printk("Invalid character in status buffer: %d at %d/%d, clearing!\n", Buf.data[i], i, Buf.len);
+            LogU("Invalid character in status buffer: %d at %d/%d, clearing!\n", Buf.data[i], i, Buf.len);
             Buf.len = 0;
             return;
         }
     }
     REENTRANCY_GUARD_END;
-#endif
 }
 
 void Macros_SanitizedPut(const char* text, const char *textEnd)

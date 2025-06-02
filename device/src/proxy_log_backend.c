@@ -13,7 +13,7 @@
 
 #define PROXY_BACKEND_BUFFER_SIZE 2048
 
-static bool isInPanicMode = false;
+bool ProxyLog_IsInPanicMode = false;
 
 static char buffer[PROXY_BACKEND_BUFFER_SIZE];
 uint16_t bufferPosition = 0;
@@ -79,8 +79,8 @@ void panic(const struct log_backend *const backend) {
     StateWormhole_Open();
     StateWormhole.persistStatusBuffer = true;
 
-    if (!isInPanicMode) {
-        isInPanicMode = true;
+    if (!ProxyLog_IsInPanicMode) {
+        ProxyLog_IsInPanicMode = true;
 
         MacroStatusBuffer_Validate();
         printk("===== PANIC =====\n");
@@ -91,7 +91,7 @@ void panic(const struct log_backend *const backend) {
 
 static int outputFunc(uint8_t *data, size_t length, void *ctx)
 {
-    if (isInPanicMode) {
+    if (ProxyLog_IsInPanicMode) {
         Macros_SanitizedPut(data, data + length);
     }
     if (ProxyLog_IsAttached) {
@@ -112,7 +112,7 @@ static int outputFunc(uint8_t *data, size_t length, void *ctx)
     };
 
 static void processLog(const struct log_backend *const backend, union log_msg_generic *msg) {
-    if (isInPanicMode || ProxyLog_IsAttached) {
+    if (ProxyLog_IsInPanicMode || ProxyLog_IsAttached) {
         uint8_t flags = LOG_OUTPUT_FLAG_CRLF_LFONLY;
         log_output_msg_process(&logOutput, &msg->log, flags);
     }
