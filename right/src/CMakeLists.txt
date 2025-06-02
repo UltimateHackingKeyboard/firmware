@@ -28,6 +28,7 @@ target_sources(${PROJECT_NAME} PRIVATE
     led_display.c
     led_manager.c
     ledmap.c
+    logger.c
     macro_events.c
     macro_recorder.c
     mouse_controller.c
