@@ -425,7 +425,7 @@ void MacroStatusBuffer_Validate(void) {
 void Macros_SanitizedPut(const char* text, const char *textEnd)
 {
     while (text < textEnd && *text != '\0') {
-        if (CHAR_IS_VALID(*text)) {
+        if (CHAR_IS_VALID(*text) && *text != '\r') {
             setStatusChar(*text);
         }
         text++;
