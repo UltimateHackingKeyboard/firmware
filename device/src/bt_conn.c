@@ -89,12 +89,53 @@ peer_t *getPeerByConn(const struct bt_conn *conn) {
     return NULL;
 }
 
+static void setAuthConn(struct bt_conn *conn) {
+    DISABLE_IRQ();
+    if (auth_conn == NULL) {
+        auth_conn = conn;
+    }
+    ENABLE_IRQ();
+
+    bt_conn_ref(auth_conn);
+}
+
+static struct bt_conn* unsetAuthConn(bool cancel_auth) {
+    bool unref = true;
+
+    if (auth_conn) {
+        DISABLE_IRQ();
+        struct bt_conn* conn = auth_conn;
+        auth_conn = NULL;
+        ENABLE_IRQ();
+
+        if (conn) {
+            if (cancel_auth) {
+                struct bt_conn_info info;
+                int err = bt_conn_get_info(conn, &info);
+                if (err == 0 && info.state == BT_CONN_STATE_CONNECTED) {
+                    bt_conn_auth_cancel(conn);
+                }
+            }
+            if (unref) {
+                bt_conn_unref(auth_conn);
+            }
+        }
+
+        return conn;
+    }
+
+    return NULL;
+}
+
 static void safeDisconnect(struct bt_conn *conn, int reason) {
     if (conn == auth_conn) {
-        bt_conn_auth_cancel(conn);
-        auth_conn = NULL;
+        unsetAuthConn(true);
     } else {
-        bt_conn_disconnect(conn, reason);
+        struct bt_conn_info info;
+        int err = bt_conn_get_info(conn, &info);
+        if (err == 0 && info.state == BT_CONN_STATE_CONNECTED) {
+            bt_conn_disconnect(conn, reason);
+        }
     }
 }
 
@@ -438,12 +479,7 @@ ATTR_UNUSED static uint8_t discover_func(struct bt_conn *conn, const struct bt_g
 
                 if (!isPairedConnection && DEVICE_IS_UHK80_RIGHT) {
                     LOG_INF("Unknown NUS trying to connect. Refusing!\n");
-                    if (conn == auth_conn) {
-                        bt_conn_auth_cancel(conn);
-                        auth_conn = NULL;
-                    } else {
-                        safeDisconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
-                    }
+                    safeDisconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
                 }
                 return BT_GATT_ITER_STOP;
             }
@@ -550,8 +586,7 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
 
     if (conn == auth_conn) {
         Trace_Printc("bu3");
-        bt_conn_unref(auth_conn);
-        auth_conn = NULL;
+        unsetAuthConn(false);
     }
 }
 
@@ -654,13 +689,11 @@ BT_CONN_CB_DEFINE(conn_callbacks) = {
 
 static void auth_passkey_entry(struct bt_conn *conn) {
     if (auth_conn) {
-        safeDisconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
         Trace_Printc("bu4");
-        bt_conn_unref(auth_conn);
-        auth_conn = NULL;
+        unsetAuthConn(true);
     }
 
-    auth_conn = bt_conn_ref(conn);
+    setAuthConn(conn);
 
     LOG_INF("Received passkey pairing inquiry.\n");
 
@@ -693,8 +726,7 @@ static void auth_cancel(struct bt_conn *conn) {
 
     if (auth_conn) {
         Trace_Printc("bu5");
-        bt_conn_unref(auth_conn);
-        auth_conn = NULL;
+        unsetAuthConn(false);
     }
 
     PairingScreen_Feedback(false);
@@ -759,11 +791,9 @@ static void pairing_complete(struct bt_conn *conn, bool bonded) {
         connectAuthenticatedConnection(conn, connectionId, connectionType);
     }
 
-
     if (auth_conn) {
         Trace_Printc("bu6");
-        bt_conn_unref(auth_conn);
-        auth_conn = NULL;
+        unsetAuthConn(false);
         PairingScreen_Feedback(true);
     }
 
@@ -801,9 +831,8 @@ static void pairing_failed(struct bt_conn *conn, enum bt_security_err reason) {
 
     if (auth_conn == conn) {
         Trace_Printc("bu7");
-        bt_conn_unref(auth_conn);
         LOG_WRN("Pairing of auth conn failed because of %d\n", reason);
-        auth_conn = NULL;
+        unsetAuthConn(false);
         PairingScreen_Feedback(false);
     }
 
@@ -855,11 +884,7 @@ void num_comp_reply(int passkey) {
         bt_conn_auth_passkey_entry(conn, passkey);
         LOG_INF("Sending passkey to conn %s\n", GetPeerStringByConn(conn));
     } else {
-        bt_conn_auth_cancel(conn);
-        LOG_INF("Reject pairing to conn %s\n", GetPeerStringByConn(conn));
-        Trace_Printc("bu1");
-        bt_conn_unref(auth_conn);
-        auth_conn = NULL;
+        conn = unsetAuthConn(true);
     }
 }
 
