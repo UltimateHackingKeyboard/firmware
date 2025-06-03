@@ -117,7 +117,9 @@ static struct bt_conn* unsetAuthConn(bool cancel_auth) {
                 }
             }
             if (unref) {
-                bt_conn_unref(auth_conn);
+                Trace_Printc("bu8");
+                bt_conn_unref(conn);
+                Trace_Printc("bu9");
             }
         }
 
@@ -693,6 +695,7 @@ static void auth_passkey_entry(struct bt_conn *conn) {
         unsetAuthConn(true);
     }
 
+    Trace_Printc("br1");
     setAuthConn(conn);
 
     LOG_INF("Received passkey pairing inquiry.\n");
