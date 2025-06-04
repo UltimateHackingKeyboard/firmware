@@ -3,6 +3,7 @@
 #include "ledmap.h"
 #include "usb_protocol_handler.h"
 #include "config_parser/config_globals.h"
+#include "macros/status_buffer.h"
 
 #ifdef __ZEPHYR__
 #include "flash.h"
@@ -35,6 +36,14 @@ void UsbCommand_LaunchStorageTransfer(const uint8_t *GenericHidOutBuffer, uint8_
         SetUsbTxBufferUint8(0, UsbStatusCode_LaunchStorageTransferInvalidConfigBufferId);
     }
 
+    if (storageOperation == StorageOperation_Write && configBufferId != ConfigBufferId_HardwareConfig) {
+        config_buffer_t* buffer = ConfigBufferIdToConfigBuffer(configBufferId);
+        if (!buffer->isValid) {
+            SetUsbTxBufferUint8(0, UsbStatusCode_LaunchStorageTransferInvalidConfigBuffer);
+            return;
+        }
+    }
+
 #ifdef __ZEPHYR__
     status_t status = Flash_LaunchTransfer(storageOperation, configBufferId, NULL);
 #else
@@ -48,6 +57,7 @@ void UsbCommand_LaunchStorageTransfer(const uint8_t *GenericHidOutBuffer, uint8_
     }
 
     if (status != kStatus_Success) {
+        Macros_ReportErrorPrintf(NULL, "UsbCommand_LaunchStorageTransfer failed with status %d", status);
         SetUsbTxBufferUint8(0, UsbStatusCode_LaunchStorageTransferTransferError);
         SetUsbTxBufferUint32(1, status);
     }

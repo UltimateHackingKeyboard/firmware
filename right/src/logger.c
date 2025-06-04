@@ -1,22 +1,30 @@
 #include <stdio.h>
-#include <zephyr/kernel.h>
-#include <zephyr/drivers/gpio.h>
+#include <stdarg.h>
+#include <string.h>
 #include "logger.h"
-#include "shell.h"
-#include "keyboard/uart.h"
-#include "nus_client.h"
-#include "nus_server.h"
 #include "device.h"
-#include "messenger.h"
 #include "macros/status_buffer.h"
-#include "zephyr/device.h"
 #include "macro_events.h"
-#include <zephyr/arch/arch_interface.h>
 #include "debug.h"
 
-#ifdef DEVICE_HAS_OLED
-#include "keyboard/oled/widgets/console_widget.h"
+
+#ifdef __ZEPHYR__
+    #include "shell.h"
+    #include "nus_client.h"
+    #include "nus_server.h"
+    #include "messenger.h"
+    #include "zephyr/device.h"
+    #include <zephyr/kernel.h>
+    #include <zephyr/drivers/gpio.h>
+    #include <zephyr/arch/arch_interface.h>
+    #if DEVICE_IS_KEYBOARD
+        #include "keyboard/uart.h"
+        #ifdef DEVICE_HAS_OLED
+            #include "keyboard/oled/widgets/console_widget.h"
+        #endif
+    #endif
 #endif
+
 
 #define MAX_LOG_LENGTH 256
 
@@ -30,13 +38,17 @@ char BUFFER[MAX_LOG_LENGTH]; \
 }
 
 void Uart_LogConstant(const char* buffer) {
+#ifdef __ZEPHYR__
     printk("%s", buffer);
+#endif
 }
 
 void Uart_Log(const char *fmt, ...) {
+#ifdef __ZEPHYR__
     EXPAND_STRING(buffer);
 
     Uart_LogConstant(buffer);
+#endif
 }
 
 void Log(const char *fmt, ...) {
@@ -92,22 +104,28 @@ void LogUSDO(const char *fmt, ...) {
 }
 
 void LogConstantTo(device_id_t deviceId, log_target_t logMask, const char* buffer) {
-    if (DEVICE_ID == deviceId) {
+    if (DEVICE_IS_UHK60 || DEVICE_ID == deviceId) {
+#if DEVICE_HAS_OLED
         if (logMask & LogTarget_Oled) {
             Oled_LogConstant(buffer);
         }
+#endif
+#ifdef __ZEPHYR__
         if ((logMask & LogTarget_Uart) && DEBUG_LOG_UART) {
             Uart_LogConstant(buffer);
         }
+#endif
         if (logMask & LogTarget_ErrorBuffer) {
-            Macros_Printf(NULL, "%s", buffer);
+            Macros_PrintfWithPos(NULL, "%s", buffer);
         }
     } else {
+#ifdef __ZEPHYR__
         if (k_is_in_isr()) {
             printk("Cannot send log from ISR:\n    %s\n", buffer);
         } else {
             Messenger_Send2(deviceId, MessageId_Log, logMask, buffer, strlen(buffer)+1);
         }
+#endif
     }
 }
 

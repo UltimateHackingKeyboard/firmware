@@ -40,6 +40,7 @@
 #ifdef __ZEPHYR__
 #include "connections.h"
 #include "bt_pair.h"
+#include "shell.h"
 #else
 #include "segment_display.h"
 #endif
@@ -109,11 +110,13 @@ bool Macros_CurrentMacroKeyIsActive()
         return S->ms.oneShotState;
     }
     if (S->ms.postponeNextNCommands > 0 || S->ls->as.modifierPostpone) {
+        bool isSameActivation = (S->ms.currentMacroKey->timestamp == S->ms.currentMacroKeyStamp);
         bool keyIsActive = (KeyState_Active(S->ms.currentMacroKey) && !PostponerQuery_IsKeyReleased(S->ms.currentMacroKey));
-        return  keyIsActive || S->ms.oneShotState;
+        return  (isSameActivation && keyIsActive) || S->ms.oneShotState;
     } else {
+        bool isSameActivation = (S->ms.currentMacroKey->timestamp == S->ms.currentMacroKeyStamp);
         bool keyIsActive = KeyState_Active(S->ms.currentMacroKey);
-        return keyIsActive || S->ms.oneShotState;
+        return (isSameActivation && keyIsActive) || S->ms.oneShotState;
     }
 }
 
@@ -1325,7 +1328,7 @@ static macro_result_t processOneShotCommand(parser_context_t* ctx) {
      * */
     if (!S->ms.macroInterrupted || !S->ms.oneShotUsbChangeDetected) {
         S->ms.oneShotState = 1;
-    } else if (S->ms.oneShotState < 3) {
+    } else if (0 < S->ms.oneShotState && S->ms.oneShotState < 3) {
         S->ms.oneShotState++;
     } else {
         S->ms.oneShotState = 0;
@@ -1803,6 +1806,32 @@ static macro_result_t processSwitchHostCommand(parser_context_t* ctx)
 #undef DRY_RUN_FINISH
 
     return MacroResult_Finished;
+}
+
+static macro_result_t processZephyrCommand(parser_context_t* ctx) {
+    if (Macros_DryRun) {
+        ctx->at = ctx->end;
+        return MacroResult_Finished;
+    }
+#ifdef __ZEPHYR__
+#define LEN 64
+    char buffer[LEN];
+
+    size_t len = MIN(LEN-1, (ctx->end - ctx->at));
+    strncpy(buffer, ctx->at, len);
+    buffer[len] = '\0';
+
+    Shell_Execute(buffer, "macro");
+
+    ctx->at = ctx->end;
+    return MacroResult_Finished;
+#undef LEN
+#else
+    Macros_ReportErrorPrintf(ctx->at, "Zephyr commands are not available on uhk60.\n");
+
+    ctx->at = ctx->end;
+    return MacroResult_Finished;
+#endif
 }
 
 static macro_result_t processCommand(parser_context_t* ctx)
@@ -2471,6 +2500,14 @@ static macro_result_t processCommand(parser_context_t* ctx)
         case 'y':
             if (ConsumeToken(ctx, "yield")) {
                 return processYieldCommand(ctx);
+            }
+            else {
+                goto failed;
+            }
+            break;
+        case 'z':
+            if (ConsumeToken(ctx, "zephyr")) {
+                return processZephyrCommand(ctx);
             }
             else {
                 goto failed;

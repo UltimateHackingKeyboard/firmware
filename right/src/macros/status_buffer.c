@@ -15,6 +15,8 @@
 #include "macro_events.h"
 #include "wormhole.h"
 #include "trace.h"
+#include "utils.h"
+#include "logger.h"
 
 #ifdef __ZEPHYR__
 #include "keyboard/oled/widgets/widgets.h"
@@ -28,6 +30,8 @@ static bool containsWormholeData = false;
 static uint16_t consumeStatusCharReadingPos = 0;
 bool Macros_ConsumeStatusCharDirtyFlag = false;
 bool Macros_StatusBufferError = false;
+
+bool LastRunWasCrash = false;
 
 #define Buf StateWormhole.statusBuffer
 
@@ -306,6 +310,7 @@ void Macros_ReportWarn(const char* err, const char* arg, const char *argEnd)
 
 void Macros_PrintfWithPos(const char* pos, const char *fmt, ...)
 {
+    REENTRANCY_GUARD_BEGIN;
     va_list myargs;
     va_start(myargs, fmt);
     char buffer[256];
@@ -318,6 +323,7 @@ void Macros_PrintfWithPos(const char* pos, const char *fmt, ...)
     } else {
         Macros_SetStatusString(buffer, NULL);
     }
+    REENTRANCY_GUARD_END;
 }
 
 void Macros_ReportErrorPrintf(const char* pos, const char *fmt, ...)
@@ -384,12 +390,16 @@ void MacroStatusBuffer_InitFromWormhole() {
     bool looksValid = true;
 
     for (uint16_t i = 0; i < Buf.len; i++) {
-        looksValid &= Buf.data[i] < 128;
+        if (Buf.data[i] >= 128) {
+            Buf.data[i] = '?';
+            looksValid = false;
+        }
     }
 
-    containsWormholeData = looksValid && StateWormhole.persistStatusBuffer;
+    containsWormholeData = looksValid && StateWormhole.persistStatusBuffer && Buf.len > 0;
 
     if (containsWormholeData) {
+        LastRunWasCrash = true;
         indicateError();
     } else {
         Macros_ProcessClearStatusCommand(true);
@@ -398,4 +408,26 @@ void MacroStatusBuffer_InitFromWormhole() {
 
 void MacroStatusBuffer_InitNormal() {
     Macros_ProcessClearStatusCommand(true);
+}
+
+void MacroStatusBuffer_Validate(void) {
+    REENTRANCY_GUARD_BEGIN;
+    for (uint16_t i = 0; i < Buf.len; i++) {
+        if (!CHAR_IS_VALID(Buf.data[i])) {
+            LogU("Invalid character in status buffer: %d at %d/%d, clearing!\n", Buf.data[i], i, Buf.len);
+            Buf.len = 0;
+            return;
+        }
+    }
+    REENTRANCY_GUARD_END;
+}
+
+void Macros_SanitizedPut(const char* text, const char *textEnd)
+{
+    while (text < textEnd && *text != '\0') {
+        if (CHAR_IS_VALID(*text) && *text != '\r') {
+            setStatusChar(*text);
+        }
+        text++;
+    }
 }

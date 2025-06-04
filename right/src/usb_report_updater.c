@@ -420,7 +420,7 @@ void ApplyKeyAction(key_state_t *keyState, key_action_cached_t *cachedAction, ke
         case KeyActionType_PlayMacro:
             if (KeyState_ActivatedNow(keyState)) {
                 resetStickyMods(cachedAction);
-                Macros_StartMacro(action->playMacro.macroId, keyState, 255, true);
+                Macros_StartMacro(action->playMacro.macroId, keyState, keyState->timestamp, 255, true);
             }
             break;
         case KeyActionType_Connections:
@@ -520,15 +520,20 @@ static void commitKeyState(key_state_t *keyState, bool active)
 
 static inline void preprocessKeyState(key_state_t *keyState)
 {
+    uint32_t currentTime = CurrentTime;
     uint8_t debounceTime = keyState->previous ? Cfg.DebounceTimePress : Cfg.DebounceTimeRelease;
-    if (keyState->debouncing && (uint8_t)(CurrentTime - keyState->timestamp) >= debounceTime) {
+    if (keyState->debouncing && (uint8_t)(currentTime - keyState->timestamp) >= debounceTime) {
         keyState->debouncing = false;
     }
 
     // read just once! Otherwise the key might get stuck
     bool hardwareState = keyState->hardwareSwitchState;
     if (!keyState->debouncing && keyState->debouncedSwitchState != hardwareState) {
-        keyState->timestamp = CurrentTime;
+        if (keyState->timestamp == currentTime) {
+            keyState->timestamp = currentTime-1;
+        } else {
+            keyState->timestamp = currentTime;
+        }
         keyState->debouncing = true;
         keyState->debouncedSwitchState = hardwareState;
 
@@ -538,9 +543,9 @@ static inline void preprocessKeyState(key_state_t *keyState)
     }
 
     if (keyState->debouncing) {
-        uint8_t timeSinceActivation = (uint8_t)(CurrentTime - keyState->timestamp);
+        uint8_t timeSinceActivation = (uint8_t)(currentTime - keyState->timestamp);
         Trace_Printc("x3");
-        EventScheduler_Schedule(CurrentTime + (debounceTime - timeSinceActivation), EventSchedulerEvent_NativeActions, "debouncing");
+        EventScheduler_Schedule(currentTime + (debounceTime - timeSinceActivation), EventSchedulerEvent_NativeActions, "debouncing");
         Trace_Printc("x4");
     }
 }

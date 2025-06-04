@@ -45,6 +45,8 @@
 #include "trace.h"
 #include "macros/vars.h"
 #include "thread_stats.h"
+#include "power_mode.h"
+#include "mouse_controller.h"
 #include "wormhole.h"
 #include "power_mode.h"
 #include "proxy_log_backend.h"
@@ -127,7 +129,6 @@ void mainRuntime(void) {
     }
 
     if (!DEVICE_IS_UHK_DONGLE) {
-        InitUart();
         InitZephyrI2c();
         InitSpi();
 
@@ -167,7 +168,7 @@ void mainRuntime(void) {
             Flash_ReadAreaSync(userConfigArea, 0, StagingUserConfigBuffer.buffer, USER_CONFIG_SIZE);
             printk("Applying user config\n");
             bool factoryMode = false;
-            if (factoryMode || UsbCommand_ApplyConfig(NULL, NULL) != UsbStatusCode_Success) {
+            if (factoryMode || UsbCommand_ValidateAndApplyConfigSync(NULL, NULL) != UsbStatusCode_Success) {
                 UsbCommand_ApplyFactory(NULL, NULL);
             }
             printk("User config applied\n");
@@ -182,6 +183,17 @@ void mainRuntime(void) {
     HID_SetGamepadActive(false);
     USB_Enable(); // has to be after USB_SetSerialNumber
 
+    if (LastRunWasCrash) {
+        printk("CRASH DETECTED, waiting for 5 seconds to allow Agent to reenumerate\n");
+        k_sleep(K_MSEC(5*1000));
+    }
+
+    // Uart has to be enabled only after we have given Agent a chance to reenumarate into bootloader after a crash
+    if (!DEVICE_IS_UHK_DONGLE) {
+        InitUart();
+    }
+
+    // Uart has to be enabled only after we have given Agent a chance to reenumarate into bootloader after a crash
     // has to be after InitSettings
     BtManager_InitBt();
     BtManager_StartBt();
@@ -203,6 +215,7 @@ void mainRuntime(void) {
     if (DEBUG_RUN_TESTS) {
         MacroVariables_RunTests();
 #if DEVICE_IS_KEYBOARD
+        MouseController_RunTests();
         BatteryCalculator_RunTests();
         BatteryCalculator_RunPercentTests();
 #endif

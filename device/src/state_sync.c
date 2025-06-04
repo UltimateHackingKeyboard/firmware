@@ -931,7 +931,7 @@ void StateSync_ResetRightLeftLink(bool bidirectional) {
         invalidateProperty(StateSyncPropertyId_PowerMode);
         invalidateProperty(StateSyncPropertyId_BatteryStationaryMode);
         // Wait sufficiently log so the firmware check isnt triggered during firmware upgrade
-        EventScheduler_Schedule(CurrentTime + 60000, EventSchedulerEvent_CheckFwChecksums, "Reset left right link");
+        EventScheduler_Reschedule(CurrentTime + 2*60*1000, EventSchedulerEvent_CheckFwChecksums, "Reset left right link");
     }
     if (DEVICE_ID == DeviceId_Uhk80_Left) {
         invalidateProperty(StateSyncPropertyId_Battery);

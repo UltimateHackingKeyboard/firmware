@@ -24,7 +24,7 @@ uint32_t UserLogic_LastEventloopTime = 0;
 void RunUserLogic(void) {
     if (EventVector_IsSet(EventVector_ApplyConfig)) {
         Trace_Printc("l1");
-        UsbCommand_ApplyConfig(NULL, NULL);
+        UsbCommand_ApplyConfigSync(NULL, NULL);
     }
     if (EventVector_IsSet(EventVector_KeymapReloadNeeded)) {
         Trace_Printc("l2");

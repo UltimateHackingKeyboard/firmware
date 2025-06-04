@@ -190,6 +190,7 @@ void WakeUpHost(void) {
 
 static usb_status_t usbDeviceCallback(usb_device_handle handle, uint32_t event, void *param)
 {
+    Trace_Printc("<i3");
     usb_status_t status = kStatus_USB_Error;
     uint16_t *temp16 = (uint16_t*)param;
     uint8_t *temp8 = (uint8_t*)param;
@@ -297,6 +298,8 @@ static usb_status_t usbDeviceCallback(usb_device_handle handle, uint32_t event, 
 #endif /* (USBD_MS_OS_DESC_VERSION == 2) */
             break;
     }
+
+    Trace_Printc(">");
 
     return status;
 }

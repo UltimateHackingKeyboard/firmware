@@ -40,6 +40,7 @@
         ParserError_InvalidSerializedConnectionAction   = 20,
         ParserError_InvalidHostConnectionId             = 21,
         ParserError_InvalidSerializedOtherAction        = 22,
+        ParserError_ConfigVersionTooNew                = 23,
     } parser_error_t;
 
     typedef enum {

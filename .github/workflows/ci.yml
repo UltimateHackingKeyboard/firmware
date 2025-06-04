@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - master*
+    tags:
+      - "v*.*.*"
   pull_request:
     branches:
       - master*
@@ -70,3 +72,29 @@ jobs:
           path: firmware/scripts/uhk-firmware-*.tar.gz
           compression-level: 0
           retention-days: 90
+
+      - name: Run build-archiver
+        uses: UltimateHackingKeyboard/build-archiver@v0.0.3
+        with:
+          FILE_PATTERN: "firmware/scripts/uhk-firmware-*.tar.gz"
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          S3_ACCESS_KEY: ${{ secrets.UHK_BUILD_ARCHIVER_AWS_ACCESS_SECRET }}
+          S3_ACCESS_KEY_ID: ${{ secrets.UHK_BUILD_ARCHIVER_AWS_ACCESS_KEY }}
+          S3_BUCKET: "uhk-build-archives"
+          S3_KEY_PREFIX: "firmware/"
+          S3_REGION: "eu-central-1"
+
+      - name: Strip `v` from git tag and
+        run: |
+          TAG_VERSION=${{ github.ref_name }}
+          TAG_VERSION=${TAG_VERSION#v}
+          echo "TAG_VERSION=$TAG_VERSION" >> $GITHUB_ENV
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        if: github.ref_type == 'tag'
+        with:
+          draft: true
+          name: ${{ env.TAG_VERSION }}
+          files: firmware/scripts/uhk-firmware-*.tar.gz
+          token: ${{ secrets.GITHUB_TOKEN }}

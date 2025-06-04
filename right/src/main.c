@@ -59,7 +59,7 @@ static void initConfig()
     while (!IsConfigInitialized) {
         if (IsEepromInitialized) {
 
-            if (IsFactoryResetModeEnabled || UsbCommand_ApplyConfig(NULL, NULL) != UsbStatusCode_Success) {
+            if (IsFactoryResetModeEnabled || UsbCommand_ValidateAndApplyConfigSync(NULL, NULL) != UsbStatusCode_Success) {
                 UsbCommand_ApplyFactory(NULL, NULL);
             }
             ShortcutParser_initialize();
@@ -141,8 +141,11 @@ int main(void)
     if (StateWormhole_IsOpen()) {
         if (!StateWormhole.wasReboot) {
             StateWormhole.persistStatusBuffer = true;
-            MacroStatusBuffer_InitFromWormhole();
+            MacroStatusBuffer_Validate();
             Trace_Print("Looks like your uhk60 crashed.");
+            MacroStatusBuffer_InitFromWormhole();
+        } else {
+            MacroStatusBuffer_InitNormal();
         }
         StateWormhole_Clean();
     } else {

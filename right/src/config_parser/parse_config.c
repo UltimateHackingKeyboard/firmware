@@ -32,8 +32,11 @@
 #include "keyboard/oled/widgets/widgets.h"
 #endif
 
+
 #ifdef __ZEPHYR__
 #include "state_sync.h"
+#else
+#include "segment_display.h"
 #endif
 
 version_t DataModelVersion = {0, 0, 0};
@@ -61,6 +64,18 @@ parser_error_t parseConfig(config_buffer_t *buffer)
     DataModelVersion.major = ReadUInt16(buffer);
     DataModelVersion.minor = ReadUInt16(buffer);
     DataModelVersion.patch = ReadUInt16(buffer);
+
+    if (VERSION_AT_LEAST(DataModelVersion, userConfigVersion.major, userConfigVersion.minor+1, 0)) {
+        Macros_ReportErrorPrintf(NULL,
+            "Config version too new: %u.%u.%u (firmware's userconfig: %u.%u.%u)\n",
+            DataModelVersion.major, DataModelVersion.minor, DataModelVersion.patch,
+            userConfigVersion.major, userConfigVersion.minor, userConfigVersion.patch
+        );
+        #ifndef __ZEPHYR__
+            SegmentDisplay_SetText(3, "DOW", SegmentDisplaySlot_Error);
+        #endif
+        return ParserError_ConfigVersionTooNew;
+    }
 
 #ifdef __ZEPHYR__
     if (!ParserRunDry) {

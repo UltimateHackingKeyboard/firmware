@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [14.0.3] - 2025-05-29
+
+Device Protocol: 4.15.0 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 11.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.4.1
+
+- Fix bug that made the configuration not update when saving it in various circumstances.
+
+## [14.0.2] - 2025-05-27
+
+Device Protocol: 4.15.0 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 11.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.4.1
+
+- Make the UHK 80 connect via USB after pressing the reset button instead of being in disconnected state.
+- Don't parse configurations of higher versions than what the firmware supports.
+
+## [14.0.1] - 2025-05-21
+
+Device Protocol: 4.15.0 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 11.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.4.**1**
+
+- Fix BLE connection count bug introduced in firmware 14.0.0, which caused BLE connection issues.
+- Make UHK 80 mouse buttons work in UEFI BIOSes.
+- Map 100% battery charge to actual battery maximum voltage, and store the maximum voltage in settings.
+- Prevent firmware update issues due to boot loops caused by invalid bridge protocol commands of different firmware versions by delaying firmware startup by 5 seconds.
+- Fix UHK 60 wormhole memory region alignment bug introduced in firmware 14.0.0, so that the firmware and the bootloader can pass data between each other.
+- Fix `oneshot` macro command stickiness against the same key taps. `SMARTMACROS:PATCH`
+- Remove the 2 second sleep mode unlock interval.
+- Make battery percentage values more accurate.
+- Log debug traces on freezes.
+- List peripheral counts in the "uhk connections" Zephyr shell command.
+
 ## [14.0.0] - 2025-05-05
 
 Device Protocol: 4.**15.0** | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: **11.0.0** | Hardware Config: 1.0.0 | Smart Macros: 3.**4.0**

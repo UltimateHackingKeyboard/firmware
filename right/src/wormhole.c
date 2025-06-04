@@ -11,8 +11,7 @@ __noinit wormhole_data_t StateWormhole;
 #else
 
 #include "attributes.h"
-ATTR_NO_INIT wormhole_data_t StateWormhole;
-
+ATTR_DATA_NO_INIT wormhole_data_t StateWormhole;
 #endif
 
 bool StateWormhole_IsOpen(void) {
