@@ -67,6 +67,7 @@
         UsbCommandId_IsPaired                 = 0x1b,
         UsbCommandId_EnterPairingMode         = 0x1c,
         UsbCommandId_EraseBleSettings         = 0x1d,
+        UsbCommandId_ExecShellCommand         = 0x1e,
     } usb_command_id_t;
 
     typedef enum {

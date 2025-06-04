@@ -8,6 +8,7 @@
 #include "i2c_error_logger.h"
 #include "macros/core.h"
 #include "debug.h"
+#include "trace.h"
 
 #ifdef __ZEPHYR__
     #include "keyboard/i2c.h"
@@ -97,6 +98,8 @@ static void slaveSchedulerCallback(I2C_Type *base, i2c_master_handle_t *handle, 
     bool isTransferScheduled = false;
     I2cSlaveScheduler_Counter++;
 
+    Trace_Printc("<i1");
+
     do {
         uhk_slave_t *currentSlave = Slaves + currentSlaveId;
 
@@ -141,6 +144,8 @@ static void slaveSchedulerCallback(I2C_Type *base, i2c_master_handle_t *handle, 
         }
 
     } while (!isTransferScheduled);
+
+    Trace_Printc(">");
 }
 
 void SlaveSchedulerCallback(status_t status)

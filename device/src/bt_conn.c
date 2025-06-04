@@ -32,8 +32,11 @@
 #include <zephyr/bluetooth/gatt.h>
 #include "stubs.h"
 #include <zephyr/logging/log.h>
+#include "trace.h"
+#include "right/src/bt_defs.h"
+#include "bt_health.h"
 
-LOG_MODULE_REGISTER(Bt, LOG_LEVEL_WRN);
+LOG_MODULE_REGISTER(Bt, LOG_LEVEL_INF);
 
 bool Bt_NewPairedDevice = false;
 
@@ -86,12 +89,55 @@ peer_t *getPeerByConn(const struct bt_conn *conn) {
     return NULL;
 }
 
+static void setAuthConn(struct bt_conn *conn) {
+    DISABLE_IRQ();
+    if (auth_conn == NULL) {
+        auth_conn = conn;
+    }
+    ENABLE_IRQ();
+
+    bt_conn_ref(auth_conn);
+}
+
+static struct bt_conn* unsetAuthConn(bool cancel_auth) {
+    bool unref = true;
+
+    if (auth_conn) {
+        DISABLE_IRQ();
+        struct bt_conn* conn = auth_conn;
+        auth_conn = NULL;
+        ENABLE_IRQ();
+
+        if (conn) {
+            if (cancel_auth) {
+                struct bt_conn_info info;
+                int err = bt_conn_get_info(conn, &info);
+                if (err == 0 && info.state == BT_CONN_STATE_CONNECTED) {
+                    bt_conn_auth_cancel(conn);
+                }
+            }
+            if (unref) {
+                Trace_Printc("bu8");
+                bt_conn_unref(conn);
+                Trace_Printc("bu9");
+            }
+        }
+
+        return conn;
+    }
+
+    return NULL;
+}
+
 static void safeDisconnect(struct bt_conn *conn, int reason) {
     if (conn == auth_conn) {
-        bt_conn_auth_cancel(conn);
-        auth_conn = NULL;
+        unsetAuthConn(true);
     } else {
-        bt_conn_disconnect(conn, reason);
+        struct bt_conn_info info;
+        int err = bt_conn_get_info(conn, &info);
+        if (err == 0 && info.state == BT_CONN_STATE_CONNECTED) {
+            bt_conn_disconnect(conn, reason);
+        }
     }
 }
 
@@ -180,6 +226,7 @@ static void setLatency(struct bt_conn* conn, const struct bt_le_conn_param* para
     int err = bt_conn_le_param_update(conn, params);
     if (err) {
         LOG_WRN("LE latencies update failed: %d\n", err);
+        Bt_HandleError("bt_conn_le_param_update", err);
     }
 }
 
@@ -218,11 +265,17 @@ static void youAreNotWanted(struct bt_conn *conn) {
     uint32_t currentTime = k_uptime_get_32();
 
     if (currentTime - lastAttemptTime < 2000) {
+        LOG_WRN("Refusing connenction %s (this is not a selected connection)(this is repeated attempt!)\n", GetPeerStringByConn(conn));
         safeDisconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
     } else {
         LOG_WRN("Refusing connenction %s (this is not a selected connection)\n", GetPeerStringByConn(conn));
         safeDisconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
     }
+    LOG_INF("    Free peripheral slots: %d, Peripheral conn count: %d, bt pari mode: %d",
+        BtConn_UnusedPeripheralConnectionCount(),
+        ACTUAL_PERIPHERAL_CONNECTION_COUNT,
+        BtPair_PairingMode
+   );
 
     lastAttemptTime = currentTime;
 }
@@ -428,12 +481,7 @@ ATTR_UNUSED static uint8_t discover_func(struct bt_conn *conn, const struct bt_g
 
                 if (!isPairedConnection && DEVICE_IS_UHK80_RIGHT) {
                     LOG_INF("Unknown NUS trying to connect. Refusing!\n");
-                    if (conn == auth_conn) {
-                        bt_conn_auth_cancel(conn);
-                        auth_conn = NULL;
-                    } else {
-                        safeDisconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
-                    }
+                    safeDisconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
                 }
                 return BT_GATT_ITER_STOP;
             }
@@ -461,12 +509,14 @@ static void connectUnknown(struct bt_conn *conn) {
     err = bt_gatt_discover(conn, &discover_params);
     if (err) {
         LOG_WRN("Service discovery failed (err %u)\n", err);
+        Bt_HandleError("bt_gatt_discover", err);
         return;
     }
 #endif
 }
 
 static void connected(struct bt_conn *conn, uint8_t err) {
+    BT_TRACE_AND_ASSERT("bc1");
     if (err) {
         LOG_WRN("Failed to connect to %s, err %u\n", GetPeerStringByConn(conn), err);
         BtManager_StartScanningAndAdvertising();
@@ -499,6 +549,7 @@ static void connected(struct bt_conn *conn, uint8_t err) {
 }
 
 static void disconnected(struct bt_conn *conn, uint8_t reason) {
+    BT_TRACE_AND_ASSERT("bc2");
     int8_t peerId = GetPeerIdByConn(conn);
     connection_type_t connectionType = Connections_Type(Peers[peerId].connectionId);
 
@@ -521,6 +572,7 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
 
     if (peerId != PeerIdUnknown) {
         Connections_SetState(Peers[peerId].connectionId, ConnectionState_Disconnected);
+        Trace_Printc("bu2");
         bt_conn_unref(Peers[peerId].conn);
         Peers[peerId].conn = NULL;
         Connections[Peers[peerId].connectionId].peerId = PeerIdUnknown;
@@ -535,8 +587,8 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
     }
 
     if (conn == auth_conn) {
-        bt_conn_unref(auth_conn);
-        auth_conn = NULL;
+        Trace_Printc("bu3");
+        unsetAuthConn(false);
     }
 }
 
@@ -586,11 +638,20 @@ static void connectAuthenticatedConnection(struct bt_conn *conn, connection_id_t
 }
 
 static void securityChanged(struct bt_conn *conn, bt_security_t level, enum bt_security_err err) {
+    BT_TRACE_AND_ASSERT("bc3");
     // In case of failure, disconnect
     if (err || (level < BT_SECURITY_L4 && !Cfg.Bt_AllowUnsecuredConnections)) {
         LOG_WRN("Bt security failed: %s, level %u, err %d, disconnecting\n", GetPeerStringByConn(conn), level, err);
-        bt_conn_auth_cancel(conn);
-        // bt_conn_disconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
+
+        struct bt_conn_info info;
+        int err = bt_conn_get_info(conn, &info);
+        if (err == 0 && info.state == BT_CONN_STATE_CONNECTED) {
+            bt_conn_auth_cancel(conn);
+            // bt_conn_disconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
+        } else {
+            // Sometimes securityChanged gets called twice, resulting in a race and a crash, so check for it \efp.
+            LOG_WRN("The connection (%s) isn't even connected! Ignoring.", GetPeerStringByConn(conn));
+        }
         return;
     }
 
@@ -630,12 +691,12 @@ BT_CONN_CB_DEFINE(conn_callbacks) = {
 
 static void auth_passkey_entry(struct bt_conn *conn) {
     if (auth_conn) {
-        safeDisconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
-        bt_conn_unref(auth_conn);
-        auth_conn = NULL;
+        Trace_Printc("bu4");
+        unsetAuthConn(true);
     }
 
-    auth_conn = bt_conn_ref(conn);
+    Trace_Printc("br1");
+    setAuthConn(conn);
 
     LOG_INF("Received passkey pairing inquiry.\n");
 
@@ -667,8 +728,8 @@ static void auth_cancel(struct bt_conn *conn) {
     LOG_INF("Pairing cancelled: peer %s\n", GetPeerStringByConn(conn));
 
     if (auth_conn) {
-        bt_conn_unref(auth_conn);
-        auth_conn = NULL;
+        Trace_Printc("bu5");
+        unsetAuthConn(false);
     }
 
     PairingScreen_Feedback(false);
@@ -733,10 +794,9 @@ static void pairing_complete(struct bt_conn *conn, bool bonded) {
         connectAuthenticatedConnection(conn, connectionId, connectionType);
     }
 
-
     if (auth_conn) {
-        bt_conn_unref(auth_conn);
-        auth_conn = NULL;
+        Trace_Printc("bu6");
+        unsetAuthConn(false);
         PairingScreen_Feedback(true);
     }
 
@@ -749,6 +809,7 @@ static void bt_foreach_conn_cb(struct bt_conn *conn, void *user_data) {
 }
 
 void BtConn_DisconnectAll() {
+    BT_TRACE_AND_ASSERT("bc4");
     bt_conn_foreach(BT_CONN_TYPE_LE, bt_foreach_conn_cb, NULL);
 }
 
@@ -761,6 +822,7 @@ static void bt_foreach_conn_cb_disconnect_unidentified(struct bt_conn *conn, voi
 }
 
 void BtConn_DisconnectAllUnidentified() {
+    BT_TRACE_AND_ASSERT("bc5");
     bt_conn_foreach(BT_CONN_TYPE_LE, bt_foreach_conn_cb_disconnect_unidentified, NULL);
 }
 
@@ -771,9 +833,9 @@ static void pairing_failed(struct bt_conn *conn, enum bt_security_err reason) {
     }
 
     if (auth_conn == conn) {
-        bt_conn_unref(auth_conn);
+        Trace_Printc("bu7");
         LOG_WRN("Pairing of auth conn failed because of %d\n", reason);
-        auth_conn = NULL;
+        unsetAuthConn(false);
         PairingScreen_Feedback(false);
     }
 
@@ -786,6 +848,7 @@ static struct bt_conn_auth_info_cb conn_auth_info_callbacks = {
 };
 
 void BtConn_Init(void) {
+    BT_TRACE_AND_ASSERT("bc6");
     int err = 0;
 
     for (uint8_t peerId = PeerIdFirstHost; peerId <= PeerIdLastHost; peerId++) {
@@ -824,15 +887,12 @@ void num_comp_reply(int passkey) {
         bt_conn_auth_passkey_entry(conn, passkey);
         LOG_INF("Sending passkey to conn %s\n", GetPeerStringByConn(conn));
     } else {
-        bt_conn_auth_cancel(conn);
-        LOG_INF("Reject pairing to conn %s\n", GetPeerStringByConn(conn));
-        bt_conn_unref(auth_conn);
-        auth_conn = NULL;
+        conn = unsetAuthConn(true);
     }
 }
 
 uint8_t BtConn_UnusedPeripheralConnectionCount() {
-    uint8_t count = MIN(PERIPHERAL_CONNECTION_COUNT, Cfg.Bt_MaxPeripheralConnections);
+    uint8_t count = ACTUAL_PERIPHERAL_CONNECTION_COUNT;
 
     for (uint8_t peerId = PeerIdFirstHost; peerId <= PeerIdLastHost; peerId++) {
         if (Peers[peerId].conn && count > 0) {

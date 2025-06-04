@@ -45,6 +45,8 @@
 #include "trace.h"
 #include "macros/vars.h"
 #include "thread_stats.h"
+#include "power_mode.h"
+#include "mouse_controller.h"
 #include "wormhole.h"
 #include "power_mode.h"
 #include "proxy_log_backend.h"
@@ -213,6 +215,7 @@ void mainRuntime(void) {
     if (DEBUG_RUN_TESTS) {
         MacroVariables_RunTests();
 #if DEVICE_IS_KEYBOARD
+        MouseController_RunTests();
         BatteryCalculator_RunTests();
         BatteryCalculator_RunPercentTests();
 #endif

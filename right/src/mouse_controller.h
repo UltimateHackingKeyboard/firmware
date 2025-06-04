@@ -27,6 +27,8 @@
         uint8_t zoomPhase;
         uint8_t zoomSign;
         bool zoomActive;
+        bool wasSmallX; //to detect trackpoint jumps
+        bool wasSmallY; //to detect trackpoint jumps
     } module_kinetic_state_t;
 
 // Variables:
@@ -37,5 +39,6 @@
 
 // Functions:
     void MouseController_ProcessMouseActions();
+    void MouseController_RunTests();
 
 #endif

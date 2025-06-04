@@ -13,7 +13,7 @@
 
 #define PROXY_BACKEND_BUFFER_SIZE 2048
 
-static bool isInPanicMode = false;
+bool ProxyLog_IsInPanicMode = false;
 
 static char buffer[PROXY_BACKEND_BUFFER_SIZE];
 uint16_t bufferPosition = 0;
@@ -32,7 +32,10 @@ uint16_t ProxyLog_ConsumeLog(uint8_t* outBuf, uint16_t outBufSize) {
     uint16_t copied = 0;
     uint16_t remaining = MIN(bufferLength, outBufSize);
     while (remaining > 0) {
-        outBuf[copied++] = buffer[bufferPosition++];
+        char a = buffer[bufferPosition++];
+        if (a == '<') a = '[';
+        if (a == '>') a = ']';
+        outBuf[copied++] = a;
         if (bufferPosition >= PROXY_BACKEND_BUFFER_SIZE) {
             bufferPosition = 0;
         }
@@ -50,15 +53,22 @@ void ProxyLog_SetAttached(bool attached) {
     ProxyLog_IsAttached = attached;
 }
 
-void printToOurBuffer(uint8_t *data, size_t length) {
-    for (uint16_t i = 0; i < length; i++) {
+static void addChar(char c) {
+    if (CHAR_IS_VALID(c)) {
         if (bufferLength < PROXY_BACKEND_BUFFER_SIZE) {
-            buffer[POS(bufferLength)] = data[i];
+            buffer[POS(bufferLength)] = c;
             bufferLength++;
         } else {
-            buffer[bufferPosition++] = data[i];
+            buffer[bufferPosition++] = c;
             bufferPosition %= PROXY_BACKEND_BUFFER_SIZE;
         }
+
+    }
+}
+
+void printToOurBuffer(uint8_t *data, size_t length) {
+    for (uint16_t i = 0; i < length; i++) {
+        addChar(data[i]);
     }
     updateNonemptyFlag();
 }
@@ -66,16 +76,23 @@ void printToOurBuffer(uint8_t *data, size_t length) {
 static void processLog(const struct log_backend *const backend, union log_msg_generic *msg);
 
 void panic(const struct log_backend *const backend) {
-    isInPanicMode = true;
-
     StateWormhole_Open();
     StateWormhole.persistStatusBuffer = true;
+
+    if (!ProxyLog_IsInPanicMode) {
+        ProxyLog_IsInPanicMode = true;
+
+        MacroStatusBuffer_Validate();
+        printk("===== PANIC =====\n");
+        Trace_Print("crash/panic");
+    }
+
 };
 
 static int outputFunc(uint8_t *data, size_t length, void *ctx)
 {
-    if (isInPanicMode) {
-        Macros_Printf("%.*s", length-1, (const char*)data);
+    if (ProxyLog_IsInPanicMode) {
+        Macros_SanitizedPut(data, data + length);
     }
     if (ProxyLog_IsAttached) {
         printToOurBuffer(data, length);
@@ -95,8 +112,9 @@ static int outputFunc(uint8_t *data, size_t length, void *ctx)
     };
 
 static void processLog(const struct log_backend *const backend, union log_msg_generic *msg) {
-    if (isInPanicMode || ProxyLog_IsAttached) {
-        log_output_msg_process(&logOutput, &msg->log, 0);
+    if (ProxyLog_IsInPanicMode || ProxyLog_IsAttached) {
+        uint8_t flags = LOG_OUTPUT_FLAG_CRLF_LFONLY;
+        log_output_msg_process(&logOutput, &msg->log, flags);
     }
 }
 

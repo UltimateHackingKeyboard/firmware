@@ -3,8 +3,16 @@
 #include "module/i2c_watchdog.h"
 #include "module.h"
 
+#if defined(DEVICE_ID)
+#include "trace.h"
+#else
+#define Trace_Printc(...)
+#endif
+
 void KEY_SCANNER_HANDLER(void)
 {
+
+    Trace_Printc("<i2");
     #if KEY_ARRAY_TYPE == KEY_ARRAY_TYPE_VECTOR
         KeyVector_Scan(&KeyVector);
     #elif KEY_ARRAY_TYPE == KEY_ARRAY_TYPE_MATRIX
@@ -13,6 +21,7 @@ void KEY_SCANNER_HANDLER(void)
     RunWatchdog();
     Module_OnScan();
     LPTMR_ClearStatusFlags(KEY_SCANNER_LPTMR_BASEADDR, kLPTMR_TimerCompareFlag);
+    Trace_Printc(">");
 }
 
 void InitKeyScanner(void)

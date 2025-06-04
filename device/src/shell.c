@@ -18,6 +18,8 @@
 #include "usb_compatibility.h"
 #include "mouse_keys.h"
 #include "config_manager.h"
+#include <zephyr/shell/shell_backend.h>
+#include "connections.h"
 
 shell_t Shell = {
     .keyLog = 0,
@@ -27,6 +29,33 @@ shell_t Shell = {
     .sdbState = 1,
 };
 
+void list_backends_by_iteration(void) {
+    const struct shell *shell;
+    size_t idx = 0;
+    size_t backendCount = shell_backend_count_get();
+
+    printk("Available shell backends:\n");
+    for (size_t i = 0; i < backendCount; i++) {
+        shell = shell_backend_get(idx);
+        printk("- Backend %zu: %s\n", idx, shell->name);
+        idx++;
+    }
+}
+
+void Shell_Execute(const char *cmd, const char *source) {
+    const char* backendName = "shell_uart";
+    const struct shell *sh = shell_backend_get_by_name(backendName);
+    if (!sh) {
+        printk("Error: %s backend not found\n", backendName);
+        list_backends_by_iteration();
+        return;
+    }
+    printk("Executing following command from %s: '%s'\n", source, cmd);
+    int err = shell_execute_cmd(sh, cmd);
+    if (err) {
+        printk("Error executing command: %d\n", err);
+    }
+}
 
 static int cmd_uhk_keylog(const struct shell *shell, size_t argc, char *argv[])
 {
@@ -166,11 +195,7 @@ static int cmd_uhk_btunpair(const struct shell *shell, size_t argc, char *argv[]
 
 static int cmd_uhk_connections(const struct shell *shell, size_t argc, char *argv[])
 {
-    printk("Compiled   peripheral count: %d\n", CONFIG_BT_CTLR_SDC_PERIPHERAL_COUNT);
-    printk("Configured peripheral count: %d\n", Cfg.Bt_MaxPeripheralConnections);
-    HostConnections_ListKnownBleConnections();
-    BtConn_ListAllBonds();
-    BtConn_ListCurrentConnections();
+    Connections_PrintInfo();
     return 0;
 }
 

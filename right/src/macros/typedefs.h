@@ -5,7 +5,7 @@
 
 // Macros:
 
-    #define STATUS_BUFFER_MAX_LENGTH 2000
+    #define STATUS_BUFFER_MAX_LENGTH 3000
 
 // Typedefs:
 

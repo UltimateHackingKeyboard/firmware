@@ -29,11 +29,11 @@ if(NOT CONFIG_BOARD_UHK_60_RIGHT)
         bt_conn.c
         bt_manager.c
         bt_pair.c
+        bt_health.c
         connections.c
         debug_eventloop_timing.c
         device_state.c
         flash.c
-        logger.c
         messenger_queue.c
         messenger.c
         proxy_log_backend.c

@@ -141,9 +141,11 @@ int main(void)
     if (StateWormhole_IsOpen()) {
         if (!StateWormhole.wasReboot) {
             StateWormhole.persistStatusBuffer = true;
-            MacroStatusBuffer_InitFromWormhole();
+            MacroStatusBuffer_Validate();
             Trace_Print("Looks like your uhk60 crashed.");
-            LastRunWasCrash = true;
+            MacroStatusBuffer_InitFromWormhole();
+        } else {
+            MacroStatusBuffer_InitNormal();
         }
         StateWormhole_Clean();
     } else {
