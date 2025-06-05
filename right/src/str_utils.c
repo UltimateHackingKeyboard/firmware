@@ -96,7 +96,7 @@ static bool isEnd(parser_context_t* ctx) {
         return false;
     }
     while (ctx->nestingLevel > 0 && ctx->at >= ctx->end && PopParserContext(ctx)) {
-        Trace_Printc("e2");
+        /* everything was don in PopParserContext */
     };
     return ctx->at >= ctx->end;
 }
@@ -349,6 +349,14 @@ const char* NextTok(const char* cmd, const char *cmdEnd)
         return cmdEnd;
     }
     return cmd;
+}
+
+void ConsumeAnyToken(parser_context_t* ctx)
+{
+    while (*ctx->at > 32 && ctx->at < ctx->end) {
+        ctx->at++;
+    }
+    consumeWhite(ctx);
 }
 
 const char* NextCmd(const char* cmd, const char *cmdEnd)

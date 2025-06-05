@@ -187,6 +187,19 @@ void Macros_ConsumeStringToken(parser_context_t* ctx) {
     }
 }
 
+/**
+ * ctx->at: beginning of the string-typed argument
+ * stringOffset: beginning of the
+ *
+ * ```
+ * write 'Hello'" you $attribute $name!"
+ * ------> ctx->at
+ *       <-----> stringOffset
+ *              <----> index
+ *                   "greenish" = attribute
+ *                    <--> subIndex
+ * ```
+ **/
 char Macros_ConsumeCharOfString(parser_context_t* ctx, uint16_t* stringOffset, uint16_t* index, uint16_t* subIndex)
 {
     const char* a = ctx->at;

@@ -922,6 +922,11 @@ bool TryExpandMacroTemplateOnce(parser_context_t* ctx) {
             const char* arg = "3";
             bool success = PushParserContext(ctx, arg, arg, arg + strlen(arg));
             return success;
+        }
+        else if (ConsumeToken(ctx, "emoji")) {
+            const char* arg = "😃";
+            bool success = PushParserContext(ctx, arg, arg, arg + strlen(arg));
+            return success;
         } else {
             Macros_ReportError("Expected valid template name!", ctx->at, ctx->end);
             return true;
