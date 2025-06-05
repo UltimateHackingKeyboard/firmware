@@ -9,9 +9,10 @@ and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
 Device Protocol: 4.**16.0** | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 11.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.**5.0**
 
+- Fix some Bluetooth-related crashes.
+- Changes to logging and crash-related behavior.
+- Add the `zephyr` smart macro command to execute Zephyr shell commands. `SMARTMACROS:MINOR`
 - Implement Zephyr shell execute device protocol command. `DEVICEPROTOCOL:MINOR`
-- Allow executing zephyr commands from macros. `SMARTMACROS:MINOR`
-- Try to prevent occasional trackpoint jumps on the UHK 80, although they may occur due to another issue.
 
 ## [14.0.3] - 2025-05-29
 
