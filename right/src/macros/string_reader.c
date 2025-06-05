@@ -154,7 +154,8 @@ static char tryConsumeAnotherStringLiteral(parser_context_t* ctx, uint16_t* stri
 }
 
 bool Macros_CompareStringToken(parser_context_t* ctx, string_segment_t str) {
-    parser_context_t ctx2 = *ctx;
+    CTX_COPY(ctx2, *ctx);
+    ctx2.nestingBound = ctx->nestingLevel;
     uint16_t stringOffset = 0, textIndex = 0, textSubIndex = 0;
     const char* str2 = str.start;
 
@@ -255,10 +256,26 @@ char Macros_ConsumeCharOfString(parser_context_t* ctx, uint16_t* stringOffset, u
             if (stringType == StringType_SingleQuote) {
                 goto normalChar;
             } else {
-                parser_context_t ctx2 = { .macroState = ctx->macroState, .begin = ctx->begin, .at = a, .end = aEnd };
+                parser_context_t ctx2 = {
+                    .macroState = ctx->macroState,
+                    .begin = ctx->begin,
+                    .at = a,
+                    .end = aEnd,
+                    .nestingLevel = ctx->nestingLevel,
+                    .nestingBound = ctx->nestingLevel,
+                };
                 ConsumeCommentsAsWhite(false);
                 char res = consumeExpressionChar(&ctx2, subIndex);
                 ConsumeCommentsAsWhite(true);
+
+                if (ctx2.nestingLevel != ctx->nestingLevel) {
+                    Macros_ReportError("Macro template has overflown expression boundary! Undefined behavior coming!", ctx2.at, ctx2.end);
+                    while (ctx2.nestingLevel > ctx->nestingLevel && PopParserContext(&ctx2)) {
+                    }
+                    *index += 1;
+                    return '$';
+                }
+
                 if (*subIndex == 0) {
                     *index += ctx2.at - a;
                 }

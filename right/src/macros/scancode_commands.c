@@ -315,7 +315,7 @@ macro_result_t Macros_DispatchText(const char* text, uint16_t textLen, bool rawS
         if (rawString) {
             character = text[S->as.dispatchData.textIdx];
         } else {
-            parser_context_t ctx = { .macroState = S, .begin = text, .at = text, .end = text+textLen };
+            parser_context_t ctx = { .macroState = S, .begin = text, .at = text, .end = text+textLen, .nestingLevel = PARSER_CONTEXT_STACK_SIZE};
             character = Macros_ConsumeCharOfString(&ctx, &stringOffsetCopy, &textIndexCopy, &textSubIndexCopy);
 
             //make sure we write error only once

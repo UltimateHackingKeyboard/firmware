@@ -5,6 +5,8 @@
 #include "macros/status_buffer.h"
 #include "module.h"
 #include "slave_protocol.h"
+#include "macros/vars.h"
+#include "trace.h"
 
 #if !defined(MIN)
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -89,15 +91,32 @@ const char* FindChar(char c, const char* str, const char* strEnd)
     return strEnd;
 }
 
+static bool isEnd(parser_context_t* ctx) {
+    if (ctx->at < ctx->end) {
+        return false;
+    }
+    while (ctx->nestingLevel > 0 && ctx->at >= ctx->end && PopParserContext(ctx)) {
+        Trace_Printc("e2");
+    };
+    return ctx->at >= ctx->end;
+}
 
 static void consumeWhite(parser_context_t* ctx)
 {
-    while (*ctx->at <= 32 && ctx->at < ctx->end) {
-        ctx->at++;
-    }
-    if (ctx->at[0] == '/' && ctx->at[1] == '/' && consumeCommentsAsWhite) {
-        while (*ctx->at != '\n' && *ctx->at != '\r' && ctx->at < ctx->end) {
+    while (!isEnd(ctx)) {
+        Trace_Printc("e3");
+        while (*ctx->at <= 32 && !isEnd(ctx)) {
             ctx->at++;
+        }
+        if (ctx->at[0] == '/' && ctx->at[1] == '/' && consumeCommentsAsWhite) {
+            while (*ctx->at != '\n' && *ctx->at != '\r' && !isEnd(ctx)) {
+                ctx->at++;
+            }
+        }
+        if (*ctx->at == '$' && TryExpandMacroTemplateOnce(ctx)) {
+            continue;
+        } else {
+            return;
         }
     }
 }
@@ -265,7 +284,7 @@ void ConsumeAnyIdentifier(parser_context_t* ctx)
 
 void ConsumeUntilDot(parser_context_t* ctx)
 {
-    while(*ctx->at > 32 && *ctx->at != '.' && ctx->at < ctx->end)    {
+    while(*ctx->at > 32 && *ctx->at != '.' && !isEnd(ctx))    {
         ctx->at++;
     }
     if (*ctx->at != '.') {
@@ -483,3 +502,31 @@ const char* Utils_DeviceIdToString(device_id_t deviceId) {
     }
 }
 #endif
+
+bool PushParserContext(parser_context_t* ctx, const char* begin, const char* at, const char* end)
+{
+    if (ctx->nestingLevel >= PARSER_CONTEXT_STACK_SIZE) {
+        Macros_ReportError("Parser context stack overflow", ctx->at, ctx->end);
+        return false;
+    }
+    parserContextStack[ctx->nestingLevel] = *ctx;
+    ctx->begin = begin;
+    ctx->at = at;
+    ctx->end = end;
+    ctx->nestingLevel++;
+    consumeWhite(ctx);
+    return true;
+}
+
+bool PopParserContext(parser_context_t* ctx)
+{
+    int8_t newNestingLevel = (int8_t)ctx->nestingLevel - 1;
+    if (newNestingLevel >= ctx->nestingBound && newNestingLevel >= 0) {
+        ASSERT(parserContextStack[newNestingLevel].nestingLevel < ctx->nestingLevel);
+        *ctx = parserContextStack[newNestingLevel];
+        return true;
+    } else {
+        return false;
+    }
+}
+
