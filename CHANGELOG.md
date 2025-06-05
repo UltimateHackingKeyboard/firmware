@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [14.1.0] - 2025-06-05
+
+Device Protocol: 4.**16.0** | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 11.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.**5.0**
+
+- Implement Zephyr shell execute device protocol command. `DEVICEPROTOCOL:MINOR`
+- Allow executing zephyr commands from macros. `SMARTMACROS:MINOR`
+- Try to prevent occasional trackpoint jumps on the UHK 80, although they may occur due to another issue.
+
 ## [14.0.3] - 2025-05-29
 
 Device Protocol: 4.15.0 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 11.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.4.1
