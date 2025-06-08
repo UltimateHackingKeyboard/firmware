@@ -347,10 +347,10 @@ COMMAND = setEmergencyKey KEYID
   - `sleep` reboots the keyboard into a low power mode, that still scans keys and can be woken up by s+f or j+l keys.
   - `shutdown` is used by uhk when its battery runs out. You can wake up by plugging in the USB cable. It is not designed to be used directly.
   - `wake` wakes up the device from "any" sleep mode that doesn't disable macro engine and the half link.
-- `reboot` - reboots the right half, and in case of uhk80, also left half and connected dongles. (Uhk60 left half shouldn't need reboot as it is a simple module.)
-  Further rules:
+  - Further rules:
     - If a sleep mode is activated while another sleep mode is active, the deeper of them will be activated.
     - If `toggle` is specified and the device is already in the (exact) sleep mode, it will wake the device instead.
+- `reboot` - reboots the right half, and in case of uhk80, also left half and connected dongles. (Uhk60 left half shouldn't need reboot as it is a simple module.)
 
 ### Bluetooth:
 - `bluetooth [toggle] { pair | advertise | noAdvertise }` controls advertising for hid devices - this doesn't affect dongle and left half advertising.
