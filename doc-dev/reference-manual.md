@@ -235,7 +235,8 @@ SCANCODE = <en-US character (CHAR)> | SCANCODE_ABBREV
 SHORTCUT = <MODMASK-SCANCODE, e.g. LC-c (COMPOSITE_SHORTCUT)>
 SHORTCUT = <SCANCODE long abbreviation (SCANCODE)> 
 SHORTCUT = <MODMASK, e.g. LS for left shift(MODMASK)> 
-KEY_SEQUENCE = altCodeOf(<unicode character (CHAR)>) | hexCodeOf(<unicode character (CHAR)>)
+KEY_SEQUENCE = altCodeOf(<unicode character (CHAR)>) | uCodeOf(<unicode character (CHAR)>) 
+KEY_SEQUENCE = hexCodeOf(<unicode character (CHAR)>) | decCodeOf(<unicode character (CHAR)>)
 DISPLAY_LOCATION = abbrev | notification | leftStatus | rightStatus | keymap | layer | host
 COMPOSITE_SHORTCUT = MODMASK-SCANCODE
 SCANCODE_ABBREV = enter | escape | backspace | tab | space | minusAndUnderscore | equalAndPlus | openingBracketAndOpeningBrace | closingBracketAndClosingBrace
@@ -376,9 +377,14 @@ COMMAND = setEmergencyKey KEYID
   - **release** means removing the scancode from the list of "active keys". I.e., it negates the effect of `pressKey` within the same macro. This does not affect scancodes emitted by different keyboard actions.
   - **tap** means pressing a key (more precisely, activating the scancode) and immediately releasing it again
   - **hold** means pressing the key, waiting until the key which activated the macro is released, and then releasing the key again. I.e., `holdKey <x>` is equivalent to `pressKey <x>; delayUntilRelease; releaseKey <x>`, while `tapKey <x>` is equivalent to `pressKey <x>; releaseKey <x>`.
-  - `tapKeySeq` can be used for executing custom sequences. The default action for each shortcut in the sequence is tap. Other actions can be specified using `MODMASK`. E.g.:
-    - `CS-u 1 2 3 space` - control shift U + number + space - linux shortcut for a custom unicode character.
-    - `pA- tab tab rA-` - tap alt tab twice to bring forward the second background window.
+  - `tapKeySeq` can be used for executing custom sequences. The default action for each shortcut in the sequence is tap. Other actions can be specified using `MODMASK`.
+    - `altCodeOf(<unicode character (CHAR)>)` will substitute a sequence corresponding to windows alt code, e.g., `pLA np1 np2 np9 np3 np2 np0 rLA`
+    - `uCodeOf(<unicode character (CHAR)>)` will substitute a sequence corresponding to a linux Ctrl+u sequence, e.g., `CS-u 1 f 9 2 8 space`
+    - `hexCodeOf(<unicode character (CHAR)>)` will substitute just the internal hexadecimal code of the character, e.g., `1 f 9 2 8`
+    - `decCodeOf(<unicode character (CHAR)>)` will substitute just the internal decimal code of the character, e.g., `1 2 9 3 2 0`.
+    - e.g.: `CS-u 1 2 3 space` - control shift U + number + space - linux shortcut for a custom unicode character.
+    - e.g.: `pA- tab tab rA-` - tap alt tab twice to bring forward the second background window.
+    - e.g.: `uCodeOf(€)` - will type `CS-u 2 0 a c space`, which on ubuntu produces the euro sign (€).
   - `MODMASK` meaning:
     - `{S|C|A|G}` - Shift Control Alt Gui. (Windows, Super, and Gui are the same thing.)
     - `[L|R]` - Left Right (which hand side modifier should be used) E.g. `holdKey RA-c` (right alt + c).

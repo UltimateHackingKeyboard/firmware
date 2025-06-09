@@ -464,14 +464,31 @@ uint32_t consumeUtf8(parser_context_t* ctx) {
     return unicode;
 }
 
-static const char* expandCodeInBase(uint32_t unicodeValue, uint8_t base, bool useNumpad) {
-#define MAX_CODE_LEN (4*10+1)
+static uint8_t putStringFromEnd(char* buffer, uint8_t startIdx, const char* str, uint8_t strLen) {
+    for (uint8_t i = 0; i < strLen; i++) {
+        if (startIdx == 0) {
+            return 0;
+        }
+        buffer[startIdx] = str[strLen - i - 1];
+        startIdx--;
+    }
+    return startIdx;
+}
+
+static const char* expandCodeInBase(const char* prefix, uint32_t unicodeValue, uint8_t base, const char* suffix, bool useNumpad) {
+#define MAX_CODE_LEN (4*10+1+11)
     const char digits[] = "0123456789abcdef";
     static char returnBuffer[MAX_CODE_LEN];
 
     returnBuffer[MAX_CODE_LEN-1] = '\0';
     uint8_t startIdx = MAX_CODE_LEN - 2;
     uint8_t charWidth = useNumpad ? 4 : 2;
+
+    uint8_t prefixLen = strlen(prefix);
+    uint8_t suffixLen = strlen(suffix);
+
+    startIdx = putStringFromEnd(returnBuffer, startIdx, suffix, suffixLen);
+    startIdx = putStringFromEnd(returnBuffer, startIdx, " ", 1);
 
     while (unicodeValue != 0 && startIdx >= charWidth) {
         uint8_t digit = unicodeValue % base;
@@ -488,6 +505,10 @@ static const char* expandCodeInBase(uint32_t unicodeValue, uint8_t base, bool us
         }
         startIdx -= charWidth;
     }
+
+    startIdx = putStringFromEnd(returnBuffer, startIdx, prefix, prefixLen);
+    startIdx = putStringFromEnd(returnBuffer, startIdx, " ", 1);
+
     startIdx += 1;
     return &returnBuffer[startIdx];
 #undef MAX_CODE_LEN
@@ -513,17 +534,37 @@ static uint32_t consumeUtf8InParentheses(parser_context_t* ctx) {
 }
 
 static void expandCodes(parser_context_t* ctx) {
-    if (*ctx->at == 'd' || *ctx->at == 'h') {
-        if (ConsumeToken(ctx, "altCodeOf")) {
-            uint32_t code = consumeUtf8InParentheses(ctx);
-            const char* keySeq = expandCodeInBase(code, 10, true);
-            PushParserContext(ctx, keySeq, keySeq, keySeq + strlen(keySeq));
-        }
-        if (ConsumeToken(ctx, "hexCodeOf")) {
-            uint32_t code = consumeUtf8InParentheses(ctx);
-            const char* keySeq = expandCodeInBase(code, 16, false);
-            PushParserContext(ctx, keySeq, keySeq, keySeq + strlen(keySeq));
-        }
+    switch (*ctx->at) {
+        case 'a':
+            if (ConsumeToken(ctx, "altCodeOf")) {
+                uint32_t code = consumeUtf8InParentheses(ctx);
+                const char* keySeq = expandCodeInBase("pLA", code, 10, "rLA", true);
+                PushParserContext(ctx, keySeq, keySeq, keySeq + strlen(keySeq));
+            }
+            break;
+        case 'd':
+            if (ConsumeToken(ctx, "decCodeOf")) {
+                uint32_t code = consumeUtf8InParentheses(ctx);
+                const char* keySeq = expandCodeInBase("", code, 10, "", false);
+                PushParserContext(ctx, keySeq, keySeq, keySeq + strlen(keySeq));
+            }
+            break;
+        case 'h':
+            if (ConsumeToken(ctx, "hexCodeOf")) {
+                uint32_t code = consumeUtf8InParentheses(ctx);
+                const char* keySeq = expandCodeInBase("", code, 16, "", false);
+                PushParserContext(ctx, keySeq, keySeq, keySeq + strlen(keySeq));
+            }
+            break;
+        case 'u':
+            if (ConsumeToken(ctx, "uCodeOf")) {
+                uint32_t code = consumeUtf8InParentheses(ctx);
+                const char* keySeq = expandCodeInBase("CS-u", code, 16, "space", false);
+                PushParserContext(ctx, keySeq, keySeq, keySeq + strlen(keySeq));
+            }
+            break;
+        default:
+            break;
     }
 }
 

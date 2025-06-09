@@ -924,7 +924,7 @@ bool TryExpandMacroTemplateOnce(parser_context_t* ctx) {
             return success;
         }
         else if (ConsumeToken(ctx, "emoji")) {
-            const char* arg = "😃";
+            const char* arg = "€";
             bool success = PushParserContext(ctx, arg, arg, arg + strlen(arg));
             return success;
         } else {
