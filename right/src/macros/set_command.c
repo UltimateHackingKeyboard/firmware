@@ -165,7 +165,7 @@ static float coalesce_float(float lowerBound, float val, float upperBound) {
 
 static macro_variable_t moduleNavigationMode(parser_context_t* ctx, set_command_action_t action, module_configuration_t* module)
 {
-    parser_context_t layerCtx = *ctx;
+    CTX_COPY(layerCtx, *ctx);
     layer_id_t layerId = Macros_ConsumeLayerId(ctx);
 
     if (action == SetCommandAction_Read) {
@@ -784,7 +784,7 @@ static macro_variable_t navigationModeAction(parser_context_t* ctx, set_command_
 static macro_variable_t keymapAction(parser_context_t* ctx, set_command_action_t action)
 {
     uint8_t layerId = Macros_ConsumeLayerId(ctx);
-    parser_context_t keyIdPos = *ctx;
+    CTX_COPY(keyIdPos, *ctx);
 
     ConsumeUntilDot(ctx);
 
