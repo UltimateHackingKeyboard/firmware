@@ -35,6 +35,7 @@
 #include "logger.h"
 #include "versioning.h"
 #include "event_scheduler.h"
+#include "macro_events.h"
 
 #define WAKE(TID) if (TID != 0) { k_wakeup(TID); }
 
@@ -475,6 +476,9 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
         }
         break;
     case StateSyncPropertyId_MergeSensor:
+        if (DEVICE_IS_UHK80_RIGHT) {
+            MacroEvent_ProcessJoinSplitEvents(MergeSensor_HalvesAreMerged);
+        }
         break;
     case StateSyncPropertyId_SwitchTestMode:
         if (!isLocalUpdate) {

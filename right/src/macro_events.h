@@ -8,6 +8,7 @@
     #include "key_action.h"
     #include "usb_device_config.h"
     #include "key_states.h"
+    #include "peripherals/merge_sensor.h"
     #include "layer.h"
 
 // Macros:
@@ -34,6 +35,7 @@
     void MacroEvent_OnError();
     void MacroEvent_RegisterLayerMacros();
     void MacroEvent_ProcessStateKeyEvents();
+    void MacroEvent_ProcessJoinSplitEvents(merge_sensor_state_t currentlyJoined);
     void MacroEvent_TriggerGenericEvent(generic_macro_event_t eventId);
 
 #endif
