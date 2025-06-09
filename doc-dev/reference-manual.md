@@ -374,7 +374,7 @@ COMMAND = setEmergencyKey KEYID
   - **tap** means pressing a key (more precisely, activating the scancode) and immediately releasing it again
   - **hold** means pressing the key, waiting until the key which activated the macro is released, and then releasing the key again. I.e., `holdKey <x>` is equivalent to `pressKey <x>; delayUntilRelease; releaseKey <x>`, while `tapKey <x>` is equivalent to `pressKey <x>; releaseKey <x>`.
   - **toggle** will check if the shortcut is pressed in this macro's reports. If it is, it will deactivate the shortcut, otherwise it will activate it. This always acts on persistent reports.
-  - **persistent** argument will global reports. These reports can be accessed from any macro and will not be cleared when the macro ends. This is useful for long-term key toggling. E.g., `toggleKey persistent LS` acts similar to caps lock.
+  - **persistent** argument will use global reports. These reports can be accessed from any macro and will not be cleared when the macro ends. This is useful for long-term key toggling. E.g., `toggleKey persistent LS` acts similar to caps lock.
   - `tapKeySeq` can be used for executing custom sequences. The default action for each shortcut in the sequence is tap. Other actions can be specified using `MODMASK`. E.g.:
     - `CS-u 1 2 3 space` - control shift U + number + space - linux shortcut for a custom unicode character.
     - `pA- tab tab rA-` - tap alt tab twice to bring forward the second background window.
