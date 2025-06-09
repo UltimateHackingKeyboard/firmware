@@ -3,6 +3,11 @@
 
 // Includes:
 
+
+    #include <stdbool.h>
+    #include <stdint.h>
+    #include "usb_device_config.h"
+
 // Macros:
 
     #define STATUS_BUFFER_MAX_LENGTH 3000
@@ -14,7 +19,8 @@
         MacroSubAction_Tap,
         MacroSubAction_Press,
         MacroSubAction_Release,
-        MacroSubAction_Hold
+        MacroSubAction_Hold,
+        MacroSubAction_Toggle,
     } macro_sub_action_t;
 
     typedef enum {
@@ -33,6 +39,14 @@
         MacroResult_JumpedForward = MacroResult_DoneFlag,
         MacroResult_JumpedBackward = MacroResult_DoneFlag | MacroResult_YieldFlag,
     } macro_result_t;
+
+    typedef struct {
+        usb_mouse_report_t macroMouseReport;
+        usb_basic_keyboard_report_t macroBasicKeyboardReport;
+        usb_media_keyboard_report_t macroMediaKeyboardReport;
+        usb_system_keyboard_report_t macroSystemKeyboardReport;
+        uint8_t inputModifierMask;
+    } macro_usb_keyboard_reports_t;
 
 // Variables:
 

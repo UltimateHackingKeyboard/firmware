@@ -151,6 +151,7 @@
             uint8_t parentMacroSlot;
             uint8_t currentMacroIndex;
             uint8_t postponeNextNCommands;
+            // ---- 4-aligned ----
             uint8_t nextSlot;
             uint8_t oneShotState : 2;
             bool oneShotUsbChangeDetected : 1;
@@ -165,12 +166,9 @@
             bool wakeMeOnKeystateChange: 1;
             bool autoRepeatInitialDelayPassed: 1;
             macro_autorepeat_state_t autoRepeatPhase: 1;
+            // ---- 4-aligned ----
 
-            uint8_t inputModifierMask;
-            usb_mouse_report_t macroMouseReport;
-            usb_basic_keyboard_report_t macroBasicKeyboardReport;
-            usb_media_keyboard_report_t macroMediaKeyboardReport;
-            usb_system_keyboard_report_t macroSystemKeyboardReport;
+            macro_usb_keyboard_reports_t reports;
         } ms;
 
         // action scope data
@@ -202,6 +200,7 @@
                 } holdLayerData;
                 struct {
                     uint8_t atKeyIdx;
+                    bool toggleShouldActivate : 1;
                 } keySeqData;
             };
 
@@ -250,6 +249,7 @@
     extern bool Macros_ParserError;
     extern bool Macros_DryRun;
     extern bool Macros_ValidationInProgress;
+    extern macro_usb_keyboard_reports_t Macros_PersistentReports;
 
 // Functions:
 

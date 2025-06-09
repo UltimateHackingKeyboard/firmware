@@ -124,6 +124,14 @@ bool UsbSystemKeyboard_AddScancode(usb_system_keyboard_report_t* report, uint8_t
     return true;
 }
 
+bool UsbSystemKeyboard_ContainsScancode(const usb_system_keyboard_report_t* report, uint8_t scancode)
+{
+    if (!UsbSystemKeyboard_UsedScancode(scancode))
+        return false;
+
+    return test_bit(scancode - USB_SYSTEM_KEYBOARD_MIN_BITFIELD_SCANCODE, report->bitfield);
+}
+
 void UsbSystemKeyboard_RemoveScancode(usb_system_keyboard_report_t* report, uint8_t scancode)
 {
     if (!UsbSystemKeyboard_UsedScancode(scancode))
