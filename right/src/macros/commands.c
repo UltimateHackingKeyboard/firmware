@@ -924,7 +924,7 @@ static macro_result_t processPlayMacroCommand(parser_context_t* ctx)
     if (Macros_DryRun) {
         return MacroResult_Finished;
     }
-    bool res = MacroRecorder_PlayRuntimeMacroSmart(id, &S->ms.macroBasicKeyboardReport);
+    bool res = MacroRecorder_PlayRuntimeMacroSmart(id, &S->ms.reports.macroBasicKeyboardReport);
     return res ? MacroResult_Blocking : MacroResult_Finished;
 }
 
@@ -1959,7 +1959,7 @@ static macro_result_t processCommand(parser_context_t* ctx)
                 return processHoldKeymapLayerMaxCommand(ctx);
             }
             else if (ConsumeToken(ctx, "holdKey")) {
-                return Macros_ProcessKeyCommandAndConsume(ctx, MacroSubAction_Hold);
+                return Macros_ProcessKeyCommandAndConsume(ctx, MacroSubAction_Hold, &S->ms.reports);
             }
             else {
                 goto failed;
@@ -2284,7 +2284,7 @@ static macro_result_t processCommand(parser_context_t* ctx)
                 return processPlayMacroCommand(ctx);
             }
             else if (ConsumeToken(ctx, "pressKey")) {
-                return Macros_ProcessKeyCommandAndConsume(ctx, MacroSubAction_Press);
+                return Macros_ProcessKeyCommandAndConsume(ctx, MacroSubAction_Press, &S->ms.reports);
             }
             else if (ConsumeToken(ctx, "postponeKeys")) {
                 processPostponeKeysCommand();
@@ -2319,7 +2319,7 @@ static macro_result_t processCommand(parser_context_t* ctx)
                 return processResolveNextKeyIdCommand();
             }
             else if (ConsumeToken(ctx, "releaseKey")) {
-                return Macros_ProcessKeyCommandAndConsume(ctx, MacroSubAction_Release);
+                return Macros_ProcessKeyCommandAndConsume(ctx, MacroSubAction_Release, &S->ms.reports);
             }
             else if (ConsumeToken(ctx, "repeatFor")) {
                 return processRepeatForCommand(ctx);
@@ -2448,10 +2448,13 @@ static macro_result_t processCommand(parser_context_t* ctx)
                 return processToggleLayerCommand(ctx);
             }
             else if (ConsumeToken(ctx, "tapKey")) {
-                return Macros_ProcessKeyCommandAndConsume(ctx, MacroSubAction_Tap);
+                return Macros_ProcessKeyCommandAndConsume(ctx, MacroSubAction_Tap, &S->ms.reports);
             }
             else if (ConsumeToken(ctx, "tapKeySeq")) {
                 return Macros_ProcessTapKeySeqCommand(ctx);
+            }
+            else if (ConsumeToken(ctx, "toggleKey")) {
+                return Macros_ProcessKeyCommandAndConsume(ctx, MacroSubAction_Toggle, &S->ms.reports);
             }
             else if (ConsumeToken(ctx, "trace")) {
                 if (!Macros_DryRun) {

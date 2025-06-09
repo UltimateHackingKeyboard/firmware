@@ -34,6 +34,7 @@
 // Functions:
 
     bool UsbSystemKeyboard_AddScancode(usb_system_keyboard_report_t* report, uint8_t scancode);
+    bool UsbSystemKeyboard_ContainsScancode(const usb_system_keyboard_report_t* report, uint8_t scancode);
     static inline bool UsbSystemKeyboard_UsedScancode(uint8_t scancode)
     {
         return (scancode >= USB_SYSTEM_KEYBOARD_MIN_BITFIELD_SCANCODE) &&
