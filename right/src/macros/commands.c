@@ -8,6 +8,7 @@
 #include "layer_stack.h"
 #include "layer_switcher.h"
 #include "ledmap.h"
+#include "logger.h"
 #include "macro_recorder.h"
 #include "macros/commands.h"
 #include "macros/debug_commands.h"
@@ -2455,7 +2456,7 @@ static macro_result_t processCommand(parser_context_t* ctx)
             }
             else if (ConsumeToken(ctx, "trace")) {
                 if (!Macros_DryRun) {
-                    Trace_Print("Triggered by macro command");
+                    Trace_Print(LogTarget_ErrorBuffer, "Triggered by macro command");
                 }
                 return MacroResult_Finished;
             }

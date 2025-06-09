@@ -4,6 +4,7 @@
 #include "keyboard/charger.h"
 #include "keyboard/leds.h"
 #include "keyboard/oled/oled.h"
+#include "logger.h"
 #include "usb/usb.h"
 #include <zephyr/drivers/adc.h>
 #include <zephyr/drivers/gpio.h>
@@ -195,7 +196,7 @@ static int cmd_uhk_btunpair(const struct shell *shell, size_t argc, char *argv[]
 
 static int cmd_uhk_connections(const struct shell *shell, size_t argc, char *argv[])
 {
-    Connections_PrintInfo();
+    Connections_PrintInfo(LogTarget_Uart);
     return 0;
 }
 
@@ -211,7 +212,7 @@ static int cmd_uhk_threads(const struct shell *shell, size_t argc, char *argv[])
 
 static int cmd_uhk_trace(const struct shell *shell, size_t argc, char *argv[])
 {
-    Trace_Print("Triggered by zephyr shell.");
+    Trace_Print(LogTarget_Uart, "Triggered by zephyr shell.");
     return 0;
 }
 

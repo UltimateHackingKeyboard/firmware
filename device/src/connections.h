@@ -7,6 +7,7 @@
     #include <stdint.h>
     #include "device.h"
     #include "host_connection.h"
+    #include "logger.h"
 
 // Macros:
 
@@ -110,6 +111,6 @@
 
     const char* Connections_GetStaticName(connection_id_t connectionId);
 
-    void Connections_PrintInfo(void);
+    void Connections_PrintInfo(log_target_t target);
 
 #endif // __CONNECTIONS_H__

@@ -426,16 +426,16 @@ connection_target_t Connections_DeviceToTarget(device_id_t deviceId) {
     }
 }
 
-void Connections_PrintInfo(void) {
-    printk("Connection info:\n");
-    printk("----------------------\n");
-    printk("Compiled   peripheral count: %d\n", CONFIG_BT_CTLR_SDC_PERIPHERAL_COUNT);
-    printk("Configured peripheral count: %d\n", Cfg.Bt_MaxPeripheralConnections);
-    printk("Pairing mode: %d\n", BtPair_PairingMode);
-    printk("Directed advertising enabled: %d\n", Cfg.Bt_DirectedAdvertisingAllowed);
-    HostConnections_ListKnownBleConnections();
-    BtConn_ListAllBonds();
-    BtConn_ListCurrentConnections();
-    printk("----------------------\n");
+void Connections_PrintInfo(log_target_t target) {
+    LogTo(DEVICE_ID, target, "Connection info:\n");
+    LogTo(DEVICE_ID, target, "----------------------\n");
+    LogTo(DEVICE_ID, target, "Compiled   peripheral count: %d\n", CONFIG_BT_CTLR_SDC_PERIPHERAL_COUNT);
+    LogTo(DEVICE_ID, target, "Configured peripheral count: %d\n", Cfg.Bt_MaxPeripheralConnections);
+    LogTo(DEVICE_ID, target, "Pairing mode: %d\n", BtPair_PairingMode);
+    LogTo(DEVICE_ID, target, "Directed advertising enabled: %d\n", Cfg.Bt_DirectedAdvertisingAllowed);
+    HostConnections_ListKnownBleConnections(target);
+    BtConn_ListAllBonds(target);
+    BtConn_ListCurrentConnections(target);
+    LogTo(DEVICE_ID, target, "----------------------\n");
 }
 
