@@ -71,7 +71,7 @@ void UsbCommand_GetKeyboardState(const uint8_t *GenericHidOutBuffer, uint8_t *Ge
 #endif
 
     uint8_t byte2 = 0
-        | (MergeSensor_IsMerged() ? GetDeviceStateByte2_HalvesMerged : 0)
+        | (MergeSensor_IsMerged() == MergeSensorState_Joined ? GetDeviceStateByte2_HalvesMerged : 0)
         | (BtPair_PairingMode == PairingMode_Oob ? GetDeviceStateByte2_PairingInProgress : 0)
         | (Bt_NewPairedDevice ? GetDeviceStateByte2_NewPairedDevice : 0)
         | (ProxyLog_HasLog ? GetDeviceStateByte2_ZephyrLog : 0);
