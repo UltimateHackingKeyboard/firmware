@@ -185,9 +185,11 @@ static macro_result_t processKey(macro_action_t macro_action, macro_usb_keyboard
         case MacroSubAction_Release:
             switch (S->as.actionPhase) {
                 case 1:
+                    deleteScancode(scancode, type, &Macros_PersistentReports);
                     deleteScancode(scancode, type, reports);
                     return MacroResult_Blocking;
                 case 2:
+                    deleteModifiers(inputModMask, outputModMask, &Macros_PersistentReports);
                     deleteModifiers(inputModMask, outputModMask, reports);
                     return MacroResult_Blocking;
                 case 3:
