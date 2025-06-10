@@ -80,7 +80,7 @@ void Trace_Init(void) {
     Trace_Printc("###");
 }
 
-void Trace_Print(const char* reason) {
+void Trace_Print(log_target_t additionalLogTargets, const char* reason) {
     uint16_t iter;
     enabled = false;
 
@@ -90,7 +90,7 @@ void Trace_Print(const char* reason) {
     if (ProxyLog_IsInPanicMode) {
         targetInterface = LogTarget_Uart;
     } else {
-        targetInterface = LogTarget_Uart | LogTarget_ErrorBuffer;
+        targetInterface = LogTarget_Uart | additionalLogTargets;
     }
 
     LogTo(targetDeviceId, targetInterface, "Printing trace buffer because: %s\n", reason);

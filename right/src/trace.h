@@ -6,6 +6,7 @@
     #include <inttypes.h>
     #include <stdbool.h>
     #include "debug.h"
+    #include "logger.h"
 
 // Macros:
 
@@ -29,7 +30,7 @@
     void Trace_Printf(const char *fmt, ...);
     void Trace_Printc(const char* s);
 
-    void Trace_Print(const char* reason);
+    void Trace_Print(log_target_t additionalLogTargets, const char* reason);
 
 #endif
 
