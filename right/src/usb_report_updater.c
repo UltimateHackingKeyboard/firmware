@@ -442,19 +442,27 @@ static void mergeReports(void)
 
     InputModifiers = 0;
 
+    {
+        UsbBasicKeyboard_MergeReports(&Macros_PersistentReports.macroBasicKeyboardReport, ActiveUsbBasicKeyboardReport);
+        UsbMediaKeyboard_MergeReports(&Macros_PersistentReports.macroMediaKeyboardReport, ActiveUsbMediaKeyboardReport);
+        UsbSystemKeyboard_MergeReports(&Macros_PersistentReports.macroSystemKeyboardReport, ActiveUsbSystemKeyboardReport);
+        UsbMouse_MergeReports(&Macros_PersistentReports.macroMouseReport, ActiveUsbMouseReport);
+        InputModifiers |= Macros_PersistentReports.inputModifierMask;
+    }
+
     if (EventVector_IsSet(EventVector_MacroReportsUsed)) {
-        for(uint8_t j = 0; j < MACRO_STATE_POOL_SIZE; j++) {
-            if(MacroState[j].ms.reportsUsed) {
+        for (uint8_t j = 0; j < MACRO_STATE_POOL_SIZE; j++) {
+            if (MacroState[j].ms.reportsUsed) {
                 //if the macro ended right now, we still want to flush the last report
                 MacroState[j].ms.reportsUsed &= MacroState[j].ms.macroPlaying;
                 macro_state_t *macroState = &MacroState[j];
 
-                UsbBasicKeyboard_MergeReports(&(macroState->ms.macroBasicKeyboardReport), ActiveUsbBasicKeyboardReport);
-                UsbMediaKeyboard_MergeReports(&(macroState->ms.macroMediaKeyboardReport), ActiveUsbMediaKeyboardReport);
-                UsbSystemKeyboard_MergeReports(&(macroState->ms.macroSystemKeyboardReport), ActiveUsbSystemKeyboardReport);
-                UsbMouse_MergeReports(&(macroState->ms.macroMouseReport), ActiveUsbMouseReport);
+                UsbBasicKeyboard_MergeReports(&(macroState->ms.reports.macroBasicKeyboardReport), ActiveUsbBasicKeyboardReport);
+                UsbMediaKeyboard_MergeReports(&(macroState->ms.reports.macroMediaKeyboardReport), ActiveUsbMediaKeyboardReport);
+                UsbSystemKeyboard_MergeReports(&(macroState->ms.reports.macroSystemKeyboardReport), ActiveUsbSystemKeyboardReport);
+                UsbMouse_MergeReports(&(macroState->ms.reports.macroMouseReport), ActiveUsbMouseReport);
 
-                InputModifiers |= macroState->ms.inputModifierMask;
+                InputModifiers |= macroState->ms.reports.inputModifierMask;
             }
         }
     }
