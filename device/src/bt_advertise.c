@@ -1,6 +1,8 @@
 #include "bt_advertise.h"
 #include <bluetooth/services/nus.h>
 #include <zephyr/bluetooth/gatt.h>
+#include <zephyr/bluetooth/bluetooth.h>
+
 #include "attributes.h"
 #include "bt_conn.h"
 #include "bt_pair.h"
@@ -61,6 +63,27 @@ static const struct bt_data sdHid[] = {SD_HID_DATA("UHK 80 BLE")};
 #endif
 
 #define BT_LE_ADV_START(PARAM, AD, SD) bt_le_adv_start(PARAM, AD, ARRAY_SIZE(AD), SD, ARRAY_SIZE(SD));
+#define BT_LE_EXT_ADV_SET_DATA(PARAM, AD, SD) bt_le_ext_adv_set_data(PARAM, AD, ARRAY_SIZE(AD), SD, ARRAY_SIZE(SD))
+
+
+static void scannedCb(struct bt_le_ext_adv *adv, struct bt_le_ext_adv_scanned_info *info) {
+
+    connection_id_t connId = Connections_GetConnectionIdByHostAddr(info->addr);
+    if (connId != ConnectionId_Invalid) {
+        char addr_str[BT_ADDR_LE_STR_LEN];
+        bt_addr_le_to_str(info->addr, addr_str, sizeof(addr_str));
+        printk("=== === === Scan request from: %s\n", GetPeerStringByAddr(info->addr));
+    } else {
+        char addr_str[BT_ADDR_LE_STR_LEN];
+        bt_addr_le_to_str(info->addr, addr_str, sizeof(addr_str));
+        printk("=== rq from: %s\n", addr_str);
+    }
+}
+
+// Register the callback
+static struct bt_le_ext_adv_cb adv_cb = {
+    .scanned = scannedCb,
+};
 
 static const char * advertisingString(uint8_t advType) {
     switch (advType) {
@@ -120,8 +143,9 @@ void BtAdvertise_DisableAdvertisingIcon(void) {
 }
 
 static struct bt_le_adv_param advParam;
+static struct bt_le_ext_adv *advExt = NULL;
 
-static int startHidAdvertising() {
+static int startBroadcastHidAdvertising() {
     int err = 0;
     advParam = *BT_LE_ADV_CONN_ONE_TIME;
     err = BT_LE_ADV_START(&advParam, adHid, sdHid);
@@ -148,6 +172,61 @@ static int startAllowListNusAdvertising(adv_config_t advConfig) {
     return err;
 }
 
+static void initAdvExt() {
+    int err;
+
+    advParam = *BT_LE_ADV_CONN_ONE_TIME;
+    advParam.options = BT_LE_ADV_OPT_CONNECTABLE | BT_LE_ADV_OPT_SCANNABLE;
+    err = bt_le_ext_adv_create(&advParam, &adv_cb, &advExt);
+
+    if (err) {
+        LOG_WRN("===== Failed to create extended advertising set (err %d)\n", err);
+        Bt_HandleError("startScannableHidAdvertising create", err);
+    }
+}
+
+static int startScannableHidAdvertising() {
+    int err = 0;
+
+    advParam = (struct bt_le_adv_param) {
+        .id = BT_ID_DEFAULT,
+            .sid = 0,
+            .secondary_max_skip = 0,
+            .options = BT_LE_ADV_OPT_SCANNABLE, // Start simple
+            .interval_min = BT_GAP_ADV_FAST_INT_MIN_2,
+            .interval_max = BT_GAP_ADV_FAST_INT_MAX_2,
+            .peer = NULL,
+    };
+
+    advParam = *BT_LE_ADV_CONN_ONE_TIME;
+    // advParam.options = BT_LE_ADV_OPT_NOTIFY_SCAN_REQ | BT_LE_ADV_OPT_SCANNABLE;
+    advParam.options = BT_LE_ADV_OPT_NOTIFY_SCAN_REQ | BT_LE_ADV_OPT_CONNECTABLE;
+    err = bt_le_ext_adv_update_param(advExt, &advParam);
+    if (err) {
+        LOG_WRN("===== Failed to update advertising params (err %d)\n", err);
+        Bt_HandleError("startScannableHidAdvertising update", err);
+        return err;
+    }
+
+    err = BT_LE_EXT_ADV_SET_DATA(advExt, adHid, sdHid);
+    if (err) {
+        LOG_WRN("===== Failed to set extended advertising data (err %d)\n", err);
+        // Bt_HandleError("startScannableHidAdvertising set", err);
+        // return err;
+    }
+
+    err = bt_le_ext_adv_start(advExt, BT_LE_EXT_ADV_START_DEFAULT);
+    if (err) {
+        LOG_WRN("===== Failed to create extended advertising set (err %d)\n", err);
+        Bt_HandleError("startScannableHidAdvertising create", err);
+        return err;
+    } else {
+        LOG_INF("==== Started scannable advertising\n");
+    }
+    return err;
+}
+
+
 uint8_t BtAdvertise_Start(adv_config_t advConfig)
 {
     BT_TRACE_AND_ASSERT("ba1");
@@ -155,7 +234,7 @@ uint8_t BtAdvertise_Start(adv_config_t advConfig)
 
     if ( DEVICE_IS_UHK80_RIGHT && !DeviceState_IsTargetConnected(ConnectionTarget_Left) ) {
         // In this case, scanning is in progress, so we cannot use the allow list.
-        advConfig = ADVERTISEMENT(ADVERTISE_NUS | ADVERTISE_HID);
+        advConfig.advType &= ADVERTISE_NUS | ADVERTISE_HID;
     }
 
     ATTR_UNUSED const char * advTypeString = advertisingString(advConfig.advType);
@@ -174,7 +253,7 @@ uint8_t BtAdvertise_Start(adv_config_t advConfig)
             /* our devices don't check service uuids, so hid advertisement effectively advertises nus too */
 
             LOG_INF("Adv: advertise nus+hid.\n");
-            err = startHidAdvertising();
+            err = startScannableHidAdvertising();
 
             break;
         case ADVERTISE_NUS:
@@ -221,11 +300,12 @@ uint8_t BtAdvertise_Start(adv_config_t advConfig)
 
 void BtAdvertise_Stop(void) {
     BT_TRACE_AND_ASSERT("ba2");
-    int err = bt_le_adv_stop();
-    if (err) {
-        LOG_WRN("Adv: Advertising failed to stop (err %d)\n", err);
-        Bt_HandleError("BtAdvertise_Stop", err);
+    bt_le_adv_stop();
+    BT_TRACE_AND_ASSERT("ba3");
+    if (advExt != NULL) {
+        bt_le_ext_adv_stop(advExt);
     }
+    BT_TRACE_AND_ASSERT("ba4");
 }
 
 adv_config_t BtAdvertise_Config() {
@@ -289,4 +369,8 @@ adv_config_t BtAdvertise_Config() {
             LOG_WRN("unknown device!\n");
             return ADVERTISEMENT( 0 );
     }
+}
+
+void BtAdvertise_Init(void) {
+    initAdvExt();
 }
