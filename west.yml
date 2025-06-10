@@ -32,6 +32,7 @@ manifest:
 
     - name: hal_nxp
       remote: zephyr
+      revision: 77815705c465627b8436cbac51f0bf0594bbeba2
       clone-depth: 1
 
     - name: c2usb
