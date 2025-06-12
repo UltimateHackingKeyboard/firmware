@@ -251,7 +251,7 @@ function performAction() {
         update)
             git submodule update --init --recursive
             cd "$ROOT/.."
-            west update -o=--depth=1 -n
+            west update -o=--depth=1
             west patch
             west config --local build.cmake-args -- "-Wno-dev"
             cd "$ROOT/scripts"
@@ -285,7 +285,7 @@ function performAction() {
             # now resume in normal setup
             cd "$ROOT/.."
             west init -l "$ROOT"
-            west update -o=--depth=1 -n
+            west update -o=--depth=1
             west patch
             west config --local build.cmake-args -- "-Wno-dev"
             rm -rf c2usb

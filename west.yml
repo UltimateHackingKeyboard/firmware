@@ -30,10 +30,6 @@ manifest:
           - tinycrypt
           - zcbor
 
-    - name: hal_nxp
-      remote: zephyr
-      clone-depth: 1
-
     - name: c2usb
       remote: IntergatedCircuits
       revision: 985a33313134a005fb2689e2bd57d05e4ec3700e

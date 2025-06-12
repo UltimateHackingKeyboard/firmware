@@ -7,6 +7,7 @@
 #include <zephyr/logging/log_backend.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include "logger.h"
 #include "macros/status_buffer.h"
 #include "trace.h"
 #include "wormhole.h"
@@ -84,7 +85,7 @@ void panic(const struct log_backend *const backend) {
 
         MacroStatusBuffer_Validate();
         printk("===== PANIC =====\n");
-        Trace_Print("crash/panic");
+        Trace_Print(LogTarget_ErrorBuffer, "crash/panic");
     }
 
 };

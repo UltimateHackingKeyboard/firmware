@@ -1,5 +1,6 @@
 #include "config_parser/parse_config.h"
 #include "keymap.h"
+#include "logger.h"
 #include "slave_drivers/is31fl3xxx_driver.h"
 #include "slave_drivers/uhk_module_driver.h"
 #include "timer.h"
@@ -142,7 +143,7 @@ int main(void)
         if (!StateWormhole.wasReboot) {
             StateWormhole.persistStatusBuffer = true;
             MacroStatusBuffer_Validate();
-            Trace_Print("Looks like your uhk60 crashed.");
+            Trace_Print(LogTarget_ErrorBuffer, "Looks like your uhk60 crashed.");
             MacroStatusBuffer_InitFromWormhole();
         } else {
             MacroStatusBuffer_InitNormal();

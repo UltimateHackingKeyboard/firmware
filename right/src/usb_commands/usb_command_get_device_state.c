@@ -1,3 +1,4 @@
+#include "logger.h"
 #ifndef __ZEPHYR__
 #include "fsl_common.h"
 #endif
@@ -50,7 +51,7 @@ static void detectFreezes() {
         lastCheckCount = 0;
         alreadyLogged = true;
 
-        Trace_Print("Looks like the firmware freezed. If that is the case, please report bellow trace to the devs:\n");
+        Trace_Print(LogTarget_ErrorBuffer, "Looks like the firmware freezed. If that is the case, please report bellow trace to the devs:\n");
     }
 
     // Just trip it to make the event loop update UserLogic_LastEventloopTime if it is not frozen
