@@ -1,5 +1,6 @@
 #include "bt_health.h"
 #include "bt_conn.h"
+#include "logger.h"
 #include "trace.h"
 #include <zephyr/logging/log.h>
 #include <zephyr/bluetooth/conn.h>
@@ -17,8 +18,11 @@ static void bond_count_cb(const struct bt_bond_info *info, void *user_data) {
     (*(int*)user_data)++;
 }
 
-void Bt_HealthCheck(const char* reason) {
+void Bt_HealthCheck(log_target_t targetOnError, bool isError) {
     BT_TRACE_AND_ASSERT("bh1");
+
+    log_target_t target = LogTarget_Uart | (isError ? targetOnError : 0);
+
 
     // 1. Check all Peers for valid pointers and state mismatches
     for (uint8_t i = PeerIdFirstHost; i <= PeerIdLastHost; i++) {
@@ -27,7 +31,7 @@ void Bt_HealthCheck(const char* reason) {
             struct bt_conn_info info;
             int err = bt_conn_get_info(conn, &info);
             if (err) {
-                LOG_WRN("HealthCheck: Peer %d has invalid conn pointer!", i);
+                LogTo(DEVICE_ID, target, "HealthCheck: Peer %d has invalid conn pointer!", i);
             }
         }
     }
@@ -36,7 +40,7 @@ void Bt_HealthCheck(const char* reason) {
     int bond_count = 0;
     bt_foreach_bond(BT_ID_DEFAULT, bond_count_cb, &bond_count);
     if (bond_count > MAX_BONDS_ALLOWED) {
-        LOG_WRN("HealthCheck: Bond count (%d) exceeds allowed maximum (%d)!", bond_count, MAX_BONDS_ALLOWED);
+        LogTo(DEVICE_ID, target, "HealthCheck: Bond count (%d) exceeds allowed maximum (%d)!", bond_count, MAX_BONDS_ALLOWED);
     }
 
     // 4. (Resource leak check placeholder)
@@ -46,15 +50,16 @@ void Bt_HealthCheck(const char* reason) {
     // Could add a heartbeat or HCI command check in the future.
 
     // 6. Print trace buffer if reason is serious
-    if (reason && strstr(reason, "error")) {
-        Trace_Print("Bluetooth health check");
-        Connections_PrintInfo();
+    if (isError) {
+        Trace_Print(target, "Bluetooth health check");
+        Connections_PrintInfo(target);
     }
 }
 
 void Bt_HandleError(const char* context, int err) {
-    LOG_ERR("Bluetooth error in %s: %d", context, err);
-    Bt_HealthCheck("error");
+    log_target_t target = LogTarget_ErrorBuffer | LogTarget_Uart;
+    LogTo(DEVICE_ID, target, "Bluetooth error in %s: %d", context, err);
+    Bt_HealthCheck(target, true);
 
     // Optionally: take recovery action, e.g., restart BT stack
     // BtManager_RestartBt();

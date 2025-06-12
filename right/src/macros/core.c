@@ -31,6 +31,8 @@ bool Macros_WakedBecauseOfKeystateChange = false;
 uint32_t Macros_WakeMeOnTime = 0xFFFFFFFF;
 bool Macros_WakeMeOnKeystateChange = false;
 
+macro_usb_keyboard_reports_t Macros_PersistentReports = {};
+
 bool Macros_ParserError = false;
 bool Macros_DryRun = false;
 bool Macros_ValidationInProgress = false;
@@ -894,6 +896,7 @@ bool Macros_MacroHasActiveInstance(macro_index_t macroIdx)
 void Macros_ResetBasicKeyboardReports()
 {
     for(uint8_t j = 0; j < MACRO_STATE_POOL_SIZE; j++) {
-        memset(&MacroState[j].ms.macroBasicKeyboardReport, 0, sizeof MacroState[j].ms.macroBasicKeyboardReport);
+        memset(&MacroState[j].ms.reports.macroBasicKeyboardReport, 0, sizeof MacroState[j].ms.reports.macroBasicKeyboardReport);
     }
+    memset(&Macros_PersistentReports, 0, sizeof Macros_PersistentReports);
 }

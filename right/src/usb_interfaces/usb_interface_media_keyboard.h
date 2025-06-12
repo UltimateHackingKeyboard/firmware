@@ -38,6 +38,7 @@
 #endif
 
     bool UsbMediaKeyboard_AddScancode(usb_media_keyboard_report_t* report, uint16_t scancode);
+    bool UsbMediaKeyboard_ContainsScancode(const usb_media_keyboard_report_t* report, uint16_t scancode);
     void UsbMediaKeyboardResetActiveReport(void);
     void SwitchActiveUsbMediaKeyboardReport(void);
     usb_status_t UsbMediaKeyboardCheckIdleElapsed();

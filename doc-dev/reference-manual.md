@@ -112,8 +112,8 @@ COMMAND = {stopRecording | stopRecordingBlind}
 COMMAND = playMacro [<slot identifier (MACROID)>]
 COMMAND = {startMouse|stopMouse} {move DIRECTION|scroll DIRECTION|accelerate|decelerate}
 COMMAND = setVar <variable name (IDENTIFIER)> <value (PARENTHESSED_EXPRESSION)>
-COMMAND = {pressKey|holdKey|tapKey|releaseKey} SHORTCUT
-COMMAND = tapKeySeq [SHORTCUT]+
+COMMAND = {pressKey|holdKey|tapKey|releaseKey|toggleKey} [persistent] SHORTCUT
+COMMAND = tapKeySeq [persistent] [SHORTCUT]+
 COMMAND = powerMode [toggle] { wake | lock | sleep }
 COMMAND = reboot
 COMMAND = bluetooth [toggle] { pair | advertise | noAdvertise }
@@ -368,11 +368,13 @@ COMMAND = setEmergencyKey KEYID
 
 - `write <custom text>` will type the provided string. Strings are single quote- (for literal strings) or double quote- (for interpolated strings) enclosed. E.g., `write "keystrokeDelay is $keystrokeDelay, 1+1=$(1+1)\n"`, or `'$ will show as literal dollar sign.'`.
 - `startMouse/stopMouse` start/stop corresponding mouse action. E.g., `startMouse move left`
-- `pressKey|holdKey|tapKey|releaseKey` Presses/holds/taps/releases the provided scancode. E.g., `pressKey mouseBtnLeft`, `tapKey LC-v` (Left Control + (lowercase) v), `tapKey CS-f5` (Ctrl + Shift + F5), `LS-` (just tap left Shift).
+- `pressKey|holdKey|tapKey|releaseKey|toggleKey` Presses/holds/taps/releases the provided scancode. E.g., `pressKey mouseBtnLeft`, `tapKey LC-v` (Left Control + (lowercase) v), `tapKey CS-f5` (Ctrl + Shift + F5), `LS-` (just tap left Shift).
   - **press** means adding the scancode into a list of "active keys" and continuing the macro. The key is released once the macro ends. I.e., if the command is not followed by any sort of delay, the key will be released again almost immediately.
-  - **release** means removing the scancode from the list of "active keys". I.e., it negates the effect of `pressKey` within the same macro. This does not affect scancodes emitted by different keyboard actions.
+  - **release** means removing the scancode from the list of "active keys". I.e., it negates the effect of `pressKey` within the same macro. This does not affect scancodes emitted by different keyboard actions, however for user friendliness it does cancel `persistent` presses.
   - **tap** means pressing a key (more precisely, activating the scancode) and immediately releasing it again
   - **hold** means pressing the key, waiting until the key which activated the macro is released, and then releasing the key again. I.e., `holdKey <x>` is equivalent to `pressKey <x>; delayUntilRelease; releaseKey <x>`, while `tapKey <x>` is equivalent to `pressKey <x>; releaseKey <x>`.
+  - **toggle** will check if the shortcut is pressed in this macro's reports. If it is, it will deactivate the shortcut, otherwise it will activate it. This always acts on persistent reports.
+  - **persistent** argument will use global reports. These reports can be accessed from any macro and will not be cleared when the macro ends. This is useful for long-term key toggling. E.g., `toggleKey persistent LS` acts similar to caps lock.
   - `tapKeySeq` can be used for executing custom sequences. The default action for each shortcut in the sequence is tap. Other actions can be specified using `MODMASK`. E.g.:
     - `CS-u 1 2 3 space` - control shift U + number + space - linux shortcut for a custom unicode character.
     - `pA- tab tab rA-` - tap alt tab twice to bring forward the second background window.
