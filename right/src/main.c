@@ -1,8 +1,11 @@
+#include "attributes.h"
 #include "config_parser/parse_config.h"
 #include "keymap.h"
 #include "logger.h"
+#include "module.h"
 #include "slave_drivers/is31fl3xxx_driver.h"
 #include "slave_drivers/uhk_module_driver.h"
+#include "slot.h"
 #include "timer.h"
 #include "init_clock.h"
 #include "init_peripherals.h"
@@ -136,6 +139,47 @@ static void initUsb() {
     InitUsb();
 }
 
+static void blinkSfjl() {
+    KeyBacklightBrightness = 255;
+    Ledmap_SetSfjlValues();
+    uint32_t blinkStartTime = CurrentTime;
+    while (CurrentTime - blinkStartTime < 50) {
+        __WFI();
+    }
+    KeyBacklightBrightness = 0;
+    Ledmap_SetBlackValues();
+}
+
+static bool keyIsSfjl(uint8_t keyId, uint8_t slotId) {
+    if (slotId == SlotId_RightKeyboardHalf) {
+        return keyId == 16 || keyId == 18;
+    }
+    if (slotId == SlotId_LeftKeyboardHalf) {
+        return keyId == 17 || keyId == 15;
+    }
+    return false;
+}
+
+static void checkSleepMode() {
+    ATTR_UNUSED bool someKeyActive = false;
+    for (uint8_t slotId = 0; slotId <= SlotId_RightKeyboardHalf; slotId++) {
+        bool matches = true;
+        for (uint8_t keyId = 0; keyId < MAX_KEY_COUNT_PER_MODULE; keyId++) {
+            someKeyActive |= KeyStates[slotId][keyId].hardwareSwitchState;
+            if (KeyStates[slotId][keyId].hardwareSwitchState != keyIsSfjl(keyId, slotId)) {
+                matches = false;
+            }
+        }
+        if (matches) {
+            PowerMode_ActivateMode(PowerMode_Awake, false, true, "uhk60 sfjl keys pressed");
+            return;
+        }
+    }
+    if (someKeyActive) {
+        blinkSfjl();
+    }
+}
+
 int main(void)
 {
     Trace_Init();
@@ -177,6 +221,11 @@ int main(void)
 
         while (1) {
             CopyRightKeystateMatrix();
+
+            if (CurrentPowerMode >= PowerMode_Lock) {
+                checkSleepMode();
+            }
+
             if (UsbReadyForTransfers() && EventScheduler_Vector & EventVector_UserLogicUpdateMask) {
                 Trace('(');
                 RunUserLogic();
