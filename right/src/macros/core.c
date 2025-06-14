@@ -267,6 +267,12 @@ static void freeLocalScopes()
 
 static macro_result_t endMacro(void)
 {
+    /* If macro has finished and some keys are pressed, we need to merge the reports once more in order to release them */
+    if (S->ms.reportsUsed) {
+        S->ms.reportsUsed = false;
+        EventVector_Set(EventVector_SendUsbReports);
+    }
+
     freeLocalScopes();
 
     S->ms.macroSleeping = false;
