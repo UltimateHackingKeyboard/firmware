@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [14.2.0] - 2025-06-14
+
+Device Protocol: 4.16.0 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 11.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.**6.0**
+
+- Implement `$onSplit` and `$onJoin` macro events. `SMARTMACROS:MINOR`
+- Add persistent macro USB reports via the `persistent` argument and add `toggleKey` command. `SMARTMACROS:MINOR`
+- Implement locking mode for the UHK 60.
+- Map sleep device action to Fn2+Pause on every keymap of the default configuration of the UHK 80.
+
 ## [14.1.0] - 2025-06-05
 
 Device Protocol: 4.**16.0** | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 11.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.**5.0**
