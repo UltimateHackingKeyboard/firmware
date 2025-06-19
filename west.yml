@@ -1,7 +1,4 @@
 manifest:
-  self:
-    path: device
-    west-commands: scripts/west-commands.yml
   remotes:
     - name: sdk
       url-base: https://github.com/nrfconnect
@@ -9,16 +6,20 @@ manifest:
       url-base: https://github.com/zephyrproject-rtos
     - name: IntergatedCircuits
       url-base: https://github.com/IntergatedCircuits
+  self:
+    path: firmware
+    west-commands: scripts/west_commands.yml
+    import:
+    - submanifests/c2usb.yml
 
   projects:
     - name: sdk-nrf
       remote: sdk
       path: nrf
       revision: v2.8.0
-      import:
-        path-prefix: nrfconnect
       clone-depth: 1
       import:
+        # path-prefix: nrfconnect
         name-allowlist:
           - zephyr
           - cmsis
@@ -29,8 +30,3 @@ manifest:
           - segger
           - tinycrypt
           - zcbor
-
-    - name: c2usb
-      remote: IntergatedCircuits
-      revision: 985a33313134a005fb2689e2bd57d05e4ec3700e
-      clone-depth: 1
