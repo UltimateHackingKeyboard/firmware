@@ -1,0 +1,64 @@
+manifest:
+  remotes:
+  - name: nxp
+    url-base: https://github.com/NXP
+  - name: nxp-zephyr
+    url-base: https://github.com/nxp-zephyr
+  - name: nxp-mcuxpresso
+    url-base: https://github.com/nxp-mcuxpresso
+  - name: nxp-real-time-edge-sw
+    url-base: https://github.com/nxp-real-time-edge-sw
+  defaults:
+    remote: nxp-mcuxpresso
+  projects:
+  - name: usb
+    userdata:
+      owner: yichang.wang@nxp.com
+      track_branch: main
+      branch_flow: false
+    revision: 08c8635b91b3197b1e21f68679059aae5c71b98f
+    path: mcuxsdk/middleware/usb
+    repo-path: mcux-sdk-middleware-usb
+    groups:
+    - usb
+    - middleware
+  - name: lwip
+    revision: b742d52bdd447f1d363b6129637cac4e93569ca0
+    path: mcuxsdk/middleware/lwip
+    groups:
+    - lwip
+    - middleware
+    userdata:
+      track_branch: mcux_main
+      branch_flow: false
+  - name: lin_stack
+    repo-path: mcux-lin_stack
+    path: mcuxsdk/middleware/lin_stack
+    userdata:
+      owner: zejiang.yu@nxp.com
+      track_branch: mcux_main
+      branch_flow: false
+    revision: f337c76ca4a714331218db2d27a14775e04902e0
+    groups:
+    - lin_stack
+    - middleware
+  - name: soem
+    revision: d3c06c9507a0937ce3dfa18579979a4b781734ca
+    path: mcuxsdk/middleware/soem
+    remote: nxp-real-time-edge-sw
+    groups:
+    - soem
+    - middleware
+    userdata:
+      track_branch: master
+      branch_flow: false
+  - name: freemodbus
+    revision: main
+    path: mcuxsdk/middleware/freemodbus
+    remote: nxp-real-time-edge-sw
+    groups:
+    - modbus
+    - middleware
+    userdata:
+      track_branch: main
+      branch_flow: false

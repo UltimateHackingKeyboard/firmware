@@ -1,0 +1,81 @@
+manifest:
+  remotes:
+  - name: nxp
+    url-base: https://github.com/NXP
+  - name: nxp-zephyr
+    url-base: https://github.com/nxp-zephyr
+  - name: nxp-mcuxpresso
+    url-base: https://github.com/nxp-mcuxpresso
+  defaults:
+    remote: nxp-mcuxpresso
+  projects:
+  - name: tinycbor
+    userdata:
+      owner: michal.chromec@nxp.com
+      track_branch: release/24.12.00
+      branch_flow: false
+    path: mcuxsdk/middleware/tinycbor
+    revision: 1cb2eab953a68e3b533247be280fd4fef24bf647
+    groups:
+    - tinycbor
+    - aws_iot
+  - name: pkcs11
+    userdata:
+      owner: michal.chromec@nxp.com
+      track_branch: release/24.12.00
+      branch_flow: false
+    path: mcuxsdk/middleware/pkcs11
+    revision: 7e42bd48bbf02ad4a85010309919ac176373f4b4
+    groups:
+    - pkcs11
+    - aws_iot
+  - name: aws_iot_device-defender
+    repo-path: Device-Defender-for-AWS-IoT-embedded-sdk
+    userdata:
+      owner: michal.chromec@nxp.com
+      track_branch: release/24.12.00
+      branch_flow: false
+    path: mcuxsdk/middleware/aws_iot/device-defender
+    revision: 57291433b6a36865887d9370defe4a6ed0cb3f40
+    groups:
+    - aws_iot
+  - name: aws_iot_device-shadow
+    repo-path: Device-Shadow-for-AWS-IoT-embedded-sdk
+    userdata:
+      owner: michal.chromec@nxp.com
+      track_branch: release/24.12.00
+      branch_flow: false
+    path: mcuxsdk/middleware/aws_iot/device-shadow
+    revision: 08d8b1a68b7c167097479705d210da6700445368
+    groups:
+    - aws_iot
+  - name: aws_iot_jobs
+    repo-path: Jobs-for-AWS-IoT-embedded-sdk
+    userdata:
+      owner: michal.chromec@nxp.com
+      track_branch: release/24.12.00
+      branch_flow: false
+    path: mcuxsdk/middleware/aws_iot/jobs
+    revision: df5b97d03f0bc32d3f62d12dc7d10e36e82a895b
+    groups:
+    - aws_iot
+  - name: aws_iot_ota
+    repo-path: ota-for-aws-iot-embedded-sdk
+    userdata:
+      owner: michal.chromec@nxp.com
+      track_branch: release/24.12.00
+      branch_flow: false
+    path: mcuxsdk/middleware/aws_iot/ota
+    revision: 52904b5a54a0a9335291088879a889f439d7738b
+    groups:
+    - aws_iot
+  - name: aws_iot_llhttp
+    repo-path: llhttp
+    userdata:
+      owner: michal.chromec@nxp.com
+      track_branch: mcux_main
+      branch_flow: false
+    path: mcuxsdk/middleware/llhttp
+    revision: 25ae94d6b619bdbbc40cc5b62ceadad5884c53f1
+    groups:
+    - aws_iot

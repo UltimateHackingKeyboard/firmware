@@ -1,0 +1,76 @@
+manifest:
+  remotes:
+  - name: nxp
+    url-base: https://github.com/NXP
+  - name: nxp-zephyr
+    url-base: https://github.com/nxp-zephyr
+  - name: nxp-mcuxpresso
+    url-base: https://github.com/nxp-mcuxpresso
+  defaults:
+    remote: nxp-mcuxpresso
+  projects:
+  - name: core
+    path: mcuxsdk/
+    repo-path: mcuxsdk-core
+    revision: 518aa678cbd66a348565bf5ed26883240f68185f
+    west-commands: scripts/west_commands.yml
+    groups:
+    - core
+    - ble_nxp
+    userdata:
+      track_branch: release/25.06.00-pvw2
+      branch_flow: true
+  - name: CMSIS
+    repo-path: mcu-sdk-cmsis
+    path: mcuxsdk/arch/arm/CMSIS
+    revision: 388b2367e9ec1a65c1e10e129627800915cb52ff
+    groups:
+    - core
+    - ble_nxp
+    userdata:
+      track_branch: mcux_main
+      branch_flow: false
+  - name: mcux-soc-svd
+    path: mcuxsdk/svd
+    revision: 97fa339c666063fdadf1d2909dde5d897f89f319
+    groups:
+    - optional
+    userdata:
+      track_branch: main
+      branch_flow: false
+  - name: mcu-sdk-examples
+    revision: 409bc15ce0da866c064acd975f1492a2c9483859
+    repo-path: mcuxsdk-examples
+    path: mcuxsdk/examples
+    groups:
+    - examples
+    userdata:
+      track_branch: release/25.06.00-pvw2
+      branch_flow: true
+  - name: mcu-sdk-components
+    repo-path: mcux-component
+    revision: a1b19cebbe37129ae86ca665832b9bb6a6031586
+    path: mcuxsdk/components
+    groups:
+    - components
+    userdata:
+      track_branch: mcux_main
+      branch_flow: true
+  - name: mcu-sdk-doc
+    repo-path: mcuxsdk-doc
+    revision: 83bd41752625efeca9278ae0a8040b1ee9213d19
+    path: mcuxsdk/docs
+    west-commands: scripts/west_commands.yml
+    groups:
+    - doc
+    userdata:
+      track_branch: main
+      branch_flow: false
+  - name: mcuxsdk-tool-data
+    revision: bfca3cf85949a87800888180b65c4a69f100795a
+    path: mcuxsdk/tool_data
+    groups:
+    - core
+    userdata:
+      track_branch: main
+      branch_flow: false
