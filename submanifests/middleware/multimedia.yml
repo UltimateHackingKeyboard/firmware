@@ -1,0 +1,137 @@
+manifest:
+  remotes:
+  - name: nxp
+    url-base: https://github.com/NXP
+  - name: nxp-zephyr
+    url-base: https://github.com/nxp-zephyr
+  - name: nxp-mcuxpresso
+    url-base: https://github.com/nxp-mcuxpresso
+  defaults:
+    remote: nxp-mcuxpresso
+  projects:
+  - name: maestro
+    revision: c389356a43a461f9f71cc5ce58a0c06b6f4bf337
+    path: mcuxsdk/middleware/audio_voice/maestro
+    groups:
+    - maestro
+    - middleware
+    userdata:
+      track_branch: main
+      branch_flow: false
+  - name: vglite
+    repo-path: gpu-vglite
+    userdata:
+      owner: andreicatalin.ilie@nxp.com
+      track_branch: main
+      branch_flow: false
+    path: mcuxsdk/middleware/vglite/driver
+    revision: 7640e1f4304f6b18290cfe34d74c6ebd7167bbbb
+    groups:
+    - vglite
+    - middleware
+  - name: vglite_sdk
+    repo-path: gpu-vglite-examples
+    userdata:
+      owner: andreicatalin.ilie@nxp.com
+      track_branch: main
+      branch_flow: false
+    path: mcuxsdk/middleware/vglite/vglite_sdk
+    revision: 3b98d1c768c6048723935822085adf64242db33b
+    groups:
+    - vglite
+    - middleware
+  - name: lvgl
+    userdata:
+      owner: cristianmarian.stoica@nxp.com
+      track_branch: release/nxp-v9.2.1
+      branch_flow: false
+    path: mcuxsdk/middleware/lvgl
+    revision: becfc125a35e6c16b5e1ffad37266ef73a75fdb8
+    groups:
+    - lvgl
+    - middleware
+  - name: vit
+    userdata:
+      owner: tomas.barak@nxp.com
+      track_branch: mcuxsdk_release
+      branch_flow: true
+    path: mcuxsdk/middleware/audio_voice/components/vit
+    revision: d85df2e3e2cf632da2deeb48de22a51594cc3b3c
+    groups:
+    - vit
+    - audio_voice
+    - middleware
+  - name: voice_seeker
+    repo-path: VoiceSeeker
+    userdata:
+      owner: tomas.barak@nxp.com
+      track_branch: mcuxsdk_release
+      branch_flow: true
+    path: mcuxsdk/middleware/audio_voice/components/voice_seeker
+    revision: 6ea4145275a53bba30b5fcf2a3665ebe69805359
+    submodules: true
+    groups:
+    - voice_seeker
+    - audio_voice
+    - middleware
+  - name: voice_spot
+    userdata:
+      owner: tomas.barak@nxp.com
+      track_branch: mcuxsdk_release
+      branch_flow: true
+    path: mcuxsdk/middleware/audio_voice/components/voice_spot
+    revision: 51e875a2f5c82ecf7e111314a96de24c0bbf3227
+    submodules: true
+    groups:
+    - bifrost
+  - name: audio-voice-components
+    userdata:
+      owner: tomas.barak@nxp.com
+      track_branch: main
+      branch_flow: false
+    path: mcuxsdk/middleware/audio_voice/components
+    revision: 3fda7f836eacfe413a567a59e3e5dd89cac17034
+    groups:
+    - audio-voice-components
+    - audio_voice
+    - middleware
+  - name: libjpeg
+    repo-path: mcux-libjpeg
+    userdata:
+      owner: yumeng.wang@nxp.com
+      track_branch: mcux_main
+      branch_flow: false
+    revision: 63f63cb2174edc38947c970b34931abe575e9f69
+    path: mcuxsdk/middleware/libjpeg
+    groups:
+    - libjpeg
+  - name: pngdec
+    userdata:
+      owner: yumeng.wang@nxp.com
+      track_branch: mcux_main
+      branch_flow: false
+    revision: ade83e07b8b6d9a2293bf00ce88a24aefaf8d556
+    path: mcuxsdk/middleware/pngdec
+    url: https://github.com/nxp-mcuxpresso/PNGdec/
+    groups:
+    - pngdec
+  - name: openh264
+    userdata:
+      owner: yumeng.wang@nxp.com
+      track_branch: mcux_main
+      branch_flow: false
+    revision: abe5eeb3c3555465333a4961494dffabea7cb526
+    path: mcuxsdk/middleware/openh264
+    groups:
+    - openh264
+  - name: openvg
+    userdata:
+      owner: camelia.groza@nxp.com
+      track_branch: main
+      branch_flow: false
+    path: mcuxsdk/middleware/openvg
+    revision: b49ed9d90432fe4616ef925a5da1b233b043eaa5
+    url: https://github.com/nxp-mcuxpresso/mcux-openvg
+    groups:
+    - openvg
+    - middleware

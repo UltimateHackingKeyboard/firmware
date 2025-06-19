@@ -1,0 +1,40 @@
+manifest:
+  remotes:
+  - name: nxp
+    url-base: https://github.com/NXP
+  - name: nxp-zephyr
+    url-base: https://github.com/nxp-zephyr
+  - name: nxp-mcuxpresso
+    url-base: https://github.com/nxp-mcuxpresso
+  defaults:
+    remote: nxp-mcuxpresso
+  projects:
+  - name: issdk
+    repo-path: mcux-is-sdk
+    userdata:
+      owner: null
+      track_branch: issdk_clean_history_branch
+      branch_flow: false
+    path: mcuxsdk/middleware/issdk
+    revision: 6d2fc86d39a74b6a9d269fb2606008303a157177
+    groups:
+    - issdk
+  - name: cjson
+    userdata:
+      owner: yumeng.wang@nxp.com
+      track_branch: mcux_main
+      branch_flow: false
+    revision: 5ac2a2e2d971372fb0036f6140c54de35b396801
+    path: mcuxsdk/middleware/cjson
+    url: https://github.com/nxp-mcuxpresso/cJSON/
+    groups:
+    - cjson
+  - name: memfault
+    userdata:
+      owner: zejiang.yu@nxp.com
+      track_branch: master
+    revision: f1a88a848b4f0a634375ab488d2d1f2a52085bfa
+    path: mcuxsdk/components/debug/memfault/memfault-firmware-sdk
+    url: https://github.com/memfault/memfault-firmware-sdk
+    groups:
+    - memfault

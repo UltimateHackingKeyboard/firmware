@@ -1,0 +1,19 @@
+manifest:
+  remotes:
+  - name: nxp
+    url-base: https://github.com/NXP
+  - name: nxp-zephyr
+    url-base: https://github.com/nxp-zephyr
+  - name: nxp-mcuxpresso
+    url-base: https://github.com/nxp-mcuxpresso
+  defaults:
+    remote: nxp-mcuxpresso
+  projects:
+  - name: mcux-devices-kinetis
+    revision: 3b5d909933f986200b06439090630c20761a3648
+    path: mcuxsdk/devices/Kinetis
+    groups:
+    - core
+    userdata:
+      track_branch: main
+      branch_flow: true
