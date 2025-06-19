@@ -1,0 +1,27 @@
+manifest:
+  remotes:
+    - name: nxp-mcuxpresso
+      url-base: https://github.com/nxp-mcuxpresso
+    - name: IntergatedCircuits
+      url-base: https://github.com/IntergatedCircuits
+  self:
+    path: firmware
+    west-commands: scripts/west_commands.yml
+    import:
+    - submanifests/c2usb.yml
+
+  projects:
+    - name: mcuxsdk-manifests
+      remote: nxp-mcuxpresso
+      path: mcuxsdk/manifest_int
+      revision: v25.06.00
+      clone-depth: 1
+      import:
+        name-allowlist:
+          - core
+          - CMSIS
+          - mcu-sdk-components
+          - mcu-sdk-examples
+          - mcuxsdk-tool-data
+          - mcux-devices-kinetis
+          - usb

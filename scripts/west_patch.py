@@ -107,7 +107,7 @@ class WestPatch(WestCommand):
                 commit_message = input(f'Enter commit message for {project.name}: ')
                 project_repo.git.commit('-m', commit_message)
                 patch_dir = self.get_patch_dir(project)
-                patch_dir.mkdir(exist_ok=True)
+                patch_dir.mkdir(exist_ok=True, parents=True)
                 ret = project_repo.git.format_patch('-1', '-o', patch_dir.as_posix())
                 log.inf(f'Committed changes and created patch {ret} for {project.name}')
             else:
