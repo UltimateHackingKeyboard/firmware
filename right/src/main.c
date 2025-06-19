@@ -53,7 +53,7 @@ static void hardwareConfigurationReadFinished(void)
 {
     IsHardwareConfigInitialized = true;
     Ledmap_InitLedLayout();
-    if (IsFactoryResetModeEnabled) {
+    if (IsFactoryResetModeEnabled()) {
         HardwareConfig->signatureLength = HARDWARE_CONFIG_SIGNATURE_LENGTH;
         strncpy(HardwareConfig->signature, "FTY", HARDWARE_CONFIG_SIGNATURE_LENGTH);
     }
@@ -65,7 +65,7 @@ static void initConfig()
     while (!IsConfigInitialized) {
         if (IsEepromInitialized) {
 
-            if (IsFactoryResetModeEnabled || UsbCommand_ValidateAndApplyConfigSync(NULL, NULL) != UsbStatusCode_Success) {
+            if (IsFactoryResetModeEnabled() || UsbCommand_ValidateAndApplyConfigSync(NULL, NULL) != UsbStatusCode_Success) {
                 UsbCommand_ApplyFactory(NULL, NULL);
             }
             ShortcutParser_initialize();
@@ -206,8 +206,6 @@ int main(void)
 
     InitClock();
     InitPeripherals();
-
-    IsFactoryResetModeEnabled = RESET_BUTTON_IS_PRESSED;
 
     EEPROM_LaunchTransfer(StorageOperation_Read, ConfigBufferId_HardwareConfig, hardwareConfigurationReadFinished);
 
