@@ -20,10 +20,10 @@
 
 // Variables:
 
-    extern bool IsFactoryResetModeEnabled;
 
 // Functions:
 
+    bool IsFactoryResetModeEnabled(void);
     void InitResetButton(void);
 
 #endif
