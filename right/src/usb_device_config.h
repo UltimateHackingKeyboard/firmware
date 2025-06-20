@@ -64,4 +64,6 @@
 // Whether the device detached feature is enabled or not
 #define USB_DEVICE_CONFIG_DETACH_ENABLE 0
 
+#define kUSB_DeviceEventGetDeviceStatus 0x7fff
+
 #endif
