@@ -58,6 +58,14 @@ static void setVariableDataSize(i2c_master_handle_t *handle, uint8_t data)
     handle->userData = NULL; // only to be called at the first read byte
     handle->transfer.dataSize = 2 + data;  // 2 byte hash length + payload length
 }
+
+extern void I2C0_DriverIRQHandler(void);
+volatile uint32_t I2C_Watchdog = 0;
+void I2C0_IRQHandler(void)
+{
+    I2C_Watchdog++;
+    I2C0_DriverIRQHandler();
+}
 #endif
 
 status_t I2cAsyncReadMessage(uint8_t i2cAddress, i2c_message_t *message)

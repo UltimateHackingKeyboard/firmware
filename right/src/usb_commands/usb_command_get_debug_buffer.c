@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include <string.h>
 #ifndef __ZEPHYR__
-#include "fsl_i2c.h"
+#include "i2c.h"
 #include "i2c_watchdog.h"
 #include "right_key_matrix.h"
 #endif
