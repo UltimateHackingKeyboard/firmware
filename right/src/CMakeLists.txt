@@ -14,6 +14,9 @@ if(IS_MCUX_SDK)
     add_subdirectory(buspal)
     add_subdirectory(ksdk_usb)
     add_subdirectory(usb_descriptors)
+    target_sources(${PROJECT_NAME} PRIVATE
+        startup/startup_MK22F51212.S
+    )
 endif()
 
 target_sources(${PROJECT_NAME} PRIVATE
