@@ -259,7 +259,7 @@ function performAction() {
             ./generate-versions.mjs
             ;;
         clean)
-            rm -rf ../bootloader  ../c2usb  ../hal_nxp  ../modules  ../nrf  ../nrfxlib  ../zephyr ../.west
+            rm -rf ../bootloader  ../c2usb  ../hal_nxp  ../modules  ../nrf  ../nrfxlib  ../zephyr ../.west ../nrfconnect ../mcuxsdk
             ;;
         setup)
             # basic dependencies
