@@ -122,10 +122,10 @@ static void initI2cBus(i2c_bus_t *i2cBus)
     I2C_MasterGetDefaultConfig(&masterConfig);
     masterConfig.baudRate_Bps = i2cBus == &i2cMainBus ? I2cMainBusRequestedBaudRateBps : I2C_EEPROM_BUS_BAUD_RATE;
     uint32_t sourceClock = CLOCK_GetFreq(i2cBus->clockSrc);
-    I2C_MasterInit(i2cBus->baseAddr, &masterConfig, sourceClock);
+    uint32_t baudrate = I2C_MasterInit(i2cBus->baseAddr, &masterConfig, sourceClock);
 
     if (i2cBus == &i2cMainBus) {
-        I2cMainBusActualBaudRateBps = I2C_ActualBaudRate;
+        I2cMainBusActualBaudRateBps = baudrate;
     }
 }
 
