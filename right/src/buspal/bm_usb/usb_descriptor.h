@@ -3,6 +3,9 @@
 
 #include "bootloader_common.h"
 #include "usb_device_config.h"
+#include "usb_api.h"
+#include "usb_device.h"
+#include "usb_device_class.h"
 
 #define USB_BCD_VERSION (0x0200)
 

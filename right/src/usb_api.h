@@ -29,7 +29,6 @@
     // General constants
 
     #define USB_DESCRIPTOR_TYPE_BINARY_OBJECT_STORE (0x0FU)
-    #define USB_DESCRIPTOR_TYPE_DEVICE_CAPABILITY   (0x10U)
 
     #define USB_DEVICE_CLASS 0x00
     #define USB_DEVICE_SUBCLASS 0x00
