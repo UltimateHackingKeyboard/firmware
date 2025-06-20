@@ -1,0 +1,121 @@
+{
+  "version": 7,
+  "cmakeMinimumRequired": {
+    "major": 3
+  },
+  "configurePresets": [
+    {
+      "name": "v1-debug",
+      "displayName": "v1-debug",
+      "generator": "Ninja",
+      "binaryDir": "${fileDir}/build-${presetName}",
+      "toolchainFile": "$env{SdkRootDirPath}/mcuxsdk/cmake/toolchain/armgcc.cmake",
+      "inherits": "debug-env",
+      "cacheVariables": {
+        "APP_DIR": "${fileDir}",
+        "CMAKE_BUILD_TYPE": "debug",
+        "SdkRootDirPath": "$env{SdkRootDirPath}/mcuxsdk",
+        "CONFIG_TOOLCHAIN": "armgcc",
+        "board": "$env{BOARD}",
+        "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "$env{binaryDir}",
+        "CMAKE_LIBRARY_OUTPUT_DIRECTORY": "$env{binaryDir}",
+        "CMAKE_ARCHIVE_OUTPUT_DIRECTORY": "$env{binaryDir}",
+        "PrjRootDirPath": "${fileDir}/",
+        "DEVICE_PROJECT_NAME": "uhk60v1",
+        "DEVICE_ID": "DEVICE_ID_UHK60V1",
+        "DEVICE_PID": "1"
+      }
+    },
+    {
+      "name": "v1-release",
+      "displayName": "v1-release",
+      "generator": "Ninja",
+      "binaryDir": "${fileDir}/build-${presetName}",
+      "toolchainFile": "$env{SdkRootDirPath}/mcuxsdk/cmake/toolchain/armgcc.cmake",
+      "inherits": "release-env",
+      "cacheVariables": {
+        "APP_DIR": "${fileDir}",
+        "CMAKE_BUILD_TYPE": "release",
+        "SdkRootDirPath": "$env{SdkRootDirPath}/mcuxsdk",
+        "CONFIG_TOOLCHAIN": "armgcc",
+        "board": "$env{BOARD}",
+        "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "$env{binaryDir}",
+        "CMAKE_LIBRARY_OUTPUT_DIRECTORY": "$env{binaryDir}",
+        "CMAKE_ARCHIVE_OUTPUT_DIRECTORY": "$env{binaryDir}",
+        "PrjRootDirPath": "${fileDir}/",
+        "DEVICE_PROJECT_NAME": "uhk60v1",
+        "DEVICE_ID": "DEVICE_ID_UHK60V1",
+        "DEVICE_PID": "1"
+      }
+    },
+    {
+      "name": "v2-debug",
+      "displayName": "v2-debug",
+      "generator": "Ninja",
+      "binaryDir": "${fileDir}/build-${presetName}",
+      "toolchainFile": "$env{SdkRootDirPath}/mcuxsdk/cmake/toolchain/armgcc.cmake",
+      "inherits": "debug-env",
+      "cacheVariables": {
+        "APP_DIR": "${fileDir}",
+        "CMAKE_BUILD_TYPE": "debug",
+        "SdkRootDirPath": "$env{SdkRootDirPath}/mcuxsdk",
+        "CONFIG_TOOLCHAIN": "armgcc",
+        "board": "$env{BOARD}",
+        "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "$env{binaryDir}",
+        "CMAKE_LIBRARY_OUTPUT_DIRECTORY": "$env{binaryDir}",
+        "CMAKE_ARCHIVE_OUTPUT_DIRECTORY": "$env{binaryDir}",
+        "PrjRootDirPath": "${fileDir}/",
+        "DEVICE_PROJECT_NAME": "uhk60v2",
+        "DEVICE_ID": "DEVICE_ID_UHK60V2",
+        "DEVICE_PID": "3"
+      }
+    },
+    {
+      "name": "v2-release",
+      "displayName": "v2-release",
+      "generator": "Ninja",
+      "binaryDir": "${fileDir}/build-${presetName}",
+      "toolchainFile": "$env{SdkRootDirPath}/mcuxsdk/cmake/toolchain/armgcc.cmake",
+      "inherits": "release-env",
+      "cacheVariables": {
+        "APP_DIR": "${fileDir}",
+        "CMAKE_BUILD_TYPE": "release",
+        "SdkRootDirPath": "$env{SdkRootDirPath}/mcuxsdk",
+        "CONFIG_TOOLCHAIN": "armgcc",
+        "board": "$env{BOARD}",
+        "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "$env{binaryDir}",
+        "CMAKE_LIBRARY_OUTPUT_DIRECTORY": "$env{binaryDir}",
+        "CMAKE_ARCHIVE_OUTPUT_DIRECTORY": "$env{binaryDir}",
+        "PrjRootDirPath": "${fileDir}/",
+        "DEVICE_PROJECT_NAME": "uhk60v2",
+        "DEVICE_ID": "DEVICE_ID_UHK60V2",
+        "DEVICE_PID": "3"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "v1-debug",
+      "displayName": "v1-debug",
+      "configurePreset": "v1-debug"
+    },
+    {
+      "name": "v1-release",
+      "displayName": "v1-release",
+      "configurePreset": "v1-release"
+    },
+    {
+      "name": "v2-debug",
+      "displayName": "v2-debug",
+      "configurePreset": "v2-debug"
+    },
+    {
+      "name": "v2-release",
+      "displayName": "v2-release",
+      "configurePreset": "v2-release"
+    }
+  ],
+  "include": [
+    "mcux_include.json"
+  ]
+}

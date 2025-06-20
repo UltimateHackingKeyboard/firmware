@@ -1,31 +1,29 @@
-# the library target is created here, so version generation will work without extra steps
-add_library(${PROJECT_NAME})
-
+# due to the unconventional project structure, this cmake file is include()-d
+# instead of add_subdirectory()-d, so every path has to be absolute
 target_include_directories(${PROJECT_NAME} PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    # this really needs to be changed when time and restructuring permits
-    ${PROJECT_SOURCE_DIR}
+    ${CMAKE_CURRENT_LIST_DIR}
 )
 
-if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/versions.c")
-    message(WARNING "Generating missing versions.c for UHK")
+set(UHK_VERSIONS_FILE ${CMAKE_CURRENT_LIST_DIR}/versions.c)
+if (NOT EXISTS ${UHK_VERSIONS_FILE})
+    message(WARNING "Generating missing ${UHK_VERSIONS_FILE} for UHK")
     find_package(Python 3 REQUIRED)
     if(Python_VERSION_MAJOR LESS 3)
         message(FATAL_ERROR "Python 3 is required versions generation.")
     endif()
-    add_custom_command(
-        OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/versions.c"
-        COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/scripts/generate_versions.py"
-        DEPENDS "${PROJECT_SOURCE_DIR}/scripts/generate_versions.py"
+    execute_process(
+        COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_LIST_DIR}/../scripts/generate_versions.py"
+        WORKING_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}"
     )
 endif()
-set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/versions.c PROPERTIES GENERATED TRUE)
+set_source_files_properties(${UHK_VERSIONS_FILE} PROPERTIES GENERATED TRUE)
 
 target_sources(${PROJECT_NAME} PRIVATE
-    bool_array_converter.c
-    buffer.c
-    crc16.c
-    key_matrix.c
-    slave_protocol.c
-    versions.c
+    ${CMAKE_CURRENT_LIST_DIR}/bool_array_converter.c
+    ${CMAKE_CURRENT_LIST_DIR}/buffer.c
+    ${CMAKE_CURRENT_LIST_DIR}/crc16.c
+    ${CMAKE_CURRENT_LIST_DIR}/key_matrix.c
+    $<$<BOOL:${IS_MCUX_SDK}>:${CMAKE_CURRENT_LIST_DIR}/key_vector.c>
+    ${CMAKE_CURRENT_LIST_DIR}/slave_protocol.c
+    ${CMAKE_CURRENT_LIST_DIR}/versions.c
 )

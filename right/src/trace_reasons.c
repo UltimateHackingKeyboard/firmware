@@ -1,7 +1,5 @@
 #include "trace_reasons.h"
 
-#ifndef __ZEPHYR__
-
 // RCM (Reset Control Module) registers - K22P121M120SF7
 #define RCM_SRS0    (*(volatile uint8_t*)0x4007F000)
 #define RCM_SRS1    (*(volatile uint8_t*)0x4007F001)
@@ -65,4 +63,3 @@ void Trace_PrintUhk60ReasonRegisters(device_id_t targetDeviceId, log_target_t ta
 
     if (SCB_HFSR & 0x40000000) LogTo(targetDeviceId, targetInterface, "Forced HardFault detected\n");
 }
-#endif
