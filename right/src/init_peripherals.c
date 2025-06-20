@@ -82,23 +82,23 @@ static void recoverI2cBus(i2c_bus_t *i2cBus)
     bool isOn = true;
     for (int i=0; i<20; i++) {
         GPIO_PinInit(i2cBus->sdaGpio, i2cBus->sdaPin, &(gpio_pin_config_t){kGPIO_DigitalInput});
-        bool isSdaHigh = GPIO_ReadPinInput(i2cBus->sdaGpio, i2cBus->sdaPin);
+        bool isSdaHigh = GPIO_PinRead(i2cBus->sdaGpio, i2cBus->sdaPin);
         GPIO_PinInit(i2cBus->sdaGpio, i2cBus->sdaPin, &(gpio_pin_config_t){kGPIO_DigitalOutput, 1});
 
         if (isSdaHigh) {
             return;
         }
 
-        GPIO_WritePinOutput(i2cBus->sclGpio, i2cBus->sclPin, isOn);
+        GPIO_PinWrite(i2cBus->sclGpio, i2cBus->sclPin, isOn);
         delay();
         isOn = !isOn;
     }
 
-    GPIO_WritePinOutput(i2cBus->sdaGpio, i2cBus->sdaPin, 0);
+    GPIO_PinWrite(i2cBus->sdaGpio, i2cBus->sdaPin, 0);
     delay();
-    GPIO_WritePinOutput(i2cBus->sclGpio, i2cBus->sclPin, 1);
+    GPIO_PinWrite(i2cBus->sclGpio, i2cBus->sclPin, 1);
     delay();
-    GPIO_WritePinOutput(i2cBus->sdaGpio, i2cBus->sdaPin, 1);
+    GPIO_PinWrite(i2cBus->sdaGpio, i2cBus->sdaPin, 1);
     delay();
 }
 

@@ -1,11 +1,7 @@
 #ifndef __ZEPHYR__
 #include "fsl_gpio.h"
-#endif
-
 #include "key_matrix.h"
 
-
-#ifndef __ZEPHYR__
 void KeyMatrix_Init(key_matrix_t *keyMatrix)
 {
     for (key_matrix_pin_t *row = keyMatrix->rows; row < keyMatrix->rows + keyMatrix->rowNum; row++) {
@@ -30,10 +26,10 @@ void KeyMatrix_ScanRow(key_matrix_t *keyMatrix)
 
     key_matrix_pin_t *colEnd = keyMatrix->cols + keyMatrix->colNum;
     for (key_matrix_pin_t *col = keyMatrix->cols; col<colEnd; col++) {
-        *(keyState++) = GPIO_ReadPinInput(col->gpio, col->pin);
+        *(keyState++) = GPIO_PinRead(col->gpio, col->pin);
     }
 
-    GPIO_WritePinOutput(row->gpio, row->pin, 0);
+    GPIO_PinWrite(row->gpio, row->pin, 0);
 
     if (++keyMatrix->currentRowNum >= keyMatrix->rowNum) {
         keyMatrix->currentRowNum = 0;
@@ -41,6 +37,6 @@ void KeyMatrix_ScanRow(key_matrix_t *keyMatrix)
 
     // This should come last to maintain the strobe for as long as possible to minimize the chance of chatter.
     row = keyMatrix->rows + keyMatrix->currentRowNum;
-    GPIO_WritePinOutput(row->gpio, row->pin, 1);
+    GPIO_PinWrite(row->gpio, row->pin, 1);
 }
-#endif
+#endif // __ZEPHYR__
