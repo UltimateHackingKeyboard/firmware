@@ -4,13 +4,15 @@
 			"path": "."
 		},
 		{
-			"name": "right",
+			"name": "uhk-80",
+			"path": "device"
+		},
+		{
+			"name": "uhk-60-right",
 			"path": "right"
 		}
 	],
 	"settings": {
-		"nrf-connect.toolchain.path": "${nrf-connect.toolchain:2.8.0}",
-		"nrf-connect.topdir": "${nrf-connect.sdk:2.8.0}",
 		"nrf-connect.applications": [
 			"${workspaceFolder}/device"
 		],
@@ -27,13 +29,14 @@
 		"files.associations": {
 			"*.h": "c",
 			"*.c": "c",
-			"bitset": "cpp",
-			"span": "cpp",
-			"array": "cpp",
-			"string": "cpp",
-			"string_view": "cpp",
-			"compare": "c",
-			"system_error": "c"
+			"*.hpp": "cpp",
+			"*.cpp": "cpp"
 		}
+	},
+	"extensions": {
+		"recommendations": [
+			"nordic-semiconductor.nrf-connect-extension-pack",
+			"NXPSemiconductors.mcuxpresso"
+		]
 	}
 }

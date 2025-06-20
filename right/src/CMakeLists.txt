@@ -10,6 +10,11 @@ add_subdirectory(peripherals)
 add_subdirectory(slave_drivers)
 add_subdirectory(usb_commands)
 add_subdirectory(usb_interfaces)
+if(IS_MCUX_SDK)
+    add_subdirectory(buspal)
+    add_subdirectory(ksdk_usb)
+    add_subdirectory(usb_descriptors)
+endif()
 
 target_sources(${PROJECT_NAME} PRIVATE
     caret_config.c
@@ -20,6 +25,9 @@ target_sources(${PROJECT_NAME} PRIVATE
     host_connection.c
     i2c.c
     i2c_error_logger.c
+    $<$<BOOL:${IS_MCUX_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/i2c_watchdog.c>
+    $<$<BOOL:${IS_MCUX_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/init_clock.c>
+    $<$<BOOL:${IS_MCUX_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/init_peripherals.c>
     key_states.c
     keymap.c
     layer.c
@@ -27,15 +35,19 @@ target_sources(${PROJECT_NAME} PRIVATE
     layer_switcher.c
     led_display.c
     led_manager.c
+    $<$<BOOL:${IS_MCUX_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/led_pwm.c>
     ledmap.c
     logger.c
     macro_events.c
     macro_recorder.c
+    $<$<BOOL:${IS_MCUX_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/main.c>
+    $<$<BOOL:${IS_MCUX_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/module.c>
     mouse_controller.c
     mouse_keys.c
     module.c
     postponer.c
     power_mode.c
+    $<$<BOOL:${IS_MCUX_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/right_key_matrix.c>
     secondary_role_driver.c
     segment_display.c
     slave_scheduler.c
@@ -45,6 +57,8 @@ target_sources(${PROJECT_NAME} PRIVATE
     test_switches.c
     timer.c
     trace.c
+    $<$<BOOL:${IS_MCUX_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/trace_reasons.c>
+    $<$<BOOL:${IS_MCUX_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/usb_composite_device.c>
     usb_protocol_handler.c
     usb_report_updater.c
     user_logic.c
