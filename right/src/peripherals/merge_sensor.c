@@ -70,6 +70,6 @@ merge_sensor_state_t MergeSensor_IsMerged(void)
 #elif (defined(__ZEPHYR__) && !DEVICE_HAS_MERGE_SENSOR)
     return MergeSensor_HalvesAreMerged;
 #elif !defined(__ZEPHYR__)
-    return !GPIO_ReadPinInput(MERGE_SENSOR_GPIO, MERGE_SENSOR_PIN) ? MergeSensorState_Joined : MergeSensorState_Split;
+    return !GPIO_PinRead(MERGE_SENSOR_GPIO, MERGE_SENSOR_PIN) ? MergeSensorState_Joined : MergeSensorState_Split;
 #endif  //__ZEPHYR__
 }
