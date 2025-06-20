@@ -15,6 +15,8 @@ if(NOT CONFIG_DEVICE_ID)
     return()
 endif()
 
+set(IS_NRF_SDK ON)
+
 project(uhk)
 add_subdirectory(shared)
 add_subdirectory(device/src)
