@@ -9,3 +9,4 @@ build.ninja
 .vscode/settings.json
 scripts/__pycache__
 right/build-*
+mcux_include.json
