@@ -16,24 +16,6 @@ include(${SdkRootDirPath}/CMakeLists.txt)
 set(IS_MCUX_SDK ON)
 set(BL_APP_VECTOR_TABLE_ADDRESS 0xc000)
 
-target_compile_options(${PROJECT_NAME} PUBLIC
-    -O2
-    $<$<CONFIG:Debug>:-g3>
-    -Wall
-    -Wextra
-    -Woverflow
-    -Wno-unused-parameter
-    -Wno-type-limits
-    -Wlogical-op
-    -Wrestrict
-    -Wnull-dereference
-    -Wshadow
-    $<$<COMPILE_LANGUAGE:CXX>:
-        -felide-constructors
-        -fno-exceptions
-        -fno-rtti
-    >
-)
 target_compile_definitions(${PROJECT_NAME} PUBLIC
     PROJECT_NAME=${DEVICE_PROJECT_NAME}
     DEVICE_ID=${DEVICE_ID}
