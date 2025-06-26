@@ -10,6 +10,14 @@
 static uint32_t prevWatchdogCounter = 0;
 static uint32_t I2cWatchdog_RecoveryCounter; // Counter for how many times we had to recover and restart
 
+volatile uint32_t I2C_Watchdog = 0;
+extern void I2C0_DriverIRQHandler(void);
+void I2C0_IRQHandler(void)
+{
+    I2C_Watchdog++;
+    I2C0_DriverIRQHandler();
+}
+
 void RunWatchdog(void)
 {
     static volatile uint32_t I2cWatchdog_WatchCounter = 0; // Counter for timer
