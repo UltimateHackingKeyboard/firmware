@@ -10,6 +10,10 @@
 		{
 			"name": "uhk-60-right",
 			"path": "right"
+		},
+		{
+			"name": "uhk-60-left",
+			"path": "left"
 		}
 	],
 	"settings": {
