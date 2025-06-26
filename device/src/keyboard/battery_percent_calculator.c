@@ -164,10 +164,10 @@ void BatteryCalculator_RunPercentTests() {
     runPercentTest(false, 4045, 4050);
 }
 
-#define TOLERANCE 4
+#define TOLERANCE 1
 
 uint16_t BatteryCalculator_Step(uint8_t oldPercentage, uint8_t newPercentage) {
-    if (oldPercentage == newPercentage || oldPercentage == 0) {
+    if (oldPercentage == newPercentage || oldPercentage == 0 || TOLERANCE == 0) {
         return newPercentage;
     }
 
