@@ -1,0 +1,32 @@
+{
+  "configurations": [
+    {
+      "type": "mcuxpresso-debug",
+      "name": "Debug",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+    
+      "executable": "",
+      "stopAtSymbol": "main",
+      "probeSerialNumber": "",
+      "isAttach": false,
+      "probeType": "",
+      "skipBuildBeforeDebug": false,
+      "skipPreFlashActions": true,
+    
+      "gdbInitCommands": [
+        "set remotetimeout 600",
+        "set debug-file-directory",
+        "set non-stop off"
+      ],
+    
+      "gdbServerConfigs": {
+        "linkserver": {},
+    		"segger": {},
+    		"pemicro": {}
+      },
+    
+      "showDevDebugOutput": "none"
+    }
+  ]
+}
