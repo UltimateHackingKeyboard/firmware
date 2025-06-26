@@ -1,4 +1,3 @@
-#ifndef __ZEPHYR__
 #include "fsl_gpio.h"
 #include "key_matrix.h"
 
@@ -39,4 +38,3 @@ void KeyMatrix_ScanRow(key_matrix_t *keyMatrix)
     row = keyMatrix->rows + keyMatrix->currentRowNum;
     GPIO_PinWrite(row->gpio, row->pin, 1);
 }
-#endif // __ZEPHYR__
