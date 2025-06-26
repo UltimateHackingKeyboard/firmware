@@ -28,23 +28,25 @@ target_sources(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}/versions.c
 )
 
-target_compile_options(${PROJECT_NAME} PUBLIC
-    $<$<BOOL:${IS_MCUX_SDK}>:-O2>
-    $<$<BOOL:${IS_MCUX_SDK} AND CONFIG:Debug>:-g3>
-    -Wall
-    -Wextra
-    -Woverflow
-    -Wno-unused-parameter
-    -Wno-type-limits
-    -Wlogical-op
-    -Wrestrict
-    -Wnull-dereference
-    -Wshadow
-    $<$<COMPILE_LANGUAGE:CXX>:
-        -felide-constructors
-        -fno-exceptions
-        -fno-rtti
-        -fno-use-cxa-atexit
-        -fno-threadsafe-statics
-    >
-)
+if (IS_MCUX_SDK)
+    target_compile_options(${PROJECT_NAME} PUBLIC
+        $<$<BOOL:${IS_MCUX_SDK}>:-O2>
+        $<$<BOOL:${IS_MCUX_SDK} AND CONFIG:Debug>:-g3>
+        -Wall
+        -Wextra
+        -Woverflow
+        -Wno-unused-parameter
+        -Wno-type-limits
+        -Wlogical-op
+        -Wrestrict
+        -Wnull-dereference
+        -Wshadow
+        $<$<COMPILE_LANGUAGE:CXX>:
+            -felide-constructors
+            -fno-exceptions
+            -fno-rtti
+            -fno-use-cxa-atexit
+            -fno-threadsafe-statics
+        >
+    )
+endif()
