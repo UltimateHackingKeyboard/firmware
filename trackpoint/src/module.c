@@ -2,7 +2,7 @@
 #include "module.h"
 #include <stdint.h>
 
-#define RESET_BY_CALIBRATE_COMMAND true
+#define RESET_BY_CALIBRATE_COMMAND false
 
 pointer_delta_t PointerDelta;
 
