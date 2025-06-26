@@ -8,7 +8,7 @@ set(board frdmkl03z) # TODO: how to remove the board selection?
 set(device MKL03Z4)
 
 include(${SdkRootDirPath}/cmake/extension/mcux.cmake)
-project(uhk-60-left
+project(uhk-trackpoint
     LANGUAGES "ASM" "C" "CXX"
 )
 include(${SdkRootDirPath}/CMakeLists.txt)
