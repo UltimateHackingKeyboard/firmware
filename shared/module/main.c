@@ -19,3 +19,28 @@ int main(void)
         __WFI();
     }
 }
+
+// https://stackoverflow.com/questions/73742774/gcc-arm-none-eabi-11-3-is-not-implemented-and-will-always-fail
+#if 1 // using nano vs nosys
+void _exit(int)
+{
+    while (1);
+}
+#else
+int _close(int)
+{
+    return -1;
+}
+int _lseek(int, int, int)
+{
+    return 0;
+}
+int _read(int, char*, int)
+{
+    return 0;
+}
+int _write(int, char *, int)
+{
+    return 0;
+}
+#endif
