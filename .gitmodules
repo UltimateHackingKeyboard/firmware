@@ -1,6 +1,3 @@
-[submodule "lib/KSDK_2.0_MKL03Z8xxx4"]
-	path = lib/KSDK_2.0_MKL03Z8xxx4
-	url = https://github.com/UltimateHackingKeyboard/KSDK_2.0_MKL03Z8xxx4.git
 [submodule "lib/bootloader"]
 	path = lib/bootloader
 	url = https://github.com/UltimateHackingKeyboard/bootloader.git
