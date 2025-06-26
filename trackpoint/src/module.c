@@ -2,6 +2,8 @@
 #include "module.h"
 #include <stdint.h>
 
+#define RESET_BY_CALIBRATE_COMMAND true
+
 pointer_delta_t PointerDelta;
 
 bool shouldReset = false;
@@ -327,12 +329,37 @@ void PS2_CLOCK_IRQ_HANDLER(void)
                 errno = 0;
                 if (shouldReset) {
                     shouldReset = false;
-                    resetBoard();
-                    phase = 1;
-
+                    if (RESET_BY_CALIBRATE_COMMAND) {
+                        phase = 10;
+                    } else {
+                        resetBoard();
+                        phase = 1;
+                    }
                 } else {
                     phase = 7;
                 }
+            }
+            break;
+        }
+
+        //recalibrate
+        case 10: {
+            requestToSend();
+            buffer = 0xe2;
+            phase = 11;
+            break;
+        }
+        case 11: {
+            if (writeByte()) {
+                phase = 12;
+                requestToSend();
+                buffer = 0x51;
+            }
+            break;
+        }
+        case 12: {
+            if (writeByte()) {
+                phase = 7;
             }
             break;
         }
