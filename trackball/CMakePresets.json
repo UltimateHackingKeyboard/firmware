@@ -8,7 +8,7 @@
       "name": "debug",
       "displayName": "debug",
       "generator": "Ninja",
-      "binaryDir": "${fileDir}/build-${presetName}",
+      "binaryDir": "${fileDir}/build/${presetName}",
       "toolchainFile": "$env{SdkRootDirPath}/mcuxsdk/cmake/toolchain/armgcc.cmake",
       "inherits": "debug-env",
       "cacheVariables": {
@@ -27,7 +27,7 @@
       "name": "release",
       "displayName": "release",
       "generator": "Ninja",
-      "binaryDir": "${fileDir}/build-${presetName}",
+      "binaryDir": "${fileDir}/build/${presetName}",
       "toolchainFile": "$env{SdkRootDirPath}/mcuxsdk/cmake/toolchain/armgcc.cmake",
       "inherits": "release-env",
       "cacheVariables": {

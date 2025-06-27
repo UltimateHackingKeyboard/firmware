@@ -8,5 +8,4 @@ CMakeCache.txt
 build.ninja
 .vscode/settings.json
 scripts/__pycache__
-build-*
 mcux_include.json
