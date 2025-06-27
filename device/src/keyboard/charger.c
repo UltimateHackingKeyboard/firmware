@@ -33,6 +33,7 @@ LOG_MODULE_REGISTER(Battery, LOG_LEVEL_INF);
  * chargerEn == 0 => charger diasbled
  * */
 
+#define DEFAULT_CHARGER_STATE (Cfg.BatteryStationaryMode ? 0 : 1)
 
 const struct gpio_dt_spec chargerEnDt = GPIO_DT_SPEC_GET(DT_ALIAS(charger_en), gpios);
 const struct gpio_dt_spec chargerStatDt = GPIO_DT_SPEC_GET(DT_ALIAS(charger_stat), gpios);
@@ -54,12 +55,18 @@ bool BatteryIsCharging;
 bool RunningOnBattery = false;
 bool RightRunningOnBattery = false;
 
-bool Charger_ChargingEnabled = true;
+bool Charger_ChargingEnabled = false;
+bool Charger_ChargingActuallyEnabled = false;
 
 static bool stabilizationPause = false;
 static uint8_t statsToIgnore = 0;
 
 static battery_manager_automaton_state_t currentChargingAutomatonState = BatteryManagerAutomatonState_Unknown;
+
+static void setChargerEnPin(bool enabled) {
+    Charger_ChargingActuallyEnabled = enabled;
+    gpio_pin_set_dt(&chargerEnDt, enabled);
+}
 
 static bool setBatteryPresent(bool present) {
     if (batteryState.batteryPresent != present) {
@@ -137,7 +144,8 @@ void Charger_PrintState() {
 bool Charger_EnableCharging(bool enabled) {
     if (Charger_ChargingEnabled != enabled) {
         Charger_ChargingEnabled = enabled;
-        gpio_pin_set_dt(&chargerEnDt, Charger_ChargingEnabled && !stabilizationPause);
+
+        setChargerEnPin(Charger_ChargingEnabled && !stabilizationPause);
         return true;
     }
     return false;
@@ -166,7 +174,7 @@ static bool handleStateTransition(battery_manager_automaton_state_t newState) {
                 break;
             case BatteryManagerAutomatonState_Unknown:
                 stateChanged |= setPowersaving(false);
-                stateChanged |= Charger_EnableCharging(true);
+                stateChanged |= Charger_EnableCharging(DEFAULT_CHARGER_STATE);
                 break;
         }
     }
@@ -176,7 +184,7 @@ static bool handleStateTransition(battery_manager_automaton_state_t newState) {
 static bool updateChargerEnabled(battery_state_t *batteryState, battery_manager_config_t* config, uint16_t voltage, bool chargerStopped) {
     battery_manager_automaton_state_t oldState = currentChargingAutomatonState;
 
-    uint16_t newMaxVoltage = voltage - 0;
+    uint16_t newMaxVoltage = voltage - 10;
 
     if (chargerStopped && !Cfg.BatteryStationaryMode) {
         uint16_t minThreshold = 3800;
@@ -290,17 +298,20 @@ void Charger_UpdateBatteryState() {
                 uint32_t timeToSleep = chargerEnabledUpdated ? CHARGER_STAT_PERIOD : CHARGER_UPDATE_PERIOD;
                 EventScheduler_Schedule(CurrentTime + timeToSleep, EventSchedulerEvent_UpdateBattery, "charger - minute period");
                 statsToIgnore = 3;
-                gpio_pin_set_dt(&chargerEnDt, Charger_ChargingEnabled);
+                setChargerEnPin(Charger_ChargingEnabled);
+
                 stabilizationPause = false;
                 // continue processing
             }
         } else {
             // check whether the charger is actually charging
-            bool actuallyEnabled = !gpio_pin_get_dt(&chargerEnDt);
+            bool actuallyEnabled = Charger_ChargingActuallyEnabled;
             bool actuallyCharging = !gpio_pin_get_dt(&chargerStatDt);
             stateChanged |= setActuallyCharging(actuallyCharging && Charger_ChargingEnabled);
 
-            gpio_pin_set_dt(&chargerEnDt, false);
+            // printk("Going to measure voltage; charger formallyEnabled = %d, actuallyEnabled = %d, actuallyCharging = %d\n", Charger_ChargingEnabled, actuallyEnabled, actuallyCharging);
+
+            setChargerEnPin(false);
 
             if (actuallyCharging) {
                 previousVoltage = getVoltage();
@@ -319,7 +330,8 @@ void Charger_UpdateBatteryState() {
             return;
         }
     } else {
-        gpio_pin_set_dt(&chargerEnDt, true);
+
+        setChargerEnPin(true);
         previousVoltage = 0;
         stateChanged = true;
     }
@@ -405,7 +417,7 @@ void InitCharger(void) {
     InitCharger_Min();
 
     gpio_pin_configure_dt(&chargerEnDt, GPIO_OUTPUT);
-    Charger_EnableCharging(true);
+    Charger_EnableCharging(DEFAULT_CHARGER_STATE);
 
     gpio_pin_configure_dt(&chargerStatDt, GPIO_INPUT);
     gpio_pin_interrupt_configure_dt(&chargerStatDt, GPIO_INT_EDGE_BOTH);
