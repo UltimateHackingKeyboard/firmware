@@ -50,6 +50,7 @@ void BtManager_InitBt() {
     }
 
     if (DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK_DONGLE) {
+        BtAdvertise_Init();
         BtScan_Init();
         NusClient_Init();
     }
