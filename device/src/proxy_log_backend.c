@@ -34,8 +34,6 @@ uint16_t ProxyLog_ConsumeLog(uint8_t* outBuf, uint16_t outBufSize) {
     uint16_t remaining = MIN(bufferLength, outBufSize);
     while (remaining > 0) {
         char a = buffer[bufferPosition++];
-        if (a == '<') a = '[';
-        if (a == '>') a = ']';
         outBuf[copied++] = a;
         if (bufferPosition >= PROXY_BACKEND_BUFFER_SIZE) {
             bufferPosition = 0;
