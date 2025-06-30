@@ -53,11 +53,6 @@ const char *const ModuleMD5Checksums[ModuleId_AllModuleCount] = {{
 }};
 """)
 
-    return {
-        'devices': package_json['devices'],
-        'modules': package_json['modules']
-    }
-
 def calculate_md5_checksum_of_file(file_path):
     with open(file_path, 'rb') as f:
         file_data = f.read()

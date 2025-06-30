@@ -251,8 +251,9 @@ int main(void)
 
 // https://stackoverflow.com/questions/73742774/gcc-arm-none-eabi-11-3-is-not-implemented-and-will-always-fail
 #if 1 // using nano vs nosys
-void _exit(int)
+void _exit(int n)
 {
+    (void)n;
     while (1);
 }
 #endif

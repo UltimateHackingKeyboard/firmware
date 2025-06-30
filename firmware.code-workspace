@@ -47,12 +47,14 @@
 			"*.c": "c",
 			"*.hpp": "cpp",
 			"*.cpp": "cpp"
-		}
+		},
+		"cmake.useCMakePresets": "always"
 	},
 	"extensions": {
 		"recommendations": [
 			"nordic-semiconductor.nrf-connect-extension-pack",
-			"NXPSemiconductors.mcuxpresso"
+			"NXPSemiconductors.mcuxpresso",
+			"ms-vscode.cmake-tools"
 		]
 	}
 }
