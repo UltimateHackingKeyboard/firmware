@@ -219,6 +219,10 @@ static void getBatteryStatusText(device_id_t deviceId, battery_state_t* battery,
         }
     }
 
+    if (Cfg.UiStyle == UiStyle_Alternative) {
+        sideIndicator = "";
+    }
+
     if (!DeviceState_IsDeviceConnected(deviceId)) {
         sprintf(buffer, "    ");
     } else if (!battery->batteryPresent) {
@@ -236,7 +240,7 @@ static string_segment_t getRightStatusText() {
     char leftBattery[BAT_BUFFER_LENGTH];
     char rightBattery[BAT_BUFFER_LENGTH];
     bool fixed = Cfg.UiStyle == UiStyle_Alternative;
-    if (SyncLeftHalfState.battery.batteryPresent && SyncRightHalfState.battery.batteryPresent) {
+    if ((SyncLeftHalfState.battery.batteryPresent && SyncRightHalfState.battery.batteryPresent) || fixed) {
         getBatteryStatusText(DeviceId_Uhk80_Left, &SyncLeftHalfState.battery, leftBattery, "", fixed, StateSync_BlinkLeftBatteryPercentage);
         getBatteryStatusText(DeviceId_Uhk80_Right, &SyncRightHalfState.battery, rightBattery, "", fixed, StateSync_BlinkRightBatteryPercentage);
         snprintf(buffer, BUFFER_LENGTH-1, "%s %s %s", Macros_DisplayStringsBuffs.rightStatus, leftBattery, rightBattery);
