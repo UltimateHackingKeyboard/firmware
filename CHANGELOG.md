@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [14.2.1] - 2025-06-30
+
+Device Protocol: 4.16.**1** | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 11.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.6.**1**
+
+- Fix a macro engine bug where USB reports weren't updated at the end of a macro, which made the keys activated from the macro get stuck. `SMARTMACROS:PATCH`
+- Make the UHK 60 not misinterpret firmware updates as crashes.
+- Correctly detect full charge level on the UHK 80.
+- Update battery percentage indicator quicker when charging.
+- Show correct battery percentage shortly after a battery is (dis)connected.
+- Make the UHK 80 instantly execute macro commands via USB instead of waiting shortly.
+- USB macro execution command fixes: Fix buffer underruns, return status code. `DEVICEPROTOCOL:PATCH`
+
 ## [14.2.0] - 2025-06-14
 
 Device Protocol: 4.16.0 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 11.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.**6.0**
