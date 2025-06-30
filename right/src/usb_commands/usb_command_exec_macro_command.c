@@ -47,5 +47,8 @@ void UsbCommand_ExecMacroCommand(const uint8_t *GenericHidOutBuffer, uint8_t *Ge
 {
     if (canExecute()) {
         requestExecution(GenericHidOutBuffer);
+    } else {
+        SetUsbTxBufferUint8(0, UsbStatusCode_Busy);
+        Macros_ReportErrorPrintf(NULL, "Another usb macro command executing, cannot execute now.\n");
     }
 }

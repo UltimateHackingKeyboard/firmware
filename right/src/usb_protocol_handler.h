@@ -85,6 +85,7 @@
     typedef enum {
         UsbStatusCode_Success        = 0,
         UsbStatusCode_InvalidCommand = 1,
+        UsbStatusCode_Busy = 2,
     } usb_status_code_general_t;
 
 // Variables:
