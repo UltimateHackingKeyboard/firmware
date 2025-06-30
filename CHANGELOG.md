@@ -12,9 +12,9 @@ Device Protocol: 4.16.**1** | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | 
 - Fix a macro engine bug where USB reports weren't updated at the end of a macro, which made the keys activated from the macro get stuck. `SMARTMACROS:PATCH`
 - Make the UHK 60 not misinterpret firmware updates as crashes.
 - Correctly detect full charge level on the UHK 80.
-- Update battery percentage indicator quicker when charging.
+- Update battery percentage indicator quicker, especially when transitioning between charging and discharging.
 - Show correct battery percentage shortly after a battery is (dis)connected.
-- Make the UHK 80 instantly execute macro commands via USB instead of waiting shortly.
+- Fix the delay before the UHK 80 executes macro commands via USB, so that the macro commands are executed instantly.
 - USB macro execution command fixes: Fix buffer underruns, return status code. `DEVICEPROTOCOL:PATCH`
 
 ## [14.2.0] - 2025-06-14
