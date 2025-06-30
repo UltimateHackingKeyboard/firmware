@@ -219,7 +219,10 @@ int main(void)
 
         sendFirstReport();
 
+        Trace_Printc("initialized");
+
         while (1) {
+            Trace_Printc("{");
             CopyRightKeystateMatrix();
 
             if (CurrentPowerMode >= PowerMode_Lock) {
@@ -237,6 +240,7 @@ int main(void)
 
             UserLogic_LastEventloopTime = CurrentTime;
 
+            Trace_Printc("}");
             __WFI();
         }
     }
