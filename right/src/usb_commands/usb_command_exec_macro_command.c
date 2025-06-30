@@ -20,8 +20,11 @@ static void requestExecution(const uint8_t *GenericHidOutBuffer)
     uint8_t len = Utils_SafeStrCopy(UsbMacroCommand, ((char*)GenericHidOutBuffer) + 1, USB_GENERIC_HID_OUT_BUFFER_LENGTH - 1);
     UsbMacroCommandLength = len;
 
-
     EventVector_Set(EventVector_UsbMacroCommandWaitingForExecution);
+
+#ifdef __ZEPHYR__
+    Main_Wake();
+#endif
 }
 
 static bool canExecute()
