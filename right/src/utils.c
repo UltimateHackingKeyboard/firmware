@@ -137,10 +137,11 @@ void Utils_PrintReport(const char* prefix, usb_basic_keyboard_report_t* report)
     Macros_SetStatusString("\n", NULL);
 }
 
-void Utils_SafeStrCopy(char* target, const char* src, uint8_t max) {
+uint8_t Utils_SafeStrCopy(char* target, const char* src, uint8_t max) {
     uint8_t stringlength = MIN(strlen(src)+1, (max));
     memcpy(target, src, stringlength);
     target[stringlength-1] = '\0';
+    return stringlength-1;
 }
 
 const char* Utils_KeyAbbreviation(key_state_t* keyState)

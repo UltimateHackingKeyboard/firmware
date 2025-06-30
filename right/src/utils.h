@@ -33,7 +33,7 @@ if (reentrancyGuard_active) {                    \
 
 // Functions:
 
-    void Utils_SafeStrCopy(char* target, const char* src, uint8_t max);
+    uint8_t Utils_SafeStrCopy(char* target, const char* src, uint8_t max);
     key_state_t* Utils_KeyIdToKeyState(uint16_t keyid);
     uint16_t Utils_KeyStateToKeyId(key_state_t* key);
     const char* Utils_KeyStateToKeyAbbreviation(key_state_t* key);
