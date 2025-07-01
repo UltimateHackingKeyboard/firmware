@@ -306,9 +306,11 @@ static usb_status_t usbDeviceCallback(usb_device_handle handle, uint32_t event, 
 
 void USB0_IRQHandler(void)
 {
+    Trace_Printc("<i6");
     USB_DeviceKhciIsrFunction(Wormhole.enumerationMode == EnumerationMode_BusPal
         ? BuspalCompositeUsbDevice.device_handle
         : UsbCompositeDevice.deviceHandle);
+    Trace_Printc(">");
 }
 
 void InitUsb(void)

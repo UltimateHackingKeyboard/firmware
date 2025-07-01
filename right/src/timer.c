@@ -1,6 +1,7 @@
 #ifndef __ZEPHYR__
 #include "fsl_pit.h"
 #include "peripherals/test_led.h"
+#include "trace.h"
 #endif
 
 #include "timer.h"
@@ -13,11 +14,13 @@ static volatile uint32_t delayLength;
 
 void PIT_TIMER_HANDLER(void)
 {
+    Trace_Printc("<i4");
     CurrentTime++;
     if (delayLength) {
         --delayLength;
     }
     PIT_ClearStatusFlags(PIT, PIT_TIMER_CHANNEL, kPIT_TimerFlag);
+    Trace_Printc(">");
 }
 
 void Timer_Init(void)
