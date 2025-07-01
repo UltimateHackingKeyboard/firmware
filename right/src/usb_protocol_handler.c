@@ -32,9 +32,10 @@
 #include "usb_commands/usb_command_set_i2c_baud_rate.h"
 #endif
 
-void UsbProtocolHandler(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer)
+void UsbProtocolHandler(uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer)
 {
     bzero(GenericHidInBuffer, USB_GENERIC_HID_IN_BUFFER_LENGTH);
+
     uint8_t command = GetUsbRxBufferUint8(0);
     switch (command) {
         case UsbCommandId_GetDeviceProperty:
@@ -145,6 +146,8 @@ void UsbProtocolHandler(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidI
     if (GenericHidInBuffer[0] != UsbStatusCode_Success) {
         Macros_ReportErrorPrintf(NULL, "Usb protocol command %d failed with: %d\n", command, GenericHidInBuffer[0]);
     }
+
+    bzero(GenericHidOutBuffer, USB_GENERIC_HID_OUT_BUFFER_LENGTH);
 }
 
 #ifdef __ZEPHYR__
