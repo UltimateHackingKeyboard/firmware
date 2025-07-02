@@ -37,6 +37,8 @@
 #include "usb_protocol_handler.h"
 #include "event_scheduler.h"
 #include "wormhole.h"
+#include "trace.h"
+#include "trace_reasons.h"
 
 static bool IsEepromInitialized = false;
 static bool IsConfigInitialized = false;
@@ -184,13 +186,16 @@ int main(void)
 {
     Trace_Init();
     if (StateWormhole_IsOpen()) {
-        if (!StateWormhole.wasReboot) {
+        if (StateWormhole.wasReboot || Trace_LooksLikeNaturalCauses()) {
+            // Looks like a normal reboot or power on startup
+            MacroStatusBuffer_InitNormal();
+        }
+        else {
+            // Looks like a crash.
             StateWormhole.persistStatusBuffer = true;
             MacroStatusBuffer_Validate();
             Trace_Print(LogTarget_ErrorBuffer, "Looks like your uhk60 crashed.");
             MacroStatusBuffer_InitFromWormhole();
-        } else {
-            MacroStatusBuffer_InitNormal();
         }
         StateWormhole_Clean();
     } else {
