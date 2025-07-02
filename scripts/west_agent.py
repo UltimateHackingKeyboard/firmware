@@ -9,10 +9,10 @@ class WestAgent(WestCommand):
     def __init__(self):
         super().__init__(
             'agent',
-            'perform UHK module firmware update over right half USB',
+            'perform UHK device firmware update over USB',
             dedent('''
-            This command finds the module binary file in the given build directory
-            and perform UHK module firmware update over USB.
+            This command finds the device binary file in the given build directory
+            and perform UHK device firmware update over USB.
             ''')
         )
 
@@ -21,38 +21,46 @@ class WestAgent(WestCommand):
             self.name, help=self.help, description=self.description)
         parser.add_argument(
             '-d', '--build-dir', required=True, metavar='DIR',
-            help='Directory containing exactly UHK module binary file')
+            help='Build directory of the device firmware (must be in the structure {app}/build/{preset})')
         return parser
+
+    def find_single_file(self, directory: Path, extension: str) -> Path:
+        files = list(directory.glob(f'*{extension}'))
+        if len(files) == 0:
+            log.die(f'No {extension} file found in {directory}')
+        if len(files) > 1:
+            log.die(f'More than one {extension} file found in {directory}: {[f.name for f in files]}')
+        return files[0]
 
     def do_run(self, args, unknown_args):
         build_dir = Path(args.build_dir)
         if not build_dir.is_dir():
             log.die(f'Build directory does not exist: {build_dir}')
 
-        elf_files = list(build_dir.glob('*.elf'))
-        if len(elf_files) == 0:
-            log.die(f'No .elf file found in {build_dir}')
-        if len(elf_files) > 1:
-            log.die(f'More than one .elf file found in {build_dir}: {[f.name for f in elf_files]}')
+        # The application name is always two levels above the build dir
+        try:
+            app_name = build_dir.parents[1].name
+        except IndexError:
+            log.die(f'Cannot determine application name from build directory: {build_dir}')
 
-        elf_file = elf_files[0]
-        elf_name = elf_file.stem
+        pid = None
+        module = None
+        if app_name == 'device':
+            dotconfig = build_dir / 'zephyr' / '.config'
+            with dotconfig.open() as f:
+                for line in f:
+                    if line.startswith('CONFIG_USB_DEVICE_PID='):
+                        pid = line[len('CONFIG_USB_DEVICE_PID='):].strip()
+                        break
+            if pid is None:
+                log.die('CONFIG_USB_DEVICE_PID not found or invalid in .config')
 
-        script_dir = Path(__file__).parent.resolve()
-        tsx_path = (script_dir / '../lib/agent/node_modules/.bin/tsx').resolve()
-        if elf_name == 'uhk-60-right':
-            updater_path = (script_dir / '../lib/agent/packages/usb/update-device-firmware.ts').resolve()
+            fw_file = build_dir / 'zephyr' / 'app_update.bin'
+            if not fw_file.is_file():
+                log.die(f'Firmware file not found: {fw_file}')
 
-            # For uhk-60-right, use .hex file
-            hex_file = elf_file.with_suffix('.hex')
-            if not hex_file.is_file():
-                log.die(f'.hex file not found for {elf_file.name}')
-
-            # Find the DEVICE_PID from CMakeCache.txt
+        elif app_name == 'right':
             cmake_cache = build_dir / 'CMakeCache.txt'
-            if not cmake_cache.is_file():
-                log.die(f'CMakeCache.txt not found in {build_dir}')
-            pid = None
             with cmake_cache.open() as f:
                 for line in f:
                     if line.startswith('DEVICE_PID:'):
@@ -63,41 +71,44 @@ class WestAgent(WestCommand):
             if pid is None:
                 log.die('DEVICE_PID not found or invalid in CMakeCache.txt')
 
+            fw_file = self.find_single_file(build_dir, '.hex')
+        else:
+            module_lookup = {
+                'keycluster': 'leftModule',
+                'left': 'leftHalf',
+                'trackball': 'rightModule',
+                'trackpoint': 'rightModule',
+            }
+            if app_name not in module_lookup:
+                log.die(f'Unknown module: {app_name}')
+            module = module_lookup[app_name]
+            fw_file = self.find_single_file(build_dir, '.bin')
+
+        script_dir = Path(__file__).parent.resolve()
+        tsx_path = (script_dir / '../lib/agent/node_modules/.bin/tsx').resolve()
+        if pid:
+            updater_path = (script_dir / '../lib/agent/packages/usb/update-device-firmware.ts').resolve()
             cmd = [
                 str(tsx_path),
                 str(updater_path),
                 '--vid=14248',
                 f'--pid={pid}',
-                str(hex_file)
+                str(fw_file)
             ]
         else:
-            # Figure out the module name for the script
-            module_lookup = {
-                'uhk-keycluster': 'leftModule',
-                'uhk-60-left': 'leftHalf',
-                'uhk-trackball': 'rightModule',
-                'uhk-trackpoint': 'rightModule',
-            }
-            if elf_name not in module_lookup:
-                log.die(f'Unknown module: {elf_name}')
-            module = module_lookup[elf_name]
-
-            # For modules, use .bin file
-            bin_file = elf_file.with_suffix('.bin')
-            if not bin_file.is_file():
-                log.die(f'.bin file not found for {elf_file.name}')
-
             updater_path = (script_dir / '../lib/agent/packages/usb/update-module-firmware.ts').resolve()
             cmd = [
                 str(tsx_path),
                 str(updater_path),
                 module,
-                str(bin_file)
+                str(fw_file)
             ]
 
         # Log the command and run it
         log.inf(f'Running: {" ".join(cmd)}')
         try:
             subprocess.run(cmd, check=True)
+        except FileNotFoundError as e:
+            log.die(f'Agent not built or file not found: {e.filename}')
         except subprocess.CalledProcessError as e:
-            log.die(f'Module update failed: {e}')
+            log.die(f'Device update failed: {e}')
