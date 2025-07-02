@@ -30,6 +30,8 @@ Macro events allow hooking special behaviour, such as applying a specific config
     $onNumLockStateChange
     $onScrollLockStateChange
     $onError
+    $onJoin
+    $onSplit
 
 Please note that:
   - under Linux, scroll lock is disabled by default. As a consequence, the macro event does not trigger.
