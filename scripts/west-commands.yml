@@ -8,4 +8,4 @@ west-commands:
     commands:
       - name: agent
         class: WestAgent
-        help: Update UHK modules through Agent's USB toolkit
+        help: Update UHK device through Agent's USB toolkit
