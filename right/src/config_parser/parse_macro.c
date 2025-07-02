@@ -7,22 +7,47 @@
 
 parser_error_t parseKeyMacroAction(config_buffer_t *buffer, macro_action_t *macroAction, serialized_macro_action_type_t macroActionType)
 {
-    uint8_t keyMacroType = macroActionType - SerializedMacroActionType_KeyMacroAction;
-    uint8_t action = keyMacroType & 0b11;
-    uint8_t type;
+    uint8_t actionTypeBits = macroActionType - SerializedMacroActionType_KeyMacroAction;
+
+    uint8_t subaction;
+    uint8_t serializedKeystrokeType;
+    uint8_t runtimeKeystrokeType;
     uint16_t scancode = 0;
     uint8_t modifierMask;
+    bool containsModifiers;
+    bool containsScancode;
 
-    keyMacroType >>= 2;
-    type = keyMacroType & 0b11;
-    keyMacroType >>= 2;
-    if (keyMacroType & 0b10) {
-        scancode = type == SerializedKeystrokeType_LongMedia ? ReadUInt16(buffer) : ReadUInt8(buffer);
+    subaction = actionTypeBits & 0b11;
+    actionTypeBits >>= 2;
+    serializedKeystrokeType = actionTypeBits & 0b11;
+    actionTypeBits >>= 2;
+    containsModifiers = actionTypeBits & 0b01;
+    actionTypeBits >>= 1;
+    containsScancode = actionTypeBits & 0b01;
+
+    switch(serializedKeystrokeType) {
+        case SerializedKeystrokeType_Basic:
+            runtimeKeystrokeType = KeystrokeType_Basic;
+            break;
+        case SerializedKeystrokeType_ShortMedia:
+        case SerializedKeystrokeType_LongMedia:
+            runtimeKeystrokeType = KeystrokeType_Media;
+            break;
+        case SerializedKeystrokeType_System:
+            runtimeKeystrokeType = KeystrokeType_System;
+            break;
+        default:
+            ConfigParser_Error(buffer, "Invalid serialized keystroke type: %d", serializedKeystrokeType);
+            return ParserError_InvalidSerializedKeystrokeType;
     }
-    modifierMask = keyMacroType & 0b01 ? ReadUInt8(buffer) : 0;
+
+    if (containsScancode) {
+        scancode = serializedKeystrokeType == SerializedKeystrokeType_LongMedia ? ReadUInt16(buffer) : ReadUInt8(buffer);
+    }
+    modifierMask = containsModifiers ? ReadUInt8(buffer) : 0;
     macroAction->type = MacroActionType_Key;
-    macroAction->key.action = action;
-    macroAction->key.type = type;
+    macroAction->key.action = subaction;
+    macroAction->key.type = runtimeKeystrokeType;
     macroAction->key.scancode = scancode;
     macroAction->key.outputModMask = modifierMask;
     macroAction->key.inputModMask = 0;
