@@ -245,12 +245,8 @@ function performAction() {
         update)
             git submodule update --init --recursive
             cd "$ROOT/.."
-            west update -o=--depth=1
+            west update
             west patch
-            west config --local build.cmake-args -- "-Wno-dev"
-            cd "$ROOT/scripts"
-            npm ci
-            ./generate-versions.mjs
             ;;
         clean)
             rm -rf ../bootloader  ../c2usb  ../hal_nxp  ../modules  ../nrf  ../nrfxlib  ../zephyr ../.west ../mcuxsdk
@@ -272,9 +268,9 @@ function performAction() {
             git submodule update --init --recursive
             cd "$ROOT/.."
             west init -l "$ROOT"
+            west config --local build.cmake-args -- "-Wno-dev"
             west update
             west patch
-            west config --local build.cmake-args -- "-Wno-dev"
             ;;
         build)
             # reference version of the build process is to be found in scripts/make-release.mjs
