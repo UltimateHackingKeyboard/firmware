@@ -19,6 +19,11 @@
 #define SCB_BFAR    (*(volatile uint32_t*)0xE000ED38)
 #define SCB_MMFAR   (*(volatile uint32_t*)0xE000ED34)
 
+#define POWER_ON_RESET (RCM_SRS0 & 0x80)
+
+bool Trace_LooksLikeNaturalCauses(void) {
+    return (RCM_SRS0 & 0x80);
+}
 
 void Trace_PrintUhk60ReasonRegisters(device_id_t targetDeviceId, log_target_t targetInterface)
 {
@@ -51,7 +56,9 @@ void Trace_PrintUhk60ReasonRegisters(device_id_t targetDeviceId, log_target_t ta
     if (RCM_SRS0 & 0x02) LogTo(targetDeviceId, targetInterface, "Loss of Clock Reset detected\n");
 
     if (RCM_SRS1 & 0x20) LogTo(targetDeviceId, targetInterface, "Software Reset detected\n");
-    if (RCM_SRS1 & 0x04) LogTo(targetDeviceId, targetInterface, "Core Lockup Reset detected\n");
+
+    // This is misleading;
+    //if (RCM_SRS1 & 0x04) LogTo(targetDeviceId, targetInterface, "Core Lockup Reset detected\n");
 
     if (PMC_LVDSC1 & 0x80) LogTo(targetDeviceId, targetInterface, "Low-Voltage Detect Flag set\n");
     if (PMC_LVDSC2 & 0x80) LogTo(targetDeviceId, targetInterface, "Low-Voltage Warning Flag set\n");
