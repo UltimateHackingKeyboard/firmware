@@ -98,6 +98,9 @@ aren't trivial to pass to the IDE, but it does pick up existing build configurat
 To get started, choose *Open Workspace from File...*, then select the `firmware.code-workspace` file.
 Install the recommended extensions or pick the one for your single device depending on the SDK.
 
+> Note that using *MCUXpresso for VS Code* extension currently overwrites the `mcux_includes.json` file,
+these modifications shall not be committed into the git repository!
+
 ### UHK80 Minimal development setup
 
 - Install commandline stuff from [nRF Connect SDK](https://developer.nordicsemi.com/nRF_Connect_SDK/doc/latest/nrf/installation/install_ncs.html)
