@@ -15,7 +15,7 @@ const life_reference_record_t LeftRecords [] = {
     { .unit = 0, .voltage = 4288 },
     { .unit = 200, .voltage = 4022 },
     { .unit = 218, .voltage = 3998 },
-    { .unit = 258, .voltage = 3950 },
+    { .unit = 248, .voltage = 3950 },
     { .unit = 298, .voltage = 3859 },
     { .unit = 338, .voltage = 3818 },
     { .unit = 378, .voltage = 3771 },
