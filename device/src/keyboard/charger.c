@@ -316,10 +316,11 @@ void Charger_UpdateBatteryState() {
             setChargerEnPin(false);
 
             if (actuallyCharging) {
+                chargerStopped = false;
                 previousVoltage = getVoltage();
                 previousCharging = true;
             } else {
-                chargerStopped = actuallyEnabled && !actuallyCharging;
+                chargerStopped = actuallyEnabled && !actuallyCharging && batteryState.powered;
                 previousVoltage = 0;
                 previousCharging = false;
             }
