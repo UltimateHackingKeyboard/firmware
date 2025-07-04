@@ -54,7 +54,9 @@
 		"recommendations": [
 			"nordic-semiconductor.nrf-connect-extension-pack",
 			"NXPSemiconductors.mcuxpresso",
-			"ms-vscode.cmake-tools"
+			"ms-vscode.cmake-tools",
+			"ms-vscode.vscode-embedded-tools",
+			"mcu-debug.peripheral-viewer"
 		]
 	}
 }
