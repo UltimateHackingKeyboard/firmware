@@ -5,6 +5,7 @@
       "name": "Debug",
       "request": "launch",
       "cwd": "${workspaceFolder}",
+      "svdPath": "${workspaceFolder}/__repo__/mcuxsdk/devices/Kinetis/K/MK22F51212/MK22F51212.xml",
     
       "executable": "",
       "stopAtSymbol": "main",
