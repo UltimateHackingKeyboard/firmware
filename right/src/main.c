@@ -40,9 +40,9 @@
 #include "trace.h"
 #include "trace_reasons.h"
 
-static bool IsEepromInitialized = false;
-static bool IsConfigInitialized = false;
-static bool IsHardwareConfigInitialized = false;
+static volatile bool IsEepromInitialized = false;
+static volatile bool IsConfigInitialized = false;
+static volatile bool IsHardwareConfigInitialized = false;
 
 static void userConfigurationReadFinished(void)
 {
