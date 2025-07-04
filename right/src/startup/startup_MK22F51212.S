@@ -334,6 +334,8 @@ __isr_vector:
     .type    Reset_Handler, %function
 Reset_Handler:
     cpsid   i               /* Mask interrupts */
+    ldr   r0, =__StackTop   /* Load address of __StackTop */
+    msr   msp, r0           /* Set MSP (Main Stack Pointer) */
     .equ    VTOR, 0xE000ED08
     ldr     r0, =VTOR
     ldr     r1, =__isr_vector
