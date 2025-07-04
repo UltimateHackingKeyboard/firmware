@@ -148,6 +148,22 @@ In case of problems, please refer to `scripts/make-release.mjs`
 4. Use the `west agent` command just like `west flash`, with the `--build-dir` parameter
 to flash the new firmware over USB.
 
+### Debugging with VS Code
+
+For UHK60 and modules, the McuXpresso SDK extention is the starting point for a debugging session.
+On a first try, this error might manifest:
+
+> Could not start GDB. Check that the file exists, and it can be manually started.
+Error: Error: spawn $env{ARM_GCC_DIR}/bin/arm-none-eabi-gdb ENOENT
+
+There are two problems to solve:
+1. The arm-none-eabi package doesn't ship with gdb by default.
+You can follow [this guide](https://interrupt.memfault.com/blog/installing-gdb#binaries-from-arm)
+to get a full toolchain installed.
+2. The extension doesn't expand the environment variable, so you'll need to modify the `.vscode/mcuxpresso-tools.json` file,
+to have a hardcoded `toolchainPath` variable. (Don't push this change into the repository, obviously.)
+
+
 ### Releasing
 
 To build a full firmware tarball:

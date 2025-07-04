@@ -48,15 +48,19 @@
 			"*.hpp": "cpp",
 			"*.cpp": "cpp"
 		},
-		"cmake.useCMakePresets": "always"
+		"cmake.useCMakePresets": "always",
+		"C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+		"C_Cpp.workspaceParsingPriority": "high",
+		"C_Cpp.autoAddFileAssociations": false
 	},
 	"extensions": {
 		"recommendations": [
 			"nordic-semiconductor.nrf-connect-extension-pack",
 			"NXPSemiconductors.mcuxpresso",
-			"ms-vscode.cmake-tools",
+			"ms-vscode.cpptools-extension-pack",
 			"ms-vscode.vscode-embedded-tools",
-			"mcu-debug.peripheral-viewer"
+			"mcu-debug.peripheral-viewer",
+			"marus25.cortex-debug"
 		]
 	}
 }

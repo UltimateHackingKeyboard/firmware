@@ -1,0 +1,28 @@
+{
+    "configurations": [
+        {
+            "name": "ARM GCC",
+            "includePath": [
+                "${workspaceFolder}/../../mcuxsdk/**",
+                "${workspaceFolder}/src/**",
+                "${workspaceFolder}/../shared/*"
+            ],
+            "defines": [],
+            "compilerPath": "${env:ARM_GCC_DIR}/bin/arm-none-eabi-gcc",
+            "compilerArgs": [
+                "-mcpu=cortex-m4",
+                "-mthumb",
+                "-mfloat-abi=hard"
+            ],
+            "cStandard": "c17",
+            "cppStandard": "gnu++20",
+            "configurationProvider": "ms-vscode.cmake-tools",
+            "mergeConfigurations": true,
+            "compileCommands": "${workspaceFolder}/build/v2-release/compile_commands.json",
+            "browse": {
+                "limitSymbolsToIncludedHeaders": true
+            }
+        }
+    ],
+    "version": 4
+}
