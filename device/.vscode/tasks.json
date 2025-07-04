@@ -1,0 +1,80 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Build UHK 80 left firmware",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"type": "process",
+			"command": "west",
+			"args": [
+				"build",
+				"--build-dir",
+				"${cwd}/device/build/uhk-80-left",
+				"${cwd}/device",
+				"--no-sysbuild",
+				"--",
+				"--preset",
+				"uhk-80-left"
+			],
+			"problemMatcher": [
+				"$gcc"
+			]
+		},
+		{
+			"label": "Build UHK 80 right firmware",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"type": "process",
+			"command": "west",
+			"args": [
+				"build",
+				"--build-dir",
+				"${cwd}/device/build/uhk-80-right",
+				"${cwd}/device",
+				"--no-sysbuild",
+				"--",
+				"--preset",
+				"uhk-80-right"
+			],
+			"problemMatcher": [
+				"$gcc"
+			]
+		},
+		{
+			"label": "Build UHK dongle firmware",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"type": "process",
+			"command": "west",
+			"args": [
+				"build",
+				"--build-dir",
+				"${cwd}/device/build/uhk-dongle",
+				"${cwd}/device",
+				"--no-sysbuild",
+				"--",
+				"--preset",
+				"uhk-dongle"
+			],
+			"problemMatcher": [
+				"$gcc"
+			]
+		}
+	]
+}

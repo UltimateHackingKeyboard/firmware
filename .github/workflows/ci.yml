@@ -54,6 +54,7 @@ jobs:
         run: |
           west config build.cmake-args -- "-Wno-dev"
           west config build.board_warn false
+          west config build.device_warn false
 
       - name: mcuxsdk west setup
         run: |
