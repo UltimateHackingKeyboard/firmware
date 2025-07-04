@@ -5,6 +5,7 @@
       "name": "Debug",
       "request": "launch",
       "cwd": "${workspaceFolder}",
+      "svdPath": "${workspaceFolder}/../svd/MK22F51212.xml",
     
       "executable": "",
       "stopAtSymbol": "main",
