@@ -338,6 +338,8 @@ Reset_Handler:
     ldr     r0, =VTOR
     ldr     r1, =__isr_vector
     str     r1, [r0]
+    ldr     r2, [r1]
+    msr     msp, r2
 #ifndef __NO_SYSTEM_INIT
     ldr   r0,=SystemInit
     blx   r0
