@@ -134,7 +134,7 @@ static uint16_t getVoltage() {
 }
 
 static void printState(battery_state_t* state) {
-    printk("Battery is present: %i, charging: %i, charger enabled: %i, at %imV (%i%%); automaton state %d\n", state->batteryPresent, state->batteryCharging, Charger_ChargingEnabled, state->batteryVoltage, state->batteryPercentage, currentChargingAutomatonState);
+    printk("Battery is present: %i, charging: %i, charger enabled: %i, powered: %d, at %imV (%i%%); automaton state %d\n", state->batteryPresent, state->batteryCharging, Charger_ChargingEnabled, state->powered, state->batteryVoltage, state->batteryPercentage, currentChargingAutomatonState);
 }
 
 void Charger_PrintState() {
@@ -192,8 +192,10 @@ static bool updateChargerEnabled(battery_state_t *batteryState, battery_manager_
             BatteryManager_SetMaxCharge(newMaxVoltage);
             oldState = BatteryManagerAutomatonState_Charged;
             printk("Charger stopped at %dmV. Setting as new 100%%.\n", voltage);
+            Charger_PrintState();
         } else {
             printk("Charger stopped bellow %dmV. This is suspicious!\n", minThreshold);
+            Charger_PrintState();
         }
     } else if (newMaxVoltage > config->maxVoltage) {
         BatteryManager_SetMaxCharge(newMaxVoltage);
