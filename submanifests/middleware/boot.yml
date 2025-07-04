@@ -1,0 +1,33 @@
+manifest:
+  remotes:
+  - name: nxp
+    url-base: https://github.com/NXP
+  - name: nxp-zephyr
+    url-base: https://github.com/nxp-zephyr
+  - name: nxp-mcuxpresso
+    url-base: https://github.com/nxp-mcuxpresso
+  defaults:
+    remote: nxp-mcuxpresso
+  projects:
+  - name: mcuboot_opensource
+    repo-path: mcuboot
+    revision: 481f6b20b02feb1925195556295911b361b58d0d
+    path: mcuxsdk/middleware/mcuboot_opensource
+    userdata:
+      owner: petr.buchta@nxp.com
+      track_branch: mcux_main
+      branch_flow: false
+    groups:
+    - mcuboot
+    - middleware
+  - name: mcu_bootloader
+    repo-path: mcuxsdk-middleware-bootloader
+    revision: 3fd0177a34c580c4a60b021e1136216ef949adf6
+    path: mcuxsdk/middleware/mcu_bootloader
+    userdata:
+      owner: shibin.yang@nxp.com
+      track_branch: mcux_main
+      branch_flow: false
+    groups:
+    - mcu-boot
+    - middleware

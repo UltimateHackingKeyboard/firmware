@@ -1,0 +1,89 @@
+manifest:
+  remotes:
+    - name: IntergatedCircuits
+      url-base: https://github.com/IntergatedCircuits
+    - name: nxp
+      url-base: https://github.com/NXP
+    - name: nxp-mcuxpresso
+      url-base: https://github.com/nxp-mcuxpresso
+  defaults:
+    remote: nxp-mcuxpresso
+  group-filter:
+  - -optional
+  - -bifrost
+  - -ble_cs_algo_private
+  - -bluetooth_private
+  - -middleware
+  - -mcuboot
+  - -mcu-boot
+  - -aws_iot
+  - -lwip
+  - -pkcs11
+  - -tinycbor
+  - -lin_stack
+  - -soem
+  - -modbus
+  - -eiq
+  - -fatfs
+  - -sdmmc
+  - -dhara
+  - -littlefs
+  - -metering
+  - -motor_control
+  - -freemaster
+  - -rtcesl
+  - -ble_nxp
+  - -rtos
+  - -freertos-kernel
+  - -freertos
+  - -multicore
+  - -vglite
+  - -vit
+  - -audio_voice
+  - -lvgl
+  - -maestro
+  - -voice_seeker
+  - -audio_voice
+  - -audio-voice-components
+  - -libjpeg
+  - -pngdec
+  - -openh264
+  - -openvg
+  - -issdk
+  - -cjson
+  - -memfault
+  - -security
+  - -els_pkc
+  - -secure-subsystem
+  - -edgelock
+  - -mbedtls
+  - -mbedtls3x
+  - -nxp_iot_agent
+  - -tfm
+  - -psa_crypto_driver
+  - -mmcau
+  - -mbedcrypto
+  - -touch
+  - -wireless
+  - -connectivity-framework
+  - -genfsk
+  - -ble_controller
+  - -bluetooth
+  - -XCVR
+  - -edgefast_bt_ble
+  - -ieee-802.15.4
+  - -ethermind
+  - -wifi_nxp
+  - -fw_bin
+  - -zigbee
+  - -wpa_supplicant-rtos
+  - -coex
+  self:
+    path: manifests
+    west-commands: scripts/west-commands.yml
+    import:
+    - submanifests/base.yml
+    - submanifests/devices/
+    - submanifests/middleware/
+    - submanifests/rtos/
+    - submanifests/internal.yml

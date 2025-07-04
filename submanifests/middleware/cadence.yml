@@ -1,0 +1,47 @@
+manifest:
+  remotes:
+  - name: nxp
+    url-base: https://github.com/NXP
+  - name: nxp-zephyr
+    url-base: https://github.com/nxp-zephyr
+  - name: nxp-mcuxpresso
+    url-base: https://github.com/nxp-mcuxpresso
+  defaults:
+    remote: nxp-mcuxpresso
+  projects:
+  - name: multicore-xaf
+    userdata:
+      owner: tomas.barak@nxp.com
+      track_branch: main
+      branch_flow: false
+    path: mcuxsdk/middleware/cadence/multicore-xaf
+    revision: c5444ca6a5f35cef0b7999383d9f24b272ea8195
+    groups:
+    - bifrost
+  - name: dsp-codecs
+    userdata:
+      owner: tomas.barak@nxp.com
+      track_branch: main
+      branch_flow: false
+    path: mcuxsdk/middleware/cadence/codecs
+    revision: bde76ff5b0a1444b87dfb151914fb905d521973f
+    groups:
+    - bifrost
+  - name: naturedsp
+    userdata:
+      owner: tomas.barak@nxp.com
+      track_branch: main
+      branch_flow: false
+    path: mcuxsdk/middleware/cadence/naturedsp
+    revision: 28c7d651eedd872a8f5dc262524063eced5a85e6
+    groups:
+    - bifrost
+  - name: nnlib
+    userdata:
+      owner: tomas.barak@nxp.com
+      track_branch: main
+      branch_flow: false
+    path: mcuxsdk/middleware/cadence/nnlib
+    revision: 03aab021e5832b7d027f3fe18bdf6115a863d6ae
+    groups:
+    - bifrost

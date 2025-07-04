@@ -17,22 +17,22 @@
 
     static inline void TestLed_On(void)
     {
-        GPIO_SetPinsOutput(TEST_LED_GPIO, 1U << TEST_LED_GPIO_PIN);
+        GPIO_PortSet(TEST_LED_GPIO, 1U << TEST_LED_GPIO_PIN);
     }
 
     static inline void TestLed_Off(void)
     {
-        GPIO_ClearPinsOutput(TEST_LED_GPIO, 1U << TEST_LED_GPIO_PIN);
+        GPIO_PortClear(TEST_LED_GPIO, 1U << TEST_LED_GPIO_PIN);
     }
 
     static inline void TestLed_Set(bool state)
     {
-        GPIO_WritePinOutput(TEST_LED_GPIO, TEST_LED_GPIO_PIN, state);
+        GPIO_PinWrite(TEST_LED_GPIO, TEST_LED_GPIO_PIN, state);
     }
 
     static inline void TestLed_Toggle(void)
     {
-        GPIO_TogglePinsOutput(TEST_LED_GPIO, 1U << TEST_LED_GPIO_PIN);
+        GPIO_PortToggle(TEST_LED_GPIO, 1U << TEST_LED_GPIO_PIN);
     }
 
 // Functions:

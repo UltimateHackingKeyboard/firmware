@@ -1,31 +1,72 @@
-# the library target is created here, so version generation will work without extra steps
-add_library(${PROJECT_NAME})
-
+# due to the unconventional project structure, this cmake file is include()-d
+# instead of add_subdirectory()-d, so every path has to be absolute
 target_include_directories(${PROJECT_NAME} PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    # this really needs to be changed when time and restructuring permits
-    ${PROJECT_SOURCE_DIR}
+    ${CMAKE_CURRENT_LIST_DIR}
 )
 
-if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/versions.c")
-    message(WARNING "Generating missing versions.c for UHK")
+set(UHK_VERSIONS_MODE "clean" CACHE STRING "UHK versions file generation mode: none, null, clean, hash")
+set(UHK_VERSIONS_FILE ${CMAKE_CURRENT_LIST_DIR}/versions.c)
+# only set to generated if the file is generated at build time (execute_process() creates it at configure time)
+#set_source_files_properties(${UHK_VERSIONS_FILE} PROPERTIES GENERATED TRUE)
+
+if(NOT UHK_VERSIONS_MODE STREQUAL "none")
+    message(STATUS "UHK: generating ${UHK_VERSIONS_FILE}")
     find_package(Python 3 REQUIRED)
     if(Python_VERSION_MAJOR LESS 3)
         message(FATAL_ERROR "Python 3 is required versions generation.")
     endif()
-    add_custom_command(
-        OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/versions.c"
-        COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/scripts/generate_versions.py"
-        DEPENDS "${PROJECT_SOURCE_DIR}/scripts/generate_versions.py"
+
+    set(GENERATE_VERSIONS_ARG "")
+    if(UHK_VERSIONS_MODE STREQUAL "hash")
+        set(GENERATE_VERSIONS_ARG "--withMd5Sums")
+    elseif(UHK_VERSIONS_MODE STREQUAL "null")
+        set(GENERATE_VERSIONS_ARG "--withZeroVersions")
+    endif()
+    execute_process(
+        COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_LIST_DIR}/../scripts/generate_versions.py" ${GENERATE_VERSIONS_ARG}
+        WORKING_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}"
+        RESULT_VARIABLE GENERATE_VERSIONS_RESULT
+        OUTPUT_VARIABLE GENERATE_VERSIONS_OUTPUT
+        ERROR_VARIABLE GENERATE_VERSIONS_ERROR
     )
+    if(NOT GENERATE_VERSIONS_RESULT EQUAL 0)
+        message(FATAL_ERROR "Failed to generate versions.c: ${GENERATE_VERSIONS_ERROR}${GENERATE_VERSIONS_OUTPUT}")
+    endif()
 endif()
-set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/versions.c PROPERTIES GENERATED TRUE)
 
 target_sources(${PROJECT_NAME} PRIVATE
-    bool_array_converter.c
-    buffer.c
-    crc16.c
-    key_matrix.c
-    slave_protocol.c
-    versions.c
+    ${CMAKE_CURRENT_LIST_DIR}/bool_array_converter.c
+    ${CMAKE_CURRENT_LIST_DIR}/buffer.c
+    ${CMAKE_CURRENT_LIST_DIR}/crc16.c
+    $<$<BOOL:${IS_MCUX_SDK}>:${CMAKE_CURRENT_LIST_DIR}/key_matrix.c>
+    $<$<BOOL:${IS_MCUX_SDK}>:${CMAKE_CURRENT_LIST_DIR}/key_vector.c>
+    ${CMAKE_CURRENT_LIST_DIR}/slave_protocol.c
+    ${CMAKE_CURRENT_LIST_DIR}/versions.c
 )
+
+if (IS_MCUX_SDK)
+    # mysteriously used by the mcuxsdk toolchain
+    set(to_be_ignored_variables "${APP_DIR}" "${PrjRootDirPath}" "${CMAKE_TOOLCHAIN_FILE}")
+
+    # TODO: port to zephyr correctly, then remove the if
+    target_compile_options(${PROJECT_NAME} PUBLIC
+        $<$<BOOL:${IS_MCUX_SDK}>:-O2>
+        $<$<BOOL:${IS_MCUX_SDK} AND CONFIG:Debug>:-g3>
+        -Wall
+        -Wextra
+        -Woverflow
+        -Wno-unused-parameter
+        -Wno-type-limits
+        -Wlogical-op
+        -Wrestrict
+        -Wnull-dereference
+        -Wshadow
+        $<$<COMPILE_LANGUAGE:CXX>:
+            -felide-constructors
+            -fno-exceptions
+            -fno-rtti
+            -fno-use-cxa-atexit
+            -fno-threadsafe-statics
+        >
+    )
+endif()

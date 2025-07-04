@@ -1,0 +1,126 @@
+From 8d555bb8d6ced86639d3b8e5830ac6e73f806214 Mon Sep 17 00:00:00 2001
+From: Benedek Kupper <kupper.benedek@gmail.com>
+Date: Thu, 26 Jun 2025 21:08:53 +0200
+Subject: [PATCH] add support for FRDM-KL03Z board
+
+---
+ _boards/frdmkl03z/CMakeLists.txt     |  7 +++++++
+ _boards/frdmkl03z/Kconfig            | 17 +++++++++++++++++
+ _boards/frdmkl03z/Kconfig.defconfig  |  4 ++++
+ _boards/frdmkl03z/board_runner.cmake | 10 ++++++++++
+ _boards/frdmkl03z/prj.conf           | 15 +++++++++++++++
+ _boards/frdmkl03z/variable.cmake     | 13 +++++++++++++
+ 7 files changed, 67 insertions(+), 1 deletion(-)
+ create mode 100644 _boards/frdmkl03z/CMakeLists.txt
+ create mode 100644 _boards/frdmkl03z/Kconfig
+ create mode 100644 _boards/frdmkl03z/Kconfig.defconfig
+ create mode 100644 _boards/frdmkl03z/board_runner.cmake
+ create mode 100644 _boards/frdmkl03z/prj.conf
+ create mode 100644 _boards/frdmkl03z/variable.cmake
+
+diff --git a/_boards/frdmkl03z/CMakeLists.txt b/_boards/frdmkl03z/CMakeLists.txt
+new file mode 100644
+index 000000000..464303b95
+--- /dev/null
++++ b/_boards/frdmkl03z/CMakeLists.txt
+@@ -0,0 +1,7 @@
++# Copyright 2024 NXP
++# All rights reserved.
++#
++# SPDX-License-Identifier: BSD-3-Clause
++include(${SdkRootDirPath}/arch/arm/target/flash.cmake)
++include(${SdkRootDirPath}/examples/_common/project_setting/arm_common.cmake)
++
+diff --git a/_boards/frdmkl03z/Kconfig b/_boards/frdmkl03z/Kconfig
+new file mode 100644
+index 000000000..491bac875
+--- /dev/null
++++ b/_boards/frdmkl03z/Kconfig
+@@ -0,0 +1,17 @@
++# Copyright 2024 NXP
++# All rights reserved.
++#
++# SPDX-License-Identifier: BSD-3-Clause
++
++rsource "Kconfig.defconfig"
++
++config MCUX_HW_BOARD_frdmkl03z
++    bool
++    default y
++    imply MCUX_HW_DEVICE_MKL03Z4
++    imply MCUX_COMPONENT_driver.clock
++    imply MCUX_COMPONENT_driver.common
++    imply MCUX_COMPONENT_driver.lpuart
++    imply MCUX_COMPONENT_driver.port_kl0
++    imply MCUX_COMPONENT_driver.smc
++    imply MCUX_COMPONENT_driver.gpio
+\ No newline at end of file
+diff --git a/_boards/frdmkl03z/Kconfig.defconfig b/_boards/frdmkl03z/Kconfig.defconfig
+new file mode 100644
+index 000000000..81f98ce46
+--- /dev/null
++++ b/_boards/frdmkl03z/Kconfig.defconfig
+@@ -0,0 +1,4 @@
++# Copyright 2024 NXP
++# All rights reserved.
++#
++# SPDX-License-Identifier: BSD-3-Clause
+diff --git a/_boards/frdmkl03z/board_runner.cmake b/_boards/frdmkl03z/board_runner.cmake
+new file mode 100644
+index 000000000..99c98f96f
+--- /dev/null
++++ b/_boards/frdmkl03z/board_runner.cmake
+@@ -0,0 +1,10 @@
++# Copyright 2024 NXP
++# All rights reserved.
++#
++# SPDX-License-Identifier: BSD-3-Clause
++board_runner_args(jlink "--device=${CONFIG_MCUX_TOOLCHAIN_JLINK_CPU_IDENTIFIER}")
++
++board_runner_args(linkserver  "--device=${CONFIG_MCUX_HW_DEVICE_ID}:FRDM-KL03Z")
++
++include(${SdkRootDirPath}/cmake/extension/runner/linkserver.board.cmake)
++include(${SdkRootDirPath}/cmake/extension/runner/jlink.board.cmake)
+diff --git a/_boards/frdmkl03z/prj.conf b/_boards/frdmkl03z/prj.conf
+new file mode 100644
+index 000000000..6d048183b
+--- /dev/null
++++ b/_boards/frdmkl03z/prj.conf
+@@ -0,0 +1,15 @@
++# Copyright 2024 NXP
++# All rights reserved.
++#
++# SPDX-License-Identifier: BSD-3-Clause
++
++CONFIG_MCUX_HW_DEVICE_PART_MKL03Z32VFK4=y
++
++# Board project basic segments
++#CONFIG_MCUX_PRJSEG_module.board.console_lite=y
++CONFIG_MCUX_PRJSEG_module.board.boardfile=y
++CONFIG_MCUX_PRJSEG_module.board.clock=y
++CONFIG_MCUX_PRJSEG_module.board.suite=y
++CONFIG_MCUX_PRJSEG_module.board.pinmux_project_folder=y
++CONFIG_MCUX_PRJSEG_project.hw_app_project_folder=y
++# end of Board project basic segments
+diff --git a/_boards/frdmkl03z/variable.cmake b/_boards/frdmkl03z/variable.cmake
+new file mode 100644
+index 000000000..0cc8b924d
+--- /dev/null
++++ b/_boards/frdmkl03z/variable.cmake
+@@ -0,0 +1,13 @@
++# Copyright 2024 NXP
++# All rights reserved.
++#
++# SPDX-License-Identifier: BSD-3-Clause
++
++mcux_set_variable(board frdmkl03z)
++mcux_set_variable(board_root examples/_boards)
++
++if (NOT DEFINED device)
++    mcux_set_variable(device MKL03Z4)
++endif()
++
++include(${SdkRootDirPath}/devices/Kinetis/KL0/${device}/variable.cmake)
+-- 
+2.44.0
+

@@ -236,12 +236,6 @@ function createCentralCompileCommands() {
     mv $TEMP_COMMANDS $ROOT/compile_commands.json
 }
 
-function getExtraConfFiles() {
-    DEVICE=$1
-    EXTRA_CONF_FILES=`jq -r '.configurePresets[] | select(.name == "build/'"$DEVICE"'") | .cacheVariables.EXTRA_CONF_FILE' device/CMakePresets.json`
-    echo "$EXTRA_CONF_FILES" | sed 's=${sourceDir}='"$ROOT"/device'=g'
-}
-
 function performAction() {
     DEVICE=$1
     ACTION=$2
@@ -251,15 +245,11 @@ function performAction() {
         update)
             git submodule update --init --recursive
             cd "$ROOT/.."
-            west update -o=--depth=1
+            west update
             west patch
-            west config --local build.cmake-args -- "-Wno-dev"
-            cd "$ROOT/scripts"
-            npm ci
-            ./generate-versions.mjs
             ;;
         clean)
-            rm -rf ../bootloader  ../c2usb  ../hal_nxp  ../modules  ../nrf  ../nrfxlib  ../zephyr ../.west
+            rm -rf ../bootloader  ../c2usb  ../hal_nxp  ../modules  ../nrf  ../nrfxlib  ../zephyr ../.west ../mcuxsdk
             ;;
         setup)
             # basic dependencies
@@ -276,22 +266,11 @@ function performAction() {
             # update following according to README
             git submodule init
             git submodule update --init --recursive
-            # c2usb is broken by default for some reason, so set it up manually
-            cd "$ROOT/.."
-            git clone https://github.com/IntergatedCircuits/c2usb
-            cd "$ROOT/../c2usb"
-            git submodule init
-            git submodule update --init --recursive
-            # now resume in normal setup
             cd "$ROOT/.."
             west init -l "$ROOT"
-            west update -o=--depth=1
-            west patch
             west config --local build.cmake-args -- "-Wno-dev"
-            rm -rf c2usb
-            cd "$ROOT/scripts"
-            npm i
-            ./generate-versions.mjs
+            west update
+            west patch
             ;;
         build)
             # reference version of the build process is to be found in scripts/make-release.mjs
@@ -301,14 +280,9 @@ function performAction() {
                 ZEPHYR_TOOLCHAIN_VARIANT=zephyr west build \
                     --build-dir "$ROOT/device/build/$DEVICE" "$ROOT/device" \
                     --pristine \
-                    --board "$DEVICE" \
                     --no-sysbuild \
                     -- \
-                    -DNCS_TOOLCHAIN_VERSION=NONE \
-                    -DCONF_FILE="$ROOT/device/prj_release.conf" \
-                    -DEXTRA_CONF_FILE="`getExtraConfFiles $DEVICE`" \
-                    -DBOARD_ROOT="$ROOT" \
-                    -Dmcuboot_OVERLAY_CONFIG="$ROOT/device/child_image/mcuboot.conf;$ROOT/device/child_image/$DEVICE.mcuboot.conf"
+                    --preset $DEVICE
 END
             createCentralCompileCommands
             ;;
@@ -410,6 +384,3 @@ function run() {
 }
 
 run $@
-
-
-
