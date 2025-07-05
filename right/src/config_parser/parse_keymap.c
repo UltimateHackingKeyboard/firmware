@@ -207,27 +207,34 @@ static parser_error_t parseMouseAction(key_action_t *keyAction, config_buffer_t 
     return ParserError_Success;
 }
 
-static void zeroAction(key_action_t *keyAction)
+static void zeroAction(key_action_t *keyAction, rgb_t* color)
 {
     keyAction->type = KeyActionType_None;
-    keyAction->color.red = 0;
-    keyAction->color.green = 0;
-    keyAction->color.blue = 0;
+    keyAction->color.red = color->red;
+    keyAction->color.green = color->green;
+    keyAction->color.blue = color->blue;
     keyAction->colorOverridden = false;
 }
 
-static parser_error_t parseZeroBlock(key_action_t *keyAction, config_buffer_t *buffer, uint8_t *actionsToZero)
+static parser_error_t parseZeroBlock(key_action_t *keyAction, config_buffer_t *buffer, uint8_t *actionCountToZero, rgb_t* color)
 {
-    if (actionsToZero != NULL) {
-        *actionsToZero = ReadUInt8(buffer);
+    if (actionCountToZero != NULL) {
+        *actionCountToZero = ReadUInt8(buffer);
+
+        // Parse color
+        key_action_t dummyAction;
+        parseKeyActionColor(&dummyAction, buffer);
+        color->red = dummyAction.color.red;
+        color->green = dummyAction.color.green;
+        color->blue = dummyAction.color.blue;
     }
-    if (*actionsToZero > 0) {
-        zeroAction(keyAction);
+    if (*actionCountToZero > 0) {
+        zeroAction(keyAction, color);
     }
     return ParserError_Success;
 }
 
-static parser_error_t parseKeyAction(key_action_t *keyAction, config_buffer_t *buffer, parse_mode_t parseMode, uint8_t *actionsToZero)
+static parser_error_t parseKeyAction(key_action_t *keyAction, config_buffer_t *buffer, parse_mode_t parseMode, uint8_t *actionCountToZero, rgb_t* zeroColor)
 {
     uint8_t keyActionType = ReadUInt8(buffer);
     key_action_t dummyKeyAction;
@@ -256,7 +263,7 @@ static parser_error_t parseKeyAction(key_action_t *keyAction, config_buffer_t *b
         case SerializedKeyActionType_Other:
             return parseOtherAction(keyAction, buffer);
         case SerializedKeyActionType_ZeroBlock:
-            return parseZeroBlock(keyAction, buffer, actionsToZero);
+            return parseZeroBlock(keyAction, buffer, actionCountToZero, zeroColor);
     }
 
     ConfigParser_Error(buffer, "Invalid key action type: %d", keyActionType);
@@ -275,21 +282,22 @@ static parser_error_t parseKeyActions(uint8_t targetLayer, config_buffer_t *buff
     }
     slot_t slotId = ModuleIdToSlotId(moduleId);
     uint8_t zeroUntil = 0;
+    rgb_t zeroColor = {0, 0, 0};
     for (uint8_t actionIdx = 0; actionIdx < actionCount; actionIdx++) {
         key_action_t dummyKeyAction;
         key_action_t *keyAction = actionIdx < MAX_KEY_COUNT_PER_MODULE ? &CurrentKeymap[targetLayer][slotId][actionIdx] : &dummyKeyAction;
 
         if (actionIdx < zeroUntil) {
-            zeroAction(keyAction);
+            zeroAction(keyAction, &zeroColor);
         } else {
-            uint8_t actionsToZero = 0;
-            errorCode = parseKeyAction(keyAction, buffer, parseMode, &actionsToZero);
+            uint8_t actionCountToZero = 0;
+            errorCode = parseKeyAction(keyAction, buffer, parseMode, &actionCountToZero, &zeroColor);
 
             if (errorCode != ParserError_Success) {
                 return errorCode;
             }
 
-            zeroUntil = actionIdx + actionsToZero;
+            zeroUntil = actionIdx + actionCountToZero;
         }
     }
     /* default second touchpad action to right button */
