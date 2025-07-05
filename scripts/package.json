@@ -22,7 +22,7 @@
   "deviceProtocolVersion": "4.16.1",
   "moduleProtocolVersion": "4.3.0",
   "dongleProtocolVersion": "1.0.2",
-  "userConfigVersion": "11.0.0",
+  "userConfigVersion": "11.1.0",
   "hardwareConfigVersion": "1.0.0",
   "smartMacrosVersion": "3.6.1",
   "devices": [

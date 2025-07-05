@@ -28,7 +28,7 @@
         SerializedKeyActionType_PlayMacro = 35,
         SerializedKeyActionType_Connections = 36,
         SerializedKeyActionType_Other = 37,
-        SerializedKeyActionType_ZeroBlock = 38,
+        SerializedKeyActionType_NoneBlock = 38,
     } serialized_key_action_type_t;
 
     typedef enum {
