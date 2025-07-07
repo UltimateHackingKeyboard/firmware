@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [15.0.0] - 2025-07-07
+
+Device Protocol: 4.16.1 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: **12.0.0** | Hardware Config: 1.0.0 | Smart Macros: 3.7.0
+
+- Compress subsequent matching key actions for more efficient storage. `USERCONFIG:MAJOR`
+- Make battery percentage indicator more accurate.
+- Make system scancodes work in macro actions.
+- Improve crash detection.
+
 ## [14.2.1] - 2025-07-01
 
 Device Protocol: 4.16.**1** | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 11.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.6.**1**
