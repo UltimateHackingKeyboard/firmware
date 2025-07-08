@@ -9,6 +9,12 @@ set(UHK_VERSIONS_FILE ${CMAKE_CURRENT_LIST_DIR}/versions.c)
 # only set to generated if the file is generated at build time (execute_process() creates it at configure time)
 #set_source_files_properties(${UHK_VERSIONS_FILE} PROPERTIES GENERATED TRUE)
 
+configure_file(
+    ${CMAKE_CURRENT_LIST_DIR}/../scripts/package.json
+    ${CMAKE_CURRENT_BINARY_DIR}/package.json
+    COPYONLY
+)
+
 if(NOT UHK_VERSIONS_MODE STREQUAL "none")
     message(STATUS "UHK: generating ${UHK_VERSIONS_FILE}")
     find_package(Python 3 REQUIRED)
@@ -23,7 +29,7 @@ if(NOT UHK_VERSIONS_MODE STREQUAL "none")
         set(GENERATE_VERSIONS_ARG "--withZeroVersions")
     endif()
     execute_process(
-        COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_LIST_DIR}/../scripts/generate_versions.py" ${GENERATE_VERSIONS_ARG}
+        COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_LIST_DIR}/../scripts/generate_versions.py" ${CMAKE_CURRENT_BINARY_DIR}/package.json ${GENERATE_VERSIONS_ARG}
         WORKING_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}"
         RESULT_VARIABLE GENERATE_VERSIONS_RESULT
         OUTPUT_VARIABLE GENERATE_VERSIONS_OUTPUT
