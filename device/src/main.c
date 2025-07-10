@@ -117,6 +117,35 @@ void Main_Wake() {
     // k_wakeup(Main_ThreadId);
 }
 
+static void detectSpinningEventLoop() {
+    const uint16_t maxEventsPerSecond = 100;
+    static uint32_t thisCheckTime = 0;
+    static uint16_t eventCount = 0;
+    static uint16_t spinPeriods = 0;
+
+    if (thisCheckTime == CurrentTime / 1024) {
+        eventCount++;
+    } else {
+        if (eventCount > maxEventsPerSecond) {
+            spinPeriods++;
+            if (spinPeriods > 30) {
+#ifdef __ZEPHYR__
+                device_id_t target = DeviceId_Uhk80_Right;
+#else
+                device_id_t target = DEVICE_ID;
+#endif
+                LogTo(target, LogTarget_Uart | LogTarget_ErrorBuffer, "Looks like the event loop is spinning quite a lot: %u events in the last second.\n", eventCount);
+                LogTo(target, LogTarget_Uart | LogTarget_ErrorBuffer, "EV: %x\n", StateWormhole.traceBuffer.eventVector);
+                spinPeriods = 0;
+            }
+        } else {
+            spinPeriods = 0;
+        }
+        thisCheckTime = CurrentTime / 1024;
+        eventCount = 0;
+    }
+}
+
 void mainRuntime(void) {
     Main_ThreadId = k_current_get();
     printk("----------\n" DEVICE_NAME " started\n");
@@ -235,6 +264,7 @@ void mainRuntime(void) {
             EVENTLOOP_TIMING(EventloopTiming_End());
         }
         scheduleNextRun();
+        detectSpinningEventLoop();
         UserLogic_LastEventloopTime = CurrentTime;
     }
 #else
@@ -244,6 +274,7 @@ void mainRuntime(void) {
         Messenger_ProcessQueue();
         RunUhk80LeftHalfLogic();
         scheduleNextRun();
+        detectSpinningEventLoop();
     }
 #endif
 }

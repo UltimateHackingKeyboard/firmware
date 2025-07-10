@@ -34,8 +34,6 @@ void UsbCommand_GetVariable(const uint8_t *GenericHidOutBuffer, uint8_t *Generic
         case UsbVariable_StatusBuffer:
             for (uint8_t i = 1; i < USB_GENERIC_HID_IN_BUFFER_LENGTH; i++) {
                 char c = Macros_ConsumeStatusChar();
-                if (c == '<') c = '[';
-                if (c == '>') c = ']';
                 SetUsbTxBufferUint8(i, c);
                 if (c == '\0') {
                     break;
