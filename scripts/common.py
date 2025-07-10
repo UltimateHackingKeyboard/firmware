@@ -12,6 +12,8 @@ def get_git_info():
         'root': exec('git rev-parse --show-toplevel')
     }
 
-def read_package_json():
-    with open(os.path.join(os.path.dirname(__file__), 'package.json'), 'r') as f:
+def read_package_json(path=None):
+    if path is None:
+        path = os.path.join(os.path.dirname(__file__), 'package.json')
+    with open(path, 'r') as f:
         return json.load(f)

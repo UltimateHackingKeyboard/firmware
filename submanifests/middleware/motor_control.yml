@@ -1,0 +1,43 @@
+manifest:
+  remotes:
+  - name: nxp
+    url-base: https://github.com/NXP
+  - name: nxp-zephyr
+    url-base: https://github.com/nxp-zephyr
+  - name: nxp-mcuxpresso
+    url-base: https://github.com/nxp-mcuxpresso
+  defaults:
+    remote: nxp-mcuxpresso
+  projects:
+  - name: motor_control
+    userdata:
+      owner: josef.tkadlec@nxp.com
+      track_branch: main_github
+      branch_flow: false
+    path: mcuxsdk/middleware/motor_control
+    revision: b0217151bbcbf5b4d5421b8e8732097a4c84a555
+    repo-path: mcux-motor_control
+    groups:
+    - motor_control
+  - name: rtcesl
+    userdata:
+      owner: pavel.rech@nxp.com
+      track_branch: main_github
+      branch_flow: false
+    path: mcuxsdk/middleware/rtcesl
+    revision: 4168ee3eb1b46a39d2effe545c9135e29714d5ce
+    repo-path: rtcesl
+    groups:
+    - rtcesl
+    - motor_control
+  - name: freemaster
+    userdata:
+      owner: michal.hanak@nxp.com
+      track_branch: main
+      branch_flow: false
+    path: mcuxsdk/middleware/freemaster
+    revision: 0ea8ce8d8f4a691461444c96cec91e459ee0310b
+    repo-path: mcux-freemaster
+    groups:
+    - freemaster
+    - motor_control

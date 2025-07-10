@@ -1,0 +1,48 @@
+manifest:
+  remotes:
+  - name: nxp
+    url-base: https://github.com/NXP
+  - name: nxp-zephyr
+    url-base: https://github.com/nxp-zephyr
+  - name: nxp-mcuxpresso
+    url-base: https://github.com/nxp-mcuxpresso
+  defaults:
+    remote: nxp-mcuxpresso
+  projects:
+  - name: fatfs
+    revision: 5d17d4461624affe558488a6ddeaa3b0d461910d
+    path: mcuxsdk/middleware/fatfs
+    groups:
+    - fatfs
+    - middleware
+    userdata:
+      track_branch: mcux_main
+      branch_flow: false
+  - name: mcux-sdk-middleware-sdmmc
+    userdata:
+      owner: yangbo.lu@nxp.com
+      track_branch: mcux_main
+      branch_flow: false
+    revision: de2766bc4f9e0ac8ed75706497e3f331fcbe35db
+    path: mcuxsdk/middleware/sdmmc
+    groups:
+    - sdmmc
+    - middleware
+  - name: dhara
+    userdata:
+      owner: null
+      track_branch: mcux_main
+      branch_flow: false
+    path: mcuxsdk/middleware/dhara
+    revision: 2dfeb816f49ecf4fea20cd566e96a2c36cc53ba9
+    groups:
+    - dhara
+  - name: littlefs
+    userdata:
+      owner: david.jurajda@nxp.com
+      track_branch: mcux_main
+      branch_flow: false
+    path: mcuxsdk/middleware/littlefs
+    revision: 39df4a21caaefea7fb8741b702b609c373f14dd9
+    groups:
+    - littlefs

@@ -99,11 +99,15 @@ class WestPatch(WestCommand):
         for project in self.get_git_projects():
             project_repo = git.Repo(project.abspath)
             if project_repo.is_dirty(untracked_files=True):
+                try:
+                    project_repo.git.add(A=True)
+                except git.exc.GitCommandError as e:
+                    log.wrn(f'{project.name} not active repo, skipping')
+                    continue
+                commit_message = input(f'Enter commit message for {project.name}: ')
+                project_repo.git.commit('-m', commit_message)
                 patch_dir = self.get_patch_dir(project)
                 patch_dir.mkdir(exist_ok=True)
-                commit_message = input(f'Enter commit message for {project.name}: ')
-                project_repo.git.add(A=True)
-                project_repo.git.commit('-m', commit_message)
                 ret = project_repo.git.format_patch('-1', '-o', patch_dir.as_posix())
                 log.inf(f'Committed changes and created patch {ret} for {project.name}')
             else:

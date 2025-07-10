@@ -1,0 +1,43 @@
+From 98596636af4da991656f93ebf1e099046ef5d813 Mon Sep 17 00:00:00 2001
+From: Benedek Kupper <kupper.benedek@gmail.com>
+Date: Thu, 26 Jun 2025 21:32:00 +0200
+Subject: [PATCH] fsl-i2c: callback on every slave receive
+
+and pass the received byte in userData.
+This is used for the variable-length protocol of UHK.
+
+---
+ drivers/i2c/fsl_i2c.c | 9 +++++----
+ 1 file changed, 5 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/i2c/fsl_i2c.c b/drivers/i2c/fsl_i2c.c
+index a8a3449..63e29d4 100644
+--- a/drivers/i2c/fsl_i2c.c
++++ b/drivers/i2c/fsl_i2c.c
+@@ -2289,8 +2289,12 @@ void I2C_SlaveTransferHandleIRQ(I2C_Type *base, void *i2cHandle)
+         else
+         {
+             tmpDataSize = xfer->dataSize;
++            /* Slave receive, master writing to slave. */
++            uint8_t data = base->D;
++
+             /* If we're out of data, invoke callback to get more. */
+-            if ((NULL == xfer->data) || (0U == tmpDataSize))
++            // if ((NULL == xfer->data) || (0U == tmpDataSize))
++            *(uint8_t*)handle->userData = data;
+             {
+                 xfer->event = kI2C_SlaveReceiveEvent;
+ 
+@@ -2303,9 +2307,6 @@ void I2C_SlaveTransferHandleIRQ(I2C_Type *base, void *i2cHandle)
+                 xfer->transferredCount = 0;
+             }
+ 
+-            /* Slave receive, master writing to slave. */
+-            uint8_t data = base->D;
+-
+             if (0U != (handle->transfer.dataSize))
+             {
+                 /* Receive data. */
+-- 
+2.44.0
+

@@ -15,8 +15,6 @@
 #define MERGE_SENSOR_PORT        PORTB
 #define MERGE_SENSOR_CLOCK       kCLOCK_PortB
 #define MERGE_SENSOR_PIN         3
-#define MERGE_SENSOR_IRQ         PORTB_IRQn
-#define MERGE_SENSOR_IRQ_HANDLER PORTB_IRQHandler
 #endif
 
 #define MERGE_SENSOR_UPDATE_PERIOD 500
@@ -70,6 +68,6 @@ merge_sensor_state_t MergeSensor_IsMerged(void)
 #elif (defined(__ZEPHYR__) && !DEVICE_HAS_MERGE_SENSOR)
     return MergeSensor_HalvesAreMerged;
 #elif !defined(__ZEPHYR__)
-    return !GPIO_ReadPinInput(MERGE_SENSOR_GPIO, MERGE_SENSOR_PIN) ? MergeSensorState_Joined : MergeSensorState_Split;
+    return !GPIO_PinRead(MERGE_SENSOR_GPIO, MERGE_SENSOR_PIN) ? MergeSensorState_Joined : MergeSensorState_Split;
 #endif  //__ZEPHYR__
 }

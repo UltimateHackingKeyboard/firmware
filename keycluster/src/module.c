@@ -65,32 +65,32 @@ void InitLedDriverSdb(void)
     CLOCK_EnableClock(SDB_CLOCK);
     PORT_SetPinMux(SDB_PORT, SDB_PIN, kPORT_MuxAsGpio);
     GPIO_PinInit(SDB_GPIO, SDB_PIN, &(gpio_pin_config_t){kGPIO_DigitalOutput, 0});
-    GPIO_WritePinOutput(SDB_GPIO, SDB_PIN, 1);
+    GPIO_PinWrite(SDB_GPIO, SDB_PIN, 1);
 }
 
 void BlackberryTrackball_Update(void)
 {
     static bool oldLeft, oldRight, oldUp, oldDown, firstRun=true;
 
-    uint8_t newLeft = GPIO_ReadPinInput(BLACKBERRY_TRACKBALL_LEFT_GPIO, BLACKBERRY_TRACKBALL_LEFT_PIN);
+    uint8_t newLeft = GPIO_PinRead(BLACKBERRY_TRACKBALL_LEFT_GPIO, BLACKBERRY_TRACKBALL_LEFT_PIN);
     if (oldLeft != newLeft) {
         PointerDelta.x--;
         oldLeft = newLeft;
     }
 
-    uint8_t newRight = GPIO_ReadPinInput(BLACKBERRY_TRACKBALL_RIGHT_GPIO, BLACKBERRY_TRACKBALL_RIGHT_PIN);
+    uint8_t newRight = GPIO_PinRead(BLACKBERRY_TRACKBALL_RIGHT_GPIO, BLACKBERRY_TRACKBALL_RIGHT_PIN);
     if (oldRight != newRight) {
         PointerDelta.x++;
         oldRight = newRight;
     }
 
-    uint8_t newUp = GPIO_ReadPinInput(BLACKBERRY_TRACKBALL_UP_GPIO, BLACKBERRY_TRACKBALL_UP_PIN);
+    uint8_t newUp = GPIO_PinRead(BLACKBERRY_TRACKBALL_UP_GPIO, BLACKBERRY_TRACKBALL_UP_PIN);
     if (oldUp != newUp) {
         PointerDelta.y--;
         oldUp = newUp;
     }
 
-    uint8_t newDown = GPIO_ReadPinInput(BLACKBERRY_TRACKBALL_DOWN_GPIO, BLACKBERRY_TRACKBALL_DOWN_PIN);
+    uint8_t newDown = GPIO_PinRead(BLACKBERRY_TRACKBALL_DOWN_GPIO, BLACKBERRY_TRACKBALL_DOWN_PIN);
     if (oldDown != newDown) {
         PointerDelta.y++;
         oldDown = newDown;

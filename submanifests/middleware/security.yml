@@ -1,0 +1,183 @@
+manifest:
+  remotes:
+  - name: nxp
+    url-base: https://github.com/NXP
+  - name: nxp-zephyr
+    url-base: https://github.com/nxp-zephyr
+  - name: nxp-mcuxpresso
+    url-base: https://github.com/nxp-mcuxpresso
+  - name: qcbor_upstream
+    url-base: https://github.com/laurencelundblade
+  defaults:
+    remote: nxp-mcuxpresso
+  projects:
+  - name: els_pkc
+    userdata:
+      owner: vit.chmelar@nxp.com
+      track_branch: mcux_main
+      branch_flow: false
+    path: mcuxsdk/components/els_pkc
+    revision: 1db724fdad2fdbf87c26d76d1dc438cdce4ba537
+    url: https://github.com/NXP/els_pkc
+    groups:
+    - security
+    - els_pkc
+  - name: se_hostlib
+    userdata:
+      owner: null
+      track_branch: mcux_develop
+      branch_flow: false
+    path: mcuxsdk/middleware/se_hostlib
+    revision: 89daa90316f650b21f271cc577db049eb79dedca
+    submodules: true
+    groups:
+    - bifrost
+  - name: secure-subsystem
+    userdata:
+      owner: vit.chmelar@nxp.com
+      track_branch: mcux_main
+      branch_flow: false
+    path: mcuxsdk/middleware/secure-subsystem
+    revision: 8d5f81c59c047d7e767f58a010293efb4a583d40
+    url: https://github.com/nxp-mcuxpresso/mcux-secure-subsystem
+    groups:
+    - secure-subsystem
+    - ble_nxp
+  - name: edgelock
+    userdata:
+      owner: vit.solcik@nxp.com
+      track_branch: mcux_main
+      branch_flow: false
+    path: mcuxsdk/firmware/edgelock
+    revision: 075651881abbc82810f47d7b8ba4d400c413676d
+    repo-path: mcux-edgelock
+    groups:
+    - edgelock
+    - security
+  - name: mbedtls
+    userdata:
+      owner: vit.chmelar@nxp.com
+      track_branch: mcux_main
+      branch_flow: false
+    path: mcuxsdk/middleware/mbedtls
+    revision: 5891f5c6e48dac322c4624d787c3c2e8ac90e5a9
+    groups:
+    - mbedtls
+    - security
+  - name: mbedtls3x
+    userdata:
+      owner: ruchika.gupta_1@nxp.com
+      dev_branch: mcux_main
+      track_branch: mcux_main
+      branch_flow: false
+    remote: nxp
+    repo-path: nxp_mbedtls
+    path: mcuxsdk/middleware/mbedtls3x
+    revision: b57efedb2c7f3072d11488f941b3729c7fc58c82
+    groups:
+    - mbedtls3x
+    - security
+  - name: nxp_iot_agent
+    userdata:
+      owner: bojan.simoneta@nxp.com
+      track_branch: master
+      branch_flow: false
+    remote: nxp
+    repo-path: el2go-agent
+    path: mcuxsdk/middleware/nxp_iot_agent
+    revision: a0dc88f3091034a484520d967576cf2d064f886f
+    groups:
+    - nxp_iot_agent
+    - security
+  - name: tfm
+    userdata:
+      owner: waqar.tahir@nxp.com
+      track_branch: mcux_main
+      branch_flow: false
+    path: mcuxsdk/middleware/tfm/tf-m
+    remote: nxp
+    repo-path: nxp_tf-m
+    revision: 7f5b012a40378adce6db7c8cd910aa04c7c9d0ae
+    groups:
+    - tfm
+  - name: psa_crypto_driver
+    userdata:
+      owner: vit.chmelar@nxp.com
+      track_branch: main-dev
+      branch_flow: false
+    path: mcuxsdk/components/psa_crypto_driver
+    revision: df8d07d27ff134ec98979b5b34d53442d8cf57a2
+    url: https://github.com/NXP/psa_crypto_driver
+    groups:
+    - psa_crypto_driver
+    - security
+  - name: mmcau
+    userdata:
+      owner: vit.chmelar@nxp.com
+      track_branch: feature/MCUX-69470-migrate-mmcau
+      branch_flow: false
+    path: mcuxsdk/middleware/mmcau
+    revision: f94cbcae9ea0de3796f19674c2acede847191c7f
+    url: https://github.com/nxp-mcuxpresso/mcux-mmcau
+    groups:
+    - mmcau
+    - security
+  - name: mbedcrypto
+    userdata:
+      owner: waqar.tahir@nxp.com
+      track_branch: develop/tf-m-1.8
+      branch_flow: false
+    path: mcuxsdk/middleware/tfm/mbed-crypto
+    remote: nxp
+    repo-path: nxp_mbedtls
+    revision: 0db4d9a97c95983aefa8aabfe61ddbdeedcd0e61
+    groups:
+    - mbedcrypto
+    - tfm
+  - name: psa-arch-tests
+    userdata:
+      owner: waqar.tahir@nxp.com
+      track_branch: mcux_main
+      branch_flow: false
+    path: mcuxsdk/middleware/tfm/psa-arch-tests
+    remote: nxp
+    repo-path: nxp_psa_arch_test
+    revision: 909959e35d4c3a82450182f777b49c5c33902d90
+    groups:
+    - tfm
+    - security
+  - name: tf-m-tests
+    userdata:
+      owner: waqar.tahir@nxp.com
+      track_branch: mcux_main
+      branch_flow: false
+    path: mcuxsdk/middleware/tfm/tf-m-tests
+    remote: nxp-mcuxpresso
+    repo-path: mcux-tf-m-tests
+    revision: 6f642014a8c255e163ae0bc4d21e327de694d6a2
+    groups:
+    - tfm
+    - security
+  - name: qcbor
+    userdata:
+      owner: waqar.tahir@nxp.com
+      track_branch: master
+      branch_flow: false
+    path: mcuxsdk/middleware/tfm/qcbor
+    revision: 751d36583a9ce1a640900c57e13c9b6b8f3a2ba2
+    remote: qcbor_upstream
+    repo-path: QCBOR
+    groups:
+    - tfm
+    - security
+  - name: secure_storage
+    userdata:
+      owner: ruchika.gupta_1@nxp.com
+      track_branch: main
+      branch_flow: false
+    path: mcuxsdk/middleware/secure_storage
+    remote: nxp-mcuxpresso
+    revision: f903103bcb674cf44e54637a9a191b11126e9208
+    repo-path: secure_storage
+    groups:
+    - bifrost
