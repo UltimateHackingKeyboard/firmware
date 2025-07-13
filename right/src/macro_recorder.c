@@ -179,7 +179,7 @@ static void playReport(usb_basic_keyboard_report_t *report)
             uint16_t timeout = readUInt16();
             if (!delayActive) {
                 delayActive = true;
-                delayStart = CurrentTime;
+                delayStart = Timer_GetCurrentTime();
                 playbackPosition -= 3;
             } else {
                 if (Timer_GetElapsedTime(&delayStart) < timeout) {
@@ -298,7 +298,7 @@ void MacroRecorder_UpdateRecordingLed()
 
     ledOn = !ledOn;
     LedDisplay_SetIcon(LedDisplayIcon_Adaptive, ledOn);
-    EventScheduler_Schedule(CurrentTime + ledFlashingPeriod, EventSchedulerEvent_MacroRecorderFlashing, "macro recorder flashing");
+    EventScheduler_Schedule(Timer_GetCurrentTime() + ledFlashingPeriod, EventSchedulerEvent_MacroRecorderFlashing, "macro recorder flashing");
 }
 
 void MacroRecorder_StartRecording(uint16_t id, bool blind)

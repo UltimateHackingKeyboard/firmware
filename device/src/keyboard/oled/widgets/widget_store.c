@@ -181,9 +181,9 @@ static string_segment_t getLeftStatusText() {
 static char getBlinkingColor() {
     char color;
 
-    uint32_t state = (CurrentTime / 1024) % 2;
+    uint32_t state = (Timer_GetCurrentTime() / 1024) % 2;
     color = state ? FontControl_SetColorWhite : FontControl_SetColorGray;
-    uint32_t nextTime = ((CurrentTime / 1024) + 1) * 1024;
+    uint32_t nextTime = ((Timer_GetCurrentTime() / 1024) + 1) * 1024;
     EventScheduler_Schedule(nextTime + 1, EventSchedulerEvent_BlinkBatteryIcon, "battery icon blink");
 
     return color;
@@ -345,7 +345,7 @@ void WidgetStore_Init()
     StatusWidget = CustomWidget_Build(&drawStatus);
     CanvasWidget = CustomWidget_Build(NULL);
     ConsoleWidget = ConsoleWidget_Build();
-    EventScheduler_Schedule(CurrentTime+1000, EventSchedulerEvent_UpdateDebugOledLine, "Widget store init");
+    EventScheduler_Schedule(Timer_GetCurrentTime()+1000, EventSchedulerEvent_UpdateDebugOledLine, "Widget store init");
 }
 
 #pragma GCC diagnostic pop

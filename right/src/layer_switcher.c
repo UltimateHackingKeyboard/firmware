@@ -119,11 +119,11 @@ void LayerSwitcher_DoubleTapToggle(layer_id_t layer, key_state_t* keyState) {
         LayerStack_LegacyPop(layer);
         if (doubleTapSwitchLayerKey == keyState && Timer_GetElapsedTimeAndSetCurrent(&doubleTapSwitchLayerStartTime) < Cfg.DoubletapTimeout) {
             LayerStack_LegacyPush(layer);
-            doubleTapSwitchLayerTriggerTime = CurrentTime;
-            doubleTapSwitchLayerStartTime = CurrentTime;
+            doubleTapSwitchLayerTriggerTime = Timer_GetCurrentTime();
+            doubleTapSwitchLayerStartTime = Timer_GetCurrentTime();
         } else {
             doubleTapSwitchLayerKey = keyState;
-            doubleTapSwitchLayerStartTime = CurrentTime;
+            doubleTapSwitchLayerStartTime = Timer_GetCurrentTime();
         }
     }
 

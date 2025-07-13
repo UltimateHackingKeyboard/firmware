@@ -40,7 +40,7 @@ void MergeSensor_Update(void) {
         executeEffects(newState);
     }
 #if DEVICE_HAS_MERGE_SENSOR
-    EventScheduler_Schedule(CurrentTime + MERGE_SENSOR_UPDATE_PERIOD, EventSchedulerEvent_UpdateMergeSensor, "update merge sensor");
+    EventScheduler_Schedule(Timer_GetCurrentTime() + MERGE_SENSOR_UPDATE_PERIOD, EventSchedulerEvent_UpdateMergeSensor, "update merge sensor");
 #endif
 }
 
@@ -57,7 +57,7 @@ void MergeSensor_Init(void)
 #endif //__ZEPHYR__
 
 #if DEVICE_HAS_MERGE_SENSOR
-    EventScheduler_Schedule(CurrentTime + MERGE_SENSOR_UPDATE_PERIOD, EventSchedulerEvent_UpdateMergeSensor, "init merge sensor");
+    EventScheduler_Schedule(Timer_GetCurrentTime() + MERGE_SENSOR_UPDATE_PERIOD, EventSchedulerEvent_UpdateMergeSensor, "init merge sensor");
 #endif
 }
 

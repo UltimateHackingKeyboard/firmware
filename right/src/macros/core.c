@@ -780,10 +780,10 @@ static void executeBlocking(void)
     bool someoneBlocking = false;
     uint8_t remainingExecution = Cfg.Macros_MaxBatchSize;
     Macros_SchedulerState.remainingCount = Macros_SchedulerState.activeSlotCount;
-    uint32_t startTime = CurrentTime;
+    uint32_t startTime = Timer_GetCurrentTime();
     uint8_t timeQuota = 5;
 
-    while (Macros_SchedulerState.remainingCount > 0 && remainingExecution > 0 && CurrentTime - startTime < timeQuota) {
+    while (Macros_SchedulerState.remainingCount > 0 && remainingExecution > 0 && Timer_GetCurrentTime() - startTime < timeQuota) {
         macro_result_t res = MacroResult_YieldFlag;
         S = &MacroState[Macros_SchedulerState.currentSlotIdx];
 
@@ -806,7 +806,7 @@ static void executeBlocking(void)
         remainingExecution--;
     }
 
-    bool finishedBecauseOfTime = CurrentTime - startTime >= timeQuota;
+    bool finishedBecauseOfTime = Timer_GetCurrentTime() - startTime >= timeQuota;
     bool finishedBecauseOfCount = remainingExecution == 0;
     bool finishedBecauseOfBlocking = someoneBlocking;
 
@@ -890,10 +890,10 @@ void Macros_ContinueMacro(void)
         break;
     case Scheduler_Blocking:
 #if (DEBUG_CHECK_MACRO_RUN_TIMES && defined(__ZEPHYR__))
-    uint64_t start = CurrentTime;
+    uint64_t start = Timer_GetCurrentTime();
     executeBlocking();
     recalculateSleepingMods();
-    uint64_t end = CurrentTime;
+    uint64_t end = Timer_GetCurrentTime();
     uint32_t time = end - start;
     if (time > 20) {
         Macros_ReportErrorPrintf(NULL, "Macro engine iteration took: %d ms. This threatens reliable uhk function!\n", time);

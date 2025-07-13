@@ -144,8 +144,8 @@ static void initUsb() {
 static void blinkSfjl() {
     KeyBacklightBrightness = 255;
     Ledmap_SetSfjlValues();
-    uint32_t blinkStartTime = CurrentTime;
-    while (CurrentTime - blinkStartTime < 50) {
+    uint32_t blinkStartTime = Timer_GetCurrentTime();
+    while (Timer_GetCurrentTime() - blinkStartTime < 50) {
         __WFI();
     }
     KeyBacklightBrightness = 0;
@@ -241,7 +241,7 @@ int main(void)
                 EventScheduler_Process();
             }
 
-            UserLogic_LastEventloopTime = CurrentTime;
+            UserLogic_LastEventloopTime = Timer_GetCurrentTime();
 
             Trace_Printc("}");
             __WFI();

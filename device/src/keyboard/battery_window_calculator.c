@@ -16,7 +16,7 @@ uint8_t pos = 0;
 uint8_t count = 0;
 
 static bool shouldAddRecord(uint16_t voltage) {
-    return CurrentTime - lastMeasurement > CHARGER_UPDATE_PERIOD/2 && voltage != 0;
+    return Timer_GetCurrentTime() - lastMeasurement > CHARGER_UPDATE_PERIOD/2 && voltage != 0;
 }
 
 static void addNewRecord(uint16_t voltage) {
@@ -34,7 +34,7 @@ static void addNewRecord(uint16_t voltage) {
     sum += voltage;
 
     count = MIN(count + 1, WINDOW_SIZE);
-    lastMeasurement = CurrentTime;
+    lastMeasurement = Timer_GetCurrentTime();
 }
 
 uint16_t BatteryCalculator_CalculateWindowAverageVoltage(uint16_t voltage) {

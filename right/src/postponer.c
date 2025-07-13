@@ -85,7 +85,7 @@ static void applyEventAndConsume(postponer_buffer_record_type_t* rec) {
     switch (rec->event.type) {
         case PostponerEventType_PressKey:
         case PostponerEventType_ReleaseKey:
-            KEY_TIMING(KeyTiming_RecordKeystroke(rec->event.key.keyState, rec->event.key.active, rec->time, CurrentTime));
+            KEY_TIMING(KeyTiming_RecordKeystroke(rec->event.key.keyState, rec->event.key.active, rec->time, Timer_GetCurrentTime()));
             rec->event.key.keyState->current = rec->event.key.active;
             Postponer_LastKeyLayer = rec->event.key.layer;
             Postponer_LastKeyMods = rec->event.key.modifiers;
@@ -108,7 +108,7 @@ static void applyEventAndConsume(postponer_buffer_record_type_t* rec) {
             static bool delayActive = false;
             static uint32_t delayStartedAt = 0;
             if (!delayActive) {
-                delayStartedAt = CurrentTime;
+                delayStartedAt = Timer_GetCurrentTime();
                 delayActive = true;
             } else {
                 if (Timer_GetElapsedTime(&delayStartedAt) >= rec->event.delay.length) {
@@ -138,7 +138,7 @@ static void prependEvent(postponer_event_t event)
 
     lastPressTime = true
         && event.type == PostponerEventType_PressKey
-        && bufferSize == 0 ? CurrentTime : lastPressTime;
+        && bufferSize == 0 ? Timer_GetCurrentTime() : lastPressTime;
     bufferSize = bufferSize < POSTPONER_BUFFER_SIZE ? bufferSize + 1 : bufferSize;
     bufferPosition--;
 
@@ -158,9 +158,9 @@ static void appendEvent(postponer_event_t event)
     uint8_t pos = POS(bufferSize);
 
     buffer[pos].event = event;
-    buffer[pos].time = CurrentTime;
+    buffer[pos].time = Timer_GetCurrentTime();
 
-    lastPressTime = event.type == PostponerEventType_PressKey ? CurrentTime : lastPressTime;
+    lastPressTime = event.type == PostponerEventType_PressKey ? Timer_GetCurrentTime() : lastPressTime;
     bufferSize = bufferSize < POSTPONER_BUFFER_SIZE ? bufferSize + 1 : bufferSize;
 
     if (bufferSize == 1) {
@@ -192,7 +192,7 @@ static void appendEvent(postponer_event_t event)
 // {
 //     if(bufferSize == 0 && cyclesUntilActivation == 0) {
 //         // ensure correct CurrentPostponedTime when postponing starts, since current postponed time is the time of last executed action
-//         buffer[POS(0-1+POSTPONER_BUFFER_SIZE)].time = CurrentTime;
+//         buffer[POS(0-1+POSTPONER_BUFFER_SIZE)].time = Timer_GetCurrentTime();
 // 	}
 //     cyclesUntilActivation = MAX(n + 1, cyclesUntilActivation);
 // }
@@ -333,7 +333,7 @@ void PostponerCore_RunPostponedEvents(void)
 
 void PostponerCore_UpdatePostponedTime() {
     if (bufferSize == 0) {
-        CurrentPostponedTime = CurrentTime;
+        CurrentPostponedTime = Timer_GetCurrentTime();
     }
 }
 
@@ -564,7 +564,7 @@ static uint8_t priority(key_state_t *key, bool active)
 
 static void chording()
 {
-    if (bufferSize == 0 || CurrentTime - buffer[bufferPosition].time < Cfg.ChordingDelay ) {
+    if (bufferSize == 0 || Timer_GetCurrentTime() - buffer[bufferPosition].time < Cfg.ChordingDelay ) {
         runState.runEventsThisCycle = false;
         if (bufferSize > 0) {
             EventScheduler_Schedule(buffer[bufferPosition].time + Cfg.ChordingDelay, EventSchedulerEvent_Postponer, "Postponer - chording");
@@ -649,7 +649,7 @@ static void autoShift()
         PostponerQuery_InfoByKeystate(keyState, &press, &release);
 
         if (release == NULL) {
-            if ( CurrentTime - buffer[bufferPosition].time < Cfg.AutoShiftDelay ) {
+            if ( Timer_GetCurrentTime() - buffer[bufferPosition].time < Cfg.AutoShiftDelay ) {
                 runState.runEventsThisCycle = false;
                 EventScheduler_Schedule(buffer[bufferPosition].time + Cfg.AutoShiftDelay, EventSchedulerEvent_Postponer, "Postponer - autoshift");
             } else {
