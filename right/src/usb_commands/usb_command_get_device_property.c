@@ -64,7 +64,7 @@ void UsbCommand_GetDeviceProperty(const uint8_t *GenericHidOutBuffer, uint8_t *G
         break;
 #endif
     case DevicePropertyId_Uptime:
-        SetUsbTxBufferUint32(1, CurrentTime);
+        SetUsbTxBufferUint32(1, Timer_GetCurrentTime());
         break;
     case DevicePropertyId_GitTag:
         Utils_SafeStrCopy(((char *)GenericHidInBuffer) + 1, gitTag, USB_GENERIC_HID_IN_BUFFER_LENGTH - 1);

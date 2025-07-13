@@ -19,7 +19,7 @@ void KeyTiming_RecordKeystroke(key_state_t *keyState, bool active, uint32_t pres
 
 void KeyTiming_RecordReport(usb_basic_keyboard_report_t* report)
 {
-    Macros_SetStatusNumSpaced(CurrentTime, false);
+    Macros_SetStatusNumSpaced(Timer_GetCurrentTime(), false);
     Utils_PrintReport(" OUT", ActiveUsbBasicKeyboardReport);
 }
 
@@ -27,7 +27,7 @@ void KeyTiming_RecordComment(key_state_t* keyState, const char* comment)
 {
     const char* keyAbbreviation = Utils_KeyAbbreviation(keyState);
 
-    Macros_SetStatusNumSpaced(CurrentTime, false);
+    Macros_SetStatusNumSpaced(Timer_GetCurrentTime(), false);
     Macros_SetStatusChar(' ');
     Macros_SetStatusString(keyAbbreviation, NULL);
     Macros_SetStatusChar(' ');

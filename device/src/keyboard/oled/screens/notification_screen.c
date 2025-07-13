@@ -22,7 +22,7 @@ void NotificationScreen_NotifyFor(const char* message, uint16_t duration) {
     ScreenManager_ActivateScreen(ScreenId_Notification);
 
     if (duration != 0) {
-        EventScheduler_Reschedule(CurrentTime + duration, EventSchedulerEvent_SwitchScreen, "notification screen - switch to main screen");
+        EventScheduler_Reschedule(Timer_GetCurrentTime() + duration, EventSchedulerEvent_SwitchScreen, "notification screen - switch to main screen");
     }
 }
 
