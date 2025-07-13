@@ -1,5 +1,6 @@
 #include "fsl_common.h"
 #include "fsl_port.h"
+#include "fsl_pit.h"
 #include "peripherals/test_led.h"
 #include "peripherals/reset_button.h"
 #include "i2c.h"
@@ -144,6 +145,11 @@ static void initI2c(void)
 
 void InitPeripherals(void)
 {
+    // PIT has multiple users, prepare first
+    pit_config_t pitConfig;
+    PIT_GetDefaultConfig(&pitConfig);
+    PIT_Init(PIT, &pitConfig);
+
     initBusPalState();
     initInterruptPriorities();
     Timer_Init();
