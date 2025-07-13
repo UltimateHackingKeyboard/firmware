@@ -29,7 +29,7 @@ void UsbCommand_GetDebugBuffer(const uint8_t *GenericHidOutBuffer, uint8_t *Gene
     SetBufferUint32(GenericHidInBuffer, 17, MatrixScanCounter);
     SetBufferUint32(GenericHidInBuffer, 21, UsbReportUpdateCounter);
 #endif
-    SetBufferUint32(GenericHidInBuffer, 25, CurrentTime);
+    SetBufferUint32(GenericHidInBuffer, 25, Timer_GetCurrentTime());
 #ifndef __ZEPHYR__
     SetBufferUint32(GenericHidInBuffer, 29, UsbGenericHidActionCounter);
     SetBufferUint32(GenericHidInBuffer, 33, UsbBasicKeyboardActionCounter);
