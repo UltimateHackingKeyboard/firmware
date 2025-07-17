@@ -6,6 +6,7 @@
 #include "fsl_i2c.h"
 #include "fsl_clock.h"
 #include "module/i2c.h"
+#include "module/key_scanner.h"
 #include "module/led_pwm.h"
 #include "slave_protocol_handler.h"
 #include "module/i2c_watchdog.h"
@@ -46,8 +47,8 @@ static void i2cSlaveCallback(I2C_Type *base, i2c_slave_transfer_t *xfer, void *u
 void initInterruptPriorities(void)
 {
     NVIC_SetPriority(I2C0_IRQn, 1);
-    NVIC_SetPriority(TPM1_IRQn, 1);
     NVIC_SetPriority(SPI0_IRQn, 1);
+    // TODO: what's the desired priority? NVIC_SetPriority(KEY_SCANNER_LPTMR_IRQ_ID, 1);
 }
 
 void initI2c(void)
