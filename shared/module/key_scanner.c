@@ -30,12 +30,8 @@ void InitKeyScanner(void)
     LPTMR_GetDefaultConfig(&lptmrConfig);
     LPTMR_Init(KEY_SCANNER_LPTMR_BASEADDR, &lptmrConfig);
 
-    #if KEY_ARRAY_TYPE == KEY_ARRAY_TYPE_MATRIX
-        uint8_t scanCountPerUsec = KEYBOARD_MATRIX_ROWS_NUM;
-    #else
-        uint8_t scanCountPerUsec = 1;
-    #endif
-    LPTMR_SetTimerPeriod(KEY_SCANNER_LPTMR_BASEADDR, USEC_TO_COUNT(1000 / scanCountPerUsec, LPTMR_SOURCE_CLOCK));
+    // LPTMR is clocked by 1ms fixed clock
+    LPTMR_SetTimerPeriod(KEY_SCANNER_LPTMR_BASEADDR, 1);
     LPTMR_EnableInterrupts(KEY_SCANNER_LPTMR_BASEADDR, kLPTMR_TimerInterruptEnable);
     EnableIRQ(KEY_SCANNER_LPTMR_IRQ_ID);
     LPTMR_StartTimer(KEY_SCANNER_LPTMR_BASEADDR);
