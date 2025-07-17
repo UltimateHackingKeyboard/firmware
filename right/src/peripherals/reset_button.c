@@ -9,6 +9,7 @@ void RESET_BUTTON_IRQ_HANDLER(void)
     Wormhole.magicNumber = WORMHOLE_MAGIC_NUMBER;
     Wormhole.enumerationMode = EnumerationMode_NormalKeyboard;
     NVIC_SystemReset();
+    // unreachable
 }
 
 static bool factoryResetModeEnabled = false;

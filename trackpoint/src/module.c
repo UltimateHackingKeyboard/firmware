@@ -364,6 +364,7 @@ void PS2_CLOCK_IRQ_HANDLER(void)
             break;
         }
     }
+    SDK_ISR_EXIT_BARRIER;
 }
 
 void Module_Loop(void)
