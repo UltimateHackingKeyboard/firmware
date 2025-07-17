@@ -11,7 +11,6 @@
 
 void KEY_SCANNER_HANDLER(void)
 {
-
     Trace_Printc("<i2");
     #if KEY_ARRAY_TYPE == KEY_ARRAY_TYPE_VECTOR
         KeyVector_Scan(&KeyVector);
@@ -22,6 +21,7 @@ void KEY_SCANNER_HANDLER(void)
     Module_OnScan();
     LPTMR_ClearStatusFlags(KEY_SCANNER_LPTMR_BASEADDR, kLPTMR_TimerCompareFlag);
     Trace_Printc(">");
+    SDK_ISR_EXIT_BARRIER;
 }
 
 void InitKeyScanner(void)

@@ -21,6 +21,7 @@ void PIT_TIMER_HANDLER(void)
     }
     PIT_ClearStatusFlags(PIT, PIT_TIMER_CHANNEL, kPIT_TimerFlag);
     Trace_Printc(">");
+    SDK_ISR_EXIT_BARRIER;
 }
 
 void Timer_Init(void)

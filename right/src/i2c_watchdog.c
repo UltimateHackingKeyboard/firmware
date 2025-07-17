@@ -31,6 +31,7 @@ void PIT_I2C_WATCHDOG_HANDLER(void)
     PIT_ClearStatusFlags(PIT, PIT_I2C_WATCHDOG_CHANNEL, PIT_TFLG_TIF_MASK);
 	TestLed_Toggle();
     Trace_Printc(">");
+    SDK_ISR_EXIT_BARRIER;
 }
 
 void InitI2cWatchdog(void)
