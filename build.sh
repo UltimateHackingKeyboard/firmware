@@ -236,12 +236,6 @@ function createCentralCompileCommands() {
     mv $TEMP_COMMANDS $ROOT/compile_commands.json
 }
 
-function getExtraConfFiles() {
-    DEVICE=$1
-    EXTRA_CONF_FILES=`jq -r '.configurePresets[] | select(.name == "build/'"$DEVICE"'") | .cacheVariables.EXTRA_CONF_FILE' device/CMakePresets.json`
-    echo "$EXTRA_CONF_FILES" | sed 's=${sourceDir}='"$ROOT"/device'=g'
-}
-
 function performAction() {
     DEVICE=$1
     ACTION=$2
@@ -301,14 +295,9 @@ function performAction() {
                 ZEPHYR_TOOLCHAIN_VARIANT=zephyr west build \
                     --build-dir "$ROOT/device/build/$DEVICE" "$ROOT/device" \
                     --pristine \
-                    --board "$DEVICE" \
                     --no-sysbuild \
                     -- \
-                    -DNCS_TOOLCHAIN_VERSION=NONE \
-                    -DCONF_FILE="$ROOT/device/prj_release.conf" \
-                    -DEXTRA_CONF_FILE="`getExtraConfFiles $DEVICE`" \
-                    -DBOARD_ROOT="$ROOT" \
-                    -Dmcuboot_OVERLAY_CONFIG="$ROOT/device/child_image/mcuboot.conf;$ROOT/device/child_image/$DEVICE.mcuboot.conf"
+                    --preset $DEVICE
 END
             createCentralCompileCommands
             ;;
