@@ -67,7 +67,7 @@ class WestPatch(WestCommand):
                 for patch_file in sorted(patch_dir.glob('*.patch')):
                     try:
                         project_repo = git.Repo(project.abspath)
-                        project_repo.git.am(patch_file.as_posix())
+                        project_repo.git.am('--ignore-space-change', patch_file.as_posix())
                         log.inf(f'Applied {patch_file.name} to {project.name}')
                     except git.exc.GitCommandError as e:
                         project_repo.git.am('--abort')
