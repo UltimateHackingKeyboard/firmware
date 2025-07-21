@@ -26,6 +26,10 @@
 		{
 			"name": "module-trackpoint",
 			"path": "trackpoint"
+		},
+		{
+			"name": "MCUX SDK",
+			"path": "../mcuxsdk"
 		}
 	],
 	"settings": {

@@ -34,7 +34,7 @@
 
 // Variables:
 
-    extern power_mode_t CurrentPowerMode;
+    extern volatile power_mode_t CurrentPowerMode;
     extern power_mode_config_t PowerModeConfig[PowerMode_Count];
 
 // Functions:

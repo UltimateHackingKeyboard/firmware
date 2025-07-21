@@ -59,7 +59,7 @@
 #define USB_DEVICE_CONFIG_BUFFER_PROPERTY_CACHEABLE 0
 
 // Whether the low power mode is enabled or not
-#define USB_DEVICE_CONFIG_LOW_POWER_MODE 0
+#define USB_DEVICE_CONFIG_LOW_POWER_MODE 1
 
 // Whether the device detached feature is enabled or not
 #define USB_DEVICE_CONFIG_DETACH_ENABLE 0

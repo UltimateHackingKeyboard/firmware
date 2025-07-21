@@ -59,7 +59,7 @@ power_mode_config_t PowerModeConfig[PowerMode_Count] = {
 
 ATTR_UNUSED static bool usbAwake = false;
 
-power_mode_t CurrentPowerMode = PowerMode_Awake;
+volatile power_mode_t CurrentPowerMode = PowerMode_Awake;
 
 // originally written for Benedek's power callback
 // TODO: remove this and simplify the rest of the code if the callback is not used.
