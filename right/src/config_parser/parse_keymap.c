@@ -207,8 +207,12 @@ static parser_error_t parseMouseAction(key_action_t *keyAction, config_buffer_t 
     return ParserError_Success;
 }
 
-static void noneBlockAction(key_action_t *keyAction, rgb_t* color)
+static void noneBlockAction(key_action_t *keyAction, rgb_t* color, parse_mode_t parseMode)
 {
+    if(parseMode == ParseMode_DryRun || parseMode == ParseMode_Overlay) {
+        return;
+    }
+
     keyAction->type = KeyActionType_None;
     keyAction->color.red = color->red;
     keyAction->color.green = color->green;
@@ -216,7 +220,7 @@ static void noneBlockAction(key_action_t *keyAction, rgb_t* color)
     keyAction->colorOverridden = false;
 }
 
-static parser_error_t parseNoneBlock(key_action_t *keyAction, config_buffer_t *buffer, uint8_t *actionCountToNone, rgb_t* color)
+static parser_error_t parseNoneBlock(key_action_t *keyAction, config_buffer_t *buffer, uint8_t *actionCountToNone, rgb_t* color, parse_mode_t parseMode)
 {
     if (actionCountToNone != NULL) {
         *actionCountToNone = ReadUInt8(buffer);
@@ -228,9 +232,11 @@ static parser_error_t parseNoneBlock(key_action_t *keyAction, config_buffer_t *b
         color->green = dummyAction.color.green;
         color->blue = dummyAction.color.blue;
     }
+
     if (*actionCountToNone > 0) {
-        noneBlockAction(keyAction, color);
+        noneBlockAction(keyAction, color, parseMode);
     }
+
     return ParserError_Success;
 }
 
@@ -263,7 +269,7 @@ static parser_error_t parseKeyAction(key_action_t *keyAction, config_buffer_t *b
         case SerializedKeyActionType_Other:
             return parseOtherAction(keyAction, buffer);
         case SerializedKeyActionType_NoneBlock:
-            return parseNoneBlock(keyAction, buffer, actionCountToNone, noneBlockColor);
+            return parseNoneBlock(keyAction, buffer, actionCountToNone, noneBlockColor, parseMode);
     }
 
     ConfigParser_Error(buffer, "Invalid key action type: %d", keyActionType);
@@ -288,7 +294,7 @@ static parser_error_t parseKeyActions(uint8_t targetLayer, config_buffer_t *buff
         key_action_t *keyAction = actionIdx < MAX_KEY_COUNT_PER_MODULE ? &CurrentKeymap[targetLayer][slotId][actionIdx] : &dummyKeyAction;
 
         if (actionIdx < noneBlockUntil) {
-            noneBlockAction(keyAction, &noneBlockColor);
+            noneBlockAction(keyAction, &noneBlockColor, parseMode);
         } else {
             uint8_t actionCountToNone = 0;
             errorCode = parseKeyAction(keyAction, buffer, parseMode, &actionCountToNone, &noneBlockColor);

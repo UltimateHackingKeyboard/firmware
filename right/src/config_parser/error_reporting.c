@@ -5,6 +5,7 @@
 #include <inttypes.h>
 #include <stdarg.h>
 #include "macros/status_buffer.h"
+#include "logger.h"
 
 void ConfigParser_Error(config_buffer_t *buffer, const char *fmt, ...)
 {
@@ -12,7 +13,7 @@ void ConfigParser_Error(config_buffer_t *buffer, const char *fmt, ...)
     va_start(myargs, fmt);
     char printBuffer[256];
     vsprintf(printBuffer, fmt, myargs);
-    Macros_ReportErrorPrintf(NULL, "%d: %s", buffer->offset, printBuffer);
+    LogUS("%d: %s", buffer->offset, printBuffer);
     config_buffer_t myBuffer = *buffer;
     myBuffer.offset = buffer->offset >= 10 ? buffer->offset - 10 : 0;
     uint8_t windowCount = 5;
@@ -23,7 +24,7 @@ void ConfigParser_Error(config_buffer_t *buffer, const char *fmt, ...)
         {
             context[i] = ReadUInt8(&myBuffer);
         }
-        Macros_ReportErrorPrintf(NULL, "%d: %u %u %u %u %u %u %u %u %u %u", myBuffer.offset-10, context[0], context[1], context[2], context[3], context[4], context[5], context[6], context[7], context[8], context[9]);
+        LogUS("%d: %u %u %u %u %u %u %u %u %u %u", myBuffer.offset-10, context[0], context[1], context[2], context[3], context[4], context[5], context[6], context[7], context[8], context[9]);
     }
 }
 
