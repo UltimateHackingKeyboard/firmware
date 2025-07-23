@@ -182,10 +182,6 @@ void WakeUpHost(void) {
     // Send resume signal - this will call USB_DeviceKhciControl(khciHandle, kUSB_DeviceControlResume, NULL);
     USB_DeviceSetStatus(UsbCompositeDevice.deviceHandle, kUSB_DeviceStatusBusResume, NULL);
     Trace_Printc("y3");
-    while (CurrentPowerMode > PowerMode_LastAwake) {
-        ;
-    }
-    Trace_Printc("y4");
 }
 
 static usb_status_t usbDeviceCallback(usb_device_handle handle, uint32_t event, void *param)
