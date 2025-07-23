@@ -639,9 +639,7 @@ static void updateActionStates() {
                     if (CurrentPowerMode > PowerMode_LastAwake && CurrentPowerMode <= PowerMode_LightSleep) {
                         Trace_Printf("y1.%d", CurrentPowerMode);
                         PowerMode_WakeHost();
-                        Trace_Printc("y5");
-                        PowerMode_ActivateMode(PowerMode_Awake, false, false, "key pressed");
-                        Trace_Printc("y6");
+                        Trace_Printc("y4");
                     }
 
                     if (Postponer_LastKeyLayer != 255 && PostponerCore_IsActive()) {
