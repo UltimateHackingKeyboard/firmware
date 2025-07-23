@@ -200,11 +200,21 @@ static usb_status_t usbDeviceCallback(usb_device_handle handle, uint32_t event, 
     }
 
     switch (event) {
-        case kUSB_DeviceEventBusReset:
+        case kUSB_DeviceEventBusReset: {
+            uint8_t interface;
             UsbCompositeDevice.attach = 0;
             MsAltEnumMode = 0;
+            if (UsbCompositeDevice.currentConfiguration != 0) {
+                UsbCompositeDevice.currentConfiguration = 0;
+                for (interface = 0; interface < USB_DEVICE_CONFIG_HID; ++interface) {
+                    usb_device_class_config_struct_t *intf = &UsbDeviceCompositeConfigList.config[interface];
+                    /* event enums collide with HID ones, so invert the value */
+                    intf->classCallback(intf->classHandle, (uint32_t)-kUSB_DeviceEventSetConfiguration, &UsbCompositeDevice.currentConfiguration);
+                }
+            }
             status = kStatus_USB_Success;
             break;
+        }
         case kUSB_DeviceEventSuspend:
             if (UsbCompositeDevice.attach) {
                 PowerMode_ActivateMode(PowerMode_Uhk60Sleep, false, false, "received device suspend event");
@@ -217,7 +227,11 @@ static usb_status_t usbDeviceCallback(usb_device_handle handle, uint32_t event, 
             break;
         case kUSB_DeviceEventSetConfiguration: {
             uint8_t interface;
-            UsbCompositeDevice.attach = 1;
+            if (UsbCompositeDevice.currentConfiguration == *temp8) {
+                break;
+            }
+            UsbCompositeDevice.currentConfiguration = *temp8;
+            UsbCompositeDevice.attach = *temp8;
             PowerMode_ActivateMode(PowerMode_Awake, false, false, "received device set configuration event");
             for (interface = 0; interface < USB_DEVICE_CONFIG_HID; ++interface) {
                 usb_device_class_config_struct_t *intf = &UsbDeviceCompositeConfigList.config[interface];
@@ -225,7 +239,6 @@ static usb_status_t usbDeviceCallback(usb_device_handle handle, uint32_t event, 
                 /* event enums collide with HID ones, so invert the value */
                 status |= intf->classCallback(intf->classHandle, (uint32_t)-kUSB_DeviceEventSetConfiguration, temp8);
             }
-            UsbCompositeDevice.currentConfiguration = *temp8;
             break;
         }
         case kUSB_DeviceEventGetConfiguration:
