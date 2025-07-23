@@ -118,13 +118,16 @@ void Main_Wake() {
 }
 
 static void detectSpinningEventLoop() {
-    const uint16_t maxEventsPerSecond = 100;
+    const uint16_t maxEventsPerSecond = 300; //allow 5ms macro wait loops
     static uint32_t thisCheckTime = 0;
     static uint16_t eventCount = 0;
     static uint16_t spinPeriods = 0;
 
     if (thisCheckTime == CurrentTime / 1024) {
-        eventCount++;
+        bool isMouseEvent = EventScheduler_Vector & (EventVector_MouseKeys | EventVector_MouseController | EventVector_SendUsbReports);
+        if (!DEVICE_IS_UHK80_RIGHT || !isMouseEvent) {
+            eventCount++;
+        }
     } else {
         if (eventCount > maxEventsPerSecond) {
             spinPeriods++;
@@ -135,7 +138,7 @@ static void detectSpinningEventLoop() {
                 device_id_t target = DEVICE_ID;
 #endif
                 LogTo(target, LogTarget_Uart | LogTarget_ErrorBuffer, "Looks like the event loop is spinning quite a lot: %u events in the last second.\n", eventCount);
-                LogTo(target, LogTarget_Uart | LogTarget_ErrorBuffer, "EV: %x\n", StateWormhole.traceBuffer.eventVector);
+                LogTo(target, LogTarget_Uart | LogTarget_ErrorBuffer, "EV: 0x%x\n", StateWormhole.traceBuffer.eventVector);
                 spinPeriods = 0;
             }
         } else {
