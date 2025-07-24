@@ -124,7 +124,7 @@ static void detectSpinningEventLoop() {
     static uint16_t spinPeriods = 0;
 
     if (thisCheckTime == CurrentTime / 1024) {
-        bool isMouseEvent = EventScheduler_Vector & (EventVector_MouseKeys | EventVector_MouseController | EventVector_SendUsbReports);
+        bool isMouseEvent = EventScheduler_Vector & (EventVector_MouseKeys | EventVector_MouseController | EventVector_SendUsbReports | EventVector_MacroEngine);
         if (!DEVICE_IS_UHK80_RIGHT || !isMouseEvent) {
             eventCount++;
         }
