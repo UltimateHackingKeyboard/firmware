@@ -37,6 +37,7 @@ uint8_t CurrentKeymapIndex = 0;
 void SwitchKeymapById(uint8_t index, bool resetLayerStack)
 {
     if (!ValidatedUserConfigBuffer.isValid) {
+        EventVector_Unset(EventVector_KeymapReloadNeeded);
         return;
     }
     parse_config_t parseConfig = (parse_config_t) {

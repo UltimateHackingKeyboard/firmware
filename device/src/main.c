@@ -262,7 +262,7 @@ void mainRuntime(void) {
         CurrentTime = k_uptime_get();
         Messenger_ProcessQueue();
         if (EventScheduler_Vector & EventVector_UserLogicUpdateMask) {
-            EVENTLOOP_TIMING(EVENTLOOP_TIMING(EventloopTiming_Start()));
+            EVENTLOOP_TIMING(EventloopTiming_Start());
             RunUserLogic();
             EVENTLOOP_TIMING(EventloopTiming_End());
         }

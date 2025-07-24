@@ -47,7 +47,7 @@ static void detectFreezes() {
         lastCheckTime = UserLogic_LastEventloopTime;
     }
 
-    if (lastCheckCount > 10 && !alreadyLogged) {
+    if (lastCheckCount > 30 && !alreadyLogged) {
         lastCheckCount = 0;
         alreadyLogged = true;
 
