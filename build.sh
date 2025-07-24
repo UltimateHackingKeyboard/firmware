@@ -54,7 +54,7 @@ function processArguments() {
     while [ -n "$1" ]
     do
         case $1 in
-            uhk-80-left|uhk-80-right|uhk-60v1-right|uhk-60v2-right|uhk-dongle)
+            uhk-80-left|uhk-80-right|uhk-60v1-right|uhk-60v2-right|uhk-dongle|trackball|trackpoint|keycluster)
                 DEVICES="$DEVICES $1"
                 shift
                 ;;
@@ -152,20 +152,24 @@ function dealiasDeviceZephyr() {
 function dealiasDeviceMcux() {
     case $DEVICE in
         uhk-60v1-right|rightv1|right)
-            DEVICE="right"
+            DEVICE="uhk-60v1-right"
             VARIANT="v1-release"
             BUILD_DIR="right/build/$VARIANT"
-            FIRMWARE="right/build/$VARIANT/uhk-60-right.elf"
             DEVICE_DIR="right"
             USBDEVICEARG="--vid=0x37a8 --pid=1"
             ;;
         uhk-60v2-right|rightv2|right)
-            DEVICE="right"
+            DEVICE="uhk-60v2-right"
             VARIANT="v2-release"
             BUILD_DIR="right/build/$VARIANT"
-            FIRMWARE="right/build/$VARIANT/uhk-60-right.elf"
             DEVICE_DIR="right"
             USBDEVICEARG="--vid=0x37a8 --pid=3"
+            ;;
+        trackpoint|trackball|keycluster)
+            DEVICE="$DEVICE"
+            VARIANT="release"
+            BUILD_DIR="$DEVICE/build/$VARIANT"
+            DEVICE_DIR="$DEVICE"
             ;;
         *)
             echo "$DEVICE is not a valid device name!"
@@ -230,9 +234,11 @@ function createCentralCompileCommands() {
 
 function upgradeEnv() {
     git submodule update --init --recursive
+    ROOT=`realpath .`
     cd "$ROOT/.."
     west update
     west patch
+    cd "$ROOT"
 }
 
 function performMcuxAction() {
@@ -250,23 +256,15 @@ function performMcuxAction() {
             createCentralCompileCommands
             ;;
         make)
-            #todo remove pristine somehow
-            rm -rf $BUILD_DIR
-            west build --build-dir "$BUILD_DIR" "$DEVICE_DIR" --pristine -- --preset "$VARIANT"
-            echo "no idea how to flash mcux devices, please use flashUsb command"
+            west build --build-dir "$BUILD_DIR" "$DEVICE_DIR" -- --preset "$VARIANT"
             ;;
+
         flash)
-            echo "no idea how to flash mcux devices, please use flashUsb command"
+            west flash --build-dir $BUILD_DIR
             exit 1
             ;;
         flashUsb)
-            USB_SCRIPT_DIR=$ROOT/lib/agent/packages/usb/
-            cd $USB_SCRIPT_DIR
-            echo "running $USB_SCRIPT_DIR$ ./update-device-firmware.ts $USBDEVICEARG $ROOT/$FIRMWARE $OTHER_ARGS"
-            mutex lock
-            ./update-device-firmware.ts "$USBDEVICEARG" "$ROOT/$FIRMWARE" "$OTHER_ARGS"
-            mutex unlock
-            cd $ROOT
+            west agent --build-dir $BUILD_DIR
             ;;
     esac
 }
@@ -300,18 +298,13 @@ END
             ;;
         flash)
             export BUILD_DIR="$ROOT/device/build/$DEVICE"
+            export DEVICE="$DEVICE"
             nrfutil toolchain-manager launch --shell --ncs-version $NCS_VERSION << END
-                # west flash --softreset --build-dir $BUILD_DIR $DEVICEARG $OTHER_ARGS
+                west flash --softreset --build-dir $BUILD_DIR $DEVICEARG $OTHER_ARGS
 END
             ;;
         flashUsb)
-            USB_SCRIPT_DIR=$ROOT/lib/agent/packages/usb/
-            cd $USB_SCRIPT_DIR
-            echo "running $USB_SCRIPT_DIR$ ./update-device-firmware.ts $USBDEVICEARG $ROOT/device/build/$DEVICE/zephyr/app_update.bin $OTHER_ARGS"
-            mutex lock
-            ./update-device-firmware.ts "$USBDEVICEARG" "$ROOT/device/build/$DEVICE/zephyr/app_update.bin" "$OTHER_ARGS"
-            mutex unlock
-            cd $ROOT
+            west agent --build-dir $BUILD_DIR
             ;;
     esac
 }
@@ -351,12 +344,10 @@ function performAction() {
             ;;
         switchMcux)
             west config manifest.file west_mcuxsdk.yml
-            # is west update && west patch needed?
             upgradeEnv
             ;;
         switchZephyr)
             west config manifest.file west.yml
-            # is west update && west patch needed?
             upgradeEnv
             ;;
         make|build|flash|flashUsb)
