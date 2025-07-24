@@ -1,10 +1,6 @@
 package-lock.json
 node_modules
-build_make
 .cache
-samples
 build
-CMakeCache.txt
-build.ninja
 .vscode/settings.json
-scripts/__pycache__
+mcux_include.json

@@ -142,8 +142,6 @@ void InitClock(void)
     SystemCoreClock = BOARD_BOOTCLOCKRUN_CORE_CLOCK;
     // Set RTC_CLKOUT source.
     CLOCK_SetRtcClkOutClock(SIM_RTC_CLKOUT_SEL_RTC1HZCLK_CLK);
-    // Enable USB FS clock.
-    CLOCK_EnableUsbfs0Clock(kCLOCK_UsbSrcExt, SIM_USB_CLK_48000000HZ);
     // Set CLKOUT source.
     CLOCK_SetClkOutClock(SIM_CLKOUT_SEL_FLEXBUS_CLK);
     // Set debug trace clock source.

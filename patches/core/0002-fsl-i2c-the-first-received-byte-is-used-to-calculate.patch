@@ -1,0 +1,31 @@
+From 094b28a5cf6a43b9050c5d87d012f08de27916d4 Mon Sep 17 00:00:00 2001
+From: Benedek Kupper <kupper.benedek@gmail.com>
+Date: Thu, 26 Jun 2025 21:20:33 +0200
+Subject: [PATCH] fsl-i2c: the first received byte is used to calculate the
+ message length
+
+This is used for the variable-length protocol of UHK.
+
+---
+ drivers/i2c/fsl_i2c.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/drivers/i2c/fsl_i2c.c b/drivers/i2c/fsl_i2c.c
+index 3ef9c31..eacd238 100644
+--- a/drivers/i2c/fsl_i2c.c
++++ b/drivers/i2c/fsl_i2c.c
+@@ -485,6 +485,11 @@ static status_t I2C_MasterTransferRunStateMachine(I2C_Type *base, i2c_master_han
+ 
+                 /* Read the data byte into the transfer buffer. */
+                 tmpdata                = base->D;
++                if (handle->userData) // UHK-specific
++                {
++                    handle->transfer.dataSize = 2 + tmpdata;  // 2 byte hash length + payload length
++                    handle->userData = NULL;
++                }
+                 *handle->transfer.data = tmpdata;
+                 handle->transfer.data++;
+ 
+-- 
+2.44.0
+

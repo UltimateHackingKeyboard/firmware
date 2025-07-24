@@ -53,6 +53,7 @@
 // Variables:
 
     extern i2c_master_handle_t I2cMasterHandle;
+    extern volatile uint32_t I2C_Watchdog;
 
 // Functions:
 

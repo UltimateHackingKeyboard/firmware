@@ -22,7 +22,7 @@ void Resend_RequestResendAsync(device_id_t dst, connection_id_t connectionId, ui
         resendRequest.connectionId = connectionId;
         resendRequest.messageWatermark = messageWatermark;
         resendRequest.dst = dst;
-        EventScheduler_Schedule(CurrentTime, EventSchedulerEvent_ResendMessage, "Messenger_ResendAsync");
+        EventScheduler_Schedule(Timer_GetCurrentTime(), EventSchedulerEvent_ResendMessage, "Messenger_ResendAsync");
     } else {
         // well, we would like to log this, but we don't want to do that from within uart callback
     }

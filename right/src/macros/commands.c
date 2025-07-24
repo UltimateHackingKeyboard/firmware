@@ -70,7 +70,7 @@ static macro_result_t processDelay(uint32_t time)
         Macros_SleepTillTime(S->as.delayData.start + time, "Macros - delay");
         return MacroResult_Sleeping;
     } else {
-        S->as.delayData.start = CurrentTime;
+        S->as.delayData.start = Timer_GetCurrentTime();
         S->as.actionActive = true;
         return processDelay(time);
     }
@@ -1079,7 +1079,7 @@ static macro_result_t processIfHoldCommand(parser_context_t* ctx, bool negate)
         }
     }
 
-    if (CurrentTime - S->ms.currentMacroStartTime >= Cfg.HoldTimeout) {
+    if (Timer_GetCurrentTime() - S->ms.currentMacroStartTime >= Cfg.HoldTimeout) {
         if (negate) {
             return MacroResult_Finished | MacroResult_ConditionFailedFlag;
         } else {
@@ -1316,7 +1316,7 @@ static macro_result_t processOneShotCommand(parser_context_t* ctx) {
         return processCommand(ctx);
     }
 
-    if (Cfg.Macros_OneShotTimeout != 0 && CurrentTime >= S->ms.currentMacroStartTime + Cfg.Macros_OneShotTimeout) {
+    if (Cfg.Macros_OneShotTimeout != 0 && Timer_GetCurrentTime() >= S->ms.currentMacroStartTime + Cfg.Macros_OneShotTimeout) {
         S->ms.oneShotState = 0;
         return processCommand(ctx);
     }

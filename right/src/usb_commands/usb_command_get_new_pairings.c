@@ -1,8 +1,5 @@
 #include "usb_command_get_new_pairings.h"
 #include "usb_protocol_handler.h"
-
-#ifdef __ZEPHYR__
-
 #include "bt_conn.h"
 #include <zephyr/bluetooth/addr.h>
 #include "host_connection.h"
@@ -75,6 +72,3 @@ void UsbCommand_GetNewPairings(uint8_t page, const uint8_t *GenericHidOutBuffer,
         SetUsbTxBufferUint8(1, data.addressCount-data.pageIdxOffset);
     }
 }
-
-#endif
-
