@@ -290,6 +290,9 @@ static macro_variable_t consumeDollarExpression(parser_context_t* ctx)
     else if (ConsumeToken(ctx, "currentAddress")) {
         return intVar(ctx->macroState->ls->ms.commandAddress);
     }
+    else if (ConsumeToken(ctx, "currentTime")) {
+        return intVar(CurrentTime & 0x7FFFFFFF);
+    }
     else if (ConsumeToken(ctx, "queuedKeyId")) {
         ConsumeUntilDot(ctx);
         int8_t queueIdx = Macros_ConsumeInt(ctx);

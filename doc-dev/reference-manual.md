@@ -215,7 +215,7 @@ LAYERID_BASIC = {fn|mouse|mod|base|fn2|fn3|fn4|fn5}
 KEYMAPID = <short keymap abbreviation(IDENTIFIER)>|last
 MACROID = last | <single char slot identifier(CHAR)> | <single number slot identifier(INT)>
 OPERATOR = + | - | * | / | % | < | > | <= | >= | == | != | && | ||
-VARIABLE_EXPANSION = $<variable name(IDENTIFIER)> | $<config value name> | $currentAddress | $thisKeyId | $queuedKeyId.<queue index (INT)> | $keyId.KEYID_ABBREV
+VARIABLE_EXPANSION = $<variable name(IDENTIFIER)> | $<config value name> | $currentAddress | $currentTime | $thisKeyId | $queuedKeyId.<queue index (INT)> | $keyId.KEYID_ABBREV
 EXPRESSION = <expression> | (EXPRESSION) | INT | BOOL | FLOAT | VARIABLE_EXPANSION | EXPRESSION OPERATOR EXPRESSION | !EXPRESSION | min(EXPRESSION [, EXPRESSION]+) | max(EXPRESSION [, EXPRESSION]+)
 PARENTHESSED_EXPRESSION = (EXPRESSION)
 INT = PARENTHESSED_EXPRESSION | VARIABLE_EXPANSION | [0-9]+ | -[0-9]+
@@ -714,6 +714,7 @@ Internally, values are saved in one of the following types, and types are automa
     - `$thisKeyId` which stands for the keyid of the key that activated the macro.
     - `$keyId.<keyId abbreviation>` which stands for numeric keyid of the provided abbreviation.
     - `$currentAddress` which stands for the address of the command in which it is found.
+    - `$currentTime` returns current time in milliseconds in 31 bit range.
     - `$queuedKeyId.<index (NUMBER)>` which stands for a zero-indexed position in the postponer queue.
 - `KEYMAPID` - is assumed to be 3 characters long abbreviation of a keymap.
 - `MACROID` - macro slot identifier is either a number or a single ascii character (interpreted as a one-byte value). `$thisKeyId` can be used so that the same macro refers to different slots when assigned to different keys.
