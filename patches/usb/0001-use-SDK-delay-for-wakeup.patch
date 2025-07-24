@@ -21,7 +21,7 @@ index 1780f87..e6462fe 100644
 -            {
 -                __NOP();
 -            }
-+            SDK_DelayAtLeastUs(3000U, SystemCoreClock);
++            SDK_DelayAtLeastUs(8000U, SystemCoreClock);
              ehciState->registerBase->PORTSC1 &= ~USBHS_PORTSC1_FPR_MASK;
              error = kStatus_USB_Success;
              break;
@@ -38,7 +38,7 @@ index c62addc..f0e1fce 100644
 -            {
 -                __NOP();
 -            }
-+            SDK_DelayAtLeastUs(3000U, SystemCoreClock);
++            SDK_DelayAtLeastUs(8000U, SystemCoreClock);
              khciState->registerBase->CTL &= (uint8_t)(~USB_CTL_RESUME_MASK);
              status = kStatus_USB_Success;
              break;
