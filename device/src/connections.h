@@ -85,6 +85,7 @@
     extern connection_id_t ActiveHostConnectionId;
     extern connection_id_t LastActiveHostConnectionId;
     extern connection_id_t SelectedHostConnectionId;
+    extern connection_id_t LastSelectedHostConnectionId;
     extern connection_t Connections[ConnectionId_Count];
 
 // Functions:

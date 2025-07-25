@@ -119,7 +119,7 @@ COMMAND = tapKeySeq [persistent] [SHORTCUT]+
 COMMAND = powerMode [toggle] { wake | lock | sleep }
 COMMAND = reboot
 COMMAND = bluetooth [toggle] { pair | advertise | noAdvertise }
-COMMAND = switchHost { last | next | previous | <host connection name (IDENTIFIER)> | <host connection name (STRING)> }
+COMMAND = switchHost { last | lastSelected | next | previous | <host connection name (IDENTIFIER)> | <host connection name (STRING)> }
 COMMAND = set module.MODULEID.navigationMode.LAYERID_BASIC NAVIGATION_MODE
 COMMAND = set module.MODULEID.baseSpeed <non-xcelerated speed, 0-10.0 (FLOAT)>
 COMMAND = set module.MODULEID.speed <xcelerated speed, 0-10.0 (FLOAT)>
@@ -363,6 +363,7 @@ COMMAND = setEmergencyKey KEYID
 - `switchHost { last | next | previous | <host connection name (IDENTIFIER)> | <host connection name (STRING)> }` switches the host connection. 
   - `previous | next` switch to the next currently connected host in the list of hosts. E.g., this iterates over blue dongles, as well as some other connections.
   - `last` switches to the previously active host connection. For instance the last in `switchHost "pc"; switchHost "laptop"; switchHost last` switches to "pc".
+  - `lastSelected` switches to the last manually selected connection. This is useful to undo an automatic switchover.
   - `<host connection identifier>` switches to the host connection with the given name. If the connection is not available, UHK will reserve a connection slot for this host. Therefore it is possible to connect to violet dongles too. 
   - See the bluetooth section for more information.
 

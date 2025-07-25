@@ -358,6 +358,9 @@ static void applyConnectionAction(connection_action_t command, uint8_t hostConne
         case ConnectionAction_Previous:
             HostConnections_SelectPreviousConnection();
             break;
+        case ConnectionAction_LastSelected:
+            HostConnections_SelectLastSelectedConnection();
+            break;
         case ConnectionAction_SwitchByHostConnectionId:
             HostConnections_SelectByHostConnIndex(hostConnectionIdx);
             break;

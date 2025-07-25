@@ -24,6 +24,7 @@ connection_t Connections[ConnectionId_Count] = {
 connection_id_t LastActiveHostConnectionId = ConnectionId_Invalid;
 connection_id_t ActiveHostConnectionId = ConnectionId_Invalid;
 connection_id_t SelectedHostConnectionId = ConnectionId_Invalid;
+connection_id_t LastSelectedHostConnectionId = ConnectionId_Invalid;
 
 static connection_id_t resolveAliases(connection_id_t connectionId) {
     if (!Connections[connectionId].isAlias) {
