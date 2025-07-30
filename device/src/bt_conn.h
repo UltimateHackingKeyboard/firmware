@@ -5,6 +5,7 @@
 
     #include <zephyr/bluetooth/bluetooth.h>
     #include <stdint.h>
+    #include "connections.h"
 
 // Macros:
 
@@ -67,6 +68,7 @@ typedef enum {
 
     void BtConn_Init(void);
     void BtConn_DisconnectAll();
+    void BtConn_DisconnectOne(connection_id_t connectionId);
 
     void BtConn_ReserveConnections();
     void Bt_SetConnectionConfigured(struct bt_conn* conn);

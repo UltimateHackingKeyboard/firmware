@@ -147,6 +147,13 @@ void HostConnections_ListKnownBleConnections() {
     }
 }
 
+void HostConnections_Reconnect() {
+    connection_id_t connId = ActiveHostConnectionId;
+    BtConn_DisconnectOne(connId);
+    k_sleep(K_MSEC(100));
+    HostConnections_SelectByHostConnIndex(connId - ConnectionId_HostConnectionFirst);
+}
+
 #endif
 
 

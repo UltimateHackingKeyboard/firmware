@@ -1755,6 +1755,18 @@ static macro_result_t processResetConfigurationCommand(parser_context_t* ctx)
     return MacroResult_Finished;
 }
 
+static macro_result_t processReconnectCommand()
+{
+    if (Macros_DryRun) {
+        return MacroResult_Finished;
+    }
+
+#ifdef __ZEPHYR__
+    HostConnections_Reconnect();
+#endif
+    return MacroResult_Finished;
+}
+
 static macro_result_t processRebootCommand()
 {
     if (Macros_DryRun) {
@@ -2344,6 +2356,9 @@ static macro_result_t processCommand(parser_context_t* ctx)
             }
             else if (ConsumeToken(ctx, "reboot")) {
                 return processRebootCommand();
+            }
+            else if (ConsumeToken(ctx, "reconnect")) {
+                return processReconnectCommand();
             }
             else {
                 goto failed;

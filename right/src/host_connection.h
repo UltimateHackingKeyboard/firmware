@@ -70,4 +70,6 @@
     void HostConnections_SelectByName(parser_context_t* ctx);
     void HostConnection_SetSelectedConnection(uint8_t connectionId);
 
+    void HostConnections_Reconnect();
+
 #endif

@@ -273,6 +273,7 @@ MACRONAME = <macro name (IDENTIFIER)>
 #####################
 # DEVELOPMENT TOOLS #
 #####################
+COMMAND = reconnect
 COMMAND = stopAllMacros
 COMMAND = statsRuntime
 COMMAND = statsLayerStack
@@ -365,6 +366,7 @@ COMMAND = setEmergencyKey KEYID
   - `last` switches to the previously active host connection. For instance the last in `switchHost "pc"; switchHost "laptop"; switchHost last` switches to "pc".
   - `<host connection identifier>` switches to the host connection with the given name. If the connection is not available, UHK will reserve a connection slot for this host. Therefore it is possible to connect to violet dongles too. 
   - See the bluetooth section for more information.
+- `reconnect` disconnects current active host, waits 100ms and then attempts to connect to it again (i.e., similar to calling switchHost).
 
 ### Triggering keyboard actions (pressing keys, clicking, etc.):
 
