@@ -18,7 +18,7 @@
 // Thread definitions
 
 #define THREAD_STACK_SIZE 1000
-#define THREAD_PRIORITY 5
+#define THREAD_PRIORITY -5
 
 #define UART_FOREVER_TIMEOUT 10000
 #define UART_RESEND_DELAY 100
