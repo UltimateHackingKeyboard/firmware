@@ -3,15 +3,15 @@
 
 #define WATCHES false
 #define DEBUG_SEMAPHORES false
-#define DEBUG_EVENTLOOP_TIMING false
 #define DEBUG_STATESYNC false
 #define DEBUG_CONSOLE false
 #define DEBUG_EVENTLOOP_SCHEDULE false
 #define DEBUG_CHECK_MACRO_RUN_TIMES false
 #define DEBUG_POSTPONER false
-#define DEBUG_THREAD_STATS true
 #define WATCH_INTERVAL 500
 
+#define DEBUG_EVENTLOOP_TIMING false
+#define DEBUG_THREAD_STATS true
 
 #define DEBUG_MODE false
 #define DEBUG_STRESS_UART false

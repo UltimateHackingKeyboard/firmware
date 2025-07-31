@@ -21,6 +21,7 @@
 #include "config_manager.h"
 #include <zephyr/shell/shell_backend.h>
 #include "connections.h"
+#include "logger_priority.h"
 
 shell_t Shell = {
     .keyLog = 0,
@@ -267,6 +268,18 @@ static int cmd_uhk_mouseMultipliers(const struct shell *shell, size_t argc, char
     return 0;
 }
 
+static int cmd_uhk_logPriority(const struct shell *shell, size_t argc, char *argv[])
+{
+    if (argc > 1 && argv[1][0] == 'h') {
+        Logger_SetPriority(true);
+        shell_fprintf(shell, SHELL_NORMAL, "Log priority set to high.\n");
+    } else {
+        Logger_SetPriority(false);
+        shell_fprintf(shell, SHELL_NORMAL, "Log priority set to low.\n");
+    }
+    return 0;
+}
+
 void InitShell(void)
 {
     SHELL_STATIC_SUBCMD_SET_CREATE(uhk_cmds,
@@ -296,6 +309,7 @@ void InitShell(void)
         SHELL_CMD_ARG(threads, NULL, "list thread statistics", cmd_uhk_threads, 1, 0),
         SHELL_CMD_ARG(trace, NULL, "lists minimalistic event trace", cmd_uhk_trace, 1, 0),
         SHELL_CMD_ARG(mouseMultipliers, NULL, "print mouse multipliers", cmd_uhk_mouseMultipliers, 1, 2),
+        SHELL_CMD_ARG(logPriority, NULL, "set log priority", cmd_uhk_logPriority, 1, 2),
         SHELL_SUBCMD_SET_END);
 
     SHELL_CMD_REGISTER(uhk, &uhk_cmds, "UHK commands", NULL);
