@@ -2599,7 +2599,18 @@ macro_result_t Macros_ProcessCommandAction(void)
 
     macro_result_t macroResult;
 
+#if (DEBUG_CHECK_MACRO_RUN_TIMES && defined(__ZEPHYR__))
+    uint32_t start = CurrentTime;
     macroResult = processCommand(&ctx);
+    uint64_t end = CurrentTime;
+    uint32_t time = end - start;
+    if (time > 20) {
+        uint32_t cmdLength = (uint32_t)(cmdEnd - cmd);
+        Macros_ReportErrorPrintf(cmd, "Macro command took: %d ms to evaluate.\n", time, cmdLength, cmd);
+    }
+#else
+    macroResult = processCommand(&ctx);
+#endif
 
     if (ctx.at != ctx.end && !Macros_ParserError && Macros_DryRun) {
         Macros_ReportWarn("Unprocessed input encountered.", ctx.at, ctx.at);
