@@ -1794,7 +1794,12 @@ static macro_result_t processSwitchHostCommand(parser_context_t* ctx)
     else if (ConsumeToken(ctx, "last")) {
         DRY_RUN_FINISH();
         HostConnections_SelectLastConnection();
-    } else {
+    }
+    else if (ConsumeToken(ctx, "lastSelected")) {
+        DRY_RUN_FINISH();
+        HostConnections_SelectLastSelectedConnection();
+    }
+    else {
         if (!Macros_DryRun) {
             HostConnections_SelectByName(ctx);
         }

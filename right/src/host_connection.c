@@ -75,6 +75,7 @@ static void selectConnection(uint8_t connectionId) {
         BtConn_ReserveConnections();
     }
     Connections_ReportState(connectionId);
+    LastSelectedHostConnectionId = connectionId;
 }
 
 static void selectNextConnection(int8_t direction) {
@@ -87,6 +88,7 @@ static void selectNextConnection(int8_t direction) {
         }
 
         if (Connections_IsReady(i)) {
+            LastSelectedHostConnectionId = i;
             Connections_HandleSwitchover(i, true);
             break;
         }
@@ -106,6 +108,12 @@ void HostConnections_SelectPreviousConnection(void) {
 void HostConnections_SelectLastConnection(void) {
     if (LastActiveHostConnectionId != ConnectionId_Invalid) {
         selectConnection(LastActiveHostConnectionId);
+    }
+}
+
+void HostConnections_SelectLastSelectedConnection(void) {
+    if (LastSelectedHostConnectionId != ConnectionId_Invalid) {
+        selectConnection(LastSelectedHostConnectionId);
     }
 }
 
