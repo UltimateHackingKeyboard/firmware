@@ -813,6 +813,18 @@ void BtConn_DisconnectAll() {
     bt_conn_foreach(BT_CONN_TYPE_LE, bt_foreach_conn_cb, NULL);
 }
 
+void BtConn_DisconnectOne(connection_id_t connectionId) {
+    uint8_t peerId = Connections[connectionId].peerId;
+
+    if (peerId == PeerIdUnknown) { return; }
+
+    struct bt_conn *conn = Peers[peerId].conn;
+
+    if (!conn) { return; }
+
+    safeDisconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
+}
+
 static void bt_foreach_conn_cb_disconnect_unidentified(struct bt_conn *conn, void *user_data) {
     peer_t* peer = getPeerByConn(conn);
     if (!peer) {
