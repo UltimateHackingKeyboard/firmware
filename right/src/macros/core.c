@@ -780,8 +780,10 @@ static void executeBlocking(void)
     bool someoneBlocking = false;
     uint8_t remainingExecution = Cfg.Macros_MaxBatchSize;
     Macros_SchedulerState.remainingCount = Macros_SchedulerState.activeSlotCount;
+    uint32_t startTime = CurrentTime;
+    uint8_t timeQuota = 5;
 
-    while (Macros_SchedulerState.remainingCount > 0 && remainingExecution > 0) {
+    while (Macros_SchedulerState.remainingCount > 0 && remainingExecution > 0 && CurrentTime - startTime < timeQuota) {
         macro_result_t res = MacroResult_YieldFlag;
         S = &MacroState[Macros_SchedulerState.currentSlotIdx];
 
@@ -804,7 +806,20 @@ static void executeBlocking(void)
         remainingExecution--;
     }
 
-    if(someoneBlocking || remainingExecution == 0) {
+    bool finishedBecauseOfTime = CurrentTime - startTime >= timeQuota;
+    bool finishedBecauseOfCount = remainingExecution == 0;
+    bool finishedBecauseOfBlocking = someoneBlocking;
+
+    if (finishedBecauseOfTime) {
+        // Well, if we get here repeatedly, we have a problem.
+        //
+        // Assume the user is using an active wait loop that takes more than 1ms to evaluate:
+        // - then this thread will prevent lower threads from running
+        // - if the loop takes too long, we may not even process messages in time to avoid even generous timeouts
+        // - we can't postpone, because if this happens in every cycle we would deadlock key processing
+    }
+
+    if(finishedBecauseOfCount || finishedBecauseOfBlocking) {
         SchedulerPostponing = true;
     }
 
@@ -874,8 +889,20 @@ void Macros_ContinueMacro(void)
         recalculateSleepingMods();
         break;
     case Scheduler_Blocking:
-        executeBlocking();
-        recalculateSleepingMods();
+#if (DEBUG_CHECK_MACRO_RUN_TIMES && defined(__ZEPHYR__))
+    uint64_t start = CurrentTime;
+    executeBlocking();
+    recalculateSleepingMods();
+    uint64_t end = CurrentTime;
+    uint32_t time = end - start;
+    if (time > 20) {
+        Macros_ReportErrorPrintf(NULL, "Macro engine iteration took: %d ms. This threatens reliable uhk function!\n", time);
+        k_sleep(K_MSEC(5));
+    }
+#else
+    executeBlocking();
+    recalculateSleepingMods();
+#endif
         break;
     default:
         break;
