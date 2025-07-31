@@ -79,7 +79,6 @@ volatile uint8_t UsbReportUpdateSemaphore = 0;
 //     composite shortcut is applied
 //   - implementation: they are kept in one global place
 
-uint8_t NativeActionInputModifiers;
 uint8_t InputModifiers;
 uint8_t InputModifiersPrevious;
 uint8_t OutputModifiers;

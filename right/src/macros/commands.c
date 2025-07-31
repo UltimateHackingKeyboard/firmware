@@ -965,7 +965,7 @@ static void processPostponeKeysCommand()
         return;
     }
     postponeCurrentCycle();
-    S->ls->as.modifierSuppressMods = true;
+    S->ls->as.modifierPostpone = true;
 }
 
 static macro_result_t processNoOpCommand()
