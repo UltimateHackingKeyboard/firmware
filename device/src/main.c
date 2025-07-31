@@ -50,6 +50,7 @@
 #include "wormhole.h"
 #include "power_mode.h"
 #include "proxy_log_backend.h"
+#include "logger_priority.h"
 
 #if DEVICE_IS_KEYBOARD
 #include "keyboard/battery_unloaded_calculator.h"
