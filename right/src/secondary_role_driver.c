@@ -144,7 +144,7 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
         return SecondaryRoleState_Primary;
     }
 
-    int32_t activeTime = (dualRoleRelease == NULL ? CurrentTime : dualRoleRelease->time) - dualRolePressTime;
+    int32_t activeTime = (dualRoleRelease == NULL ? Timer_GetCurrentTime() : dualRoleRelease->time) - dualRolePressTime;
 
     // handle timeout when action key is not pressed
     if (actionPress == NULL) {
@@ -173,7 +173,7 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
 
     //handle trigger by press
     if (Cfg.SecondaryRoles_AdvancedStrategyTriggerByPress) {
-        bool actionKeyWasPressedButDualkeyNot = actionPress != NULL && dualRoleRelease == NULL && (int32_t)(CurrentTime - actionPress->time) > Cfg.SecondaryRoles_AdvancedStrategySafetyMargin;
+        bool actionKeyWasPressedButDualkeyNot = actionPress != NULL && dualRoleRelease == NULL && (int32_t)(Timer_GetCurrentTime() - actionPress->time) > Cfg.SecondaryRoles_AdvancedStrategySafetyMargin;
         bool actionKeyWasPressedFirst = actionPress != NULL && dualRoleRelease != NULL && actionPress->time <= dualRoleRelease->time - Cfg.SecondaryRoles_AdvancedStrategySafetyMargin;
         if (actionKeyWasPressedButDualkeyNot || actionKeyWasPressedFirst) {
             KEY_TIMING2(actionKeyWasPressedButDualkeyNot, KeyTiming_RecordComment(resolutionKey, "SE"));
@@ -181,7 +181,7 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
             return SecondaryRoleState_Secondary;
         }
 
-        bool dualKeyWasPressedButActionKeyNot = dualRoleRelease != NULL && (actionPress == NULL && (int32_t)(CurrentTime - dualRoleRelease->time) > -Cfg.SecondaryRoles_AdvancedStrategySafetyMargin);
+        bool dualKeyWasPressedButActionKeyNot = dualRoleRelease != NULL && (actionPress == NULL && (int32_t)(Timer_GetCurrentTime() - dualRoleRelease->time) > -Cfg.SecondaryRoles_AdvancedStrategySafetyMargin);
         bool dualKeyWasPressedFirst = actionPress != NULL && dualRoleRelease != NULL && actionPress->time >= dualRoleRelease->time - Cfg.SecondaryRoles_AdvancedStrategySafetyMargin;
         if (dualKeyWasPressedFirst || dualKeyWasPressedButActionKeyNot) {
             KEY_TIMING2(dualKeyWasPressedButActionKeyNot, KeyTiming_RecordComment(resolutionKey, "PE"));
@@ -192,7 +192,7 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
 
     //handle trigger by release
     if (Cfg.SecondaryRoles_AdvancedStrategyTriggerByRelease) {
-        bool actionKeyWasReleasedButDualkeyNot = actionRelease != NULL && (dualRoleRelease == NULL && (int32_t)(CurrentTime - actionRelease->time) > Cfg.SecondaryRoles_AdvancedStrategySafetyMargin);
+        bool actionKeyWasReleasedButDualkeyNot = actionRelease != NULL && (dualRoleRelease == NULL && (int32_t)(Timer_GetCurrentTime() - actionRelease->time) > Cfg.SecondaryRoles_AdvancedStrategySafetyMargin);
         bool actionKeyWasReleasedFirst = actionRelease != NULL && dualRoleRelease != NULL && actionRelease->time <= dualRoleRelease->time - Cfg.SecondaryRoles_AdvancedStrategySafetyMargin;
 
         if (actionKeyWasReleasedFirst || actionKeyWasReleasedButDualkeyNot) {
@@ -201,7 +201,7 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
             return SecondaryRoleState_Secondary;
         }
 
-        bool dualKeyWasReleasedButActionKeyNot = dualRoleRelease != NULL && (actionRelease == NULL && (int32_t)(CurrentTime - dualRoleRelease->time) > -Cfg.SecondaryRoles_AdvancedStrategySafetyMargin);
+        bool dualKeyWasReleasedButActionKeyNot = dualRoleRelease != NULL && (actionRelease == NULL && (int32_t)(Timer_GetCurrentTime() - dualRoleRelease->time) > -Cfg.SecondaryRoles_AdvancedStrategySafetyMargin);
         bool dualKeyWasReleasedFirst = actionRelease != NULL && dualRoleRelease != NULL && actionRelease->time >= dualRoleRelease->time - Cfg.SecondaryRoles_AdvancedStrategySafetyMargin;
         if (dualKeyWasReleasedFirst | dualKeyWasReleasedButActionKeyNot) {
             KEY_TIMING2(dualKeyWasReleasedButActionKeyNot, KeyTiming_RecordComment(resolutionKey, "PG"));

@@ -1,0 +1,40 @@
+From e4f2184a0371bdeee7d85dccf49f384f1862ef61 Mon Sep 17 00:00:00 2001
+From: Benedek Kupper <kupper.benedek@gmail.com>
+Date: Thu, 19 Jun 2025 10:39:21 +0200
+Subject: [PATCH] cmake: add ihex binary output option
+
+---
+ cmake/extension/function.cmake | 12 +++++++++++-
+ 1 file changed, 11 insertions(+), 1 deletion(-)
+
+diff --git a/cmake/extension/function.cmake b/cmake/extension/function.cmake
+index ad53bf4..6d1000d 100644
+--- a/cmake/extension/function.cmake
++++ b/cmake/extension/function.cmake
+@@ -583,12 +583,22 @@ function(mcux_convert_binary)
+     if (${CONFIG_TOOLCHAIN} STREQUAL "armgcc")
+       set(OBJDUMP_BIN_CMD "-Osrec")
+     elseif (${CONFIG_TOOLCHAIN} STREQUAL "iar")
+-        set(OBJDUMP_BIN_CMD "--srec")
++      set(OBJDUMP_BIN_CMD "--srec")
+     elseif (${CONFIG_TOOLCHAIN} STREQUAL "mdk")
+       set(OBJDUMP_BIN_CMD "--m32combined")
+     elseif (${CONFIG_TOOLCHAIN} STREQUAL "codewarrior")
+       set(OBJDUMP_BIN_CMD "-srec")
+     endif ()
++  elseif(${FILE_EXT} STREQUAL ".hex")
++    if (${CONFIG_TOOLCHAIN} STREQUAL "armgcc")
++      set(OBJDUMP_BIN_CMD "-Oihex")
++    elseif (${CONFIG_TOOLCHAIN} STREQUAL "iar")
++      set(OBJDUMP_BIN_CMD "--intel")
++    elseif (${CONFIG_TOOLCHAIN} STREQUAL "mdk")
++      set(OBJDUMP_BIN_CMD "--i32combined")
++    elseif (${CONFIG_TOOLCHAIN} STREQUAL "codewarrior")
++      set(OBJDUMP_BIN_CMD "-ihex")
++    endif ()
+   endif()
+   if (${CONFIG_TOOLCHAIN} STREQUAL "codewarrior")
+     if(NOT __EXTRA_ARGS)
+-- 
+2.44.0
+

@@ -164,7 +164,7 @@ slave_result_t TouchpadDriver_Update(uint8_t uhkModuleDriverId)
             deltaY = (int16_t)(buffer[1] | buffer[0]<<8);
             deltaX = (int16_t)(buffer[3] | buffer[2]<<8);
 
-            ModuleConnectionStates[UhkModuleDriverId_RightModule].lastTimeConnected = CurrentTime;
+            ModuleConnectionStates[UhkModuleDriverId_RightModule].lastTimeConnected = Timer_GetCurrentTime();
 
             static bool somethingWasNonZero = false;
             bool somethingIsNonZero = noFingers || deltaX || deltaY || ((uint8_t*)&gestureEvents)[0] || ((uint8_t*)&gestureEvents)[1];
@@ -228,5 +228,5 @@ void TouchpadDriver_Disconnect(uint8_t uhkModuleDriverId)
     TouchpadEvents.x = 0;
     TouchpadEvents.y = 0;
     phase = 0;
-    EventScheduler_Schedule(CurrentTime + MODULE_CONNECTION_TIMEOUT, EventSchedulerEvent_ModuleConnectionStatusUpdate, "ModuleConnectionStatusUpdate");
+    EventScheduler_Schedule(Timer_GetCurrentTime() + MODULE_CONNECTION_TIMEOUT, EventSchedulerEvent_ModuleConnectionStatusUpdate, "ModuleConnectionStatusUpdate");
 }

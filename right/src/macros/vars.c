@@ -291,7 +291,7 @@ static macro_variable_t consumeDollarExpression(parser_context_t* ctx)
         return intVar(ctx->macroState->ls->ms.commandAddress);
     }
     else if (ConsumeToken(ctx, "currentTime")) {
-        return intVar(CurrentTime & 0x7FFFFFFF);
+        return intVar(Timer_GetCurrentTime() & 0x7FFFFFFF);
     }
     else if (ConsumeToken(ctx, "queuedKeyId")) {
         ConsumeUntilDot(ctx);

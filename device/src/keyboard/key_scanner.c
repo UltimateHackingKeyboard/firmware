@@ -301,8 +301,6 @@ bool KeyScanner_ScanAndWakeOnSfjl(bool fullScan, bool wake) {
 }
 
 static void scanKeys() {
-    CurrentTime = k_uptime_get_32();
-
     if (CurrentPowerMode > PowerMode_LightSleep) {
         KeyScanner_ScanAndWakeOnSfjl(true, true);
     } else if (!USE_QUICK_SCAN || KeyPressed || quickScan()) {

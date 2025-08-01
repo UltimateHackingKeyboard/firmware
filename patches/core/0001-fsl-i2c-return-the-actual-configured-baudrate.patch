@@ -1,0 +1,96 @@
+From 2e2bda9648b6f4b7e1bda57e21f174a3837938da Mon Sep 17 00:00:00 2001
+From: Benedek Kupper <kupper.benedek@gmail.com>
+Date: Mon, 16 Jun 2025 15:13:26 +0200
+Subject: [PATCH] fsl-i2c: return the actual configured baudrate
+
+---
+ drivers/i2c/fsl_i2c.c | 12 +++++++++---
+ drivers/i2c/fsl_i2c.h |  6 ++++--
+ 2 files changed, 13 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/i2c/fsl_i2c.c b/drivers/i2c/fsl_i2c.c
+index 3ef9c31..561a561 100644
+--- a/drivers/i2c/fsl_i2c.c
++++ b/drivers/i2c/fsl_i2c.c
+@@ -556,12 +556,14 @@ static void I2C_TransferCommonIRQHandler(I2C_Type *base, void *handle)
+  * param base I2C base pointer
+  * param masterConfig A pointer to the master configuration structure
+  * param srcClock_Hz I2C peripheral clock frequency in Hz
++ * return the actual applied baudrate
+  */
+-void I2C_MasterInit(I2C_Type *base, const i2c_master_config_t *masterConfig, uint32_t srcClock_Hz)
++uint32_t I2C_MasterInit(I2C_Type *base, const i2c_master_config_t *masterConfig, uint32_t srcClock_Hz)
+ {
+     assert(NULL != masterConfig);
+     assert(0U != srcClock_Hz);
+ 
++    uint32_t baudrate;
+     /* Temporary register for filter read. */
+     uint8_t fltReg;
+ #if defined(FSL_FEATURE_I2C_HAS_DOUBLE_BUFFER_ENABLE) && FSL_FEATURE_I2C_HAS_DOUBLE_BUFFER_ENABLE
+@@ -592,7 +594,7 @@ void I2C_MasterInit(I2C_Type *base, const i2c_master_config_t *masterConfig, uin
+     I2C_MasterClearStatusFlags(base, (uint32_t)kClearFlags);
+ 
+     /* Configure baud rate. */
+-    I2C_MasterSetBaudRate(base, masterConfig->baudRate_Bps, srcClock_Hz);
++    baudrate = I2C_MasterSetBaudRate(base, masterConfig->baudRate_Bps, srcClock_Hz);
+ 
+     /* Read out the FLT register. */
+     fltReg = base->FLT;
+@@ -618,6 +620,7 @@ void I2C_MasterInit(I2C_Type *base, const i2c_master_config_t *masterConfig, uin
+     s2Reg    = (uint8_t)(base->S2 & (~I2C_S2_DFEN_MASK));
+     base->S2 = s2Reg | I2C_S2_DFEN(masterConfig->enableDoubleBuffering);
+ #endif
++    return baudrate;
+ }
+ 
+ /*!
+@@ -764,8 +767,9 @@ void I2C_DisableInterrupts(I2C_Type *base, uint32_t mask)
+  * param base I2C base pointer
+  * param baudRate_Bps the baud rate value in bps
+  * param srcClock_Hz Source clock
++ * return the actual applied baudrate
+  */
+-void I2C_MasterSetBaudRate(I2C_Type *base, uint32_t baudRate_Bps, uint32_t srcClock_Hz)
++uint32_t I2C_MasterSetBaudRate(I2C_Type *base, uint32_t baudRate_Bps, uint32_t srcClock_Hz)
+ {
+     uint32_t multiplier;
+     uint32_t computedRate;
+@@ -814,6 +818,8 @@ void I2C_MasterSetBaudRate(I2C_Type *base, uint32_t baudRate_Bps, uint32_t srcCl
+ #endif
+     /* Set frequency register based on best settings. */
+     base->F = I2C_F_MULT(bestMult) | I2C_F_ICR(bestIcr);
++
++    return computedRate;
+ }
+ 
+ /*!
+diff --git a/drivers/i2c/fsl_i2c.h b/drivers/i2c/fsl_i2c.h
+index d470815..549254b 100644
+--- a/drivers/i2c/fsl_i2c.h
++++ b/drivers/i2c/fsl_i2c.h
+@@ -294,8 +294,9 @@ extern "C" {
+  * @param base I2C base pointer
+  * @param masterConfig A pointer to the master configuration structure
+  * @param srcClock_Hz I2C peripheral clock frequency in Hz
++ * @return the actual applied baudrate
+  */
+-void I2C_MasterInit(I2C_Type *base, const i2c_master_config_t *masterConfig, uint32_t srcClock_Hz);
++uint32_t I2C_MasterInit(I2C_Type *base, const i2c_master_config_t *masterConfig, uint32_t srcClock_Hz);
+ 
+ /*!
+  * @brief Initializes the I2C peripheral. Call this API to ungate the I2C clock
+@@ -555,8 +556,9 @@ static inline uint32_t I2C_GetDataRegAddr(I2C_Type *base)
+  * @param base I2C base pointer
+  * @param baudRate_Bps the baud rate value in bps
+  * @param srcClock_Hz Source clock
++ * @return the actual applied baudrate
+  */
+-void I2C_MasterSetBaudRate(I2C_Type *base, uint32_t baudRate_Bps, uint32_t srcClock_Hz);
++uint32_t I2C_MasterSetBaudRate(I2C_Type *base, uint32_t baudRate_Bps, uint32_t srcClock_Hz);
+ 
+ /*!
+  * @brief Sends a START on the I2C bus.
+-- 
+2.44.0
+

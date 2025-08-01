@@ -1,0 +1,18 @@
+{
+    "configurations": [
+        {
+            "name": "Zephyr",
+            "includePath": [
+                "${workspaceFolder}/**"
+            ],
+            "defines": [],
+            "cStandard": "c17",
+            "cppStandard": "gnu++20",
+            "configurationProvider": "nordic-semiconductor.nrf-connect",
+            "browse": {
+                "limitSymbolsToIncludedHeaders": true
+            }
+        }
+    ],
+    "version": 4
+}

@@ -57,9 +57,9 @@ static void changeSlot()
             currentSlot = (currentSlot + 1) % SegmentDisplaySlot_Count;
         } while (!slots[currentSlot].active);
     }
-    lastChange = CurrentTime;
+    lastChange = Timer_GetCurrentTime();
     if (activeSlotCount > 1) {
-        EventScheduler_Reschedule(CurrentTime + changeInterval, EventSchedulerEvent_SegmentDisplayUpdate, "SegmentDisplay - change slot.");
+        EventScheduler_Reschedule(Timer_GetCurrentTime() + changeInterval, EventSchedulerEvent_SegmentDisplayUpdate, "SegmentDisplay - change slot.");
     }
 
     writeLedDisplay();
@@ -72,12 +72,12 @@ void SegmentDisplay_SetText(uint8_t len, const char* text, segment_display_slot_
     memcpy(&slots[slot].text, text, len);
     slots[slot].len = len;
     slots[slot].active = true;
-    lastChange = CurrentTime;
+    lastChange = Timer_GetCurrentTime();
     currentSlot = slot;
     handleOverrides();
     writeLedDisplay();
     if (activeSlotCount > 1) {
-        EventScheduler_Reschedule(CurrentTime + changeInterval, EventSchedulerEvent_SegmentDisplayUpdate, "SegmentDisplay - setText slot change");
+        EventScheduler_Reschedule(Timer_GetCurrentTime() + changeInterval, EventSchedulerEvent_SegmentDisplayUpdate, "SegmentDisplay - setText slot change");
     }
 }
 
@@ -99,7 +99,7 @@ void SegmentDisplay_Update()
         activeSlotCount -= slots[SegmentDisplaySlot_Debug].active ? 1 : 0;
         slots[SegmentDisplaySlot_Debug].active = false;
     }
-    if (CurrentTime - lastChange >= changeInterval) {
+    if (Timer_GetCurrentTime() - lastChange >= changeInterval) {
         changeSlot();
     }
 }

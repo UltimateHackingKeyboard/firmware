@@ -1,7 +1,7 @@
 target_sources(${PROJECT_NAME} PRIVATE
-    #adc.c
-    #led_driver.c
+    $<$<BOOL:${IS_MCUX_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/adc.c>
+    $<$<BOOL:${IS_MCUX_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/led_driver.c>
     merge_sensor.c
     reset_button.c
-    #test_led.c
+    $<$<BOOL:${IS_MCUX_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/test_led.c>
 )

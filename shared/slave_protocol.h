@@ -3,10 +3,7 @@
 
 // Includes:
 
-#include <stdint.h>
-#ifndef __ZEPHYR__
-    #include "fsl_common.h"
-#endif
+    #include <stdint.h>
     #include "attributes.h"
 
 // Macros:

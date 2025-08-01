@@ -7,20 +7,8 @@
 
 // Variables:
 
-    extern uint8_t DebugBuffer[USB_GENERIC_HID_IN_BUFFER_LENGTH];
-
 // Functions:
 
     void UsbCommand_GetDebugBuffer(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer);
-
-    void SetDebugBufferUint8(uint32_t offset, uint8_t value);
-    void SetDebugBufferUint16(uint32_t offset, uint16_t value);
-    void SetDebugBufferUint32(uint32_t offset, uint32_t value);
-
-    void SetDebugBufferInt8(uint32_t offset, int8_t value);
-    void SetDebugBufferInt16(uint32_t offset, int16_t value);
-    void SetDebugBufferInt32(uint32_t offset, int32_t value);
-
-    void SetDebugBufferFloat(uint32_t offset, float value);
 
 #endif

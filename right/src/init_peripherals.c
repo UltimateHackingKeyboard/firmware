@@ -1,5 +1,6 @@
 #include "fsl_common.h"
 #include "fsl_port.h"
+#include "fsl_pit.h"
 #include "peripherals/test_led.h"
 #include "peripherals/reset_button.h"
 #include "i2c.h"
@@ -82,23 +83,23 @@ static void recoverI2cBus(i2c_bus_t *i2cBus)
     bool isOn = true;
     for (int i=0; i<20; i++) {
         GPIO_PinInit(i2cBus->sdaGpio, i2cBus->sdaPin, &(gpio_pin_config_t){kGPIO_DigitalInput});
-        bool isSdaHigh = GPIO_ReadPinInput(i2cBus->sdaGpio, i2cBus->sdaPin);
+        bool isSdaHigh = GPIO_PinRead(i2cBus->sdaGpio, i2cBus->sdaPin);
         GPIO_PinInit(i2cBus->sdaGpio, i2cBus->sdaPin, &(gpio_pin_config_t){kGPIO_DigitalOutput, 1});
 
         if (isSdaHigh) {
             return;
         }
 
-        GPIO_WritePinOutput(i2cBus->sclGpio, i2cBus->sclPin, isOn);
+        GPIO_PinWrite(i2cBus->sclGpio, i2cBus->sclPin, isOn);
         delay();
         isOn = !isOn;
     }
 
-    GPIO_WritePinOutput(i2cBus->sdaGpio, i2cBus->sdaPin, 0);
+    GPIO_PinWrite(i2cBus->sdaGpio, i2cBus->sdaPin, 0);
     delay();
-    GPIO_WritePinOutput(i2cBus->sclGpio, i2cBus->sclPin, 1);
+    GPIO_PinWrite(i2cBus->sclGpio, i2cBus->sclPin, 1);
     delay();
-    GPIO_WritePinOutput(i2cBus->sdaGpio, i2cBus->sdaPin, 1);
+    GPIO_PinWrite(i2cBus->sdaGpio, i2cBus->sdaPin, 1);
     delay();
 }
 
@@ -122,10 +123,10 @@ static void initI2cBus(i2c_bus_t *i2cBus)
     I2C_MasterGetDefaultConfig(&masterConfig);
     masterConfig.baudRate_Bps = i2cBus == &i2cMainBus ? I2cMainBusRequestedBaudRateBps : I2C_EEPROM_BUS_BAUD_RATE;
     uint32_t sourceClock = CLOCK_GetFreq(i2cBus->clockSrc);
-    I2C_MasterInit(i2cBus->baseAddr, &masterConfig, sourceClock);
+    uint32_t baudrate = I2C_MasterInit(i2cBus->baseAddr, &masterConfig, sourceClock);
 
     if (i2cBus == &i2cMainBus) {
-        I2cMainBusActualBaudRateBps = I2C_ActualBaudRate;
+        I2cMainBusActualBaudRateBps = baudrate;
     }
 }
 
@@ -144,6 +145,11 @@ static void initI2c(void)
 
 void InitPeripherals(void)
 {
+    // PIT has multiple users, prepare first
+    pit_config_t pitConfig;
+    PIT_GetDefaultConfig(&pitConfig);
+    PIT_Init(PIT, &pitConfig);
+
     initBusPalState();
     initInterruptPriorities();
     Timer_Init();
