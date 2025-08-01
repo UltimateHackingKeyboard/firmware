@@ -28,8 +28,8 @@
 			"path": "trackpoint"
 		},
 		{
-			"name": "MCUX SDK",
-			"path": "../mcuxsdk"
+			"name": "workspace",
+			"path": ".."
 		}
 	],
 	"settings": {
