@@ -776,7 +776,7 @@ static void sendActiveReports(bool resending) {
 
             KEY_TIMING(KeyTiming_RecordReport(ActiveUsbBasicKeyboardReport));
 
-            if(RuntimeMacroRecordingBlind) {
+            if (RuntimeMacroRecordingBlind || (CurrentPowerMode != PowerMode_Awake)) {
                 //just switch reports without sending the report
                 SwitchActiveUsbBasicKeyboardReport();
             } else {
@@ -799,14 +799,14 @@ static void sendActiveReports(bool resending) {
         usbReportsChangedByAnything = true;
     }
 #else
-    if (UsbMediaKeyboardCheckReportReady(resending) == kStatus_USB_Success) {
+    if ((UsbMediaKeyboardCheckReportReady(resending) == kStatus_USB_Success) && (CurrentPowerMode == PowerMode_Awake)) {
         UsbMediaKeyboardSendActiveReport();
         UsbReportUpdater_LastActivityTime = Timer_GetCurrentTime();
         usbReportsChangedByAction = true;
         usbReportsChangedByAnything = true;
     }
 
-    if (UsbSystemKeyboardCheckReportReady(resending) == kStatus_USB_Success) {
+    if ((UsbSystemKeyboardCheckReportReady(resending) == kStatus_USB_Success) && (CurrentPowerMode == PowerMode_Awake)) {
         UsbSystemKeyboardSendActiveReport();
         UsbReportUpdater_LastActivityTime = Timer_GetCurrentTime();
         usbReportsChangedByAction = true;
@@ -815,7 +815,7 @@ static void sendActiveReports(bool resending) {
 #endif
 
     bool usbMouseButtonsChanged = false;
-    if (UsbMouseCheckReportReady(resending, &usbMouseButtonsChanged) == kStatus_USB_Success) {
+    if ((UsbMouseCheckReportReady(resending, &usbMouseButtonsChanged) == kStatus_USB_Success) && (CurrentPowerMode == PowerMode_Awake)) {
         // Macros_Printf("sm\n");
 
         UsbMouseSendActiveReport();
