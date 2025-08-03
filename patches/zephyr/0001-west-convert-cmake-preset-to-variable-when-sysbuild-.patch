@@ -1,0 +1,35 @@
+From 1bb20a40fb3482e2b4b3771444ab6022ea23906c Mon Sep 17 00:00:00 2001
+From: Benedek Kupper <kupper.benedek@gmail.com>
+Date: Mon, 4 Aug 2025 00:50:36 +0200
+Subject: [PATCH] west: convert cmake preset to variable when sysbuild is
+ selected
+
+---
+ scripts/west_commands/build.py | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/scripts/west_commands/build.py b/scripts/west_commands/build.py
+index 260945483cf..dff5fba9317 100644
+--- a/scripts/west_commands/build.py
++++ b/scripts/west_commands/build.py
+@@ -602,6 +602,17 @@ class Build(Forceable):
+             config_sysbuild = True
+ 
+         if self.args.sysbuild or (config_sysbuild and not self.args.no_sysbuild):
++            preset_name = None
++            i = 0
++            while i < len(cmake_opts):
++                if cmake_opts[i].startswith('--preset'):
++                    preset_name = cmake_opts[i].split('=', 1)[-1]
++                    if preset_name == '--preset':
++                        preset_name = cmake_opts[i + 1]
++                        del cmake_opts[i + 1]
++                    cmake_opts[i] = '-DAPP_PRESET={}'.format(preset_name)
++                    break
++                i += 1
+             cmake_opts.extend(['-S{}'.format(SYSBUILD_PROJ_DIR),
+                                '-DAPP_DIR:PATH={}'.format(self.source_dir)])
+         else:
+-- 
+2.43.0
+

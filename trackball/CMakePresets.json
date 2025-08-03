@@ -14,7 +14,6 @@
       "cacheVariables": {
         "APP_DIR": "${fileDir}",
         "CMAKE_BUILD_TYPE": "debug",
-        "SdkRootDirPath": "$env{SdkRootDirPath}/mcuxsdk",
         "CONFIG_TOOLCHAIN": "armgcc",
         "board": "$env{BOARD}",
         "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "$env{binaryDir}",
@@ -33,7 +32,6 @@
       "cacheVariables": {
         "APP_DIR": "${fileDir}",
         "CMAKE_BUILD_TYPE": "release",
-        "SdkRootDirPath": "$env{SdkRootDirPath}/mcuxsdk",
         "CONFIG_TOOLCHAIN": "armgcc",
         "board": "$env{BOARD}",
         "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "$env{binaryDir}",
