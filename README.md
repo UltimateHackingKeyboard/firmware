@@ -42,7 +42,7 @@ Here is the initial checkout:
 mkdir uhk-workspace
 cd uhk-workspace
 git clone --recurse-submodules git@github.com:UltimateHackingKeyboard/firmware.git
-west init -l firmware --mf west.yml
+west init -l firmware --mf west_nrfsdk.yml
 west config build.cmake-args -- "-Wno-dev"
 cd firmware
 ```
@@ -55,10 +55,11 @@ For the rest of the command line instructions, we assume the `pwd` to be `firmwa
 ### Fetch external software components
 
 The nRF Connect SDK or McuXpresso SDK (depending on the manifest file selection) and additional
-third-party libraries can be fetched to their up-to-date state with the following command:
+third-party libraries must be fetched to their up-to-date state with the following command:
 ```bash
 west update && west patch
 ```
+This must be performed for each SDK independently, after manifest file selection.
 While the setup must only be done once, the external software components change during development,
 so this command is highly recommended to execute after checking out a new branch.
 

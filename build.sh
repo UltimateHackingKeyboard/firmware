@@ -347,11 +347,11 @@ function performAction() {
             upgradeEnv
             ;;
         switchZephyr)
-            west config manifest.file west.yml
+            west config manifest.file west_nrfsdk.yml
             upgradeEnv
             ;;
         make|build|flash|flashUsb)
-            if [ `west config manifest.file` == "west.yml" ]
+            if [ `west config manifest.file` == "west_nrfsdk.yml" ]
             then
                 performZephyrAction $DEVICE $ACTION
             else

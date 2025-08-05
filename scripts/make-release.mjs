@@ -35,7 +35,7 @@ function build(buildTarget, step) {
             ${checksumsMode}`
         );
     } else if (buildTarget.platform === 'nordic') {
-        shell.exec(`ZEPHYR_TOOLCHAIN_VARIANT=zephyr west config manifest.file west.yml && \
+        shell.exec(`ZEPHYR_TOOLCHAIN_VARIANT=zephyr west config manifest.file west_nrfsdk.yml && \
             west build --build-dir ${projectName}/build/${buildTarget.name} ${projectName} \
             --no-sysbuild \
             ${pristineFlag} \

@@ -39,6 +39,7 @@ jobs:
         uses: zephyrproject-rtos/action-zephyr-setup@v1
         with:
           app-path: firmware
+          manifest-file-name: west_nrfsdk.yml
           toolchains: arm-zephyr-eabi
           sdk-version: 0.16.8
 
