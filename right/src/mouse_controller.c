@@ -100,10 +100,10 @@ static float computeModuleSpeed(float x, float y, uint8_t moduleId)
 
     if (x != 0 || y != 0) {
         static uint32_t lastUpdate = 0;
-        uint32_t elapsedTime = CurrentTime - lastUpdate;
+        uint32_t elapsedTime = Timer_GetCurrentTime() - lastUpdate;
         float distance = sqrt(x*x + y*y);
         *currentSpeed = distance / (elapsedTime + 1);
-        lastUpdate = CurrentTime;
+        lastUpdate = Timer_GetCurrentTime();
     }
 
     float normalizedSpeed = *currentSpeed/midSpeed;
@@ -232,10 +232,10 @@ static bool feedTapHoldStateMachine(touchpad_events_t events)
     } else if (lastFinger != (events.noFingers == 1)) {
         event = lastFinger ? Event_FingerOut : Event_FingerIn ;
         lastFinger = !lastFinger;
-    } else if (lastSingleTapTimerActive && lastSingleTapTime + tapTimeout <= CurrentTime) {
+    } else if (lastSingleTapTimerActive && lastSingleTapTime + tapTimeout <= Timer_GetCurrentTime()) {
         event = Event_Timeout;
         lastSingleTapTimerActive = false;
-    } else if (holdContinuationTimerActive && continuationDelayStart + Cfg.HoldContinuationTimeout <= CurrentTime) {
+    } else if (holdContinuationTimerActive && continuationDelayStart + Cfg.HoldContinuationTimeout <= Timer_GetCurrentTime()) {
         event = Event_HoldContinuationTimeout;
         holdContinuationTimerActive = false;
     }
@@ -243,7 +243,7 @@ static bool feedTapHoldStateMachine(touchpad_events_t events)
     action = tapHoldStateMachine(event);
 
     if (action & Action_ResetTimer) {
-        lastSingleTapTime = CurrentTime;
+        lastSingleTapTime = Timer_GetCurrentTime();
         lastSingleTapTimerActive = true;
     }
     if (action & Action_Release) {
@@ -258,7 +258,7 @@ static bool feedTapHoldStateMachine(touchpad_events_t events)
         PostponerCore_TrackKeyEvent(singleTap, true, 0xff);
     }
     if (action & Action_ResetHoldContinuationTimeout) {
-        continuationDelayStart = CurrentTime;
+        continuationDelayStart = Timer_GetCurrentTime();
         holdContinuationTimerActive = true;
     }
 
@@ -411,7 +411,7 @@ static void processAxisLocking(
             ks->caretAxis = CaretAxis_None;
         }
 
-        ks->lastUpdate = CurrentTime;
+        ks->lastUpdate = Timer_GetCurrentTime();
     }
 
     // caretAxis tries to lock to one direction, therefore we "skew" the other one

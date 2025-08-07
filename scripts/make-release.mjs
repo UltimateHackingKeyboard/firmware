@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import shell from 'shelljs';
 import {getGitInfo, readPackageJson} from './common.mjs';
-import {generateVersions} from './generate-versions-util.mjs';
+import {generateChecksums} from './generate-checksums.mjs';
 import {fileURLToPath} from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -15,54 +15,36 @@ shell.config.verbose = true;
 const gitInfo = getGitInfo();
 const packageJson = readPackageJson();
 
-function getZephyrBuildParameters(buildTarget) {
-    let cmakePresetsFile = fs.readFileSync(`${gitInfo.root}/device/CMakePresets.json`, 'utf8');
-    cmakePresetsFile = cmakePresetsFile.replace(/\$\{sourceDir\}/g, `${gitInfo.root}/device`);
-    const cmakePresets = JSON.parse(cmakePresetsFile);
-    const configurePresets = cmakePresets.configurePresets;
-
-    for (const preset of configurePresets) {
-        if (preset.cacheVariables.BOARD === buildTarget.name) {
-            return preset.cacheVariables;
-        }
-    }
-    console.error(`Unknown Zephyr build target: ${buildTarget.name}`);
-    process.exit(1);
-}
-
 function build(buildTarget, step) {
     const buildDir = path.dirname(`${__dirname}/../${buildTarget.source}`);
+    const projectName = buildTarget.source.split(path.sep)[0];
+    const buildDirName = path.basename(buildDir);
     if (step === 1) {
         shell.rm('-rf', buildDir);
         shell.mkdir('-p', buildDir);
     }
+    const pristineFlag = (step === 1) ? '--pristine' : '';
+    const checksumsMode = (step === 1) ? '-DUHK_USE_CHECKSUMS=FALSE' : '-DUHK_USE_CHECKSUMS=TRUE';
 
     if (buildTarget.platform === 'kinetis') {
-        if (step === 1) {
-            shell.exec(`cd ${buildDir}/..; make clean; make -j8`);
-        } else if (step === 2) {
-            shell.exec(`cd ${buildDir}/..; make -j8`);
-        }
-    } else if (buildTarget.platform === 'nordic') {
-        const cacheVariables = getZephyrBuildParameters(buildTarget);
-
-        shell.exec(`ZEPHYR_TOOLCHAIN_VARIANT=zephyr west build \
-            --build-dir ${gitInfo.root}/device/build/${buildTarget.name} \
-            ${gitInfo.root}/device \
-            --pristine \
-            --board ${buildTarget.name} \
-            --no-sysbuild \
+        shell.exec(`west config manifest.file west_mcuxsdk.yml && \
+            west build --force --build-dir ${projectName}/build/${buildDirName} ${projectName} \
+            ${pristineFlag} \
             -- \
-            -DNCS_TOOLCHAIN_VERSION=${cacheVariables.NCS_TOOLCHAIN_VERSION} \
-            -DCONF_FILE=${gitInfo.root}/device/prj_release.conf \
-            -DEXTRA_CONF_FILE="${cacheVariables.EXTRA_CONF_FILE}" \
-            -DBOARD_ROOT=${gitInfo.root} \
-            -Dmcuboot_OVERLAY_CONFIG="${cacheVariables.mcuboot_OVERLAY_CONFIG}"`
+            --preset ${buildDirName} \
+            ${checksumsMode}`
+        );
+    } else if (buildTarget.platform === 'nordic') {
+        shell.exec(`ZEPHYR_TOOLCHAIN_VARIANT=zephyr west config manifest.file west_nrfsdk.yml && \
+            west build --build-dir ${projectName}/build/${buildTarget.name} ${projectName} \
+            --no-sysbuild \
+            ${pristineFlag} \
+            -- \
+            --preset ${buildTarget.name} \
+            ${checksumsMode}`
         );
     }
 }
-
-generateVersions({packageJson, gitInfo, useRealShas:false, useZeroVersions:true});
 
 const version = packageJson.firmwareVersion;
 const releaseName = `uhk-firmware-${version}`;
@@ -90,7 +72,7 @@ if (process.argv.includes('--buildTest')) {
     process.exit(0);
 }
 
-const {devices, modules} = generateVersions({packageJson, gitInfo, useRealShas:true, useZeroVersions:false});
+const {devices, modules} = generateChecksums({packageJson});
 packageJson.devices = devices;
 packageJson.modules = modules;
 for (const buildTarget of buildTargets) {
@@ -140,6 +122,3 @@ shell.cp('-RL', `${__dirname}/../doc/dist`, `${releaseDir}/doc`);
 shell.mkdir('-p', `${releaseDir}/doc-dev`);
 shell.cp('-RL', `${__dirname}/../doc-dev/reference-manual.md`, `${releaseDir}/doc-dev/reference-manual.md`);
 shell.exec(`tar -czvf ${releaseFile} -C ${releaseDir} .`);
-
-// Restore development values
-generateVersions({packageJson, gitInfo, useRealShas:false, useZeroVersions:false});

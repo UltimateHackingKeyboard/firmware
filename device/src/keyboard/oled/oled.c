@@ -149,7 +149,7 @@ static void performScreenShift() {
     currentXShift = shiftCounter / (DISPLAY_SHIFTING_MARGIN);
     currentYShift = shiftCounter % (DISPLAY_SHIFTING_MARGIN);
 
-    EventScheduler_Schedule(CurrentTime + DISPLAY_SHIFTING_PERIOD, EventSchedulerEvent_ShiftScreen, "Oled - shift screen");
+    EventScheduler_Schedule(Timer_GetCurrentTime() + DISPLAY_SHIFTING_PERIOD, EventSchedulerEvent_ShiftScreen, "Oled - shift screen");
     Oled_ActivateScreen(currentScreen, true);
 }
 

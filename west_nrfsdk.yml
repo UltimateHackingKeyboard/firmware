@@ -1,0 +1,32 @@
+manifest:
+  remotes:
+    - name: sdk
+      url-base: https://github.com/nrfconnect
+    - name: zephyr
+      url-base: https://github.com/zephyrproject-rtos
+    - name: IntergatedCircuits
+      url-base: https://github.com/IntergatedCircuits
+  self:
+    path: firmware
+    west-commands: scripts/west_commands.yml
+    import:
+    - submanifests/c2usb.yml
+
+  projects:
+    - name: sdk-nrf
+      remote: sdk
+      path: nrf
+      revision: v2.8.0
+      clone-depth: 1
+      import:
+        # path-prefix: nrfconnect
+        name-allowlist:
+          - zephyr
+          - cmsis
+          - hal_nordic
+          - mcuboot
+          - nrfxlib
+          - lvgl
+          - segger
+          - tinycrypt
+          - zcbor

@@ -34,6 +34,7 @@
 #include "usb_device.h"
 #include "usb_device_ch9.h"
 #include "usb_device_class.h"
+#include "usb_osa.h"
 
 #if ((defined(USB_DEVICE_CONFIG_NUM)) && (USB_DEVICE_CONFIG_NUM > 0U))
 /* Include the class drivers according to the usb_device_config.h. */
