@@ -285,7 +285,6 @@ function performZephyrAction() {
                 ZEPHYR_TOOLCHAIN_VARIANT=zephyr west build \
                     --build-dir "$ROOT/device/build/$DEVICE" "$ROOT/device" \
                     --pristine \
-                    --no-sysbuild \
                     -- \
                     --preset $DEVICE
 END

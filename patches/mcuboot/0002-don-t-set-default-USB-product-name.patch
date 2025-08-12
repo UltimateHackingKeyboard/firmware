@@ -1,0 +1,27 @@
+From a9a3eb52a8783035fdc0825006638e9f9896ec89 Mon Sep 17 00:00:00 2001
+From: Benedek Kupper <kupper.benedek@gmail.com>
+Date: Tue, 12 Aug 2025 21:13:19 +0200
+Subject: [PATCH] don't set default USB product name
+
+---
+ boot/zephyr/Kconfig | 4 ----
+ 1 file changed, 4 deletions(-)
+
+diff --git a/boot/zephyr/Kconfig b/boot/zephyr/Kconfig
+index b681fb5f..5d4d573e 100644
+--- a/boot/zephyr/Kconfig
++++ b/boot/zephyr/Kconfig
+@@ -1010,10 +1010,6 @@ config MULTITHREADING
+ config LOG_PROCESS_THREAD
+ 	default n # mcuboot has its own log processing thread
+ 
+-# override USB device name
+-config USB_DEVICE_PRODUCT
+-	default "MCUBOOT"
+-
+ # use MCUboot's own log configuration
+ config MCUBOOT_BOOTUTIL_LIB_OWN_LOG
+ 	bool
+-- 
+2.43.0
+
