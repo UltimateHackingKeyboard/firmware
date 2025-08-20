@@ -21,8 +21,8 @@
 #define THREAD_PRIORITY -5
 
 #define UART_FOREVER_TIMEOUT 10000
-#define UART_RESEND_DELAY 100
-#define UART_RESEND_COUNT 3
+#define UART_RESEND_DELAY 64
+#define UART_RESEND_COUNT 5
 
 #define UART_RESET_DELAY 10
 
@@ -430,7 +430,7 @@ static void sendControl(uint8_t byte) {
 }
 
 static void resend() {
-    if (resendTries++ > 3) {
+    if (resendTries++ > UART_RESEND_COUNT) {
         LogU("Repeatedly failed to send a message! ");
         for (uint16_t i = 0; i < txPosition; i++) {
             LogU("%i ", txBuffer[i]);
@@ -495,9 +495,10 @@ void testUart() {
 
             currentTime = k_uptime_get();
             if (uartTxState == UartTxState_WaitingForAck) {
-                uint32_t resendTime = lastMessageSentTime + UART_RESEND_DELAY;
+                uint32_t resendDelay = (UART_RESEND_DELAY << resendTries);
+                uint32_t resendTime = lastMessageSentTime + resendDelay;
                 if (currentTime >= resendTime) {
-                    LogU("Uart: didn't receive ack %d, resending\n", currentTime);
+                    LogU("Uart: didn't receive ack %d, resending (delay %d)\n", currentTime);
                     resend();
                 } else {
                     wakeTime = MIN(wakeTime, resendTime);
