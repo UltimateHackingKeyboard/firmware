@@ -70,7 +70,7 @@ and that the external software components are available.
 
 For UHK80 device targets (`uhk-80-right`, `uhk-80-left`, or `uhk-dongle`), the basic command is this:
 ```bash
-DEVICE=uhk-80-right; west build --build-dir device/build/$DEVICE device --no-sysbuild -- --preset $DEVICE
+DEVICE=uhk-80-right; west build --build-dir device/build/$DEVICE device -- --preset $DEVICE
 ```
 A debug build can be produced by appending DEVICE name with `-debug`, e.g. `DEVICE=uhk-80-right-debug`.
 
@@ -119,7 +119,7 @@ these modifications shall not be committed into the git repository!
     ```bash
     export DEVICE=uhk-80-left
     export PWD=`pwd`
-    west build --build-dir $PWD/device/build/$DEVICE $PWD/device --pristine --board $DEVICE --no-sysbuild -- -DNCS_TOOLCHAIN_VERSION=NONE -DCONF_FILE=$PWD/device/prj.conf -DOVERLAY_CONFIG=$PWD/device/prj.conf.overlays/$DEVICE.prj.conf -DBOARD_ROOT=$PWD
+    west build --build-dir $PWD/device/build/$DEVICE $PWD/device --pristine -- --preset $DEVICE -DNCS_TOOLCHAIN_VERSION=NONE
     ```
 
   - quick rebuild:

@@ -47,27 +47,27 @@
     {
       "deviceId": 3,
       "name": "uhk-80-left",
-      "source": "device/build/uhk-80-left/zephyr/app_update.bin",
-      "mmap": "device/build/uhk-80-left/zephyr/zephyr.map",
-      "merged": "device/build/uhk-80-left/zephyr/merged.hex",
+      "source": "device/build/uhk-80-left/device/zephyr/zephyr.signed.bin",
+      "mmap": "device/build/uhk-80-left/device/zephyr/zephyr.map",
+      "merged": "device/build/uhk-80-left/merged.hex",
       "platform": "nordic",
       "userConfigType": "uhk80"
     },
     {
       "deviceId": 4,
       "name": "uhk-80-right",
-      "source": "device/build/uhk-80-right/zephyr/app_update.bin",
-      "mmap": "device/build/uhk-80-right/zephyr/zephyr.map",
-      "merged": "device/build/uhk-80-right/zephyr/merged.hex",
+      "source": "device/build/uhk-80-right/device/zephyr/zephyr.signed.bin",
+      "mmap": "device/build/uhk-80-right/device/zephyr/zephyr.map",
+      "merged": "device/build/uhk-80-right/merged.hex",
       "platform": "nordic",
       "userConfigType": "uhk80"
     },
     {
       "deviceId": 5,
       "name": "uhk-dongle",
-      "source": "device/build/uhk-dongle/zephyr/app_update.bin",
-      "mmap": "device/build/uhk-dongle/zephyr/zephyr.map",
-      "merged": "device/build/uhk-dongle/zephyr/merged.hex",
+      "source": "device/build/uhk-dongle/device/zephyr/zephyr.signed.bin",
+      "mmap": "device/build/uhk-dongle/device/zephyr/zephyr.map",
+      "merged": "device/build/uhk-dongle/merged.hex",
       "platform": "nordic"
     }
   ],
