@@ -39,7 +39,8 @@
 
 #define WAKE(TID) if (TID != 0) { k_wakeup(TID); }
 
-#define STATE_SYNC_SEND_DELAY 1
+#define STATE_SYNC_SEND_DELAY_HPRIO 1
+#define STATE_SYNC_SEND_DELAY_LPRIO 10
 
 #define THREAD_STACK_SIZE 2000
 #define THREAD_PRIORITY 5
@@ -826,7 +827,7 @@ static void updateLoopRightLeft() {
             if (!isConnected || (res = handlePropertyUpdateLeftToRight()) == UpdateResult_AllUpToDate) {
                 k_sleep(K_FOREVER);
             } else {
-                uint32_t delay = res == UpdateResult_UpdatedHighPrio ? STATE_SYNC_SEND_DELAY : STATE_SYNC_SEND_DELAY*10;
+                uint32_t delay = res == UpdateResult_UpdatedHighPrio ? STATE_SYNC_SEND_DELAY_HPRIO : STATE_SYNC_SEND_DELAY_LPRIO;
                 k_sleep(K_MSEC(delay));
             }
         }
@@ -839,7 +840,7 @@ static void updateLoopRightLeft() {
             if (!isConnected || (res = handlePropertyUpdateRightToLeft()) == UpdateResult_AllUpToDate) {
                 k_sleep(K_FOREVER);
             } else {
-                uint32_t delay = res == UpdateResult_UpdatedHighPrio ? STATE_SYNC_SEND_DELAY : STATE_SYNC_SEND_DELAY*10;
+                uint32_t delay = res == UpdateResult_UpdatedHighPrio ? STATE_SYNC_SEND_DELAY_HPRIO : STATE_SYNC_SEND_DELAY_LPRIO;
                 k_sleep(K_MSEC(delay));
             }
         }
@@ -871,7 +872,7 @@ static void updateLoopRightDongle() {
             if (!isConnected || (res = handlePropertyUpdateRightToDongle()) == UpdateResult_AllUpToDate) {
                 k_sleep(K_FOREVER);
             } else {
-                uint32_t delay = res == UpdateResult_UpdatedHighPrio ? STATE_SYNC_SEND_DELAY : STATE_SYNC_SEND_DELAY*10;
+                uint32_t delay = res == UpdateResult_UpdatedHighPrio ? STATE_SYNC_SEND_DELAY_HPRIO : STATE_SYNC_SEND_DELAY_LPRIO;
                 k_sleep(K_MSEC(delay));
             }
         }
@@ -884,7 +885,7 @@ static void updateLoopRightDongle() {
             if (!isConnected || DongleStandby || (res = handlePropertyUpdateDongleToRight()) == UpdateResult_AllUpToDate) {
                 k_sleep(K_FOREVER);
             } else {
-                uint32_t delay = res == UpdateResult_UpdatedHighPrio ? STATE_SYNC_SEND_DELAY : STATE_SYNC_SEND_DELAY*10;
+                uint32_t delay = res == UpdateResult_UpdatedHighPrio ? STATE_SYNC_SEND_DELAY_HPRIO : STATE_SYNC_SEND_DELAY_LPRIO;
                 k_sleep(K_MSEC(delay));
             }
         }

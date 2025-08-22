@@ -14,6 +14,7 @@
 #include "macros/status_buffer.h"
 #include "state_sync.h"
 #include "resend.h"
+#include "timer.h"
 
 // Thread definitions
 
@@ -319,7 +320,8 @@ static void uart_callback(const struct device *dev, struct uart_event *evt, void
         break;
 
     case UART_RX_STOPPED:
-        LogU("UART_RX_STOPPED\n");
+        LogU("UART_RX_STOPPED, because %d\n", evt->data.rx_stop.reason  );
+        CurrentTime = k_uptime_get();
         EventScheduler_Schedule(Timer_GetCurrentTime() + 1000, EventSchedulerEvent_ReenableUart, "reenable uart");
         break;
     }
