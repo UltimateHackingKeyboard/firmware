@@ -604,7 +604,7 @@ static void updateLedsByLightNoneStrategy() {
 }
 
 void Ledmap_ActivateTestled(uint8_t slotId, uint8_t keyId) {
-    if (CurrentTime < backlightingLedTestStart + 1000 || !TestSwitches) {
+    if (Timer_GetCurrentTime() < backlightingLedTestStart + 1000 || !TestSwitches) {
         return;
     }
 
@@ -655,7 +655,7 @@ void handleModeChange(backlighting_mode_t from, backlighting_mode_t to) {
 
 void Ledmap_ActivateTestLedMode(bool active) {
     if (active) {
-        backlightingLedTestStart = CurrentTime;
+        backlightingLedTestStart = Timer_GetCurrentTime();
         Ledmap_SetTemporaryLedBacklightingMode(BacklightingMode_LightAll);
         EventVector_Set(EventVector_LedManagerFullUpdateNeeded);
         EventVector_WakeMain();

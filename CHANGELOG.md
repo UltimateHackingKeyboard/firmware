@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [15.1.0] - 2025-07-31
+
+Device Protocol: 4.16.1 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 12.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.**8.0**
+
+- Fix the `replaceLayer`, `overlayLayer`, and `overlayKeymap` macro commands, which corrupted the keymap due to action compression. `SMARTMACROS:PATCH`
+- Fix the `postponeKeys` modifier that acted as `suppressMods`. `SMARTMACROS:PATCH`
+- Mitigate bridge cable disconnects caused by demanding macros.
+- Add the `switchHost lastSelected` argument to switch to the last manually selected host connection. `SMARTMACROS:MINOR`
+- Add the `reconnect` command to reconnect the current host connection. `SMARTMACROS:MINOR`
+- Add the `$currentTime` macro variable expansion. `SMARTMACROS:MINOR`
+- Make freeze detection and eventloop spin detection less likely to give false alarms.
+
 ## [15.0.1] - 2025-07-10
 
 Device Protocol: 4.16.1 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 12.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.7.0

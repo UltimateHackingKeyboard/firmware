@@ -15,15 +15,17 @@ usage: ./build DEVICE1 DEVICE2 ... ACTION1 ACTION2 ...
              there are also these aliases: { left | right | dongle | all }
     ACTION is in { clean | setup | update | build | make | flash | flashUsb | shell | uart | addrline <address> }
 
-    setup    initialize submodules and set up zephyr environment
-    clean    removes zephyr libraries
-    update   check out submodules after a git checkout
-    build    full clean build with cmake execution
-    make     just recompile / relink the binary
-    flash    make and then flash
-    flashUsb just flash via USB
-    shell    open build shell
-    uart     open uhk shell
+    setup         initialize submodules and set up zephyr environment
+    clean         removes zephyr libraries
+    update        check out submodules after a git checkout
+    build         full clean build with cmake execution
+    make          just recompile / relink the binary
+    flash         make and then flash
+    flashUsb      just flash via USB
+    shell         open build shell
+    uart          open uhk shell
+    switchMcux    switch to UHK60 build environment
+    switchZephyr  switch to UHK80 build environment
 
     Optionally run with "--dev-id 123" to select device for flashing.
 
@@ -52,34 +54,34 @@ function processArguments() {
     while [ -n "$1" ]
     do
         case $1 in
-            uhk-80-left|uhk-80-right|uhk-60-right|uhk-dongle)
+            uhk-80-left|uhk-80-right|uhk-60v1-right|uhk-60v2-right|uhk-dongle|trackball|trackpoint|keycluster)
                 DEVICES="$DEVICES $1"
                 shift
                 ;;
-            left)
-                DEVICES="$DEVICES uhk-80-left"
-                shift
-                ;;
-            right)
-                DEVICES="$DEVICES uhk-80-right"
-                shift
-                ;;
-            dongle)
-                DEVICES="$DEVICES uhk-dongle"
+            left|right|dongle|rightv1|rightv2)
+                DEVICES="$DEVICES $1"
                 shift
                 ;;
             all)
-                DEVICES="$DEVICES uhk-80-left uhk-80-right uhk-dongle"
+                DEVICES="$DEVICES left right dongle"
+                shift
+                ;;
+            both)
+                DEVICES="$DEVICES left right"
                 shift
                 ;;
             clean|setup|update|build|make|flash|shell|release)
-                ACTIONS="$ACTIONS $1"
+                MULTIPLEXED_ACTIONS="$MULTIPLEXED_ACTIONS $1"
                 TARGET_TMUX_SESSION=$BUILD_SESSION_NAME
                 shift
                 ;;
             flashUsb)
-                ACTIONS="$ACTIONS make $1"
+                MULTIPLEXED_ACTIONS="$MULTIPLEXED_ACTIONS make $1"
                 TARGET_TMUX_SESSION=$BUILD_SESSION_NAME
+                shift
+                ;;
+            switchMcux|switchZephyr)
+                SINGLEPLEXED_ACTIONS="$SINGLEPLEXED_ACTIONS $1"
                 shift
                 ;;
             addrline)
@@ -96,7 +98,7 @@ function processArguments() {
                 exit 0
                 ;;
             uart)
-                ACTIONS="$ACTIONS $1"
+                TERMINAL_ACTIONS="$TERMINAL_ACTIONS $1"
                 TARGET_TMUX_SESSION=$UART_SESSION_NAME
                 shift
                 ;;
@@ -107,7 +109,7 @@ function processArguments() {
         esac
     done
 
-    if [ "$ACTIONS" == "" ]
+    if [ "$SINGLEPLEXED_ACTIONS $MULTIPLEXED_ACTIONS $TERMINAL_ACTIONS" == "" ]
     then
         help
     fi
@@ -124,61 +126,55 @@ mutex() {
   fi
 }
 
-function determineUsbDeviceArg() {
-    DEVICE=$1
-    DEVICEUSBID=""
-
+function dealiasDeviceZephyr() {
     case $DEVICE in
-        uhk-80-left)
-            DEVICEUSBID="--vid=0x37a8 --pid=7"
+        uhk-80-left|left)
+            DEVICE="uhk-80-left"
+            USBDEVICEARG="--vid=0x37a8 --pid=7"
+            DEVICEARG="--dev-id $DEVICEID_UHK80_LEFT"
             ;;
-        uhk-80-right)
-            DEVICEUSBID="--vid=0x37a8 --pid=9"
+        uhk-80-right|right)
+            DEVICE="uhk-80-right"
+            USBDEVICEARG="--vid=0x37a8 --pid=9"
+            DEVICEARG="--dev-id $DEVICEID_UHK80_RIGHT"
             ;;
-        uhk-dongle)
-            DEVICEUSBID="--vid=0x37a8 --pid=5"
+        uhk-dongle|dongle)
+            DEVICE="uhk-dongle"
+            USBDEVICEARG="--vid=0x37a8 --pid=1"
+            DEVICEARG="--dev-id $DEVICEID_UHK_DONGLE"
             ;;
-        uhk-60)
-            ;;
+        *)
+            echo "$DEVICE is not a valid device name!"
+            exit 1
     esac
-
-    echo $DEVICEUSBID
 }
 
-function determineDevIdArg() {
-    DEVICE=$1
-    DEVICEID=""
-
+function dealiasDeviceMcux() {
     case $DEVICE in
-        uhk-80-left)
-            DEVICEID="$DEVICEID_UHK80_LEFT"
+        uhk-60v1-right|rightv1|right)
+            DEVICE="uhk-60v1-right"
+            VARIANT="v1-release"
+            BUILD_DIR="right/build/$VARIANT"
+            DEVICE_DIR="right"
+            USBDEVICEARG="--vid=0x37a8 --pid=1"
             ;;
-        uhk-80-right)
-            DEVICEID="$DEVICEID_UHK80_RIGHT"
+        uhk-60v2-right|rightv2|right)
+            DEVICE="uhk-60v2-right"
+            VARIANT="v2-release"
+            BUILD_DIR="right/build/$VARIANT"
+            DEVICE_DIR="right"
+            USBDEVICEARG="--vid=0x37a8 --pid=3"
             ;;
-        uhk-dongle)
-            DEVICEID="$DEVICEID_UHK_DONGLE"
+        trackpoint|trackball|keycluster)
+            DEVICE="$DEVICE"
+            VARIANT="release"
+            BUILD_DIR="$DEVICE/build/$VARIANT"
+            DEVICE_DIR="$DEVICE"
             ;;
-        uhk-60)
-            DEVICEID="$DEVICEID_UHK60"
-            ;;
+        *)
+            echo "$DEVICE is not a valid device name!"
+            exit 1
     esac
-
-
-    if [ "$DEVICEID" == "" ]
-    then
-        cat > /dev/tty << END
-        "In order to make your life comfortable, you can define your device
-        ids in file .devices. Example content:
-
-        DEVICEID_UHK80_LEFT=69660648
-        DEVICEID_UHK80_RIGHT=69660578
-        DEVICEID_UHK_DONGLE=683150769
-END
-        echo ""
-    else
-        echo "--dev-id $DEVICEID"
-    fi
 }
 
 function establishSession() {
@@ -236,10 +232,81 @@ function createCentralCompileCommands() {
     mv $TEMP_COMMANDS $ROOT/compile_commands.json
 }
 
-function getExtraConfFiles() {
+function upgradeEnv() {
+    git submodule update --init --recursive
+    ROOT=`realpath .`
+    cd "$ROOT/.."
+    west update
+    west patch
+    cd "$ROOT"
+}
+
+function performMcuxAction() {
     DEVICE=$1
-    EXTRA_CONF_FILES=`jq -r '.configurePresets[] | select(.name == "build/'"$DEVICE"'") | .cacheVariables.EXTRA_CONF_FILE' device/CMakePresets.json`
-    echo "$EXTRA_CONF_FILES" | sed 's=${sourceDir}='"$ROOT"/device'=g'
+    ACTION=$2
+    ROOT=`realpath .`
+
+    dealiasDeviceMcux $DEVICE
+
+    case $ACTION in
+        build)
+            rm -rf $BUILD_DIR
+            west build --build-dir "$BUILD_DIR" "$DEVICE_DIR" --pristine -- --preset "$VARIANT"
+
+            createCentralCompileCommands
+            ;;
+        make)
+            west build --build-dir "$BUILD_DIR" "$DEVICE_DIR" -- --preset "$VARIANT"
+            ;;
+
+        flash)
+            west flash --build-dir $BUILD_DIR
+            exit 1
+            ;;
+        flashUsb)
+            west agent --build-dir $BUILD_DIR
+            ;;
+    esac
+}
+
+function performZephyrAction() {
+    DEVICE=$1
+    ACTION=$2
+    ROOT=`realpath .`
+
+    dealiasDeviceZephyr
+
+    case $ACTION in
+        build)
+            # reference version of the build process is to be found in scripts/make-release.mjs
+            nrfutil toolchain-manager launch --shell --ncs-version $NCS_VERSION << END
+                unset PYTHONPATH
+                unset PYTHONHOME
+                ZEPHYR_TOOLCHAIN_VARIANT=zephyr west build \
+                    --build-dir "$ROOT/device/build/$DEVICE" "$ROOT/device" \
+                    --pristine \
+                    --no-sysbuild \
+                    -- \
+                    --preset $DEVICE
+END
+            createCentralCompileCommands
+            ;;
+        make)
+            nrfutil toolchain-manager launch --shell --ncs-version $NCS_VERSION << END
+                west build --build-dir $ROOT/device/build/$DEVICE device
+END
+            ;;
+        flash)
+            export BUILD_DIR="$ROOT/device/build/$DEVICE"
+            export DEVICE="$DEVICE"
+            nrfutil toolchain-manager launch --shell --ncs-version $NCS_VERSION << END
+                west flash --softreset --build-dir $BUILD_DIR $DEVICEARG $OTHER_ARGS
+END
+            ;;
+        flashUsb)
+            west agent --build-dir $BUILD_DIR
+            ;;
+    esac
 }
 
 function performAction() {
@@ -249,17 +316,10 @@ function performAction() {
 
     case $ACTION in
         update)
-            git submodule update --init --recursive
-            cd "$ROOT/.."
-            west update -o=--depth=1
-            west patch
-            west config --local build.cmake-args -- "-Wno-dev"
-            cd "$ROOT/scripts"
-            npm ci
-            ./generate-versions.mjs
+            upgradeEnv
             ;;
         clean)
-            rm -rf ../bootloader  ../c2usb  ../hal_nxp  ../modules  ../nrf  ../nrfxlib  ../zephyr ../.west
+            rm -rf ../bootloader  ../c2usb  ../hal_nxp  ../modules  ../nrf  ../nrfxlib  ../zephyr ../.west ../mcuxsdk
             ;;
         setup)
             # basic dependencies
@@ -276,62 +336,27 @@ function performAction() {
             # update following according to README
             git submodule init
             git submodule update --init --recursive
-            # c2usb is broken by default for some reason, so set it up manually
-            cd "$ROOT/.."
-            git clone https://github.com/IntergatedCircuits/c2usb
-            cd "$ROOT/../c2usb"
-            git submodule init
-            git submodule update --init --recursive
-            # now resume in normal setup
             cd "$ROOT/.."
             west init -l "$ROOT"
-            west update -o=--depth=1
-            west patch
             west config --local build.cmake-args -- "-Wno-dev"
-            rm -rf c2usb
-            cd "$ROOT/scripts"
-            npm i
-            ./generate-versions.mjs
+            west update
+            west patch
             ;;
-        build)
-            # reference version of the build process is to be found in scripts/make-release.mjs
-            nrfutil toolchain-manager launch --shell --ncs-version $NCS_VERSION << END
-                unset PYTHONPATH
-                unset PYTHONHOME
-                ZEPHYR_TOOLCHAIN_VARIANT=zephyr west build \
-                    --build-dir "$ROOT/device/build/$DEVICE" "$ROOT/device" \
-                    --pristine \
-                    --board "$DEVICE" \
-                    --no-sysbuild \
-                    -- \
-                    -DNCS_TOOLCHAIN_VERSION=NONE \
-                    -DCONF_FILE="$ROOT/device/prj_release.conf" \
-                    -DEXTRA_CONF_FILE="`getExtraConfFiles $DEVICE`" \
-                    -DBOARD_ROOT="$ROOT" \
-                    -Dmcuboot_OVERLAY_CONFIG="$ROOT/device/child_image/mcuboot.conf;$ROOT/device/child_image/$DEVICE.mcuboot.conf"
-END
-            createCentralCompileCommands
+        switchMcux)
+            west config manifest.file west_mcuxsdk.yml
+            upgradeEnv
             ;;
-        make)
-            nrfutil toolchain-manager launch --shell --ncs-version $NCS_VERSION << END
-                west build --build-dir $ROOT/device/build/$DEVICE device
-END
+        switchZephyr)
+            west config manifest.file west_nrfsdk.yml
+            upgradeEnv
             ;;
-        flash)
-            DEVICEARG=`determineDevIdArg $DEVICE`
-            nrfutil toolchain-manager launch --shell --ncs-version $NCS_VERSION << END
-                west flash --softreset -d $ROOT/device/build/$DEVICE $DEVICEARG $OTHER_ARGS < /dev/tty
-END
-            ;;
-        flashUsb)
-            USBDEVICEARG=`determineUsbDeviceArg $DEVICE`
-            USB_SCRIPT_DIR=$ROOT/lib/agent/packages/usb/
-            cd $USB_SCRIPT_DIR
-            echo "running $USB_SCRIPT_DIR$ ./update-device-firmware.ts $USBDEVICEARG $ROOT/device/build/$DEVICE/zephyr/app_update.bin $OTHER_ARGS"
-            mutex lock
-            ./update-device-firmware.ts $USBDEVICEARG $ROOT/device/build/$DEVICE/zephyr/app_update.bin $OTHER_ARGS
-            mutex unlock
-            cd $ROOT
+        make|build|flash|flashUsb)
+            if [ `west config manifest.file` == "west_nrfsdk.yml" ]
+            then
+                performZephyrAction $DEVICE $ACTION
+            else
+                performMcuxAction $DEVICE $ACTION
+            fi
             ;;
         release)
             nrfutil toolchain-manager launch --shell --ncs-version $NCS_VERSION << END
@@ -389,27 +414,44 @@ function run() {
 
     echo "DEVICES = $DEVICES"
     echo "ACTIONS = $ACTIONS"
-
-    if [ `echo $DEVICES | wc -w` -gt 1 ]
+    
+    if [ "$TERMINAL_ACTIONS" != "" ]
     then
-        runPerDevice
-    elif [ `echo $DEVICES | wc -w` -le 1 ] 
-    then
+        ACTIONS="$TERMINAL_ACTIONS"
         performActions $DEVICES
-    else
-        tmux has-session -t $TARGET_TMUX_SESSION 2>/dev/null
-        SESSION_EXISTS=$?
-        if [ $SESSION_EXISTS == 0 -a "$TMUX" == "" ] 
+        exit 0
+    fi
+
+    if [ "$SINGLEPLEXED_ACTIONS" != "" ]
+    then
+        ACTIONS="$SINGLEPLEXED_ACTIONS"
+        performActions "none"
+    fi
+
+    if [ "$MULTIPLEXED_ACTIONS" != "" ]
+    then
+        ACTIONS="$MULTIPLEXED_ACTIONS"
+
+        if [ `echo $DEVICES | wc -w` -gt 1 ]
         then
             runPerDevice
-        else
+        elif [ `echo $DEVICES | wc -w` -le 1 ] 
+        then
             performActions $DEVICES
         fi
+        # else
+        #     tmux has-session -t $TARGET_TMUX_SESSION 2>/dev/null
+        #     SESSION_EXISTS=$?
+        #     if [ $SESSION_EXISTS == 0 -a "$TMUX" == "" ] 
+        #     then
+        #         runPerDevice
+        #     else
+        #         performActions $DEVICES
+        #     fi
+        # fi
     fi
+
 
 }
 
 run $@
-
-
-

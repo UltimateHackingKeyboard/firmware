@@ -1,0 +1,16 @@
+{
+  "version": "25.3",
+  "toolchainPath": "$env{ARM_GCC_DIR}",
+  "linkedProjects": [],
+  "trustZoneType": "none",
+  "multicoreType": "none",
+  "projectType": "sdk-v2-freestanding",
+  "sdk": {
+    "path": "${workspaceFolder}/../..",
+    "version": "25.6.0",
+    "boardId": "frdmk22f",
+    "deviceId": "MK22FN512xxx12",
+    "coreId": "core0",
+    "partId": "MK22FN512VLH12"
+  }
+}

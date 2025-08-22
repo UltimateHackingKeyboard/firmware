@@ -42,21 +42,21 @@ void ScreenManager_ActivateScreen(screen_id_t screen)
             break;
         case ScreenId_Debug:
             screenPtr = DebugScreen;
-            EventScheduler_Reschedule(CurrentTime + DEBUG_SCREEN_NOTIFICATION_TIMEOUT, EventSchedulerEvent_SwitchScreen, "ScreenManager - switch to main screen");
+            EventScheduler_Reschedule(Timer_GetCurrentTime() + DEBUG_SCREEN_NOTIFICATION_TIMEOUT, EventSchedulerEvent_SwitchScreen, "ScreenManager - switch to main screen");
             break;
         case ScreenId_Main:
             screenPtr = MainScreen;
             break;
         case ScreenId_PairingSucceeded:
             screenPtr = PairingSucceededScreen;
-            EventScheduler_Schedule(CurrentTime + SCREEN_NOTIFICATION_TIMEOUT, EventSchedulerEvent_SwitchScreen, "ScreenManager - switch to main screen");
+            EventScheduler_Schedule(Timer_GetCurrentTime() + SCREEN_NOTIFICATION_TIMEOUT, EventSchedulerEvent_SwitchScreen, "ScreenManager - switch to main screen");
             break;
         case ScreenId_PairingFailed:
             screenPtr = PairingFailedScreen;
-            EventScheduler_Schedule(CurrentTime + SCREEN_NOTIFICATION_TIMEOUT, EventSchedulerEvent_SwitchScreen, "ScreenManager - switch to main screen");
+            EventScheduler_Schedule(Timer_GetCurrentTime() + SCREEN_NOTIFICATION_TIMEOUT, EventSchedulerEvent_SwitchScreen, "ScreenManager - switch to main screen");
             break;
         case ScreenId_Canvas:
-            EventScheduler_Reschedule(CurrentTime + CANVAS_TIMEOUT, EventSchedulerEvent_SwitchScreen, "ScreenManager - switch to main screen");
+            EventScheduler_Reschedule(Timer_GetCurrentTime() + CANVAS_TIMEOUT, EventSchedulerEvent_SwitchScreen, "ScreenManager - switch to main screen");
             screenPtr = CanvasScreen;
             break;
         case ScreenId_Notification:
@@ -72,7 +72,7 @@ void ScreenManager_ActivateScreen(screen_id_t screen)
     if (k_current_get() == Main_ThreadId) {
         Oled_RequestRedraw();
     } else {
-        EventScheduler_Schedule(CurrentTime + 10, EventSchedulerEvent_RedrawOled, "Activate screen");
+        EventScheduler_Schedule(Timer_GetCurrentTime() + 10, EventSchedulerEvent_RedrawOled, "Activate screen");
     }
 }
 

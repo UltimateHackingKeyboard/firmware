@@ -1,10 +1,6 @@
-#ifdef __ZEPHYR__
 #include "device.h"
 #include "keyboard/oled/screens/canvas_screen.h"
 #include <zephyr/sys/printk.h>
-#else
-#include "fsl_common.h"
-#endif
 #include "macros/core.h"
 #include "usb_commands/usb_command_draw_oled.h"
 #include "usb_interfaces/usb_interface_generic_hid.h"

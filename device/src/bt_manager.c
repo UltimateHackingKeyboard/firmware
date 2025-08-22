@@ -92,7 +92,7 @@ void BtManager_StartScanningAndAdvertisingAsync(const char* eventLabel) {
     BT_TRACE_AND_ASSERT("bm4");
     uint32_t delay = 50;
     LOG_INF("btManager: BtManager_StartScanningAndAdvertisingAsync because %s\n", eventLabel);
-    EventScheduler_Reschedule(CurrentTime + delay, EventSchedulerEvent_BtStartScanningAndAdvertising, eventLabel);
+    EventScheduler_Reschedule(Timer_GetCurrentTime() + delay, EventSchedulerEvent_BtStartScanningAndAdvertising, eventLabel);
 }
 
 /*
@@ -172,7 +172,7 @@ void BtManager_StartScanningAndAdvertising() {
     } else {
         try++;
         uint32_t delay = try < 3 ? BT_SHORT_RETRY_DELAY : 10000;
-        EventScheduler_Reschedule(CurrentTime + delay, EventSchedulerEvent_BtStartScanningAndAdvertising, "BtManager_StartScanningAndAdvertising failed");
+        EventScheduler_Reschedule(Timer_GetCurrentTime() + delay, EventSchedulerEvent_BtStartScanningAndAdvertising, "BtManager_StartScanningAndAdvertising failed");
     }
 }
 

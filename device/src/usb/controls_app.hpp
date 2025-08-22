@@ -52,20 +52,20 @@ class controls_app : public app_base {
 
                 report_size(sizeof(hid::le_uint16_t) * 8),
                 report_count(CONSUMER_CODE_COUNT),
-                logical_limits<1, 2>(0, info<consumer>::max_usage_id),
-                usage_extended_limits(nullusage, static_cast<consumer>(info<consumer>::max_usage_id)),
+                logical_limits<1, 2>(0, get_info<consumer>().max_usage_id),
+                usage_extended_limits(nullusage, static_cast<consumer>(get_info<consumer>().max_usage_id)),
                 input::array(),
 
                 report_size(sizeof(hid::le_uint16_t) * 8),
                 report_count(SYSTEM_CODE_COUNT),
-                logical_limits<1, 2>(0, info<generic_desktop>::max_usage_id),
-                usage_extended_limits(nullusage, static_cast<generic_desktop>(info<generic_desktop>::max_usage_id)),
+                logical_limits<1, 2>(0, get_info<generic_desktop>().max_usage_id),
+                usage_extended_limits(nullusage, static_cast<generic_desktop>(get_info<generic_desktop>().max_usage_id)),
                 input::array(),
 
                 report_size(sizeof(hid::le_uint16_t) * 8),
                 report_count(TELEPHONY_CODE_COUNT),
-                logical_limits<1, 2>(0, info<telephony>::max_usage_id),
-                usage_extended_limits(nullusage, static_cast<telephony>(info<consumer>::max_usage_id)),
+                logical_limits<1, 2>(0, get_info<telephony>().max_usage_id),
+                usage_extended_limits(nullusage, static_cast<telephony>(get_info<telephony>().max_usage_id)),
                 input::array()
             )
         );

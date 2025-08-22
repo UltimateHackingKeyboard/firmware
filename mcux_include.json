@@ -1,0 +1,29 @@
+{
+  "version": 7,
+  "cmakeMinimumRequired": {
+    "major": 3
+  },
+  "configurePresets": [
+    {
+      "name": "debug-env",
+      "displayName": "debug-env",
+      "hidden": true,
+      "environment": {
+        "SdkRootDirPath": "${sourceDir}/../..",
+        "PATH": "$penv{PATH}",
+        "ARMGCC_DIR": "$env{ARM_GCC_DIR}"
+      }
+    },
+    {
+      "name": "release-env",
+      "displayName": "release-env",
+      "hidden": true,
+      "environment": {
+        "SdkRootDirPath": "${sourceDir}/../..",
+        "PATH": "$penv{PATH}",
+        "ARMGCC_DIR": "$env{ARM_GCC_DIR}"
+      }
+    }
+  ],
+  "buildPresets": []
+}

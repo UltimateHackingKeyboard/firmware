@@ -1,0 +1,59 @@
+{
+  "version": 7,
+  "cmakeMinimumRequired": {
+    "major": 3
+  },
+  "configurePresets": [
+    {
+      "name": "debug",
+      "displayName": "debug",
+      "generator": "Ninja",
+      "binaryDir": "${fileDir}/build/${presetName}",
+      "toolchainFile": "$env{SdkRootDirPath}/mcuxsdk/cmake/toolchain/armgcc.cmake",
+      "inherits": "debug-env",
+      "cacheVariables": {
+        "APP_DIR": "${fileDir}",
+        "CMAKE_BUILD_TYPE": "debug",
+        "CONFIG_TOOLCHAIN": "armgcc",
+        "board": "$env{BOARD}",
+        "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "$env{binaryDir}",
+        "CMAKE_LIBRARY_OUTPUT_DIRECTORY": "$env{binaryDir}",
+        "CMAKE_ARCHIVE_OUTPUT_DIRECTORY": "$env{binaryDir}",
+        "PrjRootDirPath": "${fileDir}/"
+      }
+    },
+    {
+      "name": "release",
+      "displayName": "release",
+      "generator": "Ninja",
+      "binaryDir": "${fileDir}/build/${presetName}",
+      "toolchainFile": "$env{SdkRootDirPath}/mcuxsdk/cmake/toolchain/armgcc.cmake",
+      "inherits": "release-env",
+      "cacheVariables": {
+        "APP_DIR": "${fileDir}",
+        "CMAKE_BUILD_TYPE": "release",
+        "CONFIG_TOOLCHAIN": "armgcc",
+        "board": "$env{BOARD}",
+        "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "$env{binaryDir}",
+        "CMAKE_LIBRARY_OUTPUT_DIRECTORY": "$env{binaryDir}",
+        "CMAKE_ARCHIVE_OUTPUT_DIRECTORY": "$env{binaryDir}",
+        "PrjRootDirPath": "${fileDir}/"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "debug",
+      "displayName": "debug",
+      "configurePreset": "debug"
+    },
+    {
+      "name": "release",
+      "displayName": "release",
+      "configurePreset": "release"
+    }
+  ],
+  "include": [
+    "mcux_include.json"
+  ]
+}

@@ -315,14 +315,13 @@ static void uart_callback(const struct device *dev, struct uart_event *evt, void
 
     case UART_RX_DISABLED:
         LogU("UART_RX_DISABLED\n");
-        CurrentTime = k_uptime_get();
-        EventScheduler_Schedule(CurrentTime + 1000, EventSchedulerEvent_ReenableUart, "reenable uart");
+        EventScheduler_Schedule(Timer_GetCurrentTime() + 1000, EventSchedulerEvent_ReenableUart, "reenable uart");
         break;
 
     case UART_RX_STOPPED:
         LogU("UART_RX_STOPPED, because %d\n", evt->data.rx_stop.reason  );
         CurrentTime = k_uptime_get();
-        EventScheduler_Schedule(CurrentTime + 1000, EventSchedulerEvent_ReenableUart, "reenable uart");
+        EventScheduler_Schedule(Timer_GetCurrentTime() + 1000, EventSchedulerEvent_ReenableUart, "reenable uart");
         break;
     }
 }

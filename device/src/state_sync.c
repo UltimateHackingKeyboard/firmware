@@ -505,7 +505,7 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
         if (!isLocalUpdate) {
             RemoteDongleProtocolVersion = *(version_t*)data;
             // This should prevent the check from being printed multiple times.
-            EventScheduler_Reschedule(CurrentTime+1000, EventSchedulerEvent_CheckDongleProtocolVersion, "state sync received dongle protocol version");
+            EventScheduler_Reschedule(Timer_GetCurrentTime()+1000, EventSchedulerEvent_CheckDongleProtocolVersion, "state sync received dongle protocol version");
         }
         break;
     case StateSyncPropertyId_ZeroDummy:
@@ -514,7 +514,7 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
     case StateSyncPropertyId_BatteryStationaryMode:
         //for both local and remote
         printk("Setting battery mode to %d\n", Cfg.BatteryStationaryMode);
-        EventScheduler_Schedule(CurrentTime + 1000, EventSchedulerEvent_UpdateBattery, "state sync");
+        EventScheduler_Schedule(Timer_GetCurrentTime() + 1000, EventSchedulerEvent_UpdateBattery, "state sync");
         break;
     case StateSyncPropertyId_PowerMode:
         if (!isLocalUpdate) {
@@ -936,7 +936,7 @@ void StateSync_ResetRightLeftLink(bool bidirectional) {
         invalidateProperty(StateSyncPropertyId_PowerMode);
         invalidateProperty(StateSyncPropertyId_BatteryStationaryMode);
         // Wait sufficiently log so the firmware check isnt triggered during firmware upgrade
-        EventScheduler_Reschedule(CurrentTime + 2*60*1000, EventSchedulerEvent_CheckFwChecksums, "Reset left right link");
+        EventScheduler_Reschedule(Timer_GetCurrentTime() + 2*60*1000, EventSchedulerEvent_CheckFwChecksums, "Reset left right link");
     }
     if (DEVICE_ID == DeviceId_Uhk80_Left) {
         invalidateProperty(StateSyncPropertyId_Battery);
@@ -961,7 +961,7 @@ void StateSync_ResetRightDongleLink(bool bidirectional) {
     }
     if (DEVICE_ID == DeviceId_Uhk80_Right) {
         RemoteDongleProtocolVersion = (version_t){0, 0, 0};
-        EventScheduler_Reschedule(CurrentTime+1000, EventSchedulerEvent_CheckDongleProtocolVersion, "state sync - reset right dongle link");
+        EventScheduler_Reschedule(Timer_GetCurrentTime()+1000, EventSchedulerEvent_CheckDongleProtocolVersion, "state sync - reset right dongle link");
     }
 }
 

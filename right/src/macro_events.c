@@ -218,8 +218,8 @@ void MacroEvent_TriggerGenericEvent(generic_macro_event_t eventId)
 void MacroEvent_OnError() {
     static uint32_t last = 0;
 
-    if (CurrentTime - last > 1000) {
-        last = CurrentTime;
+    if (Timer_GetCurrentTime() - last > 1000) {
+        last = Timer_GetCurrentTime();
         MacroEvent_TriggerGenericEvent(GenericMacroEvent_OnError);
     }
 }
