@@ -519,6 +519,13 @@ static void connectUnknown(struct bt_conn *conn) {
 
 static void connected(struct bt_conn *conn, uint8_t err) {
     BT_TRACE_AND_ASSERT("bc1");
+
+    LOG_INF("Connected cb\n");
+
+    // Without this, linux pairing fails, because tiny 27 byte packets
+    // exhaust acl buffers easily
+    enableDataLengthExtension(conn);
+
     if (err) {
         LOG_WRN("Failed to connect to %s, err %u\n", GetPeerStringByConn(conn), err);
         BtManager_StartScanningAndAdvertising();
@@ -702,10 +709,13 @@ static void auth_passkey_entry(struct bt_conn *conn) {
 
     LOG_INF("Received passkey pairing inquiry.\n");
 
+    enableDataLengthExtension(conn);
+
     if (!auth_conn) {
         LOG_INF("Returning: no auth conn\n");
         return;
     }
+
 
     connection_id_t connectionId = Connections_GetConnectionIdByHostAddr(bt_conn_get_dst(conn));
     bool isUhkPeerByAddr = isUhkDeviceConnection(Connections_Type(connectionId));
