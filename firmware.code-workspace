@@ -8,23 +8,23 @@
 			"path": "device"
 		},
 		{
-			"name": "uhk-60-right",
+			"name": "right",
 			"path": "right"
 		},
 		{
-			"name": "uhk-60-left",
+			"name": "left",
 			"path": "left"
 		},
 		{
-			"name": "module-keycluster",
+			"name": "keycluster",
 			"path": "keycluster"
 		},
 		{
-			"name": "module-trackball",
+			"name": "trackball",
 			"path": "trackball"
 		},
 		{
-			"name": "module-trackpoint",
+			"name": "trackpoint",
 			"path": "trackpoint"
 		},
 		{
@@ -55,7 +55,10 @@
 		"cmake.useCMakePresets": "always",
 		"C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
 		"C_Cpp.workspaceParsingPriority": "high",
-		"C_Cpp.autoAddFileAssociations": false
+		"C_Cpp.autoAddFileAssociations": false,
+		"clangd.arguments": [
+			"--compile-commands-dir=${workspaceFolder}/build/v2-debug"
+		]
 	},
 	"extensions": {
 		"recommendations": [
