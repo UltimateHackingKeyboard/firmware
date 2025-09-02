@@ -102,6 +102,10 @@ function processArguments() {
                 TARGET_TMUX_SESSION=$UART_SESSION_NAME
                 shift
                 ;;
+            help|--help|-h)
+                help
+                exit 0
+                ;;
             *)
                 OTHER_ARGS="$OTHER_ARGS $1"
                 shift
@@ -109,7 +113,7 @@ function processArguments() {
         esac
     done
 
-    if [ "$SINGLEPLEXED_ACTIONS $MULTIPLEXED_ACTIONS $TERMINAL_ACTIONS" == "" ]
+    if [ "$SINGLEPLEXED_ACTIONS $MULTIPLEXED_ACTIONS $TERMINAL_ACTIONS" == "  " ]
     then
         help
     fi
