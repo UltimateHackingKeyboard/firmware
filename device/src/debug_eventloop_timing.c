@@ -1,5 +1,6 @@
 #include "debug_eventloop_timing.h"
 #include "main.h"
+#include "thread_stats.h"
 
 static bool running = false;
 static uint64_t startTime = 0;
@@ -60,5 +61,7 @@ void sys_trace_thread_switched_in_user(void) {
     if (running) {
         EventloopTiming_Switch();
     }
+#if DEBUG_THREAD_STATS
+    ThreadStats_Switch();
+#endif
 }
-
