@@ -13,6 +13,7 @@
       "inherits": "debug-env",
       "cacheVariables": {
         "APP_DIR": "${fileDir}",
+        "SdkRootDirPath": "$env{SdkRootDirPath}/mcuxsdk",
         "CMAKE_BUILD_TYPE": "debug",
         "CONFIG_TOOLCHAIN": "armgcc",
         "board": "$env{BOARD}",
@@ -31,6 +32,7 @@
       "inherits": "release-env",
       "cacheVariables": {
         "APP_DIR": "${fileDir}",
+        "SdkRootDirPath": "$env{SdkRootDirPath}/mcuxsdk",
         "CMAKE_BUILD_TYPE": "release",
         "CONFIG_TOOLCHAIN": "armgcc",
         "board": "$env{BOARD}",
