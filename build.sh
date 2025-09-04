@@ -292,7 +292,6 @@ function performAction() {
             west update -o=--depth=1
             west patch
             west config --local build.cmake-args -- "-Wno-dev"
-            rm -rf c2usb
             cd "$ROOT/scripts"
             npm i
             ./generate-versions.mjs
