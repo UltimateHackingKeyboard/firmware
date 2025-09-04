@@ -2595,9 +2595,10 @@ static void jumpToMatchingBrace()
         }
     }
 
-    Macros_LoadNextCommand() || Macros_LoadNextAction() || (S->ms.macroBroken = true);
-
     Macros_DryRun = false;
+
+    // First reset the dry run, so that the following code performs state resets
+    Macros_LoadNextCommand() || Macros_LoadNextAction() || (S->ms.macroBroken = true);
 }
 
 macro_result_t Macros_ProcessCommandAction(void)
