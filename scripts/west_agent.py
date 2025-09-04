@@ -46,7 +46,7 @@ class WestAgent(WestCommand):
         pid = None
         module = None
         if app_name == 'device':
-            dotconfig = build_dir / 'zephyr' / '.config'
+            dotconfig = build_dir / 'device' / 'zephyr' / '.config'
             with dotconfig.open() as f:
                 for line in f:
                     if line.startswith('CONFIG_USB_DEVICE_PID='):
@@ -55,7 +55,7 @@ class WestAgent(WestCommand):
             if pid is None:
                 log.die('CONFIG_USB_DEVICE_PID not found or invalid in .config')
 
-            fw_file = build_dir / 'zephyr' / 'app_update.bin'
+            fw_file = build_dir / 'device' / 'zephyr' / 'zephyr.signed.bin'
             if not fw_file.is_file():
                 log.die(f'Firmware file not found: {fw_file}')
 

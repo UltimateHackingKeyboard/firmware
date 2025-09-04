@@ -14,7 +14,7 @@
                 "NCS_TOOLCHAIN_VERSION": "NONE",
                 "BOARD": "uhk-80-right",
                 "BOARD_ROOT": "${sourceParentDir}/",
-                "mcuboot_OVERLAY_CONFIG": "${sourceDir}/child_image/mcuboot.conf;${sourceDir}/child_image/uhk-80-right.mcuboot.conf",
+                "mcuboot_OVERLAY_CONFIG": "${sourceDir}/sysbuild/mcuboot.conf",
                 "CONF_FILE": "${sourceDir}/prj_release.conf",
                 "EXTRA_CONF_FILE": "${sourceDir}/prj.conf.overlays/nrf_shared.conf;${sourceDir}/prj.conf.overlays/c2usb.conf;${sourceDir}/prj.conf.overlays/uhk-80.conf;${sourceDir}/prj.conf.overlays/ble_nus.conf;${sourceDir}/prj.conf.overlays/ble_nus_client.conf;${sourceDir}/prj.conf.overlays/ble_hid.conf"
             }
@@ -28,7 +28,7 @@
                 "NCS_TOOLCHAIN_VERSION": "NONE",
                 "BOARD": "uhk-80-right",
                 "BOARD_ROOT": "${sourceParentDir}/",
-                "mcuboot_OVERLAY_CONFIG": "${sourceDir}/child_image/mcuboot.conf;${sourceDir}/child_image/uhk-80-right.mcuboot.conf",
+                "mcuboot_OVERLAY_CONFIG": "${sourceDir}/sysbuild/mcuboot.conf",
                 "CONF_FILE": "${sourceDir}/prj.conf",
                 "EXTRA_CONF_FILE": "${sourceDir}/prj.conf.overlays/nrf_shared.conf;${sourceDir}/prj.conf.overlays/c2usb.conf;${sourceDir}/prj.conf.overlays/uhk-80.conf;${sourceDir}/prj.conf.overlays/ble_nus.conf;${sourceDir}/prj.conf.overlays/ble_nus_client.conf;${sourceDir}/prj.conf.overlays/ble_hid.conf"
             }
@@ -42,7 +42,7 @@
                 "NCS_TOOLCHAIN_VERSION": "NONE",
                 "BOARD": "uhk-80-left",
                 "BOARD_ROOT": "${sourceParentDir}/",
-                "mcuboot_OVERLAY_CONFIG": "${sourceDir}/child_image/mcuboot.conf;${sourceDir}/child_image/uhk-80-left.mcuboot.conf",
+                "mcuboot_OVERLAY_CONFIG": "${sourceDir}/sysbuild/mcuboot.conf",
                 "CONF_FILE": "${sourceDir}/prj_release.conf",
                 "EXTRA_CONF_FILE": "${sourceDir}/prj.conf.overlays/nrf_shared.conf;${sourceDir}/prj.conf.overlays/c2usb.conf;${sourceDir}/prj.conf.overlays/uhk-80.conf;${sourceDir}/prj.conf.overlays/ble_nus.conf"
             }
@@ -56,7 +56,7 @@
                 "NCS_TOOLCHAIN_VERSION": "NONE",
                 "BOARD": "uhk-80-left",
                 "BOARD_ROOT": "${sourceParentDir}/",
-                "mcuboot_OVERLAY_CONFIG": "${sourceDir}/child_image/mcuboot.conf;${sourceDir}/child_image/uhk-80-left.mcuboot.conf",
+                "mcuboot_OVERLAY_CONFIG": "${sourceDir}/sysbuild/mcuboot.conf",
                 "CONF_FILE": "${sourceDir}/prj.conf",
                 "EXTRA_CONF_FILE": "${sourceDir}/prj.conf.overlays/nrf_shared.conf;${sourceDir}/prj.conf.overlays/c2usb.conf;${sourceDir}/prj.conf.overlays/uhk-80.conf;${sourceDir}/prj.conf.overlays/ble_nus.conf"
             }
@@ -70,7 +70,7 @@
                 "NCS_TOOLCHAIN_VERSION": "NONE",
                 "BOARD": "uhk-dongle",
                 "BOARD_ROOT": "${sourceParentDir}/",
-                "mcuboot_OVERLAY_CONFIG": "${sourceDir}/child_image/mcuboot.conf;${sourceDir}/child_image/uhk-dongle.mcuboot.conf",
+                "mcuboot_OVERLAY_CONFIG": "${sourceDir}/sysbuild/mcuboot.conf",
                 "CONF_FILE": "${sourceDir}/prj_release.conf",
                 "EXTRA_CONF_FILE": "${sourceDir}/prj.conf.overlays/nrf_shared.conf;${sourceDir}/prj.conf.overlays/c2usb.conf;${sourceDir}/prj.conf.overlays/ble_nus_client.conf"
             }
@@ -84,7 +84,7 @@
                 "NCS_TOOLCHAIN_VERSION": "NONE",
                 "BOARD": "uhk-dongle",
                 "BOARD_ROOT": "${sourceParentDir}/",
-                "mcuboot_OVERLAY_CONFIG": "${sourceDir}/child_image/mcuboot.conf;${sourceDir}/child_image/uhk-dongle.mcuboot.conf",
+                "mcuboot_OVERLAY_CONFIG": "${sourceDir}/sysbuild/mcuboot.conf",
                 "CONF_FILE": "${sourceDir}/prj.conf",
                 "EXTRA_CONF_FILE": "${sourceDir}/prj.conf.overlays/nrf_shared.conf;${sourceDir}/prj.conf.overlays/c2usb.conf;${sourceDir}/prj.conf.overlays/ble_nus_client.conf"
             }

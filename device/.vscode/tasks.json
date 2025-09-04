@@ -17,7 +17,6 @@
 				"--build-dir",
 				"${cwd}/build/uhk-80-left",
 				"${cwd}",
-				"--no-sysbuild",
 				"--",
 				"--preset",
 				"uhk-80-left"
@@ -42,7 +41,6 @@
 				"--build-dir",
 				"${cwd}/build/uhk-80-right",
 				"${cwd}",
-				"--no-sysbuild",
 				"--",
 				"--preset",
 				"uhk-80-right"
@@ -67,7 +65,6 @@
 				"--build-dir",
 				"${cwd}/build/uhk-dongle",
 				"${cwd}",
-				"--no-sysbuild",
 				"--",
 				"--preset",
 				"uhk-dongle"

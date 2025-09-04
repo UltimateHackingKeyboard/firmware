@@ -30,6 +30,10 @@ extern "C" {
     #include "port/zephyr/bluetooth/hid.hpp"
 #endif
 
+#if defined(CONFIG_DEBUG) == defined(NDEBUG)
+    #error "Either CONFIG_DEBUG or NDEBUG must be defined"
+#endif
+
 using namespace magic_enum::bitwise_operators;
 
 uint8_t UsbSerialNumber[5];
