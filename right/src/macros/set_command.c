@@ -32,6 +32,7 @@
 #include <stdint.h>
 #include "config_manager.h"
 #include "led_manager.h"
+#include "wormhole.h"
 
 #ifdef __ZEPHYR__
 #include "state_sync.h"
@@ -969,6 +970,7 @@ static macro_variable_t root(parser_context_t* ctx, set_command_action_t action)
     }
     else if (ConsumeToken(ctx, "devMode")) {
         ASSIGN_BOOL(Cfg.DevMode);
+        StateWormhole.devMode = Cfg.DevMode;
     }
     else if (ConsumeToken(ctx, "stickyModifiers")) {
         return stickyModifiers(ctx, action);

@@ -28,6 +28,7 @@
 #include "versioning.h"
 #include "layouts/key_layout_60_to_universal.h"
 #include "test_switches.h"
+#include "mouse_controller.h"
 
 uhk_module_state_t UhkModuleStates[UHK_MODULE_MAX_SLOT_COUNT];
 module_connection_state_t ModuleConnectionStates[UHK_MODULE_MAX_SLOT_COUNT];
@@ -156,8 +157,10 @@ void UhkModuleSlaveDriver_ProcessKeystates(uint8_t uhkModuleDriverId, uhk_module
         uint8_t keyStatesLength = BOOL_BYTES_TO_BITS_COUNT(uhkModuleState->keyCount);
         pointer_delta_t *pointerDelta = (pointer_delta_t*)(rxMessageData + keyStatesLength);
         DISABLE_IRQ();
+        DetectJumps(pointerDelta->x, pointerDelta->y, "UhkModuleDriver1");
         uhkModuleState->pointerDelta.x += pointerDelta->x;
         uhkModuleState->pointerDelta.y += pointerDelta->y;
+        DetectJumps(uhkModuleState->pointerDelta.x, uhkModuleState->pointerDelta.y, "UhkModuleDriver2");
         ENABLE_IRQ();
         uhkModuleState->pointerDelta.debugInfo = pointerDelta->debugInfo;
         nonzeroDeltas = uhkModuleState->pointerDelta.x != 0 || uhkModuleState->pointerDelta.y != 0;

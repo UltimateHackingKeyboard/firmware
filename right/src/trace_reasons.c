@@ -63,3 +63,13 @@ void Trace_PrintUhk60ReasonRegisters(device_id_t targetDeviceId, log_target_t ta
 
     if (SCB_HFSR & 0x40000000) LogTo(targetDeviceId, targetInterface, "Forced HardFault detected\n");
 }
+
+void Trace_ResetUhk60Reasons() {
+    // Clear sticky reset status registers
+    RCM_SSRS0 = 0xFF;  // Write 1 to clear each bit
+    RCM_SSRS1 = 0xFF;  // Write 1 to clear each bit
+
+    // Clear Low-Voltage Warning Flag by writing 1 to it
+    PMC_LVDSC1 |= 0x40;
+    PMC_LVDSC2 |= 0x40;
+}

@@ -1479,10 +1479,11 @@ static macro_result_t processPanicCommand(parser_context_t* ctx) {
         return MacroResult_Finished;
     }
 
+    Trace_Printc("PretendedPanic");
+
 #ifdef __ZEPHYR__
     k_panic();
 #else
-    Trace_Printc("PretendedPanic");
     NVIC_SystemReset();
 #endif
     return MacroResult_Finished;

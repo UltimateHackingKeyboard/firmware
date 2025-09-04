@@ -118,6 +118,10 @@ void Main_Wake() {
 }
 
 static void detectSpinningEventLoop() {
+    if (!Cfg.DevMode) {
+        return;
+    }
+
     const uint16_t maxEventsPerSecond = 300; //allow 5ms macro wait loops
     static uint32_t thisCheckTime = 0;
     static uint16_t eventCount = 0;
@@ -290,7 +294,11 @@ int main(void) {
             mode = StateWormhole.restartPowerMode;
             StateWormhole.restartPowerMode = PowerMode_Awake;
         }
-        MacroStatusBuffer_InitFromWormhole();
+        if (StateWormhole.devMode) {
+            MacroStatusBuffer_InitFromWormhole();
+        } else {
+            MacroStatusBuffer_InitNormal();
+        }
         StateWormhole_Clean();
     } else {
         printk("Wormhole is closed\n");

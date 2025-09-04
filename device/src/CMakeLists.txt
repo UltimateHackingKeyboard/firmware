@@ -42,7 +42,6 @@ if(NOT CONFIG_BOARD_UHK_60_RIGHT)
         round_trip_test.c
         settings.c
         shell.c
-        stack_trace.c
         state_sync.c
         thread_stats.c
     )
