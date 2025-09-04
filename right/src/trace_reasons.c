@@ -1,7 +1,5 @@
 #include "trace_reasons.h"
 
-#ifndef __ZEPHYR__
-
 // RCM (Reset Control Module) registers - K22P121M120SF7
 #define RCM_SRS0    (*(volatile uint8_t*)0x4007F000)
 #define RCM_SRS1    (*(volatile uint8_t*)0x4007F001)
@@ -75,4 +73,3 @@ void Trace_ResetUhk60Reasons() {
     PMC_LVDSC1 |= 0x40;
     PMC_LVDSC2 |= 0x40;
 }
-#endif

@@ -22,55 +22,85 @@ If you're one of the brave few who wants to hack the firmware then read on.
 - pip3
 - nodejs (and optionally nvm for version management, then (e.g.) `nvm install 20; nvm use 20`)
 - west (`pip3 install west`)
-
-### UHK80 quick dev setup
-
-On top of the above, install:
-- nrfutil and nrf commandline tools:
+- (UHK60 and modules) gcc-arm-none-eabi toolchain:
+  after it is installed, set an environment variable in the default shell, e.g.
+  - `export ARM_GCC_DIR="/usr"` for Linux or WSL in ~/.bashrc
+  - `export ARM_GCC_DIR="/opt/homebrew"` for macOS in ~/.zshrc
+- (UHK80) nrfutil and nrf commandline tools:
   - https://www.nordicsemi.com/Products/Development-tools/nRF-Util/Download
   - https://www.nordicsemi.com/Products/Development-tools/nrf-command-line-tools/download
 
-Now, following should work on latest Ubuntu.
+### Setup workspace
 
-```
-mkdir firmware
-cd firmware
-git clone --recurse-submodules git@github.com:UltimateHackingKeyboard/firmware.git
-cd firmware
-./build.sh setup
-./build.sh all build make flash
-```
+Unlike most common workflows, where the git repository is the top level directory,
+this firmware uses the [west workspace](https://docs.zephyrproject.org/latest/develop/west/workspaces.html#t2-star-topology-application-is-the-manifest-repository) structure. This means that you should first
+create a wrapping directory, which will store the firmware git repository, and the *west workspace*
+with the third-party SW components.
 
-In case the above doesn't work, please see (or create a ticket):
-- further sections of this readme 
-- content of `scripts/make-release.mjs` (this one is directive for build command form)
-- content of `build.sh` (this is an auxiliary script; it works for me)
-- the github CI build script (`.github/workflows/ci.yml`) (this one is directive for getting dependencies)
-
-### Fetching the codebase manually
-
-Note that these commands will create a [west workspace](https://docs.zephyrproject.org/latest/develop/west/workspaces.html#t2-star-topology-application-is-the-manifest-repository) in your current directory - the top "firmware".
-
+Here is the initial checkout:
 ```bash
-mkdir firmware
-cd firmware
+mkdir uhk-workspace
+cd uhk-workspace
 git clone --recurse-submodules git@github.com:UltimateHackingKeyboard/firmware.git
-west init -l firmware
-west update -o=--depth=1 -n
-west patch
-west config --local build.cmake-args -- "-Wno-dev"
-cd firmware/scripts
-npm i
-./generate-versions.mjs
+west init -l firmware --mf west_nrfsdk.yml
+west config build.cmake-args -- "-Wno-dev"
+cd firmware
+```
+Note that there are two parallel development paths, that exist side by side.
+UHK80 left, right and dongle use nRF Connect SDK, while the UHK60 and the modules use McuXpresso SDK.
+If you intend to develop on the latter, use `west init -l firmware --mf west_mcuxsdk.yml` command instead.
+(You can also switch later on with `west config manifest.file west_mcuxsdk.yml`.)
+For the rest of the command line instructions, we assume the `pwd` to be `firmware`, the git repo root directory.
+
+### Fetch external software components
+
+The nRF Connect SDK or McuXpresso SDK (depending on the manifest file selection) and additional
+third-party libraries must be fetched to their up-to-date state with the following command:
+```bash
+west update && west patch
+```
+This must be performed for each SDK independently, after manifest file selection.
+While the setup must only be done once, the external software components change during development,
+so this command is highly recommended to execute after checking out a new branch.
+
+### Build a device firmware
+
+Before you start a build, ensure that you have the correct west manifest selected (check with `west config manifest.file`),
+and that the external software components are available.
+
+For UHK80 device targets (`uhk-80-right`, `uhk-80-left`, or `uhk-dongle`), the basic command is this:
+```bash
+DEVICE=uhk-80-right; west build --build-dir device/build/$DEVICE device -- --preset $DEVICE
+```
+A debug build can be produced by appending DEVICE name with `-debug`, e.g. `DEVICE=uhk-80-right-debug`.
+
+For UHK60 device and module targets (`right`, `left`, `keycluster`, `trackball` or `trackpoint`), the basic command is this:
+(Note that only `right` has `v1` and `v2` options, all other devices are simply `release` presets.)
+```bash
+DEVICE=right; west build -f --build-dir $DEVICE/build/v2-release $DEVICE -- --preset v2-release
+```
+A debug build can be produced by replacing `release` with `debug` in the preset.
+
+The empty `--` separates the west command line arguments from the arguments that are forwarded to cmake.
+A full, clean rebuild can be performed by adding `-p` or `--pristine` before this separator.
+
+### Flashing a built firmware
+
+Using the `--build-dir` parameter of the build (e.g. `device/build/uhk-80-right` or `right/build/v2-release`),
+the flashing command is as follows:
+```bash
+BUILD_DIR=device/build/uhk-80-right; west flash --build-dir $BUILD_DIR
 ```
 
-Then, depending whether you want a full IDE experience or just minimal tools for building and flashing firmware, read *VS Code setup* or *Minimal development setup* (if you prefer a text editor + command line).
+### Development with VS Code
 
-### UHK80 VS Code setup
+It is recommended to start development in the IDE once a successful build is available, as the build parameters
+aren't trivial to pass to the IDE, but it does pick up existing build configurations.
+To get started, choose *Open Workspace from File...*, then select the `firmware.code-workspace` file.
+Install the recommended extensions or pick the one for your single device depending on the SDK.
 
-- Install [nRF Connect SDK](https://developer.nordicsemi.com/nRF_Connect_SDK/doc/latest/nrf/installation/install_ncs.html) including VS Code extensions.
-- In VS Code, click nRF connect icon in the left pane, then `Applications -> Create new build configuration` and select the relevant CMake preset. Now hit Build. This executes cmake steps.
-- Now you can rebuild or flash using the Build and Flash actions.
+> Note that using *MCUXpresso for VS Code* extension currently overwrites the `mcux_includes.json` file,
+these modifications shall not be committed into the git repository!
 
 ### UHK80 Minimal development setup
 
@@ -80,79 +110,60 @@ Then, depending whether you want a full IDE experience or just minimal tools for
     - e.g. `./build.sh uhk-80-left build make flash`, which will perform the three actions below
 
 - If the `build.sh` doesn't suit you, then launch the nrfutil shell:
-    ```
+    ```bash
     nrfutil toolchain-manager launch --shell --ncs-version v2.8.0
     ```
 - In the shell, you can build (e.g.) uhk-80-left as follows:
 
   - full build including cmake steps, as extracted from VS Code:
-    ```
+    ```bash
     export DEVICE=uhk-80-left
     export PWD=`pwd`
-    west build --build-dir $PWD/device/build/$DEVICE $PWD/device --pristine --board $DEVICE --no-sysbuild -- -DNCS_TOOLCHAIN_VERSION=NONE -DCONF_FILE=$PWD/device/prj.conf -DOVERLAY_CONFIG=$PWD/device/prj.conf.overlays/$DEVICE.prj.conf -DBOARD_ROOT=$PWD
+    west build --build-dir $PWD/device/build/$DEVICE $PWD/device --pristine -- --preset $DEVICE -DNCS_TOOLCHAIN_VERSION=NONE
     ```
 
   - quick rebuild:
-    ```
+    ```bash
     export DEVICE=uhk-80-left
     export PWD=`pwd`
     west build --build-dir $PWD/device/build/$DEVICE $PWD/device
     ```
 
   - flash:
-    ```
+    ```bash
     export DEVICE=uhk-80-left
     export PWD=`pwd`
     west flash -d $PWD/device/build/$DEVICE
     ```
 
-In case of problems, please refer to scripts/make-release.mjs
-
-### Recommended tweaks
-
-You may find this `.git/hooks/post-checkout` git hook useful:
-
-```bash
-#!/bin/bash
-
-# Update the submodule in lib/c2usb to the commit recorded in the checked-out commit
-git submodule update --init --recursive lib/c2usb
-# Refresh versions.c, so that Agent always shows what commit you are on (although it doesn't indicate unstaged changes)
-scripts/generate-versions.mjs
-```
-
-### UHK60 - IDE setup
-
-2. Download and install MCUXpresso IDE for [Linux](https://ultimatehackingkeyboard.com/mcuxpressoide/mcuxpressoide-11.2.0_4120.x86_64.deb.bin), [Mac](https://ultimatehackingkeyboard.com/mcuxpressoide/MCUXpressoIDE_11.2.0_4120.pkg), or [Windows](https://ultimatehackingkeyboard.com/mcuxpressoide/MCUXpressoIDE_11.2.0_4120.exe).
-
-3. Install the GNU ARM Eclipse Plugins for in McuXpresso IDE. This is needed to make indexing work, and to avoid the "Orphaned configuration" error message in project properties. 
-    1. In MCUXpresso IDE, go to Help > "Install New Software...", then a new dialog will appear.
-    2. In the Name field type `Eclipse Embedded CDT Plug-ins` and in the Location field type `https://download.eclipse.org/embed-cdt/updates/neon`, then click on the Add button.
-    3. Go with the flow and install the plugin.
-    
-4. In the IDE, import this project by invoking *File -> Import -> General -> Existing Projects into Workspace*, select the *left* or *right* directory depending on the desired firmware, then click on the *Finish* button.
-
-5. In order to be able to flash the firmware via USB from the IDE, you must build [Agent](https://github.com/UltimateHackingKeyboard/agent) which is Git submodule of the this repo and located in the `lib/agent` directory.
-
-6. Finally, in the IDE, click on *Run -> External Tools -> External Tools Configurations*, then select a release firmware to be flashed such as *uhk60-right_release_kboot*, and click on the *Run* button.
-
-Going forward, it's easier to flash the firmware of your choice by using the downwards toolbar icon which is located rightwards of the *green play + toolbox icon*.
+In case of problems, please refer to `scripts/make-release.mjs`
 
 ### UHK60 Minimal development setup
 
-This is tested on latest Ubuntu. Especially Windows may suffer from path issues.
+1. Install Node.js. You find the expected Node.js version in `lib/agent/.nvmrc` file. Use your OS package manager to install it. [Check the NodeJS site for more info.](https://nodejs.org/en/download/package-manager/ "Installing Node.js via package manager") Mac OS users can simply `brew install node` to get both. Should you need multiple Node.js versions on the same computer, use Node Version Manager for [Mac/Linux](https://github.com/creationix/nvm) or for [Windows](https://github.com/coreybutler/nvm-windows)
 
-1. Install the ARM cross-compiler, cross-assembler and stdlib implementation. Eg. on Arch Linux the packages `arm-none-eabi-binutils`, `arm-none-eabi-gcc`, `arm-none-eabi-newlib`.
+2. Build UHK Agent. `cd lib/agent && npm ci && npm run build`.
 
-2. Install Node.js. You find the expected Node.js version in `lib/agent/.nvmrc` file. Use your OS package manager to install it. [Check the NodeJS site for more info.](https://nodejs.org/en/download/package-manager/ "Installing Node.js via package manager") Mac OS users can simply `brew install node` to get both. Should you need multiple Node.js versions on the same computer, use Node Version Manager for [Mac/Linux](https://github.com/creationix/nvm) or for [Windows](https://github.com/coreybutler/nvm-windows)
+3. Still inside the Agent submodule, compile flashing util scripts. `cd packages/usb && npx tsc`.
 
-3. Build UHK Agent. `cd lib/agent && npm ci && npm run build`.
+4. Use the `west agent` command just like `west flash`, with the `--build-dir` parameter
+to flash the new firmware over USB.
 
-4. Still inside the Agent submodule, compile flashing util scripts. `cd packages/usb && npx tsc`.
+### Debugging with VS Code
 
-5. Generate `versions.h`. `cd scripts && npm ci && ./generate-versions-h.js`
+For UHK60 and modules, the McuXpresso SDK extention is the starting point for a debugging session.
+On a first try, this error might manifest:
 
-6. When developing, cd to the directory you're working on (`left`/`right`). To build and flash the firmware, run `make flash`. Plain `make` just builds without flashing.
+> Could not start GDB. Check that the file exists, and it can be manually started.
+Error: Error: spawn $env{ARM_GCC_DIR}/bin/arm-none-eabi-gdb ENOENT
+
+There are two problems to solve:
+1. The arm-none-eabi package doesn't ship with gdb by default.
+You can follow [this guide](https://interrupt.memfault.com/blog/installing-gdb#binaries-from-arm)
+to get a full toolchain installed.
+2. The extension doesn't expand the environment variable, so you'll need to modify the `.vscode/mcuxpresso-tools.json` file,
+to have a hardcoded `toolchainPath` variable. (Don't push this change into the repository, obviously.)
+
 
 ### Releasing
 

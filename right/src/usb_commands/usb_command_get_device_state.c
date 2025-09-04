@@ -89,5 +89,5 @@ void UsbCommand_GetKeyboardState(const uint8_t *GenericHidOutBuffer, uint8_t *Ge
     SetUsbTxBufferUint8(7, Macros_ConsumeStatusCharDirtyFlag);
     SetUsbTxBufferUint8(8, CurrentKeymapIndex);
 
-    LastUsbGetKeyboardStateRequestTimestamp = CurrentTime;
+    LastUsbGetKeyboardStateRequestTimestamp = Timer_GetCurrentTime();
 }

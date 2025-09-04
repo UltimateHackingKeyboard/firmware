@@ -231,7 +231,7 @@ void MouseKeys_SetState(serialized_mouse_action_t action, bool lock, bool activa
             ActiveMouseStates[action]++;
         }
         MouseKeys_ActivateDirectionSigns(action);
-        mouseUsbReportUpdateTime = CurrentTime;
+        mouseUsbReportUpdateTime = Timer_GetCurrentTime();
     }
     else{
         if (lock) {

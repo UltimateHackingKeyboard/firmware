@@ -297,7 +297,7 @@ ATTR_UNUSED static void getMessageDescription(uint8_t msgId1, uint8_t msgId2, co
             *out2 = StateSync_PropertyIdToString(msgId2);
             return;
         case MessageId_SyncableProperty:
-            *out1 = "SyncableProperty";
+            *out1 = "KeyStates";
             *out2 = NULL;
             return;
         case MessageId_Log:

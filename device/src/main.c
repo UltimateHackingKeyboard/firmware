@@ -85,8 +85,7 @@ static void scheduleNextRun() {
         nextEventTime = EventScheduler_Process();
         eventIsValid = true;
     }
-    CurrentTime = k_uptime_get();
-    int32_t diff = nextEventTime - CurrentTime;
+    int32_t diff = nextEventTime - Timer_GetCurrentTime();
 
     Trace(')');
 
@@ -128,7 +127,7 @@ static void detectSpinningEventLoop() {
     static uint16_t eventCount = 0;
     static uint16_t spinPeriods = 0;
 
-    if (thisCheckTime == CurrentTime / 1024) {
+    if (thisCheckTime == Timer_GetCurrentTime() / 1024) {
         bool isMouseEvent = EventScheduler_Vector & (EventVector_MouseKeys | EventVector_MouseController | EventVector_SendUsbReports | EventVector_MacroEngine);
         if (!DEVICE_IS_UHK80_RIGHT || !isMouseEvent) {
             eventCount++;
@@ -149,7 +148,7 @@ static void detectSpinningEventLoop() {
         } else {
             spinPeriods = 0;
         }
-        thisCheckTime = CurrentTime / 1024;
+        thisCheckTime = Timer_GetCurrentTime() / 1024;
         eventCount = 0;
     }
 }
@@ -264,7 +263,6 @@ void mainRuntime(void) {
 #if DEVICE_IS_UHK80_RIGHT
     while (true)
     {
-        CurrentTime = k_uptime_get();
         Messenger_ProcessQueue();
         if (EventScheduler_Vector & EventVector_UserLogicUpdateMask) {
             EVENTLOOP_TIMING(EventloopTiming_Start());
@@ -273,12 +271,11 @@ void mainRuntime(void) {
         }
         scheduleNextRun();
         detectSpinningEventLoop();
-        UserLogic_LastEventloopTime = CurrentTime;
+        UserLogic_LastEventloopTime = Timer_GetCurrentTime();
     }
 #else
     while (true)
     {
-        CurrentTime = k_uptime_get();
         Messenger_ProcessQueue();
         RunUhk80LeftHalfLogic();
         scheduleNextRun();

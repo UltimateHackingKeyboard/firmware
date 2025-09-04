@@ -98,9 +98,9 @@ void LedManager_UpdateAgentLed()
 #ifndef __ZEPHYR__
     const uint32_t updatePeriod = 1000;
     if (!TestSwitches) {
-       LedDisplay_SetIcon(LedDisplayIcon_Agent, CurrentTime - LastUsbGetKeyboardStateRequestTimestamp < 1000);
+       LedDisplay_SetIcon(LedDisplayIcon_Agent, Timer_GetCurrentTime() - LastUsbGetKeyboardStateRequestTimestamp < 1000);
     }
-    EventScheduler_Schedule(CurrentTime + updatePeriod, EventSchedulerEvent_AgentLed, "Agent led");
+    EventScheduler_Schedule(Timer_GetCurrentTime() + updatePeriod, EventSchedulerEvent_AgentLed, "Agent led");
 #endif
 }
 

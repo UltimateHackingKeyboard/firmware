@@ -2,68 +2,51 @@
 # used for both zephyr and mcuboot -> no custom kconfig symbols here
 
 if SHELL_BACKEND_RTT
-    if BOARD_UHK_80_LEFT
-        config SHELL_PROMPT_RTT
-            default "uhk80:left$ "
-    endif
-    if BOARD_UHK_80_RIGHT
-        config SHELL_PROMPT_RTT
-            default "uhk80:right$ "
-    endif
-    if BOARD_UHK_DONGLE
-        config SHELL_PROMPT_RTT
-            default "uhk-dongle$ "
-    endif
+    config SHELL_PROMPT_RTT
+        default "uhk80:left$ " if BOARD_UHK_80_LEFT
+        default "uhk80:right$ " if BOARD_UHK_80_RIGHT
+        default "uhk-dongle$ " if BOARD_UHK_DONGLE
 endif # SHELL_BACKEND_RTT
 
 if SHELL_BACKEND_SERIAL
-    if BOARD_UHK_80_LEFT
-        config SHELL_PROMPT_UART
-            default "uhk80:left$ "
-    endif
-    if BOARD_UHK_80_RIGHT
-        config SHELL_PROMPT_UART
-            default "uhk80:right$ "
-    endif
-    if BOARD_UHK_DONGLE
-        config SHELL_PROMPT_UART
-            default "uhk-dongle$ "
-    endif
+    config SHELL_PROMPT_UART
+        default "uhk80:left$ " if BOARD_UHK_80_LEFT
+        default "uhk80:right$ " if BOARD_UHK_80_RIGHT
+        default "uhk-dongle$ " if BOARD_UHK_DONGLE
 endif # SHELL_BACKEND_SERIAL
+
+if BT_DIS && BT_DIS_PNP
+    config BT_DIS_PNP_PID
+        default 0x8007 if BOARD_UHK_80_LEFT
+        default 0x8009 if BOARD_UHK_80_RIGHT
+        default 0x8005 if BOARD_UHK_DONGLE
+endif # BT_DIS && BT_DIS_PNP
 
 if BOARD_UHK_80_LEFT
     config USB_DEVICE_PRODUCT
+        default "UHK 80 left half bootloader" if MCUBOOT
         default "UHK 80 Left USB"
     config USB_DEVICE_PID
+        default 0x0006 if !BT
         default 0x0007
-    if BT_DIS && BT_DIS_PNP
-        config BT_DIS_PNP_PID
-            default 0x8007
-    endif # BT_DIS && BT_DIS_PNP
 endif # BOARD_UHK_80_LEFT
 
 if BOARD_UHK_80_RIGHT
     config USB_DEVICE_PRODUCT
+        default "UHK 80 right half bootloader" if MCUBOOT
         default "UHK 80 Right USB"
     config USB_DEVICE_PID
+        default 0x0008 if MCUBOOT
         default 0x0009
-
-    if BT_DIS && BT_DIS_PNP
-        config BT_DIS_PNP_PID
-            default 0x8009
-    endif # BT_DIS && BT_DIS_PNP
-
 endif # BOARD_UHK_80_RIGHT
 
 if BOARD_UHK_DONGLE
     config USB_DEVICE_PRODUCT
+        default "UHK dongle bootloader" if MCUBOOT
         default "UHK dongle"
     config USB_DEVICE_PID
+        default 0x0004 if MCUBOOT
         default 0x0005
-    if BT_DIS && BT_DIS_PNP
-        config BT_DIS_PNP_PID
-            default 0x8005
-    endif # BT_DIS && BT_DIS_PNP
 endif # BOARD_UHK_DONGLE
 
 if BT

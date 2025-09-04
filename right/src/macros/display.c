@@ -217,6 +217,11 @@ macro_result_t Macros_ProcessSetLedTxtCommand(parser_context_t* ctx)
 
     bool delayIsInProgress = S->as.actionActive;
 
+    if (Macros_DryRun) {
+        processList(ctx, false, time);
+        return MacroResult_Finished;
+    }
+
     if (time == 0) {
         processList(ctx, true, time);
         return MacroResult_Finished;

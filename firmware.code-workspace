@@ -1,0 +1,73 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"name": "uhk-80",
+			"path": "device"
+		},
+		{
+			"name": "right",
+			"path": "right"
+		},
+		{
+			"name": "left",
+			"path": "left"
+		},
+		{
+			"name": "keycluster",
+			"path": "keycluster"
+		},
+		{
+			"name": "trackball",
+			"path": "trackball"
+		},
+		{
+			"name": "trackpoint",
+			"path": "trackpoint"
+		},
+		{
+			"name": "workspace",
+			"path": ".."
+		}
+	],
+	"settings": {
+		"nrf-connect.applications": [
+			"${workspaceFolder}/device"
+		],
+		"nrf-connect.applicationOptions": {
+			"${workspaceFolder}/device": {
+				"flash": {
+					"softreset": true
+				}
+			}
+		},
+		"nrf-connect.boardRoots": [
+			"${workspaceFolder}/"
+		],
+		"files.associations": {
+			"*.h": "c",
+			"*.c": "c",
+			"*.hpp": "cpp",
+			"*.cpp": "cpp"
+		},
+		"cmake.useCMakePresets": "always",
+		"C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+		"C_Cpp.workspaceParsingPriority": "high",
+		"C_Cpp.autoAddFileAssociations": false,
+		"clangd.arguments": [
+			"--compile-commands-dir=${workspaceFolder}/build/v2-debug"
+		]
+	},
+	"extensions": {
+		"recommendations": [
+			"nordic-semiconductor.nrf-connect-extension-pack",
+			"NXPSemiconductors.mcuxpresso",
+			"ms-vscode.cpptools-extension-pack",
+			"ms-vscode.vscode-embedded-tools",
+			"mcu-debug.peripheral-viewer",
+			"marus25.cortex-debug"
+		]
+	}
+}

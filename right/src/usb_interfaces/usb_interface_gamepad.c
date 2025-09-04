@@ -1,5 +1,6 @@
 #include "usb_composite_device.h"
 #include "usb_report_updater.h"
+#include "usb_interfaces/usb_interface_gamepad.h"
 
 static usb_gamepad_report_t usbGamepadReports[2];
 uint32_t UsbGamepadActionCounter;

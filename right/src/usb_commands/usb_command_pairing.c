@@ -1,8 +1,6 @@
 #include "usb_command_pairing.h"
 #include "usb_protocol_handler.h"
 #include "device.h"
-
-#ifdef __ZEPHYR__
 #include <zephyr/settings/settings.h>
 #include <zephyr/bluetooth/bluetooth.h>
 #include <zephyr/bluetooth/addr.h>
@@ -78,5 +76,3 @@ void UsbCommand_IsPaired(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHid
 void UsbCommand_EnterPairingMode(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer) {
     BtManager_EnterMode(PairingMode_Oob, false);
 }
-
-#endif

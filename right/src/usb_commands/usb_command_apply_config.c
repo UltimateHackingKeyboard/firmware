@@ -109,7 +109,7 @@ static uint8_t applyConfig(const uint8_t *GenericHidOutBuffer, uint8_t *GenericH
 
     uint8_t parseConfigStatus;
 
-    if (IsFactoryResetModeEnabled) {
+    if (IsFactoryResetModeEnabled()) {
         return UsbStatusCode_Success;
     }
 

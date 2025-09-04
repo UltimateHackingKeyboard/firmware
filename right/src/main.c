@@ -40,9 +40,9 @@
 #include "trace.h"
 #include "trace_reasons.h"
 
-static bool IsEepromInitialized = false;
-static bool IsConfigInitialized = false;
-static bool IsHardwareConfigInitialized = false;
+static volatile bool IsEepromInitialized = false;
+static volatile bool IsConfigInitialized = false;
+static volatile bool IsHardwareConfigInitialized = false;
 
 static void userConfigurationReadFinished(void)
 {
@@ -53,7 +53,7 @@ static void hardwareConfigurationReadFinished(void)
 {
     IsHardwareConfigInitialized = true;
     Ledmap_InitLedLayout();
-    if (IsFactoryResetModeEnabled) {
+    if (IsFactoryResetModeEnabled()) {
         HardwareConfig->signatureLength = HARDWARE_CONFIG_SIGNATURE_LENGTH;
         strncpy(HardwareConfig->signature, "FTY", HARDWARE_CONFIG_SIGNATURE_LENGTH);
     }
@@ -65,7 +65,7 @@ static void initConfig()
     while (!IsConfigInitialized) {
         if (IsEepromInitialized) {
 
-            if (IsFactoryResetModeEnabled || UsbCommand_ValidateAndApplyConfigSync(NULL, NULL) != UsbStatusCode_Success) {
+            if (IsFactoryResetModeEnabled() || UsbCommand_ValidateAndApplyConfigSync(NULL, NULL) != UsbStatusCode_Success) {
                 UsbCommand_ApplyFactory(NULL, NULL);
             }
             ShortcutParser_initialize();
@@ -144,8 +144,8 @@ static void initUsb() {
 static void blinkSfjl() {
     KeyBacklightBrightness = 255;
     Ledmap_SetSfjlValues();
-    uint32_t blinkStartTime = CurrentTime;
-    while (CurrentTime - blinkStartTime < 50) {
+    uint32_t blinkStartTime = Timer_GetCurrentTime();
+    while (Timer_GetCurrentTime() - blinkStartTime < 50) {
         __WFI();
     }
     KeyBacklightBrightness = 0;
@@ -208,8 +208,6 @@ int main(void)
     InitClock();
     InitPeripherals();
 
-    IsFactoryResetModeEnabled = RESET_BUTTON_IS_PRESSED;
-
     EEPROM_LaunchTransfer(StorageOperation_Read, ConfigBufferId_HardwareConfig, hardwareConfigurationReadFinished);
 
     if (IsBusPalOn) {
@@ -244,10 +242,19 @@ int main(void)
                 EventScheduler_Process();
             }
 
-            UserLogic_LastEventloopTime = CurrentTime;
+            UserLogic_LastEventloopTime = Timer_GetCurrentTime();
 
             Trace_Printc("}");
             __WFI();
         }
     }
 }
+
+// https://stackoverflow.com/questions/73742774/gcc-arm-none-eabi-11-3-is-not-implemented-and-will-always-fail
+#if 1 // using nano vs nosys
+void _exit(int n)
+{
+    (void)n;
+    while (1);
+}
+#endif
