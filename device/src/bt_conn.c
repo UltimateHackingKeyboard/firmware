@@ -802,6 +802,8 @@ static void pairing_complete(struct bt_conn *conn, bool bonded) {
             Bt_NewPairedDevice = true;
         }
 
+        HostConnections_SelectByHostConnIndex(connectionId - ConnectionId_HostConnectionFirst);
+
         // we have to connect from here, because central changes its address *after* setting security
         connectAuthenticatedConnection(conn, connectionId, connectionType);
     }
