@@ -119,6 +119,10 @@ void Main_Wake() {
 }
 
 static void detectSpinningEventLoop() {
+    if (!Cfg.DevMode) {
+        return;
+    }
+
     const uint16_t maxEventsPerSecond = 300; //allow 5ms macro wait loops
     static uint32_t thisCheckTime = 0;
     static uint16_t eventCount = 0;

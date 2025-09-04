@@ -202,6 +202,7 @@ int main(void)
         MacroStatusBuffer_InitNormal();
         StateWormhole_Clean();
         StateWormhole_Open();
+        Trace_ResetUhk60Reasons();
     }
 
     InitClock();
