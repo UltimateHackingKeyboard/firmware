@@ -27,6 +27,7 @@
 #include "versioning.h"
 #include "stubs.h"
 #include "macros/vars.h"
+#include "wormhole.h"
 
 #if DEVICE_HAS_OLED
 #include "keyboard/oled/widgets/widgets.h"
@@ -378,6 +379,7 @@ parser_error_t parseConfig(config_buffer_t *buffer)
 #ifdef __ZEPHYR__
         StateSync_UpdateProperty(StateSyncPropertyId_BatteryStationaryMode, &Cfg.BatteryStationaryMode);
 #endif
+        StateWormhole.devMode = Cfg.DevMode;
         LedManager_FullUpdate();
         BtPair_ClearUnknownBonds();
         BtConn_UpdateHostConnectionPeerAllocations();

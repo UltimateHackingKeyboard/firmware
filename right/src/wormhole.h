@@ -24,6 +24,8 @@
 
         bool persistStatusBuffer;
         macro_status_buffer_t statusBuffer;
+
+        bool devMode;
     } wormhole_data_t;
 
     bool StateWormhole_IsOpen(void);
