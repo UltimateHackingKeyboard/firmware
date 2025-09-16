@@ -323,13 +323,14 @@ void StateSync_CheckFirmwareVersions() {
 void StateSync_CheckDongleProtocolVersion() {
     host_connection_t *hostConnection = HostConnection(ActiveHostConnectionId);
     if (hostConnection->type == HostConnectionType_Dongle) {
-        if (!VERSIONS_EQUAL(RemoteDongleProtocolVersion, dongleProtocolVersion)) {
+        if (RemoteDongleProtocolVersion.major == 0) {
+            LogU("Dongle (%s) protocol version is zero, can't check its version.\n", GetPeerStringByConnId(ActiveHostConnectionId));
+        } else if (!VERSIONS_EQUAL(RemoteDongleProtocolVersion, dongleProtocolVersion)) {
             LogUOS("Dongle (%s) and right half run different dongle protocol versions\n  (dongle: %d.%d.%d, right: %d.%d.%d)\n  Please upgrade!\n",
                     GetPeerStringByConnId(ActiveHostConnectionId),
                     RemoteDongleProtocolVersion.major, RemoteDongleProtocolVersion.minor, RemoteDongleProtocolVersion.patch,
                     dongleProtocolVersion.major, dongleProtocolVersion.minor, dongleProtocolVersion.patch
                   );
-            return;
         } else {
             LogU("Dongle (%s) and right half run the same dongle protocol version %d.%d.%d\n",
                     GetPeerStringByConnId(ActiveHostConnectionId),
@@ -337,6 +338,7 @@ void StateSync_CheckDongleProtocolVersion() {
                     dongleProtocolVersion.major, dongleProtocolVersion.minor, dongleProtocolVersion.patch
                   );
         }
+        // Cancel the scheduled check if this was called manually.
         EventScheduler_Unschedule(EventSchedulerEvent_CheckDongleProtocolVersion);
     }
 }
