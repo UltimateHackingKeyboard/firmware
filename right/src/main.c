@@ -1,7 +1,11 @@
+#include "attributes.h"
 #include "config_parser/parse_config.h"
 #include "keymap.h"
+#include "logger.h"
+#include "module.h"
 #include "slave_drivers/is31fl3xxx_driver.h"
 #include "slave_drivers/uhk_module_driver.h"
+#include "slot.h"
 #include "timer.h"
 #include "init_clock.h"
 #include "init_peripherals.h"
@@ -33,10 +37,12 @@
 #include "usb_protocol_handler.h"
 #include "event_scheduler.h"
 #include "wormhole.h"
+#include "trace.h"
+#include "trace_reasons.h"
 
-static bool IsEepromInitialized = false;
-static bool IsConfigInitialized = false;
-static bool IsHardwareConfigInitialized = false;
+static volatile bool IsEepromInitialized = false;
+static volatile bool IsConfigInitialized = false;
+static volatile bool IsHardwareConfigInitialized = false;
 
 static void userConfigurationReadFinished(void)
 {
@@ -47,7 +53,7 @@ static void hardwareConfigurationReadFinished(void)
 {
     IsHardwareConfigInitialized = true;
     Ledmap_InitLedLayout();
-    if (IsFactoryResetModeEnabled) {
+    if (IsFactoryResetModeEnabled()) {
         HardwareConfig->signatureLength = HARDWARE_CONFIG_SIGNATURE_LENGTH;
         strncpy(HardwareConfig->signature, "FTY", HARDWARE_CONFIG_SIGNATURE_LENGTH);
     }
@@ -59,7 +65,7 @@ static void initConfig()
     while (!IsConfigInitialized) {
         if (IsEepromInitialized) {
 
-            if (IsFactoryResetModeEnabled || UsbCommand_ValidateAndApplyConfigSync(NULL, NULL) != UsbStatusCode_Success) {
+            if (IsFactoryResetModeEnabled() || UsbCommand_ValidateAndApplyConfigSync(NULL, NULL) != UsbStatusCode_Success) {
                 UsbCommand_ApplyFactory(NULL, NULL);
             }
             ShortcutParser_initialize();
@@ -135,29 +141,72 @@ static void initUsb() {
     InitUsb();
 }
 
+static void blinkSfjl() {
+    KeyBacklightBrightness = 255;
+    Ledmap_SetSfjlValues();
+    uint32_t blinkStartTime = Timer_GetCurrentTime();
+    while (Timer_GetCurrentTime() - blinkStartTime < 50) {
+        __WFI();
+    }
+    KeyBacklightBrightness = 0;
+    Ledmap_SetBlackValues();
+}
+
+static bool keyIsSfjl(uint8_t keyId, uint8_t slotId) {
+    if (slotId == SlotId_RightKeyboardHalf) {
+        return keyId == 16 || keyId == 18;
+    }
+    if (slotId == SlotId_LeftKeyboardHalf) {
+        return keyId == 17 || keyId == 15;
+    }
+    return false;
+}
+
+static void checkSleepMode() {
+    ATTR_UNUSED bool someKeyActive = false;
+    for (uint8_t slotId = 0; slotId <= SlotId_RightKeyboardHalf; slotId++) {
+        bool matches = true;
+        for (uint8_t keyId = 0; keyId < MAX_KEY_COUNT_PER_MODULE; keyId++) {
+            someKeyActive |= KeyStates[slotId][keyId].hardwareSwitchState;
+            if (KeyStates[slotId][keyId].hardwareSwitchState != keyIsSfjl(keyId, slotId)) {
+                matches = false;
+            }
+        }
+        if (matches) {
+            PowerMode_ActivateMode(PowerMode_Awake, false, true, "uhk60 sfjl keys pressed");
+            return;
+        }
+    }
+    if (someKeyActive) {
+        blinkSfjl();
+    }
+}
+
 int main(void)
 {
     Trace_Init();
     if (StateWormhole_IsOpen()) {
-        if (!StateWormhole.wasReboot) {
+        if (StateWormhole.wasReboot || Trace_LooksLikeNaturalCauses()) {
+            // Looks like a normal reboot or power on startup
+            MacroStatusBuffer_InitNormal();
+        }
+        else {
+            // Looks like a crash.
             StateWormhole.persistStatusBuffer = true;
             MacroStatusBuffer_Validate();
-            Trace_Print("Looks like your uhk60 crashed.");
+            Trace_Print(LogTarget_ErrorBuffer, "Looks like your uhk60 crashed.");
             MacroStatusBuffer_InitFromWormhole();
-        } else {
-            MacroStatusBuffer_InitNormal();
         }
         StateWormhole_Clean();
     } else {
         MacroStatusBuffer_InitNormal();
         StateWormhole_Clean();
         StateWormhole_Open();
+        Trace_ResetUhk60Reasons();
     }
 
     InitClock();
     InitPeripherals();
-
-    IsFactoryResetModeEnabled = RESET_BUTTON_IS_PRESSED;
 
     EEPROM_LaunchTransfer(StorageOperation_Read, ConfigBufferId_HardwareConfig, hardwareConfigurationReadFinished);
 
@@ -174,8 +223,16 @@ int main(void)
 
         sendFirstReport();
 
+        Trace_Printc("initialized");
+
         while (1) {
+            Trace_Printc("{");
             CopyRightKeystateMatrix();
+
+            if (CurrentPowerMode >= PowerMode_Lock) {
+                checkSleepMode();
+            }
+
             if (UsbReadyForTransfers() && EventScheduler_Vector & EventVector_UserLogicUpdateMask) {
                 Trace('(');
                 RunUserLogic();
@@ -185,9 +242,19 @@ int main(void)
                 EventScheduler_Process();
             }
 
-            UserLogic_LastEventloopTime = CurrentTime;
+            UserLogic_LastEventloopTime = Timer_GetCurrentTime();
 
+            Trace_Printc("}");
             __WFI();
         }
     }
 }
+
+// https://stackoverflow.com/questions/73742774/gcc-arm-none-eabi-11-3-is-not-implemented-and-will-always-fail
+#if 1 // using nano vs nosys
+void _exit(int n)
+{
+    (void)n;
+    while (1);
+}
+#endif

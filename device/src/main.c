@@ -50,6 +50,7 @@
 #include "wormhole.h"
 #include "power_mode.h"
 #include "proxy_log_backend.h"
+#include "logger_priority.h"
 
 #if DEVICE_IS_KEYBOARD
 #include "keyboard/battery_unloaded_calculator.h"
@@ -84,8 +85,7 @@ static void scheduleNextRun() {
         nextEventTime = EventScheduler_Process();
         eventIsValid = true;
     }
-    CurrentTime = k_uptime_get();
-    int32_t diff = nextEventTime - CurrentTime;
+    int32_t diff = nextEventTime - Timer_GetCurrentTime();
 
     Trace(')');
 
@@ -115,6 +115,42 @@ static void scheduleNextRun() {
 void Main_Wake() {
     k_sem_give(&mainWakeupSemaphore);
     // k_wakeup(Main_ThreadId);
+}
+
+static void detectSpinningEventLoop() {
+    if (!Cfg.DevMode) {
+        return;
+    }
+
+    const uint16_t maxEventsPerSecond = 300; //allow 5ms macro wait loops
+    static uint32_t thisCheckTime = 0;
+    static uint16_t eventCount = 0;
+    static uint16_t spinPeriods = 0;
+
+    if (thisCheckTime == Timer_GetCurrentTime() / 1024) {
+        bool isMouseEvent = EventScheduler_Vector & (EventVector_MouseKeys | EventVector_MouseController | EventVector_SendUsbReports | EventVector_MacroEngine);
+        if (!DEVICE_IS_UHK80_RIGHT || !isMouseEvent) {
+            eventCount++;
+        }
+    } else {
+        if (eventCount > maxEventsPerSecond) {
+            spinPeriods++;
+            if (spinPeriods > 30) {
+#ifdef __ZEPHYR__
+                device_id_t target = DeviceId_Uhk80_Right;
+#else
+                device_id_t target = DEVICE_ID;
+#endif
+                LogTo(target, LogTarget_Uart | LogTarget_ErrorBuffer, "Looks like the event loop is spinning quite a lot: %u events in the last second.\n", eventCount);
+                LogTo(target, LogTarget_Uart | LogTarget_ErrorBuffer, "EV: 0x%x\n", StateWormhole.traceBuffer.eventVector);
+                spinPeriods = 0;
+            }
+        } else {
+            spinPeriods = 0;
+        }
+        thisCheckTime = Timer_GetCurrentTime() / 1024;
+        eventCount = 0;
+    }
 }
 
 void mainRuntime(void) {
@@ -227,23 +263,23 @@ void mainRuntime(void) {
 #if DEVICE_IS_UHK80_RIGHT
     while (true)
     {
-        CurrentTime = k_uptime_get();
         Messenger_ProcessQueue();
         if (EventScheduler_Vector & EventVector_UserLogicUpdateMask) {
-            EVENTLOOP_TIMING(EVENTLOOP_TIMING(EventloopTiming_Start()));
+            EVENTLOOP_TIMING(EventloopTiming_Start());
             RunUserLogic();
             EVENTLOOP_TIMING(EventloopTiming_End());
         }
         scheduleNextRun();
-        UserLogic_LastEventloopTime = CurrentTime;
+        detectSpinningEventLoop();
+        UserLogic_LastEventloopTime = Timer_GetCurrentTime();
     }
 #else
     while (true)
     {
-        CurrentTime = k_uptime_get();
         Messenger_ProcessQueue();
         RunUhk80LeftHalfLogic();
         scheduleNextRun();
+        detectSpinningEventLoop();
     }
 #endif
 }
@@ -258,7 +294,11 @@ int main(void) {
             mode = StateWormhole.restartPowerMode;
             StateWormhole.restartPowerMode = PowerMode_Awake;
         }
-        MacroStatusBuffer_InitFromWormhole();
+        if (StateWormhole.devMode) {
+            MacroStatusBuffer_InitFromWormhole();
+        } else {
+            MacroStatusBuffer_InitNormal();
+        }
         StateWormhole_Clean();
     } else {
         printk("Wormhole is closed\n");

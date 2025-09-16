@@ -181,9 +181,9 @@ static string_segment_t getLeftStatusText() {
 static char getBlinkingColor() {
     char color;
 
-    uint32_t state = (CurrentTime / 1024) % 2;
+    uint32_t state = (Timer_GetCurrentTime() / 1024) % 2;
     color = state ? FontControl_SetColorWhite : FontControl_SetColorGray;
-    uint32_t nextTime = ((CurrentTime / 1024) + 1) * 1024;
+    uint32_t nextTime = ((Timer_GetCurrentTime() / 1024) + 1) * 1024;
     EventScheduler_Schedule(nextTime + 1, EventSchedulerEvent_BlinkBatteryIcon, "battery icon blink");
 
     return color;
@@ -219,6 +219,10 @@ static void getBatteryStatusText(device_id_t deviceId, battery_state_t* battery,
         }
     }
 
+    if (Cfg.UiStyle == UiStyle_Alternative) {
+        sideIndicator = "";
+    }
+
     if (!DeviceState_IsDeviceConnected(deviceId)) {
         sprintf(buffer, "    ");
     } else if (!battery->batteryPresent) {
@@ -236,7 +240,7 @@ static string_segment_t getRightStatusText() {
     char leftBattery[BAT_BUFFER_LENGTH];
     char rightBattery[BAT_BUFFER_LENGTH];
     bool fixed = Cfg.UiStyle == UiStyle_Alternative;
-    if (SyncLeftHalfState.battery.batteryPresent && SyncRightHalfState.battery.batteryPresent) {
+    if ((SyncLeftHalfState.battery.batteryPresent && SyncRightHalfState.battery.batteryPresent) || fixed) {
         getBatteryStatusText(DeviceId_Uhk80_Left, &SyncLeftHalfState.battery, leftBattery, "", fixed, StateSync_BlinkLeftBatteryPercentage);
         getBatteryStatusText(DeviceId_Uhk80_Right, &SyncRightHalfState.battery, rightBattery, "", fixed, StateSync_BlinkRightBatteryPercentage);
         snprintf(buffer, BUFFER_LENGTH-1, "%s %s %s", Macros_DisplayStringsBuffs.rightStatus, leftBattery, rightBattery);
@@ -341,7 +345,7 @@ void WidgetStore_Init()
     StatusWidget = CustomWidget_Build(&drawStatus);
     CanvasWidget = CustomWidget_Build(NULL);
     ConsoleWidget = ConsoleWidget_Build();
-    EventScheduler_Schedule(CurrentTime+1000, EventSchedulerEvent_UpdateDebugOledLine, "Widget store init");
+    EventScheduler_Schedule(Timer_GetCurrentTime()+1000, EventSchedulerEvent_UpdateDebugOledLine, "Widget store init");
 }
 
 #pragma GCC diagnostic pop

@@ -30,6 +30,8 @@ Macro events allow hooking special behaviour, such as applying a specific config
     $onNumLockStateChange
     $onScrollLockStateChange
     $onError
+    $onJoin
+    $onSplit
 
 Please note that:
   - under Linux, scroll lock is disabled by default. As a consequence, the macro event does not trigger.
@@ -112,12 +114,12 @@ COMMAND = {stopRecording | stopRecordingBlind}
 COMMAND = playMacro [<slot identifier (MACROID)>]
 COMMAND = {startMouse|stopMouse} {move DIRECTION|scroll DIRECTION|accelerate|decelerate}
 COMMAND = setVar <variable name (IDENTIFIER)> <value (PARENTHESSED_EXPRESSION)>
-COMMAND = {pressKey|holdKey|tapKey|releaseKey} SHORTCUT
-COMMAND = tapKeySeq [ SHORTCUT | KEY_SEQUENCE ]+
+COMMAND = {pressKey|holdKey|tapKey|releaseKey|toggleKey} [persistent] SHORTCUT
+COMMAND = tapKeySeq [persistent] [ SHORTCUT | KEY_SEQUENCE ]+
 COMMAND = powerMode [toggle] { wake | lock | sleep }
 COMMAND = reboot
 COMMAND = bluetooth [toggle] { pair | advertise | noAdvertise }
-COMMAND = switchHost { last | next | previous | <host connection name (IDENTIFIER)> | <host connection name (STRING)> }
+COMMAND = switchHost { last | lastSelected | next | previous | <host connection name (IDENTIFIER)> | <host connection name (STRING)> }
 COMMAND = set module.MODULEID.navigationMode.LAYERID_BASIC NAVIGATION_MODE
 COMMAND = set module.MODULEID.baseSpeed <non-xcelerated speed, 0-10.0 (FLOAT)>
 COMMAND = set module.MODULEID.speed <xcelerated speed, 0-10.0 (FLOAT)>
@@ -214,7 +216,7 @@ LAYERID_BASIC = {fn|mouse|mod|base|fn2|fn3|fn4|fn5}
 KEYMAPID = <short keymap abbreviation(IDENTIFIER)>|last
 MACROID = last | <single char slot identifier(CHAR)> | <single number slot identifier(INT)>
 OPERATOR = + | - | * | / | % | < | > | <= | >= | == | != | && | ||
-VARIABLE_EXPANSION = $<variable name(IDENTIFIER)> | $<config value name> | $currentAddress | $thisKeyId | $queuedKeyId.<queue index (INT)> | $keyId.KEYID_ABBREV
+VARIABLE_EXPANSION = $<variable name(IDENTIFIER)> | $<config value name> | $currentAddress | $currentTime | $thisKeyId | $queuedKeyId.<queue index (INT)> | $keyId.KEYID_ABBREV
 EXPRESSION = <expression> | (EXPRESSION) | INT | BOOL | FLOAT | VARIABLE_EXPANSION | EXPRESSION OPERATOR EXPRESSION | !EXPRESSION | min(EXPRESSION [, EXPRESSION]+) | max(EXPRESSION [, EXPRESSION]+)
 PARENTHESSED_EXPRESSION = (EXPRESSION)
 INT = PARENTHESSED_EXPRESSION | VARIABLE_EXPANSION | [0-9]+ | -[0-9]+
@@ -275,6 +277,7 @@ MACRONAME = <macro name (IDENTIFIER)>
 #####################
 # DEVELOPMENT TOOLS #
 #####################
+COMMAND = reconnect
 COMMAND = stopAllMacros
 COMMAND = statsRuntime
 COMMAND = statsLayerStack
@@ -351,10 +354,10 @@ COMMAND = setEmergencyKey KEYID
   - `sleep` reboots the keyboard into a low power mode, that still scans keys and can be woken up by s+f or j+l keys.
   - `shutdown` is used by uhk when its battery runs out. You can wake up by plugging in the USB cable. It is not designed to be used directly.
   - `wake` wakes up the device from "any" sleep mode that doesn't disable macro engine and the half link.
-- `reboot` - reboots the right half, and in case of uhk80, also left half and connected dongles. (Uhk60 left half shouldn't need reboot as it is a simple module.)
-  Further rules:
+  - Further rules:
     - If a sleep mode is activated while another sleep mode is active, the deeper of them will be activated.
     - If `toggle` is specified and the device is already in the (exact) sleep mode, it will wake the device instead.
+- `reboot` - reboots the right half, and in case of uhk80, also left half and connected dongles. (Uhk60 left half shouldn't need reboot as it is a simple module.)
 
 ### Bluetooth:
 - `bluetooth [toggle] { pair | advertise | noAdvertise }` controls advertising for hid devices - this doesn't affect dongle and left half advertising.
@@ -365,18 +368,22 @@ COMMAND = setEmergencyKey KEYID
 - `switchHost { last | next | previous | <host connection name (IDENTIFIER)> | <host connection name (STRING)> }` switches the host connection. 
   - `previous | next` switch to the next currently connected host in the list of hosts. E.g., this iterates over blue dongles, as well as some other connections.
   - `last` switches to the previously active host connection. For instance the last in `switchHost "pc"; switchHost "laptop"; switchHost last` switches to "pc".
+  - `lastSelected` switches to the last manually selected connection. This is useful to undo an automatic switchover.
   - `<host connection identifier>` switches to the host connection with the given name. If the connection is not available, UHK will reserve a connection slot for this host. Therefore it is possible to connect to violet dongles too. 
   - See the bluetooth section for more information.
+- `reconnect` disconnects current active host, waits 100ms and then attempts to connect to it again (i.e., similar to calling switchHost).
 
 ### Triggering keyboard actions (pressing keys, clicking, etc.):
 
 - `write <custom text>` will type the provided string. Strings are single quote- (for literal strings) or double quote- (for interpolated strings) enclosed. E.g., `write "keystrokeDelay is $keystrokeDelay, 1+1=$(1+1)\n"`, or `'$ will show as literal dollar sign.'`.
 - `startMouse/stopMouse` start/stop corresponding mouse action. E.g., `startMouse move left`
-- `pressKey|holdKey|tapKey|releaseKey` Presses/holds/taps/releases the provided scancode. E.g., `pressKey mouseBtnLeft`, `tapKey LC-v` (Left Control + (lowercase) v), `tapKey CS-f5` (Ctrl + Shift + F5), `LS-` (just tap left Shift).
+- `pressKey|holdKey|tapKey|releaseKey|toggleKey` Presses/holds/taps/releases the provided scancode. E.g., `pressKey mouseBtnLeft`, `tapKey LC-v` (Left Control + (lowercase) v), `tapKey CS-f5` (Ctrl + Shift + F5), `LS-` (just tap left Shift).
   - **press** means adding the scancode into a list of "active keys" and continuing the macro. The key is released once the macro ends. I.e., if the command is not followed by any sort of delay, the key will be released again almost immediately.
-  - **release** means removing the scancode from the list of "active keys". I.e., it negates the effect of `pressKey` within the same macro. This does not affect scancodes emitted by different keyboard actions.
+  - **release** means removing the scancode from the list of "active keys". I.e., it negates the effect of `pressKey` within the same macro. This does not affect scancodes emitted by different keyboard actions, however for user friendliness it does cancel `persistent` presses.
   - **tap** means pressing a key (more precisely, activating the scancode) and immediately releasing it again
   - **hold** means pressing the key, waiting until the key which activated the macro is released, and then releasing the key again. I.e., `holdKey <x>` is equivalent to `pressKey <x>; delayUntilRelease; releaseKey <x>`, while `tapKey <x>` is equivalent to `pressKey <x>; releaseKey <x>`.
+  - **toggle** will check if the shortcut is pressed in this macro's reports. If it is, it will deactivate the shortcut, otherwise it will activate it. This always acts on persistent reports.
+  - **persistent** argument will use global reports. These reports can be accessed from any macro and will not be cleared when the macro ends. This is useful for long-term key toggling. E.g., `toggleKey persistent LS` acts similar to caps lock.
   - `tapKeySeq` can be used for executing custom sequences. The default action for each shortcut in the sequence is tap. Other actions can be specified using `MODMASK`.
     - `altCodeOf(<unicode character (CHAR)>)` will substitute a sequence corresponding to windows alt code, e.g., `pLA np1 np2 np9 np3 np2 np0 rLA`
     - `uCodeOf(<unicode character (CHAR)>)` will substitute a sequence corresponding to a linux Ctrl+u sequence, e.g., `CS-u 1 f 9 2 8 space`
@@ -719,6 +726,7 @@ Internally, values are saved in one of the following types, and types are automa
     - `$thisKeyId` which stands for the keyid of the key that activated the macro.
     - `$keyId.<keyId abbreviation>` which stands for numeric keyid of the provided abbreviation.
     - `$currentAddress` which stands for the address of the command in which it is found.
+    - `$currentTime` returns current time in milliseconds in 31 bit range.
     - `$queuedKeyId.<index (NUMBER)>` which stands for a zero-indexed position in the postponer queue.
 - `KEYMAPID` - is assumed to be 3 characters long abbreviation of a keymap.
 - `MACROID` - macro slot identifier is either a number or a single ascii character (interpreted as a one-byte value). `$thisKeyId` can be used so that the same macro refers to different slots when assigned to different keys.

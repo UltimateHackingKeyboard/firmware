@@ -85,6 +85,7 @@
     typedef enum {
         UsbStatusCode_Success        = 0,
         UsbStatusCode_InvalidCommand = 1,
+        UsbStatusCode_Busy = 2,
     } usb_status_code_general_t;
 
 // Variables:
@@ -97,6 +98,6 @@
     bt_addr_le_t GetBufferBleAddress(const uint8_t *GenericHidOutBuffer, uint32_t offset);
     void SetBufferBleAddress(uint8_t *GenericHidInBuffer, uint32_t offset, const bt_addr_le_t* addr);
 #endif
-    void UsbProtocolHandler(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer);
+    void UsbProtocolHandler(uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer);
 
 #endif

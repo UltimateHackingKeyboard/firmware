@@ -7,6 +7,7 @@
 #include "i2c_watchdog.h"
 #include "init_peripherals.h"
 #include "peripherals/test_led.h"
+#include "trace.h"
 
 uint32_t I2cWatchdog_WatchCounter;
 uint32_t I2cWatchdog_RecoveryCounter;
@@ -18,6 +19,7 @@ static uint32_t prevWatchdogCounter;
 // This method relies on a patched KSDK which increments I2C_Watchdog upon I2C transfers.
 void PIT_I2C_WATCHDOG_HANDLER(void)
 {
+    Trace_Printc("<i5");
     I2cWatchdog_WatchCounter++;
 
     if (I2C_Watchdog == prevWatchdogCounter) { // Restart I2C if there haven't been any interrupts recently
@@ -28,13 +30,12 @@ void PIT_I2C_WATCHDOG_HANDLER(void)
     prevWatchdogCounter = I2C_Watchdog;
     PIT_ClearStatusFlags(PIT, PIT_I2C_WATCHDOG_CHANNEL, PIT_TFLG_TIF_MASK);
 	TestLed_Toggle();
+    Trace_Printc(">");
+    SDK_ISR_EXIT_BARRIER;
 }
 
 void InitI2cWatchdog(void)
 {
-    pit_config_t pitConfig;
-    PIT_GetDefaultConfig(&pitConfig);
-    PIT_Init(PIT, &pitConfig);
     PIT_SetTimerPeriod(PIT, PIT_I2C_WATCHDOG_CHANNEL, USEC_TO_COUNT(I2C_WATCHDOG_INTERVAL_USEC, PIT_SOURCE_CLOCK));
     PIT_EnableInterrupts(PIT, PIT_I2C_WATCHDOG_CHANNEL, kPIT_TimerInterruptEnable);
     EnableIRQ(PIT_I2C_WATCHDOG_IRQ_ID);

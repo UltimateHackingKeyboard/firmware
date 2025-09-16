@@ -68,7 +68,7 @@ void AddReportToStatusBuffer(char* dbgTag, usb_basic_keyboard_report_t *report)
 void TriggerWatch(key_state_t *keyState)
 {
     int16_t key = (keyState - &KeyStates[SlotId_LeftKeyboardHalf][0]);
-    if (0 <= key && key <= 7) {
+    if (0 <= key && key <= 6) {
         // Set the LED value to --- until next update occurs.
 #ifdef __ZEPHYR__
         if (DEBUG_CONSOLE) {
@@ -84,17 +84,17 @@ void TriggerWatch(key_state_t *keyState)
 void WatchTime(uint8_t n)
 {
     static uint32_t lastUpdate = 0;
-    if (CurrentTime - lastWatch > WATCH_INTERVAL) {
-        showInt(CurrentTime - lastUpdate);
-        lastWatch = CurrentTime;
+    if (Timer_GetCurrentTime() - lastWatch > WATCH_INTERVAL) {
+        showInt(Timer_GetCurrentTime() - lastUpdate);
+        lastWatch = Timer_GetCurrentTime();
     }
-    lastUpdate = CurrentTime;
+    lastUpdate = Timer_GetCurrentTime();
 }
 
 bool WatchCondition(uint8_t n)
 {
-    if (CurrentTime - lastWatch > WATCH_INTERVAL) {
-        lastWatch = CurrentTime;
+    if (Timer_GetCurrentTime() - lastWatch > WATCH_INTERVAL) {
+        lastWatch = Timer_GetCurrentTime();
         return true;
     }
     return false;
@@ -108,8 +108,8 @@ void WatchTimeMicros(uint8_t n)
     i++;
 
     if (i == 1000) {
-        showInt(CurrentTime - lastUpdate);
-        lastUpdate = CurrentTime;
+        showInt(Timer_GetCurrentTime() - lastUpdate);
+        lastUpdate = Timer_GetCurrentTime();
         i = 0;
     }
 }
@@ -119,25 +119,25 @@ void WatchCallCount(uint8_t n)
 {
     tickCount++;
 
-    if (CurrentTime - lastWatch > WATCH_INTERVAL) {
+    if (Timer_GetCurrentTime() - lastWatch > WATCH_INTERVAL) {
         showInt(tickCount);
-        lastWatch = CurrentTime;
+        lastWatch = Timer_GetCurrentTime();
     }
 }
 
 void WatchValue(int v, uint8_t n)
 {
-    if (CurrentTime - lastWatch > WATCH_INTERVAL) {
+    if (Timer_GetCurrentTime() - lastWatch > WATCH_INTERVAL) {
         showInt(v);
-        lastWatch = CurrentTime;
+        lastWatch = Timer_GetCurrentTime();
     }
 }
 
 void WatchString(char const *v, uint8_t n)
 {
-    if (CurrentTime - lastWatch > WATCH_INTERVAL) {
+    if (Timer_GetCurrentTime() - lastWatch > WATCH_INTERVAL) {
         showString(v);
-        lastWatch = CurrentTime;
+        lastWatch = Timer_GetCurrentTime();
     }
 }
 
@@ -160,9 +160,9 @@ void WatchValueMin(int v, uint8_t n)
         m = v;
     }
 
-    if (CurrentTime - lastWatch > WATCH_INTERVAL) {
+    if (Timer_GetCurrentTime() - lastWatch > WATCH_INTERVAL) {
         showInt(m);
-        lastWatch = CurrentTime;
+        lastWatch = Timer_GetCurrentTime();
         m = INT_MAX;
     }
 }
@@ -175,9 +175,9 @@ void WatchValueMax(int v, uint8_t n)
         m = v;
     }
 
-    if (CurrentTime - lastWatch > WATCH_INTERVAL) {
+    if (Timer_GetCurrentTime() - lastWatch > WATCH_INTERVAL) {
         showInt(m);
-        lastWatch = CurrentTime;
+        lastWatch = Timer_GetCurrentTime();
         m = INT_MIN;
     }
 }
@@ -185,9 +185,9 @@ void WatchValueMax(int v, uint8_t n)
 
 void WatchFloatValue(float v, uint8_t n)
 {
-    if (CurrentTime - lastWatch > WATCH_INTERVAL) {
+    if (Timer_GetCurrentTime() - lastWatch > WATCH_INTERVAL) {
         showFloat(v);
-        lastWatch = CurrentTime;
+        lastWatch = Timer_GetCurrentTime();
     }
 }
 
@@ -199,9 +199,9 @@ void WatchFloatValueMin(float v, uint8_t n)
         m = v;
     }
 
-    if (CurrentTime - lastWatch > WATCH_INTERVAL) {
+    if (Timer_GetCurrentTime() - lastWatch > WATCH_INTERVAL) {
         showFloat(m);
-        lastWatch = CurrentTime;
+        lastWatch = Timer_GetCurrentTime();
         m = (float)INT_MAX;
     }
 }
@@ -214,9 +214,9 @@ void WatchFloatValueMax(float v, uint8_t n)
         m = v;
     }
 
-    if (CurrentTime - lastWatch > WATCH_INTERVAL) {
+    if (Timer_GetCurrentTime() - lastWatch > WATCH_INTERVAL) {
         showFloat(m);
-        lastWatch = CurrentTime;
+        lastWatch = Timer_GetCurrentTime();
         m = (float)INT_MIN;
     }
 }

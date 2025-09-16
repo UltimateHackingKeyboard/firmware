@@ -3,10 +3,12 @@
 #include <stdarg.h>
 #include <string.h>
 #include "macros/status_buffer.h"
+#include "trace_reasons.h"
 #include "wormhole.h"
 #include "event_scheduler.h"
 #include "logger.h"
 #include "versioning.h"
+#include "trace_reasons.h"
 
 #ifdef __ZEPHYR__
 #include "proxy_log_backend.h"
@@ -80,7 +82,7 @@ void Trace_Init(void) {
     Trace_Printc("###");
 }
 
-void Trace_Print(const char* reason) {
+void Trace_Print(log_target_t additionalLogTargets, const char* reason) {
     uint16_t iter;
     enabled = false;
 
@@ -90,12 +92,17 @@ void Trace_Print(const char* reason) {
     if (ProxyLog_IsInPanicMode) {
         targetInterface = LogTarget_Uart;
     } else {
-        targetInterface = LogTarget_Uart | LogTarget_ErrorBuffer;
+        targetInterface = LogTarget_Uart | additionalLogTargets;
     }
 
     LogTo(targetDeviceId, targetInterface, "Printing trace buffer because: %s\n", reason);
     LogTo(targetDeviceId, targetInterface, "EV: %d\n", StateWormhole.traceBuffer.eventVector);
     LogTo(targetDeviceId, targetInterface, "Tag: %s\n", gitTag);
+
+#ifndef __ZEPHYR__
+    Trace_PrintUhk60ReasonRegisters(targetDeviceId, targetInterface);
+#endif
+
     LogTo(targetDeviceId, targetInterface, "Trace:\n");
 
 #define LINE_LENGTH 64

@@ -33,6 +33,7 @@ LOG_MODULE_REGISTER(Battery, LOG_LEVEL_INF);
  * chargerEn == 0 => charger diasbled
  * */
 
+#define DEFAULT_CHARGER_STATE (Cfg.BatteryStationaryMode ? 0 : 1)
 
 const struct gpio_dt_spec chargerEnDt = GPIO_DT_SPEC_GET(DT_ALIAS(charger_en), gpios);
 const struct gpio_dt_spec chargerStatDt = GPIO_DT_SPEC_GET(DT_ALIAS(charger_stat), gpios);
@@ -54,12 +55,18 @@ bool BatteryIsCharging;
 bool RunningOnBattery = false;
 bool RightRunningOnBattery = false;
 
-bool Charger_ChargingEnabled = true;
+bool Charger_ChargingEnabled = false;
+bool Charger_ChargingActuallyEnabled = false;
 
 static bool stabilizationPause = false;
 static uint8_t statsToIgnore = 0;
 
 static battery_manager_automaton_state_t currentChargingAutomatonState = BatteryManagerAutomatonState_Unknown;
+
+static void setChargerEnPin(bool enabled) {
+    Charger_ChargingActuallyEnabled = enabled;
+    gpio_pin_set_dt(&chargerEnDt, enabled);
+}
 
 static bool setBatteryPresent(bool present) {
     if (batteryState.batteryPresent != present) {
@@ -95,7 +102,7 @@ static bool updateBatteryPresent() {
     uint32_t statPeriod = MIN((uint32_t)(lastStatZeroTime - lastStatOneTime), (uint32_t)(lastStatOneTime-lastStatZeroTime));
     uint32_t lastStat = MAX(lastStatZeroTime, lastStatOneTime);
     bool batteryOscilates = statPeriod < CHARGER_STAT_PERIOD;
-    bool changedRecently = (CurrentTime - lastStat) < CHARGER_STAT_PERIOD;
+    bool changedRecently = (Timer_GetCurrentTime() - lastStat) < CHARGER_STAT_PERIOD;
     bool batteryMissing = (changedRecently && batteryOscilates);
     bool batteryPresent = !batteryMissing;
     return setBatteryPresent(batteryPresent);
@@ -127,7 +134,7 @@ static uint16_t getVoltage() {
 }
 
 static void printState(battery_state_t* state) {
-    printk("Battery is present: %i, charging: %i, charger enabled: %i, at %imV (%i%%); automaton state %d\n", state->batteryPresent, state->batteryCharging, Charger_ChargingEnabled, state->batteryVoltage, state->batteryPercentage, currentChargingAutomatonState);
+    printk("Battery is present: %i, charging: %i, charger enabled: %i, powered: %d, at %imV (%i%%); automaton state %d\n", state->batteryPresent, state->batteryCharging, Charger_ChargingEnabled, state->powered, state->batteryVoltage, state->batteryPercentage, currentChargingAutomatonState);
 }
 
 void Charger_PrintState() {
@@ -137,7 +144,8 @@ void Charger_PrintState() {
 bool Charger_EnableCharging(bool enabled) {
     if (Charger_ChargingEnabled != enabled) {
         Charger_ChargingEnabled = enabled;
-        gpio_pin_set_dt(&chargerEnDt, Charger_ChargingEnabled && !stabilizationPause);
+
+        setChargerEnPin(Charger_ChargingEnabled && !stabilizationPause);
         return true;
     }
     return false;
@@ -166,7 +174,7 @@ static bool handleStateTransition(battery_manager_automaton_state_t newState) {
                 break;
             case BatteryManagerAutomatonState_Unknown:
                 stateChanged |= setPowersaving(false);
-                stateChanged |= Charger_EnableCharging(true);
+                stateChanged |= Charger_EnableCharging(DEFAULT_CHARGER_STATE);
                 break;
         }
     }
@@ -176,7 +184,7 @@ static bool handleStateTransition(battery_manager_automaton_state_t newState) {
 static bool updateChargerEnabled(battery_state_t *batteryState, battery_manager_config_t* config, uint16_t voltage, bool chargerStopped) {
     battery_manager_automaton_state_t oldState = currentChargingAutomatonState;
 
-    uint16_t newMaxVoltage = voltage - 0;
+    uint16_t newMaxVoltage = voltage - 10;
 
     if (chargerStopped && !Cfg.BatteryStationaryMode) {
         uint16_t minThreshold = 3800;
@@ -184,8 +192,10 @@ static bool updateChargerEnabled(battery_state_t *batteryState, battery_manager_
             BatteryManager_SetMaxCharge(newMaxVoltage);
             oldState = BatteryManagerAutomatonState_Charged;
             printk("Charger stopped at %dmV. Setting as new 100%%.\n", voltage);
+            Charger_PrintState();
         } else {
             printk("Charger stopped bellow %dmV. This is suspicious!\n", minThreshold);
+            Charger_PrintState();
         }
     } else if (newMaxVoltage > config->maxVoltage) {
         BatteryManager_SetMaxCharge(newMaxVoltage);
@@ -251,9 +261,9 @@ void Charger_UpdateBatteryState() {
 
     if (batteryState.batteryPresent) {
         if (stabilizationPause) {
-            if (CurrentTime < stabilizationPauseStartTime + CHARGER_STABILIZATION_PERIOD) {
+            if (Timer_GetCurrentTime() < stabilizationPauseStartTime + CHARGER_STABILIZATION_PERIOD) {
                 // This is a spurious wakeup due to stat change, ignore
-                EventScheduler_Reschedule(CurrentTime + CHARGER_STAT_PERIOD, EventSchedulerEvent_UpdateBattery, "spurious wakeup in stabilization pause");
+                EventScheduler_Reschedule(Timer_GetCurrentTime() + CHARGER_STAT_PERIOD, EventSchedulerEvent_UpdateBattery, "spurious wakeup in stabilization pause");
                 return;
             }
 
@@ -275,7 +285,7 @@ void Charger_UpdateBatteryState() {
 
             if (voltage == 0) {
                 // the value is not valid, try again
-                EventScheduler_Schedule(CurrentTime + CHARGER_STAT_PERIOD, EventSchedulerEvent_UpdateBattery, "charger - voltage == 0");
+                EventScheduler_Schedule(Timer_GetCurrentTime() + CHARGER_STAT_PERIOD, EventSchedulerEvent_UpdateBattery, "charger - voltage == 0");
                 return;
             } else {
                 // run the state automaton that decides when to charge
@@ -286,27 +296,31 @@ void Charger_UpdateBatteryState() {
                 stateChanged |= setActuallyCharging(batteryState.batteryCharging && Charger_ChargingEnabled);
 
                 // we are done, schedule the next update
-                stabilizationPauseStartTime = CurrentTime;
+                stabilizationPauseStartTime = Timer_GetCurrentTime();
                 uint32_t timeToSleep = chargerEnabledUpdated ? CHARGER_STAT_PERIOD : CHARGER_UPDATE_PERIOD;
-                EventScheduler_Schedule(CurrentTime + timeToSleep, EventSchedulerEvent_UpdateBattery, "charger - minute period");
+                EventScheduler_Schedule(Timer_GetCurrentTime() + timeToSleep, EventSchedulerEvent_UpdateBattery, "charger - minute period");
                 statsToIgnore = 3;
-                gpio_pin_set_dt(&chargerEnDt, Charger_ChargingEnabled);
+                setChargerEnPin(Charger_ChargingEnabled);
+
                 stabilizationPause = false;
                 // continue processing
             }
         } else {
             // check whether the charger is actually charging
-            bool actuallyEnabled = !gpio_pin_get_dt(&chargerEnDt);
+            bool actuallyEnabled = Charger_ChargingActuallyEnabled;
             bool actuallyCharging = !gpio_pin_get_dt(&chargerStatDt);
             stateChanged |= setActuallyCharging(actuallyCharging && Charger_ChargingEnabled);
 
-            gpio_pin_set_dt(&chargerEnDt, false);
+            // printk("Going to measure voltage; charger formallyEnabled = %d, actuallyEnabled = %d, actuallyCharging = %d\n", Charger_ChargingEnabled, actuallyEnabled, actuallyCharging);
+
+            setChargerEnPin(false);
 
             if (actuallyCharging) {
+                chargerStopped = false;
                 previousVoltage = getVoltage();
                 previousCharging = true;
             } else {
-                chargerStopped = actuallyEnabled && !actuallyCharging;
+                chargerStopped = actuallyEnabled && !actuallyCharging && batteryState.powered;
                 previousVoltage = 0;
                 previousCharging = false;
             }
@@ -315,11 +329,12 @@ void Charger_UpdateBatteryState() {
             stabilizationPause = true;
             statsToIgnore = 3;
 
-            EventScheduler_Reschedule(CurrentTime + CHARGER_STABILIZATION_PERIOD, EventSchedulerEvent_UpdateBattery, "start stabilization pause");
+            EventScheduler_Reschedule(Timer_GetCurrentTime() + CHARGER_STABILIZATION_PERIOD, EventSchedulerEvent_UpdateBattery, "start stabilization pause");
             return;
         }
     } else {
-        gpio_pin_set_dt(&chargerEnDt, true);
+
+        setChargerEnPin(true);
         previousVoltage = 0;
         stateChanged = true;
     }
@@ -344,8 +359,7 @@ static nrfx_power_usb_event_handler_t originalPowerHandler = NULL;
 
 static void powerCallback(nrfx_power_usb_evt_t event) {
     originalPowerHandler(event);
-    CurrentTime = k_uptime_get_32();
-    EventScheduler_Schedule(CurrentTime + CHARGER_STAT_PERIOD, EventSchedulerEvent_UpdateBattery, "charger - power callback");
+    EventScheduler_Schedule(Timer_GetCurrentTime() + CHARGER_STAT_PERIOD, EventSchedulerEvent_UpdateBattery, "charger - power callback");
 }
 
 void chargerStatCallback(const struct device *port, struct gpio_callback *cb, gpio_port_pins_t pins) {
@@ -355,11 +369,10 @@ void chargerStatCallback(const struct device *port, struct gpio_callback *cb, gp
     }
 
     bool stat = gpio_pin_get_dt(&chargerStatDt);
-    CurrentTime = k_uptime_get_32();
     if (stat) {
-        lastStatOneTime = CurrentTime;
+        lastStatOneTime = Timer_GetCurrentTime();
     } else {
-        lastStatZeroTime = CurrentTime;
+        lastStatZeroTime = Timer_GetCurrentTime();
     }
     bool stateChanged = false;
     stateChanged |= updateBatteryPresent();
@@ -370,7 +383,7 @@ void chargerStatCallback(const struct device *port, struct gpio_callback *cb, gp
     if (Shell.statLog) {
         printk("STAT changed to %i\n", stat ? 1 : 0);
     }
-    EventScheduler_Reschedule(CurrentTime + CHARGER_STAT_PERIOD, EventSchedulerEvent_UpdateBattery, "charger - stat callback");
+    EventScheduler_Reschedule(Timer_GetCurrentTime() + CHARGER_STAT_PERIOD, EventSchedulerEvent_UpdateBattery, "charger - stat callback");
 }
 
 bool Charger_ShouldRemainInDepletedMode(bool checkVoltage) {
@@ -405,7 +418,7 @@ void InitCharger(void) {
     InitCharger_Min();
 
     gpio_pin_configure_dt(&chargerEnDt, GPIO_OUTPUT);
-    Charger_EnableCharging(true);
+    Charger_EnableCharging(DEFAULT_CHARGER_STATE);
 
     gpio_pin_configure_dt(&chargerStatDt, GPIO_INPUT);
     gpio_pin_interrupt_configure_dt(&chargerStatDt, GPIO_INT_EDGE_BOTH);
@@ -420,7 +433,7 @@ void InitCharger(void) {
     nrfx_power_usbevt_init(&config);
     nrfx_power_usbevt_enable();
 
-    EventScheduler_Reschedule(CurrentTime + CHARGER_STAT_PERIOD, EventSchedulerEvent_UpdateBattery, "charger - init");
+    EventScheduler_Reschedule(Timer_GetCurrentTime() + CHARGER_STAT_PERIOD, EventSchedulerEvent_UpdateBattery, "charger - init");
 
     // TODO: Update battery level. See bas_notify()
 }

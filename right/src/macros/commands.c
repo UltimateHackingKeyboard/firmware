@@ -8,6 +8,7 @@
 #include "layer_stack.h"
 #include "layer_switcher.h"
 #include "ledmap.h"
+#include "logger.h"
 #include "macro_recorder.h"
 #include "macros/commands.h"
 #include "macros/debug_commands.h"
@@ -69,7 +70,7 @@ static macro_result_t processDelay(uint32_t time)
         Macros_SleepTillTime(S->as.delayData.start + time, "Macros - delay");
         return MacroResult_Sleeping;
     } else {
-        S->as.delayData.start = CurrentTime;
+        S->as.delayData.start = Timer_GetCurrentTime();
         S->as.actionActive = true;
         return processDelay(time);
     }
@@ -925,7 +926,7 @@ static macro_result_t processPlayMacroCommand(parser_context_t* ctx)
     if (Macros_DryRun) {
         return MacroResult_Finished;
     }
-    bool res = MacroRecorder_PlayRuntimeMacroSmart(id, &S->ms.macroBasicKeyboardReport);
+    bool res = MacroRecorder_PlayRuntimeMacroSmart(id, &S->ms.reports.macroBasicKeyboardReport);
     return res ? MacroResult_Blocking : MacroResult_Finished;
 }
 
@@ -965,7 +966,7 @@ static void processPostponeKeysCommand()
         return;
     }
     postponeCurrentCycle();
-    S->ls->as.modifierSuppressMods = true;
+    S->ls->as.modifierPostpone = true;
 }
 
 static macro_result_t processNoOpCommand()
@@ -1079,7 +1080,7 @@ static macro_result_t processIfHoldCommand(parser_context_t* ctx, bool negate)
         }
     }
 
-    if (CurrentTime - S->ms.currentMacroStartTime >= Cfg.HoldTimeout) {
+    if (Timer_GetCurrentTime() - S->ms.currentMacroStartTime >= Cfg.HoldTimeout) {
         if (negate) {
             return MacroResult_Finished | MacroResult_ConditionFailedFlag;
         } else {
@@ -1316,7 +1317,7 @@ static macro_result_t processOneShotCommand(parser_context_t* ctx) {
         return processCommand(ctx);
     }
 
-    if (Cfg.Macros_OneShotTimeout != 0 && CurrentTime >= S->ms.currentMacroStartTime + Cfg.Macros_OneShotTimeout) {
+    if (Cfg.Macros_OneShotTimeout != 0 && Timer_GetCurrentTime() >= S->ms.currentMacroStartTime + Cfg.Macros_OneShotTimeout) {
         S->ms.oneShotState = 0;
         return processCommand(ctx);
     }
@@ -1479,10 +1480,11 @@ static macro_result_t processPanicCommand(parser_context_t* ctx) {
         return MacroResult_Finished;
     }
 
+    Trace_Printc("PretendedPanic");
+
 #ifdef __ZEPHYR__
     k_panic();
 #else
-    Trace_Printc("PretendedPanic");
     NVIC_SystemReset();
 #endif
     return MacroResult_Finished;
@@ -1753,6 +1755,18 @@ static macro_result_t processResetConfigurationCommand(parser_context_t* ctx)
     return MacroResult_Finished;
 }
 
+static macro_result_t processReconnectCommand()
+{
+    if (Macros_DryRun) {
+        return MacroResult_Finished;
+    }
+
+#ifdef __ZEPHYR__
+    HostConnections_Reconnect();
+#endif
+    return MacroResult_Finished;
+}
+
 static macro_result_t processRebootCommand()
 {
     if (Macros_DryRun) {
@@ -1792,7 +1806,12 @@ static macro_result_t processSwitchHostCommand(parser_context_t* ctx)
     else if (ConsumeToken(ctx, "last")) {
         DRY_RUN_FINISH();
         HostConnections_SelectLastConnection();
-    } else {
+    }
+    else if (ConsumeToken(ctx, "lastSelected")) {
+        DRY_RUN_FINISH();
+        HostConnections_SelectLastSelectedConnection();
+    }
+    else {
         if (!Macros_DryRun) {
             HostConnections_SelectByName(ctx);
         }
@@ -1955,7 +1974,7 @@ static macro_result_t processCommand(parser_context_t* ctx)
                 return processHoldKeymapLayerMaxCommand(ctx);
             }
             else if (ConsumeToken(ctx, "holdKey")) {
-                return Macros_ProcessKeyCommandAndConsume(ctx, MacroSubAction_Hold);
+                return Macros_ProcessKeyCommandAndConsume(ctx, MacroSubAction_Hold, &S->ms.reports);
             }
             else {
                 goto failed;
@@ -2280,7 +2299,7 @@ static macro_result_t processCommand(parser_context_t* ctx)
                 return processPlayMacroCommand(ctx);
             }
             else if (ConsumeToken(ctx, "pressKey")) {
-                return Macros_ProcessKeyCommandAndConsume(ctx, MacroSubAction_Press);
+                return Macros_ProcessKeyCommandAndConsume(ctx, MacroSubAction_Press, &S->ms.reports);
             }
             else if (ConsumeToken(ctx, "postponeKeys")) {
                 processPostponeKeysCommand();
@@ -2315,7 +2334,7 @@ static macro_result_t processCommand(parser_context_t* ctx)
                 return processResolveNextKeyIdCommand();
             }
             else if (ConsumeToken(ctx, "releaseKey")) {
-                return Macros_ProcessKeyCommandAndConsume(ctx, MacroSubAction_Release);
+                return Macros_ProcessKeyCommandAndConsume(ctx, MacroSubAction_Release, &S->ms.reports);
             }
             else if (ConsumeToken(ctx, "repeatFor")) {
                 return processRepeatForCommand(ctx);
@@ -2339,6 +2358,9 @@ static macro_result_t processCommand(parser_context_t* ctx)
             }
             else if (ConsumeToken(ctx, "reboot")) {
                 return processRebootCommand();
+            }
+            else if (ConsumeToken(ctx, "reconnect")) {
+                return processReconnectCommand();
             }
             else {
                 goto failed;
@@ -2444,14 +2466,17 @@ static macro_result_t processCommand(parser_context_t* ctx)
                 return processToggleLayerCommand(ctx);
             }
             else if (ConsumeToken(ctx, "tapKey")) {
-                return Macros_ProcessKeyCommandAndConsume(ctx, MacroSubAction_Tap);
+                return Macros_ProcessKeyCommandAndConsume(ctx, MacroSubAction_Tap, &S->ms.reports);
             }
             else if (ConsumeToken(ctx, "tapKeySeq")) {
                 return Macros_ProcessTapKeySeqCommand(ctx);
             }
+            else if (ConsumeToken(ctx, "toggleKey")) {
+                return Macros_ProcessKeyCommandAndConsume(ctx, MacroSubAction_Toggle, &S->ms.reports);
+            }
             else if (ConsumeToken(ctx, "trace")) {
                 if (!Macros_DryRun) {
-                    Trace_Print("Triggered by macro command");
+                    Trace_Print(LogTarget_ErrorBuffer, "Triggered by macro command");
                 }
                 return MacroResult_Finished;
             }
@@ -2567,9 +2592,10 @@ static void jumpToMatchingBrace()
         }
     }
 
-    Macros_LoadNextCommand() || Macros_LoadNextAction() || (S->ms.macroBroken = true);
-
     Macros_DryRun = false;
+
+    // First reset the dry run, so that the following code performs state resets
+    Macros_LoadNextCommand() || Macros_LoadNextAction() || (S->ms.macroBroken = true);
 }
 
 macro_result_t Macros_ProcessCommandAction(void)
@@ -2598,7 +2624,18 @@ macro_result_t Macros_ProcessCommandAction(void)
 
     macro_result_t macroResult;
 
+#if (DEBUG_CHECK_MACRO_RUN_TIMES && defined(__ZEPHYR__))
+    uint32_t start = Timer_GetCurrentTime();
     macroResult = processCommand(&ctx);
+    uint64_t end = Timer_GetCurrentTime();
+    uint32_t time = end - start;
+    if (time > 20) {
+        uint32_t cmdLength = (uint32_t)(cmdEnd - cmd);
+        Macros_ReportErrorPrintf(cmd, "Macro command took: %d ms to evaluate.\n", time, cmdLength, cmd);
+    }
+#else
+    macroResult = processCommand(&ctx);
+#endif
 
     if (ctx.at != ctx.end && !Macros_ParserError && Macros_DryRun) {
         Macros_ReportWarn("Unprocessed input encountered.", ctx.at, ctx.at);

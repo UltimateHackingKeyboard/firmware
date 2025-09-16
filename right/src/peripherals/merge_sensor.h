@@ -12,14 +12,18 @@
 
 // Variables:
 
-    extern bool MergeSensor_HalvesAreMerged;
+    typedef enum {
+        MergeSensorState_Unknown = 0,
+        MergeSensorState_Split = 1,
+        MergeSensorState_Joined = 2,
+    } merge_sensor_state_t;
+
+    extern merge_sensor_state_t MergeSensor_HalvesAreMerged;
 
 // Functions:
 
-#if !(defined(__ZEPHYR__) && !defined(DEVICE_HAS_MERGE_SENSOR))
     void MergeSensor_Init(void);
-    bool MergeSensor_IsMerged(void);
-#endif
+    merge_sensor_state_t MergeSensor_IsMerged(void);
 
     void MergeSensor_Update(void);
 

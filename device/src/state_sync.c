@@ -35,10 +35,12 @@
 #include "logger.h"
 #include "versioning.h"
 #include "event_scheduler.h"
+#include "macro_events.h"
 
 #define WAKE(TID) if (TID != 0) { k_wakeup(TID); }
 
-#define STATE_SYNC_SEND_DELAY 1
+#define STATE_SYNC_SEND_DELAY_HPRIO 1
+#define STATE_SYNC_SEND_DELAY_LPRIO 10
 
 #define THREAD_STACK_SIZE 2000
 #define THREAD_PRIORITY 5
@@ -475,6 +477,9 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
         }
         break;
     case StateSyncPropertyId_MergeSensor:
+        if (DEVICE_IS_UHK80_RIGHT) {
+            MacroEvent_ProcessJoinSplitEvents(MergeSensor_HalvesAreMerged);
+        }
         break;
     case StateSyncPropertyId_SwitchTestMode:
         if (!isLocalUpdate) {
@@ -500,7 +505,7 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
         if (!isLocalUpdate) {
             RemoteDongleProtocolVersion = *(version_t*)data;
             // This should prevent the check from being printed multiple times.
-            EventScheduler_Reschedule(CurrentTime+1000, EventSchedulerEvent_CheckDongleProtocolVersion, "state sync received dongle protocol version");
+            EventScheduler_Reschedule(Timer_GetCurrentTime()+1000, EventSchedulerEvent_CheckDongleProtocolVersion, "state sync received dongle protocol version");
         }
         break;
     case StateSyncPropertyId_ZeroDummy:
@@ -509,7 +514,7 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
     case StateSyncPropertyId_BatteryStationaryMode:
         //for both local and remote
         printk("Setting battery mode to %d\n", Cfg.BatteryStationaryMode);
-        EventScheduler_Schedule(CurrentTime + 1000, EventSchedulerEvent_UpdateBattery, "state sync");
+        EventScheduler_Schedule(Timer_GetCurrentTime() + 1000, EventSchedulerEvent_UpdateBattery, "state sync");
         break;
     case StateSyncPropertyId_PowerMode:
         if (!isLocalUpdate) {
@@ -822,7 +827,7 @@ static void updateLoopRightLeft() {
             if (!isConnected || (res = handlePropertyUpdateLeftToRight()) == UpdateResult_AllUpToDate) {
                 k_sleep(K_FOREVER);
             } else {
-                uint32_t delay = res == UpdateResult_UpdatedHighPrio ? STATE_SYNC_SEND_DELAY : STATE_SYNC_SEND_DELAY*10;
+                uint32_t delay = res == UpdateResult_UpdatedHighPrio ? STATE_SYNC_SEND_DELAY_HPRIO : STATE_SYNC_SEND_DELAY_LPRIO;
                 k_sleep(K_MSEC(delay));
             }
         }
@@ -835,7 +840,7 @@ static void updateLoopRightLeft() {
             if (!isConnected || (res = handlePropertyUpdateRightToLeft()) == UpdateResult_AllUpToDate) {
                 k_sleep(K_FOREVER);
             } else {
-                uint32_t delay = res == UpdateResult_UpdatedHighPrio ? STATE_SYNC_SEND_DELAY : STATE_SYNC_SEND_DELAY*10;
+                uint32_t delay = res == UpdateResult_UpdatedHighPrio ? STATE_SYNC_SEND_DELAY_HPRIO : STATE_SYNC_SEND_DELAY_LPRIO;
                 k_sleep(K_MSEC(delay));
             }
         }
@@ -867,7 +872,7 @@ static void updateLoopRightDongle() {
             if (!isConnected || (res = handlePropertyUpdateRightToDongle()) == UpdateResult_AllUpToDate) {
                 k_sleep(K_FOREVER);
             } else {
-                uint32_t delay = res == UpdateResult_UpdatedHighPrio ? STATE_SYNC_SEND_DELAY : STATE_SYNC_SEND_DELAY*10;
+                uint32_t delay = res == UpdateResult_UpdatedHighPrio ? STATE_SYNC_SEND_DELAY_HPRIO : STATE_SYNC_SEND_DELAY_LPRIO;
                 k_sleep(K_MSEC(delay));
             }
         }
@@ -880,7 +885,7 @@ static void updateLoopRightDongle() {
             if (!isConnected || DongleStandby || (res = handlePropertyUpdateDongleToRight()) == UpdateResult_AllUpToDate) {
                 k_sleep(K_FOREVER);
             } else {
-                uint32_t delay = res == UpdateResult_UpdatedHighPrio ? STATE_SYNC_SEND_DELAY : STATE_SYNC_SEND_DELAY*10;
+                uint32_t delay = res == UpdateResult_UpdatedHighPrio ? STATE_SYNC_SEND_DELAY_HPRIO : STATE_SYNC_SEND_DELAY_LPRIO;
                 k_sleep(K_MSEC(delay));
             }
         }
@@ -931,7 +936,7 @@ void StateSync_ResetRightLeftLink(bool bidirectional) {
         invalidateProperty(StateSyncPropertyId_PowerMode);
         invalidateProperty(StateSyncPropertyId_BatteryStationaryMode);
         // Wait sufficiently log so the firmware check isnt triggered during firmware upgrade
-        EventScheduler_Reschedule(CurrentTime + 2*60*1000, EventSchedulerEvent_CheckFwChecksums, "Reset left right link");
+        EventScheduler_Reschedule(Timer_GetCurrentTime() + 2*60*1000, EventSchedulerEvent_CheckFwChecksums, "Reset left right link");
     }
     if (DEVICE_ID == DeviceId_Uhk80_Left) {
         invalidateProperty(StateSyncPropertyId_Battery);
@@ -956,7 +961,7 @@ void StateSync_ResetRightDongleLink(bool bidirectional) {
     }
     if (DEVICE_ID == DeviceId_Uhk80_Right) {
         RemoteDongleProtocolVersion = (version_t){0, 0, 0};
-        EventScheduler_Reschedule(CurrentTime+1000, EventSchedulerEvent_CheckDongleProtocolVersion, "state sync - reset right dongle link");
+        EventScheduler_Reschedule(Timer_GetCurrentTime()+1000, EventSchedulerEvent_CheckDongleProtocolVersion, "state sync - reset right dongle link");
     }
 }
 

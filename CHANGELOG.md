@@ -5,6 +5,56 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [15.1.0] - 2025-07-31
+
+Device Protocol: 4.16.1 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 12.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.**8.0**
+
+- Fix the `replaceLayer`, `overlayLayer`, and `overlayKeymap` macro commands, which corrupted the keymap due to action compression. `SMARTMACROS:PATCH`
+- Fix the `postponeKeys` modifier that acted as `suppressMods`. `SMARTMACROS:PATCH`
+- Mitigate bridge cable disconnects caused by demanding macros.
+- Add the `switchHost lastSelected` argument to switch to the last manually selected host connection. `SMARTMACROS:MINOR`
+- Add the `reconnect` command to reconnect the current host connection. `SMARTMACROS:MINOR`
+- Add the `$currentTime` macro variable expansion. `SMARTMACROS:MINOR`
+- Make freeze detection and eventloop spin detection less likely to give false alarms.
+
+## [15.0.1] - 2025-07-10
+
+Device Protocol: 4.16.1 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 12.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.7.0
+
+- Update battery percentage indicator shortly after discharging a charged battery.
+- Don't sanitize firmware log now that the relevant Agent bug is fixed.
+- Detect and log possible spinning event loop bugs.
+
+## [15.0.0] - 2025-07-07
+
+Device Protocol: 4.16.1 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: **12.0.0** | Hardware Config: 1.0.0 | Smart Macros: 3.**7.0**
+
+- Compress subsequent matching key actions for more efficient storage. `USERCONFIG:MAJOR`
+- Make battery percentage indicator more accurate.
+- Make system scancodes work in macro actions.
+- Improve crash detection.
+
+## [14.2.1] - 2025-07-01
+
+Device Protocol: 4.16.**1** | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 11.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.6.**1**
+
+- Fix a macro engine bug where USB reports weren't updated at the end of a macro, which made the keys activated from the macro get stuck. `SMARTMACROS:PATCH`
+- Make the UHK 60 not misinterpret firmware updates as crashes.
+- Correctly detect full charge level on the UHK 80.
+- Update battery percentage indicator quicker, especially when transitioning between charging and discharging.
+- Show correct battery percentage shortly after a battery is (dis)connected.
+- Fix the delay before the UHK 80 executes macro commands via USB, so that the macro commands are executed instantly.
+- USB macro execution command fixes: Fix buffer underruns, return status code. `DEVICEPROTOCOL:PATCH`
+
+## [14.2.0] - 2025-06-14
+
+Device Protocol: 4.16.0 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 11.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.**6.0**
+
+- Implement `$onSplit` and `$onJoin` macro events. `SMARTMACROS:MINOR`
+- Add persistent macro USB reports via the `persistent` argument and add `toggleKey` command. `SMARTMACROS:MINOR`
+- Implement locking mode for the UHK 60.
+- Map sleep device action to Fn2+Pause on every keymap of the default configuration of the UHK 80.
+
 ## [14.1.0] - 2025-06-05
 
 Device Protocol: 4.**16.0** | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 11.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.**5.0**

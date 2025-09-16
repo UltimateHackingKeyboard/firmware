@@ -7,6 +7,7 @@
 #include <zephyr/logging/log_backend.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include "logger.h"
 #include "macros/status_buffer.h"
 #include "trace.h"
 #include "wormhole.h"
@@ -33,8 +34,6 @@ uint16_t ProxyLog_ConsumeLog(uint8_t* outBuf, uint16_t outBufSize) {
     uint16_t remaining = MIN(bufferLength, outBufSize);
     while (remaining > 0) {
         char a = buffer[bufferPosition++];
-        if (a == '<') a = '[';
-        if (a == '>') a = ']';
         outBuf[copied++] = a;
         if (bufferPosition >= PROXY_BACKEND_BUFFER_SIZE) {
             bufferPosition = 0;
@@ -84,7 +83,7 @@ void panic(const struct log_backend *const backend) {
 
         MacroStatusBuffer_Validate();
         printk("===== PANIC =====\n");
-        Trace_Print("crash/panic");
+        Trace_Print(LogTarget_ErrorBuffer, "crash/panic");
     }
 
 };

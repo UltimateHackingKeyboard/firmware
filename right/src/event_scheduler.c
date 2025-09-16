@@ -124,13 +124,13 @@ static void processEvt(event_scheduler_event_t evt)
         case EventSchedulerEvent_UpdateDebugOledLine:
             WIDGET_REFRESH(&DebugLineWidget);
             if (DEBUG_MODE) {
-                EventScheduler_Schedule(CurrentTime+1000, EventSchedulerEvent_UpdateDebugOledLine, "Event scheduler loop");
+                EventScheduler_Schedule(Timer_GetCurrentTime()+1000, EventSchedulerEvent_UpdateDebugOledLine, "Event scheduler loop");
             }
             break;
 
         case EventSchedulerEvent_RoundTripTest:
             RoundTripTest_Run();
-            EventScheduler_Schedule(CurrentTime+10000, EventSchedulerEvent_RoundTripTest, "Event scheduler loop");
+            EventScheduler_Schedule(Timer_GetCurrentTime()+10000, EventSchedulerEvent_RoundTripTest, "Event scheduler loop");
             break;
         case EventSchedulerEvent_ResendMessage:
             Resend_RequestResendSync();
@@ -209,7 +209,7 @@ void EventScheduler_Unschedule(event_scheduler_event_t evt)
 
 uint32_t EventScheduler_Process()
 {
-    while (EventVector_IsSet(EventVector_EventScheduler) && nextEventAt <= CurrentTime) {
+    while (EventVector_IsSet(EventVector_EventScheduler) && nextEventAt <= Timer_GetCurrentTime()) {
         event_scheduler_event_t evt = nextEvent;
         LOG_SCHEDULE(
             if (labels[evt] != NULL) {

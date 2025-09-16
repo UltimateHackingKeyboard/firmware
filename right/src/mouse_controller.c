@@ -100,10 +100,10 @@ static float computeModuleSpeed(float x, float y, uint8_t moduleId)
 
     if (x != 0 || y != 0) {
         static uint32_t lastUpdate = 0;
-        uint32_t elapsedTime = CurrentTime - lastUpdate;
+        uint32_t elapsedTime = Timer_GetCurrentTime() - lastUpdate;
         float distance = sqrt(x*x + y*y);
         *currentSpeed = distance / (elapsedTime + 1);
-        lastUpdate = CurrentTime;
+        lastUpdate = Timer_GetCurrentTime();
     }
 
     float normalizedSpeed = *currentSpeed/midSpeed;
@@ -232,10 +232,10 @@ static bool feedTapHoldStateMachine(touchpad_events_t events)
     } else if (lastFinger != (events.noFingers == 1)) {
         event = lastFinger ? Event_FingerOut : Event_FingerIn ;
         lastFinger = !lastFinger;
-    } else if (lastSingleTapTimerActive && lastSingleTapTime + tapTimeout <= CurrentTime) {
+    } else if (lastSingleTapTimerActive && lastSingleTapTime + tapTimeout <= Timer_GetCurrentTime()) {
         event = Event_Timeout;
         lastSingleTapTimerActive = false;
-    } else if (holdContinuationTimerActive && continuationDelayStart + Cfg.HoldContinuationTimeout <= CurrentTime) {
+    } else if (holdContinuationTimerActive && continuationDelayStart + Cfg.HoldContinuationTimeout <= Timer_GetCurrentTime()) {
         event = Event_HoldContinuationTimeout;
         holdContinuationTimerActive = false;
     }
@@ -243,7 +243,7 @@ static bool feedTapHoldStateMachine(touchpad_events_t events)
     action = tapHoldStateMachine(event);
 
     if (action & Action_ResetTimer) {
-        lastSingleTapTime = CurrentTime;
+        lastSingleTapTime = Timer_GetCurrentTime();
         lastSingleTapTimerActive = true;
     }
     if (action & Action_Release) {
@@ -258,7 +258,7 @@ static bool feedTapHoldStateMachine(touchpad_events_t events)
         PostponerCore_TrackKeyEvent(singleTap, true, 0xff);
     }
     if (action & Action_ResetHoldContinuationTimeout) {
-        continuationDelayStart = CurrentTime;
+        continuationDelayStart = Timer_GetCurrentTime();
         holdContinuationTimerActive = true;
     }
 
@@ -411,7 +411,7 @@ static void processAxisLocking(
             ks->caretAxis = CaretAxis_None;
         }
 
-        ks->lastUpdate = CurrentTime;
+        ks->lastUpdate = Timer_GetCurrentTime();
     }
 
     // caretAxis tries to lock to one direction, therefore we "skew" the other one
@@ -713,9 +713,8 @@ bool canWeRun(module_kinetic_state_t* ks)
     return true;
 }
 
-ATTR_UNUSED static bool detectJumps(int16_t v, bool* state)
+ATTR_UNUSED static bool detectJump(int16_t v, const char* site)
 {
-#ifdef __ZEPHYR__
     union {
         struct {
             uint8_t low;
@@ -725,45 +724,25 @@ ATTR_UNUSED static bool detectJumps(int16_t v, bool* state)
     } u;
 
     u.word = v;
-    bool highByteIsUniform = (u.bytes.high >> 4) == (u.bytes.high & 0x0F);
-    bool isSmall = ((u.bytes.low & 0xC0) ^ (u.bytes.high & 0xC0)) == 0 && highByteIsUniform;
-    bool wasSmall = *state;
-    bool looksLikeJump = wasSmall && !isSmall;
-    *state = isSmall;
+    bool isJump = ((u.bytes.low & 0xC0) ^ (u.bytes.high & 0xC0)) == 0xC0;
 
-    if (looksLikeJump) {
-        return true;
+    return isJump;
+}
+
+
+ATTR_UNUSED bool DetectJumps(int16_t x, int16_t y, const char* site)
+{
+    if (Cfg.DevMode) {
+        bool isJump = detectJump(x, site) || detectJump(y, site);
+        if (isJump) {
+            LogUOS("Probable jump detected at site %s! %d, %d\n", site, x, y);
+        }
+        return isJump;
     } else {
         return false;
     }
-#else
-    return false;
-#endif
 }
 
-
-ATTR_UNUSED static void test(bool actual, bool expected, const char* comment) {
-#ifdef __ZEPHYR__
-    if (actual != expected) {
-        printk("  - test failed: %s\n", comment);
-    } else {
-        printk("  - test succeeded: %s\n", comment);
-    }
-#endif
-}
-
-ATTR_UNUSED void MouseController_RunTests() {
-#ifdef __ZEPHYR__
-    bool state = false;
-    bool res = false;
-    printk("Mouse Controller tests:\n");
-    res = detectJumps(1, &state);
-    res = detectJumps(2, &state);
-    test(res, false, "detect non jump");
-    res = detectJumps((int16_t)(0xff << 8 | 0x01), &state);
-    test(res, true, "detect jump");
-#endif
-}
 
 void MouseController_ProcessMouseActions()
 {
@@ -819,6 +798,7 @@ void MouseController_ProcessMouseActions()
         bool eventsIsNonzero = moduleState->pointerDelta.x || moduleState->pointerDelta.y;
         if (eventsIsNonzero && canWeRun(ks)) {
             DISABLE_IRQ();
+            DetectJumps(moduleState->pointerDelta.x, moduleState->pointerDelta.y, "MouseController1");
             // Gcc compiles those int16_t assignments as sequences of
             // single-byte instructions, therefore we need to make the
             // sequence atomic.
@@ -826,17 +806,10 @@ void MouseController_ProcessMouseActions()
             int16_t y = moduleState->pointerDelta.y;
             moduleState->pointerDelta.x = 0;
             moduleState->pointerDelta.y = 0;
+            DetectJumps(x, y, "MouseController2");
             ENABLE_IRQ();
 
 #ifdef __ZEPHYR__
-            {
-                bool jumped = false;
-                jumped |= detectJumps(x, &ks->wasSmallX);
-                jumped |= detectJumps(y, &ks->wasSmallY);
-                if (jumped && Cfg.DevMode) {
-                    LogUOS("Probable jump detected! %d %d\n", x, y);
-                }
-            }
 #endif
 
             processModuleActions(ks, moduleState->moduleId, x, y, 0xFF);

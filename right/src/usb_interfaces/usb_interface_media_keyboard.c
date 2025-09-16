@@ -141,3 +141,17 @@ bool UsbMediaKeyboard_AddScancode(usb_media_keyboard_report_t* report, uint16_t 
 
     return false;
 }
+
+bool UsbMediaKeyboard_ContainsScancode(const usb_media_keyboard_report_t* report, uint16_t scancode)
+{
+    if (scancode == 0) {
+        return false;
+    }
+
+    for (uint8_t i = 0; i < UTILS_ARRAY_SIZE(report->scancodes); i++) {
+        if (report->scancodes[i] == scancode) {
+            return true;
+        }
+    }
+    return false;
+}

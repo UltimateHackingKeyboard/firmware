@@ -4,6 +4,7 @@
 #include "peripherals/test_led.h"
 #include "microseconds/microseconds.h"
 #include "bootloader/wormhole.h"
+#include "usb_commands/usb_command_reenumerate.h"
 
 #define FIXED_BUSPAL_BOOTLOADER  1 // Used to mark the fixed BusPal bootloader. Macro usage can be removed in the future.
 
@@ -486,7 +487,8 @@ status_t bootloader_command_pump()
             } else if (cmdTag == kCommandTag_Reset) {
                 Wormhole.magicNumber = WORMHOLE_MAGIC_NUMBER;
                 Wormhole.enumerationMode = EnumerationMode_NormalKeyboard;
-                NVIC_SystemReset();
+                // Otherwise the reboot will be detected as a crash.
+                Reboot(false);
             }
 
             status = handle_command_internal(g_commandData.packet, g_commandData.packetLength);

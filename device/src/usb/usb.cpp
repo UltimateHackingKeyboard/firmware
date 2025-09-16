@@ -12,6 +12,7 @@ extern "C" {
 #include "usb_report_updater.h"
 #include "user_logic.h"
 #include <zephyr/kernel.h>
+#include <nrfx_power.h>
 }
 #include "command_app.hpp"
 #include "controls_app.hpp"
@@ -27,6 +28,10 @@ extern "C" {
 
 #if DEVICE_IS_UHK80_RIGHT
     #include "port/zephyr/bluetooth/hid.hpp"
+#endif
+
+#if defined(CONFIG_DEBUG) == defined(NDEBUG)
+    #error "Either CONFIG_DEBUG or NDEBUG must be defined"
 #endif
 
 using namespace magic_enum::bitwise_operators;
@@ -145,6 +150,9 @@ struct usb_manager {
     }
 
     usb_manager()
+     : mac_{DEVICE_DT_GET(DT_NODELABEL(zephyr_udc0)),
+        (nrfx_power_usbstatus_get() == NRFX_POWER_USB_STATE_CONNECTED) ?
+        usb::power::state::L2_SUSPEND : usb::power::state::L3_OFF}
     {
         device_.set_power_event_delegate([](usb::df::device &dev, usb::df::device::event ev) {
             using event = enum usb::df::device::event;
@@ -163,7 +171,7 @@ struct usb_manager {
         });
     }
 
-    usb::zephyr::udc_mac mac_{DEVICE_DT_GET(DT_NODELABEL(zephyr_udc0))};
+    usb::zephyr::udc_mac mac_;
     usb::df::microsoft::alternate_enumeration<usb::speeds(usb::speed::FULL)> ms_enum_{};
     usb::df::device_instance<usb::speeds(usb::speed::FULL)> device_{mac_, product_info, ms_enum_};
     static constexpr int change_flag = 0x100;

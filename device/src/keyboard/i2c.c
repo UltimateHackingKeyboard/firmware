@@ -89,7 +89,7 @@ void i2cPoller() {
         }
 
         if (masterTransferInProgress) {
-            if (!MergeSensor_HalvesAreMerged) {
+            if (MergeSensor_HalvesAreMerged != MergeSensorState_Joined) {
                 lastStatus = processMasterTransfer();
             } else {
                 k_msleep(10);

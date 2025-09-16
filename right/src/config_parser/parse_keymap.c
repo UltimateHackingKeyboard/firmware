@@ -207,23 +207,36 @@ static parser_error_t parseMouseAction(key_action_t *keyAction, config_buffer_t 
     return ParserError_Success;
 }
 
-static void zeroAction(key_action_t *keyAction)
+static void noneBlockAction(key_action_t *keyAction, rgb_t* color, parse_mode_t parseMode)
 {
+    if(parseMode == ParseMode_DryRun || parseMode == ParseMode_Overlay) {
+        return;
+    }
+
     keyAction->type = KeyActionType_None;
-    keyAction->color.red = 0;
-    keyAction->color.green = 0;
-    keyAction->color.blue = 0;
+    keyAction->color.red = color->red;
+    keyAction->color.green = color->green;
+    keyAction->color.blue = color->blue;
     keyAction->colorOverridden = false;
 }
 
-static parser_error_t parseZeroBlock(key_action_t *keyAction, config_buffer_t *buffer, uint8_t *actionsToZero)
+static parser_error_t parseNoneBlock(key_action_t *keyAction, config_buffer_t *buffer, uint8_t *actionCountToNone, rgb_t* color, parse_mode_t parseMode)
 {
-    if (actionsToZero != NULL) {
-        *actionsToZero = ReadUInt8(buffer);
+    if (actionCountToNone != NULL) {
+        *actionCountToNone = ReadUInt8(buffer);
+
+        // Parse color
+        key_action_t dummyAction;
+        parseKeyActionColor(&dummyAction, buffer);
+        color->red = dummyAction.color.red;
+        color->green = dummyAction.color.green;
+        color->blue = dummyAction.color.blue;
     }
-    if (*actionsToZero > 0) {
-        zeroAction(keyAction);
+
+    if (*actionCountToNone > 0) {
+        noneBlockAction(keyAction, color, parseMode);
     }
+
     return ParserError_Success;
 }
 
@@ -240,7 +253,7 @@ static parser_error_t skipArgument(config_buffer_t *buffer, bool *wasArgument) {
     return ParserError_Success;
 }
 
-static parser_error_t parseKeyAction(key_action_t *keyAction, config_buffer_t *buffer, parse_mode_t parseMode, uint8_t *actionsToZero, bool *wasArgument)
+static parser_error_t parseKeyAction(key_action_t *keyAction, config_buffer_t *buffer, parse_mode_t parseMode, uint8_t *actionCountToNone, rgb_t* noneBlockColor, bool *wasArgument)
 {
     uint8_t keyActionType = ReadUInt8(buffer);
     key_action_t dummyKeyAction;
@@ -268,8 +281,8 @@ static parser_error_t parseKeyAction(key_action_t *keyAction, config_buffer_t *b
             return parseConnectionsAction(keyAction, buffer);
         case SerializedKeyActionType_Other:
             return parseOtherAction(keyAction, buffer);
-        case SerializedKeyActionType_ZeroBlock:
-            return parseZeroBlock(keyAction, buffer, actionsToZero);
+        case SerializedKeyActionType_NoneBlock:
+            return parseNoneBlock(keyAction, buffer, actionCountToNone, noneBlockColor, parseMode);
         case SerializedKeyActionType_Label:
         case SerializedKeyActionType_Argument:
             return skipArgument(buffer, wasArgument);
@@ -290,23 +303,24 @@ static parser_error_t parseKeyActions(uint8_t targetLayer, config_buffer_t *buff
         parseMode = IsModuleAttached(moduleId) ? parseMode : ParseMode_DryRun;
     }
     slot_t slotId = ModuleIdToSlotId(moduleId);
-    uint8_t zeroUntil = 0;
+    uint8_t noneBlockUntil = 0;
+    rgb_t noneBlockColor = {0, 0, 0};
     for (uint8_t actionIdx = 0; actionIdx < actionCount; actionIdx++) {
         key_action_t dummyKeyAction;
         key_action_t *keyAction = actionIdx < MAX_KEY_COUNT_PER_MODULE ? &CurrentKeymap[targetLayer][slotId][actionIdx] : &dummyKeyAction;
 
-        if (actionIdx < zeroUntil) {
-            zeroAction(keyAction);
+        if (actionIdx < noneBlockUntil) {
+            noneBlockAction(keyAction, &noneBlockColor, parseMode);
         } else {
             bool wasArgument = false;
-            uint8_t actionsToZero = 0;
-            errorCode = parseKeyAction(keyAction, buffer, parseMode, &actionsToZero, &wasArgument);
+            uint8_t actionCountToNone = 0;
+            errorCode = parseKeyAction(keyAction, buffer, parseMode, &actionCountToNone, &noneBlockColor, &wasArgument);
 
             if (errorCode != ParserError_Success) {
                 return errorCode;
             }
 
-            zeroUntil = actionIdx + actionsToZero;
+            noneBlockUntil = actionIdx + actionCountToNone;
 
             if (wasArgument) {
                 actionIdx--;

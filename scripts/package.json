@@ -18,19 +18,19 @@
     "serialport": "^12.0.0",
     "shelljs": "^0.8.4"
   },
-  "firmwareVersion": "14.1.0",
-  "deviceProtocolVersion": "4.16.0",
+  "firmwareVersion": "15.1.0",
+  "deviceProtocolVersion": "4.16.1",
   "moduleProtocolVersion": "4.3.0",
   "dongleProtocolVersion": "1.0.2",
-  "userConfigVersion": "11.1.0",
+  "userConfigVersion": "12.1.0",
   "hardwareConfigVersion": "1.0.0",
-  "smartMacrosVersion": "3.5.0",
+  "smartMacrosVersion": "3.8.0",
   "devices": [
     {
       "deviceId": 1,
       "name": "uhk60-right",
-      "source": "right/uhk60v1/build_make/uhk60v1.hex",
-      "mmap": "right/uhk60v1/build_make/uhk60v1.map",
+      "source": "right/build/v1-release/uhk-60-right.hex",
+      "mmap": "right/build/v1-release/output.map",
       "kboot": "scripts/kboot-releases/uhk60-right/kboot.hex",
       "platform": "kinetis",
       "userConfigType": "uhk60"
@@ -38,8 +38,8 @@
     {
       "deviceId": 2,
       "name": "uhk60v2-right",
-      "source": "right/uhk60v2/build_make/uhk60v2.hex",
-      "mmap": "right/uhk60v2/build_make/uhk60v2.map",
+      "source": "right/build/v2-release/uhk-60-right.hex",
+      "mmap": "right/build/v2-release/output.map",
       "kboot": "scripts/kboot-releases/uhk60v2-right/kboot.hex",
       "platform": "kinetis",
       "userConfigType": "uhk60"
@@ -47,27 +47,27 @@
     {
       "deviceId": 3,
       "name": "uhk-80-left",
-      "source": "device/build/uhk-80-left/zephyr/app_update.bin",
-      "mmap": "device/build/uhk-80-left/zephyr/zephyr.map",
-      "merged": "device/build/uhk-80-left/zephyr/merged.hex",
+      "source": "device/build/uhk-80-left/device/zephyr/zephyr.signed.bin",
+      "mmap": "device/build/uhk-80-left/device/zephyr/zephyr.map",
+      "merged": "device/build/uhk-80-left/merged.hex",
       "platform": "nordic",
       "userConfigType": "uhk80"
     },
     {
       "deviceId": 4,
       "name": "uhk-80-right",
-      "source": "device/build/uhk-80-right/zephyr/app_update.bin",
-      "mmap": "device/build/uhk-80-right/zephyr/zephyr.map",
-      "merged": "device/build/uhk-80-right/zephyr/merged.hex",
+      "source": "device/build/uhk-80-right/device/zephyr/zephyr.signed.bin",
+      "mmap": "device/build/uhk-80-right/device/zephyr/zephyr.map",
+      "merged": "device/build/uhk-80-right/merged.hex",
       "platform": "nordic",
       "userConfigType": "uhk80"
     },
     {
       "deviceId": 5,
       "name": "uhk-dongle",
-      "source": "device/build/uhk-dongle/zephyr/app_update.bin",
-      "mmap": "device/build/uhk-dongle/zephyr/zephyr.map",
-      "merged": "device/build/uhk-dongle/zephyr/merged.hex",
+      "source": "device/build/uhk-dongle/device/zephyr/zephyr.signed.bin",
+      "mmap": "device/build/uhk-dongle/device/zephyr/zephyr.map",
+      "merged": "device/build/uhk-dongle/merged.hex",
       "platform": "nordic"
     }
   ],
@@ -75,29 +75,29 @@
     {
       "moduleId": 1,
       "name": "uhk60-left",
-      "source": "left/build_make/uhk_left.bin",
-      "mmap": "left/build_make/uhk_left.map",
+      "source": "left/build/release/uhk-60-left.bin",
+      "mmap": "left/build/release/output.map",
       "platform": "kinetis"
     },
     {
       "moduleId": 2,
       "name": "keycluster-left",
-      "source": "keycluster/build_make/uhk_keycluster.bin",
-      "mmap": "keycluster/build_make/uhk_keycluster.map",
+      "source": "keycluster/build/release/uhk-keycluster.bin",
+      "mmap": "keycluster/build/release/output.map",
       "platform": "kinetis"
     },
     {
       "moduleId": 3,
       "name": "trackball-right",
-      "source": "trackball/build_make/uhk_trackball.bin",
-      "mmap": "trackball/build_make/uhk_trackball.map",
+      "source": "trackball/build/release/uhk-trackball.bin",
+      "mmap": "trackball/build/release/output.map",
       "platform": "kinetis"
     },
     {
       "moduleId": 4,
       "name": "trackpoint-right",
-      "source": "trackpoint/build_make/uhk_trackpoint.bin",
-      "mmap": "trackpoint/build_make/uhk_trackpoint.map",
+      "source": "trackpoint/build/release/uhk-trackpoint.bin",
+      "mmap": "trackpoint/build/release/output.map",
       "platform": "kinetis"
     }
   ]

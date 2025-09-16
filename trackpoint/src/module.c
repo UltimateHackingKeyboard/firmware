@@ -2,6 +2,8 @@
 #include "module.h"
 #include <stdint.h>
 
+#define RESET_BY_CALIBRATE_COMMAND false
+
 pointer_delta_t PointerDelta;
 
 bool shouldReset = false;
@@ -42,7 +44,7 @@ void Module_Init(void)
 static void resetBoard()
 {
     resetTimer = 50;
-    GPIO_WritePinOutput(TP_RST_GPIO, TP_RST_PIN, 0);
+    GPIO_PinWrite(TP_RST_GPIO, TP_RST_PIN, 0);
 }
 
 uint8_t phase = 0;
@@ -53,12 +55,12 @@ void requestToSend()
 {
     for (volatile uint32_t i=0; i<150; i++);
     GPIO_PinInit(PS2_CLOCK_GPIO, PS2_CLOCK_PIN, &(gpio_pin_config_t){.pinDirection=kGPIO_DigitalOutput, .outputLogic=0});
-    GPIO_WritePinOutput(PS2_CLOCK_GPIO, PS2_CLOCK_PIN, 0);
+    GPIO_PinWrite(PS2_CLOCK_GPIO, PS2_CLOCK_PIN, 0);
     for (volatile uint32_t i=0; i<150; i++);
     GPIO_PinInit(PS2_DATA_GPIO, PS2_DATA_PIN, &(gpio_pin_config_t){.pinDirection=kGPIO_DigitalOutput, .outputLogic=0});
-    GPIO_WritePinOutput(PS2_DATA_GPIO, PS2_DATA_PIN, 0);
+    GPIO_PinWrite(PS2_DATA_GPIO, PS2_DATA_PIN, 0);
     for (volatile uint32_t i=0; i<150; i++);
-    GPIO_WritePinOutput(PS2_CLOCK_GPIO, PS2_CLOCK_PIN, 1);
+    GPIO_PinWrite(PS2_CLOCK_GPIO, PS2_CLOCK_PIN, 1);
     GPIO_PinInit(PS2_CLOCK_GPIO, PS2_CLOCK_PIN, &(gpio_pin_config_t){.pinDirection=kGPIO_DigitalInput, .outputLogic=0});
 }
 
@@ -93,16 +95,16 @@ static bool writeByte()
             if (dataBit) {
                 parityBit = !parityBit;
             }
-            GPIO_WritePinOutput(PS2_DATA_GPIO, PS2_DATA_PIN, dataBit);
+            GPIO_PinWrite(PS2_DATA_GPIO, PS2_DATA_PIN, dataBit);
             break;
         }
         case 8: {
-            GPIO_WritePinOutput(PS2_DATA_GPIO, PS2_DATA_PIN, parityBit);
+            GPIO_PinWrite(PS2_DATA_GPIO, PS2_DATA_PIN, parityBit);
             break;
         }
         case 9: {
             uint8_t stopBit = 1;
-            GPIO_WritePinOutput(PS2_DATA_GPIO, PS2_DATA_PIN, stopBit);
+            GPIO_PinWrite(PS2_DATA_GPIO, PS2_DATA_PIN, stopBit);
             break;
         }
         case 10: {
@@ -211,10 +213,10 @@ void PS2_CLOCK_IRQ_HANDLER(void)
     static uint16_t lastY = 0;
     static uint16_t lastClock;
 
-    GPIO_ClearPinsInterruptFlags(PS2_CLOCK_GPIO, 1U << PS2_CLOCK_PIN);
+    GPIO_PortClearInterruptFlags(PS2_CLOCK_GPIO, 1U << PS2_CLOCK_PIN);
 
-    bitValue = GPIO_ReadPinInput(PS2_CLOCK_GPIO, PS2_DATA_PIN);
-    clockValue = GPIO_ReadPinInput(PS2_CLOCK_GPIO, PS2_CLOCK_PIN);
+    bitValue = GPIO_PinRead(PS2_CLOCK_GPIO, PS2_DATA_PIN);
+    clockValue = GPIO_PinRead(PS2_CLOCK_GPIO, PS2_CLOCK_PIN);
 
     uint16_t currentClock = SysTick->VAL;
     uint16_t diff = lastClock - currentClock;
@@ -327,16 +329,42 @@ void PS2_CLOCK_IRQ_HANDLER(void)
                 errno = 0;
                 if (shouldReset) {
                     shouldReset = false;
-                    resetBoard();
-                    phase = 1;
-
+                    if (RESET_BY_CALIBRATE_COMMAND) {
+                        phase = 10;
+                    } else {
+                        resetBoard();
+                        phase = 1;
+                    }
                 } else {
                     phase = 7;
                 }
             }
             break;
         }
+
+        //recalibrate
+        case 10: {
+            requestToSend();
+            buffer = 0xe2;
+            phase = 11;
+            break;
+        }
+        case 11: {
+            if (writeByte()) {
+                phase = 12;
+                requestToSend();
+                buffer = 0x51;
+            }
+            break;
+        }
+        case 12: {
+            if (writeByte()) {
+                phase = 7;
+            }
+            break;
+        }
     }
+    SDK_ISR_EXIT_BARRIER;
 }
 
 void Module_Loop(void)
@@ -347,7 +375,7 @@ void Module_OnScan(void)
 {
     // finish reset sequence
     if (resetTimer > 0 && --resetTimer == 0) {
-        GPIO_WritePinOutput(TP_RST_GPIO, TP_RST_PIN, 1);
+        GPIO_PinWrite(TP_RST_GPIO, TP_RST_PIN, 1);
     }
 }
 

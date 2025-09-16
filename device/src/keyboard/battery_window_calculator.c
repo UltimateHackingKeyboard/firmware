@@ -1,6 +1,9 @@
 #include "battery_window_calculator.h"
 #include "timer.h"
 #include <inttypes.h>
+#include <zephyr/logging/log.h>
+
+LOG_MODULE_DECLARE(Battery);
 
 uint32_t lastMeasurement = 0;
 
@@ -13,7 +16,7 @@ uint8_t pos = 0;
 uint8_t count = 0;
 
 static bool shouldAddRecord(uint16_t voltage) {
-    return CurrentTime - lastMeasurement > CHARGER_UPDATE_PERIOD/2 && voltage != 0;
+    return Timer_GetCurrentTime() - lastMeasurement > CHARGER_UPDATE_PERIOD/2 && voltage != 0;
 }
 
 static void addNewRecord(uint16_t voltage) {
@@ -31,22 +34,31 @@ static void addNewRecord(uint16_t voltage) {
     sum += voltage;
 
     count = MIN(count + 1, WINDOW_SIZE);
-    lastMeasurement = CurrentTime;
+    lastMeasurement = Timer_GetCurrentTime();
 }
 
 uint16_t BatteryCalculator_CalculateWindowAverageVoltage(uint16_t voltage) {
-    if (BATTERY_CALCULATOR_AVERAGE_ENABLED) {
+    if (BATTERY_CALCULATOR_AVERAGE_ENABLED && voltage != 0) {
         // printk("BatteryCalculator_CalculateWindowAverageVoltage (%d) of (%d):", voltage, count);
         // for (uint8_t i = 0; i < count; i++) {
         //     printk(" %d", values[i]);
         // }
         // printk(" sums to %d\n", sum);
+        uint16_t res;
         if (shouldAddRecord(voltage)) {
             addNewRecord(voltage);
-            return sum / count;
+            res = sum / count;
         } else {
-            return (sum + voltage) / (count + 1);
+            res =  (sum + voltage) / (count + 1);
         }
+        if ((voltage > res && voltage - res > 200) || (res < voltage && voltage - res > 200)) {
+            LOG_WRN("Battery average flew away, resetting window to %d\n", voltage);
+            addNewRecord(voltage);
+            count = 1;
+            sum = voltage;
+            res = voltage;
+        }
+        return res;
     } else {
         return voltage;
     }

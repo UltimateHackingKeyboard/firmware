@@ -1,4 +1,5 @@
 #include "layer.h"
+#include "peripherals/merge_sensor.h"
 #include "string.h"
 #include "str_utils.h"
 #include "macro_events.h"
@@ -16,6 +17,8 @@ static macro_index_t keymapLayerChangeMacro[LayerId_Count];
 static macro_index_t capsLockChangeMacro = MacroIndex_None;
 static macro_index_t scrollLockChangeMacro = MacroIndex_None;
 static macro_index_t numLockChangeMacro = MacroIndex_None;
+static macro_index_t joinMacro = MacroIndex_None;
+static macro_index_t splitMacro = MacroIndex_None;
 
 bool MacroEvent_CapsLockStateChanged = false;
 bool MacroEvent_NumLockStateChanged = false;
@@ -39,6 +42,7 @@ static generic_macro_event_metadata_t genericMacroEvents[GenericMacroEvent_Count
 
 static void registerKeyboardStates();
 static void registerGenericEvents();
+static void registerJoinSplitEvents();
 
 /**
  * Macro events should be executed in order and wait for each other - first onInit, then `onKmeymapChange any`, finally other `onKeymapChange` ones.
@@ -53,6 +57,7 @@ void MacroEvent_OnInit()
         previousEventMacroSlot = Macros_StartMacro(idx, NULL, 255, 255, false);
     }
 
+    registerJoinSplitEvents();
     registerKeyboardStates();
     registerGenericEvents();
 }
@@ -173,6 +178,20 @@ static void registerKeyboardStates()
     }
 }
 
+static void registerJoinSplitEvents() {
+    for (int i = 0; i < AllMacrosCount; i++) {
+        const char *thisName, *thisNameEnd;
+        FindMacroName(&AllMacros[i], &thisName, &thisNameEnd);
+
+        if (TokenMatches(thisName, thisNameEnd, "$onJoin")) {
+            joinMacro = i;
+        }
+        if (TokenMatches(thisName, thisNameEnd, "$onSplit")) {
+            splitMacro = i;
+        }
+    }
+}
+
 static void registerGenericEvents()
 {
     for (int i = 0; i < AllMacrosCount; i++) {
@@ -199,8 +218,8 @@ void MacroEvent_TriggerGenericEvent(generic_macro_event_t eventId)
 void MacroEvent_OnError() {
     static uint32_t last = 0;
 
-    if (CurrentTime - last > 1000) {
-        last = CurrentTime;
+    if (Timer_GetCurrentTime() - last > 1000) {
+        last = Timer_GetCurrentTime();
         MacroEvent_TriggerGenericEvent(GenericMacroEvent_OnError);
     }
 }
@@ -222,4 +241,18 @@ void MacroEvent_ProcessStateKeyEvents()
         startMacroInSlot(scrollLockChangeMacro, &previousEventMacroSlot);
     }
     previousEventMacroSlot = 255;
+}
+
+void MacroEvent_ProcessJoinSplitEvents(merge_sensor_state_t currentlyJoined)
+{
+    static merge_sensor_state_t lastJoined = false;
+    if (lastJoined != currentlyJoined && currentlyJoined != MergeSensorState_Unknown) {
+        lastJoined = currentlyJoined;
+        if (currentlyJoined == MergeSensorState_Joined && joinMacro != MacroIndex_None) {
+            startMacroInSlot(joinMacro, &previousEventMacroSlot);
+        } else if (currentlyJoined == MergeSensorState_Split && splitMacro != MacroIndex_None) {
+            startMacroInSlot(splitMacro, &previousEventMacroSlot);
+        }
+        previousEventMacroSlot = 255;
+    }
 }

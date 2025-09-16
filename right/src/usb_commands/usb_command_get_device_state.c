@@ -1,3 +1,4 @@
+#include "logger.h"
 #ifndef __ZEPHYR__
 #include "fsl_common.h"
 #endif
@@ -17,6 +18,7 @@
 #include "bt_defs.h"
 #include "user_logic.h"
 #include "trace.h"
+#include "config_manager.h"
 
 #ifdef __ZEPHYR__
     #include "flash.h"
@@ -35,6 +37,10 @@
 #endif
 
 static void detectFreezes() {
+    if (!Cfg.DevMode) {
+        return;
+    }
+
     static bool alreadyLogged = 0;
     static uint32_t lastCheckTime = 0;
     static uint8_t lastCheckCount = 0;
@@ -46,11 +52,11 @@ static void detectFreezes() {
         lastCheckTime = UserLogic_LastEventloopTime;
     }
 
-    if (lastCheckCount > 10 && !alreadyLogged) {
+    if (lastCheckCount > 30 && !alreadyLogged) {
         lastCheckCount = 0;
         alreadyLogged = true;
 
-        Trace_Print("Looks like the firmware freezed. If that is the case, please report bellow trace to the devs:\n");
+        Trace_Print(LogTarget_ErrorBuffer, "Looks like the firmware freezed. If that is the case, please report bellow trace to the devs:\n");
     }
 
     // Just trip it to make the event loop update UserLogic_LastEventloopTime if it is not frozen
@@ -71,7 +77,7 @@ void UsbCommand_GetKeyboardState(const uint8_t *GenericHidOutBuffer, uint8_t *Ge
 #endif
 
     uint8_t byte2 = 0
-        | (MergeSensor_IsMerged() ? GetDeviceStateByte2_HalvesMerged : 0)
+        | (MergeSensor_IsMerged() == MergeSensorState_Joined ? GetDeviceStateByte2_HalvesMerged : 0)
         | (BtPair_PairingMode == PairingMode_Oob ? GetDeviceStateByte2_PairingInProgress : 0)
         | (Bt_NewPairedDevice ? GetDeviceStateByte2_NewPairedDevice : 0)
         | (ProxyLog_HasLog ? GetDeviceStateByte2_ZephyrLog : 0);
@@ -83,5 +89,5 @@ void UsbCommand_GetKeyboardState(const uint8_t *GenericHidOutBuffer, uint8_t *Ge
     SetUsbTxBufferUint8(7, Macros_ConsumeStatusCharDirtyFlag);
     SetUsbTxBufferUint8(8, CurrentKeymapIndex);
 
-    LastUsbGetKeyboardStateRequestTimestamp = CurrentTime;
+    LastUsbGetKeyboardStateRequestTimestamp = Timer_GetCurrentTime();
 }

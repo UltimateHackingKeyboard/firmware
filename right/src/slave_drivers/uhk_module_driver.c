@@ -28,6 +28,7 @@
 #include "versioning.h"
 #include "layouts/key_layout_60_to_universal.h"
 #include "test_switches.h"
+#include "mouse_controller.h"
 
 uhk_module_state_t UhkModuleStates[UHK_MODULE_MAX_SLOT_COUNT];
 module_connection_state_t ModuleConnectionStates[UHK_MODULE_MAX_SLOT_COUNT];
@@ -156,8 +157,10 @@ void UhkModuleSlaveDriver_ProcessKeystates(uint8_t uhkModuleDriverId, uhk_module
         uint8_t keyStatesLength = BOOL_BYTES_TO_BITS_COUNT(uhkModuleState->keyCount);
         pointer_delta_t *pointerDelta = (pointer_delta_t*)(rxMessageData + keyStatesLength);
         DISABLE_IRQ();
+        DetectJumps(pointerDelta->x, pointerDelta->y, "UhkModuleDriver1");
         uhkModuleState->pointerDelta.x += pointerDelta->x;
         uhkModuleState->pointerDelta.y += pointerDelta->y;
+        DetectJumps(uhkModuleState->pointerDelta.x, uhkModuleState->pointerDelta.y, "UhkModuleDriver2");
         ENABLE_IRQ();
         uhkModuleState->pointerDelta.debugInfo = pointerDelta->debugInfo;
         nonzeroDeltas = uhkModuleState->pointerDelta.x != 0 || uhkModuleState->pointerDelta.y != 0;
@@ -441,7 +444,7 @@ slave_result_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
             txMessage.length = 1;
             res.status = tx(i2cAddress);
             res.hold = true;
-            moduleConnectionState->lastTimeConnected = CurrentTime;
+            moduleConnectionState->lastTimeConnected = Timer_GetCurrentTime();
             moduleConnectionState->moduleId = uhkModuleState->moduleId;
             *uhkModulePhase = UhkModulePhase_ReceiveKeystates;
             break;
@@ -528,14 +531,14 @@ void UhkModuleSlaveDriver_Disconnect(uint8_t uhkModuleDriverId)
         memset(KeyStates[slotId], 0, MAX_KEY_COUNT_PER_MODULE * sizeof(key_state_t));
     }
 
-    EventScheduler_Schedule(CurrentTime + MODULE_CONNECTION_TIMEOUT, EventSchedulerEvent_ModuleConnectionStatusUpdate, "ModuleConnectionStatusUpdate");
+    EventScheduler_Schedule(Timer_GetCurrentTime() + MODULE_CONNECTION_TIMEOUT, EventSchedulerEvent_ModuleConnectionStatusUpdate, "ModuleConnectionStatusUpdate");
 }
 
 static void updateModuleConnectionStatus(uint8_t uhkModuleDriverId) {
     module_connection_state_t *moduleConnectionState = ModuleConnectionStates + uhkModuleDriverId;
     if (moduleConnectionState->moduleId) {
         uint32_t timeoutAt = moduleConnectionState->lastTimeConnected + MODULE_CONNECTION_TIMEOUT;
-        if (timeoutAt <= CurrentTime) {
+        if (timeoutAt <= Timer_GetCurrentTime()) {
             moduleConnectionState->moduleId = 0;
 #ifdef __ZEPHYR__
             if (DEVICE_ID == DeviceId_Uhk80_Left) {

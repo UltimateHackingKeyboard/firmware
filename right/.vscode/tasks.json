@@ -1,0 +1,42 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "cmake",
+      "label": "Build UHK 60 right",
+      "command": "build",
+      "preset": "v2-release",
+      "targets": [
+        "all"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "detail": "CMake template build task"
+    },
+    {
+      "type": "cmake",
+      "label": "Clean UHK 60 right",
+      "command": "clean",
+      "preset": "v2-release",
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "detail": "CMake template clean task"
+    },
+    {
+      "type": "cmake",
+      "label": "Configure UHK 60 right",
+      "command": "configure",
+      "preset": "v2-release",
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "detail": "CMake template configure task"
+    }
+  ]
+}

@@ -225,7 +225,7 @@ static usb_status_t USB_DeviceCh9SetClearFeature(usb_device_common_class_struct_
     }
 
     /* Identify the request is set or clear the feature. */
-    if (USB_REQUSET_STANDARD_SET_FEATURE == setup->bRequest)
+    if (USB_REQUEST_STANDARD_SET_FEATURE == setup->bRequest)
     {
         isSet = 1U;
     }
@@ -233,14 +233,14 @@ static usb_status_t USB_DeviceCh9SetClearFeature(usb_device_common_class_struct_
     if ((setup->bmRequestType & USB_REQUEST_TYPE_RECIPIENT_MASK) == USB_REQUEST_TYPE_RECIPIENT_DEVICE)
     {
         /* Set or Clear the device featrue. */
-        if (USB_REQUSET_STANDARD_FEATURE_SELECTOR_DEVICE_REMOTE_WAKEUP == setup->wValue)
+        if (USB_REQUEST_STANDARD_FEATURE_SELECTOR_DEVICE_REMOTE_WAKEUP == setup->wValue)
         {
             /* Set or Clear the device remote wakeup featrue. */
             error = USB_DeviceClassCallback(classHandle->handle, kUSB_DeviceEventSetRemoteWakeup, &isSet);
         }
 #if (defined(USB_DEVICE_CONFIG_EHCI) && (USB_DEVICE_CONFIG_EHCI > 0U)) && \
     (defined(USB_DEVICE_CONFIG_EHCI_TEST_MODE) && (USB_DEVICE_CONFIG_EHCI_TEST_MODE > 0U))
-        else if (USB_REQUSET_STANDARD_FEATURE_SELECTOR_DEVICE_TEST_MODE == setup->wValue)
+        else if (USB_REQUEST_STANDARD_FEATURE_SELECTOR_DEVICE_TEST_MODE == setup->wValue)
         {
             state = kUSB_DeviceStateTestMode;
             error = USB_DeviceSetStatus(classHandle->handle, kUSB_DeviceStatusDeviceState, &state);
@@ -253,7 +253,7 @@ static usb_status_t USB_DeviceCh9SetClearFeature(usb_device_common_class_struct_
     else if ((setup->bmRequestType & USB_REQUEST_TYPE_RECIPIENT_MASK) == USB_REQUEST_TYPE_RECIPIENT_ENDPOINT)
     {
         /* Set or Clear the endpoint featrue. */
-        if (USB_REQUSET_STANDARD_FEATURE_SELECTOR_ENDPOINT_HALT == setup->wValue)
+        if (USB_REQUEST_STANDARD_FEATURE_SELECTOR_ENDPOINT_HALT == setup->wValue)
         {
             if (USB_CONTROL_ENDPOINT == (setup->wIndex & USB_ENDPOINT_NUMBER_MASK))
             {
@@ -670,7 +670,7 @@ static usb_status_t USB_DeviceControlCallbackFeedback(usb_device_handle handle,
     {
         /* Stall the control pipe when the request is unsupported. */
         if ((!((setup->bmRequestType & USB_REQUEST_TYPE_TYPE_MASK) == USB_REQUEST_TYPE_TYPE_STANDARD)) &&
-            ((setup->bmRequestType & USB_REQUSET_TYPE_DIR_MASK) == USB_REQUEST_TYPE_DIR_OUT) && (setup->wLength) &&
+            ((setup->bmRequestType & USB_REQUEST_TYPE_DIR_MASK) == USB_REQUEST_TYPE_DIR_OUT) && (setup->wLength) &&
             (kUSB_DeviceControlPipeSetupStage == stage))
         {
             direction = USB_OUT;
@@ -688,7 +688,7 @@ static usb_status_t USB_DeviceControlCallbackFeedback(usb_device_handle handle,
         errorCode = USB_DeviceSendRequest(handle, (USB_CONTROL_ENDPOINT), *buffer, *length);
 
         if ((kStatus_USB_Success == errorCode) &&
-            (USB_REQUEST_TYPE_DIR_IN == (setup->bmRequestType & USB_REQUSET_TYPE_DIR_MASK)))
+            (USB_REQUEST_TYPE_DIR_IN == (setup->bmRequestType & USB_REQUEST_TYPE_DIR_MASK)))
         {
             errorCode = USB_DeviceRecvRequest(handle, (USB_CONTROL_ENDPOINT), (uint8_t *)NULL, 0U);
         }
@@ -788,7 +788,7 @@ usb_status_t USB_DeviceControlCallback(usb_device_handle handle,
             buffer = controlRequest.buffer;
 
             if ((deviceSetup->wLength) &&
-                ((deviceSetup->bmRequestType & USB_REQUSET_TYPE_DIR_MASK) == USB_REQUEST_TYPE_DIR_OUT) &&
+                ((deviceSetup->bmRequestType & USB_REQUEST_TYPE_DIR_MASK) == USB_REQUEST_TYPE_DIR_OUT) &&
                 (kStatus_USB_Success == error))
             {
                 /* Prime an OUT transfer */
@@ -815,7 +815,7 @@ usb_status_t USB_DeviceControlCallback(usb_device_handle handle,
     }
 #endif
     else if ((message->length) && (deviceSetup->wLength) &&
-             ((deviceSetup->bmRequestType & USB_REQUSET_TYPE_DIR_MASK) == USB_REQUEST_TYPE_DIR_OUT))
+             ((deviceSetup->bmRequestType & USB_REQUEST_TYPE_DIR_MASK) == USB_REQUEST_TYPE_DIR_OUT))
     {
         usb_device_control_request_struct_t controlRequest;
         controlRequest.buffer = message->buffer;
