@@ -677,7 +677,7 @@ static macro_result_t processWhileCommand(parser_context_t* ctx)
         S->ls->as.whileExecuting = false;
 
         if (res & MacroResult_ActionFinishedFlag) {
-            return (res & ~MacroResult_ActionFinishedFlag) | MacroResult_InProgressFlag;
+            return (res & ~MacroResult_ActionFinishedFlag) | MacroResult_InProgressFlag | MacroResult_YieldFlag;
         } else {
             return res;
         }
