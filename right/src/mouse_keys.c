@@ -150,7 +150,7 @@ static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
 
         // Handle the first scroll tick.
         if (kineticState->isScroll && !kineticState->wasMoveAction && kineticState->xOut == 0 && horizontalMovement) {
-            kineticState->xOut = ActiveMouseStates[kineticState->leftState] ? -1 : 1;
+            kineticState->xOut = ActiveMouseStates[kineticState->leftState] ? -scrollMultiplier : scrollMultiplier;
             kineticState->xSum = 0;
         }
 
@@ -165,7 +165,7 @@ static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
 
         // Handle the first scroll tick.
         if (kineticState->isScroll && !kineticState->wasMoveAction && kineticState->yOut == 0 && verticalMovement) {
-            kineticState->yOut = ActiveMouseStates[kineticState->upState] ? -1 : 1;
+            kineticState->yOut = ActiveMouseStates[kineticState->upState] ? -scrollMultiplier : scrollMultiplier;
             kineticState->ySum = 0;
         }
     } else {
