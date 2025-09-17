@@ -9,6 +9,10 @@ endif()
 
 set(IS_NRF_SDK ON)
 
+if(NOT DEFINED ENV{ARM_GCC_DIR} AND DEFINED ENV{ARMGCC_DIR})
+    set(ENV{ARM_GCC_DIR} "$ENV{ARMGCC_DIR}")
+endif()
+
 project(uhk)
 add_library(${PROJECT_NAME} OBJECT)
 target_include_directories(${PROJECT_NAME} PUBLIC
