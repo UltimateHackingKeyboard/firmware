@@ -80,6 +80,7 @@
         UsbVariable_LedAudioRegisters         = 0x06,
         UsbVariable_ShellEnabled              = 0x07,
         UsbVariable_ShellBuffer               = 0x08,
+        UsbVariable_FirmwareVersionCheckEnabled = 0x09,
     } usb_variable_id_t;
 
     typedef enum {
