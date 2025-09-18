@@ -640,6 +640,7 @@ static void updateActionStates() {
                         Trace_Printf("y1.%d", CurrentPowerMode);
                         PowerMode_WakeHost();
                         Trace_Printc("y4");
+                        Trace_Print(LogTarget_ErrorBuffer, "Wake hunt");
                     }
 
                     if (Postponer_LastKeyLayer != 255 && PostponerCore_IsActive()) {
