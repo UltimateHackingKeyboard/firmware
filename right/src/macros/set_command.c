@@ -417,6 +417,9 @@ static macro_variable_t mouseKeys(parser_context_t* ctx, set_command_action_t ac
         DEFINE_FLOAT_LIMITS(0.001f, 1000.0f);
         ASSIGN_FLOAT(state->axisSkew);
     }
+    else if (ConsumeToken(ctx, "forceFullFirstTick")) {
+        ASSIGN_BOOL(Cfg.MouseKeysForceFullFirstTick);
+    }
     else {
         Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
     }

@@ -24,6 +24,7 @@
     typedef struct {
         bool isScroll;
         bool wasMoveAction;
+        bool forceFullFirstTick;
         serialized_mouse_action_t upState;
         serialized_mouse_action_t downState;
         serialized_mouse_action_t leftState;
