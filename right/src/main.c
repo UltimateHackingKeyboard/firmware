@@ -120,11 +120,12 @@ void CopyRightKeystateMatrix(void)
     if (stateChanged) {
         if (CurrentPowerMode > PowerMode_LastAwake) {
             Trace_Printf("y1.%d", CurrentPowerMode);
-            PowerMode_WakeHost();
             Trace_Printc("y5");
             EventVector_Set(EventVector_StateMatrix);
             UpdateUsbReports();
             Trace_Printc("y6");
+            PowerMode_WakeHost();
+            Trace_Printc("y7");
             Trace_Print(LogTarget_ErrorBuffer, "Wake hunt");
         }
         EventVector_Set(EventVector_StateMatrix);
