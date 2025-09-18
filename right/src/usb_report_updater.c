@@ -636,7 +636,7 @@ static void updateActionStates() {
                     // as it is pressed
                     actionCache[slotId][keyId].modifierLayerMask = 0;
 
-                    if (CurrentPowerMode > PowerMode_LastAwake && CurrentPowerMode <= PowerMode_LightSleep) {
+                    if (CurrentPowerMode > PowerMode_LastAwake) {
                         Trace_Printf("y1.%d", CurrentPowerMode);
                         PowerMode_WakeHost();
                         Trace_Printc("y4");
@@ -776,7 +776,7 @@ static void sendActiveReports(bool resending) {
 
             KEY_TIMING(KeyTiming_RecordReport(ActiveUsbBasicKeyboardReport));
 
-            if (RuntimeMacroRecordingBlind || (CurrentPowerMode != PowerMode_Awake)) {
+            if (RuntimeMacroRecordingBlind || (CurrentPowerMode > PowerMode_LastAwake)) {
                 //just switch reports without sending the report
                 SwitchActiveUsbBasicKeyboardReport();
             } else {
@@ -815,7 +815,7 @@ static void sendActiveReports(bool resending) {
 #endif
 
     bool usbMouseButtonsChanged = false;
-    if ((UsbMouseCheckReportReady(resending, &usbMouseButtonsChanged) == kStatus_USB_Success) && (CurrentPowerMode == PowerMode_Awake)) {
+    if ((UsbMouseCheckReportReady(resending, &usbMouseButtonsChanged) == kStatus_USB_Success) && (CurrentPowerMode <= PowerMode_LastAwake)) {
         // Macros_Printf("sm\n");
 
         UsbMouseSendActiveReport();
