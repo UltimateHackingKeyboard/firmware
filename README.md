@@ -37,11 +37,12 @@ this firmware uses the [west workspace](https://docs.zephyrproject.org/latest/de
 create a wrapping directory, which will store the firmware git repository, and the *west workspace*
 with the third-party SW components.
 
-Here is the initial checkout:
+Here is the initial checkout and installation of required Python packages:
 ```bash
 mkdir uhk-workspace
 cd uhk-workspace
 git clone --recurse-submodules git@github.com:UltimateHackingKeyboard/firmware.git
+pip3 install -r firmware/scripts/requirements.txt
 west init -l firmware --mf west_nrfsdk.yml
 west config build.cmake-args -- "-Wno-dev"
 cd firmware
