@@ -122,6 +122,7 @@ void CopyRightKeystateMatrix(void)
             Trace_Printf("y1.%d", CurrentPowerMode);
             PowerMode_WakeHost();
             Trace_Printc("y5");
+            EventVector_Set(EventVector_StateMatrix);
             UpdateUsbReports();
             Trace_Printc("y6");
             Trace_Print(LogTarget_ErrorBuffer, "Wake hunt");

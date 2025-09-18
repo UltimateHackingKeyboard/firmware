@@ -42,6 +42,7 @@
 #include <string.h>
 #include "led_manager.h"
 #include "power_mode.h"
+#include "trace.h"
 
 #ifdef __ZEPHYR__
 #include "debug_eventloop_timing.h"
@@ -50,7 +51,6 @@
 #include "keyboard/input_interceptor.h"
 #include "keyboard/charger.h"
 #include "logger.h"
-#include "trace.h"
 #include "bt_pair.h"
 #else
 #include "stubs.h"
@@ -520,9 +520,11 @@ static void commitKeyState(key_state_t *keyState, bool active)
     }
 
     if (PostponerCore_EventsShouldBeQueued()) {
+        Trace_Printc("x1.1");
         PostponerCore_TrackKeyEvent(keyState, active, 255);
     } else {
         KEY_TIMING(KeyTiming_RecordKeystroke(keyState, active, Timer_GetCurrentTime(), Timer_GetCurrentTime()));
+        Trace_Printc("x1.2");
         keyState->current = active;
     }
     Macros_WakeBecauseOfKeystateChange();
@@ -632,11 +634,13 @@ static void updateActionStates() {
             if (KeyState_NonZero(keyState)) {
                 Trace_Printc("w2");
                 if (KeyState_ActivatedNow(keyState)) {
+                    Trace_Printc("w21");
                     // cache action so that key's meaning remains the same as long
                     // as it is pressed
                     actionCache[slotId][keyId].modifierLayerMask = 0;
 
                     if (CurrentPowerMode > PowerMode_LastAwake && CurrentPowerMode <= PowerMode_LightSleep) {
+                        Trace_Printc("w22");
                         Trace_Printf("y1.%d", CurrentPowerMode);
                         PowerMode_WakeHost();
                         Trace_Printc("y4");
