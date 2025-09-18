@@ -119,6 +119,9 @@ void CopyRightKeystateMatrix(void)
     }
     if (stateChanged) {
         EventVector_Set(EventVector_StateMatrix);
+        if (CurrentPowerMode > PowerMode_LastAwake) {
+            PowerMode_WakeHost();
+        }
     }
 }
 
