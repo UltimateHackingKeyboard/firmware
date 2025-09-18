@@ -362,9 +362,10 @@ function performAction() {
             fi
             ;;
         release)
-            nrfutil toolchain-manager launch --shell --ncs-version $NCS_VERSION << END
-                scripts/make-release.mjs --allowSha
-END
+            scripts/make-release.mjs --allowSha
+            # nrfutil toolchain-manager launch --shell --ncs-version $NCS_VERSION << END
+            #     scripts/make-release.mjs --allowSha
+# END
             ;;
         shell)
             nrfutil toolchain-manager launch --shell --ncs-version $NCS_VERSION

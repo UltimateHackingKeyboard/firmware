@@ -1,2 +1,5 @@
 GitPython
 jsonschema
+pyelftools
+cbor2
+intelhex

@@ -170,7 +170,7 @@ to have a hardcoded `toolchainPath` variable. (Don't push this change into the r
 To build a full firmware tarball:
 
 1. Run `npm install` in `scripts`.
-2. Enter nrf shell `nrfutil toolchain-manager launch --shell --ncs-version v2.8.0`
+2. Enter nrf shell `nrfutil toolchain-manager launch --shell --ncs-version v2.8.0`. Alternatively, if you prefer to use the system shell, make sure you have zephyr sdk installed: https://docs.zephyrproject.org/latest/develop/toolchains/zephyr_sdk.html
 2. Run `scripts/make-release.mjs`. (Or `scripts/make-release.mjs --allowSha` for development purposes.)
 3. Now, the created tarball `scripts/uhk-firmware-VERSION.tar.gz` can be flashed with UHK Agent.
 
