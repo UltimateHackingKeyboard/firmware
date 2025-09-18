@@ -10,6 +10,12 @@ set(UHK_VERSIONS_FILE ${CMAKE_CURRENT_LIST_DIR}/versions.c)
 set(UHK_CHECKSUMS_FILE ${CMAKE_CURRENT_LIST_DIR}/fw_checksums.c)
 
 set(UHK_USE_CHECKSUMS FALSE CACHE BOOL "Use calculated FW checksums in the built image")
+if(SYSBUILD)
+    # with sysbuild, the project isn't built directly, and the cmake arguments have to be fetched another way
+    # https://github.com/zephyrproject-rtos/zephyr/issues/88303
+    # https://github.com/zephyrproject-rtos/zephyr/issues/82678#issuecomment-2875599147
+    zephyr_get(UHK_USE_CHECKSUMS SYSBUILD)
+endif()
 if(UHK_USE_CHECKSUMS)
     message("UHK: Using fw_checksums.c")
     add_library(uhk_checksums OBJECT ${UHK_CHECKSUMS_FILE})
