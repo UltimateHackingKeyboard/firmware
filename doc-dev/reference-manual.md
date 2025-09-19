@@ -152,6 +152,7 @@ COMMAND = set mouseKeys.{move|scroll}.initialAcceleration <px/s, ~1700/20 (INT)>
 COMMAND = set mouseKeys.{move|scroll}.deceleratedSpeed <px/s, ~200/10 (INT)>
 COMMAND = set mouseKeys.{move|scroll}.acceleratedSpeed <px/s, ~1600/50 (INT)>
 COMMAND = set mouseKeys.{move|scroll}.axisSkew <multiplier, 0.5-2.0 (FLOAT)>
+COMMAND = set mouseKeys.scroll.forceFullFirstTick BOOL
 COMMAND = set i2cBaudRate <baud rate, default 100000(INT)>
 COMMAND = set diagonalSpeedCompensation BOOL
 COMMAND = set chordingDelay <time in ms (INT)>
@@ -578,6 +579,7 @@ Internally, values are saved in one of the following types, and types are automa
   - `deceleratedSpeed` - speed as affected by deceleration modifier.
   - `acceleratedSpeed` - speed as affected by acceleration modifier.
   - `axisSkew` - axis skew multiplies the horizontal axis and divides the vertical axis. The default value is 1.0, a reasonable value is between 0.5-2.0 Useful for very niche use cases.
+  - `forceFullFirstTick` - when enabled, mousekey scroll press will aways begin by a full scroll unit push. Disable this when using high-resolution scrolling. Enable this if your environment does not support high-resolution scrolling.
 - `set module.MODULEID.{baseSpeed|speed|xceleration}` modifies speed characteristics of right side modules.
 
     Simply speaking, `xceleration` increases sensitivity at high speeds, while decreasing sensitivity at low speeds. Furthermore, `speed` controls contribution of the acceleration formula. The `baseSpeed` can be used to offset the low-speed-sensitivity-decrease effect by making some raw input be applied directlo to the output.
