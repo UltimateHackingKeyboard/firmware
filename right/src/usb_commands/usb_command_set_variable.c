@@ -14,6 +14,7 @@
 
 #ifdef __ZEPHYR__
 #include "proxy_log_backend.h"
+#include "state_sync.h"
 #endif
 
 void UsbCommand_SetVariable(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer)
@@ -53,6 +54,16 @@ void UsbCommand_SetVariable(const uint8_t *GenericHidOutBuffer, uint8_t *Generic
         case UsbVariable_ShellEnabled:
             #ifdef __ZEPHYR__
                 ProxyLog_SetAttached(GetUsbRxBufferUint8(2));
+            #endif
+            break;
+        case UsbVariable_FirmwareVersionCheckEnabled:
+            #ifdef __ZEPHYR__
+                StateSync_VersionCheckEnabled = GetUsbRxBufferUint8(2);
+
+                if (StateSync_VersionCheckEnabled) {
+                    EventScheduler_Reschedule(Timer_GetCurrentTime() + 1000, EventSchedulerEvent_CheckFwChecksums, "Reset left right link");
+                }
+
             #endif
             break;
         default:

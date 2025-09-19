@@ -147,6 +147,7 @@
     extern bool StateSync_BlinkBatteryIcon;
     extern bool StateSync_BlinkLeftBatteryPercentage;
     extern bool StateSync_BlinkRightBatteryPercentage;
+    extern bool StateSync_VersionCheckEnabled;
 
 // Functions:
 
