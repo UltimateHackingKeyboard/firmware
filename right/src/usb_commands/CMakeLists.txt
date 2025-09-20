@@ -1,6 +1,7 @@
 target_sources(${PROJECT_NAME} PRIVATE
     usb_command_apply_config.c
     $<$<BOOL:${IS_NRF_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/usb_command_draw_oled.c>
+    $<$<BOOL:${IS_NRF_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/usb_command_read_oled.c>
     $<$<BOOL:${IS_NRF_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/usb_command_erase_ble_settings.c>
     usb_command_exec_macro_command.c
     $<$<BOOL:${IS_NRF_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/usb_command_exec_shell_command.c>

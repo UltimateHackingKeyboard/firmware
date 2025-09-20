@@ -67,3 +67,24 @@ void Framebuffer_DrawVLine(widget_t* canvas, framebuffer_t* buffer, uint8_t x, u
     }
 }
 
+uint8_t Framebuffer_GetPixelValue(framebuffer_t* buffer, uint16_t x, uint16_t y)
+{
+    if (x >= DISPLAY_WIDTH || y >= DISPLAY_HEIGHT) {
+        return 0;
+    }
+    
+    pixel_t* pixel = Framebuffer_GetPixel(buffer, x, y);
+    uint8_t value;
+    
+    if (x % 2 == 1) {
+        // Odd x coordinate - upper nibble
+        value = (pixel->value >> 4) & 0x0F;
+    } else {
+        // Even x coordinate - lower nibble
+        value = pixel->value & 0x0F;
+    }
+    
+    // Scale from 4-bit to 8-bit range
+    return (value << 4) | value;
+}
+

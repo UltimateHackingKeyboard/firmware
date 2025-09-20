@@ -48,6 +48,8 @@
     void Framebuffer_DrawHLine(widget_t* canvas, framebuffer_t* buffer, uint8_t x1, uint8_t x2, uint8_t y);
     void Framebuffer_DrawVLine(widget_t* canvas, framebuffer_t* buffer, uint8_t x, uint8_t y1, uint8_t y2);
 
+    uint8_t Framebuffer_GetPixelValue(framebuffer_t* buffer, uint16_t x, uint16_t y);
+
     // todo: currently we use 8 bit colors; refactor it to 4 bits.
     static inline void Framebuffer_SetPixel(framebuffer_t* buffer, uint16_t x, uint16_t y, uint8_t value)
     {
