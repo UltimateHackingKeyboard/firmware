@@ -37,11 +37,12 @@ this firmware uses the [west workspace](https://docs.zephyrproject.org/latest/de
 create a wrapping directory, which will store the firmware git repository, and the *west workspace*
 with the third-party SW components.
 
-Here is the initial checkout:
+Here is the initial checkout and installation of required Python packages:
 ```bash
 mkdir uhk-workspace
 cd uhk-workspace
 git clone --recurse-submodules git@github.com:UltimateHackingKeyboard/firmware.git
+pip3 install -r firmware/scripts/requirements.txt
 west init -l firmware --mf west_nrfsdk.yml
 west config build.cmake-args -- "-Wno-dev"
 cd firmware
@@ -170,7 +171,7 @@ to have a hardcoded `toolchainPath` variable. (Don't push this change into the r
 To build a full firmware tarball:
 
 1. Run `npm install` in `scripts`.
-2. Enter nrf shell `nrfutil toolchain-manager launch --shell --ncs-version v2.8.0`
+2. Enter nrf shell `nrfutil toolchain-manager launch --shell --ncs-version v2.8.0`. Alternatively, if you prefer to use the system shell, make sure you have zephyr sdk installed: https://docs.zephyrproject.org/latest/develop/toolchains/zephyr_sdk.html
 2. Run `scripts/make-release.mjs`. (Or `scripts/make-release.mjs --allowSha` for development purposes.)
 3. Now, the created tarball `scripts/uhk-firmware-VERSION.tar.gz` can be flashed with UHK Agent.
 
