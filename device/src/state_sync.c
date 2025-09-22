@@ -66,6 +66,8 @@ bool StateSync_BlinkBatteryIcon = false;
 bool StateSync_BlinkLeftBatteryPercentage = false;
 bool StateSync_BlinkRightBatteryPercentage = false;
 
+bool StateSync_VersionCheckEnabled = true;
+
 static void wake(k_tid_t tid) {
     if (tid != 0) {
         k_wakeup(tid);
@@ -278,6 +280,10 @@ void receiveBacklight(sync_command_backlight_t *buffer) {
 
 void StateSync_CheckFirmwareVersions() {
     #if DEVICE_IS_UHK80_RIGHT
+
+    if (!StateSync_VersionCheckEnabled) {
+        return;
+    }
 
     uint8_t driverId = UhkModuleSlaveDriver_SlotIdToDriverId(SlotId_LeftKeyboardHalf);
     uhk_module_state_t *moduleState = &UhkModuleStates[driverId];
