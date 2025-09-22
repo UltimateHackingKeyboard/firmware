@@ -202,7 +202,11 @@ static uint8_t consumeKeymapId(parser_context_t* ctx)
 {
     if (ConsumeToken(ctx, "last")) {
         return lastKeymapIdx;
-    } else {
+    }
+    if (ConsumeToken(ctx, "current")) {
+        return CurrentKeymapIndex;
+    }
+    else {
         uint8_t len = TokLen(ctx->at, ctx->end);
         uint8_t idx = FindKeymapByAbbreviation(len, ctx->at);
         if (idx == 0xFF) {
@@ -288,6 +292,10 @@ uint8_t Macros_ConsumeLayerId(parser_context_t* ctx)
 
 static uint8_t consumeLayerKeymapId(parser_context_t* ctx)
 {
+    // Assume: `toggleLayer last`
+    // Now since we allow toggling layers of other keymaps, we need to figure out the keymap.
+    // This function does that from the layer id, which is parsed twice.
+    // This is the first run and doesn't consume the token.
     parser_context_t bakCtx = *ctx;
     if (ConsumeToken(&bakCtx, "last")) {
         return lastLayerKeymapIdx;
@@ -1394,6 +1402,21 @@ static macro_result_t processOverlayLayerCommand(parser_context_t* ctx)
     return MacroResult_Finished;
 }
 
+static macro_result_t processReplaceKeymapCommand(parser_context_t* ctx)
+{
+    uint8_t srcKeymapId = consumeKeymapId(ctx);
+
+    if (Macros_ParserError) {
+        return MacroResult_Finished;
+    }
+    if (Macros_DryRun) {
+        return MacroResult_Finished;
+    }
+
+    ReplaceKeymap(srcKeymapId);
+    return MacroResult_Finished;
+}
+
 static bool processIfKeyPendingAtCommand(parser_context_t* ctx, bool negate)
 {
     uint16_t idx = Macros_ConsumeInt(ctx);
@@ -2348,6 +2371,9 @@ static macro_result_t processCommand(parser_context_t* ctx)
             }
             else if (ConsumeToken(ctx, "replaceLayer")) {
                 return processReplaceLayerCommand(ctx);
+            }
+            else if (ConsumeToken(ctx, "replaceKeymap")) {
+                return processReplaceKeymapCommand(ctx);
             }
             else if (ConsumeToken(ctx, "resolveNextKeyEq")) {
                 Macros_ReportError("Command deprecated. Please, replace resolveNextKeyEq by ifShortcut or ifGesture, or complain at github that you actually need this.", NULL, NULL);
