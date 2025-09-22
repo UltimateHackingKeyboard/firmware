@@ -19,6 +19,7 @@
 
 #ifdef __ZEPHYR__
 #include "usb_commands/usb_command_draw_oled.h"
+#include "usb_commands/usb_command_read_oled.h"
 #include "usb_commands/usb_command_pairing.h"
 #include "usb_commands/usb_command_erase_ble_settings.h"
 #include "bt_conn.h"
@@ -91,6 +92,9 @@ void UsbProtocolHandler(uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffe
             break;
         case UsbCommandId_DrawOled:
             UsbCommand_DrawOled(GenericHidOutBuffer, GenericHidInBuffer);
+            break;
+        case UsbCommandId_ReadOled:
+            UsbCommand_ReadOled(GenericHidOutBuffer, GenericHidInBuffer);
             break;
         case UsbCommandId_GetPairingData:
             UsbCommand_GetPairingData(GenericHidOutBuffer, GenericHidInBuffer);
