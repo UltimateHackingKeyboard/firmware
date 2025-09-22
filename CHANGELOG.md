@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [15.2.0] - 2025-09-22
+
+Device Protocol: 4.**17.0** | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 12.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.**9.0**
+
+- Fix BLE pairing with Linux.
+- Always switch to newly paired BLE connections.
+- Suppress S, F and J, L scancodes for some time after sleep modeunlock.
+- Log suspicious conditions and crashes only when the `devMode` macro variable is enabled. `SMARTMACROS:MINOR`
+- Add the `replaceKeymap` command, and the `current` KEYID alias. `SMARTMACROS:MINOR`
+- Fix the `setLedTxt` dry run mode, which occasionally acted as a delay. `SMARTMACROS:PATCH`
+- Make `while` macro command yield after every iteration. `SMARTMACROS:PATCH`
+- Fix scope state reset and some control flow scenarios. `SMARTMACROS:PATCH`
+- Add a device protocol variable to disable firmware checksum check during firmware updates. `DEVICEPROTOCOL:MINOR`
+- Add command to read OLED content. `DEVICEPROTOCOL:MINOR`
+
 ## [15.1.0] - 2025-07-31
 
 Device Protocol: 4.16.1 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 12.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.**8.0**
