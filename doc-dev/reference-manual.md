@@ -88,6 +88,7 @@ COMMAND = holdLayerMax LAYERID <time in ms (INT)>
 COMMAND = holdKeymapLayer KEYMAPID LAYERID
 COMMAND = holdKeymapLayerMax KEYMAPID LAYERID <time in ms (INT)>
 COMMAND = overlayKeymap KEYMAPID
+COMMAND = replaceKeymap KEYMAPID
 COMMAND = overlayLayer <target layer (LAYERID)> <source keymap (KEYMAPID)> <source layer (LAYERID)>
 COMMAND = replaceLayer <target layer (LAYERID)> <source keymap (KEYMAPID)> <source layer (LAYERID)>
 COMMAND = resolveNextKeyId
@@ -210,9 +211,9 @@ MODIFIER = autoRepeat
 MODIFIER = oneShot
 IFSHORTCUT_OPTIONS = noConsume | transitive | anyOrder | orGate | timeoutIn <time in ms (INT)> | cancelIn <time in ms(INT)>
 DIRECTION = {left|right|up|down}
-LAYERID = {fn|mouse|mod|base|fn2|fn3|fn4|fn5|alt|shift|super|ctrl}|last|previous
+LAYERID = {fn|mouse|mod|base|fn2|fn3|fn4|fn5|alt|shift|super|ctrl}|last|previous|current
 LAYERID_BASIC = {fn|mouse|mod|base|fn2|fn3|fn4|fn5}
-KEYMAPID = <short keymap abbreviation(IDENTIFIER)>|last
+KEYMAPID = <short keymap abbreviation(IDENTIFIER)>|last|current
 MACROID = last | <single char slot identifier(CHAR)> | <single number slot identifier(INT)>
 OPERATOR = + | - | * | / | % | < | > | <= | >= | == | != | && | ||
 VARIABLE_EXPANSION = $<variable name(IDENTIFIER)> | $<config value name> | $currentAddress | $currentTime | $thisKeyId | $queuedKeyId.<queue index (INT)> | $keyId.KEYID_ABBREV
@@ -467,6 +468,7 @@ These alterations will last only until keymap is reloaded. I.e., switching keyma
 - `replaceLayer <target layer (LAYERID)> <source keymap (KEYMAPID)> <source layer (LAYERID)>` will replace one layer with a layer from another keymap. You can use this to share layers across keymaps. For instance, add `replaceLayer mod QWR fn` to your `$onKeymapChange QTY` macro event to "permanently" replace the mod layer of your QTY keymap by the fn layer of the QWR keymap
 - `overlayLayer <target layer (LAYERID)> <source keymap (KEYMAPID)> <source layer (LAYERID)>` will take defined actions from the source layer and apply them on the target layer. Assume `ARR base` layer contains just arrows on `ijkl` keys. Now, in your QWERTY layout, call `overlayLayer base ARR base` and you get QWERTY that has arrows on `ijkl`.
 - `overlayKeymap KEYMAPID` as `overlayLayer`, but overlays all layers by corresponding layers of the provided keymap.
+- `replaceKeymap KEYMAPID` as `replaceLayer`, but replaces all layers by corresponding layers of the provided keymap. This is very similar to `switchKeymap`, but is useful for `$onKeymapChange` magic.
 
 ### Postponing mechanisms.
 

@@ -116,6 +116,15 @@ void ReplaceLayer(layer_id_t dstLayer, uint8_t srcKeymap, layer_id_t srcLayer)
     ParseKeymap(&ValidatedUserConfigBuffer, srcKeymap, AllKeymapsCount, AllMacrosCount, parseConfig);
 }
 
+void ReplaceKeymap(uint8_t srcKeymap)
+{
+    parse_config_t parseConfig = (parse_config_t) {
+        .mode = ParseKeymapMode_ReplaceKeymap,
+    };
+    ValidatedUserConfigBuffer.offset = AllKeymaps[srcKeymap].offset;
+    ParseKeymap(&ValidatedUserConfigBuffer, srcKeymap, AllKeymapsCount, AllMacrosCount, parseConfig);
+}
+
 string_segment_t GetKeymapName(uint8_t keymapId)
 {
     const char* name;
