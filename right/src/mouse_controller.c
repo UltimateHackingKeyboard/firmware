@@ -432,9 +432,15 @@ static void processAxisLocking(
 
     float xScrollMultiplier = 1.0f;
     float yScrollMultiplier = 1.0f;
+    float scrollActionMultiplier[CaretAxis_Count] = {1.0f, 1.0f};
     if (ks->currentNavigationMode == NavigationMode_Scroll) {
-        xScrollMultiplier = HorizontalScrollMultiplier();
-        yScrollMultiplier = VerticalScrollMultiplier();
+        if (Cfg.SimulateLowResScrolling) {
+            scrollActionMultiplier[CaretAxis_Horizontal] = HorizontalScrollMultiplier();
+            scrollActionMultiplier[CaretAxis_Vertical] = VerticalScrollMultiplier();
+        } else {
+            xScrollMultiplier = HorizontalScrollMultiplier();
+            yScrollMultiplier = VerticalScrollMultiplier();
+        }
     }
 
     ks->xFractionRemainder += x * speed / speedDivisor * xScrollMultiplier * caretXModeMultiplier;
@@ -502,7 +508,7 @@ static void processAxisLocking(
                 EventVector_Set(EventVector_MouseController);
             }
 
-            handleNewCaretModeAction(ks->caretAxis, sgn*currentAxisInversion, consumedAmount*currentAxisInversion, ks);
+            handleNewCaretModeAction(ks->caretAxis, sgn*currentAxisInversion, consumedAmount*currentAxisInversion*scrollActionMultiplier[axisCandidate], ks);
         }
     }
 }
@@ -565,11 +571,23 @@ static void processModuleKineticState(
                 float xIntegerPart;
                 float yIntegerPart;
 
-                ks->xFractionRemainder = modff(ks->xFractionRemainder + x * speed * HorizontalScrollMultiplier() / moduleConfiguration->scrollSpeedDivisor, &xIntegerPart);
-                ks->yFractionRemainder = modff(ks->yFractionRemainder + y * speed * VerticalScrollMultiplier() / moduleConfiguration->scrollSpeedDivisor, &yIntegerPart);
+                float xScrollMultiplier = 1.0f;
+                float yScrollMultiplier = 1.0f;
+                float xScrollActionMultiplier = 1.0f;
+                float yScrollActionMultiplier = 1.0f;
+                if (Cfg.SimulateLowResScrolling) {
+                    xScrollActionMultiplier = HorizontalScrollMultiplier();
+                    yScrollActionMultiplier = VerticalScrollMultiplier();
+                } else {
+                    xScrollMultiplier = HorizontalScrollMultiplier();
+                    yScrollMultiplier = VerticalScrollMultiplier();
+                }
 
-                MouseControllerMouseReport.wheelX += xInversion*xIntegerPart;
-                MouseControllerMouseReport.wheelY += yInversion*yIntegerPart;
+                ks->xFractionRemainder = modff(ks->xFractionRemainder + x * speed * xScrollMultiplier / moduleConfiguration->scrollSpeedDivisor, &xIntegerPart);
+                ks->yFractionRemainder = modff(ks->yFractionRemainder + y * speed * yScrollMultiplier / moduleConfiguration->scrollSpeedDivisor, &yIntegerPart);
+
+                MouseControllerMouseReport.wheelX += xInversion*xIntegerPart*xScrollActionMultiplier ;
+                MouseControllerMouseReport.wheelY += yInversion*yIntegerPart*yScrollActionMultiplier ;
             } else {
 
                 processAxisLocking((axis_locking_args_t) {

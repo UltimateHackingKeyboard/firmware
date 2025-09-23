@@ -42,6 +42,7 @@
         mouse_kinetic_state_t MouseMoveState;
         mouse_kinetic_state_t MouseScrollState;
         bool DiagonalSpeedCompensation;
+        bool SimulateLowResScrolling;
 
         // key behavior
         uint16_t KeystrokeDelay;

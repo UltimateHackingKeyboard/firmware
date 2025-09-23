@@ -968,6 +968,9 @@ static macro_variable_t root(parser_context_t* ctx, set_command_action_t action)
     else if (ConsumeToken(ctx, "diagonalSpeedCompensation")) {
         ASSIGN_BOOL(Cfg.DiagonalSpeedCompensation);
     }
+    else if (ConsumeToken(ctx, "simulateLowResScrolling")) {
+        ASSIGN_BOOL(Cfg.SimulateLowResScrolling);
+    }
     else if (ConsumeToken(ctx, "devMode")) {
         ASSIGN_BOOL(Cfg.DevMode);
         StateWormhole.devMode = Cfg.DevMode;
