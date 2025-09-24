@@ -150,3 +150,18 @@ const char* Utils_KeyAbbreviation(key_state_t* keyState)
     uint8_t keyId = Utils_KeyStateToKeyId(keyState);
     return MacroKeyIdParser_KeyIdToAbbreviation(keyId);
 }
+
+bool ShouldResendReport(bool statusOk, uint8_t* counter) {
+    static uint8_t resendCount = 0;
+    if (statusOk) {
+        resendCount = 0;
+        return false;
+    }
+
+    if (*counter < 5) {
+        (*counter)++;
+        return true;
+    } {
+        return false;
+    }
+}

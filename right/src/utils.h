@@ -41,6 +41,7 @@ if (reentrancyGuard_active) {                    \
     void Utils_PrintReport(const char* prefix, usb_basic_keyboard_report_t* report);
     key_coordinates_t Utils_KeyIdToKeyCoordinates(uint16_t keyId);
     const char* Utils_KeyAbbreviation(key_state_t* keyState);
+    bool ShouldResendReport(bool statusOk, uint8_t* counter);
 
 
 #endif /* SRC_UTILS_H_ */
