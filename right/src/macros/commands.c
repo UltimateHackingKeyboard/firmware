@@ -993,6 +993,7 @@ static macro_result_t processNoOpCommand()
 static macro_result_t processIfSecondaryCommand(parser_context_t* ctx, bool negate)
 {
     secondary_role_strategy_t strategy = Cfg.SecondaryRoles_Strategy;
+    bool originalPostponing = S->ls->as.modifierPostpone;
 
     if (ConsumeToken(ctx, "simpleStrategy")) {
         strategy = SecondaryRoleStrategy_Simple;
@@ -1039,6 +1040,7 @@ static macro_result_t processIfSecondaryCommand(parser_context_t* ctx, bool nega
 conditionPassed:
     S->ls->as.currentIfSecondaryConditionPassed = true;
     S->ls->as.currentConditionPassed = false; //otherwise following conditions would be skipped
+    S->ls->as.modifierPostpone = originalPostponing;
     return processCommand(ctx);
 }
 
@@ -1107,6 +1109,8 @@ conditionPassed:
 
 static macro_result_t processIfShortcutCommand(parser_context_t* ctx, bool negate, bool untilRelease)
 {
+    bool originalPostponing = S->ls->as.modifierPostpone;
+
     //parse optional flags
     bool consume = true;
     bool transitive = false;
@@ -1245,6 +1249,7 @@ conditionPassed:
     while(Macros_TryConsumeKeyId(ctx) != 255) { };
     S->ls->as.currentIfShortcutConditionPassed = true;
     S->ls->as.currentConditionPassed = false; //otherwise following conditions would be skipped
+    S->ls->as.modifierPostpone = originalPostponing;
     return processCommand(ctx);
 }
 
