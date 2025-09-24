@@ -8,7 +8,7 @@ This file contains (semi)formal documentation of all features of the extended en
 
 - Most values in the following text are just recommended ranges. The firmware will usually accept even values outside these ranges.
 
-### Error handling
+### Error handling, troubleshooting, crash logs
 
 Whenever a garbled command is encountered, `ERR` will light up on the display, and details are appended to the error buffer. You can retrieve it by running a `printStatus` macro command over a focused text editor.
 
@@ -16,6 +16,12 @@ Errors have the following format:
 
 ```
 {Error|Warning} at <macro name> <action index>/<line>: <message>: <failed command>
+```
+
+If you are experiencing either crashes, or suspicious problems, you can enable logging and additional consistency checks by adding following settings into your `$onInit` macro:
+
+```
+set devMode true
 ```
 
 ## Macro events
@@ -33,10 +39,6 @@ Macro events allow hooking special behaviour, such as applying a specific config
     $onJoin
     $onSplit
 
-Please note that:
-  - under Linux, scroll lock is disabled by default. As a consequence, the macro event does not trigger.
-  - under MacOS, scroll lock dims the screen but does not toggle the scroll lock state. As a consequence, the macro event does not trigger.
-
 I.e., if you want to customize the acceleration driver for your trackball module on keymap QWR, create a macro named `$onKeymapChange QWR`, with content e.g.:
 
     set module.trackball.baseSpeed 0.5
@@ -44,6 +46,10 @@ I.e., if you want to customize the acceleration driver for your trackball module
     set module.trackball.xceleration 1.0
 
 (Also note, that the above will *not* restore original settings when you leave the keymap. You will need another macro event for that.)
+
+Regarding `$onScrollLockStateChange`, please note that:
+  - under Linux, scroll lock is disabled by default. As a consequence, the macro event does not trigger.
+  - under MacOS, scroll lock dims the screen but does not toggle the scroll lock state. As a consequence, the macro event does not trigger.
 
 ## Macro commands
 
@@ -307,7 +313,12 @@ ZEPHYR_COMMAND = uhk { connections | mouseMultipliers | rollover BOOL | charger 
 ##############
 COMMAND = set macroEngine.scheduler {blocking|preemptive}
 COMMAND = set doubletapDelay <time in ms, at most 65535, alias to doubletapTimeout (INT)>
-COMMAND = set modifierLayerTriggers.{control} {left|right|both}
+COMMAND = set modifierLayerTriggers.{contrnvironment variable in the default shell, e.g.
+
+    export ARM_GCC_DIR="/usr" for Linux or WSL in ~/.bashrc
+    export ARM_GCC_DIR="/opt/homebrew" for macOS in ~/.zshrc
+
+(UHK80) nrfutil and nrf commandline tools: ol} {left|right|both}
 COMMAND = untoggleLayer
 LAYERID = control
 ###########
@@ -706,6 +717,12 @@ Internally, values are saved in one of the following types, and types are automa
 - modifier layer triggers:
     - `set modifierLayerTriggers.{shift|alt|super|ctrl} {left|right|both}` controls whether modifier layers are triggered by left or right or either of the modifiers.
 
+- `set devMode BOOL`: mostly enables extra consistency checks and logs suspicious conditions as errors. At the moment of writing this: 
+  - crash logs
+  - event loop spinning
+  - freezes (from usb callbacks when Agent is connected)
+  - cursor jumps
+
 ### Argument parsing rules:
 
 - `INT` is parsed as a 32 bit signed integer and then assigned into the target variable. However, the target variable is often only 8 or 16 bit unsigned.
@@ -774,4 +791,3 @@ Rules:
 Modifier layers are meant to allow easy overriding of modifier scancodes. If you bind an action there, it will be activated from the base layer when the corresponding modifier is pressed. E.g., allowing different scancodes for shifted keys compared to non-shifted keys. As such, they are not really layers.
 
 These layers work through an elaborate setup of positive and negative sticky layer masks.
-
