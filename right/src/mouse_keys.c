@@ -68,9 +68,14 @@ void MouseKeys_ActivateDirectionSigns(uint8_t state) {
 static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
 {
     float scrollMultiplier = 1.f;
+    float scrollActionMultiplier = 1.f;
     if (kineticState->isScroll) {
         // in practice the vertical and horizontal scroll multipliers are always the same
-        scrollMultiplier = VerticalScrollMultiplier();
+        if (Cfg.SimulateLowResScrolling) {
+            scrollActionMultiplier = VerticalScrollMultiplier();
+        } else {
+            scrollMultiplier = VerticalScrollMultiplier();
+        }
     }
     float initialSpeed = scrollMultiplier * kineticState->intMultiplier * kineticState->initialSpeed;
     float acceleration = scrollMultiplier * kineticState->intMultiplier * kineticState->acceleration;
@@ -146,7 +151,7 @@ static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
         float xSumInt;
         float xSumFrac = modff(kineticState->xSum, &xSumInt);
         kineticState->xSum = xSumFrac;
-        kineticState->xOut = xSumInt;
+        kineticState->xOut = xSumInt*scrollActionMultiplier;
 
         // Handle the first scroll tick.
         if (kineticState->isScroll && !kineticState->wasMoveAction && kineticState->xOut == 0 && horizontalMovement) {
@@ -161,7 +166,7 @@ static void processMouseKineticState(mouse_kinetic_state_t *kineticState)
         float ySumInt;
         float ySumFrac = modff(kineticState->ySum, &ySumInt);
         kineticState->ySum = ySumFrac;
-        kineticState->yOut = ySumInt;
+        kineticState->yOut = ySumInt*scrollActionMultiplier;
 
         // Handle the first scroll tick.
         if (kineticState->isScroll && !kineticState->wasMoveAction && kineticState->yOut == 0 && verticalMovement) {
