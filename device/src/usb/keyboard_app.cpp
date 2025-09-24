@@ -1,20 +1,24 @@
 #include "keyboard_app.hpp"
 extern "C" {
 #include "connections.h"
+#include "trace.h"
 #include "usb_compatibility.h"
 #include "zephyr/sys/printk.h"
-#include "trace.h"
 }
+
+keyboard_app::keyboard_app(const hid::report_protocol &rp) : app_base(this, keys_.nkro) {}
 
 keyboard_app &keyboard_app::usb_handle()
 {
-    static keyboard_app app{};
+    static constexpr const auto rd{nkro_report_desc()};
+    static keyboard_app app{hid::report_protocol(rd)};
     return app;
 }
 #if DEVICE_IS_UHK80_RIGHT
 keyboard_app &keyboard_app::ble_handle()
 {
-    static keyboard_app ble_app{};
+    static constexpr const auto ble_rd{report_desc()};
+    static keyboard_app ble_app{hid::report_protocol(ble_rd)};
     return ble_app;
 }
 #endif
@@ -123,6 +127,7 @@ void keyboard_app::set_report_state(const keys_nkro_report_base<> &data)
 
         result = send_report(&keys_.nkro);
         if (result == hid::result::not_enough_memory) {
+            assert(this != &usb_handle());
             printk("keyboard NKRO mode fails, falling back to 6KRO\n");
 
             // save key state

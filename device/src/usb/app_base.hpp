@@ -17,6 +17,12 @@ class app_base : public hid::application {
   protected:
     static constexpr std::chrono::milliseconds SEMAPHORE_RESET_TIMEOUT{100};
 
+    template <typename TReport>
+    constexpr app_base(const hid::report_protocol &rp, TReport &in_report_buffer)
+        : application(rp),
+          in_id_(in_report_buffer.ID),
+          in_buffer_(in_report_buffer.data(), sizeof(TReport))
+    {}
     template <typename T>
     static hid::report_protocol rp()
     {
@@ -26,9 +32,7 @@ class app_base : public hid::application {
     }
     template <typename T, typename TReport>
     constexpr app_base([[maybe_unused]] T *t, TReport &in_report_buffer)
-        : application(rp<T>()),
-          in_id_(in_report_buffer.ID),
-          in_buffer_(in_report_buffer.data(), sizeof(TReport))
+        : app_base(rp<T>(), in_report_buffer)
     {}
 
     void stop() override;

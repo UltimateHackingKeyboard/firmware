@@ -60,6 +60,41 @@ class keyboard_app : public app_base {
         );
         // clang-format on
     }
+    static constexpr auto nkro_report_desc()
+    {
+        using namespace hid::page;
+        using namespace hid::rdf;
+        using namespace hid::app::keyboard;
+
+        // clang-format off
+        return descriptor(
+            usage_page<generic_desktop>(),
+            usage(generic_desktop::KEYBOARD),
+            collection::application(
+                // LED report
+                leds_output_report_descriptor<LEDS_REPORT_ID>(),
+
+                // NKRO keys report with report ID
+                conditional_report_id<KEYS_NKRO_REPORT_ID>(),
+                // modifier byte can stay in position
+                report_size(1),
+                report_count(8),
+                logical_limits<1, 1>(0, 1),
+                usage_page<keyboard_keypad>(),
+                usage_limits(keyboard_keypad::KEYBOARD_LEFT_CONTROL, keyboard_keypad::KEYBOARD_RIGHT_GUI),
+                input::absolute_variable(),
+
+                // scancode bitfield
+                usage_limits(NKRO_FIRST_USAGE, NKRO_LAST_USAGE),
+                // report_size(1),
+                // logical_limits<1, 1>(0, 1),
+                report_count(NKRO_USAGE_COUNT),
+                input::absolute_variable(),
+                input::byte_padding<NKRO_USAGE_COUNT>()
+            )
+        );
+        // clang-format on
+    }
 
     enum class rollover {
         N_KEY = 0,
@@ -110,7 +145,7 @@ class keyboard_app : public app_base {
     void set_report_state(const keys_nkro_report_base<> &data);
 
   private:
-    keyboard_app() : app_base(this, keys_.nkro) {}
+    keyboard_app(const hid::report_protocol &rp);
 
     using keys_boot_report = hid::app::keyboard::keys_input_report<0>;
     using keys_6kro_report = hid::app::keyboard::keys_input_report<KEYS_6KRO_REPORT_ID>;
