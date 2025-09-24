@@ -339,11 +339,13 @@ function performAction() {
             # update following according to README
             git submodule init
             git submodule update --init --recursive
+            npm install
+            cd "$ROOT/scripts"
+            npm install
             cd "$ROOT/.."
-            west init -l "$ROOT"
+            west init -l "$ROOT" --mf west_nrfsdk.yml
             west config --local build.cmake-args -- "-Wno-dev"
-            west update
-            west patch
+            upgradeEnv
             ;;
         switchMcux)
             west config manifest.file west_mcuxsdk.yml
