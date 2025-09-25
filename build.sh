@@ -229,20 +229,32 @@ function createCentralCompileCommands() {
 
     echo creating central compile_commands.json
 
-    local existing_jsons=`ls $ROOT/device/build/*/compile_commands.json $ROOT/right/uhk60v2/compile_commands.json $ROOT/*/compile_commands.json`
+    local existing_jsons=` $ROOT/device/build/ $ROOT/right/build/ $ROOT/trackball/build $ROOT/trackpoint/build $ROOT/keycluster/build -name "compile_commands.json" 2>/dev/null`
 
-    jq -s 'add' $existing_jsons > $TEMP_COMMANDS
-
-    mv $TEMP_COMMANDS $ROOT/compile_commands.json
+    if [ "$existing_jsons" != "" ] 
+    then 
+        jq -s 'add' $existing_jsons > $TEMP_COMMANDS
+        mv $TEMP_COMMANDS $ROOT/compile_commands.json
+    fi
 }
 
 function upgradeEnv() {
     git submodule update --init --recursive
-    ROOT=`realpath .`
     cd "$ROOT/.."
     west update
     west patch
     cd "$ROOT"
+}
+
+function setFallbackArmGccEnv() {
+    if [ "$ARM_GCC_DIR" == "" ]
+    then
+        if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+            export ARM_GCC_DIR="/usr"
+        elif [[ "$OSTYPE" == "darwin"* ]]; then
+            export ARM_GCC_DIR="/opt/homebrew"
+        fi
+    fi
 }
 
 function performMcuxAction() {
@@ -343,6 +355,7 @@ function performAction() {
             cd "$ROOT/scripts"
             npm install
             cd "$ROOT/.."
+            rm -rf "$ROOT/../.west"
             west init -l "$ROOT" --mf west_nrfsdk.yml
             west config --local build.cmake-args -- "-Wno-dev"
             upgradeEnv
@@ -415,6 +428,8 @@ function run() {
         source .devices
         eval $PREBUILD
     fi
+
+    setFallbackArmGccEnv
 
     processArguments $@
 

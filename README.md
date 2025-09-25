@@ -43,6 +43,7 @@ If you're one of the brave few who wants to hack the firmware then read on.
 - (release, might work without it)
   - https://docs.zephyrproject.org/latest/develop/toolchains/zephyr_sdk.html
 - (flashing over USB) Agent built in `lib/agent` (see bellow also see `lib/agent/README.md`): 
+- (optional, used by build.sh) jq, tmux
 
 ### Quick script-aided cheatsheet
 
@@ -58,11 +59,12 @@ cd firmware
 ./build.sh setup
 ```
 
-(Optional) Build and update agent:
+(Optional) Update and build Agent (we don't update the submodule reference as often as we should):
 ```
 cd lib/agent
 git fetch origin && git checkout origin/master
 nvm use 22 && npm ci && npm run build
+cd ../..
 ```
 
 Pick UHK60 environment:
@@ -83,6 +85,12 @@ Full build and flash of UHK80:
 ./build.sh right left dongle build flashUsb
 ```
 
+Full build and flash of UHK60v2:
+
+```
+./build.sh rightv2 build flashUsb
+```
+
 Valid targets:
 - UHK80: `right`, `left`, `dongle`
 - UHK60: `rightv1`, `rightv2`, `left`, `keycluster`, `trackball`, `trackpoint`
@@ -90,16 +98,15 @@ Valid targets:
 Basic actions (see help for more):
 - `build` - full pristine build
 - `make` - incremental build
-- `flash` - flash via debug probe
+- `flash` - flash via debug probe, consider setting up `.devices` file. See `./build.sh help`.
 - `flashUsb` - flash via USB (UHK80 only)
 - `release` - build full release tarball
 
 Release:
-```
-nvm use 20; scripts/make-release.mjs --allowSha
-```
 
-If you have debug probes, you can also use `./build.sh ... flash`, in which case you probably want to configure target ids in `.devices` file. See `./build.sh help` for more info.
+```
+./build.sh release
+```
 
 ### Manual workspace setup
 
