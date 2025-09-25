@@ -11,14 +11,17 @@ extern "C" {
 #include "timer.h"
 #include "usb_report_updater.h"
 #include "user_logic.h"
+}
 #include <nrfx_power.h>
 #include <zephyr/kernel.h>
-}
+#include <zephyr/logging/log.h>
+
 #include "command_app.hpp"
 #include "controls_app.hpp"
 #include "gamepad_app.hpp"
 #include "keyboard_app.hpp"
 #include "mouse_app.hpp"
+#include "port/zephyr/tick_timer.hpp"
 #include "port/zephyr/udc_mac.hpp"
 #include "usb/df/class/hid.hpp"
 #include "usb/df/device.hpp"
@@ -35,6 +38,8 @@ extern "C" {
 #endif
 
 using namespace magic_enum::bitwise_operators;
+
+LOG_MODULE_REGISTER(hid, LOG_LEVEL_INF);
 
 uint8_t UsbSerialNumber[5];
 
@@ -139,9 +144,9 @@ struct usb_manager {
                 usb::df::microsoft::xconfig(
                     usb_xpad, usb::endpoint::address(0x85), 1, usb::endpoint::address(0x05), 255));
 
-        printk("USB config changing to %s\n", magic_enum::enum_name(conf).data() == NULL
-                                                  ? "NULL"
-                                                  : magic_enum::enum_name(conf).data());
+        LOG_INF("USB config changing to %s\n", magic_enum::enum_name(conf).data() == NULL
+                                                   ? "NULL"
+                                                   : magic_enum::enum_name(conf).data());
         if (conf == Hid_NoGamepad) {
             ms_enum_.set_config({});
             device_.set_config(base_config);
@@ -159,7 +164,38 @@ struct usb_manager {
                   : usb::power::state::L3_OFF}
     {
         device_.set_power_event_delegate([](usb::df::device &dev, usb::df::device::event ev) {
+#ifndef CONFIG_LOG_MODE_MINIMAL
+            LOG_INF("USB event: %x %s %u", (unsigned)ev,
+                magic_enum::enum_name(dev.power_state()).data(), (unsigned)dev.configured());
+#endif
+
             using event = enum usb::df::device::event;
+            using namespace std::literals;
+            static mouse_app::scroll_resolution_report report_backup{};
+            static os::zephyr::tick_timer::time_point last_reset_time{};
+
+            /* Linux hosts produce erroneous behavior when waking up (on a subset of USB ports):
+             * 1. L2 -> L0
+             * 2. USB reset
+             * 3. L0 -> L2
+             * 4. L2 -> L0
+             * 5. USB re-enumeration, this time without negotiating high-resolution scrolling
+             */
+            if ((ev & event::CONFIGURATION_CHANGE) != event::NONE) {
+                if (!dev.configured() and dev.power_state() == usb::power::state::L0_ON) {
+                    last_reset_time = os::zephyr::tick_timer::now();
+                }
+            } else if (dev.power_state() == usb::power::state::L2_SUSPEND) {
+                if (dev.configured()) {
+                    report_backup = mouse_app::usb_handle().resolution_report();
+                } else if (std::chrono::duration_cast<std::chrono::milliseconds>(
+                               os::zephyr::tick_timer::now() - last_reset_time) < 25ms) {
+                    // reset happened recently, restore the last known multiplier
+                    mouse_app::usb_handle().set_resolution_report(report_backup);
+                    LOG_INF("restored high-res scroll multiplier: %x", report_backup.resolutions);
+                }
+            }
+
             if ((ev & event::POWER_STATE_CHANGE) != event::NONE) {
                 switch (dev.power_state()) {
                 case usb::power::state::L2_SUSPEND:
@@ -192,7 +228,7 @@ extern "C" void USB_RemoteWakeup()
 {
     auto err = usb_manager::instance().device().remote_wakeup();
     if (err != usb::result::ok) {
-        printk("USB: remote wakeup request failed: %d\n", std::bit_cast<int>(err));
+        LOG_INF("remote wakeup request failed: %d\n", std::bit_cast<int>(err));
     }
 }
 

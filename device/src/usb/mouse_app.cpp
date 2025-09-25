@@ -21,10 +21,14 @@ mouse_app &mouse_app::ble_handle()
 
 void mouse_app::start(hid::protocol prot)
 {
-    // TODO start handling mouse events
     report_buffer_ = {};
-    resolution_buffer_ = {};
     receive_report(&resolution_buffer_);
+}
+
+void mouse_app::stop()
+{
+    app_base::stop();
+    set_resolution_report({});
 }
 
 void mouse_app::set_report_state(const mouse_report_base<> &data)
@@ -37,9 +41,13 @@ void mouse_app::set_report(hid::report::type type, const std::span<const uint8_t
     if (hid::report::selector(type, data.front()) != resolution_buffer_.selector()) {
         return;
     }
-    resolution_buffer_ = *reinterpret_cast<const decltype(resolution_buffer_) *>(data.data());
+    set_resolution_report(*reinterpret_cast<const decltype(resolution_buffer_) *>(data.data()));
     receive_report(&resolution_buffer_);
+}
 
+void mouse_app::set_resolution_report(const scroll_resolution_report &report)
+{
+    resolution_buffer_ = report;
     // When running on dongle, update the scroll multiplier state
     if (DEVICE_IS_UHK_DONGLE) {
         DongleScrollMultipliers.vertical = resolution_buffer_.vertical_scroll_multiplier();

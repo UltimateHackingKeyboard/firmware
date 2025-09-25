@@ -89,22 +89,25 @@ class mouse_app : public app_base {
 
     void set_report_state(const mouse_report_base<> &data);
 
+    using scroll_resolution_report =
+        hid::app::mouse::resolution_multiplier_report<MAX_SCROLL_RESOLUTION,
+            report_ids::FEATURE_MOUSE>;
+
   private:
     mouse_app() : app_base(this, report_buffer_) {}
 
     void start(hid::protocol prot) override;
+    void stop() override;
     void set_report(hid::report::type type, const std::span<const uint8_t> &data) override;
     void get_report(hid::report::selector select, const std::span<uint8_t> &buffer) override;
 
     using mouse_report = mouse_report_base<report_ids::IN_MOUSE>;
     C2USB_USB_TRANSFER_ALIGN(mouse_report, report_buffer_) {};
-    using scroll_resolution_report =
-        hid::app::mouse::resolution_multiplier_report<MAX_SCROLL_RESOLUTION,
-            report_ids::FEATURE_MOUSE>;
     C2USB_USB_TRANSFER_ALIGN(scroll_resolution_report, resolution_buffer_) {};
 
   public:
     const auto &resolution_report() const { return resolution_buffer_; }
+    void set_resolution_report(const scroll_resolution_report &report);
 };
 
 using mouse_buffer = mouse_app::mouse_report_base<>;
