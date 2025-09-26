@@ -1,0 +1,101 @@
+From 2669cb1f5240bfa5a92bf47bed97e3ce00a26a2c Mon Sep 17 00:00:00 2001
+From: Torsten Rasmussen <Torsten.Rasmussen@nordicsemi.no>
+Date: Fri, 26 Sep 2025 12:55:07 +0200
+Subject: [PATCH] sysbuild: support application CMakePresets.json files with
+ sysbuild
+
+This commit provides a CMakePresets.json which includes the sample's
+CMakePresets.json file.
+
+`west build` is extended to set `APP_DIR` in environment when sysbuild
+is used. This allows sysbuild's CMakePresets.json to include the
+sample's presets file.
+
+Signed-off-by: Torsten Rasmussen <Torsten.Rasmussen@nordicsemi.no>
+---
+ scripts/west_commands/build.py   |  5 ++++-
+ scripts/west_commands/zcmake.py  |  5 +++--
+ share/sysbuild/CMakePresets.json | 11 +++++++++++
+ 3 files changed, 18 insertions(+), 3 deletions(-)
+ create mode 100644 share/sysbuild/CMakePresets.json
+
+diff --git a/scripts/west_commands/build.py b/scripts/west_commands/build.py
+index 260945483cf..5710da41c95 100644
+--- a/scripts/west_commands/build.py
++++ b/scripts/west_commands/build.py
+@@ -578,6 +578,7 @@ class Build(Forceable):
+         if not self.run_cmake:
+             return
+ 
++        cmake_env = None
+         _banner('generating a build system')
+ 
+         if board is not None and origin != 'CMakeCache.txt':
+@@ -604,6 +605,8 @@ class Build(Forceable):
+         if self.args.sysbuild or (config_sysbuild and not self.args.no_sysbuild):
+             cmake_opts.extend(['-S{}'.format(SYSBUILD_PROJ_DIR),
+                                '-DAPP_DIR:PATH={}'.format(self.source_dir)])
++            cmake_env = os.environ.copy()
++            cmake_env["APP_DIR"] = str(self.source_dir)
+         else:
+             # self.args.no_sysbuild == True or config sysbuild False
+             cmake_opts.extend(['-S{}'.format(self.source_dir)])
+@@ -620,7 +623,7 @@ class Build(Forceable):
+                                                      DEFAULT_CMAKE_GENERATOR))]
+         if cmake_opts:
+             final_cmake_args.extend(cmake_opts)
+-        run_cmake(final_cmake_args, dry_run=self.args.dry_run)
++        run_cmake(final_cmake_args, dry_run=self.args.dry_run, env=cmake_env)
+ 
+     def _run_pristine(self):
+         _banner('making build dir {} pristine'.format(self.build_dir))
+diff --git a/scripts/west_commands/zcmake.py b/scripts/west_commands/zcmake.py
+index aad616aadd4..25e3d6407b5 100644
+--- a/scripts/west_commands/zcmake.py
++++ b/scripts/west_commands/zcmake.py
+@@ -26,7 +26,7 @@ DEFAULT_CMAKE_GENERATOR = 'Ninja'
+ '''Name of the default CMake generator.'''
+ 
+ 
+-def run_cmake(args, cwd=None, capture_output=False, dry_run=False):
++def run_cmake(args, cwd=None, capture_output=False, dry_run=False, env=None):
+     '''Run cmake to (re)generate a build system, a script, etc.
+ 
+     :param args: arguments to pass to CMake
+@@ -36,6 +36,7 @@ def run_cmake(args, cwd=None, capture_output=False, dry_run=False):
+                            dry_run is also True)
+     :param dry_run: don't actually execute the command, just print what
+                     would have been run
++    :param env: used adjusted environment when running CMake
+ 
+     If capture_output is set to True, returns the output of the command instead
+     of displaying it on stdout/stderr..'''
+@@ -60,7 +61,7 @@ def run_cmake(args, cwd=None, capture_output=False, dry_run=False):
+         return None
+ 
+     log.dbg('Running CMake:', quote_sh_list(cmd), level=log.VERBOSE_NORMAL)
+-    p = subprocess.Popen(cmd, **kwargs)
++    p = subprocess.Popen(cmd, env=env, **kwargs)
+     out, _ = p.communicate()
+     if p.returncode == 0:
+         if out:
+diff --git a/share/sysbuild/CMakePresets.json b/share/sysbuild/CMakePresets.json
+new file mode 100644
+index 00000000000..437f3b68a94
+--- /dev/null
++++ b/share/sysbuild/CMakePresets.json
+@@ -0,0 +1,11 @@
++{
++  "version": 7,
++  "cmakeMinimumRequired": {
++    "major": 3,
++    "minor": 27,
++    "patch": 0
++  },
++  "include": [
++    "$penv{APP_DIR}/CMakePresets.json"
++  ]
++}
+-- 
+2.43.0
+
