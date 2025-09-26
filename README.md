@@ -27,13 +27,15 @@ If you're one of the brave few who wants to hack the firmware then read on.
     - `scripts`
       - `make-release.mjs` - script to build a full release tarball
 
-### Prerequisities (for both UHK60 and UHK80):
+### Dependencies (for both UHK60 and UHK80):
 
 - git
 - pip3
-- nodejs (and optionally nvm for version management, then (e.g.) `nvm install 20; nvm use 20`)
-- west and some other python packages (`pip3 install -r scripts/requirements.txt`)
-- (UHK60 and modules) gcc-arm-none-eabi toolchain:
+- ninja
+- cmake
+- nodejs (and optionally nvm for version management, then (e.g.) `nvm install 22; nvm use 22`)
+- west and some other python packages (`pip3 install -r scripts/requirements.txt` after you have cloned the repository)
+- (UHK60 and modules) gcc-arm-none-eabi (sometimes also called arm-none-eabi-gcc) toolchain:
   after it is installed, set an environment variable in the default shell, e.g.
   - `export ARM_GCC_DIR="/usr"` for Linux or WSL in ~/.bashrc
   - `export ARM_GCC_DIR="/opt/homebrew"` for macOS in ~/.zshrc
@@ -99,7 +101,7 @@ Basic actions (see help for more):
 - `build` - full pristine build
 - `make` - incremental build
 - `flash` - flash via debug probe, consider setting up `.devices` file. See `./build.sh help`.
-- `flashUsb` - flash via USB (UHK80 only)
+- `flashUsb` - flash via USB
 - `release` - build full release tarball
 
 Release:
@@ -109,6 +111,8 @@ Release:
 ```
 
 ### Manual workspace setup
+
+_Note: this and following sections are redundant If you have successfully completed above build.sh procedure._
 
 Unlike most common workflows, where the git repository is the top level directory,
 this firmware uses the [west workspace](https://docs.zephyrproject.org/latest/develop/west/workspaces.html#t2-star-topology-application-is-the-manifest-repository) structure. This means that you should first
