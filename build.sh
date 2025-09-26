@@ -136,16 +136,19 @@ function dealiasDeviceZephyr() {
             DEVICE="uhk-80-left"
             USBDEVICEARG="--vid=0x37a8 --pid=7"
             DEVICEARG="--dev-id $DEVICEID_UHK80_LEFT"
+            BUILD_DIR="device/build/$DEVICE"
             ;;
         uhk-80-right|right)
             DEVICE="uhk-80-right"
             USBDEVICEARG="--vid=0x37a8 --pid=9"
             DEVICEARG="--dev-id $DEVICEID_UHK80_RIGHT"
+            BUILD_DIR="device/build/$DEVICE"
             ;;
         uhk-dongle|dongle)
             DEVICE="uhk-dongle"
             USBDEVICEARG="--vid=0x37a8 --pid=1"
             DEVICEARG="--dev-id $DEVICEID_UHK_DONGLE"
+            BUILD_DIR="device/build/$DEVICE"
             ;;
         *)
             echo "$DEVICE is not a valid device name!"
