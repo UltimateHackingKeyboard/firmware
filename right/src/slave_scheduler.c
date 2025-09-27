@@ -98,7 +98,7 @@ static void slaveSchedulerCallback(I2C_Type *base, i2c_master_handle_t *handle, 
     bool isTransferScheduled = false;
     I2cSlaveScheduler_Counter++;
 
-    Trace_Printc("<i1");
+    Trace_Printc("<");
 
     do {
         uhk_slave_t *currentSlave = Slaves + currentSlaveId;
