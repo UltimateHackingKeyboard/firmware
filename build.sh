@@ -93,7 +93,7 @@ function processArguments() {
                     echo "addrline for $ADDR:"
                     printf "    "
                     # addr2line -e device/build/$device/zephyr/zephyr.elf $ADDR
-                    arm-none-eabi-addr2line -e device/build/$device/zephyr/zephyr.elf $ADDR
+                    arm-none-eabi-addr2line -e device/build/$device/device/zephyr/zephyr.elf $ADDR
                 done
                 exit 0
                 ;;
