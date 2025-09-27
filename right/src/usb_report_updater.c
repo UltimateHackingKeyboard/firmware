@@ -785,7 +785,7 @@ static void sendActiveReports(bool resending) {
             usbReportsChangedByAction = true;
             usbReportsChangedByAnything = true;
             lastBasicReportTime = Timer_GetCurrentTime();
-            UsbReportUpdater_LastActivityTime = Timer_GetCurrentTime();
+            UsbReportUpdater_LastActivityTime = resending ? UsbReportUpdater_LastActivityTime : Timer_GetCurrentTime();
         }
     }
 
@@ -794,21 +794,21 @@ static void sendActiveReports(bool resending) {
         UsbCompatibility_SendConsumerReport(ActiveUsbMediaKeyboardReport, ActiveUsbSystemKeyboardReport);
         SwitchActiveUsbMediaKeyboardReport();
         SwitchActiveUsbSystemKeyboardReport();
-        UsbReportUpdater_LastActivityTime = Timer_GetCurrentTime();
+        UsbReportUpdater_LastActivityTime = resending ? UsbReportUpdater_LastActivityTime : Timer_GetCurrentTime();
         usbReportsChangedByAction = true;
         usbReportsChangedByAnything = true;
     }
 #else
     if ((UsbMediaKeyboardCheckReportReady(resending) == kStatus_USB_Success) && (CurrentPowerMode == PowerMode_Awake)) {
         UsbMediaKeyboardSendActiveReport();
-        UsbReportUpdater_LastActivityTime = Timer_GetCurrentTime();
+        UsbReportUpdater_LastActivityTime = resending ? UsbReportUpdater_LastActivityTime : Timer_GetCurrentTime();
         usbReportsChangedByAction = true;
         usbReportsChangedByAnything = true;
     }
 
     if ((UsbSystemKeyboardCheckReportReady(resending) == kStatus_USB_Success) && (CurrentPowerMode == PowerMode_Awake)) {
         UsbSystemKeyboardSendActiveReport();
-        UsbReportUpdater_LastActivityTime = Timer_GetCurrentTime();
+        UsbReportUpdater_LastActivityTime = resending ? UsbReportUpdater_LastActivityTime : Timer_GetCurrentTime();
         usbReportsChangedByAction = true;
         usbReportsChangedByAnything = true;
     }
@@ -819,7 +819,7 @@ static void sendActiveReports(bool resending) {
         // Macros_Printf("sm\n");
 
         UsbMouseSendActiveReport();
-        UsbReportUpdater_LastActivityTime = Timer_GetCurrentTime();
+        UsbReportUpdater_LastActivityTime = resending ? UsbReportUpdater_LastActivityTime : Timer_GetCurrentTime();
         usbReportsChangedByAction |= usbMouseButtonsChanged;
         usbReportsChangedByAnything = true;
     }
