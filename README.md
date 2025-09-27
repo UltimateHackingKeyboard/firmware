@@ -65,7 +65,7 @@ cd firmware
 ```
 cd lib/agent
 git fetch origin && git checkout origin/master
-nvm use 22 && npm ci && npm run build
+npm ci && npm run build
 cd ../..
 ```
 
