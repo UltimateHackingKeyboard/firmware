@@ -1,3 +1,4 @@
+#include "settings.h"
 #include <zephyr/bluetooth/addr.h>
 #include <zephyr/settings/settings.h>
 #include <zephyr/storage/flash_map.h>
@@ -15,6 +16,7 @@
 bool RightAddressIsSet = false;
 
 uint16_t Settings_MaxVoltage = 0;
+uart_debug_mode_t Settings_UartDebugMode = UartDebugMode_I2CMode;
 
 static void setRightAddressIsSet(bool isSet) {
     if (RightAddressIsSet != isSet) {
@@ -58,6 +60,16 @@ static int other(const char *name, size_t len, settings_read_cb read_cb, void *c
     return 0;
 }
 
+static int uartDebug(const char *name, size_t len, settings_read_cb read_cb, void *cb_arg) {
+    if (strcmp(name, "mode") == 0) {
+#if DEVICE_IS_UHK80_RIGHT
+        read_cb(cb_arg, &Settings_UartDebugMode, sizeof(Settings_UartDebugMode));
+#endif
+    }
+    return 0;
+}
+
+
 struct settings_handler settingsHandler = {
     .name = "uhk/addr",
     .h_set = peerAddressSet,
@@ -68,11 +80,17 @@ struct settings_handler otherHandler = {
     .h_set = other,
 };
 
+struct settings_handler uartDebugHandler = {
+    .name = "uhk/uartDebug",
+    .h_set = uartDebug,
+};
+
 void InitSettings(void) {
     DongleLeds_Update();
     settings_subsys_init();
     settings_register(&settingsHandler);
     settings_register(&otherHandler);
+    settings_register(&uartDebugHandler);
     settings_load();
 }
 
