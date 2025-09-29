@@ -6,6 +6,7 @@
 #include "bt_manager.h"
 #include "config_parser/config_globals.h"
 #include "ledmap.h"
+#include "pin_wiring.h"
 #include "round_trip_test.h"
 #include "shared/attributes.h"
 #include "zephyr/kernel.h"
@@ -165,7 +166,6 @@ void mainRuntime(void) {
     }
 
     if (!DEVICE_IS_UHK_DONGLE) {
-        InitZephyrI2c();
         InitSpi();
 
         InitLeds();
@@ -224,9 +224,25 @@ void mainRuntime(void) {
         k_sleep(K_MSEC(5*1000));
     }
 
+
     // Uart has to be enabled only after we have given Agent a chance to reenumarate into bootloader after a crash
     if (!DEVICE_IS_UHK_DONGLE) {
-        InitUart();
+
+    LogS("A2");
+    k_sleep(K_MSEC(1000));
+
+        InitPinWiring();
+
+    LogS("A3");
+    k_sleep(K_MSEC(1000));
+
+
+        // InitUart();
+
+        // InitZephyrI2c();
+        InitShell();
+    LogS("A4");
+    k_sleep(K_MSEC(1000));
     }
 
     // Uart has to be enabled only after we have given Agent a chance to reenumarate into bootloader after a crash
@@ -243,8 +259,6 @@ void mainRuntime(void) {
     Messenger_Init();
 
     StateSync_Init();
-
-    InitShell();
 
     RoundTripTest_Init();
 

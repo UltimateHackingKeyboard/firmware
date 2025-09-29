@@ -16,7 +16,7 @@
                 "BOARD_ROOT": "${sourceParentDir}/",
                 "mcuboot_OVERLAY_CONFIG": "${sourceDir}/sysbuild/mcuboot.conf",
                 "CONF_FILE": "${sourceDir}/prj_release.conf",
-                "EXTRA_CONF_FILE": "${sourceDir}/prj.conf.overlays/nrf_shared.conf;${sourceDir}/prj.conf.overlays/c2usb.conf;${sourceDir}/prj.conf.overlays/uhk-80.conf;${sourceDir}/prj.conf.overlays/ble_nus.conf;${sourceDir}/prj.conf.overlays/ble_nus_client.conf;${sourceDir}/prj.conf.overlays/ble_hid.conf"
+                "EXTRA_CONF_FILE": "${sourceDir}/prj.conf.overlays/nrf_shared.conf;${sourceDir}/prj.conf.overlays/c2usb.conf;${sourceDir}/prj.conf.overlays/uhk-80.conf;${sourceDir}/prj.conf.overlays/ble_nus.conf;${sourceDir}/prj.conf.overlays/ble_nus_client.conf;${sourceDir}/prj.conf.overlays/ble_hid.conf;prj.conf.overlays/uhk-80-right.conf"
             }
         },
         {
@@ -30,7 +30,7 @@
                 "BOARD_ROOT": "${sourceParentDir}/",
                 "mcuboot_OVERLAY_CONFIG": "${sourceDir}/sysbuild/mcuboot.conf",
                 "CONF_FILE": "${sourceDir}/prj.conf",
-                "EXTRA_CONF_FILE": "${sourceDir}/prj.conf.overlays/nrf_shared.conf;${sourceDir}/prj.conf.overlays/c2usb.conf;${sourceDir}/prj.conf.overlays/uhk-80.conf;${sourceDir}/prj.conf.overlays/ble_nus.conf;${sourceDir}/prj.conf.overlays/ble_nus_client.conf;${sourceDir}/prj.conf.overlays/ble_hid.conf"
+                "EXTRA_CONF_FILE": "${sourceDir}/prj.conf.overlays/nrf_shared.conf;${sourceDir}/prj.conf.overlays/c2usb.conf;${sourceDir}/prj.conf.overlays/uhk-80.conf;${sourceDir}/prj.conf.overlays/ble_nus.conf;${sourceDir}/prj.conf.overlays/ble_nus_client.conf;${sourceDir}/prj.conf.overlays/ble_hid.conf,prj.conf.overlays/uhk-80-right.conf"
             }
         },
         {

@@ -20,8 +20,13 @@
 #include "mouse_keys.h"
 #include "config_manager.h"
 #include <zephyr/shell/shell_backend.h>
+#include <zephyr/shell/shell_uart.h>
+#include <zephyr/shell/shell.h>
 #include "connections.h"
 #include "logger_priority.h"
+#include "pin_wiring.h"
+#include "device.h"
+#include "logger.h"
 
 shell_t Shell = {
     .keyLog = 0,
@@ -280,8 +285,38 @@ static int cmd_uhk_logPriority(const struct shell *shell, size_t argc, char *arg
     return 0;
 }
 
+static int startShell(void)
+{
+    const struct shell *sh = NULL;
+
+    sh = shell_backend_uart_get_ptr();
+
+    if (!sh) {
+        LogS("Shell backend not found\n");
+        return -ENODEV;
+    }
+
+    /* Initialize and start shell */
+
+    int ret = shell_start(sh);
+    if (ret < 0) {
+        LogS("Shell start failed: %d\n", ret);
+        return ret;
+    }
+
+    return 0;
+}
+
 void InitShell(void)
 {
+    if (DEVICE_IS_UHK80_RIGHT) {
+        if (PinWiringConfig->device_uart_swd == NULL) {
+            return;
+        } else {
+            startShell();
+        }
+    }
+
     SHELL_STATIC_SUBCMD_SET_CREATE(uhk_cmds,
         SHELL_CMD_ARG(keylog, NULL, "get/set key logging", cmd_uhk_keylog, 1, 1),
 #if !DEVICE_IS_UHK_DONGLE
@@ -314,3 +349,4 @@ void InitShell(void)
 
     SHELL_CMD_REGISTER(uhk, &uhk_cmds, "UHK commands", NULL);
 }
+

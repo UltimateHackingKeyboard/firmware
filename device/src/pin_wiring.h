@@ -1,0 +1,48 @@
+#ifndef __PIN_WIRING_H__
+#define __PIN_WIRING_H__
+
+// Includes:
+
+    #include <stdbool.h>
+    #include <stdint.h>
+    #include "device.h"
+    #include "connections.h"
+    #include "messenger.h"
+    #include <zephyr/drivers/pinctrl.h>
+
+// Macros:
+
+
+// Typedefs:
+
+    enum pin_wiring_t {
+        PinWiring_Uhk80_I2cModules,
+        PinWiring_Uhk80_Testing,
+    };
+
+    typedef struct {
+        const char* name;
+        const struct device* device;
+        struct pinctrl_dev_config* pinctrl;
+    } ATTR_PACKED pin_wiring_dev_t;
+
+    typedef struct {
+        const struct pinctrl_state* pins_uart0;
+        const struct pinctrl_state* pins_uart1;
+        const struct pinctrl_state* pins_i2c;
+        const pin_wiring_dev_t* device_uart_swd;
+        const pin_wiring_dev_t* device_uart_bridge;
+        const pin_wiring_dev_t* device_uart_module;
+        const pin_wiring_dev_t* device_i2c_module;
+    } ATTR_PACKED pin_wiring_config_t;
+
+
+// Variables:
+
+    extern const pin_wiring_config_t* PinWiringConfig;
+
+// Functions:
+
+    void InitPinWiring(void);
+
+#endif
