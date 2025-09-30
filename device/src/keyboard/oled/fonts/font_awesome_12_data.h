@@ -19,4 +19,8 @@ GLYPH_DATA(14, 15, BatteryLow, 240, 13, 9, 2, 0)
 GLYPH_DATA(15, 16, BatteryExclamationVertical, 115, 5, 10, 2, 0)
 GLYPH_DATA(16, 17, BoltSmall, 115, 7, 11, 1, -1)
 GLYPH_DATA(17, 18, Percent, 115, 6, 9, 1, 0)
+GLYPH_DATA(18, 19, Circle1, 192, 12, 13, 0,-2)
+GLYPH_DATA(19, 20, Circle2, 192, 13, 13, 0,-2)
+GLYPH_DATA(20, 21, Video, 216, 14, 9, 0, 0)
+GLYPH_DATA(21, 22, CasetteTape, 216, 14, 11, 0, -1)
 
