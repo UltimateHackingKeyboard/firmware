@@ -160,13 +160,16 @@ bool ShouldResendReport(bool statusOk, uint8_t* counter) {
         return false;
     }
 
+    // keep this low, since the actual delay this causes with a full queue is
+    // queueLength * maxDelay
+    const uint16_t maxDelay = 128; //ms
     const uint8_t granularity = 16; //ms
     uint8_t minimizedTime = Timer_GetCurrentTime() / granularity;
 
     if (*counter == 0) {
         *counter = minimizedTime;
         return true;
-    } else if ((uint8_t)(minimizedTime - *counter) < (512 / granularity)) {
+    } else if ((uint8_t)(minimizedTime - *counter) < (maxDelay / granularity)) {
         return true;
     } else {
         *counter = 0;
