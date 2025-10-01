@@ -177,25 +177,25 @@ static bool anySfjlKeyActive() {
 
 static void checkSleepMode() {
     ATTR_UNUSED bool someKeyActive = false;
-    for (uint8_t slotId = 0; slotId <= SlotId_RightKeyboardHalf; slotId++) {
-        bool matches = true;
+    bool matches = true;
+    for (uint8_t slotId = 0; slotId <= SlotId_LeftKeyboardHalf; slotId++) {
         for (uint8_t keyId = 0; keyId < MAX_KEY_COUNT_PER_MODULE; keyId++) {
             someKeyActive |= KeyStates[slotId][keyId].hardwareSwitchState;
             if (KeyStates[slotId][keyId].hardwareSwitchState != keyIsSfjl(keyId, slotId)) {
                 matches = false;
             }
         }
-        if (matches) {
-            PowerMode_ActivateMode(PowerMode_Awake, false, true, "uhk60 sfjl keys pressed");
-            LedManager_FullUpdate();
-            // Wait for the user to release the keys so that they don't get activated immediately again.
-            uint32_t sleepStartTime = Timer_GetCurrentTime();
-            while (Timer_GetCurrentTime() - sleepStartTime < 3000 && anySfjlKeyActive()) {
-                CopyRightKeystateMatrix();
-                __WFI();
-            }
-            return;
+    }
+    if (matches) {
+        PowerMode_ActivateMode(PowerMode_Awake, false, true, "uhk60 sfjl keys pressed");
+        LedManager_FullUpdate();
+        // Wait for the user to release the keys so that they don't get activated immediately again.
+        uint32_t sleepStartTime = Timer_GetCurrentTime();
+        while (Timer_GetCurrentTime() - sleepStartTime < 3000 && anySfjlKeyActive()) {
+            CopyRightKeystateMatrix();
+            __WFI();
         }
+        return;
     }
     if (someKeyActive) {
         blinkSfjl();

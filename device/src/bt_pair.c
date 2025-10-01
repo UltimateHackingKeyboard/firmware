@@ -194,6 +194,7 @@ static void deleteBond(const struct bt_bond_info *info) {
     // If the device was connected, release the connection object
     if (conn) {
         bt_conn_disconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
+        Trace_Printc("bu10");
         bt_conn_unref(conn);
     }
 }

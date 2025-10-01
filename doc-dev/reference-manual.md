@@ -313,12 +313,7 @@ ZEPHYR_COMMAND = uhk { connections | mouseMultipliers | rollover BOOL | charger 
 ##############
 COMMAND = set macroEngine.scheduler {blocking|preemptive}
 COMMAND = set doubletapDelay <time in ms, at most 65535, alias to doubletapTimeout (INT)>
-COMMAND = set modifierLayerTriggers.{contrnvironment variable in the default shell, e.g.
-
-    export ARM_GCC_DIR="/usr" for Linux or WSL in ~/.bashrc
-    export ARM_GCC_DIR="/opt/homebrew" for macOS in ~/.zshrc
-
-(UHK80) nrfutil and nrf commandline tools: ol} {left|right|both}
+COMMAND = set modifierLayerTriggers.{control} {left|right|both}
 COMMAND = untoggleLayer
 LAYERID = control
 ###########

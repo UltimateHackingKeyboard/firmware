@@ -308,6 +308,10 @@ secondary_role_result_t SecondaryRoles_ResolveState(key_state_t* keyState, secon
         resolutionCallerIsMacroEngine = isMacroResolution;
         resolutionState = startResolution(keyState, strategy);
         resolutionState = resolveCurrentKey(strategy);
+        bool resolvedNow = resolutionState != SecondaryRoleState_DontKnowYet;
+        if (resolvedNow) {
+            PostponerExtended_UnblockMouse();
+        }
         return (secondary_role_result_t){
             .state = resolutionState,
             .activatedNow = resolutionState != SecondaryRoleState_DontKnowYet
@@ -317,12 +321,13 @@ secondary_role_result_t SecondaryRoles_ResolveState(key_state_t* keyState, secon
         if (keyState == resolutionKey) {
             secondary_role_state_t oldState = resolutionState;
             resolutionState = resolveCurrentKey(strategy);
-            if (oldState != resolutionState) {
+            bool resolvedNow = oldState != resolutionState;
+            if (resolvedNow) {
                 PostponerExtended_UnblockMouse();
             }
             return (secondary_role_result_t){
                 .state = resolutionState,
-                .activatedNow = oldState != resolutionState
+                .activatedNow = resolvedNow
             };
         } else {
             return (secondary_role_result_t){
