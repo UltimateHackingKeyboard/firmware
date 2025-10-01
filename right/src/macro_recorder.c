@@ -54,28 +54,40 @@ static void initHeaderSlot(uint16_t id)
     recordingHeader->length = 0;
 }
 
-static void discardHeaderSlot(uint8_t headerSlot)
+static void discardMacro(uint8_t macroIndex)
 {
-    uint16_t offsetLeft = headers[headerSlot].offset;
-    uint16_t offsetRight = headers[headerSlot].offset + headers[headerSlot].length;
-    uint16_t length = headers[headerSlot].length;
+    uint16_t offsetLeft = headers[macroIndex].offset;
+    uint16_t offsetRight = headers[macroIndex].offset + headers[macroIndex].length;
+    uint16_t length = headers[macroIndex].length;
     uint8_t *leftPtr = &reportBuffer[offsetLeft];
     uint8_t *rightPtr = &reportBuffer[offsetRight];
     memcpy(leftPtr, rightPtr, reportBufferEnd - offsetRight);
     reportBufferEnd = reportBufferEnd - length;
-    memcpy(&headers[headerSlot], &headers[headerSlot+1], (headersEnd-headerSlot) * sizeof (*recordingHeader));
+    memcpy(&headers[macroIndex], &headers[macroIndex+1], (headersEnd-macroIndex) * sizeof (*recordingHeader));
     headersEnd = headersEnd-1;
-    for (int i = headerSlot; i < headersEnd; i++) {
+    for (int i = macroIndex; i < headersEnd; i++) {
         headers[i].offset -= length;
+    }
+    
+    // Fix pointers if they were pointing to the discarded macro
+    if (recordingHeader == &headers[macroIndex]) {
+        recordingHeader = NULL; // Will be set in initHeaderSlot
+    } else if (recordingHeader > &headers[macroIndex]) {
+        recordingHeader--; // Adjust pointer for the shift
+    }
+    
+    if (playbackHeader == &headers[macroIndex]) {
+        playbackHeader = NULL; // Will be set in resolvePlaybackHeader
+    } else if (playbackHeader > &headers[macroIndex]) {
+        playbackHeader--; // Adjust pointer for the shift
     }
 }
 
-static void discardLastHeaderSlot()
+static void discardLastMacro()
 {
-    uint8_t headerSlot = headersEnd - 1;
-    uint16_t length = headers[headerSlot].length;
-    reportBufferEnd = reportBufferEnd - length;
-    headersEnd = headersEnd-1;
+    if (headersEnd > 0) {
+        discardMacro(headersEnd - 1);
+    }
 }
 
 static void resolveRecordingHeader(uint16_t id)
@@ -84,12 +96,12 @@ static void resolveRecordingHeader(uint16_t id)
     {
         if (headers[i].id == id)
         {
-            discardHeaderSlot(i);
+            discardMacro(i);
             break;
         }
     }
-    while(headersEnd == MAX_RUNTIME_MACROS || reportBufferEnd > REPORT_BUFFER_MAX_LENGTH - REPORT_BUFFER_MIN_GAP) {
-        discardHeaderSlot(0);
+    while(headersEnd == MAX_RUNTIME_MACROS) {
+        discardMacro(0);
     }
     initHeaderSlot(id);
 }
@@ -278,12 +290,24 @@ void writeReportScancodes(usb_basic_keyboard_report_t *report)
     UsbBasicKeyboard_ForeachScancode(report, &writeByte);
 }
 
+// Helper function to make space in buffer
+static bool makeSpaceIfNeeded(uint16_t expected_length)
+{
+    while (reportBufferEnd + expected_length > REPORT_BUFFER_MAX_LENGTH || 
+           recordingHeader->length + expected_length > REPORT_BUFFER_MAX_MACRO_LENGTH) {
+        if (headersEnd > 1) {
+            discardMacro(0);
+        } else {
+            recordRuntimeMacroEnd();
+            return false; // No space available, recording stopped
+        }
+    }
+    return true; // Space available
+}
+
 // Macros
 #define RETURN_IF_FULL(expected_length) \
-    if (reportBufferEnd + (expected_length) > REPORT_BUFFER_MAX_LENGTH || \
-        recordingHeader->length + (expected_length) > REPORT_BUFFER_MAX_MACRO_LENGTH) { \
-        recordRuntimeMacroEnd(); \
-        discardLastHeaderSlot(); \
+    if (!makeSpaceIfNeeded(expected_length)) { \
         return; \
     }
 
