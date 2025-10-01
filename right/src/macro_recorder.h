@@ -14,18 +14,20 @@
 
     #define MAX_RUNTIME_MACROS 32
     #define REPORT_BUFFER_MAX_LENGTH 2048
-    #define REPORT_BUFFER_MAX_MACRO_LENGTH (REPORT_BUFFER_MAX_LENGTH/4)
-    #define REPORT_BUFFER_MIN_GAP (REPORT_BUFFER_MAX_LENGTH/4)
+    #define REPORT_BUFFER_MAX_MACRO_LENGTH (REPORT_BUFFER_MAX_LENGTH/3)
+    #define REPORT_BUFFER_MIN_GAP (REPORT_BUFFER_MAX_LENGTH/3)
     #define REPORT_BUFFER_SAFETY_MARGIN 11
 
 // Typedefs:
 
-    typedef enum {
-        BasicKeyboardEmpty,
-        BasicKeyboardSimple,
-        BasicKeyboard,
-        Delay
-    } macro_report_type_t;
+
+    // New serialization format control bytes
+    #define MACRO_CTRL_SCANCODE_FLIP    0x00  // 0 + 7bits of a scancode = flip the scancode bit
+    #define MACRO_CTRL_LEFT_MODS        0xC0  // 1100 + 4 bits = left mods
+    #define MACRO_CTRL_RIGHT_MODS       0xE0  // 1110 + 4 bits = right mods
+    #define MACRO_CTRL_EMPTY            0xF0  // 1111 0000 = empty
+    #define MACRO_CTRL_DELAY            0xF1  // 1111 0001 = delay + 2 bytes uint16_t number
+    #define MACRO_CTRL_FULL_REPORT      0xF2  // 1111 0010 = full report + 1 byte mods + 1 byte count + count bytes of scancodes that are pressed
 
     typedef struct {
         uint16_t id;
