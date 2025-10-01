@@ -68,6 +68,7 @@
         UsbCommandId_EnterPairingMode         = 0x1c,
         UsbCommandId_EraseBleSettings         = 0x1d,
         UsbCommandId_ExecShellCommand         = 0x1e,
+        UsbCommandId_ReadOled                 = 0x1f,
     } usb_command_id_t;
 
     typedef enum {
@@ -80,6 +81,7 @@
         UsbVariable_LedAudioRegisters         = 0x06,
         UsbVariable_ShellEnabled              = 0x07,
         UsbVariable_ShellBuffer               = 0x08,
+        UsbVariable_FirmwareVersionCheckEnabled = 0x09,
     } usb_variable_id_t;
 
     typedef enum {

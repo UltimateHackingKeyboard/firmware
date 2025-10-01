@@ -93,7 +93,7 @@ function processArguments() {
                     echo "addrline for $ADDR:"
                     printf "    "
                     # addr2line -e device/build/$device/zephyr/zephyr.elf $ADDR
-                    arm-none-eabi-addr2line -e device/build/$device/zephyr/zephyr.elf $ADDR
+                    arm-none-eabi-addr2line -e device/build/$device/device/zephyr/zephyr.elf $ADDR
                 done
                 exit 0
                 ;;
@@ -136,16 +136,19 @@ function dealiasDeviceZephyr() {
             DEVICE="uhk-80-left"
             USBDEVICEARG="--vid=0x37a8 --pid=7"
             DEVICEARG="--dev-id $DEVICEID_UHK80_LEFT"
+            BUILD_DIR="device/build/$DEVICE"
             ;;
         uhk-80-right|right)
             DEVICE="uhk-80-right"
             USBDEVICEARG="--vid=0x37a8 --pid=9"
             DEVICEARG="--dev-id $DEVICEID_UHK80_RIGHT"
+            BUILD_DIR="device/build/$DEVICE"
             ;;
         uhk-dongle|dongle)
             DEVICE="uhk-dongle"
             USBDEVICEARG="--vid=0x37a8 --pid=1"
             DEVICEARG="--dev-id $DEVICEID_UHK_DONGLE"
+            BUILD_DIR="device/build/$DEVICE"
             ;;
         *)
             echo "$DEVICE is not a valid device name!"
@@ -229,20 +232,32 @@ function createCentralCompileCommands() {
 
     echo creating central compile_commands.json
 
-    local existing_jsons=`ls $ROOT/device/build/*/compile_commands.json $ROOT/right/uhk60v2/compile_commands.json $ROOT/*/compile_commands.json`
+    local existing_jsons=` $ROOT/device/build/ $ROOT/right/build/ $ROOT/trackball/build $ROOT/trackpoint/build $ROOT/keycluster/build -name "compile_commands.json" 2>/dev/null`
 
-    jq -s 'add' $existing_jsons > $TEMP_COMMANDS
-
-    mv $TEMP_COMMANDS $ROOT/compile_commands.json
+    if [ "$existing_jsons" != "" ] 
+    then 
+        jq -s 'add' $existing_jsons > $TEMP_COMMANDS
+        mv $TEMP_COMMANDS $ROOT/compile_commands.json
+    fi
 }
 
 function upgradeEnv() {
     git submodule update --init --recursive
-    ROOT=`realpath .`
     cd "$ROOT/.."
     west update
     west patch
     cd "$ROOT"
+}
+
+function setFallbackArmGccEnv() {
+    if [ "$ARM_GCC_DIR" == "" ]
+    then
+        if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+            export ARM_GCC_DIR="/usr"
+        elif [[ "$OSTYPE" == "darwin"* ]]; then
+            export ARM_GCC_DIR="/opt/homebrew"
+        fi
+    fi
 }
 
 function performMcuxAction() {
@@ -332,18 +347,20 @@ function performAction() {
                 sudo curl https://files.nordicsemi.com/artifactory/swtools/external/nrfutil/executables/x86_64-unknown-linux-gnu/nrfutil -o /usr/local/bin/nrfutil
                 sudo chmod +x /usr/local/bin/nrfutil
             fi
-            pip3 install west
             pip3 install -r scripts/requirements.txt
             nrfutil install toolchain-manager
             nrfutil toolchain-manager install --ncs-version $NCS_VERSION
             # update following according to README
             git submodule init
             git submodule update --init --recursive
+            npm install
+            cd "$ROOT/scripts"
+            npm install
             cd "$ROOT/.."
-            west init -l "$ROOT"
+            rm -rf "$ROOT/../.west"
+            west init -l "$ROOT" --mf west_nrfsdk.yml
             west config --local build.cmake-args -- "-Wno-dev"
-            west update
-            west patch
+            upgradeEnv
             ;;
         switchMcux)
             west config manifest.file west_mcuxsdk.yml
@@ -362,9 +379,10 @@ function performAction() {
             fi
             ;;
         release)
-            nrfutil toolchain-manager launch --shell --ncs-version $NCS_VERSION << END
-                scripts/make-release.mjs --allowSha
-END
+            scripts/make-release.mjs --allowSha
+            # nrfutil toolchain-manager launch --shell --ncs-version $NCS_VERSION << END
+            #     scripts/make-release.mjs --allowSha
+# END
             ;;
         shell)
             nrfutil toolchain-manager launch --shell --ncs-version $NCS_VERSION
@@ -412,6 +430,8 @@ function run() {
         source .devices
         eval $PREBUILD
     fi
+
+    setFallbackArmGccEnv
 
     processArguments $@
 

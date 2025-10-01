@@ -8,7 +8,7 @@ This file contains (semi)formal documentation of all features of the extended en
 
 - Most values in the following text are just recommended ranges. The firmware will usually accept even values outside these ranges.
 
-### Error handling
+### Error handling, troubleshooting, crash logs
 
 Whenever a garbled command is encountered, `ERR` will light up on the display, and details are appended to the error buffer. You can retrieve it by running a `printStatus` macro command over a focused text editor.
 
@@ -16,6 +16,12 @@ Errors have the following format:
 
 ```
 {Error|Warning} at <macro name> <action index>/<line>: <message>: <failed command>
+```
+
+If you are experiencing either crashes, or suspicious problems, you can enable logging and additional consistency checks by adding following settings into your `$onInit` macro:
+
+```
+set devMode true
 ```
 
 ## Macro events
@@ -33,10 +39,6 @@ Macro events allow hooking special behaviour, such as applying a specific config
     $onJoin
     $onSplit
 
-Please note that:
-  - under Linux, scroll lock is disabled by default. As a consequence, the macro event does not trigger.
-  - under MacOS, scroll lock dims the screen but does not toggle the scroll lock state. As a consequence, the macro event does not trigger.
-
 I.e., if you want to customize the acceleration driver for your trackball module on keymap QWR, create a macro named `$onKeymapChange QWR`, with content e.g.:
 
     set module.trackball.baseSpeed 0.5
@@ -44,6 +46,10 @@ I.e., if you want to customize the acceleration driver for your trackball module
     set module.trackball.xceleration 1.0
 
 (Also note, that the above will *not* restore original settings when you leave the keymap. You will need another macro event for that.)
+
+Regarding `$onScrollLockStateChange`, please note that:
+  - under Linux, scroll lock is disabled by default. As a consequence, the macro event does not trigger.
+  - under MacOS, scroll lock dims the screen but does not toggle the scroll lock state. As a consequence, the macro event does not trigger.
 
 ## Macro commands
 
@@ -88,6 +94,7 @@ COMMAND = holdLayerMax LAYERID <time in ms (INT)>
 COMMAND = holdKeymapLayer KEYMAPID LAYERID
 COMMAND = holdKeymapLayerMax KEYMAPID LAYERID <time in ms (INT)>
 COMMAND = overlayKeymap KEYMAPID
+COMMAND = replaceKeymap KEYMAPID
 COMMAND = overlayLayer <target layer (LAYERID)> <source keymap (KEYMAPID)> <source layer (LAYERID)>
 COMMAND = replaceLayer <target layer (LAYERID)> <source keymap (KEYMAPID)> <source layer (LAYERID)>
 COMMAND = resolveNextKeyId
@@ -152,6 +159,7 @@ COMMAND = set mouseKeys.{move|scroll}.initialAcceleration <px/s, ~1700/20 (INT)>
 COMMAND = set mouseKeys.{move|scroll}.deceleratedSpeed <px/s, ~200/10 (INT)>
 COMMAND = set mouseKeys.{move|scroll}.acceleratedSpeed <px/s, ~1600/50 (INT)>
 COMMAND = set mouseKeys.{move|scroll}.axisSkew <multiplier, 0.5-2.0 (FLOAT)>
+COMMAND = set simulateLowResScrolling BOOL
 COMMAND = set i2cBaudRate <baud rate, default 100000(INT)>
 COMMAND = set diagonalSpeedCompensation BOOL
 COMMAND = set chordingDelay <time in ms (INT)>
@@ -211,9 +219,9 @@ MODIFIER = oneShot
 TEMPLATE = $macroArg.<macro argument index (INT)>
 IFSHORTCUT_OPTIONS = noConsume | transitive | anyOrder | orGate | timeoutIn <time in ms (INT)> | cancelIn <time in ms(INT)>
 DIRECTION = {left|right|up|down}
-LAYERID = {fn|mouse|mod|base|fn2|fn3|fn4|fn5|alt|shift|super|ctrl}|last|previous
+LAYERID = {fn|mouse|mod|base|fn2|fn3|fn4|fn5|alt|shift|super|ctrl}|last|previous|current
 LAYERID_BASIC = {fn|mouse|mod|base|fn2|fn3|fn4|fn5}
-KEYMAPID = <short keymap abbreviation(IDENTIFIER)>|last
+KEYMAPID = <short keymap abbreviation(IDENTIFIER)>|last|current
 MACROID = last | <single char slot identifier(CHAR)> | <single number slot identifier(INT)>
 OPERATOR = + | - | * | / | % | < | > | <= | >= | == | != | && | ||
 VARIABLE_EXPANSION = $<variable name(IDENTIFIER)> | $<config value name> | $currentAddress | $currentTime | $thisKeyId | $queuedKeyId.<queue index (INT)> | $keyId.KEYID_ABBREV
@@ -476,6 +484,7 @@ These alterations will last only until keymap is reloaded. I.e., switching keyma
 - `replaceLayer <target layer (LAYERID)> <source keymap (KEYMAPID)> <source layer (LAYERID)>` will replace one layer with a layer from another keymap. You can use this to share layers across keymaps. For instance, add `replaceLayer mod QWR fn` to your `$onKeymapChange QTY` macro event to "permanently" replace the mod layer of your QTY keymap by the fn layer of the QWR keymap
 - `overlayLayer <target layer (LAYERID)> <source keymap (KEYMAPID)> <source layer (LAYERID)>` will take defined actions from the source layer and apply them on the target layer. Assume `ARR base` layer contains just arrows on `ijkl` keys. Now, in your QWERTY layout, call `overlayLayer base ARR base` and you get QWERTY that has arrows on `ijkl`.
 - `overlayKeymap KEYMAPID` as `overlayLayer`, but overlays all layers by corresponding layers of the provided keymap.
+- `replaceKeymap KEYMAPID` as `replaceLayer`, but replaces all layers by corresponding layers of the provided keymap. This is very similar to `switchKeymap`, but is useful for `$onKeymapChange` magic.
 
 ### Postponing mechanisms.
 
@@ -581,6 +590,7 @@ Internally, values are saved in one of the following types, and types are automa
 - `set keystrokeDelay <time in ms, at most 65535>` allows slowing down keyboard output. This is handy for lousily written RDP clients and other software which just scans keys once a while and processes them in wrong order if multiple keys have been pressed inbetween. In more detail, this setting adds a delay whenever a basic usb report is sent. During this delay, key matrix is still scanned and keys are debounced, but instead of activating, the keys are added into a queue to be replayed later. Recommended value is 10 if you have issues with RDP missing modifier keys, 0 otherwise.
 - `set autoRepeatDelay <time in ms, at most 65535>` and `set autoRepeatRate <time in ms, at most 65535>` allows you to set the initial delay (default: 500 ms) and the repeat delay (default: 50 ms) when using `autoRepeat`. When you run the command `autoRepeat <command>`, the `<command>` is first run without delay. Then, it will waits `autoRepeatDelay` amount of time before running `<command>` again. Then and thereafter, it will waits `autoRepeatRate` amount of time before repeating `<command>` again. This is consistent with typical OS keyrepeat feature.
 - `set oneShotTimeout <time in ms, at most 65535>` sets the timeout for `oneShot` modifier. Zero means infinite.
+- `set simulateLowResScrolling BOOL` will make scroll events be sent in occasional large dents, producing results similar to low resolution scrolling. This does not change HID descriptors to low res scrolling.
 - `set mouseKeys.{move|scroll}.{...} INT` please refer to Agent for more details.
   - `initialSpeed` - the speed that is active when the key is pressed.
   - `initialAcceleration,baseSpeed` - when the mouse key is held, speed increases until it reaches baseSpeed.
@@ -711,6 +721,12 @@ Internally, values are saved in one of the following types, and types are automa
 - modifier layer triggers:
     - `set modifierLayerTriggers.{shift|alt|super|ctrl} {left|right|both}` controls whether modifier layers are triggered by left or right or either of the modifiers.
 
+- `set devMode BOOL`: mostly enables extra consistency checks and logs suspicious conditions as errors. At the moment of writing this: 
+  - crash logs
+  - event loop spinning
+  - freezes (from usb callbacks when Agent is connected)
+  - cursor jumps
+
 ### Argument parsing rules:
 
 - `INT` is parsed as a 32 bit signed integer and then assigned into the target variable. However, the target variable is often only 8 or 16 bit unsigned.
@@ -779,4 +795,3 @@ Rules:
 Modifier layers are meant to allow easy overriding of modifier scancodes. If you bind an action there, it will be activated from the base layer when the corresponding modifier is pressed. E.g., allowing different scancodes for shifted keys compared to non-shifted keys. As such, they are not really layers.
 
 These layers work through an elaborate setup of positive and negative sticky layer masks.
-

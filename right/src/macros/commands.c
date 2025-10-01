@@ -202,7 +202,11 @@ static uint8_t consumeKeymapId(parser_context_t* ctx)
 {
     if (ConsumeToken(ctx, "last")) {
         return lastKeymapIdx;
-    } else {
+    }
+    if (ConsumeToken(ctx, "current")) {
+        return CurrentKeymapIndex;
+    }
+    else {
         uint8_t len = TokLen(ctx->at, ctx->end);
         uint8_t idx = FindKeymapByAbbreviation(len, ctx->at);
         if (idx == 0xFF) {
@@ -288,7 +292,10 @@ uint8_t Macros_ConsumeLayerId(parser_context_t* ctx)
 
 static uint8_t consumeLayerKeymapId(parser_context_t* ctx)
 {
-    //We are parsing here the layer token, so we don't want to actually consume it
+    // Assume: `toggleLayer last`
+    // Now since we allow toggling layers of other keymaps, we need to figure out the keymap.
+    // This function does that from the layer id, which is parsed twice.
+    // This is the first run and doesn't consume the token.
     CTX_COPY(bakCtx, *ctx);
     if (ConsumeToken(&bakCtx, "last")) {
         return lastLayerKeymapIdx;
@@ -678,7 +685,7 @@ static macro_result_t processWhileCommand(parser_context_t* ctx)
         S->ls->as.whileExecuting = false;
 
         if (res & MacroResult_ActionFinishedFlag) {
-            return (res & ~MacroResult_ActionFinishedFlag) | MacroResult_InProgressFlag;
+            return (res & ~MacroResult_ActionFinishedFlag) | MacroResult_InProgressFlag | MacroResult_YieldFlag;
         } else {
             return res;
         }
@@ -986,6 +993,7 @@ static macro_result_t processNoOpCommand()
 static macro_result_t processIfSecondaryCommand(parser_context_t* ctx, bool negate)
 {
     secondary_role_strategy_t strategy = Cfg.SecondaryRoles_Strategy;
+    bool originalPostponing = S->ls->as.modifierPostpone;
 
     if (ConsumeToken(ctx, "simpleStrategy")) {
         strategy = SecondaryRoleStrategy_Simple;
@@ -1032,6 +1040,7 @@ static macro_result_t processIfSecondaryCommand(parser_context_t* ctx, bool nega
 conditionPassed:
     S->ls->as.currentIfSecondaryConditionPassed = true;
     S->ls->as.currentConditionPassed = false; //otherwise following conditions would be skipped
+    S->ls->as.modifierPostpone = originalPostponing;
     return processCommand(ctx);
 }
 
@@ -1100,6 +1109,8 @@ conditionPassed:
 
 static macro_result_t processIfShortcutCommand(parser_context_t* ctx, bool negate, bool untilRelease)
 {
+    bool originalPostponing = S->ls->as.modifierPostpone;
+
     //parse optional flags
     bool consume = true;
     bool transitive = false;
@@ -1238,6 +1249,7 @@ conditionPassed:
     while(Macros_TryConsumeKeyId(ctx) != 255) { };
     S->ls->as.currentIfShortcutConditionPassed = true;
     S->ls->as.currentConditionPassed = false; //otherwise following conditions would be skipped
+    S->ls->as.modifierPostpone = originalPostponing;
     return processCommand(ctx);
 }
 
@@ -1392,6 +1404,21 @@ static macro_result_t processOverlayLayerCommand(parser_context_t* ctx)
     }
 
     OverlayLayer(dstLayerId, srcKeymapId, srcLayerId);
+    return MacroResult_Finished;
+}
+
+static macro_result_t processReplaceKeymapCommand(parser_context_t* ctx)
+{
+    uint8_t srcKeymapId = consumeKeymapId(ctx);
+
+    if (Macros_ParserError) {
+        return MacroResult_Finished;
+    }
+    if (Macros_DryRun) {
+        return MacroResult_Finished;
+    }
+
+    ReplaceKeymap(srcKeymapId);
     return MacroResult_Finished;
 }
 
@@ -2344,6 +2371,9 @@ static macro_result_t processCommand(parser_context_t* ctx)
             }
             else if (ConsumeToken(ctx, "replaceLayer")) {
                 return processReplaceLayerCommand(ctx);
+            }
+            else if (ConsumeToken(ctx, "replaceKeymap")) {
+                return processReplaceKeymapCommand(ctx);
             }
             else if (ConsumeToken(ctx, "resolveNextKeyEq")) {
                 Macros_ReportError("Command deprecated. Please, replace resolveNextKeyEq by ifShortcut or ifGesture, or complain at github that you actually need this.", NULL, NULL);

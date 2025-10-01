@@ -9,6 +9,7 @@ on:
   pull_request:
     branches:
       - master*
+  workflow_dispatch:
 
 jobs:
   release:
@@ -88,6 +89,7 @@ jobs:
 
       - name: Run build-archiver
         uses: UltimateHackingKeyboard/build-archiver@v0.0.5
+        if: github.event.repository.fork == false
         with:
           FILE_PATTERN: "firmware/scripts/uhk-firmware-*.tar.gz"
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

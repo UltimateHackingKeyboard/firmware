@@ -66,6 +66,8 @@ bool StateSync_BlinkBatteryIcon = false;
 bool StateSync_BlinkLeftBatteryPercentage = false;
 bool StateSync_BlinkRightBatteryPercentage = false;
 
+bool StateSync_VersionCheckEnabled = true;
+
 static void wake(k_tid_t tid) {
     if (tid != 0) {
         k_wakeup(tid);
@@ -279,6 +281,10 @@ void receiveBacklight(sync_command_backlight_t *buffer) {
 void StateSync_CheckFirmwareVersions() {
     #if DEVICE_IS_UHK80_RIGHT
 
+    if (!StateSync_VersionCheckEnabled) {
+        return;
+    }
+
     uint8_t driverId = UhkModuleSlaveDriver_SlotIdToDriverId(SlotId_LeftKeyboardHalf);
     uhk_module_state_t *moduleState = &UhkModuleStates[driverId];
 
@@ -323,13 +329,14 @@ void StateSync_CheckFirmwareVersions() {
 void StateSync_CheckDongleProtocolVersion() {
     host_connection_t *hostConnection = HostConnection(ActiveHostConnectionId);
     if (hostConnection->type == HostConnectionType_Dongle) {
-        if (!VERSIONS_EQUAL(RemoteDongleProtocolVersion, dongleProtocolVersion)) {
+        if (RemoteDongleProtocolVersion.major == 0) {
+            LogU("Dongle (%s) protocol version is zero, can't check its version.\n", GetPeerStringByConnId(ActiveHostConnectionId));
+        } else if (!VERSIONS_EQUAL(RemoteDongleProtocolVersion, dongleProtocolVersion)) {
             LogUOS("Dongle (%s) and right half run different dongle protocol versions\n  (dongle: %d.%d.%d, right: %d.%d.%d)\n  Please upgrade!\n",
                     GetPeerStringByConnId(ActiveHostConnectionId),
                     RemoteDongleProtocolVersion.major, RemoteDongleProtocolVersion.minor, RemoteDongleProtocolVersion.patch,
                     dongleProtocolVersion.major, dongleProtocolVersion.minor, dongleProtocolVersion.patch
                   );
-            return;
         } else {
             LogU("Dongle (%s) and right half run the same dongle protocol version %d.%d.%d\n",
                     GetPeerStringByConnId(ActiveHostConnectionId),
@@ -337,6 +344,7 @@ void StateSync_CheckDongleProtocolVersion() {
                     dongleProtocolVersion.major, dongleProtocolVersion.minor, dongleProtocolVersion.patch
                   );
         }
+        // Cancel the scheduled check if this was called manually.
         EventScheduler_Unschedule(EventSchedulerEvent_CheckDongleProtocolVersion);
     }
 }

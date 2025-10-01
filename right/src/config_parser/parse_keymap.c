@@ -449,6 +449,10 @@ void interpretConfig(parse_config_t parseConfig, layer_id_t srcLayer, layer_id_t
                 *parseMode = ParseMode_DryRun;
             }
             break;
+        case ParseKeymapMode_ReplaceKeymap:
+            *dstLayer = srcLayer;
+            *parseMode = ParseMode_FullRun;
+            break;
         default:
             {
                 Macros_ReportErrorPrintf(NULL, "Unrecognized parse mode: %d\n", parseConfig.mode);
@@ -522,7 +526,7 @@ parser_error_t ParseKeymap(config_buffer_t *buffer, uint8_t keymapIdx, uint8_t k
     }
 
 #ifdef __ZEPHYR__
-    if (parseConfig.mode == ParseKeymapMode_FullRun || parseConfig.mode == ParseKeymapMode_OverlayKeymap) {
+    if (parseConfig.mode == ParseKeymapMode_FullRun || parseConfig.mode == ParseKeymapMode_OverlayKeymap || parseConfig.mode == ParseKeymapMode_ReplaceKeymap) {
         for (uint8_t layerId = 0; layerId < LayerId_Count; layerId++) {
             StateSync_UpdateLayer(layerId, Cfg.LayerConfig[layerId].layerIsDefined);
         }

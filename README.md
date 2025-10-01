@@ -16,28 +16,110 @@ If you want to use the latest firmware version for your UHK, then instead of goi
 
 If you're one of the brave few who wants to hack the firmware then read on.
 
-### Global prerequisities (for both UHK60 and UHK80):
+### Directory structure:
+
+- `uhk-workspace` - west workspace that manages both uhk firmware repository and third party components
+  - `zephyr, c2usb, bootloader, nrf` - third party components
+  - `firmware` - the actual uhk repository
+    - `lib/agent` - Agent as a git submodule
+      - `.nvmrc` - expected Node.js version
+      - `packages/usb` various development scripts to communicate with the UHK over USB
+    - `scripts`
+      - `make-release.mjs` - script to build a full release tarball
+
+### Dependencies (for both UHK60 and UHK80):
 
 - git
 - pip3
-- nodejs (and optionally nvm for version management, then (e.g.) `nvm install 20; nvm use 20`)
-- west (`pip3 install west`)
-- (UHK60 and modules) gcc-arm-none-eabi toolchain:
+- ninja
+- cmake
+- nodejs (and optionally nvm for version management, then (e.g.) `nvm install 22; nvm use 22`)
+- west and some other python packages (`pip3 install -r scripts/requirements.txt` after you have cloned the repository)
+- (UHK60 and modules) gcc-arm-none-eabi (sometimes also called arm-none-eabi-gcc) toolchain:
   after it is installed, set an environment variable in the default shell, e.g.
   - `export ARM_GCC_DIR="/usr"` for Linux or WSL in ~/.bashrc
   - `export ARM_GCC_DIR="/opt/homebrew"` for macOS in ~/.zshrc
 - (UHK80) nrfutil and nrf commandline tools:
   - https://www.nordicsemi.com/Products/Development-tools/nRF-Util/Download
   - https://www.nordicsemi.com/Products/Development-tools/nrf-command-line-tools/download
+- (release, might work without it)
+  - https://docs.zephyrproject.org/latest/develop/toolchains/zephyr_sdk.html
+- (flashing over USB) Agent built in `lib/agent` (see bellow also see `lib/agent/README.md`): 
+- (optional, used by build.sh) jq, tmux
 
-### Setup workspace
+### Quick script-aided cheatsheet
+
+Following uses the `build.sh` helper script. I use it with Ubuntu linux. If they don't work for you, see the manual instructions below.
+
+Initial setup:
+
+```
+mkdir uhk-workspace
+cd uhk-workspace
+git clone --recurse-submodules git@github.com:UltimateHackingKeyboard/firmware.git
+cd firmware
+./build.sh setup
+```
+
+(Optional) Update and build Agent (we don't update the submodule reference as often as we should):
+```
+cd lib/agent
+git fetch origin && git checkout origin/master
+npm ci && npm run build
+cd ../..
+```
+
+Pick UHK60 environment:
+
+```
+./build.sh switchMcux 
+```
+
+Or UHK80 environment:
+
+```
+./build.sh switchZephyr
+```
+
+Full build and flash of UHK80:
+
+```
+./build.sh right left dongle build flashUsb
+```
+
+Full build and flash of UHK60v2:
+
+```
+./build.sh rightv2 build flashUsb
+```
+
+Valid targets:
+- UHK80: `right`, `left`, `dongle`
+- UHK60: `rightv1`, `rightv2`, `left`, `keycluster`, `trackball`, `trackpoint`
+
+Basic actions (see help for more):
+- `build` - full pristine build
+- `make` - incremental build
+- `flash` - flash via debug probe, consider setting up `.devices` file. See `./build.sh help`.
+- `flashUsb` - flash via USB
+- `release` - build full release tarball
+
+Release:
+
+```
+./build.sh release
+```
+
+### Manual workspace setup
+
+_Note: this and following sections are redundant If you have successfully completed above build.sh procedure._
 
 Unlike most common workflows, where the git repository is the top level directory,
 this firmware uses the [west workspace](https://docs.zephyrproject.org/latest/develop/west/workspaces.html#t2-star-topology-application-is-the-manifest-repository) structure. This means that you should first
 create a wrapping directory, which will store the firmware git repository, and the *west workspace*
 with the third-party SW components.
 
-Here is the initial checkout:
+Here is the initial checkout and installation of required Python packages:
 ```bash
 mkdir uhk-workspace
 cd uhk-workspace
@@ -62,6 +144,16 @@ west update && west patch
 This must be performed for each SDK independently, after manifest file selection.
 While the setup must only be done once, the external software components change during development,
 so this command is highly recommended to execute after checking out a new branch.
+
+
+
+### Nrf shell environment
+
+For UHK80 development, it is recommended to use Nordic's nrf shell environment:
+
+1. (Install [nRF Util](https://www.nordicsemi.com/Products/Development-tools/nRF-Util) if you haven't done yet).
+2. Install the nRF Connect Toolchain Manager with `nrfutil install toolchain-manager`
+3. Enter the Toolchain Manager shell with `nrfutil toolchain-manager launch --shell --ncs-version v2.8.0`
 
 ### Build a device firmware
 
@@ -92,6 +184,12 @@ the flashing command is as follows:
 BUILD_DIR=device/build/uhk-80-right; west flash --build-dir $BUILD_DIR
 ```
 
+### Flashing a built firmware over USB
+
+- (Install node.js and build Agent `cd lib/agent && npm ci && npm run build` or see see `lib/agent/README.md`.)
+
+- Use the `west agent` command just like `west flash`, with the `--build-dir` parameter to flash the new firmware over USB.
+
 ### Development with VS Code
 
 It is recommended to start development in the IDE once a successful build is available, as the build parameters
@@ -102,52 +200,14 @@ Install the recommended extensions or pick the one for your single device depend
 > Note that using *MCUXpresso for VS Code* extension currently overwrites the `mcux_includes.json` file,
 these modifications shall not be committed into the git repository!
 
-### UHK80 Minimal development setup
+### Build troubleshooting
 
-- Install commandline stuff from [nRF Connect SDK](https://developer.nordicsemi.com/nRF_Connect_SDK/doc/latest/nrf/installation/install_ncs.html)
-- You can use `./build.sh` script that basically just packs the following snippets, but should be more up to date:
+If you encounter any issues, let us know via a github ticket and we will try to help asap. 
 
-    - e.g. `./build.sh uhk-80-left build make flash`, which will perform the three actions below
-
-- If the `build.sh` doesn't suit you, then launch the nrfutil shell:
-    ```bash
-    nrfutil toolchain-manager launch --shell --ncs-version v2.8.0
-    ```
-- In the shell, you can build (e.g.) uhk-80-left as follows:
-
-  - full build including cmake steps, as extracted from VS Code:
-    ```bash
-    export DEVICE=uhk-80-left
-    export PWD=`pwd`
-    west build --build-dir $PWD/device/build/$DEVICE $PWD/device --pristine -- --preset $DEVICE -DNCS_TOOLCHAIN_VERSION=NONE
-    ```
-
-  - quick rebuild:
-    ```bash
-    export DEVICE=uhk-80-left
-    export PWD=`pwd`
-    west build --build-dir $PWD/device/build/$DEVICE $PWD/device
-    ```
-
-  - flash:
-    ```bash
-    export DEVICE=uhk-80-left
-    export PWD=`pwd`
-    west flash -d $PWD/device/build/$DEVICE
-    ```
-
-In case of problems, please refer to `scripts/make-release.mjs`
-
-### UHK60 Minimal development setup
-
-1. Install Node.js. You find the expected Node.js version in `lib/agent/.nvmrc` file. Use your OS package manager to install it. [Check the NodeJS site for more info.](https://nodejs.org/en/download/package-manager/ "Installing Node.js via package manager") Mac OS users can simply `brew install node` to get both. Should you need multiple Node.js versions on the same computer, use Node Version Manager for [Mac/Linux](https://github.com/creationix/nvm) or for [Windows](https://github.com/coreybutler/nvm-windows)
-
-2. Build UHK Agent. `cd lib/agent && npm ci && npm run build`.
-
-3. Still inside the Agent submodule, compile flashing util scripts. `cd packages/usb && npx tsc`.
-
-4. Use the `west agent` command just like `west flash`, with the `--build-dir` parameter
-to flash the new firmware over USB.
+Places to reference if build fails:
+- `scripts/make-release.mjs` - script that handles building the release, thus should contain correct build commands
+- `.github/workflows/ci.yml` - github actions script that builds the firmware on every push, so contains a working dev environment setup
+- `build.sh` - a linux helper script that tries to automate above steps 
 
 ### Debugging with VS Code
 
@@ -164,22 +224,18 @@ to get a full toolchain installed.
 2. The extension doesn't expand the environment variable, so you'll need to modify the `.vscode/mcuxpresso-tools.json` file,
 to have a hardcoded `toolchainPath` variable. (Don't push this change into the repository, obviously.)
 
-
 ### Releasing
+
+Release pack can be built either from system shell or from Nordic's nrf shell. As a rule of thumb, if one fails, try the other.
 
 To build a full firmware tarball:
 
 1. Run `npm install` in `scripts`.
-2. Enter nrf shell `nrfutil toolchain-manager launch --shell --ncs-version v2.8.0`
+2. Either:
+  - To build from system shell, make sure you have zephyr sdk installed: https://docs.zephyrproject.org/latest/develop/toolchains/zephyr_sdk.html
+  - To build from nrf shell, etner `nrfutil toolchain-manager launch --shell --ncs-version v2.8.0`.
 2. Run `scripts/make-release.mjs`. (Or `scripts/make-release.mjs --allowSha` for development purposes.)
 3. Now, the created tarball `scripts/uhk-firmware-VERSION.tar.gz` can be flashed with UHK Agent.
-
-If `make-release.mjs` fails with a build error, it'll probably succeed in Nordic's shell environment.
-
-1. Install [nRF Util](https://www.nordicsemi.com/Products/Development-tools/nRF-Util).
-2. Install the nRF Connect Toolchain Manager with `nrfutil install toolchain-manager`
-3. Enter the Toolchain Manager shell with `nrfutil toolchain-manager launch --shell`
-4. Within the shell, run `make-release.mjs` according to the above.
 
 ## Contributing
 

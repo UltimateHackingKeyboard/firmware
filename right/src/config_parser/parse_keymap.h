@@ -102,6 +102,7 @@
         ParseKeymapMode_OverlayKeymap,
         ParseKeymapMode_OverlayLayer,
         ParseKeymapMode_ReplaceLayer,
+        ParseKeymapMode_ReplaceKeymap,
     } parse_keymap_mode_t;
 
     typedef enum {
