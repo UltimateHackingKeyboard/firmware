@@ -209,14 +209,17 @@ static uint16_t findCurrentCommandLine()
 
 static uint16_t findPosition(const char* arg)
 {
-    const char* startOfLine = S->ms.currentMacroAction.cmd.text + S->ls->ms.commandBegin;
-    uint16_t pos;
-    if (arg == NULL) {
-        pos = 1;
-    } else {
-        pos = arg - startOfLine + 1;
+    if (arg == NULL || S == NULL) {
+        return 1;
     }
-    return pos;
+
+    const char* startOfLine = S->ms.currentMacroAction.cmd.text + S->ls->ms.commandBegin;
+    const char* endOfLine = S->ms.currentMacroAction.cmd.text + S->ls->ms.commandEnd;
+
+    if (startOfLine < arg || arg > endOfLine) {
+        return 1;
+    }
+    return arg - startOfLine + 1;
 }
 
 static void reportErrorHeader(const char* status, uint16_t pos)

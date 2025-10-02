@@ -22,6 +22,12 @@
     #define EXPAND_REF(REF) REF.len, (const char*)ValidatedUserConfigBuffer.buffer + REF.offset
     #define CHAR_IS_VALID(C) ((C >= 32 && C < 127) || (C == '\n') || (C == '\r') || (C == '\t'))
 
+    #define PARSER_CONTEXT_STACK_SIZE 4
+
+    #define CTX_COPY(DST, SRC) \
+        parser_context_t DST = SRC; \
+        DST.nestingBound = DST.nestingLevel; \
+
 // Typedefs:
 
 
@@ -32,6 +38,8 @@
         const char* begin;
         const char* at;
         const char* end;
+        uint8_t nestingLevel;
+        uint8_t nestingBound; // This context can't be popped bellow this bound, because it is a copy.
     } parser_context_t;
 
     typedef struct {
@@ -53,6 +61,7 @@
     bool StrEqual(const char* a, const char* aEnd, const char* b, const char* bEnd);
     const char* FindChar(char c, const char* str, const char* strEnd);
     bool ConsumeToken(parser_context_t* ctx, const char *b);
+    void ConsumeAnyToken(parser_context_t* ctx);
     void ConsumeCommentsAsWhite(bool consume);
     bool ConsumeTokenByRef(parser_context_t* ctx, string_ref_t ref);
     bool ConsumeIdentifierByRef(parser_context_t* ctx, string_ref_t ref);
@@ -78,6 +87,9 @@
     secondary_role_state_t ConsumeSecondaryRoleTimeoutAction(parser_context_t* ctx);
     secondary_role_strategy_t ConsumeSecondaryRoleStrategy(parser_context_t* ctx);
     navigation_mode_t ConsumeNavigationModeId(parser_context_t* ctx);
+
+    bool PushParserContext(parser_context_t* ctx, const char* begin, const char* at, const char* end);
+    bool PopParserContext(parser_context_t* ctx);
 
 #ifdef __ZEPHYR__
     const char* Utils_DeviceIdToString(device_id_t deviceId);

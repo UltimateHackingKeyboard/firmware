@@ -122,7 +122,7 @@ COMMAND = playMacro [<slot identifier (MACROID)>]
 COMMAND = {startMouse|stopMouse} {move DIRECTION|scroll DIRECTION|accelerate|decelerate}
 COMMAND = setVar <variable name (IDENTIFIER)> <value (PARENTHESSED_EXPRESSION)>
 COMMAND = {pressKey|holdKey|tapKey|releaseKey|toggleKey} [persistent] SHORTCUT
-COMMAND = tapKeySeq [persistent] [SHORTCUT]+
+COMMAND = tapKeySeq [persistent] [ SHORTCUT | KEY_SEQUENCE ]+
 COMMAND = powerMode [toggle] { wake | lock | sleep }
 COMMAND = reboot
 COMMAND = bluetooth [toggle] { pair | advertise | noAdvertise }
@@ -216,6 +216,7 @@ MODIFIER = postponeKeys
 MODIFIER = final
 MODIFIER = autoRepeat
 MODIFIER = oneShot
+TEMPLATE = $macroArg.<macro argument index (INT)>
 IFSHORTCUT_OPTIONS = noConsume | transitive | anyOrder | orGate | timeoutIn <time in ms (INT)> | cancelIn <time in ms(INT)>
 DIRECTION = {left|right|up|down}
 LAYERID = {fn|mouse|mod|base|fn2|fn3|fn4|fn5|alt|shift|super|ctrl}|last|previous|current
@@ -244,6 +245,8 @@ SCANCODE = <en-US character (CHAR)> | SCANCODE_ABBREV
 SHORTCUT = <MODMASK-SCANCODE, e.g. LC-c (COMPOSITE_SHORTCUT)>
 SHORTCUT = <SCANCODE long abbreviation (SCANCODE)> 
 SHORTCUT = <MODMASK, e.g. LS for left shift(MODMASK)> 
+KEY_SEQUENCE = altCodeOf(<unicode character (CHAR)>) | uCodeOf(<unicode character (CHAR)>) 
+KEY_SEQUENCE = hexCodeOf(<unicode character (CHAR)>) | decCodeOf(<unicode character (CHAR)>)
 DISPLAY_LOCATION = abbrev | notification | leftStatus | rightStatus | keymap | layer | host
 COMPOSITE_SHORTCUT = MODMASK-SCANCODE
 SCANCODE_ABBREV = enter | escape | backspace | tab | space | minusAndUnderscore | equalAndPlus | openingBracketAndOpeningBrace | closingBracketAndClosingBrace
@@ -277,6 +280,7 @@ KEYID_ABBREV = leftModule.key1 | leftModule.key2 | leftModule.key3 | leftModule.
 KEYID_ABBREV = rightAlt | rightCtrl | rightFn | rightMod | rightShift | rightSpace | rightSuper | rightModule.leftButton | rightModule.rightButton | rightFn2
 KEYID_ABBREV = escape | f1 | f2 | f3 | f4 | f5 | f6 |  f7 | f8 | f9 | f10 | f11 | f12
 KEYID_ABBREV = print | delete | insert | scrollLock | pause | home | pageUp | end | pageDown | previous | upArrow | next | leftArrow | downArrow | rightArrow
+KEYID_ABBREV = template
 MACRONAME = <macro name (IDENTIFIER)>
 #####################
 # DEVELOPMENT TOOLS #
@@ -388,9 +392,14 @@ COMMAND = setEmergencyKey KEYID
   - **hold** means pressing the key, waiting until the key which activated the macro is released, and then releasing the key again. I.e., `holdKey <x>` is equivalent to `pressKey <x>; delayUntilRelease; releaseKey <x>`, while `tapKey <x>` is equivalent to `pressKey <x>; releaseKey <x>`.
   - **toggle** will check if the shortcut is pressed in this macro's reports. If it is, it will deactivate the shortcut, otherwise it will activate it. This always acts on persistent reports.
   - **persistent** argument will use global reports. These reports can be accessed from any macro and will not be cleared when the macro ends. This is useful for long-term key toggling. E.g., `toggleKey persistent LS` acts similar to caps lock.
-  - `tapKeySeq` can be used for executing custom sequences. The default action for each shortcut in the sequence is tap. Other actions can be specified using `MODMASK`. E.g.:
-    - `CS-u 1 2 3 space` - control shift U + number + space - linux shortcut for a custom unicode character.
-    - `pA- tab tab rA-` - tap alt tab twice to bring forward the second background window.
+  - `tapKeySeq` can be used for executing custom sequences. The default action for each shortcut in the sequence is tap. Other actions can be specified using `MODMASK`.
+    - `altCodeOf(<unicode character (CHAR)>)` will substitute a sequence corresponding to windows alt code, e.g., `pLA np1 np2 np9 np3 np2 np0 rLA`
+    - `uCodeOf(<unicode character (CHAR)>)` will substitute a sequence corresponding to a linux Ctrl+u sequence, e.g., `CS-u 1 f 9 2 8 space`
+    - `hexCodeOf(<unicode character (CHAR)>)` will substitute just the internal hexadecimal code of the character, e.g., `1 f 9 2 8`
+    - `decCodeOf(<unicode character (CHAR)>)` will substitute just the internal decimal code of the character, e.g., `1 2 9 3 2 0`.
+    - e.g.: `CS-u 1 2 3 space` - control shift U + number + space - linux shortcut for a custom unicode character.
+    - e.g.: `pA- tab tab rA-` - tap alt tab twice to bring forward the second background window.
+    - e.g.: `uCodeOf(€)` - will type `CS-u 2 0 a c space`, which on ubuntu produces the euro sign (€).
   - `MODMASK` meaning:
     - `{S|C|A|G}` - Shift Control Alt Gui. (Windows, Super, and Gui are the same thing.)
     - `[L|R]` - Left Right (which hand side modifier should be used) E.g. `holdKey RA-c` (right alt + c).
