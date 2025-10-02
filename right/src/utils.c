@@ -3,6 +3,7 @@
 #include "key_action.h"
 #include "key_states.h"
 #include "macros/keyid_parser.h"
+#include "timer.h"
 
 #ifdef __ZEPHYR__
 #include "device.h"
@@ -149,4 +150,29 @@ const char* Utils_KeyAbbreviation(key_state_t* keyState)
     //maps according to static enUs mapping
     uint8_t keyId = Utils_KeyStateToKeyId(keyState);
     return MacroKeyIdParser_KeyIdToAbbreviation(keyId);
+}
+
+// Try resending a report for 512ms. Give up if it doesn't succeed by then.
+bool ShouldResendReport(bool statusOk, uint8_t* counter) {
+
+    if (statusOk) {
+        *counter = 0;
+        return false;
+    }
+
+    // keep this low, since the actual delay this causes with a full queue is
+    // queueLength * maxDelay
+    const uint16_t maxDelay = 128; //ms
+    const uint8_t granularity = 16; //ms
+    uint8_t minimizedTime = Timer_GetCurrentTime() / granularity;
+
+    if (*counter == 0) {
+        *counter = minimizedTime;
+        return true;
+    } else if ((uint8_t)(minimizedTime - *counter) < (maxDelay / granularity)) {
+        return true;
+    } else {
+        *counter = 0;
+        return false;
+    }
 }

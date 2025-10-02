@@ -83,7 +83,8 @@ static void initConfig()
 static void sendFirstReport()
 {
     bool success = false;
-    while (!success) {
+    // Wait until sending a report is successful, but don't block longer than 5 seconds.
+    while (!success && Timer_GetCurrentTime() < 5000) {
         UsbReportUpdateSemaphore |= 1 << USB_BASIC_KEYBOARD_INTERFACE_INDEX;
         usb_status_t status = UsbBasicKeyboardAction();
         if (status != kStatus_USB_Success) {
@@ -94,7 +95,7 @@ static void sendFirstReport()
         }
     }
     while (UsbReportUpdateSemaphore) {
-            __WFI();
+        __WFI();
     }
 }
 
