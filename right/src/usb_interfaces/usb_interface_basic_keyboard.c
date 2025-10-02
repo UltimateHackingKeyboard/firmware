@@ -373,3 +373,47 @@ void UsbBasicKeyboard_ForeachScancode(const usb_basic_keyboard_report_t* report,
         }
     }
 }
+
+bool UsbBasicKeyboard_FindFirstDifference(const usb_basic_keyboard_report_t* current, const usb_basic_keyboard_report_t* previous, uint8_t* result)
+{
+    // Check modifier differences first
+    if (current->modifiers != previous->modifiers) {
+        // Check left modifiers (bits 0-3)
+        uint8_t leftModsCurrent = current->modifiers & 0x0F;
+        uint8_t leftModsPrevious = previous->modifiers & 0x0F;
+        if (leftModsCurrent != leftModsPrevious) {
+            *result = 0xC0 | leftModsCurrent; // 1100 + 4 bits
+            return true;
+        }
+        
+        // Check right modifiers (bits 4-7)
+        uint8_t rightModsCurrent = (current->modifiers & 0xF0) >> 4;
+        uint8_t rightModsPrevious = (previous->modifiers & 0xF0) >> 4;
+        if (rightModsCurrent != rightModsPrevious) {
+            *result = 0xE0 | rightModsCurrent; // 1110 + 4 bits
+            return true;
+        }
+    }
+    
+    // Check scancode differences (bitfield only)
+    for (uint8_t i = 0; i < UTILS_ARRAY_SIZE(current->bitfield); i++) {
+        if (current->bitfield[i] != previous->bitfield[i]) {
+            // Find the first differing bit
+            uint8_t diff = current->bitfield[i] ^ previous->bitfield[i];
+                for (uint8_t j = 0; j < 8; j++) {
+                    if (diff & (1 << j)) {
+                        uint8_t scancode = USB_BASIC_KEYBOARD_MIN_BITFIELD_SCANCODE + i * 8 + j;
+                        if (scancode > 127) {
+                            // Scancode out of range for 7-bit encoding, signal to use full report
+                            *result = 0xFF; // Special value indicating out of range
+                            return true;
+                        }
+                        *result = scancode & 0x7F; // 0 + 7 bits of scancode
+                        return true;
+                    }
+                }
+        }
+    }
+    
+    return false; // No differences found
+}
