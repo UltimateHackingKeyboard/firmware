@@ -144,7 +144,7 @@ static void processEvt(event_scheduler_event_t evt)
         case EventSchedulerEvent_PutBackToShutDown:
             PowerMode_PutBackToSleepMaybe();
             break;
-        case EventSchedulerEvent_BlinkBatteryIcon:
+        case EventSchedulerEvent_BlinkStatusIcons:
             WIDGET_REFRESH(&StatusWidget);
             break;
         default:

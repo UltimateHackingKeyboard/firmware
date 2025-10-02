@@ -83,13 +83,6 @@ static void discardMacro(uint8_t macroIndex)
     }
 }
 
-static void discardLastMacro()
-{
-    if (headersEnd > 0) {
-        discardMacro(headersEnd - 1);
-    }
-}
-
 static void resolveRecordingHeader(uint16_t id)
 {
     for (int i = 0; i < headersEnd; i++)
@@ -285,7 +278,7 @@ static bool playRuntimeMacroContinue(usb_basic_keyboard_report_t* report)
     return RuntimeMacroPlaying;
 }
 
-void writeReportScancodes(usb_basic_keyboard_report_t *report)
+static void writeReportScancodes(usb_basic_keyboard_report_t *report)
 {
     UsbBasicKeyboard_ForeachScancode(report, &writeByte);
 }
