@@ -4,7 +4,10 @@
 #include "led_display.h"
 #include "macros/core.h"
 #include "macros/status_buffer.h"
-#ifndef __ZEPHYR__
+#include "stubs.h"
+#ifdef __ZEPHYR__
+#include "keyboard/oled/widgets/widget_store.h"
+#else
 #include "segment_display.h"
 #endif
 #include "timer.h"
@@ -291,12 +294,14 @@ void MacroRecorder_UpdateRecordingLed()
 
     if (!RuntimeMacroRecording) {
         ledOn = false;
+        WIDGET_REFRESH(&StatusWidget);
         LedDisplay_SetIcon(LedDisplayIcon_Adaptive, false);
         EventScheduler_Unschedule(EventSchedulerEvent_MacroRecorderFlashing);
         return;
     }
 
     ledOn = !ledOn;
+    WIDGET_REFRESH(&StatusWidget);
     LedDisplay_SetIcon(LedDisplayIcon_Adaptive, ledOn);
     EventScheduler_Schedule(Timer_GetCurrentTime() + ledFlashingPeriod, EventSchedulerEvent_MacroRecorderFlashing, "macro recorder flashing");
 }

@@ -8,6 +8,7 @@
 #include "keyboard/oled/fonts/fonts.h"
 #include "keyboard/oled/framebuffer.h"
 #include "keyboard/oled/oled_text_renderer.h"
+#include "macro_recorder.h"
 #include "text_widget.h"
 #include "widget.h"
 #include "keymap.h"
@@ -165,12 +166,15 @@ static string_segment_t getLeftStatusText() {
             connectionIcon = FontIcon_SignalStream;
         }
     }
-    snprintf(buffer, BUFFER_LENGTH-1, "%c%c %c%c%c %s",
+    snprintf(buffer, BUFFER_LENGTH-1, "%c%c %c%c%c %c%c%c %s",
             // connection icon; always present
             (char)FontControl_NextCharIcon12, (char)connectionIcon,
             // pairing icon; sometimes present
             (AdvertisingHid == PairingMode_PairHid || AdvertisingHid == PairingMode_Advertise) ? FontControl_NextCharWhite : FontControl_NextCharAndSpaceGone,
             (char)FontControl_NextCharIcon12, AdvertisingHid == PairingMode_PairHid ? FontIcon_BluetoothSignalPlus : FontIcon_BluetoothSignal,
+            // recording icon; sometimes present
+            MacroRecorder_IsRecording() ? FontControl_NextCharWhite : FontControl_NextCharAndSpaceGone,
+            (char)FontControl_NextCharIcon12, FontIcon_Video,
             // setLedTxt if set
             Macros_DisplayStringsBuffs.leftStatus
     );
@@ -311,7 +315,9 @@ static void drawStatus(widget_t* self, framebuffer_t* buffer)
         Framebuffer_Clear(self, buffer);
         Framebuffer_DrawText(self, buffer, AlignmentType_Begin + 5, AlignmentType_Center, &JetBrainsMono12, getLeftStatusText().start, NULL);
         if (Macros_StatusBufferError) {
-            Framebuffer_DrawText(self, buffer, AlignmentType_Center - 30, AlignmentType_Center, &JetBrainsMono12, getErrorIndicatorText().start, NULL);
+            string_segment_t text = getErrorIndicatorText();
+            uint16_t width = Framebuffer_TextWidth(&JetBrainsMono12, text.start, NULL, self->w, NULL, NULL);
+            Framebuffer_DrawText(self, buffer, AlignmentType_Center - width - 18, AlignmentType_Center, &JetBrainsMono12, text.start, NULL);
         }
         Framebuffer_DrawText(self, buffer, AlignmentType_Center, AlignmentType_Center, &JetBrainsMono12, getKeyboardLedsStateText().start, NULL);
         Framebuffer_DrawText(self, buffer, AlignmentType_End, AlignmentType_Center, &JetBrainsMono12, getRightStatusText().start, NULL);
