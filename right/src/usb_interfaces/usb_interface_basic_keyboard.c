@@ -27,6 +27,7 @@ bool UsbBasicKeyboard_NumLockOn = false;
 bool UsbBasicKeyboard_ScrollLockOn = false;
 
 static bool needsResending = false;
+static uint8_t retries = 0;
 
 usb_hid_protocol_t usbBasicKeyboardProtocol;
 
@@ -205,7 +206,7 @@ void UsbBasicKeyboardSendActiveReport(void)
     UsbReportUpdateSemaphore |= 1 << USB_BASIC_KEYBOARD_INTERFACE_INDEX;
     usb_status_t status = UsbBasicKeyboardAction();
     //The semaphore has to be set before the call. Assume what happens if a bus reset happens asynchronously here. (Deadlock.)
-    if (status != kStatus_USB_Success) {
+    if (ShouldResendReport(status == kStatus_USB_Success, &retries)) {
         //This is *not* asynchronously safe as long as multiple reports of different type can be sent at the same time.
         //TODO: consider either making it atomic, or lowering semaphore reset delay
         needsResending = true;
