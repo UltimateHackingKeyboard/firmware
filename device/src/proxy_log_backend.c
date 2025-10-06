@@ -120,20 +120,24 @@ static void processLog(const struct log_backend *const backend, union log_msg_ge
 void init(const struct log_backend *const backend) {};
 int format_set(const struct log_backend *const backend, uint32_t log_type) { return 0; };
 void notify(const struct log_backend *const backend, enum log_backend_evt event, union log_backend_evt_arg *arg) {};
+static int is_ready(const struct log_backend *const backend) { return 0; }
 
 static struct log_backend_api proxyApi = (struct log_backend_api) {
     .process = processLog,
     .dropped = NULL,
     .panic = panic,
     .init = init,
-    .is_ready = NULL,
+    .is_ready = is_ready,
     .format_set = format_set,
     .notify = notify,
 };
 
-LOG_BACKEND_DEFINE(logProxy, proxyApi, false);
+#define PROXY_LOG_BACKEND_AUTOSTART true
+
+LOG_BACKEND_DEFINE(logProxy, proxyApi, PROXY_LOG_BACKEND_AUTOSTART);
 
 void InitProxyLogBackend(void) {
+#if !PROXY_LOG_BACKEND_AUTOSTART
     log_init();
 
     const struct log_backend *backend = log_backend_get_by_name("logProxy");
@@ -141,4 +145,5 @@ void InitProxyLogBackend(void) {
     log_output_ctx_set(&logOutput, backend->cb->ctx);
 
     log_backend_activate(backend, backend->cb->ctx);
+#endif
 }

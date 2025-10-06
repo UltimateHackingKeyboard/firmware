@@ -30,10 +30,10 @@
         const struct pinctrl_state* pins_uart0;
         const struct pinctrl_state* pins_uart1;
         const struct pinctrl_state* pins_i2c;
-        const pin_wiring_dev_t* device_uart_swd;
+        const pin_wiring_dev_t* device_uart_shell;
         const pin_wiring_dev_t* device_uart_bridge;
-        const pin_wiring_dev_t* device_uart_module;
-        const pin_wiring_dev_t* device_i2c_module;
+        const pin_wiring_dev_t* device_uart_modules;
+        const pin_wiring_dev_t* device_i2c_modules;
     } ATTR_PACKED pin_wiring_config_t;
 
 

@@ -310,7 +310,7 @@ static int startShell(void)
 void InitShell(void)
 {
     if (DEVICE_IS_UHK80_RIGHT) {
-        if (PinWiringConfig->device_uart_swd == NULL) {
+        if (PinWiringConfig->device_uart_shell == NULL) {
             return;
         } else {
             startShell();

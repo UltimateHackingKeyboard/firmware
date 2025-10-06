@@ -101,7 +101,7 @@ void i2cPoller() {
 }
 
 void InitZephyrI2c(void) {
-    i2c0_dev = PinWiringConfig->device_i2c_module->device;
+    i2c0_dev = PinWiringConfig->device_i2c_modules->device;
 
     if (i2c0_dev == NULL) {
         return;

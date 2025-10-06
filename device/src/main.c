@@ -227,22 +227,10 @@ void mainRuntime(void) {
 
     // Uart has to be enabled only after we have given Agent a chance to reenumarate into bootloader after a crash
     if (!DEVICE_IS_UHK_DONGLE) {
-
-    LogS("A2");
-    k_sleep(K_MSEC(1000));
-
         InitPinWiring();
-
-    LogS("A3");
-    k_sleep(K_MSEC(1000));
-
-
-        // InitUart();
-
-        // InitZephyrI2c();
+        InitUart();
+        InitZephyrI2c();
         InitShell();
-    LogS("A4");
-    k_sleep(K_MSEC(1000));
     }
 
     // Uart has to be enabled only after we have given Agent a chance to reenumarate into bootloader after a crash
@@ -299,6 +287,7 @@ void mainRuntime(void) {
 }
 
 int main(void) {
+    Cfg.DevMode = true;
     power_mode_t mode = PowerMode_Awake;
 
     Trace_Init();

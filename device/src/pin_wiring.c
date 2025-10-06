@@ -46,30 +46,30 @@ const pin_wiring_config_t Uhk80_I2cModules = {
     .pins_uart0 = uart_swd_pins,
     .pins_uart1 = uart_bridge_pins,
     .pins_i2c = i2c_modules_pins,
-    .device_i2c_module = &i2c0,
+    .device_i2c_modules = &i2c0,
     .device_uart_bridge = &uart1,
-    .device_uart_swd = &uart0,
-    .device_uart_module = NULL,
+    .device_uart_shell = &uart0,
+    .device_uart_modules = NULL,
 };
 
 const pin_wiring_config_t Uhk80_Testing = {
     .pins_uart0 = uart_swd_pins,
     .pins_uart1 = NULL,
     .pins_i2c = i2c_modules_pins,
-    .device_i2c_module = &i2c0,
+    .device_i2c_modules = &i2c0,
     .device_uart_bridge = &uart0,
-    .device_uart_swd = NULL,
-    .device_uart_module = NULL,
+    .device_uart_shell = NULL,
+    .device_uart_modules = NULL,
 };
 
 const pin_wiring_config_t Uhk80_NoSwd = {
     .pins_uart0 = uart_bridge_pins,
     .pins_uart1 = uart_modules_pins,
     .pins_i2c = NULL,
-    .device_i2c_module = NULL,
+    .device_i2c_modules = NULL,
     .device_uart_bridge = &uart0,
-    .device_uart_swd = NULL,
-    .device_uart_module = &uart1,
+    .device_uart_shell = NULL,
+    .device_uart_modules = &uart1,
 };
 
 const pin_wiring_config_t *PinWiringConfig;
@@ -97,6 +97,15 @@ void configurePins(const pin_wiring_dev_t* dev, const struct pinctrl_state* stat
     if (ret != 0) {
         LogS("Failed to update pin states: %d\n", ret);
     }
+}
+
+void deinitUart(const pin_wiring_dev_t* dev) {
+    if (dev == NULL) {
+        return;
+    }
+    uart_irq_tx_disable(dev->device);
+    uart_irq_rx_disable(dev->device);
+    uart_callback_set(dev->device, NULL, NULL);
 }
 
 void suspendDevice(const pin_wiring_dev_t* dev) {
@@ -137,39 +146,22 @@ void InitPinWiring(void) {
     k_sleep(K_MSEC(2000));
 
     PinWiringConfig = &Uhk80_I2cModules;
-    // PinWiringConfig = &Uhk80_Testing;
+    //PinWiringConfig = &Uhk80_Testing;
 
-    LogS("B1");
-    k_sleep(K_MSEC(2000));
+    // deinitUart(&uart0);
+    // deinitUart(&uart1);
 
     suspendDevice(&uart0);
-
-    logDeviceState(uart0.device, "B11");
-    LogS("B11");
-    k_sleep(K_MSEC(2000));
-    // suspendDevice(&uart1);
-
-    LogS("B12");
-    k_sleep(K_MSEC(2000));
-
-    // suspendDevice(&i2c0);
-
-    LogS("B2");
-    k_sleep(K_MSEC(2000));
+    suspendDevice(&uart1);
+    suspendDevice(&i2c0);
 
     configurePins(&uart0, PinWiringConfig->pins_uart0);
     configurePins(&uart1, PinWiringConfig->pins_uart1);
     configurePins(&i2c0, PinWiringConfig->pins_i2c);
 
-    LogS("B3");
-    k_sleep(K_MSEC(2000));
-
-    resumeDevice(PinWiringConfig->device_uart_swd);
+    resumeDevice(PinWiringConfig->device_uart_shell);
     resumeDevice(PinWiringConfig->device_uart_bridge);
-    resumeDevice(PinWiringConfig->device_uart_module);
-    resumeDevice(PinWiringConfig->device_i2c_module);
-
-    LogS("B4");
-    k_sleep(K_MSEC(2000));
+    resumeDevice(PinWiringConfig->device_uart_modules);
+    resumeDevice(PinWiringConfig->device_i2c_modules);
 }
 
