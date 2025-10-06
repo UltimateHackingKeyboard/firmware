@@ -231,6 +231,7 @@ void mainRuntime(void) {
         InitUart();
         InitZephyrI2c();
         InitShell();
+        PinWiring_Resume();
     }
 
     // Uart has to be enabled only after we have given Agent a chance to reenumarate into bootloader after a crash

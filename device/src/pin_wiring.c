@@ -111,14 +111,19 @@ void configurePins(const pin_wiring_dev_t* dev, const struct pinctrl_state* stat
     }
 }
 
+
 void deinitUart(const pin_wiring_dev_t* dev) {
     if (dev == NULL) {
         return;
     }
-    uart_irq_tx_disable(dev->device);
-    uart_irq_rx_disable(dev->device);
-    uart_callback_set(dev->device, NULL, NULL);
+    int err = 0;
+
+    err = uart_rx_disable(dev->device);
+    if (err != 0) {
+        LogS("Failed to disable UART RX: %d\n", err);
+    }
 }
+
 
 void suspendDevice(const pin_wiring_dev_t* dev) {
     if (dev == NULL) {
@@ -194,3 +199,9 @@ void InitPinWiring(void) {
     // resumeDevice(PinWiringConfig->device_i2c_modules);
 }
 
+void PinWiring_Resume() {
+    // resumeDevice(PinWiringConfig->device_uart_shell);
+    // resumeDevice(PinWiringConfig->device_uart_bridge);
+    // resumeDevice(PinWiringConfig->device_uart_modules);
+    // resumeDevice(PinWiringConfig->device_i2c_modules);
+}
