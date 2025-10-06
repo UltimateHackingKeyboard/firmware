@@ -53,16 +53,6 @@ const pin_wiring_config_t Uhk80_I2cModules = {
     .device_uart_modules = NULL,
 };
 
-const pin_wiring_config_t Uhk80_Testing = {
-    .pins_uart0 = uart_swd_pins,
-    .pins_uart1 = NULL,
-    .pins_i2c = i2c_modules_pins,
-    .device_i2c_modules = &i2c0,
-    .device_uart_bridge = &uart0,
-    .device_uart_shell = NULL,
-    .device_uart_modules = NULL,
-};
-
 const pin_wiring_config_t Uhk80_NoDebug = {
     .pins_uart0 = uart_bridge_pins,
     .pins_uart1 = uart_modules_pins,
@@ -72,6 +62,27 @@ const pin_wiring_config_t Uhk80_NoDebug = {
     .device_uart_shell = NULL,
     .device_uart_modules = &uart1,
 };
+
+const pin_wiring_config_t Uhk80_NoBridge = {
+    .pins_uart0 = uart_swd_pins,
+    .pins_uart1 = uart_modules_pins,
+    .pins_i2c = NULL,
+    .device_i2c_modules = NULL,
+    .device_uart_bridge = NULL,
+    .device_uart_shell = &uart0,
+    .device_uart_modules = &uart1,
+};
+
+const pin_wiring_config_t Uhk80_NoModules = {
+    .pins_uart0 = uart_swd_pins,
+    .pins_uart1 = uart_bridge_pins,
+    .pins_i2c = NULL,
+    .device_i2c_modules = NULL,
+    .device_uart_bridge = &uart1,
+    .device_uart_shell = &uart0,
+    .device_uart_modules = NULL,
+};
+
 
 const pin_wiring_config_t *PinWiringConfig;
 
@@ -143,7 +154,9 @@ void resumeDevice(const pin_wiring_dev_t* dev) {
 }
 
 static void selectMode() {
-    PinWiring_ActualUartDebugMode = Settings_ActualUartDebugMode;
+    PinWiring_ActualUartDebugMode = Settings_UartDebugMode;
+
+    printk("Selected UART debug mode: %d\n", PinWiring_ActualUartDebugMode);
 
     switch(PinWiring_ActualUartDebugMode) {
         case UartDebugMode_NoDebug:

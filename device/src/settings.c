@@ -90,6 +90,7 @@ void InitSettings(void) {
     settings_subsys_init();
     settings_register(&settingsHandler);
     settings_register(&otherHandler);
+    settings_register(&uartDebugHandler);
     settings_load();
 }
 

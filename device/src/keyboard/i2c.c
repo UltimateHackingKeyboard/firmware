@@ -101,11 +101,12 @@ void i2cPoller() {
 }
 
 void InitZephyrI2c(void) {
-    i2c0_dev = PinWiringConfig->device_i2c_modules->device;
-
-    if (i2c0_dev == NULL) {
+    if (PinWiringConfig->device_i2c_modules == NULL) {
+        i2c0_dev = NULL;
         return;
     }
+
+    i2c0_dev = PinWiringConfig->device_i2c_modules->device;
 
     k_thread_create(
         &thread_data, stack_area,

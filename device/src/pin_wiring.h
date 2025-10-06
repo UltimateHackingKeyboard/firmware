@@ -9,6 +9,7 @@
     #include "connections.h"
     #include "messenger.h"
     #include <zephyr/drivers/pinctrl.h>
+    #include "settings.h"
 
 // Macros:
 
@@ -40,6 +41,7 @@
 // Variables:
 
     extern const pin_wiring_config_t* PinWiringConfig;
+    extern uart_debug_mode_t PinWiring_ActualUartDebugMode;
 
 // Functions:
 
