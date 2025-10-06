@@ -46,6 +46,18 @@ widget_t ConsoleWidget;
 widget_t TargetWidget;
 widget_t DebugLineWidget;
 
+static char getBlinkingColor() {
+    char color;
+
+    uint32_t state = (Timer_GetCurrentTime() / 1024) % 2;
+    color = state ? FontControl_SetColorWhite : FontControl_SetColorGray;
+    uint32_t nextTime = ((Timer_GetCurrentTime() / 1024) + 1) * 1024;
+    EventScheduler_Schedule(nextTime + 1, EventSchedulerEvent_BlinkStatusIcons, "status icons blink");
+
+    return color;
+}
+
+
 static string_segment_t getLayerText() {
     if ( Macros_DisplayStringsBuffs.layer[0] != 0) {
         return (string_segment_t){ .start = Macros_DisplayStringsBuffs.layer, .end = NULL };
@@ -173,24 +185,13 @@ static string_segment_t getLeftStatusText() {
             (AdvertisingHid == PairingMode_PairHid || AdvertisingHid == PairingMode_Advertise) ? FontControl_NextCharWhite : FontControl_NextCharAndSpaceGone,
             (char)FontControl_NextCharIcon12, AdvertisingHid == PairingMode_PairHid ? FontIcon_BluetoothSignalPlus : FontIcon_BluetoothSignal,
             // recording icon; sometimes present
-            MacroRecorder_IsRecording() ? FontControl_NextCharWhite : FontControl_NextCharAndSpaceGone,
+            MacroRecorder_IsRecording() ? getBlinkingColor() : FontControl_NextCharAndSpaceGone,
             (char)FontControl_NextCharIcon12, FontIcon_Video,
             // setLedTxt if set
             Macros_DisplayStringsBuffs.leftStatus
     );
     return (string_segment_t){ .start = buffer, .end = NULL };
 #undef BUFFER_LENGTH
-}
-
-static char getBlinkingColor() {
-    char color;
-
-    uint32_t state = (Timer_GetCurrentTime() / 1024) % 2;
-    color = state ? FontControl_SetColorWhite : FontControl_SetColorGray;
-    uint32_t nextTime = ((Timer_GetCurrentTime() / 1024) + 1) * 1024;
-    EventScheduler_Schedule(nextTime + 1, EventSchedulerEvent_BlinkBatteryIcon, "battery icon blink");
-
-    return color;
 }
 
 

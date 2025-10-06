@@ -81,6 +81,7 @@
     size_t UsbBasicKeyboard_ScancodeCount(const usb_basic_keyboard_report_t* report);
     void UsbBasicKeyboard_MergeReports(const usb_basic_keyboard_report_t* sourceReport, usb_basic_keyboard_report_t* targetReport);
     void UsbBasicKeyboard_ForeachScancode(const usb_basic_keyboard_report_t* report, void(*action)(uint8_t));
+    bool UsbBasicKeyboard_FindFirstDifference(const usb_basic_keyboard_report_t* current, const usb_basic_keyboard_report_t* previous, uint8_t* result);
     void UsbBasicKeyboard_HandleProtocolChange();
     void UsbBasicKeyboardResetActiveReport(void);
     usb_status_t UsbBasicKeyboardCheckReportReady(bool resending);
