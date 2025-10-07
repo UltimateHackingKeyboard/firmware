@@ -1,13 +1,34 @@
 #include "fsl_gpio.h"
 #include "module.h"
 #include <stdint.h>
+#include <stdbool.h>
 
-#define RESET_BY_CALIBRATE_COMMAND false
+#define TRACKPOINT_VERSION 1
+#define MANUAL_RUN false
+
+#if TRACKPOINT_VERSION == 1
+#define NORESET 1
+#elif TRACKPOINT_VERSION == 2
+#define NORESET 0
+#endif
 
 pointer_delta_t PointerDelta;
 
-bool shouldReset = false;
-uint8_t resetTimer = 0;
+static bool shouldReset = false;
+static bool shouldRun = false;
+static uint8_t resetTimer = 0;
+
+typedef enum {
+    Phase_Begin = 0,
+    Phase_WriteReset = 1,
+    Phase_AckReset = 2,
+    Phase_WriteEnable = 3,
+    Phase_AckEnable = 4,
+    Phase_ReadByte1 = 5,
+    Phase_ReadByte2 = 6,
+    Phase_ReadByte3 = 7,
+    Phase_Idle = 13,
+} trackpoint_phase_t;
 
 key_vector_t KeyVector = {
     .itemNum = KEYBOARD_VECTOR_ITEMS_NUM,
@@ -38,16 +59,20 @@ void Module_Init(void)
 
     CLOCK_EnableClock(TP_RST_CLOCK);
     PORT_SetPinConfig(TP_RST_PORT, TP_RST_PIN, &(port_pin_config_t){.pullSelect=kPORT_PullDown, .mux=kPORT_MuxAsGpio});
-    GPIO_PinInit(TP_RST_GPIO, TP_RST_PIN, &(gpio_pin_config_t){.pinDirection=kGPIO_DigitalOutput, .outputLogic=1});
+    GPIO_PinInit(TP_RST_GPIO, TP_RST_PIN, &(gpio_pin_config_t){.pinDirection=kGPIO_DigitalOutput, .outputLogic=NORESET});
 }
 
 static void resetBoard()
 {
     resetTimer = 50;
-    GPIO_PinWrite(TP_RST_GPIO, TP_RST_PIN, 0);
+    GPIO_PinWrite(TP_RST_GPIO, TP_RST_PIN, 1-NORESET);
 }
 
-uint8_t phase = 0;
+static bool runOrIdle() {
+    return (!(MANUAL_RUN) || shouldRun);
+}
+
+uint8_t phase = Phase_Begin;
 uint32_t transitionCount = 1;
 uint8_t errno = 0;
 
@@ -65,41 +90,62 @@ void requestToSend()
 }
 
 
-bool clockValue = 0;
-bool bitValue = 0;
-uint8_t bitId = 0;
-uint8_t buffer;
+uint8_t result;
+
+typedef struct {
+    bool bitValue;
+    bool clockValue;
+    bool parityBit;
+    bool writingInProgress;
+    uint8_t buffer;
+    uint8_t bitId;
+
+} ATTR_PACKED ps2_driver_state_t;
+
+ps2_driver_state_t state = {
+    .bitValue = 0,
+    .clockValue = 0,
+    .parityBit = 0,
+    .writingInProgress = false,
+    .buffer = 0,
+    .bitId = 0,
+};
 
 static void reportError(uint8_t err) {
     errno |= err;
 }
 
-// Write a PS/2 byte to buffer bit by bit, and return true when finished.
-static bool writeByte()
+static bool writeByte2(uint8_t byte)
 {
-    static bool parityBit;
+    if (!state.writingInProgress) {
+        requestToSend();
+        state.writingInProgress = true;
+        state.buffer = byte;
+        state.bitId = 0;
+        return false;
+    }
 
-    if (clockValue) {
+    if (state.clockValue) {
         // Even though we are hooked on InteruptFallingEdge, we are receiving
         // one spurious wakeup during the initiation sequence
         return false;
     }
 
-    switch (bitId) {
+    switch (state.bitId) {
         case 0 ... 7: {
-            if (bitId == 0) {
-                parityBit = 1;
+            if (state.bitId == 0) {
+                state.parityBit = 1;
                 GPIO_PinInit(PS2_DATA_GPIO, PS2_DATA_PIN, &(gpio_pin_config_t){.pinDirection=kGPIO_DigitalOutput, .outputLogic=0});
             }
-            bool dataBit = buffer & (1 << bitId);
+            bool dataBit = state.buffer & (1 << state.bitId);
             if (dataBit) {
-                parityBit = !parityBit;
+                state.parityBit = !state.parityBit;
             }
             GPIO_PinWrite(PS2_DATA_GPIO, PS2_DATA_PIN, dataBit);
             break;
         }
         case 8: {
-            GPIO_PinWrite(PS2_DATA_GPIO, PS2_DATA_PIN, parityBit);
+            GPIO_PinWrite(PS2_DATA_GPIO, PS2_DATA_PIN, state.parityBit);
             break;
         }
         case 9: {
@@ -109,44 +155,44 @@ static bool writeByte()
         }
         case 10: {
             GPIO_PinInit(PS2_DATA_GPIO, PS2_DATA_PIN, &(gpio_pin_config_t){.pinDirection=kGPIO_DigitalInput, .outputLogic=0});
-            bitId = 0;
+            state.bitId = 0;
+            state.writingInProgress = false;
             return true;
         }
     }
 
-    bitId++;
+    state.bitId++;
     return false;
 }
 
 // Read a PS/2 byte from buffer bit by bit, and return true when finished.
-static bool readByte()
+static bool readByte(uint8_t* out)
 {
-    static bool parityBit = 1;
-
-    switch (bitId) {
+    switch (state.bitId) {
         case 0: {
-            buffer = 0;
-            parityBit = 1;
+            state.buffer = 0;
+            state.parityBit = 1;
             break;
         }
         case 1 ... 8: {
-            parityBit ^= bitValue;
-            buffer = buffer | (bitValue << (bitId-1));
+            state.parityBit ^= state.bitValue;
+            state.buffer = state.buffer | (state.bitValue << (state.bitId-1));
             break;
         }
         case 9: {
-            if (parityBit != bitValue) {
+            *out = state.buffer;
+            if (state.parityBit != state.bitValue) {
                 reportError(4);
             }
             break;
         }
         case 10: {
-             bitId = 0;
+             state.bitId = 0;
              return true;
          }
     }
 
-    bitId++;
+    state.bitId++;
     return false;
 }
 
@@ -203,7 +249,6 @@ void recognizeDrifts(int16_t x, int16_t y)
     }
 }
 
-
 void PS2_CLOCK_IRQ_HANDLER(void)
 {
     static uint8_t byte1 = 0;
@@ -215,14 +260,14 @@ void PS2_CLOCK_IRQ_HANDLER(void)
 
     GPIO_PortClearInterruptFlags(PS2_CLOCK_GPIO, 1U << PS2_CLOCK_PIN);
 
-    bitValue = GPIO_PinRead(PS2_CLOCK_GPIO, PS2_DATA_PIN);
-    clockValue = GPIO_PinRead(PS2_CLOCK_GPIO, PS2_CLOCK_PIN);
+    state.bitValue = GPIO_PinRead(PS2_CLOCK_GPIO, PS2_DATA_PIN);
+    state.clockValue = GPIO_PinRead(PS2_CLOCK_GPIO, PS2_CLOCK_PIN);
 
     uint16_t currentClock = SysTick->VAL;
     uint16_t diff = lastClock - currentClock;
     lastClock = currentClock;
 
-    if ((diff < 200 || diff > 240 ) && currentClock < lastClock && bitId > 0 && phase >= 7) {
+    if ((diff < 200 || diff > 240 ) && currentClock < lastClock && state.bitId > 0 && phase >= 7) {
         // In current configuration, SysTick value is internal clock divided by
         // 16, and *de*creasing by one by one. CPU clock frequency is 48Mhz.
         // Observed PS2 period is 220 SysTick ticks. This means one tick every
@@ -234,79 +279,71 @@ void PS2_CLOCK_IRQ_HANDLER(void)
     }
 
     switch (phase) {
-        case 0: {
+        case Phase_Begin: {
             transitionCount++;
             if (transitionCount == 22) {
-                phase = 1;
+                phase = Phase_WriteReset;
             }
             break;
         }
-        case 1: {
-            requestToSend();
-            buffer = 0xff;
-            phase = 2;
+        case Phase_WriteReset: {
+             if (!runOrIdle()) {
+                 phase = Phase_Idle;
+                 break;
+             }
+             if(writeByte2(0xff)) {
+                 transitionCount = 0;
+                 phase = Phase_AckReset;
+             }
             break;
         }
-        case 2: {
-            if (writeByte()) {
-                transitionCount = 0;
-                phase = 3;
+        case Phase_AckReset: {
+            if (readByte(&result)) {
+                phase = Phase_WriteEnable;
             }
             break;
         }
-        case 3: {
-            if (readByte()) {
-                phase = 4;
+        case Phase_WriteEnable: {
+            if (writeByte2(0xf4)) {
+                phase = Phase_AckEnable;
             }
             break;
         }
-        case 4: {
-            requestToSend();
-            buffer = 0xf4;
-            phase = 5;
-            break;
-        }
-        case 5: {
-            if (writeByte()) {
-                phase = 6;
-            }
-            break;
-        }
-        case 6: {
-            if (readByte()) { // read ACK
-                phase = 7;
-                if ( buffer != 0xfa ) {
+        case Phase_AckEnable: {
+            if (readByte(&result)) { // read ACK
+                phase = Phase_ReadByte1;
+                if ( result != 0xfa ) {
                     reportError(1);
                 }
             }
             break;
         }
-        case 7: {
-            if (readByte()) {
-                if ((buffer & 0xc8) == 0x08) {
-                    byte1 = buffer;
-                    phase = 8;
+        case Phase_ReadByte1: {
+            if (readByte(&result)) {
+                if ((result & 0xc8) == 0x08) {
+                    byte1 = result;
+                    phase = Phase_ReadByte2;
                 } else {
                     // If message format does not match the expected, assume
                     // the worst - falling out of sync with clock - and reset.
                     // In case of other errors, just ignore the corrupted frame
                     // and report the errno.
                     reportError(2);
-                    phase = 1;
+                    phase = Phase_WriteReset;
                 }
             }
             break;
         }
-        case 8: {
-            if (readByte()) {
-                deltaX = buffer;
-                phase = 9;
+        case Phase_ReadByte2: {
+            if (readByte(&result)) {
+                deltaX = result;
+                phase = Phase_ReadByte3;
             }
             break;
         }
-        case 9: {
-            if (readByte()) {
-                deltaY = buffer;
+        case Phase_ReadByte3: {
+            if (readByte(&result)) {
+                deltaY = result;
                 if (byte1 & (1 << 4)) {
                     deltaX |= 0xff00;
                 }
@@ -329,41 +366,27 @@ void PS2_CLOCK_IRQ_HANDLER(void)
                 errno = 0;
                 if (shouldReset) {
                     shouldReset = false;
-                    if (RESET_BY_CALIBRATE_COMMAND) {
-                        phase = 10;
-                    } else {
-                        resetBoard();
-                        phase = 1;
-                    }
+                    resetBoard();
+                    phase = Phase_WriteReset;
                 } else {
-                    phase = 7;
+                    phase = Phase_ReadByte1;
                 }
             }
             break;
         }
 
-        //recalibrate
-        case 10: {
-            requestToSend();
-            buffer = 0xe2;
-            phase = 11;
-            break;
-        }
-        case 11: {
-            if (writeByte()) {
-                phase = 12;
-                requestToSend();
-                buffer = 0x51;
-            }
-            break;
-        }
-        case 12: {
-            if (writeByte()) {
-                phase = 7;
-            }
-            break;
-        }
+        case Phase_Idle: {
+             if (shouldRun) {
+                 shouldRun = false;
+                 requestToSend();
+                 phase = Phase_WriteReset;
+             }
+             break;
+         }
     }
+
+    PointerDelta.debugInfo.phase = phase;
+
     SDK_ISR_EXIT_BARRIER;
 }
 
@@ -375,8 +398,9 @@ void Module_OnScan(void)
 {
     // finish reset sequence
     if (resetTimer > 0 && --resetTimer == 0) {
-        GPIO_PinWrite(TP_RST_GPIO, TP_RST_PIN, 1);
+        GPIO_PinWrite(TP_RST_GPIO, TP_RST_PIN, NORESET);
     }
+
 }
 
 void Module_ModuleSpecificCommand(module_specific_command_t command)
@@ -384,6 +408,15 @@ void Module_ModuleSpecificCommand(module_specific_command_t command)
     switch (command) {
         case ModuleSpecificCommand_ResetTrackpoint:
             shouldReset = true;
+            shouldRun = false;
+            phase = Phase_WriteReset;
+            resetBoard();
+            break;
+        case ModuleSpecificCommand_RunTrackpoint:
+            shouldRun = true;
+            shouldReset = false;
+            phase = Phase_WriteReset;
+            requestToSend();
             break;
     }
 }

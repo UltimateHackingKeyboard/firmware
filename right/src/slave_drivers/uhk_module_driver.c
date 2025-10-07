@@ -33,7 +33,8 @@
 uhk_module_state_t UhkModuleStates[UHK_MODULE_MAX_SLOT_COUNT];
 module_connection_state_t ModuleConnectionStates[UHK_MODULE_MAX_SLOT_COUNT];
 
-static bool shouldResetTrackpoint = false;
+static bool shouldSendTrackpointCommand = false;
+static uint8_t trackpointCommand = 0;
 
 bool UhkModuleDriver_ResendKeyStates = false;
 
@@ -49,7 +50,14 @@ uint8_t UhkModuleSlaveDriver_DriverIdToSlotId(uint8_t uhkModuleDriverId)
 
 void UhkModuleSlaveDriver_ResetTrackpoint()
 {
-    shouldResetTrackpoint = true;
+    shouldSendTrackpointCommand = true;
+    trackpointCommand = ModuleSpecificCommand_ResetTrackpoint;
+}
+
+void UhkModuleSlaveDriver_RunTrackpoint()
+{
+    shouldSendTrackpointCommand = true;
+    trackpointCommand = ModuleSpecificCommand_RunTrackpoint;
 }
 
 static uint8_t keyStatesBuffer[MAX_KEY_COUNT_PER_MODULE];
@@ -495,7 +503,7 @@ slave_result_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
                 res.hold = false;
                 uhkModuleTargetVars->ledPwmBrightness = uhkModuleSourceVars->ledPwmBrightness;
             }
-            if (shouldResetTrackpoint && uhkModuleDriverId == UhkModuleDriverId_RightModule) {
+            if (shouldSendTrackpointCommand && uhkModuleDriverId == UhkModuleDriverId_RightModule) {
                 *uhkModulePhase = UhkModulePhase_ResetTrackpoint;
             } else {
                 *uhkModulePhase = UhkModulePhase_RequestKeyStates;
@@ -505,9 +513,9 @@ slave_result_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
         // Other commands
         // Force reset
         case UhkModulePhase_ResetTrackpoint:
-            shouldResetTrackpoint = false;
+            shouldSendTrackpointCommand = false;
             txMessage.data[0] = SlaveCommand_ModuleSpecificCommand;
-            txMessage.data[1] = ModuleSpecificCommand_ResetTrackpoint;
+            txMessage.data[1] = trackpointCommand;
             txMessage.length = 2;
             res.status = tx(i2cAddress);
             *uhkModulePhase = UhkModulePhase_RequestKeyStates;

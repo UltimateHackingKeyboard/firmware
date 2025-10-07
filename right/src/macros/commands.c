@@ -1673,6 +1673,16 @@ static macro_result_t processRepeatForCommand(parser_context_t* ctx)
     return MacroResult_Finished;
 }
 
+static macro_result_t processRunTrackpointCommand()
+{
+    if (Macros_DryRun) {
+        return MacroResult_Finished;
+    }
+    UhkModuleSlaveDriver_RunTrackpoint();
+    return MacroResult_Finished;
+}
+
+
 static macro_result_t processResetTrackpointCommand()
 {
     if (Macros_DryRun) {
@@ -2378,6 +2388,9 @@ static macro_result_t processCommand(parser_context_t* ctx)
             }
             else if (ConsumeToken(ctx, "resetTrackpoint")) {
                 return processResetTrackpointCommand();
+            }
+            else if (ConsumeToken(ctx, "runTrackpoint")) {
+                return processRunTrackpointCommand();
             }
             else if (ConsumeToken(ctx, "replaceLayer")) {
                 return processReplaceLayerCommand(ctx);

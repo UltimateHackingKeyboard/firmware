@@ -131,6 +131,7 @@
     uint8_t UhkModuleSlaveDriver_SlotIdToDriverId(uint8_t slotId);
     uint8_t UhkModuleSlaveDriver_DriverIdToSlotId(uint8_t uhkModuleDriverId);
     void UhkModuleSlaveDriver_ResetTrackpoint();
+    void UhkModuleSlaveDriver_RunTrackpoint();
 
     void UhkModuleSlaveDriver_Init(uint8_t uhkModuleDriverId);
     slave_result_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId);

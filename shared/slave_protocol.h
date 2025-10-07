@@ -28,6 +28,7 @@
 
     typedef enum {
         ModuleSpecificCommand_ResetTrackpoint,
+        ModuleSpecificCommand_RunTrackpoint,
     } module_specific_command_t;
 
     typedef enum {
@@ -67,6 +68,7 @@
     } ATTR_PACKED i2c_message_t;
 
     typedef struct {
+        uint8_t phase;
     } ATTR_PACKED pointer_debug_info_t;
 
     typedef struct {
