@@ -219,6 +219,7 @@ const config_t DefaultCfg = (config_t){
         .SecondaryRoles_AdvancedStrategyTriggerByRelease = true,
         .SecondaryRoles_AdvancedStrategyTriggerByPress = false,
         .SecondaryRoles_AdvancedStrategyTriggerByMouse = false,
+        .SecondaryRoles_AdvancedStrategyMinimumHoldTime = 0,
         .SecondaryRoles_AdvancedStrategyDoubletapToPrimary = true,
         .SecondaryRoles_AdvancedStrategyTimeoutAction = SecondaryRoleState_Secondary,
         .SecondaryRoles_Strategy = SecondaryRoleStrategy_Simple,
