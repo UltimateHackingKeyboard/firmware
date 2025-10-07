@@ -223,6 +223,7 @@ const config_t DefaultCfg = (config_t){
         .SecondaryRoles_AdvancedStrategyDoubletapToPrimary = true,
         .SecondaryRoles_AdvancedStrategyTimeoutAction = SecondaryRoleState_Secondary,
         .SecondaryRoles_Strategy = SecondaryRoleStrategy_Simple,
+        .SecondaryRoles_PrimaryFromSameHalf = false,
         .StickyModifierStrategy = Stick_Smart,
         .Macros_Scheduler = Scheduler_Blocking,
         .Macros_MaxBatchSize = 20,

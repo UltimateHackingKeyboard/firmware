@@ -2,6 +2,7 @@
 #include "macros/core.h"
 #include "postponer.h"
 #include "timer.h"
+#include "utils.h"
 #ifndef __ZEPHYR__
 #include "led_display.h"
 #endif
@@ -58,6 +59,7 @@
  */
 
 static bool resolutionCallerIsMacroEngine = false;
+static bool isPrimaryFromSameHalf = false;
 static key_state_t *resolutionKey;
 static secondary_role_state_t resolutionState;
 static uint32_t resolutionStartTime;
@@ -132,7 +134,10 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
     postponer_buffer_record_type_t *actionRelease;
 
     PostponerQuery_InfoByKeystate(resolutionKey, &dummy, &dualRoleRelease);
-    PostponerQuery_InfoByQueueIdx(0, &actionPress, &actionRelease);
+    uint8_t lastKeyQueuePos = PostponerQuery_PendingKeypressCount() - 1;
+    PostponerQuery_InfoByQueueIdx(lastKeyQueuePos, &actionPress, &actionRelease);
+    uint16_t actionKeyId = PostponerExtended_PendingId(lastKeyQueuePos);
+    uint16_t dualRoleId = Utils_KeyStateToKeyId(resolutionKey);
 
     //handle doubletap logic
     if (
@@ -178,6 +183,12 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
 
     //handle trigger by press
     if (Cfg.SecondaryRoles_AdvancedStrategyTriggerByPress) {
+        bool actionKeyWasPressedAndFromTheSameHalf = isPrimaryFromSameHalf && actionPress != NULL && Utils_AreKeysOnTheSameHalf(actionKeyId, dualRoleId);
+
+        if(actionKeyWasPressedAndFromTheSameHalf) {
+            return SecondaryRoleState_Primary;
+        }
+        
         bool actionKeyWasPressedButDualkeyNot = actionPress != NULL && dualRoleRelease == NULL && (int32_t)(Timer_GetCurrentTime() - actionPress->time) > Cfg.SecondaryRoles_AdvancedStrategySafetyMargin;
         bool actionKeyWasPressedFirst = actionPress != NULL && dualRoleRelease != NULL && actionPress->time <= dualRoleRelease->time - Cfg.SecondaryRoles_AdvancedStrategySafetyMargin;
 
@@ -202,6 +213,12 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
 
     //handle trigger by release
     if (Cfg.SecondaryRoles_AdvancedStrategyTriggerByRelease) {
+        bool actionKeyWasReleasedAndFromSameHalf = isPrimaryFromSameHalf && actionRelease != NULL && Utils_AreKeysOnTheSameHalf(actionKeyId, dualRoleId);
+        
+        if (actionKeyWasReleasedAndFromSameHalf) {
+            return SecondaryRoleState_Primary;
+        }
+
         bool actionKeyWasReleasedButDualkeyNot = actionRelease != NULL && (dualRoleRelease == NULL && (int32_t)(Timer_GetCurrentTime() - actionRelease->time) > Cfg.SecondaryRoles_AdvancedStrategySafetyMargin);
         bool actionKeyWasReleasedFirst = actionRelease != NULL && dualRoleRelease != NULL && actionRelease->time <= dualRoleRelease->time - Cfg.SecondaryRoles_AdvancedStrategySafetyMargin;
 
@@ -245,6 +262,13 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
 static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowSimple()
 {
     if (PostponerQuery_PendingKeypressCount() > 0 && !PostponerQuery_IsKeyReleased(resolutionKey)) {
+        if (isPrimaryFromSameHalf) {
+            uint16_t actionKeyId = PostponerExtended_PendingId(0);
+            uint16_t dualRoleId = Utils_KeyStateToKeyId(resolutionKey);
+            if (Utils_AreKeysOnTheSameHalf(actionKeyId, dualRoleId)) {
+                return SecondaryRoleState_Primary;
+            }
+        }
         KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "SK"));
         return SecondaryRoleState_Secondary;
     } else if (PostponerQuery_IsKeyReleased(resolutionKey) /*assume PostponerQuery_PendingKeypressCount() == 0, but gather race conditions too*/) {
@@ -291,7 +315,9 @@ static secondary_role_state_t startResolution(key_state_t *keyState, secondary_r
 
     switch (strategy) {
         case SecondaryRoleStrategy_Simple:
-            PostponerExtended_BlockMouse();
+            if(Cfg.SecondaryRoles_AdvancedStrategyTriggerByMouse) {
+                PostponerExtended_BlockMouse();
+            }
             break;
         default:
         case SecondaryRoleStrategy_Advanced:
@@ -310,7 +336,7 @@ void SecondaryRoles_ActivateSecondaryImmediately() {
     }
 }
 
-secondary_role_result_t SecondaryRoles_ResolveState(key_state_t* keyState, secondary_role_t rolePreview, secondary_role_strategy_t strategy, bool isNewResolution, bool isMacroResolution)
+secondary_role_result_t SecondaryRoles_ResolveState(key_state_t* keyState, secondary_role_strategy_t strategy, bool isNewResolution, bool isMacroResolution, secondary_role_same_half_t actionFromSameHalf)
 {
     // Since postponer is active during resolutions, KeyState_ActivatedNow can happen only after previous
     // resolution has finished - i.e., if primary action has been activated, carried out and
@@ -320,6 +346,17 @@ secondary_role_result_t SecondaryRoles_ResolveState(key_state_t* keyState, secon
     if (isNewResolution) {
         //start new resolution
         resolutionCallerIsMacroEngine = isMacroResolution;
+        switch (actionFromSameHalf) {
+            case SecondaryRole_PrimaryFromSameHalf:
+                isPrimaryFromSameHalf = true;
+                break;
+            case SecondaryRole_SecondaryFromSameHalf:
+                isPrimaryFromSameHalf = false;
+                break;
+            default:
+                isPrimaryFromSameHalf = Cfg.SecondaryRoles_PrimaryFromSameHalf;
+                break;
+        }
         resolutionState = startResolution(keyState, strategy);
         resolutionState = resolveCurrentKey(strategy);
         bool resolvedNow = resolutionState != SecondaryRoleState_DontKnowYet;

@@ -477,6 +477,7 @@ Full set of advanced strategy config values follows (for copy-paste convenience)
 
 ```
 set secondaryRole.defaultStrategy advanced
+set secondaryRole.primaryFromSameHalf 0
 set secondaryRole.advanced.timeout 500
 set secondaryRole.advanced.timeoutAction secondary
 set secondaryRole.advanced.safetyMargin 0
