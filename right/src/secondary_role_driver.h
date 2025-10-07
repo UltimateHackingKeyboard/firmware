@@ -72,11 +72,17 @@
         bool activatedNow;
     } secondary_role_result_t;
 
+    typedef enum {
+        SecondaryRole_DefaultFromSameHalf,
+        SecondaryRole_PrimaryFromSameHalf,
+        SecondaryRole_SecondaryFromSameHalf,
+    } secondary_role_same_half_t;
+
 // Variables:
 
 // Functions:
 
-    secondary_role_result_t SecondaryRoles_ResolveState(key_state_t* keyState, secondary_role_t rolePreview, secondary_role_strategy_t strategy, bool isNewResolution, bool isMacroResolution);
+    secondary_role_result_t SecondaryRoles_ResolveState(key_state_t* keyState, secondary_role_strategy_t strategy, bool isNewResolution, bool isMacroResolution, secondary_role_same_half_t fromSameHalf);
     void SecondaryRoles_FakeActivation(secondary_role_result_t res);
     void SecondaryRoles_ActivateSecondaryImmediately();
 
