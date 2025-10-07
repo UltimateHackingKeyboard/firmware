@@ -210,9 +210,13 @@ static void getBatteryStatusText(device_id_t deviceId, battery_state_t* battery,
             percColor = FontControl_SetColorWhite;
         }
     } else if (isLow) {
-        // percSign = FontIcon_BatteryExclamationVertical;
-        percSign = FontIcon_BatteryLow;
-        percColor = getBlinkingColor();
+        if (Cfg.UiStyle == UiStyle_Classic) {
+            percSign = FontIcon_BatteryLow;
+            percColor = getBlinkingColor();
+        } else {
+            percSign = FontIcon_BatteryExclamationVertical;
+            percColor = FontControl_SetColorWhite;
+        }
     } else {
         if (Cfg.UiStyle == UiStyle_Classic) {
             percSign = FontIcon_Percent;
