@@ -227,6 +227,7 @@ void mainRuntime(void) {
 
     // Uart has to be enabled only after we have given Agent a chance to reenumarate into bootloader after a crash
     if (!DEVICE_IS_UHK_DONGLE) {
+        PinWiring_Suspend();
         PinWiring_SelectRouting();
         PinWiring_ConfigureRouting();
 
@@ -234,11 +235,7 @@ void mainRuntime(void) {
         InitZephyrI2c();
         InitShell();
 
-        // PinWiring_Suspend();
-
-
-        // PinWiring_Resume();
-        // InitShell();
+        PinWiring_Resume();
     }
 
     // Uart has to be enabled only after we have given Agent a chance to reenumarate into bootloader after a crash
