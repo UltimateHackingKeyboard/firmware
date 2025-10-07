@@ -29,6 +29,8 @@
 #include "logger.h"
 #include "shell_backend_usb.h"
 #include "stubs.h"
+#include <zephyr/irq.h>
+#include <zephyr/arch/cpu.h>
 
 shell_t Shell = {
     .keyLog = 0,
@@ -253,6 +255,83 @@ static void printMouseKeyState(mouse_kinetic_state_t* state) {
     printk(" - horizontalStateSign %d\n", state->horizontalStateSign);
 }
 
+static int cmd_uhk_irqs(const struct shell *shell, size_t argc, char *argv[]) {
+    printk("\n========================================\n");
+    printk("Interrupt Handler List\n");
+    printk("========================================\n");
+    printk("%-6s %-35s %s\n", "IRQ", "Name", "Priority");
+    printk("----------------------------------------\n");
+
+    /* Iterate through all possible IRQ numbers */
+    for (unsigned int irq = 0; irq < CONFIG_NUM_IRQS; irq++) {
+        /* Check if the IRQ is enabled */
+        if (irq_is_enabled(irq)) {
+            /* Read priority directly from NVIC IP register */
+            /* For nRF52840 (Cortex-M4), priority is stored in upper 4 bits of 8-bit register */
+            /* NVIC IP register is at 0xE000E400, each IRQ has 1 byte */
+            volatile uint8_t *nvic_ip = (volatile uint8_t *)(0xE000E400UL);
+            int prio = (nvic_ip[irq] >> 4) & 0x0F;
+
+            /* Try to get a friendly name based on common Nordic nRF52840 peripherals */
+            const char *name = "Unknown";
+
+            /* nRF52840 specific IRQ names */
+            switch (irq) {
+            case 0: name = "POWER_CLOCK"; break;
+            case 1: name = "RADIO"; break;
+            case 2: name = "UARTE0_UART0"; break;
+            case 3: name = "SPIM0_SPIS0_TWIM0_TWIS0_SPI0_TWI0"; break;
+            case 4: name = "SPIM1_SPIS1_TWIM1_TWIS1_SPI1_TWI1"; break;
+            case 5: name = "NFCT"; break;
+            case 6: name = "GPIOTE"; break;
+            case 7: name = "SAADC"; break;
+            case 8: name = "TIMER0"; break;
+            case 9: name = "TIMER1"; break;
+            case 10: name = "TIMER2"; break;
+            case 11: name = "RTC0"; break;
+            case 12: name = "TEMP"; break;
+            case 13: name = "RNG"; break;
+            case 14: name = "ECB"; break;
+            case 15: name = "CCM_AAR"; break;
+            case 16: name = "WDT"; break;
+            case 17: name = "RTC1"; break;
+            case 18: name = "QDEC"; break;
+            case 19: name = "COMP_LPCOMP"; break;
+            case 20: name = "SWI0_EGU0"; break;
+            case 21: name = "SWI1_EGU1"; break;
+            case 22: name = "SWI2_EGU2"; break;
+            case 23: name = "SWI3_EGU3"; break;
+            case 24: name = "SWI4_EGU4"; break;
+            case 25: name = "SWI5_EGU5"; break;
+            case 26: name = "TIMER3"; break;
+            case 27: name = "TIMER4"; break;
+            case 28: name = "PWM0"; break;
+            case 29: name = "PDM"; break;
+            case 33: name = "MWU"; break;
+            case 34: name = "PWM1"; break;
+            case 35: name = "PWM2"; break;
+            case 36: name = "SPIM2_SPIS2_SPI2"; break;
+            case 37: name = "RTC2"; break;
+            case 38: name = "I2S"; break;
+            case 39: name = "FPU"; break;
+            case 40: name = "USBD"; break;
+            case 41: name = "UARTE1"; break;
+            case 42: name = "QSPI"; break;
+            case 43: name = "CRYPTOCELL"; break;
+            case 45: name = "PWM3"; break;
+            case 47: name = "SPIM3"; break;
+            default: name = "Unknown"; break;
+            }
+
+            printk("%-6d %-35s %d\n", irq, name, prio);
+        }
+    }
+    printk("========================================\n");
+    printk("Total configured IRQs listed above\n");
+    printk("========================================\n\n");
+    return 0;
+}
+
 static int cmd_uhk_mouseMultipliers(const struct shell *shell, size_t argc, char *argv[]) {
     int16_t horizontalScrollMultiplier = HorizontalScrollMultiplier();
     int16_t verticalScrollMultiplier = VerticalScrollMultiplier();
@@ -335,7 +414,7 @@ void UninitShell(void)
     sh = shell_backend_uart_get_ptr();
     shellUninitialized = false;
 
-	shell_uninit(sh, shell_uninit_cb);
+    shell_uninit(sh, shell_uninit_cb);
 
     while (!shellUninitialized) {
         k_sleep(K_MSEC(10));
@@ -386,6 +465,7 @@ void InitShellCommands(void)
         SHELL_CMD_ARG(mouseMultipliers, NULL, "print mouse multipliers", cmd_uhk_mouseMultipliers, 1, 2),
         SHELL_CMD_ARG(logPriority, NULL, "set log priority", cmd_uhk_logPriority, 1, 2),
         SHELL_CMD_ARG(shells, NULL, "list available shell backends", cmd_uhk_shells, 1, 0),
+        SHELL_CMD_ARG(irqs, NULL, "list enabled IRQs and their priorities", cmd_uhk_irqs, 1, 0),
         SHELL_SUBCMD_SET_END);
 
     SHELL_CMD_REGISTER(uhk, &uhk_cmds, "UHK commands", NULL);
