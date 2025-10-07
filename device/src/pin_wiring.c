@@ -179,29 +179,31 @@ static void selectMode() {
     }
 }
 
-void InitPinWiring(void) {
+void PinWiring_SelectRouting() {
     selectMode();
+}
 
-    // deinitUart(&uart0);
-    // deinitUart(&uart1);
+void PinWiring_Suspend() {
+    deinitUart(&uart0);
+    deinitUart(&uart1);
 
-    // suspendDevice(&uart0);
-    // suspendDevice(&uart1);
-    // suspendDevice(&i2c0);
+    suspendDevice(&uart0);
+    suspendDevice(&uart1);
+    suspendDevice(&i2c0);
+}
 
+
+void PinWiring_ConfigureRouting() {
     configurePins(&uart0, PinWiringConfig->pins_uart0);
     configurePins(&uart1, PinWiringConfig->pins_uart1);
     configurePins(&i2c0, PinWiringConfig->pins_i2c);
-
-    // resumeDevice(PinWiringConfig->device_uart_shell);
-    // resumeDevice(PinWiringConfig->device_uart_bridge);
-    // resumeDevice(PinWiringConfig->device_uart_modules);
-    // resumeDevice(PinWiringConfig->device_i2c_modules);
 }
 
 void PinWiring_Resume() {
-    // resumeDevice(PinWiringConfig->device_uart_shell);
-    // resumeDevice(PinWiringConfig->device_uart_bridge);
-    // resumeDevice(PinWiringConfig->device_uart_modules);
-    // resumeDevice(PinWiringConfig->device_i2c_modules);
+    resumeDevice(PinWiringConfig->device_uart_shell);
+    resumeDevice(PinWiringConfig->device_uart_bridge);
+    resumeDevice(PinWiringConfig->device_uart_modules);
+    resumeDevice(PinWiringConfig->device_i2c_modules);
+
+    Uart_Enable();
 }

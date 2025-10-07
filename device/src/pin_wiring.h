@@ -45,6 +45,9 @@
 
 // Functions:
 
-    void InitPinWiring(void);
+    void PinWiring_SelectRouting();
+    void PinWiring_Suspend();
+    void PinWiring_ConfigureRouting();
+    void PinWiring_Resume();
 
 #endif
