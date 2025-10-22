@@ -412,6 +412,8 @@ void ApplyKeyAction(key_state_t *keyState, key_action_cached_t *cachedAction, ke
             if (keyState->current != keyState->previous) {
                 applyToggleLayerAction(keyState, action);
             }
+            // also apply holds in order to process the cached action
+            applyLayerHolds(keyState, action);
             break;
         case KeyActionType_SwitchKeymap:
             if (KeyState_ActivatedNow(keyState)) {

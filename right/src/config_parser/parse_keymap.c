@@ -514,5 +514,9 @@ parser_error_t ParseKeymap(config_buffer_t *buffer, uint8_t keymapIdx, uint8_t k
     }
 #endif
 
+    if (parseConfig.mode != ParseKeymapMode_DryRun) {
+        LayerSwitcher_MarkMappingsChanged();
+    }
+
     return ParserError_Success;
 }
