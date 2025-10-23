@@ -12,12 +12,19 @@
 // TODO: this wastes memory on UHK80
 uint8_t LedDriverValues[LED_DRIVER_MAX_COUNT][LED_DRIVER_LED_COUNT_MAX];
 
+#define LEFT_MODULE_SLEEP_CONDITION (currentLedDriverState->ledDriverIc == LedDriverIc_IS31FL3199 && KeyBacklightBrightness == 0)
+
 #if DEVICE_ID == DEVICE_ID_UHK60V1
 static uint8_t setShutdownModeNormalBufferIS31FL3731[] = {LED_DRIVER_REGISTER_SHUTDOWN, SHUTDOWN_MODE_NORMAL};
 #endif
 static uint8_t setShutdownModeNormalBufferIS31FL_3199_3737[] = {
     LED_DRIVER_REGISTER_CONFIGURATION,
     SHUTDOWN_MODE_NORMAL | (IS31FL3737B_PWM_FREQUENCY_26_7KHZ < IS31FL3737B_PWM_FREQUENCY_SHIFT)
+};
+
+static uint8_t setShutdownModeSleepBufferIS31FL_3199[] = {
+    LED_DRIVER_REGISTER_CONFIGURATION,
+0
 };
 
 static led_driver_state_t ledDriverStates[LED_DRIVER_MAX_COUNT] = {
@@ -168,6 +175,8 @@ static led_driver_state_t ledDriverStates[LED_DRIVER_MAX_COUNT] = {
         .ledCount = LED_DRIVER_LED_COUNT_IS31FL3199,
         .setShutdownModeNormalBufferLength = 2,
         .setShutdownModeNormalBuffer = setShutdownModeNormalBufferIS31FL_3199_3737,
+        .setShutdownModeSleepBufferLength = 2,
+        .setShutdownModeSleepBuffer = setShutdownModeSleepBufferIS31FL_3199,
         .setupLedControlRegistersCommandLength = 0,
         .setupLedControlRegistersCommand = {}
     },
@@ -218,6 +227,8 @@ void LedSlaveDriver_Init(uint8_t ledDriverId)
     }
     currentLedDriverState->ledIndex = 0;
 }
+
+extern uint8_t PowerLevel;
 
 slave_result_t LedSlaveDriver_Update(uint8_t ledDriverId)
 {
@@ -305,6 +316,11 @@ slave_result_t LedSlaveDriver_Update(uint8_t ledDriverId)
             *ledDriverPhase = LedDriverPhase_UpdateChangedLedValues;
             break;
         case LedDriverPhase_UpdateChangedLedValues: {
+            if (LEFT_MODULE_SLEEP_CONDITION) {
+                *ledDriverPhase = LedDriverPhase_EnterSleep;
+                break;
+            }
+
             uint8_t *targetLedValues = currentLedDriverState->targetLedValues;
 
             uint8_t lastLedChunkStartIndex = ledCount - PMW_REGISTER_UPDATE_CHUNK_SIZE;
@@ -354,6 +370,19 @@ slave_result_t LedSlaveDriver_Update(uint8_t ledDriverId)
         case LedDriverPhase_UpdateData:
             res.status = I2cAsyncWrite(ledDriverAddress, updateDataBuffer, sizeof(updateDataBuffer));
             *ledDriverPhase = LedDriverPhase_UpdateChangedLedValues;
+            break;
+        case LedDriverPhase_EnterSleep:
+            //implemented for LedDriverIc_IS31FL3199 only atm
+            res.status = I2cAsyncWrite(ledDriverAddress, currentLedDriverState->setShutdownModeSleepBuffer, currentLedDriverState->setShutdownModeSleepBufferLength);
+            *ledDriverPhase = LedDriverPhase_MaintainSleep;
+            break;
+        case LedDriverPhase_MaintainSleep:
+            if (LEFT_MODULE_SLEEP_CONDITION) {
+                *ledDriverPhase = LedDriverPhase_MaintainSleep;
+            } else {
+                res.status = I2cAsyncWrite(ledDriverAddress, currentLedDriverState->setShutdownModeNormalBuffer, currentLedDriverState->setShutdownModeNormalBufferLength);
+                *ledDriverPhase = LedDriverPhase_UpdateChangedLedValues;
+            }
             break;
     }
 
