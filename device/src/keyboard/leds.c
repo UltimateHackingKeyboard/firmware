@@ -25,7 +25,7 @@ const struct gpio_dt_spec ledsSdbDt = GPIO_DT_SPEC_GET(DT_ALIAS(leds_sdb), gpios
 
 uint8_t Uhk80LedDriverValues[UHK80_LED_DRIVER_LED_COUNT_MAX];
 
-void setLedsCs(bool state)
+static void setLedsCs(bool state)
 {
     gpio_pin_set_dt(&ledsCsDt, state);
 }
@@ -184,12 +184,11 @@ void ledUpdater() {
 
         k_mutex_unlock(&SpiMutex);
 
-        if (!ledsNeedUpdate) {
-            k_sleep(K_FOREVER);
-        }
 
         if (currentScaling == 0 && KeyBacklightBrightness == 0) {
             sleepLeds();
+        } else if (!ledsNeedUpdate) {
+            k_sleep(K_FOREVER);
         }
 
         if (currentScaling != KeyBacklightBrightness) {
