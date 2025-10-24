@@ -9,6 +9,7 @@
 #include "i2c.h"
 #include "keyboard/i2c.h"
 #include "peripherals/merge_sensor.h"
+#include "pin_wiring.h"
 
 // Thread definitions
 
@@ -21,7 +22,7 @@ static struct k_thread thread_data;
 static bool masterTransferInProgress;
 static i2c_master_transfer_t* masterTransfer;
 
-const struct device *i2c0_dev = DEVICE_DT_GET(DT_NODELABEL(i2c0));
+const struct device *i2c0_dev = NULL;
 
 status_t ZephyrI2c_MasterTransferNonBlocking(i2c_master_transfer_t *transfer) {
     if (masterTransferInProgress) {
@@ -100,6 +101,13 @@ void i2cPoller() {
 }
 
 void InitZephyrI2c(void) {
+    if (PinWiringConfig->device_i2c_modules == NULL) {
+        i2c0_dev = NULL;
+        return;
+    }
+
+    i2c0_dev = PinWiringConfig->device_i2c_modules->device;
+
     k_thread_create(
         &thread_data, stack_area,
         K_THREAD_STACK_SIZEOF(stack_area),
